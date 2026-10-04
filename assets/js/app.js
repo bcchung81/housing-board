@@ -30,6 +30,10 @@ const STAGE = { '계획': 0, '분양중': 1, '건설 단계': 2, '준공 임박'
 const STATUS_ORDER = ['분양중', '건설 단계', '준공 임박', '입주 단계', '계획'];
 const unitsTxt = (b) => (b.unitsKnown === false ? '세대수 미확인' : `${fmt(b.units)}세대`);
 const dongN = (b) => b.dongCount || (b.dongs ? b.dongs.length : 0);
+/* 단지 이름(label)은 자료에서 오므로 따옴표·쉼표·꺾쇠가 있어도 속성과 선택자가 깨지지 않게 한다. */
+const idsAttr = (ids) => esc(JSON.stringify(ids));                                       // data-ids 에는 JSON 배열을 넣는다
+const idsOf = (el) => { try { const v = JSON.parse(el.dataset.ids); return Array.isArray(v) ? v : []; } catch (_) { return []; } };
+const byId = (scope, name, id) => scope.querySelector(`[${name}="${CSS.escape(String(id))}"]`);
 // 색: 색각 이상에서도 구분되는 Okabe-Ito 계열. 면 무늬도 달리한다(분양중 단색 / 건설 해칭 / 준공 임박 점무늬 / 입주 단계 격자 / 계획 점선 / 공공택지 민간 회색 단색).
 const COLOR = { sale: '#D55E00', build: '#0072B2', soon: '#009E73', move: '#CC79A7', plan: '#5C6068', priv: '#8A8680' };   // 패널(항상 밝은 바탕)용. 지도 위 색은 THEMES에서 가져온다
 const COLOR_D = { sale: '#A84800', build: '#005C91', soon: '#00755A', move: '#A23B7C', plan: '#4A4E56', priv: '#5E5A54' };   // 글자·칩용(흰 바탕 대비 4.5:1 이상)
@@ -547,7 +551,7 @@ function applyFilters() {
   for (const id of ['dong-3d', 'dong-ghost']) if (map.getLayer(id)) map.setFilter(id, dongFilter());
   document.querySelectorAll('#projList li').forEach((li) => { const card = li.querySelector('.card'); if (!card) return; li.hidden = !blockVisible(BLOCKS.find((x) => x.id === card.dataset.id)); });
   scheduleHud();
-  document.querySelectorAll('#timeline .tlp').forEach((g) => { const ids = g.dataset.ids.split(','); g.style.opacity = ids.some((id) => blockVisible(BLOCKS.find((b) => b.id === id))) ? 1 : 0.25; });
+  document.querySelectorAll('#timeline .tlp').forEach((g) => { const ids = idsOf(g); g.style.opacity = ids.some((id) => blockVisible(BLOCKS.find((b) => b.id === id))) ? 1 : 0.25; });
 }
 /* 보기 기준: 층수 / 공정율(지은 만큼만 채움) / 입주 시기(달력) */
 function applyMode() {
@@ -660,10 +664,10 @@ if (BLOCKS.length) {
   items.forEach(([mo, bs], idx) => {
     const x = tx(mo), units = bs.reduce((a, b) => a + b.units, 0), r = 5 + Math.sqrt(units) / 4.5, k = kindOf(bs[0]), up = idx % 2 === 0;
     const yid = up ? 18 : 80, ydt = up ? 31 : 93, ids = bs.map((b) => b.id), dt = String(bs[0].moveIn).replace(/[^0-9.\-]/g, '').slice(2, 7).replace('-', '.');
-    svg += `<g class="tlp" tabindex="0" role="button" data-ids="${ids.join(',')}" aria-label="${ids.join('·')} ${esc(bs[0].moveIn)} 입주·준공 예정, 누르면 지도에서 보기">`
+    svg += `<g class="tlp" tabindex="0" role="button" data-ids="${idsAttr(ids)}" aria-label="${esc(ids.join('·'))} ${esc(bs[0].moveIn)} 입주·준공 예정, 누르면 지도에서 보기">`
       + `<circle cx="${x}" cy="${CY}" r="${Math.max(r, 11)}" fill="transparent"/>`
       + `<circle cx="${x}" cy="${CY}" r="${r}" fill="${COLOR[k]}" fill-opacity="${k === 'build' ? .88 : 1}"/>`
-      + `<text x="${x}" y="${yid}" font-size="12.5" font-weight="700" fill="#1B1D21" text-anchor="middle">${ids.join('·')}</text>`
+      + `<text x="${x}" y="${yid}" font-size="12.5" font-weight="700" fill="#1B1D21" text-anchor="middle">${esc(ids.join('·'))}</text>`
       + `<text x="${x}" y="${ydt}" font-size="11.5" fill="#4A4E56" text-anchor="middle">${dt}</text></g>`;
   });
   $('#timeline').innerHTML = svg;
@@ -688,7 +692,7 @@ function syncUrl(id) {
 }
 function focusBlock(id, { toggle = true, tour = false } = {}) {
   if (!tour) stopMotion();
-  const btn = document.querySelector(`#projList .card[data-id="${id}"]`), b = BLOCKS.find((x) => x.id === id); if (!b) return;
+  const btn = byId($('#projList'), 'data-id', id), b = BLOCKS.find((x) => x.id === id); if (!b) return;
   const was = btn && btn.getAttribute('aria-expanded') === 'true';
   document.querySelectorAll('#projList .card').forEach((c) => c.setAttribute('aria-expanded', c === btn && !(toggle && was) ? 'true' : 'false'));
   if (btn && btn.getAttribute('aria-expanded') === 'true') btn.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });   // 사이드바에서 펼친 카드가 보이게
@@ -718,7 +722,7 @@ function showGroup(ids) {
 function onTimeline(e) {
   if (e.type === 'keydown' && e.key !== 'Enter' && e.key !== ' ') return;
   const g = e.target.closest('.tlp'); if (!g) return; e.preventDefault();
-  showGroup(g.dataset.ids.split(','));
+  showGroup(idsOf(g));
 }
 $('#timeline').addEventListener('click', onTimeline); $('#timeline').addEventListener('keydown', onTimeline);
 const dur = reduceMotion ? 0 : 700;
@@ -935,11 +939,11 @@ function buildNext() {
     const n = days(g.d), ids = g.bs.map((b) => b.id), units = g.bs.reduce((a, b) => a + b.units, 0);
     const dn = !g.exact ? (n < 30 ? '이번 달' : `${Math.round(n / 30.4)}개월 뒤`) : n === 0 ? 'D-day' : n <= 120 ? `D-${n}` : `${Math.round(n / 30.4)}개월 뒤`;
     const when = g.exact ? `${g.d.getFullYear()}.${String(g.d.getMonth() + 1).padStart(2, '0')}.${String(g.d.getDate()).padStart(2, '0')}` : `${g.d.getFullYear()}.${String(g.d.getMonth() + 1).padStart(2, '0')} 예정`;
-    return `<li><button type="button" class="nx" data-ids="${ids.join(',')}" aria-label="${ids.join('·')} ${g.kind} ${when}, ${dn}, 누르면 지도에서 보기"><span class="dn${n > 60 ? ' far' : ''}">${dn}</span><span><b>${ids.join('·')} ${g.kind}</b><span class="s">${when} · ${fmt(units)}세대</span></span></button></li>`;
+    return `<li><button type="button" class="nx" data-ids="${idsAttr(ids)}" aria-label="${esc(ids.join('·'))} ${g.kind} ${when}, ${dn}, 누르면 지도에서 보기"><span class="dn${n > 60 ? ' far' : ''}">${dn}</span><span><b>${esc(ids.join('·'))} ${g.kind}</b><span class="s">${when} · ${fmt(units)}세대</span></span></button></li>`;
   }).join('');
 }
 buildNext();
-$('#nextList').addEventListener('click', (e) => { const b = e.target.closest('button[data-ids]'); if (b) showGroup(b.dataset.ids.split(',')); });
+$('#nextList').addEventListener('click', (e) => { const b = e.target.closest('button[data-ids]'); if (b) showGroup(idsOf(b)); });
 $('#sheetHandle').addEventListener('click', () => setSheet({ peek: 'half', half: 'full', full: 'peek' }[$('#panel').dataset.sheet]));
 if (innerWidth <= 900) setSheet('peek');
 
@@ -1031,7 +1035,7 @@ function renderHudContent() {
   if (!host.children.length) host.innerHTML = BLOCKS.map((b) => `<button type="button" class="hudtag" data-id="${esc(b.id)}"></button>`).join('');
   const T = TH();
   BLOCKS.forEach((b) => {
-    const el = host.querySelector(`[data-id="${b.id}"]`), k = kindOf(b), fr = floorsRange(b);
+    const el = byId(host, 'data-id', b.id), k = kindOf(b), fr = floorsRange(b);
     el.style.setProperty('--c', T.color[k]); el.style.setProperty('--cd', theme === 'night' ? T.color[k] : COLOR_D[k]);
     const line = viewMode === 'progress' ? (b.progress ? `<span class="ht-bar"><i style="width:${Math.max(b.progress.rate, 1)}%"></i></span>공정율 ${pctTxt(b.progress.rate)}` : '공정율 -')
       : viewMode === 'time' ? esc(moveText(b)) : (fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : '층수 미확인');
@@ -1053,9 +1057,9 @@ function renderHud() {
   const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
   const placed = [], parts = [];
   const order = BLOCKS.filter(blockVisible).sort((a, c) => c.units - a.units);
-  BLOCKS.forEach((b) => { const el = $('#hudTags').querySelector(`[data-id="${b.id}"]`); el.hidden = !blockVisible(b); });
+  BLOCKS.forEach((b) => { const el = byId($('#hudTags'), 'data-id', b.id); el.hidden = !blockVisible(b); });
   for (const b of order) {
-    const el = $('#hudTags').querySelector(`[data-id="${b.id}"]`), k = kindOf(b), col = T.color[k];
+    const el = byId($('#hudTags'), 'data-id', b.id), k = kindOf(b), col = T.color[k];
     const ps = b.poly.map((c) => map.project(c));
     let x0 = Math.min(...ps.map((p) => p.x)), x1 = Math.max(...ps.map((p) => p.x)), y0 = Math.min(...ps.map((p) => p.y)), y1 = Math.max(...ps.map((p) => p.y));
     if (x1 < -30 || x0 > W + 30 || y1 < -30 || y0 > H + 30) { el.hidden = true; continue; }
@@ -1102,7 +1106,7 @@ function setCollapsed(on) {
   say(on ? '사이드바를 접었습니다. 요약은 지도 오른쪽 위에 보입니다.' : '사이드바를 펼쳤습니다.');
 }
 $('#panelToggle').addEventListener('click', () => setCollapsed(!$('.app').classList.contains('collapsed')));
-$('#hudSum').addEventListener('click', (e) => { const b = e.target.closest('button[data-ids]'); if (b) showGroup(b.dataset.ids.split(',')); });
+$('#hudSum').addEventListener('click', (e) => { const b = e.target.closest('button[data-ids]'); if (b) showGroup(idsOf(b)); });
 syncHudSum();
 renderHudContent();
 
