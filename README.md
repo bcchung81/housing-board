@@ -42,8 +42,17 @@ python3 workspace/data/tools/molit_tidy.py                          # 통계누�
 
 ## 배포
 
-`workspace/`(원천 159 MB 포함)는 올리지 않습니다. Vercel 등 정적 호스팅에는 루트를 그대로 올리고 `.vercelignore`가 `workspace/`를 빼 줍니다.
-배포 주소는 V-World 콘솔의 서비스 URL에 등록해야 배경지도가 뜹니다. 인증키는 브라우저에 그대로 보이므로 URL 제한이 보호 수단의 전부입니다.
+Vercel은 `vercel.json`의 빌드 명령(`node scripts/build.js`)이 `index.html`·`assets/`·`data/`만 `public/`에 모아 서비스합니다. `workspace/`(원천 포함)와 `*.md`는 올라가지 않습니다.
+
+**인증키**: `config.js`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(OpenFreeMap 회색 지도)로 빌드합니다.
+
+```
+vercel env add VWORLD_KEY production      # 값은 프롬프트에 붙여넣기
+vercel env add VWORLD_KEY preview
+vercel --prod
+```
+
+인증키는 결국 브라우저에 그대로 보이므로 환경변수는 '저장소에 안 올리는' 용도일 뿐이고, 실제 보호는 V-World 콘솔의 서비스 URL 제한이 전부입니다. 배포 주소(운영 도메인)를 그곳에 등록해야 배경지도가 뜹니다. 미리보기 배포 주소는 배포마다 바뀌므로 등록하지 않으면 회색 지도로 나옵니다.
 
 ## 운영 최적화 메모
 

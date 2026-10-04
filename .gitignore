@@ -19,3 +19,6 @@ workspace/videos/*/.thumbnails/
 
 # 개인 사진
 workspace/docs/view/KakaoTalk_Photo_*
+
+# 빌드 산출물
+public/
