@@ -15,19 +15,24 @@ const say = (m) => { $('#sr').textContent = m; };
 const GY = window.GY_BUILDINGS, PR = window.GY_PROJECTS;
 const HAS_GY = !!(GY && GY.features && GY.features.length);
 const HAS_PR = !!(PR && PR.blocks && PR.blocks.length);
+const REG = window.REGION || {};                               // 지역 정보(어댑터가 채움): 이름·시작 위치·출처·단지 찾기
+const DISTRICTS = HAS_PR ? (PR.districts && PR.districts.length ? PR.districts : (PR.district ? [PR.district] : [])) : [];   // 지구 경계(여러 개 가능)
 const FACTOR = (HAS_GY && GY.meta.factor) || {};
 function floorsToHeight(f) {
   const k = f <= 5 ? '공동주택_1-5' : f <= 10 ? '공동주택_6-10' : f <= 15 ? '공동주택_11-15' : f <= 20 ? '공동주택_16-20' : '공동주택_21+';
   return Math.round(f * (FACTOR[k] || 2.85) * 10) / 10;
 }
-const ORDER = ['A6', 'A17', 'A9', 'A10', 'A2', 'A3'];   // 분양중 → 건설 단계 → 준공 임박 순
-const BLOCKS = HAS_PR ? ORDER.map((id) => PR.blocks.find((b) => b.id === id)).filter(Boolean) : [];
-const KIND = { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'soon', '계획': 'plan' };
-const STAGE = { '계획': 0, '분양중': 1, '건설 단계': 2, '준공 임박': 3 };
-const STATUS_ORDER = ['분양중', '건설 단계', '준공 임박', '계획'];
-// 색: 색각 이상에서도 구분되는 Okabe-Ito 계열. 면 무늬도 달리한다(분양중 단색 / 건설 해칭 / 준공 임박 점무늬 / 계획 점선).
-const COLOR = { sale: '#D55E00', build: '#0072B2', soon: '#009E73', plan: '#5C6068' };   // 패널(항상 밝은 바탕)용. 지도 위 색은 THEMES에서 가져온다
-const COLOR_D = { sale: '#A84800', build: '#005C91', soon: '#00755A', plan: '#4A4E56' };   // 글자·칩용(흰 바탕 대비 4.5:1 이상)
+const BLOCKS = HAS_PR ? PR.blocks.slice() : [];             // 순서는 어댑터가 정한다(region.projectOrder → 상태 → 세대수 → 이름)
+const HAS_PRIV = BLOCKS.some((b) => b.priv);                  // 공공택지 위 민간 단지가 있는 지역인가
+const KIND = { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'soon', '입주 단계': 'move', '계획': 'plan' };
+const kindOf = (b) => (b.priv ? 'priv' : KIND[b.status]);    // 색·무늬를 정하는 종류. 민간 단지는 상태와 상관없이 회색(priv)
+const STAGE = { '계획': 0, '분양중': 1, '건설 단계': 2, '준공 임박': 3, '입주 단계': 4 };
+const STATUS_ORDER = ['분양중', '건설 단계', '준공 임박', '입주 단계', '계획'];
+const unitsTxt = (b) => (b.unitsKnown === false ? '세대수 미확인' : `${fmt(b.units)}세대`);
+const dongN = (b) => b.dongCount || (b.dongs ? b.dongs.length : 0);
+// 색: 색각 이상에서도 구분되는 Okabe-Ito 계열. 면 무늬도 달리한다(분양중 단색 / 건설 해칭 / 준공 임박 점무늬 / 입주 단계 격자 / 계획 점선 / 공공택지 민간 회색 단색).
+const COLOR = { sale: '#D55E00', build: '#0072B2', soon: '#009E73', move: '#CC79A7', plan: '#5C6068', priv: '#8A8680' };   // 패널(항상 밝은 바탕)용. 지도 위 색은 THEMES에서 가져온다
+const COLOR_D = { sale: '#A84800', build: '#005C91', soon: '#00755A', move: '#A23B7C', plan: '#4A4E56', priv: '#5E5A54' };   // 글자·칩용(흰 바탕 대비 4.5:1 이상)
 const STAGE_NAMES = ['계획', '분양', '건설', '입주'];
 const pctTxt = (v) => (v >= 99.95 ? '100' : v >= 10 ? v.toFixed(1) : v.toFixed(2).replace(/0$/, '')) + '%';
 function sparkline(h) {
@@ -57,13 +62,13 @@ const THEMES = {
   day:   { vw: String(window.VWORLD_LAYER || 'white'), ofm: 'positron', bg: '#F4F4F5', text: '#1B1D21', sub: '#4A4E56', halo: '#FFFFFF', sky: ['#DDE1E6', '#F4F4F5'],
            mask: ['#27304A', 0.12], shadow: ['#000000', 0.2], hillShadow: '#4B5058', hillHi: '#FFFFFF', hillAcc: '#8E9299', district: '#6B6F77', dong: '#2B2E34', other: ['#8E9299', '#7A7F87'],
            ramp: ['#E6E8EC', '#CFD2D8', '#B1B5BD', '#8F949E', '#6E747F'], flat: '#E9EBEE',
-           color: { sale: '#D55E00', build: '#0072B2', soon: '#009E73', plan: '#5C6068' },
-           tone: { sale: ['#F2A66B', '#A84800'], build: ['#8EC3E6', '#005C91'], soon: ['#7FD6B8', '#00755A'] } },
+           color: { sale: '#D55E00', build: '#0072B2', soon: '#009E73', move: '#CC79A7', plan: '#5C6068', priv: '#8A8680' },
+           tone: { sale: ['#F2A66B', '#A84800'], build: ['#8EC3E6', '#005C91'], soon: ['#7FD6B8', '#00755A'], move: ['#E8B4D0', '#A23B7C'], plan: ['#C4C7CD', '#5C6068'], priv: ['#C9C6C0', '#6E6A64'] } },
   night: { vw: 'midnight', ofm: 'dark', bg: '#0E1624', text: '#F2F4F8', sub: '#B9C0CE', halo: '#0E1624', sky: ['#1A2437', '#0E1624'],
            mask: ['#000000', 0.38], shadow: ['#000000', 0.45], hillShadow: '#05080F', hillHi: '#7C8AA6', hillAcc: '#2A3550', district: '#9AA6BD', dong: '#E6EAF2', other: ['#5A6683', '#8B97B3'],
            ramp: ['#2C3546', '#3A455A', '#4E5B75', '#6A7895', '#8D9BB8'], flat: '#232C3B',
-           color: { sale: '#FF8A3D', build: '#47B0F7', soon: '#2FD6A2', plan: '#A8B0C0' },
-           tone: { sale: ['#FFC694', '#E8661A'], build: ['#A5D8F9', '#2B8FD6'], soon: ['#92EDD0', '#18B98A'] } },
+           color: { sale: '#FF8A3D', build: '#47B0F7', soon: '#2FD6A2', move: '#E88DC0', plan: '#A8B0C0', priv: '#A39F97' },
+           tone: { sale: ['#FFC694', '#E8661A'], build: ['#A5D8F9', '#2B8FD6'], soon: ['#92EDD0', '#18B98A'], move: ['#F3C3DD', '#CF5E9E'], plan: ['#C9CFDB', '#8A93A6'], priv: ['#C8C4BC', '#8E8A83'] } },
 };
 const TH = () => THEMES[theme];
 const TONE = THEMES.day.tone;   // 패널 막대용(항상 밝은 바탕). 지도 위 동 색은 TH().tone
@@ -81,7 +86,7 @@ $('#baseNote').textContent = KEY ? '배경: V-World' : '배경: OpenFreeMap (V-W
 const DEM_TILES = ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'];
 const STATUS = { loaded: false, errors: [], officialData: HAS_GY, projects: HAS_PR, base: KEY ? 'vworld' : 'openfreemap' };   // 시험용 상태. ?selftest 일 때만 window에 공개한다
 if (q.get('selftest')) window.__mapStatus = STATUS;
-const START = { center: [126.7585, 37.5515], zoom: 14.4, pitch: 52, bearing: 0 };
+const START = { pitch: 52, bearing: 0, ...(REG.view || { center: [126.7585, 37.5515], zoom: 14.4 }) };   // 지역의 시작 위치
 const map = new maplibregl.Map({
   container: 'map', style: baseStyle(), ...START, maxPitch: 80, minZoom: 11, attributionControl: { compact: true },
   canvasContextAttributes: { antialias: q.get('aa') !== '0' },   // 모서리 계단 방지(4배 다중 샘플). 저사양이면 주소에 ?aa=0
@@ -92,6 +97,7 @@ map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
 let popup = null, selId = null, selDong = null, vwFail = 0, DONG_FEATS = [];
 const SHOWN = new Set(BLOCKS.map((b) => b.status));          // 지도에 보이는 상태
 let viewMode = ['progress', 'time'].includes(q.get('mode')) ? q.get('mode') : 'floors';   // 층수 / 공정율 / 입주 시기
+let privOn = q.get('priv') !== '0';                            // 공공택지 민간 단지: 기본 켬
 let hudOn = q.get('hud') !== '0';                              // HUD(단지 표시선·정보창): 기본 켬
 let ctxOn = q.get('ctx') !== '0';                              // 역·학교(OSM): 기본 켬
 let ringOn = q.get('ring') === '1';                            // 역 반경 원(500 m·1 km): 기본 끔
@@ -116,6 +122,10 @@ function patternImage(kind) {
     const col = T.color.build;
     x.fillStyle = rgba(col, .12); x.fillRect(0, 0, s, s); x.strokeStyle = col; x.lineWidth = 2; x.beginPath();
     x.moveTo(-1, s + 1); x.lineTo(s + 1, -1); x.moveTo(-1, 1); x.lineTo(1, -1); x.moveTo(s - 1, s + 1); x.lineTo(s + 1, s - 1); x.stroke();
+  } else if (kind === 'cross') {     // 입주 단계: 격자
+    const col = T.color.move;
+    x.fillStyle = rgba(col, .12); x.fillRect(0, 0, s, s); x.strokeStyle = col; x.lineWidth = 1.5; x.beginPath();
+    x.moveTo(0, .75); x.lineTo(s, .75); x.moveTo(.75, 0); x.lineTo(.75, s); x.stroke();
   } else {                           // 준공 임박: 점
     const col = T.color.soon;
     x.fillStyle = rgba(col, .14); x.fillRect(0, 0, s, s); x.fillStyle = col; x.beginPath(); x.arc(4, 4, 1.7, 0, Math.PI * 2); x.fill();
@@ -147,14 +157,14 @@ function blockTimes(b) {
 const moveText = (b) => (/^\d/.test(b.moveIn) ? `입주 ${b.moveIn}` : String(b.moveIn));
 function blockProps(b) {
   const p = b.progress ? pctTxt(b.progress.rate) : '-';
-  return { id: b.id, status: b.status, units: b.units, short: b.id, l2: `${b.status} · ${fmt(b.units)}세대`, l2p: `공정율 ${p}`, l2t: moveText(b),
+  return { id: b.id, status: b.status, kind: kindOf(b), priv: !!b.priv, units: b.units, short: b.id, l2: `${b.status} · ${unitsTxt(b)}`, l2p: `공정율 ${p}`, l2t: moveText(b),
     lc: `${b.id} · ${b.status}`, lcp: `${b.id} · 공정율 ${p}`, lct: `${b.id} · ${moveText(b)}` };
 }
 function blocksGeoJSON() {
   return { type: 'FeatureCollection', features: BLOCKS.map((b) => ({ type: 'Feature', properties: blockProps(b), geometry: { type: 'Polygon', coordinates: [[...b.poly, b.poly[0]]] } })) };
 }
-function districtLabelPoint() {   // 단지 라벨과 겹치지 않게 지구 남쪽 1/3 지점에 둔다
-  const ps = PR.district.poly, lons = ps.map((p) => p[0]), lats = ps.map((p) => p[1]);
+function districtLabelPoint(d) {   // 단지 라벨과 겹치지 않게 지구 남쪽 1/3 지점에 둔다
+  const ps = d.poly, lons = ps.map((p) => p[0]), lats = ps.map((p) => p[1]);
   return [(Math.min(...lons) + Math.max(...lons)) / 2 + 0.002, Math.min(...lats) + (Math.max(...lats) - Math.min(...lats)) * 0.16];
 }
 function blockPointsGeoJSON() {
@@ -167,14 +177,14 @@ function ringArea(r) { let a = 0; for (let i = 0; i < r.length; i++) { const p =
 function dongsGeoJSON() {
   const feats = [], labels = [], tone = TH().tone;
   BLOCKS.forEach((b) => {
-    if (!b.dongs) return; const kind = KIND[b.status]; const r = floorsRange(b), tm = blockTimes(b);
+    if (!b.dongs) return; const kind = kindOf(b); const r = floorsRange(b), tm = blockTimes(b);
     b.dongs.forEach((d) => {
       const t = r && r[1] > r[0] ? (d.floors - r[0]) / (r[1] - r[0]) : 1;
       const color = mixTone(kind, t, tone);
-      d.poly.forEach((ring) => feats.push({ type: 'Feature', properties: { key: `${b.id}-${d.no}`, block: b.id, no: d.no, floors: d.floors, h: floorsToHeight(d.floors), color, status: b.status, rate: b.progress ? b.progress.rate : 100, t0: tm.t0, t1: tm.t1, mo: tm.mo },
+      d.poly.forEach((ring) => feats.push({ type: 'Feature', properties: { key: `${b.id}-${d.no}`, block: b.id, no: d.no, floors: d.floors, h: d.h != null ? d.h : floorsToHeight(d.floors), hEst: d.h != null ? 0 : 1, tier: d.tier, color, status: b.status, priv: !!b.priv, rate: b.progress ? b.progress.rate : 100, t0: tm.t0, t1: tm.t1, mo: tm.mo },
         geometry: { type: 'Polygon', coordinates: [[...ring, ring[0]]] } }));
       const big = d.poly.reduce((m, ring) => (ringArea(ring) > ringArea(m) ? ring : m), d.poly[0]);
-      labels.push({ type: 'Feature', properties: { text: `${d.no}동 ${d.floors}층`, no: d.no, block: b.id, status: b.status }, geometry: { type: 'Point', coordinates: centroid(big) } });
+      labels.push({ type: 'Feature', properties: { text: `${d.no}동 ${d.floors}층`, no: d.no, block: b.id, status: b.status, priv: !!b.priv }, geometry: { type: 'Point', coordinates: centroid(big) } });
     });
   });
   return [{ type: 'FeatureCollection', features: feats }, { type: 'FeatureCollection', features: labels }];
@@ -192,13 +202,13 @@ function shadowGeoJSON(feats) {
     const ring = f.geometry.coordinates[0], lat = ring[0][1], L = f.properties.h * 0.6, k = Math.SQRT1_2;
     const dx = L * k / (111320 * Math.cos(lat * Math.PI / 180)), dy = -L * k / 111320;
     const h = hull(ring.concat(ring.map((p) => [p[0] + dx, p[1] + dy]))); h.push(h[0]);
-    return { type: 'Feature', properties: { status: f.properties.status }, geometry: { type: 'Polygon', coordinates: [h] } };
+    return { type: 'Feature', properties: { status: f.properties.status, priv: f.properties.priv }, geometry: { type: 'Polygon', coordinates: [h] } };
   }) };
 }
 /* 지구 밖을 살짝 어둡게 하는 마스크: 넓은 사각형에서 지구 경계를 구멍으로 뺀다. */
 function maskGeoJSON() {
-  const hole = PR.district.poly.slice(); hole.push(hole[0]);
-  return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[120, 30], [135, 30], [135, 45], [120, 45], [120, 30]], hole] } };
+  const holes = DISTRICTS.map((d) => [...d.poly, d.poly[0]]);
+  return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[120, 30], [135, 30], [135, 45], [120, 45], [120, 30]], ...holes] } };
 }
 /* 주변 맥락(OpenStreetMap): 역 반경 원, 역, 학교 */
 const CTX = window.GY_CONTEXT, HAS_CTX = !!(CTX && CTX.stations && CTX.stations.length);
@@ -270,8 +280,9 @@ function addOfficialShadows() {
     paint: { 'fill-extrusion-color': sh[0], 'fill-extrusion-height': 0.06, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': dimExisting ? sh[1] * 0.35 : sh[1] } }, 'official-3d');
 }
 const OFFICIAL_LAYERS = ['official-far', 'official-3d', 'official-roof'];
+const BLK_FILLS = ['blk-sale', 'blk-build', 'blk-soon', 'blk-move', 'blk-plan', 'blk-priv'];
 const DIM_OPACITY = 0.3, HUD_MAXZ = 16.3;   // HUD는 이 확대 단계보다 멀리 볼 때만 보이고, 가까이에서는 지도 위 이름표가 대신한다
-function statusExpr(colors) { return ['match', ['get', 'status'], '분양중', colors.sale, '건설 단계', colors.build, '준공 임박', colors.soon, colors.plan]; }
+function kindExpr(colors) { return ['match', ['get', 'kind'], 'sale', colors.sale, 'build', colors.build, 'soon', colors.soon, 'move', colors.move, 'priv', colors.priv, colors.plan]; }
 function setupCustom() {
   const T = TH(), night = theme === 'night', layers = map.getStyle().layers, firstSymbol = (layers.find((l) => l.type === 'symbol') || {}).id;
   const add = (l) => { if (!map.getLayer(l.id)) map.addLayer(l, firstSymbol); };
@@ -294,15 +305,17 @@ function setupCustom() {
     src('dongs', { type: 'geojson', data: dg });
     src('dong-shadow', { type: 'geojson', data: shadowGeoJSON(dg.features) });
     src('dong-labels', { type: 'geojson', data: dl });
-    if (PR.district) {
-      src('district', { type: 'geojson', data: { type: 'Feature', properties: { name: '인천계양 테크노밸리 지구' }, geometry: { type: 'Polygon', coordinates: [[...PR.district.poly, PR.district.poly[0]]] } }, attribution: '지구경계 © OpenStreetMap contributors' });
-      src('district-pt', { type: 'geojson', data: { type: 'Feature', properties: { name: '인천계양 테크노밸리 지구' }, geometry: { type: 'Point', coordinates: districtLabelPoint() } } });
+    if (DISTRICTS.length) {
+      const osm = (REG.sources || []).some((s) => /OpenStreetMap/.test(s.label));
+      src('district', { type: 'geojson', data: { type: 'FeatureCollection', features: DISTRICTS.map((d) => ({ type: 'Feature', properties: { name: d.name }, geometry: { type: 'Polygon', coordinates: [[...d.poly, d.poly[0]]] } })) }, ...(osm ? { attribution: '지구경계 © OpenStreetMap contributors' } : {}) });
+      src('district-pt', { type: 'geojson', data: { type: 'FeatureCollection', features: DISTRICTS.map((d) => ({ type: 'Feature', properties: { name: d.name }, geometry: { type: 'Point', coordinates: districtLabelPoint(d) } })) } });
       src('district-mask', { type: 'geojson', data: maskGeoJSON() });
     }
     if (PR.otherBlocks && PR.otherBlocks.length) src('other-blocks', { type: 'geojson', data: { type: 'FeatureCollection', features: PR.otherBlocks.map((r) => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[...r, r[0]]] } })) } });
     if (!map.hasImage('hatch')) map.addImage('hatch', patternImage('hatch'), { pixelRatio: 2 });
     if (!map.hasImage('dots')) map.addImage('dots', patternImage('dots'), { pixelRatio: 2 });
-    for (const k of ['sale', 'build', 'soon', 'plan']) if (!map.hasImage('bd-' + k)) { const b = badgeImage(k); map.addImage('bd-' + k, b.data, b.opts); }
+    if (!map.hasImage('cross')) map.addImage('cross', patternImage('cross'), { pixelRatio: 2 });
+    for (const k of ['sale', 'build', 'soon', 'move', 'priv', 'plan']) if (!map.hasImage('bd-' + k)) { const b = badgeImage(k); map.addImage('bd-' + k, b.data, b.opts); }
   }
   if (HAS_CTX) { const g = ctxGeoJSON(); src('ctx-st', { type: 'geojson', data: g.st, attribution: '역·학교 © OpenStreetMap contributors' }); src('ctx-sch', { type: 'geojson', data: g.sch }); src('ctx-ring', { type: 'geojson', data: g.ring }); }
 
@@ -316,7 +329,7 @@ function setupCustom() {
 
   /* --- 바닥(지구 마스크, 용지, 블록, 그림자, 선택 윤곽) --- */
   if (HAS_PR) {
-    if (PR.district) {
+    if (DISTRICTS.length) {
       add({ id: 'district-mask', type: 'fill', source: 'district-mask', paint: { 'fill-color': T.mask[0], 'fill-opacity': T.mask[1] } });
       add({ id: 'district-line', type: 'line', source: 'district', paint: { 'line-color': T.district, 'line-width': 1.4, 'line-dasharray': [4, 3], 'line-opacity': 0.9 } });
     }
@@ -324,12 +337,15 @@ function setupCustom() {
       add({ id: 'other-fill', type: 'fill', source: 'other-blocks', minzoom: 13.5, paint: { 'fill-color': T.other[0], 'fill-opacity': night ? 0.16 : 0.1 } });
       add({ id: 'other-line', type: 'line', source: 'other-blocks', minzoom: 13.5, paint: { 'line-color': T.other[1], 'line-width': 1.2, 'line-dasharray': [2, 2], 'line-opacity': 0.9 } });
     }
-    add({ id: 'blk-sale', type: 'fill', source: 'blocks', filter: ['==', ['get', 'status'], '분양중'], paint: { 'fill-color': T.color.sale, 'fill-opacity': night ? 0.28 : 0.2 } });
-    add({ id: 'blk-build', type: 'fill', source: 'blocks', filter: ['==', ['get', 'status'], '건설 단계'], paint: { 'fill-pattern': 'hatch' } });
-    add({ id: 'blk-soon', type: 'fill', source: 'blocks', filter: ['==', ['get', 'status'], '준공 임박'], paint: { 'fill-pattern': 'dots' } });
-    add({ id: 'blk-plan', type: 'fill', source: 'blocks', filter: ['==', ['get', 'status'], '계획'], paint: { 'fill-color': T.color.plan, 'fill-opacity': night ? 0.16 : 0.1 } });
-    add({ id: 'blk-line', type: 'line', source: 'blocks', filter: ['!=', ['get', 'status'], '계획'], paint: { 'line-color': statusExpr(T.color), 'line-width': 2 } });
-    add({ id: 'blk-line-plan', type: 'line', source: 'blocks', filter: ['==', ['get', 'status'], '계획'], paint: { 'line-color': T.color.plan, 'line-width': 2, 'line-dasharray': [3, 2] } });
+    const NP = ['!=', ['get', 'priv'], true];   // 공공택지 민간 단지는 상태 무늬 대신 회색 면(blk-priv)으로 그린다
+    add({ id: 'blk-sale', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '분양중'], NP], paint: { 'fill-color': T.color.sale, 'fill-opacity': night ? 0.28 : 0.2 } });
+    add({ id: 'blk-build', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '건설 단계'], NP], paint: { 'fill-pattern': 'hatch' } });
+    add({ id: 'blk-soon', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '준공 임박'], NP], paint: { 'fill-pattern': 'dots' } });
+    add({ id: 'blk-move', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '입주 단계'], NP], paint: { 'fill-pattern': 'cross' } });
+    add({ id: 'blk-plan', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '계획'], NP], paint: { 'fill-color': T.color.plan, 'fill-opacity': night ? 0.16 : 0.1 } });
+    add({ id: 'blk-priv', type: 'fill', source: 'blocks', filter: ['==', ['get', 'priv'], true], paint: { 'fill-color': T.color.priv, 'fill-opacity': night ? 0.32 : 0.26 } });
+    add({ id: 'blk-line', type: 'line', source: 'blocks', filter: ['!=', ['get', 'kind'], 'plan'], paint: { 'line-color': kindExpr(T.color), 'line-width': 2 } });
+    add({ id: 'blk-line-plan', type: 'line', source: 'blocks', filter: ['==', ['get', 'kind'], 'plan'], paint: { 'line-color': T.color.plan, 'line-width': 2, 'line-dasharray': [3, 2] } });
     add({ id: 'dong-shadow', type: 'fill', source: 'dong-shadow', paint: { 'fill-color': T.shadow[0], 'fill-opacity': T.shadow[1] } });
     add({ id: 'dong-line', type: 'line', source: 'dongs', minzoom: 15.6, paint: { 'line-color': T.dong, 'line-width': 1, 'line-dasharray': [2, 2], 'line-opacity': 0.75 } });
   }
@@ -357,7 +373,7 @@ function setupCustom() {
     add({ id: 'dong-3d', type: 'fill-extrusion', source: 'dongs', paint: { 'fill-extrusion-color': ['get', 'color'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 1 } });
     // 멀리서 볼 때는 단지를 점(세대수만큼 크기)으로 보여 준다.
     add({ id: 'blk-dot', type: 'circle', source: 'block-pts', maxzoom: 14.3,
-      paint: { 'circle-radius': ['interpolate', ['linear'], ['get', 'units'], 300, 7, 800, 12], 'circle-color': statusExpr(T.color), 'circle-stroke-color': T.halo, 'circle-stroke-width': 2, 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13.6, 0.95, 14.3, 0] } });
+      paint: { 'circle-radius': ['interpolate', ['linear'], ['get', 'units'], 300, 7, 800, 12], 'circle-color': kindExpr(T.color), 'circle-stroke-color': T.halo, 'circle-stroke-width': 2, 'circle-opacity': ['interpolate', ['linear'], ['zoom'], 13.6, 0.95, 14.3, 0] } });
   }
   if (HAS_CTX) {
     add({ id: 'ctx-school', type: 'circle', source: 'ctx-sch', minzoom: 14.8, layout: { visibility: 'none' }, paint: { 'circle-radius': 4.5, 'circle-color': T.sub, 'circle-stroke-color': T.halo, 'circle-stroke-width': 1.6 } });
@@ -370,8 +386,8 @@ function setupCustom() {
     const font = fontLayer ? fontLayer.layout['text-font'] : ['Noto Sans Regular'];
     const sym = (l) => { if (!map.getLayer(l.id)) map.addLayer({ ...l, layout: { 'text-font': font, ...l.layout } }); };
     const fillText = night ? '#0E1624' : '#FFFFFF', planText = night ? '#E6EAF2' : '#2B2E34';
-    const badgeIcon = ['match', ['get', 'status'], '분양중', 'bd-sale', '건설 단계', 'bd-build', '준공 임박', 'bd-soon', 'bd-plan'];
-    const badgeText = ['match', ['get', 'status'], '계획', planText, fillText];
+    const badgeIcon = ['match', ['get', 'kind'], 'sale', 'bd-sale', 'build', 'bd-build', 'soon', 'bd-soon', 'move', 'bd-move', 'priv', 'bd-priv', 'bd-plan'];
+    const badgeText = ['match', ['get', 'kind'], 'plan', planText, fillText];
     sym({ id: 'blk-label-lo', type: 'symbol', source: 'block-pts', maxzoom: 14.3,
       layout: { 'text-field': ['get', 'short'], 'text-size': 13, 'text-allow-overlap': false, 'text-variable-anchor': ['top', 'bottom', 'left', 'right'], 'text-radial-offset': 1.1, 'symbol-sort-key': ['-', 0, ['get', 'units']] },
       paint: { 'text-color': T.text, 'text-halo-color': T.halo, 'text-halo-width': 2 } });
@@ -389,7 +405,7 @@ function setupCustom() {
     const dongPaint = { 'text-color': T.text, 'text-halo-color': T.halo, 'text-halo-width': 1.8 };
     sym({ id: 'dong-label', type: 'symbol', source: 'dong-labels', minzoom: 16.6,
       layout: { 'text-field': ['get', 'text'], 'text-size': 11.5, 'text-allow-overlap': false, 'text-variable-anchor': ['top', 'bottom'], 'text-radial-offset': 0.4 }, paint: dongPaint });
-    if (PR.district) sym({ id: 'district-label', type: 'symbol', source: 'district-pt', maxzoom: 14.6,
+    if (DISTRICTS.length) sym({ id: 'district-label', type: 'symbol', source: 'district-pt', maxzoom: 14.6,
       layout: { 'text-field': ['get', 'name'], 'text-size': 13, 'text-letter-spacing': 0.08 }, paint: { 'text-color': T.sub, 'text-halo-color': T.halo, 'text-halo-width': 2 } });
     if (HAS_CTX) {
       const cp = { 'text-color': T.text, 'text-halo-color': T.halo, 'text-halo-width': 2 };
@@ -445,32 +461,34 @@ const chipHtml = (cls, t) => `<span class="pc-chip ${cls}">${esc(t)}</span>`;
 const dlHtml = (rows) => `<dl class="pc-dl">${rows.filter(Boolean).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
 const ringsOf = (g) => (g.type === 'Polygon' ? [g.coordinates[0]] : g.coordinates.map((p) => p[0]));
 function dongBars(b, cur) {
-  const max = Math.max(...b.dongs.map((d) => d.floors)), k = KIND[b.status];
-  return `<div class="pc-bars" role="img" aria-label="${b.dongCount}개동 층수 비교" style="--tone:${mixTone(k, 1)}">` +
+  const max = Math.max(...b.dongs.map((d) => d.floors)), k = kindOf(b);
+  return `<div class="pc-bars" role="img" aria-label="${dongN(b)}개동 층수 비교" style="--tone:${mixTone(k, 1)}">` +
     b.dongs.slice().sort((a, c) => a.no.localeCompare(c.no)).map((d) => `<i class="${d.no === cur ? 'on' : ''}" title="${d.no}동 ${d.floors}층" style="height:${Math.round(26 * d.floors / max)}px"></i>`).join('') + '</div>';
 }
 function dongPopup(p, clickX) {
   const b = BLOCKS.find((x) => x.id === p.block), r = floorsRange(b);
   const same = b.dongs.filter((x) => x.floors === p.floors).length;
-  const rank = same === 1 && p.floors === r[1] ? `${b.dongCount}개동 중 가장 높은 동` : same === 1 && p.floors === r[0] ? `${b.dongCount}개동 중 가장 낮은 동` : r[0] === r[1] ? `${b.dongCount}개동 모두 ${p.floors}층` : `${b.dongCount}개동 중 ${same}개동이 ${p.floors}층`;
+  const n = dongN(b);
+  const rank = same === 1 && p.floors === r[1] ? `${n}개동 중 가장 높은 동` : same === 1 && p.floors === r[0] ? `${n}개동 중 가장 낮은 동` : r[0] === r[1] ? `${n}개동 모두 ${p.floors}층` : `${n}개동 중 ${same}개동이 ${p.floors}층`;
+  const dnote = p.tier === 'schematic' ? '동 위치·높이는 근사값(10~20 m)이며, 층수는 공급 자료 기준입니다.' : '동 윤곽은 실제 건물 자료입니다. 층수·높이는 자료 기준입니다.';
   showCard(`<div class="pc">
-    <div class="pc-h"><b>${esc(p.no)}동</b><span class="pc-sub">${esc(b.id)}</span>${chipHtml(KIND[b.status], b.status)}</div>
-    <div class="pc-big"><strong>${p.floors}층</strong><span>높이 약 ${Math.round(p.h)} m (추정)</span></div>
+    <div class="pc-h"><b>${esc(p.no)}동</b><span class="pc-sub">${esc(b.id)}</span>${chipHtml(KIND[b.status], b.status)}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
+    <div class="pc-big"><strong>${p.floors}층</strong><span>높이 약 ${Math.round(p.h)} m${p.hEst ? ' (추정)' : ''}</span></div>
     ${dongBars(b, p.no)}<div class="pc-cap">${rank}</div>
     ${dlHtml([b.progress ? ['단지 공정율', `${pctTxt(b.progress.rate)} <small>(${esc(b.progress.asOf)})</small>`] : null, ['입주', esc(b.moveIn)]])}
-    <p class="pc-foot">층수: LH 팸플릿 동호배치도(필로티 1층 포함). 동 위치·높이는 근사값입니다.</p></div>`,
+    <p class="pc-foot">${dnote}</p></div>`,
     b.dongs.flatMap((x) => x.poly), floorsToHeight(r[1]), clickX);
 }
 function blockPopup(b, clickX) {
   const fr = floorsRange(b), hist = fr ? floorHistogram(b) : null, nr = HAS_CTX ? nearestCtx(centroid(b.poly)) : null;
   const hmax = fr ? floorsToHeight(fr[1]) : 0;
   showCard(`<div class="pc">
-    <div class="pc-h"><b>${esc(b.id)}</b><span class="pc-sub">${esc(b.kind)}</span>${chipHtml(KIND[b.status], b.status)}</div>
-    <div class="pc-big"><strong>${fmt(b.units)}세대</strong>${b.dongCount ? `<span>${b.dongCount}개동</span>` : ''}</div>
+    <div class="pc-h"><b>${esc(b.id)}</b><span class="pc-sub">${esc(b.kind)}</span>${chipHtml(KIND[b.status], b.status)}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
+    <div class="pc-big"><strong>${unitsTxt(b)}</strong>${dongN(b) ? `<span>${dongN(b)}개동</span>` : ''}</div>
     ${b.note ? `<div class="pc-cap">${esc(b.note)}</div>` : ''}
-    ${dlHtml([['공정율', b.progress ? `${pctTxt(b.progress.rate)} <small>(${esc(b.progress.asOf)} 기준)</small>` : null], ['층수', hist || '미확인'], ['입주', esc(b.moveIn)], b.progress ? ['공사기간', esc(b.progress.start) + ' ~ ' + esc(b.progress.end)] : null, b.builder ? ['시공사', esc(b.builder) + (b.contractM ? ` <small>(공사금액 ${fmt(Math.round(b.contractM / 100))}억원)</small>` : '')] : null,
+    ${dlHtml([['공정율', b.progress ? `${pctTxt(b.progress.rate)} <small>(${esc(b.progress.asOf)} 기준)</small>` : null], ['층수', hist || '미확인'], ['입주', esc(b.moveIn)], b.progress && b.progress.start && b.progress.end ? ['공사기간', esc(b.progress.start) + ' ~ ' + esc(b.progress.end)] : null, b.builder ? ['시공사', esc(b.builder) + (b.contractM ? ` <small>(공사금액 ${fmt(Math.round(b.contractM / 100))}억원)</small>` : '')] : null,
       nr && nr.st ? ['가까운 역', `${esc(nr.st.name)} <small>${distTxt(nr.st.d)}</small>`] : null, nr && nr.sch ? ['가까운 학교', `${esc(nr.sch.name)} <small>${distTxt(nr.sch.d)}</small>`] : null])}
-    <p class="pc-foot">출처: ${esc(b.src)}<br>윤곽: ${esc(b.outlineHow)}${nr ? '<br>역·학교: OpenStreetMap, 단지 중심에서 직선거리' : ''}</p></div>`,
+    <p class="pc-foot">${b.src ? `출처: ${esc(b.src)}<br>` : ''}${esc(b.outlineHow)}${nr ? '<br>역·학교: OpenStreetMap, 단지 중심에서 직선거리' : ''}</p></div>`,
     b.dongs ? b.dongs.flatMap((x) => x.poly).concat([b.poly]) : [b.poly], hmax, clickX);
 }
 function officialPopup(p, geom, clickX) {
@@ -496,7 +514,8 @@ function dongH(p) {
   if (viewMode === 'time') return p.h * Math.max(0.04, Math.min(1, (timeMo - p.t0) / Math.max(0.5, p.t1 - p.t0)));
   return p.h;
 }
-function statusFilter() { return ['in', ['get', 'status'], ['literal', [...SHOWN]]]; }
+function statusFilter() { const f = ['in', ['get', 'status'], ['literal', [...SHOWN]]]; return privOn ? f : ['all', f, ['!=', ['get', 'priv'], true]]; }
+const blockVisible = (b) => SHOWN.has(b.status) && (privOn || !b.priv);   // 지금 지도에 보이는 단지인가(상태 선택 + 민간 스위치)
 function dongFilter() { return selDong == null ? statusFilter() : ['all', statusFilter(), ['!=', ['get', 'key'], selDong]]; }
 const vis = (id, on) => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); };
 const SEL_COLOR = '#F0E442';   // 고른 건물: Okabe-Ito의 노랑(상태색 어디와도 겹치지 않음) + 바닥 윤곽선
@@ -516,14 +535,15 @@ function applySel() {
 function applyFilters() {
   if (!map.getLayer('blk-line')) return;
   const f = statusFilter();
-  for (const [id, st] of [['blk-sale', '분양중'], ['blk-build', '건설 단계'], ['blk-soon', '준공 임박'], ['blk-plan', '계획']]) vis(id, SHOWN.has(st));
-  map.setFilter('blk-line', ['all', f, ['!=', ['get', 'status'], '계획']]);
-  map.setFilter('blk-line-plan', ['all', f, ['==', ['get', 'status'], '계획']]);
+  for (const [id, st] of [['blk-sale', '분양중'], ['blk-build', '건설 단계'], ['blk-soon', '준공 임박'], ['blk-move', '입주 단계'], ['blk-plan', '계획']]) vis(id, SHOWN.has(st));
+  vis('blk-priv', privOn); map.setFilter('blk-priv', ['all', ['==', ['get', 'priv'], true], ['in', ['get', 'status'], ['literal', [...SHOWN]]]]);
+  map.setFilter('blk-line', ['all', f, ['!=', ['get', 'kind'], 'plan']]);
+  map.setFilter('blk-line-plan', ['all', f, ['==', ['get', 'kind'], 'plan']]);
   for (const id of ['blk-dot', 'blk-label-lo', 'blk-badge', 'blk-badge-top', 'dong-label', 'dong-shadow', 'dong-line']) if (map.getLayer(id)) map.setFilter(id, f);
   for (const id of ['dong-3d', 'dong-ghost']) if (map.getLayer(id)) map.setFilter(id, dongFilter());
-  document.querySelectorAll('#projList li').forEach((li) => { const b = BLOCKS.find((x) => x.id === li.querySelector('.card').dataset.id); li.hidden = !SHOWN.has(b.status); });
+  document.querySelectorAll('#projList li').forEach((li) => { const card = li.querySelector('.card'); if (!card) return; li.hidden = !blockVisible(BLOCKS.find((x) => x.id === card.dataset.id)); });
   scheduleHud();
-  document.querySelectorAll('#timeline .tlp').forEach((g) => { const ids = g.dataset.ids.split(','); g.style.opacity = ids.some((id) => SHOWN.has(BLOCKS.find((b) => b.id === id).status)) ? 1 : 0.25; });
+  document.querySelectorAll('#timeline .tlp').forEach((g) => { const ids = g.dataset.ids.split(','); g.style.opacity = ids.some((id) => blockVisible(BLOCKS.find((b) => b.id === id))) ? 1 : 0.25; });
 }
 /* 보기 기준: 층수 / 공정율(지은 만큼만 채움) / 입주 시기(달력) */
 function applyMode() {
@@ -567,7 +587,7 @@ function selectDong(key) { selId = null; selDong = key; applySel(); }
 map.on('click', (e) => {
   const pick = (ids) => { const use = ids.filter((id) => map.getLayer(id)); return use.length ? map.queryRenderedFeatures(e.point, { layers: use })[0] : undefined; };
   const far = map.getZoom() < 14.3;     // 멀리서는 점이 단지를 대표하므로 점을 먼저 고른다
-  const f = (far && (pick(['blk-dot']) || pick(['blk-sale', 'blk-build', 'blk-soon', 'blk-plan']))) || pick(['dong-3d']) || pick(['blk-sale', 'blk-build', 'blk-soon', 'blk-plan']) || pick(['blk-dot', 'blk-badge', 'blk-badge-top']) || pick(['official-3d', 'official-roof', 'official-far']);
+  const f = (far && (pick(['blk-dot']) || pick(BLK_FILLS))) || pick(['dong-3d']) || pick(BLK_FILLS) || pick(['blk-dot', 'blk-badge', 'blk-badge-top']) || pick(['official-3d', 'official-roof', 'official-far']);
   if (popup) { const o = popup; popup = null; o.remove(); }
   if (!f) { select(null); return; }
   if (f.layer.id === 'dong-3d') { selectDong(f.properties.key); dongPopup(f.properties, e.point.x); }
@@ -575,42 +595,49 @@ map.on('click', (e) => {
   else { const i = f.properties.i; select(i); officialPopup(GY.features[i].properties, GY.features[i].geometry, e.point.x); }
 });
 map.on('mousemove', (e) => {
-  const ids = ['dong-3d', 'blk-sale', 'blk-build', 'blk-soon', 'blk-plan', 'blk-dot', 'blk-badge', 'blk-badge-top', ...OFFICIAL_LAYERS].filter((id) => map.getLayer(id));
+  const ids = ['dong-3d', ...BLK_FILLS, 'blk-dot', 'blk-badge', 'blk-badge-top', ...OFFICIAL_LAYERS].filter((id) => map.getLayer(id));
   map.getCanvas().style.cursor = ids.length && map.queryRenderedFeatures(e.point, { layers: ids }).length ? 'pointer' : '';
 });
 
 /* ---------- 패널 ---------- */
 function setLegend() {
-  const present = new Set(BLOCKS.map((b) => b.status));
+  const present = new Set(BLOCKS.filter((b) => !b.priv).map((b) => b.status));
   const rows = [];
   if (present.has('분양중')) rows.push(['<i class="sw sale"></i>', '분양중', '']);
   if (present.has('건설 단계')) rows.push(['<i class="sw build"></i>', '건설 단계', '']);
   if (present.has('준공 임박')) rows.push(['<i class="sw soon"></i>', '준공 임박', '<small>공정율 90% 이상, 입주 3개월 안</small>']);
+  if (present.has('입주 단계')) rows.push(['<i class="sw move"></i>', '입주 단계', '<small>입주를 시작했거나 마침</small>']);
   if (present.has('계획')) rows.push(['<i class="sw plan"></i>', '계획', '']);
+  if (HAS_PRIV && privOn) rows.push(['<i class="sw priv"></i>', '공공택지 민간', '<small>회색 면, 상태는 글자로</small>']);
   rows.push(['<i class="sw ramp"></i>', '기존 건물', `<small>${dimExisting ? '흐리게 표시 중' : '높을수록 진하게, 색조는 참고'}</small>`]);
   if (PR.otherBlocks && PR.otherBlocks.length) rows.push(['<i class="sw other"></i>', '이름 모르는 주택 용지', '<small>공식 윤곽, 점선</small>']);
-  if (viewMode === 'progress') rows.push(['<i class="sw ghost"></i>', '연한 윤곽', '<small>아직 짓지 않은 높이</small>']);
-  else if (viewMode === 'time') rows.push(['<i class="sw ghost"></i>', '동 높이', '<small>공사 기간을 직선으로 나눈 추정</small>']);
-  else rows.push(['<i class="sw tone"></i>', '같은 단지 안', '<small>진할수록 높은 동</small>']);
-  rows.push(['<i class="sw dash"></i>', '동 위치는 근사', '<small>동 윤곽은 팸플릿을 옮긴 값</small>']);
+  const anyDongs = BLOCKS.some((b) => b.dongs && b.dongs.length), schem = BLOCKS.some((b) => (b.dongs || []).some((d) => d.tier === 'schematic'));
+  if (anyDongs) {
+    if (viewMode === 'progress') rows.push(['<i class="sw ghost"></i>', '연한 윤곽', '<small>아직 짓지 않은 높이</small>']);
+    else if (viewMode === 'time') rows.push(['<i class="sw ghost"></i>', '동 높이', '<small>공사 기간을 직선으로 나눈 추정</small>']);
+    else rows.push(['<i class="sw tone"></i>', '같은 단지 안', '<small>진할수록 높은 동</small>']);
+  }
+  if (schem) rows.push(['<i class="sw dash"></i>', '동 위치는 근사', '<small>동 윤곽은 공급 자료를 옮긴 값</small>']);
   if (ctxOn && HAS_CTX) rows.push(['<i class="sw stn"></i><i class="sw sch"></i>', '역 · 학교', ringOn ? '<small>점선 원 500 m · 1 km</small>' : '']);
   $('#legendList').innerHTML = rows.map(([sw, t, n]) => `<li>${sw}<span>${t} ${n}</span></li>`).join('');
 }
 if (BLOCKS.length) {
   /* 합계 */
-  const by = {}; BLOCKS.forEach((b) => { by[b.status] = (by[b.status] || 0) + b.units; });
-  const total = BLOCKS.reduce((a, b) => a + b.units, 0);
-  const sts = STATUS_ORDER.filter((x) => by[x]);
-  $('#sumTotal').textContent = `${fmt(total)}세대 (${BLOCKS.length}개 단지)`;
-  $('#sumBar').innerHTML = sts.map((st) => `<i style="width:${100 * by[st] / total}%;background:${st === '계획' ? 'repeating-linear-gradient(90deg,#5C6068 0 4px,#fff 4px 7px)' : COLOR[KIND[st]]}" title="${st} ${fmt(by[st])}세대"></i>`).join('');
-  $('#sumBar').setAttribute('aria-label', sts.map((st) => `${st} ${fmt(by[st])}세대`).join(', '));
-  $('#sumLeg').innerHTML = sts.map((st) => `<span><i class="sw ${KIND[st]}"></i>${st} ${fmt(by[st])} (${pct(by[st], total)})</span>`).join('');
+  const by = {}; BLOCKS.forEach((b) => { const k = kindOf(b); by[k] = (by[k] || 0) + b.units; });
+  const total = BLOCKS.reduce((a, b) => a + b.units, 0), unk = BLOCKS.filter((b) => b.unitsKnown === false).length;
+  const grp = [...STATUS_ORDER.map((st) => ({ key: KIND[st], label: st })), { key: 'priv', label: '공공택지 민간' }].filter((g) => g.key in by);
+  const known = new Set(BLOCKS.filter((b) => b.unitsKnown !== false).map(kindOf));   // 세대수를 아는 단지가 하나도 없는 묶음은 0 대신 '세대수 미확인'
+  const gTxt = (g) => (known.has(g.key) ? fmt(by[g.key]) + '세대' : '세대수 미확인');
+  $('#sumTotal').textContent = `${fmt(total)}세대 (${BLOCKS.length}개 단지${unk ? `, 세대수 미확인 ${unk}곳 제외` : ''})`;
+  $('#sumBar').innerHTML = grp.map((g) => `<i style="width:${total ? 100 * by[g.key] / total : 0}%;background:${g.key === 'plan' ? 'repeating-linear-gradient(90deg,#5C6068 0 4px,#fff 4px 7px)' : COLOR[g.key]}" title="${g.label} ${gTxt(g)}"></i>`).join('');
+  $('#sumBar').setAttribute('aria-label', grp.map((g) => `${g.label} ${gTxt(g)}`).join(', '));
+  $('#sumLeg').innerHTML = grp.map((g) => `<span><i class="sw ${g.key}"></i>${g.label} ${known.has(g.key) ? `${fmt(by[g.key])} (${pct(by[g.key], total)})` : '세대수 미확인'}</span>`).join('');
   setLegend();
 
   /* 단지 카드: 접어 두고, 눌러서 선택하면 펼친다 */
   $('#projList').innerHTML = BLOCKS.map((b) => {
-    const k = KIND[b.status], cur = STAGE[b.status], fr = floorsRange(b);
-    const sub = [`${fmt(b.units)}세대`, b.dongCount ? `${b.dongCount}개동` : null, fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : null, /^\d/.test(b.moveIn) ? `입주 ${b.moveIn}` : b.moveIn].filter(Boolean).join(' · ');
+    const k = kindOf(b), cur = STAGE[b.status], fr = floorsRange(b);
+    const sub = [b.priv ? '공공택지 민간' : null, unitsTxt(b), dongN(b) ? `${dongN(b)}개동` : null, fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : null, /^\d/.test(b.moveIn) ? `입주 ${b.moveIn}` : b.moveIn].filter(Boolean).join(' · ');
     const stage = STAGE_NAMES.map((n, i) => `<span class="${i < cur ? 'done' : i === cur ? `now ${k}` : ''}">${n}</span>`).join('');
     const bars = fr ? b.dongs.slice().sort((a, c) => a.no.localeCompare(c.no)).map((d) => `<i title="${d.no}동 ${d.floors}층" style="height:${Math.round(34 * d.floors / 15)}px;background:${mixTone(k, fr[1] > fr[0] ? (d.floors - fr[0]) / (fr[1] - fr[0]) : 1)}"></i>`).join('') + '<em>동별 층수</em>' : '';
     const mini = b.progress ? `<span class="mini" style="--c:${COLOR[k]}" title="공정율 ${b.progress.rate}%"><i style="width:${Math.max(b.progress.rate, 1)}%"></i></span>` : '';
@@ -624,10 +651,10 @@ if (BLOCKS.length) {
   let svg = `<line x1="${X0}" y1="${CY}" x2="${X1}" y2="${CY}" stroke="#9A9DA4" stroke-width="2"/>`;
   for (const [lab, mo, anc] of [['2027', 3, 'middle'], ['2028', 15, 'middle'], ['2029', 27, 'middle']]) svg += `<line x1="${tx(mo)}" y1="${CY - 6}" x2="${tx(mo)}" y2="${CY + 6}" stroke="#4A4E56" stroke-width="2"/><text x="${anc === 'start' ? tx(mo) - 4 : tx(mo)}" y="114" font-size="11.5" fill="#4A4E56" text-anchor="${anc}">${lab}${lab.length === 4 ? '년' : ''}</text>`;
   const groups = new Map();
-  BLOCKS.forEach((b) => { const mo = when(b.moveIn); if (mo == null) return; (groups.get(mo) || groups.set(mo, []).get(mo)).push(b); });
+  BLOCKS.forEach((b) => { const mo = when(b.moveIn); if (mo == null || mo < 0 || mo > SPAN) return; (groups.get(mo) || groups.set(mo, []).get(mo)).push(b); });
   const items = [...groups.entries()].sort((a, c) => a[0] - c[0]);
   items.forEach(([mo, bs], idx) => {
-    const x = tx(mo), units = bs.reduce((a, b) => a + b.units, 0), r = 5 + Math.sqrt(units) / 4.5, k = KIND[bs[0].status], up = idx % 2 === 0;
+    const x = tx(mo), units = bs.reduce((a, b) => a + b.units, 0), r = 5 + Math.sqrt(units) / 4.5, k = kindOf(bs[0]), up = idx % 2 === 0;
     const yid = up ? 18 : 80, ydt = up ? 31 : 93, ids = bs.map((b) => b.id), dt = String(bs[0].moveIn).replace(/[^0-9.\-]/g, '').slice(2, 7).replace('-', '.');
     svg += `<g class="tlp" tabindex="0" role="button" data-ids="${ids.join(',')}" aria-label="${ids.join('·')} ${esc(bs[0].moveIn)} 입주·준공 예정, 누르면 지도에서 보기">`
       + `<circle cx="${x}" cy="${CY}" r="${Math.max(r, 11)}" fill="transparent"/>`
@@ -637,6 +664,9 @@ if (BLOCKS.length) {
   });
   $('#timeline').innerHTML = svg;
   $('#timeline').setAttribute('aria-label', '입주·준공 예정: ' + items.map(([, bs]) => `${bs.map((b) => b.id).join('·')} ${bs[0].moveIn}`).join(', '));
+} else {
+  $('#projList').innerHTML = '<li class="empty">이 지역에는 아직 표시할 단지가 없습니다. 자료가 들어오면 이곳에 나타납니다.</li>';
+  for (const id of ['h-sum', 'h-tl']) { const s = document.getElementById(id).closest('section'); if (s) s.hidden = true; }
 }
 function flyTo(opts) { if (reduceMotion) map.jumpTo(opts); else map.flyTo({ ...opts, duration: 1600 }); }
 function setSheet(state) {
@@ -647,7 +677,7 @@ const openId = () => { const c = document.querySelector('#projList .card[aria-ex
 function syncUrl(id) {
   try {
     const u = new URL(location.href), set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
-    set('block', id); set('mode', viewMode !== 'floors' ? viewMode : ''); set('theme', theme === 'night' ? 'night' : ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '1' : ''); set('hud', hudOn ? '' : '0');
+    set('block', id); set('priv', privOn ? '' : '0'); set('mode', viewMode !== 'floors' ? viewMode : ''); set('theme', theme === 'night' ? 'night' : ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '1' : ''); set('hud', hudOn ? '' : '0');
     history.replaceState(null, '', u);
   } catch (_) { /* file:// 에서는 막힐 수 있음 */ }
 }
@@ -658,6 +688,7 @@ function focusBlock(id, { toggle = true, tour = false } = {}) {
   document.querySelectorAll('#projList .card').forEach((c) => c.setAttribute('aria-expanded', c === btn && !(toggle && was) ? 'true' : 'false'));
   if (btn && btn.getAttribute('aria-expanded') === 'true') btn.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });   // 사이드바에서 펼친 카드가 보이게
   if (!SHOWN.has(b.status)) { SHOWN.add(b.status); syncChips(); applyFilters(); }
+  if (b.priv && !privOn) { privOn = true; syncChips(); applyFilters(); }
   if (innerWidth <= 900) setSheet('peek');
   syncUrl(id);
   select(null);
@@ -721,7 +752,7 @@ function stopTour() {
 function startTour() {
   stopOrbit(); tourOn = true;
   $('#vTour').setAttribute('aria-pressed', 'true'); $('#vTour').textContent = '투어 멈춤'; say('단지를 차례로 보여 줍니다. 지도를 만지면 멈춥니다.');
-  const seq = BLOCKS.filter((b) => SHOWN.has(b.status)).map((b) => b.id); let i = 0;
+  const seq = BLOCKS.filter(blockVisible).map((b) => b.id); let i = 0;
   const step = () => {
     if (!tourOn) return;
     if (i >= seq.length) { stopTour(); fitAll(); return; }
@@ -781,10 +812,10 @@ $('#dNorth').addEventListener('click', () => { stopMotion(); map.easeTo({ bearin
 
 /* 옵션 창: 자주 바꾸지 않는 설정을 모았다. 기본값과 다른 설정이 있으면 버튼에 개수를 보인다. */
 const ALL_ST = new Set(BLOCKS.map((b) => b.status));
-const optCount = () => (SHOWN.size < ALL_ST.size ? 1 : 0) + (HAS_CTX && !ctxOn ? 1 : 0) + (HAS_CTX && ctxOn && ringOn ? 1 : 0) + (dimExisting ? 1 : 0) + (theme === 'night' ? 1 : 0) + (hudOn ? 0 : 1);
+const optCount = () => (SHOWN.size < ALL_ST.size ? 1 : 0) + (HAS_CTX && !ctxOn ? 1 : 0) + (HAS_CTX && ctxOn && ringOn ? 1 : 0) + (dimExisting ? 1 : 0) + (theme === 'night' ? 1 : 0) + (hudOn ? 0 : 1) + (HAS_PRIV && !privOn ? 1 : 0);
 function syncChips() {
   document.querySelectorAll('#optStatus input').forEach((i) => { i.checked = SHOWN.has(i.dataset.status); });
-  $('#dimChip').checked = dimExisting; $('#nightChip').checked = theme === 'night'; $('#hudChip').checked = hudOn;
+  $('#dimChip').checked = dimExisting; $('#nightChip').checked = theme === 'night'; $('#hudChip').checked = hudOn; if (HAS_PRIV) $('#privChip').checked = privOn;
   if (HAS_CTX) { $('#ctxChip').checked = ctxOn; $('#ringChip').checked = ringOn; $('#ringChip').disabled = !ctxOn; $('#lblRing').classList.toggle('dis', !ctxOn); }
   const n = optCount(); $('#optN').hidden = !n; $('#optN').textContent = String(n);
   $('#optBtn').setAttribute('aria-label', n ? `옵션, 기본값과 다른 설정 ${n}개` : '옵션');
@@ -796,7 +827,7 @@ function reTheme() {
   try { map.setTerrain(null); } catch (_) {}
   for (const l of [...st.layers].reverse()) if (l.id !== 'bg' && l.id !== 'vworld') map.removeLayer(l.id);
   for (const id of Object.keys(st.sources)) if (id !== 'vworld') map.removeSource(id);
-  for (const id of ['hatch', 'dots', 'bd-sale', 'bd-build', 'bd-soon', 'bd-plan']) if (map.hasImage(id)) map.removeImage(id);
+  for (const id of ['hatch', 'dots', 'cross', 'bd-sale', 'bd-build', 'bd-soon', 'bd-move', 'bd-priv', 'bd-plan']) if (map.hasImage(id)) map.removeImage(id);
   map.setPaintProperty('bg', 'background-color', TH().bg);
   map.getSource('vworld').setTiles([wmts(TH().vw)]);
   setupCustom();
@@ -820,6 +851,7 @@ function positionOpt() {
   const present = STATUS_ORDER.filter((st) => ALL_ST.has(st));
   $('#optStatus').innerHTML = present.map((st) => `<label><input type="checkbox" data-status="${st}" checked><i class="sw ${KIND[st]}"></i>${st}</label>`).join('');
   if (!HAS_CTX) { $('#lblCtx').hidden = true; $('#lblRing').hidden = true; }
+  $('#lblPriv').hidden = !HAS_PRIV;
   $('#modeSeg').addEventListener('click', (e) => {
     const m = e.target.closest('button[data-mode]'); if (!m) return;
     viewMode = m.dataset.mode; applyMode(); syncUrl(openId()); say(MODE_SAY[viewMode]);
@@ -831,14 +863,15 @@ function positionOpt() {
       const st = t.dataset.status;
       if (!t.checked && SHOWN.size === 1) { t.checked = true; say('한 가지 상태는 켜 두어야 합니다.'); return; }
       t.checked ? SHOWN.add(st) : SHOWN.delete(st); syncChips(); applyFilters(); say(`${st} ${SHOWN.has(st) ? '보임' : '숨김'}`);
-    } else if (t.id === 'dimChip') { dimExisting = t.checked; syncChips(); applyDim(); }
+    } else if (t.id === 'privChip') { privOn = t.checked; syncChips(); applyFilters(); setLegend(); syncUrl(openId()); say(privOn ? '공공택지 민간 단지를 보여 줍니다.' : '공공택지 민간 단지를 숨깁니다.'); }
+    else if (t.id === 'dimChip') { dimExisting = t.checked; syncChips(); applyDim(); }
     else if (t.id === 'ctxChip') { ctxOn = t.checked; syncChips(); applyCtx(); syncUrl(openId()); say(ctxOn ? '역과 학교를 보여 줍니다.' : '역과 학교를 숨깁니다.'); }
     else if (t.id === 'ringChip') { ringOn = t.checked; syncChips(); applyCtx(); syncUrl(openId()); }
     else if (t.id === 'hudChip') { hudOn = t.checked; applyMode(); syncChips(); syncUrl(openId()); say(hudOn ? 'HUD 표시를 켭니다.' : 'HUD 표시를 끕니다.'); }
     else if (t.id === 'nightChip') setTheme(t.checked ? 'night' : 'day');
   });
   $('#optReset').addEventListener('click', () => {
-    ALL_ST.forEach((st) => SHOWN.add(st)); ctxOn = true; ringOn = false; dimExisting = false; hudOn = true; applyMode();
+    ALL_ST.forEach((st) => SHOWN.add(st)); ctxOn = true; ringOn = false; dimExisting = false; hudOn = true; privOn = true; applyMode();
     applyFilters(); applyDim(); applyCtx(); setTheme('day'); syncChips(); syncUrl(openId()); say('옵션을 기본값으로 되돌렸습니다.');
   });
   document.addEventListener('pointerdown', (e) => { if (!$('#optPanel').hidden && !e.target.closest('#optPanel, #optBtn')) setOpt(false); });
@@ -912,7 +945,7 @@ if (HAS_GY) {
   $('#qtext').textContent = `공식 높이 ${pct(s['공식높이'], n)} · 층수 환산 ${pct(s['층수환산'], n)} · 정보 없음 ${pct(s['정보없음'], n)}`;
   $('#basis').textContent = BASIS;
 } else {
-  $('#qtext').textContent = '공식 건물 자료 파일을 불러오지 못했습니다.';
+  $('#qtext').textContent = '이 지역의 공식 건물 자료가 아직 없습니다.';
 }
 
 let firstIdle = true;
@@ -921,7 +954,7 @@ map.on('idle', () => {
   if (firstIdle) {
     firstIdle = false; $('#loading').hidden = true;
     const at = document.querySelector('.maplibregl-ctrl-attrib'); if (at) { at.classList.remove('maplibregl-compact-show'); at.removeAttribute('open'); }   // 출처 표기는 접어 두고 ⓘ를 누르면 펼친다
-    const want = q.get('block'); if (want && BLOCKS.some((b) => b.id === want)) focusBlock(want, { toggle: false });
+    const want = q.get('block'), wb = want && REG.resolveBlock ? REG.resolveBlock(want) : null; if (wb && BLOCKS.includes(wb)) focusBlock(wb.id, { toggle: false });
   }
   const c = map.getCenter(); s.center = [c.lng, c.lat]; s.zoom = map.getZoom(); s.pitch = map.getPitch(); s.terrain = !!map.getTerrain();
   try {
@@ -993,12 +1026,12 @@ function renderHudContent() {
   if (!host.children.length) host.innerHTML = BLOCKS.map((b) => `<button type="button" class="hudtag" data-id="${esc(b.id)}"></button>`).join('');
   const T = TH();
   BLOCKS.forEach((b) => {
-    const el = host.querySelector(`[data-id="${b.id}"]`), k = KIND[b.status], fr = floorsRange(b);
+    const el = host.querySelector(`[data-id="${b.id}"]`), k = kindOf(b), fr = floorsRange(b);
     el.style.setProperty('--c', T.color[k]); el.style.setProperty('--cd', theme === 'night' ? T.color[k] : COLOR_D[k]);
     const line = viewMode === 'progress' ? (b.progress ? `<span class="ht-bar"><i style="width:${Math.max(b.progress.rate, 1)}%"></i></span>공정율 ${pctTxt(b.progress.rate)}` : '공정율 -')
       : viewMode === 'time' ? esc(moveText(b)) : (fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : '층수 미확인');
-    el.innerHTML = `<span class="ht-h"><b>${esc(b.id)}</b><i>${esc(b.status)}</i></span><span class="ht-m">${fmt(b.units)}세대${b.dongCount ? ` · ${b.dongCount}개동` : ''}</span><span class="ht-s">${line}</span>`;
-    el.setAttribute('aria-label', `${b.id} ${b.status}, ${fmt(b.units)}세대${b.dongCount ? `, ${b.dongCount}개동` : ''}. 누르면 지도에서 보기`);
+    el.innerHTML = `<span class="ht-h"><b>${esc(b.id)}</b><i>${esc(b.status)}</i></span><span class="ht-m">${unitsTxt(b)}${dongN(b) ? ` · ${dongN(b)}개동` : ''}</span><span class="ht-s">${line}</span>`;
+    el.setAttribute('aria-label', `${b.id} ${b.status}${b.priv ? ', 공공택지 민간' : ''}, ${unitsTxt(b)}${dongN(b) ? `, ${dongN(b)}개동` : ''}. 누르면 지도에서 보기`);
     delete hudSz[b.id];
   });
   scheduleHud();
@@ -1014,10 +1047,10 @@ function renderHud() {
     .map((r) => ({ l: r.left - mr.left - pad, t: r.top - mr.top - pad, r: r.right - mr.left + pad, b: r.bottom - mr.top + pad }));
   const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
   const placed = [], parts = [];
-  const order = BLOCKS.filter((b) => SHOWN.has(b.status)).sort((a, c) => c.units - a.units);
-  BLOCKS.forEach((b) => { const el = $('#hudTags').querySelector(`[data-id="${b.id}"]`); el.hidden = !SHOWN.has(b.status); });
+  const order = BLOCKS.filter(blockVisible).sort((a, c) => c.units - a.units);
+  BLOCKS.forEach((b) => { const el = $('#hudTags').querySelector(`[data-id="${b.id}"]`); el.hidden = !blockVisible(b); });
   for (const b of order) {
-    const el = $('#hudTags').querySelector(`[data-id="${b.id}"]`), k = KIND[b.status], col = T.color[k];
+    const el = $('#hudTags').querySelector(`[data-id="${b.id}"]`), k = kindOf(b), col = T.color[k];
     const ps = b.poly.map((c) => map.project(c));
     let x0 = Math.min(...ps.map((p) => p.x)), x1 = Math.max(...ps.map((p) => p.x)), y0 = Math.min(...ps.map((p) => p.y)), y1 = Math.max(...ps.map((p) => p.y));
     if (x1 < -30 || x0 > W + 30 || y1 < -30 || y0 > H + 30) { el.hidden = true; continue; }

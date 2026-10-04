@@ -3,21 +3,25 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>주택파동 공급 지도 (인천 계양구)</title>
-<meta name="description" content="인천 계양 테크노밸리 공공주택 공급 현황을 V-World 공식 건물 위에 3차원으로 보여 주는 지도">
-<!-- 모두 상대 경로의 일반 스크립트(defer: 화면을 먼저 그린 뒤 순서대로 실행)라 이 파일을 더블클릭해 열어도(file://) 동작합니다. 서버·빌드가 필요 없습니다. -->
+<title>주택파동 공급 지도</title>
+<meta name="description" content="공공주택 공급 현황을 V-World 공식 건물 위에 3차원으로 보여 주는 지도">
+<!-- 지역 자료(regions/*.json)를 fetch 로 읽으므로 로컬에서는 서버가 필요합니다: python3 -m http.server -->
 <!-- 지도가 곧 요청할 외부 서버와 미리 연결해 둡니다(첫 타일이 빨리 옵니다) -->
 <link rel="preconnect" href="https://api.vworld.kr" crossorigin>
 <link rel="preconnect" href="https://s3.amazonaws.com" crossorigin>
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link rel="stylesheet" href="assets/vendor/maplibre-gl/5.24.0/maplibre-gl.css">
 <link rel="stylesheet" href="assets/css/app.css">
-<!-- 첫 화면(불러오는 중 안내)을 먼저 그린 뒤, 무거운 스크립트를 순서대로 불러옵니다. 큰 파일은 미리 내려받기를 시작해 둡니다. -->
+<!-- 첫 화면(불러오는 중 안내)을 먼저 그린 뒤, 스크립트를 순서대로 불러옵니다. -->
 <link rel="preload" as="script" href="assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js">
-<link rel="preload" as="script" href="data/gyeyang_buildings.js">
 <script>
+/* 순서: 지도 라이브러리·어댑터 → 지역 자료 읽기(어댑터가 전역을 채움) → 키 파일 → 앱. 큰 자료는 fetch 가 병렬로 받는다. */
 requestAnimationFrame(function () { setTimeout(function () {
-  ['assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js', 'data/gyeyang_buildings.js', 'data/gyeyang_projects.js', 'data/gyeyang_context.js', 'config.js', 'assets/js/app.js'].forEach(function (src) { var s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); });
+  function load(src) { return new Promise(function (ok, no) { var s = document.createElement('script'); s.src = src; s.async = false; s.onload = ok; s.onerror = function () { no(new Error(src)); }; document.body.appendChild(s); }); }
+  Promise.all([load('assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js'), load('assets/js/region.js')])
+    .then(function () { return window.RegionLoader.boot(window, document); })
+    .then(function (r) { if (!r || !r.ok) return null; return load('config.js').catch(function () {}).then(function () { return load('assets/js/app.js'); }); })
+    .catch(function (e) { var f = document.getElementById('fatal'), l = document.getElementById('loading'); if (l) l.hidden = true; if (f) { f.hidden = false; f.textContent = '화면을 준비하지 못했습니다: ' + e.message; } });
 }, 0); });
 </script>
 </head>
@@ -27,7 +31,8 @@ requestAnimationFrame(function () { setTimeout(function () {
 <aside class="panel" id="panel" aria-label="공급 현황" data-sheet="peek">
   <button type="button" class="handle" id="sheetHandle" aria-expanded="false" aria-controls="panel" aria-label="패널 크기 바꾸기"></button>
   <header class="phead" id="phead">
-    <div class="eyebrow">주택파동 · 인천 계양구</div>
+    <div class="eyebrow">주택파동</div>
+    <div class="regionbox" id="regionBox" hidden><label for="regionSel">지역</label><select id="regionSel"></select></div>
     <div class="phrow"><h1>공급 현황</h1><span class="pcur" id="pcur" aria-hidden="true"></span></div>
   </header>
   <div class="pscroll" id="pscroll" tabindex="0" role="region" aria-label="공급 현황 내용">
@@ -54,7 +59,7 @@ requestAnimationFrame(function () { setTimeout(function () {
     <svg class="tl" id="timeline" viewBox="0 0 300 118" role="img" aria-label="입주 및 준공 예정 시기 타임라인"></svg>
   </section>
 
-  <p class="foot">건물 © 국토교통부 GIS건물통합정보 (V-World)<br><span id="basis">-</span> 기준 · 블록 윤곽은 V-World 공식 자료, 동 윤곽은 LH 팸플릿을 맞춘 근사값(10~20 m)입니다. 공정율은 LH 공사현황 기준입니다. 역·학교는 OpenStreetMap입니다</p>
+  <p class="foot">건물 © 국토교통부 GIS건물통합정보 (V-World)<br><span id="basis">-</span> 기준</p>
   </div>
   <nav class="prail" id="prail" aria-label="구역 이동">
     <button type="button" data-sec="h-sum" aria-label="요약" aria-current="true"><span>요약</span></button>
@@ -66,6 +71,7 @@ requestAnimationFrame(function () { setTimeout(function () {
 
 <main class="mapwrap">
   <div id="map"></div>
+  <div class="pvbanner" id="pvBanner" role="note" hidden></div>
   <div class="hud" id="hud" role="group" aria-label="단지 표지"><svg class="hud-svg" id="hudSvg" aria-hidden="true"></svg><div id="hudTags"></div></div>
   <button type="button" id="panelToggle" class="ptoggle" aria-controls="panel" aria-expanded="true" aria-label="사이드바 접기" title="사이드바 접기"><span aria-hidden="true">‹</span></button>
   <div class="hudsum" id="hudSum" role="group" aria-label="공급 요약" hidden></div>
@@ -103,7 +109,9 @@ requestAnimationFrame(function () { setTimeout(function () {
   </div>
   </div>
   <div class="optpanel" id="optPanel" role="group" aria-label="지도 옵션" hidden>
-    <fieldset><legend>보일 단지 상태</legend><div id="optStatus"></div></fieldset>
+    <fieldset><legend>보일 단지 상태</legend><div id="optStatus"></div>
+      <label id="lblPriv" hidden><input type="checkbox" id="privChip">공공택지 민간 단지 <small>회색 면</small></label>
+    </fieldset>
     <fieldset><legend>지도에 겹쳐 보기</legend>
       <label id="lblCtx"><input type="checkbox" id="ctxChip">역 · 학교 <small>OpenStreetMap</small></label>
       <label id="lblRing"><input type="checkbox" id="ringChip">역 반경 원 <small>500 m · 1 km</small></label>
