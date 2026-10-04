@@ -164,7 +164,7 @@ input/                          팀원 제출물을 푼 곳. 저장소에 올리
 | `verified` | | `Y`/`N` | 사람이 원문으로 확인했으면 `Y` |
 | `note` | | 문자 | |
 
-**지도에 올라가는 단지**: `sponsor_type`이 `public` 또는 `joint`이거나, `on_public_land`가 `Y`(직접 입력 또는 지구 유형으로 계산)인 단지. 그 밖은 `I201`(범위 밖)로 목록에만 남는다.
+**지도에 올라가는 단지**: `sponsor_type`이 `public` 또는 `joint`이거나, `private`이면서 `on_public_land`가 `Y`(직접 입력 또는 지구 유형으로 계산)인 단지. `private`인데 공공택지 위가 아니면 `I201`(범위 밖)로 목록에만 남고, `unknown`은 `W105`로 지도에서 제외한다.
 **표시 클래스**: `public`/`joint` → 공공, `private`이면서 공공택지 위 → "공공택지 민간"(회색 톤). 시행자 유형은 공고문·공사현황·마이홈 공급기관명처럼 **시행자를 직접 말하는 자료**로 정한다. 인허가의 세대 유형(공공임대·공공분양 호수) 필드는 약한 증거이며 단독 근거로 쓰지 않는다.
 
 ### 6.5 events.csv — 단지의 사건 (추가만, 수정·삭제 없음)
@@ -253,11 +253,11 @@ input/                          팀원 제출물을 푼 곳. 저장소에 올리
 | ID | 심각도 | 규칙 | 처리 |
 |---|---|---|---|
 | E001 | error | 필수 파일 없음 (`regions` `region_codes` `zones` `projects` `events` `sources`) | 해당 지역 폴더 거부 |
-| E002 | error | 헤더에 필수 열 없음, 또는 UTF-8이 아님 | 해당 파일 거부 |
+| E002 | error | 헤더에 필수 열이 없거나 열 이름이 중복됨, UTF-8이 아님, 또는 GeoJSON을 읽을 수 없음 | 해당 파일 거부 |
 | E003 | error | `regions.csv`가 1행이 아니거나 `region_slug`가 폴더 이름과 다름 | 해당 지역 폴더 거부 |
 | E101 | error | 필수 값이 비어 있음 | 행 격리 |
 | E102 | error | 형식 위반 (날짜, 숫자 범위, slug, PNU 19자리, URL, 좌표 범위) | 행 격리 |
-| E103 | error | 열거형에 없는 값 | 행 격리 |
+| E103 | error | 열거형에 없는 값, 또는 허용되지 않는 조합(예정을 허용하지 않는 사건의 `is_planned=Y`) | 행 격리 |
 | E104 | error | 기본키·중복 판정 키 중복 | 뒤의 행 격리 |
 | E105 | error | 참조 무결성 위반 (`project_id`, `source_id`, `zone_id`, `region_slug`) | 행 격리 |
 | E106 | error | 실제 사건(`is_planned=N`)의 날짜가 검증일보다 미래 | 행 격리 |
@@ -267,13 +267,13 @@ input/                          팀원 제출물을 푼 곳. 저장소에 올리
 | W101 | warn | 날짜 순서 모순 (승인>착공, 착공>사용검사, `progress` 값 감소) | 이벤트에 `suspect` 표시 |
 | W102 | warn | 높이/지상층수가 2.4~4.5 m 밖 (공동주택 동, 지상층수 3 이상) | 동에 `suspect_floors` 표시 |
 | W103 | warn | `floors_above`가 0인데 `height_m`가 10 m 이상 (지상·지하 반전 의심) | 동에 `suspect_floors` 표시 |
-| W104 | warn | `projects.units`가 최신 `notice`·`permit_approved` 값과 20% 넘게 다름 | 리포트에만 |
+| W104 | warn | `projects.units`가 가장 최근 `permit_approved`의 `value`와 20% 넘게 다름 (`notice`의 `value`는 잔여분양처럼 부분 공급일 수 있어 비교하지 않음) | 리포트에만 |
 | W105 | warn | `sponsor_type=unknown` | 지도에서 제외, 확인 목록 |
 | W106 | warn | `observed_at`이 검증일로부터 365일 넘게 지남 | 리포트에만 |
 | I201 | info | 범위 밖 단지(공공 시행도 아니고 공공택지 위도 아님) | 목록에만 남김 |
 | I202 | info | 지역·지구·단지·사건·동 건수 요약 | 리포트에만 |
 
-- **error 행은 번들로 들어가지 않는다.** 버리지 않고 `quarantine/<파일>.csv`에 사유(`_rule`, `_message`) 열과 함께 돌려준다.
+- **error 행은 번들로 들어가지 않는다.** 버리지 않고 `quarantine/<region_slug>/<파일>.csv`에 사유(`_rule`, `_message`) 열과 함께 돌려준다. 행 번호는 헤더를 뺀 데이터 행의 순번이다(스프레드시트에서는 번호 + 1행).
 - **warn 행은 번들에 들어가되** 위 표시를 단다. 상태 계산은 `suspect` 이벤트를 쓰지 않는다.
 - 종료 코드: 0 = error 없음, 1 = error 있음, 2 = 사용법·파일 열기 오류. `--strict`면 warn도 1.
 
