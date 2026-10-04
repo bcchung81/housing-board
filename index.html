@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>주택파동 공급 지도 (인천 계양구)</title>
+<meta name="description" content="인천 계양 테크노밸리 공공주택 공급 현황을 V-World 공식 건물 위에 3차원으로 보여 주는 지도">
+<!-- 모두 상대 경로의 일반 스크립트(defer: 화면을 먼저 그린 뒤 순서대로 실행)라 이 파일을 더블클릭해 열어도(file://) 동작합니다. 서버·빌드가 필요 없습니다. -->
+<!-- 지도가 곧 요청할 외부 서버와 미리 연결해 둡니다(첫 타일이 빨리 옵니다) -->
+<link rel="preconnect" href="https://api.vworld.kr" crossorigin>
+<link rel="preconnect" href="https://s3.amazonaws.com" crossorigin>
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="stylesheet" href="assets/vendor/maplibre-gl/5.24.0/maplibre-gl.css">
+<link rel="stylesheet" href="assets/css/app.css">
+<!-- 첫 화면(불러오는 중 안내)을 먼저 그린 뒤, 무거운 스크립트를 순서대로 불러옵니다. 큰 파일은 미리 내려받기를 시작해 둡니다. -->
+<link rel="preload" as="script" href="assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js">
+<link rel="preload" as="script" href="data/gyeyang_buildings.js">
+<script>
+requestAnimationFrame(function () { setTimeout(function () {
+  ['assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js', 'data/gyeyang_buildings.js', 'data/gyeyang_projects.js', 'data/gyeyang_context.js', 'config.js', 'assets/js/app.js'].forEach(function (src) { var s = document.createElement('script'); s.src = src; s.async = false; document.body.appendChild(s); });
+}, 0); });
+</script>
+</head>
+<body>
+<noscript><p style="padding:24px;font:16px sans-serif">이 지도는 자바스크립트가 필요합니다. 브라우저에서 자바스크립트를 켜 주세요.</p></noscript>
+<div class="app">
+<aside class="panel" id="panel" aria-label="공급 현황" data-sheet="peek">
+  <button type="button" class="handle" id="sheetHandle" aria-expanded="false" aria-controls="panel" aria-label="패널 크기 바꾸기"></button>
+  <header class="phead" id="phead">
+    <div class="eyebrow">주택파동 · 인천 계양구</div>
+    <div class="phrow"><h1>공급 현황</h1><span class="pcur" id="pcur" aria-hidden="true"></span></div>
+  </header>
+  <div class="pscroll" id="pscroll" tabindex="0" role="region" aria-label="공급 현황 내용">
+
+  <section class="sum" aria-labelledby="h-sum">
+    <h2 id="h-sum">공급 예정 합계</h2>
+    <b id="sumTotal">-</b>
+    <div class="sbar" id="sumBar" role="img" aria-label="상태별 세대수 비율"></div>
+    <div class="sleg" id="sumLeg"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-next">
+    <h2 id="h-next">다음 일정</h2>
+    <ul class="next" id="nextList"></ul>
+  </section>
+
+  <section class="sec" aria-labelledby="h-proj">
+    <h2 id="h-proj">단지</h2>
+    <ul class="list" id="projList"></ul>
+  </section>
+
+  <section class="sec" aria-labelledby="h-tl">
+    <h2 id="h-tl">입주·준공 예정</h2>
+    <svg class="tl" id="timeline" viewBox="0 0 300 118" role="img" aria-label="입주 및 준공 예정 시기 타임라인"></svg>
+  </section>
+
+  <p class="foot">건물 © 국토교통부 GIS건물통합정보 (V-World)<br><span id="basis">-</span> 기준 · 블록 윤곽은 V-World 공식 자료, 동 윤곽은 LH 팸플릿을 맞춘 근사값(10~20 m)입니다. 공정율은 LH 공사현황 기준입니다. 역·학교는 OpenStreetMap입니다</p>
+  </div>
+  <nav class="prail" id="prail" aria-label="구역 이동">
+    <button type="button" data-sec="h-sum" aria-label="요약" aria-current="true"><span>요약</span></button>
+    <button type="button" data-sec="h-next" aria-label="다음 일정"><span>다음 일정</span></button>
+    <button type="button" data-sec="h-proj" aria-label="단지"><span>단지</span></button>
+    <button type="button" data-sec="h-tl" aria-label="입주·준공 예정"><span>입주·준공 예정</span></button>
+  </nav>
+</aside>
+
+<main class="mapwrap">
+  <div id="map"></div>
+  <div class="hud" id="hud" role="group" aria-label="단지 표지"><svg class="hud-svg" id="hudSvg" aria-hidden="true"></svg><div id="hudTags"></div></div>
+  <button type="button" id="panelToggle" class="ptoggle" aria-controls="panel" aria-expanded="true" aria-label="사이드바 접기" title="사이드바 접기"><span aria-hidden="true">‹</span></button>
+  <div class="hudsum" id="hudSum" role="group" aria-label="공급 요약" hidden></div>
+  <button type="button" class="compass" id="compass" aria-label="나침반" title="동서남북 나침반. 누르면 북쪽이 위로 오게 합니다.">
+    <svg viewBox="-46 -46 92 92" aria-hidden="true">
+      <circle class="cp-bg" r="38"/>
+      <g id="cpRose"><g id="cpTicks"></g>
+        <text class="cp-l cp-n" data-x="0" data-y="-27" x="0" y="-27">북</text>
+        <text class="cp-l" data-x="27" data-y="0" x="27" y="0">동</text>
+        <text class="cp-l" data-x="0" data-y="27" x="0" y="27">남</text>
+        <text class="cp-l" data-x="-27" data-y="0" x="-27" y="0">서</text>
+      </g>
+      <path class="cp-view" d="M0,-33.5L-5,-44L5,-44Z"/>
+      <text class="cp-deg" id="cpDeg" x="0" y="-3">0°</text><text class="cp-name" id="cpName" x="0" y="9">북</text>
+    </svg>
+  </button>
+  <div class="topbar">
+  <div class="tools" role="group" aria-label="보기와 시점">
+    <span class="seg" id="modeSeg" role="group" aria-label="지도 보기 기준">
+      <button type="button" data-mode="floors" aria-pressed="true" title="동 높이를 층수로">층수</button><button type="button" data-mode="progress" aria-pressed="false" title="지은 만큼만 채우고 나머지는 연하게 보입니다">공정율</button><button type="button" data-mode="time" aria-pressed="false" title="달력을 움직여 공사와 입주 흐름을 봅니다">입주 시기</button>
+    </span>
+    <button type="button" id="optBtn" class="opt" aria-expanded="false" aria-controls="optPanel" title="보일 단지 상태, 역·학교, 야간 지도 등">옵션<b id="optN" hidden></b></button>
+    <button type="button" id="vAll">전체 보기</button>
+    <button type="button" id="vPlane" aria-pressed="false" title="위에서 내려다보는 평면으로 바꿉니다. 다시 누르면 비스듬한 입체로 돌아옵니다.">평면 보기</button>
+    <button type="button" id="vTour" aria-pressed="false" title="단지를 하나씩 차례로 보여 줍니다. 지도를 만지면 멈춥니다.">순회 투어</button>
+  </div>
+  <div class="dial" id="dial" role="group" aria-label="지도 방향 돌리기">
+    <button type="button" id="dNorth" title="북쪽이 위로 오게 합니다">북</button>
+    <button type="button" id="dLeft" aria-label="왼쪽으로 돌리기. 길게 누르면 계속 돕니다" title="왼쪽으로 15° (길게 누르면 계속)">◀</button>
+    <input type="range" id="dRange" min="0" max="359" step="1" value="0" aria-label="보는 방향(도)" title="끌어서 지도를 360° 돌립니다. 0°는 북쪽이 위입니다">
+    <button type="button" id="dRight" aria-label="오른쪽으로 돌리기. 길게 누르면 계속 돕니다" title="오른쪽으로 15° (길게 누르면 계속)">▶</button>
+    <output id="dOut" for="dRange" aria-hidden="true">0° 북</output>
+    <i class="sep" aria-hidden="true"></i>
+    <button type="button" id="vOrbit" aria-pressed="false" title="지금 보이는 지도를 그 자리에서 천천히 돌립니다. 지도나 컨트롤을 만지면 멈춥니다.">자동</button>
+  </div>
+  </div>
+  <div class="optpanel" id="optPanel" role="group" aria-label="지도 옵션" hidden>
+    <fieldset><legend>보일 단지 상태</legend><div id="optStatus"></div></fieldset>
+    <fieldset><legend>지도에 겹쳐 보기</legend>
+      <label id="lblCtx"><input type="checkbox" id="ctxChip">역 · 학교 <small>OpenStreetMap</small></label>
+      <label id="lblRing"><input type="checkbox" id="ringChip">역 반경 원 <small>500 m · 1 km</small></label>
+      <label><input type="checkbox" id="dimChip">기존 건물 흐리게</label>
+    </fieldset>
+    <fieldset><legend>화면</legend>
+      <label><input type="checkbox" id="hudChip">HUD 표시 <small>단지 표시선·정보창</small></label>
+      <label><input type="checkbox" id="nightChip">야간 지도</label>
+    </fieldset>
+    <button type="button" class="reset" id="optReset">기본값으로 되돌리기</button>
+  </div>
+  <details class="maplegend" id="maplegend" open>
+    <summary>범례</summary>
+    <ul id="legendList"></ul>
+  </details>
+  <div class="bar">
+    <b>기존 건물 높이 신뢰도</b>
+    <div class="qbar" id="qbar" role="img" aria-label="공식 높이, 층수 환산, 정보 없음 비율"></div>
+    <span id="qtext"></span>
+    <span class="src" id="baseNote"></span>
+  </div>
+  <div class="timebar" id="timebar" hidden>
+    <button type="button" id="tPlay" aria-label="입주 시기 재생">▶</button>
+    <input type="range" id="tRange" min="0" max="38" step="1" value="0" aria-label="입주 시기 기준 월">
+    <span id="tOut" aria-live="polite"></span>
+  </div>
+  <div id="loading" role="status"><i aria-hidden="true"></i><span>지도와 건물 자료를 불러오는 중…</span></div>
+  <div id="fatal" hidden></div>
+  <div id="sr" class="sr" aria-live="polite"></div>
+</main>
+</div>
+
+</body>
+</html>

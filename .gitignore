@@ -1,0 +1,21 @@
+# 인증키가 든 설정 파일 — 공개 저장소에 올리지 않음 (config.example.js를 복사해 사용)
+config.js
+
+# OS / 도구 부산물
+.DS_Store
+node_modules/
+__pycache__/
+*.pyc
+
+# 대용량 원천 자료 (재다운로드 가능)
+workspace/data/raw/lh/pamphlets/
+workspace/data/raw/vworld/*.zip
+
+# 영상 렌더링 결과·캐시 (재생성 가능)
+*.mp4
+workspace/videos/*/renders/
+workspace/videos/*/snapshots/
+workspace/videos/*/.thumbnails/
+
+# 개인 사진
+workspace/docs/view/KakaoTalk_Photo_*
