@@ -22,3 +22,11 @@ workspace/docs/view/KakaoTalk_Photo_*
 
 # 빌드 산출물
 public/
+.vercel
+.env*
+
+# 팀원 제출물·검증 결과·개발 환경·전달 패키지
+input/
+validation_out/
+.venv/
+dist/
