@@ -76,7 +76,7 @@ class RegionConfig:
     label_strip: list
     zone_short: str
     zone_centroid_bbox: tuple | None = None
-    max_buildings: int = 5000
+    max_buildings: int = 20000   # 보통은 걸리지 않는 안전 상한. 넘으면 큰 건물부터 남기고 meta.capped_dropped 에 뺀 수를 적는다
     min_building_m2: float = 10.0
     context_radius_m: int = 3000
 
@@ -304,6 +304,8 @@ def dongs_from_buildings(features: list[dict], min_floors: int = 5) -> list[dict
         if h:
             d["_h"] = max(d["_h"] or 0.0, h)
     out = sorted(named.values(), key=lambda d: int(d["no"]))
+    if out:
+        unnamed = []   # 동 이름이 붙은 건물이 있으면 이름 없는 건물은 부대시설일 수 있어 동으로 세지 않는다
     for i, d in enumerate(unnamed, start=1):
         d["no"] = str(i)
     result = []
@@ -760,7 +762,7 @@ def fetch_buildings(cfg: RegionConfig, client: api.Client, zone_bbox, basis: str
         feats = feats[:cfg.max_buildings]
     src = collections.Counter(f["properties"]["src"] for _, f in feats)
     return {"raw": raw, "features": [f for _, f in feats], "factor": factor, "bbox": bb,
-            "meta": B.make_meta(basis, factor), "stats": {"raw": len(raw), "tiny_dropped": tiny, "broken": broken,
+            "meta": B.make_meta(basis, factor, capped_dropped=capped or None), "stats": {"raw": len(raw), "tiny_dropped": tiny, "broken": broken,
                                                           "capped_dropped": capped, "src": dict(src)}}
 
 

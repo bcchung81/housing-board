@@ -119,7 +119,7 @@
     (region.sources || []).forEach((s) => { label[s.id] = s.label; });
     const progressLabels = [...new Set(blocks.filter((b) => b.progress && b.progress.source).map((b) => label[b.progress.source]).filter(Boolean))];
     const progressSentence = progressLabels.length ? `공정율은 ${progressLabels.join(', ')} 기준입니다.` : '';
-    const ctxSentence = context ? `역·학교는 ${/OpenStreetMap/.test(context.source || '') ? 'OpenStreetMap' : (context.source || '출처 미상')}입니다` : '';
+    const ctxSentence = context ? `역·학교는 ${/OpenStreetMap/.test(context.source || '') ? 'OpenStreetMap' : (context.source || '출처 미상')}입니다.` : '';
     const parts = [tierSentence, progressSentence, ctxSentence].filter(Boolean).join(' ');
     return {
       documentTitle: `주택파동 공급 지도 (${region.name})`,
@@ -133,8 +133,8 @@
   function adaptBundle(raw) {
     const { index, entry, region, projects, buildings, context } = raw;
     let blocks = (projects.projects || []).map((p) => adaptProject(p, region));
-    uniqueIds(blocks);
     blocks = orderBlocks(blocks, region.projectOrder);
+    uniqueIds(blocks);   // 구분 접미사(·2)는 화면에 보이는 순서를 따른다
     const districts = (region.zones || []).filter((z) => Array.isArray(z.poly) && z.poly.length >= 3).map((z) => ({ name: z.name, poly: z.poly }));
     const byKey = new Map();
     blocks.forEach((b) => { byKey.set(b.id, b); byKey.set(b.pid, b); });

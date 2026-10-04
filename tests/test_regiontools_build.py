@@ -126,11 +126,17 @@ class Dongs(unittest.TestCase):
         b = [bldg(box(0, 0, 1, 1), "101동", "25"), bldg(box(1, 0, 2, 1), "101동", "25", height="72.5"),
              bldg(box(3, 0, 4, 1), "102동", "4"), bldg(box(5, 0, 6, 1), "", "8")]
         dongs = BR.dongs_from_buildings(b)
-        self.assertEqual([d["no"] for d in dongs], ["101", "1"])
+        # 동 이름이 붙은 건물이 있으면 이름 없는 건물(경로당 등 부대시설일 수 있음)은 동으로 세지 않는다
+        self.assertEqual([d["no"] for d in dongs], ["101"])
         self.assertEqual(len(dongs[0]["poly"]), 2)
         self.assertEqual(dongs[0]["heightM"], 72.5)
-        self.assertNotIn("heightM", dongs[1])
-        self.assertEqual(dongs[1]["floorsAbove"], 8)
+
+    def test_unnamed_buildings_are_numbered_only_when_no_dong_has_a_name(self):
+        b = [bldg(box(0, 0, 1, 1), "", "20"), bldg(box(2, 0, 3, 1), "", "18", height="52.5")]
+        dongs = BR.dongs_from_buildings(b)
+        self.assertEqual([d["no"] for d in dongs], ["1", "2"])
+        self.assertEqual([d["floorsAbove"] for d in dongs], [20, 18])
+        self.assertEqual(dongs[1]["heightM"], 52.5)
 
     def test_floor_profile_match(self):
         rows = [dong_row("A2", f"10{i}동", fl, pub=100) for i, fl in enumerate([20, 21, 21, 14, 8, 14], start=1)]
@@ -229,6 +235,40 @@ class Plan(unittest.TestCase):
         self.assertTrue(any("중흥" in n for n in reasons))
         self.assertFalse(any("3BL" in n for n in reasons))  # 다른 지구 이름은 후보가 아님
         self.assertEqual(len(res["other_blocks"]), 2)  # b3(B-1 후보), b4(제외 단지)
+
+
+class FakeBuildingClient:
+    """fetch_buildings 가 부르는 두 가지만 흉내 낸다."""
+    def __init__(self, n):
+        self.n = n
+
+    def vworld_features(self, layer, bbox=None):
+        if layer == "LT_C_BLDGINFO":
+            # 면적이 서로 다른 건물 n 개(전부 10 m² 이상)
+            return [bldg(box(i * 0.0002, 0, i * 0.0002 + 0.0001 + i * 1e-8, 0.0001), dong=f"{i}동", flr="5") for i in range(self.n)]
+        return []
+
+
+class BuildingCap(unittest.TestCase):
+    def cfg(self, **kw):
+        base = dict(slug="t", name="t", title="t", description="", zoom=15, pitch=52, codes=[], zone_id="z", zone_name="z",
+                    zone_type="공공주택지구", zone_match=lambda zn: True, search_bbox=(0, 0, 1, 1), sigungu="1",
+                    bjdongs=[], jibun_slug={}, myhome_filter=lambda it: True, name_reject=None, label_strip=[], zone_short="z")
+        base.update(kw)
+        return BR.RegionConfig(**base)
+
+    def test_default_cap_is_not_the_old_5000(self):
+        self.assertGreaterEqual(self.cfg().max_buildings, 20000)
+
+    def test_nothing_is_dropped_below_the_cap(self):
+        res = BR.fetch_buildings(self.cfg(max_buildings=100), FakeBuildingClient(60), (0, 0, 0.02, 0.01), "20261004")
+        self.assertEqual(len(res["features"]), 60)
+        self.assertNotIn("capped_dropped", res["meta"])
+
+    def test_cap_is_recorded_in_meta(self):
+        res = BR.fetch_buildings(self.cfg(max_buildings=50), FakeBuildingClient(60), (0, 0, 0.02, 0.01), "20261004")
+        self.assertEqual(len(res["features"]), 50)
+        self.assertEqual(res["meta"]["capped_dropped"], 10)
 
 
 if __name__ == "__main__":

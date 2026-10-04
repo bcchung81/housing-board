@@ -97,6 +97,16 @@ test('같은 label 이 둘이면 내부 id 를 구분한다', () => {
   assert.ok(ids.includes('B-2'));
 });
 
+test('같은 label 의 구분 접미사(·2)는 파일 순서가 아니라 화면에 보이는 순서를 따른다', () => {
+  const r = R.adaptBundle(mkRaw([mkProject({ id: 'small', units: 10 }), mkProject({ id: 'big', units: 500 })]));   // 파일에는 작은 단지가 먼저
+  assert.deepEqual(r.blocks.map((b) => [b.pid, b.id]), [['big', 'A-1'], ['small', 'A-1·2']]);
+});
+
+test('문구: 역·학교 문장은 마침표로 끝난다', () => {
+  const r = R.adaptBundle(mkRaw());
+  assert.match(r.texts.footerHtml, /역·학교는 OpenStreetMap입니다\.(<|$)/);
+});
+
 test('orderProjects: projectOrder, 상태 순서, 세대수, label', () => {
   const ps = [
     mkProject({ id: 'p1', label: 'P1', status: '계획', units: 900 }),

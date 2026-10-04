@@ -46,7 +46,7 @@ function sparkline(h) {
 }
 function progressRow(b, k) {
   const p = b.progress, color = COLOR[k];
-  return `<span class="pg" style="--c:${color}" title="공사 공정율 ${p.rate}% (${p.asOf} 기준)"><span>공사</span><span class="bar2"><i style="width:${Math.max(p.rate, 0.8)}%"></i></span><b>${pctTxt(p.rate)}</b>${p.history.length >= 3 ? sparkline(p.history) : ''}</span>`;
+  return `<span class="pg" style="--c:${color}" title="공사 공정율 ${esc(p.rate)}% (${esc(p.asOf)} 기준)"><span>공사</span><span class="bar2"><i style="width:${Math.max(p.rate, 0.8)}%"></i></span><b>${pctTxt(p.rate)}</b>${p.history.length >= 3 ? sparkline(p.history) : ''}</span>`;
 }
 const centroid = (poly) => [poly.reduce((a, p) => a + p[0], 0) / poly.length, poly.reduce((a, p) => a + p[1], 0) / poly.length];
 const hex2 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -219,20 +219,20 @@ function maskGeoJSON() {
   return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[[120, 30], [135, 30], [135, 45], [120, 45], [120, 30]], ...holes] } };
 }
 /* 주변 맥락(OpenStreetMap): 역 반경 원, 역, 학교 */
-const CTX = window.GY_CONTEXT, HAS_CTX = !!(CTX && CTX.stations && CTX.stations.length);
+const CTX = window.GY_CONTEXT, HAS_CTX = !!(CTX && ((CTX.stations || []).length || (CTX.schools || []).length));   // 역이 없어도 학교만 있으면 쓴다
 const distM = (a, b) => { const R = 6371008.8, r = Math.PI / 180, dl = (b[1] - a[1]) * r, dn = (b[0] - a[0]) * r; const h = Math.sin(dl / 2) ** 2 + Math.cos(a[1] * r) * Math.cos(b[1] * r) * Math.sin(dn / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
 const distTxt = (d) => (d < 1000 ? `약 ${Math.round(d / 10) * 10} m` : `약 ${(d / 1000).toFixed(1)} km`);
 function nearestCtx(pt) {
   const best = (arr) => arr.map((s) => ({ name: s.name, d: distM(pt, [s.lon, s.lat]) })).sort((a, b) => a.d - b.d)[0];
-  return { st: best(CTX.stations), sch: CTX.schools && CTX.schools.length ? best(CTX.schools) : null };
+  return { st: (CTX.stations || []).length ? best(CTX.stations) : null, sch: CTX.schools && CTX.schools.length ? best(CTX.schools) : null };
 }
 function ctxGeoJSON() {
   const ring = (s, rM) => { const pts = [], dl = rM / 111320, dn = rM / (111320 * Math.cos(s.lat * Math.PI / 180)); for (let i = 0; i <= 72; i++) { const a = i / 72 * Math.PI * 2; pts.push([s.lon + Math.cos(a) * dn, s.lat + Math.sin(a) * dl]); } return pts; };
   const pt = (s) => ({ type: 'Feature', properties: { name: s.name }, geometry: { type: 'Point', coordinates: [s.lon, s.lat] } });
   return {
-    st: { type: 'FeatureCollection', features: CTX.stations.map(pt) },
+    st: { type: 'FeatureCollection', features: (CTX.stations || []).map(pt) },
     sch: { type: 'FeatureCollection', features: (CTX.schools || []).map(pt) },
-    ring: { type: 'FeatureCollection', features: CTX.stations.flatMap((s) => [[500, '500 m'], [1000, '1 km']].map(([r, label]) => ({ type: 'Feature', properties: { label }, geometry: { type: 'LineString', coordinates: ring(s, r) } }))) },
+    ring: { type: 'FeatureCollection', features: (CTX.stations || []).flatMap((s) => [[500, '500 m'], [1000, '1 km']].map(([r, label]) => ({ type: 'Feature', properties: { label }, geometry: { type: 'LineString', coordinates: ring(s, r) } }))) },
   };
 }
 
@@ -471,7 +471,7 @@ const ringsOf = (g) => (g.type === 'Polygon' ? [g.coordinates[0]] : g.coordinate
 function dongBars(b, cur) {
   const max = Math.max(...b.dongs.map((d) => d.floors)), k = kindOf(b);
   return `<div class="pc-bars" role="img" aria-label="${dongN(b)}개동 층수 비교" style="--tone:${mixTone(k, 1)}">` +
-    b.dongs.slice().sort((a, c) => a.no.localeCompare(c.no)).map((d) => `<i class="${d.no === cur ? 'on' : ''}" title="${d.no}동 ${d.floors}층" style="height:${Math.round(26 * d.floors / max)}px"></i>`).join('') + '</div>';
+    b.dongs.slice().sort((a, c) => a.no.localeCompare(c.no)).map((d) => `<i class="${d.no === cur ? 'on' : ''}" title="${esc(d.no)}동 ${d.floors}층" style="height:${Math.round(26 * d.floors / max)}px"></i>`).join('') + '</div>';
 }
 function dongPopup(p, clickX) {
   const b = BLOCKS.find((x) => x.id === p.block), r = floorsRange(b);
@@ -647,10 +647,10 @@ if (BLOCKS.length) {
     const k = kindOf(b), cur = STAGE[b.status], fr = floorsRange(b);
     const sub = [b.priv ? '공공택지 민간' : null, unitsTxt(b), dongN(b) ? `${dongN(b)}개동` : null, fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : null, /^\d/.test(b.moveIn) ? `입주 ${b.moveIn}` : b.moveIn].filter(Boolean).join(' · ');
     const stage = STAGE_NAMES.map((n, i) => `<span class="${i < cur ? 'done' : i === cur ? `now ${k}` : ''}">${n}</span>`).join('');
-    const bars = fr ? b.dongs.slice().sort((a, c) => a.no.localeCompare(c.no)).map((d) => `<i title="${d.no}동 ${d.floors}층" style="height:${Math.round(34 * d.floors / 15)}px;background:${mixTone(k, fr[1] > fr[0] ? (d.floors - fr[0]) / (fr[1] - fr[0]) : 1)}"></i>`).join('') + '<em>동별 층수</em>' : '';
-    const mini = b.progress ? `<span class="mini" style="--c:${COLOR[k]}" title="공정율 ${b.progress.rate}%"><i style="width:${Math.max(b.progress.rate, 1)}%"></i></span>` : '';
+    const bars = fr ? b.dongs.slice().sort((a, c) => a.no.localeCompare(c.no)).map((d) => `<i title="${esc(d.no)}동 ${d.floors}층" style="height:${Math.round(34 * d.floors / 15)}px;background:${mixTone(k, fr[1] > fr[0] ? (d.floors - fr[0]) / (fr[1] - fr[0]) : 1)}"></i>`).join('') + '<em>동별 층수</em>' : '';
+    const mini = b.progress ? `<span class="mini" style="--c:${COLOR[k]}" title="공정율 ${esc(b.progress.rate)}%"><i style="width:${Math.max(b.progress.rate, 1)}%"></i></span>` : '';
     const more = `<span class="more"><span class="stage" aria-hidden="true">${stage}</span>${b.progress ? progressRow(b, k) : ''}${bars ? `<span class="fl">${bars}</span>` : ''}${b.builder ? `<span class="bld">시공 ${esc(b.builder)}</span>` : ''}</span>`;
-    return `<li><button type="button" class="card" aria-expanded="false" data-id="${esc(b.id)}" aria-label="${esc(b.id)} ${esc(b.status)}, ${esc(sub)}"><i class="sw ${k}"></i><b>${esc(b.id)} ${esc(b.kind.replace('(공공분양)', ''))}</b><span class="st" style="color:${COLOR_D[k]}">${esc(b.status)}</span><span class="sub">${sub}</span>${mini}${more}</button></li>`;
+    return `<li><button type="button" class="card" aria-expanded="false" data-id="${esc(b.id)}" aria-label="${esc(b.id)} ${esc(b.status)}, ${esc(sub)}"><i class="sw ${k}"></i><b>${esc(b.id)} ${esc(b.kind.replace('(공공분양)', ''))}</b><span class="st" style="color:${COLOR_D[k]}">${esc(b.status)}</span><span class="sub">${esc(sub)}</span>${mini}${more}</button></li>`;
   }).join('');
 
   /* 입주·준공 예정 타임라인 (2026-10 ~ 2029-12). 같은 달은 한 점에 묶는다 */
