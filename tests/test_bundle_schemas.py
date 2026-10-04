@@ -58,5 +58,21 @@ class BundleSchemas(unittest.TestCase):
         self.assertEqual(project["flags"]["items"]["enum"], ["suspect_floors", "suspect_dates"])
 
 
+class BundleSchema110(unittest.TestCase):
+    def test_1_1_0_optional_fields_exist_and_stay_optional(self):
+        projects, region = load("projects"), load("region")
+        project = projects["$defs"]["project"]
+        for name in ("note", "builder", "contractAmountM"):
+            self.assertIn(name, project["properties"], name)
+            self.assertNotIn(name, project["required"], name)
+        progress = project["properties"]["progress"]["properties"]
+        for name in ("start", "end", "source"):
+            self.assertIn(name, progress, name)
+        self.assertEqual(project["properties"]["progress"]["required"], ["rate", "asOf"])
+        self.assertEqual(region["properties"]["projectOrder"]["items"], {"type": "string"})
+        self.assertNotIn("projectOrder", region["required"])
+        self.assertIn("schema_version", load("buildings")["properties"])
+
+
 if __name__ == "__main__":
     unittest.main()
