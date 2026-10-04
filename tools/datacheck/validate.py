@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .model import RegionResult
 from .readers import read_csv, read_geojson_table
+from .rules_rows import check_primary_key, check_refs, check_rows
 from .spec import Spec
 
 ENCODING_HINT = "UTF-8이 아님. 엑셀에서 'CSV UTF-8(쉼표로 분리)'로 다시 저장하세요"
@@ -71,4 +72,15 @@ def validate_region(path: Path | str, spec: Spec, today: date, slug: str | None 
     load_tables(res, spec)
     if not res.rejected:
         check_regions_file(res)
+    if res.rejected:
+        return res
+    for name in spec.order:  # 참조 대상 파일이 항상 앞에 온다
+        table = res.tables.get(name)
+        if table is None:
+            continue
+        fs = spec.files[name]
+        check_rows(res, spec, fs, table)
+        check_primary_key(res, fs)
+        check_refs(res, fs)
+        res.valid_keys[name] = {tuple(r.get(c) for c in fs.primary_key) for r in res.active_rows(name)}
     return res
