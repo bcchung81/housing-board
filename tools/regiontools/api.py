@@ -1,0 +1,294 @@
+"""외부 API 호출(얇은 층): V-World 데이터 API, 마이홈 공고, 건축HUB 주택인허가, Overpass.
+
+비밀 취급: 키는 .env.local에서 읽어 요청에만 쓴다. 요청 URL·키를 출력·로그·파일에 남기지 않는다.
+캐시 파일 이름은 키를 뺀 매개변수의 해시이고, 내용은 응답 본문만이다. 캐시 폴더는 호출하는 쪽이 저장소 밖으로 정한다.
+건축HUB는 간헐적으로 503·빈 본문을 주므로 최대 5회까지 점점 길게 기다리며 다시 시도한다.
+"""
+from __future__ import annotations
+
+import collections
+import hashlib
+import json
+import re
+import time
+import urllib.error
+import urllib.parse
+import urllib.request
+from dataclasses import dataclass
+from pathlib import Path
+
+VWORLD_URL = "https://api.vworld.kr/req/data"
+MYHOME_URL = "https://apis.data.go.kr/1613000/HWSPR02/"
+HUB_URL = "https://apis.data.go.kr/1613000/HsPmsHubService/"
+OVERPASS_URL = "https://overpass-api.de/api/interpreter"
+SECRET_PARAMS = ("serviceKey", "key", "domain")
+MAX_ATTEMPTS = 5
+WAIT_STEP_S = 2.0
+USER_AGENT = "housing-board-regiontools/1.0"
+
+
+class ApiError(RuntimeError):
+    pass
+
+
+class MissingKey(RuntimeError):
+    pass
+
+
+@dataclass(frozen=True)
+class Keys:
+    data_go_kr: str
+    vworld: str
+    vworld_domain: str
+
+    def secrets(self) -> list[str]:
+        return [s for s in (self.data_go_kr, self.vworld) if s]
+
+
+def load_env(path) -> dict:
+    """KEY=VALUE 줄을 읽는다. 주석(#)·빈 줄은 건너뛰고 값의 따옴표를 벗긴다."""
+    env = {}
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        k, v = line.split("=", 1)
+        env[k.strip()] = v.strip().strip("\"'")
+    return env
+
+
+def load_keys(path) -> Keys:
+    p = Path(path)
+    if not p.exists():
+        raise MissingKey(f"키 파일이 없음: {p.name}")
+    env = load_env(p)
+    missing = [k for k in ("DATA_GO_KR_KEY", "VWORLD_KEY", "VWORLD_DOMAIN") if not env.get(k)]
+    if missing:
+        raise MissingKey(f"키가 없음: {', '.join(missing)}")
+    return Keys(env["DATA_GO_KR_KEY"], env["VWORLD_KEY"], env["VWORLD_DOMAIN"])
+
+
+def redact(text: str, secrets) -> str:
+    for s in secrets:
+        if not s:
+            continue
+        for form in {s, urllib.parse.quote(s, safe=""), urllib.parse.quote_plus(s)}:
+            text = text.replace(form, "<KEY>")
+    return text
+
+
+def cache_key(name: str, params: dict) -> str:
+    clean = {k: str(v) for k, v in params.items() if k not in SECRET_PARAMS}
+    raw = name + "|" + json.dumps(clean, sort_keys=True, ensure_ascii=False)
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()[:24]
+
+
+def extract_items(payload) -> list:
+    """data.go.kr JSON 응답에서 항목 목록을 꺼낸다(items.item이 list·dict·빈 문자열인 경우 모두)."""
+    body = (payload or {}).get("response", {}).get("body", {}) if isinstance(payload, dict) else {}
+    items = body.get("items", body.get("item"))
+    if isinstance(items, dict):
+        items = items.get("item", [])
+    if isinstance(items, dict):
+        items = [items]
+    return list(items) if isinstance(items, list) else []
+
+
+def total_count(payload) -> int:
+    try:
+        return int(payload["response"]["body"].get("totalCount") or 0)
+    except (KeyError, TypeError, ValueError, AttributeError):
+        return 0
+
+
+def pan_id(url) -> str | None:
+    m = re.search(r"[?&]panId=([^&]+)", str(url or ""))
+    return m.group(1) if m else None
+
+
+def _default_fetch(url, data=None, headers=None, timeout=60):
+    req = urllib.request.Request(url, data=data, headers=headers or {"User-Agent": USER_AGENT})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status, r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read() or b""
+    except Exception as e:  # 네트워크 오류는 재시도 대상
+        return -1, type(e).__name__.encode()
+
+
+_AUTH_ERR = re.compile(rb"<returnAuthMsg>([^<]+)</returnAuthMsg>|<returnReasonCode>(\d+)</returnReasonCode>")
+# data.go.kr XML 오류 중 잠시 뒤 다시 시도할 만한 것. 키 미등록·한도 초과 등은 바로 멈춘다.
+_RETRYABLE_AUTH = ("APPLICATION_ERROR", "TIMEOUT", "HTTP_ERROR", "UNKNOWN_ERROR")
+
+
+class Client:
+    def __init__(self, keys: Keys, cache_dir=None, refresh: bool = False, fetch=None, sleep=time.sleep):
+        self.keys = keys
+        self.cache_dir = Path(cache_dir) if cache_dir else None
+        self.refresh = refresh
+        self.fetch = fetch or _default_fetch
+        self.sleep = sleep
+        self.calls = collections.Counter()
+
+    # ---- 공통 ----
+    def _err(self, msg: str) -> ApiError:
+        return ApiError(redact(msg, self.keys.secrets()))
+
+    def _cache_path(self, name: str, params: dict) -> Path | None:
+        if not self.cache_dir:
+            return None
+        return self.cache_dir / f"{name}-{cache_key(name, params)}.json"
+
+    def _get_json(self, name: str, url: str, params: dict, check, timeout: int = 60):
+        """GET + JSON. check(payload)는 정상이면 None, 재시도할 오류면 'retry:…', 멈출 오류면 'fatal:…'."""
+        cp = self._cache_path(name, params)
+        if cp and cp.exists() and not self.refresh:
+            self.calls["cache"] += 1
+            return json.loads(cp.read_text(encoding="utf-8"))
+        full = url + "?" + urllib.parse.urlencode(params)
+        last = "응답 없음"
+        for attempt in range(1, MAX_ATTEMPTS + 1):
+            self.calls["net"] += 1
+            self.calls[name] += 1
+            status, raw = self.fetch(full, None, {"User-Agent": USER_AGENT}, timeout)
+            m = _AUTH_ERR.search(raw or b"")
+            if m:
+                code = (m.group(1) or m.group(2) or b"").decode("utf-8", "replace").strip()
+                if not any(t in code for t in _RETRYABLE_AUTH):
+                    raise self._err(f"{name}: 인증·서비스 오류 {code}")
+                last = f"서비스 오류 {code}"
+            elif status != 200:
+                last = f"HTTP {status}"
+            elif not (raw or b"").strip():
+                last = "빈 본문"
+            else:
+                try:
+                    payload = json.loads(raw.decode("utf-8"))
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    last = "JSON 아님"
+                else:
+                    verdict = check(payload)
+                    if verdict is None:
+                        if cp:
+                            cp.parent.mkdir(parents=True, exist_ok=True)
+                            cp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+                        return payload
+                    if verdict.startswith("fatal:"):
+                        raise self._err(f"{name}: {verdict[6:]}")
+                    last = verdict[6:]
+            if attempt < MAX_ATTEMPTS:
+                self.sleep(WAIT_STEP_S * attempt)
+        raise self._err(f"{name}: {MAX_ATTEMPTS}회 시도 실패({last})")
+
+    # ---- data.go.kr ----
+    @staticmethod
+    def _check_data_go_kr(payload):
+        if not isinstance(payload, dict) or "response" not in payload:
+            return "retry:응답 형식이 다름"
+        code = str(payload["response"].get("header", {}).get("resultCode", "00"))
+        if code not in ("00", "0", "000"):
+            msg = payload["response"].get("header", {}).get("resultMsg", "")
+            return f"fatal:결과 코드 {code} {msg}"
+        return None
+
+    def _data_go_kr_all(self, name: str, url: str, params: dict, rows: int = 100) -> list:
+        out: list = []
+        page = 1
+        while True:
+            p = {"serviceKey": self.keys.data_go_kr, **params, "numOfRows": rows, "pageNo": page, "_type": "json"}
+            payload = self._get_json(name, url, p, self._check_data_go_kr)
+            items = extract_items(payload)
+            out += items
+            total = total_count(payload)
+            if not items or page * rows >= total:
+                return out
+            page += 1
+
+    def myhome_notices(self) -> dict:
+        """마이홈 공고 전체: rental(임대)·sale(분양)."""
+        return {"rental": self._data_go_kr_all("myhome-rental", MYHOME_URL + "rsdtRcritNtcList", {}),
+                "sale": self._data_go_kr_all("myhome-sale", MYHOME_URL + "ltRsdtRcritNtcList", {})}
+
+    def hub_basis(self, sigungu: str, bjdong: str) -> list:
+        return self._data_go_kr_all("hub-basis", HUB_URL + "getHpBasisOulnInfo",
+                                    {"sigunguCd": sigungu, "bjdongCd": bjdong})
+
+    def hub_dong(self, sigungu: str, bjdong: str) -> list:
+        return self._data_go_kr_all("hub-dong", HUB_URL + "getHpDongOulnInfo",
+                                    {"sigunguCd": sigungu, "bjdongCd": bjdong})
+
+    # ---- V-World ----
+    @staticmethod
+    def _check_vworld(payload):
+        r = payload.get("response") if isinstance(payload, dict) else None
+        if not isinstance(r, dict):
+            return "retry:응답 형식이 다름"
+        st = r.get("status")
+        if st in ("OK", "NOT_FOUND"):
+            return None
+        err = r.get("error") or {}
+        code = err.get("code", st)
+        if code in ("SYSTEM_ERROR", "UNKNOWN_ERROR"):
+            return f"retry:{code}"
+        return f"fatal:{code} {err.get('text', '')}"
+
+    def vworld_features(self, layer: str, bbox=None, attr_filter: str | None = None, size: int = 1000) -> list:
+        out: list = []
+        page = 1
+        while True:
+            p = {"service": "data", "request": "GetFeature", "data": layer, "key": self.keys.vworld,
+                 "domain": self.keys.vworld_domain, "format": "json", "size": size, "page": page, "crs": "EPSG:4326"}
+            if bbox is not None:
+                p["geomFilter"] = "BOX({},{},{},{})".format(*bbox)
+            if attr_filter:
+                p["attrFilter"] = attr_filter
+            payload = self._get_json(f"vworld-{layer}", VWORLD_URL, p, self._check_vworld)
+            r = payload["response"]
+            if r.get("status") == "NOT_FOUND":
+                return out
+            out += r.get("result", {}).get("featureCollection", {}).get("features", [])
+            pages = int((r.get("page") or {}).get("total") or 1)
+            if page >= pages:
+                return out
+            page += 1
+
+    def parcel(self, pnu: str) -> dict | None:
+        fs = self.vworld_features("LP_PA_CBND_BUBUN", attr_filter=f"pnu:=:{pnu}")
+        return fs[0] if fs else None
+
+    # ---- Overpass (키 없음) ----
+    def overpass(self, query: str, budget_s: float = 120.0, attempts: int = 3) -> dict:
+        """Overpass POST. 바쁜 서버(429·504·네트워크 오류)는 짧게 기다려 다시 시도하되 전체 budget_s 안에서만."""
+        name = "overpass"
+        cp = self._cache_path(name, {"q": query})
+        if cp and cp.exists() and not self.refresh:
+            self.calls["cache"] += 1
+            return json.loads(cp.read_text(encoding="utf-8"))
+        data = urllib.parse.urlencode({"data": query}).encode("utf-8")
+        start = time.monotonic()
+        last = "응답 없음"
+        for attempt in range(1, attempts + 1):
+            remaining = budget_s - (time.monotonic() - start)
+            if remaining < 5:
+                break
+            self.calls["net"] += 1
+            self.calls[name] += 1
+            status, raw = self.fetch(OVERPASS_URL, data, {"User-Agent": USER_AGENT}, max(5, min(90, remaining)))
+            if status == 200:
+                try:
+                    payload = json.loads(raw.decode("utf-8"))
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    last = "JSON 아님"
+                else:
+                    if cp:
+                        cp.parent.mkdir(parents=True, exist_ok=True)
+                        cp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+                    return payload
+            else:
+                last = f"HTTP {status}"
+                if status not in (429, 502, 503, 504, -1):
+                    break
+            if attempt < attempts:
+                self.sleep(5.0 * attempt)
+        raise ApiError(f"overpass: {last}")

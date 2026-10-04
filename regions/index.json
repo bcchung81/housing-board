@@ -8,6 +8,20 @@
       "visibility": "public",
       "updatedAt": "2026-10-03",
       "schema_version": "1.1.0"
+    },
+    {
+      "slug": "gwangju-gwangsan",
+      "name": "광주 광산구",
+      "visibility": "public",
+      "updatedAt": "2026-10-04",
+      "schema_version": "1.1.0"
+    },
+    {
+      "slug": "jeonnam-naju",
+      "name": "전남 나주시",
+      "visibility": "public",
+      "updatedAt": "2026-10-04",
+      "schema_version": "1.1.0"
     }
   ]
 }
