@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .model import RegionResult
 from .readers import read_csv, read_geojson_table
+from .rules_domain import DOMAIN_CHECKS, check_cross
 from .rules_rows import check_primary_key, check_refs, check_rows
 from .spec import Spec
 
@@ -82,5 +83,9 @@ def validate_region(path: Path | str, spec: Spec, today: date, slug: str | None 
         check_rows(res, spec, fs, table)
         check_primary_key(res, fs)
         check_refs(res, fs)
+        domain = DOMAIN_CHECKS.get(name)
+        if domain:
+            domain(res, spec, today)
         res.valid_keys[name] = {tuple(r.get(c) for c in fs.primary_key) for r in res.active_rows(name)}
+    check_cross(res, spec, today)
     return res
