@@ -4,9 +4,12 @@ from __future__ import annotations
 import csv
 import io
 import json
+import zipfile
 from pathlib import Path
 
 from .model import Row, Table
+
+IGNORED_DIRS = {"__MACOSX", "quarantine", "validation_out"}
 
 
 def read_csv(path: Path | str, name: str) -> Table:
@@ -44,3 +47,35 @@ def read_geojson_table(path: Path | str, name: str, slug: str) -> tuple[Table, l
         values["region_slug"] = slug
         rows.append(Row(i, values))
     return Table(name, keys, rows), features
+
+
+def extract_zip(zip_path: Path | str, dest: Path | str) -> Path:
+    """ZIP을 dest에 푼다. dest 밖으로 나가는 경로가 하나라도 있으면 아무것도 풀지 않고 ValueError."""
+    dest = Path(dest).resolve()
+    with zipfile.ZipFile(zip_path) as zf:
+        for info in zf.infolist():
+            target = (dest / info.filename).resolve()
+            if target != dest and dest not in target.parents:
+                raise ValueError(f"안전하지 않은 경로가 들어 있음: {info.filename}")
+        zf.extractall(dest)
+    return dest
+
+
+def find_region_dirs(base: Path | str, file_names: set[str], fallback_slug: str | None = None,
+                     depth: int = 2) -> list[tuple[str, Path]]:
+    """지역 폴더 (slug, 경로) 목록을 찾는다.
+
+    base 자체에 규격 파일이 있으면 그 폴더가 지역이고 slug는 fallback_slug(없으면 폴더 이름)이다.
+    아니면 하위 폴더를 depth 단계까지 찾는다. 숨김·`_` 시작·잡음 폴더는 무시한다.
+    """
+    base = Path(base)
+    if any((base / name).exists() for name in file_names):
+        return [(fallback_slug or base.name, base)]
+    if depth == 0:
+        return []
+    found: list[tuple[str, Path]] = []
+    for child in sorted(base.iterdir()):
+        if not child.is_dir() or child.name.startswith((".", "_")) or child.name in IGNORED_DIRS:
+            continue
+        found += find_region_dirs(child, file_names, None, depth - 1)
+    return found
