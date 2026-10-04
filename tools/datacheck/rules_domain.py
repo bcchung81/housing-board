@@ -66,10 +66,50 @@ def check_projects(res: RegionResult, spec: Spec, today: date) -> None:
         _stale(res, f, row, today)
 
 
+# ---------- geometry_overrides.geojson ----------
+GEO = "geometry_overrides.geojson"
+
+
+def _geometry_error(geometry) -> str | None:
+    """geometry가 Polygon/MultiPolygon이고 링이 닫혀 있으며 좌표가 한국 범위 안인지 본다."""
+    if not isinstance(geometry, dict):
+        return "geometry가 없음"
+    kind, coords = geometry.get("type"), geometry.get("coordinates")
+    if kind == "Polygon":
+        polygons = [coords]
+    elif kind == "MultiPolygon":
+        polygons = coords
+    else:
+        return f"Polygon 또는 MultiPolygon이 아님: {kind}"
+    try:
+        for polygon in polygons:
+            for ring in polygon:
+                if len(ring) < 4:
+                    return "링의 점이 4개 미만"
+                if list(ring[0]) != list(ring[-1]):
+                    return "링이 닫히지 않음(첫 점과 끝 점이 다름)"
+                for point in ring:
+                    lon, lat = float(point[0]), float(point[1])
+                    if not (124 <= lon <= 132 and 33 <= lat <= 39):
+                        return f"좌표가 한국 범위(경도 124~132, 위도 33~39) 밖: {lon}, {lat}"
+    except (TypeError, ValueError, IndexError):
+        return "coordinates 구조가 올바르지 않음"
+    return None
+
+
+def check_geometry(res: RegionResult, spec: Spec, today: date) -> None:
+    for row in res.active_rows(GEO):
+        feature = res.features[row.n - 1]
+        error = _geometry_error(feature.get("geometry") if isinstance(feature, dict) else None)
+        if error:
+            res.add("E108", GEO, row.n, error)
+
+
 DOMAIN_CHECKS = {
     "events.csv": check_events,
     "dongs.csv": check_dongs,
     "projects.csv": check_projects,
+    GEO: check_geometry,
 }
 
 
