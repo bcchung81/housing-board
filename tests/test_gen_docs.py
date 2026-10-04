@@ -55,5 +55,26 @@ class GenDocs(unittest.TestCase):
             gen_docs.inject("표지 없음", "x", "내용\n")
 
 
+class RepoDocs(unittest.TestCase):
+    def test_repo_docs_and_templates_are_up_to_date(self):
+        self.assertEqual(gen_docs.main(["--check"]), 0)
+
+    def test_definition_has_all_sections_and_markers(self):
+        text = gen_docs.DOC.read_text(encoding="utf-8")
+        for heading in ["## 0. 개요·범위·용어", "## 1. 데이터 흐름과 책임", "## 2. 공통 규약", "## 3. 입력 표 정의",
+                        "## 4. 이벤트와 상태 계산 규칙", "## 5. 시행자 유형과 공공택지 판정",
+                        "## 6. 윤곽 등급과 화면 표기", "## 7. 출력 번들 스키마", "## 8. 검증 규칙과 격리 목록",
+                        "## 9. 품질 함정 체크리스트", "## 10. 버전과 변경 절차", "## 11. 제출 방법",
+                        "## 부록 A", "## 부록 B", "## 부록 C"]:
+            self.assertIn(heading, text)
+        for name in ("fields", "enums"):
+            self.assertIn(f"<!-- GENERATED:{name}:BEGIN -->", text)
+
+    def test_every_rule_id_appears_in_the_definition(self):
+        text = gen_docs.DOC.read_text(encoding="utf-8")
+        for rule in "E001 E002 E003 E101 E102 E103 E104 E105 E106 E107 E108 W001 W101 W102 W103 W104 W105 W106 I201 I202".split():
+            self.assertIn(f"| {rule} |", text, rule)
+
+
 if __name__ == "__main__":
     unittest.main()
