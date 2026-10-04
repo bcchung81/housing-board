@@ -35,6 +35,18 @@ test('pickRegion: 기본 지역, ?region=, 모르는 slug, 빈 목록', () => {
   assert.equal(R.pickRegion({ regions: [] }, '').error, 'empty');
 });
 
+test('moveInText: 입주 단계인데 날짜가 없으면 "입주 시기 미정"이 아니라 "입주 일자 미상"', () => {
+  assert.equal(R.moveInText(null, undefined, '입주 단계'), '입주 일자 미상');
+  assert.equal(R.moveInText('', null, '입주 단계'), '입주 일자 미상');
+  assert.equal(R.moveInText('2026-09', null, '입주 단계'), '2026.09');
+  assert.equal(R.moveInText(null, undefined, '건설 단계'), '입주 시기 미정');
+});
+
+test('adaptProject: 입주 단계 단지의 moveIn 문구에 상태가 반영된다', () => {
+  const p = mkProject({ status: '입주 단계', moveIn: null, progress: null });
+  assert.equal(R.adaptProject(p, mkRegion()).moveIn, '입주 일자 미상');
+});
+
 test('moveInText: 입주 월, 날짜, 종료일 대체, 미정', () => {
   assert.equal(R.moveInText('2029-06', null), '2029.06');
   assert.equal(R.moveInText('2028-09-30', null), '준공 예정 2028-09-30');

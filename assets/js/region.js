@@ -40,11 +40,12 @@
   }
 
   /* ---------- 단지 변환 ---------- */
-  function moveInText(moveIn, progressEnd) {
+  function moveInText(moveIn, progressEnd, status) {
     const v = moveIn == null ? '' : String(moveIn).trim();
     if (/^\d{4}-\d{2}$/.test(v)) return v.replace('-', '.');
     if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return `준공 예정 ${v}`;
     if (v) return v;
+    if (status === '입주 단계') return '입주 일자 미상';   // 이미 입주한 단지에 '시기 미정'은 어색하다
     return progressEnd ? `준공 예정 ${progressEnd}` : '입주 시기 미정';
   }
   function outlineText(outline) {
@@ -73,7 +74,7 @@
       id: p.label, pid: p.id, label: p.label, name: p.name, kind: p.kind, status: p.status,
       units: finite(p.units) ? p.units : 0, unitsKnown: finite(p.units),
       dongCount: finite(p.dongCount) ? p.dongCount : (dongs ? dongs.length : 0),
-      moveIn: moveInText(p.moveIn, pr && pr.end),
+      moveIn: moveInText(p.moveIn, pr && pr.end, p.status),
       poly: p.outline.poly, outlineTier: p.outline.tier,
       sponsorClass: p.sponsorClass, priv: p.sponsorClass === 'private_on_public_land',
       src: sourcesText(p, region), outlineHow: outlineText(p.outline),

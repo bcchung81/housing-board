@@ -152,7 +152,11 @@ function blockTimes(b) {
   const t0 = b.progress ? monthF(b.progress.start) : null;
   // 입주 월이 있으면 공사 종료일은 공사현황의 종료일, 없으면(임대) 입주계획의 '준공 예정일'을 쓴다.
   const t1 = digit ? (b.progress ? monthF(b.progress.end) : mv) : mv;
-  return { t0: t0 ?? 0, t1: t1 ?? 12, mo: digit ? Math.floor(mv) : Math.floor(t1 ?? 12) };
+  // 이미 입주했는데 날짜를 모르면(입주 단계) 처음부터 다 지어진 것으로 본다. 아니면 '공사 중'으로 잘못 세어진다.
+  const unk = b.status === '입주 단계' && mv == null;
+  const planned = b.status === '계획' && t0 == null && mv == null;   // 일정이 전혀 없는 계획 단지는 달력 끝까지 '착공 전'
+  const d0 = unk ? -MO_MAX : planned ? MO_MAX + 1 : 0, d1 = unk ? -1 : planned ? MO_MAX + 2 : 12;
+  return { t0: t0 ?? d0, t1: t1 ?? d1, mo: digit ? Math.floor(mv) : Math.floor(t1 ?? d1) };
 }
 const moveText = (b) => (/^\d/.test(b.moveIn) ? `입주 ${b.moveIn}` : String(b.moveIn));
 function blockProps(b) {
@@ -486,7 +490,7 @@ function blockPopup(b, clickX) {
     <div class="pc-h"><b>${esc(b.id)}</b><span class="pc-sub">${esc(b.kind)}</span>${chipHtml(KIND[b.status], b.status)}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
     <div class="pc-big"><strong>${unitsTxt(b)}</strong>${dongN(b) ? `<span>${dongN(b)}개동</span>` : ''}</div>
     ${b.note ? `<div class="pc-cap">${esc(b.note)}</div>` : ''}
-    ${dlHtml([['공정율', b.progress ? `${pctTxt(b.progress.rate)} <small>(${esc(b.progress.asOf)} 기준)</small>` : null], ['층수', hist || '미확인'], ['입주', esc(b.moveIn)], b.progress && b.progress.start && b.progress.end ? ['공사기간', esc(b.progress.start) + ' ~ ' + esc(b.progress.end)] : null, b.builder ? ['시공사', esc(b.builder) + (b.contractM ? ` <small>(공사금액 ${fmt(Math.round(b.contractM / 100))}억원)</small>` : '')] : null,
+    ${dlHtml([b.progress ? ['공정율', `${pctTxt(b.progress.rate)} <small>(${esc(b.progress.asOf)} 기준)</small>`] : null, ['층수', hist || '미확인'], ['입주', esc(b.moveIn)], b.progress && b.progress.start && b.progress.end ? ['공사기간', esc(b.progress.start) + ' ~ ' + esc(b.progress.end)] : null, b.builder ? ['시공사', esc(b.builder) + (b.contractM ? ` <small>(공사금액 ${fmt(Math.round(b.contractM / 100))}억원)</small>` : '')] : null,
       nr && nr.st ? ['가까운 역', `${esc(nr.st.name)} <small>${distTxt(nr.st.d)}</small>`] : null, nr && nr.sch ? ['가까운 학교', `${esc(nr.sch.name)} <small>${distTxt(nr.sch.d)}</small>`] : null])}
     <p class="pc-foot">${b.src ? `출처: ${esc(b.src)}<br>` : ''}${esc(b.outlineHow)}${nr ? '<br>역·학교: OpenStreetMap, 단지 중심에서 직선거리' : ''}</p></div>`,
     b.dongs ? b.dongs.flatMap((x) => x.poly).concat([b.poly]) : [b.poly], hmax, clickX);
@@ -663,6 +667,7 @@ if (BLOCKS.length) {
       + `<text x="${x}" y="${ydt}" font-size="11.5" fill="#4A4E56" text-anchor="middle">${dt}</text></g>`;
   });
   $('#timeline').innerHTML = svg;
+  $('#h-tl').closest('section').hidden = !items.length;   // 날짜가 있는 단지가 없으면 빈 축만 보이지 않게 구역을 숨긴다
   $('#timeline').setAttribute('aria-label', '입주·준공 예정: ' + items.map(([, bs]) => `${bs.map((b) => b.id).join('·')} ${bs[0].moveIn}`).join(', '));
 } else {
   $('#projList').innerHTML = '<li class="empty">이 지역에는 아직 표시할 단지가 없습니다. 자료가 들어오면 이곳에 나타납니다.</li>';

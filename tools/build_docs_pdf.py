@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""정의서.md → HTML → PDF. 개발 전용: `markdown` 패키지와 Chrome이 필요하다.
+"""정의서.md · 번들-어댑터-정의서.md → HTML → PDF. 개발 전용: `markdown` 패키지와 Chrome이 필요하다.
 
   .venv/bin/python tools/build_docs_pdf.py
 """
@@ -12,8 +12,10 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-MD = ROOT / "docs" / "data-interface" / "정의서.md"
-PDF = ROOT / "docs" / "data-interface" / "정의서.pdf"
+DOC_DIR = ROOT / "docs" / "data-interface"
+MD = DOC_DIR / "정의서.md"
+PDF = DOC_DIR / "정의서.pdf"
+DOCS = [(MD, PDF), (DOC_DIR / "번들-어댑터-정의서.md", DOC_DIR / "번들-어댑터-정의서.pdf")]   # 팀원에게 보내는 두 문서
 CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
 CSS = """
@@ -97,8 +99,9 @@ def main() -> int:
     if not Path(CHROME).exists():
         print(f"오류: Chrome을 찾지 못함: {CHROME}")
         return 2
-    build_pdf()
-    print(f"생성: {PDF}")
+    for md, pdf in DOCS:
+        build_pdf(md, pdf)
+        print(f"생성: {pdf}")
     return 0
 
 

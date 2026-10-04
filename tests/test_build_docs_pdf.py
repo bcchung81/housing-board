@@ -76,5 +76,13 @@ class RenderHtml(unittest.TestCase):
         self.assertGreaterEqual(html.count("<table>"), 15)
 
 
+class DocsList(unittest.TestCase):
+    def test_both_definition_documents_are_built(self):
+        names = {md.name: pdf.name for md, pdf in build_docs_pdf.DOCS}
+        self.assertEqual(names, {"정의서.md": "정의서.pdf", "번들-어댑터-정의서.md": "번들-어댑터-정의서.pdf"})
+        for md, _ in build_docs_pdf.DOCS:
+            self.assertTrue(md.exists(), md)
+
+
 if __name__ == "__main__":
     unittest.main()
