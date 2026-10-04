@@ -2,7 +2,7 @@
 """V-World GIS건물통합정보(인천 SHP) → 시군구 하나의 건물 윤곽·높이 데이터(웹 지도용 JS)로 바꾼다.
 
 입력  : workspace/data/raw/vworld/vworld_GIS건물통합정보_인천_20260909.zip  (AL_D010_28_*.shp/.dbf/.shx, EPSG:5186)
-출력  : data/gyeyang_buildings.js                      window.GY_BUILDINGS = GeoJSON + meta (운영 데이터)
+출력  : workspace/data/legacy/gyeyang_buildings.js                      window.GY_BUILDINGS = GeoJSON + meta (운영 데이터)
         workspace/data/processed/gyeyang_buildings_summary.json  품질 요약(건수·결측률·환산 오차)
 실행  : python3 workspace/data/tools/vworld_buildings/build_buildings.py [시군구코드=28245] [출력이름=gyeyang]
 

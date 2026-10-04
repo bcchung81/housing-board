@@ -14,7 +14,7 @@
 |---|---|
 | `docs/주택파동_3D지형_테스트.html` | `index.html` + `assets/css/app.css` + `assets/js/app.js` (옛 단일 파일은 정리하며 삭제) |
 | `docs/vworld-key.js` | `config.js` |
-| `data/processed/gyeyang_{buildings,projects,context}.js` | `data/gyeyang_{buildings,projects,context}.js` (루트) |
+| `data/processed/gyeyang_{buildings,projects,context}.js` | `workspace/data/legacy/gyeyang_{buildings,projects,context}.js` (화면은 `regions/` 번들을 읽음) |
 | `data/processed/*.csv · *summary.json` | `workspace/data/processed/` |
 | `data/raw/15…csv · 3045249…csv` | `workspace/data/raw/datagokr/` |
 | `data/raw/molit_*.csv` | `workspace/data/raw/molit/` |

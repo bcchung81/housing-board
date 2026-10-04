@@ -15,11 +15,11 @@ workspace/data/                      (이 폴더 — 작업용, 배포하지 않
   processed/  통계누리 5개 정리본 + 건물 요약 json(gyeyang_buildings_summary.json) + 단지 표(gyeyang_projects.csv)
   tools/      paths.py  (모든 도구가 쓰는 경로. 폴더를 옮기면 여기만 고침)
               molit_tidy.py  (raw/molit → processed/)
-              vworld_buildings/  build_buildings.py, tm.py  (raw/vworld → 루트 data/gyeyang_buildings.js)
-              lh_projects/  build_projects.py, extract_plans.py  (LH 팸플릿·V-World·공정율 → 루트 data/gyeyang_projects.js)
-              context/  build_context.py  (raw/osm → 루트 data/gyeyang_context.js)
+              vworld_buildings/  build_buildings.py, tm.py  (raw/vworld → legacy/gyeyang_buildings.js)
+              lh_projects/  build_projects.py, extract_plans.py  (LH 팸플릿·V-World·공정율 → legacy/gyeyang_projects.js)
+              context/  build_context.py  (raw/osm → legacy/gyeyang_context.js)
 
-data/                                (루트 — 지도가 읽는 운영 데이터 3개)
+legacy/                              (옛 계양 운영 데이터 3개. 지도는 루트 regions/ 번들을 읽는다 — tools/regiontools/migrate_legacy.py 로 옮김)
   gyeyang_buildings.js  gyeyang_projects.js  gyeyang_context.js
 ```
 
@@ -76,7 +76,7 @@ data/                                (루트 — 지도가 읽는 운영 데이�
 | 좌표계·인코딩 | EPSG:5186(GRS80 중부원점 2010), DBF는 CP949. 지도용으로 WGS84로 바꿀 때 `tools/vworld_buildings/tm.py`의 직접 구현 변환을 씀(외부 라이브러리 없음). 계양구청 건물 중심이 Nominatim 지점과 12 m 차이로 일치 |
 | 이용허락 | V-World 내려받기 화면은 CC BY 2.0 KR, 데이터포털 쪽은 공공누리 제1유형으로 적혀 있다는 조사 결과가 있습니다(후자는 직접 확인하지 않음). 둘 다 **출처 표시**가 조건입니다. “구축기관이 달라 참고용” 자료라는 단서가 붙어 있습니다 |
 | 내려받기 | V-World 로그인이 필요합니다(로그인은 사용자가 직접). 전국·시도 단위 파일이며 월 단위 전체본과 일 단위 변경본이 있습니다 |
-| 가공본 | `data/gyeyang_buildings.js`(루트)(6.0 MB, `window.GY_BUILDINGS` GeoJSON + 메타), `processed/gyeyang_buildings_summary.json`. 다시 만들려면 `python3 workspace/data/tools/vworld_buildings/build_buildings.py [시군구코드] [이름]` |
+| 가공본 | `data/legacy/gyeyang_buildings.js`(6.0 MB, `window.GY_BUILDINGS` GeoJSON + 메타), `processed/gyeyang_buildings_summary.json`. 다시 만들려면 `python3 workspace/data/tools/vworld_buildings/build_buildings.py [시군구코드] [이름]` |
 
 계양구(시군구코드 28245) 16,724동에서 화면용 높이 `eh`를 이렇게 정합니다. 어느 방법을 썼는지는 `src`에 남깁니다.
 
@@ -117,7 +117,7 @@ data/                                (루트 — 지도가 읽는 운영 데이�
 | `raw/lh/notices/LH_인천계양A17_입주자모집공고문_20260930.pdf` (1.0 MB), `raw/lh/pamphlets/LH_인천계양A17_팸플릿_20260930.pdf` (16 MB) | A17 신혼희망타운 309세대(블록 463세대, 154세대는 행복주택으로 후속 공급) | |
 | `raw/lh/notices/LH_인천계양A2_입주자모집공고문_정정20241009.pdf` (1.5 MB), `raw/lh/pamphlets/LH_인천계양A2_팸플릿_통합.pdf` (20 MB) | A2 공공분양 747세대, 10개동 | 2026-12 입주 예정. 팸플릿은 이미지 PDF |
 | `raw/lh/notices/LH_인천계양A3_입주자모집공고문_정정20240920.pdf` (1.2 MB), `raw/lh/pamphlets/LH_인천계양A3_팸플릿.pdf` (8.7 MB) | A3 신혼희망타운 359세대(블록 538세대, 179세대는 행복주택), 8개동 | 2026-12 입주 예정 |
-| `processed/gyeyang_projects.csv`, `data/gyeyang_projects.js`(루트) | 블록·동 윤곽, 중심점·면적·동수·동별 층수. 지도(루트 `index.html`)가 읽습니다 | `tools/lh_projects/`의 `extract_plans.py` → `build_projects.py` 순으로 다시 만듭니다 |
+| `processed/gyeyang_projects.csv`, `data/legacy/gyeyang_projects.js` | 블록·동 윤곽, 중심점·면적·동수·동별 층수. 지도(루트 `index.html`)가 읽습니다 | `tools/lh_projects/`의 `extract_plans.py` → `build_projects.py` 순으로 다시 만듭니다 |
 
 | 블록 | 상태 | 세대수 | 동수 | 동별 최상층 | 입주예정 | 공정율 | 시공사 | V-World 면적 |
 |---|---|---:|---:|---|---|---:|---|---:|
@@ -137,7 +137,7 @@ data/                                (루트 — 지도가 읽는 운영 데이�
 - **블록 윤곽은 V-World 공식 자료(레이어 `LT_C_LHBLPN`)** 입니다. 이 레이어에는 블록 이름(A6 등)이 없어서, 팸플릿 ‘토지이용계획도’에서 읽은 위치로 어느 윤곽이 어느 블록인지 찾았습니다. 면적으로 검증했습니다: 공고문 세대별 공유대지×세대수 합계(A6 33,043 / A17 21,622 / A9 약 22,270 / A2 36,854 / A3 약 25,400 ㎡, 직접 계산)와 A6 +0.6%, A17 +1.3%, A9 +1.1%, A2 +0.3%, A3 +0.3% 차이입니다. A2·A3 윤곽은 팸플릿 토지이용계획도의 A2·A3 이름표 위치를 위도·경도로 바꾼 점으로 찾았습니다(블록 이름이 V-World 레이어에 없기 때문). A9 기준 면적은 차후공급(장기임대) 158세대의 공유대지를 표에서 구할 수 없어 공공분양 평균(약 46.9 ㎡)으로 가정한 추정입니다. A10은 공고가 없어 면적을 비교하지 못했습니다.
 - **동 윤곽(10~20 m 오차)** 은 공식이 아닙니다. 팸플릿 ‘단지배치도’의 단지경계선(빨간 점선)을 V-World 블록 윤곽에 겹쳐 맞춘 뒤(겹침률 IoU: A2 0.99, A3 0.98, A6 0.97, A9 0.996, A17 0.95) 동을 옮겼습니다. 회전까지 함께 맞췄는데 A9는 약 -21°, A2·A3는 약 9° 돌아가 있었습니다.
   - A6는 긴 판상형을 기울어진 사각형으로 손으로 옮겼고, A9·A17은 지붕 색 덩어리(분홍·파랑·주황 / 보라·청록·주황)를 `tools/lh_projects/extract_plans.py`로 읽은 뒤 가장 가까운 동 이름표에 붙였습니다. A17 주황 조각 하나(1708동)는 그림을 보고 수동으로 바로잡았습니다. A2·A3는 지붕 조각을 윤곽 사이 거리 12px 이하로 묶어 건물로 만들고(A2 12묶음, A3 16묶음), 묶음→동 번호는 그림에서 눈으로 확인해 정했습니다(스크립트 안 `A23` 표). 조각 수가 기대와 다르면 스크립트가 멈춥니다.
-- 같은 지구의 나머지 공동주택·주상복합 용지 22곳의 공식 윤곽도 `data/gyeyang_projects.js`(루트)의 `otherBlocks`에 넣었습니다. 이름(A번호)을 아직 모르는 용지라, 지도에는 이름 없는 점선 윤곽으로만 그립니다.
+- 같은 지구의 나머지 공동주택·주상복합 용지 22곳의 공식 윤곽도 `data/legacy/gyeyang_projects.js`의 `otherBlocks`에 넣었습니다. 이름(A번호)을 아직 모르는 용지라, 지도에는 이름 없는 점선 윤곽으로만 그립니다.
 - V-World 연속지적도(`LP_PA_CBND_BUBUN`)는 아직 **조성 전 옛 필지**(예: A6 중심 ‘박촌동 178-5 답’)를 줍니다. 블록 윤곽은 위 `LT_C_LHBLPN`을 쓰는 이유입니다.
 - V-World 배경지도: `docs/vworld-key.js`에 개발키를 넣으면 `white` 레이어를 씁니다(`gray`는 없는 레이어입니다). 이 파일에는 키가 들어 있으니 공유하지 마세요. 줌 18까지만 타일이 있어 지도는 18에서 멈춥니다. 키가 거절되면 OpenFreeMap으로 되돌립니다. 데이터 API는 요청에 `domain=localhost`를 붙여야 키를 받아 주는 것으로 확인했습니다(원인 미확인).
 - 지구경계(점선)의 OSM 데이터는 ODbL이고 지도에 출처를 표시합니다. 지명 글자는 OpenFreeMap(OSM 기반)에서 받아 V-World 배경 위에 얹습니다.
@@ -152,7 +152,7 @@ data/                                (루트 — 지도가 읽는 운영 데이�
 | `raw/lh/public/LH_건설공사현황_20260701_주택품질안전처.pdf`, `..._인천계양_추출.csv` | LH 사전정보공표(`lh.or.kr` 게시판) | 1.4 MB, 22행 | Googlebot만 제한, 일반 허용 | 공사별 시공사·공사금액·규모·착공·준공·공정률(2026년 7월 기준). 인천계양 22행을 CSV로 추림 |
 | `raw/lh/public/LH_2026년_주택입주계획_공시용.hwpx`, `LH_2025년_...hwpx` | 같은 게시판 | 58 KB, 86 KB | 같음 | 2026년 계획에 인천계양 A2(2026-12), A3(2026-12) 입주 항목이 있음 |
 | `raw/lh/public/LH_2020-2025_공공분양공급현황_공공데이터개방용_20251113.xlsx` | 같은 게시판 | 29 KB | 같음 | 공급유형별 공고 세대수. ‘인천계양(공공주택)’ A3 항목(동양동 413-2) 있음 |
-| `raw/osm/ctx.json` → `data/gyeyang_context.js`(루트) | OpenStreetMap Overpass(`railway=station`+`station=subway`, `amenity=school`) | 역 5곳, 학교 16곳 | - (공개 API) | 지구 중심에서 직선 3.2 km 안의 지하철역, 2.2 km 안의 학교 이름과 좌표. `tools/context/build_context.py`가 줄여서 만듭니다. © OpenStreetMap contributors, **ODbL** — 지도에 출처를 표시합니다 |
+| `raw/osm/ctx.json` → `data/legacy/gyeyang_context.js` | OpenStreetMap Overpass(`railway=station`+`station=subway`, `amenity=school`) | 역 5곳, 학교 16곳 | - (공개 API) | 지구 중심에서 직선 3.2 km 안의 지하철역, 2.2 km 안의 학교 이름과 좌표. `tools/context/build_context.py`가 줄여서 만듭니다. © OpenStreetMap contributors, **ODbL** — 지도에 출처를 표시합니다 |
 | `raw/gh/gh_분양임대계획_표_20261003.csv` | GH `housing-stability-in-gyeonggi-do001.do` | 9행 | **전체 금지(`Disallow: /`)** | GH 분양·임대 계획 표 |
 | `raw/gh/gh_주택공고목록_메타데이터_20261003.csv` | GH `housing.do` 목록 57쪽 | 570행 | **전체 금지** | 번호·구분·제목·부서·등록일·조회수·첨부 유무·글번호. **첨부 파일은 받지 않았습니다** |
 
@@ -163,7 +163,7 @@ data/                                (루트 — 지도가 읽는 운영 데이�
 - **역·학교(OSM)는 있는 것만 담았습니다.** 지구 안에 새로 짓는 학교·역은 OSM에 아직 없을 수 있고, 거리는 단지 중심에서 **직선**입니다(걷는 거리 아님). 지도의 ‘가까운 역·학교’ 줄과 ‘역·학교’ 보기(500 m·1 km 원)가 이 값을 씁니다.
 - **지도의 ‘입주 시기’ 보기는 추정입니다.** 단지별 공사 시작·종료일(청약플러스 공사현황, A10은 입주계획의 준공 예정일)을 직선으로 나눠 동 높이를 키웁니다. 실제 공정과 다릅니다. ‘다음 일정’ 카드의 D-n은 같은 날짜로 계산하며, 입주는 월 단위(예: 2026.12)라서 ‘n개월 뒤’로 어림합니다.
 - **지도의 동 그림자·광원은 장식입니다.** 북서쪽 해를 가정해 높이의 0.6배를 남동쪽으로 늘어뜨린 모양이며 일조 계산이 아닙니다.
-- 가공: `tools/lh_projects/build_projects.py`가 위 공정율 CSV와 V-World 윤곽을 읽어 `data/gyeyang_projects.js`(루트)를 만듭니다. 시공사는 건설공사현황 PDF(A9·A10·A17)와 청약홈 공고(A6)에서 가져왔습니다.
+- 가공: `tools/lh_projects/build_projects.py`가 위 공정율 CSV와 V-World 윤곽을 읽어 `data/legacy/gyeyang_projects.js`를 만듭니다. 시공사는 건설공사현황 PDF(A9·A10·A17)와 청약홈 공고(A6)에서 가져왔습니다.
 
 ## 6. 읽을 때 주의
 

@@ -2,7 +2,7 @@
 """OSM에서 받은 역·학교 위치를 지도용 JS(window.GY_CONTEXT)로 줄인다.
 
 입력 : workspace/data/raw/osm/ctx.json  (Overpass: railway=station, amenity=school·kindergarten, 계양 일대 bbox)
-출력 : data/gyeyang_context.js (운영 데이터)
+출력 : workspace/data/legacy/gyeyang_context.js (운영 데이터)
 기준 : 인천계양 테크노밸리 지구 중심에서 직선거리 — 지하철역 3.2 km, 학교 2.2 km 안만 남긴다.
 주의: OSM에 있는 것만 담았다. 지구 안에 새로 짓는 학교·역은 아직 OSM에 없을 수 있다. 직선거리이며 걷는 거리가 아니다.
 출처: © OpenStreetMap contributors (ODbL)

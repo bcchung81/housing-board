@@ -9,7 +9,7 @@
   workspace/data/raw/lh/cwstt/*.csv   LH 청약플러스 '공사현황' 공정율과 날짜별 이력
 위치 맞춤: 그림의 단지경계 다각형을 V-World 블록 윤곽에 겹치도록 크기·회전·이동을 맞춘다(겹침률 IoU를 출력).
 면적 검증: 공고문 세대별 공유대지×세대수 합계(AREA_NOTICE)와 V-World 윤곽 면적을 비교해 출력한다.
-출력: data/gyeyang_projects.js (운영 데이터), workspace/data/processed/gyeyang_projects.csv
+출력: workspace/data/legacy/gyeyang_projects.js (운영 데이터), workspace/data/processed/gyeyang_projects.csv
 오차: 블록 윤곽 수 m~수십 m, 동 윤곽 10~20 m. 정확한 필지(지번)가 아니다.
 """
 import csv, json, math, sys
