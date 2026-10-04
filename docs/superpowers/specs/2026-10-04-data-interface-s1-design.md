@@ -69,12 +69,13 @@ schemas/
   input.spec.json               입력 규격의 단일 원천 (열·형식·필수·열거형·규칙 메타)
   bundle/                       출력 번들 JSON Schema: index, region, projects, buildings, context
 tools/
-  validate_input.py             검증기 (표준 라이브러리만 사용)
+  validate_input.py             검증기 실행 래퍼
+  datacheck/                    검증기 본체 패키지(표준 라이브러리만 사용): spec, model, readers, values, rules_rows, rules_domain, validate, report, cli
   gen_docs.py                   input.spec.json → 정의서 필드표·CSV 템플릿 생성 및 일치 검사
-  build_docs_pdf.py             정의서.md → HTML → PDF (개발 전용: markdown 패키지 + Chrome 헤드리스)
+  build_docs_pdf.py             정의서.md → HTML → PDF (개발 전용: markdown 패키지 + Chrome 헤드리스. Chrome은 PDF를 쓰고도 종료하지 않아 파일이 완성되면 직접 종료한다)
 tests/
-  test_validate_input.py        검증기 단위 테스트 (unittest)
-  fixtures/                     정상 세트와 규칙별 오류 세트
+  helpers.py                    정상 지역을 코드로 만들어 규칙마다 한 곳만 바꿔 시험하는 도구(고정 fixtures 폴더 대신)
+  test_*.py                     검증기·생성기·예시·스키마·PDF 테스트 (unittest)
 input/                          팀원 제출물을 푼 곳. 저장소에 올리지 않는다(.gitignore)
 ```
 
