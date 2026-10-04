@@ -80,6 +80,12 @@ class FileLevel(unittest.TestCase):
         [row] = res.tables["regions.csv"].rows
         self.assertEqual(row.get("region_name"), "테스트, 구")
 
+    def test_trailing_empty_header_cells_from_excel_are_ignored(self):
+        header = ["region_slug", "region_name", "", ""]  # 엑셀이 서식만 남은 오른쪽 열까지 내보낸 경우
+        res = run(raw={"regions.csv": raw_csv(header, [["test-region", "테스트구", "", ""]])})
+        self.assertEqual(problems(res), [])
+        self.assertEqual(res.tables["regions.csv"].header, ["region_slug", "region_name"])
+
     def test_header_only_tables_pass(self):  # Review Focus 3
         empty = lambda rows: rows.clear()
         res = run(edits={"zones.csv": empty, "dongs.csv": empty})
@@ -88,12 +94,12 @@ class FileLevel(unittest.TestCase):
 
 
 class ReadCsv(unittest.TestCase):
-    def test_rows_are_numbered_from_one_skipping_blank_lines(self):
+    def test_rows_keep_their_spreadsheet_position_when_blank_rows_are_skipped(self):
         with tempfile.TemporaryDirectory() as tmp:
             p = Path(tmp) / "t.csv"
-            p.write_text("a,b\n1,2\n\n3,4\n", encoding="utf-8")
+            p.write_text("a,b\n1,2\n,\n3,4\n", encoding="utf-8")  # 2번째 행: 엑셀에서 내용만 지운 빈 행
             t = read_csv(p, "t.csv")
-        self.assertEqual([(r.n, r.get("a"), r.get("b")) for r in t.rows], [(1, "1", "2"), (2, "3", "4")])
+        self.assertEqual([(r.n, r.get("a"), r.get("b")) for r in t.rows], [(1, "1", "2"), (3, "3", "4")])
         self.assertEqual(t.rows[0].get("missing"), "")
 
 

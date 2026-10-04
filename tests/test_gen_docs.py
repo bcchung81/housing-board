@@ -76,5 +76,11 @@ class RepoDocs(unittest.TestCase):
             self.assertIn(f"| {rule} |", text, rule)
 
 
+    def test_definition_warns_about_excel_number_format(self):
+        text = gen_docs.DOC.read_text(encoding="utf-8")
+        self.assertIn("셀 서식을 '텍스트'", text)
+        self.assertIn("| 9 |", text)  # 9절 체크리스트의 9번째 함정
+
+
 if __name__ == "__main__":
     unittest.main()

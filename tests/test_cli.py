@@ -109,6 +109,20 @@ class CliTest(unittest.TestCase):
             data = json.loads((out / "quarantine" / "test-region" / "geometry_overrides.geojson").read_text(encoding="utf-8"))
             self.assertEqual(data["features"][0]["properties"]["_issues"][0]["rule"], "E108")
 
+    def test_non_object_geojson_features_do_not_crash_the_report(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / "out"
+            region = make_region(tmp)
+            features = ["abc", 5, {"type": "Feature", "properties": {}, "geometry": None}]
+            (region / "geometry_overrides.geojson").write_text(
+                json.dumps({"type": "FeatureCollection", "features": features}), encoding="utf-8")
+            code, _ = cli(region, "--out", out)
+            self.assertEqual(code, 1)
+            self.assertTrue((out / "validation_report.json").exists())
+            data = json.loads((out / "quarantine" / "test-region" / "geometry_overrides.geojson").read_text(encoding="utf-8"))
+            self.assertEqual(len(data["features"]), 3)
+            self.assertEqual({f["properties"]["_issues"][0]["rule"] for f in data["features"]}, {"E101"})
+
     def test_two_regions_one_broken_still_reports_the_other(self):  # Review Focus 5
         with tempfile.TemporaryDirectory() as tmp:
             parent, out = Path(tmp) / "input", Path(tmp) / "out"

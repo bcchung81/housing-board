@@ -17,12 +17,14 @@ def read_csv(path: Path | str, name: str) -> Table:
     text = Path(path).read_bytes().decode("utf-8-sig")
     raw = list(csv.reader(io.StringIO(text, newline="")))
     header = [h.strip() for h in raw[0]] if raw else []
+    while header and header[-1] == "":
+        header.pop()  # 엑셀이 서식만 남은 오른쪽 열까지 내보낸 빈 열 이름
     rows: list[Row] = []
-    for cells in raw[1:]:
+    for n, cells in enumerate(raw[1:], start=1):  # 행 번호 = 스프레드시트 위치(헤더 제외). 빈 행도 번호를 차지한다
         if not any(c.strip() for c in cells):
-            continue  # 끝의 빈 줄 등
+            continue  # 엑셀에서 내용만 지운 행, 끝의 빈 줄 등은 표에 넣지 않는다
         values = {h: (cells[i].strip() if i < len(cells) else "") for i, h in enumerate(header)}
-        rows.append(Row(len(rows) + 1, values))
+        rows.append(Row(n, values))
     return Table(name, header, rows)
 
 
@@ -34,7 +36,8 @@ def read_geojson_table(path: Path | str, name: str, slug: str) -> tuple[Table, l
     data = json.loads(Path(path).read_text(encoding="utf-8-sig"))
     if not isinstance(data, dict) or data.get("type") != "FeatureCollection" or not isinstance(data.get("features"), list):
         raise ValueError("FeatureCollection이 아님")
-    features = data["features"]
+    features = [f if isinstance(f, dict) else {"type": "Feature", "properties": {}, "geometry": None}
+                for f in data["features"]]  # 문자열·숫자 항목도 행(E101)으로 보고되도록 정규화
     rows: list[Row] = []
     keys: list[str] = []
     for i, feature in enumerate(features, start=1):
