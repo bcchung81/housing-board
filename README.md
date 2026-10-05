@@ -4,7 +4,9 @@
 
 지금 올라 있는 지역: **인천 계양구**(계양 테크노밸리, 기본) · **광주 광산구**(선운2지구) · **전남 나주시**(빛가람 혁신도시).
 
-데이터(번들 구조·수집한 원천·가공 과정)는 이 파일에 두지 않고 **[dataset.md](dataset.md)** 에 모았습니다.
+**번들이 없는 지역도 지도가 열립니다.** 번들(위 세 지역)이 있으면 단지·동·점검을 모두 보이고, 없으면 시군구·법정동·필지 코드나 주소 이동 입력줄로 열어 경계를 강조하고 기존 건물 3D·건축HUB 인허가 사업(번지 단위 단지)·신설예정 학교·버스 정류장·공공 모집 공고를 **요청 시에** 서버에서 받아 그립니다(`/api/v1/*`). 전국 표본 59곳으로 점검합니다(`scripts/smoke.js`).
+
+데이터(번들 구조·수집한 원천·가공 과정)는 이 파일에 두지 않고 **[dataset.md](dataset.md)** 에, 서버 API의 요청·응답 규격은 **[docs/data-interface/API-정의서.md](docs/data-interface/API-정의서.md)**(정본 `schemas/api/openapi.json`)에 모았습니다.
 
 ## 실행
 
@@ -55,9 +57,10 @@ api/bus.js               버스 위치 중계(Vercel 함수): 키를 숨기고 T
 api/v1/resolve.js        표준코드 해석 API: 행정표준코드 표 + V-World 경계·필지 + 번들 coverage
 api/v1/infra.js          기반시설 요청 시 조회 API: 인허가 단지 가까이의 신설예정 학교(교육재정알리미)와 버스 정류장(TAGO)을 번들 infra 와 같은 모양으로
 api/v1/codes/search.js  이동할 곳 검색 API: 이름·지번·도로명·표준코드 → 법정동·필지 후보(표준코드 이름 검색 + V-World 주소). 주소 이동 입력줄이 부름
+api/v1/notices.js        공공 모집 공고 API: 마이홈포털 임대·분양 모집공고(전국)를 시군구 이름으로 걸러(번들 없는 지역의 사이드바 "공공 모집 공고")
 api/v1/permits.js        인허가 사업 요청 시 조회 API: 법정동 하나의 건축HUB 주택인허가를 번지 단위 사업 + 필지 경계로(번들 없는 지역). 건축물대장 총괄표제부로 블록 단위 허가의 위치·합필 지번·준공을 보강
 api/v1/buildings.js      건물 요청 시 조회 API: 0.01° 칸 단위로 V-World 건물을 번들과 같은 속성으로(번들 없는 지역·번들 밖)
-lib/                     서버 공용(키 풀 keys.js · 로컬 캐시 cache.js · 코드 판별 codes.js · 건물 변환 buildings.js · 인허가 규칙·건물대장 대조 permits.js · 기반시설 변환 infra.js · 공공데이터포털 쪽 조회 datagokr.js · 행정표준코드 stan.js · 경계 단순화 geom.js · V-World 키 vworld.js)
+lib/                     서버 공용(키 풀 keys.js · 로컬 캐시 cache.js · 코드 판별 codes.js · 번들 있는 시군구 판별 coverage.js · 건물 변환 buildings.js · 인허가 규칙·건물대장 대조 permits.js · 기반시설·OSM 정류장 변환 infra.js · 마이홈 공고 변환 myhome.js · 공공데이터포털 쪽 조회 datagokr.js · 행정표준코드 stan.js · 경계 단순화 geom.js · V-World 키 vworld.js)
 env.example              .env.local 견본(키 이름·용도·한도, 값 없음)
 assets/
   css/app.css            화면 모양 (반투명 유리 변수 --glass-*)
@@ -69,14 +72,17 @@ assets/
   js/app.js              화면 동작 (지도·레이어·HUD·카드·옵션·사이드바)
   vendor/maplibre-gl/    MapLibre GL JS 5.24.0 (자체 호스팅, BSD-3, LICENSE.txt 동봉)
 regions/                 지역별 자료 묶음(번들) — 구조는 dataset.md
-schemas/                 번들·입력 규격(JSON Schema)
+schemas/                 번들·입력 규격(JSON Schema) · schemas/api/openapi.json(서버 API 계약, OpenAPI 3.1)
 tools/                   데이터를 만들고 검증하는 도구 — dataset.md
 run-app.sh               로컬 실행(개발 서버 + 브라우저 열기)
 dataset.md               지도 데이터 (쓰는 것 · 만드는 절차 · 안 쓰는 것 · 구조 · 수집 출처 · 가공 과정)
-docs/                    데이터 인터페이스 정의서(docs/data-interface/)·설계 문서(docs/superpowers/)·상황판 기획서와 스펙(docs/product/)
+docs/                    데이터 인터페이스 정의서(docs/data-interface/: 번들 정의서·어댑터 정의서·**서버 API 정의서**)·설계 문서(docs/superpowers/)·상황판 기획서와 스펙(docs/product/)
 scripts/build.js         Vercel 빌드
-scripts/dev.js           로컬 개발 서버(정적 파일 + /api/bus + /api/v1/resolve)
-tests/                   Python(unittest)·Node(node --test) 시험
+scripts/dev.js           로컬 개발 서버(정적 파일 + /api/bus + /api/v1/*)
+scripts/smoke.js         전국 표본 점검: 지역 이름 → 코드 → resolve·buildings·permits·infra 를 불러 "번들 없이 열리는가"를 표로(tests/smoke/regions.json 59곳)
+scripts/capture-fixtures.js  운영 응답을 tests/fixtures/api/ 에 받아 계약 시험의 기준으로 갱신
+scripts/gen-api-docs.js  schemas/api/openapi.json → docs/data-interface/API-정의서.md 생성(--check 로 최신 여부 확인)
+tests/                   Python(unittest)·Node(node --test) 시험 · fixtures/api(운영 응답 기준 파일) · smoke(전국 표본)
 workspace/               작업 영역 — 배포하지 않음 (원천 자료, 기획 문서, 영상)
 ```
 
@@ -141,15 +147,26 @@ node --test "tests/js/*.test.cjs"                     # Node (따옴표 필수)
 | `tests/js/goto.test.cjs` `codessearch.test.cjs` | 주소 이동 입력줄: 상태·후보 행·인식 칩·이동 주소·최근 이동·가짜 DOM 연결·HTML/CSS 구조, 검색 API(이름·지번·도로명·코드·부분 실패·캐시·거절) |
 | `tests/js/permits.test.cjs` `permitsapi.test.cjs` | 인허가 사업 요청 시 조회: Python 번들 빌드와의 일치(PNU·상태·짧은 이름)·번지 단위 집계·건물대장 대조 규칙, 인허가 API(쪽 넘김·재시도·키 교체·필지·상한·건물대장으로 블록 위치·합필 복구·준공·초당 한도) |
 | `tests/js/buildings.test.cjs` `buildingsapi.test.cjs` `dynbuildings.test.cjs` | 건물 요청 시 조회: Python 건물 변환과의 일치·칸 계산, 건물 API(칸 소속·캐시·시간당 상한), 화면 연결 |
+| `tests/js/myhome.test.cjs` `noticesapi.test.cjs` | 마이홈 공고 변환·시군구 거르기·링크 제한, 공고 API(전국 목록 캐시·한쪽 실패·키 교체·오류) |
+| `tests/js/contract.test.cjs` | 인터페이스 계약: 문서 온전성·운영 응답 20개가 스키마를 통과·핸들러 오류 모양·매개변수 이름 일치 |
+| `tests/js/smoke.test.cjs` | 전국 표본 점검의 판정 함수(경계 윤곽·칸 번호·열림/경고 판정)와 표본 파일 구조 |
 | `tests/js/vercelconf.test.cjs` | `vercel.json`: iframe 차단 헤더·함수 번들 파일 |
 | `tests/js/bus.test.cjs` | 버스 계산(방향·3D 면·보간·경유 단지)과 화면 연결(옵션·요청 시에만 조회 약속) |
 | `tests/js/glass.test.cjs` `sidebar.test.cjs` `topbar.test.cjs` | 반투명 유리 글자 대비 · 사이드바(글자 13px 이상·기본 접힘·요약) · 상단 바·확대 카드·가로 요약 |
 
 화면의 실제 겹침·높이는 정적 시험이 보지 못하므로, 화면을 고친 뒤에는 `?selftest`로 열어 `window.__map`으로 레이어·위치를 확인합니다. Python 시험(번들을 만드는 도구·검증기)은 [dataset.md](dataset.md)의 "지역을 추가하거나 고칠 때"에 정리했습니다.
 
+서버 API를 고칠 때는 정본 `schemas/api/openapi.json`을 먼저 고치고 문서를 다시 만든 뒤 계약 시험을 돌립니다. 배포한 뒤에는 전국 표본을 점검합니다(호출 사이에 간격을 두므로 약 15분 걸리고, 행정표준코드·건물대장은 초당 한도가 있어 몰아 부르면 막힙니다).
+
+```
+node scripts/gen-api-docs.js             # openapi.json → docs/data-interface/API-정의서.md (--check 는 최신 여부만 확인)
+node scripts/capture-fixtures.js [주소]  # 운영 응답을 tests/fixtures/api/ 에 받아 계약 시험의 기준을 갱신(키·원천 주소는 응답에 없음)
+node scripts/smoke.js [주소] ["하남시 감일동" …]   # 전국 표본 59곳(또는 이름 지정): 이름 → 코드 → resolve·buildings·permits·infra, 열리지 않으면 종료 코드 1
+```
+
 ## 배포
 
-Vercel은 `vercel.json`의 빌드 명령(`node scripts/build.js`)이 `index.html`·`assets/`·`regions/`만 `public/`에 모아 서비스하고, `api/bus.js`와 `api/v1/resolve.js`는 함수로 따로 배포됩니다(`lib/`는 함수가 가져가고, `regions/` 파일은 `vercel.json`의 `includeFiles`로 함께 올라갑니다). 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
+Vercel은 `vercel.json`의 빌드 명령(`node scripts/build.js`)이 `index.html`·`assets/`·`regions/`만 `public/`에 모아 서비스하고, `api/bus.js`와 `api/v1/*.js`(resolve·codes/search·notices·buildings·permits·infra)는 함수로 따로 배포됩니다(`lib/`는 함수가 가져가고, `regions/` 파일은 `vercel.json`의 `includeFiles`로 함께 올라갑니다). 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
 
 **인증키**: `config.js`와 `.env*`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(OpenFreeMap 회색 지도)로 빌드합니다.
 
@@ -168,6 +185,8 @@ vercel env add VWORLD_DOMAIN production         # 코드 해석이 V-World 를 �
 ```
 
 **V-World 키(운영키·개발키)**: 키는 발급 때 등록한 서비스 URL과 같은 `domain`을 보내야 통과합니다(아니면 `INCORRECT_KEY`). Vercel에는 운영키 `VWORLD_KEY`와 `VWORLD_DOMAIN=housing-board.vercel.app`을 두고, 로컬 `.env.local`에는 개발키 `VWORLD_DEV_KEY`와 `VWORLD_DOMAIN=localhost`를 둡니다. 로컬 개발 서버·수집 도구는 `VWORLD_DEV_KEY`가 있으면 그것을 쓰고, Vercel 함수는 `VWORLD_KEY`를 씁니다. 함수는 서울(`vercel.json`의 `regions: ["icn1"]`)에서 실행합니다. 미국 지역에서는 V-World 호출이 연결 실패했습니다.
+
+**호출 예산(환경변수, 값은 인스턴스별 시간당 원천 호출 수)**: `BUILDINGS_UPSTREAM_PER_HOUR`(기본 1200) · `PERMITS_UPSTREAM_PER_HOUR`(2000) · `LEDGER_UPSTREAM_PER_HOUR`(1500) · `INFRA_UPSTREAM_PER_HOUR`(600) · `SEARCH_UPSTREAM_PER_HOUR`(600). 전국 표본 점검에서 이전 값(600)으로는 몇 곳만 열어도 닿아 올렸고, 운영에는 `vercel env`로 production·preview 모두 넣었습니다(견본은 `env.example`). 마이홈 공고(`/api/v1/notices`)에는 키마다 **마이홈포털 공공주택 모집공고(15108420)** 활용신청도 필요합니다. 서울 TAGO 버스정보가 없어 서울 정류장은 OpenStreetMap으로 대신하며, 서울시 버스 API를 쓰려면 서울 열린데이터광장·공공데이터포털에서 사용자가 직접 활용신청해야 합니다(아직 하지 않음).
 
 하루 호출은 (실시간 노선 수) × 86400 ÷ ttl 회로 묶입니다. 응답을 서버 캐시와 CDN이 ttl초(최소 60초) 동안 나눠 쓰기 때문입니다(계양 4개 노선이면 최대 5,760회, 개발계정 한도 10,000회). 노선이 늘면 ttl이 길어지고, BUS 키가 늘면 키 수만큼 짧아집니다. 로컬 캐시는 `.cache/`(gitignore, 최대 24시간·50 MB), Vercel에서는 인스턴스 임시 폴더입니다.
 
@@ -190,5 +209,7 @@ vercel env add VWORLD_DOMAIN production         # 코드 해석이 V-World 를 �
 | V-World WMTS (`api.vworld.kr`) | 배경지도(white) | 인증키 필요, 최대 확대 18 |
 | AWS Terrain Tiles (`s3.amazonaws.com/elevation-tiles-prod`) | 지형 고도 | 키 없음. SRTM 등 |
 | OpenFreeMap (`tiles.openfreemap.org`) | 지명·도로명 글자, 키가 없을 때 대체 배경 | 키 없음 |
+| OpenStreetMap Overpass (`overpass-api.de`·`overpass.kumi.systems`) | TAGO에 없는 지역(서울 등)의 버스 정류장(서버가 24시간 캐시) | 키 없음, ODbL. 공개 서버라 느리거나 꺼질 수 있음(실패해도 지도는 열림) |
+| 마이홈포털 공공주택 모집공고(`apis.data.go.kr/1613000/HWSPR02`) | 번들 없는 지역의 사이드바 "공공 모집 공고" | 공공데이터포털 키 필요 |
 
-건물 © 국토교통부 GIS건물통합정보(V-World, CC BY 2.0 KR) · 역·학교 © OpenStreetMap contributors(ODbL). 지도 오른쪽 아래 출처 표기와 사이드바 아래쪽 문구가 지역 자료의 출처에서 자동으로 만들어집니다.
+건물 © 국토교통부 GIS건물통합정보(V-World, CC BY 2.0 KR) · 역·학교와 TAGO 밖 지역의 버스 정류장 © OpenStreetMap contributors(ODbL). 지도 오른쪽 아래 출처 표기와 사이드바 아래쪽 문구가 지역 자료의 출처에서 자동으로 만들어집니다.
