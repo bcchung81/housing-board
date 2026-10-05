@@ -11,7 +11,8 @@
 지역 자료(`regions/*.json`)를 `fetch`로 읽으므로 **더블클릭(`file://`)으로는 열리지 않고, 서버가 필요합니다.** 로컬에서는 개발 서버를 쓰세요. 정적 파일과 버스 위치 중계(`/api/bus`), 표준코드 해석(`/api/v1/resolve`)을 함께 열어 줍니다.
 
 ```
-./run-app.sh                     # 이 폴더에서. 개발 서버를 켜고 브라우저를 엽니다(포트 기본 8000, 바꾸려면 ./run-app.sh 8001)
+./run-app.sh                     # 이 폴더에서. 개발 서버를 켜고 첫 화면을 코드로 엽니다(포트 기본 8000, 코드 기본 41450 경기도 하남시)
+./run-app.sh 8001 4145011100     # 포트와 코드: 시군구 5·법정동 8/10·필지 19자리(?sgg= ?bjd= ?pnu=), 또는 region:incheon-gyeyang
 node scripts/dev.js 8000         # 같은 일을 직접: 브라우저에서 http://127.0.0.1:8000/ 을 엽니다
 ```
 
@@ -24,6 +25,7 @@ node scripts/dev.js 8000         # 같은 일을 직접: 브라우저에서 http
 - 화면에 `지역 자료를 불러오지 못했습니다. regions/index.json: Failed to fetch`가 뜨면 `file://`로 열었거나 서버가 꺼져 있는 것입니다. 서버를 켜고 `http://localhost:포트/`로 여세요.
 - 인터넷이 필요합니다: 배경지도(V-World), 지형 고도(AWS), 지명 글자(OpenFreeMap)를 내려받습니다.
 - V-World 배경을 쓰려면 `config.js`에 인증키를 넣습니다(`config.example.js` 참고). 비어 있으면 OpenFreeMap 회색 지도로 대신 나옵니다.
+- 지도 아래 가운데의 입력줄(`/` 키로 바로)에 장소 이름(`하남시청`, 지금 보는 곳 근처 먼저)·동 이름·지번(`장위동 68-37`)·도로명·법정동 코드(8·10자리)·PNU(19자리)를 치면 그곳으로 지도를 다시 엽니다. 투명도로 상태를 말합니다(대기 .62 · 입력 중 .88 · 비활성 .46). 서버(`node scripts/dev.js`·Vercel)가 없으면 비활성으로 보입니다.
 - 지역이 둘 이상이면 지역 선택기가 보입니다(사이드바 맨 위, 사이드바가 접혀 있을 때는 지도 오른쪽 위 요약 카드 왼쪽 위). 지역 목록에 없는 `?region=` 값은 안내 화면이 뜹니다.
 - **지도는 팝업(`window.open`)이나 새 탭으로 여세요. `<iframe>`에는 넣을 수 없습니다**(응답 헤더 `X-Frame-Options: DENY`, `frame-ancestors 'none'`).
 
@@ -31,8 +33,10 @@ node scripts/dev.js 8000         # 같은 일을 직접: 브라우저에서 http
 
 | 매개변수 | 값 | 동작 |
 |---|---|---|
+| `permits` | `0` | 번들 없는 법정동·필지에서 건축HUB 인허가 사업을 조회하지 않음 |
+| `dyn` | `0` · `1` | 건물 요청 시 조회: `0`이면 끔(번들 없는 지역은 경계만), `1`이면 번들 있는 지역에서도 번들 밖 건물을 조회(코드로 열면 기본 켬) |
 | `region` | slug | 열 지역(없으면 기본 지역). 지역을 바꾸면 `block`과 코드 매개변수는 지워집니다. 코드가 함께 오면 코드가 우선 |
-| `code` `sgg` `bjd` `pnu` | 표준코드(법정동 기준): 시군구 5 · 법정동 8 또는 10 · 필지 PNU 19자리. 둘 이상이면 `pnu` > `bjd` > `sgg` > `code` | 코드를 해석해(`/api/v1/resolve`) 번들이 있는 지역이면 그곳으로 열고 법정동·필지로 이동해 경계를 강조합니다. 번들이 없는 지역(예: 서울)은 "공급 사업 정보가 아직 없는 지역" 안내가 뜹니다. 예: `?bjd=2824510900` |
+| `code` `sgg` `bjd` `pnu` | 표준코드(법정동 기준): 시군구 5 · 법정동 8 또는 10 · 필지 PNU 19자리. 둘 이상이면 `pnu` > `bjd` > `sgg` > `code` | 코드를 해석해(`/api/v1/resolve`) 번들이 있는 지역이면 그곳으로 열고 법정동·필지로 이동해 경계를 강조합니다. 번들이 없는 지역(예: 서울·하남)도 지도가 열립니다: 경계를 강조하고 건물은 보이는 칸마다 요청 시 조회해 3D로 그리며, 법정동·필지로 열면 그 법정동의 건축HUB 인허가 사업을 단지로, 그 가까이의 신설예정 학교·버스 정류장을 입주 전 점검으로 보입니다(버스 노선·시행자·분양·통학구역은 번들이 없어 없음. 서울은 TAGO에 정류소 자료가 없음). 예: `?bjd=2824510900`(번들 있음), `?bjd=1129013800`(서울 장위동, 번들 없음) |
 | `block` | 단지 `label` 또는 `id`(예 `A6`) | 그 단지 카드를 열고 지도로 이동 |
 | `mode` | `progress` `time` `infra` | 보기 기준(기본 층수). `infra`는 점검 자료가 있는 지역만 |
 | `panel` | `1` | 데스크톱에서 사이드바를 펼친 채 열기(기본은 접힘) |
@@ -49,11 +53,16 @@ config.js                V-World 인증키 등 설정 (공유 금지) / config.e
 vercel.json  .vercelignore   배포 설정(캐시 헤더 · 올라가면 안 되는 파일 제외 · 버스 함수 설정)
 api/bus.js               버스 위치 중계(Vercel 함수): 키를 숨기고 TAGO 호출 수를 묶음(요청 시에만, 키 풀·로컬 캐시)
 api/v1/resolve.js        표준코드 해석 API: 행정표준코드 표 + V-World 경계·필지 + 번들 coverage
-lib/                     서버 공용(키 풀 keys.js · 로컬 캐시 cache.js · 코드 판별 codes.js)
+api/v1/infra.js          기반시설 요청 시 조회 API: 인허가 단지 가까이의 신설예정 학교(교육재정알리미)와 버스 정류장(TAGO)을 번들 infra 와 같은 모양으로
+api/v1/codes/search.js  이동할 곳 검색 API: 이름·지번·도로명·표준코드 → 법정동·필지 후보(표준코드 이름 검색 + V-World 주소). 주소 이동 입력줄이 부름
+api/v1/permits.js        인허가 사업 요청 시 조회 API: 법정동 하나의 건축HUB 주택인허가를 번지 단위 사업 + 필지 경계로(번들 없는 지역). 건축물대장 총괄표제부로 블록 단위 허가의 위치·합필 지번·준공을 보강
+api/v1/buildings.js      건물 요청 시 조회 API: 0.01° 칸 단위로 V-World 건물을 번들과 같은 속성으로(번들 없는 지역·번들 밖)
+lib/                     서버 공용(키 풀 keys.js · 로컬 캐시 cache.js · 코드 판별 codes.js · 건물 변환 buildings.js · 인허가 규칙·건물대장 대조 permits.js · 기반시설 변환 infra.js · 공공데이터포털 쪽 조회 datagokr.js · 행정표준코드 stan.js · 경계 단순화 geom.js · V-World 키 vworld.js)
 env.example              .env.local 견본(키 이름·용도·한도, 값 없음)
 assets/
   css/app.css            화면 모양 (반투명 유리 변수 --glass-*)
   js/region.js           지역 로더와 어댑터 (순수 함수 + 얇은 DOM 부분)
+  js/goto.js             주소 이동 입력줄(하단 커맨드 라인): 상태(대기·입력 중·이동 중·비활성)·후보·이동 주소 모델 + 얇은 DOM 부분
   js/infra.js            입주 전 점검 판정 (순수 함수)
   js/facility.js         기존 건물 시설 분류 (순수 함수)
   js/bus.js              버스 노선·위치 계산 (방향·3D 면·보간·경유 단지, 순수 함수)
@@ -128,6 +137,10 @@ node --test "tests/js/*.test.cjs"                     # Node (따옴표 필수)
 | `tests/js/busapi.test.cjs` | `api/bus.js`: 호출 수 묶기(ttl, 키 수)·노선 제한·쿼리 거절·실패 처리·키 인코딩·키 교체·한도 소진·키 값이 캐시에 없음 |
 | `tests/js/keys.test.cjs` `cache.test.cjs` | `lib/keys.js`(용도별 키 풀·한도·시연 프로파일) · `lib/cache.js`(TTL·50 MB 상한) |
 | `tests/js/codes.test.cjs` `resolve.test.cjs` | 코드 판별과 `/api/v1/resolve`(표준코드 표·경계·필지·후퇴·오류·coverage) |
+| `tests/js/infra.api.test.cjs` | 기반시설 요청 시 조회: 신설예정 학교·정류소 변환, 인허가 단지 중심에서만 조회, 서울 건너뜀, 한쪽 실패·키 교체·상한 |
+| `tests/js/goto.test.cjs` `codessearch.test.cjs` | 주소 이동 입력줄: 상태·후보 행·인식 칩·이동 주소·최근 이동·가짜 DOM 연결·HTML/CSS 구조, 검색 API(이름·지번·도로명·코드·부분 실패·캐시·거절) |
+| `tests/js/permits.test.cjs` `permitsapi.test.cjs` | 인허가 사업 요청 시 조회: Python 번들 빌드와의 일치(PNU·상태·짧은 이름)·번지 단위 집계·건물대장 대조 규칙, 인허가 API(쪽 넘김·재시도·키 교체·필지·상한·건물대장으로 블록 위치·합필 복구·준공·초당 한도) |
+| `tests/js/buildings.test.cjs` `buildingsapi.test.cjs` `dynbuildings.test.cjs` | 건물 요청 시 조회: Python 건물 변환과의 일치·칸 계산, 건물 API(칸 소속·캐시·시간당 상한), 화면 연결 |
 | `tests/js/vercelconf.test.cjs` | `vercel.json`: iframe 차단 헤더·함수 번들 파일 |
 | `tests/js/bus.test.cjs` | 버스 계산(방향·3D 면·보간·경유 단지)과 화면 연결(옵션·요청 시에만 조회 약속) |
 | `tests/js/glass.test.cjs` `sidebar.test.cjs` `topbar.test.cjs` | 반투명 유리 글자 대비 · 사이드바(글자 13px 이상·기본 접힘·요약) · 상단 바·확대 카드·가로 요약 |
@@ -146,7 +159,7 @@ vercel env add VWORLD_KEY preview
 vercel --prod
 ```
 
-**공공데이터포털 키(서버 전용)**: 함수는 `lib/keys.js`의 키 풀로 키를 고릅니다. 이름은 `DATA_GO_KR_KEY_<용도>_<번호>`(용도 `BUS` 버스 위치 · `RESOLVE` 코드 해석 · `BUILD` 번들 제작 · `DEMO` 시연)이고, 같은 용도의 키가 여러 개면 오늘 가장 적게 쓴 키부터 쓰며 한도 오류(`resultCode` 22·HTTP 429)를 받은 키는 한국시간 자정까지 쉽니다. 용도 키가 없으면 `DATA_GO_KR_KEY` 하나를 씁니다. 시연일에는 `DATA_GO_KR_PROFILE=demo`로 `DEMO` 키를 먼저 쓰게 합니다. 값은 `+ / =`가 든 디코딩된 형태 그대로 적고, `NEXT_PUBLIC_` 접두를 붙이지 않습니다(브라우저로 나갑니다). 키가 없으면 함수가 503을 주고 지도는 노선 선만 보입니다. 키마다 TAGO 버스위치정보(15098533)를 **활용신청**해 두어야 합니다(자동승인). 코드 해석에는 행정표준코드(법정동코드) 신청과 `VWORLD_KEY`·`VWORLD_DOMAIN`도 필요합니다. 자세한 규칙은 [docs/product/상황판-스펙.md](docs/product/상황판-스펙.md) 6절.
+**공공데이터포털 키(서버 전용)**: 함수는 `lib/keys.js`의 키 풀로 키를 고릅니다. 이름은 `DATA_GO_KR_KEY_<용도>_<번호>`(용도 `BUS` 버스 위치 · `RESOLVE` 코드 해석 · `BUILD` 번들 제작 · `DEMO` 시연)이고, 같은 용도의 키가 여러 개면 오늘 가장 적게 쓴 키부터 쓰며 한도 오류(`resultCode` 22·HTTP 429)를 받은 키는 한국시간 자정까지 쉽니다. 용도 키가 없으면 `DATA_GO_KR_KEY` 하나를 씁니다. 시연일에는 `DATA_GO_KR_PROFILE=demo`로 `DEMO` 키를 먼저 쓰게 합니다. 값은 `+ / =`가 든 디코딩된 형태 그대로 적고, `NEXT_PUBLIC_` 접두를 붙이지 않습니다(브라우저로 나갑니다). 키가 없으면 함수가 503을 주고 지도는 노선 선만 보입니다. 키마다 TAGO 버스위치정보(15098533)를 **활용신청**해 두어야 합니다(자동승인). 코드 해석에는 행정표준코드(법정동코드) 신청과 `VWORLD_KEY`·`VWORLD_DOMAIN`도 필요합니다. 인허가 사업 조회에는 건축HUB 주택인허가정보(15136560)와 **건축물대장정보(15134735)** 활용신청도 키마다 필요하고(없으면 대장 보강만 빠지고 `meta.ledger.error`로 알림), 건물대장은 초당 약 30건에서 막혀 함수가 호출 간격을 둡니다. 자세한 규칙은 [docs/product/상황판-스펙.md](docs/product/상황판-스펙.md) 6절.
 
 ```
 vercel env add DATA_GO_KR_KEY_BUS_1 production   # 값은 프롬프트에 붙여넣기(번호를 늘려 가며)
@@ -154,7 +167,7 @@ vercel env add DATA_GO_KR_KEY_BUS_1 preview
 vercel env add VWORLD_DOMAIN production         # 코드 해석이 V-World 를 서버에서 부를 때 보내는 서비스 도메인
 ```
 
-**V-World 서버 호출 주의**: 현재 키는 서비스 URL `localhost`만 등록되어 있어 운영 주소를 `domain`으로 보내면 `INCORRECT_KEY`가 납니다. 그래서 Vercel의 `VWORLD_DOMAIN`을 `localhost`로 두었습니다(임시 방편). V-World 콘솔에 운영 도메인을 등록하면 그 값으로 바꾸세요. 함수는 서울(`vercel.json`의 `regions: ["icn1"]`)에서 실행합니다. 미국 지역에서는 V-World 호출이 연결 실패했습니다.
+**V-World 키(운영키·개발키)**: 키는 발급 때 등록한 서비스 URL과 같은 `domain`을 보내야 통과합니다(아니면 `INCORRECT_KEY`). Vercel에는 운영키 `VWORLD_KEY`와 `VWORLD_DOMAIN=housing-board.vercel.app`을 두고, 로컬 `.env.local`에는 개발키 `VWORLD_DEV_KEY`와 `VWORLD_DOMAIN=localhost`를 둡니다. 로컬 개발 서버·수집 도구는 `VWORLD_DEV_KEY`가 있으면 그것을 쓰고, Vercel 함수는 `VWORLD_KEY`를 씁니다. 함수는 서울(`vercel.json`의 `regions: ["icn1"]`)에서 실행합니다. 미국 지역에서는 V-World 호출이 연결 실패했습니다.
 
 하루 호출은 (실시간 노선 수) × 86400 ÷ ttl 회로 묶입니다. 응답을 서버 캐시와 CDN이 ttl초(최소 60초) 동안 나눠 쓰기 때문입니다(계양 4개 노선이면 최대 5,760회, 개발계정 한도 10,000회). 노선이 늘면 ttl이 길어지고, BUS 키가 늘면 키 수만큼 짧아집니다. 로컬 캐시는 `.cache/`(gitignore, 최대 24시간·50 MB), Vercel에서는 인스턴스 임시 폴더입니다.
 
