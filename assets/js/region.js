@@ -1,5 +1,5 @@
 /* 지역 번들 로더와 어댑터.
-   regions/<slug>/*.json(번들)을 화면 코드(app.js)가 쓰는 전역 모양(GY_BUILDINGS · GY_PROJECTS · GY_CONTEXT)으로 바꾼다.
+   regions/<slug>/*.json(번들)을 화면 코드(app.js)가 쓰는 전역 모양(GY_BUILDINGS · GY_PROJECTS · GY_CONTEXT · GY_INFRA)으로 바꾼다.
    순수 함수는 node --test 로 시험한다(tests/js/region.test.cjs). DOM 은 applyTexts · mount* · boot 에서만 만진다.
    필드 정의와 변환 규칙의 정본: docs/data-interface/번들-어댑터-정의서.md */
 (function (root, factory) {
@@ -110,7 +110,7 @@
   }
 
   /* ---------- 문구 ---------- */
-  function buildTexts(region, blocks, context) {
+  function buildTexts(region, blocks, context, infra) {
     const tiers = new Set();
     blocks.forEach((b) => { tiers.add(b.outlineTier); (b.dongs || []).forEach((d) => tiers.add(d.tier)); });
     const phrases = TIER_ORDER.filter((t) => tiers.has(t)).map((t) => OUTLINE_TEXT[t]);
@@ -120,18 +120,19 @@
     const progressLabels = [...new Set(blocks.filter((b) => b.progress && b.progress.source).map((b) => label[b.progress.source]).filter(Boolean))];
     const progressSentence = progressLabels.length ? `공정율은 ${progressLabels.join(', ')} 기준입니다.` : '';
     const ctxSentence = context ? `역·학교는 ${/OpenStreetMap/.test(context.source || '') ? 'OpenStreetMap' : (context.source || '출처 미상')}입니다.` : '';
-    const parts = [tierSentence, progressSentence, ctxSentence].filter(Boolean).join(' ');
+    const infraSentence = infra && infra.asOf ? `기반시설 점검 자료는 ${infra.asOf} 기준 공개 자료입니다.` : '';
+    const parts = [tierSentence, progressSentence, ctxSentence, infraSentence].filter(Boolean).join(' ');
     return {
       documentTitle: `주택파동 공급 지도 (${region.name})`,
       eyebrow: region.title,
       description: region.description || '',
-      footerHtml: `건물 © 국토교통부 GIS건물통합정보 (V-World)<br><span id="basis">-</span> 기준${parts ? ' · ' + escapeHtml(parts) : ''}`,
+      footerHtml: `건물 © 국토교통부 GIS건물통합정보 (V-World)<br><span id="basis">-</span> 기준${parts ? `<details class="fnote"><summary>자료 안내</summary>${escapeHtml(parts)}</details>` : ''}`,   // 윤곽·공정율·출처 설명은 길어서 접어 둔다
     };
   }
 
   /* ---------- 번들 전체 변환 ---------- */
   function adaptBundle(raw) {
-    const { index, entry, region, projects, buildings, context } = raw;
+    const { index, entry, region, projects, buildings, context, infra } = raw;
     let blocks = (projects.projects || []).map((p) => adaptProject(p, region));
     blocks = orderBlocks(blocks, region.projectOrder);
     uniqueIds(blocks);   // 구분 접미사(·2)는 화면에 보이는 순서를 따른다
@@ -146,7 +147,8 @@
       GY_BUILDINGS: buildings,
       GY_PROJECTS: { blocks, district: districts[0] || null, districts, otherBlocks: projects.otherBlocks || [], meta: {} },
       GY_CONTEXT: context || null,
-      texts: buildTexts(region, blocks, context || null),
+      GY_INFRA: infra || null,
+      texts: buildTexts(region, blocks, context || null, infra || null),
       regions: (index && index.regions) || [],
       resolveBlock: (param) => (param ? byKey.get(String(param)) || null : null),
     };
@@ -169,8 +171,8 @@
     if (pick.error) return { ok: false, error: pick.error, requested: pick.requested, regions: pick.regions, index };
     const dir = String(index.dataBase || base).replace(/\/?$/, '/') + pick.region.slug + '/';
     const region = await getJson(dir + 'region.json');
-    const [projects, buildings, context] = await Promise.all([getJson(dir + 'projects.json'), getJson(dir + 'buildings.json'), getJson(dir + 'context.json', true)]);
-    return Object.assign({ ok: true }, adaptBundle({ index, entry: pick.region, region, projects, buildings, context }));
+    const [projects, buildings, context, infra] = await Promise.all([getJson(dir + 'projects.json'), getJson(dir + 'buildings.json'), getJson(dir + 'context.json', true), getJson(dir + 'infra.json', true)]);
+    return Object.assign({ ok: true }, adaptBundle({ index, entry: pick.region, region, projects, buildings, context, infra }));
   }
 
   /* ---------- 화면 반영(브라우저 전용) ---------- */
@@ -215,7 +217,7 @@
       showFatal(doc, `<p>${r.error === 'unknown' ? `‘${escapeHtml(r.requested)}’ 지역을 찾을 수 없습니다.` : '볼 수 있는 지역이 없습니다.'}</p>${links ? `<ul>${links}</ul>` : ''}`);
       return r;
     }
-    win.GY_BUILDINGS = r.GY_BUILDINGS; win.GY_PROJECTS = r.GY_PROJECTS; win.GY_CONTEXT = r.GY_CONTEXT; win.REGION = r;
+    win.GY_BUILDINGS = r.GY_BUILDINGS; win.GY_PROJECTS = r.GY_PROJECTS; win.GY_CONTEXT = r.GY_CONTEXT; win.GY_INFRA = r.GY_INFRA; win.REGION = r;
     applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r);
     return r;
   }

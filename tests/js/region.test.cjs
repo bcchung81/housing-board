@@ -149,6 +149,24 @@ test('지구에 poly 가 없으면 district 는 null, context 가 없으면 GY_C
   assert.equal(r.GY_CONTEXT, null);
 });
 
+const INFRA_DOC = { schema_version: '1.2.0', asOf: '2026-10-04', sources: [{ id: 'i', label: '출처', redistributable: 'unknown' }], schools: [], stops: [] };
+
+test('기반시설(infra.json): 있으면 GY_INFRA 와 푸터 문장, 없으면 null 이고 문장도 없다', () => {
+  const withInfra = R.adaptBundle(mkRaw([mkProject()], mkRegion(), { infra: INFRA_DOC }));
+  assert.equal(withInfra.GY_INFRA, INFRA_DOC);
+  assert.match(withInfra.texts.footerHtml, /기반시설 점검 자료는 2026-10-04 기준 공개 자료입니다\.(<|$)/);
+  const without = R.adaptBundle(mkRaw());
+  assert.equal(without.GY_INFRA, null);
+  assert.ok(!without.texts.footerHtml.includes('기반시설'));
+  assert.equal(R.adaptBundle(mkRaw([mkProject()], mkRegion(), { infra: null })).GY_INFRA, null);
+});
+
+test('기반시설 문장은 다른 문장 뒤에 오고 한 번만 나온다', () => {
+  const t = R.adaptBundle(mkRaw([mkProject()], mkRegion(), { infra: INFRA_DOC })).texts.footerHtml;
+  assert.match(t, /역·학교는 OpenStreetMap입니다\. 기반시설 점검 자료는/);
+  assert.equal(t.split('기반시설 점검 자료는').length, 2);
+});
+
 test('빈 지역(단지 0개)도 어댑터가 통과한다', () => {
   const r = R.adaptBundle(mkRaw([]));
   assert.deepEqual(r.blocks, []); assert.equal(r.hasPrivate, false);
@@ -209,6 +227,31 @@ test('loadRegion: 정상, context 404 는 무시', async () => {
   const out = await R.loadRegion({ fetch: fakeFetch(files), search: '' });
   assert.equal(out.ok, true); assert.equal(out.slug, 'r1'); assert.equal(out.GY_CONTEXT, null); assert.equal(out.blocks.length, 1);
   assert.equal(out.regions.length, 2);
+});
+
+test('loadRegion: infra.json 이 있으면 읽고, 404 면 null 로 둔다(지역은 그대로 열린다)', async () => {
+  const files = filesFor(); files['regions/r1/infra.json'] = INFRA_DOC;
+  const f = fakeFetch(files);
+  const withInfra = await R.loadRegion({ fetch: f, search: '' });
+  assert.equal(withInfra.ok, true); assert.deepEqual(withInfra.GY_INFRA, INFRA_DOC); assert.ok(f.calls.includes('regions/r1/infra.json'));
+  const without = await R.loadRegion({ fetch: fakeFetch(filesFor()), search: '' });
+  assert.equal(without.ok, true); assert.equal(without.GY_INFRA, null); assert.equal(without.blocks.length, 1);
+});
+
+test('loadRegion: infra.json 이 깨져 있으면(404 가 아닌 오류) URL 을 담은 예외', async () => {
+  const files = filesFor(); files['regions/r1/infra.json'] = INFRA_DOC;
+  const f = async (url) => (url === 'regions/r1/infra.json' ? { ok: false, status: 500, json: async () => ({}) } : fakeFetch(files)(url));
+  await assert.rejects(() => R.loadRegion({ fetch: f, search: '' }), /regions\/r1\/infra\.json: HTTP 500/);
+});
+
+test('boot: 전역 GY_INFRA 를 채운다(없으면 null)', async () => {
+  const doc = { title: '', querySelector: () => null, getElementById: () => null };
+  const mk = (files) => ({ location: { search: '', href: 'http://x.test/' }, fetch: (u) => fakeFetch(files)(u) });
+  const files = filesFor(); files['regions/r1/infra.json'] = INFRA_DOC;
+  const w1 = mk(files); const r1 = await R.boot(w1, doc);
+  assert.equal(r1.ok, true); assert.deepEqual(w1.GY_INFRA, INFRA_DOC); assert.equal(w1.REGION.slug, 'r1');
+  const w2 = mk(filesFor()); await R.boot(w2, doc);
+  assert.equal(w2.GY_INFRA, null);
 });
 
 test('loadRegion: dataBase 로 지역 폴더 주소를 바꾼다', async () => {

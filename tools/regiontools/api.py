@@ -20,6 +20,9 @@ from pathlib import Path
 VWORLD_URL = "https://api.vworld.kr/req/data"
 MYHOME_URL = "https://apis.data.go.kr/1613000/HWSPR02/"
 HUB_URL = "https://apis.data.go.kr/1613000/HsPmsHubService/"
+HUB_ARCH_URL = "https://apis.data.go.kr/1613000/ArchPmsHubService/"
+EDUINFO_URL = "https://eduinfo.go.kr/portal/theme/newSchInfoDetail.do"
+EDUINFO_REFERER = "https://eduinfo.go.kr/portal/theme/newSchMapPage.do"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 SECRET_PARAMS = ("serviceKey", "key", "domain")
 MAX_ATTEMPTS = 5
@@ -217,6 +220,42 @@ class Client:
     def hub_dong(self, sigungu: str, bjdong: str) -> list:
         return self._data_go_kr_all("hub-dong", HUB_URL + "getHpDongOulnInfo",
                                     {"sigunguCd": sigungu, "bjdongCd": bjdong})
+
+    def hub_arch_dong(self, sigungu: str, bjdong: str) -> list:
+        """건축인허가 기본개요(주택 아닌 건축물 포함) 법정동 전체."""
+        return self._data_go_kr_all("hub-arch", HUB_ARCH_URL + "getApBasisOulnInfo", {"sigunguCd": sigungu, "bjdongCd": bjdong})
+
+    # ---- 교육재정알리미 (키 없음) ----
+    def eduinfo_new_schools(self, attempts: int = 3) -> list:
+        """신설예정학교 전국 목록. 검색 조건을 비우고 POST 하면 전체(약 220교)가 한 번에 온다. 시군구 거르기는 호출한 쪽이 한다."""
+        name, form = "eduinfo-newschool", {"schlSeq": "", "yymmdd": "", "searchRg": "", "searchOffc": "", "searchWd": ""}
+        cp = self._cache_path(name, form)
+        if cp and cp.exists() and not self.refresh:
+            self.calls["cache"] += 1
+            return json.loads(cp.read_text(encoding="utf-8"))
+        data = urllib.parse.urlencode(form).encode("utf-8")
+        headers = {"User-Agent": USER_AGENT, "X-Requested-With": "XMLHttpRequest", "Referer": EDUINFO_REFERER}
+        last = "응답 없음"
+        for attempt in range(1, attempts + 1):
+            self.calls["net"] += 1
+            self.calls[name] += 1
+            status, raw = self.fetch(EDUINFO_URL, data, headers, 60)
+            if status == 200:
+                try:
+                    rows = json.loads(raw.decode("utf-8")).get("result")
+                except (UnicodeDecodeError, json.JSONDecodeError, AttributeError):
+                    rows = None
+                if isinstance(rows, list):
+                    if cp:
+                        cp.parent.mkdir(parents=True, exist_ok=True)
+                        cp.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+                    return rows
+                last = "result 목록이 없음"
+            else:
+                last = f"HTTP {status}"
+            if attempt < attempts:
+                self.sleep(WAIT_STEP_S * attempt)
+        raise self._err(f"{name}: {attempts}회 시도 실패({last})")
 
     # ---- V-World ----
     @staticmethod

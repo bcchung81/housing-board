@@ -14,8 +14,11 @@ import json
 from pathlib import Path
 
 SCHEMAS = Path(__file__).resolve().parents[2] / "schemas" / "bundle"
-REGION_FILES = {"region.json": "region", "projects.json": "projects", "buildings.json": "buildings", "context.json": "context"}
-OPTIONAL_FILES = {"context.json"}
+REGION_FILES = {"region.json": "region", "projects.json": "projects", "buildings.json": "buildings", "context.json": "context",
+                "infra.json": "infra"}
+OPTIONAL_FILES = {"context.json", "infra.json"}
+INFRA_SOURCE_LISTS = ("schools", "zones", "sites", "permits", "measures")   # 출처 id(sources)를 가진 목록
+INFRA_ID_LISTS = ("schools", "zones", "sites", "permits", "measures")       # id 가 목록 안에서 하나뿐이어야 하는 목록
 
 
 def _schema_errors(label: str, data, name: str) -> list[str]:
@@ -57,6 +60,42 @@ def _semantic(region: dict, projects: dict) -> list[str]:
     return errors
 
 
+def _semantic_infra(infra: dict, projects: dict | None) -> list[str]:
+    errors = []
+    source_ids = {s.get("id") for s in infra.get("sources", []) if isinstance(s, dict)}
+    for name in INFRA_ID_LISTS:
+        seen: dict = {}
+        for i, item in enumerate(infra.get(name, [])):
+            if not isinstance(item, dict):
+                continue
+            iid = item.get("id")
+            if iid in seen:
+                errors.append(f"infra.json: {name} id 중복: {iid!r} (#{seen[iid]}, #{i})")
+            else:
+                seen[iid] = i
+            if name in INFRA_SOURCE_LISTS:
+                for sid in item.get("sources") or []:
+                    if sid not in source_ids:
+                        errors.append(f"infra.json: {name} {iid!r}의 출처 id {sid!r}가 infra.json의 sources에 없음")
+    for sch in infra.get("schools", []):
+        if not isinstance(sch, dict):
+            continue
+        if sch.get("status") == "신설예정" and not sch.get("openYm"):
+            errors.append(f"infra.json: schools {sch.get('id')!r}는 신설예정인데 openYm(개교 예정 년월)이 없음")
+        if sch.get("status") == "부지만" and sch.get("openYm"):
+            errors.append(f"infra.json: schools {sch.get('id')!r}는 부지만인데 openYm이 있음(개교 일정이 공시됐다면 신설예정)")
+    zone_ids = {z.get("id") for z in infra.get("zones", []) if isinstance(z, dict)}
+    project_ids = {p.get("id") for p in (projects or {}).get("projects", []) if isinstance(p, dict)}
+    for a in infra.get("attendance", []):
+        if not isinstance(a, dict):
+            continue
+        if projects is not None and a.get("projectId") not in project_ids:
+            errors.append(f"infra.json: attendance의 단지 id {a.get('projectId')!r}가 projects.json에 없음")
+        if a.get("zoneId") not in zone_ids:
+            errors.append(f"infra.json: attendance의 zoneId {a.get('zoneId')!r}가 zones에 없음")
+    return errors
+
+
 def check_region_dir(path: Path | str) -> list[str]:
     path = Path(path)
     errors: list[str] = []
@@ -78,6 +117,9 @@ def check_region_dir(path: Path | str) -> list[str]:
         errors.append(f"region.json: slug {region.get('slug')!r}가 폴더 이름 {path.name!r}와 다름")
     if isinstance(region, dict) and isinstance(projects, dict):
         errors += _semantic(region, projects)
+    infra = data.get("infra.json")
+    if isinstance(infra, dict):
+        errors += _semantic_infra(infra, projects if isinstance(projects, dict) else None)
     return errors
 
 

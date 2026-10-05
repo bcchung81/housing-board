@@ -29,9 +29,11 @@ class FakeFetch:
     def __init__(self, responses):
         self.responses = list(responses)
         self.urls = []
+        self.posts = []
 
     def __call__(self, url, data=None, headers=None, timeout=None):
         self.urls.append(url)
+        self.posts.append((data, headers))
         return self.responses.pop(0)
 
 
@@ -146,6 +148,43 @@ class ClientCalls(unittest.TestCase):
         with self.assertRaises(api.ApiError):
             c.overpass("[out:json];node(1);out;")
         self.assertEqual(len(fetch.urls), 3)
+
+    def test_eduinfo_new_schools_posts_an_empty_search_without_any_key(self):
+        rows = [{"schlNm": "(가칭)계양1초", "openSchdYm": "202903"}]
+        fetch = FakeFetch([(503, b""), (200, body({"result": rows, "level": 9}))])
+        c = api.Client(KEYS, fetch=fetch, sleep=lambda s: None)
+        self.assertEqual(c.eduinfo_new_schools(), rows)
+        self.assertEqual(len(fetch.urls), 2)
+        data, headers = fetch.posts[1]
+        self.assertIn(b"searchRg=", data)
+        self.assertIn("eduinfo.go.kr", fetch.urls[1])
+        self.assertIn("eduinfo.go.kr", headers["Referer"])
+        for needle in (FAKE_DG, FAKE_VW):
+            self.assertNotIn(needle.encode(), data)
+            self.assertNotIn(needle, fetch.urls[1])
+
+    def test_eduinfo_new_schools_gives_up_and_rejects_a_page_without_result(self):
+        c = api.Client(KEYS, fetch=FakeFetch([(504, b"")] * 3), sleep=lambda s: None)
+        with self.assertRaises(api.ApiError):
+            c.eduinfo_new_schools()
+        c = api.Client(KEYS, fetch=FakeFetch([(200, body({"level": 9}))] * 3), sleep=lambda s: None)
+        with self.assertRaises(api.ApiError):
+            c.eduinfo_new_schools()
+
+    def test_eduinfo_new_schools_is_cached(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            rows = [{"schlNm": "a"}]
+            api.Client(KEYS, cache_dir=tmp, fetch=FakeFetch([(200, body({"result": rows}))]), sleep=lambda s: None).eduinfo_new_schools()
+            c2 = api.Client(KEYS, cache_dir=tmp, fetch=FakeFetch([]), sleep=lambda s: None)
+            self.assertEqual(c2.eduinfo_new_schools(), rows)
+            self.assertEqual(c2.calls["cache"], 1)
+
+    def test_hub_arch_dong_pages_and_uses_the_permit_service(self):
+        fetch = FakeFetch([(200, hub_page([{"n": i} for i in range(100)], 120)), (200, hub_page([{"n": i} for i in range(100, 120)], 120))])
+        c = api.Client(KEYS, fetch=fetch, sleep=lambda s: None)
+        self.assertEqual(len(c.hub_arch_dong("28245", "10900")), 120)
+        self.assertIn("ArchPmsHubService/getApBasisOulnInfo", fetch.urls[0])
+        self.assertIn("bjdongCd=10900", fetch.urls[0])
 
     def test_vworld_error_raises(self):
         fetch = FakeFetch([(200, body({"response": {"status": "ERROR", "error": {"code": "INVALID_KEY", "text": "x"}}}))])

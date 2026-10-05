@@ -4,7 +4,7 @@ import unittest
 from helpers import ROOT, SPEC
 
 SCHEMAS = ROOT / "schemas" / "bundle"
-NAMES = ["index", "region", "projects", "buildings", "context"]
+NAMES = ["index", "region", "projects", "buildings", "context", "infra"]
 STATUSES = ["계획", "분양중", "건설 단계", "준공 임박", "입주 단계"]
 
 
@@ -13,7 +13,7 @@ def load(name):
 
 
 class BundleSchemas(unittest.TestCase):
-    def test_all_five_schemas_are_json_schema_documents(self):
+    def test_all_schemas_are_json_schema_documents(self):
         for name in NAMES:
             with self.subTest(name):
                 s = load(name)

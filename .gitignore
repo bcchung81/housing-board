@@ -11,6 +11,10 @@ __pycache__/
 workspace/data/raw/lh/pamphlets/
 workspace/data/raw/vworld/*.zip
 
+# 기반시설 점검 원본(공공데이터포털에서 다시 내려받을 수 있음). 받는 방법은 README.md
+workspace/data/raw/infra/*
+!workspace/data/raw/infra/README.md
+
 # 영상 렌더링 결과·캐시 (재생성 가능)
 *.mp4
 workspace/videos/*/renders/

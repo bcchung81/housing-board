@@ -33,6 +33,18 @@ BUILDINGS = {"type": "FeatureCollection", "meta": {"basis": "20261004"},
              "features": [{"type": "Feature", "geometry": {"type": "Polygon", "coordinates": [RING + [RING[0]]]},
                            "properties": {"eh": 12.0, "src": "정보없음"}}]}
 CONTEXT = {"stations": [{"name": "테스트역", "lon": 126.78, "lat": 35.15}], "schools": [], "asOf": "2026-10-04", "source": "OSM"}
+INFRA = {
+    "schema_version": "1.2.0", "asOf": "2026-10-04",
+    "sources": [{"id": "i-src", "label": "교육재정알리미", "redistributable": "unknown"}],
+    "schools": [{"id": "s1", "name": "(가칭)테스트초", "level": "초등학교", "status": "신설예정", "openYm": "2029-03",
+                 "lon": 126.785, "lat": 35.155, "poly": RING, "sources": ["i-src"]}],
+    "zones": [{"id": "z-a", "name": "테스트초통학구역", "school": "테스트초등학교", "poly": RING, "asOf": "2026-09-20", "sources": ["i-src"]}],
+    "attendance": [{"projectId": "z1-A1", "zoneId": "z-a"}],
+    "stops": [{"name": "정류장", "lon": 126.785, "lat": 35.155}],
+    "sites": [{"id": "e1", "category": "전기", "name": "전기공급설비", "poly": RING, "sources": ["i-src"]}],
+    "permits": [{"id": "p1", "name": "누리센터", "use": "노유자시설", "permitDate": "2025-12-04", "startDate": None, "sources": ["i-src"]}],
+    "measures": [{"id": "m1", "category": "교통", "title": "버스 신설", "when": "2026-10", "status": "예정", "sources": ["i-src"]}],
+}
 INDEX = {"schema_version": "1.1.0", "regions": [
     {"slug": "test-region", "name": "테스트구", "default": True, "visibility": "public",
      "updatedAt": "2026-10-04", "schema_version": "1.1.0"}]}
@@ -43,7 +55,7 @@ def write_json(path, data):
     path.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
 
 
-def make(tmp, region=None, projects=None, buildings=None, context="default", index=None):
+def make(tmp, region=None, projects=None, buildings=None, context="default", index=None, infra=None):
     root = Path(tmp) / "regions"
     d = root / "test-region"
     write_json(root / "index.json", index if index is not None else INDEX)
@@ -54,6 +66,8 @@ def make(tmp, region=None, projects=None, buildings=None, context="default", ind
         write_json(d / "context.json", CONTEXT)
     elif context is not None:
         write_json(d / "context.json", context)
+    if infra is not None:
+        write_json(d / "infra.json", infra)
     return root
 
 
@@ -140,6 +154,61 @@ class CheckBundle(unittest.TestCase):
             root = make(tmp, index=idx)
             errs = self.cb.check_index(root / "index.json")
             self.assertTrue(any("ghost-region" in e for e in errs), errs)
+
+    def test_infra_is_optional_and_a_valid_one_passes(self):
+        self.assertEqual(self.errors(infra=INFRA), [])
+
+    def test_infra_schema_violation_names_the_field(self):
+        bad = copy.deepcopy(INFRA)
+        bad["schools"][0]["status"] = "개교"
+        errs = self.errors(infra=bad)
+        self.assertTrue(any("infra.json" in e and "status" in e for e in errs), errs)
+
+    def test_infra_unknown_top_level_key_is_rejected(self):
+        errs = self.errors(infra=variant(INFRA, extra=1))
+        self.assertTrue(any("infra.json" in e for e in errs), errs)
+
+    def test_infra_source_ids_must_exist(self):
+        for where, key in (("schools", "sources"), ("zones", "sources"), ("sites", "sources"), ("permits", "sources"), ("measures", "sources")):
+            with self.subTest(where):
+                bad = copy.deepcopy(INFRA)
+                bad[where][0][key] = ["ghost-src"]
+                errs = self.errors(infra=bad)
+                self.assertTrue(any("ghost-src" in e for e in errs), errs)
+
+    def test_infra_attendance_must_reference_project_and_zone(self):
+        bad = copy.deepcopy(INFRA)
+        bad["attendance"] = [{"projectId": "nope-A", "zoneId": "z-a"}, {"projectId": "z1-A1", "zoneId": "nope-z"}]
+        errs = self.errors(infra=bad)
+        self.assertTrue(any("nope-A" in e for e in errs), errs)
+        self.assertTrue(any("nope-z" in e for e in errs), errs)
+
+    def test_infra_ids_must_be_unique_within_a_list(self):
+        bad = copy.deepcopy(INFRA)
+        bad["schools"].append(copy.deepcopy(bad["schools"][0]))
+        errs = self.errors(infra=bad)
+        self.assertTrue(any("중복" in e and "s1" in e for e in errs), errs)
+
+    def test_infra_open_ym_only_makes_sense_for_scheduled_schools(self):
+        bad = copy.deepcopy(INFRA)
+        bad["schools"][0]["status"] = "부지만"
+        errs = self.errors(infra=bad)
+        self.assertTrue(any("openYm" in e for e in errs), errs)
+
+    def test_infra_measure_may_carry_a_short_label_for_the_timeline(self):
+        ok = copy.deepcopy(INFRA)
+        ok["measures"][0]["short"] = "7701번"
+        self.assertEqual(self.errors(infra=ok), [])
+        bad = copy.deepcopy(INFRA)
+        bad["measures"][0]["short"] = "가" * 15
+        errs = self.errors(infra=bad)
+        self.assertTrue(any("infra.json" in e and "short" in e for e in errs), errs)
+
+    def test_infra_scheduled_school_needs_open_ym(self):
+        bad = copy.deepcopy(INFRA)
+        del bad["schools"][0]["openYm"]
+        errs = self.errors(infra=bad)
+        self.assertTrue(any("openYm" in e for e in errs), errs)
 
     def test_cli_exit_codes(self):
         import contextlib, io
