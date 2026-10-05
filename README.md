@@ -154,6 +154,8 @@ vercel env add DATA_GO_KR_KEY_BUS_1 preview
 vercel env add VWORLD_DOMAIN production         # 코드 해석이 V-World 를 서버에서 부를 때 보내는 서비스 도메인
 ```
 
+**V-World 서버 호출 주의**: 현재 키는 서비스 URL `localhost`만 등록되어 있어 운영 주소를 `domain`으로 보내면 `INCORRECT_KEY`가 납니다. 그래서 Vercel의 `VWORLD_DOMAIN`을 `localhost`로 두었습니다(임시 방편). V-World 콘솔에 운영 도메인을 등록하면 그 값으로 바꾸세요. 함수는 서울(`vercel.json`의 `regions: ["icn1"]`)에서 실행합니다. 미국 지역에서는 V-World 호출이 연결 실패했습니다.
+
 하루 호출은 (실시간 노선 수) × 86400 ÷ ttl 회로 묶입니다. 응답을 서버 캐시와 CDN이 ttl초(최소 60초) 동안 나눠 쓰기 때문입니다(계양 4개 노선이면 최대 5,760회, 개발계정 한도 10,000회). 노선이 늘면 ttl이 길어지고, BUS 키가 늘면 키 수만큼 짧아집니다. 로컬 캐시는 `.cache/`(gitignore, 최대 24시간·50 MB), Vercel에서는 인스턴스 임시 폴더입니다.
 
 인증키는 결국 브라우저에 그대로 보이므로 환경변수는 '저장소에 안 올리는' 용도일 뿐이고, 실제 보호는 V-World 콘솔의 서비스 URL 제한이 전부입니다. 배포 주소(운영 도메인)를 그곳에 등록해야 배경지도가 뜹니다. 미리보기 배포 주소는 배포마다 바뀌므로 등록하지 않으면 회색 지도로 나옵니다.
