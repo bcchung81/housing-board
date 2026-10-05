@@ -9,7 +9,7 @@
    - 한 법정동 사업은 최대 120개(건설 단계 → 계획 → 입주 단계, 세대수 큰 순)까지 필지를 붙이고 넘으면 meta.truncated. 필지를 못 찾은 사업은 지도에 못 그리므로 meta.unlocatedNames 로만 알린다.
    - 건축HUB 는 간헐적으로 503·빈 본문을 주므로 쪽마다 최대 4번(점점 길게 기다려) 시도한다. 인증키는 lib/keys.js 의 RESOLVE 용도 풀(서비스 'hub'), V-World 는 lib/vworld.js.
    - 응답은 로컬 캐시 24시간 + CDN 24시간. 필지 경계도 따로 24시간 캐시한다. 필지를 일부라도 못 받았으면(일시 오류) 응답은 캐시하지 않는다.
-   - 열린 중계가 되지 않게 인스턴스별 시간당 V-World 필지 호출 상한(PERMITS_UPSTREAM_PER_HOUR, 기본 600)을 둔다. 키·원천 URL·원천 오류 문구는 응답에 싣지 않는다.
+   - 열린 중계가 되지 않게 인스턴스별 시간당 V-World 필지 호출 상한(PERMITS_UPSTREAM_PER_HOUR, 기본 2000)을 둔다. 키·원천 URL·원천 오류 문구는 응답에 싣지 않는다.
    시험: tests/js/permitsapi.test.cjs */
 'use strict';
 const path = require('path');
@@ -28,7 +28,7 @@ const LEDGER_URL = 'https://apis.data.go.kr/1613000/BldRgstHubService/getBrRecap
 const LEDGER_CONCURRENCY = 4;
 const LEDGER_GAP_MS = 110;                         // 건물대장은 초당 30건쯤에서 429(…PER_SECOND_EXCEEDS)로 막히고 한동안 풀리지 않는다(실측) → 인스턴스당 초당 9건 안쪽으로 간격을 둔다
 const MAX_LEDGER_BJDS = 60;
-const DEFAULT_LEDGER_BUDGET_PER_HOUR = 600;
+const DEFAULT_LEDGER_BUDGET_PER_HOUR = 1500;
 const PAGE_ROWS = 100;
 const MAX_PAGES = 30;
 const MAX_PROJECTS = 120;
@@ -36,7 +36,7 @@ const PARCEL_CONCURRENCY = 6;
 const PARCEL_MAX_POINTS = 80;
 const TTL_MS = 24 * 3600 * 1000;
 const FETCH_TIMEOUT_MS = 10000;
-const DEFAULT_BUDGET_PER_HOUR = 600;
+const DEFAULT_BUDGET_PER_HOUR = 2000;
 const ALLOWED = new Set(['bjd']);
 
 /* createService: 핸들러와, 다른 API(/api/v1/infra)가 같은 캐시·키 풀·예산으로 인허가 결과를 얻는 getPermits(bjd) 를 함께 돌려준다 */

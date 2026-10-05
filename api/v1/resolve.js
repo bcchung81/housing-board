@@ -27,6 +27,7 @@ const TTL_MS = 24 * 3600 * 1000;
 const FETCH_TIMEOUT_MS = 10000;
 const MAX_RING_POINTS = 600;
 const ALLOWED = new Set(['code', 'sgg', 'bjd', 'pnu', 'geometry']);
+const MAX_NEIGHBORS = 150;
 
 const LAYERS = {
   sgg: { layer: 'LT_C_ADSIGG_INFO', filter: (c) => `sig_cd:=:${c}`, source: 'V-World 시군구 경계(LT_C_ADSIGG_INFO)' },
@@ -91,6 +92,24 @@ function createHandler(overrides = {}) {
     });
   }
 
+  /* 구가 있는 시(수원·청주·포항·창원·고양·용인·천안·전주·화성 …)는 V-World 시군구 경계에 '시' 코드가 없고 구만 있다(실측: 9개 시가 경계 없이 열림).
+     시 코드의 앞 4자리가 같은 구들(수원 41111·41113·41115·41117)을 한 번에 받아 하나의 MultiPolygon 으로 합쳐 시 경계로 쓴다. 구도 없으면 { none:true } */
+  async function vworldDistricts(sgg) {
+    const { key, domain } = vworldCreds(env);
+    if (!key) { const e = new Error('VWORLD_KEY 없음'); e.notConfigured = true; throw e; }
+    const prefix = sgg.slice(0, 4);
+    return cache.wrap(`vw:${LAYERS.sgg.layer}:like:${prefix}`, TTL_MS, async () => {
+      const q = new URLSearchParams({ service: 'data', request: 'GetFeature', data: LAYERS.sgg.layer, key, domain, format: 'json', size: '20', crs: 'EPSG:4326', attrFilter: `sig_cd:like:${prefix}` });
+      const json = await getJson(`${VWORLD_URL}?${q}`);
+      const st = json && json.response && json.response.status;
+      if (st === 'NOT_FOUND') return { none: true };
+      if (st !== 'OK') throw new Error(`V-World ${st || '응답 형식'}`);
+      const f = ((json.response.result || {}).featureCollection || {}).features || [];
+      const polys = f.flatMap((x) => { const g = thinGeometry(x.geometry, Math.max(120, Math.floor(MAX_RING_POINTS / Math.max(1, f.length)))); return !g ? [] : g.type === 'Polygon' ? [g.coordinates] : g.coordinates; });
+      return polys.length ? { geometry: polys.length === 1 ? { type: 'Polygon', coordinates: polys[0] } : { type: 'MultiPolygon', coordinates: polys } } : { none: true };
+    });
+  }
+
   return async function handler(req, res) {
     if (req.method !== 'GET' && req.method !== 'HEAD') { res.setHeader('Allow', 'GET, HEAD'); return problem(res, 405, 'method', '허용하지 않는 방식', 'GET 만 지원합니다'); }
     const params = new URL(req.url || '/', 'http://local').searchParams;
@@ -123,6 +142,9 @@ function createHandler(overrides = {}) {
       if (c.bjd) out.bjd = c.bjd;
       if (c.pnu) { out.pnu = c.pnu; const p = codes.parsePnu(c.pnu); out.parcel = { jibun: p.jibun, landType: p.landType === '1' ? '일반' : '산', hub: p.hub, geometry: null }; }
       out.name = row.locatadd_nm; out.level = level;
+      /* 같은 시군구의 읍면동(리 제외): 시군구면 전체, 법정동·필지면 자기 자신을 뺀 나머지. 화면이 인허가 사업이 없는 곳에서 '이웃 법정동'을 고르게 한다 */
+      const umds = rows.filter((r) => codes.levelOf(r) === 'umd' && r.region_cd !== c.bjd).slice(0, MAX_NEIGHBORS).map((r) => ({ bjd: r.region_cd, name: String(r.locallow_nm || r.locatadd_nm.split(' ').pop()) }));
+      if (umds.length) out.neighbors = umds;
       if (c.padded) warnings.push('padded-8-digit');
 
       let frame = null;
@@ -135,7 +157,8 @@ function createHandler(overrides = {}) {
         if (!frame) {
           const kind = c.type === 'sgg' ? 'sgg' : 'umd';
           if (c.type !== 'sgg' && level === 'ri') warnings.push('ri-uses-umd-boundary');
-          const b = await vworld(kind, c.type === 'sgg' ? c.sgg : c.bjd);
+          let b = await vworld(kind, c.type === 'sgg' ? c.sgg : c.bjd);
+          if (b.none && kind === 'sgg') { const d = await vworldDistricts(c.sgg); if (!d.none) { b = d; warnings.push('districts-merged'); } }   // 구만 있는 시
           if (b.none) warnings.push('boundary-not-found'); else frame = b.geometry;
           if (frame && wantGeometry && c.type !== 'pnu') out.geometry = frame;
           else if (frame && c.type === 'pnu' && wantGeometry) out.geometry = frame;     // 후퇴: 필지가 없으면 법정동 경계

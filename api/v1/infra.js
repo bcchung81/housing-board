@@ -8,7 +8,7 @@
    - 서버는 임의 좌표를 받지 않는다. 그 법정동의 인허가 결과(/api/v1/permits 와 같은 캐시·키 풀)에서 필지 중심을 꺼내 쓴다 → 열린 중계가 되지 않는다. 사업이 없으면 학교·정류장도 없다.
    - 신설예정 학교: 교육재정알리미 전국 목록(키 없음, 24시간 캐시)에서 단지 중심 2 km 안만. 정류장: TAGO 근접정류소(키 풀 BUS·서비스 tago)를 단지 중심마다 한 번(150 m 안은 건너뜀, 동시 10개), 400 m 안만. 서울(시도 11)은 TAGO 도시 목록에 없어 부르지 않고 meta.noBus 로 알린다.
    - 학교·정류장 한쪽이 실패해도 나머지는 준다(meta.schoolsError·stopsError). 응답은 로컬 캐시 24시간 + CDN 24시간, 한쪽이라도 실패했으면 캐시하지 않는다.
-   - 인스턴스별 시간당 TAGO 호출 상한(INFRA_UPSTREAM_PER_HOUR, 기본 300)을 넘으면 정류장만 비운다(meta.stopsError). 키·원천 URL·원인 문구는 응답에 싣지 않는다.
+   - 인스턴스별 시간당 TAGO 호출 상한(INFRA_UPSTREAM_PER_HOUR, 기본 600)을 넘으면 정류장만 비운다(meta.stopsError). 키·원천 URL·원인 문구는 응답에 싣지 않는다.
    시험: tests/js/infra.api.test.cjs */
 'use strict';
 const permits = require('./permits.js');
@@ -22,10 +22,16 @@ const TAGO_NEAR_URL = 'https://apis.data.go.kr/1613000/BusSttnInfoInqireService/
 const EDU_URL = 'https://eduinfo.go.kr/portal/theme/newSchInfoDetail.do';
 const EDU_REFERER = 'https://eduinfo.go.kr/portal/theme/newSchMapPage.do';
 const TTL_MS = 24 * 3600 * 1000;
-const DEFAULT_BUDGET_PER_HOUR = 300;
+const DEFAULT_BUDGET_PER_HOUR = 600;
 const STOP_CONCURRENCY = 10;
 const MAX_STOP_PAGES = 3;
 const ALLOWED = new Set(['bjd']);
+const CDN_TIMEOUT_MS = 20000;
+const OVERPASS_URLS = ['https://overpass-api.de/api/interpreter', 'https://overpass.kumi.systems/api/interpreter'];   // 공개 서버는 자주 느리거나 504 라 둘을 동시에 부르고 먼저 온 것을 쓴다
+const OVERPASS_TIMEOUT_MS = 12000;
+const OSM_TTL_MS = 24 * 3600 * 1000;                                                                               // 로컬 캐시 보관 상한(lib/cache.js)과 같다
+const OSM_FAIL_TTL_MS = 2 * 60 * 1000;                                                                              // 둘 다 실패하면 2분은 다시 묻지 않는다(공개 서버를 두드리지 않고, 보는 사람마다 12초씩 기다리지 않게)
+const OSM_MAX_BOX_DEG = 0.12;                                                                                      // 상자가 이보다 크면 부르지 않는다(공개 서버 부담·응답 크기)
 const NO_TAGO_SIDO = new Set(['11']);   // 서울은 국토교통부 TAGO 도시 목록에 없다(실측: 근접정류소 0곳, cityCode=11 노선 0건). 호출 낭비를 줄이려고 건너뛴다
 
 function createHandler(overrides = {}) {
@@ -80,12 +86,45 @@ function createHandler(overrides = {}) {
     }
     return all;
   }
+  /* TAGO 에 자료가 없는 지역(서울·강릉 등)의 보조: OpenStreetMap 정류장을 Overpass 로 한 번에 받는다. 이름 있는 정류장만, 24시간 캐시.
+     실패는 던진다(캐시 안 함). 공개 서버라 느리거나 꺼질 수 있어 둘을 동시에 불러 먼저 온 것을 쓰고, 이 보조가 실패해도 지도는 정류장 없이 열린다 */
+  async function osmStops(bjd, centers) {
+    const box = I.bboxAround(centers);
+    if (box[2] - box[0] > OSM_MAX_BOX_DEG || box[3] - box[1] > OSM_MAX_BOX_DEG) throw new Error('범위가 넓어 정류장을 받지 않음');
+    if (cache.get(`osm:fail:${bjd}`)) throw new Error('최근에 실패해 잠시 건너뜀');
+    return cache.wrap(`osm:stops:${bjd}`, OSM_TTL_MS, async () => {
+      const [w, s, e, n] = box, ql = `[out:json][timeout:15];(node["highway"="bus_stop"](${s},${w},${n},${e});node["public_transport"="platform"]["bus"="yes"](${s},${w},${n},${e}););out body;`;
+      const ask = (url) => doFetch(url, { method: 'POST', body: new URLSearchParams({ data: ql }).toString(), signal: AbortSignal.timeout(OVERPASS_TIMEOUT_MS), headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json', 'User-Agent': 'housing-board/1.0 (+https://housing-board.vercel.app)' } })
+        .then(async (r) => { if (!r.ok) throw new Error(`HTTP ${r.status}`); const j = await r.json(); if (!j || !Array.isArray(j.elements)) throw new Error('elements 가 없음'); return j.elements; });
+      const elements = await Promise.any(OVERPASS_URLS.map(ask));
+      const byId = new Map();
+      for (const el of elements) { const st = I.osmStop(el); if (st && !byId.has(st.id)) byId.set(st.id, st); }
+      return [...byId.values()];
+    }).catch((e) => { cache.set(`osm:fail:${bjd}`, 1, OSM_FAIL_TTL_MS); throw e; });
+  }
   async function mapLimit(items, limit, fn) {
     const out = new Array(items.length); let next = 0;
     await Promise.all(Array.from({ length: Math.min(limit, items.length) }, async () => {
       while (next < items.length) { const i = next++; try { out[i] = { ok: await fn(items[i]) }; } catch (e) { out[i] = { err: e }; } }
     }));
     return out;
+  }
+
+  /* 인허가 결과: ① 이 인스턴스 캐시 ② 이 서버의 permits API 를 공개 주소로 불러 CDN 캐시에서 ③ 직접 만들기.
+     Vercel 은 api 함수마다 따로 돌아 permits 함수와 infra 함수의 메모리 캐시가 다르다. 화면이 방금 permits 를 불렀어도 infra 가 인허가를 다시 만들어 한 법정동에 12~24초가 걸렸다(실측: 부산 우동 18초·대구 범어동 24초·대전 봉명동 17초).
+     주소는 환경변수의 이 프로젝트 호스트만 쓰고 요청의 Host 헤더는 쓰지 않는다(다른 서버로 보내는 중계가 되지 않게). 못 받으면(보호된 미리보기 배포 등) 직접 만든다. */
+  const selfHost = () => (env.VERCEL ? (env.VERCEL_ENV === 'production' ? env.VERCEL_PROJECT_PRODUCTION_URL : env.VERCEL_URL) : '') || '';
+  async function permitsOf(bjd) {
+    const local = cache.get(`permits:${bjd}`);
+    if (local) return local;
+    const host = selfHost();
+    if (/^[a-z0-9.-]+$/i.test(host)) {
+      try {
+        const r = await doFetch(`https://${host}/api/v1/permits?bjd=${bjd}`, { signal: AbortSignal.timeout(CDN_TIMEOUT_MS), headers: { Accept: 'application/json' } });
+        if (r.ok) { const b = await r.json(); if (b && b.type === 'FeatureCollection' && Array.isArray(b.features) && b.bjd === bjd) return b; }
+      } catch (e) { /* 직접 만든다 */ }
+    }
+    return (await svc.getPermits(bjd)).body;
   }
 
   async function build(bjd, perm) {
@@ -114,11 +153,19 @@ function createHandler(overrides = {}) {
       else if (picked.length && !ok) { failed = true; meta.stopsError = '버스 정류소를 불러오지 못함'; }
       else if (errs) { failed = true; meta.stopsError = `정류소 조회 ${errs}곳을 불러오지 못해 일부만 보임`; }   // 일부만 실패해도 조용히 넘기지 않고 캐시하지 않는다
       else if (picked.length && !stops.length) meta.noBus = true;   // 호출은 됐는데 반경 안에 정류소가 0곳: 서울처럼 TAGO 도시 목록에 없는 지역
+      if (stops.length) meta.stopsSource = 'tago';
+      else if (!meta.stopsError) {                                   // TAGO 에 자료가 없으면(또는 반경 안 0곳) OpenStreetMap 으로 보조
+        try {
+          const osm = await osmStops(bjd, centers);
+          stops = osm.filter((x) => I.nearAny([x.lon, x.lat], centers, I.STOP_SHOW_M)).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+          if (stops.length) { meta.stopsSource = 'osm'; delete meta.noBus; }
+        } catch (e) { failed = true; meta.stopsError = '버스 정류장(OpenStreetMap)을 불러오지 못함'; console.error(`infra ${bjd} osm: ${(e && e.name) || 'Error'}: ${String((e && e.message) || e).slice(0, 120)}`); }
+      }
     }
     meta.schools = schools.length; meta.stops = stops.length;
     const used = new Set();
     if (schools.length) used.add('edu-newschool');
-    if (stops.length) used.add('tago-bus');
+    if (stops.length) used.add(meta.stopsSource === 'osm' ? 'osm-bus' : 'tago-bus');
     const asOf = new Date(now()).toISOString().slice(0, 10);
     return {
       body: { type: 'Infra', bjd, asOf, sources: [...used].map((id) => ({ ...I.SOURCE_DEFS[id], asOf })), schools, stops, meta },
@@ -138,7 +185,7 @@ function createHandler(overrides = {}) {
     try {
       const hit = cache.get(`infra:${bjd}`);
       if (hit) return send(res, 200, hit, 'public, s-maxage=86400, stale-while-revalidate=86400');
-      const perm = (await svc.getPermits(bjd)).body;
+      const perm = await permitsOf(bjd);
       const out = await build(bjd, perm);
       if (out.cacheable) cache.set(`infra:${bjd}`, out.body, TTL_MS);
       return send(res, 200, out.body, out.cacheable ? 'public, s-maxage=86400, stale-while-revalidate=86400' : 'public, s-maxage=60');

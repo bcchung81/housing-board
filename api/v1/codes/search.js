@@ -100,7 +100,10 @@ function createService(overrides = {}) {
     const tokens = q.split(' ').filter((t) => !JIBUN_TOKEN.test(t));
     if (!tokens.length || tokens.join('').length < MIN_Q) return [];
     let rows = await stan.search(tokens.join(' '));
-    if (!rows.length && tokens.length > 1) rows = await stan.search(tokens.slice().sort((a, b) => b.length - a.length)[0]);
+    if (!rows.length && tokens.length > 1) {                                                // 구가 새로 생겨('화성시 동탄구 오산동') 낱말이 이어지지 않으면: 동·읍·면·리·가로 끝나는 낱말(가장 구별되는 것)로 찾아 나머지 낱말이 든 행만 남긴다
+      const place = tokens.filter((t) => /[동읍면리가]$/.test(t)).sort((a, b) => b.length - a.length)[0];
+      rows = await stan.search(place || tokens.slice().sort((a, b) => b.length - a.length)[0]);
+    }
     const last = tokens[tokens.length - 1], whole = tokens.join(' ');
     const score = (r) => (r.locallow_nm === last || String(r.locatadd_nm).endsWith(whole) ? 0 : String(r.locallow_nm).includes(last) ? 1 : 2);
     return rows.filter((r) => tokens.every((t) => String(r.locatadd_nm).includes(t)) && LEVEL_RANK.hasOwnProperty(codes.levelOf(r)))

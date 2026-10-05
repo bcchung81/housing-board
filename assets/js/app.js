@@ -1160,9 +1160,23 @@ if (BLOCKS.length) {
   $('#h-tl').closest('section').hidden = !items.length;   // 날짜가 있는 단지가 없으면 빈 축만 보이지 않게 구역을 숨긴다
   $('#timeline').setAttribute('aria-label', '입주·준공 예정: ' + items.map(([, bs]) => `${bs.map((b) => b.id).join('·')} ${bs[0].moveIn}`).join(', '));
 } else {
-  $('#projList').innerHTML = '<li class="empty">이 지역에는 아직 표시할 단지가 없습니다. 자료가 들어오면 이곳에 나타납니다.</li>';
+  const near = Array.isArray(REG.nearby) ? REG.nearby : [];   // 번들 없는 지역: 같은 시군구의 다른 법정동(인허가 사업은 법정동 단위로 찾는다)
+  const chips = near.length && window.RegionLoader ? `<li class="nearby"><b>같은 시군구의 다른 법정동 ${near.length}곳</b><span class="nb-list">${near.map((x) => `<a href="${esc(window.RegionLoader.codeUrl(location.href, 'bjd', x.bjd))}">${esc(x.name)}</a>`).join('')}</span></li>` : '';
+  $('#projList').innerHTML = '<li class="empty">이 지역에는 아직 표시할 단지가 없습니다. ' + (near.length ? '인허가 사업은 법정동 단위로 찾으니 아래에서 다른 법정동을 골라 보세요.' : '자료가 들어오면 이곳에 나타납니다.') + '</li>' + chips;
   for (const id of ['h-sum', 'h-tl']) { const s = document.getElementById(id).closest('section'); if (s) s.hidden = true; }
 }
+/* 공공 모집 공고(마이홈): 번들 없는 지역에서만, 지도·단지를 막지 않게 늦게 채운다. 못 받으면 구역을 숨긴 채 둔다 */
+async function loadNotices() {
+  if (REG.slug || !RES || !RES.sgg || !window.RegionLoader || !window.RegionLoader.fetchNotices) return;
+  const data = await window.RegionLoader.fetchNotices(window, RES.sgg);
+  if (!data) return;
+  const rows = window.RegionLoader.noticeRows(data);
+  $('#secNotice').hidden = false;
+  $('#noticeSub').textContent = rows.length ? `${data.name} · 마이홈포털의 공공주택 모집공고 ${rows.length}건(대부분 매입임대·일반매각이며 건설 중인 단지와 별도입니다)` : `${data.name}에는 지금 모집 중인 공공주택 공고가 없습니다(마이홈포털 기준).`;
+  $('#noticeList').innerHTML = rows.map((r) => `<li><span class="nt">${esc(r.title)}</span>${r.meta ? `<span class="nm">${esc(r.meta)}</span>` : ''}${r.period ? `<span class="nm">${esc(r.period)}</span>` : ''}${r.place ? `<span class="nm">${esc(r.place)}</span>` : ''}`
+    + (r.url || r.pnu ? `<span class="na">${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">공고 보기</a>` : ''}${r.pnu ? `<a href="${esc(window.RegionLoader.codeUrl(location.href, 'pnu', r.pnu))}">지도에서 보기</a>` : ''}</span>` : '') + '</li>').join('');
+}
+loadNotices();
 function flyTo(opts) { if (reduceMotion) map.jumpTo(opts); else map.flyTo({ ...opts, duration: 1600 }); }
 function setSheet(state) {
   const h = { peek: '176px', half: '48vh', full: '88vh' }[state] || '176px';

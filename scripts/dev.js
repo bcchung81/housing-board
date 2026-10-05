@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* 로컬 개발 서버: 저장소 루트의 정적 파일 + /api/bus · /api/v1/resolve · /api/v1/codes/search · /api/v1/buildings · /api/v1/permits · /api/v1/infra(api/ 의 함수 그대로).
+/* 로컬 개발 서버: 저장소 루트의 정적 파일 + /api/bus · /api/v1/resolve · /api/v1/codes/search · /api/v1/notices · /api/v1/buildings · /api/v1/permits · /api/v1/infra(api/ 의 함수 그대로).
    node scripts/dev.js [포트=8000]
    버스 위치(/api/bus)는 .env.local 의 공공데이터포털 키(DATA_GO_KR_KEY_BUS_<N> 여러 개 또는 DATA_GO_KR_KEY 하나)가 있어야 동작한다. 없으면 503 이고 지도는 버스 없이 뜬다.
    키 이름·용도·한도는 env.example 과 lib/keys.js 참고. 키 사용량은 .cache/key-usage.json, 응답 캐시는 .cache/ (모두 gitignore).
@@ -37,6 +37,7 @@ function createServer(root = ROOT, env = process.env) {
   const bus = require(path.join(root, 'api', 'bus.js')).createHandler({ env });
   const resolve = require(path.join(root, 'api', 'v1', 'resolve.js')).createHandler({ env });
   const search = require(path.join(root, 'api', 'v1', 'codes', 'search.js')).createHandler({ env });
+  const notices = require(path.join(root, 'api', 'v1', 'notices.js')).createHandler({ env });
   const buildings = require(path.join(root, 'api', 'v1', 'buildings.js')).createHandler({ env });
   const permits = require(path.join(root, 'api', 'v1', 'permits.js')).createHandler({ env });
   const infra = require(path.join(root, 'api', 'v1', 'infra.js')).createHandler({ env });
@@ -47,6 +48,7 @@ function createServer(root = ROOT, env = process.env) {
     if (url.pathname === '/api/bus') return bus(req, res);
     if (url.pathname === '/api/v1/resolve') return resolve(req, res);
     if (url.pathname === '/api/v1/codes/search') return search(req, res);
+    if (url.pathname === '/api/v1/notices') return notices(req, res);
     if (url.pathname === '/api/v1/buildings') return buildings(req, res);
     if (url.pathname === '/api/v1/permits') return permits(req, res);
     if (url.pathname === '/api/v1/infra') return infra(req, res);

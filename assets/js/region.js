@@ -121,7 +121,7 @@
   }
   /* 번들이 없는 지역(등급 B·C)을 여는 빈 번들. 건물은 화면이 요청 시 칸 단위로 불러 붙이므로(GY_BUILDINGS.dynamic) 처음엔 비어 있고,
      법정동·필지로 열었으면 그 법정동의 건축HUB 인허가 사업(permits)이 단지로 들어간다 */
-  function emptyBundle(resolved, index, permits, infra) {
+  function emptyBundle(resolved, index, permits, infra, opts) {
     const name = resolved.name || '번들 없는 지역';
     const z = zoomForBbox(resolved.bbox) || 12;
     const projects = permitsToProjects(permits);
@@ -132,14 +132,16 @@
     const ledgerNote = [lg.blocksMatched || lg.parcelsRecovered || lg.completions ? `건축물대장으로 보강: 블록 단위 허가 ${lg.blocksMatched || 0}곳의 위치, 합필·분할로 사라진 지번 ${lg.parcelsRecovered || 0}곳의 현재 지번, 사용승인으로 준공 확인 ${lg.completions || 0}곳.` : '', lg.error ? `건축물대장 보강이 완전하지 않습니다: ${lg.error}.` : ''].filter(Boolean);
     const blockNote = m0.blockProjects ? [`공공주택지구 블록 단위 허가 ${m0.blockProjects}곳은 필지 번호가 없어(블록 번호만 있음) ${lg.used ? '건축물대장과 세대수·대지면적을 맞춰 보았지만 지번을 정하지 못해' : '위치를 정할 수 없어'} 지도에 없습니다: ${blk.map((x) => `${x.name}${x.block && !x.name.includes(x.block) ? `(${x.block})` : ''} ${x.units ? `${x.units}세대` : ''}`.trim()).join(', ')}${m0.blockProjects > blk.length ? ' 외' : ''}.`] : [];
     const im = (infra && infra.type === 'Infra' && infra.meta) || {};
-    const infraNotes = [im.noBus ? '버스 정류소: 국토교통부 TAGO에 이 지역(서울 등)의 정류소 자료가 없어 교통 점검은 "자료 없음"입니다.' : '', im.schoolsError ? '신설예정 학교를 불러오지 못했습니다.' : '', im.stopsError ? `${im.stopsError}.` : ''].filter(Boolean);
-    const notes = (lost.length ? [`건축HUB 인허가 사업 후보 중 필지를 못 찾아 지도에 없는 ${m0.unlocated}곳: ${lost.map((x) => `${x.name}(${x.jibun})`).join(', ')}${m0.unlocated > lost.length ? ' 외' : ''}. 원인 추정: ${[...new Set(lost.map((x) => x.reason))].join(' / ')}.`] : []).concat(blockNote, ledgerNote, infraNotes);
+    const infraNotes = [im.stopsSource === 'osm' ? '버스 정류장: 국토교통부 TAGO에 이 지역 자료가 없어 OpenStreetMap 기준으로 보여 드립니다(누락이 있을 수 있습니다).' : '', im.noBus ? '버스 정류소: 국토교통부 TAGO에 이 지역(서울 등)의 정류소 자료가 없어 교통 점검은 "자료 없음"입니다.' : '', im.schoolsError ? '신설예정 학교를 불러오지 못했습니다.' : '', im.stopsError ? `${im.stopsError}.` : ''].filter(Boolean);
+    const infraLate = opts && opts.infraFailed ? ['기반시설(신설예정 학교·정류장)을 제때 불러오지 못해 입주 전 점검 없이 열었습니다. 잠시 뒤 다시 열면 나올 수 있습니다.'] : [];
+    const notes = (lost.length ? [`건축HUB 인허가 사업 후보 중 필지를 못 찾아 지도에 없는 ${m0.unlocated}곳: ${lost.map((x) => `${x.name}(${x.jibun})`).join(', ')}${m0.unlocated > lost.length ? ' 외' : ''}. 원인 추정: ${[...new Set(lost.map((x) => x.reason))].join(' / ')}.`] : []).concat(blockNote, ledgerNote, infraNotes, infraLate);
     const region = {
       slug: '', name, notes, title: `${name} (번들 없음)`, description: `${name}의 경계와 건물을 보여 줍니다. 공급 사업은 건축HUB 인허가 기록에서 요청 시 조회한 것만 있습니다.`,
       view: { center: resolved.center || [127.0, 37.5], zoom: Math.round(z * 10) / 10, pitch: 50, bearing: 0 }, sources: projects.length ? (projects.some((x) => x.sources.includes('hub-bldrgst')) ? [HUB_SOURCES[0], LEDGER_SOURCE, HUB_SOURCES[1]] : HUB_SOURCES) : [], zones: [],
     };
     const buildings = { type: 'FeatureCollection', meta: { basis: '', factor: {} }, features: [], dynamic: true };
     const b = Object.assign({ ok: true }, adaptBundle({ index: index || { regions: [] }, entry: { visibility: 'public' }, region, projects: { projects, otherBlocks: [] }, buildings, context: null, infra: hasInfra(infra) && projects.length ? infraOf(infra) : null }));
+    b.nearby = (Array.isArray(resolved.neighbors) ? resolved.neighbors : []).filter((x) => x && /^\d{10}$/.test(String(x.bjd)) && x.name).map((x) => ({ bjd: String(x.bjd), name: String(x.name) })).slice(0, 150);   // 같은 시군구의 다른 법정동(빈 지역에서 고르게)
     const m = (permits && permits.meta) || {};
     b.permits = { fetched: !!(permits && permits.type === 'FeatureCollection'), count: projects.length, unlocated: m.unlocated || 0, truncated: !!m.truncated, records: m.records || 0, candidates: m.candidates || 0, blocks: m.blockProjects || 0, ledger: m.ledger || null };
     return b;
@@ -147,14 +149,38 @@
   /* /api/v1/infra 응답 → 번들 infra.json 모양(schema_version·asOf·sources·schools·stops). 학교나 정류소가 하나도 없으면 쓰지 않는다 */
   const hasInfra = (d) => !!(d && d.type === 'Infra' && ((d.schools || []).length || (d.stops || []).length));
   const infraOf = (d) => ({ schema_version: '1.3.0', asOf: d.asOf, sources: d.sources || [], schools: d.schools || [], stops: d.stops || [] });
-  /* 기반시설(신설예정 학교·정류장) 요청: 시간이 걸릴 수 있어 12초까지만 기다리고, 실패해도 지도는 열린다(null) */
+  /* 기반시설(신설예정 학교·정류장) 요청: 시간이 걸릴 수 있어 15초까지만 기다리고, 실패해도 지도는 열린다(null) */
   async function fetchInfra(win, bjd) {
     try {
-      const res = await Promise.race([win.fetch(`api/v1/infra?bjd=${encodeURIComponent(bjd)}`), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 12000))]);
+      const res = await Promise.race([win.fetch(`api/v1/infra?bjd=${encodeURIComponent(bjd)}`), new Promise((_, no) => setTimeout(() => no(new Error('timeout')), 15000))]);
       if (!res.ok) return null;
       const d = await res.json();
       return d && d.type === 'Infra' ? d : null;
     } catch (e) { return null; }
+  }
+  /* 공공 모집 공고(마이홈) 요청: 사이드바를 늦게 채우므로 지도를 막지 않는다. 실패하면 null(구역을 숨김) */
+  async function fetchNotices(win, sgg) {
+    try {
+      const res = await win.fetch(`api/v1/notices?sgg=${encodeURIComponent(sgg)}`);
+      if (!res.ok) return null;
+      const d = await res.json();
+      return d && d.type === 'Notices' && Array.isArray(d.items) ? d : null;
+    } catch (e) { return null; }
+  }
+  /* 공고 → 화면 줄(순수 함수): 제목 · 기관·유형·세대수 · 접수 기간 · 단지·주소 · 공고 링크(https 마이홈·LH 만) · 필지로 이동(pnu) */
+  const md = (iso) => (/^\d{4}-\d{2}-\d{2}$/.test(iso || '') ? `${iso.slice(5, 7)}.${iso.slice(8, 10)}` : '');
+  function noticeRows(data) {
+    const kind = { rental: '임대', sale: '분양' };
+    return ((data && data.items) || []).filter((n) => n && n.title).map((n) => {
+      const from = md(n.applyFrom), to = md(n.applyTo);
+      return {
+        id: String(n.id || ''), title: String(n.title),
+        meta: [n.agency, `${kind[n.kind] || ''}${n.supplyType ? `(${n.supplyType})` : ''}`.trim(), n.housingType, n.units ? `${n.units}세대` : ''].filter(Boolean).join(' · '),
+        period: from && to ? `접수 ${from === to ? from : `${from}~${to}`}` : n.announcedAt ? `공고 ${n.announcedAt.replace(/-/g, '.')}` : '',
+        place: [n.complex, n.address].filter(Boolean).join(' · '),
+        url: /^https:\/\/(www\.myhome\.go\.kr|m\.myhome\.go\.kr|apply\.lh\.or\.kr)\//.test(n.url || '') ? n.url : '', pnu: /^\d{19}$/.test(n.pnu || '') ? n.pnu : '',
+      };
+    });
   }
   /* 건축HUB 인허가 요청: 실패해도 지도는 열린다(null) */
   async function fetchPermits(win, bjd) {
@@ -388,8 +414,9 @@
         /* 번들이 없는 지역(등급 B·C): 경계와 요청 시 조회한 건물만 보이는 빈 번들로 연다. ?dyn=0 이면 건물도 없이 경계만 */
         const idx = await getIndex(win);
         const permits = resolved.bjd && !permitsOff(search) ? await fetchPermits(win, resolved.bjd) : null;
-        const infra = permits && permits.features && permits.features.length && new URLSearchParams(search).get('infra') !== '0' ? await fetchInfra(win, resolved.bjd) : null;   // 인허가 단지가 있어야 점검할 대상이 있다. 서버가 인허가 캐시를 이어 쓰므로 인허가 다음에
-        r = emptyBundle(resolved, idx, permits, infra);
+        const wantInfra = !!(permits && permits.features && permits.features.length) && new URLSearchParams(search).get('infra') !== '0';   // 인허가 단지가 있어야 점검할 대상이 있다
+        const infra = wantInfra ? await fetchInfra(win, resolved.bjd) : null;   // 서버가 인허가를 CDN 에서 이어 받으므로 인허가 다음에
+        r = emptyBundle(resolved, idx, permits, infra, { infraFailed: wantInfra && !infra });
         if (dynParam(search) === 'off') r.GY_BUILDINGS.dynamic = false;
         mountResolved(win, doc, r, resolved);
         return r;
@@ -417,7 +444,7 @@
   function mountResolved(win, doc, r, resolved) {
     win.GY_BUILDINGS = r.GY_BUILDINGS; win.GY_PROJECTS = r.GY_PROJECTS; win.GY_CONTEXT = r.GY_CONTEXT; win.GY_INFRA = r.GY_INFRA; win.REGION = r;
     const hit = resolved && resolved.pnu && r.blocks.find((b) => b.pid === `hub-${resolved.pnu}`);   // 필지로 열었는데 그 필지가 인허가 사업이면 그 단지를 연다
-    win.RESOLVED = resolved ? { start: resolvedStart(resolved), shape: resolvedShape(resolved), name: resolved.name, level: resolved.level, type: resolved.type, tier: resolved.coverage.tier, warnings: resolved.warnings || [], block: hit ? hit.pid : null } : null;
+    win.RESOLVED = resolved ? { sgg: resolved.sgg, bjd: resolved.bjd || null, start: resolvedStart(resolved), shape: resolvedShape(resolved), name: resolved.name, level: resolved.level, type: resolved.type, tier: resolved.coverage.tier, warnings: resolved.warnings || [], block: hit ? hit.pid : null } : null;
     const pm = r.permits;
     const baseNote = r.slug ? '' : pm && pm.count ? `지역 번들이 없어 경계·건물(요청 시 조회)·건축HUB 인허가 사업 ${pm.count}곳만 보여 줍니다${pm.ledger && (pm.ledger.blocksMatched + pm.ledger.parcelsRecovered) ? `(건축물대장으로 위치를 찾은 ${pm.ledger.blocksMatched + pm.ledger.parcelsRecovered}곳 포함${pm.unlocated ? `, 필지를 못 찾은 ${pm.unlocated}곳 제외` : ''})` : pm.unlocated ? `(필지를 못 찾은 ${pm.unlocated}곳 제외)` : ''}`
       : pm && pm.fetched && pm.blocks ? `지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 이 법정동의 건축HUB 인허가는 공공주택지구 블록 단위 ${pm.blocks}곳뿐이라 필지 번호가 없어 ${pm.ledger && pm.ledger.used ? '건축물대장과 맞춰 보아도 지번을 정하지 못해 ' : ''}지도에 그릴 수 없습니다`
@@ -430,5 +457,5 @@
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, boot };
+  return { STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, boot };
 });

@@ -250,3 +250,12 @@ test('장소 이름 순위: 이름이 입력과 같은 것이 그 글자로 시�
   const h = harness({ fetch: (url) => { if (isPlace(url) && new URL(url).searchParams.get('query') === '하남시청') return ok(placeResp([poi('하남시청역', '철도시설 > 철도/지하철 > 지하철역', '경기도 하남시 덕풍동 406-17', '', 127.2065, 37.5419), poi('하남시청', '지방행정기관', '경기도 하남시 신장동 520대', '경기도 하남시 대청로 10', 127.2145, 37.5392)])); return defaultFetch(url); } });
   const r = await h.get('하남시청', '&near=127.2,37.54'); assert.deepEqual(r.json.items.map((i) => i.name), ['하남시청', '하남시청역']);                 // 역이 더 가까워도 이름이 같은 시청이 먼저
 });
+
+test('이름 검색: 시에 구가 새로 생겨 낱말이 이어지지 않아도(화성시 오산동 → 화성시 동탄구 오산동) 동·읍·면 낱말로 찾아 나머지 낱말이 든 행만 남긴다(앞쪽 100행에 밀리지 않음)', async () => {
+  const filler = Array.from({ length: 150 }, (_, i) => row(`4159${String(100000 + i).padStart(6, '0')}`.slice(0, 10), `경기도 화성시 만세구 가나${i}동`, `가나${i}동`));
+  const rows = [...filler, row('4159310900', '경기도 화성시 동탄구 오산동', '오산동'), row('4137010100', '경기도 오산시 오산동', '오산동')];
+  const h = harness({ fetch: (url) => { if (isStan(url)) { const nm = new URL(url).searchParams.get('locatadd_nm'); return ok(stanJson(rows.filter((r) => r.locatadd_nm.includes(nm)).slice(0, 100))); } return defaultFetch(url); } });
+  const r = await h.get('화성시 오산동'); assert.deepEqual(r.json.items.map((i) => i.name), ['경기도 화성시 동탄구 오산동']);
+  assert.deepEqual(h.calls.filter(isStan).map((c) => new URL(c).searchParams.get('locatadd_nm')), ['화성시 오산동', '오산동']);                          // 전체 → 동 낱말(화성시 전체 150행을 훑지 않음)
+  const k = await harness().get('하남시 감일동 100'); assert.deepEqual(k.json.items.filter((i) => !i.place).map((i) => i.code), ['4145011400']);                // 지번 낱말은 이름 검색에서 빠진다
+});

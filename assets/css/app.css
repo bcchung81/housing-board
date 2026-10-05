@@ -51,6 +51,18 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,
 .dynhint{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);z-index:5;max-width:min(92vw,520px);padding:5px 14px;border-radius:14px;background:rgba(27,29,33,.86);color:#fff;font-size:13px;text-align:center;pointer-events:none}
 .dynhint[hidden]{display:none}
 .list .empty{padding:14px 6px;color:var(--mute);font-size:13.5px}
+.nlist li{padding:9px 6px;border-top:1px solid var(--line);list-style:none;font-size:13px;line-height:1.5}
+.nlist li:first-child{border-top:0}
+.nlist .nt{display:block;font-weight:700;font-size:13.5px;color:var(--ink)}
+.nlist .nm{display:block;color:var(--mute)}
+.nlist .na{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
+.nlist .na a{display:inline-block;min-height:30px;padding:4px 10px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-size:12.5px;line-height:20px}
+.nlist .na a:hover{background:#F4F4F5;border-color:#8E9299}
+.list .nearby{padding:6px 6px 14px;list-style:none;font-size:13px}
+.list .nearby b{display:block;margin-bottom:6px;color:var(--ink)}
+.list .nearby .nb-list{display:flex;flex-wrap:wrap;gap:6px}
+.list .nearby a{display:inline-block;min-height:32px;padding:5px 10px;border:1px solid var(--line);background:#fff;color:var(--ink);text-decoration:none;font-size:13px;line-height:20px}
+.list .nearby a:hover{background:#F4F4F5;border-color:#8E9299}
 h1{margin:0;font-size:24px;font-weight:700;line-height:1.25}
 h2{margin:0;font-size:16px;font-weight:700;border-bottom:2px solid var(--ink);padding-bottom:6px}
 .sec{display:flex;flex-direction:column;gap:10px}

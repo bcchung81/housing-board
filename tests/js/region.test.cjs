@@ -558,3 +558,58 @@ test('건물대장 보강: 위치·준공 근거를 메모에 적고(블록·합
   await R.boot(ok.win, ok.doc);
   assert.match(ok.els.pvBanner.textContent, /건축HUB 인허가 사업 4곳만 보여 줍니다\(건축물대장으로 위치를 찾은 2곳 포함\)/);
 });
+
+test('기반시설이 제때 안 오면(15초 제한·오류) 지도는 열고 자료 안내에 이유를 적는다. 받았거나 요청하지 않았으면 적지 않는다', async () => {
+  const late = R.emptyBundle({ name: '부산 우동', center: [129.16, 35.16] }, null, PERMIT_FC, null, { infraFailed: true });
+  assert.match(late.texts.footerHtml, /기반시설\(신설예정 학교·정류장\)을 제때 불러오지 못해 입주 전 점검 없이 열었습니다\. 잠시 뒤 다시 열면 나올 수 있습니다\./);
+  assert.doesNotMatch(R.emptyBundle({ name: 'x', center: [127, 37] }, null, PERMIT_FC, null).texts.footerHtml, /제때 불러오지 못해/);
+  assert.doesNotMatch(R.emptyBundle({ name: 'x', center: [127, 37] }, null, PERMIT_FC, null, { infraFailed: false }).texts.footerHtml, /제때 불러오지 못해/);
+  const slow = bootWithPermits('?bjd=4145010800', RESOLVED_BJD, () => json(200, PERMIT_FC));                                                      // 기반시설 요청은 기본 가짜 fetch 가 404
+  await R.boot(slow.win, slow.doc);
+  assert.ok(slow.urls.some((u) => u.startsWith('api/v1/infra?bjd=4145010800')));
+  assert.match(slow.win.REGION.texts.footerHtml, /제때 불러오지 못해/);
+  const none = bootWithPermits('?bjd=4145010800&infra=0', RESOLVED_BJD, () => json(200, PERMIT_FC)); await R.boot(none.win, none.doc);
+  assert.ok(!none.urls.some((u) => u.startsWith('api/v1/infra'))); assert.doesNotMatch(none.win.REGION.texts.footerHtml, /제때 불러오지 못해/);   // ?infra=0 이면 부르지도 않고 안내도 없다
+  const emptyPermits = bootWithPermits('?bjd=4145011100', RESOLVED_BJD, () => json(200, { type: 'FeatureCollection', features: [], meta: { records: 0, candidates: 0 } })); await R.boot(emptyPermits.win, emptyPermits.doc);
+  assert.ok(!emptyPermits.urls.some((u) => u.startsWith('api/v1/infra')));                                                                        // 인허가 단지가 없으면 점검할 대상이 없다
+});
+
+test('정류장이 OpenStreetMap 에서 왔으면 자료 안내에 그 사실과 누락 가능성을 적는다(TAGO 는 안 적음)', () => {
+  const infra = (meta) => ({ type: 'Infra', bjd: '1129013800', asOf: '2026-10-05', sources: [], schools: [], stops: [{ id: 'osm-1', name: '정류장', lon: 127.05, lat: 37.61 }], meta });
+  const osm = R.emptyBundle({ name: '서울 장위동', center: [127.05, 37.61] }, null, PERMIT_FC, infra({ stopsSource: 'osm', stops: 1 }));
+  assert.match(osm.texts.footerHtml, /국토교통부 TAGO에 이 지역 자료가 없어 OpenStreetMap 기준으로 보여 드립니다\(누락이 있을 수 있습니다\)\./);
+  assert.doesNotMatch(R.emptyBundle({ name: 'x', center: [127, 37] }, null, PERMIT_FC, infra({ stopsSource: 'tago', stops: 1 })).texts.footerHtml, /OpenStreetMap 기준/);
+});
+
+test('빈 번들: resolve 의 neighbors 를 nearby 로 싣는다(10자리 코드·이름이 있는 것만, 150개까지). 화면은 인허가 사업이 없을 때 그 법정동으로 가는 링크를 보인다', () => {
+  const nb = [{ bjd: '4145011100', name: '미사동' }, { bjd: 'x', name: '나쁨' }, { bjd: '4145010900', name: '' }, { bjd: '4145010900', name: '망월동' }, null];
+  const b = R.emptyBundle({ name: '경기도 하남시 감일동', center: [127.17, 37.55], neighbors: nb }, null, null);
+  assert.deepEqual(b.nearby, [{ bjd: '4145011100', name: '미사동' }, { bjd: '4145010900', name: '망월동' }]);
+  assert.deepEqual(R.emptyBundle({ name: 'x', center: [127, 37] }, null, null).nearby, []);
+  assert.equal(R.emptyBundle({ name: 'x', center: [127, 37], neighbors: Array.from({ length: 200 }, (_, i) => ({ bjd: String(4145010000 + i), name: `동${i}` })) }, null, null).nearby.length, 150);
+  const app = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../assets/js/app.js'), 'utf8');
+  assert.match(app, /REG\.nearby/); assert.match(app, /window\.RegionLoader\.codeUrl\(location\.href, 'bjd', x\.bjd\)/); assert.match(app, /같은 시군구의 다른 법정동 \$\{near\.length\}곳/);
+  assert.match(require('node:fs').readFileSync(require('node:path').join(__dirname, '../../assets/css/app.css'), 'utf8'), /\.list \.nearby a\{/);
+});
+
+test('noticeRows: 공고를 화면 줄로(기관·유형·세대수, 접수 기간 또는 공고일, 단지·주소, 링크는 https 마이홈·LH 만, pnu 는 19자리만). 빈 제목은 뺀다', () => {
+  const fx = JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname, '../fixtures/api/notices-hanam.json'), 'utf8'));
+  const rows = R.noticeRows(fx); assert.equal(rows.length, fx.items.length); assert.ok(rows[0].title && rows[0].meta && /^접수 \d\d\.\d\d(~\d\d\.\d\d)?$/.test(rows[0].period));
+  const n = { id: 'rental-1', kind: 'rental', title: '신혼희망타운 모집', agency: 'LH', supplyType: '행복주택', housingType: '아파트', units: 20, complex: '하남감일A7BL', address: '경기도 하남시 감일순환로 40', pnu: '4145011500104680000', announcedAt: '2026-10-01', applyFrom: '2026-10-12', applyTo: '2026-10-14', url: 'https://www.myhome.go.kr/hws/x' };
+  assert.deepEqual(R.noticeRows({ items: [n] })[0], { id: 'rental-1', title: '신혼희망타운 모집', meta: 'LH · 임대(행복주택) · 아파트 · 20세대', period: '접수 10.12~10.14', place: '하남감일A7BL · 경기도 하남시 감일순환로 40', url: 'https://www.myhome.go.kr/hws/x', pnu: '4145011500104680000' });
+  assert.equal(R.noticeRows({ items: [{ ...n, applyFrom: '2026-10-12', applyTo: '2026-10-12' }] })[0].period, '접수 10.12');
+  assert.equal(R.noticeRows({ items: [{ ...n, applyFrom: null, applyTo: null }] })[0].period, '공고 2026.10.01'); assert.equal(R.noticeRows({ items: [{ ...n, applyFrom: null, applyTo: null, announcedAt: null }] })[0].period, '');
+  for (const bad of ['http://www.myhome.go.kr/x', 'https://evil.example/', 'javascript:alert(1)']) assert.equal(R.noticeRows({ items: [{ ...n, url: bad }] })[0].url, '', bad);
+  assert.equal(R.noticeRows({ items: [{ ...n, pnu: '123' }] })[0].pnu, ''); assert.deepEqual(R.noticeRows({ items: [{ ...n, title: '' }, null] }), []); assert.deepEqual(R.noticeRows(null), []);
+});
+
+test('fetchNotices: Notices 응답만 받고 오류·네트워크 실패는 null(지도를 막지 않는다). 화면은 번들 없는 지역에서만 늦게 채운다', async () => {
+  const w1 = { urls: [], fetch: async (u) => { w1.urls.push(u); return { ok: true, json: async () => ({ type: 'Notices', items: [], name: 'x' }) }; } };
+  assert.deepEqual(await R.fetchNotices(w1, '41450'), { type: 'Notices', items: [], name: 'x' }); assert.deepEqual(w1.urls, ['api/v1/notices?sgg=41450']);
+  assert.equal(await R.fetchNotices({ fetch: async () => ({ ok: false, status: 502 }) }, '41450'), null); assert.equal(await R.fetchNotices({ fetch: async () => { throw new Error('x'); } }, '41450'), null);
+  assert.equal(await R.fetchNotices({ fetch: async () => ({ ok: true, json: async () => ({ type: 'Other' }) }) }, '41450'), null); assert.equal(await R.fetchNotices({ fetch: async () => ({ ok: true, json: async () => ({ type: 'Notices', items: 'x' }) }) }, '41450'), null);
+  const app = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../assets/js/app.js'), 'utf8'), html = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../index.html'), 'utf8');
+  assert.match(app, /if \(REG\.slug \|\| !RES \|\| !RES\.sgg/); assert.match(app, /noticeRows\(data\)/); assert.match(app, /rel=\"noopener noreferrer\"/); assert.match(html, /id="secNotice"[^>]*hidden/);
+  const r = bootWithPermits('?bjd=4145010800', { ...RESOLVED_BJD, sgg: '41450' }, () => json(200, PERMIT_FC)); await R.boot(r.win, r.doc);
+  assert.deepEqual([r.win.RESOLVED.sgg, r.win.RESOLVED.bjd], ['41450', '4145010800']);                                                        // 화면이 해석 결과의 시군구·법정동을 알아 공고를 부른다
+});

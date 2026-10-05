@@ -169,3 +169,40 @@ test('V-World 호출: 로컬이면 개발키와 domain 을 요청에 싣고(운�
   assert.ok(!JSON.stringify(r).includes('DEVELOPMENT-KEY') && !JSON.stringify(r).includes('OPERATING-KEY'));
   h.done();
 });
+
+test('구가 있는 시(화성·수원 …)는 V-World 에 시 경계가 없고 구만 있어 앞 4자리가 같은 구 경계를 합쳐 시 경계로 연다(districts-merged). 구도 없으면 boundary-not-found', async () => {
+  const rows = [ROW('4159000000', '경기도 화성시'), ROW('4159700000', '경기도 화성시 동탄구'), ROW('4159710700', '경기도 화성시 동탄구 중동'), ROW('4159100000', '경기도 화성시 만세구')];
+  const feat = (cd, x) => ({ properties: { sig_cd: cd }, geometry: SQUARE(x, 37.2, 0.05) });
+  const fetchFn = (children) => async (url) => {
+    const u = new URL(url);
+    if (u.hostname === 'apis.data.go.kr') { const sg = u.searchParams.get('sgg_cd'); return { ok: true, status: 200, json: async () => (u.searchParams.get('sido_cd') === '41' && sg === '590' ? stanJson(rows) : sg === '597' ? stanJson([rows[1], rows[2]]) : { RESULT: { resultCode: 'INFO-3' } }) }; }
+    const f = u.searchParams.get('attrFilter');
+    if (u.searchParams.get('data') === 'LT_C_ADSIGG_INFO') return { ok: true, status: 200, json: async () => (f === 'sig_cd:=:41590' ? vwJson(null) : f === 'sig_cd:like:4159' && children ? { response: { status: 'OK', result: { featureCollection: { features: [feat('41591', 126.9), feat('41597', 127.1)] } } } } : vwJson(null)) };
+    if (u.searchParams.get('data') === 'LT_C_ADEMD_INFO') return { ok: true, status: 200, json: async () => vwJson({ properties: { emd_cd: '41597107' }, geometry: SQUARE(127.1, 37.2, 0.02) }) };
+    throw new Error('예상 밖 호출 ' + url);
+  };
+  const h = harness({ fetch: fetchFn(true), readCoverage: () => ({}) });
+  const r = await h.run('/api/v1/resolve?sgg=41590&geometry=1');
+  assert.equal(r.status, 200); assert.deepEqual(r.json.warnings, ['districts-merged']); assert.equal(r.json.geometry.type, 'MultiPolygon'); assert.equal(r.json.geometry.coordinates.length, 2);
+  assert.deepEqual(r.json.bbox, [126.9, 37.2, 127.15, 37.25]); assert.deepEqual(r.json.center, [127.025, 37.225]); assert.equal(r.json.coverage.tier, 'none');
+  const calls = h.calls.filter((u) => u.includes('LT_C_ADSIGG_INFO')).map((u) => new URL(u).searchParams.get('attrFilter')); assert.deepEqual(calls, ['sig_cd:=:41590', 'sig_cd:like:4159']);
+  await h.run('/api/v1/resolve?sgg=41590&geometry=1'); assert.equal(h.calls.filter((u) => u.includes('LT_C_ADSIGG_INFO')).length, 2);                    // 두 번째는 캐시
+  const b = await h.run('/api/v1/resolve?bjd=4159710700'); assert.equal(b.status, 200); assert.equal(b.json.warnings, undefined);                           // 구 아래 법정동은 법정동 경계라 영향 없음
+  const none = harness({ fetch: fetchFn(false), readCoverage: () => ({}) }); const n = await none.run('/api/v1/resolve?sgg=41590&geometry=1');
+  assert.deepEqual(n.json.warnings, ['boundary-not-found']); assert.equal(n.json.geometry, undefined);
+  h.done(); none.done();
+});
+
+test('neighbors: 같은 시군구의 읍면동(리 제외)을 법정동·필지는 자기 자신을 빼고, 시군구는 전체를 준다(최대 150)', async () => {
+  const h = harness();
+  const b = await h.run('/api/v1/resolve?bjd=2824510900');
+  assert.deepEqual(b.json.neighbors, [{ bjd: '2824511000', name: '동양동' }, { bjd: '2824511100', name: '귤현동' }]);                                // 박촌동 자신은 빠짐, 시군구 행은 읍면동이 아님
+  const s = await h.run('/api/v1/resolve?sgg=28245&geometry=0');
+  assert.deepEqual(s.json.neighbors.map((x) => x.name), ['박촌동', '동양동', '귤현동']);
+  const p = await h.run('/api/v1/resolve?pnu=2824511000104790000'); assert.deepEqual(p.json.neighbors.map((x) => x.bjd), ['2824510900', '2824511100']);
+  const many = harness({ fetch: async (url) => { const u = new URL(url); if (u.hostname === 'apis.data.go.kr') return { ok: true, status: 200, json: async () => stanJson([ROW('2824500000', '인천광역시 계양구'), ...Array.from({ length: 200 }, (_, i) => ROW(`28245${String(101 + i).padStart(3, '0')}00`, `인천광역시 계양구 가${i}동`))]) }; return { ok: true, status: 200, json: async () => vwJson({ properties: {}, geometry: SQUARE(126.7, 37.5) }) }; } });
+  assert.equal((await many.run('/api/v1/resolve?sgg=28245')).json.neighbors.length, 150);
+  const none = harness({ fetch: async (url) => { const u = new URL(url); if (u.hostname === 'apis.data.go.kr') return { ok: true, status: 200, json: async () => stanJson([ROW('2824500000', '인천광역시 계양구')]) }; return { ok: true, status: 200, json: async () => vwJson({ properties: {}, geometry: SQUARE(126.7, 37.5) }) }; } });
+  assert.equal((await none.run('/api/v1/resolve?sgg=28245')).json.neighbors, undefined);                                                         // 읍면동이 없으면 항목 자체가 없다
+  h.done(); many.done(); none.done();
+});

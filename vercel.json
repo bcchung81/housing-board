@@ -21,6 +21,10 @@
       "maxDuration": 20,
       "excludeFiles": "{.cache/**,regions/*/{buildings,projects,context,infra}.json}"
     },
+    "api/v1/notices.js": {
+      "excludeFiles": "{.cache/**,regions/**}",
+      "maxDuration": 20
+    },
     "api/v1/buildings.js": {
       "excludeFiles": "{.cache/**,regions/**}",
       "maxDuration": 30

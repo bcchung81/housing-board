@@ -7,7 +7,7 @@
 
    - 건물은 중심점이 있는 칸에만 속한다(이웃 칸과 겹치지 않음). 변환 규칙은 lib/buildings.js(번들 빌드와 같음)이고 층수환산 높이는 계양 측정값 기반 근사다.
    - 칸당 V-World 를 최대 5쪽(1,000동씩) 부르고 넘으면 truncated:true. 응답은 로컬 캐시 24시간 + CDN 24시간(s-maxage).
-   - 키를 쓰는 열린 중계가 되지 않게: 칸 번호는 한국 범위의 정수만 받고, 인스턴스별 시간당 원천 호출 상한(BUILDINGS_UPSTREAM_PER_HOUR, 기본 600쪽)을 넘으면 429.
+   - 키를 쓰는 열린 중계가 되지 않게: 칸 번호는 한국 범위의 정수만 받고, 인스턴스별 시간당 원천 호출 상한(BUILDINGS_UPSTREAM_PER_HOUR, 기본 1200쪽)을 넘으면 429.
    - 키: VWORLD_KEY(운영)·VWORLD_DEV_KEY(로컬)·VWORLD_DOMAIN → lib/vworld.js. 키·원천 URL·원천 오류 문구는 응답에 싣지 않는다(서버 로그에는 가려서 남김).
    시험: tests/js/buildingsapi.test.cjs */
 'use strict';
@@ -20,7 +20,7 @@ const PAGE_SIZE = 1000;
 const MAX_PAGES = 5;
 const TTL_MS = 24 * 3600 * 1000;
 const FETCH_TIMEOUT_MS = 10000;
-const DEFAULT_BUDGET_PER_HOUR = 600;
+const DEFAULT_BUDGET_PER_HOUR = 1200;
 const ALLOWED = new Set(['cell']);
 
 function createHandler(overrides = {}) {

@@ -48,6 +48,7 @@ const host = (url) => new URL(url).hostname;
 
 function defaultFetch(url, init) {
   const u = new URL(url);
+  if (u.hostname.startsWith('overpass')) return ok({ elements: [] });                                                   // OpenStreetMap 보조: 기본은 정류장 없음
   if (u.hostname === 'eduinfo.go.kr') return ok({ result: [row(), row({ schlSeq: 90, schlNm: '(가칭)먼곳', pointX: '36', pointY: '128' })] });
   if (u.hostname === 'api.vworld.kr') { const pnu = /pnu:=:(\d+)/.exec(u.searchParams.get('attrFilter'))[1]; return ok(vw(pnu.endsWith('05690000') ? SQ(127.2, 37.54) : SQ(127.206, 37.54))); }
   if (u.pathname.includes('HsPmsHubService')) return ok(hub([rec(), rec({ mgmHsrgstPk: 2, bun: '0570', bldNm: '다른단지', totHhldCnt: 50, stcnsDay: '' })]));
@@ -157,4 +158,63 @@ test('서울(시도 11)은 TAGO 에 없어 정류소를 부르지 않고 noBus �
   assert.equal(r.status, 200); assert.equal(r.json.meta.noBus, true); assert.equal(r.json.meta.stopCalls, 0); assert.deepEqual(r.json.stops, []);
   assert.equal(h.calls.filter((c) => c.url.includes('getCrdntPrxmtSttnList')).length, 0);
   assert.equal(r.headers['cache-control'], 'public, s-maxage=86400, stale-while-revalidate=86400');
+});
+
+test('인허가를 CDN 에서 받는다(Vercel): 이 서버의 permits 공개 주소를 불러 건축HUB·V-World 를 다시 부르지 않고, 못 받으면 직접 만든다. 요청의 Host 헤더는 쓰지 않는다', async () => {
+  const VERCEL = { DATA_GO_KR_KEY_RESOLVE_1: 'RES-KEY', DATA_GO_KR_KEY_BUS_1: 'BUS-KEY', VWORLD_KEY: 'VW-KEY', VERCEL: '1', VERCEL_ENV: 'production', VERCEL_PROJECT_PRODUCTION_URL: 'housing-board.example.app', VERCEL_URL: 'housing-board-abc.vercel.app' };
+  const permitsBody = { type: 'FeatureCollection', bjd: BJD, features: [{ type: 'Feature', properties: { pnu: '4145010800105690000', name: 'a', label: 'a', status: '계획', units: 100, jibun: '569', records: 1 }, geometry: SQ(127.2, 37.54) }], meta: {} };
+  const viaCdn = harness({ env: VERCEL, fetch: (url, init, n) => (host(url) === 'housing-board.example.app' ? ok(permitsBody) : defaultFetch(url, init, n)) });
+  const a = await viaCdn.run(`/api/v1/infra?bjd=${BJD}`);
+  assert.equal(a.status, 200); assert.equal(a.json.meta.centers, 1); assert.ok(a.json.stops.length > 0);
+  const cdn = viaCdn.calls.filter((c) => host(c.url) === 'housing-board.example.app'); assert.equal(cdn.length, 1); assert.equal(cdn[0].url, `https://housing-board.example.app/api/v1/permits?bjd=${BJD}`);
+  assert.equal(viaCdn.calls.filter((c) => c.url.includes('HsPmsHubService') || host(c.url) === 'api.vworld.kr').length, 0, '인허가를 다시 만들지 않는다');
+  assert.ok(!/headers\.host|x-forwarded-host/i.test(require('node:fs').readFileSync(require('node:path').join(__dirname, '../../api/v1/infra.js'), 'utf8')), '요청의 Host 헤더를 주소에 쓰지 않는다');
+  for (const down of [() => raw(500, ''), () => raw(401, '<html>보호됨</html>'), () => ok({ type: 'Other' }), () => ok({ ...permitsBody, bjd: '1111111111' })]) {
+    const h = harness({ env: VERCEL, fetch: (url, init, n) => (host(url) === 'housing-board.example.app' ? down() : defaultFetch(url, init, n)) });
+    const r = await h.run(`/api/v1/infra?bjd=${BJD}`); assert.equal(r.status, 200); assert.ok(r.json.meta.centers >= 1);                          // 못 받으면 직접 만들어 같은 결과
+    assert.ok(h.calls.some((c) => c.url.includes('HsPmsHubService')), '직접 만든다');
+  }
+  const local = harness();                                                                                                                       // Vercel 이 아니면(로컬) 공개 주소를 부르지 않는다
+  await local.run(`/api/v1/infra?bjd=${BJD}`); assert.ok(!local.calls.some((c) => /\/api\/v1\/permits/.test(c.url)));
+  const preview = harness({ env: { ...VERCEL, VERCEL_ENV: 'preview' }, fetch: (url, init, n) => (host(url) === 'housing-board-abc.vercel.app' ? ok(permitsBody) : defaultFetch(url, init, n)) });
+  await preview.run(`/api/v1/infra?bjd=${BJD}`); assert.equal(preview.calls.filter((c) => host(c.url) === 'housing-board-abc.vercel.app').length, 1);   // 미리보기는 배포 주소
+});
+
+const osmNode = (id, name, lon, lat, tags = {}) => ({ type: 'node', id, lon, lat, tags: { highway: 'bus_stop', ...(name ? { name } : {}), ...tags } });
+const SEOUL_ENV = { DATA_GO_KR_KEY_RESOLVE_1: 'RES-KEY', DATA_GO_KR_KEY_BUS_1: 'BUS-KEY', VWORLD_KEY: 'VW-KEY' };
+const seoulHub = (url, init, n, overpass) => {
+  if (host(url).startsWith('overpass')) return overpass(url);
+  if (url.includes('HsPmsHubService')) return ok(hub([rec({ sigunguCd: '11290', bjdongCd: '13800', platPlc: '서울특별시 성북구 장위동 569번지' })]));
+  return defaultFetch(url, init, n);
+};
+
+test('OpenStreetMap 보조: TAGO 에 자료가 없는 서울은 Overpass 로 정류장을 받는다(이름 있는 것만, 반경 안만, 출처 osm-bus), TAGO 는 부르지 않는다. 인프라 응답은 24시간 캐시', async () => {
+  const cx = 127.2, cy = 37.54;
+  const elements = [osmNode(1, '장위동주민센터', cx + 0.001, cy + 0.001, { ref: '08123' }), osmNode(2, null, cx + 0.001, cy), osmNode(3, '먼정류장', cx + 0.02, cy + 0.02),
+    osmNode(4, '플랫폼', cx, cy + 0.002, { highway: undefined, public_transport: 'platform', bus: 'yes' }), { type: 'way', id: 5, tags: { name: '길' } }, osmNode(1, '장위동주민센터', cx + 0.001, cy + 0.001)];
+  const h = harness({ env: SEOUL_ENV, fetch: (url, init, n) => seoulHub(url, init, n, () => ok({ elements })) });
+  const r = await h.run('/api/v1/infra?bjd=1129013800');
+  assert.equal(r.status, 200); assert.equal(r.headers['cache-control'], 'public, s-maxage=86400, stale-while-revalidate=86400');
+  assert.equal(r.json.meta.stopsSource, 'osm'); assert.equal(r.json.meta.noBus, undefined); assert.equal(r.json.meta.stopCalls, 0); assert.equal(r.json.meta.stops, 2);
+  assert.deepEqual(r.json.stops.map((s) => s.name), ['장위동주민센터', '플랫폼']);                                                              // 이름 없음·멀리·way·중복은 뺌
+  assert.deepEqual(r.json.stops.find((s) => s.name === '장위동주민센터'), { id: 'osm-1', name: '장위동주민센터', lon: 127.201, lat: 37.541, no: '08123' });
+  assert.ok(r.json.sources.some((s) => s.id === 'osm-bus' && s.redistributable === 'Y' && /ODbL/.test(s.license))); assert.ok(!r.json.sources.some((s) => s.id === 'tago-bus'));
+  assert.equal(h.calls.filter((c) => c.url.includes('getCrdntPrxmtSttnList')).length, 0);
+  const ov = h.calls.filter((c) => host(c.url).startsWith('overpass')); assert.equal(ov.length, 2);                                               // 두 서버를 동시에
+  assert.equal(ov[0].init.method, 'POST'); assert.match(ov[0].init.headers['User-Agent'], /housing-board/); assert.match(decodeURIComponent(ov[0].init.body), /bus_stop/);
+  await h.run('/api/v1/infra?bjd=1129013800'); assert.equal(h.calls.filter((c) => host(c.url).startsWith('overpass')).length, 2);                // 같은 법정동은 캐시(공개 서버를 다시 부르지 않음)
+});
+
+test('OpenStreetMap 보조: 한 서버가 죽어도 다른 서버로, 둘 다 죽거나 모양이 다르면 정류장 없이(stopsError, 짧게만 캐시), TAGO 가 정류소를 주면 부르지 않는다', async () => {
+  const mk = (overpass) => harness({ env: SEOUL_ENV, fetch: (url, init, n) => seoulHub(url, init, n, overpass) });
+  const one = mk((url) => (host(url) === 'overpass-api.de' ? raw(504, '') : ok({ elements: [osmNode(7, '가까운정류장', 127.2005, 37.5405)] })));
+  const a = await one.run('/api/v1/infra?bjd=1129013800'); assert.equal(a.json.meta.stopsSource, 'osm'); assert.equal(a.json.stops.length, 1); assert.equal(a.headers['cache-control'], 'public, s-maxage=86400, stale-while-revalidate=86400');
+  const both = mk(() => raw(504, '')); const b = await both.run('/api/v1/infra?bjd=1129013800');
+  assert.equal(b.status, 200); assert.equal(b.json.stops.length, 0); assert.equal(b.json.meta.stopsError, '버스 정류장(OpenStreetMap)을 불러오지 못함'); assert.equal(b.headers['cache-control'], 'public, s-maxage=60');
+  const n0 = both.calls.filter((x) => host(x.url).startsWith('overpass')).length; assert.equal(n0, 2);
+  await both.run('/api/v1/infra?bjd=1129013800'); assert.equal(both.calls.filter((x) => host(x.url).startsWith('overpass')).length, n0);   // 실패 뒤 2분은 공개 서버를 다시 두드리지 않는다
+  both.clock.t += 2 * 60 * 1000 + 1; await both.run('/api/v1/infra?bjd=1129013800'); assert.equal(both.calls.filter((x) => host(x.url).startsWith('overpass')).length, n0 + 2);
+  const bad = mk(() => ok({ nope: 1 })); assert.equal((await bad.run('/api/v1/infra?bjd=1129013800')).json.meta.stopsError, '버스 정류장(OpenStreetMap)을 불러오지 못함');
+  const tagoCity = harness(); const c = await tagoCity.run(`/api/v1/infra?bjd=${BJD}`);                                                          // 하남: TAGO 가 정류소를 준다
+  assert.equal(c.json.meta.stopsSource, 'tago'); assert.ok(c.json.stops.length > 0); assert.equal(tagoCity.calls.filter((x) => host(x.url).startsWith('overpass')).length, 0);
 });
