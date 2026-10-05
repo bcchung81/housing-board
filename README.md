@@ -8,12 +8,17 @@
 
 ## 실행
 
-지역 자료(`regions/*.json`)를 `fetch`로 읽으므로 **더블클릭(`file://`)으로는 열리지 않고, 정적 서버가 필요합니다.**
+지역 자료(`regions/*.json`)를 `fetch`로 읽으므로 **더블클릭(`file://`)으로는 열리지 않고, 서버가 필요합니다.** 로컬에서는 개발 서버를 쓰세요. 정적 파일과 버스 위치 중계(`/api/bus`)를 함께 열어 줍니다.
 
 ```
-python3 -m http.server 8000      # 이 폴더에서
-# 브라우저에서 http://localhost:8000/ 을 엽니다
+./run-app.sh                     # 이 폴더에서. 개발 서버를 켜고 브라우저를 엽니다(포트 기본 8000, 바꾸려면 ./run-app.sh 8001)
+node scripts/dev.js 8000         # 같은 일을 직접: 브라우저에서 http://127.0.0.1:8000/ 을 엽니다
 ```
+
+- **버스 위치(3D 버스)는 인천 계양구에서만** 나옵니다(`?region=incheon-gyeyang`, 기본 지역). 확대 14 이상에서 노선 선을 따라 움직이는 3D 버스 모형과 노선 번호가 보입니다(확대 17.5 이상에서 실제 크기).
+- `.env.local`에 `DATA_GO_KR_KEY`(공공데이터포털 인증키)가 있어야 위치를 받아옵니다. 없으면 지도는 노선 선만 보여 줍니다.
+- 버스가 어디 있는지 모르겠으면 **옵션 → `가장 가까운 버스 보기`** 를 누르세요(버스가 움직이므로 고정 위치가 없습니다). 시작 위치는 주소 `?at=경도,위도,확대[,기울기,방위]`로 정할 수 있습니다(예: `?region=incheon-gyeyang&at=126.7573,37.5588,17.2,58,25`).
+- `python3 -m http.server 8000` 같은 정적 서버로도 지도는 열리지만 **버스 위치 함수가 없어(404) 노선 선만 보입니다.** 이때 하단 범례에 `버스 선만`, 옵션에 `위치 서버 없음`이 뜹니다.
 
 - 화면에 `지역 자료를 불러오지 못했습니다. regions/index.json: Failed to fetch`가 뜨면 `file://`로 열었거나 서버가 꺼져 있는 것입니다. 서버를 켜고 `http://localhost:포트/`로 여세요.
 - 인터넷이 필요합니다: 배경지도(V-World), 지형 고도(AWS), 지명 글자(OpenFreeMap)를 내려받습니다.
@@ -38,20 +43,24 @@ python3 -m http.server 8000      # 이 폴더에서
 ```
 index.html               운영 진입점 (지역 불러오기 → 키 → 앱 순으로 스크립트를 읽음)
 config.js                V-World 인증키 등 설정 (공유 금지) / config.example.js 는 키가 빈 견본
-vercel.json  .vercelignore   배포 설정(캐시 헤더 · 올라가면 안 되는 파일 제외)
+vercel.json  .vercelignore   배포 설정(캐시 헤더 · 올라가면 안 되는 파일 제외 · 버스 함수 설정)
+api/bus.js               버스 위치 중계(Vercel 함수): 키를 숨기고 TAGO 호출 수를 묶음
 assets/
   css/app.css            화면 모양 (반투명 유리 변수 --glass-*)
   js/region.js           지역 로더와 어댑터 (순수 함수 + 얇은 DOM 부분)
   js/infra.js            입주 전 점검 판정 (순수 함수)
   js/facility.js         기존 건물 시설 분류 (순수 함수)
+  js/bus.js              버스 노선·위치 계산 (방향·3D 면·보간·경유 단지, 순수 함수)
   js/app.js              화면 동작 (지도·레이어·HUD·카드·옵션·사이드바)
   vendor/maplibre-gl/    MapLibre GL JS 5.24.0 (자체 호스팅, BSD-3, LICENSE.txt 동봉)
 regions/                 지역별 자료 묶음(번들) — 구조는 dataset.md
 schemas/                 번들·입력 규격(JSON Schema)
 tools/                   데이터를 만들고 검증하는 도구 — dataset.md
+run-app.sh               로컬 실행(개발 서버 + 브라우저 열기)
 dataset.md               지도 데이터 (쓰는 것 · 만드는 절차 · 안 쓰는 것 · 구조 · 수집 출처 · 가공 과정)
 docs/                    데이터 인터페이스 정의서(docs/data-interface/)와 설계 문서(docs/superpowers/)
 scripts/build.js         Vercel 빌드
+scripts/dev.js           로컬 개발 서버(정적 파일 + /api/bus)
 tests/                   Python(unittest)·Node(node --test) 시험
 workspace/               작업 영역 — 배포하지 않음 (원천 자료, 기획 문서, 영상)
 ```
@@ -67,7 +76,7 @@ index.html ─► region.js(RegionLoader.boot) ─► config.js ─► app.js
 
 ### 브라우저 안의 순서
 
-1. **`index.html`** — 첫 화면(불러오는 중 안내)을 먼저 그린 뒤, `maplibre-gl.js` · `region.js` · `infra.js` · `facility.js`를 병렬로 받아 **받은 순서가 아니라 적힌 순서대로** 실행합니다.
+1. **`index.html`** — 첫 화면(불러오는 중 안내)을 먼저 그린 뒤, `maplibre-gl.js` · `region.js` · `infra.js` · `facility.js` · `bus.js`를 병렬로 받아 **받은 순서가 아니라 적힌 순서대로** 실행합니다.
 2. **`RegionLoader.boot()`**(`region.js`) — `regions/index.json`에서 주소의 `?region=`으로 지역을 고르고, 그 지역 폴더의 자료를 병렬로 받아 화면이 쓰는 모양으로 바꿔 전역 변수에 넣습니다(파일·필드 구조는 dataset.md). 선택 파일이 없으면 그 기능은 꺼집니다. 제목·푸터 문구를 채우고 지역 선택기와 미리보기 띠를 붙이며, 실패하면 안내 화면(`#fatal`)을 띄우고 멈춥니다.
 3. **`config.js`**(없어도 됨)로 V-World 키를 읽은 뒤 **`app.js`**를 불러옵니다.
 4. **`app.js`** — 주소 매개변수와 전역 자료로 상태를 만들고, MapLibre 지도를 만들고, 기존 건물을 분류하고, 사이드바(합계·다음 일정·단지 카드·입주 전 점검·타임라인)를 그립니다. 지도 스타일이 올라오면(`style.load`) `setupCustom()`이 자료원과 레이어를 올리고 `applyAll()`이 보기·필터·옵션을 반영합니다.
@@ -95,6 +104,7 @@ index.html ─► region.js(RegionLoader.boot) ─► config.js ─► app.js
 | 기존 건물 | `official` → `official-far/3d/roof/ao`·`official-shadow` · `fac-pts` → `fac-label`(기반시설 이름표) · `sel`(선택) → `sel-3d`·`sel-line*` |
 | 역·학교(OSM) | `ctx-st` `ctx-sch` `ctx-ring` → `ctx-*` |
 | 입주 전 점검 | `infra-*` → 신설 학교·부지·정류장·전기·통학구역·연결선·반경 |
+| 버스 노선·위치 | `bus-routes` `bus-solids` `bus-lbl` → `bus-route-line` `bus-route-label` `bus-3d`(3D 버스) `bus-label`(번호) |
 
 ## 시험
 
@@ -109,13 +119,15 @@ node --test "tests/js/*.test.cjs"                     # Node (따옴표 필수)
 | `tests/js/infra.test.cjs` | 입주 전 점검 판정 |
 | `tests/js/facility.test.cjs` | 기반시설 분류·이름표·강조색과 지도 연결(실제 계양 자료 회귀 포함) |
 | `tests/js/build.test.cjs` | `scripts/build.js`(복사 범위·미리보기 지역 제외) |
+| `tests/js/busapi.test.cjs` | `api/bus.js`: 호출 수 묶기(ttl)·노선 제한·쿼리 거절·실패 처리·키 인코딩 |
+| `tests/js/bus.test.cjs` | 버스 계산(방향·3D 면·보간·경유 단지·호출 간격)과 화면 연결(옵션·폴링 약속) |
 | `tests/js/glass.test.cjs` `sidebar.test.cjs` `topbar.test.cjs` | 반투명 유리 글자 대비 · 사이드바(글자 13px 이상·기본 접힘·요약) · 상단 바·확대 카드·가로 요약 |
 
 화면의 실제 겹침·높이는 정적 시험이 보지 못하므로, 화면을 고친 뒤에는 `?selftest`로 열어 `window.__map`으로 레이어·위치를 확인합니다. Python 시험(번들을 만드는 도구·검증기)은 [dataset.md](dataset.md)의 "지역을 추가하거나 고칠 때"에 정리했습니다.
 
 ## 배포
 
-Vercel은 `vercel.json`의 빌드 명령(`node scripts/build.js`)이 `index.html`·`assets/`·`regions/`만 `public/`에 모아 서비스합니다. 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
+Vercel은 `vercel.json`의 빌드 명령(`node scripts/build.js`)이 `index.html`·`assets/`·`regions/`만 `public/`에 모아 서비스하고, `api/bus.js`는 함수로 따로 배포됩니다. 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
 
 **인증키**: `config.js`와 `.env*`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(OpenFreeMap 회색 지도)로 빌드합니다.
 
@@ -124,6 +136,15 @@ vercel env add VWORLD_KEY production      # 값은 프롬프트에 붙여넣기
 vercel env add VWORLD_KEY preview
 vercel --prod
 ```
+
+**버스 위치 함수**: `api/bus.js`는 `DATA_GO_KR_KEY`(공공데이터포털 인증키, `+ / =`가 든 디코딩된 형태 그대로)를 서버에서만 읽습니다. 브라우저에는 나가지 않습니다. 키가 없으면 함수가 503을 주고 지도는 노선 선만 보입니다. 이 키로 TAGO 버스위치정보(15098533)를 **활용신청**해 두어야 합니다(자동승인).
+
+```
+vercel env add DATA_GO_KR_KEY production   # 값은 프롬프트에 붙여넣기
+vercel env add DATA_GO_KR_KEY preview
+```
+
+하루 호출은 (실시간 노선 수) × 86400 ÷ ttl 회로 묶입니다. 응답을 CDN이 ttl초(최소 60초) 동안 나눠 쓰기 때문입니다(계양 4개 노선이면 최대 5,760회, 개발계정 한도 10,000회). 노선이 늘면 ttl이 길어집니다.
 
 인증키는 결국 브라우저에 그대로 보이므로 환경변수는 '저장소에 안 올리는' 용도일 뿐이고, 실제 보호는 V-World 콘솔의 서비스 URL 제한이 전부입니다. 배포 주소(운영 도메인)를 그곳에 등록해야 배경지도가 뜹니다. 미리보기 배포 주소는 배포마다 바뀌므로 등록하지 않으면 회색 지도로 나옵니다.
 
