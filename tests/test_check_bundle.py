@@ -34,13 +34,16 @@ BUILDINGS = {"type": "FeatureCollection", "meta": {"basis": "20261004"},
                            "properties": {"eh": 12.0, "src": "정보없음"}}]}
 CONTEXT = {"stations": [{"name": "테스트역", "lon": 126.78, "lat": 35.15}], "schools": [], "asOf": "2026-10-04", "source": "OSM"}
 INFRA = {
-    "schema_version": "1.2.0", "asOf": "2026-10-04",
+    "schema_version": "1.3.0", "asOf": "2026-10-04",
     "sources": [{"id": "i-src", "label": "교육재정알리미", "redistributable": "unknown"}],
     "schools": [{"id": "s1", "name": "(가칭)테스트초", "level": "초등학교", "status": "신설예정", "openYm": "2029-03",
                  "lon": 126.785, "lat": 35.155, "poly": RING, "sources": ["i-src"]}],
     "zones": [{"id": "z-a", "name": "테스트초통학구역", "school": "테스트초등학교", "poly": RING, "asOf": "2026-09-20", "sources": ["i-src"]}],
     "attendance": [{"projectId": "z1-A1", "zoneId": "z-a"}],
-    "stops": [{"name": "정류장", "lon": 126.785, "lat": 35.155}],
+    "stops": [{"id": "S1", "name": "정류장", "no": "101", "lon": 126.785, "lat": 35.155, "routes": ["R1"]}],
+    "busRoutes": [{"id": "R1", "no": "87", "type": "간선버스", "from": "기점", "to": "종점", "live": True, "path": [[126.78, 35.15], [126.79, 35.16]]},
+                  {"id": "R2", "no": "9"}],
+    "busCityCode": 23,
     "sites": [{"id": "e1", "category": "전기", "name": "전기공급설비", "poly": RING, "sources": ["i-src"]}],
     "permits": [{"id": "p1", "name": "누리센터", "use": "노유자시설", "permitDate": "2025-12-04", "startDate": None, "sources": ["i-src"]}],
     "measures": [{"id": "m1", "category": "교통", "title": "버스 신설", "when": "2026-10", "status": "예정", "sources": ["i-src"]}],
@@ -188,6 +191,22 @@ class CheckBundle(unittest.TestCase):
         bad["schools"].append(copy.deepcopy(bad["schools"][0]))
         errs = self.errors(infra=bad)
         self.assertTrue(any("중복" in e and "s1" in e for e in errs), errs)
+
+    def test_infra_bus_routes_are_cross_checked(self):
+        cases = {
+            "duplicate route id": (lambda d: d["busRoutes"].append({"id": "R2", "no": "10"}), "중복"),
+            "stop points at an unknown route": (lambda d: d["stops"][0].update(routes=["R1", "ghost-route"]), "ghost-route"),
+            "duplicate stop id": (lambda d: d["stops"].append(copy.deepcopy(d["stops"][0])), "중복"),
+            "live route without a path": (lambda d: d["busRoutes"][0].pop("path"), "path"),
+            "path on a route that is not live": (lambda d: d["busRoutes"][1].update(path=[[126.7, 35.1], [126.8, 35.2]]), "live가 아닌데"),
+            "live route without a city code": (lambda d: d.pop("busCityCode"), "busCityCode"),
+        }
+        for name, (mutate, needle) in cases.items():
+            with self.subTest(name):
+                bad = copy.deepcopy(INFRA)
+                mutate(bad)
+                errs = self.errors(infra=bad)
+                self.assertTrue(any("infra.json" in e and needle in e for e in errs), errs)
 
     def test_infra_open_ym_only_makes_sense_for_scheduled_schools(self):
         bad = copy.deepcopy(INFRA)

@@ -87,7 +87,17 @@ $('#baseNote').textContent = KEY ? '' : '배경: OpenFreeMap (V-World 키를 넣
 const DEM_TILES = ['https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'];
 const STATUS = { loaded: false, errors: [], officialData: HAS_GY, projects: HAS_PR, base: KEY ? 'vworld' : 'openfreemap' };   // 시험용 상태. ?selftest 일 때만 window에 공개한다
 if (q.get('selftest')) window.__mapStatus = STATUS;
-const START = { pitch: 52, bearing: 0, ...(REG.view || { center: [126.7585, 37.5515], zoom: 14.4 }) };   // 지역의 시작 위치
+/* 주소 ?at=경도,위도,확대[,기울기,방위] 로 시작 위치를 바꾼다(어디를 봐야 하는지 알려 줄 때). 값이 이상하면 무시한다 */
+function atParam() {
+  const v = String(q.get('at') || '').split(',').map((s) => (s.trim() === '' ? NaN : Number(s)));
+  const [lon, lat, zoom, pitch, bearing] = v;
+  if (![lon, lat, zoom].every(Number.isFinite) || lon < 120 || lon > 135 || lat < 30 || lat > 45 || zoom < 0 || zoom > 22) return {};
+  const out = { center: [lon, lat], zoom };
+  if (Number.isFinite(pitch) && pitch >= 0 && pitch <= 80) out.pitch = pitch;
+  if (Number.isFinite(bearing) && bearing >= -360 && bearing <= 360) out.bearing = bearing;
+  return out;
+}
+const START = { pitch: 52, bearing: 0, ...(REG.view || { center: [126.7585, 37.5515], zoom: 14.4 }), ...atParam() };   // 지역의 시작 위치(주소 ?at= 가 있으면 그 위치)
 const map = new maplibregl.Map({
   container: 'map', style: baseStyle(), ...START, maxPitch: 80, minZoom: 11, attributionControl: { compact: true },
   canvasContextAttributes: { antialias: q.get('aa') !== '0' },   // 모서리 계단 방지(4배 다중 샘플). 저사양이면 주소에 ?aa=0
@@ -104,6 +114,7 @@ let ctxOn = q.get('ctx') !== '0';                              // 역·학교(OS
 let ringOn = q.get('ring') === '1';                            // 역 반경 원(500 m·1 km): 기본 끔
 let infraOn = q.get('infra') !== '0';                          // 입주 전 점검(학교·정류장·전기 시설): 기본 켬. 자료가 있는 지역에서만 쓰인다
 let zoneOn = q.get('zone') === '1';                            // 초등 통학구역 경계: 기본 끔
+let busOn = q.get('bus') !== '0';                              // 버스 노선·위치(3D): 기본 켬. 실시간 노선이 있는 지역에서만 쓰인다
 let timeMo = 0;                                               // 입주 시기 보기의 기준 달(2026-10부터 센 달 수)
 let dimExisting = false;                                      // 기존 건물을 흐리게
 map.on('error', (e) => {
@@ -339,11 +350,21 @@ function infraGeoJSON() {
     rings.push(pol({ pid: b.pid, empty: n === 0 }, circleRing(c, IL.STOP_M)));
     rings.push(pt({ pid: b.pid, empty: n === 0, text: n ? `정류장 ${n}곳` : '▲ 정류장 없음' }, [c[0], c[1] - IL.STOP_M / 111320]));
   });
-  (INFRA.stops || []).forEach((s) => stops.push(pt({ name: s.name }, [s.lon, s.lat])));
+  (INFRA.stops || []).forEach((s) => stops.push(pt({ name: s.name, id: s.id || '' }, [s.lon, s.lat])));
   (INFRA.zones || []).forEach((z) => { zones.push(pol({ id: z.id, name: z.name }, z.poly)); zpts.push(pt({ text: `${z.school} 통학구역` }, IL.centroid(z.poly))); });
   return { sites: fc(sites), pts: fc(pts), stops: fc(stops), zones: fc(zones), zpts: fc(zpts), spts: fc(spts), links: fc(links), lpts: fc(lpts), rings: fc(rings) };
 }
 const INFRA_GJ = HAS_INFRA ? infraGeoJSON() : null;
+/* 버스 노선·위치: 노선(번들의 busRoutes, 정류소를 이은 선)은 정적이고, 위치는 서버 중계(/api/bus)를 서버가 알려 준 간격 이상으로만 불러 3D 로 그린다.
+   방향·3D 면·보간은 BusLib(assets/js/bus.js). 위치는 몇 십 초 전 값일 수 있어 '실시간'이라 하지 않는다. 중계 함수가 없거나 키가 없으면(404·405·503) 다시 부르지 않고 노선 선만 보인다. */
+const BL = window.BusLib;
+const LIVE_ROUTES = HAS_INFRA && BL ? (INFRA.busRoutes || []).filter((r) => r.live && Array.isArray(r.path) && r.path.length > 1) : [];
+const HAS_BUS = LIVE_ROUTES.length > 0 && !!REG.slug;
+const EMPTY_FC = () => ({ type: 'FeatureCollection', features: [] });
+const BUS = { cur: [], prev: [], shown: [], scale: 0, at: null, ttl: 60, failures: 0, off: false, timer: 0, raf: 0, loadedAt: 0, solids: EMPTY_FC(), labels: EMPTY_FC() };
+const BUS_ROUTES_GJ = { type: 'FeatureCollection', features: LIVE_ROUTES.map((r) => ({ type: 'Feature', properties: { id: r.id, no: r.no, c: BL.routeColor(r.type) }, geometry: { type: 'LineString', coordinates: r.path } })) };
+const BUS_LAYERS = ['bus-route-line', 'bus-route-label', 'bus-3d', 'bus-label'], BUS_TWEEN_MS = 1200;
+const IS_LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);   // 로컬에서만 해결 방법(개발 서버)을 화면에 적는다
 const SUMM = HAS_INFRA ? IL.summarize(BLOCKS, INFRA, CTX) : null, SUMM_BY = new Map(SUMM ? SUMM.blocks.map((x) => [x.id, x]) : []);
 const LVL_MARK = { warn: '▲', info: '●', none: '○' }, LVL_WORD = { warn: '주의', info: '참고', none: '자료 없음' };
 /* 단지 표지·요약에 붙는 작은 신호 칩: 교육 ▲ · 교통 ● · 전기 ● (색만으로 구분하지 않게 기호와 글자를 함께) */
@@ -449,6 +470,7 @@ function setupCustom() {
   if (HAS_INFRA) for (const k of INFRA_ICONS) if (!map.hasImage('ic-' + k)) { const im = infraIcon(k); map.addImage('ic-' + k, im.data, im.opts); }
   if (HAS_CTX) { const g = ctxGeoJSON(); src('ctx-st', { type: 'geojson', data: g.st, attribution: '역·학교 © OpenStreetMap contributors' }); src('ctx-sch', { type: 'geojson', data: g.sch }); src('ctx-ring', { type: 'geojson', data: g.ring }); }
   if (HAS_INFRA) for (const [id, d] of [['infra-sites', INFRA_GJ.sites], ['infra-pts', INFRA_GJ.pts], ['infra-stops', INFRA_GJ.stops], ['infra-zone', INFRA_GJ.zones], ['infra-zone-pt', INFRA_GJ.zpts], ['infra-site-pts', INFRA_GJ.spts], ['infra-links', INFRA_GJ.links], ['infra-link-pts', INFRA_GJ.lpts], ['infra-rings', INFRA_GJ.rings]]) src(id, { type: 'geojson', data: d });
+  if (HAS_BUS) { src('bus-routes', { type: 'geojson', data: BUS_ROUTES_GJ, attribution: '버스 © 국토교통부 TAGO' }); src('bus-solids', { type: 'geojson', data: BUS.solids }); src('bus-lbl', { type: 'geojson', data: BUS.labels }); }
 
   /* --- 지형·하늘·빛 --- */
   add({ id: 'hillshade-own', type: 'hillshade', source: 'dem-shade',
@@ -526,6 +548,10 @@ function setupCustom() {
     add({ id: 'infra-site-ic', type: 'symbol', source: 'infra-site-pts', minzoom: 13.2, layout: { visibility: 'none', 'icon-image': ['match', ['get', 'cat'], 'power', 'ic-power', 'ic-garage'], 'icon-size': ICON_SZ, 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
     add({ id: 'infra-school', type: 'symbol', source: 'infra-pts', minzoom: 13.2, layout: { visibility: 'none', 'icon-image': ['case', newS, 'ic-edu-new', 'ic-edu-site'], 'icon-size': ICON_SZ, 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
   }
+  if (HAS_BUS) {   // 노선 선(정류소를 이은 선) 위에 3D 버스(차체+창띠). 버스는 눈에 띄도록 BusLib.BUS_SCALE 배로 그린다
+    add({ id: 'bus-route-line', type: 'line', source: 'bus-routes', minzoom: 13.2, layout: { visibility: 'none', 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': ['get', 'c'], 'line-width': ['interpolate', ['linear'], ['zoom'], 13.2, 1.4, 17, 3.2], 'line-opacity': 0.5 } });
+    add({ id: 'bus-3d', type: 'fill-extrusion', source: 'bus-solids', minzoom: 13.8, layout: { visibility: 'none' }, paint: { 'fill-extrusion-color': ['get', 'c'], 'fill-extrusion-base': ['get', 'base'], 'fill-extrusion-height': ['get', 'h'], 'fill-extrusion-opacity': 1 } });
+  }
   if (HAS_CTX) {
     add({ id: 'ctx-school', type: 'circle', source: 'ctx-sch', minzoom: 14.8, layout: { visibility: 'none' }, paint: { 'circle-radius': 4.5, 'circle-color': T.sub, 'circle-stroke-color': T.halo, 'circle-stroke-width': 1.6 } });
     add({ id: 'ctx-station', type: 'circle', source: 'ctx-st', layout: { visibility: 'none' }, paint: { 'circle-radius': 7, 'circle-color': '#FFFFFF', 'circle-stroke-color': '#1B1D21', 'circle-stroke-width': 3 } });
@@ -577,6 +603,11 @@ function setupCustom() {
       sym({ id: 'infra-link-zone-label', type: 'symbol', source: 'infra-link-pts', minzoom: 14.4, filter: ['==', ['get', 'kind'], 'zone'], layout: { visibility: 'none', 'text-field': ['get', 'label'], 'text-size': 11, ...lk }, paint: { ...ip, 'text-color': T.sub } });
       sym({ id: 'infra-ring-label', type: 'symbol', source: 'infra-rings', minzoom: 14.6, filter: ['==', ['geometry-type'], 'Point'], layout: { visibility: 'none', 'text-field': ['get', 'text'], 'text-size': 11.5, 'text-anchor': 'top', 'text-offset': [0, 0.2], 'text-allow-overlap': false }, paint: { ...ip, 'text-color': ['case', ['get', 'empty'], T.infra.warn, '#1B1D21'] } });
       sym({ id: 'infra-zone-label', type: 'symbol', source: 'infra-zone-pt', minzoom: 13.5, maxzoom: 16.5, layout: { visibility: 'none', 'text-field': ['get', 'text'], 'text-size': 12, 'text-letter-spacing': 0.04, 'text-allow-overlap': false }, paint: ip });
+    }
+    if (HAS_BUS) {
+      const bp = { 'text-color': ['get', 'c'], 'text-halo-color': T.halo, 'text-halo-width': 2.4 };
+      sym({ id: 'bus-route-label', type: 'symbol', source: 'bus-routes', minzoom: 14.6, layout: { visibility: 'none', 'symbol-placement': 'line', 'symbol-spacing': 420, 'text-field': ['concat', ['get', 'no'], '번'], 'text-size': 11.5, 'text-max-angle': 30 }, paint: bp });
+      sym({ id: 'bus-label', type: 'symbol', source: 'bus-lbl', minzoom: 13.8, layout: { visibility: 'none', 'text-field': ['get', 'text'], 'text-font': ['Noto Sans Bold'], 'text-size': ['interpolate', ['linear'], ['zoom'], 13.8, 11, 17, 14.5], 'text-anchor': 'bottom', 'text-offset': [0, -1.3], 'text-allow-overlap': true, 'text-ignore-placement': true }, paint: { ...bp, 'text-halo-width': 2.8 } });
     }
   }
   if (usingVworld) addOfmLabels();
@@ -716,11 +747,24 @@ function sitePopup(s, clickX) {
     [s.poly], 0, clickX);
 }
 function stopPopup(p, geom, clickX) {
-  const bus = (INFRA.sources || []).find((x) => /버스정류장/.test(x.label || ''));
+  const src = (INFRA.sources || []).find((x) => x.id === 'tago-bus'), st = p.id ? (INFRA.stops || []).find((s) => s.id === p.id) : null;
+  const byId = new Map((INFRA.busRoutes || []).map((r) => [r.id, r])), routes = ((st && st.routes) || []).map((id) => byId.get(id)).filter(Boolean);
+  const chips = routes.map((r) => `<em class="pc-route${r.live ? ' live' : ''}" style="--rc:${BL ? BL.routeColor(r.type) : '#56627A'}" title="${esc(r.type || '')} ${esc(r.from || '')} ↔ ${esc(r.to || '')}">${esc(r.no)}</em>`).join(' ');
   showCard(`<div class="pc">
-    <div class="pc-h"><b>${esc(p.name)}</b>${chipHtml('bus', '버스정류장')}</div>
-    <p class="pc-foot">${bus ? `출처: ${esc(bus.label)}<br>` : ''}연 1회 수집한 위치라 입주 때 새로 생기는 정류장은 아직 없을 수 있습니다.</p></div>`,
+    <div class="pc-h"><b>${esc(p.name)}</b>${chipHtml('bus', '버스정류소')}</div>
+    ${dlHtml([st && st.no ? ['정류소 번호', esc(st.no)] : null, routes.length ? ['지나는 노선', chips] : null])}
+    <p class="pc-foot">${src ? `출처: ${esc(src.label)}${src.asOf ? ` (${esc(src.asOf)} 받음)` : ''}<br>` : ''}번들을 만들 때 한 번 받은 정보라 이후에 생기거나 바뀐 정류소·노선은 아직 없을 수 있습니다.${routes.some((r) => r.live) ? ' 테두리가 있는 번호 노선은 지도에서 버스 위치를 보여 줍니다.' : ''}</p></div>`,
     [ptRing(geom.coordinates)], 0, clickX);
+}
+function busPopup(p, clickX) {
+  const bus = BUS.cur.find((b) => b.v === p.v), route = LIVE_ROUTES.find((r) => r.id === p.r);
+  if (!bus) return;
+  const d = BL.describe(bus, route, BLOCKS, (b) => IL.centroid(b.poly), BUS.at);
+  showCard(`<div class="pc">
+    <div class="pc-h"><b>${esc(d.title)}</b>${chipHtml('bus', '버스')}</div>
+    ${dlHtml([['차량', esc(d.plate)], d.where ? ['지나는 중', esc(d.where)] : null, d.near ? ['가까운 단지', esc(d.near.text)] : null, d.passes.length ? ['이 노선이 지나는 단지', esc(d.passes.join(' · '))] : null, d.from ? ['구간', `${esc(d.from)} ↔ ${esc(d.to)}`] : null])}
+    <p class="pc-foot">출처: 국토교통부 TAGO 버스위치정보${d.age ? ` · 위치 기준 ${esc(d.age)}` : ''}<br>실시간이 아니라 ${Math.round(BUS.ttl)}초 이상 간격으로 가져온 값입니다. 방향과 지나는 단지는 노선 경로(정류소를 이은 선)로 어림했습니다.</p></div>`,
+    [ptRing([bus.lon, bus.lat])], 0, clickX);
 }
 const rateH = () => ['*', ['get', 'h'], ['max', 0.05, ['/', ['get', 'rate'], 100]]];
 const timeH = () => ['*', ['get', 'h'], ['max', 0.04, ['min', 1, ['/', ['-', timeMo, ['get', 't0']], ['max', 0.5, ['-', ['get', 't1'], ['get', 't0']]]]]]];
@@ -808,17 +852,93 @@ function applyInfra() {
   if (BLOCKS.length) setLegend();
   renderHudContent();   // 단지 표지의 신호 칩도 켜고 끄는 대로
 }
-function applyAll() { applyFilters(); applyMode(); applyCtx(); applyInfra(); }
+/* ---- 버스 위치(3D): 서버가 알려 준 ttl 이상 간격으로만 부르고, 탭이 숨겨지거나 옵션이 꺼지면 멈춘다. 실패하면 간격을 2배씩 늘린다 ---- */
+function setBusData(list) {   // 버스 모형 조각(3D)과 번호 라벨 점을 지도 소스에 놓는다. 크기는 지금 확대 단계에 맞춘다
+  BUS.shown = list; BUS.scale = BL.scaleFor(map.getZoom());
+  const f = BL.features(list, LIVE_ROUTES, BL.scaleFor(map.getZoom()));
+  BUS.solids = f.solids; BUS.labels = f.labels;
+  const a = map.getSource('bus-solids'), b = map.getSource('bus-lbl');
+  if (a) a.setData(f.solids);
+  if (b) b.setData(f.labels);
+}
+function busTween() {   // 새 위치로 1.2초 동안 부드럽게. 탭이 숨겨졌거나 움직임 줄이기를 켠 환경에서는 바로 놓는다(숨은 탭은 애니메이션 프레임이 멈춘다)
+  cancelAnimationFrame(BUS.raf); BUS.raf = 0;
+  if (document.hidden || (window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches)) { setBusData(BUS.cur); return; }
+  const t0 = performance.now(), step = (now) => {
+    const k = Math.min(1, (now - t0) / BUS_TWEEN_MS);
+    setBusData(BL.interpolate(BUS.prev, BUS.cur, k));
+    BUS.raf = k < 1 ? requestAnimationFrame(step) : 0;
+  };
+  BUS.raf = requestAnimationFrame(step);
+}
+function busGo() {   // 지금 지도 가운데에서 가장 가까운 버스로 날아간다(버스가 어디 있는지 찾기 어려울 때)
+  if (!BUS.cur.length) return;
+  const c = map.getCenter(), near = BUS.cur.map((b) => ({ b, d: BL.distM([c.lng, c.lat], [b.lon, b.lat]) })).sort((x, y) => x.d - y.d)[0].b;
+  map.flyTo({ center: [near.lon, near.lat], zoom: 17.4, pitch: 58, speed: 1.4, essential: true });
+  setOpt(false); say(`가장 가까운 버스, ${(LIVE_ROUTES.find((r) => r.id === near.r) || {}).no || ''}번으로 이동합니다.`);
+}
+function updateBusStat() {
+  const go = $('#busGo'); if (go) go.hidden = !(HAS_BUS && busOn && !BUS.off && BUS.cur.length);
+  const lb = $('#lblBus small'); if (lb) lb.textContent = BUS.off ? '위치 서버 없음' : '3D, 1분 간격';
+  const el = $('#busStat'); if (!el) return;
+  el.textContent = BUS.off ? `위치를 받을 수 없음${IS_LOCAL ? ' — 로컬은 node scripts/dev.js 로 여세요' : ''}` : BUS.cur.length ? `${BUS.cur.length}대 · ${BL.ageText(BUS.at)} 위치` : (BUS.failures ? '위치를 불러오지 못함' : '불러오는 중');
+}
+function busSchedule() {
+  clearTimeout(BUS.timer);
+  if (!HAS_BUS || !busOn || BUS.off || document.hidden) return;
+  BUS.timer = setTimeout(busFetch, BL.pollDelayMs(BUS.ttl, BUS.failures));
+}
+async function busFetch() {
+  clearTimeout(BUS.timer);
+  if (!HAS_BUS || !busOn || BUS.off || document.hidden) return;
+  try {
+    const res = await fetch(`api/bus?region=${encodeURIComponent(REG.slug)}`);
+    if ([404, 405, 503].includes(res.status)) {   // 중계 함수가 없거나(404·405: 정적 서버) 키가 없다(503): 더 부르지 않고 노선 선만 보인다
+      BUS.off = true; applyBus(); setLegend();
+      console.warn(res.status === 503 ? '버스 위치: 서버에 DATA_GO_KR_KEY 환경변수가 없습니다. 노선 선만 보입니다.' : `버스 위치: /api/bus 가 없습니다(${res.status}). python3 -m http.server 같은 정적 서버에는 함수가 없습니다. 로컬에서는 node scripts/dev.js 로 여세요. 노선 선만 보입니다.`);
+      say('버스 위치를 받을 수 없어 노선 선만 보여 줍니다.');
+      return;
+    }
+    if (!res.ok) throw new Error(String(res.status));
+    const data = BL.parse(await res.json());
+    if (!data) throw new Error('shape');
+    BUS.failures = 0; BUS.ttl = data.ttl; BUS.at = data.at; BUS.loadedAt = Date.now();
+    BUS.prev = BUS.cur; BUS.cur = BL.withHeading(data.buses, LIVE_ROUTES, BUS.cur);
+    if (busOn) busTween();
+  } catch (_) { BUS.failures += 1; }
+  updateBusStat();
+  busSchedule();
+}
+function applyBus() {
+  if (!HAS_BUS) return;
+  for (const id of BUS_LAYERS) vis(id, busOn && !(BUS.off && (id === 'bus-3d' || id === 'bus-label')));
+  if (busOn) {
+    if (BUS.cur.length && !BUS.raf) setBusData(BUS.cur);   // 스타일을 다시 불러왔거나 탭이 다시 보일 때 마지막 위치를 바로 놓는다
+    if (!BUS.loadedAt || Date.now() - BUS.loadedAt > BUS.ttl * 1000) busFetch(); else busSchedule();
+  } else { clearTimeout(BUS.timer); cancelAnimationFrame(BUS.raf); BUS.raf = 0; }
+  updateBusStat();
+}
+let busRescaling = false;
+function busRescale() {   // 확대를 바꾸면 버스 크기도 맞춘다(애니메이션 중이면 프레임마다 맞추므로 건너뜀, 프레임당 한 번만)
+  if (!HAS_BUS || !busOn || BUS.raf || busRescaling || !BUS.shown.length || BL.scaleFor(map.getZoom()) === BUS.scale) return;
+  busRescaling = true;
+  requestAnimationFrame(() => { busRescaling = false; if (busOn && !BUS.raf) setBusData(BUS.shown); });
+}
+map.on('zoom', busRescale);
+document.addEventListener('visibilitychange', applyBus);
+function applyAll() { applyFilters(); applyMode(); applyCtx(); applyInfra(); applyBus(); }
 function select(i) { selId = i; selDong = null; applySel(); }
 function selectDong(key) { selId = null; selDong = key; applySel(); }
 map.on('click', (e) => {
   const pick = (ids) => { const use = ids.filter((id) => map.getLayer(id)); return use.length ? map.queryRenderedFeatures(e.point, { layers: use })[0] : undefined; };
   const far = map.getZoom() < 14.3;     // 멀리서는 점이 단지를 대표하므로 점을 먼저 고른다
   const pickInfra = () => (HAS_INFRA && infraOn ? pick(['infra-school']) || pick(['infra-stop']) || pick(['infra-site-fill']) : undefined);
-  const f = (far && (pick(['blk-dot']) || pick(BLK_FILLS))) || pick(['dong-3d']) || pick(BLK_FILLS) || pick(['blk-dot', 'blk-badge', 'blk-badge-top']) || pickInfra() || pick(['official-3d', 'official-roof', 'official-far']);
+  const pickBus = () => { if (!(HAS_BUS && busOn && map.getLayer('bus-3d'))) return undefined; const r = 7, p = e.point; return map.queryRenderedFeatures([[p.x - r, p.y - r], [p.x + r, p.y + r]], { layers: ['bus-3d'] })[0]; };   // 버스는 작아서 주변 7px 안까지
+  const f = pickBus() || (far && (pick(['blk-dot']) || pick(BLK_FILLS))) || pick(['dong-3d']) || pick(BLK_FILLS) || pick(['blk-dot', 'blk-badge', 'blk-badge-top']) || pickInfra() || pick(['official-3d', 'official-roof', 'official-far']);
   if (popup) { const o = popup; popup = null; o.remove(); }
   if (!f) { select(null); return; }
-  if (f.layer.id === 'dong-3d') { selectDong(f.properties.key); dongPopup(f.properties, e.point.x); }
+  if (f.layer.id === 'bus-3d') { select(null); busPopup(f.properties, e.point.x); }
+  else if (f.layer.id === 'dong-3d') { selectDong(f.properties.key); dongPopup(f.properties, e.point.x); }
   else if (f.layer.id.startsWith('blk-')) { select(null); blockPopup(BLOCKS.find((b) => b.id === f.properties.id), e.point.x); }
   else if (f.layer.id.startsWith('infra-')) {
     select(null);
@@ -829,7 +949,7 @@ map.on('click', (e) => {
   else { const i = f.properties.i; select(i); officialPopup(GY.features[i].properties, GY.features[i].geometry, e.point.x); }
 });
 map.on('mousemove', (e) => {
-  const ids = ['dong-3d', ...BLK_FILLS, 'blk-dot', 'blk-badge', 'blk-badge-top', ...(HAS_INFRA && infraOn ? INFRA_PICKS : []), ...OFFICIAL_LAYERS].filter((id) => map.getLayer(id));
+  const ids = ['dong-3d', ...BLK_FILLS, 'blk-dot', 'blk-badge', 'blk-badge-top', ...(HAS_INFRA && infraOn ? INFRA_PICKS : []), ...(HAS_BUS && busOn ? ['bus-3d'] : []), ...OFFICIAL_LAYERS].filter((id) => map.getLayer(id));
   map.getCanvas().style.cursor = ids.length && map.queryRenderedFeatures(e.point, { layers: ids }).length ? 'pointer' : '';
 });
 
@@ -876,8 +996,10 @@ function setLegend() {
     infraLegend = `<li class="lgrid"><b>입주 전 점검</b><div>${items.join('')}</div><small>점선 부지는 개교 일정 미공시 · ▲는 개교가 입주보다 6개월 이상 늦음${viewMode === 'infra' ? ' · 갈색 면은 반경 안에 정류장 없음' : ''}</small></li>`;
   }
   if (HAS_INFRA && zoneOn && (INFRA.zones || []).length) { rows.push(['<i class="sw zone"></i>', '초등 통학구역', '<small>점선</small>']); chips.push(['<i class="sw zone"></i>', '통학구역']); }
+  if (HAS_BUS && busOn) { const sw = '<i class="sw bus3d"></i>'; rows.push([sw, '버스 노선 · 위치', '<small id="busStat"></small>']); chips.push([sw, BUS.off ? '버스 선만' : '버스']); }
   $('#legendSum').innerHTML = chips.map(([sw, t]) => `<span>${sw}${t}</span>`).join('');
   $('#legendList').innerHTML = rows.map(([sw, t, n]) => `<li>${sw}<span>${t} ${n}</span></li>`).join('') + infraLegend;
+  updateBusStat();
 }
 let SUM_TOTAL = null, SUM_COMPACT = '';   // 지도 위 가로 요약(#hudSum)용: 합계 주·보조 문구와 번호만 있는 범례
 if (BLOCKS.length) {
@@ -940,7 +1062,7 @@ const openId = () => { const c = document.querySelector('#projList .card[aria-ex
 function syncUrl(id) {
   try {
     const u = new URL(location.href), set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
-    set('block', id); set('priv', privOn ? '' : '0'); set('mode', viewMode !== 'floors' ? viewMode : ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '1' : ''); set('hud', hudOn ? '1' : ''); set('cards', cardsOn ? '1' : ''); set('infra', HAS_INFRA && !infraOn ? '0' : ''); set('zone', HAS_INFRA && zoneOn ? '1' : ''); set('panel', $('.app').classList.contains('collapsed') ? '' : '1');
+    set('block', id); set('priv', privOn ? '' : '0'); set('mode', viewMode !== 'floors' ? viewMode : ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '1' : ''); set('hud', hudOn ? '1' : ''); set('cards', cardsOn ? '1' : ''); set('infra', HAS_INFRA && !infraOn ? '0' : ''); set('zone', HAS_INFRA && zoneOn ? '1' : ''); set('bus', HAS_BUS && !busOn ? '0' : ''); set('panel', $('.app').classList.contains('collapsed') ? '' : '1');
     history.replaceState(null, '', u);
   } catch (_) { /* file:// 에서는 막힐 수 있음 */ }
 }
@@ -1074,12 +1196,13 @@ $('#zOut').addEventListener('click', () => { stopMotion(); map.zoomOut({ duratio
 
 /* 옵션 창: 자주 바꾸지 않는 설정을 모았다. 기본값과 다른 설정이 있으면 버튼에 개수를 보인다. */
 const ALL_ST = new Set(BLOCKS.map((b) => b.status));
-const optCount = () => (SHOWN.size < ALL_ST.size ? 1 : 0) + (HAS_CTX && !ctxOn ? 1 : 0) + (HAS_CTX && ctxOn && ringOn ? 1 : 0) + (dimExisting ? 1 : 0) + (hudOn ? 1 : 0) + (cardsOn ? 1 : 0) + (HAS_PRIV && !privOn ? 1 : 0) + (HAS_INFRA && !infraOn ? 1 : 0) + (HAS_INFRA && zoneOn ? 1 : 0);
+const optCount = () => (SHOWN.size < ALL_ST.size ? 1 : 0) + (HAS_CTX && !ctxOn ? 1 : 0) + (HAS_CTX && ctxOn && ringOn ? 1 : 0) + (dimExisting ? 1 : 0) + (hudOn ? 1 : 0) + (cardsOn ? 1 : 0) + (HAS_PRIV && !privOn ? 1 : 0) + (HAS_INFRA && !infraOn ? 1 : 0) + (HAS_INFRA && zoneOn ? 1 : 0) + (HAS_BUS && !busOn ? 1 : 0);
 function syncChips() {
   document.querySelectorAll('#optStatus input').forEach((i) => { i.checked = SHOWN.has(i.dataset.status); });
   $('#dimChip').checked = dimExisting; $('#hudChip').checked = hudOn; $('#cardsChip').checked = cardsOn; if (HAS_PRIV) $('#privChip').checked = privOn;
   if (HAS_CTX) { $('#ctxChip').checked = ctxOn; $('#ringChip').checked = ringOn; $('#ringChip').disabled = !ctxOn; $('#lblRing').classList.toggle('dis', !ctxOn); }
   if (HAS_INFRA) { $('#infraChip').checked = infraOn; $('#zoneChip').checked = zoneOn; }
+  if (HAS_BUS) $('#busChip').checked = busOn;
   const n = optCount(); $('#optN').hidden = !n; $('#optN').textContent = String(n);
   $('#optBtn').setAttribute('aria-label', n ? `옵션, 기본값과 다른 설정 ${n}개` : '옵션');
 }
@@ -1098,6 +1221,8 @@ function positionOpt() {
   if (!HAS_CTX) { $('#lblCtx').hidden = true; $('#lblRing').hidden = true; }
   $('#lblPriv').hidden = !HAS_PRIV;
   $('#fsInfra').hidden = !HAS_INFRA;
+  $('#lblBus').hidden = !HAS_BUS;
+  $('#busGo').addEventListener('click', busGo);
   $('#modeSeg [data-mode="infra"]').hidden = !HAS_INFRA;
   $('#modeSeg').addEventListener('click', (e) => {
     const m = e.target.closest('button[data-mode]'); if (!m) return;
@@ -1117,13 +1242,14 @@ function positionOpt() {
     else if (t.id === 'ctxChip') { ctxOn = t.checked; syncChips(); applyCtx(); syncUrl(openId()); say(ctxOn ? '역과 학교를 보여 줍니다.' : '역과 학교를 숨깁니다.'); }
     else if (t.id === 'ringChip') { ringOn = t.checked; syncChips(); applyCtx(); syncUrl(openId()); }
     else if (t.id === 'infraChip') { infraOn = t.checked; syncChips(); applyInfra(); syncUrl(openId()); say(infraOn ? '학교·정류장·전기 시설을 보여 줍니다.' : '학교·정류장·전기 시설을 숨깁니다.'); }
+    else if (t.id === 'busChip') { busOn = t.checked; syncChips(); applyBus(); setLegend(); syncUrl(openId()); say(busOn ? '버스 노선과 위치를 3D로 보여 줍니다.' : '버스 노선과 위치를 숨깁니다.'); }
     else if (t.id === 'zoneChip') { zoneOn = t.checked; syncChips(); applyInfra(); syncUrl(openId()); say(zoneOn ? '초등 통학구역 경계를 보여 줍니다.' : '초등 통학구역 경계를 숨깁니다.'); }
     else if (t.id === 'cardsChip') { cardsOn = t.checked; applyMode(); syncChips(); syncUrl(openId()); say(cardsOn ? '단지 정보 카드를 보여 줍니다.' : '단지 정보 카드를 숨기고 지도 위 라벨로 보여 줍니다.'); }
     else if (t.id === 'hudChip') { hudOn = t.checked; applyMode(); syncChips(); syncUrl(openId()); say(hudOn ? '단지 모서리 표시선을 켭니다.' : '단지 모서리 표시선을 끕니다.'); }
   });
   $('#optReset').addEventListener('click', () => {
-    ALL_ST.forEach((st) => SHOWN.add(st)); ctxOn = true; ringOn = false; infraOn = true; zoneOn = false; dimExisting = false; hudOn = false; cardsOn = false; privOn = true; applyMode();
-    applyFilters(); applyDim(); applyCtx(); applyInfra(); syncChips(); syncUrl(openId()); say('옵션을 기본값으로 되돌렸습니다.');
+    ALL_ST.forEach((st) => SHOWN.add(st)); ctxOn = true; ringOn = false; infraOn = true; zoneOn = false; busOn = true; dimExisting = false; hudOn = false; cardsOn = false; privOn = true; applyMode();
+    applyFilters(); applyDim(); applyCtx(); applyInfra(); applyBus(); syncChips(); syncUrl(openId()); say('옵션을 기본값으로 되돌렸습니다.');
   });
   document.addEventListener('pointerdown', (e) => { if (!$('#optPanel').hidden && !e.target.closest('#optPanel, #optBtn')) setOpt(false); });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#optPanel').hidden) { setOpt(false); $('#optBtn').focus(); } });
@@ -1476,5 +1602,5 @@ renderHudContent();
 
 if (q.get('selftest')) {   // 시험 전용 훅(운영 주소에는 붙지 않음)
   window.__map = map; window.__blocks = BLOCKS;
-  window.__st = () => ({ viewMode, ctxOn, ringOn, infraOn, zoneOn, timeMo, selId, selDong, tourOn, playing: !!playT });
+  window.__st = () => ({ viewMode, ctxOn, ringOn, infraOn, zoneOn, busOn, bus: HAS_BUS ? { n: BUS.cur.length, at: BUS.at, ttl: BUS.ttl, failures: BUS.failures, off: BUS.off } : null, timeMo, selId, selDong, tourOn, playing: !!playT });
 }

@@ -93,6 +93,33 @@ def _semantic_infra(infra: dict, projects: dict | None) -> list[str]:
             errors.append(f"infra.json: attendance의 단지 id {a.get('projectId')!r}가 projects.json에 없음")
         if a.get("zoneId") not in zone_ids:
             errors.append(f"infra.json: attendance의 zoneId {a.get('zoneId')!r}가 zones에 없음")
+    routes = [r for r in infra.get("busRoutes", []) if isinstance(r, dict)]
+    route_ids: dict = {}
+    for i, r in enumerate(routes):
+        rid = r.get("id")
+        if rid in route_ids:
+            errors.append(f"infra.json: busRoutes id 중복: {rid!r} (#{route_ids[rid]}, #{i})")
+        else:
+            route_ids[rid] = i
+        if r.get("live") and not r.get("path"):
+            errors.append(f"infra.json: busRoutes {rid!r}는 live(실시간 위치를 부르는 노선)인데 path(경로)가 없음")
+        if r.get("path") and not r.get("live"):
+            errors.append(f"infra.json: busRoutes {rid!r}는 live가 아닌데 path가 있음(경로는 live 노선에만 싣는다)")
+    if any(r.get("live") for r in routes) and not infra.get("busCityCode"):
+        errors.append("infra.json: 실시간 노선(live)이 있는데 busCityCode(TAGO 도시코드)가 없음")
+    stop_seen: dict = {}
+    for i, s in enumerate(infra.get("stops", [])):
+        if not isinstance(s, dict):
+            continue
+        sid = s.get("id")
+        if sid is not None:
+            if sid in stop_seen:
+                errors.append(f"infra.json: stops id 중복: {sid!r} (#{stop_seen[sid]}, #{i})")
+            else:
+                stop_seen[sid] = i
+        for rid in s.get("routes") or []:
+            if rid not in route_ids:
+                errors.append(f"infra.json: stops {sid or s.get('name')!r}의 노선 id {rid!r}가 busRoutes에 없음")
     return errors
 
 

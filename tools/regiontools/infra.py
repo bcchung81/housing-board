@@ -1,10 +1,10 @@
-"""입주 전 기반시설 점검 자료(infra.json, 번들 1.2.0) 만들기: 순수 함수 + 원본 읽기.
+"""입주 전 기반시설 점검 자료(infra.json, 번들 1.3.0) 만들기: 순수 함수 + 원본 읽기.
 
-원천(모두 공개 자료, 키가 필요한 것은 V-World·건축HUB뿐):
+원천(모두 공개 자료, 키가 필요한 것은 V-World·건축HUB·TAGO 버스정보뿐):
 - 교육재정알리미 신설예정학교(개교 예정 년월·학급·학생·공시 좌표)  → schools
 - V-World 도시계획시설 학교·전기공급설비·교통시설 부지               → schools(부지) · sites
 - 한국교육시설안전원 초등학교통학구역(SHP) + 학교학구도연계정보 + 학교위치(CSV) → zones · attendance
-- 국토교통부 전국 버스정류장 위치정보(CSV)                          → stops
+- 국토교통부 TAGO 버스정류소·노선정보(API, 한 번만 받아 번들에 담음)  → stops · busRoutes
 - 건축HUB 건축인허가 기본개요(지구 안 비주택)                        → permits
 - 보도·고시로 사람이 확인한 대책(curated JSON)                      → measures
 
@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import csv
 import io
+import math
 import re
 import zipfile
 from pathlib import Path
@@ -22,12 +23,14 @@ from typing import Iterable, Sequence
 
 from . import geo, proj, shp
 
-INFRA_SCHEMA_VERSION = "1.2.0"
+INFRA_SCHEMA_VERSION = "1.3.0"
 LEVEL_OF = {"초": "초등학교", "중": "중학교", "고": "고등학교", "특수": "특수학교"}
 LEVEL_ORDER = ["초등학교", "중학교", "고등학교", "유치원", "특수학교"]
 SITE_KIND = {"초등학교": "elem", "중학교": "mid", "고등학교": "high", "유치원": "kg"}
 MAX_ZONE_POINTS = 200
 NEAR_SITE_M = 100.0      # 공시 좌표가 부지 안이 아닐 때 같은 학교급 부지를 이 거리 안에서 짝으로 본다
+BUS_GRID_M = 700.0       # TAGO 근접정류소를 부를 격자 간격. 반경 500 m 원이 한 변 700 m 칸을 빠짐없이 덮는다(칸의 반대각선 ≈ 495 m)
+BUS_LIVE_M = 500.0       # 단지 중심에서 이 거리 안 정류소를 지나는 노선만 실시간 위치를 부른다(live)
 
 SOURCE_DEFS = {
     "edu-newschool": {"label": "지방교육재정알리미 신설예정학교", "publisher": "교육부·한국교육학술정보원",
@@ -36,8 +39,8 @@ SOURCE_DEFS = {
                     "url": "https://www.vworld.kr", "redistributable": "unknown"},
     "edu-zone": {"label": "한국교육시설안전원 초등학교통학구역·학교학구도연계정보·초중등학교위치", "publisher": "한국교육시설안전원",
                  "url": "https://www.data.go.kr/data/15159265/fileData.do", "license": "이용허락범위 제한 없음", "redistributable": "Y"},
-    "molit-busstop": {"label": "국토교통부 전국 버스정류장 위치정보", "publisher": "국토교통부",
-                      "url": "https://www.data.go.kr/data/15067528/fileData.do", "license": "이용허락범위 제한 없음", "redistributable": "Y"},
+    "tago-bus": {"label": "국토교통부 TAGO 버스정류소·노선정보", "publisher": "국토교통부",
+                 "url": "https://www.data.go.kr/data/15098534/openapi.do", "license": "이용허락범위 제한 없음", "redistributable": "Y"},
     "hub-arch": {"label": "국토교통부 건축HUB 건축인허가정보", "publisher": "국토교통부",
                  "url": "https://www.data.go.kr/data/15134735/openapi.do", "redistributable": "unknown"},
 }
@@ -238,30 +241,130 @@ def attendance(projects: list[dict], shp_path, dbf_path, link_rows: list[dict], 
     return list(zones.values()), att
 
 
-# ---------------------------------------------------------------- 정류장 · 인허가
-def stops_near(rows: Iterable[dict], areas: Sequence[Sequence[Sequence[float]]], margin_m: float = 400.0) -> list[dict]:
-    """버스정류장 위치정보 중 지구(들)를 margin_m 만큼 넓힌 상자 안의 것. 이름·좌표가 같은 중복은 하나만."""
+# ---------------------------------------------------------------- 버스: 정류소 · 노선 (TAGO, 번들을 만들 때 한 번만 받는다)
+def _num(v):
+    try:
+        f = float(v)
+    except (TypeError, ValueError):
+        return None
+    return f if f == f else None
+
+
+def _expanded_bbox(areas: Sequence[Sequence[Sequence[float]]], margin_m: float) -> tuple:
     pts = [p for a in areas for p in a]
     x0, y0, x1, y1 = geo.bbox_of(pts)
-    dlat = margin_m / 110540.0
-    dlon = margin_m / (111320.0 * __import__("math").cos(__import__("math").radians((y0 + y1) / 2)))
+    dlat = margin_m / geo.M_PER_DEG_LAT
+    dlon = margin_m / (geo.M_PER_DEG_LON_EQ * math.cos(math.radians((y0 + y1) / 2)))
+    return x0 - dlon, y0 - dlat, x1 + dlon, y1 + dlat
+
+
+def bus_grid(areas: Sequence[Sequence[Sequence[float]]], margin_m: float = 400.0, step_m: float = BUS_GRID_M) -> list[tuple[float, float]]:
+    """지구(들)를 margin_m 넓힌 상자를 step_m 이하 칸으로 나눈 칸 중심 (위도, 경도). TAGO 근접정류소(반경 500 m)를 이 점마다 부른다."""
+    x0, y0, x1, y1 = _expanded_bbox(areas, margin_m)
+    lat0 = (y0 + y1) / 2
+    w = (x1 - x0) * geo.M_PER_DEG_LON_EQ * math.cos(math.radians(lat0))
+    h = (y1 - y0) * geo.M_PER_DEG_LAT
+    nx, ny = max(1, math.ceil(w / step_m)), max(1, math.ceil(h / step_m))
+    return [(y0 + (j + 0.5) * (y1 - y0) / ny, x0 + (i + 0.5) * (x1 - x0) / nx) for j in range(ny) for i in range(nx)]
+
+
+def merge_bus_stops(rows: Iterable[dict], areas: Sequence[Sequence[Sequence[float]]], margin_m: float = 400.0) -> list[dict]:
+    """근접정류소 응답들을 합친다: nodeid 로 중복을 없애고 지구를 margin_m 넓힌 상자 안의 것만. {id, name, no, lon, lat}, 이름·id 순."""
+    x0, y0, x1, y1 = _expanded_bbox(areas, margin_m)
     seen, out = set(), []
     for r in rows:
+        nid = str(r.get("nodeid") or "").strip()
+        lat, lon = _num(r.get("gpslati")), _num(r.get("gpslong"))
+        if not nid or nid in seen or lat is None or lon is None or not (x0 <= lon <= x1 and y0 <= lat <= y1):
+            continue
+        seen.add(nid)
+        stop = {"id": nid, "name": str(r.get("nodenm") or "").strip(), "lon": round(lon, 6), "lat": round(lat, 6)}
+        no = str(r.get("nodeno") or "").strip()
+        if no:
+            stop["no"] = no
+        out.append(stop)
+    return sorted(out, key=lambda s: (s["name"], s["id"]))
+
+
+def _route_no_key(no: str):
+    m = re.match(r"(\d+)", no)
+    return (0, int(m.group(1)), no) if m else (1, 0, no)
+
+
+def route_catalog(stop_routes: dict[str, list[dict]]) -> dict[str, dict]:
+    """정류소별 경유노선 응답({nodeid: 행들}) → {노선 id: {id, no, type, from, to}}."""
+    cat = {}
+    for rows in stop_routes.values():
+        for r in rows:
+            rid = str(r.get("routeid") or "").strip()
+            if rid and rid not in cat:
+                cat[rid] = {"id": rid, "no": str(r.get("routeno") or "").strip(), "type": str(r.get("routetp") or "").strip(),
+                            "from": str(r.get("startnodenm") or "").strip(), "to": str(r.get("endnodenm") or "").strip()}
+    return cat
+
+
+def attach_routes(stops: list[dict], stop_routes: dict[str, list[dict]], catalog: dict[str, dict]) -> list[dict]:
+    """정류소마다 지나는 노선 id 를 노선 번호 순으로 붙인다(없으면 키를 뺀다)."""
+    out = []
+    for s in stops:
+        ids = sorted({str(r.get("routeid") or "").strip() for r in stop_routes.get(s["id"], [])} & set(catalog),
+                     key=lambda i: _route_no_key(catalog[i]["no"]) + (i,))
+        out.append({**s, "routes": ids} if ids else dict(s))
+    return out
+
+
+def live_route_ids(stops: list[dict], centers: Sequence[Sequence[float]], live_m: float = BUS_LIVE_M) -> set[str]:
+    """단지 중심(경도, 위도) 어느 하나에서 live_m 안에 있는 정류소를 지나는 노선 id."""
+    out = set()
+    for s in stops:
+        if any(_dist_m(c, (s["lon"], s["lat"])) <= live_m for c in centers):
+            out.update(s.get("routes") or [])
+    return out
+
+
+def _dist_m(a, b) -> float:
+    r = math.pi / 180
+    dl, dn = (b[1] - a[1]) * r, (b[0] - a[0]) * r
+    h = math.sin(dl / 2) ** 2 + math.cos(a[1] * r) * math.cos(b[1] * r) * math.sin(dn / 2) ** 2
+    return 2 * 6371008.8 * math.asin(math.sqrt(h))
+
+
+def route_path(rows: Iterable[dict]) -> list[list[float]]:
+    """노선 경유정류소 → [경도, 위도] 목록. 항목 번호가 정류소순서(nodeord)와 같다: path[nodeord-1].
+    좌표가 없는 정류소는 앞(없으면 뒤) 정류소 좌표로 메워 번호가 어긋나지 않게 한다."""
+    pts = {}
+    for r in rows:
         try:
-            lat, lon = float(r["위도"]), float(r["경도"])
-        except (KeyError, TypeError, ValueError):
+            order = int(r.get("nodeord"))
+        except (TypeError, ValueError):
             continue
-        if not (x0 - dlon <= lon <= x1 + dlon and y0 - dlat <= lat <= y1 + dlat):
-            continue
-        name = str(r.get("정류장명") or "").strip()
-        key = (name, round(lon, 5), round(lat, 5))
-        if key in seen:
-            continue
-        seen.add(key)
-        out.append({"name": name, "lon": round(lon, 6), "lat": round(lat, 6)})
-    return sorted(out, key=lambda s: (s["name"], s["lon"], s["lat"]))
+        lat, lon = _num(r.get("gpslati")), _num(r.get("gpslong"))
+        if order >= 1 and lat is not None and lon is not None:
+            pts[order] = [round(lon, 6), round(lat, 6)]
+    if not pts:
+        return []
+    out, last = [], None
+    first = pts[min(pts)]
+    for i in range(1, max(pts) + 1):
+        last = pts.get(i) or last or first
+        out.append(list(last))
+    return out
 
 
+def bus_routes_doc(catalog: dict[str, dict], live: set[str], paths: dict[str, list[list[float]]]) -> list[dict]:
+    """번들 busRoutes: 실시간 위치를 부르는 노선(live)이 앞, 노선 번호 순. live 노선에만 경로(path)를 싣는다."""
+    out = []
+    for rid, c in catalog.items():
+        item = dict(c)
+        if rid in live:
+            item["live"] = True
+            if paths.get(rid):
+                item["path"] = paths[rid]
+        out.append(item)
+    return sorted(out, key=lambda r: (not r.get("live"), _route_no_key(r["no"]), r["id"]))
+
+
+# ---------------------------------------------------------------- 인허가
 def _day(s) -> str | None:
     s = str(s or "").strip()
     return f"{s[:4]}-{s[4:6]}-{s[6:8]}" if re.fullmatch(r"\d{8}", s) else None
@@ -300,25 +403,30 @@ def _round_geo(v):
 def _clean(item: dict) -> dict:
     out = {}
     for k, v in item.items():
-        if k == "poly" or k in ("lon", "lat", "schoolLon", "schoolLat"):
+        if k in ("poly", "path") or k in ("lon", "lat", "schoolLon", "schoolLat"):
             out[k] = _round_geo(v)
         elif v is not None:
             out[k] = v
     return out
 
 
-def assemble(*, today: str, schools, zones, attendance, stops, sites, permits, curated: dict, source_dates: dict) -> dict:
-    """infra.json 문서. 비어 있는 목록은 키를 뺀다. 쓰지 않은 출처는 싣지 않고, 참조가 없는 출처 id 는 오류."""
-    lists = {"schools": schools, "zones": zones, "attendance": attendance, "stops": stops, "sites": sites, "permits": permits,
-             "measures": list(curated.get("measures") or [])}
+def assemble(*, today: str, schools, zones, attendance, stops, sites, permits, curated: dict, source_dates: dict,
+             bus_routes=None, bus_city=None) -> dict:
+    """infra.json 문서. 비어 있는 목록은 키를 뺀다. 쓰지 않은 출처는 싣지 않고, 참조가 없는 출처 id 는 오류.
+    bus_routes 에 실시간 노선(live)이 있으면 bus_city(TAGO 도시코드)도 꼭 있어야 한다(화면이 위치를 부를 때 쓴다)."""
+    bus_routes = list(bus_routes or [])
+    if any(r.get("live") for r in bus_routes) and bus_city is None:
+        raise ValueError("실시간 노선(live)이 있는데 도시코드(bus_city)가 없음")
+    lists = {"schools": schools, "zones": zones, "attendance": attendance, "stops": stops, "busRoutes": bus_routes, "sites": sites,
+             "permits": permits, "measures": list(curated.get("measures") or [])}
     sources = {}
     for sid in SOURCE_ORDER:
         sources[sid] = {"id": sid, **SOURCE_DEFS[sid]}
     for s in curated.get("sources") or []:
         sources[s["id"]] = dict(s)
     used = {sid for name in ("schools", "zones", "sites", "permits", "measures") for it in lists[name] for sid in it.get("sources", [])}
-    if lists["stops"]:
-        used.add("molit-busstop")
+    if lists["stops"] or lists["busRoutes"]:
+        used.add("tago-bus")
     unknown = used - set(sources)
     if unknown:
         raise ValueError(f"정의되지 않은 출처 id: {sorted(unknown)}")
@@ -332,6 +440,8 @@ def assemble(*, today: str, schools, zones, attendance, stops, sites, permits, c
     for name, items in lists.items():
         if items:
             doc[name] = [_clean(i) for i in items]
+    if any(r.get("live") for r in bus_routes):
+        doc["busCityCode"] = int(bus_city)
     return doc
 
 

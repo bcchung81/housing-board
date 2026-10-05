@@ -204,14 +204,61 @@ class Attendance(unittest.TestCase):
         self.assertEqual(att[0]["zoneId"], "ZA")
 
 
-class Stops(unittest.TestCase):
-    def test_keeps_stops_near_the_area_and_drops_duplicates(self):
-        rows = [{"정류장명": "가", "위도": "37.55", "경도": "126.76"}, {"정류장명": "가", "위도": "37.55", "경도": "126.76"},
-                {"정류장명": "나", "위도": "37.5605", "경도": "126.76"}, {"정류장명": "멀리", "위도": "37.6", "경도": "126.9"},
-                {"정류장명": "빈", "위도": "", "경도": "126.76"}]
-        out = infra.stops_near(rows, [AREA], margin_m=1000)
-        self.assertEqual([s["name"] for s in out], ["가", "나"])
-        self.assertEqual(out[0], {"name": "가", "lon": 126.76, "lat": 37.55})
+def bus_row(nid, name, lat, lon, no="1"):
+    return {"nodeid": nid, "nodenm": name, "nodeno": no, "gpslati": lat, "gpslong": lon, "citycode": 23}
+
+
+def route_row(rid, no, tp="간선버스", a="기점", b="종점"):
+    return {"routeid": rid, "routeno": no, "routetp": tp, "startnodenm": a, "endnodenm": b}
+
+
+class BusStops(unittest.TestCase):
+    def test_grid_cells_are_small_enough_that_a_500m_search_covers_the_whole_box(self):
+        pts = infra.bus_grid([AREA], margin_m=400)
+        x0, y0, x1, y1 = infra._expanded_bbox([AREA], 400)
+        self.assertGreater(len(pts), 4)
+        self.assertTrue(all(y0 <= la <= y1 and x0 <= lo <= x1 for la, lo in pts))
+        samples = [(x0, y0), (x1, y0), (x0, y1), (x1, y1), ((x0 + x1) / 2, (y0 + y1) / 2), (x0 + (x1 - x0) * 0.37, y0 + (y1 - y0) * 0.81)]
+        for lon, lat in samples:
+            self.assertLessEqual(min(infra._dist_m((lon, lat), (lo, la)) for la, lo in pts), 500, (lon, lat))
+
+    def test_a_tiny_area_still_gets_one_point(self):
+        self.assertEqual(len(infra.bus_grid([[[126.75, 37.55], [126.7501, 37.55], [126.7501, 37.5501]]], margin_m=10)), 1)
+
+    def test_merge_keeps_one_per_id_inside_the_box_and_reads_string_coordinates(self):
+        rows = [bus_row("S1", "가", "37.55", 126.76, "101"), bus_row("S1", "가", 37.55, 126.76), bus_row("S2", "나", 37.5605, 126.76, no=""),
+                bus_row("S3", "멀리", 37.6, 126.9), bus_row("S4", "빈", "", 126.76), {"nodenm": "id 없음", "gpslati": 37.55, "gpslong": 126.76}]
+        out = infra.merge_bus_stops(rows, [AREA], margin_m=1000)
+        self.assertEqual([s["id"] for s in out], ["S1", "S2"])
+        self.assertEqual(out[0], {"id": "S1", "name": "가", "lon": 126.76, "lat": 37.55, "no": "101"})
+        self.assertNotIn("no", out[1])                                   # 정류소 번호가 없으면 키를 뺀다
+
+    def test_catalog_attach_and_live(self):
+        sr = {"S1": [route_row("R584", 584, "지선버스"), route_row("R87", 87)], "S2": [route_row("R87", 87)], "S3": [route_row("R9", "9")], "S4": []}
+        cat = infra.route_catalog(sr)
+        self.assertEqual(sorted(cat), ["R584", "R87", "R9"])
+        self.assertEqual(cat["R87"], {"id": "R87", "no": "87", "type": "간선버스", "from": "기점", "to": "종점"})
+        stops = [{"id": "S1", "name": "가", "lon": 126.760, "lat": 37.55}, {"id": "S2", "name": "나", "lon": 126.80, "lat": 37.55},
+                 {"id": "S3", "name": "다", "lon": 126.82, "lat": 37.55}, {"id": "S4", "name": "라", "lon": 126.76, "lat": 37.55}]
+        out = infra.attach_routes(stops, sr, cat)
+        self.assertEqual(out[0]["routes"], ["R87", "R584"])             # 노선 번호 순(숫자로)
+        self.assertNotIn("routes", out[3])                              # 지나는 노선이 없으면 키를 뺀다
+        self.assertEqual(infra.live_route_ids(out, [(126.755, 37.55)], 500), {"R87", "R584"})   # S1 은 440 m, S2·S3 는 멀다
+        self.assertEqual(infra.live_route_ids(out, [(126.755, 37.55)], 100), set())
+
+    def test_route_path_is_indexed_by_stop_order_and_fills_missing_coordinates(self):
+        rows = [{"nodeord": 2, "gpslati": "37.2", "gpslong": "126.2"}, {"nodeord": 1, "gpslati": 37.1, "gpslong": 126.1},
+                {"nodeord": 4, "gpslati": 37.4, "gpslong": 126.4}, {"nodeord": 3, "gpslati": "", "gpslong": ""}, {"nodeord": "x", "gpslati": 1, "gpslong": 1}]
+        self.assertEqual(infra.route_path(rows), [[126.1, 37.1], [126.2, 37.2], [126.2, 37.2], [126.4, 37.4]])
+        self.assertEqual(infra.route_path([]), [])
+        self.assertEqual(infra.route_path([{"nodeord": 3, "gpslati": 37.3, "gpslong": 126.3}]), [[126.3, 37.3]] * 3)   # 앞쪽이 비면 첫 좌표로
+
+    def test_routes_doc_puts_live_first_and_only_live_routes_carry_a_path(self):
+        cat = infra.route_catalog({"S": [route_row("R9", "9"), route_row("R87", 87), route_row("R584", 584, "지선버스"), route_row("RM", "M6405", "광역버스")]})
+        doc = infra.bus_routes_doc(cat, {"R584"}, {"R584": [[1, 2], [3, 4]], "R87": [[9, 9], [8, 8]]})
+        self.assertEqual([r["no"] for r in doc], ["584", "9", "87", "M6405"])
+        self.assertEqual(doc[0], {"id": "R584", "no": "584", "type": "지선버스", "from": "기점", "to": "종점", "live": True, "path": [[1, 2], [3, 4]]})
+        self.assertTrue(all("path" not in r and "live" not in r for r in doc[1:]))
 
 
 def permit(**kw):
@@ -253,7 +300,7 @@ class Assemble(unittest.TestCase):
                              curated={"sources": [{"id": "news-a", "label": "기사 A", "redistributable": "unknown"}],
                                       "measures": [{"id": "m1", "category": "교통", "title": "버스", "sources": ["news-a"]}]},
                              source_dates={"edu-newschool": "2026-03-31"})
-        self.assertEqual(doc["schema_version"], "1.2.0")
+        self.assertEqual(doc["schema_version"], "1.3.0")
         self.assertEqual(doc["asOf"], "2026-10-04")
         self.assertEqual([s["id"] for s in doc["sources"]], ["edu-newschool", "news-a"])
         self.assertEqual(doc["sources"][0]["asOf"], "2026-03-31")
@@ -271,6 +318,25 @@ class Assemble(unittest.TestCase):
         doc = infra.assemble(today="2026-10-04", schools=sch, zones=[], attendance=[], stops=[], sites=[], permits=[], curated={}, source_dates={})
         self.assertEqual(doc["schools"][0]["lon"], 126.757320)
         self.assertEqual(doc["schools"][0]["poly"][0], [126.75732, 37.555379])
+
+    def test_bus_stops_and_routes_cite_the_tago_source_and_keep_the_city_code(self):
+        stops = [{"id": "S1", "name": "가", "lon": 126.76, "lat": 37.55, "routes": ["R87"]}]
+        routes = [{"id": "R87", "no": "87", "type": "간선버스", "from": "기", "to": "종", "live": True, "path": [[126.7600001, 37.55], [126.77, 37.56]]}]
+        doc = infra.assemble(today="2026-10-05", schools=[], zones=[], attendance=[], stops=stops, sites=[], permits=[], curated={},
+                             source_dates={"tago-bus": "2026-10-05"}, bus_routes=routes, bus_city=23)
+        self.assertEqual([s["id"] for s in doc["sources"]], ["tago-bus"])
+        self.assertEqual(doc["sources"][0]["asOf"], "2026-10-05")
+        self.assertEqual(doc["busCityCode"], 23)
+        self.assertEqual(doc["busRoutes"][0]["path"][0], [126.76, 37.55])           # 경로 좌표도 6자리
+        self.assertNotIn("molit-busstop", [s["id"] for s in doc["sources"]])
+
+    def test_live_routes_need_a_city_code_and_no_live_route_means_no_city_code(self):
+        live = [{"id": "R", "no": "1", "live": True, "path": [[126.7, 37.5], [126.8, 37.6]]}]
+        with self.assertRaises(ValueError):
+            infra.assemble(today="2026-10-05", schools=[], zones=[], attendance=[], stops=[], sites=[], permits=[], curated={}, source_dates={}, bus_routes=live)
+        doc = infra.assemble(today="2026-10-05", schools=[], zones=[], attendance=[], stops=[], sites=[], permits=[], curated={}, source_dates={},
+                             bus_routes=[{"id": "R", "no": "1"}], bus_city=23)
+        self.assertNotIn("busCityCode", doc)
 
 
 if __name__ == "__main__":

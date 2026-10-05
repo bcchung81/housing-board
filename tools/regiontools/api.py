@@ -1,4 +1,4 @@
-"""외부 API 호출(얇은 층): V-World 데이터 API, 마이홈 공고, 건축HUB 주택인허가, Overpass.
+"""외부 API 호출(얇은 층): V-World 데이터 API, 마이홈 공고, 건축HUB 주택인허가, 국토교통부 TAGO 버스정보, Overpass.
 
 비밀 취급: 키는 .env.local에서 읽어 요청에만 쓴다. 요청 URL·키를 출력·로그·파일에 남기지 않는다.
 캐시 파일 이름은 키를 뺀 매개변수의 해시이고, 내용은 응답 본문만이다. 캐시 폴더는 호출하는 쪽이 저장소 밖으로 정한다.
@@ -21,6 +21,7 @@ VWORLD_URL = "https://api.vworld.kr/req/data"
 MYHOME_URL = "https://apis.data.go.kr/1613000/HWSPR02/"
 HUB_URL = "https://apis.data.go.kr/1613000/HsPmsHubService/"
 HUB_ARCH_URL = "https://apis.data.go.kr/1613000/ArchPmsHubService/"
+TAGO_URL = "https://apis.data.go.kr/1613000/"          # 국토교통부 TAGO 버스정류소·노선·위치정보(서비스별 활용신청이 따로 필요)
 EDUINFO_URL = "https://eduinfo.go.kr/portal/theme/newSchInfoDetail.do"
 EDUINFO_REFERER = "https://eduinfo.go.kr/portal/theme/newSchMapPage.do"
 OVERPASS_URL = "https://overpass-api.de/api/interpreter"
@@ -192,6 +193,8 @@ class Client:
         code = str(payload["response"].get("header", {}).get("resultCode", "00"))
         if code not in ("00", "0", "000"):
             msg = payload["response"].get("header", {}).get("resultMsg", "")
+            if code == "99":      # TAGO 가 동시 접속이 가득 찼을 때 주는 일시 오류("가용한 세션이 존재하지 않습니다")
+                return f"retry:결과 코드 {code} {msg}"
             return f"fatal:결과 코드 {code} {msg}"
         return None
 
@@ -224,6 +227,22 @@ class Client:
     def hub_arch_dong(self, sigungu: str, bjdong: str) -> list:
         """건축인허가 기본개요(주택 아닌 건축물 포함) 법정동 전체."""
         return self._data_go_kr_all("hub-arch", HUB_ARCH_URL + "getApBasisOulnInfo", {"sigunguCd": sigungu, "bjdongCd": bjdong})
+
+    # ---- 국토교통부 TAGO 버스정보 ----
+    def tago_stops_near(self, lat: float, lon: float) -> list:
+        """좌표에서 반경 약 500 m 안의 정류소(좌표기반근접정류소): nodeid·nodenm·nodeno·gpslati·gpslong. 없으면 빈 목록."""
+        return self._data_go_kr_all("tago-near", TAGO_URL + "BusSttnInfoInqireService/getCrdntPrxmtSttnList",
+                                    {"gpsLati": f"{lat:.6f}", "gpsLong": f"{lon:.6f}"})
+
+    def tago_stop_routes(self, city, node_id: str) -> list:
+        """정류소를 지나는 노선(정류소별경유노선): routeid·routeno·routetp·startnodenm·endnodenm."""
+        return self._data_go_kr_all("tago-stop-routes", TAGO_URL + "BusSttnInfoInqireService/getSttnThrghRouteList",
+                                    {"cityCode": city, "nodeid": node_id})
+
+    def tago_route_stops(self, city, route_id: str) -> list:
+        """노선이 지나는 정류소를 정류소순서(nodeord)대로(왕복 전체, 기점(미정차) 같은 가상 정류소 포함). 좌표가 문자열인 행도 있다."""
+        return self._data_go_kr_all("tago-route-stops", TAGO_URL + "BusRouteInfoInqireService/getRouteAcctoThrghSttnList",
+                                    {"cityCode": city, "routeId": route_id}, rows=300)
 
     # ---- 교육재정알리미 (키 없음) ----
     def eduinfo_new_schools(self, attempts: int = 3) -> list:

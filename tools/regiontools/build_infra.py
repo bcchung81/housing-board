@@ -4,12 +4,13 @@
   .venv/bin/python tools/regiontools/build_infra.py incheon-gyeyang --raw workspace/data/raw/infra
 
 필요한 것
-- 키(.env.local): V-World(도시계획시설), data.go.kr(건축인허가). 교육재정알리미는 키가 필요 없다. 키·요청 URL은 출력하지 않는다.
+- 키(.env.local): V-World(도시계획시설), data.go.kr(건축인허가·TAGO 버스). 교육재정알리미는 키가 필요 없다. 키·요청 URL은 출력하지 않는다.
+  TAGO 는 서비스마다 활용신청(자동승인)이 필요하다: 버스정류소정보 15098534, 버스노선정보 15098529 (노선·정류소는 이 빌드에서 한 번만 받는다).
+  버스 위치(15098533)는 빌드가 아니라 화면이 api/bus.js 를 거쳐 부른다.
 - 공공데이터포털에서 내려받은 파일을 --raw 폴더에 둔다(파일 이름에 아래 낱말이 들어 있으면 된다. 날짜가 여러 개면 가장 늦은 것).
     *초등학교통학구역*.zip   https://www.data.go.kr/data/15159265/fileData.do
     *학교학구도연계정보*.csv  https://www.data.go.kr/data/15159266/fileData.do
     *초중등학교위치*.csv      https://www.data.go.kr/data/15159184/fileData.do
-    *버스정류장 위치정보*.csv  https://www.data.go.kr/data/15067528/fileData.do
 - 사람이 보도·고시로 확인한 대책은 tools/regiontools/curated/<slug>.json (출처 id 와 함께).
 시군구 단위 설정은 INFRA_REGIONS 에 더한다.
 """
@@ -41,10 +42,11 @@ class InfraConfig:
     sigungu_code: str                     # 건축인허가 시군구 코드
     bjdongs: tuple                        # 건축인허가를 훑을 법정동 코드(지구가 걸친 동)
     edu_new_as_of: str = "2026-03-31"     # 신설예정학교 공시 기준일(알리미 '현황' 쪽에 적힘, 해마다 5월 공시)
+    bus_city: int | None = None           # TAGO 도시코드(인천 23). 없으면 버스 자료를 만들지 않는다
 
 
 INFRA_REGIONS = {
-    "incheon-gyeyang": InfraConfig("incheon-gyeyang", "인천광역시 계양구", "28245", ("10700", "10900", "11000")),
+    "incheon-gyeyang": InfraConfig("incheon-gyeyang", "인천광역시 계양구", "28245", ("10700", "10900", "11000"), bus_city=23),
 }
 
 
@@ -71,9 +73,9 @@ def build(cfg: InfraConfig, client, raw_dir, today: date, region_dir, log=print)
     zone_date = str(link[0].get("데이터기준일자") or today.isoformat()) if link else today.isoformat()
     zones, att = infra.attendance(projects, shp_path, dbf_path, link, loc, zone_date)
 
-    stop_rows = infra.read_csv(infra.find_one(raw, "*버스정류장 위치정보*.csv"))
-    stops = infra.stops_near(stop_rows, areas)
-    stop_date = max((str(r.get("정보수집일") or "") for r in stop_rows), default="") or None
+    stops, bus_routes = [], []
+    if cfg.bus_city is not None:
+        stops, bus_routes = build_bus(cfg.bus_city, client, areas, [infra._project_center(p) for p in projects], log)
 
     permits_raw = [it for b in cfg.bjdongs for it in client.hub_arch_dong(cfg.sigungu_code, b)]
     permits = infra.nonhousing_permits(permits_raw, PERMIT_SINCE)
@@ -81,19 +83,36 @@ def build(cfg: InfraConfig, client, raw_dir, today: date, region_dir, log=print)
     cf = CURATED / f"{cfg.slug}.json"
     curated = json.loads(cf.read_text("utf-8")) if cf.exists() else {}
     dates = {"edu-newschool": cfg.edu_new_as_of, "vworld-upis": today.isoformat(), "hub-arch": today.isoformat(), "edu-zone": zone_date}
-    if stop_date:
-        dates["molit-busstop"] = stop_date
+    if stops or bus_routes:
+        dates["tago-bus"] = today.isoformat()
     doc = infra.assemble(today=today.isoformat(), schools=schools, zones=zones, attendance=att, stops=stops, sites=facility,
-                         permits=permits, curated=curated, source_dates=dates)
+                         permits=permits, curated=curated, source_dates=dates, bus_routes=bus_routes, bus_city=cfg.bus_city)
     log(report(doc))
     return doc
+
+
+def build_bus(city: int, client, areas, centers, log=print):
+    """TAGO 로 정류소와 지나는 노선을 한 번 받아 (stops, busRoutes)를 만든다.
+    호출 수: 격자 점마다 근접정류소 1회 + 정류소마다 경유노선 1회 + 실시간 노선마다 경유정류소(경로) 1~2회. 실시간 위치는 여기서 받지 않는다."""
+    raw = []
+    for lat, lon in infra.bus_grid(areas):
+        raw += client.tago_stops_near(lat, lon)
+    stops = infra.merge_bus_stops(raw, areas)
+    stop_routes = {s["id"]: client.tago_stop_routes(city, s["id"]) for s in stops}
+    catalog = infra.route_catalog(stop_routes)
+    stops = infra.attach_routes(stops, stop_routes, catalog)
+    live = infra.live_route_ids(stops, centers)
+    paths = {rid: infra.route_path(client.tago_route_stops(city, rid)) for rid in sorted(live)}
+    routes = infra.bus_routes_doc(catalog, live, paths)
+    log(f"버스: 정류소 {len(stops)}곳 · 노선 {len(routes)}개 중 실시간 {len(live)}개({', '.join(r['no'] for r in routes if r.get('live'))})")
+    return stops, routes
 
 
 def report(doc: dict) -> str:
     schools = doc.get("schools", [])
     sched = [s for s in schools if s["status"] == "신설예정"]
     lines = [f"infra.json {doc['asOf']}: 신설예정 학교 {len(sched)}개교 · 일정 미공시 학교 부지 {len(schools) - len(sched)}곳 · 통학구역 {len(doc.get('zones', []))}곳 "
-             f"(단지 {len(doc.get('attendance', []))}개 연결) · 정류장 {len(doc.get('stops', []))}곳 · 시설 부지 {len(doc.get('sites', []))}곳 · "
+             f"(단지 {len(doc.get('attendance', []))}개 연결) · 정류소 {len(doc.get('stops', []))}곳 · 노선 {len(doc.get('busRoutes', []))}개 · 시설 부지 {len(doc.get('sites', []))}곳 · "
              f"비주택 인허가 {len(doc.get('permits', []))}건 · 대책 {len(doc.get('measures', []))}건"]
     for s in sched:
         lines.append(f"  - {s['name']} {s['openYm']} 개교 예정" + ("" if s.get("poly") else " (부지 윤곽 없음)"))

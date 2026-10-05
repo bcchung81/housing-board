@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>주택파동 공급 지도</title>
 <meta name="description" content="공공주택 공급 현황을 V-World 공식 건물 위에 3차원으로 보여 주는 지도">
-<!-- 지역 자료(regions/*.json)를 fetch 로 읽으므로 로컬에서는 서버가 필요합니다: python3 -m http.server -->
+<!-- 지역 자료(regions/*.json)를 fetch 로 읽으므로 로컬에서는 서버가 필요합니다: node scripts/dev.js (버스 위치 /api/bus 포함. 정적 서버 python3 -m http.server 는 노선 선만 보임) -->
 <!-- 지도가 곧 요청할 외부 서버와 미리 연결해 둡니다(첫 타일이 빨리 옵니다) -->
 <link rel="preconnect" href="https://api.vworld.kr" crossorigin>
 <link rel="preconnect" href="https://s3.amazonaws.com" crossorigin>
@@ -18,7 +18,7 @@
 /* 순서: 지도 라이브러리·어댑터·기반시설 점검 함수·기존 기반시설 분류 함수 → 지역 자료 읽기(어댑터가 전역을 채움) → 키 파일 → 앱. 큰 자료는 fetch 가 병렬로 받는다. */
 requestAnimationFrame(function () { setTimeout(function () {
   function load(src) { return new Promise(function (ok, no) { var s = document.createElement('script'); s.src = src; s.async = false; s.onload = ok; s.onerror = function () { no(new Error(src)); }; document.body.appendChild(s); }); }
-  Promise.all([load('assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js'), load('assets/js/region.js'), load('assets/js/infra.js'), load('assets/js/facility.js')])
+  Promise.all([load('assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js'), load('assets/js/region.js'), load('assets/js/infra.js'), load('assets/js/facility.js'), load('assets/js/bus.js')])
     .then(function () { return window.RegionLoader.boot(window, document); })
     .then(function (r) { if (!r || !r.ok) return null; return load('config.js').catch(function () {}).then(function () { return load('assets/js/app.js'); }); })
     .catch(function (e) { var f = document.getElementById('fatal'), l = document.getElementById('loading'); if (l) l.hidden = true; if (f) { f.hidden = false; f.textContent = '화면을 준비하지 못했습니다: ' + e.message; } });
@@ -127,6 +127,8 @@ requestAnimationFrame(function () { setTimeout(function () {
     <fieldset id="fsInfra" hidden><legend>입주 전 점검</legend>
       <label id="lblInfra"><input type="checkbox" id="infraChip">학교 · 정류장 · 전기 시설 <small>공개 자료</small></label>
       <label id="lblZone"><input type="checkbox" id="zoneChip">초등 통학구역 경계 <small>점선</small></label>
+      <label id="lblBus" hidden><input type="checkbox" id="busChip">버스 노선 · 위치 <small>3D, 1분 간격</small></label>
+      <button type="button" class="reset" id="busGo" hidden title="지금 지도 가운데에서 가장 가까운 버스로 이동합니다">가장 가까운 버스 보기</button>
     </fieldset>
     <fieldset><legend>화면</legend>
       <label><input type="checkbox" id="hudChip">단지 모서리 표시선 <small>HUD 표시</small></label>

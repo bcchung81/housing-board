@@ -9,7 +9,7 @@ const block = (pid, moveIn, lon = 126.757, lat = 37.5545) => ({ id: pid.replace(
 const A2 = block('techno-A2', '2026.12');
 const INFRA = {
   schema_version: '1.2.0', asOf: '2026-10-04',
-  sources: [{ id: 'molit-busstop', label: '국토교통부 전국 버스정류장 위치정보(2025-10-31)', asOf: '2025-10-31', redistributable: 'Y' }],
+  sources: [{ id: 'tago-bus', label: '국토교통부 TAGO 버스정류소·노선정보', asOf: '2026-10-05', redistributable: 'Y' }],
   schools: [
     { id: 'new-1', name: '(가칭)계양1초', level: '초등학교', status: '신설예정', openYm: '2029-03', classes: 44, students: 1113, lon: 126.7573, lat: 37.5552, sources: ['x'] },
     { id: 'new-far', name: '(가칭)먼초', level: '초등학교', status: '신설예정', openYm: '2027-03', lon: 126.80, lat: 37.60, sources: ['x'] },
@@ -117,7 +117,7 @@ test('projectChecks 교통: 300 m 안 정류장, 가까운 역, 기준일', () =
   const r = I.projectChecks(A2, INFRA, CTX);
   const [bus, st] = r.transit;
   assert.equal(bus.level, 'info'); assert.match(bus.text, /^정류장 1곳 · 가장 가까운 당산초아래 약 \d+ m$/);
-  assert.equal(bus.detail, '국토교통부 버스정류장 위치정보 2025.10.31 기준 — 입주 때 새로 생기는 정류장은 아직 반영되지 않았을 수 있음');
+  assert.equal(bus.detail, '국토교통부 TAGO 버스정류소 정보 2026.10.05 기준 — 입주 때 새로 생기는 정류장은 아직 반영되지 않았을 수 있음');
   assert.equal(st.label, '가까운 역'); assert.match(st.text, /^박촌역 약 [\d.]+ (m|km)$/);
 });
 

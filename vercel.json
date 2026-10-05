@@ -2,6 +2,12 @@
   "framework": null,
   "buildCommand": "node scripts/build.js",
   "outputDirectory": "public",
+  "functions": {
+    "api/bus.js": {
+      "includeFiles": "regions/*/infra.json",
+      "maxDuration": 20
+    }
+  },
   "headers": [
     {
       "source": "/assets/vendor/(.*)",

@@ -186,6 +186,42 @@ class ClientCalls(unittest.TestCase):
         self.assertIn("ArchPmsHubService/getApBasisOulnInfo", fetch.urls[0])
         self.assertIn("bjdongCd=10900", fetch.urls[0])
 
+    def test_tago_calls_use_the_right_services_and_params_and_page(self):
+        fetch = FakeFetch([(200, hub_page([{"nodeid": "S1"}], 1)), (200, hub_page([{"routeid": "R1"}], 1)),
+                           (200, hub_page([{"nodeord": i} for i in range(300)], 350)), (200, hub_page([{"nodeord": i} for i in range(300, 350)], 350)),
+                           (200, body({"response": {"header": {"resultCode": "00"}, "body": {"items": "", "totalCount": 0}}}))])
+        c = api.Client(KEYS, fetch=fetch, sleep=lambda s: None)
+        self.assertEqual(c.tago_stops_near(37.5559, 126.7542), [{"nodeid": "S1"}])
+        self.assertIn("BusSttnInfoInqireService/getCrdntPrxmtSttnList", fetch.urls[0])
+        self.assertIn("gpsLati=37.555900", fetch.urls[0])
+        self.assertIn("gpsLong=126.754200", fetch.urls[0])
+        self.assertEqual(c.tago_stop_routes(23, "S1"), [{"routeid": "R1"}])
+        self.assertIn("BusSttnInfoInqireService/getSttnThrghRouteList", fetch.urls[1])
+        self.assertIn("cityCode=23", fetch.urls[1])
+        self.assertIn("nodeid=S1", fetch.urls[1])
+        self.assertEqual(len(c.tago_route_stops(23, "R1")), 350)
+        self.assertIn("BusRouteInfoInqireService/getRouteAcctoThrghSttnList", fetch.urls[2])
+        self.assertIn("routeId=R1", fetch.urls[2])
+        self.assertIn("numOfRows=300", fetch.urls[2])
+        self.assertIn("pageNo=2", fetch.urls[3])
+        self.assertEqual(c.tago_stops_near(37.4, 126.3), [])                     # 정류소가 없는 곳은 빈 목록(오류가 아님)
+        for u in fetch.urls:
+            self.assertNotIn(FAKE_DG, u)                                          # 키는 URL 인코딩되어 나간다(+ / = 가 그대로면 승인된 키도 거절된다)
+
+    def test_tago_busy_server_is_retried_but_other_error_codes_are_not(self):
+        busy = body({"response": {"header": {"resultCode": "99", "resultMsg": "가용한 세션이 존재하지 않습니다. (30/30)"}}})
+        fetch = FakeFetch([(200, busy), (200, busy), (200, hub_page([{"nodeid": "S1"}], 1))])
+        waits = []
+        c = api.Client(KEYS, fetch=fetch, sleep=waits.append)
+        self.assertEqual(c.tago_stops_near(37.5, 126.7), [{"nodeid": "S1"}])
+        self.assertEqual(len(fetch.urls), 3)
+        self.assertEqual(len(waits), 2)
+        bad = body({"response": {"header": {"resultCode": "30", "resultMsg": "SERVICE KEY IS NOT REGISTERED"}}})
+        fetch = FakeFetch([(200, bad)])
+        with self.assertRaises(api.ApiError):
+            api.Client(KEYS, fetch=fetch, sleep=lambda s: None).tago_stops_near(37.5, 126.7)
+        self.assertEqual(len(fetch.urls), 1)
+
     def test_vworld_error_raises(self):
         fetch = FakeFetch([(200, body({"response": {"status": "ERROR", "error": {"code": "INVALID_KEY", "text": "x"}}}))])
         c = api.Client(KEYS, fetch=fetch, sleep=lambda s: None)

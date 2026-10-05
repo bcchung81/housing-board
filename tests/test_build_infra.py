@@ -23,6 +23,23 @@ class StubClient:
     """네트워크 없이 build 를 돌리는 가짜 클라이언트."""
     def __init__(self):
         self.layers = []
+        self.near = []
+        self.stop_route_calls = []
+        self.route_stop_calls = []
+
+    # ---- TAGO ----
+    def tago_stops_near(self, lat, lon):
+        self.near.append((lat, lon))
+        return [{"nodeid": "S1", "nodenm": "가정류장", "nodeno": "101", "gpslati": "37.55", "gpslong": 126.76},
+                {"nodeid": "S2", "nodenm": "먼정류장", "nodeno": "102", "gpslati": 36.0, "gpslong": 127.0}]
+
+    def tago_stop_routes(self, city, node_id):
+        self.stop_route_calls.append((city, node_id))
+        return [{"routeid": "R87", "routeno": 87, "routetp": "간선버스", "startnodenm": "기점", "endnodenm": "종점"}] if node_id == "S1" else []
+
+    def tago_route_stops(self, city, route_id):
+        self.route_stop_calls.append((city, route_id))
+        return [{"nodeord": 1, "gpslati": 37.55, "gpslong": "126.76"}, {"nodeord": 2, "gpslati": 37.551, "gpslong": 126.762}]
 
     def eduinfo_new_schools(self):
         return [edu_row(), edu_row(schlSeq=99, schlNm="(가칭)다른구", realAddr="전남광주통합특별시 광산구 하남동 395 일원")]
@@ -60,9 +77,7 @@ class BuildEndToEnd(unittest.TestCase):
         (self.raw / "elem_zone" / "x초등학교통학구역_20260920.dbf").rename(self.raw / "elem_zone" / "elem_zone.dbf")
         (self.raw / "학교학구도연계정보_20260920.csv").write_text("학구ID,학교ID,학교명,학교급구분,데이터기준일자\nZA,B1,가초등학교,초등학교,2026-09-20\n", "utf-8")
         (self.raw / "초중등학교위치_20260920.csv").write_text("학교ID,학교명,위도,경도\nB1,가초등학교,37.555,126.755\n", "utf-8-sig")
-        (self.raw / "국토교통부_전국 버스정류장 위치정보_20251031.csv").write_text(
-            "정류장번호,정류장명,위도,경도,정보수집일\n1,가정류장,37.55,126.76,2025-10-31\n2,먼정류장,36.0,127.0,2025-10-31\n", "utf-8")
-        self.cfg = build_infra.InfraConfig("test-region", "인천광역시 계양구", "28245", ("10700", "10900", "11000"))
+        self.cfg = build_infra.InfraConfig("test-region", "인천광역시 계양구", "28245", ("10700", "10900", "11000"), bus_city=23)
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -82,15 +97,18 @@ class BuildEndToEnd(unittest.TestCase):
         self.assertEqual([s["status"] for s in doc["schools"]].count("부지만"), 1)       # 유치원 부지
         self.assertEqual([z["id"] for z in doc["zones"]], ["ZA"])
         self.assertEqual(doc["attendance"], [{"projectId": "p1", "zoneId": "ZA"}])
-        self.assertEqual([s["name"] for s in doc["stops"]], ["가정류장"])
+        self.assertEqual(doc["stops"], [{"id": "S1", "name": "가정류장", "no": "101", "lon": 126.76, "lat": 37.55, "routes": ["R87"]}])
+        self.assertEqual(doc["busRoutes"], [{"id": "R87", "no": "87", "type": "간선버스", "from": "기점", "to": "종점", "live": True,
+                                             "path": [[126.76, 37.55], [126.762, 37.551]]}])     # 단지(126.755, 37.55)에서 약 440 m 안이라 실시간 노선
+        self.assertEqual(doc["busCityCode"], 23)
         self.assertEqual(doc["sites"][0]["category"], "전기")
         self.assertEqual(doc["permits"][0]["name"], "공공주택지구 커뮤니티3")
         self.assertEqual(doc["asOf"], "2026-10-04")
         dates = {s["id"]: s.get("asOf") for s in doc["sources"]}
-        self.assertEqual(dates["molit-busstop"], "2025-10-31")
+        self.assertEqual(dates["tago-bus"], "2026-10-04")
         self.assertEqual(dates["edu-newschool"], "2026-03-31")
         self.assertEqual(dates["edu-zone"], "2026-09-20")
-        self.assertIn("신설예정 학교 1개교", logs[0])
+        self.assertIn("신설예정 학교 1개교", logs[-1])
 
     def test_saves_the_raw_planned_school_list_next_to_the_other_raw_files(self):
         self.run_build()
@@ -104,8 +122,24 @@ class BuildEndToEnd(unittest.TestCase):
         self.assertEqual(check_bundle._schema_errors("infra.json", doc, "infra"), [])
         self.assertEqual(check_bundle._semantic_infra(doc, {"projects": [{"id": "p1"}]}), [])
 
+    def test_bus_data_is_fetched_once_per_stop_and_route_not_per_page_view(self):
+        from regiontools import infra
+        _, client, logs = self.run_build()
+        self.assertEqual(len(client.near), len(infra.bus_grid([AREA])))                  # 격자 점마다 한 번
+        self.assertEqual(client.stop_route_calls, [(23, "S1")])                           # 격자마다 같은 정류소가 와도 정류소는 한 번
+        self.assertEqual(client.route_stop_calls, [(23, "R87")])                          # 경로는 실시간 노선만
+        self.assertTrue(any("실시간 1개(87)" in l for l in logs), logs)
+
+    def test_a_region_without_a_bus_city_builds_no_bus_data_and_makes_no_bus_calls(self):
+        self.cfg = build_infra.InfraConfig("test-region", "인천광역시 계양구", "28245", ("10700", "10900", "11000"))
+        doc, client, _ = self.run_build()
+        self.assertNotIn("stops", doc)
+        self.assertNotIn("busRoutes", doc)
+        self.assertEqual(client.near, [])
+        self.assertNotIn("tago-bus", [s["id"] for s in doc["sources"]])
+
     def test_missing_download_is_a_clear_file_not_found(self):
-        (self.raw / "국토교통부_전국 버스정류장 위치정보_20251031.csv").unlink()
+        (self.raw / "학교학구도연계정보_20260920.csv").unlink()
         with self.assertRaises(FileNotFoundError):
             self.run_build()
 

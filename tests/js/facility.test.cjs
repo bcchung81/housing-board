@@ -112,6 +112,6 @@ test('범례에 기존 학교·병원·공공시설 한 줄이 있고 견본 색
 
 test('공식 건물 팝업 부제에 분류명이 붙고, 분류 모듈은 화면 스크립트보다 먼저 불러온다', () => {
   assert.match(app, /\[p\.d, p\.fc && FL\.NAMES\[p\.fc\]\]/);
-  assert.match(html, /load\('assets\/js\/infra\.js'\), load\('assets\/js\/facility\.js'\)\]/);
+  assert.match(html, /load\('assets\/js\/infra\.js'\), load\('assets\/js\/facility\.js'\)/);
   assert.ok(html.indexOf("facility.js") < html.indexOf("assets/js/app.js"));
 });
