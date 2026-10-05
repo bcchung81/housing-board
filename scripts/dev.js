@@ -1,11 +1,13 @@
 #!/usr/bin/env node
-/* 로컬 개발 서버: 저장소 루트의 정적 파일 + /api/bus(api/bus.js 그대로).
+/* 로컬 개발 서버: 저장소 루트의 정적 파일 + /api/bus · /api/v1/resolve(api/ 의 함수 그대로).
    node scripts/dev.js [포트=8000]
-   버스 위치(/api/bus)는 .env.local 의 DATA_GO_KR_KEY 가 있어야 동작한다. 없으면 503 이고 지도는 버스 없이 뜬다.
+   버스 위치(/api/bus)는 .env.local 의 공공데이터포털 키(DATA_GO_KR_KEY_BUS_<N> 여러 개 또는 DATA_GO_KR_KEY 하나)가 있어야 동작한다. 없으면 503 이고 지도는 버스 없이 뜬다.
+   키 이름·용도·한도는 env.example 과 lib/keys.js 참고. 키 사용량은 .cache/key-usage.json, 응답 캐시는 .cache/ (모두 gitignore).
    127.0.0.1 에만 열고, 점(.)으로 시작하는 파일(.env.local·.git)과 node_modules 는 내주지 않는다. 배포 빌드(scripts/build.js)와 무관하다. */
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { createKeyPool } = require('../lib/keys.js');
 
 const ROOT = path.resolve(__dirname, '..');
 const TYPES = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.json': 'application/json; charset=utf-8', '.css': 'text/css; charset=utf-8',
@@ -23,12 +25,22 @@ function loadEnv(file) {
   return env;
 }
 
+/* 시작할 때 보여 줄 키 현황(라벨·개수만, 값은 절대 안 찍는다) */
+function keySummary(env) {
+  const pool = createKeyPool({ env });
+  const parts = ['BUS', 'RESOLVE'].map((p) => `${p} ${pool.count(p)}개`);
+  return { text: `${parts.join(' · ')}${pool.profile === 'demo' ? ' · 시연 프로파일' : ''}`, bus: pool.hasKeys('BUS') };
+}
+
 function createServer(root = ROOT, env = process.env) {
   const bus = require(path.join(root, 'api', 'bus.js')).createHandler({ env });
+  const resolve = require(path.join(root, 'api', 'v1', 'resolve.js')).createHandler({ env });
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('X-Frame-Options', 'DENY'); res.setHeader('Content-Security-Policy', "frame-ancestors 'none'");   // vercel.json 과 같게: 지도는 팝업으로만 연다
     if (url.pathname === '/api/bus') return bus(req, res);
+    if (url.pathname === '/api/v1/resolve') return resolve(req, res);
     let rel = decodeURIComponent(url.pathname);
     if (rel.endsWith('/')) rel += 'index.html';
     const file = path.resolve(root, '.' + rel);
@@ -46,6 +58,8 @@ function createServer(root = ROOT, env = process.env) {
 if (require.main === module) {
   const port = Number(process.argv[2]) || 8000;
   const env = Object.assign({}, loadEnv(path.join(ROOT, '.env.local')), process.env);
-  createServer(ROOT, env).listen(port, '127.0.0.1', () => console.log(`http://127.0.0.1:${port}/  (버스 위치 ${env.DATA_GO_KR_KEY ? '켬' : '꺼짐: .env.local 에 DATA_GO_KR_KEY 가 없음'})`));
+  const keys = keySummary(env);
+  require('../lib/cache.js').createCache({ dir: require('../lib/cache.js').defaultDir(env) }).purgeExpired();   // 시작할 때 만료된 캐시 파일 정리
+  createServer(ROOT, env).listen(port, '127.0.0.1', () => console.log(`http://127.0.0.1:${port}/  (키: ${keys.text} · 버스 위치 ${keys.bus ? '켬' : '꺼짐: .env.local 에 DATA_GO_KR_KEY_BUS_1 또는 DATA_GO_KR_KEY 가 없음'})`));
 }
-module.exports = { createServer, loadEnv };
+module.exports = { createServer, loadEnv, keySummary };

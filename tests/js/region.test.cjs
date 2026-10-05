@@ -269,3 +269,115 @@ test('loadRegion: 모르는 지역은 오류 객체, 필수 파일 실패는 URL
   await assert.rejects(() => R.loadRegion({ fetch: fakeFetch(files), search: '' }), /regions\/r1\/buildings\.json/);
   await assert.rejects(() => R.loadRegion({ fetch: fakeFetch({}), search: '' }), /regions\/index\.json/);
 });
+
+/* ---------- 표준코드로 열기 ---------- */
+test('codeQuery: 우선순위 pnu > bjd > sgg > code, 코드가 ?region= 보다 우선, 코드가 없으면 null', () => {
+  assert.deepEqual(R.codeQuery('?code=28245&at=1,2,3'), { name: 'code', value: '28245' });
+  assert.deepEqual(R.codeQuery('?pnu=2824510900100010000'), { name: 'pnu', value: '2824510900100010000' });
+  assert.deepEqual(R.codeQuery('?code=1&sgg=28245&bjd=2824510900&pnu=2824510900100010000'), { name: 'pnu', value: '2824510900100010000' });
+  assert.deepEqual(R.codeQuery('?code=1&sgg=28245'), { name: 'sgg', value: '28245' });
+  assert.deepEqual(R.codeQuery('?region=r1&code=28245'), { name: 'code', value: '28245' });
+  assert.equal(R.codeQuery('?region=r1'), null);
+  assert.equal(R.codeQuery(''), null); assert.equal(R.codeQuery('?mode=floors'), null);
+});
+
+test('withRegion·regionUrl: 코드 매개변수를 지우고 지역으로 바꾼다, 나머지는 보존', () => {
+  const s = R.withRegion('?code=28245&mode=progress&pnu=1', 'r1');
+  const p = new URLSearchParams(s);
+  assert.equal(p.get('region'), 'r1'); assert.equal(p.get('mode'), 'progress'); assert.equal(p.has('code'), false); assert.equal(p.has('pnu'), false);
+  const u = new URL(R.regionUrl('https://x.test/?bjd=2824510900&block=A&at=1,2,3', 'r2'));
+  assert.equal(u.searchParams.get('region'), 'r2'); assert.equal(u.searchParams.has('bjd'), false); assert.equal(u.searchParams.has('block'), false); assert.equal(u.searchParams.get('at'), '1,2,3');
+});
+
+test('resolvedStart·resolvedShape: 시군구는 지역 기본 시점(null), 법정동은 15.4, 필지는 17.6, 필지를 못 찾으면 법정동 경계', () => {
+  const sq = { type: 'Polygon', coordinates: [[[0, 0], [1, 0], [1, 1], [0, 0]]] };
+  assert.equal(R.resolvedStart({ type: 'sgg', center: [126.7, 37.5] }), null);
+  assert.equal(R.resolvedShape({ type: 'sgg', geometry: sq }), null);
+  assert.deepEqual(R.resolvedStart({ type: 'bjd', center: [126.7, 37.5] }), { center: [126.7, 37.5], zoom: 15.4 });
+  assert.equal(R.resolvedShape({ type: 'bjd', geometry: sq }), sq);
+  const pnu = { type: 'pnu', center: [126.7, 37.5], parcel: { geometry: sq }, geometry: { type: 'Polygon', coordinates: [[[5, 5], [6, 5], [6, 6], [5, 5]]] } };
+  assert.equal(R.resolvedStart(pnu).zoom, 17.6); assert.equal(R.resolvedShape(pnu), sq);
+  const fallback = { type: 'pnu', center: [126.7, 37.5], parcel: { geometry: null }, geometry: sq };
+  assert.equal(R.resolvedStart(fallback).zoom, 15.4); assert.equal(R.resolvedShape(fallback), sq);
+  assert.equal(R.resolvedStart({ type: 'bjd' }), null); assert.equal(R.resolvedStart({ type: 'bjd', center: ['a', 1] }), null);
+  assert.equal(R.resolvedShape(null), null);
+});
+
+function bootWith(search, resolveRes, files = filesFor()) {
+  const els = {};
+  const el = (id) => (els[id] = els[id] || { hidden: true, innerHTML: '', textContent: '', addEventListener() {}, setAttribute() {} });
+  const doc = { title: '', querySelector: () => null, getElementById: el };
+  const base = fakeFetch(files);
+  const win = { location: { search, href: `http://x.test/${search}` }, fetch: async (u) => (String(u).startsWith('api/v1/resolve') ? resolveRes(u) : base(u)) };
+  return { win, doc, els };
+}
+const json = (status, body) => ({ ok: status < 400, status, json: async () => body });
+
+test('boot: ?code= 가 번들이 있는 시군구면 그 지역을 열고 시작 위치·경계를 RESOLVED 에 싣는다', async () => {
+  const urls = [];
+  const sq = { type: 'Polygon', coordinates: [[[126.7, 37.5], [126.8, 37.5], [126.8, 37.6], [126.7, 37.5]]] };
+  const { win, doc } = bootWith('?bjd=2824510900&mode=progress', (u) => { urls.push(u); return json(200, { type: 'bjd', level: 'umd', name: '인천광역시 계양구 박촌동', center: [126.75, 37.55], geometry: sq, coverage: { tier: 'A', slug: 'r1' } }); });
+  const r = await R.boot(win, doc);
+  assert.equal(r.ok, true); assert.equal(win.REGION.slug, 'r1');
+  assert.deepEqual(urls, ['api/v1/resolve?bjd=2824510900']);
+  assert.deepEqual(win.RESOLVED.start, { center: [126.75, 37.55], zoom: 15.4 }); assert.equal(win.RESOLVED.shape, sq); assert.equal(win.RESOLVED.name, '인천광역시 계양구 박촌동');
+});
+
+test('boot: ?region= 과 코드가 함께 오면 코드가 가리키는 지역이 우선한다', async () => {
+  const { win, doc } = bootWith('?region=zzz&sgg=28245', () => json(200, { type: 'sgg', level: 'sgg', name: '계양구', center: [126.7, 37.5], coverage: { tier: 'A', slug: 'r1' } }));
+  const r = await R.boot(win, doc);
+  assert.equal(r.ok, true); assert.equal(win.REGION.slug, 'r1'); assert.equal(win.RESOLVED.start, null);   // 시군구는 지역 기본 시점
+});
+
+test('boot: ?region= 만 있으면 해석 API 를 부르지 않고 RESOLVED 는 null', async () => {
+  let called = 0;
+  const { win, doc } = bootWith('?region=r1', () => { called++; return json(200, {}); });
+  const r = await R.boot(win, doc);
+  assert.equal(r.ok, true); assert.equal(called, 0); assert.equal(win.RESOLVED, null);
+});
+
+test('boot: 번들이 없는 시군구(tier none)는 안내 화면과 지역 목록, 지도는 열지 않는다', async () => {
+  const { win, doc, els } = bootWith('?code=11290', () => json(200, { type: 'sgg', level: 'sgg', name: '서울특별시 성북구', coverage: { tier: 'none' } }));
+  const r = await R.boot(win, doc);
+  assert.equal(r.ok, false); assert.equal(r.error, 'no-coverage');
+  assert.match(els.fatal.innerHTML, /서울특별시 성북구/); assert.match(els.fatal.innerHTML, /공급 사업 정보가 아직 없는/); assert.match(els.fatal.innerHTML, /href="\?region=r1"/);
+  assert.equal(els.fatal.hidden, false); assert.equal(win.REGION, undefined);
+});
+
+test('boot: 해석 실패(400·404·429·502·연결 불가)는 문구와 이스케이프된 detail 을 보인다', async () => {
+  const cases = [
+    [() => json(400, { code: 'invalid-code', detail: '자릿수 7는 지원하지 않습니다' }), /코드 형식이 맞지 않습니다/, 'invalid-code'],
+    [() => json(404, { code: 'unknown-code', detail: '<b>x</b>' }), /표준코드 표에 없는 코드/, 'unknown-code'],
+    [() => json(429, { code: 'keys-exhausted' }), /한도에 닿았습니다/, 'keys-exhausted'],
+    [() => json(502, { code: 'upstream' }), /부르지 못했습니다/, 'upstream'],
+    [() => json(404, null), /쓸 수 없습니다/, 'unavailable'],
+    [() => { throw new Error('offline'); }, /연결하지 못했습니다/, 'network'],
+  ];
+  for (const [res, re, code] of cases) {
+    const { win, doc, els } = bootWith('?code=123', res);
+    const r = await R.boot(win, doc);
+    assert.equal(r.ok, false); assert.equal(r.code, code); assert.match(els.fatal.innerHTML, re);
+    assert.doesNotMatch(els.fatal.innerHTML, /<b>/);
+  }
+});
+
+test('noticeText·mountBanner: 후퇴한 경고는 한 줄 안내로, 미리보기 문구와 합친다, 안내할 것이 없으면 숨김', () => {
+  assert.equal(R.noticeText(['parcel-not-found']), '요청한 필지를 찾지 못해 법정동 경계로 열었습니다');
+  assert.equal(R.noticeText(['padded-8-digit']), '');
+  assert.equal(R.noticeText(['geometry-unavailable', 'boundary-not-found']), '경계를 불러오지 못해 지역 기본 위치로 열었습니다 · 경계를 찾지 못해 지역 기본 위치로 열었습니다');
+  assert.equal(R.noticeText(undefined), '');
+  const el = { hidden: true, textContent: '' }; const doc = { getElementById: () => el };
+  R.mountBanner(doc, { visibility: 'public' }, ''); assert.equal(el.hidden, true);
+  R.mountBanner(doc, { visibility: 'public' }, '안내'); assert.equal(el.hidden, false); assert.equal(el.textContent, '안내');
+  R.mountBanner(doc, { visibility: 'preview' }, '안내'); assert.equal(el.textContent, '미리보기 — 공개 전 자료입니다 · 안내');
+  R.mountBanner(doc, { visibility: 'preview' }); assert.equal(el.textContent, '미리보기 — 공개 전 자료입니다');
+});
+
+test('boot: 필지를 못 찾아 법정동으로 후퇴하면 배너로 알린다', async () => {
+  const sq = { type: 'Polygon', coordinates: [[[126.7, 37.5], [126.8, 37.5], [126.8, 37.6], [126.7, 37.5]]] };
+  const { win, doc, els } = bootWith('?pnu=2824510900100010000', () => json(200, { type: 'pnu', level: 'umd', name: '박촌동', center: [126.75, 37.55], geometry: sq, parcel: { geometry: null }, warnings: ['parcel-not-found'], coverage: { tier: 'A', slug: 'r1' } }));
+  const r = await R.boot(win, doc);
+  assert.equal(r.ok, true);
+  assert.equal(els.pvBanner.hidden, false); assert.match(els.pvBanner.textContent, /필지를 찾지 못해 법정동 경계로/);
+  assert.equal(win.RESOLVED.start.zoom, 15.4); assert.deepEqual(win.RESOLVED.warnings, ['parcel-not-found']);
+});

@@ -29,6 +29,9 @@ public/
 .vercel
 .env*
 
+# 로컬 캐시(API 응답·키 사용량, 짧은 보관). lib/cache.js · lib/keys.js
+.cache/
+
 # 팀원 제출물·검증 결과·개발 환경·전달 패키지
 input/
 validation_out/

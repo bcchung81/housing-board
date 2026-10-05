@@ -39,14 +39,22 @@ class MissingKey(RuntimeError):
     pass
 
 
+class QuotaExceeded(ApiError):
+    """공공데이터포털 일일 호출 한도(resultCode 22 · LIMITED_NUMBER…) 초과. 다른 키가 있으면 그 키로 이어서 부른다."""
+
+
 @dataclass(frozen=True)
 class Keys:
     data_go_kr: str
     vworld: str
     vworld_domain: str
+    data_go_kr_pool: tuple = ()      # DATA_GO_KR_KEY_BUILD_<N> 여러 개(번호 순). 비어 있으면 data_go_kr 하나만 쓴다
+
+    def pool(self) -> tuple:
+        return self.data_go_kr_pool or ((self.data_go_kr,) if self.data_go_kr else ())
 
     def secrets(self) -> list[str]:
-        return [s for s in (self.data_go_kr, self.vworld) if s]
+        return [s for s in (*self.pool(), self.data_go_kr, self.vworld) if s]
 
 
 def load_env(path) -> dict:
@@ -61,15 +69,32 @@ def load_env(path) -> dict:
     return env
 
 
+_BUILD_KEY = re.compile(r"^DATA_GO_KR_KEY_BUILD_(\d+)$")
+
+
+def _decode_key(v: str) -> str:
+    return urllib.parse.unquote(v) if "%" in v else v      # 인코딩된 채 적어 둔 키도 디코딩된 값으로 맞춘다(요청에서 한 번만 인코딩)
+
+
 def load_keys(path) -> Keys:
+    """공공데이터포털 키: DATA_GO_KR_KEY_BUILD_<N>(여러 개, 한도에 닿으면 다음 키)가 있으면 그것을, 없으면 DATA_GO_KR_KEY 하나를 쓴다."""
     p = Path(path)
     if not p.exists():
         raise MissingKey(f"키 파일이 없음: {p.name}")
     env = load_env(p)
-    missing = [k for k in ("DATA_GO_KR_KEY", "VWORLD_KEY", "VWORLD_DOMAIN") if not env.get(k)]
+    numbered = []
+    for k, v in env.items():
+        m = _BUILD_KEY.match(k)
+        if m and v:
+            numbered.append((int(m.group(1)), v))
+    pool = tuple(_decode_key(v) for _, v in sorted(numbered))
+    missing = [k for k in ("VWORLD_KEY", "VWORLD_DOMAIN") if not env.get(k)]
+    if not pool and not env.get("DATA_GO_KR_KEY"):
+        missing.insert(0, "DATA_GO_KR_KEY(또는 DATA_GO_KR_KEY_BUILD_<N>)")
     if missing:
         raise MissingKey(f"키가 없음: {', '.join(missing)}")
-    return Keys(env["DATA_GO_KR_KEY"], env["VWORLD_KEY"], env["VWORLD_DOMAIN"])
+    first = pool[0] if pool else env["DATA_GO_KR_KEY"]
+    return Keys(first, env["VWORLD_KEY"], env["VWORLD_DOMAIN"], pool)
 
 
 def redact(text: str, secrets) -> str:
@@ -134,6 +159,8 @@ class Client:
         self.fetch = fetch or _default_fetch
         self.sleep = sleep
         self.calls = collections.Counter()
+        self._key_i = 0              # 지금 쓰는 data.go.kr 키(풀 안 번호)
+        self._quota_dead: set = set()  # 이번 실행에서 한도에 닿은 키 번호
 
     # ---- 공통 ----
     def _err(self, msg: str) -> ApiError:
@@ -159,9 +186,13 @@ class Client:
             m = _AUTH_ERR.search(raw or b"")
             if m:
                 code = (m.group(1) or m.group(2) or b"").decode("utf-8", "replace").strip()
+                if "LIMITED_NUMBER" in code or code == "22":
+                    raise QuotaExceeded(f"{name}: 일일 호출 한도 초과")
                 if not any(t in code for t in _RETRYABLE_AUTH):
                     raise self._err(f"{name}: 인증·서비스 오류 {code}")
                 last = f"서비스 오류 {code}"
+            elif status == 429:
+                raise QuotaExceeded(f"{name}: 일일 호출 한도 초과(HTTP 429)")
             elif status != 200:
                 last = f"HTTP {status}"
             elif not (raw or b"").strip():
@@ -178,6 +209,8 @@ class Client:
                             cp.parent.mkdir(parents=True, exist_ok=True)
                             cp.write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
                         return payload
+                    if verdict.startswith("quota:"):
+                        raise QuotaExceeded(f"{name}: {verdict[6:]}")
                     if verdict.startswith("fatal:"):
                         raise self._err(f"{name}: {verdict[6:]}")
                     last = verdict[6:]
@@ -193,17 +226,40 @@ class Client:
         code = str(payload["response"].get("header", {}).get("resultCode", "00"))
         if code not in ("00", "0", "000"):
             msg = payload["response"].get("header", {}).get("resultMsg", "")
+            if code == "22":      # 일일 호출 한도 초과: 같은 키로는 다시 부르지 않고 다음 키로 넘어간다
+                return f"quota:결과 코드 {code} {msg}"
             if code == "99":      # TAGO 가 동시 접속이 가득 찼을 때 주는 일시 오류("가용한 세션이 존재하지 않습니다")
                 return f"retry:결과 코드 {code} {msg}"
             return f"fatal:결과 코드 {code} {msg}"
         return None
 
+    def _current_key(self) -> str:
+        pool = self.keys.pool()
+        if not pool:
+            raise MissingKey("data.go.kr 키가 없음")
+        return pool[self._key_i % len(pool)]
+
+    def _next_key(self, err: QuotaExceeded) -> None:
+        """한도에 닿은 키를 이번 실행에서 빼고 다음 키로. 모두 닿았으면 그 오류를 그대로 올린다."""
+        pool = self.keys.pool()
+        self._quota_dead.add(self._key_i % len(pool))
+        left = [i for i in range(len(pool)) if i not in self._quota_dead]
+        if not left:
+            raise QuotaExceeded(f"{err} (키 {len(pool)}개 모두 한도 초과 — 한국시간 자정 이후 다시)") from None
+        self._key_i = left[0]
+        self.calls["key-switch"] += 1
+
     def _data_go_kr_all(self, name: str, url: str, params: dict, rows: int = 100) -> list:
         out: list = []
         page = 1
         while True:
-            p = {"serviceKey": self.keys.data_go_kr, **params, "numOfRows": rows, "pageNo": page, "_type": "json"}
-            payload = self._get_json(name, url, p, self._check_data_go_kr)
+            while True:
+                p = {"serviceKey": self._current_key(), **params, "numOfRows": rows, "pageNo": page, "_type": "json"}
+                try:
+                    payload = self._get_json(name, url, p, self._check_data_go_kr)
+                    break
+                except QuotaExceeded as e:
+                    self._next_key(e)
             items = extract_items(payload)
             out += items
             total = total_count(payload)

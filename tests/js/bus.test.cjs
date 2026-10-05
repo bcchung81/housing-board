@@ -204,14 +204,17 @@ test('bus.js 는 화면 스크립트보다 먼저 불러오고, 버스 옵션 �
   assert.match(html, /id="lblBus" hidden/);                                          // 실시간 노선이 있는 지역에서만 켜진다
 });
 
-test('호출 약속: 서버 ttl 이상 간격, 탭이 숨겨지면 멈춤, 옵션이 꺼지면 멈춤, 중계가 없으면(404·405·503) 다시 부르지 않는다', () => {
+test('요청 시에만 조회: 버튼을 누를 때 한 번 부르고, 자동 반복·탭 감시·반복 타이머가 없으며, 서버 ttl 동안 다시 못 누르고, 중계가 없으면(404·405·503) 더 부르지 않는다', () => {
+  assert.match(app, /async function busLoad\(\)/);
   assert.match(app, /fetch\(`api\/bus\?region=\$\{encodeURIComponent\(REG\.slug\)\}`\)/);
-  assert.match(app, /BL\.pollDelayMs\(BUS\.ttl, BUS\.failures\)/);
-  assert.match(app, /document\.hidden/);
-  assert.match(app, /document\.addEventListener\('visibilitychange', applyBus\)/);
+  assert.match(app, /\$\('#busLoad'\)\.addEventListener\('click', busLoad\)/);
+  assert.match(html, /id="busLoad" class="opt" hidden/);
+  assert.match(app, /BUS\.cooldownUntil = Date\.now\(\) \+ data\.ttl \* 1000/);
+  assert.match(app, /btn\.disabled = BUS\.loading \|\| wait > 0/);
   assert.match(app, /\[404, 405, 503\]\.includes\(res\.status\)/);
-  assert.match(app, /if \(!HAS_BUS \|\| !busOn \|\| BUS\.off \|\| document\.hidden\) return;/);
-  assert.doesNotMatch(app, /setInterval\([^)]*busFetch/);                            // 고정 간격 반복 호출이 아니라 매번 다음 시각을 다시 정한다
+  assert.doesNotMatch(app, /setInterval\([^)]*bus/i);                                // 고정 간격 반복 호출 없음
+  assert.doesNotMatch(app, /BL\.pollDelayMs|busSchedule|busFetch|visibilitychange/);  // 예약 호출·탭 감시 없음
+  assert.doesNotMatch(app, /busLoad\(\);?\s*\n\s*(applyBus|setBusData)/);            // 로드 시 자동 호출 없음
 });
 
 test('3D 층: 높이·바닥은 피처 값(차체·창띠), 색은 노선 유형, 라벨은 노선 번호이며 URL ?bus=0 으로 끈다', () => {
@@ -230,8 +233,8 @@ test('클릭: 버스를 먼저 고르고(작아서 7px 여유), 정류소 팝업
 });
 
 test('함수가 없는 정적 서버(404)에서는 조용히 사라지지 않고, 이유와 해결 방법을 화면·콘솔에 남긴다', () => {
-  assert.match(app, /BUS\.off = true; applyBus\(\); setLegend\(\);/);
-  assert.match(app, /console\.warn\([^\n]*node scripts\/dev\.js/);
+  assert.match(app, /BUS\.off = true; BUS\.loading = false; applyBus\(\); setLegend\(\);/);
+  assert.match(app, /console\.warn\([^\n]*\.\/run-app\.sh/);
   assert.match(app, /BUS\.off \? '버스 선만' : '버스'/);                              // 하단 범례 요약 줄에 보인다
   assert.match(app, /lb\.textContent = BUS\.off \? '위치 서버 없음'/);                // 옵션 항목에도 보인다
   assert.match(app, /\$\{IS_LOCAL \? ' — 로컬은 node scripts\/dev\.js 로 여세요' : ''\}/);   // 운영 화면에는 개발 명령을 적지 않는다
@@ -248,7 +251,7 @@ test('버스를 찾기 쉽게: 옵션의 \'가장 가까운 버스 보기\' 버�
   assert.match(html, /id="busGo" hidden/);
   assert.match(app, /\$\('#busGo'\)\.addEventListener\('click', busGo\)/);
   assert.match(app, /map\.flyTo\(\{ center: \[near\.lon, near\.lat\], zoom: 17\.4/);
-  assert.match(app, /go\.hidden = !\(HAS_BUS && busOn && !BUS\.off && BUS\.cur\.length\)/);
+  assert.match(app, /go\.hidden = !\(can && has\)/);
   assert.match(app, /\.\.\.atParam\(\) \};/);
   assert.match(app, /lon < 120 \|\| lon > 135 \|\| lat < 30 \|\| lat > 45 \|\| zoom < 0 \|\| zoom > 22\) return \{\};/);
 });

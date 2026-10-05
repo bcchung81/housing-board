@@ -97,7 +97,8 @@ function atParam() {
   if (Number.isFinite(bearing) && bearing >= -360 && bearing <= 360) out.bearing = bearing;
   return out;
 }
-const START = { pitch: 52, bearing: 0, ...(REG.view || { center: [126.7585, 37.5515], zoom: 14.4 }), ...atParam() };   // 지역의 시작 위치(주소 ?at= 가 있으면 그 위치)
+const RES = window.RESOLVED || null;                            // 표준코드(?code= 등)로 열었을 때 해석 결과: 시작 위치와 강조할 경계
+const START = { pitch: 52, bearing: 0, ...(REG.view || { center: [126.7585, 37.5515], zoom: 14.4 }), ...((RES && RES.start) || {}), ...atParam() };   // 지역의 시작 위치(코드로 열면 그 법정동·필지, 주소 ?at= 가 있으면 그 위치가 우선)
 const map = new maplibregl.Map({
   container: 'map', style: baseStyle(), ...START, maxPitch: 80, minZoom: 11, attributionControl: { compact: true },
   canvasContextAttributes: { antialias: q.get('aa') !== '0' },   // 모서리 계단 방지(4배 다중 샘플). 저사양이면 주소에 ?aa=0
@@ -361,7 +362,7 @@ const BL = window.BusLib;
 const LIVE_ROUTES = HAS_INFRA && BL ? (INFRA.busRoutes || []).filter((r) => r.live && Array.isArray(r.path) && r.path.length > 1) : [];
 const HAS_BUS = LIVE_ROUTES.length > 0 && !!REG.slug;
 const EMPTY_FC = () => ({ type: 'FeatureCollection', features: [] });
-const BUS = { cur: [], prev: [], shown: [], scale: 0, at: null, ttl: 60, failures: 0, off: false, timer: 0, raf: 0, loadedAt: 0, solids: EMPTY_FC(), labels: EMPTY_FC() };
+const BUS = { cur: [], prev: [], shown: [], scale: 0, at: null, ttl: 60, failures: 0, off: false, loading: false, cooldownUntil: 0, raf: 0, solids: EMPTY_FC(), labels: EMPTY_FC() };
 const BUS_ROUTES_GJ = { type: 'FeatureCollection', features: LIVE_ROUTES.map((r) => ({ type: 'Feature', properties: { id: r.id, no: r.no, c: BL.routeColor(r.type) }, geometry: { type: 'LineString', coordinates: r.path } })) };
 const BUS_LAYERS = ['bus-route-line', 'bus-route-label', 'bus-3d', 'bus-label'], BUS_TWEEN_MS = 1200;
 const IS_LOCAL = /^(localhost|127\.0\.0\.1|\[::1\])$/.test(location.hostname);   // 로컬에서만 해결 방법(개발 서버)을 화면에 적는다
@@ -470,6 +471,7 @@ function setupCustom() {
   if (HAS_INFRA) for (const k of INFRA_ICONS) if (!map.hasImage('ic-' + k)) { const im = infraIcon(k); map.addImage('ic-' + k, im.data, im.opts); }
   if (HAS_CTX) { const g = ctxGeoJSON(); src('ctx-st', { type: 'geojson', data: g.st, attribution: '역·학교 © OpenStreetMap contributors' }); src('ctx-sch', { type: 'geojson', data: g.sch }); src('ctx-ring', { type: 'geojson', data: g.ring }); }
   if (HAS_INFRA) for (const [id, d] of [['infra-sites', INFRA_GJ.sites], ['infra-pts', INFRA_GJ.pts], ['infra-stops', INFRA_GJ.stops], ['infra-zone', INFRA_GJ.zones], ['infra-zone-pt', INFRA_GJ.zpts], ['infra-site-pts', INFRA_GJ.spts], ['infra-links', INFRA_GJ.links], ['infra-link-pts', INFRA_GJ.lpts], ['infra-rings', INFRA_GJ.rings]]) src(id, { type: 'geojson', data: d });
+  if (RES && RES.shape) src('resolved', { type: 'geojson', data: { type: 'Feature', properties: { name: RES.name }, geometry: RES.shape } });   // 코드로 연 법정동·필지 경계
   if (HAS_BUS) { src('bus-routes', { type: 'geojson', data: BUS_ROUTES_GJ, attribution: '버스 © 국토교통부 TAGO' }); src('bus-solids', { type: 'geojson', data: BUS.solids }); src('bus-lbl', { type: 'geojson', data: BUS.labels }); }
 
   /* --- 지형·하늘·빛 --- */
@@ -513,6 +515,11 @@ function setupCustom() {
     add({ id: 'infra-site-dash', type: 'line', source: 'infra-sites', filter: ['==', ['get', 'cat'], 'edu-site'], layout: { visibility: 'none' }, paint: { 'line-color': E, 'line-width': 2.4, 'line-dasharray': [3, 2] } });
   }
   if (HAS_CTX) add({ id: 'ctx-ring', type: 'line', source: 'ctx-ring', layout: { visibility: 'none' }, paint: { 'line-color': T.sub, 'line-width': 1.2, 'line-dasharray': [2, 2], 'line-opacity': 0.85 } });
+  if (RES && RES.shape) {
+    add({ id: 'resolved-fill', type: 'fill', source: 'resolved', paint: { 'fill-color': '#E8590C', 'fill-opacity': RES.type === 'pnu' ? 0.28 : 0.07 } });
+    add({ id: 'resolved-halo', type: 'line', source: 'resolved', paint: { 'line-color': T.halo, 'line-width': 7, 'line-opacity': 0.9 } });
+    add({ id: 'resolved-line', type: 'line', source: 'resolved', paint: { 'line-color': '#E8590C', 'line-width': 3, 'line-dasharray': RES.type === 'pnu' ? [1, 0] : [3, 2] } });
+  }
   add({ id: 'sel-line-halo', type: 'line', source: 'sel', paint: { 'line-color': T.halo, 'line-width': 7, 'line-opacity': 0.9 } });
   add({ id: 'sel-line', type: 'line', source: 'sel', paint: { 'line-color': '#1B1D21', 'line-width': 3 } });
 
@@ -763,7 +770,7 @@ function busPopup(p, clickX) {
   showCard(`<div class="pc">
     <div class="pc-h"><b>${esc(d.title)}</b>${chipHtml('bus', '버스')}</div>
     ${dlHtml([['차량', esc(d.plate)], d.where ? ['지나는 중', esc(d.where)] : null, d.near ? ['가까운 단지', esc(d.near.text)] : null, d.passes.length ? ['이 노선이 지나는 단지', esc(d.passes.join(' · '))] : null, d.from ? ['구간', `${esc(d.from)} ↔ ${esc(d.to)}`] : null])}
-    <p class="pc-foot">출처: 국토교통부 TAGO 버스위치정보${d.age ? ` · 위치 기준 ${esc(d.age)}` : ''}<br>실시간이 아니라 ${Math.round(BUS.ttl)}초 이상 간격으로 가져온 값입니다. 방향과 지나는 단지는 노선 경로(정류소를 이은 선)로 어림했습니다.</p></div>`,
+    <p class="pc-foot">출처: 국토교통부 TAGO 버스위치정보${d.age ? ` · 위치 기준 ${esc(d.age)}` : ''}<br>${esc(busTime(BUS.at))}에 조회한 값이며 자동으로 갱신되지 않습니다(새로 보려면 '버스 새로고침'). 방향과 지나는 단지는 노선 경로(정류소를 이은 선)로 어림했습니다.</p></div>`,
     [ptRing([bus.lon, bus.lat])], 0, clickX);
 }
 const rateH = () => ['*', ['get', 'h'], ['max', 0.05, ['/', ['get', 'rate'], 100]]];
@@ -877,45 +884,49 @@ function busGo() {   // 지금 지도 가운데에서 가장 가까운 버스로
   map.flyTo({ center: [near.lon, near.lat], zoom: 17.4, pitch: 58, speed: 1.4, essential: true });
   setOpt(false); say(`가장 가까운 버스, ${(LIVE_ROUTES.find((r) => r.id === near.r) || {}).no || ''}번으로 이동합니다.`);
 }
+const busTime = (at) => { try { return new Date(at).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }); } catch (_) { return ''; } };
 function updateBusStat() {
-  const go = $('#busGo'); if (go) go.hidden = !(HAS_BUS && busOn && !BUS.off && BUS.cur.length);
-  const lb = $('#lblBus small'); if (lb) lb.textContent = BUS.off ? '위치 서버 없음' : '3D, 1분 간격';
+  const has = BUS.cur.length > 0, can = HAS_BUS && busOn && !BUS.off, wait = Math.ceil((BUS.cooldownUntil - Date.now()) / 1000);
+  const go = $('#busGo'); if (go) go.hidden = !(can && has);
+  const lb = $('#lblBus small'); if (lb) lb.textContent = BUS.off ? '위치 서버 없음' : '3D, 버튼으로 조회';
+  const btn = $('#busLoad');
+  if (btn) {   // 위치는 이 버튼을 누를 때만 조회한다(자동 갱신 없음). 조회 뒤 서버 ttl 동안은 다시 누를 수 없다
+    btn.hidden = !can; btn.disabled = BUS.loading || wait > 0;
+    btn.textContent = BUS.loading ? '조회 중…' : has ? '버스 새로고침' : '버스 위치 조회';
+    btn.title = BUS.loading ? '버스 위치를 가져오는 중입니다' : wait > 0 ? `${wait}초 뒤 다시 조회할 수 있습니다` : '버튼을 누를 때만 버스 위치를 조회합니다(자동 갱신 없음)';
+  }
   const el = $('#busStat'); if (!el) return;
-  el.textContent = BUS.off ? `위치를 받을 수 없음${IS_LOCAL ? ' — 로컬은 node scripts/dev.js 로 여세요' : ''}` : BUS.cur.length ? `${BUS.cur.length}대 · ${BL.ageText(BUS.at)} 위치` : (BUS.failures ? '위치를 불러오지 못함' : '불러오는 중');
+  el.textContent = BUS.off ? `위치를 받을 수 없음${IS_LOCAL ? ' — 로컬은 node scripts/dev.js 로 여세요' : ''}` : has ? `${BUS.cur.length}대 · ${busTime(BUS.at)} 조회` : (BUS.failures ? '위치 조회에 실패했습니다' : '“버스 위치 조회”를 누르면 표시됩니다');
 }
-function busSchedule() {
-  clearTimeout(BUS.timer);
-  if (!HAS_BUS || !busOn || BUS.off || document.hidden) return;
-  BUS.timer = setTimeout(busFetch, BL.pollDelayMs(BUS.ttl, BUS.failures));
-}
-async function busFetch() {
-  clearTimeout(BUS.timer);
-  if (!HAS_BUS || !busOn || BUS.off || document.hidden) return;
+async function busLoad() {   // 사용자가 누를 때 한 번만 조회한다. 실시간 검색·자동 갱신은 하지 않는다
+  if (!HAS_BUS || !busOn || BUS.off || BUS.loading) return;
+  const wait = Math.ceil((BUS.cooldownUntil - Date.now()) / 1000);
+  if (wait > 0) { say(`${wait}초 뒤 다시 조회할 수 있습니다.`); return; }
+  BUS.loading = true; updateBusStat();
   try {
     const res = await fetch(`api/bus?region=${encodeURIComponent(REG.slug)}`);
     if ([404, 405, 503].includes(res.status)) {   // 중계 함수가 없거나(404·405: 정적 서버) 키가 없다(503): 더 부르지 않고 노선 선만 보인다
-      BUS.off = true; applyBus(); setLegend();
-      console.warn(res.status === 503 ? '버스 위치: 서버에 DATA_GO_KR_KEY 환경변수가 없습니다. 노선 선만 보입니다.' : `버스 위치: /api/bus 가 없습니다(${res.status}). python3 -m http.server 같은 정적 서버에는 함수가 없습니다. 로컬에서는 node scripts/dev.js 로 여세요. 노선 선만 보입니다.`);
+      BUS.off = true; BUS.loading = false; applyBus(); setLegend();
+      console.warn(res.status === 503 ? '버스 위치: 서버에 DATA_GO_KR_KEY 계열 환경변수가 없습니다. 노선 선만 보입니다.' : `버스 위치: /api/bus 가 없습니다(${res.status}). python3 -m http.server 같은 정적 서버에는 함수가 없습니다. 로컬에서는 ./run-app.sh 로 여세요. 노선 선만 보입니다.`);
       say('버스 위치를 받을 수 없어 노선 선만 보여 줍니다.');
       return;
     }
     if (!res.ok) throw new Error(String(res.status));
     const data = BL.parse(await res.json());
     if (!data) throw new Error('shape');
-    BUS.failures = 0; BUS.ttl = data.ttl; BUS.at = data.at; BUS.loadedAt = Date.now();
+    BUS.failures = 0; BUS.ttl = data.ttl; BUS.at = data.at; BUS.cooldownUntil = Date.now() + data.ttl * 1000;
     BUS.prev = BUS.cur; BUS.cur = BL.withHeading(data.buses, LIVE_ROUTES, BUS.cur);
-    if (busOn) busTween();
-  } catch (_) { BUS.failures += 1; }
-  updateBusStat();
-  busSchedule();
+    applyBus(); busTween();
+    setTimeout(updateBusStat, data.ttl * 1000 + 100);   // 쿨다운이 끝나면 버튼을 다시 켠다
+    say(`버스 ${BUS.cur.length}대의 위치를 불러왔습니다.`);
+  } catch (_) { BUS.failures += 1; say('버스 위치를 불러오지 못했습니다.'); }
+  BUS.loading = false; updateBusStat();
 }
-function applyBus() {
+function applyBus() {   // 노선 선은 옵션이 켜져 있으면 늘 보이고, 버스(3D)와 번호는 조회한 뒤에만 보인다
   if (!HAS_BUS) return;
-  for (const id of BUS_LAYERS) vis(id, busOn && !(BUS.off && (id === 'bus-3d' || id === 'bus-label')));
-  if (busOn) {
-    if (BUS.cur.length && !BUS.raf) setBusData(BUS.cur);   // 스타일을 다시 불러왔거나 탭이 다시 보일 때 마지막 위치를 바로 놓는다
-    if (!BUS.loadedAt || Date.now() - BUS.loadedAt > BUS.ttl * 1000) busFetch(); else busSchedule();
-  } else { clearTimeout(BUS.timer); cancelAnimationFrame(BUS.raf); BUS.raf = 0; }
+  const posOn = busOn && !BUS.off && BUS.cur.length > 0;
+  for (const id of BUS_LAYERS) vis(id, id === 'bus-3d' || id === 'bus-label' ? posOn : busOn);
+  if (!busOn) { cancelAnimationFrame(BUS.raf); BUS.raf = 0; } else if (BUS.cur.length && !BUS.raf) setBusData(BUS.cur);   // 스타일을 다시 불러왔을 때 마지막 위치를 놓는다
   updateBusStat();
 }
 let busRescaling = false;
@@ -925,7 +936,6 @@ function busRescale() {   // 확대를 바꾸면 버스 크기도 맞춘다(애�
   requestAnimationFrame(() => { busRescaling = false; if (busOn && !BUS.raf) setBusData(BUS.shown); });
 }
 map.on('zoom', busRescale);
-document.addEventListener('visibilitychange', applyBus);
 function applyAll() { applyFilters(); applyMode(); applyCtx(); applyInfra(); applyBus(); }
 function select(i) { selId = i; selDong = null; applySel(); }
 function selectDong(key) { selId = null; selDong = key; applySel(); }
@@ -1223,6 +1233,7 @@ function positionOpt() {
   $('#fsInfra').hidden = !HAS_INFRA;
   $('#lblBus').hidden = !HAS_BUS;
   $('#busGo').addEventListener('click', busGo);
+  $('#busLoad').addEventListener('click', busLoad);
   $('#modeSeg [data-mode="infra"]').hidden = !HAS_INFRA;
   $('#modeSeg').addEventListener('click', (e) => {
     const m = e.target.closest('button[data-mode]'); if (!m) return;

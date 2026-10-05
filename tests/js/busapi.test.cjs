@@ -2,21 +2,25 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const bus = require('../../api/bus.js');
+const { createKeyPool, memoryStore } = require('../../lib/keys.js');
+const { createCache } = require('../../lib/cache.js');
 
 const KEY = 'fake+data/go==KEY';
 const live = { city: 23, routes: ['R87', 'R584'] };
 const item = (v, lon, lat, ord, nm) => ({ vehicleno: v, gpslong: lon, gpslati: lat, nodeord: ord, nodenm: nm, routenm: 87 });
 const ok = (items) => ({ response: { header: { resultCode: '00' }, body: { items: items === '' ? '' : { item: items }, totalCount: 0 } } });
-const resp = (json, status = 200) => ({ ok: status === 200, status, json: async () => json });
+const resp = (json, status = 200) => ({ ok: status === 200, status, json: async () => json, text: async () => (typeof json === 'string' ? json : JSON.stringify(json)) });
 
 function harness(over = {}) {
   const calls = [];
   const clock = { t: 1_000_000 };
   const fetchImpl = over.fetch || (async () => resp(ok([item('인천73아1091', '126.7', 37.5, 7, '가정류장')])));
+  const env = over.env || { DATA_GO_KR_KEY: KEY };
+  const now = () => clock.t;
+  const pool = createKeyPool({ env, now, store: memoryStore() });
   const handler = bus.createHandler({
     fetch: async (url, opts) => { calls.push(url); return fetchImpl(url, opts); },
-    env: over.env || { DATA_GO_KR_KEY: KEY },
-    now: () => clock.t,
+    env, now, pool, cache: createCache({ persist: false, now }),
     readLiveRoutes: over.readLiveRoutes || ((slug) => (slug === 'incheon-gyeyang' ? live : null)),
     sleep: async () => {},
   });
@@ -25,7 +29,7 @@ function harness(over = {}) {
     await handler({ method, url }, res);
     return { status: res.statusCode, headers: res.headers, json: res.body ? JSON.parse(res.body) : null };
   };
-  return { run, calls, clock };
+  return { run, calls, clock, pool };
 }
 
 test('ttl: 노선이 적어도 60초, 많아지면 하루 예산에 맞춰 늘어난다', () => {
@@ -63,15 +67,21 @@ test('성공: 노선마다 한 번씩만 부르고, 키는 URL 인코딩해서 �
   assert.ok(!JSON.stringify(r.json).includes('KEY'));
 });
 
-test('같은 인스턴스에서 30초 안에 다시 오면 TAGO 를 다시 부르지 않는다', async () => {
+test('로컬 캐시: ttl(60초) 안에 다시 오면 TAGO 를 다시 부르지 않고, 남은 시간만큼만 CDN 에 맡긴다', async () => {
   const h = harness();
-  await h.run('/api/bus?region=incheon-gyeyang');
+  const first = await h.run('/api/bus?region=incheon-gyeyang');
+  assert.equal(first.headers['cache-control'], 'public, s-maxage=60, stale-while-revalidate=60');
   h.clock.t += 29_000;
-  await h.run('/api/bus?region=incheon-gyeyang');
+  const again = await h.run('/api/bus?region=incheon-gyeyang');
   assert.equal(h.calls.length, 2);
+  assert.equal(again.headers['cache-control'], 'public, s-maxage=31, stale-while-revalidate=60');   // 이미 29초 묵었다
+  assert.deepEqual(again.json, first.json);
+  h.clock.t += 30_000;
+  await h.run('/api/bus?region=incheon-gyeyang');
+  assert.equal(h.calls.length, 2);                                                // 59초
   h.clock.t += 2_000;
   await h.run('/api/bus?region=incheon-gyeyang');
-  assert.equal(h.calls.length, 4);
+  assert.equal(h.calls.length, 4);                                                // 61초: 만료
 });
 
 test('요청이 노선을 정하지 못한다: 모르는 지역·추가 쿼리·형식 위반은 TAGO 를 부르지 않고 거절한다', async () => {
@@ -130,4 +140,88 @@ test('실제 번들: 계양 infra.json 의 live 노선과 도시코드를 읽는
   const liveIds = infra.busRoutes.filter((r) => r.live).map((r) => r.id);
   assert.ok(liveIds.length >= 1 && infra.busCityCode === 23);
   assert.ok(bus.ttlFor(liveIds.length) >= 60);
+});
+
+const KEYS3 = { DATA_GO_KR_KEY_BUS_1: 'k1+a/b=', DATA_GO_KR_KEY_BUS_2: 'k2+a/b=', DATA_GO_KR_KEY_BUS_3: 'k3+a/b=' };
+const keyOf = (url) => decodeURIComponent(new URL(url).searchParams.get('serviceKey'));
+
+test('키 풀: BUS 키가 여러 개면 호출을 나눠 쓰고(가장 적게 쓴 키 우선), ttl 은 키 수만큼 짧아진다', async () => {
+  const many = { city: 23, routes: ['R1', 'R2', 'R3', 'R4', 'R5', 'R6'] };
+  const h = harness({ env: KEYS3, readLiveRoutes: () => many });
+  const r = await h.run('/api/bus?region=incheon-gyeyang');
+  assert.equal(r.status, 200);
+  const used = {};
+  for (const u of h.calls) used[keyOf(u)] = (used[keyOf(u)] || 0) + 1;
+  assert.deepEqual(Object.values(used).sort(), [2, 2, 2]);                       // 6번을 세 키가 2번씩
+  assert.equal(r.json.ttl, 60);                                                   // 6 × 86400 / 24000 = 21.6 → 최소 60초
+  assert.equal(bus.ttlFor(10, 1), 108); assert.equal(bus.ttlFor(10, 3), 60); assert.equal(bus.ttlFor(40, 2), 216); assert.equal(bus.ttlFor(5, 0), 60);
+});
+
+test('키 풀: 한도 오류(resultCode 22, XML 본문, HTTP 429)를 받은 키는 쉬게 하고 다음 키로 다시 부른다', async () => {
+  const quotaXml = '<OpenAPI_ServiceResponse><cmmMsgHeader><errMsg>SERVICE ERROR</errMsg><returnAuthMsg>LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR</returnAuthMsg><returnReasonCode>22</returnReasonCode></cmmMsgHeader></OpenAPI_ServiceResponse>';
+  const modes = [['json22', () => resp({ response: { header: { resultCode: '22' } } })], ['xml', () => resp(quotaXml)], ['429', () => resp({}, 429)]];
+  for (const [name, bad] of modes) {
+    const h = harness({ env: { DATA_GO_KR_KEY_BUS_1: 'k1', DATA_GO_KR_KEY_BUS_2: 'k2' }, readLiveRoutes: () => ({ city: 23, routes: ['R1'] }), fetch: async (url) => (keyOf(url) === 'k1' ? bad() : resp(ok([item('가', 126.7, 37.5, 1, 'a')]))) });
+    const r = await h.run('/api/bus?region=incheon-gyeyang');
+    assert.equal(r.status, 200, name);
+    assert.deepEqual(h.calls.map(keyOf), ['k1', 'k2'], name);
+    assert.equal(h.pool.usage().keys.BUS_1.tago.exhausted, true, name);
+    h.clock.t += 61_000;                                                          // 캐시가 만료돼도 k1 은 그날 쉰다
+    await h.run('/api/bus?region=incheon-gyeyang');
+    assert.deepEqual(h.calls.map(keyOf), ['k1', 'k2', 'k2'], name);
+  }
+});
+
+test('키 풀: 모든 키가 한도에 닿으면 429 + Retry-After(한국시간 자정까지), 캐시하지 않는다', async () => {
+  const h = harness({ env: { DATA_GO_KR_KEY_BUS_1: 'k1' }, readLiveRoutes: () => ({ city: 23, routes: ['R1'] }), fetch: async () => resp({ response: { header: { resultCode: '22' } } }) });
+  const r = await h.run('/api/bus?region=incheon-gyeyang');
+  assert.equal(r.status, 429);
+  assert.equal(r.json.error, 'keys-exhausted'); assert.ok(r.json.retryAfterSec > 0 && r.json.retryAfterSec <= 86400);
+  assert.equal(r.headers['retry-after'], String(r.json.retryAfterSec)); assert.equal(r.headers['cache-control'], 'no-store');
+  const before = h.calls.length;
+  await h.run('/api/bus?region=incheon-gyeyang');
+  assert.equal(h.calls.length, before);                                          // 쉬는 키는 다시 부르지 않는다
+});
+
+test('키 풀: 응답·캐시·사용 현황 어디에도 키 값이 나오지 않는다', async () => {
+  const h = harness({ env: KEYS3 });
+  const r = await h.run('/api/bus?region=incheon-gyeyang');
+  const all = JSON.stringify([r, h.pool.usage()]);
+  for (const v of Object.values(KEYS3)) assert.ok(!all.includes(v));
+  assert.ok(all.includes('BUS_1'));
+});
+
+test('실패 직후 15초는 원천을 다시 부르지 않는다(502 를 짧게 캐시)', async () => {
+  const h = harness({ readLiveRoutes: () => ({ city: 23, routes: ['R1'] }), fetch: async () => { throw new Error('down'); } });
+  assert.equal((await h.run('/api/bus?region=incheon-gyeyang')).status, 502);
+  const n = h.calls.length;
+  h.clock.t += 14_000;
+  assert.equal((await h.run('/api/bus?region=incheon-gyeyang')).status, 502);
+  assert.equal(h.calls.length, n);
+  h.clock.t += 2_000;
+  await h.run('/api/bus?region=incheon-gyeyang');
+  assert.ok(h.calls.length > n);
+});
+
+test('비밀: 로컬 캐시 파일과 사용량 파일(.cache 에 해당)에도 키 값이 남지 않는다', async () => {
+  const fs = require('node:fs'), os = require('node:os'), path = require('node:path');
+  const { fileStore } = require('../../lib/keys.js');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'busapi-secret-'));
+  const env = { DATA_GO_KR_KEY_BUS_1: 'sEcRet+one/=', DATA_GO_KR_KEY_BUS_2: 'sEcRet+two/=' };
+  const clock = { t: 5_000_000 }, now = () => clock.t;
+  const handler = bus.createHandler({
+    fetch: async () => resp(ok([item('가', 126.7, 37.5, 1, 'a')])), env, now, sleep: async () => {}, readLiveRoutes: () => live,
+    pool: createKeyPool({ env, now, store: fileStore(path.join(dir, 'key-usage.json')) }), cache: createCache({ dir, now }),
+  });
+  const res = { headers: {}, setHeader() {}, end(b) { this.body = b; } };
+  await handler({ method: 'GET', url: '/api/bus?region=incheon-gyeyang' }, res);
+  const files = fs.readdirSync(dir);
+  assert.ok(files.includes('key-usage.json') && files.length >= 2);
+  for (const f of files) {
+    const text = fs.readFileSync(path.join(dir, f), 'utf8');
+    for (const v of Object.values(env)) for (const form of [v, encodeURIComponent(v)]) assert.ok(!text.includes(form), f);
+  }
+  assert.ok(!res.body.includes('sEcRet'));
+  assert.ok(fs.readFileSync(path.join(dir, 'key-usage.json'), 'utf8').includes('BUS_'));   // 라벨만
+  fs.rmSync(dir, { recursive: true, force: true });
 });

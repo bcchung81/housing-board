@@ -12,6 +12,7 @@
   const STATUS_RANK = ['분양중', '건설 단계', '준공 임박', '입주 단계', '계획'];
   const OUTLINE_TEXT = { official: '블록 윤곽은 공식 자료', building: '동 윤곽은 실제 건물 자료', schematic: '동 윤곽은 근사값(10~20 m)' };
   const TIER_ORDER = ['official', 'building', 'schematic'];
+  const CODE_PARAMS = ['pnu', 'bjd', 'sgg', 'code'];   // 우선순위 순서
   const FLOOR_HEIGHT = 2.85;   // 층고를 모를 때(화면의 기본 환산과 같은 값)
 
   const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -35,8 +36,63 @@
   function regionUrl(href, slug) {
     const u = new URL(href);
     u.searchParams.delete('block');
+    for (const n of CODE_PARAMS) u.searchParams.delete(n);   // 지역을 고르면 코드 진입은 끝난다
     u.searchParams.set('region', slug);
     return u.toString();
+  }
+
+  /* ---------- 표준코드로 열기 (?pnu= | ?bjd= | ?sgg= | ?code=) ----------
+     코드가 있으면 코드가 우선이다(둘 이상이면 pnu > bjd > sgg > code 중 앞선 하나). ?region= 만 있으면 옛 방식 그대로.
+     코드는 /api/v1/resolve 가 해석하고, 번들이 있는 시군구(등급 A)만 지도를 연다. 스펙: docs/product/상황판-스펙.md 2.1 */
+  function codeQuery(search) {
+    const p = new URLSearchParams(search || '');
+    for (const n of CODE_PARAMS) if (p.has(n)) return { name: n, value: p.get(n) };
+    return null;
+  }
+  const resolveUrl = (cq, base) => `${base || 'api/v1/resolve'}?${new URLSearchParams({ [cq.name]: cq.value })}`;
+  /* 코드 입력을 지역 번들 주소(?region=slug)로 바꾼다. 코드 매개변수는 지우고 나머지(at·mode 등)는 그대로 둔다 */
+  function withRegion(search, slug) {
+    const p = new URLSearchParams(search || '');
+    for (const n of CODE_PARAMS) p.delete(n);
+    p.set('region', slug);
+    return `?${p}`;
+  }
+  /* 해석 결과 → 지도 시작 위치. 시군구는 지역 기본 시점을 쓰므로 null. 법정동은 한눈에, 필지는 가까이 */
+  function resolvedStart(r) {
+    if (!r || r.type === 'sgg' || !Array.isArray(r.center) || r.center.length !== 2 || !r.center.every(finite)) return null;
+    const parcel = r.type === 'pnu' && r.parcel && r.parcel.geometry;
+    return { center: r.center, zoom: parcel ? 17.6 : 15.4 };
+  }
+  /* 강조해서 그릴 경계: 필지가 있으면 필지, 없으면 법정동 경계(필지를 못 찾아 후퇴한 경우 포함). 시군구는 그리지 않는다 */
+  function resolvedShape(r) {
+    if (!r || r.type === 'sgg') return null;
+    const g = (r.type === 'pnu' && r.parcel && r.parcel.geometry) || r.geometry;
+    return g && g.type && g.coordinates ? g : null;
+  }
+  /* 해석 경고(warnings) → 지도 위 한 줄 안내. 요청한 것과 다른 범위로 열렸을 때 조용히 넘기지 않는다(스펙 1.4) */
+  const NOTICE_TEXT = {
+    'parcel-not-found': '요청한 필지를 찾지 못해 법정동 경계로 열었습니다',
+    'ri-uses-umd-boundary': '리(里) 경계는 없어 읍면동 경계로 표시합니다',
+    'boundary-not-found': '경계를 찾지 못해 지역 기본 위치로 열었습니다',
+    'geometry-unavailable': '경계를 불러오지 못해 지역 기본 위치로 열었습니다',
+    'geometry-not-configured': '경계를 불러오지 못해 지역 기본 위치로 열었습니다',
+  };
+  function noticeText(warnings) {
+    return [...new Set((warnings || []).map((w) => NOTICE_TEXT[w]).filter(Boolean))].join(' · ');
+  }
+  const PROBLEM_TEXT = {
+    'invalid-code': '코드 형식이 맞지 않습니다', 'unknown-code': '표준코드 표에 없는 코드입니다', 'unsupported-level': '시도 단위는 열 수 없습니다',
+    'keys-exhausted': '오늘 코드 해석 한도에 닿았습니다. 잠시 뒤 다시 시도하세요', 'not-configured': '코드 해석 서비스가 설정되어 있지 않습니다', upstream: '코드 해석 서비스를 부르지 못했습니다',
+  };
+  /* /api/v1/resolve 호출 → { ok:true, data } | { ok:false, code, message } */
+  async function resolveCode(f, cq, base) {
+    let res;
+    try { res = await f(resolveUrl(cq, base)); } catch (e) { return { ok: false, code: 'network', message: '코드 해석 서비스에 연결하지 못했습니다' }; }
+    let body = null;
+    try { body = await res.json(); } catch (e) { /* 본문 없음 */ }
+    if (res.ok && body && body.coverage) return { ok: true, data: body };
+    const code = (body && body.code) || (res.status === 404 || res.status === 405 ? 'unavailable' : 'upstream');
+    return { ok: false, code, message: PROBLEM_TEXT[code] || '코드 해석 서비스를 쓸 수 없습니다', detail: body && body.detail ? String(body.detail) : '' };
   }
 
   /* ---------- 단지 변환 ---------- */
@@ -194,20 +250,43 @@
     sel.addEventListener('change', () => { win.location.assign(regionUrl(win.location.href, sel.value)); });
     box.hidden = false;
   }
-  function mountBanner(doc, r) {
+  function mountBanner(doc, r, notice) {
     const el = doc.getElementById('pvBanner');
-    if (el && r.visibility === 'preview') { el.textContent = '미리보기 — 공개 전 자료입니다'; el.hidden = false; }
+    const text = [r.visibility === 'preview' ? '미리보기 — 공개 전 자료입니다' : '', notice || ''].filter(Boolean).join(' · ');
+    if (el && text) { el.textContent = text; el.hidden = false; }
   }
   function showFatal(doc, html) {
     const f = doc.getElementById('fatal'), l = doc.getElementById('loading');
     if (l) l.hidden = true;
     if (f) { f.innerHTML = html; f.hidden = false; }
   }
+  /* 코드 해석이 안 될 때 보여 줄 지역 목록 링크(index 를 못 읽으면 빈 문자열) */
+  async function regionLinks(win) {
+    try {
+      const idx = await (await win.fetch('regions/index.json')).json();
+      const items = (idx.regions || []).map((x) => `<li><a href="?region=${encodeURIComponent(x.slug)}">${escapeHtml(x.name)}</a></li>`).join('');
+      return items ? `<ul>${items}</ul>` : '';
+    } catch (e) { return ''; }
+  }
   /* 불러와 전역에 올리고 문구·지역 선택기·배너를 반영한다. 실패하면 안내 화면을 보이고 {ok:false} 를 돌려 준다. */
   async function boot(win, doc) {
-    let r;
+    let r, search = win.location.search, resolved = null;
+    const cq = codeQuery(search);
+    if (cq) {
+      const rr = await resolveCode((u) => win.fetch(u), cq);
+      if (!rr.ok) {
+        showFatal(doc, `<p>${escapeHtml(rr.message)}</p>${rr.detail ? `<p><code>${escapeHtml(rr.detail)}</code></p>` : ''}${await regionLinks(win)}`);
+        return { ok: false, error: 'code', code: rr.code };
+      }
+      resolved = rr.data;
+      if (resolved.coverage.tier !== 'A') {
+        showFatal(doc, `<p>‘${escapeHtml(resolved.name)}’ — 공급 사업 정보가 아직 없는 지역입니다.</p><p>경계만 보여 주는 화면은 준비 중입니다.</p>${await regionLinks(win)}`);
+        return { ok: false, error: 'no-coverage', resolved };
+      }
+      search = withRegion(search, resolved.coverage.slug);
+    }
     try {
-      r = await loadRegion({ fetch: (u) => win.fetch(u), search: win.location.search });
+      r = await loadRegion({ fetch: (u) => win.fetch(u), search });
     } catch (e) {
       showFatal(doc, `<p>지역 자료를 불러오지 못했습니다.</p><p><code>${escapeHtml(e.message)}</code></p>`);
       return { ok: false, error: 'load', message: e.message };
@@ -218,9 +297,10 @@
       return r;
     }
     win.GY_BUILDINGS = r.GY_BUILDINGS; win.GY_PROJECTS = r.GY_PROJECTS; win.GY_CONTEXT = r.GY_CONTEXT; win.GY_INFRA = r.GY_INFRA; win.REGION = r;
-    applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r);
+    win.RESOLVED = resolved ? { start: resolvedStart(resolved), shape: resolvedShape(resolved), name: resolved.name, level: resolved.level, type: resolved.type, warnings: resolved.warnings || [] } : null;
+    applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r, resolved ? noticeText(resolved.warnings) : '');
     return r;
   }
 
-  return { STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, boot };
+  return { STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, resolvedStart, resolvedShape, resolveCode, noticeText, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, boot };
 });

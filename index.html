@@ -105,6 +105,7 @@ requestAnimationFrame(function () { setTimeout(function () {
     </span>
     <i class="sep" aria-hidden="true"></i>
     <button type="button" id="optBtn" class="opt" aria-expanded="false" aria-controls="optPanel" title="보일 단지 상태, 역·학교 등">옵션<b id="optN" hidden></b></button>
+    <button type="button" id="busLoad" class="opt" hidden title="버튼을 누를 때만 버스 위치를 조회합니다(자동 갱신 없음)">버스 위치 조회</button>
     <i class="sep" aria-hidden="true"></i>
     <button type="button" id="vAll" aria-label="전체 보기" title="모든 단지가 보이게 맞춥니다">전체</button>
     <button type="button" id="vPlane" aria-pressed="false" aria-label="평면 보기" title="위에서 내려다보는 평면으로 바꿉니다. 다시 누르면 비스듬한 입체로 돌아옵니다.">평면</button>
@@ -127,7 +128,7 @@ requestAnimationFrame(function () { setTimeout(function () {
     <fieldset id="fsInfra" hidden><legend>입주 전 점검</legend>
       <label id="lblInfra"><input type="checkbox" id="infraChip">학교 · 정류장 · 전기 시설 <small>공개 자료</small></label>
       <label id="lblZone"><input type="checkbox" id="zoneChip">초등 통학구역 경계 <small>점선</small></label>
-      <label id="lblBus" hidden><input type="checkbox" id="busChip">버스 노선 · 위치 <small>3D, 1분 간격</small></label>
+      <label id="lblBus" hidden><input type="checkbox" id="busChip">버스 노선 · 위치 <small>3D, 버튼으로 조회</small></label>
       <button type="button" class="reset" id="busGo" hidden title="지금 지도 가운데에서 가장 가까운 버스로 이동합니다">가장 가까운 버스 보기</button>
     </fieldset>
     <fieldset><legend>화면</legend>

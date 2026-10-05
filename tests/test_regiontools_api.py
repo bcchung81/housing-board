@@ -233,3 +233,81 @@ class ClientCalls(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+QUOTA_XML = (b"<OpenAPI_ServiceResponse><cmmMsgHeader><errMsg>SERVICE ERROR</errMsg>"
+             b"<returnAuthMsg>LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR</returnAuthMsg>"
+             b"<returnReasonCode>22</returnReasonCode></cmmMsgHeader></OpenAPI_ServiceResponse>")
+
+
+def quota_json():
+    return body({"response": {"header": {"resultCode": "22", "resultMsg": "LIMITED"}}})
+
+
+class BuildKeyPool(unittest.TestCase):
+    def _env(self, text):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        p = Path(tmp.name) / ".env.local"
+        p.write_text(text, encoding="utf-8")
+        return p
+
+    def test_load_keys_reads_numbered_build_keys_in_order_and_decodes(self):
+        p = self._env("VWORLD_KEY=v\nVWORLD_DOMAIN=d\nDATA_GO_KR_KEY_BUILD_2=b%2Bb\nDATA_GO_KR_KEY_BUILD_1=a+a\nDATA_GO_KR_KEY_BUILD_10=c\nDATA_GO_KR_KEY=legacy\n")
+        keys = api.load_keys(p)
+        self.assertEqual(keys.data_go_kr_pool, ("a+a", "b+b", "c"))      # 번호 순(10 은 2 뒤), 인코딩된 값은 디코딩
+        self.assertEqual(keys.data_go_kr, "a+a")
+        self.assertEqual(keys.pool(), ("a+a", "b+b", "c"))
+        self.assertTrue({"a+a", "b+b", "c", "v"} <= set(keys.secrets()))
+
+    def test_load_keys_without_build_keys_uses_single_legacy_key(self):
+        keys = api.load_keys(self._env("DATA_GO_KR_KEY=legacy\nVWORLD_KEY=v\nVWORLD_DOMAIN=d\n"))
+        self.assertEqual(keys.pool(), ("legacy",))
+        with self.assertRaises(api.MissingKey) as cm:
+            api.load_keys(self._env("VWORLD_KEY=v\nVWORLD_DOMAIN=d\n"))
+        self.assertIn("DATA_GO_KR_KEY", str(cm.exception))
+
+    def _client(self, responses, pool=("k1", "k2")):
+        keys = api.Keys(pool[0], FAKE_VW, "example.test", tuple(pool))
+        fetch = FakeFetch(responses)
+        return api.Client(keys, fetch=fetch, sleep=lambda s: None), fetch
+
+    def test_quota_switches_to_next_key_and_keeps_going(self):
+        for bad in (quota_json(), QUOTA_XML):
+            client, fetch = self._client([(200, bad), (200, hub_page([{"a": 1}], 1))])
+            self.assertEqual(client.hub_basis("28245", "10700"), [{"a": 1}])
+            self.assertIn("serviceKey=k1", fetch.urls[0])
+            self.assertIn("serviceKey=k2", fetch.urls[1])
+            self.assertEqual(client.calls["key-switch"], 1)
+
+    def test_http_429_also_switches(self):
+        client, fetch = self._client([(429, b""), (200, hub_page([{"a": 1}], 1))])
+        self.assertEqual(client.hub_basis("28245", "10700"), [{"a": 1}])
+        self.assertIn("serviceKey=k2", fetch.urls[1])
+
+    def test_dead_key_is_not_used_again_in_the_same_run(self):
+        client, fetch = self._client([(200, quota_json()), (200, hub_page([{"a": 1}], 1)), (200, hub_page([{"b": 2}], 1))])
+        client.hub_basis("28245", "10700")
+        client.hub_dong("28245", "10700")
+        self.assertEqual([("serviceKey=k1" in u) for u in fetch.urls], [True, False, False])
+
+    def test_all_keys_exhausted_raises_quota_exceeded_without_leaking_keys(self):
+        client, _ = self._client([(200, quota_json()), (200, quota_json())])
+        with self.assertRaises(api.QuotaExceeded) as cm:
+            client.hub_basis("28245", "10700")
+        msg = str(cm.exception)
+        self.assertIn("2개 모두 한도 초과", msg)
+        for s in ("k1&", "serviceKey"):
+            self.assertNotIn(s, msg)
+
+    def test_paging_continues_with_the_switched_key(self):
+        client, fetch = self._client([(200, hub_page([{"i": 1}], 2)), (200, quota_json()), (200, hub_page([{"i": 2}], 2))])
+        # 한 쪽에 한 건씩(rows=1) 받다가 둘째 쪽에서 한도 오류가 나는 경우
+        out = client._data_go_kr_all("hub-basis", api.HUB_URL + "x", {}, rows=1)
+        self.assertEqual([r["i"] for r in out], [1, 2])
+        self.assertIn("serviceKey=k1", fetch.urls[0])
+        self.assertIn("serviceKey=k2", fetch.urls[2])
+        self.assertIn("pageNo=2", fetch.urls[1]); self.assertIn("pageNo=2", fetch.urls[2])   # 같은 쪽을 다음 키로 다시 부른다
+
+    def test_cache_key_ignores_which_key_was_used(self):
+        self.assertEqual(api.cache_key("n", {"serviceKey": "k1", "a": 1}), api.cache_key("n", {"serviceKey": "k2", "a": 1}))
