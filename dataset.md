@@ -4,8 +4,8 @@
 
 ## 결론
 
-- **지도에 쓰는 데이터는 13종**입니다. 7종은 라이브에 있고, 6종은 다음 배포부터 나옵니다(1절). 13번(버스 위치)은 서버 함수(`api/bus.js`)와 인증키 환경변수까지 배포해야 나옵니다(2.14절).
-- **완전 자동 운영은 불가능**합니다. 동 윤곽·블록 이름·단지 속성·보도 대책은 사람이 읽어 적어야 하고, 건물 zip·포털 파일 3종·LH 공고문·공사현황은 ego lite(브라우저)로 받아야 합니다(4절). 버스정류소·노선·위치는 TAGO API로 자동이며 활용신청만 사람이 한 번 합니다.
+- **지도에 쓰는 데이터는 14종**입니다. 13종은 라이브에 있고(2026-10-05 배포, 버스 위치는 서버 함수 `/api/bus`가 28대를 돌려주는 것까지 확인함), 14번(표준코드 해석 `/api/v1/resolve`)은 작업 트리에만 있어 다음 배포부터 나옵니다(1절). 버스 위치를 버튼으로만 조회하게 바꾼 것, 키 풀·로컬 캐시, 프레임 차단 헤더도 다음 배포에 들어갑니다(2.14·2.15절).
+- **완전 자동 운영은 불가능**합니다. 동 윤곽·블록 이름·단지 속성·보도 대책은 사람이 읽어 적어야 하고, 건물 zip·포털 파일 3종·LH 공고문·공사현황은 ego lite(브라우저)로 받아야 합니다(4절). 버스정류소·노선·위치는 TAGO API로 자동이며 활용신청만 사람이 한 번 합니다(새 인증키마다 서비스별로 다시 신청). 표준코드 해석은 행정표준코드 활용신청과 V-World 서버 호출이 필요합니다.
 - **이미 모았지만 지도가 읽지 않는 자료가 있습니다.** 코드가 읽지 않는 수집 파일 7묶음(이전에 쓰던 정류장 CSV 포함)과, 배포는 되지만 화면이 읽지 않는 번들 필드입니다(3절).
 
 **문서 구성**: 1~4절이 위 결론의 본문(지도 데이터 · 만드는 절차 · 안 쓰는 자료 · 자동화 불가)이고, 5절 이후는 근거와 참고입니다 — 5 조사·수집 기록, 6 원천별 상세와 함정(6.7 카카오맵 API 조사 포함), 7 광산구·나주 경로, 8 번들 구조와 규격, 9 번들에서 화면까지의 변환, 10 결과 수치, 11 번들 필드 사용 감사표, 12 다시 만들기, 13 한계·확인하지 못한 점. README에는 데이터 내용을 두지 않고 이 파일만 가리킵니다.
@@ -37,22 +37,23 @@
 | 4 | 공정율·공사기간 | `projects.json` | 2026-09-21~30 기준 | 라이브 | [ego lite] |
 | 5 | 동 3D·동 이름표 | `projects.json` | 47동(A10 제외), 근사 10~20 m | 라이브 | [수동 판독] |
 | 6 | 기존 건물 3D | `buildings.json` | 16,724동 | 라이브 | [ego lite] + [반자동] |
-| 7 | 기존 학교·병원·공공 강조와 이름표 | 6번의 이름·용도 | 교육 218 · 의료 21 · 공공·복지 145동, 이름표 167개 | 다음 배포 | [자동] |
+| 7 | 기존 학교·병원·공공 강조와 이름표 | 6번의 이름·용도 | 교육 218 · 의료 21 · 공공·복지 145동, 이름표 167개 | 라이브 | [자동] |
 | 8 | 역·학교 점, 역 반경 원 | `context.json` | 역 5 · 학교 16 | 라이브 | [자동] 가능(계양 설정 없음) |
-| 9 | 신설 학교·부지, 시설 부지 | `infra.json` | 학교 10(신설예정 3) · 시설 2 | 다음 배포 | [자동] |
-| 10 | 초등 통학구역 | `infra.json` | 2개 구역, 단지 6개 연결 | 다음 배포 | [ego lite] → [반자동] |
-| 11 | 버스정류장, 300 m 원 | `infra.json` `stops` | 76곳(TAGO) | 다음 배포 | [자동] 활용신청 필요 |
-| 12 | 보도 대책 | `infra.json` | 5건 | 다음 배포 | [수동 판독] |
-| 13 | 버스 노선 선, 3D 버스와 번호 | `infra.json` `busRoutes` + `/api/bus` | 노선 20개 중 실시간 4개(76·86·87·584), 버스 약 29대 | 다음 배포 | [자동] 활용신청 3종·서버 함수·환경변수 필요 |
+| 9 | 신설 학교·부지, 시설 부지 | `infra.json` | 학교 10(신설예정 3) · 시설 2 | 라이브 | [자동] |
+| 10 | 초등 통학구역 | `infra.json` | 2개 구역, 단지 6개 연결 | 라이브 | [ego lite] → [반자동] |
+| 11 | 버스정류장, 300 m 원 | `infra.json` `stops` | 76곳(TAGO) | 라이브 | [자동] 활용신청 필요 |
+| 12 | 보도 대책 | `infra.json` | 5건 | 라이브 | [수동 판독] |
+| 13 | 버스 노선 선, 3D 버스와 번호 | `infra.json` `busRoutes` + `/api/bus` | 노선 20개 중 실시간 4개(76·86·87·584), 버스 28~30대 | 라이브(자동 갱신 방식). 작업 트리는 버튼으로 요청 시 조회 | [자동] 활용신청 3종·서버 함수·환경변수 필요 |
+| 14 | 표준코드(시군구·법정동·필지)로 열기: 이동과 경계 강조 | 번들 아님. `/api/v1/resolve` | 행정표준코드 표(시군구 단위로 받아 24시간 캐시) + V-World 경계·필지 | 다음 배포 | [자동] 행정표준코드 활용신청 + V-World 서버 호출 필요 |
 
-- **별도 수집 없이 위 자료로 화면 코드가 계산하는 것**: 입주 전 점검 요약(주의 4건: 교육 3 · 교통 1)·단지 → 신설 학교 연결선(A2·A3·A10 ▲)·정류장 300 m 원·단지 지면 라벨(`A2 747세대 / 15층 · 박촌역 860 m / ▲교육`)·다음 일정·입주 타임라인·합계·상태 막대·버스 진행 방향과 '이 노선이 지나는 단지'. 점검 계열은 다음 배포부터입니다(9.4절).
-- **번들이 아닌 것**: 배경 지도(V-World WMTS `white`)·지형 음영과 3D 지형(AWS Terrain)·지명·도로명 글자(OpenFreeMap)는 런타임에 외부 서비스에서 받습니다(라이브). V-World는 인증키와 서비스 URL 등록이 필요해 미리보기 배포 주소는 등록하지 않으면 회색 지도가 됩니다.
+- **별도 수집 없이 위 자료로 화면 코드가 계산하는 것**: 입주 전 점검 요약(주의 4건: 교육 3 · 교통 1)·단지 → 신설 학교 연결선(A2·A3·A10 ▲)·정류장 300 m 원·단지 지면 라벨(`A2 747세대 / 15층 · 박촌역 860 m / ▲교육`)·다음 일정·입주 타임라인·합계·상태 막대·버스 진행 방향과 '이 노선이 지나는 단지'. 점검 계열은 2026-10-05 배포부터 라이브입니다(9.4절).
+- **번들이 아닌 것**: 표준코드 해석(14번)과 버스 위치(13번 일부)는 실행 중에 서버 함수가 가져옵니다. 배경 지도(V-World WMTS `white`)·지형 음영과 3D 지형(AWS Terrain)·지명·도로명 글자(OpenFreeMap)는 런타임에 외부 서비스에서 받습니다(라이브). V-World는 인증키와 서비스 URL 등록이 필요해 미리보기 배포 주소는 등록하지 않으면 회색 지도가 됩니다.
 
 **'프로덕션'이 가리키는 것**
 
-- **배포물** = `scripts/build.js`가 `public/`에 모으는 `index.html` · `assets/` · `regions/`(`index.json`에 오른 지역만) · `config.js`. `workspace/` `tools/` `tests/` `docs/` `schemas/`와 `*.md`는 올라가지 않습니다. 서버 함수 `api/bus.js`는 `public/`에 복사되지 않고 저장소 루트의 `api/`에서 Vercel이 따로 빌드할 것으로 보입니다(추정, 배포해 봐야 확정). [코드] `scripts/build.js` · `.vercelignore` · `vercel.json`
-- **라이브** — `index.html`의 Last-Modified가 2026-10-04 13:35 KST인 상태입니다(확인함). 화면 스크립트는 `app.js`와 `region.js`뿐(`infra.js`·`facility.js`·`bus.js` 없음)이고, 계양 번들은 `region` `projects` `buildings` `context`만 있으며 **`infra.json`은 404**입니다. `api/`는 커밋하지 않았으므로 `/api/bus`도 없습니다. 지역 3개(계양 · 광산구 · 나주)가 모두 `visibility: public`입니다. 계양 라이브 번들은 약 6.1 MB(MB=10⁶ B)이고 그중 건물이 6.0 MB입니다.
-- **다음 배포** = 지금 작업 트리(커밋·배포 전)입니다. `infra.json` · `infra.js` · `facility.js` · `bus.js` · `api/bus.js` · `vercel.json`의 `functions` 항목과 화면 변경이 들어 있습니다. 같은 자료라도 **라이브에는 없고 다음 배포에만 있는 것**이 있습니다: 입주 전 점검 전부(`infra.json`), 버스 노선·위치(`busRoutes`와 `/api/bus`, Vercel 환경변수 `DATA_GO_KR_KEY`도 있어야 위치가 나옴), 기존 건물의 학교·병원·공공 강조·이름표(`buildings.json`의 `n`·`u`를 분류).
+- **배포물** = `scripts/build.js`가 `public/`에 모으는 `index.html` · `assets/` · `regions/`(`index.json`에 오른 지역만) · `config.js`. `workspace/` `tools/` `tests/` `docs/` `schemas/`와 `*.md`는 올라가지 않습니다. 서버 함수(`api/bus.js`, 작업 트리에는 `api/v1/resolve.js`도)는 `public/`에 복사되지 않고 저장소 루트의 `api/`에서 Vercel이 따로 빌드합니다(`/api/bus`가 라이브에서 200을 주는 것으로 확인함. `lib/`는 함수가 가져가고 `regions/*/infra.json`은 `vercel.json`의 `includeFiles`로 올라갑니다). [코드] `scripts/build.js` · `.vercelignore` · `vercel.json`
+- **라이브** — 2026-10-05 배포입니다(`index.html` Last-Modified 13:34 KST, `infra.json` 15:00 KST, 확인함). 화면 스크립트는 `app.js` `region.js` `infra.js` `facility.js` `bus.js`이고 계양 번들에 `infra.json`이 있으며 `/api/bus?region=incheon-gyeyang`이 200으로 버스 28대를 줍니다(CDN이 응답을 나눠 씀: `x-vercel-cache: HIT`). 버스는 **옛 방식(자동 갱신)** 이라 화면에 `busLoad` 버튼이 없습니다. `/api/v1/resolve`는 404입니다. Vercel 환경변수는 `DATA_GO_KR_KEY`·`VWORLD_KEY`(Production·Preview)뿐이고 `VWORLD_DOMAIN`·용도별 키는 없습니다. 지역 3개(계양 · 광산구 · 나주)가 모두 `visibility: public`입니다. 계양 라이브 번들은 약 6.1 MB(MB=10⁶ B)이고 그중 건물이 6.0 MB입니다.
+- **다음 배포** = 지금 작업 트리(커밋·배포 전)입니다. 번들 자료는 라이브와 같고 코드가 늘었습니다: ① 표준코드 진입 `?code=` `?sgg=` `?bjd=` `?pnu=`와 `api/v1/resolve.js`(`region.js`의 `boot`, `app.js`의 경계 강조 레이어), ② 버스 위치를 `버스 위치 조회` 버튼으로만 조회(`index.html`의 `#busLoad`, `app.js`의 `busLoad`)하고 서버 `ttl` 동안 쿨다운, ③ 공공데이터포털 키 풀(`lib/keys.js`)·로컬 캐시(`lib/cache.js`)·코드 판별(`lib/codes.js`), ④ `vercel.json`의 프레임 임베드 차단 헤더와 `api/v1/resolve.js` 함수 설정, ⑤ `env.example`, `.cache/` gitignore, 빌드 도구의 `BUILD` 키 순환. 상황판 기획서·스펙은 `docs/product/`(배포물 아님).
 
 ## 2. 데이터별 만드는 절차
 
@@ -63,7 +64,7 @@
 - 좌표는 WGS84 `[경도, 위도]` 소수 6자리입니다. V-World API는 `crs=EPSG:4326`으로 받고, 계양 건물 SHP와 학구도 SHP는 **EPSG:5186(한국 2000 중부원점)** 이라 직접 구현한 횡메르카토르 식(`tm.py`, `proj.py`)으로 바꿉니다. 계양구청 건물 중심이 Nominatim과 12 m 차이로 일치해 변환을 확인했습니다. [코드] `tools/regiontools/proj.py`
 - **모르는 값은 키를 뺍니다.** V-World·건축HUB가 모르는 값을 `0`·빈 문자열로 주므로 0은 모르는 값으로 봅니다. [코드] `buildings.py` · `bundle.py`
 - 번들은 UTF-8(BOM 없음)·공백 없는 compact JSON입니다. 마지막에 JSON Schema(`schemas/bundle/`)와 교차 규칙(출처 id 존재, 단지 id 중복, `projectOrder` 참조, 기본 지역 하나, 폴더=slug)으로 `check_bundle.py`가 검증합니다.
-- 키 3개(`DATA_GO_KR_KEY` `VWORLD_KEY` `VWORLD_DOMAIN`)는 `.env.local`에서 읽고, 코드와 로그에 키·요청 URL을 남기지 않습니다(`api.redact`). [코드] `tools/regiontools/api.py`
+- 키(`DATA_GO_KR_KEY` 또는 번호를 붙인 `DATA_GO_KR_KEY_BUILD_<N>`, `VWORLD_KEY`, `VWORLD_DOMAIN`)는 `.env.local`에서 읽고, 코드와 로그에 키·요청 URL을 남기지 않습니다(`api.redact`). `BUILD` 키가 여러 개면 한도 오류(`resultCode` 22·HTTP 429)가 날 때 다음 키로 이어서 부릅니다(`QuotaExceeded`). 견본은 `env.example`. [코드] `tools/regiontools/api.py`
 
 ### 2.1 지구 경계 — `region.json` `zones[0].poly`
 
@@ -186,18 +187,38 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 | 항목 | 내용 |
 |---|---|
-| 부를 노선 | **요청이 정하지 못합니다.** 배포된 `regions/<slug>/infra.json`의 `live` 노선과 `busCityCode`만 씁니다. 쿼리는 `region` 하나만 허용(아니면 400), 모르는 지역은 404, 키가 없으면 503(캐시 안 함), 모든 노선이 실패하면 502(15초 캐시), 일부만 실패하면 200에 `failed`로 적습니다. GET·HEAD 외는 405 |
-| 호출 예산 | 개발계정 한도 하루 10,000건 중 8,000건만 씁니다. `ttl = max(60, ceil(노선 수 × 86400 / 8000))`초이고 응답을 CDN이 `s-maxage=ttl, stale-while-revalidate=ttl`로 나눠 쓰며 인스턴스 메모리에 30초 보조 캐시가 있습니다. 하루 호출은 노선 수 × 86400 / ttl회입니다. 계양은 4개 노선, ttl 60초라 **최대 5,760회**입니다(CDN이 실제로 응답을 나눠 쓰는지는 배포 뒤 확인해야 함) |
-| 보안 | 키는 환경변수 `DATA_GO_KR_KEY`에서만 읽고(디코딩된 키 그대로, `%`가 있으면 한 번 풀어 씀) 요청 때 URL 인코딩합니다. 응답·로그에 키를 남기지 않고 오류 원인 문구도 밖으로 내보내지 않습니다(`error` 짧은 코드만). 노선·도시를 요청이 못 정해 키를 쓰는 열린 중계가 되지 않게 했습니다 |
+| 부를 노선 | **요청이 정하지 못합니다.** 배포된 `regions/<slug>/infra.json`의 `live` 노선과 `busCityCode`만 씁니다. 쿼리는 `region` 하나만 허용(아니면 400), 모르는 지역은 404, 키가 없으면 503(캐시 안 함), 모든 키가 한도에 닿으면 429(`Retry-After`, 캐시 안 함), 모든 노선이 실패하면 502(15초 캐시), 일부만 실패하면 200에 `failed`로 적습니다. GET·HEAD 외는 405 |
+| 호출 예산 | 키 하나의 개발계정 한도 하루 10,000건 중 8,000건만 씁니다. `ttl = max(60, ceil(노선 수 × 86400 / (8000 × BUS 키 수)))`초입니다. 응답은 서버 로컬 캐시(`lib/cache.js`, `ttl`초)와 CDN(`s-maxage`)이 나눠 쓰고, 실패는 15초만 기억합니다. 하루 호출은 노선 수 × 86400 / ttl회이며 계양은 4개 노선, ttl 60초라 **최대 5,760회**입니다. 라이브에서 CDN이 응답을 나눠 쓰는 것(`x-vercel-cache: HIT`)은 확인했고, 로컬 캐시는 Vercel 인스턴스마다 따로라 합계는 이보다 늘 수 있습니다 |
+| 보안·키 | 키는 환경변수 `DATA_GO_KR_KEY_BUS_<N>`(여러 개 가능, 없으면 `DATA_GO_KR_KEY`)에서만 읽고(디코딩된 키 그대로, `%`가 있으면 한 번 풀어 씀) 요청 때 URL 인코딩합니다. 호출마다 오늘 가장 적게 쓴 키를 고르고, 한도 오류(`resultCode` 22·XML 한도 본문·HTTP 429)를 받은 키는 한국시간 자정까지 쉬며 같은 요청에서 다음 키로 다시 부릅니다(`lib/keys.js`). 응답·로그에 키를 남기지 않고 오류 원인 문구도 밖으로 내보내지 않습니다(`error` 짧은 코드만). 노선·도시를 요청이 못 정해 키를 쓰는 열린 중계가 되지 않게 했습니다 |
 | 일시 오류 | TAGO `resultCode 99`(동시 접속 가득)면 0.4초 뒤 한 번 더, 그 밖의 오류 코드는 다시 하지 않습니다. 호출 한 번의 제한 시간은 8초 |
 | 화면 | 노선 선과 번호는 번들의 `path`로 그리고(유형 색: 간선 파랑·지선 초록·광역/급행/좌석 주황), 3D 버스와 번호 라벨은 위치 응답으로 그립니다. 버스는 `fill-extrusion` 조각 12개를 맞춘 **조립형 모형**(11×2.5×3.2 m: 노선 색 차체, 옆 창, 앞 유리, 흰 지붕, 노선 색 앞 표지, 범퍼 2, 바퀴 4, 지붕 에어컨)이고 방향을 모르면 덩어리 3조각으로 그립니다. 크기는 확대 17.5 이상에서 실제 크기, 멀수록 키워 최대 4배입니다. 추가 라이브러리·모델 파일은 없습니다. 방향은 경로에서 `nodeord`의 다음 정류소 방위로 어림하고, 새 위치로 1.2초 보간합니다(차량번호로 짝) |
-| 폴링 | 규칙은 9.4절. 옵션은 `?bus=0`으로 끌 수 있고, 응답이 404·405·503이면 더 부르지 않아 노선 선만 보입니다. 버스가 어디 있는지 찾기 어려워 옵션에 `가장 가까운 버스 보기`(지도 가운데에서 가장 가까운 버스로 이동)와 주소 `?at=경도,위도,확대[,기울기,방위]`(시작 위치 지정)를 두었습니다 |
+| 조회 방식 | **버튼을 누를 때만** 한 번 조회합니다(작업 트리. 라이브는 아직 자동 갱신). 자동 갱신·실시간 검색은 없고, 조회한 뒤 서버 `ttl` 동안은 버튼이 꺼집니다. 규칙은 9.4절. 옵션은 `?bus=0`으로 끌 수 있고, 응답이 404·405·503이면 더 부르지 않아 노선 선만 보입니다. 버스가 어디 있는지 찾기 어려워 옵션에 `가장 가까운 버스 보기`(지도 가운데에서 가장 가까운 버스로 이동)와 주소 `?at=경도,위도,확대[,기울기,방위]`(시작 위치 지정)를 두었습니다 |
 | 팝업·옵션 | 버스: 노선·차량번호·지나는 정류소·가까운 단지·이 노선이 지나는 단지·위치 기준 시각. 정류소: 정류소 번호·지나는 노선. 옵션 '버스 노선 · 위치'와 범례 한 줄(몇 대 · 몇 분 전 위치) |
-| 로컬 확인 | `node scripts/dev.js [포트]`: 정적 파일과 `/api/bus`(`api/bus.js` 그대로)를 127.0.0.1에만 열고 `.env.local`의 키를 씁니다. 2026-10-05에 실제 TAGO로 29대(4개 노선)를 받았고 브라우저에서 3D 버스·번호 라벨·정류소 팝업이 동작했습니다. `python3 -m http.server` 같은 **정적 서버에는 함수가 없어 `/api/bus`가 404**이고, 이때 화면은 위치 기능을 끄고 노선 선만 보여 주며 하단 범례 `버스 선만`·옵션 `위치 서버 없음`·콘솔 안내를 띄웁니다(2026-10-05 사용자의 8000번 서버에서 확인). [로그 10-05] |
+| 로컬 확인 | `node scripts/dev.js [포트]`: 정적 파일과 `/api/bus`·`/api/v1/resolve`(`api/` 함수 그대로)를 127.0.0.1에만 열고 `.env.local`의 키를 씁니다(시작할 때 `키: BUS 1개 · RESOLVE 1개`처럼 개수만 출력). 2026-10-05에 실제 TAGO로 29~30대(4개 노선)를 받았고 브라우저에서 3D 버스·번호 라벨·정류소 팝업이 동작했으며, 버튼을 누르기 전에는 `/api/bus` 호출이 0건이고 누른 뒤 1건이었습니다. `python3 -m http.server` 같은 **정적 서버에는 함수가 없어 `/api/bus`가 404**이고, 이때 화면은 위치 기능을 끄고 노선 선만 보여 주며 하단 범례 `버스 선만`·옵션 `위치 서버 없음`·콘솔 안내를 띄웁니다(2026-10-05 사용자의 8000번 서버에서 확인). [로그 10-05] |
 
 **표시하는 값의 성격**: 버스 위치는 '실시간'이 아니라 몇 십 초 전 값입니다. 진행 방향과 '이 노선이 지나는 단지'는 정류소를 이은 선으로 어림한 값이고, 3D 버스는 멀리서 눈에 띄도록 키워 그리고 확대 17.5 이상에서 실제 크기입니다(9.4절). 버스 모형은 박스를 조립한 근사라 실제 차종(저상·굴절 등)의 모양을 나타내지 않습니다.
 
-**아직 배포하지 않았습니다.** 커밋 전이고, Vercel 프로젝트에 `DATA_GO_KR_KEY` 환경변수를 넣어야 위치가 나옵니다(없으면 503, 노선 선만 보임). `vercel.json`의 `functions`(`includeFiles: regions/*/infra.json`, `maxDuration: 20`)와 `outputDirectory: public` 설정으로 루트 `api/` 함수가 함께 배포되는지, `includeFiles`가 동작하는지는 **미확인**입니다(배포해 봐야 확정). 호출 수를 더 줄이자는 제안은 13.1절 '보류 중인 개선'에 있습니다.
+**배포 상태**: 라이브(2026-10-05)에는 자동 갱신 방식의 `/api/bus`가 있고 `includeFiles: regions/*/infra.json`·`outputDirectory: public`과 함께 동작합니다(200 확인). 요청 시 조회·키 풀·로컬 캐시는 **커밋·배포 전**입니다. 배포하면 Vercel에 용도별 키(`DATA_GO_KR_KEY_BUS_1` …)를 추가할 수 있고, 없어도 기존 `DATA_GO_KR_KEY`로 동작합니다. 호출 수를 더 줄이자는 제안은 13.1절 '보류 중인 개선'에 있습니다.
+
+### 2.15 표준코드 해석(서버 중계) — `/api/v1/resolve` (번들이 아님)
+
+주소의 `?code=` `?sgg=` `?bjd=` `?pnu=`를 받아 지도가 어디를 열지 정합니다. 표준코드는 **법정동코드**(10자리: 시도 2 + 시군구 3 + 읍면동 3 + 리 2)이고 행정동은 쓰지 않습니다(연계표 적재는 하지 않았고 조사만 했음). [코드] `api/v1/resolve.js` · `lib/codes.js` · `lib/keys.js` · `lib/cache.js` · `assets/js/region.js` · `assets/js/app.js`. 규격과 근거는 `docs/product/상황판-스펙.md`·`조사기록-표준코드-서울버스-사업ID.md`.
+
+```
+브라우저 ──GET /api/v1/resolve?bjd=2824510900──► api/v1/resolve.js ──► ① 행정표준코드 법정동코드 API(StanReginCd, 시군구 단위, 24시간 캐시)
+                                                                    ──► ② V-World 경계·필지(LT_C_ADSIGG_INFO · LT_C_ADEMD_INFO · LP_PA_CBND_BUBUN, 24시간 캐시)
+         ◄── {type, name, level, center, geometry, coverage{tier, slug}, warnings, …} ──┘  ③ coverage: regions/ 의 region.json `codes`(시군구)
+```
+
+| 항목 | 내용 |
+|---|---|
+| 판별 | 숫자 5자리 시군구 · 8자리(끝에 `00`을 붙여 10자리 법정동) · 10자리 법정동 · 19자리 PNU(법정동 10 + 대지구분 1 + 본번 4 + 부번 4). V-World `sig_cd`는 앞 5자리, `emd_cd`는 앞 8자리, 건축HUB `sigunguCd`는 앞 5자리·`bjdongCd`는 6~10자리입니다(표준코드와 집합이 같음을 확인함) |
+| 후퇴 | 필지가 없으면 법정동 경계로, 리 코드는 읍면동 경계로, 경계 조회가 실패하면 경계 없이 열고 `warnings`와 지도 위 한 줄로 알립니다. 표에 없는 시군구·법정동은 후퇴하지 않고 404 |
+| 지도 | 번들이 있는 시군구(`tier: "A"`)면 그 지역을 열고 법정동은 줌 15.4, 필지는 줌 17.6으로 이동해 경계를 주황 선으로 강조합니다. 번들이 없는 지역(예: 서울 성북구)은 "공급 사업 정보가 아직 없는 지역입니다" 안내와 지역 목록을 보입니다. 코드가 `?region=`보다 우선하고, 옛 `?region=` 주소는 그대로 동작합니다 |
+| 호출 예산 | 표준코드 표는 시군구당 24시간에 한 번만 받아 캐시합니다. 키는 `DATA_GO_KR_KEY_RESOLVE_<N>`(없으면 `DATA_GO_KR_KEY`)이고 한도(`stan` 하루 10,000건) 오류가 나면 다음 키로 넘깁니다. 모든 키가 소진이면 429 |
+| 보안 | 응답·오류에 키·원천 URL·원천 오류 문구를 싣지 않습니다. 쿼리는 `code` `sgg` `bjd` `pnu` `geometry`만 허용하고 코드는 하나만 받습니다. 시도 단위는 422 |
+| 캐시 | 서버 로컬 캐시 `.cache/`(최대 24시간·50 MB, gitignore) + CDN `s-maxage=300`. 운영 환경에서는 `visibility: preview` 지역을 번들 없음으로 봅니다 |
+| 확인 | 2026-10-05 로컬에서 실제 호출: 계양구 `28245`·광산구 `12330`·나주 `12170`(모두 등급 A), 법정동 `2824510900`(박촌동)·`12330106`·`12170134`, 필지 `2824510901017700000`(박촌동 177, 경계 반환), 서울 성북구 `11290`(등급 없음), 잘못된 코드 400. 브라우저에서 `?bjd=2824510900`이 계양 번들·박촌동 중심 줌 15.4로 열리고 경계 레이어가 올라오는 것, 서울 코드의 안내 화면을 확인했습니다. 배포본에서는 아직 확인하지 못했고(`VWORLD_DOMAIN` 환경변수 없음), 화면 캡처는 시간 초과로 눈으로 보지 못했습니다 |
 
 ## 3. 이미 모았지만 지도가 쓰지 않는 자료
 
@@ -292,7 +313,8 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 학교 부지·전기·교통 시설 부지 | V-World `LT_C_UPISUQ155`·`154`·`152` | **[자동]** | 있음(`build_infra.py`) | — | 키 필요. 갱신 주기는 확인하지 못함 |
 | 초등 통학구역·학교학구도연계·학교위치 | 데이터포털 파일 3종을 ego lite로 내려받음(받기 → 안내창 → 다운로드) | **[ego lite]** → 이후 **[반자동]** | 있음(파일을 읽음 `ensure_zone_shp` `attendance`) | 로그인 없이도 받을 수 있으나 안내창을 닫아야 함 | 3월·9월 갱신. 직접 URL로 내려받는 방법은 **[시도 안 함]** |
 | 버스정류소·노선 | TAGO API(근접정류소 격자 호출 → 경유노선 → live 노선 경로)를 번들 만들 때 한 번 받음. 예전에는 전국 버스정류장 CSV(15067528)를 ego lite로 받음 | **[자동]** | 있음(`build_infra.py` `build_bus`, `api.tago_*`) | TAGO 서비스 활용신청(처음 한 번, 포털에서) | 원천 갱신 주기는 확인하지 못함. 입주 때 생기는 정류소·노선은 번들을 다시 만들어야 반영 |
-| 버스 위치(노선별) | 화면이 서버 함수 `api/bus.js`를 거쳐 TAGO 버스위치정보(15098533)를 부름 | **[자동]**(실행 중) | 있음(`api/bus.js`) | 활용신청, 배포 시 `DATA_GO_KR_KEY` 환경변수 | 서버가 알려 준 ttl(계양 60초) 이상 간격. **아직 배포 안 함** |
+| 버스 위치(노선별) | 화면이 서버 함수 `api/bus.js`를 거쳐 TAGO 버스위치정보(15098533)를 부름 | **[자동]**(실행 중) | 있음(`api/bus.js`) | 활용신청(키마다), 배포 시 `DATA_GO_KR_KEY_BUS_<N>`(또는 `DATA_GO_KR_KEY`) 환경변수 | 라이브는 서버 ttl(계양 60초) 간격 자동 갱신. 작업 트리는 버튼을 누를 때만 조회(쿨다운 = ttl) |
+| 표준코드 해석(시군구·법정동·필지) | 화면이 `api/v1/resolve.js`를 거쳐 행정표준코드 API와 V-World를 부름 | **[자동]**(실행 중) | 있음(`api/v1/resolve.js`) | 행정표준코드 활용신청, `DATA_GO_KR_KEY_RESOLVE_<N>`·`VWORLD_KEY`·`VWORLD_DOMAIN` | 24시간 로컬 캐시. **아직 배포 안 함** |
 | 지구 안 비주택 인허가 | 건축HUB 건축인허가 API(법정동 전체) | **[자동]** | 있음(`api.hub_arch_dong`) | — | 사이드바에는 표시하지 않음(`permits[]`). 주기는 확인하지 못함 |
 | 보도 기반 대책 | 기사를 읽고 요약해 JSON에 적음 | **[수동 판독]** | 없음(`curated/incheon-gyeyang.json`을 손으로 씀) | 검색·기사 읽기. 세계일보처럼 알림 권한 프롬프트가 뜨는 곳은 ego lite가 사용자 제어로 넘어가 WebFetch로 대체 | 사건이 날 때마다. 해석·요약은 사람이 함 |
 | 지도 배경·지형·글자 | 런타임에 외부 서비스에서 받음 | **[자동]**(운영 중) | `app.js` | V-World 서비스 URL(운영 도메인) 등록은 사람이 콘솔에서 | 미리보기 배포 주소는 등록하지 않으면 회색 지도 |
@@ -474,7 +496,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 ### 5.8 Python 직접 호출 (인증키)
 
-- 키 3개를 `.env.local`에서 읽습니다: `DATA_GO_KR_KEY` `VWORLD_KEY` `VWORLD_DOMAIN`. 코드와 로그에 키·요청 URL을 남기지 않습니다(`api.redact`). 응답 캐시 폴더는 저장소 밖입니다. [코드] `tools/regiontools/api.py`
+- 키를 `.env.local`에서 읽습니다: `DATA_GO_KR_KEY`(또는 `DATA_GO_KR_KEY_BUILD_<N>` 여러 개) `VWORLD_KEY` `VWORLD_DOMAIN`. 코드와 로그에 키·요청 URL을 남기지 않습니다(`api.redact`). 응답 캐시 폴더는 저장소 밖입니다. [코드] `tools/regiontools/api.py`
 - 건축HUB는 간헐적으로 503이나 빈 본문을 주어 최대 5회까지 점점 길게 기다리며 다시 시도합니다. [코드] 같은 파일 머리말
 - TAGO 버스정보도 같은 `DATA_GO_KR_KEY`로 부르며, 동시 접속이 가득 차면 `resultCode 99`를 주는데 이것도 같은 방식으로 다시 시도합니다(6.2절). [코드] 같은 파일
 - V-World 데이터 API는 요청에 `domain`을 붙여야 키를 받아 주었습니다(원인 미확인). [문서] README 4절
@@ -700,7 +722,8 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | `tools/regiontools/build_region.py <slug>` | V-World·마이홈·건축HUB·Overpass API | `region` `projects` `buildings` `context` | 키는 `.env.local`(`DATA_GO_KR_KEY` `VWORLD_KEY` `VWORLD_DOMAIN`), 키·요청 URL은 출력하지 않음 |
 | `tools/regiontools/migrate_legacy.py` | 옛 `data/gyeyang_*.js` | 계양 번들 + `index.json` 항목 | 한 번 쓴 이전 도구 |
 | `tools/regiontools/build_infra.py <slug>` | 공공데이터포털 파일 3종 + API(교육재정알리미·V-World·건축HUB·TAGO 버스) + `curated/<slug>.json` | `infra.json` | 원천 목록: `workspace/data/raw/infra/README.md`. TAGO 정류소·노선 활용신청 필요(버스 위치는 이 도구가 아니라 `api/bus.js`) |
-| `api/bus.js`(Vercel 함수) · `node scripts/dev.js` | `regions/<slug>/infra.json`의 live 노선 + TAGO 버스위치 + 환경변수 `DATA_GO_KR_KEY` | `{at, ttl, buses[], failed?}` JSON | 번들 도구가 아니라 실행 중에 도는 함수(2.14절). 로컬 서버는 `scripts/dev.js` |
+| `api/v1/resolve.js` | 표준코드(시군구·법정동·필지) + 행정표준코드 API + V-World + `regions/` coverage | 지도가 열 영역 JSON | 번들 도구가 아니라 실행 중에 도는 함수(2.15절). 규격 `docs/product/상황판-스펙.md` |
+| `api/bus.js`(Vercel 함수) · `node scripts/dev.js` | `regions/<slug>/infra.json`의 live 노선 + TAGO 버스위치 + 환경변수 `DATA_GO_KR_KEY_BUS_<N>`(없으면 `DATA_GO_KR_KEY`) | `{at, ttl, buses[], failed?}` JSON | 번들 도구가 아니라 실행 중에 도는 함수(2.14절). 로컬 서버는 `scripts/dev.js` |
 | `tools/regiontools/check_bundle.py` | `regions/` 또는 `regions/<slug>/` | 오류 목록(종료 코드 0/1/2) | 스키마 + 출처 id 존재·단지 id 중복·`projectOrder` 참조·기본 지역 하나·폴더=slug·`busRoutes` id 중복·`stops` id 중복·`stops[].routes` 참조·live↔`path`·`busCityCode` 규칙 |
 
 문서 쪽 도구: `tools/gen_docs.py`(`schemas/input.spec.json`에서 정의서 필드표와 CSV 템플릿 생성, `--check`로 커밋된 파일과 비교), `tools/build_docs_pdf.py`(정의서 Markdown → PDF, `markdown` 패키지와 Chrome 필요).
@@ -881,7 +904,8 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 | 다음 일정 | `app.js` `buildNext()` | 오늘 이후 준공·입주 이벤트를 날짜별로 묶어 앞 3건 |
 | 버스 진행 방향 | `bus.js` `headingOf` | 버스가 마지막으로 지난 정류소(`nodeord`)에서 노선 경로의 다음 정류소로 가는 방위. 같은 좌표(기점 미정차 등)는 건너뛰고, 경로로 모르면 직전 위치에서 5 m 넘게 움직인 쪽, 그것도 모르면 정사각형에 가깝게 그림 |
 | 노선이 지나는 단지 | `bus.js` `passes` | 노선 경로(정류소를 이은 선)가 단지 중심에서 500 m 안(빌드가 live 노선을 고르는 기준과 같음). 도로 모양이 아니라 어림값 |
-| 버스 위치 가져오기 | `app.js` `busFetch` · `bus.js` `pollDelayMs` | 서버 `ttl`(최소 60초) 이상 간격. 탭이 숨겨지거나 옵션을 끄면 멈추고, 실패하면 2배씩 늘려 최대 10분, 응답 404·405·503이면 더 부르지 않음. 새 위치로 1.2초 보간 |
+| 버스 위치 가져오기 | `app.js` `busLoad` (작업 트리) | **버튼을 누를 때만** 한 번 조회하고 서버 `ttl`(최소 60초)이 지나야 다시 누를 수 있음. 자동 반복·탭 감시 타이머 없음, 실패하면 안내만 하고 다시 누르면 재시도, 응답 404·405·503이면 더 부르지 않음. 새 위치로 1.2초 보간. (라이브는 옛 방식: `busFetch`·`pollDelayMs` 자동 갱신) |
+| 코드로 열기 | `region.js` `codeQuery` · `resolveCode` · `resolvedStart` · `resolvedShape` · `noticeText` (작업 트리) | 주소 코드 우선순위 `pnu > bjd > sgg > code`(`?region=`보다 우선) → `/api/v1/resolve` → 번들 있는 시군구면 `?region=<slug>`로 열고 법정동 줌 15.4·필지 줌 17.6으로 이동해 경계 강조, 번들이 없으면 안내 화면, 필지→법정동 같은 후퇴는 배너로 알림 |
 
 상태 5종·화면 문구·HUD·카드 규칙의 전부는 `docs/data-interface/번들-어댑터-정의서.md` 4·5절이 정본이고, 이 문서에서 각 규칙의 실제 처리 단계는 2절과 7절에 있습니다.
 
@@ -918,7 +942,8 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 | `buildings.json` | `features[].geometry`, `properties` `eh` `src` `h` `f` `b` `u` `n` `a` `d` `x`, `meta.factor` `meta.basis` (`app.js` 색 계산·팝업·층고 환산, `facility.js` 분류) | `schema_version`, `meta`의 `title` `license` `attribution` `crs` `crossCheck` `bbox` `fields` `counts` `total` `suspect` `lastApproval` `approvalByYear` `capped_dropped` |
 | `context.json` | `stations[]` `schools[]`(이름·좌표), `source`(푸터 문구 `region.js` `buildTexts`) | `asOf` |
 | `infra.json` | `asOf`, `sources[].id·label·url·asOf`, `schools[]` 전 필드(`id` `name` `level` `status` `openYm` `classes` `students` `address` `areaM2` `lon` `lat` `poly` `note` `sources`), `zones[].id·name·school·schoolLon·schoolLat·poly·asOf`, `attendance[]`, `stops[].id·name·no·lon·lat·routes`(`id`·`routes`·`no`는 정류소 팝업, `name·lon·lat`은 점과 300 m 계산), `busRoutes[].id·no·type·from·to·live·path`(`app.js` `LIVE_ROUTES`·`stopPopup`, `bus.js`; `path`는 live 노선에만 있음), `sites[]` 전 필드, `measures[]` 전 필드(`short`는 타임라인 이름) (`infra.js` · `app.js` · `bus.js`) | `permits[]` 전체(사이드바 목록 삭제 후 남음; `permitStatus` 함수와 `HAS_INFRA` 판정식에만 흔적이 있음), **`busCityCode`(화면 코드는 읽지 않고 서버 함수 `api/bus.js`가 읽음)**, `schema_version`, `sources[].publisher·license·redistributable`, `zones[].sources` |
-| `/api/bus` 응답(번들 아님) | `at`(위치 기준 시각) `ttl`(폴링 간격) `buses[].r·v·lon·lat·ord·stop`(`bus.js` `parse`·`describe`, `app.js` `busFetch`·`busPopup`) | `failed`(`parse`가 읽어 두지만 화면은 쓰지 않음) |
+| `/api/bus` 응답(번들 아님) | `at`(위치 기준 시각) `ttl`(다시 조회할 수 있는 간격 = 쿨다운) `buses[].r·v·lon·lat·ord·stop`(`bus.js` `parse`·`describe`, `app.js` `busLoad`·`busPopup`) | `failed`(`parse`가 읽어 두지만 화면은 쓰지 않음) |
+| `/api/v1/resolve` 응답(번들 아님) | `coverage.tier`·`coverage.slug`(어느 지역을 열지) `type` `name` `level` `center` `geometry`·`parcel.geometry`(이동·경계 강조) `warnings`(안내 문구)(`region.js` `boot`·`resolvedStart`·`resolvedShape`·`noticeText`) | `canonical` `input` `sgg` `bjd` `pnu` `bbox` `parcel.hub·jibun·landType·addr` `source` `asOf` `coverage.name·updatedAt·visibility`(상황판 본체·후속 기능용) |
 
 **크기로 본 영향**: 계양 `events` 12 B, `permits` 335 B로 사실상 없고, 광산구 `events` 3.3 KB·나주 13.2 KB가 가장 큽니다. 배포 용량은 계양 `buildings.json`(약 6.0 MB)이 거의 전부이므로 미표시 필드를 지워도 용량 차이는 미미합니다.
 
@@ -946,7 +971,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 
 - **광산구·나주·계양 기반시설은 위 명령으로 다시 만들 수 있습니다.** 입력은 API(키)와 `raw/infra/`의 포털 파일 3종입니다. 응답이 바뀌면 결과도 바뀝니다(기준일이 번들에 적힘).
 - **버스**: 정류소·노선·경로는 `build_infra.py`가 TAGO 활용신청 2종(정류소 15098534·노선 15098529)으로 한 번 받습니다. **버스 위치(15098533)는 빌드가 아니라 화면이 `api/bus.js`를 거쳐 받습니다.** 전국 버스정류장 CSV(15067528)는 더는 필요 없고, `raw/infra/`에 남은 파일은 읽지 않습니다.
-- **배포**: Vercel 프로젝트에 환경변수 `DATA_GO_KR_KEY`를 넣어야 `/api/bus`가 동작합니다(없으면 503, 지도는 노선 선만 보임). **아직 커밋·배포 전입니다.** 루트 `api/` 함수가 `outputDirectory: public`과 함께 배포되는지, `vercel.json`의 `includeFiles`가 동작하는지는 미확인입니다(2.14절).
+- **배포**: Vercel 프로젝트에 공공데이터포털 키가 있어야 `/api/bus`가 동작합니다(`DATA_GO_KR_KEY_BUS_<N>` 또는 `DATA_GO_KR_KEY`, 없으면 503, 지도는 노선 선만 보임). 표준코드 해석은 `DATA_GO_KR_KEY_RESOLVE_<N>`(또는 `DATA_GO_KR_KEY`)와 `VWORLD_KEY`·`VWORLD_DOMAIN`이 필요합니다. 루트 `api/` 함수와 `includeFiles`는 라이브 `/api/bus`로 동작을 확인했습니다. **`api/v1/resolve.js`·요청 시 조회·키 풀은 커밋·배포 전입니다**(2.14·2.15절).
 - **계양 건물·단지는 지금 저장소의 번들이 정본**입니다. 옛 생성 도구(`workspace/data/tools/vworld_buildings/build_buildings.py`, `lh_projects/extract_plans.py`·`build_projects.py`)는 남아 있고 입력 원본(`raw/vworld` zip·geojson, `raw/lh/*`)도 이 PC에 있지만, 도구는 `workspace/data/legacy/`에 옛 JS를 새로 쓰고 `migrate_legacy.py`가 그것을 번들로 옮기는 **한 번 쓰는 이전 흐름**입니다. 다시 돌리면 이후에 번들을 직접 고친 값(출처 문구, 정정 등)을 덮어쓸 수 있으니, 돌리기 전에 번들을 백업하고 차이를 확인하세요.
 - 입력 원본 중 큰 파일(`raw/vworld/*.zip`, `raw/lh/pamphlets/`)은 `.gitignore`라 저장소에 없습니다. 다른 PC에서는 다시 내려받아야 하고, 그 방법이 이 문서 5절의 사이트들입니다.
 - **조사 과정(`[로그]`)은 코드로 재현되지 않습니다.** 어느 사이트에서 무엇을 읽고 판단했는지는 이 문서가 유일한 기록이며, 세션 기록은 작업자 PC에만 있습니다.
@@ -965,15 +990,18 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 
 4. `regions/index.json`에 지역을 올립니다(`visibility: preview`이면 운영 배포에서는 빠집니다).
 5. 정의서(Markdown)를 고쳤다면 PDF를 다시 만듭니다: `.venv/bin/python tools/build_docs_pdf.py`
-6. 시험(전체 명령은 README의 "시험"). 2026-10-05 작업 트리에서 `.venv/bin/python -m unittest discover -s tests`는 286건, `node --test "tests/js/*.test.cjs"`는 145건이 통과했습니다.
+6. 시험(전체 명령은 README의 "시험"). 2026-10-05 작업 트리에서 `.venv/bin/python -m unittest discover -s tests`는 294건, `node --test "tests/js/*.test.cjs"`는 205건이 통과했습니다.
 
 | 시험 | 확인하는 것 |
 |---|---|
 | `tests/test_regiontools_*.py` `test_build_infra.py` | 번들 만드는 부품(API 층·상태·건물 높이·좌표·투영·SHP·기반시설 조립·번들 쓰기). TAGO 부분: 격자, 정류소 병합, 노선·live 선택, 경로, `resultCode 99` 재시도, 빌드 호출 수 |
 | `tests/test_bundle_schemas.py` `test_check_bundle.py` | 번들 JSON Schema와 교차 규칙 검증기(`busRoutes`·`stops` 규칙 포함) |
-| `tests/js/busapi.test.cjs`(10건) | `api/bus.js` 중계: ttl 계산, 좌표 정리, 캐시, 쿼리 거절, 405·503·502, 키 인코딩, 일부 노선 실패, `resultCode 99` 재시도, 실제 번들의 live 노선 |
-| `tests/js/bus.test.cjs`(17건) | `assets/js/bus.js` 순수 함수(방향·3D 면·보간·경유 단지·폴링 간격·팝업)와 `app.js` 연결(폴링 약속·3D 층·클릭) |
-| `tests/js/` 그 밖(`infra` `facility` `region` `sidebar` `topbar` `glass` `build`) | 점검 계산, 기존 건물 분류, 어댑터, 화면 구성, 배포 빌드 |
+| `tests/js/busapi.test.cjs`(16건) | `api/bus.js` 중계: ttl 계산(키 수 반영), 좌표 정리, 로컬 캐시, 쿼리 거절, 405·503·502·429, 키 인코딩, 키 교체·전부 소진, 키 값이 응답·캐시 파일에 없음, 일부 노선 실패, `resultCode 99` 재시도, 실제 번들의 live 노선 |
+| `tests/js/bus.test.cjs`(23건) | `assets/js/bus.js` 순수 함수(방향·3D 면·보간·경유 단지·팝업)와 `app.js` 연결(요청 시에만 조회·쿨다운·3D 층·클릭) |
+| `tests/js/keys.test.cjs`(10건) `cache.test.cjs`(7건) | `lib/keys.js` 용도별 키 풀(가장 적게 쓴 키·한도 오류 뒤 다음 키·자정 초기화·시연 프로파일), `lib/cache.js` 로컬 캐시(TTL 상한 24시간·50 MB·동시 요청 합치기) |
+| `tests/js/codes.test.cjs`(6건) `resolve.test.cjs`(10건) | 코드 판별과 `/api/v1/resolve`(표준코드 표·경계·필지·후퇴·오류·coverage·운영에서 preview 제외) |
+| `tests/js/vercelconf.test.cjs`(5건) | `vercel.json`의 iframe 차단 헤더·함수 번들 파일·저장소에 `<iframe>` 없음 |
+| `tests/js/` 그 밖(`infra` `facility` `region` `sidebar` `topbar` `glass` `build`) | 점검 계산, 기존 건물 분류, 어댑터(`region`은 표준코드 진입 `boot` 포함), 화면 구성, 배포 빌드 |
 | `tests/test_migrate_legacy.py` | 계양 이전 도구 |
 | `tests/test_cli.py` `test_domain.py` `test_rows.py` `test_files.py` `test_geometry.py` `test_spec.py` `test_examples.py` | 팀원 입력 검증기(`tools/datacheck`) |
 | `tests/test_gen_docs.py` `test_build_docs_pdf.py` | 정의서 필드표·템플릿·PDF 생성 |
