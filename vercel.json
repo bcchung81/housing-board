@@ -2,6 +2,9 @@
   "framework": null,
   "buildCommand": "node scripts/build.js",
   "outputDirectory": "public",
+  "regions": [
+    "icn1"
+  ],
   "functions": {
     "api/bus.js": {
       "includeFiles": "regions/*/infra.json",

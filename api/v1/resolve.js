@@ -70,6 +70,14 @@ function bboxOf(g) {
   return [round5(x0), round5(y0), round5(x1), round5(y1)];
 }
 
+/* 서버 로그용 한 줄: 오류 종류와 문구만 남기고, 인증키·도메인 값은 가린다(응답에는 싣지 않는다) */
+function logFailure(where, e, env = process.env) {
+  let msg = String((e && e.message) || e);
+  for (const k of ['VWORLD_KEY', 'VWORLD_DOMAIN']) if (env[k]) msg = msg.split(env[k]).join('<' + k + '>');
+  const cause = e && e.cause ? ` (cause ${String(e.cause.code || e.cause.name || '')} ${String(e.cause.message || '').split(env.VWORLD_KEY || '\u0000').join('<VWORLD_KEY>').slice(0, 120)})` : '';
+  console.error(`resolve ${where}: ${(e && e.name) || 'Error'}: ${msg.slice(0, 200)}${cause}`);
+}
+
 /* ---------- 응답 ---------- */
 function createHandler(overrides = {}) {
   const env = overrides.env || process.env;
@@ -185,6 +193,7 @@ function createHandler(overrides = {}) {
       } catch (e) {
         if (e instanceof KeyPoolError) throw e;
         warnings.push(e.notConfigured ? 'geometry-not-configured' : 'geometry-unavailable');
+        if (!e.notConfigured) logFailure('vworld', e);
       }
 
       const cov = coverageOf()[c.sgg];

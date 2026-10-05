@@ -36,6 +36,10 @@ test('함수 설정: resolve 는 색인과 지역 region.json 을, bus 는 infra
   for (const r of index.regions) assert.ok(fs.existsSync(path.join(ROOT, 'regions', r.slug, 'region.json')), r.slug);
 });
 
+test('함수는 서울(icn1)에서 돈다: 미국 지역에서는 V-World 호출이 연결 실패했다', () => {
+  assert.deepEqual(conf.regions, ['icn1']);
+});
+
 test('.vercelignore 에 .cache 가 있어 로컬 캐시·사용량 파일이 배포로 올라가지 않는다', () => {
   assert.match(fs.readFileSync(path.join(ROOT, '.vercelignore'), 'utf8'), /^\.cache\/?$/m);
   assert.match(fs.readFileSync(path.join(ROOT, '.gitignore'), 'utf8'), /^\.cache\/$/m);
