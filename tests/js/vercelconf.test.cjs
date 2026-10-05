@@ -26,6 +26,14 @@ test('함수 설정: resolve 는 색인과 지역 region.json 을, bus 는 infra
   const fn = conf.functions;
   assert.equal(fn['api/v1/resolve.js'].includeFiles, 'regions/{index.json,*/region.json}');
   assert.equal(fn['api/bus.js'].includeFiles, 'regions/*/infra.json');
+  assert.equal(fn['api/v1/codes/search.js'].includeFiles, 'regions/{index.json,*/region.json}');   // 검색 후보의 번들 유무(tier)를 resolve 와 같은 표로 정한다
+  assert.match(fn['api/v1/codes/search.js'].excludeFiles, /\.cache\/\*\*/); assert.ok(fn['api/v1/codes/search.js'].maxDuration > 0 && fn['api/v1/codes/search.js'].maxDuration <= 60); assert.ok(fs.existsSync(path.join(ROOT, 'api/v1/codes/search.js')));
+  assert.ok(fn['api/v1/buildings.js'].maxDuration >= 20 && fn['api/v1/buildings.js'].maxDuration <= 60); assert.match(fn['api/v1/buildings.js'].excludeFiles, /regions\/\*\*/);   // 건물 API 는 번들 파일을 읽지 않는다
+  assert.ok(fs.existsSync(path.join(ROOT, 'api/v1/buildings.js')));
+  assert.ok(fn['api/v1/permits.js'].maxDuration >= 20 && fn['api/v1/permits.js'].maxDuration <= 60); assert.match(fn['api/v1/permits.js'].excludeFiles, /regions\/\*\*/);   // 인허가 API 도 번들 파일을 읽지 않는다
+  assert.ok(fs.existsSync(path.join(ROOT, 'api/v1/permits.js')));
+  assert.ok(fn['api/v1/infra.js'].maxDuration >= 20 && fn['api/v1/infra.js'].maxDuration <= 60); assert.match(fn['api/v1/infra.js'].excludeFiles, /regions\/\*\*/);   // 기반시설 API 도 번들 파일을 읽지 않는다
+  assert.ok(fs.existsSync(path.join(ROOT, 'api/v1/infra.js')));
   for (const k of ['api/v1/resolve.js', 'api/bus.js']) { assert.ok(fn[k].maxDuration > 0 && fn[k].maxDuration <= 60, k); assert.ok(fs.existsSync(path.join(ROOT, k)), `${k} 파일이 있어야 한다`); }
   // 함수 묶음에 로컬 캐시(.cache)와 큰 번들(buildings 등)이 딸려 가지 않게 한다(vercel build 로 확인: resolve.func 8.9 MB → 44 KB)
   assert.match(fn['api/bus.js'].excludeFiles, /\.cache\/\*\*/);

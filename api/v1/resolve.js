@@ -5,7 +5,8 @@
    → 4xx/5xx application/problem+json (RFC 7807): invalid-code 400 · unsupported-level 422 · unknown-code 404 · keys-exhausted 429 · not-configured 503 · upstream 502
 
    처리 순서: 형식 판별(lib/codes.js) → 행정표준코드 API(StanReginCd)로 존재 확인(시군구 단위로 가져와 캐시) → V-World 경계·필지(속성 조회) → 커버리지(regions/ 번들 유무).
-   - 인증키: lib/keys.js 의 RESOLVE 용도 풀(DATA_GO_KR_KEY_RESOLVE_<N>, 없으면 DATA_GO_KR_KEY). V-World 는 VWORLD_KEY·VWORLD_DOMAIN.
+   - 인증키: lib/keys.js 의 RESOLVE 용도 풀(DATA_GO_KR_KEY_RESOLVE_<N>, 없으면 DATA_GO_KR_KEY). V-World 는 VWORLD_KEY(운영키)·VWORLD_DOMAIN(그 키에 등록한 서비스 URL,
+     운영은 housing-board.vercel.app). Vercel 밖(로컬)에서는 VWORLD_DEV_KEY 가 있으면 그것을 쓰고 VWORLD_DOMAIN 은 localhost 로 둔다.
    - 캐시: lib/cache.js 로컬 캐시 24시간(표준코드 표·경계·필지). 키·원본 응답은 응답에 싣지 않는다.
    - PNU 필지를 못 찾으면 법정동 경계로 후퇴하고 warnings 에 알린다. V-World 가 실패하면 경계 없이 이름·커버리지만 준다.
    - 시군구 폴리곤은 크므로 geometry 는 기본 생략(geometry=1 이면 포함). 링은 최대 600점으로 줄인다.
@@ -15,10 +16,13 @@ const fs = require('fs');
 const path = require('path');
 const { createKeyPool, fileStore, memoryStore, KeyPoolError } = require('../../lib/keys.js');
 const { createCache, defaultDir } = require('../../lib/cache.js');
+const { createStan } = require('../../lib/stan.js');
 const codes = require('../../lib/codes.js');
+const { readCoverage } = require('../../lib/coverage.js');   // 시군구 코드 → 번들(코드 검색 API 와 공용)
 
-const STAN_URL = 'https://apis.data.go.kr/1741000/StanReginCd/getStanReginCdList';
-const VWORLD_URL = 'https://api.vworld.kr/req/data';
+const { VWORLD_URL, vworldCreds, redactVworld } = require('../../lib/vworld.js');
+
+
 const TTL_MS = 24 * 3600 * 1000;
 const FETCH_TIMEOUT_MS = 10000;
 const MAX_RING_POINTS = 600;
@@ -30,52 +34,14 @@ const LAYERS = {
   pnu: { layer: 'LP_PA_CBND_BUBUN', filter: (c) => `pnu:=:${c}`, source: 'V-World 연속지적도(LP_PA_CBND_BUBUN)' },
 };
 
-/* regions/ 번들에서 시군구 코드 → 번들 {slug, name, updatedAt, visibility}. 번들이 없으면 빈 표.
-   production 이면 visibility 가 preview 인 지역은 뺀다(운영 빌드가 그 지역을 배포에서 빼므로, 해석 결과가 열 수 없는 지역을 가리키지 않게) */
-function readCoverage(root = path.join(__dirname, '..', '..', 'regions'), production = false) {
-  const map = {};
-  try {
-    const index = JSON.parse(fs.readFileSync(path.join(root, 'index.json'), 'utf8'));
-    for (const r of index.regions || []) {
-      if (production && r.visibility === 'preview') continue;
-      try {
-        const region = JSON.parse(fs.readFileSync(path.join(root, r.slug, 'region.json'), 'utf8'));
-        for (const c of region.codes || []) if (c.type === 'sigungu') map[c.code] = { slug: r.slug, name: r.name, updatedAt: r.updatedAt, visibility: r.visibility || 'public' };
-      } catch (e) { /* 이 지역은 건너뜀 */ }
-    }
-  } catch (e) { /* index 없음 */ }
-  return map;
-}
-
-/* ---------- 지오메트리 ---------- */
-const round5 = (n) => Math.round(n * 1e5) / 1e5;
-function thinRing(ring, max = MAX_RING_POINTS) {
-  const pts = [];
-  for (const p of ring) { const q = [round5(p[0]), round5(p[1])]; const last = pts[pts.length - 1]; if (!last || last[0] !== q[0] || last[1] !== q[1]) pts.push(q); }
-  const open = pts.length > 1 && pts[0][0] === pts[pts.length - 1][0] && pts[0][1] === pts[pts.length - 1][1] ? pts.slice(0, -1) : pts;
-  const kept = open.length <= max ? open : Array.from({ length: max }, (_, i) => open[Math.floor(i * open.length / max)]);
-  return kept.length >= 3 ? [...kept, kept[0]] : null;
-}
-function thinGeometry(g) {
-  if (!g || !g.coordinates) return null;
-  const polys = g.type === 'Polygon' ? [g.coordinates] : g.type === 'MultiPolygon' ? g.coordinates : [];
-  const out = polys.map((rings) => rings.map((r) => thinRing(r)).filter(Boolean)).filter((rings) => rings.length);
-  if (!out.length) return null;
-  return out.length === 1 ? { type: 'Polygon', coordinates: out[0] } : { type: 'MultiPolygon', coordinates: out };
-}
-function bboxOf(g) {
-  let x0 = 180, y0 = 90, x1 = -180, y1 = -90;
-  const polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates;
-  for (const rings of polys) for (const p of rings[0]) { x0 = Math.min(x0, p[0]); y0 = Math.min(y0, p[1]); x1 = Math.max(x1, p[0]); y1 = Math.max(y1, p[1]); }
-  return [round5(x0), round5(y0), round5(x1), round5(y1)];
-}
+/* 지오메트리 단순화·bbox 는 lib/geom.js(건물·인허가 API 와 공용) */
+const { round5, thinGeometry: thinGeometryTo, bboxOf } = require('../../lib/geom.js');
+const thinGeometry = (g) => thinGeometryTo(g, MAX_RING_POINTS);
 
 /* 서버 로그용 한 줄: 오류 종류와 문구만 남기고, 인증키·도메인 값은 가린다(응답에는 싣지 않는다) */
 function logFailure(where, e, env = process.env) {
-  let msg = String((e && e.message) || e);
-  for (const k of ['VWORLD_KEY', 'VWORLD_DOMAIN']) if (env[k]) msg = msg.split(env[k]).join('<' + k + '>');
-  const cause = e && e.cause ? ` (cause ${String(e.cause.code || e.cause.name || '')} ${String(e.cause.message || '').split(env.VWORLD_KEY || '\u0000').join('<VWORLD_KEY>').slice(0, 120)})` : '';
-  console.error(`resolve ${where}: ${(e && e.name) || 'Error'}: ${msg.slice(0, 200)}${cause}`);
+  const cause = e && e.cause ? ` (cause ${String(e.cause.code || e.cause.name || '')} ${redactVworld(e.cause.message || '', env).slice(0, 120)})` : '';
+  console.error(`resolve ${where}: ${(e && e.name) || 'Error'}: ${redactVworld((e && e.message) || e, env).slice(0, 200)}${cause}`);
 }
 
 /* ---------- 응답 ---------- */
@@ -86,6 +52,7 @@ function createHandler(overrides = {}) {
   const dir = overrides.cacheDir || defaultDir(env);
   const cache = overrides.cache || createCache({ dir, now });
   const pool = overrides.pool || createKeyPool({ env, now, store: env.VERCEL ? memoryStore() : fileStore(path.join(dir, 'key-usage.json')) });
+  const stan = createStan({ doFetch, pool, cache });
   const coverageOf = overrides.readCoverage || (() => readCoverage(undefined, env.VERCEL_ENV === 'production'));
 
   const send = (res, status, body, cacheControl, type = 'application/json; charset=utf-8') => {
@@ -103,27 +70,12 @@ function createHandler(overrides = {}) {
     return r.json();
   }
 
-  /* 시군구 안 표준코드 행 전부(24시간 캐시). 없으면 [] */
-  function stanRows(sido, sgg) {
-    return cache.wrap(`stan:${sido}${sgg}`, TTL_MS, () => pool.run('RESOLVE', 'stan', async (key) => {
-      const out = [];
-      for (let page = 1; page <= 10; page++) {
-        const q = new URLSearchParams({ serviceKey: key, type: 'json', numOfRows: '1000', pageNo: String(page), sido_cd: sido, sgg_cd: sgg.slice(2) });
-        const json = await getJson(`${STAN_URL}?${q}`);
-        const block = json && json.StanReginCd;
-        if (!Array.isArray(block)) { if (json && json.RESULT && json.RESULT.resultCode === 'INFO-3') return out; return json; }   // 이상한 모양은 pool 이 한도 오류인지 본다
-        const head = block[0] && block[0].head, total = Number(head && head[0] && head[0].totalCount) || 0;
-        const rows = (block.find((b) => b && b.row) || {}).row || [];
-        out.push(...rows);
-        if (out.length >= total || !rows.length) return out;
-      }
-      return out;
-    }).then((r) => { if (!Array.isArray(r)) throw new Error('표준코드 응답 모양이 다름'); return r; }));
-  }
+  /* 시군구 안 표준코드 행 전부(24시간 캐시, lib/stan.js). 없으면 [] */
+  const stanRows = (sido, sgg) => stan.rows(sido, sgg);
 
   /* V-World 속성 조회 → { geometry, props } | null. 실패는 던진다 */
   async function vworld(kind, code) {
-    const key = env.VWORLD_KEY, domain = env.VWORLD_DOMAIN || env.VERCEL_PROJECT_PRODUCTION_URL || 'localhost';
+    const { key, domain } = vworldCreds(env);
     if (!key) { const e = new Error('VWORLD_KEY 없음'); e.notConfigured = true; throw e; }
     const L = LAYERS[kind];
     return cache.wrap(`vw:${L.layer}:${code}`, TTL_MS, async () => {
@@ -215,5 +167,6 @@ function createHandler(overrides = {}) {
 module.exports = createHandler();
 module.exports.createHandler = createHandler;
 module.exports.readCoverage = readCoverage;
+module.exports.vworldCreds = vworldCreds;
 module.exports.thinGeometry = thinGeometry;
 module.exports.bboxOf = bboxOf;

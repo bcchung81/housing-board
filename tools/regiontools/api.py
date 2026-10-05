@@ -49,12 +49,13 @@ class Keys:
     vworld: str
     vworld_domain: str
     data_go_kr_pool: tuple = ()      # DATA_GO_KR_KEY_BUILD_<N> 여러 개(번호 순). 비어 있으면 data_go_kr 하나만 쓴다
+    vworld_other: tuple = ()         # 쓰지 않는 다른 V-World 키(운영키 등). 오류 문구에서 가리기 위해서만 갖고 있는다
 
     def pool(self) -> tuple:
         return self.data_go_kr_pool or ((self.data_go_kr,) if self.data_go_kr else ())
 
     def secrets(self) -> list[str]:
-        return [s for s in (*self.pool(), self.data_go_kr, self.vworld) if s]
+        return [s for s in (*self.pool(), self.data_go_kr, self.vworld, *self.vworld_other) if s]
 
 
 def load_env(path) -> dict:
@@ -88,13 +89,18 @@ def load_keys(path) -> Keys:
         if m and v:
             numbered.append((int(m.group(1)), v))
     pool = tuple(_decode_key(v) for _, v in sorted(numbered))
-    missing = [k for k in ("VWORLD_KEY", "VWORLD_DOMAIN") if not env.get(k)]
+    # 수집·빌드 도구는 로컬에서만 돈다: 개발키(VWORLD_DEV_KEY, 도메인 localhost)가 있으면 그것을, 없으면 VWORLD_KEY 를 쓴다
+    vworld = env.get("VWORLD_DEV_KEY") or env.get("VWORLD_KEY")
+    missing = [k for k in ("VWORLD_DOMAIN",) if not env.get(k)]
+    if not vworld:
+        missing.insert(0, "VWORLD_KEY(또는 VWORLD_DEV_KEY)")
     if not pool and not env.get("DATA_GO_KR_KEY"):
         missing.insert(0, "DATA_GO_KR_KEY(또는 DATA_GO_KR_KEY_BUILD_<N>)")
     if missing:
         raise MissingKey(f"키가 없음: {', '.join(missing)}")
     first = pool[0] if pool else env["DATA_GO_KR_KEY"]
-    return Keys(first, env["VWORLD_KEY"], env["VWORLD_DOMAIN"], pool)
+    other = tuple(k for k in (env.get("VWORLD_DEV_KEY"), env.get("VWORLD_KEY")) if k and k != vworld)
+    return Keys(first, vworld, env["VWORLD_DOMAIN"], pool, other)
 
 
 def redact(text: str, secrets) -> str:

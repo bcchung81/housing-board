@@ -291,8 +291,12 @@ test('withRegion·regionUrl: 코드 매개변수를 지우고 지역으로 바�
 
 test('resolvedStart·resolvedShape: 시군구는 지역 기본 시점(null), 법정동은 15.4, 필지는 17.6, 필지를 못 찾으면 법정동 경계', () => {
   const sq = { type: 'Polygon', coordinates: [[[0, 0], [1, 0], [1, 1], [0, 0]]] };
-  assert.equal(R.resolvedStart({ type: 'sgg', center: [126.7, 37.5] }), null);
-  assert.equal(R.resolvedShape({ type: 'sgg', geometry: sq }), null);
+  const A = { tier: 'A' }, NONE = { tier: 'none' };
+  assert.equal(R.resolvedStart({ type: 'sgg', center: [126.7, 37.5], coverage: A, bbox: [126.68, 37.52, 126.79, 37.59] }), null);   // 번들 있는 시군구는 지역 기본 시점
+  assert.equal(R.resolvedShape({ type: 'sgg', geometry: sq, coverage: A }), null);
+  assert.deepEqual(R.resolvedStart({ type: 'sgg', center: [127.02, 37.6], coverage: NONE, bbox: [126.99, 37.57, 127.05, 37.62] }), { center: [127.02, 37.6], zoom: 12.8 });   // 번들 없는 시군구는 경계가 한눈에
+  assert.equal(R.resolvedShape({ type: 'sgg', geometry: sq, coverage: NONE }), sq);
+  assert.equal(R.resolvedStart({ type: 'sgg', center: [127, 37.6], coverage: NONE }), null);                                       // 경계가 없으면 지역 기본 시점도 없음
   assert.deepEqual(R.resolvedStart({ type: 'bjd', center: [126.7, 37.5] }), { center: [126.7, 37.5], zoom: 15.4 });
   assert.equal(R.resolvedShape({ type: 'bjd', geometry: sq }), sq);
   const pnu = { type: 'pnu', center: [126.7, 37.5], parcel: { geometry: sq }, geometry: { type: 'Polygon', coordinates: [[[5, 5], [6, 5], [6, 6], [5, 5]]] } };
@@ -319,7 +323,7 @@ test('boot: ?code= 가 번들이 있는 시군구면 그 지역을 열고 시작
   const { win, doc } = bootWith('?bjd=2824510900&mode=progress', (u) => { urls.push(u); return json(200, { type: 'bjd', level: 'umd', name: '인천광역시 계양구 박촌동', center: [126.75, 37.55], geometry: sq, coverage: { tier: 'A', slug: 'r1' } }); });
   const r = await R.boot(win, doc);
   assert.equal(r.ok, true); assert.equal(win.REGION.slug, 'r1');
-  assert.deepEqual(urls, ['api/v1/resolve?bjd=2824510900']);
+  assert.deepEqual(urls, ['api/v1/resolve?bjd=2824510900&geometry=1']);
   assert.deepEqual(win.RESOLVED.start, { center: [126.75, 37.55], zoom: 15.4 }); assert.equal(win.RESOLVED.shape, sq); assert.equal(win.RESOLVED.name, '인천광역시 계양구 박촌동');
 });
 
@@ -336,12 +340,19 @@ test('boot: ?region= 만 있으면 해석 API 를 부르지 않고 RESOLVED 는 
   assert.equal(r.ok, true); assert.equal(called, 0); assert.equal(win.RESOLVED, null);
 });
 
-test('boot: 번들이 없는 시군구(tier none)는 안내 화면과 지역 목록, 지도는 열지 않는다', async () => {
-  const { win, doc, els } = bootWith('?code=11290', () => json(200, { type: 'sgg', level: 'sgg', name: '서울특별시 성북구', coverage: { tier: 'none' } }));
+test('boot: 번들이 없는 시군구(tier none)도 지도를 연다: 빈 번들 + 건물 요청 시 조회, 경계만 강조, 선택기에 번들 없음 표시', async () => {
+  const sq = { type: 'Polygon', coordinates: [[[126.99, 37.57], [127.05, 37.57], [127.05, 37.62], [126.99, 37.57]]] };
+  const { win, doc, els } = bootWith('?code=11290', () => json(200, { type: 'sgg', level: 'sgg', name: '서울특별시 성북구', center: [127.02, 37.6], bbox: [126.99, 37.57, 127.05, 37.62], geometry: sq, coverage: { tier: 'none' } }));
   const r = await R.boot(win, doc);
-  assert.equal(r.ok, false); assert.equal(r.error, 'no-coverage');
-  assert.match(els.fatal.innerHTML, /서울특별시 성북구/); assert.match(els.fatal.innerHTML, /공급 사업 정보가 아직 없는/); assert.match(els.fatal.innerHTML, /href="\?region=r1"/);
-  assert.equal(els.fatal.hidden, false); assert.equal(win.REGION, undefined);
+  assert.equal(r.ok, true);                                                                                          // index.html 은 ok 일 때만 앱 스크립트를 읽는다
+  assert.equal(r.slug, ''); assert.equal(win.REGION.name, '서울특별시 성북구'); assert.equal(win.GY_BUILDINGS.dynamic, true); assert.equal(win.GY_BUILDINGS.features.length, 0);
+  assert.equal(win.GY_PROJECTS.blocks.length, 0); assert.equal(win.GY_INFRA, null);
+  assert.deepEqual(win.RESOLVED.start, { center: [127.02, 37.6], zoom: 12.8 }); assert.equal(win.RESOLVED.shape, sq); assert.equal(win.RESOLVED.tier, 'none');
+  assert.equal(els.pvBanner.hidden, false); assert.match(els.pvBanner.textContent, /지역 번들이 없어 경계와 건물\(요청 시 조회\)만/);
+  assert.equal(els.fatal, undefined);
+  assert.match(els.regionSel.innerHTML, /서울특별시 성북구 \(번들 없음\)/); assert.match(els.regionSel.innerHTML, /value="r1"/);
+  const off = bootWith('?code=11290&dyn=0', () => json(200, { type: 'sgg', level: 'sgg', name: '서울특별시 성북구', center: [127.02, 37.6], bbox: [126.99, 37.57, 127.05, 37.62], coverage: { tier: 'none' } }));
+  await R.boot(off.win, off.doc); assert.equal(off.win.GY_BUILDINGS.dynamic, false);                                   // 건물 없이 경계만
 });
 
 test('boot: 해석 실패(400·404·429·502·연결 불가)는 문구와 이스케이프된 detail 을 보인다', async () => {
@@ -380,4 +391,170 @@ test('boot: 필지를 못 찾아 법정동으로 후퇴하면 배너로 알린�
   assert.equal(r.ok, true);
   assert.equal(els.pvBanner.hidden, false); assert.match(els.pvBanner.textContent, /필지를 찾지 못해 법정동 경계로/);
   assert.equal(win.RESOLVED.start.zoom, 15.4); assert.deepEqual(win.RESOLVED.warnings, ['parcel-not-found']);
+});
+
+test('zoomForBbox·dynParam: 가로 폭에 맞는 확대 단계(11~16), ?dyn 값', () => {
+  assert.equal(Math.round(R.zoomForBbox([126.68, 37.52, 126.79, 37.59]) * 10) / 10, 11.9);
+  assert.equal(R.zoomForBbox([126.7, 37.5, 126.7001, 37.5001]), 16);                       // 아주 작으면 16 에서 멈춤
+  assert.equal(R.zoomForBbox([120, 30, 130, 40]), 11);                                       // 아주 크면 지도 최소 확대 11
+  assert.equal(R.zoomForBbox(null), null); assert.equal(R.zoomForBbox([1, 2, 'a', 4]), null);
+  assert.equal(R.dynParam('?dyn=0'), 'off'); assert.equal(R.dynParam('?dyn=1&a=2'), 'on'); assert.equal(R.dynParam('?dyn=x'), null); assert.equal(R.dynParam(''), null);
+});
+
+test('boot: 번들이 있는 지역도 코드로 열면 번들 밖 건물을 요청 시 조회한다(?dyn=0 이면 끔), ?region= 만이면 그대로', async () => {
+  const resp = () => json(200, { type: 'sgg', level: 'sgg', name: '계양구', center: [126.7, 37.5], coverage: { tier: 'A', slug: 'r1' } });
+  const a = bootWith('?sgg=28245', resp); await R.boot(a.win, a.doc); assert.equal(a.win.GY_BUILDINGS.dynamic, true);
+  const b = bootWith('?sgg=28245&dyn=0', resp); await R.boot(b.win, b.doc); assert.equal(b.win.GY_BUILDINGS.dynamic, undefined);
+  const c = bootWith('?region=r1', () => json(200, {})); await R.boot(c.win, c.doc); assert.equal(c.win.GY_BUILDINGS.dynamic, undefined);
+  const d = bootWith('?region=r1&dyn=1', () => json(200, {})); await R.boot(d.win, d.doc); assert.equal(d.win.GY_BUILDINGS.dynamic, true);
+});
+
+/* ---------- 번들 없는 지역의 건축HUB 인허가 사업 ---------- */
+const PERMIT_FC = {
+  type: 'FeatureCollection', bjd: '4145010800',
+  features: [
+    { type: 'Feature', properties: { pnu: '4145010800105690000', jibun: '569', name: '덕풍아파트 신축공사', label: '덕풍', units: 120, status: '건설 단계', mainBldCnt: 3, approvedAt: '2025-06-01', startedAt: '2025-09-01', completedAt: null, plannedCompletion: '2028-12-31', address: '경기도 하남시 덕풍동 569번지', refs: ['1', '2'], records: 2 },
+      geometry: { type: 'Polygon', coordinates: [[[127.2, 37.54], [127.2003, 37.54], [127.2003, 37.5403], [127.2, 37.5403], [127.2, 37.54]]] } },
+    { type: 'Feature', properties: { pnu: '4145010800100010002', jibun: '1-2', name: '옛단지', label: '옛단지', units: 50, status: '입주 단계', mainBldCnt: null, approvedAt: '2018-01-01', startedAt: '2018-06-01', completedAt: '2020-06-01', plannedCompletion: null, address: null, refs: [], records: 1 },
+      geometry: { type: 'Polygon', coordinates: [[[127.201, 37.541], [127.2013, 37.541], [127.2013, 37.5413], [127.201, 37.541]]] } },
+    { type: 'Feature', properties: { pnu: '4145010800100020000', name: '링 없음', label: 'x', status: '계획' }, geometry: null },
+  ],
+  meta: { records: 453, unlocated: 2, truncated: false },
+};
+
+test('permitsToProjects: 인허가 사업을 번들 단지 모양으로(윤곽=필지, 상태·세대수·입주 시기·출처·메모), 윤곽 없는 것은 뺀다', () => {
+  const ps = R.permitsToProjects(PERMIT_FC);
+  assert.equal(ps.length, 2);
+  const [a, b] = ps;
+  assert.equal(a.id, 'hub-4145010800105690000'); assert.equal(a.label, '덕풍'); assert.equal(a.name, '덕풍아파트 신축공사'); assert.equal(a.status, '건설 단계'); assert.equal(a.units, 120); assert.equal(a.dongCount, 3);
+  assert.equal(a.kind, '인허가 사업'); assert.equal(a.sponsorClass, 'unknown'); assert.equal(a.outline.tier, 'official'); assert.equal(a.outline.poly.length, 4);                // 닫는 점을 뺀 링
+  assert.equal(a.moveIn, '2028-12-31'); assert.deepEqual(a.sources, ['hub-housing-permit', 'vworld-cadastre']);
+  assert.match(a.note, /경기도 하남시 덕풍동 569번지 · 허가 기록 2건 · 사업승인 2025-06-01 · 착공 2025-09-01 · 시행자·분양 정보는 없음/);
+  assert.equal(b.moveIn, '2020-06'); assert.equal(b.dongCount, 0); assert.doesNotMatch(b.note, /null/);
+  assert.deepEqual(R.permitsToProjects(null), []); assert.deepEqual(R.permitsToProjects({ features: [] }), []);
+});
+
+test('emptyBundle + 인허가: 단지로 들어가 어댑터가 쓰는 모양(상태 순서·세대수·출처 문구·민간 아님)이 된다', () => {
+  const b = R.emptyBundle({ name: '경기도 하남시 덕풍동', center: [127.2, 37.54], bbox: [127.19, 37.53, 127.22, 37.55] }, { regions: [] }, PERMIT_FC);
+  assert.equal(b.ok, true); assert.equal(b.slug, ''); assert.equal(b.blocks.length, 2);
+  assert.deepEqual(b.blocks.map((x) => [x.id, x.status, x.units, x.priv]), [['덕풍', '건설 단계', 120, false], ['옛단지', '입주 단계', 50, false]]);
+  assert.equal(b.blocks[0].src, '건축HUB 주택인허가정보(번지 단위 집계) · V-World 연속지적도(필지 경계)'); assert.equal(b.blocks[0].moveIn, '준공 예정 2028-12-31'); assert.equal(b.blocks[1].moveIn, '2020.06');
+  assert.equal(b.resolveBlock('hub-4145010800105690000'), b.blocks[0]); assert.deepEqual(b.permits, { fetched: true, count: 2, unlocated: 2, truncated: false, records: 453, candidates: 0, blocks: 0, ledger: null });
+  assert.equal(b.hasPrivate, false);
+  const none = R.emptyBundle({ name: 'x', center: [127, 37] }, null, null); assert.equal(none.blocks.length, 0); assert.deepEqual(none.permits, { fetched: false, count: 0, unlocated: 0, truncated: false, records: 0, candidates: 0, blocks: 0, ledger: null });
+});
+
+function bootWithPermits(search, resolveBody, permitsRes) {
+  const els = {}, el = (id) => (els[id] = els[id] || { hidden: true, innerHTML: '', textContent: '', addEventListener() {}, setAttribute() {} });
+  const doc = { title: '', querySelector: () => null, getElementById: el };
+  const urls = [], base = fakeFetch(filesFor());
+  const win = { location: { search, href: `http://x.test/${search}` }, fetch: async (u) => { urls.push(String(u)); if (String(u).startsWith('api/v1/resolve')) return json(200, resolveBody); if (String(u).startsWith('api/v1/permits')) return permitsRes(u); return base(u); } };
+  return { win, doc, els, urls };
+}
+const RESOLVED_BJD = { type: 'bjd', level: 'umd', name: '경기도 하남시 덕풍동', bjd: '4145010800', center: [127.2, 37.54], bbox: [127.19, 37.53, 127.22, 37.55], coverage: { tier: 'none' } };
+
+test('boot: 번들 없는 법정동은 인허가 사업을 단지로 열고, 안내 띠에 곳수를 알린다', async () => {
+  const { win, doc, els, urls } = bootWithPermits('?bjd=4145010800', RESOLVED_BJD, () => json(200, PERMIT_FC));
+  const r = await R.boot(win, doc);
+  assert.equal(r.ok, true); assert.deepEqual(urls.filter((u) => u.startsWith('api/v1/permits')), ['api/v1/permits?bjd=4145010800']);
+  assert.equal(win.GY_PROJECTS.blocks.length, 2); assert.equal(win.RESOLVED.block, null);
+  assert.match(els.pvBanner.textContent, /건축HUB 인허가 사업 2곳만 보여 줍니다\(필지를 못 찾은 2곳 제외\)/);
+});
+
+test('boot: 필지로 열었는데 그 필지가 인허가 사업이면 그 단지를 열도록 RESOLVED.block 에 싣는다', async () => {
+  const pnuBody = { ...RESOLVED_BJD, type: 'pnu', pnu: '4145010800105690000', parcel: { geometry: PERMIT_FC.features[0].geometry } };
+  const { win, doc } = bootWithPermits('?pnu=4145010800105690000', pnuBody, () => json(200, PERMIT_FC));
+  await R.boot(win, doc);
+  assert.equal(win.RESOLVED.block, 'hub-4145010800105690000');
+  const other = bootWithPermits('?pnu=4145010800199990000', { ...pnuBody, pnu: '4145010800199990000' }, () => json(200, PERMIT_FC));
+  await R.boot(other.win, other.doc); assert.equal(other.win.RESOLVED.block, null);
+});
+
+test('boot: 인허가 조회가 실패(429·502·연결 불가)하거나 ?permits=0 이거나 시군구 단위면 단지 없이 열린다(조회도 안 함)', async () => {
+  for (const res of [() => json(429, { code: 'keys-exhausted' }), () => json(502, { code: 'upstream' }), () => { throw new Error('offline'); }, () => json(200, { type: 'x' })]) {
+    const { win, doc, els } = bootWithPermits('?bjd=4145010800', RESOLVED_BJD, res);
+    const r = await R.boot(win, doc);
+    assert.equal(r.ok, true); assert.equal(win.GY_PROJECTS.blocks.length, 0); assert.match(els.pvBanner.textContent, /지역 번들이 없어 경계와 건물\(요청 시 조회\)만/);
+  }
+  const off = bootWithPermits('?bjd=4145010800&permits=0', RESOLVED_BJD, () => json(200, PERMIT_FC)); await R.boot(off.win, off.doc);
+  assert.equal(off.urls.filter((u) => u.startsWith('api/v1/permits')).length, 0); assert.equal(off.win.GY_PROJECTS.blocks.length, 0);
+  const sgg = bootWithPermits('?sgg=41450', { type: 'sgg', level: 'sgg', name: '경기도 하남시', center: [127.2, 37.5], coverage: { tier: 'none' } }, () => json(200, PERMIT_FC)); await R.boot(sgg.win, sgg.doc);
+  assert.equal(sgg.urls.filter((u) => u.startsWith('api/v1/permits')).length, 0);
+  const tierA = bootWithPermits('?bjd=2824510900', { type: 'bjd', level: 'umd', name: '박촌동', bjd: '2824510900', center: [126.75, 37.55], coverage: { tier: 'A', slug: 'r1' } }, () => json(200, PERMIT_FC)); await R.boot(tierA.win, tierA.doc);
+  assert.equal(tierA.urls.filter((u) => u.startsWith('api/v1/permits')).length, 0);                                  // 번들이 있으면 번들의 단지를 쓴다
+});
+
+test('인허가 사업 메모: 예정일이 지났는데 기록이 없으면 사실만 적고(지연 판정 아님), 예정일이 아직이면 예정으로, 기록이 아예 없으면 그렇게', () => {
+  const f = (props) => ({ type: 'Feature', properties: Object.assign({ pnu: '4145010800105690000', name: 'x', label: 'x', units: 10, status: '계획', records: 1, address: null }, props), geometry: PERMIT_FC.features[0].geometry });
+  const note = (props) => R.permitsToProjects({ features: [f(props)] })[0].note;
+  assert.match(note({ plannedStart: '2025-12-31', overdue: { kind: '착공', plannedAt: '2025-12-31', months: 9 } }), /착공 예정일 2025-12-31이 9개월 지났으나 착공 기록이 없음/);
+  assert.doesNotMatch(note({ plannedStart: '2025-12-31', overdue: { kind: '착공', plannedAt: '2025-12-31', months: 9 } }), /착공 예정 2025/);
+  assert.match(note({ overdue: { kind: '준공', plannedAt: '2019-11', months: 80 }, status: '건설 단계' }), /준공 예정일 2019-11이 80개월 지났으나 준공 기록이 없음/);
+  assert.match(note({ overdue: { kind: '착공', plannedAt: '2026-10-01', months: 0 } }), /얼마 지났으나/);
+  assert.match(note({ plannedStart: '2027-03-01' }), /착공 예정 2027-03-01/); assert.doesNotMatch(note({ plannedStart: '2027-03-01' }), /기록이 없음/);
+  assert.match(note({}), /착공 기록 없음/);                                                                          // 예정일도 없는 계획(오래된 조합 허가 등)
+  assert.doesNotMatch(note({ status: '입주 단계', completedAt: '2020-06-01' }), /기록 없음|지났으나/);
+});
+
+test('emptyBundle: 필지를 못 찾은 사업은 자료 안내(푸터)에 이름·추정 원인으로 알린다. 후보가 0이면 안내 띠에 이웃 법정동 가능성을 말한다', async () => {
+  const fc = { ...PERMIT_FC, meta: { records: 442, candidates: 3, unlocated: 3, unlocatedList: [
+    { name: '래미안 포레카운티', jibun: '144-24', status: '입주 단계', reason: '준공 뒤 합필·분할로 지번이 없어졌을 수 있음' },
+    { name: '위례 A3-3a BL', jibun: '1-1', status: '계획', reason: '택지개발지구 등 지적이 아직 나뉘지 않은 곳일 수 있음' },
+    { name: '다른 곳', jibun: '9', status: '입주 단계', reason: '준공 뒤 합필·분할로 지번이 없어졌을 수 있음' }] } };
+  const b = R.emptyBundle({ name: '서울 장위동', center: [127, 37.6] }, null, fc);
+  assert.match(b.texts.footerHtml, /필지를 못 찾아 지도에 없는 3곳: 래미안 포레카운티\(144-24\), 위례 A3-3a BL\(1-1\), 다른 곳\(9\)\. 원인 추정: 준공 뒤 합필·분할로 지번이 없어졌을 수 있음 \/ 택지개발지구 등 지적이 아직 나뉘지 않은 곳일 수 있음\./);
+  assert.doesNotMatch(R.emptyBundle({ name: 'x', center: [127, 37] }, null, PERMIT_FC.features.length ? { ...PERMIT_FC, meta: { records: 1, unlocated: 0 } } : null).texts.footerHtml, /못 찾아/);
+  const zero = bootWithPermits('?bjd=4145011100', { ...RESOLVED_BJD, bjd: '4145011100', name: '경기도 하남시 미사동' }, () => json(200, { type: 'FeatureCollection', features: [], meta: { records: 0, candidates: 0, unlocated: 0 } }));
+  await R.boot(zero.win, zero.doc);
+  assert.match(zero.els.pvBanner.textContent, /건축HUB 주택인허가에 이 법정동의 공동주택 사업이 없습니다\(기록 0건\) — 이웃 법정동에 있을 수 있습니다/);
+  const fail = bootWithPermits('?bjd=4145011100', { ...RESOLVED_BJD, bjd: '4145011100' }, () => json(502, {}));
+  await R.boot(fail.win, fail.doc);
+  assert.doesNotMatch(fail.els.pvBanner.textContent, /이웃 법정동/);                                                    // 조회 실패는 '없음'이 아니다
+});
+
+test('공공주택지구 블록 단위 허가: 자료 안내에 이름·블록·세대수로 알리고, 후보가 그것뿐이면 안내 띠가 "블록 단위라 못 그림"이라고 말한다', async () => {
+  const meta = { records: 32, candidates: 0, unlocated: 0, blockProjects: 13, blockList: [
+    { name: 'LH아파트', block: 'B1BL', units: 684 }, { name: '하남감일A5BL 아파트', block: 'A5블록', units: 617 }, { name: '감일 B-4BL', block: 'B-4BL', units: 595 }] };
+  const fc = { type: 'FeatureCollection', features: [], meta };
+  const b = R.emptyBundle({ name: '경기도 하남시 감일동', center: [127.17, 37.55] }, null, fc);
+  assert.match(b.texts.footerHtml, /공공주택지구 블록 단위 허가 13곳은 필지 번호가 없어\(블록 번호만 있음\) 위치를 정할 수 없어 지도에 없습니다: LH아파트\(B1BL\) 684세대, 하남감일A5BL 아파트\(A5블록\) 617세대, 감일 B-4BL 595세대 외\./);   // 이름에 블록이 이미 있으면 괄호를 또 붙이지 않는다
+  assert.equal(b.permits.blocks, 13);
+  const zero = bootWithPermits('?bjd=4145011400', { ...RESOLVED_BJD, bjd: '4145011400', name: '경기도 하남시 감일동' }, () => json(200, fc));
+  await R.boot(zero.win, zero.doc);
+  assert.match(zero.els.pvBanner.textContent, /이 법정동의 건축HUB 인허가는 공공주택지구 블록 단위 13곳뿐이라 필지 번호가 없어 지도에 그릴 수 없습니다/);
+  assert.doesNotMatch(zero.els.pvBanner.textContent, /이웃 법정동/);
+});
+
+test('건물대장 보강: 위치·준공 근거를 메모에 적고(블록·합필·사용승인), 출처에 건물대장을 더하며, 못 맞춘 블록·보강 실패는 자료 안내에 알린다', async () => {
+  const sq = (x) => ({ type: 'Polygon', coordinates: [[[x, 37.55], [x + 0.0003, 37.55], [x + 0.0003, 37.5503], [x, 37.55]]] });
+  const ledgerMeta = { used: true, bjds: 2, rows: 40, blocksMatched: 1, blocksAmbiguous: 1, parcelsRecovered: 1, completions: 1 };
+  const fc = { type: 'FeatureCollection', features: [
+    { type: 'Feature', geometry: sq(127.17), properties: { pnu: '4145010300104580000', jibun: '458', name: '하남감일 호반써밋', label: '호반써밋', units: 600, status: '입주 단계', approvedAt: '2017-01-01', completedAt: '2020-10-27', address: '경기도 하남시 감이동 458번지', records: 3, block: 'A1BL', via: 'ledger', ledger: { name: '하남감일 호반써밋', platPlc: '경기도 하남시 감이동 458번지', useAprDay: '2020-10-27', areaDiff: 0.33 } } },
+    { type: 'Feature', geometry: sq(127.18), properties: { pnu: '4145010300109990000', jibun: '999', name: '옛지번단지', label: '옛지번단지', units: 300, status: '입주 단계', approvedAt: '2018-01-01', completedAt: '2023-06-30', address: '경기도 하남시 감이동 999번지', records: 1, via: 'ledger', hubJibun: '200', ledger: { name: '합필후단지', platPlc: '경기도 하남시 감이동 999번지', useAprDay: '2023-06-30', areaDiff: 0.84 } } },
+    { type: 'Feature', geometry: sq(127.19), properties: { pnu: '4145011400103000000', jibun: '300', name: '준공단지', label: '준공단지', units: 120, status: '입주 단계', approvedAt: '2018-01-01', completedAt: '2021-12-31', address: '경기도 하남시 감일동 300번지', records: 1, statusBy: 'ledger' } },
+    { type: 'Feature', geometry: sq(127.2), properties: { pnu: '4145011400100100000', jibun: '100', name: '허가만', label: '허가만', units: 80, status: '계획', approvedAt: '2024-01-01', address: '경기도 하남시 감일동 100번지', records: 1 } }],
+  meta: { records: 40, candidates: 5, unlocated: 0, blockProjects: 1, blockList: [{ name: '감일 B-4BL', block: 'B-4BL', units: 595 }], ledger: ledgerMeta } };
+  const [a, moved, done, plain] = R.permitsToProjects(fc);
+  assert.deepEqual(a.sources, ['hub-housing-permit', 'hub-bldrgst', 'vworld-cadastre']);
+  assert.match(a.note, /경기도 하남시 감이동 458번지 · 건물대장 기준 위치\(허가는 블록 단위 A1BL\): 세대수 일치, 대지면적 오차 0\.33% · 허가 기록 3건 · 사업승인 2017-01-01 · 사용승인\(건물대장\) 2020-10-27/);
+  assert.match(moved.note, /건물대장 기준 위치\(허가 지번 200은 합필·분할로 지금은 없음\): 세대수 일치, 대지면적 오차 0\.84%/); assert.equal(moved.outline.how, '건물대장이 가리키는 대지 필지(연속지적도)');
+  const byName = R.permitsToProjects({ features: [{ type: 'Feature', geometry: sq(127.21), properties: { pnu: '1129013600102280000', jibun: '228', name: '꿈의숲 푸르지오', label: '꿈의숲', units: 714, status: '입주 단계', completedAt: '2010-04-29', address: '서울특별시 성북구 하월곡동 228번지', records: 1, via: 'ledger', hubJibun: '산2-11', ledger: { name: '꿈의숲 푸르지오', useAprDay: '2010-04-29', areaDiff: null, by: 'name' } } }] })[0];
+  assert.match(byName.note, /건물대장 기준 위치\(허가 지번 산2-11은 합필·분할로 지금은 없음\): 세대수·단지명 일치\(허가에 대지면적 기록이 없음\)/);
+  assert.deepEqual(done.sources, ['hub-housing-permit', 'hub-bldrgst', 'vworld-cadastre']); assert.match(done.note, /사용승인\(건물대장\) 2021-12-31/); assert.doesNotMatch(done.note, /건물대장 기준 위치/);
+  assert.deepEqual(plain.sources, ['hub-housing-permit', 'vworld-cadastre']); assert.doesNotMatch(plain.note, /건물대장/);
+  const b = R.emptyBundle({ name: '경기도 하남시 감일동', center: [127.17, 37.55] }, null, fc);
+  assert.match(b.texts.footerHtml, /건축물대장으로 보강: 블록 단위 허가 1곳의 위치, 합필·분할로 사라진 지번 1곳의 현재 지번, 사용승인으로 준공 확인 1곳\./);
+  assert.match(b.texts.footerHtml, /공공주택지구 블록 단위 허가 1곳은 필지 번호가 없어\(블록 번호만 있음\) 건축물대장과 세대수·대지면적을 맞춰 보았지만 지번을 정하지 못해 지도에 없습니다: 감일 B-4BL 595세대\./);
+  const src = (id) => b.blocks.find((x) => x.id === id).src;
+  assert.match(src('호반써밋'), /건축HUB 건축물대장정보/); assert.doesNotMatch(src('허가만'), /건축물대장/);
+  assert.deepEqual(b.permits.ledger, ledgerMeta);
+  const bad = R.emptyBundle({ name: 'x', center: [127, 37] }, null, { ...fc, meta: { ...fc.meta, ledger: { used: false, error: '건물대장 서비스 권한이 없음(활용신청 필요)' } } });
+  assert.match(bad.texts.footerHtml, /건축물대장 보강이 완전하지 않습니다: 건물대장 서비스 권한이 없음\(활용신청 필요\)\./);
+  const only = { type: 'FeatureCollection', features: [], meta: { records: 3, candidates: 0, blockProjects: 2, blockList: [], ledger: { used: true, bjds: 2, rows: 5, blocksMatched: 0, blocksAmbiguous: 2, parcelsRecovered: 0, completions: 0 } } };
+  const zero = bootWithPermits('?bjd=4145011400', { ...RESOLVED_BJD, bjd: '4145011400', name: '경기도 하남시 감일동' }, () => json(200, only));
+  await R.boot(zero.win, zero.doc);
+  assert.match(zero.els.pvBanner.textContent, /블록 단위 2곳뿐이라 필지 번호가 없어 건축물대장과 맞춰 보아도 지번을 정하지 못해 지도에 그릴 수 없습니다/);
+  const ok = bootWithPermits('?bjd=4145011400', { ...RESOLVED_BJD, bjd: '4145011400', name: '경기도 하남시 감일동' }, () => json(200, fc));
+  await R.boot(ok.win, ok.doc);
+  assert.match(ok.els.pvBanner.textContent, /건축HUB 인허가 사업 4곳만 보여 줍니다\(건축물대장으로 위치를 찾은 2곳 포함\)/);
 });

@@ -42,7 +42,7 @@ SOURCE_DEFS = {
     "tago-bus": {"label": "국토교통부 TAGO 버스정류소·노선정보", "publisher": "국토교통부",
                  "url": "https://www.data.go.kr/data/15098534/openapi.do", "license": "이용허락범위 제한 없음", "redistributable": "Y"},
     "hub-arch": {"label": "국토교통부 건축HUB 건축인허가정보", "publisher": "국토교통부",
-                 "url": "https://www.data.go.kr/data/15134735/openapi.do", "redistributable": "unknown"},
+                 "url": "https://www.data.go.kr/data/15136267/openapi.do", "redistributable": "unknown"},   # 건축인허가정보(15136267). 15134735 는 건축물대장정보라 다른 서비스다
 }
 SOURCE_ORDER = list(SOURCE_DEFS)
 

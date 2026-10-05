@@ -7,9 +7,12 @@
   /* 상세 카드(팝업)·옵션 창·범례 펼침은 뒤 지도가 보이도록 흐림과 밝기 보정을 줄이고, 글자는 더 진한 보조색(--mute-card)만 쓴다 */
   --glass-card-day-bright:1.1;--mute-card:#33373F;
   --glass-card-blur:blur(1.5px) brightness(var(--glass-card-day-bright)) saturate(1.05);
-  --hud-line:rgba(27,29,33,.26);--hud-tick:rgba(27,29,33,.78)}
+  --hud-line:rgba(27,29,33,.26);--hud-tick:rgba(27,29,33,.78);
+  --glass-dark-bright:.85;--glass-dark-blur:blur(6px) brightness(var(--glass-dark-bright)) saturate(1.1);
+  --glass-dark-active:rgba(27,29,33,.88);--glass-dark-idle:rgba(27,29,33,.62);--glass-dark-off:rgba(27,29,33,.46);
+  --hud-line-dark:rgba(255,255,255,.22);--hud-tick-dark:rgba(255,255,255,.85);--cmd-sub:#D6D8DC;--cmd-text:#fff}
 /* backdrop-filter 를 못 쓰는 브라우저는 뒤가 비쳐 글자가 흐려지므로 거의 불투명하게 둔다 */
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--glass-day-tag:rgba(255,255,255,.94);--glass-day-tag-hover:#fff;--glass-day-sum:rgba(255,255,255,.94);--glass-day-card:rgba(255,255,255,.95)}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--glass-day-tag:rgba(255,255,255,.94);--glass-day-tag-hover:#fff;--glass-day-sum:rgba(255,255,255,.94);--glass-day-card:rgba(255,255,255,.95);--glass-dark-active:rgba(27,29,33,.96);--glass-dark-idle:rgba(27,29,33,.94);--glass-dark-off:rgba(27,29,33,.94)}}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5}
@@ -45,6 +48,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,
 .regionbox select{flex:1 1 auto;min-width:0;min-height:36px;padding:0 8px;border:1px solid #8E9299;background:#fff;font:inherit;font-size:13.5px;color:var(--ink)}
 .pvbanner{position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:5;padding:4px 14px;background:#1B1D21;color:#fff;font-size:12.5px}
 .pvbanner[hidden]{display:none}
+.dynhint{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);z-index:5;max-width:min(92vw,520px);padding:5px 14px;border-radius:14px;background:rgba(27,29,33,.86);color:#fff;font-size:13px;text-align:center;pointer-events:none}
+.dynhint[hidden]{display:none}
 .list .empty{padding:14px 6px;color:var(--mute);font-size:13.5px}
 h1{margin:0;font-size:24px;font-weight:700;line-height:1.25}
 h2{margin:0;font-size:16px;font-weight:700;border-bottom:2px solid var(--ink);padding-bottom:6px}
@@ -228,6 +233,64 @@ h2{margin:0;font-size:16px;font-weight:700;border-bottom:2px solid var(--ink);pa
 .timebar input{flex:1 1 auto;min-width:0;height:40px;accent-color:#1B1D21}
 .timebar span{flex:0 0 auto;font-size:13px;font-weight:500;font-variant-numeric:tabular-nums;max-width:250px;line-height:1.35}
 .timebar span b{font-size:15px;margin-right:4px}
+/* 주소 이동 입력줄(하단 커맨드 라인). 어두운 유리의 투명도가 상태를 말한다: 입력 중 .88 · 대기 .62(지도가 비침) · 비활성 .46. 값은 :root 의 --glass-dark-* (tests/js/glass.test.cjs 가 흰 글자 대비를 확인) */
+.cmd{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--botbar-h,33px) + 12px);z-index:4;width:min(720px,calc(100% - 96px));display:flex;flex-direction:column;--cmd-bg:var(--glass-dark-idle);color:var(--cmd-text)}
+.cmd[hidden]{display:none}
+.cmd[data-state="active"],.cmd[data-state="busy"]{--cmd-bg:var(--glass-dark-active)}
+.cmd[data-state="disabled"]{--cmd-bg:var(--glass-dark-off)}
+.cmd-bar,.cmd-res,.cmd-parse{position:relative;background:var(--cmd-bg);-webkit-backdrop-filter:var(--glass-dark-blur);backdrop-filter:var(--glass-dark-blur);border:1px solid var(--hud-line-dark);transition:background-color .18s}
+.cmd-bar::before,.cmd-res::before{content:"";position:absolute;inset:0;pointer-events:none;--t:var(--hud-tick-dark);background:
+  linear-gradient(var(--t),var(--t)) 0 0/9px 1.5px no-repeat,linear-gradient(var(--t),var(--t)) 0 0/1.5px 9px no-repeat,
+  linear-gradient(var(--t),var(--t)) 100% 0/9px 1.5px no-repeat,linear-gradient(var(--t),var(--t)) 100% 0/1.5px 9px no-repeat,
+  linear-gradient(var(--t),var(--t)) 0 100%/9px 1.5px no-repeat,linear-gradient(var(--t),var(--t)) 0 100%/1.5px 9px no-repeat,
+  linear-gradient(var(--t),var(--t)) 100% 100%/9px 1.5px no-repeat,linear-gradient(var(--t),var(--t)) 100% 100%/1.5px 9px no-repeat}
+.cmd-bar{display:flex;align-items:center;gap:10px;height:46px;margin:0;padding:0 8px 0 14px}
+.cmd-bar:focus-within{outline:2px solid #fff;outline-offset:2px}
+.cmd-prompt{flex:0 0 auto;font-size:17px;font-weight:700;line-height:1}
+.cmd-bar input{flex:1 1 auto;min-width:0;height:34px;border:0;background:transparent;font:inherit;font-size:15px;font-weight:500;color:var(--cmd-text);outline:none}
+.cmd-bar input::placeholder{color:rgba(255,255,255,.9);opacity:1}
+.cmd-bar input:disabled{cursor:not-allowed}
+.cmd-key{flex:0 0 auto;min-width:22px;height:22px;padding:0 5px;border:1px solid rgba(255,255,255,.55);font:inherit;font-size:11.5px;font-weight:700;line-height:20px;text-align:center}
+.cmd-key[hidden],.cmd-clear[hidden]{display:none}
+.cmd-clear{flex:0 0 auto;width:30px;height:30px;border:0;background:transparent;color:var(--cmd-text);font-size:20px;line-height:1;cursor:pointer}
+.cmd-clear:hover{background:rgba(255,255,255,.14)}
+.cmd-go{flex:0 0 auto;height:30px;padding:0 12px;border:0;background:#fff;color:#1B1D21;font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.cmd-go:disabled{background:rgba(255,255,255,.28);color:rgba(255,255,255,.86);cursor:default}
+.cmd-go[hidden]{display:none}
+.cmd-spin{display:none;flex:0 0 auto;width:16px;height:16px;border:2px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+.cmd[data-state="busy"] .cmd-spin{display:block}
+.cmd[data-state="busy"] .cmd-go{display:none}
+.cmd[data-state="disabled"] .cmd-bar{border-style:dashed}
+.cmd-res{margin-bottom:-1px;max-height:min(46vh,360px);overflow:auto;padding-bottom:6px}
+.cmd-res[hidden],.cmd-parse[hidden]{display:none}
+.cmd-res[data-stale="1"] .cmd-o{opacity:.7}
+.cmd-h{padding:9px 14px 3px;font-size:11.5px;font-weight:700;color:var(--cmd-sub)}
+.cmd-o{display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer}
+.cmd-o:hover,.cmd-o[aria-selected="true"]{background:rgba(255,255,255,.16)}
+.cmd-ic{flex:0 0 auto;display:flex}
+.cmd-m{flex:1 1 auto;min-width:0;display:flex;align-items:baseline;gap:12px}
+.cmd-t{flex:0 0 auto;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:pre;font-size:14px;font-weight:500}
+.cmd-t b{font-weight:700;text-decoration:underline;text-underline-offset:3px}
+.cmd-s{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--cmd-sub)}
+.cmd-tier{flex:0 0 auto;display:flex;align-items:center;gap:5px;font-size:11.5px;color:#E4E6E9}
+.cmd-tier i{display:inline-block;width:9px;height:9px;border:1.5px solid #fff}
+.cmd-tier i.sw-bundle{background:#fff}
+.cmd-tier i.sw-edge{border-style:dashed;border-color:var(--cmd-sub)}
+.cmd-n,.cmd-w{padding:12px 14px;font-size:13px;color:#E4E6E9}
+.cmd-w{padding:8px 14px 2px;font-size:12px}
+.cmd-parse{margin-top:-1px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 14px;font-size:12px}
+.cmd-parse::before{content:"인식";font-weight:700;color:var(--cmd-sub);margin-right:2px}
+.cmd-sep{color:var(--cmd-sub)}
+.cmd-chip{display:flex;gap:5px;padding:1px 7px;border:1px solid rgba(255,255,255,.4)}
+.cmd-chip i{font-style:normal;color:var(--cmd-sub)}
+.cmd-chip b{font-weight:700}
+.cmd-chip.last{border-color:#fff}
+@media (min-width:901px){
+  .timebar:not([hidden]) ~ .cmd{bottom:calc(var(--botbar-h,33px) + 78px)}   /* 입주 시기 재생바와 겹치지 않게 그 위로 */
+  .mapwrap.hascmd .dynhint{bottom:calc(var(--botbar-h,33px) + 12px + 64px)}   /* 건물 불러오는 중 안내도 입력줄 위로 */
+}
+@media (prefers-reduced-motion:reduce){.cmd-bar,.cmd-res,.cmd-parse{transition:none}.cmd-spin{animation:none}}
+
 .hud{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
 .hud[hidden]{display:none}
 .hud-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
@@ -364,6 +427,10 @@ details.isub>ul{margin-top:2px}
   .handle{display:flex;align-items:center;justify-content:center;width:100%;min-height:36px;border:0;background:none;cursor:pointer;flex:0 0 auto}
   .handle::before{content:"";width:44px;height:5px;border-radius:3px;background:#B4B7BD}
   .botbar{display:none}
+  .cmd{left:12px;right:68px;top:56px;bottom:auto;transform:none;width:auto;flex-direction:column-reverse}   /* 좁은 화면은 아래 시트가 있으니 위쪽, 후보는 아래로 */
+  .cmd-res{margin-bottom:0;margin-top:-1px;max-height:40vh}
+  .cmd-parse,.cmd-key{display:none}
+  .cmd-bar input{font-size:16px}   /* iOS 가 16px 미만 입력칸을 확대하지 않게 */
   .timebar{left:12px;right:12px;transform:none;width:auto;bottom:calc(var(--sh,176px) + 12px)}
   .timebar span{min-width:0;font-size:12px}
   /* 좁은 화면: 버튼 줄이 지도를 가리지 않게 한 줄로 두고 옆으로 밀어 본다 */

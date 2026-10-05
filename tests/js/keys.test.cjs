@@ -112,3 +112,15 @@ test('DATA_GO_KR_PROFILE=demo: 서버 용도(BUS·RESOLVE)는 DEMO 키를 먼저
   const dev = K.createKeyPool({ env: { ...env, DATA_GO_KR_PROFILE: '' } });
   assert.equal(dev.profile, 'dev'); assert.equal(dev.pick('BUS', 'tago').label, 'BUS_1');
 });
+
+test('초당 호출 한도(…PER_SECOND…)는 하루 한도로 보지 않는다(키를 하루 쉬게 하지 않음)', () => {
+  const { isQuotaError, isThrottle } = require('../../lib/keys.js');
+  const perSec = { OpenAPI_ServiceResponse: { cmmMsgHeader: { errMsg: 'SERVICE ERROR', returnAuthMsg: 'LIMITED_NUMBER_OF_SERVICE_REQUESTS_PER_SECOND_EXCEEDS_ERROR', returnReasonCode: '22' } } };
+  assert.equal(isThrottle(perSec), true); assert.equal(isQuotaError(perSec), false);
+  assert.equal(isThrottle('LIMITED_NUMBER_OF_SERVICE_REQUESTS_PER_SECOND_EXCEEDS_ERROR'), true); assert.equal(isQuotaError('LIMITED_NUMBER_OF_SERVICE_REQUESTS_PER_SECOND_EXCEEDS_ERROR'), false);
+  const e = new Error('초당 호출 한도'); e.throttled = true; e.status = 429; assert.equal(isQuotaError(e), false); assert.equal(isThrottle(e), true);
+  assert.equal(isQuotaError(new Error('LIMITED_NUMBER_OF_SERVICE_REQUESTS_PER_SECOND_EXCEEDS_ERROR')), false);
+  const daily = { OpenAPI_ServiceResponse: { cmmMsgHeader: { errMsg: 'SERVICE ERROR', returnAuthMsg: 'LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR', returnReasonCode: '22' } } };
+  assert.equal(isQuotaError(daily), true); assert.equal(isThrottle(daily), false);                                                           // 일일 한도는 그대로
+  assert.equal(isQuotaError({ status: 429 }), true); assert.equal(isQuotaError('LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR'), true);
+});

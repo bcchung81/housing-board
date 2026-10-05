@@ -15,6 +15,23 @@
       "includeFiles": "regions/{index.json,*/region.json}",
       "maxDuration": 20,
       "excludeFiles": "{.cache/**,regions/*/{buildings,projects,context,infra}.json}"
+    },
+    "api/v1/codes/search.js": {
+      "includeFiles": "regions/{index.json,*/region.json}",
+      "maxDuration": 20,
+      "excludeFiles": "{.cache/**,regions/*/{buildings,projects,context,infra}.json}"
+    },
+    "api/v1/buildings.js": {
+      "excludeFiles": "{.cache/**,regions/**}",
+      "maxDuration": 30
+    },
+    "api/v1/permits.js": {
+      "excludeFiles": "{.cache/**,regions/**}",
+      "maxDuration": 30
+    },
+    "api/v1/infra.js": {
+      "excludeFiles": "{.cache/**,regions/**}",
+      "maxDuration": 30
     }
   },
   "headers": [

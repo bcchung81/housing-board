@@ -13,7 +13,8 @@ const say = (m) => { $('#sr').textContent = m; };
 
 /* ---------- 데이터 ---------- */
 const GY = window.GY_BUILDINGS, PR = window.GY_PROJECTS;
-const HAS_GY = !!(GY && GY.features && GY.features.length);
+const DYN_ON = !!(GY && GY.dynamic) && new URLSearchParams(location.search).get('dyn') !== '0';   // 건물을 요청 시 칸 단위로 불러 붙이는가(번들이 없는 지역, 또는 번들 밖)
+const HAS_GY = !!(GY && GY.features && (GY.features.length || GY.dynamic));
 const HAS_PR = !!(PR && PR.blocks && PR.blocks.length);
 const REG = window.REGION || {};                               // 지역 정보(어댑터가 채움): 이름·시작 위치·출처·단지 찾기
 const DISTRICTS = HAS_PR ? (PR.districts && PR.districts.length ? PR.districts : (PR.district ? [PR.district] : [])) : [];   // 지구 경계(여러 개 가능)
@@ -56,6 +57,7 @@ function floorsRange(b) { const fl = b.dongs ? b.dongs.map((d) => d.floors) : nu
 
 const ST = { n: 0, src: { '공식높이': 0, '층수환산': 0, '정보없음': 0 } };
 if (HAS_GY) GY.features.forEach((f, i) => { f.properties.i = i; ST.n++; ST.src[f.properties.src]++; });
+const STATIC_N = HAS_GY ? GY.features.length : 0;   // 번들에 든 건물 수(요청 시 조회로 붙는 것과 구분)
 
 /* ---------- 지도 ---------- */
 const KEY = String(window.VWORLD_KEY || '').trim();
@@ -311,8 +313,8 @@ function ctxGeoJSON() {
    점검 문구와 거리 계산은 InfraLib(assets/js/infra.js). 도시계획시설의 '집행' 표기는 건립 여부와 맞지 않아 싣지 않는다. */
 const INFRA = window.GY_INFRA || null, IL = window.InfraLib, FL = window.FacilityLib;
 /* 기존 건물 중 기반시설(학교·병원·공공·복지): 건물 속성 fc 에 분류를 남기고(색·팝업), 이름 있는 것은 라벨 점으로 모은다 */
-const FAC = HAS_GY && FL ? FL.annotate(GY.features) : { count: { edu: 0, med: 0, pub: 0 }, points: { type: 'FeatureCollection', features: [] } };
-const HAS_FAC = FAC.count.edu + FAC.count.med + FAC.count.pub > 0;
+let FAC = HAS_GY && FL ? FL.annotate(GY.features) : { count: { edu: 0, med: 0, pub: 0 }, points: { type: 'FeatureCollection', features: [] } };
+const HAS_FAC = DYN_ON || FAC.count.edu + FAC.count.med + FAC.count.pub > 0;   // 요청 시 조회하면 나중에 생기므로 레이어를 미리 만든다
 const HAS_INFRA = !!(INFRA && IL && HAS_PR && ['schools', 'zones', 'stops', 'sites', 'permits', 'measures', 'attendance'].some((k) => (INFRA[k] || []).length));
 if (viewMode === 'infra' && !HAS_INFRA) viewMode = 'floors';
 const INFRA_PICKS = ['infra-school', 'infra-site-ic', 'infra-stop', 'infra-site-fill'];
@@ -421,10 +423,13 @@ function paintBuildings() {
 /* 기존 건물 그림자: 북서 해 기준으로 높이 0.6배를 남동쪽으로 늘어뜨린 바닥 판. 3 m 이상 건물만, 확대 14.3 이상에서 처음 필요할 때 만든다
    (16,696동 · 약 5.5 MB라 시작을 느리게 하지 않으려고). 얇은 불투명도 extrusion이라 서로 겹쳐도 이중으로 어두워지지 않는다. */
 const shadowStyle = () => (['#1c2230', 0.3]);
+function officialShadowData() {
+  const L = []; GY.features.forEach((f) => { const p = f.properties; if (p.eh < 3) return; const ring = f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0]; L.push({ type: 'Feature', properties: { h: p.eh, status: '' }, geometry: { type: 'Polygon', coordinates: [ring] } }); });
+  return shadowGeoJSON(L);
+}
 function addOfficialShadows() {
   if (!HAS_GY || map.getSource('official-shadow') || !map.getLayer('official-3d')) return;
-  const L = []; GY.features.forEach((f) => { const p = f.properties; if (p.eh < 3) return; const ring = f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0]; L.push({ type: 'Feature', properties: { h: p.eh, status: '' }, geometry: { type: 'Polygon', coordinates: [ring] } }); });
-  map.addSource('official-shadow', { type: 'geojson', data: shadowGeoJSON(L), maxzoom: 16 });
+  map.addSource('official-shadow', { type: 'geojson', data: officialShadowData(), maxzoom: 16 });
   const sh = shadowStyle();
   map.addLayer({ id: 'official-shadow', type: 'fill-extrusion', source: 'official-shadow', minzoom: 14.3,
     paint: { 'fill-extrusion-color': sh[0], 'fill-extrusion-height': 0.06, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': dimExisting ? sh[1] * 0.35 : sh[1] } }, 'official-3d');
@@ -625,9 +630,104 @@ function setupCustom() {
 map.on('style.load', setupCustom);
 map.on('zoom', () => { if (map.getZoom() >= 14.3) addOfficialShadows(); });
 
+/* ---------- 건물 요청 시 조회(번들이 없는 지역 · 번들 밖) ----------
+   GY 를 '자라는 배열'로 둔다. 지도에 보이는 0.01° 칸(약 0.9×1.1 km)을 /api/v1/buildings 로 받아 GY.features 에 붙이면
+   3D·색·학교/병원 강조·그림자·선택이 기존 경로 그대로 동작한다. 번들 건물이 있으면 번들 영역(box) 안은 번들이 맡고 밖만 조회한다.
+   서버가 없거나(404·405·503) 키가 없으면 더 부르지 않는다. 스펙: docs/product/상황판-스펙.md 4절(등급 B·C) */
+const DYN = { on: DYN_ON, off: false, minZ: 14.6, maxCells: 12, maxFeatures: 60000, conc: 3, cells: new Map(), queue: [], inflight: 0, added: 0, failed: 0, truncated: 0, full: false, timer: 0, box: null };
+function featCenter(g) {
+  const ring = g && (g.type === 'Polygon' ? g.coordinates[0] : g.type === 'MultiPolygon' ? g.coordinates[0][0] : null);
+  if (!ring || !ring.length) return null;
+  const n = ring.length > 1 && ring[0][0] === ring[ring.length - 1][0] && ring[0][1] === ring[ring.length - 1][1] ? ring.length - 1 : ring.length;
+  let x = 0, y = 0; for (let i = 0; i < n; i++) { x += ring[i][0]; y += ring[i][1]; }
+  return [x / n, y / n];
+}
+if (DYN.on && STATIC_N) {   // 번들 건물이 차지한 영역
+  let x0 = 180, y0 = 90, x1 = -180, y1 = -90;
+  for (const f of GY.features) { const g = f.geometry, polys = g.type === 'Polygon' ? [g.coordinates] : g.coordinates; for (const p of polys) for (const [x, y] of p[0]) { if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; } }
+  DYN.box = [x0, y0, x1, y1];
+}
+const inBox = (c) => !!(DYN.box && c && c[0] >= DYN.box[0] && c[0] <= DYN.box[2] && c[1] >= DYN.box[1] && c[1] <= DYN.box[3]);
+const cellInBox = (ix, iy) => !!(DYN.box && ix / 100 >= DYN.box[0] && (ix + 1) / 100 <= DYN.box[2] && iy / 100 >= DYN.box[1] && (iy + 1) / 100 <= DYN.box[3]);
+function addBuildings(feats) {
+  for (const f of feats) {
+    if (GY.features.length >= DYN.maxFeatures) { DYN.full = true; break; }
+    if (!f || !f.geometry || inBox(featCenter(f.geometry))) continue;
+    const i = GY.features.length;
+    f.properties.i = i; GY.features.push(f); ST.n++; ST.src[f.properties.src] = (ST.src[f.properties.src] || 0) + 1; DYN.added++;
+  }
+}
+function flushBuildings() {   // 붙은 건물을 지도에 반영: 색 → 학교·병원 강조 → 소스 → 그림자
+  DYN.timer = 0;
+  const t0 = performance.now();
+  paintBuildings();
+  if (FL) { FAC = FL.annotate(GY.features); const s = map.getSource('fac-pts'); if (s) s.setData(FAC.points); }
+  const o = map.getSource('official'); if (o) o.setData(GY);
+  const sh = map.getSource('official-shadow'); if (sh) sh.setData(officialShadowData());
+  $('#basis').textContent = `${BASIS} · 건물 ${fmt(GY.features.length)}동`;
+  DYN.flushMs = Math.round(performance.now() - t0); DYN.flushes = (DYN.flushes || 0) + 1;   // 시험용: 반영에 걸린 시간(ms)
+  updateDynHint();
+}
+const scheduleFlush = () => { if (!DYN.timer) DYN.timer = setTimeout(flushBuildings, 150); };
+function updateDynHint() {
+  const el = $('#dynHint'); if (!el) return;
+  let t = '';
+  if (DYN.on && !DYN.off) {
+    if (map.getZoom() < DYN.minZ) t = `건물은 지도를 확대(${DYN.minZ.toFixed(1)} 이상)하면 요청 시 불러옵니다`;
+    else if (DYN.inflight || DYN.queue.length) t = '건물 불러오는 중…';
+    else if (DYN.full) t = `건물이 많아 ${fmt(DYN.maxFeatures)}동까지만 불러왔습니다`;
+    else if (DYN.failed) t = '일부 건물을 불러오지 못했습니다(잠시 뒤 다시 시도)';
+    else if (DYN.truncated) t = '건물이 아주 많은 칸은 일부만 불러왔습니다';
+  } else if (DYN.on && DYN.off) t = '건물 조회 서버가 없어 건물은 보이지 않습니다';
+  el.textContent = t; el.hidden = !t;
+}
+async function dynFetchCell(ix, iy) {
+  const key = `${ix},${iy}`;
+  DYN.cells.set(key, 'loading'); DYN.inflight++; updateDynHint();
+  try {
+    const res = await fetch(`api/v1/buildings?cell=${key}`);
+    if ([404, 405, 503].includes(res.status)) { DYN.off = true; DYN.cells.delete(key); console.warn(`건물 조회: /api/v1/buildings 를 쓸 수 없습니다(${res.status}). 로컬에서는 ./run-app.sh 로 여세요.`); return; }
+    if (!res.ok) throw new Error(String(res.status));
+    const data = await res.json();
+    if (!data || data.type !== 'FeatureCollection' || !Array.isArray(data.features)) throw new Error('shape');
+    addBuildings(data.features); DYN.cells.set(key, 'done');
+    if (data.meta && data.meta.truncated) DYN.truncated++;
+    if (DYN.failed) DYN.failed--;
+  } catch (e) { DYN.cells.set(key, Date.now() + 30000); DYN.failed++; }   // 30초 뒤 다시 시도할 수 있다
+  finally { DYN.inflight--; scheduleFlush(); dynPump(); }
+}
+function dynPump() {
+  while (!DYN.off && DYN.inflight < DYN.conc && DYN.queue.length) {
+    const [ix, iy] = DYN.queue.shift(), st = DYN.cells.get(`${ix},${iy}`);
+    if (st === 'done' || st === 'loading') continue;
+    dynFetchCell(ix, iy);
+  }
+  if (!DYN.inflight && !DYN.queue.length) updateDynHint();
+}
+function dynLoad() {   // 지도가 멈출 때마다 보이는 칸 중 아직 없는 것을 중심에서 가까운 순으로 최대 maxCells 개
+  updateDynHint();
+  if (!DYN.on || DYN.off || DYN.full || map.getZoom() < DYN.minZ) return;
+  const b = map.getBounds(), c = map.getCenter(), want = [];
+  const ix0 = Math.floor(b.getWest() * 100), ix1 = Math.floor(b.getEast() * 100), iy0 = Math.floor(b.getSouth() * 100), iy1 = Math.floor(b.getNorth() * 100);
+  if ((ix1 - ix0 + 1) * (iy1 - iy0 + 1) > 400) return;   // 비정상적으로 넓은 화면(아주 멀리 보는 기울기)은 건물이 의미 없다
+  for (let ix = ix0; ix <= ix1; ix++) for (let iy = iy0; iy <= iy1; iy++) {
+    const st = DYN.cells.get(`${ix},${iy}`);
+    if (st === 'done' || st === 'loading' || (typeof st === 'number' && st > Date.now()) || cellInBox(ix, iy)) continue;
+    want.push([ix, iy, Math.hypot((ix + 0.5) / 100 - c.lng, ((iy + 0.5) / 100 - c.lat) * 1.25)]);
+  }
+  want.sort((a, d) => a[2] - d[2]);
+  DYN.queue = want.slice(0, DYN.maxCells).map(([ix, iy]) => [ix, iy]);
+  dynPump();
+}
+window.getMapCenter = () => { const c = map.getCenter(); return [c.lng, c.lat]; };   // 주소 이동 입력줄이 장소 이름을 가까운 곳 먼저 찾으려고 읽는다(goto.js)
+if (q.get('selftest')) window.__dyn = DYN;   // 시험용: 요청 시 조회 상태
+if (DYN.on) { map.on('moveend', dynLoad); map.on('zoom', updateDynHint); map.once('idle', dynLoad); }
+
 
 /* ---------- 팝업 ---------- */
-const BASIS = HAS_GY ? String(GY.meta.basis).replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3') : '-';
+const TODAY = new Date().toISOString().slice(0, 10);
+const BASIS_STATIC = HAS_GY && GY.meta.basis ? String(GY.meta.basis).replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3') : '';
+const BASIS = DYN_ON ? (BASIS_STATIC ? `${BASIS_STATIC}(번들) · 번들 밖은 ${TODAY} 조회` : `${TODAY} 조회(요청 시)`) : HAS_GY ? BASIS_STATIC : '-';
 /* 카드는 건물을 가리지 않도록 건물의 오른쪽(없으면 왼쪽, 그것도 없으면 위)에 띄운다. */
 const PW = 236 + 12;           // 카드 폭 + 꼬리
 function bboxOf(rings, hM) {
@@ -1449,7 +1549,7 @@ map.on('idle', () => {
   if (firstIdle) {
     firstIdle = false; $('#loading').hidden = true;
     const at = document.querySelector('.maplibregl-ctrl-attrib'); if (at) { at.classList.remove('maplibregl-compact-show'); at.removeAttribute('open'); }   // 출처 표기는 접어 두고 ⓘ를 누르면 펼친다
-    const want = q.get('block'), wb = want && REG.resolveBlock ? REG.resolveBlock(want) : null; if (wb && BLOCKS.includes(wb)) focusBlock(wb.id, { toggle: false });
+    const want = q.get('block') || (RES && RES.block), wb = want && REG.resolveBlock ? REG.resolveBlock(want) : null; if (wb && BLOCKS.includes(wb)) focusBlock(wb.id, { toggle: false });   // 주소 ?block= 이 우선, 없으면 필지로 열었을 때 그 필지의 인허가 단지
   }
   const c = map.getCenter(); s.center = [c.lng, c.lat]; s.zoom = map.getZoom(); s.pitch = map.getPitch(); s.terrain = !!map.getTerrain();
   try {

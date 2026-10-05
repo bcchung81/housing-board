@@ -3,7 +3,7 @@
 
   python3 tools/regiontools/build_region.py gwangju-gwangsan|jeonnam-naju [--cache-dir DIR] [--out DIR]
 
-키(.env.local의 DATA_GO_KR_KEY·VWORLD_KEY·VWORLD_DOMAIN)가 있을 때만 동작한다. 키·요청 URL은 출력하지 않는다.
+키(.env.local의 DATA_GO_KR_KEY·VWORLD_KEY 또는 VWORLD_DEV_KEY·VWORLD_DOMAIN)가 있을 때만 동작한다. 키·요청 URL은 출력하지 않는다.
 --cache-dir(또는 환경변수 REGIONBUILD_CACHE)를 주면 응답을 그 폴더에 캐시한다. 저장소 밖 폴더를 쓴다.
 
 단지를 올리는 근거(정의서 4·5·9절):

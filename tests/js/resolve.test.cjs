@@ -149,3 +149,23 @@ test('readCoverage: 운영(production)에서는 미리보기(preview) 지역을 
   assert.deepEqual(Object.keys(R.readCoverage(root, true)), ['11111']);
   fs.rmSync(root, { recursive: true, force: true });
 });
+
+test('vworldCreds: Vercel 에서는 운영키(VWORLD_KEY), 로컬에서는 개발키(VWORLD_DEV_KEY)가 있으면 그것, domain 은 VWORLD_DOMAIN 우선', () => {
+  const both = { VWORLD_KEY: 'op', VWORLD_DEV_KEY: 'dev', VWORLD_DOMAIN: 'localhost' };
+  assert.deepEqual(R.vworldCreds(both), { key: 'dev', domain: 'localhost' });
+  assert.deepEqual(R.vworldCreds({ ...both, VERCEL: '1', VWORLD_DOMAIN: 'housing-board.vercel.app' }), { key: 'op', domain: 'housing-board.vercel.app' });
+  assert.deepEqual(R.vworldCreds({ VWORLD_KEY: 'op' }), { key: 'op', domain: 'localhost' });                       // 개발키가 없으면 VWORLD_KEY
+  assert.deepEqual(R.vworldCreds({ VWORLD_KEY: 'op', VERCEL: '1', VERCEL_PROJECT_PRODUCTION_URL: 'x.vercel.app' }), { key: 'op', domain: 'x.vercel.app' });
+  assert.equal(R.vworldCreds({}).key, undefined);
+});
+
+test('V-World 호출: 로컬이면 개발키와 domain 을 요청에 싣고(운영키는 안 씀), 키 값은 응답에 나오지 않는다', async () => {
+  const h = harness({ env: { DATA_GO_KR_KEY_RESOLVE_1: 'dgk', VWORLD_KEY: 'OPERATING-KEY', VWORLD_DEV_KEY: 'DEVELOPMENT-KEY', VWORLD_DOMAIN: 'localhost' } });
+  const r = await h.run('/api/v1/resolve?bjd=2824510900');
+  assert.equal(r.status, 200);
+  const vw = h.calls.filter((u) => u.includes('api.vworld.kr'));
+  assert.ok(vw.length >= 1);
+  for (const u of vw) { assert.ok(u.includes('key=DEVELOPMENT-KEY') && u.includes('domain=localhost'), u); assert.ok(!u.includes('OPERATING-KEY')); }
+  assert.ok(!JSON.stringify(r).includes('DEVELOPMENT-KEY') && !JSON.stringify(r).includes('OPERATING-KEY'));
+  h.done();
+});

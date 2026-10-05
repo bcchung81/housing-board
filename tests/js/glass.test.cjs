@@ -113,3 +113,42 @@ test('상태 칩과 막대 같은 작은 색 요소는 불투명을 유지한다
   assert.match(css, /\.pc-chip\.priv\{background:#ECEAE6/);
   assert.doesNotMatch(css, /\.pc-chip[^{]*\{[^}]*rgba\(/);
 });
+
+/* ---------- 주소 이동 입력줄: 어두운 유리 3단(입력 중 > 대기 > 비활성) ---------- */
+const DARK = { bright: parseFloat(VARS['--glass-dark-bright']), active: glass('--glass-dark-active'), idle: glass('--glass-dark-idle'), off: glass('--glass-dark-off') };
+const darkBg = (g, bd) => over(g, press(hex(bd), DARK.bright));   // 가장 밝은 지도가 뒤에 있을 때가 흰 글자에 가장 불리하다
+const blendText = (alpha, bg) => bg.map((v) => 255 * alpha + v * (1 - alpha));   // 반투명 흰 글자(자리표시)가 유리 위에서 실제로 보이는 색
+
+test('어두운 유리: 상태가 투명도로 구별된다(입력 중 .80~.92 > 대기 .55~.70 > 비활성 .40~.55)', () => {
+  const [a, i, o] = [DARK.active[3], DARK.idle[3], DARK.off[3]];
+  assert.ok(a >= 0.8 && a <= 0.92, `입력 중 ${a}`); assert.ok(i >= 0.55 && i <= 0.7, `대기 ${i}`); assert.ok(o >= 0.4 && o <= 0.55, `비활성 ${o}`);
+  assert.ok(a > i && i > o, '입력 중 > 대기 > 비활성 순서로 투명해져야 한다');
+  assert.ok(DARK.bright > 0.7 && DARK.bright < 1, `어두운 유리 뒤 지도 밝기 ${DARK.bright}(약하게 눌러 흰 글자 대비를 지킨다)`);
+  assert.match(css, /--glass-dark-blur:blur\(\d+px\) brightness\(var\(--glass-dark-bright\)\)/);
+});
+
+test('어두운 유리: 입력 중·대기는 밝은 지도·어두운 지도 위에서 흰 글자·보조 글자·자리표시가 4.5:1 이상, 비활성은 3:1 이상', () => {
+  const placeholder = Number(/\.cmd-bar input::placeholder\{color:rgba\(255,255,255,([\d.]+)\)/.exec(css)[1]);
+  const sub = hex(VARS['--cmd-sub']), tier = hex('#E4E6E9'), white = [255, 255, 255];
+  for (const bd of [DAY.lightest, DAY.darkest]) {
+    const act = darkBg(DARK.active, bd), sel = over([255, 255, 255, 0.16], act);   // 고른 줄은 흰 막을 한 겹 더 쓴다
+    for (const [name, tx, bg] of [['입력 중 흰 글자', white, act], ['입력 중 보조', sub, act], ['입력 중 보조(고른 줄)', sub, sel], ['입력 중 유형 글자(고른 줄)', tier, sel]]) {
+      const r = ratio(tx, bg); assert.ok(r >= 4.5, `${name} ${bd} 지도 위 ${r.toFixed(2)}:1`);
+    }
+    const idle = darkBg(DARK.idle, bd);
+    for (const [name, tx] of [['대기 흰 글자', white], ['대기 자리표시', blendText(placeholder, idle)]]) { const r = ratio(tx, idle); assert.ok(r >= 4.5, `${name} ${bd} 지도 위 ${r.toFixed(2)}:1`); }
+    const off = darkBg(DARK.off, bd);
+    for (const [name, tx] of [['비활성 흰 글자', white], ['비활성 자리표시(이유 문구)', blendText(placeholder, off)]]) { const r = ratio(tx, off); assert.ok(r >= 3, `${name} ${bd} 지도 위 ${r.toFixed(2)}:1 (비활성은 3:1)`); }
+  }
+});
+
+test('어두운 유리: 입력줄·후보·인식 칩이 상태별 변수와 backdrop-filter 를 쓰고, backdrop-filter 없는 브라우저는 거의 불투명', () => {
+  const rule = (sel) => { const m = new RegExp(`(?:^|\\n)${sel.replace(/[.\[\]="]/g, '\\$&')}\\{([^}]*)\\}`).exec(css); assert.ok(m, `${sel} 규칙을 찾을 수 없음`); return m[1]; };
+  const g = rule('.cmd-bar,.cmd-res,.cmd-parse');
+  assert.match(g, /background:var\(--cmd-bg\)/); assert.match(g, /-webkit-backdrop-filter:var\(--glass-dark-blur\)/); assert.match(g, /[^-]backdrop-filter:var\(--glass-dark-blur\)/);
+  assert.match(rule('.cmd'), /--cmd-bg:var\(--glass-dark-idle\)/);
+  assert.match(rule('.cmd[data-state="active"],.cmd[data-state="busy"]'), /--cmd-bg:var\(--glass-dark-active\)/);
+  assert.match(rule('.cmd[data-state="disabled"]'), /--cmd-bg:var\(--glass-dark-off\)/);
+  const fb = /@supports not[^{]*\{\s*:root\{([^}]*)\}\}/.exec(css)[1];
+  for (const n of ['--glass-dark-active', '--glass-dark-idle', '--glass-dark-off']) { const m = new RegExp(`${n}:rgba\\(\\d+,\\d+,\\d+,([\\d.]+)\\)`).exec(fb); assert.ok(m && +m[1] >= 0.94, `${n} 대체값`); }
+});

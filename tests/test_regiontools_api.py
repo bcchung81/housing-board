@@ -311,3 +311,28 @@ class BuildKeyPool(unittest.TestCase):
 
     def test_cache_key_ignores_which_key_was_used(self):
         self.assertEqual(api.cache_key("n", {"serviceKey": "k1", "a": 1}), api.cache_key("n", {"serviceKey": "k2", "a": 1}))
+
+
+class VWorldKeyChoice(unittest.TestCase):
+    def _load(self, text):
+        tmp = tempfile.TemporaryDirectory()
+        self.addCleanup(tmp.cleanup)
+        p = Path(tmp.name) / ".env.local"
+        p.write_text(text, encoding="utf-8")
+        return api.load_keys(p)
+
+    def test_dev_key_is_preferred_for_local_tools_and_both_are_redacted(self):
+        keys = self._load("DATA_GO_KR_KEY=d\nVWORLD_KEY=operating-key\nVWORLD_DEV_KEY=development-key\nVWORLD_DOMAIN=localhost\n")
+        self.assertEqual(keys.vworld, "development-key")
+        self.assertEqual(keys.vworld_other, ("operating-key",))
+        text = api.redact("호출 operating-key / development-key 실패", keys.secrets())
+        self.assertNotIn("operating-key", text)
+        self.assertNotIn("development-key", text)
+
+    def test_falls_back_to_vworld_key_and_requires_one_of_them(self):
+        keys = self._load("DATA_GO_KR_KEY=d\nVWORLD_KEY=operating-key\nVWORLD_DOMAIN=localhost\n")
+        self.assertEqual(keys.vworld, "operating-key")
+        self.assertEqual(keys.vworld_other, ())
+        with self.assertRaises(api.MissingKey) as cm:
+            self._load("DATA_GO_KR_KEY=d\nVWORLD_DOMAIN=localhost\n")
+        self.assertIn("VWORLD_DEV_KEY", str(cm.exception))

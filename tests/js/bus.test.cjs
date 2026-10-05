@@ -266,3 +266,29 @@ test('run-app.sh: 실행 권한이 있고, 개발 서버(scripts/dev.js)를 열�
   assert.match(sh, /NO_OPEN/);
   assert.doesNotMatch(sh.split('\n').filter((l) => !l.trim().startsWith('#')).join('\n'), /http\.server/);   // 정적 서버로 여는 줄은 없다(주석 설명 제외)
 });
+
+test('run-app.sh: 첫 화면을 코드로 연다(기본 41450 하남시, 인자·START_CODE·region:<slug>), 자릿수로 종류를 정하고, 키가 없으면 계양 번들로 연다', () => {
+  const { spawnSync } = require('node:child_process'), os = require('node:os');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'runapp-'));
+  fs.copyFileSync(path.join(__dirname, '../../run-app.sh'), path.join(dir, 'run-app.sh')); fs.chmodSync(path.join(dir, 'run-app.sh'), 0o755);
+  const run = (args, env = {}) => spawnSync('bash', [path.join(dir, 'run-app.sh'), ...args], { env: { PATH: process.env.PATH, DRY_RUN: '1', ...env }, encoding: 'utf8', cwd: dir });
+  const last = (r) => r.stdout.trim().split('\n').pop();
+  fs.writeFileSync(path.join(dir, '.env.local'), 'DATA_GO_KR_KEY=dummy\n');
+  assert.equal(last(run([])), 'http://127.0.0.1:8000/?sgg=41450');                                              // 기본: 경기도 하남시
+  assert.equal(last(run(['8123', '28245'])), 'http://127.0.0.1:8123/?sgg=28245');
+  assert.equal(last(run(['8123', '4145011100'])), 'http://127.0.0.1:8123/?bjd=4145011100');
+  assert.equal(last(run(['8123', '41450111'])), 'http://127.0.0.1:8123/?bjd=41450111');
+  assert.equal(last(run(['8123', '1129013800100740307'])), 'http://127.0.0.1:8123/?pnu=1129013800100740307');
+  assert.equal(last(run(['8123', 'region:jeonnam-naju'])), 'http://127.0.0.1:8123/?region=jeonnam-naju');
+  assert.equal(last(run(['8123'], { START_CODE: '12330' })), 'http://127.0.0.1:8123/?sgg=12330');
+  assert.equal(last(run(['8123', '28245'], { START_CODE: '12330' })), 'http://127.0.0.1:8123/?sgg=28245');         // 인자가 환경변수보다 우선
+  for (const bad of ['12345678901', 'abc', '123']) { const r = run(['8123', bad]); assert.equal(r.status, 2, bad); assert.match(r.stderr, /코드/); }
+  assert.equal(run(['abc']).status, 2);                                                                            // 포트 검사는 그대로
+  // 코드 해석 키가 없으면 코드를 해석할 수 없으므로 계양 번들로 연다(번들 주소는 키가 없어도 그대로)
+  fs.writeFileSync(path.join(dir, '.env.local'), 'VWORLD_KEY=x\n');
+  const nokey = run(['8123', '41450']); assert.equal(last(nokey), 'http://127.0.0.1:8123/?region=incheon-gyeyang'); assert.match(nokey.stderr, /해석할 수 없습니다/);
+  assert.equal(last(run(['8123', 'region:jeonnam-naju'])), 'http://127.0.0.1:8123/?region=jeonnam-naju');
+  fs.writeFileSync(path.join(dir, '.env.local'), 'DATA_GO_KR_KEY_RESOLVE_1=k\n');
+  assert.equal(last(run(['8123', '41450'])), 'http://127.0.0.1:8123/?sgg=41450');                                   // 용도별 키만 있어도 열린다
+  fs.rmSync(dir, { recursive: true, force: true });
+});
