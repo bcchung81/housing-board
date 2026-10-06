@@ -56,7 +56,7 @@
 
 - **배포물** = `scripts/build.js`가 `public/`에 모으는 `index.html` · `assets/` · `regions/`(`index.json`에 오른 지역만) · `config.js`. `workspace/` `tools/` `tests/` `docs/` `schemas/`와 `*.md`는 올라가지 않습니다. 서버 함수(`api/bus.js`·`api/v1/resolve.js`)는 `public/`에 복사되지 않고 저장소 루트의 `api/`에서 Vercel이 따로 빌드합니다(두 함수 모두 라이브에서 200, 확인함. `lib/`는 함수가 가져가고 `regions/` 파일은 `vercel.json`의 `includeFiles`로 올라가며 `.cache/`와 큰 번들은 `excludeFiles`로 뺍니다. 함수 지역은 서울 `icn1`). [코드] `scripts/build.js` · `.vercelignore` · `vercel.json`
 - **라이브** — 2026-10-05 16:39 KST 배포입니다(확인함. 처음 배포는 16:28이고 V-World 설정을 고쳐 여러 번 다시 배포함). 화면 스크립트는 `app.js` `region.js` `infra.js` `facility.js` `bus.js`이고 계양 번들에 `infra.json`이 있으며 `/api/bus?region=incheon-gyeyang`이 200으로 버스 28대를, `/api/v1/resolve`가 법정동·필지 경계를 줍니다. 헤더에 `X-Frame-Options: DENY`와 `frame-ancestors 'none'`이 있습니다. Vercel 환경변수는 `DATA_GO_KR_KEY`·`VWORLD_KEY`·`VWORLD_DOMAIN`(값 `housing-board.vercel.app`, Production·Preview)이며 `VWORLD_KEY`는 운영키입니다. 로컬 `.env.local`의 `VWORLD_DEV_KEY`는 Vercel에 올리지 않았습니다. 용도별 키는 용도별 키(`DATA_GO_KR_KEY_BUS_<N>` 등)는 아직 없습니다(없으면 `DATA_GO_KR_KEY`를 씁니다). 지역 3개(계양 · 광산구 · 나주)가 모두 `visibility: public`입니다. 계양 라이브 번들은 약 6.1 MB(MB=10⁶ B)이고 그중 건물이 6.0 MB입니다.
-- **다음 배포** = (2026-10-05 19:44에 모두 배포되어 지금은 비어 있음. 아래는 그 배포에 들어간 변경으로, 저장소에는 커밋 전입니다.) **번들 없는 지역 열기와 건물 요청 시 조회**입니다: `assets/js/region.js`(`emptyBundle`, `dynParam`, 경계 `geometry=1`), `assets/js/app.js`(`DYN`: 칸 불러오기·붙이기·반영), `index.html`·`app.css`(`#dynHint`), `api/v1/buildings.js`, `lib/buildings.js`, `lib/vworld.js`, `vercel.json`(`buildings` 함수 설정), `env.example`(`BUILDINGS_UPSTREAM_PER_HOUR`). **인허가 사업 요청 시 조회**: `api/v1/permits.js`, `lib/permits.js`, `lib/geom.js`(경계 단순화 공용), `region.js`(`permitsToProjects`·`fetchPermits`), `app.js`(필지로 열면 단지 선택), `vercel.json`(`permits`·`infra` 함수), `env.example`(`PERMITS_UPSTREAM_PER_HOUR`·`INFRA_UPSTREAM_PER_HOUR`), **기반시설 요청 시 조회**(`api/v1/infra.js`, `lib/infra.js`, `lib/datagokr.js`: 공공데이터포털 한 쪽 조회·재시도·한도 공용, `region.js`의 `fetchInfra`), **인허가 한계 보완**(블록 단위 허가 목록·필지 못 찾은 원인·예정일 경과·후보 0 안내), **건물대장 보강**(`lib/stan.js`, `lib/permits.js`의 `matchLedger`, `env.example`의 `LEDGER_UPSTREAM_PER_HOUR`·`hubledger`), `run-app.sh [포트] [코드]`(첫 화면을 코드로 열기, 기본 `41450`). 이전 배포의 변경(표준코드 진입·버튼 조회·키 풀·프레임 차단·함수 지역 `icn1`)은 이미 라이브입니다.
+- **다음 배포** = (2026-10-05 19:44에 모두 배포되어 지금은 비어 있음. 아래는 그 배포에 들어간 변경으로, 저장소에는 커밋됨입니다.) **번들 없는 지역 열기와 건물 요청 시 조회**입니다: `assets/js/region.js`(`emptyBundle`, `dynParam`, 경계 `geometry=1`), `assets/js/app.js`(`DYN`: 칸 불러오기·붙이기·반영), `index.html`·`app.css`(`#dynHint`), `api/v1/buildings.js`, `lib/buildings.js`, `lib/vworld.js`, `vercel.json`(`buildings` 함수 설정), `env.example`(`BUILDINGS_UPSTREAM_PER_HOUR`). **인허가 사업 요청 시 조회**: `api/v1/permits.js`, `lib/permits.js`, `lib/geom.js`(경계 단순화 공용), `region.js`(`permitsToProjects`·`fetchPermits`), `app.js`(필지로 열면 단지 선택), `vercel.json`(`permits`·`infra` 함수), `env.example`(`PERMITS_UPSTREAM_PER_HOUR`·`INFRA_UPSTREAM_PER_HOUR`), **기반시설 요청 시 조회**(`api/v1/infra.js`, `lib/infra.js`, `lib/datagokr.js`: 공공데이터포털 한 쪽 조회·재시도·한도 공용, `region.js`의 `fetchInfra`), **인허가 한계 보완**(블록 단위 허가 목록·필지 못 찾은 원인·예정일 경과·후보 0 안내), **건물대장 보강**(`lib/stan.js`, `lib/permits.js`의 `matchLedger`, `env.example`의 `LEDGER_UPSTREAM_PER_HOUR`·`hubledger`), `run-app.sh [포트] [코드]`(첫 화면을 코드로 열기, 기본 `41450`). 이전 배포의 변경(표준코드 진입·버튼 조회·키 풀·프레임 차단·함수 지역 `icn1`)은 이미 라이브입니다.
 
 ## 2. 데이터별 만드는 절차
 
@@ -289,7 +289,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 |---|---|
 | 입력 | `bjd` 하나뿐. **임의 좌표는 받지 않고** 그 법정동 인허가 결과에서 중심을 꺼내 씀(열린 중계 방지). 인허가 단지가 없으면 학교·정류소도 없고 외부 호출도 없음 |
 | 학교 | `tools/regiontools/infra.py`와 같은 변환(학교급 초·중·고·특수, 개교 년월, 학급·학생 수, 자료의 `pointX`=위도·`pointY`=경도). 단지 중심 2 km 안, 개교 빠른 순 |
-| 정류소 | TAGO `getCrdntPrxmtSttnList`(반경 약 500 m). 단지 중심마다 한 번, 이미 부른 중심에서 150 m 안이면 건너뜀(500 − 150 ≥ 점검 반경 300 m). 400 m 안만 싣고 정류소 번호가 있으면 `no`. 지나는 노선은 모름. **서울(시도 11)은 TAGO에 없어 부르지 않고** `meta.noBus`. TAGO에 정류소가 없는 지역(서울·강릉 등)은 **OpenStreetMap 정류장으로 대신**합니다(아래 "OSM 보조") |
+| 정류소 | TAGO `getCrdntPrxmtSttnList`(반경 약 500 m). 단지 중심마다 한 번, 이미 부른 중심에서 150 m 안이면 건너뜀(500 − 150 ≥ 점검 반경 300 m). 400 m 안만 싣고 정류소 번호가 있으면 `no`. 지나는 노선은 모름. **서울(시도 11)은 TAGO에 없어 부르지 않고**(2026-10-06부터 아래 서울시 정류소정보조회) `meta.noBus`. TAGO에 정류소가 없는 지역(서울·강릉 등)은 **OpenStreetMap 정류장으로 대신**합니다(아래 "OSM 보조") |
 | 키 | 인허가는 RESOLVE 용도(서비스 `hub`), 정류소는 BUS 용도(서비스 `tago`) 키 풀. 인스턴스별 시간당 TAGO 호출 상한 `INFRA_UPSTREAM_PER_HOUR`(기본 600) |
 | 실패 처리 | 학교·정류소 한쪽이 실패해도 나머지를 주고 `meta.schoolsError`·`stopsError`로 알리며(일부 정류소만 실패해도 알림) 캐시하지 않음. 인허가를 못 받으면 502. 화면은 15초까지만 기다리고 못 받으면 점검 없이 열며 "제때 불러오지 못해" 안내를 남김 |
 | 측정 | 하남 덕풍동: 인허가 단지 30곳 → 중심 20곳에 TAGO 20번, 정류소 117곳·신설 학교 3곳(미사4고 2027-03 · 교산1중 · 교산1초 2030-03), 첫 호출 2.7초(동시 6개일 때 9.9초라 10개로 올림), 캐시 0.002초. 서울 장위동: TAGO 건너뜀·학교 0 |
@@ -297,6 +297,8 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 한계 | 지나는 노선·실시간 버스 위치·통학구역·시설 부지(전기·차고지)는 없음. 교육재정알리미 값의 재배포 조건은 `unknown`(출처 표에 그대로 적음) |
 
 **속도(2026-10-05 전국 점검에서 발견)** — Vercel은 `api/` 함수마다 따로 돌아 `permits`와 `infra`의 메모리 캐시가 서로 다릅니다. 화면이 방금 인허가를 받았어도 `infra`가 인허가를 처음부터 다시 만들어 한 법정동에 **12~24초**가 걸렸습니다(부산 우동 18초·대구 범어동 24초·대전 봉명동 17초·김포 장기동 23초). 그래서 `infra`는 ① 로컬 캐시 → ② 이 프로젝트 호스트(`VERCEL_PROJECT_PRODUCTION_URL`, 요청의 Host 헤더는 쓰지 않음)의 `/api/v1/permits`(CDN 캐시 적중) → ③ 직접 만들기 순서로 인허가를 얻습니다. 화면의 대기는 12초에서 15초로 늘렸습니다.
+
+**서울시 정류소정보조회**(2026-10-06 운영 반영, `lib/seoul.js`·`seoulStops`) — 서울(시도 11) 법정동은 TAGO 대신 서울특별시 정류소정보조회(15000303) `http://ws.bus.go.kr/api/rest/stationinfo/getStationByPos` 를 먼저 부릅니다(**https 는 연결 시간 초과라 http**, 키는 같은 공공데이터포털 키, 키 풀 BUS·서비스 `seoul`). 단지 중심을 300 m 간격으로 골라 **최대 12곳**에 반경 700 m 로 묻고(300 + 점검 표시 400 ≤ 700) 400 m 안만 싣습니다. 응답은 `msgBody.itemList`(`stationId`·`stationNm`·`arsId` 번호·`gpsX` 경도·`gpsY` 위도), `headerCd` 0 정상·4 결과 없음. 개발계정이 **하루 1,000건**이라 인스턴스당 시간당 120건 상한(`SEOUL_UPSTREAM_PER_HOUR`)을 두고, 한도·연결 오류·상한이면 `meta.seoulError` 를 적고(짧게만 캐시) OSM 으로 물러납니다. 출처 id `seoul-bus`, 정류장 id `seoul-<stationId>`. 운영 확인: 성북구 장위동 정류소 112곳(7번 호출, `stopsSource: "seoul"`). **버스 위치(`getBusPosByRtid`)·경유 노선(`getRouteByStation`)은 호출만 확인했고 지도에 연결하지 않았습니다**(3D 버스는 노선 경로 선이 필요한데 노선정보조회가 이 키로 401). 상세는 조사기록 7.1.
 
 **OSM 보조**(`osmStops`, `lib/infra.js` `osmStop`) — TAGO 도시 목록에 없는 지역(서울, 근접정류소가 0곳인 곳)은 단지 중심 상자(0.12° 이하일 때만)를 **OpenStreetMap Overpass**에 `highway=bus_stop` · `public_transport=platform`+`bus=yes` 노드로 물어 이름이 있는 정류장만 `stops`에 넣고 `meta.stopsSource:'osm'`·출처 `osm-bus`(ODbL 표기)를 답니다. 공개 서버 두 곳(`overpass-api.de`·`overpass.kumi.systems`)에 동시에 물어 먼저 온 것을 쓰고(실측: 한 곳이 504·시간 초과를 자주 냄), 12초 제한, 24시간 캐시(`lib/cache.js` 상한). 실패해도 지도는 정류장 없이 열리고 `meta.stopsError`로 알리며, 두 서버가 모두 실패하면 **그 법정동은 2분간 다시 묻지 않습니다**(공개 서버를 두드리지 않고 보는 사람마다 12초씩 기다리지 않게). 실측: 같은 날 운영(서울 리전)에서 서울 4곳 중 3곳은 받았고 마곡동은 실패했으며, 이 개발 머신에서는 세 공개 서버(`overpass-api.de` 504·`kumi.systems`·`private.coffee` 시간 초과)가 모두 안 됐습니다 — **공개 Overpass는 믿을 수 없는 보조**입니다. 지나는 노선은 모릅니다.
 
@@ -335,6 +337,8 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 측정(운영) | 하남시 2건(2.1초, 첫 호출) · 인천 계양구 2 · 서울 성북구 1 · 수원시 1 · 제주시 2 · 부산 해운대구 0 · 서울 강남구 0. 건수가 0이어도 오류가 아닙니다(`meta.rental`·`sale`로 전국 건수는 보임) |
 | 위치 필드(2026-10-05 전수 확인) | 324건 중 **주소(`fullAdres`)가 있는 것 158건**(모두 PNU도 있음), **시군구 이름만 있는 것 86건**, **시도 이름만 있는 것 80건**(임대 80건: `[경기북부]`·`[경기남부]`·`[전북지역본부]` 같은 광역 매입임대·든든전세 공고) |
 | 한계 | 시도 이름만 있는 80건(25%)은 어느 시군구인지 알 수 없어 **어느 시군구에도 나오지 않습니다**. 건설 중인 단지와 공고를 연결하지 않음(하남 공고의 PNU는 2곳뿐). 분양 일정·경쟁률은 없음. 시군구 이름이 개편된 곳도 현재 행정표준코드의 이름과 공고의 이름이 같아 맞음(인천 서해구 6건) |
+
+**LH 분양임대공고문 합치기(2026-10-06 운영 반영)** — 같은 `/api/v1/notices` 가 LH 분양임대공고문(15058530)의 **진행 중(공고중·접수중·정정공고중) 주택 공고**(전국 약 150건, 1년 창, 상태별로 받아 1시간 캐시)를 마이홈 공고에 더합니다(`lib/lhnotice.js`, `source: "lh"`). LH 목록의 지역은 **시도뿐**이라 **제목에 시군구 이름·법정동 이름이 있을 때만** 그 시군구의 공고로 봅니다(구가 있는 시의 구는 구 이름만, 법정동 줄임말은 시도·시 줄임말 바로 뒤에 붙었을 때만 — 오탐 사례는 조사기록 7.2). 마이홈과 제목이 같은 공고는 마이홈 쪽만 두고, 고른 공고는 공급정보(15056765)로 **단지명·금회공급 세대수**를 채웁니다(공급정보에는 주소가 없음). **새로 더해지는 건 적습니다**: 전국 진행 중 LH 주택 공고 73건 중 마이홈에 없는 것은 7건(약 10%)이라 하남·익산은 0건, 아산시는 1건입니다. LH 쪽이 실패하면 마이홈 공고는 그대로 나가고 `meta.partial` 에 `lh`(공급정보만 실패하면 `lh-supply`)가 적힙니다. 키 풀 RESOLVE·서비스 `lh`.
 
 ### 2.21 인터페이스 정의와 전국 표본 점검 (2026-10-05 밤)
 
@@ -459,9 +463,9 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 버스정류소·노선 | TAGO API(근접정류소 격자 호출 → 경유노선 → live 노선 경로)를 번들 만들 때 한 번 받음. 예전에는 전국 버스정류장 CSV(15067528)를 ego lite로 받음 | **[자동]** | 있음(`build_infra.py` `build_bus`, `api.tago_*`) | TAGO 서비스 활용신청(처음 한 번, 포털에서) | 원천 갱신 주기는 확인하지 못함. 입주 때 생기는 정류소·노선은 번들을 다시 만들어야 반영 |
 | 버스 위치(노선별) | 화면이 서버 함수 `api/bus.js`를 거쳐 TAGO 버스위치정보(15098533)를 부름 | **[자동]**(실행 중) | 있음(`api/bus.js`) | 활용신청(키마다), 배포 시 `DATA_GO_KR_KEY_BUS_<N>`(또는 `DATA_GO_KR_KEY`) 환경변수 | 버튼을 누를 때만 조회(쿨다운 = 서버 ttl, 계양 60초). 라이브 |
 | 표준코드 해석(시군구·법정동·필지) | 화면이 `api/v1/resolve.js`를 거쳐 행정표준코드 API와 V-World를 부름 | **[자동]**(실행 중) | 있음(`api/v1/resolve.js`) | 행정표준코드 활용신청, `DATA_GO_KR_KEY_RESOLVE_<N>`·`VWORLD_KEY`·`VWORLD_DOMAIN` | 24시간 로컬 캐시. 라이브. 운영에서 V-World 서버 호출이 되려면 운영키·`VWORLD_DOMAIN`(운영 도메인)과 함수 지역 `icn1`이 필요함(2.15절) |
-| 번들 없는 지역의 건물(요청 시) | 화면이 `api/v1/buildings.js`를 거쳐 V-World `LT_C_BLDGINFO`를 칸 단위로 부름 | **[자동]**(실행 중) | 있음(`api/v1/buildings.js`) | V-World 서버 호출(운영키·`VWORLD_DOMAIN`), 함수 지역 `icn1` | 칸 24시간 로컬 캐시·시간당 호출 상한. **2026-10-05 배포됨(커밋 전)** |
-| 번들 없는 법정동의 인허가 사업(요청 시) | 화면이 `api/v1/permits.js`를 거쳐 건축HUB 주택인허가와 V-World 필지를 부름 | **[자동]**(실행 중) | 있음(`api/v1/permits.js`) | 건축HUB 활용신청(주택인허가·건축물대장, 키마다), 키 풀 RESOLVE 용도(서비스 `hub`·`hubledger`), V-World 서버 호출 | 24시간 캐시·시간당 호출 상한·건물대장 호출 간격(초당 한도). **2026-10-05 배포됨(커밋 전)** |
-| 번들 없는 법정동의 신설예정 학교·정류장(요청 시) | 화면이 `api/v1/infra.js`를 거쳐 교육재정알리미와 TAGO 근접정류소를 부름 | **[자동]**(실행 중) | 있음(`api/v1/infra.js`) | TAGO 정류소정보 활용신청(키마다), 키 풀 BUS 용도 | 24시간 캐시·시간당 호출 상한. 서울은 TAGO에 없음. **2026-10-05 배포됨(커밋 전)** |
+| 번들 없는 지역의 건물(요청 시) | 화면이 `api/v1/buildings.js`를 거쳐 V-World `LT_C_BLDGINFO`를 칸 단위로 부름 | **[자동]**(실행 중) | 있음(`api/v1/buildings.js`) | V-World 서버 호출(운영키·`VWORLD_DOMAIN`), 함수 지역 `icn1` | 칸 24시간 로컬 캐시·시간당 호출 상한. **2026-10-05 배포됨(커밋됨)** |
+| 번들 없는 법정동의 인허가 사업(요청 시) | 화면이 `api/v1/permits.js`를 거쳐 건축HUB 주택인허가와 V-World 필지를 부름 | **[자동]**(실행 중) | 있음(`api/v1/permits.js`) | 건축HUB 활용신청(주택인허가·건축물대장, 키마다), 키 풀 RESOLVE 용도(서비스 `hub`·`hubledger`), V-World 서버 호출 | 24시간 캐시·시간당 호출 상한·건물대장 호출 간격(초당 한도). **2026-10-05 배포됨(커밋됨)** |
+| 번들 없는 법정동의 신설예정 학교·정류장(요청 시) | 화면이 `api/v1/infra.js`를 거쳐 교육재정알리미와 TAGO 근접정류소를 부름 | **[자동]**(실행 중) | 있음(`api/v1/infra.js`) | TAGO 정류소정보 활용신청(키마다), 키 풀 BUS 용도 | 24시간 캐시·시간당 호출 상한. 서울은 TAGO에 없음. **2026-10-05 배포됨(커밋됨)** |
 | 지구 안 비주택 인허가 | 건축HUB 건축인허가 API(법정동 전체) | **[자동]** | 있음(`api.hub_arch_dong`) | — | 사이드바에는 표시하지 않음(`permits[]`). 주기는 확인하지 못함 |
 | 보도 기반 대책 | 기사를 읽고 요약해 JSON에 적음 | **[수동 판독]** | 없음(`curated/incheon-gyeyang.json`을 손으로 씀) | 검색·기사 읽기. 세계일보처럼 알림 권한 프롬프트가 뜨는 곳은 ego lite가 사용자 제어로 넘어가 WebFetch로 대체 | 사건이 날 때마다. 해석·요약은 사람이 함 |
 | 지도 배경·지형·글자 | 런타임에 외부 서비스에서 받음 | **[자동]**(운영 중) | `app.js` | V-World 서비스 URL(운영 도메인) 등록은 사람이 콘솔에서 | 미리보기 배포 주소는 등록하지 않으면 회색 지도 |
@@ -1215,3 +1219,19 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 - '입주 시기' 보기는 공사 기간을 직선으로 나눈 추정입니다.
 - 버스 위치·3D 버스는 TAGO가 알려 준 값을 그대로 보이되 몇 십 초 전 값이라 '실시간'이라 부르지 않습니다. 진행 방향과 '이 노선이 지나는 단지'는 노선 경로로 어림한 값입니다(2.14절).
 - 광산구·나주 자료는 공공 API와 LH 공고에서 모았고 **이용조건이 확인되지 않은 자료가 있습니다**(`region.json`의 `sources[].redistributable`이 `unknown`). 재배포 전에 제공기관 이용조건을 확인하세요.
+
+### 2.22 사업 id 발급과 사업↔PNU 연결 — `registry/projects.json` (2026-10-06, 레지스트리 77건, 운영 배포 전)
+
+**사업 레코드**(스펙 9.1)에 상황판 내부 id `PRJ-{시군구5}-{일련4}` 를 발급하고, 사업이 어느 필지(PNU)에 있는지 잇습니다. 건축HUB 관리번호 같은 외부 키는 id 가 아니라 `refs` 로만 보관합니다. [코드] `lib/projects.js`(순수 함수) · `lib/registry.js`(파일 읽기·검사) · `scripts/issue-projects.js`(발급 도구) · `api/v1/resolve.js`(`?project=`) · `api/v1/permits.js`(`projectId`) · `tests/js/projects.test.cjs` `registry.test.cjs` `projectapi.test.cjs`
+
+| 항목 | 내용 |
+|---|---|
+| 발급 | `node scripts/issue-projects.js --bjd 4145010800 --region incheon-gyeyang --link-pnu [--dry-run]`. 건축HUB 사업(번지 단위, 건물대장 보강, 위치 못 정한 블록 단위 허가 포함)과 번들 단지를 후보로 만들어 발급·갱신·합병하고 일관성 검사를 통과해야 씁니다. **요청 시 발급은 없음**(서버리스에 공유 쓰기 저장소가 없음) → 발급 뒤 커밋·배포 |
+| 같은 사업 | 외부 참조(`refs`: `hub-hs-basis`/`mgmHsrgstPk`, 번들은 `bundle`/<slug>/<단지 id>) 가운데 하나라도 같으면 같은 id. 변경허가로 관리번호가 늘어도 합집합이라 이어짐. 후보가 두 사업과 참조를 공유하면 일련이 작은 쪽이 남고 나머지는 `supersededBy` |
+| 사업↔PNU | 건축HUB 사업은 번지 단위라 PNU 가 곧 위치(블록 단위 허가는 건물대장 지번, 못 찾으면 `pnus` 가 비어 "위치 미연결"). **번들 단지는 PNU 가 없어** 윤곽 중심의 필지를 V-World 연속지적도 점 질의(`geomFilter=POINT`)로 찾음 — 22곳 모두 필지가 잡힘(계양 6·광산구 4·나주 12) |
+| 6단계 | 계획 → 03(사업승인 없으면 02) · 건설 단계·준공 임박 → 04 · 분양중 → 05 · 입주 단계 → 06(스펙 9.2 제안값) |
+| 현재 값 | 77건: 번들 22 + 건축HUB 55(하남 덕풍동 30·감일동 12(위치 미연결 2)·서울 장위동 13). 시군구별 일련은 `counters` |
+| 노출 | `GET /api/v1/permits` 의 `projectId`(발급된 사업만) · `GET /api/v1/resolve?project=PRJ-…`(필지 → 법정동 → 시군구 순으로 열고 번들 단지는 `project.block`) · 단지 카드의 "사업 id" 링크(`?project=`). 브라우저 확인(로컬): 하남 덕풍동 `PRJ-41450-0001` 이 필지(줌 17.6)로 열리며 카드 자동 열림, 계양 `PRJ-28245-0001` 이 번들을 열고 A6 단지 확장, 위치 미연결 `PRJ-41450-0038` 은 감일동 경계 + 안내, 없는 id 는 "발급되지 않은 사업 id" 화면 |
+| **발견한 결함** | 건축HUB 는 22자리 관리번호를 **JSON 숫자**로 줘서 `JSON.parse` 가 부동소수(`1.0000000000000001e+21`)로 뭉갰다(장위동 47개 값이 4개로). 서로 다른 사업이 한 참조를 가져 발급 도구가 합치려 하며 드러났고 기존 `permits` 의 `refs`·`latestRef`·허가별 대지면적 대조에도 영향이 있었다. `lib/datagokr.js` 가 파싱 전에 16자리 이상 `mgm…Pk` 숫자를 문자열로 감싼다 |
+| 한계 | 번들 단지의 사업 id 는 화면 카드에 안 보임(번들 스키마에 필드 없음). 필지를 못 찾은 인허가 사업은 관리번호를 싣지 않아 발급 대상이 아님. 번들 단지와 같은 실제 사업의 건축HUB 인허가는 다른 id 를 받음(윤곽·필지 맞춤은 후속). 사업 단계(6단계)·근거는 아직 화면에 안 보임 |
+

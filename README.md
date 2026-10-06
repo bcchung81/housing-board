@@ -176,7 +176,7 @@ vercel env add VWORLD_KEY preview
 vercel --prod
 ```
 
-**공공데이터포털 키(서버 전용)**: 함수는 `lib/keys.js`의 키 풀로 키를 고릅니다. 이름은 `DATA_GO_KR_KEY_<용도>_<번호>`(용도 `BUS` 버스 위치 · `RESOLVE` 코드 해석 · `BUILD` 번들 제작 · `DEMO` 시연)이고, 같은 용도의 키가 여러 개면 오늘 가장 적게 쓴 키부터 쓰며 한도 오류(`resultCode` 22·HTTP 429)를 받은 키는 한국시간 자정까지 쉽니다. 용도 키가 없으면 `DATA_GO_KR_KEY` 하나를 씁니다. 시연일에는 `DATA_GO_KR_PROFILE=demo`로 `DEMO` 키를 먼저 쓰게 합니다. 값은 `+ / =`가 든 디코딩된 형태 그대로 적고, `NEXT_PUBLIC_` 접두를 붙이지 않습니다(브라우저로 나갑니다). 키가 없으면 함수가 503을 주고 지도는 노선 선만 보입니다. 키마다 TAGO 버스위치정보(15098533)를 **활용신청**해 두어야 합니다(자동승인). 코드 해석에는 행정표준코드(법정동코드) 신청과 `VWORLD_KEY`·`VWORLD_DOMAIN`도 필요합니다. 인허가 사업 조회에는 건축HUB 주택인허가정보(15136560)와 **건축물대장정보(15134735)** 활용신청도 키마다 필요하고(없으면 대장 보강만 빠지고 `meta.ledger.error`로 알림), 건물대장은 초당 약 30건에서 막혀 함수가 호출 간격을 둡니다. 자세한 규칙은 [docs/product/상황판-스펙.md](docs/product/상황판-스펙.md) 6절.
+**공공데이터포털 키(서버 전용)**: 서울 버스 API(정류소정보조회·버스위치정보조회)와 LH 분양임대공고문·공급정보도 같은 키로 부르며(키마다 활용신청이 따로 필요, 2026-10-06 현재 키는 신청 완료) 서울은 `seoul`, LH 는 `lh` 서비스로 한도를 셉니다. 함수는 `lib/keys.js`의 키 풀로 키를 고릅니다. 이름은 `DATA_GO_KR_KEY_<용도>_<번호>`(용도 `BUS` 버스 위치 · `RESOLVE` 코드 해석 · `BUILD` 번들 제작 · `DEMO` 시연)이고, 같은 용도의 키가 여러 개면 오늘 가장 적게 쓴 키부터 쓰며 한도 오류(`resultCode` 22·HTTP 429)를 받은 키는 한국시간 자정까지 쉽니다. 용도 키가 없으면 `DATA_GO_KR_KEY` 하나를 씁니다. 시연일에는 `DATA_GO_KR_PROFILE=demo`로 `DEMO` 키를 먼저 쓰게 합니다. 값은 `+ / =`가 든 디코딩된 형태 그대로 적고, `NEXT_PUBLIC_` 접두를 붙이지 않습니다(브라우저로 나갑니다). 키가 없으면 함수가 503을 주고 지도는 노선 선만 보입니다. 키마다 TAGO 버스위치정보(15098533)를 **활용신청**해 두어야 합니다(자동승인). 코드 해석에는 행정표준코드(법정동코드) 신청과 `VWORLD_KEY`·`VWORLD_DOMAIN`도 필요합니다. 인허가 사업 조회에는 건축HUB 주택인허가정보(15136560)와 **건축물대장정보(15134735)** 활용신청도 키마다 필요하고(없으면 대장 보강만 빠지고 `meta.ledger.error`로 알림), 건물대장은 초당 약 30건에서 막혀 함수가 호출 간격을 둡니다. 자세한 규칙은 [docs/product/상황판-스펙.md](docs/product/상황판-스펙.md) 6절.
 
 ```
 vercel env add DATA_GO_KR_KEY_BUS_1 production   # 값은 프롬프트에 붙여넣기(번호를 늘려 가며)
@@ -186,7 +186,7 @@ vercel env add VWORLD_DOMAIN production         # 코드 해석이 V-World 를 �
 
 **V-World 키(운영키·개발키)**: 키는 발급 때 등록한 서비스 URL과 같은 `domain`을 보내야 통과합니다(아니면 `INCORRECT_KEY`). Vercel에는 운영키 `VWORLD_KEY`와 `VWORLD_DOMAIN=housing-board.vercel.app`을 두고, 로컬 `.env.local`에는 개발키 `VWORLD_DEV_KEY`와 `VWORLD_DOMAIN=localhost`를 둡니다. 로컬 개발 서버·수집 도구는 `VWORLD_DEV_KEY`가 있으면 그것을 쓰고, Vercel 함수는 `VWORLD_KEY`를 씁니다. 함수는 서울(`vercel.json`의 `regions: ["icn1"]`)에서 실행합니다. 미국 지역에서는 V-World 호출이 연결 실패했습니다.
 
-**호출 예산(환경변수, 값은 인스턴스별 시간당 원천 호출 수)**: `BUILDINGS_UPSTREAM_PER_HOUR`(기본 1200) · `PERMITS_UPSTREAM_PER_HOUR`(2000) · `LEDGER_UPSTREAM_PER_HOUR`(1500) · `INFRA_UPSTREAM_PER_HOUR`(600) · `SEARCH_UPSTREAM_PER_HOUR`(600). 전국 표본 점검에서 이전 값(600)으로는 몇 곳만 열어도 닿아 올렸고, 운영에는 `vercel env`로 production·preview 모두 넣었습니다(견본은 `env.example`). 마이홈 공고(`/api/v1/notices`)에는 키마다 **마이홈포털 공공주택 모집공고(15108420)** 활용신청도 필요합니다. 서울 TAGO 버스정보가 없어 서울 정류장은 OpenStreetMap으로 대신하며, 서울시 버스 API를 쓰려면 서울 열린데이터광장·공공데이터포털에서 사용자가 직접 활용신청해야 합니다(아직 하지 않음).
+**호출 예산(환경변수, 값은 인스턴스별 시간당 원천 호출 수)**: `BUILDINGS_UPSTREAM_PER_HOUR`(기본 1200) · `PERMITS_UPSTREAM_PER_HOUR`(2000) · `LEDGER_UPSTREAM_PER_HOUR`(1500) · `INFRA_UPSTREAM_PER_HOUR`(600) · `SEARCH_UPSTREAM_PER_HOUR`(600) · `SEOUL_UPSTREAM_PER_HOUR`(120, 서울시 정류소정보조회 — 개발계정 하루 1,000건). 전국 표본 점검에서 이전 값(600)으로는 몇 곳만 열어도 닿아 올렸고, 운영에는 `vercel env`로 production·preview 모두 넣었습니다(견본은 `env.example`). 마이홈 공고(`/api/v1/notices`)에는 키마다 **마이홈포털 공공주택 모집공고(15108420)** 활용신청도 필요합니다. 서울 TAGO 버스정보가 없어 서울 정류장은 OpenStreetMap으로 대신하며, 서울시 버스 API를 쓰려면 서울 열린데이터광장·공공데이터포털에서 사용자가 직접 활용신청해야 합니다(아직 하지 않음).
 
 하루 호출은 (실시간 노선 수) × 86400 ÷ ttl 회로 묶입니다. 응답을 서버 캐시와 CDN이 ttl초(최소 60초) 동안 나눠 쓰기 때문입니다(계양 4개 노선이면 최대 5,760회, 개발계정 한도 10,000회). 노선이 늘면 ttl이 길어지고, BUS 키가 늘면 키 수만큼 짧아집니다. 로컬 캐시는 `.cache/`(gitignore, 최대 24시간·50 MB), Vercel에서는 인스턴스 임시 폴더입니다.
 
@@ -213,3 +213,17 @@ vercel env add VWORLD_DOMAIN production         # 코드 해석이 V-World 를 �
 | 마이홈포털 공공주택 모집공고(`apis.data.go.kr/1613000/HWSPR02`) | 번들 없는 지역의 사이드바 "공공 모집 공고" | 공공데이터포털 키 필요 |
 
 건물 © 국토교통부 GIS건물통합정보(V-World, CC BY 2.0 KR) · 역·학교와 TAGO 밖 지역의 버스 정류장 © OpenStreetMap contributors(ODbL). 지도 오른쪽 아래 출처 표기와 사이드바 아래쪽 문구가 지역 자료의 출처에서 자동으로 만들어집니다.
+
+## 사업 id 발급 (사업 레지스트리)
+
+상황판이 사업을 가리키는 내부 id(`PRJ-{시군구5}-{일련4}`, 예 `PRJ-41450-0001`)를 `registry/projects.json` 에 발급해 둡니다. 건축HUB 관리번호는 id 가 아니라 `refs` 로만 보관하고, 사업이 있는 필지(PNU)를 `pnus` 로 잇습니다. 요청 시 발급은 없고(서버리스에 공유 쓰기 저장소가 없음) 운영자가 도구를 돌려 발급한 뒤 커밋·배포합니다. 같은 사업은 같은 id 를 받습니다(외부 참조가 하나라도 겹치면 같은 사업).
+
+```bash
+node scripts/issue-projects.js --bjd 4145010800 --bjd 4145011400   # 법정동의 건축HUB 인허가 사업(번지 단위, 건물대장 보강)
+node scripts/issue-projects.js --region incheon-gyeyang --link-pnu  # 번들 단지: 윤곽 중심의 필지를 V-World 에서 찾아 PNU 를 잇는다
+node scripts/issue-projects.js --bjd 4145010800 --dry-run           # 쓰지 않고 발급·갱신·합병만 본다
+```
+
+- 지도는 `?project=PRJ-41450-0001` 로 그 사업을 엽니다(필지가 있으면 필지로, 없으면 법정동·시군구 경계로, 번들 단지는 번들을 연 뒤 그 단지를 엶). 단지 카드의 "사업 id" 링크가 이 주소입니다. API: `GET /api/v1/resolve?project=…`, `GET /api/v1/permits` 의 `projectId`.
+- 규칙·형식·합병은 `docs/product/상황판-스펙.md` 9.1.1, 데이터 쪽 설명은 `dataset.md` 2.22. 일관성 검사는 `node --test "tests/js/*.test.cjs"`(`registry.test.cjs`)가 저장소 파일에 매번 합니다.
+
