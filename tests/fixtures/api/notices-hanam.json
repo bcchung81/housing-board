@@ -2,7 +2,7 @@
  "type": "Notices",
  "sgg": "41450",
  "name": "경기도 하남시",
- "asOf": "2026-10-05",
+ "asOf": "2026-10-06",
  "items": [
   {
    "id": "rental-21372-1",
@@ -19,7 +19,8 @@
    "announcedAt": "2026-10-01",
    "applyFrom": "2026-10-12",
    "applyTo": "2026-10-14",
-   "url": "https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=21372&houseSn=1"
+   "url": "https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=21372&houseSn=1",
+   "source": "myhome"
   },
   {
    "id": "rental-21372-2",
@@ -36,13 +37,16 @@
    "announcedAt": "2026-10-01",
    "applyFrom": "2026-10-12",
    "applyTo": "2026-10-14",
-   "url": "https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=21372&houseSn=2"
+   "url": "https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=21372&houseSn=2",
+   "source": "myhome"
   }
  ],
  "meta": {
-  "source": "마이홈포털 공공주택 모집공고(HWSPR02)",
+  "source": "마이홈포털 공공주택 모집공고(HWSPR02) + 한국토지주택공사 분양임대공고문(15058530)·공급정보(15056765)",
   "rental": 244,
   "sale": 80,
-  "matched": 2
+  "lh": 158,
+  "matched": 2,
+  "lhMatched": 0
  }
 }

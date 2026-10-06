@@ -1,8 +1,13 @@
 /* 코드 해석 API: 표준코드(법정동·시군구·PNU)를 받아 지도가 열 영역을 알려 준다.
 
-   GET /api/v1/resolve?code=<코드>        (또는 sgg= | bjd= | pnu= 중 하나)   선택: geometry=0|1
-   → 200 { type, canonical, input, sgg, bjd?, pnu?, name, level, bbox, center, geometry?, parcel?, coverage, warnings?, source, asOf }
-   → 4xx/5xx application/problem+json (RFC 7807): invalid-code 400 · unsupported-level 422 · unknown-code 404 · keys-exhausted 429 · not-configured 503 · upstream 502
+   GET /api/v1/resolve?code=<코드>        (또는 sgg= | bjd= | pnu= | project= 중 하나)   선택: geometry=0|1
+   → 200 { type, canonical, input, sgg, bjd?, pnu?, project?, name, level, bbox, center, geometry?, parcel?, coverage, warnings?, source, asOf }
+   → 4xx/5xx application/problem+json (RFC 7807): invalid-code 400 · unsupported-level 422 · unknown-code 404 · unknown-project 404 · keys-exhausted 429 · not-configured 503 · upstream 502
+
+   사업 id(PRJ-{시군구5}-{일련4}, lib/projects.js)는 사업 레지스트리(registry/projects.json)에서 찾아 그 사업의 위치로 연다: 필지(pnus 첫째)가 있으면 필지, 없으면 법정동(bjdCodes 첫째),
+   그것도 없으면 시군구. 응답은 그 위치의 응답과 같고 type 이 'project', canonical 이 사업 id 이며 project{ id, name?, units?, stageCode, stage, pnus, bjdCodes, block?, supersededFrom? }가 붙는다.
+   - 위치가 필지가 아니면 warnings 에 'project-unlocated'(위치 미연결), 합병되어 폐기된 id 를 남은 사업으로 열었으면 'project-superseded'.
+   - 번들 단지의 사업(refs 에 bundle)은 project.block 으로 그 단지를 연 채로 열린다. 발급되지 않은 id 는 404 unknown-project.
 
    처리 순서: 형식 판별(lib/codes.js) → 행정표준코드 API(StanReginCd)로 존재 확인(시군구 단위로 가져와 캐시) → V-World 경계·필지(속성 조회) → 커버리지(regions/ 번들 유무).
    - 인증키: lib/keys.js 의 RESOLVE 용도 풀(DATA_GO_KR_KEY_RESOLVE_<N>, 없으면 DATA_GO_KR_KEY). V-World 는 VWORLD_KEY(운영키)·VWORLD_DOMAIN(그 키에 등록한 서비스 URL,
@@ -19,6 +24,8 @@ const { createCache, defaultDir } = require('../../lib/cache.js');
 const { createStan } = require('../../lib/stan.js');
 const codes = require('../../lib/codes.js');
 const { readCoverage } = require('../../lib/coverage.js');   // 시군구 코드 → 번들(코드 검색 API 와 공용)
+const Projects = require('../../lib/projects.js');
+const { readRegistry } = require('../../lib/registry.js');
 
 const { VWORLD_URL, vworldCreds, redactVworld } = require('../../lib/vworld.js');
 
@@ -26,7 +33,7 @@ const { VWORLD_URL, vworldCreds, redactVworld } = require('../../lib/vworld.js')
 const TTL_MS = 24 * 3600 * 1000;
 const FETCH_TIMEOUT_MS = 10000;
 const MAX_RING_POINTS = 600;
-const ALLOWED = new Set(['code', 'sgg', 'bjd', 'pnu', 'geometry']);
+const ALLOWED = new Set(['code', 'sgg', 'bjd', 'pnu', 'project', 'geometry']);
 const MAX_NEIGHBORS = 150;
 
 const LAYERS = {
@@ -55,6 +62,7 @@ function createHandler(overrides = {}) {
   const pool = overrides.pool || createKeyPool({ env, now, store: env.VERCEL ? memoryStore() : fileStore(path.join(dir, 'key-usage.json')) });
   const stan = createStan({ doFetch, pool, cache });
   const coverageOf = overrides.readCoverage || (() => readCoverage(undefined, env.VERCEL_ENV === 'production'));
+  const registryIndex = overrides.registryIndex ? () => overrides.registryIndex : () => readRegistry(overrides.registryFile).index;
 
   const send = (res, status, body, cacheControl, type = 'application/json; charset=utf-8') => {
     res.statusCode = status;
@@ -115,13 +123,23 @@ function createHandler(overrides = {}) {
     const params = new URL(req.url || '/', 'http://local').searchParams;
     const names = [...new Set(params.keys())];
     if (names.some((n) => !ALLOWED.has(n))) return problem(res, 400, 'invalid-query', '알 수 없는 매개변수', `허용: ${[...ALLOWED].join(', ')}`);
-    const given = ['code', 'sgg', 'bjd', 'pnu'].filter((n) => params.has(n));
-    if (given.length !== 1 || params.getAll(given[0]).length !== 1) return problem(res, 400, 'invalid-query', '코드는 하나만 넘겨야 합니다', 'code, sgg, bjd, pnu 중 하나를 한 번만 쓰세요', undefined, 'public, s-maxage=3600');
+    const given = ['code', 'sgg', 'bjd', 'pnu', 'project'].filter((n) => params.has(n));
+    if (given.length !== 1 || params.getAll(given[0]).length !== 1) return problem(res, 400, 'invalid-query', '코드는 하나만 넘겨야 합니다', 'code, sgg, bjd, pnu, project 중 하나를 한 번만 쓰세요', undefined, 'public, s-maxage=3600');
     const input = params.get(given[0]);
-    const c = codes.classify(input);
-    if (!c.ok) return problem(res, 400, 'invalid-code', '코드 형식이 맞지 않습니다', c.detail, { reason: c.reason }, 'public, s-maxage=3600');
-    if (given[0] !== 'code' && given[0] !== c.type) return problem(res, 400, 'invalid-code', '코드 종류가 다릅니다', `${given[0]}= 에 ${c.type} 코드가 왔습니다`, { reason: 'type-mismatch' }, 'public, s-maxage=3600');
-    if (c.type === 'sido') return problem(res, 422, 'unsupported-level', '시도 단위는 지도 대상이 아닙니다', '시군구(5자리) 이하 코드를 쓰세요', undefined, 'public, s-maxage=3600');
+    const asked = codes.classify(input);
+    if (!asked.ok) return problem(res, 400, 'invalid-code', '코드 형식이 맞지 않습니다', asked.detail, { reason: asked.reason }, 'public, s-maxage=3600');
+    if (given[0] !== 'code' && given[0] !== asked.type) return problem(res, 400, 'invalid-code', '코드 종류가 다릅니다', `${given[0]}= 에 ${asked.type} 코드가 왔습니다`, { reason: 'type-mismatch' }, 'public, s-maxage=3600');
+    if (asked.type === 'sido') return problem(res, 422, 'unsupported-level', '시도 단위는 지도 대상이 아닙니다', '시군구(5자리) 이하 코드를 쓰세요', undefined, 'public, s-maxage=3600');
+    /* 사업 id: 레지스트리에서 사업의 위치를 찾아 그 위치(필지 → 법정동 → 시군구)의 코드로 아래 해석을 그대로 한다. 위치는 사업이 갖고 있어 요청이 정하지 못한다 */
+    let c = asked, proj = null;
+    if (asked.type === 'project') {
+      const hit = Projects.lookup(registryIndex(), asked.project);
+      if (!hit) return problem(res, 404, 'unknown-project', '발급되지 않은 사업 id 입니다', `${asked.canonical} 는 사업 레지스트리에 없습니다`, { project: asked.canonical }, 'public, s-maxage=60');
+      proj = hit;
+      const at = hit.project.pnus[0] || hit.project.bjdCodes[0] || hit.project.sgg;
+      c = codes.classify(at);
+      if (!c.ok || c.type === 'sido') return problem(res, 502, 'upstream', '사업 레지스트리의 위치가 맞지 않습니다', '관리자에게 알려 주세요');   // 검사를 통과한 레지스트리에서는 일어나지 않는다
+    }
 
     const wantGeometry = params.has('geometry') ? params.get('geometry') !== '0' : c.type !== 'sgg';
     try {
@@ -139,6 +157,13 @@ function createHandler(overrides = {}) {
       }
 
       const warnings = [], out = { type: c.type, canonical: c.canonical, input: c.input, sgg: c.sgg };
+      if (proj) {                                                  // 사업으로 열었다: 위치의 응답에 사업 정보를 붙인다(type 은 project, canonical 은 사업 id)
+        const pr = proj.project, bundle = (pr.refs || []).find((r) => r.system === 'bundle');
+        out.type = 'project'; out.canonical = pr.id; out.input = asked.input;
+        out.project = { id: pr.id, ...(pr.name ? { name: pr.name } : {}), ...(pr.units ? { units: pr.units } : {}), stageCode: pr.stageCode, stage: Projects.STAGES[pr.stageCode], pnus: pr.pnus, bjdCodes: pr.bjdCodes, ...(bundle ? { block: bundle.value } : {}), ...(proj.followed.length ? { supersededFrom: proj.followed[0] } : {}) };
+        if (!pr.pnus.length) warnings.push('project-unlocated');
+        if (proj.followed.length) warnings.push('project-superseded');
+      }
       if (c.bjd) out.bjd = c.bjd;
       if (c.pnu) { out.pnu = c.pnu; const p = codes.parsePnu(c.pnu); out.parcel = { jibun: p.jibun, landType: p.landType === '1' ? '일반' : '산', hub: p.hub, geometry: null }; }
       out.name = row.locatadd_nm; out.level = level;

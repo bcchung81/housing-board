@@ -17,7 +17,7 @@ test('dateOf·intOf·safeUrl: 8자리 날짜(달력에 없으면 null)·세대�
 });
 
 test('notice: 원천 한 행을 화면용 공고로(id 에 houseSn, 빈 값은 null, 날짜·세대수 정리, 링크는 안전한 것만)', () => {
-  assert.deepEqual(M.notice(A7, 'rental'), { id: 'rental-21372-1', kind: 'rental', title: '하남시 신혼희망타운 행복주택 예비입주자 모집공고(2026.10.01)', agency: 'LH', status: '일반공고', housingType: '아파트', supplyType: '행복주택', complex: '하남감일A7BL', units: 20, address: '경기도 하남시 감일순환로 40', pnu: '4145011500104680000', announcedAt: '2026-10-01', applyFrom: '2026-10-12', applyTo: '2026-10-14', url: A7.pcUrl });
+  assert.deepEqual(M.notice(A7, 'rental'), { id: 'rental-21372-1', kind: 'rental', title: '하남시 신혼희망타운 행복주택 예비입주자 모집공고(2026.10.01)', agency: 'LH', status: '일반공고', housingType: '아파트', supplyType: '행복주택', complex: '하남감일A7BL', units: 20, address: '경기도 하남시 감일순환로 40', pnu: '4145011500104680000', announcedAt: '2026-10-01', applyFrom: '2026-10-12', applyTo: '2026-10-14', url: A7.pcUrl, source: 'myhome' });
   const s = M.notice(SEOUL, 'rental'); assert.equal(s.id, 'rental-21370'); assert.deepEqual([s.complex, s.address, s.pnu, s.units], [null, null, null, 6]);
   assert.equal(M.notice(SALE, 'sale').units, 309); assert.equal(M.notice({ ...A7, pnu: '123' }, 'rental').pnu, null);
   assert.equal(M.notice({ ...A7, pcUrl: 'http://evil', url: 'https://apply.lh.or.kr/x' }, 'rental').url, 'https://apply.lh.or.kr/x'); assert.equal(M.notice({ ...A7, pcUrl: 'x', url: 'y' }, 'rental').url, null);

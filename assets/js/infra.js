@@ -87,7 +87,8 @@
     if (finite(s.students)) parts.push(`${fmtN(s.students)}명`);
     return parts.join('·');
   }
-  const busSource = (infra) => (infra.sources || []).find((s) => s.id === 'tago-bus' || /버스정류/.test(s.label || ''));
+  const BUS_SOURCE_IDS = ['tago-bus', 'seoul-bus', 'osm-bus'];   // 정류장 출처: 국토교통부 TAGO · 서울시 정류소정보조회 · OpenStreetMap(요청 시 조회 지역)
+  const busSource = (infra) => (infra.sources || []).find((s) => BUS_SOURCE_IDS.includes(s.id) || /버스정류/.test(s.label || ''));
 
   /* 단지 하나의 점검 줄. 줄 = { level: 'warn'|'info'|'none', label, text, detail?, generic?, ref? }
      generic = detail 이 단지와 상관없는 공통 설명(기준일·한계)이라 화면이 한 번만 보여 줘도 된다. */
@@ -142,7 +143,8 @@
   }
   function busDetail(infra) {
     const s = busSource(infra), d = s && s.asOf ? ` ${fmtDate(s.asOf)} 기준` : '';
-    return `국토교통부 TAGO 버스정류소 정보${d} — 입주 때 새로 생기는 정류장은 아직 반영되지 않았을 수 있음`;
+    const name = s && s.id !== 'tago-bus' && s.label ? s.label : '국토교통부 TAGO 버스정류소 정보';
+    return `${name}${d} — 입주 때 새로 생기는 정류장은 아직 반영되지 않았을 수 있음`;
   }
 
   /* ---------- 시각화용: 이름 줄이기, 격차 문구, 종류별 신호, 요약, 연결선, 타임라인 ---------- */

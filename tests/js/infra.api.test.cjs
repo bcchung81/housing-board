@@ -45,9 +45,12 @@ const hub = (items) => ({ response: { header: { resultCode: '00' }, body: { item
 const tago = (items) => ({ response: { header: { resultCode: '00' }, body: { items: items.length ? { item: items } : '', totalCount: items.length } } });
 const vw = (g) => ({ response: { status: 'OK', result: { featureCollection: { features: [{ geometry: g }] } } } });
 const host = (url) => new URL(url).hostname;
+const seoulNone = () => ok({ msgHeader: { headerCd: '4', headerMsg: '결과가 없습니다.', itemCount: 0 }, msgBody: { itemList: null } });
+const seoulItems = (items) => ok({ msgHeader: { headerCd: '0', headerMsg: '정상적으로 처리되었습니다.', itemCount: items.length }, msgBody: { itemList: items } });
 
 function defaultFetch(url, init) {
   const u = new URL(url);
+  if (u.hostname === 'ws.bus.go.kr') return seoulNone();                                                                  // 서울시 정류소 API: 기본은 결과 없음
   if (u.hostname.startsWith('overpass')) return ok({ elements: [] });                                                   // OpenStreetMap 보조: 기본은 정류장 없음
   if (u.hostname === 'eduinfo.go.kr') return ok({ result: [row(), row({ schlSeq: 90, schlNm: '(가칭)먼곳', pointX: '36', pointY: '128' })] });
   if (u.hostname === 'api.vworld.kr') { const pnu = /pnu:=:(\d+)/.exec(u.searchParams.get('attrFilter'))[1]; return ok(vw(pnu.endsWith('05690000') ? SQ(127.2, 37.54) : SQ(127.206, 37.54))); }
@@ -147,7 +150,7 @@ test('거절: 쿼리·법정동 형식·방식', async () => {
   assert.equal((await h.run(`/api/v1/infra?bjd=${BJD}`, 'POST')).status, 405); assert.equal(h.calls.length, 0);
 });
 
-test('서울(시도 11)은 TAGO 에 없어 정류소를 부르지 않고 noBus 로 알린다(학교는 그대로, 캐시도 정상)', async () => {
+test('서울(시도 11)은 TAGO 를 부르지 않는다: 서울시 정류소도 OSM 도 0곳이면 noBus 로 알린다(학교는 그대로, 캐시도 정상)', async () => {
   const BJD11 = '1129013800';
   const h = harness({ fetch: (url, init) => {
     const u = new URL(url);
@@ -155,8 +158,9 @@ test('서울(시도 11)은 TAGO 에 없어 정류소를 부르지 않고 noBus �
     return defaultFetch(url, init);
   } });
   const r = await h.run(`/api/v1/infra?bjd=${BJD11}`);
-  assert.equal(r.status, 200); assert.equal(r.json.meta.noBus, true); assert.equal(r.json.meta.stopCalls, 0); assert.deepEqual(r.json.stops, []);
+  assert.equal(r.status, 200); assert.equal(r.json.meta.noBus, true); assert.equal(r.json.meta.stopCalls, 1); assert.deepEqual(r.json.stops, []);
   assert.equal(h.calls.filter((c) => c.url.includes('getCrdntPrxmtSttnList')).length, 0);
+  assert.equal(h.calls.filter((c) => host(c.url) === 'ws.bus.go.kr').length, 1, '서울시 정류소 API 를 한 번 부른다');
   assert.equal(r.headers['cache-control'], 'public, s-maxage=86400, stale-while-revalidate=86400');
 });
 
@@ -188,14 +192,14 @@ const seoulHub = (url, init, n, overpass) => {
   return defaultFetch(url, init, n);
 };
 
-test('OpenStreetMap 보조: TAGO 에 자료가 없는 서울은 Overpass 로 정류장을 받는다(이름 있는 것만, 반경 안만, 출처 osm-bus), TAGO 는 부르지 않는다. 인프라 응답은 24시간 캐시', async () => {
+test('OpenStreetMap 보조: 서울시 정류소가 0곳이면 Overpass 로 정류장을 받는다(이름 있는 것만, 반경 안만, 출처 osm-bus), TAGO 는 부르지 않는다. 인프라 응답은 24시간 캐시', async () => {
   const cx = 127.2, cy = 37.54;
   const elements = [osmNode(1, '장위동주민센터', cx + 0.001, cy + 0.001, { ref: '08123' }), osmNode(2, null, cx + 0.001, cy), osmNode(3, '먼정류장', cx + 0.02, cy + 0.02),
     osmNode(4, '플랫폼', cx, cy + 0.002, { highway: undefined, public_transport: 'platform', bus: 'yes' }), { type: 'way', id: 5, tags: { name: '길' } }, osmNode(1, '장위동주민센터', cx + 0.001, cy + 0.001)];
   const h = harness({ env: SEOUL_ENV, fetch: (url, init, n) => seoulHub(url, init, n, () => ok({ elements })) });
   const r = await h.run('/api/v1/infra?bjd=1129013800');
   assert.equal(r.status, 200); assert.equal(r.headers['cache-control'], 'public, s-maxage=86400, stale-while-revalidate=86400');
-  assert.equal(r.json.meta.stopsSource, 'osm'); assert.equal(r.json.meta.noBus, undefined); assert.equal(r.json.meta.stopCalls, 0); assert.equal(r.json.meta.stops, 2);
+  assert.equal(r.json.meta.stopsSource, 'osm'); assert.equal(r.json.meta.noBus, undefined); assert.equal(r.json.meta.stopCalls, 1); assert.equal(r.json.meta.stops, 2);
   assert.deepEqual(r.json.stops.map((s) => s.name), ['장위동주민센터', '플랫폼']);                                                              // 이름 없음·멀리·way·중복은 뺌
   assert.deepEqual(r.json.stops.find((s) => s.name === '장위동주민센터'), { id: 'osm-1', name: '장위동주민센터', lon: 127.201, lat: 37.541, no: '08123' });
   assert.ok(r.json.sources.some((s) => s.id === 'osm-bus' && s.redistributable === 'Y' && /ODbL/.test(s.license))); assert.ok(!r.json.sources.some((s) => s.id === 'tago-bus'));
@@ -217,4 +221,80 @@ test('OpenStreetMap 보조: 한 서버가 죽어도 다른 서버로, 둘 다 �
   const bad = mk(() => ok({ nope: 1 })); assert.equal((await bad.run('/api/v1/infra?bjd=1129013800')).json.meta.stopsError, '버스 정류장(OpenStreetMap)을 불러오지 못함');
   const tagoCity = harness(); const c = await tagoCity.run(`/api/v1/infra?bjd=${BJD}`);                                                          // 하남: TAGO 가 정류소를 준다
   assert.equal(c.json.meta.stopsSource, 'tago'); assert.ok(c.json.stops.length > 0); assert.equal(tagoCity.calls.filter((x) => host(x.url).startsWith('overpass')).length, 0);
+});
+
+/* ---------- 서울시 정류소정보조회(lib/seoul.js) ---------- */
+const seoulStn = (id, name, lon, lat, ars = '08123') => ({ stationId: String(id), stationNm: name, arsId: ars, gpsX: String(lon), gpsY: String(lat), dist: '10' });
+const SEOUL_CALLS = (h) => h.calls.filter((c) => host(c.url) === 'ws.bus.go.kr');
+
+test('서울시 정류소: 서울(시도 11)의 정류장을 서울시 API 로 받는다(http, tmX=경도 tmY=위도 radius 700, 반경 안만·중복·이상한 항목 제외, 출처 seoul-bus). TAGO·OSM 은 부르지 않고 24시간 캐시', async () => {
+  const cx = 127.2, cy = 37.54;
+  const items = [seoulStn(101, '장위동주민센터', cx + 0.001, cy + 0.001), seoulStn(102, '먼정류소', cx + 0.02, cy + 0.02), seoulStn(101, '장위동주민센터', cx + 0.001, cy + 0.001), seoulStn(103, '', cx, cy), seoulStn(104, '좌표없음', 'x', 'y'), seoulStn(105, '번호없음', cx, cy + 0.001, '0')];
+  const h = harness({ env: SEOUL_ENV, fetch: (url, init, n) => (host(url) === 'ws.bus.go.kr' ? seoulItems(items) : seoulHub(url, init, n, () => { throw new Error('OSM 을 부르면 안 된다'); })) });
+  const r = await h.run('/api/v1/infra?bjd=1129013800');
+  assert.equal(r.status, 200); assert.equal(r.headers['cache-control'], 'public, s-maxage=86400, stale-while-revalidate=86400');
+  assert.equal(r.json.meta.stopsSource, 'seoul'); assert.equal(r.json.meta.noBus, undefined); assert.equal(r.json.meta.stopCalls, 1); assert.equal(r.json.meta.stops, 2); assert.equal(r.json.meta.seoulError, undefined);
+  assert.deepEqual(r.json.stops, [{ id: 'seoul-105', name: '번호없음', lon: 127.2, lat: 37.541 }, { id: 'seoul-101', name: '장위동주민센터', lon: 127.201, lat: 37.541, no: '08123' }].sort((a, b) => a.name.localeCompare(b.name, 'ko')));
+  assert.deepEqual(r.json.sources.map((s) => s.id).sort(), ['edu-newschool', 'seoul-bus']); assert.equal(r.json.sources.find((s) => s.id === 'seoul-bus').publisher, '서울특별시');
+  const c = SEOUL_CALLS(h)[0], u = new URL(c.url);
+  assert.equal(u.protocol, 'http:', 'https 는 연결 시간 초과라 http'); assert.equal(u.pathname, '/api/rest/stationinfo/getStationByPos');
+  assert.deepEqual([u.searchParams.get('tmX'), u.searchParams.get('tmY'), u.searchParams.get('radius'), u.searchParams.get('resultType')], ['127.200150', '37.540150', '700', 'json']);     // 단지 필지 윤곽의 중심(경도, 위도)
+  assert.equal(u.searchParams.get('serviceKey'), 'BUS-KEY');
+  assert.equal(h.calls.filter((x) => x.url.includes('getCrdntPrxmtSttnList') || host(x.url).startsWith('overpass')).length, 0);
+  await h.run('/api/v1/infra?bjd=1129013800'); assert.equal(SEOUL_CALLS(h).length, 1);                                                          // 같은 법정동은 캐시
+});
+
+test('서울시 정류소: 중심은 300 m 간격으로 최대 12곳, 키 풀 서비스는 seoul, 한도 오류는 다음 키로·모두 소진이면 OSM 으로 물러나고 오늘은 서울시를 다시 부르지 않는다', async () => {
+  const many = Array.from({ length: 30 }, (_, i) => rec({ mgmHsrgstPk: 100 + i, bun: String(600 + i).padStart(4, '0'), bldNm: `단지${i}`, sigunguCd: '11290', bjdongCd: '13800' }));
+  const wide = (url, init, n) => {
+    const u = new URL(url);
+    if (u.pathname.includes('HsPmsHubService')) return ok(hub(many));
+    if (u.hostname === 'api.vworld.kr') { const b = Number(/pnu:=:\d{11}\d(\d{4})/.exec(u.searchParams.get('attrFilter'))[1]); return ok(vw(SQ(127.2 + (b - 600) * 0.004, 37.54))); }   // 단지마다 약 350 m 떨어져 나란히
+    return defaultFetch(url, init, n);
+  };
+  const h = harness({ env: SEOUL_ENV, fetch: (url, init, n) => (host(url) === 'ws.bus.go.kr' ? seoulItems([seoulStn(1, '가', 127.2, 37.54)]) : wide(url, init, n)) });
+  const r = await h.run('/api/v1/infra?bjd=1129013800');
+  assert.equal(r.status, 200); assert.equal(r.json.meta.centers, 30); assert.equal(r.json.meta.stopCalls, 12); assert.equal(SEOUL_CALLS(h).length, 12);
+
+  const quota = '<OpenAPI_ServiceResponse><cmmMsgHeader><errMsg>SERVICE ERROR</errMsg><returnAuthMsg>LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR</returnAuthMsg><returnReasonCode>22</returnReasonCode></cmmMsgHeader></OpenAPI_ServiceResponse>';
+  const q = harness({ env: { ...SEOUL_ENV, DATA_GO_KR_KEY_BUS_2: 'BUS-KEY-2' }, fetch: (url, init, n) => {
+    if (host(url) !== 'ws.bus.go.kr') return seoulHub(url, init, n, () => ok({ elements: [osmNode(9, '대체정류장', 127.2005, 37.5405)] }));
+    return new URL(url).searchParams.get('serviceKey') === 'BUS-KEY' ? raw(200, quota) : seoulItems([seoulStn(7, '둘째키정류소', 127.2005, 37.5405)]);
+  } });
+  const a = await q.run('/api/v1/infra?bjd=1129013800'); assert.equal(a.json.meta.stopsSource, 'seoul'); assert.deepEqual(a.json.stops.map((s) => s.name), ['둘째키정류소']);
+  assert.ok(SEOUL_CALLS(q).some((c) => new URL(c.url).searchParams.get('serviceKey') === 'BUS-KEY-2'));
+  const dead = harness({ env: SEOUL_ENV, fetch: (url, init, n) => (host(url) === 'ws.bus.go.kr' ? raw(200, quota) : seoulHub(url, init, n, () => ok({ elements: [osmNode(9, '대체정류장', 127.2005, 37.5405)] }))) });
+  const b = await dead.run('/api/v1/infra?bjd=1129013800');
+  assert.equal(b.status, 200); assert.equal(b.json.meta.stopsSource, 'osm'); assert.equal(b.json.stops.length, 1); assert.equal(b.json.meta.seoulError, '서울시 정류소 조회 인증키 한도·설정 문제');
+  assert.equal(b.headers['cache-control'], 'public, s-maxage=60', 'OSM 으로 물러났으면 짧게만 캐시');
+  const n = SEOUL_CALLS(dead).length; dead.clock.t += 61 * 1000; await dead.run('/api/v1/infra?bjd=1129013800'); assert.equal(SEOUL_CALLS(dead).length, n, '키가 소진된 날은 서울시를 다시 부르지 않는다');
+});
+
+test('서울시 정류소: 실패(연결·5xx·모양 이상)는 OSM 으로 물러나고 짧게만 캐시, 일부만 실패하면 받은 것만 주고 알림, 시간당 상한(SEOUL_UPSTREAM_PER_HOUR)을 넘으면 부르지 않는다', async () => {
+  const osm = () => ok({ elements: [osmNode(9, '대체정류장', 127.2005, 37.5405)] });
+  for (const down of [() => { throw new Error('connect timeout'); }, () => raw(503, ''), () => raw(200, '<html>점검</html>'), () => ok({ msgHeader: { headerCd: '1', headerMsg: '시스템 에러' } })]) {
+    const h = harness({ env: SEOUL_ENV, fetch: (url, init, n) => (host(url) === 'ws.bus.go.kr' ? down() : seoulHub(url, init, n, osm)) });
+    const r = await h.run('/api/v1/infra?bjd=1129013800');
+    assert.equal(r.status, 200); assert.equal(r.json.meta.stopsSource, 'osm'); assert.equal(r.json.meta.seoulError, '서울시 정류소를 불러오지 못함'); assert.equal(r.headers['cache-control'], 'public, s-maxage=60');
+    assert.ok(!JSON.stringify(r.json).includes('BUS-KEY'), '키는 응답에 없다');
+  }
+  const two = [rec({ mgmHsrgstPk: 1, bun: '0569' }), rec({ mgmHsrgstPk: 2, bun: '0570', bldNm: '둘째' })].map((x) => ({ ...x, sigunguCd: '11290', bjdongCd: '13800' }));
+  let calls = 0;
+  const part = harness({ env: SEOUL_ENV, fetch: (url, init, n) => {
+    const u = new URL(url);
+    if (host(url) === 'ws.bus.go.kr') return ++calls === 1 ? seoulItems([seoulStn(1, '받은정류소', 127.2, 37.54)]) : raw(503, '');
+    if (u.pathname.includes('HsPmsHubService')) return ok(hub(two));
+    if (u.hostname === 'api.vworld.kr') { const pnu = /pnu:=:(\d+)/.exec(u.searchParams.get('attrFilter'))[1]; return ok(vw(SQ(pnu.endsWith('05690000') ? 127.2 : 127.206, 37.54))); }
+    return defaultFetch(url, init, n);
+  } });
+  const p = await part.run('/api/v1/infra?bjd=1129013800');
+  assert.equal(p.json.meta.stopCalls, 2); assert.equal(p.json.meta.stopsSource, 'seoul'); assert.deepEqual(p.json.stops.map((s) => s.name), ['받은정류소']);
+  assert.equal(p.json.meta.seoulError, '서울시 정류소 조회 일부를 불러오지 못해 일부만 보임'); assert.equal(p.headers['cache-control'], 'public, s-maxage=60');
+
+  const capped = harness({ env: { ...SEOUL_ENV, SEOUL_UPSTREAM_PER_HOUR: '1' }, fetch: (url, init, n) => (host(url) === 'ws.bus.go.kr' ? seoulItems([seoulStn(1, '가', 127.2, 37.54)]) : seoulHub(url, init, n, osm)) });
+  const c = await capped.run('/api/v1/infra?bjd=1129013800');
+  assert.equal(SEOUL_CALLS(capped).length, 1, '1건 상한 안에서 한 번'); assert.equal(c.json.meta.stopsSource, 'seoul');
+  const capped2 = harness({ env: { ...SEOUL_ENV, SEOUL_UPSTREAM_PER_HOUR: '1' }, fetch: (url, init, n) => (host(url) === 'ws.bus.go.kr' ? seoulItems([seoulStn(1, '가', 127.2, 37.54)]) : seoulHub(url, init, n, osm)) });
+  await capped2.run('/api/v1/infra?bjd=1129013800'); capped2.clock.t += 24 * 3600 * 1000 + 1;                                                   // 캐시가 만료된 다음 날에는 예산도 새로 시작
+  const d = await capped2.run('/api/v1/infra?bjd=1129013800'); assert.equal(d.json.meta.stopsSource, 'seoul'); assert.equal(SEOUL_CALLS(capped2).length, 2);
 });

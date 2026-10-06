@@ -53,7 +53,7 @@
    "get": {
     "operationId": "resolveCode",
     "summary": "표준코드 해석",
-    "description": "시군구 5·법정동 8/10·PNU 19자리 코드(`code` 또는 `sgg`·`bjd`·`pnu` 중 정확히 하나)를 이름·경계·중심·번들 유무(coverage)로 바꾼다. 화면의 `?pnu=` `?bjd=` `?sgg=` `?code=` 진입이 부른다.",
+    "description": "시군구 5·법정동 8/10·PNU 19자리·사업 id(PRJ-{시군구5}-{일련4}) 코드(`code` 또는 `sgg`·`bjd`·`pnu`·`project` 중 정확히 하나)를 이름·경계·중심·번들 유무(coverage)로 바꾼다. 사업 id 는 사업 레지스트리에서 사업의 위치(필지 → 법정동 → 시군구)를 찾아 그 위치로 연다. 화면의 `?project=` `?pnu=` `?bjd=` `?sgg=` `?code=` 진입이 부른다.",
     "tags": [
      "resolve"
     ],
@@ -62,10 +62,10 @@
       "name": "code",
       "in": "query",
       "required": false,
-      "description": "자릿수로 종류를 판별(5 sgg · 8·10 bjd · 19 pnu). 다른 이름과 함께 쓰지 않는다",
+      "description": "자릿수로 종류를 판별(5 sgg · 8·10 bjd · 19 pnu · `PRJ-` 접두는 사업 id). 다른 이름과 함께 쓰지 않는다",
       "schema": {
        "type": "string",
-       "pattern": "^[0-9\\s-]+$"
+       "pattern": "^([0-9\\s-]+|[Pp][Rr][Jj]-\\d{5}-\\d{4})$"
       }
      },
      {
@@ -96,6 +96,16 @@
       "schema": {
        "type": "string",
        "pattern": "^[0-9\\s-]+$"
+      }
+     },
+     {
+      "name": "project",
+      "in": "query",
+      "required": false,
+      "description": "사업 id `PRJ-{시군구5}-{일련4}`(발급 시점의 시군구, 일련은 0001 부터). 레지스트리에 있어야 한다(없으면 404 unknown-project). 합병되어 폐기된 id 는 남은 사업으로 열린다",
+      "schema": {
+       "type": "string",
+       "pattern": "^[Pp][Rr][Jj]-\\d{5}-\\d{4}$"
       }
      },
      {
@@ -142,7 +152,7 @@
       }
      },
      "404": {
-      "description": "표준코드 표에 없는 시군구·법정동(개편으로 바뀐 코드일 수 있음). suggestions 로 같은 시군구 법정동 후보",
+      "description": "unknown-code: 표준코드 표에 없는 시군구·법정동(개편으로 바뀐 코드일 수 있음). suggestions 로 같은 시군구 법정동 후보 · unknown-project: 사업 레지스트리에 없는 사업 id(project 에 요청한 id)",
       "content": {
        "application/problem+json": {
         "schema": {
@@ -322,8 +332,8 @@
   "/api/v1/notices": {
    "get": {
     "operationId": "getNotices",
-    "summary": "공공 모집 공고(마이홈)",
-    "description": "시군구 하나의 마이홈포털 공공주택 모집공고(임대·분양)를 돌려준다. 번들이 없는 지역에도 지금 모집 중인 공공주택을 보이려는 것이며 화면은 사이드바에 비동기로 채운다. 원천은 시군구 필터가 없는 전국 목록(100건씩, 1시간 캐시)이라 행정표준코드의 시군구 이름으로 거른다.",
+    "summary": "공공 모집 공고(마이홈·LH)",
+    "description": "시군구 하나의 공공주택 모집공고(임대·분양)를 돌려준다: 마이홈포털(HWSPR02)과 LH 분양임대공고문(15058530)을 합친다. 번들이 없는 지역에도 지금 모집 중인 공공주택을 보이려는 것이며 화면은 사이드바에 비동기로 채운다. 마이홈 원천은 시군구 필터가 없는 전국 목록(100건씩, 1시간 캐시)이라 행정표준코드의 시군구 이름으로 거른다. LH 공고문은 시도만 있어 제목에 시군구·법정동 이름이 있는 것만 싣고(제목 기준 추정, 마이홈과 제목이 같으면 마이홈만), 공급정보(15056765)로 단지명·세대수를 채운다. 한쪽이 실패하면 나머지를 주고 meta.partial 에 알린다.",
     "tags": [
      "notices"
     ],
@@ -627,7 +637,7 @@
     ],
     "responses": {
      "200": {
-      "description": "학교·정류장. 한쪽이 실패하면 meta.schoolsError·stopsError 와 s-maxage=60. TAGO 밖 지역(서울 등)의 정류장은 OpenStreetMap(meta.stopsSource='osm'), 그것도 못 받으면 meta.noBus",
+      "description": "학교·정류장. 한쪽이 실패하면 meta.schoolsError·stopsError 와 s-maxage=60. TAGO 밖 지역: 서울(시도 11)은 서울특별시 정류소정보조회(meta.stopsSource='seoul'), 실패하면 OpenStreetMap(meta.stopsSource='osm', meta.seoulError), 강릉 등 그 밖은 OpenStreetMap, 그것도 못 받으면 meta.noBus",
       "headers": {
        "Cache-Control": {
         "description": "public, s-maxage=86400, stale-while-revalidate=86400",
@@ -833,6 +843,7 @@
        "invalid-cell",
        "unsupported-level",
        "unknown-code",
+       "unknown-project",
        "method",
        "keys-exhausted",
        "budget-exhausted",
@@ -845,7 +856,7 @@
      },
      "reason": {
       "type": "string",
-      "description": "invalid-code·invalid-query 의 세부 사유(empty·not-digits·bad-length·unknown-sido·bad-pnu·type-mismatch·too-short·too-long)"
+      "description": "invalid-code·invalid-query 의 세부 사유(empty·not-digits·bad-length·unknown-sido·bad-pnu·bad-project·type-mismatch·too-short·too-long)"
      },
      "retryAfterSec": {
       "type": "integer",
@@ -875,6 +886,11 @@
        }
       },
       "description": "unknown-code(법정동)일 때 같은 시군구의 법정동 후보 8개 이내"
+     },
+     "project": {
+      "type": "string",
+      "pattern": "^PRJ-\\d{5}-\\d{4}$",
+      "description": "unknown-project 일 때 요청한 사업 id"
      }
     },
     "additionalProperties": true
@@ -1035,12 +1051,14 @@
       "enum": [
        "sgg",
        "bjd",
-       "pnu"
+       "pnu",
+       "project"
       ]
      },
      "canonical": {
       "type": "string",
-      "pattern": "^\\d{5}$|^\\d{10}$|^\\d{19}$"
+      "pattern": "^\\d{5}$|^\\d{10}$|^\\d{19}$|^PRJ-\\d{5}-\\d{4}$",
+      "description": "정규화된 코드. 사업 id 로 열었으면 남은 사업의 id(합병된 id 를 열었으면 input 과 다르다)"
      },
      "input": {
       "type": "string"
@@ -1165,10 +1183,12 @@
         "ri-uses-umd-boundary",
         "boundary-not-found",
         "geometry-unavailable",
-        "geometry-not-configured"
+        "geometry-not-configured",
+        "project-unlocated",
+        "project-superseded"
        ]
       },
-      "description": "열렸지만 요청과 다른 범위로 열린 이유(8자리 보충·구를 합쳐 시 경계로 씀·필지 없음→법정동·리→읍면동·경계 조회 실패)"
+      "description": "열렸지만 요청과 다른 범위로 열린 이유(8자리 보충·구를 합쳐 시 경계로 씀·필지 없음→법정동·리→읍면동·경계 조회 실패·사업의 위치(필지)가 연결되지 않아 법정동 또는 시군구로 엶·합병되어 폐기된 사업 id 를 남은 사업으로 엶)"
      },
      "source": {
       "type": "object",
@@ -1209,6 +1229,77 @@
        }
       },
       "description": "같은 시군구의 읍면동(리 제외). 시군구면 전체, 법정동·필지면 자기 자신을 뺀 나머지. 인허가 사업이 없는 지역에서 화면이 이웃 법정동을 고르게 한다"
+     },
+     "project": {
+      "type": "object",
+      "description": "type 이 project 일 때만. 사업 레코드(스펙 9.1)의 일부와 6단계. pnu·bjd·parcel·경계는 사업의 첫 필지(없으면 첫 법정동, 그것도 없으면 시군구)의 것이다",
+      "required": [
+       "id",
+       "stageCode",
+       "stage",
+       "pnus",
+       "bjdCodes"
+      ],
+      "properties": {
+       "id": {
+        "type": "string",
+        "pattern": "^PRJ-\\d{5}-\\d{4}$"
+       },
+       "name": {
+        "type": "string"
+       },
+       "units": {
+        "type": "integer",
+        "minimum": 1
+       },
+       "stageCode": {
+        "type": "string",
+        "enum": [
+         "01",
+         "02",
+         "03",
+         "04",
+         "05",
+         "06"
+        ],
+        "description": "6단계: 01 정책 · 02 사업화 · 03 인허가 · 04 건설 · 05 공급 · 06 입주"
+       },
+       "stage": {
+        "type": "string",
+        "enum": [
+         "정책",
+         "사업화",
+         "인허가",
+         "건설",
+         "공급",
+         "입주"
+        ]
+       },
+       "pnus": {
+        "type": "array",
+        "items": {
+         "type": "string",
+         "pattern": "^\\d{19}$"
+        },
+        "description": "사업 필지. 비면 위치 미연결"
+       },
+       "bjdCodes": {
+        "type": "array",
+        "items": {
+         "type": "string",
+         "pattern": "^\\d{10}$"
+        }
+       },
+       "block": {
+        "type": "string",
+        "description": "번들 단지의 사업이면 그 단지 id(화면이 번들을 연 뒤 그 단지를 연다)"
+       },
+       "supersededFrom": {
+        "type": "string",
+        "pattern": "^PRJ-\\d{5}-\\d{4}$",
+        "description": "합병되어 폐기된 id 로 열었으면 그 id"
+       }
+      }
      }
     }
    },
@@ -1655,7 +1746,7 @@
       "items": {
        "type": "string"
       },
-      "description": "건축HUB 허가 관리번호들(화면에는 개수만)"
+      "description": "그 번지에 모인 허가 관리번호(mgmHsrgstPk). 22자리까지 있어 문자열이고 숫자로 바꾸면 안 된다(건축HUB 는 JSON 숫자로 주므로 서버가 파싱 전에 문자열로 지킨다)"
      },
      "records": {
       "type": "integer",
@@ -1669,7 +1760,8 @@
        {
         "type": "null"
        }
-      ]
+      ],
+      "description": "가장 최근 허가의 관리번호(문자열)"
      },
      "via": {
       "const": "ledger",
@@ -1721,6 +1813,11 @@
         "const": "name"
        }
       }
+     },
+     "projectId": {
+      "type": "string",
+      "pattern": "^PRJ-\\d{5}-\\d{4}$",
+      "description": "사업 레지스트리에 발급된 사업이면 그 id(허가 관리번호나 PNU 가 같은 사업). 없으면 발급 전. 화면은 이 id 로 `?project=` 링크를 만든다"
      }
     }
    },
@@ -1991,7 +2088,7 @@
     "properties": {
      "id": {
       "type": "string",
-      "description": "edu-newschool · tago-bus · osm-bus"
+      "description": "edu-newschool · tago-bus · seoul-bus · osm-bus"
      },
      "label": {
       "type": "string"
@@ -2196,15 +2293,20 @@
        },
        "noBus": {
         "const": true,
-        "description": "TAGO 에도 OpenStreetMap 에도 정류장 자료가 없다. 교통 점검은 '자료 없음'"
+        "description": "TAGO·서울시·OpenStreetMap 어디에도 정류장 자료가 없다. 교통 점검은 '자료 없음'"
        },
        "stopsSource": {
         "type": "string",
         "enum": [
          "tago",
+         "seoul",
          "osm"
         ],
-        "description": "정류장 출처: tago(국토교통부) 우선, TAGO 에 자료가 없는 지역(서울·강릉 등)은 osm(OpenStreetMap, ODbL)"
+        "description": "정류장 출처: tago(국토교통부) 우선, 서울(시도 11)은 seoul(서울특별시 정류소정보조회), 그 밖에 TAGO 에 자료가 없는 지역(강릉 등)과 서울시 조회 실패 때는 osm(OpenStreetMap, ODbL)"
+       },
+       "seoulError": {
+        "type": "string",
+        "description": "서울시 정류소 조회가 실패했거나 일부만 받았다(시간당 상한·인증키 한도·연결 오류). 이때 응답은 s-maxage=60 이고 OpenStreetMap 으로 물러났을 수 있다"
        }
       }
      }
@@ -2274,7 +2376,7 @@
    },
    "Notice": {
     "type": "object",
-    "description": "마이홈포털 공공주택 모집공고 한 건(임대·분양). 대부분 매입임대·일반매각이라 건설 중인 단지(permits)와 합치지 않는 별도 목록",
+    "description": "공공주택 모집공고 한 건(임대·분양). 마이홈포털(HWSPR02)과 LH 분양임대공고문(15058530)이 출처이고, 대부분 매입임대·일반매각이라 건설 중인 단지(permits)와 합치지 않는 별도 목록",
     "required": [
      "id",
      "kind",
@@ -2283,7 +2385,7 @@
     "properties": {
      "id": {
       "type": "string",
-      "description": "'rental-<공고번호>[-<세대번호>]' · 'sale-…'"
+      "description": "'rental-<공고번호>[-<세대번호>]' · 'sale-…'(마이홈) · 'lh-<PAN_ID>'(LH 공고문)"
      },
      "kind": {
       "type": "string",
@@ -2343,7 +2445,8 @@
        {
         "type": "null"
        }
-      ]
+      ],
+      "description": "단지명(LH 공고는 공급정보의 단지명, 둘을 넘으면 '… 외 N')"
      },
      "units": {
       "oneOf": [
@@ -2354,7 +2457,8 @@
        {
         "type": "null"
        }
-      ]
+      ],
+      "description": "세대수(LH 공고는 공급정보의 금회공급 세대수 합)"
      },
      "address": {
       "oneOf": [
@@ -2422,6 +2526,14 @@
        }
       ],
       "description": "마이홈·LH 주소만(원천 링크를 그대로 믿지 않는다)"
+     },
+     "source": {
+      "type": "string",
+      "enum": [
+       "myhome",
+       "lh"
+      ],
+      "description": "출처: myhome(마이홈포털 HWSPR02) · lh(한국토지주택공사 분양임대공고문). lh 공고는 주소·필지가 없고(pnu null) 제목에 시군구·법정동 이름이 있을 때만 그 시군구에 실리며(제목 기준 추정), 단지명·세대수는 공급정보(15056765)에서 채운다. 마이홈과 제목이 같은 LH 공고는 마이홈 쪽만 싣는다"
      }
     }
    },
@@ -2456,7 +2568,7 @@
       "items": {
        "$ref": "#/components/schemas/Notice"
       },
-      "description": "공고일 최신 순. 구가 있는 시는 시 전체가 구 공고를 모두 포함"
+      "description": "공고일 최신 순(마이홈·LH 합침). 구가 있는 시는 시 전체가 구 공고를 모두 포함"
      },
      "meta": {
       "type": "object",
@@ -2464,7 +2576,9 @@
        "source",
        "rental",
        "sale",
-       "matched"
+       "lh",
+       "matched",
+       "lhMatched"
       ],
       "properties": {
        "source": {
@@ -2473,16 +2587,17 @@
        "rental": {
         "type": "integer",
         "minimum": 0,
-        "description": "전국 임대 공고 수"
+        "description": "전국 마이홈 임대 공고 수"
        },
        "sale": {
         "type": "integer",
         "minimum": 0,
-        "description": "전국 분양 공고 수"
+        "description": "전국 마이홈 분양 공고 수"
        },
        "matched": {
         "type": "integer",
-        "minimum": 0
+        "minimum": 0,
+        "description": "이 시군구에 실린 공고 수(마이홈 + LH)"
        },
        "partial": {
         "type": "array",
@@ -2490,10 +2605,22 @@
          "type": "string",
          "enum": [
           "rental",
-          "sale"
+          "sale",
+          "lh",
+          "lh-supply"
          ]
         },
-        "description": "한쪽 목록이 실패해 나머지만 준 경우(이때 응답은 짧게만 캐시)"
+        "description": "일부가 실패해 나머지만 준 경우(이때 응답은 짧게만 캐시): rental·sale(마이홈 목록) · lh(LH 공고문 목록) · lh-supply(LH 공급정보, 단지명·세대수 없음)"
+       },
+       "lh": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "전국 LH 진행 중 공고 수(공고중·접수중·정정공고중, 토지·상가 포함 — 주택 공고만 거르기 전)"
+       },
+       "lhMatched": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "그 가운데 LH 공고 수"
        }
       }
      }

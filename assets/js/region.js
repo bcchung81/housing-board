@@ -12,7 +12,7 @@
   const STATUS_RANK = ['분양중', '건설 단계', '준공 임박', '입주 단계', '계획'];
   const OUTLINE_TEXT = { official: '블록 윤곽은 공식 자료', building: '동 윤곽은 실제 건물 자료', schematic: '동 윤곽은 근사값(10~20 m)' };
   const TIER_ORDER = ['official', 'building', 'schematic'];
-  const CODE_PARAMS = ['pnu', 'bjd', 'sgg', 'code'];   // 우선순위 순서
+  const CODE_PARAMS = ['project', 'pnu', 'bjd', 'sgg', 'code'];   // 우선순위 순서(사업 id 가 가장 구체적이다)
   const FLOOR_HEIGHT = 2.85;   // 층고를 모를 때(화면의 기본 환산과 같은 값)
 
   const escapeHtml = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -41,8 +41,8 @@
     return u.toString();
   }
 
-  /* ---------- 표준코드로 열기 (?pnu= | ?bjd= | ?sgg= | ?code=) ----------
-     코드가 있으면 코드가 우선이다(둘 이상이면 pnu > bjd > sgg > code 중 앞선 하나). ?region= 만 있으면 옛 방식 그대로.
+  /* ---------- 표준코드로 열기 (?project= | ?pnu= | ?bjd= | ?sgg= | ?code=) ----------
+     코드가 있으면 코드가 우선이다(둘 이상이면 project > pnu > bjd > sgg > code 중 앞선 하나). ?region= 만 있으면 옛 방식 그대로.
      코드는 /api/v1/resolve 가 해석하고, 번들이 있는 시군구(등급 A)만 지도를 연다. 스펙: docs/product/상황판-스펙.md 2.1 */
   function codeQuery(search) {
     const p = new URLSearchParams(search || '');
@@ -78,16 +78,16 @@
   function resolvedStart(r) {
     if (!r || !Array.isArray(r.center) || r.center.length !== 2 || !r.center.every(finite)) return null;
     const none = !r.coverage || r.coverage.tier !== 'A';
-    if (r.type === 'sgg') { const z = none ? zoomForBbox(r.bbox) : null; return z == null ? null : { center: r.center, zoom: Math.round(z * 10) / 10 }; }
-    const parcel = r.type === 'pnu' && r.parcel && r.parcel.geometry;
+    if (r.type === 'sgg' || (r.type === 'project' && !r.bjd && !r.pnu)) { const z = none ? zoomForBbox(r.bbox) : null; return z == null ? null : { center: r.center, zoom: Math.round(z * 10) / 10 }; }
+    const parcel = (r.type === 'pnu' || r.type === 'project') && r.parcel && r.parcel.geometry;   // 사업 id 로 열었어도 필지가 연결돼 있으면 필지로
     return { center: r.center, zoom: parcel ? 17.6 : 15.4 };
   }
   /* 강조해서 그릴 경계: 필지가 있으면 필지, 없으면 법정동 경계(필지를 못 찾아 후퇴한 경우 포함).
      시군구는 번들이 있으면 그리지 않고(지구 경계가 있음) 번들이 없으면 시군구 경계가 화면의 전부다 */
   function resolvedShape(r) {
     if (!r) return null;
-    if (r.type === 'sgg' && r.coverage && r.coverage.tier === 'A') return null;
-    const g = (r.type === 'pnu' && r.parcel && r.parcel.geometry) || r.geometry;
+    if ((r.type === 'sgg' || (r.type === 'project' && !r.bjd && !r.pnu)) && r.coverage && r.coverage.tier === 'A') return null;   // 번들이 있는 시군구(사업이 위치 없이 시군구까지만 열린 경우 포함)는 지구 경계가 있어 그리지 않는다
+    const g = ((r.type === 'pnu' || r.type === 'project') && r.parcel && r.parcel.geometry) || r.geometry;
     return g && g.type && g.coordinates ? g : null;
   }
   /* 건축HUB 인허가 사업(/api/v1/permits 의 features)을 번들 단지(projects.json 의 한 항목) 모양으로. 시행자·분양 정보가 없어 sponsorClass 는 'unknown' 이고
@@ -110,7 +110,7 @@
       /* 예정일이 지났는데 착공·사용검사 기록이 원천에 없으면 사실만 적는다(지연이라고 판정하지 않음) */
       const late = p.overdue ? `${p.overdue.kind} 예정일 ${p.overdue.plannedAt}이 ${p.overdue.months >= 1 ? `${p.overdue.months}개월` : '얼마'} 지났으나 ${p.overdue.kind} 기록이 없음` : (p.status === '계획' && !p.plannedStart ? '착공 기록 없음' : '');
       out.push({
-        id: `hub-${p.pnu}`, zoneId: 'hub', label: p.label || p.name, name: p.name, sponsor: { type: 'unknown', name: '' }, sponsorClass: 'unknown',
+        id: `hub-${p.pnu}`, projectId: /^PRJ-\d{5}-\d{4}$/.test(p.projectId || '') ? p.projectId : null, zoneId: 'hub', label: p.label || p.name, name: p.name, sponsor: { type: 'unknown', name: '' }, sponsorClass: 'unknown',
         kind: '인허가 사업', status: p.status, units: finite(p.units) ? p.units : null, dongCount: finite(p.mainBldCnt) ? p.mainBldCnt : 0,
         moveIn: p.status === '입주 단계' ? (p.completedAt ? p.completedAt.slice(0, 7) : null) : (p.plannedCompletion || null),
         outline: { tier: 'official', poly: open, how: p.via === 'ledger' ? '건물대장이 가리키는 대지 필지(연속지적도)' : '건축HUB 인허가의 대지 필지(연속지적도)' }, dongs: null, events: [], sources: byLedger ? ['hub-housing-permit', 'hub-bldrgst', 'vworld-cadastre'] : ['hub-housing-permit', 'vworld-cadastre'],
@@ -132,7 +132,7 @@
     const ledgerNote = [lg.blocksMatched || lg.parcelsRecovered || lg.completions ? `건축물대장으로 보강: 블록 단위 허가 ${lg.blocksMatched || 0}곳의 위치, 합필·분할로 사라진 지번 ${lg.parcelsRecovered || 0}곳의 현재 지번, 사용승인으로 준공 확인 ${lg.completions || 0}곳.` : '', lg.error ? `건축물대장 보강이 완전하지 않습니다: ${lg.error}.` : ''].filter(Boolean);
     const blockNote = m0.blockProjects ? [`공공주택지구 블록 단위 허가 ${m0.blockProjects}곳은 필지 번호가 없어(블록 번호만 있음) ${lg.used ? '건축물대장과 세대수·대지면적을 맞춰 보았지만 지번을 정하지 못해' : '위치를 정할 수 없어'} 지도에 없습니다: ${blk.map((x) => `${x.name}${x.block && !x.name.includes(x.block) ? `(${x.block})` : ''} ${x.units ? `${x.units}세대` : ''}`.trim()).join(', ')}${m0.blockProjects > blk.length ? ' 외' : ''}.`] : [];
     const im = (infra && infra.type === 'Infra' && infra.meta) || {};
-    const infraNotes = [im.stopsSource === 'osm' ? '버스 정류장: 국토교통부 TAGO에 이 지역 자료가 없어 OpenStreetMap 기준으로 보여 드립니다(누락이 있을 수 있습니다).' : '', im.noBus ? '버스 정류소: 국토교통부 TAGO에 이 지역(서울 등)의 정류소 자료가 없어 교통 점검은 "자료 없음"입니다.' : '', im.schoolsError ? '신설예정 학교를 불러오지 못했습니다.' : '', im.stopsError ? `${im.stopsError}.` : ''].filter(Boolean);
+    const infraNotes = [im.stopsSource === 'osm' ? `버스 정류장: 국토교통부 TAGO${im.seoulError ? '·서울시' : ''}에 이 지역 자료가 없어 OpenStreetMap 기준으로 보여 드립니다(누락이 있을 수 있습니다).` : '', im.stopsSource === 'seoul' ? '버스 정류소: 서울특별시 정류소정보조회 기준입니다(국토교통부 TAGO에는 서울 자료가 없습니다).' : '', im.seoulError ? `서울시 정류소: ${im.seoulError}.` : '', im.noBus ? '버스 정류소: 국토교통부 TAGO에 이 지역(서울 등)의 정류소 자료가 없어 교통 점검은 "자료 없음"입니다.' : '', im.schoolsError ? '신설예정 학교를 불러오지 못했습니다.' : '', im.stopsError ? `${im.stopsError}.` : ''].filter(Boolean);
     const infraLate = opts && opts.infraFailed ? ['기반시설(신설예정 학교·정류장)을 제때 불러오지 못해 입주 전 점검 없이 열었습니다. 잠시 뒤 다시 열면 나올 수 있습니다.'] : [];
     const notes = (lost.length ? [`건축HUB 인허가 사업 후보 중 필지를 못 찾아 지도에 없는 ${m0.unlocated}곳: ${lost.map((x) => `${x.name}(${x.jibun})`).join(', ')}${m0.unlocated > lost.length ? ' 외' : ''}. 원인 추정: ${[...new Set(lost.map((x) => x.reason))].join(' / ')}.`] : []).concat(blockNote, ledgerNote, infraNotes, infraLate);
     const region = {
@@ -178,7 +178,7 @@
         meta: [n.agency, `${kind[n.kind] || ''}${n.supplyType ? `(${n.supplyType})` : ''}`.trim(), n.housingType, n.units ? `${n.units}세대` : ''].filter(Boolean).join(' · '),
         period: from && to ? `접수 ${from === to ? from : `${from}~${to}`}` : n.announcedAt ? `공고 ${n.announcedAt.replace(/-/g, '.')}` : '',
         place: [n.complex, n.address].filter(Boolean).join(' · '),
-        url: /^https:\/\/(www\.myhome\.go\.kr|m\.myhome\.go\.kr|apply\.lh\.or\.kr)\//.test(n.url || '') ? n.url : '', pnu: /^\d{19}$/.test(n.pnu || '') ? n.pnu : '',
+        url: /^https:\/\/(www\.myhome\.go\.kr|m\.myhome\.go\.kr|apply\.lh\.or\.kr)\//.test(n.url || '') ? n.url : '', pnu: /^\d{19}$/.test(n.pnu || '') ? n.pnu : '', fromLh: n.source === 'lh',
       };
     });
   }
@@ -206,12 +206,14 @@
     'boundary-not-found': '경계를 찾지 못해 지역 기본 위치로 열었습니다',
     'geometry-unavailable': '경계를 불러오지 못해 지역 기본 위치로 열었습니다',
     'geometry-not-configured': '경계를 불러오지 못해 지역 기본 위치로 열었습니다',
+    'project-unlocated': '이 사업의 위치(필지)가 아직 연결되지 않아 법정동 또는 시군구 경계로 열었습니다',
+    'project-superseded': '합병되어 폐기된 사업 id 라서 남은 사업으로 열었습니다',
   };
   function noticeText(warnings) {
     return [...new Set((warnings || []).map((w) => NOTICE_TEXT[w]).filter(Boolean))].join(' · ');
   }
   const PROBLEM_TEXT = {
-    'invalid-code': '코드 형식이 맞지 않습니다', 'unknown-code': '표준코드 표에 없는 코드입니다', 'unsupported-level': '시도 단위는 열 수 없습니다',
+    'invalid-code': '코드 형식이 맞지 않습니다', 'unknown-code': '표준코드 표에 없는 코드입니다', 'unknown-project': '발급되지 않은 사업 id 입니다', 'unsupported-level': '시도 단위는 열 수 없습니다',
     'keys-exhausted': '오늘 코드 해석 한도에 닿았습니다. 잠시 뒤 다시 시도하세요', 'not-configured': '코드 해석 서비스가 설정되어 있지 않습니다', upstream: '코드 해석 서비스를 부르지 못했습니다',
   };
   /* /api/v1/resolve 호출 → { ok:true, data } | { ok:false, code, message } */
@@ -257,7 +259,7 @@
     const dongs = Array.isArray(p.dongs) ? adaptDongs(p.dongs) : undefined;
     const pr = p.progress || null;
     const b = {
-      id: p.label, pid: p.id, label: p.label, name: p.name, kind: p.kind, status: p.status,
+      id: p.label, pid: p.id, projectId: p.projectId || null, label: p.label, name: p.name, kind: p.kind, status: p.status,
       units: finite(p.units) ? p.units : 0, unitsKnown: finite(p.units),
       dongCount: finite(p.dongCount) ? p.dongCount : (dongs ? dongs.length : 0),
       moveIn: moveInText(p.moveIn, pr && pr.end, p.status),
@@ -443,8 +445,9 @@
   /* 전역에 올리고 문구·지역 선택기·배너를 반영 */
   function mountResolved(win, doc, r, resolved) {
     win.GY_BUILDINGS = r.GY_BUILDINGS; win.GY_PROJECTS = r.GY_PROJECTS; win.GY_CONTEXT = r.GY_CONTEXT; win.GY_INFRA = r.GY_INFRA; win.REGION = r;
-    const hit = resolved && resolved.pnu && r.blocks.find((b) => b.pid === `hub-${resolved.pnu}`);   // 필지로 열었는데 그 필지가 인허가 사업이면 그 단지를 연다
-    win.RESOLVED = resolved ? { sgg: resolved.sgg, bjd: resolved.bjd || null, start: resolvedStart(resolved), shape: resolvedShape(resolved), name: resolved.name, level: resolved.level, type: resolved.type, tier: resolved.coverage.tier, warnings: resolved.warnings || [], block: hit ? hit.pid : null } : null;
+    const hit = resolved && ((resolved.pnu && r.blocks.find((b) => b.pid === `hub-${resolved.pnu}`))   // 필지로 열었는데 그 필지가 인허가 사업이면 그 단지를 연다
+      || (resolved.project && resolved.project.block && r.blocks.find((b) => b.pid === resolved.project.block)));   // 사업 id 가 번들 단지의 것이면 그 단지를 연다
+    win.RESOLVED = resolved ? { sgg: resolved.sgg, bjd: resolved.bjd || null, start: resolvedStart(resolved), shape: resolvedShape(resolved), name: resolved.name, level: resolved.level, type: resolved.type, parcel: !!(resolved.parcel && resolved.parcel.geometry), projectId: resolved.project ? resolved.project.id : null, tier: resolved.coverage.tier, warnings: resolved.warnings || [], block: hit ? hit.pid : null } : null;
     const pm = r.permits;
     const baseNote = r.slug ? '' : pm && pm.count ? `지역 번들이 없어 경계·건물(요청 시 조회)·건축HUB 인허가 사업 ${pm.count}곳만 보여 줍니다${pm.ledger && (pm.ledger.blocksMatched + pm.ledger.parcelsRecovered) ? `(건축물대장으로 위치를 찾은 ${pm.ledger.blocksMatched + pm.ledger.parcelsRecovered}곳 포함${pm.unlocated ? `, 필지를 못 찾은 ${pm.unlocated}곳 제외` : ''})` : pm.unlocated ? `(필지를 못 찾은 ${pm.unlocated}곳 제외)` : ''}`
       : pm && pm.fetched && pm.blocks ? `지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 이 법정동의 건축HUB 인허가는 공공주택지구 블록 단위 ${pm.blocks}곳뿐이라 필지 번호가 없어 ${pm.ledger && pm.ledger.used ? '건축물대장과 맞춰 보아도 지번을 정하지 못해 ' : ''}지도에 그릴 수 없습니다`

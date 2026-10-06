@@ -8,6 +8,8 @@
    - 사업 후보·상태·이름 규칙은 lib/permits.js(번들 빌드와 같음): 공동주택 + 총세대수 > 0, 번지 단위 집계, 상태는 계획 · 건설 단계 · 입주 단계(분양중·준공 임박은 공고·공정율이 필요해 정하지 않음).
    - 한 법정동 사업은 최대 120개(건설 단계 → 계획 → 입주 단계, 세대수 큰 순)까지 필지를 붙이고 넘으면 meta.truncated. 필지를 못 찾은 사업은 지도에 못 그리므로 meta.unlocatedNames 로만 알린다.
    - 건축HUB 는 간헐적으로 503·빈 본문을 주므로 쪽마다 최대 4번(점점 길게 기다려) 시도한다. 인증키는 lib/keys.js 의 RESOLVE 용도 풀(서비스 'hub'), V-World 는 lib/vworld.js.
+   - 사업 id: 사업 레지스트리(registry/projects.json, lib/projects.js)에 발급된 사업이면 features[].properties.projectId 에 `PRJ-{시군구5}-{일련4}` 를 붙인다(허가 관리번호가 같거나 PNU 가 같은 사업).
+     캐시된 본문에는 싣지 않고 응답할 때마다 붙이므로 레지스트리를 고치면 바로 반영된다. 발급되지 않은 사업은 projectId 가 없다.
    - 응답은 로컬 캐시 24시간 + CDN 24시간. 필지 경계도 따로 24시간 캐시한다. 필지를 일부라도 못 받았으면(일시 오류) 응답은 캐시하지 않는다.
    - 열린 중계가 되지 않게 인스턴스별 시간당 V-World 필지 호출 상한(PERMITS_UPSTREAM_PER_HOUR, 기본 2000)을 둔다. 키·원천 URL·원천 오류 문구는 응답에 싣지 않는다.
    시험: tests/js/permitsapi.test.cjs */
@@ -21,6 +23,8 @@ const { thinGeometry, largestPolygon } = require('../../lib/geom.js');
 const codes = require('../../lib/codes.js');
 const Permits = require('../../lib/permits.js');
 const { createStan } = require('../../lib/stan.js');
+const Projects = require('../../lib/projects.js');
+const { readRegistry } = require('../../lib/registry.js');
 
 const HUB_URL = 'https://apis.data.go.kr/1613000/HsPmsHubService/getHpBasisOulnInfo';
 const HUB_PLAT_URL = 'https://apis.data.go.kr/1613000/HsPmsHubService/getHpPlatPlcInfo';
@@ -52,6 +56,15 @@ function createService(overrides = {}) {
   const budget = { hour: -1, used: 0 }, lbudget = { hour: -1, used: 0 };
   const ledgerMax = Number(env.LEDGER_UPSTREAM_PER_HOUR) > 0 ? Math.floor(Number(env.LEDGER_UPSTREAM_PER_HOUR)) : DEFAULT_LEDGER_BUDGET_PER_HOUR;
   const stan = createStan({ doFetch, pool, cache, sleep });
+  const registryIndex = () => overrides.registryIndex || readRegistry(overrides.registryFile).index;
+  /* 캐시된 본문은 그대로 두고(공유됨) 사업 id 가 있는 사업에만 projectId 를 붙인 새 본문을 만든다 */
+  const withProjectIds = (body) => {
+    const idx = registryIndex();
+    if (!idx.byId.size) return body;
+    let any = false;
+    const features = body.features.map((f) => { const id = Projects.projectIdFor(idx, f.properties); if (!id) return f; any = true; return { ...f, properties: { ...f.properties, projectId: id } }; });
+    return any ? { ...body, features } : body;
+  };
 
   let ledgerSlot = 0;
   const paceLedger = async () => { const t = now(), at = Math.max(t, ledgerSlot); ledgerSlot = at + LEDGER_GAP_MS; if (at > t) await sleep(at - t); };
@@ -272,7 +285,7 @@ function createService(overrides = {}) {
     if (!creds.key || !pool.hasKeys('RESOLVE')) return problem(res, 503, 'not-configured', '인증키가 설정되어 있지 않습니다', 'RESOLVE 용도 공공데이터포털 키와 V-World 키가 필요합니다');
     try {
       const out = await getPermits(bjd);
-      return send(res, 200, out.body, out.cacheable ? 'public, s-maxage=86400, stale-while-revalidate=86400' : 'public, s-maxage=60');
+      return send(res, 200, withProjectIds(out.body), out.cacheable ? 'public, s-maxage=86400, stale-while-revalidate=86400' : 'public, s-maxage=60');
     } catch (e) {
       if (e instanceof KeyPoolError) {
         if (e.code === 'EXHAUSTED') { res.setHeader('Retry-After', String(e.retryAfterSec || 3600)); return problem(res, 429, 'keys-exhausted', '오늘 인증키 한도에 닿았습니다', e.message, { retryAfterSec: e.retryAfterSec }); }
@@ -287,7 +300,7 @@ function createService(overrides = {}) {
       return problem(res, 502, 'upstream', '인허가·필지 서비스를 부르지 못했습니다', '잠시 뒤 다시 시도하세요');   // 원인 문구는 밖으로 내보내지 않는다(키가 섞일 수 있음)
     }
   };
-  return { handler, getPermits, cache, pool, now, sleep, doFetch };
+  return { handler, getPermits, withProjectIds, cache, pool, now, sleep, doFetch };
 }
 const createHandler = (overrides) => createService(overrides).handler;
 

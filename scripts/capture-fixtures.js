@@ -18,6 +18,8 @@ const LIST = [
   ['resolve-bundle.json', '/api/v1/resolve?bjd=2824510900&geometry=1'],
   ['resolve-ri.json', '/api/v1/resolve?bjd=4373035027&geometry=1'],
   ['resolve-8digit.json', '/api/v1/resolve?bjd=41450114&geometry=1'],
+  ['resolve-project.json', '/api/v1/resolve?project=PRJ-41450-0001&geometry=1', (b) => b],             // 사업 id(필지로 열림). 레지스트리가 배포된 뒤부터 받을 수 있다(그 전에는 404 로 건너뜀)
+  ['resolve-project-bundle.json', '/api/v1/resolve?project=PRJ-28245-0001&geometry=1', (b) => b],      // 번들 단지의 사업 id(coverage A + project.block)
   ['search-name.json', `/api/v1/codes/search?q=${q('감일')}`],
   ['search-jibun.json', `/api/v1/codes/search?q=${q('장위동 68-37')}`],
   ['search-place.json', `/api/v1/codes/search?q=${q('시청')}&near=127.15,37.50`],
@@ -29,8 +31,9 @@ const LIST = [
   ['permits-deokpung.json', '/api/v1/permits?bjd=4145010800', head(3)],
   ['permits-gamil-ledger.json', '/api/v1/permits?bjd=4145011400', head(3)],
   ['infra-deokpung.json', '/api/v1/infra?bjd=4145010800', (b) => { b.schools = b.schools.slice(0, 2); b.stops = b.stops.slice(0, 3); return b; }],
-  ['infra-seoul.json', '/api/v1/infra?bjd=1129013800', (b) => { b.stops = b.stops.slice(0, 3); return b; }],   // TAGO 밖(서울): OpenStreetMap 정류장
-  ['infra-seoul-nobus.json', '/api/v1/infra?bjd=1150010500'],   // 마곡동: OpenStreetMap 공개 서버가 실패해 noBus + stopsError(받을 때마다 다를 수 있음)
+  ['infra-seoul.json', '/api/v1/infra?bjd=1129013800', (b) => { b.stops = b.stops.slice(0, 3); return b; }],   // TAGO 밖(서울): 서울특별시 정류소정보조회(stopsSource 'seoul')
+  // infra-seoul-osm.json(서울시 조회가 안 될 때 OpenStreetMap 으로 물러난 응답)·infra-seoul-nobus.json(OSM 도 실패한 noBus + stopsError)은 운영에서 다시 만들 수 없는 장애 상황의 응답이라 2026-10-05 에 받은 것을 그대로 두고 갱신하지 않는다
+  ['notices-asan.json', '/api/v1/notices?sgg=44200', (b) => { b.items = b.items.filter((i) => i.source === 'lh').concat(b.items.filter((i) => i.source === 'myhome').slice(0, 1)); return b; }],   // 마이홈에 없는 LH 공고(source 'lh')가 있는 시군구
   ['bus-gyeyang.json', '/api/bus?region=incheon-gyeyang', (b) => { b.buses = b.buses.slice(0, 3); return b; }],
 ];
 async function main() {

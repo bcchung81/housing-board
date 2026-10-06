@@ -12,7 +12,7 @@
       "excludeFiles": ".cache/**"
     },
     "api/v1/resolve.js": {
-      "includeFiles": "regions/{index.json,*/region.json}",
+      "includeFiles": "{regions/index.json,regions/*/region.json,registry/projects.json}",
       "maxDuration": 20,
       "excludeFiles": "{.cache/**,regions/*/{buildings,projects,context,infra}.json}"
     },
@@ -31,7 +31,8 @@
     },
     "api/v1/permits.js": {
       "excludeFiles": "{.cache/**,regions/**}",
-      "maxDuration": 30
+      "maxDuration": 30,
+      "includeFiles": "registry/projects.json"
     },
     "api/v1/infra.js": {
       "excludeFiles": "{.cache/**,regions/**}",

@@ -521,9 +521,9 @@ function setupCustom() {
   }
   if (HAS_CTX) add({ id: 'ctx-ring', type: 'line', source: 'ctx-ring', layout: { visibility: 'none' }, paint: { 'line-color': T.sub, 'line-width': 1.2, 'line-dasharray': [2, 2], 'line-opacity': 0.85 } });
   if (RES && RES.shape) {
-    add({ id: 'resolved-fill', type: 'fill', source: 'resolved', paint: { 'fill-color': '#E8590C', 'fill-opacity': RES.type === 'pnu' ? 0.28 : 0.07 } });
+    add({ id: 'resolved-fill', type: 'fill', source: 'resolved', paint: { 'fill-color': '#E8590C', 'fill-opacity': RES.type === 'pnu' || RES.parcel ? 0.28 : 0.07 } });
     add({ id: 'resolved-halo', type: 'line', source: 'resolved', paint: { 'line-color': T.halo, 'line-width': 7, 'line-opacity': 0.9 } });
-    add({ id: 'resolved-line', type: 'line', source: 'resolved', paint: { 'line-color': '#E8590C', 'line-width': 3, 'line-dasharray': RES.type === 'pnu' ? [1, 0] : [3, 2] } });
+    add({ id: 'resolved-line', type: 'line', source: 'resolved', paint: { 'line-color': '#E8590C', 'line-width': 3, 'line-dasharray': RES.type === 'pnu' || RES.parcel ? [1, 0] : [3, 2] } });
   }
   add({ id: 'sel-line-halo', type: 'line', source: 'sel', paint: { 'line-color': T.halo, 'line-width': 7, 'line-opacity': 0.9 } });
   add({ id: 'sel-line', type: 'line', source: 'sel', paint: { 'line-color': '#1B1D21', 'line-width': 3 } });
@@ -804,7 +804,7 @@ function blockPopup(b, clickX) {
     <div class="pc-h"><b>${esc(b.id)}</b><span class="pc-sub">${esc(b.kind.replace('(공공분양)', ''))}</span>${chipHtml(KIND[b.status], b.status)}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
     <div class="pc-big"><strong>${unitsTxt(b)}</strong>${dongN(b) ? `<span>${dongN(b)}개동</span>` : ''}</div>
     ${b.note ? `<div class="pc-cap">${esc(b.note)}</div>` : ''}
-    ${dlHtml([b.progress ? ['공정율', `${pctTxt(b.progress.rate)} <small>(${esc(String(b.progress.asOf).slice(5))} 기준)</small>`] : null, ['층수', hist || '미확인'], ['입주', esc(b.moveIn)],
+    ${dlHtml([b.projectId ? ['사업 id', `<a class="pc-pid" href="${esc(window.RegionLoader.codeUrl(location.href, 'project', b.projectId))}" title="이 사업을 바로 여는 링크">${esc(b.projectId)}</a>`] : null, b.progress ? ['공정율', `${pctTxt(b.progress.rate)} <small>(${esc(String(b.progress.asOf).slice(5))} 기준)</small>`] : null, ['층수', hist || '미확인'], ['입주', esc(b.moveIn)],
       b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`] : null,
       b.builder ? ['시공', esc(b.builder) + (b.contractM ? ` <small>${fmt(Math.round(b.contractM / 100))}억원</small>` : '')] : null,
       nr && nr.st ? ['교통', `${esc(nr.st.name)} <small>${IL.shortDist(nr.st.d)}</small>`] : null, ...schoolRows,
@@ -854,7 +854,8 @@ function sitePopup(s, clickX) {
     [s.poly], 0, clickX);
 }
 function stopPopup(p, geom, clickX) {
-  const src = (INFRA.sources || []).find((x) => x.id === 'tago-bus'), st = p.id ? (INFRA.stops || []).find((s) => s.id === p.id) : null;
+  const srcId = /^seoul-/.test(p.id || '') ? 'seoul-bus' : /^osm-/.test(p.id || '') ? 'osm-bus' : 'tago-bus';   // 정류장 id 머리말이 출처(요청 시 조회 지역: 서울시·OpenStreetMap)
+  const src = (INFRA.sources || []).find((x) => x.id === srcId), st = p.id ? (INFRA.stops || []).find((s) => s.id === p.id) : null;
   const byId = new Map((INFRA.busRoutes || []).map((r) => [r.id, r])), routes = ((st && st.routes) || []).map((id) => byId.get(id)).filter(Boolean);
   const chips = routes.map((r) => `<em class="pc-route${r.live ? ' live' : ''}" style="--rc:${BL ? BL.routeColor(r.type) : '#56627A'}" title="${esc(r.type || '')} ${esc(r.from || '')} ↔ ${esc(r.to || '')}">${esc(r.no)}</em>`).join(' ');
   showCard(`<div class="pc">
@@ -1172,7 +1173,7 @@ async function loadNotices() {
   if (!data) return;
   const rows = window.RegionLoader.noticeRows(data);
   $('#secNotice').hidden = false;
-  $('#noticeSub').textContent = rows.length ? `${data.name} · 마이홈포털의 공공주택 모집공고 ${rows.length}건(대부분 매입임대·일반매각이며 건설 중인 단지와 별도입니다)` : `${data.name}에는 지금 모집 중인 공공주택 공고가 없습니다(마이홈포털 기준).`;
+  $('#noticeSub').textContent = rows.length ? `${data.name} · 공공주택 모집공고 ${rows.length}건(마이홈포털·LH 분양임대공고문. 대부분 매입임대·일반매각이며 건설 중인 단지와 별도입니다${rows.some((r) => r.fromLh) ? '. LH 공고는 제목의 지역 이름으로 이 지역에 실은 것이라 틀릴 수 있습니다' : ''})` : `${data.name}에는 지금 모집 중인 공공주택 공고가 없습니다(마이홈포털·LH 기준).`;
   $('#noticeList').innerHTML = rows.map((r) => `<li><span class="nt">${esc(r.title)}</span>${r.meta ? `<span class="nm">${esc(r.meta)}</span>` : ''}${r.period ? `<span class="nm">${esc(r.period)}</span>` : ''}${r.place ? `<span class="nm">${esc(r.place)}</span>` : ''}`
     + (r.url || r.pnu ? `<span class="na">${r.url ? `<a href="${esc(r.url)}" target="_blank" rel="noopener noreferrer">공고 보기</a>` : ''}${r.pnu ? `<a href="${esc(window.RegionLoader.codeUrl(location.href, 'pnu', r.pnu))}">지도에서 보기</a>` : ''}</span>` : '') + '</li>').join('');
 }

@@ -102,22 +102,29 @@ test('OpenAPI 문서: 모든 $ref 가 풀리고, 모든 스키마의 required �
 
 /* ---------- ② 운영에서 받은 실제 응답 ---------- */
 test('골든 픽스처(운영 응답): resolve 6종(시군구·법정동·필지·번들 지역·리·8자리)이 ResolveResponse 를 지킨다', () => {
-  for (const f of ['resolve-sgg', 'resolve-bjd', 'resolve-pnu', 'resolve-bundle', 'resolve-ri', 'resolve-8digit', 'resolve-sgg-districts']) must('ResolveResponse', fixture(`${f}.json`), f);
+  for (const f of ['resolve-sgg', 'resolve-bjd', 'resolve-pnu', 'resolve-bundle', 'resolve-ri', 'resolve-8digit', 'resolve-sgg-districts', 'resolve-project', 'resolve-project-bundle']) must('ResolveResponse', fixture(`${f}.json`), f);
   assert.deepEqual(fixture('resolve-sgg-districts.json').warnings, ['districts-merged']); assert.equal(fixture('resolve-sgg-districts.json').geometry.type, 'MultiPolygon');   // 구만 있는 시(화성)
   assert.ok(fixture('resolve-bjd.json').neighbors.length > 5 && fixture('resolve-bjd.json').neighbors.every((n) => n.bjd !== fixture('resolve-bjd.json').bjd));   // 이웃 법정동
+  const rp = fixture('resolve-project.json'), rb = fixture('resolve-project-bundle.json');   // 사업 id 로 열기(2026-10-06 로컬 핸들러 + 레지스트리에서 받음: 레지스트리가 운영에 오르면 capture-fixtures 가 운영에서 받는다)
+  assert.deepEqual([rp.type, /^PRJ-\d{5}-\d{4}$/.test(rp.canonical), rp.project.id === rp.canonical, rp.pnu === rp.project.pnus[0], rp.coverage.tier], ['project', true, true, true, 'none']);
+  assert.deepEqual([rb.type, rb.coverage.tier, typeof rb.project.block, rb.pnu === rb.project.pnus[0]], ['project', 'A', 'string', true]);
   assert.equal(fixture('resolve-bundle.json').coverage.tier, 'A'); assert.equal(fixture('resolve-bjd.json').coverage.tier, 'none');
   assert.deepEqual(fixture('resolve-ri.json').warnings, ['ri-uses-umd-boundary']); assert.deepEqual(fixture('resolve-8digit.json').warnings, ['padded-8-digit']);
 });
 
-test('골든 픽스처: 검색·건물·인허가(건물대장 보강 포함)·기반시설(서울 OSM·noBus 포함)·버스가 각 응답 스키마를 지킨다', () => {
+test('골든 픽스처: 검색·건물·인허가(건물대장 보강 포함)·기반시설(서울시·OSM 물러남·noBus 포함)·공고(LH 포함)·버스가 각 응답 스키마를 지킨다', () => {
   for (const f of ['search-name', 'search-jibun', 'search-place', 'search-code-bad']) must('SearchResponse', fixture(`${f}.json`), f);
   must('BuildingsResponse', fixture('buildings-cell.json'), 'buildings');
   for (const f of ['permits-deokpung', 'permits-gamil-ledger']) must('PermitsResponse', fixture(`${f}.json`), f);
-  for (const f of ['infra-deokpung', 'infra-seoul', 'infra-seoul-nobus']) must('InfraResponse', fixture(`${f}.json`), f);
+  for (const f of ['infra-deokpung', 'infra-seoul', 'infra-seoul-osm', 'infra-seoul-nobus']) must('InfraResponse', fixture(`${f}.json`), f);
   must('BusResponse', fixture('bus-gyeyang.json'), 'bus');
-  for (const f of ['notices-hanam', 'notices-none']) must('NoticesResponse', fixture(`${f}.json`), f);
+  for (const f of ['notices-hanam', 'notices-asan', 'notices-none']) must('NoticesResponse', fixture(`${f}.json`), f);
   assert.ok(fixture('notices-hanam.json').items.length > 0 && fixture('notices-hanam.json').items.every((i) => /^https:\/\/(www\.myhome\.go\.kr|m\.myhome\.go\.kr|apply\.lh\.or\.kr)\//.test(i.url || 'https://www.myhome.go.kr/')));
-  assert.equal(fixture('infra-seoul.json').meta.stopsSource, 'osm'); assert.equal(fixture('infra-seoul.json').meta.noBus, undefined);   // TAGO 밖 지역은 OpenStreetMap 정류장
+  assert.equal(fixture('infra-seoul.json').meta.stopsSource, 'seoul'); assert.equal(fixture('infra-seoul.json').meta.noBus, undefined);   // TAGO 밖 서울은 서울시 정류소정보조회
+  assert.ok(fixture('infra-seoul.json').stops.every((s) => /^seoul-/.test(s.id)) && fixture('infra-seoul.json').sources.some((s) => s.id === 'seoul-bus'));
+  assert.equal(fixture('infra-seoul-osm.json').meta.stopsSource, 'osm');   // 서울시 조회가 안 될 때(또는 강릉 등 TAGO·서울 밖) OpenStreetMap 정류장
+  const asan = fixture('notices-asan.json'); assert.ok(asan.items.some((i) => i.source === 'lh' && i.url.startsWith('https://apply.lh.or.kr/') && i.complex && i.units > 0), 'LH 공고는 공급정보로 단지명·세대수가 채워진다');
+  assert.ok(asan.meta.lh > 0 && asan.meta.lhMatched >= 1 && asan.items.every((i) => i.source === 'lh' || i.source === 'myhome'));
   assert.equal(fixture('infra-seoul-nobus.json').meta.noBus, true); assert.ok(fixture('infra-seoul-nobus.json').meta.stopsError);   // OSM 도 못 받으면 noBus + stopsError
   assert.ok(fixture('permits-gamil-ledger.json').features.some((f) => f.properties.via === 'ledger') || fixture('permits-gamil-ledger.json').meta.ledger.used, '건물대장 보강 응답');
   assert.ok(fixture('search-place.json').items.some((i) => i.place === true), '장소 후보');

@@ -35,6 +35,7 @@
 | `invalid-cell` | 400 | 건물 칸 번호가 한국 범위 밖 |
 | `unsupported-level` | 422 | 시도 단위(resolve) |
 | `unknown-code` | 404 | 표준코드 표에 없음(resolve, suggestions) |
+| `unknown-project` | 404 | 발급되지 않은 사업 id(resolve, project) |
 | `method` | 405 | GET·HEAD 외 |
 | `keys-exhausted` | 429 | 인증키 한도(Retry-After) |
 | `budget-exhausted` | 429 | 이 서버의 시간당 호출 상한(Retry-After) |
@@ -43,7 +44,7 @@
 
 ## 2. `GET /api/v1/resolve` — 표준코드 해석
 
-시군구 5·법정동 8/10·PNU 19자리 코드(`code` 또는 `sgg`·`bjd`·`pnu` 중 정확히 하나)를 이름·경계·중심·번들 유무(coverage)로 바꾼다. 화면의 `?pnu=` `?bjd=` `?sgg=` `?code=` 진입이 부른다.
+시군구 5·법정동 8/10·PNU 19자리·사업 id(PRJ-{시군구5}-{일련4}) 코드(`code` 또는 `sgg`·`bjd`·`pnu`·`project` 중 정확히 하나)를 이름·경계·중심·번들 유무(coverage)로 바꾼다. 사업 id 는 사업 레지스트리에서 사업의 위치(필지 → 법정동 → 시군구)를 찾아 그 위치로 연다. 화면의 `?project=` `?pnu=` `?bjd=` `?sgg=` `?code=` 진입이 부른다.
 
 - operationId: `resolveCode`
 
@@ -51,10 +52,11 @@
 
 | 이름 | 필수 | 형식 | 설명 |
 |---|---|---|---|
-| `code` |  | string `^[0-9\s-]+$` | 자릿수로 종류를 판별(5 sgg · 8·10 bjd · 19 pnu). 다른 이름과 함께 쓰지 않는다 |
+| `code` |  | string `^([0-9\s-]+\|[Pp][Rr][Jj]-\d{5}-\d{4})$` | 자릿수로 종류를 판별(5 sgg · 8·10 bjd · 19 pnu · `PRJ-` 접두는 사업 id). 다른 이름과 함께 쓰지 않는다 |
 | `sgg` |  | string `^[0-9\s-]+$` | 시군구 5자리 |
 | `bjd` |  | string `^[0-9\s-]+$` | 법정동 8자리(00 보충) 또는 10자리 |
 | `pnu` |  | string `^[0-9\s-]+$` | 필지 19자리(대지구분 1·2, 본번 0000 아님) |
+| `project` |  | string `^[Pp][Rr][Jj]-\d{5}-\d{4}$` | 사업 id `PRJ-{시군구5}-{일련4}`(발급 시점의 시군구, 일련은 0001 부터). 레지스트리에 있어야 한다(없으면 404 unknown-project). 합병되어 폐기된 id 는 남은 사업으로 열린다 |
 | `geometry` |  | 0 · 1 | 1 이면 경계를 포함(기본: sgg 가 아니면 포함). 화면은 항상 1 |
 
 ### 응답 `200`
@@ -65,8 +67,8 @@
 
 | 항목 | 형식 | 필수 | 설명 |
 |---|---|---|---|
-| `type` | `sgg` · `bjd` · `pnu` | ● |  |
-| `canonical` | string `^\d{5}$\|^\d{10}$\|^\d{19}$` | ● |  |
+| `type` | `sgg` · `bjd` · `pnu` · `project` | ● |  |
+| `canonical` | string `^\d{5}$\|^\d{10}$\|^\d{19}$\|…` | ● | 정규화된 코드. 사업 id 로 열었으면 남은 사업의 id(합병된 id 를 열었으면 input 과 다르다) |
 | `input` | string | ● |  |
 | `sgg` | string `^\d{5}$` | ● |  |
 | `bjd` | string `^\d{10}$` |  |  |
@@ -88,7 +90,7 @@
 | `parcel.geometry` | Geometry \| null | ● | GeoJSON Polygon 또는 MultiPolygon(경계는 점 수를 줄여 단순화함) |
 | `parcel.addr` | string |  |  |
 | `coverage` | Coverage | ● | {tier:'A'} 이면 regions/<slug> 번들이 있고, {tier:'none'} 이면 번들이 없어 요청 시 조회로 연다 |
-| `warnings` | `padded-8-digit` · `districts-merged` · `parcel-not-found` · `ri-uses-umd-boundary` · `boundary-not-found` · `geometry-unavailable` · `geometry-not-configured`[] |  | 열렸지만 요청과 다른 범위로 열린 이유(8자리 보충·구를 합쳐 시 경계로 씀·필지 없음→법정동·리→읍면동·경계 조회 실패) |
+| `warnings` | `padded-8-digit` · `districts-merged` · `parcel-not-found` · `ri-uses-umd-boundary` · `boundary-not-found` · `geometry-unavailable` · `geometry-not-configured` · `project-unlocated` · `project-superseded`[] |  | 열렸지만 요청과 다른 범위로 열린 이유(8자리 보충·구를 합쳐 시 경계로 씀·필지 없음→법정동·리→읍면동·경계 조회 실패·사업의 위치(필지)가 연결되지 않아 법정동 또는 시군구로 엶·합병되어 폐기된 사업 id 를 남은 사업으로 엶) |
 | `source` | object | ● |  |
 | `source.code` | string | ● |  |
 | `source.geometry` | string | ● |  |
@@ -96,10 +98,21 @@
 | `neighbors` | object[] |  | 같은 시군구의 읍면동(리 제외). 시군구면 전체, 법정동·필지면 자기 자신을 뺀 나머지. 인허가 사업이 없는 지역에서 화면이 이웃 법정동을 고르게 한다 |
 | `neighbors[].bjd` | string `^\d{10}$` | ● |  |
 | `neighbors[].name` | string | ● |  |
+| `project` | object |  | type 이 project 일 때만. 사업 레코드(스펙 9.1)의 일부와 6단계. pnu·bjd·parcel·경계는 사업의 첫 필지(없으면 첫 법정동, 그것도 없으면 시군구)의 것이다 |
+| `project.id` | string `^PRJ-\d{5}-\d{4}$` | ● |  |
+| `project.name` | string |  |  |
+| `project.units` | integer 1~ |  |  |
+| `project.stageCode` | `01` · `02` · `03` · `04` · `05` · `06` | ● | 6단계: 01 정책 · 02 사업화 · 03 인허가 · 04 건설 · 05 공급 · 06 입주 |
+| `project.stage` | `정책` · `사업화` · `인허가` · `건설` · `공급` · `입주` | ● |  |
+| `project.pnus` | string `^\d{19}$`[] | ● | 사업 필지. 비면 위치 미연결 |
+| `project.bjdCodes` | string `^\d{10}$`[] | ● |  |
+| `project.block` | string |  | 번들 단지의 사업이면 그 단지 id(화면이 번들을 연 뒤 그 단지를 연다) |
+| `project.supersededFrom` | string `^PRJ-\d{5}-\d{4}$` |  | 합병되어 폐기된 id 로 열었으면 그 id |
 
 ### 동작
 
-- `code` 는 자릿수로 종류를 판별하고, `sgg`·`bjd`·`pnu` 는 종류가 맞아야 한다(`type-mismatch`). 정확히 하나만 쓴다.
+- `code` 는 자릿수로 종류를 판별하고(`PRJ-` 접두는 사업 id), `sgg`·`bjd`·`pnu`·`project` 는 종류가 맞아야 한다(`type-mismatch`). 정확히 하나만 쓴다.
+- **사업 id**(`PRJ-{시군구5}-{일련4}`)는 사업 레지스트리(`registry/projects.json`)에서 찾아 그 사업의 첫 필지 → 첫 법정동 → 시군구 순으로 열고, 응답의 `type` 은 `project`, `canonical` 은 사업 id, `project` 에 사업 정보가 붙는다. 필지가 없으면 `project-unlocated`, 합병되어 폐기된 id 는 남은 사업으로 열고 `project-superseded`. 레지스트리에 없으면 404 `unknown-project`.
 - `geometry` 기본값: 시군구는 생략(커서), 법정동·필지는 포함. 화면은 항상 `geometry=1`.
 - **구가 있는 시**(수원·청주·포항·창원·고양·용인·천안·전주·화성 …)는 V-World 시군구 경계에 구만 있어 구 경계를 합쳐 시 경계로 돌려주고 `warnings` 에 `districts-merged` 를 적는다.
 - 필지가 연속지적도에 없으면 법정동 경계로 후퇴하고 `parcel-not-found`.
@@ -109,7 +122,7 @@
 | HTTP | `code` | 설명 |
 |---|---|---|
 | 400 | `invalid-query` · `invalid-code` | invalid-query(코드를 둘 이상·0개·모르는 이름) · invalid-code(형식·종류 불일치). s-maxage=3600 |
-| 404 | `unknown-code` | 표준코드 표에 없는 시군구·법정동(개편으로 바뀐 코드일 수 있음). suggestions 로 같은 시군구 법정동 후보 |
+| 404 | `unknown-code` · `unknown-project` | unknown-code: 표준코드 표에 없는 시군구·법정동(개편으로 바뀐 코드일 수 있음). suggestions 로 같은 시군구 법정동 후보 · unknown-project: 사업 레지스트리에 없는 사업 id(project 에 요청한 id) |
 | 405 | `method` | GET·HEAD 만 허용(Allow 헤더) |
 | 422 | `unsupported-level` | 시도 단위(2자리)는 지도 대상이 아님 |
 | 429 | `keys-exhausted` | 인증키 한도(keys-exhausted). Retry-After |
@@ -162,7 +175,7 @@
     "code": "행정안전부 행정표준코드(법정동코드)",
     "geometry": "V-World 법정읍면동 경계(LT_C_ADEMD_INFO)"
   },
-  "asOf": "2026-10-05"
+  "asOf": "2026-10-06"
 }
 ```
 
@@ -223,7 +236,158 @@
     "code": "행정안전부 행정표준코드(법정동코드)",
     "geometry": "V-World 연속지적도(LP_PA_CBND_BUBUN)"
   },
-  "asOf": "2026-10-05"
+  "asOf": "2026-10-06"
+}
+```
+
+**사업 id(필지로 열림)** (`tests/fixtures/api/resolve-project.json`)
+
+```json
+{
+  "type": "project",
+  "canonical": "PRJ-41450-0001",
+  "input": "PRJ-41450-0001",
+  "sgg": "41450",
+  "project": {
+    "id": "PRJ-41450-0001",
+    "name": "휴먼시아 꽃뫼마을",
+    "units": 748,
+    "stageCode": "06",
+    "stage": "입주",
+    "pnus": [
+      "4145010800107750000"
+    ],
+    "bjdCodes": [
+      "4145010800"
+    ]
+  },
+  "bjd": "4145010800",
+  "pnu": "4145010800107750000",
+  "parcel": {
+    "jibun": "775",
+    "landType": "일반",
+    "hub": {
+      "sigunguCd": "41450",
+      "bjdongCd": "10800",
+      "platGbCd": "0",
+      "bun": "0775",
+      "ji": "0000"
+    },
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        "…"
+      ]
+    },
+    "addr": "경기도 하남시 덕풍동 775"
+  },
+  "name": "경기도 하남시 덕풍동",
+  "level": "umd",
+  "neighbors": [
+    {
+      "bjd": "4145012000",
+      "name": "상사창동"
+    },
+    {
+      "bjd": "4145011900",
+      "name": "하사창동"
+    }
+  ],
+  "bbox": [
+    127.19911,
+    37.55148,
+    "…"
+  ],
+  "center": [
+    127.20037,
+    37.55257
+  ],
+  "coverage": {
+    "tier": "none"
+  },
+  "source": {
+    "code": "행정안전부 행정표준코드(법정동코드)",
+    "geometry": "V-World 연속지적도(LP_PA_CBND_BUBUN)"
+  },
+  "asOf": "2026-10-06"
+}
+```
+
+**사업 id(번들 단지: 필지로 열리고 `project.block` 이 번들 단지를 가리킴)** (`tests/fixtures/api/resolve-project-bundle.json`)
+
+```json
+{
+  "type": "project",
+  "canonical": "PRJ-28245-0001",
+  "input": "PRJ-28245-0001",
+  "sgg": "28245",
+  "project": {
+    "id": "PRJ-28245-0001",
+    "name": "인천계양 테크노밸리 A6 블록",
+    "units": 663,
+    "stageCode": "05",
+    "stage": "공급",
+    "pnus": [
+      "2824510900101840001"
+    ],
+    "bjdCodes": [
+      "2824510900"
+    ],
+    "block": "techno-A6"
+  },
+  "bjd": "2824510900",
+  "pnu": "2824510900101840001",
+  "parcel": {
+    "jibun": "184-1",
+    "landType": "일반",
+    "hub": {
+      "sigunguCd": "28245",
+      "bjdongCd": "10900",
+      "platGbCd": "0",
+      "bun": "0184",
+      "ji": "0001"
+    },
+    "geometry": {
+      "type": "Polygon",
+      "coordinates": [
+        "…"
+      ]
+    },
+    "addr": "인천광역시 계양구 박촌동 184-1"
+  },
+  "name": "인천광역시 계양구 박촌동",
+  "level": "umd",
+  "neighbors": [
+    {
+      "bjd": "2824510100",
+      "name": "효성동"
+    },
+    {
+      "bjd": "2824510200",
+      "name": "계산동"
+    }
+  ],
+  "bbox": [
+    126.75523,
+    37.55229,
+    "…"
+  ],
+  "center": [
+    126.75564,
+    37.55278
+  ],
+  "coverage": {
+    "tier": "A",
+    "slug": "incheon-gyeyang",
+    "name": "인천 계양구",
+    "updatedAt": "2026-10-03",
+    "visibility": "public"
+  },
+  "source": {
+    "code": "행정안전부 행정표준코드(법정동코드)",
+    "geometry": "V-World 연속지적도(LP_PA_CBND_BUBUN)"
+  },
+  "asOf": "2026-10-06"
 }
 ```
 
@@ -275,7 +439,7 @@
     "code": "행정안전부 행정표준코드(법정동코드)",
     "geometry": "V-World 법정읍면동 경계(LT_C_ADEMD_INFO)"
   },
-  "asOf": "2026-10-05"
+  "asOf": "2026-10-06"
 }
 ```
 
@@ -314,7 +478,7 @@
     "code": "행정안전부 행정표준코드(법정동코드)",
     "geometry": "V-World 시군구 경계(LT_C_ADSIGG_INFO)"
   },
-  "asOf": "2026-10-05"
+  "asOf": "2026-10-06"
 }
 ```
 
@@ -410,7 +574,7 @@
       "행정표준코드",
       "V-World 장소"
     ],
-    "asOf": "2026-10-05",
+    "asOf": "2026-10-06",
     "count": 6
   }
 }
@@ -446,7 +610,7 @@
       "행정표준코드",
       "…"
     ],
-    "asOf": "2026-10-05",
+    "asOf": "2026-10-06",
     "count": 2
   }
 }
@@ -485,7 +649,7 @@
       "행정표준코드",
       "V-World 장소"
     ],
-    "asOf": "2026-10-05",
+    "asOf": "2026-10-06",
     "count": 5
   }
 }
@@ -501,7 +665,7 @@
     "sources": [
       "행정표준코드"
     ],
-    "asOf": "2026-10-05",
+    "asOf": "2026-10-06",
     "reason": "unknown-code",
     "detail": "행정표준코드 표에 없는 코드입니다",
     "count": 0
@@ -509,9 +673,9 @@
 }
 ```
 
-## 4. `GET /api/v1/notices` — 공공 모집 공고(마이홈)
+## 4. `GET /api/v1/notices` — 공공 모집 공고(마이홈·LH)
 
-시군구 하나의 마이홈포털 공공주택 모집공고(임대·분양)를 돌려준다. 번들이 없는 지역에도 지금 모집 중인 공공주택을 보이려는 것이며 화면은 사이드바에 비동기로 채운다. 원천은 시군구 필터가 없는 전국 목록(100건씩, 1시간 캐시)이라 행정표준코드의 시군구 이름으로 거른다.
+시군구 하나의 공공주택 모집공고(임대·분양)를 돌려준다: 마이홈포털(HWSPR02)과 LH 분양임대공고문(15058530)을 합친다. 번들이 없는 지역에도 지금 모집 중인 공공주택을 보이려는 것이며 화면은 사이드바에 비동기로 채운다. 마이홈 원천은 시군구 필터가 없는 전국 목록(100건씩, 1시간 캐시)이라 행정표준코드의 시군구 이름으로 거른다. LH 공고문은 시도만 있어 제목에 시군구·법정동 이름이 있는 것만 싣고(제목 기준 추정, 마이홈과 제목이 같으면 마이홈만), 공급정보(15056765)로 단지명·세대수를 채운다. 한쪽이 실패하면 나머지를 주고 meta.partial 에 알린다.
 
 - operationId: `getNotices`
 
@@ -533,28 +697,31 @@
 | `sgg` | string `^\d{5}$` | ● |  |
 | `name` | string | ● | 행정표준코드 시군구 이름('경기도 하남시') |
 | `asOf` | string(date) | ● |  |
-| `items` | Notice[] | ● | 공고일 최신 순. 구가 있는 시는 시 전체가 구 공고를 모두 포함 |
-| `items[].id` | string | ● | 'rental-<공고번호>[-<세대번호>]' · 'sale-…' |
+| `items` | Notice[] | ● | 공고일 최신 순(마이홈·LH 합침). 구가 있는 시는 시 전체가 구 공고를 모두 포함 |
+| `items[].id` | string | ● | 'rental-<공고번호>[-<세대번호>]' · 'sale-…'(마이홈) · 'lh-<PAN_ID>'(LH 공고문) |
 | `items[].kind` | `rental` · `sale` | ● |  |
 | `items[].title` | string | ● |  |
 | `items[].agency` | string \| null |  |  |
 | `items[].status` | string \| null |  |  |
 | `items[].housingType` | string \| null |  |  |
 | `items[].supplyType` | string \| null |  |  |
-| `items[].complex` | string \| null |  |  |
-| `items[].units` | integer 1~ \| null |  |  |
+| `items[].complex` | string \| null |  | 단지명(LH 공고는 공급정보의 단지명, 둘을 넘으면 '… 외 N') |
+| `items[].units` | integer 1~ \| null |  | 세대수(LH 공고는 공급정보의 금회공급 세대수 합) |
 | `items[].address` | string \| null |  |  |
 | `items[].pnu` | string `^\d{19}$` \| null |  | 있으면 화면이 그 필지로 이동할 수 있다 |
 | `items[].announcedAt` | string(date) \| null |  |  |
 | `items[].applyFrom` | string(date) \| null |  |  |
 | `items[].applyTo` | string(date) \| null |  |  |
 | `items[].url` | string `^https://(www\.myhome\.go\…` \| null |  | 마이홈·LH 주소만(원천 링크를 그대로 믿지 않는다) |
+| `items[].source` | `myhome` · `lh` |  | 출처: myhome(마이홈포털 HWSPR02) · lh(한국토지주택공사 분양임대공고문). lh 공고는 주소·필지가 없고(pnu null) 제목에 시군구·법정동 이름이 있을 때만 그 시군구에 실리며(제목 기준 추정), 단지명·세대수는 공급정보(15056765)에서 채운다. 마이홈과 제목이 같은 LH 공고는 마이홈 쪽만 싣는다 |
 | `meta` | object | ● |  |
 | `meta.source` | string | ● |  |
-| `meta.rental` | integer 0~ | ● | 전국 임대 공고 수 |
-| `meta.sale` | integer 0~ | ● | 전국 분양 공고 수 |
-| `meta.matched` | integer 0~ | ● |  |
-| `meta.partial` | `rental` · `sale`[] |  | 한쪽 목록이 실패해 나머지만 준 경우(이때 응답은 짧게만 캐시) |
+| `meta.rental` | integer 0~ | ● | 전국 마이홈 임대 공고 수 |
+| `meta.sale` | integer 0~ | ● | 전국 마이홈 분양 공고 수 |
+| `meta.matched` | integer 0~ | ● | 이 시군구에 실린 공고 수(마이홈 + LH) |
+| `meta.partial` | `rental` · `sale` · `lh` · `lh-supply`[] |  | 일부가 실패해 나머지만 준 경우(이때 응답은 짧게만 캐시): rental·sale(마이홈 목록) · lh(LH 공고문 목록) · lh-supply(LH 공급정보, 단지명·세대수 없음) |
+| `meta.lh` | integer 0~ | ● | 전국 LH 진행 중 공고 수(공고중·접수중·정정공고중, 토지·상가 포함 — 주택 공고만 거르기 전) |
+| `meta.lhMatched` | integer 0~ | ● | 그 가운데 LH 공고 수 |
 
 ### 동작
 
@@ -582,7 +749,7 @@
   "type": "Notices",
   "sgg": "41450",
   "name": "경기도 하남시",
-  "asOf": "2026-10-05",
+  "asOf": "2026-10-06",
   "items": [
     {
       "id": "rental-21372-1",
@@ -599,15 +766,58 @@
       "announcedAt": "2026-10-01",
       "applyFrom": "2026-10-12",
       "applyTo": "2026-10-14",
-      "url": "https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=21372&houseSn=1"
+      "url": "https://www.myhome.go.kr/hws/portal/sch/selectRsdtRcritNtcDetailView.do?pblancId=21372&houseSn=1",
+      "source": "myhome"
     },
     "…"
   ],
   "meta": {
-    "source": "마이홈포털 공공주택 모집공고(HWSPR02)",
+    "source": "마이홈포털 공공주택 모집공고(HWSPR02) + 한국토지주택공사 분양임대공고문(15058530)·공급정보(15056765)",
     "rental": 244,
     "sale": 80,
-    "matched": 2
+    "lh": 158,
+    "matched": 2,
+    "lhMatched": 0
+  }
+}
+```
+
+**LH 공고가 더해지는 시군구(아산시, `source: "lh"`)** (`tests/fixtures/api/notices-asan.json`)
+
+```json
+{
+  "type": "Notices",
+  "sgg": "44200",
+  "name": "충청남도 아산시",
+  "asOf": "2026-10-06",
+  "items": [
+    {
+      "id": "lh-2015122300020726",
+      "kind": "rental",
+      "title": "아산지역 국민임대주택 예비입주자 모집공고(2026.09.15)",
+      "agency": "한국토지주택공사",
+      "status": "접수중",
+      "housingType": "국민임대",
+      "supplyType": "임대주택",
+      "complex": "아산탕정2-A7BL 국민임대, 아산탕정 2-A15BL 국민임대 외 2",
+      "units": 1530,
+      "address": null,
+      "pnu": null,
+      "announcedAt": "2026-09-15",
+      "applyFrom": null,
+      "applyTo": "2026-10-14",
+      "url": "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancInfo.do?panId=2015122300020726&ccrCnntSysDsCd=03&uppAisTpCd=06&aisTpCd=07&mi=1026",
+      "source": "lh"
+    },
+    "…"
+  ],
+  "meta": {
+    "source": "마이홈포털 공공주택 모집공고(HWSPR02) + 한국토지주택공사 분양임대공고문(15058530)·공급정보(15056765)",
+    "rental": 244,
+    "sale": 80,
+    "lh": 158,
+    "matched": 7,
+    "lhMatched": 1
   }
 }
 ```
@@ -619,13 +829,15 @@
   "type": "Notices",
   "sgg": "11110",
   "name": "서울특별시 종로구",
-  "asOf": "2026-10-05",
+  "asOf": "2026-10-06",
   "items": [],
   "meta": {
-    "source": "마이홈포털 공공주택 모집공고(HWSPR02)",
+    "source": "마이홈포털 공공주택 모집공고(HWSPR02) + 한국토지주택공사 분양임대공고문(15058530)·공급정보(15056765)",
     "rental": 244,
     "sale": 80,
-    "matched": 0
+    "lh": 158,
+    "matched": 0,
+    "lhMatched": 0
   }
 }
 ```
@@ -730,7 +942,7 @@
   ],
   "meta": {
     "source": "V-World GIS건물통합정보(LT_C_BLDGINFO)",
-    "fetchedAt": "2026-10-05",
+    "fetchedAt": "2026-10-06",
     "count": 1702,
     "heights": "층수환산 높이는 계양 측정 층고 기반 근사",
     "rawCount": 1852,
@@ -781,14 +993,15 @@
 | `features[].properties.plannedCompletion` | PartialDate \| null |  | 사용검사 예정일(입주 단계가 아닐 때) |
 | `features[].properties.overdue` | object \| null |  | 예정일이 지났는데 착공·사용검사 기록이 없다는 사실(지연 판정이 아님) |
 | `features[].properties.address` | string \| null |  |  |
-| `features[].properties.refs` | string[] |  | 건축HUB 허가 관리번호들(화면에는 개수만) |
+| `features[].properties.refs` | string[] |  | 그 번지에 모인 허가 관리번호(mgmHsrgstPk). 22자리까지 있어 문자열이고 숫자로 바꾸면 안 된다(건축HUB 는 JSON 숫자로 주므로 서버가 파싱 전에 문자열로 지킨다) |
 | `features[].properties.records` | integer 1~ | ● |  |
-| `features[].properties.latestRef` | string \| null |  |  |
+| `features[].properties.latestRef` | string \| null |  | 가장 최근 허가의 관리번호(문자열) |
 | `features[].properties.via` | `"ledger"` |  | 위치를 건축물대장이 정함(블록 단위 허가 또는 합필·분할) |
 | `features[].properties.block` | string |  | 허가가 블록 단위일 때 블록 이름 |
 | `features[].properties.hubJibun` | string |  | 합필·분할 전 허가 지번 |
 | `features[].properties.statusBy` | `"ledger"` |  | 준공을 대장 사용승인일로 올림 |
 | `features[].properties.ledger` | object |  |  |
+| `features[].properties.projectId` | string `^PRJ-\d{5}-\d{4}$` |  | 사업 레지스트리에 발급된 사업이면 그 id(허가 관리번호나 PNU 가 같은 사업). 없으면 발급 전. 화면은 이 id 로 `?project=` 링크를 만든다 |
 | `features[].geometry` | Geometry | ● | GeoJSON Polygon 또는 MultiPolygon(경계는 점 수를 줄여 단순화함) |
 | `meta` | object | ● |  |
 | `meta.source` | string | ● |  |
@@ -894,7 +1107,7 @@
   ],
   "meta": {
     "source": "건축HUB 주택인허가정보(getHpBasisOulnInfo·getHpPlatPlcInfo) + 건축HUB 건축물대장정보(총괄표제부) + V-World 연속지적도(LP_PA_CBND_BUBUN)",
-    "fetchedAt": "2026-10-05",
+    "fetchedAt": "2026-10-06",
     "records": 453,
     "pages": 5,
     "candidates": 32,
@@ -991,7 +1204,7 @@
   ],
   "meta": {
     "source": "건축HUB 주택인허가정보(getHpBasisOulnInfo·getHpPlatPlcInfo) + 건축HUB 건축물대장정보(총괄표제부) + V-World 연속지적도(LP_PA_CBND_BUBUN)",
-    "fetchedAt": "2026-10-05",
+    "fetchedAt": "2026-10-06",
     "records": 32,
     "pages": 1,
     "candidates": 12,
@@ -1060,7 +1273,7 @@
 
 `application/json` · `Cache-Control: public, s-maxage=86400, stale-while-revalidate=86400` · 스키마 `InfraResponse`
 
-학교·정류장. 한쪽이 실패하면 meta.schoolsError·stopsError 와 s-maxage=60. TAGO 밖 지역(서울 등)의 정류장은 OpenStreetMap(meta.stopsSource='osm'), 그것도 못 받으면 meta.noBus
+학교·정류장. 한쪽이 실패하면 meta.schoolsError·stopsError 와 s-maxage=60. TAGO 밖 지역: 서울(시도 11)은 서울특별시 정류소정보조회(meta.stopsSource='seoul'), 실패하면 OpenStreetMap(meta.stopsSource='osm', meta.seoulError), 강릉 등 그 밖은 OpenStreetMap, 그것도 못 받으면 meta.noBus
 
 | 항목 | 형식 | 필수 | 설명 |
 |---|---|---|---|
@@ -1068,7 +1281,7 @@
 | `bjd` | string `^\d{10}$` | ● |  |
 | `asOf` | string(date) | ● |  |
 | `sources` | InfraSource[] | ● |  |
-| `sources[].id` | string | ● | edu-newschool · tago-bus · osm-bus |
+| `sources[].id` | string | ● | edu-newschool · tago-bus · seoul-bus · osm-bus |
 | `sources[].label` | string | ● |  |
 | `sources[].publisher` | string |  |  |
 | `sources[].url` | string |  |  |
@@ -1101,13 +1314,14 @@
 | `meta.stops` | integer | ● |  |
 | `meta.schoolsError` | string |  |  |
 | `meta.stopsError` | string |  |  |
-| `meta.noBus` | `true` |  | TAGO 에도 OpenStreetMap 에도 정류장 자료가 없다. 교통 점검은 '자료 없음' |
-| `meta.stopsSource` | `tago` · `osm` |  | 정류장 출처: tago(국토교통부) 우선, TAGO 에 자료가 없는 지역(서울·강릉 등)은 osm(OpenStreetMap, ODbL) |
+| `meta.noBus` | `true` |  | TAGO·서울시·OpenStreetMap 어디에도 정류장 자료가 없다. 교통 점검은 '자료 없음' |
+| `meta.stopsSource` | `tago` · `seoul` · `osm` |  | 정류장 출처: tago(국토교통부) 우선, 서울(시도 11)은 seoul(서울특별시 정류소정보조회), 그 밖에 TAGO 에 자료가 없는 지역(강릉 등)과 서울시 조회 실패 때는 osm(OpenStreetMap, ODbL) |
+| `meta.seoulError` | string |  | 서울시 정류소 조회가 실패했거나 일부만 받았다(시간당 상한·인증키 한도·연결 오류). 이때 응답은 s-maxage=60 이고 OpenStreetMap 으로 물러났을 수 있다 |
 
 ### 동작
 
 - 서버는 임의 좌표를 받지 않고 그 법정동의 인허가 필지 중심만 쓴다(키를 쓰는 열린 중계가 되지 않게). 인허가가 없으면 비어 있다.
-- 정류장은 TAGO 가 우선이고 TAGO 에 자료가 없는 지역(서울·강릉 등)은 OpenStreetMap(`meta.stopsSource: "osm"`, ODbL 출처 표시)으로 보조한다.
+- 정류장은 TAGO 가 우선이고, 서울은 서울특별시 정류소정보조회(`meta.stopsSource: "seoul"`, 하루 1,000건 한도라 단지 중심 300 m 간격 최대 12곳만 부른다), TAGO·서울시에 자료가 없거나 서울시 조회가 실패하면 OpenStreetMap(`meta.stopsSource: "osm"`, ODbL 출처 표시)으로 보조한다.
 - `meta.schoolsError`·`meta.stopsError` 가 있으면 일부만 준 것이며 응답은 `s-maxage=60`.
 
 ### 오류
@@ -1128,7 +1342,7 @@
 {
   "type": "Infra",
   "bjd": "4145010800",
-  "asOf": "2026-10-05",
+  "asOf": "2026-10-06",
   "sources": [
     {
       "id": "edu-newschool",
@@ -1136,7 +1350,7 @@
       "publisher": "교육부·한국교육학술정보원",
       "url": "https://eduinfo.go.kr/portal/theme/newSchMapPage.do",
       "redistributable": "unknown",
-      "asOf": "2026-10-05"
+      "asOf": "2026-10-06"
     },
     {
       "id": "tago-bus",
@@ -1145,7 +1359,7 @@
       "url": "https://www.data.go.kr/data/15098534/openapi.do",
       "license": "이용허락범위 제한 없음",
       "redistributable": "Y",
-      "asOf": "2026-10-05"
+      "asOf": "2026-10-06"
     }
   ],
   "schools": [
@@ -1208,7 +1422,53 @@
 }
 ```
 
-**서울(OpenStreetMap 정류장)** (`tests/fixtures/api/infra-seoul.json`)
+**서울(서울특별시 정류소정보조회)** (`tests/fixtures/api/infra-seoul.json`)
+
+```json
+{
+  "type": "Infra",
+  "bjd": "1129013800",
+  "asOf": "2026-10-06",
+  "sources": [
+    {
+      "id": "seoul-bus",
+      "label": "서울특별시 버스 정류소정보조회",
+      "publisher": "서울특별시",
+      "url": "https://www.data.go.kr/data/15000303/openapi.do",
+      "redistributable": "unknown",
+      "asOf": "2026-10-06"
+    }
+  ],
+  "schools": [],
+  "stops": [
+    {
+      "id": "seoul-107900355",
+      "name": "간대어린이공원",
+      "lon": 127.051183,
+      "lat": 37.618638,
+      "no": "08877"
+    },
+    {
+      "id": "seoul-110000234",
+      "name": "광운대학교",
+      "lon": 127.058146,
+      "lat": 37.619843,
+      "no": "11335"
+    },
+    "…"
+  ],
+  "meta": {
+    "centers": 13,
+    "schoolsNational": 220,
+    "schools": 0,
+    "stopCalls": 7,
+    "stops": 112,
+    "stopsSource": "seoul"
+  }
+}
+```
+
+**서울시 조회가 안 될 때(OpenStreetMap 으로 물러남)** (`tests/fixtures/api/infra-seoul-osm.json`)
 
 ```json
 {
@@ -1253,7 +1513,7 @@
 }
 ```
 
-**정류장을 못 받은 경우(OSM 서버 실패)** (`tests/fixtures/api/infra-seoul-nobus.json`)
+**정류장을 못 받은 경우(OSM 서버도 실패)** (`tests/fixtures/api/infra-seoul-nobus.json`)
 
 ```json
 {
@@ -1327,24 +1587,24 @@
 
 ```json
 {
-  "at": "2026-10-05T13:58:07.786Z",
+  "at": "2026-10-06T00:27:31.420Z",
   "ttl": 60,
   "buses": [
     {
       "r": "ICB365000050",
-      "v": "인천70바2743",
-      "lon": 126.683186,
-      "lat": 37.612328,
-      "ord": 9,
-      "stop": "만수산입구"
+      "v": "인천70바2745",
+      "lon": 126.688533,
+      "lat": 37.617053,
+      "ord": 12,
+      "stop": "불로대곡동행정복지센터"
     },
     {
       "r": "ICB365000050",
-      "v": "인천70바2692",
-      "lon": 126.755924,
-      "lat": 37.563641,
-      "ord": 43,
-      "stop": "동양체육문화센터"
+      "v": "인천70바2694",
+      "lon": 126.707736,
+      "lat": 37.59642,
+      "ord": 25,
+      "stop": "호반써밋1차아파트"
     },
     "…"
   ]
@@ -1362,12 +1622,13 @@ RFC 7807 problem+json. type 은 '/problems/<code>' 이고 code 는 아래 목록
 | `type` | string `^/problems/[a-z0-9-]+$` | ● |  |
 | `title` | string | ● |  |
 | `status` | integer 400~599 | ● |  |
-| `code` | `invalid-query` · `invalid-code` · `invalid-cell` · `unsupported-level` · `unknown-code` · `method` · `keys-exhausted` · `budget-exhausted` · `not-configured` · `upstream` | ● |  |
+| `code` | `invalid-query` · `invalid-code` · `invalid-cell` · `unsupported-level` · `unknown-code` · `unknown-project` · `method` · `keys-exhausted` · `budget-exhausted` · `not-configured` · `upstream` | ● |  |
 | `detail` | string | ● |  |
-| `reason` | string |  | invalid-code·invalid-query 의 세부 사유(empty·not-digits·bad-length·unknown-sido·bad-pnu·type-mismatch·too-short·too-long) |
+| `reason` | string |  | invalid-code·invalid-query 의 세부 사유(empty·not-digits·bad-length·unknown-sido·bad-pnu·bad-project·type-mismatch·too-short·too-long) |
 | `retryAfterSec` | integer 1~ |  | 429 일 때 다시 시도할 때까지 초(Retry-After 헤더와 같음) |
 | `sgg` | string `^\d{5}$` |  |  |
 | `suggestions` | object[] |  | unknown-code(법정동)일 때 같은 시군구의 법정동 후보 8개 이내 |
+| `project` | string `^PRJ-\d{5}-\d{4}$` |  | unknown-project 일 때 요청한 사업 id |
 
 ### `Position`
 

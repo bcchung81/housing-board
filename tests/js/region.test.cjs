@@ -271,7 +271,8 @@ test('loadRegion: 모르는 지역은 오류 객체, 필수 파일 실패는 URL
 });
 
 /* ---------- 표준코드로 열기 ---------- */
-test('codeQuery: 우선순위 pnu > bjd > sgg > code, 코드가 ?region= 보다 우선, 코드가 없으면 null', () => {
+test('codeQuery: 우선순위 project > pnu > bjd > sgg > code, 코드가 ?region= 보다 우선, 코드가 없으면 null', () => {
+  assert.deepEqual(R.codeQuery('?project=PRJ-41450-0001&pnu=2824510900100010000&bjd=2824510900'), { name: 'project', value: 'PRJ-41450-0001' });   // 사업 id 가 가장 구체적이다
   assert.deepEqual(R.codeQuery('?code=28245&at=1,2,3'), { name: 'code', value: '28245' });
   assert.deepEqual(R.codeQuery('?pnu=2824510900100010000'), { name: 'pnu', value: '2824510900100010000' });
   assert.deepEqual(R.codeQuery('?code=1&sgg=28245&bjd=2824510900&pnu=2824510900100010000'), { name: 'pnu', value: '2824510900100010000' });
@@ -596,7 +597,8 @@ test('noticeRows: 공고를 화면 줄로(기관·유형·세대수, 접수 기�
   const fx = JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname, '../fixtures/api/notices-hanam.json'), 'utf8'));
   const rows = R.noticeRows(fx); assert.equal(rows.length, fx.items.length); assert.ok(rows[0].title && rows[0].meta && /^접수 \d\d\.\d\d(~\d\d\.\d\d)?$/.test(rows[0].period));
   const n = { id: 'rental-1', kind: 'rental', title: '신혼희망타운 모집', agency: 'LH', supplyType: '행복주택', housingType: '아파트', units: 20, complex: '하남감일A7BL', address: '경기도 하남시 감일순환로 40', pnu: '4145011500104680000', announcedAt: '2026-10-01', applyFrom: '2026-10-12', applyTo: '2026-10-14', url: 'https://www.myhome.go.kr/hws/x' };
-  assert.deepEqual(R.noticeRows({ items: [n] })[0], { id: 'rental-1', title: '신혼희망타운 모집', meta: 'LH · 임대(행복주택) · 아파트 · 20세대', period: '접수 10.12~10.14', place: '하남감일A7BL · 경기도 하남시 감일순환로 40', url: 'https://www.myhome.go.kr/hws/x', pnu: '4145011500104680000' });
+  assert.deepEqual(R.noticeRows({ items: [n] })[0], { id: 'rental-1', title: '신혼희망타운 모집', meta: 'LH · 임대(행복주택) · 아파트 · 20세대', period: '접수 10.12~10.14', place: '하남감일A7BL · 경기도 하남시 감일순환로 40', url: 'https://www.myhome.go.kr/hws/x', pnu: '4145011500104680000', fromLh: false });
+  assert.equal(R.noticeRows({ items: [{ ...n, source: 'lh' }] })[0].fromLh, true); assert.equal(R.noticeRows({ items: [{ ...n, source: 'myhome' }] })[0].fromLh, false);
   assert.equal(R.noticeRows({ items: [{ ...n, applyFrom: '2026-10-12', applyTo: '2026-10-12' }] })[0].period, '접수 10.12');
   assert.equal(R.noticeRows({ items: [{ ...n, applyFrom: null, applyTo: null }] })[0].period, '공고 2026.10.01'); assert.equal(R.noticeRows({ items: [{ ...n, applyFrom: null, applyTo: null, announcedAt: null }] })[0].period, '');
   for (const bad of ['http://www.myhome.go.kr/x', 'https://evil.example/', 'javascript:alert(1)']) assert.equal(R.noticeRows({ items: [{ ...n, url: bad }] })[0].url, '', bad);
@@ -612,4 +614,34 @@ test('fetchNotices: Notices 응답만 받고 오류·네트워크 실패는 null
   assert.match(app, /if \(REG\.slug \|\| !RES \|\| !RES\.sgg/); assert.match(app, /noticeRows\(data\)/); assert.match(app, /rel=\"noopener noreferrer\"/); assert.match(html, /id="secNotice"[^>]*hidden/);
   const r = bootWithPermits('?bjd=4145010800', { ...RESOLVED_BJD, sgg: '41450' }, () => json(200, PERMIT_FC)); await R.boot(r.win, r.doc);
   assert.deepEqual([r.win.RESOLVED.sgg, r.win.RESOLVED.bjd], ['41450', '4145010800']);                                                        // 화면이 해석 결과의 시군구·법정동을 알아 공고를 부른다
+});
+
+test('사업 id 로 열기: resolveUrl 은 project= 를 그대로 보내고, 필지가 연결된 사업은 필지처럼(17.6·필지 경계), 위치가 없으면 법정동·시군구처럼 연다', () => {
+  assert.equal(R.resolveUrl(R.codeQuery('?project=PRJ-41450-0001&mode=progress')), 'api/v1/resolve?project=PRJ-41450-0001&geometry=1');
+  const sq = { type: 'Polygon', coordinates: [[[0, 0], [1, 0], [1, 1], [0, 0]]] }, pg = { type: 'Polygon', coordinates: [[[0, 0], [0.1, 0], [0.1, 0.1], [0, 0]]] };
+  const base = { type: 'project', center: [127.2, 37.54], coverage: { tier: 'none' } };
+  assert.deepEqual(R.resolvedStart({ ...base, bjd: '4145010800', pnu: '4145010800105690000', parcel: { geometry: pg }, geometry: sq }), { center: [127.2, 37.54], zoom: 17.6 });
+  assert.equal(R.resolvedShape({ ...base, bjd: '4145010800', pnu: '4145010800105690000', parcel: { geometry: pg }, geometry: sq }), pg);
+  assert.deepEqual(R.resolvedStart({ ...base, bjd: '4145011400', geometry: sq }), { center: [127.2, 37.54], zoom: 15.4 }); assert.equal(R.resolvedShape({ ...base, bjd: '4145011400', geometry: sq }), sq);   // 위치 미연결: 법정동 경계
+  assert.equal(R.resolvedStart({ ...base, coverage: { tier: 'A' } }), null, '번들이 있는 시군구까지만 열린 사업은 지역 기본 시점'); assert.equal(R.resolvedShape({ ...base, coverage: { tier: 'A' }, geometry: sq }), null);
+  assert.ok(R.noticeText(['project-unlocated', 'project-superseded']).includes('위치(필지)가 아직 연결되지 않아')); assert.ok(R.noticeText(['project-superseded']).includes('합병되어 폐기된 사업 id'));
+});
+
+test('boot: 사업 id(?project=)로 번들이 있는 지역을 열면 그 단지를 연다(project.block), 번들이 없으면 필지의 인허가 단지를 연다', async () => {
+  const urls = [], pg = { type: 'Polygon', coordinates: [[[126.75, 37.55], [126.76, 37.55], [126.76, 37.56], [126.75, 37.55]]] };
+  const { win, doc } = bootWith('?project=PRJ-28245-0001&mode=progress', (u) => { urls.push(u); return json(200, { type: 'project', canonical: 'PRJ-28245-0001', level: 'umd', name: '인천광역시 계양구 박촌동', pnu: '2824510900101840001', bjd: '2824510900', center: [126.755, 37.555], parcel: { geometry: pg }, geometry: pg,
+    project: { id: 'PRJ-28245-0001', stageCode: '05', stage: '공급', pnus: ['2824510900101840001'], bjdCodes: ['2824510900'], block: 'z1-A1' }, coverage: { tier: 'A', slug: 'r1' } }); });
+  const r = await R.boot(win, doc);
+  assert.equal(r.ok, true); assert.deepEqual(urls, ['api/v1/resolve?project=PRJ-28245-0001&geometry=1']); assert.equal(win.REGION.slug, 'r1');
+  assert.deepEqual([win.RESOLVED.type, win.RESOLVED.parcel, win.RESOLVED.projectId], ['project', true, 'PRJ-28245-0001']); assert.deepEqual(win.RESOLVED.start, { center: [126.755, 37.555], zoom: 17.6 });
+  assert.equal(win.RESOLVED.block, 'z1-A1', '번들 단지(pid z1-A1)를 연 채로 시작한다');
+  const none = bootWith('?project=PRJ-28245-0001', () => json(200, { type: 'project', canonical: 'PRJ-28245-0001', level: 'sgg', name: '인천광역시 계양구', center: [126.7, 37.5], project: { id: 'PRJ-28245-0001', stageCode: '05', stage: '공급', pnus: [], bjdCodes: [], block: '없는-단지' }, warnings: ['project-unlocated'], coverage: { tier: 'A', slug: 'r1' } }));
+  await R.boot(none.win, none.doc); assert.equal(none.win.RESOLVED.block, null, '번들에 없는 단지 id 면 단지를 열지 않고 지역만 연다'); assert.equal(none.win.RESOLVED.start, null);
+});
+
+test('permitsToProjects: 사업 id(projectId)가 있으면 단지에 싣는다(형식이 맞을 때만)', () => {
+  const ring = [[127.2, 37.54], [127.201, 37.54], [127.201, 37.541], [127.2, 37.541], [127.2, 37.54]];
+  const fc = (props) => ({ features: [{ properties: { pnu: '4145010800105690000', name: '덕풍', label: '덕풍', status: '계획', units: 10, records: 1, ...props }, geometry: { type: 'Polygon', coordinates: [ring] } }] });
+  assert.equal(R.permitsToProjects(fc({ projectId: 'PRJ-41450-0001' }))[0].projectId, 'PRJ-41450-0001');
+  for (const bad of [undefined, null, '', 'PRJ-1-1', 'x']) assert.equal(R.permitsToProjects(fc({ projectId: bad }))[0].projectId, null, String(bad));
 });

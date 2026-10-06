@@ -193,6 +193,7 @@ h2{margin:0;font-size:16px;font-weight:700;border-bottom:2px solid var(--ink);pa
 .pc-bars i{flex:0 0 10px;background:#D3D5D9}
 .pc-bars i.on{background:var(--tone);outline:1.5px solid rgba(27,29,33,.7)}
 .pc-cap{font-size:12px;color:var(--mute-card);margin-top:-3px}
+.pc-pid{font-variant-numeric:tabular-nums;font-size:12px;letter-spacing:.2px;color:inherit;text-decoration:underline dotted;text-underline-offset:2px}
 .pc-dl{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;margin:0;font-size:12.5px;line-height:1.45}
 .pc-dl dt{color:var(--mute-card)}
 .pc-dl dd{margin:0;font-weight:500}

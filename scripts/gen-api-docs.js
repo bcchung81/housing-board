@@ -62,18 +62,18 @@ function shrink(v, key) {
 const example = (f) => '```json\n' + JSON.stringify(shrink(fixture(f)), null, 2).replace(/"…"/g, '"…"') + '\n```';
 
 const OPS = [
-  { path: '/api/v1/resolve', ex: [['법정동(번들 없음, 이웃 법정동 목록 포함)', 'resolve-bjd.json'], ['필지(PNU)', 'resolve-pnu.json'], ['번들이 있는 법정동', 'resolve-bundle.json'], ['구만 있는 시(경계를 구에서 합침)', 'resolve-sgg-districts.json']], schema: 'ResolveResponse',
-    notes: ['`code` 는 자릿수로 종류를 판별하고, `sgg`·`bjd`·`pnu` 는 종류가 맞아야 한다(`type-mismatch`). 정확히 하나만 쓴다.', '`geometry` 기본값: 시군구는 생략(커서), 법정동·필지는 포함. 화면은 항상 `geometry=1`.', '**구가 있는 시**(수원·청주·포항·창원·고양·용인·천안·전주·화성 …)는 V-World 시군구 경계에 구만 있어 구 경계를 합쳐 시 경계로 돌려주고 `warnings` 에 `districts-merged` 를 적는다.', '필지가 연속지적도에 없으면 법정동 경계로 후퇴하고 `parcel-not-found`.'] },
+  { path: '/api/v1/resolve', ex: [['법정동(번들 없음, 이웃 법정동 목록 포함)', 'resolve-bjd.json'], ['필지(PNU)', 'resolve-pnu.json'], ['사업 id(필지로 열림)', 'resolve-project.json'], ['사업 id(번들 단지: 필지로 열리고 `project.block` 이 번들 단지를 가리킴)', 'resolve-project-bundle.json'], ['번들이 있는 법정동', 'resolve-bundle.json'], ['구만 있는 시(경계를 구에서 합침)', 'resolve-sgg-districts.json']], schema: 'ResolveResponse',
+    notes: ['`code` 는 자릿수로 종류를 판별하고(`PRJ-` 접두는 사업 id), `sgg`·`bjd`·`pnu`·`project` 는 종류가 맞아야 한다(`type-mismatch`). 정확히 하나만 쓴다.', '**사업 id**(`PRJ-{시군구5}-{일련4}`)는 사업 레지스트리(`registry/projects.json`)에서 찾아 그 사업의 첫 필지 → 첫 법정동 → 시군구 순으로 열고, 응답의 `type` 은 `project`, `canonical` 은 사업 id, `project` 에 사업 정보가 붙는다. 필지가 없으면 `project-unlocated`, 합병되어 폐기된 id 는 남은 사업으로 열고 `project-superseded`. 레지스트리에 없으면 404 `unknown-project`.', '`geometry` 기본값: 시군구는 생략(커서), 법정동·필지는 포함. 화면은 항상 `geometry=1`.', '**구가 있는 시**(수원·청주·포항·창원·고양·용인·천안·전주·화성 …)는 V-World 시군구 경계에 구만 있어 구 경계를 합쳐 시 경계로 돌려주고 `warnings` 에 `districts-merged` 를 적는다.', '필지가 연속지적도에 없으면 법정동 경계로 후퇴하고 `parcel-not-found`.'] },
   { path: '/api/v1/codes/search', ex: [['이름', 'search-name.json'], ['지번 주소(PNU)', 'search-jibun.json'], ['장소 이름(near)', 'search-place.json'], ['틀린 코드', 'search-code-bad.json']], schema: 'SearchResponse',
     notes: ['후보의 `kind` 가 화면이 여는 매개변수이다: `sgg` → `?sgg=`, `bjd` → `?bjd=`, `pnu` → `?pnu=`. `road`·`place` 후보는 `point` 로 `at=경도,위도,17.5` 를 함께 붙인다.', '`tier` 는 열리는 방식이다(`bundle`·`req`·`edge`, 위 3등급).', '`near` 가 있으면 장소 이름 중 가까운 것을 앞에 둔다(화면은 지금 보는 지도 가운데를 5 km 격자로 맞춰 보낸다).', '행정표준코드와 V-World 중 한쪽만 실패하면 나머지 후보를 주고 `meta.partial` 에 적는다(이때 응답은 `s-maxage=60`).'] },
-  { path: '/api/v1/notices', ex: [['하남시(임대·분양 공고)', 'notices-hanam.json'], ['공고가 없는 시군구(종로구)', 'notices-none.json']], schema: 'NoticesResponse',
+  { path: '/api/v1/notices', ex: [['하남시(임대·분양 공고)', 'notices-hanam.json'], ['LH 공고가 더해지는 시군구(아산시, `source: "lh"`)', 'notices-asan.json'], ['공고가 없는 시군구(종로구)', 'notices-none.json']], schema: 'NoticesResponse',
     notes: ['공고는 대부분 매입임대·일반매각(개별 주택)이다. 건설 중인 단지(`permits`)와 합치지 않고 화면의 별도 목록으로 보인다. `pnu` 가 있으면 화면이 그 필지로 이동할 수 있다.', '구가 있는 시는 시 코드로 물으면 구 공고를 모두 돌려주고, 구 코드로 물으면 그 구만.', '링크(`url`)는 마이홈·LH 주소만 싣는다.'] },
   { path: '/api/v1/buildings', ex: [['칸 하나(건물은 앞 몇 개만)', 'buildings-cell.json']], schema: 'BuildingsResponse',
     notes: ['건물은 중심점이 있는 칸에만 속한다(이웃 칸과 겹치지 않음). 속성 이름은 번들 `buildings.json` 과 같다.', '칸당 V-World 를 최대 5쪽(1,000동씩) 부르고 넘으면 `meta.truncated`.'] },
   { path: '/api/v1/permits', ex: [['법정동(덕풍동)', 'permits-deokpung.json'], ['공공주택지구(감일동, 건물대장 보강)', 'permits-gamil-ledger.json']], schema: 'PermitsResponse',
     notes: ['후보 규칙: 공동주택 + 총세대수 > 0, 번지(PNU) 단위로 모음. 상태는 인허가로 아는 3가지(`계획`·`건설 단계`·`입주 단계`).', '공공주택지구 블록 단위 허가(필지 번호 없음)는 건축물대장 총괄표제부의 세대수 + 대지면적으로 위치를 정하고 `via: "ledger"` 를 붙인다. 못 정한 것은 `meta.blockList`.', '예정일은 연·월만 있는 값(`YYYY-MM`)이 올 수 있다(`PartialDate`).'] },
-  { path: '/api/v1/infra', ex: [['법정동(TAGO 정류소)', 'infra-deokpung.json'], ['서울(OpenStreetMap 정류장)', 'infra-seoul.json'], ['정류장을 못 받은 경우(OSM 서버 실패)', 'infra-seoul-nobus.json']], schema: 'InfraResponse',
-    notes: ['서버는 임의 좌표를 받지 않고 그 법정동의 인허가 필지 중심만 쓴다(키를 쓰는 열린 중계가 되지 않게). 인허가가 없으면 비어 있다.', '정류장은 TAGO 가 우선이고 TAGO 에 자료가 없는 지역(서울·강릉 등)은 OpenStreetMap(`meta.stopsSource: "osm"`, ODbL 출처 표시)으로 보조한다.', '`meta.schoolsError`·`meta.stopsError` 가 있으면 일부만 준 것이며 응답은 `s-maxage=60`.'] },
+  { path: '/api/v1/infra', ex: [['법정동(TAGO 정류소)', 'infra-deokpung.json'], ['서울(서울특별시 정류소정보조회)', 'infra-seoul.json'], ['서울시 조회가 안 될 때(OpenStreetMap 으로 물러남)', 'infra-seoul-osm.json'], ['정류장을 못 받은 경우(OSM 서버도 실패)', 'infra-seoul-nobus.json']], schema: 'InfraResponse',
+    notes: ['서버는 임의 좌표를 받지 않고 그 법정동의 인허가 필지 중심만 쓴다(키를 쓰는 열린 중계가 되지 않게). 인허가가 없으면 비어 있다.', '정류장은 TAGO 가 우선이고, 서울은 서울특별시 정류소정보조회(`meta.stopsSource: "seoul"`, 하루 1,000건 한도라 단지 중심 300 m 간격 최대 12곳만 부른다), TAGO·서울시에 자료가 없거나 서울시 조회가 실패하면 OpenStreetMap(`meta.stopsSource: "osm"`, ODbL 출처 표시)으로 보조한다.', '`meta.schoolsError`·`meta.stopsError` 가 있으면 일부만 준 것이며 응답은 `s-maxage=60`.'] },
   { path: '/api/bus', ex: [['인천 계양구(앞 3대)', 'bus-gyeyang.json']], schema: 'BusResponse', notes: ['어느 노선을 부를지는 요청이 정하지 못한다(번들의 live 노선만). 오류 모양이 RFC 7807 이 아니라 `{ "error": "<코드>" }` 이다(옛 경로 유지).'] },
 ];
 
@@ -100,8 +100,8 @@ function build() {
   const statusOf = {};
   for (const item of Object.values(DOC.paths)) for (const [st, r] of Object.entries(item.get.responses)) { const d = r.description || ''; for (const c of codes) if (new RegExp(`(^|[^-a-z])${c}([^-a-z]|$)`).test(d) || (r.content && r.content['application/problem+json'] && d.includes(c))) (statusOf[c] = statusOf[c] || new Set()).add(st); }
   push('### 1.3 오류 코드', '', '| `code` | HTTP | 쓰이는 곳 |', '|---|---|---|');
-  const where = { 'invalid-query': '쿼리 이름·개수·길이·형식', 'invalid-code': '코드 형식·종류 불일치', 'invalid-cell': '건물 칸 번호가 한국 범위 밖', 'unsupported-level': '시도 단위(resolve)', 'unknown-code': '표준코드 표에 없음(resolve, suggestions)', method: 'GET·HEAD 외', 'keys-exhausted': '인증키 한도(Retry-After)', 'budget-exhausted': '이 서버의 시간당 호출 상한(Retry-After)', 'not-configured': '인증키 없음', upstream: '원천 서비스 오류' };
-  const http = { 'invalid-query': '400', 'invalid-code': '400', 'invalid-cell': '400', 'unsupported-level': '422', 'unknown-code': '404', method: '405', 'keys-exhausted': '429', 'budget-exhausted': '429', 'not-configured': '503', upstream: '502' };
+  const where = { 'invalid-query': '쿼리 이름·개수·길이·형식', 'invalid-code': '코드 형식·종류 불일치', 'invalid-cell': '건물 칸 번호가 한국 범위 밖', 'unsupported-level': '시도 단위(resolve)', 'unknown-code': '표준코드 표에 없음(resolve, suggestions)', 'unknown-project': '발급되지 않은 사업 id(resolve, project)', method: 'GET·HEAD 외', 'keys-exhausted': '인증키 한도(Retry-After)', 'budget-exhausted': '이 서버의 시간당 호출 상한(Retry-After)', 'not-configured': '인증키 없음', upstream: '원천 서비스 오류' };
+  const http = { 'invalid-query': '400', 'invalid-code': '400', 'invalid-cell': '400', 'unsupported-level': '422', 'unknown-code': '404', 'unknown-project': '404', method: '405', 'keys-exhausted': '429', 'budget-exhausted': '429', 'not-configured': '503', upstream: '502' };
   for (const c of codes) push(`| \`${c}\` | ${http[c]} | ${where[c]} |`);
   push('');
   OPS.forEach((o, i) => {

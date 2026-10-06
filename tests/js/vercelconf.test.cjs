@@ -24,7 +24,8 @@ test('저장소에 iframe 으로 지도를 넣는 곳이 없다(팝업 연결만
 
 test('함수 설정: resolve 는 색인과 지역 region.json 을, bus 는 infra.json 을 번들에 포함하고 실행 시간 상한이 있다', () => {
   const fn = conf.functions;
-  assert.equal(fn['api/v1/resolve.js'].includeFiles, 'regions/{index.json,*/region.json}');
+  assert.equal(fn['api/v1/resolve.js'].includeFiles, '{regions/index.json,regions/*/region.json,registry/projects.json}');   // 사업 id 해석은 사업 레지스트리를 읽는다
+  assert.equal(fn['api/v1/permits.js'].includeFiles, 'registry/projects.json');   // 인허가 사업에 사업 id 를 붙인다
   assert.equal(fn['api/bus.js'].includeFiles, 'regions/*/infra.json');
   assert.equal(fn['api/v1/codes/search.js'].includeFiles, 'regions/{index.json,*/region.json}');   // 검색 후보의 번들 유무(tier)를 resolve 와 같은 표로 정한다
   assert.match(fn['api/v1/codes/search.js'].excludeFiles, /\.cache\/\*\*/); assert.ok(fn['api/v1/codes/search.js'].maxDuration > 0 && fn['api/v1/codes/search.js'].maxDuration <= 60); assert.ok(fs.existsSync(path.join(ROOT, 'api/v1/codes/search.js')));

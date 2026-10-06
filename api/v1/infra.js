@@ -2,11 +2,11 @@
    그 법정동 인허가 단지 가까이의 신설예정 학교와 버스 정류장을 번들 infra.json 의 schools·stops 와 같은 모양으로 돌려준다.
 
    GET /api/v1/infra?bjd=<법정동 10자리>        (8자리는 00 을 붙여 받는다)
-   → 200 { type:'Infra', bjd, asOf, sources:[…], schools:[…], stops:[…], meta:{ centers, schoolsNational, schools, stopCalls, stops, schoolsError?, stopsError?, noBus? } }
+   → 200 { type:'Infra', bjd, asOf, sources:[…], schools:[…], stops:[…], meta:{ centers, schoolsNational, schools, stopCalls, stops, stopsSource?, schoolsError?, stopsError?, seoulError?, noBus? } }
    → problem+json: invalid-query 400 · invalid-code 400 · method 405 · keys-exhausted 429 · budget-exhausted 429 · not-configured 503 · upstream 502 (인허가를 못 받았을 때)
 
    - 서버는 임의 좌표를 받지 않는다. 그 법정동의 인허가 결과(/api/v1/permits 와 같은 캐시·키 풀)에서 필지 중심을 꺼내 쓴다 → 열린 중계가 되지 않는다. 사업이 없으면 학교·정류장도 없다.
-   - 신설예정 학교: 교육재정알리미 전국 목록(키 없음, 24시간 캐시)에서 단지 중심 2 km 안만. 정류장: TAGO 근접정류소(키 풀 BUS·서비스 tago)를 단지 중심마다 한 번(150 m 안은 건너뜀, 동시 10개), 400 m 안만. 서울(시도 11)은 TAGO 도시 목록에 없어 부르지 않고 meta.noBus 로 알린다.
+   - 신설예정 학교: 교육재정알리미 전국 목록(키 없음, 24시간 캐시)에서 단지 중심 2 km 안만. 정류장: TAGO 근접정류소(키 풀 BUS·서비스 tago)를 단지 중심마다 한 번(150 m 안은 건너뜀, 동시 10개), 400 m 안만. 서울(시도 11)은 TAGO 도시 목록에 없어 부르지 않고, 서울시 정류소정보조회(lib/seoul.js, 키 풀 BUS·서비스 seoul)를 단지 중심 주변으로 부르며(300 m 간격, 최대 12곳) 실패하면 OpenStreetMap 으로 물러난다(둘 다 안 되면 meta.noBus).
    - 학교·정류장 한쪽이 실패해도 나머지는 준다(meta.schoolsError·stopsError). 응답은 로컬 캐시 24시간 + CDN 24시간, 한쪽이라도 실패했으면 캐시하지 않는다.
    - 인스턴스별 시간당 TAGO 호출 상한(INFRA_UPSTREAM_PER_HOUR, 기본 600)을 넘으면 정류장만 비운다(meta.stopsError). 키·원천 URL·원인 문구는 응답에 싣지 않는다.
    시험: tests/js/infra.api.test.cjs */
@@ -16,6 +16,7 @@ const { KeyPoolError } = require('../../lib/keys.js');
 const { fetchPage } = require('../../lib/datagokr.js');
 const codes = require('../../lib/codes.js');
 const I = require('../../lib/infra.js');
+const Seoul = require('../../lib/seoul.js');
 const { vworldCreds } = require('../../lib/vworld.js');
 
 const TAGO_NEAR_URL = 'https://apis.data.go.kr/1613000/BusSttnInfoInqireService/getCrdntPrxmtSttnList';
@@ -23,6 +24,8 @@ const EDU_URL = 'https://eduinfo.go.kr/portal/theme/newSchInfoDetail.do';
 const EDU_REFERER = 'https://eduinfo.go.kr/portal/theme/newSchMapPage.do';
 const TTL_MS = 24 * 3600 * 1000;
 const DEFAULT_BUDGET_PER_HOUR = 600;
+const DEFAULT_SEOUL_BUDGET_PER_HOUR = 120;   // 서울 개발계정은 하루 1,000건이라 인스턴스당 시간당 120건(8시간이면 960건)
+const SEOUL_CONCURRENCY = 4;
 const STOP_CONCURRENCY = 10;
 const MAX_STOP_PAGES = 3;
 const ALLOWED = new Set(['bjd']);
@@ -39,14 +42,16 @@ function createHandler(overrides = {}) {
   const { cache, pool, now, sleep, doFetch } = svc;
   const env = overrides.env || process.env;
   const budgetMax = Number(env.INFRA_UPSTREAM_PER_HOUR) > 0 ? Math.floor(Number(env.INFRA_UPSTREAM_PER_HOUR)) : DEFAULT_BUDGET_PER_HOUR;
-  const budget = { hour: -1, used: 0 };
-  const spend = (n) => {
+  const budget = { hour: -1, used: 0 }, sbudget = { hour: -1, used: 0 };
+  const seoulMax = Number(env.SEOUL_UPSTREAM_PER_HOUR) > 0 ? Math.floor(Number(env.SEOUL_UPSTREAM_PER_HOUR)) : DEFAULT_SEOUL_BUDGET_PER_HOUR;
+  const spendOf = (b, max) => (n) => {
     const hour = Math.floor(now() / 3600000);
-    if (budget.hour !== hour) { budget.hour = hour; budget.used = 0; }
-    if (budget.used + n > budgetMax) return false;
-    budget.used += n;
+    if (b.hour !== hour) { b.hour = hour; b.used = 0; }
+    if (b.used + n > max) return false;
+    b.used += n;
     return true;
   };
+  const spend = spendOf(budget, budgetMax), spendSeoul = spendOf(sbudget, seoulMax);
   const send = (res, status, body, cacheControl, type = 'application/json; charset=utf-8') => {
     res.statusCode = status;
     res.setHeader('Content-Type', type);
@@ -85,6 +90,22 @@ function createHandler(overrides = {}) {
       if (!got.items.length || page * 100 >= got.total) break;
     }
     return all;
+  }
+  /* 서울시 정류소정보조회: 단지 중심 주변(반경 700 m, 중심은 300 m 간격으로 최대 12곳)의 정류소. 24시간 캐시(일부만 받았으면 캐시하지 않음).
+     모두 실패하면 첫 오류를 던진다(키 풀 오류 포함 — 부르는 쪽이 OSM 으로 물러난다). 일부만 실패하면 받은 것만 주고 partial 로 알린다 */
+  async function seoulStops(bjd, centers) {
+    const hit = cache.get(`seoul:stops:${bjd}`);
+    if (hit) return { stops: hit, partial: false };
+    const picked = I.queryCenters(centers, Seoul.SKIP_M, Seoul.MAX_CENTERS);
+    if (!spendSeoul(picked.length)) { const e = new Error('budget'); e.budget = true; throw e; }
+    const got = await mapLimit(picked, SEOUL_CONCURRENCY, (c) => pool.run('BUS', 'seoul', (key) => Seoul.fetchStations({ doFetch, sleep, key, center: c })));
+    const okRuns = got.filter((g) => g.ok), failedRuns = got.filter((g) => g.err);
+    if (picked.length && !okRuns.length) throw failedRuns[0].err;
+    const byId = new Map();
+    for (const g of okRuns) for (const it of g.ok) { const s = Seoul.seoulStop(it); if (s && !byId.has(s.id)) byId.set(s.id, s); }
+    const stops = [...byId.values()], partial = failedRuns.length > 0;
+    if (!partial) cache.set(`seoul:stops:${bjd}`, stops, TTL_MS);
+    return { stops, partial };
   }
   /* TAGO 에 자료가 없는 지역(서울·강릉 등)의 보조: OpenStreetMap 정류장을 Overpass 로 한 번에 받는다. 이름 있는 정류장만, 24시간 캐시.
      실패는 던진다(캐시 안 함). 공개 서버라 느리거나 꺼질 수 있어 둘을 동시에 불러 먼저 온 것을 쓰고, 이 보조가 실패해도 지도는 정류장 없이 열린다 */
@@ -154,18 +175,33 @@ function createHandler(overrides = {}) {
       else if (errs) { failed = true; meta.stopsError = `정류소 조회 ${errs}곳을 불러오지 못해 일부만 보임`; }   // 일부만 실패해도 조용히 넘기지 않고 캐시하지 않는다
       else if (picked.length && !stops.length) meta.noBus = true;   // 호출은 됐는데 반경 안에 정류소가 0곳: 서울처럼 TAGO 도시 목록에 없는 지역
       if (stops.length) meta.stopsSource = 'tago';
-      else if (!meta.stopsError) {                                   // TAGO 에 자료가 없으면(또는 반경 안 0곳) OpenStreetMap 으로 보조
-        try {
-          const osm = await osmStops(bjd, centers);
-          stops = osm.filter((x) => I.nearAny([x.lon, x.lat], centers, I.STOP_SHOW_M)).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
-          if (stops.length) { meta.stopsSource = 'osm'; delete meta.noBus; }
-        } catch (e) { failed = true; meta.stopsError = '버스 정류장(OpenStreetMap)을 불러오지 못함'; console.error(`infra ${bjd} osm: ${(e && e.name) || 'Error'}: ${String((e && e.message) || e).slice(0, 120)}`); }
+      else if (!meta.stopsError) {
+        if (noTago) {                                                // 서울: 서울시 정류소정보조회를 먼저(실패해도 지도는 열리고 OSM 으로 물러난다)
+          try {
+            const sv = await seoulStops(bjd, centers);
+            stops = sv.stops.filter((x) => I.nearAny([x.lon, x.lat], centers, I.STOP_SHOW_M)).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+            meta.stopCalls = I.queryCenters(centers, Seoul.SKIP_M, Seoul.MAX_CENTERS).length;
+            if (sv.partial) { failed = true; meta.seoulError = '서울시 정류소 조회 일부를 불러오지 못해 일부만 보임'; }
+            if (stops.length) { meta.stopsSource = 'seoul'; delete meta.noBus; }
+          } catch (e) {
+            failed = true;
+            meta.seoulError = e && e.budget ? '이 서버의 시간당 서울시 정류소 조회 한도에 닿음' : e instanceof KeyPoolError ? '서울시 정류소 조회 인증키 한도·설정 문제' : '서울시 정류소를 불러오지 못함';
+            console.error(`infra ${bjd} seoul: ${(e && e.name) || 'Error'}: ${String((e && e.message) || e).slice(0, 120)}`);
+          }
+        }
+        if (!stops.length) {                                         // TAGO·서울시에 자료가 없으면(또는 반경 안 0곳) OpenStreetMap 으로 보조
+          try {
+            const osm = await osmStops(bjd, centers);
+            stops = osm.filter((x) => I.nearAny([x.lon, x.lat], centers, I.STOP_SHOW_M)).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
+            if (stops.length) { meta.stopsSource = 'osm'; delete meta.noBus; }
+          } catch (e) { failed = true; meta.stopsError = '버스 정류장(OpenStreetMap)을 불러오지 못함'; console.error(`infra ${bjd} osm: ${(e && e.name) || 'Error'}: ${String((e && e.message) || e).slice(0, 120)}`); }
+        }
       }
     }
     meta.schools = schools.length; meta.stops = stops.length;
     const used = new Set();
     if (schools.length) used.add('edu-newschool');
-    if (stops.length) used.add(meta.stopsSource === 'osm' ? 'osm-bus' : 'tago-bus');
+    if (stops.length) used.add(meta.stopsSource === 'osm' ? 'osm-bus' : meta.stopsSource === 'seoul' ? 'seoul-bus' : 'tago-bus');
     const asOf = new Date(now()).toISOString().slice(0, 10);
     return {
       body: { type: 'Infra', bjd, asOf, sources: [...used].map((id) => ({ ...I.SOURCE_DEFS[id], asOf })), schools, stops, meta },
