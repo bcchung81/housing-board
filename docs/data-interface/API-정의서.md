@@ -869,7 +869,7 @@
 | `features[].type` | `"Feature"` |  |  |
 | `features[].properties` | BuildingProperties | ● | 번들 buildings.json 과 같은 속성(짧은 이름) |
 | `features[].properties.eh` | number | ● | 그리는 높이 m(층수환산 높이 포함) |
-| `features[].properties.src` | string | ● | 높이 출처('공식높이'·'층수환산' 등) |
+| `features[].properties.src` | string | ● | 높이 출처('공식높이'·'층수환산'·'정보없음'). '정보없음'은 높이·층수가 모두 없는 도형이며 대장과 이어지지 않았을 수 있어 화면은 평면으로만 그림(eh는 3) |
 | `features[].properties.h` | number |  | 공식 높이 m |
 | `features[].properties.f` | integer |  | 지상층수 |
 | `features[].properties.b` | integer |  | 지하층수 |

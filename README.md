@@ -122,7 +122,7 @@ index.html ─► region.js(RegionLoader.boot) ─► config.js ─► app.js
 | 배경 | `vworld`(또는 OpenFreeMap) · `dem` → 지형·`hillshade-own` |
 | 지구·단지 | `district*` → `district-mask/line/label` · `blocks` → `blk-sale/build/soon/move/plan/priv`·`blk-line*` · `block-pts` → `blk-dot`·`blk-label-lo` · `block-fronts` → `blk-badge`·`blk-badge-top` · `other-blocks` → `other-fill/line` |
 | 동 | `dongs` → `dong-3d/ghost/line/shadow` · `dong-labels` → `dong-label` |
-| 기존 건물 | `official` → `official-far/3d/roof/ao`·`official-shadow` · `fac-pts` → `fac-label`(기반시설 이름표) · `sel`(선택) → `sel-3d`·`sel-line*` |
+| 기존 건물 | `official` → `official-far/3d/roof/ao`·`official-shadow`(높이를 아는 건물만 솟음) · `official-flat`·`official-flat-line`(높이·층수가 모두 없는 도형 `정보없음`은 솟지 않는 평면 + 점선) · `fac-pts` → `fac-label`(기반시설 이름표) · `sel`(선택) → `sel-3d`·`sel-line*` |
 | 역·학교(OSM) | `ctx-st` `ctx-sch` `ctx-ring` → `ctx-*` |
 | 입주 전 점검 | `infra-*` → 신설 학교·부지·정류장·전기·통학구역·연결선·반경 |
 | 버스 노선·위치 | `bus-routes` `bus-solids` `bus-lbl` → `bus-route-line` `bus-route-label` `bus-3d`(3D 버스) `bus-label`(번호) |
