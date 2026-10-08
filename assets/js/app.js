@@ -68,7 +68,7 @@ const THEME = {
   vw: String(window.VWORLD_LAYER || 'white'), ofm: 'positron', bg: '#F4F4F5', text: '#1B1D21', sub: '#4A4E56', halo: '#FFFFFF', sky: ['#DDE1E6', '#F4F4F5'],
   mask: ['#27304A', 0.12], shadow: ['#000000', 0.2], hillShadow: '#4B5058', hillHi: '#FFFFFF', hillAcc: '#8E9299', district: '#6B6F77', dong: '#2B2E34', other: ['#8E9299', '#7A7F87'],
   ramp: ['#E6E8EC', '#CFD2D8', '#B1B5BD', '#8F949E', '#6E747F'], flat: '#E9EBEE',
-  ghost: { fill: '#AEB4BF', fillOp: 0.3, line: '#6B6F77', lineOp: 0.8 },   // 높이·층수가 모두 없는 도형(src '정보없음'): 솟지 않는 연한 평면 + 점선 윤곽
+  ghost: { fill: '#AEB4BF', fillOp: 0.3, line: '#6B6F77', lineOp: 0.8 },   // 평면으로만 그리는 도형(src '정보없음' 또는 g=1): 솟지 않는 연한 평면 + 점선 윤곽
   color: { sale: '#D55E00', build: '#0072B2', soon: '#009E73', move: '#CC79A7', plan: '#5C6068', priv: '#8A8680' },
   tone: { sale: ['#F2A66B', '#A84800'], build: ['#8EC3E6', '#005C91'], soon: ['#7FD6B8', '#00755A'], move: ['#E8B4D0', '#A23B7C'], plan: ['#C4C7CD', '#5C6068'], priv: ['#C9C6C0', '#6E6A64'] },
   infra: { edu: '#6C3FA0', power: '#9A6A00', transit: '#1B1D21', warn: '#8A4112' },
@@ -423,10 +423,10 @@ function paintBuildings() {
 }
 /* 기존 건물 그림자: 북서 해 기준으로 높이 0.6배를 남동쪽으로 늘어뜨린 바닥 판. 3 m 이상 건물만, 확대 14.3 이상에서 처음 필요할 때 만든다
    (16,696동 · 약 5.5 MB라 시작을 느리게 하지 않으려고). 얇은 불투명도 extrusion이라 서로 겹쳐도 이중으로 어두워지지 않는다.
-   높이를 모르는 도형(src '정보없음')은 평면으로만 그리므로 그림자도 만들지 않는다. */
+   평면으로만 그리는 도형(isFlat)은 그림자도 만들지 않는다. */
 const shadowStyle = () => (['#1c2230', 0.3]);
 function officialShadowData() {
-  const L = []; GY.features.forEach((f) => { const p = f.properties; if (p.eh < 3 || p.src === '정보없음') return; const ring = f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0]; L.push({ type: 'Feature', properties: { h: p.eh, status: '' }, geometry: { type: 'Polygon', coordinates: [ring] } }); });
+  const L = []; GY.features.forEach((f) => { const p = f.properties; if (p.eh < 3 || isFlat(p)) return; const ring = f.geometry.type === 'Polygon' ? f.geometry.coordinates[0] : f.geometry.coordinates[0][0]; L.push({ type: 'Feature', properties: { h: p.eh, status: '' }, geometry: { type: 'Polygon', coordinates: [ring] } }); });
   return shadowGeoJSON(L);
 }
 function addOfficialShadows() {
@@ -437,10 +437,12 @@ function addOfficialShadows() {
     paint: { 'fill-extrusion-color': sh[0], 'fill-extrusion-height': 0.06, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': dimExisting ? sh[1] * 0.35 : sh[1] } }, 'official-3d');
 }
 const OFFICIAL_LAYERS = ['official-far', 'official-3d', 'official-roof'];
-/* 높이·층수가 모두 없는 도형(src '정보없음')은 솟게 하지 않고 평면(official-flat·official-flat-line)으로만 그린다.
-   원천(V-World 건물 레이어)에는 대장에 연결되지 않은 도형이 남아 있어, 신도시(나주 혁신도시)에서는 차로·공원 위에도 놓인다(dataset.md 6.1).
-   3 m 건물로 세우면 도로 위 건물처럼 보여서, 실재 여부를 모르는 도형은 입체로 주장하지 않는다. */
-const KNOWN_H = ['!=', ['get', 'src'], '정보없음'], NO_INFO = ['==', ['get', 'src'], '정보없음'];
+/* 실재하는지 알 수 없는 도형은 솟게 하지 않고 평면(official-flat·official-flat-line)으로만 그린다. 둘이다:
+   ① src '정보없음': 높이·층수가 모두 없는 도형. 원천(V-World 건물 레이어)에는 대장에 연결되지 않은 도형이 남아 있어 신도시(나주 혁신도시)에서는 차로·공원 위에도 놓인다.
+   ② g=1: 신도시 지구 안에서 지금 있는 건물(도로명주소 건물)과 겹치지 않는 옛 건물(철거 의심). 대장 속성이 있어도 철거된 자리에 남은 것이다(tools/regiontools/existence.py, dataset.md 2.6).
+   3 m 건물이나 옛 높이로 세우면 도로 위 건물처럼 보여서 입체로 주장하지 않는다. */
+const KNOWN_H = ['all', ['!=', ['get', 'src'], '정보없음'], ['!=', ['get', 'g'], 1]], NO_INFO = ['any', ['==', ['get', 'src'], '정보없음'], ['==', ['get', 'g'], 1]];
+const isFlat = (p) => p.src === '정보없음' || p.g === 1;   // 위 KNOWN_H·NO_INFO 와 같은 판정(속성 객체용)
 const FLAT_SEL_H = 0.3;   // 평면 도형을 골랐을 때 노란 표시의 두께(m)
 const BLK_FILLS = ['blk-sale', 'blk-build', 'blk-soon', 'blk-move', 'blk-plan', 'blk-priv'];
 const DIM_OPACITY = 0.3, HUD_MAXZ = 16.3;   // HUD는 이 확대 단계보다 멀리 볼 때만 보이고, 가까이에서는 지도 위 이름표가 대신한다
@@ -495,7 +497,7 @@ function setupCustom() {
   try { map.setLight({ anchor: 'map', position: [1.5, 315, 38], color: '#FFFFFF', intensity: 0.3 }); } catch (_) {}
 
   /* --- 바닥(높이를 모르는 도형, 지구 마스크, 용지, 블록, 그림자, 선택 윤곽) --- */
-  if (HAS_GY) {   // 높이를 모르는 도형은 가장 아래에 깔아 단지·지구 표시를 가리지 않게 한다(위 KNOWN_H·NO_INFO 설명)
+  if (HAS_GY) {   // 평면 도형은 가장 아래에 깔아 단지·지구 표시를 가리지 않게 한다(위 KNOWN_H·NO_INFO 설명)
     const G = T.ghost;
     add({ id: 'official-flat', type: 'fill', source: 'official', minzoom: 14, filter: NO_INFO, paint: { 'fill-color': G.fill, 'fill-opacity': G.fillOp } });
     add({ id: 'official-flat-line', type: 'line', source: 'official', minzoom: 15, filter: NO_INFO, paint: { 'line-color': G.line, 'line-opacity': G.lineOp, 'line-width': 1, 'line-dasharray': [2, 2] } });
@@ -545,7 +547,7 @@ function setupCustom() {
   if (HAS_GY) {
     // 멀리(12~14)서는 10 m 이상만(6,586동), 가까이(14~)서는 전부. 벽은 지붕 두께만큼 낮추고 지붕 층을 따로 그린다. 높이를 모르는 도형(정보없음)은 솟지 않는 평면 + 점선.
     const ao = ['#232832', 0.34];
-    add({ id: 'official-far', type: 'fill-extrusion', source: 'official', minzoom: 12, maxzoom: 14, filter: ['>=', ['get', 'eh'], 10],
+    add({ id: 'official-far', type: 'fill-extrusion', source: 'official', minzoom: 12, maxzoom: 14, filter: ['all', ['>=', ['get', 'eh'], 10], KNOWN_H],
       paint: { 'fill-extrusion-color': ['get', 'c'], 'fill-extrusion-height': ['get', 'eh'], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 1 } });
     // 건물 아래 바닥이 살짝 어두워지는 접지 음영(의사 AO)
     add({ id: 'official-ao', type: 'line', source: 'official', minzoom: 15, filter: KNOWN_H,
@@ -828,11 +830,13 @@ function blockPopup(b, clickX) {
 }
 function officialPopup(p, geom, clickX) {
   const none = p.src === '정보없음';   // 높이·층수가 모두 없는 도형: 평면으로만 그렸고, 실재하는 건물인지 알 수 없다
+  const gone = !none && p.g === 1;     // 신도시 지구 안에서 지금 있는 건물(도로명주소 건물)과 겹치지 않는 옛 건물: 철거 의심, 역시 평면으로만 그렸다
   const name = p.n ? esc(p.n) : none ? '건물 정보 없음' : '이름 없는 건물';
   let chip, big;
   if (p.src === '공식높이') { chip = chipHtml('off', '공식 높이'); big = `<strong>${p.h} m</strong>`; }
   else if (p.src === '층수환산') { chip = chipHtml('est', '층수로 추정'); big = `<strong>약 ${Math.round(p.eh)} m</strong><span>${p.f}층 × ${(p.eh / p.f).toFixed(2)} m</span>`; }
   else { chip = chipHtml('none', '정보 없음'); big = `<strong>-</strong><span>높이를 알 수 없어 평면으로만 표시</span>`; }
+  if (gone) chip = chipHtml('none', '현존 미확인');   // 높이 칩 대신: 옛 대장 값이라 지금 있는 건물의 높이라고 주장하지 않는다
   const fl = [p.f != null ? `지상 ${p.f}` : null, p.b != null ? `지하 ${p.b}` : null].filter(Boolean).join(' · ');
   /* 정보 없는 도형은 비어 있는 줄('정보 없음'·'미기재'·'연도 없음')을 늘어놓지 않고 값이 있는 줄만 보인다 */
   const rows = none ? [fl ? ['층수', esc(fl) + '층'] : null, p.u ? ['용도', esc(p.u)] : null, p.a != null ? ['사용승인', p.a + '년'] : null].filter(Boolean)
@@ -841,10 +845,11 @@ function officialPopup(p, geom, clickX) {
     <div class="pc-h"><b>${name}</b>${p.d || p.fc ? `<span class="pc-sub">${esc([p.d, p.fc && FL.NAMES[p.fc]].filter(Boolean).join(' · '))}</span>` : ''}${chip}</div>
     <div class="pc-big">${big}</div>
     ${none ? '<p class="pc-cap">건축물대장과 이어지는 정보가 없는 도형입니다. 실제와 다를 수 있어(철거된 건물이거나 건물이 아닐 수 있음) 입체로 그리지 않았습니다.</p>' : ''}
+    ${gone ? '<p class="pc-cap">지금 있는 건물(도로명주소 건물)과 겹치지 않습니다. 신도시를 만들며 철거된 옛 건물일 수 있어 입체로 그리지 않았습니다.</p>' : ''}
     ${rows.length ? dlHtml(rows) : ''}
     ${p.x ? `<p class="pc-warn">⚠ 높이 ${p.h} m와 지상 ${p.f}층이 어긋납니다. 둘 중 하나가 틀렸을 수 있습니다.</p>` : ''}
     <p class="pc-foot">국토교통부 GIS건물통합정보 (V-World)<br>${esc(BASIS)} 기준</p></div>`,
-    ringsOf(geom), none ? 0 : p.eh, clickX);
+    ringsOf(geom), none || gone ? 0 : p.eh, clickX);
 }
 /* 기반시설 카드: 신설예정 학교·학교 부지, 전기 등 시설 부지, 정류장 */
 const ptRing = (c, d = 0.00018) => [[c[0] - d, c[1] - d], [c[0] + d, c[1] - d], [c[0] + d, c[1] + d], [c[0] - d, c[1] + d]];
@@ -907,7 +912,7 @@ const SEL_COLOR = '#F0E442';   // 고른 건물: Okabe-Ito의 노랑(상태색 �
 function applySel() {
   const src = map.getSource('sel');
   let feats = [];
-  if (selId != null && HAS_GY) { const sp = GY.features[selId].properties; feats = [{ type: 'Feature', properties: { eh: sp.src === '정보없음' ? FLAT_SEL_H : sp.eh, c: SEL_COLOR }, geometry: GY.features[selId].geometry }]; }   // 평면 도형은 솟지 않게 얇은 판으로만 표시
+  if (selId != null && HAS_GY) { const sp = GY.features[selId].properties; feats = [{ type: 'Feature', properties: { eh: isFlat(sp) ? FLAT_SEL_H : sp.eh, c: SEL_COLOR }, geometry: GY.features[selId].geometry }]; }   // 평면 도형은 솟지 않게 얇은 판으로만 표시
   else if (selDong != null) feats = DONG_FEATS.filter((f) => f.properties.key === selDong).map((f) => ({ type: 'Feature', properties: { eh: dongH(f.properties), c: SEL_COLOR }, geometry: f.geometry }));
   if (src) src.setData({ type: 'FeatureCollection', features: feats });
   const notSel = selId == null ? null : ['!=', ['get', 'i'], selId];
@@ -915,7 +920,7 @@ function applySel() {
   if (map.getLayer('official-3d')) map.setFilter('official-3d', known);
   if (map.getLayer('official-roof')) map.setFilter('official-roof', known);
   for (const id of ['official-flat', 'official-flat-line']) if (map.getLayer(id)) map.setFilter(id, flat);
-  if (map.getLayer('official-far')) map.setFilter('official-far', notSel ? ['all', ['>=', ['get', 'eh'], 10], notSel] : ['>=', ['get', 'eh'], 10]);
+  if (map.getLayer('official-far')) map.setFilter('official-far', notSel ? ['all', ['>=', ['get', 'eh'], 10], KNOWN_H, notSel] : ['all', ['>=', ['get', 'eh'], 10], KNOWN_H]);   // 멀리서도 평면 도형(정보없음·g=1)은 솟지 않는다(높이 10 m 이상 철거 의심 건물이 남던 구멍)
   for (const id of ['dong-3d', 'dong-ghost']) if (map.getLayer(id)) map.setFilter(id, dongFilter());
 }
 /* 보이는 상태 고르기 */

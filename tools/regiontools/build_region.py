@@ -30,7 +30,7 @@ from typing import Callable
 if __package__ in (None, ""):
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from regiontools import api, bundle, geo  # noqa: E402
+from regiontools import api, bundle, existence, geo  # noqa: E402
 from regiontools import buildings as B  # noqa: E402
 from regiontools.status import compute_status, flag_future  # noqa: E402
 
@@ -797,6 +797,7 @@ def build(cfg: RegionConfig, client: api.Client, today: date, out_dir: Path, wit
     today_s, basis = today.isoformat(), today.strftime("%Y%m%d")
     zone = fetch_zone(cfg, client)
     bld = fetch_buildings(cfg, client, zone["bbox"], basis)
+    bld["existence"] = existence.apply(client, bld["features"], [zone["poly"]], zone["bbox"], bld["meta"])   # 지구 안 철거 잔존 의심 건물에 g=1(existence.py)
     notices = client.myhome_notices()
     all_items = notices["rental"] + notices["sale"]
     myhome = [it for it in all_items if cfg.myhome_filter(it)]
@@ -839,6 +840,7 @@ def _report(cfg: RegionConfig, res: dict) -> str:
              f"- 건물: 원본 {b['stats']['raw']} → 번들 {len(b['features'])} (10㎡ 미만 {b['stats']['tiny_dropped']}, "
              f"퇴화 {b['stats']['broken']}, 상한 초과 {b['stats']['capped_dropped']}) 높이 출처 {b['stats']['src']}",
              f"- meta.factor: {b['factor'] or '없음(표본 30개 미만 → 화면 기본 2.85 m/층)'}",
+             existence.report(b["existence"]),
              f"- 마이홈 공고 전체 {res['myhome_total']}건 중 지역 {res['myhome_region']}건, 인허가 기본개요 {res['permits']}건, "
              f"동 개요 {res['dong_rows']}행, 필지 조회 {len(res['parcels'])}건(없음 {sum(1 for v in res['parcels'].values() if not v)})",
              f"- 통계: {dict(plan['stats'])}",

@@ -143,8 +143,31 @@
 - **배제한 원인**: ① 좌표 시프트 — 위성(z19)과 앱 배경 `white`(z18) 위에 번들 윤곽을 겹쳐, 속성 있는 건물은 지붕·블록에 정확히 맞음을 확인. ② 번들 변환 — 원천 직접 집계(36동 중 13동)와 번들 집계(35동 중 13동)가 같음. ③ 높이 돌출 착시는 **보조 요인**입니다(시작 기울기 52°에서 20 m 건물 지붕이 노면 약 26 m를 가림, 계산). 지형(DEM 1.5배)은 이 일대 기복이 ±300 m에서 16 m이나 건물을 도로로 옮기지는 않음.
 - **왜 있는지**: 신도시 조성 전 옛 건물(농촌·축사)이나 비건축 도형이 남은 것으로 **보이나 증명하지 못했습니다**(근거: 속성 전무, 혁신도시에 집중, 도로 격자와 다른 각도·길쭉한 직사각형, 같은 구역에 2003년 승인 축사 이름이 남음. 철거 이력은 과거 영상으로 확인하지 못함). 계양 구도심에도 6동이 있어 교량·구조물 같은 비건축 도형이 섞였을 수 있습니다.
 - **조치**(화면만, 데이터는 그대로): `정보없음` 도형은 솟지 않는 평면(연한 면 + 점선)으로만 그리고 그림자·접지 음영에서 뺍니다. 눌러서 여는 카드는 "건물 정보 없음 / 건축물대장과 이어지는 정보가 없는 도형입니다. 실제와 다를 수 있어 입체로 그리지 않았습니다"를 보입니다. `app.js` `official-flat`·`official-flat-line`, 시험 `tests/js/ghost.test.cjs`. 번들 `eh=3`·`src=정보없음`은 그대로 둡니다.
-- **하지 않은 것(보류)**: 번들 빌드에서 지목이 도·공원·구거·하천인 `정보없음` 도형을 아예 제외하는 방법(혁신도시 표본의 약 54%). 지목 `대` 위의 속성 전무 도형(혁신도시 표본 42동)은 신축 미반영인지 유령인지 구분할 수 없습니다. 요청 시 조회(`/api/v1/buildings`)는 필지 호출이 늘어 번들에만 맞습니다.
+- **하지 않은 것(보류)**: 번들 빌드에서 지목이 도·공원·구거·하천인 `정보없음` 도형을 제외하는 방법(혁신도시 표본의 약 54%). 지목 `대` 위의 속성 전무 도형(표본 42동)은 지목만으로는 신축 미반영인지 유령인지 구분할 수 없습니다. → **같은 날 후속 조치(아래, 도로명주소 건물 대조)로 대체했고, 지구 안에서는 이 구분이 됩니다.** 요청 시 조회(`/api/v1/buildings`)는 필지 호출이 늘어 번들에만 맞습니다.
 - **같은 원천의 다른 빈 곳**: 한국방송통신전파진흥원 본관 폴리곤(빛가람동 301, 4,505㎡)은 원천이 지상층수 3만 주고 이름·용도·높이·연면적·연도를 비웁니다(`층수환산`으로 그려짐, `정보없음`이 아님). 이름은 장소 검색에 지번(`나주시 빛가람동 301`)으로 질의하면 같은 필지의 POI(기관·건물명과 입주 기업 다수)로 나오며, 이는 이름 보강 후보입니다(**[시도 안 함]**: 상호 노출·약관 확인과 일치율 측정이 먼저).
+
+**철거된 옛 건물이 대장 속성을 가진 채 남은 경우 — 도로명주소 건물로 걸러냄 (2026-10-07 후속)**:
+- **현상**: 위 조치 뒤에도 같은 교차로에 '도로 위 건물'이 남았습니다. 이번에는 **속성이 있는 건물**입니다(한국방송통신전파진흥원 옆 동·식물 관련시설 `가동`~`라동`, 1994~1999년 승인, 공식 높이 4.1 m). 위성 영상에는 그 자리에 차로·횡단보도·보도·잔디뿐입니다. 이 중 3동은 지목이 100% `대`라서 **지목 겹침으로는 걸러지지 않습니다**.
+- **기준**: V-World `LT_C_SPBD`(도로명주소 건물)는 지금 있는 건물만 담습니다. 건물 레이어의 도형마다 면적의 몇 %가 도로명주소 건물과 겹치는지를 점 표본(도형당 최대 400점)으로 셉니다.
+- **실측**(나주 번들 6,902동 × 도로명주소 건물 5,003동, 겹침 50% 이상):
+
+  | 구분 | 동수 | 겹침 |
+  |---|---|---|
+  | 지구 안 · 속성 있음 · 연도 없음 | 1,189 | 100% |
+  | 지구 안 · 속성 있음 · 2008~2014년 승인 | 99 | 86% |
+  | 지구 안 · 속성 있음 · 2008년 이전 승인 | 499 | **18%** |
+  | 지구 안 · 정보없음 | 1,161 | 14% |
+  | 지구 밖 · 속성 있음 · 2008년 이전 승인 | 844 | 54% |
+  | 지구 밖 · 정보없음 | 1,516 | 26% |
+
+  혁신도시 지구 안에서는 실제 건물이 거의 다 겹치고(2008년 이후 승인·연도 없음 86~100%) 옛 건물은 18%만 겹칩니다. **지구 밖에서는 쓸 수 없습니다**: 속성 있는 옛 건물의 46%가 안 겹치지만 도로명주소가 없는 농가·축사일 수 있어 철거라고 볼 수 없고, 구도심에서도 실제 건물이 빠집니다(나주 구도심 속성 있는 177동 중 17동 10%, 계양 구도심 132동 중 25동 19%이며 계양에는 2008년 이전 승인 공동주택 10동이 들어 있음).
+- **규칙**(`tools/regiontools/existence.py`): 건물 중심이 `region.json`의 신도시 지구(`zones[].poly`) 안이고, 면적의 50% 이상이 도로명주소 건물과 겹치지 않으며, 사용승인이 2015년 이전이거나 없으면 `g=1`. 지구 밖에는 붙이지 않습니다. **안전장치**: 도로명주소 건물을 하나도 못 받았거나, 지구 안 2008년 이후 승인 건물(표본 10동 이상)의 겹침이 60% 미만이면 자료가 불완전하다고 보고 아무것도 붙이지 않습니다.
+- **결과**: 나주 지구 안 2,948동 중 1,424동(48%)에 `g=1`(속성 있는 건물 427동 + `정보없음` 997동). 앞서 쟀던 한국방송통신전파진흥원 일대에서 도로 지목에 50% 이상 겹치는 14동은 모두 평면이 됐고 입체로 남은 것은 0입니다. 지구 여섯 곳에서 위성 영상에 윤곽을 겹쳐 보니 표시된 자리는 공사장·잔디·차로·맨땅이고 표시되지 않은 건물은 지붕에 맞았습니다.
+- **적용 범위**: **나주만**. 광산구(선운2)와 계양(테크노밸리)은 안전장치가 작동해 표시를 붙이지 않았습니다. 지구 안 2008년 이후 승인 건물이 도로명주소와 겹치는 비율이 광산 1/11·계양 4/30이라, 철거가 이미 진행된 것인지 자료가 불완전한 것인지 가릴 수 없었습니다. 두 지역은 `정보없음` 평면 표시만 적용됩니다.
+- **조치**: `g=1`은 `정보없음`과 같이 솟지 않는 평면(연한 면 + 점선)으로만 그리고 그림자·접지 음영에서 뺍니다. 카드는 "현존 미확인" 칩과 "지금 있는 건물(도로명주소 건물)과 겹치지 않습니다. 신도시를 만들며 철거된 옛 건물일 수 있어 입체로 그리지 않았습니다"를 보이고 옛 대장 값(층수·용도·연도)은 그대로 보입니다.
+- **쓰는 법**: 번들을 새로 만들면 `build_region.py`가 같은 일을 합니다(`existence.apply`). 기존 번들에는 `.venv/bin/python tools/regiontools/flag_existence.py regions/<slug> [--dry-run]`. 요약은 `meta.existence`(`source` `minCover` `recentYear` `flagged`)에 남습니다. 시험 `tests/test_regiontools_existence.py`.
+- **한계**: 요청 시 조회(`/api/v1/buildings`, 번들 없는 지역)에는 적용하지 않았습니다(지구 경계가 없고 칸마다 호출이 더 듭니다). `g`는 철거 확정이 아니라 **'현존 미확인'**입니다(도로명주소가 아직 없는 신축·부속건물이 겹치지 않을 수 있음). V-World 상자 요청은 면적 10 km² 이내여야 해서 도로명주소 건물은 0.02° 칸으로 나눠 받습니다(15.77 km² 요청은 `INVALID_RANGE`).
+- **함께 알게 된 것(쓰지 않음)**: 도로명주소 건물은 지상층수(`gro_flo_co`)와 건물명(`buld_nm`·`buld_nm_dc`)도 줍니다. 현존이 확인된 `정보없음` 560동(나주) 중 90%에 지상층수가 있어 높이를 되살릴 수 있고(**[시도 안 함]**), 건물명은 번들에 이름 없는 건물 3,182동 중 5%(171동)에만 있어 이름 보강에는 크게 도움이 되지 않으며 한국방송통신전파진흥원 본관에도 없습니다. 반대로 구도심·지구 밖에서 현존이 확인되는 `정보없음`(나주 구도심 41동 중 31동)은 실제 건물인데 지금 평면 점선으로 그려집니다.
 
 ### 2.7 기존 학교·병원·공공 강조 — 건물 자료의 `n`·`u`
 
@@ -404,7 +427,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | `projects.json` | `events` `flags` `sponsor`(이름·유형) `zoneId` `dongs[].floorsBelow` | 계양 `events`는 0건(12 B). 광산구 3.3 KB, 나주 13.2 KB가 가장 큼 |
 | `infra.json` | `permits[]` 건축HUB 인허가 2건, `busCityCode`, `sources[].publisher·license·redistributable`, `zones[].sources`, `schema_version` | `permits[]`는 335 B. 사이드바 목록을 없앤 뒤 남음. `busCityCode`는 화면 코드가 아니라 서버 함수(`api/bus.js`)가 읽음. `stops[]`·`busRoutes[]`의 필드는 모두 화면이 읽음(11절). `infra.json` 자체가 라이브에는 없음 |
 | `region.json` | `codes` `zones[].type·publicLand` `sources[].url·license·redistributable` `updatedAt` | |
-| `buildings.json` | `meta`의 `title` `license` `attribution` `crs` `crossCheck` `bbox` `fields` `counts` `total` `suspect` `lastApproval` `approvalByYear` | |
+| `buildings.json` | `meta`의 `title` `license` `attribution` `crs` `crossCheck` `bbox` `fields` `counts` `total` `suspect` `lastApproval` `approvalByYear` `existence` | |
 | `context.json` · `index.json` | `context.asOf` · `regions[].updatedAt` `schema_version` | |
 
 ### 3.2 수집만 하고 어떤 코드도 읽지 않는 자료 (배포되지 않음)
@@ -621,6 +644,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 10-05 | **2차 운영 점검(배포 후)과 문서 반영** | Node(`scripts/smoke.js`) + ego-browser(서울 장위동·하남 상사창동·화성시 화면) | 열림 57·실패 2(낡은 표본 이름)·경고 3. 바꾼 표본 재점검 3/3 열림(2.21절) | [로그 10-05] |
 | 10-07 | **이름 없는 건물 보완 조사**: 번들별 속성 채움률, V-World 원천 속성 목록, 장소 검색·건축HUB 표제부 시험 | Node(`.env.local` 키, `lib/vworld.js`·`lib/buildings.js` 재사용) + 번들 집계 | 이름 없음 계양 71%·광산 80%·나주 88%. 원천에 PNU·관리번호 없음, 연면적·건축면적·대지면적·건폐율·용적률·구조는 줌(번들이 버림). 장소 검색에 지번으로 질의하면 필지의 POI 이름이 나옴. **표제부(`getBrTitleInfo`)는 4건 중 3건이 503 `SERVICETIMEOUT_ERROR`, 1건은 건물 없는 필지로 0건이라 내용을 확인하지 못함**(5.12절) | [로그 10-07] · 2.6절 |
 | 10-07 | **'도로 위 건물' 원인 조사와 조치** | Node(V-World `LT_C_BLDGINFO`·`LP_PA_CBND_BUBUN`·WMTS 타일 직접 호출) + Python(PIL, 윤곽 겹침 그림) + Playwright 헤드리스(화면 확인) | 속성 전무 도형이 신도시 차로·공원 위에 있음. 좌표 시프트·번들 변환 문제 아님. 화면에서 평면으로만 그리고 카드에 안내(2.6절) | [로그 10-07] · [코드] `app.js` · 시험 `ghost.test.cjs` |
+| 10-07 | **'도로 위 건물' 후속: 속성 있는 철거 잔존 건물 조사·조치** | Node(V-World `LT_C_SPBD`·`LT_C_BLDGINFO`·`LP_PA_CBND_BUBUN` 직접 호출) + Python(`tools/regiontools/existence.py`, PIL로 윤곽 겹침) + Playwright 헤드리스 | 1차 조치 뒤에도 남은 건물은 1994~1999년 승인 동·식물 시설(속성 있음)이었음. 도로명주소 건물과의 겹침으로 구분됨(지구 안 옛 건물 18%만 겹침). 나주 지구 안 1,424동에 `g=1`, 광산·계양은 안전장치로 표시 안 함(2.6절) | [로그 10-07] · [코드] `existence.py`·`flag_existence.py`·`app.js` · 시험 `test_regiontools_existence.py`·`ghost.test.cjs` |
 
 ### 5.4 ego-browser (ego lite)
 
@@ -713,7 +737,8 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 건물(계양) | **GIS건물통합정보 인천 SHP zip**. EPSG:5186, DBF는 CP949. 인천 309,863동 중 계양구(28245) 16,724동. 파일 이름의 날짜는 20260909이고 번들 `meta.basis`는 20260906(DBF의 기준일 필드 최댓값). 두 날짜가 다른 까닭은 확인하지 못함 |
 | 건물(광산구·나주) | Data API `LT_C_BLDGINFO`. 지구 범위를 0.003° 넓힌 상자로 `geomFilter=BOX`, 한 번에 1000건 쪽 넘기기, `crs=EPSG:4326`. 10 ㎡ 미만 건물 제외. 법정동은 `LT_C_ADEMD_INFO`로 채움 |
 | 건물 레이어 속성(`LT_C_BLDGINFO`, 2026-10-07 실측) | 응답 속성은 13개: `bld_nm` `dong_nm` `usability` `grnd_flr` `ugrnd_flr` `height` `useapr_day`(번들이 씀)와 `archarea`(건축면적) `totalarea`(연면적) `platarea`(대지면적) `bc_rat`(건폐율) `vl_rat`(용적률) `strct_cd`(구조)(번들이 버림). **PNU·건축물대장 관리번호가 없어** 필지·대장과 이을 키가 없고, 이으려면 건물 중심점을 역지오코딩해 지번을 얻어야 합니다. 모르는 값은 `""`·`"0"`으로 옵니다 |
-| 건물 레이어의 함정: 대장과 이어지지 않은 도형 | 속성이 전부 빈 도형이 신도시에서 차로·공원 위에 남아 있음(나주 혁신도시 속성 전무 92동 중 54%가 도로·공원 지목). 화면은 평면으로만 그림. 근거·수치·보류한 조치는 2.6절 |
+| 도로명주소 건물(`LT_C_SPBD`, 2026-10-07 실측) | 지금 있는 건물만 담음. 속성 `bd_mgt_sn`(건물관리번호) `buld_nm` `buld_nm_dc`(동명) `gro_flo_co`(지상층수) `rd_nm` `buld_no` 등. **상자 요청은 10 km² 이내**(15.77 km²는 `INVALID_RANGE`). 건물명은 대부분 비고(번들 이름 없는 건물의 5%), 구도심에서는 실제 건물의 10~19%가 빠짐. 신도시 지구 안에서는 현존 확인에 쓰임(2.6절) |
+| 건물 레이어의 함정: 대장과 이어지지 않은 도형 | 속성이 전부 빈 도형이 신도시에서 차로·공원 위에 남아 있음(나주 혁신도시 속성 전무 92동 중 54%가 도로·공원 지목). 화면은 평면으로만 그림. 신도시 지구 안에서는 철거된 옛 건물이 대장 속성을 가진 채 남아 있기도 해 `LT_C_SPBD`로 거름(나주 지구 안 48%). 근거·수치·보류한 조치는 2.6절 |
 | 블록 윤곽 | `LT_C_LHBLPN`: LH 사업지구의 용지(공동주택·주상복합·단독·녹지…) 윤곽. **블록 이름(A6)과 공공·민간 구분이 없고** `blocktype`·`zonename`(지구명)만 있음. 계양 지구 324피처 |
 | 필지 | `LP_PA_CBND_BUBUN`(`attrFilter=pnu:=:<PNU>`): 마이홈 PNU로 필지 윤곽·중심을 얻음. 계양은 아직 **조성 전 옛 필지**(박촌동 178-5 답)를 줘서 블록 윤곽은 `LT_C_LHBLPN`을 씀 |
 | 도시계획시설 | `LT_C_UPISUQ155`(학교) · `154`(전기공급설비) · `152`(교통). 학교급 칸이 기록마다 달라(대분류 '학교' 또는 '미분류'+세분류) 이름 칸 5개를 모두 봄 |
@@ -976,8 +1001,9 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 | `h` `f` `b` | 공식 높이(m) · 지상층수 · 지하층수 |
 | `u` `n` `a` `d` | 용도 · 건물명 · 사용승인 연도 · 법정동 |
 | `x` | 1이면 층당 높이가 비정상(높이·층수 불일치 의심) |
+| `g` | 1이면 철거 의심: 신도시 지구 안에서 도로명주소 건물과 겹치지 않는 옛 건물(2.6절). 화면은 평면으로만 그림. 지역에 따라 없음 |
 
-`meta`에는 지역에 따라 `counts`(출처별 건수)·`factor`(용도별 층고)·`bbox`·`fields`(위 필드 설명) 등이 더 들어 있습니다. 지오메트리는 `Polygon` 또는 `MultiPolygon`입니다.
+`meta`에는 지역에 따라 `counts`(출처별 건수)·`factor`(용도별 층고)·`bbox`·`fields`(위 필드 설명)·`existence`(철거 의심 표시를 붙인 방법과 건수) 등이 더 들어 있습니다. 지오메트리는 `Polygon` 또는 `MultiPolygon`입니다.
 
 **`<slug>/context.json`** — 역·학교(OpenStreetMap): `stations[]` `schools[]`(각 `{name*, lon*, lat*}`) · `asOf`* · `source`*
 
@@ -1076,7 +1102,8 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 |---|---|---|
 | 단지 상태 | `status.py` (만들 때) | 처음 맞는 규칙: ① 입주 단계(실제 준공검사·입주 이벤트) ② 준공 임박(공정율 ≥ 90%이고 입주가 3개월 안) ③ 건설 단계(착공 또는 공정율 > 0) ④ 분양중(최근 12개월 안 공고) ⑤ 계획. `suspect` 이벤트는 쓰지 않음 |
 | 건물 높이 | `buildings.py` (만들 때) | 공식 높이 > 0이면 그 값(`공식높이`), 아니면 지상층수 × 층고(`층수환산`, 용도별 층고는 `meta.factor`, 기본 2.85 m), 둘 다 없으면 `eh = 3`(`정보없음`) |
-| 정보없음 도형 표시 | `app.js` `KNOWN_H`·`NO_INFO` | `src`가 `정보없음`이면 입체(벽·지붕·접지 음영)와 그림자에서 빼고 연한 평면 + 점선(`official-flat`·`official-flat-line`)으로만 그림. 눌러서 여는 카드는 "건물 정보 없음 · 실제와 다를 수 있음"을 보이고 값이 있는 줄만 늘어놓음. 골랐을 때 노란 표시는 0.3 m 판 |
+| 철거 의심 `g` | `existence.py` (만들 때) | 신도시 지구 안에서 도로명주소 건물(`LT_C_SPBD`)과 면적의 50% 이상 겹치지 않고 사용승인이 2015년 이전이거나 없으면 `g=1`. 지구 밖에는 쓰지 않으며, 도로명주소 건물이 없거나 최근 승인 건물의 겹침이 60% 미만이면 붙이지 않음 |
+| 정보없음 도형 표시 | `app.js` `KNOWN_H`·`NO_INFO` | `src`가 `정보없음`이거나 `g=1`이면 입체(벽·지붕·접지 음영)와 그림자에서 빼고 연한 평면 + 점선(`official-flat`·`official-flat-line`)으로만 그림. 눌러서 여는 카드는 "건물 정보 없음 · 실제와 다를 수 있음"을 보이고 값이 있는 줄만 늘어놓음. 골랐을 때 노란 표시는 0.3 m 판 |
 | 상태 → 화면 | `app.js` | 상태 5종 → 색·단계(분양→건설→입주)·무늬. 공공택지 위 민간 단지는 회색(`priv`) |
 | 기존 건물 색 | `app.js` `paintBuildings()` | 높이 램프(진할수록 높음) + 용도 색조 + 연식 + 동마다 ±4.5% 흔들림. 장식이며 `c` `cr` `cd` `crd`로 미리 계산해 속성에 넣음 |
 | 기존 기반시설 강조 | `facility.js` | 이름 키워드가 먼저(학교·유치원·어린이집 → 교육, 병원·의원 → 의료, 구청·주민센터·경찰·소방·경로당·복지관 등 → 공공·복지), 이름이 없거나 일반명(`가동`·`16동`)이면 용도(교육연구·의료·공공·노유자). 빌딩·아파트·오피스텔·교회·농협 같은 이름은 제외. 이름표는 같은 이름·같은 동 중 가장 높은 한 동에만 |
@@ -1119,7 +1146,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 | `index.json` | `regions[].slug` `name` `default` `visibility`, `dataBase` (`region.js` 지역 고르기·선택기·불러오기) | `schema_version`, `regions[].updatedAt` `schema_version` |
 | `region.json` | `slug` `name` `title`(사이드바 맨 위 문구) `description`(페이지 설명) `view` `zones[].name·poly` `sources[].id·label`(출처 문구) `projectOrder` (`region.js` `buildTexts` · `adaptBundle` · `orderBlocks`) | `schema_version` `updatedAt` `codes` `zones[].id·type·publicLand` `sources[].publisher·license·url·asOf·redistributable`. `statusOrder`는 어댑터가 `REGION`에 싣지만 `app.js`는 자체 상수 `STATUS_ORDER`를 씀 |
 | `projects.json` | `projects[].id` `label` `name` `kind` `status` `units` `dongCount` `moveIn` `sponsorClass` `outline.poly·tier·how` `progress.rate·asOf·history·start·end·source` `dongs[].no·floorsAbove·heightM·tier·poly` `builder` `contractAmountM` `note` `sources[]`, `otherBlocks` (`region.js` `adaptProject`) | `schema_version`, `projects[].zoneId` `sponsor`(이름·유형) `events` `flags`, `dongs[].floorsBelow` |
-| `buildings.json` | `features[].geometry`, `properties` `eh` `src` `h` `f` `b` `u` `n` `a` `d` `x`, `meta.factor` `meta.basis` (`app.js` 색 계산·팝업·층고 환산, `facility.js` 분류) | `schema_version`, `meta`의 `title` `license` `attribution` `crs` `crossCheck` `bbox` `fields` `counts` `total` `suspect` `lastApproval` `approvalByYear` `capped_dropped` |
+| `buildings.json` | `features[].geometry`, `properties` `eh` `src` `h` `f` `b` `u` `n` `a` `d` `x` `g`, `meta.factor` `meta.basis` (`app.js` 색 계산·팝업·층고 환산·평면 표시, `facility.js` 분류) | `schema_version`, `meta`의 `title` `license` `attribution` `crs` `crossCheck` `bbox` `fields` `counts` `total` `suspect` `lastApproval` `approvalByYear` `existence` `capped_dropped` |
 | `context.json` | `stations[]` `schools[]`(이름·좌표), `source`(푸터 문구 `region.js` `buildTexts`) | `asOf` |
 | `infra.json` | `asOf`, `sources[].id·label·url·asOf`, `schools[]` 전 필드(`id` `name` `level` `status` `openYm` `classes` `students` `address` `areaM2` `lon` `lat` `poly` `note` `sources`), `zones[].id·name·school·schoolLon·schoolLat·poly·asOf`, `attendance[]`, `stops[].id·name·no·lon·lat·routes`(`id`·`routes`·`no`는 정류소 팝업, `name·lon·lat`은 점과 300 m 계산), `busRoutes[].id·no·type·from·to·live·path`(`app.js` `LIVE_ROUTES`·`stopPopup`, `bus.js`; `path`는 live 노선에만 있음), `sites[]` 전 필드, `measures[]` 전 필드(`short`는 타임라인 이름) (`infra.js` · `app.js` · `bus.js`) | `permits[]` 전체(사이드바 목록 삭제 후 남음; `permitStatus` 함수와 `HAS_INFRA` 판정식에만 흔적이 있음), **`busCityCode`(화면 코드는 읽지 않고 서버 함수 `api/bus.js`가 읽음)**, `schema_version`, `sources[].publisher·license·redistributable`, `zones[].sources` |
 | `/api/bus` 응답(번들 아님) | `at`(위치 기준 시각) `ttl`(다시 조회할 수 있는 간격 = 쿨다운) `buses[].r·v·lon·lat·ord·stop`(`bus.js` `parse`·`describe`, `app.js` `busLoad`·`busPopup`) | `failed`(`parse`가 읽어 두지만 화면은 쓰지 않음) |
@@ -1239,7 +1266,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 ### 13.2 알아둘 점 (자료의 성격 요약)
 
 - 블록 윤곽은 V-World 공식 자료이고, 동(棟) 윤곽과 높이는 지역에 따라 실제 건물 자료이거나 **근사값**(10~20 m)입니다. 사이드바 아래 문구에 어느 쪽인지 적힙니다.
-- 기존 건물 높이는 공식 높이 · 층수 환산 · 정보 없음으로 나뉩니다(비율은 `buildings.json`의 `src`로 셀 수 있고, 화면에는 따로 표시하지 않습니다). **정보 없음 도형은 솟지 않는 연한 평면 + 점선으로만 그리며 건물이라고 주장하지 않습니다**: 원천에는 대장과 이어지지 않은 도형이 남아 있어 신도시에서는 차로·공원 위에도 있고(2.6절), 눌러 보면 "실제와 다를 수 있음"이라고 알립니다. 건물 색조(용도·연식)와 그림자는 보기 좋게 한 **장식**이며 실제 일조 계산이 아닙니다. 단, 기존 건물 중 학교·병원·공공·복지 시설은 건물 이름의 키워드(없으면 용도)로 가려내 강조색(노랑 교육 · 빨강 의료 · 연두 공공·복지)으로 칠하고, 이름이 있으면 확대(15.2 이상)했을 때 이름표를 보입니다. 이름 없이 용도만으로 칠한 건물에는 오분류가 있을 수 있습니다.
+- 기존 건물 높이는 공식 높이 · 층수 환산 · 정보 없음으로 나뉩니다(비율은 `buildings.json`의 `src`로 셀 수 있고, 화면에는 따로 표시하지 않습니다). **정보 없음 도형은 솟지 않는 연한 평면 + 점선으로만 그리며 건물이라고 주장하지 않습니다**: 원천에는 대장과 이어지지 않은 도형이 남아 있어 신도시에서는 차로·공원 위에도 있고(2.6절), 눌러 보면 "실제와 다를 수 있음"이라고 알립니다. 신도시 지구 안에서 지금 있는 건물(도로명주소 건물)과 겹치지 않는 옛 건물(`g`)도 같은 평면으로 그리고 "현존 미확인"으로 알립니다(나주만 적용, 2.6절). 건물 색조(용도·연식)와 그림자는 보기 좋게 한 **장식**이며 실제 일조 계산이 아닙니다. 단, 기존 건물 중 학교·병원·공공·복지 시설은 건물 이름의 키워드(없으면 용도)로 가려내 강조색(노랑 교육 · 빨강 의료 · 연두 공공·복지)으로 칠하고, 이름이 있으면 확대(15.2 이상)했을 때 이름표를 보입니다. 이름 없이 용도만으로 칠한 건물에는 오분류가 있을 수 있습니다.
 - '입주 시기' 보기는 공사 기간을 직선으로 나눈 추정입니다.
 - 버스 위치·3D 버스는 TAGO가 알려 준 값을 그대로 보이되 몇 십 초 전 값이라 '실시간'이라 부르지 않습니다. 진행 방향과 '이 노선이 지나는 단지'는 노선 경로로 어림한 값입니다(2.14절).
 - 광산구·나주 자료는 공공 API와 LH 공고에서 모았고 **이용조건이 확인되지 않은 자료가 있습니다**(`region.json`의 `sources[].redistributable`이 `unknown`). 재배포 전에 제공기관 이용조건을 확인하세요.
