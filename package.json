@@ -1,0 +1,24 @@
+{
+  "name": "housing-board",
+  "private": true,
+  "description": "주택파동 — 주택공급 종합상황판과 공급 지도",
+  "scripts": {
+    "predev": "node scripts/build.js",
+    "dev": "next dev",
+    "prebuild": "node scripts/build.js",
+    "build": "next build",
+    "start": "next start",
+    "test": "node --test \"tests/js/*.test.cjs\""
+  },
+  "dependencies": {
+    "next": "16.4.0",
+    "react": "19.3.0",
+    "react-dom": "19.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "24.19.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "5.9.3"
+  }
+}

@@ -37,3 +37,8 @@ input/
 validation_out/
 .venv/
 dist/
+
+# Next.js
+.next/
+next-env.d.ts
+*.tsbuildinfo
