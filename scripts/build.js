@@ -2,8 +2,8 @@
    - index.html · assets/ · regions/ 만 복사합니다(원천 data·tools·tests·docs 와 *.md 는 올라가지 않습니다).
    - 운영 빌드(VERCEL_ENV=production)는 regions/index.json 에서 visibility 가 preview 인 지역을 빼고 그 폴더도 복사하지 않습니다.
    - VWORLD_KEY   : V-World 인증키 (Vercel 프로젝트 환경변수)
-   - VWORLD_LAYER : (선택) 낮 배경 종류
-   환경변수가 없으면 로컬 config.js 를, 그것도 없으면 빈 키(OpenFreeMap 회색 지도)를 씁니다.
+   - VWORLD_LAYER : (선택) 배경 종류(기본 midnight)
+   환경변수가 없으면 로컬 config.js 를, 그것도 없으면 빈 키(OpenFreeMap 어두운 지도)를 씁니다.
    로컬 config.js 는 읽기만 하고 고치지 않습니다. 로그에는 키 값을 찍지 않습니다. */
 const fs = require('fs');
 const path = require('path');

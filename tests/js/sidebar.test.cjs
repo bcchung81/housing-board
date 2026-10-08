@@ -1,4 +1,4 @@
-// 좌측 사이드바: 처음엔 접힌 채 열리고(데스크톱), 펼쳤을 때는 작은 글자·긴 목록 없이 읽히는지 정적으로 확인한다.
+// 우측 사이드바: 처음엔 펼친 채 열리고(데스크톱, 상황판 시안 M3), 접어도 요약이 지도 위에 남고, 작은 글자·긴 목록 없이 읽히는지 정적으로 확인한다.
 // 화면에서의 실제 겹침·높이는 별도 헤드리스 Chrome 점검으로 본다(문서 5.5·5.6c).
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -23,24 +23,24 @@ const fontPx = (sel) => {
   return sizes;
 };
 
-test('데스크톱은 처음부터 접힌 채 그린다(마크업이 접힘이어야 지도 폭이 한 번 더 바뀌지 않는다)', () => {
-  assert.match(html, /<div class="app collapsed">/);
+test('데스크톱은 처음부터 펼친 채 그린다(마크업이 펼침이어야 지도 폭이 한 번 더 바뀌지 않는다)', () => {
+  assert.match(html, /<div class="app">/);
   const t = /<button[^>]*id="panelToggle"[^>]*>/.exec(html);
   assert.ok(t, '#panelToggle 이 있어야 한다');
-  assert.match(t[0], /aria-expanded="false"/);
-  assert.match(t[0], /aria-label="사이드바 펼치기"/);
+  assert.match(t[0], /aria-expanded="true"/);
+  assert.match(t[0], /aria-label="사이드바 접기"/);
   assert.match(css, /@media \(min-width:901px\)\{\.app\.collapsed \.panel\{display:none\}\}/);
 });
 
-test('주소 ?panel=1 이면 펼친 채 열고, 접고 펼 때마다 주소에 반영한다(기억 저장은 쓰지 않는다)', () => {
-  assert.match(app, /setCollapsed\(q\.get\('panel'\) !== '1', \{ quiet: true \}\)/);   // panel=1 일 때만 펼침
+test('주소 ?panel=0 이면 접은 채 열고, 접고 펼 때마다 주소에 반영한다(기억 저장은 쓰지 않는다)', () => {
+  assert.match(app, /setCollapsed\(q\.get\('panel'\) === '0', \{ quiet: true \}\)/);   // panel=0 일 때만 접음
   assert.match(app, /set\('panel', /);
   assert.doesNotMatch(app, /localStorage[^;]*panel/i);
   // 시작할 때 알림을 읽어 주지 않는다(조용히 적용)
   assert.match(app, /function setCollapsed\(on, \{ quiet = false \} = \{\}\)/);
 });
 
-test('접힘이 기본이어도 지역 이름·지역 바꾸기가 지도 위 요약에 있다', () => {
+test('접어도 지역 이름·지역 바꾸기가 지도 위 요약에 있다', () => {
   assert.match(app, /class="hs-region"/);
   assert.match(app, /regionSel/);
   assert.match(css, /\.hudsum \.hs-region\b/);
@@ -53,15 +53,18 @@ test('상세 카드는 지도 위 요약(#hudSum)과 겹치지 않게 자리를 
 });
 
 test('사이드바 글자는 13px 아래로 내려가지 않는다', () => {
-  const SEL = ['.pcur', '.eyebrow', '.regionbox label', '.sleg', '.card .st', '.card .sub', '.stage span', '.pg', '.fl em', '.bld', '.foot',
+  const SEL = ['.pcur', '.sleg', '.card .st', '.card .sub', '.stage span', '.stage span small', '.pg', '.fl em', '.bld', '.foot',
     '.next span.s', '.inote', '.isub h3', '.icard .iw', '.im', '.ichip', '.imeta', '.isrc', '.ibtn .s',
     '#infraMeasures small', '.isum-go', '.ihead b', '.ibtn b'];
   for (const s of SEL) for (const px of fontPx(s)) assert.ok(px >= 13, `${s} ${px}px (13px 이상 필요)`);
 });
 
-test('위계: 구역 제목(h2)이 단지 이름보다 작지 않다', () => {
-  const h2 = Math.max(...fontPx('h2')), card = Math.max(...fontPx('.card b'));
-  assert.ok(h2 >= card, `h2 ${h2}px < 단지 이름 ${card}px`);
+test('위계: 구역 제목(h2)은 13px 이상의 굵은 글자이고, 단지 이름(.card b)은 그보다 크지만 17px을 넘지 않는다', () => {
+  // 상황판 시안(M3)은 구역 제목을 작은 굵은 이름표로 두고, 크기 대신 굵기·색(--ink2)으로 위계를 만든다
+  const h2 = Math.min(...fontPx('h2')), card = Math.max(...fontPx('.card b'));
+  assert.ok(h2 >= 13, `h2 ${h2}px`);
+  assert.match(bodies('h2').join(';'), /font-weight:(700|800|900)/);
+  assert.ok(card > h2 && card <= 17, `단지 이름 ${card}px`);
 });
 
 test('사이드바 보조 글자에 옅은 회색(#5C6068·#6B6F77)을 쓰지 않는다', () => {
@@ -128,17 +131,19 @@ test('입주 전 점검: 구역 전체가 기본 접힘이고, 안의 개교 일
   assert.match(app, /dataset\.sec === 'h-infra'\) setInfraOpen\(true\)/);
 });
 
-test('사이드바 글은 어절 단위로 줄을 바꾼다(keep-all + overflow-wrap) / 스크롤 중 지역 상자는 접는다', () => {
+test('사이드바 글은 어절 단위로 줄을 바꾼다(keep-all + overflow-wrap) / 지역 상자는 머리 줄(#mhead)에 있다', () => {
   const b = bodies('.pscroll').join(';');
   assert.match(b, /word-break:keep-all/);
   assert.match(b, /overflow-wrap:break-word/);
-  assert.ok(bodies('.phead.scrolled .regionbox').length, '스크롤하면 .regionbox 를 접는 규칙이 있어야 한다');
+  const head = /<header class="mhead" id="mhead">[\s\S]*?<\/header>/.exec(html);
+  assert.ok(head && /id="regionBox"/.test(head[0]) && /id="regionSel"/.test(head[0]), '지역 고르기는 머리 줄 안에 있어야 한다');
+  assert.doesNotMatch(/<aside class="panel"[\s\S]*?<\/aside>/.exec(html)[0], /id="regionBox"/);
 });
 
 test('입주 전 점검 카드에 같은 안내 문구를 되풀이하지 않는다', () => {
   assert.doesNotMatch(app, /누르면 지도에서 보기<\/span><span class="irows">/);
 });
 
-test('타임라인 글자에는 흰 후광을 둬 띠·축 위에서도 읽힌다', () => {
+test('타임라인 글자에는 바탕색 후광을 둬 띠·축 위에서도 읽힌다', () => {
   assert.match(css, /\.itl text\{[^}]*paint-order:stroke/);
 });

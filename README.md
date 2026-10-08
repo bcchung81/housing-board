@@ -26,9 +26,9 @@ node scripts/dev.js 8000         # 같은 일을 직접: 브라우저에서 http
 
 - 화면에 `지역 자료를 불러오지 못했습니다. regions/index.json: Failed to fetch`가 뜨면 `file://`로 열었거나 서버가 꺼져 있는 것입니다. 서버를 켜고 `http://localhost:포트/`로 여세요.
 - 인터넷이 필요합니다: 배경지도(V-World), 지형 고도(AWS), 지명 글자(OpenFreeMap)를 내려받습니다.
-- V-World 배경을 쓰려면 `config.js`에 인증키를 넣습니다(`config.example.js` 참고). 비어 있으면 OpenFreeMap 회색 지도로 대신 나옵니다.
-- 지도 아래 가운데의 입력줄(`/` 키로 바로)에 장소 이름(`하남시청`, 지금 보는 곳 근처 먼저)·동 이름·지번(`장위동 68-37`)·도로명·법정동 코드(8·10자리)·PNU(19자리)를 치면 그곳으로 지도를 다시 엽니다. 투명도로 상태를 말합니다(대기 .62 · 입력 중 .88 · 비활성 .46). 서버(`node scripts/dev.js`·Vercel)가 없으면 비활성으로 보입니다.
-- 지역이 둘 이상이면 지역 선택기가 보입니다(사이드바 맨 위, 사이드바가 접혀 있을 때는 지도 오른쪽 위 요약 카드 왼쪽 위). 지역 목록에 없는 `?region=` 값은 안내 화면이 뜹니다.
+- V-World 배경을 쓰려면 `config.js`에 인증키를 넣습니다(`config.example.js` 참고). 비어 있으면 OpenFreeMap 어두운 지도로 대신 나옵니다.
+- 지도 아래 가운데의 입력줄(`/` 키로 바로)에 장소 이름(`하남시청`, 지금 보는 곳 근처 먼저)·동 이름·지번(`장위동 68-37`)·도로명·법정동 코드(8·10자리)·PNU(19자리)를 치면 그곳으로 지도를 다시 엽니다. 투명도로 상태를 말합니다(대기 .78 · 입력 중 .94 · 비활성 .62). 서버(`node scripts/dev.js`·Vercel)가 없으면 비활성으로 보입니다.
+- 지역이 둘 이상이면 지역 선택기가 보입니다(머리 줄 로고 옆, 사이드바가 접혀 있을 때는 지도 오른쪽 위 요약 카드 왼쪽 위). 지역 목록에 없는 `?region=` 값은 안내 화면이 뜹니다.
 - **지도는 팝업(`window.open`)이나 새 탭으로 여세요. `<iframe>`에는 넣을 수 없습니다**(응답 헤더 `X-Frame-Options: DENY`, `frame-ancestors 'none'`).
 
 주소 매개변수(모두 선택). 화면에서 바꾸면 주소에도 반영되어 링크가 보던 상태를 따라갑니다.
@@ -41,8 +41,9 @@ node scripts/dev.js 8000         # 같은 일을 직접: 브라우저에서 http
 | `code` `sgg` `bjd` `pnu` | 표준코드(법정동 기준): 시군구 5 · 법정동 8 또는 10 · 필지 PNU 19자리. 둘 이상이면 `pnu` > `bjd` > `sgg` > `code` | 코드를 해석해(`/api/v1/resolve`) 번들이 있는 지역이면 그곳으로 열고 법정동·필지로 이동해 경계를 강조합니다. 번들이 없는 지역(예: 서울·하남)도 지도가 열립니다: 경계를 강조하고 건물은 보이는 칸마다 요청 시 조회해 3D로 그리며, 법정동·필지로 열면 그 법정동의 건축HUB 인허가 사업을 단지로, 그 가까이의 신설예정 학교·버스 정류장을 입주 전 점검으로 보입니다(버스 노선·시행자·분양·통학구역은 번들이 없어 없음. 서울은 TAGO에 정류소 자료가 없음). 예: `?bjd=2824510900`(번들 있음), `?bjd=1129013800`(서울 장위동, 번들 없음) |
 | `block` | 단지 `label` 또는 `id`(예 `A6`) | 그 단지 카드를 열고 지도로 이동 |
 | `mode` | `progress` `time` `infra` | 보기 기준(기본 층수). `infra`는 점검 자료가 있는 지역만 |
-| `panel` | `1` | 데스크톱에서 사이드바를 펼친 채 열기(기본은 접힘) |
+| `panel` | `0` | 데스크톱에서 사이드바를 접은 채 열기(기본은 펼침) |
 | `priv` `ctx` `infra` | `0` | 공공택지 민간 단지 · 역·학교 · 입주 전 점검 표시를 끈다 |
+| `dim` | `0` | 기존 건물 흐리게를 끈다(모든 기존 건물을 3D 로 채움) |
 | `ring` `zone` `hud` `cards` | `1` | 역 반경 원 · 초등 통학구역 경계 · 단지 모서리 표시선 · 단지 정보 카드를 켠다 |
 | `aa` | `0` | 안티앨리어싱 끄기(저사양) |
 | `selftest` | 아무 값 | 시험용 훅(`window.__map` 등)을 붙인다 |
@@ -63,7 +64,8 @@ api/v1/buildings.js      건물 요청 시 조회 API: 0.01° 칸 단위로 V-Wo
 lib/                     서버 공용(키 풀 keys.js · 로컬 캐시 cache.js · 코드 판별 codes.js · 번들 있는 시군구 판별 coverage.js · 건물 변환 buildings.js · 인허가 규칙·건물대장 대조 permits.js · 기반시설·OSM 정류장 변환 infra.js · 마이홈 공고 변환 myhome.js · 공공데이터포털 쪽 조회 datagokr.js · 행정표준코드 stan.js · 경계 단순화 geom.js · V-World 키 vworld.js)
 env.example              .env.local 견본(키 이름·용도·한도, 값 없음)
 assets/
-  css/app.css            화면 모양 (반투명 유리 변수 --glass-*)
+  css/app.css            화면 모양 (상황판 시안 M3의 네이비 팔레트, 반투명 유리 변수 --glass-*)
+  img/                   주택파동 로고(wave-lockup-ondark.svg: 지붕·글자 흰색 + 리본 브랜드 색 #D65535, 어두운 바탕용)
   js/region.js           지역 로더와 어댑터 (순수 함수 + 얇은 DOM 부분)
   js/goto.js             주소 이동 입력줄(하단 커맨드 라인): 상태(대기·입력 중·이동 중·비활성)·후보·이동 주소 모델 + 얇은 DOM 부분
   js/infra.js            입주 전 점검 판정 (순수 함수)
@@ -107,12 +109,13 @@ index.html ─► region.js(RegionLoader.boot) ─► config.js ─► app.js
 
 | 화면 | 위치 | 비고 |
 |---|---|---|
-| 사이드바 | 왼쪽(`#panel`) | 지역 선택·요약·다음 일정·단지·입주 전 점검(기본 접힘)·타임라인·출처 문구. 데스크톱은 기본 접힘, 모바일(≤900px)은 하단 시트 |
-| 상단 바 | 지도 왼쪽 위(`.tools`) | 보기 기준(층수·공정율·입주 시기·기반시설) · 옵션 · 전체/평면/투어 · ◀▶ 돌리기/자동. 한 줄, 좁으면 가로로 밀림 |
+| 머리 줄 | 맨 위(`#mhead`) | 주택파동 로고·지역 선택 · **6단계 필터**(`#stageF`: 계획·인허가·착공·모집·준공·입주, 눌러 단계별로 켜고 끔. 옵션의 '보일 단지 상태'와 같은 값. 인허가는 대응하는 상태가 없어 비어 있음) · 보기 기준(`#modeSeg`: 층수·공정율·입주 시기·기반시설). 모바일은 두 줄 |
+| 사이드바 | 오른쪽(`#panel`) | 요약·다음 일정·단지(펼치면 6단계 위치)·입주 전 점검(기본 접힘)·타임라인·출처 문구. 데스크톱은 기본 펼침(`?panel=0`이면 접음), 모바일(≤900px)은 하단 시트 |
+| 지도 위 도구줄 | 지도 왼쪽 위(`.tools`) | 옵션 · 전체/평면/투어 · ◀▶ 돌리기/자동. 한 줄, 좁으면 가로로 밀림 |
 | 확대·나침반 | 지도 오른쪽 위(`.rctl`) | +/− 와 나침반(누르면 북쪽 복귀) |
-| 가로 요약 | 확대 카드 왼쪽(`#hudSum`) | 사이드바가 접혀 있을 때만. 지역 선택·합계·막대·점검 한 줄·다음 일정 2건 |
+| 가로 요약 | 확대 카드 왼쪽(`#hudSum`) | 사이드바를 접었을 때만. 지역 선택·합계·막대·점검 한 줄·다음 일정 2건 |
 | 범례 | 지도 아래(`#botbar`) | 한 줄 + `자세히`로 펼침 |
-| 옵션 창 | 상단 `옵션` 아래(`#optPanel`) | 보일 단지 상태·역·학교·반경·기존 건물 흐리게·점검 표시·표시선·정보 카드 |
+| 옵션 창 | 상단 `옵션` 아래(`#optPanel`) | 보일 단지 상태·역·학교·반경·기존 건물 흐리게(기본 켬: 학교·병원·공공시설만 3D, 나머지 건물은 채우지 않은 점선 윤곽만, 확대 15 이상에서만 그림)·점검 표시·표시선·정보 카드 |
 | 상세 카드 | 지도 위 팝업 | 단지·동·기존 건물·학교·정류장·부지. 요약·확대 카드와 겹치면 아래로 비킴 |
 
 지도에 올리는 자료원과 레이어(이름은 `app.js`의 id):
@@ -152,7 +155,7 @@ node --test "tests/js/*.test.cjs"                     # Node (따옴표 필수)
 | `tests/js/smoke.test.cjs` | 전국 표본 점검의 판정 함수(경계 윤곽·칸 번호·열림/경고 판정)와 표본 파일 구조 |
 | `tests/js/vercelconf.test.cjs` | `vercel.json`: iframe 차단 헤더·함수 번들 파일 |
 | `tests/js/bus.test.cjs` | 버스 계산(방향·3D 면·보간·경유 단지)과 화면 연결(옵션·요청 시에만 조회 약속) |
-| `tests/js/glass.test.cjs` `sidebar.test.cjs` `topbar.test.cjs` | 반투명 유리 글자 대비 · 사이드바(글자 13px 이상·기본 접힘·요약) · 상단 바·확대 카드·가로 요약 |
+| `tests/js/glass.test.cjs` `sidebar.test.cjs` `topbar.test.cjs` | 반투명 유리 글자 대비 · 사이드바(글자 13px 이상·기본 펼침·요약) · 머리 줄의 보기 기준·지도 위 도구줄·확대 카드·가로 요약 |
 
 화면의 실제 겹침·높이는 정적 시험이 보지 못하므로, 화면을 고친 뒤에는 `?selftest`로 열어 `window.__map`으로 레이어·위치를 확인합니다. Python 시험(번들을 만드는 도구·검증기)은 [dataset.md](dataset.md)의 "지역을 추가하거나 고칠 때"에 정리했습니다.
 
@@ -168,7 +171,7 @@ node scripts/smoke.js [주소] ["하남시 감일동" …]   # 전국 표본 59�
 
 Vercel은 `vercel.json`의 빌드 명령(`node scripts/build.js`)이 `index.html`·`assets/`·`regions/`만 `public/`에 모아 서비스하고, `api/bus.js`와 `api/v1/*.js`(resolve·codes/search·notices·buildings·permits·infra)는 함수로 따로 배포됩니다(`lib/`는 함수가 가져가고, `regions/` 파일은 `vercel.json`의 `includeFiles`로 함께 올라갑니다). 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
 
-**인증키**: `config.js`와 `.env*`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(OpenFreeMap 회색 지도)로 빌드합니다.
+**인증키**: `config.js`와 `.env*`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(OpenFreeMap 어두운 지도)로 빌드합니다.
 
 ```
 vercel env add VWORLD_KEY production      # 값은 프롬프트에 붙여넣기
@@ -190,7 +193,7 @@ vercel env add VWORLD_DOMAIN production         # 코드 해석이 V-World 를 �
 
 하루 호출은 (실시간 노선 수) × 86400 ÷ ttl 회로 묶입니다. 응답을 서버 캐시와 CDN이 ttl초(최소 60초) 동안 나눠 쓰기 때문입니다(계양 4개 노선이면 최대 5,760회, 개발계정 한도 10,000회). 노선이 늘면 ttl이 길어지고, BUS 키가 늘면 키 수만큼 짧아집니다. 로컬 캐시는 `.cache/`(gitignore, 최대 24시간·50 MB), Vercel에서는 인스턴스 임시 폴더입니다.
 
-인증키는 결국 브라우저에 그대로 보이므로 환경변수는 '저장소에 안 올리는' 용도일 뿐이고, 실제 보호는 V-World 콘솔의 서비스 URL 제한이 전부입니다. 배포 주소(운영 도메인)를 그곳에 등록해야 배경지도가 뜹니다. 미리보기 배포 주소는 배포마다 바뀌므로 등록하지 않으면 회색 지도로 나옵니다.
+인증키는 결국 브라우저에 그대로 보이므로 환경변수는 '저장소에 안 올리는' 용도일 뿐이고, 실제 보호는 V-World 콘솔의 서비스 URL 제한이 전부입니다. 배포 주소(운영 도메인)를 그곳에 등록해야 배경지도가 뜹니다. 미리보기 배포 주소는 배포마다 바뀌므로 등록하지 않으면 OpenFreeMap 어두운 지도로 나옵니다.
 
 `/regions/*`는 5분 캐시(`max-age=300`)라, 자료를 고쳐 다시 배포해도 최대 5분은 옛 자료가 보일 수 있습니다.
 
@@ -206,7 +209,7 @@ vercel env add VWORLD_DOMAIN production         # 코드 해석이 V-World 를 �
 
 | 서비스 | 용도 | 비고 |
 |---|---|---|
-| V-World WMTS (`api.vworld.kr`) | 배경지도(white) | 인증키 필요, 최대 확대 18 |
+| V-World WMTS (`api.vworld.kr`) | 배경지도(midnight, 야간) | 인증키 필요, 최대 확대 18 |
 | AWS Terrain Tiles (`s3.amazonaws.com/elevation-tiles-prod`) | 지형 고도 | 키 없음. SRTM 등 |
 | OpenFreeMap (`tiles.openfreemap.org`) | 지명·도로명 글자, 키가 없을 때 대체 배경 | 키 없음 |
 | OpenStreetMap Overpass (`overpass-api.de`·`overpass.kumi.systems`) | TAGO에 없는 지역(서울 등)의 버스 정류장(서버가 24시간 캐시) | 키 없음, ODbL. 공개 서버라 느리거나 꺼질 수 있음(실패해도 지도는 열림) |

@@ -74,25 +74,26 @@ test('실자료 회귀: 계양에서 교육·공공복지·의료가 칠해지�
 const hue = (h) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; if (!d) return 0; const x = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (x * 60 + 360) % 360; };
 const hueGap = (a, b) => { const d = Math.abs(hue(a) - hue(b)); return Math.min(d, 360 - d); };
 const lum = (h) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
-const contrastOnWhite = (h) => 1.05 / (lum(h) + 0.05);
+const contrastOnNavy = (h) => (lum(h) + 0.05) / (lum('#0A1030') + 0.05);   // 지도 바탕(THEME.bg) 위 이름표 글자
 const FAC = (() => { const m = /fac: \{ edu: \{ c: '(#\w{6})', t: '(#\w{6})' \}, med: \{ c: '(#\w{6})', t: '(#\w{6})' \}, pub: \{ c: '(#\w{6})', t: '(#\w{6})' \} \}/.exec(app); assert.ok(m, 'THEME.fac 를 찾을 수 없음'); return { edu: { c: m[1], t: m[2] }, med: { c: m[3], t: m[4] }, pub: { c: m[5], t: m[6] } }; })();
 
-test('강조색은 상태색·점검 보라와 색상각이 18° 이상 떨어지고, 이름표 글자는 흰 바탕에서 4.5:1 이상이다', () => {
+test('강조색은 상태색·점검 보라와 색상각이 18° 이상 떨어지고, 이름표 글자는 네이비 바탕에서 4.5:1 이상이다', () => {
   const status = [...(/const COLOR = \{([^}]*)\}/.exec(app)[1]).matchAll(/(\w+): '(#\w{6})'/g)].filter(([, k]) => k !== 'plan' && k !== 'priv').map((m) => [m[1], m[2]]);   // 회색 계열은 색상각이 뜻이 없다
-  status.push(['edu(신설 학교)', '#6C3FA0']);
+  status.push(['edu(신설 학교)', '#B79CFF']);
   for (const [k, v] of Object.entries(FAC)) {
     for (const [n, c] of status) assert.ok(hueGap(v.c, c) >= 18, `${k} ${v.c} ↔ ${n} ${c}: ${hueGap(v.c, c).toFixed(0)}°`);
-    assert.ok(contrastOnWhite(v.t) >= 4.5, `${k} 글자 ${v.t} ${contrastOnWhite(v.t).toFixed(1)}:1`);
+    assert.ok(contrastOnNavy(v.t) >= 4.5, `${k} 글자 ${v.t} ${contrastOnNavy(v.t).toFixed(1)}:1`);
   }
   const ks = Object.keys(FAC);
   for (let i = 0; i < ks.length; i++) for (let j = i + 1; j < ks.length; j++) assert.ok(hueGap(FAC[ks[i]].c, FAC[ks[j]].c) >= 40, `${ks[i]}↔${ks[j]}`);
 });
 
-test('건물 색은 강조색으로 덮이고, 흐리게 옵션에서도 기반시설은 20%만 흐려진다', () => {
+test('건물 색은 강조색으로 덮이고, 흐리게(기본)에서도 기반시설은 지금처럼 3D 로 남는다', () => {
   assert.match(app, /fac = p\.fc && T\.fac\[p\.fc\]/);
   assert.match(app, /let c = fac \? hex2\(fac\.c\)/);
-  assert.match(app, /const dimK = fac \? 0\.2 : 0\.45/);
   assert.match(app, /FL\.annotate\(GY\.features\)/);
+  assert.doesNotMatch(app, /dimK|p\.cd\b|p\.crd\b/);   // 옛 흐리게(반투명 3D)는 없다: 기반시설을 흐리게 하지 않는다
+  assert.match(app, /const IS_FAC = \['has', 'fc'\]/);
 });
 
 test('이름표 층(fac-label)은 이름 있는 기반시설만, 확대 15.2부터, 큰 건물 먼저, 분류별 진한 글자색으로 그린다', () => {

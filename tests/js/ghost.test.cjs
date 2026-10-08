@@ -16,7 +16,7 @@ test('입체 층(벽·지붕·접지 음영)은 실재가 의심되지 않는 �
   assert.match(app, /const isFlat = \(p\) => p\.src === '정보없음' \|\| p\.g === 1;/);
   for (const id of ['official-3d', 'official-roof', 'official-ao']) assert.match(layerOf(id), /filter: KNOWN_H/, `${id} 은 정보없음을 뺀다`);
   assert.match(layerOf('official-far'), /filter: \['all', \['>=', \['get', 'eh'\], 10\], KNOWN_H\]/);   // 저배율(확대 12~14) 층도 같다: 높이 10 m 이상 철거 의심 건물이 멀리서 솟던 구멍
-  assert.match(app, /setFilter\('official-far', notSel \? \['all', \['>=', \['get', 'eh'\], 10\], KNOWN_H, notSel\] : \['all', \['>=', \['get', 'eh'\], 10\], KNOWN_H\]\)/);
+  assert.match(app, /setFilter\('official-far', solid\(\['all', \['>=', \['get', 'eh'\], 10\], KNOWN_H\]\)\)/);   // 고르거나 흐리게를 바꿔 필터를 다시 걸어도 같다(applyOfficial)
   for (const id of ['official-flat', 'official-flat-line']) assert.match(layerOf(id), /filter: NO_INFO/, `${id} 은 정보없음만 그린다`);
   assert.match(layerOf('official-flat'), /type: 'fill'/);                       // 솟지 않는 면
   assert.match(layerOf('official-flat-line'), /'line-dasharray': \[2, 2\]/);    // 점선 윤곽
@@ -33,18 +33,18 @@ test('그림자 판은 평면 도형(정보없음·철거 의심)을 만들지 �
 });
 
 test('고른 건물 표시: 입체 층 필터는 높이를 아는 건물을 지키면서 고른 건물을 빼고, 평면 도형은 얇은 판으로만 노랗게 칠한다', () => {
-  assert.match(app, /const known = notSel \? \['all', KNOWN_H, notSel\] : KNOWN_H, flat = notSel \? \['all', NO_INFO, notSel\] : NO_INFO;/);
-  assert.match(app, /setFilter\('official-3d', known\)/); assert.match(app, /setFilter\('official-roof', known\)/);
-  assert.match(app, /for \(const id of \['official-flat', 'official-flat-line'\]\) if \(map\.getLayer\(id\)\) map\.setFilter\(id, flat\)/);
+  assert.match(app, /notSel = selId == null \? null : \['!=', \['get', 'i'\], selId\]/);
+  assert.match(app, /map\.setFilter\('official-3d', solid\(KNOWN_H\)\); map\.setFilter\('official-roof', solid\(KNOWN_H\)\)/);
+  assert.match(app, /for \(const id of \['official-flat', 'official-flat-line'\]\) if \(map\.getLayer\(id\)\) map\.setFilter\(id, solid\(NO_INFO\)\)/);
+  assert.match(app, /function applySel\(\) \{[\s\S]*?applyOfficial\(\);/);
   assert.match(app, /eh: isFlat\(sp\) \? FLAT_SEL_H : sp\.eh/);
   assert.match(app, /const FLAT_SEL_H = 0\.3;/);
 });
 
-test('평면 도형도 눌러 카드를 열 수 있고(맨 마지막 순위), 포인터 모양이 바뀌며, 흐리게 옵션을 따른다', () => {
-  assert.match(app, /pick\(\['official-3d', 'official-roof', 'official-far'\]\) \|\| pick\(\['official-flat'\]\)/);
-  assert.match(app, /\.\.\.OFFICIAL_LAYERS, 'official-flat'\]/);
-  assert.match(app, /setPaintProperty\('official-flat', 'fill-opacity', TH\(\)\.ghost\.fillOp \* \(dim \? 0\.35 : 1\)\)/);
-  assert.ok(!/const OFFICIAL_LAYERS = \[[^\]]*official-flat/.test(app), 'OFFICIAL_LAYERS 는 fill-extrusion 층만 담는다(흐리게가 fill-extrusion 속성을 쓴다)');
+test('평면 도형도 눌러 카드를 열 수 있고(맨 마지막 순위), 포인터 모양이 바뀐다', () => {
+  assert.match(app, /pick\(\['official-3d', 'official-roof', 'official-far'\]\) \|\| pick\(\['official-flat'\]\) \|\| pick\(\['official-hit'\]\)/);
+  assert.match(app, /\.\.\.OFFICIAL_LAYERS, 'official-flat', 'official-hit'\]/);
+  assert.ok(!/const OFFICIAL_LAYERS = \[[^\]]*official-(flat|outline|hit)/.test(app), 'OFFICIAL_LAYERS 는 fill-extrusion 층만 담는다');
 });
 
 test('카드: 정보 없는 도형은 "건물 정보 없음" 제목·실제와 다를 수 있다는 안내를 보이고, 비어 있는 줄을 늘어놓지 않으며, 카드 위치 계산에 높이를 주지 않는다', () => {

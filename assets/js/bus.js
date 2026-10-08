@@ -27,8 +27,8 @@
   const SCALE_FULL_ZOOM = 17.5, SCALE_MAX = 4;             // 이 확대부터 실제 크기, 멀어질수록 키운다(최대 4배)
   const PASS_M = 500;                                     // 노선 경로가 단지 중심에서 이 거리 안이면 '지나는 단지'(빌드가 실시간 노선을 고르는 기준 BUS_LIVE_M 과 같다)
   const MIN_POLL_S = 60, MAX_BACKOFF_S = 600;
-  const TYPE_COLORS = [['간선', '#0072B2'], ['지선', '#009E73'], ['광역', '#D55E00'], ['급행', '#D55E00'], ['좌석', '#D55E00'], ['순환', '#B07A00'], ['마을', '#B07A00']];
-  const OTHER_COLOR = '#56627A';
+  const TYPE_COLORS = [['간선', '#56B4E9'], ['지선', '#5BD6A8'], ['광역', '#FF8A65'], ['급행', '#FF8A65'], ['좌석', '#FF8A65'], ['순환', '#E6C34D'], ['마을', '#E6C34D']];
+  const OTHER_COLOR = '#9AA8D6';
 
   const finite = (v) => typeof v === 'number' && Number.isFinite(v);
   const routeColor = (type) => { const t = String(type || ''); const hit = TYPE_COLORS.find(([k]) => t.includes(k)); return hit ? hit[1] : OTHER_COLOR; };

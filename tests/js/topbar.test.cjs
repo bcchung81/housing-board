@@ -22,8 +22,11 @@ test('상단 컨트롤은 줄바꿈 없이 한 줄이고, 회전 슬라이더 �
   assert.doesNotMatch(css, /\.dial\b/);
 });
 
-test('상단 한 줄에 보기 기준·옵션·전체·평면·투어·◀▶·자동이 이 순서로 모여 있다', () => {
-  const order = ['id="modeSeg"', 'id="optBtn"', 'id="vAll"', 'id="vPlane"', 'id="vTour"', 'id="dLeft"', 'id="dRight"', 'id="vOrbit"'];
+test('지도 위 한 줄에 옵션·전체·평면·투어·◀▶·자동이 이 순서로 모여 있고, 보기 기준(#modeSeg)은 머리 줄에 있다', () => {
+  const head = /<header class="mhead" id="mhead">[\s\S]*?<\/header>/.exec(html);
+  assert.ok(head && /id="modeSeg"/.test(head[0]), '보기 기준은 머리 줄에 있어야 한다');
+  assert.doesNotMatch(topbar[0], /id="modeSeg"/);
+  const order = ['id="optBtn"', 'id="vAll"', 'id="vPlane"', 'id="vTour"', 'id="dLeft"', 'id="dRight"', 'id="vOrbit"'];
   let at = -1;
   for (const o of order) { const i = topbar[0].indexOf(o); assert.ok(i > at, `${o} 위치/순서`); at = i; }
   for (const id of ['vAll', 'vPlane', 'vTour', 'dLeft', 'dRight']) assert.match(topbar[0], new RegExp(`id="${id}"[^>]*aria-label="[^"]+"`));   // 글자가 줄어도 이름은 그대로

@@ -10,6 +10,9 @@
 <link rel="preconnect" href="https://api.vworld.kr" crossorigin>
 <link rel="preconnect" href="https://s3.amazonaws.com" crossorigin>
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="assets/vendor/maplibre-gl/5.24.0/maplibre-gl.css">
 <link rel="stylesheet" href="assets/css/app.css">
 <!-- 첫 화면(불러오는 중 안내)을 먼저 그린 뒤, 스크립트를 순서대로 불러옵니다. -->
@@ -27,12 +30,22 @@ requestAnimationFrame(function () { setTimeout(function () {
 </head>
 <body>
 <noscript><p style="padding:24px;font:16px sans-serif">이 지도는 자바스크립트가 필요합니다. 브라우저에서 자바스크립트를 켜 주세요.</p></noscript>
-<div class="app collapsed">
+<div class="app">
+<header class="mhead" id="mhead">
+  <div class="brand">
+    <img class="brand-logo" src="assets/img/wave-lockup-ondark.svg" alt="주택파동" width="123" height="34">
+    <div class="brand-t"><b>공급 지도</b><span class="hd-region" id="hdRegion"></span>
+      <div class="regionbox" id="regionBox" hidden><label for="regionSel">지역</label><select id="regionSel"></select></div></div>
+  </div>
+  <div class="stagef" id="stageF" role="group" aria-label="공급 단계 필터"></div>
+  <span class="seg" id="modeSeg" role="group" aria-label="지도 보기 기준">
+      <button type="button" data-mode="floors" aria-pressed="true" title="동 높이를 층수로">층수</button><button type="button" data-mode="progress" aria-pressed="false" title="지은 만큼만 채우고 나머지는 연하게 보입니다">공정율</button><button type="button" data-mode="time" aria-pressed="false" title="달력을 움직여 공사와 입주 흐름을 봅니다">입주 시기</button><button type="button" data-mode="infra" aria-pressed="false" title="단지와 학교·정류장·전기 시설의 관계, 개교 시점과의 차이를 한눈에 봅니다" hidden>기반시설</button>
+  </span>
+</header>
 <aside class="panel" id="panel" aria-label="공급 현황" data-sheet="peek">
   <button type="button" class="handle" id="sheetHandle" aria-expanded="false" aria-controls="panel" aria-label="패널 크기 바꾸기"></button>
   <header class="phead" id="phead">
     <div class="eyebrow">주택파동</div>
-    <div class="regionbox" id="regionBox" hidden><label for="regionSel">지역</label><select id="regionSel"></select></div>
     <div class="phrow"><h1>공급 현황</h1><span class="pcur" id="pcur" aria-hidden="true"></span></div>
   </header>
   <div class="pscroll" id="pscroll" tabindex="0" role="region" aria-label="공급 현황 내용">
@@ -93,7 +106,7 @@ requestAnimationFrame(function () { setTimeout(function () {
   <div class="pvbanner" id="pvBanner" role="note" hidden></div>
   <div class="dynhint" id="dynHint" role="status" aria-live="polite" hidden></div>
   <div class="hud" id="hud" role="group" aria-label="단지 표지"><svg class="hud-svg" id="hudSvg" aria-hidden="true"></svg><div id="hudTags"></div></div>
-  <button type="button" id="panelToggle" class="ptoggle" aria-controls="panel" aria-expanded="false" aria-label="사이드바 펼치기" title="사이드바 펼치기"><span aria-hidden="true">›</span><span class="pt-l" aria-hidden="true">공급 현황</span></button>
+  <button type="button" id="panelToggle" class="ptoggle" aria-controls="panel" aria-expanded="true" aria-label="사이드바 접기" title="사이드바 접기"><span aria-hidden="true">›</span><span class="pt-l" aria-hidden="true">공급 현황</span></button>
   <div class="hudsum" id="hudSum" role="group" aria-label="공급 요약" hidden></div>
   <div class="rctl" role="group" aria-label="확대·축소와 방향">
     <button type="button" id="zIn" aria-label="확대" title="확대">+</button>
@@ -106,11 +119,7 @@ requestAnimationFrame(function () { setTimeout(function () {
     </button>
   </div>
   <div class="topbar">
-  <div class="tools" role="toolbar" aria-label="보기와 시점">
-    <span class="seg" id="modeSeg" role="group" aria-label="지도 보기 기준">
-      <button type="button" data-mode="floors" aria-pressed="true" title="동 높이를 층수로">층수</button><button type="button" data-mode="progress" aria-pressed="false" title="지은 만큼만 채우고 나머지는 연하게 보입니다">공정율</button><button type="button" data-mode="time" aria-pressed="false" title="달력을 움직여 공사와 입주 흐름을 봅니다">입주 시기</button><button type="button" data-mode="infra" aria-pressed="false" title="단지와 학교·정류장·전기 시설의 관계, 개교 시점과의 차이를 한눈에 봅니다" hidden>기반시설</button>
-    </span>
-    <i class="sep" aria-hidden="true"></i>
+  <div class="tools" role="toolbar" aria-label="시점과 옵션">
     <button type="button" id="optBtn" class="opt" aria-expanded="false" aria-controls="optPanel" title="보일 단지 상태, 역·학교 등">옵션<b id="optN" hidden></b></button>
     <button type="button" id="busLoad" class="opt" hidden title="버튼을 누를 때만 버스 위치를 조회합니다(자동 갱신 없음)">버스 위치 조회</button>
     <i class="sep" aria-hidden="true"></i>
@@ -130,7 +139,7 @@ requestAnimationFrame(function () { setTimeout(function () {
     <fieldset><legend>지도에 겹쳐 보기</legend>
       <label id="lblCtx"><input type="checkbox" id="ctxChip">역 · 학교 <small>OpenStreetMap</small></label>
       <label id="lblRing"><input type="checkbox" id="ringChip">역 반경 원 <small>500 m · 1 km</small></label>
-      <label><input type="checkbox" id="dimChip">기존 건물 흐리게</label>
+      <label><input type="checkbox" id="dimChip">기존 건물 흐리게 <small>점선 윤곽만</small></label>
     </fieldset>
     <fieldset id="fsInfra" hidden><legend>입주 전 점검</legend>
       <label id="lblInfra"><input type="checkbox" id="infraChip">학교 · 정류장 · 전기 시설 <small>공개 자료</small></label>

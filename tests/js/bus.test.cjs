@@ -8,12 +8,12 @@ const B = require('../../assets/js/bus.js');
 const close = (a, b, tol = 1e-6) => assert.ok(Math.abs(a - b) <= tol, `${a} ≉ ${b}`);
 const cen = (b) => b.c;
 
-test('노선 유형 색: 간선 파랑, 지선 초록, 광역·급행·좌석 주황 계열, 모르면 회색', () => {
-  assert.equal(B.routeColor('간선버스'), '#0072B2');
-  assert.equal(B.routeColor('지선버스'), '#009E73');
-  for (const t of ['광역버스', '급행버스', '좌석버스']) assert.equal(B.routeColor(t), '#D55E00');
-  assert.equal(B.routeColor('이상한버스'), '#56627A');
-  assert.equal(B.routeColor(undefined), '#56627A');
+test('노선 유형 색: 간선 하늘색, 지선 연두, 광역·급행·좌석 산호색 계열, 모르면 회청색(어두운 지도 위에서 보이는 밝은 색)', () => {
+  assert.equal(B.routeColor('간선버스'), '#56B4E9');
+  assert.equal(B.routeColor('지선버스'), '#5BD6A8');
+  for (const t of ['광역버스', '급행버스', '좌석버스']) assert.equal(B.routeColor(t), '#FF8A65');
+  assert.equal(B.routeColor('이상한버스'), '#9AA8D6');
+  assert.equal(B.routeColor(undefined), '#9AA8D6');
 });
 
 test('방위: 북 0 · 동 90 · 남 180 · 서 270', () => {
@@ -87,8 +87,8 @@ test('3D 조각과 라벨: 방향을 알면 모형 12조각, 모르면 덩어리
   assert.equal(parts('a').length, B.MODEL.length);
   assert.equal(parts('b').length, B.MODEL_BLOB.length);
   const body = parts('a').find((x) => x.properties.part === 'body'), sign = parts('a').find((x) => x.properties.part === 'sign'), glass = parts('a').find((x) => x.properties.part === 'glass');
-  assert.equal(body.properties.c, '#0072B2');                                           // 차체·앞 표지는 노선 색
-  assert.equal(sign.properties.c, '#0072B2');
+  assert.equal(body.properties.c, '#56B4E9');                                           // 차체·앞 표지는 노선 색
+  assert.equal(sign.properties.c, '#56B4E9');
   assert.equal(glass.properties.c, B.GLASS_COLOR);
   close(body.properties.base, 0.45); close(body.properties.h, 1.45);
   assert.ok(glass.properties.base >= body.properties.h - 1e-9);                         // 창띠는 차체 위에 얹힌다
@@ -171,7 +171,7 @@ test('팝업 내용: 노선·차량·현재 위치·가까운 단지·지나는 
   assert.match(d.near.text, /^A2 단지에서 약 \d+ m$/);
   assert.deepEqual(d.passes, ['A2']);
   assert.equal(d.age, '방금');
-  assert.equal(d.color, '#0072B2');
+  assert.equal(d.color, '#56B4E9');
   const bare = B.describe({ v: 'x', r: 'RX', lon: 1, lat: 1 }, undefined, [], cen);
   assert.equal(bare.title, '버스');
   assert.equal(bare.near, null);
