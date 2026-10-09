@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""상황판 화면이 읽는 자료(data/board/*.json)를 workspace/data 의 원천에서 만든다.
+"""상황판 화면이 읽는 자료(data/board/*.json)를 data/raw·data/processed 의 원천에서 만든다.
 
   python3 tools/boarddata/build_board_data.py           # data/board/molit.json · lh-completion.json · sources.json 을 쓴다
   python3 tools/boarddata/build_board_data.py --check   # 쓰지 않고 저장소의 파일과 같은지만 본다(다르면 1)
 
 항등식(시행주체 합=총계, 시도 합=전국, 인허가 월 흐름의 연합계=연간 실적)이 하나라도 어긋나면 쓰지 않고 멈춘다.
-Vercel 빌드에는 workspace/ 가 올라가지 않으므로 결과를 커밋한다. 시험: tests/test_boarddata.py
+Vercel 빌드에는 data/raw·processed·tools 가 올라가지 않으므로 결과를 커밋한다. 시험: tests/test_boarddata.py
 """
 from __future__ import annotations
 
@@ -24,14 +24,14 @@ LH_FILE = "15141761_한국토지주택공사_공공주택 준공예정현황_202
 
 
 def make(root: Path = ROOT) -> dict[str, dict]:
-    p = root / "workspace" / "data" / "processed"
+    p = root / "data" / "processed"
     permit, start, complete = (molit.read_csv(p / f) for f in ("molit_인허가_월별누계.csv", "molit_착공_월계.csv", "molit_준공_월계.csv"))
     sale, annual = molit.read_csv(p / "molit_분양_공동주택.csv"), molit.read_csv(p / "molit_인허가_지역별_연간.csv")
     data = molit.build(permit, start, complete, sale)
     bad = molit.verify(data, permit, annual)
     if bad:
         raise SystemExit("항등식이 어긋난다:\n  " + "\n  ".join(bad[:20]))
-    blocks = lh.read_blocks(root / "workspace" / "data" / "raw" / "datagokr" / LH_FILE)
+    blocks = lh.read_blocks(root / "data" / "raw" / "datagokr" / LH_FILE)
     return {"molit.json": data, "lh-completion.json": lh.build(blocks, "2026-01-27"), "sources.json": catalog.build(root)}
 
 

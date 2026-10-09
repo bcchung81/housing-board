@@ -2974,7 +2974,7 @@ def write(region, name, rows):
 # ================= 인천 계양구 =================
 G = "incheon-gyeyang"
 cw = list(csv.DictReader(open(
-    ROOT / "workspace/data/raw/lh/cwstt/lh_공사현황_인천계양_공정율_이력_20261003.csv", encoding="utf-8-sig")))
+    ROOT / "data/raw/lh/cwstt/lh_공사현황_인천계양_공정율_이력_20261003.csv", encoding="utf-8-sig")))
 
 write(G, "regions.csv", [dict(region_slug=G, region_name="인천 계양구", sido_name="인천광역시", sigungu_name="계양구")])
 write(G, "region_codes.csv", [

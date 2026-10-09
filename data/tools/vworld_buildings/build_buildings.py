@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """V-World GIS건물통합정보(인천 SHP) → 시군구 하나의 건물 윤곽·높이 데이터(웹 지도용 JS)로 바꾼다.
 
-입력  : workspace/data/raw/vworld/vworld_GIS건물통합정보_인천_20260909.zip  (AL_D010_28_*.shp/.dbf/.shx, EPSG:5186)
-출력  : workspace/data/legacy/gyeyang_buildings.js                      window.GY_BUILDINGS = GeoJSON + meta (운영 데이터)
-        workspace/data/processed/gyeyang_buildings_summary.json  품질 요약(건수·결측률·환산 오차)
-실행  : python3 workspace/data/tools/vworld_buildings/build_buildings.py [시군구코드=28245] [출력이름=gyeyang]
+입력  : data/raw/vworld/vworld_GIS건물통합정보_인천_20260909.zip  (AL_D010_28_*.shp/.dbf/.shx, EPSG:5186)
+출력  : data/legacy/gyeyang_buildings.js                      window.GY_BUILDINGS = GeoJSON + meta (운영 데이터)
+        data/processed/gyeyang_buildings_summary.json  품질 요약(건수·결측률·환산 오차)
+실행  : python3 data/tools/vworld_buildings/build_buildings.py [시군구코드=28245] [출력이름=gyeyang]
 
 외부 라이브러리 없이 표준 라이브러리만 쓴다(좌표 변환은 같은 폴더의 tm.py).
 높이 표시값(eh)은 공식 높이 → 층수×층고 → 3 m 평면 순으로 정하고, 어느 것을 썼는지 src에 남긴다.
@@ -233,7 +233,7 @@ def main():
     }
     data = {"type": "FeatureCollection", "features": feats, "meta": meta}
     js = PROD_DATA / f"{NAME}_buildings.js"
-    js.write_text("/* 자동 생성: workspace/data/tools/vworld_buildings/build_buildings.py · 출처 " + meta["attribution"] + " · " + meta["license"] + " */\n"
+    js.write_text("/* 자동 생성: data/tools/vworld_buildings/build_buildings.py · 출처 " + meta["attribution"] + " · " + meta["license"] + " */\n"
                   "window.GY_BUILDINGS=" + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n", encoding="utf-8")
     (PROCESSED / f"{NAME}_buildings_summary.json").write_text(json.dumps(summary, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"{js.name}: {js.stat().st_size / 1e6:.2f} MB, {n:,}동 | 높이 출처 {dict(src)} | bbox {summary['bbox']}")

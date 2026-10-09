@@ -5,7 +5,7 @@ from helpers import ROOT  # noqa: F401  (tools/ 를 sys.path 에 넣는다)
 
 from regiontools import proj
 
-LEGACY = ROOT / "workspace" / "data" / "tools" / "vworld_buildings" / "tm.py"
+LEGACY = ROOT / "data" / "tools" / "vworld_buildings" / "tm.py"
 
 
 class KoreaTm(unittest.TestCase):

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""국토교통 통계누리 CSV(workspace/data/raw/molit/molit_*.csv)를 읽기 쉬운 UTF-8 표로 바꾼다.
+"""국토교통 통계누리 CSV(data/raw/molit/molit_*.csv)를 읽기 쉬운 UTF-8 표로 바꾼다.
 
 원본의 문제: 천 단위 쉼표(388,362)가 따옴표 없이 들어 있어 숫자 한 칸이 여러 칸으로 쪼개진다.
 처리: 앞의 라벨 칸 뒤에 남은 조각을 '1~3자리 + (쉼표 뒤 3자리)*' 규칙으로 다시 합친다.

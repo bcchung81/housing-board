@@ -2,10 +2,11 @@
 
 공공데이터포털(data.go.kr), 국방부 공공데이터 개방 도구, 국토교통 통계누리에서 **CSV 그대로** 내려받은 원본(`raw/`)과,
 V-World에서 받은 건물 윤곽 자료(SHP), LH 입주자모집공고 PDF, 읽기 쉽게 정리한 표(`processed/`), 정리 스크립트(`tools/`)로 이루어져 있습니다. 인증키 같은 비밀값은 이 폴더에 없습니다.
-**지도(루트 `index.html`)가 읽는 자료 3개는 이 폴더가 아니라 루트의 `data/`에 있습니다.** 도구가 그곳에 바로 씁니다.
+**`board/`(종합상황판이 읽는 자료 3개, `tools/boarddata`가 `raw/`·`processed/`에서 만듦)만 배포에 올라가고, `raw/`·`processed/`·`tools/`는 배포하지 않습니다**(`.vercelignore`).
 
 ```
-workspace/data/                      (이 폴더 — 작업용, 배포하지 않음)
+data/                                (이 폴더)
+  board/      종합상황판이 읽는 자료(molit.json·lh-completion.json·sources.json). 배포에 올라감
   raw/        내려받은 원본 (수정하지 않음). 기관별로 묶음
     datagokr/   공공데이터포털 파일데이터(번호_기관_제목_기준일.csv) 10개
     molit/      국토교통 통계누리 5개
@@ -66,7 +67,7 @@ legacy/                              (옛 계양 운영 데이터 3개. 지도�
 - 분양 표: 각 행에서 `합계 = 분양 + 임대 + 조합`(순계·누계 각각)이 성립하는 해석이 정확히 하나 (1,198행 모두)
 - 지역별 연간 표: `실적 = 시도 합`이 5개 연도 모두 일치
 
-실행: `python3 workspace/data/tools/molit_tidy.py` (표준 라이브러리만 사용)
+실행: `python3 data/tools/molit_tidy.py` (표준 라이브러리만 사용)
 
 ## 3. 공식 건축물 윤곽·높이 — 국토교통부 GIS건물통합정보 (V-World)
 
@@ -76,7 +77,7 @@ legacy/                              (옛 계양 운영 데이터 3개. 지도�
 | 좌표계·인코딩 | EPSG:5186(GRS80 중부원점 2010), DBF는 CP949. 지도용으로 WGS84로 바꿀 때 `tools/vworld_buildings/tm.py`의 직접 구현 변환을 씀(외부 라이브러리 없음). 계양구청 건물 중심이 Nominatim 지점과 12 m 차이로 일치 |
 | 이용허락 | V-World 내려받기 화면은 CC BY 2.0 KR, 데이터포털 쪽은 공공누리 제1유형으로 적혀 있다는 조사 결과가 있습니다(후자는 직접 확인하지 않음). 둘 다 **출처 표시**가 조건입니다. “구축기관이 달라 참고용” 자료라는 단서가 붙어 있습니다 |
 | 내려받기 | V-World 로그인이 필요합니다(로그인은 사용자가 직접). 전국·시도 단위 파일이며 월 단위 전체본과 일 단위 변경본이 있습니다 |
-| 가공본 | `data/legacy/gyeyang_buildings.js`(6.0 MB, `window.GY_BUILDINGS` GeoJSON + 메타), `processed/gyeyang_buildings_summary.json`. 다시 만들려면 `python3 workspace/data/tools/vworld_buildings/build_buildings.py [시군구코드] [이름]` |
+| 가공본 | `data/legacy/gyeyang_buildings.js`(6.0 MB, `window.GY_BUILDINGS` GeoJSON + 메타), `processed/gyeyang_buildings_summary.json`. 다시 만들려면 `python3 data/tools/vworld_buildings/build_buildings.py [시군구코드] [이름]` |
 
 계양구(시군구코드 28245) 16,724동에서 화면용 높이 `eh`를 이렇게 정합니다. 어느 방법을 썼는지는 `src`에 남깁니다.
 
@@ -184,3 +185,16 @@ legacy/                              (옛 계양 운영 데이터 3개. 지도�
 | A10 통합공공임대의 동수·층수 | **미확인** | 공고가 아직 없습니다. LH 준공예정현황의 778세대·준공 예정 2028-09-30만 있습니다 |
 | V-World 연속지적도(필지 윤곽·지번) | 신축 필지 미반영 | API로 A6 중심점을 조회하니 조성 전 옛 필지(박촌동 178-5 답)가 나옵니다. 지적 정리가 끝나면(공고문: 입주지정기간 종료 이후 장기 소요) 필지 기준으로 바꿉니다 |
 | 건물통합정보 인천 외 지역 | 받지 않음 | 지도 시험이 계양구라서 인천 파일만 받았습니다. 다른 시도는 같은 방법으로 받아 `build_buildings.py`에 시군구코드를 주면 됩니다 |
+
+## 8. 옛 경로 → 현재 경로
+
+`workspace/` 폴더는 2026-10-09 에 없앴습니다(`workspace/data/` → `data/`, `workspace/videos/` → `videos/`, `workspace/analysis/` → `docs/analysis/`). 옛 커밋·문서에 `workspace/…` 로 적힌 경로는 앞의 `workspace/` 를 떼면 됩니다(`analysis/` 만 `docs/analysis/`). 2026-10-04 정리 이전의 경로는 다음과 같습니다.
+
+| 옛 경로 | 현재 경로 |
+|---|---|
+| `docs/주택파동_3D지형_테스트.html` · `docs/vworld-key.js` | `index.html` + `assets/css/app.css` + `assets/js/app.js` · `config.js` |
+| `data/processed/gyeyang_{buildings,projects,context}.js` | `data/legacy/` (도구가 쓰는 곳. 화면은 `regions/` 번들을 읽음) |
+| `data/processed/*.csv · *summary.json` | `data/processed/` |
+| `data/raw/15…csv · 3045249…csv` · `data/raw/molit_*.csv` | `data/raw/datagokr/` · `data/raw/molit/` |
+| `data/raw/LH_*공고문*.pdf` · `LH_*팸플릿*.pdf` · `lh_cwstt/` · `lh_public/` | `data/raw/lh/notices/` · `lh/pamphlets/` · `lh/cwstt/` · `lh/public/` |
+| `data/raw/vworld_*` | `data/raw/vworld/` |

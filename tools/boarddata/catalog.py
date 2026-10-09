@@ -26,7 +26,7 @@ MOLIT_RAW = {"1946": "molit_1946_인허가_부문별_월별누계.csv", "5386": 
              "5557": "molit_5557_분양_공동주택.csv", "666": "molit_666_인허가_지역별_연간.csv"}
 MOLIT_COLLECTED = {"1946": "2026-10-03T18:38:26", "5386": "2026-10-03T18:37:58", "5372": "2026-10-03T18:38:06", "5557": "2026-10-03T18:38:15", "666": "2026-10-03T18:38:56"}
 
-# 공공데이터포털 파일데이터(workspace/data/raw/datagokr). 이용허락은 workspace/data/README.md 1절 표.
+# 공공데이터포털 파일데이터(data/raw/datagokr). 이용허락은 data/README.md 1절 표.
 DATAGOKR = {   # 번호: (이용허락, 받은 시각, 쓰는 화면, 설명)
     "15141761": ("제한 없음", "2026-10-02T17:10:24", ["/", "/month", "/agency"], "공공주택 준공 예정 블록의 세대수와 준공예정일. 향후 준공 예정과 LH 기관 화면이 읽는다. 파일 기준일이 8개월 묵었다."),
     "15043330": ("제한 없음", "2026-10-02T17:11:09", [], "행복주택 공급계획. 공급 시기가 2022~2025뿐이라 향후 예정으로 쓸 수 없다."),
@@ -72,7 +72,7 @@ def _split_name(stem: str):
 def build(root: Path) -> dict:
     root = Path(root)
     items = []
-    base = root / "workspace" / "data"
+    base = root / "data"
     for sid, no, fname, title, as_of, desc in MOLIT_FILES:
         n = len(molit.read_csv(base / "processed" / fname))
         items.append({

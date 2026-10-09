@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """지역 번들에 입주 전 기반시설 점검 자료(infra.json)를 만든다.
 
-  .venv/bin/python tools/regiontools/build_infra.py incheon-gyeyang --raw workspace/data/raw/infra
+  .venv/bin/python tools/regiontools/build_infra.py incheon-gyeyang --raw data/raw/infra
 
 필요한 것
 - 키(.env.local): V-World(도시계획시설), data.go.kr(건축인허가·TAGO 버스). 교육재정알리미는 키가 필요 없다. 키·요청 URL은 출력하지 않는다.
@@ -122,7 +122,7 @@ def report(doc: dict) -> str:
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="build_infra", description="지역 번들에 입주 전 기반시설 점검 자료(infra.json)를 만든다.")
     ap.add_argument("slug", choices=sorted(INFRA_REGIONS))
-    ap.add_argument("--raw", default=str(ROOT / "workspace" / "data" / "raw" / "infra"), help="공공데이터포털에서 내려받은 파일 폴더")
+    ap.add_argument("--raw", default=str(ROOT / "data" / "raw" / "infra"), help="공공데이터포털에서 내려받은 파일 폴더")
     ap.add_argument("--env", default=str(ROOT / ".env.local"), help="키 파일(기본 저장소의 .env.local)")
     ap.add_argument("--cache-dir", default=os.environ.get("REGIONBUILD_CACHE"), help="응답 캐시 폴더(저장소 밖)")
     ap.add_argument("--refresh", action="store_true", help="캐시를 무시하고 다시 받기")

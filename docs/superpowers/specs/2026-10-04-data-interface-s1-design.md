@@ -310,7 +310,7 @@ input/                          팀원 제출물을 푼 곳. 저장소에 올리
 
 ## 12. 예시 세트
 
-- `examples/incheon-gyeyang/`: 계양의 A6(분양중, 12동, 동별 층수), A9(건설 단계)를 기존 자료에서 **그대로 옮긴다**. 원천은 `workspace/data/raw/lh/cwstt/lh_공사현황_인천계양_공정율_이력_20261003.csv`(공정율 이력)와 `workspace/data/tools/lh_projects/build_projects.py`의 `META`·`DONG_A6`·`floors`. 값을 새로 지어내지 않는다.
+- `examples/incheon-gyeyang/`: 계양의 A6(분양중, 12동, 동별 층수), A9(건설 단계)를 기존 자료에서 **그대로 옮긴다**. 원천은 `data/raw/lh/cwstt/lh_공사현황_인천계양_공정율_이력_20261003.csv`(공정율 이력)와 `data/tools/lh_projects/build_projects.py`의 `META`·`DONG_A6`·`floors`. 값을 새로 지어내지 않는다.
 - `examples/gwangju-gwangsan/`: 선운2 A-1(`zone_type=공공주택지구`, `sponsor_type=public`, `project_kind=신혼희망타운`). 스파이크에서 확인한 값만 쓴다: 마이홈 공고 2건(2026-02-02 86세대, 2026-07-06 39세대, `source_ref`는 각 공고 ID `0000061056`·`0000061131`), 인허가 승인 2022-03-11(828세대, 같은 번지에 2022-03-04 레코드도 있음), 블록 안 5층 이상 건물 6동 관측, PNU `1233010600105190000`.
 - 두 세트 모두 `verified`와 `observed_at`을 실제 확인한 값으로 채운다.
 

@@ -2,14 +2,14 @@
 """인천계양 A6·A9·A10·A17 블록의 위치·동 윤곽·동별 층수를 지도용 JS(window.GY_PROJECTS)와 CSV로 만든다.
 
 입력:
-  workspace/data/raw/vworld/vworld_LT_C_LHBLPN_인천계양테크노밸리_*.geojson   V-World 공식 블록(용지) 윤곽. 블록 이름이 없어 아래 PLAN 위치로 A-번호를 찾는다.
+  data/raw/vworld/vworld_LT_C_LHBLPN_인천계양테크노밸리_*.geojson   V-World 공식 블록(용지) 윤곽. 블록 이름이 없어 아래 PLAN 위치로 A-번호를 찾는다.
   blocks_px.json        팸플릿 '토지이용계획도'에서 읽은 블록 윤곽(그림 px). V-World 윤곽을 어느 블록으로 볼지 찾는 용도로만 쓴다.
   plan_px.json          팸플릿 '단지배치도'에서 읽은 A9·A17 단지경계와 동 지붕 조각 (extract_plans.py)
   이 파일 안의 DONG_A6   A6 동 윤곽(손으로 옮긴 값)
-  workspace/data/raw/lh/cwstt/*.csv   LH 청약플러스 '공사현황' 공정율과 날짜별 이력
+  data/raw/lh/cwstt/*.csv   LH 청약플러스 '공사현황' 공정율과 날짜별 이력
 위치 맞춤: 그림의 단지경계 다각형을 V-World 블록 윤곽에 겹치도록 크기·회전·이동을 맞춘다(겹침률 IoU를 출력).
 면적 검증: 공고문 세대별 공유대지×세대수 합계(AREA_NOTICE)와 V-World 윤곽 면적을 비교해 출력한다.
-출력: workspace/data/legacy/gyeyang_projects.js (운영 데이터), workspace/data/processed/gyeyang_projects.csv
+출력: data/legacy/gyeyang_projects.js (운영 데이터), data/processed/gyeyang_projects.csv
 오차: 블록 윤곽 수 m~수십 m, 동 윤곽 10~20 m. 정확한 필지(지번)가 아니다.
 """
 import csv, json, math, sys
@@ -265,7 +265,7 @@ def build():
         floorsMethod="LH 팸플릿 동호배치도의 동별 최상층(필로티 1층 포함). 공고문의 '최고층 기준 N~M층'은 주택형별 최상층 범위라 동 높이와 다르다.",
         sources=["LH청약플러스 인천계양 A2·A3·A6·A9·A17 입주자모집공고문과 팸플릿", "국토교통부 V-World 데이터 API(LT_C_LHBLPN) 및 배경지도", "LH청약플러스 공사현황(공정율)", "OpenStreetMap contributors (ODbL)"],
         fit={k: dict(iou=round(v[0], 3), mPerPx=round(v[1], 3), rotationDeg=round(v[2], 1)) for k, v in report.items()}, asOf="2026-10-03"), blocks=blocks)
-    OUT.write_text("/* 자동 생성: workspace/data/tools/lh_projects/build_projects.py · 근사 위치 */\nwindow.GY_PROJECTS=" + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n", encoding="utf-8")
+    OUT.write_text("/* 자동 생성: data/tools/lh_projects/build_projects.py · 근사 위치 */\nwindow.GY_PROJECTS=" + json.dumps(data, ensure_ascii=False, separators=(",", ":")) + ";\n", encoding="utf-8")
     rows = [["블록", "상태", "사업유형", "세대수", "동수", "동별 최상층", "입주예정", "중심_위도", "중심_경도", "면적_㎡(근사)", "윤곽 근거", "위치 정확도", "층수 근거", "공정율(%)", "공정율 기준일", "공사기간", "시공사", "공사금액_백만원"]]
     for bb in blocks:
         lons = [p[0] for p in bb["poly"]]; lats = [p[1] for p in bb["poly"]]

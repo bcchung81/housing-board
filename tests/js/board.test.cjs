@@ -1,6 +1,6 @@
 'use strict';
 // lib/board/calc.ts — 상황판 화면의 계산. data/board/*.json 의 값을 원천 CSV 에서 따로 센 값과 대조한다(화면 숫자 = 원천 숫자).
-// calc.ts 는 JSON 을 직접 읽지 않으므로 Node 가 타입 표기를 지우고 그대로 부른다. 원천 CSV 가 없는 환경(workspace/ 없음)에서는 대조를 건너뛴다.
+// calc.ts 는 JSON 을 직접 읽지 않으므로 Node 가 타입 표기를 지우고 그대로 부른다. 원천 CSV 가 없는 환경(data/raw·processed 없음)에서는 대조를 건너뛴다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -10,7 +10,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const C = require('../../lib/board/calc.ts');
 const molit = require('../../data/board/molit.json');
 const lh = require('../../data/board/lh-completion.json');
-const PROCESSED = path.join(ROOT, 'workspace/data/processed');
+const PROCESSED = path.join(ROOT, 'data/processed');
 const haveCsv = fs.existsSync(path.join(PROCESSED, 'molit_착공_월계.csv'));
 
 /* 통계누리 정리본 CSV(BOM·따옴표 없음) → 행 객체 */

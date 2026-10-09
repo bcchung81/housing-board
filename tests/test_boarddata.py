@@ -9,9 +9,9 @@ from helpers import ROOT  # noqa: F401  (tools/ 를 sys.path 에 넣는다)
 
 from boarddata import build_board_data as B, catalog, lh, molit as M
 
-DATA = ROOT / "workspace" / "data"
+DATA = ROOT / "data"
 HAVE_SOURCES = (DATA / "processed" / "molit_인허가_월별누계.csv").exists() and (DATA / "raw" / "datagokr").exists()
-needs_sources = unittest.skipUnless(HAVE_SOURCES, "원천 파일(workspace/data)이 없다")
+needs_sources = unittest.skipUnless(HAVE_SOURCES, "원천 파일(data/raw·processed)이 없다")
 
 
 def row(month, name, gubun, bubun, value, key="호수"):

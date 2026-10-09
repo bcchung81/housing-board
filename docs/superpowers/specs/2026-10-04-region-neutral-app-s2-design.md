@@ -77,7 +77,7 @@ scripts/build.js                            regions/ 복사, 운영 빌드에서
 - `scripts/build.js`: `data/` 대신 `regions/`를 `public/`에 복사. `VERCEL_ENV=production`이면 `index.json`에서 `visibility: preview` 지역을 빼고 그 폴더도 복사하지 않는다(필터 함수는 시험 가능하게 분리).
 - `vercel.json`: `/regions/*` 캐시 헤더 `public, max-age=300, stale-while-revalidate=3600`.
 - `README.md`: 더블클릭(`file://`) 실행 안내를 `python3 -m http.server` 안내로 교체, 지역 추가·검증 방법, 키 취급.
-- `data/`는 삭제(역사는 git에 남음). 옛 생성 스크립트 출력은 `workspace/data/legacy/`로.
+- `data/`는 삭제(역사는 git에 남음). 옛 생성 스크립트 출력은 `data/legacy/`로.
 - 정의서 10절의 버전 문구를 "번들 스키마는 입력 규격과 별도 버전"으로 고치고 PDF를 다시 만든다.
 
 ## 7. 계양 이전

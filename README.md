@@ -103,7 +103,8 @@ scripts/smoke.js         전국 표본 점검: 지역 이름 → 코드 → reso
 scripts/capture-fixtures.js  운영 응답을 tests/fixtures/api/ 에 받아 계약 시험의 기준으로 갱신
 scripts/gen-api-docs.js  schemas/api/openapi.json → docs/data-interface/API-정의서.md 생성(--check 로 최신 여부 확인)
 tests/                   Python(unittest)·Node(node --test) 시험 · fixtures/api(운영 응답 기준 파일) · smoke(전국 표본)
-workspace/               작업 영역 — 배포하지 않음 (원천 자료, 기획 문서, 영상)
+data/{raw,processed,tools}/  원천 자료·정리본·가공 도구 — 배포하지 않음 (설명: data/README.md). data/board/ 만 배포에 올라감
+videos/                  소개 영상 HyperFrames 프로젝트(housing-wave-intro) — 배포하지 않음
 ```
 
 ## 처리 구조
@@ -191,7 +192,7 @@ node scripts/smoke.js [주소] ["하남시 감일동" …]   # 전국 표본 59�
 
 ## 배포
 
-Vercel은 Next.js 프로젝트로 빌드합니다(`vercel.json`의 `framework: nextjs`·`buildCommand: npm run build`·`outputDirectory: .next`·함수 지역 `icn1`. 프로젝트 설정에 남은 옛 빌드 명령·출력 폴더를 덮어쓰려고 명시합니다). `npm run build`의 `prebuild`가 `scripts/build.js`를 돌려 `assets/`·`regions/`를 `public/`에 모으고 `config.js`를 만든 뒤 `next build`가 화면과 `/api/*` 함수를 만듭니다. 함수(`app/api/**/route.ts`)는 `handlers/`의 핸들러를 가져가고, 함수가 읽는 `regions/`·`registry/` 파일은 `next.config.ts`의 `outputFileTracingIncludes`로 함께 올라가며, 로컬 캐시·큰 번들은 `outputFileTracingExcludes`로 뺍니다. 보안·캐시 헤더도 `next.config.ts`입니다. 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
+Vercel은 Next.js 프로젝트로 빌드합니다(`vercel.json`의 `framework: nextjs`·`buildCommand: npm run build`·`outputDirectory: .next`·함수 지역 `icn1`. 프로젝트 설정에 남은 옛 빌드 명령·출력 폴더를 덮어쓰려고 명시합니다). `npm run build`의 `prebuild`가 `scripts/build.js`를 돌려 `assets/`·`regions/`를 `public/`에 모으고 `config.js`를 만든 뒤 `next build`가 화면과 `/api/*` 함수를 만듭니다. 함수(`app/api/**/route.ts`)는 `handlers/`의 핸들러를 가져가고, 함수가 읽는 `regions/`·`registry/` 파일은 `next.config.ts`의 `outputFileTracingIncludes`로 함께 올라가며, 로컬 캐시·큰 번들은 `outputFileTracingExcludes`로 뺍니다. 보안·캐시 헤더도 `next.config.ts`입니다. 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `data/raw/`·`data/processed/`·`data/tools/`·`videos/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
 
 **인증키**: `config.js`와 `.env*`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(OpenFreeMap 어두운 지도)로 빌드합니다.
 

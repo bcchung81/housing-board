@@ -54,7 +54,7 @@
 
 **'프로덕션'이 가리키는 것**
 
-- **배포물** = `scripts/build.js`가 `public/`에 모으는 `assets/` · `regions/`(지도 마크업 `index.html`은 복사하지 않고 Next.js가 `/map`을 그릴 때 루트에서 읽음)(`index.json`에 오른 지역만) · `config.js`. `workspace/` `tools/` `tests/` `docs/` `schemas/`와 `*.md`는 올라가지 않습니다. 서버 함수(`handlers/bus.js`·`handlers/v1/resolve.js`)는 `public/`에 복사되지 않고 저장소 루트의 `api/`에서 Vercel이 따로 빌드합니다(두 함수 모두 라이브에서 200, 확인함. `lib/`는 함수가 가져가고 `regions/` 파일은 `vercel.json`의 `includeFiles`로 올라가며 `.cache/`와 큰 번들은 `excludeFiles`로 뺍니다. 함수 지역은 서울 `icn1`). [코드] `scripts/build.js` · `.vercelignore` · `vercel.json`
+- **배포물** = `scripts/build.js`가 `public/`에 모으는 `assets/` · `regions/`(지도 마크업 `index.html`은 복사하지 않고 Next.js가 `/map`을 그릴 때 루트에서 읽음)(`index.json`에 오른 지역만) · `config.js`. `data/raw/` `data/processed/` `data/tools/` `videos/` `tools/` `tests/` `docs/` `schemas/`와 `*.md`는 올라가지 않습니다(`data/board/`는 올라갑니다). 서버 함수(`handlers/bus.js`·`handlers/v1/resolve.js`)는 `public/`에 복사되지 않고 저장소 루트의 `api/`에서 Vercel이 따로 빌드합니다(두 함수 모두 라이브에서 200, 확인함. `lib/`는 함수가 가져가고 `regions/` 파일은 `vercel.json`의 `includeFiles`로 올라가며 `.cache/`와 큰 번들은 `excludeFiles`로 뺍니다. 함수 지역은 서울 `icn1`). [코드] `scripts/build.js` · `.vercelignore` · `vercel.json`
 - **라이브** — 2026-10-05 16:39 KST 배포입니다(확인함. 처음 배포는 16:28이고 V-World 설정을 고쳐 여러 번 다시 배포함). 화면 스크립트는 `app.js` `region.js` `infra.js` `facility.js` `bus.js`이고 계양 번들에 `infra.json`이 있으며 `/api/bus?region=incheon-gyeyang`이 200으로 버스 28대를, `/api/v1/resolve`가 법정동·필지 경계를 줍니다. 헤더에 `X-Frame-Options: DENY`와 `frame-ancestors 'none'`이 있습니다. Vercel 환경변수는 `DATA_GO_KR_KEY`·`VWORLD_KEY`·`VWORLD_DOMAIN`(값 `housing-board.vercel.app`, Production·Preview)이며 `VWORLD_KEY`는 운영키입니다. 로컬 `.env.local`의 `VWORLD_DEV_KEY`는 Vercel에 올리지 않았습니다. 용도별 키는 용도별 키(`DATA_GO_KR_KEY_BUS_<N>` 등)는 아직 없습니다(없으면 `DATA_GO_KR_KEY`를 씁니다). 지역 3개(계양 · 광산구 · 나주)가 모두 `visibility: public`입니다. 계양 라이브 번들은 약 6.1 MB(MB=10⁶ B)이고 그중 건물이 6.0 MB입니다.
 - **다음 배포** = (2026-10-05 19:44에 모두 배포되어 지금은 비어 있음. 아래는 그 배포에 들어간 변경으로, 저장소에는 커밋됨입니다.) **번들 없는 지역 열기와 건물 요청 시 조회**입니다: `assets/js/region.js`(`emptyBundle`, `dynParam`, 경계 `geometry=1`), `assets/js/app.js`(`DYN`: 칸 불러오기·붙이기·반영), `index.html`·`app.css`(`#dynHint`), `handlers/v1/buildings.js`, `lib/buildings.js`, `lib/vworld.js`, `vercel.json`(`buildings` 함수 설정), `env.example`(`BUILDINGS_UPSTREAM_PER_HOUR`). **인허가 사업 요청 시 조회**: `handlers/v1/permits.js`, `lib/permits.js`, `lib/geom.js`(경계 단순화 공용), `region.js`(`permitsToProjects`·`fetchPermits`), `app.js`(필지로 열면 단지 선택), `vercel.json`(`permits`·`infra` 함수), `env.example`(`PERMITS_UPSTREAM_PER_HOUR`·`INFRA_UPSTREAM_PER_HOUR`), **기반시설 요청 시 조회**(`handlers/v1/infra.js`, `lib/infra.js`, `lib/datagokr.js`: 공공데이터포털 한 쪽 조회·재시도·한도 공용, `region.js`의 `fetchInfra`), **인허가 한계 보완**(블록 단위 허가 목록·필지 못 찾은 원인·예정일 경과·후보 0 안내), **건물대장 보강**(`lib/stan.js`, `lib/permits.js`의 `matchLedger`, `env.example`의 `LEDGER_UPSTREAM_PER_HOUR`·`hubledger`), `run-app.sh [포트] [코드]`(첫 화면을 코드로 열기, 기본 `41450`). 이전 배포의 변경(표준코드 진입·버튼 조회·키 풀·프레임 차단·함수 지역 `icn1`)은 이미 라이브입니다.
 
@@ -93,7 +93,7 @@
 3. **시공사·공사금액**은 LH 건설공사현황 PDF(`lh.or.kr` 사전정보공표 게시판, 첨부는 curl로 받음)에서 읽어 `META`에 옮깁니다: A2·A3 제일건설, A9 진흥기업, A10 대우건설, A17 케이씨씨건설, A6 케이알산업·우암건설(청약홈 공고 표기, 공사금액 없음). [수동 판독]
 4. **A10 준공 예정일**(2028-09-30)은 공공데이터포털 파일 15141761(LH 공공주택 준공예정현황)을 사람이 읽어 상수로 옮긴 것입니다. 코드가 그 파일을 읽지는 않습니다.
 5. **상태**는 이 프로젝트가 정한 분류입니다. LH의 공식 구분이 아닙니다. '준공 임박'은 공정율 90% 이상이고 입주가 3개월 안인 단지입니다. A10은 처음 '계획'이었으나 공사현황에 공사기간(2026-06-25~2029-01-08)과 공정율 1.741%가 나와 '건설 단계'로 정정했습니다(준공예정현황의 준공일 2028-09-30과 공사현황 종료일은 3개월 다름). [수동 판독] · [문서] README 4절
-6. `build_projects.py`가 옛 `window.GY_*` JS를 쓰고, `migrate_legacy.py`가 그것을 `projects.json`으로 옮깁니다. `입주 2026.12` → `2026-12`, 윤곽 등급은 옛 `outlineHow`에 `V-World 공식`이 있으면 `official`, 출처는 옛 단지별 `src` 문구를 살려 단지마다 하나씩 둡니다. **이 경로에는 `events`가 없습니다**(계양 번들 `events` 0건). 옛 `data/gyeyang_*.js`는 커밋 `176efac`에서 삭제되어 지금은 **번들 JSON이 정본**입니다(도구가 옛 JS를 쓰는 `workspace/data/legacy/` 폴더도 현재 없음). [코드] · `git log`
+6. `build_projects.py`가 옛 `window.GY_*` JS를 쓰고, `migrate_legacy.py`가 그것을 `projects.json`으로 옮깁니다. `입주 2026.12` → `2026-12`, 윤곽 등급은 옛 `outlineHow`에 `V-World 공식`이 있으면 `official`, 출처는 옛 단지별 `src` 문구를 살려 단지마다 하나씩 둡니다. **이 경로에는 `events`가 없습니다**(계양 번들 `events` 0건). 옛 `data/gyeyang_*.js`는 커밋 `176efac`에서 삭제되어 지금은 **번들 JSON이 정본**입니다(도구가 옛 JS를 쓰는 `data/legacy/` 폴더도 현재 없음). [코드] · `git log`
 
 주의: 공사금액 단위는 PDF 열 머리에 없어 '백만원'으로 **추정**한 값이므로 확정값으로 쓰면 안 됩니다. 입주 시기는 A2·A3 2026-12(준공 예정 2026-10-11), A10 2028-09-30, A9 2029-02, A6 2029-06, A17 2029-11입니다.
 
@@ -117,7 +117,7 @@
 
 ### 2.6 기존 건물 — `buildings.json`
 
-1. V-World GIS건물통합정보 **인천 전체 SHP zip**을 사용자가 로그인한 ego lite로 내려받아 `workspace/data/raw/vworld/`에 둡니다(`…_인천_20260909.zip`, 54.7 MB, 309,863동). EPSG:5186이고 DBF는 CP949입니다. [ego lite] `vworld.kr`의 건물 자료 `dsId=18`이며 월 단위 전체본·일 단위 변경본이 제공됩니다.
+1. V-World GIS건물통합정보 **인천 전체 SHP zip**을 사용자가 로그인한 ego lite로 내려받아 `data/raw/vworld/`에 둡니다(`…_인천_20260909.zip`, 54.7 MB, 309,863동). EPSG:5186이고 DBF는 CP949입니다. [ego lite] `vworld.kr`의 건물 자료 `dsId=18`이며 월 단위 전체본·일 단위 변경본이 제공됩니다.
 2. `build_buildings.py`가 zip의 DBF·SHP를 표준 라이브러리만으로 읽어 **계양구(28245) 16,724동**만 변환합니다(건물 `n`은 24자까지). 건물마다 `height`(공식 높이), `grnd_flr`(지상층수), `ugrnd_flr`(지하), `usability`(용도 코드), `bld_nm`·`dong_nm`, `useapr_day`(사용승인일)를 읽습니다. [반자동]
 3. **화면 높이 `eh`**: 공식 높이 > 0이면 그 값(`공식높이`), 아니면 지상층수 × 층고(`층수환산`), 둘 다 없으면 `eh`를 3으로 두고(`정보없음`) **화면은 솟지 않는 평면(연한 면 + 점선)으로만 그립니다**(2026-10-07부터. 이전에는 3 m 건물로 세웠음. 까닭은 아래 '대장과 이어지지 않은 도형'). 어느 쪽인지 `src`에 남깁니다.
 4. **층고는 가정이 아니라 측정값**입니다. 같은 자료에서 높이와 층수가 모두 있는 건물의 높이÷층수 **중앙값**(공동주택은 층수 구간 1-5·6-10·11-15·16-20·21+, 그 밖은 용도별)이며, 표본 30개 미만인 키는 뺍니다. 키가 없으면 2.85 m입니다. 정확도는 높이·층수가 모두 있는 9,922동을 번갈아 둘로 나눠 한쪽의 층고를 다른 쪽에 적용해 확인했고, 오차 중앙값 7.5%, 90%는 27.9% 이내였습니다.
@@ -195,7 +195,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 ### 2.10 초등 통학구역 — `infra.json` `zones` `attendance`
 
-1. 한국교육시설안전원 파일 3종 — 초등학교통학구역 SHP(15159265), 학교학구도연계정보(15159266), 초중등학교위치(15159184) — 을 데이터포털에서 받아 `workspace/data/raw/infra/`에 둡니다. 받기 버튼 → 안내창("…에 변경된 데이터입니다") 수락 → 다운로드입니다. [ego lite] 갱신은 3월·9월이고, 받은 자료의 기준일은 2026-09-20입니다.
+1. 한국교육시설안전원 파일 3종 — 초등학교통학구역 SHP(15159265), 학교학구도연계정보(15159266), 초중등학교위치(15159184) — 을 데이터포털에서 받아 `data/raw/infra/`에 둡니다. 받기 버튼 → 안내창("…에 변경된 데이터입니다") 수락 → 다운로드입니다. [ego lite] 갱신은 3월·9월이고, 받은 자료의 기준일은 2026-09-20입니다.
 2. `build_infra.py incheon-gyeyang`가 SHP를 읽습니다. zip 안 파일 이름이 CP949라 `zipfile(metadata_encoding='cp949')`로 풉니다. [반자동]
 3. 단지 중심을 TM으로 바꿔 SHP 폴리곤 포함 검사 → 학구도 ID → 연계 CSV에서 초등학교 → 학교위치 CSV에서 좌표 순으로 잇습니다. **단일 학교 구역을 공동 구역보다 먼저** 고르고, 꼭짓점은 200개로 단순화해 경위도로 되돌립니다.
 4. 결과: 2개 구역, 단지 6개 연결(A2·A3·A9·A10은 인천당산초, A6·A17은 인천소양초 통학구역). 지도에서는 옵션으로 켭니다.
@@ -434,19 +434,19 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 | 자료 | 위치 | 비고 |
 |---|---|---|
-| 공공데이터포털 파일데이터 10종(LH·SH·국방부) | `workspace/data/raw/datagokr/` | 기획·시장 파악용. 아래 표 |
+| 공공데이터포털 파일데이터 10종(LH·SH·국방부) | `data/raw/datagokr/` | 기획·시장 파악용. 아래 표 |
 | 통계누리 5개 표와 정리본 | `raw/molit/` `processed/molit_*` | 지도와 연결되지 않음. 아래 설명 |
 | GH 목록 57쪽·계획 표 | `raw/gh/` | 인천과 직접 관련이 적음. robots가 전체 금지인 사이트(5.11절) |
 | LH 입주계획 hwpx 2개·공급현황 xlsx | `raw/lh/public/` | 보관만 |
 | 제작 부산물 | `processed/gyeyang_projects.csv` `gyeyang_buildings_summary.json` | 도구가 남긴 사본 |
-| 전국 버스정류장 위치정보 CSV(15067528) — **이전에 쓰던 것** | `workspace/data/raw/infra/`(이 PC에 `…_20251031.csv`가 남아 있음, `.gitignore`) | 번들 만들기가 더는 읽지 않음(TAGO API로 바꿈, 2.11절). 없어도 번들은 만들어짐 |
+| 전국 버스정류장 위치정보 CSV(15067528) — **이전에 쓰던 것** | `data/raw/infra/`(이 PC에 `…_20251031.csv`가 남아 있음, `.gitignore`) | 번들 만들기가 더는 읽지 않음(TAGO API로 바꿈, 2.11절). 없어도 번들은 만들어짐 |
 | 승인·신청했으나 호출하지 않은 API | 청약홈 분양정보·경쟁률, 행복도시 준공계획, 통계리스트, LH 공급정보 | 15058530은 키 미등록(403). 6.2절 |
 | 다른 PoC(minslab HOME) 조회 | — | 비교용으로 조회만 하고 저장하지 않음 |
 | 택지정보시스템 속성자료 14종 | — | 입력 팝업 때문에 받지 않음 |
 
 **공공데이터포털 파일데이터(CSV) 10종**
 
-[문서] `workspace/data/README.md` 1절. 모두 ego-browser로 내려받음. **지도 코드가 읽지 않음.**
+[문서] `data/README.md` 1절. 모두 ego-browser로 내려받음. **지도 코드가 읽지 않음.**
 
 | 번호 | 기관·자료 | 행 | 비고 |
 |---|---|---:|---|
@@ -464,16 +464,16 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 | 자료 | 위치 | 무엇을 만드는 데 쓰나 |
 |---|---|---|
-| V-World GIS건물통합정보 인천 SHP zip, 계양 `LT_C_LHBLPN` geojson | `workspace/data/raw/vworld/` | 계양 `buildings.json`, 단지 블록·이름 모르는 용지 윤곽 |
-| LH 입주자모집공고문·팸플릿 PDF 10개(A2·A3·A6·A9·A17) | `workspace/data/raw/lh/notices`, `pamphlets` | 단지 속성 상수(`META`), 동 윤곽·동별 층수 판독, 블록 면적 검증 |
-| LH 청약플러스 공사현황 CSV 2개 | `workspace/data/raw/lh/cwstt/` | 계양 공정율·공사기간·이력 |
-| LH 건설공사현황 PDF, 계양 추출 CSV | `workspace/data/raw/lh/public/` | 시공사·공사금액을 `META` 상수에 사람이 옮김 |
-| OSM 역·학교 응답 | `workspace/data/raw/osm/ctx.json` | 계양 `context.json` |
-| 기반시설 원본 3종(통학구역 SHP zip·학구도연계 CSV·학교위치 CSV) + 알리미 응답 사본 | `workspace/data/raw/infra/` | `infra.json` |
+| V-World GIS건물통합정보 인천 SHP zip, 계양 `LT_C_LHBLPN` geojson | `data/raw/vworld/` | 계양 `buildings.json`, 단지 블록·이름 모르는 용지 윤곽 |
+| LH 입주자모집공고문·팸플릿 PDF 10개(A2·A3·A6·A9·A17) | `data/raw/lh/notices`, `pamphlets` | 단지 속성 상수(`META`), 동 윤곽·동별 층수 판독, 블록 면적 검증 |
+| LH 청약플러스 공사현황 CSV 2개 | `data/raw/lh/cwstt/` | 계양 공정율·공사기간·이력 |
+| LH 건설공사현황 PDF, 계양 추출 CSV | `data/raw/lh/public/` | 시공사·공사금액을 `META` 상수에 사람이 옮김 |
+| OSM 역·학교 응답 | `data/raw/osm/ctx.json` | 계양 `context.json` |
+| 기반시설 원본 3종(통학구역 SHP zip·학구도연계 CSV·학교위치 CSV) + 알리미 응답 사본 | `data/raw/infra/` | `infra.json` |
 | TAGO 버스정류소·노선 API 응답(캐시를 쓰면) | 저장소 밖 폴더 | 계양 `infra.json`의 `stops`·`busRoutes` |
 | 보도 대책 요약 | `tools/regiontools/curated/incheon-gyeyang.json` | `infra.json`의 `measures` |
 | 마이홈·건축HUB 주택인허가·V-World API 응답 | (캐시를 쓰면) 저장소 밖 폴더 | **광산구·나주** 번들(계양에는 쓰지 않음) |
-| 도구·스키마 | `tools/` `workspace/data/tools/` `schemas/` | 번들 생성·검증 |
+| 도구·스키마 | `tools/` `data/tools/` `schemas/` | 번들 생성·검증 |
 
 **계양에는 쓰지 않는 경로**: 마이홈 공고·건축HUB 주택인허가 API는 광산구·나주 번들을 자동으로 만들 때만 씁니다(7절). 계양 단지는 사람이 읽은 값(2.3절)이 정본입니다.
 
@@ -490,7 +490,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 | 자료 | 지금까지의 방법 | 자동화 상태 | 저장소의 코드 | 사람·브라우저가 하는 일 | 비고 · 갱신 주기 |
 |---|---|---|---|---|---|
-| 기존 건물 윤곽·높이·용도·이름 | V-World GIS건물통합정보 **인천 전체 SHP zip**을 사용자가 로그인한 ego lite로 내려받음 → `build_buildings.py` | **[ego lite]** + **[반자동]** | 있음(zip을 읽음) `workspace/data/tools/vworld_buildings/` | 로그인, 내려받기(`vworld.kr` 건물 자료 `dsId=18`) | 월 단위 전체본·일 단위 변경본 제공. **API 대안**: `LT_C_BLDGINFO`를 `build_region.py`(`fetch_buildings`)가 광산구·나주에서 이미 사용 — 계양구 전체는 **[시도 안 함]**(약 1.7만 동 이상, 1000건/쪽 — 추정), 결과 동일성 미확인 |
+| 기존 건물 윤곽·높이·용도·이름 | V-World GIS건물통합정보 **인천 전체 SHP zip**을 사용자가 로그인한 ego lite로 내려받음 → `build_buildings.py` | **[ego lite]** + **[반자동]** | 있음(zip을 읽음) `data/tools/vworld_buildings/` | 로그인, 내려받기(`vworld.kr` 건물 자료 `dsId=18`) | 월 단위 전체본·일 단위 변경본 제공. **API 대안**: `LT_C_BLDGINFO`를 `build_region.py`(`fetch_buildings`)가 광산구·나주에서 이미 사용 — 계양구 전체는 **[시도 안 함]**(약 1.7만 동 이상, 1000건/쪽 — 추정), 결과 동일성 미확인 |
 | 블록·용지 윤곽 | V-World Data API `LT_C_LHBLPN`을 임시로 호출해 geojson 저장 | **[자동]** 가능 / 계양은 **[방법만 확인]** | `fetch_zone`이 있으나 **계양 지역 설정(`RegionConfig`)이 없음** | — | 같은 레이어를 광산구·나주는 자동 사용 |
 | 블록 이름(A6·A9…)과 윤곽 연결 | 팸플릿 '토지이용계획도'에서 읽은 위치로 윤곽 선택 + 공고문 면적으로 검증 | **[수동 판독]** | 있음(`blocks_px.json` 위치와 맞추는 코드) | 그림을 눈으로 읽음 | 자동 대안(마이홈 공고 PNU → 필지 → 블록)은 계양에서 **[시도 안 함]**. 연속지적도가 조성 전 **옛 필지**(박촌동 178-5 답)를 줘서 막힐 수 있음(확인함) |
 | 단지 속성(상태·세대수·동수·종류·입주) | 입주자모집공고문 PDF를 읽어 `META` 상수에 적음 | **[수동 판독]** | 상수(`build_projects.py`) | 공고문 PDF를 ego lite로 한 건씩 내려받고 읽음(LH 첨부 경로가 robots로 막혀 일괄 불가) | 새 공고가 날 때마다. 자동 대안(마이홈 공고 API + 건축HUB 인허가 + `status.py`)은 광산구·나주에서 사용, 계양은 **[시도 안 함]** |
@@ -514,17 +514,17 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 ### 4.2 ego lite로 해야 하는 작업 (절차)
 
-사전 조건: ego lite 실행, **사용자가 data.go.kr·V-World에 로그인**(로그인은 사람이). 다운로드한 파일은 `workspace/data/raw/…`에 둡니다(큰 파일은 `.gitignore`).
+사전 조건: ego lite 실행, **사용자가 data.go.kr·V-World에 로그인**(로그인은 사람이). 다운로드한 파일은 `data/raw/…`에 둡니다(큰 파일은 `.gitignore`).
 
 1. **통학구역·학교 파일 3종**(반기: 3월·9월 갱신 후)
    - 대상 주소: `https://www.data.go.kr/data/15159265/fileData.do`(초등학교통학구역 SHP), `…/15159266/…`(학교학구도연계정보), `…/15159184/…`(초중등학교위치).
-   - 동작: 받기 버튼 → 안내창("…에 변경된 데이터입니다") 수락 → 다운로드 → `workspace/data/raw/infra/`로 옮김. SHP zip 안 파일 이름은 CP949라 코드가 풀어 줍니다.
+   - 동작: 받기 버튼 → 안내창("…에 변경된 데이터입니다") 수락 → 다운로드 → `data/raw/infra/`로 옮김. SHP zip 안 파일 이름은 CP949라 코드가 풀어 줍니다.
    - 다음: `.venv/bin/python tools/regiontools/build_infra.py incheon-gyeyang`
 2. **TAGO 버스 서비스 활용신청**(처음 한 번, 사람이 포털에서 — 브라우저로 파일을 받는 일은 아님)
    - 대상: 버스정류소정보 15098534 · 버스노선정보 15098529(번들 만들기), 버스위치정보 15098533(화면, `handlers/bus.js`). 자동승인이며 이번에는 사용자가 직접 신청했습니다.
    - 다음: `.venv/bin/python tools/regiontools/build_infra.py incheon-gyeyang`(정류소·노선을 API로 받음). 예전에 쓰던 버스정류장 CSV(15067528)는 더는 받지 않습니다.
 3. **V-World 건물 자료**(필요할 때, 월 단위 전체본)
-   - 대상: `vworld.kr`의 GIS건물통합정보 내려받기 화면(`dtmk_ntads_s002.do?svcCde=NA&dsId=18`). 로그인한 세션에서 인천 전체본을 받아 `workspace/data/raw/vworld/`에 둠.
+   - 대상: `vworld.kr`의 GIS건물통합정보 내려받기 화면(`dtmk_ntads_s002.do?svcCde=NA&dsId=18`). 로그인한 세션에서 인천 전체본을 받아 `data/raw/vworld/`에 둠.
    - 다음: 건물 도구 `build_buildings.py`(옛 이전 흐름이므로 번들 덮어쓰기 주의, 12.1절).
 4. **LH 청약플러스 공고문·팸플릿**(새 공고·정정 공고가 날 때마다)
    - 대상: `apply.lh.or.kr` 분양임대공고 목록(`mi=1027`)에서 인천계양 블록 공고를 열어 첨부 PDF를 한 건씩 내려받음. 첨부 내려받기 경로(`lhFile.do` 등)는 robots가 막고 있어 **일괄 수집은 하지 않습니다**.
@@ -570,12 +570,12 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 | 자료 | 원천 갱신 주기 | 근거 |
 |---|---|---|
-| V-World 건물 | 월 단위 전체본, 일 단위 변경본 | `workspace/data/README.md` 3절 |
+| V-World 건물 | 월 단위 전체본, 일 단위 변경본 | `data/README.md` 3절 |
 | 신설예정 학교 | 해마다 5월 공시 | `tools/regiontools/build_infra.py` 주석 |
-| 통학구역·학구도연계·학교위치 | 3월·9월 | `workspace/data/raw/infra/README.md` |
+| 통학구역·학구도연계·학교위치 | 3월·9월 | `data/raw/infra/README.md` |
 | TAGO 버스정류소·노선 | 원천 갱신 주기는 확인하지 못함(번들을 만들 때 한 번 받음). 이전 CSV는 연 1회(10월) | `tools/regiontools/build_infra.py` |
 | TAGO 버스 위치 | 원천 표기는 '실시간'. 실측은 한 노선 55초 표본뿐이라 주기를 단정하지 못함(좌표가 바뀐 호출 11번 중 4번) | 6.2절 |
-| 공사현황 | 단지마다 기준일이 다름(2026-09-21~30), 주기는 확인하지 못함 | `workspace/data/README.md` 4절 |
+| 공사현황 | 단지마다 기준일이 다름(2026-09-21~30), 주기는 확인하지 못함 | `data/README.md` 4절 |
 | 건축HUB 인허가 | 허가 이벤트 때마다(상시), 주기는 확인하지 못함 | 정의서 9절 |
 | LH 입주자모집공고 | 공고·정정 때마다 | 수집 기록 |
 | OSM | 상시 | — |
@@ -616,8 +616,8 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 10-02 | 기획서 작성 중 비교 사이트 확인(마이홈포털 메인, KB부동산 데이터허브) | Firecrawl(실패) → WebFetch·curl → 헤드리스 Chrome | 마이홈은 서버에서 받은 HTML을, KB는 렌더링해서 읽음. claude-in-chrome 확장은 연결되지 않음 | [로그 10-02] |
 | 10-02 | 정책 근거 확인: 국무총리실 보도자료 7건 | WebFetch | 정책근거·요구사항 매트릭스 문서의 근거(지도 자료 아님) | [로그 10-02] · `docs/` |
 | 10-02 | 구축에 쓸 실제 데이터·API 조사 | insane-search + 서브에이전트 4(공공데이터포털 API, 기관 사이트, 오픈소스 2) | 후보 목록. 읽기 전용, 신청·설치 없음 | [로그 10-02] |
-| 10-02 | 공공데이터포털 **마이페이지 '활용신청 현황' 읽기**(읽기 전용), 파일데이터 10종 CSV 내려받기 | ego-browser(사용자가 먼저 로그인) | `workspace/data/raw/datagokr/` 10개. 신청 API 정리 문서 | [로그 10-02] · [문서] `docs/주택파동_신청API_정리.md` |
-| 10-03 | 통계누리 주택건설실적 5개 표 내려받기(최대 60개월) | ego-browser | `raw/molit/` → `molit_tidy.py` → `processed/` | [로그 10-03] · [문서] `workspace/data/README.md` |
+| 10-02 | 공공데이터포털 **마이페이지 '활용신청 현황' 읽기**(읽기 전용), 파일데이터 10종 CSV 내려받기 | ego-browser(사용자가 먼저 로그인) | `data/raw/datagokr/` 10개. 신청 API 정리 문서 | [로그 10-02] · [문서] `docs/주택파동_신청API_정리.md` |
+| 10-03 | 통계누리 주택건설실적 5개 표 내려받기(최대 60개월) | ego-browser | `raw/molit/` → `molit_tidy.py` → `processed/` | [로그 10-03] · [문서] `data/README.md` |
 | 10-03 | 택지정보시스템 오픈API 화면 확인 | ego-browser | **받지 않음**: 내려받기 전 팝업이 직업·소속·활용 목적 입력을 요구해 임의로 채우지 않음 | [로그 10-03] · [문서] 같은 README 7절 |
 | 10-03 | 3D 지도 스택 선조사(지도 라이브러리, 건물 데이터·타일, 한국 주소 좌표, 사용 후기) | 서브에이전트 4 + ego-browser(V-World·MapLibre 문서) | MapLibre GL JS + AWS Terrain + OpenFreeMap + V-World 배경 선택 | [로그 10-03] |
 | 10-03 | **V-World GIS건물통합정보 인천 zip 내려받기** | ego-browser(사용자가 V-World 로그인을 넘겨줌) | `raw/vworld/…_인천_20260909.zip`(54.7 MB, 309,863동) | [로그 10-03] · [문서] README 3절 |
@@ -631,7 +631,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 10-03 | GH 목록 57쪽·계획 표 1쪽 | insane-search 엔진(`curl_cffi` 브라우저 위장), 사용자 지시 | `raw/gh/` — robots.txt가 전체 금지인 사이트(5.11절) | [로그 10-03] · [문서] README 5절 |
 | 10-03 | 다른 PoC(minslab HOME)가 쓰는 원천과 비교 | insane-search + curl | **조회만 하고 저장하지 않음**. 사이트가 주장하는 건수는 검증하지 않음 | [로그 10-03] |
 | 10-04 | 광산구·나주 스파이크(API 시험) | Python(V-World·마이홈·건축HUB·LH 공급정보) + ego-browser(포털 API 상세 화면) + insane-search(나주 사업 확인 뉴스) | API 응답 특성·함정 확인(6.2절). 이후 `build_region.py`로 번들 생성 | [로그 10-04] |
-| 10-04 | **입주 전 기반시설 조사** | WebSearch 25회 + ego-browser + Python | 신설예정학교 POST, 학구도 4종 파일, UPIS, 건축HUB, 보도(6.5절) | [로그 10-04] · [문서] `workspace/data/raw/infra/README.md` |
+| 10-04 | **입주 전 기반시설 조사** | WebSearch 25회 + ego-browser + Python | 신설예정학교 POST, 학구도 4종 파일, UPIS, 건축HUB, 보도(6.5절) | [로그 10-04] · [문서] `data/raw/infra/README.md` |
 | 10-05 | **카카오맵 개발자 API에 버스 위치가 있는지 조사** | 웹 검색 → ego-browser로 `developers.kakao.com/docs/ko/kakaomap/common`·`apis.map.kakao.com/web/documentation`(원문 101,750자) | **없음**(6.7절). 검색 요약은 "카카오 REST에 대중교통 경로 있음"이었고, 원문은 경로 조회일 뿐 버스 위치가 아니었음 | [로그 10-05] |
 | 10-05 | 카카오맵 앱 '초정밀 버스' 보도자료 확인 | ego-browser(`kakaocorp.com/page/detail/11734`) | 앱 기능. 인천 3초 갱신. 개발자 API 제공 여부는 자료에 없음(6.7절) | [로그 10-05] |
 | 10-05 | 공공 버스 위치 API 조사와 TAGO 연계 현황 확인 | ego-browser(data.go.kr 15059206·15098533·15098534·15098529 상세, `tago.go.kr/v5/link/current_data.jsp`) | 인천시 버스위치정보는 좌표 없음(쓰지 않음), TAGO는 좌표가 옵션 항목. 실시간 연계 목록에 인천 포함(6.2절) | [로그 10-05] |
@@ -649,7 +649,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 ### 5.4 ego-browser (ego lite)
 
 - **방식**: 사용자가 ego lite에서 먼저 로그인하고(공공데이터포털, V-World), 이쪽이 TaskSpace를 열어 그 세션을 이어서 화면을 읽거나 파일을 받음. 쓰기 동작(활용신청 등)은 하지 않았고 15058530·TAGO 버스 3종 신청은 사용자가 직접 했습니다. [로그 10-02·10-04·10-05]
-- **운영상 사실**: 포털 파일 내려받기는 클릭하면 `…에 변경된 데이터입니다` 안내창이 먼저 떠서 닫아야 내려받기가 시작됩니다. 세계일보 등 일부 사이트는 알림 권한 프롬프트 때문에 사용자 제어로 넘어가 WebFetch로 읽었습니다. [로그 10-04] · `workspace/data/raw/infra/README.md`
+- **운영상 사실**: 포털 파일 내려받기는 클릭하면 `…에 변경된 데이터입니다` 안내창이 먼저 떠서 닫아야 내려받기가 시작됩니다. 세계일보 등 일부 사이트는 알림 권한 프롬프트 때문에 사용자 제어로 넘어가 WebFetch로 읽었습니다. [로그 10-04] · `data/raw/infra/README.md`
 - **연 사이트와 목적**
 
 | 사이트 | 목적 | 결과 |
@@ -863,7 +863,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 지구 경계 | OpenStreetMap 지구 경계 way | 지구 블록들의 볼록껍질을 100점 안으로 단순화 |
 | 입주 전 기반시설(`infra.json`) | **있음**(교육재정알리미·학구도·TAGO 버스 정류소·노선·UPIS·인허가·보도) | 없음 |
 | 버스 위치(`/api/bus`) | 실시간 노선 4개(`infra.json`의 `live`) | 없음(`infra.json`이 없어 노선 목록이 없음) |
-| 만든 도구 | `workspace/data/tools/*` → `tools/regiontools/migrate_legacy.py`로 번들화 | `tools/regiontools/build_region.py` |
+| 만든 도구 | `data/tools/*` → `tools/regiontools/migrate_legacy.py`로 번들화 | `tools/regiontools/build_region.py` |
 
 ### 7.2 `build_region.py`가 자동으로 하는 일
 
@@ -925,7 +925,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | `tools/validate_input.py` | 팀원이 만든 CSV·GeoJSON 폴더/ZIP | 점검 리포트 | 규격: `schemas/input.spec.json`, `docs/data-interface/정의서.md` |
 | `tools/regiontools/build_region.py <slug>` | V-World·마이홈·건축HUB·Overpass API | `region` `projects` `buildings` `context` | 키는 `.env.local`(`DATA_GO_KR_KEY` `VWORLD_DEV_KEY` 또는 `VWORLD_KEY` `VWORLD_DOMAIN`), 키·요청 URL은 출력하지 않음 |
 | `tools/regiontools/migrate_legacy.py` | 옛 `data/gyeyang_*.js` | 계양 번들 + `index.json` 항목 | 한 번 쓴 이전 도구 |
-| `tools/regiontools/build_infra.py <slug>` | 공공데이터포털 파일 3종 + API(교육재정알리미·V-World·건축HUB·TAGO 버스) + `curated/<slug>.json` | `infra.json` | 원천 목록: `workspace/data/raw/infra/README.md`. TAGO 정류소·노선 활용신청 필요(버스 위치는 이 도구가 아니라 `handlers/bus.js`) |
+| `tools/regiontools/build_infra.py <slug>` | 공공데이터포털 파일 3종 + API(교육재정알리미·V-World·건축HUB·TAGO 버스) + `curated/<slug>.json` | `infra.json` | 원천 목록: `data/raw/infra/README.md`. TAGO 정류소·노선 활용신청 필요(버스 위치는 이 도구가 아니라 `handlers/bus.js`) |
 | `handlers/v1/resolve.js` | 표준코드(시군구·법정동·필지) + 행정표준코드 API + V-World + `regions/` coverage | 지도가 열 영역 JSON | 번들 도구가 아니라 실행 중에 도는 함수(2.15절). 규격 `docs/product/상황판-스펙.md` |
 | `handlers/bus.js`(Vercel 함수) · `node scripts/dev.js` | `regions/<slug>/infra.json`의 live 노선 + TAGO 버스위치 + 환경변수 `DATA_GO_KR_KEY_BUS_<N>`(없으면 `DATA_GO_KR_KEY`) | `{at, ttl, buses[], failed?}` JSON | 번들 도구가 아니라 실행 중에 도는 함수(2.14절). 로컬 서버는 `scripts/dev.js` |
 | `tools/regiontools/check_bundle.py` | `regions/` 또는 `regions/<slug>/` | 오류 목록(종료 코드 0/1/2) | 스키마 + 출처 id 존재·단지 id 중복·`projectOrder` 참조·기본 지역 하나·폴더=slug·`busRoutes` id 중복·`stops` id 중복·`stops[].routes` 참조·live↔`path`·`busCityCode` 규칙 |
@@ -1168,7 +1168,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 .venv/bin/python tools/regiontools/build_region.py gwangju-gwangsan --cache-dir <저장소 밖 폴더>
 .venv/bin/python tools/regiontools/build_region.py jeonnam-naju     --cache-dir <저장소 밖 폴더>
 
-# 계양 기반시설: 포털 파일 3종을 workspace/data/raw/infra/ 에 받은 뒤(받는 법은 그 폴더 README)
+# 계양 기반시설: 포털 파일 3종을 data/raw/infra/ 에 받은 뒤(받는 법은 그 폴더 README)
 # 버스는 TAGO 정류소(15098534)·노선(15098529) 활용신청이 되어 있어야 함(.env.local의 DATA_GO_KR_KEY)
 .venv/bin/python tools/regiontools/build_infra.py incheon-gyeyang
 
@@ -1183,7 +1183,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 - **광산구·나주·계양 기반시설은 위 명령으로 다시 만들 수 있습니다.** 입력은 API(키)와 `raw/infra/`의 포털 파일 3종입니다. 응답이 바뀌면 결과도 바뀝니다(기준일이 번들에 적힘).
 - **버스**: 정류소·노선·경로는 `build_infra.py`가 TAGO 활용신청 2종(정류소 15098534·노선 15098529)으로 한 번 받습니다. **버스 위치(15098533)는 빌드가 아니라 화면이 `handlers/bus.js`를 거쳐 받습니다.** 전국 버스정류장 CSV(15067528)는 더는 필요 없고, `raw/infra/`에 남은 파일은 읽지 않습니다.
 - **배포**: Vercel 프로젝트에 공공데이터포털 키가 있어야 `/api/bus`가 동작합니다(`DATA_GO_KR_KEY_BUS_<N>` 또는 `DATA_GO_KR_KEY`, 없으면 503, 지도는 노선 선만 보임). 표준코드 해석은 `DATA_GO_KR_KEY_RESOLVE_<N>`(또는 `DATA_GO_KR_KEY`)와 `VWORLD_KEY`(운영키)·`VWORLD_DOMAIN`(`housing-board.vercel.app`)이 필요합니다. 루트 `api/` 함수와 `includeFiles`·`excludeFiles`는 라이브 `/api/bus`·`/api/v1/resolve`로 동작을 확인했습니다(2.14·2.15절). V-World 서버 호출 때문에 `VWORLD_DOMAIN`(운영 도메인)과 함수 지역 `icn1`을 두었습니다(2.15절).
-- **계양 건물·단지는 지금 저장소의 번들이 정본**입니다. 옛 생성 도구(`workspace/data/tools/vworld_buildings/build_buildings.py`, `lh_projects/extract_plans.py`·`build_projects.py`)는 남아 있고 입력 원본(`raw/vworld` zip·geojson, `raw/lh/*`)도 이 PC에 있지만, 도구는 `workspace/data/legacy/`에 옛 JS를 새로 쓰고 `migrate_legacy.py`가 그것을 번들로 옮기는 **한 번 쓰는 이전 흐름**입니다. 다시 돌리면 이후에 번들을 직접 고친 값(출처 문구, 정정 등)을 덮어쓸 수 있으니, 돌리기 전에 번들을 백업하고 차이를 확인하세요.
+- **계양 건물·단지는 지금 저장소의 번들이 정본**입니다. 옛 생성 도구(`data/tools/vworld_buildings/build_buildings.py`, `lh_projects/extract_plans.py`·`build_projects.py`)는 남아 있고 입력 원본(`raw/vworld` zip·geojson, `raw/lh/*`)도 이 PC에 있지만, 도구는 `data/legacy/`에 옛 JS를 새로 쓰고 `migrate_legacy.py`가 그것을 번들로 옮기는 **한 번 쓰는 이전 흐름**입니다. 다시 돌리면 이후에 번들을 직접 고친 값(출처 문구, 정정 등)을 덮어쓸 수 있으니, 돌리기 전에 번들을 백업하고 차이를 확인하세요.
 - 입력 원본 중 큰 파일(`raw/vworld/*.zip`, `raw/lh/pamphlets/`)은 `.gitignore`라 저장소에 없습니다. 다른 PC에서는 다시 내려받아야 하고, 그 방법이 이 문서 5절의 사이트들입니다.
 - **조사 과정(`[로그]`)은 코드로 재현되지 않습니다.** 어느 사이트에서 무엇을 읽고 판단했는지는 이 문서가 유일한 기록이며, 세션 기록은 작업자 PC에만 있습니다.
 
@@ -1191,7 +1191,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 
 1. 팀원이 입력 규격(`docs/data-interface/정의서.md`)대로 CSV·GeoJSON을 만들고 `python3 tools/validate_input.py`로 점검합니다.
 2. 입력이 번들(`regions/<slug>/*.json`)로 컴파일됩니다. 지금은 API 빌더(`tools/regiontools/build_region.py`)가 광산구·나주를, `tools/regiontools/migrate_legacy.py`가 계양의 옛 자료를 번들로 만듭니다. 번들의 필드와 화면 규칙은 `docs/data-interface/번들-어댑터-정의서.md`에 있습니다.
-   입주 전 기반시설 점검 자료(`infra.json`, 선택)는 `tools/regiontools/build_infra.py`가 만듭니다. 공공데이터포털에서 받아 둘 파일은 `workspace/data/raw/infra/README.md`에 있고, 버스정류소·노선은 TAGO 활용신청 뒤 API로 받으며(새 지역은 `INFRA_REGIONS`에 `bus_city`를 정함), 보도로 확인한 대책은 `tools/regiontools/curated/<slug>.json`에 출처와 함께 둡니다.
+   입주 전 기반시설 점검 자료(`infra.json`, 선택)는 `tools/regiontools/build_infra.py`가 만듭니다. 공공데이터포털에서 받아 둘 파일은 `data/raw/infra/README.md`에 있고, 버스정류소·노선은 TAGO 활용신청 뒤 API로 받으며(새 지역은 `INFRA_REGIONS`에 `bus_city`를 정함), 보도로 확인한 대책은 `tools/regiontools/curated/<slug>.json`에 출처와 함께 둡니다.
 3. 번들을 검증합니다(`jsonschema` 필요, `python3 -m venv .venv && .venv/bin/pip install jsonschema markdown`).
 
 ```
@@ -1288,7 +1288,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 
 ### 2.23 상황판 화면 자료 — `data/board/*.json` (2026-10-09, 지도가 아니라 종합상황판·상세 화면이 읽음)
 
-`tools/boarddata/build_board_data.py`가 `workspace/data`의 원천에서 만들어 저장소에 커밋한다(Vercel 빌드에는 `workspace/`가 올라가지 않는다. `--check`로 낡음 확인, 시험 `tests/test_boarddata.py`).
+`tools/boarddata/build_board_data.py`가 `data/raw`·`data/processed`의 원천에서 만들어 저장소에 커밋한다(Vercel 빌드에는 `data/raw/` `data/processed/` `data/tools/`가 올라가지 않는다. `--check`로 낡음 확인, 시험 `tests/test_boarddata.py`).
 
 | 파일 | 내용 | 규칙 |
 |---|---|---|
