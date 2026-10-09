@@ -15,6 +15,8 @@ export const SectionTitle = ({ className, ...p }: ComponentProps<'h2'>) => <h2 c
 export const SubTitle = ({ className, ...p }: ComponentProps<'h3'>) => <h3 className={cn('mt-[18px] mb-2 text-[14px] font-bold text-muted-foreground', className)} {...p} />;
 /* 카드 안 작은 글씨: .panel .sub */
 export const sub = 'text-[12px] text-muted-foreground';
+/* 표 안의 '값 없음'(.tbl .na). 표 밖의 .na 는 스타일이 없었으므로 쓰지 않는다 */
+export const na = 'text-muted-foreground';
 
 /* 목록 카드 격자(.cards)·KPI 격자(.kpis)·두 칸(.cols2): 자동 칸 수 */
 export const cardsGrid = 'grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] gap-2.5';

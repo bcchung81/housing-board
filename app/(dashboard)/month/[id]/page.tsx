@@ -3,7 +3,11 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Crumbs from '../../../../components/Crumbs';
 import { METRIC_COLOR } from '../../../../components/charts/palette';
-import { Basis, Kpi, Prov } from '../../../../components/ui';
+import { Lede, Page, PageTitle, PanelTitle, kpisGrid, sub } from '../../../../components/page';
+import { Badge } from '../../../../components/ui/badge';
+import { Card } from '../../../../components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
+import { Basis, Kpi } from '../../../../components/ui';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, lhOfMonth, lhUnits, ymDot } from '../../../../lib/board/calc';
 import { lh, molit } from '../../../../lib/board/data';
 import { DETAILS } from '../../../../lib/shell/menu';
@@ -33,69 +37,63 @@ export default async function MonthPage({ params }: Props) {
   const nation = table.find((r) => r.code === NATION);
   const i = molit.months.indexOf(ym);
   return (
-    <div className="page">
+    <Page>
       <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: monthLabel(ym) }]} />
-      <h1>{monthLabel(ym)} <code>{ym}</code> {actual ? <span className="pill ok">실적</span> : <span className="pill">예정</span>}{actual && isProvisional(molit, ym) ? <span className="pill prov">잠정</span> : null}</h1>
-      <p className="lede">{actual ? `전국·시도별 인허가·착공·준공·분양 호수와 시행주체별 호수${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. LH 준공 예정 블록만 있습니다.`}</p>
-      <div className="nav2">
+      <PageTitle>{monthLabel(ym)} <code>{ym}</code> {actual ? <Badge variant="ok">실적</Badge> : <Badge>예정</Badge>}{actual && isProvisional(molit, ym) ? <Badge variant="warn" className="ml-1.5">잠정</Badge> : null}</PageTitle>
+      <Lede>{actual ? `전국·시도별 인허가·착공·준공·분양 호수와 시행주체별 호수${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. LH 준공 예정 블록만 있습니다.`}</Lede>
+      <div className="mt-3.5 flex justify-between gap-2 text-[13px] [&_a]:text-primary [&_a]:no-underline">
         {nb.prev ? <Link href={`/month/${nb.prev}`}>‹ {ymDot(nb.prev)}</Link> : <span />}
         {nb.next ? <Link href={`/month/${nb.next}`}>{ymDot(nb.next)} ›</Link> : <span />}
       </div>
 
       {actual && nation ? (
         <>
-          <div className="kpis">
+          <div className={kpisGrid}>
             {METRICS.map((k) => <Kpi key={k} label={`${LABEL[k]} · 전국`} tone={METRIC_COLOR[k]} value={fmt(nation.values[k])} sub={k === 'permit' && nation.values[k] === null ? '자료가 이 달부터라 월 흐름을 알 수 없음' : undefined} />)}
           </div>
 
-          <section className="panel" aria-label="시도별">
-            <h2>시도별 <small className="sub">· 호</small></h2>
-            <div className="tablewrap">
-              <table className="tbl">
-                <thead><tr><th>시도</th>{METRICS.map((k) => <th key={k}>{LABEL[k]}</th>)}</tr></thead>
-                <tbody>
-                  {table.map((r) => (
-                    <tr key={r.code} className={r.code === NATION ? 'total' : undefined}>
-                      <td>{r.code === NATION ? '전국' : <Link href={`/area/${r.code}`}>{r.name}</Link>}</td>
-                      {METRICS.map((k) => <td key={k}>{fmt(r.values[k])}</td>)}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <Card render={<section aria-label="시도별" />}>
+            <PanelTitle>시도별 <small className={sub}>· 호</small></PanelTitle>
+            <Table>
+              <TableHeader><tr><TableHead>시도</TableHead>{METRICS.map((k) => <TableHead key={k}>{LABEL[k]}</TableHead>)}</tr></TableHeader>
+              <TableBody>
+                {table.map((r) => (
+                  <TableRow key={r.code} total={r.code === NATION}>
+                    <TableCell>{r.code === NATION ? '전국' : <Link href={`/area/${r.code}`}>{r.name}</Link>}</TableCell>
+                    {METRICS.map((k) => <TableCell key={k}>{fmt(r.values[k])}</TableCell>)}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
             <Basis>통계누리 주택건설실적통계. 2026-07부터 &lsquo;전남광주&rsquo;로 집계되고 이전 달은 광주+전남 합산입니다. 인허가는 연초 누계의 차분입니다.</Basis>
-          </section>
+          </Card>
 
-          <section className="panel" aria-label="시행주체별">
-            <h2>시행주체별 <small className="sub">· 전국 · 호</small></h2>
-            <div className="tablewrap">
-              <table className="tbl">
-                <thead><tr><th>시행주체</th>{(['permit', 'start', 'complete'] as const).map((k) => <th key={k}>{LABEL[k]}</th>)}</tr></thead>
-                <tbody>
-                  {ACTORS.map((a) => <tr key={a}><td>{a}</td>{(['permit', 'start', 'complete'] as const).map((k) => <td key={k}>{fmt(seriesOf(molit, k, NATION).actors![a][i])}</td>)}</tr>)}
-                  <tr className="total"><td>총계</td>{(['permit', 'start', 'complete'] as const).map((k) => <td key={k}>{fmt(seriesOf(molit, k, NATION).total[i])}</td>)}</tr>
-                </tbody>
-              </table>
-            </div>
+          <Card render={<section aria-label="시행주체별" />}>
+            <PanelTitle>시행주체별 <small className={sub}>· 전국 · 호</small></PanelTitle>
+            <Table>
+              <TableHeader><tr><TableHead>시행주체</TableHead>{(['permit', 'start', 'complete'] as const).map((k) => <TableHead key={k}>{LABEL[k]}</TableHead>)}</tr></TableHeader>
+              <TableBody>
+                {ACTORS.map((a) => <TableRow key={a}><TableCell>{a}</TableCell>{(['permit', 'start', 'complete'] as const).map((k) => <TableCell key={k}>{fmt(seriesOf(molit, k, NATION).actors![a][i])}</TableCell>)}</TableRow>)}
+                <TableRow total><TableCell>총계</TableCell>{(['permit', 'start', 'complete'] as const).map((k) => <TableCell key={k}>{fmt(seriesOf(molit, k, NATION).total[i])}</TableCell>)}</TableRow>
+              </TableBody>
+            </Table>
             <Basis>분양은 시행주체 구분이 없습니다. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다.</Basis>
-          </section>
+          </Card>
         </>
       ) : null}
 
-      <section className="panel" aria-label="LH 준공 예정">
-        <h2>LH 준공 예정 <small className="sub">· {blocks.length}블록 · {fmt(lhUnits(blocks))}세대</small></h2>
+      <Card render={<section aria-label="LH 준공 예정" />}>
+        <PanelTitle>LH 준공 예정 <small className={sub}>· {blocks.length}블록 · {fmt(lhUnits(blocks))}세대</small></PanelTitle>
         {blocks.length > 0 ? (
-          <div className="tablewrap">
-            <table className="tbl">
-              <thead><tr><th>사업지구</th><th>블록</th><th>공급유형</th><th>세대수</th><th>준공예정일</th><th>위치</th></tr></thead>
-              <tbody>
-                {blocks.map((b, k) => <tr key={k}><td className="wrap">{b.district}</td><td>{b.block}</td><td>{b.type}</td><td>{fmt(b.units)}</td><td>{b.date}</td><td className="wrap">{b.location}</td></tr>)}
-              </tbody>
-            </table>
-          </div>
-        ) : <p className="sub">이 달에 준공 예정인 LH 블록이 파일에 없습니다.</p>}
+          <Table>
+            <TableHeader><tr><TableHead>사업지구</TableHead><TableHead>블록</TableHead><TableHead>공급유형</TableHead><TableHead>세대수</TableHead><TableHead>준공예정일</TableHead><TableHead>위치</TableHead></tr></TableHeader>
+            <TableBody>
+              {blocks.map((b, k) => <TableRow key={k}><TableCell className="min-w-[180px] whitespace-normal">{b.district}</TableCell><TableCell>{b.block}</TableCell><TableCell>{b.type}</TableCell><TableCell>{fmt(b.units)}</TableCell><TableCell>{b.date}</TableCell><TableCell className="min-w-[180px] whitespace-normal">{b.location}</TableCell></TableRow>)}
+            </TableBody>
+          </Table>
+        ) : <p className={sub}>이 달에 준공 예정인 LH 블록이 파일에 없습니다.</p>}
         <Basis>LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 {lh.sourceAsOf}로 {Math.max(0, (Number(last.slice(0, 4)) - Number(lh.sourceAsOf.slice(0, 4))) * 12 + Number(last.slice(5)) - Number(lh.sourceAsOf.slice(5, 7)))}개월 묵었습니다. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.</Basis>
-      </section>
-    </div>
+      </Card>
+    </Page>
   );
 }
