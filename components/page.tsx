@@ -15,3 +15,12 @@ export const SectionTitle = ({ className, ...p }: ComponentProps<'h2'>) => <h2 c
 export const SubTitle = ({ className, ...p }: ComponentProps<'h3'>) => <h3 className={cn('mt-[18px] mb-2 text-[14px] font-bold text-muted-foreground', className)} {...p} />;
 /* 카드 안 작은 글씨: .panel .sub */
 export const sub = 'text-[12px] text-muted-foreground';
+
+/* 목록 카드 격자(.cards)·KPI 격자(.kpis)·두 칸(.cols2): 자동 칸 수 */
+export const cardsGrid = 'grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] gap-2.5';
+export const kpisGrid = 'mt-3.5 grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-2.5';
+export const cols2 = 'mt-1 grid grid-cols-[repeat(auto-fit,minmax(min(420px,100%),1fr))] gap-3.5';
+/* 정의 목록(.dl) */
+export const Dl = ({ className, ...p }: ComponentProps<'dl'>) => (
+  <dl className={cn('mt-2.5 mb-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-[14px] [&_dt]:text-muted-foreground [&_dd]:m-0 [&_dd]:[overflow-wrap:anywhere]', className)} {...p} />
+);

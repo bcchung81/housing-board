@@ -46,10 +46,14 @@ const H = 900, CAP = 6000;
 const slug = (s) => (s === "/" ? "home" : s.replace(/^\\//, "").replace(/[\\/?=&]+/g, "-"));
 const task = await taskSpace("visual shoot");
 const page = task.page("p1");
+try {
 await page.goto(C.base + "/");
 await page.waitForLoadState();
 const DPR = await page.evaluate(() => devicePixelRatio);   // 이 브라우저의 화면 배율(예 1.1). 뷰포트 폭은 이만큼 나뉘어 적용되므로 미리 곱해 준다
 await page.cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduced-motion", value: "reduce" }] });
+/* 모든 이동은 빈 문서를 거친다. 앞 화면이 모바일 폭이었는지·스크롤바가 있었는지에 따라 같은 화면의 본문 폭이 14px 달라져(1206/1220) 줄바꿈과 높이가 흔들렸다
+   (2026-10-09: 같은 / 가 실행 이력에 따라 2083 과 2043 으로 측정됨. 빈 문서를 거치면 이력과 상관없이 같은 쪽이 된다). */
+const nav = async (url) => { await page.goto("about:blank"); await page.goto(url); await page.waitForLoadState(); };
 const setView = async (w) => {
   const mobile = w < 600;   // 모바일 에뮬레이션은 배율 보정 없이 폭 그대로 적용된다
   await page.cdp("Emulation.setDeviceMetricsOverride", { width: mobile ? w : Math.round(w * DPR), height: mobile ? 844 : Math.round(H * DPR), deviceScaleFactor: mobile ? 1 : 1, mobile });
@@ -72,7 +76,19 @@ const fullView = async (w, h) => {
   await page.cdp("Emulation.setDeviceMetricsOverride", { width: mobile ? w : Math.round(w * DPR), height: mobile ? h : Math.round(h * DPR), deviceScaleFactor: 1, mobile });
   await page.waitForTimeout(400);
 };
+/* 페이지 높이가 두 번 연속 같을 때까지 기다린다. 하이드레이션·글꼴·높이 예약(Reserve) 때문에 바로 재면 40px 짧게 잰 적이 있다
+   (2026-10-09: 같은 화면이 2043 과 2083 으로 갈렸고, 기준선의 state-home-* 아홉 장이 아래 40px 잘려 있었다). */
+const stableHeight = async () => {
+  let prev = -1, same = 0;
+  for (let i = 0; i < 40 && same < 3; i++) {
+    const h = await page.evaluate(() => document.documentElement.scrollHeight);
+    same = h === prev ? same + 1 : 0; prev = h;
+    await page.waitForTimeout(150);
+  }
+  return prev;
+};
 const shot = async (file) => {
+  await stableHeight();
   const m = await page.evaluate(() => ({ w: innerWidth, h: Math.ceil(document.documentElement.scrollHeight) }));
   const h = Math.min(m.h, CAP);
   await fullView(m.w, h);
@@ -86,7 +102,7 @@ for (const w of C.widths) {
   await setView(w);
   for (const r of C.routes) {
     if (!want(r)) continue;
-    await page.goto(C.base + r); await page.waitForLoadState(); await settle();
+    await nav(C.base + r); await settle();
     const h = await shot(slug(r) + "@" + w); n++;
     console.log(w, r, "height", h);
   }
@@ -96,7 +112,7 @@ for (let i = 0; i < C.states.length; i++) {
   if (!want(route)) continue;
   for (const w of widths) {
     await setView(w);
-    await page.goto(C.base + route); await page.waitForLoadState(); await settle();
+    await nav(C.base + route); await settle();
     await ACT[i](page); await page.waitForTimeout(450);
     await shot("state-" + name + "@" + w); n++;
     console.log("state", name, w);
@@ -107,18 +123,27 @@ for (let i = 0; i < C.states.length; i++) {
 if (C.map) {
   for (const w of [1440, 390]) {
     await setView(w);
-    await page.goto(C.base + "/map?region=jeonnam-naju&selftest=1"); await page.waitForLoadState();
+    await nav(C.base + "/map?region=jeonnam-naju&selftest=1");
     await page.waitForFunction(() => window.__mapStatus && window.__mapStatus.loaded, undefined, { timeout: 60000 }).catch(() => {});
     await settle();
     await cap("map-rail@" + w, { x: 0, y: 0, width: w < 600 ? 70 : 60, height: H });
     n++; console.log("map-rail", w);
   }
 }
-await page.cdp("Emulation.setDeviceMetricsOverride", { width: 0, height: 0, deviceScaleFactor: 0, mobile: false });
-await task.finish({ keep: [] });
 console.log("찍은 장수:", n);
+} finally {
+  /* 중간에 죽어도 작업 공간을 남기지 않는다(남으면 다음 실행의 창이 가려져 캡처가 멈춘다) */
+  await page.cdp("Emulation.setDeviceMetricsOverride", { width: 0, height: 0, deviceScaleFactor: 0, mobile: false }).catch(() => {});
+  await task.finish({ keep: [] }).catch(() => {});
+}
 `;
 
+/* macOS: 작업 공간이 끝나면 창이 닫히고, 다음 작업 공간의 새 창이 앞에 나오지 못하면 가려진 창으로 취급돼 Page.captureScreenshot 이 멈춘다.
+   (2026-10-09: 활성화 직후엔 되고 활성화 없이 새 공간을 만들면 CdpRequestTimeoutError). 시작 전에 앱을 앞으로 가져온다. */
+if (process.platform === 'darwin') {
+  require('node:child_process').spawnSync('open', ['-a', 'ego lite']);
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
+}
 const child = spawn('ego-browser', ['nodejs'], { stdio: ['pipe', 'inherit', 'inherit'] });
 child.stdin.end(script);
 child.on('exit', (code) => process.exit(code ?? 1));

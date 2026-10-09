@@ -1,4 +1,5 @@
-import * as React from "react"
+import { mergeProps } from "@base-ui/react/merge-props"
+import { useRender } from "@base-ui/react/use-render"
 import { cva, type VariantProps } from "class-variance-authority"
 import { cn } from "cn"
 
@@ -16,8 +17,13 @@ const cardVariants = cva("border border-border bg-card text-card-foreground", {
   defaultVariants: { variant: "panel" },
 })
 
-function Card({ className, variant, ...props }: React.ComponentProps<"div"> & VariantProps<typeof cardVariants>) {
-  return <div data-slot="card" className={cn(cardVariants({ variant }), className)} {...props} />
+function Card({ className, variant, render, ...props }: useRender.ComponentProps<"div"> & VariantProps<typeof cardVariants>) {
+  return useRender({
+    defaultTagName: "div",
+    props: mergeProps<"div">({ className: cn(cardVariants({ variant }), className) }, props),
+    render,
+    state: { slot: "card", variant },
+  })
 }
 
 export { Card, cardVariants }
