@@ -63,11 +63,11 @@ test('build(미리보기 배포·로컬): 미리보기 지역도 들어간다', 
   assert.ok(fs.existsSync(path.join(root, 'public/regions/b/region.json')));
 });
 
-test('build: 필요한 것만 복사한다(index.html, assets, regions) — data·tools·*.md 는 제외', () => {
+test('build: 필요한 것만 복사한다(assets, regions) — index.html(지도 마크업 정본, Next.js 가 루트에서 읽음)·data·tools·*.md 는 제외', () => {
   const root = fixture([R('a', { default: true })]);
   build({ root, env: {}, log: silent });
   const has = (p) => fs.existsSync(path.join(root, 'public', p));
-  assert.ok(has('index.html')); assert.ok(has('assets/js/app.js')); assert.ok(has('config.js'));
+  assert.ok(!has('index.html')); assert.ok(has('assets/js/app.js')); assert.ok(has('config.js'));
   assert.ok(!has('data')); assert.ok(!has('tools')); assert.ok(!has('assets/README.md'));
 });
 

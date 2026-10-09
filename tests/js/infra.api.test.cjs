@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const { createCache } = require('../../lib/cache.js');
 const { createKeyPool, memoryStore } = require('../../lib/keys.js');
 const I = require('../../lib/infra.js');
-const api = require('../../api/v1/infra.js');
+const api = require('../../handlers/v1/infra.js');
 
 /* ---------- lib/infra.js ---------- */
 const row = (over) => Object.assign({ schlSeq: 51, schlNm: '(가칭)덕풍초', ditcNm: '초', openSchdYm: '202903', classCnt: '44', stdtCnt: '1113', realAddr: '경기도 하남시 덕풍동 1 일원', pointX: '37.5400', pointY: '127.2000' }, over);
@@ -172,7 +172,7 @@ test('인허가를 CDN 에서 받는다(Vercel): 이 서버의 permits 공개 �
   assert.equal(a.status, 200); assert.equal(a.json.meta.centers, 1); assert.ok(a.json.stops.length > 0);
   const cdn = viaCdn.calls.filter((c) => host(c.url) === 'housing-board.example.app'); assert.equal(cdn.length, 1); assert.equal(cdn[0].url, `https://housing-board.example.app/api/v1/permits?bjd=${BJD}`);
   assert.equal(viaCdn.calls.filter((c) => c.url.includes('HsPmsHubService') || host(c.url) === 'api.vworld.kr').length, 0, '인허가를 다시 만들지 않는다');
-  assert.ok(!/headers\.host|x-forwarded-host/i.test(require('node:fs').readFileSync(require('node:path').join(__dirname, '../../api/v1/infra.js'), 'utf8')), '요청의 Host 헤더를 주소에 쓰지 않는다');
+  assert.ok(!/headers\.host|x-forwarded-host/i.test(require('node:fs').readFileSync(require('node:path').join(__dirname, '../../handlers/v1/infra.js'), 'utf8')), '요청의 Host 헤더를 주소에 쓰지 않는다');
   for (const down of [() => raw(500, ''), () => raw(401, '<html>보호됨</html>'), () => ok({ type: 'Other' }), () => ok({ ...permitsBody, bjd: '1111111111' })]) {
     const h = harness({ env: VERCEL, fetch: (url, init, n) => (host(url) === 'housing-board.example.app' ? down() : defaultFetch(url, init, n)) });
     const r = await h.run(`/api/v1/infra?bjd=${BJD}`); assert.equal(r.status, 200); assert.ok(r.json.meta.centers >= 1);                          // 못 받으면 직접 만들어 같은 결과

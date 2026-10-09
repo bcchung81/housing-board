@@ -28,7 +28,7 @@ const ttlFor = (routeCount, keyCount = 1) => Math.max(MIN_TTL_S, Math.ceil(route
 /* 지역 번들에서 실시간으로 부를 노선 {city, routes:[id]} — 없으면 null */
 function readLiveRoutes(slug) {
   try {
-    const infra = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'regions', slug, 'infra.json'), 'utf8'));
+    const infra = JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ path.join(require('../lib/root.js').ROOT, 'regions', slug, 'infra.json'), 'utf8'));
     const routes = (infra.busRoutes || []).filter((r) => r && r.live && typeof r.id === 'string').map((r) => r.id);
     return infra.busCityCode && routes.length ? { city: Number(infra.busCityCode), routes } : null;
   } catch (e) {

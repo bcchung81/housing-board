@@ -159,7 +159,7 @@ function harness(mod, over = {}) {
 }
 const ok = (json) => ({ ok: true, status: 200, json: async () => json, text: async () => JSON.stringify(json) });
 const raw = (status, text) => ({ ok: status < 400, status, json: async () => JSON.parse(text || 'null'), text: async () => text });
-const API = { resolve: require('../../api/v1/resolve.js'), search: require('../../api/v1/codes/search.js'), notices: require('../../api/v1/notices.js'), buildings: require('../../api/v1/buildings.js'), permits: require('../../api/v1/permits.js'), infra: require('../../api/v1/infra.js'), bus: require('../../api/bus.js') };
+const API = { resolve: require('../../handlers/v1/resolve.js'), search: require('../../handlers/v1/codes/search.js'), notices: require('../../handlers/v1/notices.js'), buildings: require('../../handlers/v1/buildings.js'), permits: require('../../handlers/v1/permits.js'), infra: require('../../handlers/v1/infra.js'), bus: require('../../handlers/bus.js') };
 const OPS = { resolve: '/api/v1/resolve', search: '/api/v1/codes/search', notices: '/api/v1/notices', buildings: '/api/v1/buildings', permits: '/api/v1/permits', infra: '/api/v1/infra' };
 const documented = (path_, status) => Object.keys(DOC.paths[path_].get.responses).includes(String(status));
 
@@ -229,7 +229,7 @@ test('오류 계약: /api/bus 는 옛 모양 {error} 를 BusError 로 문서화�
 
 /* ---------- ④ 문서의 매개변수 = 핸들러가 받는 이름 ---------- */
 test('문서의 쿼리 매개변수 이름이 핸들러의 허용 목록(ALLOWED)과 같다(문서와 코드가 어긋나면 깨진다)', () => {
-  const files = { '/api/v1/resolve': 'api/v1/resolve.js', '/api/v1/codes/search': 'api/v1/codes/search.js', '/api/v1/notices': 'api/v1/notices.js', '/api/v1/buildings': 'api/v1/buildings.js', '/api/v1/permits': 'api/v1/permits.js', '/api/v1/infra': 'api/v1/infra.js' };
+  const files = { '/api/v1/resolve': 'handlers/v1/resolve.js', '/api/v1/codes/search': 'handlers/v1/codes/search.js', '/api/v1/notices': 'handlers/v1/notices.js', '/api/v1/buildings': 'handlers/v1/buildings.js', '/api/v1/permits': 'handlers/v1/permits.js', '/api/v1/infra': 'handlers/v1/infra.js' };
   for (const [p, f] of Object.entries(files)) {
     const m = /const ALLOWED = new Set\(\[([^\]]*)\]\)/.exec(fs.readFileSync(path.join(ROOT, f), 'utf8'));
     assert.ok(m, `${f} 에 ALLOWED 가 있어야 한다`);
@@ -237,13 +237,13 @@ test('문서의 쿼리 매개변수 이름이 핸들러의 허용 목록(ALLOWED
     const doc = DOC.paths[p].get.parameters.map((x) => x.name).sort();
     assert.deepEqual(doc, code, `${p} 문서 매개변수와 코드 허용 목록`);
   }
-  const bus = fs.readFileSync(path.join(ROOT, 'api/bus.js'), 'utf8');
+  const bus = fs.readFileSync(path.join(ROOT, 'handlers/bus.js'), 'utf8');
   assert.match(bus, /keys\[0\] !== 'region'/); assert.deepEqual(DOC.paths['/api/bus'].get.parameters.map((x) => x.name), ['region']);
 });
 
 test('문서의 캐시 규칙이 코드와 같다: 200 의 Cache-Control 문구가 각 핸들러 소스의 s-maxage 값과 일치', () => {
   const src = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
-  const want = { '/api/v1/resolve': ['api/v1/resolve.js', 's-maxage=300'], '/api/v1/codes/search': ['api/v1/codes/search.js', 's-maxage=3600'], '/api/v1/notices': ['api/v1/notices.js', 's-maxage=3600'], '/api/v1/buildings': ['api/v1/buildings.js', 's-maxage=86400'], '/api/v1/permits': ['api/v1/permits.js', 's-maxage=86400'], '/api/v1/infra': ['api/v1/infra.js', 's-maxage=86400'] };
+  const want = { '/api/v1/resolve': ['handlers/v1/resolve.js', 's-maxage=300'], '/api/v1/codes/search': ['handlers/v1/codes/search.js', 's-maxage=3600'], '/api/v1/notices': ['handlers/v1/notices.js', 's-maxage=3600'], '/api/v1/buildings': ['handlers/v1/buildings.js', 's-maxage=86400'], '/api/v1/permits': ['handlers/v1/permits.js', 's-maxage=86400'], '/api/v1/infra': ['handlers/v1/infra.js', 's-maxage=86400'] };
   for (const [p, [f, s]] of Object.entries(want)) {
     assert.ok(DOC.paths[p].get.responses['200'].headers['Cache-Control'].description.includes(s), `${p} 문서`);
     assert.ok(src(f).includes(s), `${p} 코드에 ${s}`);

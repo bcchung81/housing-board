@@ -1,7 +1,7 @@
 /* api/bus.js — 버스 위치 중계. 네트워크 없이 가짜 fetch 로 시험한다. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const bus = require('../../api/bus.js');
+const bus = require('../../handlers/bus.js');
 const { createKeyPool, memoryStore } = require('../../lib/keys.js');
 const { createCache } = require('../../lib/cache.js');
 
@@ -133,7 +133,7 @@ test('TAGO 가 동시 접속 가득(99)이면 한 번 다시 시도한다. 다�
 });
 
 test('실제 번들: 계양 infra.json 의 live 노선과 도시코드를 읽는다', () => {
-  const real = require('../../api/bus.js').createHandler;
+  const real = require('../../handlers/bus.js').createHandler;
   assert.equal(typeof real, 'function');
   const fs = require('node:fs');
   const infra = JSON.parse(fs.readFileSync(require('node:path').join(__dirname, '../../regions/incheon-gyeyang/infra.json'), 'utf8'));

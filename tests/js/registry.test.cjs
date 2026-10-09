@@ -55,9 +55,10 @@ test('readRegistry: 파일이 없으면 빈 레지스트리, 깨졌으면 빈 �
   } finally { console.error = err; fs.rmSync(dir, { recursive: true, force: true }); }
 });
 
-test('기본 경로는 저장소의 registry/projects.json 이고 vercel.json 이 resolve·permits 함수에 이 파일을 포함시킨다', () => {
+test('기본 경로는 저장소의 registry/projects.json 이고 next.config.ts 가 resolve·permits 함수에 이 파일을 포함시킨다', () => {
   assert.equal(path.relative(ROOT, DEFAULT_FILE), path.join('registry', 'projects.json'));
-  const vj = JSON.parse(fs.readFileSync(path.join(ROOT, 'vercel.json'), 'utf8')).functions;
-  assert.match(vj['api/v1/resolve.js'].includeFiles, /registry\/projects\.json/); assert.match(vj['api/v1/permits.js'].includeFiles, /registry\/projects\.json/);
-  assert.ok(!/registry/.test(vj['api/v1/notices.js'].excludeFiles || ''), '공고 함수는 레지스트리를 쓰지 않는다');
+  const inc = require('../../next.config.ts').default.outputFileTracingIncludes;
+  assert.ok(inc['/api/v1/resolve'].includes('./registry/projects.json')); assert.ok(inc['/api/v1/permits'].includes('./registry/projects.json'));
+  assert.ok(!('/api/v1/notices' in inc), '공고 함수는 레지스트리를 쓰지 않는다');
 });
+

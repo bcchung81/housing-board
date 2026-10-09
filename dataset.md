@@ -54,9 +54,9 @@
 
 **'프로덕션'이 가리키는 것**
 
-- **배포물** = `scripts/build.js`가 `public/`에 모으는 `index.html` · `assets/` · `regions/`(`index.json`에 오른 지역만) · `config.js`. `workspace/` `tools/` `tests/` `docs/` `schemas/`와 `*.md`는 올라가지 않습니다. 서버 함수(`api/bus.js`·`api/v1/resolve.js`)는 `public/`에 복사되지 않고 저장소 루트의 `api/`에서 Vercel이 따로 빌드합니다(두 함수 모두 라이브에서 200, 확인함. `lib/`는 함수가 가져가고 `regions/` 파일은 `vercel.json`의 `includeFiles`로 올라가며 `.cache/`와 큰 번들은 `excludeFiles`로 뺍니다. 함수 지역은 서울 `icn1`). [코드] `scripts/build.js` · `.vercelignore` · `vercel.json`
+- **배포물** = `scripts/build.js`가 `public/`에 모으는 `assets/` · `regions/`(지도 마크업 `index.html`은 복사하지 않고 Next.js가 `/map`을 그릴 때 루트에서 읽음)(`index.json`에 오른 지역만) · `config.js`. `workspace/` `tools/` `tests/` `docs/` `schemas/`와 `*.md`는 올라가지 않습니다. 서버 함수(`handlers/bus.js`·`handlers/v1/resolve.js`)는 `public/`에 복사되지 않고 저장소 루트의 `api/`에서 Vercel이 따로 빌드합니다(두 함수 모두 라이브에서 200, 확인함. `lib/`는 함수가 가져가고 `regions/` 파일은 `vercel.json`의 `includeFiles`로 올라가며 `.cache/`와 큰 번들은 `excludeFiles`로 뺍니다. 함수 지역은 서울 `icn1`). [코드] `scripts/build.js` · `.vercelignore` · `vercel.json`
 - **라이브** — 2026-10-05 16:39 KST 배포입니다(확인함. 처음 배포는 16:28이고 V-World 설정을 고쳐 여러 번 다시 배포함). 화면 스크립트는 `app.js` `region.js` `infra.js` `facility.js` `bus.js`이고 계양 번들에 `infra.json`이 있으며 `/api/bus?region=incheon-gyeyang`이 200으로 버스 28대를, `/api/v1/resolve`가 법정동·필지 경계를 줍니다. 헤더에 `X-Frame-Options: DENY`와 `frame-ancestors 'none'`이 있습니다. Vercel 환경변수는 `DATA_GO_KR_KEY`·`VWORLD_KEY`·`VWORLD_DOMAIN`(값 `housing-board.vercel.app`, Production·Preview)이며 `VWORLD_KEY`는 운영키입니다. 로컬 `.env.local`의 `VWORLD_DEV_KEY`는 Vercel에 올리지 않았습니다. 용도별 키는 용도별 키(`DATA_GO_KR_KEY_BUS_<N>` 등)는 아직 없습니다(없으면 `DATA_GO_KR_KEY`를 씁니다). 지역 3개(계양 · 광산구 · 나주)가 모두 `visibility: public`입니다. 계양 라이브 번들은 약 6.1 MB(MB=10⁶ B)이고 그중 건물이 6.0 MB입니다.
-- **다음 배포** = (2026-10-05 19:44에 모두 배포되어 지금은 비어 있음. 아래는 그 배포에 들어간 변경으로, 저장소에는 커밋됨입니다.) **번들 없는 지역 열기와 건물 요청 시 조회**입니다: `assets/js/region.js`(`emptyBundle`, `dynParam`, 경계 `geometry=1`), `assets/js/app.js`(`DYN`: 칸 불러오기·붙이기·반영), `index.html`·`app.css`(`#dynHint`), `api/v1/buildings.js`, `lib/buildings.js`, `lib/vworld.js`, `vercel.json`(`buildings` 함수 설정), `env.example`(`BUILDINGS_UPSTREAM_PER_HOUR`). **인허가 사업 요청 시 조회**: `api/v1/permits.js`, `lib/permits.js`, `lib/geom.js`(경계 단순화 공용), `region.js`(`permitsToProjects`·`fetchPermits`), `app.js`(필지로 열면 단지 선택), `vercel.json`(`permits`·`infra` 함수), `env.example`(`PERMITS_UPSTREAM_PER_HOUR`·`INFRA_UPSTREAM_PER_HOUR`), **기반시설 요청 시 조회**(`api/v1/infra.js`, `lib/infra.js`, `lib/datagokr.js`: 공공데이터포털 한 쪽 조회·재시도·한도 공용, `region.js`의 `fetchInfra`), **인허가 한계 보완**(블록 단위 허가 목록·필지 못 찾은 원인·예정일 경과·후보 0 안내), **건물대장 보강**(`lib/stan.js`, `lib/permits.js`의 `matchLedger`, `env.example`의 `LEDGER_UPSTREAM_PER_HOUR`·`hubledger`), `run-app.sh [포트] [코드]`(첫 화면을 코드로 열기, 기본 `41450`). 이전 배포의 변경(표준코드 진입·버튼 조회·키 풀·프레임 차단·함수 지역 `icn1`)은 이미 라이브입니다.
+- **다음 배포** = (2026-10-05 19:44에 모두 배포되어 지금은 비어 있음. 아래는 그 배포에 들어간 변경으로, 저장소에는 커밋됨입니다.) **번들 없는 지역 열기와 건물 요청 시 조회**입니다: `assets/js/region.js`(`emptyBundle`, `dynParam`, 경계 `geometry=1`), `assets/js/app.js`(`DYN`: 칸 불러오기·붙이기·반영), `index.html`·`app.css`(`#dynHint`), `handlers/v1/buildings.js`, `lib/buildings.js`, `lib/vworld.js`, `vercel.json`(`buildings` 함수 설정), `env.example`(`BUILDINGS_UPSTREAM_PER_HOUR`). **인허가 사업 요청 시 조회**: `handlers/v1/permits.js`, `lib/permits.js`, `lib/geom.js`(경계 단순화 공용), `region.js`(`permitsToProjects`·`fetchPermits`), `app.js`(필지로 열면 단지 선택), `vercel.json`(`permits`·`infra` 함수), `env.example`(`PERMITS_UPSTREAM_PER_HOUR`·`INFRA_UPSTREAM_PER_HOUR`), **기반시설 요청 시 조회**(`handlers/v1/infra.js`, `lib/infra.js`, `lib/datagokr.js`: 공공데이터포털 한 쪽 조회·재시도·한도 공용, `region.js`의 `fetchInfra`), **인허가 한계 보완**(블록 단위 허가 목록·필지 못 찾은 원인·예정일 경과·후보 0 안내), **건물대장 보강**(`lib/stan.js`, `lib/permits.js`의 `matchLedger`, `env.example`의 `LEDGER_UPSTREAM_PER_HOUR`·`hubledger`), `run-app.sh [포트] [코드]`(첫 화면을 코드로 열기, 기본 `41450`). 이전 배포의 변경(표준코드 진입·버튼 조회·키 풀·프레임 차단·함수 지역 `icn1`)은 이미 라이브입니다.
 
 ## 2. 데이터별 만드는 절차
 
@@ -223,10 +223,10 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 ### 2.14 버스 위치(서버 중계) — `/api/bus` (번들이 아님)
 
-버스 위치만은 번들에 넣지 않고 실행 중에 가져옵니다. 브라우저가 data.go.kr을 직접 부르면 인증키가 드러나고 호출 수를 묶을 수 없기 때문에 서버 함수가 중계합니다. [코드] `api/bus.js` · `assets/js/bus.js` · `assets/js/app.js` · `vercel.json` · `scripts/dev.js`
+버스 위치만은 번들에 넣지 않고 실행 중에 가져옵니다. 브라우저가 data.go.kr을 직접 부르면 인증키가 드러나고 호출 수를 묶을 수 없기 때문에 서버 함수가 중계합니다. [코드] `handlers/bus.js` · `assets/js/bus.js` · `assets/js/app.js` · `vercel.json` · `scripts/dev.js`
 
 ```
-브라우저 ──GET /api/bus?region=<slug>──► api/bus.js (Vercel 함수) ──► TAGO 버스위치정보(15098533) getRouteAcctoBusLcList
+브라우저 ──GET /api/bus?region=<slug>──► handlers/bus.js (Vercel 함수) ──► TAGO 버스위치정보(15098533) getRouteAcctoBusLcList
          ◄── {at, ttl, buses[{r,v,lon,lat,ord,stop}], failed?} ──┘          (노선마다 1회, 키는 서버 환경변수)
 ```
 
@@ -247,10 +247,10 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 ### 2.15 표준코드 해석(서버 중계) — `/api/v1/resolve` (번들이 아님)
 
-주소의 `?code=` `?sgg=` `?bjd=` `?pnu=`를 받아 지도가 어디를 열지 정합니다. 표준코드는 **법정동코드**(10자리: 시도 2 + 시군구 3 + 읍면동 3 + 리 2)이고 행정동은 쓰지 않습니다(연계표 적재는 하지 않았고 조사만 했음). [코드] `api/v1/resolve.js` · `lib/codes.js` · `lib/keys.js` · `lib/cache.js` · `assets/js/region.js` · `assets/js/app.js`. 규격과 근거는 `docs/product/상황판-스펙.md`·`조사기록-표준코드-서울버스-사업ID.md`.
+주소의 `?code=` `?sgg=` `?bjd=` `?pnu=`를 받아 지도가 어디를 열지 정합니다. 표준코드는 **법정동코드**(10자리: 시도 2 + 시군구 3 + 읍면동 3 + 리 2)이고 행정동은 쓰지 않습니다(연계표 적재는 하지 않았고 조사만 했음). [코드] `handlers/v1/resolve.js` · `lib/codes.js` · `lib/keys.js` · `lib/cache.js` · `assets/js/region.js` · `assets/js/app.js`. 규격과 근거는 `docs/product/상황판-스펙.md`·`조사기록-표준코드-서울버스-사업ID.md`.
 
 ```
-브라우저 ──GET /api/v1/resolve?bjd=2824510900──► api/v1/resolve.js ──► ① 행정표준코드 법정동코드 API(StanReginCd, 시군구 단위, 24시간 캐시)
+브라우저 ──GET /api/v1/resolve?bjd=2824510900──► handlers/v1/resolve.js ──► ① 행정표준코드 법정동코드 API(StanReginCd, 시군구 단위, 24시간 캐시)
                                                                     ──► ② V-World 경계·필지(LT_C_ADSIGG_INFO · LT_C_ADEMD_INFO · LP_PA_CBND_BUBUN, 24시간 캐시)
          ◄── {type, name, level, center, geometry, coverage{tier, slug}, warnings, …} ──┘  ③ coverage: regions/ 의 region.json `codes`(시군구)
 ```
@@ -266,14 +266,14 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 구가 있는 시 | V-World 시군구 경계(`LT_C_ADSIGG_INFO`)에는 **구가 있는 시의 "시" 코드가 없고 구만 있습니다**(실측: 화성시 `41590`은 없고 `41591`~`41597`만 있음. 수원·청주·포항·창원·고양·용인·천안·전주 등 9개 시가 경계 없이 열렸음). 시군구로 열었는데 경계가 없으면 코드 앞 4자리가 같은 구들(`sig_cd:like:4159`)을 한 번에 받아 하나의 MultiPolygon으로 합쳐 시 경계로 쓰고 `warnings`에 `districts-merged`를 남깁니다(24시간 캐시). 구도 없으면 경계 없이 엽니다 |
 | 이웃 법정동 | 같은 시군구의 읍면동(리 제외, 최대 150)을 `neighbors:[{bjd,name}]`로 줍니다. 시군구로 열면 전체, 법정동·필지로 열면 자기 자신을 뺀 나머지입니다. 인허가 사업이 0건인 법정동(예: 하남 미사동)에서 화면이 "다른 법정동을 골라 보세요" 칩 목록으로 씁니다. 행정표준코드 표에서 만들므로 추가 호출이 없습니다 |
 | 확인 | 2026-10-05 로컬에서 실제 호출: 계양구 `28245`·광산구 `12330`·나주 `12170`(모두 등급 A), 법정동 `2824510900`(박촌동)·`12330106`·`12170134`, 필지 `2824510901017700000`(박촌동 177, 경계 반환), 서울 성북구 `11290`(등급 없음), 잘못된 코드 400. 브라우저에서 `?bjd=2824510900`이 계양 번들·박촌동 중심 줌 15.4로 열리고 경계 레이어가 올라오는 것, 서울 코드의 안내 화면을 확인했습니다. 화면 캡처는 시간 초과로 눈으로 보지 못했습니다. **배포본(2026-10-05 16:31 KST) 확인**: 시군구·법정동·필지·서울 코드 모두 로컬과 같은 결과이고(법정동·필지는 경계 반환), 브라우저에서 `?bjd=2824510900`이 계양 번들·줌 15.4로 열리며 배경 지도는 V-World로 뜹니다 |
-| 운영 V-World 호출 | **운영키·개발키 분리**: V-World 키는 발급할 때 등록한 서비스 URL과 같은 `domain` 값을 보내야 통과합니다(아니면 `INCORRECT_KEY`, 2026-10-05 직접 확인). 운영키 `VWORLD_KEY`는 `housing-board.vercel.app`에서, 개발키 `VWORLD_DEV_KEY`는 `localhost`에서만 통과합니다(서로 바꾸면 거절). 그래서 Vercel에는 `VWORLD_KEY`(운영키)와 `VWORLD_DOMAIN=housing-board.vercel.app`을 두고, 로컬 `.env.local`은 `VWORLD_DEV_KEY`와 `VWORLD_DOMAIN=localhost`를 둡니다. 코드는 Vercel(`VERCEL` 환경변수 있음)에서는 `VWORLD_KEY`를, 그 밖(개발 서버·수집 도구)에서는 `VWORLD_DEV_KEY`가 있으면 그것을 씁니다(`api/v1/resolve.js`의 `vworldCreds`, `tools/regiontools/api.py`의 `load_keys`). 또 함수가 기본 지역(미국 `iad1`)이면 V-World 호출이 `fetch failed`로 실패해 `vercel.json`의 `regions: ["icn1"]`(서울)로 옮겼고, 서울에서도 데이터포털 호출은 정상입니다. 실패 원인은 서버 로그(`resolve vworld: …`, 키·도메인 값은 가림)에 남습니다. |
+| 운영 V-World 호출 | **운영키·개발키 분리**: V-World 키는 발급할 때 등록한 서비스 URL과 같은 `domain` 값을 보내야 통과합니다(아니면 `INCORRECT_KEY`, 2026-10-05 직접 확인). 운영키 `VWORLD_KEY`는 `housing-board.vercel.app`에서, 개발키 `VWORLD_DEV_KEY`는 `localhost`에서만 통과합니다(서로 바꾸면 거절). 그래서 Vercel에는 `VWORLD_KEY`(운영키)와 `VWORLD_DOMAIN=housing-board.vercel.app`을 두고, 로컬 `.env.local`은 `VWORLD_DEV_KEY`와 `VWORLD_DOMAIN=localhost`를 둡니다. 코드는 Vercel(`VERCEL` 환경변수 있음)에서는 `VWORLD_KEY`를, 그 밖(개발 서버·수집 도구)에서는 `VWORLD_DEV_KEY`가 있으면 그것을 씁니다(`handlers/v1/resolve.js`의 `vworldCreds`, `tools/regiontools/api.py`의 `load_keys`). 또 함수가 기본 지역(미국 `iad1`)이면 V-World 호출이 `fetch failed`로 실패해 `vercel.json`의 `regions: ["icn1"]`(서울)로 옮겼고, 서울에서도 데이터포털 호출은 정상입니다. 실패 원인은 서버 로그(`resolve vworld: …`, 키·도메인 값은 가림)에 남습니다. |
 
 ### 2.16 건물 요청 시 조회(서버 중계) — `/api/v1/buildings` (번들이 아님)
 
-번들이 없는 지역(등급 B·C)과 번들 건물 영역 밖에서 기존 건물 3D를 그리기 위해, 화면이 지도에 보이는 **0.01° 칸**을 서버에서 받아 건물 배열에 붙입니다. [코드] `api/v1/buildings.js` · `lib/buildings.js` · `lib/vworld.js` · `assets/js/app.js`(`DYN`) · `assets/js/region.js`(`emptyBundle`)
+번들이 없는 지역(등급 B·C)과 번들 건물 영역 밖에서 기존 건물 3D를 그리기 위해, 화면이 지도에 보이는 **0.01° 칸**을 서버에서 받아 건물 배열에 붙입니다. [코드] `handlers/v1/buildings.js` · `lib/buildings.js` · `lib/vworld.js` · `assets/js/app.js`(`DYN`) · `assets/js/region.js`(`emptyBundle`)
 
 ```
-브라우저 ──GET /api/v1/buildings?cell=12705,3761──► api/v1/buildings.js ──► V-World LT_C_BLDGINFO (BOX 칸, 1,000동씩 최대 5쪽)
+브라우저 ──GET /api/v1/buildings?cell=12705,3761──► handlers/v1/buildings.js ──► V-World LT_C_BLDGINFO (BOX 칸, 1,000동씩 최대 5쪽)
          ◄── FeatureCollection(번들 buildings.json 과 같은 속성 eh·src·h·f·b·u·n·a·x) ──┘   24시간 로컬 캐시 + CDN
 ```
 
@@ -290,10 +290,10 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 ### 2.17 인허가 사업 요청 시 조회(서버 중계) — `/api/v1/permits` (번들이 아님)
 
-번들이 없는 법정동·필지에서 "어디에 어떤 공급 사업이 있나"를 보이기 위해, 법정동 하나의 **건축HUB 주택인허가 기본개요**(`getHpBasisOulnInfo`)를 번지(PNU) 단위 사업으로 모으고 **필지 경계**(V-World `LP_PA_CBND_BUBUN`)를 붙여 돌려줍니다. 화면은 이를 번들 단지와 같은 모양으로 바꿔 씁니다. [코드] `api/v1/permits.js` · `lib/permits.js` · `lib/geom.js` · `assets/js/region.js`(`permitsToProjects`·`fetchPermits`·`emptyBundle`)
+번들이 없는 법정동·필지에서 "어디에 어떤 공급 사업이 있나"를 보이기 위해, 법정동 하나의 **건축HUB 주택인허가 기본개요**(`getHpBasisOulnInfo`)를 번지(PNU) 단위 사업으로 모으고 **필지 경계**(V-World `LP_PA_CBND_BUBUN`)를 붙여 돌려줍니다. 화면은 이를 번들 단지와 같은 모양으로 바꿔 씁니다. [코드] `handlers/v1/permits.js` · `lib/permits.js` · `lib/geom.js` · `assets/js/region.js`(`permitsToProjects`·`fetchPermits`·`emptyBundle`)
 
 ```
-브라우저 ──GET /api/v1/permits?bjd=4145010800──► api/v1/permits.js ──► 건축HUB getHpBasisOulnInfo (sigunguCd 41450 · bjdongCd 10800, 100건씩 최대 30쪽)
+브라우저 ──GET /api/v1/permits?bjd=4145010800──► handlers/v1/permits.js ──► 건축HUB getHpBasisOulnInfo (sigunguCd 41450 · bjdongCd 10800, 100건씩 최대 30쪽)
          ◄── 단지 후보 FeatureCollection(필지 Polygon + 속성) ──┘   ──► V-World 필지 경계(번지마다 1회, 24시간 캐시, 동시 6개)
 ```
 
@@ -307,7 +307,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 측정 | 덕풍동 기록 453건 → 후보 32 → 지도 30(0.9초), 신장동 442 → 9 → 8, 장위동 89 → 15 → 10, 감일동 32 → 후보 0(블록 단위 12), 미사동 0건. 하남 24개 법정동 중 10곳: 2,304건 중 후보 119건·92번지. **건물대장 보강 뒤(2026-10-05, 하남 24개 법정동 전부)**: 후보 121 → 지도 102(84%)·못 찾음 4·블록 남음 15, 블록 단위 허가 30곳 중 **15곳의 위치를 대장으로 정함**(감일동 12곳 중 10, 망월동 4곳 중 3, 학암동 2곳 중 1, 장위동 1), 합필·분할로 사라진 지번 4곳의 현재 지번 복구. 장위동 못 찾음 5 → 3(래미안 포레카운티 144-24·래미안 장위 퍼스트하이 173-114 복구). 하월곡동 꿈의숲 푸르지오(산2-11)는 이름+세대수로 복구. 첫 호출 1~6초(대장 법정동 24~39곳 포함), 이후 24시간 캐시 |
 | 한계와 원인(확인함) | ① **미사동 0건은 오류가 아님**: 코드는 유효하고(건축인허가 534건) 주택인허가가 0건이며, 미사강변도시 대단지는 망월동·풍산동·선동 아래에 있음. ② **필지를 못 찾음**(81번지 중 9, 11%): 준공 뒤 합필·분할로 허가 때 지번이 없어짐(6), 15년 넘은 조합 허가(2), 택지 지적 미조성(위례 BL, 1) — 지오코더도 NOT_FOUND. ③ **공공주택지구는 블록 단위 허가**(`platGbCd 2`, '○○동 블록', 필지 번호 없음)라 허가만으로는 위치를 못 정함: 감일·학암·망월 후보 45건 중 20건(44%). **건축물대장 총괄표제부와 세대수·대지면적을 맞춰 위치를 정함(아래 "건물대장 보강")**, 못 맞춘 블록만 목록(`blockList`)으로 알림. ④ **"계획"은 착공·사용검사 기록이 원천에 없다는 뜻**: 건축인허가에도 없음. 건축물대장은 2026-10-05 활용신청이 되어(HTTP 200) 같은 지번 대장의 **사용승인일이 허가 이후면 준공(입주 단계)으로 올림**(`statusBy:'ledger'`). 하남은 인허가의 사용검사일이 이미 채워져 올린 곳이 0, 하월곡동 1곳(2018-11-20). 허가만 있는 11곳 중 9곳은 착공 예정일이 이미 지남 → `overdue`로 사실만 덧붙임. 근거 표: `docs/product/조사기록-표준코드-서울버스-사업ID.md` 6절 |
 
-**건물대장 보강**(`lib/permits.js` `matchLedger`·`ledgerCompletion`, `api/v1/permits.js` `enrich`) — 건축HUB **건축물대장정보 총괄표제부**(`BldRgstHubService/getBrRecapTitleInfo`: 지번·세대수 `hhldCnt`·대지면적 `platArea`·사용승인일 `useAprDay`)를 법정동 단위로 받아 쓴다. 블록은 법정동 경계를 가로지르므로 같은 **시군구의 모든 법정동**(행정표준코드, 최대 60곳)을 받는다(감일동 블록의 대장이 감이동에 있음).
+**건물대장 보강**(`lib/permits.js` `matchLedger`·`ledgerCompletion`, `handlers/v1/permits.js` `enrich`) — 건축HUB **건축물대장정보 총괄표제부**(`BldRgstHubService/getBrRecapTitleInfo`: 지번·세대수 `hhldCnt`·대지면적 `platArea`·사용승인일 `useAprDay`)를 법정동 단위로 받아 쓴다. 블록은 법정동 경계를 가로지르므로 같은 **시군구의 모든 법정동**(행정표준코드, 최대 60곳)을 받는다(감일동 블록의 대장이 감이동에 있음).
 
 | 용도 | 규칙 | 실측 |
 |---|---|---|
@@ -319,10 +319,10 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 ### 2.18 기반시설 요청 시 조회(서버 중계) — `/api/v1/infra` (번들이 아님)
 
-번들이 없는 법정동에서도 **입주 전 점검**(교육·교통)이 인허가 단지 위에 나오도록, 단지 가까이의 **신설예정 학교**와 **버스 정류장**을 번들 `infra.json`의 `schools`·`stops`와 같은 모양으로 돌려줍니다. 화면은 이를 `GY_INFRA`로 넣어 기존 `InfraLib`(점검 줄)·기반시설 레이어·"기반시설" 보기를 그대로 씁니다. [코드] `api/v1/infra.js` · `lib/infra.js` · `lib/datagokr.js` · `assets/js/region.js`(`fetchInfra`)
+번들이 없는 법정동에서도 **입주 전 점검**(교육·교통)이 인허가 단지 위에 나오도록, 단지 가까이의 **신설예정 학교**와 **버스 정류장**을 번들 `infra.json`의 `schools`·`stops`와 같은 모양으로 돌려줍니다. 화면은 이를 `GY_INFRA`로 넣어 기존 `InfraLib`(점검 줄)·기반시설 레이어·"기반시설" 보기를 그대로 씁니다. [코드] `handlers/v1/infra.js` · `lib/infra.js` · `lib/datagokr.js` · `assets/js/region.js`(`fetchInfra`)
 
 ```
-브라우저 ──GET /api/v1/infra?bjd=4145010800──► api/v1/infra.js ──► /api/v1/permits 와 같은 캐시에서 인허가 단지 필지 중심 30곳
+브라우저 ──GET /api/v1/infra?bjd=4145010800──► handlers/v1/infra.js ──► /api/v1/permits 와 같은 캐시에서 인허가 단지 필지 중심 30곳
                                                               ──► 교육재정알리미 신설예정학교 전국 220교(POST, 24시간 캐시) → 중심 2 km 안만
                                                               ──► TAGO 근접정류소(중심마다 1회, 150 m 안은 건너뜀, 동시 10개) → 400 m 안만
 ```
@@ -346,7 +346,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 ### 2.19 이동할 곳 검색(서버 중계) — `/api/v1/codes/search` (지도 자료가 아니라 입력줄의 조회 도구, 2026-10-05 밤 운영 배포)
 
-지도 아래 가운데 **주소 이동 입력줄**(스펙 2.5)이 친 글자를 지도가 열 수 있는 코드로 바꿉니다. 새 자료를 모으지 않고 이미 쓰는 두 원천을 이름·주소 입력에 맞게 부릅니다. [코드] `api/v1/codes/search.js` · `lib/stan.js`(`search`) · `lib/coverage.js` · `assets/js/goto.js`
+지도 아래 가운데 **주소 이동 입력줄**(스펙 2.5)이 친 글자를 지도가 열 수 있는 코드로 바꿉니다. 새 자료를 모으지 않고 이미 쓰는 두 원천을 이름·주소 입력에 맞게 부릅니다. [코드] `handlers/v1/codes/search.js` · `lib/stan.js`(`search`) · `lib/coverage.js` · `assets/js/goto.js`
 
 | 항목 | 내용 |
 |---|---|
@@ -362,10 +362,10 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 ### 2.20 공공 모집 공고(서버 중계) — `/api/v1/notices` (번들이 아님, 2026-10-05 밤 운영 배포)
 
-번들이 없는 지역에도 "지금 모집 중인 공공주택"을 사이드바 **공공 모집 공고** 구역으로 보입니다. 새 원천이 아니라 광산구·나주 번들을 만들 때 쓰던 **마이홈포털 공공주택 모집공고(HWSPR02)**를 요청 시에 부르는 것입니다. [코드] `api/v1/notices.js` · `lib/myhome.js` · `assets/js/region.js`(`fetchNotices`·`noticeRows`) · `assets/js/app.js`(`loadNotices`)
+번들이 없는 지역에도 "지금 모집 중인 공공주택"을 사이드바 **공공 모집 공고** 구역으로 보입니다. 새 원천이 아니라 광산구·나주 번들을 만들 때 쓰던 **마이홈포털 공공주택 모집공고(HWSPR02)**를 요청 시에 부르는 것입니다. [코드] `handlers/v1/notices.js` · `lib/myhome.js` · `assets/js/region.js`(`fetchNotices`·`noticeRows`) · `assets/js/app.js`(`loadNotices`)
 
 ```
-브라우저 ──GET /api/v1/notices?sgg=41450──► api/v1/notices.js ──► 행정표준코드로 시군구 이름('경기도 하남시')
+브라우저 ──GET /api/v1/notices?sgg=41450──► handlers/v1/notices.js ──► 행정표준코드로 시군구 이름('경기도 하남시')
                                                               ──► 마이홈 임대 rsdtRcritNtcList · 분양 ltRsdtRcritNtcList (전국, 100건씩, 1시간 캐시)
          ◄── {items:[{id,kind,title,agency,status,housingType,supplyType,complex,units,address,pnu,announcedAt,applyFrom,applyTo,url}], meta} ──┘
 ```
@@ -425,7 +425,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 번들 | 읽지 않는 필드 | 크기 · 비고 |
 |---|---|---|
 | `projects.json` | `events` `flags` `sponsor`(이름·유형) `zoneId` `dongs[].floorsBelow` | 계양 `events`는 0건(12 B). 광산구 3.3 KB, 나주 13.2 KB가 가장 큼 |
-| `infra.json` | `permits[]` 건축HUB 인허가 2건, `busCityCode`, `sources[].publisher·license·redistributable`, `zones[].sources`, `schema_version` | `permits[]`는 335 B. 사이드바 목록을 없앤 뒤 남음. `busCityCode`는 화면 코드가 아니라 서버 함수(`api/bus.js`)가 읽음. `stops[]`·`busRoutes[]`의 필드는 모두 화면이 읽음(11절). `infra.json` 자체가 라이브에는 없음 |
+| `infra.json` | `permits[]` 건축HUB 인허가 2건, `busCityCode`, `sources[].publisher·license·redistributable`, `zones[].sources`, `schema_version` | `permits[]`는 335 B. 사이드바 목록을 없앤 뒤 남음. `busCityCode`는 화면 코드가 아니라 서버 함수(`handlers/bus.js`)가 읽음. `stops[]`·`busRoutes[]`의 필드는 모두 화면이 읽음(11절). `infra.json` 자체가 라이브에는 없음 |
 | `region.json` | `codes` `zones[].type·publicLand` `sources[].url·license·redistributable` `updatedAt` | |
 | `buildings.json` | `meta`의 `title` `license` `attribution` `crs` `crossCheck` `bbox` `fields` `counts` `total` `suspect` `lastApproval` `approvalByYear` `existence` | |
 | `context.json` · `index.json` | `context.asOf` · `regions[].updatedAt` `schema_version` | |
@@ -503,11 +503,11 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 학교 부지·전기·교통 시설 부지 | V-World `LT_C_UPISUQ155`·`154`·`152` | **[자동]** | 있음(`build_infra.py`) | — | 키 필요. 갱신 주기는 확인하지 못함 |
 | 초등 통학구역·학교학구도연계·학교위치 | 데이터포털 파일 3종을 ego lite로 내려받음(받기 → 안내창 → 다운로드) | **[ego lite]** → 이후 **[반자동]** | 있음(파일을 읽음 `ensure_zone_shp` `attendance`) | 로그인 없이도 받을 수 있으나 안내창을 닫아야 함 | 3월·9월 갱신. 직접 URL로 내려받는 방법은 **[시도 안 함]** |
 | 버스정류소·노선 | TAGO API(근접정류소 격자 호출 → 경유노선 → live 노선 경로)를 번들 만들 때 한 번 받음. 예전에는 전국 버스정류장 CSV(15067528)를 ego lite로 받음 | **[자동]** | 있음(`build_infra.py` `build_bus`, `api.tago_*`) | TAGO 서비스 활용신청(처음 한 번, 포털에서) | 원천 갱신 주기는 확인하지 못함. 입주 때 생기는 정류소·노선은 번들을 다시 만들어야 반영 |
-| 버스 위치(노선별) | 화면이 서버 함수 `api/bus.js`를 거쳐 TAGO 버스위치정보(15098533)를 부름 | **[자동]**(실행 중) | 있음(`api/bus.js`) | 활용신청(키마다), 배포 시 `DATA_GO_KR_KEY_BUS_<N>`(또는 `DATA_GO_KR_KEY`) 환경변수 | 버튼을 누를 때만 조회(쿨다운 = 서버 ttl, 계양 60초). 라이브 |
-| 표준코드 해석(시군구·법정동·필지) | 화면이 `api/v1/resolve.js`를 거쳐 행정표준코드 API와 V-World를 부름 | **[자동]**(실행 중) | 있음(`api/v1/resolve.js`) | 행정표준코드 활용신청, `DATA_GO_KR_KEY_RESOLVE_<N>`·`VWORLD_KEY`·`VWORLD_DOMAIN` | 24시간 로컬 캐시. 라이브. 운영에서 V-World 서버 호출이 되려면 운영키·`VWORLD_DOMAIN`(운영 도메인)과 함수 지역 `icn1`이 필요함(2.15절) |
-| 번들 없는 지역의 건물(요청 시) | 화면이 `api/v1/buildings.js`를 거쳐 V-World `LT_C_BLDGINFO`를 칸 단위로 부름 | **[자동]**(실행 중) | 있음(`api/v1/buildings.js`) | V-World 서버 호출(운영키·`VWORLD_DOMAIN`), 함수 지역 `icn1` | 칸 24시간 로컬 캐시·시간당 호출 상한. **2026-10-05 배포됨(커밋됨)** |
-| 번들 없는 법정동의 인허가 사업(요청 시) | 화면이 `api/v1/permits.js`를 거쳐 건축HUB 주택인허가와 V-World 필지를 부름 | **[자동]**(실행 중) | 있음(`api/v1/permits.js`) | 건축HUB 활용신청(주택인허가·건축물대장, 키마다), 키 풀 RESOLVE 용도(서비스 `hub`·`hubledger`), V-World 서버 호출 | 24시간 캐시·시간당 호출 상한·건물대장 호출 간격(초당 한도). **2026-10-05 배포됨(커밋됨)** |
-| 번들 없는 법정동의 신설예정 학교·정류장(요청 시) | 화면이 `api/v1/infra.js`를 거쳐 교육재정알리미와 TAGO 근접정류소를 부름 | **[자동]**(실행 중) | 있음(`api/v1/infra.js`) | TAGO 정류소정보 활용신청(키마다), 키 풀 BUS 용도 | 24시간 캐시·시간당 호출 상한. 서울은 TAGO에 없음. **2026-10-05 배포됨(커밋됨)** |
+| 버스 위치(노선별) | 화면이 서버 함수 `handlers/bus.js`를 거쳐 TAGO 버스위치정보(15098533)를 부름 | **[자동]**(실행 중) | 있음(`handlers/bus.js`) | 활용신청(키마다), 배포 시 `DATA_GO_KR_KEY_BUS_<N>`(또는 `DATA_GO_KR_KEY`) 환경변수 | 버튼을 누를 때만 조회(쿨다운 = 서버 ttl, 계양 60초). 라이브 |
+| 표준코드 해석(시군구·법정동·필지) | 화면이 `handlers/v1/resolve.js`를 거쳐 행정표준코드 API와 V-World를 부름 | **[자동]**(실행 중) | 있음(`handlers/v1/resolve.js`) | 행정표준코드 활용신청, `DATA_GO_KR_KEY_RESOLVE_<N>`·`VWORLD_KEY`·`VWORLD_DOMAIN` | 24시간 로컬 캐시. 라이브. 운영에서 V-World 서버 호출이 되려면 운영키·`VWORLD_DOMAIN`(운영 도메인)과 함수 지역 `icn1`이 필요함(2.15절) |
+| 번들 없는 지역의 건물(요청 시) | 화면이 `handlers/v1/buildings.js`를 거쳐 V-World `LT_C_BLDGINFO`를 칸 단위로 부름 | **[자동]**(실행 중) | 있음(`handlers/v1/buildings.js`) | V-World 서버 호출(운영키·`VWORLD_DOMAIN`), 함수 지역 `icn1` | 칸 24시간 로컬 캐시·시간당 호출 상한. **2026-10-05 배포됨(커밋됨)** |
+| 번들 없는 법정동의 인허가 사업(요청 시) | 화면이 `handlers/v1/permits.js`를 거쳐 건축HUB 주택인허가와 V-World 필지를 부름 | **[자동]**(실행 중) | 있음(`handlers/v1/permits.js`) | 건축HUB 활용신청(주택인허가·건축물대장, 키마다), 키 풀 RESOLVE 용도(서비스 `hub`·`hubledger`), V-World 서버 호출 | 24시간 캐시·시간당 호출 상한·건물대장 호출 간격(초당 한도). **2026-10-05 배포됨(커밋됨)** |
+| 번들 없는 법정동의 신설예정 학교·정류장(요청 시) | 화면이 `handlers/v1/infra.js`를 거쳐 교육재정알리미와 TAGO 근접정류소를 부름 | **[자동]**(실행 중) | 있음(`handlers/v1/infra.js`) | TAGO 정류소정보 활용신청(키마다), 키 풀 BUS 용도 | 24시간 캐시·시간당 호출 상한. 서울은 TAGO에 없음. **2026-10-05 배포됨(커밋됨)** |
 | 지구 안 비주택 인허가 | 건축HUB 건축인허가 API(법정동 전체) | **[자동]** | 있음(`api.hub_arch_dong`) | — | 사이드바에는 표시하지 않음(`permits[]`). 주기는 확인하지 못함 |
 | 보도 기반 대책 | 기사를 읽고 요약해 JSON에 적음 | **[수동 판독]** | 없음(`curated/incheon-gyeyang.json`을 손으로 씀) | 검색·기사 읽기. 세계일보처럼 알림 권한 프롬프트가 뜨는 곳은 ego lite가 사용자 제어로 넘어가 WebFetch로 대체 | 사건이 날 때마다. 해석·요약은 사람이 함 |
 | 지도 배경·지형·글자 | 런타임에 외부 서비스에서 받음 | **[자동]**(운영 중) | `app.js` | V-World 서비스 URL(운영 도메인) 등록은 사람이 콘솔에서 | 미리보기 배포 주소는 등록하지 않으면 회색 지도 |
@@ -521,7 +521,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
    - 동작: 받기 버튼 → 안내창("…에 변경된 데이터입니다") 수락 → 다운로드 → `workspace/data/raw/infra/`로 옮김. SHP zip 안 파일 이름은 CP949라 코드가 풀어 줍니다.
    - 다음: `.venv/bin/python tools/regiontools/build_infra.py incheon-gyeyang`
 2. **TAGO 버스 서비스 활용신청**(처음 한 번, 사람이 포털에서 — 브라우저로 파일을 받는 일은 아님)
-   - 대상: 버스정류소정보 15098534 · 버스노선정보 15098529(번들 만들기), 버스위치정보 15098533(화면, `api/bus.js`). 자동승인이며 이번에는 사용자가 직접 신청했습니다.
+   - 대상: 버스정류소정보 15098534 · 버스노선정보 15098529(번들 만들기), 버스위치정보 15098533(화면, `handlers/bus.js`). 자동승인이며 이번에는 사용자가 직접 신청했습니다.
    - 다음: `.venv/bin/python tools/regiontools/build_infra.py incheon-gyeyang`(정류소·노선을 API로 받음). 예전에 쓰던 버스정류장 CSV(15067528)는 더는 받지 않습니다.
 3. **V-World 건물 자료**(필요할 때, 월 단위 전체본)
    - 대상: `vworld.kr`의 GIS건물통합정보 내려받기 화면(`dtmk_ntads_s002.do?svcCde=NA&dsId=18`). 로그인한 세션에서 인천 전체본을 받아 `workspace/data/raw/vworld/`에 둠.
@@ -762,7 +762,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | 통계누리 통계리스트 · 행복도시 준공계획 | (번호 미확인) | 아니오 | 호출 주소·한도를 읽지 못함 |
 | 국토교통부 TAGO 버스정류소정보(`BusSttnInfoInqireService`) | 15098534 | **예**(계양 `stops`) | 좌표기반근접정류소 `getCrdntPrxmtSttnList`(반경 500 m)·정류소별경유노선 `getSttnThrghRouteList`(정류소번호 목록도 있음). 자동승인·무료·이용허락범위 제한 없음·개발계정 10,000건/일(운영계정은 활용사례 등록 시 증설 가능) |
 | 국토교통부 TAGO 버스노선정보(`BusRouteInfoInqireService`) | 15098529 | **예**(계양 `busRoutes[].path`) | 노선별경유정류소목록 `getRouteAcctoThrghSttnList`만 호출(노선정보항목 `getRouteInfoIem`·노선번호목록 `getRouteNoList`는 쓰지 않음). 같은 조건 |
-| 국토교통부 TAGO 버스위치정보(`BusLcInfoInqireService`) | 15098533 | **예**(실행 중 서버 함수) | 노선별버스위치 목록조회 `getRouteAcctoBusLcList`를 `api/bus.js`가 부름(2.14절). 응답 `gpslati`·`gpslong`(WGS84 맵매칭, **옵션 항목**)·`nodeid`·`nodenm`·`nodeord`·`routenm`·`routetp`·`vehicleno`, 갱신 주기 표기 "실시간", 수정일 2023-07-12. 노선별특정정류소접근과 도시코드 목록 `getCtyCodeList`도 있음(후자로 인천 23 확인, 138개 도시). 같은 조건 |
+| 국토교통부 TAGO 버스위치정보(`BusLcInfoInqireService`) | 15098533 | **예**(실행 중 서버 함수) | 노선별버스위치 목록조회 `getRouteAcctoBusLcList`를 `handlers/bus.js`가 부름(2.14절). 응답 `gpslati`·`gpslong`(WGS84 맵매칭, **옵션 항목**)·`nodeid`·`nodenm`·`nodeord`·`routenm`·`routetp`·`vehicleno`, 갱신 주기 표기 "실시간", 수정일 2023-07-12. 노선별특정정류소접근과 도시코드 목록 `getCtyCodeList`도 있음(후자로 인천 23 확인, 138개 도시). 같은 조건 |
 | 인천광역시 버스위치정보 조회(`busLocationService`) | 15059206 | 아니오(**쓰지 않음**) | `https://apis.data.go.kr/6280000/busLocationService/getBusRouteLocation`. 응답 필드 ROUTEID·BUSID·BUS_NUM_PLATE·LOW_TP_CD·DIRCD·PATHSEQ·LATEST_STOPSEQ·LATEST_STOP_ID·LATEST_STOP_NAME·REMAIND_SEAT·CONGESTION·LASTBUSYN — **좌표 없음**(최근 정류소만). 자동승인, 개발 1,000건/일 |
 
 **건축HUB·마이홈에서 만난 함정**(실측): [문서] `docs/data-interface/정의서.md` 9절 · [로그 10-04]
@@ -775,8 +775,8 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 
 **TAGO 버스정보에서 만난 함정과 실측**(2026-10-05): [코드] `tools/regiontools/api.py` `infra.py` · [로그 10-05]
 
-- **키는 URL 인코딩해서 보냅니다.** `.env.local`의 `DATA_GO_KR_KEY`는 디코딩된 형태(`+ / =` 포함)라 그대로 붙이면 이미 승인된 서비스(건축HUB)도 `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`(403)가 납니다. 이 세션에서 처음에 이 오류를 보고 "활용신청이 필요하다"고 잘못 판단했다가 정정했습니다. Python `urlencode`와 Node `URLSearchParams`는 인코딩하고, `api/bus.js`는 환경변수 값에 `%`가 있으면 한 번 풀어 씁니다.
-- **`resultCode 99` "가용한 세션이 존재하지 않습니다. (30/30)"**: 동시 접속이 가득 찰 때 나오는 일시 오류. `api.py`가 최대 5회 다시 시도하고 `api/bus.js`는 한 번 더 시도합니다. 그 밖의 결과 코드는 바로 멈춥니다.
+- **키는 URL 인코딩해서 보냅니다.** `.env.local`의 `DATA_GO_KR_KEY`는 디코딩된 형태(`+ / =` 포함)라 그대로 붙이면 이미 승인된 서비스(건축HUB)도 `SERVICE_KEY_IS_NOT_REGISTERED_ERROR`(403)가 납니다. 이 세션에서 처음에 이 오류를 보고 "활용신청이 필요하다"고 잘못 판단했다가 정정했습니다. Python `urlencode`와 Node `URLSearchParams`는 인코딩하고, `handlers/bus.js`는 환경변수 값에 `%`가 있으면 한 번 풀어 씁니다.
+- **`resultCode 99` "가용한 세션이 존재하지 않습니다. (30/30)"**: 동시 접속이 가득 찰 때 나오는 일시 오류. `api.py`가 최대 5회 다시 시도하고 `handlers/bus.js`는 한 번 더 시도합니다. 그 밖의 결과 코드는 바로 멈춥니다.
 - **좌표가 옵션 항목이고 문자열인 행이 있습니다.** 위치 응답의 `gpslati`·`gpslong`은 옵션 항목이라 빠질 수 있고(계양 실측은 28/28대 채움), 경유정류소 응답에는 좌표가 문자열인 행이 있어 숫자로 바꿔 씁니다.
 - **경유정류소는 왕복 전체이고 가상 정류소가 섞입니다.** 87번은 146개이며 `기점(미정차)` 같은 정류소가 있고 `updowncd`가 0/1입니다. `nodeord`는 위치 응답의 `nodeord`와 같은 체계라 `path[nodeord-1]`로 이어 씁니다.
 - **근접정류소는 반경 500 m 고정**이라 지구 전체를 한 번에 못 받고 700 m 격자로 나눠 부릅니다.
@@ -915,7 +915,7 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
                        regions/index.json + regions/<slug>/*.json   (저장소에 커밋되는 정적 JSON)
 
 ② 보여 주기 (실행 중, 번들이 아님 — 2.14절)
-   브라우저 ──► api/bus.js (Vercel 함수) ──► TAGO 버스위치(API) : 위치만 몇 십 초 간격으로 가져옴
+   브라우저 ──► handlers/bus.js (Vercel 함수) ──► TAGO 버스위치(API) : 위치만 몇 십 초 간격으로 가져옴
 ```
 
 **도구와 입출력**
@@ -925,9 +925,9 @@ OSM에 있는 것만 담기므로 새로 짓는 학교·역은 빠질 수 있습
 | `tools/validate_input.py` | 팀원이 만든 CSV·GeoJSON 폴더/ZIP | 점검 리포트 | 규격: `schemas/input.spec.json`, `docs/data-interface/정의서.md` |
 | `tools/regiontools/build_region.py <slug>` | V-World·마이홈·건축HUB·Overpass API | `region` `projects` `buildings` `context` | 키는 `.env.local`(`DATA_GO_KR_KEY` `VWORLD_DEV_KEY` 또는 `VWORLD_KEY` `VWORLD_DOMAIN`), 키·요청 URL은 출력하지 않음 |
 | `tools/regiontools/migrate_legacy.py` | 옛 `data/gyeyang_*.js` | 계양 번들 + `index.json` 항목 | 한 번 쓴 이전 도구 |
-| `tools/regiontools/build_infra.py <slug>` | 공공데이터포털 파일 3종 + API(교육재정알리미·V-World·건축HUB·TAGO 버스) + `curated/<slug>.json` | `infra.json` | 원천 목록: `workspace/data/raw/infra/README.md`. TAGO 정류소·노선 활용신청 필요(버스 위치는 이 도구가 아니라 `api/bus.js`) |
-| `api/v1/resolve.js` | 표준코드(시군구·법정동·필지) + 행정표준코드 API + V-World + `regions/` coverage | 지도가 열 영역 JSON | 번들 도구가 아니라 실행 중에 도는 함수(2.15절). 규격 `docs/product/상황판-스펙.md` |
-| `api/bus.js`(Vercel 함수) · `node scripts/dev.js` | `regions/<slug>/infra.json`의 live 노선 + TAGO 버스위치 + 환경변수 `DATA_GO_KR_KEY_BUS_<N>`(없으면 `DATA_GO_KR_KEY`) | `{at, ttl, buses[], failed?}` JSON | 번들 도구가 아니라 실행 중에 도는 함수(2.14절). 로컬 서버는 `scripts/dev.js` |
+| `tools/regiontools/build_infra.py <slug>` | 공공데이터포털 파일 3종 + API(교육재정알리미·V-World·건축HUB·TAGO 버스) + `curated/<slug>.json` | `infra.json` | 원천 목록: `workspace/data/raw/infra/README.md`. TAGO 정류소·노선 활용신청 필요(버스 위치는 이 도구가 아니라 `handlers/bus.js`) |
+| `handlers/v1/resolve.js` | 표준코드(시군구·법정동·필지) + 행정표준코드 API + V-World + `regions/` coverage | 지도가 열 영역 JSON | 번들 도구가 아니라 실행 중에 도는 함수(2.15절). 규격 `docs/product/상황판-스펙.md` |
+| `handlers/bus.js`(Vercel 함수) · `node scripts/dev.js` | `regions/<slug>/infra.json`의 live 노선 + TAGO 버스위치 + 환경변수 `DATA_GO_KR_KEY_BUS_<N>`(없으면 `DATA_GO_KR_KEY`) | `{at, ttl, buses[], failed?}` JSON | 번들 도구가 아니라 실행 중에 도는 함수(2.14절). 로컬 서버는 `scripts/dev.js` |
 | `tools/regiontools/check_bundle.py` | `regions/` 또는 `regions/<slug>/` | 오류 목록(종료 코드 0/1/2) | 스키마 + 출처 id 존재·단지 id 중복·`projectOrder` 참조·기본 지역 하나·폴더=slug·`busRoutes` id 중복·`stops` id 중복·`stops[].routes` 참조·live↔`path`·`busCityCode` 규칙 |
 
 문서 쪽 도구: `tools/gen_docs.py`(`schemas/input.spec.json`에서 정의서 필드표와 CSV 템플릿 생성, `--check`로 커밋된 파일과 비교), `tools/build_docs_pdf.py`(정의서 Markdown → PDF, `markdown` 패키지와 Chrome 필요).
@@ -1016,7 +1016,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 | `zones[]` `attendance[]` | 초등 통학구역 `{id, name, school, schoolLon, schoolLat, poly, asOf, sources}` · 단지가 어느 구역에 드는지 `{projectId, zoneId}` |
 | `stops[]` | 버스정류소 `{id, name, no, lon, lat, routes[]}` — `id`는 TAGO `nodeid`, `no`는 정류소 번호, `routes[]`는 지나는 노선 id(`busRoutes[].id`, 노선 번호 순). `name`·`lon`·`lat`만 필수(1.2.0은 이 셋뿐) |
 | `busRoutes[]` | 버스 노선 `{id*, no*, type, from, to, live, path}` — `live: true`는 단지 중심 500 m 안 정류소를 지나 화면이 위치를 부르는 노선이고, **이 노선에만** `path`(정류소순서대로 이은 `[경도,위도]` 목록, `path[정류소순서-1]`)를 싣습니다. 계양 20개 중 4개 |
-| `busCityCode` | TAGO 도시코드(인천 23). `live` 노선이 있으면 필수이며 서버 함수 `api/bus.js`가 읽음 |
+| `busCityCode` | TAGO 도시코드(인천 23). `live` 노선이 있으면 필수이며 서버 함수 `handlers/bus.js`가 읽음 |
 | `sites[]` | 도시계획시설 부지 `{id, category(전기·교통·하수·환경·방재), name, areaM2, poly, sources}` |
 | `permits[]` | 지구 안 비주택 건축 인허가 `{id, name, use, permitDate, startDate, approvalDate, sources}` |
 | `measures[]` | 보도·고시로 확인한 대책 `{id, category(교통·교육·전기·기타), title, short, when, status(완료·진행·예정·검토·미정), detail, sources}` — 사람이 출처와 함께 `tools/regiontools/curated/<slug>.json`에 적음 |
@@ -1139,7 +1139,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 
 ## 11. 번들 필드의 화면 사용 감사표
 
-코드(`assets/js/region.js` · `app.js` · `infra.js` · `facility.js` · `bus.js`, 서버 쪽은 `api/bus.js`)를 필드 이름으로 검색하고 표본 줄을 확인해 만들었습니다(2026-10-05). **읽지 않는 필드는 배포에는 실리지만 화면에 영향이 없습니다**(3절의 '배포·미표시'). 필드 하나를 지우기 전에는 이 표와 코드를 다시 확인하세요.
+코드(`assets/js/region.js` · `app.js` · `infra.js` · `facility.js` · `bus.js`, 서버 쪽은 `handlers/bus.js`)를 필드 이름으로 검색하고 표본 줄을 확인해 만들었습니다(2026-10-05). **읽지 않는 필드는 배포에는 실리지만 화면에 영향이 없습니다**(3절의 '배포·미표시'). 필드 하나를 지우기 전에는 이 표와 코드를 다시 확인하세요.
 
 | 파일 | 화면이 읽는 필드 (읽는 곳) | 읽지 않는 필드 (배포·미표시) |
 |---|---|---|
@@ -1148,7 +1148,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 | `projects.json` | `projects[].id` `label` `name` `kind` `status` `units` `dongCount` `moveIn` `sponsorClass` `outline.poly·tier·how` `progress.rate·asOf·history·start·end·source` `dongs[].no·floorsAbove·heightM·tier·poly` `builder` `contractAmountM` `note` `sources[]`, `otherBlocks` (`region.js` `adaptProject`) | `schema_version`, `projects[].zoneId` `sponsor`(이름·유형) `events` `flags`, `dongs[].floorsBelow` |
 | `buildings.json` | `features[].geometry`, `properties` `eh` `src` `h` `f` `b` `u` `n` `a` `d` `x` `g`, `meta.factor` `meta.basis` (`app.js` 색 계산·팝업·층고 환산·평면 표시, `facility.js` 분류) | `schema_version`, `meta`의 `title` `license` `attribution` `crs` `crossCheck` `bbox` `fields` `counts` `total` `suspect` `lastApproval` `approvalByYear` `existence` `capped_dropped` |
 | `context.json` | `stations[]` `schools[]`(이름·좌표), `source`(푸터 문구 `region.js` `buildTexts`) | `asOf` |
-| `infra.json` | `asOf`, `sources[].id·label·url·asOf`, `schools[]` 전 필드(`id` `name` `level` `status` `openYm` `classes` `students` `address` `areaM2` `lon` `lat` `poly` `note` `sources`), `zones[].id·name·school·schoolLon·schoolLat·poly·asOf`, `attendance[]`, `stops[].id·name·no·lon·lat·routes`(`id`·`routes`·`no`는 정류소 팝업, `name·lon·lat`은 점과 300 m 계산), `busRoutes[].id·no·type·from·to·live·path`(`app.js` `LIVE_ROUTES`·`stopPopup`, `bus.js`; `path`는 live 노선에만 있음), `sites[]` 전 필드, `measures[]` 전 필드(`short`는 타임라인 이름) (`infra.js` · `app.js` · `bus.js`) | `permits[]` 전체(사이드바 목록 삭제 후 남음; `permitStatus` 함수와 `HAS_INFRA` 판정식에만 흔적이 있음), **`busCityCode`(화면 코드는 읽지 않고 서버 함수 `api/bus.js`가 읽음)**, `schema_version`, `sources[].publisher·license·redistributable`, `zones[].sources` |
+| `infra.json` | `asOf`, `sources[].id·label·url·asOf`, `schools[]` 전 필드(`id` `name` `level` `status` `openYm` `classes` `students` `address` `areaM2` `lon` `lat` `poly` `note` `sources`), `zones[].id·name·school·schoolLon·schoolLat·poly·asOf`, `attendance[]`, `stops[].id·name·no·lon·lat·routes`(`id`·`routes`·`no`는 정류소 팝업, `name·lon·lat`은 점과 300 m 계산), `busRoutes[].id·no·type·from·to·live·path`(`app.js` `LIVE_ROUTES`·`stopPopup`, `bus.js`; `path`는 live 노선에만 있음), `sites[]` 전 필드, `measures[]` 전 필드(`short`는 타임라인 이름) (`infra.js` · `app.js` · `bus.js`) | `permits[]` 전체(사이드바 목록 삭제 후 남음; `permitStatus` 함수와 `HAS_INFRA` 판정식에만 흔적이 있음), **`busCityCode`(화면 코드는 읽지 않고 서버 함수 `handlers/bus.js`가 읽음)**, `schema_version`, `sources[].publisher·license·redistributable`, `zones[].sources` |
 | `/api/bus` 응답(번들 아님) | `at`(위치 기준 시각) `ttl`(다시 조회할 수 있는 간격 = 쿨다운) `buses[].r·v·lon·lat·ord·stop`(`bus.js` `parse`·`describe`, `app.js` `busLoad`·`busPopup`) | `failed`(`parse`가 읽어 두지만 화면은 쓰지 않음) |
 | `/api/v1/resolve` 응답(번들 아님) | `coverage.tier`·`coverage.slug`(어느 지역을 열지) `type` `name` `level` `center` `geometry`·`parcel.geometry`(이동·경계 강조) `warnings`(안내 문구)(`region.js` `boot`·`resolvedStart`·`resolvedShape`·`noticeText`) | `canonical` `input` `sgg` `bjd` `pnu` `bbox` `parcel.hub·jibun·landType·addr` `source` `asOf` `coverage.name·updatedAt·visibility`(상황판 본체·후속 기능용) |
 | `/api/v1/buildings` 응답(번들 아님) | `features[].properties` 의 `eh` `src` `h` `f` `b` `u` `n` `a` `x`(번들 건물과 같은 속성, `app.js` `paintBuildings`·`officialPopup`·`FacilityLib`), `meta.truncated`(안내 띠) | `cell` `bbox` `meta.source·fetchedAt·count·rawCount·tinyDropped·outsideCell·pages·heights` |
@@ -1181,7 +1181,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 ```
 
 - **광산구·나주·계양 기반시설은 위 명령으로 다시 만들 수 있습니다.** 입력은 API(키)와 `raw/infra/`의 포털 파일 3종입니다. 응답이 바뀌면 결과도 바뀝니다(기준일이 번들에 적힘).
-- **버스**: 정류소·노선·경로는 `build_infra.py`가 TAGO 활용신청 2종(정류소 15098534·노선 15098529)으로 한 번 받습니다. **버스 위치(15098533)는 빌드가 아니라 화면이 `api/bus.js`를 거쳐 받습니다.** 전국 버스정류장 CSV(15067528)는 더는 필요 없고, `raw/infra/`에 남은 파일은 읽지 않습니다.
+- **버스**: 정류소·노선·경로는 `build_infra.py`가 TAGO 활용신청 2종(정류소 15098534·노선 15098529)으로 한 번 받습니다. **버스 위치(15098533)는 빌드가 아니라 화면이 `handlers/bus.js`를 거쳐 받습니다.** 전국 버스정류장 CSV(15067528)는 더는 필요 없고, `raw/infra/`에 남은 파일은 읽지 않습니다.
 - **배포**: Vercel 프로젝트에 공공데이터포털 키가 있어야 `/api/bus`가 동작합니다(`DATA_GO_KR_KEY_BUS_<N>` 또는 `DATA_GO_KR_KEY`, 없으면 503, 지도는 노선 선만 보임). 표준코드 해석은 `DATA_GO_KR_KEY_RESOLVE_<N>`(또는 `DATA_GO_KR_KEY`)와 `VWORLD_KEY`(운영키)·`VWORLD_DOMAIN`(`housing-board.vercel.app`)이 필요합니다. 루트 `api/` 함수와 `includeFiles`·`excludeFiles`는 라이브 `/api/bus`·`/api/v1/resolve`로 동작을 확인했습니다(2.14·2.15절). V-World 서버 호출 때문에 `VWORLD_DOMAIN`(운영 도메인)과 함수 지역 `icn1`을 두었습니다(2.15절).
 - **계양 건물·단지는 지금 저장소의 번들이 정본**입니다. 옛 생성 도구(`workspace/data/tools/vworld_buildings/build_buildings.py`, `lh_projects/extract_plans.py`·`build_projects.py`)는 남아 있고 입력 원본(`raw/vworld` zip·geojson, `raw/lh/*`)도 이 PC에 있지만, 도구는 `workspace/data/legacy/`에 옛 JS를 새로 쓰고 `migrate_legacy.py`가 그것을 번들로 옮기는 **한 번 쓰는 이전 흐름**입니다. 다시 돌리면 이후에 번들을 직접 고친 값(출처 문구, 정정 등)을 덮어쓸 수 있으니, 돌리기 전에 번들을 백업하고 차이를 확인하세요.
 - 입력 원본 중 큰 파일(`raw/vworld/*.zip`, `raw/lh/pamphlets/`)은 `.gitignore`라 저장소에 없습니다. 다른 PC에서는 다시 내려받아야 하고, 그 방법이 이 문서 5절의 사이트들입니다.
@@ -1207,14 +1207,14 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 |---|---|
 | `tests/test_regiontools_*.py` `test_build_infra.py` | 번들 만드는 부품(API 층·상태·건물 높이·좌표·투영·SHP·기반시설 조립·번들 쓰기). TAGO 부분: 격자, 정류소 병합, 노선·live 선택, 경로, `resultCode 99` 재시도, 빌드 호출 수 |
 | `tests/test_bundle_schemas.py` `test_check_bundle.py` | 번들 JSON Schema와 교차 규칙 검증기(`busRoutes`·`stops` 규칙 포함) |
-| `tests/js/busapi.test.cjs`(16건) | `api/bus.js` 중계: ttl 계산(키 수 반영), 좌표 정리, 로컬 캐시, 쿼리 거절, 405·503·502·429, 키 인코딩, 키 교체·전부 소진, 키 값이 응답·캐시 파일에 없음, 일부 노선 실패, `resultCode 99` 재시도, 실제 번들의 live 노선 |
+| `tests/js/busapi.test.cjs`(16건) | `handlers/bus.js` 중계: ttl 계산(키 수 반영), 좌표 정리, 로컬 캐시, 쿼리 거절, 405·503·502·429, 키 인코딩, 키 교체·전부 소진, 키 값이 응답·캐시 파일에 없음, 일부 노선 실패, `resultCode 99` 재시도, 실제 번들의 live 노선 |
 | `tests/js/bus.test.cjs`(23건) | `assets/js/bus.js` 순수 함수(방향·3D 면·보간·경유 단지·팝업)와 `app.js` 연결(요청 시에만 조회·쿨다운·3D 층·클릭) |
 | `tests/js/keys.test.cjs`(10건) `cache.test.cjs`(7건) | `lib/keys.js` 용도별 키 풀(가장 적게 쓴 키·한도 오류 뒤 다음 키·자정 초기화·시연 프로파일), `lib/cache.js` 로컬 캐시(TTL 상한 24시간·50 MB·동시 요청 합치기) |
 | `tests/js/codes.test.cjs`(6건) `resolve.test.cjs`(12건) | 코드 판별과 `/api/v1/resolve`(표준코드 표·경계·필지·후퇴·오류·coverage·운영에서 preview 제외·V-World 운영키/개발키 선택) |
 | `tests/js/vercelconf.test.cjs`(6건) | `vercel.json`의 iframe 차단 헤더·함수 번들 파일·함수 지역 `icn1`·저장소에 `<iframe>` 없음 |
-| `tests/js/buildings.test.cjs`(6건) `buildingsapi.test.cjs`(6건) `dynbuildings.test.cjs`(5건) | `lib/buildings.js`(Python 건물 변환과 같은 속성·칸 계산), `api/v1/buildings.js`(칸 소속·쪽 넘김·캐시·시간당 상한·키 비노출), 화면 연결(칸 불러오기·서버 없음 처리·번들 영역 분담) |
-| `tests/js/permits.test.cjs`(16건) `permitsapi.test.cjs`(14건) | `lib/permits.js`(Python 번들 빌드와 같은 PNU·날짜·짧은 이름·사건·상태, 번지 단위 집계, 건물대장 행 변환·세대수+면적/이름 대조·준공 판정), `api/v1/permits.js`(쪽 넘김·일시 오류 재시도·키 교체·필지 없음/일시 오류·120곳 상한·시간당 상한, 건물대장으로 블록 위치·합필 복구·준공 확인·권한 없음·모호·중복 지번·보강 불필요·초당 한도 재시도) |
-| `tests/js/infra.api.test.cjs`(9건) | `lib/infra.js`(신설예정 학교 변환·정류소 변환·중심 건너뛰기)와 `api/v1/infra.js`(키 용도 분리·서울 건너뜀·한쪽/일부 실패·키 교체·시간당 상한·캐시) |
+| `tests/js/buildings.test.cjs`(6건) `buildingsapi.test.cjs`(6건) `dynbuildings.test.cjs`(5건) | `lib/buildings.js`(Python 건물 변환과 같은 속성·칸 계산), `handlers/v1/buildings.js`(칸 소속·쪽 넘김·캐시·시간당 상한·키 비노출), 화면 연결(칸 불러오기·서버 없음 처리·번들 영역 분담) |
+| `tests/js/permits.test.cjs`(16건) `permitsapi.test.cjs`(14건) | `lib/permits.js`(Python 번들 빌드와 같은 PNU·날짜·짧은 이름·사건·상태, 번지 단위 집계, 건물대장 행 변환·세대수+면적/이름 대조·준공 판정), `handlers/v1/permits.js`(쪽 넘김·일시 오류 재시도·키 교체·필지 없음/일시 오류·120곳 상한·시간당 상한, 건물대장으로 블록 위치·합필 복구·준공 확인·권한 없음·모호·중복 지번·보강 불필요·초당 한도 재시도) |
+| `tests/js/infra.api.test.cjs`(9건) | `lib/infra.js`(신설예정 학교 변환·정류소 변환·중심 건너뛰기)와 `handlers/v1/infra.js`(키 용도 분리·서울 건너뜀·한쪽/일부 실패·키 교체·시간당 상한·캐시) |
 | `tests/js/` 그 밖(`infra` `facility` `region` `sidebar` `topbar` `glass` `build`) | 점검 계산, 기존 건물 분류, 어댑터(`region`은 표준코드 진입 `boot` 포함), 화면 구성, 배포 빌드 |
 | `tests/test_migrate_legacy.py` | 계양 이전 도구 |
 | `tests/test_cli.py` `test_domain.py` `test_rows.py` `test_files.py` `test_geometry.py` `test_spec.py` `test_examples.py` | 팀원 입력 검증기(`tools/datacheck`) |
@@ -1273,7 +1273,7 @@ context.json     (역·학교 위치, 다른 파일과 키로 엮이지 않음)
 
 ### 2.22 사업 id 발급과 사업↔PNU 연결 — `registry/projects.json` (2026-10-06, 레지스트리 77건, 운영 배포 전)
 
-**사업 레코드**(스펙 9.1)에 상황판 내부 id `PRJ-{시군구5}-{일련4}` 를 발급하고, 사업이 어느 필지(PNU)에 있는지 잇습니다. 건축HUB 관리번호 같은 외부 키는 id 가 아니라 `refs` 로만 보관합니다. [코드] `lib/projects.js`(순수 함수) · `lib/registry.js`(파일 읽기·검사) · `scripts/issue-projects.js`(발급 도구) · `api/v1/resolve.js`(`?project=`) · `api/v1/permits.js`(`projectId`) · `tests/js/projects.test.cjs` `registry.test.cjs` `projectapi.test.cjs`
+**사업 레코드**(스펙 9.1)에 상황판 내부 id `PRJ-{시군구5}-{일련4}` 를 발급하고, 사업이 어느 필지(PNU)에 있는지 잇습니다. 건축HUB 관리번호 같은 외부 키는 id 가 아니라 `refs` 로만 보관합니다. [코드] `lib/projects.js`(순수 함수) · `lib/registry.js`(파일 읽기·검사) · `scripts/issue-projects.js`(발급 도구) · `handlers/v1/resolve.js`(`?project=`) · `handlers/v1/permits.js`(`projectId`) · `tests/js/projects.test.cjs` `registry.test.cjs` `projectapi.test.cjs`
 
 | 항목 | 내용 |
 |---|---|

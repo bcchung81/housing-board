@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createCache } = require('../../lib/cache.js');
 const { createKeyPool, memoryStore } = require('../../lib/keys.js');
-const api = require('../../api/v1/notices.js');
+const api = require('../../handlers/v1/notices.js');
 
 const row = (cd, nm) => ({ region_cd: cd, sido_cd: cd.slice(0, 2), sgg_cd: cd.slice(2, 5), umd_cd: cd.slice(5, 8), ri_cd: cd.slice(8, 10), locatadd_nm: nm, locallow_nm: nm.split(' ').pop() });
 const stanJson = (rows) => (rows.length ? { StanReginCd: [{ head: [{ totalCount: rows.length }, { RESULT: { resultCode: 'INFO-0' } }] }, { row: rows }] } : { RESULT: { resultCode: 'INFO-3' } });

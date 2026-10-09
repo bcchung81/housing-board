@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createCache } = require('../../lib/cache.js');
 const { createKeyPool, memoryStore } = require('../../lib/keys.js');
-const api = require('../../api/v1/permits.js');
+const api = require('../../handlers/v1/permits.js');
 
 const BJD = '4145010800';                                   // 하남시 덕풍동
 const rec = (over) => Object.assign({ sigunguCd: '41450', bjdongCd: '10800', bun: '0569', ji: '0000', platGbCd: '0', purpsCdNm: '공동주택', totHhldCnt: 100, bldNm: '덕풍아파트', mgmHsrgstPk: 1, apprvDay: '20240101', stcnsDay: '20240601', useInsptDay: '', mainBldCnt: 3, platPlc: '경기도 하남시 덕풍동 569번지' }, over);

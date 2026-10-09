@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const R = require('../../api/v1/resolve.js');
+const R = require('../../handlers/v1/resolve.js');
 
 const ROW = (cd, nm, lvl) => ({ region_cd: cd, sido_cd: cd.slice(0, 2), sgg_cd: cd.slice(2, 5), umd_cd: cd.slice(5, 8), ri_cd: cd.slice(8, 10), locatadd_nm: nm, locallow_nm: nm.split(' ').pop(), locathigh_cd: '', adpt_de: '' });
 const STAN_ROWS = [ROW('2824500000', '인천광역시 계양구'), ROW('2824510900', '인천광역시 계양구 박촌동'), ROW('2824511000', '인천광역시 계양구 동양동'), ROW('2824511100', '인천광역시 계양구 귤현동')];

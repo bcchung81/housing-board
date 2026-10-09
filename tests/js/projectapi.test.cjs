@@ -8,8 +8,8 @@ const path = require('node:path');
 const { createCache } = require('../../lib/cache.js');
 const { createKeyPool, memoryStore } = require('../../lib/keys.js');
 const P = require('../../lib/projects.js');
-const resolveApi = require('../../api/v1/resolve.js');
-const permitsApi = require('../../api/v1/permits.js');
+const resolveApi = require('../../handlers/v1/resolve.js');
+const permitsApi = require('../../handlers/v1/permits.js');
 
 const NOW = Date.parse('2026-10-06T03:00:00Z');
 const ROW = (cd, nm) => ({ region_cd: cd, sido_cd: cd.slice(0, 2), sgg_cd: cd.slice(2, 5), umd_cd: cd.slice(5, 8), ri_cd: cd.slice(8, 10), locatadd_nm: nm, locallow_nm: nm.split(' ').pop(), locathigh_cd: '', adpt_de: '' });

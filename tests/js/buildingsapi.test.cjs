@@ -3,7 +3,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createCache } = require('../../lib/cache.js');
-const api = require('../../api/v1/buildings.js');
+const api = require('../../handlers/v1/buildings.js');
 
 const SQ = (x, y, d = 0.0002) => ({ type: 'Polygon', coordinates: [[[x, y], [x + d, y], [x + d, y + d], [x, y + d], [x, y]]] });
 const feat = (x, y, props = {}, d) => ({ type: 'Feature', properties: Object.assign({ bld_nm: '건물', usability: '02000', grnd_flr: '5', height: '13' }, props), geometry: SQ(x, y, d) });

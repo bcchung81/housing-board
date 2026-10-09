@@ -34,13 +34,13 @@ function keySummary(env) {
 }
 
 function createServer(root = ROOT, env = process.env) {
-  const bus = require(path.join(root, 'api', 'bus.js')).createHandler({ env });
-  const resolve = require(path.join(root, 'api', 'v1', 'resolve.js')).createHandler({ env });
-  const search = require(path.join(root, 'api', 'v1', 'codes', 'search.js')).createHandler({ env });
-  const notices = require(path.join(root, 'api', 'v1', 'notices.js')).createHandler({ env });
-  const buildings = require(path.join(root, 'api', 'v1', 'buildings.js')).createHandler({ env });
-  const permits = require(path.join(root, 'api', 'v1', 'permits.js')).createHandler({ env });
-  const infra = require(path.join(root, 'api', 'v1', 'infra.js')).createHandler({ env });
+  const bus = require(path.join(root, 'handlers', 'bus.js')).createHandler({ env });
+  const resolve = require(path.join(root, 'handlers', 'v1', 'resolve.js')).createHandler({ env });
+  const search = require(path.join(root, 'handlers', 'v1', 'codes', 'search.js')).createHandler({ env });
+  const notices = require(path.join(root, 'handlers', 'v1', 'notices.js')).createHandler({ env });
+  const buildings = require(path.join(root, 'handlers', 'v1', 'buildings.js')).createHandler({ env });
+  const permits = require(path.join(root, 'handlers', 'v1', 'permits.js')).createHandler({ env });
+  const infra = require(path.join(root, 'handlers', 'v1', 'infra.js')).createHandler({ env });
   return http.createServer(async (req, res) => {
     const url = new URL(req.url, 'http://localhost');
     res.setHeader('Cache-Control', 'no-store');

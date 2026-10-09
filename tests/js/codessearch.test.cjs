@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const { createCache } = require('../../lib/cache.js');
 const { createKeyPool, memoryStore } = require('../../lib/keys.js');
-const api = require('../../api/v1/codes/search.js');
+const api = require('../../handlers/v1/codes/search.js');
 
 const row = (region_cd, locatadd_nm, locallow_nm) => ({ region_cd, sido_cd: region_cd.slice(0, 2), sgg_cd: region_cd.slice(2, 5), umd_cd: region_cd.slice(5, 8), ri_cd: region_cd.slice(8, 10), locatadd_nm, locallow_nm });
 const ROWS = [

@@ -10,7 +10,17 @@
 
 ## 실행
 
-지역 자료(`regions/*.json`)를 `fetch`로 읽으므로 **더블클릭(`file://`)으로는 열리지 않고, 서버가 필요합니다.** 로컬에서는 개발 서버를 쓰세요. 정적 파일과 버스 위치 중계(`/api/bus`), 표준코드 해석(`/api/v1/resolve`)을 함께 열어 줍니다.
+지역 자료(`regions/*.json`)를 `fetch`로 읽으므로 **더블클릭(`file://`)으로는 열리지 않고, 서버가 필요합니다.**
+
+**상황판(사이드바 메뉴·상세 화면)과 지도(`/map`)는 Next.js 앱입니다**(설계 `docs/product/상황판-셸-설계.md`). `.env.local` 의 키는 서버 함수(`/api/*`)가 읽습니다.
+
+```
+npm install                      # 처음 한 번
+npm run dev                      # http://localhost:3000/ — 종합상황판(/) · 상세 · 지도(/map). 옛 주소 /?region=… 는 /map?… 로 넘어갑니다
+npm run build && npm start       # 운영과 같은 빌드로 확인(포트 3000, -- -p 3100 처럼 바꿀 수 있음)
+```
+
+지도만 빠르게 열려면 이전 개발 서버도 그대로 쓸 수 있습니다(루트 `index.html` 을 `/` 에 열고 `/api/*` 를 같은 핸들러로 답합니다. 사이드바·상세 화면은 없음). 정적 파일과 버스 위치 중계(`/api/bus`), 표준코드 해석(`/api/v1/resolve`)을 함께 열어 줍니다.
 
 ```
 ./run-app.sh                     # 이 폴더에서. 개발 서버를 켜고 첫 화면을 코드로 엽니다(포트 기본 8000, 코드 기본 41450 경기도 하남시)
@@ -51,17 +61,23 @@ node scripts/dev.js 8000         # 같은 일을 직접: 브라우저에서 http
 ## 폴더 구조
 
 ```
-index.html               운영 진입점 (지역 불러오기 → 키 → 앱 순으로 스크립트를 읽음)
+index.html               지도 마크업의 정본: Next.js 가 /map 을 그릴 때 읽고(components/MapIsland.tsx 가 지역 불러오기 → 키 → 앱 순으로 스크립트를 읽음), 이전 개발 서버는 / 에 그대로 엽니다
+app/(dashboard)/         사이드바 + 종합상황판(/) · 목록(/projects /area /stage /agency /sources …) · 파생 상세(/area/{코드} /project/{PRJ-…} /stage/{01~06} /agency/{id} /month/{YYYY-MM})
+app/(map)/map/           지도 화면(/map): 루트 레이아웃이 따로라 오갈 때 전체 문서가 새로 열린다(app.js 는 문서당 한 번만 도는 스크립트)
+app/api/**/route.ts      /api/* 라우트: handlers/ 의 핸들러를 lib/next-handler.ts 가 Request→Response 로 이어 준다(+ 실행 시간 상한)
+components/              ShellRail(사이드바) · Crumbs(빵부스러기) · MapIsland(지도 스크립트 로더)
+proxy.ts  next.config.ts 옛 지도 주소 리다이렉트 · 보안·캐시 헤더와 함수 번들 규칙
+package.json             Next.js 16 · React 19 · TypeScript 5.9 (npm install)
 config.js                V-World 인증키 등 설정 (공유 금지) / config.example.js 는 키가 빈 견본
-vercel.json  .vercelignore   배포 설정(캐시 헤더 · 올라가면 안 되는 파일 제외 · 버스 함수 설정)
-api/bus.js               버스 위치 중계(Vercel 함수): 키를 숨기고 TAGO 호출 수를 묶음(요청 시에만, 키 풀·로컬 캐시)
-api/v1/resolve.js        표준코드 해석 API: 행정표준코드 표 + V-World 경계·필지 + 번들 coverage
-api/v1/infra.js          기반시설 요청 시 조회 API: 인허가 단지 가까이의 신설예정 학교(교육재정알리미)와 버스 정류장(TAGO)을 번들 infra 와 같은 모양으로
-api/v1/codes/search.js  이동할 곳 검색 API: 이름·지번·도로명·표준코드 → 법정동·필지 후보(표준코드 이름 검색 + V-World 주소). 주소 이동 입력줄이 부름
-api/v1/notices.js        공공 모집 공고 API: 마이홈포털 임대·분양 모집공고(전국)를 시군구 이름으로 걸러(번들 없는 지역의 사이드바 "공공 모집 공고")
-api/v1/permits.js        인허가 사업 요청 시 조회 API: 법정동 하나의 건축HUB 주택인허가를 번지 단위 사업 + 필지 경계로(번들 없는 지역). 건축물대장 총괄표제부로 블록 단위 허가의 위치·합필 지번·준공을 보강
-api/v1/buildings.js      건물 요청 시 조회 API: 0.01° 칸 단위로 V-World 건물을 번들과 같은 속성으로(번들 없는 지역·번들 밖)
-lib/                     서버 공용(키 풀 keys.js · 로컬 캐시 cache.js · 코드 판별 codes.js · 번들 있는 시군구 판별 coverage.js · 건물 변환 buildings.js · 인허가 규칙·건물대장 대조 permits.js · 기반시설·OSM 정류장 변환 infra.js · 마이홈 공고 변환 myhome.js · 공공데이터포털 쪽 조회 datagokr.js · 행정표준코드 stan.js · 경계 단순화 geom.js · V-World 키 vworld.js)
+vercel.json  .vercelignore   배포 설정(Next.js · 함수 지역 icn1 · 올라가면 안 되는 파일 제외)
+handlers/bus.js               버스 위치 중계(Vercel 함수): 키를 숨기고 TAGO 호출 수를 묶음(요청 시에만, 키 풀·로컬 캐시)
+handlers/v1/resolve.js        표준코드 해석 API: 행정표준코드 표 + V-World 경계·필지 + 번들 coverage
+handlers/v1/infra.js          기반시설 요청 시 조회 API: 인허가 단지 가까이의 신설예정 학교(교육재정알리미)와 버스 정류장(TAGO)을 번들 infra 와 같은 모양으로
+handlers/v1/codes/search.js  이동할 곳 검색 API: 이름·지번·도로명·표준코드 → 법정동·필지 후보(표준코드 이름 검색 + V-World 주소). 주소 이동 입력줄이 부름
+handlers/v1/notices.js        공공 모집 공고 API: 마이홈포털 임대·분양 모집공고(전국)를 시군구 이름으로 걸러(번들 없는 지역의 사이드바 "공공 모집 공고")
+handlers/v1/permits.js        인허가 사업 요청 시 조회 API: 법정동 하나의 건축HUB 주택인허가를 번지 단위 사업 + 필지 경계로(번들 없는 지역). 건축물대장 총괄표제부로 블록 단위 허가의 위치·합필 지번·준공을 보강
+handlers/v1/buildings.js      건물 요청 시 조회 API: 0.01° 칸 단위로 V-World 건물을 번들과 같은 속성으로(번들 없는 지역·번들 밖)
+lib/                     서버 공용(프로젝트 루트 root.js · Next 어댑터 next-handler.ts · 사이드바 메뉴 shell/menu.ts · 키 풀 keys.js · 로컬 캐시 cache.js · 코드 판별 codes.js · 번들 있는 시군구 판별 coverage.js · 건물 변환 buildings.js · 인허가 규칙·건물대장 대조 permits.js · 기반시설·OSM 정류장 변환 infra.js · 마이홈 공고 변환 myhome.js · 공공데이터포털 쪽 조회 datagokr.js · 행정표준코드 stan.js · 경계 단순화 geom.js · V-World 키 vworld.js)
 env.example              .env.local 견본(키 이름·용도·한도, 값 없음)
 assets/
   css/app.css            화면 모양 (상황판 시안 M3의 네이비 팔레트, 반투명 유리 변수 --glass-*)
@@ -143,7 +159,7 @@ node --test "tests/js/*.test.cjs"                     # Node (따옴표 필수)
 | `tests/js/infra.test.cjs` | 입주 전 점검 판정 |
 | `tests/js/facility.test.cjs` | 기반시설 분류·이름표·강조색과 지도 연결(실제 계양 자료 회귀 포함) |
 | `tests/js/build.test.cjs` | `scripts/build.js`(복사 범위·미리보기 지역 제외) |
-| `tests/js/busapi.test.cjs` | `api/bus.js`: 호출 수 묶기(ttl, 키 수)·노선 제한·쿼리 거절·실패 처리·키 인코딩·키 교체·한도 소진·키 값이 캐시에 없음 |
+| `tests/js/busapi.test.cjs` | `handlers/bus.js`: 호출 수 묶기(ttl, 키 수)·노선 제한·쿼리 거절·실패 처리·키 인코딩·키 교체·한도 소진·키 값이 캐시에 없음 |
 | `tests/js/keys.test.cjs` `cache.test.cjs` | `lib/keys.js`(용도별 키 풀·한도·시연 프로파일) · `lib/cache.js`(TTL·50 MB 상한) |
 | `tests/js/codes.test.cjs` `resolve.test.cjs` | 코드 판별과 `/api/v1/resolve`(표준코드 표·경계·필지·후퇴·오류·coverage) |
 | `tests/js/infra.api.test.cjs` | 기반시설 요청 시 조회: 신설예정 학교·정류소 변환, 인허가 단지 중심에서만 조회, 서울 건너뜀, 한쪽 실패·키 교체·상한 |
@@ -153,7 +169,9 @@ node --test "tests/js/*.test.cjs"                     # Node (따옴표 필수)
 | `tests/js/myhome.test.cjs` `noticesapi.test.cjs` | 마이홈 공고 변환·시군구 거르기·링크 제한, 공고 API(전국 목록 캐시·한쪽 실패·키 교체·오류) |
 | `tests/js/contract.test.cjs` | 인터페이스 계약: 문서 온전성·운영 응답 20개가 스키마를 통과·핸들러 오류 모양·매개변수 이름 일치 |
 | `tests/js/smoke.test.cjs` | 전국 표본 점검의 판정 함수(경계 윤곽·칸 번호·열림/경고 판정)와 표본 파일 구조 |
-| `tests/js/vercelconf.test.cjs` | `vercel.json`: iframe 차단 헤더·함수 번들 파일 |
+| `tests/js/vercelconf.test.cjs` | `next.config.ts`·`vercel.json`·`app/api`: iframe 차단 헤더·함수 번들 파일·실행 시간 상한 |
+| `tests/js/shell.test.cjs` | 사이드바 메뉴·상세 식별자·지도 섬 스크립트 순서·루트 레이아웃 둘·옛 주소 리다이렉트 |
+| `tests/js/root.test.cjs` | `lib/root.js`: 번들러가 `__dirname`을 가짜 경로로 바꾸는 문제의 재발 방지 |
 | `tests/js/bus.test.cjs` | 버스 계산(방향·3D 면·보간·경유 단지)과 화면 연결(옵션·요청 시에만 조회 약속) |
 | `tests/js/glass.test.cjs` `sidebar.test.cjs` `topbar.test.cjs` | 반투명 유리 글자 대비 · 사이드바(글자 13px 이상·기본 펼침·요약) · 머리 줄의 보기 기준·지도 위 도구줄·확대 카드·가로 요약 |
 
@@ -169,7 +187,7 @@ node scripts/smoke.js [주소] ["하남시 감일동" …]   # 전국 표본 59�
 
 ## 배포
 
-Vercel은 `vercel.json`의 빌드 명령(`node scripts/build.js`)이 `index.html`·`assets/`·`regions/`만 `public/`에 모아 서비스하고, `api/bus.js`와 `api/v1/*.js`(resolve·codes/search·notices·buildings·permits·infra)는 함수로 따로 배포됩니다(`lib/`는 함수가 가져가고, `regions/` 파일은 `vercel.json`의 `includeFiles`로 함께 올라갑니다). 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
+Vercel은 Next.js 프로젝트로 빌드합니다(`vercel.json`의 `framework: nextjs`, 함수 지역 `icn1`). `npm run build`의 `prebuild`가 `scripts/build.js`를 돌려 `assets/`·`regions/`를 `public/`에 모으고 `config.js`를 만든 뒤 `next build`가 화면과 `/api/*` 함수를 만듭니다. 함수(`app/api/**/route.ts`)는 `handlers/`의 핸들러를 가져가고, 함수가 읽는 `regions/`·`registry/` 파일은 `next.config.ts`의 `outputFileTracingIncludes`로 함께 올라가며, 로컬 캐시·큰 번들은 `outputFileTracingExcludes`로 뺍니다. 보안·캐시 헤더도 `next.config.ts`입니다. 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
 
 **인증키**: `config.js`와 `.env*`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(OpenFreeMap 어두운 지도)로 빌드합니다.
 

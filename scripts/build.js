@@ -1,5 +1,6 @@
 /* Vercel 빌드: 배포에 필요한 파일만 public/ 으로 모으고, 환경변수로 config.js 를 만듭니다.
-   - index.html · assets/ · regions/ 만 복사합니다(원천 data·tools·tests·docs 와 *.md 는 올라가지 않습니다).
+   - assets/ · regions/ 만 복사합니다(원천 data·tools·tests·docs 와 *.md 는 올라가지 않습니다). 지도 마크업의 정본 index.html 은 복사하지 않습니다:
+     Next.js 가 /map 을 그릴 때 프로젝트 루트에서 읽습니다(app/(map)/map/page.tsx).
    - 운영 빌드(VERCEL_ENV=production)는 regions/index.json 에서 visibility 가 preview 인 지역을 빼고 그 폴더도 복사하지 않습니다.
    - VWORLD_KEY   : V-World 인증키 (Vercel 프로젝트 환경변수)
    - VWORLD_LAYER : (선택) 배경 종류(기본 midnight)
@@ -34,7 +35,7 @@ function build({ root = '.', out = 'public', env = process.env, log = console.lo
   fs.rmSync(OUT, { recursive: true, force: true });
   fs.mkdirSync(OUT, { recursive: true });
   const keep = (f) => !f.endsWith('.md') && !f.endsWith('.DS_Store');
-  for (const p of ['index.html', 'assets']) fs.cpSync(path.join(root, p), path.join(OUT, p), { recursive: true, filter: keep });
+  for (const p of ['assets']) fs.cpSync(path.join(root, p), path.join(OUT, p), { recursive: true, filter: keep });
   for (const r of index.regions) fs.cpSync(path.join(root, 'regions', r.slug), path.join(OUT, 'regions', r.slug), { recursive: true, filter: keep });
   fs.writeFileSync(path.join(OUT, 'regions/index.json'), JSON.stringify(index, null, 2) + '\n');
   const config = configText(root, env);

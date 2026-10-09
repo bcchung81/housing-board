@@ -73,7 +73,7 @@ async function main(argv, io = {}) {
   const asOf = new Date().toISOString().slice(0, 10), candidates = [];
 
   for (const bjd of args.bjd) {
-    const svc = (io.createService || require('../api/v1/permits.js').createService)({ env });
+    const svc = (io.createService || require('../handlers/v1/permits.js').createService)({ env });
     const out = await svc.getPermits(bjd);
     const { candidates: cs, noRef, unlocated } = P.fromPermitsBody(out.body, { asOf });
     log(`${bjd}: 사업 ${cs.length}건(위치 연결 ${cs.filter((c) => c.pnus.length).length}, 블록 단위·위치 미연결 ${cs.filter((c) => !c.pnus.length).length})${noRef ? ` · 관리번호가 없어 제외 ${noRef}` : ''}${unlocated ? ` · 필지를 못 찾아 목록에서 빠진 ${unlocated}` : ''}${out.cacheable ? '' : ' · ⚠ 일시 오류로 일부만 받음(다시 실행하면 채워짐)'}`);
