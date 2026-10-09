@@ -19,12 +19,13 @@ test('preflight(전역 리셋)를 가져오지 않는다: theme·utilities 만 �
   assert.doesNotMatch(css, /preflight\.css/);
 });
 
-test('shadcn 토큰이 종합상황판 팔레트(dash.css :root)와 같은 값이다', () => {
-  const dash = read('app/(dashboard)/dash.css');
-  const dv = (n) => new RegExp(`--${n}:\\s*(#[0-9A-Fa-f]{6})`).exec(dash)[1].toUpperCase();
+test('shadcn 토큰이 종합상황판 시안 팔레트와 같은 값이다', () => {
+  /* 시안 팔레트(옛 dash.css 의 :root 변수). 옛 CSS 를 걷어낸 뒤에도 값이 바뀌지 않게 여기에 고정한다. */
+  const PALETTE = { bg: '#0A1030', bg2: '#0E1740', pn: '#101A44', pn2: '#16225A', on: '#1B2A66', line: '#22305E', line2: '#3A4C8C', ink: '#E8EDFF', ink2: '#D6DEFA', sub: '#9AA8D6', mute: '#8FA0C8', acc: '#FF8A65', 'acc-ink': '#2A0E04', ok: '#4ADE9E', warn: '#FFC24D', bad: '#FF6B88' };
+  const dv = (n) => PALETTE[n];
   const tv = (n) => new RegExp(`--${n}:\\s*(#[0-9A-Fa-f]{6})`).exec(css)[1].toUpperCase();
   const same = { background: 'bg', card: 'pn', secondary: 'pn2', muted: 'bg2', accent: 'on', border: 'line', foreground: 'ink', 'muted-foreground': 'sub', primary: 'acc', 'primary-foreground': 'acc-ink', ring: 'acc', destructive: 'bad', ok: 'ok', warn: 'warn', bad: 'bad', ink2: 'ink2', mute: 'mute', line2: 'line2' };
-  for (const [shadcn, ours] of Object.entries(same)) assert.equal(tv(shadcn), dv(ours), `--${shadcn} = dash.css --${ours}`);
+  for (const [shadcn, ours] of Object.entries(same)) assert.equal(tv(shadcn), dv(ours), `--${shadcn} = 시안 --${ours}`);
   assert.equal(tv('input'), dv('line2'));
   assert.equal(tv('sidebar'), '#0C1438', '레일 배경은 옛 shell.css 의 --r-bg 와 같은 값');
   assert.equal(tv('sidebar-accent'), dv('on'));

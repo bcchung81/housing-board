@@ -70,7 +70,7 @@ const realRow = fs.readFileSync(path.join(__dirname, '../../components/board/Rea
 function panel(src, id) {
   const i = src.indexOf(`id="${id}"`);
   assert.ok(i >= 0, `${id} 패널이 있어야 한다`);
-  const j = src.indexOf('</section>', i);
+  const j = src.indexOf('</Card>', i);   // 패널은 <Card variant="board" render={<section id=…/>}> … </Card>
   return src.slice(i, j);
 }
 

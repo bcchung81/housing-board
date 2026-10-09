@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import ShellRail from '../../components/ShellRail';
 import '../tailwind.css';
-import './dash.css';
 
 export const metadata: Metadata = {
   title: { default: '주택파동 · 주택공급 종합상황판', template: '%s · 주택파동' },
@@ -13,7 +12,8 @@ export const metadata: Metadata = {
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko" className="dark">
-      <body>
+      {/* 본문 바탕·글꼴(옛 dash.css 의 body): 남색 바탕에 위쪽 오른편이 밝아지는 그라데이션, 15px/1.55 */}
+      <body className="m-0 min-h-screen text-foreground [background:#0A1030_radial-gradient(1200px_420px_at_70%_-10%,#1A2A6E_0%,#0A1030_62%)_no-repeat] [font:15px/1.55_'Noto_Sans_KR','Apple_SD_Gothic_Neo','Malgun_Gothic',system-ui,sans-serif]">
         <ShellRail>
           <main className="min-w-0 flex-1">{children}</main>
         </ShellRail>

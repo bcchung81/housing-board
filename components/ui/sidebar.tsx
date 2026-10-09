@@ -129,7 +129,7 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<"
       aria-controls="rail"
       aria-label="메뉴 열기"
       className={cn(
-        "fixed top-3 left-2 z-50 hidden size-11 cursor-pointer rounded-[10px] border border-sidebar-border bg-[rgba(12,20,56,.94)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sidebar-primary max-[900px]:block",
+        "fixed top-3 left-2 z-50 hidden size-11 cursor-pointer rounded-[10px] border border-sidebar-border bg-[rgba(12,20,56,.94)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-sidebar-primary mobile:block",
         className
       )}
       onClick={(event) => {

@@ -9,7 +9,7 @@ function Stepper({ className, ...props }: React.ComponentProps<"ol">) {
 }
 
 const stepperItemVariants = cva(
-  "flex items-center gap-2 rounded-[10px] border px-3 py-2 text-[13px] [&_b]:flex [&_b]:size-[22px] [&_b]:items-center [&_b]:justify-center [&_b]:rounded-full [&_b]:text-[12px]",
+  "flex items-center gap-2 rounded-[10px] border px-3 py-2 text-[13px] [&_b]:flex [&_b]:size-[22px] [&_b]:items-center [&_b]:justify-center [&_b]:rounded-[50%] [&_b]:text-[12px]",
   {
     variants: {
       state: {

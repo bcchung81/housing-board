@@ -2,7 +2,9 @@
 /* 화면 비교용 스크린샷 촬영(개발 도구). 같은 주소·해상도·상호작용 상태를 찍어 두 번의 결과를 scripts/visual/diff.mjs 로 픽셀 비교한다.
    Tailwind·shadcn 전환(2026-10-09 결정: 픽셀 완전 동일)에서 '바뀌기 전과 같은가'를 확인하는 기준선이다.
 
-     node scripts/visual/shoot.js --base http://localhost:3100 --out .visual/baseline [--only /area,/month] [--map]
+     node scripts/visual/shoot.js --base http://localhost:3100 --out .visual/baseline [--only /area,/month] [--map] [--legacy]
+
+   --legacy: 종합상황판이 옛 마크업(.dir .reg 같은 클래스)이던 커밋의 빌드를 찍을 때. 상태 화면이 누르는 대상의 선택자만 옛 것으로 바꾼다.
 
    ego-browser 가 필요하다(환경변수를 못 받아서 이 파일이 설정을 스크립트에 끼워 넣어 stdin 으로 넘긴다).
    결정적이게 하려고 prefers-reduced-motion 을 켜고(시안의 순환·전환 끔), 해상도 1440·1100·390, 배율 1, 긴 페이지는 높이 6000 에서 자른다. */
@@ -22,21 +24,25 @@ const WIDTHS = [1440, 1100, 390];
 
 /* 상호작용 상태: [이름, 경로, 폭들, 동작(ego 스크립트 조각 — page 가 있다)] */
 const STATES = [
-  ['home-dir3', '/', [1440], 'await page.click("css:.dir:nth-child(3)");'],
-  ['home-dir6', '/', [1440], 'await page.click("css:.dir:nth-child(6)");'],
-  ['home-legend-start', '/', [1440], 'await page.click("css:.blegend button:nth-child(3)");'],
-  ['home-jump-p12', '/', [1440, 390], 'await page.click("css:.jumps button:nth-child(4)");'],
-  ['home-jump-m12', '/', [1440], 'await page.click("css:.jumps button:nth-child(1)");'],
-  ['home-region-gg', '/', [1440], 'await page.click("css:.reg:nth-child(2)");'],
-  ['home-region-jn', '/', [1440], 'await page.click("css:.reg:nth-child(14)");'],
-  ['home-flow3', '/', [1440], 'await page.evaluate(() => [...document.querySelectorAll(".fstep")][2].click());'],
-  ['home-tip', '/', [1440], 'await page.mouse.move(520, 480); await page.mouse.move(540, 482); await page.mouse.move(560, 484); await page.waitForSelector("css:#p-chart .tip:not([hidden])", { timeout: 5000 });'],
+  ['home-dir3', '/', [1440], 'await page.click("css:[data-slot=board-dir]:nth-child(3)");'],
+  ['home-dir6', '/', [1440], 'await page.click("css:[data-slot=board-dir]:nth-child(6)");'],
+  ['home-legend-start', '/', [1440], 'await page.click("css:[data-slot=board-legend] button:nth-child(3)");'],
+  ['home-jump-p12', '/', [1440, 390], 'await page.click("css:[data-slot=board-jumps] button:nth-child(4)");'],
+  ['home-jump-m12', '/', [1440], 'await page.click("css:[data-slot=board-jumps] button:nth-child(1)");'],
+  ['home-region-gg', '/', [1440], 'await page.click("css:[data-slot=board-region]:nth-child(2)");'],
+  ['home-region-jn', '/', [1440], 'await page.click("css:[data-slot=board-region]:nth-child(14)");'],
+  ['home-flow3', '/', [1440], 'await page.evaluate(() => [...document.querySelectorAll("[data-slot=board-flow-step]")][2].click());'],
+  ['home-tip', '/', [1440], 'await page.mouse.move(520, 480); await page.mouse.move(540, 482); await page.mouse.move(560, 484); await page.waitForSelector("css:#p-chart [data-slot=board-tip]:not([hidden])", { timeout: 5000 });'],
   ['rail-folded', '/area', [1440], 'await page.evaluate(() => localStorage.setItem("rail-folded", "1")); await page.reload(); await page.waitForSelector("css:[data-slot=sidebar]"); await page.waitForTimeout(300);'],
   ['rail-drawer', '/area', [390], 'await page.click("css:[data-slot=sidebar-trigger]"); await page.waitForTimeout(400);'],
 ];
 
 const config = { base, out, only, routes: ROUTES, widths: WIDTHS, states: STATES.map(([n, r, w]) => [n, r, w]), map: !!args.map };
-const actions = STATES.map(([, , , code]) => `async (page) => { ${code} }`).join(',\n');
+/* 종합상황판 상태 화면이 누르는 대상: 새 마크업(data-slot) → 옛 마크업(클래스). --legacy 로 옛 커밋의 빌드를 찍을 때만 바꾼다 */
+const LEGACY = [['[data-slot=board-dir]', '.dir'], ['[data-slot=board-legend] button', '.blegend button'], ['[data-slot=board-jumps] button', '.jumps button'], ['[data-slot=board-region]', '.reg'],
+  ['[data-slot=board-flow-step]', '.fstep'], ['[data-slot=board-tip]', '.tip']];
+const code = (c) => (args.legacy ? LEGACY.reduce((x, [n, o]) => x.split(n).join(o), c) : c);
+const actions = STATES.map(([, , , c]) => `async (page) => { ${code(c)} }`).join(',\n');
 
 const script = `
 const fs = await import("node:fs/promises");
@@ -47,6 +53,9 @@ const slug = (s) => (s === "/" ? "home" : s.replace(/^\\//, "").replace(/[\\/?=&
 const task = await taskSpace("visual shoot");
 const page = task.page("p1");
 try {
+/* 방문한 링크의 색을 방문 전과 같게 보이게 한다. 브라우저가 방문 기록을 비동기로 반영해서, 같은 화면이 실행 때마다 링크 색이 달랐다
+   (2026-10-09: 데이터 원본의 '기관별' 링크가 파랑/보라로 갈림). @layer base 안의 우선순위 0(:where)이라 색을 직접 정한 링크(Tailwind 유틸리티·옛 CSS)는 그대로다. */
+await page.cdp("Page.addScriptToEvaluateOnNewDocument", { source: "document.addEventListener('DOMContentLoaded', () => { const s = document.createElement('style'); s.textContent = '@layer base{:where(a:visited){color:LinkText}}'; document.head.appendChild(s); });" });
 await page.goto(C.base + "/");
 await page.waitForLoadState();
 const DPR = await page.evaluate(() => devicePixelRatio);   // 이 브라우저의 화면 배율(예 1.1). 뷰포트 폭은 이만큼 나뉘어 적용되므로 미리 곱해 준다
@@ -126,7 +135,8 @@ if (C.map) {
     await nav(C.base + "/map?region=jeonnam-naju&selftest=1");
     await page.waitForFunction(() => window.__mapStatus && window.__mapStatus.loaded, undefined, { timeout: 60000 }).catch(() => {});
     await settle();
-    await cap("map-rail@" + w, { x: 0, y: 0, width: w < 600 ? 70 : 60, height: H });
+    /* 넓은 화면은 56px 레일 전체, 모바일은 햄버거가 있는 위쪽 100px 만(108px 아래부터는 지도 캔버스라 타일·글자가 늦게 올라와 찍을 때마다 다르다) */
+    await cap("map-rail@" + w, { x: 0, y: 0, width: w < 600 ? 70 : 60, height: w < 600 ? 100 : H });
     n++; console.log("map-rail", w);
   }
 }

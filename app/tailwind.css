@@ -7,10 +7,50 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* 모든 요소의 크기는 테두리·안쪽 여백을 포함한다(옛 dash.css·app.css 의 `*{box-sizing:border-box}`). preflight 를 켜기 전까지 직접 둔다. */
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+}
+
+/* 단추 초기화(옛 board.css 의 `.board button`). 유틸리티 레이어보다 아래라서 단추마다 붙인 text-·font-·border-·bg- 유틸리티가 항상 이긴다.
+   (같은 레이어에 font 단축 속성을 두면 text-[12.5px] 뒤에 생성돼 글자 크기를 도로 덮는다 — 2026-10-09 종합상황판에서 겪음.)
+   마지막 단계에서 preflight 를 켜면 이 초기화는 preflight 의 button 규칙으로 대신한다. */
+@layer components {
+  .btn-reset {
+    cursor: pointer;
+    border: 0;
+    background: none;
+    padding: 0;
+    text-align: left;
+    font: inherit;
+    color: inherit;
+  }
+}
+
+/* 옛 CSS 의 @media (max-width:N) 는 N 을 포함한다. Tailwind 의 max-[N] 은 N 미만(not all and (min-width:N))이라 정확히 N 인 화면에서 어긋난다
+   (2026-10-09: 1100px 화면에서 종합상황판이 두 칸으로 남았다). 같은 뜻의 변형을 따로 둔다: mobile = 900px 이하, narrow = 1100px 이하, phone = 520px 이하. */
+@custom-variant mobile {
+  @media (max-width: 900px) {
+    @slot;
+  }
+}
+@custom-variant narrow {
+  @media (max-width: 1100px) {
+    @slot;
+  }
+}
+@custom-variant phone {
+  @media (max-width: 520px) {
+    @slot;
+  }
+}
+
 /* 이 앱은 어두운 남색 한 가지 테마다. <html class="dark"> 로 shadcn 의 dark: 변형을 항상 켠다. */
 @custom-variant dark (&:is(.dark *));
 
-/* 종합상황판 시안의 팔레트(dash.css :root 와 같은 값)를 shadcn 토큰에 연결한다. */
+/* 종합상황판 시안의 팔레트(옛 dash.css :root 의 값)를 shadcn 토큰에 연결한다. */
 :root {
   color-scheme: dark;
   --background: #0A1030;
@@ -55,6 +95,11 @@
   --warn: #FFC24D;
   --bad: #FF6B88;
   --chartbg: #0B1233;
+}
+
+/* 종합상황판 '데이터 흐름'의 점선이 아래로 흐르는 움직임(옛 board.css 의 board-vflow). prefers-reduced-motion 에서는 Board 가 끈다. */
+@keyframes board-vflow {
+  to { background-position: 0 8px; }
 }
 
 @theme inline {

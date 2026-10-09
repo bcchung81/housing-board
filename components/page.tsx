@@ -3,7 +3,7 @@ import type { ComponentProps, ReactNode } from 'react';
 import { cn } from 'cn';
 
 export const Page = ({ children }: { children: ReactNode }) => (
-  <div className="mx-auto max-w-[1200px] px-7 pt-7 pb-12 max-[900px]:px-4 max-[900px]:pt-[68px] max-[900px]:pb-10">{children}</div>
+  <div className="mx-auto max-w-[1200px] px-7 pt-7 pb-12 mobile:px-4 mobile:pt-[68px] mobile:pb-10">{children}</div>
 );
 export const PageTitle = ({ className, ...p }: ComponentProps<'h1'>) => <h1 className={cn('mt-1.5 mb-1 text-[26px] leading-[1.25]', className)} {...p} />;
 export const Lede = ({ className, ...p }: ComponentProps<'p'>) => <p className={cn('m-0 mb-1.5 text-[14px] text-muted-foreground', className)} {...p} />;
