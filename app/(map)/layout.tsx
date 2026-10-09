@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import ShellRail from '../../components/ShellRail';
+import '../tailwind.css';
 
 export const metadata: Metadata = {
   title: '주택파동 공급 지도',
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
    대시보드와 루트 레이아웃을 나눠, 들어올 때 새 문서가 열리게 했다. 스타일은 기존 app.css 를 그대로 쓴다. */
 export default function MapLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko">
+    <html lang="ko" className="dark">
       <head>
         {/* 지도가 곧 요청할 외부 서버와 미리 연결해 둔다(첫 타일이 빨리 온다) */}
         <link rel="preconnect" href="https://api.vworld.kr" crossOrigin="" />

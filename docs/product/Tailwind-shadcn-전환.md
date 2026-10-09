@@ -19,8 +19,8 @@
 
 | 단계 | 내용 | 통과 조건 |
 |---|---|---|
-| 1 | 화면 비교 기준선·도구 | 같은 화면 반복 촬영이 한 픽셀도 안 다름(알려진 잡음 제외) |
-| 2 | Tailwind · shadcn 기반(토큰·`cn`·`components.json`), **preflight 보류** | 기준선과 같음 |
+| 1 | 화면 비교 기준선·도구 — **완료** | 같은 화면 반복 촬영이 한 픽셀도 안 다름(알려진 잡음 제외) |
+| 2 | Tailwind · shadcn 기반(토큰·`cn`·`components.json`), **preflight 보류** — **완료** | 기준선과 같음: 80장 모두 같음 |
 | 3 | 대시보드 화면(레일·빵부스러기·카드·표·차트 틀)을 shadcn/Tailwind로, `dash.css`·`shell.css` 삭제 | 기준선과 같음 |
 | 4 | `/` 종합상황판(`board.css` 삭제). 리본 차트 SVG 계산은 유지 | 기준선과 같음 |
 | 5~7 | 지도 앱 React 선언형 재작성·옛 파일 삭제·정리 | (1~4 결과를 보고 다시 정함) |
@@ -33,13 +33,21 @@ node scripts/visual/shoot.js --base http://localhost:3100 --out .visual/current 
 node scripts/visual/diff.mjs .visual/baseline .visual/current       # 다르면 종료 코드 1, 차이는 current/diff/ 에 빨간 PNG
 ```
 
-- 대상: 대시보드 22개 경로 × 해상도 3(1440·1100·390) + 상호작용 상태 11종 + `/map` 레일 잘라내기 = **80장**(`.visual/`은 gitignore, 기준선은 `pre-tailwind` 태그를 빌드해 다시 만든다).
+- 대상: 대시보드 22개 경로 × 해상도 3(1440·1100·390) + 상호작용 상태 11종 + `/map` 레일 잘라내기 = **80장**(`.visual/`은 gitignore, 기준선은 `pre-tailwind` 태그 상태를 빌드해 다시 만든다. 촬영 방식을 바꾸면 기준선도 같은 방식으로 다시 찍는다).
 - 결정적이게: `prefers-reduced-motion`(시안 순환·전환 끔), 촬영 전 포인터를 화면 밖으로 치움, 글꼴 로딩 대기, 툴팁은 보일 때까지 대기.
+- **긴 페이지는 뷰포트 높이를 페이지 전체로 키워 화면 안에서 찍는다.** `captureBeyondViewport`로 화면 밖을 찍으면 스크롤 컨테이너 안 `sticky` 표 헤더의 글자 가장자리가 CSS와 무관하게 다르게 래스터되는 아티팩트가 생겼다(2026-10-09: 비어 있는 CSS와 `@layer` 한 줄뿐인 CSS가 서로 다른 화면을 냈고, 전체 높이로 키우자 같아졌다). 원인을 가려 내려고 변경을 하나씩 빼 가며 비교한 결과다.
 - **이미지는 CSS 픽셀과 1:1**이어야 한다. `ego-browser`의 `page.screenshot`은 화면 배율(이 기계 1.1) 보정이 겹쳐 이미지가 줄어들어, `Page.captureScreenshot`을 `clip.scale: 1`로 직접 부른다. 뷰포트 폭도 같은 배율로 보정해 준다(모바일 에뮬레이션 폭은 그대로).
-- 비교는 한 픽셀의 R·G·B 최대 차이가 **2 이하면 같은 것**으로 본다(그라데이션 디더링 잡음: 같은 화면을 두 번 찍어도 ±1~2). 알려진 잡음은 `noise.json`에 파일 이름과 픽셀 수로 적는다 — 지금은 `area-11@390`(축소된 SVG 격자선, 515px) 하나다.
+- 비교는 한 픽셀의 R·G·B 최대 차이가 **2 이하면 같은 것**으로 본다(그라데이션 디더링 잡음: 같은 화면을 두 번 찍어도 ±1~2). 알려진 잡음은 `noise.json`에 파일 이름과 픽셀 수로 적는다 — 지금은 `state-home-tip@1440`(툴팁 글자 가장자리, 77px) 하나다.
 - 지도 캔버스는 타일·버스 때문에 비교하지 않는다. 지도 화면의 껍데기 비교는 5단계에서 정한다.
 
 ## 알려진 한계
 
 - 브라우저 기본 위젯(`<input type=range>` · `<select>` · `<details>` · 체크박스)은 shadcn 컴포넌트로 바꾸면 픽셀이 달라진다. 픽셀 동일이 우선이라 이런 곳은 기본 위젯을 유지하고 Tailwind로 겉만 맞춘다.
 - shadcn 기본값(둥근 정도·높이·포커스 링)은 우리 디자인과 다르므로 컴포넌트마다 덮어쓴다. Tailwind `preflight`는 전역 리셋이라 마지막 단계에서 켠다.
+
+## 2단계 기록
+
+- `app/tailwind.css`: `@layer theme, base, components, utilities;` + `theme.css`·`utilities.css`만 레이어로 가져온다(**preflight 없음**) + `tw-animate-css` + `shadcn/tailwind.css` + 남색 팔레트를 shadcn 토큰에 연결(`dash.css :root`와 같은 값, 시험이 대조). `<html class="dark">`로 `dark:` 변형을 항상 켠다.
+- Tailwind는 `next.config.ts`의 Turbopack 로더(`@tailwindcss/turbopack`)로 연결한다(Next 16.4 `create-next-app`과 같은 방식). 모든 `.css`가 이 로더를 지나므로 Lightning CSS가 기존 CSS의 선언 순서를 바꾸고 글꼴 이름의 따옴표를 뺀다 — 의미는 같고 화면 비교가 같음을 확인했다.
+- `shadcn`(CLI)은 하위 패키지에 고위험 취약점 7건이 있어 **개발 의존성**으로 두었다(운영 의존성 감사 0건). 앱이 쓰는 것은 `shadcn/tailwind.css` 한 줄뿐이다. shadcn 4.21의 `cn`은 npm 패키지이고 기본 스타일 `base-nova`는 Base UI 위에 만들어진다.
+- 기반 확인용으로 `components/ui/button.tsx`(shadcn `button`)를 추가했다. 3단계에서 `.btn`을 이것으로 바꾼다.

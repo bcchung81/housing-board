@@ -12,7 +12,7 @@ const [a, b, ...rest] = process.argv.slice(2);
 if (!a || !b) { console.error('사용: node scripts/visual/diff.mjs <기준 폴더> <새 폴더> [--tol N] [--allow N]'); process.exit(2); }
 const opt = (name, d) => (rest.includes(name) ? Number(rest[rest.indexOf(name) + 1]) : d);
 const tol = opt('--tol', 2), allow = opt('--allow', 0);
-/* 알려진 잡음(noise.json): 이 파일은 그 픽셀 수까지 허용한다. area-11@390 은 390px 로 줄어든 SVG 차트 격자선(소수 좌표의 1px 선)이 가끔 다르게 그려진다(515px, 최대 차이 24) */
+/* 알려진 잡음(noise.json): 이 파일은 그 픽셀 수까지 허용한다. state-home-tip@1440 은 툴팁 글자 가장자리가 가끔 다르게 그려진다(77px, 최대 차이 35) */
 const noise = JSON.parse(fs.readFileSync(new URL('./noise.json', import.meta.url), 'utf8'));
 const files = fs.readdirSync(a).filter((f) => f.endsWith('.png')).sort();
 const outDir = path.join(b, 'diff');

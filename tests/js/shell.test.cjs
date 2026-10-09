@@ -50,8 +50,8 @@ test('지도 섬이 스크립트를 불러오는 순서는 index.html 의 기존
 });
 
 test('지도는 루트 레이아웃이 따로이고(들어갈 때·나올 때 새 문서), 지도로 가는 링크는 <Link> 가 아니라 <a> 다', () => {
-  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko">/);
-  assert.match(read('app/(dashboard)/layout.tsx'), /<html lang="ko">/);
+  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" className="dark">/);
+  assert.match(read('app/(dashboard)/layout.tsx'), /<html lang="ko" className="dark">/);
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/layout.tsx')), '최상위 layout.tsx 가 있으면 두 레이아웃이 하나로 합쳐진다');
   const rail = read('components/ShellRail.tsx');
   assert.match(rail, /compact \|\| m\.id === 'map'\s*\?\s*<a href=\{m\.href\}/);

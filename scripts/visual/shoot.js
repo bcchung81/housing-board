@@ -59,15 +59,25 @@ const setView = async (w) => {
 /* 포인터를 화면 밖으로 치운다: 이전 상태(툴팁 등)에서 남은 포인터가 다음 화면의 호버 효과를 만들면 같은 화면이 다르게 찍힌다 */
 const park = () => page.cdp("Input.dispatchMouseEvent", { type: "mouseMoved", x: -50, y: -50, buttons: 0 });
 const settle = async () => { await park(); await page.evaluate(() => document.fonts.ready.then(() => 0)); await page.waitForTimeout(350); };
-/* CSS 픽셀 1:1 로 캡처한다(SDK 의 page.screenshot 은 배율 보정이 겹쳐 이미지가 1/1.1 로 줄어든다). clip.scale 1 = 이미지 1 픽셀이 CSS 1 픽셀 */
+/* CSS 픽셀 1:1 로 캡처한다(SDK 의 page.screenshot 은 배율 보정이 겹쳐 이미지가 1/1.1 로 줄어든다). clip.scale 1 = 이미지 1 픽셀이 CSS 1 픽셀.
+   긴 페이지는 뷰포트 높이를 페이지 전체로 키워 화면 안에서 찍는다. captureBeyondViewport 로 화면 밖을 찍으면 스크롤 컨테이너 안 sticky 헤더의
+   글자 가장자리가 CSS 와 무관하게 다르게 래스터되는 아티팩트가 생겼다(2026-10-09: 빈 css 와 @layer 한 줄만 있는 css 의 화면이 달랐고, 전체 높이로 키우자 같아졌다). */
 const cap = async (file, clip) => {
-  const r = await page.cdp("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, clip: { ...clip, scale: 1 } });
+  const r = await page.cdp("Page.captureScreenshot", { format: "png", clip: { ...clip, scale: 1 } });
   await fs.mkdir(C.out, { recursive: true });
   await fs.writeFile(C.out + "/" + file + ".png", Buffer.from(r.data, "base64"));
 };
+const fullView = async (w, h) => {
+  const mobile = w < 600;
+  await page.cdp("Emulation.setDeviceMetricsOverride", { width: mobile ? w : Math.round(w * DPR), height: mobile ? h : Math.round(h * DPR), deviceScaleFactor: 1, mobile });
+  await page.waitForTimeout(400);
+};
 const shot = async (file) => {
   const m = await page.evaluate(() => ({ w: innerWidth, h: Math.ceil(document.documentElement.scrollHeight) }));
-  await cap(file, { x: 0, y: 0, width: m.w, height: Math.min(m.h, CAP) });
+  const h = Math.min(m.h, CAP);
+  await fullView(m.w, h);
+  await cap(file, { x: 0, y: 0, width: m.w, height: h });
+  await setView(m.w);   // 다음 화면을 위해 기본 높이로 되돌린다
   return m.h;
 };
 let n = 0;

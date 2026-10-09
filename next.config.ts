@@ -8,6 +8,9 @@ import type { NextConfig } from 'next';
 const NOT_FUNCTION = ['./.cache/**'];
 
 const config: NextConfig = {
+  /* Tailwind CSS v4 를 Turbopack 로더로 연결한다(Next 16.4 create-next-app 과 같은 방식). 모든 .css 가 지나가지만 Tailwind 지시문이 없는 파일은 그대로 나온다. */
+  turbopack: { rules: { '*.css': { loaders: ['@tailwindcss/turbopack'], as: '*.css' } } },
+
   async headers() {
     return [
       { source: '/assets/vendor/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
