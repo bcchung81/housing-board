@@ -5,7 +5,7 @@
 | 폴더 | 내용 |
 |---|---|
 | `data/` | 원천(`raw/`, 기관별 하위 폴더) · 정리본(`processed/`) · 가공 도구(`tools/`) · 데이터 설명(`README.md`) |
-| `docs/` | 기획 문서(`request.md`, 정책근거·요구사항 매트릭스, 신청 API 정리), 평가 기준(`eval/`), 발표자료 HTML 2종(`media/` 포함), 기획서 발표 초안(`발표자료_pptx/deck.pptx·pdf`, 2026-10-02), 참고 이미지(`view/`) |
+| `../docs/` | (2026-10-09 에 `workspace/docs/` 에서 루트 `docs/` 로 옮김) 기획 문서(`request.md`, 정책근거·요구사항 매트릭스, 신청 API 정리), 평가 기준(`eval/`), 발표자료 HTML 2종(`media/` 포함), 기획서 발표 초안(`발표자료_pptx/deck.pptx·pdf`, 2026-10-02), 참고 이미지(`view/`) |
 | `videos/` | 소개 영상 HyperFrames 프로젝트(`housing-wave-intro/`) |
 
 ## 옛 경로 → 새 경로 (2026-10-04 정리)
@@ -22,4 +22,4 @@
 | `data/raw/lh_cwstt/` · `lh_public/` | `workspace/data/raw/lh/cwstt/` · `lh/public/` |
 | `data/raw/vworld_*` | `workspace/data/raw/vworld/` |
 | `data/tools/` · `data/README.md` | `workspace/data/tools/` · `workspace/data/README.md` |
-| `docs/` · `videos/` | `workspace/docs/` · `workspace/videos/` |
+| `docs/` · `videos/` | `workspace/videos/` (`docs/` 는 2026-10-09 에 다시 루트 `docs/` 로 합침) |
