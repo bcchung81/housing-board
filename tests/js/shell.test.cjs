@@ -54,8 +54,8 @@ test('지도는 루트 레이아웃이 따로이고(들어갈 때·나올 때 �
   assert.match(read('app/(dashboard)/layout.tsx'), /<html lang="ko" className="dark">/);
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/layout.tsx')), '최상위 layout.tsx 가 있으면 두 레이아웃이 하나로 합쳐진다');
   const rail = read('components/ShellRail.tsx');
-  assert.match(rail, /compact \|\| m\.id === 'map'\s*\?\s*<a href=\{m\.href\}/);
-  assert.match(read('app/(map)/layout.tsx'), /<ShellRail compact \/>/);
+  assert.match(rail, /compact \|\| m\.id === 'map'\s*\?\s*<SidebarMenuButton[^>]*render=\{<a href=\{m\.href\}/);
+  assert.match(read('app/(map)/layout.tsx'), /<ShellRail compact /);
 });
 
 test('옛 지도 주소(/?region=…)는 쿼리를 그대로 두고 /map 으로 보낸다', () => {

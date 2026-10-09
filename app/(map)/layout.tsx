@@ -22,10 +22,9 @@ export default function MapLayout({ children }: { children: ReactNode }) {
         <link rel="stylesheet" href="/assets/css/app.css" />
       </head>
       <body>
-        <div className="shell-map">
-          <ShellRail compact />
+        <ShellRail compact className="shell-map h-screen overflow-hidden">
           {children}
-        </div>
+        </ShellRail>
       </body>
     </html>
   );

@@ -14,10 +14,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="ko" className="dark">
       <body>
-        <div className="shell">
-          <ShellRail />
-          <main className="shell-main">{children}</main>
-        </div>
+        <ShellRail>
+          <main className="min-w-0 flex-1">{children}</main>
+        </ShellRail>
       </body>
     </html>
   );

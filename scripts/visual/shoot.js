@@ -31,8 +31,8 @@ const STATES = [
   ['home-region-jn', '/', [1440], 'await page.click("css:.reg:nth-child(14)");'],
   ['home-flow3', '/', [1440], 'await page.evaluate(() => [...document.querySelectorAll(".fstep")][2].click());'],
   ['home-tip', '/', [1440], 'await page.mouse.move(520, 480); await page.mouse.move(540, 482); await page.mouse.move(560, 484); await page.waitForSelector("css:#p-chart .tip:not([hidden])", { timeout: 5000 });'],
-  ['rail-folded', '/area', [1440], 'await page.evaluate(() => localStorage.setItem("rail-folded", "1")); await page.reload(); await page.waitForSelector("css:nav.rail"); await page.waitForTimeout(300);'],
-  ['rail-drawer', '/area', [390], 'await page.click("css:.rail-burger"); await page.waitForTimeout(400);'],
+  ['rail-folded', '/area', [1440], 'await page.evaluate(() => localStorage.setItem("rail-folded", "1")); await page.reload(); await page.waitForSelector("css:[data-slot=sidebar]"); await page.waitForTimeout(300);'],
+  ['rail-drawer', '/area', [390], 'await page.click("css:[data-slot=sidebar-trigger]"); await page.waitForTimeout(400);'],
 ];
 
 const config = { base, out, only, routes: ROUTES, widths: WIDTHS, states: STATES.map(([n, r, w]) => [n, r, w]), map: !!args.map };

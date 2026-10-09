@@ -26,7 +26,7 @@ test('shadcn 토큰이 종합상황판 팔레트(dash.css :root)와 같은 값�
   const same = { background: 'bg', card: 'pn', secondary: 'pn2', muted: 'bg2', accent: 'on', border: 'line', foreground: 'ink', 'muted-foreground': 'sub', primary: 'acc', 'primary-foreground': 'acc-ink', ring: 'acc', destructive: 'bad', ok: 'ok', warn: 'warn', bad: 'bad', ink2: 'ink2', mute: 'mute', line2: 'line2' };
   for (const [shadcn, ours] of Object.entries(same)) assert.equal(tv(shadcn), dv(ours), `--${shadcn} = dash.css --${ours}`);
   assert.equal(tv('input'), dv('line2'));
-  assert.equal(tv('sidebar'), '#0C1438', '레일 배경은 shell.css 의 --r-bg');
+  assert.equal(tv('sidebar'), '#0C1438', '레일 배경은 옛 shell.css 의 --r-bg 와 같은 값');
   assert.equal(tv('sidebar-accent'), dv('on'));
 });
 

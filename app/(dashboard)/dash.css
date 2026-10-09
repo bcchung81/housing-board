@@ -4,8 +4,6 @@
 html{color-scheme:dark}
 html,body{margin:0}
 body{min-height:100vh;color:var(--ink);background:#0A1030 radial-gradient(1200px 420px at 70% -10%,#1A2A6E 0%,#0A1030 62%) no-repeat;font:15px/1.55 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif}
-.shell{display:flex;min-height:100vh}
-.shell-main{flex:1;min-width:0}
 .page{max-width:1200px;margin:0 auto;padding:28px 28px 48px}
 .page h1{margin:6px 0 4px;font-size:26px;line-height:1.25}
 .page h2{margin:28px 0 10px;font-size:16px}
