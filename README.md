@@ -190,7 +190,7 @@ node scripts/smoke.js [주소] ["하남시 감일동" …]   # 전국 표본 59�
 
 ## 배포
 
-Vercel은 Next.js 프로젝트로 빌드합니다(`vercel.json`의 `framework: nextjs`, 함수 지역 `icn1`). `npm run build`의 `prebuild`가 `scripts/build.js`를 돌려 `assets/`·`regions/`를 `public/`에 모으고 `config.js`를 만든 뒤 `next build`가 화면과 `/api/*` 함수를 만듭니다. 함수(`app/api/**/route.ts`)는 `handlers/`의 핸들러를 가져가고, 함수가 읽는 `regions/`·`registry/` 파일은 `next.config.ts`의 `outputFileTracingIncludes`로 함께 올라가며, 로컬 캐시·큰 번들은 `outputFileTracingExcludes`로 뺍니다. 보안·캐시 헤더도 `next.config.ts`입니다. 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
+Vercel은 Next.js 프로젝트로 빌드합니다(`vercel.json`의 `framework: nextjs`·`buildCommand: npm run build`·`outputDirectory: .next`·함수 지역 `icn1`. 프로젝트 설정에 남은 옛 빌드 명령·출력 폴더를 덮어쓰려고 명시합니다). `npm run build`의 `prebuild`가 `scripts/build.js`를 돌려 `assets/`·`regions/`를 `public/`에 모으고 `config.js`를 만든 뒤 `next build`가 화면과 `/api/*` 함수를 만듭니다. 함수(`app/api/**/route.ts`)는 `handlers/`의 핸들러를 가져가고, 함수가 읽는 `regions/`·`registry/` 파일은 `next.config.ts`의 `outputFileTracingIncludes`로 함께 올라가며, 로컬 캐시·큰 번들은 `outputFileTracingExcludes`로 뺍니다. 보안·캐시 헤더도 `next.config.ts`입니다. 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `workspace/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
 
 **인증키**: `config.js`와 `.env*`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(OpenFreeMap 어두운 지도)로 빌드합니다.
 

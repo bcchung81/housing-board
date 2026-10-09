@@ -66,10 +66,14 @@ test('함수 묶음: resolve 는 색인·지역 region.json·레지스트리를,
   for (const r of index.regions) assert.ok(fs.existsSync(path.join(ROOT, 'regions', r.slug, 'region.json')), r.slug);
 });
 
-test('vercel.json 은 Next.js 와 함수 지역(icn1)만 정한다: 미국 지역에서는 V-World 호출이 연결 실패했다', () => {
+test('vercel.json 은 Next.js·빌드 명령·출력 폴더·함수 지역(icn1)만 정한다: 프로젝트 설정에 남은 옛 파이프라인(node scripts/build.js · public)을 덮어쓴다', () => {
   assert.equal(vercel.framework, 'nextjs');
-  assert.deepEqual(vercel.regions, ['icn1']);
-  for (const k of ['buildCommand', 'outputDirectory', 'functions', 'headers']) assert.ok(!(k in vercel), `${k} 는 next.config.ts·package.json 이 정한다`);
+  assert.equal(vercel.buildCommand, 'npm run build');   // prebuild 가 scripts/build.js 로 public/ 을 채우고 next build 가 이어진다(package.json)
+  assert.equal(vercel.outputDirectory, '.next');         // 프로젝트 설정의 Output Directory 가 public 이면 routes-manifest.json 을 못 찾아 배포가 실패한다(2026-10-09 미리보기에서 확인)
+  assert.deepEqual(vercel.regions, ['icn1']);            // 미국 지역에서는 V-World 호출이 연결 실패했다
+  for (const k of ['functions', 'headers', 'rewrites', 'redirects']) assert.ok(!(k in vercel), `${k} 는 next.config.ts 가 정한다`);
+  const pkg = JSON.parse(read('package.json'));
+  assert.equal(pkg.scripts.prebuild, 'node scripts/build.js'); assert.equal(pkg.scripts.build, 'next build');
 });
 
 test('.vercelignore 에 .cache 가 있어 로컬 캐시·사용량 파일이 배포로 올라가지 않고, 지도 마크업(index.html)·레지스트리·지역 자료는 올라간다', () => {
