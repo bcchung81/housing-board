@@ -108,7 +108,7 @@ export const txRegion = (r: Region) => r.n + ' — 사업 ' + r.tot + '건 · �
 
 /* ── 시도 타일 색(바탕색 = 지연율 단계) ── */
 export const RTH = [5, 7, 8.5, 10];
-export const RCOL = ['#14204F', '#323B80', '#5B3A93', '#8C3A94', '#BE3F7F', '#E0485A'];
+export const RCOL = ['var(--region-0)', 'var(--region-1)', 'var(--region-2)', 'var(--region-3)', 'var(--region-4)', 'var(--region-5)'];
 export const RLAB = ['0', '~5', '5~7', '7~8.5', '8.5~10', '10+'];
 export const rcls = (rate: number) => (rate === 0 ? 0 : 1 + RTH.filter((t) => rate >= t).length);
 
@@ -129,12 +129,12 @@ for (let x = 0; x <= LAST + 1 + 1e-9; x += 0.25) {
   w.forEach((z, k) => { dl[k] = D * z / ws * S2; });
   GEO.push({ x, lw, up, dl });
 }
-export const rp = (k: number, a: number, b: number, band: boolean) => {
+export const rp = (k: number, a: number, b: number, band: boolean, precision = 1) => {
   const up: string[] = [], lo: string[] = [];
   GEO.forEach((g) => {
     if (g.x < a - 1e-9 || g.x > b + 1e-9) return;
-    const xs = X(g.x).toFixed(1);
-    up.push(xs + ',' + (band ? g.lw[k] - g.dl[k] : g.up[k]).toFixed(1)); lo.push(xs + ',' + g.lw[k].toFixed(1));
+    const xs = X(g.x).toFixed(precision);
+    up.push(xs + ',' + (band ? g.lw[k] - g.dl[k] : g.up[k]).toFixed(precision)); lo.push(xs + ',' + g.lw[k].toFixed(precision));
   });
   return 'M' + up.join(' L') + ' L' + lo.reverse().join(' L') + ' Z';
 };

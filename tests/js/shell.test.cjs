@@ -50,7 +50,7 @@ test('지도 섬이 스크립트를 불러오는 순서는 index.html 의 기존
 });
 
 test('지도는 루트 레이아웃이 따로이고(들어갈 때·나올 때 새 문서), 지도로 가는 링크는 <Link> 가 아니라 <a> 다', () => {
-  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" className="dark">/);   // 지도는 아직 어두운 화면 하나라 다크 고정
+  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" data-map-shell="" suppressHydrationWarning>/);   // 지도도 저장된 테마를 첫 화면 전에 복원한다
   assert.match(read('app/(dashboard)/layout.tsx'), /<html lang="ko" suppressHydrationWarning>/);   // 라이트가 기본, 저장된 테마가 다크일 때만 그리기 전에 class=dark
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/layout.tsx')), '최상위 layout.tsx 가 있으면 두 레이아웃이 하나로 합쳐진다');
   const nav = read('components/TopNav.tsx');

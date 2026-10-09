@@ -1,5 +1,5 @@
+import PanelLink from './PanelLink';
 /* 종합상황판의 실데이터 행: 월별 실적 흐름(전국)과 시행주체별 호수. 서버 컴포넌트가 data/board 의 값을 읽어 그린다. */
-import Link from 'next/link';
 import { cn } from 'cn';
 import { sub } from '../page';
 import { Card } from '../ui/card';
@@ -24,7 +24,7 @@ export default function RealPanels() {
         <Legend items={lines.map((l) => ({ label: l.label, color: l.color }))} />
         <MonthLines months={molit.months} lines={lines} provisional={molit.provisional} href={(ym) => `/month/${ym}`} label={`전국 월별 인허가·착공·준공·분양 호수, ${molit.months[0]}부터 ${last}까지`} />
         <p className={cn(sub, 'mt-2')}>통계누리 · 자료 {molit.months[0].replace('-', '.')} ~ {last.replace('-', '.')}{isProvisional(molit, last) ? '(2026.01~ 잠정치)' : ''}. 그래프의 달을 누르면 월 상세로 내려갑니다.</p>
-        <p className={plink}><Link href="/area">지역별 실적 →</Link> · <Link href={`/month/${last}`}>{monthLabel(last)} 월 상세 →</Link></p>
+        <p className={plink}><PanelLink href="/area">지역별 실적</PanelLink> <PanelLink href={`/month/${last}`}>{monthLabel(last)} 월 상세</PanelLink></p>
       </Card>
 
       <Card variant="board" render={<section id="p-actors" aria-label="시행주체별 호수" />}>
@@ -45,7 +45,7 @@ export default function RealPanels() {
           })}
         </div>
         <p className={cn(sub, 'mt-2')}>지자체·LH·주택업체는 공공, 민간은 민간부문입니다. 네 분류의 합이 총계입니다. 분양은 시행주체 구분이 없습니다.</p>
-        <p className={plink}><Link href="/agency">기관별 상세 →</Link></p>
+        <p className={plink}><PanelLink href="/agency">기관별 상세</PanelLink></p>
       </Card>
     </div>
   );

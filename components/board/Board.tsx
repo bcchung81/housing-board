@@ -2,7 +2,6 @@
 /* 종합상황판(/) — 시안 이식. 시안의 동작(지시 6건 순환·월별 리본 차트·재생·시점 이동·범례 강조·시도·데이터 흐름)을 그대로 두고,
    수치는 시안의 SAMPLE 이다(위젯마다 SAMPLE 표지). 실데이터가 있는 위젯(향후 12개월 LH 준공 예정, 원천 수)은 실제 값이고 '실데이터' 표지가 붙는다.
    실데이터 행(월별 실적·시행주체별)은 서버 컴포넌트(RealPanels)를 middle 로 받아 가운데에 끼운다. */
-import Link from 'next/link';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   AD, AG, AW, C, CIR, JUMPS, K, LAST, NOW, PITCH, PW, PX0, RANGE, RCOL, RLAB, REG, VW,
@@ -14,6 +13,7 @@ import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
 import { CUR, HOVER, RIBBON, chartStatic, ribbonDynamic } from './ribbon';
 import { Real, Sample } from './tags';
+import PanelLink from './PanelLink';
 import { ag, agName, agVal, ags, bar3, btn, disp, plink, ptSmall, ptSmallBlock, ptitle, row2 } from './styles';
 
 export type BoardReal = {
@@ -32,7 +32,7 @@ function Reserve({ live, list }: { live: ReactNode; list: string[] }) {
 }
 
 /* 패널 겉모양(.pnl)과 지시가 가리킬 때 둘러지는 주색 고리(.ringable .ring) */
-const ringable = (on: boolean) => cn('[transition:box-shadow_.25s]', on && '[box-shadow:0_0_0_3px_var(--primary)]');
+const ringable = (on: boolean) => cn('[transition:box-shadow_.25s]', on && '[box-shadow:0_0_0_1px_var(--primary)]');
 /* 선택된 칩·버튼의 공통 호버: 눌려 있지 않을 때만 배경이 밝아진다 */
 const hoverBg = 'not-aria-pressed:hover:bg-pn2';
 /* 툴팁 안의 한 줄(.tip .tr): 왼쪽 이름(작은 색 사각형 포함)과 오른쪽 값 */
@@ -114,11 +114,11 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
 
   return (
     <div className="[&_:focus-visible]:[outline-offset:2px] [&_:focus-visible]:[outline:2px_solid_var(--primary)] motion-reduce:[&_*]:animate-none! motion-reduce:[&_*]:transition-none!">
-      <div className="mx-auto max-w-[1440px] px-7 pb-9">
+      <div className="board-desktop mx-auto max-w-[1440px] px-7 pb-9">
         <header className="flex flex-wrap items-center gap-5 pt-6 pb-4">
-          <div className="flex flex-wrap items-center gap-5 phone:gap-2"><div className="flex flex-col gap-[3px] phone:w-full"><b className="text-[13px] font-bold text-foreground">주택공급 종합상황판</b><span className="text-[12px] text-muted-foreground [word-break:keep-all]">계획에서 입주까지, 대한민국 주택공급의 흐름을 한눈에</span></div></div>
+          <div className="flex flex-wrap items-center gap-5 phone:gap-2"><div className="flex flex-col gap-[3px] phone:w-full"><h1 className="m-0 text-[28px] leading-[1.35] font-bold tracking-[-0.035em] text-foreground mobile:text-[13px]">주택공급 종합상황판</h1><span className="text-[12px] text-muted-foreground [word-break:keep-all]">계획에서 입주까지, 대한민국 주택공급의 흐름을 한눈에</span></div></div>
           <div className="ml-auto flex flex-wrap items-center gap-2.5">
-            <Badge variant="solid" className="bg-[#FFE08A] text-[#3B2B00]" title="시안의 수치는 SAMPLE입니다. '실데이터' 표지가 붙은 위젯만 실제 자료이고, 각각 자료의 기준일을 함께 보입니다.">SAMPLE 시안 수치 · &lsquo;실데이터&rsquo; 표지만 실제 자료</Badge>
+            <Badge variant="solid" className="bg-[var(--sample-bg)] text-[var(--sample-ink)]" title="시안의 수치는 SAMPLE입니다. '실데이터' 표지가 붙은 위젯만 실제 자료이고, 각각 자료의 기준일을 함께 보입니다.">SAMPLE 시안 수치 · &lsquo;실데이터&rsquo; 표지만 실제 자료</Badge>
             <span className={sub}>시안 기준일 2026-10-07 · 실적 자료는 {real.actualMonth.replace('-', '.')}까지</span>
           </div>
         </header>
@@ -136,7 +136,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               </button>
             ))}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2.5 rounded-[10px] border border-border bg-muted px-3.5 py-2 text-[13px] text-ink2"><Badge variant="solid" className="bg-primary text-primary-foreground">지시 요지</Badge><Reserve live={cur.q} list={DIR.map((x) => x.q)} /></div>
+          <div className="mt-2 flex flex-wrap items-center gap-2.5 rounded-[10px] border border-border bg-card px-3.5 py-2 text-[13px] text-ink2"><Badge variant="solid" className="bg-secondary text-primary">지시 요지</Badge><Reserve live={cur.q} list={DIR.map((x) => x.q)} /></div>
         </section>
 
         <div className="mt-3.5 grid grid-cols-[minmax(0,1fr)_400px] items-stretch gap-3.5 narrow:grid-cols-1">
@@ -151,11 +151,11 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               onPointerMove={(e) => { const m = monthAt(e.clientX); if (m < 0) setTip(null); else { const wr = wrapRef.current!.getBoundingClientRect(); setTip({ m, x: e.clientX - wr.left, y: e.clientY - wr.top }); } }}
               onPointerLeave={() => setTip(null)}
               onClick={(e) => { const m = monthAt(e.clientX); if (m >= 0) goto(m); }}>
-              <svg id="chart" ref={svgRef} className="block h-auto w-full [&_text]:[font-family:'Noto_Sans_KR',sans-serif]" viewBox="0 0 960 400" role="img" aria-label="2025년 1월부터 2028년 10월까지 단계별 호수를 쌓은 월별 리본. 연도별 총량에 따라 굵기가 달라지고, 층 안의 붉은 띠가 단계별 지연 호수이며 핀이 병목 단계를 가리킵니다. 아래 슬라이더로 시점을 고릅니다.">
+              <svg id="chart" shapeRendering="geometricPrecision" ref={svgRef} className="block h-auto w-full [&_text]:[font-family:inherit]" viewBox="0 0 960 400" role="img" aria-label="2025년 1월부터 2028년 10월까지 단계별 호수를 쌓은 월별 리본. 연도별 총량에 따라 굵기가 달라지고, 층 안의 붉은 띠가 단계별 지연 호수이며 핀이 병목 단계를 가리킵니다. 아래 슬라이더로 시점을 고릅니다.">
                 <g dangerouslySetInnerHTML={{ __html: staticSvg }} />
-                <g pointerEvents="none" dangerouslySetInnerHTML={{ __html: dynSvg }} />
                 <rect x={(RIBBON.PX0 + (tip ? tip.m : 0) * RIBBON.PITCH).toFixed(1)} y={RIBBON.TOP - 4} width={RIBBON.PITCH.toFixed(1)} height={RIBBON.PH + 8} fill={HOVER.fill} fillOpacity={HOVER.opacity} visibility={tip ? 'visible' : 'hidden'} pointerEvents="none" />
                 <rect x={(PX0 + cursor * PW / (LAST + 1)).toFixed(1)} y={RIBBON.TOP - 4} width={RIBBON.PITCH.toFixed(1)} height={RIBBON.PH + 8} rx="3" fill="none" stroke={CUR.stroke} strokeWidth={CUR.width} pointerEvents="none" />
+                <g pointerEvents="none" dangerouslySetInnerHTML={{ __html: dynSvg }} />
               </svg>
               <div data-slot="board-tip" className="pointer-events-none absolute z-[3] min-w-[168px] rounded-[10px] border border-line2 bg-popover px-[11px] py-[9px] text-[12px] leading-[1.5] shadow-[0_8px_22px_rgba(0,0,0,.45)]" ref={tipRef} hidden={!tip}>
                 {tipView ? (
@@ -197,7 +197,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 {([['지연', 'bad', d], ['주의', 'warn', w], ['정상', 'ok', ok]] as const).map(([name, tone, n]) => (
                   <div key={name} className="min-w-0">
                     <div className="flex items-center gap-[5px] text-[12px] whitespace-nowrap text-muted-foreground"><i className={cn('block size-[9px] flex-none rounded-[3px]', tone === 'bad' ? 'bg-bad' : tone === 'warn' ? 'bg-warn' : 'bg-ok')} />{name}<em className="ml-0.5 text-[11px] not-italic">{pct(n)}</em></div>
-                    <b className={cn('block text-[17px] leading-[1.3] whitespace-nowrap tabular-nums', tone === 'bad' ? 'text-bad' : tone === 'warn' ? 'text-warn' : 'text-ok')}>{f(n)}<small className="ml-0.5 [font-family:'Noto_Sans_KR',sans-serif] text-[11px] font-normal opacity-80">호</small></b>
+                    <b className={cn('block text-[17px] leading-[1.3] whitespace-nowrap tabular-nums', tone === 'bad' ? 'text-bad' : tone === 'warn' ? 'text-warn' : 'text-ok')}>{f(n)}<small className="ml-0.5 [font-family:inherit] text-[11px] font-normal opacity-80">호</small></b>
                   </div>
                 ))}
               </div>
@@ -207,17 +207,17 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {K.map((k, i) => {
                 const dlt = r10(v[i] - nv[i]);
                 return (
-                  <div key={k} className={cn('grid flex-auto grid-cols-[minmax(0,1fr)_70px_62px_78px] items-center gap-2 rounded-[6px] border-b border-border px-1.5 py-[5px] last:border-b-0 phone:grid-cols-[minmax(0,1fr)_62px_74px]', i === bk && 'bg-primary/10')}>
-                    <span className="flex items-center gap-2 text-[13px] font-bold whitespace-nowrap"><i className="block size-[11px] flex-none rounded-[3px]" style={{ background: C[i] }} />{CIR[i]} {k}<Badge variant="solid" className={cn('ml-0.5 bg-primary px-1.5 text-[10px] leading-[15px] text-primary-foreground', i === bk ? 'visible' : 'invisible')}>병목</Badge></span>
+                  <div key={k} className={cn('grid flex-auto grid-cols-[minmax(0,1fr)_70px_62px_78px] items-center gap-2 rounded-[6px] border-b border-border px-1.5 py-[5px] last:border-b-0 phone:grid-cols-[minmax(0,1fr)_62px_74px]', i === bk && 'bg-warn/10')}>
+                    <span className="flex items-center gap-2 text-[13px] font-bold whitespace-nowrap"><i className="block size-[11px] flex-none rounded-[3px]" style={{ background: C[i] }} />{CIR[i]} {k}<Badge variant="solid" className={cn('ml-0.5 bg-warn/15 px-1.5 text-[10px] leading-[15px] text-warn', i === bk ? 'visible' : 'invisible')}>병목</Badge></span>
                     <span className={cn(disp, 'text-right text-[18px]')}>{f(r10(v[i]))}</span>
                     {/* 옛 dash.css 의 .dl(정의 목록 격자)이 이 칸에도 걸려 있었다. 겉모습을 그대로 두려고 같은 격자·여백을 남긴다. */}
-                    <span className={cn('mt-2.5 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-right text-[12px] phone:hidden', dlt === 0 ? 'text-mute' : dlt > 0 ? 'text-[#0F9D58] dark:text-[#7FE3B8]' : 'text-[#C26A00] dark:text-[#FFB86B]')}>{dlt === 0 ? '현재' : sg(dlt)}</span>
+                    <span className={cn('mt-2.5 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-right text-[12px] phone:hidden', dlt === 0 ? 'text-mute' : dlt > 0 ? 'text-ok' : 'text-warn')}>{dlt === 0 ? '현재' : sg(dlt)}</span>
                     <span className="text-right text-[12px] whitespace-nowrap text-bad">지연 {f(r10(ds[i]))}</span>
                   </div>
                 );
               })}
             </div>
-            <p className={plink}><Link href={`/stage/0${bk + 1}`}>병목 단계({K[bk]}) 상세 →</Link>{monthLink ? <> · <a href={monthLink}>{ml(cursor)} 월 상세 →</a></> : null}</p>
+            <p className={plink}><PanelLink href={`/stage/0${bk + 1}`}>병목 단계({K[bk]}) 상세</PanelLink>{monthLink ? <><PanelLink href={monthLink}>{ml(cursor)} 월 상세</PanelLink></> : null}</p>
           </Card>
         </div>
 
@@ -245,7 +245,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={cn(sub, 'mt-[3px] flex justify-between')}><span>2026.10</span><span>2027.03</span><span>2027.09</span></div>
             <div className="mt-2 text-[12px] text-ink2"><Reserve live={futRead} list={futList} /></div>
             <p className={cn(sub, 'mt-1.5')}>착공·모집·입주 예정의 월별 자료는 원천이 없어 비어 있습니다. LH 파일은 기준일(<b>{real.lhAsOf}</b>)이 실적 자료보다 {real.lhAgeMonths}개월 묵었습니다.</p>
-            <p className={plink}><Link href="/agency/lh">LH 준공 예정 상세 →</Link></p>
+            <p className={plink}><PanelLink href="/agency/lh">LH 준공 예정 상세</PanelLink></p>
           </Card>
 
           <Card variant="board" className={ringable(cur.p.includes('p-agency'))} render={<section id="p-agency" aria-label="기관별 진행" />}>
@@ -265,7 +265,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               })}
             </div>
             <div className={cn(sub, 'mt-2')}>군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.</div>
-            <p className={plink}><Link href="/agency">기관별 실데이터(시행주체별 호수) →</Link></p>
+            <p className={plink}><PanelLink href="/agency">기관별 실데이터(시행주체별 호수)</PanelLink></p>
           </Card>
         </div>
 
@@ -273,20 +273,23 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
           <Card variant="board" className={ringable(cur.p.includes('p-region'))} render={<section id="p-region" aria-label="전국 17개 시도" />}>
             <h2 className={ptitle}>전국 17개 시도 <Sample /> <small className={ptSmall}>· 지연 · 주의 · 정상 (사업 수) · 바탕색 = 지연율 단계</small></h2>
             <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11.5px] text-muted-foreground [&>span]:flex [&>span]:items-center [&>span]:gap-[5px]" aria-label="바탕색과 지연율 구간"><span className="font-bold text-ink2">지연율(%)</span>{RCOL.map((c, i) => <span key={i}><i className="block h-3 w-6 rounded-[3px] border border-border" style={{ background: c }} />{RLAB[i]}</span>)}</div>
+            <div className="mt-2 flex items-center gap-3 text-[11px] text-muted-foreground" aria-label="사업 수 범례">
+              <span className="text-bad">지연</span><span className="text-warn">주의</span><span className="text-ok">정상</span><span>순서 · 사업 수</span>
+            </div>
             <div className="mx-0 my-2.5 grid flex-auto grid-cols-[repeat(auto-fill,minmax(112px,1fr))] auto-rows-[minmax(0,1fr)] gap-1.5">
               {REG.map((r) => {
                 const rate = r.d / r.tot * 100;
                 return (
-                  <button key={r.n} type="button" data-slot="board-region" className={cn(btn, 'flex flex-col justify-between gap-1.5 rounded-[10px] border border-[rgba(255,255,255,.1)] bg-[var(--rc)] px-[9px] py-2 [transition:filter_.15s,box-shadow_.15s] hover:[filter:brightness(1.2)] aria-pressed:border-primary aria-pressed:[box-shadow:0_0_0_2px_var(--primary)]')} aria-pressed={r.n === region} onClick={() => setRegion(r.n)} style={{ ['--rc' as string]: RCOL[rcls(rate)] }}
+                  <button key={r.n} type="button" data-slot="board-region" className={cn(btn, 'flex flex-col justify-between gap-1.5 rounded-[10px] border border-border bg-[var(--rc)] px-[9px] py-2 [transition:border-color_.15s,box-shadow_.15s] hover:border-line2 aria-pressed:border-primary aria-pressed:[box-shadow:0_0_0_1px_var(--primary)]')} aria-pressed={r.n === region} onClick={() => setRegion(r.n)} style={{ ['--rc' as string]: RCOL[rcls(rate)] }}
                     aria-label={`${r.n} 지연 ${r.d} 주의 ${r.w} 정상 ${r.ok} 지연율 ${rate.toFixed(1)}%`}>
-                    <span className="flex items-baseline justify-between gap-1 text-[13px] font-bold text-white"><span>{r.n}{r.big ? <em className="ml-1 text-[10px] font-normal text-[#FFD2C2] not-italic">상세</em> : null}</span><span className={cn(disp, 'text-[12.5px]')}>{rate.toFixed(1)}%</span></span>
-                    <span className={cn(disp, 'flex gap-2 self-start rounded-[7px] bg-[rgba(10,16,48,.74)] px-2 py-0.5 text-[15px]')}><span className="text-bad">{r.d}</span><span className="text-warn">{r.w}</span><span className="text-ok">{r.ok}</span></span>
+                    <span className="flex items-baseline justify-between gap-1 text-[13px] font-bold text-foreground"><span>{r.n}{r.big ? <em className="ml-1 text-[10px] font-normal text-muted-foreground not-italic">상세</em> : null}</span><span className={cn(disp, 'text-[12.5px]')}>{rate.toFixed(1)}%</span></span>
+                    <span className={cn(disp, 'flex gap-2 self-start rounded-[7px] bg-card/70 px-2 py-0.5 text-[15px]')}><span className="text-bad">{r.d}</span><span className="text-warn">{r.w}</span><span className="text-ok">{r.ok}</span></span>
                   </button>
                 );
               })}
             </div>
             <div className={note}><Reserve live={txRegion(curReg)} list={REG.map(txRegion)} /></div>
-            <p className={plink}><Link href={`/area/${curReg.code}`}>{curReg.n} 실적(실데이터) 상세 →</Link>{curReg.code === '12' ? <span className={cn(sub, 'ml-1.5')}>2026-07부터 광주·전남은 전남광주로 집계됩니다</span> : null}</p>
+            <p className={plink}><PanelLink href={`/area/${curReg.code}`}>{curReg.n} 실적(실데이터) 상세</PanelLink>{curReg.code === '12' ? <span className={cn(sub, 'ml-1.5')}>2026-07부터 광주·전남은 전남광주로 집계됩니다</span> : null}</p>
           </Card>
 
           <Card variant="board" className={ringable(cur.p.includes('p-flow'))} render={<section id="p-flow" aria-label="데이터 흐름" />}>
@@ -302,11 +305,9 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               ))}
             </div>
             <div className={note}><Reserve live={FL[fn].t} list={FL.map((x) => x.t)} /></div>
-            <p className={plink}><Link href="/sources">데이터 원본(원천 {real.sourceCount}곳, 받은 때와 원천 기준일) →</Link></p>
+            <p className={plink}><PanelLink href="/sources">데이터 원본(원천 {real.sourceCount}곳, 받은 때와 원천 기준일)</PanelLink></p>
           </Card>
         </div>
-
-        <nav className="mt-3.5 flex flex-wrap gap-2 [&_a]:rounded-[9px] [&_a]:border-[1.5px] [&_a]:border-line2 [&_a]:px-3 [&_a]:py-[7px] [&_a]:text-[13px] [&_a]:font-bold [&_a]:text-ink2 [&_a]:no-underline [&_a:hover]:bg-pn2" aria-label="상세 화면"><Link href="/area">지역별</Link><Link href="/projects">사업</Link><Link href="/stage">단계별</Link><Link href="/agency">기관별</Link><Link href="/sources">데이터 원본</Link><a href="/map">지도</a></nav>
       </div>
     </div>
   );

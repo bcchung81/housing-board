@@ -2,4 +2,4 @@
 import type { Actor, Metric } from '../../lib/board/types';
 
 export const METRIC_COLOR: Record<Metric, string> = { permit: 'var(--s-teal)', start: 'var(--s-orange)', complete: 'var(--s-lime)', sale: 'var(--s-gray)' };
-export const ACTOR_COLOR: Record<Actor, string> = { 지자체: 'var(--s-blue)', LH: 'var(--s-teal)', 주택업체: 'var(--s-amber)', 민간: 'var(--s-violet)' };
+export const ACTOR_COLOR: Record<Actor, string> = { 지자체: 'var(--actor-local)', LH: 'var(--actor-lh)', 주택업체: 'var(--actor-builder)', 민간: 'var(--actor-private)' };

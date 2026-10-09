@@ -1,18 +1,18 @@
 /* 종합상황판의 공통 클래스(옛 board.css 의 .disp · 버튼 초기화 · .ptitle · .plink · .row2 · 막대 행). Board 와 RealPanels 가 함께 쓴다. */
 
-/* 숫자 글씨(.disp): 굵은 본문 글꼴에 같은 폭 숫자. 본문 글꼴 목록(--font-sans)과 달리 system-ui 가 없다 */
-export const disp = "[font-family:'Noto_Sans_KR','Apple_SD_Gothic_Neo','Malgun_Gothic',sans-serif] font-bold tabular-nums tracking-[0]";
+/* 숫자 글씨(.disp): 본문과 같은 글꼴과 같은 폭 숫자를 쓴다. */
+export const disp = "[font-family:inherit] font-bold tabular-nums tracking-[0]";
 
 /* 옛 `.board button` 초기화(app/tailwind.css 의 .btn-reset, components 레이어). 단추마다 붙이면 뒤에 덧입힌 유틸리티가 이긴다 */
 export const btn = "btn-reset";
 
 /* 패널 제목(.ptitle)과 그 안의 작은 설명(.ptitle small). 제목 안의 표지는 10.5px */
 export const ptitle = `m-0 text-[20px] leading-[1.25] ${disp} [&_[data-slot=badge]]:text-[10.5px]`;
-export const ptSmall = "[font-family:'Noto_Sans_KR',sans-serif] text-[12px] font-normal text-muted-foreground";
+export const ptSmall = "[font-family:inherit] text-[12px] font-normal text-muted-foreground";
 export const ptSmallBlock = `${ptSmall} mt-0.5 block`;
 
-/* 패널 아래 링크 줄(.plink) */
-export const plink = "mt-2 text-[12.5px] [&_a]:text-primary [&_a]:no-underline [&_a:hover]:underline";
+/* 패널 아래 액션: 설명과 구분하는 얇은 선, 일정한 간격과 클릭 영역 */
+export const plink = "mt-4 mb-0 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-[13px]";
 
 /* 두 칸 행(.row2)과 막대 행(.ags .ag .an .ad .bar3) */
 export const row2 = "mt-3.5 grid grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)] items-stretch gap-3.5 narrow:grid-cols-1";

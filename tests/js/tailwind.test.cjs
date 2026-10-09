@@ -23,13 +23,15 @@ test('preflight(전역 리셋)를 가져오지 않는다: theme·utilities 만 �
 const block = (sel) => { const i = css.indexOf(`\n${sel} {`); assert.ok(i >= 0, `${sel} 블록`); return css.slice(i, css.indexOf('\n}\n', i)); };
 const token = (b, n) => { const m = new RegExp(`--${n}:\\s*(#[0-9A-Fa-f]{6})`).exec(b); assert.ok(m, `--${n}`); return m[1].toUpperCase(); };
 
-test('다크 토큰이 종합상황판 시안(남색) 팔레트와 같은 값이다', () => {
+test('다크 바탕·상태 토큰은 기존 남색 팔레트를 유지하고 조작 색은 상태 색과 분리한다', () => {
   /* 시안 팔레트(옛 dash.css 의 :root 변수). 옛 CSS 를 걷어낸 뒤에도 값이 바뀌지 않게 여기에 고정한다. */
   const PALETTE = { bg: '#0A1030', bg2: '#0E1740', pn: '#101A44', pn2: '#16225A', on: '#1B2A66', line: '#22305E', line2: '#3A4C8C', ink: '#E8EDFF', ink2: '#D6DEFA', sub: '#9AA8D6', mute: '#8FA0C8', acc: '#FF8A65', 'acc-ink': '#2A0E04', ok: '#4ADE9E', warn: '#FFC24D', bad: '#FF6B88' };
   const dark = block('.dark');
-  const same = { background: 'bg', card: 'pn', secondary: 'pn2', muted: 'bg2', accent: 'on', border: 'line', foreground: 'ink', 'muted-foreground': 'sub', primary: 'acc', 'primary-foreground': 'acc-ink', ring: 'acc', destructive: 'bad', ok: 'ok', warn: 'warn', bad: 'bad', ink2: 'ink2', mute: 'mute', line2: 'line2' };
+  const same = { background: 'bg', card: 'pn', secondary: 'pn2', muted: 'bg2', accent: 'on', border: 'line', foreground: 'ink', 'muted-foreground': 'sub', destructive: 'bad', ok: 'ok', warn: 'warn', bad: 'bad', ink2: 'ink2', mute: 'mute', line2: 'line2' };
   for (const [shadcn, ours] of Object.entries(same)) assert.equal(token(dark, shadcn), PALETTE[ours], `--${shadcn} = 시안 --${ours}`);
   assert.equal(token(dark, 'input'), PALETTE.line2);
+  assert.equal(token(dark, 'ring'), token(dark, 'primary'));
+  for (const state of ['ok', 'warn', 'bad']) assert.notEqual(token(dark, 'primary'), token(dark, state));
   assert.match(dark, /color-scheme: dark/);
 });
 
@@ -47,12 +49,13 @@ test('라이트가 기본(:root)이고 같은 이름의 토큰을 모두 갖는�
   assert.ok(ratio(t('warn'), t('card')) >= 4.0, 'warn 글자(큰 글씨 위주)');
 });
 
-test('두 루트 레이아웃이 tailwind.css 를 가져온다: 대시보드는 라이트 기본(저장된 다크만 그리기 전에 켠다), 지도는 다크 고정', () => {
+test('두 루트 레이아웃이 tailwind.css 를 가져온다: 대시보드는 라이트 기본(저장된 다크만 그리기 전에 켠다), 지도도 저장된 테마를 적용', () => {
   for (const f of ['app/(dashboard)/layout.tsx', 'app/(map)/layout.tsx']) assert.match(read(f), /import '\.\.\/tailwind\.css';/, f);
   const dash = read('app/(dashboard)/layout.tsx');
-  assert.match(dash, /localStorage\.getItem\('theme'\)==='dark'/);
+  assert.match(read('lib/shell/theme.ts'), /localStorage\.getItem\('theme'\)==='dark'/);
+  assert.match(dash, /import \{ THEME_INIT \} from/);
   assert.doesNotMatch(dash, /className="dark"/, '대시보드는 기본이 라이트다');
-  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" className="dark">/);
+  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" data-map-shell="" suppressHydrationWarning>/);
   assert.match(read('components/TopNav.tsx'), /localStorage\.setItem\('theme'/);
 });
 

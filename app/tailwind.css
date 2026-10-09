@@ -7,10 +7,15 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* 글꼴 토큰은 두 루트 레이아웃의 Do Hyeon 로컬 폰트를 참조한다. */
+
 /* 모든 요소의 크기는 테두리·안쪽 여백을 포함한다(옛 dash.css·app.css 의 `*{box-sizing:border-box}`). preflight 를 켜기 전까지 직접 둔다. */
 @layer base {
   * {
     box-sizing: border-box;
+  }
+  button, input, select, textarea {
+    font-family: inherit;
   }
 }
 
@@ -51,71 +56,84 @@
    지도(/map)는 아직 어두운 화면 하나라 레이아웃이 class="dark" 로 고정한다. */
 @custom-variant dark (&:is(.dark *));
 
-/* 라이트 팔레트(2026-10-09). 글자색은 흰 바탕에서 4.5:1 안팎의 대비를 기준으로 잡았다. 주색은 채움(버튼·막대)과 글자(링크)에 같이 쓰이므로 진한 주황이다. */
+/* 라이트 팔레트(2026-10-09). 글자색은 흰 바탕에서 4.5:1 안팎의 대비를 기준으로 잡았다. 주색은 선택·조작·링크에 쓰는 남색이며, 주의·지연 색과 분리한다. */
 :root {
   color-scheme: light;
-  --background: #F4F6FC;
-  --foreground: #0F1A3D;
+  --background: #F5F7FA;
+  --foreground: #172B4D;
   --card: #FFFFFF;
-  --card-foreground: #0F1A3D;
+  --card-foreground: #172B4D;
   --popover: #FFFFFF;
-  --popover-foreground: #0F1A3D;
-  --primary: #C2410C;
+  --popover-foreground: #172B4D;
+  --primary: #23466D;
   --primary-foreground: #FFFFFF;
-  --secondary: #E6ECFA;
-  --secondary-foreground: #0F1A3D;
-  --muted: #EEF2FB;
-  --muted-foreground: #52608C;
-  --accent: #E2E9FF;
-  --accent-foreground: #0F1A3D;
-  --destructive: #D6264F;
-  --border: #D8DEF0;
-  --input: #B5C0E0;
-  --ring: #C2410C;
-  --chart-1: #3B6FE0;
-  --chart-2: #0E9F92;
-  --chart-3: #EA7A0C;
-  --chart-4: #6FB01C;
-  --chart-5: #9B5DE5;
+  --secondary: #EAF0F6;
+  --secondary-foreground: #172B4D;
+  --muted: #F3F5F8;
+  --muted-foreground: #5F6E82;
+  --accent: #EDF3F9;
+  --accent-foreground: #172B4D;
+  --destructive: #C94359;
+  --border: #DFE5ED;
+  --input: #B9C6D6;
+  --ring: #23466D;
+  --chart-1: #5C7FAF;
+  --chart-2: #43958F;
+  --chart-3: #C48B50;
+  --chart-4: #8A9F69;
+  --chart-5: #9183AD;
   --radius: 0.625rem;
   /* shadcn 기본 토큰에 없는 이 앱의 색 */
-  --ink2: #2B3868;
-  --mute: #5F6E99;
-  --line2: #B5C0E0;
-  --pn2: #E6ECFA;
-  --ok: #147A48;
-  --warn: #B4690E;
-  --bad: #D6264F;
-  --chartbg: #F6F8FD;
+  --ink2: #344960;
+  --mute: #778599;
+  --line2: #B9C6D6;
+  --pn2: #EAF0F6;
+  --ok: #287B61;
+  --warn: #A56818;
+  --bad: #C94359;
+  --chartbg: #FAFBFD;
   /* 본문 바탕(위쪽 오른편이 살짝 밝아지는 그라데이션) */
-  --page-bg: #F4F6FC radial-gradient(1200px 420px at 70% -10%, #E4EAFF 0%, #F4F6FC 62%) no-repeat;
+  --page-bg: #F5F7FA;
   /* 차트 계열색: 6단계(파랑·청록·주황·회색·연두·보라)와 주택업체(호박색). 차트 SVG 가 var() 로 쓴다 */
-  --s-blue: #3B6FE0;
-  --s-teal: #0E9F92;
-  --s-orange: #EA7A0C;
-  --s-gray: #8A98B0;
-  --s-lime: #6FB01C;
-  --s-violet: #9B5DE5;
-  --s-amber: #E0A10C;
+  --s-blue: #5C7FAF;
+  --s-teal: #43958F;
+  --s-orange: #C48B50;
+  --s-gray: #96A3B4;
+  --s-lime: #8A9F69;
+  --s-violet: #9183AD;
+  --s-amber: #BE9B5C;
   /* 월별 공급 파동 리본 차트의 선·글자·층 경계(components/board/ribbon.ts 의 PAL) */
+  --actor-local: #486985;
+  --actor-lh: #6F8FA8;
+  --actor-builder: #9DB4C5;
+  --actor-private: #BDCADA;
+  --sample-bg: #F6EFE0;
+  --sample-ink: #80612A;
+  --real-bg: #E8F3EF;
+  --region-0: #F0F4F8;
+  --region-1: #E9EFF5;
+  --region-2: #F4EEE7;
+  --region-3: #F7EBDD;
+  --region-4: #F8E7E5;
+  --region-5: #F5DDE1;
   --rb-mid: rgba(15, 26, 61, .22);
   --rb-sep: rgba(15, 26, 61, .16);
-  --rb-sc: #52608C;
-  --rb-axis: #5F6E99;
-  --rb-ink: #0F1A3D;
-  --rb-cur: #0F1A3D;
+  --rb-sc: #5F6E82;
+  --rb-axis: #778599;
+  --rb-ink: #172B4D;
+  --rb-cur: #172B4D;
   --rb-hatch: #FFFFFF;
   --rb-seam: #FFFFFF;
-  --rb-band: #E0314F;
-  --rb-acc: #C2410C;
+  --rb-band: #C94359;
+  --rb-acc: #23466D;
   --rb-dim: rgba(15, 26, 61, .35);
-  --rb-pos: #147A48;
-  --rb-yr-on: #0F1A3D;
-  --rb-yr-off: #6B7AA6;
+  --rb-pos: #287B61;
+  --rb-yr-on: #172B4D;
+  --rb-yr-off: #778599;
   --rb-halo: #FFFFFF;
-  --rb-halo-txt: #0F1A3D;
+  --rb-halo-txt: #172B4D;
   --rb-pin: #FFFFFF;
-  --rb-hover: #0F1A3D;
+  --rb-hover: #172B4D;
 }
 
 /* 다크 팔레트: 종합상황판 시안의 남색(옛 dash.css :root 의 값) */
@@ -127,8 +145,8 @@
   --card-foreground: #E8EDFF;
   --popover: #0A1030;
   --popover-foreground: #E8EDFF;
-  --primary: #FF8A65;
-  --primary-foreground: #2A0E04;
+  --primary: #9DBCE9;
+  --primary-foreground: #10243D;
   --secondary: #16225A;
   --secondary-foreground: #E8EDFF;
   --muted: #0E1740;
@@ -138,7 +156,7 @@
   --destructive: #FF6B88;
   --border: #22305E;
   --input: #3A4C8C;
-  --ring: #FF8A65;
+  --ring: #9DBCE9;
   --chart-1: #7BA7FF;
   --chart-2: #45D3C4;
   --chart-3: #FF9F43;
@@ -160,6 +178,19 @@
   --s-lime: #A5E56D;
   --s-violet: #D9A6FF;
   --s-amber: #FFC24D;
+  --actor-local: #5278A4;
+  --actor-lh: #7799BA;
+  --actor-builder: #9DB5CD;
+  --actor-private: #C0CFDF;
+  --sample-bg: #3A3325;
+  --sample-ink: #E6CA91;
+  --real-bg: #163C34;
+  --region-0: #172544;
+  --region-1: #20304C;
+  --region-2: #35313A;
+  --region-3: #423432;
+  --region-4: #4B303D;
+  --region-5: #573044;
   --rb-mid: rgba(232, 237, 255, .2);
   --rb-sep: rgba(232, 237, 255, .16);
   --rb-sc: #9AA8D6;
@@ -169,7 +200,7 @@
   --rb-hatch: #0A1030;
   --rb-seam: #0B1233;
   --rb-band: #FF6B88;
-  --rb-acc: #FF8A65;
+  --rb-acc: #9DBCE9;
   --rb-dim: rgba(232, 237, 255, .35);
   --rb-pos: #4ADE9E;
   --rb-yr-on: #FFFFFF;
@@ -188,7 +219,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
+  --font-sans: var(--font-do-hyeon, 'Do Hyeon'), 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
   --font-heading: var(--font-sans);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
@@ -226,4 +257,14 @@
   --radius-2xl: calc(var(--radius) * 1.8);
   --radius-3xl: calc(var(--radius) * 2.2);
   --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* PC 상황판: 밝은 카드와 여백으로 위계를 만들고 선택은 얇은 남색 선으로 표시한다. */
+@layer utilities {
+  @media (min-width: 901px) {
+    .board-desktop > header { padding-top: 28px; padding-bottom: 22px; }
+    .board-desktop [data-slot="card"] { box-shadow: 0 2px 8px rgb(15 23 42 / 2%); }
+    .board-desktop [data-slot="board-dir"] { padding-top: 15px; padding-bottom: 16px; }
+    .board-desktop [data-slot="board-region"] { min-height: 94px; }
+  }
 }

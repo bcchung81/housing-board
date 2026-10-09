@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
+import { Fragment } from 'react';
 import Crumbs from '../../../components/Crumbs';
 import Legend from '../../../components/charts/Legend';
 import StackedMonths from '../../../components/charts/StackedMonths';
@@ -35,13 +36,13 @@ export default function AgencyIndex() {
         <Table>
           <TableHeader>
             <tr><TableHead rowSpan={2}>시행주체</TableHead>{KS.map(([, l]) => <TableHead key={l} colSpan={2} style={{ textAlign: 'center' }}>{l}</TableHead>)}</tr>
-            <tr>{KS.map(([k]) => <><TableHead key={`${k}m`}>{Number(last.slice(5))}월</TableHead><TableHead key={`${k}y`}>1~{Number(last.slice(5))}월 누계</TableHead></>)}</tr>
+            <tr>{KS.map(([k]) => <Fragment key={k}><TableHead>{Number(last.slice(5))}월</TableHead><TableHead>1~{Number(last.slice(5))}월 누계</TableHead></Fragment>)}</tr>
           </TableHeader>
           <TableBody>
             {ACTORS.map((a) => (
-              <TableRow key={a}><TableCell>{a}</TableCell>{KS.map(([k]) => <><TableCell key={`${k}m`}>{fmt(seriesOf(molit, k, NATION).actors![a][molit.months.indexOf(last)])}</TableCell><TableCell key={`${k}y`}>{fmt(ytd(molit, k, NATION, last, a))}</TableCell></>)}</TableRow>
+              <TableRow key={a}><TableCell>{a}</TableCell>{KS.map(([k]) => <Fragment key={k}><TableCell>{fmt(seriesOf(molit, k, NATION).actors![a][molit.months.indexOf(last)])}</TableCell><TableCell>{fmt(ytd(molit, k, NATION, last, a))}</TableCell></Fragment>)}</TableRow>
             ))}
-            <TableRow total><TableCell>총계</TableCell>{KS.map(([k]) => <><TableCell key={`${k}m`}>{fmt(valueAt(molit, k, NATION, last))}</TableCell><TableCell key={`${k}y`}>{fmt(ytd(molit, k, NATION, last))}</TableCell></>)}</TableRow>
+            <TableRow total><TableCell>총계</TableCell>{KS.map(([k]) => <Fragment key={k}><TableCell>{fmt(valueAt(molit, k, NATION, last))}</TableCell><TableCell>{fmt(ytd(molit, k, NATION, last))}</TableCell></Fragment>)}</TableRow>
           </TableBody>
         </Table>
         <Legend items={ACTORS.map((a) => ({ label: a, color: ACTOR_COLOR[a] }))} />

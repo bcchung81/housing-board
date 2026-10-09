@@ -37,13 +37,18 @@ const byId = (scope, name, id) => scope.querySelector(`[${name}="${CSS.escape(St
 // 색: 상황판 시안(M3)의 6단계 색. 모집(sale)·착공(build)·준공(soon)·입주(move)·계획(plan)이 서로 다른 밝기·색상이고, 면 무늬도 달리한다(모집 단색 / 착공 해칭 / 준공 점무늬 / 입주 격자 / 계획 점선 / 공공택지 민간 회색 단색).
 // 패널·지도 모두 어두운 네이비 바탕이라 글자·칩·지도 위 색에 같은 값을 쓴다(네이비 #101A44 위 대비 7:1 이상, tests/js/glass.test.cjs). 지도 위 색은 THEME에서 가져온다
 const COLOR = { sale: '#C7D0DA', build: '#FF9F43', soon: '#A5E56D', move: '#D9A6FF', plan: '#7BA7FF', priv: '#98A3C9' };
+// Next 지도는 저장된 테마를 따른다. 독립 index.html 은 기존 다크 지도를 유지한다.
+let LIGHT_MAP = document.documentElement.hasAttribute('data-map-shell') && !document.documentElement.classList.contains('dark');
+const DARK_COLOR = { ...COLOR };
+const LIGHT_COLOR = { sale: '#536278', build: '#8E541D', soon: '#526E35', move: '#795B9E', plan: '#365F99', priv: '#53637A' };
+if (LIGHT_MAP) Object.assign(COLOR, LIGHT_COLOR);
 /* 6단계 [번호, 이름, 현재 상태, 색]. 머리 줄의 단계 필터와 사이드바 카드의 '공급 단계 위치'가 같이 쓴다. ② 인허가는 대응하는 상태가 없어 비워 둔다(상태 5종 ↔ 6단계는 docs/product/상황판-스펙.md 9.2에서 합의하는 중). */
-const STAGES6 = [['①', '계획', '계획', COLOR.plan], ['②', '인허가', null, '#45D3C4'], ['③', '착공', '건설 단계', COLOR.build], ['④', '모집', '분양중', COLOR.sale], ['⑤', '준공', '준공 임박', COLOR.soon], ['⑥', '입주', '입주 단계', COLOR.move]];
+const STAGES6 = [['①', '계획', '계획', COLOR.plan], ['②', '인허가', null, LIGHT_MAP ? '#327F79' : '#45D3C4'], ['③', '착공', '건설 단계', COLOR.build], ['④', '모집', '분양중', COLOR.sale], ['⑤', '준공', '준공 임박', COLOR.soon], ['⑥', '입주', '입주 단계', COLOR.move]];
 const pctTxt = (v) => (v >= 99.95 ? '100' : v >= 10 ? v.toFixed(1) : v.toFixed(2).replace(/0$/, '')) + '%';
 function sparkline(h) {
   const W = 56, H = 18, n = h.length, mx = Math.max(...h.map((x) => x[1]), 1);
   const pts = h.map((x, i) => `${(i / (n - 1) * (W - 4) + 2).toFixed(1)},${(H - 2 - x[1] / mx * (H - 4)).toFixed(1)}`).join(' ');
-  return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="#9AA8D6" stroke-width="1.6"/><circle cx="${pts.split(' ').pop().split(',')[0]}" cy="${pts.split(' ').pop().split(',')[1]}" r="2.2" fill="#E8EDFF"/></svg>`;
+  return `<svg viewBox="0 0 ${W} ${H}" aria-hidden="true"><polyline points="${pts}" fill="none" stroke="var(--mute)" stroke-width="1.6"/><circle cx="${pts.split(' ').pop().split(',')[0]}" cy="${pts.split(' ').pop().split(',')[1]}" r="2.2" fill="var(--ink)"/></svg>`;
 }
 function progressRow(b, k) {
   const p = b.progress, color = COLOR[k];
@@ -74,8 +79,18 @@ const THEME = {
   // 기존 건물 중 기반시설(학교·병원·공공·복지): c 는 건물 색(상태색·점검 보라와 색상각이 떨어지게 고름), t 는 이름표 글자색(네이비 바탕에서 7:1 이상)
   fac: { edu: { c: '#F7C600', t: '#FFD84D' }, med: { c: '#E5384F', t: '#FF8FA0' }, pub: { c: '#2EC4B6', t: '#7FE3D8' } },
 };
-const TH = () => THEME;
-const TONE = THEME.tone;   // 패널 막대용. 지도 위 동 색은 TH().tone
+const LIGHT_THEME = {
+  ...THEME,
+  vw: 'Base', ofm: 'liberty', bg: '#F5F7FA', text: '#172B4D', sub: '#526176', halo: '#FFFFFF', sky: ['#E5EDF5', '#F5F7FA'],
+  mask: ['#FFFFFF', 0.12], shadow: ['#334960', 0.16], hillShadow: '#72859B', hillHi: '#FFFFFF', hillAcc: '#C3CFDC', district: '#537294', dong: '#172B4D', other: ['#778EAB', '#A8B9CD'],
+  ramp: ['#DDE5EE', '#CBD6E3', '#B9C9DA', '#9FB4CD', '#819DBC'], flat: '#D7E1EC',
+  ghost: { fill: '#9FB4CD', fillOp: 0.25, line: '#637B96', lineOp: 0.8 },
+  tone: { sale: ['#A6B2C2', '#536278'], build: ['#D9B991', '#8E541D'], soon: ['#ADBE91', '#526E35'], move: ['#BCA7CE', '#795B9E'], plan: ['#A9C0DD', '#365F99'], priv: ['#BCC8D5', '#53637A'] },
+  infra: { edu: '#7955AD', power: '#895716', transit: '#344960', warn: '#895516', ink: '#FFFFFF' },
+  fac: { edu: { c: '#BE9900', t: '#806B13' }, med: { c: '#C94359', t: '#A92B42' }, pub: { c: '#26958B', t: '#18756B' } },
+};
+const TH = () => LIGHT_MAP ? LIGHT_THEME : THEME;
+let TONE = TH().tone;   // 패널 막대용. 지도 위 동 색은 TH().tone
 const wmts = (layer) => `https://api.vworld.kr/req/wmts/1.0.0/${KEY}/${layer}/{z}/{y}/{x}.png`;
 const ofmUrl = () => `https://tiles.openfreemap.org/styles/${TH().ofm}`;
 function baseStyle() {
@@ -104,7 +119,7 @@ const START = { pitch: 52, bearing: 0, ...(REG.view || { center: [126.7585, 37.5
 const map = new maplibregl.Map({
   container: 'map', style: baseStyle(), ...START, maxPitch: 80, minZoom: 11, attributionControl: { compact: true },
   canvasContextAttributes: { antialias: q.get('aa') !== '0' },   // 모서리 계단 방지(4배 다중 샘플). 저사양이면 주소에 ?aa=0
-  localIdeographFontFamily: "'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR','Noto Sans CJK KR',sans-serif",
+  localIdeographFontFamily: getComputedStyle(document.body).fontFamily,
 });
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
 let popup = null, selId = null, selDong = null, vwFail = 0, DONG_FEATS = [];
@@ -156,7 +171,7 @@ function badgeImage(kind) {
   const col = COLOR[kind];
   roundRectPath(x, 3, 3, W - 6, H - 6, 9);
   x.lineWidth = 4; x.strokeStyle = 'rgba(10,16,48,.94)'; x.stroke();
-  x.fillStyle = plan ? ('#0A1030') : col; x.fill();
+  x.fillStyle = plan ? TH().bg : col; x.fill();
   if (plan) { roundRectPath(x, 3, 3, W - 6, H - 6, 9); x.lineWidth = 1.8; x.setLineDash([4, 3]); x.strokeStyle = col; x.stroke(); }
   return { data: x.getImageData(0, 0, W, H), opts: { pixelRatio: 2, stretchX: [[14, 34]], stretchY: [[11, 17]], content: [12, 8, 36, 20] } };
 }
@@ -165,8 +180,8 @@ function badgeImage(kind) {
 function groundImage(kind) {
   const W = 56, H = 32, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), plan = kind === 'plan';
   const col = COLOR[kind];
-  roundRectPath(x, 1, 1, W - 2, H - 2, 6); x.fillStyle = 'rgba(16,26,68,.9)'; x.fill();
-  x.lineWidth = 1.2; x.strokeStyle = '#3A4C8C'; if (plan) x.setLineDash([3, 2]); x.stroke(); x.setLineDash([]);
+  roundRectPath(x, 1, 1, W - 2, H - 2, 6); x.fillStyle = LIGHT_MAP ? 'rgba(255,255,255,.97)' : 'rgba(16,26,68,.9)'; x.fill();
+  x.lineWidth = 1.2; x.strokeStyle = LIGHT_MAP ? '#B9C6D6' : '#3A4C8C'; if (plan) x.setLineDash([3, 2]); x.stroke(); x.setLineDash([]);
   x.fillStyle = col; x.fillRect(1, 2, 4, H - 4);
   return { data: x.getImageData(0, 0, W, H), opts: { pixelRatio: 2, stretchX: [[10, 46]], stretchY: [[10, 22]], content: [9, 6, 48, 26] } };
 }
@@ -1183,7 +1198,7 @@ if (BLOCKS.length) {
   const when = (m) => { const mm = /(\d{4})[.-](\d\d)/.exec(m); return mm ? (Number(mm[1]) - 2026) * 12 + Number(mm[2]) - 10 : null; };
   const SPAN = 38, X0 = 22, X1 = 278, CY = 52, tx = (mo) => X0 + (X1 - X0) * mo / SPAN;
   let svg = `<line x1="${X0}" y1="${CY}" x2="${X1}" y2="${CY}" stroke="#3A4C8C" stroke-width="2"/>`;
-  for (const [lab, mo, anc] of [['2027', 3, 'middle'], ['2028', 15, 'middle'], ['2029', 27, 'middle']]) svg += `<line x1="${tx(mo)}" y1="${CY - 6}" x2="${tx(mo)}" y2="${CY + 6}" stroke="#9AA8D6" stroke-width="2"/><text x="${anc === 'start' ? tx(mo) - 4 : tx(mo)}" y="114" font-size="12.5" fill="#9AA8D6" text-anchor="${anc}">${lab}${lab.length === 4 ? '년' : ''}</text>`;
+  for (const [lab, mo, anc] of [['2027', 3, 'middle'], ['2028', 15, 'middle'], ['2029', 27, 'middle']]) svg += `<line x1="${tx(mo)}" y1="${CY - 6}" x2="${tx(mo)}" y2="${CY + 6}" stroke="var(--mute)" stroke-width="2"/><text x="${anc === 'start' ? tx(mo) - 4 : tx(mo)}" y="114" font-size="12.5" fill="#9AA8D6" text-anchor="${anc}">${lab}${lab.length === 4 ? '년' : ''}</text>`;
   const groups = new Map();
   BLOCKS.forEach((b) => { const mo = when(b.moveIn); if (mo == null || mo < 0 || mo > SPAN) return; (groups.get(mo) || groups.set(mo, []).get(mo)).push(b); });
   const items = [...groups.entries()].sort((a, c) => a[0] - c[0]);
@@ -1193,7 +1208,7 @@ if (BLOCKS.length) {
     svg += `<g class="tlp" tabindex="0" role="button" data-ids="${idsAttr(ids)}" aria-label="${esc(ids.join('·'))} ${esc(bs[0].moveIn)} 입주·준공 예정, 누르면 지도에서 보기">`
       + `<circle cx="${x}" cy="${CY}" r="${Math.max(r, 11)}" fill="transparent"/>`
       + `<circle cx="${x}" cy="${CY}" r="${r}" fill="${COLOR[k]}" fill-opacity="${k === 'build' ? .88 : 1}"/>`
-      + `<text x="${x}" y="${yid}" font-size="13" font-weight="700" fill="#E8EDFF" text-anchor="middle">${esc(ids.join('·'))}</text>`
+      + `<text x="${x}" y="${yid}" font-size="13" font-weight="700" fill="var(--ink)" text-anchor="middle">${esc(ids.join('·'))}</text>`
       + `<text x="${x}" y="${ydt}" font-size="12.5" fill="#9AA8D6" text-anchor="middle">${dt}</text></g>`;
   });
   $('#timeline').innerHTML = svg;
@@ -1520,7 +1535,7 @@ function buildInfraTimeline() {
       body += (i.row ? `<line x1="${x.toFixed(1)}" y1="${base + 6}" x2="${x.toFixed(1)}" y2="${top - 9}" stroke="#3A4C8C" stroke-width="1"/>` : '')
         + `<circle cx="${x.toFixed(1)}" cy="${base}" r="5.5" fill="${i.hollow ? '#0A1030' : INK[l.key]}" stroke="${INK[l.key]}" stroke-width="2"${i.hollow ? ' stroke-dasharray="2.6 1.8"' : ''}/>`
         + `<text x="${i.tx.toFixed(1)}" y="${top}" font-size="12" fill="#9AA8D6" text-anchor="${i.anchor}">${esc(IL.fmtYm(i.ym).slice(2))}</text>`
-        + i.names.map((n, k) => `<text x="${i.tx.toFixed(1)}" y="${top + (k + 1) * LINE}" font-size="12.5" font-weight="${k === 0 ? 700 : 400}" fill="#E8EDFF" text-anchor="${i.anchor}">${esc(n)}</text>`).join('');
+        + i.names.map((n, k) => `<text x="${i.tx.toFixed(1)}" y="${top + (k + 1) * LINE}" font-size="12.5" font-weight="${k === 0 ? 700 : 400}" fill="var(--ink)" text-anchor="${i.anchor}">${esc(n)}</text>`).join('');
     });
     y += h; if (l.key === 'edu') bandBottom = y - 2;
   });
@@ -1532,7 +1547,7 @@ function buildInfraTimeline() {
       + `<text x="${((gx0 + gx1) / 2).toFixed(1)}" y="${TOP - 9}" font-size="12" font-weight="700" fill="#FFD66E" text-anchor="middle">▲ 새 학교 없는 기간 ${t.gap.months}개월</text>`;
   }
   let axis = `<line x1="${X0}" y1="${y + 2}" x2="${X1}" y2="${y + 2}" stroke="#3A4C8C" stroke-width="1"/>`;
-  for (let m = Math.ceil(m0 / 12) * 12; m <= m1; m += 12) { const x = X0 + (X1 - X0) * (m - m0) / (m1 - m0); axis += `<line x1="${x.toFixed(1)}" y1="${y - 1}" x2="${x.toFixed(1)}" y2="${y + 5}" stroke="#9AA8D6" stroke-width="1.5"/><text x="${x.toFixed(1)}" y="${y + 17}" font-size="12" fill="#9AA8D6" text-anchor="middle">${m / 12}년</text>`; }
+  for (let m = Math.ceil(m0 / 12) * 12; m <= m1; m += 12) { const x = X0 + (X1 - X0) * (m - m0) / (m1 - m0); axis += `<line x1="${x.toFixed(1)}" y1="${y - 1}" x2="${x.toFixed(1)}" y2="${y + 5}" stroke="var(--mute)" stroke-width="1.5"/><text x="${x.toFixed(1)}" y="${y + 17}" font-size="12" fill="#9AA8D6" text-anchor="middle">${m / 12}년</text>`; }
   const H = y + 22;
   const svg = $('#infraTl');
   svg.setAttribute('viewBox', `0 0 300 ${H}`);
@@ -1782,4 +1797,36 @@ renderHudContent();
 if (q.get('selftest')) {   // 시험 전용 훅(운영 주소에는 붙지 않음)
   window.__map = map; window.__blocks = BLOCKS;
   window.__st = () => ({ viewMode, ctxOn, ringOn, infraOn, zoneOn, busOn, bus: HAS_BUS ? { n: BUS.cur.length, at: BUS.at, ttl: BUS.ttl, failures: BUS.failures, off: BUS.off } : null, timeMo, selId, selDong, tourOn, playing: !!playT });
+}
+
+
+/* 헤더의 테마 전환: 카메라·필터·펼친 카드는 유지하고 스타일과 색만 다시 적용한다. */
+if (document.documentElement.hasAttribute('data-map-shell')) {
+  window.addEventListener('housing:theme-change', () => {
+    const nextLight = !document.documentElement.classList.contains('dark');
+    if (nextLight === LIGHT_MAP) return;
+    const oldColor = { ...COLOR, permit: LIGHT_MAP ? '#327F79' : '#45D3C4' };
+    LIGHT_MAP = nextLight;
+    Object.assign(COLOR, LIGHT_MAP ? LIGHT_COLOR : DARK_COLOR);
+    TONE = TH().tone;
+    const newColor = { ...COLOR, permit: LIGHT_MAP ? '#327F79' : '#45D3C4' };
+    STAGES6.forEach((stage, i) => { stage[3] = i === 1 ? newColor.permit : COLOR[kindOf({ status: stage[2] })]; });
+    // 이미 열린 카드의 클릭 핸들러와 펼침 상태를 보존하면서 인라인 상태색을 바꾼다.
+    const replacement = new Map(Object.keys(oldColor).map((kind) => [oldColor[kind].toLowerCase(), newColor[kind]]));
+    document.querySelectorAll('.app [style], .maplibregl-popup [style]').forEach((element) => {
+      const style = element.getAttribute('style');
+      const updated = style.replace(/#[0-9a-f]{6}/gi, (color) => replacement.get(color.toLowerCase()) || color);
+      if (style !== updated) element.setAttribute('style', updated);
+    });
+    document.querySelectorAll('.app svg [fill], .app svg [stroke]').forEach((element) => {
+      for (const name of ['fill', 'stroke']) {
+        const value = element.getAttribute(name);
+        const next = value && replacement.get(value.toLowerCase());
+        if (next) element.setAttribute(name, next);
+      }
+    });
+    STATUS.loaded = false;
+    map.once('style.load', () => { STATUS.loaded = true; });
+    map.setStyle(baseStyle(), { diff: false });
+  });
 }

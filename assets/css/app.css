@@ -12,7 +12,8 @@
 @supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--glass-tag:rgba(16,26,68,.97);--glass-sum:rgba(10,16,48,.97);--glass-card:rgba(16,26,68,.98);--glass-cmd-active:rgba(10,16,48,.97);--glass-cmd-idle:rgba(10,16,48,.96);--glass-cmd-off:rgba(10,16,48,.96)}}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5;color-scheme:dark}
+body{font-family:var(--font-do-hyeon,'Do Hyeon'),'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5;color-scheme:dark}
+.maplibregl-map{font-family:var(--font-do-hyeon,'Do Hyeon'),'Apple SD Gothic Neo','Malgun Gothic',sans-serif}
 /* 데스크톱: 위에 머리 줄(로고·6단계 필터·보기 기준), 그 아래 왼쪽 지도와 오른쪽 패널(380px). 접으면 지도가 전체 폭 */
 .app{display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:68px minmax(0,1fr);height:100vh}
 .app.collapsed{grid-template-columns:minmax(0,1fr)}
@@ -40,7 +41,7 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,
 .brand{display:flex;align-items:center;gap:12px;flex:none;color:var(--ink)}
 .brand-logo{display:block;height:34px;width:auto}
 .brand-t{display:flex;flex-direction:column;gap:2px;padding-left:12px;border-left:1px solid var(--line2)}
-.brand-t b{font-family:'Do Hyeon','Noto Sans KR',sans-serif;font-size:19px;font-weight:400;line-height:1.1}
+.brand-t b{font-family:var(--font-do-hyeon,'Do Hyeon'),sans-serif;font-size:19px;font-weight:400;line-height:1.1}
 .hd-region,.regionbox select{font-size:12.5px;line-height:1.3;color:var(--mute)}
 .hd-region[hidden]{display:none}
 .regionbox{display:flex;align-items:center;gap:8px;margin:0}
@@ -58,8 +59,8 @@ body{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,
 .sf-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;white-space:nowrap}
 .sf-sw{flex:0 0 auto;width:10px;height:10px;border-radius:3px;background:var(--c)}
 .sf-n{margin-left:auto;font-size:11px;font-weight:400;color:var(--mute)}
-.sf-v{font-family:'Do Hyeon','Noto Sans KR',sans-serif;font-size:19px;font-weight:400;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
-.sf-v small{margin-left:2px;font-family:'Noto Sans KR',sans-serif;font-size:11px;color:var(--mute)}
+.sf-v{font-family:var(--font-do-hyeon,'Do Hyeon'),sans-serif;font-size:19px;font-weight:400;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sf-v small{margin-left:2px;font-family:var(--font-do-hyeon,'Do Hyeon'),sans-serif;font-size:11px;color:var(--mute)}
 .stagef[hidden]{display:none}
 .mhead .seg{display:flex;flex:none;margin-left:auto;gap:2px;padding:3px;border-radius:11px;background:var(--bg)}
 .mhead .seg button{min-height:34px;padding:0 12px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13px;font-weight:700;color:var(--ink2);white-space:nowrap;cursor:pointer;touch-action:manipulation}
@@ -90,7 +91,7 @@ h2{margin:0;font-size:13px;font-weight:700;color:var(--ink2)}
 .list li+li{margin-top:6px}
 .sum{display:flex;flex-direction:column;gap:6px}
 .sum b{display:block;font-size:15px}
-.sum .big{font-family:'Do Hyeon','Noto Sans KR',sans-serif;font-size:44px;font-weight:400;line-height:1.05;font-variant-numeric:tabular-nums}
+.sum .big{font-family:var(--font-do-hyeon,'Do Hyeon'),sans-serif;font-size:44px;font-weight:400;line-height:1.05;font-variant-numeric:tabular-nums}
 .sum .unit{margin:0 6px 0 4px;font-size:15px;font-weight:700}
 .sum .cnt{font-size:13px;font-weight:400;color:var(--mute)}
 .sbar{display:flex;gap:2px;height:10px;border-radius:5px;overflow:hidden}
@@ -191,7 +192,7 @@ h2{margin:0;font-size:13px;font-weight:700;color:var(--ink2)}
 #fatal{position:absolute;inset:0;background:rgba(10,16,48,.96);color:var(--ink);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:5}
 #fatal[hidden]{display:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.maplibregl-popup-content{font:13px/1.5 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;color:var(--ink);border-radius:12px;border:1px solid var(--hud-line);padding:0;box-shadow:0 10px 26px rgba(0,0,0,.42);background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur)}
+.maplibregl-popup-content{font:13px/1.5 var(--font-do-hyeon,'Do Hyeon'),'Apple SD Gothic Neo','Malgun Gothic',sans-serif;color:var(--ink);border-radius:12px;border:1px solid var(--hud-line);padding:0;box-shadow:0 10px 26px rgba(0,0,0,.42);background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur)}
 .maplibregl-popup-close-button{font-size:18px;width:26px;height:26px;color:var(--ink2)}
 .maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--hud-line)}
 .maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--hud-line)}
@@ -260,7 +261,7 @@ h2{margin:0;font-size:13px;font-weight:700;color:var(--ink2)}
 .next li{display:block}
 .next .nx{display:grid;grid-template-columns:78px minmax(0,1fr);gap:0 10px;align-items:center;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--pn);font:inherit;color:inherit;cursor:pointer}
 .next .nx:hover,.next .nx:focus-visible{background:var(--pn2)}
-.next .dn{font-family:'Do Hyeon','Noto Sans KR',sans-serif;font-size:19px;font-weight:400;line-height:1.1;color:var(--soon);font-variant-numeric:tabular-nums;white-space:nowrap}
+.next .dn{font-family:var(--font-do-hyeon,'Do Hyeon'),sans-serif;font-size:19px;font-weight:400;line-height:1.1;color:var(--soon);font-variant-numeric:tabular-nums;white-space:nowrap}
 .next .dn.move{color:var(--move)}
 .next b{font-size:14px}
 .next span.s{display:block;font-size:13px;color:var(--mute)}
@@ -520,3 +521,30 @@ details.isub>ul{margin-top:2px}
    .shell-map 은 세로 flex(위 상단 메뉴 바 48px, 아래 .app)라 .app 은 남은 높이를 채운다(.app 자체의 height:100vh 는 덮는다). */
 .shell-map .app{flex:1;min-width:0;min-height:0;height:auto}
 .shell-map .brand-logo{display:none}
+
+/* Next 지도는 대시보드의 저장된 테마를 따른다. 독립 지도 페이지의 기존 팔레트와 분리한다. */
+html[data-map-shell]:not(.dark){
+  color-scheme:light;
+  --ink:#172B4D;--ink2:#344960;--mute:#526176;--line:#DFE5ED;--line2:#B9C6D6;
+  --bg:#F5F7FA;--pn:#FFFFFF;--pn2:#EAF0F6;--acc:#23466D;--acc-ink:#FFFFFF;--warn:#895516;
+  --sale:#536278;--build:#8E541D;--soon:#526E35;--move:#795B9E;--plan:#365F99;--priv:#53637A;
+  --edu:#7955AD;--power:#895716;--hud-line:#B9C6D6;
+  --glass-tag:rgba(255,255,255,.96);--glass-tag-hover:rgba(234,240,246,.98);
+  --glass-sum:rgba(255,255,255,.96);--glass-card:rgba(255,255,255,.97);
+  --glass-cmd-active:rgba(255,255,255,.98);--glass-cmd-idle:rgba(255,255,255,.96);--glass-cmd-off:rgba(245,247,250,.96);
+  --cmd-sub:#526176;--cmd-text:#172B4D;
+}
+html[data-map-shell] body{color-scheme:inherit}
+html[data-map-shell]:not(.dark) .mhead{background:var(--pn)}
+html[data-map-shell]:not(.dark) #loading,
+html[data-map-shell]:not(.dark) #fatal{background:rgba(245,247,250,.96)}
+html[data-map-shell]:not(.dark) .pc-chip.priv{background:var(--pn2)}
+html[data-map-shell]:not(.dark) .pc-bars i{background:var(--line2)}
+html[data-map-shell]:not(.dark) .optpanel label.dis{color:var(--mute)}
+html[data-map-shell]:not(.dark) .cmd-clear:hover,
+html[data-map-shell]:not(.dark) .cmd-o:hover,
+html[data-map-shell]:not(.dark) .cmd-o[aria-selected="true"]{background:var(--pn2)}
+html[data-map-shell]:not(.dark) .cmd-go:disabled{background:var(--pn2)}
+html[data-map-shell]:not(.dark) .cmd-spin{border-color:var(--line2);border-top-color:var(--acc)}
+html[data-map-shell]:not(.dark) .cmd-tier i{border-color:var(--ink)}
+html[data-map-shell]:not(.dark) .cmd-tier i.sw-bundle{background:var(--ink)}

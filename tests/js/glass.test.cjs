@@ -48,10 +48,12 @@ test('표지·요약·상세 카드 유리 위 글자 대비가 밝은 지도·�
   for (const n of ['--glass-tag', '--glass-tag-hover', '--glass-sum', '--glass-card']) check(n, TEXT, [MAP.lightest, MAP.darkest]);
 });
 
-test('어두운 지도가 기본이다: V-World 야간(midnight)·OpenFreeMap dark, 바탕은 네이비, 밝은 테마 스위치는 없다', () => {
+test('독립 지도는 기존 다크 배경을 유지하고 Next 지도는 저장된 테마에 따라 배경을 선택한다', () => {
   assert.match(app, /window\.VWORLD_LAYER \|\| 'midnight'/);
   assert.match(app, /ofm: 'dark'/);
   assert.match(app, /bg: '#0A1030'/);
+  assert.match(app, /const TH = \(\) => LIGHT_MAP \? LIGHT_THEME : THEME/);
+  assert.match(app, /vw: 'Base', ofm: 'liberty'/);
   assert.doesNotMatch(css, /data-theme/i);
   assert.doesNotMatch(app, /nightChip|setTheme|reTheme/i);
 });
@@ -139,4 +141,17 @@ test('입력줄 유리: 입력줄·후보·인식 칩이 상태별 변수와 bac
   assert.match(rule('.cmd[data-state="disabled"]'), /--cmd-bg:var\(--glass-cmd-off\)/);
   const fb = /@supports not[^{]*\{\s*:root\{([^}]*)\}\}/.exec(css)[1];
   for (const n of ['--glass-cmd-active', '--glass-cmd-idle', '--glass-cmd-off']) { const m = new RegExp(`${n}:rgba\\(\\d+,\\d+,\\d+,([\\d.]+)\\)`).exec(fb); assert.ok(m && +m[1] >= 0.94, `${n} 대체값`); }
+});
+
+
+test('라이트 지도 HUD 본문·보조·상태 글자는 가장 밝고 어두운 지도 위에서 4.5:1 이상이다', () => {
+  const light = /html\[data-map-shell\]:not\(\.dark\)\{([^}]*)\}/.exec(css)[1];
+  const vars = Object.fromEntries([...light.matchAll(/(--[\w-]+):([^;]+);?/g)].map((m) => [m[1], m[2].trim()]));
+  const text = ['--ink', '--ink2', '--mute', '--warn', '--sale', '--build', '--soon', '--move', '--plan', '--priv', '--edu', '--power'];
+  for (const glassName of ['--glass-tag', '--glass-tag-hover', '--glass-sum', '--glass-card']) {
+    const g = vars[glassName].match(/[\d.]+/g).map(Number);
+    for (const backdrop of ['#FFFFFF', '#000000']) for (const name of text) {
+      assert.ok(ratio(hex(vars[name]), over(g, hex(backdrop))) >= 4.5, `${glassName} 위 ${name} 대비`);
+    }
+  }
 });
