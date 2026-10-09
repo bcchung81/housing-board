@@ -42,3 +42,6 @@ dist/
 .next/
 next-env.d.ts
 *.tsbuildinfo
+
+# 시각 비교 스크린샷(재생성 가능)
+.visual/

@@ -8,7 +8,9 @@
     "prebuild": "node scripts/build.js",
     "build": "next build",
     "start": "next start",
-    "test": "node --test \"tests/js/*.test.cjs\""
+    "test": "node --test \"tests/js/*.test.cjs\"",
+    "visual:shoot": "node scripts/visual/shoot.js",
+    "visual:diff": "node scripts/visual/diff.mjs"
   },
   "dependencies": {
     "next": "16.4.0",
@@ -19,6 +21,7 @@
     "@types/node": "24.19.1",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "pngjs": "7.0.0",
     "typescript": "5.9.3"
   }
 }
