@@ -1,0 +1,153 @@
+/* 종합상황판 시안(주택파동_종합상황판_최종)의 스타일을 .board 아래로 옮긴 것. 클래스 .legend 만 .blegend 로 바꿨다(대시보드 공용 .legend 와 겹침). */
+.board button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.board :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.board .disp{font-family:'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',sans-serif;font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:0}
+.board .sub{font-size:12px;color:var(--sub)}
+.board .tag{display:inline-block;font-size:11px;line-height:17px;padding:0 8px;border-radius:999px;font-weight:700;white-space:nowrap}
+.board .app{max-width:1440px;margin:0 auto;padding:0 28px 36px}
+.board .stk{display:grid}
+.board .stk>*{grid-area:1/1;min-width:0}
+.board .sz{visibility:hidden;pointer-events:none;user-select:none}
+.board .top{display:flex;align-items:center;gap:20px;flex-wrap:wrap;padding:24px 0 16px}
+.board .brand{display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.board .brand h1{margin:0;line-height:0;flex:none}
+.board .brand .lockup{display:block;height:56px;width:auto}
+.board .brand .cap{border-left:1px solid var(--line2);padding-left:20px;display:flex;flex-direction:column;gap:3px}
+.board .brand .cap b{font-size:13px;font-weight:700;color:var(--ink)}
+.board .brand .cap span{font-size:12px;color:var(--sub);word-break:keep-all}
+.board .tags{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.board .dirs{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(190px,100%),1fr));gap:8px}
+.board .dir{position:relative;overflow:hidden;display:flex;flex-direction:column;gap:2px;padding:10px 14px 12px;border-radius:12px;background:var(--pn);border:1px solid var(--line);min-width:0;transition:background .15s,border-color .15s}
+.board .dir:hover{background:var(--pn2)}
+.board .dir .d{font-size:11px;color:var(--sub)}
+.board .dir .m{font-size:22px;line-height:1.15}
+.board .dir .mrow{display:flex;align-items:center;flex-wrap:wrap;column-gap:8px;min-width:0}
+.board .dir .dv{display:flex;flex-direction:column;line-height:1.15;font-size:12px;font-weight:700;white-space:nowrap}
+.board .dir .dv small{font-size:10.5px;font-weight:400;color:var(--sub)}
+.board .dir .bar{position:absolute;left:0;bottom:0;height:3px;width:0;background:var(--acc);transition:width .9s linear}
+.board .dir[aria-pressed="true"]{background:var(--on);border-color:var(--acc)}
+.board .dir[aria-pressed="true"] .m{color:var(--acc)}
+.board .quote{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:8px;padding:8px 14px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);font-size:13px;color:var(--ink2)}
+.board .quote .tag{background:var(--acc);color:var(--acc-ink)}
+.board #quote{flex:1 1 280px}
+.board .pnl{display:flex;flex-direction:column;background:var(--pn);border:1px solid var(--line);border-radius:14px;padding:18px 20px;min-width:0}
+.board .pnl>svg{flex:none}
+.board .ringable{transition:box-shadow .25s}
+.board .ringable.ring{box-shadow:0 0 0 3px var(--acc)}
+.board .ptitle{margin:0;font-size:20px;line-height:1.25;font-weight:700}
+.board .ptitle small{font-family:'Noto Sans KR',sans-serif;font-size:12px;font-weight:400;color:var(--sub)}
+.board .note{padding:9px 12px;border-radius:8px;background:var(--bg2);font-size:13px;color:var(--ink2)}
+.board .hero{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:14px;margin-top:14px;align-items:stretch}
+.board .row3{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(300px,100%),1fr));gap:14px;margin-top:14px}
+.board .row2{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:14px;margin-top:14px;align-items:stretch}
+@media (max-width:1100px){
+  .board .hero,.board .row2{grid-template-columns:1fr}
+}
+.board .ph{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:8px}
+.board .blegend{margin-left:auto;display:flex;gap:4px;flex-wrap:wrap}
+.board .blegend button{display:flex;align-items:center;gap:6px;font-size:12.5px;padding:3px 9px;border-radius:999px;border:1px solid transparent;transition:background .15s,border-color .15s}
+.board .blegend button:hover{background:var(--pn2)}
+.board .blegend button[aria-pressed="true"]{border-color:var(--acc);background:var(--on)}
+.board .blegend i,.board .srow i{width:11px;height:11px;border-radius:3px;display:block;flex:none}
+.board .chartwrap{position:relative;background:#0B1233;border:1px solid var(--line);border-radius:10px;cursor:pointer;touch-action:pan-y}
+.board #chart{display:block;width:100%;height:auto}
+.board #chart text{font-family:'Noto Sans KR',sans-serif}
+.board .tip{position:absolute;z-index:3;pointer-events:none;min-width:168px;padding:9px 11px;border-radius:10px;background:#0A1030;border:1px solid var(--line2);box-shadow:0 8px 22px rgba(0,0,0,.45);font-size:12px;line-height:1.5}
+.board .tip[hidden]{display:none}
+.board .tip .tl{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.board .tip .tr{display:flex;align-items:center;gap:6px;justify-content:space-between}
+.board .tip .tr span:first-child{display:flex;align-items:center;gap:6px}
+.board .tip i{width:9px;height:9px;border-radius:2px;display:block}
+.board .ctrl{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px}
+.board .play{flex:none;width:46px;height:46px;border-radius:50%;background:var(--acc);display:flex;align-items:center;justify-content:center;transition:transform .12s}
+.board .play:hover{transform:scale(1.06)}
+.board .slider{flex:1 1 220px;min-width:160px}
+.board input[type=range]{width:100%;margin:0;height:28px;cursor:pointer;accent-color:var(--acc)}
+.board .jumps{display:flex;gap:6px;flex-wrap:wrap}
+.board .jumps button,.board .tour{font-size:13px;font-weight:700;padding:7px 12px;border-radius:7px;border:1.5px solid var(--line2);color:var(--ink2);transition:background .15s}
+.board .jumps button:hover,.board .tour:hover{background:var(--pn2)}
+.board .jumps button[aria-pressed="true"]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink)}
+.board .tour[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.board .snaphead{display:flex;align-items:baseline;gap:10px;margin-bottom:10px}
+.board .sumA .bar{display:flex;height:14px;border-radius:7px;overflow:hidden;gap:2px;background:var(--pn2)}
+.board .sumA .bar span{display:block;height:100%;min-width:0}
+.board .sumA .d{background:var(--bad)}
+.board .sumA .w{background:var(--warn)}
+.board .sumA .o{background:var(--ok)}
+.board .sumA .leg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:9px}
+.board .sumA .lgi{min-width:0}
+.board .sumA .lb{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--sub);white-space:nowrap}
+.board .sumA .lb i{width:9px;height:9px;border-radius:3px;display:block;flex:none}
+.board .sumA .lb em{font-style:normal;font-size:11px;margin-left:2px}
+.board .sumA b{display:block;font-size:17px;line-height:1.3;font-variant-numeric:tabular-nums;white-space:nowrap}
+.board .sumA b small{font-family:'Noto Sans KR',sans-serif;font-size:11px;font-weight:400;margin-left:2px;opacity:.8}
+.board .srows{display:flex;flex-direction:column;margin-top:8px;flex:1 1 auto}
+.board .srow{flex:1 1 auto;display:grid;grid-template-columns:minmax(0,1fr) 70px 62px 78px;gap:8px;align-items:center;padding:5px 6px;border-bottom:1px solid var(--line);border-radius:6px}
+.board .srow:last-child{border-bottom:0}
+.board .srow .k{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:700;white-space:nowrap}
+.board .srow .v{font-size:18px;text-align:right}
+.board .srow .dl{font-size:12px;text-align:right}
+.board .srow .dy{font-size:12px;text-align:right;color:var(--bad);white-space:nowrap}
+.board .srow .bn{margin-left:2px;background:var(--acc);color:var(--acc-ink);font-size:10px;line-height:15px;padding:0 6px;visibility:hidden}
+.board .srow.hot{background:rgba(255,138,101,.12)}
+.board .srow.hot .bn{visibility:visible}
+@media (max-width:520px){
+  .board .srow{grid-template-columns:minmax(0,1fr) 62px 74px}
+  .board .srow .dl{display:none}
+}
+@media (max-width:520px){
+  .board .brand{gap:8px}
+  .board .brand .lockup{height:46px}
+  .board .brand .cap{border:0;padding-left:0;width:100%}
+}
+.board .row3 .ptitle small{display:block;margin-top:2px}
+.board .bar3{display:flex;height:10px;border-radius:3px;overflow:hidden;gap:1px}
+.board .bar3 span{display:block}
+.board #fmonths{flex:1 1 76px;min-height:76px;width:100%;display:block}
+.board .ags{display:flex;flex-direction:column;justify-content:space-around;gap:6px;flex:1 1 auto;margin-top:10px}
+.board .ag{display:grid;grid-template-columns:minmax(0,142px) minmax(0,1fr) 84px;gap:10px;align-items:center}
+.board .ag .an{display:flex;align-items:baseline;flex-wrap:wrap;column-gap:5px;min-width:0}
+.board .ag .an b{font-size:13px;line-height:1.3}
+.board .ag .an .sub,.board .ag .ad .sub{font-size:11px}
+.board .ag .ad{display:flex;justify-content:flex-end;align-items:baseline;gap:5px;white-space:nowrap}
+.board .ag .ad b{font-size:16px;line-height:1.2}
+.board .rlegend{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;font-size:11.5px;color:var(--sub)}
+.board .rlegend>span{display:flex;align-items:center;gap:5px}
+.board .rlegend i{width:24px;height:12px;border-radius:3px;display:block;border:1px solid rgba(255,255,255,.12)}
+.board .regions{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));grid-auto-rows:minmax(0,1fr);gap:6px;flex:1 1 auto;margin:10px 0}
+.board .reg{padding:8px 9px;border-radius:10px;background:var(--rc);border:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;justify-content:space-between;gap:6px;transition:filter .15s,box-shadow .15s}
+.board .reg:hover{filter:brightness(1.2)}
+.board .reg[aria-pressed="true"]{box-shadow:0 0 0 2px var(--acc);border-color:var(--acc)}
+.board .reg .nm{display:flex;justify-content:space-between;align-items:baseline;gap:4px;font-size:13px;font-weight:700;color:#fff}
+.board .reg .nm em{font-style:normal;font-size:10px;font-weight:400;color:#FFD2C2;margin-left:4px}
+.board .reg .rt{font-size:12.5px}
+.board .reg .num{display:flex;gap:8px;font-size:15px;padding:2px 8px;border-radius:7px;background:rgba(10,16,48,.74);align-self:flex-start}
+.board .flowv{display:flex;flex-direction:column;flex:1 1 auto;margin:12px 0 10px}
+.board .fstep{flex:1 1 auto;display:grid;grid-template-columns:30px minmax(0,1fr);gap:12px;align-items:center;width:100%;padding:8px 12px;border-radius:10px;background:var(--bg2);border:1px solid var(--line);transition:background .15s,border-color .15s}
+.board .fstep:hover{background:var(--pn2)}
+.board .fstep[aria-pressed="true"]{background:var(--on);border-color:var(--acc)}
+.board .fstep .no{width:28px;height:28px;border-radius:50%;background:var(--line2);display:flex;align-items:center;justify-content:center;font-size:15px}
+.board .fstep[aria-pressed="true"] .no{background:var(--acc);color:var(--acc-ink)}
+.board .fstep .k{display:block;font-size:14px;font-weight:700;line-height:1.3}
+.board .fstep .s{display:block;font-size:11.5px;color:var(--sub);line-height:1.35}
+.board .vc{flex:none;width:2px;height:10px;margin-left:25px;background:linear-gradient(var(--acc) 50%,transparent 0) 0 0/2px 8px;animation:board-vflow 1s linear infinite}
+@keyframes board-vflow{to{background-position:0 8px}}
+@media (prefers-reduced-motion:reduce){
+  .board *{animation:none!important;transition:none!important}
+}
+
+/* ── 이식하며 더한 것: 위젯 표지(SAMPLE·실데이터), 패널 링크, 헤더(레일이 브랜드를 보이므로 로고 없이) ── */
+.board .brand .cap{border-left:0;padding-left:0}
+.board .tsample,.board .treal{margin-left:8px;vertical-align:middle}
+.board .tsample{background:#FFE08A;color:#3B2B00}
+.board .treal{background:var(--ok);color:#04220F}
+.board .plink{margin-top:8px;font-size:12.5px}
+.board .plink a{color:var(--acc);text-decoration:none}
+.board .plink a:hover{text-decoration:underline}
+.board .plink .sub{margin-left:6px}
+.board .ptitle .tag{font-size:10.5px}
+.board .pnl .chartwrap .chart{margin:0;border:0;background:transparent}
+.board .more{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.board .more a{padding:7px 12px;border-radius:9px;border:1.5px solid var(--line2);color:var(--ink2);text-decoration:none;font-size:13px;font-weight:700}
+.board .more a:hover{background:var(--pn2)}
+@media (max-width:900px){.board .app{padding-top:56px}}

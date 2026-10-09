@@ -1,5 +1,5 @@
 /* 대시보드 화면(종합상황판과 파생 상세) 전용. 지도 화면은 이 파일을 읽지 않는다. 팔레트는 종합상황판 시안과 같다. */
-:root{--bg:#0A1030;--bg2:#0E1740;--pn:#101A44;--pn2:#16225A;--on:#1B2A66;--line:#22305E;--line2:#3A4C8C;--ink:#E8EDFF;--sub:#9AA8D6;--acc:#FF8A65;--acc-ink:#2A0E04;--warn:#FFC24D}
+:root{--bg:#0A1030;--bg2:#0E1740;--pn:#101A44;--pn2:#16225A;--on:#1B2A66;--line:#22305E;--line2:#3A4C8C;--ink:#E8EDFF;--ink2:#D6DEFA;--sub:#9AA8D6;--mute:#8FA0C8;--acc:#FF8A65;--acc-ink:#2A0E04;--ok:#4ADE9E;--warn:#FFC24D;--bad:#FF6B88}
 *{box-sizing:border-box}
 html{color-scheme:dark}
 html,body{margin:0}

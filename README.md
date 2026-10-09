@@ -62,10 +62,11 @@ node scripts/dev.js 8000         # 같은 일을 직접: 브라우저에서 http
 
 ```
 index.html               지도 마크업의 정본: Next.js 가 /map 을 그릴 때 읽고(components/MapIsland.tsx 가 지역 불러오기 → 키 → 앱 순으로 스크립트를 읽음), 이전 개발 서버는 / 에 그대로 엽니다
-app/(dashboard)/         사이드바 + 종합상황판(/) · 목록(/projects /area /stage /agency /sources …) · 파생 상세(/area/{코드} /project/{PRJ-…} /stage/{01~06} /agency/{id} /month/{YYYY-MM})
+app/(dashboard)/         사이드바 + 종합상황판(/, 시안 이식: SAMPLE 표지 + 실데이터 위젯) · 목록·상세 실데이터 화면(/area /month /projects /project /stage /agency /sources), 준비 중(/reports /my-area)
+data/board/              상황판 화면 자료(통계누리 월 계열·LH 준공 예정·원천 카탈로그). tools/boarddata 가 만들어 커밋(dataset.md 2.23)
 app/(map)/map/           지도 화면(/map): 루트 레이아웃이 따로라 오갈 때 전체 문서가 새로 열린다(app.js 는 문서당 한 번만 도는 스크립트)
 app/api/**/route.ts      /api/* 라우트: handlers/ 의 핸들러를 lib/next-handler.ts 가 Request→Response 로 이어 준다(+ 실행 시간 상한)
-components/              ShellRail(사이드바) · Crumbs(빵부스러기) · MapIsland(지도 스크립트 로더)
+components/              ShellRail(사이드바) · Crumbs(빵부스러기) · MapIsland(지도 스크립트 로더) · board/(종합상황판 이식) · charts/(서버가 그리는 SVG 차트)
 proxy.ts  next.config.ts 옛 지도 주소 리다이렉트 · 보안·캐시 헤더와 함수 번들 규칙
 package.json             Next.js 16 · React 19 · TypeScript 5.9 (npm install)
 config.js                V-World 인증키 등 설정 (공유 금지) / config.example.js 는 키가 빈 견본
@@ -170,6 +171,8 @@ node --test "tests/js/*.test.cjs"                     # Node (따옴표 필수)
 | `tests/js/contract.test.cjs` | 인터페이스 계약: 문서 온전성·운영 응답 20개가 스키마를 통과·핸들러 오류 모양·매개변수 이름 일치 |
 | `tests/js/smoke.test.cjs` | 전국 표본 점검의 판정 함수(경계 윤곽·칸 번호·열림/경고 판정)와 표본 파일 구조 |
 | `tests/js/vercelconf.test.cjs` | `next.config.ts`·`vercel.json`·`app/api`: iframe 차단 헤더·함수 번들 파일·실행 시간 상한 |
+| `tests/js/board.test.cjs` `boardsample.test.cjs` | 화면 숫자 = 원천 CSV 숫자·시도 합 = 전국·시행주체 합 = 총계·경로 규칙, 시안 계산 이식 = 원본 실행 기준값(`tests/fixtures/board-sample-golden.json`)·SAMPLE/실데이터 표지 |
+| `tests/test_boarddata.py` | `tools/boarddata` 규칙·항등식·`data/board` 낡음 검사 |
 | `tests/js/shell.test.cjs` | 사이드바 메뉴·상세 식별자·지도 섬 스크립트 순서·루트 레이아웃 둘·옛 주소 리다이렉트 |
 | `tests/js/root.test.cjs` | `lib/root.js`: 번들러가 `__dirname`을 가짜 경로로 바꾸는 문제의 재발 방지 |
 | `tests/js/bus.test.cjs` | 버스 계산(방향·3D 면·보간·경유 단지)과 화면 연결(옵션·요청 시에만 조회 약속) |
