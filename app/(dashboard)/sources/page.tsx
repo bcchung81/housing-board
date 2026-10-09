@@ -1,5 +1,8 @@
 import type { Metadata } from 'next';
 import Crumbs from '../../../components/Crumbs';
+import { Dl, Lede, Page, PageTitle, SectionTitle, cardsGrid } from '../../../components/page';
+import { Badge } from '../../../components/ui/badge';
+import { Card, cardVariants } from '../../../components/ui/card';
 import { fmt } from '../../../lib/board/calc';
 import { sources } from '../../../lib/board/data';
 import type { Source } from '../../../lib/board/types';
@@ -16,19 +19,19 @@ const query = (q: Record<string, unknown>) => Object.entries(q).map(([k, v]) => 
 
 function Item({ s }: { s: Source }) {
   return (
-    <section className="src" id={s.id} aria-label={s.dataset}>
-      <h3>{s.dataset}</h3>
-      <p>{s.description}</p>
-      <dl className="dl">
+    <Card variant="source" render={<section id={s.id} aria-label={s.dataset} />}>
+      <h3 className="m-0 mb-1.5 text-[15px] text-foreground">{s.dataset}</h3>
+      <p className="mt-1.5 mb-0 text-[13px] text-muted-foreground">{s.description}</p>
+      <Dl className="mt-2 text-[13px]">
         <dt>제공기관</dt><dd>{s.provider}</dd>
-        <dt>받은 시각</dt><dd>{when(s.collectedAt) ?? <span className="na">기록 없음</span>} <span className="na">(우리가 받은 때)</span></dd>
-        <dt>원천 기준일</dt><dd>{s.sourceAsOf ?? <span className="na">확인하지 못함</span>} <span className="na">(원천이 말하는 기준)</span></dd>
+        <dt>받은 시각</dt><dd>{when(s.collectedAt) ?? <span>기록 없음</span>} <span>(우리가 받은 때)</span></dd>
+        <dt>원천 기준일</dt><dd>{s.sourceAsOf ?? <span>확인하지 못함</span>} <span>(원천이 말하는 기준)</span></dd>
         <dt>건수</dt><dd>{fmt(s.count)}</dd>
         <dt>조회 조건</dt><dd>{query(s.query)}</dd>
         {s.license ? <><dt>이용허락</dt><dd>{s.license}</dd></> : null}
-        <dt>이 화면들이 읽음</dt><dd>{s.usedBy.length ? s.usedBy.map((u, i) => <span key={u}>{i ? ', ' : ''}<a href={SCREEN[u][1]}>{SCREEN[u][0]}</a></span>) : <span className="na">아직 쓰지 않음</span>}</dd>
-      </dl>
-    </section>
+        <dt>이 화면들이 읽음</dt><dd>{s.usedBy.length ? s.usedBy.map((u, i) => <span key={u}>{i ? ', ' : ''}<a href={SCREEN[u][1]}>{SCREEN[u][0]}</a></span>) : <span>아직 쓰지 않음</span>}</dd>
+      </Dl>
+    </Card>
   );
 }
 
@@ -37,19 +40,19 @@ export default function SourcesPage() {
   const items = sources.items;
   const used = items.filter((i) => i.usedBy.length > 0).length;
   return (
-    <div className="page">
+    <Page>
       <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: '데이터 원본' }]} />
-      <h1>데이터 원본 <span className="pill ok">실데이터</span></h1>
-      <p className="lede">상황판이 받은 원천 {items.length}곳 중 {used}곳을 화면이 읽습니다. 받은 때와 원천이 말하는 기준일은 늘 따로 적습니다.</p>
-      <div className="cards" style={{ marginTop: 10 }}>
-        {GROUPS.map((g) => <a key={g} className="cardlink" href={`#g-${g}`}><b>{g}</b><span>{items.filter((i) => i.group === g).length}곳</span></a>)}
+      <PageTitle>데이터 원본 <Badge variant="ok">실데이터</Badge></PageTitle>
+      <Lede>상황판이 받은 원천 {items.length}곳 중 {used}곳을 화면이 읽습니다. 받은 때와 원천이 말하는 기준일은 늘 따로 적습니다.</Lede>
+      <div className={`${cardsGrid} mt-2.5`}>
+        {GROUPS.map((g) => <a key={g} className={cardVariants({ variant: 'link' })} href={`#g-${g}`}><b>{g}</b><span>{items.filter((i) => i.group === g).length}곳</span></a>)}
       </div>
       {GROUPS.map((g) => (
         <div key={g} id={`g-${g}`}>
-          <h2 style={{ marginTop: 26 }}>{g}</h2>
+          <SectionTitle className="mt-[26px]">{g}</SectionTitle>
           {items.filter((i) => i.group === g).map((s) => <Item key={s.id} s={s} />)}
         </div>
       ))}
-    </div>
+    </Page>
   );
 }
