@@ -2,8 +2,9 @@
    정적 부분(층·띠·축)은 범례 강조(hl)에만, 동적 부분(연도 띠·굵기 괄호·병목 핀)은 선택 시점(cur)에만 달라진다. */
 import { C, GEO, K, LAST, NOW, PEAK, PH, PITCH, PW, PX0, S2, TOP, BOT, X, Y0, YT, argmax, dStage, f, ml, r10, rp, tot, vals, yr } from '../../lib/board/sample';
 
-const PAL = { mid: 'rgba(232,237,255,.2)', sep: 'rgba(232,237,255,.16)', sc: '#9AA8D6', axis: '#8FA0C8', ink: '#E8EDFF', cur: '#FFFFFF', hatch: '#0A1030', hatchOp: '.55', seam: '#0B1233', band: '#FF6B88', acc: '#FF8A65', dim: 'rgba(232,237,255,.35)', pos: '#4ADE9E', yrOn: '#FFFFFF', yrOff: '#B4C0E6', halo: '#0A1030', haloTxt: '#FFFFFF' };
-export const HOVER = { fill: '#FFFFFF', opacity: '.10' };
+/* 리본 차트의 선·글자·층 경계 색: 테마별 값은 app/tailwind.css 의 --rb-* (라이트·다크). SVG 속성이 var() 로 읽는다 */
+const PAL = { mid: 'var(--rb-mid)', sep: 'var(--rb-sep)', sc: 'var(--rb-sc)', axis: 'var(--rb-axis)', ink: 'var(--rb-ink)', cur: 'var(--rb-cur)', hatch: 'var(--rb-hatch)', hatchOp: '.55', seam: 'var(--rb-seam)', band: 'var(--rb-band)', acc: 'var(--rb-acc)', dim: 'var(--rb-dim)', pos: 'var(--rb-pos)', yrOn: 'var(--rb-yr-on)', yrOff: 'var(--rb-yr-off)', halo: 'var(--rb-halo)', haloTxt: 'var(--rb-halo-txt)' };
+export const HOVER = { fill: 'var(--rb-hover)', opacity: '.10' };
 export const CUR = { stroke: PAL.cur, width: 2.4 };
 export const RIBBON = { PX0, PITCH, TOP, PH };
 
@@ -40,7 +41,7 @@ function pinSVG(m: number, main: boolean): string {
   const px = X(m + 0.5), py = g.lw[k] - g.dl[k] / 2, cx = Math.max(PX0 + 95, Math.min(PX0 + PW - 95, px));
   const t = main ? `${K[k]} 지연 ${f(r10(ds[k]))}호 · ${(ds[k] / vals(m)[k] * 100).toFixed(1)}%` : `정점 · ${K[k]} ${f(r10(ds[k]))}호`;
   return `<line x1="${px.toFixed(1)}" y1="${(py - 7).toFixed(1)}" x2="${cx.toFixed(1)}" y2="${(py - 34).toFixed(1)}" stroke="${PAL.cur}" stroke-width="1.2" stroke-dasharray="2 2"/>`
-    + `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="6" fill="#FFFFFF" stroke="${PAL.acc}" stroke-width="3"/>`
+    + `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="6" fill="var(--rb-pin)" stroke="${PAL.acc}" stroke-width="3"/>`
     + `<text x="${cx.toFixed(1)}" y="${(py - 40).toFixed(1)}" fill="${PAL.haloTxt}" font-size="12" font-weight="700" text-anchor="middle" stroke="${PAL.halo}" stroke-width="4" paint-order="stroke" stroke-linejoin="round">${t}</text>`;
 }
 

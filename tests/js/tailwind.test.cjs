@@ -19,23 +19,41 @@ test('preflight(전역 리셋)를 가져오지 않는다: theme·utilities 만 �
   assert.doesNotMatch(css, /preflight\.css/);
 });
 
-test('shadcn 토큰이 종합상황판 시안 팔레트와 같은 값이다', () => {
+/* tailwind.css 에서 `:root {…}`(라이트)와 `.dark {…}`(다크) 블록의 본문을 꺼낸다 */
+const block = (sel) => { const i = css.indexOf(`\n${sel} {`); assert.ok(i >= 0, `${sel} 블록`); return css.slice(i, css.indexOf('\n}\n', i)); };
+const token = (b, n) => { const m = new RegExp(`--${n}:\\s*(#[0-9A-Fa-f]{6})`).exec(b); assert.ok(m, `--${n}`); return m[1].toUpperCase(); };
+
+test('다크 토큰이 종합상황판 시안(남색) 팔레트와 같은 값이다', () => {
   /* 시안 팔레트(옛 dash.css 의 :root 변수). 옛 CSS 를 걷어낸 뒤에도 값이 바뀌지 않게 여기에 고정한다. */
   const PALETTE = { bg: '#0A1030', bg2: '#0E1740', pn: '#101A44', pn2: '#16225A', on: '#1B2A66', line: '#22305E', line2: '#3A4C8C', ink: '#E8EDFF', ink2: '#D6DEFA', sub: '#9AA8D6', mute: '#8FA0C8', acc: '#FF8A65', 'acc-ink': '#2A0E04', ok: '#4ADE9E', warn: '#FFC24D', bad: '#FF6B88' };
-  const dv = (n) => PALETTE[n];
-  const tv = (n) => new RegExp(`--${n}:\\s*(#[0-9A-Fa-f]{6})`).exec(css)[1].toUpperCase();
+  const dark = block('.dark');
   const same = { background: 'bg', card: 'pn', secondary: 'pn2', muted: 'bg2', accent: 'on', border: 'line', foreground: 'ink', 'muted-foreground': 'sub', primary: 'acc', 'primary-foreground': 'acc-ink', ring: 'acc', destructive: 'bad', ok: 'ok', warn: 'warn', bad: 'bad', ink2: 'ink2', mute: 'mute', line2: 'line2' };
-  for (const [shadcn, ours] of Object.entries(same)) assert.equal(tv(shadcn), dv(ours), `--${shadcn} = 시안 --${ours}`);
-  assert.equal(tv('input'), dv('line2'));
-  assert.equal(tv('sidebar'), '#0C1438', '레일 배경은 옛 shell.css 의 --r-bg 와 같은 값');
-  assert.equal(tv('sidebar-accent'), dv('on'));
+  for (const [shadcn, ours] of Object.entries(same)) assert.equal(token(dark, shadcn), PALETTE[ours], `--${shadcn} = 시안 --${ours}`);
+  assert.equal(token(dark, 'input'), PALETTE.line2);
+  assert.match(dark, /color-scheme: dark/);
 });
 
-test('두 루트 레이아웃이 tailwind.css 를 가져오고 <html class="dark"> 다(shadcn 의 dark: 변형을 항상 켠다)', () => {
-  for (const f of ['app/(dashboard)/layout.tsx', 'app/(map)/layout.tsx']) {
-    assert.match(read(f), /import '\.\.\/tailwind\.css';/, f);
-    assert.match(read(f), /<html lang="ko" className="dark">/, f);
+test('라이트가 기본(:root)이고 같은 이름의 토큰을 모두 갖는다. 글자색은 카드·바탕 위에서 4.5:1 이상이다', () => {
+  const light = block(':root'), dark = block('.dark');
+  const names = (b) => [...b.matchAll(/--([a-z0-9-]+):/g)].map((m) => m[1]).filter((n) => n !== 'radius' && n !== 'page-bg');
+  assert.deepEqual(names(light).sort(), names(dark).sort(), '라이트와 다크는 같은 토큰 이름을 정의한다');
+  assert.match(light, /color-scheme: light/);
+  const lum = (hex) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
+  const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+  const t = (n) => token(light, n);
+  for (const [fg, bg] of [['foreground', 'card'], ['foreground', 'background'], ['muted-foreground', 'card'], ['muted-foreground', 'muted'], ['primary', 'card'], ['primary-foreground', 'primary'], ['ink2', 'card'], ['bad', 'card'], ['ok', 'card']]) {
+    assert.ok(ratio(t(fg), t(bg)) >= 4.4, `${fg} 위 ${bg}: ${ratio(t(fg), t(bg)).toFixed(2)}`);
   }
+  assert.ok(ratio(t('warn'), t('card')) >= 4.0, 'warn 글자(큰 글씨 위주)');
+});
+
+test('두 루트 레이아웃이 tailwind.css 를 가져온다: 대시보드는 라이트 기본(저장된 다크만 그리기 전에 켠다), 지도는 다크 고정', () => {
+  for (const f of ['app/(dashboard)/layout.tsx', 'app/(map)/layout.tsx']) assert.match(read(f), /import '\.\.\/tailwind\.css';/, f);
+  const dash = read('app/(dashboard)/layout.tsx');
+  assert.match(dash, /localStorage\.getItem\('theme'\)==='dark'/);
+  assert.doesNotMatch(dash, /className="dark"/, '대시보드는 기본이 라이트다');
+  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" className="dark">/);
+  assert.match(read('components/TopNav.tsx'), /localStorage\.setItem\('theme'/);
 });
 
 test('Tailwind 는 Turbopack 로더로 연결하고, shadcn 설정(components.json)이 우리 CSS 를 가리킨다', () => {

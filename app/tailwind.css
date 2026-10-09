@@ -47,11 +47,79 @@
   }
 }
 
-/* 이 앱은 어두운 남색 한 가지 테마다. <html class="dark"> 로 shadcn 의 dark: 변형을 항상 켠다. */
+/* 라이트가 기본이고, 다크(옛 남색 팔레트)는 <html class="dark"> 일 때다. 상단 바의 토글이 이 클래스를 켜고 끄며 localStorage('theme') 에 기억한다.
+   지도(/map)는 아직 어두운 화면 하나라 레이아웃이 class="dark" 로 고정한다. */
 @custom-variant dark (&:is(.dark *));
 
-/* 종합상황판 시안의 팔레트(옛 dash.css :root 의 값)를 shadcn 토큰에 연결한다. */
+/* 라이트 팔레트(2026-10-09). 글자색은 흰 바탕에서 4.5:1 안팎의 대비를 기준으로 잡았다. 주색은 채움(버튼·막대)과 글자(링크)에 같이 쓰이므로 진한 주황이다. */
 :root {
+  color-scheme: light;
+  --background: #F4F6FC;
+  --foreground: #0F1A3D;
+  --card: #FFFFFF;
+  --card-foreground: #0F1A3D;
+  --popover: #FFFFFF;
+  --popover-foreground: #0F1A3D;
+  --primary: #C2410C;
+  --primary-foreground: #FFFFFF;
+  --secondary: #E6ECFA;
+  --secondary-foreground: #0F1A3D;
+  --muted: #EEF2FB;
+  --muted-foreground: #52608C;
+  --accent: #E2E9FF;
+  --accent-foreground: #0F1A3D;
+  --destructive: #D6264F;
+  --border: #D8DEF0;
+  --input: #B5C0E0;
+  --ring: #C2410C;
+  --chart-1: #3B6FE0;
+  --chart-2: #0E9F92;
+  --chart-3: #EA7A0C;
+  --chart-4: #6FB01C;
+  --chart-5: #9B5DE5;
+  --radius: 0.625rem;
+  /* shadcn 기본 토큰에 없는 이 앱의 색 */
+  --ink2: #2B3868;
+  --mute: #5F6E99;
+  --line2: #B5C0E0;
+  --pn2: #E6ECFA;
+  --ok: #147A48;
+  --warn: #B4690E;
+  --bad: #D6264F;
+  --chartbg: #F6F8FD;
+  /* 본문 바탕(위쪽 오른편이 살짝 밝아지는 그라데이션) */
+  --page-bg: #F4F6FC radial-gradient(1200px 420px at 70% -10%, #E4EAFF 0%, #F4F6FC 62%) no-repeat;
+  /* 차트 계열색: 6단계(파랑·청록·주황·회색·연두·보라)와 주택업체(호박색). 차트 SVG 가 var() 로 쓴다 */
+  --s-blue: #3B6FE0;
+  --s-teal: #0E9F92;
+  --s-orange: #EA7A0C;
+  --s-gray: #8A98B0;
+  --s-lime: #6FB01C;
+  --s-violet: #9B5DE5;
+  --s-amber: #E0A10C;
+  /* 월별 공급 파동 리본 차트의 선·글자·층 경계(components/board/ribbon.ts 의 PAL) */
+  --rb-mid: rgba(15, 26, 61, .22);
+  --rb-sep: rgba(15, 26, 61, .16);
+  --rb-sc: #52608C;
+  --rb-axis: #5F6E99;
+  --rb-ink: #0F1A3D;
+  --rb-cur: #0F1A3D;
+  --rb-hatch: #FFFFFF;
+  --rb-seam: #FFFFFF;
+  --rb-band: #E0314F;
+  --rb-acc: #C2410C;
+  --rb-dim: rgba(15, 26, 61, .35);
+  --rb-pos: #147A48;
+  --rb-yr-on: #0F1A3D;
+  --rb-yr-off: #6B7AA6;
+  --rb-halo: #FFFFFF;
+  --rb-halo-txt: #0F1A3D;
+  --rb-pin: #FFFFFF;
+  --rb-hover: #0F1A3D;
+}
+
+/* 다크 팔레트: 종합상황판 시안의 남색(옛 dash.css :root 의 값) */
+.dark {
   color-scheme: dark;
   --background: #0A1030;
   --foreground: #E8EDFF;
@@ -76,17 +144,6 @@
   --chart-3: #FF9F43;
   --chart-4: #A5E56D;
   --chart-5: #D9A6FF;
-  --radius: 0.625rem;
-  /* 사이드바(레일) */
-  --sidebar: #0C1438;
-  --sidebar-foreground: #E8EDFF;
-  --sidebar-primary: #FF8A65;
-  --sidebar-primary-foreground: #2A0E04;
-  --sidebar-accent: #1B2A66;
-  --sidebar-accent-foreground: #E8EDFF;
-  --sidebar-border: #22305E;
-  --sidebar-ring: #FF8A65;
-  /* shadcn 기본 토큰에 없는 이 앱의 색 */
   --ink2: #D6DEFA;
   --mute: #8FA0C8;
   --line2: #3A4C8C;
@@ -95,6 +152,32 @@
   --warn: #FFC24D;
   --bad: #FF6B88;
   --chartbg: #0B1233;
+  --page-bg: #0A1030 radial-gradient(1200px 420px at 70% -10%, #1A2A6E 0%, #0A1030 62%) no-repeat;
+  --s-blue: #7BA7FF;
+  --s-teal: #45D3C4;
+  --s-orange: #FF9F43;
+  --s-gray: #C7D0DA;
+  --s-lime: #A5E56D;
+  --s-violet: #D9A6FF;
+  --s-amber: #FFC24D;
+  --rb-mid: rgba(232, 237, 255, .2);
+  --rb-sep: rgba(232, 237, 255, .16);
+  --rb-sc: #9AA8D6;
+  --rb-axis: #8FA0C8;
+  --rb-ink: #E8EDFF;
+  --rb-cur: #FFFFFF;
+  --rb-hatch: #0A1030;
+  --rb-seam: #0B1233;
+  --rb-band: #FF6B88;
+  --rb-acc: #FF8A65;
+  --rb-dim: rgba(232, 237, 255, .35);
+  --rb-pos: #4ADE9E;
+  --rb-yr-on: #FFFFFF;
+  --rb-yr-off: #B4C0E6;
+  --rb-halo: #0A1030;
+  --rb-halo-txt: #FFFFFF;
+  --rb-pin: #FFFFFF;
+  --rb-hover: #FFFFFF;
 }
 
 /* 종합상황판 '데이터 흐름'의 점선이 아래로 흐르는 움직임(옛 board.css 의 board-vflow). prefers-reduced-motion 에서는 Board 가 끈다. */
@@ -107,14 +190,6 @@
   --color-foreground: var(--foreground);
   --font-sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', system-ui, sans-serif;
   --font-heading: var(--font-sans);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);

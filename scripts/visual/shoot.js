@@ -2,8 +2,9 @@
 /* 화면 비교용 스크린샷 촬영(개발 도구). 같은 주소·해상도·상호작용 상태를 찍어 두 번의 결과를 scripts/visual/diff.mjs 로 픽셀 비교한다.
    Tailwind·shadcn 전환(2026-10-09 결정: 픽셀 완전 동일)에서 '바뀌기 전과 같은가'를 확인하는 기준선이다.
 
-     node scripts/visual/shoot.js --base http://localhost:3100 --out .visual/baseline [--only /area,/month] [--map] [--legacy]
+     node scripts/visual/shoot.js --base http://localhost:3100 --out .visual/baseline [--only /area,/month] [--map] [--legacy] [--close]
 
+   --close: 끝난 뒤 작업 공간을 닫는다(기본은 .visual/.ego-space 의 공간을 계속 쓴다). ego lite 를 앞으로 띄우지 않고 백그라운드에서 쓴다.
    --legacy: 종합상황판이 옛 마크업(.dir .reg 같은 클래스)이던 커밋의 빌드를 찍을 때. 상태 화면이 누르는 대상의 선택자만 옛 것으로 바꾼다.
 
    ego-browser 가 필요하다(환경변수를 못 받아서 이 파일이 설정을 스크립트에 끼워 넣어 stdin 으로 넘긴다).
@@ -33,11 +34,13 @@ const STATES = [
   ['home-region-jn', '/', [1440], 'await page.click("css:[data-slot=board-region]:nth-child(14)");'],
   ['home-flow3', '/', [1440], 'await page.evaluate(() => [...document.querySelectorAll("[data-slot=board-flow-step]")][2].click());'],
   ['home-tip', '/', [1440], 'await page.mouse.move(520, 480); await page.mouse.move(540, 482); await page.mouse.move(560, 484); await page.waitForSelector("css:#p-chart [data-slot=board-tip]:not([hidden])", { timeout: 5000 });'],
-  ['rail-folded', '/area', [1440], 'await page.evaluate(() => localStorage.setItem("rail-folded", "1")); await page.reload(); await page.waitForSelector("css:[data-slot=sidebar]"); await page.waitForTimeout(300);'],
-  ['rail-drawer', '/area', [390], 'await page.click("css:[data-slot=sidebar-trigger]"); await page.waitForTimeout(400);'],
+  ['theme-dark-home', '/', [1440, 390], 'await page.evaluate(() => localStorage.setItem("theme", "dark")); await page.reload(); await page.waitForTimeout(600);'],
+  ['theme-dark-area', '/area', [1440], 'await page.evaluate(() => localStorage.setItem("theme", "dark")); await page.reload(); await page.waitForTimeout(600);'],
+  ['theme-dark-project', '/project/PRJ-11290-0001', [1440], 'await page.evaluate(() => localStorage.setItem("theme", "dark")); await page.reload(); await page.waitForTimeout(600);'],
+  ['nav-menu-open', '/area', [390], 'await page.evaluate(() => document.querySelector("button[aria-label=메뉴]").click()); await page.waitForTimeout(400);'],
 ];
 
-const config = { base, out, only, routes: ROUTES, widths: WIDTHS, states: STATES.map(([n, r, w]) => [n, r, w]), map: !!args.map };
+const config = { spaceDir: path.resolve('.visual'), spaceFile: path.resolve('.visual/.ego-space'), close: !!args.close, base, out, only, routes: ROUTES, widths: WIDTHS, states: STATES.map(([n, r, w]) => [n, r, w]), map: !!args.map };
 /* 종합상황판 상태 화면이 누르는 대상: 새 마크업(data-slot) → 옛 마크업(클래스). --legacy 로 옛 커밋의 빌드를 찍을 때만 바꾼다 */
 const LEGACY = [['[data-slot=board-dir]', '.dir'], ['[data-slot=board-legend] button', '.blegend button'], ['[data-slot=board-jumps] button', '.jumps button'], ['[data-slot=board-region]', '.reg'],
   ['[data-slot=board-flow-step]', '.fstep'], ['[data-slot=board-tip]', '.tip']];
@@ -50,12 +53,23 @@ const C = ${JSON.stringify(config)};
 const ACT = [${actions}];
 const H = 900, CAP = 6000;
 const slug = (s) => (s === "/" ? "home" : s.replace(/^\\//, "").replace(/[\\/?=&]+/g, "-"));
-const task = await taskSpace("visual shoot");
+/* 작업 공간은 하나를 계속 쓴다(.visual/.ego-space 에 번호를 적어 둔다). 실행마다 새로 만들어 닫으면 새 창이 생겼다 사라져 사용자 화면을 방해한다.
+   기억한 공간이 사라졌으면 새로 만든다. 끝나도 닫지 않는다(--close 일 때만). */
+let task = null;
+try { const id = Number((await fs.readFile(C.spaceFile, "utf8")).trim()); if (id) task = await taskSpace(id); } catch (_) { task = null; }
+if (!task) { task = await taskSpace("화면 점검"); await fs.mkdir(C.spaceDir, { recursive: true }); await fs.writeFile(C.spaceFile, String(task.spaceId)); }
+console.log("작업 공간", task.spaceId);
 const page = task.page("p1");
+let injected = null;
 try {
 /* 방문한 링크의 색을 방문 전과 같게 보이게 한다. 브라우저가 방문 기록을 비동기로 반영해서, 같은 화면이 실행 때마다 링크 색이 달랐다
-   (2026-10-09: 데이터 원본의 '기관별' 링크가 파랑/보라로 갈림). @layer base 안의 우선순위 0(:where)이라 색을 직접 정한 링크(Tailwind 유틸리티·옛 CSS)는 그대로다. */
-await page.cdp("Page.addScriptToEvaluateOnNewDocument", { source: "document.addEventListener('DOMContentLoaded', () => { const s = document.createElement('style'); s.textContent = '@layer base{:where(a:visited){color:LinkText}}'; document.head.appendChild(s); });" });
+   (2026-10-09: 데이터 원본의 '기관별' 링크가 파랑/보라로 갈림). @layer base 안의 우선순위 0(:where)이라 색을 직접 정한 링크(Tailwind 유틸리티·옛 CSS)는 그대로다.
+   상단 메뉴 바의 sticky 는 static 으로 찍는다: 맨 위(스크롤 0)에서 겉모습은 같지만, sticky 는 별도 합성 레이어를 만들어 본문 래스터가 미세하게(최대 차이 14)
+   달라진다. 기준선이 이 조건(static)으로 두 번 찍어 검증됐으므로 같은 조건을 유지한다. */
+/* 스크롤바를 숨긴다: 스크롤바가 있느냐에 따라 본문 폭이 소수 픽셀 달라져 카드·표의 1px 테두리가 실행마다 다르게 그려졌다
+   (2026-10-09: 같은 화면 두 번에 최대 차이 25). 숨기면 폭이 화면 폭 그대로라 결정적이다. */
+await page.cdp("Emulation.setScrollbarsHidden", { hidden: true });
+injected = (await page.cdp("Page.addScriptToEvaluateOnNewDocument", { source: "document.addEventListener('DOMContentLoaded', () => { const s = document.createElement('style'); s.textContent = '@layer base{:where(a:visited){color:LinkText}} header.sticky{position:static!important}'; document.head.appendChild(s); });"  })).identifier;
 await page.goto(C.base + "/");
 await page.waitForLoadState();
 const DPR = await page.evaluate(() => devicePixelRatio);   // 이 브라우저의 화면 배율(예 1.1). 뷰포트 폭은 이만큼 나뉘어 적용되므로 미리 곱해 준다
@@ -64,7 +78,7 @@ await page.cdp("Emulation.setEmulatedMedia", { features: [{ name: "prefers-reduc
    (2026-10-09: 같은 / 가 실행 이력에 따라 2083 과 2043 으로 측정됨. 빈 문서를 거치면 이력과 상관없이 같은 쪽이 된다). */
 const nav = async (url) => { await page.goto("about:blank"); await page.goto(url); await page.waitForLoadState(); };
 const setView = async (w) => {
-  const mobile = w < 600;   // 모바일 에뮬레이션은 배율 보정 없이 폭 그대로 적용된다
+  const mobile = w < 600; K = mobile ? 1 : DPR;   // 모바일 에뮬레이션은 배율 보정 없이 폭 그대로 적용된다
   await page.cdp("Emulation.setDeviceMetricsOverride", { width: mobile ? w : Math.round(w * DPR), height: mobile ? 844 : Math.round(H * DPR), deviceScaleFactor: mobile ? 1 : 1, mobile });
   const iw = await page.evaluate(() => innerWidth);
   if (iw !== w) console.log("경고: 뷰포트 폭", w, "요청, 실제", iw);
@@ -75,13 +89,16 @@ const settle = async () => { await park(); await page.evaluate(() => document.fo
 /* CSS 픽셀 1:1 로 캡처한다(SDK 의 page.screenshot 은 배율 보정이 겹쳐 이미지가 1/1.1 로 줄어든다). clip.scale 1 = 이미지 1 픽셀이 CSS 1 픽셀.
    긴 페이지는 뷰포트 높이를 페이지 전체로 키워 화면 안에서 찍는다. captureBeyondViewport 로 화면 밖을 찍으면 스크롤 컨테이너 안 sticky 헤더의
    글자 가장자리가 CSS 와 무관하게 다르게 래스터되는 아티팩트가 생겼다(2026-10-09: 빈 css 와 @layer 한 줄만 있는 css 의 화면이 달랐고, 전체 높이로 키우자 같아졌다). */
+/* 캡처 영역(clip)의 단위는 CSS 픽셀이 아니라 화면 배율이 곱해진 단위(DIP)다. 데스크톱 폭은 배율(예 1.1)만큼 곱한 영역을 1/배율로 줄여 찍어야
+   이미지 1 픽셀이 CSS 1 픽셀이고 화면이 잘리지 않는다(2026-10-09: 그냥 scale 1 로 찍으면 오른쪽 9% 가 잘리고 1.1배로 확대돼 있었다. 모바일 에뮬레이션은 배율 1). */
+let K = 1;
 const cap = async (file, clip) => {
-  const r = await page.cdp("Page.captureScreenshot", { format: "png", clip: { ...clip, scale: 1 } });
+  const r = await page.cdp("Page.captureScreenshot", { format: "png", clip: { x: clip.x * K, y: clip.y * K, width: clip.width * K, height: clip.height * K, scale: 1 / K } });
   await fs.mkdir(C.out, { recursive: true });
   await fs.writeFile(C.out + "/" + file + ".png", Buffer.from(r.data, "base64"));
 };
 const fullView = async (w, h) => {
-  const mobile = w < 600;
+  const mobile = w < 600; K = mobile ? 1 : DPR;
   await page.cdp("Emulation.setDeviceMetricsOverride", { width: mobile ? w : Math.round(w * DPR), height: mobile ? h : Math.round(h * DPR), deviceScaleFactor: 1, mobile });
   await page.waitForTimeout(400);
 };
@@ -126,7 +143,7 @@ for (let i = 0; i < C.states.length; i++) {
     await shot("state-" + name + "@" + w); n++;
     console.log("state", name, w);
     await park();
-    await page.evaluate(() => localStorage.removeItem("rail-folded"));
+    await page.evaluate(() => localStorage.removeItem("theme"));
   }
 }
 if (C.map) {
@@ -135,25 +152,22 @@ if (C.map) {
     await nav(C.base + "/map?region=jeonnam-naju&selftest=1");
     await page.waitForFunction(() => window.__mapStatus && window.__mapStatus.loaded, undefined, { timeout: 60000 }).catch(() => {});
     await settle();
-    /* 넓은 화면은 56px 레일 전체, 모바일은 햄버거가 있는 위쪽 100px 만(108px 아래부터는 지도 캔버스라 타일·글자가 늦게 올라와 찍을 때마다 다르다) */
-    await cap("map-rail@" + w, { x: 0, y: 0, width: w < 600 ? 70 : 60, height: w < 600 ? 100 : H });
-    n++; console.log("map-rail", w);
+    /* 지도 화면의 상단 메뉴 바(48px)만 비교한다. 그 아래는 지도 캔버스라 타일·글자가 늦게 올라와 찍을 때마다 다르다 */
+    await cap("map-nav@" + w, { x: 0, y: 0, width: w, height: 60 });
+    n++; console.log("map-nav", w);
   }
 }
 console.log("찍은 장수:", n);
 } finally {
   /* 중간에 죽어도 작업 공간을 남기지 않는다(남으면 다음 실행의 창이 가려져 캡처가 멈춘다) */
   await page.cdp("Emulation.setDeviceMetricsOverride", { width: 0, height: 0, deviceScaleFactor: 0, mobile: false }).catch(() => {});
-  await task.finish({ keep: [] }).catch(() => {});
+  await page.cdp("Emulation.setScrollbarsHidden", { hidden: false }).catch(() => {});
+  if (injected) await page.cdp("Page.removeScriptToEvaluateOnNewDocument", { identifier: injected }).catch(() => {});
+  await page.evaluate(() => localStorage.removeItem("theme")).catch(() => {});
+  if (C.close) await task.finish({ keep: [] }).catch(() => {});
 }
 `;
 
-/* macOS: 작업 공간이 끝나면 창이 닫히고, 다음 작업 공간의 새 창이 앞에 나오지 못하면 가려진 창으로 취급돼 Page.captureScreenshot 이 멈춘다.
-   (2026-10-09: 활성화 직후엔 되고 활성화 없이 새 공간을 만들면 CdpRequestTimeoutError). 시작 전에 앱을 앞으로 가져온다. */
-if (process.platform === 'darwin') {
-  require('node:child_process').spawnSync('open', ['-a', 'ego lite']);
-  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500);
-}
 const child = spawn('ego-browser', ['nodejs'], { stdio: ['pipe', 'inherit', 'inherit'] });
 child.stdin.end(script);
 child.on('exit', (code) => process.exit(code ?? 1));

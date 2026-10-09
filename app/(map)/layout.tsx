@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import ShellRail from '../../components/ShellRail';
+import TopNav from '../../components/TopNav';
 import '../tailwind.css';
 
 export const metadata: Metadata = {
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: '공공주택 공급 현황을 V-World 공식 건물 위에 3차원으로 보여 주는 지도',
 };
 
-/* 루트 레이아웃 ②(접힌 레일 + 지도). 지도 앱(assets/js/app.js)은 마운트·해제 개념이 없는 스크립트라서
+/* 루트 레이아웃 ②(상단 메뉴 바 + 지도, 아직 어두운 화면이라 class="dark" 고정). 지도 앱(assets/js/app.js)은 마운트·해제 개념이 없는 스크립트라서
    대시보드와 루트 레이아웃을 나눠, 들어올 때 새 문서가 열리게 했다. 스타일은 기존 app.css 를 그대로 쓴다. */
 export default function MapLayout({ children }: { children: ReactNode }) {
   return (
@@ -22,9 +22,10 @@ export default function MapLayout({ children }: { children: ReactNode }) {
         <link rel="stylesheet" href="/assets/css/app.css" />
       </head>
       <body>
-        <ShellRail compact className="shell-map h-screen overflow-hidden">
+        <div className="shell-map flex h-screen flex-col overflow-hidden">
+          <TopNav compact />
           {children}
-        </ShellRail>
+        </div>
       </body>
     </html>
   );

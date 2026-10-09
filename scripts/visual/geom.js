@@ -5,17 +5,20 @@
      node scripts/visual/geom.js --a http://localhost:3200 --b http://localhost:3100 [--route /] [--widths 1440,390] [--root main]
 
    스크롤바를 숨기고 잰다(본문 폭이 화면 높이에 따라 14px 달라지는 것을 없애려고). 요소 구조(태그·id)가 다르면 거기서 멈춘다.
-   시간에 따라 변하는 값(재생 막대 등)은 어긋나 보일 수 있으니 눈으로 거른다. */
+   ego lite 를 앞으로 띄우지 않고 shoot.js 와 같은 작업 공간(.visual/.ego-space)을 쓴다. 시간에 따라 변하는 값(재생 막대 등)은 어긋나 보일 수 있으니 눈으로 거른다. */
 'use strict';
-const { spawn, spawnSync } = require('node:child_process');
+const { spawn } = require('node:child_process');
 
 const args = Object.fromEntries(process.argv.slice(2).reduce((a, v, i, all) => (v.startsWith('--') ? [...a, [v.slice(2), all[i + 1] && !all[i + 1].startsWith('--') ? all[i + 1] : true]] : a), []));
-const config = { a: args.a, b: args.b, route: args.route || '/', widths: (args.widths || '1440,390').split(',').map(Number), root: args.root || 'main' };
+const config = { spaceDir: require('node:path').resolve('.visual'), spaceFile: require('node:path').resolve('.visual/.ego-space'), a: args.a, b: args.b, route: args.route || '/', widths: (args.widths || '1440,390').split(',').map(Number), root: args.root || 'main' };
 if (!config.a || !config.b) { console.error('사용: node scripts/visual/geom.js --a <옛 서버> --b <새 서버> [--route /] [--widths 1440,390] [--root main]'); process.exit(2); }
 
 const script = `
+const fs = await import("node:fs/promises");
 const C = ${JSON.stringify(config)};
-const task = await taskSpace("geometry compare");
+let task = null;   // shoot.js 와 같은 작업 공간을 쓴다(새 창을 만들지 않는다)
+try { const id = Number((await fs.readFile(C.spaceFile, "utf8")).trim()); if (id) task = await taskSpace(id); } catch (_) { task = null; }
+if (!task) { task = await taskSpace("화면 점검"); await fs.mkdir(C.spaceDir, { recursive: true }); await fs.writeFile(C.spaceFile, String(task.spaceId)); }
 const page = task.page("p1");
 try {
   await page.goto(C.a + C.route); await page.waitForLoadState();
@@ -42,10 +45,8 @@ try {
 } finally {
   await page.cdp("Emulation.setScrollbarsHidden", { hidden: false }).catch(() => {});
   await page.cdp("Emulation.setDeviceMetricsOverride", { width: 0, height: 0, deviceScaleFactor: 0, mobile: false }).catch(() => {});
-  await task.finish({ keep: [] }).catch(() => {});
 }
 `;
-if (process.platform === 'darwin') { spawnSync('open', ['-a', 'ego lite']); Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 1500); }
 const child = spawn('ego-browser', ['nodejs'], { stdio: ['pipe', 'inherit', 'inherit'] });
 child.stdin.end(script);
 child.on('exit', (code) => process.exit(code ?? 1));

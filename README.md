@@ -12,7 +12,7 @@
 
 지역 자료(`regions/*.json`)를 `fetch`로 읽으므로 **더블클릭(`file://`)으로는 열리지 않고, 서버가 필요합니다.**
 
-**상황판(사이드바 메뉴·상세 화면)과 지도(`/map`)는 Next.js 앱입니다**(설계 `docs/product/상황판-셸-설계.md`). `.env.local` 의 키는 서버 함수(`/api/*`)가 읽습니다.
+**상황판(상단 메뉴 바·상세 화면)과 지도(`/map`)는 Next.js 앱입니다**(설계 `docs/product/상황판-셸-설계.md`). `.env.local` 의 키는 서버 함수(`/api/*`)가 읽습니다.
 
 ```
 npm install                      # 처음 한 번
@@ -27,7 +27,7 @@ npm run build && npm start       # 운영과 같은 빌드로 확인(포트 3000
 ./run-app.sh 8001 4145011100     # 포트와 코드: 시군구 5·법정동 8/10·필지 19자리(?sgg= ?bjd= ?pnu=), 또는 region:incheon-gyeyang → 그 코드의 지도(/map?…)
 ```
 
-이전 개발 서버(`node scripts/dev.js 8000` — 루트 `index.html` 을 `/` 에 여는 지도 전용, 사이드바·상세 화면 없음)는 지도를 React 로 옮길 때까지 남겨 둡니다.
+이전 개발 서버(`node scripts/dev.js 8000` — 루트 `index.html` 을 `/` 에 여는 지도 전용, 상단 메뉴 바·상세 화면 없음)는 지도를 React 로 옮길 때까지 남겨 둡니다.
 
 - **버스 위치(3D 버스)는 인천 계양구에서만** 나옵니다(`?region=incheon-gyeyang`, 기본 지역). 확대 14 이상에서 노선 선을 따라 움직이는 3D 버스 모형과 노선 번호가 보입니다(확대 17.5 이상에서 실제 크기).
 - `.env.local`에 공공데이터포털 인증키가 있어야 위치를 받아옵니다(`DATA_GO_KR_KEY_BUS_1` 처럼 용도별 여러 개, 또는 `DATA_GO_KR_KEY` 하나). 없으면 지도는 노선 선만 보여 줍니다. 키 이름·용도·한도는 `env.example`을 보세요.
@@ -63,11 +63,11 @@ npm run build && npm start       # 운영과 같은 빌드로 확인(포트 3000
 
 ```
 index.html               지도 마크업의 정본: Next.js 가 /map 을 그릴 때 읽고(components/MapIsland.tsx 가 지역 불러오기 → 키 → 앱 순으로 스크립트를 읽음), 이전 개발 서버는 / 에 그대로 엽니다
-app/(dashboard)/         사이드바 + 종합상황판(/, 시안 이식: SAMPLE 표지 + 실데이터 위젯) · 목록·상세 실데이터 화면(/area /month /projects /project /stage /agency /sources), 준비 중(/reports /my-area)
+app/(dashboard)/         상단 메뉴 바 + 종합상황판(/, 시안 이식: SAMPLE 표지 + 실데이터 위젯) · 목록·상세 실데이터 화면(/area /month /projects /project /stage /agency /sources), 준비 중(/reports /my-area)
 data/board/              상황판 화면 자료(통계누리 월 계열·LH 준공 예정·원천 카탈로그). tools/boarddata 가 만들어 커밋(dataset.md 2.23)
 app/(map)/map/           지도 화면(/map): 루트 레이아웃이 따로라 오갈 때 전체 문서가 새로 열린다(app.js 는 문서당 한 번만 도는 스크립트)
 app/api/**/route.ts      /api/* 라우트: handlers/ 의 핸들러를 lib/next-handler.ts 가 Request→Response 로 이어 준다(+ 실행 시간 상한)
-components/              ShellRail(사이드바) · Crumbs(빵부스러기) · MapIsland(지도 스크립트 로더) · board/(종합상황판 이식) · charts/(서버가 그리는 SVG 차트)
+components/              TopNav(상단 메뉴 바·라이트/다크 토글) · Crumbs(빵부스러기) · MapIsland(지도 스크립트 로더) · board/(종합상황판 이식) · charts/(서버가 그리는 SVG 차트)
 proxy.ts  next.config.ts 옛 지도 주소 리다이렉트 · 보안·캐시 헤더와 함수 번들 규칙
 package.json             Next.js 16 · React 19 · TypeScript 5.9 (npm install)
 config.js                V-World 인증키 등 설정 (공유 금지) / config.example.js 는 키가 빈 견본
@@ -79,7 +79,7 @@ handlers/v1/codes/search.js  이동할 곳 검색 API: 이름·지번·도로명
 handlers/v1/notices.js        공공 모집 공고 API: 마이홈포털 임대·분양 모집공고(전국)를 시군구 이름으로 걸러(번들 없는 지역의 사이드바 "공공 모집 공고")
 handlers/v1/permits.js        인허가 사업 요청 시 조회 API: 법정동 하나의 건축HUB 주택인허가를 번지 단위 사업 + 필지 경계로(번들 없는 지역). 건축물대장 총괄표제부로 블록 단위 허가의 위치·합필 지번·준공을 보강
 handlers/v1/buildings.js      건물 요청 시 조회 API: 0.01° 칸 단위로 V-World 건물을 번들과 같은 속성으로(번들 없는 지역·번들 밖)
-lib/                     서버 공용(프로젝트 루트 root.js · Next 어댑터 next-handler.ts · 사이드바 메뉴 shell/menu.ts · 키 풀 keys.js · 로컬 캐시 cache.js · 코드 판별 codes.js · 번들 있는 시군구 판별 coverage.js · 건물 변환 buildings.js · 인허가 규칙·건물대장 대조 permits.js · 기반시설·OSM 정류장 변환 infra.js · 마이홈 공고 변환 myhome.js · 공공데이터포털 쪽 조회 datagokr.js · 행정표준코드 stan.js · 경계 단순화 geom.js · V-World 키 vworld.js)
+lib/                     서버 공용(프로젝트 루트 root.js · Next 어댑터 next-handler.ts · 메뉴 정의 shell/menu.ts · 키 풀 keys.js · 로컬 캐시 cache.js · 코드 판별 codes.js · 번들 있는 시군구 판별 coverage.js · 건물 변환 buildings.js · 인허가 규칙·건물대장 대조 permits.js · 기반시설·OSM 정류장 변환 infra.js · 마이홈 공고 변환 myhome.js · 공공데이터포털 쪽 조회 datagokr.js · 행정표준코드 stan.js · 경계 단순화 geom.js · V-World 키 vworld.js)
 env.example              .env.local 견본(키 이름·용도·한도, 값 없음)
 assets/
   css/app.css            화면 모양 (상황판 시안 M3의 네이비 팔레트, 반투명 유리 변수 --glass-*)
@@ -96,7 +96,7 @@ schemas/                 번들·입력 규격(JSON Schema) · schemas/api/opena
 tools/                   데이터를 만들고 검증하는 도구 — dataset.md
 run-app.sh               로컬 실행(개발 서버 + 브라우저 열기)
 dataset.md               지도 데이터 (쓰는 것 · 만드는 절차 · 안 쓰는 것 · 구조 · 수집 출처 · 가공 과정)
-docs/                    데이터 인터페이스 정의서(docs/data-interface/: 번들 정의서·어댑터 정의서·**서버 API 정의서**)·설계 문서(docs/superpowers/)·상황판 기획서와 스펙(docs/product/)
+docs/                    데이터 인터페이스 정의서(docs/data-interface/: 번들 정의서·어댑터 정의서·**서버 API 정의서**)·설계 문서(docs/superpowers/)·상황판 기획서와 스펙(docs/product/)·정책 근거·발표자료·평가 자료(docs/ 바로 아래 문서, `eval/` `media/` `발표자료_pptx/`)·시안 html(`design/`, 추적하지 않음)
 scripts/build.js         Vercel 빌드
 scripts/dev.js           로컬 개발 서버(정적 파일 + /api/bus + /api/v1/*)
 scripts/smoke.js         전국 표본 점검: 지역 이름 → 코드 → resolve·buildings·permits·infra 를 불러 "번들 없이 열리는가"를 표로(tests/smoke/regions.json 59곳)
@@ -174,7 +174,7 @@ node --test "tests/js/*.test.cjs"                     # Node (따옴표 필수)
 | `tests/js/vercelconf.test.cjs` | `next.config.ts`·`vercel.json`·`app/api`: iframe 차단 헤더·함수 번들 파일·실행 시간 상한 |
 | `tests/js/board.test.cjs` `boardsample.test.cjs` | 화면 숫자 = 원천 CSV 숫자·시도 합 = 전국·시행주체 합 = 총계·경로 규칙, 시안 계산 이식 = 원본 실행 기준값(`tests/fixtures/board-sample-golden.json`)·SAMPLE/실데이터 표지 |
 | `tests/test_boarddata.py` | `tools/boarddata` 규칙·항등식·`data/board` 낡음 검사 |
-| `tests/js/shell.test.cjs` | 사이드바 메뉴·상세 식별자·지도 섬 스크립트 순서·루트 레이아웃 둘·옛 주소 리다이렉트 |
+| `tests/js/shell.test.cjs` | 메뉴·상세 식별자·지도 섬 스크립트 순서·루트 레이아웃 둘·옛 주소 리다이렉트 |
 | `tests/js/root.test.cjs` | `lib/root.js`: 번들러가 `__dirname`을 가짜 경로로 바꾸는 문제의 재발 방지 |
 | `tests/js/bus.test.cjs` | 버스 계산(방향·3D 면·보간·경유 단지)과 화면 연결(옵션·요청 시에만 조회 약속) |
 | `tests/js/glass.test.cjs` `sidebar.test.cjs` `topbar.test.cjs` | 반투명 유리 글자 대비 · 사이드바(글자 13px 이상·기본 펼침·요약) · 머리 줄의 보기 기준·지도 위 도구줄·확대 카드·가로 요약 |

@@ -6,7 +6,8 @@ export const NOW = 21;   // 2026.10 (2025.01 = 0)
 export const LAST = 45;  // 2028.10
 export const CIR = ['①', '②', '③', '④', '⑤', '⑥'];
 export const K = ['계획', '인허가', '착공', '모집', '준공', '입주'];
-export const C = ['#7BA7FF', '#45D3C4', '#FF9F43', '#C7D0DA', '#A5E56D', '#D9A6FF'];
+/* 6단계 색: 테마별 값은 app/tailwind.css 의 --s-* (라이트·다크). SVG 와 인라인 스타일이 var() 로 읽는다 */
+export const C = ['var(--s-blue)', 'var(--s-teal)', 'var(--s-orange)', 'var(--s-gray)', 'var(--s-lime)', 'var(--s-violet)'];
 
 type Knot = [number, number[]];
 const AN: Knot[] = [

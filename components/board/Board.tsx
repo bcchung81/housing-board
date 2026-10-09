@@ -114,7 +114,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
 
   return (
     <div className="[&_:focus-visible]:[outline-offset:2px] [&_:focus-visible]:[outline:2px_solid_var(--primary)] motion-reduce:[&_*]:animate-none! motion-reduce:[&_*]:transition-none!">
-      <div className="mx-auto max-w-[1440px] px-7 pb-9 mobile:pt-14">
+      <div className="mx-auto max-w-[1440px] px-7 pb-9">
         <header className="flex flex-wrap items-center gap-5 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-5 phone:gap-2"><div className="flex flex-col gap-[3px] phone:w-full"><b className="text-[13px] font-bold text-foreground">주택공급 종합상황판</b><span className="text-[12px] text-muted-foreground [word-break:keep-all]">계획에서 입주까지, 대한민국 주택공급의 흐름을 한눈에</span></div></div>
           <div className="ml-auto flex flex-wrap items-center gap-2.5">
@@ -157,7 +157,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 <rect x={(RIBBON.PX0 + (tip ? tip.m : 0) * RIBBON.PITCH).toFixed(1)} y={RIBBON.TOP - 4} width={RIBBON.PITCH.toFixed(1)} height={RIBBON.PH + 8} fill={HOVER.fill} fillOpacity={HOVER.opacity} visibility={tip ? 'visible' : 'hidden'} pointerEvents="none" />
                 <rect x={(PX0 + cursor * PW / (LAST + 1)).toFixed(1)} y={RIBBON.TOP - 4} width={RIBBON.PITCH.toFixed(1)} height={RIBBON.PH + 8} rx="3" fill="none" stroke={CUR.stroke} strokeWidth={CUR.width} pointerEvents="none" />
               </svg>
-              <div data-slot="board-tip" className="pointer-events-none absolute z-[3] min-w-[168px] rounded-[10px] border border-line2 bg-background px-[11px] py-[9px] text-[12px] leading-[1.5] shadow-[0_8px_22px_rgba(0,0,0,.45)]" ref={tipRef} hidden={!tip}>
+              <div data-slot="board-tip" className="pointer-events-none absolute z-[3] min-w-[168px] rounded-[10px] border border-line2 bg-popover px-[11px] py-[9px] text-[12px] leading-[1.5] shadow-[0_8px_22px_rgba(0,0,0,.45)]" ref={tipRef} hidden={!tip}>
                 {tipView ? (
                   <>
                     <div className="mb-1 flex items-center gap-2"><b className={cn(disp, 'text-[16px]')}>{ml(tipView.m)}</b><Badge variant="solid" className={tipView.m <= NOW ? 'bg-foreground text-background' : 'bg-primary text-primary-foreground'}>{kind(tipView.m)}</Badge></div>
@@ -172,10 +172,10 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               </div>
             </div>
             <div className="mt-2.5 flex flex-wrap items-center gap-3">
-              <button type="button" className={cn(btn, 'flex size-[46px] flex-none items-center justify-center rounded-[50%] bg-primary [transition:transform_.12s] hover:[transform:scale(1.06)]')} aria-label={playing ? '일시정지' : '재생'} onClick={() => { if (!playing && cursor >= LAST) { setCursor(0); setPlaying(true); } else setPlaying(!playing); }}>
+              <button type="button" className={cn(btn, 'flex size-[46px] flex-none items-center justify-center rounded-[50%] bg-primary text-primary-foreground [transition:transform_.12s] hover:[transform:scale(1.06)]')} aria-label={playing ? '일시정지' : '재생'} onClick={() => { if (!playing && cursor >= LAST) { setCursor(0); setPlaying(true); } else setPlaying(!playing); }}>
                 {playing
-                  ? <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="4" y="3" width="4" height="14" fill="#2A0E04" /><rect x="12" y="3" width="4" height="14" fill="#2A0E04" /></svg>
-                  : <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M5 3 L17 10 L5 17 Z" fill="#2A0E04" /></svg>}
+                  ? <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><rect x="4" y="3" width="4" height="14" fill="currentColor" /><rect x="12" y="3" width="4" height="14" fill="currentColor" /></svg>
+                  : <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><path d="M5 3 L17 10 L5 17 Z" fill="currentColor" /></svg>}
               </button>
               <div className="min-w-[160px] flex-[1_1_220px]"><input className="m-0 h-7 w-full cursor-pointer accent-primary" type="range" min={0} max={LAST} step={1} value={cursor} aria-label="시점 선택 (2025.01 ~ 2028.10)" aria-valuetext={`${ml(cursor)} ${kind(cursor)}`} onChange={(e) => goto(Number(e.target.value))} /></div>
               <div data-slot="board-jumps" className="flex flex-wrap gap-1.5" role="group" aria-label="시점 바로가기">{JUMPS.map(([l, m]) => <button key={l} type="button" className={cn(btn, stepBtn, 'aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground', hoverBg)} aria-pressed={cursor === m} onClick={() => goto(m)}>{l}</button>)}</div>
@@ -207,11 +207,11 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {K.map((k, i) => {
                 const dlt = r10(v[i] - nv[i]);
                 return (
-                  <div key={k} className={cn('grid flex-auto grid-cols-[minmax(0,1fr)_70px_62px_78px] items-center gap-2 rounded-[6px] border-b border-border px-1.5 py-[5px] last:border-b-0 phone:grid-cols-[minmax(0,1fr)_62px_74px]', i === bk && 'bg-[rgba(255,138,101,.12)]')}>
+                  <div key={k} className={cn('grid flex-auto grid-cols-[minmax(0,1fr)_70px_62px_78px] items-center gap-2 rounded-[6px] border-b border-border px-1.5 py-[5px] last:border-b-0 phone:grid-cols-[minmax(0,1fr)_62px_74px]', i === bk && 'bg-primary/10')}>
                     <span className="flex items-center gap-2 text-[13px] font-bold whitespace-nowrap"><i className="block size-[11px] flex-none rounded-[3px]" style={{ background: C[i] }} />{CIR[i]} {k}<Badge variant="solid" className={cn('ml-0.5 bg-primary px-1.5 text-[10px] leading-[15px] text-primary-foreground', i === bk ? 'visible' : 'invisible')}>병목</Badge></span>
                     <span className={cn(disp, 'text-right text-[18px]')}>{f(r10(v[i]))}</span>
                     {/* 옛 dash.css 의 .dl(정의 목록 격자)이 이 칸에도 걸려 있었다. 겉모습을 그대로 두려고 같은 격자·여백을 남긴다. */}
-                    <span className={cn('mt-2.5 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-right text-[12px] phone:hidden', dlt === 0 ? 'text-mute' : dlt > 0 ? 'text-[#7FE3B8]' : 'text-[#FFB86B]')}>{dlt === 0 ? '현재' : sg(dlt)}</span>
+                    <span className={cn('mt-2.5 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-right text-[12px] phone:hidden', dlt === 0 ? 'text-mute' : dlt > 0 ? 'text-[#0F9D58] dark:text-[#7FE3B8]' : 'text-[#C26A00] dark:text-[#FFB86B]')}>{dlt === 0 ? '현재' : sg(dlt)}</span>
                     <span className="text-right text-[12px] whitespace-nowrap text-bad">지연 {f(r10(ds[i]))}</span>
                   </div>
                 );
@@ -227,10 +227,10 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
           <Card variant="board" className={ringable(cur.p.includes('p-trend'))} render={<section id="p-trend" aria-label="지연·주의 추이" />}>
             <h2 className={ptitle}>지연·주의 추이 <Sample /> <small className={ptSmallBlock}>· 호 · 실적 기준</small></h2>
             <svg id="trend" className="mt-1.5 block h-auto w-full" viewBox="0 0 560 200" role="img" aria-label="지연과 주의 호수 추이">
-              <line x1="0" y1="55" x2="560" y2="55" stroke="#22305E" /><line x1="0" y1="100" x2="560" y2="100" stroke="#22305E" /><line x1="0" y1="145" x2="560" y2="145" stroke="#22305E" />
-              <polyline points={pts(AW)} fill="none" stroke="#FFC24D" strokeWidth="2.4" /><polyline points={pts(AD)} fill="none" stroke="#FF6B88" strokeWidth="2.8" />
-              <line x1={tx(cc)} y1="6" x2={tx(cc)} y2="194" stroke="#FF8A65" strokeWidth="2" />
-              <circle cx={tx(cc)} cy={ty(ip(AD, cc))} r="4.5" fill="#FF6B88" /><circle cx={tx(cc)} cy={ty(ip(AW, cc))} r="4.5" fill="#FFC24D" />
+              <line x1="0" y1="55" x2="560" y2="55" stroke="var(--border)" /><line x1="0" y1="100" x2="560" y2="100" stroke="var(--border)" /><line x1="0" y1="145" x2="560" y2="145" stroke="var(--border)" />
+              <polyline points={pts(AW)} fill="none" stroke="var(--s-amber)" strokeWidth="2.4" /><polyline points={pts(AD)} fill="none" stroke="var(--bad)" strokeWidth="2.8" />
+              <line x1={tx(cc)} y1="6" x2={tx(cc)} y2="194" stroke="var(--primary)" strokeWidth="2" />
+              <circle cx={tx(cc)} cy={ty(ip(AD, cc))} r="4.5" fill="var(--bad)" /><circle cx={tx(cc)} cy={ty(ip(AW, cc))} r="4.5" fill="var(--s-amber)" />
             </svg>
             <div className={cn(sub, 'flex justify-between')}><span>2025.01</span><span>2026.10</span></div>
             <div className="mt-1.5 text-[12px] text-ink2"><Reserve live={txTrend(cursor)} list={RANGE.map(txTrend)} /></div>
@@ -240,7 +240,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <h2 className={ptitle}>향후 12개월 공급 예정 <Real title={`LH 공공주택 준공예정현황(15141761), 파일 기준일 ${real.lhAsOf}`} /> <small className={ptSmallBlock}>· 준공 예정(LH) 월별 (세대)</small></h2>
             <svg id="fmonths" className="mt-3 block min-h-[76px] w-full flex-[1_1_76px]!" viewBox="0 0 240 100" preserveAspectRatio="none" role="img" aria-label="2026.10부터 2027.09까지 월별 LH 준공 예정 세대수">
               {real.lh.map((m, i) => { const h = m.units / maxLh * 92; return <rect key={m.ym} x={i * 20 + 1.5} y={(100 - h).toFixed(1)} width="17" height={Math.max(h - 0.6, 0.4).toFixed(1)} fill={C[4]}><title>{`${m.ym.replace('-', '.')} LH 준공 예정 ${f(m.units)}세대 · ${m.blocks}블록`}</title></rect>; })}
-              <rect x={fi * 20 + 0.5} y="1" width="20" height="99" rx="1" fill="none" stroke="#FFFFFF" strokeWidth="2" style={{ vectorEffect: 'non-scaling-stroke' }} visibility={hasFut ? 'visible' : 'hidden'} />
+              <rect x={fi * 20 + 0.5} y="1" width="20" height="99" rx="1" fill="none" stroke="var(--foreground)" strokeWidth="2" style={{ vectorEffect: 'non-scaling-stroke' }} visibility={hasFut ? 'visible' : 'hidden'} />
             </svg>
             <div className={cn(sub, 'mt-[3px] flex justify-between')}><span>2026.10</span><span>2027.03</span><span>2027.09</span></div>
             <div className="mt-2 text-[12px] text-ink2"><Reserve live={futRead} list={futList} /></div>
@@ -272,7 +272,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         <div className={row2}>
           <Card variant="board" className={ringable(cur.p.includes('p-region'))} render={<section id="p-region" aria-label="전국 17개 시도" />}>
             <h2 className={ptitle}>전국 17개 시도 <Sample /> <small className={ptSmall}>· 지연 · 주의 · 정상 (사업 수) · 바탕색 = 지연율 단계</small></h2>
-            <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11.5px] text-muted-foreground [&>span]:flex [&>span]:items-center [&>span]:gap-[5px]" aria-label="바탕색과 지연율 구간"><span className="font-bold text-ink2">지연율(%)</span>{RCOL.map((c, i) => <span key={i}><i className="block h-3 w-6 rounded-[3px] border border-[rgba(255,255,255,.12)]" style={{ background: c }} />{RLAB[i]}</span>)}</div>
+            <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[11.5px] text-muted-foreground [&>span]:flex [&>span]:items-center [&>span]:gap-[5px]" aria-label="바탕색과 지연율 구간"><span className="font-bold text-ink2">지연율(%)</span>{RCOL.map((c, i) => <span key={i}><i className="block h-3 w-6 rounded-[3px] border border-border" style={{ background: c }} />{RLAB[i]}</span>)}</div>
             <div className="mx-0 my-2.5 grid flex-auto grid-cols-[repeat(auto-fill,minmax(112px,1fr))] auto-rows-[minmax(0,1fr)] gap-1.5">
               {REG.map((r) => {
                 const rate = r.d / r.tot * 100;

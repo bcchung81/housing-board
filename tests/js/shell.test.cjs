@@ -50,20 +50,21 @@ test('지도 섬이 스크립트를 불러오는 순서는 index.html 의 기존
 });
 
 test('지도는 루트 레이아웃이 따로이고(들어갈 때·나올 때 새 문서), 지도로 가는 링크는 <Link> 가 아니라 <a> 다', () => {
-  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" className="dark">/);
-  assert.match(read('app/(dashboard)/layout.tsx'), /<html lang="ko" className="dark">/);
+  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" className="dark">/);   // 지도는 아직 어두운 화면 하나라 다크 고정
+  assert.match(read('app/(dashboard)/layout.tsx'), /<html lang="ko" suppressHydrationWarning>/);   // 라이트가 기본, 저장된 테마가 다크일 때만 그리기 전에 class=dark
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/layout.tsx')), '최상위 layout.tsx 가 있으면 두 레이아웃이 하나로 합쳐진다');
-  const rail = read('components/ShellRail.tsx');
-  assert.match(rail, /compact \|\| m\.id === 'map'\s*\?\s*<SidebarMenuButton[^>]*render=\{<a href=\{m\.href\}/);
-  assert.match(read('app/(map)/layout.tsx'), /<ShellRail compact /);
+  const nav = read('components/TopNav.tsx');
+  assert.match(nav, /compact \|\| m\.id === 'map'\s*\?\s*<a href=\{m\.href\}/);
+  assert.match(read('app/(map)/layout.tsx'), /<TopNav compact \/>/);
+  assert.match(read('app/(dashboard)/layout.tsx'), /<TopNav \/>/);
 });
 
-test('지도 화면: 지도 앱(.app)이 레일 옆 남은 폭을 모두 쓴다 — 마크업이 display:contents 래퍼 안이라 자손 선택자여야 한다', () => {
+test('지도 화면: 지도 앱(.app)이 상단 바 아래 남은 폭·높이를 모두 쓴다 — 마크업이 display:contents 래퍼 안이라 자손 선택자여야 한다', () => {
   assert.match(read('app/(map)/map/page.tsx'), /style=\{\{ display: 'contents' \}\}/, '지도 마크업은 display:contents 래퍼 안에 들어간다');
   const appCss = read('assets/css/app.css');
-  assert.match(appCss, /\.shell-map \.app\{flex:1;min-width:0\}/);
+  assert.match(appCss, /\.shell-map \.app\{flex:1;min-width:0;min-height:0;height:auto\}/);
   assert.doesNotMatch(appCss, /\.shell-map>\.app/, '직계 자식 선택자는 래퍼 때문에 닿지 않는다(2026-10-09: 지도가 화면 폭을 다 쓰지 못함)');
-  assert.match(read('app/(map)/layout.tsx'), /<ShellRail compact className="shell-map h-screen overflow-hidden">/);
+  assert.match(read('app/(map)/layout.tsx'), /<div className="shell-map flex h-screen flex-col overflow-hidden">/);   // 세로 flex: 위 상단 바, 아래 .app
 });
 
 test('옛 지도 주소(/?region=…)는 쿼리를 그대로 두고 /map 으로 보낸다', () => {

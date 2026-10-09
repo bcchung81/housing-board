@@ -515,8 +515,8 @@ details.isub>ul{margin-top:2px}
 .lgrid div span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .lgrid small{line-height:1.45}
 
-/* 지도 화면에 사이드바 레일을 붙이는 래퍼(.shell-map, components/ShellRail.tsx)와 옛 지도 마크업의 접점. 이 지도 마크업이 React 로 옮겨질 때 함께 사라진다. */
-/* 지도 마크업은 display:contents 래퍼(app/(map)/map/page.tsx) 안이라 .app 은 .shell-map 의 직계 자식이 아니다 → 자손 선택자로 쓴다(자식 선택자면 안 닿아서 .app 이 내용 폭만큼만 차지한다) */
-.shell-map .app{flex:1;min-width:0}
+/* 지도 화면에 상단 메뉴 바를 붙이는 래퍼(.shell-map, components/TopNav.tsx)와 옛 지도 마크업의 접점. 이 지도 마크업이 React 로 옮겨질 때 함께 사라진다. */
+/* 지도 마크업은 display:contents 래퍼(app/(map)/map/page.tsx) 안이라 .app 은 .shell-map 의 직계 자식이 아니다 → 자손 선택자로 쓴다(자식 선택자면 안 닿아서 .app 이 내용 폭만큼만 차지한다).
+   .shell-map 은 세로 flex(위 상단 메뉴 바 48px, 아래 .app)라 .app 은 남은 높이를 채운다(.app 자체의 height:100vh 는 덮는다). */
+.shell-map .app{flex:1;min-width:0;min-height:0;height:auto}
 .shell-map .brand-logo{display:none}
-@media (max-width:900px){.shell-map .mhead{padding-left:60px}}

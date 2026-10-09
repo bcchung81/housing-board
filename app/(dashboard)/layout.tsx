@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import ShellRail from '../../components/ShellRail';
+import TopNav from '../../components/TopNav';
 import '../tailwind.css';
 
 export const metadata: Metadata = {
@@ -8,15 +8,21 @@ export const metadata: Metadata = {
   description: '공공주택 공급 현황을 6단계로 보고 사업·지역·지도로 내려가는 종합상황판',
 };
 
-/* 루트 레이아웃 ①(사이드바 + 본문). 지도(`app/(map)`)는 루트 레이아웃이 달라서 오갈 때 전체 문서가 새로 열린다. */
+/* 저장된 테마가 다크일 때만 그리기 전에 <html class="dark"> 를 켠다(켜 두지 않으면 라이트가 기본이다). 그리기 전에 돌아야 깜빡이지 않는다. */
+const THEME_INIT = "try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}";
+
+/* 루트 레이아웃 ①(상단 메뉴 바 + 본문). 지도(`app/(map)`)는 루트 레이아웃이 달라서 오갈 때 전체 문서가 새로 열린다. */
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko" className="dark">
-      {/* 본문 바탕·글꼴(옛 dash.css 의 body): 남색 바탕에 위쪽 오른편이 밝아지는 그라데이션, 15px/1.55 */}
-      <body className="m-0 min-h-screen text-foreground [background:#0A1030_radial-gradient(1200px_420px_at_70%_-10%,#1A2A6E_0%,#0A1030_62%)_no-repeat] [font:15px/1.55_'Noto_Sans_KR','Apple_SD_Gothic_Neo','Malgun_Gothic',system-ui,sans-serif]">
-        <ShellRail>
-          <main className="min-w-0 flex-1">{children}</main>
-        </ShellRail>
+    <html lang="ko" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+      </head>
+      {/* 본문 바탕·글꼴(옛 dash.css 의 body): 위쪽 오른편이 살짝 밝아지는 바탕(--page-bg, 테마별), 15px/1.55.
+          클래스가 없는 기본 링크(상세 화면의 dl 안 링크)는 브라우저 기본 파랑 대신 주색으로 보인다. */}
+      <body className="m-0 min-h-screen text-foreground [&_a:not([class])]:text-primary [background:var(--page-bg)] [font:15px/1.55_'Noto_Sans_KR','Apple_SD_Gothic_Neo','Malgun_Gothic',system-ui,sans-serif]">
+        <TopNav />
+        <main>{children}</main>
       </body>
     </html>
   );
