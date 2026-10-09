@@ -58,6 +58,14 @@ test('지도는 루트 레이아웃이 따로이고(들어갈 때·나올 때 �
   assert.match(read('app/(map)/layout.tsx'), /<ShellRail compact /);
 });
 
+test('지도 화면: 지도 앱(.app)이 레일 옆 남은 폭을 모두 쓴다 — 마크업이 display:contents 래퍼 안이라 자손 선택자여야 한다', () => {
+  assert.match(read('app/(map)/map/page.tsx'), /style=\{\{ display: 'contents' \}\}/, '지도 마크업은 display:contents 래퍼 안에 들어간다');
+  const appCss = read('assets/css/app.css');
+  assert.match(appCss, /\.shell-map \.app\{flex:1;min-width:0\}/);
+  assert.doesNotMatch(appCss, /\.shell-map>\.app/, '직계 자식 선택자는 래퍼 때문에 닿지 않는다(2026-10-09: 지도가 화면 폭을 다 쓰지 못함)');
+  assert.match(read('app/(map)/layout.tsx'), /<ShellRail compact className="shell-map h-screen overflow-hidden">/);
+});
+
 test('옛 지도 주소(/?region=…)는 쿼리를 그대로 두고 /map 으로 보낸다', () => {
   const proxy = read('proxy.ts');
   assert.match(proxy, /const \{ search \} = request\.nextUrl;/);
