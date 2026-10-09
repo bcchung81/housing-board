@@ -11,7 +11,7 @@ export default function MonthLines({ months, lines, provisional, href, label }: 
   const x = (i: number) => L + step * (i + 0.5), y = (v: number) => T + (H - T - B) * (1 - v / top);
   const prov = months.map((m, i) => (provisional.includes(m) ? i : -1)).filter((i) => i >= 0);
   return (
-    <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
+    <svg className="mt-2 block h-auto w-full rounded-[10px] border border-border bg-chartbg [&_text]:fill-mute [&_text]:text-[11px] [&_text]:[font-family:inherit]" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
       <defs><pattern id="hatch-prov" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#9AA8D6" strokeWidth="2" strokeOpacity=".22" /></pattern></defs>
       {[0, 0.25, 0.5, 0.75, 1].map((f) => (
         <g key={f}><line x1={L} x2={W - R} y1={y(top * f)} y2={y(top * f)} stroke="#22305E" /><text x={L - 8} y={y(top * f) + 4} textAnchor="end">{Math.round(top * f).toLocaleString('en-US')}</text></g>
@@ -22,7 +22,7 @@ export default function MonthLines({ months, lines, provisional, href, label }: 
         <polyline key={`${l.key}-${k}`} fill="none" stroke={l.color} strokeWidth="2.4" strokeLinejoin="round" strokeLinecap="round" points={seg.map(([i, v]) => `${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(' ')} />
       )))}
       {months.map((m, i) => (
-        <a key={m} href={href(m)} className="hit">
+        <a key={m} href={href(m)} className="cursor-pointer focus-visible:outline-none [&:hover_rect:first-of-type]:fill-[rgba(232,237,255,.10)] [&:focus-visible_rect:first-of-type]:fill-[rgba(232,237,255,.10)]">
           <title>{`${ymDot(m)}${provisional.includes(m) ? ' (잠정)' : ''} — ` + lines.map((l) => `${l.label} ${l.values[i] === null ? '알 수 없음' : l.values[i]!.toLocaleString('en-US') + '호'}`).join(' · ')}</title>
           <rect x={L + step * i} y={T} width={step} height={H - T - B} fill="transparent" />
         </a>

@@ -11,7 +11,7 @@ export default function StackedMonths({ months, stacks, provisional, href, label
   const pw = W - L - R, step = pw / months.length, bw = Math.max(2, step * 0.7);
   const y = (v: number) => T + (H - T - B) * (1 - v / top);
   return (
-    <svg className="chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
+    <svg className="mt-2 block h-auto w-full rounded-[10px] border border-border bg-chartbg [&_text]:fill-mute [&_text]:text-[11px] [&_text]:[font-family:inherit]" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
       {[0, 0.5, 1].map((f) => (
         <g key={f}><line x1={L} x2={W - R} y1={y(top * f)} y2={y(top * f)} stroke="#22305E" /><text x={L - 8} y={y(top * f) + 4} textAnchor="end">{Math.round(top * f).toLocaleString('en-US')}</text></g>
       ))}
@@ -19,7 +19,7 @@ export default function StackedMonths({ months, stacks, provisional, href, label
         let acc = 0;
         const xs = L + step * i + (step - bw) / 2;
         return (
-          <a key={m} href={href(m)} className="hit">
+          <a key={m} href={href(m)} className="cursor-pointer focus-visible:outline-none [&:hover_rect:first-of-type]:fill-[rgba(232,237,255,.10)] [&:focus-visible_rect:first-of-type]:fill-[rgba(232,237,255,.10)]">
             <title>{`${ymDot(m)}${provisional.includes(m) ? ' (잠정)' : ''} — ` + stacks.map((s) => `${s.label} ${s.values[i] === null ? '알 수 없음' : s.values[i]!.toLocaleString('en-US') + '호'}`).join(' · ')}</title>
             <rect x={L + step * i} y={T} width={step} height={H - T - B} fill="transparent" />
             {stacks.map((s) => {
