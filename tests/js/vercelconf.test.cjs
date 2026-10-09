@@ -76,7 +76,7 @@ test('.vercelignore 에 .cache 가 있어 로컬 캐시·사용량 파일이 배
   const ignore = read('.vercelignore');
   assert.match(ignore, /^\.cache\/?$/m);
   assert.match(read('.gitignore'), /^\.cache\/$/m);
-  for (const need of ['index.html', 'registry', 'regions', 'app', 'components', 'handlers', 'lib', 'proxy.ts', 'next.config.ts', 'package.json', 'package-lock.json']) {
+  for (const need of ['index.html', 'registry', 'regions', 'data', 'app', 'components', 'handlers', 'lib', 'proxy.ts', 'next.config.ts', 'package.json', 'package-lock.json']) {
     assert.ok(!ignore.split('\n').some((l) => l.trim().replace(/\/$/, '') === need), `${need} 는 배포(빌드)에 필요하다`);
   }
 });
