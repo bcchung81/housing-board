@@ -59,7 +59,10 @@ test('함수 묶음: resolve 는 색인·지역 region.json·레지스트리를,
   assert.deepEqual(inc['/api/v1/codes/search'], ['./regions/index.json', './regions/*/region.json']);                            // 검색 후보의 번들 유무(tier)를 resolve 와 같은 표로 정한다
   assert.ok(!('/api/v1/notices' in inc) && !('/api/v1/buildings' in inc) && !('/api/v1/infra' in inc), '공고·건물·기반시설 함수는 번들 파일을 읽지 않는다');
   // 함수 묶음에 로컬 캐시(.cache)와 큰 번들(buildings 등)이 딸려 가지 않게 한다(vercel build 로 확인했던 resolve.func 8.9 MB → 44 KB)
-  for (const k of ['/api/*', '/api/v1/*']) { for (const d of ['.cache', 'tests', 'workspace', 'dist', 'docs', 'tools', 'schemas', 'public']) assert.ok(exc[k].includes(`./${d}/**`), `${k} ${d}`); for (const f of ['buildings', 'projects', 'context']) assert.ok(exc[k].includes(`./regions/*/${f}.json`), `${k} ${f}`); }
+  for (const k of ['/api/*', '/api/v1/*']) { assert.ok(exc[k].includes('./.cache/**'), k); for (const f of ['buildings', 'projects', 'context']) assert.ok(exc[k].includes(`./regions/*/${f}.json`), `${k} ${f}`); }
+  // 제외 패턴은 경로 어디에든 일치하므로 흔한 폴더 이름(dist·docs·tests·public·tools·schemas·workspace·node_modules)을 쓰면 node_modules 안 파일까지 빠져 함수가 죽는다
+  const generic = /^\.\/(dist|docs|tests|public|tools|schemas|workspace|node_modules|lib|build|src)\//;
+  for (const [k, list] of Object.entries(exc)) for (const e of list) assert.ok(!generic.test(e), `${k}: ${e} 는 node_modules 안의 같은 이름 폴더까지 제외한다`);
   assert.ok(exc['/api/v1/*'].includes('./regions/*/infra.json'), 'v1 함수는 infra.json 도 읽지 않는다(bus 만 읽는다)');
   assert.ok(fs.existsSync(path.join(ROOT, 'regions', 'index.json')));
   const index = JSON.parse(read('regions/index.json'));

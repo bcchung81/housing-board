@@ -2,8 +2,10 @@ import type { NextConfig } from 'next';
 
 /* 이전 vercel.json 의 headers·functions 를 옮긴 것(스펙 8.3). 함수 지역 icn1 만 vercel.json 에 남는다. */
 
-/* 함수 묶음에 딸려 가면 안 되는 것: 로컬 캐시, 시험·작업 자료·문서·도구(.vercelignore 로 배포에도 안 올라가지만 로컬 빌드의 추적에도 들어가지 않게) */
-const NOT_FUNCTION = ['./.cache/**', './tests/**', './workspace/**', './dist/**', './docs/**', './tools/**', './schemas/**', './public/**'];
+/* 함수 묶음에서 뺄 것은 우리 폴더에만 있는 이름으로 좁게 쓴다. 제외 패턴은 경로 어디에든 일치(contains)하므로 `dist`·`docs`·`tests`·`public`
+   같은 흔한 폴더 이름을 쓰면 node_modules 안의 파일(next/dist/server/node-environment 등)까지 빠져, 함수가 `Cannot find module` 로 죽는다
+   (2026-10-09 미리보기 배포에서 /api/* 가 모두 500). 시험·작업 자료·문서·도구는 .vercelignore 로 배포에 올라가지 않아 따로 뺄 필요가 없다. */
+const NOT_FUNCTION = ['./.cache/**'];
 
 const config: NextConfig = {
   async headers() {
