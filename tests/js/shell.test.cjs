@@ -9,8 +9,9 @@ const ROOT = path.join(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const { MENU, SECTIONS, DETAILS, activeMenuId } = require('../../lib/shell/menu.ts');
 
-test('사이드바 메뉴는 설계 1절의 아홉 목적지이고 경로·식별자가 겹치지 않는다', () => {
-  assert.deepEqual(MENU.map((m) => m.href), ['/', '/map', '/projects', '/area', '/stage', '/agency', '/sources', '/reports', '/my-area']);
+test('사이드바 메뉴는 설계 1절의 일곱 목적지이고 경로·식별자가 겹치지 않는다(2026-10-10: 단계별 → 사업, 지역별·기관별 → 공급 실적)', () => {
+  assert.deepEqual(MENU.map((m) => m.href), ['/', '/map', '/projects', '/area', '/sources', '/reports', '/my-area']);
+  assert.deepEqual(MENU.map((m) => m.label), ['종합상황판', '지도', '사업', '공급 실적', '데이터 원본', '보고자료', '우리 동네']);
   assert.equal(new Set(MENU.map((m) => m.id)).size, MENU.length);
   assert.deepEqual(MENU.filter((m) => m.soon).map((m) => m.id), []);   // 보고자료·우리 동네도 화면이 생겨 '준비 중' 표지가 없다(2026-10-10)
 });
@@ -21,25 +22,49 @@ test('목록 구역은 모두 사이드바 메뉴이고, 지도·종합상황판
   assert.ok(!('map' in SECTIONS) && !('home' in SECTIONS));
 });
 
-test('파생 상세는 부모 메뉴를 강조한다: 월은 종합상황판, 사업은 사업, 지도는 지도', () => {
+test('파생 상세는 부모 메뉴를 강조한다: 월은 종합상황판, 사업은 사업, 시도·시행주체·기관은 공급 실적, 지도는 지도', () => {
   assert.equal(activeMenuId('/'), 'home');
   assert.equal(activeMenuId('/month/2026-10'), 'home');
   assert.equal(activeMenuId('/project/PRJ-11290-0001'), 'projects');
-  assert.equal(activeMenuId('/area/41450'), 'area');
-  assert.equal(activeMenuId('/stage/04'), 'stage');
+  assert.equal(activeMenuId('/area/11'), 'area');
+  assert.equal(activeMenuId('/agency'), 'area');
+  assert.equal(activeMenuId('/agency/lh'), 'area');
+  assert.equal(activeMenuId('/stage/04'), null);   // 없앤 화면(next.config.ts 가 /projects?stage=04 로 넘긴다)
   assert.equal(activeMenuId('/map'), 'map');
   assert.equal(activeMenuId('/nope'), null);
 });
 
-test('상세 식별자는 새로 만들지 않는다: AreaRef 코드·PRJ id·6단계·기관·연월만 열리고 나머지는 거른다', () => {
+test('상세 식별자는 새로 만들지 않는다: AreaRef 코드·PRJ id·기관·연월만 열리고 나머지는 거른다', () => {
   const ok = (s, id) => DETAILS[s].id.test(id);
-  assert.ok(ok('area', '11') && ok('area', '41450') && !ok('area', '411') && !ok('area', '4145011400'));   // 시도 2·시군구 5자리(법정동은 지도가 연다)
+  assert.ok(ok('area', '11') && !ok('area', '41450') && !ok('area', '411') && !ok('area', '4145011400'));   // 시도 2자리(시군구 5자리는 사업 목록의 거르기, 법정동은 지도가 연다)
   assert.ok(ok('project', 'PRJ-11290-0001') && !ok('project', 'PRJ-1129-0001') && !ok('project', '1009100003921'));   // 건축HUB 관리번호는 id 가 아니다(기획서 결정 5)
-  assert.ok(ok('stage', '01') && ok('stage', '06') && !ok('stage', '00') && !ok('stage', '07'));
   assert.ok(ok('agency', 'lh') && ok('agency', 'mnd') && !ok('agency', 'etc'));
   assert.ok(ok('month', '2026-10') && !ok('month', '2026-13') && !ok('month', '202610'));
   assert.ok(ok('my-area', '41') && ok('my-area', '11') && !ok('my-area', '411') && !ok('my-area', '4145'));   // 우리 동네는 시도 2자리
-  for (const d of Object.values(DETAILS)) assert.ok(d.list === '/' || Object.keys(SECTIONS).includes(d.list.slice(1)), `${d.list} 는 올라갈 목록이어야 한다`);
+  for (const d of Object.values(DETAILS)) assert.ok(d.list === '/' || Object.keys(SECTIONS).includes(activeMenuId(d.list)), `${d.list} 는 올라갈 목록(메뉴 구역 안)이어야 한다`);
+  assert.ok(!('stage' in DETAILS), '단계 상세는 사업 목록의 거르기(/projects?stage=)다');
+});
+
+test('메뉴 통합으로 없앤 화면의 옛 주소는 사업 목록의 거르기로 넘긴다(임시 넘김, 2026-10-10)', () => {
+  const cfg = read('next.config.ts');
+  assert.match(cfg, /\{ source: '\/stage', destination: '\/projects', permanent: false \}/);
+  assert.match(cfg, /\{ source: '\/stage\/:id\(0\[1-6\]\)', destination: '\/projects\?stage=:id', permanent: false \}/);
+  assert.match(cfg, /\{ source: '\/area\/:sgg\(\\\\d\{5\}\)', destination: '\/projects\?sgg=:sgg', permanent: false \}/);
+  assert.ok(!fs.existsSync(path.join(ROOT, 'app/(dashboard)/stage')), '단계별 화면 폴더는 없다');
+  const area = read('app/(dashboard)/area/[id]/page.tsx');
+  assert.doesNotMatch(area, /SggView/, '시군구 상세는 사업 목록이 맡는다');
+  assert.match(area, /href=\{`\/projects\?sgg=\$\{c\}`\}/, '시도 상세의 시군구 카드는 사업 목록의 거르기로 간다');
+});
+
+test('공급 실적은 시도별(/area)·시행주체별(/agency) 두 보기를 탭으로 잇는다', () => {
+  const tabs = read('components/SupplyTabs.tsx');
+  assert.match(tabs, /const VIEWS = \[\['\/area', '시도별'\], \['\/agency', '시행주체별'\]\] as const;/);
+  assert.match(tabs, /aria-current=\{href === current \? 'page' : undefined\}/);
+  for (const [f, cur] of [['app/(dashboard)/area/page.tsx', '/area'], ['app/(dashboard)/agency/page.tsx', '/agency']]) {
+    const s = read(f);
+    assert.match(s, /<PageTitle>공급 실적 <Badge variant="ok">실데이터<\/Badge><\/PageTitle>/, f);
+    assert.ok(s.includes(`<SupplyTabs current="${cur}" />`), f);
+  }
 });
 
 test('지도 섬이 스크립트를 불러오는 순서는 index.html 의 기존 로더와 같다(index.html 이 지도 마크업의 정본이라 어긋나면 지도가 안 열린다)', () => {

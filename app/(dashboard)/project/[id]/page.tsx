@@ -45,7 +45,7 @@ export default async function ProjectPage({ params }: Props) {
       <Card render={<section aria-label="개요" />}>
         <PanelTitle>개요</PanelTitle>
         <Dl>
-          <dt>시군구</dt><dd><Link href={`/area/${p.sgg}`}>{area?.name ?? p.sgg}</Link> <code>{p.sgg}</code></dd>
+          <dt>시군구</dt><dd><Link href={`/projects?sgg=${p.sgg}`}>{area?.name ?? p.sgg}</Link> <code>{p.sgg}</code></dd>
           <dt>법정동 코드</dt><dd>{p.bjdCodes.join(', ')}</dd>
           <dt>규모</dt><dd>{p.units ? `${fmt(p.units)}세대` : <span>세대수 미확인</span>}</dd>
           <dt>위치</dt><dd>{located ? `필지 ${p.pnus!.length}곳이 연결됨` : '위치 미연결 — 지도는 법정동 경계로 엽니다'}</dd>

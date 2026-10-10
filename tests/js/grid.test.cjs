@@ -117,11 +117,11 @@ test('그리드 부품: TanStack Table v9 정렬(값 없음 맨 뒤)·Virtual(�
 
 /* 데이터 표가 있는 화면(데이터 원본은 마지막 — 다른 세션이 고치는 중). 원시 <Table> 대신 DataGrid 를 쓴다 */
 const PAGES = {
-  'app/(dashboard)/area/page.tsx': 1, 'app/(dashboard)/area/[id]/page.tsx': 2, 'app/(dashboard)/month/[id]/page.tsx': 3,
+  'app/(dashboard)/area/page.tsx': 1, 'app/(dashboard)/area/[id]/page.tsx': 1, 'app/(dashboard)/month/[id]/page.tsx': 3,
   'app/(dashboard)/agency/page.tsx': 2, 'app/(dashboard)/agency/[id]/page.tsx': 4, 'app/(dashboard)/reports/page.tsx': 3,
-  'app/(dashboard)/stage/[id]/page.tsx': 1, 'app/(dashboard)/projects/page.tsx': 1,
+  'app/(dashboard)/projects/page.tsx': 1,
 };
-test('대시보드 표 17개는 DataGrid 로 그린다(원시 Table 없음, 표마다 이름)', () => {
+test('대시보드 표 15개는 DataGrid 로 그린다(원시 Table 없음, 표마다 이름. 2026-10-10 메뉴 통합으로 단계 상세·시군구 상세의 표 2개는 사업 목록 표가 맡는다)', () => {
   for (const [f, n] of Object.entries(PAGES)) {
     const s = read(f);
     assert.doesNotMatch(s, /components\/ui\/table'/, `${f}: ui/table 을 직접 쓰지 않는다`);

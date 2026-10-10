@@ -60,18 +60,18 @@ export default function ReportsPage() {
     <Page>
       <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: '보고자료' }]} />
       <PageTitle>월간 주택공급 브리핑 <Badge variant="ok">실데이터</Badge></PageTitle>
-      <Lede>{monthLabel(last)} 기준. 매월 진척상황 보고(8.14 지시)를 위해 상황판의 실데이터를 한 장으로 모았습니다. 숫자는 지역별·기관별·월 상세와 같은 계산입니다{prov ? '(통계누리 잠정치 포함)' : ''}.</Lede>
+      <Lede>{monthLabel(last)} 기준. 매월 진척상황 보고(8.14 지시)를 위해 상황판의 실데이터를 한 장으로 모았습니다. 숫자는 공급 실적(시도별·시행주체별)·월 상세와 같은 계산입니다{prov ? '(통계누리 잠정치 포함)' : ''}.</Lede>
 
       <Card render={<section aria-label="이번 달 실적" />}>
         <PanelTitle>① 계획대로 가고 있는가 — 전국 실적 <small className={sub}>· 호 · {monthLabel(last)}{prov ? <Prov /> : null}</small></PanelTitle>
         <DataGrid label="전국 단계별 실적" cols={nowCols} rows={nowRows} sortable={false} />
-        <Basis>통계누리 주택건설실적통계(전국). 계획(목표) 물량이 원천에 없어 &lsquo;계획 대비 달성률&rsquo;은 계산하지 않습니다 — 종합상황판의 달성률은 SAMPLE 입니다. 월별 흐름은 <Link href="/area">지역별</Link>, 이 달의 시도 표는 <Link href={`/month/${last}`}>{monthLabel(last)} 월 상세</Link>.</Basis>
+        <Basis>통계누리 주택건설실적통계(전국). 계획(목표) 물량이 원천에 없어 &lsquo;계획 대비 달성률&rsquo;은 계산하지 않습니다 — 종합상황판의 달성률은 SAMPLE 입니다. 월별 흐름은 <Link href="/area">공급 실적</Link>, 이 달의 시도 표는 <Link href={`/month/${last}`}>{monthLabel(last)} 월 상세</Link>.</Basis>
       </Card>
 
       <Card render={<section aria-label="시행주체별 진척" />}>
         <PanelTitle>② 기관별 진척 — 시행주체별 누계 <small className={sub}>· 전국 · 호 · {year}년 1~{upto}월</small></PanelTitle>
         <DataGrid label="시행주체별 누계" cols={cumCols('시행주체')} rows={actorGrid} />
-        <Basis>통계누리 시행주체 구분. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다. 기관별 월 흐름은 <Link href="/agency">기관별</Link>.</Basis>
+        <Basis>통계누리 시행주체 구분. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다. 기관별 월 흐름은 <Link href="/agency">공급 실적 · 시행주체별</Link>.</Basis>
       </Card>
 
       <Card render={<section aria-label="지역별 진척" />}>

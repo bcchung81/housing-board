@@ -128,9 +128,10 @@ test('SGG 이름 표: 레지스트리의 모든 시군구가 있고, 시도 코�
   for (const [code, s] of Object.entries(SGG)) { assert.equal(s.sido, code.slice(0, 2)); assert.ok(molit.sido.some((x) => x.code === s.sido), code); }
 });
 
-test('단계·기관 경로 규칙: 6단계 코드와 기관 id 가 DETAILS 의 식별자 규칙과 같다', () => {
+test('단계·기관 경로 규칙: 6단계 코드는 옛 단계 상세 넘김(next.config.ts)이 모두 받고, 기관 id 는 DETAILS 의 식별자 규칙과 같다', () => {
   assert.deepEqual(STAGES.map((s) => s.code), ['01', '02', '03', '04', '05', '06']);
-  for (const s of STAGES) assert.match(s.code, DETAILS.stage.id);
+  const stageId = new RegExp(`^${/source: '\/stage\/:id\(([^)]+)\)'/.exec(fs.readFileSync(path.join(__dirname, '..', '..', 'next.config.ts'), 'utf8'))[1]}$`);
+  for (const s of STAGES) assert.match(s.code, stageId);
   assert.deepEqual(AGENCIES.map((a) => a.id), ['lh', 'local', 'gh', 'sh', 'mnd']);
   for (const a of AGENCIES) assert.match(a.id, DETAILS.agency.id);
   assert.deepEqual(AGENCIES.filter((a) => a.ready).map((a) => a.actor), ['LH', '지자체']);   // 화면에 쓸 데이터가 있는 기관은 통계누리 시행주체와 이어진다

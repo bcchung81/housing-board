@@ -27,6 +27,16 @@ const config: NextConfig = {
     ];
   },
 
+  /* 2026-10-10 메뉴 통합(lib/shell/menu.ts)으로 없앤 화면의 옛 주소. 단계별·단계 상세·시군구 상세는 사업 목록의 거르기다.
+     나중에 단계별 병목 화면을 다시 열 수 있게 영구(308)가 아닌 임시(307) 넘김으로 둔다. */
+  async redirects() {
+    return [
+      { source: '/stage', destination: '/projects', permanent: false },
+      { source: '/stage/:id(0[1-6])', destination: '/projects?stage=:id', permanent: false },
+      { source: '/area/:sgg(\\d{5})', destination: '/projects?sgg=:sgg', permanent: false },
+    ];
+  },
+
   /* 핸들러가 실행 때 읽는 파일을 함수 묶음에 넣고(경로를 계산해 읽어 자동 추적이 못 찾는다), 로컬 캐시와 큰 번들은 뺀다.
      이전 vercel.json functions 의 includeFiles·excludeFiles 와 같은 규칙: resolve 8.9 MB → 44 KB 로 줄였던 것. */
   outputFileTracingIncludes: {

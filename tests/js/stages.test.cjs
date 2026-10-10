@@ -21,8 +21,8 @@ test('공식 6단계: 이름·질문·공개 범위가 발표자료 SHEET 03 과
   assert.deepEqual(rows.map((r) => r.scope), ['gov', 'gov', 'gov', 'gov', 'pub', 'pub']);
 });
 
-test('단계를 표기하는 대시보드 화면(단계별·단계 상세·사업 상세·사업 목록)은 계단식 6단계(StageLadder)를 쓰고, 옛 Stepper 는 없다', () => {
-  for (const f of ['app/(dashboard)/stage/page.tsx', 'app/(dashboard)/stage/[id]/page.tsx', 'app/(dashboard)/project/[id]/page.tsx', 'app/(dashboard)/projects/page.tsx']) {
+test('단계를 표기하는 대시보드 화면(사업 목록·사업 상세)은 계단식 6단계(StageLadder)를 쓰고, 옛 Stepper 는 없다', () => {
+  for (const f of ['app/(dashboard)/project/[id]/page.tsx', 'app/(dashboard)/projects/page.tsx']) {
     const s = read(f);
     assert.match(s, /import StageLadder from '[./]+components\/StageLadder';/, f);
     assert.match(s, /<StageLadder /, f);
@@ -30,7 +30,9 @@ test('단계를 표기하는 대시보드 화면(단계별·단계 상세·사�
   }
   assert.ok(!fs.existsSync(path.join(ROOT, 'components/ui/stepper.tsx')), '쓰는 곳이 없는 stepper.tsx 는 지운다');
   assert.match(read('app/(dashboard)/project/[id]/page.tsx'), /<StageLadder current=\{p\.stageCode\} \/>/, '사업 상세는 지금 단계를 강조한다');
-  assert.match(read('app/(dashboard)/stage/[id]/page.tsx'), /<StageLadder className="mb-5" current=\{s\.code\}/, '단계 상세는 그 단계를 강조한다');
+  const list = read('app/(dashboard)/projects/page.tsx');
+  assert.match(list, /<StageLadder className="mt-5 mb-1" current=\{stage\?\.code\}/, '사업 목록은 거른 단계를 강조한다(옛 단계 상세)');
+  assert.match(list, /href=\{\(code\) => listHref\(code === stage\?\.code \? undefined : code, sgg\)\}/, '단계 칸은 시군구 거르기를 유지하고, 고른 단계를 다시 누르면 풀린다');
 });
 
 test('StageLadder: 공개 범위 범례, 계단(단계마다 높아지는 상자), 질문, 현재 단계 표시(aria-current), 단계 목록 링크, 900px 이하 세로 목록', () => {
@@ -39,7 +41,8 @@ test('StageLadder: 공개 범위 범례, 계단(단계마다 높아지는 상자
   assert.match(c, /국민에게도 공개 \(05~06\)/);
   assert.match(c, /'--h': `\$\{64 \+ i \* 16\}px`/, '상자 높이가 단계마다 16px 씩 커진다');
   assert.match(c, /aria-current=\{on \? 'step' : undefined\}/);
-  assert.match(c, /href=\{`\/stage\/\$\{s\.code\}`\}/);
+  assert.match(c, /href = \(code\) => `\/projects\?stage=\$\{code\}`/, '칸은 그 단계로 거른 사업 목록으로 간다');
+  assert.match(c, /<Link href=\{href\(s\.code\)\}/);
   assert.match(c, /\{s\.q\}/);
   assert.match(c, /mobile:grid-cols-1/);
   assert.match(c, /gov: 'var\(--scope-gov\)', pub: 'var\(--scope-pub\)'/);

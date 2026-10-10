@@ -70,7 +70,7 @@ export const PHASES: { name: string; steps: string[] }[] = [
 
 /* 끝: 화면을 쓰는 사람. 지도(/map)는 문서가 따로라 <a> 로 잇는다 */
 export const ENDS: { who: string; asks: string; screens: [string, string][] }[] = [
-  { who: '정책 담당자', asks: '계획대로인가 · 어디서 막혔나 · 어느 사업이 늦나', screens: [['종합상황판', '/'], ['지역별', '/area'], ['단계별', '/stage'], ['기관별', '/agency'], ['보고자료', '/reports']] },
+  { who: '정책 담당자', asks: '계획대로인가 · 어디서 막혔나 · 어느 사업이 늦나', screens: [['종합상황판', '/'], ['공급 실적', '/area'], ['사업', '/projects'], ['보고자료', '/reports']] },
   { who: '국민', asks: '내 동네 사업은 몇 단계 · 다음 일정 · 신청 가능한 공고', screens: [['우리 동네', '/my-area'], ['사업', '/projects'], ['지도', '/map']] },
 ];
 export const TRACE = ['화면의 숫자', '사업에 붙은 원천 쪽 관리번호(외부 참조키)', '원천 카탈로그(⑥)', '받아 둔 원문(원천 기록)'];

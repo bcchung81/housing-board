@@ -89,7 +89,7 @@ export default async function MyAreaSido({ params }: Props) {
             {Object.entries(SGG).filter(([, s]) => s.sido === sido).map(([code, s]) => <a key={code} className="card-lift rounded-[8px] border border-border px-3 py-1.5 no-underline hover:bg-pn2" href={`/map?sgg=${code}`}>{s.name} 지도에서 보기</a>)}
           </p>
         ) : null}
-        <Basis>사업 id 레지스트리 기준. 단계는 6단계(01 정책 ~ 06 입주)이고, 단계마다 답하는 질문을 함께 적었습니다. 단계 설명은 <Link href="/stage">단계별</Link>.</Basis>
+        <Basis>사업 id 레지스트리 기준. 단계는 6단계(01 정책 ~ 06 입주)이고, 단계마다 답하는 질문을 함께 적었습니다. 단계별 사업은 <Link href="/projects">사업(현황표)</Link>.</Basis>
       </Card>
     </Page>
   );

@@ -197,7 +197,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               <h2 className={ptitle}>{ml(cursor)}</h2>
               <Badge variant="solid" className={past ? 'bg-foreground text-background' : 'bg-primary text-primary-foreground'}>{kind(cursor)}</Badge>
               <Sample />
-              <span className={pacts}><PanelLink href={`/stage/0${bk + 1}`} full={`병목 단계(${K[bk]}) 상세`}>병목 단계</PanelLink>{monthLink ? <PanelLink href={monthLink} full={`${ml(cursor)} 월 상세`}>{cursor % 12 + 1}월</PanelLink> : null}</span>
+              <span className={pacts}><PanelLink href={`/projects?stage=0${bk + 1}`} full={`병목 단계(${K[bk]})의 사업`}>병목 단계</PanelLink>{monthLink ? <PanelLink href={monthLink} full={`${ml(cursor)} 월 상세`}>{cursor % 12 + 1}월</PanelLink> : null}</span>
             </div>
             <div>
               <div className="q-grow-x flex h-3.5 gap-0.5 overflow-hidden bg-pn2 [&>span]:block [&>span]:h-full [&>span]:min-w-0" role="img" aria-label={`전체 ${f(tt)}호 중 지연 ${pct(d)}, 주의 ${pct(w)}, 정상 ${pct(ok)}`}>

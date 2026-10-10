@@ -34,7 +34,7 @@ export default async function AgencyDetail({ params }: Props) {
   const { id } = await params;
   const a = DETAILS.agency.id.test(id) ? AGENCIES.find((x) => x.id === id) : undefined;
   if (!a) notFound();
-  const crumbs = [{ label: '종합상황판', href: '/' }, { label: '기관별', href: '/agency' }, { label: a.name }];
+  const crumbs = [{ label: '종합상황판', href: '/' }, { label: '공급 실적', href: '/area' }, { label: '시행주체별', href: '/agency' }, { label: a.name }];
 
   if (!a.actor) {   // gh · sh · mnd: 화면에 쓸 데이터가 아직 없다. 받은 파일이 있으면 카탈로그를 보인다.
     const group = a.id === 'sh' ? '서울주택도시공사' : a.id === 'mnd' ? '국방부' : null;

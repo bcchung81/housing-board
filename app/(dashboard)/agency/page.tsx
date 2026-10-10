@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Crumbs from '../../../components/Crumbs';
+import SupplyTabs from '../../../components/SupplyTabs';
 import Legend from '../../../components/charts/Legend';
 import StageLegend from '../../../components/charts/StageLegend';
 import { stageLabel } from '../../../components/StageKpis';
@@ -17,10 +18,10 @@ import { AGENCIES } from '../../../lib/board/agencies';
 import { METRIC_STAGE } from '../../../lib/board/stages';
 import type { Col, Row } from '../../../lib/grid/spec';
 
-export const metadata: Metadata = { title: '기관별' };
+export const metadata: Metadata = { title: '공급 실적 · 시행주체별' };
 const KS = [['permit', '인허가'], ['start', '착공'], ['complete', '준공']] as const;
 
-/* 기관별(L1 목록): 통계누리 시행주체 4분류의 호수와 LH 준공 예정 요약. 기관별 지연·주의·정상 신호는 일정이 없어 아직 판정하지 않는다. */
+/* 공급 실적 · 시행주체별(L1 목록, 2026-10-10 메뉴 통합 전 '기관별'): 통계누리 시행주체 4분류의 호수와 LH 준공 예정 요약. 기관별 지연·주의·정상 신호는 일정이 없어 아직 판정하지 않는다. */
 export default function AgencyIndex() {
   const last = lastMonth(molit), year = last.slice(0, 4);
   const byYear = [...new Set(lh.blocks.map((b) => b.date.slice(0, 4)))].map((y) => ({ y, blocks: lh.blocks.filter((b) => b.date.startsWith(y)) }));
@@ -35,8 +36,9 @@ export default function AgencyIndex() {
   ];
   return (
     <Page>
-      <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: '기관별' }]} />
-      <PageTitle>기관별 <Badge variant="ok">실데이터</Badge></PageTitle>
+      <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: '공급 실적' }]} />
+      <PageTitle>공급 실적 <Badge variant="ok">실데이터</Badge></PageTitle>
+      <SupplyTabs current="/agency" />
       <Lede>통계누리 시행주체(지자체·LH·주택업체·민간)별 호수와 LH 준공 예정. 기관을 누르면 그 기관의 월 흐름과 예정 블록으로 내려갑니다.</Lede>
 
       {/* 기관 설명이 한 줄에 들어가도록 카드 최소 폭을 넓힌다(cardsGrid 의 260px → 340px, 1200px 폭에서 한 줄 3장) */}
