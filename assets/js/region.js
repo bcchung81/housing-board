@@ -383,10 +383,29 @@
     sel.addEventListener('change', () => { win.location.assign(regionUrl(win.location.href, sel.value)); });
     box.hidden = false;
   }
-  function mountBanner(doc, r, notice) {
+  /* 안내 띠: 한 줄 요약(brief)만 보이고 누르면 전체 문장을 편다(2026-10-10 피드백, 주소 입력줄 아래 반투명 띠 — goto.js 가 옮긴다).
+     요약이 없거나 전체와 같으면 전체 한 줄 */
+  function mountBanner(doc, r, notice, brief) {
     const el = doc.getElementById('pvBanner');
-    const text = [r.visibility === 'preview' ? '미리보기 — 공개 전 자료입니다' : '', notice || ''].filter(Boolean).join(' · ');
-    if (el && text) { el.textContent = text; el.hidden = false; }
+    const pre = r.visibility === 'preview';
+    const text = [pre ? '미리보기 — 공개 전 자료입니다' : '', notice || ''].filter(Boolean).join(' · ');
+    if (!el || !text) return;
+    const short = [pre ? '미리보기' : '', brief || notice || ''].filter(Boolean).join(' · ');
+    el.innerHTML = short === text ? `<span class="pv-s">${escapeHtml(text)}</span>`
+      : `<details class="pv-d"><summary class="pv-s">${escapeHtml(short)}</summary><p class="pv-f">${escapeHtml(text)}</p></details>`;
+    el.hidden = false;
+  }
+  /* 안내 띠의 한 줄 요약: 번들 없는 지역은 무엇을 보여 주는지만 짧게(전체 문장은 mountResolved 의 baseNote). 번들 지역의 경고는 짧아서 그대로 */
+  function bannerBrief(r, warnings) {
+    const pm = r.permits, warn = noticeText(warnings);
+    if (r.slug) return warn;
+    const found = pm && pm.ledger ? pm.ledger.blocksMatched + pm.ledger.parcelsRecovered : 0;
+    const extra = [found ? `대장으로 찾음 ${found}` : '', pm && pm.unlocated ? `제외 ${pm.unlocated}` : ''].filter(Boolean).join(' · ');
+    const base = pm && pm.count ? `번들 없는 지역 · 인허가 사업 ${pm.count}곳${extra ? ` (${extra})` : ''}`
+      : pm && pm.fetched && pm.blocks ? `번들 없는 지역 · 블록 단위 인허가 ${pm.blocks}곳은 지도에 못 그림`
+      : pm && pm.fetched ? '번들 없는 지역 · 이 법정동 인허가 사업 없음'
+      : '번들 없는 지역 · 경계·건물만';
+    return [warn ? `위치 안내 ${warn.split(' · ').length}건` : '', base].filter(Boolean).join(' · ');
   }
   function showFatal(doc, html) {
     const f = doc.getElementById('fatal'), l = doc.getElementById('loading');
@@ -454,11 +473,11 @@
       : pm && pm.fetched ? `지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 건축HUB 주택인허가에 이 법정동의 공동주택 사업이 없습니다(기록 ${pm.records}건) — 이웃 법정동에 있을 수 있습니다`
       : '지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다';
     const notes = [resolved ? noticeText(resolved.warnings) : '', baseNote].filter(Boolean).join(' · ');
-    applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r, notes);
+    applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r, notes, bannerBrief(r, resolved ? resolved.warnings : []));
   }
   async function getIndex(win) {
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, boot };
+  return { STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, boot };
 });

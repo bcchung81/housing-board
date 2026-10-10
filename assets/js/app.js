@@ -1162,7 +1162,7 @@ if (BLOCKS.length) {
   $('#sumTotal').innerHTML = `<span class="big">${fmt(total)}</span><span class="unit">세대</span> <span class="cnt">${BLOCKS.length}개 단지${unk ? `, 세대수 미확인 ${unk}곳 제외` : ''}</span>`;
   $('#sumBar').innerHTML = grp.map((g) => `<i style="width:${total ? 100 * by[g.key] / total : 0}%;background:${g.key === 'plan' ? 'repeating-linear-gradient(90deg,var(--plan) 0 4px,var(--bg) 4px 7px)' : COLOR[g.key]}" title="${g.label} ${gTxt(g)}"></i>`).join('');
   $('#sumBar').setAttribute('aria-label', grp.map((g) => `${g.label} ${gTxt(g)}`).join(', '));
-  SUM_TOTAL = { main: `${fmt(total)}세대`, sub: `공급 예정 ${BLOCKS.length}개 단지${unk ? `, 세대수 미확인 ${unk}곳 제외` : ''}` };
+  SUM_TOTAL = { main: `${fmt(total)}세대`, sub: `공급 예정 ${BLOCKS.length}개 단지${unk ? `, 세대수 미확인 ${unk}곳 제외` : ''}`, n: BLOCKS.length, unk };
   SUM_COMPACT = grp.map((g) => `<span title="${esc(g.label)} ${esc(known.has(g.key) ? `${fmt(by[g.key])}세대 (${pct(by[g.key], total)})` : '세대수 미확인')}"><i class="sw ${g.key}"></i>${known.has(g.key) ? fmt(by[g.key]) : '미확인'}</span>`).join('');
   if (HAS_INFRA) { $('#infraSum').innerHTML = infraSumHtml(); $('#infraSum').hidden = false; }
   $('#sumLeg').innerHTML = grp.map((g) => `<span><i class="sw ${g.key}"></i>${g.label} ${known.has(g.key) ? `${fmt(by[g.key])} (${pct(by[g.key], total)})` : '세대수 미확인'}</span>`).join('');
@@ -1232,7 +1232,7 @@ const openId = () => { const c = document.querySelector('#projList .card[aria-ex
 function syncUrl(id) {
   try {
     const u = new URL(location.href), set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
-    set('block', id); set('priv', privOn ? '' : '0'); set('mode', ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '' : '0'); set('hud', hudOn ? '' : '0'); set('cards', cardsOn ? '' : '0'); set('dim', dimExisting ? '' : '0'); set('infra', HAS_INFRA && !infraOn ? '0' : ''); set('zone', HAS_INFRA && !zoneOn ? '0' : ''); set('bus', HAS_BUS && !busOn ? '0' : ''); set('panel', $('.app').classList.contains('collapsed') ? '0' : '');
+    set('block', id); set('priv', privOn ? '' : '0'); set('mode', ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '' : '0'); set('hud', hudOn ? '' : '0'); set('cards', cardsOn ? '' : '0'); set('dim', dimExisting ? '' : '0'); set('infra', HAS_INFRA && !infraOn ? '0' : ''); set('zone', HAS_INFRA && !zoneOn ? '0' : ''); set('bus', HAS_BUS && !busOn ? '0' : ''); set('panel', $('.app').classList.contains('collapsed') ? '' : '1');
     history.replaceState(null, '', u);
   } catch (_) { /* file:// 에서는 막힐 수 있음 */ }
 }
@@ -1794,11 +1794,18 @@ map.on('render', scheduleHud); map.on('resize', () => { for (const k in hudSz) d
 /* ---------- 사이드바 접기 + 공급 요약(머리 줄 오른쪽) ---------- */
 /* 공급 요약: 머리 줄 '06 입주' 카드 오른쪽(옛 보기 기준 단추 자리)에 합계·단계 막대·번호 범례 | 입주 전 점검 칩. 2026-10-10 지도 위 떠 있는 카드에서 옮겼다.
    지역 이름·바꾸기는 머리 줄 왼쪽, 다음 일정은 사이드바에 있어 여기서는 뺀다. 900px 이하는 하단 시트가 대신한다 */
+const HS_ICON = {   // lucide building · circle-question-mark(ISC)
+  blk: '<svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><path d="M9 22v-3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3M8 6h.01M16 6h.01M12 6h.01M12 10h.01M12 14h.01M16 10h.01M16 14h.01M8 10h.01M8 14h.01"/></svg>',
+  unk: '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01"/></svg>',
+};
 function syncHudSum() {
   const tot = SUM_TOTAL || { main: $('#sumTotal').textContent, sub: '' };
   const side = HAS_INFRA && SUMM && SUMM.blocks.length ? `<button type="button" class="isum" data-act="infra">${infraSumHtml()}</button>` : '';
   $('#hudSum').classList.toggle('solo', !side);   // 점검 자료가 없는 지역은 합계 열만
-  $('#hudSum').innerHTML = `<div class="hs-a"><div class="hs-total"><b>${esc(tot.main)}</b><span>${esc(tot.sub)}</span></div>`
+  /* 단지 수·세대수 미확인 수는 아이콘+숫자로 줄여 한 줄에 둔다(문장이 두 줄이 되면 머리 줄을 넘쳤다, 2026-10-10). 문장은 title 과 화면 낭독기용으로 남긴다 */
+  const meta = tot.n == null ? `<span>${esc(tot.sub)}</span>`
+    : `<span class="hs-meta" title="${esc(tot.sub)}"><span class="sr">${esc(tot.sub)}</span><span aria-hidden="true">${HS_ICON.blk}${tot.n}</span>${tot.unk ? `<span aria-hidden="true">${HS_ICON.unk}${tot.unk}</span>` : ''}</span>`;
+  $('#hudSum').innerHTML = `<div class="hs-a"><div class="hs-total"><b>${esc(tot.main)}</b>${meta}</div>`
     + `<div class="sbar" role="img" aria-label="${esc($('#sumBar').getAttribute('aria-label') || '')}">${$('#sumBar').innerHTML}</div><div class="sleg">${SUM_COMPACT}</div></div>`
     + (side ? `<div class="hs-b">${side}</div>` : '');
 }
@@ -1812,7 +1819,7 @@ function setCollapsed(on, { quiet = false } = {}) {
 $('#panelToggle').addEventListener('click', () => setCollapsed(!$('.app').classList.contains('collapsed')));
 $('#hudSum').addEventListener('click', (e) => { if (e.target.closest('.isum')) openInfra(); });
 syncHudSum();
-setCollapsed(q.get('panel') === '0', { quiet: true });   // 데스크톱은 펼친 채 열린다(주소에 panel=0 이면 접음). 모바일은 하단 시트가 처음부터 작게 열려 있다
+setCollapsed(q.get('panel') !== '1', { quiet: true });   // 데스크톱은 접힌 채 열린다(주소에 panel=1 이면 펼침, 2026-10-10 피드백·문서 5.6c). 모바일은 하단 시트가 처음부터 작게 열려 있다
 renderHudContent();
 
 if (q.get('selftest')) {   // 시험 전용 훅(운영 주소에는 붙지 않음)

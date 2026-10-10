@@ -33,7 +33,7 @@ requestAnimationFrame(function () { setTimeout(function () {
 </head>
 <body>
 <noscript><p style="padding:24px;font:16px sans-serif">이 지도는 자바스크립트가 필요합니다. 브라우저에서 자바스크립트를 켜 주세요.</p></noscript>
-<div class="app">
+<div class="app collapsed">
 <header class="mhead" id="mhead">
   <div class="brand">
     <img class="brand-logo" src="assets/img/wave-lockup-ondark.svg" alt="주택파동" width="123" height="34">
@@ -107,7 +107,7 @@ requestAnimationFrame(function () { setTimeout(function () {
   <div class="pvbanner" id="pvBanner" role="note" hidden></div>
   <div class="dynhint" id="dynHint" role="status" aria-live="polite" hidden></div>
   <div class="hud" id="hud" role="group" aria-label="단지 표지"><svg class="hud-svg" id="hudSvg" aria-hidden="true"></svg><div id="hudTags"></div></div>
-  <button type="button" id="panelToggle" class="ptoggle" aria-controls="panel" aria-expanded="true" aria-label="사이드바 접기" title="사이드바 접기"><span aria-hidden="true">›</span><span class="pt-l" aria-hidden="true">공급 현황</span></button>
+  <button type="button" id="panelToggle" class="ptoggle" aria-controls="panel" aria-expanded="false" aria-label="사이드바 펼치기" title="사이드바 펼치기"><span aria-hidden="true">‹</span><span class="pt-l" aria-hidden="true">공급 현황</span></button>
   <div class="rctl" role="group" aria-label="확대·축소와 방향">
     <button type="button" id="zIn" aria-label="확대" title="확대">+</button>
     <button type="button" id="zOut" aria-label="축소" title="축소">&minus;</button>

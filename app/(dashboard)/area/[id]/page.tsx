@@ -7,18 +7,19 @@ import StageLegend from '../../../../components/charts/StageLegend';
 import MonthLines from '../../../../components/charts/MonthLines';
 import StackedMonths from '../../../../components/charts/StackedMonths';
 import { ACTOR_COLOR, METRIC_COLOR } from '../../../../components/charts/palette';
-import { Lede, Page, PageTitle, PanelTitle, SubTitle, cardsGrid, cols2, na, sub } from '../../../../components/page';
+import { Lede, Page, PageTitle, PanelTitle, SubTitle, cardsGrid, cols2, sub } from '../../../../components/page';
 import StageKpis, { stageLabel } from '../../../../components/StageKpis';
 import { Alert } from '../../../../components/ui/alert';
 import { Badge } from '../../../../components/ui/badge';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card, cardVariants } from '../../../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
+import { DataGrid } from '../../../../components/ui/data-grid';
 import { Basis, Prov } from '../../../../components/ui';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, sidoName, valueAt, ymDot, ytd } from '../../../../lib/board/calc';
 import { SGG, molit, projects } from '../../../../lib/board/data';
 import { METRIC_STAGE, stageName } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
+import type { Col, Row } from '../../../../lib/grid/spec';
 
 const LABEL = { permit: '인허가', start: '착공', complete: '준공', sale: '분양' } as const;
 type Props = { params: Promise<{ id: string }> };
@@ -44,6 +45,8 @@ function SidoView({ code }: { code: string }) {
   const lines = METRICS.map((k) => ({ key: k, label: LABEL[k], color: METRIC_COLOR[k], values: seriesOf(molit, k, code).total }));
   const actorStacks = (k: 'permit' | 'start' | 'complete') => ACTORS.map((a) => ({ key: a, label: a, color: ACTOR_COLOR[a], values: seriesOf(molit, k, code).actors![a] }));
   const recent = molit.months.slice(-12).reverse();
+  const recentCols: Col[] = [{ key: 'ym', label: '월', kind: 'text' }, ...METRICS.map((k) => ({ key: k, label: `${METRIC_STAGE[k]} ${LABEL[k]}` }))];
+  const recentRows: Row[] = recent.map((ym) => ({ id: ym, c: { ym: { text: ymDot(ym), href: `/month/${ym}`, prov: isProvisional(molit, ym), sort: ym }, ...Object.fromEntries(METRICS.map((k) => [k, valueAt(molit, k, code, ym)])) } }));
   const sggs = Object.entries(SGG).filter(([, s]) => s.sido === code);
   return (
     <Page>
@@ -76,17 +79,7 @@ function SidoView({ code }: { code: string }) {
 
       <Card render={<section aria-label="최근 12개월" />}>
         <PanelTitle>최근 12개월 <small className={sub}>· 호</small></PanelTitle>
-        <Table>
-          <TableHeader><tr><TableHead>월</TableHead>{METRICS.map((k) => <TableHead key={k}>{METRIC_STAGE[k]} {LABEL[k]}</TableHead>)}</tr></TableHeader>
-          <TableBody>
-            {recent.map((ym) => (
-              <TableRow key={ym}>
-                <TableCell><Link href={`/month/${ym}`}>{ymDot(ym)}</Link>{isProvisional(molit, ym) ? <Prov /> : null}</TableCell>
-                {METRICS.map((k) => <TableCell key={k}>{fmt(valueAt(molit, k, code, ym))}</TableCell>)}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataGrid label={`${name} 최근 12개월 호수`} cols={recentCols} rows={recentRows} />
         <Basis>통계누리 주택건설실적통계 · 인허가는 연초 누계의 차분입니다.</Basis>
       </Card>
 
@@ -120,19 +113,10 @@ function SggView({ sgg }: { sgg: string }) {
       {list.length > 0 ? (
         <Card render={<section aria-label="사업 목록" />}>
           <PanelTitle>사업 <small className={sub}>· {list.length}건 · 행을 누르면 사업 상세</small></PanelTitle>
-          <Table>
-            <TableHeader><tr><TableHead>사업</TableHead><TableHead>단계</TableHead><TableHead>세대수</TableHead><TableHead>위치</TableHead></tr></TableHeader>
-            <TableBody>
-              {list.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="min-w-[180px] whitespace-normal"><Link href={`/project/${p.id}`}>{p.name}</Link></TableCell>
-                  <TableCell>{p.stageCode} {stageName(p.stageCode)}</TableCell>
-                  <TableCell>{p.units ? fmt(p.units) : <span className={na}>미확인</span>}</TableCell>
-                  <TableCell>{p.pnus && p.pnus.length ? `필지 ${p.pnus.length}` : <span className={na}>위치 미연결</span>}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+          <DataGrid label={`${info?.name ?? sgg} 사업 목록`} rows={list.map((p) => ({
+            id: p.id,
+            c: { name: { text: p.name, href: `/project/${p.id}` }, stage: `${p.stageCode} ${stageName(p.stageCode)}`, units: p.units ? p.units : { na: '미확인' }, loc: p.pnus && p.pnus.length ? { text: `필지 ${p.pnus.length}`, sort: p.pnus.length } : { na: '위치 미연결' } },
+          }))} cols={[{ key: 'name', label: '사업', kind: 'text', wrap: true }, { key: 'stage', label: '단계', kind: 'text' }, { key: 'units', label: '세대수' }, { key: 'loc', label: '위치' }]} />
           <Basis>사업 id 레지스트리({list[0].asOf} 기준). 사업 단계는 건축HUB 인허가 기록과 지도 번들 상태를 6단계로 옮긴 제안 매핑(스펙 9.2)의 값입니다.</Basis>
         </Card>
       ) : (

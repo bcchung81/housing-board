@@ -45,7 +45,24 @@ function check(name, textColors, backdrops) {
 }
 
 test('표지·요약·상세 카드 유리 위 글자 대비가 밝은 지도·어두운 지도 모두에서 4.5:1 이상', () => {
-  for (const n of ['--glass-tag', '--glass-tag-hover', '--glass-sum', '--glass-card']) check(n, TEXT, [MAP.lightest, MAP.darkest]);
+  for (const n of ['--glass-tag', '--glass-tag-hover', '--glass-sum', '--glass-card', '--glass-hud']) check(n, TEXT, [MAP.lightest, MAP.darkest]);
+});
+
+/* 2026-10-10 피드백 '상세 카드는 HUD 처럼 투명하게, 안내 띠는 입력줄 아래 투명하게': 단지 상세 카드는 --glass-hud(.86, 대비가 지켜지는 가장 옅은 쪽),
+   안내 띠는 본문 글자(--ink)만 쓰므로 더 옅은 --glass-note. Next 지도의 밝은 테마 값도 같은 기준으로 본다 */
+test('상세 카드(--glass-hud)는 기존 카드보다 옅고, 안내 띠(--glass-note)는 본문 글자만으로 4.5:1 을 지킨다(두 테마)', () => {
+  assert.ok(glass('--glass-hud')[3] < glass('--glass-card')[3], '상세 카드가 다른 카드보다 비친다');
+  assert.ok(glass('--glass-note')[3] <= 0.7, `안내 띠 ${glass('--glass-note')[3]}`);
+  check('--glass-note', [VARS['--ink']], [MAP.lightest, MAP.darkest]);
+  const lightBlock = /html\[data-map-shell\]:not\(\.dark\)\{([^}]*)\}/.exec(css)[1];
+  const L = {}; for (const [, k, v] of lightBlock.matchAll(/(--[\w-]+):([^;]+);?/g)) L[k] = v.trim();
+  const rgba = (v) => /^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/.exec(v).slice(1).map(Number);
+  for (const [n, texts] of [['--glass-hud', [L['--ink'], L['--ink2'], L['--mute'], L['--warn']]], ['--glass-note', [L['--ink']]]]) {
+    assert.ok(L[n], `밝은 테마 ${n}`);
+    for (const bd of [MAP.lightest, MAP.darkest]) for (const tx of texts) { const r = ratio(hex(tx), over(rgba(L[n]), hex(bd))); assert.ok(r >= 4.5, `밝은 테마 ${n} 위 ${tx} ${bd} ${r.toFixed(2)}:1`); }
+  }
+  assert.ok(rgba(L['--glass-hud'])[3] < rgba(L['--glass-card'])[3], '밝은 테마에서도 상세 카드가 더 비친다');
+  assert.match(css, /(?:^|\n)\.maplibregl-popup-content\{[^}]*background:var\(--glass-hud\)/);
 });
 
 test('독립 지도는 기존 다크 배경을 유지하고 Next 지도는 저장된 테마에 따라 배경을 선택한다', () => {
@@ -59,7 +76,7 @@ test('독립 지도는 기존 다크 배경을 유지하고 Next 지도는 저�
 });
 
 test('유리는 뒤 지도가 비칠 만큼은 투명하되 글자 대비를 지킬 만큼 짙다(.85~.97)', () => {
-  for (const n of ['--glass-tag', '--glass-tag-hover', '--glass-sum', '--glass-card']) { const a = glass(n)[3]; assert.ok(a >= 0.85 && a <= 0.97, `${n} ${a}`); }
+  for (const n of ['--glass-tag', '--glass-tag-hover', '--glass-sum', '--glass-card', '--glass-hud']) { const a = glass(n)[3]; assert.ok(a >= 0.85 && a <= 0.97, `${n} ${a}`); }
 });
 
 test('필터는 흐림(blur)과 채도만 쓰고 밝기를 누르지 않으며, 상세 카드는 덜 번진다(4px 이하)', () => {
@@ -75,7 +92,7 @@ test('표지·요약·카드가 유리 변수와 backdrop-filter 를 쓴다(-web
   for (const sel of ['.maplibregl-popup-content', '.hudtag', '.maplegend', '.tools', '.rctl', '.optpanel']) {   // 공급 요약은 2026-10-10 머리 줄로 옮겨 유리판이 아니고, 입주 시기 재생바는 없앴다
     const m = new RegExp(`(?:^|\\n)${sel.replace('.', '\\.')}\\{([^}]*)\\}`).exec(css);
     assert.ok(m, `${sel} 규칙을 찾을 수 없음`);
-    assert.match(m[1], /var\(--glass-(tag|sum|card)\)/, `${sel} 배경이 유리 변수여야 한다`);
+    assert.match(m[1], /var\(--glass-(tag|sum|card|hud)\)/, `${sel} 배경이 유리 변수여야 한다`);
     const f = CARDS.includes(sel) ? '--glass-card-blur' : '--glass-blur';
     assert.match(m[1], new RegExp(`-webkit-backdrop-filter:var\\(${f}\\)`));
     assert.match(m[1], new RegExp(`[^-]backdrop-filter:var\\(${f}\\)`));
@@ -89,7 +106,7 @@ test('backdrop-filter 를 못 쓰는 브라우저용 @supports not 대체가 거
     const mm = /rgba\(\d+,\d+,\d+,([\d.]+)\)/.exec(v);
     if (mm) assert.ok(+mm[1] >= 0.94, `${k} 대체값 ${v}`);
   }
-  assert.match(m[1], /--glass-card/);
+  assert.match(m[1], /--glass-card/); assert.match(m[1], /--glass-hud/); assert.match(m[1], /--glass-note/);
 });
 
 test('상태 칩과 막대 같은 작은 색 요소는 불투명을 유지한다', () => {

@@ -1,8 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Fragment } from 'react';
 import Crumbs from '../../../components/Crumbs';
-import Legend, { Swatch } from '../../../components/charts/Legend';
+import Legend from '../../../components/charts/Legend';
 import StageLegend from '../../../components/charts/StageLegend';
 import { stageLabel } from '../../../components/StageKpis';
 import StackedMonths from '../../../components/charts/StackedMonths';
@@ -10,12 +9,13 @@ import { ACTOR_COLOR, METRIC_COLOR } from '../../../components/charts/palette';
 import { Lede, Page, PageTitle, PanelTitle, SubTitle, cols2, sub } from '../../../components/page';
 import { Badge } from '../../../components/ui/badge';
 import { Card, cardVariants } from '../../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
+import { DataGrid } from '../../../components/ui/data-grid';
 import { Basis, Prov } from '../../../components/ui';
 import { ACTORS, NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, ytd, valueAt } from '../../../lib/board/calc';
 import { lh, molit } from '../../../lib/board/data';
 import { AGENCIES } from '../../../lib/board/agencies';
 import { METRIC_STAGE } from '../../../lib/board/stages';
+import type { Col, Row } from '../../../lib/grid/spec';
 
 export const metadata: Metadata = { title: '기관별' };
 const KS = [['permit', '인허가'], ['start', '착공'], ['complete', '준공']] as const;
@@ -24,6 +24,15 @@ const KS = [['permit', '인허가'], ['start', '착공'], ['complete', '준공']
 export default function AgencyIndex() {
   const last = lastMonth(molit), year = last.slice(0, 4);
   const byYear = [...new Set(lh.blocks.map((b) => b.date.slice(0, 4)))].map((y) => ({ y, blocks: lh.blocks.filter((b) => b.date.startsWith(y)) }));
+  const mo = Number(last.slice(5)), at = molit.months.indexOf(last);
+  const actorCols: Col[] = [{ key: 'actor', label: '시행주체', kind: 'text' }, ...KS.flatMap(([k, l]) => [
+    { key: `m-${k}`, label: `${mo}월`, group: `${METRIC_STAGE[k]} ${l}`, groupSwatch: METRIC_COLOR[k] },
+    { key: `y-${k}`, label: `1~${mo}월 누계`, group: `${METRIC_STAGE[k]} ${l}`, groupSwatch: METRIC_COLOR[k] },
+  ])];
+  const actorRows: Row[] = [
+    ...ACTORS.map((a) => ({ id: a, c: { actor: { text: a, swatch: ACTOR_COLOR[a] }, ...Object.fromEntries(KS.flatMap(([k]) => [[`m-${k}`, seriesOf(molit, k, NATION).actors![a][at]], [`y-${k}`, ytd(molit, k, NATION, last, a)]])) } })),
+    { id: 'total', pin: 'bottom', c: { actor: '총계', ...Object.fromEntries(KS.flatMap(([k]) => [[`m-${k}`, valueAt(molit, k, NATION, last)], [`y-${k}`, ytd(molit, k, NATION, last)]])) } },
+  ];
   return (
     <Page>
       <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: '기관별' }]} />
@@ -38,18 +47,7 @@ export default function AgencyIndex() {
       <Card render={<section aria-label="시행주체별 호수" />}>
         <PanelTitle>시행주체별 <small className={sub}>· 전국 · 호 · {monthLabel(last)}{isProvisional(molit, last) ? <Prov /> : null}</small></PanelTitle>
         <StageLegend metrics={KS.map(([k]) => k)} />
-        <Table>
-          <TableHeader>
-            <tr><TableHead rowSpan={2}>시행주체</TableHead>{KS.map(([k, l]) => <TableHead key={l} colSpan={2} style={{ textAlign: 'center' }}><Swatch color={METRIC_COLOR[k]} />{METRIC_STAGE[k]} {l}</TableHead>)}</tr>
-            <tr>{KS.map(([k]) => <Fragment key={k}><TableHead>{Number(last.slice(5))}월</TableHead><TableHead>1~{Number(last.slice(5))}월 누계</TableHead></Fragment>)}</tr>
-          </TableHeader>
-          <TableBody>
-            {ACTORS.map((a) => (
-              <TableRow key={a}><TableCell><Swatch color={ACTOR_COLOR[a]} />{a}</TableCell>{KS.map(([k]) => <Fragment key={k}><TableCell>{fmt(seriesOf(molit, k, NATION).actors![a][molit.months.indexOf(last)])}</TableCell><TableCell>{fmt(ytd(molit, k, NATION, last, a))}</TableCell></Fragment>)}</TableRow>
-            ))}
-            <TableRow total><TableCell>총계</TableCell>{KS.map(([k]) => <Fragment key={k}><TableCell>{fmt(valueAt(molit, k, NATION, last))}</TableCell><TableCell>{fmt(ytd(molit, k, NATION, last))}</TableCell></Fragment>)}</TableRow>
-          </TableBody>
-        </Table>
+        <DataGrid label="시행주체별 호수" cols={actorCols} rows={actorRows} />
         <Legend items={ACTORS.map((a) => ({ label: a, color: ACTOR_COLOR[a] }))} />
         <div className={cols2}>
           {KS.map(([k, l]) => (
@@ -64,10 +62,8 @@ export default function AgencyIndex() {
 
       <Card render={<section aria-label="LH 준공 예정" />}>
         <PanelTitle>LH 준공 예정 <small className={sub}>· {lh.count}블록 · {fmt(lh.units)}세대</small></PanelTitle>
-        <Table>
-          <TableHeader><tr><TableHead>연도</TableHead><TableHead>블록</TableHead><TableHead>세대수</TableHead></tr></TableHeader>
-          <TableBody>{byYear.map((r) => <TableRow key={r.y}><TableCell>{r.y}</TableCell><TableCell>{r.blocks.length}</TableCell><TableCell>{fmt(r.blocks.reduce((a, b) => a + b.units, 0))}</TableCell></TableRow>)}</TableBody>
-        </Table>
+        <DataGrid label="LH 준공 예정 연도별" cols={[{ key: 'y', label: '연도', kind: 'text' }, { key: 'n', label: '블록' }, { key: 'units', label: '세대수' }]}
+          rows={byYear.map((r) => ({ id: r.y, c: { y: r.y, n: r.blocks.length, units: r.blocks.reduce((a, b) => a + b.units, 0) } }))} />
         <Basis>LH 공공주택 준공예정현황(15141761) · 파일 기준일 {lh.sourceAsOf}.</Basis>
       </Card>
     </Page>

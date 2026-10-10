@@ -4,6 +4,7 @@
   /* 지도 위 HUD 유리(단지 표지·요약·범례·하단 바·옵션·툴바·상세 카드). 값을 바꾸면 tests/js/glass.test.cjs 가 글자 대비(4.5:1)를 다시 확인한다.
      짙은 네이비를 거의 불투명하게 깔아, 뒤 지도가 가장 밝은 곳에서도 밝은 글자가 읽힌다. */
   --glass-tag:rgba(16,26,68,.92);--glass-tag-hover:rgba(27,42,102,.96);--glass-sum:rgba(10,16,48,.92);--glass-card:rgba(16,26,68,.94);
+  --glass-hud:rgba(16,26,68,.87);--glass-note:rgba(10,16,48,.66);   /* 단지 상세 카드(대비가 지켜지는 가장 옅은 쪽)·입력줄 아래 안내 띠(본문 글자만), 2026-10-10 피드백 '가리지 않게 투명하게' */
   --glass-blur:blur(6px) saturate(1.1);--glass-card-blur:blur(3px) saturate(1.05);
   --hud-line:#3A4C8C;
   --glass-cmd-active:rgba(10,16,48,.94);--glass-cmd-idle:rgba(10,16,48,.78);--glass-cmd-off:rgba(10,16,48,.62);--cmd-sub:#D6DEFA;--cmd-text:#E8EDFF;
@@ -11,7 +12,7 @@
   /* 떠 있는 상자의 그림자: 다크는 짙게, 라이트(아래 덮어쓰기)는 남색으로 옅게 */
   --hud-shadow:0 10px 26px rgba(0,0,0,.42);--tag-shadow:0 6px 16px rgba(0,0,0,.4);--sheet-shadow:0 -4px 18px rgba(0,0,0,.5);--stuck-shadow:0 7px 8px -7px rgba(0,0,0,.7);--card-hover-shadow:0 6px 16px rgba(0,0,0,.38)}
 /* backdrop-filter 를 못 쓰는 브라우저는 뒤가 비쳐 글자가 흐려지므로 거의 불투명하게 둔다 */
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--glass-tag:rgba(16,26,68,.97);--glass-sum:rgba(10,16,48,.97);--glass-card:rgba(16,26,68,.98);--glass-cmd-active:rgba(10,16,48,.97);--glass-cmd-idle:rgba(10,16,48,.96);--glass-cmd-off:rgba(10,16,48,.96)}}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--glass-tag:rgba(16,26,68,.97);--glass-sum:rgba(10,16,48,.97);--glass-card:rgba(16,26,68,.98);--glass-hud:rgba(16,26,68,.98);--glass-note:rgba(10,16,48,.96);--glass-cmd-active:rgba(10,16,48,.97);--glass-cmd-idle:rgba(10,16,48,.96);--glass-cmd-off:rgba(10,16,48,.96)}}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 /* 글꼴 역할(2026-10-10, 계획서 14절 T1): 본문·카드·라벨은 시스템 한글 본문 글꼴, 로고·제목·큰 숫자는 Do Hyeon(대시보드 app/tailwind.css 와 같은 규칙) */
@@ -68,6 +69,14 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .stagef[hidden]{display:none}
 .pvbanner{position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:5;padding:4px 14px;border-radius:0 0 8px 8px;background:var(--pn2);border:1px solid var(--line2);border-top:0;color:var(--ink);font-size:12.5px}
 .pvbanner[hidden]{display:none}
+.cmd .pvbanner{position:static;transform:none;align-self:center;max-width:100%;margin-top:6px;padding:2px 12px;border:1px solid var(--hud-line);border-radius:999px;background:var(--glass-note);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);color:var(--ink);font-size:13px;line-height:1.6}   /* 입력줄 아래 반투명 요약 띠(goto.js 가 옮긴다) */
+.cmd .pvbanner:has(.pv-d[open]){border-radius:12px}
+.cmd .pv-s{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cmd .pv-d>summary{list-style:none;cursor:pointer}
+.cmd .pv-d>summary::-webkit-details-marker{display:none}
+.cmd .pv-d>summary::after{content:" ▾";color:var(--mute)}
+.cmd .pv-d[open]>summary::after{content:" ▴"}
+.cmd .pv-f{margin:2px 0 4px;white-space:normal;word-break:keep-all}
 .dynhint{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);z-index:5;max-width:min(92vw,520px);padding:5px 14px;border-radius:14px;background:var(--glass-cmd-active);border:1px solid var(--line2);color:var(--ink);font-size:13px;text-align:center;pointer-events:none}
 .dynhint[hidden]{display:none}
 .list .empty{padding:14px 6px;color:var(--mute);font-size:13.5px}
@@ -92,7 +101,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:13px;font-weight:400;color:va
 .list li+li{margin-top:6px}
 .sum{display:flex;flex-direction:column;gap:6px}
 .sum b{display:block;font-size:15px}
-.sum .big{font-family:var(--font-disp);font-size:44px;font-weight:400;line-height:1.05;font-variant-numeric:tabular-nums}
+.sum .big{font-family:var(--font-disp);font-size:32px;font-weight:400;line-height:1.05;font-variant-numeric:tabular-nums}
 .sum .unit{margin:0 6px 0 4px;font-size:15px;font-weight:700}
 .sum .cnt{font-size:13px;font-weight:400;color:var(--mute)}
 .sbar{display:flex;gap:2px;height:10px;overflow:hidden}
@@ -199,7 +208,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:13px;font-weight:400;color:va
 #fatal{position:absolute;inset:0;background:rgba(10,16,48,.96);color:var(--ink);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:5}
 #fatal[hidden]{display:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.maplibregl-popup-content{font:13px/1.5 var(--font-body);color:var(--ink);border-radius:12px;border:1px solid var(--hud-line);padding:0;box-shadow:var(--hud-shadow);background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur)}
+.maplibregl-popup-content{font:13px/1.5 var(--font-body);color:var(--ink);border-radius:12px;border:1px solid var(--hud-line);padding:0;box-shadow:var(--hud-shadow);background:var(--glass-hud);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur)}
 .maplibregl-popup-close-button{font-size:18px;width:26px;height:26px;color:var(--ink2)}
 .maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--hud-line)}
 .maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--hud-line)}
@@ -346,6 +355,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:13px;font-weight:400;color:va
 .cmd-chip.last{border-color:var(--acc)}
 @media (min-width:901px){
   .mapwrap.hascmd .dynhint{bottom:calc(var(--botbar-h,33px) + 12px + 64px)}   /* 건물 불러오는 중 안내도 입력줄 위로 */
+  .mapwrap.hascmd:has(.cmd .pvbanner:not([hidden])) .dynhint{bottom:calc(var(--botbar-h,33px) + 12px + 98px)}   /* 입력줄 아래 안내 띠만큼 더 위로 */
 }
 @media (prefers-reduced-motion:reduce){.cmd-bar,.cmd-res,.cmd-parse{transition:none}.cmd-spin{animation:none}}
 
@@ -377,6 +387,9 @@ h2{margin:0;font-family:var(--font-disp);font-size:13px;font-weight:400;color:va
 .hudsum .hs-total{display:flex;flex-wrap:wrap;align-items:baseline;gap:0 8px;min-width:0}
 .hudsum .hs-total b{font-family:var(--font-disp);font-size:17px;font-weight:400;font-variant-numeric:tabular-nums}
 .hudsum .hs-total span{min-width:0;font-size:12px;color:var(--mute)}
+.hudsum .hs-meta{display:flex;gap:10px;white-space:nowrap;font-variant-numeric:tabular-nums}
+.hudsum .hs-meta>span{display:inline-flex;align-items:center;gap:3px}
+.hudsum .hs-meta svg{flex:none;width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .hudsum .sbar{height:8px}
 .hudsum .sleg{flex-wrap:nowrap;gap:0 10px;font-size:12px;font-variant-numeric:tabular-nums}
 .hudsum .sleg span{gap:4px;white-space:nowrap}
@@ -485,6 +498,7 @@ details.isub>ul{margin-top:2px}
   .handle::before{content:"";width:44px;height:5px;border-radius:3px;background:var(--line2)}
   .botbar{display:none}
   .cmd{left:12px;right:68px;top:56px;bottom:auto;transform:none;width:auto;flex-direction:column-reverse}   /* 좁은 화면은 아래 시트가 있으니 위쪽, 후보는 아래로 */
+  .cmd .pvbanner{order:-1;align-self:stretch;text-align:center}   /* 위아래가 뒤집힌 입력줄에서도 띠는 입력줄(·후보) 아래 */
   .cmd-res{margin-bottom:0;margin-top:-1px;max-height:40vh;border-radius:0 0 14px 14px}
   .cmd-parse,.cmd-key{display:none}
   .cmd-bar input{font-size:16px}   /* iOS 가 16px 미만 입력칸을 확대하지 않게 */
@@ -545,7 +559,7 @@ html[data-map-shell]:not(.dark){
   --edu:#7955AD;--power:#895716;--hud-line:#B9C6D6;
   --hud-shadow:0 8px 22px rgba(15,23,42,.14);--tag-shadow:0 4px 12px rgba(15,23,42,.12);--sheet-shadow:0 -4px 18px rgba(15,23,42,.14);--stuck-shadow:0 7px 8px -7px rgba(15,23,42,.18);--card-hover-shadow:0 6px 16px rgba(15,23,42,.12);
   --glass-tag:rgba(255,255,255,.96);--glass-tag-hover:rgba(234,240,246,.98);
-  --glass-sum:rgba(255,255,255,.96);--glass-card:rgba(255,255,255,.97);
+  --glass-sum:rgba(255,255,255,.96);--glass-card:rgba(255,255,255,.97);--glass-hud:rgba(255,255,255,.9);--glass-note:rgba(255,255,255,.62);
   --glass-cmd-active:rgba(255,255,255,.98);--glass-cmd-idle:rgba(255,255,255,.96);--glass-cmd-off:rgba(245,247,250,.96);
   --cmd-sub:#526176;--cmd-text:#172B4D;
 }
@@ -601,18 +615,33 @@ body{font-size:16px;line-height:1.6}
 .hudtag .ht-h i,
 .hudsum .hs-total span,
 .hudsum .sleg{font-size:13px}
-.pcur,
-.prail button span,
 .hd-region,.regionbox select,
 .pvbanner,
 .dynhint,
+.legend,
+.maplegend,
+.maplegend ul,
+.tools button,
+.pc-big span,
+.pc-dl,
+.optpanel,
+.optpanel legend,
+.optpanel .reset,
+.cmd-go,
+.cmd-n,.cmd-w,
+.hudtag .ht-h b,
+.ptoggle .pt-l,
+.hudsum,
+.hudsum .isum,
+.hudsum .isum .hc{font-size:14px}
+.pcur,
+.prail button span,
 .list .empty,
 .nlist li,
 .nlist .nt,
 .nlist .na a,
 .list .nearby,
 .list .nearby a,
-h2,
 .sum .cnt,
 .sleg,
 .card .st,
@@ -622,24 +651,8 @@ h2,
 .pg,
 .fl em,
 .bld,
-.legend,
-.maplegend,
-.maplegend ul,
 .foot,
-.tools button,
-.pc-big span,
-.pc-dl,
-.optpanel,
-.optpanel legend,
-.optpanel .reset,
 .next span.s,
-.cmd-go,
-.cmd-n,.cmd-w,
-.hudtag .ht-h b,
-.ptoggle .pt-l,
-.hudsum,
-.hudsum .isum,
-.hudsum .isum .hc,
 .sech-h,
 .inote,
 .isub>summary::before,
@@ -650,16 +663,16 @@ h2,
 .ichip,
 .imeta,
 #infraMeasures small,
-.isrc{font-size:14px}
-.shell-map .app{grid-template-columns:minmax(0,1fr) 420px;grid-template-rows:88px minmax(0,1fr)}
+.isrc{font-size:13px}   /* 공급 현황 사이드바는 지도 옆 보조 정보라 한 단계 작게(2026-10-10 피드백 '글씨가 너무 크다', 문서 5.6c: 13px 아래로는 내리지 않는다) */
+.shell-map .app{grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:88px minmax(0,1fr)}
 .shell-map .app.collapsed{grid-template-columns:minmax(0,1fr)}
 .mhead{gap:12px;padding:8px 16px}
-h1{font-size:22px}h2{font-size:20px;line-height:1.35;margin-bottom:10px}
+h1{font-size:18px}h2{font-size:16px;line-height:1.35;margin-bottom:8px}
 .brand-t b{font-size:22px}.sf-v{font-size:22px}.sf-h{font-size:14px}.sf{padding:8px 10px;gap:3px}
-.phead{padding:16px 20px 10px}.pscroll{padding:10px 28px 24px 20px}
-.card{padding:12px 14px;row-gap:6px}.card b{font-size:18px;line-height:1.4}.card .sub{font-size:15px;line-height:1.6}
-.card .st{font-size:14px}.sum b{font-size:16px}.sum .cnt{font-size:14px}
-.next .nx{padding:12px 14px;row-gap:4px}.next b{font-size:16px;line-height:1.5}.next span.s{font-size:14px;line-height:1.6}
+.phead{padding:12px 16px 8px}.pscroll{padding:8px 24px 20px 16px}
+.card{padding:10px 12px;row-gap:5px}.card b{font-size:15.5px;line-height:1.4}.card .sub{font-size:13px;line-height:1.5}
+.card .st{font-size:13px}.sum b{font-size:15px}.sum .cnt{font-size:13px}
+.next .nx{padding:10px 12px;row-gap:3px}.next b{font-size:14.5px;line-height:1.5}.next span.s{font-size:13px;line-height:1.5}
 .pc-h b{font-size:18px}.pc-dl{font-size:15px;line-height:1.6;row-gap:5px}.pc-sub,.pc-cap,.pc-foot,.pc-more p{font-size:14px;line-height:1.6}
 .pc-chip{font-size:13px}.pc-big strong{font-size:26px}.pc-big span{font-size:14px}
 .tools button,.cmd-go{font-size:15px}

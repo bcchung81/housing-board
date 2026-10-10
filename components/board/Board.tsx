@@ -4,7 +4,7 @@
    실데이터 위젯(월별 실적 흐름)은 서버 컴포넌트(RealPanels)를 middle 로 받아 '전국 17개 시도'와 같은 줄에 둔다. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
-  AD, AG, AW, C, CIR, JUMPS, K, LAST, NOW, PITCH, PW, PX0, RANGE, RCOL, RLAB, REG, VW,
+  AD, AG, AW, C, CIR, K, LAST, NOW, PITCH, PW, PX0, RANGE, RCOL, RLAB, REG, VW,
   argmax, dStage, f, ip, kind, makeDir, ml, r10, rcls, sg, tot, txSnap, txTrend, vals, ymOf, yr,
 } from '../../lib/board/sample';
 import { cn } from 'cn';
@@ -14,7 +14,7 @@ import { Card } from '../ui/card';
 import { CUR, HOVER, RIBBON, chartStatic, ribbonDynamic } from './ribbon';
 import { Real, Sample } from './tags';
 import PanelLink from './PanelLink';
-import { ag, agName, agVal, ags, bar3, btn, disp, plink, ptSmall, ptSmallBlock, ptitle, row2 } from './styles';
+import { ag, agName, agVal, ags, bar3, btn, disp, pacts, phead, ptSmall, ptSmallBlock, ptitle, row2 } from './styles';
 
 export type BoardReal = {
   sourceCount: number;                                              // 원천 카탈로그의 원천 수
@@ -38,15 +38,10 @@ const hoverBg = 'not-aria-pressed:hover:bg-pn2';
 /* 툴팁 안의 한 줄(.tip .tr): 왼쪽 이름(작은 색 사각형 포함)과 오른쪽 값 */
 const tipRow = 'flex items-center justify-between gap-1.5';
 const tipRowKey = 'flex items-center gap-1.5';
-/* 시점 바로가기의 화면 문구(JUMPS 의 키 −12M·NOW… 는 화면 비교 기준선과 같게 둔다) */
-const JUMP_LABEL: Record<string, string> = { '−12M': '−1년', NOW: '지금', '+6M': '+6개월', '+12M': '+1년', '+24M': '+2년' };
-/* 시간 막대 위의 달 m 의 가로 위치: 막대 감싸개(좌우 2px) 안에서 지름 18px 손잡이 중심과 맞춘다(app/tailwind.css .tl-range) */
-const tlX = (m: number) => `calc(11px + (100% - 22px) * ${m / LAST})`;
 
 export default function Board({ real, middle }: { real: BoardReal; middle: ReactNode }) {
   const [focus, setFocus] = useState(1);
   const [cursor, setCursor] = useState(NOW);
-  const [playing, setPlaying] = useState(false);
   const [tour, setTour] = useState(false);
   const [tick, setTick] = useState(0);
   const [hl, setHl] = useState(-1);
@@ -87,18 +82,13 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
     }, 1100));
     return end;
   }, []);
-  useEffect(() => {   // 재생: 420 ms 마다 한 달
-    if (!playing) return;
-    const id = setInterval(() => setCursor((c) => { if (c >= LAST) { setPlaying(false); return c; } return c + 1; }), 420);
-    return () => clearInterval(id);
-  }, [playing]);
   useEffect(() => {   // 지시 순환: 1 초 틱, 7 초마다 다음 지시
     const id = setInterval(() => setTick((t) => t + 1), 1000);
     return () => clearInterval(id);
   }, []);
   useEffect(() => { if (tour && tick > 0 && tick % 7 === 0) setFocus((x) => (x % 6) + 1); }, [tick, tour]);
 
-  const goto = (m: number, keepPlay = false) => { setCursor(Math.max(0, Math.min(LAST, m))); if (!keepPlay) setPlaying(false); };
+  const goto = (m: number) => setCursor(Math.max(0, Math.min(LAST, m)));
   const monthAt = (clientX: number) => {
     const r = svgRef.current!.getBoundingClientRect();
     const m = Math.floor(((clientX - r.left) * (VW / r.width) - PX0) / PITCH);
@@ -176,7 +166,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               onPointerMove={(e) => { const m = monthAt(e.clientX); if (m < 0) setTip(null); else { const wr = wrapRef.current!.getBoundingClientRect(); setTip({ m, x: e.clientX - wr.left, y: e.clientY - wr.top }); } }}
               onPointerLeave={() => setTip(null)}
               onClick={(e) => { const m = monthAt(e.clientX); if (m >= 0) goto(m); }}>
-              <svg id="chart" shapeRendering="geometricPrecision" ref={svgRef} className="block h-auto w-full [&_text]:[font-family:inherit]" viewBox="0 0 960 400" role="img" aria-label="2025년 1월부터 2028년 10월까지 단계별 호수를 쌓은 월별 리본. 연도별 총량에 따라 굵기가 달라지고, 층 안의 붉은 띠가 단계별 지연 호수이며 핀이 병목 단계를 가리킵니다. 아래 슬라이더로 시점을 고릅니다.">
+              <svg id="chart" shapeRendering="geometricPrecision" ref={svgRef} className="block h-auto w-full [&_text]:[font-family:inherit]" viewBox="0 0 960 400" role="img" aria-label="2025년 1월부터 2028년 10월까지 단계별 호수를 쌓은 월별 리본. 연도별 총량에 따라 굵기가 달라지고, 층 안의 붉은 띠가 단계별 지연 호수이며 핀이 병목 단계를 가리킵니다. 차트를 누르면 그 달을 고릅니다.">
                 <g dangerouslySetInnerHTML={{ __html: staticSvg }} />
                 <rect x={(RIBBON.PX0 + (tip ? tip.m : 0) * RIBBON.PITCH).toFixed(1)} y={RIBBON.TOP - 4} width={RIBBON.PITCH.toFixed(1)} height={RIBBON.PH + 8} fill={HOVER.fill} fillOpacity={HOVER.opacity} visibility={tip ? 'visible' : 'hidden'} pointerEvents="none" />
                 <rect x={(PX0 + cursor * PW / (LAST + 1)).toFixed(1)} y={RIBBON.TOP - 4} width={RIBBON.PITCH.toFixed(1)} height={RIBBON.PH + 8} rx="3" fill={CUR.fill} className="rb-cur" pointerEvents="none" />
@@ -200,34 +190,14 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               </div>
             </div>
             </div>
-            {/* 시점 조작 줄: 재생 · 시간 막대(연도 눈금·지금 표시·움직일 때 달 말풍선) · 바로가기(한 묶음) · 지시 순환 스위치. 900px 이하는 두 줄 */}
-            <div data-slot="board-transport" className="mt-2.5 grid grid-cols-[auto_minmax(180px,1fr)_auto_auto] items-center gap-x-3.5 gap-y-2 rounded-[12px] bg-pn2 px-2.5 py-2 mobile:grid-cols-[auto_minmax(0,1fr)]">
-              <button type="button" className={cn(btn, 'flex size-10 flex-none items-center justify-center rounded-[50%] bg-primary text-primary-foreground shadow-[var(--shadow-card)] [transition:transform_.12s] hover:[transform:scale(1.06)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary')} aria-label={playing ? '일시정지' : '재생'} onClick={() => { if (!playing && cursor >= LAST) { setCursor(0); setPlaying(true); } else setPlaying(!playing); }}>
-                {playing
-                  ? <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="4" y="3" width="4" height="14" rx="1" fill="currentColor" /><rect x="12" y="3" width="4" height="14" rx="1" fill="currentColor" /></svg>
-                  : <svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><path d="M6 3.5 L16.5 10 L6 16.5 Z" fill="currentColor" strokeLinejoin="round" /></svg>}
-              </button>
-              <div className="group/tl relative px-[2px] pt-1 pb-[18px]" style={{ ['--p' as string]: `calc(9px + (100% - 18px) * ${cursor / LAST})` }}>
-                <i className="absolute top-[9px] h-[18px] w-[2px] -translate-x-1/2 rounded-full bg-foreground/45" style={{ left: tlX(NOW) }} title="지금(2026.10)" aria-hidden="true" />
-                <input className="tl-range relative" type="range" min={0} max={LAST} step={1} value={cursor} aria-label="시점 선택 (2025.01 ~ 2028.10)" aria-valuetext={`${ml(cursor)} ${kind(cursor)}`} onChange={(e) => goto(Number(e.target.value))} />
-                <span className={cn('pointer-events-none absolute -top-[22px] -translate-x-1/2 rounded-[6px] border border-[var(--rb-hud-line)] bg-[var(--rb-hud)] px-1.5 text-[12px] leading-[20px] font-bold whitespace-nowrap text-[var(--rb-hud-txt)] tabular-nums opacity-0 backdrop-blur-[6px] [transition:opacity_.15s] group-hover/tl:opacity-100 group-focus-within/tl:opacity-100', (playing || intro === 'travel') && 'opacity-100')} style={{ left: tlX(cursor) }} aria-hidden="true">{ml(cursor)}</span>
-                {[0, 12, 24, 36].map((m) => <span key={m} className="pointer-events-none absolute bottom-0 -translate-x-1/2 text-[12px] leading-[16px] text-muted-foreground tabular-nums" style={{ left: tlX(m) }} aria-hidden="true">{2025 + m / 12}</span>)}
-              </div>
-              <div className="contents mobile:col-span-2 mobile:flex mobile:flex-wrap mobile:items-center mobile:justify-between mobile:gap-2">
-                <div data-slot="board-jumps" className="flex rounded-[10px] bg-card p-[3px] shadow-[var(--shadow-card)]" role="group" aria-label="시점 바로가기">{JUMPS.map(([l, m]) => <button key={l} type="button" className={cn(btn, 'h-8 rounded-[8px] px-2.5 text-[14px] font-bold whitespace-nowrap text-ink2 [transition:background_.15s,color_.15s] not-aria-pressed:hover:bg-pn2 not-aria-pressed:hover:text-foreground aria-pressed:bg-primary aria-pressed:text-primary-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary')} aria-pressed={cursor === m} aria-label={`${JUMP_LABEL[l]} (${ml(m)})`} onClick={() => goto(m)}>{JUMP_LABEL[l]}</button>)}</div>
-                <button type="button" role="switch" aria-checked={tour} title="총리 지시 6건을 7초마다 차례로 강조합니다" className={cn(btn, 'group/sw flex h-8 items-center gap-2 rounded-[8px] px-2 text-[14px] font-bold whitespace-nowrap text-ink2 [transition:background_.15s] hover:bg-card focus-visible:outline-2 focus-visible:outline-primary')} onClick={() => setTour(!tour)}>
-                  지시 순환
-                  <span className="relative block h-5 w-[34px] flex-none rounded-full bg-line2 [transition:background_.2s] group-aria-checked/sw:bg-primary" aria-hidden="true"><span className="absolute top-[3px] left-[3px] block size-[14px] rounded-full bg-card shadow-[var(--shadow-card)] [transition:transform_.2s] group-aria-checked/sw:translate-x-[14px]" /></span>
-                </button>
-              </div>
-            </div>
           </Card>
 
           <Card variant="board" render={<section id="p-snap" aria-label="선택 시점의 판정과 단계별 호수" />}>
-            <div className="mb-2.5 flex items-baseline gap-2.5">
+            <div className="mb-2.5 flex flex-wrap items-baseline gap-2.5">
               <h2 className={ptitle}>{ml(cursor)}</h2>
               <Badge variant="solid" className={past ? 'bg-foreground text-background' : 'bg-primary text-primary-foreground'}>{kind(cursor)}</Badge>
               <Sample />
+              <span className={pacts}><PanelLink href={`/stage/0${bk + 1}`} full={`병목 단계(${K[bk]}) 상세`}>병목 단계</PanelLink>{monthLink ? <PanelLink href={monthLink} full={`${ml(cursor)} 월 상세`}>{cursor % 12 + 1}월</PanelLink> : null}</span>
             </div>
             <div>
               <div className="q-grow-x flex h-3.5 gap-0.5 overflow-hidden bg-pn2 [&>span]:block [&>span]:h-full [&>span]:min-w-0" role="img" aria-label={`전체 ${f(tt)}호 중 지연 ${pct(d)}, 주의 ${pct(w)}, 정상 ${pct(ok)}`}>
@@ -247,7 +217,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {K.map((k, i) => {
                 const dlt = r10(v[i] - nv[i]);
                 return (
-                  <div key={k} className={cn('grid flex-auto grid-cols-[minmax(0,1fr)_70px_62px_78px] items-center gap-2 rounded-[6px] border-b border-border px-1.5 py-[5px] last:border-b-0 phone:grid-cols-[minmax(0,1fr)_62px_74px]', i === bk && 'bg-accent')}>
+                  <div key={k} className={cn('grid flex-auto grid-cols-[minmax(0,1fr)_70px_62px_78px] items-center gap-2 rounded-[6px] border-b border-border px-1.5 py-0.5 last:border-b-0 phone:grid-cols-[minmax(0,1fr)_62px_74px]', i === bk && 'bg-accent')}>
                     <span className="flex items-center gap-2 text-[15px] font-bold whitespace-nowrap"><i className="block size-[11px] flex-none rounded-[3px]" style={{ background: C[i] }} />{CIR[i]} {k}<Badge variant="solid" className={cn('ml-0.5 bg-primary/10 px-1.5 text-[12px] leading-[15px] text-primary', i === bk ? 'visible' : 'invisible')}>병목</Badge></span>
                     <span className={cn(disp, 'text-right text-[20px]')}>{f(r10(v[i]))}</span>
                     {/* 옛 dash.css 의 .dl(정의 목록 격자)이 이 칸에도 걸려 있었다. 겉모습을 그대로 두려고 같은 격자·여백을 남긴다. */}
@@ -257,7 +227,6 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 );
               })}
             </div>
-            <p className={plink}><PanelLink href={`/stage/0${bk + 1}`}>병목 단계({K[bk]}) 상세</PanelLink>{monthLink ? <><PanelLink href={monthLink}>{ml(cursor)} 월 상세</PanelLink></> : null}</p>
           </Card>
         </div>
 
@@ -265,10 +234,14 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
           {middle}
 
           <Card variant="board" className={ringable(cur.p.includes('p-region'))} render={<section id="p-region" aria-label="전국 17개 시도" />}>
-            <h2 className={ptitle}>전국 17개 시도 <Sample /> <small className={ptSmall}>· 지연 · 주의 · 정상 (사업 수) · 바탕색 = 지연율 단계</small></h2>
+            <div className={phead}>
+              <h2 className={ptitle}>전국 17개 시도 <Sample /> <small className={ptSmall}>· 지연 · 주의 · 정상 (사업 수) · 바탕색 = 지연율 단계</small></h2>
+              <span className={pacts}><PanelLink href={`/area/${curReg.code}`} full={`${curReg.n} 실적(실데이터) 상세`}>{curReg.n} 실적</PanelLink></span>
+            </div>
             <div className="mt-2.5 flex flex-wrap items-center gap-3 text-[14px] text-muted-foreground [&>span]:flex [&>span]:items-center [&>span]:gap-[5px]" aria-label="바탕색과 지연율 구간"><span className="font-bold text-ink2">지연율(%)</span>{RCOL.map((c, i) => <span key={i}><i className="block h-3 w-6 rounded-[3px] border border-border" style={{ background: c }} />{RLAB[i]}</span>)}</div>
-            <div className="mt-2 flex items-center gap-3 text-[14px] text-muted-foreground" aria-label="사업 수 범례">
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-[14px] text-muted-foreground" aria-label="사업 수 범례">
               <span className="text-bad">지연</span><span className="text-warn">주의</span><span className="text-ok">정상</span><span>순서 · 사업 수</span>
+              {curReg.code === '12' ? <span className="ml-auto">2026-07부터 광주·전남은 전남광주로 집계됩니다</span> : null}
             </div>
             <div className="mx-0 my-2.5 grid flex-auto grid-cols-[repeat(auto-fill,minmax(112px,1fr))] auto-rows-[minmax(0,1fr)] gap-1.5">
               {REG.map((r, ri) => {
@@ -282,7 +255,6 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 );
               })}
             </div>
-            <p className={plink}><PanelLink href={`/area/${curReg.code}`}>{curReg.n} 실적(실데이터) 상세</PanelLink>{curReg.code === '12' ? <span className={cn(sub, 'ml-1.5')}>2026-07부터 광주·전남은 전남광주로 집계됩니다</span> : null}</p>
           </Card>
         </div>
 
@@ -301,7 +273,10 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
           </Card>
 
           <Card variant="board" className={ringable(cur.p.includes('p-fut'))} render={<section id="p-fut" aria-label="향후 12개월 공급 예정" />}>
-            <h2 className={ptitle}>향후 12개월 공급 예정 <Real title={`LH 공공주택 준공예정현황(15141761), 파일 기준일 ${real.lhAsOf}`} /> <small className={ptSmallBlock}>· 준공 예정(LH) 월별 (세대)</small></h2>
+            <div className={phead}>
+              <h2 className={ptitle}>향후 12개월 공급 예정 <Real title={`LH 공공주택 준공예정현황(15141761), 파일 기준일 ${real.lhAsOf}`} /> <small className={ptSmallBlock}>· 준공 예정(LH) 월별 (세대)</small></h2>
+              <span className={pacts}><PanelLink href="/agency/lh" full="LH 준공 예정 상세">LH 상세</PanelLink></span>
+            </div>
             <svg id="fmonths" className="mt-3 block min-h-[76px] w-full flex-[1_1_76px]!" viewBox="0 0 240 100" preserveAspectRatio="none" role="img" aria-label="2026.10부터 2027.09까지 월별 LH 준공 예정 세대수">
               <defs><linearGradient id="fm-g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style={{ stopColor: `color-mix(in srgb, ${C[4]} 66%, var(--rb-hi))` }} /><stop offset="1" style={{ stopColor: C[4] }} /></linearGradient></defs>
               {real.lh.map((m, i) => { const h = m.units / maxLh * 92; return <rect key={m.ym} x={i * 20 + 1.5} y={(100 - h).toFixed(1)} width="17" height={Math.max(h - 0.6, 0.4).toFixed(1)} fill="url(#fm-g)" className="q-grow-y" style={{ ['--i' as string]: i }}><title>{`${m.ym.replace('-', '.')} LH 준공 예정 ${f(m.units)}세대 · ${m.blocks}블록`}</title></rect>; })}
@@ -310,11 +285,13 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={cn(sub, 'mt-[3px] flex justify-between')}><span>2026.10</span><span>2027.03</span><span>2027.09</span></div>
             <div className="mt-2 text-[14px] text-ink2"><Reserve live={futRead} list={futList} /></div>
             <p className={cn(sub, 'mt-1.5')}>착공·모집·입주 예정의 월별 자료는 원천이 없어 비어 있습니다. LH 파일은 기준일(<b>{real.lhAsOf}</b>)이 실적 자료보다 {real.lhAgeMonths}개월 묵었습니다.</p>
-            <p className={plink}><PanelLink href="/agency/lh">LH 준공 예정 상세</PanelLink></p>
           </Card>
 
           <Card variant="board" className={ringable(cur.p.includes('p-agency'))} render={<section id="p-agency" aria-label="기관별 진행" />}>
-            <h2 className={ptitle}>기관별 진행 <Sample /> <small className={ptSmallBlock}>· 호 · 지연은 전체 지연 10,000호 중 비중</small></h2>
+            <div className={phead}>
+              <h2 className={ptitle}>기관별 진행 <Sample /> <small className={ptSmallBlock}>· 호 · 지연은 전체 지연 10,000호 중 비중</small></h2>
+              <span className={pacts}><PanelLink href="/agency" full="기관별 실데이터(시행주체별 호수)">시행주체별</PanelLink></span>
+            </div>
             <div className={ags}>
               {AG.map((a, ai) => {
                 const t = a[1] + a[2] + a[3];
@@ -330,7 +307,6 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               })}
             </div>
             <div className={cn(sub, 'mt-2')}>군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.</div>
-            <p className={plink}><PanelLink href="/agency">기관별 실데이터(시행주체별 호수)</PanelLink></p>
           </Card>
         </div>
       </div>

@@ -85,12 +85,14 @@ test('지표 범례·KPI 는 6칸(StageLegend·StageKpis): 지표가 없는 단�
 });
 
 test('표 머리는 단계 번호를 붙이고(03 인허가·04 착공·05 분양·06 준공), 보고자료 ① 표는 6행(01·02 는 자료 없음)', () => {
-  for (const f of ['app/(dashboard)/area/page.tsx', 'app/(dashboard)/area/[id]/page.tsx', 'app/(dashboard)/month/[id]/page.tsx']) assert.match(read(f), /<TableHead key=\{[ik]\}>\{METRIC_STAGE\[k\]\} \{LABEL\[k\]\}<\/TableHead>/, f);
-  for (const f of ['app/(dashboard)/agency/page.tsx', 'app/(dashboard)/agency/[id]/page.tsx']) assert.match(read(f), /\{METRIC_STAGE\[k\]\} \{l\}/, f);
+  /* 표는 데이터 그리드(계획서 17절)라 머리글은 열 정의의 label 이다 */
+  for (const f of ['app/(dashboard)/area/page.tsx', 'app/(dashboard)/area/[id]/page.tsx', 'app/(dashboard)/month/[id]/page.tsx']) assert.match(read(f), /label: `\$\{METRIC_STAGE\[k\]\} \$\{LABEL\[k\]\}`/, f);
+  for (const f of ['app/(dashboard)/agency/page.tsx', 'app/(dashboard)/agency/[id]/page.tsx']) assert.match(read(f), /`\$\{METRIC_STAGE\[k\]\} \$\{l\}`/, f);
   const rep = read('app/(dashboard)/reports/page.tsx');
-  assert.match(rep, /\{STAGES\.map\(\(s\) => \{   \/\/ 공급 6단계 6행/);
-  assert.match(rep, /<TableCell colSpan=\{5\} className="text-left whitespace-normal">자료 없음 — 통계누리에 없는 단계/);
-  assert.match(rep, /<TableHead>04 착공 누계<\/TableHead>/); assert.match(rep, /<TableHead>06 준공 누계<\/TableHead>/);
+  assert.match(rep, /const nowRows: Row\[\] = STAGES\.map\(\(s\) => \{   \/\/ 공급 6단계 6행/);
+  assert.match(rep, /muted: true, note: `자료 없음 — 통계누리에 없는 단계/, '자료 없는 단계는 첫 칸 뒤를 한 칸으로 합친 설명 행');
+  assert.match(rep, /<DataGrid label="전국 단계별 실적" cols=\{nowCols\} rows=\{nowRows\} sortable=\{false\} \/>/, '6단계 순서가 뜻이라 정렬하지 않는다');
+  assert.match(rep, /label: '04 착공 누계'/); assert.match(rep, /label: '06 준공 누계'/);
 });
 
 test('지도 범례·옵션 창의 단지 상태는 6단계 순서이고 단계 번호가 붙는다(머리 줄 6단계 필터와 같은 대응)', () => {

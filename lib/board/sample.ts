@@ -51,7 +51,6 @@ export const makeDir = (sourceCount: number): Directive[] => [
   { date: '09.18', t: '일정 지연 관리', m: '지연 38사업', p: ['p-trend'], q: '태릉지구 점검 — 정부가 제시한 착공일정을 전제로 더 이상 일정 지연이 없어야 한다.' },
   { date: '09.30', t: '국민 공개·공식 원천', m: `원천 ${sourceCount}곳`, p: ['p-flow'], q: '제3차 점검회의 — 국민이 공급 진행을 체감하도록 ‘주택공급 디지털 상황판’을 조속히 구현하고 공식 정보를 일관되게 제공한다.' },
 ];
-export const JUMPS: [string, number][] = [['−12M', 9], ['NOW', 21], ['+6M', 27], ['+12M', 33], ['+24M', 45]];
 
 /* ── 계산 ── */
 export const f = (n: number) => n.toLocaleString('en-US');

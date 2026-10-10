@@ -88,17 +88,11 @@ test('지도 패널 카드도 같은 결로 떠오른다(머리 줄 공급 요�
   assert.match(map, /--card-hover-shadow:0 6px 16px rgba\(15,23,42,\.12\)/);
 });
 
-/* ---------- 시점 조작 줄(2026-10-10) ---------- */
-test('시점 조작 줄: 재생·시간 막대(연도 눈금·지금 표시·달 말풍선)·바로가기 한 묶음·지시 순환 스위치. 바로가기 차례와 화면 비교 키는 그대로', () => {
-  assert.match(board, /data-slot="board-transport" className="mt-2\.5 grid grid-cols-\[auto_minmax\(180px,1fr\)_auto_auto\][^"]*mobile:grid-cols-\[auto_minmax\(0,1fr\)\]"/);
-  assert.match(board, /<input className="tl-range relative" type="range" min=\{0\} max=\{LAST\} step=\{1\} value=\{cursor\} aria-label="시점 선택 \(2025\.01 ~ 2028\.10\)"/);
-  assert.match(board, /\['--p' as string\]: `calc\(9px \+ \(100% - 18px\) \* \$\{cursor \/ LAST\}\)`/, '채운 막대가 손잡이 중심에서 끝난다');
-  assert.match(board, /const tlX = \(m: number\) => `calc\(11px \+ \(100% - 22px\) \* \$\{m \/ LAST\}\)`;/);
-  assert.match(board, /\(playing \|\| intro === 'travel'\) && 'opacity-100'/, '재생·시간 여행 중에는 달 말풍선이 보인다');
-  assert.match(board, /\[0, 12, 24, 36\]\.map\(\(m\) => <span key=\{m\}/);
-  assert.match(board, /data-slot="board-jumps"[^>]*role="group" aria-label="시점 바로가기">\{JUMPS\.map/);
-  assert.match(board, /aria-label=\{`\$\{JUMP_LABEL\[l\]\} \(\$\{ml\(m\)\}\)`\}/);
-  assert.match(board, /role="switch" aria-checked=\{tour\}/);
-  assert.doesNotMatch(board, /stepBtn|accent-primary/, '옛 단추 모양·기본 막대가 남지 않는다');
-  for (const r of [/\.tl-range::-webkit-slider-runnable-track \{[^}]*var\(--p\)/, /\.tl-range::-moz-range-progress \{/, /\.tl-range:focus-visible::-webkit-slider-thumb \{ box-shadow: 0 0 0 4px/]) assert.match(css, r);
+/* ---------- 시점 조작 줄 제거(2026-10-10, 디자인 피드백) ---------- */
+test('월별 공급 파동 카드에 시점 조작 줄(재생·시간 막대·바로가기·지시 순환 스위치)이 없고, 시점은 차트를 눌러 고른다', () => {
+  assert.doesNotMatch(board, /board-transport|tl-range|board-jumps|JUMP_LABEL|playing|role="switch"/);
+  assert.doesNotMatch(css, /\.tl-range/, '슬라이더 모양 CSS 도 남지 않는다');
+  assert.match(board, /onClick=\{\(e\) => \{ const m = monthAt\(e\.clientX\); if \(m >= 0\) goto\(m\); \}\}/, '차트 클릭으로 시점 선택');
+  assert.match(board, /aria-label="[^"]*차트를 누르면 그 달을 고릅니다\."/);
+  assert.match(board, /setFocus\(i \+ 1\); setTour\(false\);/, '지시 카드를 누르면 순환이 멈춘다');
 });

@@ -4,10 +4,11 @@ import * as React from "react"
 import { cn } from "cn"
 
 /* 데이터 표(옛 .tablewrap + table.tbl). 바깥 상자가 가로 스크롤 컨테이너이자 테두리라서 containerClassName 으로 높이 제한 등을 준다.
-   머리 행은 그 컨테이너 안에서 sticky 다(컨테이너를 둘로 겹치면 sticky 기준이 바뀌므로 겹치지 않는다). */
-function Table({ className, containerClassName, ...props }: React.ComponentProps<"table"> & { containerClassName?: string }) {
+   머리 행은 그 컨테이너 안에서 sticky 다(컨테이너를 둘로 겹치면 sticky 기준이 바뀌므로 겹치지 않는다).
+   containerProps 는 데이터 그리드가 그 컨테이너를 세로 스크롤 상자(가상 스크롤 기준)로 쓸 때 ref·style 을 건넨다. */
+function Table({ className, containerClassName, containerProps, ...props }: React.ComponentProps<"table"> & { containerClassName?: string; containerProps?: React.ComponentProps<"div"> }) {
   return (
-    <div data-slot="table-container" className={cn("mt-2 overflow-x-auto rounded-[10px] border border-border", containerClassName)}>
+    <div data-slot="table-container" {...containerProps} className={cn("mt-2 overflow-x-auto rounded-[10px] border border-border", containerClassName)}>
       <table
         data-slot="table"
         className={cn("w-full border-collapse text-[16px] leading-[1.6] tabular-nums [&_a]:text-foreground [&_a]:no-underline [&_a:hover]:underline", className)}

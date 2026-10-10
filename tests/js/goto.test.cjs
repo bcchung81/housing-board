@@ -276,3 +276,20 @@ test('mount: 지금 지도 가운데(win.getMapCenter)를 near 로 보내고, �
   const none = fakePage(), nurls = []; G.mount(none.win, none.doc, { fetch: async (u) => { nurls.push(u); return okJson({ items: [], meta: {} }); } });
   none.el.input.focus(); type(none, '시청'); t.mock.timers.tick(330); await flush(); await flush(); assert.equal(nurls[0], 'api/v1/codes/search?q=%EC%8B%9C%EC%B2%AD&limit=8');
 });
+
+test('안내 띠(2026-10-10 피드백): 입력줄이 붙으면 띠를 입력줄 아래로 옮기고, 반투명 유리로 요약 한 줄만 보인다', () => {
+  const page = fakePage();
+  const pv = new El('div', page.doc); pv.id = 'pvBanner'; pv.parent = page.el.wrap; page.doc.byId.pvBanner = pv;
+  G.mount(page.win, page.doc, { fetch: async () => okJson({ items: [], meta: {} }) });
+  assert.equal(pv.parent, page.el.root, '띠가 입력줄(#cmd) 안으로');
+  assert.equal(page.el.root.children.at(-1), pv, '입력줄의 맨 끝(인식 줄 다음)');
+  const none = fakePage(); assert.doesNotThrow(() => G.mount(none.win, none.doc, { fetch: async () => okJson({ items: [], meta: {} }) }), '띠가 없는 문서');
+  const rule = (sel) => { const m = new RegExp(`(?:^|\\n)${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\{([^}]*)\\}`).exec(css); assert.ok(m, `${sel} 규칙`); return m[1]; };
+  const b = rule('.cmd .pvbanner');
+  assert.match(b, /position:static;/); assert.match(b, /transform:none;/);
+  assert.match(b, /background:var\(--glass-note\)/); assert.match(b, /-webkit-backdrop-filter:var\(--glass-blur\)/); assert.match(b, /[^-]backdrop-filter:var\(--glass-blur\)/);
+  assert.match(rule('.cmd .pv-s'), /white-space:nowrap;overflow:hidden;text-overflow:ellipsis/, '요약은 한 줄');
+  const mobile = /@media \(max-width:900px\)\{([\s\S]*?)\n\}\n/.exec(css)[1];
+  assert.match(mobile, /\.cmd \.pvbanner\{order:-1/, '좁은 화면(입력줄 위쪽·후보 아래로)에서도 띠는 입력줄 아래');
+  assert.match(css, /\.mapwrap\.hascmd:has\(\.cmd \.pvbanner:not\(\[hidden\]\)\) \.dynhint\{/, '건물 불러오는 안내는 띠만큼 더 위로');
+});

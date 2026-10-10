@@ -105,3 +105,13 @@ test('종합상황판은 실데이터를 data/board 에서만 읽는다: 월별 
   assert.match(page, /sourceCount: sources\.items\.length/);
   assert.match(realRow, /seriesOf\(molit/);
 });
+
+test('카드의 이동 버튼은 아래 줄이 아니라 제목 줄 오른쪽(pacts)에 작은 채운 주색으로 있다(2026-10-10 사용자 지시)', () => {
+  const head = (src) => src.slice(0, src.search(/<\/div>/));   // 패널의 첫 줄(제목 줄)
+  for (const id of ['p-snap', 'p-region', 'p-fut', 'p-agency']) assert.match(head(panel(board, id)), /className=\{pacts\}><PanelLink/, id);
+  assert.match(head(panel(realRow, 'p-actual')), /className=\{pacts\}><PanelLink/, 'p-actual');
+  assert.doesNotMatch(board + realRow, /plink/, '카드 아래 링크 줄(plink)은 없다');
+  const link = fs.readFileSync(path.join(__dirname, '../../components/board/PanelLink.tsx'), 'utf8');
+  assert.match(link, /bg-primary [^"]*text-\[13px\][^"]*text-primary-foreground/);
+  assert.match(link, /title=\{full\}/, '줄인 이름 대신 원래 이름은 title 로 보인다');
+});

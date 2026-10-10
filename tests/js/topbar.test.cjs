@@ -83,6 +83,9 @@ test('공급 요약 내용: 왼쪽 합계·막대·번호 범례, 오른쪽 입�
   assert.match(app, /SUM_COMPACT = grp\.map/);                            // 상태별 번호만(이름·%는 이름표)
   assert.match(app, /sub: `공급 예정 \$\{BLOCKS\.length\}개 단지/);
   assert.match(bodies('.hudsum .isum-t').join(';'), /display:none/);       // 점검 헤드라인 문장은 칩이 대신한다
+  /* 단지 수·세대수 미확인 수는 아이콘+숫자 한 줄(문장이 두 줄이 되면 머리 줄을 넘쳤다, 2026-10-10). 문장은 title·화면 낭독기용으로 남는다 */
+  assert.match(fn[0], /class="hs-meta" title="\$\{esc\(tot\.sub\)\}"><span class="sr">\$\{esc\(tot\.sub\)\}<\/span>/);
+  assert.match(bodies('.hudsum .hs-meta').join(';'), /white-space:nowrap/);
 });
 
 test('상세 카드는 확대 카드에 폭을 빼앗기지 않고, 가로로 겹치면 그 아래로 비켜 선다(공급 요약은 머리 줄로 옮겨 지도를 가리지 않는다)', () => {

@@ -11,11 +11,12 @@ export const ptitle = `m-0 text-[22px] leading-[1.25] ${disp} [&_[data-slot=badg
 export const ptSmall = "[font-family:inherit] text-[14px] font-normal text-muted-foreground";
 export const ptSmallBlock = `${ptSmall} mt-0.5 block`;
 
-/* 패널 아래 액션: 설명과 구분하는 얇은 선, 일정한 간격과 클릭 영역 */
-export const plink = "mt-4 mb-0 flex flex-wrap items-center gap-2 border-t border-border pt-3 text-[15px]";
+/* 패널 제목 줄(왼쪽 제목, 오른쪽 위 이동 버튼 묶음). 좁으면 버튼은 그대로 두고 제목이 줄바꿈한다 */
+export const phead = "flex items-start gap-3";
+export const pacts = "ml-auto flex flex-none gap-1.5";
 
 /* 두 칸 행(.row2: 월별 실적 흐름 | 전국 17개 시도)과 막대 행(.ags .ag .an .ad .bar3).
-   시도 칸은 타일 6열(112×6 + 간격 6×5 + 안쪽 여백 42 = 744)이 들어가는 750px 로 고정해 17곳이 3줄로 끝나게 한다 — 시도 카드(약 515)와 실적 카드(523~546) 높이가 비슷하고, 남는 높이는 타일이 늘어나 채운다.
+   시도 칸은 타일 6열(112×6 + 간격 6×5 + 안쪽 여백 42 = 744)이 들어가는 750px 로 고정해 17곳이 3줄로 끝나게 한다 — 시도 카드(약 447)와 실적 카드(약 454) 높이가 비슷하고, 남는 높이는 타일이 늘어나 채운다.
    1280px 미만에서는 실적 그래프 칸이 너무 좁아져 위아래로 쌓는다. */
 export const row2 = "mt-3.5 grid grid-cols-1 items-stretch gap-3.5 min-[1280px]:grid-cols-[minmax(0,1fr)_750px]";
 export const ags = "mt-2.5 flex flex-auto flex-col justify-around gap-1.5";

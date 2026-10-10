@@ -7,12 +7,13 @@ import { METRIC_COLOR } from '../../../components/charts/palette';
 import { Lede, Page, PageTitle, PanelTitle, cardsGrid, sub } from '../../../components/page';
 import { Badge } from '../../../components/ui/badge';
 import { Card, cardVariants } from '../../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../components/ui/table';
+import { DataGrid } from '../../../components/ui/data-grid';
 import StageKpis from '../../../components/StageKpis';
 import { Basis, Prov } from '../../../components/ui';
 import { METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, valueAt, ytd } from '../../../lib/board/calc';
 import { SGG, molit, projects } from '../../../lib/board/data';
 import { METRIC_STAGE } from '../../../lib/board/stages';
+import type { Col, Row } from '../../../lib/grid/spec';
 
 export const metadata: Metadata = { title: '지역별' };
 
@@ -22,7 +23,16 @@ const LABEL = { permit: '인허가', start: '착공', complete: '준공', sale: 
 export default function AreaIndex() {
   const last = lastMonth(molit), year = last.slice(0, 4);
   const lines = METRICS.map((k) => ({ key: k, label: LABEL[k], color: METRIC_COLOR[k], values: seriesOf(molit, k, NATION).total }));
-  const rows = molit.sido;
+  const upto = `${year}년 1~${Number(last.slice(5))}월 누계`;
+  const cols: Col[] = [
+    { key: 'name', label: '시도', kind: 'text' },
+    ...METRICS.map((k) => ({ key: `m-${k}`, label: `${METRIC_STAGE[k]} ${LABEL[k]}`, group: monthLabel(last) })),
+    ...METRICS.map((k) => ({ key: `y-${k}`, label: `${METRIC_STAGE[k]} ${LABEL[k]}`, group: upto })),
+  ];
+  const rows: Row[] = molit.sido.map((s) => ({
+    id: s.code, pin: s.code === NATION ? 'top' : undefined,
+    c: { name: s.code === NATION ? '전국' : { text: s.name, href: `/area/${s.code}` }, ...Object.fromEntries(METRICS.flatMap((k) => [[`m-${k}`, valueAt(molit, k, s.code, last)], [`y-${k}`, ytd(molit, k, s.code, last)]])) },
+  }));
   return (
     <Page>
       <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: '지역별' }]} />
@@ -40,21 +50,7 @@ export default function AreaIndex() {
 
       <Card render={<section aria-label="시도별 표" />}>
         <PanelTitle>시도별 <small className={sub}>· 호</small></PanelTitle>
-        <Table>
-          <TableHeader>
-            <tr><TableHead rowSpan={2}>시도</TableHead><TableHead colSpan={4} style={{ textAlign: 'center' }}>{monthLabel(last)}</TableHead><TableHead colSpan={4} style={{ textAlign: 'center' }}>{year}년 1~{Number(last.slice(5))}월 누계</TableHead></tr>
-            <tr>{[...METRICS, ...METRICS].map((k, i) => <TableHead key={i}>{METRIC_STAGE[k]} {LABEL[k]}</TableHead>)}</tr>
-          </TableHeader>
-          <TableBody>
-            {rows.map((s) => (
-              <TableRow key={s.code} total={s.code === NATION}>
-                <TableCell>{s.code === NATION ? '전국' : <Link href={`/area/${s.code}`}>{s.name}</Link>}</TableCell>
-                {METRICS.map((k) => <TableCell key={k}>{fmt(valueAt(molit, k, s.code, last))}</TableCell>)}
-                {METRICS.map((k) => <TableCell key={`y${k}`}>{fmt(ytd(molit, k, s.code, last))}</TableCell>)}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+        <DataGrid label="시도별 호수" cols={cols} rows={rows} />
         <Basis>2026-07부터 광주·전남이 &lsquo;전남광주&rsquo; 하나로 집계됩니다. 이전 달은 두 곳을 합산해 한 계열로 이었습니다. {isProvisional(molit, last) ? '2026-01~08은 잠정치입니다.' : ''}</Basis>
       </Card>
 

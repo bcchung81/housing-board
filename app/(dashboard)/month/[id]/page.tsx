@@ -2,20 +2,22 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Crumbs from '../../../../components/Crumbs';
-import { Swatch } from '../../../../components/charts/Legend';
 import { ACTOR_COLOR } from '../../../../components/charts/palette';
 import { Lede, Page, PageTitle, PanelTitle, sub } from '../../../../components/page';
 import StageKpis from '../../../../components/StageKpis';
 import { Badge } from '../../../../components/ui/badge';
 import { Card } from '../../../../components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
+import { DataGrid } from '../../../../components/ui/data-grid';
 import { Basis } from '../../../../components/ui';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, lhOfMonth, lhUnits, ymDot } from '../../../../lib/board/calc';
 import { lh, molit } from '../../../../lib/board/data';
 import { METRIC_STAGE } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
+import type { Col } from '../../../../lib/grid/spec';
 
 const LABEL = { permit: '인허가', start: '착공', complete: '준공', sale: '분양' } as const;
+const ACT_KS = ['permit', 'start', 'complete'] as const;
+const LH_COLS: Col[] = [{ key: 'district', label: '사업지구', kind: 'text', wrap: true }, { key: 'block', label: '블록', kind: 'text' }, { key: 'type', label: '공급유형', kind: 'text' }, { key: 'units', label: '세대수' }, { key: 'date', label: '준공예정일', kind: 'text' }, { key: 'location', label: '위치', kind: 'text', wrap: true }];
 type Props = { params: Promise<{ id: string }> };
 
 /* 월 상세: 그 달의 인허가·착공·분양·준공(시도별·시행주체별, 통계누리 실적)과 LH 준공 예정 블록. 실적이 있는 달과 LH 예정 달만 열린다. */
@@ -55,29 +57,18 @@ export default async function MonthPage({ params }: Props) {
 
           <Card render={<section aria-label="시도별" />}>
             <PanelTitle>시도별 <small className={sub}>· 호</small></PanelTitle>
-            <Table>
-              <TableHeader><tr><TableHead>시도</TableHead>{METRICS.map((k) => <TableHead key={k}>{METRIC_STAGE[k]} {LABEL[k]}</TableHead>)}</tr></TableHeader>
-              <TableBody>
-                {table.map((r) => (
-                  <TableRow key={r.code} total={r.code === NATION}>
-                    <TableCell>{r.code === NATION ? '전국' : <Link href={`/area/${r.code}`}>{r.name}</Link>}</TableCell>
-                    {METRICS.map((k) => <TableCell key={k}>{fmt(r.values[k])}</TableCell>)}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <DataGrid label={`${monthLabel(ym)} 시도별 호수`} cols={[{ key: 'name', label: '시도', kind: 'text' }, ...METRICS.map((k) => ({ key: k, label: `${METRIC_STAGE[k]} ${LABEL[k]}` }))]}
+              rows={table.map((r) => ({ id: r.code, pin: r.code === NATION ? 'top' : undefined, c: { name: r.code === NATION ? '전국' : { text: r.name, href: `/area/${r.code}` }, ...r.values } }))} />
             <Basis>통계누리 주택건설실적통계. 2026-07부터 &lsquo;전남광주&rsquo;로 집계되고 이전 달은 광주+전남 합산입니다. 인허가는 연초 누계의 차분입니다.</Basis>
           </Card>
 
           <Card render={<section aria-label="시행주체별" />}>
             <PanelTitle>시행주체별 <small className={sub}>· 전국 · 호</small></PanelTitle>
-            <Table>
-              <TableHeader><tr><TableHead>시행주체</TableHead>{(['permit', 'start', 'complete'] as const).map((k) => <TableHead key={k}>{METRIC_STAGE[k]} {LABEL[k]}</TableHead>)}</tr></TableHeader>
-              <TableBody>
-                {ACTORS.map((a) => <TableRow key={a}><TableCell><Swatch color={ACTOR_COLOR[a]} />{a}</TableCell>{(['permit', 'start', 'complete'] as const).map((k) => <TableCell key={k}>{fmt(seriesOf(molit, k, NATION).actors![a][i])}</TableCell>)}</TableRow>)}
-                <TableRow total><TableCell>총계</TableCell>{(['permit', 'start', 'complete'] as const).map((k) => <TableCell key={k}>{fmt(seriesOf(molit, k, NATION).total[i])}</TableCell>)}</TableRow>
-              </TableBody>
-            </Table>
+            <DataGrid label={`${monthLabel(ym)} 시행주체별 호수`} cols={[{ key: 'actor', label: '시행주체', kind: 'text' }, ...ACT_KS.map((k) => ({ key: k, label: `${METRIC_STAGE[k]} ${LABEL[k]}` }))]}
+              rows={[
+                ...ACTORS.map((a) => ({ id: a, c: { actor: { text: a, swatch: ACTOR_COLOR[a] }, ...Object.fromEntries(ACT_KS.map((k) => [k, seriesOf(molit, k, NATION).actors![a][i]])) } })),
+                { id: 'total', pin: 'bottom', c: { actor: '총계', ...Object.fromEntries(ACT_KS.map((k) => [k, seriesOf(molit, k, NATION).total[i]])) } },
+              ]} />
             <Basis>05 공급(분양)은 시행주체 구분이 없습니다. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다.</Basis>
           </Card>
         </>
@@ -86,12 +77,7 @@ export default async function MonthPage({ params }: Props) {
       <Card render={<section aria-label="LH 준공 예정" />}>
         <PanelTitle>LH 준공 예정 <small className={sub}>· {blocks.length}블록 · {fmt(lhUnits(blocks))}세대</small></PanelTitle>
         {blocks.length > 0 ? (
-          <Table>
-            <TableHeader><tr><TableHead>사업지구</TableHead><TableHead>블록</TableHead><TableHead>공급유형</TableHead><TableHead>세대수</TableHead><TableHead>준공예정일</TableHead><TableHead>위치</TableHead></tr></TableHeader>
-            <TableBody>
-              {blocks.map((b, k) => <TableRow key={k}><TableCell className="min-w-[180px] whitespace-normal">{b.district}</TableCell><TableCell>{b.block}</TableCell><TableCell>{b.type}</TableCell><TableCell>{fmt(b.units)}</TableCell><TableCell>{b.date}</TableCell><TableCell className="min-w-[180px] whitespace-normal">{b.location}</TableCell></TableRow>)}
-            </TableBody>
-          </Table>
+          <DataGrid label={`${monthLabel(ym)} LH 준공 예정 블록`} cols={LH_COLS} rows={blocks.map((b, k) => ({ id: String(k), c: { district: b.district, block: b.block, type: b.type, units: b.units, date: b.date, location: b.location } }))} />
         ) : <p className={sub}>이 달에 준공 예정인 LH 블록이 파일에 없습니다.</p>}
         <Basis>LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 {lh.sourceAsOf}로 {Math.max(0, (Number(last.slice(0, 4)) - Number(lh.sourceAsOf.slice(0, 4))) * 12 + Number(last.slice(5)) - Number(lh.sourceAsOf.slice(5, 7)))}개월 묵었습니다. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.</Basis>
       </Card>

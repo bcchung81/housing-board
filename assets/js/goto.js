@@ -193,6 +193,7 @@
     const nearNow = () => nearOf(typeof win.getMapCenter === 'function' ? win.getMapCenter() : null);   // app.js 가 알려 주는 지금 지도 가운데
     const state = { s: initialState(), recent: loadRecent(win), cache: new Map(), timer: null, ctl: null, retry: null, lastStatus: '' };
     el.root.closest('.mapwrap') && el.root.closest('.mapwrap').classList.add('hascmd');
+    const pv = $('pvBanner'); if (pv) el.root.appendChild(pv);   // 지역 안내 띠는 입력줄 아래 요약 한 줄로(2026-10-10 피드백). 입력줄이 없으면 지도 위쪽 그대로
 
     const make = (tag, cls, text) => { const n = doc.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
     function renderRow(r, withHeader) {

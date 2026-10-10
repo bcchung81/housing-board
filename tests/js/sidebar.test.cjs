@@ -1,4 +1,4 @@
-// 우측 사이드바: 처음엔 펼친 채 열리고(데스크톱, 상황판 시안 M3), 접어도 요약이 지도 위에 남고, 작은 글자·긴 목록 없이 읽히는지 정적으로 확인한다.
+// 우측 사이드바: 처음엔 접힌 채 열리고(데스크톱, 2026-10-10 피드백 — 문서 5.6c '기본 접힘'), 접어도 요약이 지도 위에 남고, 작은 글자·긴 목록 없이 읽히는지 정적으로 확인한다.
 // 화면에서의 실제 겹침·높이는 별도 헤드리스 Chrome 점검으로 본다(문서 5.5·5.6c).
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -23,18 +23,19 @@ const fontPx = (sel) => {
   return sizes;
 };
 
-test('데스크톱은 처음부터 펼친 채 그린다(마크업이 펼침이어야 지도 폭이 한 번 더 바뀌지 않는다)', () => {
-  assert.match(html, /<div class="app">/);
-  const t = /<button[^>]*id="panelToggle"[^>]*>/.exec(html);
+test('데스크톱은 처음부터 접힌 채 그린다(마크업이 접힘이어야 지도 폭이 한 번 더 바뀌지 않는다)', () => {
+  assert.match(html, /<div class="app collapsed">/);
+  const t = /<button[^>]*id="panelToggle"[^>]*>(.)/.exec(html);
   assert.ok(t, '#panelToggle 이 있어야 한다');
-  assert.match(t[0], /aria-expanded="true"/);
-  assert.match(t[0], /aria-label="사이드바 접기"/);
+  assert.match(t[0], /aria-expanded="false"/);
+  assert.match(t[0], /aria-label="사이드바 펼치기"/);
+  assert.match(html, /id="panelToggle"[^>]*><span aria-hidden="true">‹<\/span>/);
   assert.match(css, /@media \(min-width:901px\)\{\.app\.collapsed \.panel\{display:none\}\}/);
 });
 
-test('주소 ?panel=0 이면 접은 채 열고, 접고 펼 때마다 주소에 반영한다(기억 저장은 쓰지 않는다)', () => {
-  assert.match(app, /setCollapsed\(q\.get\('panel'\) === '0', \{ quiet: true \}\)/);   // panel=0 일 때만 접음
-  assert.match(app, /set\('panel', /);
+test('주소 ?panel=1 이면 펼친 채 열고, 접고 펼 때마다 주소에 반영한다(기억 저장은 쓰지 않는다)', () => {
+  assert.match(app, /setCollapsed\(q\.get\('panel'\) !== '1', \{ quiet: true \}\)/);   // panel=1 일 때만 펼침
+  assert.match(app, /set\('panel', \$\('\.app'\)\.classList\.contains\('collapsed'\) \? '' : '1'\)/);
   assert.doesNotMatch(app, /localStorage[^;]*panel/i);
   // 시작할 때 알림을 읽어 주지 않는다(조용히 적용)
   assert.match(app, /function setCollapsed\(on, \{ quiet = false \} = \{\}\)/);
@@ -54,10 +55,16 @@ test('사이드바 글자는 13px 아래로 내려가지 않는다', () => {
   for (const s of SEL) for (const px of fontPx(s)) assert.ok(px >= 13, `${s} ${px}px (13px 이상 필요)`);
 });
 
-test('데스크톱 가독성: 구역 제목은 20px, 단지 이름은 18px이며 역할별 크기를 구분한다', () => {
-  assert.ok(fontPx('h2').includes(20), '구역 제목 20px');
-  assert.ok(fontPx('.card b').includes(18), '단지 이름 18px');
-  assert.match(css, /grid-template-columns:minmax\(0,1fr\) 420px/);
+test('데스크톱 사이드바 글자는 한 단계 작게(2026-10-10 피드백 "글씨가 너무 크다", 문서 5.6c): 구역 제목 16px ≥ 단지 이름 15.5px, 보조 글자 13px, 폭 380px', () => {
+  const desk = /\/\* 데스크톱 가독성[\s\S]*?\n\}\n/.exec(css)[0];
+  const deskPx = (sel) => [...desk.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(sel)).map((m) => /font-size:([\d.]+)px/.exec(m[2])).filter(Boolean).map((m) => +m[1]);
+  const only = (sel, px) => { const v = deskPx(sel); assert.ok(v.length && v.every((x) => x === px), `${sel} ${v} (모두 ${px}px)`); };
+  only('h2', 16); only('.card b', 15.5); only('h1', 18);   // 구역 제목 16px ≥ 단지 이름 15.5px
+  for (const sel of ['.card .sub', '.card .st', '.next span.s', '.sleg', '.stage span', '.foot', '.inote', '.pcur', '.sum .cnt']) only(sel, 13);
+  only('.next b', 14.5); only('.sum b', 15);
+  assert.ok(fontPx('.sum .big').every((x) => x <= 32), `합계 숫자 ${fontPx('.sum .big')}px (32px 이하)`);
+  assert.match(css, /grid-template-columns:minmax\(0,1fr\) 380px/);
+  assert.doesNotMatch(css, /grid-template-columns:minmax\(0,1fr\) 420px/);
 });
 
 test('사이드바 보조 글자에 옅은 회색(#5C6068·#6B6F77)을 쓰지 않는다', () => {
