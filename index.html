@@ -15,16 +15,19 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <link rel="stylesheet" href="assets/vendor/maplibre-gl/5.24.0/maplibre-gl.css">
 <link rel="stylesheet" href="assets/css/app.css">
-<!-- 첫 화면(불러오는 중 안내)을 먼저 그린 뒤, 스크립트를 순서대로 불러옵니다. -->
+<!-- 첫 화면(불러오는 중 안내)을 먼저 그린 뒤, 스크립트를 순서대로 불러옵니다. loadview.js 는 그 진행을 영역별로 그린다. -->
+<script src="assets/js/loadview.js"></script>
 <link rel="preload" as="script" href="assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js">
 <script>
 /* 순서: 지도 라이브러리·어댑터·기반시설 점검 함수·기존 기반시설 분류 함수 → 지역 자료 읽기(어댑터가 전역을 채움) → 키 파일 → 앱 → 주소 이동 입력줄(없어도 지도는 열린다). 큰 자료는 fetch 가 병렬로 받는다. */
 requestAnimationFrame(function () { setTimeout(function () {
-  function load(src) { return new Promise(function (ok, no) { var s = document.createElement('script'); s.src = src; s.async = false; s.onload = ok; s.onerror = function () { no(new Error(src)); }; document.body.appendChild(s); }); }
+  var lv = window.LoadView ? window.LoadView.ctl() : null, restore = function () {};   // 로딩 화면 진행(assets/js/loadview.js): 스크립트는 받는 대로, 지역 자료는 boot 동안 센다
+  if (lv) ['assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js', 'assets/js/region.js', 'assets/js/infra.js', 'assets/js/facility.js', 'assets/js/bus.js', 'config.js', 'assets/js/app.js'].forEach(function (s) { lv.want('code', s); });
+  function load(src) { return new Promise(function (ok, no) { var s = document.createElement('script'); s.src = src; s.async = false; s.onload = function () { if (lv) { lv.got('code', src); if (src === 'assets/js/app.js') lv.finish('code'); } ok(); }; s.onerror = function () { no(new Error(src)); }; document.body.appendChild(s); }); }
   Promise.all([load('assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js'), load('assets/js/region.js'), load('assets/js/infra.js'), load('assets/js/facility.js'), load('assets/js/bus.js')])
-    .then(function () { return window.RegionLoader.boot(window, document); })
-    .then(function (r) { if (!r || !r.ok) return null; return load('config.js').catch(function () {}).then(function () { return load('assets/js/app.js'); }).then(function () { return load('assets/js/goto.js').then(function () { window.GotoBar.mount(window, document); }).catch(function () {}); }); })
-    .catch(function (e) { var f = document.getElementById('fatal'), l = document.getElementById('loading'); if (l) l.hidden = true; if (f) { f.hidden = false; f.textContent = '화면을 준비하지 못했습니다: ' + e.message; } });
+    .then(function () { if (lv) restore = lv.trackFetch(window); return window.RegionLoader.boot(window, document); })
+    .then(function (r) { restore(); if (lv) lv.finish('data'); if (!r || !r.ok) return null; return load('config.js').catch(function () { if (lv) lv.got('code', 'config.js'); }).then(function () { return load('assets/js/app.js'); }).then(function () { return load('assets/js/goto.js').then(function () { window.GotoBar.mount(window, document); }).catch(function () {}); }); })
+    .catch(function (e) { restore(); var f = document.getElementById('fatal'), l = document.getElementById('loading'); if (l) l.hidden = true; if (f) { f.hidden = false; f.textContent = '화면을 준비하지 못했습니다: ' + e.message; } });
 }, 0); });
 </script>
 </head>
@@ -38,9 +41,7 @@ requestAnimationFrame(function () { setTimeout(function () {
       <div class="regionbox" id="regionBox" hidden><label for="regionSel">지역</label><select id="regionSel"></select></div></div>
   </div>
   <div class="stagef" id="stageF" role="group" aria-label="공급 단계 필터"></div>
-  <span class="seg" id="modeSeg" role="group" aria-label="지도 보기 기준">
-      <button type="button" data-mode="floors" aria-pressed="true" title="동 높이를 층수로">층수</button><button type="button" data-mode="progress" aria-pressed="false" title="지은 만큼만 채우고 나머지는 연하게 보입니다">공정율</button><button type="button" data-mode="time" aria-pressed="false" title="달력을 움직여 공사와 입주 흐름을 봅니다">입주 시기</button><button type="button" data-mode="infra" aria-pressed="false" title="단지와 학교·정류장·전기 시설의 관계, 개교 시점과의 차이를 한눈에 봅니다" hidden>기반시설</button>
-  </span>
+  <div class="hudsum" id="hudSum" role="group" aria-label="공급 요약"></div>
 </header>
 <aside class="panel" id="panel" aria-label="공급 현황" data-sheet="peek">
   <button type="button" class="handle" id="sheetHandle" aria-expanded="false" aria-controls="panel" aria-label="패널 크기 바꾸기"></button>
@@ -107,7 +108,6 @@ requestAnimationFrame(function () { setTimeout(function () {
   <div class="dynhint" id="dynHint" role="status" aria-live="polite" hidden></div>
   <div class="hud" id="hud" role="group" aria-label="단지 표지"><svg class="hud-svg" id="hudSvg" aria-hidden="true"></svg><div id="hudTags"></div></div>
   <button type="button" id="panelToggle" class="ptoggle" aria-controls="panel" aria-expanded="true" aria-label="사이드바 접기" title="사이드바 접기"><span aria-hidden="true">›</span><span class="pt-l" aria-hidden="true">공급 현황</span></button>
-  <div class="hudsum" id="hudSum" role="group" aria-label="공급 요약" hidden></div>
   <div class="rctl" role="group" aria-label="확대·축소와 방향">
     <button type="button" id="zIn" aria-label="확대" title="확대">+</button>
     <button type="button" id="zOut" aria-label="축소" title="축소">&minus;</button>
@@ -121,7 +121,8 @@ requestAnimationFrame(function () { setTimeout(function () {
   <div class="topbar">
   <div class="tools" role="toolbar" aria-label="시점과 옵션">
     <button type="button" id="optBtn" class="opt" aria-expanded="false" aria-controls="optPanel" title="보일 단지 상태, 역·학교 등">옵션<b id="optN" hidden></b></button>
-    <button type="button" id="busLoad" class="opt" hidden title="버튼을 누를 때만 버스 위치를 조회합니다(자동 갱신 없음)">버스 위치 조회</button>
+    <button type="button" id="busLoad" class="opt" hidden title="버튼을 누를 때만 버스 위치를 조회합니다(자동 갱신 없음)">버스위치</button>
+    <button type="button" id="dimBtn" aria-pressed="true" title="기존 건물 흐리게: 학교·병원·공공시설만 3D 로 두고 나머지 건물은 점선 윤곽만 그립니다. 다시 누르면 모든 건물을 3D 로 봅니다.">건물 흐리게</button>
     <i class="sep" aria-hidden="true"></i>
     <button type="button" id="vAll" aria-label="전체 보기" title="모든 단지가 보이게 맞춥니다">전체</button>
     <button type="button" id="vPlane" aria-pressed="false" aria-label="평면 보기" title="위에서 내려다보는 평면으로 바꿉니다. 다시 누르면 비스듬한 입체로 돌아옵니다.">평면</button>
@@ -139,7 +140,6 @@ requestAnimationFrame(function () { setTimeout(function () {
     <fieldset><legend>지도에 겹쳐 보기</legend>
       <label id="lblCtx"><input type="checkbox" id="ctxChip">역 · 학교 <small>OpenStreetMap</small></label>
       <label id="lblRing"><input type="checkbox" id="ringChip">역 반경 원 <small>500 m · 1 km</small></label>
-      <label><input type="checkbox" id="dimChip">기존 건물 흐리게 <small>점선 윤곽만</small></label>
     </fieldset>
     <fieldset id="fsInfra" hidden><legend>입주 전 점검</legend>
       <label id="lblInfra"><input type="checkbox" id="infraChip">학교 · 정류장 · 전기 시설 <small>공개 자료</small></label>
@@ -159,11 +159,6 @@ requestAnimationFrame(function () { setTimeout(function () {
       <ul id="legendList"></ul>
     </details>
   </div>
-  <div class="timebar" id="timebar" hidden>
-    <button type="button" id="tPlay" aria-label="입주 시기 재생">▶</button>
-    <input type="range" id="tRange" min="0" max="38" step="1" value="0" aria-label="입주 시기 기준 월">
-    <span id="tOut" aria-live="polite"></span>
-  </div>
   <div class="cmd" id="cmd" data-state="idle" hidden>
     <div class="cmd-res" id="cmdRes" role="listbox" aria-label="이동할 곳 후보" hidden></div>
     <form class="cmd-bar" id="cmdForm" role="search" autocomplete="off">
@@ -177,7 +172,20 @@ requestAnimationFrame(function () { setTimeout(function () {
     </form>
     <div class="cmd-parse" id="cmdParse" aria-label="인식한 위치" hidden></div>
   </div>
-  <div id="loading" role="status"><i aria-hidden="true"></i><span>지도와 건물 자료를 불러오는 중…</span></div>
+  <div id="loading">
+    <div class="ld-card">
+      <svg class="ld-mark" viewBox="6 3 60 58" aria-hidden="true"><path fill="currentColor" d="M8 28 27 12Q36 4 45 12L64 28 57 36 39 21Q36 18 33 21L15 36Z"/><path class="ld-wave" d="M8 43C18 33 27 32 38 40C48 48 54 45 64 35V48C54 58 45 60 34 51C25 44 18 43 8 54Z"/></svg>
+      <div class="ld-text" role="status"><b>공급 지도를 여는 중</b><span id="ldSub">지역 자료를 읽고 있습니다</span></div>
+      <span class="ld-time" id="ldTime" aria-hidden="true"></span>
+      <ol class="ld-rows" aria-hidden="true">
+        <li data-area="code" data-st="active"><span class="ld-name">지도 프로그램</span><i class="ld-bar"></i><span class="ld-val">준비 중</span></li>
+        <li data-area="data" data-st="wait"><span class="ld-name">지역 자료</span><i class="ld-bar"></i><span class="ld-val">대기</span></li>
+        <li data-area="base" data-st="wait"><span class="ld-name">배경 지도</span><i class="ld-bar"></i><span class="ld-val">대기</span></li>
+        <li data-area="bld" data-st="wait"><span class="ld-name">건물·단지</span><i class="ld-bar"></i><span class="ld-val">대기</span></li>
+        <li data-area="dem" data-st="wait"><span class="ld-name">지형</span><i class="ld-bar"></i><span class="ld-val">대기</span></li>
+      </ol>
+    </div>
+  </div>
   <div id="fatal" hidden></div>
   <div id="sr" class="sr" aria-live="polite"></div>
 </main>

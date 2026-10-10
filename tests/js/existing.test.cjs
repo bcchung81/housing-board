@@ -10,12 +10,14 @@ const app = fs.readFileSync(path.join(ROOT, 'assets/js/app.js'), 'utf8');
 const css = fs.readFileSync(path.join(ROOT, 'assets/css/app.css'), 'utf8');
 const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
-test('기본은 흐리게 켬이고, 주소 dim=0 으로 끈다(옵션 개수·기본값 되돌리기·주소 반영이 같은 기준)', () => {
+test('기본은 흐리게 켬이고, 주소 dim=0 으로 끈다. 옵션 창이 아니라 위 도구 줄의 누름 단추(건물 흐리게)다(2026-10-10 사용자 요청)', () => {
   assert.match(app, /let dimExisting = q\.get\('dim'\) !== '0';/);
   assert.match(app, /set\('dim', dimExisting \? '' : '0'\)/);
-  assert.match(app, /\+ \(!dimExisting \? 1 : 0\) \+/);                      // 기본(켬)과 다를 때만 옵션 개수에 센다
-  assert.match(app, /busOn = true; dimExisting = true; hudOn = false;/);     // '기본값으로 되돌리기'
-  assert.match(html, /id="dimChip">기존 건물 흐리게 <small>점선 윤곽만<\/small>/);
+  assert.match(html, /<div class="tools" role="toolbar" aria-label="시점과 옵션">[\s\S]*?<button type="button" id="dimBtn" aria-pressed="true" title="기존 건물 흐리게:[^"]*">건물 흐리게<\/button>[\s\S]*?<\/div>\s*<\/div>\s*<div class="optpanel"/);
+  assert.doesNotMatch(html, /dimChip/, '옵션 창에는 없다');
+  assert.match(app, /\$\('#dimBtn'\)\.setAttribute\('aria-pressed', String\(dimExisting\)\)/);
+  assert.match(app, /\$\('#dimBtn'\)\.addEventListener\('click', \(\) => \{ dimExisting = !dimExisting; syncChips\(\); applyDim\(\); syncUrl\(openId\(\)\);/);
+  assert.doesNotMatch(app, /dimExisting \? 1 : 0|dimExisting = true;/, '옵션 개수·옵션 되돌리기에는 넣지 않는다');
 });
 
 test('점선 윤곽 층: 선(점선)이고 면이 아니며, 시설이 아닌 건물만, 확대 15 이상에서만 그린다', () => {

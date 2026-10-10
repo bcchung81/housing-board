@@ -2,7 +2,7 @@
 import type { Actor, LhBlock, LhData, Metric, Molit, Series } from './types';
 
 export const NATION = '00';
-export const METRICS: Metric[] = ['permit', 'start', 'complete', 'sale'];
+export const METRICS: Metric[] = ['permit', 'start', 'sale', 'complete'];   // 6단계 순서(03 인허가 → 04 착공 → 05 분양 → 06 준공, lib/board/stages.ts METRIC_STAGE)
 export const ACTORS: Actor[] = ['지자체', 'LH', '주택업체', '민간'];
 export const ACTOR_NOTE = '공공(지자체·LH·주택업체)과 민간으로 나눈 시행주체별 호수입니다. 네 분류의 합이 총계입니다.';
 
@@ -69,3 +69,15 @@ export const lhUnits = (blocks: LhBlock[]) => blocks.reduce((a, b) => a + b.unit
 
 /* 달 수(개월) 차이: a 에서 b 까지. */
 export function monthsBetween(a: string, b: string) { return (Number(b.slice(0, 4)) - Number(a.slice(0, 4))) * 12 + Number(b.slice(5, 7)) - Number(a.slice(5, 7)); }
+
+/* 앞으로의 물량을 세는 기준 달: 종합상황판의 '향후 12개월'과 같은 달(시안의 NOW, 2026.10). 보고자료·우리 동네가 쓴다 */
+export const AHEAD_FROM = '2026-10';
+
+/* 시도 하나의 LH 준공 예정 달력: fromYm 부터 n개월, 달마다 그 달의 블록(날짜·사업지구 순)과 세대수. 우리 동네(9.4 지시 '공급계획 사전 공개')가 쓴다 */
+export function lhCalendar(lh: LhData, sido: string, fromYm: string, n: number) {
+  return Array.from({ length: n }, (_, i) => {
+    const ym = nextYm(fromYm, i);
+    const blocks = lh.blocks.filter((b) => b.sido === sido && b.date.startsWith(ym)).sort((a, b) => a.date.localeCompare(b.date) || a.district.localeCompare(b.district, 'ko'));
+    return { ym, blocks, units: lhUnits(blocks) };
+  });
+}

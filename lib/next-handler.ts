@@ -1,10 +1,10 @@
 /* 기존 Node 핸들러(req, res)를 Next.js 라우트 핸들러(Request → Response)로 감싼다.
-   핸들러(handlers/**)가 쓰는 면은 req.method · req.url · res.statusCode · res.setHeader · res.end 뿐이라 이 정도면 된다.
+   핸들러(handlers/**)가 쓰는 면은 req.method · req.url · res.statusCode · res.setHeader · res.end 뿐이라 이 정도면 된다. 본문은 글자 또는 바이트(지형 타일 PNG, handlers/v1/terrain.js).
    핸들러와 lib/*.js(CJS)·그 시험은 그대로 두고, 응답 모양(상태·헤더·본문)이 같게 이어 주는 것이 목적이다. */
 type NodeRes = {
   statusCode: number;
   setHeader(name: string, value: string | number | readonly string[]): void;
-  end(chunk?: string): void;
+  end(chunk?: string | Uint8Array): void;
 };
 type NodeHandler = (req: { method: string; url: string }, res: NodeRes) => unknown;
 
@@ -14,11 +14,11 @@ export function toRoute(handler: NodeHandler) {
       const u = new URL(request.url);
       const headers = new Headers();
       let done = false;
-      const finish = (status: number, body: string | null) => {
+      const finish = (status: number, body: string | Uint8Array | null) => {
         if (done) return;
         done = true;
         const none = request.method === 'HEAD' || status === 204 || status === 304;
-        resolve(new Response(none ? null : body, { status, headers }));
+        resolve(new Response(none ? null : (body as BodyInit | null), { status, headers }));
       };
       const res: NodeRes = {
         statusCode: 200,

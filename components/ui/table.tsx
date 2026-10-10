@@ -10,7 +10,7 @@ function Table({ className, containerClassName, ...props }: React.ComponentProps
     <div data-slot="table-container" className={cn("mt-2 overflow-x-auto rounded-[10px] border border-border", containerClassName)}>
       <table
         data-slot="table"
-        className={cn("w-full border-collapse text-[13.5px] tabular-nums [&_a]:text-foreground [&_a]:no-underline [&_a:hover]:underline", className)}
+        className={cn("w-full border-collapse text-[16px] leading-[1.6] tabular-nums [&_a]:text-foreground [&_a]:no-underline [&_a:hover]:underline", className)}
         {...props}
       />
     </div>
@@ -33,14 +33,14 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       data-slot="table-head"
-      className={cn("sticky top-0 border-b border-border bg-muted px-2.5 py-[7px] text-right text-[12px] font-bold whitespace-nowrap text-muted-foreground first:text-left", className)}
+      className={cn("sticky top-0 border-b border-border bg-muted px-2.5 py-2.5 text-right text-[14px] font-bold whitespace-nowrap text-muted-foreground first:text-left", className)}
       {...props}
     />
   )
 }
 
 function TableCell({ className, ...props }: React.ComponentProps<"td">) {
-  return <td data-slot="table-cell" className={cn("border-b border-border px-2.5 py-[7px] text-right whitespace-nowrap first:text-left", className)} {...props} />
+  return <td data-slot="table-cell" className={cn("border-b border-border px-2.5 py-2.5 text-right whitespace-nowrap first:text-left", className)} {...props} />
 }
 
 export { Table, TableHeader, TableBody, TableHead, TableRow, TableCell }

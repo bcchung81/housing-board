@@ -1,14 +1,21 @@
 'use client';
 /* 기존 index.html 의 로더와 같은 순서로 지도 스크립트를 불러온다:
-   지도 라이브러리·어댑터·기반시설 점검·시설 분류·버스 → 지역 자료 읽기(어댑터가 전역을 채움) → 키 파일 → 앱 → 주소 이동 입력줄(없어도 지도는 열린다).
+   로딩 화면 진행(loadview) → 지도 라이브러리·어댑터·기반시설 점검·시설 분류·버스 → 지역 자료 읽기(어댑터가 전역을 채움) → 키 파일 → 앱 → 주소 이동 입력줄(없어도 지도는 열린다).
+   스크립트·지역 자료를 받는 대로 로딩 화면(LoadView)에 알린다. 지도가 생긴 뒤의 타일은 app.js 가 알린다.
    app.js 는 최상위 const 를 선언하는 스크립트라 문서당 한 번만 돌아야 한다. 개발 모드의 효과 이중 실행은 플래그로 막는다. */
 import { useEffect } from 'react';
 
+type LoadCtl = { want: (a: string, k: string) => void; got: (a: string, k: string) => void; finish: (a: string) => void; trackFetch: (w: Window) => () => void };
 type W = Window & {
   __mapBooted?: boolean;
+  LoadView?: { ctl: () => LoadCtl };
   RegionLoader?: { boot: (w: Window, d: Document) => Promise<{ ok?: boolean } | null> };
   GotoBar?: { mount: (w: Window, d: Document) => void };
 };
+
+const LOADVIEW = '/assets/js/loadview.js';
+const LIBS = ['/assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js', '/assets/js/region.js', '/assets/js/infra.js', '/assets/js/facility.js', '/assets/js/bus.js'];
+const CONFIG = '/config.js', APP = '/assets/js/app.js';
 
 function load(src: string) {
   return new Promise<void>((ok, no) => {
@@ -28,11 +35,21 @@ export default function MapIsland() {
       if (l) l.hidden = true;
       if (f) { f.hidden = false; f.textContent = '화면을 준비하지 못했습니다: ' + e.message; }
     };
-    Promise.all(['/assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js', '/assets/js/region.js', '/assets/js/infra.js', '/assets/js/facility.js', '/assets/js/bus.js'].map(load))
-      .then(() => w.RegionLoader!.boot(window, document))
+    let lv: LoadCtl | null = null;
+    const step = (src: string) => () => { if (lv) lv.got('code', src); };
+    load(LOADVIEW).catch(() => {})
+      .then(() => {
+        lv = w.LoadView ? w.LoadView.ctl() : null;
+        if (lv) [...LIBS, CONFIG, APP].forEach((s) => lv!.want('code', s));
+        return Promise.all(LIBS.map((s) => load(s).then(step(s))));
+      })
+      .then(() => {
+        const restore = lv ? lv.trackFetch(window) : () => {};
+        return w.RegionLoader!.boot(window, document).finally(() => { restore(); if (lv) lv.finish('data'); });
+      })
       .then((r) => {
         if (!r || !r.ok) return null;
-        return load('/config.js').catch(() => {}).then(() => load('/assets/js/app.js'))
+        return load(CONFIG).catch(() => {}).then(step(CONFIG)).then(() => load(APP)).then(step(APP)).then(() => { if (lv) lv.finish('code'); })
           .then(() => load('/assets/js/goto.js').then(() => w.GotoBar!.mount(window, document)).catch(() => {}));
       })
       .catch(fatal);

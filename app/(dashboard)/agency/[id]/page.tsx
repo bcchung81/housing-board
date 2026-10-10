@@ -2,18 +2,20 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Crumbs from '../../../../components/Crumbs';
-import Legend from '../../../../components/charts/Legend';
+import StageLegend from '../../../../components/charts/StageLegend';
 import MonthLines from '../../../../components/charts/MonthLines';
 import { METRIC_COLOR } from '../../../../components/charts/palette';
-import { Lede, Page, PageTitle, PanelTitle, kpisGrid, na, sub } from '../../../../components/page';
+import { Lede, Page, PageTitle, PanelTitle, na, sub } from '../../../../components/page';
+import StageKpis from '../../../../components/StageKpis';
 import { Alert } from '../../../../components/ui/alert';
 import { Badge } from '../../../../components/ui/badge';
 import { Card } from '../../../../components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../../../components/ui/table';
-import { Basis, Kpi, Prov } from '../../../../components/ui';
+import { Basis, Prov } from '../../../../components/ui';
 import { NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, ymDot, ytd } from '../../../../lib/board/calc';
 import { AGENCIES } from '../../../../lib/board/agencies';
 import { lh, molit, sources } from '../../../../lib/board/data';
+import { METRIC_STAGE } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
 
 type Props = { params: Promise<{ id: string }> };
@@ -64,19 +66,17 @@ export default async function AgencyDetail({ params }: Props) {
       <Crumbs items={crumbs} />
       <PageTitle>{a.name} <Badge variant="ok">실데이터</Badge></PageTitle>
       <Lede>통계누리 시행주체 `{a.actor}`의 전국 월별 호수{a.id === 'lh' ? '와 LH 준공 예정 블록' : ''}.</Lede>
-      <div className={kpisGrid}>
-        {KS.map(([k, l]) => <Kpi key={k} label={`${l} · ${monthLabel(last)}`} tone={METRIC_COLOR[k]} value={fmt(seriesOf(molit, k, NATION).actors![a.actor][i])} sub={<>{year}년 누계 {fmt(ytd(molit, k, NATION, last, a.actor))}호{isProvisional(molit, last) ? <Prov /> : null}</>} />)}
-      </div>
+      <StageKpis when={monthLabel(last)} notes={{ '05': '분양은 시행주체 구분이 없음' }} cells={Object.fromEntries(KS.map(([k]) => [k, { value: fmt(seriesOf(molit, k, NATION).actors![a.actor!][i]), sub: <>{year}년 누계 {fmt(ytd(molit, k, NATION, last, a.actor!))}호{isProvisional(molit, last) ? <Prov /> : null}</> }]))} />
       <Card render={<section aria-label="월별 실적" />}>
         <PanelTitle>월별 실적 <small className={sub}>· 전국 · 호 · 빗금은 잠정치</small></PanelTitle>
-        <Legend items={lines.map((l) => ({ label: l.label, color: l.color }))} />
+        <StageLegend metrics={KS.map(([k]) => k)} />
         <MonthLines months={molit.months} lines={lines} provisional={molit.provisional} href={(ym) => `/month/${ym}`} label={`${a.name} 전국 월별 인허가·착공·준공 호수`} />
-        <Basis>통계누리 주택건설실적통계. 인허가는 연초 누계의 차분입니다.</Basis>
+        <Basis>통계누리 주택건설실적통계. 인허가는 연초 누계의 차분입니다. 05 공급(분양)은 시행주체 구분이 없고, 01 정책·02 사업화는 통계누리에 없습니다.</Basis>
       </Card>
       <Card render={<section aria-label="최근 12개월" />}>
         <PanelTitle>최근 12개월 <small className={sub}>· 호</small></PanelTitle>
         <Table>
-          <TableHeader><tr><TableHead>월</TableHead>{KS.map(([, l]) => <TableHead key={l}>{l}</TableHead>)}</tr></TableHeader>
+          <TableHeader><tr><TableHead>월</TableHead>{KS.map(([k, l]) => <TableHead key={l}>{METRIC_STAGE[k]} {l}</TableHead>)}</tr></TableHeader>
           <TableBody>{recent.map((ym) => <TableRow key={ym}><TableCell><Link href={`/month/${ym}`}>{ymDot(ym)}</Link></TableCell>{KS.map(([k]) => <TableCell key={k}>{fmt(seriesOf(molit, k, NATION).actors![a.actor!][molit.months.indexOf(ym)])}</TableCell>)}</TableRow>)}</TableBody>
         </Table>
       </Card>

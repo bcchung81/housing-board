@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Crumbs from '../../../../components/Crumbs';
+import StageLadder from '../../../../components/StageLadder';
 import { Lede, Page, PageTitle, na } from '../../../../components/page';
 import { Alert } from '../../../../components/ui/alert';
 import { Badge } from '../../../../components/ui/badge';
@@ -31,7 +32,8 @@ export default async function StageDetail({ params }: Props) {
     <Page>
       <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: '단계별', href: '/stage' }, { label: `${s.code} ${s.name}` }]} />
       <PageTitle>{s.code} {s.name} <Badge>{list.length}건</Badge></PageTitle>
-      <Lede>이 단계에 확보한 데이터: {s.data}.</Lede>
+      <Lede>{s.q} — 이 단계에 확보한 데이터: {s.data}.</Lede>
+      <StageLadder className="mb-5" current={s.code} counts={Object.fromEntries(STAGES.map((x) => [x.code, projects.filter((p) => p.stageCode === x.code).length]))} />
       {list.length > 0 ? (
         <Table>
           <TableHeader><tr><TableHead>사업</TableHead><TableHead>시군구</TableHead><TableHead>세대수</TableHead></tr></TableHeader>

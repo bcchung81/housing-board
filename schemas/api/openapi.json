@@ -46,6 +46,10 @@
   {
    "name": "bus",
    "description": "버스 위치"
+  },
+  {
+   "name": "terrain",
+   "description": "지형 타일"
   }
  ],
  "paths": {
@@ -808,6 +812,122 @@
      }
     }
    }
+  },
+  "/api/v1/terrain": {
+   "get": {
+    "operationId": "getTerrainTile",
+    "summary": "지형 타일 중계(AWS Terrain Tiles)",
+    "description": "지도의 지형(terrain·hillshade) 타일. AWS Terrain Tiles(terrarium PNG, 미국 동부 S3)를 이 서버를 거쳐 받아 CDN 에 1년 캐시한다(S3 직접은 장당 응답 시작 약 0.7초라 첫 로딩이 가장 길었다). 한국 범위에 걸치는 z 0~14 타일만 중계한다(열린 중계 금지). 지도는 상황판 안에서만 이 경로를 쓰고, API 가 없는 옛 정적 열기는 S3 를 그대로 쓴다. 출처 표기는 지도 출처(ⓘ)에 있다.",
+    "tags": [
+     "terrain"
+    ],
+    "parameters": [
+     {
+      "name": "z",
+      "in": "query",
+      "required": true,
+      "description": "확대 단계(0~14)",
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 14
+      }
+     },
+     {
+      "name": "x",
+      "in": "query",
+      "required": true,
+      "description": "타일 열(0~2^z-1, z 14 에서 16383)",
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 16383
+      }
+     },
+     {
+      "name": "y",
+      "in": "query",
+      "required": true,
+      "description": "타일 행(0~2^z-1, z 14 에서 16383)",
+      "schema": {
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 16383
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "terrarium 인코딩 PNG(원자료 그대로)",
+      "headers": {
+       "Cache-Control": {
+        "description": "public, max-age=86400, s-maxage=31536000, immutable",
+        "schema": {
+         "type": "string"
+        }
+       }
+      },
+      "content": {
+       "image/png": {
+        "schema": {
+         "type": "string",
+         "format": "binary"
+        }
+       }
+      }
+     },
+     "400": {
+      "description": "invalid-query(쿼리 이름·형식) · out-of-range(한국 범위 밖이거나 z 15 이상)",
+      "content": {
+       "application/problem+json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "404": {
+      "description": "not-found(원천에 그 타일이 없음). Cache-Control: public, s-maxage=86400",
+      "content": {
+       "application/problem+json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "405": {
+      "description": "GET·HEAD 만 허용(Allow 헤더)",
+      "content": {
+       "application/problem+json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "429": {
+      "description": "이 서버의 시간당 원천 호출 상한(TERRAIN_UPSTREAM_PER_HOUR). budget-exhausted",
+      "content": {
+       "application/problem+json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     },
+     "502": {
+      "description": "원천 서비스 오류(원인 문구는 싣지 않음). Cache-Control: no-store",
+      "content": {
+       "application/problem+json": {
+        "schema": {
+         "$ref": "#/components/schemas/Problem"
+        }
+       }
+      }
+     }
+    }
+   }
   }
  },
  "components": {
@@ -848,7 +968,9 @@
        "keys-exhausted",
        "budget-exhausted",
        "not-configured",
-       "upstream"
+       "upstream",
+       "out-of-range",
+       "not-found"
       ]
      },
      "detail": {

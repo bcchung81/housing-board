@@ -20,9 +20,9 @@ const query = (q: Record<string, unknown>) => Object.entries(q).map(([k, v]) => 
 function Item({ s }: { s: Source }) {
   return (
     <Card variant="source" render={<section id={s.id} aria-label={s.dataset} />}>
-      <h3 className="m-0 mb-1.5 text-[15px] text-foreground">{s.dataset}</h3>
-      <p className="mt-1.5 mb-0 text-[13px] text-muted-foreground">{s.description}</p>
-      <Dl className="mt-2 text-[13px]">
+      <h3 className="m-0 mb-1.5 text-[18px] text-foreground">{s.dataset}</h3>
+      <p className="mt-1.5 mb-0 text-[15px] text-muted-foreground">{s.description}</p>
+      <Dl className="mt-2 text-[15px]">
         <dt>제공기관</dt><dd>{s.provider}</dd>
         <dt>받은 시각</dt><dd>{when(s.collectedAt) ?? <span>기록 없음</span>} <span>(우리가 받은 때)</span></dd>
         <dt>원천 기준일</dt><dd>{s.sourceAsOf ?? <span>확인하지 못함</span>} <span>(원천이 말하는 기준)</span></dd>

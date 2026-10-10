@@ -21,7 +21,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </head>
       {/* 본문 바탕·글꼴(옛 dash.css 의 body): 위쪽 오른편이 살짝 밝아지는 바탕(--page-bg, 테마별), 15px/1.55.
           클래스가 없는 기본 링크(상세 화면의 dl 안 링크)는 브라우저 기본 파랑 대신 주색으로 보인다. */}
-      <body className={`${doHyeon.className} ${doHyeon.variable} m-0 min-h-screen text-[15px] leading-[1.55] text-foreground [&_a:not([class])]:text-primary [background:var(--page-bg)] [font-synthesis:none]`}>
+      <body className={`font-sans ${doHyeon.variable} m-0 min-h-screen text-[16px] leading-[1.6] text-foreground [&_a:not([class])]:text-primary [background:var(--page-bg)] [font-synthesis:none]`}>
         <TopNav />
         <main>{children}</main>
       </body>

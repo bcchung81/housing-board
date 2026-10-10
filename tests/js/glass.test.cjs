@@ -53,7 +53,7 @@ test('독립 지도는 기존 다크 배경을 유지하고 Next 지도는 저�
   assert.match(app, /ofm: 'dark'/);
   assert.match(app, /bg: '#0A1030'/);
   assert.match(app, /const TH = \(\) => LIGHT_MAP \? LIGHT_THEME : THEME/);
-  assert.match(app, /vw: 'Base', ofm: 'liberty'/);
+  assert.match(app, /vw: 'white', ofm: 'liberty'/, "라이트는 V-World 백지도: 'Base' 는 장소 글자가 그림에 박혀 기울인 지도에서 번지고 벡터 지명과 겹쳤다");
   assert.doesNotMatch(css, /data-theme/i);
   assert.doesNotMatch(app, /nightChip|setTheme|reTheme/i);
 });
@@ -72,7 +72,7 @@ test('필터는 흐림(blur)과 채도만 쓰고 밝기를 누르지 않으며, 
 
 test('표지·요약·카드가 유리 변수와 backdrop-filter 를 쓴다(-webkit- 포함)', () => {
   const CARDS = ['.maplibregl-popup-content', '.optpanel'];   // 뒤 지도가 보이는 카드 필터를 쓰는 선택자
-  for (const sel of ['.maplibregl-popup-content', '.hudtag', '.hudsum', '.maplegend', '.timebar', '.tools', '.rctl', '.optpanel']) {
+  for (const sel of ['.maplibregl-popup-content', '.hudtag', '.maplegend', '.tools', '.rctl', '.optpanel']) {   // 공급 요약은 2026-10-10 머리 줄로 옮겨 유리판이 아니고, 입주 시기 재생바는 없앴다
     const m = new RegExp(`(?:^|\\n)${sel.replace('.', '\\.')}\\{([^}]*)\\}`).exec(css);
     assert.ok(m, `${sel} 규칙을 찾을 수 없음`);
     assert.match(m[1], /var\(--glass-(tag|sum|card)\)/, `${sel} 배경이 유리 변수여야 한다`);
@@ -146,7 +146,11 @@ test('입력줄 유리: 입력줄·후보·인식 칩이 상태별 변수와 bac
 
 test('라이트 지도 HUD 본문·보조·상태 글자는 가장 밝고 어두운 지도 위에서 4.5:1 이상이다', () => {
   const light = /html\[data-map-shell\]:not\(\.dark\)\{([^}]*)\}/.exec(css)[1];
-  const vars = Object.fromEntries([...light.matchAll(/(--[\w-]+):([^;]+);?/g)].map((m) => [m[1], m[2].trim()]));
+  const shell = /html\[data-map-shell\]\{([^}]*)\}/.exec(css)[1];   // 두 테마 공통: 단계색·강조색은 대시보드 토큰을 가리킨다
+  const tw = fs.readFileSync(path.join(ROOT, 'app/tailwind.css'), 'utf8'), twLight = tw.slice(tw.indexOf('\n:root {'), tw.indexOf('\n}\n', tw.indexOf('\n:root {')));
+  const twVar = (n) => { const m = new RegExp(`${n}:\\s*(#[0-9A-Fa-f]{6})`).exec(twLight); assert.ok(m, `app/tailwind.css 라이트 ${n}`); return m[1]; };
+  const resolve = (v) => { const m = /^var\((--[\w-]+)\)$/.exec(v); return m ? twVar(m[1]) : v; };
+  const vars = Object.fromEntries([...shell.matchAll(/(--[\w-]+):([^;]+);?/g), ...light.matchAll(/(--[\w-]+):([^;]+);?/g)].map((m) => [m[1], resolve(m[2].trim())]));
   const text = ['--ink', '--ink2', '--mute', '--warn', '--sale', '--build', '--soon', '--move', '--plan', '--priv', '--edu', '--power'];
   for (const glassName of ['--glass-tag', '--glass-tag-hover', '--glass-sum', '--glass-card']) {
     const g = vars[glassName].match(/[\d.]+/g).map(Number);

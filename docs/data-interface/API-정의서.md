@@ -41,6 +41,8 @@
 | `budget-exhausted` | 429 | 이 서버의 시간당 호출 상한(Retry-After) |
 | `not-configured` | 503 | 인증키 없음 |
 | `upstream` | 502 | 원천 서비스 오류 |
+| `out-of-range` | 400 | 지형 타일이 한국 범위 밖이거나 z 15 이상(terrain) |
+| `not-found` | 404 | 원천에 지형 타일이 없음(terrain) |
 
 ## 2. `GET /api/v1/resolve` — 표준코드 해석
 
@@ -1535,7 +1537,48 @@
 }
 ```
 
-## 8. `GET /api/bus` — 버스 위치(요청 시에만)
+## 8. `GET /api/v1/terrain` — 지형 타일 중계(AWS Terrain Tiles)
+
+지도의 지형(terrain·hillshade) 타일. AWS Terrain Tiles(terrarium PNG, 미국 동부 S3)를 이 서버를 거쳐 받아 CDN 에 1년 캐시한다(S3 직접은 장당 응답 시작 약 0.7초라 첫 로딩이 가장 길었다). 한국 범위에 걸치는 z 0~14 타일만 중계한다(열린 중계 금지). 지도는 상황판 안에서만 이 경로를 쓰고, API 가 없는 옛 정적 열기는 S3 를 그대로 쓴다. 출처 표기는 지도 출처(ⓘ)에 있다.
+
+- operationId: `getTerrainTile`
+
+### 매개변수
+
+| 이름 | 필수 | 형식 | 설명 |
+|---|---|---|---|
+| `z` | ● | integer 0~14 | 확대 단계(0~14) |
+| `x` | ● | integer 0~16383 | 타일 열(0~2^z-1, z 14 에서 16383) |
+| `y` | ● | integer 0~16383 | 타일 행(0~2^z-1, z 14 에서 16383) |
+
+### 응답 `200`
+
+`image/png` · `Cache-Control: public, max-age=86400, s-maxage=31536000, immutable` · 스키마 `PNG(terrarium, 원자료 그대로)`
+
+terrarium 인코딩 PNG(원자료 그대로)
+
+| 항목 | 형식 | 필수 | 설명 |
+|---|---|---|---|
+
+### 동작
+
+- 지도 지형 타일(terrain·hillshade, maxzoom 14)을 미국 동부 S3 대신 이 서버(icn1)와 CDN 에서 받게 한다. 한 번 받은 타일은 CDN 이 1년 보관한다.
+- 열린 중계가 되지 않게 한국 범위(경도 124~132°, 위도 33~39.5°)에 걸치는 z 0~14 타일만 받는다. 인증키는 쓰지 않는다(그래서 503 이 없다).
+- PNG 응답이라 JSON 예제는 없다. 원천 404 는 404(하루 CDN 캐시)로 돌려준다.
+
+### 오류
+
+| HTTP | `code` | 설명 |
+|---|---|---|
+| 400 | `invalid-query` · `out-of-range` | invalid-query(쿼리 이름·형식) · out-of-range(한국 범위 밖이거나 z 15 이상) |
+| 404 | `not-found` | not-found(원천에 그 타일이 없음). Cache-Control: public, s-maxage=86400 |
+| 405 | `method` | GET·HEAD 만 허용(Allow 헤더) |
+| 429 | `budget-exhausted` | 이 서버의 시간당 원천 호출 상한(TERRAIN_UPSTREAM_PER_HOUR). budget-exhausted |
+| 502 | `upstream` | 원천 서비스 오류(원인 문구는 싣지 않음). Cache-Control: no-store |
+
+### 예제
+
+## 9. `GET /api/bus` — 버스 위치(요청 시에만)
 
 배포된 번들(regions/<slug>/infra.json)의 live 노선 차량 위치. 사용자가 '버스 위치 조회'를 누를 때만 부른다. 오류 모양이 RFC 7807 이 아니라 BusError 이다(옛 경로 유지).
 
@@ -1611,7 +1654,7 @@
 }
 ```
 
-## 9. 공통 스키마
+## 10. 공통 스키마
 
 ### `Problem`
 
@@ -1622,7 +1665,7 @@ RFC 7807 problem+json. type 은 '/problems/<code>' 이고 code 는 아래 목록
 | `type` | string `^/problems/[a-z0-9-]+$` | ● |  |
 | `title` | string | ● |  |
 | `status` | integer 400~599 | ● |  |
-| `code` | `invalid-query` · `invalid-code` · `invalid-cell` · `unsupported-level` · `unknown-code` · `unknown-project` · `method` · `keys-exhausted` · `budget-exhausted` · `not-configured` · `upstream` | ● |  |
+| `code` | `invalid-query` · `invalid-code` · `invalid-cell` · `unsupported-level` · `unknown-code` · `unknown-project` · `method` · `keys-exhausted` · `budget-exhausted` · `not-configured` · `upstream` · `out-of-range` · `not-found` | ● |  |
 | `detail` | string | ● |  |
 | `reason` | string |  | invalid-code·invalid-query 의 세부 사유(empty·not-digits·bad-length·unknown-sido·bad-pnu·bad-project·type-mismatch·too-short·too-long) |
 | `retryAfterSec` | integer 1~ |  | 429 일 때 다시 시도할 때까지 초(Retry-After 헤더와 같음) |
@@ -1669,7 +1712,7 @@ GeoJSON Polygon 또는 MultiPolygon(경계는 점 수를 줄여 단순화함)
 
 `{"type":"string","pattern":"^\\d{4}(-\\d{2}(-\\d{2})?)?$","description":"원천이 연·월까지만 적은 날짜는 YYYY-MM · YYYY 로 온다(예정일)"}`
 
-## 10. 화면(클라이언트) 계약
+## 11. 화면(클라이언트) 계약
 
 | 항목 | 규칙 | 구현·시험 |
 |---|---|---|
@@ -1680,7 +1723,7 @@ GeoJSON Polygon 또는 MultiPolygon(경계는 점 수를 줄여 단순화함)
 | 주소 이동 입력줄 | `search` 후보 → 위 매개변수로 이동. 상태 4가지(대기 .62 · 입력 중 .88 · 이동 중 · 비활성 .46 불투명도). 404·405·503·429 는 비활성 | `assets/js/goto.js`, 스펙 2.5 |
 | 실패해도 | 인허가·기반시설·검색이 실패해도 경계와 건물은 열린다(자료 안내·banner 에 이유) | `region.js` |
 
-## 11. 바꾸는 규칙
+## 12. 바꾸는 규칙
 
 - **하위 호환**: 응답에 항목을 *더하는* 것은 같은 버전에서 가능(화면은 모르는 항목을 무시). 항목을 지우거나 형식·뜻을 바꾸거나 오류 코드를 바꾸면 `/api/v2` 로 올린다.
 - **절차**: `schemas/api/openapi.json` 수정 → `node scripts/capture-fixtures.js`(운영 응답 다시 받기, 키 풀 한도 때문에 호출 사이 1.2초) → `node scripts/gen-api-docs.js` → `node --test tests/js/contract.test.cjs`.

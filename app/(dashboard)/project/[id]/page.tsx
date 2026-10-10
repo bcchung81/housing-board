@@ -2,13 +2,13 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import Crumbs from '../../../../components/Crumbs';
+import StageLadder from '../../../../components/StageLadder';
 import { Dl, Lede, Page, PageTitle, PanelTitle } from '../../../../components/page';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card } from '../../../../components/ui/card';
-import { Stepper, StepperItem } from '../../../../components/ui/stepper';
 import { Basis } from '../../../../components/ui';
-import { fmt } from '../../../../lib/board/calc';
-import { SGG, projects, sources } from '../../../../lib/board/data';
+import { fmt, sidoName } from '../../../../lib/board/calc';
+import { SGG, molit, projects, sources } from '../../../../lib/board/data';
 import { STAGES } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
 
@@ -37,10 +37,10 @@ export default async function ProjectPage({ params }: Props) {
       <PageTitle>{p.name} <code>{p.id}</code></PageTitle>
       <Lede>{area?.name ?? p.sgg} · 법정동 {p.bjdCodes.length}곳 · {p.units ? `${fmt(p.units)}세대` : '세대수 미확인'}</Lede>
 
-      <Stepper aria-label="6단계 진행">
-        {STAGES.map((s, i) => <StepperItem key={s.code} state={i === cur ? 'on' : i < cur ? 'done' : 'todo'} aria-current={i === cur ? 'step' : undefined}><b>{i + 1}</b>{s.name}</StepperItem>)}
-      </Stepper>
-      <p className="mt-1.5">현재 단계 {p.stageCode} {STAGES[cur]?.name}</p>
+      <StageLadder current={p.stageCode} />
+      {/* 9.30 지시 '사업별 진행상황과 앞으로의 변화를 알기 쉽게': 지금 단계와 다음 단계를 한 문장씩. 날짜는 원천에 일정이 없어 쓰지 않는다 */}
+      <p className="mt-2.5 mb-0">지금은 <b>{p.stageCode} {STAGES[cur]?.name}</b> 단계입니다 — {STAGES[cur]?.q}</p>
+      <p className="mt-1 mb-0 text-muted-foreground">{STAGES[cur + 1] ? <>다음은 <b className="text-foreground">{STAGES[cur + 1].code} {STAGES[cur + 1].name}</b> 단계입니다 — {STAGES[cur + 1].q}</> : '마지막 단계입니다.'} {area ? <Link href={`/my-area/${area.sido}`}>우리 동네({sidoName(molit, area.sido) ?? area.sido}) 공급 소식</Link> : null}</p>
 
       <Card render={<section aria-label="개요" />}>
         <PanelTitle>개요</PanelTitle>

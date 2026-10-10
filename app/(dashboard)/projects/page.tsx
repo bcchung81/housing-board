@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import Crumbs from '../../../components/Crumbs';
+import StageLadder from '../../../components/StageLadder';
 import { Lede, Page, PageTitle, cardsGrid, na } from '../../../components/page';
 import { Badge } from '../../../components/ui/badge';
 import { cardVariants } from '../../../components/ui/card';
@@ -22,11 +23,9 @@ export default function ProjectsPage() {
       <PageTitle>사업(현황표) <Badge variant="ok">실데이터</Badge></PageTitle>
       <Lede>사업 id 레지스트리에 발급된 사업 {projects.length}건. 행을 누르면 6단계·규모·위치·근거가 있는 사업 상세로 내려갑니다.</Lede>
       <div className={`${cardsGrid} mt-3`}>
-        {bySgg.map((s) => <Link key={s.code} className={cardVariants({ variant: 'link' })} href={`/area/${s.code}`}><b>{SGG[s.code].name}</b><span>사업 {s.n}건</span><code>/area/{s.code}</code></Link>)}
+        {bySgg.map((s) => <Link key={s.code} className={cardVariants({ variant: 'link' })} href={`/area/${s.code}`}><b>{SGG[s.code].name}</b><span>사업 {s.n}건</span></Link>)}
       </div>
-      <ul className="m-0 mt-3 flex list-none flex-wrap gap-x-[14px] gap-y-1.5 p-0 text-[12.5px] text-foreground [&_li]:flex [&_li]:items-center [&_li]:gap-1.5" aria-label="단계별 사업 수">
-        {STAGES.map((s) => <li key={s.code}><Link href={`/stage/${s.code}`}>{s.code} {s.name} {projects.filter((p) => p.stageCode === s.code).length}건</Link></li>)}
-      </ul>
+      <StageLadder className="mt-5 mb-1" counts={Object.fromEntries(STAGES.map((s) => [s.code, projects.filter((p) => p.stageCode === s.code).length]))} />
       <Table>
         <TableHeader><tr><TableHead>사업</TableHead><TableHead>시군구</TableHead><TableHead>단계</TableHead><TableHead>세대수</TableHead><TableHead>위치</TableHead><TableHead>id</TableHead></tr></TableHeader>
         <TableBody>

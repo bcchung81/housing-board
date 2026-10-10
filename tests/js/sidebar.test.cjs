@@ -40,16 +40,11 @@ test('주소 ?panel=0 이면 접은 채 열고, 접고 펼 때마다 주소에 �
   assert.match(app, /function setCollapsed\(on, \{ quiet = false \} = \{\}\)/);
 });
 
-test('접어도 지역 이름·지역 바꾸기가 지도 위 요약에 있다', () => {
-  assert.match(app, /class="hs-region"/);
-  assert.match(app, /regionSel/);
-  assert.match(css, /\.hudsum \.hs-region\b/);
-});
-
-test('상세 카드는 지도 위 요약(#hudSum)과 겹치지 않게 자리를 잡는다', () => {
-  const fn = /function showCard\([\s\S]*?\n\}\n/.exec(app);
-  assert.ok(fn, 'showCard 를 찾을 수 없음');
-  assert.match(fn[0], /hudSum/);
+test('공급 요약은 머리 줄에 늘 있어 사이드바를 접어도 보이고, 지역 이름·바꾸기는 머리 줄 왼쪽에 있다(요약에 지역 선택을 두지 않는다)', () => {
+  const head = /<header class="mhead" id="mhead">[\s\S]*?<\/header>/.exec(html)[0];
+  assert.match(head, /id="regionSel"/); assert.match(head, /<div class="hudsum" id="hudSum" role="group" aria-label="공급 요약"><\/div>/);
+  assert.doesNotMatch(app, /hs-region|hudRegion|\$\('#hudSum'\)\.hidden/);
+  assert.doesNotMatch(css, /\.hudsum \.hs-region/);
 });
 
 test('사이드바 글자는 13px 아래로 내려가지 않는다', () => {
@@ -59,12 +54,10 @@ test('사이드바 글자는 13px 아래로 내려가지 않는다', () => {
   for (const s of SEL) for (const px of fontPx(s)) assert.ok(px >= 13, `${s} ${px}px (13px 이상 필요)`);
 });
 
-test('위계: 구역 제목(h2)은 13px 이상의 굵은 글자이고, 단지 이름(.card b)은 그보다 크지만 17px을 넘지 않는다', () => {
-  // 상황판 시안(M3)은 구역 제목을 작은 굵은 이름표로 두고, 크기 대신 굵기·색(--ink2)으로 위계를 만든다
-  const h2 = Math.min(...fontPx('h2')), card = Math.max(...fontPx('.card b'));
-  assert.ok(h2 >= 13, `h2 ${h2}px`);
-  assert.match(bodies('h2').join(';'), /font-weight:(700|800|900)/);
-  assert.ok(card > h2 && card <= 17, `단지 이름 ${card}px`);
+test('데스크톱 가독성: 구역 제목은 20px, 단지 이름은 18px이며 역할별 크기를 구분한다', () => {
+  assert.ok(fontPx('h2').includes(20), '구역 제목 20px');
+  assert.ok(fontPx('.card b').includes(18), '단지 이름 18px');
+  assert.match(css, /grid-template-columns:minmax\(0,1fr\) 420px/);
 });
 
 test('사이드바 보조 글자에 옅은 회색(#5C6068·#6B6F77)을 쓰지 않는다', () => {

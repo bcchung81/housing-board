@@ -12,8 +12,8 @@ export const MENU: MenuItem[] = [
   { id: 'stage', href: '/stage', label: '단계별' },
   { id: 'agency', href: '/agency', label: '기관별' },
   { id: 'sources', href: '/sources', label: '데이터 원본' },
-  { id: 'reports', href: '/reports', label: '보고자료', soon: true },
-  { id: 'my-area', href: '/my-area', label: '우리 동네', soon: true },
+  { id: 'reports', href: '/reports', label: '보고자료' },
+  { id: 'my-area', href: '/my-area', label: '우리 동네' },
 ];
 
 /* 첫 경로 마디 → 강조할 사이드바 메뉴. 월 상세는 종합상황판 위젯에서 내려가므로 ①을, 사업 상세는 ③을 강조한다. */
@@ -30,8 +30,8 @@ export const SECTIONS: Record<string, { label: string; note: string; soon?: bool
   stage: { label: '단계별', note: '6단계(01 정책 ~ 06 입주)별 사업 수와 병목. 단계마다 머문 사업 목록으로 내려갑니다.' },
   agency: { label: '기관별', note: 'LH·GH·SH·지자체·국방부별 사업·호수·단계 분포. 국방부는 수작업 입력 대기입니다.' },
   sources: { label: '데이터 원본', note: '원천 카탈로그: 모든 숫자의 출처·수집일·원천 기준일(스펙 9.3). 수집일과 원천 기준을 따로 보입니다.' },
-  reports: { label: '보고자료', note: '정례 보고용 집계.', soon: true },
-  'my-area': { label: '우리 동네 사업', note: '국민 공개: 시도·시군구·동을 골라 사업과 다음 일정을 봅니다.', soon: true },
+  reports: { label: '보고자료', note: '월간 주택공급 브리핑: 매월 진척상황 보고(8.14 지시)를 위한 실데이터 집계.' },
+  'my-area': { label: '우리 동네', note: '국민 공개: 시도를 골라 앞으로 1년의 공공주택 준공 예정과 진행 중인 사업을 봅니다(9.4 국민 예측가능성 지시).' },
 };
 
 /* 파생 상세 `/{section}/{id}`: 이름·식별자 모양·올라갈 목록. 식별자는 새로 만들지 않는다(지역은 AreaRef 코드, 사업은 PRJ-{시군구5}-{일련4}). */
@@ -41,4 +41,5 @@ export const DETAILS: Record<string, { label: string; id: RegExp; list: string; 
   stage: { label: '단계 상세', id: /^0[1-6]$/, list: '/stage', idLabel: '6단계 코드' },
   agency: { label: '기관 상세', id: /^(lh|gh|sh|local|mnd)$/, list: '/agency', idLabel: '기관' },
   month: { label: '월 상세', id: /^\d{4}-(0[1-9]|1[0-2])$/, list: '/', idLabel: '연-월' },
+  'my-area': { label: '우리 동네 시도', id: /^\d{2}$/, list: '/my-area', idLabel: '시도 2자리 코드' },
 };

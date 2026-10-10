@@ -22,10 +22,12 @@ test('상단 컨트롤은 줄바꿈 없이 한 줄이고, 회전 슬라이더 �
   assert.doesNotMatch(css, /\.dial\b/);
 });
 
-test('지도 위 한 줄에 옵션·전체·평면·투어·◀▶·자동이 이 순서로 모여 있고, 보기 기준(#modeSeg)은 머리 줄에 있다', () => {
+test('지도 위 한 줄에 옵션·전체·평면·투어·◀▶·자동이 이 순서로 모여 있고, 보기 기준 단추(층수·공정율·입주 시기)는 없다(2026-10-10 기반시설 보기 고정)', () => {
   const head = /<header class="mhead" id="mhead">[\s\S]*?<\/header>/.exec(html);
-  assert.ok(head && /id="modeSeg"/.test(head[0]), '보기 기준은 머리 줄에 있어야 한다');
-  assert.doesNotMatch(topbar[0], /id="modeSeg"/);
+  assert.ok(head && /id="hudSum"/.test(head[0]), '옛 보기 기준 자리에 공급 요약이 있다');
+  assert.doesNotMatch(html + app, /modeSeg|data-mode=|id="timebar"|tRange|tPlay|MODE_SAY|rateH|timeH|dong-ghost|timeMo|blockTimes|moLabel|MO_MAX|monthF|\btm\.mo\b|dongH\(/);   // 지운 이름을 가리키는 식이 남으면 setupCustom 이 멈춰 지도에 배경만 남는다(2026-10-10 실제로 겪음)
+  assert.match(app, /let viewMode = window\.GY_INFRA \? 'infra' : 'floors';/);
+  assert.match(app, /set\('mode', ''\);/, '옛 주소의 mode= 는 지운다');
   const order = ['id="optBtn"', 'id="vAll"', 'id="vPlane"', 'id="vTour"', 'id="dLeft"', 'id="dRight"', 'id="vOrbit"'];
   let at = -1;
   for (const o of order) { const i = topbar[0].indexOf(o); assert.ok(i > at, `${o} 위치/순서`); at = i; }
@@ -62,37 +64,31 @@ test('옵션 창에는 야간 지도 선택이 없고, 단추 이름표도 야�
   assert.doesNotMatch(html, /야간|nightChip/);
 });
 
-test('요약 카드(#hudSum)는 확대 카드 왼쪽에 붙는 가로형 2열 카드다(세로 240px 카드가 아니다)', () => {
+test('공급 요약(#hudSum)은 머리 줄 오른쪽의 2열(합계·막대·범례 | 점검 칩)이고, 지도 위에 떠 있지 않다', () => {
   const b = bodies('.hudsum').join(';');
-  assert.match(b, /top:12px/);
-  assert.match(b, /display:grid/); assert.match(b, /grid-template-columns:minmax\(0,\d+px\) minmax\(0,\d+px\)/);
-  assert.doesNotMatch(b, /width:240px|flex-direction:column/);
-  // 오른쪽 위치 = 확대 카드 오른쪽 여백 12 + 확대 카드 폭(단추 36 + 테두리 2) + 간격 8
-  const w = +/\.rctl button\{[^}]*width:(\d+)px/.exec(css)[1], right = +/right:(\d+)px/.exec(b)[1], rr = +/\.rctl\{[^}]*right:(\d+)px/.exec(css)[1];
-  assert.equal(right, rr + w + 2 + 8, `.hudsum right:${right}px 는 확대 카드 바로 왼쪽이어야 한다`);
-  // 상단 바(약 564px)와 가로로 겹치기 쉬운 폭에서는 바 아래로
-  assert.match(css, /@media \(min-width:901px\) and \(max-width:1140px\)\{\.hudsum\{top:60px\}\}/);
+  assert.match(b, /margin-left:auto/); assert.match(b, /display:grid/);
+  assert.doesNotMatch(b, /position:absolute|backdrop-filter|box-shadow/, '머리 줄 안이라 떠 있는 유리 카드가 아니다');
+  assert.match(css, /@media \(max-width:1280px\)\{\.hudsum\{grid-template-columns:minmax\(0,210px\)\}\.hudsum \.hs-b\{display:none\}\}/);
   assert.match(css, /\.ptoggle,\.hudsum\{display:none!important\}/);   // 모바일은 하단 시트가 대신한다
 });
 
-test('요약 카드 내용은 요약본: 왼쪽 지역·합계·막대·번호 범례, 오른쪽 점검 한 줄과 다음 일정(제목·날짜·세대수 줄은 뺀다)', () => {
+test('공급 요약 내용: 왼쪽 합계·막대·번호 범례, 오른쪽 입주 전 점검 칩(지역 선택·다음 일정은 머리 줄 왼쪽·사이드바에 있어 뺀다)', () => {
   const fn = /function syncHudSum\(\) \{[\s\S]*?\n\}\n/.exec(app);
   assert.ok(fn, 'syncHudSum 을 찾을 수 없음');
-  for (const c of ['hs-a', 'hs-b', 'hs-region', 'hs-total', 'SUM_COMPACT', 'class="isum"', 'class="next"']) assert.ok(fn[0].includes(c), `${c} 가 있어야 한다`);
-  assert.match(fn[0], /classList\.toggle\('solo', !side\)/);               // 점검·다음 일정이 없는 지역은 한 열
+  for (const c of ['hs-a', 'hs-b', 'hs-total', 'SUM_COMPACT', 'class="isum"']) assert.ok(fn[0].includes(c), `${c} 가 있어야 한다`);
+  for (const c of ['hs-region', 'class="next"']) assert.ok(!fn[0].includes(c), `${c} 는 없어야 한다`);
+  assert.match(fn[0], /classList\.toggle\('solo', !side\)/);               // 점검 자료가 없는 지역은 한 열
   assert.match(css, /\.hudsum\.solo\{grid-template-columns:minmax\(0,\d+px\)\}/);
   assert.doesNotMatch(fn[0], /<h3>/);                                     // '공급 예정'·'다음 일정' 제목 줄이 없다
   assert.match(app, /SUM_COMPACT = grp\.map/);                            // 상태별 번호만(이름·%는 이름표)
   assert.match(app, /sub: `공급 예정 \$\{BLOCKS\.length\}개 단지/);
   assert.match(bodies('.hudsum .isum-t').join(';'), /display:none/);       // 점검 헤드라인 문장은 칩이 대신한다
-  assert.match(bodies('.hudsum .next span.s').join(';'), /display:none/);   // 날짜·세대수 보조 줄
-  assert.match(app, /slice\(0, 2\)\.map\(\(li\) => li\.outerHTML\)/);   // 다음 일정은 2건
 });
 
-test('상세 카드는 가로 요약·확대 카드에 폭을 빼앗기지 않고, 가로로 겹치면 그 아래로 비켜 선다', () => {
+test('상세 카드는 확대 카드에 폭을 빼앗기지 않고, 가로로 겹치면 그 아래로 비켜 선다(공급 요약은 머리 줄로 옮겨 지도를 가리지 않는다)', () => {
   const fn = /function showCard\([\s\S]*?\n\}\n/.exec(app)[0];
   assert.match(fn, /const W = map\.getContainer\(\)\.clientWidth;/);       // 요약 왼쪽 가장자리로 폭을 줄이지 않는다
   assert.doesNotMatch(fn, /hs\.getBoundingClientRect\(\)\.left/);
-  assert.match(fn, /for \(const o of \[\$\('#hudSum'\), \$\('\.rctl'\)\]\)/);
+  assert.match(fn, /for \(const o of \[\$\('\.rctl'\)\]\)/);
   assert.match(fn, /dy = Math\.max\(dy, q2\.bottom \+ 8 - r\.top\)/);
 });

@@ -24,7 +24,7 @@ export default function MapLayout({ children }: { children: ReactNode }) {
         <link rel="stylesheet" href="/assets/vendor/maplibre-gl/5.24.0/maplibre-gl.css" />
         <link rel="stylesheet" href="/assets/css/app.css" />
       </head>
-      <body className={`${doHyeon.className} ${doHyeon.variable} [font-synthesis:none]`}>
+      <body className={`font-sans ${doHyeon.variable} [font-synthesis:none]`}>
         <div className="shell-map flex h-screen flex-col overflow-hidden">
           <TopNav compact />
           {children}

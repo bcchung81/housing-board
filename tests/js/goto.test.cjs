@@ -231,13 +231,13 @@ test('index.html 의 인라인 로더 스크립트가 문법 오류 없이 읽�
   assert.doesNotThrow(() => new (require('node:vm').Script)(m[1]));
 });
 
-test('구조: index.html 에 입력줄 마크업(콤보박스·목록·인식 줄)이 있고 goto.js 를 app.js 다음에 선택적으로 불러온다, 좁은 화면과 재생바·안내와의 자리 규칙이 있다', () => {
+test('구조: index.html 에 입력줄 마크업(콤보박스·목록·인식 줄)이 있고 goto.js 를 app.js 다음에 선택적으로 불러온다, 좁은 화면과 안내와의 자리 규칙이 있다(입주 시기 재생바는 2026-10-10 없앴다)', () => {
   for (const id of ['cmd', 'cmdForm', 'cmdIn', 'cmdRes', 'cmdParse', 'cmdClear', 'cmdGo']) assert.match(html, new RegExp(`id="${id}"`), id);
   assert.match(html, /<div class="cmd" id="cmd" data-state="idle" hidden>/);                                                                 // JS 가 붙기 전에는 보이지 않는다
   assert.match(html, /role="combobox"[^>]*aria-controls="cmdRes"[^>]*aria-autocomplete="list"/); assert.match(html, /<label class="sr" for="cmdIn">/); assert.match(html, /role="listbox"/);
-  assert.ok(html.indexOf('id="timebar"') < html.indexOf('id="cmd"'), '재생바 다음에 있어야 형제 선택자로 자리를 비킨다');
+  assert.doesNotMatch(html + css, /timebar/);
   assert.match(html, /load\('assets\/js\/app\.js'\); \}\)\.then\(function \(\) \{ return load\('assets\/js\/goto\.js'\)[^}]*GotoBar\.mount\(window, document\)[^}]*\}\)\.catch\(function \(\) \{\}\)/);   // 실패해도 지도는 열린다
-  assert.match(css, /@media \(min-width:901px\)\{\s*\.timebar:not\(\[hidden\]\) ~ \.cmd\{/); assert.match(css, /\.mapwrap\.hascmd \.dynhint\{/);
+  assert.match(css, /\.mapwrap\.hascmd \.dynhint\{/);
   const mobile = /@media \(max-width:900px\)\{([\s\S]*?)\n\}\n/.exec(css)[1];
   assert.match(mobile, /\.cmd\{left:12px;right:68px;top:56px;bottom:auto;/); assert.match(mobile, /\.cmd-bar input\{font-size:16px\}/);
   assert.match(css, /\.cmd\[hidden\]\{display:none\}/); assert.match(css, /\.cmd-res\[hidden\],\.cmd-parse\[hidden\]\{display:none\}/);

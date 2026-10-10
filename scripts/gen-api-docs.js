@@ -74,6 +74,8 @@ const OPS = [
     notes: ['후보 규칙: 공동주택 + 총세대수 > 0, 번지(PNU) 단위로 모음. 상태는 인허가로 아는 3가지(`계획`·`건설 단계`·`입주 단계`).', '공공주택지구 블록 단위 허가(필지 번호 없음)는 건축물대장 총괄표제부의 세대수 + 대지면적으로 위치를 정하고 `via: "ledger"` 를 붙인다. 못 정한 것은 `meta.blockList`.', '예정일은 연·월만 있는 값(`YYYY-MM`)이 올 수 있다(`PartialDate`).'] },
   { path: '/api/v1/infra', ex: [['법정동(TAGO 정류소)', 'infra-deokpung.json'], ['서울(서울특별시 정류소정보조회)', 'infra-seoul.json'], ['서울시 조회가 안 될 때(OpenStreetMap 으로 물러남)', 'infra-seoul-osm.json'], ['정류장을 못 받은 경우(OSM 서버도 실패)', 'infra-seoul-nobus.json']], schema: 'InfraResponse',
     notes: ['서버는 임의 좌표를 받지 않고 그 법정동의 인허가 필지 중심만 쓴다(키를 쓰는 열린 중계가 되지 않게). 인허가가 없으면 비어 있다.', '정류장은 TAGO 가 우선이고, 서울은 서울특별시 정류소정보조회(`meta.stopsSource: "seoul"`, 하루 1,000건 한도라 단지 중심 300 m 간격 최대 12곳만 부른다), TAGO·서울시에 자료가 없거나 서울시 조회가 실패하면 OpenStreetMap(`meta.stopsSource: "osm"`, ODbL 출처 표시)으로 보조한다.', '`meta.schoolsError`·`meta.stopsError` 가 있으면 일부만 준 것이며 응답은 `s-maxage=60`.'] },
+  { path: '/api/v1/terrain', ex: [], schema: 'PNG(terrarium, 원자료 그대로)',
+    notes: ['지도 지형 타일(terrain·hillshade, maxzoom 14)을 미국 동부 S3 대신 이 서버(icn1)와 CDN 에서 받게 한다. 한 번 받은 타일은 CDN 이 1년 보관한다.', '열린 중계가 되지 않게 한국 범위(경도 124~132°, 위도 33~39.5°)에 걸치는 z 0~14 타일만 받는다. 인증키는 쓰지 않는다(그래서 503 이 없다).', 'PNG 응답이라 JSON 예제는 없다. 원천 404 는 404(하루 CDN 캐시)로 돌려준다.'] },
   { path: '/api/bus', ex: [['인천 계양구(앞 3대)', 'bus-gyeyang.json']], schema: 'BusResponse', notes: ['어느 노선을 부를지는 요청이 정하지 못한다(번들의 live 노선만). 오류 모양이 RFC 7807 이 아니라 `{ "error": "<코드>" }` 이다(옛 경로 유지).'] },
 ];
 
@@ -100,8 +102,8 @@ function build() {
   const statusOf = {};
   for (const item of Object.values(DOC.paths)) for (const [st, r] of Object.entries(item.get.responses)) { const d = r.description || ''; for (const c of codes) if (new RegExp(`(^|[^-a-z])${c}([^-a-z]|$)`).test(d) || (r.content && r.content['application/problem+json'] && d.includes(c))) (statusOf[c] = statusOf[c] || new Set()).add(st); }
   push('### 1.3 오류 코드', '', '| `code` | HTTP | 쓰이는 곳 |', '|---|---|---|');
-  const where = { 'invalid-query': '쿼리 이름·개수·길이·형식', 'invalid-code': '코드 형식·종류 불일치', 'invalid-cell': '건물 칸 번호가 한국 범위 밖', 'unsupported-level': '시도 단위(resolve)', 'unknown-code': '표준코드 표에 없음(resolve, suggestions)', 'unknown-project': '발급되지 않은 사업 id(resolve, project)', method: 'GET·HEAD 외', 'keys-exhausted': '인증키 한도(Retry-After)', 'budget-exhausted': '이 서버의 시간당 호출 상한(Retry-After)', 'not-configured': '인증키 없음', upstream: '원천 서비스 오류' };
-  const http = { 'invalid-query': '400', 'invalid-code': '400', 'invalid-cell': '400', 'unsupported-level': '422', 'unknown-code': '404', 'unknown-project': '404', method: '405', 'keys-exhausted': '429', 'budget-exhausted': '429', 'not-configured': '503', upstream: '502' };
+  const where = { 'invalid-query': '쿼리 이름·개수·길이·형식', 'invalid-code': '코드 형식·종류 불일치', 'invalid-cell': '건물 칸 번호가 한국 범위 밖', 'out-of-range': '지형 타일이 한국 범위 밖이거나 z 15 이상(terrain)', 'not-found': '원천에 지형 타일이 없음(terrain)', 'unsupported-level': '시도 단위(resolve)', 'unknown-code': '표준코드 표에 없음(resolve, suggestions)', 'unknown-project': '발급되지 않은 사업 id(resolve, project)', method: 'GET·HEAD 외', 'keys-exhausted': '인증키 한도(Retry-After)', 'budget-exhausted': '이 서버의 시간당 호출 상한(Retry-After)', 'not-configured': '인증키 없음', upstream: '원천 서비스 오류' };
+  const http = { 'invalid-query': '400', 'invalid-code': '400', 'invalid-cell': '400', 'out-of-range': '400', 'not-found': '404', 'unsupported-level': '422', 'unknown-code': '404', 'unknown-project': '404', method: '405', 'keys-exhausted': '429', 'budget-exhausted': '429', 'not-configured': '503', upstream: '502' };
   for (const c of codes) push(`| \`${c}\` | ${http[c]} | ${where[c]} |`);
   push('');
   OPS.forEach((o, i) => {

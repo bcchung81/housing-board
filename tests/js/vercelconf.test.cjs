@@ -21,6 +21,7 @@ const ROUTES = {
   '/api/v1/buildings': ['app/api/v1/buildings/route.ts', 'handlers/v1/buildings.js'],
   '/api/v1/permits': ['app/api/v1/permits/route.ts', 'handlers/v1/permits.js'],
   '/api/v1/infra': ['app/api/v1/infra/route.ts', 'handlers/v1/infra.js'],
+  '/api/v1/terrain': ['app/api/v1/terrain/route.ts', 'handlers/v1/terrain.js'],
 };
 const maxDuration = (route) => Number(/export const maxDuration = (\d+);/.exec(read(ROUTES[route][0]))[1]);
 

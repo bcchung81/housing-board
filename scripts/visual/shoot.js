@@ -32,7 +32,6 @@ const STATES = [
   ['home-jump-m12', '/', [1440], 'await page.click("css:[data-slot=board-jumps] button:nth-child(1)");'],
   ['home-region-gg', '/', [1440], 'await page.click("css:[data-slot=board-region]:nth-child(2)");'],
   ['home-region-jn', '/', [1440], 'await page.click("css:[data-slot=board-region]:nth-child(14)");'],
-  ['home-flow3', '/', [1440], 'await page.evaluate(() => [...document.querySelectorAll("[data-slot=board-flow-step]")][2].click());'],
   ['home-tip', '/', [1440], 'await page.mouse.move(520, 480); await page.mouse.move(540, 482); await page.mouse.move(560, 484); await page.waitForSelector("css:#p-chart [data-slot=board-tip]:not([hidden])", { timeout: 5000 });'],
   ['theme-dark-home', '/', [1440, 390], 'await page.evaluate(() => localStorage.setItem("theme", "dark")); await page.reload(); await page.waitForTimeout(600);'],
   ['theme-dark-area', '/area', [1440], 'await page.evaluate(() => localStorage.setItem("theme", "dark")); await page.reload(); await page.waitForTimeout(600);'],
@@ -43,7 +42,7 @@ const STATES = [
 const config = { spaceDir: path.resolve('.visual'), spaceFile: path.resolve('.visual/.ego-space'), close: !!args.close, base, out, only, routes: ROUTES, widths: WIDTHS, states: STATES.map(([n, r, w]) => [n, r, w]), map: !!args.map };
 /* 종합상황판 상태 화면이 누르는 대상: 새 마크업(data-slot) → 옛 마크업(클래스). --legacy 로 옛 커밋의 빌드를 찍을 때만 바꾼다 */
 const LEGACY = [['[data-slot=board-dir]', '.dir'], ['[data-slot=board-legend] button', '.blegend button'], ['[data-slot=board-jumps] button', '.jumps button'], ['[data-slot=board-region]', '.reg'],
-  ['[data-slot=board-flow-step]', '.fstep'], ['[data-slot=board-tip]', '.tip']];
+  ['[data-slot=board-tip]', '.tip']];
 const code = (c) => (args.legacy ? LEGACY.reduce((x, [n, o]) => x.split(n).join(o), c) : c);
 const actions = STATES.map(([, , , c]) => `async (page) => { ${code(c)} }`).join(',\n');
 

@@ -77,8 +77,19 @@ function panel(src, id) {
 test('SAMPLE 패널(월별 공급 파동·선택 시점·지연 추이·기관별 진행·시도)은 SAMPLE 표지가 있고, 실데이터 패널은 실데이터 표지가 있다', () => {
   for (const id of ['p-chart', 'p-snap', 'p-trend', 'p-agency', 'p-region']) assert.match(panel(board, id), /<Sample \/>/, `${id}`);
   for (const id of ['p-fut']) assert.match(panel(board, id), /<Real title=/, id);
-  for (const id of ['p-actual', 'p-actors']) assert.match(panel(realRow, id), /<Real title=/, id);
+  for (const id of ['p-actual']) assert.match(panel(realRow, id), /<Real title=/, id);
   for (const id of ['p-fut']) assert.doesNotMatch(panel(board, id), /<Sample \/>/, `${id} 는 실데이터라 SAMPLE 표지가 없어야 한다`);
+});
+
+test('전국 17개 시도는 월별 실적 흐름(middle)과 같은 줄에 있고, 시행주체별 진행 현황·데이터 흐름 카드는 없다', () => {
+  assert.match(board, /<div className=\{row2\}>\s*\{middle\}\s*<Card variant="board"[^>]*id="p-region"/);
+  /* 시도 칸은 타일 6열(3줄)이 들어가는 폭이라 두 카드 높이가 비슷하다: 112×6 + 6×5 + 42 ≤ 시도 칸 폭 */
+  const styles = fs.readFileSync(path.join(__dirname, '../../components/board/styles.ts'), 'utf8');
+  const regionCol = Number(/export const row2 = "[^"]*grid-cols-\[minmax\(0,1fr\)_(\d+)px\]/.exec(styles)[1]);
+  assert.ok(regionCol >= 112 * 6 + 6 * 5 + 42, `시도 칸 ${regionCol}px`);
+  assert.match(board, /grid-cols-\[repeat\(auto-fill,minmax\(112px,1fr\)\)\][^"]*gap-1\.5/, '타일 최소 폭·간격이 바뀌면 시도 칸 폭도 다시 잰다');
+  assert.doesNotMatch(board, /id="p-flow"/);
+  assert.doesNotMatch(realRow, /id="p-actors"/);
 });
 
 test('향후 12개월 패널은 LH 준공 예정(실데이터)만 그리고, 시안의 SAMPLE 계열(착공·모집·입주 예정)을 쓰지 않는다', () => {
@@ -88,9 +99,9 @@ test('향후 12개월 패널은 LH 준공 예정(실데이터)만 그리고, 시
   assert.doesNotMatch(board, /\bFS\b/, 'sample.ts 에서 FS(향후 12개월 SAMPLE)를 가져오지 않는다');
 });
 
-test('종합상황판은 실데이터를 data/board 에서만 읽는다: 월별 실적·시행주체별(molit), LH 준공 예정(lh), 원천 수(sources)', () => {
+test('종합상황판은 실데이터를 data/board 에서만 읽는다: 월별 실적(molit), LH 준공 예정(lh), 원천 수(sources)', () => {
   const page = fs.readFileSync(path.join(__dirname, '../../app/(dashboard)/page.tsx'), 'utf8');
   assert.match(page, /lhByMonth\(lh, '2026-10', 12\)/);
   assert.match(page, /sourceCount: sources\.items\.length/);
-  assert.match(realRow, /seriesOf\(molit/); assert.match(realRow, /ytd\(molit/);
+  assert.match(realRow, /seriesOf\(molit/);
 });
