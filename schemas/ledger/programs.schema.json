@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "programs.schema.json",
+  "title": "ledger/programs",
+  "description": "프로그램(공급 유형·사업군). 정책 아래, 사업 위의 묶음. 기관 입력·수작업. 공통규격 v1.4: 프로그램_programs.csv 와 같은 열.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "programs"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "local_program_id",
+        "program_name",
+        "program_definition",
+        "source_ref",
+        "review_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "local_program_id": {
+          "$ref": "common.schema.json#/$defs/local_id"
+        },
+        "program_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "program_definition": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        },
+        "review_status": {
+          "$ref": "common.schema.json#/$defs/review_status"
+        }
+      }
+    }
+  }
+}

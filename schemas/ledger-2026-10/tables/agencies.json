@@ -1,0 +1,7 @@
+{"schema_version":"ledger/1","table":"agencies","rows":[
+{"agency_id":"lh","agency_name":"LH","stat_actor":"LH","source_ref":"housing-wave-manual"},
+{"agency_id":"local","agency_name":"지자체","stat_actor":"지자체","source_ref":"housing-wave-manual"},
+{"agency_id":"gh","agency_name":"GH","stat_actor":null,"source_ref":"housing-wave-manual"},
+{"agency_id":"sh","agency_name":"SH","stat_actor":null,"source_ref":"housing-wave-manual"},
+{"agency_id":"mnd","agency_name":"국방부","stat_actor":null,"source_ref":"housing-wave-manual"}
+]}

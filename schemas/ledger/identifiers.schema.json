@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "identifiers.schema.json",
+  "title": "ledger/identifiers",
+  "description": "외부 식별자(원천 레코드 ↔ 사업). 원천 자료는 이 표의 (id_type, id_value) 로 사업에 붙는다. 값은 문자열(관리번호 6·7·13·22자리, 앞자리 0). 필지·법정동은 project_locations 에 둔다. 공통규격 v1.4: 사업식별자_identifiers.csv + as_of. HUB_HS_PK·HUB_AP_PK·MANUAL 은 확장 값이다(v1.4 는 PNU·BJD_CODE·INTERNAL_PROJECT_ID 도 여기 두지만 원장에서는 각각 project_locations·기본 키다).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "identifiers"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "local_project_id",
+        "id_type",
+        "id_value",
+        "id_issuer",
+        "as_of",
+        "source_ref",
+        "match_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "local_project_id": {
+          "$ref": "common.schema.json#/$defs/project_id"
+        },
+        "id_type": {
+          "enum": [
+            "AREA_BLOCK",
+            "BUNDLE_ID",
+            "LH_AREA_BLOCK_CODE",
+            "HUB_HS_PK",
+            "HUB_AP_PK",
+            "MANUAL"
+          ]
+        },
+        "id_value": {
+          "type": "string",
+          "minLength": 1
+        },
+        "id_issuer": {
+          "enum": [
+            "LH",
+            "HOUSING_WAVE",
+            "국토교통부",
+            "행정안전부"
+          ]
+        },
+        "as_of": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        },
+        "match_status": {
+          "$ref": "common.schema.json#/$defs/review_status"
+        }
+      }
+    }
+  }
+}

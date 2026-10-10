@@ -1,0 +1,259 @@
+{
+  "sources": [
+    {
+      "source_ref": "agency-lh-20261010",
+      "source_owner": "AGENCY",
+      "provider": "LH",
+      "dataset_name": "[가상] 기관 입력(CSV 양식)",
+      "source_url": null,
+      "source_record_key": null,
+      "data_as_of": "2026-10-10",
+      "collected_at": "2026-10-10",
+      "original_filename": null,
+      "notes": "기관 lh 가 2026-10-10 에 보낸 CSV 양식 입력",
+      "record_count": 19,
+      "license": null,
+      "used_by": [],
+      "is_demo": true
+    }
+  ],
+  "projects": [
+    {
+      "local_project_id": "PRJ-28245-0007",
+      "project_name": "[가상] 계양 테크노밸리 A12 블록",
+      "project_unit": "PROJECT",
+      "sgg_code": "28245",
+      "agency_id": "lh",
+      "public_scope": "PUBLIC",
+      "public_basis": "가상 입력: LH 공공주택지구 블록",
+      "stage_code": "02",
+      "as_of": "2026-10-10",
+      "issued_at": null,
+      "superseded_by": null,
+      "source_ref": "agency-lh-20261010"
+    }
+  ],
+  "identifiers": [
+    {
+      "local_project_id": "PRJ-28245-0007",
+      "id_type": "MANUAL",
+      "id_value": "lh:LHD-NEW-01",
+      "id_issuer": "HOUSING_WAVE",
+      "as_of": "2026-10-10",
+      "source_ref": "agency-lh-20261010",
+      "match_status": "CONFIRMED"
+    },
+    {
+      "local_project_id": "PRJ-28245-0005",
+      "id_type": "MANUAL",
+      "id_value": "lh:LHD-A2",
+      "id_issuer": "HOUSING_WAVE",
+      "as_of": "2026-10-10",
+      "source_ref": "agency-lh-20261010",
+      "match_status": "CONFIRMED"
+    }
+  ],
+  "events": [
+    {
+      "local_project_id": "PRJ-28245-0005",
+      "complex_id": null,
+      "event_type": "PERMIT",
+      "date_type": "PLANNED",
+      "plan_basis": "BASELINE",
+      "event_date": "2025-03-31",
+      "event_month": null,
+      "event_year": null,
+      "progress_pct": null,
+      "event_detail": null,
+      "change_reason": null,
+      "change_note": null,
+      "observed_month": "2026-10",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    },
+    {
+      "local_project_id": "PRJ-28245-0005",
+      "complex_id": null,
+      "event_type": "CONSTRUCTION_START",
+      "date_type": "PLANNED",
+      "plan_basis": "BASELINE",
+      "event_date": null,
+      "event_month": "2025-09",
+      "event_year": null,
+      "progress_pct": null,
+      "event_detail": null,
+      "change_reason": null,
+      "change_note": null,
+      "observed_month": "2026-10",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    },
+    {
+      "local_project_id": "PRJ-28245-0004",
+      "complex_id": null,
+      "event_type": "CONSTRUCTION_START",
+      "date_type": "PLANNED",
+      "plan_basis": "BASELINE",
+      "event_date": "2025-10-15",
+      "event_month": null,
+      "event_year": null,
+      "progress_pct": null,
+      "event_detail": null,
+      "change_reason": null,
+      "change_note": null,
+      "observed_month": "2026-10",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    },
+    {
+      "local_project_id": "PRJ-28245-0004",
+      "complex_id": null,
+      "event_type": "CONSTRUCTION_START",
+      "date_type": "PLANNED",
+      "plan_basis": "REVISED",
+      "event_date": "2026-04-30",
+      "event_month": null,
+      "event_year": null,
+      "progress_pct": null,
+      "event_detail": null,
+      "change_reason": "PERMIT",
+      "change_note": "[가상] 건축 인허가 보완, 착공 6개월 늦춤",
+      "observed_month": "2026-10",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    },
+    {
+      "local_project_id": "PRJ-28245-0004",
+      "complex_id": null,
+      "event_type": "COMPLETION",
+      "date_type": "PLANNED",
+      "plan_basis": "BASELINE",
+      "event_date": null,
+      "event_month": null,
+      "event_year": "2028",
+      "progress_pct": null,
+      "event_detail": null,
+      "change_reason": null,
+      "change_note": null,
+      "observed_month": "2026-10",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    },
+    {
+      "local_project_id": "PRJ-28245-0007",
+      "complex_id": null,
+      "event_type": "PERMIT",
+      "date_type": "PLANNED",
+      "plan_basis": "BASELINE",
+      "event_date": null,
+      "event_month": "2027-03",
+      "event_year": null,
+      "progress_pct": null,
+      "event_detail": null,
+      "change_reason": null,
+      "change_note": null,
+      "observed_month": "2026-10",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    }
+  ],
+  "units": [
+    {
+      "local_project_id": "PRJ-28245-0005",
+      "complex_id": null,
+      "quantity_type": "AGENCY_PLAN",
+      "housing_type": "공공분양",
+      "unit_count": 320,
+      "reference_period": "2028",
+      "unit_scope": "SUBTYPE",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    },
+    {
+      "local_project_id": "PRJ-28245-0005",
+      "complex_id": null,
+      "quantity_type": "AGENCY_PLAN",
+      "housing_type": "공공임대",
+      "unit_count": 180,
+      "reference_period": "2028",
+      "unit_scope": "SUBTYPE",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    },
+    {
+      "local_project_id": "PRJ-28245-0004",
+      "complex_id": null,
+      "quantity_type": "AGENCY_PLAN",
+      "housing_type": null,
+      "unit_count": 500,
+      "reference_period": "2028-12",
+      "unit_scope": "TOTAL",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    },
+    {
+      "local_project_id": "PRJ-28245-0007",
+      "complex_id": null,
+      "quantity_type": "AGENCY_PLAN",
+      "housing_type": null,
+      "unit_count": 600,
+      "reference_period": "2030",
+      "unit_scope": "TOTAL",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    }
+  ],
+  "policies": [
+    {
+      "local_policy_id": "POL-DEMO-01",
+      "policy_name": "[가상] 수도권 공공주택 공급 확대 지시",
+      "announcement_date": "2026-09-01",
+      "scope_region": "수도권",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    }
+  ],
+  "programs": [
+    {
+      "local_program_id": "PRG-DEMO-01",
+      "program_name": "[가상] 계양 공공주택 우선 착공",
+      "program_definition": "가상 입력: 계양 테크노밸리 블록 착공 앞당김",
+      "source_ref": "agency-lh-20261010",
+      "review_status": "CONFIRMED"
+    }
+  ],
+  "links": [
+    {
+      "link_type": "POLICY_PROGRAM",
+      "from_local_id": "POL-DEMO-01",
+      "to_local_id": "PRG-DEMO-01",
+      "evidence": "[가상] 지시문 3항",
+      "review_status": "CONFIRMED",
+      "source_ref": "agency-lh-20261010"
+    },
+    {
+      "link_type": "PROGRAM_PROJECT",
+      "from_local_id": "PRG-DEMO-01",
+      "to_local_id": "PRJ-28245-0005",
+      "evidence": null,
+      "review_status": "CONFIRMED",
+      "source_ref": "agency-lh-20261010"
+    },
+    {
+      "link_type": "PROGRAM_PROJECT",
+      "from_local_id": "PRG-DEMO-01",
+      "to_local_id": "PRJ-28245-0007",
+      "evidence": null,
+      "review_status": "CONFIRMED",
+      "source_ref": "agency-lh-20261010"
+    },
+    {
+      "link_type": "POLICY_PROJECT",
+      "from_local_id": "POL-DEMO-01",
+      "to_local_id": "PRJ-28245-0004",
+      "evidence": "[가상] 지시문 별표",
+      "review_status": "CONFIRMED",
+      "source_ref": "agency-lh-20261010"
+    }
+  ]
+}

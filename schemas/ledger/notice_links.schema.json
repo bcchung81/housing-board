@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "notice_links.schema.json",
+  "title": "ledger/notice_links",
+  "description": "공고 ↔ 사업 연결. 공고에는 사업 번호가 없어(PAN_ID·pblancId 만) 사람이 확인한 연결만 CONFIRMED 로 둔다. 공통규격 v1.4 에 없는 확장 표.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "notice_links"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "notice_system",
+        "notice_id",
+        "local_project_id",
+        "evidence",
+        "review_status",
+        "source_ref"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "notice_system": {
+          "enum": [
+            "MYHOME",
+            "LH"
+          ]
+        },
+        "notice_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "local_project_id": {
+          "$ref": "common.schema.json#/$defs/project_id"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "review_status": {
+          "$ref": "common.schema.json#/$defs/review_status"
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        }
+      }
+    }
+  }
+}

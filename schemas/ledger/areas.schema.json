@@ -1,0 +1,163 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "areas.schema.json",
+  "title": "ledger/areas",
+  "description": "지역(키 사슬의 뿌리). 전국 00 → 시도 2자리 → 시군구 5자리 → 법정동 10자리. 보관(법정동코드 파일, 연 1회) + 행정표준코드 API 로 보정. 공통규격 v1.4 에 없는 확장 표.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "areas"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "area_code",
+        "level",
+        "area_name",
+        "parent_code",
+        "source_ref"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "area_code": {
+          "type": "string",
+          "pattern": "^(\\d{2}|\\d{5}|\\d{10})$"
+        },
+        "level": {
+          "enum": [
+            "NATION",
+            "SIDO",
+            "SGG",
+            "BJD"
+          ]
+        },
+        "area_name": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "description": "법정동코드 파일의 전체 이름(예 경기도 성남시 수정구). 파일이 없는 칸은 통계누리·행정표준코드의 이름"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parent_code": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(\\d{2}|\\d{5})$"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "level": {
+                "const": "NATION"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "area_code": {
+                "const": "00"
+              },
+              "parent_code": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "level": {
+                "const": "SIDO"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "area_code": {
+                "type": "string",
+                "pattern": "^\\d{2}$"
+              },
+              "parent_code": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "level": {
+                "const": "SGG"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "area_code": {
+                "type": "string",
+                "pattern": "^\\d{5}$"
+              },
+              "parent_code": {
+                "type": "string",
+                "pattern": "^\\d{2}$"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "level": {
+                "const": "BJD"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "area_code": {
+                "type": "string",
+                "pattern": "^\\d{10}$"
+              },
+              "parent_code": {
+                "type": "string",
+                "pattern": "^\\d{5}$"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

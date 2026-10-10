@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "common.schema.json",
+  "title": "ledger/common",
+  "description": "사업 원장 표들이 함께 쓰는 값 모양. 코드는 문자열로 보관한다(앞자리 0, 숫자형 변환 금지 — 스펙 9.1).",
+  "$defs": {
+    "project_id": {
+      "type": "string",
+      "pattern": "^PRJ-\\d{5}-\\d{4}$",
+      "description": "사업 id PRJ-{시군구5}-{일련4}. 발급 뒤 불변(스펙 9.1.1)"
+    },
+    "nation": {
+      "const": "00",
+      "description": "전국(통계누리 집계 행)"
+    },
+    "sido": {
+      "type": "string",
+      "pattern": "^\\d{2}$"
+    },
+    "sgg": {
+      "type": "string",
+      "pattern": "^\\d{5}$"
+    },
+    "bjd": {
+      "type": "string",
+      "pattern": "^\\d{10}$"
+    },
+    "pnu": {
+      "type": "string",
+      "pattern": "^\\d{19}$"
+    },
+    "date": {
+      "type": "string",
+      "pattern": "^\\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\\d|3[01])$"
+    },
+    "month": {
+      "type": "string",
+      "pattern": "^\\d{4}-(0[1-9]|1[0-2])$"
+    },
+    "datetime": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?(Z|[+-]\\d{2}:\\d{2})$"
+    },
+    "stage_code": {
+      "enum": [
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06"
+      ],
+      "description": "공급 6단계: 01 정책 · 02 사업화 · 03 인허가 · 04 건설 · 05 공급 · 06 입주"
+    },
+    "agency_id": {
+      "enum": [
+        "lh",
+        "local",
+        "gh",
+        "sh",
+        "mnd"
+      ]
+    },
+    "stat_actor": {
+      "enum": [
+        "지자체",
+        "LH",
+        "주택업체",
+        "민간"
+      ],
+      "description": "통계누리 시행주체 구분"
+    },
+    "review_status": {
+      "enum": [
+        "CONFIRMED",
+        "REVIEW_REQUIRED"
+      ],
+      "description": "공통규격 v1.4 의 review_status·match_status"
+    },
+    "source_ref": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$",
+      "description": "sources 표의 source_ref"
+    },
+    "complex_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+/.+$",
+      "description": "{지역 번들 slug}/{단지 id}"
+    },
+    "local_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    }
+  }
+}

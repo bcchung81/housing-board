@@ -1,0 +1,100 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "stat_facts.schema.json",
+  "title": "ledger/stat_facts",
+  "description": "통계 실적(통계누리 주택건설실적통계). 지표·시도·월·시행주체 칸의 호수. 사업 원장과는 (시도, 월, 단계)로만 만난다(커버율 = 원장 합 ÷ 통계). 보관(월 공표). 05 분양은 시행주체 구분이 없어 TOTAL 행만 있다. 공통규격 v1.4 에 없는 확장 표.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "stat_facts"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "metric",
+        "stage_code",
+        "sido_code",
+        "ym",
+        "actor",
+        "value",
+        "provisional",
+        "source_ref"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "metric": {
+          "enum": [
+            "permit",
+            "start",
+            "sale",
+            "complete"
+          ]
+        },
+        "stage_code": {
+          "enum": [
+            "03",
+            "04",
+            "05",
+            "06"
+          ]
+        },
+        "sido_code": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/nation"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/sido"
+            }
+          ]
+        },
+        "ym": {
+          "$ref": "common.schema.json#/$defs/month"
+        },
+        "actor": {
+          "enum": [
+            "TOTAL",
+            "지자체",
+            "LH",
+            "주택업체",
+            "민간"
+          ]
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "provisional": {
+          "type": "boolean"
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        }
+      }
+    }
+  }
+}

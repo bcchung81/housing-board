@@ -1,0 +1,236 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "events.schema.json",
+  "title": "ledger/events",
+  "description": "일정 이벤트(월별 스냅샷). 단계별 예정·실제 날짜. 원천은 현재값만 주므로 같은 예정일을 관측한 달(observed_month = 찍은 달)마다 행을 남겨 이력을 쌓는다 — 당초 대비 지연(Q3)·단계별 머문 기간(Q2)은 이 이력으로만 계산된다. 예정(PLANNED)은 plan_basis 로 당초(BASELINE)·변경(REVISED)·현재(CURRENT)를 가른다. 공통규격 v1.4: 진행이력_events.csv + plan_basis·observed_month·complex_id·event_year·change_reason·change_note. date_type 값은 v1.4 그대로(PLANNED·ACTUAL)이고 당초·변경 구분은 새 열로 더했다(팀 합의 필요).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "events"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "local_project_id",
+        "complex_id",
+        "event_type",
+        "date_type",
+        "plan_basis",
+        "event_date",
+        "event_month",
+        "event_year",
+        "progress_pct",
+        "event_detail",
+        "change_reason",
+        "change_note",
+        "observed_month",
+        "source_ref",
+        "review_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "local_project_id": {
+          "$ref": "common.schema.json#/$defs/project_id"
+        },
+        "complex_id": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/complex_id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "event_type": {
+          "enum": [
+            "PERMIT",
+            "CONSTRUCTION_START",
+            "PROGRESS",
+            "COMPLETION",
+            "SUPPLY_NOTICE",
+            "MOVE_IN"
+          ]
+        },
+        "date_type": {
+          "enum": [
+            "PLANNED",
+            "ACTUAL"
+          ]
+        },
+        "plan_basis": {
+          "anyOf": [
+            {
+              "enum": [
+                "BASELINE",
+                "REVISED",
+                "CURRENT"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "event_date": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "event_month": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/month"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "event_year": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^\\d{4}$",
+              "description": "연도만 아는 예정일(건축HUB 예정일이 YYYY 로 오는 경우)"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "progress_pct": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "event_detail": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "change_reason": {
+          "anyOf": [
+            {
+              "enum": [
+                "PERMIT",
+                "BUSINESS_APPROVAL",
+                "CONSTRUCTION_START",
+                "OTHER"
+              ],
+              "description": "일정 변경(지연) 사유: 인허가·사업승인·착공·기타(기획서 시나리오 A). 기관 입력"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "change_note": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_month": {
+          "$ref": "common.schema.json#/$defs/month"
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        },
+        "review_status": {
+          "$ref": "common.schema.json#/$defs/review_status"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "date_type": {
+                "const": "ACTUAL"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "plan_basis": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "plan_basis": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "event_date": {
+                  "$ref": "common.schema.json#/$defs/date"
+                }
+              }
+            },
+            {
+              "properties": {
+                "event_month": {
+                  "$ref": "common.schema.json#/$defs/month"
+                }
+              }
+            },
+            {
+              "properties": {
+                "event_year": {
+                  "type": "string"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

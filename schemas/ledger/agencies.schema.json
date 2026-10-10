@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "agencies.schema.json",
+  "title": "ledger/agencies",
+  "description": "기관. LH·GH·SH·지자체·국방부. stat_actor 로 통계누리 시행주체와 잇는다(없으면 null). 공통규격 v1.4 에 없는 확장 표.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "agencies"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "agency_id",
+        "agency_name",
+        "stat_actor",
+        "source_ref"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "agency_id": {
+          "$ref": "common.schema.json#/$defs/agency_id"
+        },
+        "agency_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "stat_actor": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/stat_actor"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        }
+      }
+    }
+  }
+}

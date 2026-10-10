@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "notices.schema.json",
+  "title": "ledger/notices",
+  "description": "모집 공고. 공고 목록은 실시간(마이홈·LH API, 목록 캐시 1시간)으로 보이고, 이 표에는 사업과 이을 공고와 모집 일정 이력만 보관한다. 공통규격 v1.4 에 없는 확장 표.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "notices"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "notice_system",
+        "notice_id",
+        "notice_title",
+        "sgg_code",
+        "pnu",
+        "announced_on",
+        "apply_start",
+        "apply_end",
+        "observed_on",
+        "source_ref"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "notice_system": {
+          "enum": [
+            "MYHOME",
+            "LH"
+          ]
+        },
+        "notice_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notice_title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sgg_code": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/sgg"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pnu": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/pnu"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "announced_on": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "apply_start": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "apply_end": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "observed_on": {
+          "$ref": "common.schema.json#/$defs/date"
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        }
+      }
+    }
+  }
+}

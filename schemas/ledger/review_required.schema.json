@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "review_required.schema.json",
+  "title": "ledger/review_required",
+  "description": "검토 목록. 원장에 바로 넣지 못한 원천 레코드와 사람이 판단할 일. 공통규격 v1.4: review_required.csv 와 같은 열(규격에 열 정의 없음). review_type 은 제안 값.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "review_required"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "review_type",
+        "local_project_id",
+        "source_ref",
+        "record_key",
+        "record_name",
+        "detail",
+        "reason"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "review_type": {
+          "enum": [
+            "SGG_UNRESOLVED",
+            "PUBLIC_SCOPE_UNKNOWN",
+            "DATE_CONFLICT",
+            "LINK_CANDIDATE"
+          ]
+        },
+        "local_project_id": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/project_id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        },
+        "record_key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "record_name": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "detail": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "policies.schema.json",
+  "title": "ledger/policies",
+  "description": "정책(지시·공급계획). 원천 API 가 없어 기관 입력·수작업으로 채운다. 종합상황판 '총리 지시' 위젯이 읽는다. 공통규격 v1.4: 정책_policies.csv 와 같은 열.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "policies"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "local_policy_id",
+        "policy_name",
+        "announcement_date",
+        "scope_region",
+        "source_ref",
+        "review_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "local_policy_id": {
+          "$ref": "common.schema.json#/$defs/local_id"
+        },
+        "policy_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "announcement_date": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "scope_region": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        },
+        "review_status": {
+          "$ref": "common.schema.json#/$defs/review_status"
+        }
+      }
+    }
+  }
+}

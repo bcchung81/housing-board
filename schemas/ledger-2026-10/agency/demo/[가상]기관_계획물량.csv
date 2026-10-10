@@ -1,0 +1,5 @@
+﻿local_project_id,agency_project_key,housing_type,unit_count,reference_period,unit_scope
+PRJ-28245-0005,,공공분양,320,2028,SUBTYPE
+PRJ-28245-0005,,공공임대,180,2028,SUBTYPE
+PRJ-28245-0004,,,500,2028-12,TOTAL
+,LHD-NEW-01,,600,2030,TOTAL

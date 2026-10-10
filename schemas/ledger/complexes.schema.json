@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "complexes.schema.json",
+  "title": "ledger/complexes",
+  "description": "단지·블록. 사업 아래 단위(지역 번들 단지, LH 블록). 상태 5종은 단지 단위, 단계는 사업 단위라 둘 다 둔다(사업 단계를 정하는 규칙은 스펙 9.2 미결). 공통규격 v1.4 에 없는 확장 표.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "complexes"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "complex_id",
+        "local_project_id",
+        "region_slug",
+        "complex_label",
+        "complex_name",
+        "status",
+        "sponsor_class",
+        "housing_kind",
+        "unit_count",
+        "move_in_month",
+        "progress_pct",
+        "progress_as_of",
+        "source_ref"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "complex_id": {
+          "$ref": "common.schema.json#/$defs/complex_id"
+        },
+        "local_project_id": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/project_id"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "region_slug": {
+          "type": "string",
+          "pattern": "^[a-z0-9-]+$"
+        },
+        "complex_label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "complex_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "계획",
+            "분양중",
+            "건설 단계",
+            "준공 임박",
+            "입주 단계"
+          ]
+        },
+        "sponsor_class": {
+          "enum": [
+            "public",
+            "private_on_public_land"
+          ]
+        },
+        "housing_kind": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unit_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "move_in_month": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/month"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "progress_pct": {
+          "anyOf": [
+            {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "progress_as_of": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        }
+      }
+    }
+  }
+}

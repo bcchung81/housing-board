@@ -1,0 +1,73 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "links.schema.json",
+  "title": "ledger/links",
+  "description": "정책·프로그램·사업 연결. link_type 값은 v1.4 에 허용값이 없어 제안한 값이다. 공통규격 v1.4: 정책사업연결_links.csv 와 같은 열.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "links"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "link_type",
+        "from_local_id",
+        "to_local_id",
+        "evidence",
+        "review_status",
+        "source_ref"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "link_type": {
+          "enum": [
+            "POLICY_PROGRAM",
+            "PROGRAM_PROJECT",
+            "POLICY_PROJECT"
+          ]
+        },
+        "from_local_id": {
+          "$ref": "common.schema.json#/$defs/local_id"
+        },
+        "to_local_id": {
+          "$ref": "common.schema.json#/$defs/local_id"
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "review_status": {
+          "$ref": "common.schema.json#/$defs/review_status"
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        }
+      }
+    }
+  }
+}

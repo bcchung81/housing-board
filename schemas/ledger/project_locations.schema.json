@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "project_locations.schema.json",
+  "title": "ledger/project_locations",
+  "description": "사업 위치(사업 ↔ 법정동·필지). 지도의 사업 위치와 시군구·법정동 거르기가 읽는다. pnu 가 null 이면 법정동만 안다(지도에서 '위치 미연결'). pnu_scope 는 SITE(사업 대지 필지) · REPRESENTATIVE(윤곽 중심의 대표 필지 하나). 공통규격 v1.4 에 없는 확장 표.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "project_locations"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "local_project_id",
+        "bjd_code",
+        "pnu",
+        "pnu_scope",
+        "source_ref"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "local_project_id": {
+          "$ref": "common.schema.json#/$defs/project_id"
+        },
+        "bjd_code": {
+          "$ref": "common.schema.json#/$defs/bjd"
+        },
+        "pnu": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/pnu"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "pnu_scope": {
+          "anyOf": [
+            {
+              "enum": [
+                "SITE",
+                "REPRESENTATIVE"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "pnu": {
+                "type": "null"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "pnu_scope": {
+                "type": "null"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "pnu_scope": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,167 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "sources.schema.json",
+  "title": "ledger/sources",
+  "description": "원천. 모든 행의 source_ref 가 가리킨다. 받은 시각(collected_at)과 원천 기준일(data_as_of)을 반드시 나눈다(스펙 9.3). 공통규격 v1.4: 원천_sources.csv + record_count·license·used_by(이 원천을 읽는 화면 경로)·is_demo.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "sources"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "source_ref",
+        "source_owner",
+        "provider",
+        "dataset_name",
+        "source_url",
+        "source_record_key",
+        "data_as_of",
+        "collected_at",
+        "original_filename",
+        "notes",
+        "record_count",
+        "license",
+        "used_by",
+        "is_demo"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        },
+        "source_owner": {
+          "type": "string",
+          "minLength": 1
+        },
+        "provider": {
+          "type": "string",
+          "minLength": 1
+        },
+        "dataset_name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "source_url": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "source_record_key": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "data_as_of": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "collected_at": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/datetime"
+            },
+            {
+              "$ref": "common.schema.json#/$defs/date"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "받은 시각(일시, 날짜만 남은 기록은 날짜)"
+        },
+        "original_filename": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "record_count": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 0
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "license": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "used_by": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^/"
+          }
+        },
+        "is_demo": {
+          "type": "boolean",
+          "description": "가상(시연용) 자료. 이 원천을 가리키는 행은 화면에서 실데이터와 갈라 표시한다(v1.4 의 is_demo 는 여기서 채운다)"
+        }
+      }
+    }
+  }
+}
