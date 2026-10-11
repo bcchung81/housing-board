@@ -6,14 +6,17 @@ export const disp = "font-display font-bold tabular-nums tracking-[0]";   // 숫
 /* 옛 `.board button` 초기화(app/tailwind.css 의 .btn-reset, components 레이어). 단추마다 붙이면 뒤에 덧입힌 유틸리티가 이긴다 */
 export const btn = "btn-reset";
 
-/* 패널 제목(.ptitle)과 그 안의 작은 설명(.ptitle small). 제목 안의 표지는 10.5px */
+/* 패널 제목(.ptitle). 제목 안의 표지는 12px. 설명은 보이는 글자 대신 h2 의 title 에 둔다 */
 export const ptitle = `m-0 text-[22px] leading-[1.25] ${disp} [&_[data-slot=badge]]:text-[12px]`;
-export const ptSmall = "[font-family:inherit] text-[14px] font-normal text-muted-foreground";
-export const ptSmallBlock = `${ptSmall} mt-0.5 block`;
 
-/* 패널 제목 줄(왼쪽 제목, 오른쪽 위 이동 버튼 묶음). 좁으면 버튼은 그대로 두고 제목이 줄바꿈한다 */
-export const phead = "flex items-start gap-3";
+/* 패널 제목 줄: [제목(설명은 title)] … [범례 칩][이동 버튼]. 넓은 화면에서는 한 줄, 좁으면 오른쪽 묶음(phgroup)이 다음 줄 오른쪽으로 내려간다 */
+export const phead = "flex flex-wrap items-center gap-x-3 gap-y-1.5";
+export const phgroup = "ml-auto flex flex-wrap items-center justify-end gap-x-3 gap-y-1";
 export const pacts = "ml-auto flex flex-none gap-1.5";
+/* 제목 줄의 판정 기준 꼬리표('2026.10 판정' · '판정 없음'): 판정 값이 어느 달 것인지 */
+export const jtag = "text-[13px] whitespace-nowrap text-muted-foreground tabular-nums";
+/* 제목 줄의 작은 범례 칩 묶음(칩은 tags.tsx 의 Key) */
+export const legend = "flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[13px] text-muted-foreground";
 
 /* 두 칸 행(.row2: 월별 실적 흐름 | 시도 16곳)과 막대 행(.ags .ag .an .ad .bar3).
    시도 칸은 타일 6열(112×6 + 간격 6×5 + 안쪽 여백 42 = 744)이 들어가는 750px 로 고정해 시도 16곳이 3줄로 끝나게 한다 — 시도 카드(약 447)와 실적 카드(약 454) 높이가 비슷하고, 남는 높이는 타일이 늘어나 채운다.

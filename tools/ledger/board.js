@@ -87,13 +87,22 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
     return { p, issued: !!p.issued_at, bulk, judgeable: !!p.issued_at || bulk, units: unitsOfProject(p.local_project_id), actual, actualTypes: new Set(actual.map((e) => e.event_type)), plan, base: BOARD_OF_STAGE[p.stage_code] };
   });
 
+  /* 실제 날짜가 어디까지인가(actualThrough): 실제 기록이 있는 사업의 호수를 원천별로 더해(사업마다 원천 하나에 한 번), 호수가 가장 많은 원천의 자료 달(data_as_of 의 달).
+     자료 달이 없거나 관측 달보다 늦으면 관측 달. 그 뒤 달은 실제가 아니라 예정으로 다시 만든다(stageAt) */
+  const actualUnits = {};
+  for (const x of projects) for (const s of new Set(x.actual.map((e) => e.source_ref))) actualUnits[s] = (actualUnits[s] ?? 0) + x.units;
+  const actualSource = Object.keys(actualUnits).sort((a, b) => actualUnits[b] - actualUnits[a] || a.localeCompare(b))[0] ?? null;
+  const sourceMonth = actualSource && asOf.get(actualSource) ? asOf.get(actualSource).slice(0, 7) : observedMonth;
+  const actualThrough = sourceMonth < observedMonth ? sourceMonth : observedMonth, at = months.indexOf(actualThrough);
+
   /* 보드 단계(달 i 말 기준). 실제 기록이 없는 사업(LH 후보)은 stage_code 의 칸을 처음부터 쓴다.
-     NOW 달 뒤에는 기간 끝이 기준일 뒤인 현재 예정을 더하고(기준일 전에 지난 예정은 일어난 것으로 치지 않는다), NOW 부터는 stage_code 의 칸보다 낮게 두지 않는다 */
+     actualThrough 달 뒤에는 기간 끝이 기준일 뒤인 현재 예정을 더하고(기준일 전에 지난 예정은 일어난 것으로 치지 않는다), NOW 부터는 stage_code 의 칸보다 낮게 두지 않는다.
+     NOW 달은 기준일 관측(stage_code)이라 예정을 더하지 않는다 — 더하면 판정의 단계별 지연 호수(delayByStage)가 바뀐다 */
   const stageAt = (x, i) => {
     const ym = months[i];
     let s = x.actual.length ? 0 : x.base;
     for (const e of x.actual) if (monthOf(e) <= ym) s = Math.max(s, BOARD_OF_EVENT[e.event_type]);
-    if (i > now) for (const e of Object.values(x.plan)) if (endOf(e) > referenceDate && monthOf(e) <= ym) s = Math.max(s, BOARD_OF_EVENT[e.event_type]);
+    if (i > at && i !== now) for (const e of Object.values(x.plan)) if (endOf(e) > referenceDate && monthOf(e) <= ym) s = Math.max(s, BOARD_OF_EVENT[e.event_type]);
     if (i >= now) s = Math.max(s, x.base);
     return s;
   };
@@ -176,7 +185,7 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
       /* ④모집·⑥입주 일정이 있는 사업 수(공고 = 실제 SUPPLY_NOTICE, 입주 = 현재 예정 MOVE_IN) */
       withEvents: { supplyNotice: projects.filter((x) => x.actualTypes.has('SUPPLY_NOTICE')).length, moveIn: projects.filter((x) => x.plan.MOVE_IN).length },
     },
-    months, now, stageUnits, stageProjects,
+    months, now, actualThrough, actualIndex: at, actualSource, stageUnits, stageProjects,
     judgment: { ok: bucket('ok'), caution: bucket('caution'), delay: bucket('delay'), excluded: { projects: excluded.length, units: sum(excluded), reason: `LH 준공예정 후보(발급 전): 파일 기준일 ${lhAsOf} 이후 준공 여부를 알 기록이 없다` },
       excludedStartOverdue: { projects: new Set(startSkipped.map((x) => x.p.local_project_id)).size, pairs: startSkipped.length, units: sum([...new Set(startSkipped)]), reason: '건축HUB 대용량 후보의 착공 예정 경과(착공 기록 없음): 원천에 착공 실제일 기록이 약 7% 뿐이라 지연으로 치지 않는다' } },
     delayByStage: byStageNow('delay'), cautionByStage: byStageNow('caution'),
@@ -204,5 +213,6 @@ if (require.main === module) {
   fs.writeFileSync(out, `${render(board)}\n`);
   const j = board.judgment;
   console.log(`판정 ${board.scope.judged}: 정상 ${j.ok.projects} · 주의 ${j.caution.projects} · 지연 ${j.delay.projects} (제외 ${j.excluded.projects})`);
+  console.log(`실제 날짜 ${board.actualThrough}까지(${board.actualSource})`);
   console.log(`${OUT} 를 썼다 (${fs.statSync(out).size} 바이트)`);
 }

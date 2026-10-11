@@ -76,7 +76,8 @@ test('지표 범례·KPI 는 6칸(StageLegend·StageKpis): 지표가 없는 단�
   assert.match(legend, /const ON_BOARD: Record<Metric, number> = \{ permit: 1, start: 2, sale: 3, complete: 4 \};/);
   assert.match(legend, /border-dashed border-line2/); assert.match(legend, />자료 없음</);
   assert.match(kpis, /\{STAGES\.map\(\(s\) => \{/); assert.match(kpis, /자료 없음/); assert.match(kpis, /grid grid-cols-6 gap-2\.5 narrow:grid-cols-3 phone:grid-cols-2/); assert.match(kpis, /공급 6단계별 실적 · \{when\}<\/p>/, '시점은 위에 한 번');
-  assert.match(read('components/board/RealPanels.tsx'), /<StageLegend metrics=\{METRICS\} names="board" \/>/);
+  assert.match(read('components/board/RealPanels.tsx'), /<StageLegend metrics=\{METRICS\} names="board" compact \/>/, '종합상황판은 제목 줄의 작은 칩(①·⑥ 자료 없음은 빼고 단계 번호는 title)');
+  assert.match(legend, /if \(compact\) return \(/); assert.match(legend, /' 자료 없음'/);
   const pages = { 'app/(dashboard)/area/page.tsx': ['legend', 'kpis'], 'app/(dashboard)/area/[id]/page.tsx': ['legend', 'kpis'], 'app/(dashboard)/month/[id]/page.tsx': ['kpis'], 'app/(dashboard)/agency/[id]/page.tsx': ['legend', 'kpis'], 'app/(dashboard)/agency/page.tsx': ['legend'] };
   for (const [f, want] of Object.entries(pages)) {
     const s = read(f);

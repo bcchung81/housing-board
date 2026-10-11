@@ -29,7 +29,7 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start }:
   const span = `${start.year}년 1~${start.upto}월`;
   return [
     { date: '08.14', t: '진척 관리', m: start.cum === null ? '착공 –' : `착공 ${f(start.cum)}호`,
-      sub: yoy === null ? undefined : { text: `${yoy >= 0 ? '▲' : '▼'} ${Math.abs(yoy).toFixed(1)}%`, note: '전년 같은 기간', tone: yoy >= 0 ? 'ok' : 'bad' },
+      sub: yoy === null ? undefined : { text: `${yoy >= 0 ? '▲' : '▼'} ${Math.abs(yoy).toFixed(1)}%`, note: `1~${start.upto}월 · 전년 대비`, tone: yoy >= 0 ? 'ok' : 'bad' },
       basis: `통계누리 전국 착공 ${span} 누계와 전년 같은 기간 대비(보고자료와 같은 계산). 계획(목표) 물량 원천이 없어 계획 대비 달성률은 내지 못합니다.`,
       p: ['p-chart'] },
     { date: '08.19', t: '사업장별 현황판', m: `${f(L.scope.projects)} 사업`, basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})`,

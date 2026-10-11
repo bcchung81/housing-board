@@ -143,7 +143,6 @@
   /* 월별 공급 파동 리본 차트의 선·글자·층 경계(components/board/ribbon.ts 의 PAL) */
   --rb-mid: rgba(15, 26, 61, .22);
   --rb-sep: rgba(15, 26, 61, .16);
-  --rb-sc: #5F6E82;
   --rb-axis: #5F6E82;
   --rb-ink: #172B4D;
   --rb-cur: #172B4D;
@@ -238,7 +237,6 @@
   --region-5: #7A2C4E;
   --rb-mid: rgba(232, 237, 255, .2);
   --rb-sep: rgba(232, 237, 255, .16);
-  --rb-sc: #9AA8D6;
   --rb-axis: #8FA0C8;
   --rb-ink: #E8EDFF;
   --rb-cur: #FFFFFF;

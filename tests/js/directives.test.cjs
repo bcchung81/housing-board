@@ -75,8 +75,10 @@ test("메뉴: 보고자료·우리 동네는 화면이 생겨 '준비 중'이 �
 
 test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림을 넣지 않는다 — 사용자 피드백 2026-10-10)', () => {
   const b = read('components/board/Board.tsx');
-  assert.match(b, /<div className="grid grid-cols-\[repeat\(auto-fit,minmax\(min\(190px,100%\),1fr\)\)\] gap-2">/);
-  assert.match(b, /<span className="text-\[14px\] text-muted-foreground">\{x\.date\} · \{x\.t\}<\/span>/);
+  assert.match(b, /<div className="grid grid-cols-2 gap-2 min-\[901px\]:grid-cols-3 min-\[1101px\]:grid-cols-6">/);
+  assert.match(b, /\{x\.date\} · \{x\.t\}<\/span>/);
+  assert.match(b, /data-slot="board-dir" title=\{x\.basis\}/, '출처는 hover title');
+  assert.doesNotMatch(b, /<Real title=\{x\.basis\}/, '카드에 실데이터 표지를 달지 않는다');
   assert.doesNotMatch(b, /DIR_TL|top-\[83\.5px\]/);
   assert.match(read('app/tailwind.css'), /\.board-desktop \[data-slot="board-dir"\] \{ padding-top: 15px; padding-bottom: 16px; \}/);
 });

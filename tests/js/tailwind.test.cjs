@@ -87,7 +87,7 @@ test('주의(--warn)는 착공(--st-build) 색과 색상각이 18° 이상 떨�
 test('차트 축·보조 글자(--mute, 리본 축)는 카드·차트 바탕 위 4.5:1 이상이다', () => {
   for (const [name, get] of THEMES) {
     const b = get(), t = (n) => token(b, n);
-    for (const fg of ['mute', 'rb-axis', 'rb-yr-off', 'rb-sc']) for (const bg of ['card', 'chartbg']) {
+    for (const fg of ['mute', 'rb-axis', 'rb-yr-off']) for (const bg of ['card', 'chartbg']) {
       const r = ratio(t(fg), t(bg)); assert.ok(r >= 4.5, `${name} --${fg} 위 --${bg}: ${r.toFixed(2)}`);
     }
   }

@@ -144,6 +144,25 @@ test('기관 미상 줄: id unknown, 건축HUB 55건 · 건축HUB 전국 후보 
   assert.equal(board.agencies.filter((a) => a.id == null).length, 0);
 });
 
+test('실제 날짜는 호수가 가장 많은 원천의 자료 달까지(actualThrough): 전국은 건축HUB 대용량 2026-08, 그 뒤 달은 예정으로 다시 만들고 기준 달은 관측(stage_code) 그대로', () => {
+  assert.deepEqual([board.actualThrough, board.actualIndex, board.actualSource], ['2026-08', 19, BULK]);
+  assert.equal(board.months[board.actualIndex], board.actualThrough);
+  /* 작은 원장: 대용량 사업(100호, 자료 2026-08) + 번들 사업(10호, 자료 2026-10). 대용량 사업은 2025-03 인허가 실제, 준공 예정 2026-09-20.
+     기준일을 2026-09-15 로 두면 2026-09 는 실제 날짜 뒤라 예정(준공)을 쓴다 — 예전 규칙(기준 달 뒤만 예정)이면 ②인허가였다 */
+  const base = tables.projects.find((r) => r.source_ref === BULK);
+  const p1 = { ...base, local_project_id: 'T-1', source_ref: BULK, issued_at: null, stage_code: '06' }, p2 = { ...base, local_project_id: 'T-2', source_ref: 'bundle-t', issued_at: null, stage_code: '04' };
+  const ev = (pid, src, type, dt, date) => ({ local_project_id: pid, source_ref: src, event_type: type, date_type: dt, plan_basis: dt === 'PLANNED' ? 'CURRENT' : null, event_date: date });
+  const u = (pid, src, n) => ({ local_project_id: pid, source_ref: src, quantity_type: 'PERMIT', unit_scope: 'TOTAL', unit_count: n });
+  const small = boardFromLedger({ ...tables, projects: [p1, p2], sources: [{ source_ref: BULK, data_as_of: '2026-08-31' }, { source_ref: 'bundle-t', data_as_of: '2026-10-03' }],
+    events: [ev('T-1', BULK, 'PERMIT', 'ACTUAL', '2025-03-02'), ev('T-1', BULK, 'COMPLETION', 'PLANNED', '2026-09-20'), ev('T-2', 'bundle-t', 'CONSTRUCTION_START', 'ACTUAL', '2026-10-01')],
+    units: [u('T-1', BULK, 100), u('T-2', 'bundle-t', 10)] }, { referenceDate: '2026-09-15', observedMonth: '2026-10' });
+  assert.deepEqual([small.actualThrough, small.actualSource], ['2026-08', BULK], '호수가 많은 원천(대용량 100호 > 번들 10호)의 자료 달');
+  const st = (ym) => small.stageUnits[small.months.indexOf(ym)];
+  assert.deepEqual(st('2026-08'), [10, 100, 0, 0, 0, 0], '실제 날짜까지는 실제(②인허가, 번들 사업은 아직 실제 기록 전이라 ①)');
+  assert.deepEqual(st('2026-09'), [10, 0, 0, 0, 100, 0], '실제 날짜 뒤는 예정(⑤준공)');
+  assert.deepEqual(st('2026-10'), [0, 0, 10, 0, 100, 0], '기준 달은 관측: stage_code 바닥(06 → ⑤) · 번들 착공 실제(2026-10)');
+});
+
 test('저장된 data/board/ledger-board.json 이 도구로 다시 만든 것과 같다', () => {
   const saved = fs.readFileSync(path.join(__dirname, '..', '..', OUT), 'utf8');
   assert.equal(saved, `${render(board)}\n`);
