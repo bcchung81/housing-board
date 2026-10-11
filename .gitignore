@@ -46,3 +46,6 @@ next-env.d.ts
 
 # 시각 비교 스크린샷(재생성 가능)
 .visual/
+
+# 건축HUB 대용량 과거 판(월 약 6.5 MB × 20). 원본은 Storage ledger-raw 에 두고 저장소에는 manifest.json(sha256)만 둔다
+schemas/*/raw/hub-bulk-history/*.zip

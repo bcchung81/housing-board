@@ -159,20 +159,19 @@ export default function SourcesPage() {
     return resp ? { text: `캐시 ${fmt(rec)}건 · 응답 ${fmt(resp)}`, sort: rec } : { na: '캐시 없음' };
   };
 
-  /* 종합상황판: 화면 위젯 순서. 실데이터 = 월별 실적·원장 집계 5개(원장 2026-10 기준) + 원천 수, 나머지는 시안 고정값(SAMPLE) */
+  /* 종합상황판: 화면 위젯 순서. 모두 실데이터 = 월별 실적·원장 집계 6개(원장 2026-10 기준, 지연·주의 추이는 월 판정 이력) + 원천 수 */
   const molitUsed = items.filter((s) => s.id.startsWith('molit-') && s.usedBy.includes('/'));
   const molitRows = molitUsed.reduce((n, s) => n + s.count, 0);
-  const sample = (widget: string, need: string): Row => ({ id: widget, c: { widget, kind: { text: 'SAMPLE', muted: true }, data: '시안 고정값', method: null, cycle: null, count: { na: '없음' }, asOf: null, gap: `필요: ${need}` } });
   /* 원장 집계 위젯 5개는 같은 원장을 쓰므로 수집 건수는 첫 행에만 센다(합계에 겹쳐 세지 않게) */
   const judgedSido = ledger.regions.filter((r) => r.judged).map((r) => molit.sido.find((x) => x.code === r.code)?.name ?? r.code).join('·');
   const ledgerRow = (id: string, widget: string, gap: string, first = false): Row => ({ id, c: { widget, kind: '실데이터', data: `원장 ${ledger.observedMonth} 기준 표 · data/board/ledger-board.json`, method: 'tools/ledger → ledger-board.json', cycle: '수동 갱신', count: first ? held(ledger.scope.projects, '사업') : { na: '위 원장과 같음' }, asOf: ledger.observedMonth, gap } });
   const boardRows: Row[] = [
     { id: 'directives', c: { widget: '총리 지시 6건', kind: '실데이터', data: '통계누리 착공 누계 · 사업 원장 집계 · 원천 카탈로그', method: '통계누리 수집 + 원장 집계(tools/ledger/board.js) + sources.json', cycle: '수동 갱신', count: held(items.length, '데이터셋'), asOf: null, gap: `필요: ${nameOf('ledger')} · ${nameOf('agency-input')} · ${nameOf('schedule')}` } },
-    ledgerRow('ribbon', '월별 공급 파동', `${nationOf(ledger)}(사업 ${ledger.scope.projects}건 · ${ledgerMix(ledger)}) · 지연 띠는 ${ledger.observedMonth} 관측부터 · ${nameOf('schedule')}(월별 이력) 없음`, true),
-    ledgerRow('snap', '선택 시점 판정', `${ledgerJudged(ledger)} · 과거 판정 기록 없음`),
+    ledgerRow('ribbon', '월별 공급 파동', `${nationOf(ledger)}(사업 ${ledger.scope.projects}건 · ${ledgerMix(ledger)}) · 지연 띠는 ${ledger.trend?.[0]?.month ?? ledger.observedMonth} 판정부터`, true),
+    ledgerRow('snap', '선택 시점 판정', `${ledgerJudged(ledger)} · 지난 달은 월 판정 이력`),
     ledgerRow('region', `시도 ${ledger.regions.length}곳`, `판정은 ${judgedSido}만 · ${nationOf(ledger)} 사업 중`),
     { id: 'actual', c: { widget: '월별 실적 흐름', kind: '실데이터', data: `${nameOf('molit')} 중 ${molitUsed.length}표(인허가·착공·준공·분양) · ${molit.months[0]}~${molit.months[molit.months.length - 1]}`, method: COLLECTION[molitUsed[0].id].method, cycle: COLLECTION[molitUsed[0].id].cycle, count: held(molitRows, '행'), asOf: molitUsed[0].sourceAsOf, gap: SCREEN_USAGE.molit.gap } },
-    sample('지연·주의 추이', `${nameOf('schedule')}(월별 이력)`),
+    ledgerRow('trend', '지연·주의 추이', `월 판정 이력(data/board/judgment-history.json): ${ledger.trend?.[0]?.month ?? ledger.observedMonth}~ 건축HUB 과거 판 소급 · ${ledger.observedMonth}부터 월 관측`),
     ledgerRow('future', '향후 12개월 공급 예정', `준공만(착공·모집·입주 예정 없음) · LH 후보 예정일은 파일 기준일 ${lh.sourceAsOf} 값`),
     ledgerRow('agency', '기관별 진행', `기관 미상 ${ledger.agencies.find((a) => a.id === 'unknown')?.projects ?? 0}건 · ${nameOf('agency-input')} 없음`),
   ];

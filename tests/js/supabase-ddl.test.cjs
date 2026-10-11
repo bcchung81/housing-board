@@ -1,6 +1,7 @@
 'use strict';
 // Supabase 원장 마이그레이션(supabase/migrations/*_ledger_schema.sql)을 글자로 읽어 schemas/ledger 와 대조한다(네트워크 없음).
 // 스키마와 DDL 이 따로 바뀌는 것을 막는다: 값 목록·패턴·열 이름, 모든 표 RLS, public 미사용, anon·authenticated 쓰기 권한 없음.
+// 공개 범위(*_public_scope.sql, 기획서 Q4): 차례로 적용한 뒤 anon·authenticated 가 읽는 것은 api.board 와 그 뷰가 읽는 두 표뿐.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -12,6 +13,8 @@ const SCHEMA_DIR = path.join(ROOT, 'schemas/ledger');
 const migFile = fs.readdirSync(MIG_DIR).find((f) => /^\d{14}_ledger_schema\.sql$/.test(f));
 const SQL = fs.readFileSync(path.join(MIG_DIR, migFile), 'utf8');
 const CODE = SQL.replace(/--[^\n]*/g, '');   // 주석 제거(주석 안에 '--' 를 담은 문자열 리터럴은 없다)
+const scopeFile = fs.readdirSync(MIG_DIR).find((f) => /^\d{14}_public_scope\.sql$/.test(f));
+const SCOPE = scopeFile ? fs.readFileSync(path.join(MIG_DIR, scopeFile), 'utf8').replace(/--[^\n]*/g, '') : '';
 
 const common = JSON.parse(fs.readFileSync(path.join(SCHEMA_DIR, 'common.schema.json'), 'utf8')).$defs;
 const TABLES = fs.readdirSync(SCHEMA_DIR).filter((f) => f !== 'common.schema.json').map((f) => f.replace('.schema.json', ''));
@@ -185,4 +188,39 @@ test('api 뷰: 모두 security_invoker, review_required 는 뷰가 없다', () =
   for (const [, name, opts] of views) assert.match(opts, /security_invoker\s*=\s*true/, name);
   assert.ok(!views.some(([, name]) => name === 'review_required'));
   for (const t of TABLES.filter((t) => t !== 'review_required')) assert.ok(views.some(([, name]) => name === t), `api.${t}`);
+});
+
+const namesIn = (s, schema) => [...s.matchAll(new RegExp(`\\b${schema}\\.(\\w+)`, 'g'))].map((m) => m[1]);
+
+test('공개 범위(기획서 Q4): 차례로 적용하면 anon·authenticated 는 api.board 와 그 뷰가 읽는 두 표만 select 한다', () => {
+  assert.ok(scopeFile && scopeFile > migFile, 'supabase/migrations/<14자리>_public_scope.sql 이 표 마이그레이션 뒤에 있다');
+  const views = [...CODE.matchAll(/create view api\.(\w+)/gi)].map((m) => m[1]);
+  const readable = { api: new Set(), ledger: new Set() };
+  for (const [, privs, objs, to] of CODE.matchAll(/\bgrant\s+([\s\S]+?)\s+on\s+([\s\S]+?)\s+to\s+([\s\S]+?);/gi)) {
+    if (!/\bselect\b/i.test(privs) || !/\banon\b/i.test(to)) continue;
+    if (/all tables in schema api/i.test(objs)) views.forEach((v) => readable.api.add(v));
+    namesIn(objs, 'ledger').forEach((t) => readable.ledger.add(t));
+  }
+  assert.equal(readable.api.size, 17);
+  for (const [, privs, objs, from] of SCOPE.matchAll(/\brevoke\s+([\s\S]+?)\s+on\s+([\s\S]+?)\s+from\s+([\s\S]+?);/gi)) {
+    if (!/\bselect\b/i.test(privs)) continue;
+    assert.deepEqual(from.split(',').map((w) => w.trim().toLowerCase()), ['anon', 'authenticated'], objs);
+    namesIn(objs, 'api').forEach((v) => readable.api.delete(v));
+    namesIn(objs, 'ledger').forEach((t) => readable.ledger.delete(t));
+  }
+  assert.deepEqual(sorted(readable.api), ['board']);
+  assert.deepEqual(sorted(readable.ledger), ['board_snapshots', 'months']);
+  const board = CODE.match(/create view api\.board[\s\S]+?;/i)[0];   // security_invoker 라 남긴 표가 정확히 이 뷰의 입력
+  assert.deepEqual(sorted(new Set(namesIn(board, 'ledger'))), ['board_snapshots', 'months']);
+  assert.doesNotMatch(board, /current_run/);
+});
+
+test('공개 범위: current_run 실행 회수(public 포함), 정책은 months·board_snapshots 만, 회수만 하고 적재 경로는 건드리지 않는다', () => {
+  assert.match(SCOPE, /revoke execute on function ledger\.current_run\(\) from public, anon, authenticated;/);
+  const created = [...CODE.matchAll(/create policy (\w+) on ledger\.(\w+)/gi)].map((m) => `${m[2]}.${m[1]}`);
+  const dropped = [...SCOPE.matchAll(/drop policy (\w+) on ledger\.(\w+);/gi)].map((m) => `${m[2]}.${m[1]}`);
+  for (const d of dropped) assert.ok(created.includes(d), d);
+  assert.deepEqual(sorted(created.filter((p) => !dropped.includes(p))), ['board_snapshots.read_all', 'months.read_all']);
+  assert.doesNotMatch(SCOPE, /\bgrant\b/i, '회수만 한다');
+  assert.doesNotMatch(SCOPE, /service_role|ledger_admin|storage\.|db_schemas/i, '적재 경로·노출 설정은 그대로');
 });

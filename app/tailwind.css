@@ -130,8 +130,6 @@
   /* 6단계 공개 범위(components/StageLadder.tsx): 01~04 담당자 열람은 파랑, 05~06 국민 공개는 초록. 상자 테두리·번호·이름 글자에 쓴다(카드 위 4.5:1 이상) */
   --scope-gov: #3D63A0;
   --scope-pub: #23694C;
-  --sample-bg: #F6EFE0;
-  --sample-ink: #80612A;
   --real-bg: #E8F3EF;
   /* 지연율 바탕색 6단계: 0 은 중립, 그 위는 한 색상(로즈)이 단계마다 한 방향으로 짙어진다 */
   --region-0: #F1F4F8;
@@ -226,8 +224,6 @@
   --actor-private: #5A6A9E;
   --scope-gov: #7BA7FF;
   --scope-pub: #6CD9A8;
-  --sample-bg: #3A3325;
-  --sample-ink: #E6CA91;
   --real-bg: #163C34;
   --region-0: #17224A;
   --region-1: #2A2452;

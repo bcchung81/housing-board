@@ -1,13 +1,14 @@
 'use client';
 /* 종합상황판(/) — 시안 이식. 시안의 동작(지시 6건 순환·월별 리본 차트·재생·시점 이동·범례 강조·시도)을 그대로 두고,
    월별 공급 파동·선택 시점 판정·시도·기관별 진행·향후 12개월은 사업 원장 집계(data/board/ledger-board.json — 원장 2026-10 기준)를 그린다.
-   지연·주의 추이만 아직 시안 SAMPLE 이다(SAMPLE 표지). 총리 지시 6건 카드는 실데이터(lib/board/directives.ts).
+   지연·주의 추이·선택 달 판정·리본의 지연 띠는 집계의 월 판정 이력(trend: 2025.01~2026.09 건축HUB 과거 판 소급, 2026.10부터 월 관측)을 쓴다 — trend 가 없는 옛 집계는 기준 달만 판정.
+   총리 지시 6건 카드는 실데이터(lib/board/directives.ts).
    카드에는 숫자·단위·짧은 이름만 보이고, 기준·범위·규칙 설명은 카드 제목(h2)의 title 에 둔다(2026-10-11 사용자 지시: 실데이터 표지 제거·범례는 제목 줄에·서술 최소화).
    실데이터 위젯(월별 실적 흐름)은 서버 컴포넌트(RealPanels)를 middle 로 받아 시도 카드와 같은 줄에 둔다. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
-  AD, AW, C, CIR, K, PX0, RCOL, RLAB, VW,
-  anchor, argmax, delayAt, f, flatTotal, ip, judgedAt, kind, ml, rcls, ribbonOf, sg, timelineOf, txTrend,
+  C, CIR, K, PX0, RCOL, RLAB, VW,
+  argmax, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, sg, timelineOf, trendMax, trendOf, txTrend,
 } from '../../lib/board/sample';
 import { ledgerJudged, ledgerMix, makeDirectives, nation as nationOf } from '../../lib/board/directives';
 import type { LedgerBoard } from '../../lib/board/types';
@@ -16,7 +17,7 @@ import { sub } from '../page';
 import { Badge } from '../ui/badge';
 import { Card } from '../ui/card';
 import { CUR, HOVER, RIBBON, chartStatic, ribbonDynamic } from './ribbon';
-import { Key, Sample } from './tags';
+import { Key } from './tags';
 import PanelLink from './PanelLink';
 import { ag, agName, agRow, agVal, ags, bar3, btn, disp, jtag, legend, pacts, phead, phgroup, ptitle, row2 } from './styles';
 
@@ -66,7 +67,9 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
 
   const DIR = useMemo(() => makeDirectives({ sourceCount: real.sourceCount, stageNames: K, ledger: real.ledger, start: real.start }), [real.sourceCount, real.ledger, real.start]);
   const valid = useMemo(() => new Set(real.validMonths), [real.validMonths]);
-  const rib = useMemo(() => ribbonOf(T, L.stageUnits, L.delayByStage), [T, L]);
+  /* 달마다 판정(판정 없는 달 null)과 단계별 지연 호수 */
+  const JS = useMemo(() => judgmentsOf(L), [L]), DL = useMemo(() => delaysOf(JS), [JS]), TR = useMemo(() => trendOf(T, JS), [T, JS]);
+  const rib = useMemo(() => ribbonOf(T, L.stageUnits, DL), [T, L, DL]);
   const staticSvg = useMemo(() => chartStatic(rib, hl), [rib, hl]);
   const dynSvg = useMemo(() => ribbonDynamic(rib, cursor), [rib, cursor]);
 
@@ -116,18 +119,20 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
     t.style.left = `${Math.max(x, 6)}px`; t.style.top = `${Math.max(y, 6)}px`;
   }, [tip]);
 
-  /* 선택 시점의 값. 단계 호수·증감은 선택 시점을 따르고(증감 = 선택 − 기준 달), 판정 값은 선택 시점 이하의 가장 늦은 판정 달(jm, 원장에는 기준 달 하나)의 값이다 — 그 앞 달은 판정 없음 */
-  const v = L.stageUnits[cursor], nv = L.stageUnits[NOW], jm = judgedAt(T, cursor), judged = jm >= 0, ds = delayAt(T, L.delayByStage, cursor), bk = argmax(L.delayByStage);
+  /* 선택 시점의 값. 단계 호수·증감은 선택 시점을 따르고(증감 = 선택 − 기준 달), 판정 값은 선택 시점 이하의 가장 늦은 판정 달(jm, 이력 달 또는 기준 달)의 값이다 — 판정 달이 없으면 판정 없음 */
+  const v = L.stageUnits[cursor], nv = L.stageUnits[NOW], jm = judgedAt(T, cursor), judged = jm >= 0, SJ = JS[judged ? jm : NOW]!, ds = delayAt(T, DL, cursor), bk = argmax(SJ.delayByStage);
   const planned = (m: number) => kind(T, m) === '예정 기준', showDlt = cursor !== NOW;
   const nowTag = `${ml(T, NOW)} 판정`, jTag = judged ? `${ml(T, jm)} 판정` : '판정 없음';
   const ymKo = (m: number) => `${T.months[m].slice(0, 4)}년 ${Number(T.months[m].slice(5))}월`, ymDot = (ym: string) => ym.replace('-', '.');
-  const J = L.judgment, d = J.delay.units, w = J.caution.units, ok = J.ok.units, tt = d + w + ok, pct = (x: number) => (x / tt * 100).toFixed(1) + '%';
+  const J = L.judgment, d = SJ.delay.units, w = SJ.caution.units, ok = SJ.ok.units, tt = d + w + ok, pct = (x: number) => (x / tt * 100).toFixed(1) + '%';   // J = 기준 달 판정(기관 카드), d·w·ok = 선택 달 판정
   /* 원장 범위: 카드 제목의 title 에 보인다(일부가 전국처럼 보이지 않게) */
   const nation = nationOf(L);
   const scope = `원장 ${L.observedMonth} 기준 · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)}) · ${nation} · ${real.ledgerOrigin === 'supabase' ? `출처 Supabase(api.board, ${real.ledgerMonth})` : '출처 JSON 대체'}`;
-  const cc = Math.min(cursor, NOW), tx = (m: number) => (m * 560 / NOW).toFixed(1), ty = (val: number) => (190 - val / 20000 * 180).toFixed(1);
-  const RANGE = T.months.map((_, i) => i), ad = anchor(AD, NOW), aw = anchor(AW, NOW);   // SAMPLE 추이는 기준 달에 맞춰 옮긴다
-  const pts = (arr: [number, number][]) => RANGE.slice(0, NOW + 1).map((m) => tx(m) + ',' + ty(ip(arr, m, NOW))).join(' ');
+  /* 지연·주의 추이: 판정이 있는 달(0 … NOW)의 호수. 세로 맨 위(tmax)는 이력 최댓값에 맞춘다(눈금선 3개 = 4등분) */
+  const tmax = trendMax(Math.max(0, ...TR.flatMap((r) => (r ? [r.d, r.w] : [])))), cc = Math.min(cursor, NOW), ct = TR[judgedAt(T, cc)] ?? null;
+  const tx = (m: number) => (m * 560 / NOW).toFixed(1), ty = (val: number) => (190 - val / tmax * 180).toFixed(1);
+  const RANGE = T.months.map((_, i) => i);
+  const pts = (k: 'd' | 'w') => TR.flatMap((r, m) => (r ? [tx(m) + ',' + ty(r[k])] : [])).join(' ');
   const up = L.upcoming, fi = cursor - NOW, hasFut = fi >= 0 && fi < up.length;
   const maxUp = Math.max(1, ...up.map((m) => m.units));
   const cur = DIR[focus - 1];
@@ -145,8 +150,8 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const futList = [`${ml(T, NOW)} 준공 ${f(maxUp)}호 · 99사업`, `${ml(T, 0)} 지난 시점 · 실적은 월 상세`, `${ml(T, LAST)} · 12개월 범위 밖`];
 
   function tipOf(m: number) {
-    const vv = L.stageUnits[m], dd = delayAt(T, L.delayByStage, m), b = argmax(dd);
-    return { m, vv, dd, b };
+    const vv = L.stageUnits[m], dd = delayAt(T, DL, m), b = argmax(dd), tj = judgedAt(T, m);
+    return { m, vv, dd, b, tj: tj >= 0 ? JS[tj] : null };
   }
 
   return (
@@ -155,7 +160,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         <header className="flex flex-wrap items-center gap-5 pt-6 pb-4">
           <div className="flex flex-wrap items-center gap-5 phone:gap-2"><div className="flex flex-col gap-[3px] phone:w-full"><h1 className="m-0 text-[32px] leading-[1.35] font-bold tracking-[-0.035em] text-foreground mobile:text-[13px]">주택공급 종합상황판</h1><span className="text-[14px] text-muted-foreground [word-break:keep-all]">계획에서 입주까지, 대한민국 주택공급의 흐름을 한눈에</span></div></div>
           <div className="ml-auto flex flex-wrap items-center gap-2.5">
-            <span className={sub} title={`지연·주의 추이(SAMPLE 표지)만 시안 수치이고 나머지는 실제 자료입니다. 원장 위젯은 ${scope}입니다. 실적(통계누리) 자료는 ${real.actualMonth.replace('-', '.')}까지입니다.`}>원장 {L.referenceDate} · 실적 {real.actualMonth.replace('-', '.')}</span>
+            <span className={sub} title={`원장 위젯은 ${scope}입니다. 실적(통계누리) 자료는 ${real.actualMonth.replace('-', '.')}까지입니다.`}>원장 {L.referenceDate} · 실적 {real.actualMonth.replace('-', '.')}</span>
           </div>
         </header>
 
@@ -177,10 +182,10 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         <div className="mt-3.5 grid grid-cols-[minmax(0,1fr)_400px] items-stretch gap-3.5 narrow:grid-cols-1">
           <Card variant="board" className={ringable(cur.p.includes('p-chart'))} render={<section id="p-chart" aria-label="월별 공급 파동" />}>
             <div className="mb-2 flex flex-wrap items-center gap-3.5">
-              <h2 className={ptitle} title={`${scope} · 달 말 단계별 호수 · ${ml(T, T.actual)}까지 실제 날짜(호수가 가장 많은 원천의 자료 달), 이후 현재 예정(빗금) · 기준일 ${ml(T, NOW)} · 붉은 띠 = 단계별 지연 호수(${ml(T, NOW)} 관측부터)${flatTotal(rib) ? ` · 총량 매달 ${f(rib.total[0])}호(같은 사업이 단계만 옮겨 감)` : ''}`}>월별 공급 파동</h2>
+              <h2 className={ptitle} title={`${scope} · 달 말 단계별 호수 · ${ml(T, T.actual)}까지 실제 날짜(호수가 가장 많은 원천의 자료 달), 이후 현재 예정(빗금) · 기준일 ${ml(T, NOW)} · 붉은 띠 = 단계별 지연 호수(${ml(T, T.judged[0])} 판정부터)${flatTotal(rib) ? ` · 총량 매달 ${f(rib.total[0])}호(같은 사업이 단계만 옮겨 감)` : ''}`}>월별 공급 파동</h2>
               <div data-slot="board-legend" className="ml-auto flex flex-wrap gap-1" role="group" aria-label="단계 범례 (누르면 해당 단계를 강조)">
                 {K.map((k, i) => <button key={k} type="button" className={cn(btn, 'flex items-center gap-1.5 rounded-full border border-transparent px-[9px] py-[3px] text-[14px] [transition:background_.15s,border-color_.15s] aria-pressed:border-primary aria-pressed:bg-accent', hoverBg)} aria-pressed={hl === i} onClick={() => setHl(hl === i ? -1 : i)}><i className="block size-[11px] flex-none rounded-[3px]" style={{ background: C[i] }} />{k}</button>)}
-                <span className="flex items-center gap-1.5 border border-transparent px-[9px] py-[3px] text-[14px]" title={`붉은 띠 = 단계별 지연 호수(${ml(T, NOW)} 관측부터)`}><i className="block size-[11px] flex-none rounded-[3px] bg-[var(--rb-band)]" />지연</span>
+                <span className="flex items-center gap-1.5 border border-transparent px-[9px] py-[3px] text-[14px]" title={`붉은 띠 = 단계별 지연 호수(${ml(T, T.judged[0])} 판정부터)`}><i className="block size-[11px] flex-none rounded-[3px] bg-[var(--rb-band)]" />지연</span>
               </div>
             </div>
             {/* 좁은 화면에서만 가로로 민다. 세로는 숨긴다: overflow-x 가 auto 면 세로도 auto 가 되어, 툴팁·소수점 높이로 1px 만 넘쳐도 세로 스크롤바가 생기고 그 폭만큼 차트가 다시 줄어 그림이 흔들렸다 */}
@@ -189,7 +194,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               onPointerMove={(e) => { const m = monthAt(e.clientX); if (m < 0) setTip(null); else { const wr = wrapRef.current!.getBoundingClientRect(); setTip({ m, x: e.clientX - wr.left, y: e.clientY - wr.top }); } }}
               onPointerLeave={() => setTip(null)}
               onClick={(e) => { const m = monthAt(e.clientX); if (m >= 0) goto(m); }}>
-              <svg id="chart" shapeRendering="geometricPrecision" ref={svgRef} className="block h-auto w-full [&_text]:[font-family:inherit]" viewBox="0 0 960 400" role="img" aria-label={`${ymKo(0)}부터 ${ymKo(LAST)}까지 원장 사업 ${f(L.scope.projects)}건의 달 말 단계별 호수를 쌓은 월별 리본(${nation}). 바닥부터 쌓은 높이(세로축, 호)가 그 달 총량이고, 층 안의 붉은 띠가 ${ml(T, NOW)} 관측부터의 단계별 지연 호수이며 핀이 병목 단계를 가리킵니다. 차트를 누르면 그 달을 고릅니다.`}>
+              <svg id="chart" shapeRendering="geometricPrecision" ref={svgRef} className="block h-auto w-full [&_text]:[font-family:inherit]" viewBox="0 0 960 400" role="img" aria-label={`${ymKo(0)}부터 ${ymKo(LAST)}까지 원장 사업 ${f(L.scope.projects)}건의 달 말 단계별 호수를 쌓은 월별 리본(${nation}). 바닥부터 쌓은 높이(세로축, 호)가 그 달 총량이고, 층 안의 붉은 띠가 ${ml(T, T.judged[0])} 판정부터의 단계별 지연 호수이며 핀이 병목 단계를 가리킵니다. 차트를 누르면 그 달을 고릅니다.`}>
                 <g dangerouslySetInnerHTML={{ __html: staticSvg }} />
                 <rect x={rib.X(tip ? tip.m : 0).toFixed(1)} y={RIBBON.TOP - 4} width={rib.pitch.toFixed(1)} height={RIBBON.PH + 8} fill={HOVER.fill} fillOpacity={HOVER.opacity} visibility={tip ? 'visible' : 'hidden'} pointerEvents="none" />
                 <rect x={rib.X(cursor).toFixed(1)} y={RIBBON.TOP - 4} width={rib.pitch.toFixed(1)} height={RIBBON.PH + 8} rx="3" fill={CUR.fill} className="rb-cur" pointerEvents="none" />
@@ -205,10 +210,10 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                     <div className={cn(sub, 'mb-[3px]')}>총량 {f(rib.total[tipView.m])}호</div>
                     {K.map((k, i) => <div key={k} className={tipRow}><span className={tipRowKey}><i className="block size-[9px] rounded-[2px]" style={{ background: C[i] }} />{CIR[i]} {k}</span><b className={disp}>{f(tipView.vv[i])}</b></div>)}
                     <div className="mt-[3px] border-t border-border pt-[3px]">
-                      {tipView.m >= NOW ? <>
-                        <div className={tipRow}><span className={cn(tipRowKey, 'text-bad')}>지연</span><b className={disp}>{f(J.delay.units)}</b></div><div className={tipRow}><span className={cn(tipRowKey, 'text-warn')}>주의</span><b className={disp}>{f(J.caution.units)}</b></div>
+                      {tipView.tj ? <>
+                        <div className={tipRow}><span className={cn(tipRowKey, 'text-bad')}>지연</span><b className={disp}>{f(tipView.tj.delay.units)}</b></div><div className={tipRow}><span className={cn(tipRowKey, 'text-warn')}>주의</span><b className={disp}>{f(tipView.tj.caution.units)}</b></div>
                         <div className={tipRow}><span className={cn(tipRowKey, 'text-primary')}>병목 · {K[tipView.b]}</span><b className={disp}>{f(tipView.dd[tipView.b])}</b></div>
-                      </> : <div className={cn(tipRow, 'text-muted-foreground')}>판정은 {ml(T, NOW)} 관측부터</div>}
+                      </> : <div className={cn(tipRow, 'text-muted-foreground')}>판정은 {ml(T, T.judged[0])}부터</div>}
                     </div>
                   </>
                 ) : null}
@@ -219,7 +224,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
 
           <Card variant="board" className="@container" render={<section id="p-snap" aria-label="선택 시점의 판정과 단계별 호수" />}>
             <div className="mb-2.5 flex flex-wrap items-center gap-2.5">
-              <h2 className={ptitle} title={`${scope} · 단계 호수는 선택 달, 증감 = 선택 달 − 기준 달(${ml(T, NOW)}) · 판정은 ${ml(T, NOW)} 관측만 있다: 그 앞 달은 판정 없음, 뒤 달은 ${ml(T, NOW)} 판정 · 판정 기준일 ${L.referenceDate} · 지연 = 현재 예정일 경과 ${L.judge.delayMonths}개월 이상, 주의 = ${L.judge.cautionMonths}~${L.judge.delayMonths}개월 · ${ledgerJudged(L)}`}>{ml(T, cursor)}</h2>
+              <h2 className={ptitle} title={`${scope} · 단계 호수는 선택 달, 증감 = 선택 달 − 기준 달(${ml(T, NOW)}) · 판정은 선택 달 이하의 가장 늦은 판정 달(${ml(T, T.judged[0])}~${ml(T, NOW)}, ${ml(T, NOW)} 뒤 달은 ${ml(T, NOW)} 판정) · 판정 기준일 ${SJ.referenceDate} · 지연 = 현재 예정일 경과 ${L.judge.delayMonths}개월 이상, 주의 = ${L.judge.cautionMonths}~${L.judge.delayMonths}개월 · ${ledgerJudged(L)}`}>{ml(T, cursor)}</h2>
               <Badge variant="solid" className={planned(cursor) ? 'bg-primary text-primary-foreground' : 'bg-foreground text-background'}>{kind(T, cursor)}</Badge>
               <span className={pacts}><PanelLink href={`/projects?stage=0${bk + 1}`} full={`병목 단계(${K[bk]})의 사업`}>병목 단계</PanelLink>{monthLink ? <PanelLink href={monthLink} full={`${ml(T, cursor)} 월 상세`}>{Number(T.months[cursor].slice(5))}월</PanelLink> : null}</span>
             </div>
@@ -231,19 +236,19 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 </div>
                 <span data-slot="judge-tag" className={cn(jtag, 'flex-none leading-none')}>{jTag}</span>
               </div>
-              {/* 판정 없는 달은 숫자만 감춘다(칸 높이는 그대로) */}
+              {/* 판정 없는 달은 숫자 대신 '—'(칸 높이는 그대로라 달을 옮겨도 표가 흔들리지 않는다) */}
               <div className="mt-[9px] grid grid-cols-3 gap-2">
-                {([['지연', 'bad', d, J.delay.projects], ['주의', 'warn', w, J.caution.projects], ['정상', 'ok', ok, J.ok.projects]] as const).map(([name, tone, n, np]) => (
+                {([['지연', 'bad', d, SJ.delay.projects], ['주의', 'warn', w, SJ.caution.projects], ['정상', 'ok', ok, SJ.ok.projects]] as const).map(([name, tone, n, np]) => (
                   <div key={name} className="min-w-0">
                     <div className="flex items-center gap-[5px] text-[14px] whitespace-nowrap text-muted-foreground"><i className={cn('block size-[9px] flex-none rounded-[3px]', tone === 'bad' ? 'bg-bad' : tone === 'warn' ? 'bg-warn' : 'bg-ok')} />{name}<em className={cn('ml-0.5 text-[14px] not-italic tabular-nums', !judged && 'invisible')}>{pct(n)}</em></div>
-                    <b className={cn('block font-display text-[min(20px,5cqi)] leading-[1.3] whitespace-nowrap tabular-nums', tone === 'bad' ? 'text-bad' : tone === 'warn' ? 'text-warn' : 'text-ok', !judged && 'invisible')}>{f(n)}<small className="ml-0.5 [font-family:inherit] text-[14px] font-normal opacity-80">호</small></b>
-                    <div className={cn('text-[14px] whitespace-nowrap text-muted-foreground tabular-nums', !judged && 'invisible')}>{f(np)}건</div>
+                    <b className={cn('block font-display text-[min(20px,5cqi)] leading-[1.3] whitespace-nowrap tabular-nums', tone === 'bad' ? 'text-bad' : tone === 'warn' ? 'text-warn' : 'text-ok', !judged && 'text-mute')}>{judged ? <>{f(n)}<small className="ml-0.5 [font-family:inherit] text-[14px] font-normal opacity-80">호</small></> : '—'}</b>
+                    <div className={cn('text-[14px] whitespace-nowrap text-muted-foreground tabular-nums', !judged && 'text-mute')}>{judged ? `${f(np)}건` : '—'}</div>
                   </div>
                 ))}
               </div>
             </div>
             {/* 증감 칸은 선택 달이 기준 달이 아닐 때만(기준 달이면 3칸) */}
-            <div className={cn('mt-3 grid flex-auto content-start gap-x-3', showDlt ? 'grid-cols-[minmax(0,1fr)_max-content_max-content_max-content] phone:grid-cols-[minmax(0,1fr)_max-content_max-content]' : 'grid-cols-[minmax(0,1fr)_max-content_max-content]')} aria-label={showDlt ? '단계별 호수, 기준 달 대비 증감, 지연 호수' : '단계별 호수, 지연 호수'}>
+            <div className={cn('mt-3 grid flex-auto grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-x-3', showDlt ? 'grid-cols-[minmax(0,1fr)_max-content_max-content_max-content] phone:grid-cols-[minmax(0,1fr)_max-content_max-content]' : 'grid-cols-[minmax(0,1fr)_max-content_max-content]')} aria-label={showDlt ? '단계별 호수, 기준 달 대비 증감, 지연 호수' : '단계별 호수, 지연 호수'}>
               <div className="col-span-full grid grid-cols-subgrid items-center px-1.5 pb-0.5 text-[13px] text-muted-foreground">
                 <span>단계</span><span className="text-right">호수</span>{showDlt ? <span className="text-right phone:hidden">증감</span> : null}<span className="text-right">지연 호수</span>
               </div>
@@ -295,18 +300,18 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         <div className="mt-3.5 grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-3.5">
           <Card variant="board" className={ringable(cur.p.includes('p-trend'))} render={<section id="p-trend" aria-label="지연·주의 추이" />}>
             <div className={phead}>
-              <h2 className={ptitle} title={`지연·주의 호수(호) 추이 · 실적 기준 · 판정 이력은 ${L.observedMonth} 관측부터 쌓인다 · 아래 줄은 선택 시점(${ml(T, Math.min(cursor, NOW))})의 전월 대비 증감(호)`}>지연·주의 추이 <Sample /></h2>
+              <h2 className={ptitle} title={`지연·주의 호수(호) · 2025.01~2026.09 건축HUB 과거 판 소급 판정 · 2026.10부터 월 관측 · 아래 줄은 선택 시점(${ml(T, cc)})의 전월 대비 증감`}>지연·주의 추이</h2>
               <span className={cn(legend, 'ml-auto')}><Key sw="var(--bad)" className="h-[3px] w-3.5 rounded-full">지연</Key><Key sw="var(--warn)" className="h-[3px] w-3.5 rounded-full">주의</Key></span>
             </div>
             {/* 패널 폭에 따라 0.6~1배로 줄어 그려진다: 선·격자는 non-scaling-stroke 로 화면 px 굵기를 지킨다(1px 미만 흐림 방지, 계획서 14절 T2) */}
             <svg id="trend" className="mt-1.5 block h-auto w-full" viewBox="0 0 560 200" role="img" aria-label="지연과 주의 호수 추이">
               <line x1="0" y1="55" x2="560" y2="55" stroke="var(--border)" vectorEffect="non-scaling-stroke" /><line x1="0" y1="100" x2="560" y2="100" stroke="var(--border)" vectorEffect="non-scaling-stroke" /><line x1="0" y1="145" x2="560" y2="145" stroke="var(--border)" vectorEffect="non-scaling-stroke" />
-              <g className="q-sweep"><polyline points={pts(aw)} fill="none" stroke="var(--warn)" strokeWidth="2.4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /><polyline points={pts(ad)} fill="none" stroke="var(--bad)" strokeWidth="2.8" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /></g>
+              <g className="q-sweep"><polyline points={pts('w')} fill="none" stroke="var(--warn)" strokeWidth="2.4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /><polyline points={pts('d')} fill="none" stroke="var(--bad)" strokeWidth="2.8" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /></g>
               <line x1={tx(cc)} y1="6" x2={tx(cc)} y2="194" stroke="var(--primary)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
-              <circle cx={tx(cc)} cy={ty(ip(ad, cc, NOW))} r="4.5" fill="var(--bad)" /><circle cx={tx(cc)} cy={ty(ip(aw, cc, NOW))} r="4.5" fill="var(--warn)" />
+              <circle cx={tx(cc)} cy={ty(ct?.d ?? 0)} r="4.5" fill="var(--bad)" visibility={ct ? 'visible' : 'hidden'} /><circle cx={tx(cc)} cy={ty(ct?.w ?? 0)} r="4.5" fill="var(--warn)" visibility={ct ? 'visible' : 'hidden'} />
             </svg>
             <div className={cn(sub, 'flex justify-between')}><span>{ml(T, 0)}</span><span>{ml(T, NOW)}</span></div>
-            <div className="mt-1.5 text-[14px] text-ink2"><Reserve live={txTrend(T, cursor)} list={RANGE.map((m) => txTrend(T, m))} /></div>
+            <div className="mt-1.5 text-[14px] text-ink2"><Reserve live={txTrend(T, TR, cursor)} list={RANGE.map((m) => txTrend(T, TR, m))} /></div>
           </Card>
 
           <Card variant="board" className={ringable(cur.p.includes('p-fut'))} render={<section id="p-fut" aria-label="향후 12개월 공급 예정" />}>

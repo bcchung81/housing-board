@@ -6,14 +6,16 @@
    LH 후보(발급 전, 파일 기준일 2026-01-27)는 준공 여부를 알 기록이 없어 판정에서 뺀다.
    건축HUB 대용량 후보는 착공 실제일이 있는 기록이 약 7% 뿐이라 '착공 예정 경과 + 착공 기록 없음'이 대부분 자료 누락이다(2026-10-11 결정). 그래서 사용검사(준공) 예정 경과만 판정하고,
    착공 예정 경과는 정상·주의·지연에서 빼 judgment.excludedStartOverdue 로 따로 센다. 건축HUB 스냅샷(발급 사업)은 착공·준공 둘 다 판정한다.
-   순수 함수 boardFromLedger 는 파일을 읽거나 쓰지 않는다.
-   실행: node tools/ledger/board.js  → schemas/ledger-2026-10/tables 를 읽어 data/board/ledger-board.json 을 쓴다. */
+   순수 함수 boardFromLedger 는 파일을 읽거나 쓰지 않는다. 월 판정 이력(history, data/board/judgment-history.json 의 rows — tools/ledger/trend.js)을 받으면
+   결과의 trend 는 관측 달 앞의 이력 행 + 이번 달 판정 행(basis OBSERVED) 하나다(지연·주의 추이 카드).
+   실행: node tools/ledger/board.js  → schemas/ledger-2026-10/tables 와 판정 이력(있으면)을 읽어 data/board/ledger-board.json 을 쓴다. */
 const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..', '..');
 const TABLES = 'schemas/ledger-2026-10/tables';
 const OUT = 'data/board/ledger-board.json';
+const HISTORY = 'data/board/judgment-history.json';
 const NEEDED = ['projects', 'events', 'units', 'sources', 'areas', 'agencies'];
 const LH_SOURCE = 'datagokr-15141761';
 const BULK_PREFIX = 'hub-bulk-hs-';   // 건축HUB 주택인허가 전국 대용량(tools/ledger/hub-bulk.js), 뒤에 자료 달
@@ -46,8 +48,8 @@ function elapsedMonths(end, ref) {
 }
 const classify = (months, judge = JUDGE) => (months >= judge.delayMonths ? 'delay' : months >= judge.cautionMonths ? 'caution' : 'ok');
 
-/* tables: { projects, events, units, sources, areas, agencies } 의 행 배열 */
-function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth = '2026-10' } = {}) {
+/* tables: { projects, events, units, sources, areas, agencies } 의 행 배열, history: 판정 이력 행(달 순) */
+function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth = '2026-10', history = [] } = {}) {
   const months = Array.from({ length: LAST + 1 }, (_, i) => addMonths(FIRST_MONTH, i));
   const now = months.indexOf(observedMonth);
   if (now < 0) throw new Error(`observedMonth ${observedMonth} 가 보드 시점(${FIRST_MONTH}~${months[LAST]}) 밖이다`);
@@ -173,6 +175,13 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
   const judgedSources = new Set(judged.flatMap((x) => [...x.actual, ...Object.values(x.plan)].map((e) => e.source_ref)));
   const dataAsOf = Object.fromEntries([...judgedSources].sort().map((s) => [s, asOf.get(s) ?? null]));
   const bulkCandidates = candidates.filter((x) => x.bulk).length;
+  const judgment = { ok: bucket('ok'), caution: bucket('caution'), delay: bucket('delay'), excluded: { projects: excluded.length, units: sum(excluded), reason: `LH 준공예정 후보(발급 전): 파일 기준일 ${lhAsOf} 이후 준공 여부를 알 기록이 없다` },
+    excludedStartOverdue: { projects: new Set(startSkipped.map((x) => x.p.local_project_id)).size, pairs: startSkipped.length, units: sum([...new Set(startSkipped)]), reason: '건축HUB 대용량 후보의 착공 예정 경과(착공 기록 없음): 원천에 착공 실제일 기록이 약 7% 뿐이라 지연으로 치지 않는다' } };
+  const delayByStage = byStageNow('delay'), cautionByStage = byStageNow('caution');
+  /* 이번 달 판정 행(이력 파일과 같은 모양). edition = 실은 건축HUB 대용량 판의 자료 달 */
+  const edition = tables.sources.map((s) => s.source_ref).find((r) => r.startsWith(BULK_PREFIX))?.slice(BULK_PREFIX.length) ?? null;
+  const { excludedStartOverdue: xs } = judgment;
+  const own = { month: observedMonth, referenceDate, edition, basis: 'OBSERVED', ok: judgment.ok, caution: judgment.caution, delay: judgment.delay, delayByStage, cautionByStage, judged: judged.length, excludedStartOverdue: { projects: xs.projects, pairs: xs.pairs, units: xs.units } };
 
   return {
     schema: 'ledger-board/1', observedMonth, referenceDate, source: TABLES,
@@ -186,10 +195,9 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
       withEvents: { supplyNotice: projects.filter((x) => x.actualTypes.has('SUPPLY_NOTICE')).length, moveIn: projects.filter((x) => x.plan.MOVE_IN).length },
     },
     months, now, actualThrough, actualIndex: at, actualSource, stageUnits, stageProjects,
-    judgment: { ok: bucket('ok'), caution: bucket('caution'), delay: bucket('delay'), excluded: { projects: excluded.length, units: sum(excluded), reason: `LH 준공예정 후보(발급 전): 파일 기준일 ${lhAsOf} 이후 준공 여부를 알 기록이 없다` },
-      excludedStartOverdue: { projects: new Set(startSkipped.map((x) => x.p.local_project_id)).size, pairs: startSkipped.length, units: sum([...new Set(startSkipped)]), reason: '건축HUB 대용량 후보의 착공 예정 경과(착공 기록 없음): 원천에 착공 실제일 기록이 약 7% 뿐이라 지연으로 치지 않는다' } },
-    delayByStage: byStageNow('delay'), cautionByStage: byStageNow('caution'),
+    judgment, delayByStage, cautionByStage,
     regions, agencies, upcoming, overdue: overdue.slice(0, OVERDUE_LIMIT), overdueTotal: overdue.length,
+    trend: [...history.filter((r) => r.month < observedMonth), own],
   };
 }
 
@@ -203,11 +211,13 @@ function render(v, ind = '') {
 }
 
 const loadTables = (dir = path.join(ROOT, TABLES)) => Object.fromEntries(NEEDED.map((t) => [t, JSON.parse(fs.readFileSync(path.join(dir, `${t}.json`), 'utf8')).rows]));
+/* 판정 이력 행(파일이 없으면 빈 배열) */
+const loadHistory = (root = ROOT) => { const f = path.join(root, HISTORY); return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')).rows : []; };
 
-module.exports = { boardFromLedger, elapsedMonths, classify, render, loadTables, OUT };
+module.exports = { boardFromLedger, elapsedMonths, classify, render, loadTables, loadHistory, endOf, lastDay, addMonths, OUT, HISTORY };
 
 if (require.main === module) {
-  const board = boardFromLedger(loadTables());
+  const board = boardFromLedger(loadTables(), { history: loadHistory() });
   const out = path.join(ROOT, OUT);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, `${render(board)}\n`);

@@ -36,15 +36,15 @@
 
 | 스키마 | 담는 것 | Data API 노출 | 누가 |
 |---|---|---|---|
-| `ledger` | 16표 + `months`·`ingest_runs`·`ingest_run_sources`·`board_snapshots` | **안 함** | 소유자 postgres(마이그레이션), 읽기 anon·authenticated(RLS), 쓰기 service_role(RPC 안에서만) |
-| `api` | 읽기 뷰(`security_invoker = true`), 열 = v1.4 열 + `is_demo`·`sido_code`·`is_candidate` | **노출**(publishable 키) | anon·authenticated `select` 만 |
+| `ledger` | 16표 + `months`·`ingest_runs`·`ingest_run_sources`·`board_snapshots` | **안 함** | 소유자 postgres(마이그레이션), 읽기 anon·authenticated 는 `months`·`board_snapshots` 만(`api.board` 용, RLS), 쓰기 service_role(RPC 안에서만) |
+| `api` | 읽기 뷰(`security_invoker = true`), 열 = v1.4 열 + `is_demo`·`sido_code`·`is_candidate` | **노출**(publishable 키) | anon·authenticated 는 `api.board` `select` 만(나머지 16뷰는 권한 없음 → 401, 9절 7번) |
 | `ledger_admin` | 적재 RPC(`begin_run`·`publish_run`·`export_table`)와 스테이징 표 `stage_rows` | **노출**하되 service_role 에만 USAGE | 파이프라인(secret 키) |
 | `public` | 쓰지 않는다 | (기본값 그대로) | – |
 | (나중) `intake` | 기관 입력 접수 표 | 노출 | authenticated(기관 사용자) |
 
 - **왜 public 이 아닌가(실측)**: 이 프로젝트의 `public` 기본 권한(`pg_default_acl`)은 새 표에 anon·authenticated 에 `arwdDxtm`(쓰기 포함 전부)를 준다. RLS 자동 켜기 이벤트 트리거(`ensure_rls` → `public.rls_auto_enable`)는 `public` 에만 작동한다. 그래서 `ledger` 에 두고 **RLS 를 마이그레이션에서 직접 켜고 GRANT 를 명시**한다.
 - **키**: publishable 키 = anon 역할(RLS 적용), secret 키 = service_role(BYPASSRLS, 그래도 GRANT·트리거는 적용). 웹앱(Vercel)에는 `NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 두 개만 둔다. `SUPABASE_SECRET_KEY`·`SUPABASE_DB_URL` 은 적재하는 곳(로컬 `.env.local`, 나중에 GitHub Actions 비밀값)에만 둔다.
-- **RLS**: `ledger` 모든 표 `enable row level security`. anon·authenticated 는 공개 표에 `for select using (true)` 정책만(쓰기 정책 없음 → 쓰기 불가). 공개하지 않는 표: `review_required`(내부 작업 목록), `stage_rows`. `ingest_runs` 는 `status in ('published','superseded')` 행만 읽기.
+- **RLS**: `ledger` 모든 표 `enable row level security`. anon·authenticated 는 `months`·`board_snapshots` 에만 `for select using (true)` 정책(쓰기 정책 없음 → 쓰기 불가). 나머지 18표와 `stage_rows` 는 GRANT·정책 모두 없다(2026-10-11 `_public_scope.sql` 로 회수 — 다시 GRANT 해도 RLS 가 0행으로 막는 이중 잠금).
 - 발행이 한 트랜잭션이라 "반쯤 올라간 판"은 읽는 쪽에 보이지 않는다. 그래서 공개 조건을 행마다 두지 않고, `api` 뷰가 **현재 판**(최근 발행 실행이 쓴 행)만 고른다. events·board_snapshots 는 모든 달을 보인다.
 - **역할별 시간 제한(실측)**: anon 3초, authenticated 8초, authenticator 8초, 그리고 authenticator 에 `safeupdate` 가 걸려 있다(WHERE 없는 UPDATE·DELETE 거부). 발행 RPC 는 8초 안에 끝나야 하고 지우기 문에는 늘 WHERE 를 둔다.
 - **나중의 기관 입력 역할**: Supabase Auth 사용자 + `app_metadata.agency_id`(사용자가 고칠 수 없는 쪽). `intake.agency_rows(agency_id, tbl, row jsonb, submitted_by default auth.uid(), status)` 에 `with check (agency_id = auth.jwt()->'app_metadata'->>'agency_id')` 로 넣기만 하고, 원장 반영은 파이프라인이 `import-agency.js` 규칙(검증·거부 사유)으로 한다. 기관은 원장 표에 직접 쓰지 않는다. 지금은 만들지 않는다.
@@ -94,6 +94,7 @@
 |---|---|---|
 | events | 관측 달마다 행(`observed_month`) 누적. 지금 파일과 같다 | 당초 대비 지연·머문 기간은 관측 이력으로만 계산(데이터셋-스키마 3절) |
 | board_snapshots | 달마다 JSON 하나(`month` 기본 키) | 지연·주의 추이·보고자료가 달끼리 비교한다. 10,335 B/월 |
+| 월 판정 이력 | `data/board/judgment-history.json`(저장소) → 보드 JSON 의 `trend` 로 board_snapshots 에 함께 실린다. 2025-01~2026-09 는 건축HUB 과거 판 소급(`tools/ledger/trend.js`, 판 원본은 `ledger-raw/2026-10/hub-bulk-history/`, sha256 은 그 폴더 manifest.json), 2026-10 부터는 달마다 `trend.js --close` 로 관측 행을 붙인다 | 닫힌 달 보드는 고칠 수 없어서(가드) 지난 달 판정은 새 달 보드의 trend 로 옮겨 싣는다(2026-10-11) |
 | 그 밖의 원장 표 | 현재 판만. 지난 판은 `ledger-raw/{YYYY-MM}/tables.tar.gz` | 화면이 지난 판의 사업·물량을 다시 묻지 않는다. 지금 16표 묶음 gzip 298,835 B |
 | stat_facts | 원천의 달(`ym`)이 시간 축. 잠정치 개정은 덮어쓴다 | 원천 개정값이 정답이다. 개정 전 값은 Storage 원본에 남는다 |
 
@@ -228,6 +229,7 @@ ledger-raw/
 | 4 | 화면이 언제 읽나 | A 서버 fetch + ISR(1시간, publishable 키) · B 빌드 전에 DB → JSON 파일로 받아 지금처럼 import | **A** | 배포 없이 새 판이 반영되고 비밀 키가 웹앱에 없다. 대가: 빌드·재확인이 DB 에 의존 → 전환기에는 JSON 대체값을 남긴다. B 는 가장 단순하지만 매달 배포해야 한다 |
 | 5 | LH 후보 273건을 지금 싣나 | A 싣고, 발급 때 같은 id 확정 · B 발급 뒤에만 싣기 | **A** | 지금 보드 호수의 77%(148,389호)와 향후 12개월이 후보에서 온다. 대가: 발급 도구가 후보 id 를 그대로 써야 한다(`scripts/issue-projects.js` 보완) |
 | 6 | 요금제 | A 무료 유지 · B 유료 | **A** | 지금 약 20 MB/500 MB. 대가: **7일 동안 활동이 없으면 일시정지**된다. 4-A 의 시간당 재확인이 방문이 있는 동안 활동을 만들고, 멈추면 대시보드에서 복원한다. 전국 수집(8절 6번)을 시작하거나 400 MB 에 가까워지면 B |
+| 7 | 원장 행을 공개하나(기획서 Q4) | A 화면 집계(`api.board`)만 공개 · B `api` 뷰 17개 공개 | **A — 2026-10-11 결정·적용** | 건축HUB 약관의 복제·제공 제한과 포털 표기가 어긋나(Q4) 사업·관리번호·필지·일정·공고 행은 publishable 키로 읽히지 않게 한다. 대가: 사업 하나·시군구 하나의 즉석 거르기 화면(4절 약점)은 `api` 뷰로 못 읽고, 서버 전용 경로(secret 키)나 집계 JSON 이 필요하다. 제공기관 확인으로 범위가 넓어지면 뷰 단위로 GRANT 를 다시 준다 |
 
 ## 부록 A. DDL 초안 (A-1~A-6 적용 — 부록 C, A-7·`ledger_admin`·`stage_rows` 는 적재 단계)
 
@@ -693,3 +695,23 @@ revoke execute on all functions in schema ledger_admin from anon, authenticated,
 | 기관 CSV 도 gzip, 경로는 실제 폴더 그대로(`agency/demo/…`·`agency/templates/…`), `snapshot/` 도 올림 | 한 규칙으로. 기관 입력 접수 구조는 아직 없다 |
 | 같은 달 재적재는 `x-upsert: true` 로 덮어씀 | 적재 대상은 늘 열린 달(닫힌 달은 begin_run 이 거부)이라 지난 달 경로는 덮어쓰지 않는다는 규칙과 맞다 |
 | `ingest_runs.started_at` = 실행 시작 시각(가장 이른 fetched_at 아님) | 수집 시각은 원천별로 `ingest_run_sources.collected_at` 에 남는다 |
+
+### 공개 범위 축소 (2026-10-11, 기획서 Q4 · 9절 7번)
+
+- 마이그레이션 `supabase/migrations/20261011180351_public_scope.sql` 을 먼저 `BEGIN … ROLLBACK` 안에서 anon·authenticated·service_role 로 점검(79항목 통과)한 뒤 `supabase db push --db-url … --yes` 로 적용. `migration list` 원격 = 로컬 3개.
+- 회수(anon·authenticated): `api` 뷰 16개 select(`board` 만 남김), `ledger` 표 17개 select(`months`·`board_snapshots` 만 남김 — `api.board` 가 security_invoker 로 읽는 두 표), 그 17표의 정책(`read_all` 16·`read_published` 1) 삭제, `ledger.current_run()` EXECUTE(public 포함 — 함수 기본 권한이 public 에 있었다). service_role·`ledger_admin`·Storage·노출 스키마는 그대로.
+- 실측(HTTP, publishable 키):
+
+| 대상 | 결과 |
+|---|---|
+| `api.board` | 200, 1행(2026-10) |
+| `api` 나머지 16뷰 | 401(42501) |
+| `ledger` 표(`Accept-Profile: ledger`)·`rpc/current_run` | 406(PGRST106, 노출 안 함) |
+| `api` OpenAPI 루트 | 401 |
+| `/graphql/v1` introspection | 200 + `pg_graphql extension is not enabled`(표·뷰 노출 없음) |
+| Storage `ledger-raw` 목록 · 버킷 정보 · 객체 다운로드(authenticated·public 경로) | 200 `[]`(정책 없음) · 404 NoSuchBucket · 404 NoSuchKey · 404 NoSuchBucket |
+| 운영 화면 `https://housing-board.vercel.app/` | `Supabase(api.board, 2026-10)` 그대로 |
+
+- `supabase db advisors --level info`: WARN·ERROR 0. INFO 71 — 정책 없는 RLS 표 19(회수한 17표 + review_required + stage_rows, 의도), 인덱스 없는 외래 키 42, 쓰이지 않은 인덱스 10.
+- `supabase-verify.js` 를 새 범위에 맞춤: anon 은 `api.board` 200 + 나머지 16뷰 거부(401·403·404 중 하나)를 확인. anon 으로 하던 "현재 판 행 수 = 파일" 은 1단계 왕복(`export_table`, secret 키, 행마다 깊은 같음)이 대신하고, "원천별 최근 발행 실행 하나"(`source_freshness.run_id`)는 secret 키로 읽을 길이 없어(service_role 은 `api` 뷰 권한이 없고 `ledger` 는 노출 안 함) 뺐다. `--month 2026-10` 모두 통과.
+- 시험: `tests/js/supabase-ddl.test.cjs` 에 2개 추가(마이그레이션을 차례로 적용한 뒤 anon 이 읽는 것 = `api.board`·두 표, 정책·current_run 회수, 쓰기·적재 경로 무변경). `npm test` 660 통과, `npx tsc --noEmit` 통과.

@@ -5,7 +5,7 @@ import { lh, molit, sources } from '../../lib/board/data';
 import { loadLedgerBoard } from '../../lib/board/ledger-source';
 
 /* 종합상황판(L0, 시안 이식). 실데이터는 '실데이터' 표지가 붙은 위젯 — 월별 실적(통계누리), 사업 원장 집계(월별 공급 파동·선택 시점 판정·시도·
-   기관별 진행·향후 12개월, 원장 2026-10 기준 · 전국 아님), 원천 수(카탈로그). 총리 지시 6건(통계누리 착공 누계·원장 집계·원천 수)도 실데이터, SAMPLE 은 지연·주의 추이만. 월 상세로 가는 링크는 열리는 달(실적 + LH 예정 달)만 만든다. */
+   기관별 진행·향후 12개월, 원장 2026-10 기준 · 전국 아님), 원천 수(카탈로그). 총리 지시 6건(통계누리 착공 누계·원장 집계·원천 수)도 실데이터, 지연·주의 추이는 월 판정 이력(trend). 월 상세로 가는 링크는 열리는 달(실적 + LH 예정 달)만 만든다. */
 export default async function Home() {
   const src = await loadLedgerBoard();
   const last = lastMonth(molit);

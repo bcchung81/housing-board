@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { boardFromLedger, elapsedMonths, classify, render, loadTables, OUT } = require('../../tools/ledger/board');
+const { boardFromLedger, elapsedMonths, classify, render, loadTables, loadHistory, OUT } = require('../../tools/ledger/board');
 
 const tables = loadTables();
 const board = boardFromLedger(tables, { referenceDate: '2026-10-10', observedMonth: '2026-10' });
@@ -163,7 +163,7 @@ test('실제 날짜는 호수가 가장 많은 원천의 자료 달까지(actual
   assert.deepEqual(st('2026-10'), [0, 0, 10, 0, 100, 0], '기준 달은 관측: stage_code 바닥(06 → ⑤) · 번들 착공 실제(2026-10)');
 });
 
-test('저장된 data/board/ledger-board.json 이 도구로 다시 만든 것과 같다', () => {
+test('저장된 data/board/ledger-board.json 이 도구로 다시 만든 것과 같다(판정 이력 파일을 넘긴다)', () => {
   const saved = fs.readFileSync(path.join(__dirname, '..', '..', OUT), 'utf8');
-  assert.equal(saved, `${render(board)}\n`);
+  assert.equal(saved, `${render(boardFromLedger(tables, { referenceDate: '2026-10-10', observedMonth: '2026-10', history: loadHistory() }))}\n`);
 });

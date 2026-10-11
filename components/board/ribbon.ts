@@ -62,7 +62,7 @@ function pinSVG(p: ReturnType<typeof ribbonLabels>['pin']): string {
     + labelSVG(p, p.text, PAL.band) + '</g>';
 }
 
-/* 동적 부분: 연도 띠 · 총량 괄호 · 병목 핀(선택 시점, 판정 기록 앞이면 NOW 관측) */
+/* 동적 부분: 연도 띠 · 총량 괄호 · 병목 핀(선택 시점, 그 앞에 판정 달이 없으면 첫 판정 달) */
 export function ribbonDynamic(g: Ribbon, cur: number): string {
   const { T, X } = g, yi = yr(T, cur), L = ribbonLabels(g, cur);
   let s = '';

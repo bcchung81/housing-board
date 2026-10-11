@@ -1,0 +1,383 @@
+{
+ "source": "건축HUB 대용량 제공 서비스 - 주택인허가 기본개요 과거 월 판",
+ "endpoint": "https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do (다운로드 POST https://www.hub.go.kr/cmm/fms/fileOpnDown.do)",
+ "procedure": "ego lite(작업공간 1)로 로그인 없이 구분=주택인허가·서비스명=기본개요·데이터제공년월 2025-01-01~2026-10-11 로 검색하고, 각 행의 '전체 다운로드' -> 이용목적 '참고자료' -> 확인 -> download 이벤트 -> saveAs 로 받았다. 2025-06 판은 앞서 같은 절차로 받아 둔 파일을 복사했다(fetched_at 은 복사 시각).",
+ "columns": [
+  {
+   "name": "관리_주택대장_PK",
+   "type": "VARCHAR(33)",
+   "note": ""
+  },
+  {
+   "name": "대지_위치",
+   "type": "VARCHAR(500)",
+   "note": ""
+  },
+  {
+   "name": "건물_명",
+   "type": "VARCHAR(100)",
+   "note": ""
+  },
+  {
+   "name": "시군구_코드",
+   "type": "VARCHAR(5)",
+   "note": ""
+  },
+  {
+   "name": "법정동_코드",
+   "type": "VARCHAR(5)",
+   "note": ""
+  },
+  {
+   "name": "대지_구분_코드",
+   "type": "VARCHAR(1)",
+   "note": ""
+  },
+  {
+   "name": "번",
+   "type": "VARCHAR(4)",
+   "note": ""
+  },
+  {
+   "name": "지",
+   "type": "VARCHAR(4)",
+   "note": ""
+  },
+  {
+   "name": "특수지_명",
+   "type": "VARCHAR(200)",
+   "note": ""
+  },
+  {
+   "name": "블록",
+   "type": "VARCHAR(20)",
+   "note": ""
+  },
+  {
+   "name": "로트",
+   "type": "VARCHAR(20)",
+   "note": ""
+  },
+  {
+   "name": "용도_코드",
+   "type": "VARCHAR(5)",
+   "note": ""
+  },
+  {
+   "name": "용도_코드_명",
+   "type": "VARCHAR(100)",
+   "note": ""
+  },
+  {
+   "name": "구조_코드",
+   "type": "VARCHAR(2)",
+   "note": ""
+  },
+  {
+   "name": "구조_코드_명",
+   "type": "VARCHAR(100)",
+   "note": ""
+  },
+  {
+   "name": "주_건축물_수",
+   "type": "NUMERIC(5)",
+   "note": ""
+  },
+  {
+   "name": "연면적(㎡)",
+   "type": "NUMERIC(19,9)",
+   "note": ""
+  },
+  {
+   "name": "총_세대_수(세대)",
+   "type": "NUMERIC(8)",
+   "note": ""
+  },
+  {
+   "name": "철거_멸실_구분_코드",
+   "type": "CHAR(1)",
+   "note": ""
+  },
+  {
+   "name": "철거_멸실_구분_코드_명",
+   "type": "VARCHAR(100)",
+   "note": ""
+  },
+  {
+   "name": "철거_시작_일",
+   "type": "VARCHAR(8)",
+   "note": ""
+  },
+  {
+   "name": "철거_종료_일",
+   "type": "VARCHAR(8)",
+   "note": ""
+  },
+  {
+   "name": "철거_멸실_일",
+   "type": "VARCHAR(8)",
+   "note": ""
+  },
+  {
+   "name": "승인_일",
+   "type": "VARCHAR(8)",
+   "note": ""
+  },
+  {
+   "name": "착공_예정_일",
+   "type": "VARCHAR(8)",
+   "note": ""
+  },
+  {
+   "name": "착공_일",
+   "type": "VARCHAR(8)",
+   "note": ""
+  },
+  {
+   "name": "사용_검사_예정_일",
+   "type": "VARCHAR(8)",
+   "note": ""
+  },
+  {
+   "name": "사용_검사_일",
+   "type": "VARCHAR(8)",
+   "note": ""
+  },
+  {
+   "name": "생성_일자",
+   "type": "VARCHAR(8)",
+   "note": ""
+  }
+ ],
+ "files": [
+  {
+   "data_month": "2025-01",
+   "provided_month": "2025-02",
+   "zip": "basic-2025-01.zip",
+   "zip_bytes": 7947317,
+   "zip_sha256": "de52f20980d24ee93d5e61c98d1b0c1e030412f8815d1110592b918ec15f15a5",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 44293302,
+   "rows": 303150,
+   "max_created": "2025-01-31",
+   "fetched_at": "2026-10-11T09:06:54+00:00"
+  },
+  {
+   "data_month": "2025-02",
+   "provided_month": "2025-03",
+   "zip": "basic-2025-02.zip",
+   "zip_bytes": 6171750,
+   "zip_sha256": "83b1ac1da2955813026991e7c96c9c54fef2d83ca8b82adcf6008abcff0614a0",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 44757571,
+   "rows": 306182,
+   "max_created": "2025-03-05",
+   "fetched_at": "2026-10-11T09:06:49+00:00"
+  },
+  {
+   "data_month": "2025-03",
+   "provided_month": "2025-04",
+   "zip": "basic-2025-03.zip",
+   "zip_bytes": 6233719,
+   "zip_sha256": "82b6eb3ab52c4b69269192821fd97531edbc5f7233acb6f2e3c22b917fdf6cc7",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 45256591,
+   "rows": 309430,
+   "max_created": "2025-04-01",
+   "fetched_at": "2026-10-11T09:06:44+00:00"
+  },
+  {
+   "data_month": "2025-04",
+   "provided_month": "2025-05",
+   "zip": "basic-2025-04.zip",
+   "zip_bytes": 6298733,
+   "zip_sha256": "84a18e9719ae9e50df1cf5b5e0152508a1fd1cc093c542fee7c08252ec1ea7ad",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 45782677,
+   "rows": 312849,
+   "max_created": "2025-05-01",
+   "fetched_at": "2026-10-11T09:06:40+00:00"
+  },
+  {
+   "data_month": "2025-05",
+   "provided_month": "2025-06",
+   "zip": "basic-2025-05.zip",
+   "zip_bytes": 6361564,
+   "zip_sha256": "98d1954ca1d3e8fc3ad13782593d4adb7cc7307c71cc677a118ba92039a68e4a",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 46281416,
+   "rows": 316111,
+   "max_created": "2025-06-09",
+   "fetched_at": "2026-10-11T09:06:35+00:00"
+  },
+  {
+   "data_month": "2025-06",
+   "provided_month": "2025-07",
+   "zip": "basic-2025-06.zip",
+   "zip_bytes": 6424107,
+   "zip_sha256": "3834b77643ca773b40bfb808c84a480b0273ba01341561330ac988f6e5428138",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 46810353,
+   "rows": 319558,
+   "max_created": "2025-06-30",
+   "fetched_at": "2026-10-11T09:04:48+00:00"
+  },
+  {
+   "data_month": "2025-07",
+   "provided_month": "2025-08",
+   "zip": "basic-2025-07.zip",
+   "zip_bytes": 6500652,
+   "zip_sha256": "2d0f5bf6de24c2df41ebdc455c6b29ee2117183c0ed5280105de5f0fe16d5f05",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 47434715,
+   "rows": 323660,
+   "max_created": "2025-08-03",
+   "fetched_at": "2026-10-11T09:06:31+00:00"
+  },
+  {
+   "data_month": "2025-08",
+   "provided_month": "2025-09",
+   "zip": "basic-2025-08.zip",
+   "zip_bytes": 6568910,
+   "zip_sha256": "ae5dc25df3bbc65c089e30662ee2b13e6492b14262e6b60c765a15da1a07e571",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 48021877,
+   "rows": 327527,
+   "max_created": "2025-09-03",
+   "fetched_at": "2026-10-11T09:06:26+00:00"
+  },
+  {
+   "data_month": "2025-09",
+   "provided_month": "2025-10",
+   "zip": "basic-2025-09.zip",
+   "zip_bytes": 7150992,
+   "zip_sha256": "b4d6af4c151f6384ba6482f80f633b39853f515ac661110d15b32b18ebc6376f",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 48563558,
+   "rows": 331128,
+   "max_created": "2025-09-25",
+   "fetched_at": "2026-10-11T09:06:18+00:00"
+  },
+  {
+   "data_month": "2025-10",
+   "provided_month": "2025-11",
+   "zip": "basic-2025-10.zip",
+   "zip_bytes": 7150992,
+   "zip_sha256": "f0e16dcc7cbe32a4e26fdc92b298b4e8d3db50ebbb549af7f1e0a19fe270d9d6",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 48563558,
+   "rows": 331128,
+   "max_created": "2025-09-25",
+   "fetched_at": "2026-10-11T09:06:15+00:00"
+  },
+  {
+   "data_month": "2025-11",
+   "provided_month": "2025-12",
+   "zip": "basic-2025-11.zip",
+   "zip_bytes": 6872981,
+   "zip_sha256": "1a344fa8a5d5a95bce59e547e689a6a9ee2ef3d92f52af8fedcbfab3d389d2d9",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 49855074,
+   "rows": 339651,
+   "max_created": "2025-12-09",
+   "fetched_at": "2026-10-11T09:06:09+00:00"
+  },
+  {
+   "data_month": "2025-12",
+   "provided_month": "2026-01",
+   "zip": "basic-2025-12.zip",
+   "zip_bytes": 7516715,
+   "zip_sha256": "8abc3126b4959d579e6cf067d5e777c8a22004f7fea8cb87674385bf866fb0d0",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 50566246,
+   "rows": 344370,
+   "max_created": "2026-01-06",
+   "fetched_at": "2026-10-11T09:06:05+00:00"
+  },
+  {
+   "data_month": "2026-01",
+   "provided_month": "2026-02",
+   "zip": "basic-2026-01.zip",
+   "zip_bytes": 6963261,
+   "zip_sha256": "0bbb839ff2c59fd1c579efb97db0effb9f3f97735b8412b1a90cef23114c568a",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 51239207,
+   "rows": 348827,
+   "max_created": "2026-01-30",
+   "fetched_at": "2026-10-11T09:06:00+00:00"
+  },
+  {
+   "data_month": "2026-02",
+   "provided_month": "2026-03",
+   "zip": "basic-2026-02.zip",
+   "zip_bytes": 7016058,
+   "zip_sha256": "2012e8670c11be2e127dd16623530f1e3dc8b87e176b718ab889e20488abc32c",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 51701763,
+   "rows": 351953,
+   "max_created": "2026-03-02",
+   "fetched_at": "2026-10-11T09:05:56+00:00"
+  },
+  {
+   "data_month": "2026-03",
+   "provided_month": "2026-04",
+   "zip": "basic-2026-03.zip",
+   "zip_bytes": 7096906,
+   "zip_sha256": "afec6d703706ebec67bfea585eeafbe165a369b52acbb8099c408a7db114390a",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 52370586,
+   "rows": 356286,
+   "max_created": "2026-03-31",
+   "fetched_at": "2026-10-11T09:05:51+00:00"
+  },
+  {
+   "data_month": "2026-04",
+   "provided_month": "2026-05",
+   "zip": "basic-2026-04.zip",
+   "zip_bytes": 7181963,
+   "zip_sha256": "376da1ddd45c209b284448bd578a50666bf192ac845bab4a8aed487b6683df7e",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 53055993,
+   "rows": 360702,
+   "max_created": "2026-05-05",
+   "fetched_at": "2026-10-11T09:05:43+00:00"
+  },
+  {
+   "data_month": "2026-05",
+   "provided_month": "2026-06",
+   "zip": "basic-2026-05.zip",
+   "zip_bytes": 7245468,
+   "zip_sha256": "b28281fd6c087238628e8c6c88bc195d12725d098692c71c4eada52a96039cd4",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 53589948,
+   "rows": 364186,
+   "max_created": "2026-05-31",
+   "fetched_at": "2026-10-11T09:05:37+00:00"
+  },
+  {
+   "data_month": "2026-06",
+   "provided_month": "2026-07",
+   "zip": "basic-2026-06.zip",
+   "zip_bytes": 8168346,
+   "zip_sha256": "78ae1b4c36c1aaf601596be3b0c87085383b82d0cff5d45f43c6a71d7de7cdcd",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 54130644,
+   "rows": 367736,
+   "max_created": "2026-06-25",
+   "fetched_at": "2026-10-11T09:05:33+00:00"
+  },
+  {
+   "data_month": "2026-07",
+   "provided_month": "2026-08",
+   "zip": "basic-2026-07.zip",
+   "zip_bytes": 7463825,
+   "zip_sha256": "ebfa604c4ad51054ca231060d2e77a5dd5099e754fb204618f53e944a917cea9",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 55177626,
+   "rows": 373192,
+   "max_created": "2026-08-03",
+   "fetched_at": "2026-10-11T09:04:40+00:00"
+  }
+ ],
+ "notes": "2025-09 와 2025-10 판은 zip 은 다르지만(내부 파일 시각 2025-10-21 / 2025-11-20) mart_jty_01.txt 내용이 바이트까지 같다(사이트가 같은 자료를 올려 둠). max_created 가 데이터 월보다 며칠 뒤로 나오는 판이 많다(생성_일자가 제공 직전 갱신분을 포함). fetched_at 은 파일 저장 시각이고 2025-06 은 복사 시각이다."
+}

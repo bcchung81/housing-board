@@ -1,24 +1,34 @@
-/* 종합상황판 시안(주택파동_종합상황판_최종)에서 옮긴 공통 상수·문구와, 아직 SAMPLE 인 위젯(지연·주의 추이)의 데이터·계산.
-   SAMPLE 부분은 원본을 실행해 뽑은 기준값(tests/fixtures/board-sample-golden.json)과 같은 숫자를 내는지 tests/js/boardsample.test.cjs 가 확인한다.
+/* 종합상황판 시안(주택파동_종합상황판_최종)에서 옮긴 공통 상수·문구와 계산. 리본 좌표 상수는 시안을 실행해 뽑은 기준값(tests/fixtures/board-sample-golden.json)과 같은지 tests/js/boardsample.test.cjs 가 확인한다.
    리본 차트 기하(ribbonOf)는 시안 수식을 원장 집계(data/board/ledger-board.json 의 달 말 단계별 호수)에 맞춰 바꾼 것이다.
+   판정은 원장 집계의 trend(월 판정 이력: 2025.01~2026.09 건축HUB 과거 판 소급 + 관측 달, tools/ledger/trend.js)가 있는 달마다 있다 — 지연·주의 추이 카드, 선택 달 판정, 리본의 지연 띠.
    시점(달 이름·기준 달·마지막 달·실제 날짜가 있는 마지막 달)은 고정값이 아니라 원장 집계에서 읽는다(timelineOf) — 다음 달 원장을 올리면 화면의 기준일·달 이름이 따라 바뀐다. */
 
-/* 원장 집계의 시점: months = 'YYYY-MM' 목록(0 부터), now = 기준 달(판정 관측 달), last = 마지막 시점, actual = 실제 날짜가 있는 마지막 달(그 뒤는 예정으로 다시 만든 값) */
-export type Timeline = { months: string[]; now: number; last: number; actual: number };
-export function timelineOf(L: { months: string[]; now: number; actualThrough?: string }): Timeline {
+/* 원장 집계의 시점: months = 'YYYY-MM' 목록(0 부터), now = 기준 달(판정 관측 달), last = 마지막 시점, actual = 실제 날짜가 있는 마지막 달(그 뒤는 예정으로 다시 만든 값),
+   judged = 판정이 있는 달(trend 의 달 + 기준 달, 오름차순) */
+export type Timeline = { months: string[]; now: number; last: number; actual: number; judged: number[] };
+export function timelineOf(L: { months: string[]; now: number; actualThrough?: string; trend?: { month: string }[] }): Timeline {
   const a = L.actualThrough ? L.months.indexOf(L.actualThrough) : -1;
-  return { months: L.months, now: L.now, last: L.months.length - 1, actual: a >= 0 && a < L.now ? a : L.now };   // actualThrough 가 없는 옛 집계는 기준 달까지 실제
+  const judged = [...new Set([...(L.trend ?? []).map((r) => L.months.indexOf(r.month)).filter((i) => i >= 0 && i <= L.now), L.now])].sort((x, y) => x - y);   // trend 가 없는 옛 집계는 기준 달만
+  return { months: L.months, now: L.now, last: L.months.length - 1, actual: a >= 0 && a < L.now ? a : L.now, judged };   // actualThrough 가 없는 옛 집계는 기준 달까지 실제
+}
+/* 한 달의 판정(data/board/judgment-history.json 의 행 모양). 기준 달은 원장 집계 자신의 judgment */
+type Judged = { projects: number; units: number };
+export type JudgeRow = { month: string; referenceDate: string; ok: Judged; caution: Judged; delay: Judged; delayByStage: number[]; cautionByStage: number[]; judged: number };
+type JudgeSource = { months: string[]; now: number; referenceDate: string; judgment: { ok: Judged; caution: Judged; delay: Judged }; delayByStage: number[]; cautionByStage: number[]; scope: { judged: number }; trend?: JudgeRow[] };
+/* 달(시점 번호)마다 판정 행, 판정 없는 달은 null */
+export function judgmentsOf(L: JudgeSource): (JudgeRow | null)[] {
+  const out: (JudgeRow | null)[] = L.months.map(() => null);
+  for (const r of L.trend ?? []) { const i = L.months.indexOf(r.month); if (i >= 0 && i <= L.now) out[i] = r; }
+  out[L.now] ??= { month: L.months[L.now], referenceDate: L.referenceDate, ok: L.judgment.ok, caution: L.judgment.caution, delay: L.judgment.delay, delayByStage: L.delayByStage, cautionByStage: L.cautionByStage, judged: L.scope.judged };
+  return out;
 }
 export const CIR = ['①', '②', '③', '④', '⑤', '⑥'];
 export const K = ['계획', '인허가', '착공', '모집', '준공', '입주'];
 /* 6단계 색: 테마별 값은 app/tailwind.css 의 --st-* (차트 면 색, 라이트·다크). SVG 와 인라인 스타일이 var() 로 읽는다 */
 export const C = ['var(--st-plan)', 'var(--st-permit)', 'var(--st-build)', 'var(--st-sale)', 'var(--st-soon)', 'var(--st-move)'];
 
-export const AD: [number, number][] = [[0, 1200], [9, 3400], [15, 6100], [21, 10000]];
-export const AW: [number, number][] = [[0, 2100], [9, 4500], [15, 9800], [21, 18000]];
 /* ── 계산 ── */
 export const f = (n: number) => n.toLocaleString('en-US');
-export const r10 = (n: number) => Math.round(n / 10) * 10;
 export const sg = (n: number) => (n >= 0 ? '+' : '−') + f(Math.abs(n));
 export const ml = (T: Timeline, m: number) => T.months[m].replace('-', '.');
 export const kind = (T: Timeline, m: number) => (m === T.now ? '현재' : (m <= T.actual ? '실적 기준' : '예정 기준'));
@@ -29,29 +39,24 @@ export function yearsOf(T: Timeline) {
   T.months.forEach((ym, m) => { const y = Number(ym.slice(0, 4)), l = ys[ys.length - 1]; if (l && l.y === y) l.b = m; else ys.push({ y, a: m, b: m }); });
   return ys;
 }
-/* 판정은 관측한 달(기준 달 NOW 하나)에만 있다: 선택 시점 이하의 가장 늦은 판정 달. 없으면 -1 */
-export const judgedAt = (T: Timeline, m: number) => (m >= T.now ? T.now : -1);
-
-/* SAMPLE 추이(AD·AW)는 시안의 기준 달(마지막 점)을 원장의 기준 달에 맞춰 옮긴다 */
-export const anchor = (arr: [number, number][], now: number): [number, number][] => arr.map(([m, v]) => [m + now - arr[arr.length - 1][0], v]);
-export function ip(arr: [number, number][], m: number, now: number): number {
-  const mm = Math.min(m, now);
-  if (mm <= arr[0][0]) return arr[0][1];
-  for (let i = 0; i < arr.length - 1; i++) {
-    if (mm >= arr[i][0] && mm <= arr[i + 1][0]) { const u = (mm - arr[i][0]) / (arr[i + 1][0] - arr[i][0]); return arr[i][1] + (arr[i + 1][1] - arr[i][1]) * u; }
-  }
-  return arr[arr.length - 1][1];
-}
+/* 판정 값은 선택 시점 이하의 가장 늦은 판정 달(T.judged)의 값이다. 없으면 -1 */
+export const judgedAt = (T: Timeline, m: number) => T.judged.reduce((j, k) => (k <= m ? k : j), -1);
 export const argmax = (a: number[]) => a.reduce((b, v, i) => (v > a[b] ? i : b), 0);
 export const sum = (a: number[]) => a.reduce((s, v) => s + v, 0);
-/* 단계별 지연 호수: 판정은 기준 달(NOW) 관측부터라 그 앞 달은 0, NOW 와 예정 구간은 NOW 의 판정(delayByStage)을 유지한다 */
-export const delayAt = (T: Timeline, delay: number[], m: number) => (judgedAt(T, m) >= 0 ? delay : delay.map(() => 0));
+/* 단계별 지연 호수: delays = 달마다 delayByStage(판정 없는 달 null). 선택 시점 이하의 가장 늦은 판정 달의 값, 판정 달이 없으면 0(예정 구간은 NOW 의 판정을 유지한다) */
+export const delaysOf = (J: (JudgeRow | null)[]) => J.map((r) => r?.delayByStage ?? null);
+const ZERO = [0, 0, 0, 0, 0, 0];
+export const delayAt = (T: Timeline, delays: (number[] | null)[], m: number) => { const j = judgedAt(T, m); return j >= 0 && delays[j] ? delays[j] : ZERO; };
 
-/* ── 문구 ── */
-/* 지연·주의 추이 카드의 아래 줄: 선택 시점(NOW 까지)의 전월 대비 증감 */
-export function txTrend(T: Timeline, cur: number) {
-  const n = T.now, ad = anchor(AD, n), aw = anchor(AW, n), c = Math.min(cur, n), p = Math.max(c - 1, 0);
-  return '전월 대비 지연 ' + sg(r10(ip(ad, c, n) - ip(ad, p, n))) + ' · 주의 ' + sg(r10(ip(aw, c, n) - ip(aw, p, n)));   // 시점·단위(호)는 카드 제목 title 에(2026-10-11 서술 최소화)
+/* ── 지연·주의 추이 카드 ── */
+/* 0 … NOW 달마다 지연·주의 호수(판정 없는 달 null) */
+export const trendOf = (T: Timeline, J: (JudgeRow | null)[]) => J.slice(0, T.now + 1).map((r) => (r ? { d: r.delay.units, w: r.caution.units } : null));
+/* 세로 맨 위: 최댓값 이상인 가장 작은 1·1.2·1.5·2·2.5·3·4·5·6·8 × 10^n(눈금 글자가 없어 선이 카드 높이를 고르게 쓰게 한다). 눈금선 3개는 4등분 */
+export const trendMax = (max: number) => { for (let e = 1; ; e *= 10) for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8]) if (m * e >= max) return m * e; };
+/* 아래 줄: 선택 시점(NOW 까지)의 전월 대비 증감(호, 이력 차이). 첫 달·앞 달 판정이 없으면 0 */
+export function txTrend(T: Timeline, tr: ({ d: number; w: number } | null)[], cur: number) {
+  const c = Math.min(cur, T.now), a = tr[c], b = c > 0 ? tr[c - 1] : null;
+  return '전월 대비 지연 ' + sg(a && b ? a.d - b.d : 0) + ' · 주의 ' + sg(a && b ? a.w - b.w : 0);   // 시점·단위(호)는 카드 제목 title 에(2026-10-11 서술 최소화)
 }
 
 /* ── 시도 타일 색(바탕색 = 지연율 단계) ── */
@@ -67,9 +72,10 @@ export const xOf = (n: number) => (x: number) => PX0 + x * PW / n;
 export type Geo = { x: number; lw: number[]; up: number[]; dl: number[] };
 /* total = 달마다 단계 합, step = 세로축 눈금 간격(1·2·2.5·5 × 10^n 중 눈금 5칸 이하가 되는 가장 작은 값), ymax = 가장 큰 총량을 step 단위로 올린 값(세로축 맨 위), ticks = 0…ymax 눈금,
    s2 = 1호의 px, geo = 0.25개월 간격의 층 경계(lw 아래·up 위, 0 은 BOT 에서 쌓는다)와 지연 띠 두께(dl, px), T = 시점, X·pitch = 시점의 x 좌표와 한 달 폭 */
-export type Ribbon = { T: Timeline; X: (x: number) => number; pitch: number; su: number[][]; delay: number[]; total: number[]; step: number; ymax: number; ticks: number[]; s2: number; geo: Geo[] };
+export type Ribbon = { T: Timeline; X: (x: number) => number; pitch: number; su: number[][]; delay: (number[] | null)[]; total: number[]; step: number; ymax: number; ticks: number[]; s2: number; geo: Geo[] };
 const niceStep = (max: number) => { for (let e = 1; ; e *= 10) for (const m of [1, 2, 2.5, 5]) if (Math.ceil(max / (m * e)) <= 5) return m * e; };
-export function ribbonOf(tl: Timeline, su: number[][], delay: number[]): Ribbon {
+/* delay = 달마다 단계별 지연 호수(delaysOf, 판정 없는 달 null) */
+export function ribbonOf(tl: Timeline, su: number[][], delay: (number[] | null)[]): Ribbon {
   const LAST = tl.last, total = su.map(sum), step = niceStep(Math.max(...total)), n = Math.ceil(Math.max(...total) / step), ymax = n * step, s2 = PH / ymax, geo: Geo[] = [];
   for (let x = 0; x <= LAST + 1 + 1e-9; x += 0.25) {   // 달 m 의 값은 칸 가운데(m + 0.5)에 두고 이웃 달과 곧게 잇는다
     const t = Math.min(LAST, Math.max(0, x - 0.5)), i = Math.floor(t), j = Math.min(LAST, i + 1), u = t - i;
@@ -137,10 +143,10 @@ export function ribbonLabels(g: Ribbon, cur: number) {
   const used: Box[] = [...staticList(g), ...yrs.flat()].map(textBox);
   const free = (b: Box) => inView(b) && !used.some((u) => hit(u, b));
 
-  /* 병목 핀: 그 달 병목 단계(지연 호수가 가장 큰 단계)의 지연 띠 한가운데. 선택 시점이 판정 기록(NOW) 앞이면 NOW 관측 핀 */
-  const m = cur >= T.now ? cur : T.now, p = g.geo[4 * m + 2], ds = delayAt(T, g.delay, m), k = argmax(ds);
+  /* 병목 핀: 그 달 병목 단계(지연 호수가 가장 큰 단계)의 지연 띠 한가운데. 선택 시점 앞에 판정 달이 없으면 첫 판정 달의 핀 */
+  const on = judgedAt(T, cur) >= 0, m = on ? cur : T.judged[0], p = g.geo[4 * m + 2], ds = delayAt(T, g.delay, m), k = argmax(ds);
   const px = X(m + 0.5), py = p.lw[k] - p.dl[k] / 2;
-  const pt = cur >= T.now ? `${K[k]} 지연 ${f(ds[k])}호 · ${(ds[k] / g.su[m][k] * 100).toFixed(1)}%` : `${ml(T, m)} 관측 · ${K[k]} ${f(ds[k])}호`;
+  const pt = on ? `${K[k]} 지연 ${f(ds[k])}호 · ${(ds[k] / g.su[m][k] * 100).toFixed(1)}%` : `${ml(T, m)} 관측 · ${K[k]} ${f(ds[k])}호`;
   const dot: Box = { x: px - 9, y: py - 9, w: 18, h: 18 };
   used.push(dot);
   const w0 = labelBox(px, 0, pt).w, cands: { dx: number; below: boolean }[] = [];
@@ -149,9 +155,10 @@ export function ribbonLabels(g: Ribbon, cur: number) {
   const pin = pins.find(free) ?? pins[0];
   used.push(pin);
 
-  /* 커서 괄호의 총량 라벨: 쌓은 더미 위쪽 안 → 바닥 쪽 안(기준일 글자가 막으면 한 칸 위) */
+  /* 커서 괄호의 총량 라벨: 쌓은 더미 위쪽 안 → 바닥 쪽 안(기준일 글자가 막으면 한 칸 위) → 더미 위 빈 곳(판정 달마다 핀이 옮겨 가 더미가 낮은 달에 안쪽이 막힐 때) */
   const top = BOT - g.total[cur] * g.s2, bx = X(cur + 0.5), tt = `${f(g.total[cur])}호`;
-  const tw = labelBox(bx, 0, tt).w, tops = [bx, Math.max(bx, PX0 + 4 + tw / 2)].flatMap((x) => [labelBox(x, Math.max(TOP + 22, top + 22), tt), labelBox(x, BOT - 14, tt), labelBox(x, BOT - 30, tt)]);   // 막히면 왼쪽 세로축을 비켜 오른쪽으로
+  const tw = labelBox(bx, 0, tt).w, xs = [bx, Math.max(bx, PX0 + 4 + tw / 2)];   // 막히면 왼쪽 세로축을 비켜 오른쪽으로
+  const tops = [...xs.flatMap((x) => [labelBox(x, Math.max(TOP + 22, top + 22), tt), labelBox(x, BOT - 14, tt), labelBox(x, BOT - 30, tt)]), ...xs.map((x) => labelBox(x, top - 12, tt))];
   const total = tops.find(free) ?? tops[0];
   return { years: yrs, total: { ...total, text: tt }, pin: { ...pin, text: pt, px, py, k }, statics: staticList(g) };
 }

@@ -10,6 +10,7 @@
 | `raw/lh-completion/` | 빈 폴더 | 포털 최신 판이 `한국토지주택공사_공공주택 준공예정현황_20260127` 로 저장소 판과 같다. 차기 등록 예정 2027-02-04 |
 | `raw/hub/` | `<법정동10>.json` 4개 (1129013800 · 4145010800 · 4145011400 · 4145011500) | 건축HUB 주택인허가 기본개요(getHpBasisOulnInfo). 호출 10번에 레코드 844건. 인증키는 저장하지 않았다 |
 | `raw/hub-bulk/` | 주택인허가 기본개요·행위개요·대지위치 zip 3개 + `manifest.json`(열 이름) | 건축HUB 대용량 제공 서비스, 2026-08 데이터(2026-09 제공). 전국 기본개요 377,256행. 읽기 전용 |
+| `raw/hub-bulk-history/` | 기본개요 과거 월 판 `basic-YYYY-MM.zip` 19개(2025-01~2026-07) + `manifest.json` | 같은 서비스의 과거 판. 월 판정 이력 소급용(`tools/ledger/trend.js`). 2025-10 판은 2025-09 판과 내용이 같다. 읽기 전용 |
 | `raw/myhome/` · `raw/lh-notice/` · `raw/move-in/` | 마이홈 공공주택 모집공고(임대·분양 363행 · 공고 117) · LH 분양임대공고문 4,985건 + 공급정보 2,825행 · 한국부동산원 입주예정물량 703행, 폴더마다 `manifest.json` | `tools/ledger/collect-national.js`(공고, 2026-10-11) · 공공데이터포털 파일 15111714(입주예정, 기준 2026-06-30). 읽기 전용 |
 | `mappings/` | `lh-block-sgg.json` · `hub-candidate-ids.json` | LH 준공예정 278 지구·블록의 시군구(이름 일치 254 · 세종 규칙 7 · 시도 통합 규칙 7 · 개편 시군구 규칙 10 · 미해결 0, 법정동까지 255). 건축HUB 대용량 후보의 관리번호 → 사업 id(관리번호 13,588개, 더하기만 하고 지우지 않는다 — 장기 미갱신으로 빠진 관리번호의 id 도 남는다. 지금 사업은 3,495개) |
 | `snapshot/` | `hub-events.json` · `manifest.json` · `hub-bulk-2026-08.json` · `hub-bulk-2026-08.manifest.json` | 건축HUB 사업 55건(관리번호 58개) 대조, 209행. 건축HUB 대용량 중간 스냅샷: 범위 안 진행 중 기록 4,103개(2.0 MB, 한 기록 한 줄)와 거르기 건수·날짜 정리 건수·zip 해시 |
@@ -46,13 +47,14 @@
 node tools/ledger/convert.js --month 2026-10 --lh-sgg schemas/ledger-2026-10/mappings/lh-block-sgg.json --hub-events schemas/ledger-2026-10/snapshot/hub-events.json --legal-dong "schemas/ledger-2026-10/raw/legal-dong/국토교통부_법정동코드_20260929.csv" --hub-bulk schemas/ledger-2026-10/snapshot/hub-bulk-2026-08.json --hub-ids schemas/ledger-2026-10/mappings/hub-candidate-ids.json --national schemas/ledger-2026-10/raw --out schemas/ledger-2026-10/tables
 ```
 
-6. 종합상황판 집계: `node tools/ledger/board.js` → `data/board/ledger-board.json`
+6. 월 판정 이력(소급): `node tools/ledger/trend.js` → `data/board/judgment-history.json`(2025-01~2026-09, 약 20초). 다음 달로 넘어갈 때는 새 원장 전에 `node tools/ledger/trend.js --close` 로 이번 달 판정을 관측 행으로 붙인다.
+7. 종합상황판 집계: `node tools/ledger/board.js` → `data/board/ledger-board.json`(이력이 있으면 trend 포함)
 
 기관 입력 가져오기: `node tools/ledger/import-agency.js --dir <폴더> --agency <id> --received YYYY-MM-DD [--demo] [--out <파일>]`
 
 ## 시험
 
-`tests/js/legal-dong.test.cjs` · `lh-mapping.test.cjs` · `snapshot.test.cjs` · `agency-import.test.cjs` · `ledger.test.cjs` · `ledger-2026-10.test.cjs` · `hub-bulk.test.cjs` · `ledger-board.test.cjs`
+`tests/js/legal-dong.test.cjs` · `lh-mapping.test.cjs` · `snapshot.test.cjs` · `agency-import.test.cjs` · `ledger.test.cjs` · `ledger-2026-10.test.cjs` · `hub-bulk.test.cjs` · `ledger-board.test.cjs` · `trend.test.cjs`
 
 ## 한계
 

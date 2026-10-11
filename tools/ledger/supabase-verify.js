@@ -2,12 +2,13 @@
 /* Supabase 에 실린 한 달 판을 파일과 대조한다 — 설계: docs/product/Supabase-원장-설계.md 6절 6단계.
    secret 키: ledger_admin.export_table 로 16표를 받아 파일과 행마다 깊은 같음(load_seq 순, 키 순서는 보지 않음) → validate.js 오류 0
      → 저장한 보드(api.board) = boardFromLedger(DB 표) = data/board/ledger-board.json, 달은 열림.
-   publishable 키(anon): api 뷰 17개 읽힘, 현재 판 행 수 = 파일 행 수, review_required 는 api 에 없음, 원천별 최근 발행 실행(source_freshness.run_id)이 하나, ledger_admin 의 RPC·표 쓰기와 api 뷰 쓰기는 거부.
+   publishable 키(anon): 공개 범위는 화면 집계만(기획서 Q4, 마이그레이션 _public_scope.sql) — api.board 만 읽히고 나머지 뷰 16개는 거부,
+     review_required 는 api 에 없음, ledger_admin 의 RPC·표 쓰기와 api 뷰 쓰기는 거부. 현재 판 행 수는 1의 왕복(export_table)이 대신한다.
    실행: node tools/ledger/supabase-verify.js --month 2026-10 (어긋나면 종료 코드 1) */
 const fs = require('node:fs');
 const path = require('node:path');
 const { isDeepStrictEqual } = require('node:util');
-const { boardFromLedger } = require('./board');
+const { boardFromLedger, loadHistory } = require('./board');
 const { validate } = require('./validate');
 const { readEnv, readTables, client } = require('./supabase-load');
 
@@ -45,38 +46,29 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
   check(errors.length === 0, `validate(DB 표) 오류 ${errors.length}건: ${errors.slice(0, 3).join(' / ')}`);
   log(`validate(DB 표): 오류 ${errors.length}`);
 
-  /* 2 anon 읽기: 뷰 17개, 행 수 */
+  /* 2 anon 읽기: api.board 만 읽히고 나머지 뷰는 거부(401·403·404) */
   const anon = async (p, init = {}) => fetch(`${url}/rest/v1/${p}`, { ...init, headers: { apikey: pub, 'Accept-Profile': 'api', ...(init.headers ?? {}) } });
   const counts = {};
   for (const v of VIEWS) {
-    const res = await anon(`${v}?select=*${v === 'events' ? `&observed_month=eq.${month}` : v === 'board' ? `&month=eq.${month}` : ''}`, { headers: { Prefer: 'count=exact', Range: '0-0' } });
-    await res.text();
-    counts[v] = Number((res.headers.get('content-range') ?? '').split('/')[1]);
-    check(res.ok, `anon api.${v} 읽기 ${res.status}`);
+    const res = await anon(`${v}?select=*${v === 'board' ? `&month=eq.${month}` : ''}&limit=1`);
+    const body = await res.json().catch(() => null);
+    counts[v] = res.status;
+    if (v === 'board') check(res.ok && Array.isArray(body) && body.length === 1, `anon api.board 읽기 ${res.status}`);
+    else check([401, 403, 404].includes(res.status), `anon api.${v} 가 거부되지 않았다(${res.status})`);
   }
-  for (const [v, n] of Object.entries(counts)) {
-    const want = v === 'board' ? 1 : v === 'source_freshness' ? files.sources.length : files[v].length;
-    check(n === want, `api.${v} ${n}행 ≠ 기대 ${want}`);
-  }
-  log(`anon api 행 수: ${Object.entries(counts).map(([k, n]) => `${k} ${n}`).join(' · ')}`);
+  log(`anon api: ${Object.entries(counts).map(([k, n]) => `${k} ${n}`).join(' · ')}`);
 
   /* 3 보드: 저장본 = DB 표로 다시 계산 = 파일 */
   const res = await anon(`board?month=eq.${month}&select=board,reference_date,status`);
   const [row] = await res.json();
   const stored = row?.board;
   const fileBoard = JSON.parse(fs.readFileSync(path.join(root, 'data/board/ledger-board.json'), 'utf8'));
-  check(isDeepStrictEqual(stored, boardFromLedger(db, { referenceDate: row?.reference_date, observedMonth: month })), '저장한 보드 ≠ boardFromLedger(DB 표)');
+  check(isDeepStrictEqual(stored, boardFromLedger(db, { referenceDate: row?.reference_date, observedMonth: month, history: loadHistory(root) })), '저장한 보드 ≠ boardFromLedger(DB 표)');
   check(isDeepStrictEqual(stored, fileBoard), '저장한 보드 ≠ data/board/ledger-board.json');
   check(row?.status === 'open', `달 ${month} 상태 ${row?.status}`);
   log(`보드: 저장본 = 재계산 = 파일 ${problems.some((p) => p.includes('보드')) ? '아님' : '같음'} · 달 상태 ${row?.status}`);
 
-  /* 4 현재 판: 모든 원천의 최근 발행 실행이 하나(source_freshness.run_id) */
-  const fr = await (await anon('source_freshness?select=run_id')).json();
-  const runs = [...new Set(fr.map((r) => r.run_id))];
-  check(runs.length === 1 && runs[0] != null, `원천별 최근 발행 실행이 하나가 아니다: ${runs.join(',')}`);
-  log(`현재 판 실행: ${runs.join(',')}`);
-
-  /* 5 anon 쓰기 거부 */
+  /* 4 anon 쓰기 거부 */
   const denied = async (label, p, body, profile) => {
     const r = await fetch(`${url}/rest/v1/${p}`, { method: 'POST', headers: { apikey: pub, 'Content-Type': 'application/json', 'Content-Profile': profile }, body: JSON.stringify(body) });
     await r.text();
@@ -96,7 +88,7 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
 
   if (problems.length) log(`어긋남 ${problems.length}건:\n- ${problems.join('\n- ')}`);
   else log('모두 통과');
-  return { problems, counts, runs, exported: Object.fromEntries(Object.entries(db).map(([k, v]) => [k, v.length])) };
+  return { problems, counts, exported: Object.fromEntries(Object.entries(db).map(([k, v]) => [k, v.length])) };
 }
 
 module.exports = { verify, exportAll, VIEWS };

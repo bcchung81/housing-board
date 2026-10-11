@@ -15,7 +15,7 @@ const zlib = require('node:zlib');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { isDeepStrictEqual } = require('node:util');
-const { boardFromLedger } = require('./board');
+const { boardFromLedger, loadHistory } = require('./board');
 const { validate } = require('./validate');
 
 const ROOT = path.join(__dirname, '..', '..');
@@ -56,10 +56,10 @@ function readTables(dir) {
     .map((f) => [f.slice(0, -5), JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')).rows]));
 }
 
-/* 파일 보드와 다시 계산한 보드가 같아야 한다. 같으면 보드를 돌려준다 */
-function checkBoard(tables, fileBoard, month) {
+/* 파일 보드와 다시 계산한 보드가 같아야 한다(판정 이력 history 는 board.js 가 쓰는 data/board/judgment-history.json 의 행). 같으면 보드를 돌려준다 */
+function checkBoard(tables, fileBoard, month, history = []) {
   if (fileBoard.observedMonth !== month) throw new Error(`${BOARD_FILE} 의 observedMonth ${fileBoard.observedMonth} ≠ ${month}`);
-  const board = boardFromLedger(tables, { referenceDate: fileBoard.referenceDate, observedMonth: month });
+  const board = boardFromLedger(tables, { referenceDate: fileBoard.referenceDate, observedMonth: month, history });
   if (!isDeepStrictEqual(board, fileBoard)) throw new Error(`boardFromLedger 결과가 ${BOARD_FILE} 와 다르다(node tools/ledger/board.js 로 다시 만들고 확인)`);
   return board;
 }
@@ -172,7 +172,7 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
   if (errors.length) throw new Error(`validate.js 오류 ${errors.length}건: ${errors.slice(0, 3).join(' / ')}`);
   lap('read');
   const fileBoard = JSON.parse(fs.readFileSync(boardFile, 'utf8'));
-  const board = checkBoard(tables, fileBoard, month);
+  const board = checkBoard(tables, fileBoard, month, loadHistory(root));
   lap('board');
   const expected = expectedCounts(tables, board);
   const items = stageItems(tables, board);

@@ -1,29 +1,65 @@
 'use strict';
-// lib/board/sample.ts — 아직 SAMPLE 인 계산(지연·주의 추이)이 시안 원본과 같은 숫자를 내는지, 시안을 실행해 뽑은 기준값
-// (tests/fixtures/board-sample-golden.json)과 비교한다. 시안의 데이터·식을 일부러 그대로 두었으므로 한 글자도 다르면 안 된다.
-// 원장 집계(data/board/ledger-board.json)로 바꾼 리본 기하·판정 문구는 원장 값으로 다시 계산해 확인한다.
+// lib/board/sample.ts — 시안에서 옮긴 달 이름·구분·리본 좌표가 시안 원본과 같은 값을 내는지, 시안을 실행해 뽑은 기준값
+// (tests/fixtures/board-sample-golden.json)과 비교한다. 원장 집계(data/board/ledger-board.json)로 바꾼 리본 기하·판정 문구와
+// 월 판정 이력(trend)으로 바꾼 지연·주의 추이·선택 달 판정·지연 띠는 원장 값으로 다시 계산해 확인한다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const S = require('../../lib/board/sample.ts');
 const G = require('../fixtures/board-sample-golden.json');
 const L = require('../../data/board/ledger-board.json');
 const T = S.timelineOf(L);                                   // 화면의 시점은 원장 집계에서 읽는다
-const T0 = S.timelineOf({ months: L.months, now: L.now });   // 시안처럼 기준 달까지 실제(actualThrough 없음)
+const T0 = S.timelineOf({ months: L.months, now: L.now });   // 시안처럼 기준 달까지 실제(actualThrough 없음), trend 없음(기준 달만 판정)
+const { trend: _t, ...OLD } = L;                            // 옛 집계(trend 없음, JSON 대체 등)
+const J = S.judgmentsOf(L), DL = S.delaysOf(J), TR = S.trendOf(T, J);
 
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9 * Math.max(1, Math.abs(b)), `${msg}: ${a} ≠ ${b}`);
 const nearAll = (a, b, msg) => { assert.equal(a.length, b.length, msg); a.forEach((v, i) => near(v, b[i], `${msg}[${i}]`)); };
 
-test('46개 시점의 지연·주의(추이 SAMPLE)·월 이름·구분·추이 문구가 시안과 같다(원장 시점 = 시안 시점, 기준 달까지 실제)', () => {
+test('46개 시점의 월 이름·구분이 시안과 같다(원장 시점 = 시안 시점, 기준 달까지 실제)', () => {
   assert.equal(G.months.length, T.last + 1);
   for (const g of G.months) {
-    const m = g.m;
-    near(S.ip(S.anchor(S.AD, T.now), m, T.now), g.ad, `지연 ${m}`);
-    near(S.ip(S.anchor(S.AW, T.now), m, T.now), g.aw, `주의 ${m}`);
-    assert.equal(S.ml(T, m), g.label);
-    assert.equal(S.kind(T0, m), g.kind);
-    /* 추이 문구는 줄였다(2026-10-11: 시점·'호' 는 카드 제목 title 로) — 숫자는 시안 문구와 같다 */
-    assert.equal(S.txTrend(T, m), g.txTrend.replace(/^\S+ 전월 대비 — /, '전월 대비 ').replace(/호/g, ''), `추이 문구 ${m}`);
+    assert.equal(S.ml(T, g.m), g.label);
+    assert.equal(S.kind(T0, g.m), g.kind);
   }
+});
+
+test('지연·주의 추이(월 판정 이력): 점 = 0 … NOW 달마다 하나, 값 = 이력 행의 지연·주의 호수(기준 달은 원장 판정), 세로 맨 위 = 4 × 간격, 아래 줄 = 전월 대비 실제 차이', () => {
+  assert.equal(L.trend.length, T.now + 1, '2025.01~2026.09 소급 21행 + 2026.10 관측 1행');
+  assert.deepEqual(T.judged, Array.from({ length: T.now + 1 }, (_, i) => i));
+  assert.equal(TR.length, T.now + 1); assert.ok(TR.every(Boolean), '점 수 = NOW + 1');
+  L.trend.forEach((r, i) => assert.deepEqual(TR[i], { d: r.delay.units, w: r.caution.units }, r.month));
+  assert.deepEqual(TR[T.now], { d: L.judgment.delay.units, w: L.judgment.caution.units });
+  /* 세로 맨 위: 최댓값 이상인 가장 작은 1·1.2·1.5·2·2.5·3·4·5·6·8 × 10^n(눈금선 y=55·100·145 = 3/4·1/2·1/4) */
+  assert.equal(S.trendMax(215282), 250000); assert.equal(S.trendMax(70000), 80000); assert.equal(S.trendMax(100000), 100000); assert.equal(S.trendMax(9000), 10000); assert.equal(S.trendMax(0), 1);
+  const max = Math.max(...TR.flatMap((r) => [r.d, r.w])), top = S.trendMax(max);
+  assert.ok(top >= max && top <= max * 1.25, `맨 위 ${top} 는 최댓값 ${max} 이상, 1.25배 이하`);
+  const sgn = (n) => (n >= 0 ? '+' : '−') + S.f(Math.abs(n));
+  assert.equal(S.txTrend(T, TR, 0), '전월 대비 지연 +0 · 주의 +0', '첫 달은 0');
+  for (let m = 1; m <= T.now; m++) assert.equal(S.txTrend(T, TR, m), `전월 대비 지연 ${sgn(TR[m].d - TR[m - 1].d)} · 주의 ${sgn(TR[m].w - TR[m - 1].w)}`, `${m}`);
+  assert.equal(S.txTrend(T, TR, T.last), S.txTrend(T, TR, T.now), 'NOW 뒤 달은 NOW');
+  const trend = panel(board, 'p-trend');
+  assert.match(trend, /points=\{pts\('w'\)\}[\s\S]*points=\{pts\('d'\)\}/);
+  assert.match(board, /const pts = \(k: 'd' \| 'w'\) => TR\.flatMap\(\(r, m\) => \(r \? \[tx\(m\) \+ ',' \+ ty\(r\[k\]\)\] : \[\]\)\)\.join\(' '\);/);
+  assert.match(board, /ty = \(val: number\) => \(190 - val \/ tmax \* 180\)\.toFixed\(1\)/, '세로 축척은 이력 최댓값에 맞춘 tmax');
+  assert.match(trend, /<line x1="0" y1="55"[^>]*\/><line x1="0" y1="100"[^>]*\/><line x1="0" y1="145"/, '눈금선 3개(글자 없음)');
+  assert.doesNotMatch(trend, /<text/, '추이 카드에 새 글자 없음');
+  assert.match(trend, /txTrend\(T, TR, cursor\)/);
+});
+
+test('옛 집계(trend 없음): 판정은 기준 달만 — 추이는 기준 달 한 점, 증감 0, 앞 달 지연 띠 0', () => {
+  const TO = S.timelineOf(OLD), JO = S.judgmentsOf(OLD), TRO = S.trendOf(TO, JO);
+  assert.deepEqual(TO.judged, [TO.now]);
+  assert.equal(TRO.filter(Boolean).length, 1);
+  assert.deepEqual(TRO[TO.now], { d: L.judgment.delay.units, w: L.judgment.caution.units });
+  assert.equal(S.txTrend(TO, TRO, TO.now), '전월 대비 지연 +0 · 주의 +0');
+  assert.deepEqual([S.judgedAt(TO, 5), S.judgedAt(TO, TO.now), S.judgedAt(TO, 30)], [-1, TO.now, TO.now]);
+  const DO = S.delaysOf(JO);
+  assert.deepEqual(S.delayAt(TO, DO, TO.now - 1), [0, 0, 0, 0, 0, 0]);
+  assert.deepEqual(S.delayAt(TO, DO, TO.now), L.delayByStage);
+  assert.deepEqual(S.delayAt(TO, DO, TO.last), L.delayByStage);
+  const R = S.ribbonOf(TO, L.stageUnits, DO);
+  for (const g of R.geo) if (g.x < TO.now) assert.deepEqual(g.dl, [0, 0, 0, 0, 0, 0], `x=${g.x}`);
+  assert.match(S.ribbonLabels(R, 3).pin.text, /^2026\.10 관측 · /, '판정 달 앞이면 첫 판정 달 핀');
 });
 
 test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계·원장 집계·원천 수), 날짜·제목·연결 패널·인용문은 시안 그대로이고, 원장 시도는 통계누리 시도 코드(짧은 이름·/area 링크)로 이어진다', () => {
@@ -73,7 +109,7 @@ test('원장 집계와 화면 시점이 같은 칸이다: 46개월(2025-01~2028-
 test('리본 차트 기하(원장): 좌표 상수는 시안과 같고, 층 두께 = 그 달 단계별 호수, 층은 바닥(BOT)부터 빈틈없이 쌓인다', () => {
   assert.deepEqual([S.PX0, S.PW, S.TOP].map(Number), [G.consts.PX0, G.consts.PW, G.consts.TOP]);
   assert.deepEqual([S.PH, S.BOT], [304, 356], '세로는 시안보다 16 줄여 기준일 글자 줄을 비운다');
-  const R = S.ribbonOf(T, L.stageUnits, L.delayByStage);
+  const R = S.ribbonOf(T, L.stageUnits, DL);
   near(R.pitch, G.consts.PITCH, 'PITCH');
   G.x.forEach(([v, x]) => near(R.X(v), x, `X(${v})`));
   assert.ok(S.textBox(S.staticTexts(R).now).y >= S.BOT, '기준일 글자 상자가 플롯(BOT) 안으로 들어가지 않는다');
@@ -95,29 +131,28 @@ test('리본 차트 기하(원장): 좌표 상수는 시안과 같고, 층 두�
   assert.match(S.rp(R, 5, T.now + 1, T.last + 1, false, 3), /^M[\d.]+,[\d.]+( L[\d.]+,[\d.]+)+ Z$/);
 });
 
-test('리본 지연 띠·병목: NOW 앞 달은 0(관측 기록 없음), NOW 와 그 뒤는 delayByStage, 띠는 층보다 두껍지 않다, 병목 = 지연 호수가 가장 큰 단계', () => {
-  const R = S.ribbonOf(T, L.stageUnits, L.delayByStage);
-  for (const g of R.geo) {
-    if (g.x < T.now) assert.deepEqual(g.dl, [0, 0, 0, 0, 0, 0], `x=${g.x}`);
-    else g.dl.forEach((d, k) => assert.ok(d <= g.lw[k] - g.up[k] + 1e-9, `x=${g.x} k=${k}`));
+test('리본 지연 띠·병목: 달마다 그 달(판정 달)의 delayByStage, NOW 뒤는 NOW 판정, 띠는 층보다 두껍지 않다, 병목 = 지연 호수가 가장 큰 단계', () => {
+  const R = S.ribbonOf(T, L.stageUnits, DL);
+  for (const g of R.geo) g.dl.forEach((d, k) => assert.ok(d <= g.lw[k] - g.up[k] + 1e-9, `x=${g.x} k=${k}`));
+  for (let m = 0; m <= T.last; m++) {
+    const at = R.geo[4 * m + 2], dm = m <= T.now ? L.trend[m].delayByStage : L.delayByStage;
+    dm.forEach((d, k) => near(at.dl[k], Math.min(d, L.stageUnits[m][k]) * R.s2, `띠 ${m}/${k}`));
   }
-  const at = R.geo[4 * T.now + 2];
-  L.delayByStage.forEach((d, k) => near(at.dl[k], Math.min(d, L.stageUnits[T.now][k]) * R.s2, `NOW 띠 ${k}`));
-  assert.deepEqual(S.delayAt(T, L.delayByStage, T.now - 1), [0, 0, 0, 0, 0, 0]);
-  assert.deepEqual(S.delayAt(T, L.delayByStage, T.now), L.delayByStage);
-  assert.deepEqual(S.delayAt(T, L.delayByStage, T.last), L.delayByStage);
+  assert.deepEqual(S.delayAt(T, DL, 0), L.trend[0].delayByStage);
+  assert.deepEqual(S.delayAt(T, DL, T.now - 1), L.trend[T.now - 1].delayByStage);
+  assert.deepEqual(S.delayAt(T, DL, T.now), L.delayByStage);
+  assert.deepEqual(S.delayAt(T, DL, T.last), L.delayByStage);
   assert.equal(S.argmax(L.delayByStage), L.delayByStage.indexOf(Math.max(...L.delayByStage)));
   /* 띠가 층보다 두꺼우면 층 두께로 자른다 */
-  const tiny = S.ribbonOf(T, L.stageUnits.map(() => [10, 10, 10, 10, 10, 10]), [100, 0, 0, 0, 0, 0]);
+  const tiny = S.ribbonOf(T, L.stageUnits.map(() => [10, 10, 10, 10, 10, 10]), T.months.map(() => [100, 0, 0, 0, 0, 0]));
   near(tiny.geo[4 * T.now + 2].dl[0], 10 * tiny.s2, '잘린 띠');
-  const band = S.rp(R, 1, 0, T.now - 0.25, true).slice(1, -2).split(' L'), half = band.length / 2;
-  for (let i = 0; i < half; i++) assert.equal(band[i], band[band.length - 1 - i], 'NOW 앞 띠는 두께가 0');
+  near(tiny.geo[2].dl[0], 10 * tiny.s2, '이력 달의 띠');
 });
 
 test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨·핀이 서로 겹치지 않고 viewBox(960×400) 안에 있다(원장 = 총량 매달 같음, 총량이 해마다 다른 경우도)', () => {
-  const R = S.ribbonOf(T, L.stageUnits, L.delayByStage);
+  const R = S.ribbonOf(T, L.stageUnits, DL);
   // 총량이 해마다 다른 경우: 전국 원장(총량 약 238만)에서 0.5배 → 1.5배
-  const grow = S.ribbonOf(T, L.stageUnits.map((r, m) => r.map((v) => Math.round(v * (0.5 + m / 45)))), L.delayByStage);
+  const grow = S.ribbonOf(T, L.stageUnits.map((r, m) => r.map((v) => Math.round(v * (0.5 + m / 45)))), DL);
   for (const [name, g] of [['원장', R], ['총량 증가', grow]]) {
     for (let cur = 0; cur <= T.last; cur++) {
       const o = S.ribbonLabels(g, cur);
@@ -138,12 +173,12 @@ test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨·핀이 서�
   assert.deepEqual(ST.months.map((t) => t.t), ['2025.01', '2025.07', '2026.01', '2026.07', '2027.07', '2028.01', '2028.07'], '1월·7월, 기준일 글자 아래(2027.01)는 비운다(시안과 같은 자리)');
   for (const g of [R, grow]) assert.ok(S.ribbonLabels(g, T.now).statics.every((t) => !/붉은 띠|총량 매달/.test(t.t)), '차트 안 설명 글자 없음');
   assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '50만', '100만', '150만', '200만', '250만']); assert.equal(ST.unit.t, '(호)');
-  const big = S.ribbonOf(T, L.stageUnits.map((r) => r.map((v) => v * 5)), L.delayByStage);   // ymax 1,000만 이상: '만' 을 빼 눈금이 왼쪽 여백에 들어가고 단위는 머리 글자로
+  const big = S.ribbonOf(T, L.stageUnits.map((r) => r.map((v) => v * 5)), DL);   // ymax 1,000만 이상: '만' 을 빼 눈금이 왼쪽 여백에 들어가고 단위는 머리 글자로
   assert.ok(big.ymax >= 10000000); assert.ok(S.staticTexts(big).ticks.every((t) => !t.t.includes('만'))); assert.equal(S.staticTexts(big).unit.t, '(만 호)');
   ST.ticks.forEach((t, i) => near(t.y, S.BOT - R.ticks[i] * R.s2 + 3, `눈금 y ${i}`));
-  const small = S.ribbonOf(T, L.stageUnits.map(() => [10000, 20000, 30000, 20000, 5000, 4000]), L.delayByStage);   // 총량 89,000: 5만 간격이면 2칸이지만 더 잘게 5칸 이하 중 가장 작은 간격
+  const small = S.ribbonOf(T, L.stageUnits.map(() => [10000, 20000, 30000, 20000, 5000, 4000]), DL);   // 총량 89,000: 5만 간격이면 2칸이지만 더 잘게 5칸 이하 중 가장 작은 간격
   assert.equal(small.step, 20000); assert.equal(small.ymax, 100000); assert.deepEqual(S.staticTexts(small).ticks.map((t) => t.t), ['0', '2만', '4만', '6만', '8만', '10만']);
-  const half = S.ribbonOf(T, L.stageUnits.map(() => [20000, 20000, 20000, 20000, 20000, 20000]), L.delayByStage);   // 총량 120,000 → 간격 25,000(2.5 × 10^4)
+  const half = S.ribbonOf(T, L.stageUnits.map(() => [20000, 20000, 20000, 20000, 20000, 20000]), DL);   // 총량 120,000 → 간격 25,000(2.5 × 10^4)
   assert.equal(half.step, 25000); assert.deepEqual(S.staticTexts(half).ticks.map((t) => t.t), ['0', '2.5만', '5만', '7.5만', '10만', '12.5만']);
   assert.equal(o.pin.text, `${S.K[1]} 지연 ${S.f(L.delayByStage[1])}호 · ${(L.delayByStage[1] / L.stageUnits[T.now][1] * 100).toFixed(1)}%`);
   assert.equal(S.ribbonLabels(grow, T.now).years[1].length, 2, '총량이 해마다 다르면 연도·총량과 증감 두 줄');
@@ -164,11 +199,11 @@ test('시점은 원장 집계에서 읽는다: 다음 달 원장(관측 2026-11,
   assert.deepEqual([T2.now, T2.last, T2.actual], [22, 45, 20]);
   assert.equal(S.ml(T2, T2.now), '2026.11');
   assert.deepEqual([S.kind(T2, 21), S.kind(T2, 22)], ['예정 기준', '현재']);
-  const R2 = S.ribbonOf(T2, next.stageUnits, next.delayByStage), ST2 = S.staticTexts(R2);
+  const R2 = S.ribbonOf(T2, next.stageUnits, S.delaysOf(S.judgmentsOf(next))), ST2 = S.staticTexts(R2);
   assert.equal(ST2.now.t, '기준일 2026.11'); near(ST2.now.x, R2.X(23), '기준일 글자 x');
   assert.ok(!ST2.months.some((t) => t.t === '2027.01'), '기준일 아래 달 이름은 비운다');
-  assert.deepEqual(S.delayAt(T2, next.delayByStage, 21), [0, 0, 0, 0, 0, 0], '판정은 새 기준 달부터');
-  assert.equal(S.txTrend(T2, 22), S.txTrend(T, 21), 'SAMPLE 추이의 끝점은 기준 달');
+  assert.deepEqual(T2.judged, Array.from({ length: 23 }, (_, i) => i), '이력(2026.10 관측 행 포함) + 새 기준 달');
+  assert.deepEqual(S.delayAt(T2, S.delaysOf(S.judgmentsOf(next)), 21), L.delayByStage, '지난 기준 달은 그 달 이력 행');
   for (let cur = 0; cur <= T2.last; cur++) {
     const o = S.ribbonLabels(R2, cur), B = [...o.statics, ...o.years.flat()].map(S.textBox).concat([o.pin, o.total]);
     for (let i = 0; i < B.length; i++) { assert.ok(S.inView(B[i]), `${cur}: ${i} viewBox 밖`); for (let j = i + 1; j < B.length; j++) assert.ok(!S.hit(B[i], B[j]), `${cur}: ${i}⟷${j} 겹침`); }
@@ -177,11 +212,15 @@ test('시점은 원장 집계에서 읽는다: 다음 달 원장(관측 2026-11,
   assert.deepEqual(S.yearsOf(S.timelineOf({ months: L.months.slice(3), now: 18 })).map((y) => [y.y, y.a, y.b]), [[2025, 0, 8], [2026, 9, 20], [2027, 21, 32], [2028, 33, 42]]);
 });
 
-test('선택 달 규칙: 판정 값은 선택 달 이하의 가장 늦은 판정 달(원장에는 기준 달 하나) — 지난 달은 판정 없음, 예정 달은 기준 달 판정', () => {
-  assert.equal(S.judgedAt(T, 5), -1);
-  assert.equal(S.judgedAt(T, T.now - 1), -1);
+test('선택 달 규칙: 판정 값은 선택 달 이하의 가장 늦은 판정 달(이력 달·기준 달) — 지난 달은 그 달 이력, 예정 달은 기준 달 판정, 이력이 빈 달은 앞 판정 달', () => {
+  assert.equal(S.judgedAt(T, 5), 5);
+  assert.equal(S.judgedAt(T, T.now - 1), T.now - 1);
   assert.equal(S.judgedAt(T, T.now), T.now);
   assert.equal(S.judgedAt(T, 30), T.now);
+  assert.equal(S.judgedAt(T0, 5), -1, '옛 집계: 기준 달 앞은 판정 없음');
+  const gap = S.timelineOf({ ...L, trend: L.trend.filter((r) => r.month !== '2025-06') });   // 판이 없는 달
+  assert.equal(S.judgedAt(gap, 5), 4);
+  assert.deepEqual(J[5], L.trend[5]); assert.equal(J[T.now].delay.units, L.judgment.delay.units);
 });
 
 /* ── 종합상황판 이식: SAMPLE 위젯만 표지가 있고, 실데이터 위젯은 표지 없이 제목 title 에 기준·범위를 둔다(2026-10-11 사용자 지시) ── */
@@ -197,8 +236,8 @@ function panel(src, id) {
   return src.slice(i, j);
 }
 
-test('SAMPLE 패널(지연 추이)은 SAMPLE 표지가 있고, 원장 패널 5개는 표지 없이 제목 title 에 원장 범위(전국 여부)를 보인다', () => {
-  for (const id of ['p-trend']) assert.match(panel(board, id), /<Sample \/>/, `${id}`);
+test('SAMPLE 표지는 없다(지연·주의 추이도 월 판정 이력), 원장 패널 5개는 제목 title 에 원장 범위(전국 여부)를 보인다', () => {
+  assert.doesNotMatch(board, /<Sample|SAMPLE/, 'SAMPLE 표지·문구 없음');
   for (const id of ['p-chart', 'p-snap', 'p-region', 'p-agency', 'p-fut']) {
     const p = panel(board, id);
     assert.match(p, /<h2 className=\{ptitle\} title=\{`\$\{scope\} · /, `${id}: 제목 title 에 원장 범위`);
@@ -207,7 +246,7 @@ test('SAMPLE 패널(지연 추이)은 SAMPLE 표지가 있고, 원장 패널 5�
   }
   assert.doesNotMatch(board + realRow, /<Real\b|실데이터<|scopeShort/, '실데이터 표지·보이는 범위 글자 없음');
   assert.match(board, /const scope = `원장 \$\{L\.observedMonth\} 기준 · 사업 \$\{f\(L\.scope\.projects\)\}건\(\$\{ledgerMix\(L\)\}\) · \$\{nation\} · \$\{real\.ledgerOrigin === 'supabase' \? `출처 Supabase\(api\.board, \$\{real\.ledgerMonth\}\)` : '출처 JSON 대체'\}`;/);
-  assert.match(panel(board, 'p-trend'), /판정 이력은 \$\{L\.observedMonth\} 관측부터 쌓인다/);
+  assert.match(panel(board, 'p-trend'), /title=\{`지연·주의 호수\(호\) · 2025\.01~2026\.09 건축HUB 과거 판 소급 판정 · 2026\.10부터 월 관측 · /);
   assert.match(panel(realRow, 'p-actual'), /<h2 className=\{ptitle\} title=\{`국토교통 통계누리/, 'p-actual: 출처는 제목 title');
   assert.doesNotMatch(board, /\b(AG|REG|dStage|vals|txSnap)\b/, '시안 SAMPLE 계산(기관·시도·단계 호수)을 쓰지 않는다');
 });
@@ -215,7 +254,9 @@ test('SAMPLE 패널(지연 추이)은 SAMPLE 표지가 있고, 원장 패널 5�
 test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 호수·증감·지연, 시도 판정 여부, 기관별 사업 수, 12개월 준공 예정', () => {
   const snap = panel(board, 'p-snap');
   assert.match(board, /const T = useMemo\(\(\) => timelineOf\(L\), \[L\]\), NOW = T\.now, LAST = T\.last;/, '시점은 원장 집계에서');
-  assert.match(board, /const v = L\.stageUnits\[cursor\], nv = L\.stageUnits\[NOW\], jm = judgedAt\(T, cursor\), judged = jm >= 0, ds = delayAt\(T, L\.delayByStage, cursor\), bk = argmax\(L\.delayByStage\);/);
+  assert.match(board, /const v = L\.stageUnits\[cursor\], nv = L\.stageUnits\[NOW\], jm = judgedAt\(T, cursor\), judged = jm >= 0, SJ = JS\[judged \? jm : NOW\]!, ds = delayAt\(T, DL, cursor\), bk = argmax\(SJ\.delayByStage\);/, '선택 달의 판정 = 그 판정 달의 이력 행');
+  assert.match(board, /const JS = useMemo\(\(\) => judgmentsOf\(L\), \[L\]\), DL = useMemo\(\(\) => delaysOf\(JS\), \[JS\]\)/);
+  assert.match(board, /ribbonOf\(T, L\.stageUnits, DL\)/, '리본 지연 띠도 달마다 판정');
   assert.match(board, /showDlt = cursor !== NOW;/);
   assert.match(board, /jTag = judged \? `\$\{ml\(T, jm\)\} 판정` : '판정 없음';/);
   assert.match(snap, /role="img" aria-label=\{judged \? [\s\S]*?<span data-slot="judge-tag" className=\{cn\(jtag, '[^']*'\)\}>\{jTag\}<\/span>/, '판정 막대 오른쪽에 판정 달 꼬리표');
@@ -226,7 +267,8 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(panel(board, 'p-region'), /<span data-slot="judge-tag" className=\{jtag\}>\{nowTag\}<\/span>/, '시도: 머리 줄에 판정 달');
   assert.match(panel(board, 'p-agency'), /<span data-slot="judge-tag" className=\{cn\(jtag, '[^']*self-end'\)\}>\{nowTag\}<\/span>\s*<div className=\{ags\}>/, '기관: 제목 줄 바로 아래 오른쪽에 판정 달(제목 줄은 1280px 에서 폭이 없다)');
   assert.match(board, /const nowTag = `\$\{ml\(T, NOW\)\} 판정`/);
-  assert.match(board, /const J = L\.judgment, d = J\.delay\.units, w = J\.caution\.units, ok = J\.ok\.units/);
+  assert.match(board, /const J = L\.judgment, d = SJ\.delay\.units, w = SJ\.caution\.units, ok = SJ\.ok\.units/);
+  assert.match(snap, /\['지연', 'bad', d, SJ\.delay\.projects\]/);
   assert.doesNotMatch(snap, /txJudge|판정 제외:/, '서술 줄 없음 — 규칙·제외는 실데이터 표지 title 에');
   assert.match(snap, /ledgerJudged\(L\)/);
   assert.match(snap, /const dlt = v\[i\] - nv\[i\], neck = judged && i === bk;/, '증감 = 선택 달 − 기준 달, 병목 표시는 판정이 있는 달만');

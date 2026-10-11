@@ -25,15 +25,19 @@ const OUT = path.join(ROOT, `schemas/ledger-2026-10/snapshot/hub-bulk-${DATA_MON
 const OUT_MANIFEST = path.join(ROOT, `schemas/ledger-2026-10/snapshot/hub-bulk-${DATA_MONTH}.manifest.json`);
 const WINDOW_START = '2025-01-01';   // 상황판 시점 0(2025.01): 그 전에 준공(사용검사)한 기록은 뺀다
 const DATE_MIN = '1990-01-01', DATE_MAX = '2040-12-31';
-/* 진행 중 규칙(기준일 2026-10-10). 순서 = 근거를 세는 순서 */
-const ACTIVE = [
+/* 진행 중 규칙(기준일 2026-10-10). 순서 = 근거를 세는 순서. a 의 하한은 기준일 달의 60개월 전 1일(주택법 제16조 착공 의무 5년):
+   기준일 2026-10-10 → 2021-10-01. 과거 판으로 그 달 판정을 소급할 때(tools/ledger/trend.js)는 그 달 말을 기준일로 준다. b·c·d 는 고정 */
+const REFERENCE_DATE = '2026-10-10';
+const permitFloor = (referenceDate) => { const [y, m] = referenceDate.split('-').map(Number), k = y * 12 + (m - 1) - 60; return `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}-01`; };
+const A_MIN = permitFloor(REFERENCE_DATE);
+const ACTIVE = (aMin) => [
   ['d', (d) => d.insp >= '2025-01-01'],
-  ['a', (d) => d.apprv >= '2021-10-01'],   // 주택법 제16조 착공 의무 5년
+  ['a', (d) => d.apprv >= aMin],   // 주택법 제16조 착공 의무 5년
   ['b', (d) => d.stcns >= '2018-01-01'],
   ['c', (d) => d.insp_sched >= '2025-01-01' && d.apprv >= '2015-01-01'],
 ];
-/* 날짜(null 은 비교에서 거짓) → 맞은 근거 'a'~'d' 또는 null(장기 미갱신) */
-const activeBasis = (d) => ACTIVE.find(([, ok]) => ok(Object.fromEntries(DATE_COLS.map((k) => [k, d[k] ?? '']))))?.[0] ?? null;
+/* 날짜(null 은 비교에서 거짓) → 맞은 근거 'a'~'d' 또는 null(장기 미갱신). aMin = a 의 하한(기본 2021-10-01) */
+const activeBasis = (d, aMin = A_MIN) => ACTIVE(aMin).find(([, ok]) => ok(Object.fromEntries(DATE_COLS.map((k) => [k, d[k] ?? '']))))?.[0] ?? null;
 /* 기본개요 열 번호(manifest.json files.basic.columns 순서) */
 const B = { pk: 0, address: 1, name: 2, sgg: 3, bjd: 4, plat_gb: 5, bun: 6, ji: 7, special: 8, block: 9, use: 12, households: 17, demolish_code: 18, demolish_day: 22, apprv: 23, stcns_sched: 24, stcns: 25, insp_sched: 26, insp: 27 };
 const DATE_COLS = ['apprv', 'stcns_sched', 'stcns', 'insp_sched', 'insp'];
@@ -51,7 +55,7 @@ function cleanDate(s) {
 }
 
 /* 기본개요 한 줄(열 배열) → { record, active: 근거 } 또는 { drop: 사유 }. 사유: NO_PERMIT_DATE · NO_HOUSEHOLDS · DEMOLISHED · COMPLETED_BEFORE_WINDOW · STALE(장기 미갱신) */
-function basicRecord(c) {
+function basicRecord(c, aMin = A_MIN) {
   const v = (k) => String(c[B[k]] ?? '').trim();
   const dates = Object.fromEntries(DATE_COLS.map((k) => [k, cleanDate(c[B[k]])]));
   if (!dates.apprv) return { drop: 'NO_PERMIT_DATE' };
@@ -59,7 +63,7 @@ function basicRecord(c) {
   if (!Number.isInteger(households) || households < 1) return { drop: 'NO_HOUSEHOLDS' };
   if (v('demolish_code') || cleanDate(c[B.demolish_day])) return { drop: 'DEMOLISHED' };
   if (dates.insp && dates.insp < WINDOW_START) return { drop: 'COMPLETED_BEFORE_WINDOW' };
-  const active = activeBasis(dates);
+  const active = activeBasis(dates, aMin);
   if (!active) return { drop: 'STALE' };
   return { active, record: { pk: v('pk'), sgg: v('sgg'), bjd: v('bjd'), plat_gb: v('plat_gb'), bun: v('bun'), ji: v('ji'), block: v('block'), special: v('special'), address: v('address'), name: v('name'), complex: null, use: v('use'), households, ...dates, site: null, site_count: 0 } };
 }
@@ -78,6 +82,27 @@ function eachLine(zip, member, onLine) {
 }
 
 const sha256 = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+
+/* 행위개요의 단지명(처음 나온 빈칸 아닌 값)과 대지위치의 대표 필지·필지 수를 byPk(관리번호 → 기록, complex null · site null · site_count 0)의 기록에 붙인다.
+   zips = { act, site: { zip, member } }. 과거 판(기본개요만)의 기록에는 2026-08 판의 값을 관리번호로 붙인다(관리번호의 정적 속성, tools/ledger/trend.js) */
+async function attachStatic(rawDir, zips, byPk) {
+  let actRows = 0, siteRows = 0;
+  await eachLine(path.join(rawDir, zips.act.zip), zips.act.member, (c) => {
+    const r = byPk.get(String(c[A.pk]).trim());
+    if (!r) return;
+    actRows++;
+    const name = String(c[A.complex] ?? '').trim();
+    if (name && !r.complex) r.complex = name;
+  });
+  await eachLine(path.join(rawDir, zips.site.zip), zips.site.member, (c) => {
+    const r = byPk.get(String(c[S.pk]).trim());
+    if (!r) return;
+    siteRows++;
+    r.site_count++;
+    if (String(c[S.rep]).trim() === '1' && !r.site) r.site = { sgg: c[S.sgg].trim(), bjd: c[S.bjd].trim(), plat_gb: c[S.plat_gb].trim(), bun: c[S.bun].trim(), ji: c[S.ji].trim() };
+  });
+  return { actRows, siteRows };
+}
 
 /* 원본 3개를 읽어 { records(관리번호 순), manifest } */
 async function build(rawDir = RAW) {
@@ -102,21 +127,7 @@ async function build(rawDir = RAW) {
     funnel.kept++;
     active[r.active]++;
   });
-  let actRows = 0, siteRows = 0;
-  await eachLine(path.join(rawDir, zips.act.zip), zips.act.member, (c) => {
-    const r = byPk.get(String(c[A.pk]).trim());
-    if (!r) return;
-    actRows++;
-    const name = String(c[A.complex] ?? '').trim();
-    if (name && !r.complex) r.complex = name;
-  });
-  await eachLine(path.join(rawDir, zips.site.zip), zips.site.member, (c) => {
-    const r = byPk.get(String(c[S.pk]).trim());
-    if (!r) return;
-    siteRows++;
-    r.site_count++;
-    if (String(c[S.rep]).trim() === '1' && !r.site) r.site = { sgg: c[S.sgg].trim(), bjd: c[S.bjd].trim(), plat_gb: c[S.plat_gb].trim(), bun: c[S.bun].trim(), ji: c[S.ji].trim() };
-  });
+  const { actRows, siteRows } = await attachStatic(rawDir, zips, byPk);
   const records = [...byPk.values()].sort((a, b) => (a.pk < b.pk ? -1 : a.pk > b.pk ? 1 : 0));
   const manifest = {
     source: src.source, data_month: DATA_MONTH, data_as_of: `${DATA_MONTH}-31`, fetched_at: src.fetched_at, files: zips,
@@ -191,7 +202,7 @@ function districtToken(district) {
 const renderRecords = (records) => `{"schema":"hub-bulk/1","data_month":"${DATA_MONTH}","records":[\n${records.map((r) => JSON.stringify(r)).join(',\n')}\n]}\n`;
 const loadRecords = (file = OUT) => JSON.parse(fs.readFileSync(file, 'utf8')).records;
 
-module.exports = { cleanDate, basicRecord, activeBasis, build, codeMapper, locate, groupKey, normBlock, districtToken, renderRecords, loadRecords, OUT, OUT_MANIFEST, RAW, DATA_MONTH };
+module.exports = { cleanDate, basicRecord, activeBasis, permitFloor, eachLine, attachStatic, sha256, build, codeMapper, locate, groupKey, normBlock, districtToken, renderRecords, loadRecords, OUT, OUT_MANIFEST, RAW, DATA_MONTH, B };
 
 if (require.main === module) {
   build().then(({ records, manifest }) => {
