@@ -30,7 +30,7 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   const start = { year: last.slice(0, 4), upto: Number(last.slice(5)), cum, cumLy };
   const dir = makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start });
   assert.deepEqual(dir.map((d) => [d.date, d.t, d.p]), [['08.14', '진척 관리', ['p-chart']], ['08.19', '사업장별 현황판', ['p-region']], ['09.03', '범부처 통합·병목', ['p-trend', 'p-agency']], ['09.04', '예측가능성', ['p-fut']], ['09.18', '일정 지연 관리', ['p-trend']], ['09.30', '국민 공개·공식 원천', ['p-flow']]]);
-  dir.forEach((d, i) => { assert.ok(d.basis.length > 10, `표지 title ${i}`); assert.match(d.q, / — /, `인용문 ${i}`); });
+  dir.forEach((d, i) => { assert.ok(d.basis.length > 10, `표지 title ${i}`); });
   const yoy = (cum - cumLy) / cumLy * 100;
   assert.equal(dir[0].m, `착공 ${S.f(cum)}호`);
   assert.equal(dir[0].sub.text, `${yoy >= 0 ? '▲' : '▼'} ${Math.abs(yoy).toFixed(1)}%`);
@@ -195,7 +195,7 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(board, /const v = L\.stageUnits\[cursor\], nv = L\.stageUnits\[NOW\], past = cursor <= NOW, ds = L\.delayByStage, bk = argmax\(ds\);/);
   assert.match(board, /const J = L\.judgment, d = J\.delay\.units, w = J\.caution\.units, ok = J\.ok\.units/);
   assert.match(snap, /<Reserve live=\{txJudge\(cursor\)\}/);
-  assert.match(snap, /판정 제외 \{f\(J\.excluded\.projects\)\}건 · \{f\(J\.excluded\.units\)\}호/);
+  assert.match(snap, /판정 제외: [\s\S]*LH 후보 \{f\(J\.excluded\.projects\)\}건\(\{f\(J\.excluded\.units\)\}호\)/);
   assert.match(snap, /const dlt = v\[i\] - nv\[i\];/);
   const region = panel(board, 'p-region');
   assert.match(region, /\{L\.regions\.map\(/);

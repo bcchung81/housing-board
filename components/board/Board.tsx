@@ -167,7 +167,6 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               </button>
             ))}
           </div>
-          <div className="mt-2 flex flex-wrap items-center gap-2.5 rounded-[10px] border border-border bg-card px-3.5 py-2 text-[15px] text-ink2"><Badge variant="solid" className="bg-secondary text-primary">지시 요지</Badge><Reserve live={cur.q} list={DIR.map((x) => x.q)} /></div>
         </section>
 
         <div className="mt-3.5 grid grid-cols-[minmax(0,1fr)_400px] items-stretch gap-3.5 narrow:grid-cols-1">
@@ -212,7 +211,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             </div>
           </Card>
 
-          <Card variant="board" render={<section id="p-snap" aria-label="선택 시점의 판정과 단계별 호수" />}>
+          <Card variant="board" className="@container" render={<section id="p-snap" aria-label="선택 시점의 판정과 단계별 호수" />}>
             <div className="mb-2.5 flex flex-wrap items-baseline gap-2.5">
               <h2 className={ptitle}>{ml(cursor)}</h2>
               <Badge variant="solid" className={past ? 'bg-foreground text-background' : 'bg-primary text-primary-foreground'}>{kind(cursor)}</Badge>
@@ -226,24 +225,30 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               <div className="mt-[9px] grid grid-cols-3 gap-2">
                 {([['지연', 'bad', d, J.delay.projects], ['주의', 'warn', w, J.caution.projects], ['정상', 'ok', ok, J.ok.projects]] as const).map(([name, tone, n, np]) => (
                   <div key={name} className="min-w-0">
-                    <div className="flex items-center gap-[5px] text-[14px] whitespace-nowrap text-muted-foreground"><i className={cn('block size-[9px] flex-none rounded-[3px]', tone === 'bad' ? 'bg-bad' : tone === 'warn' ? 'bg-warn' : 'bg-ok')} />{name} {f(np)}건<em className="ml-0.5 text-[14px] not-italic">{pct(n)}</em></div>
-                    <b className={cn('block font-display text-[20px] leading-[1.3] whitespace-nowrap tabular-nums', tone === 'bad' ? 'text-bad' : tone === 'warn' ? 'text-warn' : 'text-ok')}>{f(n)}<small className="ml-0.5 [font-family:inherit] text-[14px] font-normal opacity-80">호</small></b>
+                    <div className="flex items-center gap-[5px] text-[14px] whitespace-nowrap text-muted-foreground"><i className={cn('block size-[9px] flex-none rounded-[3px]', tone === 'bad' ? 'bg-bad' : tone === 'warn' ? 'bg-warn' : 'bg-ok')} />{name}<em className="ml-0.5 text-[14px] not-italic tabular-nums">{pct(n)}</em></div>
+                    <b className={cn('block font-display text-[min(20px,5cqi)] leading-[1.3] whitespace-nowrap tabular-nums', tone === 'bad' ? 'text-bad' : tone === 'warn' ? 'text-warn' : 'text-ok')}>{f(n)}<small className="ml-0.5 [font-family:inherit] text-[14px] font-normal opacity-80">호</small></b>
+                    <div className="text-[14px] whitespace-nowrap text-muted-foreground tabular-nums">{f(np)}건</div>
                   </div>
                 ))}
               </div>
             </div>
             <div className={cn(sub, 'mt-1.5')}><Reserve live={txJudge(cursor)} list={[0, NOW, LAST].map(txJudge)} /></div>
-            <div className={sub} title={J.excluded.reason}>지연 = 예정일 경과 {L.judge.delayMonths}개월 이상 · 주의 = {L.judge.cautionMonths}~{L.judge.delayMonths}개월 · 판정 제외 {f(J.excluded.projects)}건 · {f(J.excluded.units)}호(LH 후보){J.excludedStartOverdue ? ` · 건축HUB 후보 착공 예정 경과 ${f(J.excludedStartOverdue.pairs)}건 제외` : ''}</div>
-            <div className="mt-2 flex flex-auto flex-col" aria-label="단계별 호수, 현재 대비 증감, 지연 호수">
+            <div className={cn(sub, 'break-keep')} title={J.excluded.reason}>
+              <div><span className="whitespace-nowrap">지연 = 예정일 경과 {L.judge.delayMonths}개월 이상</span> <span className="whitespace-nowrap">· 주의 = {L.judge.cautionMonths}~{L.judge.delayMonths}개월</span></div>
+              <div>판정 제외: <span className="whitespace-nowrap">LH 후보 {f(J.excluded.projects)}건({f(J.excluded.units)}호)</span>{J.excludedStartOverdue ? <> · 건축HUB 후보 착공 예정 경과 <span className="whitespace-nowrap">{f(J.excludedStartOverdue.pairs)}건</span></> : null}</div>
+            </div>
+            <div className="mt-2 grid flex-auto grid-cols-[minmax(0,1fr)_max-content_max-content_max-content] content-start gap-x-3 phone:grid-cols-[minmax(0,1fr)_max-content_max-content]" aria-label="단계별 호수, 현재 대비 증감, 지연 호수">
+              <div className="col-span-4 grid grid-cols-subgrid items-center px-1.5 pb-0.5 text-[13px] text-muted-foreground phone:col-span-3">
+                <span>단계</span><span className="text-right">현재 호수</span><span className="text-right phone:hidden">증감</span><span className="text-right">지연 호수</span>
+              </div>
               {K.map((k, i) => {
                 const dlt = v[i] - nv[i];
                 return (
-                  <div key={k} className={cn('grid flex-auto grid-cols-[minmax(0,1fr)_70px_62px_78px] items-center gap-2 rounded-[6px] border-b border-border px-1.5 py-0.5 last:border-b-0 phone:grid-cols-[minmax(0,1fr)_66px_74px]', i === bk && 'bg-accent')}>
+                  <div key={k} className={cn('col-span-4 grid flex-auto grid-cols-subgrid items-center rounded-[6px] border-b border-border px-1.5 py-0.5 last:border-b-0 phone:col-span-3', i === bk && 'bg-accent')}>
                     <span className="flex items-center gap-2 text-[15px] font-bold whitespace-nowrap"><i className="block size-[11px] flex-none rounded-[3px]" style={{ background: C[i] }} />{CIR[i]} {k}<Badge variant="solid" className={cn('ml-0.5 bg-primary/10 px-1.5 text-[12px] leading-[15px] text-primary', i === bk ? 'visible' : 'invisible')}>병목</Badge></span>
-                    <span className={cn(disp, 'text-right text-[20px]')}>{f(v[i])}</span>
-                    {/* 옛 dash.css 의 .dl(정의 목록 격자)이 이 칸에도 걸려 있었다. 겉모습을 그대로 두려고 같은 격자·여백을 남긴다. */}
-                    <span className={cn('mt-2.5 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-1.5 text-right text-[14px] phone:hidden', dlt === 0 ? 'text-mute' : dlt > 0 ? 'text-ok' : 'text-warn')}>{dlt === 0 ? '현재' : sg(dlt)}</span>
-                    <span className="text-right text-[14px] whitespace-nowrap text-bad">지연 {f(ds[i])}</span>
+                    <span className={cn(disp, 'text-right text-[min(20px,5cqi)] whitespace-nowrap')}>{f(v[i])}</span>
+                    <span className={cn('text-right text-[14px] whitespace-nowrap tabular-nums phone:hidden', dlt === 0 ? 'text-mute' : dlt > 0 ? 'text-ok' : 'text-warn')}>{dlt === 0 ? '현재' : sg(dlt)}</span>
+                    <span className="text-right text-[14px] whitespace-nowrap tabular-nums text-bad">{f(ds[i])}</span>
                   </div>
                 );
               })}
