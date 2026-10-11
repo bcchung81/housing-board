@@ -99,7 +99,7 @@ export function stageLinks(n: StageNumbers, acquire: Pick<Acquire, 'id' | 'kind'
       AGENCY('계획 호수 · 당초 일정'), SCHEDULE('예정일'),
     ],
     outcomes: [
-      { name: '① 계획 층 · 종합상황판', lines: ['지금 SAMPLE', '택지정보 + 기관 입력'] },
+      { name: '① 계획 층 · 종합상황판', lines: ['지금 원장 2026-10 · 전국 아님', '택지정보 + 기관 입력'] },
       { name: '계획 대비 실적', lines: ['계획 호수 원천 없음', '기관 입력으로만'] },
       { name: '당초 대비 지연', lines: ['일정 기록 + 택지 진행이력', '+ 건축HUB 착공예정일'] },
       { name: "지도 '계획' 단지", lines: [`지금 ${f(bun('계획'))}단지`, '지구 경계로 전국'] },
@@ -139,7 +139,7 @@ export function stageLinks(n: StageNumbers, acquire: Pick<Acquire, 'id' | 'kind'
     ],
     outcomes: [
       { name: '② 인허가 층 · 종합상황판', lines: ['실적 = 통계누리(시도)', `사업 = ${n.sgg}개 시군구`] },
-      { name: '전국 17개 시도 판정', lines: ['지금 SAMPLE', '전국 사업 원장 필요'] },
+      { name: '시도 16곳 판정', lines: ['지금 원장 · 서울·경기·인천만', '전국 사업 원장 필요'] },
       { name: '지도 인허가 사업', lines: ['법정동 조회 · 캐시 24시간', '전국 조회 가능'] },
       { name: '인허가 지연', lines: ['예정일 이력 없음', '일정 기록 필요'] },
     ],
@@ -174,7 +174,7 @@ export function stageLinks(n: StageNumbers, acquire: Pick<Acquire, 'id' | 'kind'
     ],
     outcomes: [
       { name: '③ 착공 층 · 종합상황판', lines: ['실적 = 통계누리(시도)', `사업 = ${f(reg('04'))}건`] },
-      { name: '병목 착공 · 지연 호수', lines: ['지금 SAMPLE', '당초 대비 비교 필요'] },
+      { name: '병목 착공 · 지연 호수', lines: ['지금 원장 · 현재 예정 기준', '당초 대비 비교 필요'] },
       { name: '지도 공정율', lines: ['계양 LH 공사현황', 'LH 전국 168블록 가공 전'] },
       { name: '착공 지연 판정', lines: ['착공예정일(A9·F1)', '+ 일정 기록'] },
     ],

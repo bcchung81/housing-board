@@ -7,8 +7,10 @@ import Fold from '../../../components/sources/Fold';
 import HashOpen from '../../../components/sources/HashOpen';
 import StageLinks from '../../../components/sources/StageLinks';
 import { DataGrid } from '../../../components/ui/data-grid';
-import { fmt, nextYm } from '../../../lib/board/calc';
-import { molit, projects, lh, sources } from '../../../lib/board/data';
+import { fmt } from '../../../lib/board/calc';
+import { ledger, molit, projects, lh, sources } from '../../../lib/board/data';
+import { ledgerJudged, ledgerMix, nation as nationOf } from '../../../lib/board/directives';
+import { CIR, K } from '../../../lib/board/sample';
 import { ITEMS, MODE_LABEL } from '../../../lib/board/pipeline';
 import { COLLECTION, OPERATIONS, bytesLabel } from '../../../lib/board/collection';
 import { SCREEN_USAGE, sourceGap, sourceUsage } from '../../../lib/board/screen-usage';
@@ -157,19 +159,22 @@ export default function SourcesPage() {
     return resp ? { text: `캐시 ${fmt(rec)}건 · 응답 ${fmt(resp)}`, sort: rec } : { na: '캐시 없음' };
   };
 
-  /* 종합상황판: 화면 위젯 순서. 실데이터 2개 + 원천 수, 나머지는 시안 고정값(SAMPLE) */
+  /* 종합상황판: 화면 위젯 순서. 실데이터 = 월별 실적·원장 집계 5개(원장 2026-10 기준) + 원천 수, 나머지는 시안 고정값(SAMPLE) */
   const molitUsed = items.filter((s) => s.id.startsWith('molit-') && s.usedBy.includes('/'));
   const molitRows = molitUsed.reduce((n, s) => n + s.count, 0);
   const sample = (widget: string, need: string): Row => ({ id: widget, c: { widget, kind: { text: 'SAMPLE', muted: true }, data: '시안 고정값', method: null, cycle: null, count: { na: '없음' }, asOf: null, gap: `필요: ${need}` } });
+  /* 원장 집계 위젯 5개는 같은 원장을 쓰므로 수집 건수는 첫 행에만 센다(합계에 겹쳐 세지 않게) */
+  const judgedSido = ledger.regions.filter((r) => r.judged).map((r) => molit.sido.find((x) => x.code === r.code)?.name ?? r.code).join('·');
+  const ledgerRow = (id: string, widget: string, gap: string, first = false): Row => ({ id, c: { widget, kind: '실데이터', data: `원장 ${ledger.observedMonth} 기준 표 · data/board/ledger-board.json`, method: 'tools/ledger → ledger-board.json', cycle: '수동 갱신', count: first ? held(ledger.scope.projects, '사업') : { na: '위 원장과 같음' }, asOf: ledger.observedMonth, gap } });
   const boardRows: Row[] = [
-    { id: 'directives', c: { widget: '총리 지시 6건', kind: 'SAMPLE · 원천 수 실제', data: '시안 고정값 · 원천 카탈로그', method: '수집 기록 → sources.json', cycle: '수동 갱신', count: held(items.length, '데이터셋'), asOf: null, gap: `필요: ${nameOf('ledger')} · ${nameOf('agency-input')} · ${nameOf('schedule')}` } },
-    sample('월별 공급 파동', `${nameOf('ledger')}(6단계 호수) · ${nameOf('schedule')}`),
-    sample('선택 시점 판정', `${nameOf('schedule')}(당초·변경) · ${nameOf('agency-input')}`),
-    sample('전국 17개 시도', `${nameOf('ledger')}(전국) · ${nameOf('bounds')}`),
+    { id: 'directives', c: { widget: '총리 지시 6건', kind: '실데이터', data: '통계누리 착공 누계 · 사업 원장 집계 · 원천 카탈로그', method: '통계누리 수집 + 원장 집계(tools/ledger/board.js) + sources.json', cycle: '수동 갱신', count: held(items.length, '데이터셋'), asOf: null, gap: `필요: ${nameOf('ledger')} · ${nameOf('agency-input')} · ${nameOf('schedule')}` } },
+    ledgerRow('ribbon', '월별 공급 파동', `${nationOf(ledger)}(사업 ${ledger.scope.projects}건 · ${ledgerMix(ledger)}) · 지연 띠는 ${ledger.observedMonth} 관측부터 · ${nameOf('schedule')}(월별 이력) 없음`, true),
+    ledgerRow('snap', '선택 시점 판정', `${ledgerJudged(ledger)} · 과거 판정 기록 없음`),
+    ledgerRow('region', `시도 ${ledger.regions.length}곳`, `판정은 ${judgedSido}만 · ${nationOf(ledger)} 사업 중`),
     { id: 'actual', c: { widget: '월별 실적 흐름', kind: '실데이터', data: `${nameOf('molit')} 중 ${molitUsed.length}표(인허가·착공·준공·분양) · ${molit.months[0]}~${molit.months[molit.months.length - 1]}`, method: COLLECTION[molitUsed[0].id].method, cycle: COLLECTION[molitUsed[0].id].cycle, count: held(molitRows, '행'), asOf: molitUsed[0].sourceAsOf, gap: SCREEN_USAGE.molit.gap } },
     sample('지연·주의 추이', `${nameOf('schedule')}(월별 이력)`),
-    { id: 'future', c: { widget: '향후 12개월 공급 예정', kind: '실데이터', data: `${nameOf('lh-completion')} · ${fmt(lh.units)}호`, method: COLLECTION['datagokr-15141761'].method, cycle: COLLECTION['datagokr-15141761'].cycle, count: held(lh.count, '블록'), asOf: lh.sourceAsOf, gap: SCREEN_USAGE['lh-completion'].gap } },
-    sample('기관별 진행', `${nameOf('agency-input')}(계획 호수·지연 사유)`),
+    ledgerRow('future', '향후 12개월 공급 예정', `준공만(착공·모집·입주 예정 없음) · LH 후보 예정일은 파일 기준일 ${lh.sourceAsOf} 값`),
+    ledgerRow('agency', '기관별 진행', `기관 미상 ${ledger.agencies.find((a) => a.id === 'unknown')?.projects ?? 0}건 · ${nameOf('agency-input')} 없음`),
   ];
 
   /* 지도: 지도에서 쓰는 운영 자료 + 지역 번들·건물대장. 보관 → 실시간 → 미연결 순. 캐시 키 앞부분은 handlers/** 의 cache.wrap 키 */
@@ -222,14 +227,17 @@ export default function SourcesPage() {
   /* 행을 누르면 펼치는 실제 레코드 예시(앞 10건). 번들·레지스트리·보관 JSON 은 배포본에도 있고, 원본 CSV·캐시는 로컬에만 있다 */
   const nation = (k: 'permit' | 'start' | 'sale' | 'complete') => molit.metrics[k].series['00'].total;
   const molitRecs = molit.months.map((ym, i) => ({ 월: ym, 인허가: nation('permit')[i], 착공: nation('start')[i], 분양: nation('sale')[i], 준공: nation('complete')[i], 잠정: molit.provisional.includes(ym) ? 'Y' : '' })).reverse();
-  const lhWindow = lh.blocks.filter((b) => b.date.slice(0, 7) >= '2026-10' && b.date.slice(0, 7) <= nextYm('2026-10', 11)).sort((a, b) => a.date.localeCompare(b.date));
   const blockKeys = ['date', 'district', 'units', 'type', 'location', 'sido'];
   const fromCache = (apis: string[], keys?: string[]) => { const recs = apis.flatMap((a) => cache[a] ?? []); return detailOf(recs, `로컬 캐시 .cache · ${apis.join('·')}`, { keys }); };
   const PROCESSED: Record<string, string> = { 'molit-permit-monthly': '인허가_월별누계', 'molit-start-monthly': '착공_월계', 'molit-complete-monthly': '준공_월계', 'molit-sale-apt': '분양_공동주택', 'molit-permit-annual': '인허가_지역별_연간' };
   const DETAIL: Record<string, Detail | undefined> = {
     directives: detailOf(items.map((x) => ({ id: x.id, dataset: x.dataset, provider: x.provider, count: x.count, sourceAsOf: x.sourceAsOf, collectedAt: x.collectedAt?.slice(0, 10) })), 'data/board/sources.json'),
     actual: detailOf(molitRecs, 'data/board/molit.json · 전국'),
-    future: detailOf(lhWindow as unknown as Rec[], 'data/board/lh-completion.json · 2026-10~2027-09', { keys: blockKeys }),
+    ribbon: detailOf(ledger.months.map((ym, i) => ({ 월: ym, ...Object.fromEntries(K.map((k, j) => [`${CIR[j]} ${k}`, ledger.stageUnits[i][j]])) })), 'data/board/ledger-board.json · stageUnits'),
+    snap: detailOf(ledger.overdue as unknown as Rec[], 'data/board/ledger-board.json · overdue'),
+    region: detailOf(ledger.regions as unknown as Rec[], 'data/board/ledger-board.json · regions'),
+    future: detailOf(ledger.upcoming as unknown as Rec[], 'data/board/ledger-board.json · upcoming'),
+    agency: detailOf(ledger.agencies as unknown as Rec[], 'data/board/ledger-board.json · agencies'),
     'map-projects': detailOf(bundles.rec.projects, 'regions/*/projects.json', { keys: ['region', 'name', 'kind', 'status', 'units', 'dongCount', 'moveIn', 'builder'] }),
     'map-buildings': detailOf(bundles.rec.buildings, 'regions/*/buildings.json', { total: bundles.buildings }),
     'map-context': detailOf(bundles.rec.context, 'regions/*/context.json', { keys: ['region', 'kind', 'name', 'lon', 'lat'] }),

@@ -1,0 +1,74 @@
+{
+ "source": "건축HUB 대용량 제공 서비스 - 주택인허가(기본개요·행위개요·대지위치) 최신 월",
+ "data_month": "2026-08",
+ "data_as_of": "2026-08-31",
+ "fetched_at": "2026-10-11T01:37:31.576242+00:00",
+ "files": {
+  "basic": {
+   "zip": "주택인허가_기본개요_2026-08.zip",
+   "member": "mart_jty_01.txt",
+   "sha256": "196482e19b7c1192071f870b1125b17b037a484af6392c9c25e3d5d6c403cb0a"
+  },
+  "act": {
+   "zip": "주택인허가_행위개요_2026-08.zip",
+   "member": "mart_jty_12.txt",
+   "sha256": "bacc6beabdba5933555db509236af3b00da0839a94321c0cf63f540e4eb54008"
+  },
+  "site": {
+   "zip": "주택인허가_대지위치_2026-08.zip",
+   "member": "mart_jty_15.txt",
+   "sha256": "04159045c4f6a44c37b6e3b5c81034ffd20cedee529db6707d998ecc1a09f7e6"
+  }
+ },
+ "rules": {
+  "date": "YYYYMMDD, 달력에 있는 1990-01-01~2040-12-31 만(그 밖은 null)",
+  "scope": "사업승인일 있음 · 총세대수 ≥ 1 · 철거·멸실 표시 없음 · 사용검사일 없음 또는 ≥ 2025-01-01",
+  "active": "진행 중(기준일 2026-10-10) 중 하나: d 사용검사일 ≥ 2025-01-01 · a 사업승인일 ≥ 2021-10-01(주택법 제16조 착공 의무 5년) · b 착공일 ≥ 2018-01-01 · c 사용검사 예정일 ≥ 2025-01-01 이고 사업승인일 ≥ 2015-01-01. 아니면 STALE(장기 미갱신)",
+  "site": "대지위치는 대표 필지(대표_여부 1)만, 필지 수는 site_count"
+ },
+ "funnel": {
+  "rows": 377256,
+  "NO_PERMIT_DATE": 951,
+  "NO_HOUSEHOLDS": 348582,
+  "DEMOLISHED": 0,
+  "COMPLETED_BEFORE_WINDOW": 13764,
+  "STALE": 9856,
+  "kept": 4103
+ },
+ "active": {
+  "d": 630,
+  "a": 2912,
+  "b": 70,
+  "c": 491
+ },
+ "dates": {
+  "apprv": {
+   "valid": 376305,
+   "empty": 714,
+   "invalid": 237
+  },
+  "stcns_sched": {
+   "valid": 136623,
+   "empty": 240173,
+   "invalid": 460
+  },
+  "stcns": {
+   "valid": 63933,
+   "empty": 313042,
+   "invalid": 281
+  },
+  "insp_sched": {
+   "valid": 145247,
+   "empty": 228811,
+   "invalid": 3198
+  },
+  "insp": {
+   "valid": 151689,
+   "empty": 225510,
+   "invalid": 57
+  }
+ },
+ "act_rows_matched": 0,
+ "site_rows_matched": 171425,
+ "records": 4103
+}

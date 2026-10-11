@@ -15,12 +15,14 @@ export const ptSmallBlock = `${ptSmall} mt-0.5 block`;
 export const phead = "flex items-start gap-3";
 export const pacts = "ml-auto flex flex-none gap-1.5";
 
-/* 두 칸 행(.row2: 월별 실적 흐름 | 전국 17개 시도)과 막대 행(.ags .ag .an .ad .bar3).
-   시도 칸은 타일 6열(112×6 + 간격 6×5 + 안쪽 여백 42 = 744)이 들어가는 750px 로 고정해 17곳이 3줄로 끝나게 한다 — 시도 카드(약 447)와 실적 카드(약 454) 높이가 비슷하고, 남는 높이는 타일이 늘어나 채운다.
+/* 두 칸 행(.row2: 월별 실적 흐름 | 시도 16곳)과 막대 행(.ags .ag .an .ad .bar3).
+   시도 칸은 타일 6열(112×6 + 간격 6×5 + 안쪽 여백 42 = 744)이 들어가는 750px 로 고정해 시도 16곳이 3줄로 끝나게 한다 — 시도 카드(약 447)와 실적 카드(약 454) 높이가 비슷하고, 남는 높이는 타일이 늘어나 채운다.
    1280px 미만에서는 실적 그래프 칸이 너무 좁아져 위아래로 쌓는다. */
 export const row2 = "mt-3.5 grid grid-cols-1 items-stretch gap-3.5 min-[1280px]:grid-cols-[minmax(0,1fr)_750px]";
 export const ags = "mt-2.5 flex flex-auto flex-col justify-around gap-1.5";
 export const ag = "grid items-center gap-2.5";
-export const agName = "flex min-w-0 flex-wrap items-baseline gap-x-[5px] [&_b]:text-[15px] [&_b]:leading-[1.3]";
+/* 기관 행은 모두 같은 높이·같은 세 칸(이름 | 막대 | 지연 호수·비중). 사업 없는 기관을 묶은 한 줄도 같은 틀을 쓴다 */
+export const agRow = "h-9 grid-cols-[136px_minmax(0,1fr)_108px]";
+export const agName = "flex min-w-0 items-baseline gap-x-[5px] whitespace-nowrap [&_b]:text-[15px] [&_b]:leading-[1.3]";
 export const agVal = "flex items-baseline justify-end gap-[5px] whitespace-nowrap [&_b]:font-display [&_b]:text-[20px] [&_b]:leading-[1.2]";
 export const bar3 = "flex gap-px overflow-hidden";   // 막대 그래프는 모서리를 둥글리지 않는다(계획서 11절)

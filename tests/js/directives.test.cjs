@@ -13,9 +13,10 @@ const molit = require('../../data/board/molit.json');
 const lh = require('../../data/board/lh-completion.json');
 const { MENU } = require('../../lib/shell/menu.ts');
 
-test('앞으로를 세는 기준 달은 종합상황판의 향후 12개월과 같다(2026-10)', () => {
+test('앞으로를 세는 기준 달은 종합상황판의 향후 12개월(원장 upcoming)과 같다(2026-10)', () => {
   assert.equal(C.AHEAD_FROM, '2026-10');
-  assert.match(read('app/(dashboard)/page.tsx'), /lh: lhByMonth\(lh, '2026-10', 12\)/);
+  assert.equal(require('../../data/board/ledger-board.json').upcoming[0].ym, C.AHEAD_FROM);
+  assert.match(read('app/(dashboard)/page.tsx'), /^    ledger: src\.board,$/m);
 });
 
 test('우리 동네 달력(lhCalendar): 시도별 달력을 모두 더하면 전국 LH 준공 예정(lhByMonth)과 같고, 달 안은 날짜 순이다', () => {
@@ -106,8 +107,9 @@ test('리본 위 라벨·툴팁은 흰 판이 아니라 HUD 유리다: 반투명
   assert.match(r, /fill="\$\{PAL\.hud\}" stroke="\$\{PAL\.hudLine\}"/);
   assert.match(r, /fill="\$\{PAL\.hudTxt\}"/);
   assert.doesNotMatch(r + tw, /rb-halo/, '흰 판 토큰(--rb-halo)은 없다');
-  assert.match(r, /labelSVG\(cx, py - 40, t, PAL\.band\)/);
-  assert.match(r, /`\$\{f\(tot\(cur\)\)\}호`, PAL\.hudAcc\)/);
+  assert.match(r, /labelSVG\(p, p\.text, PAL\.band\)/, '병목 핀 라벨의 강조 띠 = 지연 띠 색');
+  assert.match(r, /labelSVG\(L\.total, L\.total\.text, PAL\.hudAcc\)/, '커서 총량 라벨의 강조 띠 = 밝은 주색');
+  assert.match(read('lib/board/sample.ts'), /tt = `\$\{f\(g\.total\[cur\]\)\}호`/);
   assert.match(b, /data-slot="board-tip" className="dark [^"]*bg-\[color-mix\(in_srgb,var\(--popover\)_88%,transparent\)\][^"]*backdrop-blur-\[6px\]/, '툴팁은 다크 범위의 반투명 유리');
   // 대비: 유리(rgb a%)를 가장 밝은 바탕(흰색) 위에 깔았을 때 흰 글자
   const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };

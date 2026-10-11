@@ -1,0 +1,157 @@
+{
+ "source": "마이홈포털 공공주택 모집공고(HWSPR02)",
+ "fetched_at": "2026-10-11T01:23:38.779Z",
+ "endpoint": [
+  "https://apis.data.go.kr/1613000/HWSPR02/rsdtRcritNtcList",
+  "https://apis.data.go.kr/1613000/HWSPR02/ltRsdtRcritNtcList"
+ ],
+ "params": {
+  "numOfRows": 100,
+  "pageNo": "1..N",
+  "_type": "json",
+  "observed_month": "2026-10"
+ },
+ "calls": 4,
+ "pages": 4,
+ "records": 363,
+ "notes": "전국 현재 공고 전체(시군구 필터 없음). 임대=rental.json, 분양=sale.json(items 는 원천 행 그대로). 22자리 관리번호 보호는 lib/datagokr.js protectBigInts.",
+ "per_kind": {
+  "rental": {
+   "totalCount": 285,
+   "rows": 285,
+   "by_brtcNm": {
+    "경상북도": 42,
+    "전북특별자치도": 38,
+    "대구광역시": 35,
+    "대전광역시": 25,
+    "강원특별자치도": 22,
+    "경기도": 22,
+    "울산광역시": 16,
+    "충청남도": 15,
+    "서울특별시": 15,
+    "인천광역시": 14,
+    "부산광역시": 12,
+    "경상남도": 9,
+    "제주특별자치도": 7,
+    "세종특별자치시": 5,
+    "충청북도": 4,
+    "전남광주통합특별시": 4
+   },
+   "by_suplyInsttNm": {
+    "LH": 267,
+    "경상북도개발공사": 11,
+    "부산도시공사": 7
+   },
+   "by_sttusNm": {
+    "일반공고": 256,
+    "정정공고": 29
+   },
+   "by_houseTyNm": {
+    "아파트": 147,
+    "다가구주택": 125,
+    "오피스텔": 7,
+    "연립주택": 6
+   },
+   "with_pnu": 89,
+   "with_hsmpNm": 89,
+   "fields": [
+    "pblancId",
+    "houseSn",
+    "sttusNm",
+    "pblancNm",
+    "suplyInsttNm",
+    "houseTyNm",
+    "suplyTyNm",
+    "beforePblancId",
+    "rcritPblancDe",
+    "przwnerPresnatnDe",
+    "suplyHoCo",
+    "refrnc",
+    "url",
+    "pcUrl",
+    "mobileUrl",
+    "hsmpNm",
+    "brtcNm",
+    "signguNm",
+    "fullAdres",
+    "rnCodeNm",
+    "refrnLegaldongNm",
+    "pnu",
+    "heatMthdNm",
+    "totHshldCo",
+    "sumSuplyCo",
+    "rentGtn",
+    "enty",
+    "prtpay",
+    "surlus",
+    "mtRntchrg",
+    "beginDe",
+    "endDe"
+   ]
+  },
+  "sale": {
+   "totalCount": 78,
+   "rows": 78,
+   "by_brtcNm": {
+    "전북특별자치도": 31,
+    "경상남도": 18,
+    "전남광주통합특별시": 9,
+    "경상북도": 5,
+    "인천광역시": 4,
+    "강원특별자치도": 2,
+    "울산광역시": 2,
+    "충청북도": 2,
+    "충청남도": 2,
+    "경기도": 1,
+    "부산광역시": 1,
+    "대구광역시": 1
+   },
+   "by_suplyInsttNm": {
+    "LH": 76,
+    "광주광역시도시공사": 1,
+    "강원개발공사": 1
+   },
+   "by_sttusNm": {
+    "일반공고": 57,
+    "정정공고": 21
+   },
+   "by_houseTyNm": {
+    "아파트": 36,
+    "다세대주택": 28,
+    "다가구주택": 12,
+    "오피스텔": 2
+   },
+   "with_pnu": 78,
+   "with_hsmpNm": 78,
+   "fields": [
+    "pblancId",
+    "houseSn",
+    "sttusNm",
+    "pblancNm",
+    "suplyInsttNm",
+    "houseTyNm",
+    "beforePblancId",
+    "rcritPblancDe",
+    "przwnerPresnatnDe",
+    "refrnc",
+    "url",
+    "pcUrl",
+    "mobileUrl",
+    "hsmpNm",
+    "brtcNm",
+    "signguNm",
+    "fullAdres",
+    "rnCodeNm",
+    "refrnLegaldongNm",
+    "pnu",
+    "heatMthdNm",
+    "sumSuplyCo",
+    "enty",
+    "prtpay",
+    "surlus",
+    "beginDe",
+    "endDe"
+   ]
+  }
+ }
+}

@@ -93,6 +93,6 @@ test('월별 공급 파동 카드에 시점 조작 줄(재생·시간 막대·�
   assert.doesNotMatch(board, /board-transport|tl-range|board-jumps|JUMP_LABEL|playing|role="switch"/);
   assert.doesNotMatch(css, /\.tl-range/, '슬라이더 모양 CSS 도 남지 않는다');
   assert.match(board, /onClick=\{\(e\) => \{ const m = monthAt\(e\.clientX\); if \(m >= 0\) goto\(m\); \}\}/, '차트 클릭으로 시점 선택');
-  assert.match(board, /aria-label="[^"]*차트를 누르면 그 달을 고릅니다\."/);
+  assert.match(board, /aria-label=\{`[^`]*차트를 누르면 그 달을 고릅니다\.`\}/);
   assert.match(board, /setFocus\(i \+ 1\); setTour\(false\);/, '지시 카드를 누르면 순환이 멈춘다');
 });

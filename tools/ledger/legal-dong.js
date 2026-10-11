@@ -1,7 +1,7 @@
 'use strict';
 /* 법정동코드 파일(공공데이터포털 15123287, 열: 법정동코드·법정동명·폐지여부)을 원장 areas 표 행으로 옮긴다.
    순수 함수다: 파일을 읽거나 쓰지 않는다. source_ref 는 넣지 않는다(변환기 convert.js 가 붙인다).
-   존재 행만 돌려준다(폐지 행은 버린다). 단계는 코드 10자리로 가른다: 뒤 8자리 0 → SIDO, 뒤 5자리 0 → SGG(일반구도 SGG), 그 밖 → BJD. */
+   존재 행은 rows 로, 폐지 행은 옛 코드 대조용으로 abolished([{ code(10자리), name }])로 돌려준다. 단계는 코드 10자리로 가른다: 뒤 8자리 0 → SIDO, 뒤 5자리 0 → SGG(일반구도 SGG), 그 밖 → BJD. */
 
 /* BOM·UTF-8·EUC-KR(CP949)을 모두 받는다. 유효하지 않은 UTF-8 이면 EUC-KR 로 푼다 */
 function decode(buffer) {
@@ -28,18 +28,18 @@ function levelRow(code, name) {
 
 function parseLegalDong(buffer, fileName) {
   const text = decode(buffer).replace(/^﻿/, '');
-  const rows = [];
+  const rows = [], abolished = [];
   for (const raw of text.split(/\r?\n/)) {
     const line = raw.trim();
     if (!line) continue;
     const cut = line.split(',').map((c) => c.trim());
     if (!/^\d{10}$/.test(cut[0])) continue; // 머리글 행
     const [code, name, state] = cut;
-    if (state !== '존재') continue;
+    if (state !== '존재') { if (name) abolished.push({ code, name }); continue; }
     if (!name) throw new Error(`법정동명이 비었다: ${code}`);
     rows.push(levelRow(code, name));
   }
-  return { asOf: asOfFromName(fileName), rows };
+  return { asOf: asOfFromName(fileName), rows, abolished };
 }
 
 module.exports = { parseLegalDong };

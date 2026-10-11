@@ -43,7 +43,8 @@ function gyeyangProject(item, registry) {
   return registry.projects.find((p) => p.refs.some((r) => r.system === 'bundle' && r.key === GYEYANG_KEY && r.value === `techno-${item.block}`))?.id ?? null;
 }
 
-function mapLhBlocks({ blocks, areaRows, registry }) {
+/* 법정동코드 존재 행의 이름 색인: 시군구·법정동 전체 이름 → 행·코드, 시도 이름들, 개편된 구 찾기용 dongIndex */
+function nameIndex(areaRows) {
   const sggByName = new Map(areaRows.filter((r) => r.level === 'SGG').map((r) => [r.area_name, r]));
   const bjdByName = new Map();
   for (const r of areaRows) if (r.level === 'BJD') bjdByName.set(r.area_name, bjdByName.has(r.area_name) ? null : r.area_code);   // 이름이 겹치면 못 쓴다
@@ -60,6 +61,39 @@ function mapLhBlocks({ blocks, areaRows, registry }) {
     if (!dongIndex.has(key)) dongIndex.set(key, new Map());
     dongIndex.get(key).set(sgg.area_code, dongIndex.get(key).has(sgg.area_code) ? null : r.area_code);   // 같은 구에 같은 이름이 둘이면 못 쓴다
   }
+  return { sggByName, bjdByName, sggByCode, sidoNames, dongIndex };
+}
+
+/* 지번 주소('시도 시군구 [일반구] 읍면동 [리] [산 ]본번[-부번]', 한국부동산원 입주예정물량 등) → { sgg, bjd, pnu } 또는 { error: SGG·BJD·LOT }.
+   시도 이름은 normalize(통합·개명)로 바꾸고, 세종은 시군구 없이 읽는다. 시군구 이름이 없으면 개편된 구(동 이름이 맞는 새 구가 하나)로 잇는다(mapLhBlocks 와 같은 규칙).
+   법정동은 '<시군구 전체 이름> <나머지>' 가 정확히 맞아야 한다(행정동 이름은 맞지 않는다). 산은 대지구분 1(PNU 11번째 자리 2), 본번 0 은 필지가 아니다(LOT) */
+function jibunToPnu(address, idx) {
+  const { makePnu } = require('../../lib/permits.js');
+  const m = /^(.*?)\s+(산\s*)?(\d+)(?:-(\d+))?$/.exec(String(address ?? '').replace(/\s*\([^()]*\)\s*$/, '').trim());   // 끝의 괄호 설명('(당수지구 C3BL)')은 뗀다
+  if (!m) return { error: 'LOT' };
+  const n = normalize(m[1]), t = n.tokens;
+  let sgg = null, bjd = null;
+  const cands = n.method === 'RULE_SEJONG' ? [{ name: SEJONG.name, used: 1 }] : sggCandidates(t);
+  for (const c of cands) {
+    const hit = idx.sggByName.get(c.name);
+    if (hit) { sgg = hit; bjd = idx.bjdByName.get(`${hit.area_name} ${t.slice(c.used).join(' ')}`) ?? null; break; }
+  }
+  if (!sgg && idx.sidoNames.has(t[0])) {
+    for (let k = 2; k < t.length && !sgg; k++) {
+      const hits = idx.dongIndex.get(`${t[0]}|${t[k]}`);
+      if (!hits || hits.size !== 1) continue;
+      const s = idx.sggByCode.get([...hits.keys()][0]), code = idx.bjdByName.get(`${s.area_name} ${t.slice(k).join(' ')}`);
+      if (code) { sgg = s; bjd = code; }
+    }
+  }
+  if (!sgg) return { error: 'SGG' };
+  if (!bjd) return { error: 'BJD', sgg: sgg.area_code };
+  const pnu = makePnu(bjd.slice(0, 5), bjd.slice(5), m[3], m[4] ?? '0', m[2] ? '1' : '0');
+  return pnu ? { sgg: sgg.area_code, bjd, pnu } : { error: 'LOT', sgg: sgg.area_code };
+}
+
+function mapLhBlocks({ blocks, areaRows, registry }) {
+  const { sggByName, bjdByName, sggByCode, sidoNames, dongIndex } = nameIndex(areaRows);
   const bundleProjects = registry.projects.filter((p) => p.refs.some((r) => r.system === 'bundle'));
 
   const groups = new Map();
@@ -144,6 +178,6 @@ async function main() {
   console.log(count, `법정동 ${items.filter((i) => i.bjd_code).length}`, `API 호출 ${calls}`);
 }
 
-module.exports = { mapLhBlocks, normalize, pickStan, OUT, LEGAL_DONG_FILE };
+module.exports = { mapLhBlocks, normalize, nameIndex, jibunToPnu, pickStan, OUT, LEGAL_DONG_FILE };
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });

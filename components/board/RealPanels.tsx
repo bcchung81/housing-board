@@ -1,5 +1,5 @@
 import PanelLink from './PanelLink';
-/* 종합상황판의 실데이터 위젯: 월별 실적 흐름(전국). 서버 컴포넌트가 data/board 의 값을 읽어 그린다. Board 가 '전국 17개 시도'와 같은 줄에 둔다. */
+/* 종합상황판의 실데이터 위젯: 월별 실적 흐름(전국). 서버 컴포넌트가 data/board 의 값을 읽어 그린다. Board 가 시도 카드와 같은 줄에 둔다. */
 import { cn } from 'cn';
 import { sub } from '../page';
 import { Card } from '../ui/card';
