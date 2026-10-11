@@ -67,20 +67,21 @@ const must = (schemaName, value, label) => { const e = check(schemaName, value);
 /* ---------- ① 문서 자체 ---------- */
 test('OpenAPI 문서: 3.1, 경로마다 operationId(유일)·태그·매개변수·200 과 오류 응답, GET 만', () => {
   assert.equal(DOC.openapi, '3.1.0');
-  const ids = new Set(), want = ['/api/v1/resolve', '/api/v1/codes/search', '/api/v1/notices', '/api/v1/buildings', '/api/v1/permits', '/api/v1/infra', '/api/v1/terrain', '/api/bus'];
+  const ids = new Set(), want = ['/api/v1/resolve', '/api/v1/codes/search', '/api/v1/notices', '/api/v1/buildings', '/api/v1/permits', '/api/v1/ledger', '/api/v1/infra', '/api/v1/terrain', '/api/bus'];
   const TILE = '/api/v1/terrain';   // 지형 타일 중계: PNG 로 답하고 인증키를 쓰지 않아 503 이 없다(2026-10-10). 나머지 경로의 규칙은 그대로
+  const LEDGER = '/api/v1/ledger';  // 사업 원장 표시값: 원천(Supabase)을 못 읽으면 저장소 JSON 으로 대체해 502·503 이 없다(2026-10-11)
   assert.deepEqual(Object.keys(DOC.paths).sort(), want.slice().sort());
   for (const [p, item] of Object.entries(DOC.paths)) {
     assert.deepEqual(Object.keys(item), ['get'], `${p} 는 GET 만`);
     const op = item.get;
     assert.ok(op.operationId && !ids.has(op.operationId), `${p} operationId`); ids.add(op.operationId);
     assert.ok(op.summary && op.description && op.tags && op.tags.length === 1, `${p} 설명·태그`);
-    assert.ok(op.responses['200'] && op.responses['405'] && op.responses['502'] && (op.responses['503'] || p === TILE), `${p} 200·405·502·503 응답`);
+    assert.ok(op.responses['200'] && op.responses['405'] && ((op.responses['502'] && (op.responses['503'] || p === TILE)) || (p === LEDGER && !op.responses['502'] && !op.responses['503'])), `${p} 200·405·502·503 응답`);
     for (const prm of op.parameters) assert.ok(prm.name && prm.in === 'query' && prm.schema && prm.description, `${p} 매개변수 ${prm.name}`);
     const ct = Object.keys(op.responses['200'].content)[0]; assert.equal(ct, p === TILE ? 'image/png' : 'application/json');
     assert.ok(op.responses['200'].headers['Cache-Control'].description, `${p} 캐시 규칙 문서화`);
   }
-  assert.equal(DOC.tags.length, 8);
+  assert.equal(DOC.tags.length, 9);
 });
 
 test('OpenAPI 문서: 모든 $ref 가 풀리고, 모든 스키마의 required 가 properties 에 있으며, Problem 의 code 목록이 응답 문서와 맞는다', () => {
@@ -119,6 +120,9 @@ test('골든 픽스처: 검색·건물·인허가(건물대장 보강 포함)·�
   for (const f of ['permits-deokpung', 'permits-gamil-ledger']) must('PermitsResponse', fixture(`${f}.json`), f);
   for (const f of ['infra-deokpung', 'infra-seoul', 'infra-seoul-osm', 'infra-seoul-nobus']) must('InfraResponse', fixture(`${f}.json`), f);
   must('BusResponse', fixture('bus-gyeyang.json'), 'bus');
+  const lg = fixture('ledger-gyeyang.json');   // 2026-10-11 로컬 개발 서버(origin supabase)에서 받음: 경로가 운영에 오르면 운영에서 다시 받는다
+  must('LedgerResponse', lg, 'ledger');
+  assert.ok(lg.projects.length > 0 && lg.projects.some((x) => x.cls === 'delay') && lg.projects.some((x) => x.next));
   for (const f of ['notices-hanam', 'notices-asan', 'notices-none']) must('NoticesResponse', fixture(`${f}.json`), f);
   assert.ok(fixture('notices-hanam.json').items.length > 0 && fixture('notices-hanam.json').items.every((i) => /^https:\/\/(www\.myhome\.go\.kr|m\.myhome\.go\.kr|apply\.lh\.or\.kr)\//.test(i.url || 'https://www.myhome.go.kr/')));
   assert.equal(fixture('infra-seoul.json').meta.stopsSource, 'seoul'); assert.equal(fixture('infra-seoul.json').meta.noBus, undefined);   // TAGO 밖 서울은 서울시 정류소정보조회
@@ -160,8 +164,8 @@ function harness(mod, over = {}) {
 }
 const ok = (json) => ({ ok: true, status: 200, json: async () => json, text: async () => JSON.stringify(json) });
 const raw = (status, text) => ({ ok: status < 400, status, json: async () => JSON.parse(text || 'null'), text: async () => text });
-const API = { resolve: require('../../handlers/v1/resolve.js'), search: require('../../handlers/v1/codes/search.js'), notices: require('../../handlers/v1/notices.js'), buildings: require('../../handlers/v1/buildings.js'), permits: require('../../handlers/v1/permits.js'), infra: require('../../handlers/v1/infra.js'), bus: require('../../handlers/bus.js') };
-const OPS = { resolve: '/api/v1/resolve', search: '/api/v1/codes/search', notices: '/api/v1/notices', buildings: '/api/v1/buildings', permits: '/api/v1/permits', infra: '/api/v1/infra' };
+const API = { resolve: require('../../handlers/v1/resolve.js'), search: require('../../handlers/v1/codes/search.js'), notices: require('../../handlers/v1/notices.js'), buildings: require('../../handlers/v1/buildings.js'), permits: require('../../handlers/v1/permits.js'), ledger: require('../../handlers/v1/ledger.js'), infra: require('../../handlers/v1/infra.js'), bus: require('../../handlers/bus.js') };
+const OPS = { resolve: '/api/v1/resolve', search: '/api/v1/codes/search', notices: '/api/v1/notices', buildings: '/api/v1/buildings', permits: '/api/v1/permits', ledger: '/api/v1/ledger', infra: '/api/v1/infra' };
 const documented = (path_, status) => Object.keys(DOC.paths[path_].get.responses).includes(String(status));
 
 function expectProblem(r, path_, status, code, extra) {
@@ -211,6 +215,9 @@ test('오류 계약: resolve(코드 형식·종류·시도 422·표에 없음 40
   expectProblem(await harness(API.notices, { env: {} })('/api/v1/notices?sgg=41450'), '/api/v1/notices', 503, 'not-configured');
   expectProblem(await harness(API.notices)('/api/v1/notices'), '/api/v1/notices', 400, 'invalid-query');
   const nfn = harness(API.notices, { fetch: () => ok({ RESULT: { resultCode: 'INFO-3' } }) }); expectProblem(await nfn('/api/v1/notices?sgg=41450'), '/api/v1/notices', 404, 'unknown-code', { sgg: '41450' });
+  const led = harness(API.ledger);
+  for (const bad of ['sgg=abc', 'sgg=284', 'sgg=2824510900']) expectProblem(await led(`/api/v1/ledger?${bad}`), '/api/v1/ledger', 400, 'invalid-code');
+  for (const bad of ['', '?sgg=28245&sgg=11110']) expectProblem(await led(`/api/v1/ledger${bad}`), '/api/v1/ledger', 400, 'invalid-query');
   for (const name of ['permits', 'infra']) {
     const p = OPS[name], run = harness(API[name]);
     expectProblem(await run(`${p}?bjd=abc`), p, 400, 'invalid-code');
@@ -230,7 +237,7 @@ test('오류 계약: /api/bus 는 옛 모양 {error} 를 BusError 로 문서화�
 
 /* ---------- ④ 문서의 매개변수 = 핸들러가 받는 이름 ---------- */
 test('문서의 쿼리 매개변수 이름이 핸들러의 허용 목록(ALLOWED)과 같다(문서와 코드가 어긋나면 깨진다)', () => {
-  const files = { '/api/v1/resolve': 'handlers/v1/resolve.js', '/api/v1/codes/search': 'handlers/v1/codes/search.js', '/api/v1/notices': 'handlers/v1/notices.js', '/api/v1/buildings': 'handlers/v1/buildings.js', '/api/v1/permits': 'handlers/v1/permits.js', '/api/v1/infra': 'handlers/v1/infra.js', '/api/v1/terrain': 'handlers/v1/terrain.js' };
+  const files = { '/api/v1/resolve': 'handlers/v1/resolve.js', '/api/v1/codes/search': 'handlers/v1/codes/search.js', '/api/v1/notices': 'handlers/v1/notices.js', '/api/v1/buildings': 'handlers/v1/buildings.js', '/api/v1/permits': 'handlers/v1/permits.js', '/api/v1/ledger': 'handlers/v1/ledger.js', '/api/v1/infra': 'handlers/v1/infra.js', '/api/v1/terrain': 'handlers/v1/terrain.js' };
   for (const [p, f] of Object.entries(files)) {
     const m = /const ALLOWED = new Set\(\[([^\]]*)\]\)/.exec(fs.readFileSync(path.join(ROOT, f), 'utf8'));
     assert.ok(m, `${f} 에 ALLOWED 가 있어야 한다`);
@@ -244,7 +251,7 @@ test('문서의 쿼리 매개변수 이름이 핸들러의 허용 목록(ALLOWED
 
 test('문서의 캐시 규칙이 코드와 같다: 200 의 Cache-Control 문구가 각 핸들러 소스의 s-maxage 값과 일치', () => {
   const src = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
-  const want = { '/api/v1/resolve': ['handlers/v1/resolve.js', 's-maxage=300'], '/api/v1/codes/search': ['handlers/v1/codes/search.js', 's-maxage=3600'], '/api/v1/notices': ['handlers/v1/notices.js', 's-maxage=3600'], '/api/v1/buildings': ['handlers/v1/buildings.js', 's-maxage=86400'], '/api/v1/permits': ['handlers/v1/permits.js', 's-maxage=86400'], '/api/v1/infra': ['handlers/v1/infra.js', 's-maxage=86400'], '/api/v1/terrain': ['handlers/v1/terrain.js', 's-maxage=31536000'] };
+  const want = { '/api/v1/resolve': ['handlers/v1/resolve.js', 's-maxage=300'], '/api/v1/codes/search': ['handlers/v1/codes/search.js', 's-maxage=3600'], '/api/v1/notices': ['handlers/v1/notices.js', 's-maxage=3600'], '/api/v1/buildings': ['handlers/v1/buildings.js', 's-maxage=86400'], '/api/v1/permits': ['handlers/v1/permits.js', 's-maxage=86400'], '/api/v1/ledger': ['handlers/v1/ledger.js', 's-maxage=300'], '/api/v1/infra': ['handlers/v1/infra.js', 's-maxage=86400'], '/api/v1/terrain': ['handlers/v1/terrain.js', 's-maxage=31536000'] };
   for (const [p, [f, s]] of Object.entries(want)) {
     assert.ok(DOC.paths[p].get.responses['200'].headers['Cache-Control'].description.includes(s), `${p} 문서`);
     assert.ok(src(f).includes(s), `${p} 코드에 ${s}`);

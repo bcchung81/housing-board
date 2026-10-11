@@ -1259,7 +1259,126 @@
 }
 ```
 
-## 7. `GET /api/v1/infra` — 기반시설(신설예정 학교·버스 정류장) 요청 시 조회
+## 7. `GET /api/v1/ledger` — 사업 원장의 지도 표시값(단계·판정·다음 일정)
+
+시군구 하나의 사업 원장 사업을 지도 표시값으로 돌려준다(기획서 M7 사업 카드의 6단계 위치와 다음 일정, M8 지연 상태를 사업 색으로). 행은 종합상황판 판정과 같은 사업별 상태에서 만들어 달마다 Supabase 에 싣고(`tools/ledger/board.js` mapIndexFromLedger → `ledger.map_snapshots` → 공개 보기 `api.map`), 서버가 공개용 키로 최신 달을 읽는다. Supabase 를 못 읽으면 저장소의 같은 색인(`data/board/ledger-map.json`)으로 대체하고 `origin: "json"` 으로 알린다(그래서 502·503 이 없다). 지도는 `/api/v1/permits` 사업과 `pks`(건축HUB 관리번호 = properties.refs)·`pnus`(필지 = properties.pnu)·`id`(properties.projectId)로 잇는다.
+
+- operationId: `getLedgerProjects`
+
+### 매개변수
+
+| 이름 | 필수 | 형식 | 설명 |
+|---|---|---|---|
+| `sgg` | ● | string `^\d{5}$` | 시군구 5자리(원장의 시군구 코드 그대로, 구가 있는 시는 구 코드) |
+
+### 응답 `200`
+
+`application/json` · `Cache-Control: public, max-age=0, s-maxage=300, stale-while-revalidate=3600 (서버 안 Supabase 읽기는 3600초 캐시 · 적재 뒤 태그 ledger-board 로 비움)` · 스키마 `LedgerResponse`
+
+사업 행(id 순). 원장에 사업이 없는 시군구는 빈 배열. Supabase 를 못 읽어 JSON 으로 대체했으면 origin json 과 Cache-Control: no-store
+
+| 항목 | 형식 | 필수 | 설명 |
+|---|---|---|---|
+| `schema` | `"ledger-map/1"` | ● |  |
+| `month` | string `^\d{4}-(0[1-9]\|1[0-2])$` | ● | 원장 관측 달 |
+| `referenceDate` | string(date) | ● | 판정 기준일 |
+| `origin` | `supabase` · `json` | ● | supabase(api.map) · json(대체: data/board/ledger-map.json) |
+| `sgg` | string `^\d{5}$` | ● |  |
+| `projects` | LedgerProject[] | ● | 사업 id 순 |
+| `projects[].id` | string `^PRJ-\d{5}-\d{4}$` | ● | 사업 id. issued 가 false 면 발급 전 임시값(LH·건축HUB 후보) |
+| `projects[].name` | string | ● |  |
+| `projects[].issued` | boolean | ● | 사업 레지스트리에 발급된 사업인가 |
+| `projects[].stage` | `01` · `02` · `03` · `04` · `05` · `06` | ● | 사업 단계 stage_code(01 계획·02 지구·03 인허가·04 착공·05 모집·06 준공) — 종합상황판 6칸으로는 01·02 → ① |
+| `projects[].cls` | `ok` · `caution` · `delay` \| null | ● | 판정(정상·주의·지연). null 이면 판정 대상이 아니다(why) |
+| `projects[].why` | `LH 후보` · `예정 없음` \| null | ● | cls 가 null 인 까닭: LH 후보(준공 여부를 알 기록이 없어 판정에서 뺌) · 예정 없음(판정하는 착공·준공 현재 예정이 없음). cls 가 있으면 null |
+| `projects[].overdue` | object \| null | ● | 판정에 넣은 예정일 경과 중 가장 많이 지난 것(건축HUB 후보의 착공 예정 경과처럼 판정에서 뺀 것은 없다) |
+| `projects[].overdue.eventType` | `CONSTRUCTION_START` · `COMPLETION` | ● |  |
+| `projects[].overdue.planned` | PartialDate | ● | 원천이 연·월까지만 적은 날짜는 YYYY-MM · YYYY 로 온다(예정일) |
+| `projects[].overdue.months` | integer 0~ | ● | 기간 끝에서 기준일까지 꽉 찬 달 수 |
+| `projects[].next` | object \| null | ● | 기준일 당일·이후에 끝나는 현재 예정 중 가장 이른 것. 실제 기록이 있는 종류와 사업 단계가 이미 이른 착공·준공은 뺀다 |
+| `projects[].next.eventType` | `PERMIT` · `CONSTRUCTION_START` · `SUPPLY_NOTICE` · `COMPLETION` · `MOVE_IN` | ● |  |
+| `projects[].next.planned` | PartialDate | ● | 원천이 연·월까지만 적은 날짜는 YYYY-MM · YYYY 로 온다(예정일) |
+| `projects[].units` | integer 0~ | ● | 호수(종합상황판과 같은 물량 규칙) |
+| `projects[].pks` | string `^\d+$`[] | ● | 건축HUB 주택인허가 관리번호(= /api/v1/permits 의 properties.refs) |
+| `projects[].pnus` | string `^\d{19}$`[] | ● | 필지 PNU(= /api/v1/permits 의 properties.pnu). 블록 단위 사업은 비어 있을 수 있다 |
+| `projects[].bundles` | string[] | ● | 지도 번들 단지 id '지역slug/단지id'(regions/<slug>/projects.json 의 id, 원장 식별자 BUNDLE_ID). 번들 지역의 단지와 잇는 열쇠 |
+
+### 동작
+
+- 행은 종합상황판과 같은 사업별 상태(`tools/ledger/board.js`)에서 만든다: 판정 합계가 보드와 같다. 달마다 적재 도구가 Supabase `api.map` 에 싣는다.
+- 지도 매칭: `pks` ↔ `permits` 의 `properties.refs`(건축HUB 관리번호), `pnus` ↔ `properties.pnu`, `id` ↔ `properties.projectId`(발급 사업). 어느 하나라도 같으면 같은 사업이다.
+- `cls` 가 `null` 이면 `why`(`LH 후보`·`예정 없음`)로 까닭을 보인다. `overdue` 는 판정에 넣은 경과만, `next` 는 기준일 뒤 가장 이른 현재 예정.
+- Supabase 를 못 읽으면 저장소 JSON 으로 대체하고 `origin: "json"`(`Cache-Control: no-store`). 행 안 키 순서는 원천에 따라 다를 수 있다.
+
+### 오류
+
+| HTTP | `code` | 설명 |
+|---|---|---|
+| 400 | `invalid-query` · `invalid-code` | invalid-query(sgg 없음·중복·모르는 쿼리) · invalid-code(5자리 숫자가 아님). s-maxage=60 |
+| 405 | `method` | GET·HEAD 만 허용(Allow 헤더) |
+
+### 예제
+
+**인천 계양구(사업 원장 35건)** (`tests/fixtures/api/ledger-gyeyang.json`)
+
+```json
+{
+  "schema": "ledger-map/1",
+  "month": "2026-10",
+  "referenceDate": "2026-10-10",
+  "origin": "supabase",
+  "sgg": "28245",
+  "projects": [
+    {
+      "id": "PRJ-28245-0001",
+      "cls": "ok",
+      "pks": [
+        "1000000000000000335472"
+      ],
+      "why": null,
+      "name": "인천계양 테크노밸리 A6 블록",
+      "next": {
+        "planned": "2029-03-22",
+        "eventType": "COMPLETION"
+      },
+      "pnus": [
+        "2824510900101840001"
+      ],
+      "stage": "05",
+      "units": 663,
+      "issued": true,
+      "bundles": [
+        "incheon-gyeyang/techno-A6"
+      ],
+      "overdue": null
+    },
+    {
+      "id": "PRJ-28245-0002",
+      "cls": "ok",
+      "pks": [],
+      "why": null,
+      "name": "인천계양 테크노밸리 A17 블록",
+      "next": {
+        "planned": "2029-08-17",
+        "eventType": "COMPLETION"
+      },
+      "pnus": [
+        "2824510900102770001"
+      ],
+      "stage": "05",
+      "units": 309,
+      "issued": true,
+      "bundles": [
+        "incheon-gyeyang/techno-A17"
+      ],
+      "overdue": null
+    },
+    "…"
+  ]
+}
+```
+
+## 8. `GET /api/v1/infra` — 기반시설(신설예정 학교·버스 정류장) 요청 시 조회
 
 법정동 인허가 단지 가까이의 신설예정 학교(교육재정알리미)와 버스 정류장(TAGO, 없으면 OpenStreetMap)을 번들 infra.json 과 같은 모양으로 돌려준다. 서버는 임의 좌표를 받지 않고 그 법정동 인허가 결과의 필지 중심만 쓴다. 인허가는 이 서버의 permits API 를 공개 주소로 불러 CDN 캐시에서 받는다.
 
@@ -1537,7 +1656,7 @@
 }
 ```
 
-## 8. `GET /api/v1/terrain` — 지형 타일 중계(AWS Terrain Tiles)
+## 9. `GET /api/v1/terrain` — 지형 타일 중계(AWS Terrain Tiles)
 
 지도의 지형(terrain·hillshade) 타일. AWS Terrain Tiles(terrarium PNG, 미국 동부 S3)를 이 서버를 거쳐 받아 CDN 에 1년 캐시한다(S3 직접은 장당 응답 시작 약 0.7초라 첫 로딩이 가장 길었다). 한국 범위에 걸치는 z 0~14 타일만 중계한다(열린 중계 금지). 지도는 상황판 안에서만 이 경로를 쓰고, API 가 없는 옛 정적 열기는 S3 를 그대로 쓴다. 출처 표기는 지도 출처(ⓘ)에 있다.
 
@@ -1578,7 +1697,7 @@ terrarium 인코딩 PNG(원자료 그대로)
 
 ### 예제
 
-## 9. `GET /api/bus` — 버스 위치(요청 시에만)
+## 10. `GET /api/bus` — 버스 위치(요청 시에만)
 
 배포된 번들(regions/<slug>/infra.json)의 live 노선 차량 위치. 사용자가 '버스 위치 조회'를 누를 때만 부른다. 오류 모양이 RFC 7807 이 아니라 BusError 이다(옛 경로 유지).
 
@@ -1654,7 +1773,7 @@ terrarium 인코딩 PNG(원자료 그대로)
 }
 ```
 
-## 10. 공통 스키마
+## 11. 공통 스키마
 
 ### `Problem`
 
@@ -1712,7 +1831,7 @@ GeoJSON Polygon 또는 MultiPolygon(경계는 점 수를 줄여 단순화함)
 
 `{"type":"string","pattern":"^\\d{4}(-\\d{2}(-\\d{2})?)?$","description":"원천이 연·월까지만 적은 날짜는 YYYY-MM · YYYY 로 온다(예정일)"}`
 
-## 11. 화면(클라이언트) 계약
+## 12. 화면(클라이언트) 계약
 
 | 항목 | 규칙 | 구현·시험 |
 |---|---|---|
@@ -1723,7 +1842,7 @@ GeoJSON Polygon 또는 MultiPolygon(경계는 점 수를 줄여 단순화함)
 | 주소 이동 입력줄 | `search` 후보 → 위 매개변수로 이동. 상태 4가지(대기 .62 · 입력 중 .88 · 이동 중 · 비활성 .46 불투명도). 404·405·503·429 는 비활성 | `assets/js/goto.js`, 스펙 2.5 |
 | 실패해도 | 인허가·기반시설·검색이 실패해도 경계와 건물은 열린다(자료 안내·banner 에 이유) | `region.js` |
 
-## 12. 바꾸는 규칙
+## 13. 바꾸는 규칙
 
 - **하위 호환**: 응답에 항목을 *더하는* 것은 같은 버전에서 가능(화면은 모르는 항목을 무시). 항목을 지우거나 형식·뜻을 바꾸거나 오류 코드를 바꾸면 `/api/v2` 로 올린다.
 - **절차**: `schemas/api/openapi.json` 수정 → `node scripts/capture-fixtures.js`(운영 응답 다시 받기, 키 풀 한도 때문에 호출 사이 1.2초) → `node scripts/gen-api-docs.js` → `node --test tests/js/contract.test.cjs`.

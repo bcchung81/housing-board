@@ -18,7 +18,7 @@ function fakeFetch() {
   const fetch = async (url, init) => {
     calls.push({ url, init });
     const p = new URL(url).pathname;
-    const body = p.endsWith('/rpc/begin_run') ? '7' : p.endsWith('/rpc/publish_run') ? JSON.stringify(L.expectedCounts(tables, {})) : '';
+    const body = p.endsWith('/rpc/begin_run') ? '7' : p.endsWith('/rpc/publish_run') ? JSON.stringify(L.expectedCounts(tables, {})) : p.endsWith('/rpc/publish_map') ? String(Object.keys(JSON.parse(init.body).p_rows).length) : '';
     return { ok: true, status: 200, text: async () => body };
   };
   return { fetch, calls };
@@ -57,15 +57,29 @@ test('보드가 data/board/ledger-board.json 과 다르면 호출 전에 멈춘�
   assert.equal(f.calls.length, 0);
 });
 
-test('적재 호출 순서와 모양: begin_run → stage_rows 묶음(≤1 MB) → publish_run, 키는 머리에만', async () => {
+test('지도 색인이 data/board/ledger-map.json 과 다르면 호출 전에 멈춘다', async () => {
+  const map = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/board/ledger-map.json'), 'utf8'));
+  map.bySgg['28245'][0].cls = 'delay';
+  const tmp = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'sb-load-')), 'map.json');
+  fs.writeFileSync(tmp, JSON.stringify(map));
+  const f = fakeFetch();
+  await assert.rejects(L.load({ month: '2026-10', mapFile: tmp, env: ENV, fetch: f.fetch, log: () => {} }), /ledger-map\.json 와 다르다/);
+  assert.equal(f.calls.length, 0);
+});
+
+test('적재 호출 순서와 모양: begin_run → stage_rows 묶음(≤1 MB) → publish_run → publish_map, 키는 머리에만', async () => {
   const f = fakeFetch();
   const r = await L.load({ month: '2026-10', skipRaw: true, env: ENV, fetch: f.fetch, log: () => {} });
   const paths = f.calls.map((c) => new URL(c.url).pathname);
   assert.equal(paths[0], '/rest/v1/rpc/begin_run');
-  assert.equal(paths.at(-1), '/rest/v1/rpc/publish_run');
+  assert.deepEqual(paths.slice(-2), ['/rest/v1/rpc/publish_run', '/rest/v1/rpc/publish_map']);
   const stages = f.calls.filter((c) => c.url.endsWith('/rest/v1/stage_rows'));
   assert.equal(stages.length, r.chunks);
-  assert.equal(stages.length, f.calls.length - 2);
+  assert.equal(stages.length, f.calls.length - 3);
+  const map = JSON.parse(f.calls.at(-1).init.body);
+  assert.deepEqual(map, { p_run: 7, p_rows: JSON.parse(fs.readFileSync(path.join(ROOT, 'data/board/ledger-map.json'), 'utf8')).bySgg });
+  assert.equal(r.mapRows, Object.keys(map.p_rows).length);
+  assert.ok(Number.isInteger(r.timings.map));
   const begin = JSON.parse(f.calls[0].init.body);
   assert.equal(begin.p_month, '2026-10');
   assert.equal(begin.p_kind, 'load');
@@ -82,7 +96,7 @@ test('적재 호출 순서와 모양: begin_run → stage_rows 묶음(≤1 MB) �
     assert.ok(rows.every((x) => x.run_id === 7));
     staged += rows.length;
   }
-  const expected = JSON.parse(f.calls.at(-1).init.body);
+  const expected = JSON.parse(f.calls.at(-2).init.body);
   assert.deepEqual(expected, { p_run: 7, p_expected: L.expectedCounts(tables, {}) });
   assert.equal(staged, Object.values(tables).reduce((s, rows) => s + rows.length, 0) + 1);
   for (const c of f.calls) assert.ok(!c.url.includes(ENV.SUPABASE_SECRET_KEY));

@@ -48,7 +48,7 @@ node tools/ledger/convert.js --month 2026-10 --lh-sgg schemas/ledger-2026-10/map
 ```
 
 6. 월 판정 이력(소급): `node tools/ledger/trend.js` → `data/board/judgment-history.json`(2025-01~2026-09, 약 20초). 다음 달로 넘어갈 때는 새 원장 전에 `node tools/ledger/trend.js --close` 로 이번 달 판정을 관측 행으로 붙인다.
-7. 종합상황판 집계: `node tools/ledger/board.js` → `data/board/ledger-board.json`(이력이 있으면 trend 포함)
+7. 종합상황판 집계·지도 색인: `node tools/ledger/board.js` → `data/board/ledger-board.json`(이력이 있으면 trend 포함)과 `data/board/ledger-map.json`(시군구마다 사업 단계·판정·다음 일정, 한 사업 한 줄, 판정 합계 = 보드)
 
 기관 입력 가져오기: `node tools/ledger/import-agency.js --dir <폴더> --agency <id> --received YYYY-MM-DD [--demo] [--out <파일>]`
 

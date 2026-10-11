@@ -6,6 +6,8 @@
    ③ ledger_admin.begin_run → run_id(닫힌 달이면 DB 가 거부)
    ④ ledger_admin.stage_rows 에 묶음(약 1 MB)으로 POST, 보드 JSON 은 tbl 'board'
    ⑤ ledger_admin.publish_run — 한 트랜잭션(표별 행 수가 기대와 다르면 전체 취소)
+   ⑤' ledger_admin.publish_map — 지도 색인(data/board/ledger-map.json = mapIndexFromLedger(표), ②에서 대조)을 그 달 시군구 행으로 바꿔 넣는다(자기 트랜잭션,
+      publish_run 을 무겁게 하지 않으려고 따로 부른다. 마이그레이션 *_map_snapshots.sql)
    ⑥ 원본(raw·snapshot·mappings·agency)과 16표 묶음(tables.tar.gz)을 Storage ledger-raw/<달>/ 에 덮어쓰기(같은 달 재실행 = 같은 내용) → record_files
    실행: node tools/ledger/supabase-load.js --month 2026-10 [--dry-run] [--skip-raw]
    확인: node tools/ledger/supabase-verify.js --month 2026-10 · 시험: tests/js/supabase-load.test.cjs */
@@ -15,7 +17,7 @@ const zlib = require('node:zlib');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { isDeepStrictEqual } = require('node:util');
-const { boardFromLedger, loadHistory } = require('./board');
+const { boardFromLedger, mapIndexFromLedger, loadHistory, MAP_OUT } = require('./board');
 const { validate } = require('./validate');
 
 const ROOT = path.join(__dirname, '..', '..');
@@ -62,6 +64,13 @@ function checkBoard(tables, fileBoard, month, history = []) {
   const board = boardFromLedger(tables, { referenceDate: fileBoard.referenceDate, observedMonth: month, history });
   if (!isDeepStrictEqual(board, fileBoard)) throw new Error(`boardFromLedger 결과가 ${BOARD_FILE} 와 다르다(node tools/ledger/board.js 로 다시 만들고 확인)`);
   return board;
+}
+
+/* 파일 지도 색인과 다시 계산한 색인이 같아야 한다(기준일·달은 보드 파일과 같게). 같으면 색인을 돌려준다 */
+function checkMap(tables, fileMap, board) {
+  const index = mapIndexFromLedger(tables, { referenceDate: board.referenceDate, observedMonth: board.observedMonth });
+  if (!isDeepStrictEqual(index, fileMap)) throw new Error(`mapIndexFromLedger 결과가 ${MAP_OUT} 와 다르다(node tools/ledger/board.js 로 다시 만들고 확인)`);
+  return index;
 }
 
 /* 스테이징 행: 표마다 파일 순서대로 seq 1… (= load_seq), 보드는 tbl 'board' seq 1 */
@@ -162,7 +171,7 @@ function client({ url, key, fetch = globalThis.fetch }) {
   };
 }
 
-async function load({ month, dryRun = false, skipRaw = false, root = ROOT, boardFile = path.join(root, BOARD_FILE), env = readEnv(root), fetch = globalThis.fetch, log = console.log } = {}) {
+async function load({ month, dryRun = false, skipRaw = false, root = ROOT, boardFile = path.join(root, BOARD_FILE), mapFile = path.join(root, MAP_OUT), env = readEnv(root), fetch = globalThis.fetch, log = console.log } = {}) {
   const timings = {};
   let t0 = Date.now();
   const lap = (k) => { timings[k] = Date.now() - t0; t0 = Date.now(); };
@@ -173,13 +182,14 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
   lap('read');
   const fileBoard = JSON.parse(fs.readFileSync(boardFile, 'utf8'));
   const board = checkBoard(tables, fileBoard, month, loadHistory(root));
+  const map = checkMap(tables, JSON.parse(fs.readFileSync(mapFile, 'utf8')), board);
   lap('board');
   const expected = expectedCounts(tables, board);
   const items = stageItems(tables, board);
   const payload = (runId) => chunkRows(items.map((it) => ({ run_id: runId, ...it })));   // 묶음 크기는 run_id 까지 넣은 실제 본문으로 잰다
   const chunks = payload(0);
   const raws = skipRaw ? [] : rawFiles(dir, month);
-  const summary = { month, referenceDate: fileBoard.referenceDate, counts: expected, chunks: chunks.length, raw: raws.length + (skipRaw ? 0 : 1), dryRun };
+  const summary = { month, referenceDate: fileBoard.referenceDate, counts: expected, mapSgg: Object.keys(map.bySgg).length, chunks: chunks.length, raw: raws.length + (skipRaw ? 0 : 1), dryRun };
   if (dryRun) {
     log(`[dry-run] ${month}: 표 ${Object.keys(tables).length}개 · ${chunks.length}묶음 · 원본 ${summary.raw}개 — 호출 없음`);
     return { ...summary, timings };
@@ -193,6 +203,9 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
   lap('stage');
   const published = await api.rpc('publish_run', { p_run: runId, p_expected: expected });
   lap('publish');
+  const mapRows = await api.rpc('publish_map', { p_run: runId, p_rows: map.bySgg });
+  if (mapRows !== summary.mapSgg) throw new Error(`publish_map 이 ${mapRows}행을 넣었다(기대 ${summary.mapSgg})`);
+  lap('map');
 
   const files = [];
   if (!skipRaw) {
@@ -207,8 +220,8 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
     await api.rpc('record_files', { p_run: runId, p_files: files });
   }
   lap('raw');
-  const result = { ...summary, runId, published, files, timings };
-  log(`${month} 판 발행: run ${runId} · ${Object.entries(published).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
+  const result = { ...summary, runId, published, mapRows, files, timings };
+  log(`${month} 판 발행: run ${runId} · ${Object.entries(published).map(([k, v]) => `${k} ${v}`).join(' · ')} · 지도 시군구 ${mapRows}`);
   log(`원본 ${files.length}개(${files.reduce((s, f) => s + f.bytes, 0).toLocaleString()} B) · 시간(ms) ${Object.entries(result.timings).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
   await revalidateBoard(env, log);
   return result;
@@ -226,7 +239,7 @@ async function revalidateBoard(env, log, fetch = globalThis.fetch) {
   }
 }
 
-module.exports = { parseArgs, readEnv, readTables, checkBoard, stageItems, expectedCounts, chunkRows, safeKey, rawFiles, tarball, client, load, revalidateBoard, BUCKET, CHUNK_BYTES };
+module.exports = { parseArgs, readEnv, readTables, checkBoard, checkMap, stageItems, expectedCounts, chunkRows, safeKey, rawFiles, tarball, client, load, revalidateBoard, BUCKET, CHUNK_BYTES };
 
 if (require.main === module) {
   load(parseArgs(process.argv.slice(2))).catch((e) => { console.error(e.message); process.exit(1); });

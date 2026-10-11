@@ -45,7 +45,7 @@ test("'지금' 문구의 수치는 저장소 자료와 같다: 레지스트리 7
   const ledger = P.STEPS.find((s) => s.id === 'ledger').now;
   assert.match(ledger, /77건\(5개 시군구\)/); assert.match(ledger, /0건/);
   const routes = [];
-  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'route.ts' && !p.includes('/revalidate/')) routes.push(p); } };
+  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'route.ts' && !p.includes('/revalidate/') && !p.includes('/v1/ledger/')) routes.push(p); } };   // ledger 는 원천이 아니라 보관한 원장(api.map)을 읽는다
   walk(path.join(ROOT, 'app/api'));
   assert.equal(routes.length, 8);
   assert.match(P.LIVE.now, /^8개:/);

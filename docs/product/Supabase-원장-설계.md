@@ -36,15 +36,15 @@
 
 | 스키마 | 담는 것 | Data API 노출 | 누가 |
 |---|---|---|---|
-| `ledger` | 16표 + `months`·`ingest_runs`·`ingest_run_sources`·`board_snapshots` | **안 함** | 소유자 postgres(마이그레이션), 읽기 anon·authenticated 는 `months`·`board_snapshots` 만(`api.board` 용, RLS), 쓰기 service_role(RPC 안에서만) |
-| `api` | 읽기 뷰(`security_invoker = true`), 열 = v1.4 열 + `is_demo`·`sido_code`·`is_candidate` | **노출**(publishable 키) | anon·authenticated 는 `api.board` `select` 만(나머지 16뷰는 권한 없음 → 401, 9절 7번) |
-| `ledger_admin` | 적재 RPC(`begin_run`·`publish_run`·`export_table`)와 스테이징 표 `stage_rows` | **노출**하되 service_role 에만 USAGE | 파이프라인(secret 키) |
+| `ledger` | 16표 + `months`·`ingest_runs`·`ingest_run_sources`·`board_snapshots`·`map_snapshots` | **안 함** | 소유자 postgres(마이그레이션), 읽기 anon·authenticated 는 `months`·`board_snapshots`·`map_snapshots` 만(`api.board`·`api.map` 용, RLS), 쓰기 service_role(RPC 안에서만) |
+| `api` | 읽기 뷰(`security_invoker = true`), 열 = v1.4 열 + `is_demo`·`sido_code`·`is_candidate` | **노출**(publishable 키) | anon·authenticated 는 `api.board`(보드 집계)·`api.map`(지도 사업 표시값) `select` 만(나머지 16뷰는 권한 없음 → 401, 9절 7번) |
+| `ledger_admin` | 적재 RPC(`begin_run`·`publish_run`·`publish_map`·`export_table`)와 스테이징 표 `stage_rows` | **노출**하되 service_role 에만 USAGE | 파이프라인(secret 키) |
 | `public` | 쓰지 않는다 | (기본값 그대로) | – |
 | (나중) `intake` | 기관 입력 접수 표 | 노출 | authenticated(기관 사용자) |
 
 - **왜 public 이 아닌가(실측)**: 이 프로젝트의 `public` 기본 권한(`pg_default_acl`)은 새 표에 anon·authenticated 에 `arwdDxtm`(쓰기 포함 전부)를 준다. RLS 자동 켜기 이벤트 트리거(`ensure_rls` → `public.rls_auto_enable`)는 `public` 에만 작동한다. 그래서 `ledger` 에 두고 **RLS 를 마이그레이션에서 직접 켜고 GRANT 를 명시**한다.
 - **키**: publishable 키 = anon 역할(RLS 적용), secret 키 = service_role(BYPASSRLS, 그래도 GRANT·트리거는 적용). 웹앱(Vercel)에는 `NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 두 개만 둔다. `SUPABASE_SECRET_KEY`·`SUPABASE_DB_URL` 은 적재하는 곳(로컬 `.env.local`, 나중에 GitHub Actions 비밀값)에만 둔다.
-- **RLS**: `ledger` 모든 표 `enable row level security`. anon·authenticated 는 `months`·`board_snapshots` 에만 `for select using (true)` 정책(쓰기 정책 없음 → 쓰기 불가). 나머지 18표와 `stage_rows` 는 GRANT·정책 모두 없다(2026-10-11 `_public_scope.sql` 로 회수 — 다시 GRANT 해도 RLS 가 0행으로 막는 이중 잠금).
+- **RLS**: `ledger` 모든 표 `enable row level security`. anon·authenticated 는 `months`·`board_snapshots`·`map_snapshots` 에만 `for select using (true)` 정책(쓰기 정책 없음 → 쓰기 불가). 나머지 18표와 `stage_rows` 는 GRANT·정책 모두 없다(2026-10-11 `_public_scope.sql` 로 회수 — 다시 GRANT 해도 RLS 가 0행으로 막는 이중 잠금).
 - 발행이 한 트랜잭션이라 "반쯤 올라간 판"은 읽는 쪽에 보이지 않는다. 그래서 공개 조건을 행마다 두지 않고, `api` 뷰가 **현재 판**(최근 발행 실행이 쓴 행)만 고른다. events·board_snapshots 는 모든 달을 보인다.
 - **역할별 시간 제한(실측)**: anon 3초, authenticated 8초, authenticator 8초, 그리고 authenticator 에 `safeupdate` 가 걸려 있다(WHERE 없는 UPDATE·DELETE 거부). 발행 RPC 는 8초 안에 끝나야 하고 지우기 문에는 늘 WHERE 를 둔다.
 - **나중의 기관 입력 역할**: Supabase Auth 사용자 + `app_metadata.agency_id`(사용자가 고칠 수 없는 쪽). `intake.agency_rows(agency_id, tbl, row jsonb, submitted_by default auth.uid(), status)` 에 `with check (agency_id = auth.jwt()->'app_metadata'->>'agency_id')` 로 넣기만 하고, 원장 반영은 파이프라인이 `import-agency.js` 규칙(검증·거부 사유)으로 한다. 기관은 원장 표에 직접 쓰지 않는다. 지금은 만들지 않는다.
@@ -94,6 +94,7 @@
 |---|---|---|
 | events | 관측 달마다 행(`observed_month`) 누적. 지금 파일과 같다 | 당초 대비 지연·머문 기간은 관측 이력으로만 계산(데이터셋-스키마 3절) |
 | board_snapshots | 달마다 JSON 하나(`month` 기본 키) | 지연·주의 추이·보고자료가 달끼리 비교한다. 10,335 B/월 |
+| map_snapshots | 달·시군구마다 사업 행 배열 하나(`(month, sgg_code)` 기본 키), `board.js` 의 `mapIndexFromLedger`(= `data/board/ledger-map.json`) | 지도가 시군구 하나의 사업 단계·판정·다음 일정을 한 번에 읽는다(기획서 M7·M8). 판정은 보드와 같은 사업별 상태라 합계가 같다. 2026-10 판 251행·약 1 MB |
 | 월 판정 이력 | `data/board/judgment-history.json`(저장소) → 보드 JSON 의 `trend` 로 board_snapshots 에 함께 실린다. 2025-01~2026-09 는 건축HUB 과거 판 소급(`tools/ledger/trend.js`, 판 원본은 `ledger-raw/2026-10/hub-bulk-history/`, sha256 은 그 폴더 manifest.json), 2026-10 부터는 달마다 `trend.js --close` 로 관측 행을 붙인다 | 닫힌 달 보드는 고칠 수 없어서(가드) 지난 달 판정은 새 달 보드의 trend 로 옮겨 싣는다(2026-10-11) |
 | 그 밖의 원장 표 | 현재 판만. 지난 판은 `ledger-raw/{YYYY-MM}/tables.tar.gz` | 화면이 지난 판의 사업·물량을 다시 묻지 않는다. 지금 16표 묶음 gzip 298,835 B |
 | stat_facts | 원천의 달(`ym`)이 시간 축. 잠정치 개정은 덮어쓴다 | 원천 개정값이 정답이다. 개정 전 값은 Storage 원본에 남는다 |
@@ -103,7 +104,7 @@
 | 장치 | 내용 |
 |---|---|
 | `ledger.months(month, status open/closed, reference_date)` | 열린 달은 하나(부분 고유 인덱스). `begin_run(새 달)` 이 이전의 열린 달을 **같은 트랜잭션에서 닫는다** |
-| 트리거 `guard_closed_month` | events·board_snapshots·ingest_runs 에서 닫힌 달 행의 INSERT·UPDATE·DELETE 를 예외로 막는다 |
+| 트리거 `guard_closed_month` | events·board_snapshots·map_snapshots·ingest_runs 에서 닫힌 달 행의 INSERT·UPDATE·DELETE 를 예외로 막는다 |
 | 트리거 `guard_months` | 닫힌 달을 다시 열거나 달을 지우는 것을 막는다 |
 | 권한 | service_role 에 TRUNCATE 를 주지 않고, 문장 단위 `before truncate` 트리거로도 막는다(행 트리거를 건너뛰므로) |
 | 같은 달 재실행 | 열린 달은 `publish_run` 이 그 달 events 를 지우고 다시 넣는다. 이전 실행은 `superseded` |
@@ -229,7 +230,7 @@ ledger-raw/
 | 4 | 화면이 언제 읽나 | A 서버 fetch + ISR(1시간, publishable 키) · B 빌드 전에 DB → JSON 파일로 받아 지금처럼 import | **A** | 배포 없이 새 판이 반영되고 비밀 키가 웹앱에 없다. 대가: 빌드·재확인이 DB 에 의존 → 전환기에는 JSON 대체값을 남긴다. B 는 가장 단순하지만 매달 배포해야 한다 |
 | 5 | LH 후보 273건을 지금 싣나 | A 싣고, 발급 때 같은 id 확정 · B 발급 뒤에만 싣기 | **A** | 지금 보드 호수의 77%(148,389호)와 향후 12개월이 후보에서 온다. 대가: 발급 도구가 후보 id 를 그대로 써야 한다(`scripts/issue-projects.js` 보완) |
 | 6 | 요금제 | A 무료 유지 · B 유료 | **A** | 지금 약 20 MB/500 MB. 대가: **7일 동안 활동이 없으면 일시정지**된다. 4-A 의 시간당 재확인이 방문이 있는 동안 활동을 만들고, 멈추면 대시보드에서 복원한다. 전국 수집(8절 6번)을 시작하거나 400 MB 에 가까워지면 B |
-| 7 | 원장 행을 공개하나(기획서 Q4) | A 화면 집계(`api.board`)만 공개 · B `api` 뷰 17개 공개 | **A — 2026-10-11 결정·적용** | 건축HUB 약관의 복제·제공 제한과 포털 표기가 어긋나(Q4) 사업·관리번호·필지·일정·공고 행은 publishable 키로 읽히지 않게 한다. 대가: 사업 하나·시군구 하나의 즉석 거르기 화면(4절 약점)은 `api` 뷰로 못 읽고, 서버 전용 경로(secret 키)나 집계 JSON 이 필요하다. 제공기관 확인으로 범위가 넓어지면 뷰 단위로 GRANT 를 다시 준다 |
+| 7 | 원장 행을 공개하나(기획서 Q4) | A 화면 집계(`api.board`)만 공개 · B `api` 뷰 17개 공개 | **A — 2026-10-11 결정·적용** | 건축HUB 약관의 복제·제공 제한과 포털 표기가 어긋나(Q4) 사업·관리번호·필지·일정·공고 행은 publishable 키로 읽히지 않게 한다. 대가: 사업 하나·시군구 하나의 즉석 거르기 화면(4절 약점)은 `api` 뷰로 못 읽고, 서버 전용 경로(secret 키)나 집계 JSON 이 필요하다. 제공기관 확인으로 범위가 넓어지면 뷰 단위로 GRANT 를 다시 준다. 2026-10-11 넓힘: 지도 사업 표시값 `api.map`(지도 `/api/v1/permits` 가 이미 보이는 관리번호·필지와 이름·단계·판정·예정일만, 부록 C) |
 
 ## 부록 A. DDL 초안 (A-1~A-6 적용 — 부록 C, A-7·`ledger_admin`·`stage_rows` 는 적재 단계)
 
@@ -715,3 +716,12 @@ revoke execute on all functions in schema ledger_admin from anon, authenticated,
 - `supabase db advisors --level info`: WARN·ERROR 0. INFO 71 — 정책 없는 RLS 표 19(회수한 17표 + review_required + stage_rows, 의도), 인덱스 없는 외래 키 42, 쓰이지 않은 인덱스 10.
 - `supabase-verify.js` 를 새 범위에 맞춤: anon 은 `api.board` 200 + 나머지 16뷰 거부(401·403·404 중 하나)를 확인. anon 으로 하던 "현재 판 행 수 = 파일" 은 1단계 왕복(`export_table`, secret 키, 행마다 깊은 같음)이 대신하고, "원천별 최근 발행 실행 하나"(`source_freshness.run_id`)는 secret 키로 읽을 길이 없어(service_role 은 `api` 뷰 권한이 없고 `ledger` 는 노출 안 함) 뺐다. `--month 2026-10` 모두 통과.
 - 시험: `tests/js/supabase-ddl.test.cjs` 에 2개 추가(마이그레이션을 차례로 적용한 뒤 anon 이 읽는 것 = `api.board`·두 표, 정책·current_run 회수, 쓰기·적재 경로 무변경). `npm test` 660 통과, `npx tsc --noEmit` 통과.
+
+### 지도 사업 표시값 (2026-10-11, 기획서 M7·M8 · Q4 넓힘)
+
+- 마이그레이션 `supabase/migrations/20261011183656_map_snapshots.sql` 을 `BEGIN … ROLLBACK`(한 문장 DO 블록 안에서 마이그레이션 실행 → 점검 → 예외로 취소, `supabase db query --db-url`)으로 anon·authenticated·service_role·소유자로 28항목 점검한 뒤 `supabase db push --db-url … --yes` 로 적용. `migration list` 원격 = 로컬 4개.
+- 객체: 표 `ledger.map_snapshots(month → months, sgg_code, run_id → ingest_runs, rows jsonb 배열, built_at)` 기본 키 `(month, sgg_code)` — RLS 켬, anon·authenticated `select` + `read_all` 정책, 쓰기는 service_role, 트리거 `guard_closed_month('month')`·`no_truncate`. 뷰 `api.map(month, sgg_code, reference_date, rows)`(security_invoker, 기준일은 `months` 에서) anon·authenticated `select`. RPC `ledger_admin.publish_map(p_run, p_rows)` — service_role 만, 자기 트랜잭션, `publish_run` 과 같은 잠금, 발행된(published) load 실행 · 열린 달일 때만 그 달 행을 지우고 `{시군구: [행…]}` 을 넣고 행 수를 돌려준다. `publish_run` 은 그대로.
+- 점검 결과: anon 은 `api.map`·`map_snapshots` 읽기만(insert·delete·publish_map 42501), `api.projects` 는 계속 거부, service_role 은 `api.map` 권한 없음(의도, verify 는 anon 으로 읽는다), 같은 달 재발행은 바꿔 넣기, 배열·값이 배열 아닌 객체·4자리 시군구·superseded·없는 실행 거부, service_role TRUNCATE 권한 없음, 소유자 TRUNCATE 는 트리거가 거부, 달을 닫으면 update·insert·publish_map 거부.
+- 적재 `node tools/ledger/supabase-load.js --month 2026-10`: 지도 색인 파일 = `mapIndexFromLedger(표)` 대조(다르면 호출 전에 중단) → … → `publish_run` → `publish_map` 251행. run 12. 시간(ms): stage 7,429 · **publish 6,965**(전과 같음) · **map 613**.
+- 확인 `node tools/ledger/supabase-verify.js --month 2026-10`: 저장 지도 색인(anon `api.map` 그 달 251행 · 사업 3,845) = `mapIndexFromLedger(DB 표)` = `data/board/ledger-map.json`, anon `api.board`·`api.map` 200 · 나머지 16뷰 401, anon `rpc/publish_map` 401. 모두 통과.
+- 화면 쪽 읽기: `GET /api/v1/ledger?sgg=` (`handlers/v1/ledger.js`, `schemas/api/openapi.json`) — 공개용 키로 최신 달 → 그 달 시군구 행, 성공만 3600초 캐시(태그 `ledger-board`, 보드와 함께 비움), 실패하면 `data/board/ledger-map.json`. jsonb 는 행 안 키 순서를 바꾼다(값은 같다).

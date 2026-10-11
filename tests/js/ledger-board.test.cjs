@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { boardFromLedger, elapsedMonths, classify, render, loadTables, loadHistory, OUT } = require('../../tools/ledger/board');
+const { boardFromLedger, mapIndexFromLedger, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, OUT } = require('../../tools/ledger/board');
 
 const tables = loadTables();
 const board = boardFromLedger(tables, { referenceDate: '2026-10-10', observedMonth: '2026-10' });
@@ -166,4 +166,72 @@ test('실제 날짜는 호수가 가장 많은 원천의 자료 달까지(actual
 test('저장된 data/board/ledger-board.json 이 도구로 다시 만든 것과 같다(판정 이력 파일을 넘긴다)', () => {
   const saved = fs.readFileSync(path.join(__dirname, '..', '..', OUT), 'utf8');
   assert.equal(saved, `${render(boardFromLedger(tables, { referenceDate: '2026-10-10', observedMonth: '2026-10', history: loadHistory() }))}\n`);
+});
+
+/* ---------- 지도 색인(mapIndexFromLedger → data/board/ledger-map.json) ---------- */
+const index = mapIndexFromLedger(tables, { referenceDate: '2026-10-10', observedMonth: '2026-10' });
+const rows = Object.values(index.bySgg).flat();
+
+test('지도 색인: 모든 사업 3,845건이 시군구마다 id 순으로 한 번씩, 시군구 키는 사업의 sgg_code', () => {
+  assert.deepEqual([index.schema, index.observedMonth, index.referenceDate], ['ledger-map/1', '2026-10', '2026-10-10']);
+  assert.equal(rows.length, N);
+  assert.equal(new Set(rows.map((r) => r.id)).size, N);
+  const sgg = Object.fromEntries(tables.projects.map((p) => [p.local_project_id, p.sgg_code]));
+  for (const [k, list] of Object.entries(index.bySgg)) {
+    assert.match(k, /^\d{5}$/);
+    assert.ok(list.every((r) => sgg[r.id] === k), k);
+    assert.deepEqual(list.map((r) => r.id), list.map((r) => r.id).slice().sort(), `${k} id 순`);
+  }
+  for (const r of rows) assert.deepEqual(Object.keys(r), ['id', 'name', 'issued', 'stage', 'cls', 'why', 'overdue', 'next', 'units', 'pks', 'pnus', 'bundles']);
+});
+
+test('지도 색인의 판정 합계(건수·호수) = 보드 판정, 대상이 아닌 사업은 why 로 까닭(LH 후보 273 = 보드 제외)', () => {
+  const j = board.judgment;
+  for (const c of ['ok', 'caution', 'delay']) {
+    const xs = rows.filter((r) => r.cls === c);
+    assert.deepEqual({ projects: xs.length, units: sum(xs.map((r) => r.units)) }, j[c], c);
+  }
+  assert.equal(sum(rows.map((r) => r.units)), board.scope.units);
+  assert.ok(rows.every((r) => (r.cls === null) === (r.why !== null)));
+  assert.deepEqual([rows.filter((r) => r.why === 'LH 후보').length, sum(rows.filter((r) => r.why === 'LH 후보').map((r) => r.units))], [j.excluded.projects, j.excluded.units]);
+  assert.equal(rows.filter((r) => r.why === '예정 없음').length, N - board.scope.judged - j.excluded.projects);
+});
+
+test('지도 색인의 overdue 는 보드의 예정일 경과에서 판정에 넣은 것 중 가장 큰 것, next 는 기준일 뒤 가장 이른 예정(실제가 있는 종류 제외)', () => {
+  const months = new Map();
+  for (const o of board.overdue) if (o.class !== 'excluded') months.set(o.id, Math.max(months.get(o.id) ?? -1, o.months));
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  for (const [id, m] of months) assert.equal(byId.get(id).overdue.months, m, id);   // 보드 목록(상위 200쌍)에 있는 사업
+  assert.ok(rows.every((r) => !r.overdue || ['CONSTRUCTION_START', 'COMPLETION'].includes(r.overdue.eventType)));
+  assert.ok(rows.filter((r) => r.cls === 'delay').every((r) => r.overdue.months >= 6));
+  assert.ok(rows.filter((r) => r.cls === 'caution').every((r) => r.overdue.months >= 1 && r.overdue.months < 6));
+  // 착공 예정만 지난 대용량 후보는 overdue 가 없다(판정에서 뺀 경과)
+  const bulkStartOnly = board.overdue.filter((o) => o.class === 'excluded').map((o) => byId.get(o.id));
+  assert.ok(bulkStartOnly.length && bulkStartOnly.every((r) => !r.overdue || r.overdue.eventType === 'COMPLETION'));
+  const actual = new Set(tables.events.filter((e) => e.date_type === 'ACTUAL').map((e) => `${e.local_project_id}|${e.event_type}`));
+  for (const r of rows.filter((x) => x.next)) {
+    assert.ok(!actual.has(`${r.id}|${r.next.eventType}`), r.id);
+    assert.ok(`${r.next.planned}`.padEnd(10, '9') >= '2026-10-10', `${r.id} ${r.next.planned}`);
+  }
+  const a2 = byId.get('PRJ-28245-0005');   // 계양 A2: 준공 예정 2026-10-11(번들) — 기준일 다음 날
+  assert.deepEqual(a2.next, { eventType: 'COMPLETION', planned: '2026-10-11' });
+});
+
+test('지도 색인: 건축HUB 관리번호·필지·번들 단지 id 는 원장 식별자·위치 그대로(정렬, 중복 없음)', () => {
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  const pk = tables.identifiers.filter((r) => r.id_type === 'HUB_HS_PK');
+  assert.equal(sum(rows.map((r) => r.pks.length)), new Set(pk.map((r) => `${r.local_project_id}|${r.id_value}`)).size);
+  for (const r of pk) assert.ok(byId.get(r.local_project_id).pks.includes(r.id_value));
+  for (const l of tables.project_locations.filter((x) => x.pnu)) assert.ok(byId.get(l.local_project_id).pnus.includes(l.pnu));
+  assert.ok(rows.every((r) => r.pnus.every((x) => /^\d{19}$/.test(x)) && r.pks.join() === r.pks.slice().sort().join()));
+  const bundle = tables.identifiers.filter((r) => r.id_type === 'BUNDLE_ID');   // 지도 번들 단지와 잇는 열쇠 '지역slug/단지id'
+  assert.equal(sum(rows.map((r) => r.bundles.length)), bundle.length);
+  for (const r of bundle) assert.ok(byId.get(r.local_project_id).bundles.includes(r.id_value));
+});
+
+test('저장된 data/board/ledger-map.json 이 도구로 다시 만든 것과 같고, 한 사업 한 줄이다', () => {
+  const saved = fs.readFileSync(path.join(__dirname, '..', '..', MAP_OUT), 'utf8');
+  assert.equal(saved, renderMap(index));
+  assert.deepEqual(JSON.parse(saved), index);
+  assert.equal(saved.split('\n').filter((l) => l.startsWith('      {"id":')).length, N);
 });

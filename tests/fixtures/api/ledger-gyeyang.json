@@ -1,0 +1,718 @@
+{
+ "schema": "ledger-map/1",
+ "month": "2026-10",
+ "referenceDate": "2026-10-10",
+ "origin": "supabase",
+ "sgg": "28245",
+ "projects": [
+  {
+   "id": "PRJ-28245-0001",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000335472"
+   ],
+   "why": null,
+   "name": "인천계양 테크노밸리 A6 블록",
+   "next": {
+    "planned": "2029-03-22",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824510900101840001"
+   ],
+   "stage": "05",
+   "units": 663,
+   "issued": true,
+   "bundles": [
+    "incheon-gyeyang/techno-A6"
+   ],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0002",
+   "cls": "ok",
+   "pks": [],
+   "why": null,
+   "name": "인천계양 테크노밸리 A17 블록",
+   "next": {
+    "planned": "2029-08-17",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824510900102770001"
+   ],
+   "stage": "05",
+   "units": 309,
+   "issued": true,
+   "bundles": [
+    "incheon-gyeyang/techno-A17"
+   ],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0003",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000164958"
+   ],
+   "why": null,
+   "name": "인천계양 테크노밸리 A9 블록",
+   "next": {
+    "planned": "2028-10-03",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824511000102030001"
+   ],
+   "stage": "04",
+   "units": 475,
+   "issued": true,
+   "bundles": [
+    "incheon-gyeyang/techno-A9"
+   ],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0004",
+   "cls": "ok",
+   "pks": [],
+   "why": null,
+   "name": "인천계양 테크노밸리 A3 블록",
+   "next": {
+    "planned": "2026-10-11",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824511000104090003"
+   ],
+   "stage": "04",
+   "units": 538,
+   "issued": true,
+   "bundles": [
+    "incheon-gyeyang/techno-A3"
+   ],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0005",
+   "cls": "ok",
+   "pks": [],
+   "why": null,
+   "name": "인천계양 테크노밸리 A2 블록",
+   "next": {
+    "planned": "2026-10-11",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824511000104130003"
+   ],
+   "stage": "04",
+   "units": 747,
+   "issued": true,
+   "bundles": [
+    "incheon-gyeyang/techno-A2"
+   ],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0006",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000335522"
+   ],
+   "why": null,
+   "name": "인천계양 테크노밸리 A10 블록",
+   "next": {
+    "planned": "2028-09-30",
+    "eventType": "MOVE_IN"
+   },
+   "pnus": [
+    "2824511000104480001"
+   ],
+   "stage": "04",
+   "units": 778,
+   "issued": true,
+   "bundles": [
+    "incheon-gyeyang/techno-A10"
+   ],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0022",
+   "cls": "ok",
+   "pks": [
+    "1060100013334"
+   ],
+   "why": null,
+   "name": "작전현대아파트 주택재개발 정비사업",
+   "next": {
+    "planned": "2027-05-31",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824510300104390007"
+   ],
+   "stage": "03",
+   "units": 1370,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0024",
+   "cls": "ok",
+   "pks": [
+    "1060100013114"
+   ],
+   "why": null,
+   "name": "제일풍경채 계양 위너스카이 1단지",
+   "next": null,
+   "pnus": [
+    "2824510100106900000"
+   ],
+   "stage": "06",
+   "units": 777,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0025",
+   "cls": "ok",
+   "pks": [
+    "1060100013115"
+   ],
+   "why": null,
+   "name": "제일풍경채 계양 위너스카이 2단지",
+   "next": null,
+   "pnus": [
+    "2824510100106910000"
+   ],
+   "stage": "06",
+   "units": 566,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0026",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000182750"
+   ],
+   "why": null,
+   "name": "LH아파트",
+   "next": {
+    "planned": "2026-12-31",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 538,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0027",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000182699"
+   ],
+   "why": null,
+   "name": "공동주택",
+   "next": {
+    "planned": "2026-12-31",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 747,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0028",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000335505"
+   ],
+   "why": null,
+   "name": "LH아파트",
+   "next": {
+    "planned": "2029-08-17",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 463,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0029",
+   "cls": "delay",
+   "pks": [
+    "1060100016294"
+   ],
+   "why": null,
+   "name": "장미연립 뷰그리안",
+   "next": null,
+   "pnus": [
+    "2824510300106840000"
+   ],
+   "stage": "03",
+   "units": 72,
+   "issued": false,
+   "bundles": [],
+   "overdue": {
+    "months": 33,
+    "planned": "2024-01-02",
+    "eventType": "COMPLETION"
+   }
+  },
+  {
+   "id": "PRJ-28245-0030",
+   "cls": "ok",
+   "pks": [
+    "1060100016534"
+   ],
+   "why": null,
+   "name": "작전에피트",
+   "next": null,
+   "pnus": [
+    "2824510300109560000"
+   ],
+   "stage": "06",
+   "units": 340,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0031",
+   "cls": "delay",
+   "pks": [
+    "1000000000000000002503"
+   ],
+   "why": null,
+   "name": "작전우영아파트 재건축 정비사업",
+   "next": null,
+   "pnus": [
+    "2824510300108690017"
+   ],
+   "stage": "03",
+   "units": 321,
+   "issued": false,
+   "bundles": [],
+   "overdue": {
+    "months": 7,
+    "planned": "2026-02-28",
+    "eventType": "COMPLETION"
+   }
+  },
+  {
+   "id": "PRJ-28245-0032",
+   "cls": "delay",
+   "pks": [
+    "1000000000000000103318"
+   ],
+   "why": null,
+   "name": "대부연립",
+   "next": null,
+   "pnus": [
+    "2824510900100430000"
+   ],
+   "stage": "03",
+   "units": 43,
+   "issued": false,
+   "bundles": [],
+   "overdue": {
+    "months": 35,
+    "planned": "2023-10-31",
+    "eventType": "COMPLETION"
+   }
+  },
+  {
+   "id": "PRJ-28245-0033",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000107714"
+   ],
+   "why": null,
+   "name": "작전동 LH영구임대주택",
+   "next": {
+    "planned": "2027-12-31",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824510300100960000"
+   ],
+   "stage": "03",
+   "units": 152,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0034",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000115282"
+   ],
+   "why": null,
+   "name": "효성구역 도시개발사업 공3블록 공동주택 신축공사",
+   "next": {
+    "planned": "2027-07-15",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 1964,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0035",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000115281"
+   ],
+   "why": null,
+   "name": "효성구역 도시개발사업 공4블록",
+   "next": {
+    "planned": "2027-07-15",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 1089,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0036",
+   "cls": "caution",
+   "pks": [
+    "1000000000000000120866"
+   ],
+   "why": null,
+   "name": "효성동 도시개발사업 공1블럭 공동주택 신축공사",
+   "next": null,
+   "pnus": [],
+   "stage": "03",
+   "units": 718,
+   "issued": false,
+   "bundles": [],
+   "overdue": {
+    "months": 2,
+    "planned": "2026-07-31",
+    "eventType": "COMPLETION"
+   }
+  },
+  {
+   "id": "PRJ-28245-0037",
+   "cls": "delay",
+   "pks": [
+    "1000000000000000120862"
+   ],
+   "why": null,
+   "name": "공2BL 공동주택",
+   "next": null,
+   "pnus": [],
+   "stage": "03",
+   "units": 179,
+   "issued": false,
+   "bundles": [],
+   "overdue": {
+    "months": 18,
+    "planned": "2025-04-01",
+    "eventType": "COMPLETION"
+   }
+  },
+  {
+   "id": "PRJ-28245-0038",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000340659"
+   ],
+   "why": null,
+   "name": "인천계양 A-16BL 공공주택",
+   "next": {
+    "planned": "2029-06-30",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 434,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0039",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000340629"
+   ],
+   "why": null,
+   "name": "LH아파트",
+   "next": {
+    "planned": "2029-03-03",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 782,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0040",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000202634"
+   ],
+   "why": null,
+   "name": "동남아파트 소규모 재건축사업 00아파트 신축공사",
+   "next": {
+    "planned": "2030-10-01",
+    "eventType": "CONSTRUCTION_START"
+   },
+   "pnus": [
+    "2824510100100250020"
+   ],
+   "stage": "03",
+   "units": 160,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0041",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000202886"
+   ],
+   "why": null,
+   "name": "효성동 서광아파트 소규모재건축정비사업",
+   "next": {
+    "planned": "2028-07-01",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824510100102360006"
+   ],
+   "stage": "03",
+   "units": 180,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0042",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000204813"
+   ],
+   "why": null,
+   "name": "효성동 상록삼익세림 소규모재건축정비사업조합 아파트 신축공사",
+   "next": {
+    "planned": "2028-05-31",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824510100101530001"
+   ],
+   "stage": "03",
+   "units": 173,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0043",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000220671"
+   ],
+   "why": null,
+   "name": "효성동 중앙공영아파트 소규모재건축정비사업",
+   "next": {
+    "planned": "2028-06-01",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824510100102930001"
+   ],
+   "stage": "03",
+   "units": 210,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0044",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000226299"
+   ],
+   "why": null,
+   "name": "효성새사미아파트",
+   "next": {
+    "planned": "2027-08-01",
+    "eventType": "CONSTRUCTION_START"
+   },
+   "pnus": [
+    "2824510100106230016"
+   ],
+   "stage": "03",
+   "units": 373,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0045",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000262456"
+   ],
+   "why": null,
+   "name": "인천계양 테크노밸리 A15블록 우미린",
+   "next": {
+    "planned": "2028-01-31",
+    "eventType": "CONSTRUCTION_START"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 546,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0046",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000281673"
+   ],
+   "why": null,
+   "name": "인천계양 A21블럭 아파트",
+   "next": {
+    "planned": "2027-01-04",
+    "eventType": "CONSTRUCTION_START"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 536,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0047",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000283753"
+   ],
+   "why": null,
+   "name": "신한아파트 가로주택 정비사업",
+   "next": {
+    "planned": "2028-10-02",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [
+    "2824510300108520014"
+   ],
+   "stage": "03",
+   "units": 177,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0048",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000292991"
+   ],
+   "why": null,
+   "name": "효성동 00 아파트",
+   "next": {
+    "planned": "2026-11-05",
+    "eventType": "CONSTRUCTION_START"
+   },
+   "pnus": [
+    "2824510100106230113"
+   ],
+   "stage": "03",
+   "units": 58,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0049",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000301155"
+   ],
+   "why": null,
+   "name": "LH아파트",
+   "next": {
+    "planned": "2027-06-01",
+    "eventType": "CONSTRUCTION_START"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 556,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0050",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000305005"
+   ],
+   "why": null,
+   "name": "인천계양지구 AC3BL 주상복합",
+   "next": {
+    "planned": "2029-07-31",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 614,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  },
+  {
+   "id": "PRJ-28245-0051",
+   "cls": "ok",
+   "pks": [
+    "1000000000000000304959"
+   ],
+   "why": null,
+   "name": "인천계양지구 AC4BL 주상복합",
+   "next": {
+    "planned": "2029-07-31",
+    "eventType": "COMPLETION"
+   },
+   "pnus": [],
+   "stage": "03",
+   "units": 496,
+   "issued": false,
+   "bundles": [],
+   "overdue": null
+  }
+ ]
+}

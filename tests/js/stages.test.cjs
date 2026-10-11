@@ -54,7 +54,8 @@ test('지도의 단계 필터·단지 카드 단계 위치는 공식 6단계이�
   const MAP = { '계획': '03', '건설 단계': '04', '준공 임박': '04', '분양중': '05', '입주 단계': '06' };
   for (const [status, code] of Object.entries(MAP)) assert.equal(stageOf(status, { approvedAt: true }), code, `레지스트리 stageOf(${status})`);
   assert.match(app, /data-status="\$\{live\.join\('\|'\)\}"/, '한 단계가 여러 상태를 함께 켜고 끈다');
-  assert.match(app, /const now = sts\.includes\(b\.status\)/, '단지 카드의 지금 단계 = 상태가 속한 단계');
+  assert.match(app, /const own = STAGES6\.find\(\(x\) => x\[2\]\.includes\(b\.status\)\)/, '단지 카드의 지금 단계 = 상태가 속한 단계');
+  assert.match(app, /if \(!l\) return \{ now: own,/, '사업 원장 단계가 없을 때만 상태로 정한다(있으면 원장 단계, M7)');
   assert.doesNotMatch(app, /'착공', '건설 단계'|'모집', '분양중'|PERMIT_COLOR/, '옛 단계 이름·인허가 대체색이 남지 않는다');
 });
 

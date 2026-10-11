@@ -224,3 +224,43 @@ test('공개 범위: current_run 실행 회수(public 포함), 정책은 months�
   assert.doesNotMatch(SCOPE, /\bgrant\b/i, '회수만 한다');
   assert.doesNotMatch(SCOPE, /service_role|ledger_admin|storage\.|db_schemas/i, '적재 경로·노출 설정은 그대로');
 });
+
+/* 지도 사업 표시값(*_map_snapshots.sql, 기획서 M7·M8 · Q4 '화면 표시값만 공개'): 표 하나 + 공개 뷰 api.map + 적재 RPC publish_map */
+const mapFile = fs.readdirSync(MIG_DIR).find((f) => /^\d{14}_map_snapshots\.sql$/.test(f));
+const MAPSQL = mapFile ? fs.readFileSync(path.join(MIG_DIR, mapFile), 'utf8').replace(/--[^\n]*/g, '') : '';
+
+test('지도 표시값: map_snapshots 는 RLS·읽기 정책·닫힌 달 가드·TRUNCATE 금지, 쓰기는 service_role 만, publish_run 은 건드리지 않는다', () => {
+  assert.ok(mapFile && mapFile > scopeFile, '공개 범위 마이그레이션 뒤에 있다');
+  assert.match(MAPSQL, /create table ledger\.map_snapshots \([\s\S]*primary key \(month, sgg_code\)/);
+  assert.match(MAPSQL, /month\s+ledger\.ym not null references ledger\.months/);
+  assert.match(MAPSQL, /run_id\s+bigint not null references ledger\.ingest_runs/);
+  assert.match(MAPSQL, /alter table ledger\.map_snapshots enable row level security;/);
+  assert.match(MAPSQL, /create policy read_all on ledger\.map_snapshots for select to anon, authenticated using \(true\);/);
+  assert.match(MAPSQL, /create trigger guard before insert or update or delete on ledger\.map_snapshots for each row execute function ledger\.guard_closed_month\('month'\)/);
+  assert.match(MAPSQL, /create trigger no_truncate before truncate on ledger\.map_snapshots for each statement execute function ledger\.no_truncate\(\)/);
+  for (const [, privs, objs, to] of MAPSQL.matchAll(/\bgrant\s+([\s\S]+?)\s+on\s+([\s\S]+?)\s+to\s+([\s\S]+?);/gi)) {
+    if (/\b(anon|authenticated|public)\b/i.test(to)) assert.equal(privs.trim().toLowerCase(), 'select', `${objs} 는 읽기만`);
+    if (/execute/i.test(privs)) assert.equal(to.trim(), 'service_role');
+    assert.doesNotMatch(privs, /truncate/i);
+  }
+  assert.match(MAPSQL, /revoke execute on function ledger_admin\.publish_map\(bigint, jsonb\) from public, anon, authenticated;/);
+  assert.doesNotMatch(MAPSQL, /publish_run\s*\(|security\s+definer|\bpublic\s*\./i);
+  assert.match(MAPSQL, /status <> 'published'/, '발행된 실행만');
+  assert.match(MAPSQL, /status = 'open'/, '열린 달만');
+});
+
+test('공개 범위(Q4 넓힘): 차례로 적용하면 anon 이 읽는 것은 api.board·api.map 과 그 뷰가 읽는 세 표뿐', () => {
+  const view = MAPSQL.match(/create view api\.map with \(([^)]*)\) as[\s\S]+?;/i);
+  assert.ok(view);
+  assert.match(view[1], /security_invoker\s*=\s*true/);
+  assert.deepEqual(sorted(new Set(namesIn(view[0], 'ledger'))), ['map_snapshots', 'months']);
+  const readable = { api: new Set(['board']), ledger: new Set(['board_snapshots', 'months']) };   // 공개 범위 마이그레이션 뒤(앞 시험)
+  for (const [, privs, objs, to] of MAPSQL.matchAll(/\bgrant\s+([\s\S]+?)\s+on\s+([\s\S]+?)\s+to\s+([\s\S]+?);/gi)) {
+    if (!/\bselect\b/i.test(privs) || !/\banon\b/i.test(to)) continue;
+    namesIn(objs, 'api').forEach((v) => readable.api.add(v));
+    namesIn(objs, 'ledger').forEach((t) => readable.ledger.add(t));
+  }
+  assert.deepEqual(sorted(readable.api), ['board', 'map']);
+  assert.deepEqual(sorted(readable.ledger), ['board_snapshots', 'map_snapshots', 'months']);
+  assert.doesNotMatch(MAPSQL, /all tables in schema/i, '이름을 들어 준다');
+});

@@ -114,6 +114,7 @@
         kind: '인허가 사업', status: p.status, units: finite(p.units) ? p.units : null, dongCount: finite(p.mainBldCnt) ? p.mainBldCnt : 0,
         moveIn: p.status === '입주 단계' ? (p.completedAt ? p.completedAt.slice(0, 7) : null) : (p.plannedCompletion || null),
         outline: { tier: 'official', poly: open, how: p.via === 'ledger' ? '건물대장이 가리키는 대지 필지(연속지적도)' : '건축HUB 인허가의 대지 필지(연속지적도)' }, dongs: null, events: [], sources: byLedger ? ['hub-housing-permit', 'hub-bldrgst', 'vworld-cadastre'] : ['hub-housing-permit', 'vworld-cadastre'],
+        pnu: p.pnu, refs: Array.isArray(p.refs) ? p.refs.map(String) : [],   // 사업 원장과 잇는 열쇠(attachLedger)
         note: [p.address, where, `허가 기록 ${p.records}건`, dates, p.status === '계획' && p.plannedStart && !p.overdue ? `착공 예정 ${p.plannedStart}` : '', late, '시행자·분양 정보는 없음'].filter(Boolean).join(' · '),
       });
     }
@@ -277,6 +278,7 @@
     if (p.builder) b.builder = p.builder;
     if (finite(p.contractAmountM)) b.contractM = p.contractAmountM;
     if (p.note) b.note = p.note;
+    if (p.pnu) { b.pnu = p.pnu; b.refs = p.refs || []; }   // 인허가 사업만(번들 단지에는 없다)
     return b;
   }
   function uniqueIds(blocks) {
@@ -296,6 +298,66 @@
       return (rank(a) - rank(c)) || (c.units - a.units) || String(a.label).localeCompare(String(c.label), 'ko');
     });
   }
+
+  /* ---------- 사업 원장(GET /api/v1/ledger?sgg=) — 지도 카드의 6단계·다음 일정·판정(기획서 M7·M8) ----------
+     판정(cls)은 종합상황판과 같은 규칙으로 서버가 계산한 값이라 화면에서 다시 계산하지 않는다. 실패하면 null(원장 정보 없이 지도는 그대로) */
+  async function fetchLedger(win, sgg) {
+    try {
+      const res = await win.fetch(`api/v1/ledger?sgg=${encodeURIComponent(sgg)}`);
+      if (!res.ok) return null;
+      const d = await res.json();
+      return d && d.schema === 'ledger-map/1' && Array.isArray(d.projects) ? d : null;
+    } catch (e) { return null; }
+  }
+  /* 단지 ↔ 원장 행: 사업 id(projectId) · 건축HUB 관리번호(refs ↔ pks) · 필지(pnu ↔ pnus) · 번들 단지 id('지역slug/단지id' ↔ bundles, 원장 식별자 BUNDLE_ID) 중 하나라도 같으면 같은 사업 */
+  function ledgerIndex(rows) {
+    const id = new Map(), pk = new Map(), pnu = new Map(), bundle = new Map();
+    for (const r of rows) {
+      if (!r || !r.id) continue;
+      id.set(r.id, r);
+      (r.pks || []).forEach((k) => pk.set(String(k), r));
+      (r.pnus || []).forEach((k) => pnu.set(String(k), r));
+      (r.bundles || []).forEach((k) => bundle.set(String(k), r));
+    }
+    return { id, pk, pnu, bundle };
+  }
+  function matchLedger(b, ix, slug) {
+    return (b.projectId && ix.id.get(b.projectId)) || (b.refs || []).map((k) => ix.pk.get(String(k))).find(Boolean)
+      || (b.pnu && ix.pnu.get(b.pnu)) || (slug && b.pid && ix.bundle.get(`${slug}/${b.pid}`)) || null;
+  }
+  /* 원장 응답들(시군구마다 하나) → 단지마다 b.ledger 를 붙이고 붙인 수를 돌려 준다. slug = 번들 지역(번들 없는 지역은 '') */
+  function attachLedger(blocks, docs, slug) {
+    const ok = (docs || []).filter((d) => d && Array.isArray(d.projects));
+    if (!ok.length) return 0;
+    const ix = ledgerIndex(ok.flatMap((d) => d.projects)), meta = ok[0];
+    let n = 0;
+    for (const b of blocks || []) {
+      const r = matchLedger(b, ix, slug);
+      if (!r) continue;
+      b.ledger = { id: r.id, issued: !!r.issued, stage: /^0[1-6]$/.test(r.stage || '') ? r.stage : null, cls: ['ok', 'caution', 'delay'].includes(r.cls) ? r.cls : null,
+        overdue: r.overdue || null, next: r.next || null, month: meta.month, referenceDate: meta.referenceDate, origin: meta.origin };
+      n++;
+    }
+    return n;
+  }
+  /* 원장 한 행 → 카드 문구. 일정은 월까지('YYYY-MM-DD'·'YYYY-MM' → 'YYYY.MM', 'YYYY' 는 그대로) */
+  const EVENT_TEXT = { PERMIT: '인허가', CONSTRUCTION_START: '착공', SUPPLY_NOTICE: '모집 공고', COMPLETION: '준공', MOVE_IN: '입주' };
+  const CLS_TEXT = { ok: '정상', caution: '주의', delay: '지연' };
+  const ymText = (v) => { const m = /^(\d{4})(?:-(\d{2}))?/.exec(String(v || '')); return m ? (m[2] ? `${m[1]}.${m[2]}` : m[1]) : ''; };
+  function ledgerTexts(l) {
+    if (!l) return null;
+    const ev = (e) => (e && EVENT_TEXT[e.eventType]) || '';
+    const late = l.cls && l.cls !== 'ok' && l.overdue && ev(l.overdue) ? `${ev(l.overdue)} 예정 ${l.overdue.months}개월 경과` : '';
+    return {
+      cls: l.cls ? CLS_TEXT[l.cls] : '', late, lateTitle: late && l.overdue.planned ? `예정일 ${l.overdue.planned}` : '',
+      next: l.next && ev(l.next) && ymText(l.next.planned) ? `${ev(l.next)} 예정 ${ymText(l.next.planned)}` : '',
+      basis: `${l.origin === 'supabase' ? 'Supabase 원장' : '사업 원장'} ${l.month || ''} 기준`.replace(/\s+/g, ' '), refDate: l.referenceDate || '',
+    };
+  }
+  /* 원장을 부를 시군구: 번들 지역은 region.json 의 시군구, 코드로 열었으면 해석 결과의 시군구도 */
+  const ledgerSggs = (r, resolved) => [...new Set([...((r && r.sggs) || []), ...(resolved && /^\d{5}$/.test(resolved.sgg || '') ? [resolved.sgg] : [])])];
+  /* 주소 ?ledger=0 이면 원장을 부르지 않는다 */
+  const ledgerOff = (search) => new URLSearchParams(search || '').get('ledger') === '0';
 
   /* ---------- 문구 ---------- */
   function buildTexts(region, blocks, context, infra) {
@@ -329,6 +391,7 @@
     blocks.forEach((b) => { byKey.set(b.id, b); byKey.set(b.pid, b); });
     return {
       slug: region.slug, name: region.name, title: region.title, description: region.description || '',
+      sggs: (region.codes || []).filter((c) => c && c.type === 'sigungu' && /^\d{5}$/.test(c.code)).map((c) => c.code),   // 사업 원장을 부를 시군구
       visibility: (entry && entry.visibility) || 'public', view: region.view, statusOrder: region.statusOrder,
       sources: region.sources || [], zones: region.zones || [], districts,
       blocks, otherBlocks: projects.otherBlocks || [], hasPrivate: blocks.some((b) => b.priv),
@@ -433,6 +496,7 @@
       resolved = rr.data;
       if (resolved.coverage.tier !== 'A') {
         /* 번들이 없는 지역(등급 B·C): 경계와 요청 시 조회한 건물만 보이는 빈 번들로 연다. ?dyn=0 이면 건물도 없이 경계만 */
+        const ledgerP = ledgerOff(search) ? null : Promise.all(ledgerSggs(null, resolved).map((s) => fetchLedger(win, s)));   // 인허가와 함께 받는다(기다리지 않음)
         const idx = await getIndex(win);
         const permits = resolved.bjd && !permitsOff(search) ? await fetchPermits(win, resolved.bjd) : null;
         const wantInfra = !!(permits && permits.features && permits.features.length) && new URLSearchParams(search).get('infra') !== '0';   // 인허가 단지가 있어야 점검할 대상이 있다
@@ -440,6 +504,7 @@
         r = emptyBundle(resolved, idx, permits, infra, { infraFailed: wantInfra && !infra });
         if (dynParam(search) === 'off') r.GY_BUILDINGS.dynamic = false;
         mountResolved(win, doc, r, resolved);
+        hangLedger(win, r, ledgerP);
         return r;
       }
       search = withRegion(search, resolved.coverage.slug);
@@ -459,7 +524,12 @@
     const dyn = dynParam(search);
     if (r.GY_BUILDINGS && dyn !== 'off' && (dyn === 'on' || resolved)) r.GY_BUILDINGS.dynamic = true;
     mountResolved(win, doc, r, resolved);
+    hangLedger(win, r, ledgerOff(search) ? null : Promise.all(ledgerSggs(r, resolved).map((s) => fetchLedger(win, s))));
     return r;
+  }
+  /* 원장은 지도 첫 표시를 기다리게 하지 않는다: 받는 대로 단지에 붙이고, 화면(app.js)은 window.LEDGER(붙인 단지 수)를 기다려 다시 그린다 */
+  function hangLedger(win, r, p) {
+    win.LEDGER = p ? p.then((docs) => attachLedger(r.blocks, docs, r.slug), () => 0) : null;
   }
   /* 전역에 올리고 문구·지역 선택기·배너를 반영 */
   function mountResolved(win, doc, r, resolved) {
@@ -479,5 +549,5 @@
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, boot };
+  return { STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, boot };
 });

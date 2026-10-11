@@ -2,19 +2,21 @@
 /* Supabase 에 실린 한 달 판을 파일과 대조한다 — 설계: docs/product/Supabase-원장-설계.md 6절 6단계.
    secret 키: ledger_admin.export_table 로 16표를 받아 파일과 행마다 깊은 같음(load_seq 순, 키 순서는 보지 않음) → validate.js 오류 0
      → 저장한 보드(api.board) = boardFromLedger(DB 표) = data/board/ledger-board.json, 달은 열림.
-   publishable 키(anon): 공개 범위는 화면 집계만(기획서 Q4, 마이그레이션 _public_scope.sql) — api.board 만 읽히고 나머지 뷰 16개는 거부,
+     → 저장한 지도 색인(api.map, 그 달 모든 시군구) = mapIndexFromLedger(DB 표) = data/board/ledger-map.json.
+   publishable 키(anon): 공개 범위는 화면 표시값만(기획서 Q4, 마이그레이션 _public_scope.sql·_map_snapshots.sql) — api.board·api.map 만 읽히고 나머지 뷰 16개는 거부,
      review_required 는 api 에 없음, ledger_admin 의 RPC·표 쓰기와 api 뷰 쓰기는 거부. 현재 판 행 수는 1의 왕복(export_table)이 대신한다.
    실행: node tools/ledger/supabase-verify.js --month 2026-10 (어긋나면 종료 코드 1) */
 const fs = require('node:fs');
 const path = require('node:path');
 const { isDeepStrictEqual } = require('node:util');
-const { boardFromLedger, loadHistory } = require('./board');
+const { boardFromLedger, mapIndexFromLedger, loadHistory, MAP_OUT } = require('./board');
 const { validate } = require('./validate');
 const { readEnv, readTables, client } = require('./supabase-load');
 
 const ROOT = path.join(__dirname, '..', '..');
 const PAGE = 5000;
-const VIEWS = ['board', 'areas', 'agencies', 'sources', 'projects', 'identifiers', 'project_locations', 'complexes', 'events', 'units',
+const PUBLIC_VIEWS = ['board', 'map'];
+const VIEWS = ['board', 'map', 'areas', 'agencies', 'sources', 'projects', 'identifiers', 'project_locations', 'complexes', 'events', 'units',
   'stat_facts', 'policies', 'programs', 'links', 'notices', 'notice_links', 'source_freshness'];
 
 async function exportAll(api, tbl, month) {
@@ -46,14 +48,14 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
   check(errors.length === 0, `validate(DB 표) 오류 ${errors.length}건: ${errors.slice(0, 3).join(' / ')}`);
   log(`validate(DB 표): 오류 ${errors.length}`);
 
-  /* 2 anon 읽기: api.board 만 읽히고 나머지 뷰는 거부(401·403·404) */
+  /* 2 anon 읽기: api.board·api.map 만 읽히고 나머지 뷰는 거부(401·403·404) */
   const anon = async (p, init = {}) => fetch(`${url}/rest/v1/${p}`, { ...init, headers: { apikey: pub, 'Accept-Profile': 'api', ...(init.headers ?? {}) } });
   const counts = {};
   for (const v of VIEWS) {
-    const res = await anon(`${v}?select=*${v === 'board' ? `&month=eq.${month}` : ''}&limit=1`);
+    const res = await anon(`${v}?select=*${PUBLIC_VIEWS.includes(v) ? `&month=eq.${month}` : ''}&limit=1`);
     const body = await res.json().catch(() => null);
     counts[v] = res.status;
-    if (v === 'board') check(res.ok && Array.isArray(body) && body.length === 1, `anon api.board 읽기 ${res.status}`);
+    if (PUBLIC_VIEWS.includes(v)) check(res.ok && Array.isArray(body) && body.length === 1, `anon api.${v} 읽기 ${res.status}`);
     else check([401, 403, 404].includes(res.status), `anon api.${v} 가 거부되지 않았다(${res.status})`);
   }
   log(`anon api: ${Object.entries(counts).map(([k, n]) => `${k} ${n}`).join(' · ')}`);
@@ -68,6 +70,18 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
   check(row?.status === 'open', `달 ${month} 상태 ${row?.status}`);
   log(`보드: 저장본 = 재계산 = 파일 ${problems.some((p) => p.includes('보드')) ? '아님' : '같음'} · 달 상태 ${row?.status}`);
 
+  /* 3' 지도 색인: 저장본(그 달 모든 시군구) = DB 표로 다시 계산 = 파일 */
+  const mres = await anon(`map?month=eq.${month}&select=sgg_code,reference_date,rows&order=sgg_code`);
+  const mrows = await mres.json();
+  check(mres.ok && Array.isArray(mrows), `anon api.map 전체 읽기 ${mres.status}`);
+  const list = Array.isArray(mrows) ? mrows : [];
+  const storedMap = { schema: 'ledger-map/1', observedMonth: month, referenceDate: list[0]?.reference_date, bySgg: Object.fromEntries(list.map((r) => [r.sgg_code, r.rows])) };
+  const fileMap = JSON.parse(fs.readFileSync(path.join(root, MAP_OUT), 'utf8'));
+  check(list.every((r) => r.reference_date === row?.reference_date), 'api.map 의 기준일 ≠ 보드 기준일');
+  check(isDeepStrictEqual(storedMap, mapIndexFromLedger(db, { referenceDate: row?.reference_date, observedMonth: month })), '저장한 지도 색인 ≠ mapIndexFromLedger(DB 표)');
+  check(isDeepStrictEqual(storedMap, fileMap), `저장한 지도 색인 ≠ ${MAP_OUT}`);
+  log(`지도: 시군구 ${list.length} · 사업 ${list.reduce((s, r) => s + r.rows.length, 0)} · 저장본 = 재계산 = 파일 ${problems.some((p) => p.includes('지도')) ? '아님' : '같음'}`);
+
   /* 4 anon 쓰기 거부 */
   const denied = async (label, p, body, profile) => {
     const r = await fetch(`${url}/rest/v1/${p}`, { method: 'POST', headers: { apikey: pub, 'Content-Type': 'application/json', 'Content-Profile': profile }, body: JSON.stringify(body) });
@@ -78,6 +92,7 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
   const deny = [
     await denied('rpc begin_run', 'rpc/begin_run', { p_month: month, p_kind: 'load', p_reference_date: '2026-10-10' }, 'ledger_admin'),
     await denied('rpc publish_run', 'rpc/publish_run', { p_run: 1, p_expected: {} }, 'ledger_admin'),
+    await denied('rpc publish_map', 'rpc/publish_map', { p_run: 1, p_rows: {} }, 'ledger_admin'),
     await denied('stage_rows insert', 'stage_rows', { run_id: 1, tbl: 'x', seq: 1, row: {} }, 'ledger_admin'),
     await denied('api.projects insert', 'projects', { local_project_id: 'PRJ-00000-0000' }, 'api'),
   ];
@@ -91,7 +106,7 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
   return { problems, counts, exported: Object.fromEntries(Object.entries(db).map(([k, v]) => [k, v.length])) };
 }
 
-module.exports = { verify, exportAll, VIEWS };
+module.exports = { verify, exportAll, VIEWS, PUBLIC_VIEWS };
 
 if (require.main === module) {
   const i = process.argv.indexOf('--month');

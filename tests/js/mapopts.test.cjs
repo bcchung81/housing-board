@@ -37,3 +37,13 @@ test('public/ 사본이 원본과 같다(지도는 public/assets 를 내보낸�
   assert.equal(read('public/assets/js/app.js'), app);
   assert.equal(read('public/assets/css/app.css'), read('assets/css/app.css'));
 });
+
+test('사업 원장 판정(M8): 주의·지연만 단지 테두리·점 테두리로, 색은 의미 토큰(--warn·--bad), 단계 필터를 따르고, 원장은 뒤에 붙는다', () => {
+  assert.match(app, /const JUDGED = \['match', \['get', 'cls'\], \['caution', 'delay'\], true, false\]/);
+  assert.match(app, /'delay', v\('--bad', '#FF6B88'\), 'caution', v\('--warn', '#FFC24D'\)/);
+  assert.match(app, /add\(\{ id: 'blk-judge', type: 'line', source: 'blocks', filter: JUDGED,/);
+  assert.ok(app.indexOf("id: 'blk-judge'") < app.indexOf("id: 'blk-line',"), '단계색 윤곽 아래에 깐다');
+  assert.match(app, /map\.setFilter\('blk-judge', \['all', f, JUDGED\]\)/);
+  assert.match(app, /window\.LEDGER\.then\(\(n\) => \{ if \(n\) refreshLedger\(\); \}/);
+  assert.match(app, /lg\.issued \? pidLink\(lg\.id\) : `<span class="pc-pid"/, '발급 전 후보 id 는 링크하지 않는다');
+});

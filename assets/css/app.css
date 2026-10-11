@@ -131,6 +131,15 @@ h2{margin:0;font-family:var(--font-disp);font-size:13px;font-weight:400;color:va
 .stage span.now.move::before{background:var(--move)}
 .stage span.now.priv::before{background:var(--priv)}
 .stage span.now.plan::before{background:var(--plan)}
+.stage span.now::before{background:var(--mute)}   /* 원장 단계가 01 정책·02 사업화(그 단계의 지도 상태색이 없음) */
+/* 사업 원장 판정(기획서 M8): 정상·주의·지연은 대시보드와 같은 의미 토큰. 독립 index.html 에는 tailwind.css 가 없어 다크 값으로 대신한다 */
+.stg{display:contents}
+.jd{font-style:normal;font-weight:700}
+.jd.ok{color:var(--ok,#4ADE9E)}.jd.caution{color:var(--warn)}.jd.delay{color:var(--bad,#FF6B88)}
+.ldg{font-size:13px;color:var(--ink2)}
+.stg6{display:inline-flex;gap:2px;margin-right:6px;vertical-align:1px}
+.stg6 i{width:9px;height:6px;border-radius:2px;background:var(--line2)}
+.stg6 i.on{background:var(--mute)}.stg6 i.on.sale{background:var(--sale)}.stg6 i.on.build{background:var(--build)}.stg6 i.on.soon{background:var(--soon)}.stg6 i.on.move{background:var(--move)}.stg6 i.on.plan{background:var(--plan)}.stg6 i.on.priv{background:var(--priv)}
 .pg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
 .pg .bar2{flex:1 1 auto;height:8px;background:var(--line);position:relative;overflow:hidden}
 .pg .bar2 i{position:absolute;left:0;top:0;bottom:0;background:var(--c)}
@@ -158,6 +167,8 @@ h2{margin:0;font-family:var(--font-disp);font-size:13px;font-weight:400;color:va
 .sw.outline{border:1.5px dashed var(--mute);background:transparent}
 .sw.stn{border-radius:50%;border:3px solid var(--bg);background:#fff;box-shadow:0 0 0 1px var(--mute)}
 .sw.sch{border-radius:50%;width:9px;height:9px;margin:0 1px;background:var(--mute)}
+.sw.jd-w{background:transparent;border:2.5px solid var(--warn)}
+.sw.jd-d{background:transparent;border:2.5px solid var(--bad,#FF6B88)}
 .sw.tone{background:linear-gradient(90deg,#4A5A99,#C7D0DA)}
 .legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;font-size:13.5px;margin:0;padding:0;list-style:none}
 .legend li{display:flex;align-items:center;gap:8px}

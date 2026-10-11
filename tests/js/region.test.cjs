@@ -665,3 +665,60 @@ test('permitsToProjects: 사업 id(projectId)가 있으면 단지에 싣는다(�
   assert.equal(R.permitsToProjects(fc({ projectId: 'PRJ-41450-0001' }))[0].projectId, 'PRJ-41450-0001');
   for (const bad of [undefined, null, '', 'PRJ-1-1', 'x']) assert.equal(R.permitsToProjects(fc({ projectId: bad }))[0].projectId, null, String(bad));
 });
+
+/* ---------- 사업 원장(GET /api/v1/ledger) → 지도 단지(기획서 M7·M8) ---------- */
+const LEDGER = require('../fixtures/api/ledger-gyeyang.json');   // 인천 계양 35건(정상 30·주의 1·지연 4)
+const sqAt = (x) => ({ type: 'Polygon', coordinates: [[[x, 37.5], [x + 0.001, 37.5], [x + 0.001, 37.501], [x, 37.501], [x, 37.5]]] });
+
+test('attachLedger: 인허가 단지는 pnu·건축HUB 관리번호(refs↔pks)·사업 id 로, 판정·단계·다음 일정을 단지에 붙인다', () => {
+  const fc = { type: 'FeatureCollection', features: [
+    { type: 'Feature', geometry: sqAt(126.7), properties: { pnu: '2824510300106840000', name: '장미연립 뷰그리안', status: '계획', refs: [], records: 1 } },          // pnu 로
+    { type: 'Feature', geometry: sqAt(126.71), properties: { pnu: '2824510100199990000', name: '이름만 다름', status: '계획', refs: ['1000000000000000120866'], records: 1 } },   // 관리번호로
+    { type: 'Feature', geometry: sqAt(126.72), properties: { pnu: '2824510900199990000', name: 'x', status: '분양중', projectId: 'PRJ-28245-0001', refs: [], records: 1 } },   // 사업 id 로
+    { type: 'Feature', geometry: sqAt(126.73), properties: { pnu: '2824510300199990000', name: '인천계양 테크노밸리 A6 블록', status: '계획', refs: ['0'], records: 1 } },   // 인허가 단지는 이름으로 잇지 않는다
+  ] };
+  const b = R.emptyBundle({ name: '계양', center: [126.7, 37.5] }, { regions: [] }, fc);
+  assert.equal(R.attachLedger(b.blocks, [LEDGER]), 3);
+  const by = (n) => b.blocks.find((x) => x.name === n).ledger;
+  assert.deepEqual(by('장미연립 뷰그리안'), { id: 'PRJ-28245-0029', issued: false, stage: '03', cls: 'delay', overdue: { months: 33, planned: '2024-01-02', eventType: 'COMPLETION' }, next: null, month: '2026-10', referenceDate: LEDGER.referenceDate, origin: 'supabase' });
+  assert.equal(by('이름만 다름').id, 'PRJ-28245-0036'); assert.equal(by('이름만 다름').cls, 'caution');
+  assert.equal(by('x').id, 'PRJ-28245-0001'); assert.equal(by('x').issued, true);
+  assert.equal(by('인천계양 테크노밸리 A6 블록'), undefined);
+});
+
+test('attachLedger: 번들 단지(사업 id·필지 없음)는 번들 단지 id(지역slug/단지id ↔ 원장 bundles)로 잇고, 이름만 같으면 잇지 않는다', () => {
+  const r = R.adaptBundle(mkRaw([mkProject({ id: 'techno-A6', label: 'A6', name: '이름이 바뀐 단지' }), mkProject({ id: 'zz', label: 'Z', name: '인천계양 테크노밸리 A17 블록' })], mkRegion({ codes: [{ code: '28245', type: 'sigungu', name: '계양구' }] })));
+  assert.deepEqual(r.sggs, ['28245']);
+  assert.equal(R.attachLedger(r.blocks, [LEDGER], 'incheon-gyeyang'), 1);   // 이름이 같아도 단지 id(zz)가 원장에 없으면 잇지 않는다
+  assert.equal(r.blocks.find((x) => x.pid === 'techno-A6').ledger.id, 'PRJ-28245-0001');
+  assert.equal(R.attachLedger(r.blocks.map((b) => ({ ...b, ledger: undefined })), [LEDGER], 'other-region'), 0, '지역 slug 가 다르면 잇지 않는다');
+});
+
+test('attachLedger: 원장을 못 받으면(null·빈 목록) 아무것도 붙이지 않는다', () => {
+  const r = R.adaptBundle(mkRaw());
+  assert.equal(R.attachLedger(r.blocks, []), 0); assert.equal(R.attachLedger(r.blocks, [null]), 0); assert.equal(R.attachLedger(r.blocks, null), 0);
+  assert.equal(r.blocks[0].ledger, undefined);
+});
+
+test('ledgerTexts: 판정·경과·다음 일정 문구(월까지)와 기준', () => {
+  const t = R.ledgerTexts({ cls: 'delay', overdue: { eventType: 'COMPLETION', planned: '2024-01-02', months: 33 }, next: null, month: '2026-10', origin: 'supabase', referenceDate: '2026-10-10' });
+  assert.deepEqual(t, { cls: '지연', late: '준공 예정 33개월 경과', lateTitle: '예정일 2024-01-02', next: '', basis: 'Supabase 원장 2026-10 기준', refDate: '2026-10-10' });
+  const ok = R.ledgerTexts({ cls: 'ok', overdue: null, next: { eventType: 'COMPLETION', planned: '2027-03-22' }, month: '2026-10', origin: 'json' });
+  assert.equal(ok.cls, '정상'); assert.equal(ok.late, ''); assert.equal(ok.next, '준공 예정 2027.03'); assert.equal(ok.basis, '사업 원장 2026-10 기준');
+  assert.equal(R.ledgerTexts({ cls: null, next: { eventType: 'MOVE_IN', planned: '2028' } }).next, '입주 예정 2028');
+  assert.equal(R.ledgerTexts({ cls: null, next: { eventType: 'SUPPLY_NOTICE', planned: '2027-05' } }).next, '모집 공고 예정 2027.05');
+  assert.equal(R.ledgerTexts({ cls: null }).cls, '');   // 판정 대상 아님은 표시하지 않는다
+  assert.equal(R.ledgerTexts(null), null);
+});
+
+test('ledgerSggs·fetchLedger: 번들 시군구와 코드 해석 시군구, 실패는 null', async () => {
+  assert.deepEqual(R.ledgerSggs({ sggs: ['28245'] }, { sgg: '28245' }), ['28245']);
+  assert.deepEqual(R.ledgerSggs(null, { sgg: '41450' }), ['41450']);
+  assert.deepEqual(R.ledgerSggs({ sggs: [] }, null), []);
+  const win = (res) => ({ fetch: async (u) => { win.last = u; if (res instanceof Error) throw res; return res; } });
+  const ok = win({ ok: true, json: async () => LEDGER });
+  assert.equal((await R.fetchLedger(ok, '28245')).projects.length, 35); assert.equal(win.last, 'api/v1/ledger?sgg=28245');
+  assert.equal(await R.fetchLedger(win({ ok: false, status: 400, json: async () => ({}) }), 'x'), null);
+  assert.equal(await R.fetchLedger(win(new Error('down')), '28245'), null);
+  assert.equal(await R.fetchLedger(win({ ok: true, json: async () => ({ schema: 'other', projects: [] }) }), '28245'), null);
+});
