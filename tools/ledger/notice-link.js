@@ -9,8 +9,9 @@ const { normBlock, districtToken } = require('./hub-bulk');
 
 const RULE = { T1: 'T1_LH_DISTRICT_BLOCK', T2: 'T2_NAME_DISTRICT_BLOCK', T3: 'T3_NAME_SUBDISTRICT_BLOCK' };
 const compact = (s) => String(s ?? '').replace(/\s/g, '').toUpperCase();
-/* text 안에 tok 이 있고 바로 뒤가 숫자가 아니다('대장2' 가 '대장' 에 맞지 않게) */
-const hasTok = (text, tok) => { if (!tok) return false; let i = text.indexOf(tok); while (i >= 0) { if (!/\d/.test(text[i + tok.length] ?? '')) return true; i = text.indexOf(tok, i + 1); } return false; };
+/* text 안에 tok 이 있고 바로 뒤가 숫자·한글 음절이 아니다('대장2' 가 '대장' 에, '구리갈매역세권' 이 '구리갈매' 에, '안양관양고' 가 '안양관양' 에 맞지 않게). 지구명에 원래 붙는 꼬리(TAIL)는 허용 */
+const TAIL = /^(지구|공공주택|택지|신도시|도시개발|하늘도시|도시|공동주택|아파트|주택|단지|일원|블록|블럭|구역|정보타운|테크노밸리|행복|공공|국민|영구|통합|신혼|분양|임대|리츠|사업)/;
+const hasTok = (text, tok) => { if (!tok) return false; let i = text.indexOf(tok); while (i >= 0) { const rest = text.slice(i + tok.length), c = rest[0] ?? ''; if (!/\d/.test(c) && (!/[가-힣]/.test(c) || TAIL.test(rest))) return true; i = text.indexOf(tok, i + 1); } return false; };
 
 /* 글자에서 블록 코드들: 'A-24블록' 'A16, A17' 'A33·37·60' 세종식 '5-1L1BL' '6-3UR1', 숫자뿐인 '1블록' → '#1'. 기관 약자(LH 등)는 블록으로 보지 않는다 */
 function blocksOf(text) {
@@ -27,7 +28,7 @@ function blocksOf(text) {
   out.delete(null);
   return out;
 }
-const GENERIC = /^(지구|단지|일원|지역|공공주택지구|택지개발지구|신도시)$|신혼희망타운|행복주택|공공분양|공공임대|국민임대|영구임대|통합공공임대|분양주택|임대주택|입주자|모집|공고/;
+const GENERIC = /^(지구|단지|일원|지역|공공주택지구|택지개발지구|신도시)$|신혼희망|행복주택|공공주택|공공분양|공공임대|국민임대|영구임대|통합공공임대|장기전세|분양전환|분양주택|임대주택|입주자|모집|공고/;
 /* 조각의 지구 낱말: 첫 블록 코드 바로 앞 낱말(두 글자 이상). 없으면 null */
 function titleDistrict(seg) {
   const m = /^(.*?)(?:\s*)(?:\d{1,2}-\d{1,2}\s*[A-Z]{1,3}\d|(?<![A-Za-z0-9])[A-Z]{1,2}\s?-?\s?\d|\d{1,2}\s*(?:블록|블럭|BL))/i.exec(String(seg).trim());
@@ -109,7 +110,7 @@ function projectIndex({ projects, identifiers, complexes, hubRecords = [] }, lhS
   for (const x of P.values()) {
     x.texts.push(x.p.project_name ?? '');
     if (x.p.source_ref !== lhSource) for (const k of blocksOf(x.p.project_name)) x.blocks.add(k);   // LH 후보 이름은 '지구 블록' 이라 식별자로 이미 넣었다
-    x.text = compact(x.texts.join(' '));
+    x.text = x.texts.map(compact).join('|');   // 글자 사이를 '|' 로 이어 앞 글자의 끝과 뒤 글자의 첫머리가 한 낱말로 붙지 않게 한다
     x.lh = x.p.source_ref === lhSource;
     for (const b of x.blocks) (byBlock.get(b) || byBlock.set(b, []).get(b)).push(x);
   }

@@ -1,0 +1,63 @@
+{
+ "source": "택지정보시스템(openapi.jigu.go.kr) 파일 다운로드 - 공공데이터포털 파일데이터 6종",
+ "fetched_at": "2026-10-12T11:08:21.661274+00:00",
+ "endpoint": "https://openapi.jigu.go.kr/down/detail.do?table=<표>",
+ "params": {},
+ "notes": "6종 모두 2026-10-12 시점 포털 제공형태가 기관자체 다운로드이고, 연결된 openapi.jigu.go.kr/down/detail.do 가 \"서비스 점검 중입니다\"(LX국토도시사업처 063-713-1252)만 표시해 파일을 받지 못함. ego lite 와 curl 모두 확인.",
+ "files": {
+  "15072120": {
+   "portal_id": 15072120,
+   "portal_name": "국토교통부_택지정보_단계별사업정보_20230816",
+   "provider": "국토교통부",
+   "portal_modified": "2023-09-18",
+   "ext": "CSV",
+   "url": "https://openapi.jigu.go.kr/down/detail.do?table=BLS5_DSTRC_STEP",
+   "result": "파일 없음·점검 중"
+  },
+  "15072165": {
+   "portal_id": 15072165,
+   "portal_name": "국토교통부_택지정보_지구경계_20230816",
+   "provider": "국토교통부",
+   "portal_modified": "2023-09-07",
+   "ext": "SHP",
+   "url": "https://openapi.jigu.go.kr/down/detail.do?table=BLS5_GIS_DSTRC_BNDRY",
+   "result": "파일 없음·점검 중"
+  },
+  "15072166": {
+   "portal_id": 15072166,
+   "portal_name": "국토교통부_택지정보_토지이용계획도_20230816",
+   "provider": "국토교통부",
+   "portal_modified": "2023-09-07",
+   "ext": "SHP",
+   "url": "https://openapi.jigu.go.kr/down/detail.do?table=BLS5_GIS_LAD_USE_PLAN",
+   "result": "파일 없음·점검 중"
+  },
+  "15072126": {
+   "portal_id": 15072126,
+   "portal_name": "국토교통부_택지정보_토지이용계획_20230816",
+   "provider": "국토교통부",
+   "portal_modified": "2023-09-18",
+   "ext": "CSV",
+   "url": "https://openapi.jigu.go.kr/down/detail.do?table=BLS5_DSTRC_LAND",
+   "result": "파일 없음·점검 중"
+  },
+  "15072162": {
+   "portal_id": 15072162,
+   "portal_name": "국토교통부_택지정보_토지이용계획이력_20230816",
+   "provider": "국토교통부",
+   "portal_modified": "2023-09-18",
+   "ext": "CSV",
+   "url": "https://openapi.jigu.go.kr/down/detail.do?table=BLS5_DSTRC_LAND_HIST",
+   "result": "파일 없음·점검 중"
+  },
+  "15072160": {
+   "portal_id": 15072160,
+   "portal_name": "국토교통부_택지정보_부분준공이력_20241231",
+   "provider": "국토교통부",
+   "portal_modified": "2025-06-13",
+   "ext": "CSV",
+   "url": "https://openapi.jigu.go.kr/down/detail.do?table=BLS5_DSTRC_PART_HIST",
+   "result": "파일 없음·점검 중"
+  }
+ }
+}

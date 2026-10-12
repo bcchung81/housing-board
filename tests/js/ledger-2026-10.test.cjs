@@ -2,11 +2,12 @@
 // 2026-10 기준 원장 한 벌(schemas/ledger-2026-10/tables): 저장된 표가 검증을 통과하고, 같은 입력으로 다시 만들면 똑같이 나온다.
 // 건축HUB 전국 대용량(2026-08)은 중간 스냅샷(snapshot/hub-bulk-2026-08.json, 열린 달 주 1회 갱신 뒤면 snapshot/hub-refresh.json)과 후보 id 매핑(mappings/hub-candidate-ids.json)으로 넣는다.
 // 전국 모집공고(마이홈·LH)와 한국부동산원 입주예정물량은 raw/ 의 원본(readNational)으로 넣는다: 공고 중복 제거(panId)·필지 일치 연결만·지번 주소 → 필지.
+// 단계별 원천(건축물대장·부동산원·K-apt·마이홈 단지·청약홈·HUG·LH 공고 상세)은 중간 스냅샷(snapshot/stage-<판>.json, readStageInput)으로 넣는다(규칙 시험은 stage-link.test.cjs).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { convert, loadInputs, readHubBulk, readNational } = require('../../tools/ledger/convert');
+const { convert, raiseStages, STAGE_OF_EVENT, loadInputs, readHubBulk, readNational, readStageInput, stageFileOf, isStageSource } = require('../../tools/ledger/convert');
 const NL = require('../../tools/ledger/notice-link');
 const { nameIndex, jibunToPnu } = require('../../tools/ledger/map-lh');
 const { validate } = require('../../tools/ledger/validate');
@@ -28,6 +29,7 @@ const rebuilt = convert(loadInputs({
   hubBulk: readHubBulk(path.join(BASE, fs.existsSync(path.join(BASE, 'snapshot/hub-refresh.json')) ? 'snapshot/hub-refresh.json' : `snapshot/hub-bulk-${ED}.json`)),   // 열린 달 API 덮어쓰기(hub-api-refresh.js)가 있으면 그것
   hubIds: read('mappings/hub-candidate-ids.json'),
   national,
+  stage: readStageInput(stageFileOf(BASE)),
 }));
 const BULK = `hub-bulk-hs-${ED}`, MYHOME = 'myhome-hwspr02', LH_NOTICE = 'datagokr-15058530', MOVE_IN = 'datagokr-15111714';
 
@@ -36,7 +38,7 @@ test('저장된 2026-10 기준 표 16개가 검증(스키마·키 중복·표 �
   assert.deepEqual(validate(saved), []);
 });
 
-test('같은 입력(법정동코드·LH 매핑·건축HUB 스냅샷·건축HUB 대용량·후보 id 매핑·전국 공고·입주예정)으로 다시 만들면 저장된 표와 같다', () => {
+test('같은 입력(법정동코드·LH 매핑·건축HUB 스냅샷·건축HUB 대용량·후보 id 매핑·전국 공고·입주예정·단계별 원천)으로 다시 만들면 저장된 표와 같다', () => {
   for (const [table, rows] of Object.entries(rebuilt)) {
     assert.equal(rows.length, saved[table].length, table);
     rows.forEach((r, i) => { if (JSON.stringify(r) !== JSON.stringify(saved[table][i])) assert.deepEqual(saved[table][i], r, `${table}[${i}]`); });   // 큰 표의 deepEqual 실패 출력이 느려 다른 행만 비교한다
@@ -54,27 +56,27 @@ test('2026-10 기준: 사업 = 발급 77 + LH 후보 273 + 건축HUB 대용량 �
   assert.ok(bulk.every((p) => p.as_of === P.lastDay(ED)));
   const inferred = bulk.filter((p) => p.agency_id);
   assert.ok(bulk.filter((p) => !p.agency_id).every((p) => p.public_scope === 'UNKNOWN' && p.public_basis === null));
-  const linkedBulk = new Set(saved.notice_links.map((l) => l.local_project_id).filter((id) => bulk.some((p) => p.local_project_id === id)));
-  assert.deepEqual(inferred.map((p) => p.local_project_id).sort(), [...linkedBulk].sort(), '공고에 연결된 건축HUB 후보는 모두 공급기관(LH)으로 기관을 채웠다(첫 판 35)');
+  const linkedBulk = new Set(saved.notice_links.filter((l) => !isStageSource(l.source_ref)).map((l) => l.local_project_id).filter((id) => bulk.some((p) => p.local_project_id === id)));
+  assert.deepEqual(inferred.map((p) => p.local_project_id).sort(), [...linkedBulk].sort(), '마이홈·LH 공고(notice-link 규칙)에 연결된 건축HUB 후보는 모두 공급기관(LH)으로 기관을 채웠다(첫 판 35, notice-link.js 접두 충돌 수정 뒤 34). 청약홈·HUG·L1 연결은 기관을 추정하지 않는다');
   assert.ok(inferred.every((p) => p.agency_id === 'lh' && p.public_scope === 'PUBLIC' && /^모집공고 공급기관 LH\(공고 (LH|MYHOME) \S+, (M1_PNU|T1_LH_DISTRICT_BLOCK|T2_NAME_DISTRICT_BLOCK) — 자동 연결, 확인 필요\)$/.test(p.public_basis)), '근거는 public_basis');
   assert.equal(new Set(saved.projects.map((p) => p.sgg_code.slice(0, 2))).size, 16, '시도 16곳(전남광주 12 하나)');
   assert.ok(saved.events.every((e) => e.observed_month === '2026-10'));
   assert.equal(saved.events.filter((e) => e.source_ref === 'hub-hs-basis').length, read('snapshot/hub-events.json').rows.length);
   assert.deepEqual([...new Set(saved.review_required.map((r) => r.review_type))].sort(), ['DUPLICATE_CANDIDATE', 'LINK_CANDIDATE', 'PUBLIC_SCOPE_UNKNOWN', 'SGG_UNRESOLVED']);
   assert.ok(saved.review_required.filter((r) => r.review_type === 'SGG_UNRESOLVED').every((r) => r.source_ref === BULK), '시군구 미해결은 건축HUB 대용량에서만(입주예정 주소는 시군구를 모두 찾았다)');
-  assert.ok(saved.review_required.filter((r) => r.review_type === 'LINK_CANDIDATE').every((r) => r.source_ref === BULK || r.detail.startsWith(`${NL.RULE.T3}: `)), '연결 후보는 LH↔건축HUB 묶음 또는 공고 T3');
+  assert.ok(saved.review_required.filter((r) => r.review_type === 'LINK_CANDIDATE').every((r) => r.source_ref === BULK || r.detail.startsWith(`${NL.RULE.T3}: `) || isStageSource(r.source_ref)), '연결 후보는 LH↔건축HUB 묶음 또는 공고 T3 또는 단계별 원천(키 중복)');
   assert.equal(saved.areas.filter((a) => a.source_ref === 'datagokr-15123287').length, legalDong.rows.length, '법정동코드 파일의 존재 행(20,560)');
 });
 
-test('예정일 경과(2026-10-10): 현재 예정의 기간 끝이 지났고, 같은 종류의 실제 기록이 없고, 사업 단계가 아직 그 단계 전인 건축HUB 사업 — 9개 사업 13쌍', () => {
+test('예정일 경과(2026-10-10): 현재 예정의 기간 끝이 지났고, 같은 종류의 실제 기록이 없고, 사업 단계가 아직 그 단계 전인 건축HUB 사업 — 9개 사업 13쌍 → 8개 사업 11쌍(2026-10-13 단계 올리기: 청약홈 모집공고 실제로 05 가 된 성북 2사업의 착공 예정 경과가 빠진다)', () => {
   const stage = Object.fromEntries(saved.projects.map((p) => [p.local_project_id, p.stage_code]));
   const hub = saved.events.filter((e) => e.source_ref === 'hub-hs-basis');
   const actual = new Set(hub.filter((e) => e.date_type === 'ACTUAL').map((e) => `${e.local_project_id}|${e.event_type}`));
   const end = (e) => e.event_date ?? (e.event_month ? `${e.event_month}-31` : `${e.event_year}-12-31`);
   const reached = { CONSTRUCTION_START: '04', COMPLETION: '06' };
   const overdue = hub.filter((e) => e.date_type === 'PLANNED' && end(e) < '2026-10-10' && !actual.has(`${e.local_project_id}|${e.event_type}`) && stage[e.local_project_id] < reached[e.event_type]);
-  assert.equal(overdue.length, 13);
-  assert.equal(new Set(overdue.map((e) => e.local_project_id)).size, 9);
+  assert.equal(overdue.length, 11);
+  assert.equal(new Set(overdue.map((e) => e.local_project_id)).size, 8);
 });
 
 /* 공고·입주예정 시험용 작은 입력: 대용량 없이(레지스트리·LH 후보만) 바꾼 원본으로 변환한다 */
@@ -94,7 +96,9 @@ test('공고: 마이홈 panId 가 LH PAN_ID 와 같으면 한 공고(LH, PAN_ID 
   assert.deepEqual([merged[0].source_ref, merged[0].notice_title, merged[0].announced_on, merged[0].apply_start, merged[0].apply_end, merged[0].sgg_code], [MYHOME, '시험 공고', '2026-10-01', '2026-10-05', '2026-10-10', '11290']);
   assert.ok(t.notices.some((n) => n.notice_system === 'MYHOME' && n.notice_id === '9002'));
   assert.equal(r.merged, 1);
-  assert.equal(saved.notices.length, national.lhNotice.notices.length + saved.notices.filter((n) => n.notice_system === 'MYHOME').length, '공고 원본은 주 1회 갱신으로 바뀐다(첫 실행 4,993)');
+  const own = saved.notices.filter((n) => n.notice_system === 'LH' || n.notice_system === 'MYHOME');
+  assert.equal(own.length, national.lhNotice.notices.length + saved.notices.filter((n) => n.notice_system === 'MYHOME').length, '공고 원본은 주 1회 갱신으로 바뀐다(첫 실행 4,993)');
+  assert.equal(saved.notices.length - own.length, 6096 + 9700, '단계별 원천: 청약홈 분양정보 6,096 + HUG 분양이력 9,700(같은 키 3건은 #2)');
   assert.equal(new Set(saved.notices.map((n) => `${n.notice_system}|${n.notice_id}`)).size, saved.notices.length);
   assert.deepEqual([saved.notices.filter((n) => n.source_ref === MYHOME && n.notice_system === 'LH').length, saved.notices.filter((n) => n.notice_system === 'MYHOME').length], [107, 8]);
   assert.ok(saved.notices.filter((n) => n.source_ref === LH_NOTICE).every((n) => n.sgg_code === null && n.pnu === null && n.apply_start === null), 'LH 목록만 있는 공고는 시도뿐');
@@ -142,7 +146,7 @@ test('저장된 표의 공고 연결: 규칙 M1·T1·T2(evidence 앞머리)만, 
   const lhType = new Map(national.lhNotice.notices.map((n) => [n.PAN_ID, n.AIS_TP_CD_NM]));
   const kind = (l) => NL.noticeKind(notice.get(`${l.notice_system}|${l.notice_id}`).notice_title, l.notice_system === 'LH' ? lhType.get(l.notice_id) : undefined);
   const rules = new Set();
-  for (const l of saved.notice_links) {
+  for (const l of saved.notice_links.filter((x) => !isStageSource(x.source_ref))) {   // 단계별 원천 연결(청약홈·HUG·L1)은 stage-link.test.cjs
     const rule = /^(M1_PNU|T1_LH_DISTRICT_BLOCK|T2_NAME_DISTRICT_BLOCK): /.exec(l.evidence)?.[1];
     assert.ok(rule, l.evidence);
     rules.add(rule);
@@ -151,7 +155,7 @@ test('저장된 표의 공고 연결: 규칙 M1·T1·T2(evidence 앞머리)만, 
     assert.notEqual(kind(l), 'CANCEL');
   }
   assert.deepEqual([...rules].sort(), ['M1_PNU', 'T1_LH_DISTRICT_BLOCK', 'T2_NAME_DISTRICT_BLOCK']);
-  const expected = new Set(saved.notice_links.filter((l) => kind(l) === 'INITIAL' && notice.get(`${l.notice_system}|${l.notice_id}`).announced_on)
+  const expected = new Set(saved.notice_links.filter((l) => !isStageSource(l.source_ref) && kind(l) === 'INITIAL' && notice.get(`${l.notice_system}|${l.notice_id}`).announced_on)
     .map((l) => `${l.local_project_id}|${NL.noticeGroup(notice.get(`${l.notice_system}|${l.notice_id}`).notice_title)}`));
   const ev = saved.events.filter((e) => e.event_type === 'SUPPLY_NOTICE' && [MYHOME, LH_NOTICE].includes(e.source_ref));
   const got = ev.map((e) => { const [, sys, id] = /^공고 (\w+) (\S+) · /.exec(e.event_detail); return `${e.local_project_id}|${NL.noticeGroup(notice.get(`${sys}|${id}`).notice_title)}`; });
@@ -162,7 +166,7 @@ test('저장된 표의 공고 연결: 규칙 M1·T1·T2(evidence 앞머리)만, 
 
 test('검토 목록: T3 는 잇지 않고 LINK_CANDIDATE(공고 원천), 같은 공고·같은 블록에 자동 연결된 두 사업은 DUPLICATE_CANDIDATE 로만(병합하지 않음)', () => {
   const linked = new Set(saved.notice_links.map((l) => `${l.local_project_id}|${l.notice_system} ${l.notice_id}`));
-  const t3 = saved.review_required.filter((r) => r.review_type === 'LINK_CANDIDATE' && r.source_ref !== BULK);
+  const t3 = saved.review_required.filter((r) => r.review_type === 'LINK_CANDIDATE' && r.source_ref !== BULK && !isStageSource(r.source_ref));
   assert.ok(t3.length > 0);
   assert.ok(t3.every((r) => [MYHOME, LH_NOTICE].includes(r.source_ref) && !linked.has(`${r.local_project_id}|${r.record_key}`)));
   const dup = saved.review_required.filter((r) => r.review_type === 'DUPLICATE_CANDIDATE');
@@ -199,7 +203,7 @@ test('입주예정: 필지가 사업 위치와 같은 행만 MOVE_IN 예정(CURR
   const { t, r } = small({ moveIn: { ...national.moveIn, rows: [
     { month: '2027-03', region: '서울', type: '분양', address: 'x', name: '맞음', units: 100 },
     { month: '2027-00', region: '서울', type: '분양', address: 'x', name: '월 오류', units: 50 },
-    { month: '2027-04', region: '서울', type: '분양', address: '서울특별시 성북구 장위동 99999-1', name: '사업 없음', units: 30 },
+    { month: '2027-04', region: '서울', type: '분양', address: '서울특별시 성북구 장위동 9999-1', name: '사업 없음', units: 30 },
   ].map((x, i) => (i < 2 ? { ...x, address: null } : x)) } });
   assert.equal(t.events.filter((e) => e.source_ref === MOVE_IN).length, 0, '주소가 없거나 월이 틀리거나 사업이 없으면 이벤트 없음');
   assert.deepEqual([r.moveIn.badMonth, r.moveIn.parseFailed.LOT, r.moveIn.noProject, r.moveIn.events], [1, 1, 1, 0]);
@@ -216,4 +220,60 @@ test('입주예정: 필지가 사업 위치와 같은 행만 MOVE_IN 예정(CURR
   const idx = nameIndex(legalDong.rows), pnus = new Set(national.moveIn.rows.filter((x) => /^\d{4}-(0[1-9]|1[0-2])$/.test(x.month)).map((x) => jibunToPnu(x.address, idx).pnu).filter(Boolean));
   const located = new Set(saved.project_locations.filter((l) => pnus.has(l.pnu)).map((l) => l.local_project_id));
   assert.deepEqual([...new Set(ev.map((e) => e.local_project_id))].sort(), [...located].sort(), '이벤트가 있는 사업 = 입주예정 필지가 위치 필지인 사업');
+});
+
+/* 단계별 원천(2026-10-13, snapshot/stage-2026-08.json → tools/ledger/stage-link.js): 측정으로 정밀도가 확인된 자동 연결 규칙만. 숫자는 이 판의 효과(전 → 후) */
+const plain = convert(loadInputs({ observedMonth: '2026-10', lhSgg: read('mappings/lh-block-sgg.json'), hubEvents: read('snapshot/hub-events.json').rows, legalDong,
+  hubBulk: readHubBulk(path.join(BASE, fs.existsSync(path.join(BASE, 'snapshot/hub-refresh.json')) ? 'snapshot/hub-refresh.json' : `snapshot/hub-bulk-${ED}.json`)), hubIds: read('mappings/hub-candidate-ids.json'), national }));
+test('단계별 원천은 행을 더하기만 한다: stage 원천 행을 빼면 stage 없이 만든 표와 같다(trend 소급 항등의 전제) — 사업 단계는 stage 이벤트로만 올라간 것을 빼고 본다(2026-10-13 단계 올리기)', () => {
+  /* stage 없는 표의 사업을 stage 이벤트로 다시 올리면(raiseStages, 최댓값이라 순서 무관) 저장된 사업과 같다 */
+  const lifted = { projects: plain.projects, events: saved.events.filter((e) => isStageSource(e.source_ref)) };
+  raiseStages(lifted, '2026-10', {});
+  for (const [table, rows0] of Object.entries(plain)) {
+    const rows = table === 'projects' ? lifted.projects : rows0;
+    const kept = saved[table].filter((r) => !isStageSource(r.source_ref ?? ''));
+    assert.equal(kept.length, rows.length, table);
+    rows.forEach((r, i) => { if (JSON.stringify(r) !== JSON.stringify(kept[i])) assert.deepEqual(kept[i], r, `${table}[${i}]`); });
+  }
+});
+
+test('단계별 원천의 효과(2026-10): 준공 실제 사업 672 → 743(건축물대장 +71: 필지 45 · 블록 26) · 착공 실제 737 → 799 · 모집공고 사업 110 → 1,041 · 입주예정 사업 376 → 1,143 · 착공 추정 588(청약홈 475 · HUG 113)', () => {
+  const projectsOf = (f) => new Set(saved.events.filter(f).map((e) => e.local_project_id)).size;
+  assert.equal(projectsOf((e) => e.event_type === 'COMPLETION' && e.date_type === 'ACTUAL'), 743, '측정 기대 약 751 — 블록 표제부 묶음(세대 합)이 스냅샷에 없어 블록 후보가 조금 적다');
+  assert.equal(projectsOf((e) => e.event_type === 'CONSTRUCTION_START' && e.date_type === 'ACTUAL'), 799);
+  assert.equal(projectsOf((e) => e.event_type === 'SUPPLY_NOTICE'), 1041, '청약홈 A1~A4 · HUG H1 · LH L1 연결의 최초 모집공고');
+  assert.equal(projectsOf((e) => e.event_type === 'MOVE_IN' && e.date_type === 'PLANNED'), 1143, '청약홈 입주예정월 · LH 공고 상세 입주예정월');
+  const est = saved.events.filter((e) => e.date_type === 'ESTIMATED');
+  assert.ok(est.every((e) => e.event_type === 'CONSTRUCTION_START' && e.plan_basis === null && e.review_status === 'REVIEW_REQUIRED'));
+  assert.deepEqual([est.length, est.filter((e) => e.source_ref === 'datagokr-15098547').length, est.filter((e) => e.source_ref === 'khug-sale-history').length], [588, 475, 113], '사업마다 하나, 가장 이른 근거');
+  const actualStart = new Set(saved.events.filter((e) => e.event_type === 'CONSTRUCTION_START' && e.date_type === 'ACTUAL').map((e) => e.local_project_id));
+  assert.ok(est.every((e) => !actualStart.has(e.local_project_id)), '착공 실제가 있는 사업에는 추정이 없다');
+  const count = (rows, f) => rows.reduce((o, r) => { const k = f(r); o[k] = (o[k] ?? 0) + 1; return o; }, {});
+  assert.deepEqual(count(saved.identifiers.filter((i) => i.match_rule), (i) => `${i.id_type} ${i.match_rule}`), {
+    'HUB_HS_PK LH_BLOCK_DISTRICT': 101, 'BLDRGST_PK K2_BLD_PARCEL': 736, 'BLDRGST_PK K3_BLD_BLOCK': 56, 'REB_COMPLEX_ID K4_REB_PNU': 219, 'KAPT_CODE K6_KAPT_PNU': 370, 'MYHOME_HSMP_SN K4_MYHOME_PNU': 104 });
+  assert.equal(new Set(saved.identifiers.filter((i) => ['REB_COMPLEX_ID', 'KAPT_CODE', 'MYHOME_HSMP_SN'].includes(i.id_type)).map((i) => i.local_project_id)).size, 456, '필지가 있는 준공 사업 673 중 단지 키가 하나 이상(측정 기대 약 473)');
+  const rule = (l) => /^([A-Z0-9_]+): /.exec(l.evidence)[1];
+  const stageLinks = saved.notice_links.filter((l) => isStageSource(l.source_ref));
+  assert.deepEqual(Object.fromEntries(Object.entries(count(stageLinks, rule)).sort()), { A1_PNU: 1370, A2_BLOCK_DISTRICT: 355, A3_NAME_HH: 110, A4_NAME_CONTAIN_HH: 18, H1_NAME_HH: 235, L1_DETAIL_PNU: 51 });
+  assert.equal(new Set(saved.notice_links.map((l) => l.local_project_id)).size, 1103, '공고에 이어진 사업 130 → 1,103');
+  assert.deepEqual(count(saved.review_required.filter((r) => isStageSource(r.source_ref)), (r) => `${r.review_type} ${r.record_key.split(' ')[0]}`), { 'LINK_CANDIDATE BLDRGST_PK': 6 }, '같은 대장이 두 사업에 맞는 3건 × 2');
+});
+
+test('사업 단계 올리기(2026-10-13): 모든 사업의 stage_code ≥ 기준 달 이하 실제 이벤트가 뜻하는 단계 — stage 입력이 없을 때도 같은 규칙. 03 2,826 → 2,212 · 04 335 → 220 · 05 2 → 669 · 06 682 → 744(올린 사업 729)', () => {
+  const monthOf = (e) => (e.event_date ? e.event_date.slice(0, 7) : e.event_month ?? (e.event_year != null ? `${e.event_year}-12` : null));
+  const check = (t) => {
+    const top = new Map();
+    for (const e of t.events) if (e.date_type === 'ACTUAL' && STAGE_OF_EVENT[e.event_type] && monthOf(e) && monthOf(e) <= '2026-10') top.set(e.local_project_id, [top.get(e.local_project_id), STAGE_OF_EVENT[e.event_type]].filter(Boolean).sort().pop());
+    for (const p of t.projects) assert.ok(!top.has(p.local_project_id) || p.stage_code >= top.get(p.local_project_id), `${p.local_project_id} ${p.stage_code} < ${top.get(p.local_project_id)}`);
+  };
+  check(saved);
+  check(plain);
+  const dist = (t) => t.projects.reduce((o, p) => ((o[p.stage_code] = (o[p.stage_code] ?? 0) + 1), o), {});
+  assert.deepEqual(dist(saved), { '03': 2212, '04': 220, '05': 669, '06': 744 }, '올리기 전 03 2,826 · 04 335 · 05 2 · 06 682');
+  const report = {};
+  convert({ ...loadInputs({ observedMonth: '2026-10', lhSgg: read('mappings/lh-block-sgg.json'), hubEvents: read('snapshot/hub-events.json').rows, legalDong,
+    hubBulk: readHubBulk(path.join(BASE, fs.existsSync(path.join(BASE, 'snapshot/hub-refresh.json')) ? 'snapshot/hub-refresh.json' : `snapshot/hub-bulk-${ED}.json`)), hubIds: read('mappings/hub-candidate-ids.json'), national, stage: readStageInput(stageFileOf(BASE)) }), report });
+  assert.deepEqual(report.stageRaise, { projects: 729,
+    by: { 'SUPPLY_NOTICE datagokr-15098547': 542, 'SUPPLY_NOTICE datagokr-15058530': 93, 'COMPLETION hub-bulk-bld-2026-08': 62, 'SUPPLY_NOTICE myhome-hwspr02': 3, 'SUPPLY_NOTICE khug-sale-history': 24, 'SUPPLY_NOTICE datagokr-15057999': 5 },
+    byChange: { '03→05': 564, '04→05': 103, '04→06': 12, '03→06': 50 } }, '청약홈 모집공고 542 · LH 공고 93 · 건축물대장 준공 62 · HUG 24 · LH 공고 상세 5 · 마이홈 3');
 });

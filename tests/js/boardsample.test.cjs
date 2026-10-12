@@ -373,3 +373,16 @@ test('월별 실적 흐름: 종합상황판에서만 세로축을 만 단위로 
   assert.match(lines, /fmt=\{board \? man : undefined\} fill=\{board\}/);
   for (const f of ['app/(dashboard)/area/page.tsx', 'app/(dashboard)/area/[id]/page.tsx', 'app/(dashboard)/agency/[id]/page.tsx']) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../../', f), 'utf8'), /\sboard(\s|=|\/>)/, f);
 });
+
+test('추이 그래프: 원천이 새로 들어간 달(addedSources)에만 표지를 단다', () => {
+  const marks = S.addedMarks(J, L.now);
+  const withSrc = L.trend.filter((r) => r.addedSources?.length && L.months.indexOf(r.month) <= L.now).map((r) => r.month);
+  assert.deepEqual(marks.map((a) => L.months[a.m]), withSrc, '표지 달 = addedSources 가 있는 달');
+  assert.deepEqual(S.addedMarks(S.judgmentsOf(OLD), OLD.now), [], 'addedSources 가 없으면 표지 없음');
+  const none = S.judgmentsOf({ ...L, trend: L.trend.map(({ addedSources, ...r }) => r) });
+  assert.deepEqual(S.addedMarks(none, L.now), []);
+  const trend = panel(board, 'p-trend');
+  assert.match(trend, /AM\.map\(\(a\) => <line [^>]*data-added-mark[^>]*strokeDasharray/, '세로 점선');
+  assert.match(trend, /AM\.map\(\(a\) => <span [^>]*data-added-label[^>]*>원천 추가<\/span>/, '이름표');
+  assert.match(board, /원천 추가: \$\{a\.sources\.join\('·'\)\} — 이전 달과 직접 비교 주의/, '툴팁 문구');
+});

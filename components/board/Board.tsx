@@ -8,7 +8,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   C, CIR, K, PX0, RCOL, REGION_POS, RLAB, VW,
-  apart, argmax, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, sg, timelineOf, trendAt, trendMax, trendOf,
+  addedMarks, apart, argmax, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '../../lib/board/sample';
 import { ledgerJudged, ledgerMix, makeDirectives, nation as nationOf } from '../../lib/board/directives';
 import type { LedgerBoard } from '../../lib/board/types';
@@ -130,6 +130,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const pts = (k: 'd' | 'w') => TR.flatMap((r, m) => (r ? [tx(m) + ',' + ty(r[k])] : [])).join(' ');
   const t0 = T.judged[0], tf = TR[t0] ?? null, te = TR[judgedAt(T, NOW)] ?? { d: 0, w: 0 };
   const [eyD, eyW] = apart(tyn(te.d), tyn(te.w), 36, TH - 18), [syD, syW] = apart(tyn(tf?.d ?? 0), tyn(tf?.w ?? 0), 16, TH);   // 이름표 겹침 방지: 아래쪽을 내린다
+  const AM = addedMarks(JS, NOW), amTip = (a: { m: number; sources: string[] }) => `${ml(T, a.m)} 원천 추가: ${a.sources.join('·')} — 이전 달과 직접 비교 주의`;
   const up = L.upcoming, fi = cursor - NOW, hasFut = fi >= 0 && fi < up.length;
   const maxUp = Math.max(1, ...up.map((m) => m.units)), upSum = up.reduce((n, m) => n + m.units, 0), upProj = up.reduce((n, m) => n + m.projects, 0), UPH = 82;   // UPH = 막대 최대 높이(viewBox 100 중, 위 18은 선택 값 자리)
   const cur = DIR[focus - 1];
@@ -301,12 +302,14 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             {/* 선·격자는 non-scaling-stroke 로 화면 px 굵기를 지키고(1px 미만 흐림 방지, 계획서 14절 T2), 점·글자는 선 위에 겹친 HTML 이라 폭이 줄어도 크기가 그대로다 */}
             <div className="mt-3 flex" style={{ height: TH }}>
               <div className="relative min-w-0 flex-1">
-                <svg id="trend" className="absolute inset-0 size-full" viewBox={`0 0 560 ${TH}`} preserveAspectRatio="none" role="img" aria-label={`지연과 주의 호수 추이, ${ml(T, t0)}부터 ${ml(T, NOW)}까지. ${tf ? `${ml(T, t0)} 지연 ${f(tf.d)}호, 주의 ${f(tf.w)}호. ` : ''}${tsel ? `${ml(T, cc)} 지연 ${f(tsel.d)}호(전월 대비 ${sg(tsel.dd)}), 주의 ${f(tsel.w)}호(${sg(tsel.dw)}).` : `${ml(T, cc)} 판정 없음.`}`}>
+                <svg id="trend" className="absolute inset-0 size-full" viewBox={`0 0 560 ${TH}`} preserveAspectRatio="none" role="img" aria-label={`지연과 주의 호수 추이, ${ml(T, t0)}부터 ${ml(T, NOW)}까지. ${tf ? `${ml(T, t0)} 지연 ${f(tf.d)}호, 주의 ${f(tf.w)}호. ` : ''}${tsel ? `${ml(T, cc)} 지연 ${f(tsel.d)}호(전월 대비 ${sg(tsel.dd)}), 주의 ${f(tsel.w)}호(${sg(tsel.dw)}).` : `${ml(T, cc)} 판정 없음.`}${AM.map((a) => ` ${ml(T, a.m)} 원천 추가.`).join('')}`}>
                   {[0.25, 0.5, 0.75].map((fr) => <line key={fr} x1="0" y1={ty(tmax * fr)} x2="560" y2={ty(tmax * fr)} stroke="var(--border)" vectorEffect="non-scaling-stroke" />)}
+                  {AM.map((a) => <line key={a.m} data-added-mark x1={tx(a.m)} y1="2" x2={tx(a.m)} y2={TH - 2} stroke="var(--muted-foreground)" strokeDasharray="3 3" vectorEffect="non-scaling-stroke"><title>{amTip(a)}</title></line>)}
                   <g className="q-sweep"><polyline points={pts('w')} fill="none" stroke="var(--warn)" strokeWidth="2.4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /><polyline points={pts('d')} fill="none" stroke="var(--bad)" strokeWidth="2.8" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /></g>
                   <line x1={tx(cc)} y1="2" x2={tx(cc)} y2={TH - 2} stroke="var(--primary)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                 </svg>
                 <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+                  {AM.map((a) => <span key={a.m} data-added-label className="absolute bottom-0 -translate-x-full whitespace-nowrap bg-card pr-1 text-[12px] leading-4 text-muted-foreground" style={{ left: tpc(a.m) }} title={amTip(a)}>원천 추가</span>)}
                   {ct ? ([['bg-bad', ct.d], ['bg-warn', ct.w]] as const).map(([c, val]) => <i key={c} className={cn('absolute block size-3 -translate-1/2 rounded-full border-[1.5px] border-card', c)} style={{ left: tpc(cc), top: tyn(val) }} />) : null}
                   {tf && t0 < NOW ? ([[tf.d, syD], [tf.w, syW]] as const).map(([val, yy], i) => <span key={i} className="absolute left-0 text-[13px] leading-4 text-muted-foreground tabular-nums" style={{ top: Math.max(0, yy - 24) }}>{f(val)}</span>) : null}
                 </div>

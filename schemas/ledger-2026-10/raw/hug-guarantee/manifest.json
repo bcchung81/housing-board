@@ -1,0 +1,32 @@
+{
+ "source": "공공데이터포털 파일데이터 15002513",
+ "fetched_at": "2026-10-12T11:08:21.661274+00:00",
+ "endpoint": "https://www.data.go.kr/data/15002513/fileData.do",
+ "params": {
+  "portal_id": 15002513
+ },
+ "notes": "ego lite(작업공간 14)로 로그인 없이 내려받음. 상세 페이지의 '다운로드' 버튼 클릭 -> '변경된 데이터' 안내 alert 확인 -> download 이벤트 -> saveAs. 행 수는 머리글 제외 CSV 레코드 수.",
+ "files": {
+  "main": {
+   "portal_id": 15002513,
+   "portal_name": "주택도시보증공사_분양보증 발급현황_20260630",
+   "provider": "주택도시보증공사",
+   "portal_modified": "2026-09-30",
+   "portal_registered": "2026-09-22",
+   "update_cycle": "분기",
+   "portal_rows": "818",
+   "edition": "20260630",
+   "filename": "주택도시보증공사_분양보증 발급현황_20260630.csv",
+   "bytes": 21157,
+   "sha256": "fcc31c779aada112589f7446ee1c9edff55892f75d7b091ff6a0bfc0ae268cef",
+   "encoding": "CP949",
+   "rows": 818,
+   "header": [
+    "연도",
+    "지역",
+    "보증실적(억원)",
+    "세대수"
+   ]
+  }
+ }
+}

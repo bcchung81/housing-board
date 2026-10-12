@@ -1,0 +1,34 @@
+{
+ "source": "공공데이터포털 파일데이터 15064155",
+ "fetched_at": "2026-10-12T11:08:21.661274+00:00",
+ "endpoint": "https://www.data.go.kr/data/15064155/fileData.do",
+ "params": {
+  "portal_id": 15064155
+ },
+ "notes": "ego lite(작업공간 14)로 로그인 없이 내려받음. 상세 페이지의 '다운로드' 버튼 클릭 -> '변경된 데이터' 안내 alert 확인 -> download 이벤트 -> saveAs. 행 수는 머리글 제외 CSV 레코드 수.",
+ "files": {
+  "main": {
+   "portal_id": 15064155,
+   "portal_name": "행정중심복합도시건설청_행복도시 공동주택 준공계획_20260914",
+   "provider": "행정중심복합도시건설청",
+   "portal_modified": "2026-09-15",
+   "portal_registered": "2024-08-09",
+   "update_cycle": "월간",
+   "portal_rows": "5",
+   "edition": "20260914",
+   "filename": "행정중심복합도시건설청_행복도시 공동주택 준공계획_20260914.csv",
+   "bytes": 246,
+   "sha256": "cc42aa320682cb08c80c84821e8d88e1677b547e1889546f587d9cff7ef84810",
+   "encoding": "CP949",
+   "rows": 5,
+   "header": [
+    "생활권",
+    "블록",
+    "사업자",
+    "주택유형",
+    "입주시기",
+    "세대수"
+   ]
+  }
+ }
+}

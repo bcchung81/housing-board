@@ -1,0 +1,230 @@
+{
+ "source": "건축HUB 대용량 제공 서비스 - 건축인허가 기본개요 최신 월",
+ "fetched_at": "2026-10-12T11:08:21.661274+00:00",
+ "endpoint": "https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do (다운로드 POST https://www.hub.go.kr/cmm/fms/fileOpnDown.do)",
+ "params": {
+  "구분": "01 건축인허가",
+  "데이터제공년월": "2026-09(2026년 08월 데이터)",
+  "이용목적": "3 참고자료"
+ },
+ "notes": "ego lite(작업공간 14)로 로그인 없이 내려받음. 절차: 구분 선택 -> 검색(40건씩) -> 해당 파일의 '전체 다운로드' -> 이용목적 팝업 '참고자료' -> 확인 -> download 이벤트 -> saveAs. 열 이름·타입은 '설명' 팝업(/portal/opn/lps/idx-lgcpt-pvsn-srvc-popup.do). 머리글 없는 텍스트(구분자 | 추정), zip 은 풀지 않고 그대로 보관, 행 수는 unzip -p | wc -l.",
+ "files": {
+  "basic": {
+   "service": "기본개요 (2026년 08월, 제공 2026-09)",
+   "opnTaskCd": "0101",
+   "zip": "건축인허가_기본개요_2026-08.zip",
+   "zip_bytes": 439574298,
+   "zip_sha256": "0fd6134d42b96f7887bc66ab1829b37ff8e8176bfb58e542fb2096c1ff1beff6",
+   "member": "mart_kcy_01.txt",
+   "member_bytes": 1715511773,
+   "rows": 6513881,
+   "columns": [
+    {
+     "name": "관리_허가대장_PK",
+     "type": "VARCHAR(33)",
+     "note": ""
+    },
+    {
+     "name": "대지_위치",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "건물_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "시군구_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "법정동_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "대지_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "번",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "지",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "특수지_명",
+     "type": "VARCHAR(200)",
+     "note": ""
+    },
+    {
+     "name": "블록",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "로트",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "지목_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "지역_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "지구_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "구역_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "지목_코드",
+     "type": "VARCHAR(2)",
+     "note": ""
+    },
+    {
+     "name": "지역_코드",
+     "type": "VARCHAR(6)",
+     "note": ""
+    },
+    {
+     "name": "지구_코드",
+     "type": "VARCHAR(6)",
+     "note": ""
+    },
+    {
+     "name": "구역_코드",
+     "type": "VARCHAR(6)",
+     "note": ""
+    },
+    {
+     "name": "건축_구분_코드",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "건축_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "대지_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "건축_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "건폐_율(%)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "연면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "용적_률_산정_연면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "용적_률(%)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "주_건축물_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "부속_건축물_동_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "주_용도_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "주_용도_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "세대_수(세대)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "호_수(호)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "가구_수(가구)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "총_주차_수",
+     "type": "NUMERIC(7)",
+     "note": ""
+    },
+    {
+     "name": "착공_예정_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "착공_연기_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "실제_착공_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "건축_허가_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "사용승인_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "생성_일자",
+     "type": "VARCHAR(8)",
+     "note": ""
+    }
+   ]
+  }
+ }
+}

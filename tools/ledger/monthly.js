@@ -177,13 +177,15 @@ async function run({ root = P.ROOT, month, dryRun = false, now = Date.now(), exe
   return { ...result, status: 'updated', summary };
 }
 
-/* convert.js 인자(그 달 폴더의 입력, --hub-bulk = snapshot/<bulkFile>) */
+/* convert.js 인자(그 달 폴더의 입력, --hub-bulk = snapshot/<bulkFile>). 단계별 원천 중간 스냅샷(snapshot/stage-*.json, 가장 늦은 것)이 있으면 --stage 로 넘긴다 —
+   그 스냅샷은 수동 단계(tools/ledger/stage-snapshot.js, 원본 API 자료가 CI 에 없다)라 월 갱신이 만들지 않는다 */
 function convertArgs(root, dir, month, bulkFile) {
   const rel = (p) => path.relative(root, p);
   const dong = fs.readdirSync(path.join(dir, 'raw/legal-dong')).filter((f) => f.endsWith('.csv')).sort().pop();
+  const snap = path.join(dir, 'snapshot'), stage = fs.existsSync(snap) ? fs.readdirSync(snap).filter((f) => /^stage-\d{4}-\d{2}\.json$/.test(f)).sort().pop() : null;
   return ['--month', month, '--lh-sgg', rel(path.join(dir, 'mappings/lh-block-sgg.json')), '--hub-events', rel(path.join(dir, 'snapshot/hub-events.json')),
     '--legal-dong', rel(path.join(dir, 'raw/legal-dong', dong)), '--hub-bulk', rel(path.join(dir, 'snapshot', bulkFile)),
-    '--hub-ids', rel(path.join(dir, 'mappings/hub-candidate-ids.json')), '--national', rel(path.join(dir, 'raw')), '--out', rel(path.join(dir, 'tables'))];
+    '--hub-ids', rel(path.join(dir, 'mappings/hub-candidate-ids.json')), '--national', rel(path.join(dir, 'raw')), ...(stage ? ['--stage', rel(path.join(snap, stage))] : []), '--out', rel(path.join(dir, 'tables'))];
 }
 
 /* ---------- 열린 달 주 1회 갱신(--refresh) ---------- */
@@ -279,7 +281,7 @@ function parseArgs(argv) {
   return o;
 }
 
-module.exports = { run, refresh, refreshStatus, changedGrades, parseList, latestEdition, placeEdition, summaryMarkdown, boardSummary, parseArgs, STATIC, REFRESH_FILES };
+module.exports = { run, refresh, refreshStatus, changedGrades, parseList, latestEdition, placeEdition, summaryMarkdown, boardSummary, parseArgs, convertArgs, STATIC, REFRESH_FILES };
 
 if (require.main === module) {
   (async () => {

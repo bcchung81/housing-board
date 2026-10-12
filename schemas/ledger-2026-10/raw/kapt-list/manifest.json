@@ -1,0 +1,53 @@
+{
+ "source": "국토교통부 공동주택 단지 목록제공 서비스(15057332, K-apt)",
+ "fetched_at": "2026-10-12T11:31:14.797Z",
+ "endpoint": [
+  "https://apis.data.go.kr/1613000/AptListService4/getTotalAptList4"
+ ],
+ "params": {
+  "pageRows": 5000,
+  "요청단위": "numOfRows=5000 전 쪽(전국 한 요청 단위)",
+  "cond": "(전국·전체)"
+ },
+ "calls": 8,
+ "pages": 8,
+ "records": 22324,
+ "notes": "전국 모든 단지 코드·단지명·법정동코드(bjdCode)·시도~리 이름. 한 번에 numOfRows=5000 으로 전 쪽. rows 는 원천 행 그대로. 기본정보(15058453 getAphusBassInfoV5) 시험 3건: 응답 필드 kaptCode,kaptName,kaptAddr,codeSaleNm,codeHeatNm,kaptTarea,kaptDongCnt,kaptdaCnt,kaptBcompany,kaptAcompany,kaptTel,kaptUrl,codeAptNm,doroJuso,codeMgrNm,codeHallNm,kaptUsedate,kaptFax,hoCnt,kaptMarea,kaptMparea60,kaptMparea85,kaptMparea135,kaptMparea136,privArea,bjdCode,kaptTopFloor,ktownFlrNo,kaptBaseFloor,kaptdEcntp,zipcode",
+ "operations": {
+  "getTotalAptList4": {
+   "totalCount": 22324,
+   "rows": 22324,
+   "calls": 8,
+   "fields": [
+    "kaptCode",
+    "kaptName",
+    "bjdCode",
+    "as1",
+    "as2",
+    "as3",
+    "as4"
+   ],
+   "idField": "kaptCode",
+   "idDistinct": 22324,
+   "idRepeatRows": 0,
+   "bySido": {
+    "경기도": 5665,
+    "서울특별시": 3407,
+    "전남광주통합특별시": 1759,
+    "부산광역시": 1467,
+    "경상남도": 1462,
+    "대구광역시": 1196,
+    "인천광역시": 1139,
+    "경상북도": 1080,
+    "충청남도": 1017,
+    "전북특별자치도": 898,
+    "강원특별자치도": 865,
+    "충청북도": 805,
+    "대전광역시": 608,
+    "울산광역시": 551,
+    "세종특별자치시": 216,
+    "제주특별자치도": 189
+   }
+  }
+ }
+}

@@ -1,0 +1,228 @@
+{
+ "source": "V-World 데이터 API 택지·사업지구 경계와 블록(토지이용계획) 폴리곤",
+ "endpoint": "https://api.vworld.kr/req/data",
+ "params": {
+  "service": "data",
+  "request": "GetFeature",
+  "data": "<layer>",
+  "geomFilter": "BOX(<격자 칸>)",
+  "size": 1000,
+  "page": "1..N",
+  "format": "json",
+  "crs": "EPSG:4326"
+ },
+ "layers": {
+  "LT_C_LHZONE": {
+   "file": "LT_C_LHZONE.geojson",
+   "gzip": false,
+   "crs": "EPSG:4326",
+   "bytes_json": 17264764,
+   "bytes_file": 17264764,
+   "features_before_dedupe": 1388,
+   "features": 1332,
+   "id_field": "feature.id (예 LT_C_LHBLPN.44313)",
+   "property_fields": {
+    "zonename": 1332
+   },
+   "by_region": {
+    "경위도 126E 33N": 19,
+    "경위도 126E 34N": 13,
+    "경위도 127E 34N": 36,
+    "경위도 128E 34N": 8,
+    "경위도 128E 35N": 169,
+    "경위도 126E 35N": 91,
+    "경위도 127E 35N": 33,
+    "경위도 129E 35N": 98,
+    "경위도 126E 36N": 38,
+    "경위도 127E 36N": 170,
+    "경위도 128E 36N": 34,
+    "경위도 129E 36N": 8,
+    "경위도 127E 37N": 321,
+    "경위도 126E 37N": 255,
+    "경위도 128E 37N": 16,
+    "경위도 129E 37N": 9,
+    "경위도 124E 37N": 1,
+    "경위도 127E 38N": 5,
+    "경위도 128E 38N": 8
+   },
+   "calls": 244,
+   "grid": {
+    "cell_deg": 0.5,
+    "cells_fetched": 52,
+    "cells_split_to_quarter": 0,
+    "split_over": 3000,
+    "min_cell_deg": 0.05,
+    "page_size": 1000,
+    "bounds": {
+     "lon": [
+      124,
+      132
+     ],
+     "lat": [
+      33,
+      39
+     ]
+    }
+   }
+  },
+  "LT_C_LHBLPN": {
+   "file": "LT_C_LHBLPN.geojson.gz",
+   "gzip": true,
+   "crs": "EPSG:4326",
+   "bytes_json": 266409232,
+   "bytes_file": 85278456,
+   "features_before_dedupe": 146102,
+   "features": 143343,
+   "id_field": "feature.id (예 LT_C_LHBLPN.44313)",
+   "property_fields": {
+    "blocktype": 143330,
+    "zonename": 143343
+   },
+   "by_region": {
+    "경위도 126E 33N": 1407,
+    "경위도 126E 34N": 3230,
+    "경위도 127E 34N": 3534,
+    "경위도 128E 34N": 301,
+    "경위도 128E 35N": 16965,
+    "경위도 126E 35N": 8583,
+    "경위도 127E 35N": 2904,
+    "경위도 129E 35N": 7159,
+    "경위도 126E 36N": 4251,
+    "경위도 127E 36N": 19806,
+    "경위도 128E 36N": 3222,
+    "경위도 129E 36N": 454,
+    "경위도 126E 37N": 36014,
+    "경위도 127E 37N": 34514,
+    "경위도 128E 37N": 359,
+    "경위도 129E 37N": 313,
+    "경위도 124E 37N": 1,
+    "경위도 127E 38N": 159,
+    "경위도 128E 38N": 167
+   },
+   "calls": 572,
+   "grid": {
+    "cell_deg": 0.5,
+    "cells_fetched": 151,
+    "cells_split_to_quarter": 36,
+    "split_over": 3000,
+    "min_cell_deg": 0.05,
+    "page_size": 1000,
+    "bounds": {
+     "lon": [
+      124,
+      132
+     ],
+     "lat": [
+      33,
+      39
+     ]
+    }
+   }
+  },
+  "LT_C_UD610": {
+   "file": "LT_C_UD610.geojson",
+   "gzip": false,
+   "crs": "EPSG:4326",
+   "bytes_json": 192284,
+   "bytes_file": 192284,
+   "features_before_dedupe": 20,
+   "record_total_sum": 20,
+   "features": 20,
+   "id_field": "feature.id (예 LT_C_LHBLPN.44313)",
+   "property_fields": {
+    "uname": 20,
+    "dyear": 20,
+    "dnum": 20,
+    "sido_name": 20,
+    "sigg_name": 20,
+    "remark": 4
+   },
+   "by_region": {
+    "전북특별자치도": 1,
+    "경상남도": 3,
+    "경상북도": 2,
+    "경기도": 5,
+    "서울특별시": 5,
+    "강원특별자치도": 3,
+    "충청북도": 1
+   },
+   "calls": 202,
+   "grid": {
+    "cell_deg": 0.5,
+    "cells_fetched": 10,
+    "cells_split_to_quarter": 0,
+    "split_over": 3000,
+    "min_cell_deg": 0.05,
+    "page_size": 1000,
+    "bounds": {
+     "lon": [
+      124,
+      132
+     ],
+     "lat": [
+      33,
+      39
+     ]
+    }
+   }
+  },
+  "LT_C_UD620": {
+   "file": "LT_C_UD620.geojson",
+   "gzip": false,
+   "crs": "EPSG:4326",
+   "bytes_json": 4302073,
+   "bytes_file": 4302073,
+   "features_before_dedupe": 227,
+   "record_total_sum": 227,
+   "features": 220,
+   "id_field": "feature.id (예 LT_C_LHBLPN.44313)",
+   "property_fields": {
+    "uname": 186,
+    "sido_name": 220,
+    "sigg_name": 220,
+    "dyear": 220,
+    "dnum": 220
+   },
+   "by_region": {
+    "전남광주통합특별시": 5,
+    "전북특별자치도": 4,
+    "경상남도": 8,
+    "부산광역시": 3,
+    "대구광역시": 7,
+    "경상북도": 4,
+    "울산광역시": 6,
+    "충청남도": 4,
+    "대전광역시": 3,
+    "충청북도": 2,
+    "세종특별자치시": 2,
+    "경기도": 95,
+    "인천광역시": 14,
+    "서울특별시": 60,
+    "강원특별자치도": 3
+   },
+   "calls": 212,
+   "grid": {
+    "cell_deg": 0.5,
+    "cells_fetched": 20,
+    "cells_split_to_quarter": 0,
+    "split_over": 3000,
+    "min_cell_deg": 0.05,
+    "page_size": 1000,
+    "bounds": {
+     "lon": [
+      124,
+      132
+     ],
+     "lat": [
+      33,
+      39
+     ]
+    }
+   }
+  }
+ },
+ "fetched_at": "2026-10-12T11:04:09.813Z",
+ "calls": 1230,
+ "records": 144915,
+ "notes": "속성은 원본 그대로. 같은 지물이 여러 칸에 걸치면 feature.id 로 중복 제거. 사업과의 연계 없음."
+}

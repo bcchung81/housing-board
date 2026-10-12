@@ -13,7 +13,7 @@ export function timelineOf(L: { months: string[]; now: number; actualThrough?: s
 }
 /* 한 달의 판정(data/board/judgment-history.json 의 행 모양). 기준 달은 원장 집계 자신의 judgment */
 type Judged = { projects: number; units: number };
-export type JudgeRow = { month: string; referenceDate: string; ok: Judged; caution: Judged; delay: Judged; delayByStage: number[]; cautionByStage: number[]; judged: number };
+export type JudgeRow = { month: string; referenceDate: string; ok: Judged; caution: Judged; delay: Judged; delayByStage: number[]; cautionByStage: number[]; judged: number; addedSources?: string[] };
 type JudgeSource = { months: string[]; now: number; referenceDate: string; judgment: { ok: Judged; caution: Judged; delay: Judged }; delayByStage: number[]; cautionByStage: number[]; scope: { judged: number }; trend?: JudgeRow[] };
 /* 달(시점 번호)마다 판정 행, 판정 없는 달은 null */
 export function judgmentsOf(L: JudgeSource): (JudgeRow | null)[] {
@@ -52,6 +52,8 @@ export const delayAt = (T: Timeline, delays: (number[] | null)[], m: number) => 
 /* 0 … NOW 달마다 지연·주의 호수(판정 없는 달 null) */
 export const trendOf = (T: Timeline, J: (JudgeRow | null)[]) => J.slice(0, T.now + 1).map((r) => (r ? { d: r.delay.units, w: r.caution.units } : null));
 /* 세로 맨 위: 최댓값 이상인 가장 작은 1·1.2·1.5·2·2.5·3·4·5·6·8 × 10^n(눈금 글자가 없어 선이 카드 높이를 고르게 쓰게 한다). 눈금선 3개는 4등분 */
+/* 원천이 새로 들어간 달(addedSources 가 있는 판정 행) — 추이 그래프의 표지. 이전 달과 직접 비교되지 않는다 */
+export const addedMarks = (J: (JudgeRow | null)[], NOW: number) => J.slice(0, NOW + 1).flatMap((r, m) => (r?.addedSources?.length ? [{ m, sources: r.addedSources }] : []));
 export const trendMax = (max: number) => { for (let e = 1; ; e *= 10) for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8]) if (m * e >= max) return m * e; };
 /* 선 끝 이름표의 값: 선택 시점(NOW 까지)의 판정 달 값과 전월 대비 증감(호, 이력 차이). 판정 달이 없으면 null, 앞 달 판정이 없으면 증감 0 */
 export function trendAt(T: Timeline, tr: ({ d: number; w: number } | null)[], cur: number) {

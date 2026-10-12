@@ -1,0 +1,181 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>6단계 연계값 분석</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+:root{--bg:#F5F7FB;--pn:#fff;--ink:#0F1A33;--sub:#56627F;--line:#DCE2EF;--acc:#C8421F;--soft:#EEF2FB;--ok:#1F7A4D;--warn:#A86A00;--bad:#C8421F;--track:#E4E9F4}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0B1230;--pn:#121C45;--ink:#E8EDFF;--sub:#A3AFD6;--line:#25336A;--acc:#FF8A65;--soft:#17235A;--ok:#5FD39A;--warn:#F2B94B;--bad:#FF8A65;--track:#1C2A63}}
+:root[data-theme="dark"]{--bg:#0B1230;--pn:#121C45;--ink:#E8EDFF;--sub:#A3AFD6;--line:#25336A;--acc:#FF8A65;--soft:#17235A;--ok:#5FD39A;--warn:#F2B94B;--bad:#FF8A65;--track:#1C2A63}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.75 'Noto Sans KR','Apple SD Gothic Neo','Malgun Gothic',system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+main{max-width:980px;margin:0 auto;padding:44px 16px 80px}
+h1{margin:0 0 6px;font-size:26px;line-height:1.3;letter-spacing:-.02em}
+.sub{color:var(--sub);font-size:13.5px;margin:0 0 30px}
+h2{margin:44px 0 12px;font-size:19px}
+.card{background:var(--pn);border:1px solid var(--line);border-left:4px solid var(--acc);border-radius:10px;padding:16px 20px}
+.card p{margin:0;font-size:17px;font-weight:700;line-height:1.6}
+ul,ol{margin:12px 0 0;padding-left:20px}li{margin:6px 0}
+code{font:12.5px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--soft);padding:1px 5px;border-radius:4px;white-space:nowrap}
+.tw{overflow-x:auto;margin:6px 0 4px;border:1px solid var(--line);border-radius:10px;background:var(--pn)}
+table{border-collapse:collapse;width:100%;font-size:13.5px;line-height:1.55}
+th,td{padding:8px 11px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{background:var(--soft);font-weight:700;white-space:nowrap}tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+.note{color:var(--sub);font-size:13px;margin:6px 0 0}
+.tag{display:inline-block;font-size:12px;font-weight:700;line-height:1;padding:4px 7px;border-radius:999px;border:1px solid currentColor;white-space:nowrap}
+.t-ok{color:var(--ok)}.t-warn{color:var(--warn)}.t-bad{color:var(--bad)}
+/* 키 사슬 */
+.chain{margin:8px 0 0;display:grid;gap:0}
+.st{display:grid;grid-template-columns:44px 1fr auto;gap:4px 14px;align-items:center;background:var(--pn);border:1px solid var(--line);border-radius:10px;padding:12px 16px}
+.st .no{width:36px;height:36px;border-radius:50%;background:var(--soft);display:grid;place-items:center;font-weight:700}
+.st .nm{font-weight:700}.st .k{color:var(--sub);font-size:13.5px}
+.st .c{text-align:right;font-size:13px;color:var(--sub);font-variant-numeric:tabular-nums;line-height:1.5}
+.st .c b{color:var(--ink);font-size:15px}
+.br{display:grid;grid-template-columns:44px 1fr;gap:0 14px;padding:0 16px}
+.br .ln{justify-self:center;width:2px;background:var(--line)}
+.br .bd{padding:10px 0 12px;font-size:13.5px}
+.br .bt{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.bar{display:flex;align-items:center;gap:10px;margin:6px 0 2px}
+.bar .tr{flex:1;max-width:340px;height:8px;border-radius:4px;background:var(--track);overflow:hidden}
+.bar .fl{height:100%;border-radius:4px;background:var(--acc)}
+.bar .fl.ok{background:var(--ok)}.bar .fl.warn{background:var(--warn)}
+.bar .v{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.br .why{color:var(--sub)}
+.log{margin-top:44px;padding-top:14px;border-top:1px solid var(--line);color:var(--sub);font-size:13.5px}
+.log ul{margin:6px 0 0}
+@media (max-width:560px){.st{grid-template-columns:36px 1fr}.st .c{grid-column:2;text-align:left}.br{padding:0 10px}.st{padding:12px}}
+</style></head><body><main>
+<h1>공급 6단계 · 단계 간 연계값 분석</h1>
+<p class="sub">사업 원장 2026-10(기준일 2026-10-12, 사업 3,845건)을 실측했습니다. 같은 수치를 서로 다른 스크립트로 두 번 계산해 대조했고, 추정이던 API 필드는 공공데이터포털 명세로 확인했습니다.</p>
+
+<h2>결론</h2>
+<div class="card"><p>단계별 자료보다 단계 사이 연결이 더 크게 끊겨 있습니다. 키가 바뀌는 세 구간(계획→인허가, 착공→모집, 준공→입주)이 끊겼고, 인허가→착공은 키는 같은데 값이 비어 있습니다. 인허가부터 준공까지 실제 날짜가 모두 이어진 사업은 3,845건 중 4건입니다.</p></div>
+<ul>
+<li>허브는 지금처럼 사업 id(<code>PRJ-시군구5-일련4</code>)로 둡니다. 다만 구간마다 정규화된 연계값과, 그 값을 이은 규칙을 함께 남깁니다.</li>
+<li>먼저 할 일은 수집 없이 스키마·변환만 고치는 네 가지입니다. 사업 id 고정, 표준 블록 키, 연결 규칙 칸, 원천 레코드 키(4장 1~4).</li>
+<li>그다음 수집 순서는 착공 실제일 보강 → 청약홈 분양정보(민간 포함 모집) → 단지코드(마이홈·K-apt)입니다.</li>
+</ul>
+
+<h2>1. 키 사슬 한눈에</h2>
+<p class="note">상자 오른쪽 숫자는 그 단계의 증거가 있는 사업 수입니다. 막대는 앞 단계 사업 중 다음 단계 실제 증거까지 이어진 비율입니다.</p>
+<div class="chain">
+  <div class="st"><div class="no">①</div><div><div class="nm">계획</div><div class="k">LH 지구·블록 <code>위례A2-7BL|1</code> · 지구코드 없음</div></div><div class="c"><b>278</b><br>사업</div></div>
+  <div class="br"><div class="ln"></div><div class="bd">
+    <div class="bt"><span>지구·블록 ↔ 관리번호 (이름·블록 규칙)</span><span class="tag t-bad">키 바뀜</span></div>
+    <div class="bar"><div class="tr"><div class="fl warn" style="width:32.7%"></div></div><span class="v">91 / 278 · 33%</span></div>
+    <div class="why">계획 원천이 LH 준공예정뿐입니다(정책·기관 입력은 0행).</div></div></div>
+
+  <div class="st"><div class="no">②</div><div><div class="nm">인허가</div><div class="k">주택인허가 관리번호 <code>관리_주택대장_PK</code></div></div><div class="c"><b>3,651</b><br>실제</div></div>
+  <div class="br"><div class="ln"></div><div class="bd">
+    <div class="bt"><span>같은 관리번호</span><span class="tag t-warn">값 빔</span></div>
+    <div class="bar"><div class="tr"><div class="fl warn" style="width:19.9%"></div></div><span class="v">726 / 3,651 · 20%</span></div>
+    <div class="why">예정까지 넣으면 3,635건이 이어집니다. 착공 예정일이 지났는데 기록이 없는 2,514건 중 342건은 이미 입주예정 목록에 있습니다.</div></div></div>
+
+  <div class="st"><div class="no">③</div><div><div class="nm">착공</div><div class="k">같은 관리번호의 착공일</div></div><div class="c"><b>737</b> 실제<br>3,617 예정</div></div>
+  <div class="br"><div class="ln"></div><div class="bd">
+    <div class="bt"><span>관리번호·필지 → 공고 ID (필지 일치·제목 규칙)</span><span class="tag t-bad">키 바뀜</span></div>
+    <div class="bar"><div class="tr"><div class="fl" style="width:1.8%"></div></div><span class="v">13 / 737 · 1.8%</span></div>
+    <div class="why">공고 4,995건 중 필지가 있는 것은 57건입니다. 건축HUB 후보는 3/681건만 이어졌습니다.</div></div></div>
+
+  <div class="st"><div class="no">④</div><div><div class="nm">모집</div><div class="k">LH <code>PAN_ID</code> · 마이홈 공고 ID</div></div><div class="c"><b>131</b><br>사업</div></div>
+  <div class="br"><div class="ln"></div><div class="bd">
+    <div class="bt"><span>사업 id 를 거쳐서만</span><span class="tag t-bad">약함</span></div>
+    <div class="bar"><div class="tr"><div class="fl" style="width:3.1%"></div></div><span class="v">4 / 131 · 3%</span></div>
+    <div class="why">공고와 이어진 사업이 적고, 준공 실제일은 건축HUB 사용검사일에서만 옵니다(LH 후보는 원천 없음).</div></div></div>
+
+  <div class="st"><div class="no">⑤</div><div><div class="nm">준공</div><div class="k">관리번호의 사용검사일 (+ 건축물대장)</div></div><div class="c"><b>672</b> 실제<br>3,678 예정</div></div>
+  <div class="br"><div class="ln"></div><div class="bd">
+    <div class="bt"><span>필지 → 단지코드</span><span class="tag t-bad">키 없음</span></div>
+    <div class="bar"><div class="tr"><div class="fl" style="width:0"></div></div><span class="v">실제 0 / 672 · 예정 21 / 672</span></div>
+    <div class="why">입주 실제 원천이 없습니다. 택지 블록은 준공 뒤 필지가 바뀝니다.</div></div></div>
+
+  <div class="st"><div class="no">⑥</div><div><div class="nm">입주</div><div class="k">단지코드 — 원장에 없음</div></div><div class="c"><b>0</b> 실제<br>376 예정</div></div>
+</div>
+
+<h2>2. 구간별 진단</h2>
+<div class="tw"><table>
+<thead><tr><th>구간</th><th>지금 잇는 값과 규칙</th><th class="n">이어진 사업</th><th>끊긴 이유 (확인한 것)</th></tr></thead>
+<tbody>
+<tr><td>①→②</td><td><code>AREA_BLOCK</code> ↔ <code>HUB_HS_PK</code>. 시군구·정규화 블록이 같고, LH 지구 낱말이 건물명·특수지명·주소에 들어 있으며, 후보가 1개일 때만 잇습니다. 세대수·날짜는 보지 않습니다.</td><td class="n">91 / 278</td><td>키 값이 원문 <code>지구|블록</code>이고 시군구가 없습니다. 이름 규칙으로 이었는데도 모두 <code>CONFIRMED</code>로 기록됩니다(convert.js:167·236).</td></tr>
+<tr><td>②→③</td><td>같은 관리번호</td><td class="n">726 / 3,651</td><td>착공 실제가 없는 2,925건 = 예정일이 아직 안 옴 395 · 예정일 지남 2,514 · 예정 없음 16. 판정에서 뺀 대용량 후보가 2,408사업·1,363,988호입니다. 착공 전이라서가 아니라 원천 값이 빈 것입니다.</td></tr>
+<tr><td>③→④</td><td>notice_links: 필지 일치 10 · LH 블록+지구 낱말 200 · 사업 블록+지구 낱말 154. 모두 확인 필요(<code>REVIEW_REQUIRED</code>)입니다.</td><td class="n">13 / 737</td><td>공고 원천이 LH·마이홈뿐이라 민간 분양은 빠집니다. LH 공고 API만 있는 4,880건은 시군구·필지 칸이 0%입니다. 출처별로 보면 대용량 후보 3/681, 번들·LH 10/19입니다.</td></tr>
+<tr><td>④→⑤</td><td>직접 키 없음. 사업 id 를 거칩니다.</td><td class="n">4 / 131</td><td>④가 131건으로 적습니다. LH 후보는 2026-01-27 판 뒤로 준공 실제를 알 수 없습니다.</td></tr>
+<tr><td>⑤→⑥</td><td>부동산원 입주예정을 필지 일치로 붙입니다(370행). 나머지 6건은 지역 번들에서 옵니다.</td><td class="n">실제 0 · 예정 21 / 672</td><td>단지코드가 없습니다. 입주 예정 376건 중 343건은 아직 인허가 단계로 기록돼 있습니다. 감일동 블록으로 허가된 힐스테이트 포웰시티(932세대)의 건축물대장은 감이동 458번지에 있습니다. 레지스트리에서 같은 경우가 5건입니다.</td></tr>
+</tbody></table></div>
+<p class="note">원천 둘 이상이 한 사업에 이어진 것은 98건(2.5%)입니다. 대부분이 LH 블록과 건축HUB의 조합(91건)입니다.</p>
+
+<h2>3. 단계별 수집 데이터와 연계값 제안</h2>
+<div class="tw"><table>
+<thead><tr><th>단계</th><th>단계 고유 키 (PK)</th><th>꼭 받을 값</th><th>다음 단계로 넘길 연계값 (FK)</th><th>원천 · 보관 방식</th></tr></thead>
+<tbody>
+<tr><td>① 계획</td><td>표준 블록 키 <code>시군구5|지구|블록</code>. 기관 입력이면 사업 id</td><td>지구명·블록·시군구, 계획 호수(<code>AGENCY_PLAN</code>), 당초 일정(<code>BASELINE</code>)</td><td>표준 블록 키 → ②. 건축HUB <code>블록</code>·<code>특수지_명</code> 열에서 같은 함수로 만듭니다. 블록 경계 안 필지 → ②</td><td>LH 준공예정(연 1회), 기관 입력, 지구 경계(F3·A11). 보관</td></tr>
+<tr><td>② 인허가</td><td><code>관리_주택대장_PK</code> (문자열, 7·13·22자리)</td><td>승인일, 총세대수, 대지위치의 필지 전체, 착공·사용검사 예정일</td><td>관리번호 → ③·⑤(같은 키), 표준 블록 키 → ①, 대지 필지 → ④·⑥</td><td>건축HUB 대용량(월) + OpenAPI(주 1회). 보관</td></tr>
+<tr><td>③ 착공</td><td>관리번호</td><td>착공일(실제), 착공 예정일(월별 <code>CURRENT</code>)</td><td>표준 블록 키·필지 → ④</td><td>건축HUB(결손이 큼), LH 공사현황, 기관 입력. 월 스냅샷 보관</td></tr>
+<tr><td>④ 모집</td><td>공고 ID: LH <code>PAN_ID</code> · 마이홈 공고 · 청약홈 <code>HOUSE_MANAGE_NO</code>+<code>PBLANC_NO</code></td><td>모집공고일 <code>RCRIT_PBLANC_DE</code>, 공급규모 <code>TOT_SUPLY_HSHLDCO</code>, 공급위치 <code>HSSPLY_ADRES</code>, 입주예정월 <code>MVN_PREARNGE_YM</code>, 사업주체 <code>BSNS_MBY_NM</code>, 공공주택지구 여부 <code>PUBLIC_HOUSE_EARTH_AT</code></td><td>공급위치 주소 → V-World 주소검색 → 필지 → 사업(필지 일치 규칙). 입주예정월 → ⑥ 예정</td><td>청약홈 A10(신청됨·미연결), LH·마이홈(지금). 목록은 실시간, 연결·일정은 보관</td></tr>
+<tr><td>⑤ 준공</td><td>관리번호의 사용검사일 + 건축물대장 관리번호(새 키 종류)</td><td>사용검사일, 사용승인일, 세대수</td><td>준공 뒤 필지 → ⑥. 법정동 + 세대수 + 사용승인일 → K-apt</td><td>건축HUB, 건축물대장(조회는 실시간, 대조 결과는 보관)</td></tr>
+<tr><td>⑥ 입주</td><td>단지코드: K-apt <code>kaptCode</code> · 마이홈 <code>hsmpSn</code> · LH 단지코드</td><td>입주지정 시작·종료일(LH), 사용승인일 <code>kaptUsedate</code>, 세대수 <code>kaptdaCnt</code>, 준공일 <code>competDe</code></td><td>—</td><td>마이홈 단지 A3(<code>pnu</code> 있음), K-apt A4·A5(<code>bjdCode</code>만 있고 지번 없음), LH 단지정보 파일(주소 글자뿐). 반기 보관</td></tr>
+</tbody></table></div>
+<p class="note">필지(PNU)는 단계 사이 다리로는 쓰지만 영구 키로는 쓰지 않습니다. 허가 때 필지와 준공 뒤 필지가 다를 수 있기 때문입니다. K-apt에는 지번이 없어, 지금 건축물대장 대조 규칙(세대수 + 대지면적 ±2%)처럼 법정동·세대수·사용승인일로 맞춥니다.</p>
+
+<h2>4. 스키마(PK·FK) 보강 — 수집 없이 먼저</h2>
+<div class="tw"><table>
+<thead><tr><th>#</th><th>보강</th><th>지금 상태 (근거)</th><th>바꾸지 않으면</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>사업 id 고정: LH 후보 id도 매핑 파일로</td><td>번호를 세어 계산합니다(convert.js:156-160). 매핑 파일에 id가 있는 것은 계양 5건뿐입니다.</td><td>LH 새 판(2027-02)에서 번호가 밀리면 지난 달 일정 기록(사업 id 외래 키)이 엉뚱한 사업을 가리킵니다.</td></tr>
+<tr><td>2</td><td>표준 블록 키 <code>시군구5|지구|블록</code>을 키 값으로</td><td>대조에는 공용 <code>normBlock</code>·<code>districtToken</code>(hub-bulk.js:197·202)을 씁니다. 하지만 키 값은 원문이고, 묶음 키(<code>groupKey</code>)·lib/permits.js·공고 제목(<code>titleDistrict</code>)은 따로 정규화합니다.</td><td>원천마다 같은 블록이 다른 글자가 되어 ①→②·③→④ 대조를 매번 새로 만들어야 합니다.</td></tr>
+<tr><td>3</td><td>연결 규칙·확신도 칸: <code>identifiers.match_rule</code>(KEY·PNU·BLOCK_NAME·ADDRESS·SPATIAL·MANUAL), 규칙 연결은 <code>REVIEW_REQUIRED</code></td><td>이름·블록 규칙으로 이은 91건도 <code>CONFIRMED</code>로 고정돼 있습니다. 공고 연결은 이미 evidence 칸에 규칙을 남깁니다.</td><td>사람이 확인한 연결과 자동 추정을 가를 수 없습니다.</td></tr>
+<tr><td>4</td><td>일정·물량 행에 원천 레코드 키 (<code>id_type</code>, <code>id_value</code>) → identifiers</td><td>관리번호는 <code>event_detail</code> 글자에만 있습니다. 사업마다 날짜 종류별 한 행만 남깁니다(convert.js:244-249).</td><td>관리번호가 2개 이상인 443사업은 나머지 기록의 날짜를 버립니다. 동·블록별로 진행이 다른 사업의 단계를 추적할 수 없습니다.</td></tr>
+<tr><td>5</td><td>새 키 종류: 건축물대장 관리번호, <code>kaptCode</code>, <code>hsmpSn</code>, LH 단지코드. 공고 원천에 청약홈 추가</td><td>id_type 6종 중 쓰이는 것은 <code>HUB_HS_PK</code>·<code>AREA_BLOCK</code>·<code>BUNDLE_ID</code> 3종뿐입니다.</td><td>⑤→⑥을 이을 자리가 없습니다.</td></tr>
+<tr><td>6</td><td>필지 시점: <code>project_locations</code>에 허가 때 필지 / 준공 뒤 대장 필지 구분</td><td>감일동 블록 허가 → 대장은 감이동(5건)</td><td>준공 뒤 대장·K-apt·입주예정과 필지로 대조하면 빗나갑니다.</td></tr>
+<tr><td>7</td><td>단계는 이벤트로 계산하고, <code>stage_code</code>와 어긋나면 검토 목록에</td><td>v1.4 <code>stage_code</code>는 06 하나에 준공·입주를 함께 담습니다. 06인데 준공 실제 이벤트가 없는 사업이 10건입니다(감일 9건은 건축물대장으로 판정했지만 이벤트로 옮기지 않았음).</td><td>보드 ⑤·⑥ 칸과 사업 단계가 서로 다른 말을 합니다.</td></tr>
+</tbody></table></div>
+
+<h2>5. 수집 우선순위</h2>
+<ol>
+<li><b>착공 실제일</b>: 판정에서 뺀 2,408사업·1,363,988호를 판정에 넣을 수 있습니다. 건축HUB 말고는 사업 단위 전국 원천이 없습니다. LH 공사현황·기관 입력을 쓰고, 입주예정·모집공고가 있으면 '착공 추정' 표지를 따로 둡니다(실제일로 넣지 않음).</li>
+<li><b>청약홈 분양정보(A10, 신청됨)</b>: 민간·지방공사 모집까지 받습니다. 공급위치 주소로 ③→④를 잇고, 입주예정월로 ⑥ 예정을 채웁니다. 지금 대용량 후보 3/681을 올리는 유일한 원천입니다.</li>
+<li><b>단지코드</b>: 마이홈 단지정보(A3, <code>pnu</code>로 바로 연결, 운영계정 심의), K-apt(A4·A5), LH 단지정보(6,217행).</li>
+<li><b>계획</b>: 지구 경계(F3·A11)의 속성을 확인하고, 기관 입력 경로를 정합니다.</li>
+</ol>
+
+<h2>6. 검증 기록</h2>
+<p class="note">처음 답과 재검증이 다른 것만 적었습니다. 그 밖의 수치(3,845 · 91/278 · 726/3,651 · 13/737 · 131 · 57/4,995 · 4/131 · 4 · 98 · 282)는 두 계산이 같았습니다.</p>
+<div class="tw"><table>
+<thead><tr><th>항목</th><th>처음 답</th><th>재검증</th><th>판정</th></tr></thead>
+<tbody>
+<tr><td>⑤→⑥ 예정</td><td>370</td><td>준공 실제 672건 중 21건. 입주 예정 사업은 376건(부동산원 370 + 번들 6)</td><td><span class="tag t-bad">고침</span></td></tr>
+<tr><td>판정에서 뺀 착공 경과</td><td>2,407쌍 · 136만 호</td><td>2,408사업 · 1,363,988호(ledger-board.json). 수집 계획 문서의 값이 낡았습니다</td><td><span class="tag t-bad">고침</span></td></tr>
+<tr><td>관리번호 2개 이상 443사업</td><td>어느 기록의 날짜인지 모름</td><td>관리번호는 글자로 남지만, 종류별 한 행만 남아 나머지 날짜가 버려집니다</td><td><span class="tag t-warn">보탬</span></td></tr>
+<tr><td>날짜 순서 이상</td><td>착공&gt;준공 1 · 인허가&gt;착공 7</td><td>가장 이른 값끼리 비교하면 1·1. 날짜 쌍 하나라도 어긋난 사업으로 세면 8·10. 대부분 번들의 변경 허가·단지별 날짜 때문입니다</td><td><span class="tag t-bad">고침</span></td></tr>
+<tr><td>택지 블록의 필지 변경</td><td>추정</td><td>힐스테이트 포웰시티: 감일동 블록 허가 → 대장 감이동 458(같은 세대수·날짜). 레지스트리 5건</td><td><span class="tag t-ok">확인</span></td></tr>
+<tr><td>착공 결손 해석</td><td>값이 빔</td><td>예정일이 지난 2,514건 중 342건이 입주예정 목록에 있음. 준공 실제 672건은 모두 착공 실제가 있음</td><td><span class="tag t-ok">확인</span></td></tr>
+<tr><td>공공 여부별 모집 연결</td><td>—</td><td>공고에 이어지면 공공으로 채우는 순환 구조(convert.js:411-417)라 출처별로 봐야 합니다</td><td><span class="tag t-warn">보탬</span></td></tr>
+<tr><td>행위개요 관리번호</td><td>README "하나도 안 겹침"</td><td>파일 전체로는 기본개요와 99.9% 겹침, 진행 중 4,103건과는 0. 총세대수 0인 기존 단지 행위허가가 98.7%</td><td><span class="tag t-warn">보탬</span></td></tr>
+<tr><td>청약홈·K-apt·마이홈 필드</td><td>추정</td><td>포털 명세로 필드명 확인(3장 표)</td><td><span class="tag t-ok">확인</span></td></tr>
+<tr><td>LH 공고 상세(15057999)</td><td>단지명·주소·입주예정월</td><td>포털 명세에는 계약장소 주소만 있습니다. 활용가이드는 열지 않았습니다</td><td><span class="tag t-warn">확인 못함</span></td></tr>
+<tr><td>택지정보 이용 중지(10-08)</td><td>중지</td><td>포털 페이지에는 안내가 없습니다(2025-08-29 판)</td><td><span class="tag t-warn">확인 못함</span></td></tr>
+</tbody></table></div>
+
+<h2>7. 남은 것</h2>
+<ul>
+<li><b>확인 못한 것</b>: LH 공고 상세 응답 전체, 지구 경계(F3·A11) 속성, 택지정보 이용 중지 여부, 청약홈 호출 한도.</li>
+<li><b>낡은 문서</b>: 원장 README의 공고 4,993건(지금 4,995건), 수집 계획의 2,407쌍. <code>/sources</code> '단계별 데이터 연계' 탭과 추가 확보 목록은 2026-10-10 기준이라 대용량·법정동·입주예정·공고 수집이 반영되지 않았습니다.</li>
+<li><b>정할 것</b>: 4장 1~4(스키마·변환만)부터 할지, 청약홈 연결(5장 2)을 먼저 할지.</li>
+</ul>
+
+<h2>부록 · 측정 정의</h2>
+<div class="tw"><table>
+<thead><tr><th>단계</th><th>증거 (실제)</th><th>증거 (예정)</th></tr></thead>
+<tbody>
+<tr><td>① 계획</td><td colspan="2">identifiers 에 <code>AREA_BLOCK</code> 또는 units 에 <code>PUBLIC_PLAN</code> (실제·예정 구분 없음)</td></tr>
+<tr><td>② 인허가</td><td><code>PERMIT</code> ACTUAL</td><td>— (0행)</td></tr>
+<tr><td>③ 착공</td><td><code>CONSTRUCTION_START</code> ACTUAL</td><td><code>CONSTRUCTION_START</code> PLANNED</td></tr>
+<tr><td>④ 모집</td><td><code>SUPPLY_NOTICE</code> ACTUAL 또는 notice_links 에 사업 있음</td><td>— (0행)</td></tr>
+<tr><td>⑤ 준공</td><td><code>COMPLETION</code> ACTUAL</td><td><code>COMPLETION</code> PLANNED</td></tr>
+<tr><td>⑥ 입주</td><td><code>MOVE_IN</code> ACTUAL (0행)</td><td><code>MOVE_IN</code> PLANNED</td></tr>
+</tbody></table></div>
+<p class="note">입력은 <code>schemas/ledger-2026-10/tables</code>(16표)이고, 건축HUB 대용량 원본 zip 과 <code>data/board/ledger-board.json</code> 을 대조했습니다. 측정 스크립트는 세션 임시 폴더에 두어 저장소에는 남지 않습니다.</p>
+
+<div class="log"><b>변경 이력</b><ul>
+<li>2026-10-12 — 첫 분석(원장 실측)</li>
+<li>2026-10-12 — 독립 재계산·API 명세 확인으로 수치 4곳 고침, 근거 보탬</li></ul></div>
+</main></body></html>

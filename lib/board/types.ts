@@ -40,5 +40,5 @@ export type LedgerBoard = {
   upcoming: { ym: string; units: number; projects: number }[];
   overdue: { id: string; name: string; sgg: string; eventType: string; planned: string; months: number; class: string }[];
   /* 월 판정 이력(data/board/judgment-history.json, tools/ledger/trend.js) 중 기준 달 앞 행 + 이번 달 행. 없으면(옛 집계) 기준 달만 판정 */
-  trend?: { month: string; referenceDate: string; edition: string | null; basis: 'BACKFILL' | 'OBSERVED'; ok: Judged; caution: Judged; delay: Judged; delayByStage: number[]; cautionByStage: number[]; judged: number; excludedStartOverdue?: Judged & { pairs: number } }[];
+  trend?: { month: string; referenceDate: string; edition: string | null; basis: 'BACKFILL' | 'OBSERVED'; ok: Judged; caution: Judged; delay: Judged; delayByStage: number[]; cautionByStage: number[]; judged: number; addedSources?: string[]; excludedStartOverdue?: Judged & { pairs: number } }[];
 };

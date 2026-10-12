@@ -71,14 +71,26 @@ for (const m of CODE.matchAll(/create table ledger\.(\w+)\s*\(/gi)) {
   }
   tables[m[1]] = t;
 }
-/* 뒤 마이그레이션의 열 CHECK 바꾸기(alter table ledger.<표> drop/add constraint <표>_<열>_check)를 차례로 적용한다 — 값 목록을 넓힐 때 앞 마이그레이션은 고치지 않는다 */
+/* 뒤 마이그레이션을 차례로 적용한다 — 값 목록을 넓히거나 열을 더할 때 앞 마이그레이션은 고치지 않는다.
+   열 CHECK 바꾸기(alter table ledger.<표> drop/add constraint <표>_<열>_check), 열 더하기(add column <열> <형> [check (…)]),
+   열이 아닌 이름의 제약(<표>_<이름>_check)은 표 제약으로 더한다. 이름을 모르는 표 제약 지우기(do 블록 execute format)는 여기서 읽지 않는다 */
 const altered = [];
 for (const f of fs.readdirSync(MIG_DIR).filter((x) => /^\d{14}_\w+\.sql$/.test(x) && x > migFile).sort()) {
   const sql = fs.readFileSync(path.join(MIG_DIR, f), 'utf8').replace(/--[^\n]*/g, '');
-  for (const m of sql.matchAll(/alter table ledger\.(\w+)\s+(drop|add) constraint (\w+)/gi)) {
-    const [, t, op, name] = m, col = tables[t]?.columns[name.replace(`${t}_`, '').replace(/_check$/, '')];
-    if (!col || !name.endsWith('_check')) throw new Error(`${f}: 열 CHECK 가 아닌 제약 ${name}`);
-    if (op === 'drop') col.checks = []; else col.checks.push(checks(sql.slice(m.index))[0]);
+  for (const m of sql.matchAll(/alter table ledger\.(\w+)\s+(?:(drop|add) constraint (\w+)|add column (\w+)\s+([\w.]+))/gi)) {
+    const [, t, op, name, newCol, type] = m;
+    if (newCol) {
+      if (!tables[t] || tables[t].columns[newCol]) throw new Error(`${f}: ${t}.${newCol} 를 더할 수 없다`);
+      const rest = sql.slice(m.index + m[0].length, sql.indexOf(';', m.index));
+      tables[t].columns[newCol] = { type, checks: checks(rest) };
+      altered.push(`${f}:add column:${t}.${newCol}`);
+      continue;
+    }
+    if (!name.endsWith('_check')) throw new Error(`${f}: CHECK 가 아닌 제약 ${name}`);
+    const col = tables[t]?.columns[name.replace(`${t}_`, '').replace(/_check$/, '')];
+    if (col) { if (op === 'drop') col.checks = []; else col.checks.push(checks(sql.slice(m.index))[0]); }
+    else if (op === 'add') tables[t].tableChecks.push(checks(sql.slice(m.index))[0]);
+    else throw new Error(`${f}: 열이 없는 제약 지우기 ${name}`);
     altered.push(`${f}:${op}:${name}`);
   }
 }
@@ -130,8 +142,22 @@ test('값 목록: 스키마 enum 열마다 DDL 에 같은 목록(열 CHECK 또�
 });
 
 test('뒤 마이그레이션의 값 목록 넓히기: review_required.review_type 에 DUPLICATE_CANDIDATE(중복 사업 후보) — 지우고 다시 만든다', () => {
-  assert.deepEqual(altered, ['20261011200000_review_duplicate_candidate.sql:drop:review_required_review_type_check', '20261011200000_review_duplicate_candidate.sql:add:review_required_review_type_check']);
+  const dup = '20261011200000_review_duplicate_candidate.sql';
+  assert.deepEqual(altered.filter((a) => a.startsWith(dup)), [`${dup}:drop:review_required_review_type_check`, `${dup}:add:review_required_review_type_check`]);
   assert.ok(inList(tables.review_required.columns.review_type.checks[0], 'review_type').includes('DUPLICATE_CANDIDATE'));
+});
+
+test('단계별 원천(*_stage_sources.sql): id_type·id_issuer·notice_system·date_type 넓히기, identifiers.match_rule 더하기, plan_basis 규칙은 PLANNED 기준, api.identifiers 끝에 match_rule', () => {
+  const f = fs.readdirSync(MIG_DIR).find((x) => /^\d{14}_stage_sources\.sql$/.test(x));
+  assert.ok(f, 'supabase/migrations/<14자리>_stage_sources.sql');
+  const pairs = ['identifiers_id_type_check', 'identifiers_id_issuer_check', 'notices_notice_system_check', 'notice_links_notice_system_check', 'events_date_type_check'].flatMap((n) => [`${f}:drop:${n}`, `${f}:add:${n}`]);
+  assert.deepEqual(altered.filter((a) => a.startsWith(f)).sort(), [...pairs, `${f}:add column:identifiers.match_rule`, `${f}:add:events_planned_basis_check`].sort());
+  assert.deepEqual(inList(tables.events.columns.date_type.checks[0], 'date_type'), ['PLANNED', 'ACTUAL', 'ESTIMATED']);
+  assert.ok(tables.events.tableChecks.includes("(date_type = 'PLANNED') = (plan_basis is not null)"));
+  const sql = fs.readFileSync(path.join(MIG_DIR, f), 'utf8').replace(/--[^\n]*/g, '');
+  assert.match(sql, /pg_get_constraintdef\(oid\) ilike '%date_type%ACTUAL%plan_basis IS NULL%'[\s\S]*execute format\('alter table ledger\.events drop constraint %I', c\)/, '이름 없는 앞 규칙을 정의로 찾아 지운다');
+  assert.match(sql, /create or replace view api\.identifiers with \(security_invoker = true\) as\s+select i\.local_project_id, i\.id_type, i\.id_value, i\.id_issuer, i\.as_of, i\.source_ref, i\.match_status, s\.is_demo, i\.match_rule\b/);
+  assert.doesNotMatch(sql, /\bgrant\b/i, '권한은 바꾸지 않는다');
 });
 
 test('패턴: 도메인 정규식 = common $defs pattern, 열 정규식 CHECK = 스키마 pattern', () => {

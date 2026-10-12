@@ -52,3 +52,17 @@ schemas/*/raw/hub-bulk-history/*.zip
 
 # 열린 달 매일 갱신의 건축HUB OpenAPI 원본(법정동별 응답, tools/ledger/hub-api-refresh.js). 기획서 결정 4 "원천 응답 재배포 안 함" — Storage ledger-raw 에만(raw-store.js push --only raw/hub-refresh)
 schemas/*/raw/hub-refresh/
+
+# 단계별 전국 원천(2026-10-12 수집). 100 MB 넘는 대용량 zip 과 API 원본 응답(기획서 결정 4 "원천 응답 재배포 안 함")은 저장소에 manifest.json(sha256)만 둔다
+schemas/*/raw/hub-bulk-ap/*.zip
+schemas/*/raw/hub-bulk-bld/*.zip
+schemas/*/raw/applyhome/*.json
+schemas/*/raw/applyhome-cmpet/*.json
+schemas/*/raw/vworld-district/*.geojson*
+schemas/*/raw/kapt-list/*.json
+schemas/*/raw/myhome-complex/*.json
+schemas/*/raw/lh-lease-complex/*.json
+schemas/*/raw/lh-public-complex/*.json
+schemas/*/raw/lh-notice-detail/*.json
+schemas/*/raw/hug-sale-history/*.json
+!schemas/*/raw/*/manifest.json

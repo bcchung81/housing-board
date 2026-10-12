@@ -1,0 +1,57 @@
+{
+ "source": "한국토지주택공사 임대주택단지 조회 서비스(15059475)",
+ "fetched_at": "2026-10-12T11:29:44.453Z",
+ "endpoint": [
+  "https://apis.data.go.kr/B552555/lhLeaseInfo1/lhLeaseInfo1"
+ ],
+ "params": {
+  "pageRows": 10000,
+  "요청단위": "PG_SZ=10000 전 쪽(전국 한 요청 단위)",
+  "cond": "(전국·전체)"
+ },
+ "calls": 1,
+ "pages": 1,
+ "records": 6739,
+ "notes": "CNP_CD·SPL_TP_CD 는 선택이라 비우고 PG_SZ=10000 으로 전국 전 쪽. 행은 단지×전용면적 단위(총세대수 SUM_HSH_CNT, 전체 행수 ALL_CNT). 응답에 단지 코드·법정동코드·PNU 가 없고 지역명(ARA_NM)만 있다. totalCount 는 첫 행의 ALL_CNT.",
+ "operations": {
+  "lhLeaseInfo1": {
+   "totalCount": 6739,
+   "rows": 6739,
+   "calls": 1,
+   "fields": [
+    "SUM_HSH_CNT",
+    "RFE",
+    "RNUM",
+    "HSH_CNT",
+    "ARA_NM",
+    "LS_GMY",
+    "AIS_TP_CD_NM",
+    "SBD_LGO_NM",
+    "ALL_CNT",
+    "DDO_AR",
+    "MVIN_XPC_YM"
+   ],
+   "idField": "SBD_LGO_NM",
+   "idDistinct": 1938,
+   "idRepeatRows": 4801,
+   "bySido": {
+    "경기도": 2250,
+    "전남광주통합특별시": 700,
+    "경상남도": 429,
+    "충청북도": 419,
+    "충청남도": 413,
+    "전북특별자치도": 391,
+    "강원특별자치도": 334,
+    "경상북도": 331,
+    "대전광역시": 298,
+    "대구광역시": 271,
+    "인천광역시": 266,
+    "서울특별시": 160,
+    "부산광역시": 151,
+    "세종시": 122,
+    "제주특별자치도": 112,
+    "울산광역시": 92
+   }
+  }
+ }
+}

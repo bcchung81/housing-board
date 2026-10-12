@@ -31,7 +31,8 @@ test('스키마: 표 16개 + 공통 1개, draft 2020-12, $id = 파일 이름, �
 test('공통규격 v1.4 의 값을 그대로 쓰고, 넓힌 값만 더한다(이벤트 종류·날짜 구분·검토 상태)', () => {
   const ev = schema('events').$defs.row.properties;
   assert.deepEqual(ev.event_type.enum, ['PERMIT', 'CONSTRUCTION_START', 'PROGRESS', 'COMPLETION', 'SUPPLY_NOTICE', 'MOVE_IN']);
-  assert.deepEqual(ev.date_type.enum, ['PLANNED', 'ACTUAL'], 'date_type 은 v1.4 그대로');
+  assert.deepEqual(ev.date_type.enum, ['PLANNED', 'ACTUAL', 'ESTIMATED'], 'date_type 은 v1.4(PLANNED·ACTUAL) + 확장 ESTIMATED(착공 추정 — 이 날 이전에 일어났음, 2026-10-13)');
+  assert.deepEqual(schema('events').$defs.row.allOf[0], { if: { properties: { date_type: { const: 'PLANNED' } } }, then: { properties: { plan_basis: { type: 'string' } } }, else: { properties: { plan_basis: { type: 'null' } } } }, 'plan_basis 는 PLANNED 에만(ACTUAL·ESTIMATED 는 null)');
   assert.deepEqual(ev.plan_basis.anyOf[0].enum, ['BASELINE', 'REVISED', 'CURRENT'], '당초·변경·현재는 새 열(plan_basis)');
   assert.ok(ev.observed_month, '관측 월(스냅샷)');
   assert.deepEqual(schema('common').$defs.review_status.enum, ['CONFIRMED', 'REVIEW_REQUIRED']);

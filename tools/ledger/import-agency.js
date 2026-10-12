@@ -118,7 +118,7 @@ function importAgency({ dir, agencyId, receivedOn, isDemo = false, base, counter
       known.add(pid);
     }
     mapKey.set(x.agency_project_key, pid);
-    rows.identifiers.push({ local_project_id: pid, id_type: 'MANUAL', id_value: `${agencyId}:${x.agency_project_key}`, id_issuer: 'HOUSING_WAVE', as_of: receivedOn, source_ref, match_status: 'CONFIRMED' });
+    rows.identifiers.push({ local_project_id: pid, id_type: 'MANUAL', id_value: `${agencyId}:${x.agency_project_key}`, id_issuer: 'HOUSING_WAVE', as_of: receivedOn, source_ref, match_status: 'CONFIRMED', match_rule: null });
   }
 
   /* 일정 */

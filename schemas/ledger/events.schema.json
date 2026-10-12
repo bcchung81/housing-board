@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "events.schema.json",
   "title": "ledger/events",
-  "description": "일정 이벤트(월별 스냅샷). 단계별 예정·실제 날짜. 원천은 현재값만 주므로 같은 예정일을 관측한 달(observed_month = 찍은 달)마다 행을 남겨 이력을 쌓는다 — 당초 대비 지연(Q3)·단계별 머문 기간(Q2)은 이 이력으로만 계산된다. 예정(PLANNED)은 plan_basis 로 당초(BASELINE)·변경(REVISED)·현재(CURRENT)를 가른다. 공통규격 v1.4: 진행이력_events.csv + plan_basis·observed_month·complex_id·event_year·change_reason·change_note. date_type 값은 v1.4 그대로(PLANNED·ACTUAL)이고 당초·변경 구분은 새 열로 더했다(팀 합의 필요).",
+  "description": "일정 이벤트(월별 스냅샷). 단계별 예정·실제 날짜. 원천은 현재값만 주므로 같은 예정일을 관측한 달(observed_month = 찍은 달)마다 행을 남겨 이력을 쌓는다 — 당초 대비 지연(Q3)·단계별 머문 기간(Q2)은 이 이력으로만 계산된다. 예정(PLANNED)은 plan_basis 로 당초(BASELINE)·변경(REVISED)·현재(CURRENT)를 가른다. 공통규격 v1.4: 진행이력_events.csv + plan_basis·observed_month·complex_id·event_year·change_reason·change_note. date_type 은 v1.4 의 PLANNED·ACTUAL 에 ESTIMATED(추정 — 실제 날짜는 모르나 이 날 이전에 일어났음, 상한)를 더했고 당초·변경 구분은 새 열로 더했다(팀 합의 필요). plan_basis 는 PLANNED 에만 있다.",
   "type": "object",
   "required": [
     "schema_version",
@@ -72,8 +72,10 @@
         "date_type": {
           "enum": [
             "PLANNED",
-            "ACTUAL"
-          ]
+            "ACTUAL",
+            "ESTIMATED"
+          ],
+          "description": "ESTIMATED: 실제 날짜는 모르나 이 날 이전에 일어났음(상한, 예: 착공 — HUG 최초 보증발급일·청약홈 최초 모집공고일). 판정(board.js)에는 쓰지 않는다"
         },
         "plan_basis": {
           "anyOf": [
@@ -186,21 +188,21 @@
           "if": {
             "properties": {
               "date_type": {
-                "const": "ACTUAL"
+                "const": "PLANNED"
               }
             }
           },
           "then": {
             "properties": {
               "plan_basis": {
-                "type": "null"
+                "type": "string"
               }
             }
           },
           "else": {
             "properties": {
               "plan_basis": {
-                "type": "string"
+                "type": "null"
               }
             }
           }

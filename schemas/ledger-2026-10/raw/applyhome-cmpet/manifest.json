@@ -1,0 +1,206 @@
+{
+ "source": "한국부동산원 청약홈 청약접수 경쟁률 및 특별공급 신청현황 조회 서비스(15098905)",
+ "fetched_at": "2026-10-12T11:03:07.204Z",
+ "endpoint": [
+  "https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1/getAPTLttotPblancCmpet",
+  "https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1/getUrbtyOfctlLttotPblancCmpet",
+  "https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1/getPblPvtRentLttotPblancCmpet",
+  "https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1/getCancResplLttotPblancCmpet",
+  "https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1/getRemndrLttotPblancCmpet",
+  "https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1/getAptLttotPblancScore",
+  "https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1/getOPTLttotPblancCmpet",
+  "https://api.odcloud.kr/api/ApplyhomeInfoCmpetRtSvc/v1/getAPTSpsplyReqstStus"
+ ],
+ "params": {
+  "page": "1..N",
+  "perPage": 1000,
+  "returnType": "JSON",
+  "cond": "(없음=전체 기간·전국)"
+ },
+ "calls": 116,
+ "pages": 116,
+ "records": 111242,
+ "notes": "오퍼레이션별 전 쪽 수집(rows 는 원천 행 그대로, 값 변환 없음). 분양정보와는 HOUSE_MANAGE_NO·PBLANC_NO 로 잇는다. 경쟁률 행에는 공고일이 없어 earliest·latest 는 null.",
+ "operations": {
+  "getAPTLttotPblancCmpet": {
+   "totalCount": 55212,
+   "rows": 55212,
+   "calls": 56,
+   "fields": [
+    "CMPET_RATE",
+    "HOUSE_MANAGE_NO",
+    "HOUSE_TY",
+    "MODEL_NO",
+    "PBLANC_NO",
+    "REQ_CNT",
+    "RESIDE_SECD",
+    "RESIDE_SENM",
+    "SUBSCRPT_RANK_CODE",
+    "SUPLY_HSHLDCO"
+   ],
+   "earliest": null,
+   "latest": null
+  },
+  "getUrbtyOfctlLttotPblancCmpet": {
+   "totalCount": 2740,
+   "rows": 2740,
+   "calls": 3,
+   "fields": [
+    "CMPET_RATE",
+    "HOUSE_MANAGE_NO",
+    "HOUSE_TY",
+    "MODEL_NO",
+    "PBLANC_NO",
+    "REQ_CNT",
+    "RESIDNT_PRIOR_AT",
+    "RESIDNT_PRIOR_SENM",
+    "SUPLY_HSHLDCO"
+   ],
+   "earliest": null,
+   "latest": null
+  },
+  "getPblPvtRentLttotPblancCmpet": {
+   "totalCount": 4072,
+   "rows": 4072,
+   "calls": 5,
+   "fields": [
+    "CMPET_RATE",
+    "HOUSE_MANAGE_NO",
+    "HOUSE_TY",
+    "MODEL_NO",
+    "PBLANC_NO",
+    "REQ_CNT",
+    "SPSPLY_KND_CODE",
+    "SPSPLY_KND_HSHLDCO",
+    "SPSPLY_KND_NM",
+    "SUPLY_HSHLDCO"
+   ],
+   "earliest": null,
+   "latest": null
+  },
+  "getCancResplLttotPblancCmpet": {
+   "totalCount": 453,
+   "rows": 453,
+   "calls": 1,
+   "fields": [
+    "HOUSE_MANAGE_NO",
+    "HOUSE_TY",
+    "INSTT_RECOMEND_CMPET_RATE",
+    "INSTT_RECOMEND_HSHLDCO",
+    "INSTT_RECOMEND_REQ_CNT",
+    "LFE_FRST_CMPET_RATE",
+    "LFE_FRST_HSHLDCO",
+    "LFE_FRST_REQ_CNT",
+    "MNYCH_CMPET_RATE",
+    "MNYCH_HSHLDCO",
+    "MNYCH_REQ_CNT",
+    "MODEL_NO",
+    "NORMAL_CMPET_RATE",
+    "NORMAL_HSHLDCO",
+    "NORMAL_REQ_CNT",
+    "NWWDS_CMPET_RATE",
+    "NWWDS_HSHLDCO",
+    "NWWDS_REQ_CNT",
+    "OLD_PARNTS_SUPORT_CMPET_RATE",
+    "OLD_PARNTS_SUPORT_HSHLDCO",
+    "OLD_PARNTS_SUPORT_REQ_CNT",
+    "PBLANC_NO",
+    "SUPLY_HSHLDCO"
+   ],
+   "earliest": null,
+   "latest": null
+  },
+  "getRemndrLttotPblancCmpet": {
+   "totalCount": 4291,
+   "rows": 4291,
+   "calls": 5,
+   "fields": [
+    "CMPET_RATE",
+    "HOUSE_MANAGE_NO",
+    "HOUSE_TY",
+    "PBLANC_NO",
+    "REMNDR_HSHLD_PBLANC_TYCD",
+    "REQ_CNT",
+    "SUPLY_HSHLDCO"
+   ],
+   "earliest": null,
+   "latest": null
+  },
+  "getAptLttotPblancScore": {
+   "totalCount": 29918,
+   "rows": 29918,
+   "calls": 30,
+   "fields": [
+    "AVRG_SCORE",
+    "HOUSE_MANAGE_NO",
+    "HOUSE_TY",
+    "LWET_SCORE",
+    "MODEL_NO",
+    "PBLANC_NO",
+    "RESIDE_SECD",
+    "RESIDE_SENM",
+    "TOP_SCORE"
+   ],
+   "earliest": null,
+   "latest": null
+  },
+  "getOPTLttotPblancCmpet": {
+   "totalCount": 2148,
+   "rows": 2148,
+   "calls": 3,
+   "fields": [
+    "CMPET_RATE",
+    "HOUSE_MANAGE_NO",
+    "HOUSE_TY",
+    "PBLANC_NO",
+    "REQ_CNT",
+    "SUPLY_HSHLDCO"
+   ],
+   "earliest": null,
+   "latest": null
+  },
+  "getAPTSpsplyReqstStus": {
+   "totalCount": 12408,
+   "rows": 12408,
+   "calls": 13,
+   "fields": [
+    "CRSPAREA_LFE_FRST_CNT",
+    "CRSPAREA_MNYCH_CNT",
+    "CRSPAREA_NWBB_NWBBSHR_CNT",
+    "CRSPAREA_NWWDS_NMTW_CNT",
+    "CRSPAREA_OPS_CNT",
+    "CRSPAREA_YGMN_CNT",
+    "CTPRVN_LFE_FRST_CNT",
+    "CTPRVN_MNYCH_CNT",
+    "CTPRVN_NWBB_NWBBSHR_CNT",
+    "CTPRVN_NWWDS_NMTW_CNT",
+    "CTPRVN_OPS_CNT",
+    "CTPRVN_YGMN_CNT",
+    "ETC_AREA_LFE_FRST_CNT",
+    "ETC_AREA_MNYCH_CNT",
+    "ETC_AREA_NWBB_NWBBSHR_CNT",
+    "ETC_AREA_NWWDS_NMTW_CNT",
+    "ETC_AREA_OPS_CNT",
+    "ETC_AREA_YGMN_CNT",
+    "HOUSE_MANAGE_NO",
+    "HOUSE_TY",
+    "INSTT_RECOMEND_DCSN_CNT",
+    "INSTT_RECOMEND_HSHLDCO",
+    "INSTT_RECOMEND_PREPAR_CNT",
+    "LFE_FRST_HSHLDCO",
+    "MNYCH_HSHLDCO",
+    "NWBB_NWBBSHR_HSHLDCO",
+    "NWWDS_NMTW_HSHLDCO",
+    "OLD_PARNTS_SUPORT_HSHLDCO",
+    "PBLANC_NO",
+    "SPSPLY_HSHLDCO",
+    "SUBSCRPT_RESULT_NM",
+    "TRANSR_INSTT_ENFSN_CNT",
+    "TRANSR_INSTT_ENFSN_HSHLDCO",
+    "YGMN_HSHLDCO"
+   ],
+   "earliest": null,
+   "latest": null
+  }
+ }
+}

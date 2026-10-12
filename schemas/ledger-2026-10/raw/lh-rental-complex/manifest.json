@@ -1,0 +1,39 @@
+{
+ "source": "공공데이터포털 파일데이터 15050700",
+ "fetched_at": "2026-10-12T11:08:21.661274+00:00",
+ "endpoint": "https://www.data.go.kr/data/15050700/fileData.do",
+ "params": {
+  "portal_id": 15050700
+ },
+ "notes": "ego lite(작업공간 14)로 로그인 없이 내려받음. 상세 페이지의 '다운로드' 버튼 클릭 -> '변경된 데이터' 안내 alert 확인 -> download 이벤트 -> saveAs. 행 수는 머리글 제외 CSV 레코드 수.",
+ "files": {
+  "main": {
+   "portal_id": 15050700,
+   "portal_name": "한국토지주택공사_임대주택단지정보_건설_20250918",
+   "provider": "한국토지주택공사",
+   "portal_modified": "2025-11-19",
+   "portal_registered": "2022-04-29",
+   "update_cycle": "연간",
+   "portal_rows": "24259",
+   "edition": "20250918",
+   "filename": "한국토지주택공사_임대주택단지정보_건설_20250918.csv",
+   "bytes": 2941937,
+   "sha256": "35432ccd0df407dc1507574d1cd378a0ba226980a9ef0fdb0ce97aebfe26787d",
+   "encoding": "CP949",
+   "rows": 24259,
+   "header": [
+    "단지코드",
+    "단지명",
+    "주소",
+    "상세주소",
+    "준공일자",
+    "매입일자",
+    "공급유형",
+    "형명",
+    "공급면적",
+    "세대수",
+    "구분"
+   ]
+  }
+ }
+}

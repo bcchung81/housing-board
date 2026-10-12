@@ -7,7 +7,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const H = require('../../tools/ledger/hub-bulk');
 const T = require('../../tools/ledger/trend');
-const { readHubBulk, convert } = require('../../tools/ledger/convert');
+const { readHubBulk, convert, raiseStages, isStageSource } = require('../../tools/ledger/convert');
 const { boardFromLedger, loadTables, loadHistory, addMonths } = require('../../tools/ledger/board');
 const P = require('../../tools/ledger/paths');
 
@@ -29,14 +29,22 @@ test('V1 항등: 지금 판을 소급 경로(기본개요 + 그 판 정적 속�
   const records = T.sortedRecords(p.recs[a]);
   assert.deepEqual(records, readHubBulk(H.OUT).records, '중간 스냅샷과 같은 기록');
   const tables = T.tablesFor(ctx, { ed, records, reg: p.reg, month: MONTH, hubEvents: ctx.apiEvents });
-  /* 열린 달 API 덮어쓰기(hub-api-refresh.js) 뒤면 저장된 표는 hub-refresh.json 으로 만들었다(그 재현은 ledger-2026-10.test.cjs). 그때는 지금 파이프라인을 중간 스냅샷으로 다시 돌린 표와 견준다 */
+  /* 열린 달 API 덮어쓰기(hub-api-refresh.js) 뒤면 저장된 표는 hub-refresh.json 으로 만들었다(그 재현은 ledger-2026-10.test.cjs). 그때는 지금 파이프라인을 중간 스냅샷으로 다시 돌린 표와 견준다.
+     소급 경로는 단계별 원천(convert --stage)을 쓰지 않으므로(미래 자료가 과거 판정에 새지 않게) 저장된 표에서 stage 원천의 행(isStageSource)을 빼고 견준다 — stage 는 행을 더하기만 한다 */
   const refreshed = fs.existsSync(path.join(BASE, 'snapshot/hub-refresh.json'));
-  const saved = refreshed ? convert({ ...ctx.base, observedMonth: MONTH, hubBulk: readHubBulk(H.OUT), hubEvents: ctx.apiEvents, report: {} }) : loadTables();
-  for (const t of Object.keys(refreshed ? loadTables() : saved)) assert.deepEqual(tables[t], saved[t], t);
   const all = fs.readdirSync(path.join(BASE, 'tables')).map((f) => f.slice(0, -5));
-  for (const t of all) assert.deepEqual(tables[t], refreshed ? saved[t] : JSON.parse(fs.readFileSync(path.join(BASE, `tables/${t}.json`), 'utf8')).rows, t);
+  const rows = (t) => JSON.parse(fs.readFileSync(path.join(BASE, `tables/${t}.json`), 'utf8')).rows;
+  const stored = Object.fromEntries(all.map((t) => [t, rows(t).filter((r) => !isStageSource(r.source_ref ?? ''))]));
+  if (!refreshed) {   // 단계 올리기(convert.js raiseStages)는 원천을 가리지 않아 저장된 사업 단계에 stage 이벤트로만 올라간 것이 섞인다 — 소급 표의 사업을 stage 이벤트로 다시 올려 견주고, 나머지는 소급 표 단계로 본다
+    const lifted = { projects: tables.projects, events: rows('events').filter((e) => isStageSource(e.source_ref)) };
+    raiseStages(lifted, MONTH, {});
+    assert.deepEqual(lifted.projects, stored.projects, 'projects(stage 이벤트로만 올라간 단계 제외)');
+    stored.projects = tables.projects;
+  }
+  const saved = refreshed ? convert({ ...ctx.base, observedMonth: MONTH, hubBulk: readHubBulk(H.OUT), hubEvents: ctx.apiEvents, report: {} }) : stored;
+  for (const t of all) assert.deepEqual(tables[t], saved[t], t);
   const opts = { referenceDate: REF, observedMonth: MONTH };
-  const judgment = refreshed ? boardFromLedger(saved, opts).judgment : L.judgment;
+  const judgment = boardFromLedger(saved, opts).judgment;
   assert.deepEqual(boardFromLedger(tables, opts).judgment, judgment);
   const fromBulk = T.tablesFor(ctx, { ed, records, reg: p.reg, month: MONTH });
   assert.deepEqual(fromBulk.events.filter((e) => e.source_ref === 'hub-hs-basis'), ctx.apiEvents, '판 기본개요 → eventsFromHub = API 스냅샷');
@@ -81,11 +89,13 @@ test('이력 파일: 2025-01~2026-09 소급 행(한 줄에 하나), 판은 editi
     assert.equal(r.ok.projects + r.caution.projects + r.delay.projects, r.judged, `${r.month} 판정 수`);
   }
   assert.deepEqual(h.rows.filter((r) => r.basis === 'BACKFILL').map((r) => r.month)[0], '2025-01');
+  assert.ok(h.rows.filter((r) => r.basis === 'BACKFILL').every((r) => !('addedSources' in r)), '소급 행은 단계별 원천을 쓰지 않아 원천 추가 표지가 없다');
   const back = h.rows.find((r) => r.month === '2025-10');
   if (back) assert.equal(back.edition, '2025-09', '2025-10 은 2025-09 판');
   assert.deepEqual(L.trend.slice(0, -1), loadHistory().filter((r) => r.month < L.observedMonth));
   const own = L.trend[L.trend.length - 1];
   assert.deepEqual([own.month, own.basis, own.edition, own.referenceDate], [L.observedMonth, 'OBSERVED', ED, L.referenceDate]);
+  if (own.month === '2026-10') assert.deepEqual(own.addedSources, ['건축물대장', '청약홈', 'HUG', 'LH 공고 상세'], '2026-10 은 단계별 원천을 처음 판정에 쓴 달(부동산원·K-apt·마이홈 단지는 식별자뿐이라 판정에 안 쓴다)');
   assert.deepEqual([own.ok, own.caution, own.delay, own.delayByStage, own.cautionByStage, own.judged], [L.judgment.ok, L.judgment.caution, L.judgment.delay, L.delayByStage, L.cautionByStage, L.scope.judged]);
 });
 

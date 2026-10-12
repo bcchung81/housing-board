@@ -16,6 +16,13 @@ test('makePnu·ymd: Python 과 같다(대지 1·산 2·블록 거절, 본번 0·
   YMD_IN.forEach((s, i) => assert.equal(P.ymd(s), YMD_OUT[i], String(s)));
 });
 
+test('makePnu: 본번·부번이 4자리(9999)를 넘으면 null — 19자리 PNU 만 만든다(파주 와동동 14392번지가 20자리로 나오던 결함, 2026-10-13. Python make_pnu 는 아직 20자리)', () => {
+  assert.equal(P.makePnu('41480', '12200', '14392', '0', '0'), null);
+  assert.equal(P.makePnu('41480', '12200', '9999', '9999', '0'), '4148012200199999999');
+  assert.equal(P.makePnu('41480', '12200', '1', '10000', '0'), null);
+  assert.equal(P.makePnu('41480', '12200', '00569', '0000', '0'), '4148012200105690000', '앞 0 은 자릿수로 치지 않는다');
+});
+
 test('shortLabel: 지도용 짧은 이름이 Python 과 같다(8자 이내, N차·N단지 보존)', () => {
   NAMES.forEach((n, i) => assert.equal(P.shortLabel(n), SHORT[i], n));
 });

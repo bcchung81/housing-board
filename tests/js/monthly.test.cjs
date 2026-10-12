@@ -275,3 +275,18 @@ test('hub-bulk.js --month 경로(그 달 원본 · 데이터 월 · 달 기록 �
   assert.equal(H.renderRecords(records, H.DATA_MONTH), fs.readFileSync(H.OUT, 'utf8'));
   assert.equal(`${JSON.stringify(manifest, null, 1)}\n`, fs.readFileSync(H.OUT_MANIFEST, 'utf8'));
 });
+
+test('convert 인자: 그 달 폴더에 단계별 원천 중간 스냅샷(snapshot/stage-*.json)이 있으면 가장 늦은 것을 --stage 로 넘기고, 없으면 넘기지 않는다(스냅샷은 수동 단계)', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-stage-')), dir = path.join(root, 'schemas/ledger-2026-11');
+  write(path.join(dir, 'raw/legal-dong/국토교통부_법정동코드_20260929.csv'), 'x');
+  write(path.join(dir, 'snapshot/hub-events.json'), { rows: [] });
+  const args = () => M.convertArgs(root, dir, '2026-11', 'hub-bulk-2026-09.json');
+  assert.ok(!args().includes('--stage'));
+  write(path.join(dir, 'snapshot/stage-2026-08.json'), '{}');
+  write(path.join(dir, 'snapshot/stage-2026-09.json'), '{}');
+  write(path.join(dir, 'snapshot/stage-2026-09.manifest.json'), '{}');
+  const a = args();
+  assert.equal(a[a.indexOf('--stage') + 1], 'schemas/ledger-2026-11/snapshot/stage-2026-09.json');
+  assert.equal(a[a.length - 2], '--out', '--out 은 끝');
+  fs.rmSync(root, { recursive: true, force: true });
+});

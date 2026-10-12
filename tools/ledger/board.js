@@ -15,6 +15,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const P = require('./paths');
+const { isStageSource, stageSourceName, STAGE_NAMES } = require('./stage-link');
 
 const ROOT = P.ROOT;
 const tablesOf = (month) => `schemas/ledger-${month}/tables`;
@@ -33,6 +34,10 @@ const BOARD_OF_STAGE = { '01': 0, '02': 0, '03': 1, '04': 2, '05': 3, '06': 4 };
 /* 판정하는 이벤트와, 사업 단계가 이 값 이상이면 이미 그 단계에 이른 것으로 본다 */
 const REACHED = { CONSTRUCTION_START: '04', COMPLETION: '06' };
 const BULK_SKIP = 'CONSTRUCTION_START';   // 대용량 후보에서 판정하지 않는 이벤트
+/* 종류별 원천 순위(현재 예정 고르기): 목록의 원천이 앞 순서대로 먼저, 목록 밖 원천은 그 뒤에서 bySource.
+   입주예정 = 한국부동산원 입주예정물량 → LH 공고 상세 → 청약홈(2026-10-13 결정 — 자료 기준일만 보면 받은 날이 최근인 청약홈이 이겨 지난 달 예정이 앞섰다) */
+const SOURCE_RANK = { MOVE_IN: ['datagokr-15111714', 'datagokr-15057999', 'datagokr-15098547'] };
+const rankOf = (e) => { const i = SOURCE_RANK[e.event_type]?.indexOf(e.source_ref) ?? -1; return i < 0 ? Number.MAX_SAFE_INTEGER : i; };
 const UNKNOWN_AGENCY = '기관 미상';
 /* 예정일 경과 목록은 경과가 큰 것부터 이만큼만 싣는다(전국이면 1만 건 가까이라 화면 자료가 1 MB 를 넘는다). 전체 수는 overdueTotal */
 const OVERDUE_LIMIT = 200;
@@ -84,9 +89,9 @@ function projectStates(tables, referenceDate) {
   const projects = tables.projects.map((p) => {
     const evs = eventsOf.get(p.local_project_id) ?? [];
     const actual = evs.filter((e) => e.date_type === 'ACTUAL');
-    /* 종류마다 현재 예정 하나: 원천 순위가 가장 높은 것 */
+    /* 종류마다 현재 예정 하나: 종류별 순위(SOURCE_RANK), 그다음 원천 순위가 가장 높은 것 */
     const plan = {};
-    for (const e of evs.filter((x) => x.date_type === 'PLANNED' && x.plan_basis === 'CURRENT').sort((a, b) => bySource(a.source_ref, b.source_ref))) plan[e.event_type] ??= e;
+    for (const e of evs.filter((x) => x.date_type === 'PLANNED' && x.plan_basis === 'CURRENT').sort((a, b) => rankOf(a) - rankOf(b) || bySource(a.source_ref, b.source_ref))) plan[e.event_type] ??= e;
     const bulk = p.source_ref.startsWith(BULK_PREFIX);
     return { p, issued: !!p.issued_at, bulk, judgeable: !!p.issued_at || bulk, units: unitsOfProject(p.local_project_id), actual, actualTypes: new Set(actual.map((e) => e.event_type)), plan, base: BOARD_OF_STAGE[p.stage_code] };
   });
@@ -129,12 +134,13 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
   const actualThrough = sourceMonth < observedMonth ? sourceMonth : observedMonth, at = months.indexOf(actualThrough);
 
   /* 보드 단계(달 i 말 기준). 실제 기록이 없는 사업(LH 후보)은 stage_code 의 칸을 처음부터 쓴다. 실제 기록이 모집공고(SUPPLY_NOTICE)뿐인 사업도 그 칸에서 시작한다
-     (공고만으로 첫 공고 전 달을 ①계획으로 되돌리지 않는다 — 2026-10-11 공고 연결 확대 때 LH 후보 28건이 그랬다).
+     (공고만으로 첫 공고 전 달을 ①계획으로 되돌리지 않는다 — 2026-10-11 공고 연결 확대 때 LH 후보 28건이 그랬다). 다만 그 칸이 ④모집(stage_code 05)이면 ③착공에서 시작한다 —
+     원장 변환이 실제 모집공고로 stage_code 를 05 로 올리므로(convert.js raiseStages, 2026-10-13) ④모집은 공고 달부터 센다.
      actualThrough 달 뒤에는 기간 끝이 기준일 뒤인 현재 예정을 더하고(기준일 전에 지난 예정은 일어난 것으로 치지 않는다), NOW 부터는 stage_code 의 칸보다 낮게 두지 않는다.
      NOW 달은 기준일 관측(stage_code)이라 예정을 더하지 않는다 — 더하면 판정의 단계별 지연 호수(delayByStage)가 바뀐다 */
   const stageAt = (x, i) => {
     const ym = months[i];
-    let s = x.actual.some((e) => e.event_type !== 'SUPPLY_NOTICE') ? 0 : x.base;
+    let s = x.actual.some((e) => e.event_type !== 'SUPPLY_NOTICE') ? 0 : x.base === BOARD_OF_EVENT.SUPPLY_NOTICE ? x.base - 1 : x.base;
     for (const e of x.actual) if (monthOf(e) <= ym) s = Math.max(s, BOARD_OF_EVENT[e.event_type]);
     if (i > at && i !== now) for (const e of Object.values(x.plan)) if (endOf(e) > referenceDate && monthOf(e) <= ym) s = Math.max(s, BOARD_OF_EVENT[e.event_type]);
     if (i >= now) s = Math.max(s, x.base);
@@ -197,7 +203,12 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
   /* 이번 달 판정 행(이력 파일과 같은 모양). edition = 실은 건축HUB 대용량 판의 자료 달 */
   const edition = tables.sources.map((s) => s.source_ref).find((r) => r.startsWith(BULK_PREFIX))?.slice(BULK_PREFIX.length) ?? null;
   const { excludedStartOverdue: xs } = judgment;
-  const own = { month: observedMonth, referenceDate, edition, basis: 'OBSERVED', ok: judgment.ok, caution: judgment.caution, delay: judgment.delay, delayByStage, cautionByStage, judged: judged.length, excludedStartOverdue: { projects: xs.projects, pairs: xs.pairs, units: xs.units } };
+  /* 원천 추가 표지: 이번 달 판정한 사업의 실제 이벤트가 쓴 단계별 원천(stage-link) 중 앞 달까지 이력 행의 addedSources 에 없던 것의 짧은 이름(STAGE_NAMES 순).
+     소급(BACKFILL) 행은 단계별 원천을 쓰지 않아 표지가 없다. trend.js --close 가 이 행을 그대로 이력에 붙이므로 다음 달부터는 같은 원천에 표지가 다시 붙지 않는다 */
+  const seen = new Set(history.filter((r) => r.month < observedMonth).flatMap((r) => r.addedSources ?? []));
+  const usedNames = new Set(judged.flatMap((x) => x.actual).map((e) => e.source_ref).filter(isStageSource).map(stageSourceName));
+  const addedSources = STAGE_NAMES.filter((n) => usedNames.has(n) && !seen.has(n));
+  const own = { month: observedMonth, referenceDate, edition, basis: 'OBSERVED', ok: judgment.ok, caution: judgment.caution, delay: judgment.delay, delayByStage, cautionByStage, judged: judged.length, excludedStartOverdue: { projects: xs.projects, pairs: xs.pairs, units: xs.units }, ...(addedSources.length ? { addedSources } : {}) };
 
   return {
     schema: 'ledger-board/1', observedMonth, referenceDate, source: tablesOf(observedMonth),

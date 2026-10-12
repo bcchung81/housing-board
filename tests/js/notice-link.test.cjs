@@ -93,3 +93,49 @@ test('T3: 지구 낱말에서 시도·시군구 줄임말을 떼야 맞으면 T3
   const [t1] = NL.matchTitle({ texts: ['부천대장 A7블록 공공분양'], sido: sido('경기도') }, index, sggName);
   assert.match(NL.titleEvidence(t1, '부천대장 A7'), /^T1_LH_DISTRICT_BLOCK: .* LH 지구 낱말 '부천대장' 이 제목에 있음 = 사업 부천대장 A7 · 같은 블록 다른 사업 PRJ-41196-0100\(중복 의심\)$/);
 });
+
+test('지구 낱말 경계: 뒤가 한글 음절이면 다른 이름(구리갈매≠구리갈매역세권·안양관양≠안양관양고·아산탕정≠아산탕정자이), 숫자도 다른 이름, 지구명 꼬리(지구·구역·정보타운 등)와 공백·기호는 같은 이름', () => {
+  assert.equal(NL.hasTok('구리갈매역세권공공주택지구S-1BL', '구리갈매'), false);
+  assert.equal(NL.hasTok('안양관양고', '안양관양'), false);
+  assert.equal(NL.hasTok('아산탕정자이', '아산탕정'), false);
+  assert.equal(NL.hasTok('화성동탄2', '화성동탄'), false, '숫자 꼬리는 기존대로 다른 이름');
+  assert.equal(NL.hasTok('화성동탄2지구', '화성동탄2'), true);
+  assert.equal(NL.hasTok('구리갈매지구S-1BL', '구리갈매'), true);
+  assert.equal(NL.hasTok('대전천동3구역주거환경개선사업', '대전천동3'), true);
+  assert.equal(NL.hasTok('과천지식정보타운S11BL', '과천지식'), true);
+  assert.equal(NL.hasTok('구리갈매', '구리갈매'), true);
+  assert.equal(NL.hasTok('구리갈매역세권|구리갈매A-1', '구리갈매'), true, '뒤 낱말이 맞으면 맞는다');
+});
+
+test('경계 적용: 공고 구리갈매 S1 은 구리갈매역세권 사업에 안 붙고 구리갈매 사업에는 붙는다(T2)', () => {
+  const pr = [
+    { local_project_id: 'PRJ-41310-0001', project_name: '구리갈매역세권 공공주택지구 S-1BL 신축공사', sgg_code: '41310', source_ref: BULK },
+    { local_project_id: 'PRJ-41310-0002', project_name: '구리갈매지구 S-1BL', sgg_code: '41310', source_ref: BULK },
+  ];
+  const idx = NL.projectIndex({ projects: pr, identifiers: [], complexes: [], hubRecords: [] }, LH);
+  const r = NL.matchTitle({ texts: ['구리갈매 S1블록 10년 공공임대주택 예비입주자 모집 공고'], sido: sido('경기도') }, idx, () => '');
+  assert.deepEqual(r.map((h) => [h.pid, h.rule]), [['PRJ-41310-0002', NL.RULE.T2]]);
+});
+
+test('주택 유형어는 지구 낱말이 아니다: 부천괴안(공공주택) B1 의 지구는 부천괴안, 다른 지구의 B1 에 안 붙는다', () => {
+  assert.deepEqual(NL.pairsOf('부천괴안(공공주택) B1 입주자모집').map((x) => x.dist), []);
+  assert.deepEqual(NL.pairsOf('부천괴안(공공주택) B1').map((x) => x.dist), []);
+  for (const w of ['공공주택', '공공분양', '국민임대', '행복주택', '신혼희망', '통합공공임대', '영구임대', '공공임대', '장기전세', '분양전환']) assert.equal(NL.pairsOf(`부천괴안(${w}) B1`).length, 0, w);
+  const pr = [{ local_project_id: 'PRJ-1', project_name: '다른지구 B1 공동주택(공공주택)', sgg_code: '41196', source_ref: BULK }];
+  const idx = NL.projectIndex({ projects: pr, identifiers: [], complexes: [], hubRecords: [] }, LH);
+  assert.deepEqual(NL.matchTitle({ texts: ['부천괴안(공공주택) B1'], sido: sido('경기도') }, idx, () => ''), []);
+});
+
+test('정상 쌍은 그대로 맞는다: 지구명 꼬리·BL 표기·단지명 접두', () => {
+  const pr = [
+    { local_project_id: 'PRJ-A', project_name: '화성동탄2 C-14BL 공공임대', sgg_code: '41196', source_ref: BULK },
+    { local_project_id: 'PRJ-B', project_name: '대전천동3구역 주거환경개선사업 5BL 공동주택', sgg_code: '41196', source_ref: BULK },
+    { local_project_id: 'PRJ-C', project_name: '남양주왕숙 B-1BL', sgg_code: '41196', source_ref: BULK },
+  ];
+  const idx = NL.projectIndex({ projects: pr, identifiers: [], complexes: [], hubRecords: [] }, LH);
+  const m = (t) => NL.matchTitle({ texts: [t], sido: sido('경기도') }, idx, () => '').map((h) => [h.pid, h.rule]);
+  assert.deepEqual(m('화성동탄2 C-14블록 6년 분양전환공공임대주택 입주자모집공고'), [['PRJ-A', NL.RULE.T2]]);
+  assert.deepEqual(m('대전천동3 5블록 10년 분양전환공공임대주택 예비입주자 모집공고'), [['PRJ-B', NL.RULE.T2]]);
+  assert.deepEqual(m('남양주왕숙 B-1BL'), [['PRJ-C', NL.RULE.T2]]);
+  assert.deepEqual(m('화성동탄 C-14블록 공공임대'), [], "'화성동탄' 은 '화성동탄2' 가 아니다");
+});

@@ -40,7 +40,9 @@
         "notice_system": {
           "enum": [
             "MYHOME",
-            "LH"
+            "LH",
+            "APPLYHOME",
+            "HUG"
           ]
         },
         "notice_id": {

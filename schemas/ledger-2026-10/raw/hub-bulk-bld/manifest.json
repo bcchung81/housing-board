@@ -1,0 +1,742 @@
+{
+ "source": "건축HUB 대용량 제공 서비스 - 건축물대장 총괄표제부·표제부 최신 월",
+ "fetched_at": "2026-10-12T11:08:21.661274+00:00",
+ "endpoint": "https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do (다운로드 POST https://www.hub.go.kr/cmm/fms/fileOpnDown.do)",
+ "params": {
+  "구분": "03 건축물대장",
+  "데이터제공년월": "2026-09(2026년 08월 데이터)",
+  "이용목적": "3 참고자료"
+ },
+ "notes": "ego lite(작업공간 14)로 로그인 없이 내려받음. 절차: 구분 선택 -> 검색(40건씩) -> 해당 파일의 '전체 다운로드' -> 이용목적 팝업 '참고자료' -> 확인 -> download 이벤트 -> saveAs. 열 이름·타입은 '설명' 팝업(/portal/opn/lps/idx-lgcpt-pvsn-srvc-popup.do). 머리글 없는 텍스트(구분자 | 추정), zip 은 풀지 않고 그대로 보관, 행 수는 unzip -p | wc -l. 표제부는 받기 전 Range 요청으로 content-length 651,525,650 바이트(1.5 GB 미만)를 확인.",
+ "files": {
+  "summary": {
+   "service": "총괄표제부 (2026년 08월, 제공 2026-09)",
+   "opnTaskCd": "0302",
+   "zip": "건축물대장_총괄표제부_2026-08.zip",
+   "zip_bytes": 37932334,
+   "zip_sha256": "47df6b182d3df00002557e1eac9f21c4fe0c1b6e651c0a67168078f311ac559b",
+   "member": "mart_djy_02.txt",
+   "member_bytes": 221878166,
+   "rows": 620966,
+   "columns": [
+    {
+     "name": "관리_건축물대장_PK",
+     "type": "VARCHAR(33)",
+     "note": ""
+    },
+    {
+     "name": "대장_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "대장_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "대장_종류_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "대장_종류_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "신_구_대장_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "신_구_대장_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "대지_위치",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "도로명_대지_위치",
+     "type": "VARCHAR(400)",
+     "note": ""
+    },
+    {
+     "name": "건물_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "시군구_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "법정동_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "대지_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "번",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "지",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "특수지_명",
+     "type": "VARCHAR(200)",
+     "note": ""
+    },
+    {
+     "name": "블록",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "로트",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "외필지_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "새주소_도로_코드",
+     "type": "VARCHAR(12)",
+     "note": ""
+    },
+    {
+     "name": "새주소_법정동_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "새주소_지상지하_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "새주소_본_번",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "새주소_부_번",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "대지_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "건축_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "건폐_율(%)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "연면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "용적_률_산정_연면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "용적_률(%)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "주_용도_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "주_용도_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "기타_용도",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "세대_수(세대)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "가구_수(가구)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "주_건축물_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "부속_건축물_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "부속_건축물_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "총_주차_수",
+     "type": "NUMERIC(7)",
+     "note": ""
+    },
+    {
+     "name": "옥내_기계식_대수(대)",
+     "type": "NUMERIC(6)",
+     "note": ""
+    },
+    {
+     "name": "옥내_기계식_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "옥외_기계식_대수(대)",
+     "type": "NUMERIC(6)",
+     "note": ""
+    },
+    {
+     "name": "옥외_기계식_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "옥내_자주식_대수(대)",
+     "type": "NUMERIC(6)",
+     "note": ""
+    },
+    {
+     "name": "옥내_자주식_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "옥외_자주식_대수(대)",
+     "type": "NUMERIC(6)",
+     "note": ""
+    },
+    {
+     "name": "옥외_자주식_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "허가_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "착공_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "사용승인_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_년",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_기관_코드",
+     "type": "CHAR(7)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_기관_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_구분_코드",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "호_수(호)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "에너지효율_등급",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "에너지절감_율",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "에너지_EPI점수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "친환경_건축물_등급",
+     "type": "CHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "친환경_건축물_인증점수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "지능형_건축물_등급",
+     "type": "CHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "지능형_건축물_인증점수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "생성_일자",
+     "type": "VARCHAR(8)",
+     "note": ""
+    }
+   ]
+  },
+  "title": {
+   "service": "표제부 (2026년 08월, 제공 2026-09)",
+   "opnTaskCd": "0303",
+   "zip": "건축물대장_표제부_2026-08.zip",
+   "zip_bytes": 651525650,
+   "zip_sha256": "0e1789435deb8b636452961069beb5f45fc92fa19045308fc863fe0a158f6724",
+   "member": "mart_djy_03.txt",
+   "member_bytes": 3805320118,
+   "rows": 8064406,
+   "columns": [
+    {
+     "name": "관리_건축물대장_PK",
+     "type": "VARCHAR(33)",
+     "note": ""
+    },
+    {
+     "name": "대장_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "대장_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "대장_종류_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "대장_종류_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "대지_위치",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "도로명_대지_위치",
+     "type": "VARCHAR(400)",
+     "note": ""
+    },
+    {
+     "name": "건물_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "시군구_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "법정동_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "대지_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "번",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "지",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "특수지_명",
+     "type": "VARCHAR(200)",
+     "note": ""
+    },
+    {
+     "name": "블록",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "로트",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "외필지_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "새주소_도로_코드",
+     "type": "VARCHAR(12)",
+     "note": ""
+    },
+    {
+     "name": "새주소_법정동_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "새주소_지상지하_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "새주소_본_번",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "새주소_부_번",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "동_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "주_부속_구분_코드",
+     "type": "CHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "주_부속_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "대지_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "건축_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "건폐_율(%)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "연면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "용적_률_산정_연면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "용적_률(%)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "구조_코드",
+     "type": "VARCHAR(2)",
+     "note": ""
+    },
+    {
+     "name": "구조_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "기타_구조",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "주_용도_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "주_용도_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "기타_용도",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "지붕_코드",
+     "type": "VARCHAR(2)",
+     "note": ""
+    },
+    {
+     "name": "지붕_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "기타_지붕",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "세대_수(세대)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "가구_수(가구)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "높이(m)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "지상_층_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "지하_층_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "승용_승강기_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "비상용_승강기_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "부속_건축물_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "부속_건축물_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "총_동_연면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "옥내_기계식_대수(대)",
+     "type": "NUMERIC(6)",
+     "note": ""
+    },
+    {
+     "name": "옥내_기계식_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "옥외_기계식_대수(대)",
+     "type": "NUMERIC(6)",
+     "note": ""
+    },
+    {
+     "name": "옥외_기계식_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "옥내_자주식_대수(대)",
+     "type": "NUMERIC(6)",
+     "note": ""
+    },
+    {
+     "name": "옥내_자주식_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "옥외_자주식_대수(대)",
+     "type": "NUMERIC(6)",
+     "note": ""
+    },
+    {
+     "name": "옥외_자주식_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "허가_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "착공_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "사용승인_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_년",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_기관_코드",
+     "type": "CHAR(7)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_기관_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_구분_코드",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "허가번호_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "호_수(호)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "에너지효율_등급",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "에너지절감_율",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "에너지_EPI점수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "친환경_건축물_등급",
+     "type": "CHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "친환경_건축물_인증점수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "지능형_건축물_등급",
+     "type": "CHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "지능형_건축물_인증점수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "생성_일자",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "내진_설계_적용_여부",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "내진_능력",
+     "type": "VARCHAR(200)",
+     "note": ""
+    }
+   ]
+  }
+ }
+}
