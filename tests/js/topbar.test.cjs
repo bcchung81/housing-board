@@ -1,4 +1,4 @@
-// 지도 위 컨트롤: 상단은 한 줄(보기 기준·옵션·전체/평면/투어·좌우 돌리기/자동), 우측 상단은 확대·축소·나침반 한 묶음으로 작게.
+// 지도 위 컨트롤: 왼쪽 위는 자료 켜고 끄기 한 줄(옵션·버스위치·건물 흐리게), 오른쪽 위는 시점 조작 한 묶음(확대·축소·나침반 | 전체·평면·투어 | 좌우 돌리기·자동, 2026-10-13).
 // 화면에서의 실제 크기·겹침은 별도 헤드리스 Chrome 점검으로 본다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -22,16 +22,20 @@ test('상단 컨트롤은 줄바꿈 없이 한 줄이고, 회전 슬라이더 �
   assert.doesNotMatch(css, /\.dial\b/);
 });
 
-test('지도 위 한 줄에 옵션·전체·평면·투어·◀▶·자동이 이 순서로 모여 있고, 보기 기준 단추(층수·공정율·입주 시기)는 없다(2026-10-10 기반시설 보기 고정)', () => {
+test('왼쪽 위 한 줄은 옵션·버스위치·건물 흐리게, 시점 조작(전체·평면·투어·돌리기·자동)은 오른쪽 위 묶음에 이 순서로 모여 있고, 보기 기준 단추(층수·공정율·입주 시기)는 없다', () => {
   const head = /<header class="mhead" id="mhead">[\s\S]*?<\/header>/.exec(html);
   assert.ok(head && /id="hudSum"/.test(head[0]), '옛 보기 기준 자리에 공급 요약이 있다');
   assert.doesNotMatch(html + app, /modeSeg|data-mode=|id="timebar"|tRange|tPlay|MODE_SAY|rateH|timeH|dong-ghost|timeMo|blockTimes|moLabel|MO_MAX|monthF|\btm\.mo\b|dongH\(/);   // 지운 이름을 가리키는 식이 남으면 setupCustom 이 멈춰 지도에 배경만 남는다(2026-10-10 실제로 겪음)
   assert.match(app, /let viewMode = window\.GY_INFRA \? 'infra' : 'floors';/);
   assert.match(app, /set\('mode', ''\);/, '옛 주소의 mode= 는 지운다');
-  const order = ['id="optBtn"', 'id="vAll"', 'id="vPlane"', 'id="vTour"', 'id="dLeft"', 'id="dRight"', 'id="vOrbit"'];
-  let at = -1;
-  for (const o of order) { const i = topbar[0].indexOf(o); assert.ok(i > at, `${o} 위치/순서`); at = i; }
-  for (const id of ['vAll', 'vPlane', 'vTour', 'dLeft', 'dRight']) assert.match(topbar[0], new RegExp(`id="${id}"[^>]*aria-label="[^"]+"`));   // 글자가 줄어도 이름은 그대로
+  const inOrder = (block, ids) => { let at = -1; for (const id of ids) { const i = block.indexOf(`id="${id}"`); assert.ok(i > at, `${id} 위치/순서`); at = i; } };
+  inOrder(topbar[0], ['optBtn', 'busLoad', 'dimBtn']);
+  const cam = /<div class="rctl"[\s\S]*?\n  <\/div>/.exec(html)[0];
+  inOrder(cam, ['zIn', 'zOut', 'compass', 'vAll', 'vPlane', 'vTour', 'dLeft', 'dRight', 'vOrbit']);
+  for (const id of ['vAll', 'vPlane', 'vTour', 'dLeft', 'dRight', 'vOrbit']) assert.doesNotMatch(topbar[0], new RegExp(`id="${id}"`), `${id} 는 왼쪽 줄에 없다`);
+  for (const id of ['vAll', 'vPlane', 'vTour', 'dLeft', 'dRight']) assert.match(cam, new RegExp(`id="${id}"[^>]*aria-label="[^"]+"`));   // 글자·그림이 줄어도 이름은 그대로
+  assert.match(cam, /id="dLeft"[^>]*><svg viewBox="0 0 24 24" aria-hidden="true">/);   // 돌리기는 글리프(◀▶) 대신 그린 아이콘
+  assert.equal((cam.match(/class="rsep"/g) || []).length, 2, '무리 셋을 띠 둘로 나눈다');
 });
 
 test('좌우 돌리기는 ◀▶ 15° 단추와 길게 누르기로 남아 있다(슬라이더 코드는 없다)', () => {
@@ -48,7 +52,7 @@ test('우측 상단은 확대·축소·나침반 한 묶음(.rctl)이고, 기본
   assert.match(app, /\$\('#zIn'\)\.addEventListener\('click'/);
   assert.match(app, /\$\('#zOut'\)\.addEventListener\('click'/);
   assert.doesNotMatch(css, /\.compass\b|cp-tick|cp-deg|cp-name/);
-  assert.match(app, /HUD_EXCL = '\.topbar, \.rctl,/);        // 단지 표지가 이 묶음을 피한다
+  assert.match(app, /HUD_EXCL = '\.topbar, \.rctl,[^']*#cmd:not\(\[hidden\]\)/);        // 단지 표지가 이 묶음과 주소 입력줄을 피한다
   // 나침반은 작게: 묶음 단추 폭 40px 이하, 그림 28px 이하
   const w = /\.rctl button\{[^}]*width:(\d+)px/.exec(css), svg = /\.rctl svg\{[^}]*width:(\d+)px/.exec(css);
   assert.ok(w && +w[1] <= 40, `.rctl button 폭 ${w && w[1]}`);
@@ -64,34 +68,36 @@ test('옵션 창에는 야간 지도 선택이 없고, 단추 이름표도 야�
   assert.doesNotMatch(html, /야간|nightChip/);
 });
 
-test('공급 요약(#hudSum)은 머리 줄 오른쪽의 2열(합계·막대·범례 | 점검 칩)이고, 지도 위에 떠 있지 않다', () => {
+test('공급 요약(#hudSum)은 머리 줄 오른쪽의 2열(합계 한 줄 | 점검 단추)이고, 지도 위에 떠 있지 않다', () => {
   const b = bodies('.hudsum').join(';');
   assert.match(b, /margin-left:auto/); assert.match(b, /display:grid/);
   assert.doesNotMatch(b, /position:absolute|backdrop-filter|box-shadow/, '머리 줄 안이라 떠 있는 유리 카드가 아니다');
-  assert.match(css, /@media \(max-width:1280px\)\{\.hudsum\{grid-template-columns:minmax\(0,210px\)\}\.hudsum \.hs-b\{display:none\}\}/);
+  assert.match(css, /@media \(max-width:1100px\)\{\.hudsum \.hs-b\{display:none\}/);
   assert.match(css, /\.ptoggle,\.hudsum\{display:none!important\}/);   // 모바일은 하단 시트가 대신한다
+  const isum = bodies('.hudsum .isum').join(';');
+  assert.match(isum, /border:0/); assert.match(isum, /background:transparent/); assert.match(isum, /color:var\(--mute\)/);   // 조용한 링크 말씨(상자·채움 없음)
 });
 
-test('공급 요약 내용: 왼쪽 합계·막대·번호 범례, 오른쪽 입주 전 점검 칩(지역 선택·다음 일정은 머리 줄 왼쪽·사이드바에 있어 뺀다)', () => {
+test('공급 요약 내용: 합계는 \'n세대 · m단지\' 한 줄(문장은 title), 상태 막대·범례는 사이드바에만, 오른쪽은 입주 전 점검 단추(2026-10-13)', () => {
   const fn = /function syncHudSum\(\) \{[\s\S]*?\n\}\n/.exec(app);
   assert.ok(fn, 'syncHudSum 을 찾을 수 없음');
-  for (const c of ['hs-a', 'hs-b', 'hs-total', 'SUM_COMPACT', 'class="isum"']) assert.ok(fn[0].includes(c), `${c} 가 있어야 한다`);
-  for (const c of ['hs-region', 'class="next"']) assert.ok(!fn[0].includes(c), `${c} 는 없어야 한다`);
+  for (const c of ['hs-a', 'hs-b', 'hs-total', 'class="isum"', 'title="${esc(tot.sub)}"', '단지']) assert.ok(fn[0].includes(c), `${c} 가 있어야 한다`);
+  for (const c of ['hs-region', 'class="next"', 'sbar', 'sleg', 'SUM_COMPACT', '#sumBar']) assert.ok(!fn[0].includes(c), `${c} 는 없어야 한다`);
   assert.match(fn[0], /classList\.toggle\('solo', !side\)/);               // 점검 자료가 없는 지역은 한 열
-  assert.match(css, /\.hudsum\.solo\{grid-template-columns:minmax\(0,\d+px\)\}/);
-  assert.doesNotMatch(fn[0], /<h3>/);                                     // '공급 예정'·'다음 일정' 제목 줄이 없다
-  assert.match(app, /SUM_COMPACT = grp\.map/);                            // 상태별 번호만(이름·%는 이름표)
+  assert.match(css, /\.hudsum\.solo\{grid-template-columns:auto\}/);
+  assert.doesNotMatch(app, /SUM_COMPACT|HS_ICON/);
   assert.match(app, /sub: `공급 예정 \$\{BLOCKS\.length\}개 단지/);
-  assert.match(bodies('.hudsum .isum-t').join(';'), /display:none/);       // 점검 헤드라인 문장은 칩이 대신한다
-  /* 단지 수·세대수 미확인 수는 아이콘+숫자 한 줄(문장이 두 줄이 되면 머리 줄을 넘쳤다, 2026-10-10). 문장은 title·화면 낭독기용으로 남는다 */
-  assert.match(fn[0], /class="hs-meta" title="\$\{esc\(tot\.sub\)\}"><span class="sr">\$\{esc\(tot\.sub\)\}<\/span>/);
-  assert.match(bodies('.hudsum .hs-meta').join(';'), /white-space:nowrap/);
+  assert.match(app, /function infraSumHtml\(\) \{[\s\S]*?<span class="isum-h">입주 전 점검<\/span><span class="isum-go" aria-hidden="true">›<\/span><span class="isum-c">/);
 });
 
-test('상세 카드는 확대 카드에 폭을 빼앗기지 않고, 가로로 겹치면 그 아래로 비켜 선다(공급 요약은 머리 줄로 옮겨 지도를 가리지 않는다)', () => {
+test('상세 카드는 늘 보이는 영역 안에 든다: 시점 묶음과 겹치면 가로로 비켜 서고, 위·아래 상자(도구 줄·입력줄·범례 띠·아래 시트) 사이 높이에 맞춰 줄이고(안쪽 스크롤) 밀어 넣는다', () => {
   const fn = /function showCard\([\s\S]*?\n\}\n/.exec(app)[0];
   assert.match(fn, /const W = map\.getContainer\(\)\.clientWidth;/);       // 요약 왼쪽 가장자리로 폭을 줄이지 않는다
-  assert.doesNotMatch(fn, /hs\.getBoundingClientRect\(\)\.left/);
-  assert.match(fn, /for \(const o of \[\$\('\.rctl'\)\]\)/);
-  assert.match(fn, /dy = Math\.max\(dy, q2\.bottom \+ 8 - r\.top\)/);
+  assert.match(fn, /fitCard\(\);/);
+  const fit = /function fitCard\(\) \{[\s\S]*?\n\}\n/.exec(app)[0];
+  assert.match(app, /const CARD_AVOID = \['\.topbar', '#cmd', '#botbar', '\.maplibregl-ctrl-bottom-right'\];/);
+  assert.match(fit, /innerWidth <= 900 \? \['#panel'\]/);
+  assert.match(fit, /dx = rc\.left - 8 - r\.right/);
+  assert.match(fit, /pc\.style\.maxHeight = /);
+  assert.match(bodies('.pc').join(';'), /overflow-y:auto/);
 });

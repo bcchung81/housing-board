@@ -22,7 +22,7 @@ const EDGE: Record<Edge, string> = {
   key: 'stroke-foreground', name: 'stroke-foreground [stroke-dasharray:5_4]', need: 'stroke-warn', none: 'stroke-bad [stroke-dasharray:3_3]',
 };
 const LABEL: Record<Edge, string> = { key: 'fill-foreground', name: 'fill-foreground', need: 'fill-warn', none: 'fill-bad' };
-/* 받는 방식 표지(상자 오른쪽 위): 실시간·API 는 색, CSV 는 진한 테두리, 나머지는 흐리게 */
+/* 받는 방식 표지(상자 오른쪽 위·탭 줄 오른쪽 범례, 같은 11px 알약): 실시간·API 는 색, CSV 는 진한 테두리, 나머지는 흐리게. 뜻(VIA_NOTE)은 범례 알약의 title */
 const VIA_STYLE: Record<Via, { box: string; text: string; pill: string }> = {
   실시간: { box: 'fill-[color-mix(in_srgb,var(--primary)_12%,var(--card))] stroke-primary', text: 'fill-primary', pill: 'border-primary text-primary' },
   API: { box: 'fill-[color-mix(in_srgb,var(--ok)_12%,var(--card))] stroke-ok', text: 'fill-ok', pill: 'border-ok text-ok' },
@@ -180,30 +180,34 @@ export default function StageLinks({ stages, extra }: { stages: StageLink[]; ext
   const tabCls = 'h-8 cursor-pointer rounded-[8px] border-0 bg-transparent px-3 text-[14px] font-bold whitespace-nowrap text-ink2 [transition:background_.15s,color_.15s] not-aria-selected:hover:bg-pn2 aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary';
   return (
     <div>
-      <div role="tablist" aria-label="공급 6단계" className="flex w-fit max-w-full flex-wrap rounded-[10px] bg-card p-[3px] shadow-[var(--shadow-card)]"
-        onKeyDown={(e) => { if (e.key === 'ArrowRight') go(tab + 1); else if (e.key === 'ArrowLeft') go(tab - 1); else if (e.key === 'Home') go(0); else if (e.key === 'End') go(total - 1); else return; e.preventDefault(); }}>
-        {stages.map((st, i) => (
-          <button key={st.id} ref={(el) => { refs.current[i] = el; }} type="button" role="tab" id={`stage-tab-${st.id}`} aria-selected={i === tab} aria-controls={`stage-panel-${st.id}`} tabIndex={i === tab ? 0 : -1}
-            onClick={() => setTab(i)} className={tabCls} title={`공식 단계 ${st.official}`}>
-            {NUM[i]} {st.name}
-          </button>
-        ))}
-        {extra ? (
-          <button ref={(el) => { refs.current[ETC] = el; }} type="button" role="tab" id="stage-tab-etc" aria-selected={tab === ETC} aria-controls="stage-panel-etc" tabIndex={tab === ETC ? 0 : -1}
-            onClick={() => setTab(ETC)} className={cn(tabCls, 'ml-1')}>
-            기타
-          </button>
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+        <div role="tablist" aria-label="공급 6단계" className="flex w-fit max-w-full flex-wrap rounded-[10px] bg-card p-[3px] shadow-[var(--shadow-card)]"
+          onKeyDown={(e) => { if (e.key === 'ArrowRight') go(tab + 1); else if (e.key === 'ArrowLeft') go(tab - 1); else if (e.key === 'Home') go(0); else if (e.key === 'End') go(total - 1); else return; e.preventDefault(); }}>
+          {stages.map((st, i) => (
+            <button key={st.id} ref={(el) => { refs.current[i] = el; }} type="button" role="tab" id={`stage-tab-${st.id}`} aria-selected={i === tab} aria-controls={`stage-panel-${st.id}`} tabIndex={i === tab ? 0 : -1}
+              onClick={() => setTab(i)} className={tabCls} title={`공식 단계 ${st.official}`}>
+              {NUM[i]} {st.name}
+            </button>
+          ))}
+          {extra ? (
+            <button ref={(el) => { refs.current[ETC] = el; }} type="button" role="tab" id="stage-tab-etc" aria-selected={tab === ETC} aria-controls="stage-panel-etc" tabIndex={tab === ETC ? 0 : -1}
+              onClick={() => setTab(ETC)} className={cn(tabCls, 'ml-1')}>
+              기타
+            </button>
+          ) : null}
+        </div>
+        {s ? (
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1 text-[12px] text-muted-foreground" aria-label="범례">
+            <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-2 border-foreground align-middle" />키 연결</span>
+            <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-[1.5px] border-dashed border-foreground align-middle" />이름·주소만</span>
+            <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-2 border-warn align-middle" />확보하면 연결</span>
+            <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-[1.5px] border-dashed border-bad align-middle" />값·키 없음</span>
+            <span className="h-3 w-px bg-border" aria-hidden="true" />
+            {VIAS.map((v) => <b key={v} title={VIA_NOTE[v]} className={cn('inline-block rounded-full border px-1.5 text-[11px] leading-[16px] font-bold whitespace-nowrap', VIA_STYLE[v].pill)}>{v}</b>)}
+          </div>
         ) : null}
       </div>
       {s ? <div role="tabpanel" id={`stage-panel-${s.id}`} aria-labelledby={`stage-tab-${s.id}`} className="mt-3 grid gap-3">
-        <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 text-[12px] text-muted-foreground" aria-label="범례">
-          <span><i className="mr-1 inline-block w-6 border-t-2 border-foreground align-middle" />키 연결</span>
-          <span><i className="mr-1 inline-block w-6 border-t-[1.5px] border-dashed border-foreground align-middle" />이름·주소만</span>
-          <span><i className="mr-1 inline-block w-6 border-t-2 border-warn align-middle" />확보하면 연결</span>
-          <span><i className="mr-1 inline-block w-6 border-t-[1.5px] border-dashed border-bad align-middle" />값·키 없음</span>
-          <span className="h-3 w-px bg-border" aria-hidden="true" />
-          {VIAS.map((v) => <span key={v}><b className={cn('mr-1 inline-block rounded-full border px-1.5 text-[10.5px] leading-[15px] font-bold', VIA_STYLE[v].pill)}>{v}</b>{VIA_NOTE[v]}</span>)}
-        </div>
         {/* 도식은 본문 폭에 맞춰 줄어든다(화면을 넘치지 않음). 휴대폰 폭에서만 읽히게 상자 안에서 옆으로 민다 */}
         <div className="overflow-x-auto rounded-[12px] border border-border bg-card px-2 py-1">
           <Diagram s={s} />

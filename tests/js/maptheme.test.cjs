@@ -49,10 +49,12 @@ test('블록 무늬는 24px 그림을 배율 2 로 올려 12px 주기로 반복�
   for (const n of ['hatch', 'dots', 'cross']) assert.match(app, new RegExp(`'fill-pattern': '${n}', 'fill-opacity': PAT_OP`));
 });
 
-test('숨긴 패널 구역과 그 레일 점은 실제로 숨는다(.sec 의 display:flex 가 hidden 을 덮지 않게)', () => {
-  assert.match(css, /\.sec\[hidden\],\.prail button\[hidden\]\{display:none\}/);
-  assert.match(app, /\$\('#prail \[data-sec="h-next"\]'\)\.hidden = !rows\.length;/);
-  assert.match(app, /\$\('#prail \[data-sec="h-tl"\]'\)\.hidden = !items\.length;/);
+test('숨긴 패널 구역은 실제로 숨는다(.sec 의 display:flex 가 hidden 을 덮지 않게). 오른쪽 점 레일·쪽수 표시는 없다(2026-10-13)', () => {
+  assert.match(css, /\.sec\[hidden\]\{display:none\}/);
+  assert.match(app, /\$\('#h-next'\)\.parentElement\.hidden = !rows\.length;/);
+  assert.match(app, /\$\('#h-tl'\)\.closest\('section'\)\.hidden = !items\.length;/);
+  const html = read('index.html');
+  assert.doesNotMatch(html + app + css, /prail|pcur/);
 });
 
 test('패널 그림(합계 막대·입주 타임라인·기반시설 타임라인)은 고정 다크 색 대신 테마 변수를 쓴다', () => {

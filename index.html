@@ -47,7 +47,7 @@ requestAnimationFrame(function () { setTimeout(function () {
   <button type="button" class="handle" id="sheetHandle" aria-expanded="false" aria-controls="panel" aria-label="패널 크기 바꾸기"></button>
   <header class="phead" id="phead">
     <div class="eyebrow">주택파동</div>
-    <div class="phrow"><h1>공급 현황</h1><span class="pcur" id="pcur" aria-hidden="true"></span></div>
+    <h1>공급 현황</h1>
   </header>
   <div class="pscroll" id="pscroll" tabindex="0" role="region" aria-label="공급 현황 내용">
 
@@ -56,7 +56,6 @@ requestAnimationFrame(function () { setTimeout(function () {
     <b id="sumTotal">-</b>
     <div class="sbar" id="sumBar" role="img" aria-label="상태별 세대수 비율"></div>
     <div class="sleg" id="sumLeg"></div>
-    <button type="button" class="isum" id="infraSum" hidden aria-label="입주 전 점검 요약. 누르면 기반시설 보기로 바뀝니다"></button>
   </section>
 
   <section class="sec" aria-labelledby="h-next">
@@ -76,7 +75,7 @@ requestAnimationFrame(function () { setTimeout(function () {
   </section>
 
   <section class="sec" id="secInfra" aria-labelledby="h-infra" hidden>
-    <h2 id="h-infra"><button type="button" class="sech" id="infraToggle" aria-expanded="false" aria-controls="infraBody"><span>입주 전 점검</span><span class="sech-h" aria-hidden="true">펼치기</span></button></h2>
+    <div class="shead"><h2 id="h-infra"><button type="button" class="sech" id="infraToggle" aria-expanded="false" aria-controls="infraBody"><span>입주 전 점검</span><span class="sech-h" aria-hidden="true"></span></button></h2><span class="isum-c" id="infraChips"></span><button type="button" class="plink" id="infraGo" title="단지와 학교·정류장·전기 시설을 한 화면에 맞춥니다">기반시설 보기</button></div>
     <div class="sbody" id="infraBody" hidden>
     <div class="isub" id="infraTlBox" hidden><h3>입주와 기반시설 시점</h3><svg class="itl" id="infraTl" role="img" aria-label=""></svg><p class="inote" id="infraTlNote"></p></div>
     <ul class="list" id="infraList"></ul>
@@ -93,13 +92,6 @@ requestAnimationFrame(function () { setTimeout(function () {
 
   <div class="foot">건물 © 국토교통부 GIS건물통합정보 (V-World)<br><span id="basis">-</span> 기준</div>
   </div>
-  <nav class="prail" id="prail" aria-label="구역 이동">
-    <button type="button" data-sec="h-sum" aria-label="요약" aria-current="true"><span>요약</span></button>
-    <button type="button" data-sec="h-next" aria-label="다음 일정"><span>다음 일정</span></button>
-    <button type="button" data-sec="h-proj" aria-label="단지"><span>단지</span></button>
-    <button type="button" data-sec="h-infra" aria-label="입주 전 점검"><span>입주 전 점검</span></button>
-    <button type="button" data-sec="h-tl" aria-label="입주·준공 예정"><span>입주·준공 예정</span></button>
-  </nav>
 </aside>
 
 <main class="mapwrap">
@@ -108,7 +100,7 @@ requestAnimationFrame(function () { setTimeout(function () {
   <div class="dynhint" id="dynHint" role="status" aria-live="polite" hidden></div>
   <div class="hud" id="hud" role="group" aria-label="단지 표지"><svg class="hud-svg" id="hudSvg" aria-hidden="true"></svg><div id="hudTags"></div></div>
   <button type="button" id="panelToggle" class="ptoggle" aria-controls="panel" aria-expanded="false" aria-label="사이드바 펼치기" title="사이드바 펼치기"><span aria-hidden="true">‹</span><span class="pt-l" aria-hidden="true">공급 현황</span></button>
-  <div class="rctl" role="group" aria-label="확대·축소와 방향">
+  <div class="rctl" role="group" aria-label="지도 시점: 확대·축소·방향·보기">
     <button type="button" id="zIn" aria-label="확대" title="확대">+</button>
     <button type="button" id="zOut" aria-label="축소" title="축소">&minus;</button>
     <button type="button" id="compass" aria-label="나침반" title="나침반. 누르면 북쪽이 위로 오게 합니다.">
@@ -117,20 +109,20 @@ requestAnimationFrame(function () { setTimeout(function () {
         <g id="cpRose"><path class="cp-n" d="M0,-9L-3.6,0L3.6,0Z"/><path class="cp-s" d="M0,9L-3.6,0L3.6,0Z"/></g>
       </svg>
     </button>
+    <i class="rsep" aria-hidden="true"></i>
+    <button type="button" id="vAll" class="rt" aria-label="전체 보기" title="모든 단지가 보이게 맞춥니다">전체</button>
+    <button type="button" id="vPlane" class="rt" aria-pressed="false" aria-label="평면 보기" title="위에서 내려다보는 평면으로 바꿉니다. 다시 누르면 비스듬한 입체로 돌아옵니다.">평면</button>
+    <button type="button" id="vTour" class="rt" aria-pressed="false" aria-label="순회 투어" title="단지를 하나씩 차례로 보여 줍니다. 지도를 만지면 멈춥니다.">투어</button>
+    <i class="rsep" aria-hidden="true"></i>
+    <button type="button" id="dLeft" class="rot" aria-label="왼쪽으로 돌리기. 길게 누르면 계속 돕니다" title="왼쪽으로 15° (길게 누르면 계속)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button>
+    <button type="button" id="dRight" class="rot" aria-label="오른쪽으로 돌리기. 길게 누르면 계속 돕니다" title="오른쪽으로 15° (길게 누르면 계속)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg></button>
+    <button type="button" id="vOrbit" class="rt" aria-pressed="false" title="지금 보이는 지도를 그 자리에서 천천히 돌립니다. 지도나 컨트롤을 만지면 멈춥니다.">자동</button>
   </div>
   <div class="topbar">
-  <div class="tools" role="toolbar" aria-label="시점과 옵션">
+  <div class="tools" role="toolbar" aria-label="지도 옵션">
     <button type="button" id="optBtn" class="opt" aria-expanded="false" aria-controls="optPanel" title="보일 단지 상태, 역·학교 등">옵션<b id="optN" hidden></b></button>
     <button type="button" id="busLoad" class="opt" hidden title="버튼을 누를 때만 버스 위치를 조회합니다(자동 갱신 없음)">버스위치</button>
     <button type="button" id="dimBtn" aria-pressed="true" title="기존 건물 흐리게: 학교·병원·공공시설만 3D 로 두고 나머지 건물은 점선 윤곽만 그립니다. 다시 누르면 모든 건물을 3D 로 봅니다.">건물 흐리게</button>
-    <i class="sep" aria-hidden="true"></i>
-    <button type="button" id="vAll" aria-label="전체 보기" title="모든 단지가 보이게 맞춥니다">전체</button>
-    <button type="button" id="vPlane" aria-pressed="false" aria-label="평면 보기" title="위에서 내려다보는 평면으로 바꿉니다. 다시 누르면 비스듬한 입체로 돌아옵니다.">평면</button>
-    <button type="button" id="vTour" aria-pressed="false" aria-label="순회 투어" title="단지를 하나씩 차례로 보여 줍니다. 지도를 만지면 멈춥니다.">투어</button>
-    <i class="sep" aria-hidden="true"></i>
-    <button type="button" id="dLeft" class="rot" aria-label="왼쪽으로 돌리기. 길게 누르면 계속 돕니다" title="왼쪽으로 15° (길게 누르면 계속)">◀</button>
-    <button type="button" id="dRight" class="rot" aria-label="오른쪽으로 돌리기. 길게 누르면 계속 돕니다" title="오른쪽으로 15° (길게 누르면 계속)">▶</button>
-    <button type="button" id="vOrbit" aria-pressed="false" title="지금 보이는 지도를 그 자리에서 천천히 돌립니다. 지도나 컨트롤을 만지면 멈춥니다.">자동</button>
   </div>
   </div>
   <div class="optpanel" id="optPanel" role="group" aria-label="지도 옵션" hidden>
@@ -164,11 +156,11 @@ requestAnimationFrame(function () { setTimeout(function () {
     <form class="cmd-bar" id="cmdForm" role="search" autocomplete="off">
       <span class="cmd-prompt" aria-hidden="true">›</span>
       <label class="sr" for="cmdIn">주소 이동</label>
-      <input id="cmdIn" type="text" role="combobox" aria-expanded="false" aria-controls="cmdRes" aria-autocomplete="list" aria-haspopup="listbox" placeholder="주소·법정동·단지 또는 코드 입력" maxlength="60" enterkeyhint="go" autocomplete="off" autocapitalize="off" spellcheck="false">
+      <input id="cmdIn" type="text" role="combobox" aria-expanded="false" aria-controls="cmdRes" aria-autocomplete="list" aria-haspopup="listbox" placeholder="주소·단지·코드" maxlength="60" enterkeyhint="go" autocomplete="off" autocapitalize="off" spellcheck="false">
       <kbd class="cmd-key" aria-hidden="true" title="/ 키로 바로 입력">/</kbd>
       <button type="button" class="cmd-clear" id="cmdClear" aria-label="입력 지우기" hidden>&times;</button>
       <i class="cmd-spin" aria-hidden="true"></i>
-      <button type="submit" class="cmd-go" id="cmdGo" disabled>이동 <span aria-hidden="true">↵</span></button>
+      <button type="submit" class="cmd-go" id="cmdGo" disabled>이동</button>
     </form>
     <div class="cmd-parse" id="cmdParse" aria-label="인식한 위치" hidden></div>
   </div>

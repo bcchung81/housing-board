@@ -81,10 +81,10 @@ test('등장 동작은 끝나면 원래 스타일로 돌아간다(backwards): bo
   for (const k of ['q-rise', 'q-grow-y', 'q-grow-x', 'q-sweep', 'q-pulse']) assert.match(css, new RegExp(`animation: ${k} [^;]* backwards;`), k);
 });
 
-test('지도 패널 카드도 같은 결로 떠오른다(머리 줄 공급 요약의 점검 칩은 제외)', () => {
+test('지도 패널 카드도 같은 결로 떠오른다(머리 줄 점검 단추는 조용한 링크라 제외)', () => {
   const map = read('assets/css/app.css');
-  assert.match(map, /@media \(hover:hover\)\{\n  \.card:hover,\.next \.nx:hover,\.isum:hover\{transform:translateY\(-1px\);box-shadow:var\(--card-hover-shadow\);border-color:var\(--line2\)\}/);
-  assert.match(map, /\.hudsum \.isum:hover\{transform:none;box-shadow:none\}/);
+  assert.match(map, /@media \(hover:hover\)\{\n  \.card:hover,\.next \.nx:hover\{transform:translateY\(-1px\);box-shadow:var\(--card-hover-shadow\);border-color:var\(--line2\)\}/);
+  assert.doesNotMatch(map, /\.isum:hover\{transform:translateY/);
   assert.match(map, /--card-hover-shadow:0 6px 16px rgba\(0,0,0,\.38\)/);
   assert.match(map, /--card-hover-shadow:0 6px 16px rgba\(15,23,42,\.12\)/);
 });

@@ -1,8 +1,8 @@
 import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { Metadata } from 'next';
-import Crumbs from '../../../components/Crumbs';
-import { Dl, Page, PageTitle, SectionTitle } from '../../../components/page';
+import { Dl, Page, PageHead, PanelHead } from '../../../components/page';
+import { legend } from '../../../components/board/styles';
 import Fold from '../../../components/sources/Fold';
 import HashOpen from '../../../components/sources/HashOpen';
 import StageLinks from '../../../components/sources/StageLinks';
@@ -23,8 +23,9 @@ import { GRID_DENSE, type Col, type Detail, type Row } from '../../../lib/grid/s
 
 export const metadata: Metadata = { title: '데이터 원본' };
 
-const H2 = 'mt-6 mb-1 text-[17px]';
-const H3 = 'mt-5 mb-1 text-[15px]';   // 기타 탭 안의 구역 제목
+const H3 = 'mt-5 mb-1 text-[16px] font-normal';   // 기타 탭 안의 구역 제목
+/* 기타 탭 표의 표지 뜻: 머리 줄 범례 칩(뜻은 title) */
+const MARKS: [string, string][] = [['✓ 사용', '사용'], ['△ 일부 지역·가공본', '일부 지역·가공본'], ['미연결', '필요하나 연결 안 됨'], ['SAMPLE', '시안 고정값'], ['보관', '파일로 받아 둠'], ['실시간', '화면 조회 때 요청']];
 
 const SCREEN_COLS: Col[] = [
   { key: 'screen', label: '화면', kind: 'text' },
@@ -96,7 +97,9 @@ function fileBytes(s: Source): number | null {
   try { return statSync(path.join(process.cwd(), relative)).size; } catch { return null; }
 }
 
-/* 실제 지도 로더가 읽는 파일만 세며, 없는 선택 파일은 0으로 더한다. rec 는 행을 펼칠 때 보일 레코드(건물은 앞 10건만) */
+/* 실제 지도 로더가 읽는 파일만 세며, 없는 선택 파일은 0으로 더한다.
+   rec 는 행을 펼칠 때 보일 레코드(건물은 앞 10건만).
+   (줄을 나눈 까닭: 위 fileBytes 의 파일 추적 경고를 보일 때 Turbopack(16.4) 코드 틀이 이 줄의 한글 중간을 잘라 next build 가 멈췄다, 2026-10-13) */
 type Rec = Record<string, unknown>;
 function bundleCounts() {
   const counts = { projects: 0, buildings: 0, context: 0, infra: 0, infraRegions: 0, permits: 0, zones: 0 };
@@ -307,13 +310,14 @@ export default function SourcesPage() {
 
   return (
     <Page>
-      <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: '데이터 원본' }]} />
-      <PageTitle>데이터 원본</PageTitle>
+      <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '데이터 원본' }]} title="데이터 원본" />
       <section id="stage-links" aria-labelledby="h-stage" className="scroll-mt-20">
-        <SectionTitle id="h-stage" className={H2}>단계별 데이터 연계</SectionTitle>
+        <PanelHead id="h-stage" title="단계별 데이터 연계" />
         <StageLinks stages={stages} extra={(
       <div id="etc">
-        <p className="m-0 text-[12px] text-muted-foreground">✓ 사용 · △ 일부 지역·가공본 · 미연결 = 필요하나 연결 안 됨 · SAMPLE = 시안 고정값 · 보관 = 파일로 받아 둠 · 실시간 = 화면 조회 때 요청 · 수집 건수 = 보관 레코드 + 로컬 캐시(.cache) 응답 레코드</p>
+        <p className={`${legend} m-0 justify-end`} aria-label="표지" title="수집 건수 = 보관 레코드 + 로컬 캐시(.cache) 응답 레코드">
+          {MARKS.map(([k, v]) => <span key={k} className="rounded-full border border-border px-1.5 leading-[18px] whitespace-nowrap" title={v}>{k}</span>)}
+        </p>
         <section aria-labelledby="h-screen" className={GRID_DENSE}>
           <h3 id="h-screen" className={H3}>화면별 요약</h3>
           <DataGrid label="화면별 데이터 사용과 부족한 자료" cols={SCREEN_COLS} rows={screenRows} sortable={false} />
@@ -327,7 +331,7 @@ export default function SourcesPage() {
           <DataGrid label="지도 데이터별 사용과 수집 현황" cols={MAP_COLS} rows={withDetail(mapRows)} />
         </section>
         <section id="acquire" aria-labelledby="h-acquire" className={`scroll-mt-20 ${GRID_DENSE}`}>
-          <h3 id="h-acquire" className={H3}>추가 확보 필요 · API {acqApi.length}건 · 파일 {acqFile.length}건 <small className="text-[12px] font-normal text-muted-foreground">조사 {ACQUIRE_ASOF}</small></h3>
+          <h3 id="h-acquire" className={H3} title={`조사 ${ACQUIRE_ASOF}`}>추가 확보 필요 · API {acqApi.length}건 · 파일 {acqFile.length}건</h3>
           <DataGrid label="추가 확보 필요 건수" cols={ACQ_SUM_COLS} rows={acqSumRows} sortable={false} />
           <DataGrid label="추가 확보 필요 API·파일" cols={ACQ_COLS} rows={acqRows} />
         </section>

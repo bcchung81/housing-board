@@ -1,16 +1,15 @@
 import type { Metadata } from 'next';
-import Crumbs from '../../../components/Crumbs';
 import SupplyTabs from '../../../components/SupplyTabs';
 import StageLegend from '../../../components/charts/StageLegend';
 import MonthLines from '../../../components/charts/MonthLines';
+import { ProvKey } from '../../../components/charts/Legend';
 import { METRIC_COLOR } from '../../../components/charts/palette';
-import { Lede, Page, PageTitle, PanelTitle, sub } from '../../../components/page';
-import { Badge } from '../../../components/ui/badge';
+import { Page, PageHead, PanelHead, SrcLink } from '../../../components/page';
 import { Card } from '../../../components/ui/card';
 import { DataGrid } from '../../../components/ui/data-grid';
 import StageKpis from '../../../components/StageKpis';
-import { Basis, Prov } from '../../../components/ui';
-import { METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, valueAt, ytd } from '../../../lib/board/calc';
+import { Prov } from '../../../components/ui';
+import { METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, valueAt, ymDot, ytd } from '../../../lib/board/calc';
 import { molit } from '../../../lib/board/data';
 import { METRIC_STAGE } from '../../../lib/board/stages';
 import type { Col, Row } from '../../../lib/grid/spec';
@@ -34,26 +33,29 @@ export default function AreaIndex() {
     id: s.code, pin: s.code === NATION ? 'top' : undefined,
     c: { name: s.code === NATION ? '전국' : { text: s.name, href: `/area/${s.code}` }, ...Object.fromEntries(METRICS.flatMap((k) => [[`m-${k}`, valueAt(molit, k, s.code, last)], [`y-${k}`, ytd(molit, k, s.code, last)]])) },
   }));
+  const prov = isProvisional(molit, last);
   return (
     <Page>
-      <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: '공급 실적' }]} />
-      <PageTitle>공급 실적 <Badge variant="ok">실데이터</Badge></PageTitle>
-      <SupplyTabs current="/area" />
-      <Lede>시도 16곳의 인허가·착공·분양·준공 호수(공급 6단계의 03~06, 01 정책·02 사업화는 통계누리에 없음). 시도 이름을 누르면 시행주체별 월 흐름으로, 그래프의 달을 누르면 그 달의 전국 현황으로 내려갑니다.</Lede>
+      <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '공급 실적' }]} title="공급 실적"
+        tip="시도 16곳의 인허가·착공·분양·준공 호수(공급 6단계의 03~06, 01 정책·02 사업화는 통계누리에 없음). 시도 이름을 누르면 시행주체별 월 흐름으로, 그래프의 달을 누르면 그 달의 전국 현황으로 내려갑니다."
+        meta={`실적 ${ymDot(last)}`} metaTip={`통계누리 주택건설실적통계 · 자료 기간 ${molit.months[0]} ~ ${last}${prov ? ` · ${year}-01~${last.slice(5)}은 잠정치` : ''}`}>
+        <SupplyTabs current="/area" />
+      </PageHead>
 
-      <StageKpis when={monthLabel(last)} cells={Object.fromEntries(METRICS.map((k) => [k, { value: fmt(valueAt(molit, k, NATION, last)), sub: <>{year}년 1~{Number(last.slice(5))}월 누계 {fmt(ytd(molit, k, NATION, last))}호{isProvisional(molit, last) ? <Prov /> : null}</> }]))} />
+      <StageKpis when={monthLabel(last)} cells={Object.fromEntries(METRICS.map((k) => [k, { value: fmt(valueAt(molit, k, NATION, last)), sub: <>1~{Number(last.slice(5))}월 누계 {fmt(ytd(molit, k, NATION, last))}호{prov ? <Prov /> : null}</> }]))} />
 
       <Card render={<section aria-label="전국 월별 실적" />}>
-        <PanelTitle>전국 월별 실적 <small className={sub}>· 호 · 빗금은 잠정치</small></PanelTitle>
-        <StageLegend metrics={METRICS} />
+        <PanelHead title="전국 월별 실적" tip={`호 · 빗금은 잠정치 · 통계누리 주택건설실적통계 · 자료 기간 ${molit.months[0]} ~ ${last}. 인허가는 연초 누계의 차분이라 첫 달(${molit.months[0]})은 알 수 없습니다.`}>
+          <StageLegend metrics={METRICS} compact />
+          {molit.provisional.length ? <ProvKey /> : null}
+          <SrcLink />
+        </PanelHead>
         <MonthLines months={molit.months} lines={lines} provisional={molit.provisional} href={(ym) => `/month/${ym}`} label={`전국 월별 인허가·착공·분양·준공 호수, ${molit.months[0]}부터 ${last}까지`} />
-        <Basis>통계누리 주택건설실적통계 · 자료 기간 {molit.months[0]} ~ {last}. 인허가는 연초 누계의 차분이라 첫 달({molit.months[0]})은 알 수 없습니다.</Basis>
       </Card>
 
       <Card render={<section aria-label="시도별 표" />}>
-        <PanelTitle>시도별 <small className={sub}>· 호</small></PanelTitle>
+        <PanelHead title="시도별" tip={`호 · 2026-07부터 광주·전남이 '전남광주' 하나로 집계됩니다. 이전 달은 두 곳을 합산해 한 계열로 이었습니다.${prov ? ` ${year}-01~${last.slice(5)}은 잠정치입니다.` : ''}`} />
         <DataGrid label="시도별 호수" cols={cols} rows={rows} />
-        <Basis>2026-07부터 광주·전남이 &lsquo;전남광주&rsquo; 하나로 집계됩니다. 이전 달은 두 곳을 합산해 한 계열로 이었습니다. {isProvisional(molit, last) ? '2026-01~08은 잠정치입니다.' : ''}</Basis>
       </Card>
     </Page>
   );

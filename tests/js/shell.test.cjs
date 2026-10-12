@@ -62,7 +62,8 @@ test('공급 실적은 시도별(/area)·시행주체별(/agency) 두 보기를 
   assert.match(tabs, /aria-current=\{href === current \? 'page' : undefined\}/);
   for (const [f, cur] of [['app/(dashboard)/area/page.tsx', '/area'], ['app/(dashboard)/agency/page.tsx', '/agency']]) {
     const s = read(f);
-    assert.match(s, /<PageTitle>공급 실적 <Badge variant="ok">실데이터<\/Badge><\/PageTitle>/, f);
+    assert.match(s, /<PageHead [^>]*title="공급 실적"/, f);
+    assert.doesNotMatch(s, /실데이터<\/Badge>/, `${f}: 실데이터 표지는 쓰지 않는다(2026-10-13 화면 규칙)`);
     assert.ok(s.includes(`<SupplyTabs current="${cur}" />`), f);
   }
 });

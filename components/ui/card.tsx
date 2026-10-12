@@ -9,8 +9,8 @@ import { cn } from "cn"
 const cardVariants = cva("border border-border bg-card text-card-foreground shadow-[var(--shadow-card)]", {
   variants: {
     variant: {
-      panel: "card-soft mt-4 min-w-0 rounded-[14px] px-5 py-5",
-      kpi: "card-soft flex flex-col gap-2 rounded-[12px] px-4 py-4",
+      panel: "card-soft min-w-0 rounded-[14px] px-5 py-5",
+      kpi: "card-soft @container flex min-w-0 flex-col gap-1.5 rounded-[12px] px-4 py-3.5",
       link: "card-lift flex flex-col gap-0.5 rounded-[12px] px-4 py-2 no-underline hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&_b]:text-[17px] [&_b]:leading-[1.35] [&_span]:text-[14px] [&_span]:leading-[1.45] [&_span]:[word-break:keep-all] [&_span]:text-muted-foreground",
       source: "card-soft mt-2.5 rounded-[12px] px-5 py-4",
       board: "card-soft flex min-w-0 flex-col rounded-[14px] px-5 py-5 [&>svg]:flex-none",

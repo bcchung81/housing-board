@@ -13,7 +13,7 @@ const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 test('기본은 흐리게 켬이고, 주소 dim=0 으로 끈다. 옵션 창이 아니라 위 도구 줄의 누름 단추(건물 흐리게)다(2026-10-10 사용자 요청)', () => {
   assert.match(app, /let dimExisting = q\.get\('dim'\) !== '0';/);
   assert.match(app, /set\('dim', dimExisting \? '' : '0'\)/);
-  assert.match(html, /<div class="tools" role="toolbar" aria-label="시점과 옵션">[\s\S]*?<button type="button" id="dimBtn" aria-pressed="true" title="기존 건물 흐리게:[^"]*">건물 흐리게<\/button>[\s\S]*?<\/div>\s*<\/div>\s*<div class="optpanel"/);
+  assert.match(html, /<div class="tools" role="toolbar" aria-label="지도 옵션">[\s\S]*?<button type="button" id="dimBtn" aria-pressed="true" title="기존 건물 흐리게:[^"]*">건물 흐리게<\/button>[\s\S]*?<\/div>\s*<\/div>\s*<div class="optpanel"/);
   assert.doesNotMatch(html, /dimChip/, '옵션 창에는 없다');
   assert.match(app, /\$\('#dimBtn'\)\.setAttribute\('aria-pressed', String\(dimExisting\)\)/);
   assert.match(app, /\$\('#dimBtn'\)\.addEventListener\('click', \(\) => \{ dimExisting = !dimExisting; syncChips\(\); applyDim\(\); syncUrl\(openId\(\)\);/);

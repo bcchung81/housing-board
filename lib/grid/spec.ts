@@ -11,7 +11,7 @@ export type Col = { key: string; label: string; kind?: Kind; group?: string; gro
 /* pin: 합계 행(top 전국 · bottom 총계)은 정렬·검색과 상관없이 그 자리에 둔다. note: 첫 칸 뒤를 한 칸으로 합친 설명(자료 없는 단계 행)
    detail: 행을 누르면 바로 아래에 펼치는 실제 레코드 예시(열·행, 전체 건수, 출처). 가상 스크롤 표(120행 초과)에서는 펼치지 않는다 */
 export type Detail = { cols: Col[]; rows: Row[]; total: number; source: string };
-export type Row = { id: string; pin?: 'top' | 'bottom'; note?: string; muted?: boolean; detail?: Detail; c: Record<string, Cell> };
+export type Row = { id: string; pin?: 'top' | 'bottom'; note?: string; noteTitle?: string; /* note 칸의 title 툴팁 */ muted?: boolean; detail?: Detail; c: Record<string, Cell> };
 /* 작은 글자 그리드: 감싸는 요소에 주면 본문 13px·머리글 12px·좁은 칸 여백(데이터 원본).
    칸 글자는 한 줄로 고정하지 않고 낱말 단위(keep-all)로 줄을 바꿔, 열 너비는 글자 길이에 맞고 표가 화면 밖으로 넘쳐 잘리지 않는다(대신 행이 높아진다) */
 export const GRID_DENSE = '[&_table]:text-[13px] [&_table]:leading-[1.5] [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-[12px] [&_td]:px-2 [&_td]:py-1.5 [&_th]:whitespace-normal [&_td]:whitespace-normal [&_th]:[word-break:keep-all] [&_td]:[word-break:keep-all]';

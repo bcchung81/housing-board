@@ -235,7 +235,7 @@ test('클릭: 버스를 먼저 고르고(작아서 7px 여유), 정류소 팝업
 test('함수가 없는 정적 서버(404)에서는 조용히 사라지지 않고, 이유와 해결 방법을 화면·콘솔에 남긴다', () => {
   assert.match(app, /BUS\.off = true; BUS\.loading = false; applyBus\(\); setLegend\(\);/);
   assert.match(app, /console\.warn\([^\n]*\.\/run-app\.sh/);
-  assert.match(app, /BUS\.off \? '버스 선만' : '버스'/);                              // 하단 범례 요약 줄에 보인다
+  assert.match(app, /rows\.push\(\[sw, '버스 노선 · 위치', '<small id="busStat"><\/small>'\]\)/);   // 하단 범례 '자세히' 목록에 이유가 보인다(요약 줄은 단지 상태만, 2026-10-13)
   assert.match(app, /lb\.textContent = BUS\.off \? '위치 서버 없음'/);                // 옵션 항목에도 보인다
   assert.match(app, /\$\{IS_LOCAL \? ' — 로컬은 node scripts\/dev\.js 로 여세요' : ''\}/);   // 운영 화면에는 개발 명령을 적지 않는다
   assert.match(html, /node scripts\/dev\.js/);

@@ -31,7 +31,7 @@ test('단계를 표기하는 대시보드 화면(사업 목록·사업 상세)�
   assert.ok(!fs.existsSync(path.join(ROOT, 'components/ui/stepper.tsx')), '쓰는 곳이 없는 stepper.tsx 는 지운다');
   assert.match(read('app/(dashboard)/project/[id]/page.tsx'), /<StageLadder current=\{p\.stageCode\} \/>/, '사업 상세는 지금 단계를 강조한다');
   const list = read('app/(dashboard)/projects/page.tsx');
-  assert.match(list, /<StageLadder className="mt-5 mb-1" current=\{stage\?\.code\}/, '사업 목록은 거른 단계를 강조한다(옛 단계 상세)');
+  assert.match(list, /<StageLadder current=\{stage\?\.code\}/, '사업 목록은 거른 단계를 강조한다(옛 단계 상세)');
   assert.match(list, /href=\{\(code\) => listHref\(code === stage\?\.code \? undefined : code, sgg\)\}/, '단계 칸은 시군구 거르기를 유지하고, 고른 단계를 다시 누르면 풀린다');
 });
 
@@ -76,7 +76,8 @@ test('지표 범례·KPI 는 6칸(StageLegend·StageKpis): 지표가 없는 단�
   assert.match(legend, /\{STAGES\.map\(\(s, i\) => \{/);
   assert.match(legend, /const ON_BOARD: Record<Metric, number> = \{ permit: 1, start: 2, sale: 3, complete: 4 \};/);
   assert.match(legend, /border-dashed border-line2/); assert.match(legend, />자료 없음</);
-  assert.match(kpis, /\{STAGES\.map\(\(s\) => \{/); assert.match(kpis, /자료 없음/); assert.match(kpis, /grid grid-cols-6 gap-2\.5 narrow:grid-cols-3 phone:grid-cols-2/); assert.match(kpis, /공급 6단계별 실적 · \{when\}<\/p>/, '시점은 위에 한 번');
+  assert.match(kpis, /\{STAGES\.map\(\(s\) => \{/); assert.match(kpis, /자료 없음/); assert.match(kpis, /grid grid-cols-6 gap-2\.5 narrow:grid-cols-3 phone:grid-cols-2/); assert.match(kpis, /title=\{`공급 6단계별 실적 · \$\{when\}`\}/, '시점은 묶음의 title 에 한 번');
+  assert.match(kpis, /const why = `자료 없음 — /, '빈 단계는 — 와 title 이유'); assert.doesNotMatch(kpis, /<span className="text-\[14px\]">\{notes/, '이유 문장을 칸에 보이지 않는다');
   assert.match(read('components/board/RealPanels.tsx'), /<StageLegend metrics=\{METRICS\} names="board" compact \/>/, '종합상황판은 제목 줄의 작은 칩(①·⑥ 자료 없음은 빼고 단계 번호는 title)');
   assert.match(legend, /if \(compact\) return \(/); assert.match(legend, /' 자료 없음'/);
   const pages = { 'app/(dashboard)/area/page.tsx': ['legend', 'kpis'], 'app/(dashboard)/area/[id]/page.tsx': ['legend', 'kpis'], 'app/(dashboard)/month/[id]/page.tsx': ['kpis'], 'app/(dashboard)/agency/[id]/page.tsx': ['legend', 'kpis'], 'app/(dashboard)/agency/page.tsx': ['legend'] };
@@ -95,7 +96,7 @@ test('표 머리는 단계 번호를 붙이고(03 인허가·04 착공·05 분�
   for (const f of ['app/(dashboard)/agency/page.tsx', 'app/(dashboard)/agency/[id]/page.tsx']) assert.match(read(f), /`\$\{METRIC_STAGE\[k\]\} \$\{l\}`/, f);
   const rep = read('app/(dashboard)/reports/page.tsx');
   assert.match(rep, /const nowRows: Row\[\] = STAGES\.map\(\(s\) => \{   \/\/ 공급 6단계 6행/);
-  assert.match(rep, /muted: true, note: `자료 없음 — 통계누리에 없는 단계/, '자료 없는 단계는 첫 칸 뒤를 한 칸으로 합친 설명 행');
+  assert.match(rep, /muted: true, note: '—',/, '자료 없는 단계는 첫 칸 뒤를 한 칸으로 합친 대시 행');
   assert.match(rep, /<DataGrid label="전국 단계별 실적" cols=\{nowCols\} rows=\{nowRows\} sortable=\{false\} \/>/, '6단계 순서가 뜻이라 정렬하지 않는다');
   assert.match(rep, /label: '04 착공 누계'/); assert.match(rep, /label: '06 준공 누계'/);
 });

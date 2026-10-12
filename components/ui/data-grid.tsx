@@ -101,7 +101,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight }: { co
       {r.note !== undefined ? (
         <>
           <TableCell className={stickyCell}><CellView v={r.c[first]} col={cols[0]} /></TableCell>
-          <TableCell colSpan={cols.length - 1} className="text-left whitespace-normal">{r.note}</TableCell>
+          <TableCell colSpan={cols.length - 1} className="text-left whitespace-normal" title={r.noteTitle}>{r.note}</TableCell>
         </>
       ) : cols.map((c) => (
         <TableCell key={c.key} className={cn(c.key === first && stickyCell, c.kind === 'text' && 'text-left', c.wrap && 'min-w-[180px] whitespace-normal [word-break:keep-all]', starts.has(c.key) && 'border-l')}>

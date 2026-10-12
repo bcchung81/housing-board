@@ -149,7 +149,7 @@
     return {
       mode: s.mode, panel, rows: panel === 'recent' ? recentRows : rows, note, warn: panel === 'rows' ? s.warn : '', chips: chipsOf(chosen),
       canGo: active && s.items.length > 0, clear: !!s.q && s.mode !== 'disabled', key: s.mode === 'idle' && !s.q, busy: s.mode === 'busy',
-      disabled: s.mode === 'disabled', placeholder: s.mode === 'disabled' ? (DISABLED_TEXT[s.reason] || DISABLED_TEXT.static) + (s.reason === 'static' && opts && opts.local ? LOCAL_HINT : '') : '주소·법정동·단지 또는 코드 입력',
+      disabled: s.mode === 'disabled', placeholder: s.mode === 'disabled' ? (DISABLED_TEXT[s.reason] || DISABLED_TEXT.static) + (s.reason === 'static' && opts && opts.local ? LOCAL_HINT : '') : '주소·단지·코드',
       stale: panel === 'rows' && s.searching, active: s.mode === 'active' && s.items.length > 0 ? `cmdO${s.sel}` : '', status: panel === 'rows' ? `후보 ${rows.length}곳` : panel === 'searching' ? '찾는 중' : '',
     };
   }

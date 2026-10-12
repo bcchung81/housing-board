@@ -60,11 +60,11 @@ test('우리 동네(9.4 국민 예측가능성): 시도를 고르면 1년 달력
   for (const s of [idx, page]) assert.match(s, /청약·입주 자격은 각 모집공고에서 직접 확인하세요/);
 });
 
-test('사업 상세(9.30 쉬운 설명): 지금 단계와 다음 단계를 한 문장씩, 그 시도의 우리 동네로 이어 준다', () => {
+test('사업 상세(9.30 쉬운 설명): 지금 단계는 계단(현재 표시·칸 title 의 질문)이 보이고 문장으로 되풀이하지 않으며, 그 시도의 우리 동네로 이어 준다', () => {
   const s = read('app/(dashboard)/project/[id]/page.tsx');
-  assert.match(s, /지금은 <b>\{p\.stageCode\} \{STAGES\[cur\]\?\.name\}<\/b> 단계입니다 — \{STAGES\[cur\]\?\.q\}/);
-  assert.match(s, /다음은 <b className="text-foreground">\{STAGES\[cur \+ 1\]\.code\} \{STAGES\[cur \+ 1\]\.name\}<\/b> 단계입니다/);
-  assert.match(s, /'마지막 단계입니다\.'/);
+  assert.match(s, /<StageLadder current=\{p\.stageCode\} \/>/);
+  assert.doesNotMatch(s, /단계입니다 — /, '그림이 보여 주는 지금·다음 단계를 문장으로 다시 쓰지 않는다(2026-10-13 화면 규칙)');
+  assert.match(read('components/StageLadder.tsx'), /title=\{`\$\{s\.code\} \$\{s\.name\} — \$\{s\.q\}`\}/, '단계마다 답할 질문은 칸의 title');
   assert.match(s, /href=\{`\/my-area\/\$\{area\.sido\}`\}/);
 });
 

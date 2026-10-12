@@ -1,14 +1,14 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
-import Crumbs from '../../../../components/Crumbs';
+import { ChevronLeft } from 'lucide-react';
+import PanelLink from '../../../../components/board/PanelLink';
 import { ACTOR_COLOR } from '../../../../components/charts/palette';
-import { Lede, Page, PageTitle, PanelTitle, sub } from '../../../../components/page';
+import { Dash, Page, PageHead, PanelHead, SrcLink, sub } from '../../../../components/page';
 import StageKpis from '../../../../components/StageKpis';
 import { Badge } from '../../../../components/ui/badge';
 import { Card } from '../../../../components/ui/card';
 import { DataGrid } from '../../../../components/ui/data-grid';
-import { Basis } from '../../../../components/ui';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, lhOfMonth, lhUnits, ymDot } from '../../../../lib/board/calc';
 import { lh, molit } from '../../../../lib/board/data';
 import { METRIC_STAGE } from '../../../../lib/board/stages';
@@ -41,45 +41,48 @@ export default async function MonthPage({ params }: Props) {
   const table = actual ? monthTable(molit, ym) : [];
   const nation = table.find((r) => r.code === NATION);
   const i = molit.months.indexOf(ym);
+  const lhAge = Math.max(0, (Number(last.slice(0, 4)) - Number(lh.sourceAsOf.slice(0, 4))) * 12 + Number(last.slice(5)) - Number(lh.sourceAsOf.slice(5, 7)));
   return (
     <Page>
-      <Crumbs items={[{ label: '종합상황판', href: '/' }, { label: monthLabel(ym) }]} />
-      <PageTitle>{monthLabel(ym)} <code>{ym}</code> {actual ? <Badge variant="ok">실적</Badge> : <Badge>예정</Badge>}{actual && isProvisional(molit, ym) ? <Badge variant="warn" className="ml-1.5">잠정</Badge> : null}</PageTitle>
-      <Lede>{actual ? `전국·시도별 인허가·착공·분양·준공 호수와 시행주체별 호수${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. LH 준공 예정 블록만 있습니다.`}</Lede>
-      <div className="mt-3.5 flex justify-between gap-2 text-[15px] [&_a]:text-primary [&_a]:no-underline">
-        {nb.prev ? <Link href={`/month/${nb.prev}`}>‹ {ymDot(nb.prev)}</Link> : <span />}
-        {nb.next ? <Link href={`/month/${nb.next}`}>{ymDot(nb.next)} ›</Link> : <span />}
-      </div>
+      <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: monthLabel(ym) }]} title={monthLabel(ym)}
+        tip={actual ? `전국·시도별 인허가·착공·분양·준공 호수와 시행주체별 호수${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. LH 준공 예정 블록만 있습니다.`}>
+        {actual ? <Badge variant="ok" title="통계누리 실적이 있는 달">실적</Badge> : <Badge title="실적 자료가 없는 달 — LH 준공 예정만">예정</Badge>}
+        {actual && isProvisional(molit, ym) ? <Badge variant="warn" title="통계누리가 잠정치로 낸 달입니다. 확정치는 2027년 9월 공표 예정">잠정</Badge> : null}
+        <nav aria-label="이웃 달" className="ml-auto flex gap-4">
+          {nb.prev ? <Link href={`/month/${nb.prev}`} title={`이전 달 ${monthLabel(nb.prev)}`} className="inline-flex items-center gap-px rounded-[4px] text-[14px] text-muted-foreground no-underline underline-offset-[3px] tabular-nums transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><ChevronLeft className="size-3.5" aria-hidden="true" />{ymDot(nb.prev)}</Link> : null}
+          {nb.next ? <PanelLink href={`/month/${nb.next}`} full={`다음 달 ${monthLabel(nb.next)}`}>{ymDot(nb.next)}</PanelLink> : null}
+        </nav>
+      </PageHead>
 
       {actual && nation ? (
         <>
-          <StageKpis when="전국" cells={Object.fromEntries(METRICS.map((k) => [k, { value: fmt(nation.values[k]), sub: k === 'permit' && nation.values[k] === null ? '자료가 이 달부터라 월 흐름을 알 수 없음' : undefined }]))} />
+          <StageKpis when="전국" cells={Object.fromEntries(METRICS.map((k) => [k, { value: k === 'permit' && nation.values[k] === null ? <Dash why="자료가 이 달부터라 월 흐름을 알 수 없음" /> : fmt(nation.values[k]) }]))} />
 
           <Card render={<section aria-label="시도별" />}>
-            <PanelTitle>시도별 <small className={sub}>· 호</small></PanelTitle>
+            <PanelHead title="시도별" tip="호 · 통계누리 주택건설실적통계. 2026-07부터 '전남광주'로 집계되고 이전 달은 광주+전남 합산입니다. 인허가는 연초 누계의 차분입니다."><SrcLink /></PanelHead>
             <DataGrid label={`${monthLabel(ym)} 시도별 호수`} cols={[{ key: 'name', label: '시도', kind: 'text' }, ...METRICS.map((k) => ({ key: k, label: `${METRIC_STAGE[k]} ${LABEL[k]}` }))]}
               rows={table.map((r) => ({ id: r.code, pin: r.code === NATION ? 'top' : undefined, c: { name: r.code === NATION ? '전국' : { text: r.name, href: `/area/${r.code}` }, ...r.values } }))} />
-            <Basis>통계누리 주택건설실적통계. 2026-07부터 &lsquo;전남광주&rsquo;로 집계되고 이전 달은 광주+전남 합산입니다. 인허가는 연초 누계의 차분입니다.</Basis>
           </Card>
 
           <Card render={<section aria-label="시행주체별" />}>
-            <PanelTitle>시행주체별 <small className={sub}>· 전국 · 호</small></PanelTitle>
+            <PanelHead title="시행주체별" tip="전국 · 호 · 05 공급(분양)은 시행주체 구분이 없습니다. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다." />
             <DataGrid label={`${monthLabel(ym)} 시행주체별 호수`} cols={[{ key: 'actor', label: '시행주체', kind: 'text' }, ...ACT_KS.map((k) => ({ key: k, label: `${METRIC_STAGE[k]} ${LABEL[k]}` }))]}
               rows={[
                 ...ACTORS.map((a) => ({ id: a, c: { actor: { text: a, swatch: ACTOR_COLOR[a] }, ...Object.fromEntries(ACT_KS.map((k) => [k, seriesOf(molit, k, NATION).actors![a][i]])) } })),
                 { id: 'total', pin: 'bottom', c: { actor: '총계', ...Object.fromEntries(ACT_KS.map((k) => [k, seriesOf(molit, k, NATION).total[i]])) } },
               ]} />
-            <Basis>05 공급(분양)은 시행주체 구분이 없습니다. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다.</Basis>
           </Card>
         </>
       ) : null}
 
       <Card render={<section aria-label="LH 준공 예정" />}>
-        <PanelTitle>LH 준공 예정 <small className={sub}>· {blocks.length}블록 · {fmt(lhUnits(blocks))}세대</small></PanelTitle>
+        <PanelHead title="LH 준공 예정" tip={`LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 ${lh.sourceAsOf}로 ${lhAge}개월 묵었습니다. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.`}>
+          <span className={`${sub} tabular-nums`}>{blocks.length}블록 · {fmt(lhUnits(blocks))}세대</span>
+          {actual ? null : <SrcLink />}
+        </PanelHead>
         {blocks.length > 0 ? (
           <DataGrid label={`${monthLabel(ym)} LH 준공 예정 블록`} cols={LH_COLS} rows={blocks.map((b, k) => ({ id: String(k), c: { district: b.district, block: b.block, type: b.type, units: b.units, date: b.date, location: b.location } }))} />
-        ) : <p className={sub}>이 달에 준공 예정인 LH 블록이 파일에 없습니다.</p>}
-        <Basis>LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 {lh.sourceAsOf}로 {Math.max(0, (Number(last.slice(0, 4)) - Number(lh.sourceAsOf.slice(0, 4))) * 12 + Number(last.slice(5)) - Number(lh.sourceAsOf.slice(5, 7)))}개월 묵었습니다. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.</Basis>
+        ) : <p className={`${sub} m-0`}>이 달에 준공 예정인 LH 블록이 파일에 없습니다.</p>}
       </Card>
     </Page>
   );

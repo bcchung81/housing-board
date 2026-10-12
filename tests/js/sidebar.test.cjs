@@ -49,18 +49,18 @@ test('공급 요약은 머리 줄에 늘 있어 사이드바를 접어도 보이
 });
 
 test('사이드바 글자는 13px 아래로 내려가지 않는다', () => {
-  const SEL = ['.pcur', '.sleg', '.card .st', '.card .sub', '.stage span', '.stage span small', '.pg', '.fl em', '.bld', '.foot',
+  const SEL = ['.sleg', '.card .st', '.card .sub', '.stage span', '.stage span small', '.pg', '.bld', '.foot',
     '.next span.s', '.inote', '.isub h3', '.icard .iw', '.im', '.ichip', '.imeta', '.isrc', '.ibtn .s',
-    '#infraMeasures small', '.isum-go', '.ihead b', '.ibtn b'];
+    '#infraMeasures small', '.shead .hc', '.plink', '.ihead b', '.ibtn b'];
   for (const s of SEL) for (const px of fontPx(s)) assert.ok(px >= 13, `${s} ${px}px (13px 이상 필요)`);
 });
 
-test('데스크톱 사이드바 글자는 한 단계 작게(2026-10-10 피드백 "글씨가 너무 크다", 문서 5.6c): 구역 제목 16px ≥ 단지 이름 15.5px, 보조 글자 13px, 폭 380px', () => {
+test('데스크톱 사이드바: 구역 제목은 종합상황판 카드 제목과 같은 20px(2026-10-13), 사이드바 이름 22px, 본문 글자는 한 단계 작게(2026-10-10 피드백, 문서 5.6c) 단지 이름 15.5px·보조 13px, 폭 380px', () => {
   const desk = /\/\* 데스크톱 가독성[\s\S]*?\n\}\n/.exec(css)[0];
   const deskPx = (sel) => [...desk.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(sel)).map((m) => /font-size:([\d.]+)px/.exec(m[2])).filter(Boolean).map((m) => +m[1]);
   const only = (sel, px) => { const v = deskPx(sel); assert.ok(v.length && v.every((x) => x === px), `${sel} ${v} (모두 ${px}px)`); };
-  only('h2', 16); only('.card b', 15.5); only('h1', 18);   // 구역 제목 16px ≥ 단지 이름 15.5px
-  for (const sel of ['.card .sub', '.card .st', '.next span.s', '.sleg', '.stage span', '.foot', '.inote', '.pcur', '.sum .cnt']) only(sel, 13);
+  only('h2', 20); only('.card b', 15.5); only('h1', 22);   // 구역 제목 20px(종합상황판 카드 제목) > 단지 이름 15.5px
+  for (const sel of ['.card .sub', '.card .st', '.next span.s', '.sleg', '.stage span', '.foot', '.inote', '.sum .cnt']) only(sel, 13);
   only('.next b', 14.5); only('.sum b', 15);
   assert.ok(fontPx('.sum .big').every((x) => x <= 32), `합계 숫자 ${fontPx('.sum .big')}px (32px 이하)`);
   assert.match(css, /grid-template-columns:minmax\(0,1fr\) 380px/);
@@ -124,11 +124,22 @@ test('입주 전 점검: 구역 전체가 기본 접힘이고, 안의 개교 일
   assert.match(html, /<details class="isub" id="infraSrcBox">/);
   assert.match(css, /\.isub>summary/);
   assert.match(css, /\.sbody\[hidden\]\{display:none\}/);        // flex 가 hidden 을 덮지 않게
-  // 열리는 길 셋: 구역 제목, 요약의 '기반시설 보기', 보기 기준의 '기반시설'(openInfra), 오른쪽 레일
+  // 열리는 길: 구역 제목, 머리 줄 점검 단추·구역 머리의 '기반시설 보기'(openInfra). 오른쪽 점 레일은 없앴다(2026-10-13)
   assert.match(app, /function setInfraOpen\(open\)/);
   assert.match(app, /\$\('#infraToggle'\)\.addEventListener\('click'/);
   assert.match(app, /function openInfra\(\)[\s\S]*?setInfraOpen\(true\)/);
-  assert.match(app, /dataset\.sec === 'h-infra'\) setInfraOpen\(true\)/);
+  assert.match(app, /\$\('#infraGo'\)\.addEventListener\('click', openInfra\)/);
+});
+
+test('입주 전 점검 요약은 머리 줄 단추 하나만 두고, 사이드바는 구역 머리(제목 + 신호 칩 + 조용한 링크)로 대신한다(2026-10-13)', () => {
+  assert.doesNotMatch(html, /id="infraSum"/);
+  assert.doesNotMatch(app, /#infraSum\b/);
+  const head = /<div class="shead"><h2 id="h-infra">[\s\S]*?<\/div>/.exec(html);
+  assert.ok(head, '입주 전 점검 구역 머리(.shead)가 있어야 한다');
+  assert.match(head[0], /<span class="isum-c" id="infraChips"><\/span>/);
+  assert.match(head[0], /<button type="button" class="plink" id="infraGo"[^>]*>기반시설 보기<\/button>/);
+  assert.match(app, /\$\('#infraChips'\)\.innerHTML = infraChipsHtml\(\);/);
+  assert.match(css, /\.pscroll>section>h2,\.pscroll>section>\.shead\{position:sticky/);   // 구역 머리가 제목처럼 위에 붙는다
 });
 
 test('사이드바 글은 어절 단위로 줄을 바꾼다(keep-all + overflow-wrap) / 지역 상자는 머리 줄(#mhead)에 있다', () => {

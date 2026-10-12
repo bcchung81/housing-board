@@ -162,7 +162,7 @@ test('mount: 입력 → 320ms 뒤 검색 한 번 → 후보 줄과 인식 칩 �
   const page = fakePage(), calls = [];
   const h = G.mount(page.win, page.doc, { fetch: async (u) => { calls.push(u); return okJson({ items: [ITEM_PNU, ITEM_BJD], meta: {} }); } });
   assert.ok(h); assert.equal(page.el.root.hidden, false); assert.equal(page.el.wrap.classList.contains('hascmd'), true);   // .mapwrap 에 표시(재생바·안내 자리 규칙이 씀)
-  assert.equal(page.el.root.dataset.state, 'idle'); assert.equal(page.el.input.disabled, false); assert.equal(page.el.input.placeholder, '주소·법정동·단지 또는 코드 입력');
+  assert.equal(page.el.root.dataset.state, 'idle'); assert.equal(page.el.input.disabled, false); assert.equal(page.el.input.placeholder, '주소·단지·코드');
   page.el.input.focus(); assert.equal(page.el.root.dataset.state, 'active'); assert.equal(page.el.res.hidden, false); assert.equal(page.el.res.textContent.includes('/'), false);   // 최근이 없으면 안내 문구
   type(page, '장'); t.mock.timers.tick(400); assert.equal(calls.length, 0);                                                                 // 한 글자는 검색 안 함
   type(page, '장위동 68-37'); t.mock.timers.tick(100); type(page, '장위동 68-37'); t.mock.timers.tick(319); assert.equal(calls.length, 0);   // 디바운스
