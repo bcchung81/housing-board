@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import PanelLink from '../../../../components/board/PanelLink';
 import { Page, PageHead, PanelHead, sub } from '../../../../components/page';
+import { buttonVariants } from '../../../../components/ui/button';
 import { Card } from '../../../../components/ui/card';
 import { Kpi } from '../../../../components/ui';
 import { METRIC_COLOR } from '../../../../components/charts/palette';
@@ -68,7 +69,7 @@ export default async function MyAreaSido({ params }: Props) {
       </Card>
 
       <Card render={<section aria-label="상황판 등록 사업" />}>
-        <PanelHead title="진행 중인 사업" tip="상황판에 등록된 사업과 지금 단계 · 사업 id 레지스트리 기준. 단계는 6단계(01 정책 ~ 06 입주)이고, 단계마다 답하는 질문을 함께 적었습니다.">
+        <PanelHead title="진행 중인 사업" tip="상황판에 등록된 사업과 지금 단계 · 사업 id 레지스트리 기준. 단계는 6단계(01 정책 ~ 06 입주)이고, 단계마다 답하는 질문은 단계 표지에 마우스를 올리면 보입니다.">
           <PanelLink href="/projects" full="단계별 사업은 사업(현황표)">사업(현황표)</PanelLink>
         </PanelHead>
         {list.length ? (
@@ -77,16 +78,16 @@ export default async function MyAreaSido({ params }: Props) {
               const st = STAGES.find((s) => s.code === p.stageCode);
               return (
                 <li key={p.id} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 border-t border-border pt-2 first:border-t-0 first:pt-0">
-                  <span className="min-w-0"><Link href={`/project/${p.id}`}>{p.name}</Link> <span className="text-[14px] text-muted-foreground">{SGG[p.sgg]?.name}{p.units ? ` · ${fmt(p.units)}세대` : ''}</span></span>
-                  <span className="text-[14px]"><b className={st?.scope === 'pub' ? 'text-[var(--scope-pub)]' : 'text-[var(--scope-gov)]'}>{p.stageCode} {st?.name}</b> <span className="text-muted-foreground">— {st?.q}</span></span>
+                  <span className="min-w-0"><Link href={`/project/${p.id}`} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{p.name}</Link> <span className="text-[14px] text-muted-foreground">{SGG[p.sgg]?.name}{p.units ? ` · ${fmt(p.units)}세대` : ''}</span></span>
+                  <b className={`text-[14px] whitespace-nowrap ${st?.scope === 'pub' ? 'text-[var(--scope-pub)]' : 'text-[var(--scope-gov)]'}`} title={st?.q}>{p.stageCode} {st?.name}</b>
                 </li>
               );
             })}
           </ul>
         ) : <p className={`${sub} m-0`} title="사업 id 레지스트리는 지금 5개 시군구(서울 성북·인천 계양·경기 하남·전남광주 나주·광산)만 다룹니다.">이 지역은 아직 상황판에 등록된 사업이 없습니다.</p>}
         {Object.entries(SGG).some(([, s]) => s.sido === sido) ? (
-          <p className="mt-3 mb-0 flex flex-wrap gap-2 text-[15px]">
-            {Object.entries(SGG).filter(([, s]) => s.sido === sido).map(([code, s]) => <a key={code} className="card-lift rounded-[8px] border border-border px-3 py-1.5 no-underline hover:bg-pn2" href={`/map?sgg=${code}`}>{s.name} 지도에서 보기</a>)}
+          <p className="mt-4 mb-0 flex flex-wrap gap-2">
+            {Object.entries(SGG).filter(([, s]) => s.sido === sido).map(([code, s]) => <a key={code} className={buttonVariants()} href={`/map?sgg=${code}`}>{s.name} 지도에서 보기</a>)}
           </p>
         ) : null}
       </Card>

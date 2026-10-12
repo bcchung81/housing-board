@@ -55,8 +55,9 @@ test('우리 동네(9.4 국민 예측가능성): 시도를 고르면 1년 달력
   assert.match(page, /const SIDO = molit\.sido\.filter\(\(s\) => s\.code !== NATION\);/);
   assert.match(page, /export const generateStaticParams = \(\) => SIDO\.map/);
   assert.match(page, /lhCalendar\(lh, sido, AHEAD_FROM, 12\)/);
-  assert.match(page, /\{p\.stageCode\} \{st\?\.name\}<\/b> <span className="text-muted-foreground">— \{st\?\.q\}/);
-  assert.match(page, /href=\{`\/map\?sgg=\$\{code\}`\}/, '지도는 <a> 로 연다');
+  assert.match(page, /title=\{st\?\.q\}>\{p\.stageCode\} \{st\?\.name\}<\/b>/, '단계 표지만 보이고 질문은 그 title(2026-10-13 마무리 리뷰)');
+  assert.doesNotMatch(page, /— \{st\?\.q\}/, '줄마다 질문 문장을 되풀이하지 않는다');
+  assert.match(page, /<a key=\{code\} className=\{buttonVariants\(\)\} href=\{`\/map\?sgg=\$\{code\}`\}>/, '지도는 <a> 로 열고, 사업 상세와 같은 주 단추');
   for (const s of [idx, page]) assert.match(s, /청약·입주 자격은 각 모집공고에서 직접 확인하세요/);
 });
 

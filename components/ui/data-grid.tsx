@@ -87,7 +87,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight }: { co
     <tr key={`${r.id}-detail`} id={detailId(r)}>
       <TableCell colSpan={cols.length} className="bg-pn2 px-3 py-2 text-left whitespace-normal">
         <div className="w-0 min-w-full [&_th]:[word-break:normal]!">
-          <p className="m-0 text-[12px] text-muted-foreground">예시 {r.detail!.rows.length.toLocaleString('en-US')}건 / 전체 {r.detail!.total.toLocaleString('en-US')}건 · {r.detail!.source}</p>
+          <p className="m-0 text-[13px] text-muted-foreground">예시 {r.detail!.rows.length.toLocaleString('en-US')}건 / 전체 {r.detail!.total.toLocaleString('en-US')}건 · {r.detail!.source}</p>
           <DataGrid label={`${label} · ${display(r.c[first], cols[0].kind).text} 예시`} cols={r.detail!.cols} rows={r.detail!.rows} sortable={false} />
         </div>
       </TableCell>

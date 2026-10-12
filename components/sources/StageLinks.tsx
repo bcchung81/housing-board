@@ -22,7 +22,7 @@ const EDGE: Record<Edge, string> = {
   key: 'stroke-foreground', name: 'stroke-foreground [stroke-dasharray:5_4]', need: 'stroke-warn', none: 'stroke-bad [stroke-dasharray:3_3]',
 };
 const LABEL: Record<Edge, string> = { key: 'fill-foreground', name: 'fill-foreground', need: 'fill-warn', none: 'fill-bad' };
-/* 받는 방식 표지(상자 오른쪽 위·탭 줄 오른쪽 범례, 같은 11px 알약): 실시간·API 는 색, CSV 는 진한 테두리, 나머지는 흐리게. 뜻(VIA_NOTE)은 범례 알약의 title */
+/* 받는 방식 표지(상자 오른쪽 위 11px·탭 줄 오른쪽 범례 13px 알약): 실시간·API 는 색, CSV 는 진한 테두리, 나머지는 흐리게. 뜻(VIA_NOTE)은 범례 알약의 title */
 const VIA_STYLE: Record<Via, { box: string; text: string; pill: string }> = {
   실시간: { box: 'fill-[color-mix(in_srgb,var(--primary)_12%,var(--card))] stroke-primary', text: 'fill-primary', pill: 'border-primary text-primary' },
   API: { box: 'fill-[color-mix(in_srgb,var(--ok)_12%,var(--card))] stroke-ok', text: 'fill-ok', pill: 'border-ok text-ok' },
@@ -197,13 +197,13 @@ export default function StageLinks({ stages, extra }: { stages: StageLink[]; ext
           ) : null}
         </div>
         {s ? (
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1 text-[12px] text-muted-foreground" aria-label="범례">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1 text-[13px] text-muted-foreground" aria-label="범례">
             <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-2 border-foreground align-middle" />키 연결</span>
             <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-[1.5px] border-dashed border-foreground align-middle" />이름·주소만</span>
             <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-2 border-warn align-middle" />확보하면 연결</span>
             <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-[1.5px] border-dashed border-bad align-middle" />값·키 없음</span>
             <span className="h-3 w-px bg-border" aria-hidden="true" />
-            {VIAS.map((v) => <b key={v} title={VIA_NOTE[v]} className={cn('inline-block rounded-full border px-1.5 text-[11px] leading-[16px] font-bold whitespace-nowrap', VIA_STYLE[v].pill)}>{v}</b>)}
+            {VIAS.map((v) => <b key={v} title={VIA_NOTE[v]} className={cn('inline-block rounded-full border px-1.5 text-[13px] leading-[18px] font-bold whitespace-nowrap', VIA_STYLE[v].pill)}>{v}</b>)}
           </div>
         ) : null}
       </div>

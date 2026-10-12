@@ -149,6 +149,7 @@ function SourceDetail({ s }: { s: Source }) {
 
 export default function SourcesPage() {
   const items = sources.items;
+  const got = items.flatMap((s) => (s.collectedAt ? [s.collectedAt.slice(0, 10)] : [])).sort();   // 카탈로그의 수집일(가장 이른·늦은 날)
   const bundles = bundleCounts();
   const regions = regionIndex.regions.length;
   const nameOf = (id: string) => ITEMS.find((i) => i.id === id)!.name;
@@ -310,12 +311,14 @@ export default function SourcesPage() {
 
   return (
     <Page>
-      <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '데이터 원본' }]} title="데이터 원본" />
+      <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '데이터 원본' }]} title="데이터 원본"
+        meta={`수집 ${got[got.length - 1].replace(/-/g, '.')} · 조사 ${ACQUIRE_ASOF.replace(/-/g, '.')}`}
+        metaTip={`원천 카탈로그 ${items.length}건의 수집일 ${got[0]} ~ ${got[got.length - 1]} · 추가 확보 필요 조사 ${ACQUIRE_ASOF}`} />
       <section id="stage-links" aria-labelledby="h-stage" className="scroll-mt-20">
         <PanelHead id="h-stage" title="단계별 데이터 연계" />
         <StageLinks stages={stages} extra={(
       <div id="etc">
-        <p className={`${legend} m-0 justify-end`} aria-label="표지" title="수집 건수 = 보관 레코드 + 로컬 캐시(.cache) 응답 레코드">
+        <p className={`${legend} m-0 justify-end text-[13px]`} aria-label="표지" title="수집 건수 = 보관 레코드 + 로컬 캐시(.cache) 응답 레코드">
           {MARKS.map(([k, v]) => <span key={k} className="rounded-full border border-border px-1.5 leading-[18px] whitespace-nowrap" title={v}>{k}</span>)}
         </p>
         <section aria-labelledby="h-screen" className={GRID_DENSE}>

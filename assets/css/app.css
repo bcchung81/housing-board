@@ -16,7 +16,7 @@
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
 /* 글꼴 역할(2026-10-10, 계획서 14절 T1): 본문·카드·라벨은 시스템 한글 본문 글꼴, 로고·제목·큰 숫자는 Do Hyeon(대시보드 app/tailwind.css 와 같은 규칙) */
-:root{--font-body:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;--font-disp:var(--font-do-hyeon,'Do Hyeon'),'Apple SD Gothic Neo','Malgun Gothic',sans-serif}
+:root{--font-body:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;--font-disp:var(--font-do-hyeon,'Do Hyeon'),'Apple SD Gothic Neo','Malgun Gothic',sans-serif}body{--font-disp:var(--font-do-hyeon,'Do Hyeon'),'Apple SD Gothic Neo','Malgun Gothic',sans-serif}   /* next/font 의 --font-do-hyeon 은 body 에 붙는다 — :root 에서만 풀면 글꼴 이름이 'Do Hyeon' 으로 떨어져(Next 셸에는 그 이름의 글꼴이 없음) 숫자·제목이 시스템 글꼴로 보였다(2026-10-13) */
 body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5;color-scheme:dark}
 .maplibregl-map{font-family:var(--font-body)}
 /* 데스크톱: 위에 머리 줄(로고·6단계 필터·보기 기준), 그 아래 왼쪽 지도와 오른쪽 패널(380px). 접으면 지도가 전체 폭 */
@@ -55,7 +55,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .sf-sw{flex:0 0 auto;width:10px;height:10px;border-radius:3px;background:var(--c)}
 .sf-n{margin-left:auto;font-size:11px;font-weight:400;color:var(--mute)}
 .sf-v{font-family:var(--font-disp);font-size:19px;font-weight:400;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
-.sf-v small{margin-left:2px;font-family:var(--font-disp);font-size:11px;color:var(--mute)}
+.sf-v small{margin-left:2px;font-family:var(--font-body);font-size:11px;font-weight:400;color:var(--mute)}   /* 단위는 작고 흐린 본문 글꼴(종합상황판 KPI 단위와 같은 결) */
 .sf-v.none{color:var(--mute)}
 .stagef[hidden]{display:none}
 .pvbanner{position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:5;max-width:min(92%,720px);padding:4px 14px;border-radius:0 0 8px 8px;background:var(--pn2);border:1px solid var(--line2);border-top:0;color:var(--ink);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -375,7 +375,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 /* 사이드바 접기 단추: 지도 오른쪽 가장자리 아래쪽(위쪽은 시점 묶음 .rctl 이 쓴다). 펼쳐 있을 때는 작은 손잡이, 접혀 있을 때는 '공급 현황' 탭 */
 .ptoggle{position:absolute;right:0;bottom:calc(var(--botbar-h,33px) + 84px);z-index:3;width:20px;height:68px;padding:0;border:1px solid var(--line2);border-right:0;border-radius:8px 0 0 8px;background:var(--pn);color:var(--ink);font:inherit;font-size:20px;line-height:1;cursor:pointer}
 .ptoggle:hover{background:var(--pn2)}
-.ptoggle .pt-l{display:none;writing-mode:vertical-rl;font-size:13px;font-weight:700;letter-spacing:.06em}
+.ptoggle .pt-l{display:none;writing-mode:vertical-rl;text-orientation:sideways;font-size:13px;font-weight:700;letter-spacing:.02em;white-space:nowrap}   /* 한 글자씩 세워 쌓지 않고 90° 돌린 한 줄로 읽힌다 */
 .app.collapsed .ptoggle{width:30px;height:auto;padding:12px 0;display:flex;flex-direction:column;align-items:center;gap:8px}
 .app.collapsed .ptoggle .pt-l{display:block}
 /* 공급 요약(머리 줄 오른쪽): 합계 한 줄('3,173세대 · 6단지', 문장은 title) | 입주 전 점검 단추(위 줄 조용한 링크 '입주 전 점검 ›', 아래 줄 신호 칩).
@@ -386,7 +386,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .hudsum .hs-b{display:flex;align-items:center;min-width:0;padding-left:14px;border-left:1px solid var(--line)}
 .hudsum .hs-total{white-space:nowrap;font-variant-numeric:tabular-nums}
 .hudsum .hs-total b{font-family:var(--font-disp);font-size:17px;font-weight:400}
-.hudsum .hs-total small{margin-left:1px;font-size:13px}
+.hudsum .hs-total small{margin-left:1px;font-size:13px;color:var(--mute)}
 .hudsum .hs-n{margin-left:6px;color:var(--mute)}
 .hudsum .isum{display:flex;flex-wrap:wrap;align-items:center;gap:0 2px;margin:0;padding:2px 4px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;line-height:1.45;color:var(--mute);text-align:left;white-space:nowrap;cursor:pointer}
 .hudsum .isum-go{font-size:15px;line-height:1;transition:transform .15s}

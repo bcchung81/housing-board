@@ -14,7 +14,7 @@ export type Detail = { cols: Col[]; rows: Row[]; total: number; source: string }
 export type Row = { id: string; pin?: 'top' | 'bottom'; note?: string; noteTitle?: string; /* note 칸의 title 툴팁 */ muted?: boolean; detail?: Detail; c: Record<string, Cell> };
 /* 작은 글자 그리드: 감싸는 요소에 주면 본문 13px·머리글 12px·좁은 칸 여백(데이터 원본).
    칸 글자는 한 줄로 고정하지 않고 낱말 단위(keep-all)로 줄을 바꿔, 열 너비는 글자 길이에 맞고 표가 화면 밖으로 넘쳐 잘리지 않는다(대신 행이 높아진다) */
-export const GRID_DENSE = '[&_table]:text-[13px] [&_table]:leading-[1.5] [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-[12px] [&_td]:px-2 [&_td]:py-1.5 [&_th]:whitespace-normal [&_td]:whitespace-normal [&_th]:[word-break:keep-all] [&_td]:[word-break:keep-all]';
+export const GRID_DENSE = '[&_table]:text-[13px] [&_table]:leading-[1.5] [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-[13px] [&_td]:px-2 [&_td]:py-1.5 [&_th]:whitespace-normal [&_td]:whitespace-normal [&_th]:[word-break:keep-all] [&_td]:[word-break:keep-all]';
 export type HeadCell = { key?: string; label: string; colSpan: number; rowSpan: number; swatch?: string };
 
 const isObj = (v: Cell): v is CellObj => typeof v === 'object' && v !== null;
