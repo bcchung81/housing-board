@@ -1,5 +1,5 @@
-/* 월별 공급 파동 리본 차트의 SVG 문자열(시안 buildChart·renderRibbon·pinSVG 를 옮김). 기하는 lib/board/sample.ts 의 ribbonOf(원장 집계)로 계산한다.
-   정적 부분(층·띠·축)은 범례 강조(hl)에만, 동적 부분(연도 띠·총량 괄호·병목 핀)은 선택 시점(cur)에만 달라진다. */
+/* 월별 공급 파동 리본 차트의 SVG 문자열(시안 buildChart·renderRibbon 을 옮김). 기하는 lib/board/sample.ts 의 ribbonOf(원장 집계)로 계산한다.
+   정적 부분(층·띠·축)은 범례 강조(hl)에만, 동적 부분(연도 띠·총량 괄호)은 선택 시점(cur)에만 달라진다. 병목은 차트 안에 핀으로 두지 않고 툴팁에 둔다(2026-10-12 시안 정리). */
 import { C, PH, PW, PX0, TOP, BOT, ribbonLabels, rp, staticTexts, yearsOf, yr, type Ribbon, type Tx } from '../../lib/board/sample';
 
 /* 리본 차트의 선·글자·층 경계 색: 테마별 값은 app/tailwind.css 의 --rb-* (라이트·다크). SVG 속성이 var() 로 읽는다 */
@@ -18,7 +18,7 @@ const ln = (x1: number, y1: number, x2: number, y2: number, st: string, w: numbe
 /* 글자 자리는 lib/board/sample.ts 의 staticTexts·ribbonLabels 가 정한다(겹치지 않게 고른 자리). c = PAL 의 색 이름 */
 const tx = (x: Tx) => `<text x="${x.x.toFixed(1)}" y="${x.y.toFixed(1)}" fill="${PAL[x.c as keyof typeof PAL]}" font-size="${x.fs}"${x.bold ? ' font-weight="700"' : ''} text-anchor="${x.a}">${x.t}</text>`;
 
-/* 정적 부분: 층 6개(실적·예정), 지연 띠, 예정 구간 빗금, 기준일 선, 축 글자. hl = 범례에서 고른 단계(없으면 -1).
+/* 정적 부분: 층 6개(실적·예정), 지연 띠, 예정 구간 빗금, 기준일 선, 세로축 눈금 글자, 아래 달 눈금(글자 없이 표시만, 1월은 길게). hl = 범례에서 고른 단계(없으면 -1).
    예정 구간(옅은 층·빗금)은 실제 날짜가 있는 마지막 달(T.actual) 뒤부터, 기준일 선은 기준 달(T.now) 뒤에 긋는다 */
 export function chartStatic(g: Ribbon, hl: number): string {
   const { T: TL, X } = g, nowX = X(TL.now + 1), actX = X(TL.actual + 1);
@@ -39,30 +39,23 @@ export function chartStatic(g: Ribbon, hl: number): string {
   for (let k = 0; k < 6; k++) s += `<path d="${rp(g, k, 0, TL.last + 1, true, 3)}" fill="${PAL.band}" fill-opacity="${(0.94 * dimK(hl, k)).toFixed(2)}"/>`;
   s += `<rect x="${actX.toFixed(1)}" y="${TOP}" width="${(PX0 + PW - actX).toFixed(1)}" height="${PH}" fill="url(#hatch)" pointer-events="none"/>`;
   s += '</g><g class="rb-now">' + ln(nowX, TOP - 8, nowX, BOT + 2, PAL.ink, 1.4, '5 4');
-  s += tx(T.now) + '</g><g class="rb-axes">' + T.months.map(tx).join('');
-  /* 세로축(호): 층이 판을 거의 덮으므로 눈금선은 층 경계색(--rb-seam)을 55% 로 깐 점선으로 층 위에서도 보이게, 0 은 실선. 눈금 글자·'(호)' 는 staticTexts 가 정한다 */
-  g.ticks.forEach((v, i) => { const y = BOT - v * g.s2; s += (i ? `<g opacity=".55">${ln(PX0, y, PX0 + PW, y, PAL.seam, 1, '3 4')}</g>` : ln(PX0, y, PX0 + PW, y, PAL.mid, 1)) + ln(PX0 - 4, y, PX0, y, PAL.axis, 1); });
-  s += T.ticks.map(tx).join('') + tx(T.unit) + '</g>';
+  s += tx(T.now) + '</g><g class="rb-axes">';
+  for (let m = 0; m <= TL.last + 1; m++) { const jan = m <= TL.last && TL.months[m].endsWith('-01'); s += `<g opacity="${jan ? 1 : 0.6}">${ln(X(m), BOT, X(m), BOT + (jan ? 7 : 3), PAL.axis, 1)}</g>`; }
+  /* 세로축(호): 층이 판을 거의 덮으므로 눈금선은 층 경계색(--rb-seam)을 55% 로 깐 점선으로 층 위에서도 보이게, 0 은 실선. 눈금 글자는 staticTexts 가 정한다(단위는 카드 제목 title) */
+  g.ticks.forEach((v, i) => { const y = BOT - v * g.s2; s += (i ? `<g opacity=".55">${ln(PX0, y, PX0 + PW, y, PAL.seam, 1, '3 4')}</g>` : ln(PX0, y, PX0 + PW, y, PAL.mid, 1)); });
+  s += T.ticks.map(tx).join('') + '</g>';
   return s;
 }
 
 /* 리본 위 라벨: HUD 판(남색 반투명 유리 + 밝은 가장자리 선 + 왼쪽 3px 강조 띠) 위에 흰 글자. 흰 판이 리본 색을 가리던 것을 바꿨다(2026-10-10).
-   글자에 외곽선을 겹치면 축소 시 획이 뭉개져서 판과 글자를 따로 그린다. accent = 강조 띠 색(총량은 밝은 주색 --rb-hud-acc, 병목·정점 핀은 지연 띠 색) */
+   글자에 외곽선을 겹치면 축소 시 획이 뭉개져서 판과 글자를 따로 그린다. accent = 강조 띠 색(총량은 밝은 주색 --rb-hud-acc) */
 function labelSVG(b: { x: number; y: number; w: number; center: number; baseline: number }, text: string, accent: string): string {
   return `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(2)}" width="${b.w}" height="24" rx="5" fill="${PAL.hud}" stroke="${PAL.hudLine}" stroke-width=".75"/>`
     + `<rect x="${(b.x + 3).toFixed(2)}" y="${(b.y + 4).toFixed(2)}" width="3" height="16" rx="1.5" fill="${accent}"/>`
     + `<text x="${(b.center + 3).toFixed(2)}" y="${b.baseline.toFixed(2)}" fill="${PAL.hudTxt}" font-size="15" font-weight="600" text-anchor="middle">${text}</text>`;
 }
 
-/* 병목 핀: 그 달 병목 단계(지연 호수가 가장 큰 단계)의 지연 띠 한가운데. 라벨은 핀 위(시안 자리)가 머리 글자와 겹치면 아래·옆으로 비켜 놓는다(ribbonLabels) */
-function pinSVG(p: ReturnType<typeof ribbonLabels>['pin']): string {
-  const { px, py } = p, y2 = p.below ? py + 34 : py - 34;
-  return `<g class="rb-pin"><line x1="${px.toFixed(1)}" y1="${(p.below ? py + 7 : py - 7).toFixed(1)}" x2="${p.center.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${PAL.cur}" stroke-width="1.2" stroke-dasharray="2 2"/>`
-    + `<circle cx="${px.toFixed(1)}" cy="${py.toFixed(1)}" r="6" fill="var(--rb-pin)" stroke="${PAL.acc}" stroke-width="3"/>`
-    + labelSVG(p, p.text, PAL.band) + '</g>';
-}
-
-/* 동적 부분: 연도 띠 · 총량 괄호 · 병목 핀(선택 시점, 그 앞에 판정 달이 없으면 첫 판정 달) */
+/* 동적 부분: 연도 띠 · 총량 괄호와 라벨(선택 시점) */
 export function ribbonDynamic(g: Ribbon, cur: number): string {
   const { T, X } = g, yi = yr(T, cur), L = ribbonLabels(g, cur);
   let s = '';
@@ -76,6 +69,5 @@ export function ribbonDynamic(g: Ribbon, cur: number): string {
   const cl = (x1: number, y1: number, x2: number, y2: number, w: number, d?: boolean) => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${PAL.cur}" stroke-width="${w}"${d ? ' stroke-dasharray="2 2"' : ''}/>`;
   s += '<g class="rb-marks">' + cl(bx, top, bx, BOT, 1.4, true) + cl(bx - 8, top, bx + 8, top, 2) + cl(bx - 8, BOT, bx + 8, BOT, 2);
   s += labelSVG(L.total, L.total.text, PAL.hudAcc);
-  s += pinSVG(L.pin);
   return s + '</g>';
 }

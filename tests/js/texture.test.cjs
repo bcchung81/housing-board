@@ -12,7 +12,7 @@ const board = read('components/board/Board.tsx'), lines = read('components/chart
 test('E2 추이 그래프: 줄여 그려도(0.6~1배) 선·격자·현재선 굵기는 화면 px(non-scaling-stroke)', () => {
   const svg = /<svg id="trend"[\s\S]*?<\/svg>/.exec(board)[0];
   const strokes = [...svg.matchAll(/<(line|polyline)[^>]*>/g)].map((m) => m[0]);
-  assert.equal(strokes.length, 6, '격자 3 · 지연·주의 선 2 · 현재선 1');
+  assert.equal(strokes.length, 4, '격자(3개를 map 으로) 1 · 지연·주의 선 2 · 현재선 1');
   for (const s of [...svg.matchAll(/<(?:line|polyline)\b[^>]*\/>/g)].map((m) => m[0])) assert.match(s, /vectorEffect="non-scaling-stroke"/, s.slice(0, 60));
 });
 
@@ -20,7 +20,7 @@ test('E3 잠정치 빗금: 가로로 늘어나는 SVG 무늬 대신 그래프 �
   assert.doesNotMatch(lines, /<pattern|hatch-prov/);
   assert.match(lines, /data-slot="chart-prov"[^>]*repeating-linear-gradient\(45deg,/);
   assert.match(lines, /left: `\$\{\(L \+ step \* prov\[0\]\) \/ W \* 100\}%`, width: `\$\{step \* prov\.length \/ W \* 100\}%`/);
-  assert.match(lines, /<svg preserveAspectRatio="none" className="relative block/, '그래프(SVG)가 띠 위에 그려진다');
+  assert.match(lines, /<svg preserveAspectRatio="none" className=\{board \? 'absolute inset-0 block size-full overflow-visible' : 'relative block/, '그래프(SVG)가 띠 위에 그려진다(종합상황판은 남는 높이를 채우는 absolute)');
 });
 
 test('E4 글꼴 역할: 본문은 시스템 한글 글꼴, 로고·메뉴·제목·큰 숫자는 Do Hyeon(대시보드·지도 같은 규칙)', () => {

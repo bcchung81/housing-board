@@ -42,14 +42,15 @@ test('리본 연출: 서버 렌더부터 쓸기(sweep) → 시간 여행(travel,
   assert.match(board, /<rect className="rb-scan"[^>]*fill="url\(#rb-scan-g\)" opacity="0"/);
 });
 
-test('리본 SVG 는 연출 단계별로 묶여 있다: 축·층·기준일·연도 머리글(차례 --i)·표시(굵기 괄호·라벨·핀)', () => {
-  for (const g of ['<g class="rb-axes">', '<g class="rb-layers">', '<g class="rb-now">', '<g class="rb-marks">', '<g class="rb-pin">']) assert.ok(ribbon.includes(g), g);
+test('리본 SVG 는 연출 단계별로 묶여 있다: 축·층·기준일·연도 머리글(차례 --i)·표시(굵기 괄호·라벨). 병목 핀은 차트에 없다(툴팁에)', () => {
+  for (const g of ['<g class="rb-axes">', '<g class="rb-layers">', '<g class="rb-now">', '<g class="rb-marks">']) assert.ok(ribbon.includes(g), g);
+  assert.ok(!ribbon.includes('rb-pin'), '병목 핀 없음');
   assert.match(ribbon, /<g class="rb-yr" style="--i:\$\{i\}">/);
   assert.match(ribbon, /<linearGradient id="rb-scan-g" x1="0" y1="0" x2="1" y2="0">/);
 });
 
 test('조용한 등장: 종합상황판의 다른 그래프와 개별 화면 그래프·계단식 6단계', () => {
-  for (const c of ["'q-rise card-lift group/dir", 'q-grow-x flex h-3.5', "'q-rise card-lift flex flex-col", '<g className="q-sweep"><polyline', 'className="q-grow-y"', "cn(bar3, 'q-grow-x h-3')"]) assert.ok(board.includes(c), c);
+  for (const c of ["'q-rise card-lift group/dir", 'q-grow-x flex h-3.5', "'q-rise card-lift flex flex-col", '<g className="q-sweep"><polyline', 'className="q-grow-y"', "cn(bar3, 'q-grow-x h-3"]) assert.ok(board.includes(c), c);
   assert.match(read('components/charts/MonthLines.tsx'), /<g className="q-sweep">/);
   assert.match(read('components/charts/StackedMonths.tsx'), /<g className="q-grow-y" style=\{\{ \['--i' as string\]: i \* 0\.3 \}\}>/);
   const ladder = read('components/StageLadder.tsx');

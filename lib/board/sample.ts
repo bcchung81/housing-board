@@ -53,20 +53,30 @@ export const delayAt = (T: Timeline, delays: (number[] | null)[], m: number) => 
 export const trendOf = (T: Timeline, J: (JudgeRow | null)[]) => J.slice(0, T.now + 1).map((r) => (r ? { d: r.delay.units, w: r.caution.units } : null));
 /* 세로 맨 위: 최댓값 이상인 가장 작은 1·1.2·1.5·2·2.5·3·4·5·6·8 × 10^n(눈금 글자가 없어 선이 카드 높이를 고르게 쓰게 한다). 눈금선 3개는 4등분 */
 export const trendMax = (max: number) => { for (let e = 1; ; e *= 10) for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8]) if (m * e >= max) return m * e; };
-/* 아래 줄: 선택 시점(NOW 까지)의 전월 대비 증감(호, 이력 차이). 첫 달·앞 달 판정이 없으면 0 */
-export function txTrend(T: Timeline, tr: ({ d: number; w: number } | null)[], cur: number) {
-  const c = Math.min(cur, T.now), a = tr[c], b = c > 0 ? tr[c - 1] : null;
-  return '전월 대비 지연 ' + sg(a && b ? a.d - b.d : 0) + ' · 주의 ' + sg(a && b ? a.w - b.w : 0);   // 시점·단위(호)는 카드 제목 title 에(2026-10-11 서술 최소화)
+/* 선 끝 이름표의 값: 선택 시점(NOW 까지)의 판정 달 값과 전월 대비 증감(호, 이력 차이). 판정 달이 없으면 null, 앞 달 판정이 없으면 증감 0 */
+export function trendAt(T: Timeline, tr: ({ d: number; w: number } | null)[], cur: number) {
+  const j = judgedAt(T, Math.min(cur, T.now)), a = j >= 0 ? tr[j] : null, b = j > 0 ? tr[j - 1] : null;
+  return a ? { d: a.d, w: a.w, dd: b ? a.d - b.d : 0, dw: b ? a.w - b.w : 0 } : null;
+}
+/* 두 이름표의 세로 자리(y, 아래로 커진다): 간격이 gap 보다 좁으면 아래쪽을 내리고, 바닥(max)을 넘으면 위쪽을 올린다. 입력 순서대로 돌려준다 */
+export function apart(a: number, b: number, gap: number, max: number): [number, number] {
+  const lowFirst = a > b, up = lowFirst ? b : a;
+  let lo = lowFirst ? a : b, hi = up;
+  if (lo - hi < gap) lo = hi + gap;
+  if (lo > max) { lo = max; hi = Math.min(hi, lo - gap); }
+  return lowFirst ? [lo, hi] : [hi, lo];
 }
 
 /* ── 시도 타일 색(바탕색 = 지연율 단계) ── */
-export const RTH = [5, 7, 8.5, 10];
+export const RTH = [10, 15, 20, 30];
 export const RCOL = ['var(--region-0)', 'var(--region-1)', 'var(--region-2)', 'var(--region-3)', 'var(--region-4)', 'var(--region-5)'];
-export const RLAB = ['0', '~5', '5~7', '7~8.5', '8.5~10', '10+'];
+export const RLAB = ['0', '<10', '10~15', '15~20', '20~30', '30+'];
 export const rcls = (rate: number) => (rate === 0 ? 0 : 1 + RTH.filter((t) => rate >= t).length);
+/* 시도 코드 → 지리 격자 자리 [줄, 열](4열 × 5줄, 5줄 2~4열은 선택한 시도 요약 칸). 표에 없는 코드는 자리를 주지 않아 빈 칸에 이어 붙는다 */
+export const REGION_POS: Record<string, [number, number]> = { '28': [1, 1], '11': [1, 2], '41': [1, 3], '51': [1, 4], '44': [2, 1], '36': [2, 2], '43': [2, 3], '47': [2, 4], '52': [3, 1], '30': [3, 2], '27': [3, 3], '31': [3, 4], '12': [4, 1], '48': [4, 2], '26': [4, 3], '50': [5, 1] };
 
 /* ── 리본 차트 기하(시안과 같은 좌표계). 층 두께 = 원장의 달 말 단계별 호수, 붉은 띠 = delayAt, 세로 축척(ymax)은 총량에 맞춘다 ── */
-export const VW = 960, PX0 = 46, PW = 908, TOP = 52, PH = 304, BOT = TOP + PH; // PH 는 시안(320)보다 16 줄였다: 바닥부터 쌓으면 층이 BOT 까지 내려와 '기준일' 글자 줄(374)과 겹쳐서(2026-10-11)
+export const VW = 960, PX0 = 46, PW = 908, TOP = 52, PH = 320, BOT = TOP + PH; // 시안 값. 아래 달 이름 줄을 없애(2026-10-12) '기준' 글자(BOT 아래 한 줄)만 남아 304 로 줄였던 높이를 되돌렸다
 /* 시점 n 칸을 플롯 폭에 고르게 놓은 x 좌표(칸 m 의 왼쪽 끝 = X(m)) */
 export const xOf = (n: number) => (x: number) => PX0 + x * PW / n;
 export type Geo = { x: number; lw: number[]; up: number[]; dl: number[] };
@@ -96,7 +106,7 @@ export const rp = (g: Ribbon, k: number, a: number, b: number, band: boolean, pr
   return 'M' + up.join(' L') + ' L' + lo.reverse().join(' L') + ' Z';
 };
 
-/* ── 리본 글자 자리. 실데이터(원장)는 같은 사업이 단계만 옮겨 가 총량이 매달 같아서, 시안의 연도별 총량 두 줄·병목 핀·커서 라벨이 머리 줄과 서로 겹쳤다(2026-10-11).
+/* ── 리본 글자 자리. 실데이터(원장)는 같은 사업이 단계만 옮겨 가 총량이 매달 같아서, 시안의 연도별 총량 두 줄·커서 라벨이 머리 줄과 서로 겹쳤다(2026-10-11).
    글자 상자는 대략값(한글 0.9em, 숫자·영문 0.6em, 띄어쓰기·문장부호 0.35em, 위 = 기준선 − 0.9em, 높이 1.2em — 브라우저 getBBox 보다 조금 크게 잡는다).
    라벨(HUD 판)은 판 상자로 겹침을 본다. ribbon.ts 가 이 자리를 그리고, tests/js/boardsample.test.cjs 가 46개 시점에서 겹치지 않음을 확인한다. ── */
 export type Box = { x: number; y: number; w: number; h: number };
@@ -114,22 +124,21 @@ export function labelBox(x: number, baseline: number, text: string) {
 }
 /* 총량이 46개월 내내 같으면(원장) 연도별 총량·증감 대신 연도만 둔다(총량은 커서 라벨과 카드 제목 title 에) */
 export const flatTotal = (g: Ribbon) => g.total.every((v) => v === g.total[0]);
-const man = (n: number, unit = '만') => (n === 0 ? '0' : `${+(n / 10000).toFixed(2)}${unit}`);   // 세로축 눈금 글자: 0, 5만, 2.5만 (ymax 1,000만 이상이면 '만' 을 빼고 단위를 머리 글자로 옮긴다)
+/* 세로축 단위(차트 안에 글자로 두지 않고 카드 제목 title 에): ymax 1,000만 이상이면 눈금 글자에서 '만' 을 빼 단위가 '만 호' 가 된다 */
+export const axisUnit = (g: Ribbon) => (g.ymax >= 10000000 ? '만 호' : '호');
+const man = (n: number, unit = '만') => (n === 0 ? '0' : `${+(n / 10000).toFixed(2)}${unit}`);   // 세로축 눈금 글자: 0, 5만, 2.5만
 
-/* 정적 글자(c = ribbon.ts 의 색 이름). 붉은 띠 범례·총량 설명은 차트 안에 두지 않는다(카드 제목 줄의 '지연' 칩과 제목 title, 2026-10-11) */
-/* 아래 달 이름: 1월·7월, 기준일 글자 아래(기준선 ±3개월)는 비운다 */
+/* 정적 글자(c = ribbon.ts 의 색 이름): 세로축 눈금과 '기준' 글자뿐이다. 붉은 띠 범례·총량 설명·세로축 단위·아래 달 이름은 차트 안에 두지 않는다(카드 제목 줄의 '지연' 칩과 제목 title, 2026-10-12 시안 정리) */
 export function staticTexts(g: Ribbon) {
-  const big = g.ymax >= 10000000, { T, X } = g;
+  const { T, X } = g;
   return {
-    ticks: g.ticks.map((v): Tx => ({ x: PX0 - 6, y: BOT - v * g.s2 + 3, t: man(v, big ? '' : '만'), fs: 13, a: 'end', c: 'axis' })),   // 세로축: 0 에서 ymax 까지 눈금마다
-    unit: { x: PX0 - 6, y: TOP - 14, t: big ? '(만 호)' : '(호)', fs: 13, a: 'end', c: 'axis' } as Tx,
-    now: { x: X(T.now + 1), y: 374, t: `기준일 ${ml(T, T.now)}`, fs: 14, a: 'middle', c: 'ink' } as Tx,
-    months: T.months.flatMap((ym, m): Tx[] => (/-(01|07)$/.test(ym) && Math.abs(m + 0.5 - (T.now + 1)) >= 3 ? [{ x: X(m + 0.5), y: 392, t: ml(T, m), fs: 14, a: 'middle', c: 'axis' }] : [])),
+    ticks: g.ticks.map((v): Tx => ({ x: PX0 - 6, y: BOT - v * g.s2 + 3, t: man(v, axisUnit(g) === '호' ? '만' : ''), fs: 13, a: 'end', c: 'axis' })),   // 세로축: 0 에서 ymax 까지 눈금마다
+    now: { x: X(T.now + 1), y: 393, t: `기준 ${ml(T, T.now)}`, fs: 13, a: 'middle', c: 'ink', bold: true } as Tx,
   };
 }
-const staticList = (g: Ribbon) => { const s = staticTexts(g); return [...s.ticks, s.unit, s.now, ...s.months]; };
+const staticList = (g: Ribbon) => { const s = staticTexts(g); return [...s.ticks, s.now]; };
 
-/* 선택 시점(cur)의 글자: 연도 머리 · 커서 총량 라벨 · 병목 핀 라벨. 핀을 먼저 놓고(위 → 아래 → 왼쪽·오른쪽으로 비킴), 커서 라벨은 층 위쪽 안 → 아래쪽 안 중 비어 있는 곳 */
+/* 선택 시점(cur)의 글자: 연도 머리 · 커서 총량 라벨(층 위쪽 안 → 아래쪽 안 → 더미 위 중 비어 있는 곳) */
 export function ribbonLabels(g: Ribbon, cur: number) {
   const { T, X } = g, fl = flatTotal(g), yi = yr(T, cur), yrs: Tx[][] = [], Y = yearsOf(T);
   const YT = Y.map((y) => g.total[y.b]);   // 해마다 마지막 달(마지막 해는 마지막 시점)의 총량
@@ -143,22 +152,10 @@ export function ribbonLabels(g: Ribbon, cur: number) {
   const used: Box[] = [...staticList(g), ...yrs.flat()].map(textBox);
   const free = (b: Box) => inView(b) && !used.some((u) => hit(u, b));
 
-  /* 병목 핀: 그 달 병목 단계(지연 호수가 가장 큰 단계)의 지연 띠 한가운데. 선택 시점 앞에 판정 달이 없으면 첫 판정 달의 핀 */
-  const on = judgedAt(T, cur) >= 0, m = on ? cur : T.judged[0], p = g.geo[4 * m + 2], ds = delayAt(T, g.delay, m), k = argmax(ds);
-  const px = X(m + 0.5), py = p.lw[k] - p.dl[k] / 2;
-  const pt = on ? `${K[k]} 지연 ${f(ds[k])}호 · ${(ds[k] / g.su[m][k] * 100).toFixed(1)}%` : `${ml(T, m)} 관측 · ${K[k]} ${f(ds[k])}호`;
-  const dot: Box = { x: px - 9, y: py - 9, w: 18, h: 18 };
-  used.push(dot);
-  const w0 = labelBox(px, 0, pt).w, cands: { dx: number; below: boolean }[] = [];
-  for (const dx of [0, -(w0 / 2 + 16), w0 / 2 + 16]) for (const below of [false, true]) cands.push({ dx, below });
-  const pins = cands.map(({ dx, below }) => ({ below, ...labelBox(Math.max(PX0 + 95, Math.min(PX0 + PW - 95, px + dx)), below ? py + 50 : py - 40, pt) }));
-  const pin = pins.find(free) ?? pins[0];
-  used.push(pin);
-
-  /* 커서 괄호의 총량 라벨: 쌓은 더미 위쪽 안 → 바닥 쪽 안(기준일 글자가 막으면 한 칸 위) → 더미 위 빈 곳(판정 달마다 핀이 옮겨 가 더미가 낮은 달에 안쪽이 막힐 때) */
+  /* 커서 괄호의 총량 라벨: 쌓은 더미 위쪽 안 → 바닥 쪽 안 → 더미 위 빈 곳 */
   const top = BOT - g.total[cur] * g.s2, bx = X(cur + 0.5), tt = `${f(g.total[cur])}호`;
   const tw = labelBox(bx, 0, tt).w, xs = [bx, Math.max(bx, PX0 + 4 + tw / 2)];   // 막히면 왼쪽 세로축을 비켜 오른쪽으로
   const tops = [...xs.flatMap((x) => [labelBox(x, Math.max(TOP + 22, top + 22), tt), labelBox(x, BOT - 14, tt), labelBox(x, BOT - 30, tt)]), ...xs.map((x) => labelBox(x, top - 12, tt))];
   const total = tops.find(free) ?? tops[0];
-  return { years: yrs, total: { ...total, text: tt }, pin: { ...pin, text: pt, px, py, k }, statics: staticList(g) };
+  return { years: yrs, total: { ...total, text: tt }, statics: staticList(g) };
 }

@@ -2,12 +2,15 @@
    통계누리 전국 착공 누계(보고자료와 같은 ytd), 사업 원장 집계(ledger-board.json), 원천 카탈로그 건수. */
 import type { LedgerBoard } from './types';
 
+/* 카드 아랫줄 = 앞말(pre, 작은 글자) + 큰 숫자(big) + 단위(u) + 보조 값(sub). m 은 그 셋을 이은 한 줄(읽기용 이름). 날짜·지시 이름·기준(basis)은 카드 title */
 export type Directive = {
   date: string; t: string; m: string;
-  sub?: { text: string; note?: string; tone: 'ok' | 'bad' | 'warn' };   // 값 오른쪽의 작은 보조 값
-  basis: string;                                                          // '실데이터' 표지의 title: 값의 기준과 못 내는 값
+  pre?: string; big: string; u: string;
+  sub?: { text: string; tone: 'ok' | 'bad' | 'warn' };   // 값 오른쪽의 작은 보조 값
+  basis: string;                                          // 카드 title: 값의 기준(기간·범위)과 못 내는 값
   p: string[];
 };
+const val = (pre: string | undefined, big: string, u: string) => ({ pre, big, u, m: `${pre ? pre + ' ' : ''}${big}${u}` });
 export type DirectiveInput = {
   sourceCount: number;
   stageNames: string[];                                                    // 리본 6단계 이름(sample.ts 의 K): 병목 단계 이름
@@ -28,19 +31,19 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start }:
   const yoy = start.cum !== null && start.cumLy ? (start.cum - start.cumLy) / start.cumLy * 100 : null;
   const span = `${start.year}년 1~${start.upto}월`;
   return [
-    { date: '08.14', t: '진척 관리', m: start.cum === null ? '착공 –' : `착공 ${f(start.cum)}호`,
-      sub: yoy === null ? undefined : { text: `${yoy >= 0 ? '▲' : '▼'} ${Math.abs(yoy).toFixed(1)}%`, note: `1~${start.upto}월 · 전년 대비`, tone: yoy >= 0 ? 'ok' : 'bad' },
+    { date: '08.14', t: '진척 관리', ...val('착공', start.cum === null ? '–' : f(start.cum), start.cum === null ? '' : '호'),
+      sub: yoy === null ? undefined : { text: `${yoy >= 0 ? '▲' : '▼'}${Math.abs(yoy).toFixed(1)}%`, tone: yoy >= 0 ? 'ok' : 'bad' },
       basis: `통계누리 전국 착공 ${span} 누계와 전년 같은 기간 대비(보고자료와 같은 계산). 계획(목표) 물량 원천이 없어 계획 대비 달성률은 내지 못합니다.`,
       p: ['p-chart'] },
-    { date: '08.19', t: '사업장별 현황판', m: `${f(L.scope.projects)} 사업`, basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})`,
+    { date: '08.19', t: '사업장별 현황판', ...val(undefined, f(L.scope.projects), '사업'), basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})`,
       p: ['p-region'] },
-    { date: '09.03', t: '범부처 통합·병목', m: `병목 ${K[bk]} ${f(L.delayByStage[bk])}호`, basis: `${L_(L)} · 단계별 지연 호수가 가장 큰 단계(판정한 사업 ${L.scope.judged}건 기준)`,
+    { date: '09.03', t: '범부처 통합·병목', ...val(`병목 ${K[bk]}`, f(L.delayByStage[bk]), '호'), basis: `${L_(L)} · 단계별 지연 호수가 가장 큰 단계(판정한 사업 ${L.scope.judged}건 기준)`,
       p: ['p-trend', 'p-agency'] },
-    { date: '09.04', t: '예측가능성', m: `준공 예정 ${f(upSum)}호`, basis: `${L_(L)} · 향후 12개월(${L.upcoming[0].ym}~${L.upcoming[L.upcoming.length - 1].ym}) 준공 예정 호수 합`,
+    { date: '09.04', t: '예측가능성', ...val('준공 예정', f(upSum), '호'), basis: `${L_(L)} · 향후 12개월(${L.upcoming[0].ym}~${L.upcoming[L.upcoming.length - 1].ym}) 준공 예정 호수 합`,
       p: ['p-fut'] },
-    { date: '09.18', t: '일정 지연 관리', m: `지연 ${L.judgment.delay.projects}사업`, sub: { text: `주의 ${L.judgment.caution.projects}사업`, tone: 'warn' }, basis: `${L_(L)} · ${ledgerJudged(L)} 중 지연·주의`,
+    { date: '09.18', t: '일정 지연 관리', ...val('지연', f(L.judgment.delay.projects), '사업'), sub: { text: `주의 ${f(L.judgment.caution.projects)}`, tone: 'warn' }, basis: `${L_(L)} · ${ledgerJudged(L)} 중 지연·주의`,
       p: ['p-trend'] },
-    { date: '09.30', t: '국민 공개·공식 원천', m: `원천 ${sourceCount}곳`, basis: '원천 카탈로그(data/board/sources.json)에 등록된 원천 수',
+    { date: '09.30', t: '국민 공개·공식 원천', ...val('원천', f(sourceCount), '곳'), basis: '원천 카탈로그(data/board/sources.json)에 등록된 원천 수',
       p: ['p-flow'] },
   ];
 }

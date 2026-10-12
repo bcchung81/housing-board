@@ -15,6 +15,8 @@ test('대시보드 막대: 상태 비율 막대·기관별 막대(bar3)·12개�
   assert.match(read('components/board/styles.ts'), /export const bar3 = "flex gap-px overflow-hidden";/);
   const fm = /<svg id="fmonths"[\s\S]*?<\/svg>/.exec(board)[0];
   assert.doesNotMatch(fm, /\brx=/, '12개월 막대·선택 테두리');
+  const rg = /<span className="flex h-1\.5 gap-px[^>]*>/.exec(board)[0];
+  assert.doesNotMatch(rg, /rounded/, '시도 타일 3색 막대');
   assert.doesNotMatch(read('components/charts/StackedMonths.tsx'), /\brx=|rounded/);
   const ladder = read('components/StageLadder.tsx');
   assert.doesNotMatch(ladder, /rounded-t-/, '계단 칸 윗모서리');
