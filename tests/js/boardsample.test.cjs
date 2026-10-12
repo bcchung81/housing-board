@@ -78,8 +78,8 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   assert.equal(dir[1].m, `${S.f(L.scope.projects)} 사업`);
   assert.equal(L.scope.projects, L.scope.issued + L.scope.candidates);
   const b = L.scope.bySource;
-  assert.match(dir[1].basis, new RegExp(`^원장 2026-10 기준 · 전국 · 사업 ${S.f(L.scope.projects)}건\\(발급 ${b.issued} · LH 후보 ${b.lhCandidates} · 건축HUB 후보 ${S.f(b.hubBulkCandidates)}\\)$`));
-  assert.match(dir[4].basis, new RegExp(`^원장 2026-10 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(발급 사업은 착공·준공, 건축HUB 후보는 준공 예정 경과만 · 판정 밖: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의$`));
+  assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth} 기준 · 전국 · 사업 ${S.f(L.scope.projects)}건\\(발급 ${b.issued} · LH 후보 ${b.lhCandidates} · 건축HUB 후보 ${S.f(b.hubBulkCandidates)}\\)$`));
+  assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth} 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(발급 사업은 착공·준공, 건축HUB 후보는 준공 예정 경과만 · 판정 밖: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의$`));
   assert.doesNotMatch(dir.map((d) => d.basis).join(' '), /전국 아님/);
   const bk = L.delayByStage.indexOf(Math.max(...L.delayByStage));
   assert.equal(dir[2].m, `병목 ${S.K[bk]} ${S.f(L.delayByStage[bk])}호`);
@@ -97,10 +97,13 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
 test('원장 집계와 화면 시점이 같은 칸이다: 46개월(2025-01~2028-10), NOW = 2026-10, 실제 날짜는 2026-08까지, 단계 6칸', () => {
   assert.equal(L.schema, 'ledger-board/1');
   assert.deepEqual([T.months, T.now, T.last], [L.months, L.now, L.months.length - 1]);
-  assert.deepEqual([T.now, T.last, T.months[0], T.months[T.last]], [21, 45, '2025-01', '2028-10']);
-  assert.equal(L.observedMonth, T.months[T.now]);
-  assert.deepEqual([L.actualThrough, T.actual, L.actualIndex], ['2026-08', 19, 19]);
-  assert.deepEqual([S.kind(T, 19), S.kind(T, 20), S.kind(T, 21), S.kind(T, 22)], ['실적 기준', '예정 기준', '현재', '예정 기준'], '실제 날짜 뒤 달(2026.09)은 예정 기준');
+  assert.deepEqual([T.last, T.months[0], T.months[T.last]], [45, '2025-01', '2028-10']);
+  assert.equal(L.observedMonth, T.months[T.now], '첫 판 NOW = 21(2026-10)');
+  /* 실제 날짜 = 건축HUB 대용량 판의 데이터 월(첫 판 2026-08, 19) */
+  const ed = L.trend[L.trend.length - 1].edition, a = L.months.indexOf(ed);
+  assert.deepEqual([L.actualThrough, T.actual, L.actualIndex], [ed, a, a]);
+  assert.deepEqual([S.kind(T, a), ...Array.from({ length: T.now - a - 1 }, (_, i) => S.kind(T, a + 1 + i)), S.kind(T, T.now), S.kind(T, T.now + 1)],
+    ['실적 기준', ...Array(T.now - a - 1).fill('예정 기준'), '현재', '예정 기준'], '실제 날짜 뒤 달(첫 판 2026.09)은 예정 기준');
   assert.equal(T0.actual, T0.now, 'actualThrough 가 없는 옛 집계는 기준 달까지 실제');
   for (const row of L.stageUnits) assert.equal(row.length, S.K.length);
   assert.equal(L.delayByStage.length, S.K.length);

@@ -9,6 +9,8 @@ import type { LedgerBoard, LhData, Molit, RegistryProject, Sources } from './typ
 export const molit = molitJson as unknown as Molit;
 export const lh = lhJson as unknown as LhData;
 export const ledger = ledgerJson as unknown as LedgerBoard;   // 사업 원장 집계(종합상황판 카드)
+/* 앞으로의 물량을 세는 기준 달: 종합상황판의 '향후 12개월'과 같은 달(원장 관측 달 — 월 갱신을 따라간다). 보고자료·우리 동네가 쓴다 */
+export const AHEAD_FROM = ledger.observedMonth;
 export const sources = sourcesJson as unknown as Sources;
 export const projects = (registryJson as unknown as { projects: RegistryProject[] }).projects;
 

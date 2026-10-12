@@ -81,10 +81,10 @@ const bjdCodesOf = (registry) => [...new Set(hubProjects(registry).flatMap((p) =
 const kstMonth = (now) => new Date(now + 9 * 3600 * 1000).toISOString().slice(0, 7);
 
 /* 법정동 하나의 모든 쪽(handlers/v1/permits.js hubRecords 와 같은 호출). 반환 { pages: [{ page_no, total_count, items }] } */
-async function fetchBjd(bjd, { pool, doFetch, sleep }) {
+async function fetchBjd(bjd, { pool, doFetch, sleep, maxPages = MAX_PAGES }) {
   const { fetchPage } = require('../../lib/datagokr.js');
   const pages = [];
-  for (let page = 1; page <= MAX_PAGES; page++) {
+  for (let page = 1; page <= maxPages; page++) {
     const got = await pool.run('RESOLVE', 'hub', (key) => fetchPage({ doFetch, sleep, url: HUB_URL, timeoutMs: FETCH_TIMEOUT_MS,
       params: { serviceKey: key, sigunguCd: bjd.slice(0, 5), bjdongCd: bjd.slice(5, 10), numOfRows: String(PAGE_ROWS), pageNo: String(page), _type: 'json' } }));
     pages.push({ page_no: page, total_count: got.total, items: got.items });
@@ -135,6 +135,6 @@ async function main(argv) {
   console.log(`호출 ${manifest.calls} · 쪽 ${manifest.pages} · 기록 ${manifest.records} · 행 ${rows.length} · 관리번호 ${matched.length}/${manifest.refs}${missing.length ? ` (못 찾음 ${missing.map((m) => m.mgmHsrgstPk).join(', ')})` : ''}`);
 }
 
-module.exports = { eventsFromHub, matchRefs, overdueOf, bjdCodesOf, SOURCE_REF };
+module.exports = { eventsFromHub, matchRefs, overdueOf, bjdCodesOf, fetchBjd, SOURCE_REF, HUB_URL, PAGE_ROWS };
 
 if (require.main === module) main(process.argv.slice(2)).catch((e) => { console.error(`오류: ${e.message}`); process.exit(1); });

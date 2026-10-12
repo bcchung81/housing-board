@@ -43,7 +43,8 @@
             "SGG_UNRESOLVED",
             "PUBLIC_SCOPE_UNKNOWN",
             "DATE_CONFLICT",
-            "LINK_CANDIDATE"
+            "LINK_CANDIDATE",
+            "DUPLICATE_CANDIDATE"
           ]
         },
         "local_project_id": {

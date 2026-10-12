@@ -1,0 +1,84 @@
+{
+ "month": "2026-10",
+ "reference_date": "2026-10-12",
+ "base_data_as_of": "2026-08-31",
+ "api_date": "2026-10-12",
+ "api_created_max": "2026-08-31",
+ "bjds": {
+  "bjds": 1611,
+  "loaded": 1611,
+  "failed": 0,
+  "truncated": 0,
+  "calls": 3737,
+  "pages": 3732
+ },
+ "match": {
+  "bulk_records": 4103,
+  "queried": 4098,
+  "matched": 4098,
+  "rate": 1,
+  "not_queried": 5,
+  "api_records": 263383,
+  "api_duplicates": 0
+ },
+ "fields": {
+  "apprv": {
+   "same": 4098,
+   "changed": 0,
+   "api_only": 0,
+   "bulk_only": 0
+  },
+  "stcns_sched": {
+   "same": 4078,
+   "changed": 0,
+   "api_only": 0,
+   "bulk_only": 0
+  },
+  "stcns": {
+   "same": 701,
+   "changed": 0,
+   "api_only": 0,
+   "bulk_only": 0
+  },
+  "insp_sched": {
+   "same": 3942,
+   "changed": 0,
+   "api_only": 0,
+   "bulk_only": 0
+  },
+  "insp": {
+   "same": 630,
+   "changed": 0,
+   "api_only": 0,
+   "bulk_only": 0
+  },
+  "households": {
+   "same": 4098,
+   "changed": 0,
+   "api_only": 0,
+   "bulk_only": 0
+  }
+ },
+ "suspect": {
+  "rule": "바뀐(또는 API 에서 새로 채워진) 날짜가 대용량 자료 기준일 2026-08-31 이전",
+  "count": 0,
+  "sample": []
+ },
+ "overwrite": {
+  "overwritten": 4098,
+  "overwritten_changed": 0,
+  "kept_not_in_api": 0,
+  "kept_not_queried": 5,
+  "added": 0,
+  "dropped": 0,
+  "dropped_reasons": {},
+  "api_only_skipped": {
+   "NO_HOUSEHOLDS": 244307,
+   "COMPLETED_BEFORE_WINDOW": 8722,
+   "STALE": 5864,
+   "NO_PERMIT_DATE": 392
+  }
+ },
+ "dropped_sample": [],
+ "records": 4103
+}

@@ -293,3 +293,18 @@ test('안내 띠(2026-10-10 피드백): 입력줄이 붙으면 띠를 입력줄 
   assert.match(mobile, /\.cmd \.pvbanner\{order:-1/, '좁은 화면(입력줄 위쪽·후보 아래로)에서도 띠는 입력줄 아래');
   assert.match(css, /\.mapwrap\.hascmd:has\(\.cmd \.pvbanner:not\(\[hidden\]\)\) \.dynhint\{/, '건물 불러오는 안내는 띠만큼 더 위로');
 });
+
+test('mount: 마우스를 올려 다시 그려도 목록 스크롤 위치를 지키고 scrollIntoView 를 부르지 않는다(휠이 튀던 문제). 키보드 이동은 선택 줄을 보인다', async (t) => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const page = fakePage(), res = page.el.res; let into = 0;
+  G.mount(page.win, page.doc, { fetch: async () => okJson({ items: [ITEM_PNU, ITEM_BJD, ITEM_SGG], meta: {} }) });
+  let top = 0; Object.defineProperty(res, 'scrollTop', { get: () => top, set: (v) => { top = v; } });
+  const clear = Object.getOwnPropertyDescriptor(El.prototype, 'textContent').set; Object.defineProperty(res, 'textContent', { get: () => res.children.map((c) => c.textContent).join(''), set: (v) => { clear.call(res, v); top = 0; } });   // 실제 브라우저처럼 비우면 scrollTop 이 0
+  page.el.input.focus(); type(page, '장위동'); t.mock.timers.tick(400); await flush(); await flush();
+  const orig = El.prototype.scrollIntoView; El.prototype.scrollIntoView = () => { into++; }; t.after(() => { El.prototype.scrollIntoView = orig; });
+  top = 120; into = 0;
+  res.fire('mousemove', { target: res.children[3] });
+  assert.equal(page.el.input.attrs['aria-activedescendant'], 'cmdO2'); assert.equal(top, 120); assert.equal(into, 0);
+  page.el.input.fire('keydown', { key: 'ArrowUp' });
+  assert.equal(page.el.input.attrs['aria-activedescendant'], 'cmdO1'); assert.equal(into, 1);   // 키보드는 선택 줄을 보이게
+});

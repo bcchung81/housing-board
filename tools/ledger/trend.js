@@ -13,9 +13,10 @@
      ⑥ boardFromLedger(되감은 표, { referenceDate: 그 달 말, observedMonth: D }) 의 이번 달 행(trend 마지막 행)을 basis BACKFILL 로 싣는다.
    - 관측(OBSERVED, 2026-10 부터): 그 달 data/board/ledger-board.json 의 판정 행을 그대로 붙인다(--close). 관측 행이 있는 달은 소급으로 덮지 않는다.
    달마다 하는 일: 새 달 원장·보드를 만들기 전에 지난 달 보드로 `node tools/ledger/trend.js --close` → 새 달 원장 → `node tools/ledger/board.js`.
-   실행: node tools/ledger/trend.js           → 폴더의 판으로 소급 행을 다시 계산해 이력 파일을 쓴다(관측 행은 남긴다, 약 1~2분)
-         node tools/ledger/trend.js --close   → data/board/ledger-board.json 의 이번 달 판정을 OBSERVED 행으로 이력에 붙인다
-   읽기만 하는 것: schemas/ledger-2026-10/raw·snapshot·mappings(후보 id 매핑을 쓰지 않는다). 시험: tests/js/trend.test.cjs */
+   실행: node tools/ledger/trend.js [--month YYYY-MM]           → 폴더의 판으로 소급 행을 다시 계산해 이력 파일을 쓴다(관측 행은 남긴다, 약 1~2분)
+         node tools/ledger/trend.js [--month YYYY-MM] --close   → data/board/ledger-board.json 의 이번 달 판정을 OBSERVED 행으로 이력에 붙인다
+     --month 는 원장 폴더(schemas/ledger-<달>)이자 소급의 관측 달이다. 주지 않으면 가장 늦은 원장 폴더와 ledger-board.json 의 observedMonth.
+   읽기만 하는 것: schemas/ledger-<달>/raw·snapshot·mappings(후보 id 매핑을 쓰지 않는다). 시험: tests/js/trend.test.cjs */
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
@@ -26,11 +27,13 @@ const { eventsFromHub } = require('./snapshot');
 const { boardFromLedger, endOf, lastDay, addMonths, HISTORY } = require('./board');
 const { validate } = require('./validate');
 const { parseLegalDong } = require('./legal-dong');
+const P = require('./paths');
 
-const ROOT = path.join(__dirname, '..', '..');
-const BASE = path.join(ROOT, 'schemas/ledger-2026-10');
+const ROOT = P.ROOT;
+const BASE = P.ledgerDir(P.latestMonth());   // 기본 원장 폴더(가장 늦은 달)
 const HISTORY_DIR = path.join(BASE, 'raw/hub-bulk-history');
-const DONG = 'raw/legal-dong/국토교통부_법정동코드_20260929.csv';
+/* 법정동코드 원본: raw/legal-dong 의 CSV 중 이름이 가장 늦은 것(판마다 새 파일) */
+const dongFile = (base) => { const d = path.join(base, 'raw/legal-dong'), f = fs.readdirSync(d).filter((x) => x.endsWith('.csv')).sort().pop(); if (!f) throw new Error(`${d} 에 법정동코드 CSV 가 없다`); return path.join(d, f); };
 const FIRST = '2025-01';
 const RULE = '달 D 의 판정 = 데이터 월이 D 이하인 가장 늦은 건축HUB 대용량 판(기본개요 내용이 앞 판과 같으면 앞 판)으로 D 말일을 기준일로 hub-bulk → convert → boardFromLedger 를 돌린 judgment(기준일 뒤 실제 이벤트는 뺀다) — BACKFILL. 2026-10 부터는 그 달 종합상황판 판정 — OBSERVED.';
 /* 되감을 단계: [이벤트, 이 단계 이상이면 이른 것, 낮출 단계] — 준공을 먼저 본다(낮춘 뒤 착공을 다시 본다) */
@@ -59,7 +62,7 @@ async function editionsOf(historyDir = HISTORY_DIR, rawDir = H.RAW) {
     eds.set(m[1], { month: m[1], dir: historyDir, zip: f, member: info.member ?? 'mart_jty_01.txt', collectedAt: info.fetched_at ? info.fetched_at.slice(0, 10) : null, files: [f] });
   }
   const b = raw.files.basic;
-  eds.set(H.DATA_MONTH, { month: null, dir: rawDir, zip: b.zip, member: b.member, collectedAt: raw.fetched_at.slice(0, 10), files: Object.values(raw.files).map((f) => f.zip), full: true });
+  eds.set(P.bulkDataMonth(rawDir), { month: null, dir: rawDir, zip: b.zip, member: b.member, collectedAt: raw.fetched_at.slice(0, 10), files: Object.values(raw.files).map((f) => f.zip), full: true });
   const list = [...eds.entries()].sort(([a], [c]) => a.localeCompare(c)).map(([month, e]) => ({ ...e, month }));
   const kept = [], skipped = [];
   for (const e of list) {
@@ -99,15 +102,16 @@ async function attachStatic2608(byPkList, rawDir = H.RAW) {
 const sortedRecords = (m) => [...m.values()].sort((a, b) => (a.pk < b.pk ? -1 : a.pk > b.pk ? 1 : 0));
 
 /* 고정 입력(README 의 convert 명령과 같은 것). 후보 id 매핑은 읽기만 */
-function loadContext() {
-  const legalDong = parseLegalDong(fs.readFileSync(path.join(BASE, DONG)), path.basename(DONG));
-  const base = loadInputs({ lhSgg: json(path.join(BASE, 'mappings/lh-block-sgg.json')), legalDong, hubIds: json(path.join(BASE, 'mappings/hub-candidate-ids.json')), national: readNational(path.join(BASE, 'raw')) });
-  return { base, apiEvents: json(path.join(BASE, 'snapshot/hub-events.json')).rows };
+function loadContext(dir = BASE) {
+  const dong = dongFile(dir);
+  const legalDong = parseLegalDong(fs.readFileSync(dong), path.basename(dong));
+  const base = loadInputs({ lhSgg: json(path.join(dir, 'mappings/lh-block-sgg.json')), legalDong, hubIds: json(path.join(dir, 'mappings/hub-candidate-ids.json')), national: readNational(path.join(dir, 'raw')) });
+  return { base, apiEvents: json(path.join(dir, 'snapshot/hub-events.json')).rows };
 }
 
 /* 판 ed 의 기록으로 달 month 의 원장 표. hubEvents 를 주지 않으면 그 판 기본개요의 레지스트리 행에서 만든다 */
 function tablesFor(ctx, { ed, records, reg, month, hubEvents }) {
-  const hubBulk = { dataMonth: ed.month, dataAsOf: ed.full ? `${ed.month}-31` : lastDay(ed.month), collectedAt: ed.collectedAt, files: ed.files, records };
+  const hubBulk = { dataMonth: ed.month, dataAsOf: lastDay(ed.month), collectedAt: ed.collectedAt, files: ed.files, records };
   const events = hubEvents ?? eventsFromHub({ bulk: reg }, ctx.base.registry, month);
   return convert({ ...ctx.base, observedMonth: month, hubBulk, hubEvents: events, report: {} });
 }
@@ -142,22 +146,23 @@ const writeHistory = (h, file = path.join(ROOT, HISTORY)) => {
 };
 
 /* 소급: FIRST … observedMonth 앞 달 중 관측 행이 없는 달 */
-async function backfill({ observedMonth, log = console.log } = {}) {
+async function backfill({ observedMonth, base = BASE, log = console.log } = {}) {
   const hist = readHistory(), observed = new Set(hist.rows.filter((r) => r.basis === 'OBSERVED').map((r) => r.month));
-  const { editions, skipped } = await editionsOf();
+  const rawDir = path.join(base, 'raw/hub-bulk');
+  const { editions, skipped } = await editionsOf(path.join(base, 'raw/hub-bulk-history'), rawDir);
   for (const s of skipped) log(`판 ${s.month}: 기본개요 내용이 ${s.sameAs} 판과 같아 건너뜀`);
   const months = [];
   for (let m = FIRST; m < observedMonth; m = addMonths(m, 1)) if (!observed.has(m)) months.push(m);
   const plan = months.map((m) => ({ month: m, ref: lastDay(m), ed: pickEdition(editions, m) }));
   for (const p of plan.filter((x) => !x.ed)) log(`${p.month}: 쓸 판이 없다(건너뜀)`);
   const todo = plan.filter((x) => x.ed);
-  const ctx = loadContext(), regPks = registryPks(ctx.base.registry);
+  const ctx = loadContext(base), regPks = registryPks(ctx.base.registry);
   const parsed = new Map();
   for (const ed of [...new Set(todo.map((x) => x.ed))]) {
     const aMins = [...new Set(todo.filter((x) => x.ed === ed).map((x) => H.permitFloor(x.ref)))];
     parsed.set(ed, await readBasic(ed, aMins, regPks));
   }
-  await attachStatic2608([...parsed.values()].flatMap((p) => Object.values(p.recs)));
+  await attachStatic2608([...parsed.values()].flatMap((p) => Object.values(p.recs)), rawDir);
   const rows = [], editionsUsed = {};
   for (const { month, ref, ed } of todo) {
     const { recs, reg } = parsed.get(ed);
@@ -177,11 +182,11 @@ async function backfill({ observedMonth, log = console.log } = {}) {
 }
 
 /* 관측: ledger-board.json 의 이번 달 판정 행을 OBSERVED 로 붙인다(같은 달 행은 바꾼다) */
-async function close({ log = console.log } = {}) {
+async function close({ base = BASE, log = console.log } = {}) {
   const board = json(path.join(ROOT, 'data/board/ledger-board.json'));
   const row = board.trend?.find((r) => r.month === board.observedMonth);
   if (!row || row.basis !== 'OBSERVED') throw new Error('ledger-board.json 에 이번 달 판정 행(trend)이 없다 — node tools/ledger/board.js 로 다시 만든다');
-  const hist = readHistory(), { editions } = await editionsOf();
+  const hist = readHistory(), { editions } = await editionsOf(path.join(base, 'raw/hub-bulk-history'), path.join(base, 'raw/hub-bulk'));
   const ed = editions.find((e) => e.month === row.edition);
   writeHistory({ editions: { ...hist.editions, ...(ed ? { [ed.month]: { zip: ed.zip, sha256: ed.sha256 } } : {}) }, rows: [...hist.rows.filter((r) => r.month !== row.month), row] });
   log(`${row.month} OBSERVED 행을 ${HISTORY} 에 붙였다: 지연 ${row.delay.projects}/${row.delay.units} · 주의 ${row.caution.projects}/${row.caution.units}`);
@@ -190,7 +195,8 @@ async function close({ log = console.log } = {}) {
 module.exports = { editionsOf, pickEdition, readBasic, attachStatic2608, sortedRecords, registryPks, loadContext, tablesFor, rewind, renderHistory, RULE };
 
 if (require.main === module) {
-  const observedMonth = json(path.join(ROOT, 'data/board/ledger-board.json')).observedMonth;
-  (process.argv.includes('--close') ? close() : backfill({ observedMonth }))
+  const i = process.argv.indexOf('--month'), month = i > 0 ? process.argv[i + 1] : null;
+  const base = month ? P.ledgerDir(month) : BASE, observedMonth = month ?? json(path.join(ROOT, 'data/board/ledger-board.json')).observedMonth;
+  (process.argv.includes('--close') ? close({ base }) : backfill({ observedMonth, base }))
     .catch((e) => { console.error(`오류: ${e.message}`); process.exit(1); });
 }

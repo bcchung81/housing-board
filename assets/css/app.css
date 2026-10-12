@@ -52,7 +52,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .regionbox{display:flex;align-items:center;gap:8px;margin:0}
 .regionbox[hidden]{display:none}
 .regionbox label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.regionbox select{max-width:160px;min-height:20px;padding:0;border:0;background:transparent;font-family:inherit;cursor:pointer}
+.regionbox select{max-width:235px;min-height:20px;padding:0;border:0;background:transparent;font-family:inherit;cursor:pointer}
 .regionbox select option{background:var(--pn);color:var(--ink)}
 .stagef{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(6,minmax(96px,1fr));gap:6px;overflow-x:auto;scrollbar-width:none}
 .stagef::-webkit-scrollbar{display:none}
@@ -357,13 +357,14 @@ h2{margin:0;font-family:var(--font-disp);font-size:13px;font-weight:400;color:va
 .cmd-tier i.sw-edge{border-style:dashed;border-color:var(--cmd-sub)}
 .cmd-n,.cmd-w{padding:12px 14px;font-size:13px;color:var(--cmd-sub)}
 .cmd-w{padding:8px 14px 2px;font-size:12px}
-.cmd-parse{margin-top:-1px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:7px 14px;font-size:12px;border-radius:0 0 14px 14px}
+.cmd-parse{margin-top:-1px;display:flex;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;align-items:center;gap:6px;padding:7px 14px;font-size:12px;border-radius:0 0 14px 14px}
 .cmd-parse::before{content:"인식";font-weight:700;color:var(--cmd-sub);margin-right:2px}
 .cmd-sep{color:var(--cmd-sub)}
 .cmd-chip{display:flex;gap:5px;padding:1px 7px;border:1px solid var(--line2);border-radius:999px}
 .cmd-chip i{font-style:normal;color:var(--cmd-sub)}
 .cmd-chip b{font-weight:700}
-.cmd-chip.last{border-color:var(--acc)}
+.cmd-chip.last{border-color:var(--acc);min-width:0}
+.cmd-chip.last b{overflow:hidden;text-overflow:ellipsis}   /* 인식 줄은 한 줄 고정: 긴 후보는 말줄임 */
 @media (min-width:901px){
   .mapwrap.hascmd .dynhint{bottom:calc(var(--botbar-h,33px) + 12px + 64px)}   /* 건물 불러오는 중 안내도 입력줄 위로 */
   .mapwrap.hascmd:has(.cmd .pvbanner:not([hidden])) .dynhint{bottom:calc(var(--botbar-h,33px) + 12px + 98px)}   /* 입력줄 아래 안내 띠만큼 더 위로 */
@@ -404,12 +405,15 @@ h2{margin:0;font-family:var(--font-disp);font-size:13px;font-weight:400;color:va
 .hudsum .sbar{height:8px}
 .hudsum .sleg{flex-wrap:nowrap;gap:0 10px;font-size:12px;font-variant-numeric:tabular-nums}
 .hudsum .sleg span{gap:4px;white-space:nowrap}
-.hudsum .isum{width:auto;margin:0;padding:6px 8px;border:1px solid var(--hud-line);border-radius:8px;background:var(--pn);flex-wrap:nowrap;gap:6px;white-space:nowrap;font-size:12.5px}
+.hudsum .isum{width:auto;margin:0;padding:5px 8px;border:1px solid var(--hud-line);border-radius:8px;background:var(--pn);display:grid;grid-template-columns:auto auto;justify-content:space-between;align-items:center;gap:2px 6px;white-space:nowrap;font-size:12.5px}   /* 라벨·› 위 줄, 칩 아래 줄로 쌓아 폭을 줄인다 */
+.hudsum .isum-c{grid-row:2;grid-column:1 / -1}
+.hudsum .isum-go{grid-row:1;grid-column:2}
 .hudsum .isum-t{display:none}
 .hudsum .isum-c{flex-wrap:nowrap;gap:0 6px}
 .hudsum .isum .hc{font-size:12.5px}
 .hudsum .isum-go{font-size:0;margin-left:2px}
 .hudsum .isum-go::after{content:"›";font-size:16px;line-height:1}
+@media (min-width:1281px) and (max-width:1400px){.hudsum:not(.solo){grid-template-columns:minmax(0,196px) auto}.hudsum .hs-a{padding-right:8px}.hudsum .hs-b{padding-left:8px}}   /* 점검 칩이 있는 1281~1400px 에서 6단계 카드 자리를 지킨다 */
 @media (max-width:1280px){.hudsum{grid-template-columns:minmax(0,210px)}.hudsum .hs-b{display:none}}   /* 6단계 카드 자리를 지키려고 점검 칩을 뺀다(사이드바에 있다) */
 .maplibregl-popup{z-index:3}
 /* 우측 상단: 확대·축소·나침반을 한 줄기 작은 묶음으로. 나침반은 누르면 북쪽이 위로 오고, 방향(도)은 이름표로 알린다. */

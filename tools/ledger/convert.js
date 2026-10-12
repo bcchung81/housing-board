@@ -9,6 +9,7 @@ const { codeMapper, locate, groupKey, normBlock, districtToken, cleanDate } = re
 const { normalize, nameIndex, jibunToPnu } = require('./map-lh');
 const { permitEvents, statusOf } = require('../../lib/permits.js');
 const { stageOf } = require('../../lib/projects.js');
+const NL = require('./notice-link');
 
 const ROOT = path.join(__dirname, '..', '..');
 const SLUGS = ['incheon-gyeyang', 'gwangju-gwangsan', 'jeonnam-naju'];
@@ -180,7 +181,7 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
   if (hubBulk) {
     if (!legalDong?.abolished) throw new Error('hubBulk 에는 legalDong(폐지 행 포함)이 필요하다');
     const ref = `hub-bulk-hs-${hubBulk.dataMonth}`, asOfB = hubBulk.dataAsOf, now = Date.parse(`${asOfB}T00:00:00Z`);
-    t.sources.push({ ...own, source_ref: ref, provider: '국토교통부 건축HUB', dataset_name: `건축HUB 대용량 제공 주택인허가(기본개요·행위개요·대지위치) ${hubBulk.dataMonth} 데이터`, source_url: 'https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do', source_record_key: '관리_주택대장_PK', data_as_of: asOfB, collected_at: hubBulk.collectedAt, original_filename: hubBulk.files.join(' · '), notes: '전국 주택인허가 중 사업승인일·총세대수가 있고 2025-01 전에 사용검사하지 않았으며 진행 중(2025 이후 사용검사 · 2021-10 이후 승인 · 2018 이후 착공 · 2015 이후 승인이고 2025 이후 사용검사 예정 중 하나)인 기록(tools/ledger/hub-bulk.js). 필지·블록 단위로 모은 후보 사업과 그 일정·물량.', record_count: hubBulk.records.length, used_by: ['/'] });
+    t.sources.push({ ...own, source_ref: ref, provider: '국토교통부 건축HUB', dataset_name: `건축HUB 대용량 제공 주택인허가(기본개요·행위개요·대지위치) ${hubBulk.dataMonth} 데이터`, source_url: 'https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do', source_record_key: '관리_주택대장_PK', data_as_of: asOfB, collected_at: hubBulk.collectedAt, original_filename: hubBulk.files.join(' · '), notes: `전국 주택인허가 중 사업승인일·총세대수가 있고 2025-01 전에 사용검사하지 않았으며 진행 중(2025 이후 사용검사 · 2021-10 이후 승인 · 2018 이후 착공 · 2015 이후 승인이고 2025 이후 사용검사 예정 중 하나)인 기록(tools/ledger/hub-bulk.js). 필지·블록 단위로 모은 후보 사업과 그 일정·물량.${hubBulk.note ? ` ${hubBulk.note}.` : ''}`, record_count: hubBulk.records.length, used_by: ['/'] });
     const mapper = codeMapper(legalDong.rows, legalDong.abolished);
     const regPks = new Map(registry.projects.flatMap((p) => p.refs.filter((r) => r.system === 'hub-hs-basis').map((r) => [String(r.value), p.id])));
     const regPnus = new Map(registry.projects.flatMap((p) => (p.pnus || []).map((x) => [x, p.id])));
@@ -270,7 +271,7 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
   /* 건축HUB 스냅샷(tools/ledger/snapshot.js)이 만든 이벤트는 그대로 싣는다 */
   t.events.push(...hubEvents);
 
-  if (national) addNational(t, { ...national, legalDong, observedMonth, own, report });
+  if (national) addNational(t, { ...national, legalDong, observedMonth, own, report, hubRecords: hubBulk?.records ?? [] });
 
   /* 통계 실적: 지표 × 시도 × 월 × (총계 + 시행주체) */
   for (const [metric, m] of Object.entries(molit.metrics)) {
@@ -291,18 +292,22 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
 /* 전국 모집공고(마이홈 공공주택 모집공고 · LH 분양임대공고문)와 한국부동산원 입주예정물량을 원장에 더한다(t 를 고친다).
    공고: 공고 하나에 notices 한 행. 마이홈 공고의 LH 링크 panId 가 LH 목록의 PAN_ID 와 같으면 한 공고로 보고 (LH, PAN_ID) 로 싣되, 행의 값(제목·날짜·필지·시군구)은
      마이홈에서 가져와 source_ref 는 마이홈이다(LH 쪽은 notice_id 가 가리킨다). LH 목록에만 있는 공고는 LH 값(시도뿐이라 시군구·필지 없음), 마이홈에만 있는 공고는 (MYHOME, pblancId).
-   연결: 마이홈 행의 19자리 필지(옛 코드는 지금 코드로)가 사업 위치 필지와 같을 때만 잇는다(이름만 같은 것은 잇지 않고 report.noticeNameOnly 로 센다).
-     자동 연결이라 notice_links·SUPPLY_NOTICE 이벤트는 REVIEW_REQUIRED(스키마: 사람이 확인한 연결만 CONFIRMED). 이벤트 날짜는 공고일(실제), 접수 기간은 event_detail.
+   연결(notice-link.js, evidence 에 규칙 이름과 대조한 글자): M1_PNU 마이홈 행의 19자리 필지(옛 코드는 지금 코드로) = 사업 위치 필지 · T1_LH_DISTRICT_BLOCK 제목 블록 = LH 블록이고
+     LH 지구 낱말이 제목에 있음 · T2_NAME_DISTRICT_BLOCK 제목 블록 = 사업 블록이고 제목 지구 낱말이 사업 이름·단지명에 있음(둘 다 시도 일치). T3(줄임말을 떼야 맞음)는 잇지 않고
+     검토 목록(LINK_CANDIDATE). 취소공고는 잇지 않는다. 이름만 같은 것은 잇지 않고 report.noticeNameOnly 로 센다.
+     자동 연결이라 notice_links·SUPPLY_NOTICE 이벤트는 REVIEW_REQUIRED(스키마: 사람이 확인한 연결만 CONFIRMED). SUPPLY_NOTICE 는 최초 입주자모집 공고만(잔여세대·추가·예비입주자 등과
+     가정어린이집·오피스텔 같은 비공급 공고는 연결만), 정정·재공고 묶음마다 하나 — 날짜는 묶음의 가장 이른 공고일(실제), 접수 기간은 event_detail.
+     같은 공고의 같은 블록에 자동 연결된 두 사업은 검토 목록(DUPLICATE_CANDIDATE)에 둔다(병합하지 않는다).
      연결된 건축HUB 대용량 후보의 기관이 비었으면 공급기관으로 채우고(LH → lh · SH → sh · GH → gh · 도시·개발공사 → local) 근거를 public_basis 에 적는다.
    입주예정: 지번 주소 → 필지(map-lh.js jibunToPnu)가 사업 위치 필지와 같으면 MOVE_IN 예정(CURRENT, 월). 사업은 만들지 않는다. 시군구를 못 찾은 주소만 검토 목록 */
-function addNational(t, { myhome, lhNotice, moveIn, legalDong, observedMonth, own, report }) {
+function addNational(t, { myhome, lhNotice, moveIn, legalDong, observedMonth, own, report, hubRecords = [] }) {
   if (!legalDong?.abolished) throw new Error('national 에는 legalDong(폐지 행 포함)이 필요하다');
   const rep = (report.national = {});
   const mapper = codeMapper(legalDong.rows, legalDong.abolished), idx = nameIndex(legalDong.rows);
   const day = (s) => cleanDate(String(s ?? '').replace(/\D/g, ''));
   const used = ['/'];
-  t.sources.push({ ...own, source_ref: MYHOME_SOURCE, provider: '국토교통부 마이홈포털(공공데이터포털)', dataset_name: '마이홈포털 공공주택 모집공고(HWSPR02) 임대·분양', source_url: myhome.endpoint.join(' · '), source_record_key: 'pblancId·houseSn', data_as_of: myhome.fetchedAt.slice(0, 10), collected_at: myhome.fetchedAt, notes: '받은 날의 전국 현재 공고(tools/ledger/collect-national.js). 필지(pnu)가 사업 위치 필지와 같은 공고만 사업에 이었다.', record_count: myhome.rows.length, used_by: used });
-  t.sources.push({ ...own, source_ref: LH_NOTICE_SOURCE, provider: '한국토지주택공사(공공데이터포털)', dataset_name: '15058530 분양임대공고문 조회(+15056765 공급정보)', source_url: lhNotice.endpoint.join(' · '), source_record_key: 'PAN_ID', data_as_of: lhNotice.fetchedAt.slice(0, 10), collected_at: lhNotice.fetchedAt, notes: `공고일 2024-01-01 이후 공고 목록(지역은 시도뿐). 공급정보 ${lhNotice.supply.length}건은 단지명·세대수뿐이라 이름 대조 건수만 셌다.`, record_count: lhNotice.notices.length, used_by: [] });
+  t.sources.push({ ...own, source_ref: MYHOME_SOURCE, provider: '국토교통부 마이홈포털(공공데이터포털)', dataset_name: '마이홈포털 공공주택 모집공고(HWSPR02) 임대·분양', source_url: myhome.endpoint.join(' · '), source_record_key: 'pblancId·houseSn', data_as_of: myhome.fetchedAt.slice(0, 10), collected_at: myhome.fetchedAt, notes: '받은 날의 전국 현재 공고(tools/ledger/collect-national.js). 필지(pnu)가 사업 위치 필지와 같거나 제목·단지명의 지구·블록이 사업과 맞는 공고를 사업에 이었다(notice_links evidence).', record_count: myhome.rows.length, used_by: used });
+  t.sources.push({ ...own, source_ref: LH_NOTICE_SOURCE, provider: '한국토지주택공사(공공데이터포털)', dataset_name: '15058530 분양임대공고문 조회(+15056765 공급정보)', source_url: lhNotice.endpoint.join(' · '), source_record_key: 'PAN_ID', data_as_of: lhNotice.fetchedAt.slice(0, 10), collected_at: lhNotice.fetchedAt, notes: `공고일 2024-01-01 이후 공고 목록(지역은 시도뿐). 제목과 공급정보 ${lhNotice.supply.length}건의 단지명에서 지구·블록을 읽어 사업에 이었다(notice_links evidence).`, record_count: lhNotice.notices.length, used_by: used });
   t.sources.push({ ...own, source_ref: MOVE_IN_SOURCE, provider: '한국부동산원(공공데이터포털)', dataset_name: '15111714 주택공급정보 입주예정물량정보', source_url: 'https://www.data.go.kr/data/15111714/fileData.do', source_record_key: '주소(지번)·아파트명', data_as_of: moveIn.dataAsOf, collected_at: moveIn.fetchedAt, original_filename: moveIn.filename, notes: '30세대 이상 공동주택 입주예정 월(지번 주소). 주소의 필지가 사업 위치 필지와 같은 행만 MOVE_IN 예정으로 실었다.', record_count: moveIn.rows.length, used_by: used });
 
   /* 사업 위치 필지 → 사업들 */
@@ -329,32 +334,87 @@ function addNational(t, { myhome, lhNotice, moveIn, legalDong, observedMonth, ow
   }
   for (const n of lhNotice.notices) {
     if (notices.has(`LH|${n.PAN_ID}`)) continue;
-    notices.set(`LH|${n.PAN_ID}`, { rows: [], row: { notice_system: 'LH', notice_id: n.PAN_ID, notice_title: n.PAN_NM, sgg_code: null, pnu: null, announced_on: day(n.PAN_NT_ST_DT), apply_start: null, apply_end: day(n.CLSG_DT), observed_on: lhNotice.fetchedAt.slice(0, 10), source_ref: LH_NOTICE_SOURCE } });
+    notices.set(`LH|${n.PAN_ID}`, { rows: [], supplier: 'LH', row: { notice_system: 'LH', notice_id: n.PAN_ID, notice_title: n.PAN_NM, sgg_code: null, pnu: null, announced_on: day(n.PAN_NT_ST_DT), apply_start: null, apply_end: day(n.CLSG_DT), observed_on: lhNotice.fetchedAt.slice(0, 10), source_ref: LH_NOTICE_SOURCE } });
   }
   const keys = [...notices.keys()].sort();
   t.notices.push(...keys.map((k) => notices.get(k).row));
   Object.assign(rep, { myhomeRows: myhome.rows.length, myhomeNotices: groups.size, lhNotices: lhNotice.notices.length, merged: [...groups.keys()].filter((k) => k.startsWith('LH|')).length, notices: keys.length });
 
-  /* 필지 연결 → notice_links · SUPPLY_NOTICE · 기관 추정 */
+  /* 연결 → notice_links · SUPPLY_NOTICE · 기관 추정 · 검토 목록(T3 연결 후보 · 중복 사업 후보). 규칙은 notice-link.js */
   const projectById = new Map(t.projects.map((p) => [p.local_project_id, p]));
-  const supplierOf = new Map();
+  const index = NL.projectIndex({ projects: t.projects, identifiers: t.identifiers, complexes: t.complexes, hubRecords }, LH_SOURCE);
+  const areaNames = new Map(legalDong.rows.map((a) => [a.area_code, a.area_name])), sggName = (code) => areaNames.get(code) ?? '';
+  const sidoOf = NL.sidoIndex(legalDong.rows);
+  const supplyNames = new Map(lhNotice.supply.map((s) => [s.PAN_ID, [...new Set((s.response ?? []).flatMap((x) => [...(x.dsList01 ?? []).map((d) => d.SBD_LGO_NM), ...['dsList02', 'dsList03', 'dsList04', 'dsList05'].flatMap((k) => (x[k] ?? []).map((d) => d.BZDT_NM))]).filter(Boolean))]]));
+  const supplierOf = new Map(), linksOf = new Map(), dups = new Map();
+  Object.assign(rep, { cancelled: 0, byRule: {}, byKind: {}, t3: 0 });
   for (const k of keys) {
-    const { rows, row, supplier } = notices.get(k), linked = new Map();
-    for (const r of [...rows].sort((a, b) => +a.pblancId - +b.pblancId || a.houseSn - b.houseSn)) for (const pid of byPnu.get(r.pnu19) ?? []) if (!linked.has(pid)) linked.set(pid, r);
-    for (const [pid, r] of [...linked].sort(([a], [b]) => a.localeCompare(b))) {
-      t.notice_links.push({ notice_system: row.notice_system, notice_id: row.notice_id, local_project_id: pid, evidence: `마이홈 공고 ${r.pblancId}-${r.houseSn} ${r.hsmpNm || '(단지명 없음)'} 필지 ${r.pnu19} = 사업 위치 필지`, review_status: 'REVIEW_REQUIRED', source_ref: MYHOME_SOURCE });
-      if (row.announced_on) t.events.push({ ...EVENT_BASE, local_project_id: pid, event_type: 'SUPPLY_NOTICE', date_type: 'ACTUAL', plan_basis: null, event_date: row.announced_on, event_month: null, event_detail: `공고 ${row.notice_system} ${row.notice_id} · 접수 ${row.apply_start ?? '?'} ~ ${row.apply_end ?? '?'}`, observed_month: observedMonth, source_ref: MYHOME_SOURCE, review_status: 'REVIEW_REQUIRED' });
-      (supplierOf.get(pid) || supplierOf.set(pid, []).get(pid)).push({ supplier, row, pnu: r.pnu19 });
+    const { rows, row, supplier } = notices.get(k), lhRow = row.notice_system === 'LH' ? lhById.get(row.notice_id) : null;
+    const kind = NL.noticeKind(row.notice_title, lhRow?.AIS_TP_CD_NM);
+    if (kind === 'CANCEL') { rep.cancelled++; continue; }
+    const found = new Map();   // pid → { rule, evidence }
+    for (const r of [...rows].sort((a, b) => +a.pblancId - +b.pblancId || a.houseSn - b.houseSn)) for (const pid of byPnu.get(r.pnu19) ?? []) {
+      if (!found.has(pid)) found.set(pid, { rule: 'M1_PNU', evidence: `M1_PNU: 마이홈 공고 ${r.pblancId}-${r.houseSn} ${r.hsmpNm || '(단지명 없음)'} 필지 ${r.pnu19} = 사업 위치 필지` });
+    }
+    const texts = [row.notice_title, ...(supplyNames.get(row.notice_id) ?? []), ...rows.map((r) => r.hsmpNm).filter(Boolean)];
+    const hits = NL.matchTitle({ texts, sido: sidoOf(lhRow?.CNP_CD_NM ?? rows[0]?.brtcNm) }, index, sggName);
+    for (const h of hits) {
+      if (found.has(h.pid)) continue;
+      const evidence = NL.titleEvidence(h, projectById.get(h.pid).project_name);
+      if (h.rule === NL.RULE.T3) {   // 줄임말을 떼야 맞는 것은 잇지 않고 검토 목록
+        rep.t3++;
+        t.review_required.push({ review_type: 'LINK_CANDIDATE', local_project_id: h.pid, source_ref: row.source_ref, record_key: `${row.notice_system} ${row.notice_id}`, record_name: row.notice_title, detail: evidence, reason: '공고 제목의 지구 낱말에서 시·시도 줄임말을 떼야 사업 이름과 맞아 자동으로 잇지 않았다' });
+        continue;
+      }
+      found.set(h.pid, { rule: h.rule, evidence });
+      for (const o of h.others) {   // 같은 공고·같은 블록에 자동 연결된 두 사업 = 중복 사업 후보
+        if (!hits.some((x) => x.pid === o && x.rule !== NL.RULE.T3)) continue;
+        const pair = [h.pid, o].sort().join('|');
+        if (!dups.has(pair)) dups.set(pair, { block: h.block, notices: new Set() });
+        dups.get(pair).notices.add(`${row.notice_system} ${row.notice_id}`);
+      }
+    }
+    for (const [pid, l] of [...found].sort(([a], [b]) => a.localeCompare(b))) {
+      t.notice_links.push({ notice_system: row.notice_system, notice_id: row.notice_id, local_project_id: pid, evidence: kind === 'NON_SUPPLY' ? `${l.evidence} · 주택 공급 공고 아님(모집공고 이벤트 없음)` : l.evidence, review_status: 'REVIEW_REQUIRED', source_ref: row.source_ref });
+      rep.byRule[l.rule] = (rep.byRule[l.rule] ?? 0) + 1;
+      rep.byKind[kind] = (rep.byKind[kind] ?? 0) + 1;
+      (linksOf.get(pid) || linksOf.set(pid, []).get(pid)).push({ row, kind });
+      (supplierOf.get(pid) || supplierOf.set(pid, []).get(pid)).push({ supplier, row, rule: l.rule });
     }
   }
-  Object.assign(rep, { links: t.notice_links.length, linkedNotices: new Set(t.notice_links.map((l) => l.notice_id)).size, linkedProjects: supplierOf.size, agencyInferred: {}, agencyConflicts: 0 });
+  /* SUPPLY_NOTICE: 최초 입주자모집(INITIAL)만, 정정·재공고 묶음(noticeGroup)마다 하나 — 공고일이 가장 이른 공고의 날짜(실제), 접수 기간은 event_detail */
+  rep.supplyEvents = 0;
+  for (const [pid, ls] of [...linksOf].sort(([a], [b]) => a.localeCompare(b))) {
+    const groups = new Map();
+    for (const { row } of ls.filter((l) => l.kind === 'INITIAL' && l.row.announced_on)) {
+      const g = NL.noticeGroup(row.notice_title);
+      (groups.get(g) || groups.set(g, []).get(g)).push(row);
+    }
+    for (const rs of groups.values()) {
+      const [main, ...rest] = rs.sort((a, b) => a.announced_on.localeCompare(b.announced_on) || a.notice_id.localeCompare(b.notice_id));
+      t.events.push({ ...EVENT_BASE, local_project_id: pid, event_type: 'SUPPLY_NOTICE', date_type: 'ACTUAL', plan_basis: null, event_date: main.announced_on, event_month: null, event_detail: `공고 ${main.notice_system} ${main.notice_id} · 접수 ${main.apply_start ?? '?'} ~ ${main.apply_end ?? '?'}${rest.length ? ` · 정정·재공고 ${rest.map((r) => `${r.notice_system} ${r.notice_id}`).join(', ')}` : ''}`, observed_month: observedMonth, source_ref: main.source_ref, review_status: 'REVIEW_REQUIRED' });
+      rep.supplyEvents++;
+    }
+  }
+  /* 중복 사업 후보: 같은 공고의 같은 블록에 자동 연결된 두 사업(대개 LH 후보·발급 사업과 건축HUB 대용량 후보). 병합하지 않고 검토 목록에 둔다 */
+  const kindOf = (p) => (p.issued_at ? '발급 사업' : p.source_ref === LH_SOURCE ? 'LH 후보' : p.source_ref.startsWith('hub-bulk-hs-') ? '건축HUB 대용량 후보' : '후보');
+  const firstOf = (p) => (p.issued_at ? 0 : p.source_ref === LH_SOURCE ? 1 : 2);
+  for (const [pair, d] of [...dups].sort(([a], [b]) => a.localeCompare(b))) {
+    const [a, b] = pair.split('|').map((id) => projectById.get(id)).sort((x, y) => firstOf(x) - firstOf(y) || x.local_project_id.localeCompare(y.local_project_id));
+    const ns = [...d.notices].sort();
+    t.review_required.push({ review_type: 'DUPLICATE_CANDIDATE', local_project_id: a.local_project_id, source_ref: LH_NOTICE_SOURCE, record_key: `${a.local_project_id}|${b.local_project_id}`, record_name: `${a.project_name ?? '(이름 없음)'} · ${b.project_name ?? '(이름 없음)'}`,
+      detail: `${kindOf(a)} ${a.local_project_id}(${a.sgg_code} ${sggName(a.sgg_code)}) ↔ ${kindOf(b)} ${b.local_project_id}(${b.sgg_code} ${sggName(b.sgg_code)}) · 블록 ${d.block.replace('#', '')} · 공고 ${ns.length}건(${ns.slice(0, 3).join(', ')}${ns.length > 3 ? ' 등' : ''})${a.sgg_code !== b.sgg_code ? ' · 시군구가 다르다 — 한쪽 위치(LH 위치 글자 등)가 틀렸거나 행정구역 개편일 수 있다' : ''}`,
+      reason: '같은 공고의 같은 블록에 두 사업이 자동 연결됐다 — 같은 사업이 두 번 실렸을 수 있다(자동 병합하지 않았다)' });
+  }
+  rep.duplicates = dups.size;
+  Object.assign(rep, { links: t.notice_links.length, linkedNotices: new Set(t.notice_links.map((l) => `${l.notice_system}|${l.notice_id}`)).size, linkedProjects: supplierOf.size, agencyInferred: {}, agencyConflicts: 0 });
   for (const [pid, xs] of supplierOf) {
     const p = projectById.get(pid);
     if (!p.source_ref.startsWith('hub-bulk-hs-') || p.agency_id) continue;
     const ids = new Set(xs.map((x) => agencyOfSupplier(x.supplier)));
     if (ids.size !== 1 || ids.has(null)) { rep.agencyConflicts++; continue; }
     const x = xs[0];
-    Object.assign(p, { agency_id: [...ids][0], public_scope: 'PUBLIC', public_basis: `마이홈 모집공고 공급기관 ${x.supplier}(공고 ${x.row.notice_system} ${x.row.notice_id}, 필지 ${x.pnu} 일치 — 자동 연결, 확인 필요)` });
+    Object.assign(p, { agency_id: [...ids][0], public_scope: 'PUBLIC', public_basis: `모집공고 공급기관 ${x.supplier}(공고 ${x.row.notice_system} ${x.row.notice_id}, ${x.rule} — 자동 연결, 확인 필요)` });
     rep.agencyInferred[p.agency_id] = (rep.agencyInferred[p.agency_id] ?? 0) + 1;
   }
   /* 이름만 맞는 후보(잇지 않고 세기만): 연결 안 된 공고의 단지명(마이홈 hsmpNm · LH 공급정보 SBD_LGO_NM)이 사업 이름과 공백·괄호를 빼고 같다 */
@@ -407,11 +467,12 @@ function loadInputs({ observedMonth = '2026-10', lhSgg, hubEvents, legalDong, hu
   };
 }
 
-/* 건축HUB 대용량 중간 스냅샷(hub-bulk.js 가 쓴 파일과 그 manifest) → convert 의 hubBulk 입력 */
+/* 건축HUB 대용량 중간 스냅샷(hub-bulk.js 가 쓴 파일과 그 manifest) → convert 의 hubBulk 입력.
+   열린 달 API 덮어쓰기(hub-api-refresh.js 의 hub-refresh.json)면 note(API 를 부른 날·기록 생성일)가 sources 행 notes 끝에 붙는다 */
 function readHubBulk(file) {
   const { records } = JSON.parse(fs.readFileSync(file, 'utf8'));
   const m = JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.manifest.json'), 'utf8'));
-  return { dataMonth: m.data_month, dataAsOf: m.data_as_of, collectedAt: m.fetched_at.slice(0, 10), files: Object.values(m.files).map((f) => f.zip), records };
+  return { dataMonth: m.data_month, dataAsOf: m.data_as_of, collectedAt: m.fetched_at.slice(0, 10), files: Object.values(m.files).map((f) => f.zip), records, ...(m.note ? { note: m.note } : {}) };
 }
 /* 전국 모집공고·입주예정 원본 폴더(schemas/ledger-YYYY-MM/raw: myhome · lh-notice · move-in, tools/ledger/collect-national.js) → convert 의 national 입력.
    입주예정 CSV 는 따옴표 칸(쉼표 포함)을 받고, 기준일은 원본 파일 이름 끝의 날짜(…_20260630.csv) */

@@ -8,8 +8,8 @@ import { Badge } from '../../../../components/ui/badge';
 import { Card } from '../../../../components/ui/card';
 import { Basis, Kpi } from '../../../../components/ui';
 import { METRIC_COLOR } from '../../../../components/charts/palette';
-import { AHEAD_FROM, NATION, fmt, lhCalendar, monthLabel, nextYm, sidoName } from '../../../../lib/board/calc';
-import { SGG, lh, molit, projects } from '../../../../lib/board/data';
+import { NATION, fmt, lhCalendar, monthLabel, nextYm, sidoName } from '../../../../lib/board/calc';
+import { AHEAD_FROM, SGG, lh, molit, projects } from '../../../../lib/board/data';
 import { STAGES } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
 

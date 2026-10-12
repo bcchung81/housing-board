@@ -1,13 +1,13 @@
 'use strict';
 /* 사업 원장 한 달 판을 Supabase 에 싣는다 — 설계: docs/product/Supabase-원장-설계.md 5·6절, 마이그레이션 supabase/migrations/*_ledger_load.sql.
-   정본은 저장소 파일(결정 1-A). secret 키로 Data API(PostgREST·Storage REST)만 쓴다(새 패키지 없음, 결정 3-A).
+   정본은 저장소 파일(결정 1-A). DB 쪽(③~⑤')은 SUPABASE_DB_URL 로 직접 연결(pg, 결정 3-C — PostgREST 의 statement_timeout 8초를 피한다),
+   Storage(⑥)만 secret 키로 REST.
    ① schemas/ledger-<달>/tables/*.json 읽기 → validate.js 오류 0
    ② board.js 로 그 달 보드 계산 → data/board/ledger-board.json 과 같아야 한다(기준일은 그 파일의 referenceDate)
-   ③ ledger_admin.begin_run → run_id(닫힌 달이면 DB 가 거부)
-   ④ ledger_admin.stage_rows 에 묶음(약 1 MB)으로 POST, 보드 JSON 은 tbl 'board'
-   ⑤ ledger_admin.publish_run — 한 트랜잭션(표별 행 수가 기대와 다르면 전체 취소)
-   ⑤' ledger_admin.publish_map — 지도 색인(data/board/ledger-map.json = mapIndexFromLedger(표), ②에서 대조)을 그 달 시군구 행으로 바꿔 넣는다(자기 트랜잭션,
-      publish_run 을 무겁게 하지 않으려고 따로 부른다. 마이그레이션 *_map_snapshots.sql)
+   ③ ledger_admin.begin_run → run_id(닫힌 달이면 DB 가 거부). 이것만 먼저 커밋한다(실행 기록)
+   ④~⑤' 한 트랜잭션: stage_rows 에 묶음(약 1 MB) INSERT(보드 JSON 은 tbl 'board') → ledger_admin.publish_run(표별 행 수가 기대와 다르면 거부)
+      → ledger_admin.publish_map(지도 색인 data/board/ledger-map.json = mapIndexFromLedger(표), ②에서 대조, 마이그레이션 *_map_snapshots.sql).
+      어디서든 실패하면 되돌려 발행되지 않는다(실행은 'staged' 로 남고 다음 begin_run 이 failed 로 돌린다)
    ⑥ 원본(raw·snapshot·mappings·agency)과 16표 묶음(tables.tar.gz)을 Storage ledger-raw/<달>/ 에 덮어쓰기(같은 달 재실행 = 같은 내용) → record_files
    실행: node tools/ledger/supabase-load.js --month 2026-10 [--dry-run] [--skip-raw]
    확인: node tools/ledger/supabase-verify.js --month 2026-10 · 시험: tests/js/supabase-load.test.cjs */
@@ -24,6 +24,8 @@ const ROOT = path.join(__dirname, '..', '..');
 const BOARD_FILE = 'data/board/ledger-board.json';
 const BUCKET = 'ledger-raw';
 const CHUNK_BYTES = 1_000_000;
+const STATEMENT_TIMEOUT = '120s';   // 이 연결에서만. publish_run 실측은 부록 C
+const STAGE_SQL = 'insert into ledger_admin.stage_rows (run_id, tbl, seq, "row") select $1, x.tbl, x.seq, x."row" from jsonb_to_recordset($2::jsonb) as x(tbl text, seq integer, "row" jsonb)';
 const RAW_DIRS = ['raw', 'snapshot', 'mappings', 'agency'];   // raw/<원천>/… 은 <달>/<원천>/… 로(설계 5절)
 
 function parseArgs(argv) {
@@ -153,7 +155,28 @@ function gitCommit(root) {
   } catch { return null; }
 }
 
-/* Data API 손잡이. 키는 머리에만 싣고 오류 문장에 넣지 않는다 */
+/* DB 직접 연결(결정 3-C). { query(sql, params) → { rows }, end() } 를 돌려준다 — 시험은 같은 모양의 가짜를 넘긴다 */
+async function pgConnect(url) {
+  const { Client } = require('pg');
+  const c = new Client({ connectionString: url, ssl: { rejectUnauthorized: false }, connectionTimeoutMillis: 20000 });
+  c.on('error', () => {});   // 끊김은 다음 query 의 실패로 드러난다(이벤트 오류 문장은 흘리지 않는다)
+  await c.connect();
+  return c;
+}
+
+/* 오류 문장에서 연결 문자열과 그 조각(비밀번호·사용자·호스트)을 가린다 */
+function redact(msg, url) {
+  let s = String(msg);
+  const parts = [url];
+  try {
+    const u = new URL(url);
+    parts.push(u.password, decodeURIComponent(u.password), u.username, decodeURIComponent(u.username), u.host, u.hostname);
+  } catch { /* URL 이 아니면 통째로만 가린다 */ }
+  for (const p of parts.filter(Boolean).sort((a, b) => b.length - a.length)) s = s.split(p).join('***');
+  return s.replace(/postgres(ql)?:\/\/\S+/g, 'postgres://***');
+}
+
+/* Storage·Data API 손잡이. 키는 머리에만 싣고 오류 문장에 넣지 않는다 */
 function client({ url, key, fetch = globalThis.fetch }) {
   if (!url || !key) throw new Error('NEXT_PUBLIC_SUPABASE_URL·SUPABASE_SECRET_KEY 가 필요하다(.env.local)');
   const auth = { apikey: key, Authorization: `Bearer ${key}` };
@@ -166,12 +189,17 @@ function client({ url, key, fetch = globalThis.fetch }) {
   const json = { 'Content-Type': 'application/json' };
   return {
     rpc: (name, args) => call('POST', `/rest/v1/rpc/${name}`, { headers: { ...json, 'Content-Profile': 'ledger_admin' }, body: JSON.stringify(args) }),
-    stage: (rows) => call('POST', '/rest/v1/stage_rows', { headers: { ...json, 'Content-Profile': 'ledger_admin', Prefer: 'return=minimal' }, body: JSON.stringify(rows) }),
     upload: (key, data, contentType) => call('POST', `/storage/v1/object/${BUCKET}/${key}`, { headers: { 'Content-Type': contentType, 'x-upsert': 'true' }, body: data }),
+    /* 객체 바이트. 없으면(4xx) null, 서버 오류면 던진다(tools/ledger/raw-store.js) */
+    download: async (key) => {
+      const res = await fetch(`${url}/storage/v1/object/${BUCKET}/${key}`, { headers: auth });
+      if (res.status >= 500) throw new Error(`GET /storage/v1/object/${BUCKET}/${key} → ${res.status}`);
+      return res.ok ? Buffer.from(await res.arrayBuffer()) : null;
+    },
   };
 }
 
-async function load({ month, dryRun = false, skipRaw = false, root = ROOT, boardFile = path.join(root, BOARD_FILE), mapFile = path.join(root, MAP_OUT), env = readEnv(root), fetch = globalThis.fetch, log = console.log } = {}) {
+async function load({ month, dryRun = false, skipRaw = false, root = ROOT, boardFile = path.join(root, BOARD_FILE), mapFile = path.join(root, MAP_OUT), env = readEnv(root), fetch = globalThis.fetch, connect = pgConnect, log = console.log } = {}) {
   const timings = {};
   let t0 = Date.now();
   const lap = (k) => { timings[k] = Date.now() - t0; t0 = Date.now(); };
@@ -186,8 +214,7 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
   lap('board');
   const expected = expectedCounts(tables, board);
   const items = stageItems(tables, board);
-  const payload = (runId) => chunkRows(items.map((it) => ({ run_id: runId, ...it })));   // 묶음 크기는 run_id 까지 넣은 실제 본문으로 잰다
-  const chunks = payload(0);
+  const chunks = chunkRows(items);
   const raws = skipRaw ? [] : rawFiles(dir, month);
   const summary = { month, referenceDate: fileBoard.referenceDate, counts: expected, mapSgg: Object.keys(map.bySgg).length, chunks: chunks.length, raw: raws.length + (skipRaw ? 0 : 1), dryRun };
   if (dryRun) {
@@ -195,29 +222,48 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
     return { ...summary, timings };
   }
 
+  const dbUrl = env.SUPABASE_DB_URL;
+  if (!dbUrl) throw new Error('SUPABASE_DB_URL 이 필요하다(.env.local)');
   const api = client({ url: env.NEXT_PUBLIC_SUPABASE_URL, key: env.SUPABASE_SECRET_KEY, fetch });
-  const runId = await api.rpc('begin_run', { p_month: month, p_kind: 'load', p_reference_date: fileBoard.referenceDate,
-    p_meta: { tool: 'tools/ledger/supabase-load.js', git_commit: gitCommit(root), params: { tables: `schemas/ledger-${month}/tables` } } });
-  lap('begin');
-  for (const ch of payload(runId)) await api.stage(ch);
-  lap('stage');
-  const published = await api.rpc('publish_run', { p_run: runId, p_expected: expected });
-  lap('publish');
-  const mapRows = await api.rpc('publish_map', { p_run: runId, p_rows: map.bySgg });
-  if (mapRows !== summary.mapSgg) throw new Error(`publish_map 이 ${mapRows}행을 넣었다(기대 ${summary.mapSgg})`);
-  lap('map');
-
+  const one = async (db, sql, params) => (await db.query(sql, params)).rows[0].v;
+  let db, runId, published, mapRows;
   const files = [];
-  if (!skipRaw) {
-    const put = async (key, data, source) => {
-      await api.upload(key, data, 'application/gzip');
-      files.push({ bucket: BUCKET, path: key, bytes: data.length, sha256: sha256(data), source });
-    };
-    for (const f of raws) await put(f.key, zlib.gzipSync(fs.readFileSync(path.join(dir, f.source))), f.source);
-    const tdir = path.join(dir, 'tables');
-    const tar = tarball(fs.readdirSync(tdir).filter((f) => f.endsWith('.json')).sort().map((f) => ({ name: f, data: fs.readFileSync(path.join(tdir, f)) })));
-    await put(`${month}/tables.tar.gz`, zlib.gzipSync(tar), 'tables/*.json');
-    await api.rpc('record_files', { p_run: runId, p_files: files });
+  try {
+    db = await connect(dbUrl);
+    await db.query(`set statement_timeout = '${STATEMENT_TIMEOUT}'`);
+    runId = Number(await one(db, 'select ledger_admin.begin_run($1, $2, $3::date, $4::jsonb) as v', [month, 'load', fileBoard.referenceDate,
+      JSON.stringify({ tool: 'tools/ledger/supabase-load.js', git_commit: gitCommit(root), params: { tables: `schemas/ledger-${month}/tables` } })]));
+    lap('begin');
+    await db.query('begin');
+    try {
+      for (const ch of chunks) await db.query(STAGE_SQL, [runId, JSON.stringify(ch)]);
+      lap('stage');
+      published = await one(db, 'select ledger_admin.publish_run($1, $2::jsonb) as v', [runId, JSON.stringify(expected)]);
+      lap('publish');
+      mapRows = Number(await one(db, 'select ledger_admin.publish_map($1, $2::jsonb) as v', [runId, JSON.stringify(map.bySgg)]));
+      if (mapRows !== summary.mapSgg) throw new Error(`publish_map 이 ${mapRows}행을 넣었다(기대 ${summary.mapSgg})`);
+      await db.query('commit');
+      lap('map');
+    } catch (e) {
+      await db.query('rollback').catch(() => {});
+      throw e;
+    }
+
+    if (!skipRaw) {
+      const put = async (key, data, source) => {
+        await api.upload(key, data, 'application/gzip');
+        files.push({ bucket: BUCKET, path: key, bytes: data.length, sha256: sha256(data), source });
+      };
+      for (const f of raws) await put(f.key, zlib.gzipSync(fs.readFileSync(path.join(dir, f.source))), f.source);
+      const tdir = path.join(dir, 'tables');
+      const tar = tarball(fs.readdirSync(tdir).filter((f) => f.endsWith('.json')).sort().map((f) => ({ name: f, data: fs.readFileSync(path.join(tdir, f)) })));
+      await put(`${month}/tables.tar.gz`, zlib.gzipSync(tar), 'tables/*.json');
+      await db.query('select ledger_admin.record_files($1, $2::jsonb)', [runId, JSON.stringify(files)]);
+    }
+  } catch (e) {
+    throw new Error(redact(e instanceof Error ? e.message : e, dbUrl));
+  } finally {
+    if (db) await db.end().catch(() => {});
   }
   lap('raw');
   const result = { ...summary, runId, published, mapRows, files, timings };
@@ -239,7 +285,7 @@ async function revalidateBoard(env, log, fetch = globalThis.fetch) {
   }
 }
 
-module.exports = { parseArgs, readEnv, readTables, checkBoard, checkMap, stageItems, expectedCounts, chunkRows, safeKey, rawFiles, tarball, client, load, revalidateBoard, BUCKET, CHUNK_BYTES };
+module.exports = { parseArgs, readEnv, readTables, checkBoard, checkMap, stageItems, expectedCounts, chunkRows, safeKey, rawFiles, tarball, client, pgConnect, redact, load, revalidateBoard, BUCKET, CHUNK_BYTES, STAGE_SQL, STATEMENT_TIMEOUT };
 
 if (require.main === module) {
   load(parseArgs(process.argv.slice(2))).catch((e) => { console.error(e.message); process.exit(1); });

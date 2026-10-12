@@ -217,6 +217,7 @@
       if (v.disabled) el.input.title = v.placeholder; else el.input.removeAttribute('title');
       el.clear.hidden = !v.clear || v.busy; el.go.disabled = !v.canGo; el.go.hidden = v.disabled;
       const key = el.root.querySelector('.cmd-key'); if (key) key.hidden = !v.key;
+      const keep = state.hover ? el.res.scrollTop : 0;   // 마우스 올림으로 다시 그릴 때는 스크롤 위치를 지켜야 휠이 튀지 않는다
       el.res.textContent = ''; el.res.hidden = v.panel === 'none'; el.res.dataset.stale = v.stale ? '1' : '';
       if (v.panel === 'rows' || v.panel === 'recent') {
         el.res.appendChild(make('div', 'cmd-h', v.panel === 'recent' ? '최근 이동' : '일치'));
@@ -231,7 +232,8 @@
         const chip = make('span', i === v.chips.length - 1 ? 'cmd-chip last' : 'cmd-chip'); chip.appendChild(make('i', null, c.label)); chip.appendChild(make('b', null, [c.text, c.code, c.goal ? `→ ${c.goal}` : ''].filter(Boolean).join(' ')));
         el.parse.appendChild(chip);
       });
-      const sel = el.res.querySelector('[aria-selected="true"]'); if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: 'nearest' });
+      if (state.hover) el.res.scrollTop = keep;
+      else { const sel = el.res.querySelector('[aria-selected="true"]'); if (sel && sel.scrollIntoView) sel.scrollIntoView({ block: 'nearest' }); }   // 키보드 이동 때만 선택 줄을 보이게
       if (el.sr && v.status && v.status !== state.lastStatus) el.sr.textContent = v.status;
       state.lastStatus = v.status;
     }
@@ -282,7 +284,7 @@
     });
     el.clear.addEventListener('click', () => { dispatch({ type: 'clear' }); el.input.focus(); });
     el.res.addEventListener('mousedown', (e) => e.preventDefault());   // 후보를 눌러도 입력줄이 포커스를 잃지 않게
-    el.res.addEventListener('mousemove', (e) => { const row = e.target.closest && e.target.closest('.cmd-o'); if (row && state.s.mode === 'active' && state.s.items.length) dispatch({ type: 'hover', index: Number(row.dataset.index) }); });
+    el.res.addEventListener('mousemove', (e) => { const row = e.target.closest && e.target.closest('.cmd-o'); if (row && state.s.mode === 'active' && state.s.items.length) { state.hover = true; try { dispatch({ type: 'hover', index: Number(row.dataset.index) }); } finally { state.hover = false; } } });
     el.res.addEventListener('click', (e) => {
       const row = e.target.closest && e.target.closest('.cmd-o'); if (!row) return;
       const i = Number(row.dataset.index);

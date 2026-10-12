@@ -5,8 +5,8 @@ import { Lede, Page, PageTitle } from '../../../components/page';
 import { Badge } from '../../../components/ui/badge';
 import { cardVariants } from '../../../components/ui/card';
 import { Basis } from '../../../components/ui';
-import { AHEAD_FROM, NATION, fmt, lhCalendar, monthLabel, nextYm } from '../../../lib/board/calc';
-import { SGG, lh, molit, projects } from '../../../lib/board/data';
+import { NATION, fmt, lhCalendar, monthLabel, nextYm } from '../../../lib/board/calc';
+import { AHEAD_FROM, SGG, lh, molit, projects } from '../../../lib/board/data';
 
 export const metadata: Metadata = { title: '우리 동네' };
 

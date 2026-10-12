@@ -17,7 +17,7 @@
 | `agency/` | `templates/` 양식 6종, `README.md`, `demo/` | 기관 입력 양식(UTF-8 BOM)과 '[가상]' 예시 CSV 6종·rows.json. 예시 행은 모두 is_demo 원천을 가리키며 기준 표에는 합치지 않았다 |
 | `tables/` | 원장 16표 (15 MB, 한 행 한 줄 JSON, 가장 큰 events 5.1 MB) | 2026-10 기준. 검증 통과, 같은 입력이면 같은 결과 |
 
-`tables/` 행 수: areas 20,562 · agencies 5 · policies 0 · programs 0 · links 0 · projects 3,845(발급 77 + LH 후보 273 + 건축HUB 대용량 후보 3,495) · identifiers 4,451 · project_locations 3,861 · complexes 22 · events 13,001 · units 4,012 · notices 4,993 · notice_links 10 · stat_facts 16,320 · sources 27 · review_required 66(공공 여부 미확인 55 · 시군구 미해결 5 · LH 연결 후보 6).
+`tables/` 행 수: areas 20,562 · agencies 5 · policies 0 · programs 0 · links 0 · projects 3,845(발급 77 + LH 후보 273 + 건축HUB 대용량 후보 3,495) · identifiers 4,451 · project_locations 3,861 · complexes 22 · events 13,120 · units 4,012 · notices 4,993 · notice_links 364 · stat_facts 16,320 · sources 27 · review_required 90(공공 여부 미확인 55 · 시군구 미해결 5 · 연결 후보 14(LH↔건축HUB 6 · 공고 T3 8) · 중복 사업 후보 16).
 
 ## 건축HUB 대용량(전국, 2026-08 데이터)
 
@@ -31,8 +31,10 @@
 ## 전국 모집공고·입주예정(`convert.js --national raw`)
 
 - 공고(notices 4,993): LH 목록 4,985 + 마이홈만 있는 공고 8(지방공사). 마이홈 공고 링크의 panId 가 LH PAN_ID 와 같은 107건은 한 공고로 합쳐 (LH, PAN_ID) 로 싣고 값(제목·날짜·시군구·필지)과 source_ref 는 마이홈이다. LH 목록만 있는 공고는 지역이 시도뿐이라 시군구·필지가 없다. 원천 `myhome-hwspr02`·`datagokr-15058530`.
-- 연결(notice_links 10, 공고 8 · 사업 8): 마이홈 행의 19자리 필지가 사업 위치 필지(레지스트리·LH 후보에 붙은 건축HUB·건축HUB 후보 대표 필지)와 같을 때만. 자동 연결이라 REVIEW_REQUIRED. 이름만 같은 후보 공고 12건은 잇지 않았다. 연결마다 SUPPLY_NOTICE(실제, 공고일, 접수 기간은 event_detail) — 종합상황판 ④모집이 이 이벤트를 쓴다.
-- 기관: 연결된 건축HUB 후보 중 기관이 빈 3건을 공급기관(LH)으로 채우고 public_scope PUBLIC, 근거는 public_basis.
+- 연결(notice_links 364, 공고 282 · 사업 131, 규칙 `tools/ledger/notice-link.js`, evidence 에 규칙 이름과 대조한 글자): M1_PNU 마이홈 필지 = 사업 위치 필지 10 · T1_LH_DISTRICT_BLOCK 제목(또는 공급정보·마이홈 단지명) 블록 = LH 준공예정 블록 + LH 지구 낱말이 제목에 200 · T2_NAME_DISTRICT_BLOCK 제목 블록 = 사업 블록 + 제목 지구 낱말이 사업 이름·단지명·특수지명에(주소는 안 봄) 154. T1·T2 는 시도 일치. 블록만·법정동/본번만 같은 것은 잇지 않는다. 자동 연결이라 REVIEW_REQUIRED. 취소공고는 잇지 않는다.
+- 검토 목록: T3(지구 낱말에서 '인천영종 → 영종' 같은 시·시도 줄임말을 떼야 맞음) 8건은 잇지 않고 LINK_CANDIDATE(원천 = 공고), 같은 공고의 같은 블록에 자동 연결된 두 사업 16쌍은 DUPLICATE_CANDIDATE(LH 후보·발급 사업 ↔ 건축HUB 대용량 후보 15, 대용량끼리 1, 시군구가 다른 3쌍은 detail 에 적음). 병합하지 않는다.
+- SUPPLY_NOTICE(129, 사업 106): 최초 입주자모집 공고만, 정정·재공고(앞머리 [정정공고]·(재게시)·날짜·회차를 지운 제목) 묶음마다 하나 — 날짜는 묶음의 가장 이른 공고일(실제), 접수 기간·정정 공고는 event_detail. 잔여세대·추가·예비입주자·선착순·매각 공고와 가정어린이집·오피스텔 등 비공급 공고는 연결만 둔다. 종합상황판 ④모집이 이 이벤트를 쓴다.
+- 기관: 연결된 건축HUB 후보 중 기관이 빈 35건을 공급기관(LH)으로 채우고 public_scope PUBLIC, 근거(공고·규칙)는 public_basis. 이름만 같은 후보 공고 8건은 잇지 않았다.
 - 입주예정(MOVE_IN 예정 370, 원천 `datagokr-15111714`, 기준 2026-06-30): 703행 = 월 오류(2027-00) 2 · 주소 실패 80(본번 0 등 77 · 행정동·읍면 빠짐 3) · 맞는 사업 없음 250 · 필지 일치 371. 지번 주소는 법정동코드 이름(옛 시도 이름·개편 구 포함)으로 PNU 를 만든다(`map-lh.js jibunToPnu`). 사업은 만들지 않는다.
 
 ## 만드는 순서
@@ -49,12 +51,21 @@ node tools/ledger/convert.js --month 2026-10 --lh-sgg schemas/ledger-2026-10/map
 
 6. 월 판정 이력(소급): `node tools/ledger/trend.js` → `data/board/judgment-history.json`(2025-01~2026-09, 약 20초). 다음 달로 넘어갈 때는 새 원장 전에 `node tools/ledger/trend.js --close` 로 이번 달 판정을 관측 행으로 붙인다.
 7. 종합상황판 집계·지도 색인: `node tools/ledger/board.js` → `data/board/ledger-board.json`(이력이 있으면 trend 포함)과 `data/board/ledger-map.json`(시군구마다 사업 단계·판정·다음 일정, 한 사업 한 줄, 판정 합계 = 보드)
+8. Supabase 적재·확인: `node tools/ledger/supabase-load.js --month 2026-10 [--dry-run] [--skip-raw]` → `node tools/ledger/supabase-verify.js --month 2026-10`. DB 쪽(실행 기록·스테이징·발행·지도)은 `SUPABASE_DB_URL` 로 직접 연결(pg, 시간 제한 120s, 2026-10-11), 원본 업로드·verify 는 secret 키 REST. 다른 곳(GitHub Actions 등)에서 돌릴 때 필요한 환경변수: `SUPABASE_DB_URL`·`SUPABASE_SECRET_KEY`·`NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`(verify 의 anon 점검), 선택 `BOARD_REVALIDATE_URL`·`REVALIDATE_SECRET`.
+
+### 월 갱신 자동화(수집 PR → 사람 확인 → 합치면 적재)
+
+- 위 3~7을 한 번에: `node tools/ledger/monthly.js [--month YYYY-MM] [--dry-run]`(기본 한국시간 이번 달). 새 판·새 달이 아니면 '새 자료 없음'으로 아무것도 바꾸지 않는다. 새 달이면 `schemas/ledger-<달>/` 을 만들고 이 폴더의 정적 입력(법정동·LH 준공예정·입주예정·과거 판·매핑·기관 양식)을 복사한다. 같은 달 새 판이면 이 폴더를 고치고 밀려난 기본개요를 `raw/hub-bulk-history/basic-<판>.zip` 으로 옮긴다. Supabase 에는 쓰지 않는다.
+- `hub-bulk.js`·`trend.js`·`board.js` 는 `--month` 를 받는다(기본 가장 늦은 원장 폴더). 대용량 판은 `raw/hub-bulk/manifest.json`, 기준일은 달 폴더 `manifest.json` 의 `reference_date`(이 폴더는 없어 2026-10-10).
+- GitHub Actions: `ledger-collect.yml`(매달 21~25일, PR 생성) → 사람이 합침 → `ledger-load.yml`(8단계 적재·확인·캐시 비우기). 과거 판 zip 은 git 이 무시하므로 `tools/ledger/raw-store.js pull|push` 로 Storage `ledger-raw/<달>/hub-bulk-history/` 와 주고받는다.
+- 비밀값 이름: `SUPABASE_DB_URL` · `SUPABASE_SECRET_KEY` · `NEXT_PUBLIC_SUPABASE_URL` · `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` · `DATA_GO_KR_KEY` · `REVALIDATE_SECRET` · `BOARD_REVALIDATE_URL`(없으면 잡은 건너뛴다).
+- 수동으로 남는 것: 통계누리(`data/board/molit.json`), 입주예정 새 파일(반기), LH 준공예정 새 판(2027-02), 법정동코드 새 판(연 1회). 자세히는 `docs/product/데이터-수집-계획.md` 8-1절.
 
 기관 입력 가져오기: `node tools/ledger/import-agency.js --dir <폴더> --agency <id> --received YYYY-MM-DD [--demo] [--out <파일>]`
 
 ## 시험
 
-`tests/js/legal-dong.test.cjs` · `lh-mapping.test.cjs` · `snapshot.test.cjs` · `agency-import.test.cjs` · `ledger.test.cjs` · `ledger-2026-10.test.cjs` · `hub-bulk.test.cjs` · `ledger-board.test.cjs` · `trend.test.cjs`
+`tests/js/legal-dong.test.cjs` · `lh-mapping.test.cjs` · `snapshot.test.cjs` · `agency-import.test.cjs` · `ledger.test.cjs` · `ledger-2026-10.test.cjs` · `hub-bulk.test.cjs` · `ledger-board.test.cjs` · `trend.test.cjs` · `monthly.test.cjs` · `notice-link.test.cjs`
 
 ## 한계
 

@@ -1,5 +1,5 @@
 'use strict';
-/* 건축HUB 주택인허가 대용량 파일(기본개요·행위개요·대지위치, schemas/ledger-2026-10/raw/hub-bulk) → 원장 변환기(convert.js)가 읽는 중간 스냅샷.
+/* 건축HUB 주택인허가 대용량 파일(기본개요·행위개요·대지위치, schemas/ledger-<달>/raw/hub-bulk) → 원장 변환기(convert.js)가 읽는 중간 스냅샷.
    원본 zip 은 머리글 없는 '|' 텍스트(UTF-8)이고 열 이름은 같은 폴더 manifest.json 에 있다. 관리번호(관리_주택대장_PK)는 자릿수가 섞인 문자열로 다룬다.
    - 날짜: 'YYYYMMDD' 이고 달력에 있으며 1990-01-01 ~ 2040-12-31 인 값만 'YYYY-MM-DD' 로 받는다. 그 밖(' 2002 5'·'200512'·30000101 …)은 null 로 두고 열마다 센다.
    - 범위(기록 단위, 관리번호 기준): 사업승인일이 있고 · 총세대수 1 이상 · 철거·멸실 표시(구분 코드·멸실일)가 없고 · 사용검사 실제일이 비었거나 2025-01-01 이후.
@@ -10,7 +10,8 @@
    - 남긴 관리번호만 행위개요의 단지명(처음 나온 빈칸 아닌 값)과 대지위치의 대표 필지(대표_여부 1, 필지 수는 따로 셈)를 붙인다.
      대지위치 전체(남긴 관리번호만 26만 행)는 원장 위치 표에 싣기에 너무 커서 대표 필지만 남긴다.
    원본 zip 은 시스템 unzip(-p)으로 한 줄씩 읽는다(새 npm 꾸러미 없음).
-   실행: node tools/ledger/hub-bulk.js  → schemas/ledger-2026-10/snapshot/hub-bulk-2026-08.json · hub-bulk-2026-08.manifest.json
+   실행: node tools/ledger/hub-bulk.js [--month YYYY-MM]  → schemas/ledger-<달>/snapshot/hub-bulk-<데이터 월>.json · .manifest.json
+     달을 주지 않으면 가장 늦은 원장 폴더. 데이터 월은 raw/hub-bulk/manifest.json, 기준일은 그 달 폴더 manifest.json(tools/ledger/paths.js referenceDateOf)
    시험: tests/js/hub-bulk.test.cjs */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -18,16 +19,20 @@ const crypto = require('node:crypto');
 const readline = require('node:readline');
 const { spawn } = require('node:child_process');
 
-const ROOT = path.join(__dirname, '..', '..');
-const RAW = path.join(ROOT, 'schemas/ledger-2026-10/raw/hub-bulk');
-const DATA_MONTH = '2026-08';
-const OUT = path.join(ROOT, `schemas/ledger-2026-10/snapshot/hub-bulk-${DATA_MONTH}.json`);
-const OUT_MANIFEST = path.join(ROOT, `schemas/ledger-2026-10/snapshot/hub-bulk-${DATA_MONTH}.manifest.json`);
+const P = require('./paths');
+
+const ROOT = P.ROOT;
+/* 기본값 = 가장 늦은 원장 폴더의 판(시험·trend.js 가 쓴다) */
+const outFiles = (base, dataMonth) => ({ out: path.join(base, `snapshot/hub-bulk-${dataMonth}.json`), manifest: path.join(base, `snapshot/hub-bulk-${dataMonth}.manifest.json`) });
+const BASE = P.ledgerDir(P.latestMonth());
+const RAW = path.join(BASE, 'raw/hub-bulk');
+const DATA_MONTH = P.bulkDataMonth(RAW);
+const { out: OUT, manifest: OUT_MANIFEST } = outFiles(BASE, DATA_MONTH);
 const WINDOW_START = '2025-01-01';   // 상황판 시점 0(2025.01): 그 전에 준공(사용검사)한 기록은 뺀다
 const DATE_MIN = '1990-01-01', DATE_MAX = '2040-12-31';
-/* 진행 중 규칙(기준일 2026-10-10). 순서 = 근거를 세는 순서. a 의 하한은 기준일 달의 60개월 전 1일(주택법 제16조 착공 의무 5년):
-   기준일 2026-10-10 → 2021-10-01. 과거 판으로 그 달 판정을 소급할 때(tools/ledger/trend.js)는 그 달 말을 기준일로 준다. b·c·d 는 고정 */
-const REFERENCE_DATE = '2026-10-10';
+/* 진행 중 규칙(기준일 기본 2026-10-10). 순서 = 근거를 세는 순서. a 의 하한은 기준일 달의 60개월 전 1일(주택법 제16조 착공 의무 5년):
+   기준일 2026-10-10 → 2021-10-01. 과거 판으로 그 달 판정을 소급할 때(tools/ledger/trend.js)는 그 달 말을, 달 원장(build)은 그 달 폴더의 기준일을 준다. b·c·d 는 고정 */
+const REFERENCE_DATE = P.DEFAULT_REFERENCE_DATE;
 const permitFloor = (referenceDate) => { const [y, m] = referenceDate.split('-').map(Number), k = y * 12 + (m - 1) - 60; return `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}-01`; };
 const A_MIN = permitFloor(REFERENCE_DATE);
 const ACTIVE = (aMin) => [
@@ -104,8 +109,9 @@ async function attachStatic(rawDir, zips, byPk) {
   return { actRows, siteRows };
 }
 
-/* 원본 3개를 읽어 { records(관리번호 순), manifest } */
-async function build(rawDir = RAW) {
+/* 원본 3개를 읽어 { records(관리번호 순), manifest }. dataMonth = 판의 데이터 월, referenceDate = 진행 중 규칙의 기준일 */
+async function build(rawDir = RAW, { dataMonth = P.bulkDataMonth(rawDir), referenceDate = REFERENCE_DATE } = {}) {
+  const aMin = permitFloor(referenceDate);
   const src = JSON.parse(fs.readFileSync(path.join(rawDir, 'manifest.json'), 'utf8'));
   const zips = {};
   for (const [k, f] of Object.entries(src.files)) {
@@ -120,7 +126,7 @@ async function build(rawDir = RAW) {
   await eachLine(path.join(rawDir, zips.basic.zip), zips.basic.member, (c) => {
     funnel.rows++;
     for (const k of DATE_COLS) { const t = String(c[B[k]] ?? '').trim(); dates[k][!t ? 'empty' : cleanDate(t) ? 'valid' : 'invalid']++; }
-    const r = basicRecord(c);
+    const r = basicRecord(c, aMin);
     if (r.drop) { funnel[r.drop]++; return; }
     if (byPk.has(r.record.pk)) throw new Error(`기본개요 관리번호 중복: ${r.record.pk}`);
     byPk.set(r.record.pk, r.record);
@@ -130,9 +136,9 @@ async function build(rawDir = RAW) {
   const { actRows, siteRows } = await attachStatic(rawDir, zips, byPk);
   const records = [...byPk.values()].sort((a, b) => (a.pk < b.pk ? -1 : a.pk > b.pk ? 1 : 0));
   const manifest = {
-    source: src.source, data_month: DATA_MONTH, data_as_of: `${DATA_MONTH}-31`, fetched_at: src.fetched_at, files: zips,
+    source: src.source, data_month: dataMonth, data_as_of: P.lastDay(dataMonth), fetched_at: src.fetched_at, files: zips,
     rules: { date: `YYYYMMDD, 달력에 있는 ${DATE_MIN}~${DATE_MAX} 만(그 밖은 null)`, scope: `사업승인일 있음 · 총세대수 ≥ 1 · 철거·멸실 표시 없음 · 사용검사일 없음 또는 ≥ ${WINDOW_START}`,
-      active: '진행 중(기준일 2026-10-10) 중 하나: d 사용검사일 ≥ 2025-01-01 · a 사업승인일 ≥ 2021-10-01(주택법 제16조 착공 의무 5년) · b 착공일 ≥ 2018-01-01 · c 사용검사 예정일 ≥ 2025-01-01 이고 사업승인일 ≥ 2015-01-01. 아니면 STALE(장기 미갱신)', site: '대지위치는 대표 필지(대표_여부 1)만, 필지 수는 site_count' },
+      active: `진행 중(기준일 ${referenceDate}) 중 하나: d 사용검사일 ≥ 2025-01-01 · a 사업승인일 ≥ ${aMin}(주택법 제16조 착공 의무 5년) · b 착공일 ≥ 2018-01-01 · c 사용검사 예정일 ≥ 2025-01-01 이고 사업승인일 ≥ 2015-01-01. 아니면 STALE(장기 미갱신)`, site: '대지위치는 대표 필지(대표_여부 1)만, 필지 수는 site_count' },
     funnel, active, dates, act_rows_matched: actRows, site_rows_matched: siteRows, records: records.length,
   };
   return { records, manifest };
@@ -199,17 +205,19 @@ function districtToken(district) {
 }
 
 /* 한 기록 한 줄(변경을 줄 단위로 보려고) */
-const renderRecords = (records) => `{"schema":"hub-bulk/1","data_month":"${DATA_MONTH}","records":[\n${records.map((r) => JSON.stringify(r)).join(',\n')}\n]}\n`;
+const renderRecords = (records, dataMonth = DATA_MONTH) => `{"schema":"hub-bulk/1","data_month":"${dataMonth}","records":[\n${records.map((r) => JSON.stringify(r)).join(',\n')}\n]}\n`;
 const loadRecords = (file = OUT) => JSON.parse(fs.readFileSync(file, 'utf8')).records;
 
-module.exports = { cleanDate, basicRecord, activeBasis, permitFloor, eachLine, attachStatic, sha256, build, codeMapper, locate, groupKey, normBlock, districtToken, renderRecords, loadRecords, OUT, OUT_MANIFEST, RAW, DATA_MONTH, B };
+module.exports = { cleanDate, basicRecord, activeBasis, permitFloor, eachLine, attachStatic, sha256, build, codeMapper, locate, groupKey, normBlock, districtToken, renderRecords, loadRecords, outFiles, OUT, OUT_MANIFEST, RAW, DATA_MONTH, B };
 
 if (require.main === module) {
-  build().then(({ records, manifest }) => {
-    fs.mkdirSync(path.dirname(OUT), { recursive: true });
-    fs.writeFileSync(OUT, renderRecords(records));
-    fs.writeFileSync(OUT_MANIFEST, `${JSON.stringify(manifest, null, 1)}\n`);
+  const i = process.argv.indexOf('--month'), base = P.ledgerDir(i > 0 ? process.argv[i + 1] : P.latestMonth());
+  const raw = path.join(base, 'raw/hub-bulk'), dataMonth = P.bulkDataMonth(raw), { out, manifest: outManifest } = outFiles(base, dataMonth);
+  build(raw, { dataMonth, referenceDate: P.referenceDateOf(base) }).then(({ records, manifest }) => {
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    fs.writeFileSync(out, renderRecords(records, dataMonth));
+    fs.writeFileSync(outManifest, `${JSON.stringify(manifest, null, 1)}\n`);
     console.log(manifest.funnel, manifest.active, `행위개요 ${manifest.act_rows_matched}행 · 대지위치 ${manifest.site_rows_matched}행`);
-    console.log(`${path.relative(ROOT, OUT)} (${fs.statSync(OUT).size} 바이트)`);
+    console.log(`${path.relative(ROOT, out)} (${fs.statSync(out).size} 바이트)`);
   }).catch((e) => { console.error(`오류: ${e.message}`); process.exit(1); });
 }

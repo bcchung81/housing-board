@@ -1,0 +1,65 @@
+{
+ "source": "건축HUB 대용량 2026-08 판 중간 스냅샷(snapshot/hub-bulk-2026-08.json)을 주택인허가 기본개요 OpenAPI(getHpBasisOulnInfo) 현재값으로 덮어씀",
+ "data_month": "2026-08",
+ "data_as_of": "2026-08-31",
+ "fetched_at": "2026-10-12T01:34:40.960Z",
+ "fetched_until": "2026-10-12T01:51:20.144Z",
+ "endpoint": "https://apis.data.go.kr/1613000/HsPmsHubService/getHpBasisOulnInfo",
+ "note": "건축HUB OpenAPI(2026-10-12 호출, 기록 생성일 최대 2026-08-31) 값으로 일정·세대수를 덮어씀(대용량 2026-08 판 기준 2026-08-31, tools/ledger/hub-api-refresh.js)",
+ "base": {
+  "file": "snapshot/hub-bulk-2026-08.json",
+  "data_month": "2026-08",
+  "data_as_of": "2026-08-31",
+  "fetched_at": "2026-10-11T01:37:31.576242+00:00",
+  "records": 4103
+ },
+ "files": {
+  "basic": {
+   "zip": "주택인허가_기본개요_2026-08.zip",
+   "member": "mart_jty_01.txt",
+   "sha256": "196482e19b7c1192071f870b1125b17b037a484af6392c9c25e3d5d6c403cb0a"
+  },
+  "act": {
+   "zip": "주택인허가_행위개요_2026-08.zip",
+   "member": "mart_jty_12.txt",
+   "sha256": "bacc6beabdba5933555db509236af3b00da0839a94321c0cf63f540e4eb54008"
+  },
+  "site": {
+   "zip": "주택인허가_대지위치_2026-08.zip",
+   "member": "mart_jty_15.txt",
+   "sha256": "04159045c4f6a44c37b6e3b5c81034ffd20cedee529db6707d998ecc1a09f7e6"
+  }
+ },
+ "reference_date": "2026-10-12",
+ "rules": {
+  "overwrite": "① 관리번호가 API 에 있으면 일정·세대수를 API 값으로(위치·이름은 대용량) ② 없으면 대용량 그대로 ③ 불러온 법정동에서 API 에만 있고 범위·진행 중 규칙을 통과하면 더함 ④ 덮어쓴 뒤 규칙에 걸리면 뺌",
+  "active": "진행 중(기준일 2026-10-12) 중 하나: d 사용검사일 ≥ 2025-01-01 · a 사업승인일 ≥ 2021-10-01(주택법 제16조 착공 의무 5년) · b 착공일 ≥ 2018-01-01 · c 사용검사 예정일 ≥ 2025-01-01 이고 사업승인일 ≥ 2015-01-01. 아니면 STALE(장기 미갱신)",
+  "safety": "법정동 호출 실패 ≤ 5% · 관리번호 일치율 ≥ 90%",
+  "limit": "대용량에 없는 법정동의 새 사업은 다음 대용량 판에서만 들어온다"
+ },
+ "bjds": 1611,
+ "loaded": 1611,
+ "failed": 0,
+ "truncated": 0,
+ "calls": 3737,
+ "pages": 3732,
+ "failed_bjds": [],
+ "truncated_bjds": [],
+ "api_records": 263383,
+ "records": 4103,
+ "overwrite": {
+  "overwritten": 4098,
+  "overwritten_changed": 0,
+  "kept_not_in_api": 0,
+  "kept_not_queried": 5,
+  "added": 0,
+  "dropped": 0,
+  "dropped_reasons": {},
+  "api_only_skipped": {
+   "NO_HOUSEHOLDS": 244307,
+   "COMPLETED_BEFORE_WINDOW": 8722,
+   "STALE": 5864,
+   "NO_PERMIT_DATE": 392
+  }
+ }
+}

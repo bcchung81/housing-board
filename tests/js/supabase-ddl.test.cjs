@@ -71,6 +71,17 @@ for (const m of CODE.matchAll(/create table ledger\.(\w+)\s*\(/gi)) {
   }
   tables[m[1]] = t;
 }
+/* 뒤 마이그레이션의 열 CHECK 바꾸기(alter table ledger.<표> drop/add constraint <표>_<열>_check)를 차례로 적용한다 — 값 목록을 넓힐 때 앞 마이그레이션은 고치지 않는다 */
+const altered = [];
+for (const f of fs.readdirSync(MIG_DIR).filter((x) => /^\d{14}_\w+\.sql$/.test(x) && x > migFile).sort()) {
+  const sql = fs.readFileSync(path.join(MIG_DIR, f), 'utf8').replace(/--[^\n]*/g, '');
+  for (const m of sql.matchAll(/alter table ledger\.(\w+)\s+(drop|add) constraint (\w+)/gi)) {
+    const [, t, op, name] = m, col = tables[t]?.columns[name.replace(`${t}_`, '').replace(/_check$/, '')];
+    if (!col || !name.endsWith('_check')) throw new Error(`${f}: 열 CHECK 가 아닌 제약 ${name}`);
+    if (op === 'drop') col.checks = []; else col.checks.push(checks(sql.slice(m.index))[0]);
+    altered.push(`${f}:${op}:${name}`);
+  }
+}
 const domains = {};  // name → check expr
 for (const m of CODE.matchAll(/create domain ledger\.(\w+)\s+as\s+\w+\s+check\s*\(/gi)) domains[m[1]] = inner(CODE, m.index + m[0].length - 1).trim();
 
@@ -116,6 +127,11 @@ test('값 목록: 스키마 enum 열마다 DDL 에 같은 목록(열 CHECK 또�
     }
   }
   assert.ok(compared >= 30, `대조한 열 ${compared}`);
+});
+
+test('뒤 마이그레이션의 값 목록 넓히기: review_required.review_type 에 DUPLICATE_CANDIDATE(중복 사업 후보) — 지우고 다시 만든다', () => {
+  assert.deepEqual(altered, ['20261011200000_review_duplicate_candidate.sql:drop:review_required_review_type_check', '20261011200000_review_duplicate_candidate.sql:add:review_required_review_type_check']);
+  assert.ok(inList(tables.review_required.columns.review_type.checks[0], 'review_type').includes('DUPLICATE_CANDIDATE'));
 });
 
 test('패턴: 도메인 정규식 = common $defs pattern, 열 정규식 CHECK = 스키마 pattern', () => {

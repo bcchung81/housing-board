@@ -11,15 +11,16 @@ const H = require('../../tools/ledger/hub-bulk');
 const { convert, loadInputs, readHubBulk, mergeHubIds } = require('../../tools/ledger/convert');
 const { parseLegalDong } = require('../../tools/ledger/legal-dong');
 
-const BASE = path.join(__dirname, '..', '..', 'schemas', 'ledger-2026-10');
+/* 지금 원장(가장 늦은 달 폴더)과 그 판 — 2026-10 첫 판은 schemas/ledger-2026-10 · 2026-08 */
+const BASE = path.dirname(path.dirname(H.RAW));
 const read = (p) => JSON.parse(fs.readFileSync(path.join(BASE, p), 'utf8'));
-const DONG = 'raw/legal-dong/국토교통부_법정동코드_20260929.csv';
+const DONG = `raw/legal-dong/${fs.readdirSync(path.join(BASE, 'raw/legal-dong')).filter((f) => f.endsWith('.csv')).sort().pop()}`;
 const legalDong = parseLegalDong(fs.readFileSync(path.join(BASE, DONG)), path.basename(DONG));
 const bulk = readHubBulk(H.OUT);
 const manifest = JSON.parse(fs.readFileSync(H.OUT_MANIFEST, 'utf8'));
 const savedIds = read('mappings/hub-candidate-ids.json');
 const saved = Object.fromEntries(['projects', 'identifiers', 'project_locations', 'review_required'].map((t) => [t, read(`tables/${t}.json`).rows]));
-const BULK = 'hub-bulk-hs-2026-08';
+const BULK = `hub-bulk-hs-${H.DATA_MONTH}`;
 const inputs = (records, hubIds) => loadInputs({ lhSgg: read('mappings/lh-block-sgg.json'), legalDong, hubBulk: { ...bulk, records }, hubIds });
 
 /* 기본개요 한 줄(29열) */
@@ -83,12 +84,15 @@ test('중간 스냅샷 = 원본: zip 해시가 원본 manifest 와 같고, 기�
     assert.deepEqual(mid, fresh, r.pk);
   }
   assert.ok(kept > 50, `앞 3,000줄 중 남은 기록 ${kept}`);
+  /* 2026-08 판: 377,256 → 승인일 없음 951 · 세대 0 348,582 · 철거 0 · 창 전 준공 13,764 · 장기 미갱신 9,856 → 4,103(d 630 · a 2,912 · b 70 · c 491, 2,579,621세대) */
   const fn = manifest.funnel;
-  assert.deepEqual(fn, { rows: 377256, NO_PERMIT_DATE: 951, NO_HOUSEHOLDS: 348582, DEMOLISHED: 0, COMPLETED_BEFORE_WINDOW: 13764, STALE: 9856, kept: 4103 });
+  assert.deepEqual(Object.keys(fn), ['rows', 'NO_PERMIT_DATE', 'NO_HOUSEHOLDS', 'DEMOLISHED', 'COMPLETED_BEFORE_WINDOW', 'STALE', 'kept']);
+  assert.equal(fn.rows, raw.files.basic.rows, '거르기 전 = 원본 기본개요 행 수(원본 manifest)');
   assert.equal(fn.rows, fn.NO_PERMIT_DATE + fn.NO_HOUSEHOLDS + fn.DEMOLISHED + fn.COMPLETED_BEFORE_WINDOW + fn.STALE + fn.kept);
-  assert.deepEqual(manifest.active, { d: 630, a: 2912, b: 70, c: 491 }, '남은 기록의 근거(d·a·b·c 순서로 처음 맞는 것)');
-  assert.equal(bulk.records.reduce((s, r) => s + r.households, 0), 2579621);
-  assert.ok(bulk.records.every((r) => H.activeBasis(r)), '남은 기록은 모두 진행 중');
+  assert.deepEqual(Object.keys(manifest.active), ['d', 'a', 'b', 'c'], '남은 기록의 근거(d·a·b·c 순서로 처음 맞는 것)');
+  assert.equal(Object.values(manifest.active).reduce((a, b) => a + b, 0), fn.kept);
+  assert.deepEqual(bulk.records.reduce((m, r) => { m[H.activeBasis(r, H.permitFloor(manifest.rules.active.match(/기준일 (\d{4}-\d{2}-\d{2})/)[1]))]++; return m; }, { d: 0, a: 0, b: 0, c: 0 }), manifest.active, '근거 건수 = 기록에서 다시 센 것');
+  assert.ok(bulk.records.every((r) => H.activeBasis(r, H.permitFloor(manifest.rules.active.match(/기준일 (\d{4}-\d{2}-\d{2})/)[1]))), '남은 기록은 모두 진행 중');
   assert.equal(bulk.records.length, fn.kept);
   assert.equal(new Set(bulk.records.map((r) => r.pk)).size, bulk.records.length, '관리번호 중복 없음');
 });
@@ -151,13 +155,13 @@ test('관리번호는 한 번만: 대용량 기록마다 식별자 한 행(사�
   const registry = new Set(ids.filter((i) => i.source_ref !== BULK).map((i) => i.id_value));
   for (const r of bulk.records) assert.equal([fromBulk.has(r.pk), unresolved.has(r.pk), registry.has(r.pk)].filter(Boolean).length, 1, r.pk);
   const regLeft = bulk.records.filter((r) => registry.has(r.pk)).length;
-  assert.deepEqual([fromBulk.size, unresolved.size], [4103 - 5 - regLeft, 5]);
+  assert.equal(fromBulk.size, bulk.records.length - unresolved.size - regLeft, '2026-08 판: 4,103 - 미해결 5 - 레지스트리');
 });
 
 test('매핑은 더하기만: 장기 미갱신으로 빠진 관리번호의 id 도 매핑에 남고(사업은 없음), 대용량 후보 사업은 모두 매핑의 id', () => {
   const projOf = new Set(Object.values(savedIds)), bulkProjects = saved.projects.filter((p) => p.source_ref === BULK);
-  assert.equal(Object.keys(savedIds).length, 13588, '관리번호 13,588개(2026-10 첫 실행) 그대로');
-  assert.equal(bulkProjects.length, 3495);
+  assert.ok(Object.keys(savedIds).length >= 13588, '관리번호 13,588개(2026-10 첫 실행)에서 늘기만 한다');
+  assert.ok(bulkProjects.length > 0, '2026-08 판 3,495');
   assert.ok(bulkProjects.every((p) => projOf.has(p.local_project_id)));
   const live = new Set(bulk.records.map((r) => r.pk)), gone = Object.keys(savedIds).filter((pk) => !live.has(pk));
   assert.ok(gone.length > 9000, `빠진 관리번호 ${gone.length}`);

@@ -70,9 +70,6 @@ export const lhUnits = (blocks: LhBlock[]) => blocks.reduce((a, b) => a + b.unit
 /* 달 수(개월) 차이: a 에서 b 까지. */
 export function monthsBetween(a: string, b: string) { return (Number(b.slice(0, 4)) - Number(a.slice(0, 4))) * 12 + Number(b.slice(5, 7)) - Number(a.slice(5, 7)); }
 
-/* 앞으로의 물량을 세는 기준 달: 종합상황판의 '향후 12개월'과 같은 달(시안의 NOW, 2026.10). 보고자료·우리 동네가 쓴다 */
-export const AHEAD_FROM = '2026-10';
-
 /* 시도 하나의 LH 준공 예정 달력: fromYm 부터 n개월, 달마다 그 달의 블록(날짜·사업지구 순)과 세대수. 우리 동네(9.4 지시 '공급계획 사전 공개')가 쓴다 */
 export function lhCalendar(lh: LhData, sido: string, fromYm: string, n: number) {
   return Array.from({ length: n }, (_, i) => {

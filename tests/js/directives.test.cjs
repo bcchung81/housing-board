@@ -9,27 +9,28 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const C = require('../../lib/board/calc.ts');
+const AHEAD = require('../../data/board/ledger-board.json').observedMonth;   // lib/board/data.ts 의 AHEAD_FROM
 const molit = require('../../data/board/molit.json');
 const lh = require('../../data/board/lh-completion.json');
 const { MENU } = require('../../lib/shell/menu.ts');
 
-test('앞으로를 세는 기준 달은 종합상황판의 향후 12개월(원장 upcoming)과 같다(2026-10)', () => {
-  assert.equal(C.AHEAD_FROM, '2026-10');
-  assert.equal(require('../../data/board/ledger-board.json').upcoming[0].ym, C.AHEAD_FROM);
+test('앞으로를 세는 기준 달은 종합상황판의 향후 12개월(원장 upcoming)과 같은 원장 관측 달이다(월 갱신을 따라간다)', () => {
+  assert.match(fs.readFileSync(path.join(__dirname, '../../lib/board/data.ts'), 'utf8'), /export const AHEAD_FROM = ledger\.observedMonth;/);
+  assert.equal(require('../../data/board/ledger-board.json').upcoming[0].ym, AHEAD);
   assert.match(read('app/(dashboard)/page.tsx'), /^    ledger: src\.board,$/m);
 });
 
 test('우리 동네 달력(lhCalendar): 시도별 달력을 모두 더하면 전국 LH 준공 예정(lhByMonth)과 같고, 달 안은 날짜 순이다', () => {
   const sido = [...new Set(lh.blocks.map((b) => b.sido))];
-  const nation = C.lhByMonth(lh, C.AHEAD_FROM, 12);
-  const cals = sido.map((s) => C.lhCalendar(lh, s, C.AHEAD_FROM, 12));
+  const nation = C.lhByMonth(lh, AHEAD, 12);
+  const cals = sido.map((s) => C.lhCalendar(lh, s, AHEAD, 12));
   nation.forEach((m, i) => {
     assert.equal(cals.reduce((a, c) => a + c[i].units, 0), m.units, `${m.ym} 세대수`);
     assert.equal(cals.reduce((a, c) => a + c[i].blocks.length, 0), m.blocks, `${m.ym} 블록 수`);
     assert.equal(cals[0][i].ym, m.ym);
   });
   for (const c of cals) for (const m of c) for (let k = 1; k < m.blocks.length; k++) assert.ok(m.blocks[k - 1].date <= m.blocks[k].date, '날짜 순');
-  const gyeonggi = C.lhCalendar(lh, '41', C.AHEAD_FROM, 12);
+  const gyeonggi = C.lhCalendar(lh, '41', AHEAD, 12);
   assert.ok(gyeonggi.some((m) => m.blocks.length), '경기는 1년 안 준공 예정이 있다');
 });
 

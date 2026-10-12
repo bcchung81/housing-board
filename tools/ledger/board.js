@@ -1,5 +1,5 @@
 'use strict';
-/* 사업 원장 표(schemas/ledger-2026-10/tables)에서 종합상황판 카드용 집계를 만든다. 화면(components/board/Board.tsx)이 쓰는 시점(2025.01=0 … 2028.10=45)과
+/* 사업 원장 표(schemas/ledger-<달>/tables)에서 종합상황판 카드용 집계를 만든다. 화면(components/board/Board.tsx)이 쓰는 시점(2025.01=0 … 2028.10=45)과
    보드 단계 6칸(0 ①계획 · 1 ②인허가 · 2 ③착공 · 3 ④모집 · 4 ⑤준공 · 5 ⑥입주)에 맞춘다.
    판정 기준(2026-10-10 결정, docs/product/상황판-기획서.md Q7 · 데이터-수집-계획.md 3절): 현재 예정(CURRENT)의 기간 끝에서 기준일까지 꽉 찬 달 수가
    6 이상이면 지연, 1 이상 6 미만이면 주의, 그 밖은 정상. 판정 대상은 발급 사업과 건축HUB 전국 대용량 후보(발급 전이지만 원천에 실제 착공·준공 기록이 있다, 기준 2026-08)다.
@@ -9,12 +9,15 @@
    순수 함수 boardFromLedger 는 파일을 읽거나 쓰지 않는다. 월 판정 이력(history, data/board/judgment-history.json 의 rows — tools/ledger/trend.js)을 받으면
    결과의 trend 는 관측 달 앞의 이력 행 + 이번 달 판정 행(basis OBSERVED) 하나다(지연·주의 추이 카드).
    지도 색인 mapIndexFromLedger 는 같은 사업별 상태(projectStates)로 시군구마다 사업 단계·판정·다음 일정을 모은다(지도 사업 색, 기획서 M7·M8).
-   실행: node tools/ledger/board.js  → schemas/ledger-2026-10/tables 와 판정 이력(있으면)을 읽어 data/board/ledger-board.json 과 data/board/ledger-map.json 을 쓴다. */
+   실행: node tools/ledger/board.js [--month YYYY-MM]  → schemas/ledger-<달>/tables(기본 가장 늦은 원장 폴더)와 판정 이력(있으면)을 읽어 data/board/ledger-board.json 과
+     data/board/ledger-map.json 을 쓴다. 관측 달 = 그 달, 기준일 = 그 달 폴더 manifest.json 의 reference_date(없으면 2026-10-10, tools/ledger/paths.js). */
 const fs = require('node:fs');
 const path = require('node:path');
 
-const ROOT = path.join(__dirname, '..', '..');
-const TABLES = 'schemas/ledger-2026-10/tables';
+const P = require('./paths');
+
+const ROOT = P.ROOT;
+const tablesOf = (month) => `schemas/ledger-${month}/tables`;
 const OUT = 'data/board/ledger-board.json';
 const MAP_OUT = 'data/board/ledger-map.json';
 const HISTORY = 'data/board/judgment-history.json';
@@ -125,12 +128,13 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
   const sourceMonth = actualSource && asOf.get(actualSource) ? asOf.get(actualSource).slice(0, 7) : observedMonth;
   const actualThrough = sourceMonth < observedMonth ? sourceMonth : observedMonth, at = months.indexOf(actualThrough);
 
-  /* 보드 단계(달 i 말 기준). 실제 기록이 없는 사업(LH 후보)은 stage_code 의 칸을 처음부터 쓴다.
+  /* 보드 단계(달 i 말 기준). 실제 기록이 없는 사업(LH 후보)은 stage_code 의 칸을 처음부터 쓴다. 실제 기록이 모집공고(SUPPLY_NOTICE)뿐인 사업도 그 칸에서 시작한다
+     (공고만으로 첫 공고 전 달을 ①계획으로 되돌리지 않는다 — 2026-10-11 공고 연결 확대 때 LH 후보 28건이 그랬다).
      actualThrough 달 뒤에는 기간 끝이 기준일 뒤인 현재 예정을 더하고(기준일 전에 지난 예정은 일어난 것으로 치지 않는다), NOW 부터는 stage_code 의 칸보다 낮게 두지 않는다.
      NOW 달은 기준일 관측(stage_code)이라 예정을 더하지 않는다 — 더하면 판정의 단계별 지연 호수(delayByStage)가 바뀐다 */
   const stageAt = (x, i) => {
     const ym = months[i];
-    let s = x.actual.length ? 0 : x.base;
+    let s = x.actual.some((e) => e.event_type !== 'SUPPLY_NOTICE') ? 0 : x.base;
     for (const e of x.actual) if (monthOf(e) <= ym) s = Math.max(s, BOARD_OF_EVENT[e.event_type]);
     if (i > at && i !== now) for (const e of Object.values(x.plan)) if (endOf(e) > referenceDate && monthOf(e) <= ym) s = Math.max(s, BOARD_OF_EVENT[e.event_type]);
     if (i >= now) s = Math.max(s, x.base);
@@ -196,7 +200,7 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
   const own = { month: observedMonth, referenceDate, edition, basis: 'OBSERVED', ok: judgment.ok, caution: judgment.caution, delay: judgment.delay, delayByStage, cautionByStage, judged: judged.length, excludedStartOverdue: { projects: xs.projects, pairs: xs.pairs, units: xs.units } };
 
   return {
-    schema: 'ledger-board/1', observedMonth, referenceDate, source: TABLES,
+    schema: 'ledger-board/1', observedMonth, referenceDate, source: tablesOf(observedMonth),
     judge: { ...JUDGE, dataAsOf, rule: '발급 사업(건축HUB 스냅샷)은 착공·준공 예정 경과를 판정하고, 건축HUB 대용량 후보는 사용검사(준공) 예정 경과만 판정한다(착공 실제일 기록이 약 7% 뿐이라 착공 예정 경과는 자료 누락이 많다). LH 후보는 판정하지 않는다.' },
     scope: {
       projects: projects.length, issued: projects.length - candidates.length, candidates: candidates.length, judged: judged.length, units: sum(projects),
@@ -256,14 +260,16 @@ function render(v, ind = '') {
   return Array.isArray(v) ? `[\n${items.join(',\n')}\n${ind}]` : `{\n${items.join(',\n')}\n${ind}}`;
 }
 
-const loadTables = (dir = path.join(ROOT, TABLES)) => Object.fromEntries(NEEDED.map((t) => [t, JSON.parse(fs.readFileSync(path.join(dir, `${t}.json`), 'utf8')).rows]));
+const loadTables = (dir = path.join(ROOT, tablesOf(P.latestMonth()))) => Object.fromEntries(NEEDED.map((t) => [t, JSON.parse(fs.readFileSync(path.join(dir, `${t}.json`), 'utf8')).rows]));
 /* 판정 이력 행(파일이 없으면 빈 배열) */
 const loadHistory = (root = ROOT) => { const f = path.join(root, HISTORY); return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')).rows : []; };
 
 module.exports = { boardFromLedger, mapIndexFromLedger, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, endOf, lastDay, addMonths, OUT, HISTORY };
 
 if (require.main === module) {
-  const board = boardFromLedger(loadTables(), { history: loadHistory() });
+  const i = process.argv.indexOf('--month'), month = i > 0 ? process.argv[i + 1] : P.latestMonth();
+  const tables = loadTables(path.join(ROOT, tablesOf(month)));
+  const board = boardFromLedger(tables, { referenceDate: P.referenceDateOf(P.ledgerDir(month)), observedMonth: month, history: loadHistory() });
   const out = path.join(ROOT, OUT);
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, `${render(board)}\n`);
@@ -271,7 +277,7 @@ if (require.main === module) {
   console.log(`판정 ${board.scope.judged}: 정상 ${j.ok.projects} · 주의 ${j.caution.projects} · 지연 ${j.delay.projects} (제외 ${j.excluded.projects})`);
   console.log(`실제 날짜 ${board.actualThrough}까지(${board.actualSource})`);
   console.log(`${OUT} 를 썼다 (${fs.statSync(out).size} 바이트)`);
-  const index = mapIndexFromLedger(loadTables(), { referenceDate: board.referenceDate, observedMonth: board.observedMonth });
+  const index = mapIndexFromLedger(tables, { referenceDate: board.referenceDate, observedMonth: board.observedMonth });
   const mapOut = path.join(ROOT, MAP_OUT);
   fs.writeFileSync(mapOut, renderMap(index));
   const rows = Object.values(index.bySgg).flat();

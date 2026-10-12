@@ -27,6 +27,7 @@
 | 보관 원천 | 갱신 | 호출·크기 |
 |---|---|---|
 | 건축HUB 기본개요 스냅샷 → events | 매달 | 지금 10호출·844건·209행 / 전국 약 2.1만 호출(키 1개 2~3일) |
+| 건축HUB 기본개요 OpenAPI → 대용량 후보의 일정·세대수 덮어쓰기(열린 달, `hub-api-refresh.js`) | 주 1회(월 06:00, `ledger-refresh.yml`) | 법정동 약 1,600곳·약 1,700호출, 원본은 Storage 만 |
 | LH 준공예정 → projects·events·units | 연 1회(차기 2027-02-04) | 351행·29 KiB |
 | 통계누리 → stat_facts | 매달 공표 | 4표 65,878행·약 2 MB |
 | 법정동코드 → areas | 연 1회·개편 때 | 53,387행·2,471,662 B(존재 20,560) |
@@ -46,7 +47,7 @@
 - **키**: publishable 키 = anon 역할(RLS 적용), secret 키 = service_role(BYPASSRLS, 그래도 GRANT·트리거는 적용). 웹앱(Vercel)에는 `NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 두 개만 둔다. `SUPABASE_SECRET_KEY`·`SUPABASE_DB_URL` 은 적재하는 곳(로컬 `.env.local`, 나중에 GitHub Actions 비밀값)에만 둔다.
 - **RLS**: `ledger` 모든 표 `enable row level security`. anon·authenticated 는 `months`·`board_snapshots`·`map_snapshots` 에만 `for select using (true)` 정책(쓰기 정책 없음 → 쓰기 불가). 나머지 18표와 `stage_rows` 는 GRANT·정책 모두 없다(2026-10-11 `_public_scope.sql` 로 회수 — 다시 GRANT 해도 RLS 가 0행으로 막는 이중 잠금).
 - 발행이 한 트랜잭션이라 "반쯤 올라간 판"은 읽는 쪽에 보이지 않는다. 그래서 공개 조건을 행마다 두지 않고, `api` 뷰가 **현재 판**(최근 발행 실행이 쓴 행)만 고른다. events·board_snapshots 는 모든 달을 보인다.
-- **역할별 시간 제한(실측)**: anon 3초, authenticated 8초, authenticator 8초, 그리고 authenticator 에 `safeupdate` 가 걸려 있다(WHERE 없는 UPDATE·DELETE 거부). 발행 RPC 는 8초 안에 끝나야 하고 지우기 문에는 늘 WHERE 를 둔다.
+- **역할별 시간 제한(실측)**: anon 3초, authenticated 8초, authenticator 8초, 그리고 authenticator 에 `safeupdate` 가 걸려 있다(WHERE 없는 UPDATE·DELETE 거부). 적재는 2026-10-11 부터 DB 직접 연결이라 이 제한을 받지 않는다(9절 3번). 지우기 문에는 늘 WHERE 를 둔다.
 - **나중의 기관 입력 역할**: Supabase Auth 사용자 + `app_metadata.agency_id`(사용자가 고칠 수 없는 쪽). `intake.agency_rows(agency_id, tbl, row jsonb, submitted_by default auth.uid(), status)` 에 `with check (agency_id = auth.jwt()->'app_metadata'->>'agency_id')` 로 넣기만 하고, 원장 반영은 파이프라인이 `import-agency.js` 규칙(검증·거부 사유)으로 한다. 기관은 원장 표에 직접 쓰지 않는다. 지금은 만들지 않는다.
 
 ## 2. 표별 대응
@@ -174,7 +175,7 @@ ledger-raw/
 
 ## 6. 적재·검증 절차
 
-새 도구 `tools/ledger/load.js --month YYYY-MM [--dry-run]`(만들 때 승인). secret 키로 Data API 만 쓴다(새 패키지 없음).
+새 도구 `tools/ledger/load.js --month YYYY-MM [--dry-run]`(만들 때 승인). secret 키로 Data API 만 쓴다(새 패키지 없음). → 2026-10-11 부터 3~5단계는 DB 직접 연결(9절 3번 C, 부록 C).
 
 | 단계 | 하는 일 | 확인 |
 |---|---|---|
@@ -226,7 +227,7 @@ ledger-raw/
 |---|---|---|---|---|
 | 1 | 정본은 어디인가 | A 전환기엔 저장소 파일이 정본, DB 는 적재한 사본 · B 지금부터 DB 가 정본 | **A** | 2026-10-10 결정(③ DB 전환은 기관 입력 쓰기 화면 때)과 맞고, 검증·시험·커밋 흐름이 그대로다. 대가: 같은 자료가 두 곳. 기관 입력 경로를 열 때 B 로 바꾼다 |
 | 2 | 이력을 어떻게 남기나 | A 현재 판 + events 달별 + 보드 JSON 달별 + 표 묶음 Storage · B 모든 표를 달마다 한 벌 · C 모든 표 유효 구간(SCD2) | **A** | 화면이 묻는 이력은 events 와 판정 추이뿐이다. B 는 areas 2만 행을 매달 복제, C 는 적재·조회가 복잡. 대가: 지난 달의 사업·물량 표를 SQL 로 바로 못 묻고 Storage 묶음을 풀어야 한다 |
-| 3 | 노출·적재 경로 | A `api` 뷰만 공개 + secret 키로 스테이징 → 발행 RPC · B `ledger` 를 바로 노출 + RLS · C DB 연결 문자열로 직접 적재(pg 패키지) | **A** | 공개 면이 뷰로 고정되고 적재가 한 트랜잭션이며 새 패키지가 없다. 대가: RPC 가 8초 제한 안이어야 한다(지금 규모는 충분, 전국이면 실측). 넘으면 C 로 |
+| 3 | 노출·적재 경로 | A `api` 뷰만 공개 + secret 키로 스테이징 → 발행 RPC · B `ledger` 를 바로 노출 + RLS · C DB 연결 문자열로 직접 적재(pg 패키지) | **C — 2026-10-11 A→C 전환**(공개 면은 A 의 `api` 뷰 그대로) | 처음엔 A(새 패키지 없음). 전국 원장에서 `publish_run` 이 6.8초로 authenticator 의 8초 제한에 가까워져 적재만 C 로 바꿨다: `SUPABASE_DB_URL`(풀러 세션 모드, postgres 역할)로 연결해 `statement_timeout` 120s 를 명시하고 같은 `ledger_admin` 함수를 SQL 로 부른다. 대가: devDependency `pg` 하나, 적재하는 곳에 연결 문자열 비밀값이 하나 더. Storage 업로드·verify 는 그대로 secret 키 REST(부록 C) |
 | 4 | 화면이 언제 읽나 | A 서버 fetch + ISR(1시간, publishable 키) · B 빌드 전에 DB → JSON 파일로 받아 지금처럼 import | **A** | 배포 없이 새 판이 반영되고 비밀 키가 웹앱에 없다. 대가: 빌드·재확인이 DB 에 의존 → 전환기에는 JSON 대체값을 남긴다. B 는 가장 단순하지만 매달 배포해야 한다 |
 | 5 | LH 후보 273건을 지금 싣나 | A 싣고, 발급 때 같은 id 확정 · B 발급 뒤에만 싣기 | **A** | 지금 보드 호수의 77%(148,389호)와 향후 12개월이 후보에서 온다. 대가: 발급 도구가 후보 id 를 그대로 써야 한다(`scripts/issue-projects.js` 보완) |
 | 6 | 요금제 | A 무료 유지 · B 유료 | **A** | 지금 약 20 MB/500 MB. 대가: **7일 동안 활동이 없으면 일시정지**된다. 4-A 의 시간당 재확인이 방문이 있는 동안 활동을 만들고, 멈추면 대시보드에서 복원한다. 전국 수집(8절 6번)을 시작하거나 400 MB 에 가까워지면 B |
@@ -725,3 +726,19 @@ revoke execute on all functions in schema ledger_admin from anon, authenticated,
 - 적재 `node tools/ledger/supabase-load.js --month 2026-10`: 지도 색인 파일 = `mapIndexFromLedger(표)` 대조(다르면 호출 전에 중단) → … → `publish_run` → `publish_map` 251행. run 12. 시간(ms): stage 7,429 · **publish 6,965**(전과 같음) · **map 613**.
 - 확인 `node tools/ledger/supabase-verify.js --month 2026-10`: 저장 지도 색인(anon `api.map` 그 달 251행 · 사업 3,845) = `mapIndexFromLedger(DB 표)` = `data/board/ledger-map.json`, anon `api.board`·`api.map` 200 · 나머지 16뷰 401, anon `rpc/publish_map` 401. 모두 통과.
 - 화면 쪽 읽기: `GET /api/v1/ledger?sgg=` (`handlers/v1/ledger.js`, `schemas/api/openapi.json`) — 공개용 키로 최신 달 → 그 달 시군구 행, 성공만 3600초 캐시(태그 `ledger-board`, 보드와 함께 비움), 실패하면 `data/board/ledger-map.json`. jsonb 는 행 안 키 순서를 바꾼다(값은 같다).
+
+### 직접 연결 적재 (2026-10-11, 9절 3번 A→C)
+
+- 까닭: run 13(REST)에서 `publish_run` 6.8초 — authenticator·authenticated 의 `statement_timeout` 8초에 가깝다. 실측: postgres 역할은 역할 설정에 `statement_timeout` 이 없고 서버 기본값 2분(`reset_val` 120000), anon 3s · authenticated 8s · authenticator 8s(+ `lock_timeout` 8s, `safeupdate`).
+- `tools/ledger/supabase-load.js`: `SUPABASE_DB_URL`(풀러 세션 모드 5432, postgres) 연결 하나에서 `set statement_timeout = '120s'` → `begin_run`(이것만 따로 커밋 = 실행 기록) → `begin` → `stage_rows` 묶음 INSERT(`jsonb_to_recordset`, 약 1 MB씩 19번) → `publish_run` → `publish_map`(행 수 대조) → `commit` → Storage(REST, secret 키) → `record_files`. 함수·규칙은 마이그레이션 그대로. 스테이징~지도가 한 트랜잭션이라 어디서 실패해도 발행되지 않는다(실행은 `staged` 로 남고 다음 `begin_run` 이 failed 로 돌린다). `publish_map` 도 같은 트랜잭션에 들어가 보드·지도가 함께 바뀐다. 오류 문장의 연결 문자열·사용자·호스트·비밀번호는 `***` 로 가린다. devDependency `pg` 8.23.0.
+- 적재 `--month 2026-10`: run 14 published · run 13 superseded, 지도 시군구 251, 원본 59개, `stage_rows` 0, 2026-10 열림. verify 모두 통과.
+
+| 단계(ms) | run 13 (REST) | run 14 (pg 직접) |
+|---|---|---|
+| begin(연결 포함) | — | 1,865 |
+| stage | 7,500 | 3,554 |
+| publish | 6,800 (8초 제한) | 6,528 (120초 제한) |
+| map | 900 | 343 (commit 포함) |
+| raw(Storage) | 26,000 | 28,542 |
+
+- 시험: `tests/js/supabase-load.test.cjs` 를 가짜 pg 로(호출 순서·인자, 스테이징·`publish_run`·지도 행 수 실패 시 rollback·commit 없음·원본 안 올림, 연결 실패 오류에 비밀값 없음, `redact`).

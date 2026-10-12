@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /* 전국 원천 수집(원장 변환 없음): 마이홈포털 공공주택 모집공고(HWSPR02) · LH 분양임대공고문(15058530)과 공급정보(15056765).
-   결과: schemas/ledger-2026-10/raw/<source>/ 아래 원본 JSON + manifest.json. 키(DATA_GO_KR_KEY, .env.local)는 어디에도 쓰지 않는다.
+   결과: schemas/ledger-<달>/raw/<source>/ 아래 원본 JSON + manifest.json. 키(DATA_GO_KR_KEY, 환경변수 또는 .env.local)는 어디에도 쓰지 않는다.
    사용: node tools/ledger/collect-national.js --month 2026-10 --source myhome|lh-notice|all [--to 2026-10-11] [--from 2024-01-01] [--supply-cap 600] [--reuse-list]
    한도: 호출 사이 110 ms, 동시 4건 이하(여기서는 순차), 초당 한도(PER_SECOND)는 25 초 쉬고 다시. 호출 총수는 manifest 의 calls.
    시험: tests/js/collect-national.test.cjs (순수 함수만) */
@@ -54,10 +54,11 @@ function manifest({ source, endpoint, params, calls, pages, records, fetchedAt, 
 }
 
 /* ---- 실행부 ---- */
-function loadKey() {
-  const t = fs.readFileSync(path.join(ROOT, '.env.local'), 'utf8').match(/^DATA_GO_KR_KEY=(.*)$/m);
+function loadKey() {   // 환경변수(GitHub Actions 비밀값) 먼저, 없으면 .env.local
+  const file = path.join(ROOT, '.env.local');
+  const t = process.env.DATA_GO_KR_KEY ?? (fs.existsSync(file) ? fs.readFileSync(file, 'utf8').match(/^DATA_GO_KR_KEY=(.*)$/m)?.[1] : null);
   if (!t) throw new Error('DATA_GO_KR_KEY 없음');
-  return t[1].replace(/^["']|["']$/g, '').split(',')[0].trim();
+  return t.replace(/^["']|["']$/g, '').split(',')[0].trim();
 }
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 function makeCaller() {
