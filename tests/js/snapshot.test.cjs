@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const Ajv2020 = require('ajv/dist/2020');
-const { eventsFromHub, matchRefs, bjdCodesOf } = require('../../tools/ledger/snapshot');
+const { eventsFromHub, matchRefs, bjdCodesOf, fetchBjdRetry } = require('../../tools/ledger/snapshot');
 
 const ROOT = path.join(__dirname, '..', '..');
 const MONTH = '2026-10';
@@ -83,4 +83,30 @@ test('정밀도: YYYYMMDD → event_date, YYYYMM → event_month, YYYY → event
 test('같은 원본으로 두 번 만들면 결과가 같다', () => {
   assert.deepEqual(eventsFromHub(raw, registry, MONTH), rows);
   assert.equal(JSON.stringify(eventsFromHub(raw, registry, MONTH)), JSON.stringify(rows));
+});
+
+/* 법정동 재시도: 네트워크 없이 가짜 doFetch·sleep·pool 로 본다 */
+const EMPTY = { ok: true, status: 200, text: async () => '' };
+const OK = { ok: true, status: 200, text: async () => JSON.stringify({ response: { header: { resultCode: '00' }, body: { totalCount: 1, items: { item: [{ mgmHsrgstPk: 1 }] } } } }) };
+const fakePool = { run: (purpose, service, fn) => fn('K') };
+
+test('끝내 실패하던 법정동이 쉬었다 다시 불러 성공한다(첫 쪽 빈 본문 4번 뒤 정상)', async () => {
+  let n = 0;
+  const doFetch = async () => (n++ < 4 ? EMPTY : OK);
+  const sleeps = [];
+  const sleep = async (ms) => { sleeps.push(ms); };
+  const { pages } = await fetchBjdRetry('1111010100', { pool: fakePool, doFetch, sleep }, { log: () => {} });
+  assert.equal(pages.length, 1);
+  assert.equal(pages[0].items.length, 1);
+  assert.equal(sleeps.filter((ms) => ms === 10000).length, 1);
+});
+
+test('늘 빈 본문이면 4회(각 4번 호출)를 거쳐 오류를 던지고, 10·20·30초 쉰다', async () => {
+  let calls = 0;
+  const doFetch = async () => { calls++; return EMPTY; };
+  const sleeps = [];
+  const sleep = async (ms) => { sleeps.push(ms); };
+  await assert.rejects(fetchBjdRetry('1111010100', { pool: fakePool, doFetch, sleep }, { log: () => {} }), /빈 본문/);
+  assert.equal(calls, 16);
+  assert.deepEqual(sleeps.filter((ms) => ms >= 10000), [10000, 20000, 30000]);
 });

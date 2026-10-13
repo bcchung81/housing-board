@@ -8,7 +8,7 @@
    실행: node tools/ledger/snapshot.js --month 2026-10 [--offline]
      법정동(레지스트리 건축HUB 사업의 bjdCodes)마다 모든 쪽을 불러 schemas/ledger-<달>/raw/hub/<법정동10>.json 에 원본(쪽별 items, 인증키 없음)을 남기고
      schemas/ledger-<달>/snapshot/hub-events.json · manifest.json 을 쓴다. --offline 은 저장된 원본만 읽어 같은 결과를 낸다.
-     찍는 달은 한국시간 이번 달이어야 한다(지난 달 파일은 다시 쓰지 않는다). 호출·키 풀·재시도는 handlers/v1/permits.js 의 hubRecords 와 같다.
+     찍는 달은 한국시간 이번 달이어야 한다(지난 달 파일은 다시 쓰지 않는다). 호출·키 풀·재시도는 handlers/v1/permits.js 의 hubRecords 와 같다. 법정동 하나가 끝내 실패하면 10·20·30초 쉬고 다시 부른다(fetchBjdRetry).
    시험: tests/js/snapshot.test.cjs */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -20,6 +20,7 @@ const HUB_URL = 'https://apis.data.go.kr/1613000/HsPmsHubService/getHpBasisOulnI
 const PAGE_ROWS = 100;
 const MAX_PAGES = 30;
 const FETCH_TIMEOUT_MS = 10000;
+const RETRY_WAITS_MS = [10000, 20000, 30000];   // 법정동 하나가 끝내 실패하면 쉬었다가 다시(GitHub 서버에서 빈 본문·5xx 가 몇 초씩 이어진다 — 2026-10-13 ledger-refresh 실측)
 /* 이벤트 → 기본개요 필드와 여러 기록 중 고르는 쪽(lib/permits.js aggregate 와 같음) */
 const FIELDS = [
   ['PERMIT', 'ACTUAL', 'apprvDay', 'last'],
@@ -93,6 +94,18 @@ async function fetchBjd(bjd, { pool, doFetch, sleep, maxPages = MAX_PAGES }) {
   return { pages };
 }
 
+/* fetchBjd 가 실패하면 waits 만큼 쉬었다가 다시 부른다. 끝내 실패하면 마지막 오류를 던진다(4곳뿐이고 사업 일정 행이 빠지면 안 되므로 실패를 허용하지 않는다).
+   hub-api-refresh.js 는 실패한 법정동을 따로 다시 부르므로 fetchBjd 자체에는 넣지 않는다 */
+async function fetchBjdRetry(bjd, opts, { waits = RETRY_WAITS_MS, log = console.log } = {}) {
+  for (let i = 0; ; i++) {
+    try { return await fetchBjd(bjd, opts); } catch (e) {
+      if (i >= waits.length) throw e;
+      log(`${bjd}: ${e.message} — ${waits[i] / 1000}초 쉬고 다시(${i + 1}/${waits.length})`);
+      await opts.sleep(waits[i]);
+    }
+  }
+}
+
 async function main(argv) {
   const at = argv.indexOf('--month'), month = at >= 0 ? argv[at + 1] : null, offline = argv.includes('--offline');
   if (!/^\d{4}-\d{2}$/.test(month || '')) throw new Error('--month YYYY-MM 이 필요하다');
@@ -112,7 +125,7 @@ async function main(argv) {
     for (const bjd of bjds) {
       let calls = 0;
       const doFetch = (...a) => { calls++; return fetch(...a); };
-      const fetched_at = new Date().toISOString(), { pages } = await fetchBjd(bjd, { pool, doFetch, sleep });
+      const fetched_at = new Date().toISOString(), { pages } = await fetchBjdRetry(bjd, { pool, doFetch, sleep });
       // 인증키가 든 요청 주소는 남기지 않는다: 엔드포인트와 키를 뺀 조회 조건만
       files[bjd] = { source_ref: SOURCE_REF, endpoint: HUB_URL, params: { sigunguCd: bjd.slice(0, 5), bjdongCd: bjd.slice(5, 10), numOfRows: String(PAGE_ROWS), _type: 'json' }, fetched_at, calls, pages };
       fs.mkdirSync(path.dirname(rawFile(month, bjd)), { recursive: true });
@@ -135,6 +148,6 @@ async function main(argv) {
   console.log(`호출 ${manifest.calls} · 쪽 ${manifest.pages} · 기록 ${manifest.records} · 행 ${rows.length} · 관리번호 ${matched.length}/${manifest.refs}${missing.length ? ` (못 찾음 ${missing.map((m) => m.mgmHsrgstPk).join(', ')})` : ''}`);
 }
 
-module.exports = { eventsFromHub, matchRefs, overdueOf, bjdCodesOf, fetchBjd, SOURCE_REF, HUB_URL, PAGE_ROWS };
+module.exports = { eventsFromHub, matchRefs, overdueOf, bjdCodesOf, fetchBjd, fetchBjdRetry, SOURCE_REF, HUB_URL, PAGE_ROWS };
 
 if (require.main === module) main(process.argv.slice(2)).catch((e) => { console.error(`오류: ${e.message}`); process.exit(1); });
