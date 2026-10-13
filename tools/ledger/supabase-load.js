@@ -6,7 +6,8 @@
    ② board.js 로 그 달 보드 계산 → data/board/ledger-board.json 과 같아야 한다(기준일은 그 파일의 referenceDate)
    ③ ledger_admin.begin_run → run_id(닫힌 달이면 DB 가 거부). 이것만 먼저 커밋한다(실행 기록)
    ④~⑤' 한 트랜잭션: stage_rows 에 묶음(약 1 MB) INSERT(보드 JSON 은 tbl 'board') → ledger_admin.publish_run(표별 행 수가 기대와 다르면 거부)
-      → ledger_admin.publish_map(지도 색인 data/board/ledger-map.json = mapIndexFromLedger(표), ②에서 대조, 마이그레이션 *_map_snapshots.sql).
+      → ledger_admin.publish_map(지도 색인 data/board/ledger-map.json = mapIndexFromLedger(표), ②에서 대조, 마이그레이션 *_map_snapshots.sql)
+      → ledger_admin.publish_screens(화면 파일 넷 SCREEN_FILES 를 그대로, ②에서 모양만 확인, 마이그레이션 *_screen_snapshots.sql).
       어디서든 실패하면 되돌려 발행되지 않는다(실행은 'staged' 로 남고 다음 begin_run 이 failed 로 돌린다)
    ⑥ 원본(raw·snapshot·mappings·agency)과 16표 묶음(tables.tar.gz)을 Storage ledger-raw/<달>/ 에 덮어쓰기(같은 달 재실행 = 같은 내용) → record_files
    실행: node tools/ledger/supabase-load.js --month 2026-10 [--dry-run] [--skip-raw]
@@ -27,6 +28,13 @@ const CHUNK_BYTES = 1_000_000;
 const STATEMENT_TIMEOUT = '120s';   // 이 연결에서만. publish_run 실측은 부록 C
 const STAGE_SQL = 'insert into ledger_admin.stage_rows (run_id, tbl, seq, "row") select $1, x.tbl, x.seq, x."row" from jsonb_to_recordset($2::jsonb) as x(tbl text, seq integer, "row" jsonb)';
 const RAW_DIRS = ['raw', 'snapshot', 'mappings', 'agency'];   // raw/<원천>/… 은 <달>/<원천>/… 로(설계 5절)
+/* 화면 표시값(api.screens): 키 → 저장소 파일과 그 파일에 있어야 하는 필드(배열·객체) */
+const SCREEN_FILES = {
+  molit: { file: 'data/board/molit.json', arrays: ['months', 'sido'], objects: ['metrics'] },
+  lh: { file: 'data/board/lh-completion.json', arrays: ['blocks'], objects: [] },
+  sources: { file: 'data/board/sources.json', arrays: ['items'], objects: [] },
+  registry: { file: 'registry/projects.json', arrays: ['projects'], objects: [] },
+};
 
 function parseArgs(argv) {
   const o = { month: null, dryRun: false, skipRaw: false };
@@ -73,6 +81,20 @@ function checkMap(tables, fileMap, board) {
   const index = mapIndexFromLedger(tables, { referenceDate: board.referenceDate, observedMonth: board.observedMonth });
   if (!isDeepStrictEqual(index, fileMap)) throw new Error(`mapIndexFromLedger 결과가 ${MAP_OUT} 와 다르다(node tools/ledger/board.js 로 다시 만들고 확인)`);
   return index;
+}
+
+/* 화면 파일 넷을 읽고 모양만 확인한다(깊은 내용은 화면이 쓰는 그대로). → {키: 파일 내용} */
+function readScreens(root) {
+  const out = {};
+  for (const [key, { file, arrays, objects }] of Object.entries(SCREEN_FILES)) {
+    const v = JSON.parse(fs.readFileSync(path.join(root, file), 'utf8'));
+    const isObj = (x) => x !== null && typeof x === 'object' && !Array.isArray(x);
+    if (!isObj(v) || !arrays.every((k) => Array.isArray(v[k])) || !objects.every((k) => isObj(v[k]))) {
+      throw new Error(`${file} 모양이 다르다(배열 ${arrays.join('·')}${objects.length ? `, 객체 ${objects.join('·')}` : ''} 가 있어야 한다)`);
+    }
+    out[key] = v;
+  }
+  return out;
 }
 
 /* 스테이징 행: 표마다 파일 순서대로 seq 1… (= load_seq), 보드는 tbl 'board' seq 1 */
@@ -211,14 +233,15 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
   const fileBoard = JSON.parse(fs.readFileSync(boardFile, 'utf8'));
   const board = checkBoard(tables, fileBoard, month, loadHistory(root));
   const map = checkMap(tables, JSON.parse(fs.readFileSync(mapFile, 'utf8')), board);
+  const screens = readScreens(root);
   lap('board');
   const expected = expectedCounts(tables, board);
   const items = stageItems(tables, board);
   const chunks = chunkRows(items);
   const raws = skipRaw ? [] : rawFiles(dir, month);
-  const summary = { month, referenceDate: fileBoard.referenceDate, counts: expected, mapSgg: Object.keys(map.bySgg).length, chunks: chunks.length, raw: raws.length + (skipRaw ? 0 : 1), dryRun };
+  const summary = { month, referenceDate: fileBoard.referenceDate, counts: expected, mapSgg: Object.keys(map.bySgg).length, screens: Object.keys(screens).length, chunks: chunks.length, raw: raws.length + (skipRaw ? 0 : 1), dryRun };
   if (dryRun) {
-    log(`[dry-run] ${month}: 표 ${Object.keys(tables).length}개 · ${chunks.length}묶음 · 원본 ${summary.raw}개 — 호출 없음`);
+    log(`[dry-run] ${month}: 표 ${Object.keys(tables).length}개 · ${chunks.length}묶음 · 지도 시군구 ${summary.mapSgg} · 화면 ${summary.screens} · 원본 ${summary.raw}개 — 호출 없음`);
     return { ...summary, timings };
   }
 
@@ -226,7 +249,7 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
   if (!dbUrl) throw new Error('SUPABASE_DB_URL 이 필요하다(.env.local)');
   const api = client({ url: env.NEXT_PUBLIC_SUPABASE_URL, key: env.SUPABASE_SECRET_KEY, fetch });
   const one = async (db, sql, params) => (await db.query(sql, params)).rows[0].v;
-  let db, runId, published, mapRows;
+  let db, runId, published, mapRows, screenRows;
   const files = [];
   try {
     db = await connect(dbUrl);
@@ -242,6 +265,8 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
       lap('publish');
       mapRows = Number(await one(db, 'select ledger_admin.publish_map($1, $2::jsonb) as v', [runId, JSON.stringify(map.bySgg)]));
       if (mapRows !== summary.mapSgg) throw new Error(`publish_map 이 ${mapRows}행을 넣었다(기대 ${summary.mapSgg})`);
+      screenRows = Number(await one(db, 'select ledger_admin.publish_screens($1, $2::jsonb) as v', [runId, JSON.stringify(screens)]));
+      if (screenRows !== summary.screens) throw new Error(`publish_screens 가 ${screenRows}행을 넣었다(기대 ${summary.screens})`);
       await db.query('commit');
       lap('map');
     } catch (e) {
@@ -266,8 +291,8 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
     if (db) await db.end().catch(() => {});
   }
   lap('raw');
-  const result = { ...summary, runId, published, mapRows, files, timings };
-  log(`${month} 판 발행: run ${runId} · ${Object.entries(published).map(([k, v]) => `${k} ${v}`).join(' · ')} · 지도 시군구 ${mapRows}`);
+  const result = { ...summary, runId, published, mapRows, screenRows, files, timings };
+  log(`${month} 판 발행: run ${runId} · ${Object.entries(published).map(([k, v]) => `${k} ${v}`).join(' · ')} · 지도 시군구 ${mapRows} · 화면 ${screenRows}`);
   log(`원본 ${files.length}개(${files.reduce((s, f) => s + f.bytes, 0).toLocaleString()} B) · 시간(ms) ${Object.entries(result.timings).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
   await revalidateBoard(env, log);
   return result;
@@ -285,7 +310,7 @@ async function revalidateBoard(env, log, fetch = globalThis.fetch) {
   }
 }
 
-module.exports = { parseArgs, readEnv, readTables, checkBoard, checkMap, stageItems, expectedCounts, chunkRows, safeKey, rawFiles, tarball, client, pgConnect, redact, load, revalidateBoard, BUCKET, CHUNK_BYTES, STAGE_SQL, STATEMENT_TIMEOUT };
+module.exports = { parseArgs, readEnv, readTables, checkBoard, checkMap, readScreens, stageItems, expectedCounts, chunkRows, safeKey, rawFiles, tarball, client, pgConnect, redact, load, revalidateBoard, BUCKET, CHUNK_BYTES, SCREEN_FILES, STAGE_SQL, STATEMENT_TIMEOUT };
 
 if (require.main === module) {
   load(parseArgs(process.argv.slice(2))).catch((e) => { console.error(e.message); process.exit(1); });

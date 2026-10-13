@@ -46,6 +46,7 @@
 - **왜 public 이 아닌가(실측)**: 이 프로젝트의 `public` 기본 권한(`pg_default_acl`)은 새 표에 anon·authenticated 에 `arwdDxtm`(쓰기 포함 전부)를 준다. RLS 자동 켜기 이벤트 트리거(`ensure_rls` → `public.rls_auto_enable`)는 `public` 에만 작동한다. 그래서 `ledger` 에 두고 **RLS 를 마이그레이션에서 직접 켜고 GRANT 를 명시**한다.
 - **키**: publishable 키 = anon 역할(RLS 적용), secret 키 = service_role(BYPASSRLS, 그래도 GRANT·트리거는 적용). 웹앱(Vercel)에는 `NEXT_PUBLIC_SUPABASE_URL`·`NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` 두 개만 둔다. `SUPABASE_SECRET_KEY`·`SUPABASE_DB_URL` 은 적재하는 곳(로컬 `.env.local`, 나중에 GitHub Actions 비밀값)에만 둔다.
 - **RLS**: `ledger` 모든 표 `enable row level security`. anon·authenticated 는 `months`·`board_snapshots`·`map_snapshots` 에만 `for select using (true)` 정책(쓰기 정책 없음 → 쓰기 불가). 나머지 18표와 `stage_rows` 는 GRANT·정책 모두 없다(2026-10-11 `_public_scope.sql` 로 회수 — 다시 GRANT 해도 RLS 가 0행으로 막는 이중 잠금).
+- **화면 표시값(2026-10-13, `_screen_snapshots.sql`)**: 화면이 빌드 때 묶은 JSON 대신 Supabase 를 읽도록 `ledger.screen_snapshots`(달·키 `molit`·`lh`·`sources`·`registry` 마다 파일 내용 하나)와 `api.screens(key, month, reference_date, run_id, payload)`(가장 최근 달만)를 둔다. 공개 범위는 같은 규칙 — 화면이 이미 보이는 값(`data/board/molit.json`·`lh-completion.json`·`sources.json`·`registry/projects.json`)만 anon `select`, 원장 행은 그대로 비공개. 쓰기는 `ledger_admin.publish_screens`(service_role, `publish_map` 뒤 같은 트랜잭션).
 - 발행이 한 트랜잭션이라 "반쯤 올라간 판"은 읽는 쪽에 보이지 않는다. 그래서 공개 조건을 행마다 두지 않고, `api` 뷰가 **현재 판**(최근 발행 실행이 쓴 행)만 고른다. events·board_snapshots 는 모든 달을 보인다.
 - **역할별 시간 제한(실측)**: anon 3초, authenticated 8초, authenticator 8초, 그리고 authenticator 에 `safeupdate` 가 걸려 있다(WHERE 없는 UPDATE·DELETE 거부). 적재는 2026-10-11 부터 DB 직접 연결이라 이 제한을 받지 않는다(9절 3번). 지우기 문에는 늘 WHERE 를 둔다.
 - **나중의 기관 입력 역할**: Supabase Auth 사용자 + `app_metadata.agency_id`(사용자가 고칠 수 없는 쪽). `intake.agency_rows(agency_id, tbl, row jsonb, submitted_by default auth.uid(), status)` 에 `with check (agency_id = auth.jwt()->'app_metadata'->>'agency_id')` 로 넣기만 하고, 원장 반영은 파이프라인이 `import-agency.js` 규칙(검증·거부 사유)으로 한다. 기관은 원장 표에 직접 쓰지 않는다. 지금은 만들지 않는다.
@@ -96,6 +97,7 @@
 | events | 관측 달마다 행(`observed_month`) 누적. 지금 파일과 같다 | 당초 대비 지연·머문 기간은 관측 이력으로만 계산(데이터셋-스키마 3절) |
 | board_snapshots | 달마다 JSON 하나(`month` 기본 키) | 지연·주의 추이·보고자료가 달끼리 비교한다. 10,335 B/월 |
 | map_snapshots | 달·시군구마다 사업 행 배열 하나(`(month, sgg_code)` 기본 키), `board.js` 의 `mapIndexFromLedger`(= `data/board/ledger-map.json`) | 지도가 시군구 하나의 사업 단계·판정·다음 일정을 한 번에 읽는다(기획서 M7·M8). 판정은 보드와 같은 사업별 상태라 합계가 같다. 2026-10 판 251행·약 1 MB |
+| screen_snapshots | 달·화면 키마다 저장소 파일 하나 그대로(`(month, key)` 기본 키), `supabase-load.js` 의 `SCREEN_FILES` | 화면(국토부·LH 준공·데이터 원본·사업 레지스트리)이 배포 없이 적재만으로 바뀐다. `api.screens` 는 가장 최근 달만 보인다. 2026-10 판 4행·약 180 KB |
 | 월 판정 이력 | `data/board/judgment-history.json`(저장소) → 보드 JSON 의 `trend` 로 board_snapshots 에 함께 실린다. 2025-01~2026-09 는 건축HUB 과거 판 소급(`tools/ledger/trend.js`, 판 원본은 `ledger-raw/2026-10/hub-bulk-history/`, sha256 은 그 폴더 manifest.json), 2026-10 부터는 달마다 `trend.js --close` 로 관측 행을 붙인다 | 닫힌 달 보드는 고칠 수 없어서(가드) 지난 달 판정은 새 달 보드의 trend 로 옮겨 싣는다(2026-10-11) |
 | 그 밖의 원장 표 | 현재 판만. 지난 판은 `ledger-raw/{YYYY-MM}/tables.tar.gz` | 화면이 지난 판의 사업·물량을 다시 묻지 않는다. 지금 16표 묶음 gzip 298,835 B |
 | stat_facts | 원천의 달(`ym`)이 시간 축. 잠정치 개정은 덮어쓴다 | 원천 개정값이 정답이다. 개정 전 값은 Storage 원본에 남는다 |

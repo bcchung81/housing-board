@@ -10,7 +10,7 @@ import { Badge } from '../../../../components/ui/badge';
 import { Card } from '../../../../components/ui/card';
 import { DataGrid } from '../../../../components/ui/data-grid';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, lhOfMonth, lhUnits, ymDot } from '../../../../lib/board/calc';
-import { lh, molit } from '../../../../lib/board/data';
+import { getBoardData } from '../../../../lib/board/data';
 import { METRIC_STAGE } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
 import type { Col } from '../../../../lib/grid/spec';
@@ -21,10 +21,14 @@ const LH_COLS: Col[] = [{ key: 'district', label: '사업지구', kind: 'text', 
 type Props = { params: Promise<{ id: string }> };
 
 /* 월 상세: 그 달의 인허가·착공·분양·준공(시도별·시행주체별, 통계누리 실적)과 LH 준공 예정 블록. 실적이 있는 달과 LH 예정 달만 열린다. */
-const lhMonths = [...new Set(lh.blocks.map((b) => b.date.slice(0, 7)))].sort();
-const allMonths = [...new Set([...molit.months, ...lhMonths])].sort();
-export const dynamicParams = false;
-export const generateStaticParams = () => allMonths.map((id) => ({ id }));
+const monthsOf = (molit: { months: string[] }, lh: { blocks: { date: string }[] }) => {
+  const lhMonths = [...new Set(lh.blocks.map((b) => b.date.slice(0, 7)))].sort();
+  return [...new Set([...molit.months, ...lhMonths])].sort();
+};
+export const generateStaticParams = async () => {
+  const { molit, lh } = await getBoardData();
+  return monthsOf(molit, lh).map((id) => ({ id }));
+};
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
@@ -33,6 +37,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MonthPage({ params }: Props) {
   const { id: ym } = await params;
+  const { molit, lh } = await getBoardData();
+  const allMonths = monthsOf(molit, lh);
   if (!DETAILS.month.id.test(ym) || !allMonths.includes(ym)) notFound();
   const actual = molit.months.includes(ym);
   const blocks = lhOfMonth(lh, ym);

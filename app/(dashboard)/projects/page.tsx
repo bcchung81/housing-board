@@ -8,7 +8,7 @@ import { buttonVariants } from '../../../components/ui/button';
 import { Card, cardVariants } from '../../../components/ui/card';
 import { DataGrid } from '../../../components/ui/data-grid';
 import { sidoName } from '../../../lib/board/calc';
-import { SGG, molit, projects } from '../../../lib/board/data';
+import { SGG, getBoardData } from '../../../lib/board/data';
 import { STAGES, stageName } from '../../../lib/board/stages';
 
 type Props = { searchParams: Promise<{ stage?: string | string[]; sgg?: string | string[] }> };
@@ -17,6 +17,7 @@ type Props = { searchParams: Promise<{ stage?: string | string[]; sgg?: string |
    맞지 않는 값은 거르지 않는다. 시군구는 시도가 행정표준코드에 있으면 레지스트리에 없어도 받는다(사업 자료 없음 안내와 지도 단추). */
 async function filters(searchParams: Props['searchParams']) {
   const q = await searchParams;
+  const { molit } = await getBoardData();
   const stage = STAGES.find((s) => s.code === q.stage);
   const sgg = typeof q.sgg === 'string' && /^\d{5}$/.test(q.sgg) && sidoName(molit, q.sgg.slice(0, 2)) ? q.sgg : undefined;
   return { stage, sgg, label: [sgg && (SGG[sgg]?.name ?? `시군구 ${sgg}`), stage && `${stage.code} ${stage.name}`].filter(Boolean).join(' · ') };
@@ -38,6 +39,7 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 /* 사업(L2 목록): 사업 id 레지스트리의 사업. 5개 시군구뿐이라 '전국'이 아니다. */
 export default async function ProjectsPage({ searchParams }: Props) {
   const { stage, sgg, label } = await filters(searchParams);
+  const { molit, projects } = await getBoardData();
   const inSgg = sgg ? projects.filter((p) => p.sgg === sgg) : projects;
   const list = inSgg.filter((p) => !stage || p.stageCode === stage.code)
     .sort((a, b) => a.sgg.localeCompare(b.sgg) || b.stageCode.localeCompare(a.stageCode) || a.name.localeCompare(b.name, 'ko'));

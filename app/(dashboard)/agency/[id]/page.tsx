@@ -13,13 +13,12 @@ import { DataGrid } from '../../../../components/ui/data-grid';
 import { Prov } from '../../../../components/ui';
 import { NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, ymDot, ytd } from '../../../../lib/board/calc';
 import { AGENCIES } from '../../../../lib/board/agencies';
-import { lh, molit, sources } from '../../../../lib/board/data';
+import { getBoardData } from '../../../../lib/board/data';
 import { METRIC_STAGE } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
 import type { Col } from '../../../../lib/grid/spec';
 
 type Props = { params: Promise<{ id: string }> };
-export const dynamicParams = false;
 export const generateStaticParams = () => AGENCIES.map((a) => ({ id: a.id }));
 const KS = [['permit', '인허가'], ['start', '착공'], ['complete', '준공']] as const;
 const YEAR_COLS: Col[] = [{ key: 'y', label: '연도', kind: 'text' }, { key: 'n', label: '블록' }, { key: 'units', label: '세대수' }];
@@ -32,6 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function AgencyDetail({ params }: Props) {
   const { id } = await params;
+  const { lh, molit, sources } = await getBoardData();
   const a = DETAILS.agency.id.test(id) ? AGENCIES.find((x) => x.id === id) : undefined;
   if (!a) notFound();
   const crumbs = [{ label: '종합상황판', href: '/' }, { label: '공급 실적', href: '/area' }, { label: '시행주체별', href: '/agency' }, { label: a.name }];

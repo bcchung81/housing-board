@@ -2,7 +2,7 @@
    ① 중심은 사업 원장과 월별 일정 기록(원장 단계 분포 막대 + 일정 기록 0 막대) ② 보관·혼합·실시간 비율 막대 ③ 신호판은 시간이 지나야 열린다(시간축 세 점).
    막대 색은 뜻을 따르고(단계 = components/charts/palette.ts 와 같은 지표 색, 갈래 = 보관 주색·실시간 청록), 값과 이름은 본문 색 글자로 함께 적는다. */
 import type { ReactNode } from 'react';
-import { projects } from '../../lib/board/data';
+import { getBoardData } from '../../lib/board/data';
 import { stageName } from '../../lib/board/stages';
 import { ITEMS, MODE_LABEL, SIGNAL_NOTE, TIMELINE, type Mode } from '../../lib/board/pipeline';
 import { MODE_TONE } from './Flow';
@@ -34,7 +34,8 @@ function Takeaway({ no, title, children, note }: { no: string; title: ReactNode;
   );
 }
 
-export default function Summary() {
+export default async function Summary() {
+  const { projects } = await getBoardData();
   const byStage = ['01', '02', '03', '04', '05', '06'].map((c) => ({ key: c, n: projects.filter((p) => p.stageCode === c).length, fill: STAGE_TONE[c] })).filter((s) => s.n > 0);
   const stageCodes = ['01', '02', '03', '04', '05', '06'];
   const noProject = stageCodes.filter((c) => !byStage.some((s) => s.key === c));

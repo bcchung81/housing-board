@@ -10,7 +10,7 @@ import { DataGrid } from '../../../components/ui/data-grid';
 import StageKpis from '../../../components/StageKpis';
 import { Prov } from '../../../components/ui';
 import { METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, valueAt, ymDot, ytd } from '../../../lib/board/calc';
-import { molit } from '../../../lib/board/data';
+import { getBoardData } from '../../../lib/board/data';
 import { METRIC_STAGE } from '../../../lib/board/stages';
 import type { Col, Row } from '../../../lib/grid/spec';
 
@@ -20,7 +20,8 @@ const LABEL = { permit: '인허가', start: '착공', complete: '준공', sale: 
 
 /* 공급 실적 · 시도별(L1 목록, 2026-10-10 메뉴 통합 전 '지역별'): 시도 16곳의 최근 달과 연누계, 전국 월별 흐름. 시군구 단위 실적 통계는 없다(통계누리는 시도 단위) —
    사업 자료가 있는 시군구는 사업 목록의 거르기(/projects?sgg=)로 간다. */
-export default function AreaIndex() {
+export default async function AreaIndex() {
+  const { molit } = await getBoardData();
   const last = lastMonth(molit), year = last.slice(0, 4);
   const lines = METRICS.map((k) => ({ key: k, label: LABEL[k], color: METRIC_COLOR[k], values: seriesOf(molit, k, NATION).total }));
   const upto = `${year}년 1~${Number(last.slice(5))}월 누계`;

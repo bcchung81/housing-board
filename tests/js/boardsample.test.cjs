@@ -348,8 +348,8 @@ test('향후 12개월 패널은 원장의 준공 예정(upcoming, 2026-10부터 
 
 test('종합상황판은 실데이터를 data/board 에서만 읽는다: 월별 실적(molit), 원장 집계(ledger), 원천 수(sources)', () => {
   const page = fs.readFileSync(path.join(__dirname, '../../app/(dashboard)/page.tsx'), 'utf8');
-  assert.match(fs.readFileSync(path.join(__dirname, '../../lib/board/data.ts'), 'utf8'), /import ledgerJson from '\.\.\/\.\.\/data\/board\/ledger-board\.json';/);
-  assert.match(page, /^    ledger: src\.board,$/m);
+  assert.match(fs.readFileSync(path.join(__dirname, '../../lib/board/ledger-source.ts'), 'utf8'), /import ledgerBundled from '\.\.\/\.\.\/data\/board\/ledger-board\.json';/);
+  assert.match(page, /^    ledger,$/m);
   assert.match(page, /sido: Object\.fromEntries\(molit\.sido\.map/);
   assert.match(page, /sourceCount: sources\.items\.length/);
   assert.match(realRow, /seriesOf\(molit/);

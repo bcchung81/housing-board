@@ -5,12 +5,13 @@ import StageLegend from '../charts/StageLegend';
 import MonthLines from '../charts/MonthLines';
 import { METRIC_COLOR } from '../charts/palette';
 import { METRICS, NATION, isProvisional, lastMonth, monthLabel, seriesOf } from '../../lib/board/calc';
-import { molit } from '../../lib/board/data';
+import { getBoardData } from '../../lib/board/data';
 import { pacts, phead, phgroup, ptitle } from './styles';
 
 const LABEL = { permit: '인허가', start: '착공', complete: '준공', sale: '분양' } as const;
 
-export default function RealPanels() {
+export default async function RealPanels() {
+  const { molit } = await getBoardData();
   const last = lastMonth(molit);
   const lines = METRICS.map((k) => ({ key: k, label: LABEL[k], color: METRIC_COLOR[k], values: seriesOf(molit, k, NATION).total }));
   return (

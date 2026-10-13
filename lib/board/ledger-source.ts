@@ -1,6 +1,8 @@
 import { unstable_cache } from 'next/cache';
-import { ledger as ledgerJson } from './data';
+import ledgerBundled from '../../data/board/ledger-board.json';
 import type { LedgerBoard } from './types';
+
+const ledgerJson = ledgerBundled as unknown as LedgerBoard;
 
 /* 종합상황판의 사업 원장 집계 — Supabase 보기 api.board(읽기 전용)를 공개용 키로 서버에서 읽는다(성공한 결과만 3600초 캐시, 태그 ledger-board).
    환경변수가 없거나 요청·모양 검사가 실패하면 data/board/ledger-board.json 으로 대체한다(전환 기간). */

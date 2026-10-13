@@ -15,9 +15,9 @@ const lh = require('../../data/board/lh-completion.json');
 const { MENU } = require('../../lib/shell/menu.ts');
 
 test('앞으로를 세는 기준 달은 종합상황판의 향후 12개월(원장 upcoming)과 같은 원장 관측 달이다(월 갱신을 따라간다)', () => {
-  assert.match(fs.readFileSync(path.join(__dirname, '../../lib/board/data.ts'), 'utf8'), /export const AHEAD_FROM = ledger\.observedMonth;/);
+  assert.match(fs.readFileSync(path.join(__dirname, '../../lib/board/data.ts'), 'utf8'), /AHEAD_FROM: l\.board\.observedMonth/);
   assert.equal(require('../../data/board/ledger-board.json').upcoming[0].ym, AHEAD);
-  assert.match(read('app/(dashboard)/page.tsx'), /^    ledger: src\.board,$/m);
+  assert.match(read('app/(dashboard)/page.tsx'), /^    ledger,$/m);
 });
 
 test('우리 동네 달력(lhCalendar): 시도별 달력을 모두 더하면 전국 LH 준공 예정(lhByMonth)과 같고, 달 안은 날짜 순이다', () => {
@@ -52,8 +52,7 @@ test('보고자료(8.14 정례 보고): 실적·시행주체·시도·앞으로�
 test('우리 동네(9.4 국민 예측가능성): 시도를 고르면 1년 달력과 등록 사업(지금 단계·질문)을 보이고, 자격 판단은 하지 않는다', () => {
   const idx = read('app/(dashboard)/my-area/page.tsx'), page = read('app/(dashboard)/my-area/[sido]/page.tsx');
   assert.match(idx, /href=\{`\/my-area\/\$\{s\.code\}`\}/);
-  assert.match(page, /const SIDO = molit\.sido\.filter\(\(s\) => s\.code !== NATION\);/);
-  assert.match(page, /export const generateStaticParams = \(\) => SIDO\.map/);
+  assert.match(page, /export const generateStaticParams = async \(\) => \(await getBoardData\(\)\)\.molit\.sido\.filter\(\(s\) => s\.code !== NATION\)/);
   assert.match(page, /lhCalendar\(lh, sido, AHEAD_FROM, 12\)/);
   assert.match(page, /title=\{st\?\.q\}>\{p\.stageCode\} \{st\?\.name\}<\/b>/, '단계 표지만 보이고 질문은 그 title(2026-10-13 마무리 리뷰)');
   assert.doesNotMatch(page, /— \{st\?\.q\}/, '줄마다 질문 문장을 되풀이하지 않는다');

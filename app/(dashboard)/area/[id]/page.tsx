@@ -12,7 +12,7 @@ import { Card, cardVariants } from '../../../../components/ui/card';
 import { DataGrid } from '../../../../components/ui/data-grid';
 import { Prov } from '../../../../components/ui';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, sidoName, valueAt, ymDot, ytd } from '../../../../lib/board/calc';
-import { SGG, molit, projects } from '../../../../lib/board/data';
+import { SGG, getBoardData } from '../../../../lib/board/data';
 import { METRIC_STAGE } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
 import type { Col, Row } from '../../../../lib/grid/spec';
@@ -21,10 +21,11 @@ const LABEL = { permit: '인허가', start: '착공', complete: '준공', sale: 
 type Props = { params: Promise<{ id: string }> };
 
 /* 시도 2자리 16곳을 미리 그린다. 시군구 5자리(/area/41450)는 2026-10-10 부터 사업 목록의 거르기(/projects?sgg=)로 넘긴다(next.config.ts). */
-export const generateStaticParams = () => molit.sido.filter((s) => s.code !== NATION).map((s) => ({ id: s.code }));
+export const generateStaticParams = async () => (await getBoardData()).molit.sido.filter((s) => s.code !== NATION).map((s) => ({ id: s.code }));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+  const { molit } = await getBoardData();
   return { title: sidoName(molit, id) ?? id };
 }
 
@@ -34,7 +35,8 @@ export default async function AreaDetail({ params }: Props) {
   return <SidoView code={id} />;
 }
 
-function SidoView({ code }: { code: string }) {
+async function SidoView({ code }: { code: string }) {
+  const { molit, projects } = await getBoardData();
   const name = sidoName(molit, code);
   if (!name || code === NATION) notFound();
   const last = lastMonth(molit);

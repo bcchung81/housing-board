@@ -8,7 +8,7 @@ import HashOpen from '../../../components/sources/HashOpen';
 import StageLinks from '../../../components/sources/StageLinks';
 import { DataGrid } from '../../../components/ui/data-grid';
 import { fmt } from '../../../lib/board/calc';
-import { ledger, molit, projects, lh, sources } from '../../../lib/board/data';
+import { getBoardData } from '../../../lib/board/data';
 import { ledgerJudged, ledgerMix, nation as nationOf } from '../../../lib/board/directives';
 import { CIR, K } from '../../../lib/board/sample';
 import { ITEMS, MODE_LABEL } from '../../../lib/board/pipeline';
@@ -147,7 +147,8 @@ function SourceDetail({ s }: { s: Source }) {
   );
 }
 
-export default function SourcesPage() {
+export default async function SourcesPage() {
+  const { ledger, molit, projects, lh, sources } = await getBoardData();
   const items = sources.items;
   const got = items.flatMap((s) => (s.collectedAt ? [s.collectedAt.slice(0, 10)] : [])).sort();   // 카탈로그의 수집일(가장 이른·늦은 날)
   const bundles = bundleCounts();

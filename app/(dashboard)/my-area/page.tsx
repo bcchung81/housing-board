@@ -3,12 +3,13 @@ import Link from 'next/link';
 import { Page, PageHead, sub } from '../../../components/page';
 import { cardVariants } from '../../../components/ui/card';
 import { NATION, fmt, lhCalendar, monthLabel, nextYm, ymDot } from '../../../lib/board/calc';
-import { AHEAD_FROM, SGG, lh, molit, projects } from '../../../lib/board/data';
+import { SGG, getBoardData } from '../../../lib/board/data';
 
 export const metadata: Metadata = { title: '우리 동네' };
 
 /* 우리 동네(국민 공개, L1): 시도를 한 번 고르면 그 시도의 앞으로 1년 공급 달력으로 간다(기획서 시나리오 B: 선택은 한두 번). */
-export default function MyAreaIndex() {
+export default async function MyAreaIndex() {
+  const { AHEAD_FROM, lh, molit, projects } = await getBoardData();
   const until = nextYm(AHEAD_FROM, 11);
   return (
     <Page>

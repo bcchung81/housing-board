@@ -10,13 +10,11 @@ import { Card } from '../../../components/ui/card';
 import { DataGrid } from '../../../components/ui/data-grid';
 import { Kpi, Prov } from '../../../components/ui';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, lhByMonth, monthLabel, monthsBetween, nextYm, valueAt, ymDot, ytd } from '../../../lib/board/calc';
-import { AHEAD_FROM, lh, molit, projects } from '../../../lib/board/data';
+import { getBoardData } from '../../../lib/board/data';
 import { METRIC_STAGE, STAGES } from '../../../lib/board/stages';
 import type { Col, Row } from '../../../lib/grid/spec';
 
 export const metadata: Metadata = { title: '보고자료' };
-
-const FROM = AHEAD_FROM;   // 종합상황판의 '향후 12개월'과 같은 기준 달
 
 /* 증감률(%): 비교할 값이 없으면 null */
 const rate = (now: number | null, before: number | null) => (now === null || before === null || before === 0 ? null : (now - before) / before * 100);
@@ -26,7 +24,9 @@ const cumCols = (first: string): Col[] => [{ key: 'name', label: first, kind: 't
 
 /* 보고자료(월간 주택공급 브리핑). 8.14 지시 '매월 진척상황 보고'와 정책 매트릭스의 '정례 보고(기간별 KPI 자동집계)'에 답한다.
    모든 숫자는 실데이터(통계누리·LH 파일·사업 id 레지스트리)를 다른 화면과 같은 계산 함수로 센 값이다. 원천이 없는 것(계획 물량·일정 지연)은 판정하지 않고 그렇다고 적는다. */
-export default function ReportsPage() {
+export default async function ReportsPage() {
+  const { AHEAD_FROM, lh, molit, projects } = await getBoardData();
+  const FROM = AHEAD_FROM;   // 종합상황판의 '향후 12개월'과 같은 기준 달
   const last = lastMonth(molit), prev = nextYm(last, -1), lastYear = nextYm(last, -12), year = last.slice(0, 4), upto = Number(last.slice(5));
   const prov = isProvisional(molit, last);
   const rows = METRICS.map((k) => {

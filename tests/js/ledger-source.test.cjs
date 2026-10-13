@@ -17,14 +17,15 @@ test('공개용 키와 api 스키마로 읽고, 1시간 재검증이며, 비밀 
   assert.match(src, /revalidate: 3600/);
   assert.match(src, /AbortSignal\.timeout\(4000\)/);
   assert.doesNotMatch(src, /SUPABASE_SECRET_KEY|SUPABASE_DB_URL|SERVICE_ROLE/);
-  assert.match(src, /import \{ ledger as ledgerJson \} from '\.\/data'/);
+  assert.match(src, /import ledgerBundled from '\.\.\/\.\.\/data\/board\/ledger-board\.json'/);
 });
 
-test('page.tsx 는 data.ts 의 ledger 를 직접 가져오지 않고 loadLedgerBoard 를 쓴다', () => {
+test('page.tsx 는 getBoardData 로 읽고, data.ts 가 loadLedgerBoard 를 부른다', () => {
   const page = read('app/(dashboard)/page.tsx');
-  const imp = page.match(/import \{([^}]*)\} from '\.\.\/\.\.\/lib\/board\/data'/)[1];
-  assert.doesNotMatch(imp, /\bledger\b/);
-  assert.match(page, /await loadLedgerBoard\(\)/);
+  const data = read('lib/board/data.ts');
+  assert.match(page, /await getBoardData\(\)/);
+  assert.match(data, /loadLedgerBoard\(\)/);
+  assert.match(data, /import \{ loadLedgerBoard \} from '\.\/ledger-source'/);
 });
 
 test('대체 경로: 환경변수 없음·HTTP 오류·빈 결과·모양 불량·예외 모두 JSON 으로 돌아가며 한 줄만 경고한다', () => {

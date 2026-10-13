@@ -13,7 +13,7 @@ import { Card, cardVariants } from '../../../components/ui/card';
 import { DataGrid } from '../../../components/ui/data-grid';
 import { Prov } from '../../../components/ui';
 import { ACTORS, NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, ytd, valueAt, ymDot } from '../../../lib/board/calc';
-import { lh, molit } from '../../../lib/board/data';
+import { getBoardData } from '../../../lib/board/data';
 import { AGENCIES } from '../../../lib/board/agencies';
 import { METRIC_STAGE } from '../../../lib/board/stages';
 import type { Col, Row } from '../../../lib/grid/spec';
@@ -22,7 +22,8 @@ export const metadata: Metadata = { title: '공급 실적 · 시행주체별' };
 const KS = [['permit', '인허가'], ['start', '착공'], ['complete', '준공']] as const;
 
 /* 공급 실적 · 시행주체별(L1 목록, 2026-10-10 메뉴 통합 전 '기관별'): 통계누리 시행주체 4분류의 호수와 LH 준공 예정 요약. 기관별 지연·주의·정상 신호는 일정이 없어 아직 판정하지 않는다. */
-export default function AgencyIndex() {
+export default async function AgencyIndex() {
+  const { lh, molit } = await getBoardData();
   const last = lastMonth(molit), year = last.slice(0, 4);
   const byYear = [...new Set(lh.blocks.map((b) => b.date.slice(0, 4)))].map((y) => ({ y, blocks: lh.blocks.filter((b) => b.date.startsWith(y)) }));
   const mo = Number(last.slice(5)), at = molit.months.indexOf(last);

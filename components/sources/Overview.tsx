@@ -1,7 +1,8 @@
 import { Database, Layers, MapPin, CalendarClock } from 'lucide-react';
-import { sources } from '../../lib/board/data';
+import { getBoardData } from '../../lib/board/data';
 
-export default function Overview() {
+export default async function Overview() {
+  const { sources } = await getBoardData();
   const used = sources.items.filter((s) => s.usedBy.length > 0).length;
   const unknownDate = sources.items.filter((s) => !s.sourceAsOf).length;
   const metrics = [

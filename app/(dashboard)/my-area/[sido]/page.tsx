@@ -8,17 +8,16 @@ import { Card } from '../../../../components/ui/card';
 import { Kpi } from '../../../../components/ui';
 import { METRIC_COLOR } from '../../../../components/charts/palette';
 import { NATION, fmt, lhCalendar, monthLabel, nextYm, sidoName, ymDot } from '../../../../lib/board/calc';
-import { AHEAD_FROM, SGG, lh, molit, projects } from '../../../../lib/board/data';
+import { SGG, getBoardData } from '../../../../lib/board/data';
 import { STAGES } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
 
 type Props = { params: Promise<{ sido: string }> };
-export const dynamicParams = false;
-const SIDO = molit.sido.filter((s) => s.code !== NATION);
-export const generateStaticParams = () => SIDO.map((s) => ({ sido: s.code }));
+export const generateStaticParams = async () => (await getBoardData()).molit.sido.filter((s) => s.code !== NATION).map((s) => ({ sido: s.code }));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { sido } = await params;
+  const { molit } = await getBoardData();
   return { title: `${sidoName(molit, sido) ?? sido} 우리 동네` };
 }
 
@@ -27,7 +26,8 @@ const day = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))
 /* 우리 동네 시도(L2): 앞으로 12개월 달력(달마다 LH 준공 예정 단지) + 그 시도의 등록 사업(지금 단계를 쉬운 말로) + 지도. 9.4·9.30 지시. */
 export default async function MyAreaSido({ params }: Props) {
   const { sido } = await params;
-  if (!DETAILS['my-area'].id.test(sido) || !SIDO.some((s) => s.code === sido)) notFound();
+  const { AHEAD_FROM, lh, molit, projects } = await getBoardData();
+  if (!DETAILS['my-area'].id.test(sido) || !molit.sido.some((s) => s.code === sido && s.code !== NATION)) notFound();
   const name = sidoName(molit, sido)!, cal = lhCalendar(lh, sido, AHEAD_FROM, 12), list = projects.filter((p) => SGG[p.sgg]?.sido === sido);
   const total = cal.reduce((a, m) => ({ n: a.n + m.blocks.length, units: a.units + m.units }), { n: 0, units: 0 });
   const busy = cal.filter((m) => m.blocks.length).length;

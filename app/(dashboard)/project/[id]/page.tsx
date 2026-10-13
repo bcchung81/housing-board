@@ -7,21 +7,22 @@ import { Dash, Dl, Page, PageHead, PanelHead, SrcLink } from '../../../../compon
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card } from '../../../../components/ui/card';
 import { fmt, sidoName } from '../../../../lib/board/calc';
-import { SGG, molit, projects, sources } from '../../../../lib/board/data';
+import { SGG, getBoardData } from '../../../../lib/board/data';
 import { DETAILS } from '../../../../lib/shell/menu';
 
 type Props = { params: Promise<{ id: string }> };
-export const dynamicParams = false;
-export const generateStaticParams = () => projects.map((p) => ({ id: p.id }));
+export const generateStaticParams = async () => (await getBoardData()).projects.map((p) => ({ id: p.id }));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
+  const { projects } = await getBoardData();
   return { title: projects.find((p) => p.id === id)?.name ?? id };
 }
 
 /* 사업 상세(L3): 머리·6단계·개요|근거(기획서 4.3). 지금 단계는 계단이 보이므로 문장으로 다시 쓰지 않는다(단계마다 답할 질문은 계단 칸의 title). 건축HUB 관리번호(refs)는 공개 범위가 미결(기획서 Q4)이라 보이지 않는다. */
 export default async function ProjectPage({ params }: Props) {
   const { id } = await params;
+  const { molit, projects, sources } = await getBoardData();
   const p = DETAILS.project.id.test(id) ? projects.find((x) => x.id === id) : undefined;
   if (!p) notFound();
   const located = !!(p.pnus && p.pnus.length);

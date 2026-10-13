@@ -306,3 +306,53 @@ test('공개 범위(Q4 넓힘): 차례로 적용하면 anon 이 읽는 것은 ap
   assert.deepEqual(sorted(readable.ledger), ['board_snapshots', 'map_snapshots', 'months']);
   assert.doesNotMatch(MAPSQL, /all tables in schema/i, '이름을 들어 준다');
 });
+
+/* 화면 표시값(*_screen_snapshots.sql, Q4 '화면 표시값만 공개'): 표 하나 + 공개 뷰 api.screens(가장 최근 달만) + 적재 RPC publish_screens */
+const screenFile = fs.readdirSync(MIG_DIR).find((f) => /^\d{14}_screen_snapshots\.sql$/.test(f));
+const SCRSQL = screenFile ? fs.readFileSync(path.join(MIG_DIR, screenFile), 'utf8').replace(/--[^\n]*/g, '') : '';
+
+test('화면 표시값: screen_snapshots 는 키 넷·객체 내용, RLS·읽기 정책·닫힌 달 가드·TRUNCATE 금지, 쓰기는 service_role 만', () => {
+  assert.ok(screenFile && screenFile > mapFile, '지도 표시값 마이그레이션 뒤에 있다');
+  assert.match(SCRSQL, /create table ledger\.screen_snapshots \([\s\S]*primary key \(month, key\)/);
+  assert.match(SCRSQL, /month\s+ledger\.ym not null references ledger\.months/);
+  assert.match(SCRSQL, /key\s+text not null check \(key in \('molit', 'lh', 'sources', 'registry'\)\)/);
+  assert.match(SCRSQL, /run_id\s+bigint not null references ledger\.ingest_runs/);
+  assert.match(SCRSQL, /payload\s+jsonb not null check \(jsonb_typeof\(payload\) = 'object'\)/);
+  assert.match(SCRSQL, /alter table ledger\.screen_snapshots enable row level security;/);
+  assert.match(SCRSQL, /create policy read_all on ledger\.screen_snapshots for select to anon, authenticated using \(true\);/);
+  assert.match(SCRSQL, /create trigger guard before insert or update or delete on ledger\.screen_snapshots for each row execute function ledger\.guard_closed_month\('month'\)/);
+  assert.match(SCRSQL, /create trigger no_truncate before truncate on ledger\.screen_snapshots for each statement execute function ledger\.no_truncate\(\)/);
+  for (const [, privs, objs, to] of SCRSQL.matchAll(/\bgrant\s+([\s\S]+?)\s+on\s+([\s\S]+?)\s+to\s+([\s\S]+?);/gi)) {
+    if (/\b(anon|authenticated|public)\b/i.test(to)) assert.equal(privs.trim().toLowerCase(), 'select', `${objs} 는 읽기만`);
+    if (/execute/i.test(privs)) assert.equal(to.trim(), 'service_role');
+    assert.doesNotMatch(privs, /truncate/i);
+  }
+  assert.match(SCRSQL, /revoke execute on function ledger_admin\.publish_screens\(bigint, jsonb\) from public, anon, authenticated;/);
+  assert.match(SCRSQL, /grant execute on function ledger_admin\.publish_screens\(bigint, jsonb\) to service_role;/);
+  assert.doesNotMatch(SCRSQL, /publish_run\s*\(|publish_map\s*\(|security\s+definer|\bpublic\s*\./i);
+  assert.match(SCRSQL, /pg_advisory_xact_lock\(hashtext\('ledger_admin\.publish_run'\)\)/, 'publish_run 과 같은 잠금');
+  assert.match(SCRSQL, /status <> 'published'/, '발행된 실행만');
+  assert.match(SCRSQL, /status = 'open'/, '열린 달만');
+  assert.match(SCRSQL, /is distinct from array\['lh', 'molit', 'registry', 'sources'\]/, '키는 정확히 넷');
+  assert.match(SCRSQL, /delete from ledger\.screen_snapshots where month = v_month;/);
+  assert.match(SCRSQL, /notify pgrst, 'reload schema';\s*$/);
+});
+
+test('공개 범위(Q4 넓힘): api.screens 는 열 다섯·가장 최근 달만, 차례로 적용하면 anon 이 읽는 것은 api.board·api.map·api.screens 와 그 뷰가 읽는 네 표뿐', () => {
+  const view = SCRSQL.match(/create view api\.screens with \(([^)]*)\) as([\s\S]+?);/i);
+  assert.ok(view);
+  assert.match(view[1], /security_invoker\s*=\s*true/);
+  assert.deepEqual(view[2].match(/select\s+([\s\S]+?)\s+from/i)[1].split(',').map((c) => c.trim().split('.').pop()), ['key', 'month', 'reference_date', 'run_id', 'payload']);
+  assert.match(view[2], /where s\.month = \(select max\(month\) from ledger\.screen_snapshots\)/);
+  assert.deepEqual(sorted(new Set(namesIn(view[0], 'ledger'))), ['months', 'screen_snapshots']);
+  assert.match(SCRSQL, /revoke all on api\.screens from public, anon, authenticated, service_role;/);
+  const readable = { api: new Set(['board', 'map']), ledger: new Set(['board_snapshots', 'map_snapshots', 'months']) };   // 지도 표시값 마이그레이션 뒤(앞 시험)
+  for (const [, privs, objs, to] of SCRSQL.matchAll(/\bgrant\s+([\s\S]+?)\s+on\s+([\s\S]+?)\s+to\s+([\s\S]+?);/gi)) {
+    if (!/\bselect\b/i.test(privs) || !/\banon\b/i.test(to)) continue;
+    namesIn(objs, 'api').forEach((v) => readable.api.add(v));
+    namesIn(objs, 'ledger').forEach((t) => readable.ledger.add(t));
+  }
+  assert.deepEqual(sorted(readable.api), ['board', 'map', 'screens']);
+  assert.deepEqual(sorted(readable.ledger), ['board_snapshots', 'map_snapshots', 'months', 'screen_snapshots']);
+  assert.doesNotMatch(SCRSQL, /all tables in schema/i, '이름을 들어 준다');
+});

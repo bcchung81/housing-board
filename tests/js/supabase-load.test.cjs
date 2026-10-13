@@ -1,5 +1,5 @@
 'use strict';
-// Supabase 적재 도구(tools/ledger/supabase-load.js): 묶음 나누기·스테이징 모양·dry-run 무호출·보드 불일치 거부·Storage 키·실패 시 미발행·연결 문자열 가림.
+// Supabase 적재 도구(tools/ledger/supabase-load.js): 묶음 나누기·스테이징 모양·dry-run 무호출·보드 불일치 거부·화면 파일 넷·Storage 키·실패 시 미발행·연결 문자열 가림.
 // DB 는 가짜 pg 연결, Storage 는 가짜 fetch(네트워크 없음).
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -17,6 +17,8 @@ const ENV = { NEXT_PUBLIC_SUPABASE_URL: 'https://example.supabase.co', SUPABASE_
 const { observedMonth: MONTH, referenceDate: REF } = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/board/ledger-board.json'), 'utf8'));
 const tables = L.readTables(path.join(ROOT, `schemas/ledger-${MONTH}/tables`));
 const mapFile = () => JSON.parse(fs.readFileSync(path.join(ROOT, 'data/board/ledger-map.json'), 'utf8'));
+const SCREENS = { molit: 'data/board/molit.json', lh: 'data/board/lh-completion.json', sources: 'data/board/sources.json', registry: 'registry/projects.json' };
+const screenFiles = () => Object.fromEntries(Object.entries(SCREENS).map(([k, f]) => [k, JSON.parse(fs.readFileSync(path.join(ROOT, f), 'utf8'))]));
 
 /* 가짜 Storage REST: 부른 것을 적는다 */
 function fakeFetch() {
@@ -39,6 +41,7 @@ function fakeDb({ failOn, failConnect } = {}) {
       if (sql.includes('ledger_admin.begin_run')) return { rows: [{ v: '7' }] };   // bigint 는 문자열로 온다
       if (sql.includes('ledger_admin.publish_run')) return { rows: [{ v: L.expectedCounts(tables, {}) }] };
       if (sql.includes('ledger_admin.publish_map')) return { rows: [{ v: Object.keys(JSON.parse(params[1])).length }] };
+      if (sql.includes('ledger_admin.publish_screens')) return { rows: [{ v: Object.keys(JSON.parse(params[1])).length }] };
       return { rows: [] };
     },
     end: async () => { ended++; },
@@ -77,6 +80,8 @@ test('dry-run: DB 연결·fetch 를 한 번도 부르지 않는다', async () =>
   assert.equal(d.urls.length, 0);
   assert.equal(r.counts.areas, tables.areas.length);
   assert.equal(r.counts.board, 1);
+  assert.equal(r.screens, 4);
+  assert.equal(r.screenRows, undefined);
 });
 
 test('보드가 data/board/ledger-board.json 과 다르면 호출 전에 멈춘다', async () => {
@@ -101,14 +106,14 @@ test('지도 색인이 data/board/ledger-map.json 과 다르면 호출 전에 �
   assert.equal(d.urls.length, 0);
 });
 
-test('적재 순서와 모양: 제한 시간 → begin_run(커밋) → begin → 스테이징 묶음 → publish_run → publish_map → commit, 연결 문자열은 connect 에만', async () => {
+test('적재 순서와 모양: 제한 시간 → begin_run(커밋) → begin → 스테이징 묶음 → publish_run → publish_map → publish_screens → commit, 연결 문자열은 connect 에만', async () => {
   const f = fakeFetch(), d = fakeDb();
   const logs = [];
   const r = await L.load({ month: MONTH, skipRaw: true, env: ENV, fetch: f.fetch, connect: d.connect, log: (m) => logs.push(m) });
   assert.deepEqual(d.urls, [DB_URL]);
   assert.equal(f.calls.length, 0);
   const kinds = d.sqls().map(kind);
-  assert.deepEqual(kinds, ['timeout', 'begin_run', 'begin', ...Array(r.chunks).fill('stage'), 'publish_run', 'publish_map', 'commit']);
+  assert.deepEqual(kinds, ['timeout', 'begin_run', 'begin', ...Array(r.chunks).fill('stage'), 'publish_run', 'publish_map', 'publish_screens', 'commit']);
   assert.equal(d.calls[0].sql, `set statement_timeout = '${L.STATEMENT_TIMEOUT}'`);
   assert.equal(d.ended(), 1);
   const [month, k, ref, meta] = d.calls[1].params;
@@ -130,6 +135,12 @@ test('적재 순서와 모양: 제한 시간 → begin_run(커밋) → begin →
   assert.deepEqual([map.params[0], JSON.parse(map.params[1])], [7, mapFile().bySgg]);
   assert.equal(r.runId, 7);
   assert.equal(r.mapRows, Object.keys(mapFile().bySgg).length);
+  const scr = d.calls.find((x) => kind(x.sql) === 'publish_screens');
+  assert.equal(scr.sql, 'select ledger_admin.publish_screens($1, $2::jsonb) as v');
+  assert.equal(scr.params[0], 7);
+  assert.deepEqual(Object.keys(JSON.parse(scr.params[1])).sort(), ['lh', 'molit', 'registry', 'sources']);
+  assert.deepEqual(JSON.parse(scr.params[1]), screenFiles());
+  assert.equal(r.screenRows, 4);
   for (const t of ['begin', 'stage', 'publish', 'map', 'raw']) assert.ok(Number.isInteger(r.timings[t]), t);
   noSecret(logs.join('\n'));
 });
@@ -141,7 +152,7 @@ test('publish_run 이 실패하면 되돌리고(commit 없음) 지도·원본·r
   noSecret(err.message);
   const kinds = d.sqls().map(kind);
   assert.equal(kinds.at(-1), 'rollback');
-  for (const k of ['commit', 'publish_map', 'record_files']) assert.ok(!kinds.includes(k), k);
+  for (const k of ['commit', 'publish_map', 'publish_screens', 'record_files']) assert.ok(!kinds.includes(k), k);
   assert.equal(f.calls.length, 0);
   assert.equal(d.ended(), 1);
 });
@@ -163,6 +174,31 @@ test('지도 행 수가 기대와 다르면 commit 하지 않는다', async () =
   const kinds = d.sqls().map(kind);
   assert.equal(kinds.at(-1), 'rollback');
   assert.ok(!kinds.includes('commit'));
+});
+
+test('화면 행 수가 4가 아니면 commit 하지 않는다', async () => {
+  const d = fakeDb();
+  const conn = async (url) => {
+    const db = await d.connect(url);
+    return { ...db, query: async (sql, params) => sql.includes('publish_screens') ? (d.calls.push({ sql, params }), { rows: [{ v: 3 }] }) : db.query(sql, params) };
+  };
+  await assert.rejects(L.load({ month: MONTH, skipRaw: true, env: ENV, fetch: fakeFetch().fetch, connect: conn, log: () => {} }), /publish_screens 가 3행/);
+  const kinds = d.sqls().map(kind);
+  assert.equal(kinds.at(-1), 'rollback');
+  assert.ok(!kinds.includes('commit'));
+});
+
+test('readScreens: 키 넷 = 저장소 파일 그대로, 모양이 다르면(배열 빠짐) 호출 전에 멈춘다', async () => {
+  assert.deepEqual(L.readScreens(ROOT), screenFiles());
+  assert.deepEqual(Object.fromEntries(Object.entries(L.SCREEN_FILES).map(([k, v]) => [k, v.file])), SCREENS);
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sb-screens-'));
+  for (const [k, f] of Object.entries(SCREENS)) {
+    fs.mkdirSync(path.join(tmp, path.dirname(f)), { recursive: true });
+    const v = screenFiles()[k];
+    if (k === 'lh') delete v.blocks;
+    fs.writeFileSync(path.join(tmp, f), JSON.stringify(v));
+  }
+  assert.throws(() => L.readScreens(tmp), /lh-completion\.json 모양이 다르다/);
 });
 
 test('연결 실패·SUPABASE_DB_URL 없음: 오류에 연결 문자열·호스트·비밀번호가 없다', async () => {
