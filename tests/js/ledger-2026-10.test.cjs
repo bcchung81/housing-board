@@ -21,7 +21,8 @@ const DONG = `raw/legal-dong/${fs.readdirSync(path.join(BASE, 'raw/legal-dong'))
 const legalDong = parseLegalDong(fs.readFileSync(path.join(BASE, DONG)), path.basename(DONG));
 const national = readNational(path.join(BASE, 'raw'));
 const saved = Object.fromEntries(fs.readdirSync(path.join(BASE, 'tables')).map((f) => { const j = read(`tables/${f}`); return [j.table, j.rows]; }));
-const rebuilt = convert(loadInputs({
+const rebuiltReport = {};
+const rebuilt = convert({ ...loadInputs({
   observedMonth: '2026-10',
   lhSgg: read('mappings/lh-block-sgg.json'),
   hubEvents: read('snapshot/hub-events.json').rows,
@@ -30,7 +31,7 @@ const rebuilt = convert(loadInputs({
   hubIds: read('mappings/hub-candidate-ids.json'),
   national,
   stage: readStageInput(stageFileOf(BASE)),
-}));
+}), report: rebuiltReport });
 const BULK = `hub-bulk-hs-${ED}`, MYHOME = 'myhome-hwspr02', LH_NOTICE = 'datagokr-15058530', MOVE_IN = 'datagokr-15111714';
 
 test('저장된 2026-10 기준 표 16개가 검증(스키마·키 중복·표 사이 참조)을 통과한다', () => {
@@ -100,7 +101,8 @@ test('공고: 마이홈 panId 가 LH PAN_ID 와 같으면 한 공고(LH, PAN_ID 
   assert.equal(own.length, national.lhNotice.notices.length + saved.notices.filter((n) => n.notice_system === 'MYHOME').length, '공고 원본은 주 1회 갱신으로 바뀐다(첫 실행 4,993)');
   assert.equal(saved.notices.length - own.length, 6096 + 9700, '단계별 원천: 청약홈 분양정보 6,096 + HUG 분양이력 9,700(같은 키 3건은 #2)');
   assert.equal(new Set(saved.notices.map((n) => `${n.notice_system}|${n.notice_id}`)).size, saved.notices.length);
-  assert.deepEqual([saved.notices.filter((n) => n.source_ref === MYHOME && n.notice_system === 'LH').length, saved.notices.filter((n) => n.notice_system === 'MYHOME').length], [107, 8]);
+  assert.ok(rebuiltReport.national.merged > 0 && rebuiltReport.national.myhomeNotices > rebuiltReport.national.merged);
+  assert.deepEqual([saved.notices.filter((n) => n.source_ref === MYHOME && n.notice_system === 'LH').length, saved.notices.filter((n) => n.notice_system === 'MYHOME').length], [rebuiltReport.national.merged, rebuiltReport.national.myhomeNotices - rebuiltReport.national.merged], '마이홈 공고 중 LH PAN_ID 와 합친 것 · 마이홈만 — 주 1회 갱신으로 바뀌므로 변환 보고와 대조');
   assert.ok(saved.notices.filter((n) => n.source_ref === LH_NOTICE).every((n) => n.sgg_code === null && n.pnu === null && n.apply_start === null), 'LH 목록만 있는 공고는 시도뿐');
   for (const ref of [MYHOME, LH_NOTICE, MOVE_IN]) assert.ok(saved.sources.some((x) => x.source_ref === ref), ref);
 });
