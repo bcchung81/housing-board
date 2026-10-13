@@ -1,7 +1,7 @@
 {
   "schema": "ledger-map/1",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-12",
+  "referenceDate": "2026-10-13",
   "bySgg": {
     "11110": [
       {"id":"PRJ-11110-0016","name":"신영제1구역주택재개발정비사업아파트","issued":false,"stage":"03","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-18"},"units":199,"pks":["1002100006406"],"pnus":["1111018600101580002"],"bundles":[]},
@@ -1978,7 +1978,7 @@
     "41131": [
       {"id":"PRJ-41131-0001","name":"위례A2-7BL 1","issued":false,"stage":"05","cls":null,"why":"LH 후보","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2026-12"},"units":1309,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41131-0002","name":"성남신촌 A2","issued":false,"stage":"05","cls":null,"why":"LH 후보","overdue":null,"next":null,"units":320,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41131-0003","name":"성남신촌 A1","issued":false,"stage":"05","cls":null,"why":"LH 후보","overdue":null,"next":{"eventType":"COMPLETION","planned":"2026-10-12"},"units":227,"pks":["1000000000000000197435"],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41131-0003","name":"성남신촌 A1","issued":false,"stage":"05","cls":null,"why":"LH 후보","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2026-10"},"units":227,"pks":["1000000000000000197435"],"pnus":[],"bundles":[]},
       {"id":"PRJ-41131-0004","name":"성남금토 A2","issued":false,"stage":"05","cls":null,"why":"LH 후보","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2027-01"},"units":633,"pks":["1000000000000000200236"],"pnus":[],"bundles":[]},
       {"id":"PRJ-41131-0005","name":"성남금토 A4","issued":false,"stage":"05","cls":null,"why":"LH 후보","overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-07-30"},"units":1150,"pks":["1000000000000000208867"],"pnus":[],"bundles":[]},
       {"id":"PRJ-41131-0006","name":"판교창조경제밸리 G6","issued":false,"stage":"04","cls":null,"why":"LH 후보","overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-06-30"},"units":195,"pks":[],"pnus":[],"bundles":[]},
@@ -3636,7 +3636,7 @@
       {"id":"PRJ-47850-0010","name":"우방 아이유쉘 유라밸","issued":false,"stage":"06","cls":"ok","why":null,"overdue":null,"next":null,"units":310,"pks":["1246100004821"],"pnus":["4785025622106470000"],"bundles":[]},
       {"id":"PRJ-47850-0013","name":"칠곡 왜관 월드메르디앙 웰리지","issued":false,"stage":"06","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":352,"pks":["1246100005641"],"pnus":[],"bundles":[]},
       {"id":"PRJ-47850-0014","name":"중리 광신프로그레스","issued":false,"stage":"03","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-06-30","months":3},"next":null,"units":1259,"pks":["1000000000000000115925"],"pnus":["4785025622102240001"],"bundles":[]},
-      {"id":"PRJ-47850-0015","name":"통합공공임대주택","issued":false,"stage":"03","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-12-13","months":9},"next":null,"units":30,"pks":["1000000000000000143164"],"pnus":["4785025021102810009"],"bundles":[]},
+      {"id":"PRJ-47850-0015","name":"통합공공임대주택","issued":false,"stage":"03","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-12-13","months":10},"next":null,"units":30,"pks":["1000000000000000143164"],"pnus":["4785025021102810009"],"bundles":[]},
       {"id":"PRJ-47850-0016","name":"통합공공임대주택","issued":false,"stage":"06","cls":"ok","why":null,"overdue":null,"next":null,"units":30,"pks":["1000000000000000143165"],"pnus":["4785025021115740000"],"bundles":[]},
       {"id":"PRJ-47850-0017","name":"칠곡 북삼지구 S-1BL 공동주택","issued":false,"stage":"03","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-30"},"units":610,"pks":["1000000000000000189584"],"pnus":[],"bundles":[]},
       {"id":"PRJ-47850-0018","name":"칠곡 북삼지구 B-2BL 공동주택","issued":false,"stage":"03","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-04-03"},"units":655,"pks":["1000000000000000205487"],"pnus":[],"bundles":[]},

@@ -2,10 +2,10 @@
  "source": "건축HUB 대용량 2026-08 판 중간 스냅샷(snapshot/hub-bulk-2026-08.json)을 주택인허가 기본개요 OpenAPI(getHpBasisOulnInfo) 현재값으로 덮어씀",
  "data_month": "2026-08",
  "data_as_of": "2026-08-31",
- "fetched_at": "2026-10-12T01:34:40.960Z",
- "fetched_until": "2026-10-12T01:51:20.144Z",
+ "fetched_at": "2026-10-13T04:29:12.987Z",
+ "fetched_until": "2026-10-13T04:44:49.140Z",
  "endpoint": "https://apis.data.go.kr/1613000/HsPmsHubService/getHpBasisOulnInfo",
- "note": "건축HUB OpenAPI(2026-10-12 호출, 기록 생성일 최대 2026-08-31) 값으로 일정·세대수를 덮어씀(대용량 2026-08 판 기준 2026-08-31, tools/ledger/hub-api-refresh.js)",
+ "note": "건축HUB OpenAPI(2026-10-13 호출, 기록 생성일 최대 2026-08-31) 값으로 일정·세대수를 덮어씀(대용량 2026-08 판 기준 2026-08-31, tools/ledger/hub-api-refresh.js)",
  "base": {
   "file": "snapshot/hub-bulk-2026-08.json",
   "data_month": "2026-08",
@@ -30,10 +30,10 @@
    "sha256": "04159045c4f6a44c37b6e3b5c81034ffd20cedee529db6707d998ecc1a09f7e6"
   }
  },
- "reference_date": "2026-10-12",
+ "reference_date": "2026-10-13",
  "rules": {
   "overwrite": "① 관리번호가 API 에 있으면 일정·세대수를 API 값으로(위치·이름은 대용량) ② 없으면 대용량 그대로 ③ 불러온 법정동에서 API 에만 있고 범위·진행 중 규칙을 통과하면 더함 ④ 덮어쓴 뒤 규칙에 걸리면 뺌",
-  "active": "진행 중(기준일 2026-10-12) 중 하나: d 사용검사일 ≥ 2025-01-01 · a 사업승인일 ≥ 2021-10-01(주택법 제16조 착공 의무 5년) · b 착공일 ≥ 2018-01-01 · c 사용검사 예정일 ≥ 2025-01-01 이고 사업승인일 ≥ 2015-01-01. 아니면 STALE(장기 미갱신)",
+  "active": "진행 중(기준일 2026-10-13) 중 하나: d 사용검사일 ≥ 2025-01-01 · a 사업승인일 ≥ 2021-10-01(주택법 제16조 착공 의무 5년) · b 착공일 ≥ 2018-01-01 · c 사용검사 예정일 ≥ 2025-01-01 이고 사업승인일 ≥ 2015-01-01. 아니면 STALE(장기 미갱신)",
   "safety": "법정동 호출 실패 ≤ 5% · 관리번호 일치율 ≥ 90%",
   "limit": "대용량에 없는 법정동의 새 사업은 다음 대용량 판에서만 들어온다"
  },
@@ -41,7 +41,7 @@
  "loaded": 1611,
  "failed": 0,
  "truncated": 0,
- "calls": 3737,
+ "calls": 3732,
  "pages": 3732,
  "failed_bjds": [],
  "truncated_bjds": [],

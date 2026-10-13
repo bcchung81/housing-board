@@ -1,12 +1,12 @@
 {
   "schema": "ledger-board/1",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-12",
+  "referenceDate": "2026-10-13",
   "source": "schemas/ledger-2026-10/tables",
   "judge": {
     "cautionMonths": 1,
     "delayMonths": 6,
-    "dataAsOf": {"bundle-incheon-gyeyang":"2026-10-03","datagokr-15057999":"2026-10-12","datagokr-15058530":"2026-10-12","datagokr-15098547":"2026-10-12","datagokr-15111714":"2026-06-30","hub-bulk-bld-2026-08":"2026-08-31","hub-bulk-hs-2026-08":"2026-08-31","hub-hs-basis":null,"khug-sale-history":"2026-10-12","myhome-hwspr02":"2026-10-12"},
+    "dataAsOf": {"bundle-incheon-gyeyang":"2026-10-03","datagokr-15057999":"2026-10-12","datagokr-15058530":"2026-10-13","datagokr-15098547":"2026-10-12","datagokr-15111714":"2026-06-30","hub-bulk-bld-2026-08":"2026-08-31","hub-bulk-hs-2026-08":"2026-08-31","hub-hs-basis":null,"khug-sale-history":"2026-10-12","myhome-hwspr02":"2026-10-13"},
     "rule": "발급 사업(건축HUB 스냅샷)은 착공·준공 예정 경과를 판정하고, 건축HUB 대용량 후보는 사용검사(준공) 예정 경과만 판정한다(착공 실제일 기록이 약 7% 뿐이라 착공 예정 경과는 자료 누락이 많다). LH 후보는 판정하지 않는다."
   },
   "scope": {
@@ -230,13 +230,13 @@
     {"id":"PRJ-51820-0007","name":"대지조성사업","sgg":"51820","eventType":"CONSTRUCTION_START","planned":"2021-09-07","months":61,"class":"excluded"},
     {"id":"PRJ-26320-0080","name":"구포3차 봄여름가을겨울 드림아파트","sgg":"26320","eventType":"CONSTRUCTION_START","planned":"2021-10-01","months":60,"class":"excluded"},
     {"id":"PRJ-44150-0045","name":null,"sgg":"44150","eventType":"CONSTRUCTION_START","planned":"2021-09-15","months":60,"class":"excluded"},
+    {"id":"PRJ-48121-0020","name":"창원 무동지구 27블럭 공동주택 건립공사","sgg":"48121","eventType":"CONSTRUCTION_START","planned":"2021-10-13","months":60,"class":"excluded"},
     {"id":"PRJ-48820-0014","name":"고성군 당동리 00공동주택(민간임대)","sgg":"48820","eventType":"CONSTRUCTION_START","planned":"2021-10-01","months":60,"class":"excluded"},
     {"id":"PRJ-11545-0022","name":"독산솔리힐아파트","sgg":"11545","eventType":"COMPLETION","planned":"2021-10-30","months":59,"class":"delay"},
     {"id":"PRJ-27110-0032","name":"더샵 동성로 센트리엘","sgg":"27110","eventType":"CONSTRUCTION_START","planned":"2021-10-31","months":59,"class":"excluded"},
     {"id":"PRJ-27200-0030","name":"대명동 1226-6 주거복합","sgg":"27200","eventType":"CONSTRUCTION_START","planned":"2021-11-01","months":59,"class":"excluded"},
     {"id":"PRJ-41591-0034","name":"화성 남양뉴타운 C-1블록 공동주택","sgg":"41591","eventType":"CONSTRUCTION_START","planned":"2021-11-01","months":59,"class":"excluded"},
     {"id":"PRJ-47930-0010","name":null,"sgg":"47930","eventType":"CONSTRUCTION_START","planned":"2021-11-01","months":59,"class":"excluded"},
-    {"id":"PRJ-48121-0020","name":"창원 무동지구 27블럭 공동주택 건립공사","sgg":"48121","eventType":"CONSTRUCTION_START","planned":"2021-10-13","months":59,"class":"excluded"},
     {"id":"PRJ-51820-0018","name":null,"sgg":"51820","eventType":"CONSTRUCTION_START","planned":"2021-10-14","months":59,"class":"excluded"},
     {"id":"PRJ-11140-0033","name":"세운재정비촉진지구 3-8","sgg":"11140","eventType":"CONSTRUCTION_START","planned":"2021-12-01","months":58,"class":"excluded"},
     {"id":"PRJ-11650-0064","name":null,"sgg":"11650","eventType":"CONSTRUCTION_START","planned":"2021-12-01","months":58,"class":"excluded"},
@@ -649,7 +649,7 @@
     },
     {
       "month": "2026-10",
-      "referenceDate": "2026-10-12",
+      "referenceDate": "2026-10-13",
       "edition": "2026-08",
       "basis": "OBSERVED",
       "ok": {"projects":2812,"units":1904376},

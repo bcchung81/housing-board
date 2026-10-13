@@ -1,12 +1,12 @@
 {
  "schema": "ledger-month/1",
  "month": "2026-10",
- "reference_date": "2026-10-12",
+ "reference_date": "2026-10-13",
  "edition": "2026-08",
- "refreshed_at": "2026-10-12T01:59:56.032Z",
+ "refreshed_at": "2026-10-13T04:29:09.803Z",
  "tool": "tools/ledger/monthly.js --refresh",
  "steps": [
-  "달 기록 manifest.json(기준일 2026-10-12)",
+  "달 기록 manifest.json(기준일 2026-10-13)",
   "hub-bulk.js",
   "hub-api-refresh.js(건축HUB OpenAPI 덮어쓰기)",
   "snapshot.js",
@@ -22,29 +22,29 @@
   "changedGrades": 0,
   "before": {
    "month": "2026-10",
-   "referenceDate": "2026-10-10",
-   "edition": "2026-08",
-   "projects": 3845,
-   "judged": 3411,
-   "ok": 2757,
-   "caution": 134,
-   "delay": 520,
-   "okUnits": 1871791,
-   "cautionUnits": 58185,
-   "delayUnits": 215282
-  },
-  "after": {
-   "month": "2026-10",
    "referenceDate": "2026-10-12",
    "edition": "2026-08",
    "projects": 3845,
    "judged": 3411,
-   "ok": 2757,
-   "caution": 134,
-   "delay": 520,
-   "okUnits": 1871791,
-   "cautionUnits": 58185,
-   "delayUnits": 215282
+   "ok": 2812,
+   "caution": 133,
+   "delay": 466,
+   "okUnits": 1904376,
+   "cautionUnits": 59358,
+   "delayUnits": 181524
+  },
+  "after": {
+   "month": "2026-10",
+   "referenceDate": "2026-10-13",
+   "edition": "2026-08",
+   "projects": 3845,
+   "judged": 3411,
+   "ok": 2812,
+   "caution": 133,
+   "delay": 466,
+   "okUnits": 1904376,
+   "cautionUnits": 59358,
+   "delayUnits": 181524
   }
  }
 }

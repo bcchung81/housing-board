@@ -1,15 +1,15 @@
 {
  "month": "2026-10",
- "reference_date": "2026-10-12",
+ "reference_date": "2026-10-13",
  "base_data_as_of": "2026-08-31",
- "api_date": "2026-10-12",
+ "api_date": "2026-10-13",
  "api_created_max": "2026-08-31",
  "bjds": {
   "bjds": 1611,
   "loaded": 1611,
   "failed": 0,
   "truncated": 0,
-  "calls": 3737,
+  "calls": 3732,
   "pages": 3732
  },
  "match": {
