@@ -347,7 +347,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               <h2 className={ptitle} title={`${scope} · 막대는 기관별 정상·주의·지연·판정 밖 호수(판정된 사업의 물량) · 오른쪽 = 지연 호수 · 전체 지연 ${f(J.delay.units)}호 중 비중 · 판정 밖: ${outNote}`}>기관별 진행</h2>
               <div className={phgroup}>
                 <span className={legend} title="막대 색: 정상 · 주의 · 지연 · 판정 밖 호수">{[['bg-ok', '정상'], ['bg-warn', '주의'], ['bg-bad', '지연'], ['bg-[var(--out)] shadow-[inset_0_0_0_1px_var(--out-line)]', '판정 밖']].map(([c, n]) => <Key key={n} className={cn('size-2', c)}>{n}</Key>)}</span>
-                <span className={pacts}><PanelLink href="/agency" full="기관별 실데이터(시행주체별 호수)">시행주체별</PanelLink></span>
+                <span className={pacts}><PanelLink href="/projects" full="사업 목록 — 기관 칩으로 거르기">기관별 사업</PanelLink></span>
               </div>
             </div>
             <div className={ags}>
