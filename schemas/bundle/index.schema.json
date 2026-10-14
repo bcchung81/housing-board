@@ -20,6 +20,7 @@
           "default": {"type": "boolean", "description": "?region= 이 없을 때 여는 지역"},
           "visibility": {"enum": ["public", "preview"], "description": "preview 지역은 운영 빌드에서 제외된다"},
           "updatedAt": {"type": "string", "format": "date"},
+          "infra": {"type": "boolean", "description": "infra.json(입주 전 기반시설)이 있는가 — scripts/build.js 가 산출물 색인에 채운다. false 면 화면이 요청하지 않는다"},
           "schema_version": {"$ref": "#/$defs/semver"}
         }
       }

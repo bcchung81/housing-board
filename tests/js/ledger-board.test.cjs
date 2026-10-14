@@ -18,7 +18,7 @@ const BULK = `hub-bulk-hs-${EDITION}`;
 const live = tables.projects.filter((p) => !p.superseded_by), N = live.length;
 const isHome = (p) => p.source_ref.startsWith('home-dump-');
 /* 예정일 경과 쌍·계양 A2 다음 일정을 센 기준일(2026-10-10). 열린 달 주 1회 갱신(monthly.js --refresh)으로 저장된 보드의 기준일은 날마다 바뀌므로 이 둘은 이 기준일로 다시 계산해 본다 */
-const REF0 = '2026-10-10', board0 = boardFromLedger(tables, { referenceDate: REF0, observedMonth: MONTH });   // 발급 16 + LH 후보 122 + 건축HUB 대용량 후보 1,917 + 수도권 HOME 263
+const REF0 = '2026-10-10', board0 = boardFromLedger(tables, { referenceDate: REF0, observedMonth: MONTH });   // 발급 16 + LH 후보 122 + 건축HUB 대용량 후보 1,917 + 수도권 HOME 259
 
 test('판정 개월 경계: 꽉 찬 달 수(기준일의 일이 끝 날짜의 일보다 작으면 1을 뺀다), 6개월 = 지연, 1개월 미만 = 정상', () => {
   assert.equal(elapsedMonths('2026-04-10', '2026-10-10'), 6);

@@ -55,6 +55,14 @@ test('build(운영): 미리보기 지역 폴더와 색인 항목이 산출물에
   assert.deepEqual(out.regions.map((r) => r.slug), ['a']);
 });
 
+test('build: 산출물 색인의 infra 는 그 지역 폴더에 infra.json 이 있는가', () => {
+  const root = fixture([R('a', { default: true }), R('b')]);
+  fs.writeFileSync(path.join(root, 'regions/a/infra.json'), '{}');
+  build({ root, env: {}, log: silent });
+  const out = JSON.parse(fs.readFileSync(path.join(root, 'public/regions/index.json'), 'utf8'));
+  assert.deepEqual(out.regions.map((r) => [r.slug, r.infra]), [['a', true], ['b', false]]);
+});
+
 test('build(미리보기 배포·로컬): 미리보기 지역도 들어간다', () => {
   const root = fixture([R('a', { default: true }), R('b', { visibility: 'preview' })]);
   build({ root, env: { VERCEL_ENV: 'preview' }, log: silent });

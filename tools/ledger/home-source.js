@@ -96,10 +96,59 @@ function blockKey(row) {
   if (!block) { const m = /\s+([A-Za-z]{1,3})\s*-?\s*(\d+)(?:BL)?(?:\s|\(|$)/i.exec(row.name ?? ''); block = m ? m[1] + m[2] : null; }
   const m = /^([A-Za-z]{1,3})\s*-?\s*0*(\d+)(?:BL)?$/i.exec(block ?? '');
   if (!term || !m) return null;
-  const t = term.replace(/\s+/g, '').replace('국제화계획', '').replace(/(?:공공주택지구|택지개발사업|택지개발지구|지구)+$/, '');
+  const t = term.replace(/\s+/g, '').replaceAll('국제화계획', '').replace(/(?:공공주택지구|택지개발사업|택지개발지구|지구)+$/, '');
   return t ? { region: row.region, term: t, block: `${m[1].toUpperCase()}${+m[2]}` } : null;
 }
 const keyText = (k) => `${k.region}|${k.term}|${k.block}`;
+
+/* ---------- 대표 고르기(HOME supply_dashboard.inventory — policy-progress.js 도 이것을 쓴다) ---------- */
+/* 대표가 될 수 없는 행: 복수 현장 계약(MULTI_SITE_CONTRACT), 블록 키 없는 건설공사 계약. rows 의 source_id 는 별칭을 푼 값(lh_incheon_* → lh_*) */
+const inventoryDropped = (row) => (row.warnings || []).includes('MULTI_SITE_CONTRACT') || (row.source_id === 'lh_construction' && blockKey(row) === null);
+/* 지구·블록 중복 제외 → { chosen, excluded }(id). 같은 블록(blockKey)에 공급계획(lh_sale·lh_rent)이 하나면 그것, 계획 없이 한 행이면 그 행이 대표.
+   계획이 둘 이상이거나 계획 없이 여러 행이면 묶음째 뺀다. 대표의 계획 호수가 없고 같은 블록 원천의 양수 호수가 한 값이면 그 값(SAME_BLOCK_SOURCE) */
+function inventory(rows) {
+  const grouped = new Map(), excluded = [];
+  for (const row of rows) {
+    if (inventoryDropped(row)) { excluded.push(row.id); continue; }
+    const key = blockKey(row);
+    const k = key ? `K${keyText(key)}` : `S${row.source_id}\u0000${row.id}`;
+    if (!grouped.has(k)) grouped.set(k, []);
+    grouped.get(k).push(row);
+  }
+  const chosen = [];
+  for (const group of grouped.values()) {
+    const plans = group.filter((r) => PLAN_SOURCES.has(r.source_id));
+    if (plans.length > 1 || (!plans.length && group.length > 1)) { excluded.push(...group.map((r) => r.id)); continue; }
+    let winner = plans.length ? plans[0] : group[0];
+    if (winner.planned_units == null) {
+      const caps = new Set(group.filter((r) => r.planned_units != null && r.planned_units > 0).map((r) => r.planned_units));
+      if (caps.size === 1) winner = { ...winner, planned_units: [...caps][0], quantity_basis: 'SAME_BLOCK_SOURCE', quantity_source_ids: group.filter((r) => r.planned_units != null).map((r) => r.id) };
+    }
+    chosen.push(winner);
+    excluded.push(...group.filter((r) => r.id !== winner.id).map((r) => r.id));
+  }
+  return { chosen, excluded };
+}
+
+/* 현장 키(원장만의 규칙 — 대표가 될 수 없는 행만 있는 묶음을 다른 사업에 붙일 때): 시도|지구(괄호·지구 꼬리 뺌)|블록(숫자 블록도 받는다).
+   지구가 없으면 이름의 마지막 낱말이 블록. 복수 현장 계약이 아니면 이름에 블록 표기가 하나뿐일 때 그 블록(HOME evidence_bridge.match_key 와 같은 생각) */
+function siteKey(p) {
+  const noParen = (s) => String(s ?? '').replace(/\([^)]*(?:\)|$)/g, ' ').trim();
+  let term = noParen(p.district), block = p.block;
+  if (!term) { const w = noParen(p.name).split(/\s+/); if (w.length < 2) return null; block = w.pop(); term = w.join(''); }
+  if (!(p.warnings ?? []).includes('MULTI_SITE_CONTRACT')) {
+    const hits = new Set([...String(p.name ?? '').toUpperCase().matchAll(/(?<![A-Z0-9])([A-Z]{1,3})\s*-?\s*0*(\d+)(?:BL|블록)?(?![0-9])/g)].map((m) => `${m[1]}${m[2]}`));
+    if (hits.size === 1) block = [...hits][0];
+  }
+  const m = /^([A-Za-z]{0,3})\s*-?\s*0*(\d+)(?:BL)?$/i.exec(String(block ?? '').trim());
+  const b = m ? `${m[1].toUpperCase()}${m[2]}` : String(block ?? '').replace(/\s+/g, '').toUpperCase();
+  const t = term.replace(/\s+/g, '').replace(/(?:공공주택지구|택지개발사업|택지개발지구|지구)+$/, '');
+  return t && b ? `${p.region}|${t}|${b}` : null;
+}
+/* 공사 계약 코드형 이름('[(105228)서울공릉(복합개발)]…') */
+const CODE_NAME = /^\s*\[\(\d+\)/;
+/* 지구+블록 이름(대표 원천이 없을 때, LH 공급계획 이름 꼴): '인천서구(거북이기지)'·'1' → '인천서구(거북이기지) 1'. 원천 지구 칸 끝의 닫히지 않은 '(' 는 뺀다 */
+const siteName = (p) => { const d = String(p.district ?? '').replace(/\s*\($/, '').trim(); return d ? [d, String(p.block ?? '').trim()].filter(Boolean).join(' ') : null; };
 
 /* ---------- 시군구 ---------- */
 const sggCandidates = (t) => [...(t.length >= 3 && t[1].endsWith('시') && t[2].endsWith('구') ? [{ name: t.slice(0, 3).join(' '), used: 3 }] : []), ...(t.length >= 2 ? [{ name: t.slice(0, 2).join(' '), used: 2 }] : [])];
@@ -254,10 +303,32 @@ function buildHome(home, { areaRows, lhSgg = [] }) {
     g.bjds = inCity.filter((b) => b.startsWith(g.sgg)).sort();
     out.push(g);
   }
+  /* 대표 원천 행(HOME inventory 규칙 그대로): 복수 현장 계약·블록 키 없는 건설공사 계약은 대표가 되지 못한다. 같은 블록에 공급계획이 하나면 그것,
+     계획 없이 한 행이면 그 행. 계획이 둘 이상이거나 계획 없이 여러 행이면(HOME 은 묶음째 집계에서 뺀다) 남는 행 중 원천 사업후보 순 첫 행.
+     대표가 될 행이 없는 묶음은 같은 시군구·같은 현장(siteKey)·같은 계획 호수의 사업이 하나뿐이면 그 사업에 별칭으로 합친다(absorbed — 옛 id 는 대표 id 로 넘어간다) */
+  const rowOf = (m) => ({ ...m.p, id: m.pro, source_id: src(m.p.source_id) });
+  const winners = new Set(inventory(members.map(rowOf)).chosen.map((r) => r.id));
+  const lone = (g) => g.members.every((m) => inventoryDropped(rowOf(m)));
+  const sameSite = (x, y) => Number.isInteger(x.p.planned_units) && x.p.planned_units > 0 && x.p.planned_units === y.p.planned_units && siteKey(x.p) !== null && siteKey(x.p) === siteKey(y.p);
+  const absorbedInto = new Map();
+  for (const g of out.filter(lone)) {
+    const targets = out.filter((h) => h !== g && h.sgg === g.sgg && !lone(h) && h.members.some((y) => !inventoryDropped(rowOf(y)) && g.members.some((x) => sameSite(x, y))));
+    if (targets.length !== 1) continue;
+    const h = targets[0];
+    h.members.push(...g.members);
+    h.absorbed = [...(h.absorbed ?? []), ...g.members];
+    h.bjds = [...new Set([...h.bjds, ...g.bjds.filter((b) => b.startsWith(h.sgg))])].sort();
+    absorbedInto.set(g, h);
+  }
+  out.splice(0, out.length, ...out.filter((g) => !absorbedInto.has(g)));
+  report.inventory = { dropped: members.filter((m) => inventoryDropped(rowOf(m))).length, absorbed: absorbedInto.size, lone: out.filter(lone).length, ambiguous: 0 };
   for (const g of [...out, ...unresolved]) {
-    /* 대표 원천 행: 공급계획(LH 분양·임대)이 하나면 그것, 아니면 HPR 순 첫 행(HOME inventory 와 같은 쪽) */
-    const plans = g.members.filter((m) => PLAN_SOURCES.has(src(m.p.source_id)));
-    g.main = plans.length === 1 ? plans[0] : g.members[0];
+    for (const m of g.members) m.dropped = inventoryDropped(rowOf(m));
+    const live = g.members.filter((m) => !m.dropped);
+    const won = g.members.find((m) => winners.has(m.pro));
+    g.main = won ?? live[0] ?? g.members[0];
+    g.lone = !live.length;
+    if (live.length && !won) report.inventory.ambiguous++;
     g.keys = groupKeys(g);
   }
   report.groups = out.length;
@@ -275,6 +346,7 @@ function groupKeys(g) {
   for (const m of g.members) keys.push(`PRO:${m.pro}`);
   for (const m of g.members) for (const l of m.lh) keys.push(`LH:${l.id}`);
   if (g.sgg) for (const k of new Set(g.members.filter((m) => m.key).map((m) => `BLK:${g.sgg}|${m.key.term}|${m.key.block}`))) keys.push(k);
+  g.absorbedKeys = new Set((g.absorbed ?? []).flatMap((m) => [`HPR:${m.hpr}`, `PRO:${m.pro}`, ...m.lh.map((l) => `LH:${l.id}`)]));
   return keys;
 }
 
@@ -290,9 +362,11 @@ function assignHomeIds(groups, { homeIds = {}, counters = {}, taken = [] } = {})
   for (const type of KEY_ORDER) {
     for (const g of order) {
       if (ids.has(g)) continue;
-      const hit = [...new Set(g.keys.filter((k) => k.startsWith(`${type}:`)).map((k) => homeIds[k]).filter(Boolean))].sort();
+      const ids_ = (keys) => [...new Set(keys.filter((k) => k.startsWith(`${type}:`)).map((k) => homeIds[k]).filter(Boolean))].sort();
+      const hit = ids_(g.keys);
       if (hit.length > 1) conflicts++;
-      const id = hit.find((x) => !used.has(x) && serialOf(x));
+      /* 합친 사업(absorbed)은 대표 쪽 키의 id 를 먼저 — 옛 id 는 대표 id 로 넘어간다(scripts/issue-projects.js --home 이 supersededBy) */
+      const id = [...ids_(g.keys.filter((k) => !g.absorbedKeys?.has(k))), ...hit].find((x) => !used.has(x) && serialOf(x));
       if (id) { ids.set(g, id); used.add(id); }
     }
   }
@@ -309,10 +383,10 @@ function assignHomeIds(groups, { homeIds = {}, counters = {}, taken = [] } = {})
   }
   return { ids, fresh, conflicts };
 }
-/* 매핑 파일: 이전 매핑에 이번 묶음의 키를 더한다(있는 키는 바꾸지 않는다). 키 순, 한 항목 한 줄 */
+/* 매핑 파일: 이전 매핑에 이번 묶음의 키를 더한다(있는 키는 바꾸지 않는다 — 다른 사업에 합친 행(absorbed)의 키만 대표 id 로 다시 가리킨다). 키 순, 한 항목 한 줄 */
 function mergeHomeIds(prev, groups, ids) {
   const out = { ...prev };
-  for (const g of groups) for (const k of g.keys) out[k] ??= ids.get(g);
+  for (const g of groups) for (const k of g.keys) { if (g.absorbedKeys?.has(k)) out[k] = ids.get(g); else out[k] ??= ids.get(g); }
   return Object.fromEntries(Object.keys(out).sort().map((k) => [k, out[k]]));
 }
 const renderHomeIds = (ids) => `{\n${Object.entries(ids).map(([k, v]) => `${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(',\n')}\n}\n`;
@@ -320,6 +394,8 @@ const renderHomeIds = (ids) => `{\n${Object.entries(ids).map(([k, v]) => `${JSON
 /* ---------- 원장 행 ---------- */
 const EVENT = { complex_id: null, event_date: null, event_month: null, event_year: null, progress_pct: null, event_detail: null, change_reason: null, change_note: null };
 const agencyOf = (dev) => AGENCY.find(([re]) => re.test(String(dev ?? '').trim()))?.[1] ?? null;
+/* 사업 이름: 원천 이름. 대표가 없는 묶음(lone — 복수 현장 계약·블록 키 없는 계약뿐)의 복수 현장 계약이거나 공사 계약 코드형 이름이면 지구+블록 */
+const projectName = (p, lone) => ((lone && (p.warnings ?? []).includes('MULTI_SITE_CONTRACT')) || CODE_NAME.test(p.name ?? '') ? siteName(p) ?? trim(p.name, 200) : trim(p.name, 200));
 const trim = (s, n = 160) => { const t = String(s ?? '').replace(/\s+/g, ' ').trim(); return t ? (t.length > n ? `${t.slice(0, n - 1)}…` : t) : null; };
 
 /* build(buildHome) + ids(assignHomeIds) → 원장 표 조각 { projects, identifiers, project_locations, events, units, notices, notice_links, review_required, policies, programs, links, policy_targets, area_facts, sources } 과 report.
@@ -360,7 +436,7 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
     const scope = agency ? 'PUBLIC' : program ? 'PUBLIC' : 'UNKNOWN';
     const block = g.members.find((m) => m.key)?.key.block ?? main.block;
     t.projects.push({
-      local_project_id: pid, project_name: trim(main.name, 200) ?? trim(g.main.hprName, 200), project_unit: g.members.some((m) => m.key) ? 'BLOCK' : /^\d+$/.test(String(block ?? '').trim()) ? 'AREA_UNKNOWN' : 'PROJECT',
+      local_project_id: pid, project_name: projectName(main, g.lone) ?? trim(g.main.hprName, 200), project_unit: g.members.some((m) => m.key) ? 'BLOCK' : /^\d+$/.test(String(block ?? '').trim()) ? 'AREA_UNKNOWN' : 'PROJECT',
       sgg_code: g.sgg, agency_id: agency, public_scope: scope,
       public_basis: agency ? `HOME 원천 시행: ${ps.map((p) => p.developer).find((d) => agencyOf(d) === agency)}` : program ? `HOME 프로그램: ${program}` : null,
       stage_code: stage, as_of: ps.map((p) => p.base_date).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d ?? '') && d <= asOf).sort().pop() ?? asOf,
@@ -371,7 +447,7 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
     /* 식별자: HPR·PRO(HOME), LH 준공예정 별칭(HOME LH_ + AREA_BLOCK 지구|블록), LH 공사현황 지구·블록 코드, 대체된 레지스트리 사업의 번들 단지 */
     const ident = (id_type, id_value, id_issuer, source_ref, match_status, match_rule) => t.identifiers.push({ local_project_id: pid, id_type, id_value, id_issuer, as_of: asOf, source_ref, match_status, match_rule });
     for (const m of g.members) {
-      ident('HOME', m.hpr, 'HOUSING_WAVE', refs.main, 'REVIEW_REQUIRED', m === g.members[0] ? null : 'SGG_DISTRICT_BLOCK');
+      ident('HOME', m.hpr, 'HOUSING_WAVE', refs.main, 'REVIEW_REQUIRED', m === g.members[0] ? null : g.absorbed?.includes(m) ? 'SAME_SITE_UNITS' : 'SGG_DISTRICT_BLOCK');
       ident('HOME', m.pro, 'HOUSING_WAVE', refs.main, 'REVIEW_REQUIRED', 'SOURCE_ANCHOR');
     }
     for (const m of g.members) for (const l of m.lh) {
@@ -393,14 +469,26 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
     for (const x of moved) t.project_locations.push({ local_project_id: pid, bjd_code: x.pnu.slice(0, 10), pnu: x.pnu, pnu_scope: 'REPRESENTATIVE', source_ref: x.src });
     for (const bjd of g.bjds) if (!moved.some((x) => x.pnu.startsWith(bjd))) t.project_locations.push({ local_project_id: pid, bjd_code: bjd, pnu: null, pnu_scope: null, source_ref: refs.main });
 
-    /* 호수: 묶음의 계획 호수 중 가장 큰 값 하나(겹치는 행을 더하지 않는다) */
-    const withUnits = g.members.filter((m) => Number.isInteger(m.p.planned_units) && m.p.planned_units >= 0).sort((a, b) => b.p.planned_units - a.p.planned_units || byStr(a.pro, b.pro));
+    /* 호수: 묶음의 계획 호수 중 가장 큰 값 하나(겹치는 행을 더하지 않는다). 대표가 될 수 없는 행(복수 현장 계약·블록 키 없는 계약)의 호수는 다른 행에 호수가 없을 때만 */
+    const hasUnits = (m) => Number.isInteger(m.p.planned_units) && m.p.planned_units >= 0, all = g.members.filter(hasUnits), pool = all.filter((m) => !m.dropped);
+    const withUnits = (pool.length ? pool : all).sort((a, b) => b.p.planned_units - a.p.planned_units || byStr(a.pro, b.pro));
     if (withUnits.length) {
-      const u = withUnits[0].p, differs = new Set(withUnits.map((m) => m.p.planned_units)).size > 1;
+      const u = withUnits[0].p, differs = new Set(all.map((m) => m.p.planned_units)).size > 1;
       t.units.push({ local_project_id: pid, complex_id: null, quantity_type: 'PROJECT_PLAN', housing_type: u.tenure && !/확인/.test(u.tenure) ? u.tenure : null, unit_count: u.planned_units, reference_period: null, unit_scope: 'TOTAL', source_ref: refs.main,
         review_status: differs || (u.warnings ?? []).some((w) => /MULTI_SITE|QUANTITY|CONFLICT/.test(w)) ? 'REVIEW_REQUIRED' : 'CONFIRMED' });
     }
   }
+
+  /* 다른 사업에 합친 HOME 발급 사업(레지스트리 supersededBy — scripts/issue-projects.js --home): 사업 행만 남기고 superseded_by 로 대표를 가리킨다(옛 주소가 대표로 넘어간다) */
+  const live = new Set(t.projects.map((p) => p.local_project_id)), absorbedByPro = new Map(sorted.flatMap((g) => (g.absorbed ?? []).map((m) => [m.pro, m.p])));
+  R.supersededHome = 0;
+  for (const p of registry.projects) {
+    if (!p.supersededBy || !live.has(p.supersededBy) || live.has(p.id) || !p.refs.some((r) => r.system === HOME_SYSTEM)) continue;
+    const into = t.projects.find((x) => x.local_project_id === p.supersededBy), src_ = absorbedByPro.get(p.refs.find((r) => r.key === 'PRO')?.value);
+    t.projects.push({ ...into, local_project_id: p.id, project_name: (src_ && projectName(src_, true)) ?? into.project_name, stage_code: p.stageCode, as_of: p.asOf, issued_at: p.issuedAt ?? null, superseded_by: p.supersededBy });
+    R.supersededHome++;
+  }
+  t.projects.sort((a, b) => byStr(a.local_project_id, b.local_project_id));
 
   /* 일정 */
   const ev = (pid, e) => t.events.push({ ...EVENT, local_project_id: pid, observed_month: observedMonth, review_status: 'CONFIRMED', ...e });
@@ -663,7 +751,7 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
   const reg = JSON.parse(JSON.stringify(registry));
   reg.counters ??= {};
   const ref = `${HOME_PREFIX}${edition}`;
-  const rows = tables.projects.filter((p) => p.source_ref === ref);
+  const rows = tables.projects.filter((p) => p.source_ref === ref && !p.superseded_by);
   const by = (list, f) => { const m = new Map(); for (const r of list) { const k = f(r); if (k == null) continue; (m.get(k) || m.set(k, []).get(k)).push(r); } return m; };
   const idents = by(tables.identifiers.filter((r) => r.id_type === 'HOME' && /^(HPR_|PRO_|LH__)/.test(r.id_value)), (r) => r.local_project_id);
   const locs = by(tables.project_locations, (r) => r.local_project_id), units = by(tables.units.filter((u) => u.unit_scope === 'TOTAL'), (u) => u.local_project_id);
@@ -691,7 +779,16 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
     reg.counters[s.sgg] = Math.max(reg.counters[s.sgg] ?? 0, s.n);
   }
   const hide = (p, reason) => { if (!p.hiddenAt) { p.hiddenAt = today; p.hiddenReason = reason; } out.hidden.push({ id: p.id, name: p.name ?? null, sgg: p.sgg, reason: p.hiddenReason }); };
-  for (const p of reg.projects) if (isHomeEntry(p) && !current.has(p.id) && !p.supersededBy) hide(p, `HOME 덤프 ${edition} 에 없다`);
+  /* 이번 판에 없는 HOME 발급 사업: 그 HOME 별칭(HPR·PRO·LH)이 매핑에서 이번 판의 다른 사업 하나를 가리키면(다른 사업에 합쳤다 — buildHome absorbed) 그 사업으로 대체, 아니면 숨긴다 */
+  for (const p of reg.projects) {
+    if (!isHomeEntry(p) || current.has(p.id)) continue;
+    const into = [...new Set(p.refs.filter((r) => r.system === HOME_SYSTEM).map((r) => homeIds[`${r.key}:${r.value}`]).filter((id) => id && id !== p.id && current.has(id)))];
+    if (into.length === 1) {
+      p.supersededBy = into[0];
+      delete p.hiddenAt; delete p.hiddenReason;
+      out.superseded.push({ from: p.id, name: p.name ?? null, into: into[0], rule: 'HOME_SAME_SITE', key: p.refs.filter((r) => r.system === HOME_SYSTEM).map((r) => `${r.key}:${r.value}`).join(' ') });
+    } else if (!p.supersededBy) hide(p, `HOME 덤프 ${edition} 에 없다`);
+  }
   /* 수도권의 다른 발급 사업: HOME 사업으로 대체하거나 숨긴다 */
   const lhOf = by(lhSgg.filter((e) => e.local_project_id), (e) => e.local_project_id);
   for (const p of reg.projects.filter((x) => !isHomeEntry(x) && HOME_SIDO.includes(x.sgg.slice(0, 2)))) {
@@ -719,4 +816,4 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
   return { registry: reg, ...out };
 }
 
-module.exports = { HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, issueHome, serialOf };
+module.exports = { HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, issueHome, serialOf };

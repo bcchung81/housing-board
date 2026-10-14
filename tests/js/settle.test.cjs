@@ -69,3 +69,14 @@ test('region.settleOf: 06 입주일 때만, 번들은 마지막 실제 준공 �
   assert.equal(R.settleOf({ status: '건설 단계', ledger: { stage: '06', done: '2008-12', next: { eventType: 'MOVE_IN', planned: '2026-08-01' } } }, NOW), 'moving');
   assert.equal(R.settleOf({ status: '건설 단계', ledger: { stage: '06' } }, NOW), null);           // done 이 아직 없는 원장 = 지금 동작
 });
+
+test('app.js 상태 글: 날짜 없는 06 입주 단지(표지 null)도 범례와 같은 입주 진행 — 옛 문구 입주 단계를 적지 않는다(광주 광산 A-2)', () => {
+  const src = fs.readFileSync(path.join(ROOT, 'assets/js/app.js'), 'utf8');
+  const m = /const stTxt = (\(b\) => .*?);\s/.exec(src);
+  assert.ok(m, 'stTxt 를 찾지 못했다');
+  const stTxt = new Function('window', `return ${m[1]}`)({ Settle: S });
+  assert.equal(stTxt({ status: '입주 단계', settle: null }), '입주 진행');
+  assert.equal(stTxt({ status: '입주 단계', settle: 'settled' }), '입주 완료');
+  assert.equal(stTxt({ status: '건설 단계', settle: null }), '건설 단계');
+  assert.match(src, /\.map\(\(b\) => b\.settle \|\| 'moving'\)/, '범례도 표지 없는 06 을 입주 진행으로 센다');
+});

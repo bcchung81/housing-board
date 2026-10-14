@@ -141,7 +141,7 @@ test('④ 수도권 사업 수 = HOME 사업 중 시군구가 정해진 것(같�
   assert.equal(cap.length, build.groups.length);
   const members = build.groups.reduce((n, g) => n + g.members.length, 0), unresolved = build.unresolved.reduce((n, g) => n + g.members.length, 0);
   assert.equal(members + unresolved, home.kinds.home_project.length, 'HOME 사업(HPR) 308 = 묶음에 든 것 + 시군구 미정');
-  assert.deepEqual([home.kinds.home_project.length, build.groups.length, members - build.groups.length, unresolved], [308, 263, 43, 2], '2026-10-13 덤프: 308 → 블록 병합 43 → 시군구 미정 2 → 사업 263');
+  assert.deepEqual([home.kinds.home_project.length, build.groups.length, members - build.groups.length, unresolved], [308, 259, 47, 2], '2026-10-13 덤프: 308 → 블록 병합 43 + 같은 현장 합침 4(복수 현장·블록 키 없는 계약) → 시군구 미정 2 → 사업 259');
   const blk = new Map();
   for (const g of build.groups) for (const k of g.keys.filter((x) => x.startsWith('BLK:'))) { assert.ok(!blk.has(k), `${k} 가 두 사업에`); blk.set(k, g); }
   const block = new Set();
@@ -248,7 +248,7 @@ test('레지스트리: 수도권 옛 발급 사업 61 = HOME 사업으로 대체
   assert.ok(sup.every((p) => p.sgg === '28245' && registry.projects.find((x) => x.id === p.supersededBy).refs.some((r) => r.system === 'bundle' && p.refs.some((q) => q.value === r.value))));
   assert.deepEqual([...new Set(hid.map((p) => p.sgg))].sort(), ['11290', '41450']);
   const match = read('mappings/home-registry-match.json');
-  assert.deepEqual(match.superseded.map((m) => m.from).sort(), sup.map((p) => p.id).sort());
+  assert.deepEqual(match.superseded.filter((m) => m.rule !== 'HOME_SAME_SITE').map((m) => m.from).sort(), sup.map((p) => p.id).sort());
   for (const p of sup) assert.equal(saved.projects.find((x) => x.local_project_id === p.id).superseded_by, p.supersededBy, `${p.id}: 원장에도 대체`);
   assert.ok(hid.every((p) => !saved.projects.some((x) => x.local_project_id === p.id)), '숨긴 사업은 원장에 없다');
   const page = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/project/[id]/page.tsx'), 'utf8');
@@ -268,4 +268,53 @@ test('지도 계약: 사업 행의 done = 실제 준공(ACTUAL COMPLETION) 중 �
   const t = loadTables(), m = mapIndexFromLedger(t, { referenceDate: M.referenceDate, observedMonth: M.observedMonth });
   assert.deepEqual(m, M);
   assert.ok(boardFromLedger(t, { referenceDate: M.referenceDate, observedMonth: M.observedMonth }).scope.projects === rows.length);
+});
+
+test('대표 고르기(HOME supply_dashboard.inventory)는 한 벌: 원장 변환(home-source)과 9·7 진행(policy-progress)이 같은 함수를 쓴다', () => {
+  const PP = require('../../tools/ledger/policy-progress');
+  assert.equal(PP.inventory, H.inventory);
+  const r = { source_id: 'lh_sale', region: '경기도', name: '고양창릉 S-03', block: 'S-03' };
+  assert.deepEqual(PP.blockKey(r), Object.values(H.blockKey(r)));
+  assert.equal(H.inventoryDropped({ source_id: 'lh_construction', warnings: [], region: '서울특별시', district: '서울공릉', block: '1', name: '서울공릉 1' }), true, '블록 키 없는 건설공사 계약');
+  assert.equal(H.inventoryDropped({ source_id: 'lh_progress', warnings: ['MULTI_SITE_CONTRACT'], region: '경기도', district: '부천대장', block: 'A7', name: '부천대장 A7' }), true, '복수 현장 계약');
+  assert.equal(H.inventoryDropped({ source_id: 'lh_progress', warnings: [], region: '서울특별시', district: '서울공릉', block: '1', name: '서울공릉 1' }), false);
+  /* 현장 키: 괄호·숫자 블록을 받고, 복수 현장 계약은 이름의 블록 표기를 쓰지 않는다 */
+  assert.equal(H.siteKey({ region: '서울특별시', district: '서울공릉(복합개발)', block: '1', name: '[(105228)서울공릉(복합개발)]위례A2-7BL…', warnings: ['MULTI_SITE_CONTRACT'] }), '서울특별시|서울공릉|1');
+  assert.equal(H.siteKey({ region: '서울특별시', district: '서울공릉', block: '1', name: '서울공릉 1' }), '서울특별시|서울공릉|1');
+  assert.equal(H.siteKey({ region: '경기도', district: '의왕초평(뉴스테이)', block: '04', name: '의왕초평 A4BL 민간참여 공공주택 건설사업' }), '경기도|의왕초평|A4');
+  assert.equal(H.siteKey({ region: '인천광역시', district: null, block: null, name: '인천부평(도시재생뉴딜) A' }), '인천광역시|인천부평|A');
+});
+
+test('중복 사업 정리(2026-10-13 덤프): 대표가 될 수 없는 행만 있는 사업 4건을 같은 현장·같은 호수 사업에 합치고, 옛 id 는 대표로 넘긴다', () => {
+  const MERGED = { 'PRJ-11350-0097': 'PRJ-11350-0096', 'PRJ-11560-0146': 'PRJ-11560-0143', 'PRJ-28237-0064': 'PRJ-28237-0065', 'PRJ-41430-0044': 'PRJ-41430-0048' };
+  const byId = new Map(saved.projects.map((p) => [p.local_project_id, p])), reg = new Map(registry.projects.map((p) => [p.id, p]));
+  for (const [from, into] of Object.entries(MERGED)) {
+    assert.equal(byId.get(from)?.superseded_by, into, `${from}: 원장 superseded_by`);
+    assert.equal(reg.get(from)?.supersededBy, into, `${from}: 레지스트리 supersededBy(/project/${from} → ${into})`);
+    assert.ok(!byId.get(into).superseded_by && !reg.get(into).supersededBy && !reg.get(into).hiddenAt, `${into} 는 살아 있다`);
+    const refs = reg.get(from).refs.filter((r) => r.system === 'home');
+    for (const r of refs) assert.equal(homeIds[`${r.key}:${r.value}`], into, `home-ids ${r.key}:${r.value} → 대표 id`);
+    const pro = refs.find((r) => r.key === 'PRO').value, hpr = refs.find((r) => r.key === 'HPR').value;
+    assert.ok(saved.identifiers.some((i) => i.local_project_id === into && i.id_type === 'HOME' && i.id_value === pro), `${into} 에 ${pro} 별칭`);
+    assert.ok(saved.identifiers.some((i) => i.local_project_id === into && i.id_value === hpr && i.match_rule === 'SAME_SITE_UNITS'), `${into} 에 ${hpr}(SAME_SITE_UNITS)`);
+    assert.ok(!saved.identifiers.some((i) => i.local_project_id === from) && !saved.events.some((e) => e.local_project_id === from) && !saved.units.some((u) => u.local_project_id === from), `${from} 에는 사업 행만 남는다`);
+  }
+  const M = require('../../data/board/ledger-map.json'), mapIds = new Set(Object.values(M.bySgg).flat().map((r) => r.id));
+  assert.ok(Object.keys(MERGED).every((id) => !mapIds.has(id)) && Object.values(MERGED).every((id) => mapIds.has(id)), '지도에는 대표만');
+  assert.deepEqual(read('mappings/home-registry-match.json').superseded.filter((m) => m.rule === 'HOME_SAME_SITE').map((m) => [m.from, m.into]).sort(), Object.entries(MERGED).sort());
+});
+
+test('사업 이름: 공사 계약 코드형 이름([(105228)…]) 0건, 수도권 HOME 사업의 대표 원천은 복수 현장 계약·블록 키 없는 계약이 아니다(그것뿐인 사업 9건 제외)', { skip: SKIP }, () => {
+  const code = /^\s*\[\(\d+\)/;
+  assert.equal(saved.projects.filter((p) => code.test(p.project_name ?? '')).length, 0, '원장(대체된 행 포함)');
+  assert.equal(registry.projects.filter((p) => !p.supersededBy && !p.hiddenAt && code.test(p.name ?? '')).length, 0, '살아 있는 레지스트리');
+  const home = H.readHome(HOME_DIR), build = H.buildHome(home, { areaRows: inputs().legalDong.rows, lhSgg: read('mappings/lh-block-sgg.json') });
+  const drop = (m) => H.inventoryDropped({ ...m.p, source_id: { lh_incheon_construction: 'lh_construction' }[m.p.source_id] ?? m.p.source_id });
+  const lone = build.groups.filter((g) => g.members.every(drop));
+  assert.equal(lone.length, 9, '대표 없이 남는 사업(같은 현장 사업이 없거나 시군구가 다름) — 인천계양 A2·A3, 인천검단 35·AA13-1·AA19BL, 인천서구 2, 인천송림4, 양평공흥');
+  for (const g of build.groups.filter((x) => !lone.includes(x))) assert.ok(!drop(g.main), `${g.main.pro}: 대표가 대표가 될 수 없는 행`);
+  const names = new Map(saved.projects.map((p) => [p.local_project_id, p.project_name]));
+  assert.ok(!saved.projects.filter((p) => isCap(p.sgg_code) && !p.superseded_by).some((p) => /및|,\s*\S+BL/.test(p.project_name ?? '') && /BL.*BL/.test(p.project_name ?? '')), '여러 블록을 묶은 계약 이름이 사업 이름이 아니다');
+  assert.equal(names.get('PRJ-28245-0055'), '인천계양(공공주택) A2');
+  assert.equal(names.get('PRJ-41196-0099'), '부천대장 A7');
 });
