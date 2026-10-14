@@ -20,6 +20,8 @@ import { Card } from '../ui/card';
 import { CUR, HOVER, RIBBON, chartStatic, ribbonDynamic } from './ribbon';
 import { Key } from './tags';
 import PanelLink from './PanelLink';
+import MapLink from './MapLink';
+import { mapScopeHref } from '../../lib/board/map-href';
 import { ag, agName, agVal, ags, bar3, btn, disp, jtag, legend, pacts, phead, phgroup, ptitle, row2 } from './styles';
 
 export type BoardReal = {
@@ -137,6 +139,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const cur = DIR[focus - 1];
   const sidoName = (code: string) => real.sido[code] ?? code;
   const curReg = L.regions.find((r) => r.code === region)!;
+  const curRegMap = mapScopeHref({ sido: curReg.code });   // 수도권 시도만 지도 연결(그 밖은 null)
   const judgedNames = L.regions.filter((r) => r.judged).map((r) => sidoName(r.code)).join('·');
   const judgedText = L.regions.every((r) => r.judged) ? `${L.regions.length}개 시도 모두` : `${judgedNames}만`;
   const emptyAgencies = L.agencies.filter((a) => !a.projects);
@@ -289,7 +292,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               <div data-slot="board-region-sum" aria-live="polite" className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 rounded-[10px] border border-border bg-card px-3.5 py-2 [grid-area:5/2/6/5] mobile:gap-x-2.5 mobile:gap-y-0.5 mobile:px-2 mobile:py-1.5">
                 <b className="text-[15px]">{sidoName(curReg.code)}</b>
                 <span className="flex gap-2.5 text-[14px] whitespace-nowrap text-muted-foreground mobile:gap-1.5 mobile:text-[13px]"><span>지연<strong className="ml-[3px] text-bad">{f(curReg.delay)}</strong></span><span>주의<strong className="ml-[3px] text-warn">{f(curReg.caution)}</strong></span><span>정상<strong className="ml-[3px] text-ok">{f(curReg.ok)}</strong></span><span>건</span></span>
-                <span className={cn(pacts, 'mobile:ml-0')}><PanelLink href={`/region?sido=${curReg.code}`} full={`${sidoName(curReg.code)} 실적(실데이터) 상세`}>{sidoName(curReg.code)} 실적</PanelLink></span>
+                <span className={cn(pacts, 'mobile:ml-0')}><PanelLink href={`/region?sido=${curReg.code}`} full={`${sidoName(curReg.code)} 실적(실데이터) 상세`}>{sidoName(curReg.code)} 실적</PanelLink>{curRegMap ? <MapLink href={curRegMap} full={`${sidoName(curReg.code)} 지도에서 보기`} /> : null}</span>
               </div>
             </div>
           </Card>

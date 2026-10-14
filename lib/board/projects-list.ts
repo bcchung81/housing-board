@@ -35,7 +35,7 @@ export const lateCell = (r: ProjectRow): Cell => {
 export const agencyCell = (r: ProjectRow): Cell => { const k = agencyKey(r.agency); return k === 'etc' ? { text: AGENCY_NAME[k], muted: true } : AGENCY_NAME[k]; };
 export const unitsCell = (r: ProjectRow): Cell => (r.units > 0 ? r.units : { na: '미확인' });
 /* 지도 연결점(수도권 사업만 — 지도 자료가 서울·인천·경기). 지도는 다른 루트 레이아웃이라 <a> */
-export const mapCell = (r: ProjectRow): Cell => (isMetro(r.sgg) ? { text: '지도에서 보기', href: mapHref({ project: r.id }), doc: true, icon: 'map', title: `${r.name} — 지도에서 이 사업 위치 보기` } : null);
+export const mapCell = (r: ProjectRow): Cell => (isMetro(r.sgg) ? { text: '지도', href: mapHref({ project: r.id }), doc: true, icon: 'map', title: `${r.name} — 지도에서 이 사업 위치 보기` } : null);
 
 /* 의미 없는 열 버리기: 모든 칸이 빈칸(–)이거나 모두 '기타'인 열은 그리지 않고, 뺀 사실은 표 머리의 title 에 한 번만 */
 const OPTIONAL: Record<string, string> = { agency: '기관(모두 기타)', notice: '공고 확인(모두 없음)', next: `${PLAN_COL}(모두 없음)`, late: '지연(개월)(모두 경과 없음)', map: '지도(수도권 사업만)' };

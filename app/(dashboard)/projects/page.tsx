@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Download, MapPin, Printer } from 'lucide-react';
+import { Download, Printer } from 'lucide-react';
 import { Page, PageHead, PanelHead, SrcLink, sub } from '../../../components/page';
 import Drawer from '../../../components/projects/Drawer';
 import PrintButton from '../../../components/projects/PrintButton';
@@ -12,14 +12,15 @@ import InfoTip from '../../../components/ui/info-tip';
 import { Badge } from '../../../components/ui/badge';
 import { Card } from '../../../components/ui/card';
 import { Chip, ChipBar, ChipGroup, ChipMenu, ChipSep, ClearChip } from '../../../components/ui/chips';
-import { mapHref } from '../../../lib/board/map-href';
+import { mapScopeHref } from '../../../lib/board/map-href';
+import MapLink from '../../../components/board/MapLink';
 import { DataGrid } from '../../../components/ui/data-grid';
 import { sidoName } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
 import { getPolicyProgress, getProjectDrawer, getProjectsIndex } from '../../../lib/board/projects-index';
 import {
   AGENCY_NAME, AGENCY_TIP, BOARD_CIR, BOARD_COLOR, BOARD_NAMES, CAND_NAME, DELAY_GROUP, LONG_DELAY_MONTHS, PLAN_COL, STATUS_NAME, STATUS_ORDER, STATUS_RANGE, STATUS_TIP,
-  applyFilters, candidateOf, compareLines, editionText, isMetro, listHref, listOrder, parseFilters, pipelineOf, policyLabel, priorityOf, questionsOf, scopeOf, summaryOf, ymText,
+  applyFilters, candidateOf, compareLines, editionText, listHref, listOrder, parseFilters, pipelineOf, policyLabel, priorityOf, questionsOf, scopeOf, summaryOf, ymText,
   type Filters, type ProjectRow,
 } from '../../../lib/board/projects-view';
 import type { Cell, Col, Row } from '../../../lib/grid/spec';
@@ -171,11 +172,9 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const csvHref = listHref(f).replace(/^\/projects/, '/projects/csv');
   const issued = list.filter((r) => r.issued).length;
   const reset = listHref(f) !== '/projects';
-  /* 지도 연결점: 시군구를 고르면 그 시군구, 아니면 이 범위의 수도권 시군구를 고르게 한다(지도 첫 화면으로 떨어지지 않게) */
-  const mapSggs = [...new Set(scope.filter((r) => isMetro(r.sgg)).map((r) => r.sgg))].sort((a, b) => (idx.sggNames[a] ?? a).localeCompare(idx.sggNames[b] ?? b, 'ko'));
-  const mapLink = f.sgg ? (isMetro(f.sgg) ? <a href={mapHref({ sgg: f.sgg })} title="지도에서 이 시군구 보기" className={MAPA}><MapPin className="size-3.5" aria-hidden="true" />지도</a> : null)
-    : mapSggs.length ? <ChipMenu label={<span className="flex items-center gap-1"><MapPin className="size-3.5" aria-hidden="true" />지도</span>} fixed right cols={2} title="지도에서 볼 시군구 고르기(수도권)"
-      items={mapSggs.map((c) => ({ href: mapHref({ sgg: c }), label: sggLabel(idx.sggNames[c] ?? c, sidoName(molit, c.slice(0, 2))), doc: true }))} /> : null;
+  /* 지도 연결점: 이 목록의 범위로 — 시군구 하나 ?sgg= · 시도 하나(수도권) ?sido= · 수도권(기본) 지도 첫 화면. 수도권 밖·전국이면 숨긴다 */
+  const scopeMap = f.sgg || f.sido ? mapScopeHref({ sgg: f.sgg, sido: f.sido }) : f.metro ? mapScopeHref() : null;
+  const mapLink = scopeMap ? <MapLink href={scopeMap} full="이 범위를 지도에서 보기">이 범위 지도에서</MapLink> : null;
   /* 빈 결과: 푸는 동작과 가까운 대안(건수가 있는 것만) */
   const alts = !list.length ? [
     ...(f.status || f.stage !== undefined ? [{ label: '상태·단계 거르기 풀기', href: at({ status: undefined, stage: undefined }), n: count(rows, { ...f, status: undefined, stage: undefined }) }] : []),

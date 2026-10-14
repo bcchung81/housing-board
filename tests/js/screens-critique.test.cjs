@@ -129,7 +129,7 @@ test('빈 결과 회복: 거르기 풀기·전국에서 보기 등 건수가 있
 });
 
 test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들고 <a>(문서 이동)로 연다 — 서랍·목록 행·지역 공급 목록과 원·LH 블록 표·시도만 고른 지도 링크(시군구 고르기)', () => {
-  const files = ['components/projects/ProjectDetail.tsx', 'app/(dashboard)/projects/page.tsx', 'components/region/Ahead.tsx', 'app/(dashboard)/agency/[id]/page.tsx'];
+  const files = ['components/projects/ProjectDetail.tsx', 'components/region/Ahead.tsx', 'app/(dashboard)/agency/[id]/page.tsx'];
   for (const f of files) {
     const s = read(f);
     assert.match(s, /import \{ mapHref \} from '[./]+lib\/board\/map-href'/, f);
@@ -140,9 +140,9 @@ test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들�
   assert.match(det, /지도에서 보기 · \$\{loc\}/, '위치 종류(블록·지번·지구·근사·미확보)를 짧게');
   assert.doesNotMatch(det, />기반시설 점검</);
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(read('lib/board/projects-list.ts'), /isMetro\(r\.sgg\) \? \{ text: '지도에서 보기', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
-  assert.match(page, /items=\{mapSggs\.map\(\(c\) => \(\{ href: mapHref\(\{ sgg: c \}\)/, '시군구를 고르지 않았으면 지도 첫 화면 대신 시군구를 고르게');
-  assert.doesNotMatch(page, /: '\/map'/);
+  assert.match(read('lib/board/projects-list.ts'), /isMetro\(r\.sgg\) \? \{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
+  assert.match(page, /import \{ mapScopeHref \} from '[./]+lib\/board\/map-href'/);
+  assert.doesNotMatch(page, /`\/map\?|: '\/map'/, '지도 주소는 map-href 한 곳');
   const grid = read('components/ui/data-grid.tsx');
   assert.match(grid, /o\.doc \? <a href=\{o\.href\}/);
   const ahead = read('components/region/Ahead.tsx');

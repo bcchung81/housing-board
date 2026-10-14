@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Page, PageHead, PanelHead, sub } from '../../../components/page';
 import PanelLink from '../../../components/board/PanelLink';
+import MapLink from '../../../components/board/MapLink';
 import { Card } from '../../../components/ui/card';
 import { Chip, ChipBar, ChipGroup, ChipSep } from '../../../components/ui/chips';
 import InfoTip from '../../../components/ui/info-tip';
@@ -15,6 +16,7 @@ import annualJson from '../../../data/board/region-annual.json';
 import type { AreaFactsDoc } from '../../../lib/board/area-facts';
 import { fmt, lastMonth, monthLabel, ymDot } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
+import { mapScopeHref } from '../../../lib/board/map-href';
 import { CAL_KINDS, CAL_TYPE, aheadAll, parseKinds, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
 import { getProjectsIndex } from '../../../lib/board/projects-index';
 import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '../../../lib/board/projects-view';
@@ -72,6 +74,8 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
   /* 같은 범위의 사업 화면 연결: 점검 필요(주의·지연·장기 지연) 건수 */
   const { rows } = await getProjectsIndex();
   const pf: Filters = sido === 'metro' ? { metro: true } : sido ? { sido } : {};
+  /* 지도 연결: 수도권 = 지도 첫 화면, 시도 하나 = ?sido=, 전국·수도권 밖 = 없음 */
+  const scopeMap = sido === 'metro' ? mapScopeHref() : sido ? mapScopeHref({ sido }) : null;
   const check = applyFilters(rows, { ...pf, status: 'check' }).length, inScope = applyFilters(rows, pf).length;
 
   return (
@@ -94,6 +98,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
           {ORDER.map((c) => <Chip key={c} href={href({ sido: c })} on={c === sido}>{sidoName(c)}</Chip>)}
         </ChipGroup>
         <span className={`${sub} ml-auto whitespace-nowrap tabular-nums`}>
+          {scopeMap ? <><MapLink href={scopeMap} full={`${name} 지도에서 보기`} />{' · '}</> : null}
           <Link href={listHref(pf)} className={LINKA} title={`${name} 사업 목록(사업 화면)`}>{name} 사업 {fmt(inScope)}건</Link>
           {' · '}
           {check ? <Link href={listHref(pf, { status: 'check' })} className={LINKA} title="주의·지연·장기 지연 사업을 지연 개월 큰 순으로">점검 필요 <b className="text-bad">{fmt(check)}</b> ›</Link> : '점검 필요 0'}
