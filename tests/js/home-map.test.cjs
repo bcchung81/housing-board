@@ -96,7 +96,8 @@ test('home-map 파일: 형식이 생성기 출력과 같고(다시 그리면 같
     for (const r of doc.projects) {
       if (r.next && r.next.eventType === 'COMPLETION') assert.equal(r.completion, r.next.planned, r.id);
       if (r.next && r.next.eventType === 'MOVE_IN') assert.equal(r.moveIn, r.next.planned, r.id);
-      if (r.loc) { assert.ok(['block', 'address', 'district', 'area'].includes(r.loc.by)); assert.ok(r.loc.at.every(Number.isFinite)); }
+      if (r.loc) { assert.ok(['block', 'address', 'district', 'name', 'area'].includes(r.loc.by)); assert.ok(r.loc.at.every(Number.isFinite)); }
+      if (r.loc && r.loc.by === 'name') { assert.equal(r.loc.basis, 'NAME_SEARCH'); assert.equal(r.loc.status, 'REVIEW'); assert.deepEqual(r.bundles, []); }   // 이름 검색 근사는 번들 단지와 이어지지 않은 사업에만
     }
   }
 });
@@ -141,13 +142,13 @@ test('지도: 수도권 시군구(?sgg=41281)는 permits·infra·ledger 를 부�
   assert.equal(r.ok, true);
   assert.deepEqual(api(urls), []);
   assert.ok(urls.includes(`assets/home-map/41281.${hash}.json`));
-  const drawn = doc.projects.filter((x) => x.loc && ['block', 'address', 'district'].includes(x.loc.by));
+  const drawn = doc.projects.filter((x) => x.loc && ['block', 'address', 'district', 'name'].includes(x.loc.by));
   assert.equal(r.home.total, doc.projects.length); assert.equal(r.blocks.length, drawn.length); assert.equal(r.home.unlocated.length, doc.projects.length - drawn.length);
   for (const b of r.blocks) {
     const row = doc.projects.find((x) => x.id === b.projectId);
     assert.equal(b.ledger.id, row.id); assert.equal(b.ledger.stage, row.stage); assert.equal(b.ledger.cls, row.cls); assert.deepEqual(b.ledger.next, row.next);
     assert.equal(b.home.noticeUnits, row.noticeUnits); assert.equal(b.units, row.units || 0); assert.equal(b.statusBy, 'ledger');
-    assert.equal(b.poly.length, 8); assert.equal(b.outlineTier, 'point');
+    assert.equal(b.poly.length, row.loc.by === 'name' ? 24 : 8); assert.equal(b.outlineTier, 'point'); assert.equal(!!b.approx, row.loc.by === 'name');   // 이름 검색 근사는 원(24각) + 점선
   }
   assert.equal(win.LEDGER, null); assert.equal(win.GY_INFRA, null); assert.equal(win.GY_BUILDINGS.dynamic, true);   // 원장은 이미 붙었고, 건물은 배경으로 요청 시 조회
   assert.match(els.pvBanner.innerHTML, new RegExp(`사업 원장 ${doc.projects.length}건 · 지도 ${drawn.length}건`));

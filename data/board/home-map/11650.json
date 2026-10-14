@@ -1,12 +1,13 @@
 {
   "schema": "home-map/1",
   "sgg": "11650",
+  "name": "서울특별시 서초구",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
   "edition": "20261014T102506Z",
   "projects": [
     {"id":"PRJ-11650-0079","name":"이수역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":918,"pks":[],"pnus":[],"bundles":[],"label":"이수역 동측","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1165010100","loc":{"by":"area","at":[127.013536,37.476938],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
     {"id":"PRJ-11650-0080","name":"서울 서리풀","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2029"},"units":20000,"pks":[],"pnus":[],"bundles":[],"label":"서울 서리풀","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.013536,37.476938],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"]}},
-    {"id":"PRJ-11650-0081","name":"구 한국교육개발원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":700,"pks":[],"pnus":[],"bundles":[],"label":"구 한국교육개발원","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.013536,37.476938],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"]}}
+    {"id":"PRJ-11650-0081","name":"구 한국교육개발원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":700,"pks":[],"pnus":[],"bundles":[],"label":"구 한국교육개발원","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[127.022337,37.470691],"basis":"NAME_SEARCH","status":"REVIEW","match":"한국교육개발원"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"]}}
   ]
 }

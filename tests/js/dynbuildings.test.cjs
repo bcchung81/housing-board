@@ -22,7 +22,8 @@ test('GY 를 자라는 배열로 둔다: 붙인 건물에 i 를 매기고 색·�
   assert.match(app, /function addBuildings\(feats\)[\s\S]*inBox\(featCenter\(f\.geometry\)\)[\s\S]*f\.properties\.i = i; GY\.features\.push\(f\)/);
   assert.match(app, /function flushBuildings\(\)[\s\S]*paintBuildings\(\)[\s\S]*FL\.annotate\(GY\.features\)[\s\S]*getSource\('official'\)[\s\S]*setData\(GY\)[\s\S]*officialShadowData\(\)/);
   assert.match(app, /function cellInBox\(ix, iy\)|const cellInBox = /);
-  assert.match(app, /if \(DYN\.on && STATIC_N\)/);
+  assert.match(app, /if \(DYN\.on && STATIC_N && !GY\.lite\)/);   // 수도권 경량 번들은 영역 상자 대신 중심점으로 겹침을 거른다
+  assert.match(app, /const LITE_KEYS = DYN\.on && GY && GY\.lite \?[\s\S]*function addBuildings\(feats\)[\s\S]*LITE_KEYS\.has\(k\)\) continue; LITE_KEYS\.add\(k\)/);
 });
 
 test('요청 시 조회가 켜지면 학교·병원 강조 레이어를 미리 만들고, 꺼 두는 주소 ?dyn=0 을 따른다', () => {
@@ -39,7 +40,7 @@ test('안내 띠: 확대 안내·불러오는 중·실패 문구가 #dynHint 에
 });
 
 test('기준일 문구: 요청 시 조회는 조회일을, 번들과 섞이면 둘 다 적는다', () => {
-  assert.match(app, /\$\{BASIS_STATIC\}\(번들\) · 번들 밖은 \$\{TODAY\} 조회/);
+  assert.match(app, /\$\{BASIS_STATIC\}\(\$\{GY\.lite \? '사업 둘레' : '번들'\}\) · \$\{GY\.lite \? '그 밖' : '번들 밖'\}은 \$\{TODAY\} 조회/);
   assert.match(app, /\$\{TODAY\} 조회\(요청 시\)/);
 });
 

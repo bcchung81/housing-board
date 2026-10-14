@@ -1,11 +1,12 @@
 {
   "schema": "home-map/1",
   "sgg": "11740",
+  "name": "서울특별시 강동구",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
   "edition": "20261014T102506Z",
   "projects": [
     {"id":"PRJ-11740-0102","name":"고덕강일 3단지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1305,"pks":[],"pnus":[],"bundles":[],"label":"고덕강일 3단지","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1174011000","loc":{"by":"address","at":[127.169452,37.572543],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
-    {"id":"PRJ-11740-0103","name":"고덕역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"고덕역","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.147253,37.54891],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}}
+    {"id":"PRJ-11740-0103","name":"고덕역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"고덕역","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[127.153949,37.555047],"basis":"NAME_SEARCH","status":"REVIEW","match":"고덕역"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}}
   ]
 }

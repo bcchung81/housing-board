@@ -1,6 +1,7 @@
 {
   "schema": "home-map/1",
   "sgg": "11500",
+  "name": "서울특별시 강서구",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
   "edition": "20261014T102506Z",
@@ -12,6 +13,6 @@
     {"id":"PRJ-11500-0104","name":"강서 군부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":918,"pks":[],"pnus":[],"bundles":[],"label":"강서 군부지","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.818667,37.565749],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"]}},
     {"id":"PRJ-11500-0105","name":"강서 국회대로 인근","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"강서 국회대로 인근","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.818667,37.565749],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
     {"id":"PRJ-11500-0106","name":"마곡지구 17단지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":381,"pks":[],"pnus":[],"bundles":[],"label":"마곡지구 17단지","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1150010500","loc":{"by":"area","at":[126.818667,37.565749],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":null},
-    {"id":"PRJ-11500-0107","name":"화곡역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":2335,"pks":[],"pnus":[],"bundles":[],"label":"화곡역 동측","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1150010300","loc":{"by":"area","at":[126.818667,37.565749],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}}
+    {"id":"PRJ-11500-0107","name":"화곡역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":2335,"pks":[],"pnus":[],"bundles":[],"label":"화곡역 동측","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1150010300","loc":{"by":"name","at":[126.840432,37.541397],"basis":"NAME_SEARCH","status":"REVIEW","match":"화곡역"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}}
   ]
 }

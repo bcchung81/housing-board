@@ -26,6 +26,12 @@ function homeMapManifest(): Record<string, string> {
   try { return JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public/assets/home-map/manifest.json'), 'utf8')); } catch { return {}; }
 }
 
+/* 수도권 경량 번들 표(scripts/build.js 가 public/assets/home-lite/manifest.json 에 쓴다): { 시군구: { name, n(사업 수), h?(경량 번들 해시) } }.
+   지도는 h 가 있는 시군구에서 경량 번들을 부르고, 지역 선택기에 이 시군구들을 시도별로 넣는다. 없으면 빈 표 */
+function homeLiteManifest(): Record<string, { name: string; n: number; h?: string }> {
+  try { return JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public/assets/home-lite/manifest.json'), 'utf8')); } catch { return {}; }
+}
+
 /* 지역 자료 읽기는 index.json → 기본 지역의 region.json → 나머지 순으로 이어져 왕복이 직렬이다. 앞의 둘은 작고 모든 열기에 쓰이므로 미리 받는다
    (기본 지역이 아닌 지역·코드로 열면 4 KB 정도가 헛될 뿐이다. 큰 buildings.json 은 지역을 알아야 하므로 미리 받지 않는다) */
 function regionPreloads(): string[] {
@@ -45,7 +51,7 @@ export default function MapPage() {
   return (
     <>
       <div style={{ display: 'contents' }} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: markup }} />
-      <MapIsland assets={assets} homeMap={homeMapManifest()} />
+      <MapIsland assets={assets} homeMap={homeMapManifest()} homeLite={homeLiteManifest()} />
     </>
   );
 }

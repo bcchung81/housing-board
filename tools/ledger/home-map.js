@@ -10,12 +10,13 @@
        block    LH 블록 라벨점(block_location, 블록 키 = home-ids.json 의 BLK 키)
        address  대표 지번 근사(project_location APPROXIMATE_ADDRESS)
        district 지구 대표점(district.project_ids)
+       name     이름 검색 근사 위치(mappings/home-geocode.json 의 채택 행, tools/ledger/home-geocode.js) — 그릴 위치가 시군구 대표점뿐이거나 없을 때만. 확인 필요
        area     시군구 대표점(project_location APPROXIMATE_AREA) — 지도는 그리지 않고 목록에만 둔다
      법정동 대표점은 원본에 좌표가 없어 쓰지 못한다(bjd 코드만 싣는다). 모두 근거 상태 REVIEW(경계·건물 아님).
    - 정책 연결: links PROGRAM_PROJECT(프로그램 → 사업)와 POLICY_PROGRAM(정책 → 프로그램). 하나라도 CONFIRMED 면 CONFIRMED, 아니면 REVIEW_REQUIRED, 연결이 없으면 null.
    순수 함수 homeMapFromLedger 는 파일을 읽거나 쓰지 않는다. 같은 입력 → 같은 바이트(행은 id 순, 좌표는 소수 6자리).
    실행: node tools/ledger/home-map.js [--month YYYY-MM]  → schemas/ledger-<달>/tables + 그 달의 가장 늦은 HOME 판(raw/home/<덤프시각>, 원본 jsonl.gz 필요)
-     + mappings/home-ids.json 을 읽어 data/board/home-map/ 을 통째로 다시 쓴다(사업이 없어진 시군구 파일은 지운다). 시험: tests/js/home-map.test.cjs */
+     + mappings/home-ids.json(·home-geocode.json, 없으면 이름 검색 위치 없이) 을 읽어 data/board/home-map/ 을 통째로 다시 쓴다(사업이 없어진 시군구 파일은 지운다). 시험: tests/js/home-map.test.cjs */
 const fs = require('node:fs');
 const path = require('node:path');
 
@@ -28,7 +29,7 @@ const OUT_DIR = 'data/board/home-map';
 const SCHEMA = 'home-map/1';
 const EXTRA_TABLES = ['links', 'policies'];
 const SIDO_CODE = { 서울특별시: '11', 인천광역시: '28', 경기도: '41' };
-const LOC_RANK = { block: 0, address: 1, district: 2, area: 3 };
+const LOC_RANK = { block: 0, address: 1, district: 2, name: 3, area: 4 };
 const LABEL_MAX = 18;
 const byStr = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const r6 = (v) => Math.round(v * 1e6) / 1e6;
@@ -133,7 +134,12 @@ function policyOf(tables) {
 
 /* tables: 원장 표(board.js NEEDED + links·policies), locations: homeLocations 결과, homeIds: 대응표.
    돌려주는 것: { 시군구: 파일 객체 } (수도권 시군구만, 사업이 있는 시군구만) */
-function homeMapFromLedger(tables, { referenceDate, observedMonth, edition = null, locations = new Map(), homeIds = {} } = {}) {
+/* 이름 검색 근사 위치(geocode: Map(id → home-geocode 채택 행))는 그릴 위치가 없거나 시군구 대표점뿐인 사업에만 쓴다 */
+function withNameSearch(loc, g) {
+  if (!g || (loc && loc.by !== 'area')) return loc ?? null;
+  return { by: 'name', at: [r6(g.at[0]), r6(g.at[1])], basis: 'NAME_SEARCH', status: 'REVIEW', match: String(g.match ?? '') };
+}
+function homeMapFromLedger(tables, { referenceDate, observedMonth, edition = null, locations = new Map(), homeIds = {}, geocode = new Map(), names = new Map() } = {}) {
   const index = mapIndexFromLedger(tables, { referenceDate, observedMonth });
   const project = new Map(tables.projects.map((p) => [p.local_project_id, p]));
   const bjds = new Map();
@@ -147,10 +153,10 @@ function homeMapFromLedger(tables, { referenceDate, observedMonth, edition = nul
       return {
         ...r, label: labels.get(r.id) ?? shortName(r.name), agency: p?.agency_id ?? null,
         moveIn: moveIn.get(r.id) ?? null, completion: completion.get(r.id) ?? null, noticeUnits: notice(r.id),
-        bjd: bjds.get(r.id) ?? null, loc: locations.get(r.id) ?? null, policy: policy(r.id),
+        bjd: bjds.get(r.id) ?? null, loc: withNameSearch(locations.get(r.id), (r.bundles ?? []).length ? null : geocode.get(r.id)), policy: policy(r.id),
       };
     });
-    out[sgg] = { schema: SCHEMA, sgg, observedMonth: index.observedMonth, referenceDate: index.referenceDate, edition, projects };
+    out[sgg] = { schema: SCHEMA, sgg, ...(names.has(sgg) ? { name: names.get(sgg) } : {}), observedMonth: index.observedMonth, referenceDate: index.referenceDate, edition, projects };
   }
   return out;
 }
@@ -171,7 +177,9 @@ if (require.main === module) {
   if (!homeAvailable(homeDir)) throw new Error(`HOME 판 원본(jsonl.gz)이 없다: ${homeDir ?? `${dir}/raw/home`} — raw-store.js 로 받아 온 뒤 다시 실행`);
   const home = readHome(homeDir);
   const homeIds = JSON.parse(fs.readFileSync(path.join(dir, 'mappings/home-ids.json'), 'utf8'));
-  const docs = homeMapFromLedger(tables, { referenceDate: P.referenceDateOf(dir), observedMonth: month, edition: home.edition, locations: homeLocations(home.kinds, homeIds), homeIds });
+  const geocode = require('./home-geocode').adoptedOf(path.join(dir, 'mappings/home-geocode.json'));
+  const names = new Map(tables.areas.filter((a) => a.level === 'SGG').map((a) => [a.area_code, a.area_name]));
+  const docs = homeMapFromLedger(tables, { referenceDate: P.referenceDateOf(dir), observedMonth: month, edition: home.edition, locations: homeLocations(home.kinds, homeIds), homeIds, geocode, names });
   const out = path.join(P.ROOT, OUT_DIR);
   fs.mkdirSync(out, { recursive: true });
   for (const f of fs.readdirSync(out)) if (/^\d{5}\.json$/.test(f) && !docs[f.slice(0, 5)]) fs.rmSync(path.join(out, f));

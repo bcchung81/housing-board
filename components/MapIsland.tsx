@@ -9,6 +9,7 @@ type LoadCtl = { want: (a: string, k: string) => void; got: (a: string, k: strin
 type W = Window & {
   __mapBooted?: boolean;
   HOME_MAP?: Record<string, string>;
+  HOME_LITE?: Record<string, { name: string; n: number; h?: string }>;
   LoadView?: { ctl: () => LoadCtl };
   RegionLoader?: { boot: (w: Window, d: Document) => Promise<{ ok?: boolean } | null> };
   GotoBar?: { mount: (w: Window, d: Document) => void };
@@ -29,13 +30,14 @@ function load(src: string) {
   });
 }
 
-export default function MapIsland({ assets = {}, homeMap = {} }: { assets?: Record<string, string>; homeMap?: Record<string, string> }) {
+export default function MapIsland({ assets = {}, homeMap = {}, homeLite = {} }: { assets?: Record<string, string>; homeMap?: Record<string, string>; homeLite?: Record<string, { name: string; n: number; h?: string }> }) {
   useEffect(() => {
     ASSETS = assets;
     const w = window as W;
     if (w.__mapBooted) return;
     w.__mapBooted = true;
     w.HOME_MAP = homeMap;   // 수도권 시군구 → 지도 정적 자료 해시(region.js 가 assets/home-map/<시군구>.<해시>.json 을 부른다)
+    w.HOME_LITE = homeLite;   // 수도권 시군구 → 이름·사업 수·경량 번들 해시(region.js: assets/home-lite/<시군구>.<해시>.json, 지역 선택기 목록)
     const fatal = (e: Error) => {
       const f = document.getElementById('fatal'), l = document.getElementById('loading');
       if (l) l.hidden = true;

@@ -9,6 +9,8 @@
      옛 이름→해시 이름 표를 assets/manifest.json 에 적습니다. 해시 이름은 next.config.ts 가 immutable 장기 캐시로 내려 주고, 옛 이름은 그대로 남습니다(짧은 캐시).
    - 수도권 지도 정적 자료(data/board/home-map/<시군구>.json, tools/ledger/home-map.js)는 assets/home-map/ 에 같은 이름과 내용 해시 이름(<시군구>.<해시8>.json)으로 복사하고,
      시군구→해시 표를 assets/home-map/manifest.json 에 적습니다(지도 페이지가 읽어 window.HOME_MAP 으로 넘깁니다). 해시 이름은 immutable 장기 캐시입니다.
+   - 수도권 경량 번들(data/board/home-lite/<시군구>.json, tools/ledger/home-lite.js — 사업 둘레 건물·지구 경계)은 assets/home-lite/<시군구>.<해시8>.json 으로만 복사하고,
+     index.json 의 시군구 목록(이름·사업 수)과 해시를 assets/home-lite/manifest.json { 시군구: { name, n, h? } } 에 적습니다(지도 페이지 → window.HOME_LITE: 경량 번들 주소와 지역 선택기 목록).
    로컬 config.js 는 읽기만 하고 고치지 않습니다. 로그에는 키 값을 찍지 않습니다. */
 const fs = require('fs');
 const path = require('path');
@@ -66,6 +68,26 @@ function homeMapFiles(root, OUT) {
   return manifest;
 }
 
+/* 수도권 경량 번들의 해시 이름 사본과 표. index.json 이 없으면 아무것도 만들지 않는다 */
+function homeLiteFiles(root, OUT) {
+  const src = path.join(root, 'data/board/home-lite'), idx = path.join(src, 'index.json');
+  if (!fs.existsSync(idx)) return {};
+  const dir = path.join(OUT, 'assets/home-lite'), manifest = {};
+  fs.mkdirSync(dir, { recursive: true });
+  for (const x of JSON.parse(fs.readFileSync(idx, 'utf8')).sggs || []) {
+    if (!/^\d{5}$/.test(x.sgg)) continue;
+    const e = { name: x.name || '', n: x.projects || 0 }, f = path.join(src, `${x.sgg}.json`);
+    if (x.lite && fs.existsSync(f)) {
+      const body = fs.readFileSync(f);
+      e.h = crypto.createHash('sha256').update(body).digest('hex').slice(0, 8);
+      fs.writeFileSync(path.join(dir, `${x.sgg}.${e.h}.json`), body);
+    }
+    manifest[x.sgg] = e;
+  }
+  fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(manifest) + '\n');
+  return manifest;
+}
+
 function build({ root = '.', out = 'public', env = process.env, log = console.log } = {}) {
   const OUT = path.join(root, out), production = env.VERCEL_ENV === 'production';
   const index = pickRegions(JSON.parse(fs.readFileSync(path.join(root, 'regions/index.json'), 'utf8')), production);
@@ -83,9 +105,10 @@ function build({ root = '.', out = 'public', env = process.env, log = console.lo
   fs.writeFileSync(path.join(OUT, 'config.js'), config);
   hashScripts(OUT);
   const home = homeMapFiles(root, OUT);
-  log(`build ok -> ${out}/ (지역 ${index.regions.map((r) => r.slug).join(', ')}${Object.keys(home).length ? ` · 수도권 지도 자료 ${Object.keys(home).length}개 시군구` : ''}${production ? ' · 운영: 미리보기 지역 제외' : ''}; V-World 키: ${/VWORLD_KEY\s*=\s*['"][^'"]+['"]/.test(config) ? '있음' : '없음'})`);
+  const lite = homeLiteFiles(root, OUT);
+  log(`build ok -> ${out}/ (지역 ${index.regions.map((r) => r.slug).join(', ')}${Object.keys(home).length ? ` · 수도권 지도 자료 ${Object.keys(home).length}개 시군구` : ''}${Object.keys(lite).length ? ` · 경량 번들 ${Object.values(lite).filter((e) => e.h).length}개` : ''}${production ? ' · 운영: 미리보기 지역 제외' : ''}; V-World 키: ${/VWORLD_KEY\s*=\s*['"][^'"]+['"]/.test(config) ? '있음' : '없음'})`);
   return index;
 }
 
-module.exports = { pickRegions, build, homeMapFiles };
+module.exports = { pickRegions, build, homeMapFiles, homeLiteFiles };
 if (require.main === module) build();
