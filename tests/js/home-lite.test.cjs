@@ -20,6 +20,7 @@ const ROOT = path.join(__dirname, '../..');
 const LITE = path.join(ROOT, L.OUT_DIR);
 const MAPDIR = path.join(ROOT, H.OUT_DIR);
 const app = fs.readFileSync(path.join(ROOT, 'assets/js/app.js'), 'utf8');
+const css = fs.readFileSync(path.join(ROOT, 'assets/css/app.css'), 'utf8'), html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
 /* ---------- 경량 번들 생성기(순수 함수) ---------- */
 const sq = (x, y, d = 0.0001) => ({ type: 'MultiPolygon', coordinates: [[[[x, y], [x + d, y], [x + d, y + d], [x, y + d], [x, y]]]] });
@@ -64,7 +65,7 @@ test('경량 번들 건물 부호화: 정수 차이 부호화 → 지도(region.
   assert.deepEqual(R.liteFeatures([['x'], null, [{ eh: 1 }, 'bad']]), []);
 });
 
-test('경량 번들 파일: 수도권 시군구 목록(index.json)과 형식, 시군구 gzip ≤ 150 KB, 사업당 건물 gzip ≤ 50 KB', () => {
+test('경량 번들 파일: 수도권 시군구 목록(index.json)과 형식, 시군구 gzip ≤ 150 KB, 사업당 건물 gzip ≤ 50 KB, 근사 위치(name) 사업은 150 m 만', () => {
   const idx = JSON.parse(fs.readFileSync(path.join(LITE, 'index.json'), 'utf8'));
   const sggs = fs.readdirSync(MAPDIR).filter((f) => /^\d{5}\.json$/.test(f)).map((f) => f.slice(0, 5)).sort();
   assert.deepEqual(idx.sggs.map((x) => x.sgg), sggs);
@@ -73,14 +74,14 @@ test('경량 번들 파일: 수도권 시군구 목록(index.json)과 형식, �
     assert.equal(fs.existsSync(f), x.lite, x.sgg);
     if (!x.lite) continue;
     const text = fs.readFileSync(f, 'utf8'), d = JSON.parse(text);
-    assert.equal(d.schema, 'home-lite/1'); assert.equal(d.sgg, x.sgg); assert.equal(d.radiusM, 300);
+    assert.equal(d.schema, 'home-lite/1'); assert.equal(d.sgg, x.sgg); assert.equal(d.radiusM, 300); assert.equal(d.approxRadiusM, 150);
     assert.ok(zlib.gzipSync(text).length <= 150 * 1024, `${x.sgg} gzip`);
     const feats = R.liteFeatures(d.buildings);
     assert.equal(feats.length, d.buildings.length, x.sgg);
     const home = JSON.parse(fs.readFileSync(path.join(MAPDIR, `${x.sgg}.json`), 'utf8'));
     for (const [id, n] of d.projects) {
-      const at = home.projects.find((r) => r.id === id).loc.at;
-      const mine = d.buildings.filter((_, i) => V.distM(at, feats[i].geometry.coordinates[0][0].slice(0, -1).reduce((a, p, k, arr) => [a[0] + p[0] / arr.length, a[1] + p[1] / arr.length], [0, 0])) <= 300);
+      const loc = home.projects.find((r) => r.id === id).loc, at = loc.at, rM = loc.by === 'name' ? 150 : 300;
+      const mine = d.buildings.filter((_, i) => V.distM(at, feats[i].geometry.coordinates[0][0].slice(0, -1).reduce((a, p, k, arr) => [a[0] + p[0] / arr.length, a[1] + p[1] / arr.length], [0, 0])) <= rM);
       assert.equal(mine.length, n, id);
       assert.ok(zlib.gzipSync(JSON.stringify(mine)).length <= 50 * 1024, `${id} gzip`);
     }
@@ -164,7 +165,8 @@ test('?sgg=(수도권): 원장 정적 자료 + 경량 번들 각 1건, permits·
   assert.equal(r.blocks.length, 2); assert.equal(r.home.unlocated.length, 2);
   assert.ok(win.RESOLVED.start.zoom >= 14, `zoom ${win.RESOLVED.start.zoom}`);   // 시군구 전체(확대 11~12)가 아니라 사업 둘레
   assert.ok(Math.abs(win.RESOLVED.start.center[0] - 126.851) < 0.002);
-  assert.match(els.pvBanner.innerHTML, /사업 둘레 300 m\(1동\)/);
+  assert.match(els.pvBanner.innerHTML, /사업 원장 4건 중 2건을 대표점/); assert.doesNotMatch(els.pvBanner.innerHTML, /HOME|미리 담았/, '개발 용어·번들 설명은 화면에 없다');
+  assert.ok(!els.locNote || els.locNote.hidden, '?sgg= 로 열면 위치 안내 한 줄은 없다');
   /* 지역 선택기: 번들 + 수도권 시군구(사업 있는 곳만, 시도별), 지금 시군구가 골라져 있다 */
   assert.match(els.regionSel.innerHTML, /<optgroup label="서울 · 사업 원장"><option value="sgg:11350">노원구 · 9건<\/option><\/optgroup>/);
   assert.match(els.regionSel.innerHTML, /<option value="sgg:41281" selected>고양시 덕양구 · 4건<\/option>/);
@@ -190,12 +192,14 @@ test('?project=(수도권): 위치 있는 사업은 그 표지에서(확대 16.5
   const rb = await R.boot(b.win, b.doc);
   assert.equal(b.win.RESOLVED.block, 'home-PRJ-41281-0002'); assert.equal(b.win.RESOLVED.approx, true);
   assert.equal(rb.blocks.find((x) => x.pid === 'home-PRJ-41281-0002').approx, true);
-  assert.match(b.els.pvBanner.innerHTML, /이름 검색 근사 위치 — 확인 필요/);
+  assert.equal(b.els.locNote.hidden, false); assert.match(b.els.locNoteText.innerHTML, /<b>사업 PRJ-41281-0002<\/b> · 근사 위치 — 사업 이름으로 찾은 위치라/);   // 눈에 띄는 한 줄(닫기 단추)
   const c = bootWith('?project=PRJ-41281-0004', P('PRJ-41281-0004'), FILES, { lite: LITE_TABLE });
   await R.boot(c.win, c.doc);
   assert.equal(c.win.RESOLVED.block, null); assert.deepEqual(c.win.RESOLVED.lost, { id: 'PRJ-41281-0004', name: '사업 PRJ-41281-0004' });
   assert.ok(c.win.RESOLVED.shape); assert.ok(c.win.RESOLVED.start.zoom < 14);   // 시군구 경계로
-  assert.match(c.els.pvBanner.innerHTML, /위치 미확보/);
+  assert.equal(c.els.locNote.hidden, false); assert.match(c.els.locNoteText.innerHTML, /<b>사업 PRJ-41281-0004<\/b> · 위치 미확보 — 지도에 표시할 위치가 없어 시군구 전체를 보여 줍니다\. <a href="\/projects\?id=PRJ-41281-0004">사업 정보 보기<\/a>/);
+  assert.doesNotMatch(c.els.pvBanner.innerHTML, /사업 PRJ-41281-0004/, '작은 요약 띠에 섞지 않는다');
+  assert.equal(R.locNoteHtml({ id: 'P<1>', name: '<b>' }).includes('&lt;b&gt;'), true, '이름은 이스케이프');
 });
 
 test('경량 번들 표가 없으면(옛 정적 페이지) 경량 번들을 부르지 않고 예전처럼 연다. 비수도권은 그대로', async () => {
@@ -217,8 +221,12 @@ test('연결점: 카드의 사업 id·이름과 위치 미확보 목록은 사�
   assert.match(app, /lostHtml\(\) \+ BLOCKS\.map/); assert.match(app, /lostHtml\(\) \+ \(REG\.home \?/);
 });
 
-test('표지: 이름 검색 근사 위치는 면을 채우지 않는 점선 원(blk-line-approx), 경량 번들 지구는 지구 밖을 어둡게 하지 않는다', () => {
-  assert.match(app, /id: 'blk-line-approx', type: 'line', source: 'blocks', filter: \['==', \['get', 'approx'\], true\]/);
+test('표지: 이름 검색 근사 위치는 실선 겹원 + 띠(①계획 점선과 다른 모양, 범례 \'근사 위치\'), 경량 번들 지구는 지구 밖을 어둡게 하지 않는다', () => {
+  assert.match(app, /id: 'blk-line-approx', type: 'line', source: 'blocks', filter: \['==', \['get', 'approx'\], true\], paint: \{ 'line-color': kindExpr\(T\.color\), 'line-width': 1\.6 \} \}/, '점선 아님');
+  assert.match(app, /id: 'blk-approx', type: 'fill', source: 'blocks', filter: \['==', \['get', 'approx'\], true\]/);
+  assert.match(app, /coordinates: b\.approx \? approxRings\(b\.poly\) :/, '바깥 원 + 안쪽 원(구멍)');
+  assert.match(app, /add\('<i class="sw approx"><\/i>', '근사 위치'/); assert.match(css, /\.sw\.approx\{border-radius:50%;border:1\.5px solid/);
+  assert.match(html, /id="locNote" role="status" hidden>[\s\S]*?id="locNoteX" aria-label="안내 닫기"/);
   assert.match(app, /approx: !!b\.approx/);
   assert.match(app, /const NOT_APPROX = \['!=', \['get', 'approx'\], true\]/);
   assert.match(app, /const MASK_ON = DISTRICTS\.length > 0 && !\(window\.REGION && window\.REGION\.lite\)/);

@@ -194,7 +194,7 @@
       const from = md(n.applyFrom), to = md(n.applyTo);
       return {
         id: String(n.id || ''), title: String(n.title),
-        meta: [n.agency, `${kind[n.kind] || ''}${n.supplyType ? `(${n.supplyType})` : ''}`.trim(), n.housingType, n.units ? `${n.units}세대` : ''].filter(Boolean).join(' · '),
+        meta: [n.agency, `${kind[n.kind] || ''}${n.supplyType ? `(${n.supplyType})` : ''}`.trim(), n.housingType, n.units ? `${n.units}호` : ''].filter(Boolean).join(' · '),
         period: from && to ? `접수 ${from === to ? from : `${from}~${to}`}` : n.announcedAt ? `공고 ${n.announcedAt.replace(/-/g, '.')}` : '',
         place: [n.complex, n.address].filter(Boolean).join(' · '),
         url: /^https:\/\/(www\.myhome\.go\.kr|m\.myhome\.go\.kr|apply\.lh\.or\.kr)\//.test(n.url || '') ? n.url : '', pnu: /^\d{19}$/.test(n.pnu || '') ? n.pnu : '', fromLh: n.source === 'lh',
@@ -476,12 +476,12 @@
   const STATUS_OF_STAGE = { '01': '사업화', '02': '사업화', '03': '계획', '04': '건설 단계', '05': '분양중', '06': '입주 단계' };
   const HOME_LOC_TEXT = { block: 'LH 블록 라벨점', address: '대표 지번 근사', district: '지구 대표점', name: '이름 검색 근사 위치', area: '시군구 대표점' };
   const HOME_DRAWN_M = { block: 45, address: 35, district: 45, name: 40 };   // 지도에 그리는 위치 종류와 표지 반지름(m). 시군구 대표점·위치 없음은 목록에만
-  const APPROX_TITLE = '이름 검색 근사 위치 — 확인 필요';   // 이름 검색(tools/ledger/home-geocode.js)으로 찾은 위치: 속 빈 원 + 점선 표지
+  const APPROX_TITLE = '근사 위치 — 사업 이름으로 찾은 위치라 확인이 필요합니다';   // 이름 검색(tools/ledger/home-geocode.js)으로 찾은 위치: 겹원 표지(app.js approxRings)
   const HOME_SOURCE = { id: 'home-ledger', label: '사업 원장(HOME 덤프) · 위치는 LH 블록 라벨점·대표 지번·지구 대표점·이름 검색 근사(검토 중)' };
   const AGENCY_TEXT = { lh: 'LH', sh: 'SH', gh: 'GH' };
   const homeInfo = (r) => ({ units: finite(r.units) && r.units > 0 ? r.units : null, noticeUnits: finite(r.noticeUnits) ? r.noticeUnits : null,
     loc: r.loc && HOME_LOC_TEXT[r.loc.by] ? Object.assign({ by: r.loc.by, text: HOME_LOC_TEXT[r.loc.by], status: r.loc.status || 'REVIEW' }, r.loc.by === 'name' && r.loc.match ? { match: String(r.loc.match) } : {}) : null,
-    policy: r.policy && r.policy.status ? { status: r.policy.status, names: Array.isArray(r.policy.names) ? r.policy.names.map(String) : [] } : null });
+    policy: r.policy && r.policy.status ? { status: r.policy.status, names: Array.isArray(r.policy.names) ? r.policy.names.map(String) : [], short: Array.isArray(r.policy.short) ? r.policy.short.map(String) : [] } : null });
   /* 점 둘레 정팔각형(경도·위도) */
   function ring8(c, rM) {
     const dl = rM / 111320, dn = rM / (111320 * Math.cos(c[1] * Math.PI / 180)), out = [];
@@ -653,6 +653,21 @@
       : `<details class="pv-d"><summary class="pv-s">${escapeHtml(short)}</summary><p class="pv-f">${escapeHtml(text)}</p></details>`;
     el.hidden = false;
   }
+  /* 위치 안내 한 줄(#locNote): ?project= 로 연 사업이 위치 미확보(시군구 전체로 열림)거나 근사 위치일 때 지도 위에 눈에 띄게, 닫을 수 있게.
+     작은 요약 띠(pvBanner)에 섞으면 놓친다(2026-10-14 재평가) */
+  function locNoteHtml(x) {
+    if (!x) return '';
+    const name = `<b>${escapeHtml(x.name)}</b>`;
+    return x.approx ? `${name} · 근사 위치 — 사업 이름으로 찾은 위치라 실제 사업지와 다를 수 있습니다`
+      : `${name} · 위치 미확보 — 지도에 표시할 위치가 없어 시군구 전체를 보여 줍니다. <a href="/projects?id=${encodeURIComponent(x.id)}">사업 정보 보기</a>`;
+  }
+  function mountLocNote(doc, x) {
+    const el = doc.getElementById('locNote'), t = doc.getElementById('locNoteText'), btn = doc.getElementById('locNoteX');
+    const html = locNoteHtml(x);
+    if (!el || !t || !html) return;
+    t.innerHTML = html; el.hidden = false;
+    if (btn) btn.addEventListener('click', () => { el.hidden = true; });
+  }
   /* 안내 띠의 한 줄 요약: 번들 없는 지역은 무엇을 보여 주는지만 짧게(전체 문장은 mountResolved 의 baseNote). 번들 지역의 경고는 짧아서 그대로 */
   function bannerBrief(r, warnings) {
     const pm = r.permits, warn = noticeText(warnings);
@@ -755,14 +770,14 @@
     const pm = r.permits;
     const hm = r.home;
     const baseNote = r.slug ? '' : hm ? (hm.failed ? '사업 원장 자료를 불러오지 못해 경계와 건물(요청 시 조회)만 보여 줍니다'
-      : `수도권 사업은 사업 원장(HOME) 기준입니다: ${hm.total}건 중 ${hm.drawn}건을 대표점(블록 라벨·대표 지번·지구 대표점·이름 검색 근사)에 표시하고, 위치를 모르는 ${hm.unlocated.length}건은 목록에만 둡니다${r.lite ? `. 건물은 사업 둘레 ${r.lite.radiusM} m(${r.lite.buildings}동)를 미리 담았습니다` : ''}`)
+      : `사업 원장 ${hm.total}건 중 ${hm.drawn}건을 대표점(블록·대표 지번·지구 대표점·근사 위치)에 표시합니다. 표시한 점은 사업 경계가 아닙니다. 위치 미확보 ${hm.unlocated.length}건은 목록에만 둡니다`)
       : pm && pm.count ? `지역 번들이 없어 경계·건물(요청 시 조회)·건축HUB 인허가 사업 ${pm.count}곳만 보여 줍니다${pm.ledger && (pm.ledger.blocksMatched + pm.ledger.parcelsRecovered) ? `(건축물대장으로 위치를 찾은 ${pm.ledger.blocksMatched + pm.ledger.parcelsRecovered}곳 포함${pm.unlocated ? `, 필지를 못 찾은 ${pm.unlocated}곳 제외` : ''})` : pm.unlocated ? `(필지를 못 찾은 ${pm.unlocated}곳 제외)` : ''}`
       : pm && pm.fetched && pm.blocks ? `지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 이 법정동의 건축HUB 인허가는 공공주택지구 블록 단위 ${pm.blocks}곳뿐이라 필지 번호가 없어 ${pm.ledger && pm.ledger.used ? '건축물대장과 맞춰 보아도 지번을 정하지 못해 ' : ''}지도에 그릴 수 없습니다`
       : pm && pm.fetched ? `지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 건축HUB 주택인허가에 이 법정동의 공동주택 사업이 없습니다(기록 ${pm.records}건) — 이웃 법정동에 있을 수 있습니다`
       : '지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다';
-    const one = capital && hit && hit.approx ? `${hit.name}: ${APPROX_TITLE}` : lost ? `${lost.name}: 위치 미확보 — 지도에 그릴 위치가 없어 시군구 경계로 열었습니다` : '';
-    const notes = [one, resolved ? noticeText(warns) : '', baseNote].filter(Boolean).join(' · ');
-    applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r, notes, [one, bannerBrief(r, warns)].filter(Boolean).join(' · '));
+    const notes = [resolved ? noticeText(warns) : '', baseNote].filter(Boolean).join(' · ');
+    applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r, notes, bannerBrief(r, warns));
+    mountLocNote(doc, capital && hit && hit.approx ? { name: hit.name, approx: true } : lost ? { id: lost.id, name: lost.name } : null);
   }
   /* 지도 가로 화소(사이드바를 뺀 대강의 값) — 첫 시점 계산용 */
   const mapPx = (win) => { const w = Number(win && win.innerWidth) || 1200; return Math.max(360, w > 900 ? w - 400 : w); };
@@ -770,5 +785,5 @@
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { HOME_SIDO, isHomeSgg, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, boot };
+  return { HOME_SIDO, isHomeSgg, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
 });

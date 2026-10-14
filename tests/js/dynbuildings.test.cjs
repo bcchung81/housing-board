@@ -34,7 +34,8 @@ test('요청 시 조회가 켜지면 학교·병원 강조 레이어를 미리 �
 test('안내 띠: 확대 안내·불러오는 중·실패 문구가 #dynHint 에 뜨고 CSS 가 있다', () => {
   assert.match(html, /id="dynHint" role="status"/);
   assert.match(css, /\.dynhint\{/); assert.match(css, /\.dynhint\[hidden\]\{display:none\}/);
-  assert.match(app, /확대\(\$\{DYN\.minZ\.toFixed\(1\)\} 이상\)하면 건물을 불러옵니다/);   // 한 줄 안내(2026-10-13)
+  assert.match(app, /'더 확대하면 주변 건물이 보입니다'/);   // 한 줄 안내(2026-10-13), 확대 단계 숫자는 화면에 내지 않는다(2026-10-14 재평가)
+  assert.doesNotMatch(app, /이상\)하면 건물을 불러옵니다|건물 조회 서버가 없어/, '개발자 문구(확대 단계 숫자·서버)는 화면에 없다');
   assert.match(css, /\.dynhint\{[^}]*white-space:nowrap/);
   assert.match(app, /건물 불러오는 중…/); assert.match(app, /일부 건물을 불러오지 못했습니다/);
 });

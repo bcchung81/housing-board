@@ -5,6 +5,7 @@
   "edition": "20261014T102506Z",
   "basis": "20261014",
   "radiusM": 300,
+  "approxRadiusM": 150,
   "projects": [["PRJ-11230-0098",1183]],
   "districts": [],
   "blocks": [],

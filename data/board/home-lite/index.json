@@ -2,6 +2,7 @@
   "schema": "home-lite-index/1",
   "edition": "20261014T102506Z",
   "radiusM": 300,
+  "approxRadiusM": 150,
   "sggs": [
     {"sgg":"11110","name":"서울특별시 종로구","projects":1,"drawn":1,"lite":true},
     {"sgg":"11140","name":"서울특별시 중구","projects":1,"drawn":1,"lite":true},

@@ -620,7 +620,7 @@ test('noticeRows: 공고를 화면 줄로(기관·유형·세대수, 접수 기�
   const fx = JSON.parse(require('node:fs').readFileSync(require('node:path').join(__dirname, '../fixtures/api/notices-hanam.json'), 'utf8'));
   const rows = R.noticeRows(fx); assert.equal(rows.length, fx.items.length); assert.ok(rows[0].title && rows[0].meta && /^접수 \d\d\.\d\d(~\d\d\.\d\d)?$/.test(rows[0].period));
   const n = { id: 'rental-1', kind: 'rental', title: '신혼희망타운 모집', agency: 'LH', supplyType: '행복주택', housingType: '아파트', units: 20, complex: '하남감일A7BL', address: '경기도 하남시 감일순환로 40', pnu: '4145011500104680000', announcedAt: '2026-10-01', applyFrom: '2026-10-12', applyTo: '2026-10-14', url: 'https://www.myhome.go.kr/hws/x' };
-  assert.deepEqual(R.noticeRows({ items: [n] })[0], { id: 'rental-1', title: '신혼희망타운 모집', meta: 'LH · 임대(행복주택) · 아파트 · 20세대', period: '접수 10.12~10.14', place: '하남감일A7BL · 경기도 하남시 감일순환로 40', url: 'https://www.myhome.go.kr/hws/x', pnu: '4145011500104680000', fromLh: false });
+  assert.deepEqual(R.noticeRows({ items: [n] })[0], { id: 'rental-1', title: '신혼희망타운 모집', meta: 'LH · 임대(행복주택) · 아파트 · 20호', period: '접수 10.12~10.14', place: '하남감일A7BL · 경기도 하남시 감일순환로 40', url: 'https://www.myhome.go.kr/hws/x', pnu: '4145011500104680000', fromLh: false });
   assert.equal(R.noticeRows({ items: [{ ...n, source: 'lh' }] })[0].fromLh, true); assert.equal(R.noticeRows({ items: [{ ...n, source: 'myhome' }] })[0].fromLh, false);
   assert.equal(R.noticeRows({ items: [{ ...n, applyFrom: '2026-10-12', applyTo: '2026-10-12' }] })[0].period, '접수 10.12');
   assert.equal(R.noticeRows({ items: [{ ...n, applyFrom: null, applyTo: null }] })[0].period, '공고 2026.10.01'); assert.equal(R.noticeRows({ items: [{ ...n, applyFrom: null, applyTo: null, announcedAt: null }] })[0].period, '');

@@ -74,9 +74,11 @@ test('app.js 상태 글: 날짜 없는 06 입주 단지(표지 null)도 범례�
   const src = fs.readFileSync(path.join(ROOT, 'assets/js/app.js'), 'utf8');
   const m = /const stTxt = (\(b\) => .*?);\s/.exec(src);
   assert.ok(m, 'stTxt 를 찾지 못했다');
-  const stTxt = new Function('window', `return ${m[1]}`)({ Settle: S });
+  const tx = /const STATUS_TXT = (\{.*?\});/.exec(src)[1];
+  const stTxt = new Function('window', `const STATUS_TXT = ${tx}; return ${m[1]}`)({ Settle: S });
   assert.equal(stTxt({ status: '입주 단계', settle: null }), '입주 진행');
   assert.equal(stTxt({ status: '입주 단계', settle: 'settled' }), '입주 완료');
-  assert.equal(stTxt({ status: '건설 단계', settle: null }), '건설 단계');
+  assert.equal(stTxt({ status: '건설 단계', settle: null }), '착공');   // 화면과 같은 단계 낱말(2026-10-14)
+  assert.equal(stTxt({ status: '분양중', settle: null }), '모집 중'); assert.equal(stTxt({ status: '사업화' }), '계획'); assert.equal(stTxt({ status: '계획' }), '인허가');
   assert.match(src, /\.map\(\(b\) => b\.settle \|\| 'moving'\)/, '범례도 표지 없는 06 을 입주 진행으로 센다');
 });

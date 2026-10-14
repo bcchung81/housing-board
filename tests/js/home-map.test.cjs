@@ -67,7 +67,7 @@ test('home-map 생성기: 위치는 블록 라벨점 > 대표 지번 > 지구 �
   assert.equal(p2.loc.by, 'address'); assert.equal(p3.loc.by, 'area');
   assert.equal(p1.label, '고양창릉 A4'); assert.equal(p2.label, '사업 PRJ-41281-0002');
   assert.equal(p1.noticeUnits, 392 + 211); assert.equal(p2.noticeUnits, null);
-  assert.deepEqual(p1.policy, { status: 'REVIEW_REQUIRED', names: ['주택공급 확대방안 (9·7)'] }); assert.equal(p2.policy, null);
+  assert.deepEqual(p1.policy, { status: 'REVIEW_REQUIRED', names: ['주택공급 확대방안 (9·7)'], short: ['9·7'] }); assert.equal(p2.policy, null);   // short: 화면과 같은 '9·7 대책' 표기용
   assert.equal(p1.completion, '2027-11-14'); assert.equal(p1.moveIn, '2028-01'); assert.equal(p1.bjd, '4128111300'); assert.equal(p1.units, 900);
 });
 

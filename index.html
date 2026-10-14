@@ -54,7 +54,7 @@ requestAnimationFrame(function () { setTimeout(function () {
   <section class="sum" aria-labelledby="h-sum">
     <h2 id="h-sum">공급 예정 합계</h2>
     <b id="sumTotal">-</b>
-    <div class="sbar" id="sumBar" role="img" aria-label="상태별 세대수 비율"></div>
+    <div class="sbar" id="sumBar" role="img" aria-label="단계별 호수 비율"></div>
     <div class="sleg" id="sumLeg"></div>
   </section>
 
@@ -97,6 +97,7 @@ requestAnimationFrame(function () { setTimeout(function () {
 <main class="mapwrap">
   <div id="map"></div>
   <div class="pvbanner" id="pvBanner" role="note" hidden></div>
+  <div class="locnote" id="locNote" role="status" hidden><svg class="ln-i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span class="ln-t" id="locNoteText"></span><button type="button" class="ln-x" id="locNoteX" aria-label="안내 닫기" title="닫기"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
   <div class="dynhint" id="dynHint" role="status" aria-live="polite" hidden></div>
   <div class="hud" id="hud" role="group" aria-label="단지 표지"><svg class="hud-svg" id="hudSvg" aria-hidden="true"></svg><div id="hudTags"></div></div>
   <button type="button" id="panelToggle" class="ptoggle" aria-controls="panel" aria-expanded="false" aria-label="사이드바 펼치기" title="사이드바 펼치기"><span aria-hidden="true">‹</span><span class="pt-l" aria-hidden="true">공급 현황</span></button>
@@ -128,7 +129,7 @@ requestAnimationFrame(function () { setTimeout(function () {
   <div class="optpanel" id="optPanel" role="group" aria-label="지도 옵션" hidden>
     <fieldset><legend>보일 단지 상태</legend><div id="optStatus"></div>
       <label id="lblPriv" hidden><input type="checkbox" id="privChip">공공택지 민간 단지 <small>회색 면</small></label>
-      <label id="lblEx" hidden title="06 입주 중 준공 뒤 24개월이 지난 단지. 기본은 숨김"><input type="checkbox" id="exChip">기존 단지 <small id="exN"></small></label>
+      <label id="lblEx" hidden title="⑤준공 뒤 24개월이 지난 단지. 기본은 숨김"><input type="checkbox" id="exChip">기존 단지 <small id="exN"></small></label>
     </fieldset>
     <fieldset><legend>지도에 겹쳐 보기</legend>
       <label id="lblCtx"><input type="checkbox" id="ctxChip">역 · 학교 <small>OpenStreetMap</small></label>
@@ -141,7 +142,7 @@ requestAnimationFrame(function () { setTimeout(function () {
       <button type="button" class="reset" id="busGo" hidden title="지금 지도 가운데에서 가장 가까운 버스로 이동합니다">가장 가까운 버스 보기</button>
     </fieldset>
     <fieldset><legend>화면</legend>
-      <label><input type="checkbox" id="hudChip">단지 모서리 표시선 <small>HUD 표시</small></label>
+      <label><input type="checkbox" id="hudChip">단지 모서리 표시선 <small>꺾쇠</small></label>
       <label id="lblCards"><input type="checkbox" id="cardsChip">단지 정보 카드 <small>떠 있는 상자</small></label>
     </fieldset>
     <button type="button" class="reset" id="optReset">기본값으로 되돌리기</button>

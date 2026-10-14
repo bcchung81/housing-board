@@ -117,7 +117,8 @@ function currentPlan(tables, type) {
   return m;
 }
 
-/* 정책 연결: 사업 → { status, names(정책 이름, 이름 순) } */
+/* 정책 연결: 사업 → { status, names(정책 이름, 이름 순), short(짧은 이름 '9·7', names 와 같은 순서 — 사업 화면 policyLabel 과 같은 규칙: projects-index.js policyShort) } */
+const policyShort = (id) => { const m = /^POL_\d{4}_(\d{2})(\d{2})$/.exec(id); return m ? `${+m[1]}·${+m[2]}` : id; };
 function policyOf(tables) {
   const polName = new Map((tables.policies ?? []).map((p) => [p.local_policy_id, p.policy_name]));
   const prgPol = new Map();
@@ -125,11 +126,11 @@ function policyOf(tables) {
   const out = new Map();
   for (const l of tables.links ?? []) {
     if (l.link_type !== 'PROGRAM_PROJECT') continue;
-    const x = out.get(l.to_local_id) || out.set(l.to_local_id, { confirmed: false, names: new Set() }).get(l.to_local_id);
+    const x = out.get(l.to_local_id) || out.set(l.to_local_id, { confirmed: false, names: new Map() }).get(l.to_local_id);
     if (l.review_status === 'CONFIRMED') x.confirmed = true;
-    for (const pol of prgPol.get(l.from_local_id) ?? []) if (polName.has(pol)) x.names.add(polName.get(pol));
+    for (const pol of prgPol.get(l.from_local_id) ?? []) if (polName.has(pol)) x.names.set(polName.get(pol), policyShort(pol));
   }
-  return (pid) => { const x = out.get(pid); return x ? { status: x.confirmed ? 'CONFIRMED' : 'REVIEW_REQUIRED', names: [...x.names].sort() } : null; };
+  return (pid) => { const x = out.get(pid); if (!x) return null; const names = [...x.names.keys()].sort(); return { status: x.confirmed ? 'CONFIRMED' : 'REVIEW_REQUIRED', names, short: names.map((n) => x.names.get(n)) }; };
 }
 
 /* tables: 원장 표(board.js NEEDED + links·policies), locations: homeLocations 결과, homeIds: 대응표.

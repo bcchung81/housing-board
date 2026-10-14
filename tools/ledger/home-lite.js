@@ -2,6 +2,7 @@
 /* 수도권 지도 경량 번들: HOME 사업이 있는 시군구마다 data/board/home-lite/<시군구>.json 하나. 지도(assets/js/region.js)는 수도권 시군구를 열 때
    home-map(사업 행) 과 함께 이 파일을 받아, 번들 3곳(계양·광산·나주)처럼 처음부터 건물 외곽·지구 경계·사업 표지를 그린다.
    - buildings: 위치가 있는 사업(블록 라벨점·대표 지번·지구 대표점·이름 검색 근사, home-map 의 loc) 둘레 RADIUS_M 안에 중심점이 있는 건물.
+     이름 검색 근사(loc.by 'name')는 위치가 불확실해 APPROX_RADIUS_M 만 담는다(2026-10-14: 근사 사업이 많은 서울 시군구 번들이 커서 첫 열기가 늦었다).
      V-World 건물 레이어(LT_C_BLDGINFO)를 /api/v1/buildings 와 같은 0.01° 칸·같은 변환(lib/buildings.js convertFeature, 계양 층고)으로 받는다
      → 지도가 번들 밖을 요청 시 조회할 때 같은 건물은 같은 좌표라 중심점으로 겹침을 거른다.
    - districts: 그 시군구에 걸친 공공주택지구(HOME district — V-World 공동주택용지 도형). 대표점이 시군구 경계 안이거나 연결 사업이 이 시군구인 지구. 면만, 단순화(약 1 m).
@@ -24,6 +25,8 @@ const { readHome, latestHomeDir, homeAvailable } = require('./home-source');
 const OUT_DIR = 'data/board/home-lite';
 const SCHEMA = 'home-lite/1';
 const RADIUS_M = 300;
+const APPROX_RADIUS_M = 150;
+const radiusOf = (r) => (r.loc && r.loc.by === 'name' ? APPROX_RADIUS_M : RADIUS_M);
 const DRAWN = new Set(['block', 'address', 'district', 'name']);
 const LAYER = 'LT_C_BLDGINFO';
 const PAGE_SIZE = 1000;
@@ -40,13 +43,13 @@ function cellsAround([x, y], rM = RADIUS_M) {
   return out;
 }
 const keyOf = (c) => `${c[0]},${c[1]}`;
-/* 사업 지점들 → 그 둘레 rM 안에 중심점이 있는 건물(중심점 순, 겹치면 하나) */
+/* 사업 지점들 → 그 둘레 반경 안에 중심점이 있는 건물(중심점 순, 겹치면 하나). 지점은 [경도, 위도] 또는 { at, r }(사업마다 반경) */
 function nearBuildings(features, points, rM = RADIUS_M) {
-  const seen = new Map();
+  const seen = new Map(), ps = points.map((p) => (Array.isArray(p) ? { at: p, r: rM } : p));
   for (const f of features) {
     const c = Bld.centroidOf(f.geometry);
     if (!c || seen.has(keyOf(c))) continue;
-    if (points.some((p) => V.distM(p, c) <= rM)) seen.set(keyOf(c), f);
+    if (ps.some((p) => V.distM(p.at, c) <= p.r)) seen.set(keyOf(c), f);
   }
   return [...seen.entries()].sort((a, b) => byStr(a[0], b[0])).map(([, f]) => f);
 }
@@ -75,14 +78,14 @@ function districtRings(g) {
 function liteDoc(doc, { features, districts, blocks, inside, basis, edition }) {
   const drawn = doc.projects.filter((r) => r.loc && DRAWN.has(r.loc.by) && Array.isArray(r.loc.at));
   const points = drawn.map((r) => r.loc.at);
-  const buildings = nearBuildings(features, points);
-  const projects = drawn.map((r) => [r.id, buildings.filter((f) => V.distM(r.loc.at, Bld.centroidOf(f.geometry)) <= RADIUS_M).length]).sort((a, b) => byStr(a[0], b[0]));
+  const buildings = nearBuildings(features, drawn.map((r) => ({ at: r.loc.at, r: radiusOf(r) })));
+  const projects = drawn.map((r) => [r.id, buildings.filter((f) => V.distM(r.loc.at, Bld.centroidOf(f.geometry)) <= radiusOf(r)).length]).sort((a, b) => byStr(a[0], b[0]));
   const ids = new Set(doc.projects.map((r) => r.id));
   const ds = districts.filter((d) => inside([d.lon, d.lat]) || d.ids.some((id) => ids.has(id))).map((d) => ({ name: d.name, polys: d.rings })).sort((a, b) => byStr(a.name, b.name));
   const taken = new Set(points.map(keyOf));
   const bs = blocks.filter((b) => inside(b.at) && !taken.has(keyOf(b.at))).sort((a, b) => byStr(a.label, b.label) || byStr(keyOf(a.at), keyOf(b.at)));
   if (!buildings.length && !ds.length && !bs.length) return null;
-  return { schema: SCHEMA, sgg: doc.sgg, name: doc.name ?? null, edition, basis, radiusM: RADIUS_M, projects, districts: ds, blocks: bs, buildings };
+  return { schema: SCHEMA, sgg: doc.sgg, name: doc.name ?? null, edition, basis, radiusM: RADIUS_M, approxRadiusM: APPROX_RADIUS_M, projects, districts: ds, blocks: bs, buildings };
 }
 /* 링(닫힘) → [x0, y0, dx1, dy1, …](경위도×1e6 정수, 닫는 점 뺌) */
 function encodeRing(ring) {
@@ -99,7 +102,7 @@ function renderLite(d0) {
   return `{\n${head.join('\n')}\n${list('districts')},\n${list('blocks')},\n${list('buildings')}\n}\n`;
 }
 
-module.exports = { OUT_DIR, SCHEMA, RADIUS_M, cellsAround, nearBuildings, simplifyRing, districtRings, liteDoc, encodeGeometry, renderLite };
+module.exports = { OUT_DIR, SCHEMA, RADIUS_M, APPROX_RADIUS_M, cellsAround, nearBuildings, simplifyRing, districtRings, liteDoc, encodeGeometry, renderLite };
 
 /* ---------- 실행 ---------- */
 async function fetchCell(client, key) {
@@ -163,10 +166,10 @@ async function main() {
     if (!lite) continue;
     const text = renderLite(lite);
     fs.writeFileSync(path.join(out, `${d.sgg}.json`), text);
-    const per = lite.projects.map(([id]) => { const at = drawnOf(d).find((r) => r.id === id).loc.at; return zlib.gzipSync(JSON.stringify(lite.buildings.filter((f) => V.distM(at, Bld.centroidOf(f.geometry)) <= RADIUS_M).map((f) => [f.properties, encodeGeometry(f.geometry)]))).length; });
+    const per = lite.projects.map(([id]) => { const row = drawnOf(d).find((r) => r.id === id), at = row.loc.at; return zlib.gzipSync(JSON.stringify(lite.buildings.filter((f) => V.distM(at, Bld.centroidOf(f.geometry)) <= radiusOf(row)).map((f) => [f.properties, encodeGeometry(f.geometry)]))).length; });
     sizes.push({ sgg: d.sgg, raw: Buffer.byteLength(text), gz: zlib.gzipSync(text).length, n: lite.buildings.length, d: lite.districts.length, b: lite.blocks.length, p: lite.projects.length, perMax: per.length ? Math.max(...per) : 0 });
   }
-  fs.writeFileSync(path.join(out, 'index.json'), `{\n  "schema": "home-lite-index/1",\n  "edition": ${JSON.stringify(home.edition)},\n  "radiusM": ${RADIUS_M},\n  "sggs": [\n${index.map((x) => `    ${JSON.stringify(x)}`).join(',\n')}\n  ]\n}\n`);
+  fs.writeFileSync(path.join(out, 'index.json'), `{\n  "schema": "home-lite-index/1",\n  "edition": ${JSON.stringify(home.edition)},\n  "radiusM": ${RADIUS_M},\n  "approxRadiusM": ${APPROX_RADIUS_M},\n  "sggs": [\n${index.map((x) => `    ${JSON.stringify(x)}`).join(',\n')}\n  ]\n}\n`);
   const kb = (n) => `${Math.round(n / 1024)}KB`;
   for (const s of sizes) console.log(`  ${s.sgg} 건물 ${s.n} · 지구 ${s.d} · 블록 ${s.b} · 사업 ${s.p} · ${kb(s.raw)} (gzip ${kb(s.gz)}, 사업당 최대 gzip ${kb(s.perMax)})`);
   const tot = sizes.reduce((a, s) => ({ raw: a.raw + s.raw, gz: a.gz + s.gz }), { raw: 0, gz: 0 });

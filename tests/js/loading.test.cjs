@@ -82,10 +82,12 @@ test('건물 그림자(official-shadow)는 막이 걷힌 뒤 첫 idle(지형이 
   assert.match(app, /function addOfficialShadows\(\) \{\n  if \(!HAS_GY \|\| map\.getSource\('official-shadow'\)/, '두 번 불려도 한 번만 붙인다');
 });
 
-test('로딩 막(S1): 지형을 기다리지 않고 배경 타일·setupCustom 소스가 준비되면 걷고, 늦어도 12초, idle 이 먼저면 idle 에 걷는다. 지형 소스는 하나(S2)', () => {
-  assert.match(app, /const REVEAL_MAX_MS = 12000;/);
+test('로딩 막(S1): 지형을 기다리지 않고 setupCustom 소스가 준비되면 걷고(배경 타일은 그 뒤 1.5초까지만, 경량 번들 건물은 기다리지 않음), 늦어도 12초, idle 이 먼저면 idle 에 걷는다. 지형 소스는 하나(S2)', () => {
+  assert.match(app, /const REVEAL_MAX_MS = 12000, BASE_GRACE_MS = 1500;/);
   assert.match(app, /if \(spec\.type !== 'raster-dem'\) WAIT_SRC\.add\(id\);/, '지형이 아닌 소스만 기다린다');
-  assert.match(app, /for \(const id of WAIT_SRC\) if \(map\.getSource\(id\) && !map\.isSourceLoaded\(id\)\) return;\n  reveal\('ready'\);/);
+  assert.match(app, /const NO_WAIT = new Set\(GY && GY\.lite \? \['official'\] : \[\]\);/, '경량 번들 건물(사업 둘레)은 막이 기다리지 않는다(2026-10-14 용산 근사 위치 사업)');
+  assert.match(app, /for \(const id of WAIT_SRC\) if \(!BASE_SRC\.includes\(id\) && !NO_WAIT\.has\(id\) && map\.getSource\(id\) && !map\.isSourceLoaded\(id\)\) return;/);
+  assert.match(app, /if \(!graceTimer\) \{ PERF\.own = Math\.round\(performance\.now\(\)\); graceTimer = setTimeout\(\(\) => reveal\('base-grace'\), BASE_GRACE_MS\); \}\n  for \(const id of BASE_SRC\) if \(map\.getSource\(id\) && !map\.isSourceLoaded\(id\)\) return;[^\n]*\n  reveal\('ready'\);/, '배경 타일 한 장이 늦어도 막이 남지 않는다');
   assert.match(app, /setTimeout\(\(\) => reveal\('timeout'\), REVEAL_MAX_MS\);/);
   assert.match(app, /reveal\('idle'\);/);
   assert.ok(app.indexOf('const whenRevealed') < app.indexOf('whenRevealed(dynLoad)'), '건물 조회는 막이 걷힐 때(정의 뒤에서 건다)');

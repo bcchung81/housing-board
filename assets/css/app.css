@@ -57,6 +57,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .sf-v{font-family:var(--font-disp);font-size:19px;font-weight:400;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
 .sf-v small{margin-left:2px;font-family:var(--font-body);font-size:11px;font-weight:400;color:var(--mute)}   /* 단위는 작고 흐린 본문 글꼴(종합상황판 KPI 단위와 같은 결) */
 .sf-v.none{color:var(--mute)}
+.sf-v.sm{font-family:var(--font-body);font-size:13px;line-height:1.75}   /* 호수 미확인(숫자 자리의 글) */
 .stagef[hidden]{display:none}
 .pvbanner{position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:5;max-width:min(92%,720px);padding:4px 14px;border-radius:0 0 8px 8px;background:var(--pn2);border:1px solid var(--line2);border-top:0;color:var(--ink);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pvbanner[hidden]{display:none}
@@ -70,6 +71,17 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .cmd .pv-f{margin:2px 0 4px;white-space:normal;word-break:keep-all}
 .dynhint{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);z-index:5;max-width:min(92vw,520px);padding:5px 14px;border-radius:14px;background:var(--glass-cmd-active);border:1px solid var(--line2);color:var(--ink);font-size:13px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .dynhint[hidden]{display:none}
+/* 위치 안내 한 줄(?project= 로 연 사업이 위치 미확보·근사 위치일 때, region.js mountLocNote). 지도 위 가운데, 닫을 수 있다 */
+.locnote{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:10px;max-width:min(calc(100% - 420px),760px);min-width:min(420px,calc(100% - 24px));padding:9px 8px 9px 14px;border-radius:12px;background:color-mix(in srgb,var(--warn) 16%,var(--pn));border:1px solid color-mix(in srgb,var(--warn) 55%,transparent);box-shadow:0 6px 20px rgba(0,0,0,.18);color:var(--ink);font-size:14px;line-height:1.45}
+.locnote[hidden]{display:none}
+.locnote .ln-i{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
+.locnote .ln-t{flex:1;min-width:0}
+.locnote .ln-t b{font-weight:700}
+.locnote .ln-t a{color:inherit;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
+.locnote .ln-x{flex:none;display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
+.locnote .ln-x:hover{background:color-mix(in srgb,var(--ink) 10%,transparent)}
+.locnote .ln-x:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
+.locnote .ln-x svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;stroke-linecap:round}
 .list .empty{padding:14px 6px;color:var(--mute);font-size:13.5px}
 .nlist li{padding:9px 6px;border-top:1px solid var(--line);list-style:none;font-size:13px;line-height:1.5}
 .nlist li:first-child{border-top:0}
@@ -148,6 +160,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .sw.other{border:1.5px dashed #5566BE;background:rgba(85,102,190,.22)}
 .sw.dash{border:1.5px dashed var(--ink);background:transparent}
 .sw.plan{border:1.5px dashed var(--plan)}
+.sw.approx{border-radius:50%;border:1.5px solid var(--ink);background:radial-gradient(circle,transparent 0 2.2px,var(--ink) 2.3px 3.5px,color-mix(in srgb,var(--ink) 22%,transparent) 3.6px)}   /* 근사 위치: 실선 겹원 + 띠(지도 blk-approx) */
 .sw.ex{background:#374C98}
 .sw.fac-edu{background:#F7C600}
 .sw.fac-med{background:#E5384F}
@@ -483,6 +496,7 @@ details.isub>ul{margin-top:2px}
 .pc-chip.bus{background:transparent;border-color:var(--ink2);color:var(--ink2)}
 .handle{display:none}
 @media (max-width:900px){
+  .locnote{top:60px;min-width:0;max-width:calc(100% - 24px)}
   /* 좁은 화면: 머리 줄은 위 줄(지역) / 아래 6단계 칩(3칸 × 2줄)으로 위에 고정하고, 지도는 그 아래, 패널은 아래 시트 */
   .app{display:block;height:100vh}
   .mhead{position:fixed;top:0;left:0;right:0;height:var(--mh);flex-wrap:wrap;align-content:flex-start;gap:6px 10px;padding:6px 12px}
