@@ -253,8 +253,10 @@ test('레지스트리: 수도권 옛 발급 사업 61 = HOME 사업으로 대체
   assert.deepEqual(match.superseded.filter((m) => m.rule !== 'HOME_SAME_SITE').map((m) => m.from).sort(), sup.map((p) => p.id).sort());
   for (const p of sup) assert.equal(saved.projects.find((x) => x.local_project_id === p.id).superseded_by, p.supersededBy, `${p.id}: 원장에도 대체`);
   assert.ok(hid.every((p) => !saved.projects.some((x) => x.local_project_id === p.id)), '숨긴 사업은 원장에 없다');
-  const page = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/project/[id]/page.tsx'), 'utf8');
-  assert.match(page, /if \(p\.supersededBy\) redirect\(`\/project\/\$\{p\.supersededBy\}`\)/);
+  /* /project/<옛 id> → /projects?id=<옛 id>(next.config.ts) → 서랍이 대표 사업을 연다(lib/board/projects-view.ts drawerTarget) */
+  const V = require('../../lib/board/projects-view.ts');
+  for (const p of sup) assert.equal(V.drawerTarget(p.id, registry.projects, () => true).id, p.supersededBy, p.id);
+  assert.match(fs.readFileSync(path.join(ROOT, 'next.config.ts'), 'utf8'), /\{ source: '\/project\/:id', destination: '\/projects\?id=:id', permanent: false \}/);
   assert.match(fs.readFileSync(path.join(ROOT, 'lib/board/data.ts'), 'utf8'), /projects: s\.projects\.filter\(\(p\) => !p\.supersededBy && !p\.hiddenAt\), allProjects: s\.projects/);
 });
 

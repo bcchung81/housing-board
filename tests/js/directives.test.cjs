@@ -34,19 +34,18 @@ test('우리 동네 달력(lhCalendar): 시도별 달력을 모두 더하면 전
   assert.ok(gyeonggi.some((m) => m.blocks.length), '경기는 1년 안 준공 예정이 있다');
 });
 
-test('보고자료(8.14 정례 보고): 실적·시행주체·시도·앞으로의 물량·사업 단계를 같은 계산 함수로 보이고, 판정하지 못하는 것(계획 대비·일정 지연·병목)을 밝힌다', () => {
-  const s = read('app/(dashboard)/reports/page.tsx');
-  for (const h of ['① 계획대로 가고 있는가', '② 정책별 진행', '③ 기관별 진척', '④ 어디서 늘고 줄었는가', '⑤ 앞으로 실제 공급되는 물량', '⑥ 사업은 어느 단계에 있는가']) assert.ok(s.includes(h), h);   // ② 정책별 진행은 2026-10-14(HOME 개념 흡수)
-  for (const f of ['valueAt(molit, k, NATION, last)', 'ytd(molit, k, NATION, last)', "ytd(molit, 'start', NATION, last, a)", 'lhByMonth(lh, FROM, 12)']) assert.ok(s.includes(f), f);
-  assert.match(s, /const FROM = AHEAD_FROM;/);
-  assert.match(s, /판정하지 못하는 것/);
-  assert.match(s, /일정 지연\(9\.18 지시/);
-  assert.match(s, /<StageLadder className="mt-0" counts=\{counts\} \/>/);
+test('월간 보고(8.14 정례 보고): 사업 화면의 인쇄 보기(?print=1·@media print)가 핵심 질문·단계 파이프라인·목표 대비·우선 점검 상위 10·기준일·출처를 담는다(2026-10-14 보고자료 메뉴를 사업 화면으로 합침)', () => {
+  const s = read('app/(dashboard)/projects/page.tsx');
+  assert.match(s, /<h1 [^>]*>월간 주택공급 보고<\/h1>/);
+  assert.match(s, /우선 점검 사업 · 상위 10/);
+  assert.match(s, /const top = priorityOf\(scope\);/);
+  assert.match(s, /기준일: 사업 원장 \{ref\}/);
+  assert.match(s, /출처: 사업 원장/);
+  assert.ok(!fs.existsSync(path.join(ROOT, 'app/(dashboard)/reports')), '옛 보고자료 화면은 없다(/reports → /projects?print=1)');
   // 이번 달 증감은 전월·전년 같은 달과 비교한다
   const last = C.lastMonth(molit);
   assert.equal(C.nextYm(last, -1), '2026-07');
   assert.equal(C.nextYm(last, -12), '2025-08');
-  assert.ok(C.ytd(molit, 'start', C.NATION, '2025-08') > 0, '전년 같은 기간 누계가 있어야 비교한다');
 });
 
 test('지역 공급(9.4 국민 예측가능성): 시도를 고르면 앞으로 12개월 모집·준공·입주 예정과 고른 달 목록을 보이고, 자격 판단은 하지 않는다', () => {
@@ -58,18 +57,18 @@ test('지역 공급(9.4 국민 예측가능성): 시도를 고르면 앞으로 1
   assert.doesNotMatch(page + ahead, /자격 (판정|충족)/);
 });
 
-test('사업 상세(9.30 쉬운 설명): 지금 단계는 계단(현재 표시·칸 title 의 질문)이 보이고 문장으로 되풀이하지 않으며, 그 시도의 우리 동네로 이어 준다', () => {
-  const s = read('app/(dashboard)/project/[id]/page.tsx');
-  assert.match(s, /<StageLadder current=\{hidden \? undefined : p\.stageCode\} \/>/);
+test('사업 상세(9.30 쉬운 설명): 서랍의 지금 단계는 6단계 스텝(현재 표시·칸 title 의 질문)이 보이고 문장으로 되풀이하지 않으며, 그 시도의 지역 공급으로 이어 준다', () => {
+  const s = read('components/projects/ProjectDetail.tsx');
+  assert.match(s, /<StageLadder flat current=\{r\.stage\}/);
   assert.doesNotMatch(s, /단계입니다 — /, '그림이 보여 주는 지금·다음 단계를 문장으로 다시 쓰지 않는다(2026-10-13 화면 규칙)');
   assert.match(read('components/StageLadder.tsx'), /title=\{`\$\{s\.code\} \$\{s\.name\} — \$\{s\.q\}`\}/, '단계마다 답할 질문은 칸의 title');
-  assert.match(s, /href=\{`\/my-area\/\$\{area\.sido\}`\}/);
+  assert.match(s, /href=\{`\/region\?sido=\$\{r\.sgg\.slice\(0, 2\)\}`\}/);
 });
 
 test("메뉴: 보고자료·우리 동네는 화면이 생겨 '준비 중'이 아니고, 빈 화면을 그리던 [section] 경로는 없다", () => {
   assert.deepEqual(MENU.filter((m) => m.soon), []);
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/(dashboard)/[section]')), '[section] 경로');
-  for (const f of ['app/(dashboard)/reports/page.tsx']) assert.ok(fs.existsSync(path.join(ROOT, f)), f);
+  for (const f of ['app/(dashboard)/projects/page.tsx', 'app/(dashboard)/region/page.tsx']) assert.ok(fs.existsSync(path.join(ROOT, f)), f);   // 보고자료 → 사업 인쇄 보기, 우리 동네 → 지역 공급(2026-10-14)
 });
 
 test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림을 넣지 않는다 — 사용자 피드백 2026-10-10)', () => {

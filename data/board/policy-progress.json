@@ -61,6 +61,7 @@
        "through": "2026-09-30",
        "target": null,
        "actual": 86739,
+       "actualWithEstimates": 86739,
        "actualThrough": "2026-08-31",
        "actualReviewUnits": null,
        "gap": null,
@@ -388,12 +389,13 @@
        "from": "2026-01-01",
        "through": "2026-09-30",
        "target": 8049,
-       "actual": 8742,
-       "actualThrough": "2026-09-30",
+       "actual": 4732,
+       "actualWithEstimates": 8742,
+       "actualThrough": "2026-08-10",
        "actualReviewUnits": 0,
-       "gap": 0,
-       "shortfallPct": 0,
-       "status": "REACHED"
+       "gap": 3317,
+       "shortfallPct": 41.2,
+       "status": "GAP"
       }
      ],
      "monthly": [
@@ -742,11 +744,12 @@
        "from": "2026-01-01",
        "through": "2026-09-30",
        "target": 14694,
-       "actual": 5789,
-       "actualThrough": "2026-09-01",
+       "actual": 3560,
+       "actualWithEstimates": 5789,
+       "actualThrough": "2026-08-10",
        "actualReviewUnits": 0,
-       "gap": 8905,
-       "shortfallPct": 60.6,
+       "gap": 11134,
+       "shortfallPct": 75.8,
        "status": "GAP"
       }
      ],
@@ -1115,8 +1118,9 @@
        "from": "2026-01-01",
        "through": "2026-09-30",
        "target": 1543,
-       "actual": 5789,
-       "actualThrough": "2026-09-01",
+       "actual": 3560,
+       "actualWithEstimates": 5789,
+       "actualThrough": "2026-08-10",
        "actualReviewUnits": 0,
        "gap": 0,
        "shortfallPct": 0,
@@ -1533,6 +1537,7 @@
        "through": "2026-09-30",
        "target": 381,
        "actual": 381,
+       "actualWithEstimates": 381,
        "actualThrough": "2026-07-31",
        "actualReviewUnits": 0,
        "gap": 0,
@@ -1945,6 +1950,7 @@
        "through": "2026-09-30",
        "target": null,
        "actual": null,
+       "actualWithEstimates": null,
        "actualThrough": null,
        "actualReviewUnits": null,
        "gap": null,
@@ -2330,6 +2336,7 @@
   "homeRule 은 HOME 화면과 같다(목표 누적은 정책 시작일부터, 확인 누적은 처음부터라 기간이 섞인다). 우리 화면은 samePeriod(같은 해 1월~기준 달)를 쓴다.",
   "착공은 정책 전체 범위에서 원문 연도별 목표(연말 점)와 지역 착공 통계를 쓴다 — 연말 목표를 달로 나누지 않는다.",
   "입주는 예정 물량만 있고 실적은 집계하지 않는다(HOME 과 같다).",
-  "HOME 의 이 계산은 9·7(POL_2025_0907) 전용이다 — 1·29·8·13 은 같은 코드 경로가 없다."
+  "HOME 의 이 계산은 9·7(POL_2025_0907) 전용이다 — 1·29·8·13 은 같은 코드 경로가 없다.",
+  "samePeriod.actual 은 확인(담당자 추정 입력 OFFICER_CURRENT_ESTIMATE 을 뺀 사건), actualWithEstimates 는 추정 포함(= HOME actualPoints)이다. gap·status 는 확인으로만 낸다."
  ]
 }

@@ -34,11 +34,37 @@ test('HOME 화면 공급(분양·모집) 값 재현: 목표 점·확인 점·연
   assert.deepEqual(supply.homeRule, { target: { date: '2026-09-30', units: 8049 }, actual: { date: '2026-09-30', units: 8742, reviewUnits: 0, confirmedUnits: 8742 }, status: 'REACHED', gap: 0, shortfallPct: 0 });
 });
 
-test('같은 기간 비교(우리 기본): 2026-01~09 목표 8,049 대 확인 8,742 → 도달', () => {
+test('같은 기간 비교(우리 기본): 2026-01~09 목표 8,049 대 확인 4,732(추정 포함 8,742) → 부족 3,317(41.2%) — 확인과 담당자 추정을 섞지 않는다', () => {
   assert.equal(saved.referenceMonthEnd, '2026-09-30');
   const s = supply.samePeriod.find((y) => y.year === 2026);
-  assert.deepEqual([s.from, s.through, s.target, s.actual, s.gap, s.shortfallPct, s.status], ['2026-01-01', '2026-09-30', 8049, 8742, 0, 0, 'REACHED']);
-  assert.deepEqual(supply.monthly.find((m) => m.month === '2026-09'), { month: '2026-09', target: 8049, actual: 8742, targetYtd: 8049, actualYtd: 8742 });
+  assert.deepEqual([s.from, s.through, s.target, s.actual, s.actualWithEstimates, s.gap, s.shortfallPct, s.status], ['2026-01-01', '2026-09-30', 8049, 4732, 8742, 3317, 41.2, 'GAP']);
+  assert.equal(s.actualWithEstimates, supply.homeRule.actual.units, '추정 포함 = HOME 화면 확인 누적(같은 해 1월 전 확인 없음)');
+  assert.deepEqual(supply.monthly.find((m) => m.month === '2026-09'), { month: '2026-09', target: 8049, actual: 8742, targetYtd: 8049, actualYtd: 8742 }, '월말 시계열은 HOME 과 같다(추정 포함)');
+});
+
+test('추정 분리: 공급 측정값 125건 중 담당자 추정(OFFICER_CURRENT_ESTIMATE) 70건 · 확인 ≤ 추정 포함, 추정 입력이 없는 단계(착공 통계·준공)는 같다', { skip: SKIP }, () => {
+  const svc = PP.homeService(H.readHome(HOME_DIR), saved.asOf);
+  const sup = [...svc.profiles.values()].map((p) => p.progress?.SUPPLY).filter(Boolean);
+  assert.deepEqual([sup.length, sup.filter((v) => PP.ESTIMATE_RULES.has(v.input_rule)).length], [125, 70]);
+  const b = PP.buildCohorts(svc, saved.asOf, PP.POLICY_ID);
+  const est = b.cohorts.flatMap((c) => c.events).filter((e) => e.estimate);
+  assert.ok(est.length > 0 && est.every((e) => e.origin === 'MANUAL'), '추정 표지는 담당자 측정값에만');
+});
+
+test('추정 분리는 모든 단계·연도에서 확인 ≤ 추정 포함이고, 다르면 gap·status 는 확인 기준이다', () => {
+  for (const [k, st] of Object.entries(saved.policies[0].stages)) for (const y of st.samePeriod) {
+    assert.ok('actualWithEstimates' in y, `${k} ${y.year}`);
+    if (y.actual != null) assert.ok(y.actualWithEstimates >= y.actual, `${k} ${y.year}`);
+    if (y.target != null && y.actual != null) assert.equal(y.gap, Math.max(0, y.target - y.actual), `${k} ${y.year}`);
+  }
+  const y26 = (k) => saved.policies[0].stages[k].samePeriod.find((y) => y.year === 2026);
+  assert.deepEqual(['CONSTRUCTION', 'COMPLETION'].map((k) => y26(k).actual === y26(k).actualWithEstimates), [true, true]);
+  assert.ok(saved.notes.some((n) => n.includes('actualWithEstimates')));
+  /* 순수 함수: withEstimates 를 주면 칸을 덧붙이고, 비교는 확인 점으로만 */
+  const t = [{ date: '2026-09-30', units: 100 }], a = [{ date: '2026-03-31', units: 40 }], w = [{ date: '2026-03-31', units: 40 }, { date: '2026-08-31', units: 120 }];
+  const [r] = PP.samePeriod(t, a, '2026-09-30', 2026, w);
+  assert.deepEqual([r.actual, r.actualWithEstimates, r.gap, r.status], [40, 120, 60, 'GAP']);
+  assert.equal('actualWithEstimates' in PP.samePeriod(t, a, '2026-09-30', 2026)[0], false);
 });
 
 test('다른 단계 고정값(덤프 판 = HOME 운영 API): 착공은 원문 연간 목표·지역 통계, 사업화·인허가·준공은 승인 일정이 목표, 입주는 실적 없음', () => {
@@ -46,8 +72,8 @@ test('다른 단계 고정값(덤프 판 = HOME 운영 API): 착공은 원문 �
   assert.deepEqual(Object.keys(st), ['CONSTRUCTION', 'SUPPLY', 'BUSINESS', 'APPROVAL', 'COMPLETION', 'MOVE_IN']);
   const y26 = (k) => st[k].samePeriod.find((y) => y.year === 2026);
   assert.deepEqual([y26('CONSTRUCTION').target, y26('CONSTRUCTION').actual, y26('CONSTRUCTION').status], [null, 86739, 'NOT_DUE']);
-  assert.deepEqual([y26('BUSINESS').target, y26('BUSINESS').actual, y26('BUSINESS').status], [14694, 5789, 'GAP']);
-  assert.deepEqual([y26('APPROVAL').target, y26('APPROVAL').actual, y26('APPROVAL').status, y26('COMPLETION').actual, y26('COMPLETION').status], [1543, 5789, 'REACHED', 381, 'REACHED']);
+  assert.deepEqual([y26('BUSINESS').target, y26('BUSINESS').actual, y26('BUSINESS').actualWithEstimates, y26('BUSINESS').status], [14694, 3560, 5789, 'GAP']);
+  assert.deepEqual([y26('APPROVAL').target, y26('APPROVAL').actual, y26('APPROVAL').actualWithEstimates, y26('APPROVAL').status, y26('COMPLETION').actual, y26('COMPLETION').status], [1543, 3560, 5789, 'REACHED', 381, 'REACHED']);
   assert.deepEqual([y26('MOVE_IN').target, y26('MOVE_IN').actual, y26('MOVE_IN').status], [null, null, 'NOT_DUE']);
   assert.deepEqual(st.CONSTRUCTION.targetPoints.map((p) => p.units), [269000, 515000, 765000, 1014000, 1349000]);
   assert.deepEqual(st.APPROVAL.annual.find((a) => a.year === 2026), { year: 2026, target_units: 2913, target_cumulative_units: 2913, management_cumulative_units: null, actual_units: 5789, actual_cumulative_units: 16731, actual_through: '2026-09-01', actual_status: 'PARTIAL' });

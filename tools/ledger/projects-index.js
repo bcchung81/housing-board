@@ -1,8 +1,10 @@
 'use strict';
 /* 사업 화면(/projects · /project/[id] · /reports 정책 절)이 읽는 자료 두 파일. 원장 표를 화면마다 통째로 읽지 않게 미리 묶는다.
-   - data/board/projects-index.json: 목록에 더하는 것만 — 정책·프로그램 목록, 시군구 이름, 사업별 공고 확인 호수·프로그램·정책·연결 상태.
+   - data/board/projects-index.json: 목록에 더하는 것만 — 정책·프로그램 목록, 시군구 이름, 사업별 공고 확인 호수·프로그램·정책·연결 상태,
+     시행 기관(agency), 원천 실제 기록이 있는 단계(reached — 리본 칸 1~5, 단계 파이프라인), 준공 현재 예정 달(completion — 준공 실제가 없을 때, 보드의 향후 12개월 준공과 같은 규칙).
      사업 행(이름·단계·판정·다음 일정·호수)은 지도 색인 data/board/ledger-map.json 그대로 쓴다(판정 규칙 한 벌 — tools/ledger/board.js).
-   - data/board/project-detail.json: 발급 사업(살아 있는 레지스트리 사업)마다 개요·단계별 현재 예정/실제/추정·예정일 경과·공정률 이력·근거 원천.
+   - data/board/project-detail.json: 발급 사업(살아 있는 레지스트리 사업)마다 개요·단계별 현재 예정/실제/추정·예정일 경과·공정률 이력·근거 원천,
+     수도권 HOME 사업은 지도 위치의 종류(loc — data/board/home-map/<시군구>.json 의 loc.by·basis, tools/ledger/home-map.js 가 만든 것).
      events 표(4 MB)를 사업별로 미리 묶은 것이다. 현재 예정과 경과는 board.js projectStates 그대로(목록의 다음 일정·상태와 같은 값).
    공고 확인 호수와 정책 연결 규칙은 지도 정적 자료(tools/ledger/home-map.js)와 같다: 연결이 하나라도 CONFIRMED 면 CONFIRMED, 아니면 REVIEW_REQUIRED.
    순수 함수 projectsIndexFromLedger·projectDetailFromLedger 는 파일을 읽거나 쓰지 않는다. 같은 입력 → 같은 바이트.
@@ -11,7 +13,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const P = require('./paths');
-const { projectStates, loadTables } = require('./board');
+const { projectStates, loadTables, endOf } = require('./board');
 const { noticeUnitsOf } = require('./home-map');
 
 const INDEX_OUT = 'data/board/projects-index.json';
@@ -19,6 +21,7 @@ const DETAIL_OUT = 'data/board/project-detail.json';
 const EXTRA_TABLES = ['links', 'programs', 'policies'];
 /* 단계 사건(원장 event_type) — 사업 상세 타임라인의 줄 순서 */
 const STAGE_EVENTS = ['PERMIT', 'CONSTRUCTION_START', 'SUPPLY_NOTICE', 'COMPLETION', 'MOVE_IN'];
+const BOARD_OF_EVENT = { PERMIT: 1, CONSTRUCTION_START: 2, SUPPLY_NOTICE: 3, COMPLETION: 4, MOVE_IN: 5 };
 const byStr = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 const textOf = (e) => e.event_date ?? e.event_month ?? (e.event_year != null ? String(e.event_year) : null);
 
@@ -61,18 +64,25 @@ function projectsIndexFromLedger(tables, { referenceDate, observedMonth }) {
   const programs = [...progs.values()].sort((a, b) => b.projects - a.projects || byStr(a.name, b.name)).map((x) => ({ name: x.name, policies: [...x.policies].sort(), projects: x.projects }));
   const sgg = {};
   for (const code of [...new Set(live.map((p) => p.sgg_code))].sort()) sgg[code] = areaName.get(code) ?? null;
+  const states = new Map(projectStates(tables, referenceDate).projects.map((x) => [x.p.local_project_id, x]));
   const projects = {};
   for (const p of [...live].sort((a, b) => byStr(a.local_project_id, b.local_project_id))) {
-    const id = p.local_project_id, l = links.get(id), n = notice(id), x = {};
+    const id = p.local_project_id, l = links.get(id), n = notice(id), s = states.get(id), x = {};
     if (n != null) x.notice = n;
     if (l) { x.programs = [...l.programs].sort(); x.policies = [...l.policies].sort(); x.link = l.confirmed ? 'CONFIRMED' : 'REVIEW_REQUIRED'; }
+    if (p.agency_id) x.agency = p.agency_id;
+    const reached = STAGE_EVENTS.filter((t) => s.actualTypes.has(t)).map((t) => BOARD_OF_EVENT[t]);
+    if (reached.length) x.reached = reached;
+    const cp = s.plan.COMPLETION;
+    if (cp && !s.actualTypes.has('COMPLETION')) x.completion = endOf(cp).slice(0, 7);
     if (Object.keys(x).length) projects[id] = x;
   }
   return { schema: 'projects-index/1', observedMonth, referenceDate, policies, programs, sgg, projects };
 }
 
 /* 발급 사업(issued_at 있고 대체되지 않음)마다 상세. 돌려주는 것: project-detail/1 */
-function projectDetailFromLedger(tables, { referenceDate, observedMonth }) {
+/* locs: Map(사업 id → { by, basis }) — loadMonth 가 지도 정적 자료에서 읽는다(없으면 위치 칸 없음) */
+function projectDetailFromLedger(tables, { referenceDate, observedMonth, locs = new Map() }) {
   const { projects: states } = projectStates(tables, referenceDate);
   const group = (rows) => { const m = new Map(); for (const r of rows) (m.get(r.local_project_id) || m.set(r.local_project_id, []).get(r.local_project_id)).push(r); return m; };
   const evOf = group(tables.events), locOf = group(tables.project_locations), unitOf = group(tables.units);
@@ -109,6 +119,7 @@ function projectDetailFromLedger(tables, { referenceDate, observedMonth }) {
       unit: x.p.project_unit, agency: x.p.agency_id, scope: x.p.public_scope, basis: x.p.public_basis, asOf: x.p.as_of, issuedAt: x.p.issued_at, source: x.p.source_ref,
       bjd: [...new Set((locOf.get(id) ?? []).map((l) => l.bjd_code).filter(Boolean))].sort(),
       stages, progress: [...prog].sort((a, b) => byStr(a[0], b[0])), refs: [...refs].sort(),
+      ...(locs.has(id) ? { loc: locs.get(id) } : {}),
     };
   }
   const sources = {};
@@ -132,20 +143,30 @@ function renderDoc(doc, big) {
 const renderIndex = (doc) => renderDoc(doc, ['projects']);
 const renderDetail = (doc) => renderDoc(doc, ['sources', 'projects']);
 
-/* 그 달 폴더의 원장 표 + 기준일 */
+/* 지도 정적 자료(data/board/home-map/<시군구>.json)의 사업 위치 종류 → Map(사업 id → { by, basis }) */
+function homeMapLocs(dir = path.join(P.ROOT, 'data/board/home-map')) {
+  const out = new Map();
+  if (!fs.existsSync(dir)) return out;
+  for (const f of fs.readdirSync(dir).filter((n) => /^\d{5}\.json$/.test(n)).sort()) {
+    for (const p of JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')).projects) if (p.loc?.by) out.set(p.id, { by: p.loc.by, basis: p.loc.basis ?? null });
+  }
+  return out;
+}
+
+/* 그 달 폴더의 원장 표 + 기준일 + 지도 위치 종류 */
 function loadMonth(month = P.latestMonth()) {
   const dir = P.ledgerDir(month), tablesDir = path.join(dir, 'tables');
   const tables = { ...loadTables(tablesDir), ...Object.fromEntries(EXTRA_TABLES.map((t) => [t, JSON.parse(fs.readFileSync(path.join(tablesDir, `${t}.json`), 'utf8')).rows])) };
-  return { tables, referenceDate: P.referenceDateOf(dir), observedMonth: month };
+  return { tables, referenceDate: P.referenceDateOf(dir), observedMonth: month, locs: homeMapLocs() };
 }
 
 module.exports = { INDEX_OUT, DETAIL_OUT, STAGE_EVENTS, policyKey, policyShort, projectsIndexFromLedger, projectDetailFromLedger, renderIndex, renderDetail, loadMonth };
 
 if (require.main === module) {
   const i = process.argv.indexOf('--month');
-  const { tables, referenceDate, observedMonth } = loadMonth(i > 0 ? process.argv[i + 1] : undefined);
+  const { tables, referenceDate, observedMonth, locs } = loadMonth(i > 0 ? process.argv[i + 1] : undefined);
   const index = projectsIndexFromLedger(tables, { referenceDate, observedMonth });
-  const detail = projectDetailFromLedger(tables, { referenceDate, observedMonth });
+  const detail = projectDetailFromLedger(tables, { referenceDate, observedMonth, locs });
   const a = renderIndex(index), b = renderDetail(detail);
   fs.writeFileSync(path.join(P.ROOT, INDEX_OUT), a);
   fs.writeFileSync(path.join(P.ROOT, DETAIL_OUT), b);

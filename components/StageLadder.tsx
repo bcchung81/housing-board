@@ -8,11 +8,12 @@ import Link from 'next/link';
 import { cn } from 'cn';
 import { STAGES } from '../lib/board/stages';
 
-type Props = { current?: string; counts?: Record<string, number>; className?: string; href?: (code: string) => string };
+/* flat: 계단 대신 같은 높이(64px)의 한 줄(사업 상세 서랍 — 좁은 서랍에서 계단 높이 148px 를 쓰지 않는다) */
+type Props = { current?: string; counts?: Record<string, number>; className?: string; href?: (code: string) => string; flat?: boolean };
 
 const SCOPE = { gov: 'var(--scope-gov)', pub: 'var(--scope-pub)' } as const;
 
-export default function StageLadder({ current, counts, className, href = (code) => `/projects?stage=${code}` }: Props) {
+export default function StageLadder({ current, counts, className, href = (code) => `/projects?stage=${code}`, flat = false }: Props) {
   return (
     <div data-slot="stage-ladder" className={className}>
       <p className="m-0 mb-1 flex flex-wrap justify-end gap-x-2.5 gap-y-0.5 text-[12px] text-muted-foreground" aria-label="공개 범위">
@@ -25,10 +26,11 @@ export default function StageLadder({ current, counts, className, href = (code) 
           const style = { '--sc': SCOPE[s.scope], '--h': `${64 + i * 16}px`, '--i': i * 1.5 } as CSSProperties;   // --i: 첫 화면에 01→06 차례로 오른다(q-rise)
           return (
             <li key={s.code} className="q-rise flex min-w-0 flex-col" style={style}>
-              <div className="flex h-[148px] items-end border-b-2 border-line2 px-1.5 mobile:h-auto mobile:border-b-0 mobile:px-0">
+              <div className={cn('flex items-end border-b-2 border-line2 px-1.5 mobile:h-auto mobile:border-b-0 mobile:px-0', !flat && 'h-[148px]')}>
                 <Link href={href(s.code)} aria-current={on ? 'step' : undefined} title={`${s.code} ${s.name} — ${s.q}`}
                   className={cn('card-lift keep-border flex h-[var(--h)] w-full flex-col items-center justify-center gap-0.5 border-2 border-b-0 border-[var(--sc)] px-1 text-center no-underline mobile:h-auto mobile:flex-row mobile:justify-start mobile:gap-2 mobile:rounded-[8px] mobile:border-b-2 mobile:px-3 mobile:py-1.5',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
+                    flat && 'h-auto min-h-[64px]',
                     on ? 'q-pulse bg-[color-mix(in_srgb,var(--sc)_24%,var(--card))] text-foreground [box-shadow:0_0_0_2px_var(--primary)] dark:[box-shadow:none]' : 'bg-[color-mix(in_srgb,var(--sc)_14%,var(--card))] text-[var(--sc)] hover:bg-[color-mix(in_srgb,var(--sc)_22%,var(--card))]')}>
                   <span className="text-[15px] leading-none tabular-nums">{s.code}</span>
                   <b className="font-display text-[20px] leading-[1.25] font-normal">{s.name}</b>

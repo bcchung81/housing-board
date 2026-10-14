@@ -5,7 +5,9 @@
 export type Kind = 'int' | 'delta' | 'pct' | 'text';
 /* 글자 말고 더 필요한 칸: 링크·색 견본(점선은 자료 없음)·잠정 표시·코드 글꼴·흐린 글자·없음 문구(na), sort 는 표시와 다른 정렬값.
    사업 목록(2026-10-14): title(칸 툴팁) · tone(글자 색 bad 지연·warn 주의) · mark(견본 모양: outline 은 swatch 색 테두리만 — 지연, hatch 는 빗금 — 미확보) */
-export type CellObj = { text?: string; sort?: number | string | null; href?: string; swatch?: string; dashed?: boolean; prov?: boolean; code?: boolean; muted?: boolean; na?: string; title?: string; tone?: 'bad' | 'warn'; mark?: 'outline' | 'hatch' };
+export type CellObj = { text?: string; sort?: number | string | null; href?: string; swatch?: string; dashed?: boolean; prov?: boolean; code?: boolean; muted?: boolean; na?: string; title?: string; tone?: 'bad' | 'warn'; mark?: 'outline' | 'hatch';
+  /* 사업 화면(2026-10-14 시안): pill = 단계 알약(옅은 단계색 바탕 + 단계 글자색), strong = 굵게(지연 개월) */
+  pill?: { color: string; ink: string }; strong?: boolean };
 export type Cell = number | string | null | undefined | CellObj;
 /* wrap 은 긴 글자 열(최소 180px, 줄바꿈), clip 은 한 줄 말줄임 열(값 = CSS 최대 폭, 예 'clamp(180px,100vw - 1100px,380px)' — 잘린 칸은 title 로 전체 글자),
    sort:false 는 정렬하지 않는 열, group 이 같은 이웃 열은 위 줄 머리글 한 칸으로 묶인다 */
@@ -13,7 +15,9 @@ export type Col = { key: string; label: string; kind?: Kind; group?: string; gro
 /* pin: 합계 행(top 전국 · bottom 총계)은 정렬·검색과 상관없이 그 자리에 둔다. note: 첫 칸 뒤를 한 칸으로 합친 설명(자료 없는 단계 행)
    detail: 행을 누르면 바로 아래에 펼치는 실제 레코드 예시(열·행, 전체 건수, 출처). 가상 스크롤 표(120행 초과)에서는 펼치지 않는다 */
 export type Detail = { cols: Col[]; rows: Row[]; total: number; source: string };
-export type Row = { id: string; pin?: 'top' | 'bottom'; note?: string; noteTitle?: string; /* note 칸의 title 툴팁 */ muted?: boolean; detail?: Detail; c: Record<string, Cell> };
+export type Row = { id: string; pin?: 'top' | 'bottom'; note?: string; noteTitle?: string; /* note 칸의 title 툴팁 */ muted?: boolean; detail?: Detail; c: Record<string, Cell>;
+  /* href: 행을 누르면(칸 안 링크·단추가 아닌 곳) 이 주소로 간다(스크롤 유지 — 사업 목록의 상세 서랍 ?id=). sel: 선택된 행(서랍에 열린 사업) */
+  href?: string; sel?: boolean };
 /* 작은 글자 그리드: 감싸는 요소에 주면 본문 13px·머리글 12px·좁은 칸 여백(데이터 원본).
    칸 글자는 한 줄로 고정하지 않고 낱말 단위(keep-all)로 줄을 바꿔, 열 너비는 글자 길이에 맞고 표가 화면 밖으로 넘쳐 잘리지 않는다(대신 행이 높아진다) */
 export const GRID_DENSE = '[&_table]:text-[13px] [&_table]:leading-[1.5] [&_th]:px-2 [&_th]:py-1.5 [&_th]:text-[13px] [&_td]:px-2 [&_td]:py-1.5 [&_th]:whitespace-normal [&_td]:whitespace-normal [&_th]:[word-break:keep-all] [&_td]:[word-break:keep-all]';

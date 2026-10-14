@@ -29,13 +29,22 @@ const config: NextConfig = {
     ];
   },
 
-  /* 2026-10-10 메뉴 통합(lib/shell/menu.ts)으로 없앤 화면의 옛 주소. 단계별·단계 상세·시군구 상세는 사업 목록의 거르기다.
-     나중에 단계별 병목 화면을 다시 열 수 있게 영구(308)가 아닌 임시(307) 넘김으로 둔다. */
+  /* 메뉴 통합(lib/shell/menu.ts)으로 없앤 화면의 옛 주소. 나중에 화면을 다시 열 수 있게 영구(308)가 아닌 임시(307) 넘김으로 둔다.
+     2026-10-10: 단계별·단계 상세·시군구 상세는 사업 목록의 거르기다.
+     2026-10-14(메뉴 5개): 사업 상세는 사업 목록의 서랍(?id=), 보고자료는 사업 화면의 인쇄 보기(?print=1), 공급 실적·시행주체별·우리 동네는 지역 공급(?sido=).
+     월 상세(/month/:id)·기관 상세(/agency/:id)는 종합상황판 위젯이 링크하므로 넘기지 않는다. 쿼리는 Next 가 목적지에 덧붙인다 */
   async redirects() {
     return [
       { source: '/stage', destination: '/projects', permanent: false },
       { source: '/stage/:id(0[1-6])', destination: '/projects?stage=:id', permanent: false },
       { source: '/area/:sgg(\\d{5})', destination: '/projects?sgg=:sgg', permanent: false },
+      { source: '/project/:id', destination: '/projects?id=:id', permanent: false },
+      { source: '/reports', destination: '/projects?print=1', permanent: false },
+      { source: '/area', destination: '/region', permanent: false },
+      { source: '/area/:sido(\\d{2})', destination: '/region?sido=:sido', permanent: false },
+      { source: '/agency', destination: '/region', permanent: false },
+      { source: '/my-area', destination: '/region', permanent: false },
+      { source: '/my-area/:sido', destination: '/region?sido=:sido', permanent: false },
     ];
   },
 

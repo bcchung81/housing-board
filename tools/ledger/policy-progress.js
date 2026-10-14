@@ -27,6 +27,9 @@ const EVENT_STAGES = new Set([...STAGES, 'COMPLETION']);
 const METRICS = { CONSTRUCTION: '착공(건설)', SUPPLY: '공급(분양·모집)', BUSINESS: '사업화', APPROVAL: '인허가', COMPLETION: '준공', MOVE_IN: '입주 예정' };
 const REGIONS = ['서울특별시', '경기도', '인천광역시'];
 const ALIASES = { lh_incheon_sale: 'lh_sale', lh_incheon_rent: 'lh_rent', lh_incheon_construction: 'lh_construction' };
+/* 담당자 추정 입력(project_profile.progress 의 input_rule): '기한이 지난 단계에서 담당자가 고른 현재값 — 원천 실적 확인과 구분'. HOME 화면(homeRule·actualPoints)은 그대로 섞고,
+   우리 같은 기간 비교(samePeriod)는 확인(actual = 이 입력을 뺀 사건)과 추정 포함(actualWithEstimates)을 나눠 낸다(2026-10-14 결정: 확인과 추정을 섞지 않는다) */
+const ESTIMATE_RULES = new Set(['OFFICER_CURRENT_ESTIMATE']);
 const ROADMAP_STAGES = { PLANNING: '계획', APPROVAL: '인허가', CONSTRUCTION: '착공', SUPPLY: '공급', COMPLETION: '준공', MOVE_IN: '입주 시작' };
 
 const byStr = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
@@ -295,7 +298,7 @@ function buildCohorts(svc, asOf, policyId) {
       schedules.push(...goals);
       /* 담당자 단계 측정값(project_profile.progress) → 실제 사건 */
       for (const [stage, v] of Object.entries(svc.profiles.get(member.id)?.progress ?? {})) {
-        if (v.event_date) events.push({ stage, event_date: v.event_date, units: v.units ?? null, status: 'ACTUAL', review_status: 'CONFIRMED', origin: 'MANUAL', project_id: member.id });
+        if (v.event_date) events.push({ stage, event_date: v.event_date, units: v.units ?? null, status: 'ACTUAL', review_status: 'CONFIRMED', origin: 'MANUAL', project_id: member.id, ...(ESTIMATE_RULES.has(v.input_rule) ? { estimate: true } : {}) });
       }
     }
     const starts = events.filter((e) => e.stage === 'CONSTRUCTION' && (e.status ?? 'ACTUAL') === 'ACTUAL').map((e) => e.event_date);
@@ -398,11 +401,11 @@ function scheduleTargets(cohorts, metric, periodStart) {
   });
   return { points, cohorts: used.size };
 }
-/* _events: 단계 실적 사건 → 날짜별 누적(사업별 최대 도달량, 확인 필요 연결 포함) */
-function stageEvents(cohorts, metric, asOf) {
+/* _events: 단계 실적 사건 → 날짜별 누적(사업별 최대 도달량, 확인 필요 연결 포함). estimates: false 면 담당자 추정 입력(estimate)을 뺀다 */
+function stageEvents(cohorts, metric, asOf, { estimates = true } = {}) {
   const byDate = new Map();
   for (const c of cohorts) for (const e of c.events) {
-    if (e.stage === metric && (e.status ?? 'ACTUAL') === 'ACTUAL' && e.event_date <= asOf) {
+    if (e.stage === metric && (e.status ?? 'ACTUAL') === 'ACTUAL' && e.event_date <= asOf && (estimates || !e.estimate)) {
       if (!byDate.has(e.event_date)) byDate.set(e.event_date, []);
       byDate.get(e.event_date).push([c, e]);
     }
@@ -488,8 +491,9 @@ function homeRule(targets, actual, asOf) {
 }
 
 /* samePeriod — 같은 해 1월 1일 ~ 기준 달 말일(지난 해는 12월 31일)의 목표 증가분 대 확인 증가분. 그 기간에 점이 없으면 null(0 으로 보지 않는다).
-   status: GAP · REACHED · NO_ACTUAL(목표만) · NOT_DUE(목표가 기간 뒤에만) · NO_TARGET */
-function samePeriod(targets, actual, cutoff, firstYear) {
+   status: GAP · REACHED · NO_ACTUAL(목표만) · NOT_DUE(목표가 기간 뒤에만) · NO_TARGET
+   withEstimates(추정 포함 확인 점)를 주면 actualWithEstimates 를 덧붙인다 — actual·gap·status 는 확인(actual 점)으로만 낸다 */
+function samePeriod(targets, actual, cutoff, firstYear, withEstimates = null) {
   const years = [];
   for (let year = firstYear; year <= +cutoff.slice(0, 4); year++) {
     const from = `${year}-01-01`, through = `${year}-12-31` < cutoff ? `${year}-12-31` : cutoff;
@@ -502,7 +506,7 @@ function samePeriod(targets, actual, cutoff, firstYear) {
     const target = delta(targets), act = delta(actual), lastAct = actual.filter(inWin).pop() ?? null;
     const gap = target != null && act != null ? Math.max(0, target - act) : null;
     const reviewBefore = actual.filter((p) => p.date < from).pop();
-    years.push({ year, from, through, target, actual: act, actualThrough: lastAct ? lastAct.date : null,
+    years.push({ year, from, through, target, actual: act, ...(withEstimates ? { actualWithEstimates: delta(withEstimates) } : {}), actualThrough: lastAct ? lastAct.date : null,
       actualReviewUnits: lastAct && lastAct.review_units != null ? lastAct.review_units - (reviewBefore?.review_units ?? 0) : null,
       gap, shortfallPct: gap != null ? pct1(gap, target) : null,
       status: target == null ? (targets.some((p) => p.date > through) ? 'NOT_DUE' : 'NO_TARGET') : act == null ? 'NO_ACTUAL' : gap > 0 ? 'GAP' : 'REACHED' });
@@ -538,6 +542,7 @@ function policyProgress(home, { policyId = POLICY_ID } = {}) {
     const macro = metric === 'CONSTRUCTION';
     const t = macro ? { points: officialTargets(b.plan), cohorts: null } : scheduleTargets(b.cohorts, metric, periodStart);
     const a = macro ? { points: regionalActual(statistics, asOf, periodStart), cohorts: null } : metric === 'MOVE_IN' ? { points: [], cohorts: 0 } : stageEvents(b.cohorts, metric, asOf);
+    const confirmed = macro || metric === 'MOVE_IN' ? a : stageEvents(b.cohorts, metric, asOf, { estimates: false });   // 확인 = 담당자 추정 입력을 뺀 사건
     const last = a.points[a.points.length - 1];
     stages[metric] = {
       label: METRICS[metric],
@@ -545,7 +550,7 @@ function policyProgress(home, { policyId = POLICY_ID } = {}) {
       actualBasis: macro ? '동일 범위 공식 지역 착공 통계(서울·경기·인천 합)' : metric === 'MOVE_IN' ? '입주 실적은 집계하지 않음(실제 시작일만 관리)' : '동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분',
       evidence: { targetCohorts: t.cohorts, actualCohorts: a.cohorts, reviewIncluded: !macro && metric !== 'MOVE_IN', reviewUnits: last?.review_units ?? null, confirmedUnits: last?.confirmed_units ?? null, policyConfirmedUnits: last?.policy_confirmed_units ?? null },
       homeRule: homeRule(t.points, a.points, asOf),
-      samePeriod: samePeriod(t.points, a.points, cutoff, firstYear),
+      samePeriod: samePeriod(t.points, confirmed.points, cutoff, firstYear, a.points),
       monthly: monthlySeries(t.points, a.points, periodStart, cutoff),
       targetPoints: t.points.map(({ cohorts, ...p }) => p),
       actualPoints: a.points,
@@ -572,6 +577,7 @@ function policyProgress(home, { policyId = POLICY_ID } = {}) {
       '착공은 정책 전체 범위에서 원문 연도별 목표(연말 점)와 지역 착공 통계를 쓴다 — 연말 목표를 달로 나누지 않는다.',
       '입주는 예정 물량만 있고 실적은 집계하지 않는다(HOME 과 같다).',
       'HOME 의 이 계산은 9·7(POL_2025_0907) 전용이다 — 1·29·8·13 은 같은 코드 경로가 없다.',
+      `samePeriod.actual 은 확인(담당자 추정 입력 ${[...ESTIMATE_RULES].join('·')} 을 뺀 사건), actualWithEstimates 는 추정 포함(= HOME actualPoints)이다. gap·status 는 확인으로만 낸다.`,
     ],
   };
 }
@@ -588,7 +594,7 @@ function parseArgs(argv) {
   return o;
 }
 
-module.exports = { policyProgress, render, schedulePeriod, sourceEvents, blockKey, inventory, linkedNotices, scheduleTargets, stageEvents, homeRule, samePeriod, asOfOf, buildCohorts, homeService, POLICY_ID };
+module.exports = { ESTIMATE_RULES, policyProgress, render, schedulePeriod, sourceEvents, blockKey, inventory, linkedNotices, scheduleTargets, stageEvents, homeRule, samePeriod, asOfOf, buildCohorts, homeService, POLICY_ID };
 
 if (require.main === module) {
   try {

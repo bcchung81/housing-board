@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronDown, ChevronRight, ChevronUp, ChevronsUpDown, Search } from 'lucide-react';
 import { constructSortFn, createColumnHelper, createSortedRowModel, rowSortingFeature, tableFeatures, useTable, type SortingState } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
@@ -17,6 +18,7 @@ import { compare, display, filterRows, groupStarts, headerRows, sortValue, split
    - 줄무늬, 글자 열은 왼쪽·숫자 열은 오른쪽 정렬, 묶음(머리글 2단)이 바뀌는 곳에 세로 구분선, 없는 값은 흐린 –.
    - 30행을 넘는 표는 검색 칸과 건수를, 120행을 넘는 표는 보이는 행만 그린다(LH 준공 예정 351행: DOM 행 351 → 수십).
    - 행에 detail(실제 레코드 예시)이 있으면 첫 칸에 ▸ 가 붙고, 행을 누르면(또는 ▸ 단추) 바로 아래에 예시 표가 열린다. 칸 안의 링크를 누르면 펼치지 않고 그 링크로 간다.
+   - 행에 href 가 있으면 행을 눌러 그 주소로 간다(스크롤 유지, 사업 목록 → 상세 서랍). 키보드는 칸 안의 링크로 간다. sel 인 행은 선택 바탕.
    서버 화면은 직렬화되는 열·행(lib/grid/spec.ts 의 Col·Row)만 넘긴다. 시험: tests/js/grid.test.cjs */
 
 const features = tableFeatures({
@@ -45,10 +47,11 @@ function CellView({ v, col }: { v: Cell; col: Col }) {
   const body = o?.href ? <Link href={o.href}>{text}</Link> : text;
   const mark = o?.mark === 'hatch' ? <i className={cn('mr-1.5 inline-block size-[11px] rounded-[3px] border border-line2 align-[-1px]', HATCH)} aria-hidden="true" />
     : o?.mark === 'outline' ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-2 align-[-1px]" style={{ borderColor: o.swatch }} aria-hidden="true" /> : null;
+  const toned = d.tone ? <span className={cn(TONE[d.tone], o?.strong && 'font-bold')}>{body}</span> : o?.strong ? <b>{body}</b> : body;
   const inner = (
     <>
       {mark ?? (o?.dashed ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-[1.5px] border-dashed border-line2 align-[-1px]" aria-hidden="true" /> : o?.swatch ? <Swatch color={o.swatch} /> : null)}
-      {d.tone ? <span className={TONE[d.tone]}>{body}</span> : body}
+      {o?.pill ? <span className="inline-block rounded-full px-2 text-[12px] leading-[19px] font-bold whitespace-nowrap" style={{ background: `color-mix(in srgb,${o.pill.color} 16%,var(--card))`, color: o.pill.ink }}>{body}</span> : toned}
       {o?.prov ? <Prov /> : null}
     </>
   );
@@ -60,6 +63,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight }: { co
   const [q, setQ] = React.useState('');
   const [open, setOpen] = React.useState<ReadonlySet<string>>(new Set());
   const uid = React.useId();
+  const router = useRouter();
   const { top, body, bottom } = React.useMemo(() => splitPinned(rows), [rows]);
   const want = wants(body.length);
   const data = React.useMemo(() => filterRows(body, q, cols), [body, q, cols]);
@@ -103,8 +107,10 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight }: { co
   const line = (r: Row, i: number, pinned: boolean, measure?: boolean) => [
     <TableRow key={r.id} total={pinned} data-index={measure ? i : undefined} ref={measure ? v.measureElement : undefined}
       aria-rowindex={want.virtual ? (pinned ? undefined : lead + i + 1) : undefined}
-      onClick={expandable && r.detail ? (e) => { if (!(e.target as HTMLElement).closest('a, button, input')) toggle(r.id); } : undefined}
-      className={cn(!pinned && (i % 2 ? zebra : 'bg-card'), r.muted && 'text-muted-foreground', expandable && r.detail && 'cursor-pointer')}>
+      onClick={expandable && r.detail ? (e) => { if (!(e.target as HTMLElement).closest('a, button, input')) toggle(r.id); }
+        : r.href ? (e) => { if (!(e.target as HTMLElement).closest('a, button, input')) router.push(r.href!, { scroll: false }); } : undefined}
+      data-sel={r.sel ? '' : undefined}
+      className={cn(!pinned && (r.sel ? 'bg-accent' : i % 2 ? zebra : 'bg-card'), r.muted && 'text-muted-foreground', ((expandable && r.detail) || r.href) && 'cursor-pointer')}>
       {r.note !== undefined ? (
         <>
           <TableCell className={stickyCell}><CellView v={r.c[first]} col={cols[0]} /></TableCell>

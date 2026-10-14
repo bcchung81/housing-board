@@ -9,11 +9,11 @@ const ROOT = path.join(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const { MENU, SECTIONS, DETAILS, activeMenuId } = require('../../lib/shell/menu.ts');
 
-test('사이드바 메뉴는 설계 1절의 일곱 목적지이고 경로·식별자가 겹치지 않는다(2026-10-10: 단계별 → 사업, 지역별·기관별 → 공급 실적)', () => {
-  assert.deepEqual(MENU.map((m) => m.href), ['/', '/map', '/projects', '/area', '/sources', '/reports', '/my-area']);
-  assert.deepEqual(MENU.map((m) => m.label), ['종합상황판', '지도', '사업', '공급 실적', '데이터 원본', '보고자료', '우리 동네']);
+test('상단 메뉴는 다섯 목적지이고 경로·식별자가 겹치지 않는다(2026-10-14: 보고자료·사업 상세 → 사업, 공급 실적·우리 동네 → 지역 공급)', () => {
+  assert.deepEqual(MENU.map((m) => m.href), ['/', '/map', '/projects', '/region', '/sources']);
+  assert.deepEqual(MENU.map((m) => m.label), ['종합상황판', '지도', '사업', '지역 공급', '데이터 원본']);
   assert.equal(new Set(MENU.map((m) => m.id)).size, MENU.length);
-  assert.deepEqual(MENU.filter((m) => m.soon).map((m) => m.id), []);   // 보고자료·우리 동네도 화면이 생겨 '준비 중' 표지가 없다(2026-10-10)
+  assert.deepEqual(MENU.filter((m) => m.soon).map((m) => m.id), []);
 });
 
 test('목록 구역은 모두 사이드바 메뉴이고, 지도·종합상황판은 목록 구역이 아니다', () => {
@@ -22,27 +22,26 @@ test('목록 구역은 모두 사이드바 메뉴이고, 지도·종합상황판
   assert.ok(!('map' in SECTIONS) && !('home' in SECTIONS));
 });
 
-test('파생 상세는 부모 메뉴를 강조한다: 월은 종합상황판, 사업은 사업, 시도·시행주체·기관은 공급 실적, 지도는 지도', () => {
+test('파생 상세는 부모 메뉴를 강조한다: 월은 종합상황판, 기관은 지역 공급, 지도는 지도. 넘기는 옛 주소는 메뉴가 없다', () => {
   assert.equal(activeMenuId('/'), 'home');
   assert.equal(activeMenuId('/month/2026-10'), 'home');
-  assert.equal(activeMenuId('/project/PRJ-11290-0001'), 'projects');
-  assert.equal(activeMenuId('/area/11'), 'area');
-  assert.equal(activeMenuId('/agency'), 'area');
-  assert.equal(activeMenuId('/agency/lh'), 'area');
-  assert.equal(activeMenuId('/stage/04'), null);   // 없앤 화면(next.config.ts 가 /projects?stage=04 로 넘긴다)
+  assert.equal(activeMenuId('/projects'), 'projects');
+  assert.equal(activeMenuId('/region'), 'region');
+  assert.equal(activeMenuId('/agency/lh'), 'region');
+  for (const p of ['/project/PRJ-11290-0001', '/reports', '/area', '/area/11', '/my-area', '/stage/04']) assert.equal(activeMenuId(p), null, p);   // 없앤 화면(next.config.ts 가 넘긴다)
   assert.equal(activeMenuId('/map'), 'map');
   assert.equal(activeMenuId('/nope'), null);
 });
 
-test('상세 식별자는 새로 만들지 않는다: AreaRef 코드·PRJ id·기관·연월만 열리고 나머지는 거른다', () => {
+test('상세 식별자는 새로 만들지 않는다: PRJ id·기관·연월만 열리고 나머지는 거른다. 지역 공급은 상세가 없다(?sido=)', () => {
   const ok = (s, id) => DETAILS[s].id.test(id);
-  assert.ok(ok('area', '11') && !ok('area', '41450') && !ok('area', '411') && !ok('area', '4145011400'));   // 시도 2자리(시군구 5자리는 사업 목록의 거르기, 법정동은 지도가 연다)
   assert.ok(ok('project', 'PRJ-11290-0001') && !ok('project', 'PRJ-1129-0001') && !ok('project', '1009100003921'));   // 건축HUB 관리번호는 id 가 아니다(기획서 결정 5)
   assert.ok(ok('agency', 'lh') && ok('agency', 'mnd') && !ok('agency', 'etc'));
   assert.ok(ok('month', '2026-10') && !ok('month', '2026-13') && !ok('month', '202610'));
-  assert.ok(ok('my-area', '41') && ok('my-area', '11') && !ok('my-area', '411') && !ok('my-area', '4145'));   // 우리 동네는 시도 2자리
+  assert.deepEqual(Object.keys(DETAILS).sort(), ['agency', 'month', 'project']);
   for (const d of Object.values(DETAILS)) assert.ok(d.list === '/' || Object.keys(SECTIONS).includes(activeMenuId(d.list)), `${d.list} 는 올라갈 목록(메뉴 구역 안)이어야 한다`);
   assert.ok(!('stage' in DETAILS), '단계 상세는 사업 목록의 거르기(/projects?stage=)다');
+  assert.equal(DETAILS.project.list, '/projects', '사업 상세는 사업 목록의 서랍(?id=)');
 });
 
 test('메뉴 통합으로 없앤 화면의 옛 주소는 사업 목록의 거르기로 넘긴다(임시 넘김, 2026-10-10)', () => {

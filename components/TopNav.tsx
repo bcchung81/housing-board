@@ -1,5 +1,5 @@
 'use client';
-/* 상단 메뉴 바(한 줄, PC 높이 64px). 왼쪽 로고, 가운데 메뉴 글자 링크(전부 한 줄에 보인다), 오른쪽 테마 토글. 900px 이하에서는 햄버거 하나로 접혀 아래로 펼쳐진다.
+/* 상단 메뉴 바(한 줄, PC 높이 64px). 왼쪽 로고, 가운데 메뉴 글자 링크(5개, 전부 한 줄에 보인다), 오른쪽 테마 토글. 900px 이하에서는 햄버거 하나로 접혀 아래로 펼쳐진다. 인쇄에는 싣지 않는다.
    지도 화면(compact)도 동일한 헤더와 테마 토글을 사용하며 문서 단위로 이동한다.
    안쪽 상자는 스크롤바를 뺀 폭이 아니라 화면 폭(100vw) 기준으로 폭·자리를 정한다: 문서 스크롤바가 있는 화면(종합상황판·사업…)과 없는 화면(우리 동네·지도)을
    오갈 때 메뉴 바가 움직이지 않게. 폭도 100vw 기준이라 1470px 보다 좁은 화면에서도 같고(2026-10-10: 메뉴 7px·테마 단추 14px 이동), 스크롤바 밑으로 들어가는 몫은 overflow-x-clip 으로 자른다
@@ -52,7 +52,7 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
   });
 
   return (
-    <header className="sticky top-0 z-40 shrink-0 overflow-x-clip border-b border-border bg-card font-display font-normal text-card-foreground shadow-[0_1px_8px_rgba(15,23,42,.025)]">
+    <header className="sticky top-0 z-40 shrink-0 overflow-x-clip border-b border-border bg-card font-display font-normal text-card-foreground shadow-[0_1px_8px_rgba(15,23,42,.025)] print:hidden">
       <div className="ml-[max(0px,50vw_-_720px)] flex h-16 w-[min(1440px,100vw)] items-center gap-2 px-7 mobile:ml-0 mobile:h-12 mobile:w-auto mobile:px-3">
         <a className="mr-3 flex h-full shrink-0 items-center gap-[9px] text-[#0F1A3D] no-underline dark:text-foreground focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary" href="/" aria-label="주택파동 종합상황판 처음으로">
           <svg className="block size-[33px] shrink-0" viewBox="4 4 64 60" aria-hidden="true">

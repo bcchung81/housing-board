@@ -9,7 +9,7 @@ import { ChevronDown, X } from 'lucide-react';
 import { cn } from 'cn';
 
 export const HATCH = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_45%,transparent)_0_1.5px,transparent_1.5px_3.5px)]';
-const CHIP = 'flex items-center gap-1.5 rounded-full border border-transparent px-2 py-[3px] text-[14px] leading-[1.5] whitespace-nowrap text-foreground no-underline [transition:background_.15s,border-color_.15s] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
+const CHIP = 'flex items-center gap-1.5 rounded-full border border-transparent px-2 py-[3px] text-[14px] leading-[1.5] whitespace-nowrap text-foreground no-underline [transition:background_.15s,border-color_.15s] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-[1500px]:px-1';
 const ON = 'border-primary bg-accent';
 const OFF = 'hover:bg-pn2';
 
@@ -19,11 +19,12 @@ export function SwatchMark({ kind, color, className }: Swatch & { className?: st
     style={kind === 'fill' ? { background: color } : kind === 'outline' ? { borderColor: color } : undefined} />;
 }
 
-export function ChipBar({ children, label = '거르기' }: { children: ReactNode; label?: string }) {
-  return <nav aria-label={label} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] border border-border bg-card px-3 py-2 shadow-[var(--shadow-card)]">{children}</nav>;
+export function ChipBar({ children, label = '거르기', className }: { children: ReactNode; label?: string; className?: string }) {
+  return <nav aria-label={label} className={cn('flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] border border-border bg-card px-3 py-2 shadow-[var(--shadow-card)]', className)}>{children}</nav>;
 }
-export function ChipGroup({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  return <div role="group" aria-label={label} className={cn('flex flex-wrap items-center gap-0.5', className)}><span className="mr-1 text-[13px] text-muted-foreground min-[901px]:max-[1439px]:sr-only">{label}</span>{children}</div>;
+/* bare: 묶음 이름을 화면에 내지 않는다(읽기 도구에만) — 칩이 많은 줄(사업 화면 시안)이 1440 에서도 한 줄에 들게 */
+export function ChipGroup({ label, children, className, bare = false }: { label: string; children: ReactNode; className?: string; bare?: boolean }) {
+  return <div role="group" aria-label={label} className={cn('flex flex-wrap items-center gap-0.5', className)}><span className={cn('mr-1 text-[13px] text-muted-foreground', bare ? 'sr-only' : 'min-[901px]:max-[1439px]:sr-only')}>{label}</span>{children}</div>;
 }
 export const ChipSep = () => <span className="h-5 w-px bg-border mobile:hidden" aria-hidden="true" />;
 

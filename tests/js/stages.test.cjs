@@ -21,18 +21,16 @@ test('공식 6단계: 이름·질문·공개 범위가 발표자료 SHEET 03 과
   assert.deepEqual(rows.map((r) => r.scope), ['gov', 'gov', 'gov', 'gov', 'pub', 'pub']);
 });
 
-test('단계를 표기하는 대시보드 화면(사업 목록·사업 상세)은 계단식 6단계(StageLadder)를 쓰고, 옛 Stepper 는 없다', () => {
-  for (const f of ['app/(dashboard)/project/[id]/page.tsx', 'app/(dashboard)/projects/page.tsx']) {
-    const s = read(f);
-    assert.match(s, /import StageLadder from '[./]+components\/StageLadder';/, f);
-    assert.match(s, /<StageLadder /, f);
-    assert.doesNotMatch(s, /Stepper/, f);
-  }
+test('사업 상세(서랍)는 공식 6단계 스텝(StageLadder, 한 줄)으로 지금 단계를 강조하고, 사업 목록은 리본 칸 칩·파이프라인으로 거른다. 옛 Stepper 는 없다', () => {
+  const det = read('components/projects/ProjectDetail.tsx');
+  assert.match(det, /import StageLadder from '[./]+StageLadder';/);
+  assert.match(det, /<StageLadder flat current=\{r\.stage\} href=\{\(code\) => `\/projects\?stage=\$\{BOARD_OF_STAGE\[code\]\}`\} \/>/, '사업 상세는 지금 단계를 강조하고, 칸은 그 리본 칸으로 거른 목록');
+  for (const f of ['components/projects/ProjectDetail.tsx', 'app/(dashboard)/projects/page.tsx']) assert.doesNotMatch(read(f), /Stepper/, f);
   assert.ok(!fs.existsSync(path.join(ROOT, 'components/ui/stepper.tsx')), '쓰는 곳이 없는 stepper.tsx 는 지운다');
-  assert.match(read('app/(dashboard)/project/[id]/page.tsx'), /<StageLadder current=\{hidden \? undefined : p\.stageCode\} \/>/, '사업 상세는 지금 단계를 강조한다');
   const list = read('app/(dashboard)/projects/page.tsx');
-  assert.match(list, /<StageLadder className="mt-1" current=\{f\.stage\}/, '사업 목록은 거른 단계를 강조한다(옛 단계 상세)');
-  assert.match(list, /href=\{\(code\) => at\(\{ stage: code === f\.stage \? undefined : code \}\)\}/, '단계 칸은 다른 거르기(렌즈·지역·상태)를 유지하고, 고른 단계를 다시 누르면 풀린다');
+  assert.match(list, /href=\{at\(\{ stage: f\.stage === i \? undefined : String\(i\) \}\)\}/, '단계 칩은 다른 거르기(렌즈·지역·상태·기관)를 유지하고, 고른 단계를 다시 누르면 풀린다');
+  assert.match(list, /href=\{\(i\) => at\(\{ stage: f\.stage === i \? undefined : String\(i\) \}\)\}/, '파이프라인 칸도 같은 거르기');
+  assert.match(read('components/StageLadder.tsx'), /flat && 'h-auto min-h-\[64px\]'/, '서랍의 스텝은 계단 높이 대신 한 줄');
 });
 
 test('StageLadder: 공개 범위 범례, 계단(단계마다 높아지는 상자), 질문, 현재 단계 표시(aria-current), 단계 목록 링크, 900px 이하 세로 목록', () => {
@@ -91,15 +89,10 @@ test('지표 범례·KPI 는 6칸(StageLegend·StageKpis): 지표가 없는 단�
   }
 });
 
-test('표 머리는 단계 번호를 붙이고(03 인허가·04 착공·05 분양·06 준공), 보고자료 ① 표는 6행(01·02 는 자료 없음)', () => {
-  /* 표는 데이터 그리드(계획서 17절)라 머리글은 열 정의의 label 이다 */
+test('표 머리는 단계 번호를 붙인다(03 인허가·04 착공·05 분양·06 준공)', () => {
+  /* 표는 데이터 그리드(계획서 17절)라 머리글은 열 정의의 label 이다. 옛 보고자료 ① 표(6행)는 2026-10-14 사업 화면 인쇄 보기(핵심 질문·파이프라인)로 바뀌었다 */
   for (const f of ['app/(dashboard)/month/[id]/page.tsx']) assert.match(read(f), /label: `\$\{METRIC_STAGE\[k\]\} \$\{LABEL\[k\]\}`/, f);
   for (const f of ['app/(dashboard)/agency/[id]/page.tsx']) assert.match(read(f), /`\$\{METRIC_STAGE\[k\]\} \$\{l\}`/, f);
-  const rep = read('app/(dashboard)/reports/page.tsx');
-  assert.match(rep, /const nowRows: Row\[\] = STAGES\.map\(\(s\) => \{   \/\/ 공급 6단계 6행/);
-  assert.match(rep, /muted: true, note: '—',/, '자료 없는 단계는 첫 칸 뒤를 한 칸으로 합친 대시 행');
-  assert.match(rep, /<DataGrid label="전국 단계별 실적" cols=\{nowCols\} rows=\{nowRows\} sortable=\{false\} \/>/, '6단계 순서가 뜻이라 정렬하지 않는다');
-  assert.match(rep, /label: '04 착공 누계'/); assert.match(rep, /label: '06 준공 누계'/);
 });
 
 test('지도 범례·옵션 창의 단지 상태는 6단계 순서이고 단계 번호가 붙는다(머리 줄 6단계 필터와 같은 대응)', () => {
