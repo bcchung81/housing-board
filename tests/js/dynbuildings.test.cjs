@@ -41,7 +41,7 @@ test('안내 띠: 확대 안내·불러오는 중·실패 문구가 #dynHint 에
 });
 
 test('기준일 문구: 요청 시 조회는 조회일을, 번들과 섞이면 둘 다 적는다', () => {
-  assert.match(app, /\$\{BASIS_STATIC\}\(\$\{GY\.lite \? '사업 둘레' : '번들'\}\) · \$\{GY\.lite \? '그 밖' : '번들 밖'\}은 \$\{TODAY\} 조회/);
+  assert.match(app, /\$\{BASIS_STATIC\}\(\$\{GY\.lite \? '사업 둘레' : '지역 자료'\}\) · 그 밖은 \$\{TODAY\} 조회/);
   assert.match(app, /\$\{TODAY\} 조회\(요청 시\)/);
 });
 

@@ -168,7 +168,7 @@ test('?sgg=(수도권): 원장 정적 자료 + 경량 번들 각 1건, permits·
   assert.match(els.pvBanner.innerHTML, /사업 원장 4건 중 2건을 대표점/); assert.doesNotMatch(els.pvBanner.innerHTML, /HOME|미리 담았/, '개발 용어·번들 설명은 화면에 없다');
   assert.ok(!els.locNote || els.locNote.hidden, '?sgg= 로 열면 위치 안내 한 줄은 없다');
   /* 지역 선택기: 번들 + 수도권 시군구(사업 있는 곳만, 시도별), 지금 시군구가 골라져 있다 */
-  assert.match(els.regionSel.innerHTML, /<optgroup label="서울 · 사업 원장"><option value="sgg:11350">노원구 · 9건<\/option><\/optgroup>/);
+  assert.match(els.regionSel.innerHTML, /<optgroup label="서울"><option value="sgg:11350">노원구 · 9건<\/option><\/optgroup>/);
   assert.match(els.regionSel.innerHTML, /<option value="sgg:41281" selected>고양시 덕양구 · 4건<\/option>/);
   assert.doesNotMatch(els.regionSel.innerHTML, /sgg:41000/); assert.equal(els.regionBox.hidden, false);
 });

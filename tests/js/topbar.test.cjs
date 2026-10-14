@@ -78,15 +78,15 @@ test('공급 요약(#hudSum)은 머리 줄 오른쪽의 2열(합계 한 줄 | �
   assert.match(isum, /border:0/); assert.match(isum, /background:transparent/); assert.match(isum, /color:var\(--mute\)/);   // 조용한 링크 말씨(상자·채움 없음)
 });
 
-test('공급 요약 내용: 합계는 \'n세대 · m단지\' 한 줄(문장은 title), 상태 막대·범례는 사이드바에만, 오른쪽은 입주 전 점검 단추(2026-10-13)', () => {
+test('공급 요약 내용: 합계는 \'n호 · m건\' 한 줄(문장은 title), 상태 막대·범례는 사이드바에만, 오른쪽은 입주 전 점검 단추(2026-10-13)', () => {
   const fn = /function syncHudSum\(\) \{[\s\S]*?\n\}\n/.exec(app);
   assert.ok(fn, 'syncHudSum 을 찾을 수 없음');
-  for (const c of ['hs-a', 'hs-b', 'hs-total', 'class="isum"', 'title="${esc(tot.sub)}"', '단지']) assert.ok(fn[0].includes(c), `${c} 가 있어야 한다`);
+  for (const c of ['hs-a', 'hs-b', 'hs-total', 'class="isum"', 'title="${esc(tot.sub)}"', '${tot.n}건']) assert.ok(fn[0].includes(c), `${c} 가 있어야 한다`);
   for (const c of ['hs-region', 'class="next"', 'sbar', 'sleg', 'SUM_COMPACT', '#sumBar']) assert.ok(!fn[0].includes(c), `${c} 는 없어야 한다`);
   assert.match(fn[0], /classList\.toggle\('solo', !side\)/);               // 점검 자료가 없는 지역은 한 열
   assert.match(css, /\.hudsum\.solo\{grid-template-columns:auto\}/);
   assert.doesNotMatch(app, /SUM_COMPACT|HS_ICON/);
-  assert.match(app, /sub: `공급 예정 \$\{BLOCKS\.length\}개 단지/);
+  assert.match(app, /sub: `공급 예정 사업 \$\{BLOCKS\.length\}건/);
   assert.match(app, /function infraSumHtml\(\) \{[\s\S]*?<span class="isum-h">입주 전 점검<\/span><span class="isum-go" aria-hidden="true">›<\/span><span class="isum-c">/);
 });
 

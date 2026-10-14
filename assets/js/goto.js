@@ -15,7 +15,7 @@
   const DEBOUNCE_MS = 320;
   const RECENT_MAX = 5;
   const RECENT_KEY = 'jt.goto.recent';
-  const TIER_LABEL = { bundle: '번들', req: '요청 시 조회', edge: '경계만' };
+  const TIER_LABEL = { bundle: '상세 3D', req: '요청 시 조회', edge: '경계만' };
   const NOTICE = {
     none: '일치하는 곳이 없습니다. 장소 이름(하남시청)·동 이름·지번(장위동 68-37)·도로명을 입력해 보세요.',
     'unknown-code': '행정표준코드 표에 없는 코드입니다.',

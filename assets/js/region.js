@@ -124,7 +124,7 @@
   /* 번들이 없는 지역(등급 B·C)을 여는 빈 번들. 건물은 화면이 요청 시 칸 단위로 불러 붙이므로(GY_BUILDINGS.dynamic) 처음엔 비어 있고,
      법정동·필지로 열었으면 그 법정동의 건축HUB 인허가 사업(permits)이 단지로 들어간다 */
   function emptyBundle(resolved, index, permits, infra, opts) {
-    const name = resolved.name || '번들 없는 지역';
+    const name = resolved.name || '선택한 지역';
     const home = opts && opts.home;   // 수도권: { doc } (doc 이 null 이면 받지 못함) — 인허가·기반시설 없이 원장 사업만
     if (home) {
       const docs = home.doc ? [home.doc] : [], lite = home.lite && Array.isArray(home.lite.buildings) ? home.lite : null;
@@ -132,8 +132,8 @@
       const zones = lite ? (lite.districts || []).flatMap((d) => (d.polys || []).filter((g) => Array.isArray(g) && g.length >= 4).map((g) => ({ name: String(d.name || ''), poly: g.slice(0, g.length - 1) }))) : [];
       const others = lite ? (lite.blocks || []).filter((x) => Array.isArray(x.at) && x.at.every(finite)).map((x) => ring8(x.at, 22)) : [];
       const pts = docs.flatMap((d) => d.projects || []).filter((x) => x && x.loc && HOME_DRAWN_M[x.loc.by] && Array.isArray(x.loc.at) && x.loc.at.length === 2 && x.loc.at.every(finite) && !(x.bundles || []).length).map((x) => x.loc.at);
-      const region = { slug: '', name, notes: home.doc ? [] : ['사업 원장 자료를 불러오지 못했습니다. 잠시 뒤 다시 열어 보세요.'], title: `${name} (번들 없음)`,
-        description: `${name}의 공급 사업은 사업 원장(HOME) 기준입니다. 위치는 대표점이며 사업 경계가 아닙니다.${lite ? ` 건물은 사업 둘레 ${lite.radiusM || 300} m를 미리 담았고 그 밖은 확대하면 불러옵니다.` : ''}`,
+      const region = { slug: '', name, notes: home.doc ? [] : ['사업 원장 자료를 불러오지 못했습니다. 잠시 뒤 다시 열어 보세요.'], title: name,
+        description: `${name}의 공급 사업은 사업 원장 기준입니다. 위치는 대표점이며 사업 경계가 아닙니다.${lite ? ` 건물은 사업 둘레 ${lite.radiusM || 300} m를 미리 담았고 그 밖은 확대하면 불러옵니다.` : ''}`,
         view: homeView(pts, opts.px) || { center: resolved.center || [127.0, 37.5], zoom: Math.round((zoomForBbox(resolved.bbox) || 12) * 10) / 10, pitch: 50, bearing: 0 }, sources: [], zones };
       const buildings = { type: 'FeatureCollection', meta: { basis: (lite && lite.basis) || '', factor: {} }, features: lite ? liteFeatures(lite.buildings) : [], dynamic: true, lite: !!lite };
       const b = Object.assign({ ok: true }, adaptBundle({ index: index || { regions: [] }, entry: { visibility: 'public' }, region, projects: { projects: [], otherBlocks: others }, buildings, context: null, infra: null, home: docs, homeFailed: !home.doc }));
@@ -155,7 +155,7 @@
     const infraLate = opts && opts.infraFailed ? ['기반시설(신설예정 학교·정류장)을 제때 불러오지 못해 입주 전 점검 없이 열었습니다. 잠시 뒤 다시 열면 나올 수 있습니다.'] : [];
     const notes = (lost.length ? [`건축HUB 인허가 사업 후보 중 필지를 못 찾아 지도에 없는 ${m0.unlocated}곳: ${lost.map((x) => `${x.name}(${x.jibun})`).join(', ')}${m0.unlocated > lost.length ? ' 외' : ''}. 원인 추정: ${[...new Set(lost.map((x) => x.reason))].join(' / ')}.`] : []).concat(blockNote, ledgerNote, infraNotes, infraLate);
     const region = {
-      slug: '', name, notes, title: `${name} (번들 없음)`, description: `${name}의 경계와 건물을 보여 줍니다. 공급 사업은 건축HUB 인허가 기록에서 요청 시 조회한 것만 있습니다.`,
+      slug: '', name, notes, title: name, description: `${name}의 경계와 건물을 보여 줍니다. 공급 사업은 건축HUB 인허가 기록에서 요청 시 조회한 것만 있습니다.`,
       view: { center: resolved.center || [127.0, 37.5], zoom: Math.round(z * 10) / 10, pitch: 50, bearing: 0 }, sources: projects.length ? (projects.some((x) => x.sources.includes('hub-bldrgst')) ? [HUB_SOURCES[0], LEDGER_SOURCE, HUB_SOURCES[1]] : HUB_SOURCES) : [], zones: [],
     };
     const buildings = { type: 'FeatureCollection', meta: { basis: '', factor: {} }, features: [], dynamic: true };
@@ -446,12 +446,15 @@
     }
     return out;
   }
-  /* 지역 선택기의 수도권 목록(HOME_LITE 표 → 시도별 묶음, 시군구 코드 순). 사업이 없는 시군구는 뺀다 */
+  /* 지역 선택기의 수도권 목록(HOME_LITE 표 → 시도별 묶음 '서울'·'인천'·'경기', 시군구 코드 순이라 시 아래 구가 바로 뒤에 온다). 사업이 없는 시군구는 뺀다.
+     구가 있는 시의 시 단위 코드(41110 수원시 등 — 구를 정하지 못한 사업)는 '수원시(구 미정)'으로 구 항목과 구분한다 */
   const SIDO_SHORT = { 11: '서울', 28: '인천', 41: '경기' };
+  const sggShort = (name) => String(name).replace(/^(서울특별시|인천광역시|경기도)\s*/, '');
   function homeSelectorGroups(table) {
     const rows = Object.entries(table && typeof table === 'object' ? table : {}).filter(([sgg, e]) => isHomeSgg(sgg) && e && e.n > 0 && e.name).sort((a, b) => (a[0] < b[0] ? -1 : 1));
-    return HOME_SIDO.map((sido) => ({ sido, label: `${SIDO_SHORT[sido]} · 사업 원장`, options: rows.filter(([sgg]) => sgg.slice(0, 2) === sido)
-      .map(([sgg, e]) => ({ value: `sgg:${sgg}`, sgg, label: `${String(e.name).replace(/^(서울특별시|인천광역시|경기도)\s*/, '')} · ${e.n}건` })) })).filter((g) => g.options.length);
+    const cityWithGu = (sgg) => sgg.endsWith('0') && rows.some(([x]) => x !== sgg && x.slice(0, 4) === sgg.slice(0, 4));
+    return HOME_SIDO.map((sido) => ({ sido, label: SIDO_SHORT[sido], options: rows.filter(([sgg]) => sgg.slice(0, 2) === sido)
+      .map(([sgg, e]) => ({ value: `sgg:${sgg}`, sgg, name: sggShort(e.name), n: e.n, label: `${sggShort(e.name)}${cityWithGu(sgg) ? '(구 미정)' : ''} · ${e.n}건` })) })).filter((g) => g.options.length);
   }
   /* 지도에 그린 사업 지점들 → 첫 시점. 모두가 확대 minZ 이상의 한 화면에 들어가면 그 범위, 아니면 가장 많은 사업이 모인 곳(첫 화면에 건물이 보이게).
      사업이 하나면 그 사업(확대 16). px = 지도 가로 화소 */
@@ -477,7 +480,7 @@
   const HOME_LOC_TEXT = { block: 'LH 블록 라벨점', address: '대표 지번 근사', district: '지구 대표점', name: '이름 검색 근사 위치', area: '시군구 대표점' };
   const HOME_DRAWN_M = { block: 45, address: 35, district: 45, name: 40 };   // 지도에 그리는 위치 종류와 표지 반지름(m). 시군구 대표점·위치 없음은 목록에만
   const APPROX_TITLE = '근사 위치 — 사업 이름으로 찾은 위치라 확인이 필요합니다';   // 이름 검색(tools/ledger/home-geocode.js)으로 찾은 위치: 겹원 표지(app.js approxRings)
-  const HOME_SOURCE = { id: 'home-ledger', label: '사업 원장(HOME 덤프) · 위치는 LH 블록 라벨점·대표 지번·지구 대표점·이름 검색 근사(검토 중)' };
+  const HOME_SOURCE = { id: 'home-ledger', label: '사업 원장 · 위치는 LH 블록 라벨점·대표 지번·지구 대표점·이름 검색 근사(검토 중)' };
   const AGENCY_TEXT = { lh: 'LH', sh: 'SH', gh: 'GH' };
   const homeInfo = (r) => ({ units: finite(r.units) && r.units > 0 ? r.units : null, noticeUnits: finite(r.noticeUnits) ? r.noticeUnits : null,
     loc: r.loc && HOME_LOC_TEXT[r.loc.by] ? Object.assign({ by: r.loc.by, text: HOME_LOC_TEXT[r.loc.by], status: r.loc.status || 'REVIEW' }, r.loc.by === 'name' && r.loc.match ? { match: String(r.loc.match) } : {}) : null,
@@ -632,12 +635,23 @@
     if (!box || !sel) return;
     const m = selectorModel({ regions: r.regions }, r.slug), groups = homeSelectorGroups(win && win.HOME_LITE);
     if (!m.visible && !groups.length) return;
-    /* 지역 번들 + 수도권 시군구(사업 원장 사업이 있는 곳, 시도별). 수도권 시군구를 고르면 ?sgg= 로 연다 */
-    const cur = !r.slug && win && win.RESOLVED && win.RESOLVED.sgg ? `sgg:${win.RESOLVED.sgg}` : '', listed = groups.some((g) => g.options.some((o) => o.value === cur));
-    const none = !r.slug && !listed ? `<option value="" selected disabled hidden>${escapeHtml(r.name)} (번들 없음)</option>` : '';   // 목록에 없는 지역은 현재 값을 따로 보인다
-    const opt = (o, on) => `<option value="${escapeHtml(o.value)}"${on ? ' selected' : ''}>${escapeHtml(o.label)}</option>`;
-    sel.innerHTML = none + (groups.length ? `<optgroup label="지역 번들">${m.options.map((o) => opt(o, o.selected)).join('')}</optgroup>` + groups.map((g) => `<optgroup label="${escapeHtml(g.label)}">${g.options.map((o) => opt(o, o.value === cur)).join('')}</optgroup>`).join('')
-      : m.options.map((o) => opt(o, o.selected)).join(''));
+    /* 수도권 시군구(사업 원장 사업이 있는 곳, 시도별)를 먼저, 상세 3D 지역(regions/ 지역 자료)은 맨 아래 '상세 3D 지역' 묶음에.
+       수도권 시군구와 같은 곳의 상세 3D 지역(인천 계양구)은 한 항목으로 합쳐 그 지역 자료로 연다(그 지역도 사업은 원장으로 붙는다). 수도권 시군구를 고르면 ?sgg= 로 연다 */
+    const cur = !r.slug && win && win.RESOLVED && win.RESOLVED.sgg ? `sgg:${win.RESOLVED.sgg}` : '';
+    const merged = new Set();
+    const homeGroups = groups.map((g) => ({ label: g.label, options: g.options.map((o) => {
+      const b = m.options.find((x) => x.label === `${g.label} ${o.name}`);
+      if (!b) return o;
+      merged.add(b.value);
+      return { value: b.value, sgg: o.sgg, label: `${o.label} · 상세 3D`, selected: b.selected };
+    }) }));
+    const rest = m.options.filter((o) => !merged.has(o.value));
+    const on = (o) => !!o.selected || o.value === cur || (!!o.sgg && `sgg:${o.sgg}` === cur);
+    const listed = homeGroups.some((g) => g.options.some(on)) || rest.some(on);
+    const none = !listed ? `<option value="" selected disabled hidden>${escapeHtml(r.name)}</option>` : '';   // 목록에 없는 지역은 현재 값을 따로 보인다
+    const opt = (o) => `<option value="${escapeHtml(o.value)}"${on(o) ? ' selected' : ''}>${escapeHtml(o.label)}</option>`;
+    sel.innerHTML = none + (groups.length ? homeGroups.map((g) => `<optgroup label="${escapeHtml(g.label)}">${g.options.map(opt).join('')}</optgroup>`).join('') + (rest.length ? `<optgroup label="상세 3D 지역">${rest.map(opt).join('')}</optgroup>` : '')
+      : m.options.map(opt).join(''));
     sel.addEventListener('change', () => { win.location.assign(/^sgg:\d{5}$/.test(sel.value) ? codeUrl(win.location.href, 'sgg', sel.value.slice(4)) : regionUrl(win.location.href, sel.value)); });
     box.hidden = false;
   }
@@ -675,10 +689,10 @@
     if (r.home) return [warn ? `위치 안내 ${warn.split(' · ').length}건` : '', r.home.failed ? '사업 원장을 불러오지 못함' : `사업 원장 ${r.home.total}건 · 지도 ${r.home.drawn}건`].filter(Boolean).join(' · ');
     const found = pm && pm.ledger ? pm.ledger.blocksMatched + pm.ledger.parcelsRecovered : 0;
     const extra = [found ? `대장으로 찾음 ${found}` : '', pm && pm.unlocated ? `제외 ${pm.unlocated}` : ''].filter(Boolean).join(' · ');
-    const base = pm && pm.count ? `번들 없는 지역 · 인허가 사업 ${pm.count}곳${extra ? ` (${extra})` : ''}`
-      : pm && pm.fetched && pm.blocks ? `번들 없는 지역 · 블록 단위 인허가 ${pm.blocks}곳은 지도에 못 그림`
-      : pm && pm.fetched ? '번들 없는 지역 · 이 법정동 인허가 사업 없음'
-      : '번들 없는 지역 · 경계·건물만';
+    const base = pm && pm.count ? `인허가 사업 ${pm.count}곳${extra ? ` (${extra})` : ''}`
+      : pm && pm.fetched && pm.blocks ? `블록 단위 인허가 ${pm.blocks}곳은 지도에 못 그림`
+      : pm && pm.fetched ? '이 법정동 인허가 사업 없음'
+      : '경계·건물만';
     return [warn ? `위치 안내 ${warn.split(' · ').length}건` : '', base].filter(Boolean).join(' · ');
   }
   function showFatal(doc, html) {
@@ -771,10 +785,10 @@
     const hm = r.home;
     const baseNote = r.slug ? '' : hm ? (hm.failed ? '사업 원장 자료를 불러오지 못해 경계와 건물(요청 시 조회)만 보여 줍니다'
       : `사업 원장 ${hm.total}건 중 ${hm.drawn}건을 대표점(블록·대표 지번·지구 대표점·근사 위치)에 표시합니다. 표시한 점은 사업 경계가 아닙니다. 위치 미확보 ${hm.unlocated.length}건은 목록에만 둡니다`)
-      : pm && pm.count ? `지역 번들이 없어 경계·건물(요청 시 조회)·건축HUB 인허가 사업 ${pm.count}곳만 보여 줍니다${pm.ledger && (pm.ledger.blocksMatched + pm.ledger.parcelsRecovered) ? `(건축물대장으로 위치를 찾은 ${pm.ledger.blocksMatched + pm.ledger.parcelsRecovered}곳 포함${pm.unlocated ? `, 필지를 못 찾은 ${pm.unlocated}곳 제외` : ''})` : pm.unlocated ? `(필지를 못 찾은 ${pm.unlocated}곳 제외)` : ''}`
-      : pm && pm.fetched && pm.blocks ? `지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 이 법정동의 건축HUB 인허가는 공공주택지구 블록 단위 ${pm.blocks}곳뿐이라 필지 번호가 없어 ${pm.ledger && pm.ledger.used ? '건축물대장과 맞춰 보아도 지번을 정하지 못해 ' : ''}지도에 그릴 수 없습니다`
-      : pm && pm.fetched ? `지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 건축HUB 주택인허가에 이 법정동의 공동주택 사업이 없습니다(기록 ${pm.records}건) — 이웃 법정동에 있을 수 있습니다`
-      : '지역 번들이 없어 경계와 건물(요청 시 조회)만 보여 줍니다';
+      : pm && pm.count ? `상세 3D 자료가 없어 경계·건물(요청 시 조회)·건축HUB 인허가 사업 ${pm.count}곳만 보여 줍니다${pm.ledger && (pm.ledger.blocksMatched + pm.ledger.parcelsRecovered) ? `(건축물대장으로 위치를 찾은 ${pm.ledger.blocksMatched + pm.ledger.parcelsRecovered}곳 포함${pm.unlocated ? `, 필지를 못 찾은 ${pm.unlocated}곳 제외` : ''})` : pm.unlocated ? `(필지를 못 찾은 ${pm.unlocated}곳 제외)` : ''}`
+      : pm && pm.fetched && pm.blocks ? `상세 3D 자료가 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 이 법정동의 건축HUB 인허가는 공공주택지구 블록 단위 ${pm.blocks}곳뿐이라 필지 번호가 없어 ${pm.ledger && pm.ledger.used ? '건축물대장과 맞춰 보아도 지번을 정하지 못해 ' : ''}지도에 그릴 수 없습니다`
+      : pm && pm.fetched ? `상세 3D 자료가 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 건축HUB 주택인허가에 이 법정동의 공동주택 사업이 없습니다(기록 ${pm.records}건) — 이웃 법정동에 있을 수 있습니다`
+      : '상세 3D 자료가 없어 경계와 건물(요청 시 조회)만 보여 줍니다';
     const notes = [resolved ? noticeText(warns) : '', baseNote].filter(Boolean).join(' · ');
     applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r, notes, bannerBrief(r, warns));
     mountLocNote(doc, capital && hit && hit.approx ? { name: hit.name, approx: true } : lost ? { id: lost.id, name: lost.name } : null);

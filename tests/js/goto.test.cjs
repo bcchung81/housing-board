@@ -34,7 +34,7 @@ test('subText·rowsOf·chipsOf: 후보 한 줄의 보조 글자·강조·유형 
   assert.equal(G.subText(ITEM_BJD), '법정동 4145011400'); assert.equal(G.subText(ITEM_PNU), '번지 68-37 · 필지 경계로 이동'); assert.equal(G.subText(ITEM_ROAD), '도로명 주소 · 법정동 4145011400'); assert.equal(G.subText(ITEM_SGG), '시군구 28245');
   const rows = G.rowsOf([ITEM_BJD, ITEM_PNU], '감일', 1);
   assert.deepEqual(rows.map((r) => [r.id, r.selected, r.kind, r.tierLabel, r.hit]), [['cmdO0', false, 'bjd', '요청 시 조회', '감일'], ['cmdO1', true, 'pnu', '요청 시 조회', '']]);
-  assert.deepEqual(G.rowsOf([ITEM_SGG], '계양', 0)[0].tierLabel, '번들');
+  assert.deepEqual(G.rowsOf([ITEM_SGG], '계양', 0)[0].tierLabel, '상세 3D');
   assert.deepEqual(G.chipsOf(ITEM_PNU).map((c) => [c.label, c.text, c.code || '', c.goal || '']), [['시도', '서울특별시', '', ''], ['시군구', '성북구', '11290', ''], ['법정동', '장위동', '1129013800', ''], ['번지', '68-37', '', '필지로 이동']]);
   assert.equal(G.chipsOf(ITEM_BJD).slice(-1)[0].goal, '법정동으로 이동'); assert.equal(G.chipsOf(ITEM_SGG).slice(-1)[0].goal, '시군구 경계로 이동'); assert.equal(G.chipsOf(ITEM_ROAD).slice(-1)[0].goal, '법정동·좌표로 이동');
   assert.deepEqual(G.chipsOf(ITEM_ROAD).map((c) => c.label), ['시도', '시군구', '법정동', '도로명']);

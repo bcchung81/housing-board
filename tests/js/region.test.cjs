@@ -344,7 +344,7 @@ test('boot: ?region= 만 있으면 해석 API 를 부르지 않고 RESOLVED 는 
   assert.equal(r.ok, true); assert.equal(called, 0); assert.equal(win.RESOLVED, null);
 });
 
-test('boot: 번들이 없는 시군구(tier none)도 지도를 연다: 빈 번들 + 건물 요청 시 조회, 경계만 강조, 선택기에 번들 없음 표시', async () => {
+test('boot: 번들이 없는 시군구(tier none)도 지도를 연다: 빈 번들 + 건물 요청 시 조회, 경계만 강조, 선택기에 지역 이름 표시(내부 용어 없이)', async () => {
   const sq = { type: 'Polygon', coordinates: [[[126.99, 37.57], [127.05, 37.57], [127.05, 37.62], [126.99, 37.57]]] };
   const { win, doc, els } = bootWith('?code=11290', () => json(200, { type: 'sgg', level: 'sgg', name: '서울특별시 성북구', center: [127.02, 37.6], bbox: [126.99, 37.57, 127.05, 37.62], geometry: sq, coverage: { tier: 'none' } }));
   const r = await R.boot(win, doc);
@@ -352,9 +352,9 @@ test('boot: 번들이 없는 시군구(tier none)도 지도를 연다: 빈 번�
   assert.equal(r.slug, ''); assert.equal(win.REGION.name, '서울특별시 성북구'); assert.equal(win.GY_BUILDINGS.dynamic, true); assert.equal(win.GY_BUILDINGS.features.length, 0);
   assert.equal(win.GY_PROJECTS.blocks.length, 0); assert.equal(win.GY_INFRA, null);
   assert.deepEqual(win.RESOLVED.start, { center: [127.02, 37.6], zoom: 12.8 }); assert.equal(win.RESOLVED.shape, sq); assert.equal(win.RESOLVED.tier, 'none');
-  assert.equal(els.pvBanner.hidden, false); assert.match(els.pvBanner.innerHTML, /지역 번들이 없어 경계와 건물\(요청 시 조회\)만/);
+  assert.equal(els.pvBanner.hidden, false); assert.match(els.pvBanner.innerHTML, /상세 3D 자료가 없어 경계와 건물\(요청 시 조회\)만/);
   assert.equal(els.fatal, undefined);
-  assert.match(els.regionSel.innerHTML, /서울특별시 성북구 \(번들 없음\)/); assert.match(els.regionSel.innerHTML, /value="r1"/);
+  assert.match(els.regionSel.innerHTML, /<option value="" selected disabled hidden>서울특별시 성북구<\/option>/); assert.doesNotMatch(els.regionSel.innerHTML, /번들/); assert.match(els.regionSel.innerHTML, /value="r1"/);
   const off = bootWith('?code=11290&dyn=0', () => json(200, { type: 'sgg', level: 'sgg', name: '서울특별시 성북구', center: [127.02, 37.6], bbox: [126.99, 37.57, 127.05, 37.62], coverage: { tier: 'none' } }));
   await R.boot(off.win, off.doc); assert.equal(off.win.GY_BUILDINGS.dynamic, false);                                   // 건물 없이 경계만
 });
@@ -391,19 +391,19 @@ test('noticeText·mountBanner: 후퇴한 경고는 한 줄 안내로, 미리보�
 
 test('안내 띠(2026-10-10 피드백): 한 줄 요약만 보이고 누르면 전체 문장을 편다 — bannerBrief 는 경우마다 짧게 줄인다', () => {
   const el = { hidden: true, innerHTML: '' }; const doc = { getElementById: () => el };
-  const full = '지역 번들이 없어 경계·건물(요청 시 조회)·건축HUB 인허가 사업 13곳만 보여 줍니다(건축물대장으로 위치를 찾은 3곳 포함, 필지를 못 찾은 3곳 제외)';
-  R.mountBanner(doc, { visibility: 'public' }, full, '번들 없는 지역 · 인허가 사업 13곳 (대장으로 찾음 3 · 제외 3)');
-  assert.equal(el.innerHTML, `<details class="pv-d"><summary class="pv-s">번들 없는 지역 · 인허가 사업 13곳 (대장으로 찾음 3 · 제외 3)</summary><p class="pv-f">${full}</p></details>`);
+  const full = '상세 3D 자료가 없어 경계·건물(요청 시 조회)·건축HUB 인허가 사업 13곳만 보여 줍니다(건축물대장으로 위치를 찾은 3곳 포함, 필지를 못 찾은 3곳 제외)';
+  R.mountBanner(doc, { visibility: 'public' }, full, '인허가 사업 13곳 (대장으로 찾음 3 · 제외 3)');
+  assert.equal(el.innerHTML, `<details class="pv-d"><summary class="pv-s">인허가 사업 13곳 (대장으로 찾음 3 · 제외 3)</summary><p class="pv-f">${full}</p></details>`);
   const B = (permits, warnings, slug = null) => R.bannerBrief({ slug, permits }, warnings);
-  assert.equal(B({ count: 13, fetched: true, ledger: { blocksMatched: 2, parcelsRecovered: 1 }, unlocated: 3 }), '번들 없는 지역 · 인허가 사업 13곳 (대장으로 찾음 3 · 제외 3)');
-  assert.equal(B({ count: 4, fetched: true, ledger: { blocksMatched: 2, parcelsRecovered: 0 } }), '번들 없는 지역 · 인허가 사업 4곳 (대장으로 찾음 2)');
-  assert.equal(B({ count: 2, fetched: true, unlocated: 2 }), '번들 없는 지역 · 인허가 사업 2곳 (제외 2)');
-  assert.equal(B({ count: 6, fetched: true }), '번들 없는 지역 · 인허가 사업 6곳');
-  assert.equal(B({ count: 0, fetched: true, blocks: 13 }), '번들 없는 지역 · 블록 단위 인허가 13곳은 지도에 못 그림');
-  assert.equal(B({ count: 0, fetched: true, records: 0 }), '번들 없는 지역 · 이 법정동 인허가 사업 없음');
-  assert.equal(B(null), '번들 없는 지역 · 경계·건물만');
+  assert.equal(B({ count: 13, fetched: true, ledger: { blocksMatched: 2, parcelsRecovered: 1 }, unlocated: 3 }), '인허가 사업 13곳 (대장으로 찾음 3 · 제외 3)');
+  assert.equal(B({ count: 4, fetched: true, ledger: { blocksMatched: 2, parcelsRecovered: 0 } }), '인허가 사업 4곳 (대장으로 찾음 2)');
+  assert.equal(B({ count: 2, fetched: true, unlocated: 2 }), '인허가 사업 2곳 (제외 2)');
+  assert.equal(B({ count: 6, fetched: true }), '인허가 사업 6곳');
+  assert.equal(B({ count: 0, fetched: true, blocks: 13 }), '블록 단위 인허가 13곳은 지도에 못 그림');
+  assert.equal(B({ count: 0, fetched: true, records: 0 }), '이 법정동 인허가 사업 없음');
+  assert.equal(B(null), '경계·건물만');
   assert.equal(B(null, ['parcel-not-found'], 'r1'), '요청한 필지를 찾지 못해 법정동 경계로 열었습니다', '번들 지역의 경고는 짧아서 그대로');
-  assert.equal(B({ count: 6, fetched: true }, ['parcel-not-found']), '위치 안내 1건 · 번들 없는 지역 · 인허가 사업 6곳');
+  assert.equal(B({ count: 6, fetched: true }, ['parcel-not-found']), '위치 안내 1건 · 인허가 사업 6곳');
   assert.equal(B(null, [], 'r1'), '');
 });
 
@@ -482,7 +482,7 @@ test('boot: 번들 없는 법정동은 인허가 사업을 단지로 열고, 안
   assert.equal(r.ok, true); assert.deepEqual(urls.filter((u) => u.startsWith('api/v1/permits')), ['api/v1/permits?bjd=4145010800']);
   assert.equal(win.GY_PROJECTS.blocks.length, 2); assert.equal(win.RESOLVED.block, null);
   assert.match(els.pvBanner.innerHTML, /건축HUB 인허가 사업 2곳만 보여 줍니다\(필지를 못 찾은 2곳 제외\)/);
-  assert.match(els.pvBanner.innerHTML, /<summary class="pv-s">번들 없는 지역 · 인허가 사업 2곳 \(제외 2\)<\/summary>/, '띠에는 요약, 펼치면 전체');
+  assert.match(els.pvBanner.innerHTML, /<summary class="pv-s">인허가 사업 2곳 \(제외 2\)<\/summary>/, '띠에는 요약, 펼치면 전체');
 });
 
 test('boot: 필지로 열었는데 그 필지가 인허가 사업이면 그 단지를 열도록 RESOLVED.block 에 싣는다', async () => {
@@ -498,7 +498,7 @@ test('boot: 인허가 조회가 실패(429·502·연결 불가)하거나 ?permit
   for (const res of [() => json(429, { code: 'keys-exhausted' }), () => json(502, { code: 'upstream' }), () => { throw new Error('offline'); }, () => json(200, { type: 'x' })]) {
     const { win, doc, els } = bootWithPermits('?bjd=4145010800', RESOLVED_BJD, res);
     const r = await R.boot(win, doc);
-    assert.equal(r.ok, true); assert.equal(win.GY_PROJECTS.blocks.length, 0); assert.match(els.pvBanner.innerHTML, /지역 번들이 없어 경계와 건물\(요청 시 조회\)만/);
+    assert.equal(r.ok, true); assert.equal(win.GY_PROJECTS.blocks.length, 0); assert.match(els.pvBanner.innerHTML, /상세 3D 자료가 없어 경계와 건물\(요청 시 조회\)만/);
   }
   const off = bootWithPermits('?bjd=4145010800&permits=0', RESOLVED_BJD, () => json(200, PERMIT_FC)); await R.boot(off.win, off.doc);
   assert.equal(off.urls.filter((u) => u.startsWith('api/v1/permits')).length, 0); assert.equal(off.win.GY_PROJECTS.blocks.length, 0);
