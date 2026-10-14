@@ -149,24 +149,25 @@ function Diagram({ s }: { s: StageLink }) {
   );
 }
 
-export default function StageLinks({ stages, extra }: { stages: StageLink[]; extra?: React.ReactNode }) {
+export default function StageLinks({ stages, extra, status }: { stages: StageLink[]; extra?: React.ReactNode; status?: React.ReactNode }) {
   const [tab, setTab] = React.useState(0);
   const [pending, setPending] = React.useState<string | null>(null);
   const refs = React.useRef<(HTMLButtonElement | null)[]>([]);
   const extraRef = React.useRef<HTMLDivElement>(null);
-  const ETC = stages.length, total = stages.length + (extra ? 1 : 0);
+  const ETC = stages.length, STATUS = stages.length + (extra ? 1 : 0), total = STATUS + (status ? 1 : 0);   // 마지막 두 탭: 기타 · 수집 상태
   React.useEffect(() => {   // #stage-permit 은 그 단계 탭, #stage-etc 나 기타 안의 #id 는 기타 탭
     const sync = () => {
       const id = decodeURIComponent(window.location.hash.slice(1));
       const i = stages.findIndex((s) => `stage-${s.id}` === id);
       if (i >= 0) setTab(i);
       else if (extra && id === 'stage-etc') setTab(ETC);
+      else if (status && id === 'stage-status') setTab(STATUS);
       else if (extra && id && extraRef.current?.contains(document.getElementById(id))) { setTab(ETC); setPending(id); }
     };
     sync();
     window.addEventListener('hashchange', sync);
     return () => window.removeEventListener('hashchange', sync);
-  }, [stages, extra, ETC]);
+  }, [stages, extra, status, ETC, STATUS]);
   React.useEffect(() => {   // 기타 탭이 보인 뒤에 접힌 상자를 열고 그 자리로
     if (!pending || tab !== ETC) return;
     const el = document.getElementById(pending);
@@ -195,6 +196,12 @@ export default function StageLinks({ stages, extra }: { stages: StageLink[]; ext
               기타
             </button>
           ) : null}
+          {status ? (
+            <button ref={(el) => { refs.current[STATUS] = el; }} type="button" role="tab" id="stage-tab-status" aria-selected={tab === STATUS} aria-controls="stage-panel-status" tabIndex={tab === STATUS ? 0 : -1}
+              onClick={() => setTab(STATUS)} className={cn(tabCls, extra ? undefined : 'ml-1')}>
+              수집 상태
+            </button>
+          ) : null}
         </div>
         {s ? (
           <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1 text-[13px] text-muted-foreground" aria-label="범례">
@@ -216,6 +223,7 @@ export default function StageLinks({ stages, extra }: { stages: StageLink[]; ext
           <DataGrid key={s.id} label={`${s.name} 단계 자료별 연계`} cols={COLS} rows={rows} sortable={false} />
         </div>
       </div> : null}
+      {status ? <div role="tabpanel" id="stage-panel-status" aria-labelledby="stage-tab-status" hidden={tab !== STATUS} className="mt-3">{status}</div> : null}
       {extra ? <div role="tabpanel" id="stage-panel-etc" aria-labelledby="stage-tab-etc" ref={extraRef} hidden={tab !== ETC} className="mt-3">{extra}</div> : null}
     </div>
   );

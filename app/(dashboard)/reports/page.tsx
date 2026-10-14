@@ -3,6 +3,8 @@ import StageLadder from '../../../components/StageLadder';
 import { stageLabel } from '../../../components/StageKpis';
 import { ACTOR_COLOR, METRIC_COLOR } from '../../../components/charts/palette';
 import PanelLink from '../../../components/board/PanelLink';
+import PolicyTable from '../../../components/projects/PolicyTable';
+import { StateLegend } from '../../../components/projects/PolicyStages';
 import { Page, PageHead, PanelHead, SrcLink, kpisGrid } from '../../../components/page';
 import { Alert } from '../../../components/ui/alert';
 import { Badge } from '../../../components/ui/badge';
@@ -11,6 +13,8 @@ import { DataGrid } from '../../../components/ui/data-grid';
 import { Kpi, Prov } from '../../../components/ui';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, lhByMonth, monthLabel, monthsBetween, nextYm, valueAt, ymDot, ytd } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
+import { getPolicyProgress, getProjectsIndex } from '../../../lib/board/projects-index';
+import { applyFilters, policyStageCells, summaryOf } from '../../../lib/board/projects-view';
 import { METRIC_STAGE, STAGES } from '../../../lib/board/stages';
 import type { Col, Row } from '../../../lib/grid/spec';
 
@@ -25,7 +29,7 @@ const cumCols = (first: string): Col[] => [{ key: 'name', label: first, kind: 't
 /* 보고자료(월간 주택공급 브리핑). 8.14 지시 '매월 진척상황 보고'와 정책 매트릭스의 '정례 보고(기간별 KPI 자동집계)'에 답한다.
    모든 숫자는 실데이터(통계누리·LH 파일·사업 id 레지스트리)를 다른 화면과 같은 계산 함수로 센 값이다. 원천이 없는 것(계획 물량·일정 지연)은 판정하지 않고 그렇다고 적는다. */
 export default async function ReportsPage() {
-  const { AHEAD_FROM, lh, molit, projects } = await getBoardData();
+  const [{ AHEAD_FROM, lh, molit, projects }, idx, pp] = await Promise.all([getBoardData(), getProjectsIndex(), getPolicyProgress()]);
   const FROM = AHEAD_FROM;   // 종합상황판의 '향후 12개월'과 같은 기준 달
   const last = lastMonth(molit), prev = nextYm(last, -1), lastYear = nextYm(last, -12), year = last.slice(0, 4), upto = Number(last.slice(5));
   const prov = isProvisional(molit, last);
@@ -46,7 +50,7 @@ export default async function ReportsPage() {
     const r = rows.find((x) => METRIC_STAGE[x.k] === s.code);
     return r
       ? { id: s.code, c: { stage: { text: stageLabel(r.k), swatch: METRIC_COLOR[r.k] }, now: r.now, mom: r.mom, yoy: r.yoy, cum: r.cum, cumYoy: r.cumYoy } }
-      : { id: s.code, muted: true, note: '—', noteTitle: `자료 없음 — 통계누리에 없는 단계${s.code === '01' ? '(계획·목표 물량 원천 없음)' : '(사업별 단계는 ⑤ 사업 단계에서)'}`, c: { stage: { text: `${s.code} ${s.name}`, dashed: true } } };
+      : { id: s.code, muted: true, note: '—', noteTitle: `자료 없음 — 통계누리에 없는 단계${s.code === '01' ? '(계획·목표 물량 원천 없음)' : '(사업별 단계는 ⑥ 사업 단계에서)'}`, c: { stage: { text: `${s.code} ${s.name}`, dashed: true } } };
   });
   const actorGrid: Row[] = [
     ...actorRows.map((r) => ({ id: r.a, c: { name: { text: r.a, swatch: ACTOR_COLOR[r.a] }, st: r.start, stYoy: rate(r.start, r.startLy), dn: r.done, dnYoy: rate(r.done, r.doneLy) } })),
@@ -55,6 +59,11 @@ export default async function ReportsPage() {
   const ahead = lhByMonth(lh, FROM, 12);
   const sum = (n: number) => ahead.slice(0, n).reduce((s, m) => ({ units: s.units + m.units, blocks: s.blocks + m.blocks }), { units: 0, blocks: 0 });
   const counts = Object.fromEntries(STAGES.map((s) => [s.code, projects.filter((p) => p.stageCode === s.code).length]));
+  /* ② 정책별 진행: 사업 목록의 정책 렌즈와 같은 계산(lib/board/projects-view.ts) — 사업 수·계획 호수·연결 상태는 원장, 단계 확인/목표는 policy-progress samePeriod(9·7 만) */
+  const policyLines = idx.policies.map((p) => {
+    const rs = applyFilters(idx.rows, { policy: p }), sm = summaryOf(rs);
+    return { key: p.key, short: p.short, name: p.name, projects: sm.n, units: sm.units, cells: policyStageCells(pp, p.id), scope: [...new Set(rs.map((r) => r.sgg.slice(0, 2)))].sort().map((c) => molit.sido.find((x) => x.code === c)?.name ?? c).join('·'), review: sm.review, confirmed: sm.confirmed };
+  });
   const NOT_JUDGED = '원천이 없어 이 보고에서 빠진 항목입니다 — ① 계획 물량 대비 달성률(공급계획 목표치 원천 없음), ② 일정 지연(9.18 지시: 당초·변경·현재 예정 일정이 사업 레코드에 없어 지연 개월을 셀 수 없음), ③ 단계별 병목·머문 기간(단계 진입일 없음). 종합상황판의 해당 위젯은 SAMPLE 입니다.';
   return (
     <Page>
@@ -72,20 +81,28 @@ export default async function ReportsPage() {
         <DataGrid label="전국 단계별 실적" cols={nowCols} rows={nowRows} sortable={false} />
       </Card>
 
+      <Card render={<section aria-label="정책별 진행" />}>
+        <PanelHead title="② 정책별 진행 — 목표 대비 단계별 확인" tip={`정책마다 연결된 사업의 리본 6칸 확인/목표 호수 · ${pp.referenceMonthEnd.slice(0, 4)}년 1월~${Number(pp.referenceMonthEnd.slice(5, 7))}월 누적(같은 기간) · 목표 = 연결 사업 원천의 같은 단계 예정 물량(착공은 9·7 원문 연도별 목표), 확인 = 같은 범위 단계 도달량 · 빨간 테두리는 목표 미달 · 연결은 검토 중 포함 · 단계 목표 계산은 9·7 만 있음(HOME 판 ${pp.source.edition})`}>
+          <StateLegend />
+          <PanelLink href="/projects?policy=97" full="정책별 사업은 사업 화면의 렌즈">사업 렌즈</PanelLink>
+        </PanelHead>
+        <PolicyTable lines={policyLines} />
+      </Card>
+
       <Card render={<section aria-label="시행주체별 진척" />}>
-        <PanelHead title="② 기관별 진척 — 시행주체별 누계" tip={`전국 · 호 · ${year}년 1~${upto}월 · 통계누리 시행주체 구분. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다.`}>
+        <PanelHead title="③ 기관별 진척 — 시행주체별 누계" tip={`전국 · 호 · ${year}년 1~${upto}월 · 통계누리 시행주체 구분. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다.`}>
           <PanelLink href="/agency" full="기관별 월 흐름은 공급 실적 · 시행주체별">시행주체별</PanelLink>
         </PanelHead>
         <DataGrid label="시행주체별 누계" cols={cumCols('시행주체')} rows={actorGrid} />
       </Card>
 
       <Card render={<section aria-label="지역별 진척" />}>
-        <PanelHead title="③ 어디서 늘고 줄었는가 — 시도별 누계" tip={`호 · ${year}년 1~${upto}월 · 착공 누계가 많은 순 · 2026-07부터 광주·전남은 '전남광주'로 집계되고 이전 달은 두 곳을 합산했습니다.`} />
+        <PanelHead title="④ 어디서 늘고 줄었는가 — 시도별 누계" tip={`호 · ${year}년 1~${upto}월 · 착공 누계가 많은 순 · 2026-07부터 광주·전남은 '전남광주'로 집계되고 이전 달은 두 곳을 합산했습니다.`} />
         <DataGrid label="시도별 누계" cols={cumCols('시도')} rows={sidoRows.map((r) => ({ id: r.code, c: { name: { text: r.name, href: `/area/${r.code}` }, st: r.st, stYoy: r.stYoy, dn: r.dn, dnYoy: r.dnYoy } }))} />
       </Card>
 
       <Card render={<section aria-label="앞으로 공급되는 물량" />}>
-        <PanelHead title="④ 앞으로 실제 공급되는 물량 — LH 준공 예정" tip={`${monthLabel(FROM)}부터 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${lh.sourceAsOf}(실적 자료보다 ${Math.max(0, monthsBetween(lh.sourceAsOf.slice(0, 7), last))}개월 묵음). 착공·모집·입주 예정의 월별 원천은 아직 없습니다.`}>
+        <PanelHead title="⑤ 앞으로 실제 공급되는 물량 — LH 준공 예정" tip={`${monthLabel(FROM)}부터 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${lh.sourceAsOf}(실적 자료보다 ${Math.max(0, monthsBetween(lh.sourceAsOf.slice(0, 7), last))}개월 묵음). 착공·모집·입주 예정의 월별 원천은 아직 없습니다.`}>
           <PanelLink href="/agency/lh" full="블록별 목록은 LH 준공 예정">LH 준공 예정</PanelLink>
           <PanelLink href="/my-area" full="지역별 달력은 우리 동네">우리 동네</PanelLink>
         </PanelHead>
@@ -95,7 +112,7 @@ export default async function ReportsPage() {
       </Card>
 
       <Card render={<section aria-label="사업 단계" />}>
-        <PanelHead title="⑤ 사업은 어느 단계에 있는가" tip={`사업 id 레지스트리 ${projects.length}건 · ${projects[0].asOf} 기준 5개 시군구라 전국 분포가 아닙니다. 단계는 스펙 9.2 의 제안 매핑입니다.`} />
+        <PanelHead title="⑥ 사업은 어느 단계에 있는가" tip={`사업 id 레지스트리 ${projects.length}건 · ${projects[0].asOf} 기준 5개 시군구라 전국 분포가 아닙니다. 단계는 스펙 9.2 의 제안 매핑입니다.`} />
         <StageLadder className="mt-0" counts={counts} />
       </Card>
 

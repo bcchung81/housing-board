@@ -161,7 +161,7 @@ function renderHomeMap(doc) {
   return `{\n${head.join('\n')}\n  "projects": [\n${doc.projects.map((r) => `    ${JSON.stringify(r)}`).join(',\n')}\n  ]\n}\n`;
 }
 
-module.exports = { HOME_SIDO, OUT_DIR, SCHEMA, isHomeSgg, homeLocations, homeMapFromLedger, renderHomeMap };
+module.exports = { HOME_SIDO, OUT_DIR, SCHEMA, isHomeSgg, homeLocations, homeMapFromLedger, renderHomeMap, noticeUnitsOf };
 
 if (require.main === module) {
   const i = process.argv.indexOf('--month'), month = i > 0 ? process.argv[i + 1] : P.latestMonth();

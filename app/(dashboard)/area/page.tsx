@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import SupplyTabs from '../../../components/SupplyTabs';
+import AnnualView, { parseMetric } from '../../../components/area/AnnualView';
+import PeriodTabs from '../../../components/area/PeriodTabs';
 import StageLegend from '../../../components/charts/StageLegend';
 import MonthLines from '../../../components/charts/MonthLines';
 import { ProvKey } from '../../../components/charts/Legend';
@@ -20,7 +22,8 @@ const LABEL = { permit: '인허가', start: '착공', complete: '준공', sale: 
 
 /* 공급 실적 · 시도별(L1 목록, 2026-10-10 메뉴 통합 전 '지역별'): 시도 16곳의 최근 달과 연누계, 전국 월별 흐름. 시군구 단위 실적 통계는 없다(통계누리는 시도 단위) —
    사업 자료가 있는 시군구는 사업 목록의 거르기(/projects?sgg=)로 간다. */
-export default async function AreaIndex() {
+export default async function AreaIndex({ searchParams }: { searchParams: Promise<{ period?: string; metric?: string; region?: string }> }) {
+  const q = await searchParams, annual = q.period === 'year';
   const { molit } = await getBoardData();
   const last = lastMonth(molit), year = last.slice(0, 4);
   const lines = METRICS.map((k) => ({ key: k, label: LABEL[k], color: METRIC_COLOR[k], values: seriesOf(molit, k, NATION).total }));
@@ -41,7 +44,10 @@ export default async function AreaIndex() {
         tip="시도 16곳의 인허가·착공·분양·준공 호수(공급 6단계의 03~06, 01 정책·02 사업화는 통계누리에 없음). 시도 이름을 누르면 시행주체별 월 흐름으로, 그래프의 달을 누르면 그 달의 전국 현황으로 내려갑니다."
         meta={`실적 ${ymDot(last)}`} metaTip={`통계누리 주택건설실적통계 · 자료 기간 ${molit.months[0]} ~ ${last}${prov ? ` · ${year}-01~${last.slice(5)}은 잠정치` : ''}`}>
         <SupplyTabs current="/area" />
+        <PeriodTabs year={annual} />
       </PageHead>
+
+      {annual ? <AnnualView molit={molit} metric={parseMetric(q.metric)} region={molit.sido.some((s) => s.code === q.region) ? q.region! : NATION} /> : <>
 
       <StageKpis when={monthLabel(last)} cells={Object.fromEntries(METRICS.map((k) => [k, { value: fmt(valueAt(molit, k, NATION, last)), sub: <>1~{Number(last.slice(5))}월 누계 {fmt(ytd(molit, k, NATION, last))}호{prov ? <Prov /> : null}</> }]))} />
 
@@ -58,6 +64,7 @@ export default async function AreaIndex() {
         <PanelHead title="시도별" tip={`호 · 2026-07부터 광주·전남이 '전남광주' 하나로 집계됩니다. 이전 달은 두 곳을 합산해 한 계열로 이었습니다.${prov ? ` ${year}-01~${last.slice(5)}은 잠정치입니다.` : ''}`} />
         <DataGrid label="시도별 호수" cols={cols} rows={rows} />
       </Card>
+      </>}
     </Page>
   );
 }

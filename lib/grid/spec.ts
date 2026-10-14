@@ -3,8 +3,9 @@
 
 /* 칸 종류: int 정수(쉼표) · delta 증감률(▲▼, 색) · pct 비율(%) · text 글자. 정하지 않으면 int */
 export type Kind = 'int' | 'delta' | 'pct' | 'text';
-/* 글자 말고 더 필요한 칸: 링크·색 견본(점선은 자료 없음)·잠정 표시·코드 글꼴·흐린 글자·없음 문구(na), sort 는 표시와 다른 정렬값 */
-export type CellObj = { text?: string; sort?: number | string | null; href?: string; swatch?: string; dashed?: boolean; prov?: boolean; code?: boolean; muted?: boolean; na?: string };
+/* 글자 말고 더 필요한 칸: 링크·색 견본(점선은 자료 없음)·잠정 표시·코드 글꼴·흐린 글자·없음 문구(na), sort 는 표시와 다른 정렬값.
+   사업 목록(2026-10-14): title(칸 툴팁) · tone(글자 색 bad 지연·warn 주의) · mark(견본 모양: outline 은 swatch 색 테두리만 — 지연, hatch 는 빗금 — 미확보) */
+export type CellObj = { text?: string; sort?: number | string | null; href?: string; swatch?: string; dashed?: boolean; prov?: boolean; code?: boolean; muted?: boolean; na?: string; title?: string; tone?: 'bad' | 'warn'; mark?: 'outline' | 'hatch' };
 export type Cell = number | string | null | undefined | CellObj;
 /* wrap 은 긴 글자 열(최소 180px, 줄바꿈), sort:false 는 정렬하지 않는 열, group 이 같은 이웃 열은 위 줄 머리글 한 칸으로 묶인다 */
 export type Col = { key: string; label: string; kind?: Kind; group?: string; groupSwatch?: string; wrap?: boolean; sort?: false };
@@ -34,12 +35,12 @@ export function compare(a: number | string, b: number | string): number {
   return String(a).localeCompare(String(b), 'ko', { numeric: true });
 }
 
-/* 표시 글자와 색(tone: ok 늘어남 · bad 줄어듦 · na 흐리게) */
-export function display(v: Cell, kind: Kind = 'int'): { text: string; tone?: 'ok' | 'bad' | 'na' } {
+/* 표시 글자와 색(tone: ok 늘어남 · bad 줄어듦·지연 · warn 주의 · na 흐리게) */
+export function display(v: Cell, kind: Kind = 'int'): { text: string; tone?: 'ok' | 'bad' | 'warn' | 'na' } {
   if (v === null || v === undefined) return { text: '–', tone: 'na' };
   if (isObj(v)) {
     if (v.na !== undefined) return { text: v.na, tone: 'na' };
-    return v.muted ? { text: v.text ?? '', tone: 'na' } : { text: v.text ?? '' };
+    return v.muted ? { text: v.text ?? '', tone: 'na' } : v.tone ? { text: v.text ?? '', tone: v.tone } : { text: v.text ?? '' };
   }
   if (typeof v === 'string') return { text: v };
   if (kind === 'delta') return { text: `${v >= 0 ? '▲' : '▼'} ${Math.abs(v).toFixed(1)}%`, tone: v >= 0 ? 'ok' : 'bad' };

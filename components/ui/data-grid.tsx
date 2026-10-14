@@ -27,7 +27,8 @@ const features = tableFeatures({
 const helper = createColumnHelper<typeof features, Row>();
 
 const ROW_H = 46;   // 한 줄 행 높이(16px × 1.6 + 위아래 10px + 테두리). 여러 줄 행은 그린 뒤 잰다
-const TONE = { ok: 'text-ok', bad: 'text-bad', na: 'text-muted-foreground' } as const;
+const TONE = { ok: 'text-ok', bad: 'text-bad', warn: 'text-warn', na: 'text-muted-foreground' } as const;
+const HATCH = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_45%,transparent)_0_1.5px,transparent_1.5px_3.5px)]';
 const zebra = 'bg-[color-mix(in_srgb,var(--pn2)_45%,var(--card))]';   // 불투명이라야 붙은 첫 열 밑으로 글자가 비치지 않는다
 const stickyCell = 'sticky left-0 z-[1] bg-inherit group-data-[scrolled]/grid:shadow-[6px_0_6px_-6px_rgb(0_0_0/0.25)]';   // 옆으로 민 동안만 오른쪽 그림자
 
@@ -39,13 +40,16 @@ function CellView({ v, col }: { v: Cell; col: Col }) {
   const o = typeof v === 'object' && v !== null ? v : undefined;
   const text = o?.code ? <code>{d.text}</code> : keepWords(d.text);
   const body = o?.href ? <Link href={o.href}>{text}</Link> : text;
-  return (
+  const mark = o?.mark === 'hatch' ? <i className={cn('mr-1.5 inline-block size-[11px] rounded-[3px] border border-line2 align-[-1px]', HATCH)} aria-hidden="true" />
+    : o?.mark === 'outline' ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-2 align-[-1px]" style={{ borderColor: o.swatch }} aria-hidden="true" /> : null;
+  const inner = (
     <>
-      {o?.dashed ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-[1.5px] border-dashed border-line2 align-[-1px]" aria-hidden="true" /> : o?.swatch ? <Swatch color={o.swatch} /> : null}
+      {mark ?? (o?.dashed ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-[1.5px] border-dashed border-line2 align-[-1px]" aria-hidden="true" /> : o?.swatch ? <Swatch color={o.swatch} /> : null)}
       {d.tone ? <span className={TONE[d.tone]}>{body}</span> : body}
       {o?.prov ? <Prov /> : null}
     </>
   );
+  return o?.title ? <span title={o.title}>{inner}</span> : inner;
 }
 
 export function DataGrid({ cols, rows, label, sortable = true, maxHeight }: { cols: Col[]; rows: Row[]; label: string; sortable?: boolean; maxHeight?: number }) {

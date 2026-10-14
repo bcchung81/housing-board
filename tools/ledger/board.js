@@ -288,7 +288,7 @@ const loadTables = (dir = path.join(ROOT, tablesOf(P.latestMonth()))) => Object.
 /* 판정 이력 행(파일이 없으면 빈 배열) */
 const loadHistory = (root = ROOT) => { const f = path.join(root, HISTORY); return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')).rows : []; };
 
-module.exports = { boardFromLedger, mapIndexFromLedger, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, endOf, lastDay, addMonths, OUT, HISTORY };
+module.exports = { boardFromLedger, mapIndexFromLedger, projectStates, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, endOf, lastDay, addMonths, OUT, HISTORY };
 
 if (require.main === module) {
   const i = process.argv.indexOf('--month'), month = i > 0 ? process.argv[i + 1] : P.latestMonth();

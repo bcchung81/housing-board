@@ -6,6 +6,8 @@ import { legend } from '../../../components/board/styles';
 import Fold from '../../../components/sources/Fold';
 import HashOpen from '../../../components/sources/HashOpen';
 import StageLinks from '../../../components/sources/StageLinks';
+import Status from '../../../components/sources/Status';
+import homeSources from '../../../data/board/home-sources.json';
 import { DataGrid } from '../../../components/ui/data-grid';
 import { fmt } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
@@ -17,6 +19,7 @@ import { SCREEN_USAGE, sourceGap, sourceUsage } from '../../../lib/board/screen-
 import { cacheRecords, csvDetail, detailOf, readJson } from '../../../lib/board/samples';
 import { ACQUIRE, ACQUIRE_ASOF, GAPS, type AcquireStatus } from '../../../lib/board/acquire';
 import { stageLinks } from '../../../lib/board/stage-links';
+import type { HomeSources } from '../../../lib/board/home-sources';
 import regionIndex from '../../../regions/index.json';
 import type { Source } from '../../../lib/board/types';
 import { GRID_DENSE, type Col, type Detail, type Row } from '../../../lib/grid/spec';
@@ -349,7 +352,7 @@ export default async function SourcesPage() {
           </Fold>
         </section>
       </div>
-        )} />
+        )} status={<Status hs={homeSources as HomeSources} items={items} molit={molit} />} />
       </section>
       <HashOpen />
     </Page>

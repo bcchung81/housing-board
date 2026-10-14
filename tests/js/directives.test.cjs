@@ -36,7 +36,7 @@ test('우리 동네 달력(lhCalendar): 시도별 달력을 모두 더하면 전
 
 test('보고자료(8.14 정례 보고): 실적·시행주체·시도·앞으로의 물량·사업 단계를 같은 계산 함수로 보이고, 판정하지 못하는 것(계획 대비·일정 지연·병목)을 밝힌다', () => {
   const s = read('app/(dashboard)/reports/page.tsx');
-  for (const h of ['① 계획대로 가고 있는가', '② 기관별 진척', '③ 어디서 늘고 줄었는가', '④ 앞으로 실제 공급되는 물량', '⑤ 사업은 어느 단계에 있는가']) assert.ok(s.includes(h), h);
+  for (const h of ['① 계획대로 가고 있는가', '② 정책별 진행', '③ 기관별 진척', '④ 어디서 늘고 줄었는가', '⑤ 앞으로 실제 공급되는 물량', '⑥ 사업은 어느 단계에 있는가']) assert.ok(s.includes(h), h);   // ② 정책별 진행은 2026-10-14(HOME 개념 흡수)
   for (const f of ['valueAt(molit, k, NATION, last)', 'ytd(molit, k, NATION, last)', "ytd(molit, 'start', NATION, last, a)", 'lhByMonth(lh, FROM, 12)']) assert.ok(s.includes(f), f);
   assert.match(s, /const FROM = AHEAD_FROM;/);
   assert.match(s, /판정하지 못하는 것/);

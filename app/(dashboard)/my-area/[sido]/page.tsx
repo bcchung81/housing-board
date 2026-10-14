@@ -2,11 +2,15 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import PanelLink from '../../../../components/board/PanelLink';
-import { Page, PageHead, PanelHead, sub } from '../../../../components/page';
+import { Page, PageHead, PanelHead, SrcLink, cardsGrid, sub } from '../../../../components/page';
 import { buttonVariants } from '../../../../components/ui/button';
 import { Card } from '../../../../components/ui/card';
 import { Kpi } from '../../../../components/ui';
 import { METRIC_COLOR } from '../../../../components/charts/palette';
+import Legend from '../../../../components/charts/Legend';
+import StockLines, { HOUSEHOLD_COLOR, STOCK_COLOR } from '../../../../components/charts/StockLines';
+import areaFactsJson from '../../../../data/board/area-facts.json';
+import { conditions, stockChart, type AreaFactsDoc } from '../../../../lib/board/area-facts';
 import { NATION, fmt, lhCalendar, monthLabel, nextYm, sidoName, ymDot } from '../../../../lib/board/calc';
 import { SGG, getBoardData } from '../../../../lib/board/data';
 import { STAGES } from '../../../../lib/board/stages';
@@ -21,6 +25,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return { title: `${sidoName(molit, sido) ?? sido} 우리 동네` };
 }
 
+const areaFacts = areaFactsJson as AreaFactsDoc;
+const COND_TIP = '숫자마다 기준연도가 다릅니다 · 재고−가구 차이는 공급 부족 확정치가 아님(공실·점유·실입주량은 이 자료에 없음) · KOSIS·SGIS(HOME 지역 지표)';
 const day = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일`;
 
 /* 우리 동네 시도(L2): 앞으로 12개월 달력(달마다 LH 준공 예정 단지) + 그 시도의 등록 사업(지금 단계를 쉬운 말로) + 지도. 9.4·9.30 지시. */
@@ -32,6 +38,8 @@ export default async function MyAreaSido({ params }: Props) {
   const total = cal.reduce((a, m) => ({ n: a.n + m.blocks.length, units: a.units + m.units }), { n: 0, units: 0 });
   const busy = cal.filter((m) => m.blocks.length).length;
   const until = nextYm(AHEAD_FROM, 11);
+  const cond = conditions(areaFacts, sido), chart = stockChart(areaFacts, sido);
+  const ymd = (p: string) => p.replace('-', '.');
   return (
     <Page>
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '우리 동네', href: '/my-area' }, { label: name }]} title={`${name} 우리 동네 공급 소식`}
@@ -66,6 +74,31 @@ export default async function MyAreaSido({ params }: Props) {
             </li>
           ))}
         </ol>
+      </Card>
+
+      <Card render={<section aria-label="동네 여건" />}>
+        <PanelHead title="동네 여건" tip={cond ? `${name} · ${COND_TIP}` : `${name}은 동네 여건 자료가 없습니다. 지금은 서울·인천·경기만 있습니다.`}>
+          {cond ? <SrcLink /> : <span className={`${sub} whitespace-nowrap`}>자료 없음</span>}
+        </PanelHead>
+        {cond ? (
+          <>
+            <div className={cardsGrid}>
+              <Kpi label="인구" unit="명" value={cond.population ? fmt(cond.population.value) : '–'} sub={cond.population?.period} tip="인구총조사 기반 총인구 · 일반가구와 같은 연도 비교용(주민등록인구와 분모가 다름)" />
+              <Kpi label="일반가구" unit="가구" value={cond.households ? fmt(cond.households.value) : '–'} sub={cond.households?.period} tip="KOSIS 일반가구 수" />
+              <Kpi label="주택 재고" value={cond.housingUnits ? fmt(cond.housingUnits.value) : '–'} sub={cond.housingUnits?.period} tip="KOSIS 주택 수 · 같은 연도의 일반가구와 비교하는 값" />
+              <Kpi label="미분양" tone="var(--bad)" value={cond.unsold ? fmt(cond.unsold.value) : '–'} sub={cond.unsold ? `${ymd(cond.unsold.period)}${cond.unsold.completed !== null ? ` · 준공 후 ${fmt(cond.unsold.completed)}` : ''}` : undefined} tip="미분양주택현황 월말 재고 · 신규 공급 실적 아님" />
+            </div>
+            {chart ? (
+              <>
+                <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1">
+                  <h3 className="m-0 text-[16px] font-normal text-muted-foreground" title={`${name} · ${chart.years[0]}~${chart.lastActual} 실적${chart.years.length > chart.years.indexOf(chart.lastActual) + 1 ? `, ${chart.lastActual + 1}~${chart.years[chart.years.length - 1]}은 장래가구 추계(점선)` : ''} · 재고−가구 차이는 공급 부족 확정치가 아님`}>주택 재고 · 일반가구</h3>
+                  <span className="ml-auto"><Legend items={[{ label: '주택 재고', color: STOCK_COLOR }, { label: '일반가구', color: HOUSEHOLD_COLOR }, { label: '장래가구 추계(점선)', color: 'var(--line2)' }]} /></span>
+                </div>
+                <StockLines chart={chart} label={`${name} 주택 재고와 일반가구 ${chart.years[0]}~${chart.lastActual}, 장래가구 추계`} />
+              </>
+            ) : null}
+          </>
+        ) : null}
       </Card>
 
       <Card render={<section aria-label="상황판 등록 사업" />}>
