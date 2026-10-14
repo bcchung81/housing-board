@@ -96,3 +96,34 @@ test("정책 표기: 지도 카드의 policyTxt 줄에는 연결 상태('연결 
   assert.ok(line, 'policyTxt 정의 줄을 찾을 수 없음');
   assert.doesNotMatch(line[0], /연결 확정|확정 전/);
 });
+
+/* ---- 4차 재평가(2026-10-15): 카드 용어·말풍선 겹침·다크 파랑 건물 ---- */
+test("카드 행 이름: 사업 화면과 같은 '현재 예정'·'상태'(펼친 카드·접힌 카드 줄), 사이드바 모음은 '다가오는 준공·입주'", () => {
+  const code = noComments(app);
+  assert.match(code, /\['상태', `<b class="jd/);
+  assert.match(code, /\['현재 예정', esc\(lt\.next\)\]/);
+  assert.match(code, /t\.next \? `현재 예정 \$\{esc\(t\.next\)\}`/);
+  assert.doesNotMatch(code, /\['다음 일정'|\['판정'|`다음 \$\{esc\(t\.next\)\}`/);
+  assert.match(html, /<h2 id="h-next">다가오는 준공·입주<\/h2>/);
+  assert.equal(R.ledgerTexts({ cls: 'caution', overdue: { eventType: 'COMPLETION', planned: '2026-06-01', months: 4 } }).late, '준공 예정 경과 4개월');   // 사업 화면 '경과 n개월'과 같은 어순
+});
+
+test('말풍선 겹침: 단지 카드(HUD)는 자리 후보를 넓히고, 끝내 먼저 놓인 카드와 겹치면 카드만 숨기고 표시선(표지)은 남긴다', () => {
+  const fn = /function renderHud\(\) \{[\s\S]*?\n\}\n/.exec(app)[0];
+  assert.match(fn, /const cands = \[[^;]*\[x1 \+ 16, y0 - 4 \+ TH_ \+ 6\][^;]*\];/);
+  const skip = /if \(placed\.some\(\(e\) => hit\(r, e\)\)\) \{[\s\S]*?continue;\s*\}\s*placed\.push\(r\);/.exec(fn);
+  assert.ok(skip, '겹침 처리 블록을 찾을 수 없음');
+  assert.match(skip[0], /el\.hidden = true;/); assert.match(skip[0], /parts\.push\(`<path d="\$\{d\}"/);   // 표시선(레티클)은 그대로 그린다
+  assert.ok(fn.indexOf('placed.push(r)') > fn.indexOf('placed.some'), '숨긴 카드는 자리를 차지하지 않는다');
+  assert.match(app, /'blk-label-lo'[\s\S]{0,400}'text-allow-overlap': false/);   // 지도 안 라벨은 겹침 금지 그대로
+});
+
+test('다크 지도: 기존 건물 파랑 단계는 지붕(밝게 섞은 윗면)까지 네이비 바탕 3:1 이상이면서 모든 단계 색보다 어둡다', () => {
+  const ramp = /ramp: \['(#\w{6})', '(#\w{6})', '(#\w{6})', '(#\w{6})', '(#\w{6})'\], flat/.exec(app).slice(1);
+  const roof = (h) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(h.slice(i, i + 2), 16) * 0.74 + 255 * 0.26).toString(16).padStart(2, '0')).join('');   // paintBuildings: 지붕 = 흰색 26% 섞음
+  const stage = [...(/const COLOR = \{([^}]*)\}/.exec(app)[1]).matchAll(/(\w+): '(#\w{6})'/g)].filter(([, k]) => k !== 'priv').map((m) => m[2]);
+  assert.ok(lum(roof(ramp[4])) < Math.min(...stage.map(lum)), '가장 밝은 파랑 지붕이 단계 색보다 밝다');
+  assert.ok(ratio(roof(ramp[4]), '#0A1030') >= 3, `지붕 대비 ${ratio(roof(ramp[4]), '#0A1030').toFixed(2)}`);
+  assert.ok(lum(ramp[4]) <= lum('#394C96') + 1e-9 && lum(ramp[3]) <= lum('#2E3F82') + 1e-9, '위 두 단은 3차 값(#33468D·#4155A3)보다 한 단계 낮다');
+  assert.match(css, /\.sw\.ramp\{background:linear-gradient\(90deg,#17204D,#394C96\)\}/);   // 범례 견본도 같이
+});

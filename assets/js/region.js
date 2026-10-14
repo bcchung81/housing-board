@@ -381,7 +381,7 @@
   function ledgerTexts(l) {
     if (!l) return null;
     const ev = (e) => (e && EVENT_TEXT[e.eventType]) || '';
-    const late = l.cls && l.cls !== 'ok' && l.overdue && ev(l.overdue) ? `${ev(l.overdue)} 예정 ${l.overdue.months}개월 경과` : '';
+    const late = l.cls && l.cls !== 'ok' && l.overdue && ev(l.overdue) ? `${ev(l.overdue)} 예정 경과 ${l.overdue.months}개월` : '';
     return {
       cls: l.cls ? CLS_TEXT[l.cls] : '', late, lateTitle: late && l.overdue.planned ? `예정일 ${l.overdue.planned}` : '',
       next: l.next && ev(l.next) && ymText(l.next.planned) ? `${ev(l.next)} 예정 ${ymText(l.next.planned)}` : '',

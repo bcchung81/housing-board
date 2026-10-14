@@ -140,7 +140,7 @@ const q = new URLSearchParams(location.search);
 const THEME = {
   vw: String(window.VWORLD_LAYER || 'midnight'), ofm: 'dark', bg: '#0A1030', text: '#E8EDFF', sub: '#9AA8D6', halo: '#0A1030', sky: ['#0A1030', '#0E1740'],
   mask: ['#000000', 0.32], shadow: ['#000000', 0.4], hillShadow: '#000000', hillHi: '#3A4C8C', hillAcc: '#141C4A', district: '#B8C4F0', dong: '#E8EDFF', other: ['#5566BE', '#3A4C8C'],
-  ramp: ['#17204D', '#222E66', '#2A3A7A', '#33468D', '#4155A3'], flat: '#16225A',   // 기존 건물: 낮은 건물은 어둡고 높을수록 밝다(어두운 바탕에서는 밝을수록 눈에 띈다)
+  ramp: ['#17204D', '#222E66', '#273675', '#2E3F82', '#394C96'], flat: '#16225A',   // 기존 건물: 낮은 건물은 어둡고 높을수록 밝다(어두운 바탕에서는 밝을수록 눈에 띈다). 위 세 단은 근사 위치 원보다 밝아 한 단계 낮췄다(2026-10-15 4차 P3)
   ghost: { fill: '#6C7DC0', fillOp: 0.3, line: '#9AA8D6', lineOp: 0.8 },   // 평면으로만 그리는 도형(src '정보없음' 또는 g=1): 솟지 않는 연한 평면 + 점선 윤곽
   color: COLOR,
   tone: { sale: ['#7C8696', '#C7D0DA'], build: ['#B86F2A', '#FF9F43'], near: ['#B86F2A', '#FF9F43'], soon: ['#6B9F3E', '#A5E56D'], move: ['#9A6FC0', '#D9A6FF'], plan: ['#4A6FB5', '#7BA7FF'], permit: ['#2F8F86', '#45D3C4'], priv: ['#59648E', '#98A3C9'] },   // 같은 단지 안: 낮은 동은 어둡게, 높은 동은 상태색 그대로
@@ -1003,8 +1003,8 @@ function blockPopup(b, clickX) {
     <div class="pc-big"><strong>${unitsTxt(b)}</strong></div>
     ${b.note ? `<div class="pc-cap">${esc(b.note)}</div>` : ''}
     ${dlHtml([pidRow, lg && lg.stage ? ['단계', `<span class="stg6"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => `<i class="${x === sn.now ? `on ${sn.k}` : ''}"></i>`).join('')}</span><span title="${esc(sn.now[4])}">${stName(sn.now)}</span>`] : null,
-      lt && lt.cls ? ['판정', `<b class="jd ${lg.cls}">${lt.cls}</b>${lt.late ? ` <small${lt.lateTitle ? ` title="${esc(lt.lateTitle)}"` : ''}>${esc(lt.late)}</small>` : ''}`] : null,
-      lt && lt.next ? ['다음 일정', esc(lt.next)] : null, ...homeRows(b), b.progress ? ['공정율', `<span title="${esc(b.progress.asOf)} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(b.moveIn)],
+      lt && lt.cls ? ['상태', `<b class="jd ${lg.cls}">${lt.cls}</b>${lt.late ? ` <small${lt.lateTitle ? ` title="${esc(lt.lateTitle)}"` : ''}>${esc(lt.late)}</small>` : ''}`] : null,
+      lt && lt.next ? ['현재 예정', esc(lt.next)] : null, ...homeRows(b), b.progress ? ['공정율', `<span title="${esc(b.progress.asOf)} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(b.moveIn)],
       b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`] : null,
       b.builder ? ['시공', esc(b.builder) + (b.contractM ? ` <small>${fmt(Math.round(b.contractM / 100))}억원</small>` : '')] : null,
       nr && nr.st ? ['교통', `${esc(nr.st.name)} <small>${IL.shortDist(nr.st.d)}</small>`] : null, ...schoolRows,
@@ -1282,7 +1282,7 @@ function setLegend() {
   });
   if (BLOCKS.some((b) => b.approx)) add('<i class="sw approx"></i>', '근사 위치', '<small>이름으로 찾은 위치, 겹원 · 확인 필요</small>', '근사 위치', APPROX_TXT);
   const jd = ['caution', 'delay'].map((c) => BLOCKS.filter((b) => b.ledger && b.ledger.cls === c).length);
-  if (jd[0] + jd[1]) add(`${jd[0] ? '<i class="sw jd-w"></i>' : ''}${jd[1] ? '<i class="sw jd-d"></i>' : ''}`, [jd[0] ? `주의 ${jd[0]}` : '', jd[1] ? `지연 ${jd[1]}` : ''].filter(Boolean).join(' · '), '<small>원장 판정, 굵은 테두리</small>', '');
+  if (jd[0] + jd[1]) add(`${jd[0] ? '<i class="sw jd-w"></i>' : ''}${jd[1] ? '<i class="sw jd-d"></i>' : ''}`, [jd[0] ? `주의 ${jd[0]}` : '', jd[1] ? `지연 ${jd[1]}` : ''].filter(Boolean).join(' · '), '<small>상태, 굵은 테두리</small>', '');
   if (HAS_PRIV && privOn) add('<i class="sw priv"></i>', '공공택지 민간', '<small>회색 면, 상태는 글자로</small>', '');
   const dimNow = dimExisting;
   if (dimNow) add('<i class="sw outline"></i>', '기존 건물', `<small>점선 윤곽만${HAS_FAC ? ', 학교·병원·공공시설은 3D' : ''}</small>`);
@@ -1356,7 +1356,7 @@ if (BLOCKS.length) {
   function stageInner(b) {
     const dates = stageDates(b), sn = stageNow(b), t = LT(b);
     const strip = `<span class="stage" aria-hidden="true"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => { const on = x === sn.now; return `<span class="${on ? `now ${sn.k}` : ''}" title="${esc(x[4])}">${x[1]}<small>${dates[x[1]] || (on ? '현재' : '')}</small></span>`; }).join('')}</span>`;
-    const parts = t ? [t.cls ? `<b class="jd ${b.ledger.cls}"${t.lateTitle ? ` title="${esc(t.lateTitle)}"` : ''}>${t.cls}${t.late ? ` · ${esc(t.late)}` : ''}</b>` : '', t.next ? `다음 ${esc(t.next)}` : ''].filter(Boolean) : [];
+    const parts = t ? [t.cls ? `<b class="jd ${b.ledger.cls}"${t.lateTitle ? ` title="${esc(t.lateTitle)}"` : ''}>${t.cls}${t.late ? ` · ${esc(t.late)}` : ''}</b>` : '', t.next ? `현재 예정 ${esc(t.next)}` : ''].filter(Boolean) : [];
     return strip + (parts.length ? `<span class="ldg" title="${esc(t.basis)}">${parts.join(' · ')}</span>` : '');
   }
   /* 원장이 늦게 붙으면(window.LEDGER) 단지 선·점·이름표 자료, 펼친 카드의 단계 띠, 접힌 카드의 주의·지연 표지, 범례를 다시 그린다 */
@@ -1950,7 +1950,8 @@ function renderHud() {
     const d = `M${x0},${y0 + L}V${y0}H${x0 + L}M${x1 - L},${y0}H${x1}V${y0 + L}M${x1},${y1 - L}V${y1}H${x1 - L}M${x0 + L},${y1}H${x0}V${y1 - L}`;   // 모서리 표시선(레티클)
     if (!cardsOn) { el.hidden = true; parts.push(`<path d="${d}" fill="none" stroke="${T.halo}" stroke-width="5" stroke-linecap="square"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linecap="square"/>`); continue; }
     const sz = hudSz[b.id] || (hudSz[b.id] = { w: el.offsetWidth, h: el.offsetHeight }), TW = sz.w, TH_ = sz.h;
-    const cands = [[x1 + 16, y0 - 4], [x0 - 16 - TW, y0 - 4], [x1 + 16, y1 - TH_ + 4], [x0 - 16 - TW, y1 - TH_ + 4], [cx - TW / 2, y0 - 16 - TH_], [cx - TW / 2, y1 + 16]];
+    const cands = [[x1 + 16, y0 - 4], [x0 - 16 - TW, y0 - 4], [x1 + 16, y1 - TH_ + 4], [x0 - 16 - TW, y1 - TH_ + 4], [cx - TW / 2, y0 - 16 - TH_], [cx - TW / 2, y1 + 16],
+      [x1 + 16, y0 - 4 + TH_ + 6], [x0 - 16 - TW, y0 - 4 + TH_ + 6], [x1 + 16, y0 - 4 - TH_ - 6], [x0 - 16 - TW, y0 - 4 - TH_ - 6]];   // 앞 여섯 자리가 모두 막히면 옆 카드 위·아래로 비켜 선다
     const rectOf = (c) => ({ l: c[0], t: c[1], r: c[0] + TW, b: c[1] + TH_ });
     const inside = (r) => r.l >= 4 && r.t >= 4 && r.r <= W - 4 && r.b <= H - 4;
     const conflicts = (r) => (inside(r) ? 0 : 3) + ex.filter((e) => hit(r, e)).length + placed.filter((e) => hit(r, e)).length;
@@ -1958,7 +1959,11 @@ function renderHud() {
     let best = first, bestC = conflicts(rectOf(cands[first]));
     if (bestC > 0) cands.forEach((c, i) => { const n = conflicts(rectOf(c)); if (n < bestC) { best = i; bestC = n; } });
     hudPrev[b.id] = best;
-    const c = cands[best], r = rectOf(c); placed.push(r);
+    const c = cands[best], r = rectOf(c);
+    if (placed.some((e) => hit(r, e))) {   // 어느 자리도 먼저 놓인(호수가 큰) 카드를 피하지 못하면 이 카드는 숨기고 표시선만 남긴다(겹쳐 읽기 어려운 것보다 낫다). 가까이 확대하면 다시 보인다
+      el.hidden = true; parts.push(`<path d="${d}" fill="none" stroke="${T.halo}" stroke-width="5" stroke-linecap="square"/><path d="${d}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linecap="square"/>`); continue;
+    }
+    placed.push(r);
     el.style.transform = `translate(${Math.round(c[0])}px,${Math.round(c[1])}px)`;
     // 정보창(카드)으로 이어지는 점선
     const kx = c[0] > cx ? x1 : x0, ky = c[1] + TH_ / 2 > cy ? y1 : y0;

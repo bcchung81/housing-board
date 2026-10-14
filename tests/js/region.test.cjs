@@ -705,7 +705,7 @@ test('attachLedger: 원장을 못 받으면(null·빈 목록) 아무것도 붙�
 
 test('ledgerTexts: 판정·경과·다음 일정 문구(월까지)와 기준', () => {
   const t = R.ledgerTexts({ cls: 'delay', overdue: { eventType: 'COMPLETION', planned: '2024-01-02', months: 33 }, next: null, month: '2026-10', origin: 'supabase', referenceDate: '2026-10-10' });
-  assert.deepEqual(t, { cls: '지연', late: '준공 예정 33개월 경과', lateTitle: '예정일 2024-01-02', next: '', basis: 'Supabase 원장 2026-10 기준', refDate: '2026-10-10' });
+  assert.deepEqual(t, { cls: '지연', late: '준공 예정 경과 33개월', lateTitle: '예정일 2024-01-02', next: '', basis: 'Supabase 원장 2026-10 기준', refDate: '2026-10-10' });
   const ok = R.ledgerTexts({ cls: 'ok', overdue: null, next: { eventType: 'COMPLETION', planned: '2027-03-22' }, month: '2026-10', origin: 'json' });
   assert.equal(ok.cls, '정상'); assert.equal(ok.late, ''); assert.equal(ok.next, '준공 예정 2027.03'); assert.equal(ok.basis, '사업 원장 2026-10 기준');
   assert.equal(R.ledgerTexts({ cls: null, next: { eventType: 'MOVE_IN', planned: '2028' } }).next, '입주 예정 2028');

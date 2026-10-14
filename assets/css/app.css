@@ -168,7 +168,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .sw.fac-edu{background:#8A7A3A}
 .sw.fac-med{background:#A5566A}
 .sw.fac-pub{background:#3F7F5E}
-.sw.ramp{background:linear-gradient(90deg,#17204D,#4155A3)}
+.sw.ramp{background:linear-gradient(90deg,#17204D,#394C96)}
 .sw.ghost{border:1.5px solid var(--mute);background:rgba(108,125,192,.3)}
 .sw.outline{border:1.5px dashed var(--mute);background:transparent}
 .sw.stn{border-radius:50%;border:3px solid var(--bg);background:#fff;box-shadow:0 0 0 1px var(--mute)}
