@@ -22,7 +22,7 @@ const sum = <T,>(a: T[], f: (x: T) => number) => a.reduce((s, x) => s + f(x), 0)
 const monthLabel = (ym: string) => `${ym.slice(0, 4)}년 ${Number(ym.slice(5, 7))}월`;
 const dayText = (e: AheadEntry) => (e.day ? `${Number(e.day.slice(5, 7))}월 ${Number(e.day.slice(8, 10))}일` : `${Number(e.ym.slice(5, 7))}월 중`);
 const light = (c: string, p: number) => `color-mix(in srgb,${c} ${p}%,var(--card))`;
-const hollow = (e: AheadEntry) => e.loc === 'rep' || e.loc === 'area';
+const hollow = (e: AheadEntry) => e.loc === 'rep' || e.loc === 'area' || e.loc === 'name';
 const onMap = (e: AheadEntry) => METRO.includes(e.sd);
 const HATCH_SW = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_45%,transparent)_0_1.5px,transparent_1.5px_3.5px)]';
 const LINK = 'group/action inline-flex flex-none cursor-pointer items-center gap-px rounded-[4px] border-0 bg-transparent p-0 text-[14px] leading-[1.45] whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
@@ -195,7 +195,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
         ) : <span className="pointer-events-none absolute top-2 right-3 text-[13px] text-muted-foreground">원을 누르면 그 사업을 지도에서 볼 수 있음</span>; })()}
         <ul className="pointer-events-auto absolute bottom-2 left-3 m-0 flex list-none flex-wrap items-center gap-x-2.5 p-0 text-[13px] text-muted-foreground" aria-label="지도 범례">
           <li className="flex items-center gap-1" title="원 넓이 = 호수(호수 미확인은 가장 작은 원)"><i className="block size-[9px] rounded-full bg-mute" aria-hidden="true" />원 넓이 = 호수</li>
-          <li className="flex items-center gap-1" title="정확한 좌표가 없어 시군구 중심(또는 시군구·동 근사 위치)에 둔 사업"><i className="block size-[9px] rounded-full border-[1.5px] border-mute" aria-hidden="true" />대표 위치</li>
+          <li className="flex items-center gap-1" title="정확한 좌표가 없어 시군구 중심(또는 근사 위치)에 둔 사업"><i className="block size-[9px] rounded-full border-[1.5px] border-mute" aria-hidden="true" />대표 위치</li>
           <li className="flex items-center gap-1" title="공공주택지구 공동주택용지(V-World LT_C_LHBLPN)"><i className="block size-[9px] rounded-[2px]" style={{ background: 'color-mix(in srgb,var(--muted-foreground) 20%,transparent)' }} aria-hidden="true" />지구</li>
         </ul>
       </div>

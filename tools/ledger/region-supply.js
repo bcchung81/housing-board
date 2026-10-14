@@ -111,9 +111,9 @@ function buildMap(munis, districts) {
   return { geo: sgg, doc: { schema: 'region-map/1', projection: '등장방형(위도 37.5° 보정) · 1000 = 위도 1° · x = (경도−124.5)·cos37.5°·1000, y = (38.4−위도)·1000', view, sgg: sgg.filter((g) => g.d).map(({ s, n, d }) => ({ s, n, d })), districts: dist } };
 }
 
-/* 사업 위치: home-map 의 위치(블록 라벨점·주소 근사점·지구 대표점 = 점, 근사 영역 = area) → 없으면 시군구 대표점('rep').
+/* 사업 위치: home-map 의 위치(블록 라벨점·주소 근사점·지구 대표점 = 점, 근사 영역 = area, 이름 검색 근사점 = name) → 없으면 시군구 대표점('rep').
    loc: 사업 id → home-map loc({ by, at }) · geo: buildMap 의 시군구(코드·대표점). 서울·인천·경기만 붙인다 */
-const LOC_KIND = new Set(['block', 'address', 'district', 'area']);
+const LOC_KIND = new Set(['block', 'address', 'district', 'area', 'name']);
 function placeCalendar(calendar, loc, geo) {
   const count = { point: 0, area: 0, rep: 0, none: 0 };
   for (const s of Object.values(METRO)) for (const e of calendar.sido[s] ?? []) {

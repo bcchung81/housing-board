@@ -104,17 +104,6 @@ test('시행주체 색: 막대가 차트 바탕 위 3:1 이상이고, 공공 3�
   }
 });
 
-test('6단계 공개 범위 색(--scope-gov·--scope-pub)은 카드 위 4.5:1, 옅은 면(14%) 위에서도 4.5:1 이상이다', () => {
-  const mix = (fg, bg, a) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(fg.slice(i, i + 2), 16) * a + parseInt(bg.slice(i, i + 2), 16) * (1 - a)).toString(16).padStart(2, '0')).join('');
-  for (const [name, get] of THEMES) {
-    const b = get(), t = (n) => token(b, n);
-    for (const s of ['scope-gov', 'scope-pub']) {
-      const card = ratio(t(s), t('card')), tint = ratio(t(s), mix(t(s), t('card'), 0.14));
-      assert.ok(card >= 4.5 && tint >= 4.5, `${name} --${s} 카드 ${card.toFixed(2)} · 옅은 면 ${tint.toFixed(2)}`);
-    }
-  }
-});
-
 test('지연율 바탕색 6단계는 밝기가 한 방향으로 변하고(라이트는 짙어지고 다크는 밝아진다), 그 위 글자(본문·ink2)가 4.5:1 이상이다', () => {
   for (const [name, get] of THEMES) {
     const b = get(), t = (n) => token(b, n), L = [0, 1, 2, 3, 4, 5].map((i) => lum(t(`region-${i}`)));

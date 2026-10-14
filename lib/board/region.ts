@@ -13,8 +13,8 @@ export const CAL_TYPE: Record<CalKind, { name: string; color: string; ink: strin
   MOVE_IN: { name: '입주', color: 'var(--st-move)', ink: 'var(--st-move-ink)' },
 };
 /* 위치 근거: 점(블록 라벨점·주소 근사점·지구 대표점) · 근사(시군구·동) · 대표(시군구 중심) */
-export type LocKind = 'block' | 'address' | 'district' | 'area' | 'rep';
-export const LOC_NAME: Record<LocKind, string> = { block: 'LH 블록 대표점', address: '주소 근사점', district: '지구 대표점', area: '근사 위치(시군구·동)', rep: '대표 위치(시군구 중심)' };
+export type LocKind = 'block' | 'address' | 'district' | 'area' | 'name' | 'rep';
+export const LOC_NAME: Record<LocKind, string> = { block: 'LH 블록 대표점', address: '주소 근사점', district: '지구 대표점', area: '근사 위치(시군구·동)', name: '근사 위치(이름 검색)', rep: '대표 위치(시군구 중심)' };
 
 export type CalEntry = { ym: string; day: string | null; type: CalKind; id: string; drawer: boolean; name: string; units: number; sgg: string; loc?: LocKind; pt?: [number, number] };
 export type CalendarDoc = { schema: string; observedMonth: string; referenceDate: string; edition: string; from: string; to: string; months: string[]; kinds: CalKind[]; sido: Record<string, CalEntry[]> };

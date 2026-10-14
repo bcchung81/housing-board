@@ -19,7 +19,7 @@ const SCOPE: Record<string, string> = { PUBLIC: '공공', PRIVATE_ON_PUBLIC_LAND
 const UNIT: Record<string, string> = { BLOCK: '블록', PROJECT: '사업', AREA_UNKNOWN: '구역 미상' };
 const LOC: Record<string, string> = { block: 'LH 블록 대표점', address: '주소 근사점', district: '지구 대표점', area: '근사 영역(시군구·동)', parcel: '필지', name: '이름 검색 위치' };
 /* 지도 링크 옆 짧은 위치 종류: 블록·지번·지구·근사·미확보 */
-const LOC_SHORT: Record<string, string> = { block: '블록', parcel: '지번', address: '근사', district: '지구', area: '근사' };
+const LOC_SHORT: Record<string, string> = { block: '블록', parcel: '지번', address: '근사', district: '지구', area: '근사', name: '근사' };
 const fmt = (n: number) => n.toLocaleString('en-US');
 const NOTE = 'm-0 rounded-[10px] border border-border bg-muted px-4 py-2.5 text-[15px] text-muted-foreground';
 const FACTS = 'm-0 grid grid-cols-[repeat(auto-fit,minmax(min(180px,100%),1fr))] gap-x-10 gap-y-3 text-[16px] leading-[1.6] [&_dd]:m-0 [&_dt]:text-[14px] [&_dt]:text-muted-foreground';
