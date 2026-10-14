@@ -93,8 +93,8 @@ function stageNow(b) {
   const byLedger = b.statusBy === 'ledger';   // 수도권: 지도 상태를 원장 단계로 정했다(01 은 '사업화' 상태) — 다르다고 적지 않는다
   return { now: l, k: l === own || byLedger ? kindOf(b) : STAGE_KIND[STAGES6.indexOf(l)], title: `단계: ${LT(b).basis}${own && own !== l && !byLedger ? ` · 지도 상태 ${STATUS_TXT[b.status] || b.status}(${stName(own)})와 다름` : ''}` };
 }
-/* 수도권 원장 사업(b.home): 계획·공고 확인 호수와 정책 연결. 정책은 사업 화면과 같은 짧은 이름('9·7 대책')과 연결 상태(연결 확정·확정 전), 정식 이름·위치 근거는 title */
-const policyTxt = (p) => `${(p.short || []).map((x) => `${x} 대책`).join(', ') || p.names.join(', ') || '정책'} · ${p.status === 'CONFIRMED' ? '연결 확정' : '확정 전'}`;
+/* 수도권 원장 사업(b.home): 계획·공고 확인 호수와 정책 연결. 정책은 사업 화면과 같은 짧은 이름('9·7 대책')만 보이고, 연결 상태(연결 확정·확정 전)·정식 이름·위치 근거는 title */
+const policyTxt = (p) => `${(p.short || []).map((x) => `${x} 대책`).join(', ') || p.names.join(', ') || '정책'}`;
 function homeParts(b) {
   const h = b.home; if (!h) return null;
   const nums = [h.units != null ? `계획 ${fmt(h.units)}호` : '', h.noticeUnits != null ? `공고 확인 ${fmt(h.noticeUnits)}호` : ''].filter(Boolean).join(' · ');

@@ -90,3 +90,9 @@ test('키보드 초점: 넘침을 자르는 도구 묶음(.rctl·.tools) 단추�
   assert.match(css, /\.rctl button:focus-visible,\.tools button:focus-visible\{outline:2px solid var\(--acc\);outline-offset:-3px/);
   assert.match(css, /\.regionbox select:focus-visible\{outline:2px solid var\(--acc\)/);
 });
+
+test("정책 표기: 지도 카드의 policyTxt 줄에는 연결 상태('연결 확정'·'확정 전')가 없다 — 상태는 title 에만", () => {
+  const line = /^const policyTxt = .*$/m.exec(app);
+  assert.ok(line, 'policyTxt 정의 줄을 찾을 수 없음');
+  assert.doesNotMatch(line[0], /연결 확정|확정 전/);
+});
