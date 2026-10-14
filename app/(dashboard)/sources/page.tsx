@@ -325,7 +325,7 @@ export default async function SourcesPage() {
         tip="① 요구사항 충족 → ② 수집 상태 → ③ 연도 확보 → ④ 연결 · 맨 아래 원천 카탈로그(단계별 데이터 연계·원천별 수집 건수·기준일)">
         <ReqTags screen="sources" />
         <span className="text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
-          title={`HOME 덤프 ${req.edition} 수집 실행 · 사업 원장 기준일 ${req.referenceDate} · 원천 카탈로그 ${items.length}건의 수집일 ${got[0]} ~ ${got[got.length - 1]} · 추가 확보 필요 조사 ${ACQUIRE_ASOF}`}>
+          title={`HOME 자료 ${req.edition.slice(0, 4)}.${req.edition.slice(4, 6)}.${req.edition.slice(6, 8)} 수집 · 사업 원장 기준일 ${req.referenceDate} · 원천 카탈로그 ${items.length}건의 수집일 ${got[0]} ~ ${got[got.length - 1]} · 추가 확보 필요 조사 ${ACQUIRE_ASOF}`}>
           수집 {editionDay} · 원장 {req.referenceDate.replace(/-/g, '.')}
         </span>
       </PageHead>

@@ -16,18 +16,19 @@ export type DirectiveInput = {
   stageNames: string[];                                                    // 리본 6단계 이름(sample.ts 의 K): 병목 단계 이름
   ledger: LedgerBoard;
   start: { year: string; upto: number; cum: number | null; cumLy: number | null };   // 통계누리 전국 착공 누계(올해 1~upto월)와 전년 같은 기간
+  /* 병목 계산: 사업 화면 '어디서 막혀 있는가'와 같은 함수(lib/board/projects-view.ts bottleneckOf)를 넘겨받는다 — 이 파일은 Node 시험이 그대로 읽어 다른 .ts 를 가져오지 않는다 */
+  bottleneck: (byStage: number[]) => { i: number; units: number } | null;
 };
 
 const f = (n: number) => n.toLocaleString('en-US');
-const argmax = (a: number[]) => a.reduce((b, v, i) => (v > a[b] ? i : b), 0);
 /* 원장 범위 글자(화면 여러 곳이 같이 쓴다): 전국 여부, 사업 구성, 판정 대상·제외 */
 export const nation = (L: LedgerBoard) => (L.scope.coverage === 'NATIONWIDE' ? '전국' : '전국 아님');
 export const ledgerMix = (L: LedgerBoard) => { const b = L.scope.bySource; return b ? `발급 ${f(b.issued)} · LH 후보 ${f(b.lhCandidates)} · 건축HUB 후보 ${f(b.hubBulkCandidates)}${b.home ? ` · 수도권 HOME ${f(b.home)}` : ''}` : `발급 ${f(L.scope.issued)} · 후보 ${f(L.scope.candidates)}`; };
 export const ledgerJudged = (L: LedgerBoard) => { const b = L.scope.bySource, s = L.judgment.excludedStartOverdue; return `판정 ${f(L.scope.judged)}건(발급 사업은 착공·준공, 건축HUB 후보는 준공 예정 경과만 · 판정 밖: LH 후보 ${f(b?.lhCandidates ?? L.judgment.excluded.projects)}건${s ? `, 건축HUB 후보의 착공 예정 경과 ${f(s.pairs)}건` : ''})`; };
 const L_ = (L: LedgerBoard) => `원장 ${L.observedMonth} 기준 · ${nation(L)}`;
 
-export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start }: DirectiveInput): Directive[] {
-  const bk = argmax(L.delayByStage), upSum = L.upcoming.reduce((n, m) => n + m.units, 0);
+export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start, bottleneck }: DirectiveInput): Directive[] {
+  const neck = bottleneck(L.delayByStage), upSum = L.upcoming.reduce((n, m) => n + m.units, 0);
   const yoy = start.cum !== null && start.cumLy ? (start.cum - start.cumLy) / start.cumLy * 100 : null;
   const span = `${start.year}년 1~${start.upto}월`;
   return [
@@ -37,7 +38,7 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start }:
       p: ['p-chart'] },
     { date: '08.19', t: '사업장별 현황판', ...val(undefined, f(L.scope.projects), '사업'), basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})`,
       p: ['p-region'] },
-    { date: '09.03', t: '범부처 통합·병목', ...val(`병목 ${K[bk]}`, f(L.delayByStage[bk]), '호'), basis: `${L_(L)} · 단계별 지연 호수가 가장 큰 단계(판정한 사업 ${L.scope.judged}건 기준)`,
+    { date: '09.03', t: '범부처 통합·병목', ...(neck ? val(`병목 ${K[neck.i]}`, f(neck.units), '호') : val('병목', '없음', '')), basis: `${L_(L)} · 병목 = 지연 호수(경과 6개월 이상 사업의 계획 호수)가 가장 큰 단계 — 사업 화면 '어디서 막혀 있는가'와 같은 계산(판정한 사업 ${L.scope.judged}건 기준)`,
       p: ['p-trend', 'p-agency'] },
     { date: '09.04', t: '예측가능성', ...val('준공 예정', f(upSum), '호'), basis: `${L_(L)} · 향후 12개월(${L.upcoming[0].ym}~${L.upcoming[L.upcoming.length - 1].ym}) 준공 예정 호수 합`,
       p: ['p-fut'] },

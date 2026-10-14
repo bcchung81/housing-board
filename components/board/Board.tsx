@@ -8,9 +8,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import {
   C, CIR, K, PX0, RCOL, REGION_POS, RLAB, VW,
-  addedMarks, apart, argmax, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, sg, timelineOf, trendAt, trendMax, trendOf,
+  addedMarks, apart, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '../../lib/board/sample';
 import { ledgerJudged, ledgerMix, makeDirectives, nation as nationOf } from '../../lib/board/directives';
+import { bottleneckOf } from '../../lib/board/projects-view';
 import type { LedgerBoard } from '../../lib/board/types';
 import { cn } from 'cn';
 import { sub } from '../page';
@@ -59,7 +60,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const wrapRef = useRef<HTMLDivElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
 
-  const DIR = useMemo(() => makeDirectives({ sourceCount: real.sourceCount, stageNames: K, ledger: real.ledger, start: real.start }), [real.sourceCount, real.ledger, real.start]);
+  const DIR = useMemo(() => makeDirectives({ sourceCount: real.sourceCount, stageNames: K, ledger: real.ledger, start: real.start, bottleneck: bottleneckOf }), [real.sourceCount, real.ledger, real.start]);
   const valid = useMemo(() => new Set(real.validMonths), [real.validMonths]);
   /* 달마다 판정(판정 없는 달 null)과 단계별 지연 호수 */
   const JS = useMemo(() => judgmentsOf(L), [L]), DL = useMemo(() => delaysOf(JS), [JS]), TR = useMemo(() => trendOf(T, JS), [T, JS]);
@@ -114,7 +115,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   }, [tip]);
 
   /* 선택 시점의 값. 단계 호수·증감은 선택 시점을 따르고(증감 = 선택 − 기준 달), 판정 값은 선택 시점 이하의 가장 늦은 판정 달(jm, 이력 달 또는 기준 달)의 값이다 — 판정 달이 없으면 판정 없음 */
-  const v = L.stageUnits[cursor], nv = L.stageUnits[NOW], jm = judgedAt(T, cursor), judged = jm >= 0, SJ = JS[judged ? jm : NOW]!, ds = delayAt(T, DL, cursor), bk = argmax(SJ.delayByStage);
+  const v = L.stageUnits[cursor], nv = L.stageUnits[NOW], jm = judgedAt(T, cursor), judged = jm >= 0, SJ = JS[judged ? jm : NOW]!, ds = delayAt(T, DL, cursor), bk = bottleneckOf(SJ.delayByStage)?.i ?? -1;   // 병목: 사업 화면 '어디서 막혀 있는가'와 같은 계산(projects-view bottleneckOf)
   const planned = (m: number) => kind(T, m) === '예정 기준', showDlt = cursor !== NOW;
   const jTag = judged ? `${ml(T, jm)} 판정` : '판정 없음', showJTag = jm !== cursor;   // 판정 달 꼬리표는 선택 달과 판정 달이 다를 때만(예정 달 → 기준 달 판정, 판정 없는 달 → 판정 없음)
   const ymKo = (m: number) => `${T.months[m].slice(0, 4)}년 ${Number(T.months[m].slice(5))}월`, ymDot = (ym: string) => ym.replace('-', '.');
@@ -143,7 +144,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const monthLink = valid.has(T.months[cursor]) ? `/month/${T.months[cursor]}` : null;
   const tipView = tip ? tipOf(tip.m) : null;
   function tipOf(m: number) {
-    const vv = L.stageUnits[m], dd = delayAt(T, DL, m), b = argmax(dd), tj = judgedAt(T, m);
+    const vv = L.stageUnits[m], dd = delayAt(T, DL, m), b = bottleneckOf(dd)?.i ?? 0, tj = judgedAt(T, m);
     return { m, vv, dd, b, tj: tj >= 0 ? JS[tj] : null };
   }
 
@@ -219,7 +220,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className="mb-2.5 flex flex-wrap items-center gap-2.5">
               <h2 className={cn(ptitle, 'text-[26px]')} title={`${scope} · 단계 호수는 선택 달, 증감 = 선택 달 − 기준 달(${ml(T, NOW)}) · 판정은 선택 달 이하의 가장 늦은 판정 달(${ml(T, T.judged[0])}~${ml(T, NOW)}, ${ml(T, NOW)} 뒤 달은 ${ml(T, NOW)} 판정) · 판정 기준일 ${SJ.referenceDate} · 지연 = 현재 예정일 경과 ${L.judge.delayMonths}개월 이상, 주의 = ${L.judge.cautionMonths}~${L.judge.delayMonths}개월 · ${ledgerJudged(L)}`}>{ml(T, cursor)}</h2>
               <Badge variant="solid" className={planned(cursor) ? 'bg-primary text-primary-foreground' : 'bg-foreground text-background'}>{kind(T, cursor)}</Badge>
-              <span className={pacts}><PanelLink href={`/projects?stage=0${bk + 1}`} full={`병목 단계(${K[bk]})의 사업`}>병목 단계</PanelLink>{monthLink ? <PanelLink href={monthLink} full={`${ml(T, cursor)} 월 상세`}>{Number(T.months[cursor].slice(5))}월</PanelLink> : null}</span>
+              <span className={pacts}>{bk >= 0 ? <PanelLink href={`/projects?stage=${bk}&status=check`} full={`병목 단계(${CIR[bk]} ${K[bk]})의 점검 필요 사업(전국)`}>병목 단계</PanelLink> : null}{monthLink ? <PanelLink href={monthLink} full={`${ml(T, cursor)} 월 상세`}>{Number(T.months[cursor].slice(5))}월</PanelLink> : null}</span>
             </div>
             <div>
               {/* 판정 달 꼬리표는 막대 오른쪽에, 선택 달과 판정 달이 다를 때만(제목 줄은 '예정 기준' 표지와 이동 링크로 폭이 없다) */}
@@ -347,7 +348,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               <h2 className={ptitle} title={`${scope} · 막대는 기관별 정상·주의·지연·판정 밖 호수(판정된 사업의 물량) · 오른쪽 = 지연 호수 · 전체 지연 ${f(J.delay.units)}호 중 비중 · 판정 밖: ${outNote}`}>기관별 진행</h2>
               <div className={phgroup}>
                 <span className={legend} title="막대 색: 정상 · 주의 · 지연 · 판정 밖 호수">{[['bg-ok', '정상'], ['bg-warn', '주의'], ['bg-bad', '지연'], ['bg-[var(--out)] shadow-[inset_0_0_0_1px_var(--out-line)]', '판정 밖']].map(([c, n]) => <Key key={n} className={cn('size-2', c)}>{n}</Key>)}</span>
-                <span className={pacts}><PanelLink href="/projects" full="사업 목록 — 기관 칩으로 거르기">기관별 사업</PanelLink></span>
+                <span className={pacts}><PanelLink href="/projects?sido=all" full="사업 목록(전국) — 기관 메뉴로 거르기">기관별 사업</PanelLink></span>
               </div>
             </div>
             <div className={ags}>

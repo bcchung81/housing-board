@@ -17,8 +17,11 @@ export function directiveText(doc: RequirementsDoc, date: string): string {
   return d ? `${d.full} ${d.event}` : date;
 }
 
+/* 지시 날짜를 시간순으로('MM.DD' — 지시는 모두 같은 해) */
+export const datesOf = (r: Requirement) => [...r.dates].sort();
+
 /* 꼬리표 title: 이름(우선순위) · 지시 · 판정(근거 지표) */
 export const tagTitle = (doc: RequirementsDoc, r: Requirement) =>
-  `${r.id} ${r.title}(${r.priority}) · 지시 ${r.dates.map((d) => directiveText(doc, d)).join(' · ')} · 판정 ${VERDICT[r.verdict].name}(${r.metric})`;
+  `${r.id} ${r.title}(${r.priority}) · 지시 ${datesOf(r).map((d) => directiveText(doc, d)).join(' · ')} · 판정 ${VERDICT[r.verdict].name}(${r.metric})`;
 
 export const countVerdicts = (doc: RequirementsDoc) => Object.fromEntries((Object.keys(VERDICT) as Verdict[]).map((v) => [v, doc.items.filter((r) => r.verdict === v).length])) as Record<Verdict, number>;

@@ -136,7 +136,7 @@ test('동네 여건은 서울·인천·경기만 그리고, 다른 시도·전�
   assert.deepEqual(Object.keys(facts.sido), ['11', '28', '41']);
   const page = read('app/(dashboard)/region/page.tsx');
   assert.match(page, /\{sido && facts\.sido\[sido\] \? <Cond /);
-  assert.match(page, /동네 여건 자료: /);
+  assert.match(page, /인구·주택 재고·미분양은 시도를 고르면 보입니다/, '수도권·전국·다른 시도는 막다른 꼬리말 대신 시도 고르기 링크');
   assert.match(read('components/region/Cond.tsx'), /if \(!c\) return null;/);
 });
 

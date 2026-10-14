@@ -18,9 +18,6 @@ test('대시보드 막대: 상태 비율 막대·기관별 막대(bar3)·12개�
   const rg = /<span className="flex h-1\.5 gap-px[^>]*>/.exec(board)[0];
   assert.doesNotMatch(rg, /rounded/, '시도 타일 3색 막대');
   assert.doesNotMatch(read('components/charts/StackedMonths.tsx'), /\brx=|rounded/);
-  const ladder = read('components/StageLadder.tsx');
-  assert.doesNotMatch(ladder, /rounded-t-/, '계단 칸 윗모서리');
-  assert.match(ladder, /mobile:rounded-\[8px\]/, '900px 이하 세로 목록(막대가 아님)은 그대로');
 });
 
 test('지도 막대: 상태 막대(.sbar)·공정 막대(.mini·.pg .bar2·.hudtag .ht-bar)', () => {

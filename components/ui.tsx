@@ -8,7 +8,7 @@ export function Kpi({ label, value, unit = '호', sub, tone, tip }: { label: str
     <Card variant="kpi" title={tip}>
       <span className="flex min-w-0 items-center gap-1.5 truncate text-[14px] text-muted-foreground"><i className="block size-[9px] flex-none rounded-[3px] bg-line2" style={tone ? { background: tone } : undefined} aria-hidden="true" />{label}</span>
       <b className="font-display text-[min(30px,15cqi)] leading-[1.2] font-normal whitespace-nowrap tabular-nums">{value}<small className="ml-[3px] font-sans text-[14px] font-normal text-muted-foreground">{unit}</small></b>
-      {sub ? <span className="text-[13px] text-muted-foreground tabular-nums">{sub}</span> : null}
+      {sub ? <span className="text-[14px] text-muted-foreground tabular-nums">{sub}</span> : null}
     </Card>
   );
 }

@@ -31,12 +31,24 @@ export function placeLabel(sgg: string, sidoShort: string, inSido: boolean): str
   return inSido ? t.slice(1).join(' ') : `${sidoShort} ${t.slice(1).join(' ')}`;
 }
 
+export const METRO = ['11', '28', '41'];
 const byDay = (a: CalEntry, b: CalEntry) => (a.day ?? `${a.ym}-99`).localeCompare(b.day ?? `${b.ym}-99`) || a.name.localeCompare(b.name, 'ko');
 
-/* 시도('' = 전국)의 예정 전체(종류 거르기 전) */
+/* 지역 범위: '' = 전국 · 'metro' = 수도권(서울·인천·경기 — 처음 열 때) · 'NN' = 시도 하나. 주소는 ?sido=all|NN, 수도권은 ?sido 없음 */
+export const scopeCodes = (doc: { sido: Record<string, unknown> }, sido: string) => (sido === 'metro' ? METRO.filter((c) => c in doc.sido) : sido ? [sido] : Object.keys(doc.sido));
+export const inScope = (sido: string, code: string) => (sido === 'metro' ? METRO.includes(code) : sido ? code === sido : true);
+
+/* 지역 범위의 예정 전체(종류 거르기 전). 시도 하나일 때만 시도 이름을 뺀다 */
 export function aheadAll(doc: CalendarDoc, sido: string, sidoName: (code: string) => string): AheadEntry[] {
-  const codes = sido ? [sido] : Object.keys(doc.sido);
-  return codes.flatMap((sd) => (doc.sido[sd] ?? []).map((e) => ({ ...e, k: `${e.id}|${e.type}`, sd, place: placeLabel(e.sgg, sidoName(sd), !!sido) }))).sort(byDay);
+  const one = !!sido && sido !== 'metro';
+  return scopeCodes(doc, sido).flatMap((sd) => (doc.sido[sd] ?? []).map((e) => ({ ...e, k: `${e.id}|${e.type}`, sd, place: placeLabel(e.sgg, sidoName(sd), one) }))).sort(byDay);
+}
+/* 지도 보기 상자(시도들의 상자를 합친 것). 경계 자료가 없는 범위면 null */
+export function viewOf(doc: RegionMapDoc, sido: string): [number, number, number, number] | null {
+  const vs = (sido === 'metro' ? METRO : sido ? [sido] : []).map((c) => doc.view[c]).filter(Boolean);
+  if (!vs.length) return null;
+  const x0 = Math.min(...vs.map((v) => v[0])), y0 = Math.min(...vs.map((v) => v[1])), x1 = Math.max(...vs.map((v) => v[0] + v[2])), y1 = Math.max(...vs.map((v) => v[1] + v[3]));
+  return [x0, y0, x1 - x0, y1 - y0];
 }
 
 /* 종류 칩: 켜진 값(쉼표). 모르는 값은 버리고, 하나도 안 남으면 전부 */
@@ -57,7 +69,6 @@ export function pickMonth(months: string[], list: { ym: string }[], m?: string):
 }
 
 /* ---------- 지난 공급 실적 ---------- */
-export const METRO = ['11', '28', '41'];
 export const NATION_FROM = 2022;   // 통계누리 월 자료가 2021-09 부터라 2021 은 4개월뿐 — 전국·다른 시도는 2022 부터
 
 /* 월 자료 → 해마다 YearVal(lib/board/annual.ts 와 같은 모양) */
@@ -88,4 +99,17 @@ export function regionYears(molit: Molit, annual: AnnualDoc, metric: Metric, cod
     ? [2018, 2019, 2020, 2021].map((year) => { const v = annual.permitYearly[code]?.[String(year)] ?? null; return { year, value: v, months: v === null ? 0 : 12, first: v === null ? null : 1, last: v === null ? null : 12, complete: v !== null, provisional: false }; })
     : yearlyOf(annual.months, annual.series[metric][code], [], 2018, NATION_FROM - 1);
   return { years: [...early, ...years], spliced: true };
+}
+
+/* 수도권(세 시도) 연도별 합: 해마다 값을 더하고(셋 다 비면 null), 달 수는 가장 적은 시도 것, 완결은 셋 다 완결일 때만 */
+export function metroYears(molit: Molit, annual: AnnualDoc, metric: Metric): YearVal[] {
+  const each = METRO.map((c) => regionYears(molit, annual, metric, c).years);
+  const years = [...new Set(each.flat().map((y) => y.year))].sort((a, b) => a - b);
+  return years.map((year) => {
+    const ys = each.map((e) => e.find((y) => y.year === year)).filter((y): y is YearVal => !!y && y.value !== null);
+    if (!ys.length) return { year, value: null, months: 0, first: null, last: null, complete: false, provisional: false };
+    const full = ys.length === METRO.length;
+    return { year, value: ys.reduce((t, y) => t + y.value!, 0), months: full ? Math.min(...ys.map((y) => y.months)) : 0, first: Math.max(...ys.map((y) => y.first ?? 1)), last: Math.min(...ys.map((y) => y.last ?? 12)),
+      complete: full && ys.every((y) => y.complete), provisional: ys.some((y) => y.provisional) };
+  });
 }

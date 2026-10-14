@@ -3,7 +3,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, ChevronRight, ChevronUp, ChevronsUpDown, Search } from 'lucide-react';
+import { ChevronDown, ChevronRight, ChevronUp, ChevronsUpDown, MapPin, Search } from 'lucide-react';
+import LinkPending from './link-pending';
 import { constructSortFn, createColumnHelper, createSortedRowModel, rowSortingFeature, tableFeatures, useTable, type SortingState } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from 'cn';
@@ -43,27 +44,31 @@ const clipTitle = (v: Cell, col: Col) => (typeof v === 'object' && v?.title ? un
 function CellView({ v, col }: { v: Cell; col: Col }) {
   const d = display(v, col.kind);
   const o = typeof v === 'object' && v !== null ? v : undefined;
-  const text = o?.code ? <code>{d.text}</code> : keepWords(d.text);
-  const body = o?.href ? <Link href={o.href}>{text}</Link> : text;
+  const text = o?.icon === 'map' ? <><MapPin className="inline size-4 align-[-3px]" aria-hidden="true" /><span className="sr-only">{d.text}</span></> : o?.code ? <code>{d.text}</code> : keepWords(d.text);
+  const body = o?.href ? (o.doc ? <a href={o.href} className={o.icon ? 'inline-flex rounded-[4px] p-0.5 text-muted-foreground hover:text-primary' : undefined}>{text}</a> : <Link href={o.href} className="relative">{text}<LinkPending /></Link>) : text;
   const mark = o?.mark === 'hatch' ? <i className={cn('mr-1.5 inline-block size-[11px] rounded-[3px] border border-line2 align-[-1px]', HATCH)} aria-hidden="true" />
     : o?.mark === 'outline' ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-2 align-[-1px]" style={{ borderColor: o.swatch }} aria-hidden="true" /> : null;
   const toned = d.tone ? <span className={cn(TONE[d.tone], o?.strong && 'font-bold')}>{body}</span> : o?.strong ? <b>{body}</b> : body;
   const inner = (
     <>
       {mark ?? (o?.dashed ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-[1.5px] border-dashed border-line2 align-[-1px]" aria-hidden="true" /> : o?.swatch ? <Swatch color={o.swatch} /> : null)}
-      {o?.pill ? <span className="inline-block rounded-full px-2 text-[12px] leading-[19px] font-bold whitespace-nowrap" style={{ background: `color-mix(in srgb,${o.pill.color} 16%,var(--card))`, color: o.pill.ink }}>{body}</span> : toned}
+      {o?.pill ? <span className="inline-block rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: `color-mix(in srgb,${o.pill.color} 16%,var(--card))`, color: o.pill.ink }}>{body}</span> : toned}
       {o?.prov ? <Prov /> : null}
     </>
   );
   return o?.title ? <span title={o.title}>{inner}</span> : inner;
 }
 
-export function DataGrid({ cols, rows, label, sortable = true, maxHeight }: { cols: Col[]; rows: Row[]; label: string; sortable?: boolean; maxHeight?: number }) {
+/* quietCount: 검색 칸 옆 건수를 찾을 때만 보인다(표 머리에 이미 건수가 있는 사업 목록 — 같은 숫자를 두 번 내지 않는다) */
+export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietCount = false }: { cols: Col[]; rows: Row[]; label: string; sortable?: boolean; maxHeight?: number; quietCount?: boolean }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [q, setQ] = React.useState('');
   const [open, setOpen] = React.useState<ReadonlySet<string>>(new Set());
   const uid = React.useId();
   const router = useRouter();
+  /* 행을 눌러 서랍을 여는 동안(서버가 그린다) 그 행에 진행 표지 */
+  const [going, startGoing] = React.useTransition();
+  const [goingId, setGoingId] = React.useState<string | null>(null);
   const { top, body, bottom } = React.useMemo(() => splitPinned(rows), [rows]);
   const want = wants(body.length);
   const data = React.useMemo(() => filterRows(body, q, cols), [body, q, cols]);
@@ -108,9 +113,9 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight }: { co
     <TableRow key={r.id} total={pinned} data-index={measure ? i : undefined} ref={measure ? v.measureElement : undefined}
       aria-rowindex={want.virtual ? (pinned ? undefined : lead + i + 1) : undefined}
       onClick={expandable && r.detail ? (e) => { if (!(e.target as HTMLElement).closest('a, button, input')) toggle(r.id); }
-        : r.href ? (e) => { if (!(e.target as HTMLElement).closest('a, button, input')) router.push(r.href!, { scroll: false }); } : undefined}
-      data-sel={r.sel ? '' : undefined}
-      className={cn(!pinned && (r.sel ? 'bg-accent' : i % 2 ? zebra : 'bg-card'), r.muted && 'text-muted-foreground', ((expandable && r.detail) || r.href) && 'cursor-pointer')}>
+        : r.href ? (e) => { if (!(e.target as HTMLElement).closest('a, button, input')) { setGoingId(r.id); startGoing(() => router.push(r.href!, { scroll: false })); } } : undefined}
+      data-sel={r.sel ? '' : undefined} aria-busy={going && goingId === r.id ? true : undefined}
+      className={cn(!pinned && (r.sel ? 'bg-accent' : i % 2 ? zebra : 'bg-card'), r.muted && 'text-muted-foreground', ((expandable && r.detail) || r.href) && 'cursor-pointer', going && goingId === r.id && 'cursor-progress animate-pulse motion-reduce:animate-none')}>
       {r.note !== undefined ? (
         <>
           <TableCell className={stickyCell}><CellView v={r.c[first]} col={cols[0]} /></TableCell>
@@ -143,7 +148,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight }: { co
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="이 표에서 찾기" aria-label={`${label} 안에서 찾기`}
               className="h-10 w-full rounded-[10px] border-[1.5px] border-line2 bg-card pr-3 pl-9 text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary" />
           </label>
-          <span className="text-[14px] text-muted-foreground tabular-nums" aria-live="polite">{q.trim() ? `${data.length}건 / 전체 ${body.length}건` : `${body.length}건`}</span>
+          <span className="text-[14px] text-muted-foreground tabular-nums" aria-live="polite">{q.trim() ? `${data.length.toLocaleString('en-US')}건 / 전체 ${body.length.toLocaleString('en-US')}건` : quietCount ? '' : `${body.length.toLocaleString('en-US')}건`}</span>
         </div>
       ) : null}
       <Table aria-label={label} aria-rowcount={want.virtual ? lead + list.length + bottom.length : undefined}

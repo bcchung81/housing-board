@@ -71,10 +71,11 @@ test('옛 집계(trend 없음): 판정은 기준 달만 — 추이는 기준 달
 
 test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계·원장 집계·원천 수), 날짜·제목·연결 패널·인용문은 시안 그대로이고, 원장 시도는 통계누리 시도 코드(짧은 이름·/area 링크)로 이어진다', () => {
   const { makeDirectives } = require('../../lib/board/directives.ts');
+  const BN = require('../../lib/board/projects-view.ts').bottleneckOf;
   const molit = require('../../data/board/molit.json'), C = require('../../lib/board/calc.ts');
   const last = C.lastMonth(molit), cum = C.ytd(molit, 'start', C.NATION, last), cumLy = C.ytd(molit, 'start', C.NATION, C.nextYm(last, -12));
   const start = { year: last.slice(0, 4), upto: Number(last.slice(5)), cum, cumLy };
-  const dir = makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start });
+  const dir = makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start, bottleneck: BN });
   assert.deepEqual(dir.map((d) => [d.date, d.t, d.p]), [['08.14', '진척 관리', ['p-chart']], ['08.19', '사업장별 현황판', ['p-region']], ['09.03', '범부처 통합·병목', ['p-trend', 'p-agency']], ['09.04', '예측가능성', ['p-fut']], ['09.18', '일정 지연 관리', ['p-trend']], ['09.30', '국민 공개·공식 원천', ['p-flow']]]);
   dir.forEach((d, i) => { assert.ok(d.basis.length > 10, `표지 title ${i}`); });
   const yoy = (cum - cumLy) / cumLy * 100;
@@ -96,8 +97,8 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   assert.deepEqual([dir[3].pre, dir[3].big, dir[3].u], ['준공 예정', S.f(L.upcoming.reduce((n, m) => n + m.units, 0)), '호']);
   assert.deepEqual([dir[4].pre, dir[4].big, dir[4].u], ['지연', S.f(L.judgment.delay.projects), '사업']);
   assert.deepEqual(dir[4].sub, { text: `주의 ${S.f(L.judgment.caution.projects)}`, tone: 'warn' });
-  assert.equal(makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start })[5].m, '원천 19곳');
-  assert.equal(makeDirectives({ sourceCount: 14, stageNames: S.K, ledger: L, start: { ...start, cum: null } })[0].sub, undefined, '누계가 없으면 증감을 내지 않는다');
+  assert.equal(makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start, bottleneck: BN })[5].m, '원천 19곳');
+  assert.equal(makeDirectives({ sourceCount: 14, stageNames: S.K, ledger: L, start: { ...start, cum: null }, bottleneck: BN })[0].sub, undefined, '누계가 없으면 증감을 내지 않는다');
   const codes = require('../../data/board/molit.json').sido.map((s) => s.code);
   assert.equal(L.regions.length, 16);
   for (const r of L.regions) assert.ok(codes.includes(r.code), `${r.name} → ${r.code}`);
@@ -284,7 +285,8 @@ test('SAMPLE 표지는 없다(지연·주의 추이도 월 판정 이력), 원�
 test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 호수·증감·지연, 시도 판정 여부, 기관별 사업 수, 12개월 준공 예정', () => {
   const snap = panel(board, 'p-snap');
   assert.match(board, /const T = useMemo\(\(\) => timelineOf\(L\), \[L\]\), NOW = T\.now, LAST = T\.last;/, '시점은 원장 집계에서');
-  assert.match(board, /const v = L\.stageUnits\[cursor\], nv = L\.stageUnits\[NOW\], jm = judgedAt\(T, cursor\), judged = jm >= 0, SJ = JS\[judged \? jm : NOW\]!, ds = delayAt\(T, DL, cursor\), bk = argmax\(SJ\.delayByStage\);/, '선택 달의 판정 = 그 판정 달의 이력 행');
+  assert.match(board, /const v = L\.stageUnits\[cursor\], nv = L\.stageUnits\[NOW\], jm = judgedAt\(T, cursor\), judged = jm >= 0, SJ = JS\[judged \? jm : NOW\]!, ds = delayAt\(T, DL, cursor\), bk = bottleneckOf\(SJ\.delayByStage\)\?\.i \?\? -1;/, '선택 달의 판정 = 그 판정 달의 이력 행 · 병목은 사업 화면과 같은 bottleneckOf');
+  assert.match(board, /<PanelLink href=\{`\/projects\?stage=\$\{bk\}&status=check`\}/, '병목 단계 링크는 리본 칸 번호(옛 0${bk + 1} 은 공식 단계로 읽혀 한 칸 앞 단계로 갔다)');
   assert.match(board, /const JS = useMemo\(\(\) => judgmentsOf\(L\), \[L\]\), DL = useMemo\(\(\) => delaysOf\(JS\), \[JS\]\)/);
   assert.match(board, /ribbonOf\(T, L\.stageUnits, DL\)/, '리본 지연 띠도 달마다 판정');
   assert.match(board, /showDlt = cursor !== NOW;/);
@@ -357,7 +359,7 @@ test('종합상황판은 실데이터를 data/board 에서만 읽는다: 월별 
 
 test('카드의 이동 링크는 아래 줄이 아니라 제목 줄 오른쪽(pacts)에 조용한 글자 링크로 있다(2026-10-10 사용자 지시, 2026-10-12 시안 정리)', () => {
   const head = (src) => src.slice(0, src.search(/<\/div>/));   // 패널의 첫 줄(제목 줄)
-  for (const id of ['p-snap', 'p-fut', 'p-agency']) assert.match(head(panel(board, id)), /className=\{pacts\}><PanelLink/, id);
+  for (const id of ['p-snap', 'p-fut', 'p-agency']) assert.match(head(panel(board, id)), /className=\{pacts\}>(\{bk >= 0 \? )?<PanelLink/, id);
   assert.match(head(panel(realRow, 'p-actual')), /className=\{pacts\}><PanelLink/, 'p-actual');
   assert.doesNotMatch(board + realRow, /plink/, '카드 아래 링크 줄(plink)은 없다');
   const link = fs.readFileSync(path.join(__dirname, '../../components/board/PanelLink.tsx'), 'utf8');

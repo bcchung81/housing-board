@@ -150,10 +150,10 @@ export function Coverage({ hs, molit }: { hs: HomeSources; molit: Molit }) {
 export function Links({ hs }: { hs: HomeSources }) {
   return (
     <Card render={<section aria-label="연결" />}>
-      <PanelHead title="연결" tip="정책–프로그램, 프로그램–사업 연결(사업 원장 links) · 검토 중 = 담당자 확인 전 제안 · 해제된 연결은 빠짐">
+      <PanelHead title="연결" tip="정책–프로그램, 프로그램–사업 연결(사업 원장 links) · 확정 전 = 담당자가 아직 확정하지 않은 제안 · 해제된 연결은 빠짐">
         <LegendList>
           <li className={KEY}><i className={`${dot} bg-primary`} aria-hidden="true" />확정</li>
-          <li className={KEY}><i className={dot} style={{ background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} aria-hidden="true" />검토 중</li>
+          <li className={KEY}><i className={dot} style={{ background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} aria-hidden="true" />확정 전</li>
         </LegendList>
       </PanelHead>
       <div className="mt-3 grid grid-cols-2 gap-x-10 gap-y-5 narrow:grid-cols-1">
@@ -163,12 +163,12 @@ export function Links({ hs }: { hs: HomeSources }) {
             <div key={l.type} className="flex flex-col gap-1.5">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                 <b className="text-[15px]">{LINK_NAME[l.type]}</b>
-                <span className="text-[13px] text-muted-foreground tabular-nums">검토 중 <b className="text-[15px] text-foreground">{fmt(l.review)}</b> · 확정 <b className="text-[15px] text-foreground">{fmt(l.confirmed)}</b></span>
+                <span className="text-[13px] text-muted-foreground tabular-nums">확정 전 <b className="text-[15px] text-foreground">{fmt(l.review)}</b> · 확정 <b className="text-[15px] text-foreground">{fmt(l.confirmed)}</b></span>
               </div>
               {all ? (
-                <span className="flex h-[14px] gap-px overflow-hidden" role="img" aria-label={`${LINK_NAME[l.type]}: 확정 ${l.confirmed}, 검토 중 ${l.review}`}>
+                <span className="flex h-[14px] gap-px overflow-hidden" role="img" aria-label={`${LINK_NAME[l.type]}: 확정 ${l.confirmed}, 확정 전 ${l.review}`}>
                   {l.confirmed ? <span style={{ width: `${l.confirmed / all * 100}%`, minWidth: 3, background: 'var(--primary)' }} title={`확정 ${fmt(l.confirmed)}`} /> : null}
-                  {l.review ? <span style={{ width: `${l.review / all * 100}%`, background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} title={`검토 중 ${fmt(l.review)}`} /> : null}
+                  {l.review ? <span style={{ width: `${l.review / all * 100}%`, background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} title={`확정 전 ${fmt(l.review)}`} /> : null}
                 </span>
               ) : <span className="text-[13px] text-muted-foreground">연결 없음</span>}
             </div>

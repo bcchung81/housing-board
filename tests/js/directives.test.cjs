@@ -39,7 +39,8 @@ test('월간 보고(8.14 정례 보고): 사업 화면의 인쇄 보기(?print=1
   assert.match(s, /<h1 [^>]*>월간 주택공급 보고<\/h1>/);
   assert.match(s, /우선 점검 사업 · 상위 10/);
   assert.match(s, /const top = priorityOf\(scope\);/);
-  assert.match(s, /기준일: 사업 원장 \{ref\}/);
+  assert.match(s, /자료 기준: 사업 원장 \{ref\}/);
+  assert.doesNotMatch(s, /HOME 덤프 \{pp\.source\.edition\}/, "판 번호(20261014T102506Z)를 화면에 내지 않는다");
   assert.match(s, /출처: 사업 원장/);
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/(dashboard)/reports')), '옛 보고자료 화면은 없다(/reports → /projects?print=1)');
   // 이번 달 증감은 전월·전년 같은 달과 비교한다
@@ -59,9 +60,9 @@ test('지역 공급(9.4 국민 예측가능성): 시도를 고르면 앞으로 1
 
 test('사업 상세(9.30 쉬운 설명): 서랍의 지금 단계는 6단계 스텝(현재 표시·칸 title 의 질문)이 보이고 문장으로 되풀이하지 않으며, 그 시도의 지역 공급으로 이어 준다', () => {
   const s = read('components/projects/ProjectDetail.tsx');
-  assert.match(s, /<StageLadder flat current=\{r\.stage\}/);
+  assert.match(s, /<StageSteps current=\{r\.board\}/);
   assert.doesNotMatch(s, /단계입니다 — /, '그림이 보여 주는 지금·다음 단계를 문장으로 다시 쓰지 않는다(2026-10-13 화면 규칙)');
-  assert.match(read('components/StageLadder.tsx'), /title=\{`\$\{s\.code\} \$\{s\.name\} — \$\{s\.q\}`\}/, '단계마다 답할 질문은 칸의 title');
+  assert.match(read('components/projects/StageSteps.tsx'), /title=\{`\$\{BOARD_CIR\[i\]\} \$\{name\} — \$\{QUESTION\[i\]\}/, '단계마다 답할 질문은 칸의 title');
   assert.match(s, /href=\{`\/region\?sido=\$\{r\.sgg\.slice\(0, 2\)\}`\}/);
 });
 

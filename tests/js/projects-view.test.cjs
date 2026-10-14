@@ -71,7 +71,8 @@ test('거르기 읽기·주소: 맞지 않는 값은 거르지 않고, 렌즈는
   assert.equal(V.listHref(f, { sido: '11' }), '/projects?policy=97&sido=11&stage=2&status=delay&agency=lh', '시도를 고르면 시군구가 풀린다');
   assert.equal(V.listHref({ sido: '41' }, { sgg: '41500' }), '/projects?sgg=41500', '시군구를 고르면 시도가 풀린다');
   assert.equal(V.listHref(f, { id: 'PRJ-41113-0035' }), '/projects?policy=97&sgg=41285&stage=2&status=delay&agency=lh&id=PRJ-41113-0035', '서랍 id 는 거르기를 지킨 채 맨 뒤');
-  assert.equal(V.listHref({}, { print: '1' }), '/projects?print=1');
+  assert.equal(V.listHref({ metro: true }, { print: '1' }), '/projects?print=1', '기본 범위(수도권)는 주소에 적지 않는다');
+  assert.equal(V.listHref({}, { print: '1' }), '/projects?sido=all&print=1', '전국은 ?sido=all');
   assert.equal(V.listHref(f, { policy: undefined, program: undefined, sgg: undefined, stage: undefined, status: undefined, agency: undefined }), '/projects');
   /* 기관·상태·단계가 함께 걸린다 */
   const g = { agency: 'lh', status: 'check', stage: 2 };
@@ -87,30 +88,37 @@ test('상태: 지연 중 경과 12개월 이상은 장기 지연, 점검 필요 
   const chk = V.listOrder(V.applyFilters(rows, { status: 'check' }), { status: 'check' });
   assert.equal(chk.length, 401);
   assert.ok(chk.every((r, i) => i === 0 || V.lateOf(chk[i - 1]) >= V.lateOf(r)), '지연 개월 큰 순');
-  assert.deepEqual(V.priorityOf(rows).map(V.lateOf), [81, 71, 70, 68, 65, 58, 58, 58, 58, 58], '월간 보고 우선 점검 상위 10');
+  const top = V.priorityOf(rows);
+  assert.deepEqual(top.map(V.lateOf), [81, 71, 70, 68, 65, 58, 58, 50, 49, 43], '월간 보고 우선 점검 상위 10');
+  assert.deepEqual([top[5].name, top[5].count, top[5].units], ['온천2구역아파트', 4, 3853], '같은 시군구·같은 이름(한 단지의 동·공구)은 한 줄로 합친다 — 상위 10에 같은 이름이 되풀이되지 않는다');
+  assert.equal(new Set(top.map((r) => `${r.sgg}|${r.name}`)).size, top.length);
+  const all = V.listOrder(V.applyFilters(rows, {}));
+  assert.ok(all.every((r, i) => i === 0 || (V.lateOf(all[i - 1]) ?? -1) >= (V.lateOf(r) ?? -1)), '목록 기본 순서 = 점검 필요 순(지연 개월 큰 순, 경과 없는 사업은 뒤)');
 });
 
 test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 75.8% 부족 · ② 인허가 113,632호 · 지연 315건 · 대구 · 앞으로 12개월 준공 214,975호(= 종합상황판 향후 12개월)', () => {
   const q = Q({});
   assert.deepEqual(Object.keys(q), ['계획대로 가고 있는가', '어디서 막혀 있는가', '어떤 사업이 늦어지는가', '어디를 먼저 챙기는가', '앞으로 얼마나 공급되는가']);
   const a = q['계획대로 가고 있는가'];
-  assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['75.8', '% 부족', '9·7 ①계획 3,560 / 14,694', 'bad', '/projects?policy=97']);
+  assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['75.8', '% 부족', '9·7 대책 ①계획 3,560 / 14,694', 'bad', '/projects?policy=97&sido=all']);
   assert.match(a.tip, /추정 포함 5,789호/, '추정 포함은 title 에만');
-  assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['② 인허가', '지연·주의 113,632호', '/projects?stage=1']);
-  assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['315', '장기 219 · 주의 86', '/projects?status=check']);
+  assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['② 인허가', '병목 · 지연 83,715호', '/projects?sido=all&stage=1&status=check']);
+  assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['315', '지연 96 · 장기 219', '/projects?sido=all&status=check'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로');
   assert.deepEqual([q['어디를 먼저 챙기는가'].value, q['어디를 먼저 챙기는가'].sub, q['어디를 먼저 챙기는가'].href], ['대구', '지연·주의 25,072호', '/projects?sido=27']);
   const up = BOARD.upcoming.reduce((s, x) => ({ units: s.units + x.units, projects: s.projects + x.projects }), { units: 0, projects: 0 });
-  assert.deepEqual([q['앞으로 얼마나 공급되는가'].value, q['앞으로 얼마나 공급되는가'].sub, q['앞으로 얼마나 공급되는가'].href], [up.units.toLocaleString('en-US'), `12개월 준공 예정 · ${up.projects}건`, '/region']);
+  assert.deepEqual([q['앞으로 얼마나 공급되는가'].value, q['앞으로 얼마나 공급되는가'].sub, q['앞으로 얼마나 공급되는가'].href], [up.units.toLocaleString('en-US'), `12개월 준공 예정 · ${up.projects}건`, '/region?sido=all']);
   assert.equal(up.units, 214975);
 });
 
 test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·주의 2) · 인천 2,890호 · 13,372호 24건 / 1·29 는 목표가 없어 정상 비율 / 시도를 고르면 시군구', () => {
   const q = Q({ policy: pol('97') });
-  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['75.8', '9·7 ①계획 3,560 / 14,694'], ['③ 착공', '지연·주의 3,510호'], ['2', '장기 2 · 주의 2'], ['인천', '지연·주의 2,890호'], ['13,372', '12개월 준공 예정 · 24건']]);
+  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['75.8', '9·7 대책 ①계획 3,560 / 14,694'], ['③ 착공', '병목 · 지연 1,666호'], ['2', '지연 0 · 장기 2'], ['인천', '지연·주의 2,890호'], ['13,372', '12개월 준공 예정 · 24건']]);
   assert.equal(q['계획대로 가고 있는가'].href, undefined, '이미 9·7 렌즈');
   const q129 = Q({ policy: pol('129') });
   assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100', '% 정상', '판정 38건 · 일정 없음 9']);
   assert.deepEqual([q129['어디서 막혀 있는가'].value, q129['어디서 막혀 있는가'].muted, q129['어디서 막혀 있는가'].href], ['없음', true, undefined]);
+  const qm = Q({ metro: true });
+  assert.deepEqual([qm['어디서 막혀 있는가'].href, qm['앞으로 얼마나 공급되는가'].href], ['/projects?sido=metro&stage=2&status=check', '/region'], '수도권(기본) 범위의 링크는 수도권을 지킨다');
   const q41 = Q({ sido: '41' });
   assert.deepEqual([q41['어디를 먼저 챙기는가'].value, q41['어디를 먼저 챙기는가'].href], ['이천시', '/projects?sgg=41500']);
   assert.equal(q41['앞으로 얼마나 공급되는가'].href, '/region?sido=41');
@@ -220,8 +228,8 @@ test('화면 적용: 목록은 발급 사업만 서랍으로 열고(행·이름 
   assert.match(drawer, /e\.key !== 'Escape'/); assert.match(drawer, /window\.history\.go\(-n\.depth\)/); assert.match(drawer, /router\.replace\(closeHref, \{ scroll: false \}\)/);
   assert.match(drawer, /w-\[min\(60vw,980px\)\]/, '오른쪽 약 60% 폭');
   const det = read('components/projects/ProjectDetail.tsx');
-  assert.match(det, /<StageLadder flat current=\{r\.stage\}/);
-  assert.match(det, />기준선 없음</, "타임라인 머리에 '기준선 없음' 한 번");
+  assert.match(det, /<StageSteps current=\{r\.board\} reached=\{r\.reached\}/, '서랍의 단계 줄도 목록과 같은 리본 칸 번호');
+  assert.match(det, />당초 일정 없음</, "타임라인 머리에 '당초 일정 없음' 한 번");
   assert.match(det, /hiddenNote\(p\.hiddenAt!, p\.hiddenReason\)/);
   /* 화면은 자료를 lib/board/projects-index.ts 한 곳에서만 읽고, 옛 상세·보고자료 화면은 없다 */
   for (const f of ['app/(dashboard)/projects/page.tsx', 'components/projects/ProjectDetail.tsx', 'components/projects/Summary.tsx']) assert.doesNotMatch(read(f), /data\/board\/(ledger-map|projects-index|project-detail|policy-progress)\.json/, f);

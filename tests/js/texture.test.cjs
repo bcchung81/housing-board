@@ -31,7 +31,6 @@ test('E4 글꼴 역할: 본문은 시스템 한글 글꼴, 로고·메뉴·제�
   for (const f of ['app/(dashboard)/layout.tsx', 'app/(map)/layout.tsx']) { const s = read(f); assert.match(s, /className=\{`font-sans \$\{doHyeon\.variable\}/, f); assert.doesNotMatch(s, /doHyeon\.className/, f); }
   assert.match(read('components/TopNav.tsx'), /<header className="[^"]*font-display/);
   assert.match(read('components/ui.tsx'), /<b className="font-display text-\[min\(30px,15cqi\)\]/, 'KPI 큰 숫자는 Do Hyeon, 칸이 좁으면 줄어든다');
-  assert.match(read('components/StageLadder.tsx'), /<b className="font-display text-\[20px\]/);
   assert.match(read('components/board/styles.ts'), /export const disp = "font-display /);
   assert.match(css, /:root\{--font-body:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;--font-disp:var\(--font-do-hyeon,'Do Hyeon'\)/);
   for (const r of [/body\{font-family:var\(--font-body\);/, /\.maplibregl-map\{font-family:var\(--font-body\)\}/, /\.maplibregl-popup-content\{font:13px\/1\.5 var\(--font-body\);/, /h1\{margin:0;font-family:var\(--font-disp\);/, /\.sum \.big\{font-family:var\(--font-disp\);/]) assert.match(css, r);

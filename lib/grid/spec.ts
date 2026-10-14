@@ -7,7 +7,9 @@ export type Kind = 'int' | 'delta' | 'pct' | 'text';
    사업 목록(2026-10-14): title(칸 툴팁) · tone(글자 색 bad 지연·warn 주의) · mark(견본 모양: outline 은 swatch 색 테두리만 — 지연, hatch 는 빗금 — 미확보) */
 export type CellObj = { text?: string; sort?: number | string | null; href?: string; swatch?: string; dashed?: boolean; prov?: boolean; code?: boolean; muted?: boolean; na?: string; title?: string; tone?: 'bad' | 'warn'; mark?: 'outline' | 'hatch';
   /* 사업 화면(2026-10-14 시안): pill = 단계 알약(옅은 단계색 바탕 + 단계 글자색), strong = 굵게(지연 개월) */
-  pill?: { color: string; ink: string }; strong?: boolean };
+  pill?: { color: string; ink: string }; strong?: boolean;
+  /* 지도 연결점(2026-10-14): doc = href 를 <a>(문서 이동 — 지도는 다른 루트 레이아웃)로, icon 'map' = 글자 대신 지도 표지(글자는 읽기 도구·title 에) */
+  doc?: boolean; icon?: 'map' };
 export type Cell = number | string | null | undefined | CellObj;
 /* wrap 은 긴 글자 열(최소 180px, 줄바꿈), clip 은 한 줄 말줄임 열(값 = CSS 최대 폭, 예 'clamp(180px,100vw - 1100px,380px)' — 잘린 칸은 title 로 전체 글자),
    sort:false 는 정렬하지 않는 열, group 이 같은 이웃 열은 위 줄 머리글 한 칸으로 묶인다 */

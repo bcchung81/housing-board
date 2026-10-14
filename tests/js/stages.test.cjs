@@ -21,29 +21,20 @@ test('공식 6단계: 이름·질문·공개 범위가 발표자료 SHEET 03 과
   assert.deepEqual(rows.map((r) => r.scope), ['gov', 'gov', 'gov', 'gov', 'pub', 'pub']);
 });
 
-test('사업 상세(서랍)는 공식 6단계 스텝(StageLadder, 한 줄)으로 지금 단계를 강조하고, 사업 목록은 리본 칸 칩·파이프라인으로 거른다. 옛 Stepper 는 없다', () => {
+test('사업 상세(서랍)·목록·타임라인은 같은 리본 칸 번호(①~⑥ 이름·단계색)를 쓰고, 공식 01~06 은 서랍 칸의 작은 보조 표기뿐이다. 단계 거르기는 파이프라인 칸으로 고르고 칩 줄에는 고른 단계만(풀기). 옛 Stepper·StageLadder 는 없다', () => {
   const det = read('components/projects/ProjectDetail.tsx');
-  assert.match(det, /import StageLadder from '[./]+StageLadder';/);
-  assert.match(det, /<StageLadder flat current=\{r\.stage\} href=\{\(code\) => `\/projects\?stage=\$\{BOARD_OF_STAGE\[code\]\}`\} \/>/, '사업 상세는 지금 단계를 강조하고, 칸은 그 리본 칸으로 거른 목록');
-  for (const f of ['components/projects/ProjectDetail.tsx', 'app/(dashboard)/projects/page.tsx']) assert.doesNotMatch(read(f), /Stepper/, f);
-  assert.ok(!fs.existsSync(path.join(ROOT, 'components/ui/stepper.tsx')), '쓰는 곳이 없는 stepper.tsx 는 지운다');
+  assert.match(det, /<StageSteps current=\{r\.board\} reached=\{r\.reached\} href=\{\(i\) => `\/projects\?stage=\$\{i\}`\} \/>/, '지금 단계 = 목록의 단계 알약과 같은 리본 칸');
+  for (const f of ['components/projects/ProjectDetail.tsx', 'app/(dashboard)/projects/page.tsx']) assert.doesNotMatch(read(f), /Stepper|StageLadder/, f);
+  for (const f of ['components/ui/stepper.tsx', 'components/StageLadder.tsx']) assert.ok(!fs.existsSync(path.join(ROOT, f)), `쓰는 곳이 없는 ${f} 는 지운다`);
+  const steps = read('components/projects/StageSteps.tsx');
+  assert.match(steps, /\{BOARD_CIR\[i\]\} \{name\}<\/b>/, '칸 이름은 ①~⑥');
+  assert.match(steps, /\{BOARD_OFFICIAL_SHORT\[i\]\}/, '공식 번호는 보조 표기');
+  assert.match(steps, /aria-current=\{on \? 'step' : undefined\}/);
+  assert.match(steps, /\$\{QUESTION\[i\]\}/, '단계마다 답할 질문은 칸의 title');
   const list = read('app/(dashboard)/projects/page.tsx');
-  assert.match(list, /href=\{at\(\{ stage: f\.stage === i \? undefined : String\(i\) \}\)\}/, '단계 칩은 다른 거르기(렌즈·지역·상태·기관)를 유지하고, 고른 단계를 다시 누르면 풀린다');
-  assert.match(list, /href=\{\(i\) => at\(\{ stage: f\.stage === i \? undefined : String\(i\) \}\)\}/, '파이프라인 칸도 같은 거르기');
-  assert.match(read('components/StageLadder.tsx'), /flat && 'h-auto min-h-\[64px\]'/, '서랍의 스텝은 계단 높이 대신 한 줄');
-});
-
-test('StageLadder: 공개 범위 범례, 계단(단계마다 높아지는 상자), 질문, 현재 단계 표시(aria-current), 단계 목록 링크, 900px 이하 세로 목록', () => {
-  const c = read('components/StageLadder.tsx');
-  assert.match(c, /담당자 열람 \(01~04\)/);
-  assert.match(c, /국민에게도 공개 \(05~06\)/);
-  assert.match(c, /'--h': `\$\{64 \+ i \* 16\}px`/, '상자 높이가 단계마다 16px 씩 커진다');
-  assert.match(c, /aria-current=\{on \? 'step' : undefined\}/);
-  assert.match(c, /href = \(code\) => `\/projects\?stage=\$\{code\}`/, '칸은 그 단계로 거른 사업 목록으로 간다');
-  assert.match(c, /<Link href=\{href\(s\.code\)\}/);
-  assert.match(c, /\{s\.q\}/);
-  assert.match(c, /mobile:grid-cols-1/);
-  assert.match(c, /gov: 'var\(--scope-gov\)', pub: 'var\(--scope-pub\)'/);
+  assert.match(list, /href=\{\(i\) => at\(\{ stage: f\.stage === i \? undefined : String\(i\) \}\)\}/, '파이프라인 칸이 단계 거르기(다른 거르기 유지, 다시 누르면 풀림)');
+  assert.doesNotMatch(list, /BOARD_NAMES\.map\(\(n, i\) => <Chip/, '칩 줄에 단계 칩 6개를 두지 않는다');
+  assert.match(list, /f\.stage !== undefined \? <ClearChip href=\{at\(\{ stage: undefined \}\)\}/, '고른 단계는 칩 줄에서 풀 수 있다');
 });
 
 test('지도의 단계 필터·단지 카드 단계 위치는 공식 6단계이고, 단지 상태는 사업 레지스트리와 같은 매핑으로 묶인다', () => {

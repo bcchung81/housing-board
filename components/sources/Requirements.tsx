@@ -7,7 +7,7 @@ import { PanelHead } from '../page';
 import { Card } from '../ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { HATCH } from '../ui/chips';
-import { VERDICT, countVerdicts, directiveText, type RequirementsDoc, type Verdict } from '../../lib/board/requirements';
+import { VERDICT, countVerdicts, datesOf, directiveText, type RequirementsDoc, type Verdict } from '../../lib/board/requirements';
 
 const ZEBRA = 'bg-[color-mix(in_srgb,var(--pn2)_45%,var(--card))]';
 const SW: Record<Verdict, { cls: string; style?: CSSProperties }> = {
@@ -25,7 +25,7 @@ export default function Requirements({ doc }: { doc: RequirementsDoc }) {
   const n = countVerdicts(doc);
   return (
     <Card render={<section aria-label="요구사항 충족" />}>
-      <PanelHead title="요구사항 충족" tip="HOME 기능 요구 F-01~F-12 · 판정은 실제 자료로 센 근거 지표와 규칙(tools/ledger/requirements.js)으로 냄 — 충족·부분·없음 · 근거 지표에 마우스를 올리면 계산과 규칙 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행">
+      <PanelHead title="요구사항 충족" tip="HOME 기능 요구 12가지 · 판정은 실제 자료로 센 근거 지표와 규칙(tools/ledger/requirements.js)으로 냄 — 충족·부분·없음 · 근거 지표에 마우스를 올리면 계산과 규칙 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행">
         <span className="text-[14px] text-muted-foreground tabular-nums">충족 <b className="text-foreground">{n.met}</b> · 부분 <b className="text-foreground">{n.part}</b> · 없음 <b className="text-foreground">{n.none}</b></span>
       </PanelHead>
       <Table aria-label="요구사항 충족">
@@ -37,10 +37,10 @@ export default function Requirements({ doc }: { doc: RequirementsDoc }) {
         <TableBody>
           {doc.items.map((r, i) => (
             <TableRow key={r.id} id={r.id} className={`scroll-mt-24 target:outline-2 target:-outline-offset-2 target:outline-primary ${i % 2 ? ZEBRA : 'bg-card'}`}>
-              <TableCell className="text-left whitespace-normal"><span title={`${r.criterion}\n- ${r.items.join('\n- ')}`}><b className="tabular-nums">{r.id}</b> {r.title}</span></TableCell>
+              <TableCell className="text-left whitespace-normal"><span title={`${r.id} · ${r.criterion}\n- ${r.items.join('\n- ')}`}><b>{r.title}</b> <span className="text-[13px] text-muted-foreground tabular-nums">{r.id}</span></span></TableCell>
               <TableCell className={`text-left ${r.priority === '필수' ? 'font-bold' : 'text-muted-foreground'}`}>{r.priority}</TableCell>
               <TableCell className="text-left">
-                {r.dates.map((d, j) => <span key={d}>{j ? ' · ' : ''}<span className="tabular-nums" title={directiveText(doc, d)}>{d}</span></span>)}
+                {datesOf(r).map((d, j) => <span key={d}>{j ? ' · ' : ''}<span className="tabular-nums" title={directiveText(doc, d)}>{d}</span></span>)}
               </TableCell>
               <TableCell className="text-left"><Mark v={r.verdict} /></TableCell>
               <TableCell className="text-left"><span className="tabular-nums" title={r.tip}>{r.metric}</span></TableCell>

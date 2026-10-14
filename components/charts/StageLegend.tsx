@@ -18,7 +18,7 @@ export default function StageLegend({ metrics, names = 'official', compact = fal
       title={STAGES.map((s, i) => { const k = metricAt(i, s.code), stage = names === 'board' ? K[i] : s.name; return `${names === 'board' ? CIR[i] : s.code}${stage}${k ? (METRIC_LABEL[k] !== stage ? `(${METRIC_LABEL[k]})` : '') : ' 자료 없음'}`; }).join(' · ')}>
       {STAGES.map((s, i) => {
         const k = metricAt(i, s.code);
-        return k ? <li key={s.code} className="relative whitespace-nowrap"><i className="absolute inset-x-0 -bottom-[3px] block h-[3px] rounded-full" style={{ background: METRIC_COLOR[k] }} aria-hidden="true" />{METRIC_LABEL[k]}</li> : null;
+        return k ? <li key={s.code} className="relative whitespace-nowrap"><i className="absolute inset-x-0 -bottom-[3px] block h-[3px] rounded-full" style={{ background: METRIC_COLOR[k] }} aria-hidden="true" />{names === 'board' ? K[i] : METRIC_LABEL[k]}</li> : null;
       })}
     </ul>
   );

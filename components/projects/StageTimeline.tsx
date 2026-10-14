@@ -1,7 +1,7 @@
 /* 사업 상세 서랍의 '단계 타임라인'(서버가 그린다 — 위치는 lib/board/projects-view.ts timelineOf 의 %). 시안: docs/design/home-concept/assets/app.js timeline.
    단계마다 두 줄: 현재(원장 현재 예정 — 점선 칸, 경과면 빨간·노란 테두리) · 실제(원천에서 확인한 날짜 — 점, ③착공은 공사 기간 막대). 기록이 하나도 없는 단계는 줄을 그리지 않는다.
    예정일이 지났는데 실제가 없으면 실제 줄에 빗금. 오른쪽 열은 예정일 경과 개월. 아래 선은 공정률 보고. 세로 굵은 선은 오늘(원장 기준일의 달).
-   범례는 이 사업 타임라인에 그린 표지만(TimelineLegend). 기준선(당초) 줄은 원천이 없어 없다 — 서랍 머리에서 '기준선 없음' 한 번. */
+   범례는 이 사업 타임라인에 그린 표지만(TimelineLegend). 기준선(당초) 줄은 원천이 없어 없다 — 서랍 머리에서 '당초 일정 없음' 한 번. 오른쪽 열 머리 = '예정 경과'. */
 import type { ReactNode } from 'react';
 import { cn } from 'cn';
 import { HATCH } from '../ui/chips';
@@ -14,7 +14,7 @@ const lateText = (cls: string) => (cls === 'delay' ? 'text-bad font-bold' : 'tex
 export function TimelineLegend({ t }: { t: Timeline }) {
   const li = 'flex items-center gap-1 whitespace-nowrap';
   return (
-    <ul className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[13px] text-muted-foreground" aria-label="범례">
+    <ul className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[14px] text-muted-foreground" aria-label="범례">
       {t.used.plan ? <li className={li} title="원장 현재 예정(CURRENT) 하나"><i className="block h-[9px] w-4 rounded-[2px] border-[1.5px] border-dashed border-mute [background:color-mix(in_srgb,var(--mute)_22%,var(--card))]" aria-hidden="true" />현재 예정</li> : null}
       {t.used.actual ? <li className={li} title="원천에서 확인한 날짜"><i className="block h-[5px] w-4 bg-mute" aria-hidden="true" />실제</li> : null}
       {t.used.late ? <li className={li} title="현재 예정일 경과 6개월 이상(1~6개월은 노란 테두리)"><i className="block h-[9px] w-4 rounded-[2px] border-[1.5px] border-bad" aria-hidden="true" />지연</li> : null}
@@ -27,10 +27,10 @@ export function TimelineLegend({ t }: { t: Timeline }) {
 
 /* 마커 옆 날짜 꼬리표: 오른쪽 끝(78% 넘음)이면 마커 왼쪽 */
 function Tag({ at, left = at > 78, className, children }: { at: number; left?: boolean; className?: string; children: ReactNode }) {
-  return <span aria-hidden="true" className={cn('pointer-events-none absolute top-1/2 z-[3] -translate-y-1/2 rounded-[3px] bg-chartbg px-1 text-[12px] leading-[15px] whitespace-nowrap tabular-nums', left ? '-ml-2.5 -translate-x-full' : 'ml-2.5', className)} style={{ left: `${at}%` }}>{children}</span>;
+  return <span aria-hidden="true" className={cn('pointer-events-none absolute top-1/2 z-[3] -translate-y-1/2 rounded-[3px] bg-chartbg px-1 text-[13px] leading-[16px] whitespace-nowrap tabular-nums', left ? '-ml-2.5 -translate-x-full' : 'ml-2.5', className)} style={{ left: `${at}%` }}>{children}</span>;
 }
 const Line = ({ label, children }: { label: string; children: ReactNode }) => (
-  <><span className="text-[12px] leading-none text-muted-foreground">{label}</span><span className="relative block h-[16px]">{children}</span></>
+  <><span className="text-[13px] leading-none text-muted-foreground">{label}</span><span className="relative block h-[16px]">{children}</span></>
 );
 
 export default function StageTimeline({ t }: { t: Timeline }) {
@@ -42,8 +42,9 @@ export default function StageTimeline({ t }: { t: Timeline }) {
         <span className="pointer-events-none absolute inset-y-0 right-[88px] left-[160px]" aria-hidden="true">
           {t.years.map((y) => <span key={y} className="absolute inset-y-0 border-l border-border" style={{ left: `${yearAt(t, y)}%` }} />)}
           <span className="absolute -top-6 bottom-0 z-[1] border-l-2 border-foreground" style={{ left: `${t.today}%` }} />
-          <span className={cn('absolute -top-[26px] pl-1.5 text-[12px] font-bold whitespace-nowrap tabular-nums', t.today > 85 && '-translate-x-full pr-1.5 pl-0')} style={{ left: `${t.today}%` }}>오늘 {t.todayText}</span>
+          <span className={cn('absolute -top-[26px] pl-1.5 text-[13px] font-bold whitespace-nowrap tabular-nums', t.today > 85 && '-translate-x-full pr-1.5 pl-0')} style={{ left: `${t.today}%` }}>오늘 {t.todayText}</span>
         </span>
+        {t.lanes.length ? <span className="absolute -top-[26px] right-0 w-[76px] text-right text-[13px] whitespace-nowrap text-muted-foreground" title="현재 예정일이 지난 개월(지연 6개월 이상은 빨강, 주의 1~6개월은 노랑)">예정 경과</span> : null}
         {t.lanes.map((l) => {
           const c = BOARD_COLOR[l.board];
           return (
@@ -79,7 +80,7 @@ export default function StageTimeline({ t }: { t: Timeline }) {
                 <polyline fill="none" stroke="var(--st-build)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" points={pr.map((p) => `${(p.at * 10).toFixed(1)},${(100 - p.pct).toFixed(1)}`).join(' ')} />
               </svg>
               {pr.map((p, i) => <span key={i} className="absolute size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-card" style={{ left: `${p.at}%`, top: `${100 - p.pct}%`, background: 'var(--st-build)' }} title={p.text} />)}
-              <span className={cn('absolute -translate-y-1/2 pl-2 text-[12px] font-bold whitespace-nowrap tabular-nums', last.at > 85 && '-translate-x-full pr-2 pl-0')} style={{ left: `${last.at}%`, top: `${100 - last.pct}%`, color: 'var(--st-build-ink)' }}>{last.pct}%</span>
+              <span className={cn('absolute -translate-y-1/2 pl-2 text-[13px] font-bold whitespace-nowrap tabular-nums', last.at > 85 && '-translate-x-full pr-2 pl-0')} style={{ left: `${last.at}%`, top: `${100 - last.pct}%`, color: 'var(--st-build-ink)' }}>{last.pct}%</span>
             </span>
             <span />
           </div>

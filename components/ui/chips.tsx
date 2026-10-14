@@ -7,9 +7,10 @@ import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronDown, X } from 'lucide-react';
 import { cn } from 'cn';
+import LinkPending from './link-pending';
 
 export const HATCH = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_45%,transparent)_0_1.5px,transparent_1.5px_3.5px)]';
-const CHIP = 'flex items-center gap-1.5 rounded-full border border-transparent px-2 py-[3px] text-[14px] leading-[1.5] whitespace-nowrap text-foreground no-underline [transition:background_.15s,border-color_.15s] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-[1500px]:px-1';
+const CHIP = 'relative flex items-center gap-1.5 rounded-full border border-transparent px-2 py-[3px] text-[14px] leading-[1.5] whitespace-nowrap text-foreground no-underline [transition:background_.15s,border-color_.15s] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-[1500px]:px-1';
 const ON = 'border-primary bg-accent';
 const OFF = 'hover:bg-pn2';
 
@@ -31,30 +32,34 @@ export const ChipSep = () => <span className="h-5 w-px bg-border mobile:hidden" 
 export function Chip({ href, on, title, swatch, children }: { href: string; on?: boolean; title?: string; swatch?: Swatch; children: ReactNode }) {
   return (
     <Link href={href} scroll={false} aria-current={on ? 'true' : undefined} title={title} className={cn(CHIP, on ? ON : OFF)}>
-      {swatch ? <SwatchMark {...swatch} /> : null}{children}
+      {swatch ? <SwatchMark {...swatch} /> : null}{children}<LinkPending />
     </Link>
   );
 }
 
 /* 고른 값을 푸는 칩(예: 시군구 거르기): 이름 + × */
 export function ClearChip({ href, title, children }: { href: string; title: string; children: ReactNode }) {
-  return <Link href={href} scroll={false} title={title} aria-label={`${typeof children === 'string' ? children : ''} 거르기 풀기`} className={cn(CHIP, ON)}>{children}<X className="size-3.5 shrink-0" aria-hidden="true" /></Link>;
+  return <Link href={href} scroll={false} title={title} aria-label={`${typeof children === 'string' ? children : ''} 거르기 풀기`} className={cn(CHIP, ON)}>{children}<X className="size-3.5 shrink-0" aria-hidden="true" /><LinkPending /></Link>;
 }
 
-export type MenuItem = { href: string; label: string; on?: boolean; title?: string };
-export function ChipMenu({ label, on, items, cols = 1, title }: { label: string; on?: boolean; items: MenuItem[]; cols?: 1 | 2; title?: string }) {
-  const current = items.find((i) => i.on)?.label;
+/* doc: 다른 루트 레이아웃(지도 /map)으로 가는 항목 — <Link> 가 아니라 <a>(문서 이동) */
+export type MenuItem = { href: string; label: string; on?: boolean; title?: string; doc?: boolean };
+const ITEM = 'block rounded-[8px] px-3 py-1.5 text-[14px] whitespace-nowrap text-foreground no-underline hover:bg-pn2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary';
+/* fixed: 고른 값이 있어도 이름(label)을 그대로 보인다(지도 시군구 고르기처럼 거르기가 아닌 메뉴). right: 펼침 목록을 오른쪽 끝에 맞춘다 */
+export function ChipMenu({ label, on, items, cols = 1, title, fixed = false, right = false }: { label: ReactNode; on?: boolean; items: MenuItem[]; cols?: 1 | 2; title?: string; fixed?: boolean; right?: boolean }) {
+  const current = fixed ? undefined : items.find((i) => i.on)?.label;
   return (
     <details key={current ?? ''} className="group relative">
       <summary title={title ?? current} className={cn(CHIP, 'cursor-pointer list-none [&::-webkit-details-marker]:hidden', on ? ON : OFF)}>
         <span className="max-w-[9em] truncate">{current ?? label}</span><ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
       </summary>
-      <div className="absolute top-full left-0 z-30 mt-1 max-h-[60vh] min-w-[160px] overflow-y-auto rounded-[10px] border border-border bg-popover p-1 text-popover-foreground shadow-[var(--shadow-pop)]">
+      <div className={cn('absolute top-full z-30', right ? 'right-0' : 'left-0', 'mt-1 max-h-[60vh] min-w-[160px] overflow-y-auto rounded-[10px] border border-border bg-popover p-1 text-popover-foreground shadow-[var(--shadow-pop)]')}>
         <ul className={cn('m-0 list-none p-0', cols === 2 ? 'grid grid-cols-2 gap-0.5' : 'flex flex-col gap-0.5')}>
           {items.map((i) => (
             <li key={i.href}>
-              <Link href={i.href} scroll={false} title={i.title} aria-current={i.on ? 'true' : undefined}
-                className={cn('block rounded-[8px] px-3 py-1.5 text-[14px] whitespace-nowrap text-foreground no-underline hover:bg-pn2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary', i.on && 'bg-accent font-bold')}>{i.label}</Link>
+              {i.doc ? <a href={i.href} title={i.title} className={cn(ITEM, i.on && 'bg-accent font-bold')}>{i.label}</a> : (
+                <Link href={i.href} scroll={false} title={i.title} aria-current={i.on ? 'true' : undefined} className={cn(ITEM, 'relative', i.on && 'bg-accent font-bold')}>{i.label}<LinkPending /></Link>
+              )}
             </li>
           ))}
         </ul>

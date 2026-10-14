@@ -1,12 +1,15 @@
 'use client';
 /* 지역 공급 ① 앞으로 12개월: 파동 타임라인(달마다 사업 조각을 호수만큼 쌓음) · 지도(원 넓이 = 호수, 서울·인천·경기만) · 고른 달 목록.
    세 블록이 같은 고른 달(주소 ?m=)과 강조 사업을 쓴다. 시도·종류 거르기는 서버(칩 링크)가 하고, 이 섬은 달 고르기·강조·지도 원 크기만 맡는다.
-   마우스는 조각·원에 HUD(떠 있는 설명)를, 키보드는 달 단추(←→ Home End)와 목록 링크가 같은 정보를 준다. 시안: docs/design/home-concept/assets/app.js PAGES.region */
+   마우스는 조각·원에 HUD(떠 있는 설명)를, 키보드는 달 단추(←→ Home End)와 목록 링크가 같은 정보를 준다. 시안: docs/design/home-concept/assets/app.js PAGES.region
+   지도 연결점(수도권 사업만): 목록 행의 지도 표지, 원·조각을 눌러 고른 사업은 지도 상자 위 '지도에서 보기'. 지도(/map)는 다른 루트 레이아웃이라 <a>.
+   sido: 'metro' 수도권 · '' 전국 · 'NN' 시도 하나. */
 import * as React from 'react';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, MapPin } from 'lucide-react';
 import { cn } from 'cn';
-import { CAL_KINDS, CAL_TYPE, LOC_NAME, type AheadEntry, type CalKind } from '../../lib/board/region';
+import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, inScope, type AheadEntry, type CalKind } from '../../lib/board/region';
+import { mapHref } from '../../lib/board/map-href';
 
 type MapData = { view: [number, number, number, number]; sgg: { s: string; n: string; d: string }[]; districts: { n: string; d: string }[] };
 type Props = { sido: string; regionName: string; months: string[]; nowM: string; list: AheadEntry[]; initialM: string; map: MapData | null };
@@ -20,11 +23,12 @@ const monthLabel = (ym: string) => `${ym.slice(0, 4)}년 ${Number(ym.slice(5, 7)
 const dayText = (e: AheadEntry) => (e.day ? `${Number(e.day.slice(5, 7))}월 ${Number(e.day.slice(8, 10))}일` : `${Number(e.ym.slice(5, 7))}월 중`);
 const light = (c: string, p: number) => `color-mix(in srgb,${c} ${p}%,var(--card))`;
 const hollow = (e: AheadEntry) => e.loc === 'rep' || e.loc === 'area';
+const onMap = (e: AheadEntry) => METRO.includes(e.sd);
 const HATCH_SW = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_45%,transparent)_0_1.5px,transparent_1.5px_3.5px)]';
 const LINK = 'group/action inline-flex flex-none cursor-pointer items-center gap-px rounded-[4px] border-0 bg-transparent p-0 text-[14px] leading-[1.45] whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
 const KindChip = ({ t }: { t: CalKind }) => (
-  <span className="inline-block flex-none rounded-full px-2 text-[12px] leading-[19px] font-bold whitespace-nowrap" style={{ background: light(CAL_TYPE[t].color, 16), color: CAL_TYPE[t].ink }}>{CAL_TYPE[t].name}</span>
+  <span className="inline-block flex-none rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: light(CAL_TYPE[t].color, 16), color: CAL_TYPE[t].ink }}>{CAL_TYPE[t].name}</span>
 );
 
 export default function Ahead({ sido, regionName, months, nowM, list, initialM, map }: Props) {
@@ -107,7 +111,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
           {[max, max / 2, 0].map((v, i) => (
             <React.Fragment key={i}>
               <span className="absolute inset-x-0 border-t border-border" style={{ top: `${i * 50}%` }} />
-              <span className="absolute right-[calc(100%+8px)] -translate-y-1/2 text-[12px] leading-none whitespace-nowrap text-mute tabular-nums" style={{ top: `${i * 50}%` }}>{man(v)}</span>
+              <span className="absolute right-[calc(100%+8px)] -translate-y-1/2 text-[13px] leading-none whitespace-nowrap text-mute tabular-nums" style={{ top: `${i * 50}%` }}>{man(v)}</span>
             </React.Fragment>
           ))}
         </div>
@@ -128,16 +132,16 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
                 onClick={(ev) => { const seg = (ev.target as HTMLElement).closest<HTMLElement>('[data-seg]'); pick(x, seg ? seg.dataset.seg! : null); }}
                 className="btn-reset group/m flex min-w-0 flex-col items-center rounded-[8px] px-0.5 pt-1 pb-0.5 enabled:cursor-pointer enabled:hover:bg-[color-mix(in_srgb,var(--pn2)_70%,transparent)] aria-checked:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
                 <span className="flex h-[36px] flex-col items-center justify-end leading-[1.25] tabular-nums">
-                  {xs.length ? <><b className="text-[13px] whitespace-nowrap">{man(tot[i])}<small className="ml-px text-[11px] font-normal text-muted-foreground">호</small></b><span className="text-[12px] whitespace-nowrap text-muted-foreground">{xs.length}곳</span></> : null}
+                  {xs.length ? <><b className="text-[13px] whitespace-nowrap">{man(tot[i])}<small className="ml-px text-[11px] font-normal text-muted-foreground">호</small></b><span className="text-[13px] whitespace-nowrap text-muted-foreground">{xs.length}곳</span></> : null}
                 </span>
                 <span className="relative flex w-full flex-col-reverse items-center" style={{ height: WAVE_H }}>
                   {xs.length
                     ? <span className="q-grow-y flex h-full w-[min(30px,62%)] flex-col-reverse [&>span:last-child]:rounded-t-[3px]" style={{ ['--i' as string]: i }}>{segs(xs, x)}</span>
-                    : <><span className="text-[12px] leading-none text-muted-foreground">없음</span><span className="mb-1 block h-[5px] w-px bg-line2" /></>}
+                    : <><span className="text-[13px] leading-none text-muted-foreground">없음</span><span className="mb-1 block h-[5px] w-px bg-line2" /></>}
                 </span>
                 <span className="mt-1.5 flex flex-col items-center leading-[1.25]">
                   <span className="rounded-full px-1.5 text-[13px] whitespace-nowrap tabular-nums group-aria-checked/m:bg-primary group-aria-checked/m:font-bold group-aria-checked/m:text-primary-foreground">{Number(x.slice(5))}월</span>
-                  <span className="h-4 text-[11px] whitespace-nowrap text-muted-foreground">{x === nowM ? '이번 달' : x.endsWith('-01') ? x.slice(0, 4) : ''}</span>
+                  <span className="h-4 text-[12px] whitespace-nowrap text-muted-foreground">{x === nowM ? '이번 달' : x.endsWith('-01') ? x.slice(0, 4) : ''}</span>
                 </span>
               </button>
             );
@@ -165,8 +169,8 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
         onClick={(ev) => { const d = (ev.target as Element).closest<SVGElement>('[data-dot]'); const e = d ? byK.get(d.dataset.dot!) : undefined; if (e) { setHud(null); pick(e.ym, e.k); } }}>
         <svg viewBox={V.join(' ')} preserveAspectRatio="xMidYMid meet" className="absolute top-2 left-2 block h-[calc(100%-16px)] w-[calc(100%-16px)]" role="img" aria-label={`${regionName} 예정 사업 위치(목록과 같은 사업)`}>
           <g strokeLinejoin="round">
-            {map.sgg.filter((g) => g.s !== sido).map((g, i) => <path key={`o${i}`} d={g.d} fill="none" stroke="var(--border)" vectorEffect="non-scaling-stroke" />)}
-            {map.sgg.filter((g) => g.s === sido).map((g, i) => <path key={`s${i}`} d={g.d} fill="var(--card)" stroke="var(--line2)" vectorEffect="non-scaling-stroke"><title>{g.n}</title></path>)}
+            {map.sgg.filter((g) => !inScope(sido, g.s)).map((g, i) => <path key={`o${i}`} d={g.d} fill="none" stroke="var(--border)" vectorEffect="non-scaling-stroke" />)}
+            {map.sgg.filter((g) => inScope(sido, g.s)).map((g, i) => <path key={`s${i}`} d={g.d} fill="var(--card)" stroke="var(--line2)" vectorEffect="non-scaling-stroke"><title>{g.n}</title></path>)}
           </g>
           <g fill="color-mix(in srgb,var(--muted-foreground) 20%,transparent)" aria-hidden="true">
             {map.districts.map((x, i) => <path key={i} d={x.d}><title>{x.n}</title></path>)}
@@ -183,7 +187,13 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
             </g>
           ) : null}
         </svg>
-        <ul className="pointer-events-auto absolute bottom-2 left-3 m-0 flex list-none flex-wrap items-center gap-x-2.5 p-0 text-[12px] text-muted-foreground" aria-label="지도 범례">
+        {(() => { const sel = hl ? byK.get(hl) : undefined; return sel && onMap(sel) ? (
+          <a href={mapHref({ project: sel.id })} title={`${sel.name} — 지도에서 이 사업 위치와 주변 보기`}
+            className="absolute top-2 right-2 inline-flex max-w-[70%] items-center gap-1 rounded-[8px] border border-border bg-card px-2.5 py-1 text-[14px] font-bold text-foreground no-underline shadow-[var(--shadow-card)] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            <MapPin className="size-4 flex-none" aria-hidden="true" /><span className="truncate">{sel.name}</span><span className="flex-none font-normal text-muted-foreground">지도에서 보기 ›</span>
+          </a>
+        ) : <span className="pointer-events-none absolute top-2 right-3 text-[13px] text-muted-foreground">원을 누르면 그 사업을 지도에서 볼 수 있음</span>; })()}
+        <ul className="pointer-events-auto absolute bottom-2 left-3 m-0 flex list-none flex-wrap items-center gap-x-2.5 p-0 text-[13px] text-muted-foreground" aria-label="지도 범례">
           <li className="flex items-center gap-1" title="원 넓이 = 호수(호수 미확인은 가장 작은 원)"><i className="block size-[9px] rounded-full bg-mute" aria-hidden="true" />원 넓이 = 호수</li>
           <li className="flex items-center gap-1" title="정확한 좌표가 없어 시군구 중심(또는 시군구·동 근사 위치)에 둔 사업"><i className="block size-[9px] rounded-full border-[1.5px] border-mute" aria-hidden="true" />대표 위치</li>
           <li className="flex items-center gap-1" title="공공주택지구 공동주택용지(V-World LT_C_LHBLPN)"><i className="block size-[9px] rounded-[2px]" style={{ background: 'color-mix(in srgb,var(--muted-foreground) 20%,transparent)' }} aria-hidden="true" />지구</li>
@@ -210,15 +220,18 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
               <KindChip t={e.type} />
               <span className="min-w-0 flex-1 truncate font-bold" title={e.name}>
                 {href ? <Link href={href} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link> : e.name}
+                {href ? null : <span className="ml-1.5 text-[13px] font-normal text-muted-foreground" title="발급 전 후보 — 사업 번호가 아직 없어 상세가 없음">후보</span>}
               </span>
               <span className="w-[74px] flex-none whitespace-nowrap text-muted-foreground tabular-nums">{dayText(e)}</span>
               <span className="w-[96px] flex-none truncate text-muted-foreground" title={e.sgg}>{e.place}</span>
               <span className="w-[68px] flex-none text-right whitespace-nowrap tabular-nums">{e.units ? `${fmt(e.units)}호` : <span className="text-[13px] text-muted-foreground" title="호수 미확인">미확인</span>}</span>
+              <span className="w-5 flex-none">{onMap(e) ? <a href={mapHref({ project: e.id })} title={`${e.name} — 지도에서 보기`} aria-label={`${e.name} 지도에서 보기`} className="flex rounded-[4px] text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"><MapPin className="size-4" aria-hidden="true" /></a> : null}</span>
               <span className="w-4 flex-none">{href ? <Link href={href} tabIndex={-1} aria-hidden="true" className="flex text-muted-foreground hover:text-primary"><ChevronRight className="size-4" /></Link> : null}</span>
             </li>
           );
         })}
       </ol>
+      {xs.some((e) => !e.drawer) ? <p className="m-0 mt-1.5 text-[14px] text-muted-foreground">후보 = 사업 번호 발급 전이라 상세가 없는 사업(다음 원장에서 열림)</p> : null}
       {xs.length > shown.length ? <button type="button" onClick={() => setMore(true)} className={cn('btn-reset mt-2', LINK)}>더 보기 · 외 {xs.length - shown.length}곳 {fmt(sum(xs.slice(LIST_N), (e) => e.units))}호</button> : null}
     </div>
   );

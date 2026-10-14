@@ -14,6 +14,9 @@ import { Prov } from '../../../../components/ui';
 import { NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, ymDot, ytd } from '../../../../lib/board/calc';
 import { AGENCIES } from '../../../../lib/board/agencies';
 import { getBoardData } from '../../../../lib/board/data';
+import { mapHref } from '../../../../lib/board/map-href';
+import { getProjectsIndex } from '../../../../lib/board/projects-index';
+import { isMetro, sggOfAddress } from '../../../../lib/board/projects-view';
 import { METRIC_STAGE } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
 import type { Col } from '../../../../lib/grid/spec';
@@ -22,7 +25,8 @@ type Props = { params: Promise<{ id: string }> };
 export const generateStaticParams = () => AGENCIES.map((a) => ({ id: a.id }));
 const KS = [['permit', '인허가'], ['start', '착공'], ['complete', '준공']] as const;
 const YEAR_COLS: Col[] = [{ key: 'y', label: '연도', kind: 'text' }, { key: 'n', label: '블록' }, { key: 'units', label: '세대수' }];
-const BLOCK_COLS: Col[] = [{ key: 'date', label: '준공예정일', kind: 'text' }, { key: 'district', label: '사업지구', kind: 'text', wrap: true }, { key: 'block', label: '블록', kind: 'text' }, { key: 'type', label: '공급유형', kind: 'text' }, { key: 'units', label: '세대수' }, { key: 'location', label: '위치', kind: 'text', wrap: true }];
+const BLOCK_COLS: Col[] = [{ key: 'date', label: '준공예정일', kind: 'text' }, { key: 'district', label: '사업지구', kind: 'text', wrap: true }, { key: 'block', label: '블록', kind: 'text' }, { key: 'type', label: '공급유형', kind: 'text' }, { key: 'units', label: '세대수' }, { key: 'location', label: '위치', kind: 'text', wrap: true },
+  { key: 'map', label: '지도', kind: 'text', sort: false }];
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
@@ -60,6 +64,14 @@ export default async function AgencyDetail({ params }: Props) {
   const byYear = [...new Set(lh.blocks.map((b) => b.date.slice(0, 4)))].map((y) => ({ y, blocks: lh.blocks.filter((b) => b.date.startsWith(y)) }));
   const recent = molit.months.slice(-12).reverse();
   const prov = isProvisional(molit, last);
+  /* 블록 → 지도(수도권만): 원장에 같은 이름('지구 블록')의 사업이 있으면 그 사업, 없으면 주소의 시군구 */
+  const idx = a.id === 'lh' ? await getProjectsIndex() : null;
+  const byName = new Map((idx?.rows ?? []).filter((r) => isMetro(r.sgg)).map((r) => [`${r.sgg.slice(0, 2)}|${r.name}`, r.id]));
+  const blockMap = (b: (typeof lh.blocks)[number]) => {
+    if (!idx || !isMetro(b.sido)) return null;
+    const project = byName.get(`${b.sido}|${b.district} ${b.block}`), sgg = project ? null : sggOfAddress(b.location, b.sido, idx.sggNames);
+    return project || sgg ? { text: project ? '지도에서 이 블록 보기' : '지도에서 이 시군구 보기', href: mapHref({ project, sgg }), doc: true, icon: 'map' as const, title: project ? '지도에서 이 사업 위치 보기' : '사업 번호가 없어 지도에서 이 블록의 시군구를 보기' } : null;
+  };
   return (
     <Page>
       <PageHead crumbs={crumbs} title={a.name} tip={`통계누리 시행주체 '${a.actor}'의 전국 월별 호수${a.id === 'lh' ? '와 LH 준공 예정 블록' : ''}.`}
@@ -80,12 +92,12 @@ export default async function AgencyDetail({ params }: Props) {
       </Card>
       {a.id === 'lh' ? (
         <Card render={<section aria-label="LH 준공 예정" />}>
-          <PanelHead title="LH 준공 예정" tip={`준공예정일 순 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${lh.sourceAsOf}. 예정일은 그 시점의 계획입니다.`}>
+          <PanelHead title="LH 준공 예정" tip={`준공예정일 순 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${lh.sourceAsOf}. 예정일은 그 시점의 계획입니다. · 지도 열은 수도권 블록만(사업이 있으면 그 사업, 없으면 시군구)`}>
             <span className={`${sub} tabular-nums`}>{lh.count}블록 · {fmt(lh.units)}세대</span>
           </PanelHead>
           <DataGrid label="LH 준공 예정 연도별" cols={YEAR_COLS} rows={byYear.map((r) => ({ id: r.y, c: { y: r.y, n: r.blocks.length, units: r.blocks.reduce((s, b) => s + b.units, 0) } }))} />
           <DataGrid label="LH 준공 예정 블록" cols={BLOCK_COLS} maxHeight={520}
-            rows={lh.blocks.map((b, k) => ({ id: String(k), c: { date: { text: b.date, href: `/month/${b.date.slice(0, 7)}` }, district: b.district, block: b.block, type: b.type, units: b.units, location: b.location } }))} />
+            rows={lh.blocks.map((b, k) => ({ id: String(k), c: { date: { text: b.date, href: `/month/${b.date.slice(0, 7)}` }, district: b.district, block: b.block, type: b.type, units: b.units, location: b.location, map: blockMap(b) } }))} />
         </Card>
       ) : null}
     </Page>
