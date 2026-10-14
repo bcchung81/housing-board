@@ -101,12 +101,13 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
       </ChipBar>
 
       <Card render={<section aria-label={AHEAD_ALL} />}>
-        <PanelHead title={<>{kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground">{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}곳 · {man(units)}호</span></>} tip={AHEAD_TIP}>
+        <PanelHead title={<>{kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground">{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {man(units)}호</span></>} tip={AHEAD_TIP}>
           <InfoTip label="앞으로 12개월 읽는 법">
             <dl>
               <dt>{AHEAD_ALL}</dt><dd>사업 원장의 현재 예정(모집공고·준공·입주)이 {ymDot(months[0])}~{ymDot(months[11])}에 든 사업 · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌</dd>
               <dt>준공 칩</dt><dd>사업 화면 &apos;{AHEAD_COMPLETION}&apos;과 같은 범위·같은 값</dd>
-              <dt>{CAND_NAME}</dt><dd>사업 번호가 아직 없는 사업 — 누르면 간단 보기</dd>
+              <dt>(후보) {CAND_NAME}</dt><dd>사업 번호가 아직 없는 사업 — 누르면 간단 보기</dd>
+              <dt>키보드</dt><dd>달 막대는 ←→ 로 옮기고, 지도 원은 Tab 으로 들어가 ←→ 로 옮긴 뒤 Enter 로 그 사업을 고릅니다</dd>
               <dt>예정일</dt><dd>계획이라 바뀔 수 있고, 청약 자격은 모집공고에서 확인</dd>
             </dl>
           </InfoTip>
@@ -115,7 +116,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
               const xs = all.filter((e) => e.type === t), next = toggleKind(kinds, t);
               return (
                 <Chip key={t} href={href({ kinds: next ?? kinds })} on={kinds.includes(t)} swatch={{ kind: 'fill', color: CAL_TYPE[t].color }}
-                  title={`${name} · 1년 안 ${CAL_TYPE[t].name} 예정 ${xs.length}곳 · ${fmt(xs.reduce((s, e) => s + e.units, 0))}호${xs.some((e) => !e.units) ? ` · 호수 미확인 ${xs.filter((e) => !e.units).length}` : ''}`}>
+                  title={`${name} · 1년 안 ${CAL_TYPE[t].name} 예정 ${xs.length}건 · ${fmt(xs.reduce((s, e) => s + e.units, 0))}호${xs.some((e) => !e.units) ? ` · 호수 미확인 ${xs.filter((e) => !e.units).length}` : ''}`}>
                   {CAL_TYPE[t].name}<span className="text-muted-foreground tabular-nums">{fmt(xs.length)}</span>
                 </Chip>
               );
@@ -134,7 +135,8 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
         <Card render={<section aria-label="동네 여건" />}>
           <PanelHead title="동네 여건" tip="인구·가구·주택 재고·미분양(KOSIS·SGIS, HOME 지역 지표)은 서울·인천·경기만 자료가 있어 시도 하나를 고르면 보인다" />
           <p className="m-0 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px] text-muted-foreground">
-            <span>인구·주택 재고·미분양은 시도를 고르면 보입니다{sido === 'metro' ? '' : '(서울·인천·경기만 자료 있음)'}</span>
+            {/* 시도 하나를 골랐는데 자료가 없으면 '없음'을 바로 말하고(고르라고 하지 않는다), 수도권·전국이면 시도를 고르게 한다 */}
+            <span>{sido && sido !== 'metro' ? `${name} 동네 여건 자료 없음(서울·인천·경기만)` : `인구·주택 재고·미분양은 시도를 고르면 보입니다${sido ? '' : '(서울·인천·경기만 자료 있음)'}`}</span>
             {Object.keys(facts.sido).map((c) => <PanelLink key={c} href={href({ sido: c, m: null })} full={`${sidoName(c)} 동네 여건`}>{sidoName(c)}</PanelLink>)}
           </p>
         </Card>

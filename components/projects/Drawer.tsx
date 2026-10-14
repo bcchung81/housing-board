@@ -56,8 +56,8 @@ export default function Drawer({ id, canonical, closeHref, title, head, children
     if (!id) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      const menu = document.querySelector<HTMLDetailsElement>('details[open]');
-      if (menu) { menu.open = false; return; }   // 펼친 칩 메뉴가 먼저
+      const menu = document.querySelector<HTMLDetailsElement>('details[open]:not([data-fold])');
+      if (menu) { menu.open = false; return; }   // 펼친 칩 메뉴가 먼저(접힘 영역 data-fold 은 메뉴가 아니다)
       close();
     };
     window.addEventListener('keydown', onKey);

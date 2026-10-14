@@ -1,5 +1,6 @@
 /* 연도별 막대(서버가 SVG 로 그린다). 완결 연도는 진한 막대, 부분 연도(2021 은 9~12월·올해는 1~N월)는 옅은 점선 막대 + 기간 꼬리표.
-   전년 대비 꼬리표는 두 해 모두 12/12개월인 완결 연도에만 붙는다(lib/board/annual.ts yoy). 세로축은 MonthLines 와 같은 틀(HTML 눈금). */
+   전년 대비 꼬리표는 두 해 모두 12/12개월인 완결 연도에만 붙는다(lib/board/annual.ts yoy). 세로축은 MonthLines 와 같은 틀(HTML 눈금).
+   키보드: 막대마다 Tab 으로 초점이 가고(읽기 이름 = 연도·호수·전년 대비), 초점 막대는 테두리로 보인다. 누를 동작이 없어 Enter 는 쓰지 않는다. */
 import { spanLabel, yoy, type YearVal } from '../../lib/board/annual';
 
 const H = 260;
@@ -18,10 +19,11 @@ export default function YearBars({ series, color, label }: { series: YearVal[]; 
         {ticks.map((v, i) => <span key={i} data-slot="chart-axis" className="absolute right-0 -translate-y-1/2 whitespace-nowrap tabular-nums" style={{ top: `${i / k * 100}%` }}>{man(v)}</span>)}
       </div>
       <div className="relative" style={{ height: H }}>
-        <svg preserveAspectRatio="none" viewBox={`0 0 ${n * 100} 1000`} className="absolute inset-0 block size-full overflow-visible" role="img" aria-label={label}>
-          {ticks.map((v) => <line key={v} x1="0" x2={n * 100} y1={1000 - v / top * 1000} y2={1000 - v / top * 1000} stroke="var(--border)" vectorEffect="non-scaling-stroke" />)}
+        <svg preserveAspectRatio="none" viewBox={`0 0 ${n * 100} 1000`} className="absolute inset-0 block size-full overflow-visible" role="group" aria-label={label}>
+          {ticks.map((v) => <line key={v} aria-hidden="true" x1="0" x2={n * 100} y1={1000 - v / top * 1000} y2={1000 - v / top * 1000} stroke="var(--border)" vectorEffect="non-scaling-stroke" />)}
           {series.map((y, i) => y.value === null ? null : (
-            <rect key={y.year} className="q-grow-y" x={i * 100 + 24} width="52" y={1000 - y.value / top * 1000} height={y.value / top * 1000}
+            <rect key={y.year} className="q-grow-y outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" x={i * 100 + 24}
+              tabIndex={0} role="img" aria-label={`${y.year}년${y.complete ? '' : ` ${spanLabel(y)}(부분 연도)`} ${y.value.toLocaleString('en-US')}호${(() => { const d = y.complete ? yoy(series, y.year) : null; return d === null ? '' : ` · 전년 대비 ${d >= 0 ? '증가' : '감소'} ${Math.abs(d).toFixed(1)}%`; })()}`} width="52" y={1000 - y.value / top * 1000} height={y.value / top * 1000}
               style={{ fill: y.complete ? color : part, ['--i' as string]: i * 0.5 }} {...(y.complete ? {} : { stroke: color, strokeDasharray: '4 3', vectorEffect: 'non-scaling-stroke' })}>
               <title>{`${y.year}${y.complete ? '' : ` ${spanLabel(y)}(부분 연도${y.provisional ? '·잠정' : ''})`} — ${y.value.toLocaleString('en-US')}호`}</title>
             </rect>

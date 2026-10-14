@@ -1,14 +1,14 @@
 'use client';
 /* 지역 공급 ① 앞으로 12개월: 파동 타임라인(달마다 사업 조각을 호수만큼 쌓음) · 지도(원 넓이 = 호수, 서울·인천·경기만) · 고른 달 목록.
    세 블록이 같은 고른 달(주소 ?m=)과 강조 사업을 쓴다. 시도·종류 거르기는 서버(칩 링크)가 하고, 이 섬은 달 고르기·강조·지도 원 크기만 맡는다.
-   마우스는 조각·원에 HUD(떠 있는 설명)를, 키보드는 달 단추(←→ Home End)와 목록 링크가 같은 정보를 준다. 시안: docs/design/home-concept/assets/app.js PAGES.region
+   마우스는 조각·원에 HUD(떠 있는 설명)를, 키보드는 달 단추(←→ Home End)·지도 원(고른 달의 원만 초점 — Tab 으로 하나, ←→ 이동, Enter·Space 고르기)과 목록 링크가 같은 정보를 준다. 시안: docs/design/home-concept/assets/app.js PAGES.region
    지도 연결점(수도권 사업만): 목록 행의 지도 표지, 원·조각을 눌러 고른 사업은 지도 상자 위 '지도에서 보기'. 지도(/map)는 다른 루트 레이아웃이라 <a>.
    sido: 'metro' 수도권 · '' 전국 · 'NN' 시도 하나. */
 import * as React from 'react';
 import Link from 'next/link';
 import { ChevronRight, MapPin } from 'lucide-react';
 import { cn } from 'cn';
-import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, inScope, type AheadEntry, type CalKind } from '../../lib/board/region';
+import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, dotFocus, inScope, type AheadEntry, type CalKind } from '../../lib/board/region';
 import { mapHref } from '../../lib/board/map-href';
 
 type MapData = { view: [number, number, number, number]; sgg: { s: string; n: string; d: string }[]; districts: { n: string; d: string }[] };
@@ -89,7 +89,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
   const max = niceMax(Math.max(1, ...tot));
   const segs = (xs: AheadEntry[], x: string) => (!sido
     /* 전국: 사업이 많아(달마다 수십~수백) 조각 대신 종류별로 묶는다 */
-    ? CAL_KINDS.map((t) => { const ys = xs.filter((e) => e.type === t), u = sum(ys, (e) => e.units); return u ? <span key={t} className="relative block w-full flex-none border-t border-chartbg" style={{ height: `${u / max * 100}%`, background: CAL_TYPE[t].color }} title={`${monthLabel(x)} ${CAL_TYPE[t].name} ${ys.length}곳 · ${fmt(u)}호`} /> : null; })
+    ? CAL_KINDS.map((t) => { const ys = xs.filter((e) => e.type === t), u = sum(ys, (e) => e.units); return u ? <span key={t} className="relative block w-full flex-none border-t border-chartbg" style={{ height: `${u / max * 100}%`, background: CAL_TYPE[t].color }} title={`${monthLabel(x)} ${CAL_TYPE[t].name} ${ys.length}건 · ${fmt(u)}호`} /> : null; })
     : [...xs].sort((a, b) => CAL_KINDS.indexOf(a.type) - CAL_KINDS.indexOf(b.type) || b.units - a.units).map((e) => (e.units
       ? <span key={e.k} data-seg={e.k} data-hl={e.k === hotKey ? '' : undefined} className="relative block min-h-[3px] w-full flex-none border-t border-chartbg data-[hl]:z-[1] data-[hl]:outline-2 data-[hl]:outline-foreground" style={{ height: `${e.units / max * 100}%`, background: CAL_TYPE[e.type].color }} />
       : <span key={e.k} data-seg={e.k} data-hl={e.k === hotKey ? '' : undefined} className={cn('relative block h-[7px] w-full flex-none border border-b-0 data-[hl]:z-[1] data-[hl]:outline-2 data-[hl]:outline-foreground', HATCH_SW)} style={{ borderColor: CAL_TYPE[e.type].color }} />)));
@@ -128,11 +128,11 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
             const xs = byM[x], on = x === m;
             return (
               <button key={x} type="button" role="radio" aria-checked={on} data-m={x} disabled={!xs.length} tabIndex={xs.length ? (on ? 0 : -1) : undefined}
-                aria-label={`${monthLabel(x)} ${xs.length}곳 ${fmt(tot[i])}호`}
+                aria-label={`${monthLabel(x)} ${xs.length}건 ${fmt(tot[i])}호`}
                 onClick={(ev) => { const seg = (ev.target as HTMLElement).closest<HTMLElement>('[data-seg]'); pick(x, seg ? seg.dataset.seg! : null); }}
                 className="btn-reset group/m flex min-w-0 flex-col items-center rounded-[8px] px-0.5 pt-1 pb-0.5 enabled:cursor-pointer enabled:hover:bg-[color-mix(in_srgb,var(--pn2)_70%,transparent)] aria-checked:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
                 <span className="flex h-[36px] flex-col items-center justify-end leading-[1.25] tabular-nums">
-                  {xs.length ? <><b className="text-[13px] whitespace-nowrap">{man(tot[i])}<small className="ml-px text-[11px] font-normal text-muted-foreground">호</small></b><span className="text-[13px] whitespace-nowrap text-muted-foreground">{xs.length}곳</span></> : null}
+                  {xs.length ? <><b className="text-[13px] whitespace-nowrap">{man(tot[i])}<small className="ml-px text-[11px] font-normal text-muted-foreground">호</small></b><span className="text-[13px] whitespace-nowrap text-muted-foreground">{xs.length}건</span></> : null}
                 </span>
                 <span className="relative flex w-full flex-col-reverse items-center" style={{ height: WAVE_H }}>
                   {xs.length
@@ -161,14 +161,33 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
     const pts = list.filter((e) => e.pt).sort((a, b) => Number(a.ym === act) - Number(b.ym === act) || b.units - a.units);
     const rOf = (e: AheadEntry) => (e.units ? Math.max(4, 17 * Math.sqrt(e.units / maxU)) : 4) * (k ?? 1);
     const ringOf = hotKey ? pts.find((e) => e.k === hotKey) : undefined;
+    const foc = dotFocus(byM[m] ?? [], m, hl);
+    const focusDot = (k: string) => { mapBox.current?.querySelector<SVGElement>(`[data-dot="${CSS.escape(k)}"]`)?.focus(); setHot(k); };
+    const onDotKey = (ev: React.KeyboardEvent) => {
+      const k = (ev.target as Element).closest<SVGElement>('[data-dot]')?.dataset.dot;
+      const i = k ? foc.keys.indexOf(k) : -1;
+      if (i < 0) return;
+      if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); const e = byK.get(k!)!; pick(e.ym, e.k); return; }
+      const n = ({ ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: foc.keys.length - 1 } as Record<string, number>)[ev.key];
+      if (n === undefined) return;
+      ev.preventDefault();
+      focusDot(foc.keys[(n + foc.keys.length) % foc.keys.length]);
+    };
+    /* 초점을 받는 원(고른 달)의 접근 속성: 단추 역할·이름(사업·종류·날짜·호수·위치)·눌림 */
+    const dotA11y = (e: AheadEntry) => (foc.keys.includes(e.k) ? {
+      tabIndex: e.k === foc.tab ? 0 : -1, role: 'button', 'aria-pressed': e.k === hl,
+      'aria-label': `${e.name} · ${CAL_TYPE[e.type].name} ${dayText(e)} · ${e.units ? `${fmt(e.units)}호` : '호수 미확인'} · ${e.place}${e.loc ? ` · ${LOC_NAME[e.loc]}` : ''}`,
+      onFocus: () => setHot(e.k), onBlur: () => setHot(null),
+      className: 'cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-primary',
+    } : { className: 'cursor-pointer', 'aria-hidden': true });
     mapEl = (
       <div ref={mapBox} data-slot="chart-frame" className="relative h-full min-h-[340px] overflow-hidden rounded-[10px] border border-border bg-chartbg"
         onMouseMove={(ev) => { lastMouse.current = ev; if (hud) place(ev); }}
         onMouseOver={(ev) => { lastMouse.current = ev; const d = (ev.target as Element).closest<SVGElement>('[data-dot]'); const e = d ? byK.get(d.dataset.dot!) : undefined; setHud(e ? { e, withLoc: true } : null); }}
         onMouseLeave={() => setHud(null)}
         onClick={(ev) => { const d = (ev.target as Element).closest<SVGElement>('[data-dot]'); const e = d ? byK.get(d.dataset.dot!) : undefined; if (e) { setHud(null); pick(e.ym, e.k); } }}>
-        <svg viewBox={V.join(' ')} preserveAspectRatio="xMidYMid meet" className="absolute top-2 left-2 block h-[calc(100%-16px)] w-[calc(100%-16px)]" role="img" aria-label={`${regionName} 예정 사업 위치(목록과 같은 사업)`}>
-          <g strokeLinejoin="round">
+        <svg viewBox={V.join(' ')} preserveAspectRatio="xMidYMid meet" className="absolute top-2 left-2 block h-[calc(100%-16px)] w-[calc(100%-16px)]" role="group" aria-label={`${regionName} ${monthLabel(m)} 예정 사업 위치 ${foc.keys.length}건(목록과 같은 사업 · ←→ 로 옮기고 Enter 로 고르기)`} onKeyDown={onDotKey}>
+          <g strokeLinejoin="round" aria-hidden="true">
             {map.sgg.filter((g) => !inScope(sido, g.s)).map((g, i) => <path key={`o${i}`} d={g.d} fill="none" stroke="var(--border)" vectorEffect="non-scaling-stroke" />)}
             {map.sgg.filter((g) => inScope(sido, g.s)).map((g, i) => <path key={`s${i}`} d={g.d} fill="var(--card)" stroke="var(--line2)" vectorEffect="non-scaling-stroke"><title>{g.n}</title></path>)}
           </g>
@@ -180,10 +199,10 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
               {pts.map((e) => {
                 const on = e.ym === act, c = CAL_TYPE[e.type].color, [x, y] = e.pt!, r = rOf(e);
                 return hollow(e)
-                  ? <circle key={e.k} data-dot={e.k} cx={x} cy={y} r={r} fill="var(--chartbg)" fillOpacity={on ? 0.7 : 0} stroke={c} strokeWidth={on ? 2 : 1.2} strokeOpacity={on ? 1 : 0.4} vectorEffect="non-scaling-stroke" className="cursor-pointer" />
-                  : <circle key={e.k} data-dot={e.k} cx={x} cy={y} r={r} fill={c} fillOpacity={on ? 0.9 : 0.22} stroke={on ? 'var(--card)' : 'none'} strokeWidth={1} vectorEffect="non-scaling-stroke" className="cursor-pointer" />;
+                  ? <circle key={e.k} data-dot={e.k} cx={x} cy={y} r={r} fill="var(--chartbg)" fillOpacity={on ? 0.7 : 0} stroke={c} strokeWidth={on ? 2 : 1.2} strokeOpacity={on ? 1 : 0.4} vectorEffect="non-scaling-stroke" {...dotA11y(e)} />
+                  : <circle key={e.k} data-dot={e.k} cx={x} cy={y} r={r} fill={c} fillOpacity={on ? 0.9 : 0.22} stroke={on ? 'var(--card)' : 'none'} strokeWidth={1} vectorEffect="non-scaling-stroke" {...dotA11y(e)} />;
               })}
-              {ringOf ? <circle cx={ringOf.pt![0]} cy={ringOf.pt![1]} r={rOf(ringOf) + 3 * k} fill="none" stroke="var(--foreground)" strokeWidth={2} vectorEffect="non-scaling-stroke" pointerEvents="none" /> : null}
+              {ringOf ? <circle cx={ringOf.pt![0]} cy={ringOf.pt![1]} r={rOf(ringOf) + 3 * k} fill="none" stroke="var(--foreground)" strokeWidth={2} vectorEffect="non-scaling-stroke" pointerEvents="none" aria-hidden="true" /> : null}
             </g>
           ) : null}
         </svg>
@@ -192,7 +211,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
             className="absolute top-2 right-2 inline-flex max-w-[70%] items-center gap-1 rounded-[8px] border border-border bg-card px-2.5 py-1 text-[14px] font-bold text-foreground no-underline shadow-[var(--shadow-card)] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             <MapPin className="size-4 flex-none" aria-hidden="true" /><span className="truncate">{sel.name}</span><span className="flex-none font-normal text-muted-foreground">지도에서 보기 ›</span>
           </a>
-        ) : <span className="pointer-events-none absolute top-2 right-3 text-[13px] text-muted-foreground">원을 누르면 그 사업을 지도에서 볼 수 있음</span>; })()}
+        ) : <span className="pointer-events-none absolute top-2 right-3 text-[13px] text-muted-foreground">원을 누르면(키보드는 Enter) 그 사업을 지도에서 볼 수 있음</span>; })()}
         <ul className="pointer-events-auto absolute bottom-2 left-3 m-0 flex list-none flex-wrap items-center gap-x-2.5 p-0 text-[13px] text-muted-foreground" aria-label="지도 범례">
           <li className="flex items-center gap-1" title="원 넓이 = 호수(호수 미확인은 가장 작은 원)"><i className="block size-[9px] rounded-full bg-mute" aria-hidden="true" />원 넓이 = 호수</li>
           <li className="flex items-center gap-1" title="정확한 좌표가 없어 시군구 중심(또는 근사 위치)에 둔 사업"><i className="block size-[9px] rounded-full border-[1.5px] border-mute" aria-hidden="true" />대표 위치</li>
@@ -210,18 +229,18 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
       onBlur={(ev) => { if (!ev.currentTarget.contains(ev.relatedTarget as Node)) setHot(null); }}>
       <div className="mb-1 flex flex-wrap items-baseline gap-x-3">
         <h3 className="m-0 text-[16px] font-bold">{monthLabel(m)}</h3>
-        <span className="text-[14px] text-muted-foreground tabular-nums">{xs.length}곳 · {fmt(sum(xs, (e) => e.units))}호</span>
+        <span className="text-[14px] text-muted-foreground tabular-nums">{xs.length}건 · {fmt(sum(xs, (e) => e.units))}호</span>
       </div>
       <ol className="m-0 list-none columns-2 gap-x-8 p-0 narrow:columns-1" aria-label={`${monthLabel(m)} 예정 사업`}>
         {shown.map((e) => {
-          /* 상세가 있는 사업은 상세 서랍(?id=), 번호 발급 전 사업은 간단 보기(?cand=) — 막다른 행이 없다 */
+          /* 상세가 있는 사업은 상세 서랍(?id=), 후보 사업은 간단 보기(?cand=) — 막다른 행이 없다 */
           const href = e.drawer ? `/projects?id=${e.id}` : `/projects?cand=${e.id}`;
           return (
             <li key={e.k} data-row={e.k} data-hl={e.k === hotKey ? '' : undefined} className="flex break-inside-avoid items-center gap-x-3 border-b border-border px-1 py-1.5 text-[14px] leading-[1.5] data-[hl]:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)]">
               <KindChip t={e.type} />
               <span className="min-w-0 flex-1 truncate font-bold" title={e.name}>
                 <Link href={href} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link>
-                {e.drawer ? null : <>{' '}<span className="ml-1 text-[13px] font-normal text-muted-foreground" title="번호 발급 전 사업(후보) — 누르면 간단 보기(상세 일정 없음)">(후보)</span></>}
+                {e.drawer ? null : <>{' '}<span className="ml-1 text-[13px] font-normal text-muted-foreground" title="후보 사업(사업 번호가 아직 없음) — 누르면 간단 보기">(후보)</span></>}
               </span>
               <span className="w-[74px] flex-none whitespace-nowrap text-muted-foreground tabular-nums">{dayText(e)}</span>
               <span className="w-[96px] flex-none truncate text-muted-foreground" title={e.sgg}>{e.place}</span>
@@ -232,8 +251,8 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
           );
         })}
       </ol>
-      {xs.some((e) => !e.drawer) ? <p className="m-0 mt-1.5 text-[14px] text-muted-foreground">(후보) = 번호 발급 전 사업 · 누르면 간단 보기</p> : null}
-      {xs.length > shown.length ? <button type="button" onClick={() => setMore(true)} className={cn('btn-reset mt-2', LINK)}>더 보기 · 외 {xs.length - shown.length}곳 {fmt(sum(xs.slice(LIST_N), (e) => e.units))}호</button> : null}
+      {xs.some((e) => !e.drawer) ? <p className="m-0 mt-1.5 text-[14px] text-muted-foreground">(후보) = 사업 번호가 아직 없는 후보 사업 · 누르면 간단 보기</p> : null}
+      {xs.length > shown.length ? <button type="button" onClick={() => setMore(true)} className={cn('btn-reset mt-2', LINK)}>더 보기 · 외 {xs.length - shown.length}건 {fmt(sum(xs.slice(LIST_N), (e) => e.units))}호</button> : null}
     </div>
   );
 

@@ -34,11 +34,11 @@ test('우리 동네 달력(lhCalendar): 시도별 달력을 모두 더하면 전
   assert.ok(gyeonggi.some((m) => m.blocks.length), '경기는 1년 안 준공 예정이 있다');
 });
 
-test('월간 보고(8.14 정례 보고): 사업 화면의 인쇄 보기(?print=1·@media print)가 핵심 질문·단계 파이프라인·목표 대비·우선 점검 상위 10·기준일·출처를 담는다(2026-10-14 보고자료 메뉴를 사업 화면으로 합침)', () => {
+test('월간 보고(8.14 정례 보고): 사업 화면의 인쇄 보기(?print=1·@media print)가 핵심 질문·단계별 진행·정책 목표 대비(펼침)·점검 필요 사업(10줄 넘으면 상위 10)·기준일·출처를 담는다(2026-10-14 보고자료 메뉴를 사업 화면으로 합침)', () => {
   const s = read('app/(dashboard)/projects/page.tsx');
   assert.match(s, /<h1 [^>]*>월간 주택공급 보고<\/h1>/);
-  assert.match(s, /우선 점검 사업 · 상위 10/);
-  assert.match(s, /const top = priorityOf\(scope\);/);
+  assert.match(s, /점검 필요 \$\{fmt\(prioN\)\}건 전부/, "10줄 이하면 '점검 필요 n건 전부'(넘으면 상위 10)");
+  assert.match(s, /const prioAll = priorityOf\(scope, Infinity\), top = prioAll\.slice\(0, 10\);/);
   assert.match(s, /자료 기준: 사업 원장 \{ref\}/);
   assert.doesNotMatch(s, /HOME 덤프 \{pp\.source\.edition\}/, "판 번호(20261014T102506Z)를 화면에 내지 않는다");
   assert.match(s, /출처: 사업 원장/);

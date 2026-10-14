@@ -1,6 +1,7 @@
 'use strict';
-/* 화면 재평가(impeccable 2026-10-14, 27/40) 고침을 고정한다: 용어 한 체계 · 요약 범위·숫자 정합(지금 ≤ 거쳐 간, 앞으로 12개월) · 보이는 도움말(ⓘ) ·
-   요구사항 칩은 데이터 원본에만 · 번호 발급 전 사업의 간단 보기(?cand=) · 목록 → 서랍 이동은 스크롤 유지 · 서랍 머리·단계 칸. */
+/* 화면 재평가(impeccable 2026-10-14, 27/40 → 3차 28/40) 고침을 고정한다: 용어 한 체계(쉬운 말) · 요약 범위·숫자 정합(지금 ≤ 이 단계까지 온, 앞으로 12개월) · 보이는 도움말(ⓘ) ·
+   요구사항 칩은 데이터 원본에만 · 후보 사업의 간단 보기(?cand=) · 목록 → 서랍 이동은 스크롤 유지 · 서랍 머리·단계 칸.
+   3차 고침의 나머지(날짜 열 이름·단계 '지금' 하나·CSV·SVG 초점·본문 바로가기·인쇄 전용 숨김·기관 메뉴)는 tests/js/screens-a3.test.cjs. */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -40,15 +41,36 @@ test("용어표: 화면 글자에 '공식 0'·'세대'·'분양'이 없다(단�
   }
 });
 
-test("용어표: '도달/지금' → '거쳐 간 사업 · 지금 이 단계', '추정 포함' → '담당자 추정 포함', '발급 전 후보' → '번호 발급 전 사업(후보)', 지연 묶음과 구간을 나눈다", () => {
+/* 용어표(3차 재평가 H2 — 국민이 바로 이해하는 말): 옛 말 → 새 말. 옛 말은 화면 글자(주석 밖)에 남지 않는다 */
+const TERMS = [
+  ['거쳐 간 사업', '이 단계까지 온 사업'],
+  ['번호 발급 전 사업(후보)', '후보 사업'],
+  ['HOME 정책 진행(보이는 표지)', '정책 목표 대비'],
+  ['정책별 목표 대비', '정책 목표 대비'],
+  ['계획대로 가고 있는가(정책 칸)', '9·7 대책 목표 대비(정책 전체)'],
+  ['단계 파이프라인', '단계별 진행'],
+  ['다음 일정 · 지난 예정(열)', '현재 예정'],
+  ['목표 미배정', '목표 없음'],
+  ['연결 확정 · 확정 전(보이는 글)', '정책 이름만(연결 상태는 title)'],
+  ['곳(사업 수)', '건'],
+];
+test(`용어표: ${TERMS.map(([a, b]) => `${a} → ${b}`).join(' · ')}`, () => {
   const all = SCREENS.map((f) => visible(read(f))).join('\n');
   assert.doesNotMatch(all, /도달/);
-  assert.doesNotMatch(all, /발급 전 후보/);
+  assert.doesNotMatch(all, /발급 전 후보|번호 발급 전|거쳐 간|목표 미배정/);
+  assert.doesNotMatch(all, /'다음 일정'|'지난 예정'|>다음 일정<|>단계 파이프라인<|>HOME 정책 진행|'정책별 목표 대비'/);
+  /* 연결 상태는 보이는 글이 아니라 title 에만: 글자 마디·문자열 값으로 '연결 확정'·'확정 전'을 내지 않는다 */
+  assert.doesNotMatch(all, /'연결 확정'|'확정 전'|>[^<{]*(연결 확정|확정 전)[^<{]*</);
+  assert.doesNotMatch(all, /[}\d]곳\b|\}곳 /, "사업 수 단위는 '건'");
   assert.doesNotMatch(all.replace(/담당자 추정 포함/g, ''), /추정 포함/);
   const sum = read('components/projects/Summary.tsx');
-  assert.match(sum, /거쳐 간 사업 \{fmt\(c\.n\)\}/);
+  assert.match(sum, /이 단계까지 온 사업 \{fmt\(c\.n\)\}/);
   assert.match(sum, /지금 이 단계 <b>\{fmt\(c\.now\)\}<\/b>/);
-  assert.equal(V.CAND_NAME, '번호 발급 전 사업(후보)');
+  assert.match(sum, />단계별 진행<\/h3>/);
+  assert.match(read('app/(dashboard)/projects/page.tsx'), /: '정책 목표 대비'\} open=\{print\}/);
+  assert.equal(V.CAND_NAME, '후보 사업');
+  assert.equal(V.PLAN_COL, '현재 예정');
+  assert.equal(V.CAND_PLAN, '원천 예정(확인 필요)');
   assert.equal(V.DELAY_GROUP, '지연(장기 포함)');
   assert.deepEqual([V.STATUS_RANGE.caution, V.STATUS_RANGE.delay, V.STATUS_RANGE.long], ['주의 1~6개월', '지연 6~12개월', '장기 12개월+']);
   for (const f of [{}, { metro: true }, { sido: '26' }]) {
@@ -73,15 +95,16 @@ test('파이프라인 불변식: 칸마다 지금 이 단계 ≤ 거쳐 간 사�
   /* 재평가에서 깨졌던 칸: 전국 ⑤ 준공, 수도권 ② 인허가 */
   const all = V.pipelineOf(rows).open.find((c) => c.i === 4);
   assert.ok(all.now <= all.n);
-  /* 요약 범위: 파이프라인은 상태·단계 거르기를 따르지 않는다(목록에만) */
+  /* 요약 범위: 단계별 진행은 상태·단계 거르기를 따르지 않는다(목록에만) */
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /const pipe = pipelineOf\(scope\);/);
   assert.match(page, /단계·상태 거르기는 목록에만/);
   assert.match(page, /요약 범위<\/b> \{scopeText\}/);
-  /* 범위가 다른 블록에는 머리 표지: 목표 대비(HOME 정책 진행 · 정책 전체), 파이프라인(사업 원장), 핵심 질문 ①(정책 전체) */
-  assert.match(read('components/projects/Summary.tsx'), />HOME 정책 진행 · 정책 전체</);
+  /* 범위가 다른 블록에는 표지: 정책 목표 대비(정책 전체 · 호), 단계별 진행(사업 원장), 핵심 질문 첫 칸은 이름에 범위(정책 전체) */
+  assert.match(read('components/projects/Summary.tsx'), />정책 전체 · 호</);
   assert.match(read('components/projects/Summary.tsx'), />사업 원장 · \{scope\}</);
-  assert.equal(Q({ metro: true })['계획대로 가고 있는가'].scope, '정책 전체');
+  const q1 = V.questionsOf(rows, { metro: true }, ctx)[0];
+  assert.equal(q1.q, '9·7 대책 목표 대비(정책 전체)');
 });
 
 test("앞으로 12개월: 같은 범위(원장 관측 달부터 12개월) — 사업 '준공 예정' = 지역 공급 '준공' 칩 = 종합상황판 준공 예정, 이름은 종류로 구분", () => {
@@ -122,7 +145,7 @@ test('보이는 도움말: 핵심 정의는 눌러서 여는 ⓘ(Base UI Popover
   assert.match(read('app/(dashboard)/region/page.tsx'), /<InfoTip label="앞으로 12개월 읽는 법">/);
 });
 
-test('번호 발급 전 사업(후보)도 행을 누르면 간단 보기 서랍(?cand=<원장 id>) — 이름·시군구·단계·호수·다음 일정·판정·출처, 상세 일정 없음 한 줄', () => {
+test("후보 사업도 행을 누르면 간단 보기 서랍(?cand=<원장 id>) — 이름·시군구·단계·호수·원천 예정(확인 필요)·판정·출처, 안내 글은 예정 유무에 맞춘다", () => {
   const cand = rows.find((r) => !r.issued && r.cls === 'delay');
   const c = V.candidateOf(rows, cand.id);
   assert.equal(c.row.id, cand.id);
@@ -132,16 +155,19 @@ test('번호 발급 전 사업(후보)도 행을 누르면 간단 보기 서랍(
   assert.equal(V.candidateOf(rows, null), null);
   const lh = rows.find((r) => !r.issued && r.why === 'LH 후보');
   assert.ok(V.candidateOf(rows, lh.id).sources.includes('LH 준공 예정 파일'));
-  assert.equal(V.nextOf(cand).tone, 'bad');
+  assert.match(V.nextOf(cand).tag, /^경과 \d+개월$/, "지난 예정은 빨강 대신 '경과 n개월' 꼬리표");
+  assert.equal(V.nextOf(cand).tone, undefined);
   /* 주소: 상세(?id=)와 나눈다 */
   assert.equal(V.listHref({ metro: true }, { cand: cand.id }), `/projects?cand=${cand.id}`);
   assert.equal(V.listHref({}, { cand: cand.id }), `/projects?sido=all&cand=${cand.id}`);
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /const href = r\.issued \? listHref\(f, \{ id: r\.id \}\) : listHref\(f, \{ cand: r\.id \}\);/, '모든 행이 눌린다');
+  assert.match(read('lib/board/projects-list.ts'), /const href = r\.issued \? listHref\(f, \{ id: r\.id \}\) : listHref\(f, \{ cand: r\.id \}\);/, '모든 행이 눌린다');
   assert.match(page, /<Candidate row=\{cand\.row\}/);
   const comp = read('components/projects/Candidate.tsx');
-  assert.match(comp, /번호 발급 전 — 상세 일정 없음/);
-  for (const t of ['시군구', '단계', '계획 호수', '다음 일정', '판정', '출처']) assert.ok(comp.includes(`<dt>${t}</dt>`), t);
+  assert.doesNotMatch(comp, /상세 일정 없음/, "'일정 없음'과 예정 표시가 함께 나오지 않는다");
+  assert.match(comp, /: next \? '사업 번호가 아직 없는 후보 사업입니다 · 예정일은 원천 자료에 적힌 값이라 확인이 필요합니다'/);
+  assert.match(comp, /<dt>\{r\.issued \? PLAN_COL : CAND_PLAN\}<\/dt>/);
+  for (const t of ['시군구', '단계', '계획 호수', '판정', '출처']) assert.ok(comp.includes(`<dt>${t}</dt>`), t);
   /* 지역 공급 목록의 후보 행도 막다른 줄이 아니다 */
   const ahead = read('components/region/Ahead.tsx');
   assert.match(ahead, /: `\/projects\?cand=\$\{e\.id\}`;/);
@@ -150,7 +176,7 @@ test('번호 발급 전 사업(후보)도 행을 누르면 간단 보기 서랍(
 
 test('서랍: 목록 링크는 스크롤 유지(scroll=false), 머리는 두 열 격자(× 오른쪽 고정), 단계 칸은 지금 거르기 유지', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /name: r\.issued \? \{ text: r\.name, href, stay: true \}/);
+  assert.match(read('lib/board/projects-list.ts'), /name: r\.issued \? \{ text: r\.name, href, stay: true \}/);
   assert.match(read('components/ui/data-grid.tsx'), /<Link href=\{o\.href\} scroll=\{o\.stay \? false : undefined\}/);
   const drawer = read('components/projects/Drawer.tsx');
   assert.match(drawer, /grid grid-cols-\[minmax\(0,1fr\)_auto\] items-start/);

@@ -16,9 +16,9 @@ export const MENU: MenuItem[] = [
   { id: 'sources', href: '/sources', label: '데이터 원본' },
 ];
 
-/* 첫 경로 마디 → 강조할 메뉴. 월 상세는 종합상황판 위젯에서 내려가므로 종합상황판을, 기관 상세(/agency/{기관})는 지역 공급을 강조한다 */
+/* 첫 경로 마디 → 강조할 메뉴. 월 상세·기관 상세(/agency/{기관})는 종합상황판 위젯에서 내려가므로 종합상황판을 강조한다(빵부스러기도 '종합상황판 › 기관') */
 const PARENT: Record<string, MenuId> = {
-  '': 'home', month: 'home', map: 'map', projects: 'projects', region: 'region', agency: 'region', sources: 'sources',
+  '': 'home', month: 'home', map: 'map', projects: 'projects', region: 'region', agency: 'home', sources: 'sources',
 };
 export const activeMenuId = (pathname: string): MenuId | null => PARENT[pathname.split('/')[1] ?? ''] ?? null;
 
@@ -33,6 +33,6 @@ export const SECTIONS: Record<string, { label: string; note: string; soon?: bool
    사업 상세는 화면이 아니라 사업 목록의 서랍(/projects?id=)이고, 옛 주소 /project/{id} 는 넘긴다 */
 export const DETAILS: Record<string, { label: string; id: RegExp; list: string; idLabel: string }> = {
   project: { label: '사업 상세', id: /^PRJ-\d{5}-\d{4}$/, list: '/projects', idLabel: '사업 id' },
-  agency: { label: '기관 상세', id: /^(lh|gh|sh|local|mnd)$/, list: '/region', idLabel: '기관' },
+  agency: { label: '기관 상세', id: /^(lh|gh|sh|local|mnd)$/, list: '/', idLabel: '기관' },
   month: { label: '월 상세', id: /^\d{4}-(0[1-9]|1[0-2])$/, list: '/', idLabel: '연-월' },
 };

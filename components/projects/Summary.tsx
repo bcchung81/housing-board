@@ -1,9 +1,10 @@
 /* 사업 화면 요약 카드의 세 부분(서버가 그린다 — 값은 lib/board/projects-view.ts). 시안: docs/design/home-concept/assets/app.js questions·pipeline·policyCompare.
-   - Questions: 핵심 질문 5칸(계획대로·어디서 막힘·어떤 사업·어디 먼저·앞으로 얼마). 누르면 그 답의 거르기(또는 지역 공급)로 간다.
-   - Pipeline: 리본 칸마다 거쳐 간 사업(실제 기록이 있거나 지금 그 단계 — 계획 호수·비율 막대)과 지금 이 단계(누르면 거르는 기준). 둘 다 없는 칸은 접은 한 칸(점선)으로 한 번만.
-   - ReadHelp: 핵심 정의(지연 구간 · 확인과 담당자 추정 · 거쳐 간과 지금 · 병목 · 앞으로 12개월)를 눌러서 여는 ⓘ 하나로(인쇄에는 펼친 목록).
-   - PolicyCompare: 정책별 같은 기간 목표 대비 확인. 목표가 있는 단계만 칸으로, 나머지는 '목표 미배정' 한 번. 확인과 담당자 추정을 섞지 않는다 —
-     막대는 확인(실색) 뒤에 추정 포함분(옅은 점선), 숫자는 '확인 / 목표' 와 아래 '추정 포함' 줄. 부족·비율은 확인으로만 낸다. */
+   - Questions: 핵심 질문 5칸(정책 목표 대비·어디서 막힘·어떤 사업·어디 먼저·앞으로 얼마). 누르면 그 답의 거르기(또는 지역 공급)로 간다. 칸마다 쉬운 말 정의 ⓘ(help).
+   - Pipeline(보이는 이름 '단계별 진행'): 리본 칸마다 이 단계까지 온 사업(실제 기록이 있거나 지금 그 단계 — 계획 호수·비율 막대)과 지금 이 단계(누르면 거르는 기준). 둘 다 없는 칸은 접은 한 칸(점선)으로 한 번만.
+   - ReadHelp: 핵심 정의(지연 구간 · 확인과 담당자 추정 · 이 단계까지 온 사업과 지금 · 병목 · 앞으로 12개월)를 눌러서 여는 ⓘ 하나로(인쇄에는 펼친 목록).
+   - PolicyCompare: 정책별 같은 기간 목표 대비 확인 — 기본 접힘(<details>, 머리에 핵심 한 줄 compareHead), 인쇄 보기는 펼침. 목표가 있는 단계만 칸으로, 나머지는 '목표 없음' 한 번.
+     확인과 담당자 추정을 섞지 않는다 — 막대는 확인(실색) 뒤에 추정 포함분(옅은 점선), 숫자는 '확인 / 목표' 와 아래 '추정 포함' 줄. 부족·초과·비율은 확인으로만 낸다.
+     정책–사업 연결 상태(확정·확정 전)는 보이는 글에 쓰지 않고 정책 이름 title 에만. */
 import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 import { cn } from 'cn';
@@ -11,7 +12,8 @@ import { Badge } from '../ui/badge';
 import { HATCH } from '../ui/chips';
 import InfoTip from '../ui/info-tip';
 import LinkPending from '../ui/link-pending';
-import { AHEAD_COMPLETION, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD_OFFICIAL, DELAY_GROUP, STATUS_RANGE, hasEstimate, hasTarget, policyLabel, ymText, type CompareLine, type PipeCell, type Question, type StageCell } from '../../lib/board/projects-view';
+import { ChevronRight } from 'lucide-react';
+import { AHEAD_COMPLETION, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD_OFFICIAL, DELAY_GROUP, STATUS_RANGE, compareHead, hasEstimate, hasTarget, policyLabel, rateOf, ymText, type CompareLine, type PipeCell, type Question, type StageCell } from '../../lib/board/projects-view';
 
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 const man = (v: number) => (v === 0 ? '0' : v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
@@ -27,9 +29,8 @@ export function Questions({ list }: { list: Question[] }) {
       {list.map((x) => {
         const inner = (
           <>
-            <span className={cn('flex min-w-0 items-center gap-1.5 text-[14px] text-muted-foreground', x.href && 'group-hover/q:text-primary')}>
+            <span className={cn('flex min-w-0 items-center gap-1.5 pr-7 text-[14px] text-muted-foreground', x.href && 'group-hover/q:text-primary')}>
               <span className="truncate">{x.q}</span>
-              {x.scope ? <span className="flex-none rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] whitespace-nowrap text-muted-foreground" title={x.scopeTip}>{x.scope}</span> : null}
             </span>
             <b className={cn('font-display text-[28px] leading-[1.2] font-normal whitespace-nowrap tabular-nums', x.tone === 'bad' && 'text-bad', x.muted && 'text-muted-foreground')} style={x.ink ? { color: x.ink } : undefined}>
               {x.value}{x.unit ? <small className="ml-[3px] font-sans text-[14px] font-normal text-muted-foreground">{x.unit}</small> : null}
@@ -38,8 +39,9 @@ export function Questions({ list }: { list: Question[] }) {
           </>
         );
         return (
-          <li key={x.q} className="min-w-0 px-4 first:pl-0 last:pr-0 narrow:pl-0">
+          <li key={x.q} className="relative min-w-0 px-4 first:pl-0 last:pr-0 narrow:pl-0">
             {x.href ? <Link href={x.href} scroll={false} title={x.tip} className={QA}>{inner}<LinkPending /></Link> : <div title={x.tip} className={QA}>{inner}</div>}
+            <span className="absolute top-[-4px] right-3"><InfoTip label={x.q}><p>{x.help}</p></InfoTip></span>
           </li>
         );
       })}
@@ -52,19 +54,23 @@ export function Pipeline({ open, shut, total, on, href, badges, scope }: { open:
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h3 className={h3} title="큰 숫자·막대 = 거쳐 간 사업(그 단계 실제 기록이 있거나 지금 그 단계인 사업)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에">단계 파이프라인</h3>
-        <Badge title="사업 원장의 사업별 단계 기록으로 센 값(아래 정책별 목표 대비는 HOME 정책 진행 자료)">사업 원장 · {scope}</Badge>
+        <h3 className={h3} title="큰 숫자·막대 = 이 단계까지 온 사업(그 단계 실제 기록이 있거나 지금 그 단계인 사업)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에">단계별 진행</h3>
+        <InfoTip label="단계별 진행">
+          <p>사업이 계획부터 입주까지 여섯 단계 중 어디까지 왔는지 셉니다.</p>
+          <p>큰 숫자는 이 단계까지 온 사업의 집 수(호)이고, &apos;지금 이 단계&apos;는 지금 바로 그 단계에 있는 사업 수입니다. 칸을 누르면 그 사업만 아래 목록에 남습니다.</p>
+        </InfoTip>
+        <Badge title="사업 원장의 사업별 단계 기록으로 센 값(아래 정책 목표 대비는 HOME 정책 진행 자료)">사업 원장 · {scope}</Badge>
         {badges}
       </div>
-      <ol className="m-0 mt-3 grid list-none gap-2 p-0 narrow:grid-cols-3! mobile:grid-cols-2!" style={{ gridTemplateColumns: cols }} aria-label="단계 파이프라인">
+      <ol className="m-0 mt-3 grid list-none gap-2 p-0 narrow:grid-cols-3! mobile:grid-cols-2!" style={{ gridTemplateColumns: cols }} aria-label="단계별 진행">
         {open.map((c) => {
-          const tip = `${BOARD_CIR[c.i]} ${BOARD_NAMES[c.i]} — 거쳐 간 사업 ${fmt(c.n)}건(${c.share.toFixed(0)}% · 그 단계 실제 기록이 있거나${c.i === 0 ? ' 계획 호수를 확인했거나' : ''} 지금 그 단계인 사업) · 계획 호수 ${fmt(c.units)}호 · 지금 이 단계 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만 목록에' : ''}`;
+          const tip = `${BOARD_CIR[c.i]} ${BOARD_NAMES[c.i]} — 이 단계까지 온 사업 ${fmt(c.n)}건(${c.share.toFixed(0)}% · 그 단계 실제 기록이 있거나${c.i === 0 ? ' 계획 호수를 확인했거나' : ''} 지금 그 단계인 사업) · 계획 호수 ${fmt(c.units)}호 · 지금 이 단계 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만 목록에' : ''}`;
           const body = (
             <>
               <span className="flex items-center gap-1.5 text-[14px] whitespace-nowrap" style={{ color: BOARD_INK[c.i] }}><i className="block size-[9px] flex-none rounded-[2px]" style={{ background: BOARD_COLOR[c.i] }} aria-hidden="true" />{BOARD_CIR[c.i]} {BOARD_NAMES[c.i]}</span>
               <span className="flex flex-col">
                 <b className="font-display text-[24px] leading-[1.15] font-normal tabular-nums">{fmt(c.units)}<small className="ml-[3px] font-sans text-[14px] text-muted-foreground">호</small></b>
-                <span className="text-[14px] text-muted-foreground tabular-nums">거쳐 간 사업 {fmt(c.n)} / {fmt(total)}</span>
+                <span className="text-[14px] text-muted-foreground tabular-nums">이 단계까지 온 사업 {fmt(c.n)} / {fmt(total)}</span>
               </span>
               <span className="relative block h-[6px]" style={{ background: light(BOARD_COLOR[c.i], 22) }} aria-hidden="true">
                 <span className="q-grow-x absolute inset-y-0 left-0" style={{ width: `${c.share}%`, background: BOARD_COLOR[c.i], '--i': c.i } as CSSProperties} />
@@ -98,7 +104,7 @@ export function Pipeline({ open, shut, total, on, href, badges, scope }: { open:
 
 /* 목표 칸 하나: 목표·확인(+추정 포함) 막대 · 실적 없음 · 연말 목표만 */
 function TargetCell({ c, pol }: { c: StageCell; pol: string }) {
-  const color = BOARD_COLOR[c.board], tip = c.target != null ? `${pol} ${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — ${ymText(c.from)}~${ymText(c.through)} · 확인 ${c.actual != null ? `${fmt(c.actual)}호` : '없음'}${c.review ? `(확정 전 연결 ${fmt(c.review)}호 포함)` : ''}${hasEstimate(c) ? ` · 담당자 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호 — 확인과 구분)` : ''} / 목표 ${fmt(c.target)}호${c.state === 'short' ? ` · 부족 ${fmt(c.gap ?? 0)}호(${c.shortfallPct}%, 확인 기준)` : ''} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}` : '';
+  const color = BOARD_COLOR[c.board], tip = c.target != null ? `${pol} ${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — ${ymText(c.from)}~${ymText(c.through)} · 확인 ${c.actual != null ? `${fmt(c.actual)}호` : '없음'}${c.review ? `(확정 전 연결 ${fmt(c.review)}호 포함)` : ''}${hasEstimate(c) ? ` · 담당자 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호 — 확인과 구분)` : ''} / 목표 ${fmt(c.target)}호${c.state === 'short' ? ` · 부족 ${fmt(c.gap ?? 0)}호(${c.shortfallPct}%, 확인 기준)` : c.actual != null && c.actual > c.target ? ` · ${rateOf(c).word}(확인 기준)` : ''} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}` : '';
   if (c.target != null && c.actual != null) {
     const short = c.state === 'short', est = hasEstimate(c);
     return (
@@ -109,7 +115,7 @@ function TargetCell({ c, pol }: { c: StageCell; pol: string }) {
           {short ? <span className="absolute inset-0 border-[1.5px] border-bad" /> : null}
         </span>
         <span className="text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">
-          <b className={cn('text-[14px]', short ? 'text-bad' : 'text-foreground')}>{fmt(c.actual)}</b> / {fmt(c.target)}{short ? <> <b className="text-bad">부족 {c.shortfallPct}%</b></> : null}
+          <b className={cn('text-[14px]', short ? 'text-bad' : 'text-foreground')}>{fmt(c.actual)}</b> / {fmt(c.target)}{short ? <> <b className="text-bad">{rateOf(c).word}</b></> : c.actual > c.target ? <> <b className="text-ok">{rateOf(c).word}</b></> : null}
         </span>
         {est ? <span className="text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">담당자 추정 포함 {fmt(c.withEst!)}</span> : null}
       </div>
@@ -132,7 +138,7 @@ function TargetCell({ c, pol }: { c: StageCell; pol: string }) {
   );
 }
 
-export function PolicyCompare({ lines, title, href }: { lines: CompareLine[]; title: string; href: (key: string) => string }) {
+export function PolicyCompare({ lines, title, href, open = false }: { lines: CompareLine[]; title: string; href: (key: string) => string; open?: boolean }) {
   if (!lines.length) return null;
   const used = lines.flatMap((l) => l.cells.filter(hasTarget));
   const c0 = lines[0].cells[0];
@@ -141,34 +147,46 @@ export function PolicyCompare({ lines, title, href }: { lines: CompareLine[]; ti
   if (used.some((c) => c.target != null)) lg.push({ label: '목표', tip: '같은 기간 목표(같은 색 옅게)', style: { background: light('var(--mute)', 30) } });
   if (used.some((c) => c.target != null && c.actual == null)) lg.push({ label: '실적 없음', cls: `border border-line2 ${HATCH}`, tip: '목표는 있으나 확인 실적 원천이 없음(빗금)' });
   if (used.some((c) => c.state === 'short')) lg.push({ label: '목표 미달', cls: 'border-[1.5px] border-bad', tip: '확인이 목표에 못 미침(빨간 테두리)' });
+  /* 기본 접힘(목록 앞 블록을 줄인다) — 머리에 정책마다 핵심 한 줄. ⓘ 는 summary 밖(누르면 접힘이 바뀌지 않게) */
   return (
-    <div className="mt-5">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h3 className={h3} title="정책마다 같은 기간 목표 대비 확인 · 단계 목표가 배정된 정책만(1·29·8·13 대책은 목표 없음 — 정책 칩으로 사업은 볼 수 있음) · 확인은 확정 전 연결 포함, 담당자 추정 입력은 따로 · 정책 전체 범위(수도권·전국 거르기와 상관없음)">{title}</h3>
-        <span className="text-[14px] text-muted-foreground tabular-nums" title="같은 해 1월~기준 달 누적(policy-progress samePeriod)">{ymText(c0.from)}~{c0.through.slice(5, 7)}</span>
-        <Badge title="HOME 정책 진행 자료의 정책 전체 값(호) — 지역·기관·단계·상태 거르기와 상관없음. 위 단계 파이프라인(사업 원장, 건)과 출처·단위가 달라 ⑤ 준공 등 숫자가 서로 다를 수 있음">HOME 정책 진행 · 정책 전체</Badge>
-        <ul className="m-0 ml-auto flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[14px] text-muted-foreground" aria-label="범례">
-          {lg.map((x) => <li key={x.label} className="flex items-center gap-1 whitespace-nowrap" title={x.tip}><i className={cn('block size-[9px] flex-none rounded-[2px]', x.cls)} style={x.style} aria-hidden="true" />{x.label}</li>)}
-        </ul>
-      </div>
-      {lines.map((l) => (
-        <div key={l.policy.key} className="mt-2 flex flex-wrap items-center gap-x-8 gap-y-2 rounded-[10px] border border-border px-3 py-2.5">
-          <Link href={href(l.policy.key)} scroll={false} className="flex flex-col rounded-[6px] text-foreground no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" title={`${l.policy.name} · ${l.policy.announced.replace(/-/g, '.')} 발표 · ${l.policy.scope} · 누르면 이 정책의 사업`}>
-            <b className="font-display text-[20px] leading-[1.2] font-normal whitespace-nowrap hover:underline">{policyLabel(l.policy)}</b>
-            <span className="text-[14px] text-muted-foreground tabular-nums">사업 {fmt(l.n)}건 · {fmt(l.units)}호</span>
-          </Link>
-          {l.cells.filter(hasTarget).map((c) => (
-            <div key={c.key} className="flex min-w-[150px] flex-col gap-1">
-              <span className="flex items-center gap-1.5 text-[14px] whitespace-nowrap" style={{ color: BOARD_INK[c.board] }} title={`공식 단계 ${BOARD_OFFICIAL[c.board]} · HOME 단계 '${c.label}'`}><i className="block size-[9px] flex-none rounded-[2px]" style={{ background: BOARD_COLOR[c.board] }} aria-hidden="true" />{BOARD_CIR[c.board]} {BOARD_NAMES[c.board]}</span>
-              <TargetCell c={c} pol={l.policy.short} />
-            </div>
-          ))}
-          <span className="ml-auto flex items-center gap-2">
-            {l.none.length ? <span className="text-[14px] text-muted-foreground" title={`${l.none.map((i) => `${BOARD_CIR[i]} ${BOARD_NAMES[i]}`).join(' · ')} — 같은 기간 단계 목표가 배정되지 않음`}>{l.none.map((i) => BOARD_CIR[i]).join('')} 목표 미배정</span> : null}
-            <Badge title="정책–사업 연결 상태 · 확정 전 = 담당자가 아직 확정하지 않은 제안 연결">연결 확정 {fmt(l.confirmed)} · 확정 전 {fmt(l.review)}</Badge>
-          </span>
+    <div className="relative mt-5">
+      <details data-fold open={open} className="group/fold">
+        <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 rounded-[8px] pr-10 hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden"
+          title="정책마다 같은 기간 목표 대비 확인 · 단계 목표가 배정된 정책만(1·29·8·13 대책은 목표 없음 — 정책 칩으로 사업은 볼 수 있음) · 확인은 담당자가 아직 확정하지 않은 연결 포함, 담당자 추정 입력은 따로 · 정책 전체 범위(수도권·전국 거르기와 상관없음) · 누르면 펼치기/접기">
+          <ChevronRight className="size-4 flex-none text-muted-foreground transition-transform group-open/fold:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
+          <h3 className={h3}>{title}</h3>
+          <span className="text-[14px] text-muted-foreground tabular-nums" title="같은 해 1월~기준 달 누적">{ymText(c0.from)}~{c0.through.slice(5, 7)} · 정책 전체</span>
+          {lines.map((l) => <span key={l.policy.key} className="text-[14px] text-foreground tabular-nums">{compareHead(l)}</span>)}
+        </summary>
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <Badge title="HOME 정책 진행 자료의 정책 전체 값(호) — 지역·기관·단계·상태 거르기와 상관없음. 위 단계별 진행(사업 원장, 건)과 출처·단위가 달라 ⑤ 준공 등 숫자가 서로 다를 수 있음">정책 전체 · 호</Badge>
+          <ul className="m-0 ml-auto flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[14px] text-muted-foreground" aria-label="범례">
+            {lg.map((x) => <li key={x.label} className="flex items-center gap-1 whitespace-nowrap" title={x.tip}><i className={cn('block size-[9px] flex-none rounded-[2px]', x.cls)} style={x.style} aria-hidden="true" />{x.label}</li>)}
+          </ul>
         </div>
-      ))}
+        {lines.map((l) => (
+          <div key={l.policy.key} className="mt-2 flex flex-wrap items-center gap-x-8 gap-y-2 rounded-[10px] border border-border px-3 py-2.5">
+            <Link href={href(l.policy.key)} scroll={false} className="flex flex-col rounded-[6px] text-foreground no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+              title={`${l.policy.name} · ${l.policy.announced.replace(/-/g, '.')} 발표 · ${l.policy.scope} · 정책–사업 연결: 담당자 확정 ${fmt(l.confirmed)}건 · 확정 전(제안) ${fmt(l.review)}건 · 누르면 이 정책의 사업`}>
+              <b className="font-display text-[20px] leading-[1.2] font-normal whitespace-nowrap hover:underline">{policyLabel(l.policy)}</b>
+              <span className="text-[14px] text-muted-foreground tabular-nums">사업 {fmt(l.n)}건 · {fmt(l.units)}호</span>
+            </Link>
+            {l.cells.filter(hasTarget).map((c) => (
+              <div key={c.key} className="flex min-w-[150px] flex-col gap-1">
+                <span className="flex items-center gap-1.5 text-[14px] whitespace-nowrap" style={{ color: BOARD_INK[c.board] }} title={`공식 단계 ${BOARD_OFFICIAL[c.board]} · HOME 단계 '${c.label}'`}><i className="block size-[9px] flex-none rounded-[2px]" style={{ background: BOARD_COLOR[c.board] }} aria-hidden="true" />{BOARD_CIR[c.board]} {BOARD_NAMES[c.board]}</span>
+                <TargetCell c={c} pol={l.policy.short} />
+              </div>
+            ))}
+            {l.none.length ? <span className="ml-auto text-[14px] text-muted-foreground" title={`${l.none.map((i) => `${BOARD_CIR[i]} ${BOARD_NAMES[i]}`).join(' · ')} — 같은 기간 단계 목표가 배정되지 않음`}>{l.none.map((i) => BOARD_CIR[i]).join('')} 목표 없음</span> : null}
+          </div>
+        ))}
+      </details>
+      <span className="absolute top-[-2px] right-0">
+        <InfoTip label={title}>
+          <p>정부가 정책에서 정한 단계별 목표 호수와, 실제로 기록에서 확인한 호수를 같은 기간(올해 1월부터)끼리 견줍니다.</p>
+          <p>정책 전체 숫자라 위에서 고른 지역·기관과 상관없습니다. 목표보다 적으면 &apos;부족&apos;, 많으면 &apos;초과&apos;입니다. 담당자가 짐작해 넣은 값은 옅은 점선으로 따로 보입니다.</p>
+        </InfoTip>
+      </span>
     </div>
   );
 }
@@ -179,7 +197,7 @@ function Defs() {
     <dl>
       <dt>{DELAY_GROUP}</dt><dd>{`현재 예정일 경과 6개월 이상 — 구간은 ${STATUS_RANGE.delay} · ${STATUS_RANGE.long}(${STATUS_RANGE.caution}은 따로 셈)`}</dd>
       <dt>확인 · 담당자 추정 포함</dt><dd>확인 = 기록으로 확인한 호수 · 담당자 추정 포함 = 담당자 입력을 더한 값(비율·부족은 확인으로만)</dd>
-      <dt>거쳐 간 사업 · 지금 이 단계</dt><dd>거쳐 간 사업 = 그 단계 실제 기록이 있거나 지금 그 단계인 사업 · 지금 이 단계 = 현재 그 단계인 사업(칸을 누르면 목록이 그 사업만)</dd>
+      <dt>이 단계까지 온 사업 · 지금 이 단계</dt><dd>이 단계까지 온 사업 = 그 단계 기록이 있거나 지금 그 단계에 있는 사업 · 지금 이 단계 = 지금 바로 그 단계에 있는 사업(칸을 누르면 목록이 그 사업만)</dd>
       <dt>병목</dt><dd>{DELAY_GROUP} 사업의 계획 호수가 가장 큰 단계(종합상황판과 같은 계산)</dd>
       <dt>{AHEAD_COMPLETION}</dt><dd>원장 관측 달부터 12개월 안에 준공 현재 예정 달이 든 사업(준공 실제가 있으면 뺌)</dd>
     </dl>

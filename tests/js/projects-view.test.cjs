@@ -98,9 +98,10 @@ test('상태: 지연 중 경과 12개월 이상은 장기 지연, 점검 필요 
 
 test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 75.8% 부족 · ② 인허가 113,632호 · 지연 315건 · 대구 · 앞으로 12개월 준공 214,975호(= 종합상황판 향후 12개월)', () => {
   const q = Q({});
-  assert.deepEqual(Object.keys(q), ['계획대로 가고 있는가', '어디서 막혀 있는가', '어떤 사업이 늦어지는가', '어디를 먼저 챙기는가', '앞으로 얼마나 공급되는가']);
-  const a = q['계획대로 가고 있는가'];
-  assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['75.8', '% 부족', '9·7 대책 ①계획 3,560 / 14,694', 'bad', '/projects?policy=97&sido=all']);
+  assert.deepEqual(Object.keys(q), ['9·7 대책 목표 대비(정책 전체)', '어디서 막혀 있는가', '어떤 사업이 늦어지는가', '어디를 먼저 챙기는가', '앞으로 얼마나 공급되는가'], '첫 칸은 범위(정책 전체)를 이름에');
+  const a = q['9·7 대책 목표 대비(정책 전체)'];
+  assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['75.8', '% 부족', '①계획 확인 3,560 / 목표 14,694', 'bad', '/projects?policy=97&sido=all']);
+  for (const x of Object.values(q)) assert.ok(x.help && !/policy-progress|samePeriod|HOME|원장/.test(x.help), `ⓘ 정의는 쉬운 말: ${x.q}`);
   assert.match(a.tip, /추정 포함 5,789호/, '추정 포함은 title 에만');
   assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['② 인허가', '병목 · 지연(장기 포함) 83,715호', '/projects?sido=all&stage=1&status=check']);
   assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['315', '지연 6~12개월 96 · 장기 12개월+ 219', '/projects?sido=all&status=check'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로');
@@ -112,8 +113,8 @@ test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 7
 
 test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·주의 2) · 인천 2,890호 · 13,372호 24건 / 1·29 는 목표가 없어 정상 비율 / 시도를 고르면 시군구', () => {
   const q = Q({ policy: pol('97') });
-  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['75.8', '9·7 대책 ①계획 3,560 / 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['인천', '지연·주의 2,890호'], ['13,372', '앞으로 12개월 준공 예정 · 24건']]);
-  assert.equal(q['계획대로 가고 있는가'].href, undefined, '이미 9·7 렌즈');
+  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['75.8', '①계획 확인 3,560 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['인천', '지연·주의 2,890호'], ['13,372', '앞으로 12개월 준공 예정 · 24건']]);
+  assert.equal(q['9·7 대책 목표 대비(정책 전체)'].href, undefined, '이미 9·7 렌즈');
   const q129 = Q({ policy: pol('129') });
   assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100', '% 정상', '판정 38건 · 일정 없음 9']);
   assert.deepEqual([q129['어디서 막혀 있는가'].value, q129['어디서 막혀 있는가'].muted, q129['어디서 막혀 있는가'].href], ['없음', true, undefined]);
@@ -213,8 +214,10 @@ test('서랍이 열 것(?id=): 발급 사업 → 그 사업, 대체된 옛 id �
 
 test('화면 적용: 목록은 발급 사업을 상세 서랍(?id=), 번호 발급 전 사업을 간단 보기(?cand=)로 열고, 서랍은 그 사업 자료만 서버에서 그린다. 인쇄 보기는 요약·우선 점검·출처만', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /const href = r\.issued \? listHref\(f, \{ id: r\.id \}\) : listHref\(f, \{ cand: r\.id \}\);/);
-  assert.match(page, /id: r\.id, href, sel: r\.id === sel,/, '행을 누르면 서랍, 열린 사업은 선택 표시');
+  const lst = read('lib/board/projects-list.ts');
+  assert.match(lst, /const href = r\.issued \? listHref\(f, \{ id: r\.id \}\) : listHref\(f, \{ cand: r\.id \}\);/);
+  assert.match(lst, /id: r\.id, href, sel: r\.id === sel,/, '행을 누르면 서랍, 열린 사업은 선택 표시');
+  assert.match(page, /const gridRows: Row\[\] = listRows\(list, f, sel,/, '화면 표와 CSV 가 같은 행');
   assert.match(page, /getProjectDrawer\(id\)/);
   assert.match(page, /<Drawer id=\{drawer \? id : null\} canonical=\{sel\} closeHref=\{listHref\(f\)\}/);
   assert.doesNotMatch(page, /<ReqTags/, '요구사항 칩은 데이터 원본에만');

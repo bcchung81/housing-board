@@ -11,7 +11,9 @@ export type CellObj = { text?: string; sort?: number | string | null; href?: str
   /* 지도 연결점(2026-10-14): doc = href 를 <a>(문서 이동 — 지도는 다른 루트 레이아웃)로, icon 'map' = 글자 대신 지도 표지(글자는 읽기 도구·title 에) */
   doc?: boolean; icon?: 'map';
   /* stay = 같은 화면 안 이동(사업 목록 → 서랍 ?id=·?cand=)이라 링크가 스크롤 위치를 지킨다(Link scroll={false}) */
-  stay?: boolean };
+  stay?: boolean;
+  /* tag = 글자 뒤 작은 꼬리표(현재 예정의 '경과 n개월'·'실제' — 색 대신 글로) */
+  tag?: string };
 export type Cell = number | string | null | undefined | CellObj;
 /* wrap 은 긴 글자 열(최소 180px, 줄바꿈), clip 은 한 줄 말줄임 열(값 = CSS 최대 폭, 예 'clamp(180px,100vw - 1100px,380px)' — 잘린 칸은 title 로 전체 글자),
    sort:false 는 정렬하지 않는 열, group 이 같은 이웃 열은 위 줄 머리글 한 칸으로 묶인다 */
@@ -91,3 +93,19 @@ export function splitPinned(rows: Row[]) {
 
 /* 긴 표만: 30행을 넘으면 검색(시도 16행 표는 한눈에 보인다), 120행을 넘으면 보이는 행만 그린다(가상 스크롤) */
 export const wants = (n: number) => ({ search: n > 30, virtual: n > 120 });
+
+/* CSV(사업 목록 내려받기): 열 = 화면 열 이름, 숫자 열은 쉼표 없는 수(지연 +12 → 12, 미확인은 글자), 글자 열은 표시 글자(꼬리표는 괄호로).
+   엑셀이 한글을 깨뜨리지 않게 UTF-8 BOM 을 앞에 붙이고 줄 끝은 CRLF(RFC 4180) */
+export const CSV_BOM = '\uFEFF';
+const csvField = (s: string) => (/[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+export function csvValue(v: Cell, kind: Kind = 'int'): string {
+  if (v === null || v === undefined) return '';
+  if (isObj(v) && v.na !== undefined) return v.na;
+  if (kind !== 'text') { const n = typeof v === 'number' ? v : isObj(v) && typeof v.sort === 'number' ? v.sort : null; if (n !== null) return String(n); }
+  const t = display(v, kind).text;
+  return isObj(v) && v.tag ? `${t} (${v.tag})` : t;
+}
+export function toCsv(cols: Col[], rows: Row[]): string {
+  const lines = [cols.map((c) => csvField(c.label)), ...rows.map((r) => cols.map((c) => csvField(csvValue(r.c[c.key], c.kind))))];
+  return CSV_BOM + lines.map((l) => l.join(',')).join('\r\n') + '\r\n';
+}

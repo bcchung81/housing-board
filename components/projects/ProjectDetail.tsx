@@ -1,5 +1,5 @@
 /* 사업 상세 서랍의 내용(서버가 그린다 — 자료는 lib/board/projects-index.ts getProjectDrawer). 시안: docs/design/home-concept/assets/app.js renderDetail.
-   머리(이름·프로그램·정책 연결·id) → 단계 줄(①~⑥, 목록과 같은 번호·색 — 공식 01~06 은 보조 표기) → 핵심 수치(계획·공고 확인·공정률, 있는 것만) → 단계 타임라인(상태·'당초 일정 없음' 한 번) → 개요(지도에서 보기 · 위치 종류) → 근거(접힘).
+   머리(이름·프로그램·정책(연결 상태는 title)·id) → 단계 줄(①~⑥, 목록과 같은 번호·색 — 공식 01~06 은 보조 표기) → 핵심 수치(계획·공고 확인·공정률, 있는 것만) → 단계 타임라인(상태·'당초 일정 없음' 한 번) → 개요(지도에서 보기 · 위치 종류) → 근거(접힘).
    숨김 사업(대응 사업 없음)은 한 줄 안내와 개요만. 대체된 옛 id 는 대표 사업을 그리고 맨 위에 한 줄 안내. 건축HUB 관리번호는 공개 범위가 미결(기획서 Q4)이라 보이지 않는다. */
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
@@ -39,7 +39,7 @@ export function DrawerHead({ d }: { d: Drawer }) {
     <>
       <span className="flex flex-wrap items-center gap-1.5">
         {r.programs.map((g) => <Badge key={g} title="프로그램">{g}</Badge>)}
-        {pol.map((x) => <Badge key={x.key} title={`${x.name} · ${fixed ? '담당자가 확정한 정책 연결' : '담당자가 아직 확정하지 않은 제안 연결 · 해제된 연결은 빠짐'}`}>{policyLabel(x)} · {fixed ? '연결 확정' : '확정 전'}</Badge>)}
+        {pol.map((x) => <Badge key={x.key} title={`${x.name} · 정책 연결: ${fixed ? '담당자가 확정함' : '담당자가 아직 확정하지 않은 제안(해제된 연결은 빠짐)'}`}>{policyLabel(x)}</Badge>)}
       </span>
       <code className="text-[14px] text-muted-foreground" title="사업 id">{r.id}</code>
     </>
@@ -97,7 +97,7 @@ export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: 
           <div><dt>위치</dt><dd>{x.loc ? <span title={x.loc.basis ?? undefined}>{LOC[x.loc.by] ?? x.loc.by}</span> : <None>좌표 없음</None>}{x.bjd.length ? <span className="text-muted-foreground tabular-nums" title="법정동 코드"> · {x.bjd.join(', ')}</span> : null}</dd></div>
           <div><dt>시행</dt><dd title={AGENCY_TIP[ag]}>{r.agency ? d.agencies[r.agency] ?? AGENCY_NAME[ag] : <None tip={AGENCY_TIP.etc}>미확인</None>}</dd></div>
           <div><dt>구분</dt><dd title={x.basis ?? undefined}>{SCOPE[x.scope] ?? x.scope} · {UNIT[x.unit] ?? x.unit}</dd></div>
-          <div><dt>정책 연결</dt><dd>{pol.length ? pol.map((p, i) => <span key={p.key}>{i ? ' · ' : ''}{policyLabel(p)} <span className="text-muted-foreground">{r.link === 'CONFIRMED' ? '연결 확정' : '확정 전'}</span></span>) : <None>연결 없음</None>}</dd></div>
+          <div><dt>정책 연결</dt><dd>{pol.length ? pol.map((p, i) => <span key={p.key} title={`정책 연결: ${r.link === 'CONFIRMED' ? '담당자가 확정함' : '담당자가 아직 확정하지 않은 제안'}`}>{i ? ' · ' : ''}{policyLabel(p)}</span>) : <None>연결 없음</None>}</dd></div>
         </dl>
       </Card>
 

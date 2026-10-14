@@ -27,7 +27,7 @@ test('사업 상세(서랍)·목록·타임라인은 같은 리본 칸 번호(�
   for (const f of ['components/projects/ProjectDetail.tsx', 'app/(dashboard)/projects/page.tsx']) assert.doesNotMatch(read(f), /Stepper|StageLadder/, f);
   for (const f of ['components/ui/stepper.tsx', 'components/StageLadder.tsx']) assert.ok(!fs.existsSync(path.join(ROOT, f)), `쓰는 곳이 없는 ${f} 는 지운다`);
   const steps = read('components/projects/StageSteps.tsx');
-  assert.match(steps, /\{BOARD_CIR\[i\]\} \{name\}<\/b>/, '칸 이름은 ①~⑥');
+  assert.match(steps, /\{BOARD_CIR\[i\]\} \{name\}\n\s*<\/b>/, '칸 이름은 ①~⑥');
   assert.match(steps, /공식 단계 \$\{BOARD_OFFICIAL\[i\]\}/, '공식 번호는 title 에만');
   assert.doesNotMatch(steps, /BOARD_OFFICIAL_SHORT/);
   assert.match(steps, /aria-current=\{on \? 'step' : undefined\}/);

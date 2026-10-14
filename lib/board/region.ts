@@ -63,6 +63,12 @@ export function toggleKind(on: CalKind[], k: CalKind): CalKind[] | null {
 }
 
 /* 고른 달: 주소의 m 이 예정 있는 달이면 그대로, 아니면 예정 있는 첫 달(없으면 첫 달) */
+/* 지도 원의 키보드 초점(로빙 tabindex): 고른 달의 위치 있는 원만 초점 대상(목록 순서), Tab 으로 들어가는 원은 고른 사업(없으면 첫 원) 하나.
+   ←→(↑↓) 로 옮기고 Enter·Space 로 그 사업을 고른다(components/region/Ahead.tsx) */
+export function dotFocus(list: { k: string; ym: string; pt?: unknown }[], m: string, sel: string | null): { keys: string[]; tab: string | null } {
+  const keys = list.filter((e) => e.ym === m && e.pt).map((e) => e.k);
+  return { keys, tab: sel && keys.includes(sel) ? sel : keys[0] ?? null };
+}
 export function pickMonth(months: string[], list: { ym: string }[], m?: string): string {
   const has = (x: string) => list.some((e) => e.ym === x);
   return m && months.includes(m) && has(m) ? m : months.find(has) ?? months[0];

@@ -22,12 +22,12 @@ test('목록 구역은 모두 사이드바 메뉴이고, 지도·종합상황판
   assert.ok(!('map' in SECTIONS) && !('home' in SECTIONS));
 });
 
-test('파생 상세는 부모 메뉴를 강조한다: 월은 종합상황판, 기관은 지역 공급, 지도는 지도. 넘기는 옛 주소는 메뉴가 없다', () => {
+test('파생 상세는 부모 메뉴를 강조한다: 월·기관은 종합상황판(위젯에서 내려감), 지도는 지도. 넘기는 옛 주소는 메뉴가 없다', () => {
   assert.equal(activeMenuId('/'), 'home');
   assert.equal(activeMenuId('/month/2026-10'), 'home');
   assert.equal(activeMenuId('/projects'), 'projects');
   assert.equal(activeMenuId('/region'), 'region');
-  assert.equal(activeMenuId('/agency/lh'), 'region');
+  assert.equal(activeMenuId('/agency/lh'), 'home');
   for (const p of ['/project/PRJ-11290-0001', '/reports', '/area', '/area/11', '/my-area', '/stage/04']) assert.equal(activeMenuId(p), null, p);   // 없앤 화면(next.config.ts 가 넘긴다)
   assert.equal(activeMenuId('/map'), 'map');
   assert.equal(activeMenuId('/nope'), null);

@@ -1,8 +1,10 @@
 /* 사업 상세 서랍의 단계 줄: 목록·타임라인·지역 공급과 같은 ①~⑥ 이름과 단계색(리본 칸). 공식 6단계 번호(01~06)는 보이는 글에 쓰지 않고 칸 title 에만.
-   지금 단계는 단계색 면 + '지금', 실제 기록으로 거친 단계는 옅은 면, 나머지는 테두리만. 칸을 누르면 지금 거르기를 유지한 채 그 단계인 사업 목록(href 를 화면이 준다). */
+   '지금' 한 칸만 단계색으로 채우고(+ '지금' 꼬리표), 지난 단계는 옅은 체크, 앞 단계는 빈 칸(projects-view stepState). 실제 기록 여부는 title 에.
+   칸을 누르면 지금 거르기를 유지한 채 그 단계인 사업 목록(href 를 화면이 준다). */
 import Link from 'next/link';
+import { Check } from 'lucide-react';
 import { cn } from 'cn';
-import { BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD_OFFICIAL } from '../../lib/board/projects-view';
+import { BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD_OFFICIAL, stepState } from '../../lib/board/projects-view';
 
 /* 칸마다 답할 질문(발표자료 6단계 질문을 리본 칸에 맞춤): ③착공은 공사 진행, ⑤준공은 공사의 끝(사용검사) — ⑤에 ③의 질문을 베끼지 않는다 */
 export const QUESTION = [
@@ -18,15 +20,19 @@ export default function StageSteps({ current, reached, href }: { current: number
   return (
     <ol className="m-0 grid list-none grid-cols-6 gap-1.5 p-0 mobile:grid-cols-3" aria-label="공급 6단계">
       {BOARD_NAMES.map((name, i) => {
-        const on = i === current, done = !on && (i === 0 || reached.includes(i)) && i < current;
+        const st = stepState(i, current), on = st === 'now';
         const c = BOARD_COLOR[i];
+        const rec = i === 0 || reached.includes(i) ? '실제 기록 있음' : '실제 기록 없음';
         return (
           <li key={name} className="min-w-0">
-            <Link href={href(i)} aria-current={on ? 'step' : undefined} title={`${BOARD_CIR[i]} ${name} — ${QUESTION[i]} · 공식 단계 ${BOARD_OFFICIAL[i]}${on ? ' · 이 사업의 지금 단계' : done ? ' · 지난 단계' : ''} · 누르면 지금 거르기 안에서 이 단계인 사업`}
+            <Link href={href(i)} aria-current={on ? 'step' : undefined} data-step={st}
+              title={`${BOARD_CIR[i]} ${name} — ${QUESTION[i]} · 공식 단계 ${BOARD_OFFICIAL[i]}${on ? ' · 이 사업의 지금 단계' : st === 'past' ? ` · 지난 단계(${rec})` : ' · 아직 오지 않은 단계'} · 누르면 지금 거르기 안에서 이 단계인 사업`}
               className={cn('card-lift flex h-full min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[8px] border-2 px-1 py-1.5 text-center no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-                on ? 'text-foreground' : 'text-muted-foreground')}
-              style={{ borderColor: on || done ? c : 'var(--border)', background: on ? `color-mix(in srgb,${c} 26%,var(--card))` : done ? `color-mix(in srgb,${c} 10%,var(--card))` : 'var(--card)' }}>
-              <b className="text-[16px] leading-[1.3] font-bold whitespace-nowrap" style={on || done ? { color: BOARD_INK[i] } : undefined}>{BOARD_CIR[i]} {name}</b>
+                on ? 'text-foreground' : 'border-border bg-card text-muted-foreground')}
+              style={on ? { borderColor: c, background: `color-mix(in srgb,${c} 26%,var(--card))` } : undefined}>
+              <b className={cn('flex items-center gap-1 text-[16px] leading-[1.3] whitespace-nowrap', on ? 'font-bold' : 'font-normal')} style={on ? { color: BOARD_INK[i] } : undefined}>
+                {st === 'past' ? <><Check className="size-4 flex-none opacity-70" aria-hidden="true" /><span className="sr-only">지난 단계 </span></> : null}{BOARD_CIR[i]} {name}
+              </b>
               {on ? <span className="mt-0.5 rounded-full bg-primary px-2 text-[13px] leading-[18px] font-bold text-primary-foreground">지금</span> : null}
             </Link>
           </li>

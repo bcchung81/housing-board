@@ -115,7 +115,7 @@ test('칩 줄: 단계 칩 없음(파이프라인 칸으로) · 상태는 점검 
   assert.doesNotMatch(read('components/projects/Summary.tsx') + page, /F-0\d/);
 });
 
-test('빈 결과 회복: 거르기 풀기·전국에서 보기 등 건수가 있는 대안만 보이고, 번호 발급 전 사업은 간단 보기로 연다는 것을 보이는 글로', () => {
+test('빈 결과 회복: 거르기 풀기·전국에서 보기 등 건수가 있는 대안만 보이고, 후보 사업은 간단 보기로 연다는 것을 보이는 글로', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /이 조건의 사업이 없습니다/);
   for (const t of ['상태·단계 거르기 풀기', '전국에서 보기', '정책·기관 거르기 풀기', '모두 풀기']) assert.ok(page.includes(t), t);
@@ -125,7 +125,7 @@ test('빈 결과 회복: 거르기 풀기·전국에서 보기 등 건수가 있
   const f = { metro: true, status: 'long', stage: 4 };
   assert.equal(V.applyFilters(rows, f).length, 0);
   assert.ok(V.applyFilters(rows, { metro: true }).length > 0);
-  assert.match(read('components/region/Ahead.tsx'), /\(후보\) = 번호 발급 전 사업 · 누르면 간단 보기/);
+  assert.match(read('components/region/Ahead.tsx'), /\(후보\) = 사업 번호가 아직 없는 후보 사업 · 누르면 간단 보기/);
 });
 
 test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들고 <a>(문서 이동)로 연다 — 서랍·목록 행·지역 공급 목록과 원·LH 블록 표·시도만 고른 지도 링크(시군구 고르기)', () => {
@@ -140,7 +140,7 @@ test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들�
   assert.match(det, /지도에서 보기 · \$\{loc\}/, '위치 종류(블록·지번·지구·근사·미확보)를 짧게');
   assert.doesNotMatch(det, />기반시설 점검</);
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /isMetro\(r\.sgg\) \? \{ text: '지도에서 보기', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
+  assert.match(read('lib/board/projects-list.ts'), /isMetro\(r\.sgg\) \? \{ text: '지도에서 보기', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
   assert.match(page, /items=\{mapSggs\.map\(\(c\) => \(\{ href: mapHref\(\{ sgg: c \}\)/, '시군구를 고르지 않았으면 지도 첫 화면 대신 시군구를 고르게');
   assert.doesNotMatch(page, /: '\/map'/);
   const grid = read('components/ui/data-grid.tsx');
@@ -165,12 +165,12 @@ test('언어: 판 번호·HOME 덤프·렌즈·검토 중·기준선 없음 대�
   assert.match(read('components/sources/Requirements.tsx'), /datesOf\(r\)\.map/);
 });
 
-test('읽는 법(ⓘ 하나의 정의들)과 진행 표지: 지연 구간 · 확인과 담당자 추정 · 거쳐 간과 지금 · 병목 · 앞으로 12개월, 칩·서랍 이동 중에는 가벼운 표지', () => {
+test('읽는 법(ⓘ 하나의 정의들)과 진행 표지: 지연 구간 · 확인과 담당자 추정 · 이 단계까지 온 사업과 지금 · 병목 · 앞으로 12개월, 칩·서랍 이동 중에는 가벼운 표지', () => {
   const sum = read('components/projects/Summary.tsx');
-  for (const t of ['<dt>{DELAY_GROUP}</dt>', '<dt>확인 · 담당자 추정 포함</dt>', '<dt>거쳐 간 사업 · 지금 이 단계</dt>', '<dt>병목</dt>', '<dt>{AHEAD_COMPLETION}</dt>']) assert.ok(sum.includes(t), t);
+  for (const t of ['<dt>{DELAY_GROUP}</dt>', '<dt>확인 · 담당자 추정 포함</dt>', '<dt>이 단계까지 온 사업 · 지금 이 단계</dt>', '<dt>병목</dt>', '<dt>{AHEAD_COMPLETION}</dt>']) assert.ok(sum.includes(t), t);
   assert.match(read('app/(dashboard)/projects/page.tsx'), /<ReadHelp \/>/);
   assert.match(sum, /지금 이 단계 <b>\{fmt\(c\.now\)\}<\/b>/, '파이프라인 칸 안에 지금 건수');
-  assert.match(sum, /거쳐 간 사업 \{fmt\(c\.n\)\}/);
+  assert.match(sum, /이 단계까지 온 사업 \{fmt\(c\.n\)\}/);
   const p = V.pipelineOf(V.applyFilters(rows, {}, 'stage'));
   assert.ok(p.open.every((c) => c.now === rows.filter((r) => r.board === c.i).length), '지금 = 칸을 누르면 거르는 건수');
   assert.match(read('components/ui/link-pending.tsx'), /useLinkStatus/);

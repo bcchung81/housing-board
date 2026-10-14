@@ -25,8 +25,10 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       {/* 본문 바탕·글꼴(옛 dash.css 의 body): 위쪽 오른편이 살짝 밝아지는 바탕(--page-bg, 테마별), 15px/1.55.
           클래스가 없는 기본 링크(상세 화면의 dl 안 링크)는 브라우저 기본 파랑 대신 주색으로 보인다. */}
       <body className={`font-sans ${doHyeon.variable} m-0 min-h-screen text-[16px] leading-[1.6] text-foreground [&_a:not([class])]:text-primary [background:var(--page-bg)] [font-synthesis:none]`}>
+        {/* 본문 바로가기: 첫 Tab 에서만 보이는 링크(메뉴를 건너뛴다). 인쇄에는 싣지 않는다 */}
+        <a href="#main" className="sr-only rounded-[8px] bg-primary px-4 py-2 text-[15px] font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">본문 바로가기</a>
         <TopNav />
-        <main>{children}</main>
+        <main id="main" tabIndex={-1} className="focus:outline-none">{children}</main>
       </body>
     </html>
   );

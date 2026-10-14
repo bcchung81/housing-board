@@ -53,6 +53,7 @@ function CellView({ v, col }: { v: Cell; col: Col }) {
     <>
       {mark ?? (o?.dashed ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-[1.5px] border-dashed border-line2 align-[-1px]" aria-hidden="true" /> : o?.swatch ? <Swatch color={o.swatch} /> : null)}
       {o?.pill ? <span className="inline-block rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: `color-mix(in srgb,${o.pill.color} 16%,var(--card))`, color: o.pill.ink }}>{body}</span> : toned}
+      {o?.tag ? <span className="ml-1.5 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] font-normal whitespace-nowrap text-muted-foreground">{o.tag}</span> : null}
       {o?.prov ? <Prov /> : null}
     </>
   );
