@@ -538,7 +538,7 @@
     const dir = String(index.dataBase || base).replace(/\/?$/, '/') + pick.region.slug + '/';
     const region = await getJson(dir + 'region.json');
     /* opts.home(region) → 수도권 원장 자료 Promise(번들 파일과 함께 받는다) */
-    const [projects, buildings, context, infra, home] = await Promise.all([getJson(dir + 'projects.json'), getJson(dir + 'buildings.json'), getJson(dir + 'context.json', true), getJson(dir + 'infra.json', true), opts.home ? opts.home(region) : null]);
+    const [projects, buildings, context, infra, home] = await Promise.all([getJson(dir + 'projects.json'), getJson(dir + 'buildings.json'), getJson(dir + 'context.json', true), pick.region.infra === false ? null : getJson(dir + 'infra.json', true), opts.home ? opts.home(region) : null]);
     return Object.assign({ ok: true }, adaptBundle({ index, entry: pick.region, region, projects, buildings, context, infra, ...(home ? { home: home.docs, homeFailed: home.failed } : {}) }));
   }
 

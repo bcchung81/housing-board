@@ -22,7 +22,7 @@ test('참조 값은 숫자 변환 흔적이 없다(22자리 관리번호가 부�
     assert.doesNotMatch(r.value, /[eE][+-]?\d|\./, `${p.id}: 부동소수 표기 ${r.value}`);
     if (r.system === 'hub-hs-basis') assert.match(r.value, /^\d{1,22}$/, `${p.id}: 관리번호 형식 ${r.value}`);
   }
-  const long = REAL.projects.flatMap((p) => p.refs).filter((r) => r.value.length > 15);
+  const long = REAL.projects.filter((p) => !p.supersededBy).flatMap((p) => p.refs).filter((r) => r.value.length > 15);   // 대체된 사업은 대표 사업과 참조를 나눠 가질 수 있다(validateRegistry 도 살아 있는 사업만 본다)
   assert.equal(new Set(long.map((r) => r.value)).size, long.length, '22자리 관리번호가 서로 다르게 보관된다');
 });
 

@@ -1628,6 +1628,16 @@
      "system": "home",
      "key": "PRO",
      "value": "PRO_2c8c2fda28fd878a7a9a94bd"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ac4452d5a3119683ef276aa5"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6b007623f2703880246788d3"
     }
    ],
    "issuedAt": "2026-10-14",
@@ -1660,7 +1670,8 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 294
+   "units": 294,
+   "supersededBy": "PRJ-11350-0096"
   },
   {
    "id": "PRJ-11350-0098",
@@ -2864,6 +2875,16 @@
      "system": "home",
      "key": "PRO",
      "value": "PRO_9e2cfb55c9d254091d3fb30d"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_803eee707326eb19d83f9c7b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_cd30a85198ac80fedcab7136"
     }
    ],
    "issuedAt": "2026-10-14",
@@ -2952,7 +2973,8 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 283
+   "units": 283,
+   "supersededBy": "PRJ-11560-0143"
   },
   {
    "id": "PRJ-11560-0147",
@@ -4123,17 +4145,18 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 350
+   "units": 350,
+   "supersededBy": "PRJ-28237-0065"
   },
   {
    "id": "PRJ-28237-0065",
    "sgg": "28237",
-   "stageCode": "02",
+   "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
-   "asOf": "2026-01-01",
+   "asOf": "2026-07-01",
    "name": "인천부평(도시재생뉴딜) A",
    "bjdCodes": [],
    "pnus": [],
@@ -4147,6 +4170,16 @@
      "system": "home",
      "key": "PRO",
      "value": "PRO_9a256c5d211050be9f0814ff"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8d735a3a96b7f96b288ec30d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_0e5b836fdd9670216e60ee53"
     }
    ],
    "issuedAt": "2026-10-14",
@@ -4450,7 +4483,7 @@
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
    "asOf": "2026-07-01",
-   "name": "인천계양 A2BL 및 A3BL 아파트 건설공사 1공구",
+   "name": "인천계양(공공주택) A2",
    "bjdCodes": [
     "2824511000"
    ],
@@ -4534,7 +4567,7 @@
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
    "asOf": "2026-07-01",
-   "name": "인천계양 A2BL 및 A3BL 아파트 건설공사 1공구",
+   "name": "인천계양(공공주택) A3",
    "bjdCodes": [
     "2824511000"
    ],
@@ -4571,7 +4604,7 @@
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
    "asOf": "2026-07-01",
-   "name": "[(105410)인천서구(거북이기지)]인천석남어울림센터및거북이기지행복주택건설공사1공구",
+   "name": "인천서구(거북이기지) 1",
    "bjdCodes": [],
    "pnus": [],
    "refs": [
@@ -4662,7 +4695,7 @@
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
    "asOf": "2026-07-01",
-   "name": "[(105409)인천서구(석남어울림)]인천석남어울림센터및거북이기지행복주택건설공사1공구",
+   "name": "인천서구(석남어울림) 1",
    "bjdCodes": [],
    "pnus": [],
    "refs": [
@@ -4783,7 +4816,7 @@
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
    "asOf": "2026-07-01",
-   "name": "[(100585)인천검단]인천검단AA13-1BL5공구,AA13-2BL6공구및인천신문아파트건설공사",
+   "name": "인천검단 35",
    "bjdCodes": [],
    "pnus": [],
    "refs": [
@@ -4837,7 +4870,7 @@
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
    "asOf": "2026-07-01",
-   "name": "[(100585)인천검단]인천검단AA13-1BL5공구,AA13-2BL6공구및인천신문아파트건설공사",
+   "name": "인천검단 AA13-1",
    "bjdCodes": [],
    "pnus": [],
    "refs": [
@@ -5338,7 +5371,7 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 633
+   "units": 438
   },
   {
    "id": "PRJ-41133-0025",
@@ -5744,7 +5777,7 @@
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
    "asOf": "2026-09-29",
-   "name": "조달청)부천종합운동장역세권 A-1BL 및 A-2BL 아파트 건설공사 1공구",
+   "name": "부천종합운동장 역세권 A2",
    "bjdCodes": [],
    "pnus": [],
    "refs": [
@@ -5991,7 +6024,7 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 952
+   "units": 314
   },
   {
    "id": "PRJ-41196-0099",
@@ -6002,7 +6035,7 @@
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
    "asOf": "2026-09-30",
-   "name": "조달청)부천대장 A-7BL 및 A-8BL 아파트 건설공사 1공구",
+   "name": "부천대장 A7",
    "bjdCodes": [],
    "pnus": [],
    "refs": [
@@ -6039,7 +6072,7 @@
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
    "asOf": "2026-09-30",
-   "name": "조달청)부천대장 A-7BL 및 A-8BL 아파트 건설공사 1공구",
+   "name": "부천대장 A8",
    "bjdCodes": [],
    "pnus": [],
    "refs": [
@@ -6151,7 +6184,7 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 688
+   "units": 227
   },
   {
    "id": "PRJ-41196-0103",
@@ -8736,7 +8769,8 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 381
+   "units": 381,
+   "supersededBy": "PRJ-41430-0048"
   },
   {
    "id": "PRJ-41430-0045",
@@ -8888,12 +8922,12 @@
   {
    "id": "PRJ-41430-0048",
    "sgg": "41430",
-   "stageCode": "03",
+   "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
     "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
    },
-   "asOf": "2026-01-01",
+   "asOf": "2026-07-01",
    "name": "의왕초평(뉴스테이) A4",
    "bjdCodes": [],
    "pnus": [],
@@ -8912,6 +8946,16 @@
      "system": "home",
      "key": "LH",
      "value": "LH__d104d67e76f618b82e7f8414"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3cae35e350c53ae0708abf41"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_0d475dbdf35690c529f845be"
     }
    ],
    "issuedAt": "2026-10-14",

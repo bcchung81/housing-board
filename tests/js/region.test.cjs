@@ -236,6 +236,9 @@ test('loadRegion: infra.json 이 있으면 읽고, 404 면 null 로 둔다(지�
   assert.equal(withInfra.ok, true); assert.deepEqual(withInfra.GY_INFRA, INFRA_DOC); assert.ok(f.calls.includes('regions/r1/infra.json'));
   const without = await R.loadRegion({ fetch: fakeFetch(filesFor()), search: '' });
   assert.equal(without.ok, true); assert.equal(without.GY_INFRA, null); assert.equal(without.blocks.length, 1);
+  const files2 = filesFor(); files2['regions/index.json'].regions[0].infra = false;   // 빌드 색인이 infra.json 없다고 하면 요청하지 않는다(404 를 만들지 않게)
+  const f2 = fakeFetch(files2), skipped = await R.loadRegion({ fetch: f2, search: '' });
+  assert.equal(skipped.ok, true); assert.equal(skipped.GY_INFRA, null); assert.ok(!f2.calls.includes('regions/r1/infra.json'));
 });
 
 test('loadRegion: infra.json 이 깨져 있으면(404 가 아닌 오류) URL 을 담은 예외', async () => {

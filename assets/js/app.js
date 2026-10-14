@@ -38,7 +38,7 @@ const HAS_PRIV = BLOCKS.some((b) => b.priv);                  // 공공택지 �
    단계(status)는 그대로 두고 표시만 바꾼다. 원장이 늦게 붙으면(refreshLedger) 다시 센다 */
 const settleAll = () => BLOCKS.forEach((b) => { b.settle = window.RegionLoader && window.RegionLoader.settleOf ? window.RegionLoader.settleOf(b) : null; });
 settleAll();
-const stTxt = (b) => (b.settle && window.Settle ? window.Settle.LABEL[b.settle] : b.status);   // 화면에 적는 상태 이름
+const stTxt = (b) => (window.Settle && (b.settle || b.status === '입주 단계') ? window.Settle.LABEL[b.settle || 'moving'] : b.status);   // 화면에 적는 상태 이름(날짜 없는 06 입주 단지는 범례처럼 입주 진행)
 const hasEx = () => BLOCKS.some((b) => b.settle === 'existing');
 const KIND = { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'soon', '입주 단계': 'move', '계획': 'plan', '사업화': 'plan' };   // 사업화: 수도권 원장 01·02 단계(계획과 같은 색)
 const kindOf = (b) => (b.priv ? 'priv' : KIND[b.status]);    // 색·무늬를 정하는 종류. 민간 단지는 상태와 상관없이 회색(priv)

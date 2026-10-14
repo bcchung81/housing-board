@@ -77,6 +77,7 @@ function build({ root = '.', out = 'public', env = process.env, log = console.lo
   const keep = (f) => !f.endsWith('.md') && !f.endsWith('.DS_Store');
   for (const p of ['assets']) fs.cpSync(path.join(root, p), path.join(OUT, p), { recursive: true, filter: keep });
   for (const r of index.regions) fs.cpSync(path.join(root, 'regions', r.slug), path.join(OUT, 'regions', r.slug), { recursive: true, filter: keep });
+  for (const r of index.regions) r.infra = fs.existsSync(path.join(root, 'regions', r.slug, 'infra.json'));   // 입주 전 기반시설 파일이 없는 지역은 화면이 요청하지 않는다(404 를 만들지 않게)
   fs.writeFileSync(path.join(OUT, 'regions/index.json'), JSON.stringify(index, null, 2) + '\n');
   const config = configText(root, env);
   fs.writeFileSync(path.join(OUT, 'config.js'), config);

@@ -23,7 +23,6 @@ const EVENT_STAGES = new Set([...STAGES, 'COMPLETION']);
 const METRICS = { CONSTRUCTION: '착공(건설)', SUPPLY: '공급(분양·모집)', BUSINESS: '사업화', APPROVAL: '인허가', COMPLETION: '준공', MOVE_IN: '입주 예정' };
 const REGIONS = ['서울특별시', '경기도', '인천광역시'];
 const ALIASES = { lh_incheon_sale: 'lh_sale', lh_incheon_rent: 'lh_rent', lh_incheon_construction: 'lh_construction' };
-const LH_TERM_SOURCES = new Set(['lh_sale', 'lh_rent', 'lh_construction', 'lh_history', 'lh_progress', 'lh_reit_progress']);
 const ROADMAP_STAGES = { PLANNING: '계획', APPROVAL: '인허가', CONSTRUCTION: '착공', SUPPLY: '공급', COMPLETION: '준공', MOVE_IN: '입주 시작' };
 
 const byStr = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
@@ -122,54 +121,12 @@ function sourceEvents(row) {
   return events.map((e, i) => [e, i]).sort(([a, i], [b, j]) => cmpTuple([a.month, a.stage], [b.month, b.stage]) || i - j).map(([e]) => e);
 }
 
-/* ---------- 지구·블록 키(supply_dashboard.block_key, map_data.district_term) ---------- */
-function districtTerm(row) {
-  if (!LH_TERM_SOURCES.has(row.source_id)) return null;
-  let value = row.district || row.name;
-  value = value.replace(/\([^)]*(?:\)|$)/g, '');
-  const cut = /\s*[A-Za-z]{1,3}\s*-?\s*\d|\s+주복\d|\s+0\d/.exec(value);
-  if (cut) value = value.slice(0, cut.index);
-  return value.trim();
-}
+/* ---------- 지구·블록 키(supply_dashboard.block_key, map_data.district_term)·중복 제외(supply_dashboard.inventory) — 원장 변환(home-source.js)과 한 벌 ---------- */
 /* → [시도, 지구, 블록] 또는 null */
-function blockKey(row) {
-  let term = districtTerm(row), block = row.block;
-  if (!block) {
-    const m = /\s+([A-Za-z]{1,3})\s*-?\s*(\d+)(?:BL)?(?:\s|\(|$)/i.exec(row.name);
-    block = m ? m[1] + m[2] : null;
-  }
-  const m = /^([A-Za-z]{1,3})\s*-?\s*0*(\d+)(?:BL)?$/i.exec(block || '');
-  if (!term || !m) return null;
-  term = term.replace(/\s+/g, '').replaceAll('국제화계획', '').replace(/(?:공공주택지구|택지개발사업|택지개발지구|지구)+$/, '');
-  return [row.region, term, m[1].toUpperCase() + String(parseInt(m[2], 10))];
-}
+function blockKey(row) { const k = HOME.blockKey(row); return k ? [k.region, k.term, k.block] : null; }
 const keyStr = (k) => k.join('\u0000');
-
-/* 지구·블록 중복 제외(supply_dashboard.inventory) → { chosen, excluded } */
-function inventory(rows) {
-  const grouped = new Map(), excluded = [];
-  for (const row of rows) {
-    if ((row.warnings || []).includes('MULTI_SITE_CONTRACT')) { excluded.push(row.id); continue; }
-    const key = blockKey(row);
-    if (row.source_id === 'lh_construction' && key === null) { excluded.push(row.id); continue; }
-    const k = key ? `K${keyStr(key)}` : `S${row.source_id}\u0000${row.id}`;
-    if (!grouped.has(k)) grouped.set(k, []);
-    grouped.get(k).push(row);
-  }
-  const chosen = [];
-  for (const group of grouped.values()) {
-    const plans = group.filter((r) => r.source_id === 'lh_sale' || r.source_id === 'lh_rent');
-    if (plans.length > 1 || (!plans.length && group.length > 1)) { excluded.push(...group.map((r) => r.id)); continue; }
-    let winner = plans.length ? plans[0] : group[0];
-    if (winner.planned_units == null) {
-      const caps = new Set(group.filter((r) => r.planned_units != null && r.planned_units > 0).map((r) => r.planned_units));
-      if (caps.size === 1) winner = { ...winner, planned_units: [...caps][0], quantity_basis: 'SAME_BLOCK_SOURCE', quantity_source_ids: group.filter((r) => r.planned_units != null).map((r) => r.id) };
-    }
-    chosen.push(winner);
-    excluded.push(...group.filter((r) => r.id !== winner.id).map((r) => r.id));
-  }
-  return { chosen, excluded };
-}
+/* 지구·블록 중복 제외 → { chosen, excluded } */
+const inventory = HOME.inventory;
 
 /* 본 모집공고 연결(supply_dashboard.linked_notices) → Map(사업 id → 공고) */
 function linkedNotices(rows, notices, asOf) {
@@ -600,7 +557,7 @@ function parseArgs(argv) {
   return o;
 }
 
-module.exports = { policyProgress, render, schedulePeriod, sourceEvents, blockKey, districtTerm, inventory, linkedNotices, scheduleTargets, stageEvents, homeRule, samePeriod, asOfOf, buildCohorts, homeService, POLICY_ID };
+module.exports = { policyProgress, render, schedulePeriod, sourceEvents, blockKey, inventory, linkedNotices, scheduleTargets, stageEvents, homeRule, samePeriod, asOfOf, buildCohorts, homeService, POLICY_ID };
 
 if (require.main === module) {
   try {
