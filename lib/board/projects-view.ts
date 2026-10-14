@@ -12,6 +12,8 @@ export type LinkStatus = 'CONFIRMED' | 'REVIEW_REQUIRED';
 export type MapRow = {
   id: string; name: string | null; issued: boolean; stage: string; cls: Cls | null; why: string | null;
   overdue: { eventType: string; planned: string; months: number } | null; next: { eventType: string; planned: string } | null; done?: string; units: number;
+  /* 건축HUB 관리번호(공개 범위 미결 — 화면에는 값 없이 '건축HUB 인허가에서 온 사업'인지만 쓴다) */
+  pks?: string[];
 };
 /* projects-index.json 의 사업별 덧붙임(tools/ledger/projects-index.js): reached = 원천 실제 기록이 있는 리본 칸(1~5), completion = 준공 현재 예정 달(준공 실제 없을 때) */
 export type IndexExtra = { notice?: number; programs?: string[]; policies?: string[]; link?: LinkStatus; agency?: string; reached?: number[]; completion?: string };
@@ -29,8 +31,6 @@ export const BOARD_COLOR = ['var(--st-plan)', 'var(--st-permit)', 'var(--st-buil
 export const BOARD_INK = ['var(--st-plan-ink)', 'var(--st-permit-ink)', 'var(--st-build-ink)', 'var(--st-sale-ink)', 'var(--st-soon-ink)', 'var(--st-move-ink)'] as const;
 /* 리본 칸의 공식 단계(칸 title) */
 export const BOARD_OFFICIAL = ['01 정책 · 02 사업화', '03 인허가', '04 건설(착공~준공 공사 기간)', '05 공급', '04 건설 끝(사용검사)', '06 입주'] as const;
-/* 칸 아래 짧은 보조 표기(공식 6단계 번호) — 사업 상세의 단계 줄 */
-export const BOARD_OFFICIAL_SHORT = ['공식 01·02', '공식 03', '공식 04', '공식 05', '공식 04 끝', '공식 06'] as const;
 export const BOARD_OF_STAGE: Record<string, number> = { '01': 0, '02': 0, '03': 1, '04': 2, '05': 3, '06': 4 };
 export const stageColor = (code: string) => BOARD_COLOR[BOARD_OF_STAGE[code] ?? 0];
 /* 원장 단계 사건 → 리본 칸 */
@@ -42,6 +42,9 @@ export const LONG_DELAY_MONTHS = 12;
 export const STATUS_NAME: Record<Status, string> = { ok: '정상', caution: '주의', delay: '지연', long: '장기 지연', none: '일정 없음' };
 export const STATUS_TIP: Record<Status, string> = { ok: '현재 예정일이 지나지 않음', caution: '현재 예정일 경과 1~6개월', delay: '현재 예정일 경과 6~12개월', long: '현재 예정일 경과 12개월 이상', none: '판정할 현재 예정일이 없음' };
 export const STATUS_ORDER: Status[] = ['ok', 'caution', 'delay', 'long', 'none'];
+/* 구간 이름(칩 메뉴·보조 줄): '지연'은 묶음(지연 + 장기, 경과 6개월 이상)에만 '지연(장기 포함)'으로 쓰고, 구간은 개월을 붙여 구분한다 */
+export const STATUS_RANGE: Record<Status, string> = { ok: '정상', caution: '주의 1~6개월', delay: '지연 6~12개월', long: '장기 12개월+', none: '일정 없음' };
+export const DELAY_GROUP = '지연(장기 포함)';
 export const statusOf = (r: { cls: Cls | null; overdue: { months: number } | null }): Status =>
   r.cls === 'delay' ? (r.overdue && r.overdue.months >= LONG_DELAY_MONTHS ? 'long' : 'delay') : r.cls ?? 'none';
 export const isCheck = (r: ProjectRow) => r.cls === 'caution' || r.cls === 'delay';
@@ -131,7 +134,7 @@ export const listOrder = (rows: ProjectRow[]) => [...rows].sort((a, b) => (lateO
 
 /* 거르기 주소: 열쇠 순서를 고정한다. patch 의 undefined 는 그 거르기를 푼다. 렌즈(policy·program)는 하나, 시도를 고르면 시군구가 풀리고 시군구를 고르면 시도가 풀린다.
    지역 sido: 'NN' · 'metro'(수도권) · 'all'(전국). 지역이 비면 기본 수도권 — 'metro' 는 ?stage·?status·?agency 가 함께 있을 때만 적는다(없으면 기본과 같아 뺀다) */
-const KEYS = ['policy', 'program', 'sido', 'sgg', 'stage', 'status', 'agency', 'id', 'print'] as const;
+const KEYS = ['policy', 'program', 'sido', 'sgg', 'stage', 'status', 'agency', 'id', 'cand', 'print'] as const;
 type Plain = Partial<Record<(typeof KEYS)[number], string>>;
 export const plainOf = (f: Filters): Plain => ({ policy: f.policy?.key, program: f.program?.name, sido: f.sgg ? undefined : f.sido ?? (f.metro ? 'metro' : 'all'), sgg: f.sgg, stage: f.stage === undefined ? undefined : String(f.stage), status: f.status, agency: f.agency });
 export function listHref(f: Filters, patch: Plain = {}) {
@@ -157,9 +160,10 @@ export function summaryOf(rows: ProjectRow[]) {
   };
 }
 
-/* ---------- 단계 파이프라인: 칸마다 원천 실제 기록으로 확인한 사업 수·그 계획 호수(①은 계획 호수가 있는 사업). 기록이 없는 칸은 접는다 ---------- */
-/* 칸의 두 숫자: 도달 n = 그 단계 기록을 거친 사업(누적, 큰 숫자·막대) · 지금 now = 지금 그 단계인 사업(칸을 누르면 거르는 기준) */
-export const reachedAt = (r: ProjectRow, i: number) => (i === 0 ? r.units > 0 : r.reached.includes(i));
+/* ---------- 단계 파이프라인: 칸마다 그 단계를 거쳐 간 사업 수·그 계획 호수. 기록이 없는 칸은 접는다 ---------- */
+/* 칸의 두 숫자: 거쳐 간 n = 그 단계 실제 기록이 있거나(①은 계획 호수가 있거나) 지금 그 단계인 사업(누적, 큰 숫자·막대) · 지금 now = 지금 그 단계인 사업(칸을 누르면 거르는 기준).
+   지금 그 단계인 사업은 그 단계에 들어와 있으므로 거쳐 간 사업에 넣는다 — 실제 기록 없이 단계만 올라간 사업(예: 준공 실제 없이 06 인 사업) 때문에 지금 > 거쳐 간 이 되던 것을 막는다(불변식 now ≤ n) */
+export const reachedAt = (r: ProjectRow, i: number) => r.board === i || (i === 0 ? r.units > 0 : r.reached.includes(i));
 export type PipeCell = { i: number; n: number; units: number; share: number; now: number };
 export function pipelineOf(rows: ProjectRow[]) {
   const cells: PipeCell[] = BOARD_NAMES.map((_, i) => {
@@ -243,8 +247,14 @@ export function compareLines(pp: PolicyProgress, policies: Policy[], rows: Proje
   });
 }
 
+/* '앞으로 12개월'의 두 이름: 준공만(사업 핵심 질문·종합상황판) · 모집·준공·입주(지역 공급). 범위는 둘 다 원장 관측 달부터 12개월 */
+export const AHEAD_COMPLETION = '앞으로 12개월 준공 예정';
+export const AHEAD_ALL = '앞으로 12개월 모집·준공·입주 예정';
+export const aheadMonths = (observedMonth: string) => Array.from({ length: 12 }, (_, i) => addMonths(observedMonth, i));
+
 /* ---------- 핵심 질문 5(시안 app.js questions): 렌즈·지역·기관 범위로 다시 센다(상태·단계 칩과 상관없음) ---------- */
-export type Question = { q: string; value: string; unit: string; sub: string; tip: string; href?: string; tone?: 'bad'; ink?: string; muted?: boolean };
+/* scope: 이 칸만 범위가 다를 때 질문 옆에 보이는 짧은 표지(예 '정책 전체') */
+export type Question = { q: string; value: string; unit: string; sub: string; tip: string; href?: string; tone?: 'bad'; ink?: string; muted?: boolean; scope?: string; scopeTip?: string };
 export type QuestionCtx = { pp: PolicyProgress; policies: Policy[]; observedMonth: string; sidoName: (code: string) => string; sggName: (code: string) => string };
 export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Question[] {
   const scope = scopeOf(rows, f), Q: Question[] = [];
@@ -254,7 +264,7 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
   const pair = pol ? policyStageCells(ctx.pp, pol.id)?.find((c) => c.target != null && c.actual != null) : undefined;
   if (pol && pair) {
     const short = pair.state === 'short', i = pair.board;
-    Q.push({ q: '계획대로 가고 있는가', href: !f.policy ? listHref(f, { policy: pk! }) : undefined, tone: short ? 'bad' : undefined,
+    Q.push({ q: '계획대로 가고 있는가', scope: '정책 전체', scopeTip: `${policyLabel(pol)} 전체(HOME 정책 진행 자료) — 지역·기관 거르기와 상관없음`, href: !f.policy ? listHref(f, { policy: pk! }) : undefined, tone: short ? 'bad' : undefined,
       value: short ? String(pair.shortfallPct) : String(Math.round(pair.actual! / pair.target! * 100)), unit: short ? '% 부족' : '% 달성',
       sub: `${policyLabel(pol)} ${BOARD_CIR[i]}${BOARD_NAMES[i]} ${fmt(pair.actual!)} / ${fmt(pair.target!)}`,
       tip: `${stageCellTip(pair, pol.short)} · 정책 전체 범위(policy-progress) · 목표와 확인이 같은 기간에 함께 있는 첫 단계${hasEstimate(pair) ? ' · 비율은 확인으로만 계산(추정 제외)' : ''}` });
@@ -270,12 +280,12 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
   const late = scope.filter(isCheck);
   const byStage = delayByStageOf(scope), neck = bottleneckOf(byStage);
   Q.push({ q: '어디서 막혀 있는가', href: neck ? listHref(f, { stage: String(neck.i), status: 'check' }) : undefined, ink: neck ? BOARD_INK[neck.i] : undefined, muted: !neck,
-    value: neck ? `${BOARD_CIR[neck.i]} ${BOARD_NAMES[neck.i]}` : '없음', unit: '', sub: neck ? `병목 · 지연 ${fmt(neck.units)}호` : '지연 사업 없음',
-    tip: `병목 = 지연 호수(경과 6개월 이상 사업의 계획 호수)가 가장 큰 단계 · 종합상황판 병목과 같은 계산 · ${byStage.map((v, i) => `${BOARD_CIR[i]} ${fmt(v)}`).join(' · ')}` });
-  /* ③ 어떤 사업이 늦어지는가: 지연(장기 포함) 건수 = 지연 + 장기(주의는 넣지 않는다) */
+    value: neck ? `${BOARD_CIR[neck.i]} ${BOARD_NAMES[neck.i]}` : '없음', unit: '', sub: neck ? `병목 · ${DELAY_GROUP} ${fmt(neck.units)}호` : '지연 사업 없음',
+    tip: `병목 = ${DELAY_GROUP} 호수(현재 예정일 경과 6개월 이상 사업의 계획 호수)가 가장 큰 단계 · 종합상황판 병목과 같은 계산 · ${byStage.map((v, i) => `${BOARD_CIR[i]} ${fmt(v)}`).join(' · ')}` });
+  /* ③ 어떤 사업이 늦어지는가: 지연(장기 포함) 건수 = 지연 6~12개월 + 장기 12개월+(주의는 넣지 않는다) */
   const n = (s: Status) => late.filter((r) => statusOf(r) === s).length;
-  Q.push({ q: '어떤 사업이 늦어지는가', href: late.length ? listHref(f, { status: 'check' }) : undefined, value: fmt(n('delay') + n('long')), unit: '건', sub: `지연 ${fmt(n('delay'))} · 장기 ${fmt(n('long'))}`,
-    tip: `지연(경과 6~12개월) ${fmt(n('delay'))} + 장기 지연(12개월 이상) ${fmt(n('long'))} · 주의(1~6개월) ${fmt(n('caution'))}건은 따로 · 누르면 점검 필요 목록` });
+  Q.push({ q: '어떤 사업이 늦어지는가', href: late.length ? listHref(f, { status: 'check' }) : undefined, value: fmt(n('delay') + n('long')), unit: '건', sub: `${STATUS_RANGE.delay} ${fmt(n('delay'))} · ${STATUS_RANGE.long} ${fmt(n('long'))}`,
+    tip: `${DELAY_GROUP} = ${STATUS_RANGE.delay} ${fmt(n('delay'))} + ${STATUS_RANGE.long} ${fmt(n('long'))} · ${STATUS_RANGE.caution} ${fmt(n('caution'))}건은 따로 · 누르면 점검 필요 목록` });
   /* ④ 어디를 먼저: 지연·주의 호수가 가장 큰 시도(시도·시군구를 고르면 시군구) */
   const bySgg = !!(f.sido || f.sgg), acc = new Map<string, number>();
   for (const r of late) { const k = bySgg ? r.sgg : r.sgg.slice(0, 2); acc.set(k, (acc.get(k) ?? 0) + r.units); }
@@ -284,12 +294,33 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
     href: top ? (bySgg ? (top[0] !== f.sgg ? listHref(f, { sgg: top[0] }) : undefined) : listHref(f, { sido: top[0] })) : undefined,
     sub: top ? `지연·주의 ${fmt(top[1])}호` : '지연·주의 사업 없음', tip: `지연·주의 사업 호수가 가장 큰 ${bySgg ? '시군구' : '시도'}` });
   /* ⑤ 앞으로 얼마나: 준공 현재 예정이 앞으로 12개월(원장 관측 달부터)에 드는 사업(준공 실제가 있으면 뺌 — 종합상황판 향후 12개월 준공과 같은 규칙) */
-  const months = Array.from({ length: 12 }, (_, i) => addMonths(ctx.observedMonth, i));
+  const months = aheadMonths(ctx.observedMonth);
   const up = scope.filter((r) => r.completion && months.includes(r.completion));
   const sido = f.sgg ? f.sgg.slice(0, 2) : f.sido ?? (f.metro ? '' : 'all');
-  Q.push({ q: '앞으로 얼마나 공급되는가', href: `/region${sido ? `?sido=${sido}` : ''}`, value: fmt(up.reduce((s, r) => s + r.units, 0)), unit: '호', sub: `12개월 준공 예정 · ${fmt(up.length)}건`,
-    tip: `이 범위 사업의 준공 현재 예정 · ${ymText(months[0])}~${ymText(months[11])} · 이미 준공 실제가 있는 사업 제외 · 누르면 지역 공급` });
+  Q.push({ q: '앞으로 얼마나 공급되는가', href: `/region${sido ? `?sido=${sido}` : ''}`, value: fmt(up.reduce((s, r) => s + r.units, 0)), unit: '호', sub: `${AHEAD_COMPLETION} · ${fmt(up.length)}건`,
+    tip: `${AHEAD_COMPLETION} = 이 범위 사업의 준공 현재 예정 달이 ${ymText(months[0])}~${ymText(months[11])}인 사업(이미 준공 실제가 있는 사업 제외) · 지역 공급의 '준공' 칩과 같은 값 · 누르면 지역 공급` });
   return Q;
+}
+
+/* ---------- 다음 일정(목록 칸·간단 보기): 지난 예정(주의·지연)은 그 달과 색, 아니면 다음 현재 예정, 끝난 사업은 실제 준공 달 ---------- */
+/* 열이 좁아 모집공고는 '모집'(리본 ④와 같은 말) */
+export const NEXT_NAME: Record<string, string> = { ...EVENT_NAME, SUPPLY_NOTICE: '모집' };
+export function nextOf(r: ProjectRow): { text: string; sort: number; title: string; tone?: 'warn' | 'bad'; muted?: boolean } | null {
+  const late = lateOf(r);
+  if (late !== null && r.overdue) return { text: `${ymText(r.overdue.planned)} ${NEXT_NAME[r.overdue.eventType]}`, tone: r.cls === 'caution' ? 'warn' : 'bad', sort: monthNo(r.overdue.planned), title: `${EVENT_NAME[r.overdue.eventType]} 현재 예정일 경과 ${r.overdue.months}개월 — ${STATUS_NAME[statusOf(r)]}` };
+  if (r.next) return { text: `${ymText(r.next.planned)} ${NEXT_NAME[r.next.eventType]}`, sort: monthNo(r.next.planned), title: `${EVENT_NAME[r.next.eventType]} 현재 예정` };
+  if (r.done) return { text: `${ymText(r.done)} 준공`, muted: true, sort: monthNo(r.done), title: '실제 준공' };
+  return null;
+}
+
+/* ---------- 간단 보기(?cand=): 상세 자료가 없는 사업(번호 발급 전 후보 등)을 목록 색인 자료만으로 연다 ---------- */
+/* 번호 발급 전 사업의 원장 id 는 다음 원장에서 바뀔 수 있어 상세(?id=)와 주소를 나눈다. 목록에 없는 id 면 null */
+export const CAND_NAME = '번호 발급 전 사업(후보)';
+export function candidateOf(rows: ProjectRow[], id: string | null | undefined): { row: ProjectRow; sources: string[] } | null {
+  const row = id ? rows.find((r) => r.id === id) : undefined;
+  if (!row) return null;
+  const sources = [...(row.pks?.length ? ['건축HUB 주택인허가'] : []), ...(row.why === 'LH 후보' ? ['LH 준공 예정 파일'] : [])];
+  return { row, sources: sources.length ? sources : ['사업 원장'] };
 }
 
 /* ---------- 월간 보고: 우선 점검 상위 10(현재 예정일 경과 개월 큰 순, 같으면 호수 큰 순) ---------- */

@@ -45,7 +45,7 @@ function CellView({ v, col }: { v: Cell; col: Col }) {
   const d = display(v, col.kind);
   const o = typeof v === 'object' && v !== null ? v : undefined;
   const text = o?.icon === 'map' ? <><MapPin className="inline size-4 align-[-3px]" aria-hidden="true" /><span className="sr-only">{d.text}</span></> : o?.code ? <code>{d.text}</code> : keepWords(d.text);
-  const body = o?.href ? (o.doc ? <a href={o.href} className={o.icon ? 'inline-flex rounded-[4px] p-0.5 text-muted-foreground hover:text-primary' : undefined}>{text}</a> : <Link href={o.href} className="relative">{text}<LinkPending /></Link>) : text;
+  const body = o?.href ? (o.doc ? <a href={o.href} className={o.icon ? 'inline-flex rounded-[4px] p-0.5 text-muted-foreground hover:text-primary' : undefined}>{text}</a> : <Link href={o.href} scroll={o.stay ? false : undefined} className="relative">{text}<LinkPending /></Link>) : text;
   const mark = o?.mark === 'hatch' ? <i className={cn('mr-1.5 inline-block size-[11px] rounded-[3px] border border-line2 align-[-1px]', HATCH)} aria-hidden="true" />
     : o?.mark === 'outline' ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-2 align-[-1px]" style={{ borderColor: o.swatch }} aria-hidden="true" /> : null;
   const toned = d.tone ? <span className={cn(TONE[d.tone], o?.strong && 'font-bold')}>{body}</span> : o?.strong ? <b>{body}</b> : body;

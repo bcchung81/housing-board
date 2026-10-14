@@ -1,7 +1,7 @@
 /* 사업 화면 요약 카드의 세 부분(서버가 그린다 — 값은 lib/board/projects-view.ts). 시안: docs/design/home-concept/assets/app.js questions·pipeline·policyCompare.
    - Questions: 핵심 질문 5칸(계획대로·어디서 막힘·어떤 사업·어디 먼저·앞으로 얼마). 누르면 그 답의 거르기(또는 지역 공급)로 간다.
-   - Pipeline: 리본 칸마다 도달(실제 기록으로 그 단계를 거친 사업 — 계획 호수·비율 막대)과 지금(현재 그 단계인 사업 — 누르면 거르는 기준). 둘 다 없는 칸은 접은 한 칸(점선)으로 한 번만.
-   - ReadGuide: 툴팁에만 있던 핵심 정의 셋(지연 기준 · 확인과 추정 · 도달과 지금)을 화면에 보이는 한 줄로.
+   - Pipeline: 리본 칸마다 거쳐 간 사업(실제 기록이 있거나 지금 그 단계 — 계획 호수·비율 막대)과 지금 이 단계(누르면 거르는 기준). 둘 다 없는 칸은 접은 한 칸(점선)으로 한 번만.
+   - ReadHelp: 핵심 정의(지연 구간 · 확인과 담당자 추정 · 거쳐 간과 지금 · 병목 · 앞으로 12개월)를 눌러서 여는 ⓘ 하나로(인쇄에는 펼친 목록).
    - PolicyCompare: 정책별 같은 기간 목표 대비 확인. 목표가 있는 단계만 칸으로, 나머지는 '목표 미배정' 한 번. 확인과 담당자 추정을 섞지 않는다 —
      막대는 확인(실색) 뒤에 추정 포함분(옅은 점선), 숫자는 '확인 / 목표' 와 아래 '추정 포함' 줄. 부족·비율은 확인으로만 낸다. */
 import Link from 'next/link';
@@ -9,8 +9,9 @@ import type { CSSProperties, ReactNode } from 'react';
 import { cn } from 'cn';
 import { Badge } from '../ui/badge';
 import { HATCH } from '../ui/chips';
+import InfoTip from '../ui/info-tip';
 import LinkPending from '../ui/link-pending';
-import { BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD_OFFICIAL, LONG_DELAY_MONTHS, hasEstimate, hasTarget, policyLabel, ymText, type CompareLine, type PipeCell, type Question, type StageCell } from '../../lib/board/projects-view';
+import { AHEAD_COMPLETION, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD_OFFICIAL, DELAY_GROUP, STATUS_RANGE, hasEstimate, hasTarget, policyLabel, ymText, type CompareLine, type PipeCell, type Question, type StageCell } from '../../lib/board/projects-view';
 
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 const man = (v: number) => (v === 0 ? '0' : v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
@@ -26,7 +27,10 @@ export function Questions({ list }: { list: Question[] }) {
       {list.map((x) => {
         const inner = (
           <>
-            <span className={cn('text-[14px] text-muted-foreground', x.href && 'group-hover/q:text-primary')}>{x.q}</span>
+            <span className={cn('flex min-w-0 items-center gap-1.5 text-[14px] text-muted-foreground', x.href && 'group-hover/q:text-primary')}>
+              <span className="truncate">{x.q}</span>
+              {x.scope ? <span className="flex-none rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] whitespace-nowrap text-muted-foreground" title={x.scopeTip}>{x.scope}</span> : null}
+            </span>
             <b className={cn('font-display text-[28px] leading-[1.2] font-normal whitespace-nowrap tabular-nums', x.tone === 'bad' && 'text-bad', x.muted && 'text-muted-foreground')} style={x.ink ? { color: x.ink } : undefined}>
               {x.value}{x.unit ? <small className="ml-[3px] font-sans text-[14px] font-normal text-muted-foreground">{x.unit}</small> : null}
             </b>
@@ -43,28 +47,29 @@ export function Questions({ list }: { list: Question[] }) {
   );
 }
 
-export function Pipeline({ open, shut, total, on, href, badges }: { open: PipeCell[]; shut: number[]; total: number; on?: number; href: (i: number) => string; badges?: ReactNode }) {
+export function Pipeline({ open, shut, total, on, href, badges, scope }: { open: PipeCell[]; shut: number[]; total: number; on?: number; href: (i: number) => string; badges?: ReactNode; scope: string }) {
   const cols = `repeat(${open.length},minmax(0,1fr))${shut.length ? ` minmax(0,${Math.max(0.7, shut.length * 0.45)}fr)` : ''}`;
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h3 className={h3} title="큰 숫자·막대 = 도달(실제 기록으로 그 단계를 거친 사업의 계획 호수·비율) · 지금 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만">단계 파이프라인</h3>
+        <h3 className={h3} title="큰 숫자·막대 = 거쳐 간 사업(그 단계 실제 기록이 있거나 지금 그 단계인 사업)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에">단계 파이프라인</h3>
+        <Badge title="사업 원장의 사업별 단계 기록으로 센 값(아래 정책별 목표 대비는 HOME 정책 진행 자료)">사업 원장 · {scope}</Badge>
         {badges}
       </div>
       <ol className="m-0 mt-3 grid list-none gap-2 p-0 narrow:grid-cols-3! mobile:grid-cols-2!" style={{ gridTemplateColumns: cols }} aria-label="단계 파이프라인">
         {open.map((c) => {
-          const tip = `${BOARD_CIR[c.i]} ${BOARD_NAMES[c.i]} — 도달: 실제 기록으로 이 단계를 거친 사업 ${fmt(c.n)}건(${c.share.toFixed(0)}%) · 계획 호수 ${fmt(c.units)}호${c.i === 0 ? '(①은 계획 호수를 확인한 사업)' : ''} · 지금 이 단계인 사업 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만' : ''}`;
+          const tip = `${BOARD_CIR[c.i]} ${BOARD_NAMES[c.i]} — 거쳐 간 사업 ${fmt(c.n)}건(${c.share.toFixed(0)}% · 그 단계 실제 기록이 있거나${c.i === 0 ? ' 계획 호수를 확인했거나' : ''} 지금 그 단계인 사업) · 계획 호수 ${fmt(c.units)}호 · 지금 이 단계 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만 목록에' : ''}`;
           const body = (
             <>
               <span className="flex items-center gap-1.5 text-[14px] whitespace-nowrap" style={{ color: BOARD_INK[c.i] }}><i className="block size-[9px] flex-none rounded-[2px]" style={{ background: BOARD_COLOR[c.i] }} aria-hidden="true" />{BOARD_CIR[c.i]} {BOARD_NAMES[c.i]}</span>
               <span className="flex flex-col">
                 <b className="font-display text-[24px] leading-[1.15] font-normal tabular-nums">{fmt(c.units)}<small className="ml-[3px] font-sans text-[14px] text-muted-foreground">호</small></b>
-                <span className="text-[14px] text-muted-foreground tabular-nums">도달 {fmt(c.n)}건 / {fmt(total)}</span>
+                <span className="text-[14px] text-muted-foreground tabular-nums">거쳐 간 사업 {fmt(c.n)} / {fmt(total)}</span>
               </span>
               <span className="relative block h-[6px]" style={{ background: light(BOARD_COLOR[c.i], 22) }} aria-hidden="true">
                 <span className="q-grow-x absolute inset-y-0 left-0" style={{ width: `${c.share}%`, background: BOARD_COLOR[c.i], '--i': c.i } as CSSProperties} />
               </span>
-              <span className={cn('text-[14px] tabular-nums', c.now ? 'text-foreground' : 'text-muted-foreground')}>지금 <b>{fmt(c.now)}</b>건{c.now ? <span className="ml-0.5 text-muted-foreground" aria-hidden="true">›</span> : null}</span>
+              <span className={cn('text-[14px] tabular-nums', c.now ? 'text-foreground' : 'text-muted-foreground')}>지금 이 단계 <b>{fmt(c.now)}</b>{c.now ? <span className="ml-0.5 text-muted-foreground" aria-hidden="true">›</span> : null}</span>
             </>
           );
           const box = 'flex h-full w-full min-w-0 flex-col gap-1.5 rounded-[10px] border border-border px-3 py-2.5 text-left text-foreground no-underline';
@@ -93,7 +98,7 @@ export function Pipeline({ open, shut, total, on, href, badges }: { open: PipeCe
 
 /* 목표 칸 하나: 목표·확인(+추정 포함) 막대 · 실적 없음 · 연말 목표만 */
 function TargetCell({ c, pol }: { c: StageCell; pol: string }) {
-  const color = BOARD_COLOR[c.board], tip = c.target != null ? `${pol} ${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — ${ymText(c.from)}~${ymText(c.through)} · 확인 ${c.actual != null ? `${fmt(c.actual)}호` : '없음'}${c.review ? `(확정 전 연결 ${fmt(c.review)}호 포함)` : ''}${hasEstimate(c) ? ` · 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호 — 확인과 구분)` : ''} / 목표 ${fmt(c.target)}호${c.state === 'short' ? ` · 부족 ${fmt(c.gap ?? 0)}호(${c.shortfallPct}%, 확인 기준)` : ''} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}` : '';
+  const color = BOARD_COLOR[c.board], tip = c.target != null ? `${pol} ${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — ${ymText(c.from)}~${ymText(c.through)} · 확인 ${c.actual != null ? `${fmt(c.actual)}호` : '없음'}${c.review ? `(확정 전 연결 ${fmt(c.review)}호 포함)` : ''}${hasEstimate(c) ? ` · 담당자 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호 — 확인과 구분)` : ''} / 목표 ${fmt(c.target)}호${c.state === 'short' ? ` · 부족 ${fmt(c.gap ?? 0)}호(${c.shortfallPct}%, 확인 기준)` : ''} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}` : '';
   if (c.target != null && c.actual != null) {
     const short = c.state === 'short', est = hasEstimate(c);
     return (
@@ -106,7 +111,7 @@ function TargetCell({ c, pol }: { c: StageCell; pol: string }) {
         <span className="text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">
           <b className={cn('text-[14px]', short ? 'text-bad' : 'text-foreground')}>{fmt(c.actual)}</b> / {fmt(c.target)}{short ? <> <b className="text-bad">부족 {c.shortfallPct}%</b></> : null}
         </span>
-        {est ? <span className="text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">추정 포함 {fmt(c.withEst!)}</span> : null}
+        {est ? <span className="text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">담당자 추정 포함 {fmt(c.withEst!)}</span> : null}
       </div>
     );
   }
@@ -132,7 +137,7 @@ export function PolicyCompare({ lines, title, href }: { lines: CompareLine[]; ti
   const used = lines.flatMap((l) => l.cells.filter(hasTarget));
   const c0 = lines[0].cells[0];
   const lg: { label: string; tip: string; cls?: string; style?: CSSProperties }[] = [{ label: '확인', cls: 'bg-mute', tip: '확인 호수(단계색 실색) — 원천·연결 사건과 담당자 측정값 중 추정이 아닌 것' }];
-  if (used.some(hasEstimate)) lg.push({ label: '추정 포함', tip: '담당자 추정 입력(기한이 지난 단계에 담당자가 고른 현재값)을 더한 값(옅은 점선) — 비율·부족은 확인으로만', style: EST('var(--mute)') });
+  if (used.some(hasEstimate)) lg.push({ label: '담당자 추정 포함', tip: '담당자 추정 입력(기한이 지난 단계에 담당자가 고른 현재값)을 더한 값(옅은 점선) — 비율·부족은 확인으로만', style: EST('var(--mute)') });
   if (used.some((c) => c.target != null)) lg.push({ label: '목표', tip: '같은 기간 목표(같은 색 옅게)', style: { background: light('var(--mute)', 30) } });
   if (used.some((c) => c.target != null && c.actual == null)) lg.push({ label: '실적 없음', cls: `border border-line2 ${HATCH}`, tip: '목표는 있으나 확인 실적 원천이 없음(빗금)' });
   if (used.some((c) => c.state === 'short')) lg.push({ label: '목표 미달', cls: 'border-[1.5px] border-bad', tip: '확인이 목표에 못 미침(빨간 테두리)' });
@@ -141,6 +146,7 @@ export function PolicyCompare({ lines, title, href }: { lines: CompareLine[]; ti
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
         <h3 className={h3} title="정책마다 같은 기간 목표 대비 확인 · 단계 목표가 배정된 정책만(1·29·8·13 대책은 목표 없음 — 정책 칩으로 사업은 볼 수 있음) · 확인은 확정 전 연결 포함, 담당자 추정 입력은 따로 · 정책 전체 범위(수도권·전국 거르기와 상관없음)">{title}</h3>
         <span className="text-[14px] text-muted-foreground tabular-nums" title="같은 해 1월~기준 달 누적(policy-progress samePeriod)">{ymText(c0.from)}~{c0.through.slice(5, 7)}</span>
+        <Badge title="HOME 정책 진행 자료의 정책 전체 값(호) — 지역·기관·단계·상태 거르기와 상관없음. 위 단계 파이프라인(사업 원장, 건)과 출처·단위가 달라 ⑤ 준공 등 숫자가 서로 다를 수 있음">HOME 정책 진행 · 정책 전체</Badge>
         <ul className="m-0 ml-auto flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[14px] text-muted-foreground" aria-label="범례">
           {lg.map((x) => <li key={x.label} className="flex items-center gap-1 whitespace-nowrap" title={x.tip}><i className={cn('block size-[9px] flex-none rounded-[2px]', x.cls)} style={x.style} aria-hidden="true" />{x.label}</li>)}
         </ul>
@@ -167,14 +173,17 @@ export function PolicyCompare({ lines, title, href }: { lines: CompareLine[]; ti
   );
 }
 
-/* 읽는 법: 툴팁 안에만 있던 핵심 정의 셋을 보이는 한 줄로(발표 화면에서 읽히게). 인쇄에도 싣는다 */
-export function ReadGuide() {
-  const item = 'flex flex-wrap items-baseline gap-x-1.5';
+/* 읽는 법: 핵심 정의를 눌러서 여는 ⓘ 하나로(문구 최소화). 인쇄에는 같은 정의를 펼친 목록으로 싣는다(print 만) */
+function Defs() {
   return (
-    <dl aria-label="읽는 법" className="m-0 mt-4 flex flex-wrap gap-x-6 gap-y-1 border-t border-border pt-3 text-[14px] leading-[1.5] text-muted-foreground [&_dd]:m-0 [&_dt]:font-bold [&_dt]:text-foreground">
-      <div className={item}><dt>지연</dt><dd>현재 예정일이 6개월 넘게 지남(1~6개월 주의, {LONG_DELAY_MONTHS}개월 이상 장기)</dd></div>
-      <div className={item}><dt>확인 · 추정</dt><dd>확인 = 기록으로 확인한 호수, 추정 포함 = 담당자 입력을 더한 값(비율은 확인으로만)</dd></div>
-      <div className={item}><dt>도달 · 지금</dt><dd>도달 = 그 단계를 거친 사업, 지금 = 현재 그 단계인 사업(칸을 누르면 지금 기준)</dd></div>
+    <dl>
+      <dt>{DELAY_GROUP}</dt><dd>{`현재 예정일 경과 6개월 이상 — 구간은 ${STATUS_RANGE.delay} · ${STATUS_RANGE.long}(${STATUS_RANGE.caution}은 따로 셈)`}</dd>
+      <dt>확인 · 담당자 추정 포함</dt><dd>확인 = 기록으로 확인한 호수 · 담당자 추정 포함 = 담당자 입력을 더한 값(비율·부족은 확인으로만)</dd>
+      <dt>거쳐 간 사업 · 지금 이 단계</dt><dd>거쳐 간 사업 = 그 단계 실제 기록이 있거나 지금 그 단계인 사업 · 지금 이 단계 = 현재 그 단계인 사업(칸을 누르면 목록이 그 사업만)</dd>
+      <dt>병목</dt><dd>{DELAY_GROUP} 사업의 계획 호수가 가장 큰 단계(종합상황판과 같은 계산)</dd>
+      <dt>{AHEAD_COMPLETION}</dt><dd>원장 관측 달부터 12개월 안에 준공 현재 예정 달이 든 사업(준공 실제가 있으면 뺌)</dd>
     </dl>
   );
 }
+export const ReadHelp = () => <InfoTip label="읽는 법" text="읽는 법"><Defs /></InfoTip>;
+export const PrintDefs = () => <div aria-hidden="true" className="mt-4 hidden border-t border-border pt-3 text-[13px] print:block [&_dd]:m-0 [&_dd]:mb-1 [&_dl]:m-0 [&_dt]:font-bold"><Defs /></div>;

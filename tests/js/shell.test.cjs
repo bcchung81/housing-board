@@ -57,7 +57,7 @@ test('공급 실적·시행주체별·우리 동네 목록 화면은 지역 공�
   for (const f of ['agency/[id]/page.tsx', 'month/[id]/page.tsx', 'region/page.tsx']) assert.ok(fs.existsSync(path.join(ROOT, 'app/(dashboard)', f)), f);
   const s = read('app/(dashboard)/region/page.tsx');
   assert.match(s, /<PageHead [^>]*title="지역 공급"/);
-  assert.match(s, /<ReqTags screen="region" \/>/);
+  assert.doesNotMatch(s, /<ReqTags/, '요구사항 칩은 데이터 원본에만(screens-terms)');
   assert.doesNotMatch(s, /실데이터<\/Badge>/, '실데이터 표지는 쓰지 않는다(2026-10-13 화면 규칙)');
 });
 

@@ -214,24 +214,25 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
       </div>
       <ol className="m-0 list-none columns-2 gap-x-8 p-0 narrow:columns-1" aria-label={`${monthLabel(m)} 예정 사업`}>
         {shown.map((e) => {
-          const href = e.drawer ? `/projects?id=${e.id}` : '';
+          /* 상세가 있는 사업은 상세 서랍(?id=), 번호 발급 전 사업은 간단 보기(?cand=) — 막다른 행이 없다 */
+          const href = e.drawer ? `/projects?id=${e.id}` : `/projects?cand=${e.id}`;
           return (
             <li key={e.k} data-row={e.k} data-hl={e.k === hotKey ? '' : undefined} className="flex break-inside-avoid items-center gap-x-3 border-b border-border px-1 py-1.5 text-[14px] leading-[1.5] data-[hl]:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)]">
               <KindChip t={e.type} />
               <span className="min-w-0 flex-1 truncate font-bold" title={e.name}>
-                {href ? <Link href={href} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link> : e.name}
-                {href ? null : <span className="ml-1.5 text-[13px] font-normal text-muted-foreground" title="발급 전 후보 — 사업 번호가 아직 없어 상세가 없음">후보</span>}
+                <Link href={href} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link>
+                {e.drawer ? null : <>{' '}<span className="ml-1 text-[13px] font-normal text-muted-foreground" title="번호 발급 전 사업(후보) — 누르면 간단 보기(상세 일정 없음)">(후보)</span></>}
               </span>
               <span className="w-[74px] flex-none whitespace-nowrap text-muted-foreground tabular-nums">{dayText(e)}</span>
               <span className="w-[96px] flex-none truncate text-muted-foreground" title={e.sgg}>{e.place}</span>
               <span className="w-[68px] flex-none text-right whitespace-nowrap tabular-nums">{e.units ? `${fmt(e.units)}호` : <span className="text-[13px] text-muted-foreground" title="호수 미확인">미확인</span>}</span>
               <span className="w-5 flex-none">{onMap(e) ? <a href={mapHref({ project: e.id })} title={`${e.name} — 지도에서 보기`} aria-label={`${e.name} 지도에서 보기`} className="flex rounded-[4px] text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"><MapPin className="size-4" aria-hidden="true" /></a> : null}</span>
-              <span className="w-4 flex-none">{href ? <Link href={href} tabIndex={-1} aria-hidden="true" className="flex text-muted-foreground hover:text-primary"><ChevronRight className="size-4" /></Link> : null}</span>
+              <span className="w-4 flex-none"><Link href={href} tabIndex={-1} aria-hidden="true" className="flex text-muted-foreground hover:text-primary"><ChevronRight className="size-4" /></Link></span>
             </li>
           );
         })}
       </ol>
-      {xs.some((e) => !e.drawer) ? <p className="m-0 mt-1.5 text-[14px] text-muted-foreground">후보 = 사업 번호 발급 전이라 상세가 없는 사업(다음 원장에서 열림)</p> : null}
+      {xs.some((e) => !e.drawer) ? <p className="m-0 mt-1.5 text-[14px] text-muted-foreground">(후보) = 번호 발급 전 사업 · 누르면 간단 보기</p> : null}
       {xs.length > shown.length ? <button type="button" onClick={() => setMore(true)} className={cn('btn-reset mt-2', LINK)}>더 보기 · 외 {xs.length - shown.length}곳 {fmt(sum(xs.slice(LIST_N), (e) => e.units))}호</button> : null}
     </div>
   );

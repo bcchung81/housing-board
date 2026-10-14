@@ -75,7 +75,7 @@
   --secondary: #EAF0F6;
   --secondary-foreground: #172B4D;
   --muted: #F3F5F8;
-  --muted-foreground: #5F6E82;
+  --muted-foreground: #4D5B6F;   /* 회의실 투사용 한 단계 진하게(2026-10-14): 카드 6.9:1 · 바탕 6.1:1 · 강조 면 6.0:1 */
   --accent: #EDF3F9;
   --accent-foreground: #172B4D;
   --destructive: #C94359;

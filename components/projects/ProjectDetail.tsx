@@ -3,7 +3,6 @@
    숨김 사업(대응 사업 없음)은 한 줄 안내와 개요만. 대체된 옛 id 는 대표 사업을 그리고 맨 위에 한 줄 안내. 건축HUB 관리번호는 공개 범위가 미결(기획서 Q4)이라 보이지 않는다. */
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
-import ReqTags from '../ReqTags';
 import PanelLink from '../board/PanelLink';
 import { Dl, PanelHead } from '../page';
 import { Kpi } from '../ui';
@@ -42,13 +41,13 @@ export function DrawerHead({ d }: { d: Drawer }) {
         {r.programs.map((g) => <Badge key={g} title="프로그램">{g}</Badge>)}
         {pol.map((x) => <Badge key={x.key} title={`${x.name} · ${fixed ? '담당자가 확정한 정책 연결' : '담당자가 아직 확정하지 않은 제안 연결 · 해제된 연결은 빠짐'}`}>{policyLabel(x)} · {fixed ? '연결 확정' : '확정 전'}</Badge>)}
       </span>
-      <ReqTags screen="projects" ids={['F-04', 'F-06']} />
       <code className="text-[14px] text-muted-foreground" title="사업 id">{r.id}</code>
     </>
   );
 }
 
-export default function ProjectDetail({ d }: { d: Drawer }) {
+/* stageHref: 단계 줄 칸의 주소(목록 화면의 지금 거르기를 유지 — 화면이 만든다) */
+export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: (i: number) => string }) {
   if (d.kind === 'hidden') {
     const p = d.project, h = hiddenNote(p.hiddenAt!, p.hiddenReason);
     return (
@@ -72,7 +71,7 @@ export default function ProjectDetail({ d }: { d: Drawer }) {
     <>
       {d.from ? <p role="note" className={NOTE}>옛 사업 id {d.from.id}({d.from.name})는 이 사업으로 합쳤습니다</p> : null}
       <div className="flex flex-col gap-3">
-        <StageSteps current={r.board} reached={r.reached} href={(i) => `/projects?stage=${i}`} />
+        <StageSteps current={r.board} reached={r.reached} href={stageHref} />
         <section aria-label="핵심 수치" className="grid grid-cols-3 gap-2.5 mobile:grid-cols-1">
           <Kpi label="계획" value={r.units > 0 ? fmt(r.units) : '—'} unit={r.units > 0 ? '호' : ''} sub={r.units > 0 ? undefined : '호수 미확인'} tip="사업 계획 호수(원장의 첫 물량 — 공공 공급계획 → 인허가 → 공고 → 사업계획)" />
           {r.notice != null ? <Kpi label="공고 확인" value={fmt(r.notice)} tone="var(--st-sale)" sub={r.units > 0 ? `계획의 ${(r.notice / r.units * 100).toFixed(0)}%` : undefined} tip="모집공고에서 확인한 호수(공고 확인 ≠ 준공)" /> : null}

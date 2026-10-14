@@ -327,9 +327,9 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={cn(sub, 'mt-0.5 flex justify-between')} style={{ paddingRight: TLBL + 4 }}><span>{ml(T, 0)}</span><span>{ml(T, NOW)}</span></div>
           </Card>
 
-          <Card variant="board" className={ringable(cur.p.includes('p-fut'))} render={<section id="p-fut" aria-label="향후 12개월 공급 예정" />}>
+          <Card variant="board" className={ringable(cur.p.includes('p-fut'))} render={<section id="p-fut" aria-label="앞으로 12개월 준공 예정" />}>
             <div className={phead}>
-              <h2 className={ptitle} title={`${scope} · 준공 예정 월별(호) · 준공 실제 기록이 없는 사업의 현재 예정 준공 달(같은 사업은 한 번) · LH 후보의 예정일은 파일 기준일(${real.lhAsOf}) 값으로, 실적 자료보다 ${real.lhAgeMonths}개월 묵었습니다 · 막대를 누르면 그 달을 고릅니다 · 지난 시점의 준공 실적은 월 상세·지역별 화면에서 봅니다`}>향후 12개월 공급 예정</h2>
+              <h2 className={ptitle} title={`${scope} · 준공 예정 월별(호) · 준공 실제 기록이 없는 사업의 현재 예정 준공 달(같은 사업은 한 번) · LH 후보의 예정일은 파일 기준일(${real.lhAsOf}) 값으로, 실적 자료보다 ${real.lhAgeMonths}개월 묵었습니다 · 막대를 누르면 그 달을 고릅니다 · 사업 화면·지역 공급의 '앞으로 12개월 준공 예정'과 같은 범위·같은 값 · 지난 시점의 준공 실적은 월 상세·지역별 화면에서 봅니다`}>앞으로 12개월 준공 예정</h2>
               <span className={pacts}><PanelLink href="/agency/lh" full="LH 준공 예정 상세">LH 상세</PanelLink></span>
             </div>
             <div className="mt-2 flex items-baseline gap-2"><b className={cn(disp, 'text-[30px] leading-[1.1] font-normal')}>{f(upSum)}<small className="text-[18px]">호</small></b><span className="text-[14px] text-muted-foreground">{f(upProj)}사업</span></div>

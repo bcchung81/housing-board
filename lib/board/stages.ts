@@ -13,4 +13,8 @@ export const stageName = (code: string) => STAGES.find((s) => s.code === code)?.
 /* 통계누리 실적 지표 → 6단계. 스펙 9.2·사업 레지스트리(lib/projects.js stageOf)와 같은 대응이다(준공 = 사용검사 = 06 입주).
    01 정책·02 사업화는 통계누리에 없어 지표를 보이는 화면에서 '자료 없음' 칸으로 자리만 보인다(components/charts/StageLegend.tsx · components/StageKpis.tsx) */
 export const METRIC_STAGE = { permit: '03', start: '04', sale: '05', complete: '06' } as const;
-export const METRIC_LABEL = { permit: '인허가', start: '착공', sale: '분양', complete: '준공' } as const;
+export const METRIC_LABEL = { permit: '인허가', start: '착공', sale: '분양', complete: '준공' } as const;   // 통계누리 지표 이름(원천 표기 — 화면에는 METRIC_BOARD 의 리본 이름을 쓴다)
+/* 통계누리 지표 → 종합상황판 리본 칸(②인허가 ③착공 ④모집 ⑤준공 — 화면 전체의 단계 이름). ①계획·⑥입주는 통계누리에 없다 */
+export const METRIC_BOARD = { permit: 1, start: 2, sale: 3, complete: 4 } as const;
+const CIRS = ['①', '②', '③', '④', '⑤', '⑥'], NAMES = ['계획', '인허가', '착공', '모집', '준공', '입주'];
+export const metricBoardLabel = (k: keyof typeof METRIC_BOARD) => `${CIRS[METRIC_BOARD[k]]} ${NAMES[METRIC_BOARD[k]]}`;

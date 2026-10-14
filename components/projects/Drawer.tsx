@@ -32,7 +32,7 @@ export default function Drawer({ id, canonical, closeHref, title, head, children
     else { if (!was) n.base = true; n.depth += 1; }
     if (id) n.last = id;
     if (id) { bodyRef.current?.scrollTo({ top: 0 }); titleRef.current?.focus({ preventScroll: true }); }
-    else if (n.last) document.querySelector<HTMLAnchorElement>(`[data-slot="data-grid"] a[href$="id=${n.last}"]`)?.focus({ preventScroll: true });
+    else if (n.last) document.querySelector<HTMLAnchorElement>(`[data-slot="data-grid"] a[href$="=${n.last}"]`)?.focus({ preventScroll: true });   // ?id= · ?cand=
   }, [id]);
 
   /* 처음 열린 서랍: 제목에 초점, 대체된 옛 id 면 주소를 대표 id 로 */
@@ -68,11 +68,14 @@ export default function Drawer({ id, canonical, closeHref, title, head, children
   return (
     <aside role="dialog" aria-modal="false" aria-labelledby="drawer-title"
       className="fixed top-16 right-0 bottom-0 z-30 flex w-[min(60vw,980px)] flex-col border-l border-border shadow-[var(--shadow-pop)] [background:var(--page-bg)] print:hidden mobile:top-12 mobile:w-full">
-      <header className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border bg-card py-2.5 pr-3 pl-5">
-        <h2 id="drawer-title" ref={titleRef} tabIndex={-1} className="m-0 min-w-0 font-display text-[24px] leading-[1.2] font-normal tracking-[-0.03em] [overflow-wrap:anywhere] focus:outline-none">{title}</h2>
-        {head}
+      {/* 머리: 왼쪽 열(제목 + 배지·id, 줄바꿈) · 오른쪽 열(× — 긴 이름에서도 오른쪽 위에 고정) */}
+      <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 border-b border-border bg-card py-2.5 pr-3 pl-5">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
+          <h2 id="drawer-title" ref={titleRef} tabIndex={-1} className="m-0 min-w-0 font-display text-[24px] leading-[1.2] font-normal tracking-[-0.03em] [overflow-wrap:anywhere] focus:outline-none">{title}</h2>
+          {head}
+        </div>
         <button type="button" onClick={close} aria-label="사업 상세 닫기" title="닫기 (Esc)"
-          className={`${head ? '' : 'ml-auto '}flex size-9 flex-none cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-pn2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}>
+          className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-pn2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
           <X className="size-[18px]" aria-hidden="true" />
         </button>
       </header>

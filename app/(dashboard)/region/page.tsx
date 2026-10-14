@@ -4,7 +4,7 @@ import { Page, PageHead, PanelHead, sub } from '../../../components/page';
 import PanelLink from '../../../components/board/PanelLink';
 import { Card } from '../../../components/ui/card';
 import { Chip, ChipBar, ChipGroup, ChipSep } from '../../../components/ui/chips';
-import ReqTags from '../../../components/ReqTags';
+import InfoTip from '../../../components/ui/info-tip';
 import Ahead from '../../../components/region/Ahead';
 import Annual, { parseMetric } from '../../../components/region/Annual';
 import Cond from '../../../components/region/Cond';
@@ -17,7 +17,7 @@ import { fmt, lastMonth, monthLabel, ymDot } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
 import { CAL_KINDS, CAL_TYPE, aheadAll, parseKinds, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
 import { getProjectsIndex } from '../../../lib/board/projects-index';
-import { applyFilters, listHref, type Filters } from '../../../lib/board/projects-view';
+import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '../../../lib/board/projects-view';
 import type { Metric } from '../../../lib/board/types';
 
 export const metadata: Metadata = { title: '지역 공급' };
@@ -78,8 +78,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
     <Page>
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '지역 공급' }]} title="지역 공급"
         tip="앞으로 12개월 예정(원장 현재 예정) → 지난 공급 실적(통계누리) → 동네 여건(서울·인천·경기) 순">
-        <ReqTags screen="region" />
-        <span className="text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
+        <span className="ml-auto text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
           title={`앞으로 12개월(${monthLabel(calendar.from)} ~ ${monthLabel(calendar.to)}) · 원장 기준일 ${calendar.referenceDate} · 통계누리 실적 ${last}까지`}>
           예정 {ymDot(calendar.from)}~{ymDot(calendar.to)} · 실적 {ymDot(last)}
         </span>
@@ -101,8 +100,16 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
         </span>
       </ChipBar>
 
-      <Card render={<section aria-label="앞으로 12개월" />}>
-        <PanelHead title={<>앞으로 12개월<span className="ml-2 text-[14px] font-normal text-muted-foreground">{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}곳 · {man(units)}호</span></>} tip={AHEAD_TIP}>
+      <Card render={<section aria-label={AHEAD_ALL} />}>
+        <PanelHead title={<>{kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground">{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}곳 · {man(units)}호</span></>} tip={AHEAD_TIP}>
+          <InfoTip label="앞으로 12개월 읽는 법">
+            <dl>
+              <dt>{AHEAD_ALL}</dt><dd>사업 원장의 현재 예정(모집공고·준공·입주)이 {ymDot(months[0])}~{ymDot(months[11])}에 든 사업 · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌</dd>
+              <dt>준공 칩</dt><dd>사업 화면 &apos;{AHEAD_COMPLETION}&apos;과 같은 범위·같은 값</dd>
+              <dt>{CAND_NAME}</dt><dd>사업 번호가 아직 없는 사업 — 누르면 간단 보기</dd>
+              <dt>예정일</dt><dd>계획이라 바뀔 수 있고, 청약 자격은 모집공고에서 확인</dd>
+            </dl>
+          </InfoTip>
           <ChipGroup label="종류">
             {CAL_KINDS.map((t) => {
               const xs = all.filter((e) => e.type === t), next = toggleKind(kinds, t);
