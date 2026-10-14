@@ -1,6 +1,6 @@
 :root{--ink:#E8EDFF;--ink2:#D6DEFA;--mute:#9AA8D6;--line:#22305E;--line2:#3A4C8C;--bg:#0A1030;--pn:#101A44;--pn2:#16225A;--acc:#FF8A65;--acc-ink:#2A0E04;--warn:#FFD66E;--on-c:#10162E;
   /* 6단계 색(상황판 시안 M3). 모집·착공·준공·입주·계획은 app.js 의 COLOR 와 같은 값이다 */
-  --sale:#C7D0DA;--build:#FF9F43;--soon:#A5E56D;--move:#D9A6FF;--plan:#7BA7FF;--priv:#98A3C9;
+  --sale:#C7D0DA;--build:#FF9F43;--soon:#A5E56D;--move:#D9A6FF;--plan:#7BA7FF;--permit:#45D3C4;--priv:#98A3C9;
   /* 지도 위 HUD 유리(단지 표지·요약·범례·하단 바·옵션·툴바·상세 카드). 값을 바꾸면 tests/js/glass.test.cjs 가 글자 대비(4.5:1)를 다시 확인한다.
      짙은 네이비를 거의 불투명하게 깔아, 뒤 지도가 가장 밝은 곳에서도 밝은 글자가 읽힌다. */
   --glass-tag:rgba(16,26,68,.92);--glass-tag-hover:rgba(27,42,102,.96);--glass-sum:rgba(10,16,48,.92);--glass-card:rgba(16,26,68,.94);
@@ -132,6 +132,8 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .stage span.now.build::before{background:var(--build)}
 .stage span.now.soon::before{background:var(--soon)}
 .stage span.now.move::before{background:var(--move)}
+.stage span.now.near::before{background:var(--build)}
+.stage span.now.permit::before{background:var(--permit)}
 .stage span.now.priv::before{background:var(--priv)}
 .stage span.now.plan::before{background:var(--plan)}
 .stage span.now::before{background:var(--mute)}   /* 원장 단계가 01 정책·02 사업화(그 단계의 지도 상태색이 없음) */
@@ -142,7 +144,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .ldg{font-size:13px;color:var(--ink2)}
 .stg6{display:inline-flex;gap:2px;margin-right:6px;vertical-align:1px}
 .stg6 i{width:9px;height:6px;border-radius:2px;background:var(--line2)}
-.stg6 i.on{background:var(--mute)}.stg6 i.on.sale{background:var(--sale)}.stg6 i.on.build{background:var(--build)}.stg6 i.on.soon{background:var(--soon)}.stg6 i.on.move{background:var(--move)}.stg6 i.on.plan{background:var(--plan)}.stg6 i.on.priv{background:var(--priv)}
+.stg6 i.on{background:var(--mute)}.stg6 i.on.sale{background:var(--sale)}.stg6 i.on.build{background:var(--build)}.stg6 i.on.soon{background:var(--soon)}.stg6 i.on.move{background:var(--move)}.stg6 i.on.plan{background:var(--plan)}.stg6 i.on.permit{background:var(--permit)}.stg6 i.on.near{background:var(--build)}.stg6 i.on.priv{background:var(--priv)}
 .pg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
 .pg .bar2{flex:1 1 auto;height:8px;background:var(--line);position:relative;overflow:hidden}
 .pg .bar2 i{position:absolute;left:0;top:0;bottom:0;background:var(--c)}
@@ -154,17 +156,18 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .sw{display:inline-block;width:12px;height:12px;border-radius:3px}
 .sw.sale{background:var(--sale)}
 .sw.build{border:1px solid var(--build);background:repeating-linear-gradient(45deg,var(--build) 0 2px,color-mix(in srgb,var(--build) 16%,transparent) 2px 5px)}
-.sw.soon{border:1px solid var(--soon);background:radial-gradient(circle,var(--soon) 0 2px,color-mix(in srgb,var(--soon) 18%,transparent) 2.5px)}
-.sw.move{border:1px solid var(--move);background:repeating-linear-gradient(0deg,var(--move) 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,var(--move) 0 1px,color-mix(in srgb,var(--move) 16%,transparent) 1px 4px)}
+.sw.near{border:1px solid var(--build);background:radial-gradient(circle,var(--build) 0 2px,color-mix(in srgb,var(--build) 18%,transparent) 2.5px)}
+.sw.soon{border:1px solid var(--soon);background:repeating-linear-gradient(0deg,var(--soon) 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,var(--soon) 0 1px,color-mix(in srgb,var(--soon) 16%,transparent) 1px 4px)}
 .sw.priv{background:var(--priv)}
 .sw.other{border:1.5px dashed #5566BE;background:rgba(85,102,190,.22)}
 .sw.dash{border:1.5px dashed var(--ink);background:transparent}
 .sw.plan{border:1.5px dashed var(--plan)}
+.sw.permit{border:1.5px dashed var(--permit)}
 .sw.approx{border-radius:50%;border:1.5px solid var(--ink);background:radial-gradient(circle,transparent 0 2.2px,var(--ink) 2.3px 3.5px,color-mix(in srgb,var(--ink) 22%,transparent) 3.6px)}   /* 근사 위치: 실선 겹원 + 띠(지도 blk-approx) */
 .sw.ex{background:#374C98}
 .sw.fac-edu{background:#F7C600}
 .sw.fac-med{background:#E5384F}
-.sw.fac-pub{background:#2EC4B6}
+.sw.fac-pub{background:#2EC46E}
 .sw.ramp{background:linear-gradient(90deg,#17204D,#4155A3)}
 .sw.ghost{border:1.5px solid var(--mute);background:rgba(108,125,192,.3)}
 .sw.outline{border:1.5px dashed var(--mute);background:transparent}
@@ -234,9 +237,11 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .pc-chip{display:inline-block;font-size:11.5px;font-weight:700;line-height:1.5;padding:0 7px;border:1px solid;border-radius:999px;white-space:nowrap}
 .pc-chip.sale{background:var(--sale);border-color:var(--sale);color:var(--on-c)}
 .pc-chip.build{background:var(--build);border-color:var(--build);color:var(--on-c)}
+.pc-chip.near{background:var(--build);border-color:var(--build);color:var(--on-c)}
 .pc-chip.soon{background:var(--soon);border-color:var(--soon);color:var(--on-c)}
 .pc-chip.move{background:var(--move);border-color:var(--move);color:var(--on-c)}
 .pc-chip.plan{background:transparent;border-style:dashed;border-color:var(--plan);color:var(--plan)}
+.pc-chip.permit{background:transparent;border-style:dashed;border-color:var(--permit);color:var(--permit)}
 .pc-chip.priv{background:#2A3568;border-color:var(--priv);color:var(--ink2)}
 .pc-chip.off{background:transparent;border-color:var(--ink2);color:var(--ink2)}
 .pc-chip.est{background:transparent;border-color:var(--warn);color:var(--warn)}
@@ -585,7 +590,7 @@ html[data-map-shell] body{color-scheme:inherit}
 /* Next 지도(두 테마 공통): 강조색은 대시보드 주색, 6단계 색은 대시보드와 같은 토큰(app/tailwind.css 의 --st-*-ink).
    예전 다크 지도의 주황 강조(#FF8A65)는 상단 메뉴 바의 하늘색 밑줄과 한 화면에 두 강조색을 만들었고, ③착공 주황(#FF9F43)과도 겹쳤다. */
 html[data-map-shell]{--acc:var(--primary);--acc-ink:var(--primary-foreground);
-  --sale:var(--st-sale-ink);--build:var(--st-build-ink);--soon:var(--st-soon-ink);--move:var(--st-move-ink);--plan:var(--st-plan-ink);--priv:var(--st-priv-ink)}
+  --sale:var(--st-sale-ink);--build:var(--st-build-ink);--soon:var(--st-soon-ink);--move:var(--st-move-ink);--plan:var(--st-plan-ink);--permit:var(--st-permit-ink);--priv:var(--st-priv-ink)}
 /* 머리 줄의 바탕·아래 선·지역 글자는 위 상단 메뉴 바(TopNav)와 같은 Tailwind 토큰(app/tailwind.css)을 쓴다. 두 테마 모두 */
 html[data-map-shell] .mhead{background:var(--card);border-bottom-color:var(--border)}
 html[data-map-shell] .hd-region,html[data-map-shell] .regionbox select{color:var(--muted-foreground)}

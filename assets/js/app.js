@@ -46,7 +46,7 @@ settleAll();
 const STATUS_TXT = { '사업화': '계획', '계획': '인허가', '건설 단계': '착공', '준공 임박': '준공 임박', '분양중': '모집 중', '입주 단계': '준공' };
 const stTxt = (b) => (window.Settle && (b.settle || b.status === '입주 단계') ? window.Settle.LABEL[b.settle || 'moving'] : STATUS_TXT[b.status] || b.status);
 const hasEx = () => BLOCKS.some((b) => b.settle === 'existing');
-const KIND = { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'soon', '입주 단계': 'move', '계획': 'plan', '사업화': 'plan' };   // 사업화: 수도권 원장 01·02 단계(계획과 같은 색)
+const KIND = { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'near', '입주 단계': 'soon', '계획': 'permit', '사업화': 'plan' };   // 종류 = 화면 6단계 색 이름(plan ① permit ② build ③ sale ④ soon ⑤ move ⑥). 준공 임박(near)은 ③ 안의 상태라 ③ 색 + 점무늬, 입주 단계(soon)는 ⑤준공
 const kindOf = (b) => (b.priv ? 'priv' : KIND[b.status]);    // 색·무늬를 정하는 종류. 민간 단지는 상태와 상관없이 회색(priv)
 const STATUS_ORDER = ['분양중', '건설 단계', '준공 임박', '입주 단계', '계획'];
 const unitsTxt = (b) => (b.unitsKnown === false ? '호수 미확인' : `${fmt(b.units)}호`);
@@ -55,30 +55,34 @@ const dongN = (b) => b.dongCount || (b.dongs ? b.dongs.length : 0);
 const idsAttr = (ids) => esc(JSON.stringify(ids));                                       // data-ids 에는 JSON 배열을 넣는다
 const idsOf = (el) => { try { const v = JSON.parse(el.dataset.ids); return Array.isArray(v) ? v : []; } catch (_) { return []; } };
 const byId = (scope, name, id) => scope.querySelector(`[${name}="${CSS.escape(String(id))}"]`);
-// 색: 상황판 시안(M3)의 6단계 색. 모집(sale)·착공(build)·준공(soon)·입주(move)·계획(plan)이 서로 다른 밝기·색상이고, 면 무늬도 달리한다(모집 단색 / 착공 해칭 / 준공 점무늬 / 입주 격자 / 계획 점선 / 공공택지 민간 회색 단색).
+// 색: 화면(사업·지역 공급·종합상황판 리본)의 6단계 색과 같다 — ①계획 plan ②인허가 permit ③착공 build ④모집 sale ⑤준공 soon ⑥입주 move(app/tailwind.css 의 --st-*). 면 무늬는 달리한다(모집 단색 / 착공 해칭 / 준공 임박 점무늬 / 준공 격자 / 계획·인허가 점선 / 공공택지 민간 회색 단색).
+// near(준공 임박)는 ③착공 안의 상태라 build 와 같은 색이다(TOKEN).
 // 패널·지도 모두 어두운 네이비 바탕이라 글자·칩·지도 위 색에 같은 값을 쓴다(네이비 #101A44 위 대비 7:1 이상, tests/js/glass.test.cjs). 지도 위 색은 THEME에서 가져온다
-const COLOR = { sale: '#C7D0DA', build: '#FF9F43', soon: '#A5E56D', move: '#D9A6FF', plan: '#7BA7FF', priv: '#98A3C9' };
+const COLOR = { plan: '#7BA7FF', permit: '#45D3C4', build: '#FF9F43', near: '#FF9F43', sale: '#C7D0DA', soon: '#A5E56D', move: '#D9A6FF', priv: '#98A3C9' };
+const TOKEN = { near: 'build' };   // COLOR 종류 → --st-*-ink 이름이 다른 것
 // Next 지도(data-map-shell)는 저장된 테마를 따르고, 단계색은 대시보드와 같은 토큰(app/tailwind.css 의 --st-*-ink)에서 읽는다.
 // 독립 index.html 은 tailwind.css 가 없으므로 위 다크 값을 그대로 쓴다.
 const SHELL = document.documentElement.hasAttribute('data-map-shell');
 let LIGHT_MAP = SHELL && !document.documentElement.classList.contains('dark');
 function applyStageInk() {
   const cs = getComputedStyle(document.documentElement), read = (k) => { const v = cs.getPropertyValue(`--st-${k}-ink`).trim(); return /^#[0-9a-f]{6}$/i.test(v) ? v.toUpperCase() : null; };
-  for (const k of Object.keys(COLOR)) { const v = read(k); if (v) COLOR[k] = v; }
+  for (const k of Object.keys(COLOR)) { const v = read(TOKEN[k] || k); if (v) COLOR[k] = v; }
 }
 if (SHELL) applyStageInk();
 /* 공급 6단계 [번호, 이름, 속하는 단지 상태들, 색, 공식 단계] — 종합상황판 리본·사업 화면과 같은 ①계획 ②인허가 ③착공 ④모집 ⑤준공 ⑥입주(lib/board/projects-view.ts BOARD_NAMES·BOARD_OFFICIAL).
    공식 6단계 번호(01 정책 ~ 06 입주)는 title 에만 둔다. 머리 줄의 단계 필터와 사이드바 카드의 '공급 단계 위치'가 같이 쓴다.
    단지 상태 → 칸: 사업화(원장 01·02) → ①, 계획(인허가 기록) → ②, 건설 단계·준공 임박 → ③, 분양중 → ④, 입주 단계(사용검사, 원장 06) → ⑤. ⑥입주에 해당하는 단지 상태는 없다.
    원장 단계 → 칸은 BOARD_OF_STAGE(tools/ledger/board.js 와 같다). 색은 그 단계 단지가 지도에 그려지는 색(첫 상태 기준), 단지가 없는 단계는 보조 글자색. */
-const stageColor = (sts) => (sts.length ? COLOR[KIND[sts[0]]] : 'var(--mute)');
-const STAGES6 = [['①', '계획', ['사업화'], '공식 01 정책 · 02 사업화'], ['②', '인허가', ['계획'], '공식 03 인허가'], ['③', '착공', ['건설 단계', '준공 임박'], '공식 04 건설(착공~준공 공사 기간)'], ['④', '모집', ['분양중'], '공식 05 공급'], ['⑤', '준공', ['입주 단계'], '공식 04 건설 끝(사용검사)'], ['⑥', '입주', [], '공식 06 입주']].map((s) => [s[0], s[1], s[2], stageColor(s[2]), s[3]]);
+const STAGE_KIND = ['plan', 'permit', 'build', 'sale', 'soon', 'move'];   // ①~⑥ 칸의 색 종류(종합상황판 리본 lib/board/sample.ts C 와 같은 순서)
+const stageColor = (i) => COLOR[STAGE_KIND[i]];
+const STAGES6 = [['①', '계획', ['사업화'], '공식 01 정책 · 02 사업화'], ['②', '인허가', ['계획'], '공식 03 인허가'], ['③', '착공', ['건설 단계', '준공 임박'], '공식 04 건설(착공~준공 공사 기간)'], ['④', '모집', ['분양중'], '공식 05 공급'], ['⑤', '준공', ['입주 단계'], '공식 04 건설 끝(사용검사)'], ['⑥', '입주', [], '공식 06 입주']].map((s, i) => [s[0], s[1], s[2], stageColor(i), s[3]]);
 const BOARD_OF_STAGE = { '01': 0, '02': 0, '03': 1, '04': 2, '05': 3, '06': 4 };
 const stageOfCode = (code) => STAGES6[BOARD_OF_STAGE[code]] || null;   // 원장 단계 코드 → 칸
 const stName = (s) => `${s[0]}${s[1]}`;   // '③착공'
 /* 단지 상태 → 범례·옵션 창 이름('③착공', '④모집 중'). 준공 임박은 ③ 안의 상태라 번호 없이 */
 const stLabel = (st) => { const s = STAGES6.find((x) => x[2].includes(st)); return st === '준공 임박' || !s ? STATUS_TXT[st] || st : `${s[0]}${STATUS_TXT[st]}`; };
 const stTitle = (st) => { const s = STAGES6.find((x) => x[2].includes(st)); return s ? `${stName(s)} — ${s[4]}` : ''; };
+const PLAN_KIND = ['in', ['get', 'kind'], ['literal', ['plan', 'permit']]];   // 점선 윤곽으로 그리는 종류(①계획·②인허가)
 const PLAN_ST = ['계획', '사업화'];   // 계획 색 면(blk-plan)으로 그리는 상태
 const BY_STAGE = STAGES6.flatMap((s) => s[2]);   // 계획 · 건설 단계 · 준공 임박 · 분양중 · 입주 단계
 /* 사업 원장(기획서 M7·M8): region.js 가 지도와 따로 받아 단지에 b.ledger 를 붙인다. 원장 단계가 있으면 6단계 위치는 원장 기준(지도 상태와 다르면 title 에 적는다) */
@@ -87,7 +91,7 @@ function stageNow(b) {
   const own = STAGES6.find((x) => x[2].includes(b.status)), l = b.ledger && b.ledger.stage ? stageOfCode(b.ledger.stage) : null;
   if (!l) return { now: own, k: kindOf(b), title: '' };
   const byLedger = b.statusBy === 'ledger';   // 수도권: 지도 상태를 원장 단계로 정했다(01 은 '사업화' 상태) — 다르다고 적지 않는다
-  return { now: l, k: l === own || byLedger ? kindOf(b) : (l[2].length ? KIND[l[2][0]] : ''), title: `단계: ${LT(b).basis}${own && own !== l && !byLedger ? ` · 지도 상태 ${STATUS_TXT[b.status] || b.status}(${stName(own)})와 다름` : ''}` };
+  return { now: l, k: l === own || byLedger ? kindOf(b) : STAGE_KIND[STAGES6.indexOf(l)], title: `단계: ${LT(b).basis}${own && own !== l && !byLedger ? ` · 지도 상태 ${STATUS_TXT[b.status] || b.status}(${stName(own)})와 다름` : ''}` };
 }
 /* 수도권 원장 사업(b.home): 계획·공고 확인 호수와 정책 연결. 정책은 사업 화면과 같은 짧은 이름('9·7 대책')과 연결 상태(연결 확정·확정 전), 정식 이름·위치 근거는 title */
 const policyTxt = (p) => `${(p.short || []).map((x) => `${x} 대책`).join(', ') || p.names.join(', ') || '정책'} · ${p.status === 'CONFIRMED' ? '연결 확정' : '확정 전'}`;
@@ -139,10 +143,10 @@ const THEME = {
   ramp: ['#17204D', '#222E66', '#2A3A7A', '#33468D', '#4155A3'], flat: '#16225A',   // 기존 건물: 낮은 건물은 어둡고 높을수록 밝다(어두운 바탕에서는 밝을수록 눈에 띈다)
   ghost: { fill: '#6C7DC0', fillOp: 0.3, line: '#9AA8D6', lineOp: 0.8 },   // 평면으로만 그리는 도형(src '정보없음' 또는 g=1): 솟지 않는 연한 평면 + 점선 윤곽
   color: COLOR,
-  tone: { sale: ['#7C8696', '#C7D0DA'], build: ['#B86F2A', '#FF9F43'], soon: ['#6B9F3E', '#A5E56D'], move: ['#9A6FC0', '#D9A6FF'], plan: ['#4A6FB5', '#7BA7FF'], priv: ['#59648E', '#98A3C9'] },   // 같은 단지 안: 낮은 동은 어둡게, 높은 동은 상태색 그대로
+  tone: { sale: ['#7C8696', '#C7D0DA'], build: ['#B86F2A', '#FF9F43'], near: ['#B86F2A', '#FF9F43'], soon: ['#6B9F3E', '#A5E56D'], move: ['#9A6FC0', '#D9A6FF'], plan: ['#4A6FB5', '#7BA7FF'], permit: ['#2F8F86', '#45D3C4'], priv: ['#59648E', '#98A3C9'] },   // 같은 단지 안: 낮은 동은 어둡게, 높은 동은 상태색 그대로
   infra: { edu: '#B79CFF', power: '#FFC24D', transit: '#E8EDFF', warn: '#FFD66E', ink: '#10162E' },   // ink: 색 바탕 기호 안의 그림 색
   // 기존 건물 중 기반시설(학교·병원·공공·복지): c 는 건물 색(상태색·점검 보라와 색상각이 떨어지게 고름), t 는 이름표 글자색(네이비 바탕에서 7:1 이상)
-  fac: { edu: { c: '#F7C600', t: '#FFD84D' }, med: { c: '#E5384F', t: '#FF8FA0' }, pub: { c: '#2EC4B6', t: '#7FE3D8' } },
+  fac: { edu: { c: '#F7C600', t: '#FFD84D' }, med: { c: '#E5384F', t: '#FF8FA0' }, pub: { c: '#2EC46E', t: '#7FE3A8' } },
 };
 const LIGHT_THEME = {
   ...THEME,
@@ -151,9 +155,9 @@ const LIGHT_THEME = {
   mask: ['#FFFFFF', 0.12], shadow: ['#334960', 0.16], hillShadow: '#72859B', hillHi: '#FFFFFF', hillAcc: '#C3CFDC', district: '#537294', dong: '#172B4D', other: ['#778EAB', '#A8B9CD'],
   ramp: ['#DDE5EE', '#CBD6E3', '#B9C9DA', '#9FB4CD', '#819DBC'], flat: '#D7E1EC',
   ghost: { fill: '#9FB4CD', fillOp: 0.25, line: '#637B96', lineOp: 0.8 },
-  tone: { sale: ['#C9D1DE', '#7286A8'], build: ['#F1CAAD', '#DA7426'], soon: ['#C1D9B4', '#5B9B3A'], move: ['#D3C5EC', '#8B67CC'], plan: ['#B5CDF0', '#3D7BD8'], priv: ['#CED6E0', '#8C99AB'] },   // 높은 층 끝 = app/tailwind.css 라이트 --st-*(차트 면 색). 글자용 진한 색을 쓰면 덩어리처럼 무겁다
+  tone: { sale: ['#C9D1DE', '#7286A8'], build: ['#F1CAAD', '#DA7426'], near: ['#F1CAAD', '#DA7426'], soon: ['#C1D9B4', '#5B9B3A'], move: ['#D3C5EC', '#8B67CC'], plan: ['#B5CDF0', '#3D7BD8'], permit: ['#B4DDD8', '#16998D'], priv: ['#CED6E0', '#8C99AB'] },   // 높은 층 끝 = app/tailwind.css 라이트 --st-*(차트 면 색). 글자용 진한 색을 쓰면 덩어리처럼 무겁다
   infra: { edu: '#7955AD', power: '#895716', transit: '#344960', warn: '#7F6300', ink: '#FFFFFF' },
-  fac: { edu: { c: '#BE9900', t: '#806B13' }, med: { c: '#C94359', t: '#A92B42' }, pub: { c: '#26958B', t: '#18756B' } },
+  fac: { edu: { c: '#BE9900', t: '#806B13' }, med: { c: '#C94359', t: '#A92B42' }, pub: { c: '#2A9D5C', t: '#1A7A44' } },
 };
 const TH = () => LIGHT_MAP ? LIGHT_THEME : THEME;
 let TONE = TH().tone;   // 패널 막대용. 지도 위 동 색은 TH().tone
@@ -266,12 +270,12 @@ function patternImage(kind) {
     x.fillStyle = rgba(col, .12); x.fillRect(0, 0, s, s); x.strokeStyle = col; x.lineWidth = 2.5; x.lineCap = 'square'; x.beginPath();
     for (const o of [-s, 0, s]) { x.moveTo(o - 2, s + 2); x.lineTo(o + s + 2, -2); }
     x.stroke();
-  } else if (kind === 'cross') {     // 입주 단계: 격자(가로·세로 한 줄씩)
-    const col = T.color.move;
+  } else if (kind === 'cross') {     // 입주 단계(⑤준공): 격자(가로·세로 한 줄씩)
+    const col = T.color.soon;
     x.fillStyle = rgba(col, .12); x.fillRect(0, 0, s, s); x.strokeStyle = col; x.lineWidth = 2.5; x.beginPath();
     x.moveTo(0, s / 2); x.lineTo(s, s / 2); x.moveTo(s / 2, 0); x.lineTo(s / 2, s); x.stroke();
   } else {                           // 준공 임박: 점
-    const col = T.color.soon;
+    const col = T.color.near;
     x.fillStyle = rgba(col, .14); x.fillRect(0, 0, s, s); x.fillStyle = col; x.beginPath(); x.arc(s / 2, s / 2, 4, 0, Math.PI * 2); x.fill();
   }
   return x.getImageData(0, 0, s, s);
@@ -279,7 +283,7 @@ function patternImage(kind) {
 function roundRectPath(x, a, b, w, h, r) { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); }
 /* 단지 배지: 늘어나는 알약 모양 그림(9-slice). 밝은 상태색 알약에 네이비 테두리. */
 function badgeImage(kind) {
-  const W = 48, H = 28, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), plan = kind === 'plan';
+  const W = 48, H = 28, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), plan = kind === 'plan' || kind === 'permit';
   const col = COLOR[kind];
   roundRectPath(x, 3, 3, W - 6, H - 6, 9);
   x.lineWidth = 4; x.strokeStyle = 'rgba(10,16,48,.94)'; x.stroke();
@@ -290,7 +294,7 @@ function badgeImage(kind) {
 /* 지면 라벨 그림: 짙은 네이비 카드(M3의 칩 문법: 얇은 테두리 + 왼쪽 상태색 띠). 상태색 단색 알약(bd-*)보다 대비가 약해 HUD 카드와 같은 결이다.
    지도 안 기호는 backdrop-filter를 못 쓰므로 투명도를 .9로 두어 어떤 건물 위에서도 글자 대비(밝은 글자 #E8EDFF 기준 10:1 이상)가 유지된다. */
 function groundImage(kind) {
-  const W = 56, H = 32, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), plan = kind === 'plan';
+  const W = 56, H = 32, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d'), plan = kind === 'plan' || kind === 'permit';
   const col = COLOR[kind];
   roundRectPath(x, 1, 1, W - 2, H - 2, 6); x.fillStyle = LIGHT_MAP ? 'rgba(255,255,255,.97)' : 'rgba(16,26,68,.9)'; x.fill();
   x.lineWidth = 1.2; x.strokeStyle = LIGHT_MAP ? '#B9C6D6' : '#3A4C8C'; if (plan) x.setLineDash([3, 2]); x.stroke(); x.setLineDash([]);
@@ -574,7 +578,7 @@ function judgeExpr(other) {
   const cs = getComputedStyle(document.documentElement), v = (k, d) => cs.getPropertyValue(k).trim() || d;
   return ['match', ['get', 'cls'], 'delay', v('--bad', '#FF6B88'), 'caution', v('--warn', '#FFC24D'), other];
 }
-function kindExpr(colors) { return ['match', ['get', 'kind'], 'sale', colors.sale, 'build', colors.build, 'soon', colors.soon, 'move', colors.move, 'priv', colors.priv, colors.plan]; }
+function kindExpr(colors) { return ['match', ['get', 'kind'], 'sale', colors.sale, 'build', colors.build, 'near', colors.near, 'soon', colors.soon, 'permit', colors.permit, 'priv', colors.priv, colors.plan]; }
 function setupCustom() {
   const T = TH(), layers = map.getStyle().layers, firstSymbol = (layers.find((l) => l.type === 'symbol') || {}).id;
   const add = (l) => { if (!map.getLayer(l.id)) map.addLayer(l, firstSymbol); };
@@ -607,7 +611,7 @@ function setupCustom() {
     if (!map.hasImage('hatch')) map.addImage('hatch', patternImage('hatch'), { pixelRatio: 2 });
     if (!map.hasImage('dots')) map.addImage('dots', patternImage('dots'), { pixelRatio: 2 });
     if (!map.hasImage('cross')) map.addImage('cross', patternImage('cross'), { pixelRatio: 2 });
-    for (const k of ['sale', 'build', 'soon', 'move', 'priv', 'plan']) { if (!map.hasImage('bd-' + k)) { const b = badgeImage(k); map.addImage('bd-' + k, b.data, b.opts); } if (!map.hasImage('gl-' + k)) { const g = groundImage(k); map.addImage('gl-' + k, g.data, g.opts); } }
+    for (const k of ['sale', 'build', 'near', 'soon', 'priv', 'plan', 'permit']) { if (!map.hasImage('bd-' + k)) { const b = badgeImage(k); map.addImage('bd-' + k, b.data, b.opts); } if (!map.hasImage('gl-' + k)) { const g = groundImage(k); map.addImage('gl-' + k, g.data, g.opts); } }
   }
   if (HAS_INFRA) for (const k of INFRA_ICONS) if (!map.hasImage('ic-' + k)) { const im = infraIcon(k); map.addImage('ic-' + k, im.data, im.opts); }
   if (HAS_CTX) { const g = ctxGeoJSON(); src('ctx-st', { type: 'geojson', data: g.st, attribution: '역·학교 © OpenStreetMap contributors' }); src('ctx-sch', { type: 'geojson', data: g.sch }); src('ctx-ring', { type: 'geojson', data: g.ring }); }
@@ -648,11 +652,11 @@ function setupCustom() {
     add({ id: 'blk-build', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '건설 단계'], NP], paint: { 'fill-pattern': 'hatch', 'fill-opacity': PAT_OP } });
     add({ id: 'blk-soon', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '준공 임박'], NP], paint: { 'fill-pattern': 'dots', 'fill-opacity': PAT_OP } });
     add({ id: 'blk-move', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '입주 단계'], NP], paint: { 'fill-pattern': 'cross', 'fill-opacity': PAT_OP } });
-    add({ id: 'blk-plan', type: 'fill', source: 'blocks', filter: ['all', ['in', ['get', 'status'], ['literal', PLAN_ST]], NP], paint: { 'fill-color': T.color.plan, 'fill-opacity': 0.1 } });
+    add({ id: 'blk-plan', type: 'fill', source: 'blocks', filter: ['all', ['in', ['get', 'status'], ['literal', PLAN_ST]], NP], paint: { 'fill-color': kindExpr(T.color), 'fill-opacity': 0.1 } });
     add({ id: 'blk-priv', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'priv'], true], NA], paint: { 'fill-color': T.tone.priv[1], 'fill-opacity': ['*', 0.26, DIM] } });
     add({ id: 'blk-judge', type: 'line', source: 'blocks', filter: JUDGED, paint: { 'line-color': judgeExpr(T.halo), 'line-width': 7, 'line-opacity': 0.9 } });   // 원장 판정 주의·지연: 단계색 윤곽(2px) 밖으로 두꺼운 테두리
-    add({ id: 'blk-line', type: 'line', source: 'blocks', filter: ['all', ['!=', ['get', 'kind'], 'plan'], NA], paint: { 'line-color': kindExpr(T.color), 'line-width': 2, 'line-opacity': DIM } });
-    add({ id: 'blk-line-plan', type: 'line', source: 'blocks', filter: ['all', ['==', ['get', 'kind'], 'plan'], NA], paint: { 'line-color': T.color.plan, 'line-width': 2, 'line-dasharray': [3, 2] } });
+    add({ id: 'blk-line', type: 'line', source: 'blocks', filter: ['all', ['!', PLAN_KIND], NA], paint: { 'line-color': kindExpr(T.color), 'line-width': 2, 'line-opacity': DIM } });
+    add({ id: 'blk-line-plan', type: 'line', source: 'blocks', filter: ['all', PLAN_KIND, NA], paint: { 'line-color': kindExpr(T.color), 'line-width': 2, 'line-dasharray': [3, 2] } });
     add({ id: 'blk-approx', type: 'fill', source: 'blocks', filter: ['==', ['get', 'approx'], true], paint: { 'fill-color': kindExpr(T.color), 'fill-opacity': 0.22 } });   // 근사 위치: 겹원 사이 띠(approxRings)
     add({ id: 'blk-line-approx', type: 'line', source: 'blocks', filter: ['==', ['get', 'approx'], true], paint: { 'line-color': kindExpr(T.color), 'line-width': 1.6 } });   // 근사 위치: 실선 겹원(점선은 ①계획 윤곽)
     add({ id: 'dong-shadow', type: 'fill', source: 'dong-shadow', paint: { 'fill-color': T.shadow[0], 'fill-opacity': T.shadow[1] } });
@@ -729,7 +733,7 @@ function setupCustom() {
     const fontLayer = layers.find((l) => l.type === 'symbol' && l.layout && l.layout['text-font']);
     const font = fontLayer ? fontLayer.layout['text-font'] : ['Noto Sans Regular'];
     const sym = (l) => { if (!map.getLayer(l.id)) map.addLayer({ ...l, layout: { 'text-font': font, ...l.layout } }); };
-    const badgeIcon = ['match', ['get', 'kind'], 'sale', 'gl-sale', 'build', 'gl-build', 'soon', 'gl-soon', 'move', 'gl-move', 'priv', 'gl-priv', 'gl-plan'];
+    const badgeIcon = ['match', ['get', 'kind'], 'sale', 'gl-sale', 'build', 'gl-build', 'near', 'gl-near', 'soon', 'gl-soon', 'permit', 'gl-permit', 'priv', 'gl-priv', 'gl-plan'];
     sym({ id: 'blk-label-lo', type: 'symbol', source: 'block-pts', maxzoom: 14.3,
       layout: { 'text-field': ['get', 'short'], 'text-size': 13, 'text-allow-overlap': false, 'text-variable-anchor': ['top', 'bottom', 'left', 'right'], 'text-radial-offset': 1.1, 'symbol-sort-key': ['-', 0, ['get', 'units']] },
       paint: { 'text-color': T.text, 'text-halo-color': T.halo, 'text-halo-width': 2 } });
@@ -1085,9 +1089,9 @@ function applyFilters() {
   const f = statusFilter();
   for (const [id, st] of [['blk-sale', ['분양중']], ['blk-build', ['건설 단계']], ['blk-soon', ['준공 임박']], ['blk-move', ['입주 단계']], ['blk-plan', PLAN_ST]]) { const on = st.filter((x) => SHOWN.has(x)); vis(id, on.length > 0); map.setFilter(id, ['all', ['in', ['get', 'status'], ['literal', on.length ? on : st]], ['!=', ['get', 'priv'], true], NOT_APPROX, ...exOut()]); }
   vis('blk-priv', privOn); map.setFilter('blk-priv', ['all', ['==', ['get', 'priv'], true], ['in', ['get', 'status'], ['literal', [...SHOWN]]], NOT_APPROX, ...exOut()]);
-  map.setFilter('blk-line', ['all', f, ['!=', ['get', 'kind'], 'plan'], NOT_APPROX]);
+  map.setFilter('blk-line', ['all', f, ['!', PLAN_KIND], NOT_APPROX]);
   if (map.getLayer('blk-judge')) map.setFilter('blk-judge', ['all', f, JUDGED]);
-  map.setFilter('blk-line-plan', ['all', f, ['==', ['get', 'kind'], 'plan'], NOT_APPROX]);
+  map.setFilter('blk-line-plan', ['all', f, PLAN_KIND, NOT_APPROX]);
   for (const id of ['blk-approx', 'blk-line-approx']) if (map.getLayer(id)) map.setFilter(id, ['all', f, ['==', ['get', 'approx'], true]]);
   for (const id of ['blk-dot', 'blk-label-lo', 'blk-badge', 'blk-badge-top', 'dong-label', 'dong-shadow', 'dong-line']) if (map.getLayer(id)) map.setFilter(id, f);
   if (map.getLayer('dong-3d')) map.setFilter('dong-3d', dongFilter());
@@ -1259,9 +1263,9 @@ function setLegend() {
     if (!present.has(st)) return;
     if (st !== '입주 단계') return add(`<i class="sw ${KIND[st]}"></i>`, stLabel(st), NOTE[st] || '', stLabel(st), stTitle(st));
     const ss = new Set(BLOCKS.filter((b) => !b.priv && b.status === st).map((b) => b.settle || 'moving'));
-    if (ss.has('moving')) add('<i class="sw move"></i>', '⑤준공 · 입주 진행', '<small>준공 6개월 안</small>', '⑤준공 · 입주 진행', stTitle(st));
-    if (ss.has('settled')) add('<i class="sw move" style="opacity:.45"></i>', '⑤준공 · 입주 완료', '<small>준공 7~24개월, 흐리게</small>', '⑤준공 · 입주 완료', stTitle(st));
-    if (ss.has('existing') && exOn) add('<i class="sw move" style="opacity:.25"></i>', '기존 단지', '<small>준공 24개월 넘음</small>', '');
+    if (ss.has('moving')) add('<i class="sw soon"></i>', '⑤준공 · 입주 진행', '<small>준공 6개월 안</small>', '⑤준공 · 입주 진행', stTitle(st));
+    if (ss.has('settled')) add('<i class="sw soon" style="opacity:.45"></i>', '⑤준공 · 입주 완료', '<small>준공 7~24개월, 흐리게</small>', '⑤준공 · 입주 완료', stTitle(st));
+    if (ss.has('existing') && exOn) add('<i class="sw soon" style="opacity:.25"></i>', '기존 단지', '<small>준공 24개월 넘음</small>', '');
   });
   if (BLOCKS.some((b) => b.approx)) add('<i class="sw approx"></i>', '근사 위치', '<small>이름으로 찾은 위치, 겹원 · 확인 필요</small>', '근사 위치', APPROX_TXT);
   const jd = ['caution', 'delay'].map((c) => BLOCKS.filter((b) => b.ledger && b.ledger.cls === c).length);
@@ -1318,7 +1322,7 @@ if (BLOCKS.length) {
   const known = new Set(BLOCKS.filter((b) => b.unitsKnown !== false).map(kindOf));   // 호수를 아는 단지가 하나도 없는 묶음은 0 대신 '호수 미확인'
   const gTxt = (g) => (known.has(g.key) ? fmt(by[g.key]) + '호' : '호수 미확인');
   $('#sumTotal').innerHTML = `<span class="big">${fmt(total)}</span><span class="unit">호</span> <span class="cnt">${BLOCKS.length}개 단지${unk ? `, 호수 미확인 ${unk}곳 제외` : ''}</span>`;
-  $('#sumBar').innerHTML = grp.map((g) => `<i style="width:${total ? 100 * by[g.key] / total : 0}%;background:${g.key === 'plan' ? 'repeating-linear-gradient(90deg,var(--plan) 0 4px,var(--bg) 4px 7px)' : COLOR[g.key]}" title="${g.label} ${gTxt(g)}"></i>`).join('');
+  $('#sumBar').innerHTML = grp.map((g) => `<i style="width:${total ? 100 * by[g.key] / total : 0}%;background:${g.key === 'plan' || g.key === 'permit' ? `repeating-linear-gradient(90deg,var(--${g.key}) 0 4px,var(--bg) 4px 7px)` : COLOR[g.key]}" title="${g.label} ${gTxt(g)}"></i>`).join('');
   $('#sumBar').setAttribute('aria-label', grp.map((g) => `${g.label} ${gTxt(g)}`).join(', '));
   SUM_TOTAL = { main: fmt(total), sub: `공급 예정 ${BLOCKS.length}개 단지${unk ? `, 호수 미확인 ${unk}곳 제외` : ''}`, n: BLOCKS.length, unk };
   if (HAS_INFRA) $('#infraChips').innerHTML = infraChipsHtml();
@@ -2000,7 +2004,7 @@ if (document.documentElement.hasAttribute('data-map-shell')) {
     applyStageInk();   // 클래스가 바뀐 뒤라 새 테마의 --st-*-ink 를 읽는다
     TONE = TH().tone;
     const newColor = { ...COLOR };
-    STAGES6.forEach((stage) => { stage[3] = stageColor(stage[2]); });
+    STAGES6.forEach((stage, i) => { stage[3] = stageColor(i); });
     // 이미 열린 카드의 클릭 핸들러와 펼침 상태를 보존하면서 인라인 상태색을 바꾼다.
     const replacement = new Map(Object.keys(oldColor).map((kind) => [oldColor[kind].toLowerCase(), newColor[kind]]));
     document.querySelectorAll('.app [style], .maplibregl-popup [style]').forEach((element) => {

@@ -17,18 +17,19 @@ test('Next 지도의 강조색은 대시보드 주색이고, 6단계 색은 대�
   assert.ok(shell, 'html[data-map-shell] 공통 규칙');
   assert.match(shell[1], /--acc:var\(--primary\)/);
   assert.match(shell[1], /--acc-ink:var\(--primary-foreground\)/);
-  for (const k of ['sale', 'build', 'soon', 'move', 'plan', 'priv']) assert.match(shell[1], new RegExp(`--${k}:var\\(--st-${k}-ink\\)`), k);
+  for (const k of ['sale', 'build', 'soon', 'move', 'plan', 'permit', 'priv']) assert.match(shell[1], new RegExp(`--${k}:var\\(--st-${k}-ink\\)`), k);
   const light = /html\[data-map-shell\]:not\(\.dark\)\{([^}]*)\}/.exec(css)[1];
-  assert.doesNotMatch(light, /--(acc|sale|build|soon|move|plan|priv):/, '라이트 덮어쓰기에 단계색·강조색을 따로 두지 않는다');
+  assert.doesNotMatch(light, /--(acc|sale|build|soon|move|plan|permit|priv):/, '라이트 덮어쓰기에 단계색·강조색을 따로 두지 않는다');
   assert.match(light, new RegExp(`--warn:${twVar('warn')}`, 'i'), '라이트 지도 주의색 = 대시보드 --warn');
 });
 
 test('지도 스크립트는 지도 셸에서 단계색을 CSS 토큰으로 읽고(독립 지도는 다크 대체값), 라이트 3D 동 색의 높은 층 끝은 차트 면 색(--st-*)이다', () => {
   assert.match(app, /getPropertyValue\(`--st-\$\{k\}-ink`\)/);
+  assert.match(app, /read\(TOKEN\[k\] \|\| k\)/);
   assert.match(app, /if \(SHELL\) applyStageInk\(\);/);
   assert.doesNotMatch(app, /LIGHT_COLOR/, '라이트 단계색 사본을 따로 두지 않는다');
   const tone = /const LIGHT_THEME = \{[\s\S]*?tone: \{([^}]*)\}/.exec(app)[1];
-  for (const [k, st] of [['sale', 'sale'], ['build', 'build'], ['soon', 'soon'], ['move', 'move'], ['plan', 'plan'], ['priv', 'priv']]) {
+  for (const [k, st] of [['sale', 'sale'], ['build', 'build'], ['near', 'build'], ['soon', 'soon'], ['move', 'move'], ['plan', 'plan'], ['permit', 'permit'], ['priv', 'priv']]) {
     const m = new RegExp(`${k}: \\['#[0-9A-Fa-f]{6}', '(#[0-9A-Fa-f]{6})'\\]`).exec(tone);
     assert.ok(m, `tone.${k}`); assert.equal(m[1].toUpperCase(), twVar(`st-${st}`), `tone.${k} 높은 층 끝 = --st-${st}`);
   }
@@ -79,4 +80,21 @@ test('900px 이하에서 지도 머리 줄과 지도는 상단 메뉴 바 높이
   const m = /@media \(max-width:900px\)\{\n  \.shell-map\{--nav-h:49px\}\n  \.shell-map \.mhead\{top:var\(--nav-h\)\}\n  \.shell-map \.mapwrap\{top:calc\(var\(--nav-h\) \+ var\(--mh\)\)\}\n\}/.exec(css);
   assert.ok(m, '.shell-map 모바일 머리 줄 내림 규칙');
   assert.match(read('components/TopNav.tsx'), /mobile:h-12/, '메뉴 바 높이(48px + 아래 선 1px)와 --nav-h 가 맞아야 한다');
+});
+
+test('지도 ①~⑥ 색 = 화면(종합상황판 리본·사업·지역 공급)의 같은 번호 색 변수', () => {
+  const sample = read('lib/board/sample.ts');
+  const ribbon = [...(/export const C = \[([^\]]*)\]/.exec(sample)[1]).matchAll(/var\(--st-(\w+)\)/g)].map((x) => x[1]);
+  assert.deepEqual(ribbon, ['plan', 'permit', 'build', 'sale', 'soon', 'move'], '리본 ①~⑥ 변수');
+  const stageKind = /const STAGE_KIND = \[([^\]]*)\]/.exec(app)[1].match(/'(\w+)'/g).map((x) => x.slice(1, -1));
+  assert.deepEqual(stageKind, ribbon, '지도 ①~⑥ 칸 색 종류 = 리본 변수 이름');
+  assert.match(app, /const TOKEN = \{ near: 'build' \}/, '준공 임박은 ③착공 안의 상태라 ③ 색');
+  const KIND = Object.fromEntries([...(/const KIND = \{([^}]*)\}/.exec(app)[1]).matchAll(/'([^']+)': '(\w+)'/g)].map((x) => [x[1], x[2]]));
+  assert.deepEqual(KIND, { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'near', '입주 단계': 'soon', '계획': 'permit', '사업화': 'plan' }, '단지 상태 → 색 종류(①사업화 ②계획 ③건설·임박 ④분양중 ⑤입주 단계)');
+  // 다크 대체값(독립 지도) = 다크 --st-*-ink
+  const twDark = tw.slice(tw.indexOf('\n.dark'));
+  const darkInk = (n) => new RegExp(`--st-${n}-ink:\\s*(#[0-9A-Fa-f]{6})`).exec(twDark)[1].toUpperCase();
+  const COLOR = Object.fromEntries([...(/const COLOR = \{([^}]*)\}/.exec(app)[1]).matchAll(/(\w+): '(#[0-9A-Fa-f]{6})'/g)].map((x) => [x[1], x[2].toUpperCase()]));
+  for (const k of ['plan', 'permit', 'build', 'sale', 'soon', 'move', 'priv']) assert.equal(COLOR[k], darkInk(k), `COLOR.${k} = 다크 --st-${k}-ink`);
+  assert.equal(COLOR.near, COLOR.build);
 });

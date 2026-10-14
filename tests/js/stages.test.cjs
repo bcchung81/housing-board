@@ -47,7 +47,7 @@ test('지도의 단계 필터·단지 카드 단계 위치는 화면과 같은 �
   assert.match(app, /const STATUS_TXT = \{ '사업화': '계획', '계획': '인허가', '건설 단계': '착공', '준공 임박': '준공 임박', '분양중': '모집 중', '입주 단계': '준공' \};/);
   assert.doesNotMatch(app, /\$\{no\} \$\{name\}|<small>세대<\/small>|'세대수 미확인'|\}세대`/, '머리 줄·카드에 옛 번호(01~06)·세대 단위가 남지 않는다');
   const { stageOf } = require(path.join(ROOT, 'lib/projects.js'));
-  assert.match(app, /'계획': 'plan', '사업화': 'plan'/, '사업화(수도권 원장 01·02 단계)는 계획과 같은 색');   // 지도 개선 계획 3절
+  assert.match(app, /'계획': 'permit', '사업화': 'plan'/, '사업화(수도권 원장 01·02 단계)는 ①계획 색, 계획(인허가)은 ②인허가 색');   // 지도 개선 계획 3절
   const MAP = { '계획': '03', '건설 단계': '04', '준공 임박': '04', '분양중': '05', '입주 단계': '06' };
   for (const [status, code] of Object.entries(MAP)) assert.equal(stageOf(status, { approvedAt: true }), code, `레지스트리 stageOf(${status})`);
   assert.match(app, /data-status="\$\{live\.join\('\|'\)\}"/, '한 단계가 여러 상태를 함께 켜고 끈다');
@@ -97,7 +97,7 @@ test('표 머리는 리본 단계 이름을 붙인다(②인허가·③착공·�
 test('지도 범례·옵션 창의 단지 상태는 6단계 순서이고 리본 칸 이름(①~⑥)이 붙는다, 공식 번호는 title(머리 줄 6단계 필터와 같은 대응)', () => {
   assert.match(app, /const BY_STAGE = STAGES6\.flatMap\(\(s\) => s\[2\]\);/);
   assert.match(app, /BY_STAGE\.forEach\(\(st\) => \{[^]*?if \(!present\.has\(st\)\) return;\n\s+if \(st !== '입주 단계'\) return add\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, stLabel\(st\), NOTE\[st\] \|\| '', stLabel\(st\), stTitle\(st\)\);/);
-  assert.match(app, /add\('<i class="sw move"><\/i>', '⑤준공 · 입주 진행'/);    // ⑤준공(사용검사)은 경과 표지로 둘로 나눈다(2026-10-14)
+  assert.match(app, /add\('<i class="sw soon"><\/i>', '⑤준공 · 입주 진행'/);    // ⑤준공(사용검사)은 경과 표지로 둘로 나눈다(2026-10-14)
   assert.match(app, /'⑤준공 · 입주 완료'/);
   assert.match(app, /const present = BY_STAGE\.filter\(\(st\) => ALL_ST\.has\(st\)\);/);
   assert.match(app, /\$\{stLabel\(st\)\}<\/label>/);
