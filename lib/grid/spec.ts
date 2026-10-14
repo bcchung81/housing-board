@@ -7,8 +7,9 @@ export type Kind = 'int' | 'delta' | 'pct' | 'text';
    사업 목록(2026-10-14): title(칸 툴팁) · tone(글자 색 bad 지연·warn 주의) · mark(견본 모양: outline 은 swatch 색 테두리만 — 지연, hatch 는 빗금 — 미확보) */
 export type CellObj = { text?: string; sort?: number | string | null; href?: string; swatch?: string; dashed?: boolean; prov?: boolean; code?: boolean; muted?: boolean; na?: string; title?: string; tone?: 'bad' | 'warn'; mark?: 'outline' | 'hatch' };
 export type Cell = number | string | null | undefined | CellObj;
-/* wrap 은 긴 글자 열(최소 180px, 줄바꿈), sort:false 는 정렬하지 않는 열, group 이 같은 이웃 열은 위 줄 머리글 한 칸으로 묶인다 */
-export type Col = { key: string; label: string; kind?: Kind; group?: string; groupSwatch?: string; wrap?: boolean; sort?: false };
+/* wrap 은 긴 글자 열(최소 180px, 줄바꿈), clip 은 한 줄 말줄임 열(값 = CSS 최대 폭, 예 'clamp(180px,100vw - 1100px,380px)' — 잘린 칸은 title 로 전체 글자),
+   sort:false 는 정렬하지 않는 열, group 이 같은 이웃 열은 위 줄 머리글 한 칸으로 묶인다 */
+export type Col = { key: string; label: string; kind?: Kind; group?: string; groupSwatch?: string; wrap?: boolean; clip?: string; sort?: false };
 /* pin: 합계 행(top 전국 · bottom 총계)은 정렬·검색과 상관없이 그 자리에 둔다. note: 첫 칸 뒤를 한 칸으로 합친 설명(자료 없는 단계 행)
    detail: 행을 누르면 바로 아래에 펼치는 실제 레코드 예시(열·행, 전체 건수, 출처). 가상 스크롤 표(120행 초과)에서는 펼치지 않는다 */
 export type Detail = { cols: Col[]; rows: Row[]; total: number; source: string };

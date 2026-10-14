@@ -35,6 +35,9 @@ const stickyCell = 'sticky left-0 z-[1] bg-inherit group-data-[scrolled]/grid:sh
 /* 하이픈·물결이 든 짧은 낱말(2026-08-31, 2021-09~2026-08, 61-79번지)은 줄을 바꿀 때 가운데서 끊지 않는다(브라우저는 하이픈 뒤에서 끊는다) */
 const keepWords = (t: string): React.ReactNode => (/[-~]/.test(t) ? t.split(/( +)/).map((w, i) => (i % 2 || !/[-~]/.test(w) || w.length > 24 ? w : <span key={i} className="whitespace-nowrap">{w}</span>)) : t);
 
+/* 말줄임 열(clip)의 칸 title: 칸에 title 이 있으면 그것(안쪽 span 이 보인다), 없으면 전체 글자 */
+const clipTitle = (v: Cell, col: Col) => (typeof v === 'object' && v?.title ? undefined : display(v, col.kind).text);
+
 function CellView({ v, col }: { v: Cell; col: Col }) {
   const d = display(v, col.kind);
   const o = typeof v === 'object' && v !== null ? v : undefined;
@@ -115,7 +118,9 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight }: { co
               <ChevronRight className={cn('size-3.5 transition-transform', open.has(r.id) && 'rotate-90')} aria-hidden="true" />
             </button>
           ) : <span className="mr-1 inline-block w-4" aria-hidden="true" />) : null}
-          <CellView v={r.c[c.key]} col={c} />
+          {c.clip ? (
+            <span className="block truncate" style={{ maxWidth: c.clip }} title={clipTitle(r.c[c.key], c)}><CellView v={r.c[c.key]} col={c} /></span>
+          ) : <CellView v={r.c[c.key]} col={c} />}
         </TableCell>
       ))}
     </TableRow>,

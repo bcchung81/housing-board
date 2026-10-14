@@ -1,6 +1,8 @@
 /* 거르기 칩 한 줄(HOME 개념 흡수 계획 3절: 조작은 칩 한 줄, 모든 선택은 URL 에 남긴다). 서버 컴포넌트 — 칩은 쿼리 주소로 가는 링크라 스크립트 없이 동작한다.
    ChipBar(카드 한 줄) > ChipGroup(작은 이름 + 칩들) > Chip(링크, 고르면 aria-current) · ChipMenu(펼침 목록 — <details>, 고른 값이 바뀌면 key 로 닫힌 채 다시 그린다) · ChipSep(세로 구분선).
-   견본(swatch): 단계 색 면(fill) · 지연 빨간 테두리(outline) · 미확보 빗금(hatch). 시안: docs/design/home-concept/projects.html */
+   견본(swatch): 단계 색 면(fill) · 지연 빨간 테두리(outline) · 미확보 빗금(hatch). 시안: docs/design/home-concept/projects.html
+   한 줄 규칙(2026-10-14): 1280~1440 폭에서 칩이 한 줄에 들도록 묶음 이름(렌즈·지역·단계·상태)은 1440 미만에서 화면에서 숨기고(읽기 도구에는 남는다),
+   펼침 칩에 고른 값이 길면 말줄임(전체 이름은 title). 범위·연결 상태 배지는 칩 줄에 두지 않는다(요약 카드 머리 줄). */
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { ChevronDown, X } from 'lucide-react';
@@ -18,10 +20,10 @@ export function SwatchMark({ kind, color, className }: Swatch & { className?: st
 }
 
 export function ChipBar({ children, label = '거르기' }: { children: ReactNode; label?: string }) {
-  return <nav aria-label={label} className="flex flex-wrap items-center gap-x-4 gap-y-2 rounded-[12px] border border-border bg-card px-3 py-2 shadow-[var(--shadow-card)]">{children}</nav>;
+  return <nav aria-label={label} className="flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] border border-border bg-card px-3 py-2 shadow-[var(--shadow-card)]">{children}</nav>;
 }
 export function ChipGroup({ label, children, className }: { label: string; children: ReactNode; className?: string }) {
-  return <div role="group" aria-label={label} className={cn('flex flex-wrap items-center gap-0.5', className)}><span className="mr-1 text-[13px] text-muted-foreground">{label}</span>{children}</div>;
+  return <div role="group" aria-label={label} className={cn('flex flex-wrap items-center gap-0.5', className)}><span className="mr-1 text-[13px] text-muted-foreground min-[901px]:max-[1439px]:sr-only">{label}</span>{children}</div>;
 }
 export const ChipSep = () => <span className="h-5 w-px bg-border mobile:hidden" aria-hidden="true" />;
 
@@ -43,8 +45,8 @@ export function ChipMenu({ label, on, items, cols = 1, title }: { label: string;
   const current = items.find((i) => i.on)?.label;
   return (
     <details key={current ?? ''} className="group relative">
-      <summary title={title} className={cn(CHIP, 'cursor-pointer list-none [&::-webkit-details-marker]:hidden', on ? ON : OFF)}>
-        <span>{current ?? label}</span><ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
+      <summary title={title ?? current} className={cn(CHIP, 'cursor-pointer list-none [&::-webkit-details-marker]:hidden', on ? ON : OFF)}>
+        <span className="max-w-[9em] truncate">{current ?? label}</span><ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
       </summary>
       <div className="absolute top-full left-0 z-30 mt-1 max-h-[60vh] min-w-[160px] overflow-y-auto rounded-[10px] border border-border bg-popover p-1 text-popover-foreground shadow-[var(--shadow-pop)]">
         <ul className={cn('m-0 list-none p-0', cols === 2 ? 'grid grid-cols-2 gap-0.5' : 'flex flex-col gap-0.5')}>

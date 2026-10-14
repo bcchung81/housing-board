@@ -22,7 +22,7 @@ export function kstDate(iso: string | null | undefined): string | null {
 
 export type StatusRow = { owner: '우리' | 'HOME'; id: string; name: string; org: string; ok: boolean; lastOk: string | null; asOf: string | null; count: number | null; runs: string; note: string };
 
-/* 원천 표: 우리 원천(카탈로그) 먼저, 그 뒤 HOME 원천. 상태는 정상/실패 두 가지 */
+/* 원천 표: 실패한 원천을 맨 위에, 그 밖은 우리 원천(카탈로그) 먼저, 그 뒤 HOME 원천. 상태는 정상/실패 두 가지 */
 export function statusRows(hs: HomeSources, ours: Source[]): StatusRow[] {
   const mine: StatusRow[] = ours.map((s) => ({ owner: '우리', id: s.id, name: s.dataset, org: s.group, ok: true, lastOk: kstDate(s.collectedAt), asOf: s.sourceAsOf ? s.sourceAsOf.replace(/-/g, '.') : null, count: s.count, runs: '파일', note: `${s.provider} · 파일로 받아 둔 자료` }));
   const home: StatusRow[] = hs.sources.map((s) => ({
@@ -30,7 +30,8 @@ export function statusRows(hs: HomeSources, ours: Source[]): StatusRow[] {
     runs: `${s.runs}회${s.failed ? ` · 실패 ${s.failed}` : ''}`,
     note: `수집 실행 ${s.runs}회 중 실패 ${s.failed}${s.interrupted ? `·중단 ${s.interrupted}` : ''}${s.ok ? '' : ` · 마지막 실행 ${kstDate(s.lastRun)} 실패${s.lastOk ? ' — 마지막 정상 값을 씀' : ' — 정상 수집 없음'}`}${s.expected !== null ? ` · 확보 기록 기대 ${s.expected.toLocaleString('en-US')} 수집 ${s.fetched?.toLocaleString('en-US')}${s.partial ? '(일부 범위)' : ''}` : ''}`,
   }));
-  return [...mine, ...home];
+  const all = [...mine, ...home];
+  return [...all.filter((r) => !r.ok), ...all.filter((r) => r.ok)];
 }
 
 export type CoverageRow = { id: string; name: string; owner: '우리' | 'HOME'; cells: ('full' | 'part' | 'none')[] };

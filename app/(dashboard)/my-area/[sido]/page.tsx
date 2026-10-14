@@ -11,7 +11,7 @@ import Legend from '../../../../components/charts/Legend';
 import StockLines, { HOUSEHOLD_COLOR, STOCK_COLOR } from '../../../../components/charts/StockLines';
 import areaFactsJson from '../../../../data/board/area-facts.json';
 import { conditions, stockChart, type AreaFactsDoc } from '../../../../lib/board/area-facts';
-import { NATION, fmt, lhCalendar, monthLabel, nextYm, sidoName, ymDot } from '../../../../lib/board/calc';
+import { NATION, addrText, fmt, foldEmptyMonths, lhCalendar, monthLabel, nextYm, sidoName, ymDot } from '../../../../lib/board/calc';
 import { SGG, getBoardData } from '../../../../lib/board/data';
 import { STAGES } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
@@ -28,6 +28,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 const areaFacts = areaFactsJson as AreaFactsDoc;
 const COND_TIP = '숫자마다 기준연도가 다릅니다 · 재고−가구 차이는 공급 부족 확정치가 아님(공실·점유·실입주량은 이 자료에 없음) · KOSIS·SGIS(HOME 지역 지표)';
 const day = (d: string) => `${Number(d.slice(5, 7))}월 ${Number(d.slice(8, 10))}일`;
+/* 이어진 빈 달 한 칸의 이름: '2027년 3월 ~ 7월'(해가 바뀌면 '2026년 10월 ~ 2027년 1월') */
+const spanName = (from: string, to: string) => (from === to ? monthLabel(from) : `${monthLabel(from)} ~ ${from.slice(0, 4) === to.slice(0, 4) ? `${Number(to.slice(5))}월` : monthLabel(to)}`);
 
 /* 우리 동네 시도(L2): 앞으로 12개월 달력(달마다 LH 준공 예정 단지) + 그 시도의 등록 사업(지금 단계를 쉬운 말로) + 지도. 9.4·9.30 지시. */
 export default async function MyAreaSido({ params }: Props) {
@@ -54,23 +56,28 @@ export default async function MyAreaSido({ params }: Props) {
       <Card render={<section aria-label="앞으로 12개월 공급 달력" />}>
         <PanelHead title="앞으로 12개월 공급 달력" tip={`LH 준공 예정 · 달마다 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${lh.sourceAsOf}. 준공 예정일은 계획이라 바뀔 수 있고, 모집(청약) 일정과는 다릅니다.`} />
         <ol className="m-0 grid list-none grid-cols-[repeat(auto-fill,minmax(min(250px,100%),1fr))] items-start gap-2.5 p-0">
-          {cal.map((m) => (
-            <li key={m.ym} className={m.blocks.length ? 'rounded-[10px] border border-border px-3.5 py-3' : 'rounded-[10px] border border-dashed border-line2 bg-muted px-3.5 py-3'}>
+          {foldEmptyMonths(cal).map((x) => x.kind === 'empty' ? (
+            <li key={x.from} className="rounded-[10px] border border-dashed border-line2 bg-muted px-3.5 py-3">
               <div className="flex items-baseline justify-between gap-2">
-                <b className="text-[17px]">{monthLabel(m.ym)}</b>
-                <span className="text-[14px] text-muted-foreground tabular-nums">{m.blocks.length ? `${m.blocks.length}곳 · ${fmt(m.units)}세대` : '예정 없음'}</span>
+                <b className="text-[17px]">{spanName(x.from, x.to)}</b>
+                <span className="text-[14px] text-muted-foreground">예정 없음</span>
               </div>
-              {m.blocks.length ? (
-                <ul className="m-0 mt-2 flex list-none flex-col gap-1.5 p-0">
-                  {m.blocks.map((b, i) => (
+            </li>
+          ) : (
+            <li key={x.m.ym} className="rounded-[10px] border border-border px-3.5 py-3">
+              <div className="flex items-baseline justify-between gap-2">
+                <b className="text-[17px]">{monthLabel(x.m.ym)}</b>
+                <span className="text-[14px] text-muted-foreground tabular-nums">{`${x.m.blocks.length}곳 · ${fmt(x.m.units)}세대`}</span>
+              </div>
+              <ul className="m-0 mt-2 flex list-none flex-col gap-1.5 p-0">
+                  {x.m.blocks.map((b, i) => (
                     <li key={i} className="border-t border-border pt-1.5 text-[14px] leading-[1.5] first:border-t-0 first:pt-0">
                       <span className="flex flex-wrap items-baseline justify-between gap-x-2"><b className="text-[15px]">{b.district}{b.block && b.block !== '1' ? ` ${b.block}블록` : ''}</b><span className="tabular-nums">{fmt(b.units)}세대</span></span>
                       <span className="block text-muted-foreground">{b.type} · {day(b.date)} 준공 예정</span>
-                      <span className="block text-muted-foreground [overflow-wrap:anywhere]">{b.location}</span>
+                      <span className="block text-muted-foreground [overflow-wrap:anywhere]">{addrText(b.location)}</span>
                     </li>
                   ))}
-                </ul>
-              ) : null}
+              </ul>
             </li>
           ))}
         </ol>
@@ -86,7 +93,7 @@ export default async function MyAreaSido({ params }: Props) {
               <Kpi label="인구" unit="명" value={cond.population ? fmt(cond.population.value) : '–'} sub={cond.population?.period} tip="인구총조사 기반 총인구 · 일반가구와 같은 연도 비교용(주민등록인구와 분모가 다름)" />
               <Kpi label="일반가구" unit="가구" value={cond.households ? fmt(cond.households.value) : '–'} sub={cond.households?.period} tip="KOSIS 일반가구 수" />
               <Kpi label="주택 재고" value={cond.housingUnits ? fmt(cond.housingUnits.value) : '–'} sub={cond.housingUnits?.period} tip="KOSIS 주택 수 · 같은 연도의 일반가구와 비교하는 값" />
-              <Kpi label="미분양" tone="var(--bad)" value={cond.unsold ? fmt(cond.unsold.value) : '–'} sub={cond.unsold ? `${ymd(cond.unsold.period)}${cond.unsold.completed !== null ? ` · 준공 후 ${fmt(cond.unsold.completed)}` : ''}` : undefined} tip="미분양주택현황 월말 재고 · 신규 공급 실적 아님" />
+              <Kpi label="미분양" value={cond.unsold ? fmt(cond.unsold.value) : '–'} sub={cond.unsold ? `${ymd(cond.unsold.period)}${cond.unsold.completed !== null ? ` · 준공 후 ${fmt(cond.unsold.completed)}` : ''}` : undefined} tip="미분양주택현황 월말 재고 · 신규 공급 실적 아님" />
             </div>
             {chart ? (
               <>

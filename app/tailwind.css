@@ -339,6 +339,7 @@
   .q-grow-x { transform-origin: 0 50%; animation: q-grow-x .6s cubic-bezier(.2, .7, .2, 1) backwards; animation-delay: calc(var(--i, 0) * 60ms); }
   .q-sweep { animation: q-sweep .8s cubic-bezier(.3, .7, .3, 1) backwards; }
   .q-pulse { animation: q-pulse 1.2s .6s ease-out backwards; }
+  .dark .q-pulse { animation: none; }   /* 다크: 밝은 주색 펄스가 사각 후광처럼 남는다(계단 '현재' 칸) */
 }
 
 /* 카드 호버(2026-10-10): 누를 수 있는 카드(card-lift: 링크 카드·지시 카드·시도 타일·계단 칸)는 2px 떠오르고 그림자가 깊어지며 테두리가 주색을 띤다.
@@ -352,6 +353,7 @@
     .card-lift:hover:not([aria-pressed="true"]):not([aria-current="step"]):not(.keep-border) { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }   /* keep-border: 테두리 색이 뜻을 가진 카드(계단 칸의 공개 범위)는 색을 지킨다 */
     .card-lift[aria-pressed="true"]:hover { box-shadow: 0 0 0 1px var(--primary), var(--shadow-hover); }
     .card-lift[aria-current="step"]:hover { box-shadow: 0 0 0 2px var(--primary), var(--shadow-hover); }
+    .dark .card-lift[aria-current="step"]:hover { box-shadow: var(--shadow-hover); }
     .card-soft:hover:not(.is-ringed) { box-shadow: var(--shadow-hover-soft); border-color: var(--line2); }
   }
   .card-lift:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-hover); }

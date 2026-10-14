@@ -149,3 +149,21 @@ test('카탈로그가 말하는 "이 화면들이 읽음" 은 알려진 화면�
   const known = new Set(['/', '/area', '/month', '/agency', '/projects', '/project', '/map']);
   for (const s of sources.items) for (const u of s.usedBy) assert.ok(known.has(u), `${s.id}: ${u}`);
 });
+
+test('우리 동네 달력: LH 블록 주소의 시도·시군구 접두 중복을 화면에서만 뺀다(원천 값 그대로) · 이어진 빈 달은 한 칸', () => {
+  const C = require('../../lib/board/calc.ts');
+  assert.equal(C.addrText('부산광역시 남구 문현동 부산 남구 부산광역시 남구 문현동 산23-1번지 일원'), '부산광역시 남구 문현동 산23-1번지 일원');
+  assert.equal(C.addrText('경기도 이천시 경기 이천시 경기 이천시'), '경기도 이천시');
+  assert.equal(C.addrText('충청남도 당진시 석문면 충남 당진군 충남 당진군 석문면'), '충청남도 당진시 석문면', '시·군만 다른 같은 이름도 같은 시군구');
+  assert.equal(C.addrText('경기도 파주시 목동동 경기도 파주시 와석순환로 220'), '경기도 파주시 목동동 · 와석순환로 220', '다른 주소는 · 로 잇는다');
+  assert.equal(C.addrText('경기도 광주시 오포읍 일원'), '경기도 광주시 오포읍 일원', "경기 광주시는 시도 '광주'로 보지 않는다");
+  assert.equal(C.addrText('서울특별시 강남구 세곡동'), '서울특별시 강남구 세곡동');
+  const lh = require('../../data/board/lh-completion.json').blocks;
+  for (const b of lh) {
+    const t = C.addrText(b.location);
+    assert.ok(t.length <= b.location.length && t.split(' ')[0] === b.location.split(' ')[0], b.location);
+    assert.doesNotMatch(t, /^(\S+) (\S+) .*\b\1 \2\b/u, `${b.location} → ${t}`);
+  }
+  const cal = ['2026-10', '2026-11', '2026-12', '2027-01', '2027-02'].map((ym, i) => ({ ym, blocks: i === 2 ? [1] : [] }));
+  assert.deepEqual(C.foldEmptyMonths(cal).map((x) => (x.kind === 'empty' ? `${x.from}~${x.to}` : x.m.ym)), ['2026-10~2026-11', '2026-12', '2027-01~2027-02']);
+});

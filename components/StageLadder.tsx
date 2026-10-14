@@ -1,6 +1,6 @@
 /* 공급 6단계 계단(발표자료 SHEET 03 '주택공급 6단계, 단계마다 답해야 할 질문'의 그림). 단계를 표기하는 화면(사업 목록·사업 상세·보고자료)이 함께 쓴다.
    범례(공개 범위) → 계단 6칸(상자가 단계마다 높아지고 한 기준선에 선다). 칸마다 답할 질문은 칸의 title 에 둔다(화면 문구 최소화). 01~04 는 담당자 열람(파랑), 05~06 은 국민 공개(초록).
-   current 는 지금 단계(진한 면·주색 고리·'현재'), counts 는 칸 안의 사업 수. 칸은 그 단계로 거른 사업 목록(/projects?stage=NN)으로 가는 링크이고,
+   current 는 지금 단계(진한 면·주색 고리·'현재' — 다크는 밝은 주색 고리·펄스가 사각 후광처럼 떠서 고리 없이 면·'현재'만), counts 는 칸 안의 사업 수. 칸은 그 단계로 거른 사업 목록(/projects?stage=NN)으로 가는 링크이고,
    사업 목록은 href 로 다른 거르기(시군구)를 이어 붙인다.
    900px 이하는 계단 대신 세로 목록(상자 높이를 푼다). */
 import type { CSSProperties } from 'react';
@@ -29,7 +29,7 @@ export default function StageLadder({ current, counts, className, href = (code) 
                 <Link href={href(s.code)} aria-current={on ? 'step' : undefined} title={`${s.code} ${s.name} — ${s.q}`}
                   className={cn('card-lift keep-border flex h-[var(--h)] w-full flex-col items-center justify-center gap-0.5 border-2 border-b-0 border-[var(--sc)] px-1 text-center no-underline mobile:h-auto mobile:flex-row mobile:justify-start mobile:gap-2 mobile:rounded-[8px] mobile:border-b-2 mobile:px-3 mobile:py-1.5',
                     'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-                    on ? 'q-pulse bg-[color-mix(in_srgb,var(--sc)_24%,var(--card))] text-foreground [box-shadow:0_0_0_2px_var(--primary)]' : 'bg-[color-mix(in_srgb,var(--sc)_14%,var(--card))] text-[var(--sc)] hover:bg-[color-mix(in_srgb,var(--sc)_22%,var(--card))]')}>
+                    on ? 'q-pulse bg-[color-mix(in_srgb,var(--sc)_24%,var(--card))] text-foreground [box-shadow:0_0_0_2px_var(--primary)] dark:[box-shadow:none]' : 'bg-[color-mix(in_srgb,var(--sc)_14%,var(--card))] text-[var(--sc)] hover:bg-[color-mix(in_srgb,var(--sc)_22%,var(--card))]')}>
                   <span className="text-[15px] leading-none tabular-nums">{s.code}</span>
                   <b className="font-display text-[20px] leading-[1.25] font-normal">{s.name}</b>
                   {/* 건수와 '현재'는 한 줄 — 가장 낮은 01 칸(64px)에서도 칸 안에 든다 */}

@@ -170,7 +170,7 @@ async function run({ root = P.ROOT, month, dryRun = false, now = Date.now(), exe
   exec('trend.js', ['--month', month]);
   exec('board.js', ['--month', month]);
   const pp = policyProgressArgs(dir, month);
-  if (pp) exec('policy-progress.js', pp);
+  if (pp) { exec('policy-progress.js', pp); exec('projects-index.js', pp); }
 
   const after = boardSummary(boardFile);
   const summary = summaryMarkdown({ month, edition, newMonth, prevMonth: latest, before, after });
@@ -193,7 +193,8 @@ function convertArgs(root, dir, month, bulkFile) {
     ...(home ? ['--home', rel(home), '--home-ids', rel(path.join(dir, 'mappings/home-ids.json'))] : []), '--out', rel(path.join(dir, 'tables'))];
 }
 
-/* 9·7 정책 단계별 목표·확인(policy-progress.js → data/board/policy-progress.json) 인자: 그 달 폴더에 HOME 판이 있을 때만(보드 다음에 돈다), 없으면 null */
+/* 9·7 정책 단계별 목표·확인(policy-progress.js → data/board/policy-progress.json)과 사업 화면 자료(projects-index.js → projects-index·project-detail.json) 인자:
+   그 달 폴더에 HOME 판이 있을 때만(보드 다음에 돈다), 없으면 null */
 const policyProgressArgs = (dir, month) => (require('./home-source').latestHomeDir(dir) ? ['--month', month] : null);
 
 /* ---------- 열린 달 주 1회 갱신(--refresh) ---------- */
@@ -267,7 +268,7 @@ async function refresh({ root = P.ROOT, month, now = Date.now(), exec = defaultE
   exec('trend.js', ['--month', month]);
   exec('board.js', ['--month', month]);
   const pp = policyProgressArgs(dir, month);
-  if (pp) exec('policy-progress.js', pp);
+  if (pp) { exec('policy-progress.js', pp); exec('projects-index.js', pp); }
 
   const after = boardSummary(boardFile), gradesAfter = gradesOf(mapFile);
   const changed = gradesBefore && gradesAfter ? changedGrades(gradesBefore, gradesAfter) : null;

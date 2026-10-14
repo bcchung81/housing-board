@@ -46,9 +46,10 @@ export const SubTitle = ({ className, ...p }: ComponentProps<'h3'>) => <h3 class
 /* 빈 값: 긴 문장 대신 — (이유는 title) */
 export const Dash = ({ why }: { why: string }) => <span className="text-muted-foreground" title={why} aria-label={why}>—</span>;
 
-/* 목록 카드 격자(.cards)·KPI 격자(.kpis)·두 칸(.cols2): 자동 칸 수 */
+/* 목록 카드 격자(.cards)·KPI 격자(.kpis)·두 칸(.cols2): 자동 칸 수.
+   KPI 격자는 auto-fill(빈 칸도 자리를 지킨다) — 카드가 1~2개여도 한 칸 폭(240px~약 280px)이라 가로로 늘어나지 않는다 */
 export const cardsGrid = 'grid grid-cols-[repeat(auto-fill,minmax(min(260px,100%),1fr))] gap-2.5';
-export const kpisGrid = 'grid grid-cols-[repeat(auto-fit,minmax(min(200px,100%),1fr))] gap-2.5';
+export const kpisGrid = 'grid grid-cols-[repeat(auto-fill,minmax(min(240px,100%),1fr))] gap-2.5';
 export const cols2 = 'grid grid-cols-[repeat(auto-fit,minmax(min(420px,100%),1fr))] gap-x-3.5';
 /* 정의 목록(.dl) */
 export const Dl = ({ className, ...p }: ComponentProps<'dl'>) => (

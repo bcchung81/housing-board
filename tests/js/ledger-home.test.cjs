@@ -318,3 +318,31 @@ test('사업 이름: 공사 계약 코드형 이름([(105228)…]) 0건, 수도�
   assert.equal(names.get('PRJ-28245-0055'), '인천계양(공공주택) A2');
   assert.equal(names.get('PRJ-41196-0099'), '부천대장 A7');
 });
+
+test('프로그램 표기 합치기: 같은 정책 안에서 띄어쓰기·가운뎃점만 다른 프로그램은 하나(26 → 24), 정책이 다르면 id 는 둘이고 이름 표기만 같다', () => {
+  assert.equal(H.programKey('도심 공공주택  복합사업'), H.programKey('도심공공주택복합사업'));
+  assert.equal(H.programKey('노후청사ㆍ공공부지'), H.programKey('노후청사·공공부지'));
+  assert.notEqual(H.programKey('공공택지 공급 조기화'), H.programKey('공공택지 공급 확대·조기화'), '표기가 아니라 낱말이 다르면 다른 프로그램');
+  const polOf = new Map(saved.links.filter((l) => l.link_type === 'POLICY_PROGRAM').map((l) => [l.to_local_id, l.from_local_id]));
+  const keys = saved.programs.map((p) => `${polOf.get(p.local_program_id)}|${H.programKey(p.program_name)}`);
+  assert.equal(new Set(keys).size, keys.length, '같은 정책·같은 키의 프로그램이 둘 없다');
+  assert.equal(saved.programs.length, 24);
+  for (const name of ['3기 신도시', '공공주택 건설']) assert.equal(saved.programs.filter((p) => p.program_name === name).length, 1, name);
+  const dosim = saved.programs.filter((p) => H.programKey(p.program_name) === H.programKey('도심 공공주택 복합사업'));
+  assert.deepEqual(dosim.map((p) => [p.local_program_id, p.program_name]), [['PRG_1391a48ea998e31820ad2643', '도심 공공주택 복합사업'], ['PRG_7fd0420ba721f1a0ca43fbe7', '도심 공공주택 복합사업']], '8·13 과 9·7 의 프로그램은 따로(사업의 정책이 섞이지 않게), 표기는 사업 연결이 많은 쪽');
+  assert.ok(saved.links.every((l) => l.link_type !== 'PROGRAM_PROJECT' || saved.programs.some((p) => p.local_program_id === l.from_local_id)));
+});
+
+test('프로그램 합치기는 프로그램·연결·목표만 바꾼다: 9·7 계획표 프로그램이 같은 표기의 HOME 프로그램이면 목표가 그 프로그램에 붙고, 사업 id·다른 표는 그대로', { skip: SKIP }, () => {
+  const before = files(run().t);
+  const fake = fakeEdition({ policy_delivery_plan: (rows) => rows.map((r) => ({ ...r, payload: { ...r.payload, programs: (r.payload.programs ?? []).map((pr) => (pr.id === 'URBAN' ? { ...pr, name: '도심공공주택  복합사업' } : pr)) } })) });
+  const after = run(fake), fa = files(after.t);
+  assert.deepEqual(validate(after.t), []);
+  assert.deepEqual(Object.keys(before).filter((t) => before[t] !== fa[t]), ['programs', 'links', 'policy_targets'], '사업·식별자·사건 등 다른 표는 바이트 그대로');
+  assert.ok(!after.t.programs.some((p) => p.local_program_id === 'POL_2025_0907.URBAN'), '계획표 프로그램 행은 따로 싣지 않는다');
+  const T = (rows, id) => rows.filter((r) => r.local_program_id === id).map((r) => `${r.stage_code} ${r.period_start} ${r.target_units}`);
+  assert.deepEqual(T(after.t.policy_targets, 'PRG_7fd0420ba721f1a0ca43fbe7'), T(saved.policy_targets, 'POL_2025_0907.URBAN'), '같은 정책(9·7)의 HOME 프로그램에 목표가 모인다');
+  assert.ok(after.t.links.some((l) => l.link_type === 'POLICY_PROGRAM' && l.from_local_id === 'POL_2025_0907' && l.to_local_id === 'PRG_7fd0420ba721f1a0ca43fbe7' && /공급 계획표/.test(l.evidence)));
+  assert.equal(after.report.home.ids.fresh, 0);
+  fs.rmSync(path.dirname(fake), { recursive: true, force: true });
+});

@@ -29,7 +29,7 @@ test('단계를 표기하는 대시보드 화면(사업 목록·사업 상세)�
     assert.doesNotMatch(s, /Stepper/, f);
   }
   assert.ok(!fs.existsSync(path.join(ROOT, 'components/ui/stepper.tsx')), '쓰는 곳이 없는 stepper.tsx 는 지운다');
-  assert.match(read('app/(dashboard)/project/[id]/page.tsx'), /<StageLadder current=\{p\.stageCode\} \/>/, '사업 상세는 지금 단계를 강조한다');
+  assert.match(read('app/(dashboard)/project/[id]/page.tsx'), /<StageLadder current=\{hidden \? undefined : p\.stageCode\} \/>/, '사업 상세는 지금 단계를 강조한다');
   const list = read('app/(dashboard)/projects/page.tsx');
   assert.match(list, /<StageLadder className="mt-1" current=\{f\.stage\}/, '사업 목록은 거른 단계를 강조한다(옛 단계 상세)');
   assert.match(list, /href=\{\(code\) => at\(\{ stage: code === f\.stage \? undefined : code \}\)\}/, '단계 칸은 다른 거르기(렌즈·지역·상태)를 유지하고, 고른 단계를 다시 누르면 풀린다');

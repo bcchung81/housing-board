@@ -236,7 +236,15 @@ test('--refresh unchanged: 판 목록·내려받기 없이 기준일 = 오늘 �
   assert.ok(fs.existsSync(path.join(f.base, 'raw/hub-bulk/manifest.json')), '대용량 판은 그대로');
 });
 
-test('--refresh auto·review: 등급 바뀐 사업 > max(50, 판정 사업 2%) 또는 사업 수 ±2% 초과면 review, 아니면 auto. 요약에 판정 전후 사업·호수', async () => {
+test('HOME 판이 있으면 보드 다음에 policy-progress → projects-index(같은 --month), 다른 단계 순서는 그대로', async () => {
+  const f = refreshFixture();
+  write(path.join(f.base, 'raw/home/20261013T140241Z/manifest.json'), { files: {} });
+  await M.refresh({ ...f.opts, now: KST('2026-10-12', 6) });
+  assert.deepEqual(f.calls.map((c) => c.split(' ')[0]), ['hub-bulk.js', 'hub-api-refresh.js', 'snapshot.js', 'collect-national.js', 'convert.js', 'trend.js', 'board.js', 'policy-progress.js', 'projects-index.js']);
+  assert.deepEqual(f.calls.slice(-2), ['policy-progress.js --month 2026-10', 'projects-index.js --month 2026-10']);
+});
+
+test('--refresh auto·review:등급 바뀐 사업 > max(50, 판정 사업 2%) 또는 사업 수 ±2% 초과면 review, 아니면 auto. 요약에 판정 전후 사업·호수', async () => {
   const auto = refreshFixture({ board: REF_BOARD(101), grades: regrade(3) });
   const a = await M.refresh({ ...auto.opts, now: KST('2026-10-12', 6) });
   assert.deepEqual([a.status, a.changedGrades], ['auto', 3]);

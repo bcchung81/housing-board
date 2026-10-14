@@ -48,6 +48,9 @@ function readHome(dir) {
   return { edition: path.basename(dir), snapshotAt: manifest.snapshot_at, manifest, kinds };
 }
 /* 그 달 폴더의 가장 늦은 HOME 판(raw/home/<덤프시각>, manifest.json 이 있는 것), 없으면 null */
+/* 프로그램 이름 정규화 키: 공백을 빼고 가운뎃점 꼴(・ㆍ‧∙•)을 '·' 로 — '도심 공공주택 복합사업' = '도심공공주택 복합사업' */
+const programKey = (name) => String(name ?? '').replace(/\s+/g, '').replace(/[・ㆍ‧∙•]/g, '·');
+
 function latestHomeDir(monthDir) {
   const base = path.join(monthDir, 'raw/home');
   if (!fs.existsSync(base)) return null;
@@ -593,18 +596,41 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
   /* 정책·프로그램·연결·목표 */
   const policy = new Map(K.policy.map((r) => [r.payload.id, r.payload]));
   for (const [id, p] of [...policy].sort(([a], [b]) => byStr(a, b))) t.policies.push({ local_policy_id: id, policy_name: p.name, announcement_date: dayOf(p.announced_at), scope_region: p.target_scope ?? null, source_ref: refs.policy, review_status: status(p.lifecycle_status) });
-  const programs = new Map();
-  for (const r of [...K.home_program_mapping].sort((a, b) => byStr(a.id, b.id))) {
+  /* 프로그램: 같은 정책 안에서 띄어쓰기·가운뎃점 표기만 다른 이름(programKey)은 한 프로그램. 대표 = 그중 사업 연결(home_mapping 행)이 가장 많은 것
+     (같으면 id 가 앞선 것 — 바뀌는 연결이 가장 적다). 정책이 다르면 합치지 않는다(합치면 한 정책의 사업이 다른 정책 사업이 된다) — 이름 표기만 하나로 맞춘다.
+     표시 이름 = 같은 키 HOME 프로그램 중 사업 연결이 가장 많은 것의 표기. 9·7 공급 계획표 프로그램은 같은 정책·같은 키의 HOME 프로그램이 있으면 그것에 합친다.
+     progOf: 원천 프로그램 id → 대표 id(정책 연결·사업 연결·정책 목표가 대표 한 곳에 모인다) */
+  const programs = new Map(), progOf = new Map(), byKey = new Map(), nameOf = new Map(), polProg = new Map();
+  const merged = (prev, rs) => (prev && prev !== 'CONFIRMED' ? prev : rs);   // 모두 CONFIRMED 일 때만 CONFIRMED
+  const uses = new Map();
+  for (const r of K.home_mapping) uses.set(r.program_id, (uses.get(r.program_id) ?? 0) + 1);
+  const homeProgs = [...K.home_program_mapping].sort((a, b) => byStr(a.id, b.id));
+  for (const r of [...homeProgs].sort((a, b) => (uses.get(b.id) ?? 0) - (uses.get(a.id) ?? 0) || byStr(a.id, b.id))) {
+    const k = programKey(r.name);
+    if (!nameOf.has(k)) nameOf.set(k, r.name);
+    if (!byKey.has(`${r.policy_id}|${k}`)) byKey.set(`${r.policy_id}|${k}`, r.id);
+  }
+  const rsOf = new Map();
+  for (const r of homeProgs) { const rep = byKey.get(`${r.policy_id}|${programKey(r.name)}`); progOf.set(r.id, rep); rsOf.set(rep, merged(rsOf.get(rep), status(r.status))); }
+  const addPolicyProgram = (pol, prg, evidence, rs) => {
+    const k = `${pol}|${prg}`, prev = polProg.get(k);
+    polProg.set(k, { link_type: 'POLICY_PROGRAM', from_local_id: pol, to_local_id: prg, evidence: trim(prev ? `${prev.evidence} / ${evidence}` : evidence, 400), review_status: merged(prev?.review_status, rs), source_ref: refs.policy });
+  };
+  for (const r of homeProgs) {
     programs.set(r.id, r);
-    t.programs.push({ local_program_id: r.id, program_name: r.name, program_definition: null, source_ref: refs.policy, review_status: status(r.status) });
-    if (!skipPolicy(r.policy_id) && policy.has(r.policy_id)) t.links.push({ link_type: 'POLICY_PROGRAM', from_local_id: r.policy_id, to_local_id: r.id, evidence: trim(`${r.basis ?? ''} ${r.evidence_url ?? ''}`, 400), review_status: status(r.status), source_ref: refs.policy });
+    const id = progOf.get(r.id);
+    if (id === r.id) t.programs.push({ local_program_id: id, program_name: nameOf.get(programKey(r.name)), program_definition: null, source_ref: refs.policy, review_status: rsOf.get(id) });
+    if (!skipPolicy(r.policy_id) && policy.has(r.policy_id)) addPolicyProgram(r.policy_id, id, `${r.basis ?? ''} ${r.evidence_url ?? ''}`, status(r.status));
   }
   const plan = K.policy_delivery_plan.map((r) => r.payload).filter((p) => policy.has(p.policy_id));
   for (const p of plan) for (const pr of p.programs ?? []) {
-    const id = `${p.policy_id}.${pr.id}`;
-    t.programs.push({ local_program_id: id, program_name: pr.name, program_definition: `${policy.get(p.policy_id).name} 공급 계획표의 프로그램(원문 ${p.pdf_page ?? '-'}쪽)`, source_ref: refs.policy, review_status: status(policy.get(p.policy_id).lifecycle_status) });
-    t.links.push({ link_type: 'POLICY_PROGRAM', from_local_id: p.policy_id, to_local_id: id, evidence: trim(`공급 계획표 ${p.evidence_url ?? ''} ${p.pdf_page ? `PDF ${p.pdf_page}쪽` : ''}`, 400), review_status: status(policy.get(p.policy_id).lifecycle_status), source_ref: refs.policy });
+    const rs = status(policy.get(p.policy_id).lifecycle_status), own = `${p.policy_id}.${pr.id}`, k = `${p.policy_id}|${programKey(pr.name)}`;
+    if (!byKey.has(k)) { byKey.set(k, own); t.programs.push({ local_program_id: own, program_name: nameOf.get(programKey(pr.name)) ?? pr.name, program_definition: `${policy.get(p.policy_id).name} 공급 계획표의 프로그램(원문 ${p.pdf_page ?? '-'}쪽)`, source_ref: refs.policy, review_status: rs }); }
+    const id = byKey.get(k);
+    progOf.set(own, id);
+    addPolicyProgram(p.policy_id, id, `공급 계획표 ${p.evidence_url ?? ''} ${p.pdf_page ? `PDF ${p.pdf_page}쪽` : ''}`, rs);
   }
+  t.links.push(...polProg.values());
   /* 사업–프로그램(home_mapping): 정책이 UNASSIGNED·MON_* 이거나 RELEASED 면 넣지 않는다. 합친 사업에 같은 프로그램이 둘이면 한 행(모두 CONFIRMED 일 때만 CONFIRMED) */
   R.mapping = { rows: K.home_mapping.length, skipped: 0, noProject: 0, noProgram: 0 };
   const pp = new Map();
@@ -613,11 +639,11 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
     const pid = pidOfPro.get(r.project_id);
     if (!pid) { R.mapping.noProject++; continue; }
     if (!programs.has(r.program_id)) { R.mapping.noProgram++; continue; }
-    const k = `${r.program_id}|${pid}`, prev = pp.get(k);
-    pp.set(k, { link_type: 'PROGRAM_PROJECT', from_local_id: r.program_id, to_local_id: pid, evidence: trim(`${prev ? `${prev.evidence} / ` : ''}${r.project_id} ${r.policy_id} ${r.basis ?? ''} ${r.evidence_url ?? ''}`, 600), review_status: prev && prev.review_status !== 'CONFIRMED' ? prev.review_status : status(r.status), source_ref: refs.policy });
+    const prg = progOf.get(r.program_id), k = `${prg}|${pid}`, prev = pp.get(k);
+    pp.set(k, { link_type: 'PROGRAM_PROJECT', from_local_id: prg, to_local_id: pid, evidence: trim(`${prev ? `${prev.evidence} / ` : ''}${r.project_id} ${r.policy_id} ${r.basis ?? ''} ${r.evidence_url ?? ''}`, 600), review_status: prev && prev.review_status !== 'CONFIRMED' ? prev.review_status : status(r.status), source_ref: refs.policy });
   }
   t.links.push(...[...pp.values()].sort((a, b) => byStr(a.from_local_id, b.from_local_id) || byStr(a.to_local_id, b.to_local_id)));
-  t.policy_targets.push(...policyTargets(policy, plan, refs));
+  t.policy_targets.push(...policyTargets(policy, plan, refs, (id) => progOf.get(id) ?? id));
 
   /* 지역 지표 */
   t.area_facts.push(...areaFacts(K, idx, refs, R));
@@ -639,8 +665,9 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
   return { tables: t, report: R };
 }
 
-/* 정책 목표 행: 정책 전체(policy.target_units, 기간은 공급 계획표에 있을 때만), 공급 계획표의 연도별·프로그램별·시도 배분·경기인천 합·입주 전망(관리목표로 채택한 FORECAST_TARGET) */
-function policyTargets(policy, plan, refs) {
+/* 정책 목표 행: 정책 전체(policy.target_units, 기간은 공급 계획표에 있을 때만), 공급 계획표의 연도별·프로그램별·시도 배분·경기인천 합·입주 전망(관리목표로 채택한 FORECAST_TARGET).
+   progOf: 계획표 프로그램 id → 원장 프로그램 id(같은 이름의 HOME 프로그램이 있으면 그 id) */
+function policyTargets(policy, plan, refs, progOf = (id) => id) {
   const out = [], seen = new Set(), CAP = ['11', '28', '41'];
   const STAGE_OF_METRIC = { CONSTRUCTION: '04', MOVE_IN: '06', SUPPLY: '05', COMPLETION: '06' };
   const sidoOf = (name) => Object.entries(SIDO_NAME).find(([, n]) => n === name)?.[0];
@@ -656,7 +683,7 @@ function policyTargets(policy, plan, refs) {
       if (Number.isInteger(a.seoul_units)) row(null, ['11'], `${a.year}-01-01`, `${a.year}-12-31`, a.seoul_units, ev(`${a.year}년 서울`));
     }
     for (const pr of p.programs ?? []) {
-      const id = `${p.policy_id}.${pr.id}`;
+      const id = progOf(`${p.policy_id}.${pr.id}`);
       if (Number.isInteger(pr.target_units) && area.length) row(id, area, p.period_start, p.period_end, pr.target_units, ev(pr.name));
       for (const a of pr.annual ?? []) if (Number.isInteger(a.units) && area.length) row(id, area, `${a.year}-01-01`, `${a.year}-12-31`, a.units, ev(`${pr.name} ${a.year}년`));
     }
@@ -816,4 +843,4 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
   return { registry: reg, ...out };
 }
 
-module.exports = { HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, issueHome, serialOf };
+module.exports = { programKey, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, issueHome, serialOf };

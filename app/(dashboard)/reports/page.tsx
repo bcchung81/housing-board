@@ -7,7 +7,6 @@ import PolicyTable from '../../../components/projects/PolicyTable';
 import { StateLegend } from '../../../components/projects/PolicyStages';
 import { Page, PageHead, PanelHead, SrcLink, kpisGrid } from '../../../components/page';
 import { Alert } from '../../../components/ui/alert';
-import { Badge } from '../../../components/ui/badge';
 import { Card } from '../../../components/ui/card';
 import { DataGrid } from '../../../components/ui/data-grid';
 import { Kpi, Prov } from '../../../components/ui';
@@ -64,7 +63,8 @@ export default async function ReportsPage() {
     const rs = applyFilters(idx.rows, { policy: p }), sm = summaryOf(rs);
     return { key: p.key, short: p.short, name: p.name, projects: sm.n, units: sm.units, cells: policyStageCells(pp, p.id), scope: [...new Set(rs.map((r) => r.sgg.slice(0, 2)))].sort().map((c) => molit.sido.find((x) => x.code === c)?.name ?? c).join('·'), review: sm.review, confirmed: sm.confirmed };
   });
-  const NOT_JUDGED = '원천이 없어 이 보고에서 빠진 항목입니다 — ① 계획 물량 대비 달성률(공급계획 목표치 원천 없음), ② 일정 지연(9.18 지시: 당초·변경·현재 예정 일정이 사업 레코드에 없어 지연 개월을 셀 수 없음), ③ 단계별 병목·머문 기간(단계 진입일 없음). 종합상황판의 해당 위젯은 SAMPLE 입니다.';
+  /* 2026-10-14: 이 절은 문구뿐이고 가상 자료를 보이지 않는다(종합상황판에도 SAMPLE 위젯이 없다) → SAMPLE 배지를 뺐다. 9·7 은 ②에서 단계 목표와 비교한다 */
+  const NOT_JUDGED = '원천이 없어 이 보고에서 빠진 항목입니다 — 1·29·8·13 정책의 목표 대비(단계별 목표 원천 없음, 9·7 은 ②에서 비교), 당초 대비 일정 지연(9.18 지시: 당초·변경 일정이 사업 레코드에 없어 현재 예정일 경과로만 판정), 단계별 병목·머문 기간(단계 진입일 없음).';
   return (
     <Page>
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '보고자료' }]} title="월간 주택공급 브리핑"
@@ -73,7 +73,7 @@ export default async function ReportsPage() {
         metaTip={`통계누리 주택건설실적통계 ${monthLabel(last)}까지 · LH 공공주택 준공예정현황(15141761) 파일 기준일 ${lh.sourceAsOf}(실적 자료보다 ${Math.max(0, monthsBetween(lh.sourceAsOf.slice(0, 7), last))}개월 묵음) · 사업 id 레지스트리 ${projects[0].asOf}`} />
 
       <Card render={<section aria-label="이번 달 실적" />}>
-        <PanelHead title="① 계획대로 가고 있는가 — 전국 실적" tip={`호 · ${monthLabel(last)} · 통계누리 주택건설실적통계(전국). 계획(목표) 물량이 원천에 없어 '계획 대비 달성률'은 계산하지 않습니다 — 종합상황판의 달성률은 SAMPLE 입니다.`}>
+        <PanelHead title="① 계획대로 가고 있는가 — 전국 실적" tip={`호 · ${monthLabel(last)} · 통계누리 주택건설실적통계(전국). 전국 실적 원천에는 계획(목표) 물량이 없어 이 표는 달성률을 계산하지 않습니다 — 9·7 목표 대비는 ②.`}>
           <PanelLink href="/area" full="월별 흐름은 공급 실적">공급 실적</PanelLink>
           <PanelLink href={`/month/${last}`} full={`이 달의 시도 표는 ${monthLabel(last)} 월 상세`}>{Number(last.slice(5))}월 상세</PanelLink>
           <SrcLink />
@@ -118,8 +118,7 @@ export default async function ReportsPage() {
 
       <Alert className="flex flex-wrap items-center gap-x-3 gap-y-1" title={NOT_JUDGED}>
         <b>판정하지 못하는 것</b>
-        <span>계획 물량 대비 달성률 · 일정 지연 · 단계별 병목·머문 기간</span>
-        <Badge variant="warn" className="px-1.5 text-[11px] leading-[18px]" title="종합상황판의 해당 위젯은 SAMPLE 입니다">SAMPLE</Badge>
+        <span>9·7 밖 정책의 목표 대비 · 당초 일정 대비 지연 · 단계별 병목·머문 기간</span>
       </Alert>
     </Page>
   );

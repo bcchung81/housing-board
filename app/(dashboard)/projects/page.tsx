@@ -43,13 +43,14 @@ const STATUS_CELL: Record<Status, (r: ProjectRow) => Cell> = {
   delay: () => ({ text: STATUS_NAME.delay, swatch: 'var(--bad)', mark: 'outline', tone: 'bad', sort: 0, title: STATUS_TIP.delay }),
   none: (r) => ({ text: STATUS_NAME.none, mark: 'hatch', muted: true, sort: 2, title: `${STATUS_TIP.none}${r.why ? ` — ${r.why === 'LH 후보' ? 'LH 후보(판정 대상 아님)' : r.why}` : ''}` }),
 };
-/* 다음 일정: 지난 예정(주의·지연)은 경과 개월과 색, 아니면 다음 현재 예정, 끝난 사업은 실제 준공 달 */
+/* 다음 일정: 지난 예정(주의·지연)은 경과 개월과 색, 아니면 다음 현재 예정, 끝난 사업은 실제 준공 달. 열이 좁아 모집공고는 '모집'(리본 ④와 같은 말) */
+const NEXT_NAME: Record<string, string> = { ...EVENT_NAME, SUPPLY_NOTICE: '모집' };
 function nextCell(r: ProjectRow): Cell {
   if (r.overdue && (r.cls === 'delay' || r.cls === 'caution')) {
     const o = r.overdue;
-    return { text: `${ymText(o.planned)} ${EVENT_NAME[o.eventType]} +${o.months}개월`, tone: r.cls === 'delay' ? 'bad' : 'warn', sort: monthNo(o.planned), title: `현재 예정일 경과 ${o.months}개월 — ${STATUS_NAME[r.cls]}` };
+    return { text: `${ymText(o.planned)} ${NEXT_NAME[o.eventType]} +${o.months}개월`, tone: r.cls === 'delay' ? 'bad' : 'warn', sort: monthNo(o.planned), title: `${EVENT_NAME[o.eventType]} 현재 예정일 경과 ${o.months}개월 — ${STATUS_NAME[r.cls]}` };
   }
-  if (r.next) return { text: `${ymText(r.next.planned)} ${EVENT_NAME[r.next.eventType]}`, sort: monthNo(r.next.planned), title: '현재 예정' };
+  if (r.next) return { text: `${ymText(r.next.planned)} ${NEXT_NAME[r.next.eventType]}`, sort: monthNo(r.next.planned), title: `${EVENT_NAME[r.next.eventType]} 현재 예정` };
   if (r.done) return { text: `${ymText(r.done)} 준공`, muted: true, sort: monthNo(r.done), title: '실제 준공' };
   return null;
 }
@@ -73,14 +74,16 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const ref = idx.referenceDate.replace(/-/g, '.');
   const at = (p: Parameters<typeof listHref>[1]) => listHref(f, p);
 
-  const cols: Col[] = [{ key: 'name', label: '사업', kind: 'text', wrap: true }, { key: 'sgg', label: '시군구', kind: 'text' }, { key: 'prog', label: '프로그램', kind: 'text' }, { key: 'stage', label: '단계', kind: 'text' },
+  /* 1280~1440 폭에서 8열이 다 보이게: 사업·시군구·프로그램은 한 줄 말줄임(전체는 title), 최대 폭은 화면 폭을 따라 늘고 줄며 1100 이하에서만 가로 스크롤 */
+  const cols: Col[] = [{ key: 'name', label: '사업', kind: 'text', clip: 'clamp(180px, 100vw - 1100px, 400px)' }, { key: 'sgg', label: '시군구', kind: 'text', clip: 'clamp(110px, 100vw - 1150px, 180px)' },
+    { key: 'prog', label: '프로그램', kind: 'text', clip: 'clamp(130px, 100vw - 1140px, 220px)' }, { key: 'stage', label: '단계', kind: 'text' },
     { key: 'units', label: '계획 호수' }, { key: 'notice', label: '공고 확인' }, { key: 'next', label: '다음 일정', kind: 'text' }, { key: 'status', label: '상태', kind: 'text' }];
   const gridRows: Row[] = list.map((r) => ({
     id: r.id,
     c: {
-      name: r.issued ? { text: r.name, href: `/project/${r.id}` } : { text: r.name, title: `발급 전 후보(임시 번호 ${r.id}) — 사업 상세 없음` },
+      name: r.issued ? { text: r.name, href: `/project/${r.id}` } : { text: r.name, title: `발급 전 후보(임시 번호 ${r.id}) — 사업 상세 없음 · ${r.name}` },
       sgg: { text: sggLabel(r.sggName, sidoName(molit, sidoOf(r))), href: at({ sgg: r.sgg }) },
-      prog: r.programs.length ? { text: r.programs.join(' · '), title: r.link === 'CONFIRMED' ? '정책 연결 확정' : '정책 연결 검토 중(담당자 확인 전 제안)' } : null,
+      prog: r.programs.length ? { text: r.programs.join(' · '), title: `${r.programs.join(' · ')} — ${r.link === 'CONFIRMED' ? '정책 연결 확정' : '정책 연결 검토 중(담당자 확인 전 제안)'}` } : null,
       stage: { text: `${r.stage} ${stageName(r.stage)}`, swatch: stageColor(r.stage) },
       units: r.units > 0 ? r.units : { na: '미확인' },
       notice: r.notice,
@@ -100,6 +103,13 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const third = lens && s.notice > 0
     ? <Kpi label="공고 확인" value={fmt(s.notice)} tone="var(--st-sale)" sub={s.noticeRatio !== null ? `계획의 ${s.noticeRatio.toFixed(1)}% · ${s.noticeProjects}건` : undefined} tip="모집공고에서 확인한 호수(공고 확인 ≠ 준공) · 비율은 공고 확인 ÷ 계획 호수이며 착공·준공 달성률이 아닙니다" />
     : <Kpi label="지연" value={fmt(s.delay)} unit="건" tone="var(--bad)" tip="현재 예정일 경과 6개월 이상" />;
+  /* 렌즈의 범위·연결 상태 배지: 칩 줄이 아니라 요약 카드 머리 줄(제목 옆)에 둔다 — 칩 줄이 한 줄로 남는다 */
+  const lensBadges = lens ? (
+    <span className="flex items-center gap-1.5">
+      <Badge title={`범위: ${f.policy?.scope ?? '정책 연결 범위'} — 이 렌즈에 연결된 사업은 ${scope.join('·')}에만 있습니다`}>{scope.join('·')}</Badge>
+      {lensRev.review ? <Badge title={`담당자 확인 전 제안 연결 ${lensRev.review}건 포함(확정 ${lensRev.confirmed}건) · 해제된 연결은 제외`}>검토 중 연결</Badge> : null}
+    </span>
+  ) : null;
   const ladder = (
     <StageLadder className="mt-1" current={f.stage} counts={stageCounts(applyFilters(rows, f, 'stage'))}
       href={(code) => at({ stage: code === f.stage ? undefined : code })} />
@@ -116,12 +126,6 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <Chip href={at({ policy: undefined, program: undefined })} on={!lens}>전체</Chip>
           {idx.policies.map((p) => <Chip key={p.key} href={at({ policy: p.key })} on={f.policy?.key === p.key} title={`${p.name} · ${p.announced.replace(/-/g, '.')} 발표`}>{p.short}</Chip>)}
           <ChipMenu label="프로그램" on={!!f.program} items={idx.programs.map((p) => ({ href: at({ program: p.name }), label: p.name, on: f.program?.name === p.name, title: `${idx.policies.filter((x) => p.policies.includes(x.key)).map((x) => x.short).join('·')} · 사업 ${p.projects}건` }))} />
-          {lens ? (
-            <span className="ml-1.5 flex items-center gap-1.5">
-              <Badge title={`범위: ${f.policy?.scope ?? '정책 연결 범위'} — 이 렌즈에 연결된 사업은 ${scope.join('·')}에만 있습니다`}>{scope.join('·')}</Badge>
-              {lensRev.review ? <Badge title={`담당자 확인 전 제안 연결 ${lensRev.review}건 포함(확정 ${lensRev.confirmed}건) · 해제된 연결은 제외`}>검토 중 연결</Badge> : null}
-            </span>
-          ) : null}
         </ChipGroup>
         <ChipSep />
         <ChipGroup label="지역">
@@ -154,12 +158,14 @@ export default async function ProjectsPage({ searchParams }: Props) {
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <h3 className="m-0 text-[16px] font-normal text-muted-foreground" title={`${f.policy!.name} · 같은 해 1월~기준 달 누적 · 목표 = 연결 사업 원천의 같은 단계 예정 물량(착공은 원문 연도별 목표), 확인 = 같은 범위 단계 도달량(검토 중 연결 포함) · HOME 계산(판 ${pp.source.edition})`}>6단계 목표 대비 확인</h3>
                 <span className={cn(sub, 'tabular-nums')}>{`${cells[0].from.slice(0, 7).replace('-', '.')}~${pp.referenceMonthEnd.slice(5, 7)}`}</span>
+                {lensBadges}
                 <div className="ml-auto"><StateLegend /></div>
               </div>
               <PolicyStageBars cells={cells} />
             </> : <>
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                 <h3 className="m-0 text-[16px] font-normal text-muted-foreground" title="지금 단계별 사업 수 · 칸을 누르면 그 단계만 거름(다시 누르면 풀림)">단계별 사업 수</h3>
+                {lensBadges}
                 {lens ? <Badge title={`단계 목표 계산은 9·7 정책 전체 범위만 있습니다(HOME policy_delivery) — ${lensTitle}는 비교할 목표 자료가 없습니다`}>비교 자료 없음</Badge> : null}
               </div>
               {ladder}

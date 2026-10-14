@@ -1,7 +1,7 @@
 /* 공급 실적 · 연도별(/area?period=year): 지표·지역 칩 한 줄 → KPI 3(마지막 완결 연도 · 전년 대비 · 올해 부분값) → 연도 막대 → 시도 × 연도 표.
    연간 집계·완결 판정은 lib/board/annual.ts. 자료가 2021-09 부터라 2021 은 부분 연도이고, 부분 연도는 전년 대비를 내지 않는다. */
 import Link from 'next/link';
-import { PanelHead, SrcLink } from '../page';
+import { PanelHead, SrcLink, kpisGrid } from '../page';
 import { Card } from '../ui/card';
 import { DataGrid } from '../ui/data-grid';
 import { Kpi, Prov } from '../ui';
@@ -64,7 +64,7 @@ export default function AnnualView({ molit, metric, region }: { molit: Molit; me
         </div>
       </div>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(260px,100%),1fr))] gap-2.5" aria-label="핵심 수치">
+      <div className={kpisGrid} aria-label="핵심 수치">
         {cur ? <Kpi label={`${cur.year} ${LABEL[metric]}(${rname})`} value={fmt(cur.value)} tone={color} sub="12/12개월" tip={`통계누리 주택건설실적통계 · ${cur.year}년 ${LABEL[metric]} 합계`} /> : null}
         {cur && prev ? (
           d === null ? <Kpi label="전년 대비" value="–" unit="" sub={`${prev.year}년이 ${prev.months}/12개월`} tip="두 해 모두 12/12개월일 때만 냅니다" />

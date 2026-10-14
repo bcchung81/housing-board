@@ -1,6 +1,7 @@
 /* 사업 상세의 주인공 차트 '단계 일정'(서버가 그린다 — 위치는 lib/board/projects-view.ts timelineOf 의 %). 시안: docs/design/home-concept/project.html.
    줄 = 리본 칸 ①계획~⑥입주. 예정은 점선·옅은 면, 실제는 실색(점·막대), 추정은 점선 테두리만, 예정일 경과는 빨간(지연)·노란(주의) 테두리, 원천이 없는 줄은 빗금.
-   ③착공 줄은 공사 기간(예정 점선 막대 위에 실제 실선 막대). 아래 선은 공정률 보고(점마다 title). 세로 굵은 선은 오늘(원장 기준일의 달). */
+   ③착공 줄은 공사 기간(예정 점선 막대 위에 실제 실선 막대). 아래 선은 공정률 보고(점마다 title). 세로 굵은 선은 오늘(원장 기준일의 달).
+   줄마다 꼬리표(실제 달 · 예정 달 · 추정 '이전')를 마커 옆에 쓴다 — 오른쪽 끝(80% 넘음)이나 공사 막대가 있는 줄은 마커 왼쪽. 날짜를 따로 늘어놓은 일정 표는 두지 않는다. */
 import { cn } from 'cn';
 import { HATCH } from '../ui/chips';
 import { BOARD_CIR, BOARD_COLOR, BOARD_NAMES, yearAt, type Timeline } from '../../lib/board/projects-view';
@@ -46,6 +47,11 @@ export default function ProjectTimeline({ t }: { t: Timeline }) {
                 : <span key={i} className={cn('absolute top-[3px] z-[2] h-[20px] w-[14px] -translate-x-1/2 rounded-[3px] border-dashed', m.late ? 'border-2 border-solid' : 'border-[1.5px]')}
                   style={{ left: `${m.at}%`, background: m.kind === 'plan' ? light(c, 32) : 'transparent', borderColor: m.late ? LATE[m.late.cls] : c }}
                   title={m.late ? `${m.text} · 경과 ${m.late.months}개월 — ${m.late.cls === 'delay' ? '지연' : '주의'}` : m.text} />)}
+              {r.tag ? (
+                <span aria-hidden="true" className={cn('pointer-events-none absolute top-1/2 z-[3] -translate-y-1/2 rounded-[3px] bg-chartbg px-1 text-[12px] leading-[16px] whitespace-nowrap tabular-nums',
+                  r.tag.at > 80 || (r.bars.length && r.tag.at > 12) ? '-ml-2.5 -translate-x-full' : 'ml-2.5', r.tag.late === 'delay' ? 'text-bad' : r.tag.late === 'caution' ? 'text-warn' : 'text-muted-foreground')}
+                  style={{ left: `${r.tag.at}%` }}>{r.tag.text}</span>
+              ) : null}
             </span>,
           ];
         })}

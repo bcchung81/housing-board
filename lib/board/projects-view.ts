@@ -146,22 +146,15 @@ export type ProjectDetail = {
 };
 export const STAGE_EVENTS = ['PERMIT', 'CONSTRUCTION_START', 'SUPPLY_NOTICE', 'COMPLETION', 'MOVE_IN'] as const;
 
-/* 일정 표: 단계 · 예정 · 실제 · 차이(실제 − 예정 개월, 오지 않은 단계는 예정일 경과 개월) */
-export type SchedRow = { type: string; board: number; plan: string | null; actual: string | null; est: string | null; diff: number | null; late: { months: number; cls: Cls } | null };
-export function scheduleOf(d: ProjectDetail): SchedRow[] {
-  return STAGE_EVENTS.map((t) => {
-    const s = d.stages[t] ?? {};
-    const diff = s.plan && s.actual ? monthNo(s.actual) - monthNo(s.plan) : null;
-    return { type: t, board: BOARD_OF_EVENT[t], plan: s.plan ?? null, actual: s.actual ?? null, est: s.est ?? null, diff, late: s.late ?? null };
-  });
-}
-
 /* 타임라인: 가로축은 연 단위(첫 해 1월 ~ 끝 해 다음 1월), 위치는 % 로 준다(서버가 그린다).
    줄 = 리본 칸 6개. 마커: 예정(점선·옅은 면) · 실제(실색) · 추정(점선 테두리만). 지연은 예정 마커에 빨간 테두리(주의는 노란).
-   ③착공 줄은 공사 기간 막대: 예정(착공 → 준공 예정, 점선) 위에 실제(착공 실제 → 준공 실제 또는 오늘, 실선). 공정률은 보고 점과 선 */
+   ③착공 줄은 공사 기간 막대: 예정(착공 → 준공 예정, 점선) 위에 실제(착공 실제 → 준공 실제 또는 오늘, 실선). 공정률은 보고 점과 선.
+   꼬리표(tag): 줄마다 날짜 한 개를 마커 옆에 쓴다 — 실제가 있으면 실제 달, 없으면 '예정 달'(경과면 +개월과 색), 추정이면 '달 이전'.
+   예정 대비 실제 차이(개월)는 실제 마커의 title. (2026-10-14 사업 상세의 '일정' 표를 없애고 그 값을 여기로 옮겼다) */
 export type Mark = { kind: 'plan' | 'actual' | 'est'; at: number; text: string; late?: { months: number; cls: Cls } };
 export type Bar = { kind: 'plan' | 'actual'; from: number; to: number; text: string };
-export type Timeline = { years: number[]; today: number; todayText: string; rows: { board: number; marks: Mark[]; bars: Bar[]; empty: boolean }[]; progress: { at: number; pct: number; text: string }[] };
+export type Tag = { at: number; text: string; late?: Cls };
+export type Timeline = { years: number[]; today: number; todayText: string; rows: { board: number; marks: Mark[]; bars: Bar[]; empty: boolean; tag?: Tag }[]; progress: { at: number; pct: number; text: string }[] };
 export function timelineOf(d: ProjectDetail, referenceDate: string): Timeline {
   const T = monthNo(referenceDate);
   const dates: number[] = [T];
@@ -179,7 +172,12 @@ export function timelineOf(d: ProjectDetail, referenceDate: string): Timeline {
     row.empty = false;
     if (s.plan) row.marks.push({ kind: 'plan', at: x(monthNo(s.plan)), text: `${EVENT_NAME[t]} 예정 ${ymText(s.plan)}`, ...(s.late ? { late: s.late } : {}) });
     if (s.est) row.marks.push({ kind: 'est', at: x(monthNo(s.est)), text: `${EVENT_NAME[t]} 추정 ${ymText(s.est)}(이 날 이전)` });
-    if (s.actual) row.marks.push({ kind: 'actual', at: x(monthNo(s.actual)), text: `${EVENT_NAME[t]} 실제 ${ymText(s.actual)}` });
+    if (s.actual) {
+      const diff = s.plan ? monthNo(s.actual) - monthNo(s.plan) : null;
+      row.marks.push({ kind: 'actual', at: x(monthNo(s.actual)), text: `${EVENT_NAME[t]} 실제 ${ymText(s.actual)}${diff !== null ? ` · 예정 ${ymText(s.plan!)} 대비 ${diff > 0 ? '+' : ''}${diff}개월` : ''}` });
+      row.tag = { at: x(monthNo(s.actual)), text: ymText(s.actual) };
+    } else if (s.plan) row.tag = { at: x(monthNo(s.plan)), text: `${ymText(s.plan)} 예정${s.late ? ` +${s.late.months}개월` : ''}`, ...(s.late ? { late: s.late.cls } : {}) };
+    else if (s.est) row.tag = { at: x(monthNo(s.est)), text: `${ymText(s.est)} 이전` };
   }
   /* 공사 기간(③착공 줄) */
   const cs = d.stages.CONSTRUCTION_START, cp = d.stages.COMPLETION;
@@ -198,3 +196,13 @@ export function timelineOf(d: ProjectDetail, referenceDate: string): Timeline {
 }
 /* 연 눈금 위치(%): 그해 1월 시작 */
 export const yearAt = (t: Timeline, y: number) => Math.round((y - t.years[0]) / t.years.length * 10000) / 100;
+
+/* ---------- 숨김 사업 안내 ---------- */
+/* 목록에서 뺀(대응 사업 없음) 사업의 한 줄 안내와 이유(title). 이유 글의 덤프 판 번호·내부 문서 참조('— 데이터-정제-계획 6절 3')는 화면에 내지 않는다 */
+export function hiddenNote(at: string, reason: string | undefined) {
+  const why = (reason ?? '대응 사업이 없다')
+    .replace(/HOME 덤프 \d{8}T\d{6}Z ?에/g, 'HOME 자료에')
+    .replace(/\s*—\s*[^—()]*\d+절[^()—]*/g, '')
+    .replace(/\(\s*\)/g, '').trim();
+  return { text: `${at.replace(/-/g, '.')}부터 목록에서 뺀 사업입니다 · 대신할 사업 없음`, title: why };
+}

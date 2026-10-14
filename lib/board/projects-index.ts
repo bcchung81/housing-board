@@ -37,3 +37,6 @@ export const getProjectRow = cache(async (id: string) => {
 });
 
 export const getPolicyProgress = cache(async () => progressJson as unknown as PolicyProgress);
+
+/* 시군구 이름(목록 행이 없는 사업 — 숨김 사업 상세의 개요): projects-index.json 의 시군구 이름표만 읽는다 */
+export const getSggName = cache(async (code: string) => (indexJson as unknown as IndexDoc).sgg[code] ?? null);

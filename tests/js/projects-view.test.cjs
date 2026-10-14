@@ -26,26 +26,26 @@ test('두 파일은 지금 원장 표에서 다시 만든 것과 바이트가 �
   assert.equal(IDX.referenceDate, MAP.referenceDate, '지도 색인과 같은 기준일');
 });
 
-test('목록 행 = 원장의 살아 있는 사업 전부(대체 6·숨김 55 제외), 발급 279 · 후보 2,039', () => {
-  assert.equal(rows.length, 2318);
+test('목록 행 = 원장의 살아 있는 사업 전부(대체 10·숨김 55 제외), 발급 275 · 후보 2,039', () => {
+  assert.equal(rows.length, 2314);
   assert.equal(new Set(rows.map((r) => r.id)).size, rows.length);
   const gone = new Set(REG.filter((p) => p.supersededBy || p.hiddenAt).map((p) => p.id));
-  assert.equal(gone.size, 61);
+  assert.equal(gone.size, 65);
   assert.ok(rows.every((r) => !gone.has(r.id)), '대체·숨김 사업은 목록에 없다');
-  assert.equal(rows.filter((r) => r.issued).length, 279);
+  assert.equal(rows.filter((r) => r.issued).length, 275);
   const live = new Set(REG.filter((p) => !p.supersededBy && !p.hiddenAt).map((p) => p.id));
   assert.ok(rows.filter((r) => r.issued).every((r) => live.has(r.id)), '발급 행 = 살아 있는 레지스트리 사업');
   assert.deepEqual(Object.keys(DET.projects).sort(), rows.filter((r) => r.issued).map((r) => r.id).sort(), '상세 자료는 발급 사업만');
 });
 
-test('렌즈: 9·7 140건 · 1·29 47건 · 8·13 51건(모두 서울·인천·경기), 프로그램 렌즈는 프로그램 목록의 사업 수와 같다', () => {
+test('렌즈: 9·7 138건 · 1·29 47건 · 8·13 51건(모두 서울·인천·경기), 프로그램 렌즈는 프로그램 목록의 사업 수와 같다', () => {
   const n = (f) => V.applyFilters(rows, f).length;
-  assert.deepEqual(IDX.policies.map((p) => [p.key, n({ policy: p })]), [['97', 140], ['129', 47], ['813', 51]]);
+  assert.deepEqual(IDX.policies.map((p) => [p.key, n({ policy: p })]), [['97', 138], ['129', 47], ['813', 51]]);
   for (const p of IDX.policies) assert.ok(V.applyFilters(rows, { policy: p }).every((r) => r.policies.includes(p.key) && ['11', '28', '41'].includes(r.sgg.slice(0, 2))), p.key);
   for (const g of IDX.programs) assert.equal(n({ program: g }), g.projects, g.name);
-  assert.equal(rows.filter((r) => r.policies.length).length, 238, '정책에 연결된 사업');
+  assert.equal(rows.filter((r) => r.policies.length).length, 236, '정책에 연결된 사업');
   const s = V.summaryOf(V.applyFilters(rows, { policy: pol('97') }));
-  assert.deepEqual([s.n, s.units, s.notice, s.review, s.confirmed], [140, 118748, 19521, 139, 1]);
+  assert.deepEqual([s.n, s.units, s.notice, s.review, s.confirmed], [138, 116723, 19521, 137, 1]);
   /* 렌즈 + 지역 + 단계 + 상태가 함께 걸린다 */
   const f = { policy: pol('97'), sido: '41', stage: '04', status: 'ok' };
   assert.ok(V.applyFilters(rows, f).every((r) => r.policies.includes('97') && r.sgg.startsWith('41') && r.stage === '04' && r.cls === 'ok'));
@@ -96,8 +96,11 @@ test('타임라인·일정 표 자료: 수원당수 A5 — 착공 실제 2023.12
   assert.deepEqual(t.rows[5].marks.map((m) => m.text), ['입주 예정 2027.06']);
   assert.deepEqual(t.progress[t.progress.length - 1], { at: t.progress[t.progress.length - 1].at, pct: 68, text: '2026.10.07 보고 68%' });
   assert.ok(t.progress.every((p, i, a) => i === 0 || p.at >= a[i - 1].at), '보고일 순');
-  const sched = V.scheduleOf(d);
-  assert.deepEqual(sched.map((s) => [s.type, s.plan, s.actual]), [['PERMIT', null, null], ['CONSTRUCTION_START', null, '2023-12-21'], ['SUPPLY_NOTICE', null, '2024-11-15'], ['COMPLETION', '2027-02-03', null], ['MOVE_IN', '2027-06', null]]);
+  /* 꼬리표: 실제 달, 없으면 예정 달(일정 표를 없애고 날짜는 타임라인에만) */
+  assert.deepEqual(t.rows.map((r) => r.tag?.text ?? null), [null, null, '2023.12', '2024.11', '2027.02 예정', '2027.06 예정']);
+  const late = V.timelineOf({ ...d, stages: { CONSTRUCTION_START: { plan: '2025-03', late: { months: 7, cls: 'delay' } }, COMPLETION: { plan: '2026-01', actual: '2026-04' } } }, DET.referenceDate);
+  assert.deepEqual(late.rows[2].tag, { at: late.rows[2].tag.at, text: '2025.03 예정 +7개월', late: 'delay' });
+  assert.equal(late.rows[4].marks.find((m) => m.kind === 'actual').text, '준공 실제 2026.04 · 예정 2026.01 대비 +3개월', '예정 대비 차이는 실제 점의 title');
 });
 
 test('상세의 현재 예정·경과는 목록(지도 색인)과 같은 값이다 — 발급 사업 전부', () => {
@@ -113,7 +116,9 @@ test('화면 적용: 사업 상세는 발급 id 전부를 빌드 때 만들고, 
   const page = read('app/(dashboard)/project/[id]/page.tsx');
   assert.match(page, /export const generateStaticParams = async \(\) => \(await getBoardData\(\)\)\.allProjects\.map\(\(p\) => \(\{ id: p\.id \}\)\);/);
   assert.match(page, /if \(p\.supersededBy\) redirect\(`\/project\/\$\{p\.supersededBy\}`\)/);
-  assert.match(page, /p\.hiddenAt \? <Card render=\{<section aria-label="대체됨" \/>\}>/);
+  assert.match(page, /const hidden = p\.hiddenAt \? hiddenNote\(p\.hiddenAt, p\.hiddenReason\) : null;/);
+  assert.match(page, /<StageLadder current=\{hidden \? undefined : p\.stageCode\} \/>/, '숨김 사업은 계단의 현재를 켜지 않는다');
+  assert.doesNotMatch(page, /scheduleOf|label="단계 일정" cols/, '일정 표 없음(날짜는 타임라인에만)');
   assert.match(page, /<ProjectTimeline t=\{tl\} \/>/);
   const list = read('app/(dashboard)/projects/page.tsx');
   assert.match(list, /name: r\.issued \? \{ text: r\.name, href: `\/project\/\$\{r\.id\}` \} : \{ text: r\.name, title: `발급 전 후보/);
@@ -124,4 +129,16 @@ test('화면 적용: 사업 상세는 발급 id 전부를 빌드 때 만들고, 
   assert.match(rep, /cells: policyStageCells\(pp, p\.id\)/);
   /* 화면은 자료를 lib/board/projects-index.ts 한 곳에서만 읽는다 */
   for (const f of ['app/(dashboard)/projects/page.tsx', 'app/(dashboard)/project/[id]/page.tsx', 'app/(dashboard)/reports/page.tsx']) assert.doesNotMatch(read(f), /data\/board\/(ledger-map|projects-index|project-detail|policy-progress)\.json/, f);
+});
+
+test('숨김 사업 안내: 한 줄 + 이유는 title, 덤프 판 번호·내부 문서 이름은 내지 않는다 · 시군구는 이름', () => {
+  const h = REG.filter((p) => p.hiddenAt);
+  assert.ok(h.length > 0);
+  for (const p of h) {
+    const n = V.hiddenNote(p.hiddenAt, p.hiddenReason);
+    assert.equal(n.text, `${p.hiddenAt.replace(/-/g, '.')}부터 목록에서 뺀 사업입니다 · 대신할 사업 없음`);
+    assert.doesNotMatch(n.title, /데이터-정제|절 \d|\d{8}T\d{6}Z/, p.id);
+    assert.ok(IDX.sgg[p.sgg], `${p.id}: 시군구 ${p.sgg} 이름이 있다`);
+  }
+  assert.equal(V.hiddenNote('2026-10-14', 'HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)').title, 'HOME 자료에 대응 사업이 없다(수도권은 HOME 이 정본)');
 });

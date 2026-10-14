@@ -41,12 +41,7 @@ export default function Status({ hs, items, molit }: { hs: HomeSources; items: S
     <div className="grid gap-3.5">
       <Card render={<section aria-label="원천 수집 상태" />}>
         <PanelHead title={<>원천 <span className="text-[14px] text-muted-foreground tabular-nums">{src.length}곳 · 실패 {failed}</span></>}
-          tip={`원천마다 마지막 정상 수집·원천 기준일·건수 · 실패한 원천은 마지막 정상 값을 씁니다. 우리 원천 ${items.length}곳은 파일로 받아 둔 자료(카탈로그 수집일), HOME 원천 ${hs.sources.length}곳은 HOME 덤프의 수집 실행 ${fmt(hs.runs.total)}회(실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted}) 중 마지막 실행의 결과입니다. 건수는 원장에 옮긴 행 수(없으면 확보 기록의 수집 건수).`}>
-          <ul className="m-0 flex list-none flex-wrap items-center gap-x-2.5 p-0 text-[13px] text-muted-foreground" aria-label="범례">
-            <li className={KEY}><i className={dot} style={{ background: 'var(--ok)' }} aria-hidden="true" />정상</li>
-            <li className={KEY}><i className={dot} style={{ background: 'var(--bad)' }} aria-hidden="true" />실패</li>
-          </ul>
-        </PanelHead>
+          tip={`원천마다 마지막 정상 수집·원천 기준일·건수 · 실패한 원천은 맨 위에 두고 마지막 정상 값을 씁니다. 우리 원천 ${items.length}곳은 파일로 받아 둔 자료(카탈로그 수집일), HOME 원천 ${hs.sources.length}곳은 HOME 덤프의 수집 실행 ${fmt(hs.runs.total)}회(실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted}) 중 마지막 실행의 결과입니다. 건수는 원장에 옮긴 행 수(없으면 확보 기록의 수집 건수).`} />
         <div className={GRID_DENSE}><DataGrid label="원천 수집 상태" cols={COLS} rows={rows} /></div>
       </Card>
 
