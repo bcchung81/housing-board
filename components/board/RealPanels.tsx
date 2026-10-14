@@ -20,7 +20,7 @@ export default async function RealPanels() {
         <h2 className={ptitle} title={`국토교통 통계누리 주택건설실적통계 · 전국 · 호 · 빗금은 잠정치 · 자료 ${molit.months[0].replace('-', '.')} ~ ${last.replace('-', '.')}${isProvisional(molit, last) ? '(2026.01~ 잠정치)' : ''} · 그래프의 달을 누르면 월 상세로 내려갑니다`}>월별 실적 흐름</h2>
         <div className={phgroup}>
           <StageLegend metrics={METRICS} names="board" compact />
-          <span className={pacts}><PanelLink href="/area" full="지역별 실적">지역별</PanelLink><PanelLink href={`/month/${last}`} full={`${monthLabel(last)} 월 상세`}>{Number(last.slice(5))}월</PanelLink></span>
+          <span className={pacts}><PanelLink href="/region" full="지역별 실적">지역별</PanelLink><PanelLink href={`/month/${last}`} full={`${monthLabel(last)} 월 상세`}>{Number(last.slice(5))}월</PanelLink></span>
         </div>
       </div>
       <MonthLines months={molit.months} lines={lines} provisional={molit.provisional} href={(ym) => `/month/${ym}`} label={`전국 월별 인허가·착공·분양·준공 호수, ${molit.months[0]}부터 ${last}까지`} board />

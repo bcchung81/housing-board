@@ -67,7 +67,7 @@ export default async function MonthPage({ params }: Props) {
           <Card render={<section aria-label="시도별" />}>
             <PanelHead title="시도별" tip="호 · 통계누리 주택건설실적통계. 2026-07부터 '전남광주'로 집계되고 이전 달은 광주+전남 합산입니다. 인허가는 연초 누계의 차분입니다."><SrcLink /></PanelHead>
             <DataGrid label={`${monthLabel(ym)} 시도별 호수`} cols={[{ key: 'name', label: '시도', kind: 'text' }, ...METRICS.map((k) => ({ key: k, label: `${METRIC_STAGE[k]} ${LABEL[k]}` }))]}
-              rows={table.map((r) => ({ id: r.code, pin: r.code === NATION ? 'top' : undefined, c: { name: r.code === NATION ? '전국' : { text: r.name, href: `/area/${r.code}` }, ...r.values } }))} />
+              rows={table.map((r) => ({ id: r.code, pin: r.code === NATION ? 'top' : undefined, c: { name: r.code === NATION ? '전국' : { text: r.name, href: `/region?sido=${r.code}` }, ...r.values } }))} />
           </Card>
 
           <Card render={<section aria-label="시행주체별" />}>

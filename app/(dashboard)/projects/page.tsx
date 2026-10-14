@@ -201,7 +201,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
       </div>
       {reportHead}
 
-      <ChipBar className="print:hidden">
+      <ChipBar className="print:hidden min-[901px]:max-[1439px]:gap-x-2">
         <ChipGroup label="렌즈" bare>
           <Chip href={at({ policy: undefined, program: undefined })} on={!lens}>전체</Chip>
           {idx.policies.map((p) => <Chip key={p.key} href={at({ policy: p.key })} on={f.policy?.key === p.key} title={`${p.name} · ${p.announced.replace(/-/g, '.')} 발표 · ${p.scope}`}>{p.short}</Chip>)}

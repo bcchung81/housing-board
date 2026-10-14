@@ -305,7 +305,7 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(region, /rate = r\.judged \? r\.delay \/ r\.judged \* 100 : null/);
   assert.match(region, /rate === null \? 'var\(--card\)' : RCOL\[rcls\(rate\)\]/);
   assert.match(region, /판정 대상 없음/);
-  assert.match(region, /href=\{`\/area\/\$\{curReg\.code\}`\}/);
+  assert.match(region, /href=\{`\/region\?sido=\$\{curReg\.code\}`\}/, '시도 실적은 지역 공급(옛 /area/NN 넘김 대신 바로)');
   const agency = panel(board, 'p-agency');
   assert.match(agency, /\{L\.agencies\.filter\(\(a\) => a\.projects\)\.map\(/, '사업 있는 기관만 행으로');
   assert.match(agency, /사업 없음: \{emptyAgencies\.map\(\(a\) => a\.name\)\.join\(' · '\)\}/, '사업 없는 기관은 마지막 한 줄로 묶는다');

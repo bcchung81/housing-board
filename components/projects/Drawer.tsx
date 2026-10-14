@@ -72,7 +72,7 @@ export default function Drawer({ id, canonical, closeHref, title, head, children
         <h2 id="drawer-title" ref={titleRef} tabIndex={-1} className="m-0 min-w-0 font-display text-[24px] leading-[1.2] font-normal tracking-[-0.03em] [overflow-wrap:anywhere] focus:outline-none">{title}</h2>
         {head}
         <button type="button" onClick={close} aria-label="사업 상세 닫기" title="닫기 (Esc)"
-          className="ml-auto flex size-9 flex-none cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-pn2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          className={`${head ? '' : 'ml-auto '}flex size-9 flex-none cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-pn2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary`}>
           <X className="size-[18px]" aria-hidden="true" />
         </button>
       </header>
