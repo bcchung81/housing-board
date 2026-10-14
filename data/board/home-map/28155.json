@@ -3,9 +3,9 @@
   "sgg": "28155",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261013T140241Z",
+  "edition": "20261014T102506Z",
   "projects": [
-    {"id":"PRJ-28155-0036","name":"인천영종 A62","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":792,"pks":[],"pnus":[],"bundles":[],"label":"인천영종 A62","agency":"lh","moveIn":null,"completion":"2028-12-13","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
-    {"id":"PRJ-28155-0037","name":"인천영종 A-24BL 아파트 건설공사 12공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-03"},"units":641,"pks":[],"pnus":[],"bundles":[],"label":"인천영종 A24","agency":"lh","moveIn":null,"completion":"2028-02-03","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}}
+    {"id":"PRJ-28155-0036","name":"인천영종 A62","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":792,"pks":[],"pnus":[],"bundles":[],"label":"인천영종 A62","agency":"lh","moveIn":null,"completion":"2028-12-13","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-28155-0037","name":"인천영종 A-24BL 아파트 건설공사 12공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-03"},"units":641,"pks":[],"pnus":[],"bundles":[],"label":"인천영종 A24","agency":"lh","moveIn":null,"completion":"2028-02-03","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"]}}
   ]
 }

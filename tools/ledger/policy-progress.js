@@ -7,6 +7,10 @@
      계획물량이 있고 정책기간 전 착공이 아닌 묶음만 '코호트'.
    - policy_delivery_comparison.comparison_index 의 정책 전체 범위: 단계별 목표 점(_schedule_targets — 코호트마다 가장 늦은 원천 하나, 같은 (날짜·호수) 한 번, 사업 물량 상한, 정책 시작일 이후)과
      확인 점(_events — 사업별 최대 도달량의 누적, 확인 필요(REVIEW) 연결 포함). 착공은 9·7 원문 연도별 목표와 지역 착공 통계(_official_targets·_regional_actual).
+   - 담당자 입력(2026-10-14 판부터, 덤프 시점 HOME 코드는 미커밋이라 21c60b1 규칙 + 운영 화면 140개 묶음·6단계 점 대조로 맞췄다):
+     project_profile.overrides(계획물량·공정률)가 원천값을 덮고, progress(단계 측정값)는 MANUAL 실제 사건 — 측정값이 있는 단계는 그 묶음의 원천·연결 사건을 뺀다.
+     execution_schedule(승인 일정) → 사업·단계 관리 목표(schedule_goals): 그 단계의 원천 일정을 빼고, 관리 목표가 있으면 목표 점은 그것만 쓴다(_schedule_targets).
+     delivery_setting 은 아직 들어온 판이 없어 옮기지 않았다(있으면 멈춘다). 착공 연도 표의 정책 관리목표(policy_profile, 원문과 같은 값)도 옮기지 않았다.
    - 기준일(as_of) = 덤프 시각의 한국 날짜(HOME 은 기준일 다음 날 0시(한국) 전에 기록된 판을 읽는다 — 덤프 뒤 기록이 없으니 덤프의 현재 판과 같다).
    두 가지 비교
    - homeRule: HOME 화면(policy-stage-flow.js comparisonStatus)과 같다 — 기준일까지 도래한 마지막 목표 누적(정책 시작일부터) 대 기준일까지 마지막 확인 누적(처음부터). 기간이 섞인다.
@@ -172,6 +176,12 @@ function homeService(home, asOf) {
     if (!K[kind]) throw new Error(`HOME 판에 ${kind} 가 없다(tools/ledger/home-dump.py 로 다시 뽑는다)`);
     return K[kind].filter((r) => (r.payload.base_date ?? '9999') <= asOf).map((r) => ({ ...r.payload, id: r.entity_id, source_id: r.source_id, revision_no: r.revision_no }));
   };
+  /* 담당자 입력 오버레이(project_profile — 2026-10-14 판부터): 사업 id → { overrides(계획물량·공정률 등 { value }), progress(단계 → 측정값) }. 이 kind 가 없는 옛 판은 입력이 없던 판이다 */
+  const profiles = new Map();
+  for (const r of K.project_profile ? rows('project_profile') : []) {
+    if (profiles.has(r.project_id)) throw new Error(`같은 사업의 담당자 입력이 둘: ${r.project_id}`);
+    profiles.set(r.project_id, r);
+  }
   const cutoffMs = Date.parse(`${asOf}T00:00:00+09:00`) + 86400000;
   const pgTime = (s) => Date.parse(String(s).replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00'));
   /* service.projects(policy_id): 사업 매핑(home_mapping) → 프로그램(home_program_mapping, 기준일 전 생성)의 정책. 기준일 뒤 감사 기록이 없으니 되감기는 없다 */
@@ -196,11 +206,12 @@ function homeService(home, asOf) {
       const report = latest.get(row.id);
       const p = { ...row, warnings: [...(row.warnings || [])], mapping };
       if (report && (row.progress_pct == null || report.report_date > (row.progress_date ?? row.base_date))) Object.assign(p, { progress_pct: report.progress_pct, progress_date: report.report_date, progress_evidence_url: report.evidence_url });
+      for (const [k, v] of Object.entries(profiles.get(row.id)?.overrides ?? {})) if (v && v.value !== undefined) p[k] = v.value;   // 담당자 입력값이 원천값을 덮는다
       if (mapping.policy_id === policyId) out.push(p);
     }
     return out.sort((a, b) => cmpTuple([a.region, a.name], [b.region, b.name]));
   }
-  return { rows, projects };
+  return { rows, projects, profiles };
 }
 
 /* ---------- 코호트(policy_delivery.build_delivery 의 사업 묶음) ---------- */
@@ -214,10 +225,16 @@ function buildCohorts(svc, asOf, policyId) {
   const groupKey = (row) => { const k = blockKey(row); return k ? `K${keyStr(k)}` : `I${row.id}`; };
   for (const row of rows) { const k = groupKey(row); if (!allByKey.has(k)) allByKey.set(k, []); allByKey.get(k).push(row); }
   const notices = linkedNotices(chosen, svc.rows('notice'), asOf);
-  /* 담당자 설정(delivery_setting)·승인 일정(execution_schedule) — 이 판에는 없다(관리 목표 없음) */
+  /* 담당자 설정(delivery_setting) — 아직 들어온 판이 없어 옮기지 않았다(있으면 멈춘다) */
   const setting = svc.rows('delivery_setting').find((r) => r.policy_id === policyId) ?? { targets: [], events: [] };
-  const approved = svc.rows('execution_schedule').filter((r) => r.status !== 'RELEASED' && r.units != null);
-  if ((setting.targets || []).length || (setting.events || []).length || approved.length) throw new Error('담당자 목표·사건(delivery_setting·execution_schedule)이 있는 판 — 아직 옮기지 않았다');
+  if ((setting.targets || []).length || (setting.events || []).length) throw new Error('담당자 목표·사건(delivery_setting)이 있는 판 — 아직 옮기지 않았다');
+  /* delivery_operations.schedule_goals: 승인 일정(execution_schedule) → 사업·단계 관리 목표(managed_schedule) */
+  const managed = new Map();
+  for (const r of svc.rows('execution_schedule')) {
+    if (r.status === 'RELEASED' || r.units == null) continue;
+    if (!managed.has(r.project_id)) managed.set(r.project_id, []);
+    managed.get(r.project_id).push({ stage: r.stage, due_date: r.due_date, units: r.units, origin: r.status === 'REVIEW' ? 'SOURCE_REVIEW' : 'MANUAL', precision: 'DAY', managed_schedule: true });
+  }
   /* stage_evidence.linked_events */
   const stageLinks = new Map();
   for (const r of svc.rows('stage_evidence')) {
@@ -247,7 +264,8 @@ function buildCohorts(svc, asOf, policyId) {
       missing.push(row.id); cap = notices.get(row.id)?.units;
       if (!cap) continue;
     }
-    const events = [], schedules = [], progress = [];
+    const events = [], progress = [];
+    let schedules = [];
     for (const member of group) {
       if (member.start_actual_date) events.push({ stage: 'CONSTRUCTION', event_date: member.start_actual_date, units: cap, origin: 'SOURCE', source_id: member.origin_source_id });
       for (const e of sourceEvents(member)) {
@@ -271,6 +289,14 @@ function buildCohorts(svc, asOf, policyId) {
         }
       }
       schedules.push(...(occupancy.get(member.id) || []));
+      /* 승인 일정이 있는 단계는 이 사업의 원천 일정을 빼고 관리 목표를 넣는다(build_delivery managed_stages) */
+      const goals = managed.get(member.id) || [], managedStages = new Set(goals.map((g) => g.stage));
+      schedules = schedules.filter((s) => !(s.source_object_id === member.id && managedStages.has(s.stage)));
+      schedules.push(...goals);
+      /* 담당자 단계 측정값(project_profile.progress) → 실제 사건 */
+      for (const [stage, v] of Object.entries(svc.profiles.get(member.id)?.progress ?? {})) {
+        if (v.event_date) events.push({ stage, event_date: v.event_date, units: v.units ?? null, status: 'ACTUAL', review_status: 'CONFIRMED', origin: 'MANUAL', project_id: member.id });
+      }
     }
     const starts = events.filter((e) => e.stage === 'CONSTRUCTION' && (e.status ?? 'ACTUAL') === 'ACTUAL').map((e) => e.event_date);
     const firstStart = starts.length ? starts.slice().sort(byStr)[0] : null;
@@ -284,7 +310,10 @@ function buildCohorts(svc, asOf, policyId) {
     }
     const p = progress.length ? maxBy(progress, (x) => [x.as_of_date]) : null;
     if (p && p.pct === 100) events.push({ stage: 'COMPLETION', event_date: p.as_of_date, units: cap, origin: 'SOURCE' });
-    const c = { id: row.id, source_ids: group.map((m) => m.id), name: row.name, region: row.region, units: cap, planned_units: plannedCap, mapping_status: row.mapping.status, events, schedules };
+    /* 담당자 측정값이 있는 단계는 그 묶음의 원천·연결 사건을 빼고 측정값만 쓴다(덤프 시점 HOME 운영 화면 140개 묶음 사건과 대조해 맞춘 규칙) */
+    const measured = new Set(events.filter((e) => e.origin === 'MANUAL').map((e) => e.stage));
+    const kept = events.filter((e) => e.origin === 'MANUAL' || !measured.has(e.stage));
+    const c = { id: row.id, source_ids: group.map((m) => m.id), name: row.name, region: row.region, units: cap, planned_units: plannedCap, mapping_status: row.mapping.status, events: kept, schedules };
     portfolio.push(c);
     if (!beforePeriod && plannedCap) cohorts.push(c);
   }
@@ -343,7 +372,9 @@ function occupancySchedules(projects, moveInPlans) {
 function scheduleTargets(cohorts, metric, periodStart) {
   const inc = new Map(), used = new Set();
   for (const c of cohorts) {
-    let source = c.schedules.filter((s) => s.stage === metric && s.origin === 'SOURCE' && s.units != null && s.due_date >= periodStart);
+    let source = c.schedules.filter((s) => s.stage === metric && (s.origin === 'SOURCE' || s.managed_schedule) && s.units != null && s.due_date >= periodStart);
+    const managedOnly = source.filter((s) => s.managed_schedule);
+    if (managedOnly.length) source = managedOnly;   // 관리 목표가 있으면 그것만
     if (!source.length) continue;
     const latest = maxBy(source, (s) => [s.source_base_date || '', s.source_object_id || '']);
     source = source.filter((s) => s.source_object_id === latest.source_object_id);
@@ -434,7 +465,7 @@ function annualPairs(targets, actual, asOf, macro) {
     const prior = actual.filter((a) => a.date < `${year}-01-01`).pop() ?? null;
     const target = lastAtOrBefore(targets, yearEnd);
     out.push({ year, target_units: yearlyPlans.length ? yearlyPlans.reduce((a, p) => a + p.annual_units, 0) : null, target_cumulative_units: target ? target.units : null,
-      management_cumulative_units: null,   // 담당자 목표(delivery_setting·execution_schedule) — 이 판에는 없다(있으면 buildCohorts 가 멈춘다)
+      management_cumulative_units: null,   // 정책·지역 범위 담당자 목표(delivery_setting·policy_profile)는 옮기지 않았다 — 사업 범위 승인 일정은 목표 점에 들어간다
       actual_units: yearlyActual.length ? yearlyActual[yearlyActual.length - 1].units - (prior ? prior.units : 0) : null,
       actual_cumulative_units: last ? last.units : null, actual_through: last ? last.date : null,
       actual_status: year > year0 ? 'FUTURE' : yearlyActual.length && (!macro || yearlyActual[yearlyActual.length - 1].date < yearEnd) ? 'PARTIAL' : yearlyActual.length ? 'OBSERVED' : 'NOT_ACQUIRED' });

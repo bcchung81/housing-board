@@ -3,7 +3,7 @@
   "sgg": "11200",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261013T140241Z",
+  "edition": "20261014T102506Z",
   "projects": [
     {"id":"PRJ-11200-0176","name":"금호23","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":764,"pks":[],"pnus":[],"bundles":[],"label":"금호23","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1120011200","loc":{"by":"address","at":[127.020991,37.548178],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
     {"id":"PRJ-11200-0177","name":"성수동 舊 서울경찰청기마대 부지","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-06"},"units":260,"pks":[],"pnus":[],"bundles":[],"label":"성수동 舊 서울경찰청기마대 부지","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.041311,37.550626],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"]}}

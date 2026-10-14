@@ -10,7 +10,7 @@
   "11230": 99,
   "11260": 68,
   "11290": 64,
-  "11305": 44,
+  "11305": 45,
   "11320": 40,
   "11350": 100,
   "11380": 92,
@@ -48,14 +48,14 @@
   "41190": 5,
   "41192": 64,
   "41194": 61,
-  "41196": 104,
+  "41196": 111,
   "41210": 72,
   "41220": 188,
   "41270": 1,
   "41273": 24,
   "41281": 95,
   "41285": 49,
-  "41290": 33,
+  "41290": 39,
   "41310": 47,
   "41360": 207,
   "41370": 47,
@@ -80,7 +80,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "신문로2-12",
@@ -109,7 +109,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "신당(약수역)",
@@ -135,7 +135,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "강변강서",
@@ -163,7 +163,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "효창공원앞역 북측",
@@ -192,7 +192,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "용산 도시재생 혁신지구",
@@ -219,7 +219,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "캠프킴",
@@ -246,7 +246,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "용산국제업무지구",
@@ -273,7 +273,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "용산 유수지",
@@ -300,7 +300,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "501 정보대(서빙고초 앞)",
@@ -327,7 +327,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "용산우체국",
@@ -354,7 +354,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "효창공원앞역",
@@ -382,7 +382,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "금호23",
@@ -411,7 +411,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "성수동 舊 서울경찰청기마대 부지",
@@ -438,7 +438,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "성동초 인근",
@@ -467,7 +467,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "중곡역",
@@ -493,7 +493,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "아차산역 동측",
@@ -522,7 +522,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "용두1-6",
@@ -551,7 +551,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "동대문구 일원",
@@ -578,7 +578,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "용마산역",
@@ -606,7 +606,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "면목(용마터널)",
@@ -632,7 +632,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "상봉역",
@@ -658,7 +658,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "사가정역",
@@ -684,7 +684,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "면목(상봉터미널)",
@@ -710,7 +710,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "중랑 면목행정복합타운",
@@ -1127,7 +1127,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "장위12",
@@ -1153,7 +1153,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "성신여대입구역 북측",
@@ -1182,7 +1182,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "장위8",
@@ -1211,7 +1211,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "수유12구역",
@@ -1237,7 +1237,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "강북5",
@@ -1266,7 +1266,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "송중동 주민센터",
@@ -1293,7 +1293,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "미아16구역",
@@ -1314,12 +1314,39 @@
    "issuedAt": "2026-10-14"
   },
   {
+   "id": "PRJ-11305-0045",
+   "sgg": "11305",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
+   },
+   "asOf": "2025-10-01",
+   "name": "번동2단지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_252c4a5cf878f2a39a32834b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_73a1d690a79f9c05b5ef0bcb"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 3048
+  },
+  {
    "id": "PRJ-11320-0033",
    "sgg": "11320",
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "쌍문동 교육연구시설",
@@ -1346,7 +1373,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "쌍문역 서측",
@@ -1372,7 +1399,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "성대야구장",
@@ -1399,7 +1426,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "서울시 도봉구 창동 700-33",
@@ -1426,7 +1453,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "창동역 복합개발",
@@ -1452,7 +1479,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "방학역",
@@ -1478,7 +1505,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "창2동 주민센터",
@@ -1504,7 +1531,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "쌍문역 동측",
@@ -1530,7 +1557,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "하계5단지",
@@ -1557,7 +1584,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "상계마들",
@@ -1584,7 +1611,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "수락산역",
@@ -1610,7 +1637,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-23",
    "name": "서울공릉 1",
@@ -1679,7 +1706,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "태릉 CC",
@@ -1706,7 +1733,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "중계1단지",
@@ -1733,7 +1760,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "서울공릉(복합개발) 1",
@@ -1762,7 +1789,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "불광2 329-32",
@@ -1788,7 +1815,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "녹번역",
@@ -1814,7 +1841,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "증산4구역",
@@ -1840,7 +1867,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "응암동101번지 일대",
@@ -1868,7 +1895,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "연신내역",
@@ -1894,7 +1921,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "수색14구역",
@@ -1920,7 +1947,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "불광1 근린공원",
@@ -1946,7 +1973,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "은평구 불광동 일원",
@@ -1973,7 +2000,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "녹번동근린공원",
@@ -2000,7 +2027,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "백련산 서측",
@@ -2029,7 +2056,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "연희2",
@@ -2058,7 +2085,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "고은산 서측",
@@ -2085,7 +2112,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "충정로1",
@@ -2114,7 +2141,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "홍은1",
@@ -2143,7 +2170,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "아현동 699번지 일대",
@@ -2171,7 +2198,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "망원체육공원 인근",
@@ -2200,7 +2227,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "염창역 남측",
@@ -2229,7 +2256,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "목동역",
@@ -2255,7 +2282,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "목4동 강서고",
@@ -2282,7 +2309,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "가양 노후 임대 재건축",
@@ -2309,7 +2336,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "강서염창(가로주택) 01",
@@ -2336,7 +2363,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "강서구 이전부지",
@@ -2363,7 +2390,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "SBA 글로벌마케팅센터",
@@ -2390,7 +2417,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "강서 군부지",
@@ -2417,7 +2444,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "강서 국회대로 인근",
@@ -2443,7 +2470,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-06-22",
    "name": "마곡지구 17단지",
@@ -2472,7 +2499,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "화곡역 동측",
@@ -2501,7 +2528,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "서울시 구로구 구로동 87-1",
@@ -2528,7 +2555,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "오류동역 남측",
@@ -2557,7 +2584,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "대림역",
@@ -2583,7 +2610,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "서울세관 구로지원센터",
@@ -2610,7 +2637,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "금천구청역 유휴부지",
@@ -2636,7 +2663,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "남부여성발전센터(양육친화주택)",
@@ -2663,7 +2690,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "금천 공군부대",
@@ -2690,7 +2717,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "신길2구역",
@@ -2718,7 +2745,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "서울지방고용노동청 서울남부지청",
@@ -2745,7 +2772,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "양평13",
@@ -2774,7 +2801,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "양평14",
@@ -2802,7 +2829,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "신길13",
@@ -2831,7 +2858,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "신길15구역",
@@ -2857,7 +2884,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "서울대방 1",
@@ -2896,7 +2923,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "당산동 양육친화주택",
@@ -2923,7 +2950,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "서울대방(복합개발) 1",
@@ -2982,7 +3009,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "영등포역",
@@ -3008,7 +3035,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "신길4",
@@ -3035,7 +3062,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "흑석2",
@@ -3064,7 +3091,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "동작우체국",
@@ -3091,7 +3118,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2023-11-02",
    "name": "본동",
@@ -3120,7 +3147,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-23",
    "name": "수방사군부지 1",
@@ -3164,7 +3191,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "관악세무서",
@@ -3191,7 +3218,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "이수역 동측",
@@ -3220,7 +3247,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "서울 서리풀",
@@ -3247,7 +3274,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "구 한국교육개발원",
@@ -3274,7 +3301,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "강남구청",
@@ -3301,7 +3328,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "수서 노후 임대 재건축",
@@ -3330,7 +3357,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "서울의료원 남측부지",
@@ -3357,7 +3384,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "송파우체국",
@@ -3384,7 +3411,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "위례 업무용지",
@@ -3411,7 +3438,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "방이동 복합청사",
@@ -3438,7 +3465,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "올림픽공원 인근",
@@ -3467,7 +3494,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "송파구 ICT보안클러스터",
@@ -3494,7 +3521,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-06-22",
    "name": "고덕강일 3단지",
@@ -3523,7 +3550,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "고덕역",
@@ -3979,7 +4006,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천송림4 주거환경개선사업 건설공사 1공구",
@@ -4006,7 +4033,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천영종 A62",
@@ -4043,7 +4070,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천영종 A-24BL 아파트 건설공사 12공구",
@@ -4070,7 +4097,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "제물포 도심공공복합",
@@ -4099,7 +4126,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "남인천 우체국",
@@ -4154,7 +4181,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천부평(도시재생뉴딜) A",
@@ -4359,7 +4386,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)인천계양 A-10BL 아파트 건설공사 4공구",
@@ -4396,7 +4423,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "인천계양 A6",
@@ -4433,7 +4460,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천계양 A17",
@@ -4480,7 +4507,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천계양(공공주택) A2",
@@ -4517,7 +4544,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천계양 A9",
@@ -4564,7 +4591,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천계양(공공주택) A3",
@@ -4601,7 +4628,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천서구(거북이기지) 1",
@@ -4628,7 +4655,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "청라동 92-29",
@@ -4655,7 +4682,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천가정2 B2",
@@ -4692,7 +4719,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천서구(석남어울림) 1",
@@ -4719,7 +4746,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2025-09-07",
    "name": "인천검암",
@@ -4745,7 +4772,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천검단 AA19BL 민간참여 공공주택건설사업",
@@ -4774,7 +4801,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "인천검단 AA19",
@@ -4813,7 +4840,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천검단 35",
@@ -4840,7 +4867,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천검단 AA-21BL 아파트 건설공사 7공구",
@@ -4867,7 +4894,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "인천검단 AA13-1",
@@ -4894,7 +4921,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "舊 경인지방통계청 수원사무소",
@@ -4921,7 +4948,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "수원우편집중국",
@@ -4948,7 +4975,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "국토지리정보원",
@@ -4975,7 +5002,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "수원당수 B3",
@@ -5019,7 +5046,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "권선구 서둔동 208-16",
@@ -5046,7 +5073,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "수원당수 B2",
@@ -5090,7 +5117,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "수원당수 A-5BL 아파트 건설공사 5공구",
@@ -5129,7 +5156,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "성남세관",
@@ -5156,7 +5183,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "성남금광2",
@@ -5182,7 +5209,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "성남복정2 A1",
@@ -5221,7 +5248,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "성남 금토2",
@@ -5247,7 +5274,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "민간참여) 성남신촌 A-1BL 민간참여 공공주택 건설사업",
@@ -5281,7 +5308,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "성남금토 A4",
@@ -5330,7 +5357,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "성남금토 A2",
@@ -5379,7 +5406,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "성남 여수2",
@@ -5405,7 +5432,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "성남낙생 A1",
@@ -5454,7 +5481,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "의정부우정 A2",
@@ -5498,7 +5525,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "의정부법조타운 S1",
@@ -5524,7 +5551,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "의정부3동 우체국",
@@ -5551,7 +5578,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "의정부법조타운 S3",
@@ -5600,7 +5627,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)의정부우정 A-3BL 아파트 건설공사 3공구",
@@ -5634,7 +5661,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)의정부우정 A-1BL 아파트 건설공사 1공구",
@@ -5668,7 +5695,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "서안양우체국",
@@ -5695,7 +5722,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "부천우편집중국",
@@ -5722,7 +5749,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "중동역 서측",
@@ -5748,7 +5775,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "중동역 동측",
@@ -5774,7 +5801,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-29",
    "name": "부천종합운동장 역세권 A2",
@@ -5811,7 +5838,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-29",
    "name": "부천종합운동장 역세권 A1",
@@ -5848,7 +5875,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "부천역곡 A2",
@@ -5897,7 +5924,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "원미공원",
@@ -5923,7 +5950,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "원미사거리 북측",
@@ -5949,7 +5976,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "부천괴안 A-1BL 아파트 건설공사 2공구 (",
@@ -5983,7 +6010,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "부천대장 A5",
@@ -6032,7 +6059,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "부천대장 A7",
@@ -6069,7 +6096,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "부천대장 A8",
@@ -6106,7 +6133,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "부천대장 A2",
@@ -6143,7 +6170,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "부천대장 A6",
@@ -6192,7 +6219,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "부천대장 A-1BL 아파트 건설공사 3공구",
@@ -6219,7 +6246,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "부천대장 A-12BL 통합형 민간참여 공공주택건설사업",
@@ -6241,12 +6268,38 @@
    "units": 795
   },
   {
+   "id": "PRJ-41196-0111",
+   "sgg": "41196",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "원종역사 복합개발",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c0e430058ae90c7864aa2be3"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a22f2170a2db0aed91590bc4"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
    "id": "PRJ-41210-0070",
    "sgg": "41210",
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "광명세무서",
@@ -6273,7 +6326,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "광명 舊 근로청소년복지관 부지",
@@ -6300,7 +6353,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "광명경찰서 부지",
@@ -6327,7 +6380,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "평택고덕 Abc12",
@@ -6369,7 +6422,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "평택고덕 A35",
@@ -6396,7 +6449,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)평택고덕 Ab-37BL 아파트 건설공사 16공구",
@@ -6428,7 +6481,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "평택고덕 A-64BL 민간참여 공공주택건설사업",
@@ -6460,7 +6513,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "평택고덕 A-35BL 민간참여 공공주택건설사업",
@@ -6492,7 +6545,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "평택고덕 A34",
@@ -6519,7 +6572,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "평택고덕 A65",
@@ -6561,7 +6614,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "평택고덕 Aa-38BL 아파트 건설공사 15공구",
@@ -6593,7 +6646,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "평택고덕 A31",
@@ -6620,7 +6673,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "평택고덕 A-34BL 민간참여 공공주택건설사업",
@@ -6652,7 +6705,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "평택고덕 A63",
@@ -6694,7 +6747,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "평택고덕 A-56BL 민간참여 공공주택건설사업",
@@ -6728,7 +6781,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "평택우체국",
@@ -6755,7 +6808,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "평택고덕 A-31BL 민간참여 공공주택건설사업",
@@ -6787,7 +6840,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "안산신길2 A1,A3",
@@ -6814,7 +6867,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "안산신길2 B1",
@@ -6858,7 +6911,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "안산신길2 A6",
@@ -6897,7 +6950,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "고양창릉 A-4BL 아파트 건설공사 1공구",
@@ -6936,7 +6989,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "고양창릉 S-04",
@@ -6975,7 +7028,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "고양창릉 S-6BL 아파트 건설공사 3공구",
@@ -7009,7 +7062,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "고양창릉 S-02",
@@ -7053,7 +7106,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "고양창릉 S-03",
@@ -7090,7 +7143,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "고양시 소재 구 국방대학교",
@@ -7117,7 +7170,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "고양창릉 S-5BL 아파트 건설공사 2공구",
@@ -7151,7 +7204,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "고양창릉 S-01",
@@ -7196,7 +7249,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "고양장항 S-1BL 아파트 건설공사 5공구",
@@ -7230,7 +7283,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "고양장항 S-2BL 아파트 건설공사 6공구",
@@ -7264,7 +7317,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "과천 경마장·방첩사 부지",
@@ -7291,7 +7344,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "과천지식정보타운 S-12",
@@ -7333,7 +7386,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)과천주암 C-1BL 공동주택 건설공사 1공구",
@@ -7370,7 +7423,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "과천주암(뉴스테이) C2",
@@ -7412,12 +7465,39 @@
    "units": 1030
   },
   {
+   "id": "PRJ-41290-0039",
+   "sgg": "41290",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "과천과천 공공주택지구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_082d8d7c5058ffae839effe5"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8eb907ea3ca37d14b865d6cd"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 10000
+  },
+  {
    "id": "PRJ-41310-0044",
    "sgg": "41310",
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "구리갈매역세권 A-3",
@@ -7451,7 +7531,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)구리갈매역세권 A-2BL 아파트 건설공사 3공구",
@@ -7485,7 +7565,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "구리갈매역세권 A-1",
@@ -7534,7 +7614,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)구리갈매역세권 A-4BL 아파트 건설공사 2공구",
@@ -7573,7 +7653,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)남양주진접2 A-1BL 아파트 건설공사 5공구",
@@ -7607,7 +7687,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "남양주왕숙 A-1BL 아파트 건설공사 1공구",
@@ -7641,7 +7721,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "남양주왕숙 A-3BL 아파트 건설공사 7공구 (",
@@ -7675,7 +7755,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "남양주왕숙2 A03",
@@ -7719,7 +7799,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)남양주진접2 B-1BL 아파트 건설공사 2공구",
@@ -7753,7 +7833,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-29",
    "name": "남양주왕숙 S-18",
@@ -7787,7 +7867,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "남양주왕숙2 A01",
@@ -7831,7 +7911,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-04-01",
    "name": "다산지금A3",
@@ -7858,7 +7938,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "남양주왕숙 B-2BL 아파트 건설공사 5공구 (",
@@ -7892,7 +7972,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "남양주진접2 A7",
@@ -7941,7 +8021,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "남양주왕숙 A-17",
@@ -7968,7 +8048,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)남양주진접2 A-4BL 아파트 건설공사 4공구",
@@ -8007,7 +8087,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "남양주 군부지",
@@ -8034,7 +8114,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)남양주진접2 A-3BL 아파트 건설공사 3공구 (",
@@ -8073,7 +8153,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)남양주왕숙 A-24BL 아파트 건설공사 4공구",
@@ -8112,7 +8192,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)남양주왕숙 B-17BL 아파트 건설공사 3공구 (",
@@ -8146,7 +8226,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)남양주왕숙 A-2BL 아파트 건설공사 2공구",
@@ -8185,7 +8265,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "남양주왕숙 B-1BL 아파트 건설공사 6공구 (",
@@ -8219,7 +8299,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)남양주왕숙 A-6BL 아파트 건설공사 8공구",
@@ -8253,7 +8333,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "남양주왕숙 A-25BL 아파트 건설공사",
@@ -8287,7 +8367,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "오산세교2 A-12BL 민간참여 공공주택건설사업",
@@ -8319,7 +8399,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "오산세교2 A11",
@@ -8361,7 +8441,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)시흥하중 A-4BL 공동주택 건설공사 2공구",
@@ -8400,7 +8480,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "시흥거모 A4",
@@ -8427,7 +8507,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "시흥거모 A5",
@@ -8476,7 +8556,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "시흥거모 S1",
@@ -8503,7 +8583,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)시흥하중 A-2BL 아파트 건설공사 3공구",
@@ -8537,7 +8617,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "시흥거모 A6",
@@ -8564,7 +8644,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "시흥대야역",
@@ -8590,7 +8670,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "시흥하중 A1",
@@ -8639,7 +8719,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "시흥거모 A10",
@@ -8666,7 +8746,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "군포대야미 A1",
@@ -8711,7 +8791,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "군포대야미 A-2BL 아파트 건설공사 1공구",
@@ -8778,7 +8858,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "의왕월암 A3",
@@ -8827,7 +8907,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "의왕월암 A1",
@@ -8876,7 +8956,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "의왕청계2 A1",
@@ -8925,7 +9005,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "의왕초평(뉴스테이) A4",
@@ -10246,7 +10326,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "하남 신장테니스장 부지",
@@ -10273,7 +10353,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "하남교산 A-2BL 공공주택 건설사업",
@@ -10308,7 +10388,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-29",
    "name": "기흥구 신갈동 17-27",
@@ -10335,7 +10415,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "파주운정3 A20BL 아파트 건설공사 13공구",
@@ -10369,7 +10449,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "이천장호원 B2BL 아파트 건설공사 1공구",
@@ -10401,7 +10481,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)김포고촌2 A1BL 아파트 건설공사 1공구",
@@ -10440,7 +10520,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "화성동탄2 C-27",
@@ -10482,7 +10562,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-09-30",
    "name": "화성동탄2 C-14",
@@ -10519,7 +10599,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "민간참여) 화성동탄2 C-14 민간참여 공공주택 건설사업",
@@ -10546,7 +10626,7 @@
    "stageCode": "02",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-01-01",
    "name": "병점복합타운 주복1",
@@ -10573,7 +10653,7 @@
    "stageCode": "03",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-04-01",
    "name": "광주역세권",
@@ -10600,7 +10680,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)양주옥정 A-22BL 아파트 건설공사 1공구",
@@ -10634,7 +10714,7 @@
    "stageCode": "05",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "양주회천 A26",
@@ -10678,7 +10758,7 @@
    "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
-    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+    "dataset": "HOME 사업(home_project) 덤프 20261014T102506Z"
    },
    "asOf": "2026-07-01",
    "name": "조달청)양평공흥(고령자) 아파트 건설공사 1공구",

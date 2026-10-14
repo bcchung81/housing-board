@@ -221,10 +221,39 @@ function pickSgg(cands, sido, idx) {
 }
 
 /* ---------- 덤프 → 사업 묶음 ---------- */
+/* 담당자 실명·입력 사유는 공개 표에 넣지 않는다 — 2026-10-14 판부터 HOME 덤프에 담당자 입력 이력(actor·reason)이 들어 있다.
+   판에 적힌 actor·reason·change_reason 값을 모아, 글에서 ' · ' 로 나뉜 그 조각을 빼고 남은 이름은 지운다(같은 판 → 같은 결과) */
+function officerTerms(K) {
+  const names = new Set(), reasons = new Set();
+  const walk = (o) => {
+    if (Array.isArray(o)) { for (const v of o) walk(v); return; }
+    if (!o || typeof o !== 'object') return;
+    for (const [k, v] of Object.entries(o)) {
+      if (typeof v !== 'string') walk(v);
+      else if (k === 'actor') names.add(v.trim());
+      else if (k === 'reason' || k === 'change_reason') reasons.add(v.trim());
+    }
+  };
+  walk(K);
+  names.delete(''); reasons.delete('');
+  return { names: [...names].sort(byStr), reasons };
+}
+function scrubText(s, { names, reasons }) {
+  let out = s.split(' · ').filter((seg) => !names.includes(seg.trim()) && !reasons.has(seg.trim())).join(' · ');
+  for (const n of names) out = out.split(n).join('');
+  return out;
+}
+function scrubKinds(K) {
+  const terms = officerTerms(K);
+  if (!terms.names.length && !terms.reasons.size) return K;
+  const deep = (o) => (typeof o === 'string' ? scrubText(o, terms) : Array.isArray(o) ? o.map(deep) : o && typeof o === 'object' ? Object.fromEntries(Object.entries(o).map(([k, v]) => [k, deep(v)])) : o);
+  return deep(K);
+}
+
 /* home: readHome 결과, areaRows: 법정동코드 존재 행(convert 의 legalDong.rows), lhSgg: mappings/lh-block-sgg.json.
-   돌려주는 것: { edition, asOf(덤프 날짜), refs, groups(사업 묶음 — sgg 있는 것), unresolved(시군구 못 정한 묶음), kinds, idx, report } */
+   돌려주는 것: { edition, asOf(덤프 날짜), refs, groups(사업 묶음 — sgg 있는 것), unresolved(시군구 못 정한 묶음), kinds(담당자 실명·사유를 지운 것), idx, report } */
 function buildHome(home, { areaRows, lhSgg = [] }) {
-  const K = home.kinds, edition = home.edition, asOf = home.snapshotAt.slice(0, 10), refs = refsOf(edition);
+  const K = scrubKinds(home.kinds), edition = home.edition, asOf = home.snapshotAt.slice(0, 10), refs = refsOf(edition);
   const idx = nameIndex(areaRows);
   const report = { homeProjects: K.home_project.length };
   const pro = new Map(K.project.map((r) => [r.entity_id, { id: r.entity_id, source_id: r.source_id, ...r.payload }]));
@@ -619,7 +648,8 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
   for (const r of homeProgs) {
     programs.set(r.id, r);
     const id = progOf.get(r.id);
-    if (id === r.id) t.programs.push({ local_program_id: id, program_name: nameOf.get(programKey(r.name)), program_definition: null, source_ref: refs.policy, review_status: rsOf.get(id) });
+    /* 해제된 프로그램(HOME 이 대표 id 로 합친 별칭, 정책 UNASSIGNED)은 HOME 목록처럼 뺀다 */
+    if (id === r.id && r.status !== 'RELEASED') t.programs.push({ local_program_id: id, program_name: nameOf.get(programKey(r.name)), program_definition: null, source_ref: refs.policy, review_status: rsOf.get(id) });
     if (!skipPolicy(r.policy_id) && policy.has(r.policy_id)) addPolicyProgram(r.policy_id, id, `${r.basis ?? ''} ${r.evidence_url ?? ''}`, status(r.status));
   }
   const plan = K.policy_delivery_plan.map((r) => r.payload).filter((p) => policy.has(p.policy_id));
@@ -843,4 +873,4 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
   return { registry: reg, ...out };
 }
 
-module.exports = { programKey, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, issueHome, serialOf };
+module.exports = { programKey, officerTerms, scrubKinds, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, issueHome, serialOf };

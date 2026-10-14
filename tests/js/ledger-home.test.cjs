@@ -113,7 +113,9 @@ test('② 비수도권 행은 변경 전(git HEAD 의 표)과 바이트 동일 �
   const review = (rows, cap) => rows.filter((r) => !cap.has(r.local_project_id) && !String(r.record_key).split('|').some((k) => cap.has(k)) && !r.source_ref.startsWith(H.HOME_PREFIX));
   assert.deepEqual(lines(review(saved.review_required, capNow)), lines(review(head.review_required, capHead)), 'review_required');
   const reg = (rows) => rows.map((r) => (r.source_ref === 'housing-wave-registry' ? { ...r, data_as_of: null } : r));   // 레지스트리 원천의 기준일 = registry.updatedAt(HOME 발급으로 바뀐다)
-  for (const x of ['notices', 'sources']) assert.deepEqual(lines(reg(saved[x].slice(0, head[x].length))), lines(reg(head[x])), `${x}: HEAD 행이 그대로 앞에`);
+  /* HOME 행(source_ref home-dump-<판>)은 판마다 갈아끼우므로 빼고 본다 — 새 판이면 판 이름이 바뀐다 */
+  const notHome = (rows) => rows.filter((r) => !String(r.source_ref).startsWith(H.HOME_PREFIX));
+  for (const x of ['notices', 'sources']) { const h = notHome(head[x]); assert.deepEqual(lines(reg(notHome(saved[x]).slice(0, h.length))), lines(reg(h)), `${x}: HEAD 행이 그대로 앞에`); }
   assert.ok(saved.notices.slice(head.notices.length).every((n) => n.source_ref.startsWith(H.HOME_PREFIX)) && saved.sources.slice(head.sources.length).every((s) => s.source_ref.startsWith(H.HOME_PREFIX)), '뒤에 붙은 것은 HOME 공고·원천뿐');
   for (const x of ['stat_facts', 'areas', 'agencies']) assert.equal(lines(saved[x]).join('\n'), lines(head[x]).join('\n'), x);
 });
@@ -140,8 +142,8 @@ test('④ 수도권 사업 수 = HOME 사업 중 시군구가 정해진 것(같�
   assert.ok(cap.every((p) => p.source_ref === `${H.HOME_PREFIX}${home.edition}`), '수도권 사업은 모두 HOME');
   assert.equal(cap.length, build.groups.length);
   const members = build.groups.reduce((n, g) => n + g.members.length, 0), unresolved = build.unresolved.reduce((n, g) => n + g.members.length, 0);
-  assert.equal(members + unresolved, home.kinds.home_project.length, 'HOME 사업(HPR) 308 = 묶음에 든 것 + 시군구 미정');
-  assert.deepEqual([home.kinds.home_project.length, build.groups.length, members - build.groups.length, unresolved], [308, 259, 47, 2], '2026-10-13 덤프: 308 → 블록 병합 43 + 같은 현장 합침 4(복수 현장·블록 키 없는 계약) → 시군구 미정 2 → 사업 259');
+  assert.equal(members + unresolved, home.kinds.home_project.length, 'HOME 사업(HPR) 311 = 묶음에 든 것 + 시군구 미정');
+  assert.deepEqual([home.kinds.home_project.length, build.groups.length, members - build.groups.length, unresolved], [311, 262, 47, 2], '2026-10-14 덤프: 311(새 사업 3) → 블록 병합 43 + 같은 현장 합침 4(복수 현장·블록 키 없는 계약) → 시군구 미정 2 → 사업 262');
   const blk = new Map();
   for (const g of build.groups) for (const k of g.keys.filter((x) => x.startsWith('BLK:'))) { assert.ok(!blk.has(k), `${k} 가 두 사업에`); blk.set(k, g); }
   const block = new Set();
@@ -227,7 +229,7 @@ test('연결: 정책–프로그램·프로그램–사업, REVIEW → REVIEW_RE
   assert.ok(saved.links.every((l) => !/UNASSIGNED|MON_/.test(`${l.from_local_id} ${l.to_local_id}`)));
   assert.deepEqual([...new Set(saved.links.map((l) => l.link_type))].sort(), ['POLICY_PROGRAM', 'PROGRAM_PROJECT']);
   assert.equal(new Set(saved.links.map((l) => `${l.link_type}|${l.from_local_id}|${l.to_local_id}`)).size, saved.links.length, '연결은 한 번씩');
-  assert.ok(pp.filter((l) => l.review_status === 'CONFIRMED').length <= 1, 'CONFIRMED 는 덤프에 1건');
+  assert.equal(pp.filter((l) => l.review_status === 'CONFIRMED').length, 174, '2026-10-14 덤프: 재매칭으로 home_mapping CONFIRMED 197건(9·7) → 사업 묶음당 한 행 174(2026-10-13 판 1)');
 });
 
 test('지역 지표(area_facts): 원천 묶음마다 원천 행 하나, 지역 코드는 원장 지역, 미분양은 전체·준공 후', () => {
@@ -268,6 +270,16 @@ test('지도 계약: 사업 행의 done = 실제 준공(ACTUAL COMPLETION) 중 �
   const t = loadTables(), m = mapIndexFromLedger(t, { referenceDate: M.referenceDate, observedMonth: M.observedMonth });
   assert.deepEqual(m, M);
   assert.ok(boardFromLedger(t, { referenceDate: M.referenceDate, observedMonth: M.observedMonth }).scope.projects === rows.length);
+});
+
+test('담당자 실명·입력 사유는 원장 표에 들어가지 않는다: 판의 actor·reason 값을 근거 문구에서 지운다(2026-10-14 판부터 덤프에 업무 이력)', { skip: SKIP }, () => {
+  const K = { home_mapping: [{ basis: '사용자 입력 · 홍길 · 자동 확인', reason: '자동 확인' }], x: [{ payload: { actor: '홍길', selected: { basis: '담당자 확인 · 홍길 · 자동 확인 · 동일 블록' } } }] };
+  const s = H.scrubKinds(K);
+  assert.deepEqual([s.home_mapping[0].basis, s.x[0].payload.selected.basis], ['사용자 입력', '담당자 확인 · 동일 블록']);
+  assert.equal(H.scrubKinds({ a: [{ basis: '그대로' }] }).a[0].basis, '그대로', '담당자 입력이 없는 판은 그대로');
+  const { names } = H.officerTerms(H.readHome(HOME_DIR).kinds);
+  assert.ok(names.length > 0, '2026-10-14 판에는 담당자 이름이 있다');
+  for (const t of TABLES) { const text = JSON.stringify(saved[t]); for (const n of names) assert.ok(!text.includes(n), `${t} 에 담당자 이름`); }
 });
 
 test('대표 고르기(HOME supply_dashboard.inventory)는 한 벌: 원장 변환(home-source)과 9·7 진행(policy-progress)이 같은 함수를 쓴다', () => {
@@ -326,7 +338,7 @@ test('프로그램 표기 합치기: 같은 정책 안에서 띄어쓰기·가�
   const polOf = new Map(saved.links.filter((l) => l.link_type === 'POLICY_PROGRAM').map((l) => [l.to_local_id, l.from_local_id]));
   const keys = saved.programs.map((p) => `${polOf.get(p.local_program_id)}|${H.programKey(p.program_name)}`);
   assert.equal(new Set(keys).size, keys.length, '같은 정책·같은 키의 프로그램이 둘 없다');
-  assert.equal(saved.programs.length, 24);
+  assert.equal(saved.programs.length, 38, '2026-10-14 판: 9·7 원문 보완으로 HOME 프로그램 +14, 해제(RELEASED)된 별칭 2개는 빼고 38(2026-10-13 판 24)');
   for (const name of ['3기 신도시', '공공주택 건설']) assert.equal(saved.programs.filter((p) => p.program_name === name).length, 1, name);
   const dosim = saved.programs.filter((p) => H.programKey(p.program_name) === H.programKey('도심 공공주택 복합사업'));
   assert.deepEqual(dosim.map((p) => [p.local_program_id, p.program_name]), [['PRG_1391a48ea998e31820ad2643', '도심 공공주택 복합사업'], ['PRG_7fd0420ba721f1a0ca43fbe7', '도심 공공주택 복합사업']], '8·13 과 9·7 의 프로그램은 따로(사업의 정책이 섞이지 않게), 표기는 사업 연결이 많은 쪽');

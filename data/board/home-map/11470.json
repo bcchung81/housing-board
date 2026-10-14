@@ -3,7 +3,7 @@
   "sgg": "11470",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261013T140241Z",
+  "edition": "20261014T102506Z",
   "projects": [
     {"id":"PRJ-11470-0087","name":"염창역 남측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":4222,"pks":[],"pnus":[],"bundles":[],"label":"염창역 남측","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1147010200","loc":{"by":"area","at":[126.862364,37.527082],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
     {"id":"PRJ-11470-0088","name":"목동역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"목동역","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.862364,37.527082],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},

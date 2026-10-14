@@ -18,7 +18,9 @@ KINDS = ['policy', 'policy_delivery_plan', 'policy_event', 'project', 'project_r
          'unsold', 'district', 'block_location', 'project_location', 'plan_notice', 'collection_link',
          'municipality', 'policy_municipality',
          # 9·7 정책 단계별 목표·확인(tools/ledger/policy-progress.js, HOME policy_delivery.build_delivery)이 더 읽는 것
-         'evidence_bridge', 'lh_movein_plan', 'document_evidence', 'delivery_setting', 'execution_schedule']
+         'evidence_bridge', 'lh_movein_plan', 'document_evidence', 'delivery_setting', 'execution_schedule',
+         # 담당자 입력 오버레이(계획물량·단계 측정값 — 2026-10-14 판부터). 원본 gz 는 커밋하지 않는다(실명·사유 포함)
+         'project_profile']
 SMALL_TABLES = ['home_project', 'home_identity_alias', 'home_project_evidence', 'home_mapping',
                 'home_program_mapping', 'home_plan', 'home_plan_event', 'home_plan_project_link', 'home_coverage']
 BATCH_COLS = ['id', 'source_id', 'status', 'started_at', 'finished_at']

@@ -17,7 +17,7 @@ const P = require('./paths');
 const OUT = 'data/board/home-sources.json';
 const YEARS = [2018, 2019, 2020, 2021, 2022, 2023, 2024, 2025, 2026];
 
-/* HOME 원천 이름·기관: HOME 원천 등록부(10-home/backend/sources.py 의 SOURCES — id·name·org) 그대로 옮겼다(2026-10-14, 60곳 = 덤프 수집 실행의 source_id 전부).
+/* HOME 원천 이름·기관: HOME 원천 등록부(10-home/backend/sources.py 의 SOURCES — id·name·org) 그대로 옮겼다(2026-10-14, 60곳 + 2026-10-14 판의 새 원천 2곳 = 덤프 수집 실행의 source_id 전부).
    등록부가 바뀌면 여기를 다시 옮긴다. 목록에 없는 source_id 는 id 를 이름으로 쓴다 */
 const NAMES = {
   building_hub: ["건축HUB 주택인허가", "국토교통부"], building_hub_details: ["건축HUB 동별·대지위치 파일럿", "국토교통부"], building_hub_incheon: ["9·7 인천 주택인허가 원천", "국토교통부"], building_register: ["건축HUB 주거용 건축물대장", "국토교통부"],
@@ -40,6 +40,8 @@ const NAMES = {
   sh_inventory: ["SH 최신 공개본 사업 연결", "서울주택도시공사"], sh_redevelopment: ["SH 공공재개발·재건축 사업현황", "서울주택도시공사"], sh_supply_plan: ["SH 주택분양 공급계획·과거 공개본", "서울주택도시공사"],
   unsold_statistics: ["수도권 미분양·준공 후 미분양 월별 재고", "국토교통 통계누리"], urban_930: ["서울 도심복합사업 9·30 후속조치", "국토교통부 / 정책브리핑"], vworld: ["행정구역 경계·주소 좌표", "국토교통부 VWorld"],
   vworld_district: ["VWorld 공공주택지구 공동주택용지", "국토교통부 VWorld"], vworld_municipality: ["VWorld 서울·경기 시군구 경계", "국토교통부 VWorld"],
+  /* 2026-10-14 판에 새로 생긴 원천 — 등록부 소스가 아직 공개되지 않아 덤프의 APPLICATION_README 설명으로 적었다 */
+  area_national_benchmarks: ["입지 지표 전국 평균 비교(인구·가구 전국 원천)", "국가데이터처 KOSIS·SGIS"], kosis_living: ["KOSIS 생활 통계(소득·인구이동·거주기간·주거형태)·PIR", "국가데이터처 KOSIS / 국가지표체계"],
 };
 /* HOME source_id → 원장 원천(source_ref 꼬리). 이어지는 것만: 원장 쪽 건수·기준일을 곁붙인다 */
 const LEDGER_TAIL = {

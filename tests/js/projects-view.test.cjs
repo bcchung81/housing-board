@@ -26,26 +26,26 @@ test('두 파일은 지금 원장 표에서 다시 만든 것과 바이트가 �
   assert.equal(IDX.referenceDate, MAP.referenceDate, '지도 색인과 같은 기준일');
 });
 
-test('목록 행 = 원장의 살아 있는 사업 전부(대체 10·숨김 55 제외), 발급 275 · 후보 2,039', () => {
-  assert.equal(rows.length, 2314);
+test('목록 행 = 원장의 살아 있는 사업 전부(대체 10·숨김 55 제외), 발급 278 · 후보 2,039', () => {
+  assert.equal(rows.length, 2317);
   assert.equal(new Set(rows.map((r) => r.id)).size, rows.length);
   const gone = new Set(REG.filter((p) => p.supersededBy || p.hiddenAt).map((p) => p.id));
   assert.equal(gone.size, 65);
   assert.ok(rows.every((r) => !gone.has(r.id)), '대체·숨김 사업은 목록에 없다');
-  assert.equal(rows.filter((r) => r.issued).length, 275);
+  assert.equal(rows.filter((r) => r.issued).length, 278);
   const live = new Set(REG.filter((p) => !p.supersededBy && !p.hiddenAt).map((p) => p.id));
   assert.ok(rows.filter((r) => r.issued).every((r) => live.has(r.id)), '발급 행 = 살아 있는 레지스트리 사업');
   assert.deepEqual(Object.keys(DET.projects).sort(), rows.filter((r) => r.issued).map((r) => r.id).sort(), '상세 자료는 발급 사업만');
 });
 
-test('렌즈: 9·7 138건 · 1·29 47건 · 8·13 51건(모두 서울·인천·경기), 프로그램 렌즈는 프로그램 목록의 사업 수와 같다', () => {
+test('렌즈: 9·7 141건 · 1·29 47건 · 8·13 51건(모두 서울·인천·경기), 프로그램 렌즈는 프로그램 목록의 사업 수와 같다', () => {
   const n = (f) => V.applyFilters(rows, f).length;
-  assert.deepEqual(IDX.policies.map((p) => [p.key, n({ policy: p })]), [['97', 138], ['129', 47], ['813', 51]]);
+  assert.deepEqual(IDX.policies.map((p) => [p.key, n({ policy: p })]), [['97', 141], ['129', 47], ['813', 51]]);
   for (const p of IDX.policies) assert.ok(V.applyFilters(rows, { policy: p }).every((r) => r.policies.includes(p.key) && ['11', '28', '41'].includes(r.sgg.slice(0, 2))), p.key);
   for (const g of IDX.programs) assert.equal(n({ program: g }), g.projects, g.name);
-  assert.equal(rows.filter((r) => r.policies.length).length, 236, '정책에 연결된 사업');
+  assert.equal(rows.filter((r) => r.policies.length).length, 239, '정책에 연결된 사업');
   const s = V.summaryOf(V.applyFilters(rows, { policy: pol('97') }));
-  assert.deepEqual([s.n, s.units, s.notice, s.review, s.confirmed], [138, 116723, 19521, 137, 1]);
+  assert.deepEqual([s.n, s.units, s.notice, s.review, s.confirmed], [141, 129771, 19521, 0, 141], '2026-10-14 판: 재매칭으로 9·7 사업 연결이 모두 확정(2026-10-13 판 검토 137 · 확정 1)');
   /* 렌즈 + 지역 + 단계 + 상태가 함께 걸린다 */
   const f = { policy: pol('97'), sido: '41', stage: '04', status: 'ok' };
   assert.ok(V.applyFilters(rows, f).every((r) => r.policies.includes('97') && r.sgg.startsWith('41') && r.stage === '04' && r.cls === 'ok'));
@@ -63,7 +63,7 @@ test('거르기 읽기·주소: 맞지 않는 값은 거르지 않고, 렌즈는
   assert.equal(V.listHref(f, { policy: undefined, program: undefined, sgg: undefined, stage: undefined, status: undefined }), '/projects');
 });
 
-test('9·7 6단계 목표 대비 확인 = policy-progress samePeriod(2026-01~09): 공급 목표 9,355 vs 확인 6,680 · 부족 2,675(28.6%) · 확인 필요 연결 1,871 포함', () => {
+test('9·7 6단계 목표 대비 확인 = policy-progress samePeriod(2026-01~09): 공급 목표 8,049 vs 확인 8,742 도달 · 사업화 목표 14,694 vs 확인 5,789 부족 8,905(60.6%)', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
   const st = PP.policies[0].stages;
   assert.deepEqual(cells.map((c) => c.key), ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'COMPLETION', 'MOVE_IN']);
@@ -72,11 +72,15 @@ test('9·7 6단계 목표 대비 확인 = policy-progress samePeriod(2026-01~09)
     assert.deepEqual([c.target, c.actual, c.gap, c.shortfallPct, c.review], [s.target, s.actual, s.gap, s.shortfallPct, s.actualReviewUnits], c.key);
   }
   const sup = cells[3];
-  assert.deepEqual([sup.state, sup.target, sup.actual, sup.gap, sup.shortfallPct, sup.review], ['short', 9355, 6680, 2675, 28.6, 1871]);
-  assert.equal(Math.round(sup.fill * 10) / 10, 71.4);
-  const tip = V.stageCellTip(sup);
-  for (const t of ['6,680', '9,355', '2,675', '28.6%', '1,871', '2026.01~2026.09']) assert.ok(tip.includes(t), t);
-  assert.deepEqual(cells.map((c) => c.state), ['none', 'noTarget', 'noTarget', 'short', 'noTarget', 'noActual'], '목표 없는 단계는 빗금, 입주는 확인 미확보');
+  assert.deepEqual([sup.state, sup.target, sup.actual, sup.gap, sup.shortfallPct, sup.review], ['met', 8049, 8742, 0, 0, 0]);
+  assert.equal(Math.round(sup.fill * 10) / 10, 100);
+  for (const t of ['8,742', '8,049', '2026.01~2026.09']) assert.ok(V.stageCellTip(sup).includes(t), t);
+  const biz = cells[0];
+  assert.deepEqual([biz.state, biz.target, biz.actual, biz.gap, biz.shortfallPct], ['short', 14694, 5789, 8905, 60.6]);
+  assert.equal(Math.round(biz.fill * 10) / 10, 39.4);
+  const tip = V.stageCellTip(biz);
+  for (const t of ['5,789', '14,694', '8,905', '60.6%', '2026.01~2026.09']) assert.ok(tip.includes(t), t);
+  assert.deepEqual(cells.map((c) => c.state), ['short', 'met', 'noTarget', 'met', 'met', 'none'], '착공은 목표가 연말 점이라 빗금, 입주는 목표·확인 모두 없음(2026-10-14 판: 승인 일정이 사업화·인허가·준공 목표가 됐다)');
   assert.equal(V.policyStageCells(PP, 'POL_2026_0129'), null, '1·29·8·13 은 비교 자료 없음');
 });
 

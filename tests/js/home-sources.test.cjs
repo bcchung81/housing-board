@@ -41,9 +41,9 @@ test('data/board/home-sources.json: 실행 합계·원천 수·연결 수가 서
   assert.equal(hs.runs.total, hs.runs.success + hs.runs.failed + hs.runs.interrupted);
   assert.equal(hs.sources.reduce((n, s) => n + s.runs, 0), hs.runs.total);
   assert.equal(hs.sources.reduce((n, s) => n + s.failed, 0), hs.runs.failed);
-  assert.equal(hs.sources.length, 60);
+  assert.equal(hs.sources.length, 62);
   assert.deepEqual(hs.sources.filter((s) => !s.ok).map((s) => s.id), ['ih_supply']);
-  /* 이름·기관은 HOME 원천 등록부(sources.py SOURCES) 그대로 — 60곳 모두 등록부에 있다(id 를 이름으로 쓴 원천 없음) */
+  /* 이름·기관은 HOME 원천 등록부(sources.py SOURCES) 그대로 — 62곳 모두 이름이 있다(id 를 이름으로 쓴 원천 없음, 2026-10-14 판의 새 원천 2곳은 덤프 안내서 설명으로) */
   assert.ok(hs.sources.every((s) => s.name !== s.id && s.org !== 'HOME'), '등록부에 없는 원천');
   const ih = hs.sources.find((s) => s.id === 'ih_supply');
   assert.deepEqual([ih.name, ih.org], ['iH 인천도시공사 임대주택 재고·계약·공가 참조', '인천도시공사']);
@@ -52,7 +52,7 @@ test('data/board/home-sources.json: 실행 합계·원천 수·연결 수가 서
     assert.equal(l.confirmed + l.review + l.other, rows.length);
     assert.equal(l.confirmed, rows.filter((x) => x.review_status === 'CONFIRMED').length);
   }
-  assert.deepEqual(hs.links.map((l) => [l.type, l.review, l.confirmed]), [['POLICY_PROGRAM', 24, 0], ['PROGRAM_PROJECT', 268, 1]]);
+  assert.deepEqual(hs.links.map((l) => [l.type, l.review, l.confirmed]), [['POLICY_PROGRAM', 13, 25], ['PROGRAM_PROJECT', 98, 174]]);
 });
 
 test('statusRows: 실패 원천이 맨 위, 그 뒤 우리 원천 + HOME 원천 · 실패 원천은 마지막 정상 없음', () => {

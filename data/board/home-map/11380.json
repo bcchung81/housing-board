@@ -3,7 +3,7 @@
   "sgg": "11380",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261013T140241Z",
+  "edition": "20261014T102506Z",
   "projects": [
     {"id":"PRJ-11380-0083","name":"불광2 329-32","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"불광2 329-32","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.926626,37.617473],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
     {"id":"PRJ-11380-0084","name":"녹번역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"녹번역","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.926626,37.617473],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},

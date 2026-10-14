@@ -50,7 +50,8 @@
       {"id":"PRJ-11305-0041","name":"수유12구역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11305-0042","name":"강북5","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":688,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11305-0043","name":"송중동 주민센터","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1083,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11305-0044","name":"미아16구역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11305-0044","name":"미아16구역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11305-0045","name":"번동2단지","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":3048,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11320": [
       {"id":"PRJ-11320-0033","name":"쌍문동 교육연구시설","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2029-10"},"units":1171,"pks":[],"pnus":[],"bundles":[]},
@@ -1357,7 +1358,8 @@
       {"id":"PRJ-41196-0101","name":"부천대장 A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-31"},"units":548,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41196-0102","name":"부천대장 A6","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"units":227,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41196-0103","name":"부천대장 A-1BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-07-19"},"units":1002,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41196-0104","name":"부천대장 A-12BL 통합형 민간참여 공공주택건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-30"},"units":795,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41196-0104","name":"부천대장 A-12BL 통합형 민간참여 공공주택건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-30"},"units":795,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41196-0111","name":"원종역사 복합개발","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41210": [
       {"id":"PRJ-41210-0070","name":"광명세무서","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":238,"pks":[],"pnus":[],"bundles":[]},
@@ -1405,7 +1407,8 @@
       {"id":"PRJ-41290-0030","name":"과천 경마장·방첩사 부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":9800,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41290-0031","name":"과천지식정보타운 S-12","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":1424,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41290-0032","name":"조달청)과천주암 C-1BL 공동주택 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-12-15"},"units":1338,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41290-0033","name":"과천주암(뉴스테이) C2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":1030,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41290-0033","name":"과천주암(뉴스테이) C2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":1030,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41290-0039","name":"과천과천 공공주택지구","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2029"},"units":10000,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41310": [
       {"id":"PRJ-41310-0044","name":"구리갈매역세권 A-3","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":287,"pks":[],"pnus":[],"bundles":[]},

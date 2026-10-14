@@ -3,7 +3,7 @@
   "sgg": "41610",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261013T140241Z",
+  "edition": "20261014T102506Z",
   "projects": [
     {"id":"PRJ-41610-0038","name":"광주역세권","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2026"},"units":316,"pks":[],"pnus":[],"bundles":[],"label":"광주역세권","agency":"gh","moveIn":"2026","completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.291872,37.400593],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":null}
   ]
