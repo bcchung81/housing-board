@@ -129,8 +129,9 @@ export const scopeOf = (rows: ProjectRow[], f: Filters) => rows.filter((r) => in
 export function applyFilters(rows: ProjectRow[], f: Filters, skip?: 'stage' | 'status') {
   return scopeOf(rows, f).filter((r) => (skip === 'stage' || f.stage === undefined || r.board === f.stage) && (skip === 'status' || statusOk(r, f.status)));
 }
-/* 목록 순서(기본): 점검 필요 순 — 지연 개월 큰 순(같으면 호수 큰 순), 경과 없는 사업은 원래 순서로 뒤에 */
-export const listOrder = (rows: ProjectRow[]) => [...rows].sort((a, b) => (lateOf(b) ?? -1) - (lateOf(a) ?? -1) || (lateOf(a) === null ? 0 : b.units - a.units));
+/* 목록 순서(기본): 번호가 있는 사업 먼저, 후보 사업(원천 예정이라 확인 필요)은 뒤에 — 그 안에서 점검 필요 순(지연 개월 큰 순, 같으면 호수 큰 순), 경과 없는 사업은 원래 순서로 뒤에.
+   판정·상태·지연 건수는 그대로이고 순서만 나눈다(2026-10-15 사용자 결정). 열 머리로 정렬을 바꾸면 그 정렬을 따른다(그리드) */
+export const listOrder = (rows: ProjectRow[]) => [...rows].sort((a, b) => Number(!a.issued) - Number(!b.issued) || (lateOf(b) ?? -1) - (lateOf(a) ?? -1) || (lateOf(a) === null ? 0 : b.units - a.units));
 
 /* 거르기 주소: 열쇠 순서를 고정한다. patch 의 undefined 는 그 거르기를 푼다. 렌즈(policy·program)는 하나, 시도를 고르면 시군구가 풀리고 시군구를 고르면 시도가 풀린다.
    지역 sido: 'NN' · 'metro'(수도권) · 'all'(전국). 지역이 비면 기본 수도권 — 'metro' 는 ?stage·?status·?agency 가 함께 있을 때만 적는다(없으면 기본과 같아 뺀다) */
@@ -244,11 +245,11 @@ export function stageCellTip(c: StageCell, polName = '') {
 }
 /* 목표 대비 줄: 렌즈 '전체'면 목표가 배정된 정책 모두, 정책 렌즈면 그 정책 하나(목표가 없으면 없음). 칸은 목표가 있는 단계만, 나머지는 '목표 미배정' 한 번 */
 export type CompareLine = { policy: Policy; cells: StageCell[]; none: number[]; n: number; units: number; review: number; confirmed: number };
-/* 접힌 '정책 목표 대비' 머리의 핵심 한 줄: 목표·확인이 함께 있는 칸 중 가장 뒤 단계의 미달 칸(없으면 가장 뒤 단계 칸) — 공급에 가장 가까운 단계의 부족 */
+/* 접힌 '정책 목표 대비' 머리의 한 줄: 부족률 숫자 없이 목표가 있는 단계 수와 부족한 단계 이름만(단계별 비율은 핵심 질문 첫 칸·펼친 칸에 — 같은 화면에 이름표 없는 부족률이 둘 나오지 않게) */
 export function compareHead(l: CompareLine) {
-  const both = l.cells.filter((c) => c.target != null && c.actual != null);
-  const c = [...both].reverse().find((x) => x.state === 'short') ?? both[both.length - 1];
-  return c ? `${l.policy.short} ${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} 확인 ${fmt(c.actual!)} / 목표 ${fmt(c.target!)} · ${rateOf(c).word}` : `${l.policy.short} 목표만 있음`;
+  const tgt = l.cells.filter((c) => c.target != null), short = tgt.filter((c) => c.state === 'short');
+  if (!tgt.length) return `${l.policy.short} 목표만 있음`;
+  return short.length ? `${l.policy.short} · 목표 있는 ${tgt.length}단계 중 ${short.length}단계 부족(${short.map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]}`).join('·')})` : `${l.policy.short} · 목표 있는 ${tgt.length}단계 모두 달성`;
 }
 export function compareLines(pp: PolicyProgress, policies: Policy[], rows: ProjectRow[], keys: string[]): CompareLine[] {
   return policies.filter((p) => keys.includes(p.key)).flatMap((policy) => {
@@ -265,22 +266,24 @@ export const AHEAD_ALL = '앞으로 12개월 모집·준공·입주 예정';
 export const aheadMonths = (observedMonth: string) => Array.from({ length: 12 }, (_, i) => addMonths(observedMonth, i));
 
 /* ---------- 핵심 질문 5(시안 app.js questions): 렌즈·지역·기관 범위로 다시 센다(상태·단계 칩과 상관없음) ---------- */
-/* help: ⓘ 에 여는 쉬운 말 정의(전문용어 없이). 범위가 다른 첫 칸(정책 목표 대비)은 이름에 범위를 넣는다 */
-export type Question = { q: string; value: string; unit: string; sub: string; tip: string; help: string; href?: string; tone?: 'bad'; ink?: string; muted?: boolean };
+/* help: ⓘ 에 여는 쉬운 말 정의(전문용어 없이). 범위가 다른 첫 칸(정책 목표 대비)은 이름에 범위를 넣는다.
+   stages: 첫 칸(정책 목표 대비)은 대표 단계 하나 대신 ①~⑥ 단계마다 확인/목표·비율(접힌 '정책 목표 대비'의 그 정책 행과 같은 policyStageCells) — 있으면 value·unit·sub 대신 그린다 */
+export type Question = { q: string; value: string; unit: string; sub: string; tip: string; help: string; href?: string; tone?: 'bad'; ink?: string; muted?: boolean; stages?: StageCell[] };
 export type QuestionCtx = { pp: PolicyProgress; policies: Policy[]; observedMonth: string; sidoName: (code: string) => string; sggName: (code: string) => string };
 export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Question[] {
   const scope = scopeOf(rows, f), Q: Question[] = [];
   /* ① 정책 목표 대비(정책 전체 — 이름에 범위): 정책 렌즈(전체면 9·7)의 같은 기간 목표·확인이 함께 있는 첫 칸. 없으면(목표 없는 렌즈) '계획대로 가고 있는가' = 판정 사업 중 정상 비율 */
   const pk = f.policy ? f.policy.key : f.program ? null : '97';
   const pol = pk ? ctx.policies.find((p) => p.key === pk) : undefined;
-  const pair = pol ? policyStageCells(ctx.pp, pol.id)?.find((c) => c.target != null && c.actual != null) : undefined;
+  const cells = pol ? policyStageCells(ctx.pp, pol.id) : null;
+  const pair = cells?.find((c) => c.target != null && c.actual != null);
   if (pol && pair) {
     const short = pair.state === 'short', i = pair.board, r = rateOf(pair);
     Q.push({ q: `${policyLabel(pol)} 목표 대비(정책 전체)`, href: !f.policy ? listHref(f, { policy: pk! }) : undefined, tone: short ? 'bad' : undefined,
-      value: r.value, unit: r.unit,
+      value: r.value, unit: r.unit, stages: cells!,
       sub: `${BOARD_CIR[i]}${BOARD_NAMES[i]} 확인 ${fmt(pair.actual!)} / 목표 ${fmt(pair.target!)}`,
-      tip: `${stageCellTip(pair, pol.short)} · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 목표와 확인이 같은 기간에 함께 있는 첫 단계${hasEstimate(pair) ? ' · 비율은 확인으로만 계산(추정 제외)' : ''}`,
-      help: `${policyLabel(pol)}가 같은 기간에 세운 목표 호수와, 기록으로 확인한 호수를 견줍니다. 정책 전체 숫자라 위에서 고른 지역·기관과 상관없습니다.` });
+      tip: `${pol.name} 단계별 목표 대비 확인(${ymText(pair.from)}~${ymText(pair.through)}) · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 부족·초과·비율은 확인으로만 계산${cells!.some(hasEstimate) ? ` · 담당자 추정 포함(확인과 따로): ${cells!.filter(hasEstimate).map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.withEst!)}호`).join(' · ')}` : ''} · 누르면 이 정책의 사업`,
+      help: `${policyLabel(pol)}이 올해 1월부터 단계마다 세운 목표 집 수(호)와, 실제 기록으로 확인한 집 수를 단계별로 나란히 보입니다. 줄마다 '확인 / 목표'와 모자라면 부족 %, 넘치면 초과 %입니다. 목표를 정하지 않은 단계는 '목표 없음'입니다. 정책 전체 숫자라 위에서 고른 지역·기관과 상관없습니다.` });
   } else {
     const judged = scope.filter((r) => r.cls);
     if (judged.length) {

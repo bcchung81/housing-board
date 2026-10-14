@@ -31,7 +31,7 @@ const VIA_STYLE: Record<Via, { box: string; text: string; pill: string }> = {
   가공: { box: 'fill-card stroke-border', text: 'fill-muted-foreground', pill: 'border-border text-muted-foreground' },
   내부: { box: 'fill-card stroke-border', text: 'fill-muted-foreground', pill: 'border-border text-muted-foreground' },
 };
-const VIA_NOTE: Record<Via, string> = { 실시간: '조회 때 API', API: 'API 보관', CSV: 'CSV 파일', 파일: 'PDF·hwpx·SHP', 가공: '번들·레지스트리', 내부: '기관 입력·일정 기록' };
+const VIA_NOTE: Record<Via, string> = { 실시간: '조회 때 API', API: 'API 보관', CSV: 'CSV 파일', 파일: 'PDF·hwpx·SHP', 가공: '지도 자료·사업 번호 목록', 내부: '기관 입력·일정 기록' };
 const pillW = (t: string) => [...t].reduce((w, ch) => w + (/[가-힣]/.test(ch) ? 11 : 7.2), 0) + 12;
 /* 상자 오른쪽 위에 오른쪽부터 차례로 */
 function Badges({ via, right, top }: { via: Via[]; right: number; top: number }) {

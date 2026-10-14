@@ -26,7 +26,7 @@ import { stageLinks } from '../../../lib/board/stage-links';
 import type { HomeSources } from '../../../lib/board/home-sources';
 import regionIndex from '../../../regions/index.json';
 import type { Source } from '../../../lib/board/types';
-import { GRID_DENSE, type Col, type Detail, type Row } from '../../../lib/grid/spec';
+import { GRID_DENSE, dotDates, type Col, type Detail, type Row } from '../../../lib/grid/spec';
 
 export const metadata: Metadata = { title: '데이터 원본' };
 
@@ -139,13 +139,15 @@ function bundleCounts() {
   return { ...counts, rec };
 }
 
+/* 카탈로그(data/board/sources.json) 설명의 보이는 글: 하이픈 날짜는 점 표기, 내부 말 '번들'은 '지도 자료'(원본 값은 그대로) */
+const plain = (t: string) => dotDates(t).replace(/지도 번들|번들/g, '지도 자료');
 function SourceDetail({ s }: { s: Source }) {
   return (
     <section id={s.id} aria-label={s.dataset} className="scroll-mt-20 border-b border-border py-3 last:border-b-0">
       <h3 className="m-0 text-[14px]">{s.dataset}</h3>
-      <p className="mt-1 mb-1.5 text-[13px] text-muted-foreground">{s.description}</p>
+      <p className="mt-1 mb-1.5 text-[13px] text-muted-foreground">{plain(s.description)}</p>
       <Dl className="text-[13px]">
-        <dt>기관</dt><dd>{s.provider}</dd>
+        <dt>기관</dt><dd>{plain(s.provider)}</dd>
         <dt>조회 조건</dt><dd>{Object.entries(s.query).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : String(v)}`).join(' · ')}</dd>
         <dt>활용 화면</dt><dd>{s.usedBy.length ? s.usedBy.join(' · ') : '화면 미연결'}</dd>
         <dt>이용허락</dt><dd>{s.license ?? '확인하지 못함'}</dd>
@@ -181,7 +183,7 @@ export default async function SourcesPage() {
   const ledgerRow = (id: string, widget: string, gap: string, first = false): Row => ({ id, c: { widget, kind: '실데이터', data: `원장 ${ledger.observedMonth} 기준 표 · data/board/ledger-board.json`, method: 'tools/ledger → ledger-board.json', cycle: '수동 갱신', count: first ? held(ledger.scope.projects, '사업') : { na: '위 원장과 같음' }, asOf: ledger.observedMonth, gap } });
   const boardRows: Row[] = [
     { id: 'directives', c: { widget: '총리 지시 6건', kind: '실데이터', data: '통계누리 착공 누계 · 사업 원장 집계 · 원천 카탈로그', method: '통계누리 수집 + 원장 집계(tools/ledger/board.js) + sources.json', cycle: '수동 갱신', count: held(items.length, '데이터셋'), asOf: null, gap: `필요: ${nameOf('ledger')} · ${nameOf('agency-input')} · ${nameOf('schedule')}` } },
-    ledgerRow('ribbon', '월별 공급 파동', `${nationOf(ledger)}(사업 ${ledger.scope.projects}건 · ${ledgerMix(ledger)}) · 지연 띠는 ${ledger.trend?.[0]?.month ?? ledger.observedMonth} 판정부터`, true),
+    ledgerRow('ribbon', '월별 공급 파동', `${nationOf(ledger)}(사업 ${ledger.scope.projects}건 · ${ledgerMix(ledger).replace('수도권 HOME', '수도권 정책 진행 자료')}) · 지연 띠는 ${ledger.trend?.[0]?.month ?? ledger.observedMonth} 판정부터`, true),
     ledgerRow('snap', '선택 시점 판정', `${ledgerJudged(ledger)} · 지난 달은 월 판정 이력`),
     ledgerRow('region', `시도 ${ledger.regions.length}곳`, `판정은 ${judgedSido}만 · ${nationOf(ledger)} 사업 중`),
     { id: 'actual', c: { widget: '월별 실적 흐름', kind: '실데이터', data: `${nameOf('molit')} 중 ${molitUsed.length}표(인허가·착공·준공·분양) · ${molit.months[0]}~${molit.months[molit.months.length - 1]}`, method: COLLECTION[molitUsed[0].id].method, cycle: COLLECTION[molitUsed[0].id].cycle, count: held(molitRows, '행'), asOf: molitUsed[0].sourceAsOf, gap: SCREEN_USAGE.molit.gap } },
@@ -216,13 +218,13 @@ export default async function SourcesPage() {
     const op = OPERATIONS[i.id], usage = SCREEN_USAGE[i.id];
     const none = usage.map.startsWith('필요');
     const mode = i.id === 'hub-ap' || i.id === 'lh-completion' ? '보관' : i.now === 'none' ? '미연결' : MODE_LABEL[i.now];
-    return { id: i.id, muted: none, c: { name: i.name, use: none ? null : usage.map.startsWith('△') ? `△ ${mark(usage.map)}` : mark(usage.map), mode, method: i.id === 'hub-ap' ? '건축HUB API → 계양 시설 번들' : op.method, cycle: i.id === 'hub-ap' ? '계양 수동 보완' : op.cycle, ...COUNT[i.id], gap: usage.gap } };
+    return { id: i.id, muted: none, c: { name: i.name, use: none ? null : usage.map.startsWith('△') ? `△ ${mark(usage.map)}` : mark(usage.map), mode, method: i.id === 'hub-ap' ? '건축HUB API → 계양 시설 지도 자료' : op.method, cycle: i.id === 'hub-ap' ? '계양 수동 보완' : op.cycle, ...COUNT[i.id], gap: usage.gap } };
   });
   const bundleRows: Row[] = [
-    { id: 'map-projects', c: { name: '지역 사업·단지 번들', use: '단지·공정·일정', mode: '보관', method: '공고·API·공사현황 가공 → JSON', cycle: '수동 보완·재배포', count: held(bundles.projects, '단지'), scope: `${regions}개 지역`, gap: '지역 제한 · 일부 층수·입주일 · 일정 변경 이력 없음' } },
+    { id: 'map-projects', c: { name: '지역 사업·단지 지도 자료', use: '단지·공정·일정', mode: '보관', method: '공고·API·공사현황 가공 → JSON', cycle: '수동 보완·재배포', count: held(bundles.projects, '단지'), scope: `${regions}개 지역`, gap: '지역 제한 · 일부 층수·입주일 · 일정 변경 이력 없음' } },
     { id: 'map-buildings', c: { name: '지역 건물 보관본', use: '기존 건물', mode: '보관', method: 'V-World 파일·API 가공 → JSON', cycle: '수동 보완·재배포', count: held(bundles.buildings, '건물'), scope: `${regions}개 지역`, gap: '높이·층수 완전성 · 보관본 최신성' } },
     { id: 'map-context', c: { name: '역·기존 학교 위치', use: '주변 역·학교', mode: '보관', method: 'OpenStreetMap → context.json', cycle: '수동 보완·재배포', count: held(bundles.context, '위치'), scope: `${regions}개 지역`, gap: '공식 학교 배정·통학구역 대조' } },
-    { id: 'map-infra', c: { name: '기반시설·교통 점검 번들', use: '△ 계양 시설 점검', mode: '보관', method: 'API·파일·보도 확인 → infra.json', cycle: '수동 보완·재배포', count: held(bundles.infra, '항목'), scope: `${bundles.infraRegions}개 지역`, gap: `${regions - bundles.infraRegions}개 지역 상세 시설 점검 없음` } },
+    { id: 'map-infra', c: { name: '기반시설·교통 점검 지도 자료', use: '△ 계양 시설 점검', mode: '보관', method: 'API·파일·보도 확인 → infra.json', cycle: '수동 보완·재배포', count: held(bundles.infra, '항목'), scope: `${bundles.infraRegions}개 지역`, gap: `${regions - bundles.infraRegions}개 지역 상세 시설 점검 없음` } },
     { id: 'building-register', c: { name: '건축물대장 · 총괄표제부', use: '위치·준공 보강', mode: '실시간', method: '건축HUB API', cycle: '조회 시 · 캐시 24시간', count: cached('ledger'), scope: '전국 조회', gap: '블록·합필 위치 매칭 실패 · 조회 권한·한도 누락' } },
   ];
   const rank = { 보관: 0, 혼합: 1, 실시간: 2, 미연결: 3 } as Record<string, number>;
@@ -234,7 +236,7 @@ export default async function SourcesPage() {
   const boardReal = countBy(boardRows, 'kind', '실데이터'), mapUsed = mapRows.length - countBy(mapRows, 'mode', '미연결');
   const screenRows: Row[] = [
     { id: 'board', c: { screen: { text: '종합상황판', href: '/' }, count: total(boardRows), total: boardRows.length, real: boardReal, sample: boardRows.length - boardReal, store: boardRows.filter((r) => r.c.method).length, live: 0, none: boardMissing.length, scope: '전국 · 시도 · 월', gap: boardMissing.join(' · ') } },
-    { id: 'map', c: { screen: { text: '지도', href: '/map' }, count: total(mapRows), total: mapUsed, real: mapUsed, sample: 0, store: countBy(mapRows, 'mode', '보관'), live: countBy(mapRows, 'mode', '실시간'), none: mapMissing.length, scope: `번들 ${regions}개 지역 · 조회 전국`, gap: `${mapMissing.join(' · ')} · 시설 점검 ${bundles.infraRegions}개 지역 · 공고↔사업 연결` } },
+    { id: 'map', c: { screen: { text: '지도', href: '/map' }, count: total(mapRows), total: mapUsed, real: mapUsed, sample: 0, store: countBy(mapRows, 'mode', '보관'), live: countBy(mapRows, 'mode', '실시간'), none: mapMissing.length, scope: `지도 자료 ${regions}개 지역 · 조회 전국`, gap: `${mapMissing.join(' · ')} · 시설 점검 ${bundles.infraRegions}개 지역 · 공고↔사업 연결` } },
   ];
 
   /* 행을 누르면 펼치는 실제 레코드 예시(앞 10건). 번들·레지스트리·보관 JSON 은 배포본에도 있고, 원본 CSV·캐시는 로컬에만 있다 */

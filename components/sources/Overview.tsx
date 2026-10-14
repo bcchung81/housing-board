@@ -6,7 +6,7 @@ export default async function Overview() {
   const used = sources.items.filter((s) => s.usedBy.length > 0).length;
   const unknownDate = sources.items.filter((s) => !s.sourceAsOf).length;
   const metrics = [
-    { label: '수집한 데이터셋', value: sources.items.length, unit: '건', note: '기관 원천 + 지역 지도 번들', href: '#catalog', icon: Database },
+    { label: '수집한 데이터셋', value: sources.items.length, unit: '건', note: '기관 원천 + 지역 지도 자료', href: '#catalog', icon: Database },
     { label: '화면에서 활용', value: used, unit: '건', note: `수집 자료 중 ${Math.round(used / sources.items.length * 100)}% 활용`, href: '#catalog', icon: Layers },
     { label: '수집 후 미활용', value: sources.items.length - used, unit: '건', note: '보관 완료 · 화면 연결 대기', href: '#catalog', icon: MapPin },
     { label: '원천 기준일 미확인', value: unknownDate, unit: '건', note: '자료 최신성 확인 필요', href: '#catalog', icon: CalendarClock },

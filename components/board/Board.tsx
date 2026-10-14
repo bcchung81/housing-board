@@ -235,7 +235,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 {([['지연', 'bad', d, SJ.delay.projects], ['주의', 'warn', w, SJ.caution.projects], ['정상', 'ok', ok, SJ.ok.projects]] as const).map(([name, tone, n, np]) => (
                   <div key={name} className="min-w-0">
                     <div className="flex items-center gap-[5px] text-[13px] whitespace-nowrap text-muted-foreground"><i className={cn('block size-2 flex-none rounded-[2px]', tone === 'bad' ? 'bg-bad' : tone === 'warn' ? 'bg-warn' : 'bg-ok')} />{name}<em className={cn('font-bold text-foreground not-italic tabular-nums', !judged && 'invisible')}>{pct(n)}</em></div>
-                    <b className={cn('mt-px block font-display text-[min(22px,6.2cqi)] leading-[1.2] whitespace-nowrap tabular-nums', tone === 'bad' ? 'text-bad' : tone === 'warn' ? 'text-warn' : 'text-ok', !judged && 'text-mute')}>{judged ? <>{f(n)}<small className="ml-0.5 [font-family:inherit] text-[13px] font-normal opacity-85">호</small></> : '—'}</b>
+                    <b className={cn('mt-px block font-display text-[min(22px,6.2cqi)] leading-[1.2] whitespace-nowrap tabular-nums', tone === 'bad' ? 'text-bad' : tone === 'warn' ? 'text-warn' : 'text-ok', !judged && 'text-mute')}>{judged ? <>{f(n)}<small className="ml-0.5 [font-family:inherit] text-[13px] font-normal">호</small></> : '—'}</b>
                     <div className={cn('text-[13px] whitespace-nowrap text-muted-foreground tabular-nums', !judged && 'text-mute')}>{judged ? `${f(np)}건` : '—'}</div>
                   </div>
                 ))}
@@ -251,9 +251,9 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 return (
                   <div key={k} className={cn('col-span-full grid flex-auto grid-cols-subgrid items-center rounded-[6px] border-b border-border px-1.5 py-0.5 last:border-b-0', neck && 'bg-accent')}>
                     <span className="flex items-center gap-2 text-[15px] font-bold whitespace-nowrap"><i className="block size-[11px] flex-none rounded-[3px]" style={{ background: C[i] }} />{CIR[i]} {k}<Badge variant="solid" className={cn('ml-0.5 bg-primary/10 px-1.5 text-[12px] leading-[15px] text-primary', neck ? 'visible' : 'invisible')}>병목</Badge></span>
-                    <span className={cn(disp, 'text-right text-[min(20px,5.6cqi)] whitespace-nowrap', !v[i] && 'text-mute opacity-70')}>{f(v[i])}</span>
+                    <span className={cn(disp, 'text-right text-[min(20px,5.6cqi)] whitespace-nowrap', !v[i] && 'text-muted-foreground')}>{f(v[i])}</span>
                     {showDlt ? <span className={cn('text-right text-[14px] whitespace-nowrap tabular-nums phone:hidden', dlt === 0 ? 'text-mute' : dlt > 0 ? 'text-ok' : 'text-warn')}>{dlt === 0 ? '0' : sg(dlt)}</span> : null}
-                    <span className={cn('text-right text-[14px] whitespace-nowrap tabular-nums', judged && ds[i] ? 'text-bad' : 'text-mute', judged && !ds[i] && 'opacity-70')}>{judged ? f(ds[i]) : '—'}</span>
+                    <span className={cn('text-right text-[14px] whitespace-nowrap tabular-nums', judged && ds[i] ? 'text-bad' : judged ? 'text-muted-foreground' : 'text-mute')}>{judged ? f(ds[i]) : '—'}</span>
                   </div>
                 );
               })}

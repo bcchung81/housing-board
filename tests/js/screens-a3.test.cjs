@@ -60,7 +60,7 @@ test("H1 서랍 단계 줄: '지금' 한 칸만 채우고 지난 단계는 옅�
 
 test('H8 정책 목표 대비: 기본 접힘(머리에 핵심 한 줄) · 인쇄 보기는 펼침 · 첫 질문 칸은 이름에 범위 · 목표를 넘으면 초과', () => {
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
-  assert.deepEqual(lines.map(V.compareHead), ['9·7 ④모집 확인 4,732 / 목표 8,049 · 부족 41.2%']);
+  assert.deepEqual(lines.map(V.compareHead), ['9·7 · 목표 있는 4단계 중 2단계 부족(①계획·④모집)'], '4차(A4): 머리 줄은 부족률 숫자 없이 단계 이름만');
   const cells = lines[0].cells;
   assert.equal(V.rateOf(cells[1]).word, '초과 130.7%', '② 인허가 3,560 / 1,543');
   assert.equal(V.rateOf(cells[4]).word, '달성', '⑤ 준공 381 / 381');

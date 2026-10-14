@@ -1,5 +1,6 @@
 /* 사업 화면 요약 카드의 세 부분(서버가 그린다 — 값은 lib/board/projects-view.ts). 시안: docs/design/home-concept/assets/app.js questions·pipeline·policyCompare.
    - Questions: 핵심 질문 5칸(정책 목표 대비·어디서 막힘·어떤 사업·어디 먼저·앞으로 얼마). 누르면 그 답의 거르기(또는 지역 공급)로 간다. 칸마다 쉬운 말 정의 ⓘ(help).
+     첫 칸(정책 목표 대비, 정책 전체 범위)은 page 가 '요약 범위' 줄 밖에 따로 두고, 대표 단계 하나 대신 ①~⑥ 단계마다 확인/목표·비율을 작은 줄로(StageRates).
    - Pipeline(보이는 이름 '단계별 진행'): 리본 칸마다 이 단계까지 온 사업(실제 기록이 있거나 지금 그 단계 — 계획 호수·비율 막대)과 지금 이 단계(누르면 거르는 기준). 둘 다 없는 칸은 접은 한 칸(점선)으로 한 번만.
    - ReadHelp: 핵심 정의(지연 구간 · 확인과 담당자 추정 · 이 단계까지 온 사업과 지금 · 병목 · 앞으로 12개월)를 눌러서 여는 ⓘ 하나로(인쇄에는 펼친 목록).
    - PolicyCompare: 정책별 같은 기간 목표 대비 확인 — 기본 접힘(<details>, 머리에 핵심 한 줄 compareHead), 인쇄 보기는 펼침. 목표가 있는 단계만 칸으로, 나머지는 '목표 없음' 한 번.
@@ -13,7 +14,7 @@ import { HATCH } from '../ui/chips';
 import InfoTip from '../ui/info-tip';
 import LinkPending from '../ui/link-pending';
 import { ChevronRight } from 'lucide-react';
-import { AHEAD_COMPLETION, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD_OFFICIAL, DELAY_GROUP, STATUS_RANGE, compareHead, hasEstimate, hasTarget, policyLabel, rateOf, ymText, type CompareLine, type PipeCell, type Question, type StageCell } from '../../lib/board/projects-view';
+import { AHEAD_COMPLETION, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD_OFFICIAL, DELAY_GROUP, compareHead, hasEstimate, hasTarget, policyLabel, rateOf, stageCellTip, ymText, type CompareLine, type PipeCell, type Question, type StageCell } from '../../lib/board/projects-view';
 
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 const man = (v: number) => (v === 0 ? '0' : v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
@@ -22,20 +23,41 @@ const h3 = 'm-0 text-[16px] font-normal text-muted-foreground';
 /* 추정 포함분 막대: 단계색 옅은 면 + 점선 테두리 */
 const EST = (c: string): CSSProperties => ({ background: light(c, 55), outline: `1px dashed ${c}`, outlineOffset: '-1px' });
 
+/* 첫 칸의 단계별 줄: 단계 이름(단계 글자색) · 확인 / 목표 · 부족·초과·달성(확인 기준). 목표가 없는 단계는 '목표 없음'(옅게), 담당자 추정 포함은 줄 title 에 */
+function StageRates({ cells }: { cells: StageCell[] }) {
+  return (
+    <span className="grid grid-cols-[auto_1fr_auto] gap-x-2.5 text-[13px] leading-[20px] whitespace-nowrap tabular-nums">
+      {cells.map((c) => {
+        const both = c.target != null && c.actual != null, short = c.state === 'short';
+        return (
+          <span key={c.key} title={stageCellTip(c)} className={cn('col-span-3 grid grid-cols-subgrid', !both && 'text-muted-foreground')}>
+            <span style={both ? { color: BOARD_INK[c.board] } : undefined}>{BOARD_CIR[c.board]}{BOARD_NAMES[c.board]}</span>
+            {both ? <span className="text-right text-muted-foreground"><b className="font-bold text-foreground">{fmt(c.actual!)}</b> / {fmt(c.target!)}</span>
+              : c.target != null ? <span className="text-right">실적 없음 / {fmt(c.target)}</span> : <span className="text-right">목표 없음</span>}
+            <span className={cn('text-right', short ? 'font-bold text-bad' : both && c.actual! > c.target! ? 'text-ok' : undefined)}>{both ? rateOf(c).word : ''}</span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
 const QA = 'group/q relative flex w-full min-w-0 flex-col gap-1 rounded-[8px] text-left text-foreground no-underline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary';
 export function Questions({ list }: { list: Question[] }) {
   return (
-    <ol className="m-0 grid list-none gap-y-4 divide-x divide-border p-0 narrow:grid-cols-3! narrow:divide-x-0 mobile:grid-cols-2!" style={{ gridTemplateColumns: `repeat(${list.length},minmax(0,1fr))` }} aria-label="핵심 질문">
+    <ol className={cn('m-0 grid list-none gap-y-4 divide-x divide-border p-0', list.length > 2 && 'narrow:grid-cols-3! narrow:divide-x-0 mobile:grid-cols-2!')} style={{ gridTemplateColumns: `repeat(${list.length},minmax(0,1fr))` }} aria-label="핵심 질문">
       {list.map((x) => {
         const inner = (
           <>
             <span className={cn('flex min-w-0 items-center gap-1.5 pr-7 text-[14px] text-muted-foreground', x.href && 'group-hover/q:text-primary')}>
               <span className="truncate">{x.q}</span>
             </span>
+            {x.stages ? <StageRates cells={x.stages} /> : <>
             <b className={cn('font-display text-[28px] leading-[1.2] font-normal whitespace-nowrap tabular-nums', x.tone === 'bad' && 'text-bad', x.muted && 'text-muted-foreground')} style={x.ink ? { color: x.ink } : undefined}>
               {x.value}{x.unit ? <small className="ml-[3px] font-sans text-[14px] font-normal text-muted-foreground">{x.unit}</small> : null}
             </b>
             <span className="truncate text-[14px] text-muted-foreground tabular-nums">{x.sub}</span>
+            </>}
           </>
         );
         return (
@@ -195,11 +217,11 @@ export function PolicyCompare({ lines, title, href, open = false }: { lines: Com
 function Defs() {
   return (
     <dl>
-      <dt>{DELAY_GROUP}</dt><dd>{`현재 예정일 경과 6개월 이상 — 구간은 ${STATUS_RANGE.delay} · ${STATUS_RANGE.long}(${STATUS_RANGE.caution}은 따로 셈)`}</dd>
-      <dt>확인 · 담당자 추정 포함</dt><dd>확인 = 기록으로 확인한 호수 · 담당자 추정 포함 = 담당자 입력을 더한 값(비율·부족은 확인으로만)</dd>
+      <dt>{DELAY_GROUP}</dt><dd>지금 잡혀 있는 예정일을 6개월 넘게 넘긴 사업 — 6~12개월은 지연, 12개월이 넘으면 장기(1~6개월 넘긴 주의는 따로 셈)</dd>
+      <dt>확인 · 담당자 추정 포함</dt><dd>확인 = 실제 기록으로 확인한 집 수(호) · 담당자 추정 포함 = 여기에 담당자가 짐작해 넣은 값을 더한 수(부족·초과 비율은 확인한 수로만 계산)</dd>
       <dt>이 단계까지 온 사업 · 지금 이 단계</dt><dd>이 단계까지 온 사업 = 그 단계 기록이 있거나 지금 그 단계에 있는 사업 · 지금 이 단계 = 지금 바로 그 단계에 있는 사업(칸을 누르면 목록이 그 사업만)</dd>
-      <dt>병목</dt><dd>{DELAY_GROUP} 사업의 계획 호수가 가장 큰 단계(종합상황판과 같은 계산)</dd>
-      <dt>{AHEAD_COMPLETION}</dt><dd>원장 관측 달부터 12개월 안에 준공 현재 예정 달이 든 사업(준공 실제가 있으면 뺌)</dd>
+      <dt>병목</dt><dd>예정일을 6개월 넘게 넘긴 사업의 집 수가 가장 많이 몰린 단계(종합상황판과 같은 계산)</dd>
+      <dt>{AHEAD_COMPLETION}</dt><dd>자료 기준 달부터 12개월 안에 공사를 마칠 예정인 사업(이미 공사를 마친 사업은 뺌)</dd>
     </dl>
   );
 }

@@ -50,6 +50,8 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 }
 
 const fmt = (n: number) => n.toLocaleString('en-US');
+/* 원천 이름 HOME 은 보이는 글 대신 title 에(보이는 이름은 '정책 진행 자료') */
+const HOME_TIP = 'HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료(정책별 단계 목표·확인 포함)';
 /* 같은 거르기에서 빠진 하나를 풀면 몇 건인지(빈 결과의 대안) */
 const count = (rows: ProjectRow[], f: Filters) => applyFilters(rows, f).length;
 
@@ -92,14 +94,26 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const lines = f.program ? [] : compareLines(pp, idx.policies, rows, f.policy ? [f.policy.key] : idx.policies.map((p) => p.key));
   const listOnly = f.stage !== undefined || !!f.status;
   const scopeText = [region, lens, f.agency && AGENCY_NAME[f.agency]].filter(Boolean).join(' · ');
+  /* 첫 칸(정책 목표 대비)은 정책 전체 범위라 '요약 범위' 줄 밖 왼쪽에 따로 둔다(범위 줄은 나머지 질문 위에만) */
+  const [whole, scoped] = questions[0]?.stages ? [questions[0], questions.slice(1)] : [null, questions];
+  const scopeLine = (
+    <div className="-mt-1 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-muted-foreground">
+      <span className="tabular-nums"><b className="font-bold text-foreground">요약 범위</b> {scopeText}</span>
+      <span className={cn(listOnly && 'font-bold text-foreground')} title="핵심 질문·단계별 진행은 정책·지역·기관 거르기를 따르고, 단계·상태 거르기는 아래 목록에만 적용">단계·상태 거르기는 목록에만</span>
+      <span className="ml-auto"><ReadHelp /></span>
+    </div>
+  );
   const summary = (
     <Card render={<section aria-label="요약" />} className="print:break-inside-avoid">
-      <div className="-mt-1 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-muted-foreground">
-        <span className="tabular-nums"><b className="font-bold text-foreground">요약 범위</b> {scopeText}</span>
-        <span className={cn(listOnly && 'font-bold text-foreground')} title="핵심 질문·단계별 진행은 정책·지역·기관 거르기를 따르고, 단계·상태 거르기는 아래 목록에만 적용">단계·상태 거르기는 목록에만</span>
-        <span className="ml-auto"><ReadHelp /></span>
-      </div>
-      <Questions list={questions} />
+      {whole ? (
+        <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,4fr)] gap-x-4 gap-y-4 narrow:grid-cols-1">
+          <div className="border-r border-border pr-4 narrow:border-r-0 narrow:pr-0">
+            <div className="-mt-1 mb-3 text-[14px] text-muted-foreground tabular-nums" title="정책 전체 숫자 — 위 지역·기관·단계·상태 거르기와 상관없음"><b className="font-bold text-foreground">정책 전체</b> {ymText(whole.stages![0].from)}~{whole.stages![0].through.slice(5, 7)} · 확인 / 목표</div>
+            <Questions list={[whole]} />
+          </div>
+          <div>{scopeLine}<Questions list={scoped} /></div>
+        </div>
+      ) : <>{scopeLine}<Questions list={scoped} /></>}
       <div className="mt-5">
         <Pipeline open={pipe.open} shut={pipe.shut} total={pipe.total} on={f.stage} badges={badges} scope={region} href={(i) => at({ stage: f.stage === i ? undefined : String(i) })} />
       </div>
@@ -123,7 +137,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
         {prioRows.length ? <DataGrid label="우선 점검 사업" cols={prio.cols} rows={prioRows} sortable={false} /> : <p className={cn(sub, 'm-0')}>예정일이 지난 사업이 없습니다</p>}
       </Card>
       <p className={cn('m-0 text-[13px] text-muted-foreground', !print && 'hidden print:block')}>
-        범위 {label}({fmt(scope.length)}건) · 자료 기준: 사업 원장 {ref} · HOME 자료 {editionText(pp.source.edition)} · 정책 목표·확인 {ymText(pp.referenceMonthEnd)}까지 · 출처: 사업 원장(건축HUB·LH·마이홈·청약홈·통계누리), HOME 자료, 정책 진행 · 판정: 현재 예정일 경과 1~6개월 주의, 6개월 이상 지연, {LONG_DELAY_MONTHS}개월 이상 장기 지연 · 9·7 대책 확인은 담당자 추정 입력을 뺀 값(담당자 추정 포함은 따로)
+        범위 {label}({fmt(scope.length)}건) · 자료 기준: 사업 원장 {ref} · <span title={HOME_TIP}>정책 진행 자료</span> {editionText(pp.source.edition)} · 정책 목표·확인 {ymText(pp.referenceMonthEnd)}까지 · 출처: 사업 원장(건축HUB·LH·마이홈·청약홈·통계누리), <span title={HOME_TIP}>정책 진행 자료</span> · 판정: 현재 예정일 경과 1~6개월 주의, 6개월 이상 지연, {LONG_DELAY_MONTHS}개월 이상 장기 지연 · 9·7 대책 확인은 담당자 추정 입력을 뺀 값(담당자 추정 포함은 따로)
       </p>
     </>
   );
@@ -131,7 +145,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
     <header className={cn('pt-4 print:pt-0', !print && 'hidden print:block')}>
       <div className="flex flex-wrap items-baseline gap-x-3">
         <h1 className="m-0 font-display text-[28px] leading-[1.2] font-normal tracking-[-0.03em]">월간 주택공급 보고</h1>
-        <span className="text-[14px] text-muted-foreground tabular-nums" title={`사업 원장 ${idx.referenceDate} · 9·7 대책 단계 목표·확인은 ${pp.referenceMonthEnd}까지`}>자료 기준 {ref} · 정책 목표 {ymText(pp.referenceMonthEnd)}까지 · {label}</span>
+        <span className="text-[14px] text-muted-foreground tabular-nums" title={`사업 원장 ${idx.referenceDate.replace(/-/g, '.')} · 9·7 대책 단계 목표·확인은 ${pp.referenceMonthEnd.replace(/-/g, '.')}까지`}>자료 기준 {ref} · 정책 목표 {ymText(pp.referenceMonthEnd)}까지 · {label}</span>
       </div>
     </header>
   );
@@ -218,10 +232,10 @@ export default async function ProjectsPage({ searchParams }: Props) {
           tip={`기본 순서 = 점검 필요 순(지연 개월 큰 순)${grid.note}`}>
           <InfoTip label="목록 읽는 법">
             <dl>
-              <dt>기본 순서</dt><dd>점검 필요 순 — 현재 예정일 경과 개월이 큰 사업부터</dd>
-              <dt>{PLAN_COL}</dt><dd>지금 잡혀 있는 다음 예정일 · 이미 지난 날짜에는 &apos;경과 n개월&apos;, 공사를 마친 사업은 &apos;실제&apos;</dd>
-              <dt>지연(개월)</dt><dd>현재 예정일 경과 개월 · {STATUS_RANGE.caution} · {STATUS_RANGE.delay} · {STATUS_RANGE.long}({DELAY_GROUP} = 6개월 이상)</dd>
-              <dt>공고 확인</dt><dd>모집공고에서 확인한 호수(공고 확인 ≠ 준공)</dd>
+              <dt>기본 순서</dt><dd>점검 필요 순 — 예정일을 오래 넘긴 사업부터 · {CAND_NAME}은 번호가 있는 사업 뒤에(열 머리를 누르면 그 순서로)</dd>
+              <dt>{PLAN_COL}</dt><dd>지금 잡혀 있는 다음 예정일 · 이미 지난 날짜는 옅게(넘긴 개월은 지연 열), 공사를 마친 사업은 &apos;실제&apos;</dd>
+              <dt>지연(개월)</dt><dd>예정일을 넘긴 개월 수 · {STATUS_RANGE.caution} · {STATUS_RANGE.delay} · {STATUS_RANGE.long}({DELAY_GROUP} = 6개월 이상)</dd>
+              <dt>공고 확인</dt><dd>모집공고에서 확인한 호수(공고가 났다고 공사를 마친 것은 아님)</dd>
               <dt>{CAND_NAME}</dt><dd>사업 번호가 아직 없어 상세 일정이 없는 사업 — 누르면 간단 보기</dd>
             </dl>
           </InfoTip>
@@ -231,7 +245,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
         </PanelHead>
         {list.length ? (
           <>
-            <p className={cn(sub, 'm-0 mb-1')}>점검 필요 순 · 행을 누르면 상세{list.length > issued ? ` · ${CAND_NAME} ${fmt(list.length - issued)}건은 간단 보기` : ''}</p>
+            <p className={cn(sub, 'm-0 mb-1')}>점검 필요 순 · 행을 누르면 상세{list.length > issued ? ` · ${CAND_NAME} ${fmt(list.length - issued)}건은 간단 보기 · 목록 뒤쪽` : ''}</p>
             <DataGrid label="사업 목록" maxHeight={640} cols={grid.cols} rows={gridRows} quietCount />
           </>
         ) : (

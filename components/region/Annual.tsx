@@ -65,7 +65,7 @@ export default function Annual({ molit, annual, sido, metric, order, sidoName, h
       </PanelHead>
       <YearBars series={years} color={color} label={`${rname} 연도별 ${name} 호수, ${years[0]?.year}년부터 ${ymDot(months[months.length - 1])}까지`} />
       <p className="m-0 mt-2 text-[14px] text-muted-foreground">
-        {spliced ? `${years[0]?.year}~${NATION_FROM - 1}년은 HOME 통계(같은 통계누리 시도 자료), ${NATION_FROM}년부터 통계누리 월 자료` : `${NATION_FROM}년부터(통계누리 월 자료 — ${months[0].slice(0, 4)}년은 ${Number(months[0].slice(5))}월부터라 뺌) · 서울·인천·경기는 2018년부터(수도권 칩)`}
+        {spliced ? <><span title="HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료(2018~2021 시도 통계)">{`${years[0]?.year}~${NATION_FROM - 1}년은 정책 진행 자료에 담긴 같은 통계누리 시도 자료`}</span>{`, ${NATION_FROM}년부터 통계누리 월 자료`}</> : `${NATION_FROM}년부터(통계누리 월 자료 — ${months[0].slice(0, 4)}년은 ${Number(months[0].slice(5))}월부터라 뺌) · 서울·인천·경기는 2018년부터(수도권 칩)`}
         {part ? ` · ${part.year}년은 ${spanLabel(part)}만${part.provisional ? '(잠정치 포함)' : ''}` : ''}
       </p>
       {table ? <div className="mt-5">{table}</div> : null}

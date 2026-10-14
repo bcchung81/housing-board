@@ -1,7 +1,7 @@
 'use client';
 /* 사업 상세 서랍(오른쪽, 화면 폭의 약 60%): 목록(/projects)은 그대로 보이고 주소 ?id= 가 서랍을 연다. 내용은 서버가 그린다(직접 연 주소도 서랍이 열린 채 온다).
    닫기: × 단추·Esc(펼친 칩 메뉴가 있으면 메뉴만 닫는다)·뒤로 가기. 목록에서 열었으면 닫을 때 그만큼 뒤로 가고(주소 기록이 쌓이지 않게), 주소로 바로 열었으면 ?id= 를 뺀 목록으로 바꾼다.
-   대체된 옛 id 로 열면(서버가 대표 사업을 그린다) 주소를 대표 id 로 고쳐 쓴다. 열릴 때 제목에 초점, 닫히면 목록의 그 사업 링크로 초점을 돌린다. 인쇄에는 싣지 않는다. */
+   대체된 옛 id 로 열면(서버가 대표 사업을 그린다) 주소를 대표 id 로 고쳐 쓴다. 열릴 때 제목에 초점, 닫히면 목록의 그 사업 링크로(없으면 본문 main 으로) 초점을 돌린다. 인쇄에는 싣지 않는다. */
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
@@ -32,7 +32,11 @@ export default function Drawer({ id, canonical, closeHref, title, head, children
     else { if (!was) n.base = true; n.depth += 1; }
     if (id) n.last = id;
     if (id) { bodyRef.current?.scrollTo({ top: 0 }); titleRef.current?.focus({ preventScroll: true }); }
-    else if (n.last) document.querySelector<HTMLAnchorElement>(`[data-slot="data-grid"] a[href$="=${n.last}"]`)?.focus({ preventScroll: true });   // ?id= · ?cand=
+    else if (n.last) {
+      /* ?id= · ?cand=. 돌아갈 행이 없으면(주소로 바로 열었는데 그 행이 목록에 그려지지 않음 등) 본문(main)으로 — 초점이 body 로 빠지지 않게 */
+      const row = document.querySelector<HTMLAnchorElement>(`[data-slot="data-grid"] a[href$="=${n.last}"]`);
+      (row ?? document.getElementById('main'))?.focus({ preventScroll: true });
+    }
   }, [id]);
 
   /* 처음 열린 서랍: 제목에 초점, 대체된 옛 id 면 주소를 대표 id 로 */

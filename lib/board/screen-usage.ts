@@ -5,7 +5,7 @@ export const SCREEN_USAGE: Record<string, Usage> = {
   'hub-hs': { board: '필요 · 미연결', map: '✓ 인허가 사업', gap: '전국 정기 수집·시행자·분양 정보·위치 미확인 사업 보완', evidence: ['assets/js/region.js', 'handlers/v1/permits.js'] },
   ledger: { board: '△ 원장 2026-10 전국(발급 77 · LH 후보 273 · 건축HUB 후보 3,495) · 6단계·판정', map: '✓ 사업 번호·위치 연결', gap: '건축HUB 후보는 대용량 2026-08 기준(정기 수집 없음)', evidence: ['handlers/v1/resolve.js', 'handlers/v1/permits.js', 'data/board/ledger-board.json'] },
   schedule: { board: '필요 · 미연결', map: '필요 · 미연결', gap: '당초·변경 예정일과 월별 이력 없음 · 지연 판단 불가', evidence: ['registry/projects.json', 'lib/board/pipeline.ts'] },
-  'hub-ap': { board: '—', map: '△ 계양 시설 허가 번들', gap: '시설 허가 일부만 보관 · 전국 수집과 공공사업 선별 미구현', evidence: ['regions/incheon-gyeyang/infra.json', 'assets/js/app.js'] },
+  'hub-ap': { board: '—', map: '△ 계양 시설 허가 지도 자료', gap: '시설 허가 일부만 보관 · 전국 수집과 공공사업 선별 미구현', evidence: ['regions/incheon-gyeyang/infra.json', 'assets/js/app.js'] },
   'agency-input': { board: '필요 · 미연결', map: '필요 · 미연결', gap: '기관 입력 경로·계획 호수·당초 일정·지연 사유 없음', evidence: ['lib/board/pipeline.ts'] },
   molit: { board: '✓ 월별 실적', map: '—', gap: '최신 월 갱신·정기 수집 자동화 · 계획 대비 실적의 계획값 없음', evidence: ['components/board/RealPanels.tsx', 'tools/boarddata/molit.py'] },
   'lh-completion': { board: '✓ 향후 준공 예정', map: '△ 계양 단지 원천', gap: '2026-01-27 보관본 갱신 필요 · 준공예정일과 입주일 구분', evidence: ['app/(dashboard)/page.tsx', 'regions/incheon-gyeyang/region.json'] },

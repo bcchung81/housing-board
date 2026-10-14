@@ -11,7 +11,7 @@ import { cn } from 'cn';
 import { Swatch } from '../charts/Legend';
 import { Prov } from '../ui';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
-import { compare, display, filterRows, groupStarts, headerRows, sortValue, splitPinned, wants, type Cell, type Col, type Row } from '../../lib/grid/spec';
+import { compare, display, dotDates, filterRows, groupStarts, headerRows, sortValue, splitPinned, wants, type Cell, type Col, type Row } from '../../lib/grid/spec';
 
 /* 데이터 그리드(계획서 17절): TanStack Table v9(정렬)과 TanStack Virtual(긴 표)을 기존 Table 마크업 위에 얹는다. 헤드리스라 모양은 Table 그대로다.
    - 머리글을 누르면 정렬(숫자는 큰 값부터, 글자는 가나다순 → 반대 → 원래 순서). 값이 없는 칸은 방향과 상관없이 맨 뒤. th 에 aria-sort.
@@ -36,7 +36,8 @@ const zebra = 'bg-[color-mix(in_srgb,var(--pn2)_45%,var(--card))]';   // 불투�
 const stickyCell = 'sticky left-0 z-[1] bg-inherit group-data-[scrolled]/grid:shadow-[6px_0_6px_-6px_rgb(0_0_0/0.25)]';   // 옆으로 민 동안만 오른쪽 그림자
 
 /* 하이픈·물결이 든 짧은 낱말(2026-08-31, 2021-09~2026-08, 61-79번지)은 줄을 바꿀 때 가운데서 끊지 않는다(브라우저는 하이픈 뒤에서 끊는다) */
-const keepWords = (t: string): React.ReactNode => (/[-~]/.test(t) ? t.split(/( +)/).map((w, i) => (i % 2 || !/[-~]/.test(w) || w.length > 24 ? w : <span key={i} className="whitespace-nowrap">{w}</span>)) : t);
+/* 보이는 날짜는 점 표기(dotDates — 2026-08-31 → 2026.08.31) */
+const keepWords = (raw: string): React.ReactNode => { const t = dotDates(raw); return /[-~]/.test(t) ? t.split(/( +)/).map((w, i) => (i % 2 || !/[-~]/.test(w) || w.length > 24 ? w : <span key={i} className="whitespace-nowrap">{w}</span>)) : t; };
 
 /* 말줄임 열(clip)의 칸 title: 칸에 title 이 있으면 그것(안쪽 span 이 보인다), 없으면 전체 글자 */
 const clipTitle = (v: Cell, col: Col) => (typeof v === 'object' && v?.title ? undefined : display(v, col.kind).text);
@@ -120,7 +121,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
       {r.note !== undefined ? (
         <>
           <TableCell className={stickyCell}><CellView v={r.c[first]} col={cols[0]} /></TableCell>
-          <TableCell colSpan={cols.length - 1} className="text-left whitespace-normal" title={r.noteTitle}>{r.note}</TableCell>
+          <TableCell colSpan={cols.length - 1} className="text-left whitespace-normal" title={r.noteTitle}>{dotDates(r.note)}</TableCell>
         </>
       ) : cols.map((c) => (
         <TableCell key={c.key} className={cn(c.key === first && stickyCell, c.kind === 'text' && 'text-left', c.wrap && 'min-w-[180px] whitespace-normal [word-break:keep-all]', starts.has(c.key) && 'border-l')}>

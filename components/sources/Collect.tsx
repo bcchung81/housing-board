@@ -16,6 +16,11 @@ import type { Molit, Source } from '../../lib/board/types';
 const KEY = 'flex items-center gap-1 whitespace-nowrap';
 const dot = 'block size-[9px] flex-none rounded-[2px]';
 const PART = 'color-mix(in srgb, var(--primary) 26%, var(--card))';
+/* 원천 이름 HOME 은 보이는 글 대신 title 에 — 보이는 이름은 '정책 진행 자료'(우리 = 파일로 받아 둔 원천 카탈로그) */
+const HOME_TIP = 'HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료';
+const OWNER = { 우리: '우리', HOME: '정책 진행 자료' } as const;
+/* 기관 이름 중 내부 말('주택파동 지도 번들')은 보이는 글에서 '지도 자료'로 */
+const orgName = (o: string) => o.replace(/지도 번들/g, '지도 자료');
 const LegendList = ({ children }: { children: ReactNode }) => <ul className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[13px] text-muted-foreground" aria-label="범례">{children}</ul>;
 
 const COLS: Col[] = [
@@ -33,7 +38,7 @@ function issueRow(r: StatusRow): Row {
   return {
     id: `${r.owner}-${r.id}`,
     c: {
-      name: { text: r.name, title: r.note }, owner: r.owner, org: r.org,
+      name: { text: r.name, title: r.note }, owner: { text: OWNER[r.owner], title: r.owner === 'HOME' ? HOME_TIP : '파일로 받아 둔 원천 카탈로그' }, org: orgName(r.org),
       st: r.ok ? { text: '경고', swatch: 'var(--warn)', tone: 'warn', title: '마지막 수집이 일부만(부분 수집)', sort: 1 }
         : { text: '실패', swatch: 'var(--bad)', tone: 'bad', title: `마지막 실행 ${r.lastRun ?? ''} 실패${r.lastOk ? ' — 마지막 정상 값을 씀' : ' — 정상 수집 없음'}`, sort: 0 },
       runs: r.runs, last: r.lastOk ?? { na: '없음' }, asOf: r.asOf, n: r.count,
@@ -52,7 +57,7 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
   const cols = COLS.filter((c) => c.key === 'name' || keep.includes(c.key));
 
   const orgs = new Map<string, StatusRow[]>();
-  for (const r of okRows) { if (!orgs.has(r.org)) orgs.set(r.org, []); orgs.get(r.org)!.push(r); }
+  for (const r of okRows) { const o = orgName(r.org); if (!orgs.has(o)) orgs.set(o, []); orgs.get(o)!.push(r); }
   const orgList = [...orgs].sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0], 'ko'));
   const maxDay = (rs: StatusRow[]) => rs.map((r) => r.lastOk).filter((d): d is string => !!d).sort().pop();
   /* 마지막 줄 빈 칸이 적은 열 수(3·4) */
@@ -129,10 +134,12 @@ export function Coverage({ hs, molit }: { hs: HomeSources; molit: Molit }) {
             </div>
             {rest.map((r) => (
               <div key={r.id} role="row" className="contents">
-                <span role="rowheader" className="truncate" title={`${r.name} · ${r.owner}`}>{r.owner === 'HOME' ? <span className="mr-1 text-[11px] text-muted-foreground">HOME</span> : null}{r.name}</span>
+                <span role="rowheader" className="truncate" title={`${r.name} · ${r.owner}`}>{r.owner === 'HOME' ? <span className="mr-1 text-[11px] text-muted-foreground" title={HOME_TIP}>{OWNER.HOME}</span> : null}{r.name}</span>
                 {r.cells.map((c, i) => (
-                  <span key={i} role="cell" title={`${r.name} · ${GRID_YEARS[i]} · ${MARK[c]}`} className={`block h-[18px] rounded-[3px] ${c === 'none' ? `border border-line2 ${HATCH}` : ''}`}
-                    style={c === 'full' ? { background: 'var(--primary)' } : c === 'part' ? { background: PART } : undefined}>
+                  <span key={i} role="cell" title={`${r.name} · ${GRID_YEARS[i]} · ${MARK[c]}`} className="block">
+                    {/* 색 칸은 그림만, 읽는 글자는 칠한 칸 밖 sr-only(칠한 바탕 위 숨긴 글자가 대비 검사에 걸리지 않게) */}
+                    <span aria-hidden="true" className={`block h-[18px] rounded-[3px] ${c === 'none' ? `border border-line2 ${HATCH}` : ''}`}
+                      style={c === 'full' ? { background: 'var(--primary)' } : c === 'part' ? { background: PART } : undefined} />
                     <span className="sr-only">{MARK[c]}</span>
                   </span>
                 ))}
@@ -150,10 +157,10 @@ export function Coverage({ hs, molit }: { hs: HomeSources; molit: Molit }) {
 export function Links({ hs }: { hs: HomeSources }) {
   return (
     <Card render={<section aria-label="연결" />}>
-      <PanelHead title="연결" tip="정책–프로그램, 프로그램–사업 연결(사업 원장 links) · 확정 전 = 담당자가 아직 확정하지 않은 제안 · 해제된 연결은 빠짐">
+      <PanelHead title="연결" tip="정책–프로그램, 프로그램–사업 연결(사업 원장 links) · 담당자 확인 전 = 자동으로 제안했고 담당자가 아직 확인하지 않은 연결(원장 '확정 전') · 해제된 연결은 빠짐">
         <LegendList>
-          <li className={KEY}><i className={`${dot} bg-primary`} aria-hidden="true" />확정</li>
-          <li className={KEY}><i className={dot} style={{ background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} aria-hidden="true" />확정 전</li>
+          <li className={KEY}><i className={`${dot} bg-primary`} aria-hidden="true" />담당자 확인</li>
+          <li className={KEY}><i className={dot} style={{ background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} aria-hidden="true" />담당자 확인 전</li>
         </LegendList>
       </PanelHead>
       <div className="mt-3 grid grid-cols-2 gap-x-10 gap-y-5 narrow:grid-cols-1">
@@ -163,12 +170,12 @@ export function Links({ hs }: { hs: HomeSources }) {
             <div key={l.type} className="flex flex-col gap-1.5">
               <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                 <b className="text-[15px]">{LINK_NAME[l.type]}</b>
-                <span className="text-[13px] text-muted-foreground tabular-nums">확정 전 <b className="text-[15px] text-foreground">{fmt(l.review)}</b> · 확정 <b className="text-[15px] text-foreground">{fmt(l.confirmed)}</b></span>
+                <span className="text-[13px] text-muted-foreground tabular-nums">담당자 확인 전 <b className="text-[15px] text-foreground">{fmt(l.review)}</b> · 확인 <b className="text-[15px] text-foreground">{fmt(l.confirmed)}</b></span>
               </div>
               {all ? (
-                <span className="flex h-[14px] gap-px overflow-hidden" role="img" aria-label={`${LINK_NAME[l.type]}: 확정 ${l.confirmed}, 확정 전 ${l.review}`}>
-                  {l.confirmed ? <span style={{ width: `${l.confirmed / all * 100}%`, minWidth: 3, background: 'var(--primary)' }} title={`확정 ${fmt(l.confirmed)}`} /> : null}
-                  {l.review ? <span style={{ width: `${l.review / all * 100}%`, background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} title={`확정 전 ${fmt(l.review)}`} /> : null}
+                <span className="flex h-[14px] gap-px overflow-hidden" role="img" aria-label={`${LINK_NAME[l.type]}: 담당자 확인 ${l.confirmed}, 확인 전 ${l.review}`}>
+                  {l.confirmed ? <span style={{ width: `${l.confirmed / all * 100}%`, minWidth: 3, background: 'var(--primary)' }} title={`담당자 확인 ${fmt(l.confirmed)}`} /> : null}
+                  {l.review ? <span style={{ width: `${l.review / all * 100}%`, background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} title={`담당자 확인 전 ${fmt(l.review)}`} /> : null}
                 </span>
               ) : <span className="text-[13px] text-muted-foreground">연결 없음</span>}
             </div>

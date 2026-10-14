@@ -94,10 +94,15 @@ export function splitPinned(rows: Row[]) {
 /* 긴 표만: 30행을 넘으면 검색(시도 16행 표는 한눈에 보인다), 120행을 넘으면 보이는 행만 그린다(가상 스크롤) */
 export const wants = (n: number) => ({ search: n > 30, virtual: n > 120 });
 
+/* 화면 날짜 표기: 보이는 글의 하이픈 날짜(2026-10-31 · 2026-10 · 2021-09~2026-08)를 점 표기(2026.10.31 · 2026.10)로. 그리드 칸·설명 줄이 그릴 때만 쓴다(CSV·정렬값·주소는 그대로) */
+export const dotDates = (s: string) => s.replace(/\b((?:19|20)\d{2})-(0[1-9]|1[0-2])(?:-([0-3]\d))?\b/g, (_, y, m, d) => (d ? `${y}.${m}.${d}` : `${y}.${m}`));
+
 /* CSV(사업 목록 내려받기): 열 = 화면 열 이름, 숫자 열은 쉼표 없는 수(지연 +12 → 12, 미확인은 글자), 글자 열은 표시 글자(꼬리표는 괄호로).
    엑셀이 한글을 깨뜨리지 않게 UTF-8 BOM 을 앞에 붙이고 줄 끝은 CRLF(RFC 4180) */
 export const CSV_BOM = '\uFEFF';
-const csvField = (s: string) => (/[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s);
+/* 수식 주입 방어: = + - @ 탭·CR 로 시작하는 글자는 엑셀이 수식으로 읽지 않게 앞에 ' 를 붙인다. 숫자(음수 -3·+19 같은 값)는 그대로 */
+const csvSafe = (s: string) => (/^[=+\-@\t\r]/.test(s) && !/^[+-]?\d+(\.\d+)?$/.test(s) ? `'${s}` : s);
+const csvField = (raw: string) => { const s = csvSafe(raw); return /[",\r\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s; };
 export function csvValue(v: Cell, kind: Kind = 'int'): string {
   if (v === null || v === undefined) return '';
   if (isObj(v) && v.na !== undefined) return v.na;

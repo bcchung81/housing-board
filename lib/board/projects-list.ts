@@ -19,8 +19,13 @@ export function statusCell(r: ProjectRow): Cell {
   const why = s === 'none' && r.why ? ` — ${r.why === 'LH 후보' ? 'LH 후보(판정 대상 아님)' : r.why}` : '';
   return { text: STATUS_NAME[s], sort: STATUS_SORT[s], title: `${STATUS_TIP[s]}${why}`, ...(w.kind === 'hatch' ? { mark: 'hatch' as const, muted: true } : w.kind === 'outline' ? { swatch: w.color, mark: 'outline' as const, tone: 'bad' as const } : { swatch: w.color, ...(s === 'long' ? { tone: 'bad' as const } : {}) }) };
 }
-/* 현재 예정: projects-view nextOf(간단 보기 서랍·인쇄 표와 같은 값 — 지난 예정은 색 대신 '경과 n개월' 꼬리표) */
-export const nextCell = (r: ProjectRow): Cell => nextOf(r);
+/* 현재 예정: projects-view nextOf(간단 보기 서랍과 같은 값). 목록·인쇄 표는 지연(개월) 열이 같은 행에 있어 지난 예정의 '경과 n개월' 꼬리표를 빼고
+   날짜를 옅게 둔다(경과 개월은 title 에 — 지연 열·상태와 세 번 겹치지 않게). 지연 열이 없는 간단 보기는 꼬리표를 그대로 쓴다 */
+export const nextCell = (r: ProjectRow): Cell => {
+  const n = nextOf(r);
+  if (!n || lateOf(r) === null) return n;
+  return { text: n.text, sort: n.sort, title: n.title, muted: true };
+};
 /* 칸마다 title 을 붙이면 2,317행 목록의 화면 자료가 커진다 — 설명은 열 머리에 두고 칸에는 뜻이 다른 것(상태·현재 예정·지연)만 */
 export const stagePill = (r: ProjectRow): Cell => ({ text: `${BOARD_CIR[r.board]} ${BOARD_NAMES[r.board]}`, sort: r.board, pill: { color: BOARD_COLOR[r.board], ink: BOARD_INK[r.board] } });
 export const lateCell = (r: ProjectRow): Cell => {
@@ -60,5 +65,6 @@ export function listRows(list: ProjectRow[], f: Filters, sel: string | null, sid
     };
   });
 }
-/* CSV 열 = 화면에 보이는 열(뺀 빈 열 제외)에서 지도 표지만 뺀다(링크라 값이 없다) */
-export const csvCols = (cols: Col[]) => cols.filter((c) => c.key !== 'map');
+/* CSV 열 = 첫 열 사업 id + 화면에 보이는 열(뺀 빈 열 제외)에서 지도 표지만 뺀다(링크라 값이 없다). 화면 표에는 id 열이 없어 행에 붙여 넣는다(csvRows) */
+export const csvCols = (cols: Col[]): Col[] => [{ key: 'id', label: '사업 id', kind: 'text' }, ...cols.filter((c) => c.key !== 'map')];
+export const csvRows = (rows: Row[]): Row[] => rows.map((r) => ({ ...r, c: { id: r.id, ...r.c } }));
