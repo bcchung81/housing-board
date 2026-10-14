@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "notices.schema.json",
   "title": "ledger/notices",
-  "description": "모집 공고. 공고 목록은 실시간(마이홈·LH API, 목록 캐시 1시간)으로 보이고, 이 표에는 사업과 이을 공고와 모집 일정 이력만 보관한다. 공통규격 v1.4 에 없는 확장 표. notice_system: MYHOME 마이홈 · LH 분양임대공고 · APPLYHOME 청약홈 분양정보(notice_id = 주택관리번호-공고번호) · HUG 분양보증 이력(notice_id = 시군구|사업명|공고승인일, 공고일 = 공고승인일).",
+  "description": "모집 공고. 공고 목록은 실시간(마이홈·LH API, 목록 캐시 1시간)으로 보이고, 이 표에는 사업과 이을 공고와 모집 일정 이력만 보관한다. 공통규격 v1.4 에 없는 확장 표. notice_system: MYHOME 마이홈 · LH 분양임대공고 · APPLYHOME 청약홈 분양정보(notice_id = 주택관리번호-공고번호) · HUG 분양보증 이력(notice_id = 시군구|사업명|공고승인일, 공고일 = 공고승인일) · GH 경기주택도시공사 공고 목록(notice_id = 원천 개체 번호 source_object_id, HOME 덤프 gh_notice).",
   "type": "object",
   "required": [
     "schema_version",
@@ -46,7 +46,8 @@
             "MYHOME",
             "LH",
             "APPLYHOME",
-            "HUG"
+            "HUG",
+            "GH"
           ]
         },
         "notice_id": {

@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "policy_targets.schema.json",
+  "title": "ledger/policy_targets",
+  "description": "정책 목표 호수. 한 정책의 목표를 단계·범위 지역·기간·프로그램 단위로 나눈 행(HOME policy.target_units = 정책 전체 기간·범위 한 행, policy_delivery_plan 의 연도별(annual)·프로그램별(programs)·시도 배분(region_allocations·joint_region_units)은 각각의 행). 겹치는 행(전체·연도별·시도별)은 서로 더하지 않는다. 판마다 통째로 바꾼다. 공통규격 v1.4 에 없는 확장 표(2026-10-14, HOME 덤프).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "policy_targets"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "local_policy_id",
+        "local_program_id",
+        "stage_code",
+        "area_codes",
+        "period_start",
+        "period_end",
+        "target_units",
+        "evidence",
+        "source_ref",
+        "review_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "local_policy_id": {
+          "$ref": "common.schema.json#/$defs/local_id"
+        },
+        "local_program_id": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/local_id"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "프로그램별 목표면 programs 의 id, 정책 전체 목표면 null"
+        },
+        "stage_code": {
+          "anyOf": [
+            {
+              "$ref": "common.schema.json#/$defs/stage_code"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "목표가 세는 단계(예: 착공 CONSTRUCTION → 04, 입주 MOVE_IN → 06). 원문에 단계가 없으면 null"
+        },
+        "area_codes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^(\\d{2}|\\d{5})$"
+          },
+          "description": "범위 지역 코드(시도 2자리·시군구 5자리, 전국 00, areas 에 있어야 한다). 둘 이상 = 원문이 합쳐서만 준 목표(예: 경기·인천 합 joint_region_units → [\"28\", \"41\"])"
+        },
+        "period_start": {
+          "$ref": "common.schema.json#/$defs/date"
+        },
+        "period_end": {
+          "$ref": "common.schema.json#/$defs/date",
+          "description": "period_start 이상. 연도별 목표는 그해 1-01~12-31"
+        },
+        "target_units": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "근거(원문 쪽수·URL·주석, 예: HOME evidence_url·pdf_page·note)"
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        },
+        "review_status": {
+          "$ref": "common.schema.json#/$defs/review_status"
+        }
+      }
+    }
+  }
+}

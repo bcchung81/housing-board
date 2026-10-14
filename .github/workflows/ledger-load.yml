@@ -5,7 +5,7 @@
 # git 이 무시하는 과거 판 zip 은 체크아웃에 없어 이 잡이 다시 올리지 않는다(ledger-collect 가 이미 올렸다, ingest_runs.files 에도 빠진다).
 # 비밀값(이름만): SUPABASE_DB_URL · SUPABASE_SECRET_KEY · NEXT_PUBLIC_SUPABASE_URL · NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
 #   선택 BOARD_REVALIDATE_URL · REVALIDATE_SECRET. 필수 넷 중 하나라도 없으면 '비밀값 없음 — 건너뜀'으로 성공 종료한다.
-# 열린 달 주 1회 갱신(ledger-refresh.yml)이 GITHUB_TOKEN 으로 main 에 푸시하면 on: push 가 깨지 않으므로 그 잡이 gh workflow run 으로 이 잡을 건다(workflow_dispatch).
+# 열린 달 갱신(ledger-refresh.yml, 수동 실행)이 GITHUB_TOKEN 으로 main 에 푸시하면 on: push 가 깨지 않으므로 그 잡이 gh workflow run 으로 이 잡을 건다(workflow_dispatch).
 # 공개 저장소: set -x 를 쓰지 않는다. supabase-load.js 는 오류 문장의 연결 문자열·비밀번호·호스트를 *** 로 가린다.
 name: ledger-load
 

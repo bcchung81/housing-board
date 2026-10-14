@@ -2950,6 +2950,11 @@
       ],
       "description": "기준일 당일·이후에 끝나는 현재 예정 중 가장 이른 것. 실제 기록이 있는 종류와 사업 단계가 이미 이른 착공·준공은 뺀다"
      },
+     "done": {
+      "type": "string",
+      "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+      "description": "실제 준공(ACTUAL COMPLETION) 중 가장 늦은 달 YYYY-MM. 실제 준공 기록이 없으면 칸이 없다(지도 '입주중' 표시). 2026-10-14 추가"
+     },
      "units": {
       "type": "integer",
       "minimum": 0,

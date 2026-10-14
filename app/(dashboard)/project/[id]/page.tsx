@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
 import StageLadder from '../../../../components/StageLadder';
 import PanelLink from '../../../../components/board/PanelLink';
@@ -11,20 +11,21 @@ import { SGG, getBoardData } from '../../../../lib/board/data';
 import { DETAILS } from '../../../../lib/shell/menu';
 
 type Props = { params: Promise<{ id: string }> };
-export const generateStaticParams = async () => (await getBoardData()).projects.map((p) => ({ id: p.id }));
+export const generateStaticParams = async () => (await getBoardData()).allProjects.map((p) => ({ id: p.id }));
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  const { projects } = await getBoardData();
-  return { title: projects.find((p) => p.id === id)?.name ?? id };
+  const { allProjects } = await getBoardData();
+  return { title: allProjects.find((p) => p.id === id)?.name ?? id };
 }
 
 /* 사업 상세(L3): 머리·6단계·개요|근거(기획서 4.3). 지금 단계는 계단이 보이므로 문장으로 다시 쓰지 않는다(단계마다 답할 질문은 계단 칸의 title). 건축HUB 관리번호(refs)는 공개 범위가 미결(기획서 Q4)이라 보이지 않는다. */
 export default async function ProjectPage({ params }: Props) {
   const { id } = await params;
-  const { molit, projects, sources } = await getBoardData();
-  const p = DETAILS.project.id.test(id) ? projects.find((x) => x.id === id) : undefined;
+  const { molit, allProjects, sources } = await getBoardData();
+  const p = DETAILS.project.id.test(id) ? allProjects.find((x) => x.id === id) : undefined;
   if (!p) notFound();
+  if (p.supersededBy) redirect(`/project/${p.supersededBy}`);   // 대체된 사업(수도권 → HOME 사업): 옛 주소는 새 사업으로
   const located = !!(p.pnus && p.pnus.length);
   const area = SGG[p.sgg];
   const slug = /^regions\/([^/]+)\//.exec(p.source.dataset)?.[1];   // 지도 번들 출처면 번들의 갱신일이 원천 기준일이다
@@ -37,6 +38,7 @@ export default async function ProjectPage({ params }: Props) {
         <code className="text-[14px] text-muted-foreground" title="사업 id">{p.id}</code>
       </PageHead>
 
+      {p.hiddenAt ? <Card render={<section aria-label="대체됨" />}><p>{`이 사업은 ${p.hiddenAt}부터 목록에서 뺐습니다(대체 사업 없음) — ${p.hiddenReason ?? '대응 사업이 없다'}.`}</p></Card> : null}
       <StageLadder current={p.stageCode} />
 
       <div className="grid grid-cols-2 items-start gap-3.5 narrow:grid-cols-1">

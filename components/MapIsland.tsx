@@ -8,28 +8,34 @@ import { useEffect } from 'react';
 type LoadCtl = { want: (a: string, k: string) => void; got: (a: string, k: string) => void; finish: (a: string) => void; trackFetch: (w: Window) => () => void };
 type W = Window & {
   __mapBooted?: boolean;
+  HOME_MAP?: Record<string, string>;
   LoadView?: { ctl: () => LoadCtl };
   RegionLoader?: { boot: (w: Window, d: Document) => Promise<{ ok?: boolean } | null> };
   GotoBar?: { mount: (w: Window, d: Document) => void };
 };
 
 const LOADVIEW = '/assets/js/loadview.js';
-const LIBS = ['/assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js', '/assets/js/region.js', '/assets/js/infra.js', '/assets/js/facility.js', '/assets/js/bus.js'];
+const LIBS = ['/assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js', '/assets/js/settle.js', '/assets/js/region.js', '/assets/js/infra.js', '/assets/js/facility.js', '/assets/js/bus.js'];
 const CONFIG = '/config.js', APP = '/assets/js/app.js';
+
+/* 해시 이름 표(옛 이름 → app.<해시>.js). 표에 없으면 옛 이름 그대로 */
+let ASSETS: Record<string, string> = {};
 
 function load(src: string) {
   return new Promise<void>((ok, no) => {
     const s = document.createElement('script');
-    s.src = src; s.async = false; s.onload = () => ok(); s.onerror = () => no(new Error(src));
+    s.src = ASSETS[src] || src; s.async = false; s.onload = () => ok(); s.onerror = () => no(new Error(src));
     document.body.appendChild(s);
   });
 }
 
-export default function MapIsland() {
+export default function MapIsland({ assets = {}, homeMap = {} }: { assets?: Record<string, string>; homeMap?: Record<string, string> }) {
   useEffect(() => {
+    ASSETS = assets;
     const w = window as W;
     if (w.__mapBooted) return;
     w.__mapBooted = true;
+    w.HOME_MAP = homeMap;   // 수도권 시군구 → 지도 정적 자료 해시(region.js 가 assets/home-map/<시군구>.<해시>.json 을 부른다)
     const fatal = (e: Error) => {
       const f = document.getElementById('fatal'), l = document.getElementById('loading');
       if (l) l.hidden = true;

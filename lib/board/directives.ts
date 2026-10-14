@@ -22,7 +22,7 @@ const f = (n: number) => n.toLocaleString('en-US');
 const argmax = (a: number[]) => a.reduce((b, v, i) => (v > a[b] ? i : b), 0);
 /* 원장 범위 글자(화면 여러 곳이 같이 쓴다): 전국 여부, 사업 구성, 판정 대상·제외 */
 export const nation = (L: LedgerBoard) => (L.scope.coverage === 'NATIONWIDE' ? '전국' : '전국 아님');
-export const ledgerMix = (L: LedgerBoard) => { const b = L.scope.bySource; return b ? `발급 ${f(b.issued)} · LH 후보 ${f(b.lhCandidates)} · 건축HUB 후보 ${f(b.hubBulkCandidates)}` : `발급 ${f(L.scope.issued)} · 후보 ${f(L.scope.candidates)}`; };
+export const ledgerMix = (L: LedgerBoard) => { const b = L.scope.bySource; return b ? `발급 ${f(b.issued)} · LH 후보 ${f(b.lhCandidates)} · 건축HUB 후보 ${f(b.hubBulkCandidates)}${b.home ? ` · 수도권 HOME ${f(b.home)}` : ''}` : `발급 ${f(L.scope.issued)} · 후보 ${f(L.scope.candidates)}`; };
 export const ledgerJudged = (L: LedgerBoard) => { const b = L.scope.bySource, s = L.judgment.excludedStartOverdue; return `판정 ${f(L.scope.judged)}건(발급 사업은 착공·준공, 건축HUB 후보는 준공 예정 경과만 · 판정 밖: LH 후보 ${f(b?.lhCandidates ?? L.judgment.excluded.projects)}건${s ? `, 건축HUB 후보의 착공 예정 경과 ${f(s.pairs)}건` : ''})`; };
 const L_ = (L: LedgerBoard) => `원장 ${L.observedMonth} 기준 · ${nation(L)}`;
 

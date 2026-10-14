@@ -8,6 +8,7 @@
      --only <달 폴더 기준 경로>를 주면 그 아래 파일만 올린다(주 1회 갱신 .github/workflows/ledger-refresh.yml 은 raw/hub-refresh 만 — 받아 둔 과거 판 zip 을 갱신 때마다 다시 올리지 않게).
      raw/hub-refresh 는 같은 키(<달>/hub-refresh/<법정동>.json.gz)에 덮어쓰므로 Storage 에는 마지막으로 받은 날의 원본이 남는다. pull 은 하지 않는다(갱신 때마다 새로 받는다).
    실행: node tools/ledger/raw-store.js pull|push [--month YYYY-MM](기본 가장 늦은 원장 폴더) [--only <경로>]
+   HOME 덤프 판 raw/home/<덤프시각>/*.jsonl.gz 도 같은 방식: push 는 <달>/home/<덤프시각>/<파일>.gz 로 올리고 pull 은 가장 늦은 판의 없는 파일을 받는다(pullHome).
    환경변수: NEXT_PUBLIC_SUPABASE_URL · SUPABASE_SECRET_KEY(.env.local 또는 환경). 시험: tests/js/monthly.test.cjs */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -41,6 +42,34 @@ async function pull({ root = P.ROOT, month = P.latestMonth(root), api, log = con
     got++;
   }
   log(`pull ${month}: 과거 판 ${files.length}개 중 ${got}개 받음`);
+  await pullHome({ root, month, api, log });
+  return got;
+}
+
+/* HOME 덤프 판(raw/home/<덤프시각>/*.jsonl.gz, git 무시 — 같은 폴더의 manifest.json 만 저장소에 있다) 중 가장 늦은 판의 없는/다른 파일을 Storage <달>/home/<덤프시각>/<파일>.gz 에서 받는다
+   (convert --home 재현용. push 는 git 무시 파일을 다 올리므로 이 폴더도 이미 같은 키로 올라간다). 그 달 → 앞 달 순서로 찾고 sha256(manifest.files)을 맞춘다 */
+async function pullHome({ root = P.ROOT, month = P.latestMonth(root), api, log = console.log }) {
+  const dir = require('./home-source').latestHomeDir(P.ledgerDir(month, root));
+  if (!dir) return 0;
+  const edition = path.basename(dir), files = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).files ?? {};
+  const months = P.ledgerMonths(root).filter((m) => m <= month).reverse();
+  let got = 0;
+  for (const [name, f] of Object.entries(files)) {
+    const target = path.join(dir, name);
+    if (fs.existsSync(target) && (!f.sha256 || sha256(fs.readFileSync(target)) === f.sha256)) continue;
+    let buf = null;
+    for (const m of months) {
+      const gz = await api.download(`${m}/home/${edition}/${name}.gz`);
+      if (!gz) continue;
+      buf = zlib.gunzipSync(gz);
+      if (f.sha256 && sha256(buf) !== f.sha256) throw new Error(`${m}/home/${edition}/${name}: sha256 이 manifest 와 다르다`);
+      break;
+    }
+    if (!buf) throw new Error(`HOME ${edition}/${name} 를 Storage(${months.join('·')})에서 찾지 못했다`);
+    fs.writeFileSync(target, buf);
+    got++;
+  }
+  log(`pull ${month}: HOME 판 ${edition} 의 ${Object.keys(files).length}개 중 ${got}개 받음`);
   return got;
 }
 
@@ -65,7 +94,7 @@ async function push({ root = P.ROOT, month = P.latestMonth(root), api, ignored =
   return up.map((f) => f.key);
 }
 
-module.exports = { pull, push, ignoredFiles };
+module.exports = { pull, pullHome, push, ignoredFiles };
 
 if (require.main === module) {
   const [cmd] = process.argv.slice(2), i = process.argv.indexOf('--month'), o = process.argv.indexOf('--only');

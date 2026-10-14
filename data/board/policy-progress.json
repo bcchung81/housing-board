@@ -1,0 +1,1843 @@
+{
+ "schema": "policy-progress/1",
+ "source": {
+  "system": "home",
+  "edition": "20261013T140241Z",
+  "snapshotAt": "2026-10-13T14:02:41.323977+00:00",
+  "sourceCommit": "21c60b1d5f18afeeff72963d584c4dabb361b7ed",
+  "rule": "HOME 10-home backend policy_delivery.build_delivery + policy_delivery_comparison.comparison_index(정책 전체 범위), web policy-stage-flow.js comparisonStatus"
+ },
+ "asOf": "2026-10-13",
+ "referenceMonthEnd": "2026-09-30",
+ "policies": [
+  {
+   "policyId": "POL_2025_0907",
+   "name": "주택공급 확대방안 (9·7)",
+   "periodStart": "2026-01-01",
+   "periodEnd": "2030-12-31",
+   "targetUnits": 1350000,
+   "basis": {
+    "linkedProjects": 194,
+    "afterDedup": 137,
+    "duplicateExcluded": 57,
+    "missingQuantity": 4,
+    "portfolio": 133,
+    "prePolicyStart": 87,
+    "cohorts": 46,
+    "cohortUnits": 54914,
+    "linkedNotices": 6,
+    "mappingReviewIncluded": true,
+    "rule": "사업 원장(정책 매핑) → 지구·블록 중복 제외(여러 원천이 같은 블록이면 LH 공급계획 하나, 계획이 둘 이상이거나 계획 없이 여러 개면 모두 제외) → 계획물량 있고 정책기간 전 착공이 아닌 묶음"
+   },
+   "stages": {
+    "CONSTRUCTION": {
+     "label": "착공(건설)",
+     "targetBasis": "9·7 원문 연도별 착공 목표",
+     "actualBasis": "동일 범위 공식 지역 착공 통계(서울·경기·인천 합)",
+     "evidence": {
+      "targetCohorts": null,
+      "actualCohorts": null,
+      "reviewIncluded": false,
+      "reviewUnits": null,
+      "confirmedUnits": null,
+      "policyConfirmedUnits": null
+     },
+     "homeRule": {
+      "target": null,
+      "actual": {
+       "date": "2026-08-31",
+       "units": 86739,
+       "reviewUnits": null,
+       "confirmedUnits": null
+      },
+      "status": "NOT_DUE",
+      "gap": null,
+      "shortfallPct": null
+     },
+     "samePeriod": [
+      {
+       "year": 2026,
+       "from": "2026-01-01",
+       "through": "2026-09-30",
+       "target": null,
+       "actual": 86739,
+       "actualThrough": "2026-08-31",
+       "actualReviewUnits": null,
+       "gap": null,
+       "shortfallPct": null,
+       "status": "NOT_DUE"
+      }
+     ],
+     "monthly": [
+      {
+       "month": "2026-01",
+       "target": null,
+       "actual": 7529,
+       "targetYtd": null,
+       "actualYtd": 7529
+      },
+      {
+       "month": "2026-02",
+       "target": null,
+       "actual": 13923,
+       "targetYtd": null,
+       "actualYtd": 13923
+      },
+      {
+       "month": "2026-03",
+       "target": null,
+       "actual": 20204,
+       "targetYtd": null,
+       "actualYtd": 20204
+      },
+      {
+       "month": "2026-04",
+       "target": null,
+       "actual": 37170,
+       "targetYtd": null,
+       "actualYtd": 37170
+      },
+      {
+       "month": "2026-05",
+       "target": null,
+       "actual": 48855,
+       "targetYtd": null,
+       "actualYtd": 48855
+      },
+      {
+       "month": "2026-06",
+       "target": null,
+       "actual": 65204,
+       "targetYtd": null,
+       "actualYtd": 65204
+      },
+      {
+       "month": "2026-07",
+       "target": null,
+       "actual": 77894,
+       "targetYtd": null,
+       "actualYtd": 77894
+      },
+      {
+       "month": "2026-08",
+       "target": null,
+       "actual": 86739,
+       "targetYtd": null,
+       "actualYtd": 86739
+      },
+      {
+       "month": "2026-09",
+       "target": null,
+       "actual": 86739,
+       "targetYtd": null,
+       "actualYtd": 86739
+      }
+     ],
+     "targetPoints": [
+      {
+       "date": "2026-12-31",
+       "units": 269000,
+       "annual_units": 269000
+      },
+      {
+       "date": "2027-12-31",
+       "units": 515000,
+       "annual_units": 246000
+      },
+      {
+       "date": "2028-12-31",
+       "units": 765000,
+       "annual_units": 250000
+      },
+      {
+       "date": "2029-12-31",
+       "units": 1014000,
+       "annual_units": 249000
+      },
+      {
+       "date": "2030-12-31",
+       "units": 1349000,
+       "annual_units": 335000
+      }
+     ],
+     "actualPoints": [
+      {
+       "date": "2026-01-31",
+       "units": 7529,
+       "annual_units": 7529,
+       "by_region": {
+        "서울특별시": 741,
+        "경기도": 6581,
+        "인천광역시": 207
+       }
+      },
+      {
+       "date": "2026-02-28",
+       "units": 13923,
+       "annual_units": 6394,
+       "by_region": {
+        "서울특별시": 3031,
+        "경기도": 2995,
+        "인천광역시": 368
+       }
+      },
+      {
+       "date": "2026-03-31",
+       "units": 20204,
+       "annual_units": 6281,
+       "by_region": {
+        "서울특별시": 1239,
+        "경기도": 3413,
+        "인천광역시": 1629
+       }
+      },
+      {
+       "date": "2026-04-30",
+       "units": 37170,
+       "annual_units": 16966,
+       "by_region": {
+        "서울특별시": 2012,
+        "경기도": 10406,
+        "인천광역시": 4548
+       }
+      },
+      {
+       "date": "2026-05-31",
+       "units": 48855,
+       "annual_units": 11685,
+       "by_region": {
+        "서울특별시": 2607,
+        "경기도": 7013,
+        "인천광역시": 2065
+       }
+      },
+      {
+       "date": "2026-06-30",
+       "units": 65204,
+       "annual_units": 16349,
+       "by_region": {
+        "서울특별시": 3491,
+        "경기도": 8010,
+        "인천광역시": 4848
+       }
+      },
+      {
+       "date": "2026-07-31",
+       "units": 77894,
+       "annual_units": 12690,
+       "by_region": {
+        "서울특별시": 6386,
+        "경기도": 6059,
+        "인천광역시": 245
+       }
+      },
+      {
+       "date": "2026-08-31",
+       "units": 86739,
+       "annual_units": 8845,
+       "by_region": {
+        "서울특별시": 1172,
+        "경기도": 4068,
+        "인천광역시": 3605
+       }
+      }
+     ],
+     "annual": [
+      {
+       "year": 2021,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2022,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2023,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2024,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2025,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2026,
+       "target_units": 269000,
+       "target_cumulative_units": 269000,
+       "management_cumulative_units": null,
+       "actual_units": 86739,
+       "actual_cumulative_units": 86739,
+       "actual_through": "2026-08-31",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2027,
+       "target_units": 246000,
+       "target_cumulative_units": 515000,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2028,
+       "target_units": 250000,
+       "target_cumulative_units": 765000,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2029,
+       "target_units": 249000,
+       "target_cumulative_units": 1014000,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2030,
+       "target_units": 335000,
+       "target_cumulative_units": 1349000,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2031,
+       "target_units": null,
+       "target_cumulative_units": 1349000,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      }
+     ]
+    },
+    "SUPPLY": {
+     "label": "공급(분양·모집)",
+     "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
+     "actualBasis": "동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분",
+     "evidence": {
+      "targetCohorts": 26,
+      "actualCohorts": 11,
+      "reviewIncluded": true,
+      "reviewUnits": 2187,
+      "confirmedUnits": 5419,
+      "policyConfirmedUnits": 0
+     },
+     "homeRule": {
+      "target": {
+       "date": "2026-09-30",
+       "units": 9355
+      },
+      "actual": {
+       "date": "2026-09-30",
+       "units": 7606,
+       "reviewUnits": 2187,
+       "confirmedUnits": 5419
+      },
+      "status": "GAP",
+      "gap": 1749,
+      "shortfallPct": 18.7
+     },
+     "samePeriod": [
+      {
+       "year": 2026,
+       "from": "2026-01-01",
+       "through": "2026-09-30",
+       "target": 9355,
+       "actual": 6680,
+       "actualThrough": "2026-09-30",
+       "actualReviewUnits": 1871,
+       "gap": 2675,
+       "shortfallPct": 28.6,
+       "status": "GAP"
+      }
+     ],
+     "monthly": [
+      {
+       "month": "2026-01",
+       "target": null,
+       "actual": 926,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-02",
+       "target": 206,
+       "actual": 1307,
+       "targetYtd": 206,
+       "actualYtd": 381
+      },
+      {
+       "month": "2026-03",
+       "target": 206,
+       "actual": 1307,
+       "targetYtd": 206,
+       "actualYtd": 381
+      },
+      {
+       "month": "2026-04",
+       "target": 206,
+       "actual": 1307,
+       "targetYtd": 206,
+       "actualYtd": 381
+      },
+      {
+       "month": "2026-05",
+       "target": 1455,
+       "actual": 2758,
+       "targetYtd": 1455,
+       "actualYtd": 1832
+      },
+      {
+       "month": "2026-06",
+       "target": 4798,
+       "actual": 6040,
+       "targetYtd": 4798,
+       "actualYtd": 5114
+      },
+      {
+       "month": "2026-07",
+       "target": 5932,
+       "actual": 6040,
+       "targetYtd": 5932,
+       "actualYtd": 5114
+      },
+      {
+       "month": "2026-08",
+       "target": 8374,
+       "actual": 7297,
+       "targetYtd": 8374,
+       "actualYtd": 6371
+      },
+      {
+       "month": "2026-09",
+       "target": 9355,
+       "actual": 7606,
+       "targetYtd": 9355,
+       "actualYtd": 6680
+      }
+     ],
+     "targetPoints": [
+      {
+       "date": "2026-02-28",
+       "units": 206,
+       "annual_units": 206
+      },
+      {
+       "date": "2026-05-31",
+       "units": 1455,
+       "annual_units": 1249
+      },
+      {
+       "date": "2026-06-30",
+       "units": 4798,
+       "annual_units": 3343
+      },
+      {
+       "date": "2026-07-31",
+       "units": 5932,
+       "annual_units": 1134
+      },
+      {
+       "date": "2026-08-31",
+       "units": 8374,
+       "annual_units": 2442
+      },
+      {
+       "date": "2026-09-30",
+       "units": 9355,
+       "annual_units": 981
+      },
+      {
+       "date": "2026-10-31",
+       "units": 10285,
+       "annual_units": 930
+      },
+      {
+       "date": "2026-11-30",
+       "units": 11351,
+       "annual_units": 1066
+      },
+      {
+       "date": "2026-12-31",
+       "units": 12408,
+       "annual_units": 1057
+      }
+     ],
+     "actualPoints": [
+      {
+       "date": "2025-07-31",
+       "units": 926,
+       "confirmed_units": 610,
+       "policy_confirmed_units": 0,
+       "review_units": 316
+      },
+      {
+       "date": "2026-02-27",
+       "units": 1307,
+       "confirmed_units": 610,
+       "policy_confirmed_units": 0,
+       "review_units": 697
+      },
+      {
+       "date": "2026-05-28",
+       "units": 1825,
+       "confirmed_units": 610,
+       "policy_confirmed_units": 0,
+       "review_units": 1215
+      },
+      {
+       "date": "2026-05-29",
+       "units": 2758,
+       "confirmed_units": 1543,
+       "policy_confirmed_units": 0,
+       "review_units": 1215
+      },
+      {
+       "date": "2026-06-26",
+       "units": 3734,
+       "confirmed_units": 2519,
+       "policy_confirmed_units": 0,
+       "review_units": 1215
+      },
+      {
+       "date": "2026-06-30",
+       "units": 6040,
+       "confirmed_units": 4825,
+       "policy_confirmed_units": 0,
+       "review_units": 1215
+      },
+      {
+       "date": "2026-08-10",
+       "units": 6634,
+       "confirmed_units": 5419,
+       "policy_confirmed_units": 0,
+       "review_units": 1215
+      },
+      {
+       "date": "2026-08-31",
+       "units": 7297,
+       "confirmed_units": 5419,
+       "policy_confirmed_units": 0,
+       "review_units": 1878
+      },
+      {
+       "date": "2026-09-30",
+       "units": 7606,
+       "confirmed_units": 5419,
+       "policy_confirmed_units": 0,
+       "review_units": 2187
+      }
+     ],
+     "annual": [
+      {
+       "year": 2021,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2022,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2023,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2024,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2025,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": 926,
+       "actual_cumulative_units": 926,
+       "actual_through": "2025-07-31",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2026,
+       "target_units": 12408,
+       "target_cumulative_units": 12408,
+       "management_cumulative_units": null,
+       "actual_units": 6680,
+       "actual_cumulative_units": 7606,
+       "actual_through": "2026-09-30",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2027,
+       "target_units": null,
+       "target_cumulative_units": 12408,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2028,
+       "target_units": null,
+       "target_cumulative_units": 12408,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2029,
+       "target_units": null,
+       "target_cumulative_units": 12408,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2030,
+       "target_units": null,
+       "target_cumulative_units": 12408,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2031,
+       "target_units": null,
+       "target_cumulative_units": 12408,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      }
+     ]
+    },
+    "BUSINESS": {
+     "label": "사업화",
+     "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
+     "actualBasis": "동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분",
+     "evidence": {
+      "targetCohorts": 0,
+      "actualCohorts": 1,
+      "reviewIncluded": true,
+      "reviewUnits": 3500,
+      "confirmedUnits": 0,
+      "policyConfirmedUnits": 0
+     },
+     "homeRule": {
+      "target": null,
+      "actual": {
+       "date": "2022-02-09",
+       "units": 3500,
+       "reviewUnits": 3500,
+       "confirmedUnits": 0
+      },
+      "status": "NO_TARGET",
+      "gap": null,
+      "shortfallPct": null
+     },
+     "samePeriod": [
+      {
+       "year": 2026,
+       "from": "2026-01-01",
+       "through": "2026-09-30",
+       "target": null,
+       "actual": null,
+       "actualThrough": null,
+       "actualReviewUnits": null,
+       "gap": null,
+       "shortfallPct": null,
+       "status": "NO_TARGET"
+      }
+     ],
+     "monthly": [
+      {
+       "month": "2026-01",
+       "target": null,
+       "actual": 3500,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-02",
+       "target": null,
+       "actual": 3500,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-03",
+       "target": null,
+       "actual": 3500,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-04",
+       "target": null,
+       "actual": 3500,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-05",
+       "target": null,
+       "actual": 3500,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-06",
+       "target": null,
+       "actual": 3500,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-07",
+       "target": null,
+       "actual": 3500,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-08",
+       "target": null,
+       "actual": 3500,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-09",
+       "target": null,
+       "actual": 3500,
+       "targetYtd": null,
+       "actualYtd": 0
+      }
+     ],
+     "targetPoints": [],
+     "actualPoints": [
+      {
+       "date": "2022-02-09",
+       "units": 3500,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 3500
+      }
+     ],
+     "annual": [
+      {
+       "year": 2021,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2022,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": 3500,
+       "actual_cumulative_units": 3500,
+       "actual_through": "2022-02-09",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2023,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": 3500,
+       "actual_through": "2022-02-09",
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2024,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": 3500,
+       "actual_through": "2022-02-09",
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2025,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": 3500,
+       "actual_through": "2022-02-09",
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2026,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": 3500,
+       "actual_through": "2022-02-09",
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2027,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2028,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2029,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2030,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2031,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      }
+     ]
+    },
+    "APPROVAL": {
+     "label": "인허가",
+     "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
+     "actualBasis": "동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분",
+     "evidence": {
+      "targetCohorts": 3,
+      "actualCohorts": 13,
+      "reviewIncluded": true,
+      "reviewUnits": 12546,
+      "confirmedUnits": 0,
+      "policyConfirmedUnits": 0
+     },
+     "homeRule": {
+      "target": null,
+      "actual": {
+       "date": "2026-06-30",
+       "units": 12546,
+       "reviewUnits": 12546,
+       "confirmedUnits": 0
+      },
+      "status": "NOT_DUE",
+      "gap": null,
+      "shortfallPct": null
+     },
+     "samePeriod": [
+      {
+       "year": 2026,
+       "from": "2026-01-01",
+       "through": "2026-09-30",
+       "target": null,
+       "actual": 1909,
+       "actualThrough": "2026-06-30",
+       "actualReviewUnits": 1909,
+       "gap": null,
+       "shortfallPct": null,
+       "status": "NOT_DUE"
+      }
+     ],
+     "monthly": [
+      {
+       "month": "2026-01",
+       "target": null,
+       "actual": 10637,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-02",
+       "target": null,
+       "actual": 10637,
+       "targetYtd": null,
+       "actualYtd": 0
+      },
+      {
+       "month": "2026-03",
+       "target": null,
+       "actual": 11570,
+       "targetYtd": null,
+       "actualYtd": 933
+      },
+      {
+       "month": "2026-04",
+       "target": null,
+       "actual": 11570,
+       "targetYtd": null,
+       "actualYtd": 933
+      },
+      {
+       "month": "2026-05",
+       "target": null,
+       "actual": 11570,
+       "targetYtd": null,
+       "actualYtd": 933
+      },
+      {
+       "month": "2026-06",
+       "target": null,
+       "actual": 12546,
+       "targetYtd": null,
+       "actualYtd": 1909
+      },
+      {
+       "month": "2026-07",
+       "target": null,
+       "actual": 12546,
+       "targetYtd": null,
+       "actualYtd": 1909
+      },
+      {
+       "month": "2026-08",
+       "target": null,
+       "actual": 12546,
+       "targetYtd": null,
+       "actualYtd": 1909
+      },
+      {
+       "month": "2026-09",
+       "target": null,
+       "actual": 12546,
+       "targetYtd": null,
+       "actualYtd": 1909
+      }
+     ],
+     "targetPoints": [
+      {
+       "date": "2026-12-31",
+       "units": 1370,
+       "annual_units": 1370
+      },
+      {
+       "date": "2027-12-31",
+       "units": 4605,
+       "annual_units": 3235
+      },
+      {
+       "date": "2028-12-31",
+       "units": 8504,
+       "annual_units": 3899
+      }
+     ],
+     "actualPoints": [
+      {
+       "date": "2022-01-06",
+       "units": 560,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 560
+      },
+      {
+       "date": "2023-05-17",
+       "units": 876,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 876
+      },
+      {
+       "date": "2023-12-29",
+       "units": 3182,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 3182
+      },
+      {
+       "date": "2024-12-23",
+       "units": 6679,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 6679
+      },
+      {
+       "date": "2024-12-30",
+       "units": 7522,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 7522
+      },
+      {
+       "date": "2025-02-17",
+       "units": 8858,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 8858
+      },
+      {
+       "date": "2025-09-30",
+       "units": 9695,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 9695
+      },
+      {
+       "date": "2025-10-27",
+       "units": 10637,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 10637
+      },
+      {
+       "date": "2026-03-31",
+       "units": 11570,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 11570
+      },
+      {
+       "date": "2026-06-30",
+       "units": 12546,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 12546
+      }
+     ],
+     "annual": [
+      {
+       "year": 2021,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2022,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": 560,
+       "actual_cumulative_units": 560,
+       "actual_through": "2022-01-06",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2023,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": 2622,
+       "actual_cumulative_units": 3182,
+       "actual_through": "2023-12-29",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2024,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": 4340,
+       "actual_cumulative_units": 7522,
+       "actual_through": "2024-12-30",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2025,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": 3115,
+       "actual_cumulative_units": 10637,
+       "actual_through": "2025-10-27",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2026,
+       "target_units": 1370,
+       "target_cumulative_units": 1370,
+       "management_cumulative_units": null,
+       "actual_units": 1909,
+       "actual_cumulative_units": 12546,
+       "actual_through": "2026-06-30",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2027,
+       "target_units": 3235,
+       "target_cumulative_units": 4605,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2028,
+       "target_units": 3899,
+       "target_cumulative_units": 8504,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2029,
+       "target_units": null,
+       "target_cumulative_units": 8504,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2030,
+       "target_units": null,
+       "target_cumulative_units": 8504,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2031,
+       "target_units": null,
+       "target_cumulative_units": 8504,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      }
+     ]
+    },
+    "COMPLETION": {
+     "label": "준공",
+     "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
+     "actualBasis": "동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분",
+     "evidence": {
+      "targetCohorts": 19,
+      "actualCohorts": 1,
+      "reviewIncluded": true,
+      "reviewUnits": 381,
+      "confirmedUnits": 0,
+      "policyConfirmedUnits": 0
+     },
+     "homeRule": {
+      "target": null,
+      "actual": {
+       "date": "2026-07-31",
+       "units": 381,
+       "reviewUnits": 381,
+       "confirmedUnits": 0
+      },
+      "status": "NOT_DUE",
+      "gap": null,
+      "shortfallPct": null
+     },
+     "samePeriod": [
+      {
+       "year": 2026,
+       "from": "2026-01-01",
+       "through": "2026-09-30",
+       "target": null,
+       "actual": 381,
+       "actualThrough": "2026-07-31",
+       "actualReviewUnits": 381,
+       "gap": null,
+       "shortfallPct": null,
+       "status": "NOT_DUE"
+      }
+     ],
+     "monthly": [
+      {
+       "month": "2026-01",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-02",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-03",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-04",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-05",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-06",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-07",
+       "target": null,
+       "actual": 381,
+       "targetYtd": null,
+       "actualYtd": 381
+      },
+      {
+       "month": "2026-08",
+       "target": null,
+       "actual": 381,
+       "targetYtd": null,
+       "actualYtd": 381
+      },
+      {
+       "month": "2026-09",
+       "target": null,
+       "actual": 381,
+       "targetYtd": null,
+       "actualYtd": 381
+      }
+     ],
+     "targetPoints": [
+      {
+       "date": "2026-10-31",
+       "units": 294,
+       "annual_units": 294
+      },
+      {
+       "date": "2027-05-31",
+       "units": 577,
+       "annual_units": 283
+      },
+      {
+       "date": "2027-12-31",
+       "units": 1427,
+       "annual_units": 850
+      },
+      {
+       "date": "2028-05-31",
+       "units": 1975,
+       "annual_units": 548
+      },
+      {
+       "date": "2028-06-30",
+       "units": 2770,
+       "annual_units": 795
+      },
+      {
+       "date": "2028-09-30",
+       "units": 3613,
+       "annual_units": 843
+      },
+      {
+       "date": "2028-11-30",
+       "units": 3913,
+       "annual_units": 300
+      },
+      {
+       "date": "2029-01-31",
+       "units": 5822,
+       "annual_units": 1909
+      },
+      {
+       "date": "2029-04-30",
+       "units": 7088,
+       "annual_units": 1266
+      },
+      {
+       "date": "2029-07-26",
+       "units": 7397,
+       "annual_units": 309
+      },
+      {
+       "date": "2029-07-31",
+       "units": 9176,
+       "annual_units": 1779
+      },
+      {
+       "date": "2029-10-31",
+       "units": 10458,
+       "annual_units": 1282
+      },
+      {
+       "date": "2029-11-13",
+       "units": 11482,
+       "annual_units": 1024
+      },
+      {
+       "date": "2030-02-28",
+       "units": 12076,
+       "annual_units": 594
+      },
+      {
+       "date": "2031-12-31",
+       "units": 15576,
+       "annual_units": 3500
+      }
+     ],
+     "actualPoints": [
+      {
+       "date": "2026-07-31",
+       "units": 381,
+       "confirmed_units": 0,
+       "policy_confirmed_units": 0,
+       "review_units": 381
+      }
+     ],
+     "annual": [
+      {
+       "year": 2021,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2022,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2023,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2024,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2025,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2026,
+       "target_units": 294,
+       "target_cumulative_units": 294,
+       "management_cumulative_units": null,
+       "actual_units": 381,
+       "actual_cumulative_units": 381,
+       "actual_through": "2026-07-31",
+       "actual_status": "PARTIAL"
+      },
+      {
+       "year": 2027,
+       "target_units": 1133,
+       "target_cumulative_units": 1427,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2028,
+       "target_units": 2486,
+       "target_cumulative_units": 3913,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2029,
+       "target_units": 7569,
+       "target_cumulative_units": 11482,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2030,
+       "target_units": 594,
+       "target_cumulative_units": 12076,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2031,
+       "target_units": 3500,
+       "target_cumulative_units": 15576,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      }
+     ]
+    },
+    "MOVE_IN": {
+     "label": "입주 예정",
+     "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
+     "actualBasis": "입주 실적은 집계하지 않음(실제 시작일만 관리)",
+     "evidence": {
+      "targetCohorts": 22,
+      "actualCohorts": 0,
+      "reviewIncluded": false,
+      "reviewUnits": null,
+      "confirmedUnits": null,
+      "policyConfirmedUnits": null
+     },
+     "homeRule": {
+      "target": {
+       "date": "2026-08-28",
+       "units": 381
+      },
+      "actual": null,
+      "status": "NO_ACTUAL",
+      "gap": null,
+      "shortfallPct": null
+     },
+     "samePeriod": [
+      {
+       "year": 2026,
+       "from": "2026-01-01",
+       "through": "2026-09-30",
+       "target": 381,
+       "actual": null,
+       "actualThrough": null,
+       "actualReviewUnits": null,
+       "gap": null,
+       "shortfallPct": null,
+       "status": "NO_ACTUAL"
+      }
+     ],
+     "monthly": [
+      {
+       "month": "2026-01",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-02",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-03",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-04",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-05",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-06",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-07",
+       "target": null,
+       "actual": null,
+       "targetYtd": null,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-08",
+       "target": 381,
+       "actual": null,
+       "targetYtd": 381,
+       "actualYtd": null
+      },
+      {
+       "month": "2026-09",
+       "target": 381,
+       "actual": null,
+       "targetYtd": 381,
+       "actualYtd": null
+      }
+     ],
+     "targetPoints": [
+      {
+       "date": "2026-08-28",
+       "units": 381,
+       "annual_units": 381
+      },
+      {
+       "date": "2026-12-01",
+       "units": 697,
+       "annual_units": 316
+      },
+      {
+       "date": "2027-02-01",
+       "units": 711,
+       "annual_units": 14
+      },
+      {
+       "date": "2027-09-01",
+       "units": 772,
+       "annual_units": 61
+      },
+      {
+       "date": "2027-10-01",
+       "units": 832,
+       "annual_units": 60
+      },
+      {
+       "date": "2027-12-01",
+       "units": 1350,
+       "annual_units": 518
+      },
+      {
+       "date": "2028-03-01",
+       "units": 1518,
+       "annual_units": 168
+      },
+      {
+       "date": "2028-07-01",
+       "units": 2128,
+       "annual_units": 610
+      },
+      {
+       "date": "2029-02-01",
+       "units": 3061,
+       "annual_units": 933
+      },
+      {
+       "date": "2029-06-01",
+       "units": 4037,
+       "annual_units": 976
+      },
+      {
+       "date": "2029-06-30",
+       "units": 4700,
+       "annual_units": 663
+      },
+      {
+       "date": "2029-11-30",
+       "units": 5009,
+       "annual_units": 309
+      },
+      {
+       "date": "2029-12-31",
+       "units": 6708,
+       "annual_units": 1699
+      },
+      {
+       "date": "2030-02-01",
+       "units": 7990,
+       "annual_units": 1282
+      },
+      {
+       "date": "2030-03-01",
+       "units": 9014,
+       "annual_units": 1024
+      },
+      {
+       "date": "2030-05-01",
+       "units": 9608,
+       "annual_units": 594
+      },
+      {
+       "date": "2031-12-31",
+       "units": 14478,
+       "annual_units": 4870
+      },
+      {
+       "date": "2032-12-31",
+       "units": 17713,
+       "annual_units": 3235
+      },
+      {
+       "date": "2033-12-31",
+       "units": 21612,
+       "annual_units": 3899
+      }
+     ],
+     "actualPoints": [],
+     "annual": [
+      {
+       "year": 2021,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2022,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2023,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2024,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2025,
+       "target_units": null,
+       "target_cumulative_units": null,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2026,
+       "target_units": 697,
+       "target_cumulative_units": 697,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "NOT_ACQUIRED"
+      },
+      {
+       "year": 2027,
+       "target_units": 653,
+       "target_cumulative_units": 1350,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2028,
+       "target_units": 778,
+       "target_cumulative_units": 2128,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2029,
+       "target_units": 4580,
+       "target_cumulative_units": 6708,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2030,
+       "target_units": 2900,
+       "target_cumulative_units": 9608,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      },
+      {
+       "year": 2031,
+       "target_units": 4870,
+       "target_cumulative_units": 14478,
+       "management_cumulative_units": null,
+       "actual_units": null,
+       "actual_cumulative_units": null,
+       "actual_through": null,
+       "actual_status": "FUTURE"
+      }
+     ]
+    }
+   }
+  }
+ ],
+ "notes": [
+  "homeRule 은 HOME 화면과 같다(목표 누적은 정책 시작일부터, 확인 누적은 처음부터라 기간이 섞인다). 우리 화면은 samePeriod(같은 해 1월~기준 달)를 쓴다.",
+  "착공은 정책 전체 범위에서 원문 연도별 목표(연말 점)와 지역 착공 통계를 쓴다 — 연말 목표를 달로 나누지 않는다.",
+  "입주는 예정 물량만 있고 실적은 집계하지 않는다(HOME 과 같다).",
+  "HOME 의 이 계산은 9·7(POL_2025_0907) 전용이다 — 1·29·8·13 은 같은 코드 경로가 없다."
+ ]
+}

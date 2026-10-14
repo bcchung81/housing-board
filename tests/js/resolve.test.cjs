@@ -206,3 +206,24 @@ test('neighbors: 같은 시군구의 읍면동(리 제외)을 법정동·필지�
   assert.equal((await none.run('/api/v1/resolve?sgg=28245')).json.neighbors, undefined);                                                         // 읍면동이 없으면 항목 자체가 없다
   h.done(); many.done(); none.done();
 });
+
+test('옛 광주(29)·전남(46) 코드로 열면 400 이 아니라 통합 코드(12)로 해석하고 legacy-code 로 알린다(/map?sgg=29200)', async () => {
+  const rows = [ROW('1233000000', '전남광주통합특별시 광산구'), ROW('1233010600', '전남광주통합특별시 광산구 운수동')];
+  const h = harness({
+    fetch: async (url) => {
+      const u = new URL(url);
+      if (u.hostname === 'apis.data.go.kr') return { ok: true, status: 200, json: async () => (u.searchParams.get('sido_cd') === '12' && u.searchParams.get('sgg_cd') === '330' ? stanJson(rows) : { RESULT: { resultCode: 'INFO-3' } }) };
+      return { ok: true, status: 200, json: async () => vwJson({ properties: { sig_cd: '12330' }, geometry: SQUARE(126.79, 35.13, 0.1) }) };
+    },
+    readCoverage: () => ({ 12330: { slug: 'gwangju-gwangsan', name: '광주 광산구', updatedAt: '2026-10-04', visibility: 'public' } }),
+  });
+  const r = await h.run('/api/v1/resolve?sgg=29200&geometry=1');
+  assert.equal(r.status, 200);
+  assert.deepEqual([r.json.type, r.json.canonical, r.json.sgg, r.json.input, r.json.name], ['sgg', '12330', '12330', '29200', '전남광주통합특별시 광산구']);
+  assert.deepEqual(r.json.coverage.slug, 'gwangju-gwangsan'); assert.ok(r.json.warnings.includes('legacy-code'));
+  const b = await h.run('/api/v1/resolve?code=2920010600');
+  assert.equal(b.status, 200); assert.equal(b.json.bjd, '1233010600');
+  const n = await h.run('/api/v1/resolve?sgg=46170');
+  assert.equal(n.status, 404); assert.equal(n.json.code, 'unknown-code'); assert.match(n.json.detail, /12170/);   // 나주는 이 가짜 표에 없음 → 새 코드로 찾아 본 뒤 404
+  h.done();
+});

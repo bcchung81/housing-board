@@ -10,14 +10,18 @@ const { validate } = require('../../tools/ledger/validate');
 const ROOT = path.join(__dirname, '..', '..');
 const DIR = path.join(ROOT, 'schemas/ledger');
 const TABLES = ['areas', 'agencies', 'policies', 'programs', 'links', 'projects', 'identifiers', 'project_locations', 'complexes', 'events', 'units', 'notices', 'notice_links', 'stat_facts', 'sources', 'review_required'];
+/* 레지스트리의 HOME 발급 사업(refs.system home, scripts/issue-projects.js --home)은 HOME 판을 넣을 때만 원장에 실린다 — 이 시험은 HOME 판 없이(지금 가진 자료만) 돌린다 */
+const isHomeEntry = (p) => p.refs.some((r) => r.system === 'home');
 const input = loadInputs();
 const tables = convert(input);
 const schema = (t) => JSON.parse(fs.readFileSync(path.join(DIR, `${t}.schema.json`), 'utf8'));
 const by = (rows, f) => rows.reduce((m, r) => ({ ...m, [f(r)]: (m[f(r)] ?? 0) + 1 }), {});
 
-test('스키마: 표 16개 + 공통 1개, draft 2020-12, $id = 파일 이름, 파일 모양 { schema_version, table, rows }', () => {
-  assert.deepEqual(fs.readdirSync(DIR).sort(), [...TABLES, 'common'].map((t) => `${t}.schema.json`).sort());
-  for (const t of TABLES) {
+const HOME_TABLES = ['policy_targets', 'area_facts'];   // HOME 덤프 표(마이그레이션 *_ledger_refine.sql) — HOME 판이 없으면 빈 표
+
+test('스키마: 표 16개 + HOME 표 2개 + 공통 1개, draft 2020-12, $id = 파일 이름, 파일 모양 { schema_version, table, rows }', () => {
+  assert.deepEqual(fs.readdirSync(DIR).sort(), [...TABLES, ...HOME_TABLES, 'common'].map((t) => `${t}.schema.json`).sort());
+  for (const t of [...TABLES, ...HOME_TABLES]) {
     const s = schema(t);
     assert.equal(s.$schema, 'https://json-schema.org/draft/2020-12/schema', t);
     assert.equal(s.$id, `${t}.schema.json`);
@@ -25,7 +29,8 @@ test('스키마: 표 16개 + 공통 1개, draft 2020-12, $id = 파일 이름, �
     assert.deepEqual(s.required, ['schema_version', 'table', 'rows']);
     assert.equal(s.$defs.row.additionalProperties, false, `${t}: 정의하지 않은 열을 받지 않는다`);
   }
-  assert.deepEqual(Object.keys(tables), TABLES, '변환 결과의 표 = 스키마의 표');
+  assert.deepEqual(Object.keys(tables), [...TABLES, ...HOME_TABLES], '변환 결과의 표 18개 = 스키마의 표');
+  assert.deepEqual([tables.policy_targets.length, tables.area_facts.length], [0, 0], 'HOME 판이 없으면 빈 표');
 });
 
 test('공통규격 v1.4 의 값을 그대로 쓰고, 넓힌 값만 더한다(이벤트 종류·날짜 구분·검토 상태)', () => {
@@ -44,7 +49,8 @@ test('지금 가진 자료 전체가 새 표로 옮겨지고 검증(스키마·�
 });
 
 test('화면이 쓰는 숫자가 그대로 나온다: 사업 77건, 단지 22곳, 통계 칸, 원천 19 + 원장 원천 3', () => {
-  assert.deepEqual(tables.projects.map((p) => p.local_project_id), input.registry.projects.map((p) => p.id));
+  assert.deepEqual(tables.projects.map((p) => p.local_project_id), input.registry.projects.filter((p) => !isHomeEntry(p)).map((p) => p.id));
+  assert.ok(tables.projects.every((p) => !p.superseded_by), 'HOME 판이 없으면 HOME 사업으로의 대체를 잇지 않는다(옛 수도권 사업이 그대로)');
   assert.ok(tables.projects.every((p) => p.issued_at), '레지스트리 사업은 모두 발급된 사업');
   assert.equal(tables.complexes.length, 22);
   assert.ok(tables.complexes.every((c) => c.local_project_id), '번들 단지는 모두 사업에 붙어 있다');
@@ -59,7 +65,7 @@ test('화면이 쓰는 숫자가 그대로 나온다: 사업 77건, 단지 22곳
 });
 
 test('공공 여부 근거가 없는 건축HUB 사업과 시군구를 못 찾은 LH 블록은 검토 목록으로 간다', () => {
-  const hub = input.registry.projects.filter((p) => p.refs.every((r) => r.system !== 'bundle'));
+  const hub = input.registry.projects.filter((p) => p.refs.every((r) => r.system !== 'bundle' && r.system !== 'home'));
   const groups = new Set(input.lh.blocks.map((b) => `${b.district}|${b.block}`));
   assert.deepEqual(by(tables.review_required, (r) => r.review_type), { PUBLIC_SCOPE_UNKNOWN: hub.length, SGG_UNRESOLVED: groups.size });
   assert.ok(tables.projects.filter((p) => p.project_unit === 'PROJECT').every((p) => p.public_scope === 'UNKNOWN'));
@@ -90,9 +96,9 @@ test('LH 시군구 매핑이 있으면: 새 블록은 다음 번호의 후보 id
   ] });
   assert.equal(JSON.stringify(input.registry), before);
   assert.deepEqual(validate(t), []);
-  const fresh = t.projects.filter((p) => !p.issued_at);
-  assert.deepEqual(fresh.map((p) => [p.local_project_id, p.project_unit, p.agency_id, p.public_scope]), [['PRJ-41131-0001', 'AREA_UNKNOWN', 'lh', 'PUBLIC']]);
-  assert.deepEqual(t.units.filter((u) => u.local_project_id === 'PRJ-41131-0001').map((u) => [u.housing_type, u.unit_count]), [['공공분양', 1090], ['행복주택', 219]]);
+  const fresh = t.projects.filter((p) => !p.issued_at), next = `PRJ-41131-${String((input.registry.counters['41131'] ?? 0) + 1).padStart(4, '0')}`;   // 레지스트리 카운터 다음(HOME 발급으로 41131 은 0050 까지 썼다)
+  assert.deepEqual(fresh.map((p) => [p.local_project_id, p.project_unit, p.agency_id, p.public_scope]), [[next, 'AREA_UNKNOWN', 'lh', 'PUBLIC']]);
+  assert.deepEqual(t.units.filter((u) => u.local_project_id === next).map((u) => [u.housing_type, u.unit_count]), [['공공분양', 1090], ['행복주택', 219]]);
   assert.deepEqual(t.events.filter((e) => e.local_project_id === a2 && e.source_ref === 'datagokr-15141761').map((e) => [e.event_type, e.date_type, e.plan_basis, e.event_date, e.observed_month]), [['COMPLETION', 'PLANNED', 'CURRENT', '2026-10-31', '2026-10']]);
   assert.equal(t.projects.length, tables.projects.length + 1, '기존 사업에 붙은 블록은 사업을 새로 만들지 않는다');
   assert.equal(t.review_required.filter((r) => r.review_type === 'SGG_UNRESOLVED').length, tables.review_required.filter((r) => r.review_type === 'SGG_UNRESOLVED').length - 2);

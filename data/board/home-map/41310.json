@@ -1,0 +1,13 @@
+{
+  "schema": "home-map/1",
+  "sgg": "41310",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-41310-0044","name":"구리갈매역세권 A-3","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":287,"pks":[],"pnus":[],"bundles":[],"label":"구리갈매역세권 A3","agency":"lh","moveIn":null,"completion":"2028-09-30","noticeUnits":null,"bjd":"4131010100","loc":{"by":"block","at":[127.113819,37.63806],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-41310-0045","name":"조달청)구리갈매역세권 A-2BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-03"},"units":362,"pks":[],"pnus":[],"bundles":[],"label":"구리갈매역세권 A2","agency":"lh","moveIn":null,"completion":"2028-10-03","noticeUnits":null,"bjd":"4131010100","loc":{"by":"block","at":[127.113731,37.63907],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-41310-0046","name":"구리갈매역세권 A-1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":1791,"pks":[],"pnus":[],"bundles":[],"label":"구리갈매역세권 A1","agency":"lh","moveIn":"2028-09","completion":"2028-05-20","noticeUnits":null,"bjd":"4131010100","loc":{"by":"block","at":[127.118727,37.639824],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-41310-0047","name":"조달청)구리갈매역세권 A-4BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-14"},"units":561,"pks":[],"pnus":[],"bundles":[],"label":"구리갈매역세권 A4","agency":"lh","moveIn":"2028-09","completion":"2028-06-14","noticeUnits":309,"bjd":"4131010100","loc":{"by":"district","at":[127.118106,37.64144],"basis":"DISTRICT_REPRESENTATIVE_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}}
+  ]
+}

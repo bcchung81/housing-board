@@ -1,6 +1,6 @@
-# 사업 원장 월 수집 — 새 건축HUB 대용량 판(데이터 월 D 판은 D+1 월 20일께 나온다)으로 원장을 다시 만들어 PR 을 연다.
+# 사업 원장 월 수집 — 2026-10-14 예약 실행 제거(데이터 안정화 전까지 수동 실행만, docs/product/데이터-정제-계획.md 6절). 새 건축HUB 대용량 판(데이터 월 D 판은 D+1 월 20일께 나온다)으로 원장을 다시 만들어 PR 을 연다.
 #   tools/ledger/monthly.js: 판 받기 → hub-bulk → snapshot(API) → 공고 수집 → convert → validate → (새 달이면 trend --close) → trend → board
-#   새 자료가 없으면 아무것도 바꾸지 않고 끝난다(21~25일 매일 돌아도 안전). 같은 브랜치(ledger/<달>-<판>)가 이미 있으면 건너뛴다.
+#   새 자료가 없으면 아무것도 바꾸지 않고 끝난다(여러 번 돌려도 안전). 같은 브랜치(ledger/<달>-<판>)가 이미 있으면 건너뛴다.
 # Supabase 원장에는 쓰지 않는다(begin_run 같은 DB 쓰기 없음). git 이 무시하는 원본(과거 판 zip)만 Storage ledger-raw 에 받고(pull) 올린다(push).
 # 적재는 사람이 PR 을 확인하고 main 에 합친 뒤 ledger-load.yml 이 한다.
 # 비밀값(이름만): NEXT_PUBLIC_SUPABASE_URL · SUPABASE_SECRET_KEY · DATA_GO_KR_KEY. 하나라도 없으면 '비밀값 없음 — 건너뜀'으로 성공 종료한다.
@@ -9,9 +9,6 @@
 name: ledger-collect
 
 on:
-  schedule:
-    # 매달 21~25일 한국시간 09:00(= UTC 00:00)
-    - cron: '0 0 21-25 * *'
   workflow_dispatch:
     inputs:
       month:

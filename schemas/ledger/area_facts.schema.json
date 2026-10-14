@@ -1,0 +1,99 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "area_facts.schema.json",
+  "title": "ledger/area_facts",
+  "description": "지역 지표(인구·가구·주택·고용·미분양 등). 지역 코드·지표·하위 구분·기간마다 값 하나(긴 형식). HOME area_stat 한 행의 여러 값(households·population·…)과 묶음 값(age_bands·sizes·industry_workers)은 지표·하위 구분별 행으로, unsold 는 metric unsold + breakdown(TOTAL 등)으로 푼다. 사업 원장과는 지역 코드로만 만난다. 판마다 통째로 바꾼다. 공통규격 v1.4 에 없는 확장 표(2026-10-14, HOME 덤프).",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "area_facts"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "area_code",
+        "metric",
+        "breakdown",
+        "period",
+        "value",
+        "unit",
+        "definition",
+        "source_ref",
+        "review_status"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "area_code": {
+          "type": "string",
+          "pattern": "^(\\d{2}|\\d{5}|\\d{10})$",
+          "description": "areas 의 area_code(전국 00·시도·시군구·법정동)"
+        },
+        "metric": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_]*$",
+          "description": "지표 이름(소문자·숫자·밑줄, 예: population·households·housing_units·employment_rate·unsold)"
+        },
+        "breakdown": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "하위 구분(예: 연령대 0-14, 가구원수 5+, 산업 A, 미분양 TOTAL). 전체면 null"
+        },
+        "period": {
+          "type": "string",
+          "pattern": "^\\d{4}(-(0[1-9]|1[0-2]|H[12]))?$",
+          "description": "기준 기간: 연 YYYY · 월 YYYY-MM · 반기 YYYY-H1/H2"
+        },
+        "value": {
+          "type": "number"
+        },
+        "unit": {
+          "type": "string",
+          "minLength": 1,
+          "description": "단위(예: 명·가구·호·%·개)"
+        },
+        "definition": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "원천 정의·주의(HOME definition·unit_basis)"
+        },
+        "source_ref": {
+          "$ref": "common.schema.json#/$defs/source_ref"
+        },
+        "review_status": {
+          "$ref": "common.schema.json#/$defs/review_status"
+        }
+      }
+    }
+  }
+}

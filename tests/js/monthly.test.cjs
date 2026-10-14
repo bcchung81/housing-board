@@ -186,6 +186,26 @@ test('raw-store: pull 은 그 달 → 앞 달 경로에서 찾아 sha256 을 맞
   assert.deepEqual(only, ['2026-11/hub-refresh/1129013800.json.gz'], '--only 는 그 폴더 아래만(과거 판 zip 은 다시 올리지 않는다)');
 });
 
+test('raw-store: HOME 덤프 판(raw/home/<덤프시각>)은 <달>/home/<덤프시각>/<파일>.gz 로 올라가고, pull 이 없는·다른 파일만 sha256 을 맞춰 받는다', async () => {
+  const f = fixture();
+  const store = new Map(), api = { download: async (k) => store.get(k) ?? null, upload: async (k, d) => { store.set(k, d); } };
+  const hd = path.join(f.base, 'raw/home/20261013T140241Z'), body = zlib.gzipSync(Buffer.from('{"a":1}\n'));
+  fs.mkdirSync(hd, { recursive: true });
+  write(path.join(hd, 'manifest.json'), { snapshot_at: '2026-10-13T14:02:41Z', files: { 'gh_notice.jsonl.gz': { sha256: crypto.createHash('sha256').update(body).digest('hex'), rows: 1 } } });
+  fs.writeFileSync(path.join(hd, 'gh_notice.jsonl.gz'), body);
+  const keys = await RS.push({ root: f.root, month: '2026-10', api, ignored: ['raw/home/20261013T140241Z/gh_notice.jsonl.gz'], log: () => {} });
+  assert.deepEqual(keys, ['2026-10/home/20261013T140241Z/gh_notice.jsonl.gz.gz']);
+  assert.equal(await RS.pullHome({ root: f.root, month: '2026-10', api, log: () => {} }), 0, '이미 있으면 받지 않는다');
+  fs.rmSync(path.join(hd, 'gh_notice.jsonl.gz'));
+  assert.equal(await RS.pullHome({ root: f.root, month: '2026-10', api, log: () => {} }), 1);
+  assert.deepEqual(fs.readFileSync(path.join(hd, 'gh_notice.jsonl.gz')), body);
+  fs.rmSync(path.join(hd, 'gh_notice.jsonl.gz'));
+  store.set(keys[0], zlib.gzipSync(Buffer.from('다른 내용')));
+  await assert.rejects(RS.pullHome({ root: f.root, month: '2026-10', api, log: () => {} }), /sha256 이 manifest 와 다르다/);
+  store.clear();
+  await assert.rejects(RS.pullHome({ root: f.root, month: '2026-10', api, log: () => {} }), /Storage\(.*\)에서 찾지 못했다/);
+});
+
 /* ---------- 열린 달 주 1회 갱신(--refresh) ---------- */
 const REF_BOARD = (projects, judged = projects - 1) => ({ observedMonth: '2026-10', referenceDate: '2026-10-12', scope: { projects, judged }, judgment: { ok: { projects: judged - 2, units: 9000 }, caution: { projects: 1, units: 500 }, delay: { projects: 1, units: 300 } }, trend: [{ month: '2026-10', edition: '2026-08' }] });
 const mapOf = (grades) => ({ bySgg: { 11290: grades.map((cls, i) => ({ id: `PRJ-11290-${String(i + 1).padStart(4, '0')}`, cls })) } });
@@ -276,7 +296,7 @@ test('hub-bulk.js --month 경로(그 달 원본 · 데이터 월 · 달 기록 �
   assert.equal(`${JSON.stringify(manifest, null, 1)}\n`, fs.readFileSync(H.OUT_MANIFEST, 'utf8'));
 });
 
-test('convert 인자: 그 달 폴더에 단계별 원천 중간 스냅샷(snapshot/stage-*.json)이 있으면 가장 늦은 것을 --stage 로 넘기고, 없으면 넘기지 않는다(스냅샷은 수동 단계)', () => {
+test('convert 인자: 그 달 폴더에 단계별 원천 중간 스냅샷(snapshot/stage-*.json)이 있으면 가장 늦은 것을 --stage 로 넘기고, 없으면 넘기지 않는다(스냅샷은 수동 단계) · HOME 판(raw/home/<덤프시각>)이 있으면 --home·--home-ids', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'ledger-stage-')), dir = path.join(root, 'schemas/ledger-2026-11');
   write(path.join(dir, 'raw/legal-dong/국토교통부_법정동코드_20260929.csv'), 'x');
   write(path.join(dir, 'snapshot/hub-events.json'), { rows: [] });
@@ -288,5 +308,12 @@ test('convert 인자: 그 달 폴더에 단계별 원천 중간 스냅샷(snapsh
   const a = args();
   assert.equal(a[a.indexOf('--stage') + 1], 'schemas/ledger-2026-11/snapshot/stage-2026-09.json');
   assert.equal(a[a.length - 2], '--out', '--out 은 끝');
+  assert.ok(!a.includes('--home'), 'HOME 판이 없으면 넘기지 않는다');
+  write(path.join(dir, 'raw/home/20261001T000000Z/manifest.json'), { files: {} });
+  write(path.join(dir, 'raw/home/20261013T140241Z/manifest.json'), { files: {} });
+  const h = args();
+  assert.deepEqual([h[h.indexOf('--home') + 1], h[h.indexOf('--home-ids') + 1]], ['schemas/ledger-2026-11/raw/home/20261013T140241Z', 'schemas/ledger-2026-11/mappings/home-ids.json'], 'HOME 판(가장 늦은 덤프 시각)과 id 매핑');
+  assert.equal(h[h.length - 2], '--out');
+  assert.ok(M.STATIC.includes('raw/home'), '새 달에 HOME 판을 가져간다');
   fs.rmSync(root, { recursive: true, force: true });
 });

@@ -6,6 +6,9 @@
    --region <slug>         지역 번들(regions/<slug>/projects.json)의 단지를 발급한다. 번들 단지에는 PNU 가 없어 --link-pnu 로 단지 윤곽 중심의 필지(연속지적도)와 법정동(읍면동 경계)을 V-World 에서 찾아 채운다.
    --link-pnu              (번들 단지) 위치 연결. 필지를 못 찾으면 법정동만, 그것도 못 찾으면 비워 둔다(화면은 위치 미연결로 연다).
    --dry-run               레지스트리를 쓰지 않고 무엇이 발급·갱신·합병될지만 보인다.
+   --home [--month YYYY-MM] (네트워크 없음) 원장 표(schemas/ledger-<달>/tables, convert.js --home --out 의 결과)의 수도권 HOME 사업을 발급·갱신하고, 수도권의 다른 발급 사업을
+                           HOME 사업으로 대체(supersededBy)하거나 숨긴다(hiddenAt) — 대응 근거는 mappings/home-registry-match.json 에 쓴다(tools/ledger/home-source.js issueHome).
+                           발급 뒤 convert.js --home --out 을 다시 돌려야 원장의 issued_at·superseded_by 가 채워진다.
    같은 사업은 같은 id 를 받는다(외부 참조가 하나라도 겹치면 같은 사업, lib/projects.js). 키는 .env.local(DATA_GO_KR_KEY…, V-World 개발키)을 쓴다. 키 값은 출력하지 않는다.
    저장소의 registry/projects.json 을 고친 뒤에는 커밋하고 배포해야 운영(resolve·permits)에 반영된다. */
 'use strict';
@@ -19,7 +22,7 @@ const { vworldCreds, VWORLD_URL, redactVworld } = require('../lib/vworld.js');
 const ROOT = path.resolve(__dirname, '..');
 
 function parseArgs(argv) {
-  const a = { bjd: [], region: [], linkPnu: false, dryRun: false, file: DEFAULT_FILE };
+  const a = { bjd: [], region: [], linkPnu: false, dryRun: false, file: DEFAULT_FILE, home: false, month: null };
   for (let i = 0; i < argv.length; i++) {
     const t = argv[i];
     if (t === '--bjd') a.bjd.push(String(argv[++i] || ''));
@@ -27,11 +30,15 @@ function parseArgs(argv) {
     else if (t === '--file') a.file = path.resolve(String(argv[++i] || ''));
     else if (t === '--link-pnu') a.linkPnu = true;
     else if (t === '--dry-run') a.dryRun = true;
+    else if (t === '--home') a.home = true;
+    else if (t === '--month') a.month = String(argv[++i] || '');
     else throw new Error(`알 수 없는 인자: ${t}`);
   }
   for (const b of a.bjd) if (!/^\d{10}$/.test(b)) throw new Error(`--bjd 는 법정동 10자리여야 합니다: ${b}`);
   for (const r of a.region) if (!/^[a-z0-9-]{1,40}$/.test(r)) throw new Error(`--region 은 지역 slug 여야 합니다: ${r}`);
-  if (!a.bjd.length && !a.region.length) throw new Error('--bjd 또는 --region 이 필요합니다');
+  if (a.month && !/^\d{4}-\d{2}$/.test(a.month)) throw new Error(`--month 는 YYYY-MM 이어야 합니다: ${a.month}`);
+  if (a.home && (a.bjd.length || a.region.length)) throw new Error('--home 은 --bjd·--region 과 함께 쓰지 않습니다');
+  if (!a.home && !a.bjd.length && !a.region.length) throw new Error('--bjd 또는 --region 또는 --home 이 필요합니다');
   return a;
 }
 
@@ -65,8 +72,33 @@ async function linkBundleCandidate(env, cand, project, log, doFetch) {
   return cand;
 }
 
+/* --home: 원장 표의 HOME 사업 → 레지스트리(네트워크 없음) */
+function issueHomeCli(args, io = {}) {
+  const log = io.log || console.log;
+  const LP = require('../tools/ledger/paths.js'), H = require('../tools/ledger/home-source.js');
+  const dir = LP.ledgerDir(args.month || LP.latestMonth()), json = (f) => JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+  const homeDir = H.latestHomeDir(dir);
+  if (!homeDir) throw new Error(`${path.relative(ROOT, dir)}/raw/home 에 HOME 판이 없습니다`);
+  const cur = readRegistry(args.file);
+  if (cur.invalid) throw new Error(`레지스트리가 일관성 검사를 통과하지 못해 중단합니다:\n  ${cur.invalid.slice(0, 8).join('\n  ')}`);
+  const tables = Object.fromEntries(['projects', 'identifiers', 'project_locations', 'units'].map((t) => [t, json(`tables/${t}.json`).rows]));
+  const today = io.today || new Date().toISOString().slice(0, 10);
+  const r = H.issueHome(cur.registry, { tables, homeIds: json('mappings/home-ids.json'), lhSgg: json('mappings/lh-block-sgg.json'), today, edition: path.basename(homeDir) });
+  const errs = P.validateRegistry(r.registry);
+  if (errs.length) throw new Error(`발급 결과가 일관성 검사를 통과하지 못해 쓰지 않습니다:\n  ${errs.slice(0, 8).join('\n  ')}`);
+  log(`HOME ${path.basename(homeDir)}: 발급 ${r.issued.length} · 갱신 ${r.updated.length} · 대체 ${r.superseded.length} · 숨김 ${r.hidden.length} → 전체 ${r.registry.projects.length}건`);
+  for (const x of r.superseded) log(`  대체 ${x.from} → ${x.into} (${x.rule} ${x.key ?? ''}) ${x.name ?? ''}`);
+  if (args.dryRun) { log('--dry-run: 레지스트리를 쓰지 않았습니다'); return r; }
+  writeRegistry(r.registry, args.file);
+  const match = { schema: 'home-registry-match/1', edition: path.basename(homeDir), at: today, superseded: r.superseded, hidden: r.hidden };
+  fs.writeFileSync(path.join(dir, 'mappings/home-registry-match.json'), `{\n"schema": "home-registry-match/1",\n"edition": ${JSON.stringify(match.edition)},\n"at": ${JSON.stringify(today)},\n"superseded": [\n${r.superseded.map((x) => JSON.stringify(x)).join(',\n')}\n],\n"hidden": [\n${r.hidden.map((x) => JSON.stringify(x)).join(',\n')}\n]\n}\n`);
+  log(`${path.relative(ROOT, args.file)} · ${path.relative(ROOT, path.join(dir, 'mappings/home-registry-match.json'))} 에 썼습니다. convert.js --home --out 을 다시 돌리고, 커밋·배포해야 운영에 반영됩니다.`);
+  return r;
+}
+
 async function main(argv, io = {}) {
   const log = io.log || console.log, args = parseArgs(argv);
+  if (args.home) return issueHomeCli(args, io);
   const env = io.env || Object.assign({}, loadEnv(path.join(ROOT, '.env.local')), process.env);
   const cur = readRegistry(args.file);
   if (cur.invalid) throw new Error(`레지스트리가 일관성 검사를 통과하지 못해 중단합니다:\n  ${cur.invalid.slice(0, 8).join('\n  ')}`);
@@ -105,4 +137,4 @@ async function main(argv, io = {}) {
 }
 
 if (require.main === module) main(process.argv.slice(2)).catch((e) => { console.error(`오류: ${e.message}`); process.exit(1); });
-module.exports = { parseArgs, vworldAt, linkBundleCandidate, main };
+module.exports = { parseArgs, vworldAt, linkBundleCandidate, main, issueHomeCli };

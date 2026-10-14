@@ -103,3 +103,27 @@ test('build: 로컬 config.js 를 고치지 않는다', () => {
   build({ root, env: { VWORLD_KEY: 'x' }, log: silent });
   assert.equal(fs.readFileSync(path.join(root, 'config.js'), 'utf8'), before);
 });
+
+test('build: 지도 스크립트는 내용 해시 사본이 생기고(옛 이름도 남는다) 표(assets/manifest.json)가 옛 이름→해시 이름을 가리킨다, 내용이 바뀌면 이름이 바뀐다', () => {
+  const root = fixture([R('a', { default: true })]);
+  build({ root, env: {}, log: silent });
+  const m = () => JSON.parse(fs.readFileSync(path.join(root, 'public/assets/manifest.json'), 'utf8'));
+  const first = m();
+  assert.match(first['/assets/js/app.js'], /^\/assets\/js\/app\.[0-9a-f]{8}\.js$/);
+  assert.match(first['/config.js'], /^\/assets\/js\/config\.[0-9a-f]{8}\.js$/);
+  assert.equal(fs.readFileSync(path.join(root, 'public', first['/assets/js/app.js']), 'utf8'), '//app');
+  assert.ok(fs.existsSync(path.join(root, 'public/assets/js/app.js')), '옛 이름도 남는다');
+  fs.writeFileSync(path.join(root, 'assets/js/app.js'), '//app2');
+  build({ root, env: {}, log: silent });
+  assert.notEqual(m()['/assets/js/app.js'], first['/assets/js/app.js']);
+});
+
+test('해시 이름 스크립트만 immutable 장기 캐시(next.config.ts), 지도 섬은 표의 이름으로 불러오고 page 가 preload 한다', () => {
+  const cfg = fs.readFileSync(path.join(__dirname, '../../next.config.ts'), 'utf8');
+  const m = /source: '(\/assets\/js\/:file\([^']+\))', headers: \[\{ key: 'Cache-Control', value: '([^']+)'/.exec(cfg);
+  assert.ok(m && /immutable/.test(m[2]));
+  const re = new RegExp('^' + m[1].replace('/assets/js/:file(', '/assets/js/(').replace(/\\\\/g, '\\') + '$');
+  assert.ok(re.test('/assets/js/app.6cc4d9d9.js')); assert.ok(!re.test('/assets/js/app.js'));
+  assert.match(fs.readFileSync(path.join(__dirname, '../../components/MapIsland.tsx'), 'utf8'), /s\.src = ASSETS\[src\] \|\| src;/);
+  assert.match(fs.readFileSync(path.join(__dirname, '../../app/(map)/map/page.tsx'), 'utf8'), /preload\(href, \{ as: 'script' \}\)/);
+});

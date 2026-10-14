@@ -1,0 +1,11 @@
+{
+  "schema": "home-map/1",
+  "sgg": "11440",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-11440-0071","name":"아현동 699번지 일대","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"아현동 699번지 일대","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1144010100","loc":{"by":"address","at":[126.960787,37.557877],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
+    {"id":"PRJ-11440-0072","name":"망원체육공원 인근","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":940,"pks":[],"pnus":[],"bundles":[],"label":"망원체육공원 인근","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1144012300","loc":{"by":"area","at":[126.89793,37.562257],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}}
+  ]
+}

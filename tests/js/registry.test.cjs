@@ -18,6 +18,7 @@ test('저장소의 registry/projects.json 은 일관성 검사를 통과한다(i
 test('참조 값은 숫자 변환 흔적이 없다(22자리 관리번호가 부동소수 표기 1e+21 이 되면 서로 다른 사업이 한 사업이 된다)', () => {
   for (const p of REAL.projects) for (const r of p.refs) {
     assert.equal(typeof r.value, 'string', `${p.id} ${r.value}`);
+    if (r.system === 'home') { assert.match(r.value, /^(HPR_|PRO_|LH__)[0-9a-f]{24}$/, `${p.id}: HOME id 형식 ${r.value}`); continue; }   // HOME 덤프 id(16진 — e7 같은 글자가 있어 아래 검사에서 뺀다)
     assert.doesNotMatch(r.value, /[eE][+-]?\d|\./, `${p.id}: 부동소수 표기 ${r.value}`);
     if (r.system === 'hub-hs-basis') assert.match(r.value, /^\d{1,22}$/, `${p.id}: 관리번호 형식 ${r.value}`);
   }
@@ -25,7 +26,7 @@ test('참조 값은 숫자 변환 흔적이 없다(22자리 관리번호가 부�
   assert.equal(new Set(long.map((r) => r.value)).size, long.length, '22자리 관리번호가 서로 다르게 보관된다');
 });
 
-test('번들 단지는 모두 사업 id 를 받았고 위치(필지·법정동)가 연결돼 있다(--link-pnu)', () => {
+test('번들 단지는 모두 사업 id 를 받았고 위치(필지·법정동)가 연결돼 있다(--link-pnu) — 수도권 HOME 사업으로 대체된 단지는 새 사업이 번들 참조·필지를 넘겨받는다(2026-10-14)', () => {
   const index = P.indexRegistry(REAL), regions = JSON.parse(fs.readFileSync(path.join(ROOT, 'regions', 'index.json'), 'utf8')).regions;
   assert.ok(regions.length >= 3);
   for (const r of regions) {
@@ -35,7 +36,8 @@ test('번들 단지는 모두 사업 id 를 받았고 위치(필지·법정동)�
       assert.ok(hit, `${r.slug}/${bp.id} 에 사업 id 가 없음 — node scripts/issue-projects.js --region ${r.slug} --link-pnu`);
       const sgg = region.codes.find((c) => c.type === 'sigungu').code;
       assert.equal(hit.sgg, sgg); assert.equal(hit.pnus.length, 1, `${hit.id}: 필지가 연결되지 않음`); assert.equal(hit.pnus[0].slice(0, 5), sgg.length === 5 ? hit.pnus[0].slice(0, 5) : sgg);
-      assert.equal(hit.name, bp.name);
+      if (hit.refs.some((x) => x.system === 'home')) assert.ok(REAL.projects.some((p) => p.supersededBy === hit.id && p.name === bp.name && p.refs.some((x) => x.system === 'bundle' && x.value === bp.id)), `${hit.id}: 대체된 옛 사업(${bp.name})이 있어야 한다`);
+      else assert.equal(hit.name, bp.name);
     }
   }
 });

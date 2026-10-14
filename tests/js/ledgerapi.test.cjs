@@ -103,6 +103,7 @@ test('계약 문서: /api/v1/ledger 경로·LedgerResponse 가 openapi.json 에 
   const op = doc.paths['/api/v1/ledger'].get;
   assert.equal(op.responses['200'].content['application/json'].schema.$ref, '#/components/schemas/LedgerResponse');
   assert.deepEqual(op.parameters.map((p) => p.name), ['sgg']);
-  const props = doc.components.schemas.LedgerProject.required;
-  for (const r of Object.values(MAP.bySgg).flat()) assert.deepEqual(Object.keys(r), props);
+  const props = doc.components.schemas.LedgerProject.required, at = props.indexOf('next') + 1;
+  assert.ok(doc.components.schemas.LedgerProject.properties.done && !props.includes('done'), 'done(마지막 실제 준공 달)은 있을 때만');
+  for (const r of Object.values(MAP.bySgg).flat()) assert.deepEqual(Object.keys(r), 'done' in r ? [...props.slice(0, at), 'done', ...props.slice(at)] : props);
 });

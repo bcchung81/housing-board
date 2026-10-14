@@ -1,0 +1,10 @@
+{
+  "schema": "home-map/1",
+  "sgg": "41500",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-41500-0072","name":"이천장호원 B2BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-22","months":1},"next":null,"units":620,"pks":[],"pnus":[],"bundles":[],"label":"이천장호원 B2","agency":"lh","moveIn":null,"completion":"2026-08-22","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}}
+  ]
+}

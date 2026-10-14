@@ -14,6 +14,9 @@ const migFile = fs.readdirSync(MIG_DIR).find((f) => /^\d{14}_ledger_schema\.sql$
 const SQL = fs.readFileSync(path.join(MIG_DIR, migFile), 'utf8');
 const CODE = SQL.replace(/--[^\n]*/g, '');   // 주석 제거(주석 안에 '--' 를 담은 문자열 리터럴은 없다)
 const scopeFile = fs.readdirSync(MIG_DIR).find((f) => /^\d{14}_public_scope\.sql$/.test(f));
+const refineFile = fs.readdirSync(MIG_DIR).find((f) => /^\d{14}_ledger_refine\.sql$/.test(f));
+const REFINE = refineFile ? fs.readFileSync(path.join(MIG_DIR, refineFile), 'utf8').replace(/--[^\n]*/g, '') : '';
+const NEW_TABLES = ['policy_targets', 'area_facts'];   // *_ledger_refine.sql 이 만든 원장 표(비공개: RLS 정책·api 뷰 없음)
 const SCOPE = scopeFile ? fs.readFileSync(path.join(MIG_DIR, scopeFile), 'utf8').replace(/--[^\n]*/g, '') : '';
 
 const common = JSON.parse(fs.readFileSync(path.join(SCHEMA_DIR, 'common.schema.json'), 'utf8')).$defs;
@@ -23,7 +26,9 @@ const rowSchema = (t) => JSON.parse(fs.readFileSync(path.join(SCHEMA_DIR, `${t}.
 // 스키마에 없고 DB 에만 있는 열: 적재 열, 대리 키, links 의 외래 키용 생성 열
 const META = ['load_run_id', 'load_seq'];
 const ADDED = { project_locations: ['location_id'], events: ['event_id'], units: ['unit_id'], review_required: ['review_id'],
-  links: ['from_policy_id', 'from_program_id', 'to_program_id', 'to_project_id'] };
+  links: ['from_policy_id', 'from_program_id', 'to_program_id', 'to_project_id'],
+  projects: ['retired_run_id'], complexes: ['retired_run_id'],   // 고아 표시(*_ledger_refine.sql, DB 가 정한다)
+  policy_targets: ['target_id'], area_facts: ['fact_id'] };
 const OPS_TABLES = ['months', 'ingest_runs', 'ingest_run_sources', 'board_snapshots'];
 // 도메인 ↔ common.schema.json $defs
 const DOMAIN_DEF = { project_id: 'project_id', sido_code: 'sido', sgg_code: 'sgg', bjd_code: 'bjd', pnu: 'pnu', ym: 'month',
@@ -62,9 +67,10 @@ const literals = (list) => [...list.matchAll(/'((?:[^']|'')*)'/g)].map((m) => m[
 const checks = (item) => [...item.matchAll(/\bcheck\s*\(/gi)].map((m) => inner(item, m.index + m[0].length - 1).trim());
 
 const tables = {};   // name → { columns: {col: {type, checks: [expr]}}, tableChecks: [expr] }
-for (const m of CODE.matchAll(/create table ledger\.(\w+)\s*\(/gi)) {
+for (const m of [...CODE.matchAll(/create table ledger\.(\w+)\s*\(/gi), ...REFINE.matchAll(/create table ledger\.(\w+)\s*\(/gi)]) {
+  const src = m.input;
   const t = { columns: {}, tableChecks: [] };
-  for (const item of splitTop(inner(CODE, m.index + m[0].length - 1))) {
+  for (const item of splitTop(inner(src, m.index + m[0].length - 1))) {
     if (/^(primary key|unique|check|foreign key|constraint)\b/i.test(item)) { if (/^check\b/i.test(item)) t.tableChecks.push(...checks(item)); continue; }
     const [, col, type] = item.match(/^(\w+)\s+([\w.\[\]]+)/);
     t.columns[col] = { type, checks: checks(item) };
@@ -108,8 +114,9 @@ const regexOf = (expr, col) => { const m = expr.match(new RegExp(`^${col}\\s*~\\
 const domainOf = (type) => type.startsWith('ledger.') ? type.slice(7) : null;
 const sorted = (a) => [...a].sort();
 
-test('마이그레이션 한 개, 원장 16표 + 운영 4표가 있다', () => {
+test('원장 16표 + 운영 4표(*_ledger_schema.sql) + 새 원장 2표(*_ledger_refine.sql)가 있다', () => {
   assert.ok(migFile, 'supabase/migrations/<14자리>_ledger_schema.sql');
+  assert.ok(refineFile, 'supabase/migrations/<14자리>_ledger_refine.sql');
   assert.deepEqual(sorted(Object.keys(tables)), sorted([...TABLES, ...OPS_TABLES]));
 });
 
@@ -186,7 +193,7 @@ test('패턴: 도메인 정규식 = common $defs pattern, 열 정규식 CHECK = 
 
 test('RLS: 모든 표 enable row level security, review_required 외에는 select 정책', () => {
   const policies = [...CODE.matchAll(/create policy \w+ on ledger\.(\w+)\s+for (\w+) to ([\w, ]+?) using/gi)];
-  for (const t of Object.keys(tables)) {
+  for (const t of Object.keys(tables).filter((x) => !NEW_TABLES.includes(x))) {   // 새 표는 아래 *_ledger_refine.sql 시험
     assert.match(CODE, new RegExp(`alter table ledger\\.${t}\\s+enable row level security;`), t);
     const mine = policies.filter((p) => p[1] === t);
     if (t === 'review_required') { assert.equal(mine.length, 0, 'review_required 는 공개하지 않는다'); continue; }
@@ -229,7 +236,7 @@ test('api 뷰: 모두 security_invoker, review_required 는 뷰가 없다', () =
   assert.ok(views.length >= 16);
   for (const [, name, opts] of views) assert.match(opts, /security_invoker\s*=\s*true/, name);
   assert.ok(!views.some(([, name]) => name === 'review_required'));
-  for (const t of TABLES.filter((t) => t !== 'review_required')) assert.ok(views.some(([, name]) => name === t), `api.${t}`);
+  for (const t of TABLES.filter((t) => t !== 'review_required' && !NEW_TABLES.includes(t))) assert.ok(views.some(([, name]) => name === t), `api.${t}`);
 });
 
 const namesIn = (s, schema) => [...s.matchAll(new RegExp(`\\b${schema}\\.(\\w+)`, 'g'))].map((m) => m[1]);
@@ -355,4 +362,61 @@ test('공개 범위(Q4 넓힘): api.screens 는 열 다섯·가장 최근 달만
   assert.deepEqual(sorted(readable.api), ['board', 'map', 'screens']);
   assert.deepEqual(sorted(readable.ledger), ['board_snapshots', 'map_snapshots', 'months', 'screen_snapshots']);
   assert.doesNotMatch(SCRSQL, /all tables in schema/i, '이름을 들어 준다');
+});
+
+/* 원장 정제(*_ledger_refine.sql, 데이터-정제-계획 D3): publish_run 고아 정리 + 새 표 policy_targets·area_facts(비공개) */
+test('정제: 새 표 2개는 RLS 켬·정책 없음·anon·authenticated 권한 없음, 쓰기는 service_role 만, 화면 스냅샷·공개 범위는 그대로', () => {
+  assert.ok(refineFile && refineFile > screenFile, '화면 표시값 마이그레이션 뒤에 있다');
+  for (const t of NEW_TABLES) {
+    assert.match(REFINE, new RegExp(`alter table ledger\\.${t}\\s+enable row level security;`), t);
+    assert.match(tables[t].columns.source_ref.type, /^ledger\.source_ref$/, `${t}.source_ref`);
+    assert.match(tables[t].columns.review_status.type, /^ledger\.review_status$/, `${t}.review_status`);
+    assert.ok(tables[t].columns.load_run_id && tables[t].columns.load_seq, `${t}: 적재 열`);
+  }
+  assert.doesNotMatch(REFINE, /create policy|create (or replace )?view|security\s+definer|\bpublic\s*\.|all tables in schema|db_schemas|screen_snapshots/i);
+  assert.match(REFINE, /revoke all on ledger\.policy_targets, ledger\.area_facts from public, anon, authenticated, service_role;/);
+  for (const [, privs, objs, to] of REFINE.matchAll(/\bgrant\s+([\s\S]+?)\s+on\s+([\s\S]+?)\s+to\s+([\s\S]+?);/gi)) {
+    assert.equal(to.trim(), 'service_role', `${privs} on ${objs}`);
+    assert.doesNotMatch(privs, /truncate/i);
+  }
+  assert.match(REFINE, /local_policy_id\s+ledger\.local_id not null references ledger\.policies/);
+  assert.match(REFINE, /local_program_id\s+ledger\.local_id references ledger\.programs/);
+  assert.match(REFINE, /area_code\s+text not null references ledger\.areas/);
+  assert.match(REFINE, /revoke execute on function ledger_admin\.orphan_counts\(\) from public, anon, authenticated;/);
+  assert.match(REFINE, /grant execute on function ledger_admin\.orphan_counts\(\) to service_role;/);
+});
+
+test('정제: publish_run 은 이번 실행에 없는 projects·complexes 를 지우고, 다른 달 events 가 가리키면 retired_run_id 로 표시한다', () => {
+  const fn = REFINE.match(/create or replace function ledger_admin\.publish_run\(p_run bigint, p_expected jsonb\)[\s\S]+?end \$\$;/i)?.[0];
+  assert.ok(fn, 'publish_run 을 같은 서명으로 다시 만든다');
+  assert.match(fn, /v_replace text\[\] := array\['identifiers','project_locations','units','review_required','links','notice_links','policy_targets','area_facts'\]/, '기존 교체 표 + 새 표 2개');
+  assert.match(fn, /v_upsert\s+text\[\] := array\['sources','areas','agencies','projects','complexes','policies','programs','notices','stat_facts'\]/, 'upsert 표는 그대로');
+  assert.match(fn, /delete from ledger\.events where observed_month = v_month;[\s\S]*update ledger\.complexes c set retired_run_id = p_run/, '그 달 events 를 갈아 넣은 뒤 정리');
+  assert.match(fn, /when t in \('projects', 'complexes'\) then ', retired_run_id = null'/, '다시 실리면 표시를 푼다');
+  assert.match(fn, /delete from ledger\.complexes c\s+where c\.load_run_id <> p_run\s+and not exists \(select 1 from ledger\.events e where e\.complex_id = c\.complex_id\)/);
+  assert.match(fn, /with recursive keep\(id\)[\s\S]+ledger\.events e[\s\S]+ledger\.complexes c[\s\S]+superseded_by/, '남길 사업 = events·남은 단지·대체 사슬');
+  assert.match(fn, /update ledger\.projects p set retired_run_id = p_run\s+where p\.load_run_id <> p_run and p\.retired_run_id is null and p\.local_project_id = any \(v_keep\)/);
+  assert.match(fn, /delete from ledger\.projects p\s+where p\.load_run_id <> p_run and p\.local_project_id <> all \(v_keep\)/);
+  assert.match(fn, /jsonb_build_object\('orphans', v_orphans\)/, '정리 건수를 돌려준다');
+  assert.match(fn, /pg_advisory_xact_lock\(hashtext\('ledger_admin\.publish_run'\)\)/);
+  assert.match(REFINE, /alter table ledger\.projects add column retired_run_id bigint references ledger\.ingest_runs;/);
+  assert.match(REFINE, /alter table ledger\.complexes add column retired_run_id bigint references ledger\.ingest_runs;/);
+  assert.match(REFINE, /a\.attname not in \('load_run_id', 'load_seq', 'retired_run_id'\)/, '표시 열은 적재 열처럼 파일에서 받지 않는다');
+  const ex = REFINE.match(/create or replace function ledger_admin\.export_table[\s\S]+?end \$\$;/i)?.[0];
+  assert.ok(ex);
+  for (const c of ['target_id', 'fact_id', 'retired_run_id']) assert.match(ex, new RegExp(`'${c}'`), `export_table 은 ${c} 를 뺀다`);
+  for (const t of NEW_TABLES) assert.match(ex, new RegExp(`'${t}'`), `export_table 이 ${t} 를 내보낸다`);
+  assert.doesNotMatch(REFINE, /alter table ledger\.links/, 'links 는 바꾸지 않는다(이미 판마다 교체, 덤프 판은 source_ref)');
+});
+
+test('정제: notices·notice_links.notice_system 에 GH, identifiers.id_type 에 HOME 을 더한다(앞 마이그레이션은 그대로) — 표 계약 enum 과 같다', () => {
+  for (const [file, col, t, want] of [['notices', 'notice_system', 'notices', 'GH'], ['notice_links', 'notice_system', 'notice_links', 'GH'], ['identifiers', 'id_type', 'identifiers', 'HOME']]) {
+    const m = REFINE.match(new RegExp(`alter table ledger\\.${t} drop constraint ${t}_${col}_check;\\s*alter table ledger\\.${t} add constraint ${t}_${col}_check\\s*check \\(${col} in \\(([^)]*)\\)\\);`));
+    assert.ok(m, `${t}.${col} CHECK 다시 만들기`);
+    const vals = [...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]);
+    assert.ok(vals.includes(want), `${t}.${col} ∋ ${want}`);
+    const contract = JSON.parse(fs.readFileSync(path.join(__dirname, '../../schemas/ledger', `${file}.schema.json`), 'utf8'));
+    const en = JSON.stringify(contract).match(new RegExp(`"${col}":\\{"enum":\\[([^\\]]*)\\]`))[1].replace(/"/g, '').split(',');
+    assert.deepEqual(vals.slice().sort(), en.slice().sort(), `${file}.schema.json enum = 마이그레이션 CHECK`);
+  }
 });

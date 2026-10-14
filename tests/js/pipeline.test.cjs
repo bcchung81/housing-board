@@ -37,13 +37,16 @@ test('단계가 가리키는 코드 위치는 저장소에 실제로 있다(없�
   for (const s of [...P.STEPS, P.LIVE]) for (const f of s.code) assert.ok(fs.existsSync(path.join(ROOT, f)), `${s.id}: ${f}`);
 });
 
-test("'지금' 문구의 수치는 저장소 자료와 같다: 레지스트리 77건·5개 시군구·일정 0건, 번들 단지 22곳, 실시간 API 8개", () => {
-  assert.equal(registry.length, 77);
-  assert.equal(new Set(registry.map((p) => p.sgg)).size, 5);
+test("'지금' 문구의 수치는 저장소 자료와 같다: 살아 있는 레지스트리 279건·70개 시군구(수도권 HOME 263, 옛 수도권 61 = 대체 6 + 숨김 55 — 2026-10-14)·일정 0건, 번들 단지 22곳, 실시간 API 8개", () => {
+  const live = registry.filter((p) => !p.supersededBy && !p.hiddenAt);
+  assert.equal(live.length, 279);
+  assert.equal(new Set(live.map((p) => p.sgg)).size, 70);
+  assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'home')).length, 263);
+  assert.deepEqual([registry.filter((p) => p.supersededBy).length, registry.filter((p) => p.hiddenAt).length], [6, 55]);
   assert.equal(registry.filter((p) => p.schedule).length, 0);
-  assert.equal(registry.filter((p) => p.refs.some((r) => r.system === 'bundle')).length, 22);
+  assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'bundle')).length, 22);
   const ledger = P.STEPS.find((s) => s.id === 'ledger').now;
-  assert.match(ledger, /77건\(5개 시군구\)/); assert.match(ledger, /0건/);
+  assert.match(ledger, /279건\(70개 시군구/); assert.match(ledger, /0건/);
   const routes = [];
   const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'route.ts' && !p.includes('/revalidate/') && !p.includes('/v1/ledger/')) routes.push(p); } };   // ledger 는 원천이 아니라 보관한 원장(api.map)을 읽는다
   walk(path.join(ROOT, 'app/api'));

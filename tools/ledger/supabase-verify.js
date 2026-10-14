@@ -1,11 +1,12 @@
 'use strict';
 /* Supabase 에 실린 한 달 판을 파일과 대조한다 — 설계: docs/product/Supabase-원장-설계.md 6절 6단계.
-   secret 키: ledger_admin.export_table 로 16표를 받아 파일과 행마다 깊은 같음(load_seq 순, 키 순서는 보지 않음) → validate.js 오류 0
+   secret 키: ledger_admin.export_table 로 16표 + 새 표 2개(policy_targets·area_facts, 파일이 없으면 0행)를 받아 파일과 행마다 깊은 같음(load_seq 순, 키 순서는 보지 않음) → validate.js 오류 0
+     → 고아 0(ledger_admin.orphan_counts: 현재 판이 아닌 projects·complexes 는 지워졌거나 표시됨, 마이그레이션 *_ledger_refine.sql).
      → 저장한 보드(api.board) = boardFromLedger(DB 표) = data/board/ledger-board.json, 달은 열림.
      → 저장한 지도 색인(api.map, 그 달 모든 시군구) = mapIndexFromLedger(DB 표) = data/board/ledger-map.json.
      → 저장한 화면 표시값(api.screens, 가장 최근 달 = 그 달, 4행) = 저장소 파일 넷(SCREEN_FILES).
    publishable 키(anon): 공개 범위는 화면 표시값만(기획서 Q4, 마이그레이션 _public_scope.sql·_map_snapshots.sql·_screen_snapshots.sql) — api.board·api.map·api.screens 만 읽히고 나머지 뷰 16개는 거부,
-     review_required 는 api 에 없음, ledger_admin 의 RPC·표 쓰기와 api 뷰 쓰기는 거부. 현재 판 행 수는 1의 왕복(export_table)이 대신한다.
+     review_required·policy_targets·area_facts 는 api 에 없음, ledger_admin 의 RPC·표 쓰기와 api 뷰 쓰기는 거부. 현재 판 행 수는 1의 왕복(export_table)이 대신한다.
    실행: node tools/ledger/supabase-verify.js --month 2026-10 (어긋나면 종료 코드 1) */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -18,7 +19,9 @@ const ROOT = path.join(__dirname, '..', '..');
 const PAGE = 5000;
 const PUBLIC_VIEWS = ['board', 'map', 'screens'];
 const VIEWS = ['board', 'map', 'screens', 'areas', 'agencies', 'sources', 'projects', 'identifiers', 'project_locations', 'complexes', 'events', 'units',
-  'stat_facts', 'policies', 'programs', 'links', 'notices', 'notice_links', 'source_freshness'];
+  'stat_facts', 'policies', 'programs', 'links', 'notices', 'notice_links', 'source_freshness', 'policy_targets', 'area_facts'];
+/* 파일이 없어도 왕복하는 표(마이그레이션 *_ledger_refine.sql) — 파일이 없으면 DB 도 0행이어야 한다 */
+const NEW_TABLES = ['policy_targets', 'area_facts'];
 
 async function exportAll(api, tbl, month) {
   const rows = [];
@@ -38,9 +41,9 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
 
   /* 1 왕복: DB → JSON = 파일 */
   const db = {};
-  for (const tbl of Object.keys(files)) {
+  for (const tbl of [...new Set([...Object.keys(files), ...NEW_TABLES])]) {
     db[tbl] = await exportAll(api, tbl, month);
-    const a = files[tbl], b = db[tbl];
+    const a = files[tbl] ?? [], b = db[tbl];
     const bad = a.findIndex((r, i) => !isDeepStrictEqual(r, b[i]));
     check(a.length === b.length && bad < 0, `${tbl}: 파일 ${a.length}행 · DB ${b.length}행${bad >= 0 ? `, ${bad + 1}번째 행이 다르다` : ''}`);
   }
@@ -48,6 +51,11 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
   const errors = validate(db);
   check(errors.length === 0, `validate(DB 표) 오류 ${errors.length}건: ${errors.slice(0, 3).join(' / ')}`);
   log(`validate(DB 표): 오류 ${errors.length}`);
+
+  /* 1' 고아 0: 현재 판이 아닌 projects·complexes 는 지워졌거나 retired_run_id 로 표시돼 있어야 한다(표시된 행은 닫힌 달 events 가 가리키는 것) */
+  const orphans = await api.rpc('orphan_counts', {});
+  check(orphans.projects_stale === 0 && orphans.complexes_stale === 0, `고아(현재 판 아님·표시 없음): 사업 ${orphans.projects_stale} · 단지 ${orphans.complexes_stale}`);
+  log(`고아: 사업 ${orphans.projects_stale} · 단지 ${orphans.complexes_stale} · 표시(닫힌 달 참조) 사업 ${orphans.projects_retired} · 단지 ${orphans.complexes_retired}`);
 
   /* 2 anon 읽기: api.board·api.map·api.screens 만 읽히고 나머지 뷰는 거부(401·403·404) */
   const anon = async (p, init = {}) => fetch(`${url}/rest/v1/${p}`, { ...init, headers: { apikey: pub, 'Accept-Profile': 'api', ...(init.headers ?? {}) } });

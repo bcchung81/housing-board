@@ -49,8 +49,9 @@ test('StageLadder: 공개 범위 범례, 계단(단계마다 높아지는 상자
 });
 
 test('지도의 단계 필터·단지 카드 단계 위치는 공식 6단계이고, 단지 상태는 사업 레지스트리와 같은 매핑으로 묶인다', () => {
-  assert.match(app, /const STAGES6 = \[\['01', '정책', \[\]\], \['02', '사업화', \[\]\], \['03', '인허가', \['계획'\]\], \['04', '건설', \['건설 단계', '준공 임박'\]\], \['05', '공급', \['분양중'\]\], \['06', '입주', \['입주 단계'\]\]\]/);
+  assert.match(app, /const STAGES6 = \[\['01', '정책', \[\]\], \['02', '사업화', \['사업화'\]\], \['03', '인허가', \['계획'\]\], \['04', '건설', \['건설 단계', '준공 임박'\]\], \['05', '공급', \['분양중'\]\], \['06', '입주', \['입주 단계'\]\]\]/);
   const { stageOf } = require(path.join(ROOT, 'lib/projects.js'));
+  assert.match(app, /'계획': 'plan', '사업화': 'plan'/, '사업화(수도권 원장 01·02 단계)는 계획과 같은 색');   // 지도 개선 계획 3절
   const MAP = { '계획': '03', '건설 단계': '04', '준공 임박': '04', '분양중': '05', '입주 단계': '06' };
   for (const [status, code] of Object.entries(MAP)) assert.equal(stageOf(status, { approvedAt: true }), code, `레지스트리 stageOf(${status})`);
   assert.match(app, /data-status="\$\{live\.join\('\|'\)\}"/, '한 단계가 여러 상태를 함께 켜고 끈다');
@@ -103,7 +104,9 @@ test('표 머리는 단계 번호를 붙이고(03 인허가·04 착공·05 분�
 
 test('지도 범례·옵션 창의 단지 상태는 6단계 순서이고 단계 번호가 붙는다(머리 줄 6단계 필터와 같은 대응)', () => {
   assert.match(app, /const BY_STAGE = STAGES6\.flatMap\(\(s\) => s\[2\]\);/);
-  assert.match(app, /BY_STAGE\.forEach\(\(st\) => \{ if \(present\.has\(st\)\) add\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, st, `<small>\$\{stageOfSt\(st\)\}/);
+  assert.match(app, /BY_STAGE\.forEach\(\(st\) => \{[^]*?if \(!present\.has\(st\)\) return;\n\s+if \(st !== '입주 단계'\) return add\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, st, `<small>\$\{stageOfSt\(st\)\}/);
+  assert.match(app, /add\('<i class="sw move"><\/i>', '입주 진행', `<small>\$\{stageOfSt\(st\)\}/);    // 06 입주는 경과 표지로 둘로 나눈다(2026-10-14)
+  assert.match(app, /'입주 완료', `<small>\$\{stageOfSt\(st\)\}/);
   assert.match(app, /const present = BY_STAGE\.filter\(\(st\) => ALL_ST\.has\(st\)\);/);
   assert.match(app, /\$\{st\} <small>\$\{stageOfSt\(st\)\}<\/small><\/label>/);
 });

@@ -1,0 +1,15 @@
+{
+  "schema": "home-map/1",
+  "sgg": "11260",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-11260-0063","name":"용마산역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"용마산역","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1126010100","loc":{"by":"address","at":[127.08698,37.574653],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
+    {"id":"PRJ-11260-0064","name":"면목(용마터널)","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"면목(용마터널)","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.09315,37.595412],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
+    {"id":"PRJ-11260-0065","name":"상봉역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"상봉역","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.09315,37.595412],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
+    {"id":"PRJ-11260-0066","name":"사가정역","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"사가정역","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.09315,37.595412],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
+    {"id":"PRJ-11260-0067","name":"면목(상봉터미널)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"면목(상봉터미널)","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.09315,37.595412],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
+    {"id":"PRJ-11260-0068","name":"중랑 면목행정복합타운","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2027-06"},"units":712,"pks":[],"pnus":[],"bundles":[],"label":"중랑 면목행정복합타운","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.09315,37.595412],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"]}}
+  ]
+}

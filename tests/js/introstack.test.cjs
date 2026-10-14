@@ -21,8 +21,8 @@ test('주소 intro=stack 이고 움직임 줄이기가 아닐 때만 돈다(그 
   assert.ok(h > a && h < app.indexOf('\n})();', a) && app.split('window.__introStack =').length === 2, '시험 훅은 블록 안에서 한 번만');
 });
 
-test('한 번만 돈다: 첫 스타일에서 숨기고 첫 idle 에 시작, 스타일을 다시 불러오면 그만둔다', () => {
-  assert.match(app, /if \(first\) \{ first = false; show\(0, 0\); map\.once\('idle', start\); return; \}/);
+test('한 번만 돈다: 첫 스타일에서 숨기고 로딩 막이 걷힐 때(whenRevealed) 시작, 스타일을 다시 불러오면 그만둔다', () => {
+  assert.match(app, /if \(first\) \{ first = false; show\(0, 0\); whenRevealed\(start\); return; \}/);
   assert.match(app, /if \(state !== 'wait'\) return; state = 'run';/);
   assert.match(app, /if \(state === 'done'\) return; state = 'done'; stop\(\);/);
   assert.match(app, /state = 'done'; stop\(\); SAVED\.clear\(\); H0 = undefined;/);
@@ -74,6 +74,7 @@ function harness() {
   H.origOp = H.op();
   H.win.addEventListener = (e, f) => { H.win[e] = f; }; H.win.removeEventListener = (e) => { delete H.win[e]; };
   vm.runInNewContext(src, {
+    whenRevealed: (f) => H.map.once('idle', f),   // 가짜 지도에서는 막이 첫 idle 에 걷힌다고 본다
     INTRO_ON: true, map: H.map, $: (s) => H.hud[s], BLK_FILLS: ['blk-build'], DONG_FEATS: [{ properties: { key: 'A2-101' } }, { properties: { key: 'A2-101' } }, { properties: { key: 'A2-102' } }], INFRA_LAYERS: [], INFRA_MODE_LAYERS: [], ZONE_LAYERS: [], BUS_LAYERS: [],
     window: H.win, performance: { now: () => H.now }, requestAnimationFrame: (f) => H.rafs.push(f), cancelAnimationFrame: () => {},
     setTimeout: (f, t) => { H.timers.set(++H.tid, [t, f]); return H.tid; }, clearTimeout: (id) => H.timers.delete(id),

@@ -1,0 +1,14 @@
+{
+  "schema": "home-map/1",
+  "sgg": "41192",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-41192-0060","name":"조달청)부천종합운동장역세권 A-1BL 및 A-2BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-25"},"units":550,"pks":[],"pnus":[],"bundles":[],"label":"부천종합운동장역세권 A2","agency":"lh","moveIn":null,"completion":"2028-10-25","noticeUnits":null,"bjd":null,"loc":{"by":"block","at":[126.797077,37.509817],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-41192-0061","name":"부천종합운동장 역세권 A1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-25"},"units":293,"pks":[],"pnus":[],"bundles":[],"label":"부천종합운동장역세권 A1","agency":"lh","moveIn":null,"completion":"2028-10-25","noticeUnits":null,"bjd":null,"loc":{"by":"block","at":[126.79551,37.510697],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-41192-0062","name":"부천역곡 A2","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-31"},"units":1464,"pks":[],"pnus":[],"bundles":[],"label":"부천역곡 A2","agency":"lh","moveIn":"2029-06","completion":"2029-01-31","noticeUnits":976,"bjd":"4119210300","loc":{"by":"block","at":[126.807056,37.495733],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-41192-0063","name":"원미공원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"원미공원","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.78233,37.506303],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
+    {"id":"PRJ-41192-0064","name":"원미사거리 북측","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"원미사거리 북측","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.78233,37.506303],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}}
+  ]
+}

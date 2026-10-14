@@ -1,4 +1,4 @@
-# 사업 원장 열린 달 주 1회 갱신(월요일 한국시간 06:00) — 건축HUB 대용량 판(월 1회) 사이의 착공·사용검사·예정일 변화를 주택인허가 기본개요 OpenAPI 현재값으로 덮어쓴다.
+# 사업 원장 열린 달 갱신 — 2026-10-14 예약 실행 제거(데이터 안정화 전까지 수동 실행만, docs/product/데이터-정제-계획.md 6절). 건축HUB 대용량 판(월 1회) 사이의 착공·사용검사·예정일 변화를 주택인허가 기본개요 OpenAPI 현재값으로 덮어쓴다.
 #   tools/ledger/monthly.js --refresh: 기준일 = 오늘 → hub-bulk → hub-api-refresh(법정동 약 1,600곳) → snapshot → 공고 수집 → convert → validate → trend → board
 #   가장 늦은 원장 폴더가 한국시간 이번 달이 아니면(새 달 폴더는 ledger-collect 가 21일부터 만든다) 'skipped' 로 끝난다.
 #   결과 unchanged → 끝. auto → github-actions 봇으로 main 에 커밋·푸시하고 ledger-load 를 직접 건다. review(판정 등급이 바뀐 사업 > max(50, 2%) 또는 사업 수 ±2% 초과) → 브랜치 PR.
@@ -10,9 +10,6 @@
 name: ledger-refresh
 
 on:
-  schedule:
-    # 주 1회 월요일 한국시간 06:00(= UTC 일요일 21:00)
-    - cron: '0 21 * * 0'
   workflow_dispatch:
 
 permissions:

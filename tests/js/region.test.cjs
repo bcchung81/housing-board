@@ -680,7 +680,7 @@ test('attachLedger: 인허가 단지는 pnu·건축HUB 관리번호(refs↔pks)�
   const b = R.emptyBundle({ name: '계양', center: [126.7, 37.5] }, { regions: [] }, fc);
   assert.equal(R.attachLedger(b.blocks, [LEDGER]), 3);
   const by = (n) => b.blocks.find((x) => x.name === n).ledger;
-  assert.deepEqual(by('장미연립 뷰그리안'), { id: 'PRJ-28245-0029', issued: false, stage: '03', cls: 'delay', overdue: { months: 33, planned: '2024-01-02', eventType: 'COMPLETION' }, next: null, month: '2026-10', referenceDate: LEDGER.referenceDate, origin: 'supabase' });
+  assert.deepEqual(by('장미연립 뷰그리안'), { id: 'PRJ-28245-0029', issued: false, stage: '03', cls: 'delay', overdue: { months: 33, planned: '2024-01-02', eventType: 'COMPLETION' }, next: null, done: null, moveIn: null, month: '2026-10', referenceDate: LEDGER.referenceDate, origin: 'supabase' });
   assert.equal(by('이름만 다름').id, 'PRJ-28245-0036'); assert.equal(by('이름만 다름').cls, 'caution');
   assert.equal(by('x').id, 'PRJ-28245-0001'); assert.equal(by('x').issued, true);
   assert.equal(by('인천계양 테크노밸리 A6 블록'), undefined);

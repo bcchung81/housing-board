@@ -229,7 +229,7 @@ test('건물대장: 같은 세대수·면적 후보가 둘이면 모호로 남�
 });
 
 test('건물대장: 보강이 필요 없으면(모두 위치 있고 준공) 대장·대지위치는 부르지 않는다', async () => {
-  const done = [rec({ bjdongCd: '11400', bun: '0100', bldNm: '준공단지', totHhldCnt: 80, apprvDay: '20180101', stcnsDay: '20200101', useInsptDay: '20230101' })];
+  const done = [rec({ bjdongCd: '11400', bun: '0100', bldNm: '준공단지', totHhldCnt: 80, apprvDay: '20180101', stcnsDay: '20200101', useInsptDay: '20250301' })];
   const h = harness({ fetch: ledgerFetch({ basis: done }) });
   const r = await h.run(`/api/v1/permits?bjd=${GB}`);
   assert.equal(r.json.features[0].properties.status, '입주 단계'); assert.equal(calls(h, 'getBrRecapTitleInfo').length, 0); assert.equal(calls(h, 'getHpPlatPlcInfo').length, 0);

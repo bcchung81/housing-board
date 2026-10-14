@@ -147,15 +147,18 @@ test('LH 블록 연결: 시군구·블록 코드·지구 이름이 맞으면 LH 
   assert.deepEqual([sep.project_unit, sep.stage_code, sep.issued_at, sep.public_scope], ['BLOCK', '04', null, 'UNKNOWN']);
 });
 
-test('관리번호는 한 번만: 대용량 기록마다 식별자 한 행(사업 또는 LH 후보) · 시군구 미해결 검토 · 레지스트리와 겹침 중 하나', () => {
+test('관리번호는 한 번만: 대용량 기록마다 식별자 한 행(사업 또는 LH 후보) · 시군구 미해결 검토 · 레지스트리와 겹침 중 하나 — 수도권(11·28·41) 기록은 HOME 덤프가 정본이라 원장에 없다(2026-10-14)', () => {
   const ids = saved.identifiers.filter((i) => i.id_type === 'HUB_HS_PK');
   assert.equal(new Set(ids.map((i) => i.id_value)).size, ids.length);
   const fromBulk = new Set(ids.filter((i) => i.source_ref === BULK).map((i) => i.id_value));
   const unresolved = new Set(saved.review_required.filter((r) => r.review_type === 'SGG_UNRESOLVED' && r.source_ref === BULK).map((r) => r.record_key));
   const registry = new Set(ids.filter((i) => i.source_ref !== BULK).map((i) => i.id_value));
-  for (const r of bulk.records) assert.equal([fromBulk.has(r.pk), unresolved.has(r.pk), registry.has(r.pk)].filter(Boolean).length, 1, r.pk);
-  const regLeft = bulk.records.filter((r) => registry.has(r.pk)).length;
-  assert.equal(fromBulk.size, bulk.records.length - unresolved.size - regLeft, '2026-08 판: 4,103 - 미해결 5 - 레지스트리');
+  const mapper = H.codeMapper(legalDong.rows, legalDong.abolished);
+  const capital = (r) => ['11', '28', '41'].includes(H.locate(r, mapper).sgg?.slice(0, 2));
+  for (const r of bulk.records) assert.equal([fromBulk.has(r.pk), unresolved.has(r.pk), registry.has(r.pk)].filter(Boolean).length, capital(r) ? 0 : 1, r.pk);
+  const regLeft = bulk.records.filter((r) => registry.has(r.pk)).length, cap = bulk.records.filter(capital).length;
+  assert.ok(cap > 0);
+  assert.equal(fromBulk.size, bulk.records.length - unresolved.size - regLeft - cap, '2026-08 판: 4,103 - 미해결 5 - 레지스트리 - 수도권');
 });
 
 test('매핑은 더하기만: 장기 미갱신으로 빠진 관리번호의 id 도 매핑에 남고(사업은 없음), 대용량 후보 사업은 모두 매핑의 id', () => {

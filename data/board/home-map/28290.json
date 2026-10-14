@@ -1,0 +1,14 @@
+{
+  "schema": "home-map/1",
+  "sgg": "28290",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-28290-0054","name":"인천검단 AA19BL 민간참여 공공주택건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"units":1323,"pks":[],"pnus":[],"bundles":[],"label":"인천검단 AA19BL 민간참여 …","agency":"lh","moveIn":null,"completion":"2027-10-31","noticeUnits":null,"bjd":"2829011000","loc":{"by":"address","at":[126.702771,37.608976],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-28290-0055","name":"인천검단 AA19","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2027-11"},"units":991,"pks":[],"pnus":[],"bundles":[],"label":"인천검단 AA19","agency":"lh","moveIn":"2027-11","completion":null,"noticeUnits":null,"bjd":"2829011000","loc":{"by":"address","at":[126.702771,37.608976],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-28290-0056","name":"[(100585)인천검단]인천검단AA13-1BL5공구,AA13-2BL6공구및인천신문아파트건설공사","issued":true,"stage":"04","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-02-18","months":19},"next":null,"units":964,"pks":[],"pnus":[],"bundles":[],"label":"[(100585)인천검단]인천검…","agency":"lh","moveIn":null,"completion":"2025-02-18","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-28290-0057","name":"인천검단 AA-21BL 아파트 건설공사 7공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-07","months":2},"next":null,"units":1224,"pks":[],"pnus":[],"bundles":[],"label":"인천검단 AA21","agency":"lh","moveIn":null,"completion":"2026-08-07","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-28290-0058","name":"[(100585)인천검단]인천검단AA13-1BL5공구,AA13-2BL6공구및인천신문아파트건설공사","issued":true,"stage":"04","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-02-18","months":19},"next":null,"units":702,"pks":[],"pnus":[],"bundles":[],"label":"[(100585)인천검단]인천검…","agency":"lh","moveIn":null,"completion":"2025-02-18","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}}
+  ]
+}

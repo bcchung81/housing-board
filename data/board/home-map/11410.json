@@ -1,0 +1,13 @@
+{
+  "schema": "home-map/1",
+  "sgg": "11410",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-11410-0033","name":"연희2","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1067,"pks":[],"pnus":[],"bundles":[],"label":"연희2","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1141011700","loc":{"by":"address","at":[126.932167,37.576894],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
+    {"id":"PRJ-11410-0034","name":"고은산 서측","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2577,"pks":[],"pnus":[],"bundles":[],"label":"고은산 서측","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.933178,37.582858],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
+    {"id":"PRJ-11410-0035","name":"충정로1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":297,"pks":[],"pnus":[],"bundles":[],"label":"충정로1","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1141010200","loc":{"by":"address","at":[126.964435,37.560904],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
+    {"id":"PRJ-11410-0036","name":"홍은1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":329,"pks":[],"pnus":[],"bundles":[],"label":"홍은1","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1141011800","loc":{"by":"address","at":[126.942387,37.592304],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null}
+  ]
+}

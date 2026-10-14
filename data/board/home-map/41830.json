@@ -1,0 +1,10 @@
+{
+  "schema": "home-map/1",
+  "sgg": "41830",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-41830-0020","name":"조달청)양평공흥(고령자) 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-23"},"units":150,"pks":[],"pnus":[],"bundles":[],"label":"조달청)양평공흥(고령자) 아파트…","agency":"lh","moveIn":null,"completion":"2028-09-23","noticeUnits":null,"bjd":"4183025000","loc":null,"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}}
+  ]
+}

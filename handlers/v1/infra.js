@@ -136,7 +136,7 @@ function createHandler(overrides = {}) {
      주소는 환경변수의 이 프로젝트 호스트만 쓰고 요청의 Host 헤더는 쓰지 않는다(다른 서버로 보내는 중계가 되지 않게). 못 받으면(보호된 미리보기 배포 등) 직접 만든다. */
   const selfHost = () => (env.VERCEL ? (env.VERCEL_ENV === 'production' ? env.VERCEL_PROJECT_PRODUCTION_URL : env.VERCEL_URL) : '') || '';
   async function permitsOf(bjd) {
-    const local = cache.get(`permits:${bjd}`);
+    const local = cache.get(`permits:v2:${bjd}`);   // 키는 handlers/v1/permits.js getPermits 와 같게
     if (local) return local;
     const host = selfHost();
     if (/^[a-z0-9.-]+$/i.test(host)) {

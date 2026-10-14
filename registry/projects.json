@@ -1,14 +1,736 @@
 {
  "schema": "project-registry/1",
- "updatedAt": "2026-10-06",
+ "updatedAt": "2026-10-14",
  "counters": {
-  "11290": 13,
+  "11110": 21,
+  "11140": 37,
+  "11170": 51,
+  "11200": 177,
+  "11215": 33,
+  "11230": 99,
+  "11260": 68,
+  "11290": 64,
+  "11305": 44,
+  "11320": 40,
+  "11350": 100,
+  "11380": 92,
+  "11410": 36,
+  "11440": 72,
+  "11470": 89,
+  "11500": 107,
+  "11530": 96,
+  "11545": 46,
+  "11560": 148,
+  "11590": 70,
+  "11620": 56,
+  "11650": 81,
+  "11680": 114,
+  "11710": 89,
+  "11740": 103,
   "12170": 12,
   "12330": 4,
-  "28245": 6,
-  "41450": 42
+  "28125": 27,
+  "28155": 37,
+  "28177": 64,
+  "28200": 66,
+  "28237": 65,
+  "28245": 57,
+  "28275": 38,
+  "28290": 58,
+  "41110": 3,
+  "41113": 35,
+  "41130": 2,
+  "41131": 50,
+  "41133": 25,
+  "41135": 125,
+  "41150": 101,
+  "41170": 1,
+  "41190": 5,
+  "41192": 64,
+  "41194": 61,
+  "41196": 104,
+  "41210": 72,
+  "41220": 188,
+  "41270": 1,
+  "41273": 24,
+  "41281": 95,
+  "41285": 49,
+  "41290": 33,
+  "41310": 47,
+  "41360": 207,
+  "41370": 47,
+  "41390": 92,
+  "41410": 43,
+  "41430": 48,
+  "41450": 74,
+  "41463": 89,
+  "41480": 112,
+  "41500": 72,
+  "41570": 73,
+  "41590": 37,
+  "41595": 23,
+  "41610": 38,
+  "41630": 99,
+  "41830": 20
  },
  "projects": [
+  {
+   "id": "PRJ-11110-0021",
+   "sgg": "11110",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "신문로2-12",
+   "bjdCodes": [
+    "1111012000"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_5f54e7fe60461ae576fea874"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c8a1e75dfe2b64502d7fc3bf"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 180
+  },
+  {
+   "id": "PRJ-11140-0037",
+   "sgg": "11140",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "신당(약수역)",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3b351d68b4524d8245bb2f77"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_828b43a99a4dad190e41a04b"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11170-0043",
+   "sgg": "11170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "강변강서",
+   "bjdCodes": [
+    "1117012900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1b643a618844087eca2dd1ff"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_11359ffaed64d6181df9ee98"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11170-0044",
+   "sgg": "11170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "효창공원앞역 북측",
+   "bjdCodes": [
+    "1117011900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_40c6d821035f8470377d5252"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_27bfdbf8ed76b3da6a98430c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 4040
+  },
+  {
+   "id": "PRJ-11170-0045",
+   "sgg": "11170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "용산 도시재생 혁신지구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_58a6500c99fca310f7f6f6a2"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4a8887ae58a527a89721074f"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 324
+  },
+  {
+   "id": "PRJ-11170-0046",
+   "sgg": "11170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "캠프킴",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_56683e0f78435ded484e385c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6dcdb7568638547d5f13ceb9"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 2500
+  },
+  {
+   "id": "PRJ-11170-0047",
+   "sgg": "11170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "용산국제업무지구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b88d205203b45e3252eef900"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8f7cfd0355b772455738fd2e"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 10000
+  },
+  {
+   "id": "PRJ-11170-0048",
+   "sgg": "11170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "용산 유수지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_55c6406e410adeec48ec05aa"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a905cf21f6f91eb32576d273"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 480
+  },
+  {
+   "id": "PRJ-11170-0049",
+   "sgg": "11170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "501 정보대(서빙고초 앞)",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_057f5dabb56e035a6ebefded"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c1d5bedb5aefab204a5b5d99"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 150
+  },
+  {
+   "id": "PRJ-11170-0050",
+   "sgg": "11170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "용산우체국",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ac7233662b91203fdbcf4187"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_cefa946583e53cb64b880357"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 47
+  },
+  {
+   "id": "PRJ-11170-0051",
+   "sgg": "11170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "효창공원앞역",
+   "bjdCodes": [
+    "1117011900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3a560649039e261361377236"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f19bf0c0c0b51092e3d80d8f"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11200-0176",
+   "sgg": "11200",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "금호23",
+   "bjdCodes": [
+    "1120011200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_246f7bf3bdcbddcba5359d68"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_126d35cae4b149d658589f67"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 764
+  },
+  {
+   "id": "PRJ-11200-0177",
+   "sgg": "11200",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "성수동 舊 서울경찰청기마대 부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_7a8f3e19e66801787ee942da"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_2795613a48f123a6709eb5c6"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 260
+  },
+  {
+   "id": "PRJ-11215-0031",
+   "sgg": "11215",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "성동초 인근",
+   "bjdCodes": [
+    "1121510500"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_11d328e50c02ea5a7d072a2c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_64ef4a45d1f90c80f246565b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 254
+  },
+  {
+   "id": "PRJ-11215-0032",
+   "sgg": "11215",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "중곡역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2d56db0e9ce681cd737f530c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a32a60f7e6ad0b98bb311b2a"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11215-0033",
+   "sgg": "11215",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "아차산역 동측",
+   "bjdCodes": [
+    "1121510300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3dc5e63d5f1edc506e0f9da3"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b70ded4cc8fb1d859a373886"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1663
+  },
+  {
+   "id": "PRJ-11230-0098",
+   "sgg": "11230",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "용두1-6",
+   "bjdCodes": [
+    "1123010200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_190c130af041d33c59be3c25"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c2ebf7487f34d2db731550e1"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 977
+  },
+  {
+   "id": "PRJ-11230-0099",
+   "sgg": "11230",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "동대문구 일원",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4da395f20d4e6ca225307548"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c50c7cd5ce2780239e1b47ad"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1500
+  },
+  {
+   "id": "PRJ-11260-0063",
+   "sgg": "11260",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "용마산역",
+   "bjdCodes": [
+    "1126010100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_71892ddab86d91d8e71f63be"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_169086e0fab041b971b4559d"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11260-0064",
+   "sgg": "11260",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "면목(용마터널)",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1fdf9e4c422edeb5a29718c9"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1a2f7971d22b94d5210c83b2"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11260-0065",
+   "sgg": "11260",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "상봉역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_50b11f3b35a873665f286806"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_26a2505a43a97489b36b6748"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11260-0066",
+   "sgg": "11260",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "사가정역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c623b6b47dc34654b7f44d5f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_53082600847f09b9d1450f68"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11260-0067",
+   "sgg": "11260",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "면목(상봉터미널)",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_d9ea9178199d932811ff145a"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_81b3115095b754e7ec4ed14a"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11260-0068",
+   "sgg": "11260",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "중랑 면목행정복합타운",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2ec1eedc03eb1167e391eebc"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_df2b6ad28caa146e40165715"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 712
+  },
   {
    "id": "PRJ-11290-0001",
    "sgg": "11290",
@@ -35,7 +757,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "꿈의숲대명루첸아파트",
-   "units": 611
+   "units": 611,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0002",
@@ -63,7 +787,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "장월 에스에이치빌 1단지",
-   "units": 254
+   "units": 254,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0003",
@@ -91,7 +817,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "장월 에스에이치빌 2단지",
-   "units": 373
+   "units": 373,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0004",
@@ -119,7 +847,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "래미안 포레카운티",
-   "units": 939
+   "units": 939,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0005",
@@ -147,7 +877,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "래미안 장위 퍼스트하이",
-   "units": 1562
+   "units": 1562,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0006",
@@ -175,7 +907,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "장위자이 레디언트",
-   "units": 2840
+   "units": 2840,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0007",
@@ -203,7 +937,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "장위10구역 주택재개발 정비사업 신축공사",
-   "units": 1931
+   "units": 1931,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0008",
@@ -231,7 +967,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "장위6구역 주택재개발정비사업",
-   "units": 1637
+   "units": 1637,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0009",
@@ -259,7 +997,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "꿈의숲아이파크",
-   "units": 1711
+   "units": 1711,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0010",
@@ -287,7 +1027,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "장위 지웰 에스테이트",
-   "units": 173
+   "units": 173,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0011",
@@ -315,7 +1057,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "석관지구 특별계획구역2 신축사업",
-   "units": 510
+   "units": 510,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0012",
@@ -343,7 +1087,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "장위11-2구역 가로주택정비사업",
-   "units": 160
+   "units": 160,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-11290-0013",
@@ -371,7 +1117,2409 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "장위11-1구역 가로주택정비사업 공동주택(아파트) 신축공사",
-   "units": 136
+   "units": 136,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
+  },
+  {
+   "id": "PRJ-11290-0062",
+   "sgg": "11290",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "장위12",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_111e756eef487f91c73ef92c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_13f67ea16f40f7ab62c9b01e"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11290-0063",
+   "sgg": "11290",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "성신여대입구역 북측",
+   "bjdCodes": [
+    "1129010900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_564570b0ed7951e2c0eac31b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3491eb82cd30032bcfcf0950"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 755
+  },
+  {
+   "id": "PRJ-11290-0064",
+   "sgg": "11290",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "장위8",
+   "bjdCodes": [
+    "1129013800"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_70932e9a16a9ef8f1a7e5d34"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_ae1215fd9d5a7d014fd618ca"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 2846
+  },
+  {
+   "id": "PRJ-11305-0041",
+   "sgg": "11305",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "수유12구역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_18c1eb6c5a8e44752f3a1085"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5351f3a63130cc15162bd622"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11305-0042",
+   "sgg": "11305",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "강북5",
+   "bjdCodes": [
+    "1130510100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_9bc0de05715e9f64243ba5c7"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_784dc89e91295e1ad45efc12"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 688
+  },
+  {
+   "id": "PRJ-11305-0043",
+   "sgg": "11305",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "송중동 주민센터",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4960ca40d0691637b93b65ae"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_879332d8d922f83dd0c8ba74"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1083
+  },
+  {
+   "id": "PRJ-11305-0044",
+   "sgg": "11305",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "미아16구역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ba86ef8ec0a5a6737a84f0de"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_d54b36a08e44ee6863c1abb8"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11320-0033",
+   "sgg": "11320",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "쌍문동 교육연구시설",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ad866f1773ce98d9c8be6327"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_2c106292a198ad5679081b44"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1171
+  },
+  {
+   "id": "PRJ-11320-0034",
+   "sgg": "11320",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "쌍문역 서측",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_254a2369423a4509ea44aeb9"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_36c74c34a5f0d987fc16dbab"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11320-0035",
+   "sgg": "11320",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "성대야구장",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_13581b986eceaa447aad8404"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_47484524b36e9d7b3af3fe27"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1800
+  },
+  {
+   "id": "PRJ-11320-0036",
+   "sgg": "11320",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "서울시 도봉구 창동 700-33",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_37229d647b8e8b9b8341701d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4a72aacea5cee51469b86da2"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 40
+  },
+  {
+   "id": "PRJ-11320-0037",
+   "sgg": "11320",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "창동역 복합개발",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1406fa51ed1f68a562ea9476"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_669685be7eed133057ce06c5"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11320-0038",
+   "sgg": "11320",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "방학역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_7365471cb8494869af2e543f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_9c54a26cb81e4c96c771ebdd"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11320-0039",
+   "sgg": "11320",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "창2동 주민센터",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_d899e03aa327273a5a8069e2"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_afc982f21f2ba956980037bd"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11320-0040",
+   "sgg": "11320",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "쌍문역 동측",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f712cc8ef96d35663dfe35be"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b965f447d9ace29159f33348"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11350-0093",
+   "sgg": "11350",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "하계5단지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a4cd8eb1a7cb9349c773d90b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_03561173f5abd3b28d8db1d9"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1336
+  },
+  {
+   "id": "PRJ-11350-0094",
+   "sgg": "11350",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "상계마들",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_501345d9c9530e91d172c385"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1f6764b1b6aab482a725c8ab"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 363
+  },
+  {
+   "id": "PRJ-11350-0095",
+   "sgg": "11350",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "수락산역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_add2d016897bf68b2902684c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_220dc97d19ccb8e26c3f6c53"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11350-0096",
+   "sgg": "11350",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-23",
+   "name": "서울공릉 1",
+   "bjdCodes": [
+    "1135010300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_e940ae8afbb9385d048b9e98"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_2c8c2fda28fd878a7a9a94bd"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 294
+  },
+  {
+   "id": "PRJ-11350-0097",
+   "sgg": "11350",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "[(105228)서울공릉(복합개발)]위례A2-7BL아파트건설공사9공구및서울공릉아파트건설공사1공구",
+   "bjdCodes": [
+    "1135010300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ac4452d5a3119683ef276aa5"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6b007623f2703880246788d3"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 294
+  },
+  {
+   "id": "PRJ-11350-0098",
+   "sgg": "11350",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "태릉 CC",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3fadf32fbe6789629d212965"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_ab855ead876cfce649fcad57"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 6800
+  },
+  {
+   "id": "PRJ-11350-0099",
+   "sgg": "11350",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "중계1단지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_231e571376eab084385973f9"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c0c689ff53de8bba99439a0d"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1370
+  },
+  {
+   "id": "PRJ-11350-0100",
+   "sgg": "11350",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "서울공릉(복합개발) 1",
+   "bjdCodes": [
+    "1135010300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_99eb036dee6f618833a7a0f2"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_cd0c470968bd4d8ee81b2651"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 60
+  },
+  {
+   "id": "PRJ-11380-0083",
+   "sgg": "11380",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "불광2 329-32",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_224aeea5a5ed4532c271b504"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_06ef5aba78dae587f5381de8"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11380-0084",
+   "sgg": "11380",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "녹번역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c231d456d139ece679574dfc"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_2dfce86fe558681361a8c5ad"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11380-0085",
+   "sgg": "11380",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "증산4구역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b1b65f466fd7147115e49707"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4c96e296040e04e1aa37a791"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11380-0086",
+   "sgg": "11380",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "응암동101번지 일대",
+   "bjdCodes": [
+    "1138010700"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1aa30005c3cd4df40d3b462f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_51b9cfb5f833d957d13f49e5"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11380-0087",
+   "sgg": "11380",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "연신내역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c117a11f4c5fb271c9bd385b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6212fea1bb8363c6b1136af9"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11380-0088",
+   "sgg": "11380",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "수색14구역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6d509da0fa887e751a622f0d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7a1b3fb69101bcfb1b42b9fb"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11380-0089",
+   "sgg": "11380",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "불광1 근린공원",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_d8edf6421026a189ec1e435a"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8ce8c3df4e7155e9e20e5d64"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11380-0090",
+   "sgg": "11380",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "은평구 불광동 일원",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4083aa992aeafbe0caead61c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_99dc32d7e9c2b5cf629b99cb"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1300
+  },
+  {
+   "id": "PRJ-11380-0091",
+   "sgg": "11380",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "녹번동근린공원",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ca26f4c5fc3e840a6a01a970"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_aeec29784fa6fefa3869f86a"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 2676
+  },
+  {
+   "id": "PRJ-11380-0092",
+   "sgg": "11380",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "백련산 서측",
+   "bjdCodes": [
+    "1138010700"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_509ba745441b4ec5c5344886"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c4a63913d21659af247c20ca"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 961
+  },
+  {
+   "id": "PRJ-11410-0033",
+   "sgg": "11410",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "연희2",
+   "bjdCodes": [
+    "1141011700"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_cc9a1163f8722fa4a09cc8d6"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_598154b3b2f8a2ffe5e52d94"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1067
+  },
+  {
+   "id": "PRJ-11410-0034",
+   "sgg": "11410",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "고은산 서측",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_57ced7a7e6dd144808832bb1"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_87862d303e20a94a7d90df1c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 2577
+  },
+  {
+   "id": "PRJ-11410-0035",
+   "sgg": "11410",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "충정로1",
+   "bjdCodes": [
+    "1141010200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_e60a86adcf6ea294d6dfe24f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8c2d0d145cacc82adc270a87"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 297
+  },
+  {
+   "id": "PRJ-11410-0036",
+   "sgg": "11410",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "홍은1",
+   "bjdCodes": [
+    "1141011800"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_5b7d0cac057d4026239ec431"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_fc8fbca1e1ecf8ae188230cd"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 329
+  },
+  {
+   "id": "PRJ-11440-0071",
+   "sgg": "11440",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "아현동 699번지 일대",
+   "bjdCodes": [
+    "1144010100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ed75ab02a54b6a1f9f67e3eb"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_20c760a234315090e0242afe"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11440-0072",
+   "sgg": "11440",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "망원체육공원 인근",
+   "bjdCodes": [
+    "1144012300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ee8d0c8c54039d830165ca80"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_cafeb40c710350bb694c9227"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 940
+  },
+  {
+   "id": "PRJ-11470-0087",
+   "sgg": "11470",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "염창역 남측",
+   "bjdCodes": [
+    "1147010200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c7349e2051fef90fa079a0c6"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3370ee252f975781561dd8a5"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 4222
+  },
+  {
+   "id": "PRJ-11470-0088",
+   "sgg": "11470",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "목동역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_23b1a8880c4e26723f8eb332"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_47eba88fe1130d6b77c37d31"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11470-0089",
+   "sgg": "11470",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "목4동 강서고",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1e434ccfc0d8050dbe00ba2a"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_bc2a0f4ce051d5f21e833795"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 4209
+  },
+  {
+   "id": "PRJ-11500-0100",
+   "sgg": "11500",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "가양 노후 임대 재건축",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_bd180db1690cc2abc12c38ee"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_0e4dea0b47e152f0fe3df9ff"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 3235
+  },
+  {
+   "id": "PRJ-11500-0101",
+   "sgg": "11500",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "강서염창(가로주택) 01",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_75e4d393170df4313bf4f819"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_10812cb53671cfc2fe139728"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 14
+  },
+  {
+   "id": "PRJ-11500-0102",
+   "sgg": "11500",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "강서구 이전부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_d449ab2ef92364d06a2e9480"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4bdc93d4fcf60d9eabdb1081"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 558
+  },
+  {
+   "id": "PRJ-11500-0103",
+   "sgg": "11500",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "SBA 글로벌마케팅센터",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3611008b369ff7bc873ddd6d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5c49156a3943b038ea92dcf5"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 116
+  },
+  {
+   "id": "PRJ-11500-0104",
+   "sgg": "11500",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "강서 군부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_38c300a31ef2b0fe2c575922"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_75d3f6c62d1673d3be1544a5"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 918
+  },
+  {
+   "id": "PRJ-11500-0105",
+   "sgg": "11500",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "강서 국회대로 인근",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f0c2df6fcce5d3ca6e1ac40f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8c3b6554ab1f238379040252"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11500-0106",
+   "sgg": "11500",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-06-22",
+   "name": "마곡지구 17단지",
+   "bjdCodes": [
+    "1150010500"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b91a606f06e15289aae5f675"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c96377d9ec7e60cf32e1ccdb"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 381
+  },
+  {
+   "id": "PRJ-11500-0107",
+   "sgg": "11500",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "화곡역 동측",
+   "bjdCodes": [
+    "1150010300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_38ec67f3d75db0d270db5d93"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f14b407686551a8c8080374f"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 2335
+  },
+  {
+   "id": "PRJ-11530-0094",
+   "sgg": "11530",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "서울시 구로구 구로동 87-1",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_eef375ba45c52da0966c8ea8"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a677254753d97b28ee701d0f"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 40
+  },
+  {
+   "id": "PRJ-11530-0095",
+   "sgg": "11530",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "오류동역 남측",
+   "bjdCodes": [
+    "1153010700"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_7e1e3f2d5449b0581d39df60"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_d0b00f942ef69450fa7f1de2"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 858
+  },
+  {
+   "id": "PRJ-11530-0096",
+   "sgg": "11530",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "대림역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_0175c7d75aa4fe7c839cadec"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_fd867d790f8bd00fe88a26aa"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11545-0043",
+   "sgg": "11545",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "서울세관 구로지원센터",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_0059bd9d1fa8c2f1ba39ab51"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_73ede68b8940786e9b5608de"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 437
+  },
+  {
+   "id": "PRJ-11545-0044",
+   "sgg": "11545",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "금천구청역 유휴부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f5f0c973178b5075bea05390"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e079e684854844e1d0f492ab"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11545-0045",
+   "sgg": "11545",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "남부여성발전센터(양육친화주택)",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_21e921c4762865f5fa74028d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e921264c160252278798002a"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 200
+  },
+  {
+   "id": "PRJ-11545-0046",
+   "sgg": "11545",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "금천 공군부대",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_43c3c63142505cb595b39640"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f70bc179d2e7edc12fd1c89f"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 2900
+  },
+  {
+   "id": "PRJ-11560-0137",
+   "sgg": "11560",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "신길2구역",
+   "bjdCodes": [
+    "1156013200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ec6ce3180fc584712868899a"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_168f1b7ac50dad0e8503be59"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11560-0138",
+   "sgg": "11560",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "서울지방고용노동청 서울남부지청",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_5eb954dcfab2f796edfcc328"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_16c8a4369cd17e666f910f0c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 43
+  },
+  {
+   "id": "PRJ-11560-0139",
+   "sgg": "11560",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "양평13",
+   "bjdCodes": [
+    "1156012600"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_9ebd6743e6cb7ea6becbeeca"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_2c2001c3d32526ca7db32feb"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 556
+  },
+  {
+   "id": "PRJ-11560-0140",
+   "sgg": "11560",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "양평14",
+   "bjdCodes": [
+    "1156012600"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_7d54949a30fd131c64085ead"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3e8cad6ee80cd657082e29e7"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11560-0141",
+   "sgg": "11560",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "신길13",
+   "bjdCodes": [
+    "1156013200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f08c4c50b1a031c07fdb464e"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_59f0ce2d13ffd7f68386cdc4"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 587
+  },
+  {
+   "id": "PRJ-11560-0142",
+   "sgg": "11560",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "신길15구역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b549e5add512484843c7d728"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8cab710e90befa9f077d0763"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11560-0143",
+   "sgg": "11560",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "서울대방 1",
+   "bjdCodes": [
+    "1156013200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_e7a2125a0d34bf05658ad0cd"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_9e2cfb55c9d254091d3fb30d"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 283
+  },
+  {
+   "id": "PRJ-11560-0144",
+   "sgg": "11560",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "당산동 양육친화주택",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_361b62fb1df2560563468089"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b5b910b8835faf1cdab3a966"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 380
+  },
+  {
+   "id": "PRJ-11560-0145",
+   "sgg": "11560",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "서울대방(복합개발) 1",
+   "bjdCodes": [
+    "1156013200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b4f3ed9a7fb76d7cf877ea74"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_caf8c53bb625d4bd6e627ef6"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 61
+  },
+  {
+   "id": "PRJ-11560-0146",
+   "sgg": "11560",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "[(105229)서울대방(복합개발)]서울대방아파트건설공사1공구및동작구수방사아파트건설공사1공구",
+   "bjdCodes": [
+    "1156013200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_803eee707326eb19d83f9c7b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_cd30a85198ac80fedcab7136"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 283
+  },
+  {
+   "id": "PRJ-11560-0147",
+   "sgg": "11560",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "영등포역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_5e036631481e8ad1420619ce"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_eb1e3860bd31a511706cdd0d"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-11560-0148",
+   "sgg": "11560",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "신길4",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3a0f7caf7ccb3c09f7c58359"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f6c0192892345ead1fe0e5de"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1273
+  },
+  {
+   "id": "PRJ-11590-0067",
+   "sgg": "11590",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "흑석2",
+   "bjdCodes": [
+    "1159010500"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_55b3a22fdc2e290fcda22269"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6b7accf6235ec008418abf8a"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1055
+  },
+  {
+   "id": "PRJ-11590-0068",
+   "sgg": "11590",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "동작우체국",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_427504c906e30484295926ba"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b3385e00c93275476fe9e0c1"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 30
+  },
+  {
+   "id": "PRJ-11590-0069",
+   "sgg": "11590",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2023-11-02",
+   "name": "본동",
+   "bjdCodes": [
+    "1159010400"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f9b31ad0c406f0c5cb427879"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_cbceb5560d4064cf699d2557"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1046
+  },
+  {
+   "id": "PRJ-11590-0070",
+   "sgg": "11590",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-23",
+   "name": "수방사군부지 1",
+   "bjdCodes": [
+    "1159010100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_155e4ae00d01c5c293b69c16"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e8e64858eea849421f7245dd"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__5ec7870a0fb6df22ebc2564a"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__9e14f4b94ddf7eeedf75ebc3"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__f15ee75a0758d263d0fb77da"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 556
+  },
+  {
+   "id": "PRJ-11620-0056",
+   "sgg": "11620",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "관악세무서",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_7b803752121c75282379df71"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1522e3969944d024d7a047da"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 25
+  },
+  {
+   "id": "PRJ-11650-0079",
+   "sgg": "11650",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "이수역 동측",
+   "bjdCodes": [
+    "1165010100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a8ea34fb7627f86801a043a2"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4b83a7db152f72ee3b153d7f"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 918
+  },
+  {
+   "id": "PRJ-11650-0080",
+   "sgg": "11650",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "서울 서리풀",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_584651f4c9a27d4e3346e0be"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c7bf4d75062d2edb412facd8"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 20000
+  },
+  {
+   "id": "PRJ-11650-0081",
+   "sgg": "11650",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "구 한국교육개발원",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a1546babf9cff455d69eff8a"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e12cd2ca5b4a653afccf0d46"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 700
+  },
+  {
+   "id": "PRJ-11680-0112",
+   "sgg": "11680",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "강남구청",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4515c5f09bfa4bdffd3474c5"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3644d2e9f81a15cf87f949f8"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 360
+  },
+  {
+   "id": "PRJ-11680-0113",
+   "sgg": "11680",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "수서 노후 임대 재건축",
+   "bjdCodes": [
+    "1168011500"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_5867d3585d455e37cb9852a6"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5b74fdf3cdf3e46eb1fdf2ba"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 3899
+  },
+  {
+   "id": "PRJ-11680-0114",
+   "sgg": "11680",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "서울의료원 남측부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_fb3166124fb3c731b4925d9f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7f07df34de1fabfe5afd0fac"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 518
+  },
+  {
+   "id": "PRJ-11710-0085",
+   "sgg": "11710",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "송파우체국",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f2d55bafb6ed3d5ef7f8abf4"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_100a310e54531926e77ad240"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 51
+  },
+  {
+   "id": "PRJ-11710-0086",
+   "sgg": "11710",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "위례 업무용지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_9b2317a69791214dc62d9a0b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_2d1e1ea17c963204dbdfbe9a"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1000
+  },
+  {
+   "id": "PRJ-11710-0087",
+   "sgg": "11710",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "방이동 복합청사",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_dca23995489dadde2eeb8d2b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_364bb1200a4921c1f94e9226"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 160
+  },
+  {
+   "id": "PRJ-11710-0088",
+   "sgg": "11710",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "올림픽공원 인근",
+   "bjdCodes": [
+    "1171011100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_228895d18765323151090e66"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e26284342c51c4d7f850a28f"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 935
+  },
+  {
+   "id": "PRJ-11710-0089",
+   "sgg": "11710",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "송파구 ICT보안클러스터",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8f2c4140dc20c5fa1d7bfc93"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_fe8d8a5809d05cda65f308a6"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 300
+  },
+  {
+   "id": "PRJ-11740-0102",
+   "sgg": "11740",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-06-22",
+   "name": "고덕강일 3단지",
+   "bjdCodes": [
+    "1174011000"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8a48ffa2bedaddaf76cddee9"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1fbf5c7629634fa05be7652a"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1305
+  },
+  {
+   "id": "PRJ-11740-0103",
+   "sgg": "11740",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "고덕역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_517de3afe942870445a65685"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_63f578bc1d63faa6105ff084"
+    }
+   ],
+   "issuedAt": "2026-10-14"
   },
   {
    "id": "PRJ-12170-0001",
@@ -804,6 +3952,207 @@
    "units": 554
   },
   {
+   "id": "PRJ-28125-0027",
+   "sgg": "28125",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천송림4 주거환경개선사업 건설공사 1공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6b33c70669b52a34ebe8a1cf"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_97cb44fc1d3d65cddf98e848"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1198
+  },
+  {
+   "id": "PRJ-28155-0036",
+   "sgg": "28155",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천영종 A62",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_0fd591e1680e22a0b10a8cdb"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_315b38f36059a51d91060291"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_0c94208651a9d2bca4412fb2"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4f1c664272dc56715a82cb02"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 792
+  },
+  {
+   "id": "PRJ-28155-0037",
+   "sgg": "28155",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천영종 A-24BL 아파트 건설공사 12공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8bc7d8c7f8751f363aaa93c2"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3f8c1fea26831aa04fcfdcb7"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 641
+  },
+  {
+   "id": "PRJ-28177-0064",
+   "sgg": "28177",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "제물포 도심공공복합",
+   "bjdCodes": [
+    "2817710400"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_334e0e0ca5373e874d76ce9f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a0d337124ee67a9f014a4b0f"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 3500
+  },
+  {
+   "id": "PRJ-28200-0066",
+   "sgg": "28200",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "남인천 우체국",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_05136902a2a7d52b22d30811"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_dd462e54ac3a0de7be3ae75b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 29
+  },
+  {
+   "id": "PRJ-28237-0064",
+   "sgg": "28237",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천부평 행복주택 및 도시재생뉴딜 혁신센터 건설공사",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8d735a3a96b7f96b288ec30d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_0e5b836fdd9670216e60ee53"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 350
+  },
+  {
+   "id": "PRJ-28237-0065",
+   "sgg": "28237",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "인천부평(도시재생뉴딜) A",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_33e22deb3cecde2f2bf9870c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_9a256c5d211050be9f0814ff"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 350
+  },
+  {
    "id": "PRJ-28245-0001",
    "sgg": "28245",
    "bjdCodes": [
@@ -828,7 +4177,8 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "인천계양 테크노밸리 A6 블록",
-   "units": 663
+   "units": 663,
+   "supersededBy": "PRJ-28245-0053"
   },
   {
    "id": "PRJ-28245-0002",
@@ -855,7 +4205,8 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "인천계양 테크노밸리 A17 블록",
-   "units": 309
+   "units": 309,
+   "supersededBy": "PRJ-28245-0054"
   },
   {
    "id": "PRJ-28245-0003",
@@ -882,7 +4233,8 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "인천계양 테크노밸리 A9 블록",
-   "units": 317
+   "units": 317,
+   "supersededBy": "PRJ-28245-0056"
   },
   {
    "id": "PRJ-28245-0004",
@@ -909,7 +4261,8 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "인천계양 테크노밸리 A3 블록",
-   "units": 359
+   "units": 359,
+   "supersededBy": "PRJ-28245-0057"
   },
   {
    "id": "PRJ-28245-0005",
@@ -936,7 +4289,8 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "인천계양 테크노밸리 A2 블록",
-   "units": 747
+   "units": 747,
+   "supersededBy": "PRJ-28245-0055"
   },
   {
    "id": "PRJ-28245-0006",
@@ -963,7 +4317,4605 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "인천계양 테크노밸리 A10 블록",
+   "units": 778,
+   "supersededBy": "PRJ-28245-0052"
+  },
+  {
+   "id": "PRJ-28245-0052",
+   "sgg": "28245",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)인천계양 A-10BL 아파트 건설공사 4공구",
+   "bjdCodes": [
+    "2824511000"
+   ],
+   "pnus": [
+    "2824511000104480001"
+   ],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_9003eb21d98f81bd29ab5450"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_017fafed01a4f905828cb913"
+    },
+    {
+     "system": "bundle",
+     "key": "incheon-gyeyang",
+     "value": "techno-A10",
+     "asOf": "2026-10-06"
+    }
+   ],
+   "issuedAt": "2026-10-14",
    "units": 778
+  },
+  {
+   "id": "PRJ-28245-0053",
+   "sgg": "28245",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "인천계양 A6",
+   "bjdCodes": [
+    "2824510900"
+   ],
+   "pnus": [
+    "2824510900101840001"
+   ],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1d0ee93261f23851648d6418"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_04a4f394cc7df91c10403fd5"
+    },
+    {
+     "system": "bundle",
+     "key": "incheon-gyeyang",
+     "value": "techno-A6",
+     "asOf": "2026-10-06"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 663
+  },
+  {
+   "id": "PRJ-28245-0054",
+   "sgg": "28245",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천계양 A17",
+   "bjdCodes": [
+    "2824510900"
+   ],
+   "pnus": [
+    "2824510900102770001"
+   ],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_cbd738d476643c4d6ff02050"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_12d91632b8ca640e1505869f"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_fad8ebedf0541120099f81bc"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c1f32197fe5a45ab84ea895f"
+    },
+    {
+     "system": "bundle",
+     "key": "incheon-gyeyang",
+     "value": "techno-A17",
+     "asOf": "2026-10-06"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 463
+  },
+  {
+   "id": "PRJ-28245-0055",
+   "sgg": "28245",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천계양 A2BL 및 A3BL 아파트 건설공사 1공구",
+   "bjdCodes": [
+    "2824511000"
+   ],
+   "pnus": [
+    "2824511000104130003"
+   ],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_58da2409a04948210a06c914"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_325adcce78038cd49c65a01f"
+    },
+    {
+     "system": "bundle",
+     "key": "incheon-gyeyang",
+     "value": "techno-A2",
+     "asOf": "2026-10-06"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 747
+  },
+  {
+   "id": "PRJ-28245-0056",
+   "sgg": "28245",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천계양 A9",
+   "bjdCodes": [
+    "2824511000"
+   ],
+   "pnus": [
+    "2824511000102030001"
+   ],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2ca9e7f1cc5c24b775aa0fd7"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_421fe0f0243dd68b11f2712c"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6c42bf8e75bc58440bf81b88"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_95b506af61f0ff28ddff817c"
+    },
+    {
+     "system": "bundle",
+     "key": "incheon-gyeyang",
+     "value": "techno-A9",
+     "asOf": "2026-10-06"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 475
+  },
+  {
+   "id": "PRJ-28245-0057",
+   "sgg": "28245",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천계양 A2BL 및 A3BL 아파트 건설공사 1공구",
+   "bjdCodes": [
+    "2824511000"
+   ],
+   "pnus": [
+    "2824511000104090003"
+   ],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2705bc71317ba583b78d3059"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7dffd65ce8143bd3adcb788a"
+    },
+    {
+     "system": "bundle",
+     "key": "incheon-gyeyang",
+     "value": "techno-A3",
+     "asOf": "2026-10-06"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 538
+  },
+  {
+   "id": "PRJ-28275-0034",
+   "sgg": "28275",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "[(105410)인천서구(거북이기지)]인천석남어울림센터및거북이기지행복주택건설공사1공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_348b79fe5454d867e28407a3"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_24a23cced84da509ea76ed63"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 58
+  },
+  {
+   "id": "PRJ-28275-0035",
+   "sgg": "28275",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "청라동 92-29",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8ad6d0f9d39ca6e9de4dd5df"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3b288213c58c0a4e7ca7f754"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 110
+  },
+  {
+   "id": "PRJ-28275-0036",
+   "sgg": "28275",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천가정2 B2",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a1e37b070719308a0a70ff2e"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_9ac25f1509bc7f37adddafd1"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_640a10f7a0f1f788e418903c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f6fe760da2c698c308f46373"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 308
+  },
+  {
+   "id": "PRJ-28275-0037",
+   "sgg": "28275",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "[(105409)인천서구(석남어울림)]인천석남어울림센터및거북이기지행복주택건설공사1공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_74d50f3ddcbda881e4b1b79e"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_aecd3212ce60bbfbce7dc75b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 110
+  },
+  {
+   "id": "PRJ-28275-0038",
+   "sgg": "28275",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2025-09-07",
+   "name": "인천검암",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_88c204720ee0b512923c4ef6"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_bcf874c2e3e4751119d205af"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-28290-0054",
+   "sgg": "28290",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천검단 AA19BL 민간참여 공공주택건설사업",
+   "bjdCodes": [
+    "2829011000"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_13c5b094ab67c88d5143f074"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_38a37a66ed2666efe40ae527"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1323
+  },
+  {
+   "id": "PRJ-28290-0055",
+   "sgg": "28290",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "인천검단 AA19",
+   "bjdCodes": [
+    "2829011000"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4465acd6dbd786bfb9ec95f9"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3cb5f412f922f460f58516ca"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3e8b400a770c150e7f7c4ad8"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8ccbf751972faf82dc5b094d"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 991
+  },
+  {
+   "id": "PRJ-28290-0056",
+   "sgg": "28290",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "[(100585)인천검단]인천검단AA13-1BL5공구,AA13-2BL6공구및인천신문아파트건설공사",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_305851a2d368a9cb8fb00485"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_510814bb61b898c4c4787405"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 964
+  },
+  {
+   "id": "PRJ-28290-0057",
+   "sgg": "28290",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "인천검단 AA-21BL 아파트 건설공사 7공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_accb84c8cd4f9cd727edcbea"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_76abe08cb7c430960fb40f03"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1224
+  },
+  {
+   "id": "PRJ-28290-0058",
+   "sgg": "28290",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "[(100585)인천검단]인천검단AA13-1BL5공구,AA13-2BL6공구및인천신문아파트건설공사",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_07e9dc1b34c100820c5496d6"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_78873f80da10dc2ae09042c5"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 702
+  },
+  {
+   "id": "PRJ-41110-0001",
+   "sgg": "41110",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "舊 경인지방통계청 수원사무소",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6075d2d527f02ea76b0f7e23"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5b2dfefde3fe5f30440c7978"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 88
+  },
+  {
+   "id": "PRJ-41110-0002",
+   "sgg": "41110",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "수원우편집중국",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b326b0347cf6d9f8d9cd4715"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7097aa6b5fe65792b9d04af2"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 936
+  },
+  {
+   "id": "PRJ-41110-0003",
+   "sgg": "41110",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "국토지리정보원",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_0bbcfa5cd0886694318facf3"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_eba6d403e8965edbefb24d1b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 240
+  },
+  {
+   "id": "PRJ-41113-0032",
+   "sgg": "41113",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "수원당수 B3",
+   "bjdCodes": [
+    "4111314100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1cf746f0a843c4bc8b4a104b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_57af98abdfc6232a25ccc8d0"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8aa17fc1e11b4a3db20c109a"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7ad0bdb14a2577612c11a3c6"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__396219ad71885bdaa2dc774c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 394
+  },
+  {
+   "id": "PRJ-41113-0033",
+   "sgg": "41113",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "권선구 서둔동 208-16",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a5d2e07b637f94356487ecc0"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_58481c36e898b0a44a8bcc52"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 29
+  },
+  {
+   "id": "PRJ-41113-0034",
+   "sgg": "41113",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "수원당수 B2",
+   "bjdCodes": [
+    "4111314100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8b36f6b2485c019bfb9a274c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_613ae41b8f0bd647833d71d1"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_00307e70e5fb6c62e2bde58b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e24ec7ed0705de50dfcfb55e"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__7a34ccf6d32e9dc7c58fbc55"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 347
+  },
+  {
+   "id": "PRJ-41113-0035",
+   "sgg": "41113",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "수원당수 A-5BL 아파트 건설공사 5공구",
+   "bjdCodes": [
+    "4111314100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_29fc7ab77ed5ece34bca2f0d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_c6f5a8ea506ed720419b999a"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__3d56e40bb7ac939f7cbbc374"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__45e63c995ef4418a0872bf2d"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 726
+  },
+  {
+   "id": "PRJ-41130-0001",
+   "sgg": "41130",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "성남세관",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_55dd8a00b8596d4d7c5d3f46"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_149160a909ffc1acfd06a5c8"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 76
+  },
+  {
+   "id": "PRJ-41130-0002",
+   "sgg": "41130",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "성남금광2",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6daeba518dc3698c9e84b95e"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_894b8c05c79c1106d43ec663"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-41131-0046",
+   "sgg": "41131",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "성남복정2 A1",
+   "bjdCodes": [
+    "4113110100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_bb50f9d1e78491845d3848d1"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1372e9a98923707ece293d63"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__17f1b31bade9c6289fc7f0ea"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__2464231f6cc10eeb0bd03bb1"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 594
+  },
+  {
+   "id": "PRJ-41131-0047",
+   "sgg": "41131",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "성남 금토2",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3f2bd934fa9b2e36a7b4d6ce"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_2803ad032536795662e205b8"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-41131-0048",
+   "sgg": "41131",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "민간참여) 성남신촌 A-1BL 민간참여 공공주택 건설사업",
+   "bjdCodes": [
+    "4113110900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_87b1dc956b9a17780cea1a56"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3e4fe820f1cb21379bbbe611"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__b92e637ee90abc62cba2cfda"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 227
+  },
+  {
+   "id": "PRJ-41131-0049",
+   "sgg": "41131",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "성남금토 A4",
+   "bjdCodes": [
+    "4113111600"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_0a32d3e3f79b97b33a74be5f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3faad76d14e22fbad1a26071"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1f1cb66bfaaf4f323c6d34e8"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b572acaa0e4e1468c625d137"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__698a82790f34a6df33d7d8a3"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__e4bfee89662416b714697b54"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1150
+  },
+  {
+   "id": "PRJ-41131-0050",
+   "sgg": "41131",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "성남금토 A2",
+   "bjdCodes": [
+    "4113111600"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c7ea45b883bef1ac5aedb546"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_57f146c63d9864e7673d3456"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b36ef5005eb998b19b06e8a2"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_fcc796121d9c033bc356aaad"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__0b789a33f5a525176e280b12"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__112db79118a0a3026d58cf7c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 633
+  },
+  {
+   "id": "PRJ-41133-0025",
+   "sgg": "41133",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "성남 여수2",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_9d70a08b3a2de47486fc27c5"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4437186527b2362ee10c2a38"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-41135-0125",
+   "sgg": "41135",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "성남낙생 A1",
+   "bjdCodes": [
+    "4113511300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8e7650c749132ee928a8bd97"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_77a162724b5fb3200f074687"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_5dd85071f1468e4c682994b4"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_ff961a60763365c3c98a5f65"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__c45ec0a28c1bb9e620215137"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__dc398e13ccd890053cdc2fba"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1400
+  },
+  {
+   "id": "PRJ-41150-0096",
+   "sgg": "41150",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "의정부우정 A2",
+   "bjdCodes": [
+    "4115011100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a9c6e0bbdf10f60dae726658"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1c43b0f814e69ac298b474bd"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8f8ea3647a7f28561d6be701"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5df894e901b0cf27c15875bc"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__83dc4d1a863b43ba7785d9f8"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 463
+  },
+  {
+   "id": "PRJ-41150-0097",
+   "sgg": "41150",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "의정부법조타운 S1",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_aefb802df0a2847f7759ef63"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_498d0e9db7798af601231a87"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-41150-0098",
+   "sgg": "41150",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "의정부3동 우체국",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_0db0305805014785c083529e"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_73c7df8c409e12c936ff4a12"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 262
+  },
+  {
+   "id": "PRJ-41150-0099",
+   "sgg": "41150",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "의정부법조타운 S3",
+   "bjdCodes": [
+    "4115011200"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a9e2b42af6515f265087c221"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_78e980421f549ed99961abc8"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a4c50a195552fb8d32d4e495"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b39de55a5159fecbfe750bb6"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__3e3e94ee6c02bc574b8069bf"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__0bef31fc5ef32e6440eb3cd3"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 544
+  },
+  {
+   "id": "PRJ-41150-0100",
+   "sgg": "41150",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)의정부우정 A-3BL 아파트 건설공사 3공구",
+   "bjdCodes": [
+    "4115011100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_574ff3f008ade56590b8ec61"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_9bb2aea471cca4dfe1473b62"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__063669e8933f3c1785758aac"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 640
+  },
+  {
+   "id": "PRJ-41150-0101",
+   "sgg": "41150",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)의정부우정 A-1BL 아파트 건설공사 1공구",
+   "bjdCodes": [
+    "4115011100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8cde69b4829a34cf8aaf46c1"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_9bd9311231d4f52cf4fd0d2a"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__f20125b277962a3fc9e445d1"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 538
+  },
+  {
+   "id": "PRJ-41170-0001",
+   "sgg": "41170",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "서안양우체국",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_81fa33a1b02bdd6cb0999d3c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e1dd8be91eb56e641eb9ddbe"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 200
+  },
+  {
+   "id": "PRJ-41190-0003",
+   "sgg": "41190",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "부천우편집중국",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1b527459ab0b00f5c10edcbe"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_10085fef35e2826f8b388966"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 860
+  },
+  {
+   "id": "PRJ-41190-0004",
+   "sgg": "41190",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "중동역 서측",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f94ff33354e4521ba958fe90"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_30949212b6369efd1d8c4725"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-41190-0005",
+   "sgg": "41190",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "중동역 동측",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_9819f86728b89ad41a57bd98"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7367d9085ed0784a5657e9ea"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-41192-0060",
+   "sgg": "41192",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-29",
+   "name": "조달청)부천종합운동장역세권 A-1BL 및 A-2BL 아파트 건설공사 1공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_7a4d66f9b2f0c300fe5e6d7c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_171ee6d80319bb24c2926826"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_793f0a72c3ac239bdd6029be"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_347b47a4f9138b29c9538562"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 550
+  },
+  {
+   "id": "PRJ-41192-0061",
+   "sgg": "41192",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-29",
+   "name": "부천종합운동장 역세권 A1",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4d4be332e7dc1e160ff48548"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_266bd2e5c910accd84506663"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_268a46cf6e170bce79cf2118"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_eb100907cef28861b0a05947"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 293
+  },
+  {
+   "id": "PRJ-41192-0062",
+   "sgg": "41192",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "부천역곡 A2",
+   "bjdCodes": [
+    "4119210300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f8393228e78ca0075859f9cd"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8aa9dcf9ed7eaafe3bef3196"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_bef685af0a6592e383820f24"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e4e3d8647720b2239bc5b5c1"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__112e5dd9d3321cb75b25d23f"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__5baa2c04c9e8c72b488f39c0"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1464
+  },
+  {
+   "id": "PRJ-41192-0063",
+   "sgg": "41192",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "원미공원",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_58af5e0bd68f660a9316c366"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a995bd3f6dcc2baf26236f82"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-41192-0064",
+   "sgg": "41192",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "원미사거리 북측",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_bb4059048602fc7b22114d7d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_eb7b6d0f2985031d5bcf8f47"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-41194-0061",
+   "sgg": "41194",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "부천괴안 A-1BL 아파트 건설공사 2공구 (",
+   "bjdCodes": [
+    "4119410400"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_54f907d579ca5fd60a2afddc"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_2a87e83e13bdc703528e3afe"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__fe22157ffe61f0bfcd56eb51"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 499
+  },
+  {
+   "id": "PRJ-41196-0098",
+   "sgg": "41196",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "부천대장 A5",
+   "bjdCodes": [
+    "4119610600"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_22a54bff131b3548a9359cec"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4ce4de9490cbe0a07f49c657"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f13f84ba5ec3ae1e69c77689"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_60b4a8833ed549023a6ef1a5"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__243e26dadb460675dd49d235"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__509466042d4c6974910737f5"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 952
+  },
+  {
+   "id": "PRJ-41196-0099",
+   "sgg": "41196",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "조달청)부천대장 A-7BL 및 A-8BL 아파트 건설공사 1공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f58089c04b5b88839a5bf995"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4d3397869cc1cd2e52d0da8f"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_65d55a7f7cc5f397568d101d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_984164fef8c491cac3388381"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 473
+  },
+  {
+   "id": "PRJ-41196-0100",
+   "sgg": "41196",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "조달청)부천대장 A-7BL 및 A-8BL 아파트 건설공사 1공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4fb766cacc71a95f8fafc093"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_64708e6eff91c584399a3045"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_546cb9cf682de26fcc18119c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_981ca316073354b11ac87f21"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 392
+  },
+  {
+   "id": "PRJ-41196-0101",
+   "sgg": "41196",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "부천대장 A2",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b52825131050069496e06306"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_69217405e9523695488434c1"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b4ac3c5626f4d24b9534ab17"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e2aefb3da54e732fd248384d"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 548
+  },
+  {
+   "id": "PRJ-41196-0102",
+   "sgg": "41196",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "부천대장 A6",
+   "bjdCodes": [
+    "4119610600"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_0b4e9febdde7a53e1fa985a4"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b880a907c24a95915be5fb6e"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8b7ad0f3c7b2243650a12e7a"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_d86ce8966f5ed10d5ef2d175"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__816bc78e7861abed9c87b888"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__bd8232fa74c8e317a6731ab2"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 688
+  },
+  {
+   "id": "PRJ-41196-0103",
+   "sgg": "41196",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "부천대장 A-1BL 아파트 건설공사 3공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b9debff8fd9a7921fc37300c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_d45f401d3810473a7b1a1030"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1002
+  },
+  {
+   "id": "PRJ-41196-0104",
+   "sgg": "41196",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "부천대장 A-12BL 통합형 민간참여 공공주택건설사업",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_55a18329f954c905f90e1ffe"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f84e7049e2e679bdad59fdcb"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 795
+  },
+  {
+   "id": "PRJ-41210-0070",
+   "sgg": "41210",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "광명세무서",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2771240360aae6b3c4505585"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_46111510e4cff8dcfb61cd23"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 238
+  },
+  {
+   "id": "PRJ-41210-0071",
+   "sgg": "41210",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "광명 舊 근로청소년복지관 부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_d635880f8c18f532e4cd5937"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5a9081352087ccf5e20a7a56"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 740
+  },
+  {
+   "id": "PRJ-41210-0072",
+   "sgg": "41210",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "광명경찰서 부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b24d741fbfcc40c1261692ab"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6134d46a7bf1bf8ab5f80ea8"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 550
+  },
+  {
+   "id": "PRJ-41220-0175",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "평택고덕 Abc12",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_161f1d6f4151b7936b17c7f7"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1993865f89886304beac4322"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_37953ac2013f8368997c406d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3860ba5f3fad3d846038eb9a"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__d92b383afb2a3c9ab520f84b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 942
+  },
+  {
+   "id": "PRJ-41220-0176",
+   "sgg": "41220",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "평택고덕 A35",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3c54d1645fa961620b5714a6"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1eb195e8ab43ebb1a9bee921"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 753
+  },
+  {
+   "id": "PRJ-41220-0177",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)평택고덕 Ab-37BL 아파트 건설공사 16공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_308ba037d79f48609e8ff792"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_310ee8dc2c45b6ac03a9bc8f"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__0efb643d7152593ebd09b45b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 603
+  },
+  {
+   "id": "PRJ-41220-0178",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "평택고덕 A-64BL 민간참여 공공주택건설사업",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c2619958a18c0933b839dbdf"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_573605b60cae1ca0690fe41b"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__e61b9882d27208925fb67124"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 536
+  },
+  {
+   "id": "PRJ-41220-0179",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "평택고덕 A-35BL 민간참여 공공주택건설사업",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4316d8979ef6b6ee657bcef1"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5ff66dc50d3ad524d26511b6"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__e4805a216447f2274de92fe6"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 753
+  },
+  {
+   "id": "PRJ-41220-0180",
+   "sgg": "41220",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "평택고덕 A34",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_525b8e065ad61e8c5116b274"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_62fe58b54a39d604d6cf3e87"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 679
+  },
+  {
+   "id": "PRJ-41220-0181",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "평택고덕 A65",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_9c0a47e9b2729750cefa3347"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6ba966490828eff7628082f7"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_79f1222ff43e3013c02d7465"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e0405cae5623f83a2647ac0c"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__c05c237ed9a187d9da1eb2a0"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 837
+  },
+  {
+   "id": "PRJ-41220-0182",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "평택고덕 Aa-38BL 아파트 건설공사 15공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2b403f769e401c021589cf87"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_833127d228d37d6e4e73898d"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__e9cb8f124e954fadc27aaa2d"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 966
+  },
+  {
+   "id": "PRJ-41220-0183",
+   "sgg": "41220",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "평택고덕 A31",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b58856749a87934a6286650c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_89b769c87e8d8ee8f6a837bf"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 690
+  },
+  {
+   "id": "PRJ-41220-0184",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "평택고덕 A-34BL 민간참여 공공주택건설사업",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2d87e32ff13df2fc99ca7b39"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_94becbf0cbd773bbf5ab565c"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__0c499800ae5c5f2ac5f493ca"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 679
+  },
+  {
+   "id": "PRJ-41220-0185",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "평택고덕 A63",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a466ab872e1adbd7483b8f88"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_96fbdceca532731914a07380"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_e60b0da0d9b108822f2a7fbc"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_def4c369f9c976b8a84511a4"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__84f51792a8f8e31c2a1d12ea"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 630
+  },
+  {
+   "id": "PRJ-41220-0186",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "평택고덕 A-56BL 민간참여 공공주택건설사업",
+   "bjdCodes": [
+    "4122012800"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_024e57dd4073ddf5b056df3b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_de06501cdfc05a4baead9d6c"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__67843d16becf945fcd46e509"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1499
+  },
+  {
+   "id": "PRJ-41220-0187",
+   "sgg": "41220",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "평택우체국",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_d4a450bed28bb0b09083e09c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e420af9e79bdd46a681d7cb7"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 352
+  },
+  {
+   "id": "PRJ-41220-0188",
+   "sgg": "41220",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "평택고덕 A-31BL 민간참여 공공주택건설사업",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c49d14300ba8deef7581f286"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f579d71a70d2f60499abdb0b"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__857b4589fda8304b0e4b41fd"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 690
+  },
+  {
+   "id": "PRJ-41270-0001",
+   "sgg": "41270",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "안산신길2 A1,A3",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_d6777764bbd2fbf9bb6c8938"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6b136676d58c65ca4274e4af"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 357
+  },
+  {
+   "id": "PRJ-41273-0023",
+   "sgg": "41273",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "안산신길2 B1",
+   "bjdCodes": [
+    "4127310300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2b78ddf9b31aa149e48e9d2c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5cc020482e16fc7f3825af4f"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c08a0879aaae8b49440f6b53"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_9f9031c8f3a9ef0626b95757"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__8eeccb4d45ce011e681e6558"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 387
+  },
+  {
+   "id": "PRJ-41273-0024",
+   "sgg": "41273",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "안산신길2 A6",
+   "bjdCodes": [
+    "4127310300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ea1c83eb02d2c8dccf5fe025"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f4d0df2ada51ce61f9bb6b72"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__0b49512351a39c39729a2254"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__66fb986b3322193a4c76a947"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 251
+  },
+  {
+   "id": "PRJ-41281-0088",
+   "sgg": "41281",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "고양창릉 A-4BL 아파트 건설공사 1공구",
+   "bjdCodes": [
+    "4128111300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4c45c7c3f658f629c004038b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_09fa29b63ffb3ea986cf233f"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__45ba74ee4da582bf6e82d860"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__6ac1bf8ac48d17b7945a759a"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 900
+  },
+  {
+   "id": "PRJ-41281-0089",
+   "sgg": "41281",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "고양창릉 S-04",
+   "bjdCodes": [
+    "4128110500"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_fae33983b157ab9c10390232"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_0a79310e612f5bc1215fcad3"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_629ee8500f42fb074fc6d71b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_cc5d09785c131c57c2e7e642"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1024
+  },
+  {
+   "id": "PRJ-41281-0090",
+   "sgg": "41281",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "고양창릉 S-6BL 아파트 건설공사 3공구",
+   "bjdCodes": [
+    "4128111300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_309bf23d2fb8da6183af21ee"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_148663cc20e9552d2c42c304"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__cae8ffbdd879547bb684b020"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 430
+  },
+  {
+   "id": "PRJ-41281-0091",
+   "sgg": "41281",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "고양창릉 S-02",
+   "bjdCodes": [
+    "4128111300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3da356d359f047915c3f8088"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_29bf4cef6fb4606948bb3b48"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_23eb71dc48063933772f82bb"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_bc01f01ac015b15530c7e35b"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__02606e66741be52b7171b14c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1057
+  },
+  {
+   "id": "PRJ-41281-0092",
+   "sgg": "41281",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "고양창릉 S-03",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_982c5e2a271ef5ed8992d3bf"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4d29636ffa571ff2fdf7c72e"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_49f5becc03c38c29e62983a1"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_80a5c2cd5cc076e96d8dd72c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1282
+  },
+  {
+   "id": "PRJ-41281-0093",
+   "sgg": "41281",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "고양시 소재 구 국방대학교",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6a50be98aeecbcb9503a668c"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_bc935def5f22ca03944f4bc9"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 2570
+  },
+  {
+   "id": "PRJ-41281-0094",
+   "sgg": "41281",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "고양창릉 S-5BL 아파트 건설공사 2공구",
+   "bjdCodes": [
+    "4128111300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a670f6d7fa645d127b8c28f5"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_cd0ad7de7ca676c6f3981f1f"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__7c6d377912b4d94347e82069"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 759
+  },
+  {
+   "id": "PRJ-41281-0095",
+   "sgg": "41281",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "고양창릉 S-01",
+   "bjdCodes": [
+    "4128111300",
+    "4128112800"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_5e44ff687d450ebf890a9497"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e72836551bdd58eec3660b80"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_15117de9d32f8a7b6b4ce0b8"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f25c0c21ce607faf686e73a5"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__61cd5792d76cf8e7bf9a880b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 494
+  },
+  {
+   "id": "PRJ-41285-0048",
+   "sgg": "41285",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "고양장항 S-1BL 아파트 건설공사 5공구",
+   "bjdCodes": [
+    "4128510400"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_e71c088b2a775d523be27f02"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4e0a46c41cc48a371a6fc916"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__b0747b3e5b5ee6365119695d"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 869
+  },
+  {
+   "id": "PRJ-41285-0049",
+   "sgg": "41285",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "고양장항 S-2BL 아파트 건설공사 6공구",
+   "bjdCodes": [
+    "4128510400"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_9a060c54637eb65164c01ddc"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_70c16f89c02d428a47cc1de7"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__3e2152ee902a95587151a592"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 945
+  },
+  {
+   "id": "PRJ-41290-0030",
+   "sgg": "41290",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "과천 경마장·방첩사 부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3aaa36bdc0644e9adf63ce4f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_20c39c71a1b979499c045c9b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 9800
+  },
+  {
+   "id": "PRJ-41290-0031",
+   "sgg": "41290",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "과천지식정보타운 S-12",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f0e91ca7d6f4ffa9668238a0"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_254e6d4ae135e6e081f67607"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c6d1ed1cb18f1a5adc438790"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6a66b31b8f84244d491514e6"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__030bb34eaca2fea7f9a35187"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1424
+  },
+  {
+   "id": "PRJ-41290-0032",
+   "sgg": "41290",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)과천주암 C-1BL 공동주택 건설공사 1공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f617b8ab7c2920e1773650d1"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_9ee37f274e85961971980bc6"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__3c7ca89acdac43437626d665"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__83cd9ab050015670d871712c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1338
+  },
+  {
+   "id": "PRJ-41290-0033",
+   "sgg": "41290",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "과천주암(뉴스테이) C2",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3210e7ae7c0bc5de3785d13a"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a56077631c9e69c156861889"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3ffc50cbfd9df68edfe7914e"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_bceb35af2280eaa50c810c09"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__18cd764ae82fa316b34a127d"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__f3acb977a159187305a2662b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1030
+  },
+  {
+   "id": "PRJ-41310-0044",
+   "sgg": "41310",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "구리갈매역세권 A-3",
+   "bjdCodes": [
+    "4131010100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_d0dd95b84f96620c9036e4f8"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_2dfb63f2826a3d14481c2fb4"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__cf3737d100acda554446ea63"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 287
+  },
+  {
+   "id": "PRJ-41310-0045",
+   "sgg": "41310",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)구리갈매역세권 A-2BL 아파트 건설공사 3공구",
+   "bjdCodes": [
+    "4131010100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4d62ed375542ead7b1165c52"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3703d67f2bab49410930e182"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__7243c6dcd171a43d43919446"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 362
+  },
+  {
+   "id": "PRJ-41310-0046",
+   "sgg": "41310",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "구리갈매역세권 A-1",
+   "bjdCodes": [
+    "4131010100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_fe72b7e9bb4288835d8cfe03"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6861d287cc87790fa4d52028"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_57bf781795949537a16f6804"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b0f7e7ded4e31142e5b39d02"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__b4c096aef492f64ddc68d005"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__b6d2bb08c97bddfd17402e8b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1791
+  },
+  {
+   "id": "PRJ-41310-0047",
+   "sgg": "41310",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)구리갈매역세권 A-4BL 아파트 건설공사 2공구",
+   "bjdCodes": [
+    "4131010100"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_7a5d34a3c10d5c0515bee7ec"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e79e6d9e96f006b1537e24f4"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__5d2ebeeba935420af0382de7"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__f71a3cebb9670e331d0e331b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 561
+  },
+  {
+   "id": "PRJ-41360-0188",
+   "sgg": "41360",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)남양주진접2 A-1BL 아파트 건설공사 5공구",
+   "bjdCodes": [
+    "4136025300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_e13ecdb8c6a1d81662869346"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_120626d9ffa1c95cd3e9a326"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__3cce43249f4f4dd714fe9527"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 920
+  },
+  {
+   "id": "PRJ-41360-0189",
+   "sgg": "41360",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "남양주왕숙 A-1BL 아파트 건설공사 1공구",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_5d79f3e20d68bcc103a1d79d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1988cb01f60debc386947bee"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__c1d6dfea9609cacb0b9d26b2"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 629
+  },
+  {
+   "id": "PRJ-41360-0190",
+   "sgg": "41360",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "남양주왕숙 A-3BL 아파트 건설공사 7공구 (",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ebca252a5fc063326df625ce"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1b0f09c1abb6e68c92fac227"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__21a0dfbeef3ba22876158142"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 428
+  },
+  {
+   "id": "PRJ-41360-0191",
+   "sgg": "41360",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "남양주왕숙2 A03",
+   "bjdCodes": [
+    "4136010400"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_34a4781cb72ee714b1b83fd4"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1f460bcd27c1e4573d9337b6"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_e2c9f24a2b84fc9abaefc1ff"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4d0196c4344cf524a88ae0cc"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__ec40b182c2007524b867a36f"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 686
+  },
+  {
+   "id": "PRJ-41360-0192",
+   "sgg": "41360",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)남양주진접2 B-1BL 아파트 건설공사 2공구",
+   "bjdCodes": [
+    "4136025300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_d3599b60db46126cb69a67db"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1f4c8795c658a64e348d64d0"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__7fe87a679fd3af3210a06d81"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 260
+  },
+  {
+   "id": "PRJ-41360-0193",
+   "sgg": "41360",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-29",
+   "name": "남양주왕숙 S-18",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_e2c4422031690adc288cf022"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_36bfc1e9221a570c5661f8ea"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__76d3bf6eeef10eaf815e383c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 965
+  },
+  {
+   "id": "PRJ-41360-0194",
+   "sgg": "41360",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "남양주왕숙2 A01",
+   "bjdCodes": [
+    "4136010400"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_7cc0d92b771368542a012d10"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_446826cdc93ccf8d880cb0f1"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4fa3c6bb816c4485291dc310"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8f376db71f557323a80c0fd9"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__1bdd495a9b865fb51b82b8f3"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 812
+  },
+  {
+   "id": "PRJ-41360-0195",
+   "sgg": "41360",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-04-01",
+   "name": "다산지금A3",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_38c42e9d49e2700d6e257f04"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4a1b0a207f5a806c3f755e5e"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 518
+  },
+  {
+   "id": "PRJ-41360-0196",
+   "sgg": "41360",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "남양주왕숙 B-2BL 아파트 건설공사 5공구 (",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_57eed117daf2e2a838c7b11d"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_51b6a96ba3923d28008f12f0"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__6ae788a198710fa20be52043"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 587
+  },
+  {
+   "id": "PRJ-41360-0197",
+   "sgg": "41360",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "남양주진접2 A7",
+   "bjdCodes": [
+    "4136025300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_568fcefb3a9038e7267e29c6"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_549ddb7c7141ef73cf07ffb0"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_5e4e5efb5b9dd7b1a06ecaa0"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7b3aa15241d24df4972a9f95"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__bac23f48750be8ea2e16a129"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__edfedac85a8fec69d3c4efe1"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 710
+  },
+  {
+   "id": "PRJ-41360-0198",
+   "sgg": "41360",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "남양주왕숙 A-17",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_447a1f7757536e91b7d07977"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_60f74ae611079cfae69ea20e"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 379
+  },
+  {
+   "id": "PRJ-41360-0199",
+   "sgg": "41360",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)남양주진접2 A-4BL 아파트 건설공사 4공구",
+   "bjdCodes": [
+    "4136025300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2f6895ece90074d91ddd5dfb"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_67142027aa77136be6cb3593"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__7b8f88d21ff7dbc9f74e6fd6"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__d50d90559d2588876c192b8b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 448
+  },
+  {
+   "id": "PRJ-41360-0200",
+   "sgg": "41360",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "남양주 군부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_e6e37fbafb00ffaefb76199f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6d8b05fb793b1fdeeb986482"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 4180
+  },
+  {
+   "id": "PRJ-41360-0201",
+   "sgg": "41360",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)남양주진접2 A-3BL 아파트 건설공사 3공구 (",
+   "bjdCodes": [
+    "4136025300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_9de6e89b937481df2690fe79"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_879ed3ac20d377a411aa7d9f"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__7662041a83446a7f168d8838"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__f3bb5b040f6873e6f7f5499c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 366
+  },
+  {
+   "id": "PRJ-41360-0202",
+   "sgg": "41360",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)남양주왕숙 A-24BL 아파트 건설공사 4공구",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f473e70ec7c1bd0c25b4982b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_92a0bd4e283231a4a8007d2a"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__f4c20caf6951447174752a00"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__f53d1a92b7b35eaaadd48935"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 589
+  },
+  {
+   "id": "PRJ-41360-0203",
+   "sgg": "41360",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)남양주왕숙 B-17BL 아파트 건설공사 3공구 (",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6643c7c49b58a36dbf7aacbb"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b6318a6756a3b039af39fdc7"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__87511c64f9c77b1e185449a1"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 491
+  },
+  {
+   "id": "PRJ-41360-0204",
+   "sgg": "41360",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)남양주왕숙 A-2BL 아파트 건설공사 2공구",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8b491e8204b143fcd4752a83"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b94e9de3e3e2bbd4f05e5272"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__d4e74e32672f1539c84a0e0a"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__d5d9208ae8f3bfa3949d1c7d"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 608
+  },
+  {
+   "id": "PRJ-41360-0205",
+   "sgg": "41360",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "남양주왕숙 B-1BL 아파트 건설공사 6공구 (",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ef38cba45d120d6520d824d4"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_d9a942fb86e1bca36d15a8ed"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__ec2ba4733812550425b7903e"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 560
+  },
+  {
+   "id": "PRJ-41360-0206",
+   "sgg": "41360",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)남양주왕숙 A-6BL 아파트 건설공사 8공구",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4957398447fab5705e0ffb81"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_ed25b25037ed0881f19d9a12"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__67cb6ae860f01e3d7c9811e9"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 954
+  },
+  {
+   "id": "PRJ-41360-0207",
+   "sgg": "41360",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "남양주왕숙 A-25BL 아파트 건설공사",
+   "bjdCodes": [
+    "4136025900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4a1d2efbe7acb5724ce2970b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f345f2ad0c4ce9f333d7e80d"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__b42e7e6608cce9f7c3223cf8"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1298
+  },
+  {
+   "id": "PRJ-41370-0046",
+   "sgg": "41370",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "오산세교2 A-12BL 민간참여 공공주택건설사업",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_91d116b4f9d1db0227101555"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4a6fe65e22783ed2e16c1cc5"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__3832159aa63f62a322c36248"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 433
+  },
+  {
+   "id": "PRJ-41370-0047",
+   "sgg": "41370",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "오산세교2 A11",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_67c831ae55c25bff2b683090"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_693fd7d6c158c2da26abe2c0"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_bfefc84d848b440d96b210f3"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7844728e32bd7d032106a1dc"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__69dc9c32eea1d1610dd87db0"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 399
+  },
+  {
+   "id": "PRJ-41390-0084",
+   "sgg": "41390",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)시흥하중 A-4BL 공동주택 건설공사 2공구",
+   "bjdCodes": [
+    "4139011900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8e27956555278faade6da048"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_07535d298d1b6d593fdde152"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__478d87219a1369e56626dfcc"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__a327ee086dc60af68776cc94"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 584
+  },
+  {
+   "id": "PRJ-41390-0085",
+   "sgg": "41390",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "시흥거모 A4",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_0d635c9204505e89cb9b1b04"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_53a9b7ec0a27d2d3f33aae2b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 510
+  },
+  {
+   "id": "PRJ-41390-0086",
+   "sgg": "41390",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "시흥거모 A5",
+   "bjdCodes": [
+    "4139012700"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6258ab74beec92ed9bd15674"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_56c23b88a629f40dd3071afc"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_934bfeb8d0b821c3bc74a76f"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_70da87e9fa493fcc566e02e3"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__d7bb9e48ca62cc43af21f9c5"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__f894caf701a82cb0dd84ee0e"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 435
+  },
+  {
+   "id": "PRJ-41390-0087",
+   "sgg": "41390",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "시흥거모 S1",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f56c5d12227b48bdb9e99c49"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5fd2115e976e1d5bb4e90456"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 300
+  },
+  {
+   "id": "PRJ-41390-0088",
+   "sgg": "41390",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)시흥하중 A-2BL 아파트 건설공사 3공구",
+   "bjdCodes": [
+    "4139011900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_665fedfab105a6aa2eca8c10"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7af1f4c60e23bd2da29910fc"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__8bff1eef2fd7592b659084a3"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 412
+  },
+  {
+   "id": "PRJ-41390-0089",
+   "sgg": "41390",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "시흥거모 A6",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_88c4f380f99442fa499b2f94"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7d1b5e3e2b392b43d0c59a6b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 480
+  },
+  {
+   "id": "PRJ-41390-0090",
+   "sgg": "41390",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "시흥대야역",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6c4d5c27b68c683dc9e7a0bc"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_818e6983526e0b4e58cd3911"
+    }
+   ],
+   "issuedAt": "2026-10-14"
+  },
+  {
+   "id": "PRJ-41390-0091",
+   "sgg": "41390",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "시흥하중 A1",
+   "bjdCodes": [
+    "4139011900"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1d614d9e1ac34c901e7be3c6"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_956d75d8144b84a201c71b73"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1823d2f7cc02437e6939d43a"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b3d348e364dc16b744cc949d"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__728f564591e1b4ee1f54025d"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__db74df5fd26c6b3e72965217"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 600
+  },
+  {
+   "id": "PRJ-41390-0092",
+   "sgg": "41390",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "시흥거모 A10",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_810a00ecd798299acb582005"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a2d73c8fd81adb49dfba0fa3"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 301
+  },
+  {
+   "id": "PRJ-41410-0042",
+   "sgg": "41410",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "군포대야미 A1",
+   "bjdCodes": [
+    "4141010600",
+    "4141010800"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_bbd10801be6e876cc2901ec6"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3467a150907b93a0999e5c40"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4f02d4fa41ac4df0f4dad1f1"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a7012ddbc7d3e06fb0580569"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__7aca1c80670ac6c92286cd69"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 378
+  },
+  {
+   "id": "PRJ-41410-0043",
+   "sgg": "41410",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "군포대야미 A-2BL 아파트 건설공사 1공구",
+   "bjdCodes": [
+    "4141010800"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_60cf0f604d516f199778de9e"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b08b4358cb7f64e9637fb3a0"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__60342d3d8707cc6f79ef9a34"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__6c18ba1aad2249592692055b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1511
+  },
+  {
+   "id": "PRJ-41430-0044",
+   "sgg": "41430",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "의왕초평 A4BL 민간참여 공공주택 건설사업",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_3cae35e350c53ae0708abf41"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_0d475dbdf35690c529f845be"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 381
+  },
+  {
+   "id": "PRJ-41430-0045",
+   "sgg": "41430",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "의왕월암 A3",
+   "bjdCodes": [
+    "4143011000"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_a7f918c2a3e441d10e5b7d70"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4678e7ce4d7bafb3d2e7e4ad"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1a5c6500b51348fb504185c2"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_d17c29dff54b362101f15d36"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__0906040ae32678367c09de39"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__f5a603903765a7bf1990eed8"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 642
+  },
+  {
+   "id": "PRJ-41430-0046",
+   "sgg": "41430",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "의왕월암 A1",
+   "bjdCodes": [
+    "4143011000"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2bc060632cea6de2af9ce7c7"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7bdab913be1c06af3cd62f18"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_ed3237c7e6e1c700ea1c3062"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_b5b91172d6eed372aeb26e11"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__b6cc1d03f4f3afaec2631f0d"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__c1c1491aef114eefc05a7339"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 674
+  },
+  {
+   "id": "PRJ-41430-0047",
+   "sgg": "41430",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "의왕청계2 A1",
+   "bjdCodes": [
+    "4143010800"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_084c9436b13fedbd2a8cc93b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7dbb8517958f6375fc421333"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_12d500189c00493d653f1461"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_ecac22dd522009f174891d30"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__687c73bfa7819cfe7c7d5a21"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__d4e1dc1001515ecd08660736"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 480
+  },
+  {
+   "id": "PRJ-41430-0048",
+   "sgg": "41430",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "의왕초평(뉴스테이) A4",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4d21feaeef052887cb8c5804"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_840dde9c0a83c846e6d18690"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__d104d67e76f618b82e7f8414"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 381
   },
   {
    "id": "PRJ-41450-0001",
@@ -991,7 +8943,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "휴먼시아 꽃뫼마을",
-   "units": 748
+   "units": 748,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0002",
@@ -1019,7 +8973,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "휴먼시아꽃뫼마을",
-   "units": 638
+   "units": 638,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0003",
@@ -1047,7 +9003,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "휴먼시아 새뜰마을",
-   "units": 401
+   "units": 401,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0004",
@@ -1075,7 +9033,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "휴먼시아 새뜰마을",
-   "units": 330
+   "units": 330,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0005",
@@ -1103,7 +9063,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "크로바 연립 재건축아파트공사",
-   "units": 72
+   "units": 72,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0006",
@@ -1131,7 +9093,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "프라임아파트",
-   "units": 41
+   "units": 41,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0007",
@@ -1159,7 +9123,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "효천수리골마을 아파트",
-   "units": 103
+   "units": 103,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0008",
@@ -1193,7 +9159,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "한솔리치빌아파트5단지",
-   "units": 268
+   "units": 268,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0009",
@@ -1221,7 +9189,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "한솔리치빌아파트3단지",
-   "units": 283
+   "units": 283,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0010",
@@ -1249,7 +9219,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남자이",
-   "units": 875
+   "units": 875,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0011",
@@ -1277,7 +9249,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남한솔솔파크",
-   "units": 616
+   "units": 616,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0012",
@@ -1305,7 +9279,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "한승미메이드아파트",
-   "units": 46
+   "units": 46,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0013",
@@ -1333,7 +9309,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "케이씨씨아파트",
-   "units": 244
+   "units": 244,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0014",
@@ -1361,7 +9339,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "벽산블루밍아파트",
-   "units": 696
+   "units": 696,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0015",
@@ -1389,7 +9369,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "덕풍동 369-1 아파트",
-   "units": 24
+   "units": 24,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0016",
@@ -1417,7 +9399,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "송도연립재건축아파트",
-   "units": 44
+   "units": 44,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0017",
@@ -1445,7 +9429,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "참아름",
-   "units": 777
+   "units": 777,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0018",
@@ -1473,7 +9459,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남풍산센트레빌아파트",
-   "units": 168
+   "units": 168,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0019",
@@ -1501,7 +9489,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "삼부르네상스",
-   "units": 471
+   "units": 471,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0020",
@@ -1529,7 +9519,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "제일풍경채",
-   "units": 140
+   "units": 140,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0021",
@@ -1557,7 +9549,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "제일풍경채",
-   "units": 120
+   "units": 120,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0022",
@@ -1585,7 +9579,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "동원베네스트",
-   "units": 217
+   "units": 217,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0023",
@@ -1613,7 +9609,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남풍산아이파크5단지",
-   "units": 365
+   "units": 365,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0024",
@@ -1641,7 +9639,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남풍산아이파크1단지",
-   "units": 686
+   "units": 686,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0025",
@@ -1669,7 +9669,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "우남퍼스트빌리젠트",
-   "units": 95
+   "units": 95,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0026",
@@ -1697,7 +9699,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "대명세라뷰아파트",
-   "units": 97
+   "units": 97,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0027",
@@ -1725,7 +9729,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남더샵센트럴뷰",
-   "units": 672
+   "units": 672,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0028",
@@ -1753,7 +9759,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "감일 금강펜테리움 센트럴파크",
-   "units": 684
+   "units": 684,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0029",
@@ -1782,7 +9790,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "감일 스타힐스",
-   "units": 578
+   "units": 578,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0030",
@@ -1811,7 +9821,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남감일스윗시티",
-   "units": 934
+   "units": 934,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0031",
@@ -1839,7 +9851,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남 덕풍역 파크 어울림",
-   "units": 383
+   "units": 383,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0032",
@@ -1867,7 +9881,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남감일 스윗시티 행복주택 7단지",
-   "units": 425
+   "units": 425,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0033",
@@ -1896,7 +9912,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "감일스윗시티10단지",
-   "units": 753
+   "units": 753,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0034",
@@ -1925,7 +9943,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "힐스테이트 포웰시티",
-   "units": 932
+   "units": 932,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0035",
@@ -1953,7 +9973,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "감일스윗시티1단지",
-   "units": 669
+   "units": 669,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0036",
@@ -1987,7 +10009,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남덕풍행복주택",
-   "units": 30
+   "units": 30,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0037",
@@ -2015,7 +10039,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남감일 스윗시티 행복주택 6단지",
-   "units": 672
+   "units": 672,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0038",
@@ -2041,7 +10067,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "LH아파트",
-   "units": 1094
+   "units": 1094,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0039",
@@ -2069,7 +10097,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "감일포엠포레",
-   "units": 617
+   "units": 617,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0040",
@@ -2098,7 +10128,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "감일 파크 센트레빌",
-   "units": 595
+   "units": 595,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0041",
@@ -2124,7 +10156,9 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남감일 공공주택지구 B-9BL",
-   "units": 866
+   "units": 866,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
   },
   {
    "id": "PRJ-41450-0042",
@@ -2158,7 +10192,475 @@
    ],
    "issuedAt": "2026-10-06",
    "name": "하남덕풍 경기 행복주택",
-   "units": 131
+   "units": 131,
+   "hiddenAt": "2026-10-14",
+   "hiddenReason": "HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)"
+  },
+  {
+   "id": "PRJ-41450-0073",
+   "sgg": "41450",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "하남 신장테니스장 부지",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b5a207ca24628a3ad9cf9fa5"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_807d4faaa25f214d951e24ea"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 300
+  },
+  {
+   "id": "PRJ-41450-0074",
+   "sgg": "41450",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "하남교산 A-2BL 공공주택 건설사업",
+   "bjdCodes": [
+    "4145010100",
+    "4145011700"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_f53c89c34e3066f9f2f00c22"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f4df90618b2cfb95837b4d92"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__e33dbc942675f8630e5bba91"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1115
+  },
+  {
+   "id": "PRJ-41463-0089",
+   "sgg": "41463",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-29",
+   "name": "기흥구 신갈동 17-27",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_13c656607bdfd97ff51557ba"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_7e3bdb768e61d0409e3f5a33"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 40
+  },
+  {
+   "id": "PRJ-41480-0112",
+   "sgg": "41480",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "파주운정3 A20BL 아파트 건설공사 13공구",
+   "bjdCodes": [
+    "4148011700"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_91031ae7480f41f039d4d851"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_8c391ca1a19b12b73f9bd9bd"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__ede79b95525a99b4d1227e54"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 612
+  },
+  {
+   "id": "PRJ-41500-0072",
+   "sgg": "41500",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "이천장호원 B2BL 아파트 건설공사 1공구",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b3e997a7438ad45de050c090"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_afa121ebed699e8aab86cd60"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__38a64177710c76e699a9f17f"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 620
+  },
+  {
+   "id": "PRJ-41570-0073",
+   "sgg": "41570",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)김포고촌2 A1BL 아파트 건설공사 1공구",
+   "bjdCodes": [
+    "4157025300"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_464a41bece455383a93ed7db"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5c41696f54ce584f4f9b324c"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__5379df37e7621d8ed9e4a342"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__eddef6c27124370f2cce2298"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 350
+  },
+  {
+   "id": "PRJ-41590-0035",
+   "sgg": "41590",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "화성동탄2 C-27",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_056f8d06bc3cd1025e480a48"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_112f13b479d372ba51663856"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_8ff7f6a1cf83b090198ff712"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_a1474954caef110fbe9dbedf"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__0a5c8ee8031ac03bb85b2d3d"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 563
+  },
+  {
+   "id": "PRJ-41590-0036",
+   "sgg": "41590",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-09-30",
+   "name": "화성동탄2 C-14",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_747b873d14a7ba998d392c6e"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_1a98096fd39a060c2144684a"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__6e43d615d6cef143cf000b8f"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__704a5f4bf0428031957722de"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 850
+  },
+  {
+   "id": "PRJ-41590-0037",
+   "sgg": "41590",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "민간참여) 화성동탄2 C-14 민간참여 공공주택 건설사업",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_253d85df416518f3e275b9ed"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_672dfd527cf2fe8d9d71cf5c"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 610
+  },
+  {
+   "id": "PRJ-41595-0023",
+   "sgg": "41595",
+   "stageCode": "02",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-01-01",
+   "name": "병점복합타운 주복1",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c999e1b8b65715d90c373575"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e05c4608f73fa5151e560558"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 780
+  },
+  {
+   "id": "PRJ-41610-0038",
+   "sgg": "41610",
+   "stageCode": "03",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-04-01",
+   "name": "광주역세권",
+   "bjdCodes": [],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4386d2d73b2c134527e86645"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_e57577ac296a4798617e617b"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 316
+  },
+  {
+   "id": "PRJ-41630-0098",
+   "sgg": "41630",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)양주옥정 A-22BL 아파트 건설공사 1공구",
+   "bjdCodes": [
+    "4163010800"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_46faf193aac16d7eab78abd0"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_46a39b2e958153bd4b912fb3"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__3da493c072fad0475b5993e9"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 1126
+  },
+  {
+   "id": "PRJ-41630-0099",
+   "sgg": "41630",
+   "stageCode": "05",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "양주회천 A26",
+   "bjdCodes": [
+    "4163011700"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_730750f9874c73fd8011cce5"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_58dd448826d821eaa4ef979c"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_6b252cf0037943076b1637f4"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_687b3d75300242efdbf92fcc"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__854d59af4b5380e076ec6f64"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 792
+  },
+  {
+   "id": "PRJ-41830-0020",
+   "sgg": "41830",
+   "stageCode": "04",
+   "source": {
+    "provider": "HOME PoC(팀 공유 덤프)",
+    "dataset": "HOME 사업(home_project) 덤프 20261013T140241Z"
+   },
+   "asOf": "2026-07-01",
+   "name": "조달청)양평공흥(고령자) 아파트 건설공사 1공구",
+   "bjdCodes": [
+    "4183025000"
+   ],
+   "pnus": [],
+   "refs": [
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_b116ef3009033a4610078c5b"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_3b78a8f40148299920b7bd90"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__b7df7d0a5f2c755697cdf5a6"
+    }
+   ],
+   "issuedAt": "2026-10-14",
+   "units": 150
   }
  ]
 }

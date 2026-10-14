@@ -14,6 +14,8 @@ const config: NextConfig = {
   async headers() {
     return [
       { source: '/assets/vendor/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },
+      { source: '/assets/js/:file(.+\\.[0-9a-f]{8}\\.js)', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },   // build.js 가 만든 내용 해시 사본(옛 이름은 아래 기본 캐시로 남는다)
+      { source: '/assets/home-map/:file(\\d{5}\\.[0-9a-f]{8}\\.json)', headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }] },   // 수도권 지도 정적 자료의 내용 해시 사본(build.js)
       { source: '/regions/:path*', headers: [{ key: 'Cache-Control', value: 'public, max-age=300, stale-while-revalidate=3600' }] },
       {   // 모든 경로: 지도를 다른 출처의 iframe 에 넣지 못하게 한다(스펙 2.3). 화면 전환은 같은 창이라 영향이 없다
         source: '/:path*',

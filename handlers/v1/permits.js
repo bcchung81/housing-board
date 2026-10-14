@@ -2,10 +2,11 @@
    번지(PNU) 단위 사업으로 모으고 필지 경계(V-World 연속지적도)를 붙여 돌려준다.
 
    GET /api/v1/permits?bjd=<법정동 10자리>        (8자리는 00 을 붙여 받는다)
-   → 200 { type:'FeatureCollection', bjd, features:[{properties:{ pnu, jibun, name, label, units, status, mainBldCnt, approvedAt, startedAt, completedAt, plannedStart, plannedCompletion, overdue, address, refs, records }, geometry:Polygon}], meta:{ source, fetchedAt, records, candidates, projects, located, unlocated, unlocatedNames, unlocatedList, blockProjects, blockList, parcelErrors, truncated, skipped } }
+   → 200 { type:'FeatureCollection', bjd, features:[{properties:{ pnu, jibun, name, label, units, status, mainBldCnt, approvedAt, startedAt, completedAt, plannedStart, plannedCompletion, overdue, settled, address, refs, records }, geometry:Polygon}], meta:{ source, fetchedAt, records, candidates, projects, located, unlocated, unlocatedNames, unlocatedList, blockProjects, blockList, parcelErrors, truncated, skipped } }
    → problem+json: invalid-query 400 · invalid-code 400 · method 405 · keys-exhausted 429 · budget-exhausted 429 · not-configured 503 · upstream 502
 
-   - 사업 후보·상태·이름 규칙은 lib/permits.js(번들 빌드와 같음): 공동주택 + 총세대수 > 0, 번지 단위 집계, 상태는 계획 · 건설 단계 · 입주 단계(분양중·준공 임박은 공고·공정율이 필요해 정하지 않음).
+   - 사업 후보·상태·이름 규칙은 lib/permits.js: 공동주택 + 총세대수 > 0 + 원장과 같은 '진행 중' 규칙, 번지 단위 집계, 상태는 계획 · 건설 단계 · 입주 단계(분양중·준공 임박은 공고·공정율이 필요해 정하지 않음).
+     입주 단계에는 경과 표지 settled(moving 입주 진행 · settled 입주 완료 · existing 기존 단지, assets/js/settle.js)를 붙인다.
    - 한 법정동 사업은 최대 120개(건설 단계 → 계획 → 입주 단계, 세대수 큰 순)까지 필지를 붙이고 넘으면 meta.truncated. 필지를 못 찾은 사업은 지도에 못 그리므로 meta.unlocatedNames 로만 알린다.
    - 건축HUB 는 간헐적으로 503·빈 본문을 주므로 쪽마다 최대 4번(점점 길게 기다려) 시도한다. 인증키는 lib/keys.js 의 RESOLVE 용도 풀(서비스 'hub'), V-World 는 lib/vworld.js.
    - 사업 id: 사업 레지스트리(registry/projects.json, lib/projects.js)에 발급된 사업이면 features[].properties.projectId 에 `PRJ-{시군구5}-{일련4}` 를 붙인다(허가 관리번호가 같거나 PNU 가 같은 사업).
@@ -198,7 +199,7 @@ function createService(overrides = {}) {
       if (m && m.row) {
         const row = m.row, done = Permits.ledgerCompletion(row, b.approvedAt, now()) || (b.completedAt && b.completedAt <= t ? b.completedAt : null), name = Permits.isGenericName(b.name) && row.name ? row.name : b.name;
         taken.add(row.pnu);
-        matched.push({ pnu: row.pnu, jibun: jibunOf(row), name, label: Permits.shortLabel(name) || name, units: b.units, status: done ? '입주 단계' : b.status, mainBldCnt: null, approvedAt: b.approvedAt, startedAt: b.startedAt, completedAt: done, plannedStart: null, plannedCompletion: null, overdue: null,
+        matched.push({ pnu: row.pnu, jibun: jibunOf(row), name, label: Permits.shortLabel(name) || name, units: b.units, status: done ? '입주 단계' : b.status, mainBldCnt: null, approvedAt: b.approvedAt, startedAt: b.startedAt, completedAt: done, plannedStart: null, plannedCompletion: null, overdue: null, settled: done ? Permits.settledOf(done, null, now()) : null,
           address: row.platPlc, refs: [], records: b.records, latestRef: b.latestRef, block: b.block, via: 'ledger', ledger: ledgerOf(row, m) });
         info.blocksMatched++;
       } else { if (m && m.ambiguous) info.blocksAmbiguous++; leftBlocks.push(b); }
@@ -208,7 +209,7 @@ function createService(overrides = {}) {
       if (m && m.row) {
         const row = m.row, done = Permits.ledgerCompletion(row, p.approvedAt, now());
         taken.add(row.pnu);
-        matched.push({ ...p, pnu: row.pnu, jibun: jibunOf(row), address: row.platPlc, status: done ? '입주 단계' : p.status, completedAt: done || p.completedAt, plannedStart: done ? null : p.plannedStart, overdue: done ? null : p.overdue,
+        matched.push({ ...p, pnu: row.pnu, jibun: jibunOf(row), address: row.platPlc, status: done ? '입주 단계' : p.status, completedAt: done || p.completedAt, plannedStart: done ? null : p.plannedStart, overdue: done ? null : p.overdue, settled: done ? Permits.settledOf(done, null, now()) : p.settled,
           via: 'ledger', hubJibun: p.jibun, ledger: ledgerOf(row, m) });
         info.parcelsRecovered++;
       } else lost.push(p);
@@ -216,7 +217,7 @@ function createService(overrides = {}) {
     for (const p of locatedIn.filter((x) => x.status !== '입주 단계')) {              // ③ 같은 지번 대장의 사용승인일로 준공 확인
       const same = byPnu.get(p.pnu) || [];
       const done = same.map((r) => Permits.ledgerCompletion(r, p.approvedAt, now())).filter(Boolean).sort().pop();
-      if (done) { Object.assign(p, { status: '입주 단계', completedAt: done, plannedStart: null, overdue: null, statusBy: 'ledger' }); info.completions++; }
+      if (done) { Object.assign(p, { status: '입주 단계', completedAt: done, plannedStart: null, overdue: null, settled: Permits.settledOf(done, null, now()), statusBy: 'ledger' }); info.completions++; }
     }
     return { info, matched, blocks: leftBlocks, lost, partial: !!info.error };
   }
@@ -268,10 +269,10 @@ function createService(overrides = {}) {
   /* 법정동(10자리) 하나의 인허가 사업 결과: { body, cacheable, hit }. 캐시에 있으면 그것, 없으면 만들고(필지를 다 받았을 때만) 24시간 캐시한다 */
   async function getPermits(bjd) {
     const creds = vworldCreds(env);
-    const hit = cache.get(`permits:${bjd}`);
+    const hit = cache.get(`permits:v2:${bjd}`);   // v2(2026-10-14): 진행 중 후보 규칙·입주 경과(settled) — 옛 규칙 본문을 다시 쓰지 않는다
     if (hit) return { body: hit, cacheable: true, hit: true };
     const out = await build(bjd, creds);
-    if (out.cacheable) cache.set(`permits:${bjd}`, out.body, TTL_MS);
+    if (out.cacheable) cache.set(`permits:v2:${bjd}`, out.body, TTL_MS);
     return { body: out.body, cacheable: out.cacheable, hit: false };
   }
   const handler = async function handler(req, res) {

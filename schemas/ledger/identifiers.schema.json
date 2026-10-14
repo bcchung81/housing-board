@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "identifiers.schema.json",
   "title": "ledger/identifiers",
-  "description": "외부 식별자(원천 레코드 ↔ 사업). 원천 자료는 이 표의 (id_type, id_value) 로 사업에 붙는다. 값은 문자열(관리번호 6·7·13·22자리, 앞자리 0). 필지·법정동은 project_locations 에 둔다. 공통규격 v1.4: 사업식별자_identifiers.csv + as_of. HUB_HS_PK·HUB_AP_PK·MANUAL·BLDRGST_PK(건축물대장)·REB_COMPLEX_ID(부동산원 단지)·KAPT_CODE(K-apt 단지)·MYHOME_HSMP_SN(마이홈 단지)은 확장 값이고 match_rule(자동 연결 규칙)은 확장 열이다(v1.4 는 PNU·BJD_CODE·INTERNAL_PROJECT_ID 도 여기 두지만 원장에서는 각각 project_locations·기본 키다).",
+  "description": "외부 식별자(원천 레코드 ↔ 사업). 원천 자료는 이 표의 (id_type, id_value) 로 사업에 붙는다. 값은 문자열(관리번호 6·7·13·22자리, 앞자리 0). 필지·법정동은 project_locations 에 둔다. 공통규격 v1.4: 사업식별자_identifiers.csv + as_of. HUB_HS_PK·HUB_AP_PK·MANUAL·BLDRGST_PK(건축물대장)·REB_COMPLEX_ID(부동산원 단지)·KAPT_CODE(K-apt 단지)·MYHOME_HSMP_SN(마이홈 단지)·HOME(HOME 덤프 별칭 HPR_·PRO_·LH_ — 원래 MANUAL 에 섞여 있었다)은 확장 값이고 match_rule(자동 연결 규칙)은 확장 열이다(v1.4 는 PNU·BJD_CODE·INTERNAL_PROJECT_ID 도 여기 두지만 원장에서는 각각 project_locations·기본 키다).",
   "type": "object",
   "required": [
     "schema_version",
@@ -53,7 +53,8 @@
             "BLDRGST_PK",
             "REB_COMPLEX_ID",
             "KAPT_CODE",
-            "MYHOME_HSMP_SN"
+            "MYHOME_HSMP_SN",
+            "HOME"
           ]
         },
         "id_value": {

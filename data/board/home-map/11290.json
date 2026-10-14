@@ -1,0 +1,12 @@
+{
+  "schema": "home-map/1",
+  "sgg": "11290",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-11290-0062","name":"장위12","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"장위12","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.02774,37.606987],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
+    {"id":"PRJ-11290-0063","name":"성신여대입구역 북측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":755,"pks":[],"pnus":[],"bundles":[],"label":"성신여대입구역 북측","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1129010900","loc":{"by":"address","at":[127.013195,37.592076],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"]}},
+    {"id":"PRJ-11290-0064","name":"장위8","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2846,"pks":[],"pnus":[],"bundles":[],"label":"장위8","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1129013800","loc":{"by":"address","at":[127.054848,37.616526],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null}
+  ]
+}

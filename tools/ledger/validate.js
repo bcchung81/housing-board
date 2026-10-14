@@ -63,6 +63,15 @@ function validate(tables) {
     const [from, to] = ends[r.link_type];
     if (!from.has(r.from_local_id) || !to.has(r.to_local_id)) errors.push(`links: ${r.link_type} ${r.from_local_id} → ${r.to_local_id} 의 끝이 없다`);
   }
+  /* 새 표(HOME 덤프, 마이그레이션 *_ledger_refine.sql) — 변환기가 아직 만들지 않으면 없다 */
+  for (const r of tables.policy_targets ?? []) {
+    if (!policies.has(r.local_policy_id)) errors.push(`policy_targets.local_policy_id: 없는 값 ${r.local_policy_id}`);
+    if (r.local_program_id != null && !programs.has(r.local_program_id)) errors.push(`policy_targets.local_program_id: 없는 값 ${r.local_program_id}`);
+    for (const c of r.area_codes ?? []) if (!areas.has(c)) errors.push(`policy_targets.area_codes: 없는 값 ${c}`);
+    if (r.period_start > r.period_end) errors.push(`policy_targets: 기간 ${r.period_start} > ${r.period_end}`);
+  }
+  if (tables.policy_targets) keys('policy_targets', ['local_policy_id', 'local_program_id', 'stage_code', 'area_codes', 'period_start', 'period_end']);
+  if (tables.area_facts) { keys('area_facts', ['area_code', 'metric', 'breakdown', 'period', 'source_ref']); ref('area_facts', 'area_code', areas); }
   return errors;
 }
 

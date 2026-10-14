@@ -1,0 +1,13 @@
+{
+  "schema": "home-map/1",
+  "sgg": "11590",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-11590-0067","name":"흑석2","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1055,"pks":[],"pnus":[],"bundles":[],"label":"흑석2","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1159010500","loc":{"by":"address","at":[126.962142,37.507602],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
+    {"id":"PRJ-11590-0068","name":"동작우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":30,"pks":[],"pnus":[],"bundles":[],"label":"동작우체국","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.948305,37.496499],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"]}},
+    {"id":"PRJ-11590-0069","name":"본동","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1046,"pks":[],"pnus":[],"bundles":[],"label":"본동","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1159010400","loc":{"by":"address","at":[126.955117,37.512648],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
+    {"id":"PRJ-11590-0070","name":"수방사군부지 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-30"},"units":556,"pks":[],"pnus":[],"bundles":[],"label":"수방사군부지 1","agency":"lh","moveIn":null,"completion":"2028-09-30","noticeUnits":null,"bjd":"1159010100","loc":{"by":"address","at":[126.948,37.514891],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null}
+  ]
+}

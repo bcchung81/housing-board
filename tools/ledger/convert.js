@@ -11,6 +11,7 @@ const { permitEvents, statusOf } = require('../../lib/permits.js');
 const { stageOf } = require('../../lib/projects.js');
 const NL = require('./notice-link');
 const { addStage, isStageSource } = require('./stage-link');
+const HOME = require('./home-source');
 
 const ROOT = path.join(__dirname, '..', '..');
 const SLUGS = ['incheon-gyeyang', 'gwangju-gwangsan', 'jeonnam-naju'];
@@ -51,10 +52,13 @@ const SUSPECT_FIELD = { permit_approved: 'apprv', construction_start: 'stcns', c
      hubBulk?: { dataMonth, dataAsOf, collectedAt, files, records }(tools/ledger/hub-bulk.js 중간 스냅샷, legalDong 필요), hubIds?: { 관리번호: 후보 id }(mappings/hub-candidate-ids.json),
      national?: readNational() 의 { myhome, lhNotice, moveIn }(전국 모집공고·입주예정물량, legalDong 필요),
      stage?: readStageInput() 의 단계별 원천 중간 스냅샷(legalDong 필요, 소급 경로 trend.js 는 쓰지 않는다 — 미래 자료가 과거 판정에 새지 않게),
-     report?: 건축HUB 대용량·공고·입주예정 처리 건수를 채울 빈 객체 } */
-function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencies, sggNames, lhSgg = [], hubEvents = [], legalDong = null, hubBulk = null, hubIds = {}, national = null, stage = null, report = {} }) {
+     home?: home-source.js readHome 의 HOME 덤프 판(legalDong 필요) — 주면 수도권(11·28·41)의 원장 행을 HOME 행으로 갈아끼운다(replaceSido, 단계 올리기 전), homeIds?: { 키: id }(mappings/home-ids.json),
+     report?: 건축HUB 대용량·공고·입주예정 처리 건수를 채울 빈 객체(home 이면 report.homeIds 에 이번 판의 키를 더한 매핑 — 열거되지 않는 칸) } */
+function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencies, sggNames, lhSgg = [], hubEvents = [], legalDong = null, hubBulk = null, hubIds = {}, national = null, stage = null, home = null, homeIds = {}, report = {} }) {
   if (!/^\d{4}-\d{2}$/.test(observedMonth ?? '')) throw new Error('observedMonth(YYYY-MM)가 필요하다');
-  const t = { areas: [], agencies: [], policies: [], programs: [], links: [], projects: [], identifiers: [], project_locations: [], complexes: [], events: [], units: [], notices: [], notice_links: [], stat_facts: [], sources: [], review_required: [] };
+  const t = { areas: [], agencies: [], policies: [], programs: [], links: [], projects: [], identifiers: [], project_locations: [], complexes: [], events: [], units: [], notices: [], notice_links: [], stat_facts: [], sources: [], review_required: [], policy_targets: [], area_facts: [] };
+  /* HOME 발급 사업(레지스트리 refs.system home, scripts/issue-projects.js --home): 사업 행은 HOME 판에서만 만든다. HOME 사업으로의 대체(supersededBy)는 HOME 판을 넣을 때만 잇는다 */
+  const homeReg = new Set(registry.projects.filter((p) => p.refs.some((r) => r.system === HOME.HOME_SYSTEM)).map((p) => p.id));
 
   /* 원천 */
   for (const s of catalog.items) {
@@ -85,7 +89,7 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
   for (const a of agencies) t.agencies.push({ agency_id: a.id, agency_name: a.name, stat_actor: a.actor ?? null, source_ref: 'housing-wave-manual' });
 
   /* 지역 번들 단지: 레지스트리의 bundle 참조로 사업에 붙는다 */
-  const projectOfComplex = new Map(registry.projects.flatMap((p) => p.refs.filter((r) => r.system === 'bundle').map((r) => [`${r.key}/${r.value}`, p.id])));
+  const projectOfComplex = new Map(registry.projects.filter((p) => !homeReg.has(p.id)).flatMap((p) => p.refs.filter((r) => r.system === 'bundle').map((r) => [`${r.key}/${r.value}`, p.id])));   // HOME 발급 사업이 넘겨받은 번들 참조는 빼고(옛 사업의 단지로 둔다)
   const complexOfProject = new Map();
   for (const { slug, region, projects } of bundles) {
     const src = `bundle-${slug}`;
@@ -118,6 +122,7 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
 
   /* 사업 원장: 레지스트리 그대로(번들 단지 사업은 BLOCK, 건축HUB 사업은 번지 단위 PROJECT) */
   for (const p of registry.projects) {
+    if (homeReg.has(p.id)) continue;
     const bundle = complexOfProject.get(p.id);
     const src = bundle ? `bundle-${bundle.slug}` : 'hub-hs-basis';
     const sponsor = bundle?.c.sponsor?.name;
@@ -126,7 +131,7 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
       agency_id: AGENCY_OF_SPONSOR[sponsor] ?? null,
       public_scope: bundle ? (bundle.c.sponsorClass === 'public' ? 'PUBLIC' : 'PRIVATE_ON_PUBLIC_LAND') : 'UNKNOWN',
       public_basis: bundle ? `지역 번들 시행자: ${sponsor}` : null,
-      stage_code: p.stageCode, as_of: p.asOf, issued_at: p.issuedAt, superseded_by: p.supersededBy ?? null, source_ref: src,
+      stage_code: p.stageCode, as_of: p.asOf, issued_at: p.issuedAt, superseded_by: p.supersededBy && !homeReg.has(p.supersededBy) ? p.supersededBy : null, source_ref: src,
     });
     if (!sggNames[p.sgg]) addArea(p.sgg, 'SGG', null, 'housing-wave-registry');
     for (const r of p.refs) {
@@ -293,6 +298,17 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
         for (const [actor, values] of Object.entries(s.actors || {})) t.stat_facts.push({ ...base, actor, value: values[i] });
       });
     }
+  }
+
+  /* HOME 덤프: 수도권 원장 행을 HOME 행으로(단계 올리기 전 — HOME 실제 이벤트도 같은 규칙으로 올린다) */
+  if (home) {
+    if (!legalDong) throw new Error('home 에는 legalDong 이 필요하다');
+    const build = HOME.buildHome(home, { areaRows: legalDong.rows, lhSgg });
+    const { ids, fresh, conflicts } = HOME.assignHomeIds(build.groups, { homeIds, counters: registry.counters, taken: [...t.projects.map((p) => p.local_project_id), ...Object.values(hubIds)] });
+    const { tables, report: hr } = HOME.homeRows(build, ids, { registry, observedMonth, notices: t.notices });
+    const replaced = HOME.replaceSido(t, tables, { registry });
+    report.home = { edition: home.edition, ...hr, ids: { groups: build.groups.length, fresh, conflicts }, replaced };
+    Object.defineProperty(report, 'homeIds', { value: HOME.mergeHomeIds(homeIds, build.groups, ids), enumerable: false });
   }
 
   raiseStages(t, observedMonth, report);
@@ -492,7 +508,7 @@ function addNational(t, { myhome, lhNotice, moveIn, legalDong, observedMonth, ow
 
 /* 저장소에서 입력을 읽는다. 시군구 이름 표(SGG)는 lib/board/data.ts 안에 있고 그 파일은 JSON 을 import 해 Node 가 바로 못 읽으므로
    tests/js/board.test.cjs 와 같은 방법으로 객체 글자만 꺼낸다. */
-function loadInputs({ observedMonth = '2026-10', lhSgg, hubEvents, legalDong, hubBulk, hubIds, national, stage } = {}) {
+function loadInputs({ observedMonth = '2026-10', lhSgg, hubEvents, legalDong, hubBulk, hubIds, national, stage, home, homeIds } = {}) {
   const json = (p) => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
   const src = fs.readFileSync(path.join(ROOT, 'lib/board/data.ts'), 'utf8');
   const sggNames = Function(`return (${/export const SGG[^=]*= (\{[\s\S]*?\n\});/.exec(src)[1]})`)();
@@ -500,7 +516,8 @@ function loadInputs({ observedMonth = '2026-10', lhSgg, hubEvents, legalDong, hu
     registry: json('registry/projects.json'), molit: json('data/board/molit.json'), lh: json('data/board/lh-completion.json'), catalog: json('data/board/sources.json'),
     bundles: SLUGS.map((slug) => ({ slug, region: json(`regions/${slug}/region.json`), projects: json(`regions/${slug}/projects.json`).projects })),
     agencies: require(path.join(ROOT, 'lib/board/agencies.ts')).AGENCIES,
-    sggNames, lhSgg: lhSgg ?? [], hubEvents: hubEvents ?? [], legalDong: legalDong ?? null, hubBulk: hubBulk ?? null, hubIds: hubIds ?? {}, national: national ?? null, stage: stage ?? null, observedMonth,
+    sggNames, lhSgg: lhSgg ?? [], hubEvents: hubEvents ?? [], legalDong: legalDong ?? null, hubBulk: hubBulk ?? null, hubIds: hubIds ?? {}, national: national ?? null, stage: stage ?? null,
+    home: home ?? null, homeIds: homeIds ?? {}, observedMonth,
   };
 }
 
@@ -554,19 +571,24 @@ function mergeHubIds(prev, tables) {
   for (const r of tables.identifiers) if (r.id_type === 'HUB_HS_PK' && bulk.has(r.local_project_id)) ids[r.id_value] ??= r.local_project_id;
   return Object.fromEntries(Object.keys(ids).sort().map((k) => [k, ids[k]]));
 }
+/* 표 파일(schemas/ledger-<달>/tables/<표>.json): 한 행 한 줄(변경을 줄 단위로 보려고) */
+const renderTable = (table, rows) => `{"schema_version":"ledger/1","table":"${table}","rows":[\n${rows.map((r) => JSON.stringify(r)).join(',\n')}\n]}\n`;
 const renderHubIds = (ids) => `{\n${Object.entries(ids).map(([k, v]) => `${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(',\n')}\n}\n`;
 
-module.exports = { convert, raiseStages, STAGE_OF_EVENT, loadInputs, readHubBulk, readNational, readStageInput, stageFileOf, isStageSource, mergeHubIds, renderHubIds };
+module.exports = { convert, raiseStages, STAGE_OF_EVENT, loadInputs, readHubBulk, readNational, readStageInput, stageFileOf, isStageSource, mergeHubIds, renderHubIds, renderTable, HOME };
 
 /* 실행: node tools/ledger/convert.js [--month 2026-10] [--lh-sgg <매핑.json>] [--hub-events <스냅샷.json>] [--legal-dong <법정동코드 원본>]
-     [--hub-bulk <중간 스냅샷.json> --hub-ids <후보 id 매핑.json>] [--national <raw 폴더>] [--stage <snapshot/stage-*.json>] [--out <폴더>]
-   --out 을 주면 검증을 통과했을 때만 표마다 <폴더>/<표>.json 을 쓰고(한 행 한 줄 — 변경을 줄 단위로 보려고), --hub-ids 파일에 새 후보 id 를 더한다. */
+     [--hub-bulk <중간 스냅샷.json> --hub-ids <후보 id 매핑.json>] [--national <raw 폴더>] [--stage <snapshot/stage-*.json>] [--home <HOME 판 폴더> --home-ids <매핑.json>] [--out <폴더>]
+   --out 을 주면 검증을 통과했을 때만 표마다 <폴더>/<표>.json 을 쓰고(한 행 한 줄 — 변경을 줄 단위로 보려고), --hub-ids·--home-ids 파일에 새 id 를 더한다.
+   --home 은 판 폴더(schemas/ledger-<달>/raw/home/<덤프시각>) — 원본 jsonl.gz 가 없으면(저장소에는 manifest 만) Storage 에서 받거나 home-dump.py 로 다시 뽑는다(raw-store.js pull 은 아직 HOME 을 받지 않는다). */
 if (require.main === module) {
   const { validate } = require('./validate');
   const arg = (name) => { const i = process.argv.indexOf(name); return i > 0 ? process.argv[i + 1] : null; };
   const readJson = (p) => JSON.parse(fs.readFileSync(p, 'utf8'));
-  const dong = arg('--legal-dong'), idsFile = arg('--hub-ids'), report = {};
+  const dong = arg('--legal-dong'), idsFile = arg('--hub-ids'), homeDir = arg('--home'), homeIdsFile = arg('--home-ids'), report = {};
   const hubIds = idsFile && fs.existsSync(idsFile) ? readJson(idsFile) : {};
+  const homeIds = homeIdsFile && fs.existsSync(homeIdsFile) ? readJson(homeIdsFile) : {};
+  if (homeDir && !HOME.homeAvailable(homeDir)) throw new Error(`${homeDir} 에 HOME 원본(jsonl.gz)이 없다 — Storage ledger-raw/<달>/home/<덤프시각>/ 에서 받거나 tools/ledger/home-dump.py 로 덤프에서 다시 뽑는다`);
   const tables = convert({ ...loadInputs({
     observedMonth: arg('--month') ?? '2026-10',
     lhSgg: arg('--lh-sgg') ? readJson(arg('--lh-sgg')) : [],
@@ -575,6 +597,7 @@ if (require.main === module) {
     hubBulk: arg('--hub-bulk') ? readHubBulk(arg('--hub-bulk')) : null, hubIds,
     national: arg('--national') ? readNational(arg('--national')) : null,
     stage: arg('--stage') ? readStageInput(arg('--stage')) : null,
+    home: homeDir ? HOME.readHome(homeDir) : null, homeIds,
   }), report });
   for (const [name, rows] of Object.entries(tables)) console.log(`${name.padEnd(18)} ${rows.length}`);
   if (Object.keys(report).length) console.log('건축HUB 대용량·공고·입주예정·단계별 원천', JSON.stringify(report));
@@ -585,9 +608,10 @@ if (require.main === module) {
   if (out && !errors.length) {
     fs.mkdirSync(out, { recursive: true });
     for (const [table, rows] of Object.entries(tables)) {
-      fs.writeFileSync(path.join(out, `${table}.json`), `{"schema_version":"ledger/1","table":"${table}","rows":[\n${rows.map((r) => JSON.stringify(r)).join(',\n')}\n]}\n`);
+      fs.writeFileSync(path.join(out, `${table}.json`), renderTable(table, rows));
     }
     console.log(`표 ${Object.keys(tables).length}개를 ${out} 에 썼다`);
     if (idsFile) fs.writeFileSync(idsFile, renderHubIds(mergeHubIds(hubIds, tables)));
+    if (homeIdsFile && report.homeIds) fs.writeFileSync(homeIdsFile, HOME.renderHomeIds(report.homeIds));
   }
 }

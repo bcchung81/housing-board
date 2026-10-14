@@ -14,9 +14,11 @@ const tables = loadTables();
 const board = boardFromLedger(tables, { referenceDate: REF, observedMonth: MONTH });
 const sum = (a) => a.reduce((s, v) => s + v, 0);
 const BULK = `hub-bulk-hs-${EDITION}`;
-const N = tables.projects.length;
-/* 발급 사업 9개 사업 13쌍·계양 A2 다음 일정을 센 기준일(2026-10-10). 열린 달 주 1회 갱신(monthly.js --refresh)으로 저장된 보드의 기준일은 날마다 바뀌므로 이 둘은 이 기준일로 다시 계산해 본다 */
-const REF0 = '2026-10-10', board0 = boardFromLedger(tables, { referenceDate: REF0, observedMonth: MONTH });   // 발급 77 + LH 후보 273 + 건축HUB 대용량 후보 3,495(진행 중만)
+/* 대체된 사업(superseded_by — 수도권 레지스트리 사업이 HOME 사업으로 넘어간 것, 2026-10-14)은 집계·지도에서 빠진다. 수도권(11·28·41)은 HOME 덤프 사업(source_ref home-dump-<덤프시각>) */
+const live = tables.projects.filter((p) => !p.superseded_by), N = live.length;
+const isHome = (p) => p.source_ref.startsWith('home-dump-');
+/* 예정일 경과 쌍·계양 A2 다음 일정을 센 기준일(2026-10-10). 열린 달 주 1회 갱신(monthly.js --refresh)으로 저장된 보드의 기준일은 날마다 바뀌므로 이 둘은 이 기준일로 다시 계산해 본다 */
+const REF0 = '2026-10-10', board0 = boardFromLedger(tables, { referenceDate: REF0, observedMonth: MONTH });   // 발급 16 + LH 후보 122 + 건축HUB 대용량 후보 1,917 + 수도권 HOME 263
 
 test('판정 개월 경계: 꽉 찬 달 수(기준일의 일이 끝 날짜의 일보다 작으면 1을 뺀다), 6개월 = 지연, 1개월 미만 = 정상', () => {
   assert.equal(elapsedMonths('2026-04-10', '2026-10-10'), 6);
@@ -31,15 +33,16 @@ test('판정 개월 경계: 꽉 찬 달 수(기준일의 일이 끝 날짜의 �
   assert.equal(elapsedMonths('2026-12-31', '2026-10-10'), 0, '아직 오지 않은 예정');
 });
 
-test('판정 = 정상 · 주의 · 지연(발급 사업 + 건축HUB 대용량 후보의 준공 예정 경과, 2026-10 첫 판 3,411 = 2,757 · 134 · 520 → 단계별 원천(건축물대장 준공 실제) 뒤 2,811 · 132 · 468 → 단계 올리기(2026-10-13) 뒤 2,812 · 133 · 466), LH 후보는 판정에서 뺀다', () => {
+test('판정 = 정상 · 주의 · 지연(발급 사업 + 수도권 HOME 사업 + 건축HUB 대용량 후보의 준공 예정 경과, 2026-10 첫 판 3,411 = 2,757 · 134 · 520 → 단계별 원천(건축물대장 준공 실제) 뒤 2,811 · 132 · 468 → 단계 올리기(2026-10-13) 뒤 2,812 · 133 · 466 → 수도권 HOME 교체(2026-10-14) 뒤 2,009 = 1,608 · 86 · 315), LH 후보는 판정에서 뺀다', () => {
   const j = board.judgment;
   assert.deepEqual([board.scope.judged, j.ok.projects, j.caution.projects, j.delay.projects], [L.scope.judged, L.judgment.ok.projects, L.judgment.caution.projects, L.judgment.delay.projects], '저장된 보드와 같다');
   assert.equal(j.ok.projects + j.caution.projects + j.delay.projects, board.scope.judged);
-  const of = (f) => tables.projects.filter(f).length;
-  const lhN = of((p) => p.source_ref === 'datagokr-15141761'), bulkN = of((p) => p.source_ref === BULK), issuedN = of((p) => p.issued_at);
+  const of = (f) => live.filter(f).length;
+  const lhN = of((p) => p.source_ref === 'datagokr-15141761'), bulkN = of((p) => p.source_ref === BULK), issuedN = of((p) => p.issued_at), homeN = of(isHome);
   assert.equal(j.excluded.projects, lhN, '판정 제외 = LH 후보 전부');
-  assert.deepEqual(board.scope, { projects: N, issued: issuedN, candidates: N - issuedN, judged: L.scope.judged, units: board.scope.units, coverage: 'NATIONWIDE', bySource: { issued: issuedN, lhCandidates: lhN, hubBulkCandidates: bulkN }, sido: new Set(tables.projects.map((p) => p.sgg_code.slice(0, 2))).size, withEvents: L.scope.withEvents });
-  assert.equal(issuedN + lhN + bulkN, N, '발급 + LH 후보 + 건축HUB 대용량 후보');
+  assert.deepEqual(board.scope, { projects: N, issued: issuedN, candidates: N - issuedN, judged: L.scope.judged, units: board.scope.units, coverage: 'NATIONWIDE', bySource: { issued: of((p) => p.issued_at && !isHome(p)), lhCandidates: lhN, hubBulkCandidates: bulkN, home: homeN }, sido: new Set(live.map((p) => p.sgg_code.slice(0, 2))).size, withEvents: L.scope.withEvents });
+  assert.equal(board.scope.bySource.issued + lhN + bulkN + homeN, N, '발급 + LH 후보 + 건축HUB 대용량 후보 + 수도권 HOME');
+  assert.ok(homeN > 0 && live.filter((p) => ['11', '28', '41'].includes(p.sgg_code.slice(0, 2))).every(isHome), '수도권 사업은 모두 HOME');
   assert.equal(board.scope.units, L.scope.units);
   assert.deepEqual({ ...board.judge, rule: undefined }, { cautionMonths: 1, delayMonths: 6, rule: undefined, dataAsOf: L.judge.dataAsOf });
   assert.equal(board.judge.dataAsOf[BULK], lastDay(EDITION), '건축HUB 대용량의 자료 기준일 = 판 데이터 월 말일');
@@ -54,12 +57,19 @@ test('판정 = 정상 · 주의 · 지연(발급 사업 + 건축HUB 대용량 �
   assert.equal(sum(board.cautionByStage), j.caution.units);
 });
 
-test('예정일 경과 목록은 수집 계획 3절의 정의와 같다: 발급 사업은 9개 사업 13쌍(착공 9 · 준공 4) → 8개 사업 11쌍(착공 7 · 준공 4, 2026-10-13 단계 올리기로 청약홈 모집공고가 붙은 장위10·장위6구역이 05 가 되어 착공 예정 경과가 빠짐), 목록은 경과가 큰 것부터 200쌍, 전체 수는 overdueTotal', () => {
-  // 저장된 원장 시험(ledger-2026-10.test.cjs)과 같은 정의로 고른 쌍(발급 사업은 건축HUB 스냅샷, 대용량 후보는 대용량 원천 — 사업마다 원천이 하나)
-  const stage = Object.fromEntries(tables.projects.map((p) => [p.local_project_id, p.stage_code]));
-  const issued = new Set(tables.projects.filter((p) => p.issued_at).map((p) => p.local_project_id));
-  const bulk = new Set(tables.projects.filter((p) => p.source_ref === BULK).map((p) => p.local_project_id));
-  const hub = tables.events.filter((e) => (e.source_ref === 'hub-hs-basis' && issued.has(e.local_project_id)) || (e.source_ref === BULK && bulk.has(e.local_project_id)));
+test('예정일 경과 목록은 수집 계획 3절의 정의와 같다: 발급 사업은 9개 사업 13쌍(착공 9 · 준공 4) → 8개 사업 11쌍(2026-10-13 단계 올리기) → 수도권 HOME 교체(2026-10-14) 뒤 성북·하남 건축HUB 발급 사업은 원장에서 빠지고 HOME 사업 5개 사업 5쌍(모두 준공), 목록은 경과가 큰 것부터 200쌍, 전체 수는 overdueTotal', () => {
+  // 저장된 원장 시험(ledger-2026-10.test.cjs)과 같은 정의로 고른 쌍(발급 사업은 건축HUB 스냅샷, 대용량 후보는 대용량 원천 — 사업마다 원천이 하나.
+  // HOME 사업은 종류마다 HOME 원천 예정(공사 계약 준공예정) → LH 준공예정 별칭 순으로 하나 — board.js SOURCE_RANK)
+  const stage = Object.fromEntries(live.map((p) => [p.local_project_id, p.stage_code]));
+  const issued = new Set(live.filter((p) => p.issued_at).map((p) => p.local_project_id));
+  const bulk = new Set(live.filter((p) => p.source_ref === BULK).map((p) => p.local_project_id));
+  const home = new Set(live.filter(isHome).map((p) => p.local_project_id));
+  const homePlan = new Map();
+  for (const e of tables.events.filter((x) => home.has(x.local_project_id) && x.date_type === 'PLANNED' && x.plan_basis === 'CURRENT').sort((a, b) => Number(/-lh-plan$/.test(a.source_ref)) - Number(/-lh-plan$/.test(b.source_ref)))) {
+    const k = `${e.local_project_id}|${e.event_type}`;
+    if (!homePlan.has(k)) homePlan.set(k, e);
+  }
+  const hub = [...tables.events.filter((e) => (e.source_ref === 'hub-hs-basis' && issued.has(e.local_project_id)) || (e.source_ref === BULK && bulk.has(e.local_project_id))), ...homePlan.values()];
   // 실제 기록은 모든 원천(2026-10-13 단계별 원천: 건축물대장의 준공·착공 실제가 예정일 경과를 지운다). 착공 추정(ESTIMATED)은 실제가 아니다
   const actual = new Set(tables.events.filter((e) => e.date_type === 'ACTUAL').map((e) => `${e.local_project_id}|${e.event_type}`));
   const end = (e) => e.event_date ?? (e.event_month ? `${e.event_month}-31` : `${e.event_year}-12-31`);
@@ -71,12 +81,13 @@ test('예정일 경과 목록은 수집 계획 3절의 정의와 같다: 발급 
   assert.equal(board.overdueTotal, L.overdueTotal);
   assert.deepEqual(board0.overdue.map((o) => `${o.id}|${o.eventType}|${o.months}`), expected.slice(0, 200).map((e) => `${e.id}|${e.eventType}|${e.months}`));
   const reg = expected.filter((e) => issued.has(e.id));
-  assert.equal(reg.length, 11);
-  assert.equal(new Set(reg.map((e) => e.id)).size, 8);
-  assert.equal(reg.filter((e) => e.eventType === 'CONSTRUCTION_START').length, 7);
+  assert.ok(reg.every((e) => home.has(e.id)), '발급 사업의 경과는 모두 HOME 사업(성북·하남 건축HUB 발급 사업은 HOME 에 대응이 없어 숨김)');
+  assert.equal(reg.length, 5);
+  assert.equal(new Set(reg.map((e) => e.id)).size, 5);
+  assert.equal(reg.filter((e) => e.eventType === 'CONSTRUCTION_START').length, 0);
   const worst = new Map();
   for (const e of reg) worst.set(e.id, Math.max(worst.get(e.id) ?? 0, e.months));
-  assert.deepEqual([...worst.values()].map((m) => classify(m)).sort(), ['caution', 'caution', 'caution', 'delay', 'delay', 'delay', 'delay', 'delay'], '장위10구역 지연 → 경과 없음 · 장위6구역 지연 → 주의(준공 예정 경과만)');
+  assert.deepEqual([...worst.values()].map((m) => classify(m)).sort(), ['caution', 'caution', 'delay', 'delay', 'ok'], '인천검단 AA13 계약 준공예정 2025-02-18 두 블록 지연 · 인천검단 AA21·이천장호원 B2 주의 · 성남금토 A2(2026-09-16) 한 달이 차지 않음');
 });
 
 test('건축HUB 대용량 후보는 착공 예정 경과를 판정에서 뺀다: 준공 예정 경과만 정상·주의·지연, 뺀 쌍은 excludedStartOverdue 로 센다(발급 사업은 둘 다 판정)', () => {
@@ -135,19 +146,22 @@ test('NOW(2026-10)의 단계 분포 = stage_code 분포(01·02→①, 03→②, 
   const top = new Map();   // 사업 → NOW 달까지 실제 기록의 가장 높은 칸(착공 추정 ESTIMATED 는 실제가 아니다)
   for (const e of tables.events) if (e.date_type === 'ACTUAL' && ofEvent[e.event_type] != null && (e.event_date ?? e.event_month ?? `${e.event_year}-12`).slice(0, 7) <= MONTH) top.set(e.local_project_id, Math.max(top.get(e.local_project_id) ?? 0, ofEvent[e.event_type]));
   const expected = [0, 0, 0, 0, 0, 0];
-  for (const p of tables.projects) expected[Math.max(idx[p.stage_code], top.get(p.local_project_id) ?? 0)] += 1;
+  for (const p of live) expected[Math.max(idx[p.stage_code], top.get(p.local_project_id) ?? 0)] += 1;
   assert.deepEqual(board.stageProjects[board.now], expected);
   const byStage = [0, 0, 0, 0, 0, 0];
-  for (const p of tables.projects) byStage[idx[p.stage_code]] += 1;
+  for (const p of live) byStage[idx[p.stage_code]] += 1;
   assert.deepEqual(byStage, expected, '실제 기록이 stage_code 보다 높은 칸을 뜻하는 사업이 없다(MOVE_IN 실제는 없다)');
   const index = mapIndexFromLedger(tables, { referenceDate: REF, observedMonth: MONTH });
   assert.deepEqual(Object.values(index.bySgg).flat().reduce((v, r) => ((v[idx[r.stage]] += 1), v), [0, 0, 0, 0, 0, 0]), expected, '지도 색인의 stage 도 같은 분포');
 });
 
-test('향후 12개월(2026-10 ~ 2027-09) 준공 예정: 계양 A2·A3 는 번들과 LH 에 예정이 있어도 한 번만 센다', () => {
+/* 계양 A2·A3: 2026-10-14 부터 HOME 사업(옛 레지스트리 PRJ-28245-0005·0004 는 대체 → 0055·0057, HOME 원천 공사 계약 준공예정 2026-10-11) */
+const [A2, A3] = ['PRJ-28245-0005', 'PRJ-28245-0004'].map((id) => tables.projects.find((p) => p.local_project_id === id).superseded_by);
+test('향후 12개월(2026-10 ~ 2027-09) 준공 예정: 계양 A2·A3 는 한 사업에 예정이 여럿이어도 한 번만 센다', () => {
   assert.deepEqual(board.upcoming.map((u) => u.ym), board.months.slice(board.now, board.now + 12));
-  // 계양 A2(PRJ-28245-0005) 747 + A3(PRJ-28245-0004) 538 은 번들 예정(2026-10-11)의 달에 한 번
-  const keep = (r) => ['PRJ-28245-0005', 'PRJ-28245-0004'].includes(r.local_project_id);
+  assert.deepEqual([A2, A3], ['PRJ-28245-0055', 'PRJ-28245-0057']);
+  // 계양 A2 747 + A3 538 은 준공 예정(2026-10-11)의 달에 한 번
+  const keep = (r) => [A2, A3].includes(r.local_project_id);
   const two = boardFromLedger({ ...tables, projects: tables.projects.filter(keep), events: tables.events.filter(keep), units: tables.units.filter(keep) });
   assert.deepEqual(two.upcoming[0], { ym: '2026-10', units: 747 + 538, projects: 2 });
   const plans = new Map();
@@ -155,26 +169,27 @@ test('향후 12개월(2026-10 ~ 2027-09) 준공 예정: 계양 A2·A3 는 번들
   assert.ok(sum(board.upcoming.map((u) => u.projects)) <= plans.size, '사업마다 한 번');
 });
 
-test('NOW 뒤의 달은 기준일 뒤 현재 예정을 쓴다: 계양 A2·A3(입주자모집공고 2024-09 연결, 준공 예정 2026-10-11, 입주 2026-12) → 2026-10 ④모집 · 2026-11 ⑤준공 · 2026-12 ⑥입주', () => {
+test('NOW 뒤의 달은 기준일 뒤 현재 예정을 쓴다: 계양 A2·A3(HOME — 착공 2023-10-25 실제, 준공 예정 2026-10-11, 모집공고·입주 연결 없음) → 2026-10 ③착공 · 2026-11·12 ⑤준공', () => {
   const only = (id) => {
     const keep = (r) => r.local_project_id === id;
     return boardFromLedger({ ...tables, projects: tables.projects.filter(keep), events: tables.events.filter(keep), units: tables.units.filter(keep) });
   };
-  for (const id of ['PRJ-28245-0005', 'PRJ-28245-0004']) {
+  for (const id of [A2, A3]) {
     const b = only(id), at = (ym) => b.stageProjects[b.months.indexOf(ym)].indexOf(1);
-    assert.deepEqual([at('2026-09'), at('2026-10'), at('2026-11'), at('2026-12')], [3, 3, 4, 5], id);
+    assert.deepEqual([at('2026-09'), at('2026-10'), at('2026-11'), at('2026-12')], [2, 2, 4, 4], id);
   }
 });
 
-test('기관 미상 줄: id unknown, 건축HUB 55건 · 건축HUB 전국 후보(공고 연결로 LH 를 채운 35건 제외) · 지역 번들 공공택지 민간 11건', () => {
+test('기관 미상 줄: id unknown, 건축HUB(수도권 교체 뒤 0) · 건축HUB 전국 후보(공고 연결로 LH 를 채운 것 제외) · 수도권 HOME(시행기관 미상) · 지역 번들 공공택지 민간 11건', () => {
   const u = board.agencies.find((a) => a.id === 'unknown');
   assert.equal(u.name, '기관 미상');
-  const noAgency = tables.projects.filter((p) => !p.agency_id), n = (f) => noAgency.filter(f).length.toLocaleString('en-US');
+  const noAgency = live.filter((p) => !p.agency_id), n = (f) => noAgency.filter(f).length.toLocaleString('en-US');
   assert.equal(u.projects, noAgency.length, '2026-10 첫 판: 66 + 3,460');
-  assert.equal(u.note, `시행 기관 미연결: 건축HUB ${n((p) => p.source_ref === 'hub-hs-basis')}건 · 건축HUB 전국 후보 ${n((p) => p.source_ref === BULK)}건 · 지역 번들 ${n((p) => p.source_ref.startsWith('bundle-'))}건(공공택지 민간 ${n((p) => p.public_scope === 'PRIVATE_ON_PUBLIC_LAND')})`);
-  const lhRows = tables.projects.filter((p) => p.agency_id === 'lh');
+  assert.equal(u.note, `시행 기관 미연결: 건축HUB ${n((p) => p.source_ref === 'hub-hs-basis')}건 · 건축HUB 전국 후보 ${n((p) => p.source_ref === BULK)}건 · 수도권 HOME ${n(isHome)}건 · 지역 번들 ${n((p) => p.source_ref.startsWith('bundle-'))}건(공공택지 민간 ${n((p) => p.public_scope === 'PRIVATE_ON_PUBLIC_LAND')})`);
+  const lhRows = live.filter((p) => p.agency_id === 'lh');
   assert.equal(board.agencies.find((a) => a.id === 'lh').projects, lhRows.length, 'LH 후보 · 번들 LH · 공고로 채운 후보(2026-10 첫 판 273 + 11 + 3)');
   assert.ok(lhRows.filter((p) => p.source_ref === 'datagokr-15141761').length === board.judgment.excluded.projects);
+  assert.ok(lhRows.some(isHome), 'HOME 원천 시행 LH');
   assert.equal(board.agencies.filter((a) => a.id == null).length, 0);
 });
 
@@ -206,17 +221,18 @@ test('저장된 data/board/ledger-board.json 이 도구로 다시 만든 것과 
 const index = mapIndexFromLedger(tables, { referenceDate: REF, observedMonth: MONTH });
 const rows = Object.values(index.bySgg).flat();
 
-test('지도 색인: 모든 사업 3,845건이 시군구마다 id 순으로 한 번씩, 시군구 키는 사업의 sgg_code', () => {
+test('지도 색인: 모든 사업(대체된 사업 제외 — 2026-10-14 수도권 HOME 교체 뒤 2,318건, 그 전 3,845건)이 시군구마다 id 순으로 한 번씩, 시군구 키는 사업의 sgg_code', () => {
   assert.deepEqual([index.schema, index.observedMonth, index.referenceDate], ['ledger-map/1', MONTH, REF]);
   assert.equal(rows.length, N);
   assert.equal(new Set(rows.map((r) => r.id)).size, N);
-  const sgg = Object.fromEntries(tables.projects.map((p) => [p.local_project_id, p.sgg_code]));
+  assert.ok(rows.every((r) => !tables.projects.find((p) => p.local_project_id === r.id).superseded_by), '대체된 사업은 없다');
+  const sgg = Object.fromEntries(live.map((p) => [p.local_project_id, p.sgg_code]));
   for (const [k, list] of Object.entries(index.bySgg)) {
     assert.match(k, /^\d{5}$/);
     assert.ok(list.every((r) => sgg[r.id] === k), k);
     assert.deepEqual(list.map((r) => r.id), list.map((r) => r.id).slice().sort(), `${k} id 순`);
   }
-  for (const r of rows) assert.deepEqual(Object.keys(r), ['id', 'name', 'issued', 'stage', 'cls', 'why', 'overdue', 'next', 'units', 'pks', 'pnus', 'bundles']);
+  for (const r of rows) assert.deepEqual(Object.keys(r), ['id', 'name', 'issued', 'stage', 'cls', 'why', 'overdue', 'next', ...('done' in r ? ['done'] : []), 'units', 'pks', 'pnus', 'bundles']);
 });
 
 test('지도 색인의 판정 합계(건수·호수) = 보드 판정, 대상이 아닌 사업은 why 로 까닭(LH 후보 273 = 보드 제외)', () => {
@@ -247,7 +263,7 @@ test('지도 색인의 overdue 는 보드의 예정일 경과에서 판정에 �
     assert.ok(!actual.has(`${r.id}|${r.next.eventType}`), r.id);
     assert.ok(`${r.next.planned}`.padEnd(10, '9') >= REF, `${r.id} ${r.next.planned}`);
   }
-  const a2 = mapIndexFromLedger(tables, { referenceDate: REF0, observedMonth: MONTH }).bySgg['28245'].find((r) => r.id === 'PRJ-28245-0005');   // 계양 A2: 준공 예정 2026-10-11(번들) — 기준일 2026-10-10 다음 날
+  const a2 = mapIndexFromLedger(tables, { referenceDate: REF0, observedMonth: MONTH }).bySgg['28245'].find((r) => r.id === A2);   // 계양 A2(HOME): 준공 예정 2026-10-11 — 기준일 2026-10-10 다음 날
   assert.deepEqual(a2.next, { eventType: 'COMPLETION', planned: '2026-10-11' });
 });
 

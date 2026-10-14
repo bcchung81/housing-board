@@ -22,9 +22,9 @@
 /* 순서: 지도 라이브러리·어댑터·기반시설 점검 함수·기존 기반시설 분류 함수 → 지역 자료 읽기(어댑터가 전역을 채움) → 키 파일 → 앱 → 주소 이동 입력줄(없어도 지도는 열린다). 큰 자료는 fetch 가 병렬로 받는다. */
 requestAnimationFrame(function () { setTimeout(function () {
   var lv = window.LoadView ? window.LoadView.ctl() : null, restore = function () {};   // 로딩 화면 진행(assets/js/loadview.js): 스크립트는 받는 대로, 지역 자료는 boot 동안 센다
-  if (lv) ['assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js', 'assets/js/region.js', 'assets/js/infra.js', 'assets/js/facility.js', 'assets/js/bus.js', 'config.js', 'assets/js/app.js'].forEach(function (s) { lv.want('code', s); });
+  if (lv) ['assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js', 'assets/js/settle.js', 'assets/js/region.js', 'assets/js/infra.js', 'assets/js/facility.js', 'assets/js/bus.js', 'config.js', 'assets/js/app.js'].forEach(function (s) { lv.want('code', s); });
   function load(src) { return new Promise(function (ok, no) { var s = document.createElement('script'); s.src = src; s.async = false; s.onload = function () { if (lv) { lv.got('code', src); if (src === 'assets/js/app.js') lv.finish('code'); } ok(); }; s.onerror = function () { no(new Error(src)); }; document.body.appendChild(s); }); }
-  Promise.all([load('assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js'), load('assets/js/region.js'), load('assets/js/infra.js'), load('assets/js/facility.js'), load('assets/js/bus.js')])
+  Promise.all([load('assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js'), load('assets/js/settle.js'), load('assets/js/region.js'), load('assets/js/infra.js'), load('assets/js/facility.js'), load('assets/js/bus.js')])
     .then(function () { if (lv) restore = lv.trackFetch(window); return window.RegionLoader.boot(window, document); })
     .then(function (r) { restore(); if (lv) lv.finish('data'); if (!r || !r.ok) return null; return load('config.js').catch(function () { if (lv) lv.got('code', 'config.js'); }).then(function () { return load('assets/js/app.js'); }).then(function () { return load('assets/js/goto.js').then(function () { window.GotoBar.mount(window, document); }).catch(function () {}); }); })
     .catch(function (e) { restore(); var f = document.getElementById('fatal'), l = document.getElementById('loading'); if (l) l.hidden = true; if (f) { f.hidden = false; f.textContent = '화면을 준비하지 못했습니다: ' + e.message; } });
@@ -128,6 +128,7 @@ requestAnimationFrame(function () { setTimeout(function () {
   <div class="optpanel" id="optPanel" role="group" aria-label="지도 옵션" hidden>
     <fieldset><legend>보일 단지 상태</legend><div id="optStatus"></div>
       <label id="lblPriv" hidden><input type="checkbox" id="privChip">공공택지 민간 단지 <small>회색 면</small></label>
+      <label id="lblEx" hidden title="06 입주 중 준공 뒤 24개월이 지난 단지. 기본은 숨김"><input type="checkbox" id="exChip">기존 단지 <small id="exN"></small></label>
     </fieldset>
     <fieldset><legend>지도에 겹쳐 보기</legend>
       <label id="lblCtx"><input type="checkbox" id="ctxChip">역 · 학교 <small>OpenStreetMap</small></label>

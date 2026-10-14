@@ -171,6 +171,7 @@ function createHandler(overrides = {}) {
       const umds = rows.filter((r) => codes.levelOf(r) === 'umd' && r.region_cd !== c.bjd).slice(0, MAX_NEIGHBORS).map((r) => ({ bjd: r.region_cd, name: String(r.locallow_nm || r.locatadd_nm.split(' ').pop()) }));
       if (umds.length) out.neighbors = umds;
       if (c.padded) warnings.push('padded-8-digit');
+      if (c.legacyFrom) warnings.push('legacy-code');                // 옛 광주(29)·전남(46) 코드를 2026-07 통합 코드(12)로 넘겼다(lib/codes.js LEGACY_SGG)
 
       let frame = null;
       try {

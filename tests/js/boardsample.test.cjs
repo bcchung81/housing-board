@@ -88,7 +88,7 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   assert.deepEqual([dir[1].pre, dir[1].big, dir[1].u], [undefined, S.f(L.scope.projects), '사업']);
   assert.equal(L.scope.projects, L.scope.issued + L.scope.candidates);
   const b = L.scope.bySource;
-  assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth} 기준 · 전국 · 사업 ${S.f(L.scope.projects)}건\\(발급 ${b.issued} · LH 후보 ${b.lhCandidates} · 건축HUB 후보 ${S.f(b.hubBulkCandidates)}\\)$`));
+  assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth} 기준 · 전국 · 사업 ${S.f(L.scope.projects)}건\\(발급 ${b.issued} · LH 후보 ${b.lhCandidates} · 건축HUB 후보 ${S.f(b.hubBulkCandidates)}${b.home ? ` · 수도권 HOME ${S.f(b.home)}` : ''}\\)$`));
   assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth} 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(발급 사업은 착공·준공, 건축HUB 후보는 준공 예정 경과만 · 판정 밖: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의$`));
   assert.doesNotMatch(dir.map((d) => d.basis).join(' '), /전국 아님/);
   const bk = L.delayByStage.indexOf(Math.max(...L.delayByStage));
@@ -127,7 +127,7 @@ test('리본 차트 기하(원장): 좌표 상수는 시안과 같고, 층 두�
   G.x.forEach(([v, x]) => near(R.X(v), x, `X(${v})`));
   assert.ok(S.textBox(S.staticTexts(R).now).y >= S.BOT + 7, '기준 글자 상자가 플롯(BOT)·1월 눈금(7) 안으로 들어가지 않는다');
   R.total.forEach((t, m) => assert.equal(t, L.stageUnits[m].reduce((a, b) => a + b, 0), `총량 ${m}`));
-  assert.equal(R.step, 500000); assert.equal(R.ymax, 2500000, '세로 축척은 가장 큰 총량을 눈금 간격 단위로 올린 값');
+  assert.equal(R.step, 500000); assert.equal(R.ymax, 1500000, '세로 축척은 가장 큰 총량을 눈금 간격 단위로 올린 값(수도권 HOME 교체 뒤 총량 약 141만, 2026-10-14)');
   assert.ok(R.ymax >= Math.max(...R.total) && R.ymax - Math.max(...R.total) < R.step);
   near(R.s2, S.PH / R.ymax, 's2');
   assert.equal(R.geo.length, 4 * (T.last + 1) + 1, '0.25개월 간격');
@@ -164,7 +164,7 @@ test('리본 지연 띠·병목: 달마다 그 달(판정 달)의 delayByStage, 
 
 test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹치지 않고 viewBox(960×400) 안에 있다(원장 = 총량 매달 같음, 총량이 해마다 다른 경우도)', () => {
   const R = S.ribbonOf(T, L.stageUnits, DL);
-  // 총량이 해마다 다른 경우: 전국 원장(총량 약 238만)에서 0.5배 → 1.5배
+  // 총량이 해마다 다른 경우: 전국 원장(총량 약 141만 — 2026-10-14 수도권 HOME 교체 전 238만)에서 0.5배 → 1.5배
   const grow = S.ribbonOf(T, L.stageUnits.map((r, m) => r.map((v) => Math.round(v * (0.5 + m / 45)))), DL);
   for (const [name, g] of [['원장', R], ['총량 증가', grow]]) {
     for (let cur = 0; cur <= T.last; cur++) {
@@ -185,8 +185,8 @@ test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹
   assert.deepEqual(Object.keys(o).sort(), ['statics', 'total', 'years'], '병목 핀 없음');
   assert.equal(ST.now.t, '기준 2026.10');
   for (const g of [R, grow]) assert.ok(S.ribbonLabels(g, T.now).statics.every((t) => !/붉은 띠|총량 매달/.test(t.t)), '차트 안 설명 글자 없음');
-  assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '50만', '100만', '150만', '200만', '250만']); assert.equal(S.axisUnit(R), '호');
-  const big = S.ribbonOf(T, L.stageUnits.map((r) => r.map((v) => v * 5)), DL);   // ymax 1,000만 이상: '만' 을 빼 눈금이 왼쪽 여백에 들어가고 단위는 머리 글자로
+  assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '50만', '100만', '150만']); assert.equal(S.axisUnit(R), '호');
+  const big = S.ribbonOf(T, L.stageUnits.map((r) => r.map((v) => v * 8)), DL);   // ymax 1,000만 이상: '만' 을 빼 눈금이 왼쪽 여백에 들어가고 단위는 머리 글자로
   assert.ok(big.ymax >= 10000000); assert.ok(S.staticTexts(big).ticks.every((t) => !t.t.includes('만'))); assert.equal(S.axisUnit(big), '만 호');
   ST.ticks.forEach((t, i) => near(t.y, S.BOT - R.ticks[i] * R.s2 + 3, `눈금 y ${i}`));
   const small = S.ribbonOf(T, L.stageUnits.map(() => [10000, 20000, 30000, 20000, 5000, 4000]), DL);   // 총량 89,000: 5만 간격이면 2칸이지만 더 잘게 5칸 이하 중 가장 작은 간격

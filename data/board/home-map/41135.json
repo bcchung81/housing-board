@@ -1,0 +1,10 @@
+{
+  "schema": "home-map/1",
+  "sgg": "41135",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-41135-0125","name":"성남낙생 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-31"},"units":1400,"pks":[],"pnus":[],"bundles":[],"label":"성남낙생 A1","agency":"lh","moveIn":"2029-02","completion":"2029-01-31","noticeUnits":933,"bjd":"4113511300","loc":{"by":"block","at":[127.081819,37.357054],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}}
+  ]
+}

@@ -23,6 +23,7 @@ export type Sources = { items: Source[] };
 export type RegistryProject = {
   id: string; name: string; sgg: string; bjdCodes: string[]; pnus?: string[]; stageCode: string; units?: number | null;
   source: { provider: string; dataset: string; url?: string }; asOf: string; issuedAt: string;
+  supersededBy?: string; hiddenAt?: string; hiddenReason?: string;   // 대체(다른 사업으로 넘어감)·숨김(대응 사업 없음) — scripts/issue-projects.js --home
 };
 
 /* data/board/ledger-board.json(tools/ledger/board.js 가 사업 원장 표에서 만든다). 시점 0 = months[0], 단계 6칸 = ①계획 … ⑥입주 */
@@ -30,7 +31,7 @@ type Judged = { projects: number; units: number };
 export type LedgerBoard = {
   schema: string; observedMonth: string; referenceDate: string;
   judge: { cautionMonths: number; delayMonths: number; rule?: string };
-  scope: { projects: number; issued: number; candidates: number; judged: number; units: number; coverage?: string; bySource?: { issued: number; lhCandidates: number; hubBulkCandidates: number } };
+  scope: { projects: number; issued: number; candidates: number; judged: number; units: number; coverage?: string; bySource?: { issued: number; lhCandidates: number; hubBulkCandidates: number; home?: number } };
   months: string[]; now: number; stageUnits: number[][]; stageProjects: number[][];
   actualThrough?: string; actualIndex?: number; actualSource?: string | null;   // 실제 날짜가 있는 마지막 달(호수가 가장 많은 원천의 자료 달). 그 뒤 달은 예정으로 다시 만든 값. 없으면(옛 집계) 기준 달까지 실제
   judgment: { ok: Judged; caution: Judged; delay: Judged; excluded: Judged & { reason: string }; excludedStartOverdue?: Judged & { pairs: number; reason: string } };

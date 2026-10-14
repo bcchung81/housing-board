@@ -31,11 +31,29 @@ test('permitEvents·statusOf: 사건과 상태가 Python 과 같다(미래 실�
   RECS.forEach((r, i) => { assert.deepEqual(P.permitEvents(r, NOW), EVENTS[i], JSON.stringify(r)); assert.equal(P.statusOf(P.permitEvents(r, NOW), NOW), STATUS[i], JSON.stringify(r)); });
 });
 
-test('isCandidate: 공동주택이면서 총세대수가 있는 기록만', () => {
-  assert.equal(P.isCandidate({ totHhldCnt: 10, purpsCdNm: '공동주택' }), true);
-  assert.equal(P.isCandidate({ totHhldCnt: 0, purpsCdNm: '공동주택' }), false);
-  assert.equal(P.isCandidate({ totHhldCnt: 10, purpsCdNm: '단독주택' }), false);
-  assert.equal(P.isCandidate({ totHhldCnt: null, purpsCdNm: '공동주택(아파트)' }), false);
+test('isCandidate: 공동주택이면서 총세대수가 있고 원장과 같은 진행 중 규칙을 지나는 기록만', () => {
+  const ok = { totHhldCnt: 10, purpsCdNm: '공동주택', apprvDay: '20240101' };
+  assert.equal(P.isCandidate(ok, NOW), true);
+  assert.equal(P.isCandidate({ ...ok, totHhldCnt: 0 }, NOW), false);
+  assert.equal(P.isCandidate({ ...ok, purpsCdNm: '단독주택' }, NOW), false);
+  assert.equal(P.isCandidate({ ...ok, totHhldCnt: null, purpsCdNm: '공동주택(아파트)' }, NOW), false);
+});
+
+test('inProgress: 원장(hub-bulk.js)의 진행 중 규칙 — 승인 5년 · 착공 2018~ · 준공 예정 2025~(승인 2015~) · 준공 2025~, 2025 전 준공·승인일 없음은 제외', () => {
+  const r = (over) => ({ apprvDay: '20100101', stcnsDay: '', useInsptDay: '', useInsptSchedDay: '', ...over });
+  assert.equal(P.permitFloor(NOW), '2021-10-01');                                                              // 기준일 달의 60개월 전 1일
+  assert.equal(P.inProgress(r({ apprvDay: '20211001' }), NOW), true);                                          // a 승인 5년 안
+  assert.equal(P.inProgress(r({ apprvDay: '20210930' }), NOW), false);
+  assert.equal(P.inProgress(r({ stcnsDay: '20180101' }), NOW), true);                                          // b 착공 2018~
+  assert.equal(P.inProgress(r({ stcnsDay: '20171231' }), NOW), false);
+  assert.equal(P.inProgress(r({ apprvDay: '20150101', useInsptSchedDay: '20250101' }), NOW), true);            // c 준공 예정 2025~ 이고 승인 2015~
+  assert.equal(P.inProgress(r({ apprvDay: '20141231', useInsptSchedDay: '20250101' }), NOW), false);
+  assert.equal(P.inProgress(r({ apprvDay: '20150101', useInsptSchedDay: '202512' }), NOW), false);             // 부분 날짜는 원장처럼 쓰지 않는다
+  assert.equal(P.inProgress(r({ useInsptDay: '20250101' }), NOW), true);                                       // d 준공 2025~
+  assert.equal(P.inProgress(r({ apprvDay: '20220101', stcnsDay: '20220601', useInsptDay: '20241231' }), NOW), false);   // 2025 전 준공은 승인·착공이 새로워도 제외
+  assert.equal(P.inProgress(r({ apprvDay: '', stcnsDay: '20220601' }), NOW), false);                           // 승인일 없음
+  // 재현 사례: 작전동풍림아이원(인천 계양, 2003-01-21 사용검사)은 후보가 아니다
+  assert.equal(P.isCandidate({ totHhldCnt: 1200, purpsCdNm: '공동주택', apprvDay: '20000801', stcnsDay: '20001001', useInsptDay: '20030121' }, NOW), false);
 });
 
 const rec = (over) => Object.assign({ sigunguCd: '41450', bjdongCd: '10800', bun: '0569', ji: '0000', platGbCd: '0', purpsCdNm: '공동주택', totHhldCnt: 100, bldNm: '테스트아파트', mgmHsrgstPk: 1, apprvDay: '20240101', stcnsDay: '', useInsptDay: '', mainBldCnt: 3, platPlc: '경기도 하남시 덕풍동 569번지' }, over);
@@ -44,7 +62,7 @@ test('aggregate: 같은 필지의 기록(변경허가)은 한 사업으로 모�
   const out = P.aggregate([
     rec({ mgmHsrgstPk: 1, apprvDay: '20240101', totHhldCnt: 100 }),
     rec({ mgmHsrgstPk: 2, apprvDay: '20250601', totHhldCnt: 120, stcnsDay: '20250901', useInsptSchedDay: '20281231', bldNm: '테스트아파트 신축공사' }),
-    rec({ mgmHsrgstPk: 3, bun: '0001', ji: '0002', bldNm: '다른곳', totHhldCnt: 50, apprvDay: '20180101', stcnsDay: '20180601', useInsptDay: '20200601' }),
+    rec({ mgmHsrgstPk: 3, bun: '0001', ji: '0002', bldNm: '다른곳', totHhldCnt: 50, apprvDay: '20180101', stcnsDay: '20180601', useInsptDay: '20250601' }),
     rec({ mgmHsrgstPk: 4, purpsCdNm: '단독주택' }), rec({ mgmHsrgstPk: 5, platGbCd: '2' }),
   ], NOW);
   assert.deepEqual(out.skipped, { notCandidate: 1, noPnu: 1 });
@@ -54,7 +72,8 @@ test('aggregate: 같은 필지의 기록(변경허가)은 한 사업으로 모�
   assert.equal(a.name, '테스트아파트 신축공사'); assert.equal(a.label, '테스트'); assert.equal(a.jibun, '569');
   assert.equal(a.approvedAt, '2025-06-01'); assert.equal(a.startedAt, '2025-09-01'); assert.equal(a.completedAt, null); assert.equal(a.plannedCompletion, '2028-12-31');
   assert.deepEqual(a.refs, ['1', '2']); assert.equal(a.address, '경기도 하남시 덕풍동 569번지'); assert.equal(a.mainBldCnt, 3);
-  assert.equal(b.pnu, '4145010800100010002'); assert.equal(b.status, '입주 단계'); assert.equal(b.completedAt, '2020-06-01'); assert.equal(b.plannedCompletion, null); assert.equal(b.jibun, '1-2');
+  assert.equal(b.pnu, '4145010800100010002'); assert.equal(b.status, '입주 단계'); assert.equal(b.completedAt, '2025-06-01'); assert.equal(b.plannedCompletion, null); assert.equal(b.jibun, '1-2');
+  assert.equal(a.settled, null); assert.equal(b.settled, 'settled');                                               // 입주 경과: 준공 16개월 → 입주 완료
 });
 
 test('aggregate: 이름이 없으면 번지로, 정렬은 건설 단계 → 계획 → 입주 단계 안에서 세대수 큰 순, 미래 실제 날짜는 계획', () => {
@@ -80,12 +99,12 @@ test('ymdLoose·monthsBetween: 예정일은 YYYYMMDD·YYYYMM·YYYY 로 섞여 �
 });
 
 test('aggregate: 예정일이 지났는데 기록이 없으면 overdue(착공/준공)를 덧붙이고, 부분 날짜·예정일 없음·이미 입주는 건드리지 않는다', () => {
-  const r = (over) => Object.assign({ sigunguCd: '11290', bjdongCd: '13800', bun: '0025', ji: '0055', platGbCd: '0', purpsCdNm: '공동주택', totHhldCnt: 100, bldNm: '구역', mgmHsrgstPk: 1, apprvDay: '20150501', stcnsDay: '', useInsptDay: '', mainBldCnt: 1 }, over);
+  const r = (over) => Object.assign({ sigunguCd: '11290', bjdongCd: '13800', bun: '0025', ji: '0055', platGbCd: '0', purpsCdNm: '공동주택', totHhldCnt: 100, bldNm: '구역', mgmHsrgstPk: 1, apprvDay: '20220501', stcnsDay: '', useInsptDay: '', mainBldCnt: 1 }, over);
   const one = (over) => P.aggregate([r(over)], NOW).projects[0];
   const a = one({ stcnsSchedDay: '20251231', useInsptSchedDay: '20291231' });
   assert.equal(a.status, '계획'); assert.equal(a.plannedStart, '2025-12-31'); assert.deepEqual(a.overdue, { kind: '착공', plannedAt: '2025-12-31', months: 9 }); assert.equal(a.plannedCompletion, '2029-12-31');
   const future = one({ stcnsSchedDay: '20270301' }); assert.equal(future.overdue, null); assert.equal(future.plannedStart, '2027-03-01');
-  const old = one({ apprvDay: '20030630', stcnsSchedDay: ' ', useInsptSchedDay: '200603' }); assert.equal(old.overdue, null); assert.equal(old.plannedStart, null); assert.equal(old.plannedCompletion, '2006-03');   // 예정일 없는 옛 조합 허가
+  assert.equal(one({ apprvDay: '20030630', stcnsSchedDay: ' ', useInsptSchedDay: '200603' }), undefined);   // 예정일만 옛날인 옛 조합 허가는 진행 중이 아니라 후보가 아니다
   const building = one({ stcnsDay: '20250101', useInsptSchedDay: '201911' }); assert.equal(building.status, '건설 단계'); assert.deepEqual(building.overdue, { kind: '준공', plannedAt: '2019-11', months: 82 }); assert.equal(building.plannedStart, null);
   const buildingOk = one({ stcnsDay: '20250101', useInsptSchedDay: '20281231' }); assert.equal(buildingOk.overdue, null);
   const done = one({ stcnsDay: '20250101', useInsptDay: '20260101', stcnsSchedDay: '20240101', useInsptSchedDay: '20250101' }); assert.equal(done.status, '입주 단계'); assert.equal(done.overdue, null); assert.equal(done.plannedStart, null); assert.equal(done.plannedCompletion, null);
@@ -103,16 +122,16 @@ test('unlocatedReason: 입주 단계는 합필·분할, 산 지번·BL 은 택�
 });
 
 test('aggregate: 공공주택지구의 블록 단위 허가(platGbCd 2)는 PNU 가 없어 지도에는 못 올리지만 blocks 로 모아 알린다(같은 블록은 하나로)', () => {
-  const blk = (over) => Object.assign({ sigunguCd: '41450', bjdongCd: '11400', bun: '0000', ji: '0000', platGbCd: '2', purpsCdNm: '공동주택', totHhldCnt: 600, bldNm: 'LH아파트', block: 'B1BL', mgmHsrgstPk: 1, apprvDay: '20101230', stcnsDay: '', useInsptDay: '', platPlc: '경기도 하남시 감일동 블록' }, over);
+  const blk = (over) => Object.assign({ sigunguCd: '41450', bjdongCd: '11400', bun: '0000', ji: '0000', platGbCd: '2', purpsCdNm: '공동주택', totHhldCnt: 600, bldNm: 'LH아파트', block: 'B1BL', mgmHsrgstPk: 1, apprvDay: '20221230', stcnsDay: '', useInsptDay: '', platPlc: '경기도 하남시 감일동 블록' }, over);
   const out = P.aggregate([
-    blk({ mgmHsrgstPk: 1 }), blk({ mgmHsrgstPk: 2, apprvDay: '20120101', totHhldCnt: 700, bldNm: 'LH아파트 B1BL' }),                                // 같은 블록의 변경허가
-    blk({ mgmHsrgstPk: 3, block: 'A5블록', bldNm: '하남감일A5BL 아파트', totHhldCnt: 617, stcnsDay: '20190101' }),
-    blk({ mgmHsrgstPk: 4, block: 'B-4BL', bldNm: '감일 B-4BL', totHhldCnt: 595, stcnsDay: '20190101', useInsptDay: '20220101' }),
+    blk({ mgmHsrgstPk: 1 }), blk({ mgmHsrgstPk: 2, apprvDay: '20230101', totHhldCnt: 700, bldNm: 'LH아파트 B1BL' }),                                // 같은 블록의 변경허가
+    blk({ mgmHsrgstPk: 3, block: 'A5블록', bldNm: '하남감일A5BL 아파트', totHhldCnt: 617, apprvDay: '20181230', stcnsDay: '20190101' }),
+    blk({ mgmHsrgstPk: 4, block: 'B-4BL', bldNm: '감일 B-4BL', totHhldCnt: 595, apprvDay: '20181230', stcnsDay: '20190101', useInsptDay: '20250101' }),
     blk({ mgmHsrgstPk: 5, block: '', bldNm: '이름뿐', platGbCd: '2' }), blk({ mgmHsrgstPk: 6, bun: '0000', platGbCd: '0', bldNm: '블록 아님' }),   // 대지인데 본번 0 → 블록이 아니라 그냥 PNU 없음
   ], NOW);
   assert.deepEqual(out.projects, []); assert.deepEqual(out.skipped, { notCandidate: 0, noPnu: 5 + 1 });
   assert.deepEqual(out.blocks.map((b) => [b.block, b.status, b.units, b.records]), [['A5블록', '건설 단계', 617, 1], ['B1BL', '계획', 700, 2], [null, '계획', 600, 1], ['B-4BL', '입주 단계', 595, 1]]);
-  assert.equal(out.blocks[1].name, 'LH아파트 B1BL'); assert.equal(out.blocks[1].approvedAt, '2012-01-01');             // 가장 최근 허가의 이름·승인일
+  assert.equal(out.blocks[1].name, 'LH아파트 B1BL'); assert.equal(out.blocks[1].approvedAt, '2023-01-01');             // 가장 최근 허가의 이름·승인일
 });
 
 /* ---------- 건물대장 보강(2026-10-05 하남·장위 실측값으로) ---------- */
@@ -158,9 +177,9 @@ test('ledgerCompletion: 허가 이후·오늘 이전의 사용승인일만 준�
 });
 
 test('aggregate: 사업·블록에 최신 허가의 관리번호(latestRef)를 남겨 대지위치 조회와 잇는다, 블록에는 착공·준공일도', () => {
-  const r = (over) => Object.assign({ sigunguCd: '41450', bjdongCd: '11400', bun: '0000', ji: '0000', platGbCd: '2', purpsCdNm: '공동주택', totHhldCnt: 932, bldNm: '힐스테이트 포웰시티', block: 'B6', mgmHsrgstPk: 11, apprvDay: '20170101', stcnsDay: '20180101', useInsptDay: '20201027' }, over);
+  const r = (over) => Object.assign({ sigunguCd: '41450', bjdongCd: '11400', bun: '0000', ji: '0000', platGbCd: '2', purpsCdNm: '공동주택', totHhldCnt: 932, bldNm: '힐스테이트 포웰시티', block: 'B6', mgmHsrgstPk: 11, apprvDay: '20170101', stcnsDay: '20180101', useInsptDay: '20251027' }, over);
   const out = P.aggregate([r(), r({ mgmHsrgstPk: 12, apprvDay: '20190101' }), r({ bun: '0010', platGbCd: '0', mgmHsrgstPk: 21, bldNm: '지번 사업' })], NOW);
-  assert.equal(out.blocks.length, 1); assert.equal(out.blocks[0].latestRef, '12'); assert.equal(out.blocks[0].startedAt, '2018-01-01'); assert.equal(out.blocks[0].completedAt, '2020-10-27');
+  assert.equal(out.blocks.length, 1); assert.equal(out.blocks[0].latestRef, '12'); assert.equal(out.blocks[0].startedAt, '2018-01-01'); assert.equal(out.blocks[0].completedAt, '2025-10-27');
   assert.equal(out.projects[0].latestRef, '21');
 });
 

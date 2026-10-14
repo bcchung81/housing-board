@@ -44,13 +44,13 @@ test('지역 자료로 세는 요청(nameOf): 번들 파일·코드 해석·인�
   for (const [u, want] of Object.entries(cases)) assert.equal(LV.nameOf(u), want, u);
 });
 
-test('알리는 쪽: 지도 섬·옛 로더가 스크립트 7개를, boot 동안 감싼 fetch 가 지역 자료를, app.js 가 소스별 타일(배경·건물·지형)을 알리고 첫 idle 에서 닫는다', () => {
+test('알리는 쪽: 지도 섬·옛 로더가 스크립트를, boot 동안 감싼 fetch 가 지역 자료를, app.js 가 소스별 타일(배경·건물·지형)을 알리고 막이 걷힐 때(reveal) 닫는다', () => {
   assert.match(island, /lv!?\.want\('code', s\)/); assert.match(island, /load\(s\)\.then\(step\(s\)\)/);
   assert.match(island, /const restore = lv \? lv\.trackFetch\(window\) : \(\) => \{\};\n        return w\.RegionLoader!\.boot\(window, document\)\.finally\(\(\) => \{ restore\(\); if \(lv\) lv\.finish\('data'\); \}\);/);
   assert.match(html, /<script src="assets\/js\/loadview\.js"><\/script>/);
   assert.match(html, /if \(lv\) restore = lv\.trackFetch\(window\); return window\.RegionLoader\.boot\(window, document\);/);
-  assert.match(app, /LV\.watchMap\(map, \{ base: \['vworld', 'openmaptiles', 'ofm'\], bld: \['official', 'dongs', 'dong-shadow', 'blocks', 'other-blocks'\], dem: \['dem', 'dem-shade'\] \}\);/);
-  assert.match(app, /firstIdle = false; if \(LV\) LV\.close\(\); else \$\('#loading'\)\.hidden = true;/);
+  assert.match(app, /LV\.watchMap\(map, \{ base: \['vworld', 'openmaptiles', 'ofm'\], bld: \['official', 'dongs', 'dong-shadow', 'blocks', 'other-blocks'\], dem: \['dem'\] \}\);/);
+  assert.match(app, /revealed = true; PERF\.revealBy = by; perfMark\('reveal'\);\n  if \(LV\) LV\.close\(\); else \$\('#loading'\)\.hidden = true;/);
   const lv = read('assets/js/loadview.js');
   for (const ev of ['sourcedataloading', 'sourcedata', 'sourcedataabort', 'error']) assert.match(lv, new RegExp(`${ev}: \\(e\\) =>`), ev);
   assert.match(lv, /const settled = \(id\) => A\[id\]\.want\.size > 0 && groups\[id\]\.every/, '타일을 하나도 세기 전에는 끝내지 않는다');
@@ -76,10 +76,23 @@ test('지도 화면은 index.html 을 그릴 때 읽는다(개발 서버가 고�
   assert.match(page, /export default function MapPage\(\) \{\n  const markup = mapMarkup\(\);/);
 });
 
-test('건물 그림자(official-shadow)는 첫 idle 뒤에 붙는다: 건물이 많은 지역(계양 16,724동)에서 그림자 도형 계산·두 번째 큰 GeoJSON 이 로딩을 늦추지 않게', () => {
-  assert.match(app, /if \(map\.getZoom\(\) >= 14\.3\) \{ if \(firstIdle\) map\.once\('idle', addOfficialShadows\); else addOfficialShadows\(\); \}/);
-  assert.match(app, /map\.on\('zoom', \(\) => \{ if \(!firstIdle && map\.getZoom\(\) >= 14\.3\) addOfficialShadows\(\); \}\);/);
-  assert.ok(app.indexOf("map.on('style.load', setupCustom);") < app.indexOf('let firstIdle = true;'), 'setupCustom 은 style.load(비동기)에서만 돌아 뒤에 선언된 firstIdle 을 읽어도 된다');
+test('건물 그림자(official-shadow)는 막이 걷힌 뒤 첫 idle(지형이 안 와도 5초 뒤)에 붙는다: 건물이 많은 지역(계양 16,724동)에서 그림자 도형 계산·두 번째 큰 GeoJSON 이 로딩을 늦추지 않게', () => {
+  assert.match(app, /if \(map\.getZoom\(\) >= 14\.3\) \{ if \(!revealed\) whenRevealed\(\(\) => \{ map\.once\('idle', addOfficialShadows\); setTimeout\(addOfficialShadows, 5000\); \}\); else addOfficialShadows\(\); \}/);
+  assert.match(app, /map\.on\('zoom', \(\) => \{ if \(revealed && map\.getZoom\(\) >= 14\.3\) addOfficialShadows\(\); \}\);/);
+  assert.match(app, /function addOfficialShadows\(\) \{\n  if \(!HAS_GY \|\| map\.getSource\('official-shadow'\)/, '두 번 불려도 한 번만 붙인다');
+});
+
+test('로딩 막(S1): 지형을 기다리지 않고 배경 타일·setupCustom 소스가 준비되면 걷고, 늦어도 12초, idle 이 먼저면 idle 에 걷는다. 지형 소스는 하나(S2)', () => {
+  assert.match(app, /const REVEAL_MAX_MS = 12000;/);
+  assert.match(app, /if \(spec\.type !== 'raster-dem'\) WAIT_SRC\.add\(id\);/, '지형이 아닌 소스만 기다린다');
+  assert.match(app, /for \(const id of WAIT_SRC\) if \(map\.getSource\(id\) && !map\.isSourceLoaded\(id\)\) return;\n  reveal\('ready'\);/);
+  assert.match(app, /setTimeout\(\(\) => reveal\('timeout'\), REVEAL_MAX_MS\);/);
+  assert.match(app, /reveal\('idle'\);/);
+  assert.ok(app.indexOf('const whenRevealed') < app.indexOf('whenRevealed(dynLoad)'), '건물 조회는 막이 걷힐 때(정의 뒤에서 건다)');
+  assert.doesNotMatch(app, /firstIdle|'dem-shade'/);
+  assert.match(app, /add\(\{ id: 'hillshade-own', type: 'hillshade', source: 'dem',/);
+  assert.match(app, /const PERF = window\.__mapPerf = \{ app: Math\.round\(performance\.now\(\)\) \};/, 'S0 계측');
+  for (const k of ['reveal', 'projects', 'demFirst', 'dem']) assert.match(app, new RegExp(`perfMark\\('${k}'\\)`), k);
 });
 
 test('글꼴은 display block: 대체 글꼴로 먼저 그렸다 바꾸면 상단 메뉴가 좌우로 오므라든다(메뉴 708→655px)', () => {

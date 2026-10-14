@@ -18,7 +18,7 @@ test('classify: 잘못된 입력은 이유를 준다(비어 있음·숫자 아�
   const why = (s) => C.classify(s).reason;
   assert.equal(why(''), 'empty'); assert.equal(why(null), 'empty');
   assert.equal(why('28245a'), 'not-digits'); assert.equal(why('인천'), 'not-digits');
-  assert.equal(why('99245'), 'unknown-sido'); assert.equal(why('29200'), 'unknown-sido');      // 광주(29)는 통합 이후 없음
+  assert.equal(why('99245'), 'unknown-sido'); assert.equal(why('29999'), 'unknown-sido');      // 광주(29)는 통합 이후 없음(대응표에 없는 옛 시군구)
   assert.equal(why('282451'), 'bad-length'); assert.equal(why('1'), 'unknown-sido');
   assert.equal(why('2824511000304790000'), 'bad-pnu');                                          // 대지구분 3
   assert.equal(why('2824511000100000000'), 'bad-pnu');                                          // 본번 0000
@@ -50,4 +50,18 @@ test('levelOf·findRow·nameParts: 행정표준코드 행 해석', () => {
 test('KNOWN_SIDO: 전국 표의 시도 16개(광주 29·전남 46은 없음)', () => {
   assert.equal(C.KNOWN_SIDO.size, 16);
   assert.ok(C.KNOWN_SIDO.has('12') && C.KNOWN_SIDO.has('36') && !C.KNOWN_SIDO.has('29') && !C.KNOWN_SIDO.has('46'));
+});
+
+test('옛 광주(29)·전남(46) 코드는 2026-07 통합 코드(12)로 넘긴다: 시군구 번호는 대응표로, 읍면동·리·필지 번호는 그대로', () => {
+  const c = C.classify('29200');
+  assert.deepEqual([c.ok, c.type, c.canonical, c.sgg, c.sido, c.legacyFrom, c.input], [true, 'sgg', '12330', '12330', '12', '29200', '29200']);   // 광산구
+  assert.equal(C.classify('46170').canonical, '12170');                                                   // 나주시
+  assert.equal(C.classify('46230').canonical, '12190');                                                   // 광양시(번호가 다르게 바뀜)
+  assert.equal(C.classify('29200106').canonical, '1233010600');                                           // 운수동(8자리)
+  assert.equal(C.classify('4617013400').canonical, '1217013400');                                         // 빛가람동
+  assert.equal(C.classify('2920010600107010000').pnu, '1233010600107010000');
+  assert.equal(C.classify('29').canonical, '12'); assert.equal(C.classify('29').type, 'sido');
+  assert.equal(C.classify('12330').legacyFrom, undefined);
+  assert.equal(new Set(Object.values(C.LEGACY_SGG)).size, Object.keys(C.LEGACY_SGG).length);               // 한 새 코드에 옛 코드 하나
+  assert.equal(Object.keys(C.LEGACY_SGG).length, 27);                                                    // 광주 5 + 전남 22
 });

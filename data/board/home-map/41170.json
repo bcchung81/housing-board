@@ -1,0 +1,10 @@
+{
+  "schema": "home-map/1",
+  "sgg": "41170",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-41170-0001","name":"서안양우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2028-06"},"units":200,"pks":[],"pnus":[],"bundles":[],"label":"서안양우체국","agency":"gh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.927865,37.404533],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"]}}
+  ]
+}

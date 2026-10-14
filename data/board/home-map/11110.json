@@ -1,0 +1,10 @@
+{
+  "schema": "home-map/1",
+  "sgg": "11110",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-11110-0021","name":"신문로2-12","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":180,"pks":[],"pnus":[],"bundles":[],"label":"신문로2-12","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1111012000","loc":{"by":"address","at":[126.975521,37.569696],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null}
+  ]
+}

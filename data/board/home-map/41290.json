@@ -1,0 +1,13 @@
+{
+  "schema": "home-map/1",
+  "sgg": "41290",
+  "observedMonth": "2026-10",
+  "referenceDate": "2026-10-13",
+  "edition": "20261013T140241Z",
+  "projects": [
+    {"id":"PRJ-41290-0030","name":"과천 경마장·방첩사 부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":9800,"pks":[],"pnus":[],"bundles":[],"label":"과천 경마장·방첩사 부지","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.003941,37.43418],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"]}},
+    {"id":"PRJ-41290-0031","name":"과천지식정보타운 S-12","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":1424,"pks":[],"pnus":[],"bundles":[],"label":"과천지식정보타운 S12","agency":"lh","moveIn":"2027-11","completion":"2027-07-30","noticeUnits":null,"bjd":null,"loc":{"by":"block","at":[126.977388,37.410029],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-41290-0032","name":"조달청)과천주암 C-1BL 공동주택 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-12-15"},"units":1338,"pks":[],"pnus":[],"bundles":[],"label":"과천주암 C1","agency":"lh","moveIn":"2029-02","completion":"2027-12-15","noticeUnits":120,"bjd":null,"loc":{"by":"block","at":[127.025366,37.454521],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}},
+    {"id":"PRJ-41290-0033","name":"과천주암(뉴스테이) C2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":1030,"pks":[],"pnus":[],"bundles":[],"label":"과천주암 C2","agency":"lh","moveIn":"2028-06","completion":"2027-10-11","noticeUnits":null,"bjd":null,"loc":{"by":"block","at":[127.020285,37.452812],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택공급 확대방안 (9·7)"]}}
+  ]
+}

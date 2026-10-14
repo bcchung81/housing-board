@@ -1,3 +1,12 @@
+/* 첫 화면 계측(S0, 지도 개선 계획 4절): 막 걷힘(map:reveal) · 첫 사업 표시(map:projects) · 지형 도착(map:dem)을 performance.mark 로 남기고
+   window.__mapPerf 에 문서 시작부터의 ms 로 모은다(app = app.js 실행 시작 · mapNew = 지도 생성 직후 · setup = 스타일 로드 뒤 setupCustom 끝). 셋이 모이면 콘솔에 한 줄. 화면 문구는 없다(가려진 창에서도 같은 값) */
+const PERF = window.__mapPerf = { app: Math.round(performance.now()) };
+function perfMark(k) {
+  if (PERF[k] != null) return;
+  try { performance.mark('map:' + k); } catch (_) {}
+  PERF[k] = Math.round(performance.now());
+  if (PERF.reveal != null && PERF.dem != null && (PERF.projects != null || !HAS_PR)) console.info('[map-perf]', JSON.stringify(PERF));
+}
 const $ = (s) => document.querySelector(s);
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmt = (n) => Number(n).toLocaleString('ko-KR');
@@ -25,7 +34,13 @@ function floorsToHeight(f) {
 }
 const BLOCKS = HAS_PR ? PR.blocks.slice() : [];             // 순서는 어댑터가 정한다(region.projectOrder → 상태 → 세대수 → 이름)
 const HAS_PRIV = BLOCKS.some((b) => b.priv);                  // 공공택지 위 민간 단지가 있는 지역인가
-const KIND = { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'soon', '입주 단계': 'move', '계획': 'plan' };
+/* 입주 경과 표지(assets/js/settle.js, 지도 개선 계획 2절): 06 입주 단지에 moving 입주 진행 · settled 입주 완료(흐리게) · existing 기존 단지(기본 숨김, 옵션 '기존 단지'로 켬).
+   단계(status)는 그대로 두고 표시만 바꾼다. 원장이 늦게 붙으면(refreshLedger) 다시 센다 */
+const settleAll = () => BLOCKS.forEach((b) => { b.settle = window.RegionLoader && window.RegionLoader.settleOf ? window.RegionLoader.settleOf(b) : null; });
+settleAll();
+const stTxt = (b) => (b.settle && window.Settle ? window.Settle.LABEL[b.settle] : b.status);   // 화면에 적는 상태 이름
+const hasEx = () => BLOCKS.some((b) => b.settle === 'existing');
+const KIND = { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'soon', '입주 단계': 'move', '계획': 'plan', '사업화': 'plan' };   // 사업화: 수도권 원장 01·02 단계(계획과 같은 색)
 const kindOf = (b) => (b.priv ? 'priv' : KIND[b.status]);    // 색·무늬를 정하는 종류. 민간 단지는 상태와 상관없이 회색(priv)
 const STATUS_ORDER = ['분양중', '건설 단계', '준공 임박', '입주 단계', '계획'];
 const unitsTxt = (b) => (b.unitsKnown === false ? '세대수 미확인' : `${fmt(b.units)}세대`);
@@ -50,18 +65,34 @@ if (SHELL) applyStageInk();
    단지 상태 5종 → 6단계는 사업 레지스트리와 같은 매핑(docs/product/상황판-스펙.md 9.2, lib/projects.js stageOf): 계획 → 03 인허가, 건설 단계·준공 임박 → 04 건설, 분양중 → 05 공급, 입주 단계 → 06 입주.
    01 정책·02 사업화에 해당하는 단지 상태는 없다(지도의 '계획' 단지는 인허가 기록이 있는 단지라 레지스트리에서도 03 이다). 색은 그 단계 단지가 지도에 그려지는 색(첫 상태 기준), 단지가 없는 단계는 보조 글자색. */
 const stageColor = (sts) => (sts.length ? COLOR[KIND[sts[0]]] : 'var(--mute)');
-const STAGES6 = [['01', '정책', []], ['02', '사업화', []], ['03', '인허가', ['계획']], ['04', '건설', ['건설 단계', '준공 임박']], ['05', '공급', ['분양중']], ['06', '입주', ['입주 단계']]].map((s) => [...s, stageColor(s[2])]);
+const STAGES6 = [['01', '정책', []], ['02', '사업화', ['사업화']], ['03', '인허가', ['계획']], ['04', '건설', ['건설 단계', '준공 임박']], ['05', '공급', ['분양중']], ['06', '입주', ['입주 단계']]].map((s) => [...s, stageColor(s[2])]);
 /* 단지 상태 → 6단계 이름('04 건설'). 범례·옵션 창의 상태를 6단계 순서로 놓고 번호를 붙인다(머리 줄 6단계 필터와 같은 대응) */
 const stageOfSt = (st) => { const s = STAGES6.find((x) => x[2].includes(st)); return s ? `${s[0]} ${s[1]}` : ''; };
+const PLAN_ST = ['계획', '사업화'];   // 계획 색 면(blk-plan)으로 그리는 상태
 const BY_STAGE = STAGES6.flatMap((s) => s[2]);   // 계획 · 건설 단계 · 준공 임박 · 분양중 · 입주 단계
 /* 사업 원장(기획서 M7·M8): region.js 가 지도와 따로 받아 단지에 b.ledger 를 붙인다. 원장 단계가 있으면 6단계 위치는 원장 기준(지도 상태와 다르면 title 에 적는다) */
 const LT = (b) => (b.ledger && window.RegionLoader ? window.RegionLoader.ledgerTexts(b.ledger) : null);
 function stageNow(b) {
   const own = STAGES6.find((x) => x[2].includes(b.status)), l = b.ledger && b.ledger.stage ? STAGES6.find((x) => x[0] === b.ledger.stage) : null;
   if (!l) return { now: own, k: kindOf(b), title: '' };
-  return { now: l, k: l === own ? kindOf(b) : (l[2].length ? KIND[l[2][0]] : ''), title: `단계: ${LT(b).basis}${own && own !== l ? ` · 지도 상태 ${b.status}(${own[0]} ${own[1]})와 다름` : ''}` };
+  const byLedger = b.statusBy === 'ledger';   // 수도권: 지도 상태를 원장 단계로 정했다(01 은 '사업화' 상태) — 다르다고 적지 않는다
+  return { now: l, k: l === own || byLedger ? kindOf(b) : (l[2].length ? KIND[l[2][0]] : ''), title: `단계: ${LT(b).basis}${own && own !== l && !byLedger ? ` · 지도 상태 ${b.status}(${own[0]} ${own[1]})와 다름` : ''}` };
 }
-const jdMark = (b) => { const c = b.ledger && b.ledger.cls; return c === 'caution' || c === 'delay' ? ` <em class="jd ${c}">${c === 'delay' ? '지연' : '주의'}</em>` : ''; };   // 접힌 단지 카드: 주의·지연만
+/* 수도권 원장 사업(b.home): 계획·공고 확인 호수와 정책 연결 표지. 문구는 짧게, 위치·정책 근거는 title */
+function homeParts(b) {
+  const h = b.home; if (!h) return null;
+  const nums = [h.units != null ? `계획 ${fmt(h.units)}` : '', h.noticeUnits != null ? `공고 확인 ${fmt(h.noticeUnits)}` : ''].filter(Boolean).join(' · ');
+  const pol = h.policy ? (h.policy.status === 'CONFIRMED' ? '정책 연결' : '정책 연결 검토 중') : '';
+  const title = [h.loc ? `위치: ${h.loc.text}(${h.loc.status === 'CONFIRMED' ? '확인' : '검토 중'}, 사업 경계 아님)` : '위치: 미확보',
+    h.policy ? `정책: ${h.policy.names.join(', ') || '이름 미상'} · ${h.policy.status === 'CONFIRMED' ? '연결 확인' : '연결 검토 중(REVIEW)'}` : '', h.noticeUnits != null ? '공고 확인: 연결된 모집공고의 세대수(준공 아님)' : ''].filter(Boolean).join('\n');
+  return { nums, pol, title };
+}
+const homeLine = (b) => { const x = homeParts(b); return x && (x.nums || x.pol) ? `<span class="bld hm" title="${esc(x.title)}">${esc([x.nums, x.pol].filter(Boolean).join(' · '))}</span>` : ''; };
+const jdMark = (b) => {   // 접힌 단지 카드: 원장 주의·지연만. 원장 판정이 없는 인허가 사업은 예정일이 지났는데 기록이 없으면 '예정 경과'(근거는 title)
+  const c = b.ledger && b.ledger.cls, o = !c && b.overdue;
+  if (c === 'caution' || c === 'delay') return ` <em class="jd ${c}">${c === 'delay' ? '지연' : '주의'}</em>`;
+  return o ? ` <em class="jd caution" title="${esc(`${o.kind} 예정 ${o.plannedAt}, ${o.months}개월 지났으나 ${o.kind} 기록 없음`)}">예정 경과</em>` : '';
+};
 const pctTxt = (v) => (v >= 99.95 ? '100' : v >= 10 ? v.toFixed(1) : v.toFixed(2).replace(/0$/, '')) + '%';
 function sparkline(h) {
   const W = 56, H = 18, n = h.length, mx = Math.max(...h.map((x) => x[1]), 1);
@@ -74,6 +105,7 @@ function progressRow(b, k) {
 }
 const centroid = (poly) => [poly.reduce((a, p) => a + p[0], 0) / poly.length, poly.reduce((a, p) => a + p[1], 0) / poly.length];
 const hex2 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mixHex = (a, b, t) => '#' + hex2(a).map((v, i) => Math.round(v + (hex2(b)[i] - v) * t).toString(16).padStart(2, '0')).join('');
 function mixTone(kind, t0, tone = TONE) { const t = 0.3 + 0.7 * t0; const [a, b] = tone[kind].map(hex2); return '#' + a.map((v, i) => Math.round(v + (b[i] - v) * t).toString(16).padStart(2, '0')).join(''); }
 function floorsRange(b) { const fl = b.dongs ? b.dongs.map((d) => d.floors) : null; return fl ? [Math.min(...fl), Math.max(...fl)] : null; }
 
@@ -142,18 +174,46 @@ const map = new maplibregl.Map({
   canvasContextAttributes: { antialias: q.get('aa') !== '0' },   // 모서리 계단 방지(4배 다중 샘플). 저사양이면 주소에 ?aa=0
   localIdeographFontFamily: getComputedStyle(document.body).fontFamily,
 });
+perfMark('mapNew');
 map.addControl(new maplibregl.ScaleControl({ unit: 'metric' }), 'bottom-right');
-/* 로딩 화면(index.html #loading, assets/js/loadview.js): 지도가 생긴 뒤의 배경·건물·지형 타일을 소스별로 세어 실시간으로 보인다. 첫 idle 에서 걷는다.
+/* 로딩 화면(index.html #loading, assets/js/loadview.js): 지도가 생긴 뒤의 배경·건물·지형 타일을 소스별로 세어 실시간으로 보인다. 배경·건물·단지가 준비되면 걷는다(지형은 기다리지 않음, 아래 reveal).
    LoadView 가 없으면(옛 로더) 첫 idle 에 #loading 만 숨긴다. */
 const LV = window.LoadView ? window.LoadView.ctl() : null;
 if (LV) {
   LV.sub([REG.name, BLOCKS.length ? `단지 ${BLOCKS.length}곳` : '', HAS_GY && GY.features.length ? `건물 ${fmt(GY.features.length)}동` : ''].filter(Boolean).join(' · ') || '지도를 준비하고 있습니다');
-  LV.watchMap(map, { base: ['vworld', 'openmaptiles', 'ofm'], bld: ['official', 'dongs', 'dong-shadow', 'blocks', 'other-blocks'], dem: ['dem', 'dem-shade'] });   // 건물 그림자(official-shadow)는 첫 idle 뒤에 붙는다
+  LV.watchMap(map, { base: ['vworld', 'openmaptiles', 'ofm'], bld: ['official', 'dongs', 'dong-shadow', 'blocks', 'other-blocks'], dem: ['dem'] });   // 건물 그림자(official-shadow)는 첫 idle 뒤에 붙는다
 }
+/* 지형: demFirst = 첫 타일 도착, dem = 보이는 범위의 지형 타일이 다 찼을 때(그 전에 idle 이 오면 idle — idle 은 지형까지 다 받았다는 뜻) */
+map.on('sourcedata', function demArrived(e) { if (e.sourceId !== 'dem' || !e.tile) return; perfMark('demFirst'); if (map.isSourceLoaded('dem')) { perfMark('dem'); map.off('sourcedata', demArrived); } });
+map.once('idle', () => { if (map.getSource('dem')) perfMark('dem'); });
+if (HAS_PR) map.on('render', function projectsShown() { if (map.getLayer('blk-line') && map.isSourceLoaded('blocks')) { perfMark('projects'); map.off('render', projectsShown); } });
+/* 로딩 막(S1): 첫 idle(지형까지 다 받은 때)이 아니라 배경·건물·단지 소스가 준비되면 걷고, 지형은 뒤에 붙는다(지형 없는 동안은 평지로 그려진다).
+   지형 타일이 늦거나 실패해도 막이 남지 않게 REVEAL_MAX_MS 에는 걷는다. 걷힐 때 할 일(출처 접기·단지 열기·그림자·건물 조회·쌓기 연출)은 whenRevealed 로 건다 */
+const REVEAL_MAX_MS = 12000;
+const BASE_SRC = ['vworld', 'openmaptiles', 'ofm'], WAIT_SRC = new Set(BASE_SRC);   // 기다릴 소스: 배경 + setupCustom 이 올린 소스(지형 dem 은 빼고)
+let revealed = false, baseTiles = 0;
+const onReveal = [];
+const whenRevealed = (fn) => { if (revealed) fn(); else onReveal.push(fn); };
+function reveal(by) {
+  if (revealed) return;
+  revealed = true; PERF.revealBy = by; perfMark('reveal');
+  if (LV) LV.close(); else $('#loading').hidden = true;   // 남은 영역을 모두 채우고 0.35초 동안 걷는다
+  for (const fn of onReveal.splice(0)) { try { fn(); } catch (e) { console.error(e); } }
+  scheduleHud();
+}
+map.on('sourcedata', function baseTile(e) { if (e.tile && BASE_SRC.includes(e.sourceId)) { baseTiles++; map.off('sourcedata', baseTile); } });
+map.on('render', function readyToReveal() {
+  if (revealed) { map.off('render', readyToReveal); return; }
+  if (!baseTiles || !map.getLayer('sel-line')) return;   // 배경 타일을 하나라도 받았고 setupCustom 이 끝났다
+  for (const id of WAIT_SRC) if (map.getSource(id) && !map.isSourceLoaded(id)) return;
+  reveal('ready');
+});
+setTimeout(() => reveal('timeout'), REVEAL_MAX_MS);
 let popup = null, selId = null, selDong = null, vwFail = 0, DONG_FEATS = [];
 const SHOWN = new Set(BLOCKS.map((b) => b.status));          // 지도에 보이는 상태
 let viewMode = window.GY_INFRA ? 'infra' : 'floors';   // 기반시설 보기로 연다(점검 자료가 없는 지역은 층수 높이). 층수·공정율·입주 시기 보기 전환은 없앴다(2026-10-10 사용자 결정)
 let privOn = q.get('priv') !== '0';                            // 공공택지 민간 단지: 기본 켬
+let exOn = q.get('ex') === '1';                                // 기존 단지(06 입주 중 준공 24개월 넘음): 기본 숨김, 주소 ex=1 이면 보임
 let hudOn = q.get('hud') !== '0';                              // 단지 모서리 표시선(레티클): 기본 켬(옵션은 모두 켠 채로 연다, 2026-10-10 사용자 요청). 주소 hud=0 이면 끔
 let cardsOn = q.get('cards') !== '0';                          // 단지 정보 카드(떠 있는 상자, 표시선 포함): 기본 켬. 끄면(cards=0) 단지 요약을 지도 안 라벨로 단지 위치에 붙인다
 let ctxOn = q.get('ctx') !== '0';                              // 역·학교(OSM): 기본 켬
@@ -259,8 +319,8 @@ function groundOf(b) {
 }
 function blockProps(b) {
   const g = groundOf(b), fr = floorsRange(b), sig = infraOn && window.GY_INFRA;
-  return { id: b.id, status: b.status, kind: kindOf(b), priv: !!b.priv, units: b.units, short: b.id, l2: `${b.status} · ${unitsTxt(b)}`, cls: (b.ledger && b.ledger.cls) || '',
-    lc: `${b.id} · ${b.status}`,
+  return { id: b.id, status: b.status, settle: b.settle || '', kind: kindOf(b), priv: !!b.priv, units: b.units, short: b.id, l2: `${stTxt(b)} · ${unitsTxt(b)}`, cls: (b.ledger && b.ledger.cls) || '',
+    lc: `${b.id} · ${stTxt(b)}`,
     /* 지면 라벨(요약): 세대수 / 층수 / 교통(가까운 역) / 신호(주의만·전부) */
     gu: unitsTxt(b), gf: fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : '층수 미확인',
     tr: g.station ? ` · ${g.station}` : '',
@@ -293,11 +353,11 @@ function dongsGeoJSON() {
     if (!b.dongs) return; const kind = kindOf(b); const r = floorsRange(b);
     b.dongs.forEach((d) => {
       const t = r && r[1] > r[0] ? (d.floors - r[0]) / (r[1] - r[0]) : 1;
-      const color = mixTone(kind, t, tone);
-      d.poly.forEach((ring) => feats.push({ type: 'Feature', properties: { key: `${b.id}-${d.no}`, block: b.id, no: d.no, floors: d.floors, h: d.h != null ? d.h : floorsToHeight(d.floors), hEst: d.h != null ? 0 : 1, tier: d.tier, color, status: b.status, priv: !!b.priv },
+      const color = b.settle === 'settled' ? mixHex(mixTone(kind, t, tone), TH().bg, 0.5) : mixTone(kind, t, tone);   // 입주 완료는 바탕 쪽으로 흐리게
+      d.poly.forEach((ring) => feats.push({ type: 'Feature', properties: { key: `${b.id}-${d.no}`, block: b.id, no: d.no, floors: d.floors, h: d.h != null ? d.h : floorsToHeight(d.floors), hEst: d.h != null ? 0 : 1, tier: d.tier, color, status: b.status, settle: b.settle || '', priv: !!b.priv },
         geometry: { type: 'Polygon', coordinates: [[...ring, ring[0]]] } }));
       const big = d.poly.reduce((m, ring) => (ringArea(ring) > ringArea(m) ? ring : m), d.poly[0]);
-      labels.push({ type: 'Feature', properties: { text: `${d.no}동 ${d.floors}층`, no: d.no, block: b.id, status: b.status, priv: !!b.priv }, geometry: { type: 'Point', coordinates: centroid(big) } });
+      labels.push({ type: 'Feature', properties: { text: `${d.no}동 ${d.floors}층`, no: d.no, block: b.id, status: b.status, settle: b.settle || '', priv: !!b.priv }, geometry: { type: 'Point', coordinates: centroid(big) } });
     });
   });
   return [{ type: 'FeatureCollection', features: feats }, { type: 'FeatureCollection', features: labels }];
@@ -315,7 +375,7 @@ function shadowGeoJSON(feats) {
     const ring = f.geometry.coordinates[0], lat = ring[0][1], L = f.properties.h * 0.6, k = Math.SQRT1_2;
     const dx = L * k / (111320 * Math.cos(lat * Math.PI / 180)), dy = -L * k / 111320;
     const h = hull(ring.concat(ring.map((p) => [p[0] + dx, p[1] + dy]))); h.push(h[0]);
-    return { type: 'Feature', properties: { status: f.properties.status, priv: f.properties.priv, fc: f.properties.fc || '' }, geometry: { type: 'Polygon', coordinates: [h] } };
+    return { type: 'Feature', properties: { status: f.properties.status, settle: f.properties.settle || '', priv: f.properties.priv, fc: f.properties.fc || '' }, geometry: { type: 'Polygon', coordinates: [h] } };
   }) };
 }
 /* 지구 밖을 살짝 어둡게 하는 마스크: 넓은 사각형에서 지구 경계를 구멍으로 뺀다. */
@@ -492,13 +552,12 @@ function setupCustom() {
   const T = TH(), layers = map.getStyle().layers, firstSymbol = (layers.find((l) => l.type === 'symbol') || {}).id;
   const add = (l) => { if (!map.getLayer(l.id)) map.addLayer(l, firstSymbol); };
   const empty = { type: 'FeatureCollection', features: [] };
-  const src = (id, spec) => { if (!map.getSource(id)) map.addSource(id, spec); };
+  const src = (id, spec) => { if (!map.getSource(id)) map.addSource(id, spec); if (spec.type !== 'raster-dem') WAIT_SRC.add(id); };   // 지형이 아닌 소스는 막을 걷기 전에 기다린다
 
   /* --- 자료 --- */
   src('dem', { type: 'raster-dem', tiles: DEM_TILES, tileSize: 256, encoding: 'terrarium', maxzoom: 14,   // 원자료가 30 m급이라 14단계면 충분하고, 지명 벡터 타일(최대 14)과 맞아 경고도 없다
    
     attribution: 'Terrain: <a href="https://registry.opendata.aws/terrain-tiles/" target="_blank" rel="noopener">AWS Terrain Tiles</a> (SRTM·GMTED2010 © USGS, ETOPO1 © NOAA 등)' });
-  src('dem-shade', { type: 'raster-dem', tiles: DEM_TILES, tileSize: 256, encoding: 'terrarium', maxzoom: 14 });
   src('sel', { type: 'geojson', data: empty });
   if (HAS_GY) paintBuildings();   // 건물 색 4종을 계산해 속성에 넣은 뒤 소스에 올린다(낮/밤을 바꿔 다시 불러도 새 색)
   if (HAS_GY) src('official', { type: 'geojson', data: GY, maxzoom: 16, attribution: '건물 © 국토교통부 GIS건물통합정보(V-World, CC BY 2.0 KR)' });
@@ -530,7 +589,9 @@ function setupCustom() {
   if (HAS_BUS) { src('bus-routes', { type: 'geojson', data: BUS_ROUTES_GJ, attribution: '버스 © 국토교통부 TAGO' }); src('bus-solids', { type: 'geojson', data: BUS.solids }); src('bus-lbl', { type: 'geojson', data: BUS.labels }); }
 
   /* --- 지형·하늘·빛 --- */
-  add({ id: 'hillshade-own', type: 'hillshade', source: 'dem-shade',
+  /* 언덕 음영도 지형과 같은 소스(dem)를 쓴다(S2, 2026-10-14): 따로 두면(dem-shade) 같은 타일을 두 번 받았다(계양 1280×800 지형 요청 25 → 15건, 1.7MB → 0.9MB).
+     MapLibre 가 '같은 소스' 경고를 콘솔에 내지만 화면 비교에서 화소 차이는 채널당 8 이하(평균 0.5)였다 */
+  add({ id: 'hillshade-own', type: 'hillshade', source: 'dem',
     paint: { 'hillshade-exaggeration': 0.3, 'hillshade-shadow-color': T.hillShadow, 'hillshade-highlight-color': T.hillHi, 'hillshade-accent-color': T.hillAcc, 'hillshade-illumination-direction': 315, 'hillshade-illumination-anchor': 'map' } });
   try { map.setSky({ 'sky-color': T.sky[0], 'horizon-color': T.sky[1], 'fog-color': T.sky[1], 'sky-horizon-blend': 0.5, 'horizon-fog-blend': 0.6, 'fog-ground-blend': 0.25 }); } catch (_) {}
   map.setTerrain({ source: 'dem', exaggeration: 1 });   // 1.5 → 1(2026-10-10): 30m급 표고를 과장하면 평지 단지 위 바닥 선·면이 물결처럼 휘고 움직일 때 튄다(계획서 14.3 ①). 끄는 것은 지형 입체감을 없애는 제품 결정이라 보류
@@ -552,16 +613,17 @@ function setupCustom() {
       add({ id: 'other-fill', type: 'fill', source: 'other-blocks', minzoom: 13.5, paint: { 'fill-color': T.other[0], 'fill-opacity': 0.1 } });
       add({ id: 'other-line', type: 'line', source: 'other-blocks', minzoom: 13.5, paint: { 'line-color': T.other[1], 'line-width': 1.2, 'line-dasharray': [2, 2], 'line-opacity': 0.9 } });
     }
-    const PAT_OP = ['interpolate', ['linear'], ['zoom'], 13.5, 0.55, 15.5, 1];   // 멀리서는 무늬를 옅게(작게 줄어든 무늬가 지글거리지 않게)
+    const DIM = ['case', ['==', ['get', 'settle'], 'settled'], 0.45, 1];   // 입주 완료(06 입주, 준공 7~24개월)는 흐리게. 표지는 06 단지에만 붙는다
+    const PAT_OP = ['interpolate', ['linear'], ['zoom'], 13.5, ['*', 0.55, DIM], 15.5, DIM];   // 멀리서는 무늬를 옅게(작게 줄어든 무늬가 지글거리지 않게)
     const NP = ['!=', ['get', 'priv'], true];   // 공공택지 민간 단지는 상태 무늬 대신 회색 면(blk-priv)으로 그린다
     add({ id: 'blk-sale', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '분양중'], NP], paint: { 'fill-color': T.color.sale, 'fill-opacity': 0.2 } });
     add({ id: 'blk-build', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '건설 단계'], NP], paint: { 'fill-pattern': 'hatch', 'fill-opacity': PAT_OP } });
     add({ id: 'blk-soon', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '준공 임박'], NP], paint: { 'fill-pattern': 'dots', 'fill-opacity': PAT_OP } });
     add({ id: 'blk-move', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '입주 단계'], NP], paint: { 'fill-pattern': 'cross', 'fill-opacity': PAT_OP } });
-    add({ id: 'blk-plan', type: 'fill', source: 'blocks', filter: ['all', ['==', ['get', 'status'], '계획'], NP], paint: { 'fill-color': T.color.plan, 'fill-opacity': 0.1 } });
-    add({ id: 'blk-priv', type: 'fill', source: 'blocks', filter: ['==', ['get', 'priv'], true], paint: { 'fill-color': T.tone.priv[1], 'fill-opacity': 0.26 } });
+    add({ id: 'blk-plan', type: 'fill', source: 'blocks', filter: ['all', ['in', ['get', 'status'], ['literal', PLAN_ST]], NP], paint: { 'fill-color': T.color.plan, 'fill-opacity': 0.1 } });
+    add({ id: 'blk-priv', type: 'fill', source: 'blocks', filter: ['==', ['get', 'priv'], true], paint: { 'fill-color': T.tone.priv[1], 'fill-opacity': ['*', 0.26, DIM] } });
     add({ id: 'blk-judge', type: 'line', source: 'blocks', filter: JUDGED, paint: { 'line-color': judgeExpr(T.halo), 'line-width': 7, 'line-opacity': 0.9 } });   // 원장 판정 주의·지연: 단계색 윤곽(2px) 밖으로 두꺼운 테두리
-    add({ id: 'blk-line', type: 'line', source: 'blocks', filter: ['!=', ['get', 'kind'], 'plan'], paint: { 'line-color': kindExpr(T.color), 'line-width': 2 } });
+    add({ id: 'blk-line', type: 'line', source: 'blocks', filter: ['!=', ['get', 'kind'], 'plan'], paint: { 'line-color': kindExpr(T.color), 'line-width': 2, 'line-opacity': DIM } });
     add({ id: 'blk-line-plan', type: 'line', source: 'blocks', filter: ['==', ['get', 'kind'], 'plan'], paint: { 'line-color': T.color.plan, 'line-width': 2, 'line-dasharray': [3, 2] } });
     add({ id: 'dong-shadow', type: 'fill', source: 'dong-shadow', paint: { 'fill-color': T.shadow[0], 'fill-opacity': T.shadow[1] } });
     add({ id: 'dong-line', type: 'line', source: 'dongs', paint: { 'line-color': T.dong, 'line-width': 1, 'line-dasharray': [2, 2], 'line-opacity': ['step', ['zoom'], 0, 15.6, 0.75] } });   // minzoom 대신 투명도 단계: 숨은 층이 있으면 지형 바닥 텍스처가 매 프레임 무효가 된다(계획서 14.3 ③)
@@ -688,12 +750,13 @@ function setupCustom() {
   if (usingVworld) addOfmLabels();
   // 지형 위 바닥(2D) 선 층을 첫 3D 층(sel-3d) 앞으로 모은다: 3D 층 뒤에 끼면 바닥 그림 묶음이 쪼개져 매 프레임 다시 굽는다(계획서 14.3 ③, 2026-10-10 실측 계양 18회/프레임)
   if (map.getLayer('sel-3d')) for (const id of ['official-ao', 'infra-link-zone', 'infra-link-new', 'bus-route-line']) if (map.getLayer(id)) map.moveLayer(id, 'sel-3d');
-  if (map.getZoom() >= 14.3) { if (firstIdle) map.once('idle', addOfficialShadows); else addOfficialShadows(); }   // 첫 화면이 뜬 뒤에: 건물이 많은 지역(계양 16,724동)에서 그림자 도형 계산과 두 번째 큰 GeoJSON 타일링이 로딩을 늦춘다
+  if (map.getZoom() >= 14.3) { if (!revealed) whenRevealed(() => { map.once('idle', addOfficialShadows); setTimeout(addOfficialShadows, 5000); }); else addOfficialShadows(); }   // 첫 화면이 뜬 뒤에: 건물이 많은 지역(계양 16,724동)에서 그림자 도형 계산과 두 번째 큰 GeoJSON 타일링이 로딩을 늦춘다. 지형이 오지 않아 idle 이 없어도 5초 뒤에는 붙인다
   applyAll();
   if (!usingVworld) for (const l of layers) if (l.type === 'symbol' && /name/.test(JSON.stringify(map.getLayoutProperty(l.id, 'text-field') || ''))) map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', 'name:ko'], ['get', 'name']]);
+  perfMark('setup');
 }
 map.on('style.load', setupCustom);
-map.on('zoom', () => { if (!firstIdle && map.getZoom() >= 14.3) addOfficialShadows(); });
+map.on('zoom', () => { if (revealed && map.getZoom() >= 14.3) addOfficialShadows(); });
 
 /* ---------- 건물 요청 시 조회(번들이 없는 지역 · 번들 밖) ----------
    GY 를 '자라는 배열'로 둔다. 지도에 보이는 0.01° 칸(약 0.9×1.1 km)을 /api/v1/buildings 로 받아 GY.features 에 붙이면
@@ -786,7 +849,7 @@ function dynLoad() {   // 지도가 멈출 때마다 보이는 칸 중 아직 �
 }
 window.getMapCenter = () => { const c = map.getCenter(); return [c.lng, c.lat]; };   // 주소 이동 입력줄이 장소 이름을 가까운 곳 먼저 찾으려고 읽는다(goto.js)
 if (q.get('selftest')) window.__dyn = DYN;   // 시험용: 요청 시 조회 상태
-if (DYN.on) { map.on('moveend', dynLoad); map.on('zoom', updateDynHint); map.once('idle', dynLoad); }
+if (DYN.on) { map.on('moveend', dynLoad); map.on('zoom', updateDynHint); whenRevealed(dynLoad); }
 
 
 /* ---------- 팝업 ---------- */
@@ -862,7 +925,7 @@ function dongPopup(p, clickX) {
   const rank = same === 1 && p.floors === r[1] ? `${n}개동 중 가장 높은 동` : same === 1 && p.floors === r[0] ? `${n}개동 중 가장 낮은 동` : r[0] === r[1] ? `${n}개동 모두 ${p.floors}층` : `${n}개동 중 ${same}개동이 ${p.floors}층`;
   const dnote = p.tier === 'schematic' ? '동 위치·높이는 근사값(10~20 m)이며, 층수는 공급 자료 기준입니다.' : '동 윤곽은 실제 건물 자료입니다. 층수·높이는 자료 기준입니다.';
   showCard(`<div class="pc">
-    <div class="pc-h"><b title="${esc(dnote)}">${esc(p.no)}동</b><span class="pc-sub">${esc(b.id)}</span>${chipHtml(KIND[b.status], b.status)}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
+    <div class="pc-h"><b title="${esc(dnote)}">${esc(p.no)}동</b><span class="pc-sub">${esc(b.id)}</span>${chipHtml(KIND[b.status], stTxt(b))}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
     <div class="pc-big"><strong>${p.floors}층</strong><span>높이 약 ${Math.round(p.h)} m${p.hEst ? ' (추정)' : ''}</span></div>
     ${dongBars(b, p.no)}<div class="pc-cap">${rank}</div>
     ${dlHtml([b.progress ? ['단지 공정율', `<span title="${esc(b.progress.asOf)} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['입주', esc(b.moveIn)]])}</div>`,
@@ -870,6 +933,7 @@ function dongPopup(p, clickX) {
 }
 const shortSchool = (n) => String(n || '').replace(/초등학교$/, '초').replace(/중학교$/, '중').replace(/고등학교$/, '고');
 const ymDot = (d) => String(d || '').slice(0, 7).replace('-', '.');
+const homeRows = (b) => { const x = homeParts(b); return x ? [x.nums ? ['호수', `<span title="${esc(x.title)}">${esc(x.nums)}</span>`] : null, x.pol ? ['정책', `<span title="${esc(x.title)}">${esc(x.pol)}</span>`] : null] : []; };
 function blockPopup(b, clickX) {
   const fr = floorsRange(b), nr = HAS_CTX ? nearestCtx(centroid(b.poly)) : null;
   const hmax = fr ? floorsToHeight(fr[1]) : 0;
@@ -884,12 +948,12 @@ function blockPopup(b, clickX) {
   /* 출처·기준·자료 설명은 화면 대신 단지 이름의 title 로(2026-10-13 지도 화면 정리) */
   const about = [b.src ? `출처: ${b.src}` : '', lt ? `단계·판정: ${lt.basis}${lt.refDate ? ` (판정 기준일 ${lt.refDate})` : ''}` : '', b.outlineHow, nr ? '역·학교: OpenStreetMap, 단지 중심에서 직선거리' : '', zr || sr ? '통학구역·신설예정 학교: 교육부 공개 자료(입주 전 점검)' : ''].filter(Boolean).join('\n');
   showCard(`<div class="pc">
-    <div class="pc-h"><b${about ? ` title="${esc(about)}"` : ''}>${esc(b.id)}</b><span class="pc-sub">${esc(b.kind.replace('(공공분양)', ''))}</span>${chipHtml(KIND[b.status], b.status)}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
+    <div class="pc-h"><b${about ? ` title="${esc(about)}"` : ''}>${esc(b.id)}</b><span class="pc-sub">${esc(b.kind.replace('(공공분양)', ''))}</span>${chipHtml(KIND[b.status], stTxt(b))}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
     <div class="pc-big"><strong>${unitsTxt(b)}</strong></div>
     ${b.note ? `<div class="pc-cap">${esc(b.note)}</div>` : ''}
     ${dlHtml([pidRow, lg && lg.stage ? ['단계', `<span class="stg6"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => `<i class="${x === sn.now ? `on ${sn.k}` : ''}"></i>`).join('')}</span>${sn.now[0]} ${sn.now[1]}`] : null,
       lt && lt.cls ? ['판정', `<b class="jd ${lg.cls}">${lt.cls}</b>${lt.late ? ` <small${lt.lateTitle ? ` title="${esc(lt.lateTitle)}"` : ''}>${esc(lt.late)}</small>` : ''}`] : null,
-      lt && lt.next ? ['다음 일정', esc(lt.next)] : null, b.progress ? ['공정율', `<span title="${esc(b.progress.asOf)} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(b.moveIn)],
+      lt && lt.next ? ['다음 일정', esc(lt.next)] : null, ...homeRows(b), b.progress ? ['공정율', `<span title="${esc(b.progress.asOf)} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(b.moveIn)],
       b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`] : null,
       b.builder ? ['시공', esc(b.builder) + (b.contractM ? ` <small>${fmt(Math.round(b.contractM / 100))}억원</small>` : '')] : null,
       nr && nr.st ? ['교통', `${esc(nr.st.name)} <small>${IL.shortDist(nr.st.d)}</small>`] : null, ...schoolRows,
@@ -965,8 +1029,9 @@ function busPopup(p, clickX) {
     <p class="pc-foot">출처: 국토교통부 TAGO 버스위치정보${d.age ? ` · 위치 기준 ${esc(d.age)}` : ''}<br>${esc(busTime(BUS.at))}에 조회한 값이며 자동으로 갱신되지 않습니다(새로 보려면 '버스 새로고침'). 방향과 지나는 단지는 노선 경로(정류소를 이은 선)로 어림했습니다.</p></div>`,
     [ptRing([bus.lon, bus.lat])], 0, clickX);
 }
-function statusFilter() { const f = ['in', ['get', 'status'], ['literal', [...SHOWN]]]; return privOn ? f : ['all', f, ['!=', ['get', 'priv'], true]]; }
-const blockVisible = (b) => SHOWN.has(b.status) && (privOn || !b.priv);   // 지금 지도에 보이는 단지인가(상태 선택 + 민간 스위치)
+const exOut = () => (exOn ? [] : [['!=', ['get', 'settle'], 'existing']]);   // 기존 단지(준공 24개월 넘음)는 옵션을 켜야 보인다
+function statusFilter() { const f = ['all', ['in', ['get', 'status'], ['literal', [...SHOWN]]], ...exOut()]; return privOn ? f : ['all', f, ['!=', ['get', 'priv'], true]]; }
+const blockVisible = (b) => SHOWN.has(b.status) && (privOn || !b.priv) && (exOn || b.settle !== 'existing');   // 지금 지도에 보이는 단지인가(상태 선택 + 민간 스위치 + 기존 단지)
 function dongFilter() { return selDong == null ? statusFilter() : ['all', statusFilter(), ['!=', ['get', 'key'], selDong]]; }
 const vis = (id, on) => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); };
 const SEL_COLOR = '#F0E442';   // 고른 건물: Okabe-Ito의 노랑(상태색 어디와도 겹치지 않음) + 바닥 윤곽선
@@ -983,8 +1048,8 @@ function applySel() {
 function applyFilters() {
   if (!map.getLayer('blk-line')) return;
   const f = statusFilter();
-  for (const [id, st] of [['blk-sale', '분양중'], ['blk-build', '건설 단계'], ['blk-soon', '준공 임박'], ['blk-move', '입주 단계'], ['blk-plan', '계획']]) vis(id, SHOWN.has(st));
-  vis('blk-priv', privOn); map.setFilter('blk-priv', ['all', ['==', ['get', 'priv'], true], ['in', ['get', 'status'], ['literal', [...SHOWN]]]]);
+  for (const [id, st] of [['blk-sale', ['분양중']], ['blk-build', ['건설 단계']], ['blk-soon', ['준공 임박']], ['blk-move', ['입주 단계']], ['blk-plan', PLAN_ST]]) { const on = st.filter((x) => SHOWN.has(x)); vis(id, on.length > 0); map.setFilter(id, ['all', ['in', ['get', 'status'], ['literal', on.length ? on : st]], ['!=', ['get', 'priv'], true], ...exOut()]); }
+  vis('blk-priv', privOn); map.setFilter('blk-priv', ['all', ['==', ['get', 'priv'], true], ['in', ['get', 'status'], ['literal', [...SHOWN]]], ...exOut()]);
   map.setFilter('blk-line', ['all', f, ['!=', ['get', 'kind'], 'plan']]);
   if (map.getLayer('blk-judge')) map.setFilter('blk-judge', ['all', f, JUDGED]);
   map.setFilter('blk-line-plan', ['all', f, ['==', ['get', 'kind'], 'plan']]);
@@ -1152,8 +1217,15 @@ function setLegend() {
   const present = new Set(BLOCKS.filter((b) => !b.priv).map((b) => b.status));
   const rows = [], chips = [];   // rows = 자세한 목록 [기호, 이름, 설명], chips = 요약 한 줄 [기호, 이름]
   const add = (sw, t, n, short = t) => { rows.push([sw, t, n]); if (short) chips.push([sw, short]); };
-  const NOTE = { '준공 임박': ' · 공정율 90% 이상, 입주 3개월 안', '입주 단계': ' · 입주를 시작했거나 마침' };
-  BY_STAGE.forEach((st) => { if (present.has(st)) add(`<i class="sw ${KIND[st]}"></i>`, st, `<small>${stageOfSt(st)}${NOTE[st] || ''}</small>`); });   // 6단계 순서, 단계 번호를 붙인다
+  const NOTE = { '준공 임박': ' · 공정율 90% 이상, 입주 3개월 안' };
+  BY_STAGE.forEach((st) => {   // 6단계 순서, 단계 번호를 붙인다. 06 입주는 경과 표지로 나눈다(입주 진행 · 입주 완료, 기존 단지는 옵션을 켰을 때만)
+    if (!present.has(st)) return;
+    if (st !== '입주 단계') return add(`<i class="sw ${KIND[st]}"></i>`, st, `<small>${stageOfSt(st)}${NOTE[st] || ''}</small>`);
+    const ss = new Set(BLOCKS.filter((b) => !b.priv && b.status === st).map((b) => b.settle || 'moving'));
+    if (ss.has('moving')) add('<i class="sw move"></i>', '입주 진행', `<small>${stageOfSt(st)} · 준공 6개월 안</small>`);
+    if (ss.has('settled')) add('<i class="sw move" style="opacity:.45"></i>', '입주 완료', `<small>${stageOfSt(st)} · 준공 7~24개월, 흐리게</small>`);
+    if (ss.has('existing') && exOn) add('<i class="sw move" style="opacity:.25"></i>', '기존 단지', '<small>준공 24개월 넘음</small>', '');
+  });
   const jd = ['caution', 'delay'].map((c) => BLOCKS.filter((b) => b.ledger && b.ledger.cls === c).length);
   if (jd[0] + jd[1]) add(`${jd[0] ? '<i class="sw jd-w"></i>' : ''}${jd[1] ? '<i class="sw jd-d"></i>' : ''}`, [jd[0] ? `주의 ${jd[0]}` : '', jd[1] ? `지연 ${jd[1]}` : ''].filter(Boolean).join(' · '), '<small>원장 판정, 굵은 테두리</small>', '');
   if (HAS_PRIV && privOn) add('<i class="sw priv"></i>', '공공택지 민간', '<small>회색 면, 상태는 글자로</small>', '');
@@ -1190,6 +1262,13 @@ function setLegend() {
   updateBusStat();
 }
 let SUM_TOTAL = null;   // 머리 줄 합계(#hudSum)용: 세대수·단지 수와 보조 문장(title)
+/* 수도권: 원장에는 있지만 위치가 시군구 대표점뿐이거나 없어 지도에 그리지 않은 사업. 목록 끝에 이름만, 누르면 사업 상세 */
+function unlocatedHtml() {
+  const u = REG.home && Array.isArray(REG.home.unlocated) ? REG.home.unlocated : [];
+  if (!u.length) return '';
+  const s6 = Object.fromEntries(STAGES6.map((x) => [x[0], x[1]]));
+  return `<li class="nearby"><b title="사업 원장에는 있으나 위치가 시군구 대표점뿐이거나 없어 지도에 그리지 않은 사업">위치 미확보 ${u.length}건</b><span class="nb-list">${u.map((x) => `<a href="/project/${encodeURIComponent(x.id)}" title="${esc([x.id, x.stage ? `${x.stage} ${s6[x.stage]}` : '', x.units ? `${fmt(x.units)}세대` : '', x.loc ? `위치: ${x.loc}` : '위치 없음'].filter(Boolean).join(' · '))}">${esc(x.name)}</a>`).join('')}</span></li>`;
+}
 if (BLOCKS.length) {
   /* 합계 */
   const by = {}; BLOCKS.forEach((b) => { const k = kindOf(b); by[k] = (by[k] || 0) + b.units; });
@@ -1211,9 +1290,9 @@ if (BLOCKS.length) {
     const sub = [b.priv ? '공공택지 민간' : null, unitsTxt(b), dongN(b) ? `${dongN(b)}개동` : null, fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : null, /^\d/.test(b.moveIn) ? `입주 ${b.moveIn}` : b.moveIn].filter(Boolean).join(' · ');
     const bars = fr ? b.dongs.slice().sort((a, c) => a.no.localeCompare(c.no)).map((d) => `<i title="${esc(d.no)}동 ${d.floors}층" style="height:${Math.round(34 * d.floors / 15)}px;background:${mixTone(k, fr[1] > fr[0] ? (d.floors - fr[0]) / (fr[1] - fr[0]) : 1)}"></i>`).join('') : '';
     const mini = b.progress ? `<span class="mini" style="--c:${COLOR[k]}" title="공정율 ${esc(b.progress.rate)}%"><i style="width:${Math.max(b.progress.rate, 1)}%"></i></span>` : '';
-    const more = `<span class="more"><span class="stg">${stageInner(b)}</span>${b.progress ? progressRow(b, k) : ''}${bars ? `<span class="fl" title="동별 층수">${bars}</span>` : ''}${b.builder ? `<span class="bld">시공 ${esc(b.builder)}</span>` : ''}</span>`;
-    return `<li><button type="button" class="card" aria-expanded="false" data-id="${esc(b.id)}" aria-label="${esc(b.id)} ${esc(b.status)}, ${esc(sub)}"><i class="sw ${k}"></i><b>${esc(b.id)} ${esc(b.kind.replace('(공공분양)', ''))}</b><span class="st" style="color:${COLOR[k]}">${esc(b.status)}${jdMark(b)}</span><span class="sub">${esc(sub)}</span>${mini}${more}</button></li>`;
-  }).join('');
+    const more = `<span class="more"><span class="stg">${stageInner(b)}</span>${homeLine(b)}${b.progress ? progressRow(b, k) : ''}${bars ? `<span class="fl" title="동별 층수">${bars}</span>` : ''}${b.builder ? `<span class="bld">시공 ${esc(b.builder)}</span>` : ''}</span>`;
+    return `<li><button type="button" class="card" aria-expanded="false" data-id="${esc(b.id)}" aria-label="${esc(b.id)} ${esc(stTxt(b))}, ${esc(sub)}"><i class="sw ${k}"></i><b>${esc(b.id)} ${esc(b.kind.replace('(공공분양)', ''))}</b><span class="st" style="color:${COLOR[k]}">${esc(stTxt(b))}${jdMark(b)}</span><span class="sub">${esc(sub)}</span>${mini}${more}</button></li>`;
+  }).join('') + unlocatedHtml();
 
   /* 펼친 단지 카드의 6단계 띠(원장 단계가 있으면 원장 기준) + 원장 판정·다음 일정 한 줄 */
   function stageInner(b) {
@@ -1224,15 +1303,20 @@ if (BLOCKS.length) {
   }
   /* 원장이 늦게 붙으면(window.LEDGER) 단지 선·점·이름표 자료, 펼친 카드의 단계 띠, 접힌 카드의 주의·지연 표지, 범례를 다시 그린다 */
   function refreshLedger() {
+    const was = BLOCKS.map((b) => b.settle).join('|'); settleAll();
+    if (BLOCKS.map((b) => b.settle).join('|') !== was && map.getSource('dongs')) {   // 원장 단계·준공 달로 경과 표지가 바뀌면 동(색·거르기 속성)도 다시
+      const [dg, dl] = dongsGeoJSON(); DONG_FEATS = dg.features;
+      map.getSource('dongs').setData(dg); map.getSource('dong-labels').setData(dl); map.getSource('dong-shadow').setData(shadowGeoJSON(dg.features));
+    }
     const src = map.getSource('blocks'); if (src) src.setData(blocksGeoJSON());
     refreshGround();
     document.querySelectorAll('#projList .card').forEach((card) => {
       const b = BLOCKS.find((x) => x.id === card.dataset.id); if (!b) return;
       const w = card.querySelector('.stg'), st = card.querySelector('.st');
       if (w) w.innerHTML = stageInner(b);
-      if (st) st.innerHTML = esc(b.status) + jdMark(b);
+      if (st) st.innerHTML = esc(stTxt(b)) + jdMark(b);
     });
-    setLegend();
+    setLegend(); syncChips(); applyFilters(); renderHudContent();
   }
   if (window.LEDGER) window.LEDGER.then((n) => { if (n) refreshLedger(); }, () => {});
   /* 단지가 아는 단계별 날짜(준공 예정·입주). 월까지만 '26.12 로 적는다. 모르는 단계는 비워 둔다. */
@@ -1263,7 +1347,8 @@ if (BLOCKS.length) {
 } else {
   const near = Array.isArray(REG.nearby) ? REG.nearby : [];   // 번들 없는 지역: 같은 시군구의 다른 법정동(인허가 사업은 법정동 단위로 찾는다)
   const chips = near.length && window.RegionLoader ? `<li class="nearby"><b>같은 시군구의 다른 법정동 ${near.length}곳</b><span class="nb-list">${near.map((x) => `<a href="${esc(window.RegionLoader.codeUrl(location.href, 'bjd', x.bjd))}">${esc(x.name)}</a>`).join('')}</span></li>` : '';
-  $('#projList').innerHTML = '<li class="empty">이 지역에는 아직 표시할 단지가 없습니다. ' + (near.length ? '인허가 사업은 법정동 단위로 찾으니 아래에서 다른 법정동을 골라 보세요.' : '자료가 들어오면 이곳에 나타납니다.') + '</li>' + chips;
+  $('#projList').innerHTML = (REG.home ? `<li class="empty">${REG.home.failed ? '사업 원장 자료를 불러오지 못했습니다.' : REG.home.total ? '이 시군구의 원장 사업은 위치를 몰라 지도에 그리지 못했습니다.' : '이 시군구에는 사업 원장에 실린 공급 사업이 없습니다.'}</li>${unlocatedHtml()}`   // 수도권: 원장 기준(인허가 법정동 안내 없음)
+    : '<li class="empty">이 지역에는 아직 표시할 단지가 없습니다. ' + (near.length ? '인허가 사업은 법정동 단위로 찾으니 아래에서 다른 법정동을 골라 보세요.' : '자료가 들어오면 이곳에 나타납니다.') + '</li>' + chips);
   for (const id of ['h-sum', 'h-tl']) { const s = document.getElementById(id).closest('section'); if (s) s.hidden = true; }
 }
 /* 공공 모집 공고(마이홈): 번들 없는 지역에서만, 지도·단지를 막지 않게 늦게 채운다. 못 받으면 구역을 숨긴 채 둔다 */
@@ -1287,7 +1372,7 @@ const openId = () => { const c = document.querySelector('#projList .card[aria-ex
 function syncUrl(id) {
   try {
     const u = new URL(location.href), set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
-    set('block', id); set('priv', privOn ? '' : '0'); set('mode', ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '' : '0'); set('hud', hudOn ? '' : '0'); set('cards', cardsOn ? '' : '0'); set('dim', dimExisting ? '' : '0'); set('infra', HAS_INFRA && !infraOn ? '0' : ''); set('zone', HAS_INFRA && !zoneOn ? '0' : ''); set('bus', HAS_BUS && !busOn ? '0' : ''); set('panel', $('.app').classList.contains('collapsed') ? '' : '1');
+    set('block', id); set('priv', privOn ? '' : '0'); set('ex', exOn ? '1' : ''); set('mode', ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '' : '0'); set('hud', hudOn ? '' : '0'); set('cards', cardsOn ? '' : '0'); set('dim', dimExisting ? '' : '0'); set('infra', HAS_INFRA && !infraOn ? '0' : ''); set('zone', HAS_INFRA && !zoneOn ? '0' : ''); set('bus', HAS_BUS && !busOn ? '0' : ''); set('panel', $('.app').classList.contains('collapsed') ? '' : '1');
     history.replaceState(null, '', u);
   } catch (_) { /* file:// 에서는 막힐 수 있음 */ }
 }
@@ -1299,6 +1384,7 @@ function focusBlock(id, { toggle = true, tour = false, scroll = true } = {}) {
   if (scroll && btn && btn.getAttribute('aria-expanded') === 'true') btn.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });   // 사이드바에서 펼친 카드가 보이게
   if (!SHOWN.has(b.status)) { SHOWN.add(b.status); syncChips(); applyFilters(); }
   if (b.priv && !privOn) { privOn = true; syncChips(); applyFilters(); }
+  if (b.settle === 'existing' && !exOn) { exOn = true; syncChips(); applyFilters(); setLegend(); }
   if (innerWidth <= 900) setSheet('peek');
   syncUrl(id);
   select(null);
@@ -1421,11 +1507,12 @@ $('#zOut').addEventListener('click', () => { stopMotion(); map.zoomOut({ duratio
 
 /* 옵션 창: 자주 바꾸지 않는 설정을 모았다. 기본은 모두 켬이고, 꺼 둔 설정이 있으면 버튼에 개수를 보인다. */
 const ALL_ST = new Set(BLOCKS.map((b) => b.status));
-const optCount = () => (SHOWN.size < ALL_ST.size ? 1 : 0) + (HAS_CTX && !ctxOn ? 1 : 0) + (HAS_CTX && ctxOn && !ringOn ? 1 : 0) + (!hudOn ? 1 : 0) + (!cardsOn ? 1 : 0) + (HAS_PRIV && !privOn ? 1 : 0) + (HAS_INFRA && !infraOn ? 1 : 0) + (HAS_INFRA && !zoneOn ? 1 : 0) + (HAS_BUS && !busOn ? 1 : 0);
+const optCount = () => (SHOWN.size < ALL_ST.size ? 1 : 0) + (hasEx() && exOn ? 1 : 0) + (HAS_CTX && !ctxOn ? 1 : 0) + (HAS_CTX && ctxOn && !ringOn ? 1 : 0) + (!hudOn ? 1 : 0) + (!cardsOn ? 1 : 0) + (HAS_PRIV && !privOn ? 1 : 0) + (HAS_INFRA && !infraOn ? 1 : 0) + (HAS_INFRA && !zoneOn ? 1 : 0) + (HAS_BUS && !busOn ? 1 : 0);
 function syncChips() {
   document.querySelectorAll('#optStatus input').forEach((i) => { i.checked = SHOWN.has(i.dataset.status); });
   document.querySelectorAll('#stageF button[data-status]:not(:disabled)').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.status.split('|').every((st) => SHOWN.has(st)))));
   $('#dimBtn').setAttribute('aria-pressed', String(dimExisting)); $('#hudChip').checked = hudOn; $('#cardsChip').checked = cardsOn; if (HAS_PRIV) $('#privChip').checked = privOn;
+  $('#lblEx').hidden = !hasEx(); $('#exChip').checked = exOn; $('#exN').textContent = hasEx() ? String(BLOCKS.filter((b) => b.settle === 'existing').length) : '';
   if (HAS_CTX) { $('#ctxChip').checked = ctxOn; $('#ringChip').checked = ringOn; $('#ringChip').disabled = !ctxOn; $('#lblRing').classList.toggle('dis', !ctxOn); }
   if (HAS_INFRA) { $('#infraChip').checked = infraOn; $('#zoneChip').checked = zoneOn; }
   if (HAS_BUS) $('#busChip').checked = busOn;
@@ -1473,7 +1560,8 @@ function positionOpt() {
       const st = t.dataset.status;
       if (!t.checked && SHOWN.size === 1) { t.checked = true; say('한 가지 상태는 켜 두어야 합니다.'); return; }
       t.checked ? SHOWN.add(st) : SHOWN.delete(st); syncChips(); applyFilters(); say(`${st} ${SHOWN.has(st) ? '보임' : '숨김'}`);
-    } else if (t.id === 'privChip') { privOn = t.checked; syncChips(); applyFilters(); setLegend(); syncUrl(openId()); say(privOn ? '공공택지 민간 단지를 보여 줍니다.' : '공공택지 민간 단지를 숨깁니다.'); }
+    } else if (t.id === 'exChip') { exOn = t.checked; syncChips(); applyFilters(); setLegend(); syncUrl(openId()); say(exOn ? '기존 단지를 보여 줍니다.' : '기존 단지를 숨깁니다.'); }
+    else if (t.id === 'privChip') { privOn = t.checked; syncChips(); applyFilters(); setLegend(); syncUrl(openId()); say(privOn ? '공공택지 민간 단지를 보여 줍니다.' : '공공택지 민간 단지를 숨깁니다.'); }
     else if (t.id === 'ctxChip') { ctxOn = t.checked; syncChips(); applyCtx(); syncUrl(openId()); say(ctxOn ? '역과 학교를 보여 줍니다.' : '역과 학교를 숨깁니다.'); }
     else if (t.id === 'ringChip') { ringOn = t.checked; syncChips(); applyCtx(); syncUrl(openId()); }
     else if (t.id === 'infraChip') { infraOn = t.checked; syncChips(); applyInfra(); syncUrl(openId()); say(infraOn ? '학교·정류장·전기 시설을 보여 줍니다.' : '학교·정류장·전기 시설을 숨깁니다.'); }
@@ -1483,7 +1571,7 @@ function positionOpt() {
     else if (t.id === 'hudChip') { hudOn = t.checked; applyMode(); syncChips(); syncUrl(openId()); say(hudOn ? '단지 모서리 표시선을 켭니다.' : '단지 모서리 표시선을 끕니다.'); }
   });
   $('#optReset').addEventListener('click', () => {
-    ALL_ST.forEach((st) => SHOWN.add(st)); ctxOn = true; ringOn = true; infraOn = true; zoneOn = true; busOn = true; hudOn = true; cardsOn = true; privOn = true; applyMode();
+    ALL_ST.forEach((st) => SHOWN.add(st)); ctxOn = true; ringOn = true; infraOn = true; zoneOn = true; busOn = true; hudOn = true; cardsOn = true; privOn = true; exOn = false; applyMode();
     applyFilters(); applyCtx(); applyInfra(); applyBus(); if (BLOCKS.length) setLegend(); syncChips(); syncUrl(openId()); say('옵션을 기본값(모두 켬)으로 되돌렸습니다.');
   });
   document.addEventListener('pointerdown', (e) => { if (!$('#optPanel').hidden && !e.target.closest('#optPanel, #optBtn')) setOpt(false); });
@@ -1588,7 +1676,7 @@ function buildInfra() {
     // 단지당 제목 줄 + 주의(▲) 줄만. 참고 내용은 지도 위 상세 카드와 '자료 기준·출처'에 있다.
     const warns = GROUPS.flatMap(([g]) => ck[g].filter((r) => r.level === 'warn'));
     const lines = warns.map((r) => `<span class="iw"><span class="im warn">▲</span> <b>${esc(r.label)}</b> ${esc(r.ref && r.ref.cmp ? r.detail : r.text)}</span>`).join('');
-    return `<li><button type="button" class="card icard" data-id="${esc(b.id)}"><i class="sw ${k}"></i><b>${esc(b.id)} ${esc(b.kind.replace('(공공분양)', ''))}</b><span class="st" style="color:${COLOR[k]}">${esc(b.status)}</span><span class="sub">${esc(moveText(b))}${warns.length ? '' : ' · 주의 없음'}</span>${lines}</button></li>`;
+    return `<li><button type="button" class="card icard" data-id="${esc(b.id)}"><i class="sw ${k}"></i><b>${esc(b.id)} ${esc(b.kind.replace('(공공분양)', ''))}</b><span class="st" style="color:${COLOR[k]}">${esc(stTxt(b))}</span><span class="sub">${esc(moveText(b))}${warns.length ? '' : ' · 주의 없음'}</span>${lines}</button></li>`;
   }).join('');
   const schools = IL.sortSchools(INFRA.schools), sched = schools.filter((s) => s.status === '신설예정'), sites = schools.length - sched.length;
   $('#infraSchools').innerHTML = sched.map((s) => {
@@ -1637,14 +1725,13 @@ if (innerWidth <= 900) setSheet('peek');
 if (HAS_GY) $('#basis').textContent = BASIS;
 else $('#baseNote').textContent = ['이 지역의 공식 건물 자료가 아직 없습니다', $('#baseNote').textContent].filter(Boolean).join(' · ');
 
-let firstIdle = true;
+whenRevealed(() => {   // 막이 걷힐 때(S1: 지형을 기다리지 않음)
+  const at = document.querySelector('.maplibregl-ctrl-attrib'); if (at) { at.classList.remove('maplibregl-compact-show'); at.removeAttribute('open'); }   // 출처 표기는 접어 두고 ⓘ를 누르면 펼친다
+  const want = q.get('block') || (RES && RES.block), wb = want && REG.resolveBlock ? REG.resolveBlock(want) : null; if (wb && BLOCKS.includes(wb)) focusBlock(wb.id, { toggle: false });   // 주소 ?block= 이 우선, 없으면 필지로 열었을 때 그 필지의 인허가 단지
+});
 map.on('idle', () => {
   const s = STATUS; s.loaded = true;
-  if (firstIdle) {
-    firstIdle = false; if (LV) LV.close(); else $('#loading').hidden = true;   // 남은 영역을 모두 채우고 0.35초 동안 걷는다
-    const at = document.querySelector('.maplibregl-ctrl-attrib'); if (at) { at.classList.remove('maplibregl-compact-show'); at.removeAttribute('open'); }   // 출처 표기는 접어 두고 ⓘ를 누르면 펼친다
-    const want = q.get('block') || (RES && RES.block), wb = want && REG.resolveBlock ? REG.resolveBlock(want) : null; if (wb && BLOCKS.includes(wb)) focusBlock(wb.id, { toggle: false });   // 주소 ?block= 이 우선, 없으면 필지로 열었을 때 그 필지의 인허가 단지
-  }
+  reveal('idle');   // 준비 판정보다 idle 이 먼저 오면(소스가 적은 지역) 그때 걷는다
   const c = map.getCenter(); s.center = [c.lng, c.lat]; s.zoom = map.getZoom(); s.pitch = map.getPitch(); s.terrain = !!map.getTerrain();
   try {
     const dongs = map.getLayer('dong-3d') ? map.queryRenderedFeatures(undefined, { layers: ['dong-3d'] }) : [];
@@ -1708,7 +1795,7 @@ if (INTRO_ON) (function introStack() {
     map.triggerRepaint();
   }
   function skip() { finish(0); }
-  function start() {   // 첫 idle(로딩 화면이 걷히기 시작할 때). ① 은 바로, 나머지는 AT 시각에
+  function start() {   // 로딩 화면이 걷히기 시작할 때. ① 은 바로, 나머지는 AT 시각에
     if (state !== 'wait') return; state = 'run';
     EV.forEach((e) => window.addEventListener(e, skip, { capture: true, passive: true }));
     map.on('render', rtt);
@@ -1718,7 +1805,7 @@ if (INTRO_ON) (function introStack() {
   }
   for (const el of HUD_EL) el.style.opacity = '0';   // HUD 는 지도보다 먼저 그려질 수 있다
   map.on('style.load', () => {   // setupCustom 다음에 불린다(먼저 등록됨)
-    if (first) { first = false; show(0, 0); map.once('idle', start); return; }   // 첫 스타일: 그리기 전에 숨긴다. 첫 idle 의 로딩 화면 걷기·그림자 추가보다 뒤에 불린다
+    if (first) { first = false; show(0, 0); whenRevealed(start); return; }   // 첫 스타일: 그리기 전에 숨긴다. 로딩 화면이 걷힐 때(whenRevealed) 시작한다
     state = 'done'; stop(); SAVED.clear(); H0 = undefined; for (const el of HUD_EL) { el.style.transition = ''; el.style.opacity = ''; }   // 스타일을 다시 불러왔다: 새 레이어는 원래 값이므로 그만두고 다시 돌지 않는다
   });
   window.__introStack = { step(n) { stop(); state = 'done'; show(n, 0); setH(H0); if (H0 !== undefined) setK(null); } };   // 시험 캡처용: n 단계 뒤 모습으로 바로
@@ -1766,13 +1853,13 @@ function renderHudContent() {
     el.style.setProperty('--c', T.color[k]); el.style.setProperty('--cd', COLOR[k]);
     /* 두 줄: 이름·상태 / 세대. 층·동·점검 칩은 단지 카드에 있고, 점검에 주의가 있으면 작은 ▲ 하나만(어느 분야인지는 title) */
     const sx = HAS_INFRA && infraOn ? SUMM_BY.get(b.id) : null, warns = sx ? Object.keys(IL.GROUP_NAMES).filter((g) => sx.levels[g] === 'warn').map((g) => IL.GROUP_NAMES[g]) : [];
-    el.innerHTML = `<span class="ht-h"><b>${esc(b.id)}</b><i>${esc(b.status)}</i>${warns.length ? `<em class="ht-w" title="입주 전 점검 주의: ${esc(warns.join('·'))}">▲</em>` : ''}</span><span class="ht-m">${unitsTxt(b)}</span>`;
-    el.setAttribute('aria-label', `${b.id} ${b.status}${b.priv ? ', 공공택지 민간' : ''}, ${unitsTxt(b)}${dongN(b) ? `, ${dongN(b)}개동` : ''}${sx ? `. 입주 전 점검 ${Object.keys(IL.GROUP_NAMES).filter((g) => sx.levels[g]).map((g) => `${IL.GROUP_NAMES[g]} ${LVL_WORD[sx.levels[g]]}`).join(', ')}` : ''}. 누르면 지도에서 보기`);
+    el.innerHTML = `<span class="ht-h"><b>${esc(b.id)}</b><i>${esc(stTxt(b))}</i>${warns.length ? `<em class="ht-w" title="입주 전 점검 주의: ${esc(warns.join('·'))}">▲</em>` : ''}</span><span class="ht-m">${unitsTxt(b)}</span>`;
+    el.setAttribute('aria-label', `${b.id} ${stTxt(b)}${b.priv ? ', 공공택지 민간' : ''}, ${unitsTxt(b)}${dongN(b) ? `, ${dongN(b)}개동` : ''}${sx ? `. 입주 전 점검 ${Object.keys(IL.GROUP_NAMES).filter((g) => sx.levels[g]).map((g) => `${IL.GROUP_NAMES[g]} ${LVL_WORD[sx.levels[g]]}`).join(', ')}` : ''}. 누르면 지도에서 보기`);
     delete hudSz[b.id];
   });
   scheduleHud();
 }
-function scheduleHud() { if (!hudRaf) hudRaf = requestAnimationFrame(renderHud); }
+function scheduleHud() { if (revealed && !hudRaf) hudRaf = requestAnimationFrame(renderHud); }   // 막이 걷히기 전엔 그리지 않는다(S4): 매 프레임 단지 꼭짓점을 지형 높이로 투영하는 일이 첫 화면 전 메인 스레드를 차지했다. 걷힐 때 한 번 그린다(reveal)
 /* 하단 띠(범례) 높이를 CSS 변수로 알려 지도 컨트롤·시간 바가 그 위에 서게 한다 */
 (function botbarSize() {
   const bb = $('#botbar'), wrap = $('.mapwrap'); if (!bb || !wrap) return;
