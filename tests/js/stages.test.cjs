@@ -81,7 +81,7 @@ test('지표 범례·KPI 는 6칸(StageLegend·StageKpis): 지표가 없는 단�
   assert.match(kpis, /const why = `자료 없음 — /, '빈 단계는 — 와 title 이유'); assert.doesNotMatch(kpis, /<span className="text-\[14px\]">\{notes/, '이유 문장을 칸에 보이지 않는다');
   assert.match(read('components/board/RealPanels.tsx'), /<StageLegend metrics=\{METRICS\} names="board" compact \/>/, '종합상황판은 제목 줄의 작은 칩(①·⑥ 자료 없음은 빼고 단계 번호는 title)');
   assert.match(legend, /if \(compact\) return \(/); assert.match(legend, /' 자료 없음'/);
-  const pages = { 'app/(dashboard)/area/page.tsx': ['legend', 'kpis'], 'app/(dashboard)/area/[id]/page.tsx': ['legend', 'kpis'], 'app/(dashboard)/month/[id]/page.tsx': ['kpis'], 'app/(dashboard)/agency/[id]/page.tsx': ['legend', 'kpis'], 'app/(dashboard)/agency/page.tsx': ['legend'] };
+  const pages = { 'app/(dashboard)/month/[id]/page.tsx': ['kpis'], 'app/(dashboard)/agency/[id]/page.tsx': ['legend', 'kpis'] };
   for (const [f, want] of Object.entries(pages)) {
     const s = read(f);
     if (want.includes('legend')) assert.match(s, /<StageLegend metrics=/, f);
@@ -93,8 +93,8 @@ test('지표 범례·KPI 는 6칸(StageLegend·StageKpis): 지표가 없는 단�
 
 test('표 머리는 단계 번호를 붙이고(03 인허가·04 착공·05 분양·06 준공), 보고자료 ① 표는 6행(01·02 는 자료 없음)', () => {
   /* 표는 데이터 그리드(계획서 17절)라 머리글은 열 정의의 label 이다 */
-  for (const f of ['app/(dashboard)/area/page.tsx', 'app/(dashboard)/area/[id]/page.tsx', 'app/(dashboard)/month/[id]/page.tsx']) assert.match(read(f), /label: `\$\{METRIC_STAGE\[k\]\} \$\{LABEL\[k\]\}`/, f);
-  for (const f of ['app/(dashboard)/agency/page.tsx', 'app/(dashboard)/agency/[id]/page.tsx']) assert.match(read(f), /`\$\{METRIC_STAGE\[k\]\} \$\{l\}`/, f);
+  for (const f of ['app/(dashboard)/month/[id]/page.tsx']) assert.match(read(f), /label: `\$\{METRIC_STAGE\[k\]\} \$\{LABEL\[k\]\}`/, f);
+  for (const f of ['app/(dashboard)/agency/[id]/page.tsx']) assert.match(read(f), /`\$\{METRIC_STAGE\[k\]\} \$\{l\}`/, f);
   const rep = read('app/(dashboard)/reports/page.tsx');
   assert.match(rep, /const nowRows: Row\[\] = STAGES\.map\(\(s\) => \{   \/\/ 공급 6단계 6행/);
   assert.match(rep, /muted: true, note: '—',/, '자료 없는 단계는 첫 칸 뒤를 한 칸으로 합친 대시 행');

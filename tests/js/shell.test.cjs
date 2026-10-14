@@ -51,21 +51,15 @@ test('메뉴 통합으로 없앤 화면의 옛 주소는 사업 목록의 거르
   assert.match(cfg, /\{ source: '\/stage\/:id\(0\[1-6\]\)', destination: '\/projects\?stage=:id', permanent: false \}/);
   assert.match(cfg, /\{ source: '\/area\/:sgg\(\\\\d\{5\}\)', destination: '\/projects\?sgg=:sgg', permanent: false \}/);
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/(dashboard)/stage')), '단계별 화면 폴더는 없다');
-  const area = read('app/(dashboard)/area/[id]/page.tsx');
-  assert.doesNotMatch(area, /SggView/, '시군구 상세는 사업 목록이 맡는다');
-  assert.match(area, /href=\{`\/projects\?sgg=\$\{c\}`\}/, '시도 상세의 시군구 카드는 사업 목록의 거르기로 간다');
 });
 
-test('공급 실적은 시도별(/area)·시행주체별(/agency) 두 보기를 탭으로 잇는다', () => {
-  const tabs = read('components/SupplyTabs.tsx');
-  assert.match(tabs, /const VIEWS = \[\['\/area', '시도별'\], \['\/agency', '시행주체별'\]\] as const;/);
-  assert.match(tabs, /aria-current=\{href === current \? 'page' : undefined\}/);
-  for (const [f, cur] of [['app/(dashboard)/area/page.tsx', '/area'], ['app/(dashboard)/agency/page.tsx', '/agency']]) {
-    const s = read(f);
-    assert.match(s, /<PageHead [^>]*title="공급 실적"/, f);
-    assert.doesNotMatch(s, /실데이터<\/Badge>/, `${f}: 실데이터 표지는 쓰지 않는다(2026-10-13 화면 규칙)`);
-    assert.ok(s.includes(`<SupplyTabs current="${cur}" />`), f);
-  }
+test('공급 실적·시행주체별·우리 동네 목록 화면은 지역 공급(/region)으로 합쳐 없고, 종합상황판 위젯이 쓰는 기관 상세·월 상세는 남는다(2026-10-14)', () => {
+  for (const f of ['area', 'my-area', 'agency/page.tsx']) assert.ok(!fs.existsSync(path.join(ROOT, 'app/(dashboard)', f)), f);
+  for (const f of ['agency/[id]/page.tsx', 'month/[id]/page.tsx', 'region/page.tsx']) assert.ok(fs.existsSync(path.join(ROOT, 'app/(dashboard)', f)), f);
+  const s = read('app/(dashboard)/region/page.tsx');
+  assert.match(s, /<PageHead [^>]*title="지역 공급"/);
+  assert.match(s, /<ReqTags screen="region" \/>/);
+  assert.doesNotMatch(s, /실데이터<\/Badge>/, '실데이터 표지는 쓰지 않는다(2026-10-13 화면 규칙)');
 });
 
 test('지도 섬이 스크립트를 불러오는 순서는 index.html 의 기존 로더와 같다(index.html 이 지도 마크업의 정본이라 어긋나면 지도가 안 열린다)', () => {

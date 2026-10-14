@@ -49,15 +49,13 @@ test('보고자료(8.14 정례 보고): 실적·시행주체·시도·앞으로�
   assert.ok(C.ytd(molit, 'start', C.NATION, '2025-08') > 0, '전년 같은 기간 누계가 있어야 비교한다');
 });
 
-test('우리 동네(9.4 국민 예측가능성): 시도를 고르면 1년 달력과 등록 사업(지금 단계·질문)을 보이고, 자격 판단은 하지 않는다', () => {
-  const idx = read('app/(dashboard)/my-area/page.tsx'), page = read('app/(dashboard)/my-area/[sido]/page.tsx');
-  assert.match(idx, /href=\{`\/my-area\/\$\{s\.code\}`\}/);
-  assert.match(page, /export const generateStaticParams = async \(\) => \(await getBoardData\(\)\)\.molit\.sido\.filter\(\(s\) => s\.code !== NATION\)/);
-  assert.match(page, /lhCalendar\(lh, sido, AHEAD_FROM, 12\)/);
-  assert.match(page, /title=\{st\?\.q\}>\{p\.stageCode\} \{st\?\.name\}<\/b>/, '단계 표지만 보이고 질문은 그 title(2026-10-13 마무리 리뷰)');
-  assert.doesNotMatch(page, /— \{st\?\.q\}/, '줄마다 질문 문장을 되풀이하지 않는다');
-  assert.match(page, /<a key=\{code\} className=\{buttonVariants\(\)\} href=\{`\/map\?sgg=\$\{code\}`\}>/, '지도는 <a> 로 열고, 사업 상세와 같은 주 단추');
-  for (const s of [idx, page]) assert.match(s, /청약·입주 자격은 각 모집공고에서 직접 확인하세요/);
+test('지역 공급(9.4 국민 예측가능성): 시도를 고르면 앞으로 12개월 모집·준공·입주 예정과 고른 달 목록을 보이고, 자격 판단은 하지 않는다', () => {
+  const page = read('app/(dashboard)/region/page.tsx'), ahead = read('components/region/Ahead.tsx');
+  assert.match(page, /aheadAll\(calendar, sido, sidoName\)/);
+  assert.match(page, /청약 자격은 모집공고에서 확인/);
+  assert.match(ahead, /role="radiogroup" aria-label="달 고르기"/, '달은 키보드로 고른다(←→)');
+  assert.match(ahead, /`\/projects\?id=\$\{e\.id\}`/, '사업은 사업 화면 서랍으로 연다');
+  assert.doesNotMatch(page + ahead, /자격 (판정|충족)/);
 });
 
 test('사업 상세(9.30 쉬운 설명): 지금 단계는 계단(현재 표시·칸 title 의 질문)이 보이고 문장으로 되풀이하지 않으며, 그 시도의 우리 동네로 이어 준다', () => {
@@ -71,7 +69,7 @@ test('사업 상세(9.30 쉬운 설명): 지금 단계는 계단(현재 표시·
 test("메뉴: 보고자료·우리 동네는 화면이 생겨 '준비 중'이 아니고, 빈 화면을 그리던 [section] 경로는 없다", () => {
   assert.deepEqual(MENU.filter((m) => m.soon), []);
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/(dashboard)/[section]')), '[section] 경로');
-  for (const f of ['app/(dashboard)/reports/page.tsx', 'app/(dashboard)/my-area/page.tsx', 'app/(dashboard)/my-area/[sido]/page.tsx']) assert.ok(fs.existsSync(path.join(ROOT, f)), f);
+  for (const f of ['app/(dashboard)/reports/page.tsx']) assert.ok(fs.existsSync(path.join(ROOT, f)), f);
 });
 
 test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림을 넣지 않는다 — 사용자 피드백 2026-10-10)', () => {

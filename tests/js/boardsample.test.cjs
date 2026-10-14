@@ -366,12 +366,12 @@ test('카드의 이동 링크는 아래 줄이 아니라 제목 줄 오른쪽(pa
   assert.match(link, /title=\{full\}/, '줄인 이름 대신 원래 이름은 title 로 보인다');
 });
 
-test('월별 실적 흐름: 종합상황판에서만 세로축을 만 단위로 줄이고 그래프가 카드 높이를 채운다(/area·/agency 의 MonthLines 는 그대로)', () => {
+test('월별 실적 흐름: 종합상황판에서만 세로축을 만 단위로 줄이고 그래프가 카드 높이를 채운다(기관 상세 /agency/{기관} 의 MonthLines 는 그대로)', () => {
   assert.match(realRow, /<MonthLines [\s\S]*? board \/>/);
   const lines = fs.readFileSync(path.join(__dirname, '../../components/charts/MonthLines.tsx'), 'utf8');
   assert.match(lines, /const man = \(v: number\) => \(v === 0 \? '0' : `\$\{\+\(v \/ 10000\)\.toFixed\(1\)\}만`\);/);
   assert.match(lines, /fmt=\{board \? man : undefined\} fill=\{board\}/);
-  for (const f of ['app/(dashboard)/area/page.tsx', 'app/(dashboard)/area/[id]/page.tsx', 'app/(dashboard)/agency/[id]/page.tsx']) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../../', f), 'utf8'), /\sboard(\s|=|\/>)/, f);
+  for (const f of ['app/(dashboard)/agency/[id]/page.tsx']) assert.doesNotMatch(fs.readFileSync(path.join(__dirname, '../../', f), 'utf8'), /\sboard(\s|=|\/>)/, f);
 });
 
 test('추이 그래프: 원천이 새로 들어간 달(addedSources)에만 표지를 단다', () => {

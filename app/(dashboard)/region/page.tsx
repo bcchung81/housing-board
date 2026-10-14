@@ -1,0 +1,115 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { Page, PageHead, PanelHead } from '../../../components/page';
+import { Card } from '../../../components/ui/card';
+import { Chip, ChipBar, ChipGroup } from '../../../components/ui/chips';
+import ReqTags from '../../../components/ReqTags';
+import Ahead from '../../../components/region/Ahead';
+import Annual, { parseMetric } from '../../../components/region/Annual';
+import Cond from '../../../components/region/Cond';
+import areaFactsJson from '../../../data/board/area-facts.json';
+import calendarJson from '../../../data/board/region-calendar.json';
+import mapJson from '../../../data/board/region-map.json';
+import annualJson from '../../../data/board/region-annual.json';
+import type { AreaFactsDoc } from '../../../lib/board/area-facts';
+import { fmt, lastMonth, monthLabel, ymDot } from '../../../lib/board/calc';
+import { getBoardData } from '../../../lib/board/data';
+import { CAL_KINDS, CAL_TYPE, aheadAll, parseKinds, pickMonth, toggleKind, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
+import type { Metric } from '../../../lib/board/types';
+
+export const metadata: Metadata = { title: '지역 공급' };
+
+const calendar = calendarJson as unknown as CalendarDoc;
+const regionMap = mapJson as unknown as RegionMapDoc;
+const annual = annualJson as unknown as AnnualDoc;
+const facts = areaFactsJson as AreaFactsDoc;
+/* 시도 칩 순서(행정 순, 2026-07부터 광주·전남은 '전남광주' 12) */
+const ORDER = ['11', '26', '27', '28', '12', '30', '31', '36', '41', '51', '43', '44', '52', '47', '48', '50'];
+const man = (v: number) => (v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
+const AHEAD_TIP = '사업 원장의 현재 예정(모집공고·준공·입주) · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌 · 막대 한 조각 = 사업 하나(높이 = 호수, 전국은 종류별로 묶음) · 지도 원 넓이 = 호수(지도는 서울·인천·경기만) · 예정일은 계획이라 바뀔 수 있고 청약 자격은 모집공고에서 확인';
+
+type Q = { sido?: string; m?: string; kind?: string; metric?: string };
+
+/* 지역 공급(옛 우리 동네 + 공급 실적): 시도 칩 → ① 앞으로 12개월 → ② 지난 공급 실적 → ③ 동네 여건(서울·인천·경기만). 선택은 모두 주소(?sido=&m=&kind=&metric=)에 남는다.
+   시안: docs/design/home-concept/region.html. 9.4 국민 예측가능성 지시(F-09)·연도별 실적(F-05)·전국↔시도(F-01) */
+export default async function RegionPage({ searchParams }: { searchParams: Promise<Q> }) {
+  const q = await searchParams;
+  const { molit } = await getBoardData();
+  const short = Object.fromEntries(molit.sido.map((s) => [s.code, s.name]));
+  const sidoName = (c: string) => short[c] ?? c;
+  const sido = q.sido && ORDER.includes(q.sido) ? q.sido : '';
+  const metric = parseMetric(q.metric);
+  const kinds = parseKinds(q.kind);
+  const name = sido ? sidoName(sido) : '전국';
+
+  const href = (p: { sido?: string; kinds?: CalKind[]; metric?: Metric; m?: string | null }) => {
+    const s = new URLSearchParams();
+    const sd = p.sido ?? sido, ks = p.kinds ?? kinds, mt = p.metric ?? metric, m = p.m === undefined ? q.m : p.m;
+    if (sd) s.set('sido', sd);
+    if (m) s.set('m', m);
+    if (ks.length !== CAL_KINDS.length) s.set('kind', ks.join(','));
+    if (mt !== 'complete') s.set('metric', mt);
+    const t = s.toString();
+    return t ? `/region?${t}` : '/region';
+  };
+
+  /* ① 앞으로 12개월 */
+  const all = aheadAll(calendar, sido, sidoName);
+  const list = all.filter((e) => kinds.includes(e.type));
+  const months = calendar.months;
+  const m = pickMonth(months, list, q.m);
+  const units = list.reduce((s, e) => s + e.units, 0);
+  const view = sido ? regionMap.view[sido] : undefined;
+  const nowM = calendar.referenceDate.slice(0, 7);
+  const last = lastMonth(molit);
+
+  return (
+    <Page>
+      <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '지역 공급' }]} title="지역 공급"
+        tip="앞으로 12개월 예정(원장 현재 예정) → 지난 공급 실적(통계누리) → 동네 여건(서울·인천·경기) 순">
+        <ReqTags screen="region" />
+        <span className="text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
+          title={`앞으로 12개월(${monthLabel(calendar.from)} ~ ${monthLabel(calendar.to)}) · 원장 기준일 ${calendar.referenceDate} · 통계누리 실적 ${last}까지`}>
+          예정 {ymDot(calendar.from)}~{ymDot(calendar.to)} · 실적 {ymDot(last)}
+        </span>
+      </PageHead>
+
+      <ChipBar label="시도">
+        <ChipGroup label="시도" className="[&>span:first-child]:sr-only">
+          <Chip href={href({ sido: '' })} on={!sido}>전국</Chip>
+          {ORDER.map((c) => <Chip key={c} href={href({ sido: c })} on={c === sido}>{sidoName(c)}</Chip>)}
+        </ChipGroup>
+      </ChipBar>
+
+      <Card render={<section aria-label="앞으로 12개월" />}>
+        <PanelHead title={<>앞으로 12개월<span className="ml-2 text-[14px] font-normal text-muted-foreground">{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}곳 · {man(units)}호</span></>} tip={AHEAD_TIP}>
+          <ChipGroup label="종류">
+            {CAL_KINDS.map((t) => {
+              const xs = all.filter((e) => e.type === t), next = toggleKind(kinds, t);
+              return (
+                <Chip key={t} href={href({ kinds: next ?? kinds })} on={kinds.includes(t)} swatch={{ kind: 'fill', color: CAL_TYPE[t].color }}
+                  title={`${name} · 1년 안 ${CAL_TYPE[t].name} 예정 ${xs.length}곳 · ${fmt(xs.reduce((s, e) => s + e.units, 0))}호${xs.some((e) => !e.units) ? ` · 호수 미확인 ${xs.filter((e) => !e.units).length}` : ''}`}>
+                  {CAL_TYPE[t].name}<span className="text-muted-foreground tabular-nums">{fmt(xs.length)}</span>
+                </Chip>
+              );
+            })}
+          </ChipGroup>
+        </PanelHead>
+        {list.length ? (
+          <Ahead key={`${sido}|${kinds.join(',')}`} sido={sido} regionName={name} months={months} nowM={nowM} list={list} initialM={m}
+            map={view ? { view, sgg: regionMap.sgg, districts: regionMap.districts } : null} />
+        ) : <p className="m-0 text-[14px] text-muted-foreground">{name} · 12개월 안 {kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정 없음</p>}
+      </Card>
+
+      <Annual molit={molit} annual={annual} sido={sido} metric={metric} order={ORDER} sidoName={sidoName} href={(p) => href({ ...p, m: null })} />
+
+      {sido && facts.sido[sido] ? <Cond facts={facts} sido={sido} name={name} /> : (
+        <p className="m-0 px-1 text-[14px] text-muted-foreground" title="인구·가구·주택 재고·미분양(KOSIS·SGIS, HOME 지역 지표)은 이 세 시도만 있어 다른 시도·전국은 블록을 그리지 않음">
+          동네 여건 자료: {Object.keys(facts.sido).map((c, i) => (
+            <span key={c}>{i ? ' · ' : ''}<Link href={href({ sido: c, m: null })} className="text-muted-foreground underline-offset-[3px] hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{sidoName(c)}</Link></span>
+          ))} 만
+        </p>
+      )}
+    </Page>
+  );
+}

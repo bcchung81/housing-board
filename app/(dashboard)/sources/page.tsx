@@ -6,8 +6,12 @@ import { legend } from '../../../components/board/styles';
 import Fold from '../../../components/sources/Fold';
 import HashOpen from '../../../components/sources/HashOpen';
 import StageLinks from '../../../components/sources/StageLinks';
-import Status from '../../../components/sources/Status';
+import ReqTags from '../../../components/ReqTags';
+import Requirements from '../../../components/sources/Requirements';
+import { Collect, Coverage, Links } from '../../../components/sources/Collect';
 import homeSources from '../../../data/board/home-sources.json';
+import requirementsJson from '../../../data/board/requirements.json';
+import type { RequirementsDoc } from '../../../lib/board/requirements';
 import { DataGrid } from '../../../components/ui/data-grid';
 import { fmt } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
@@ -155,6 +159,8 @@ export default async function SourcesPage() {
   const items = sources.items;
   const got = items.flatMap((s) => (s.collectedAt ? [s.collectedAt.slice(0, 10)] : [])).sort();   // 카탈로그의 수집일(가장 이른·늦은 날)
   const bundles = bundleCounts();
+  const req = requirementsJson as unknown as RequirementsDoc, hs = homeSources as HomeSources;
+  const editionDay = `${req.edition.slice(0, 4)}.${req.edition.slice(4, 6)}.${req.edition.slice(6, 8)}`;   // 덤프 시각 '20261014T102506Z'(UTC) — 한국 날짜도 같은 날
   const regions = regionIndex.regions.length;
   const nameOf = (id: string) => ITEMS.find((i) => i.id === id)!.name;
   const missing = (screen: 'board' | 'map') => ITEMS.filter((i) => SCREEN_USAGE[i.id][screen].startsWith('필요')).map((i) => i.name);
@@ -316,8 +322,18 @@ export default async function SourcesPage() {
   return (
     <Page>
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '데이터 원본' }]} title="데이터 원본"
-        meta={`수집 ${got[got.length - 1].replace(/-/g, '.')} · 조사 ${ACQUIRE_ASOF.replace(/-/g, '.')}`}
-        metaTip={`원천 카탈로그 ${items.length}건의 수집일 ${got[0]} ~ ${got[got.length - 1]} · 추가 확보 필요 조사 ${ACQUIRE_ASOF}`} />
+        tip="① 요구사항 충족 → ② 수집 상태 → ③ 연도 확보 → ④ 연결 · 맨 아래 원천 카탈로그(단계별 데이터 연계·원천별 수집 건수·기준일)">
+        <ReqTags screen="sources" />
+        <span className="text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
+          title={`HOME 덤프 ${req.edition} 수집 실행 · 사업 원장 기준일 ${req.referenceDate} · 원천 카탈로그 ${items.length}건의 수집일 ${got[0]} ~ ${got[got.length - 1]} · 추가 확보 필요 조사 ${ACQUIRE_ASOF}`}>
+          수집 {editionDay} · 원장 {req.referenceDate.replace(/-/g, '.')}
+        </span>
+      </PageHead>
+      <Requirements doc={req} />
+      <Collect hs={hs} items={items} />
+      <Coverage hs={hs} molit={molit} />
+      <Links hs={hs} />
+      <Fold title="원천 카탈로그" meta={`단계별 데이터 연계 · 화면별 사용 · 추가 확보 필요 ${ACQUIRE.length}건 · 보관 데이터셋 ${items.length}건`} className="mt-0 shadow-[var(--shadow-card)]">
       <section id="stage-links" aria-labelledby="h-stage" className="scroll-mt-20">
         <PanelHead id="h-stage" title="단계별 데이터 연계" />
         <StageLinks stages={stages} extra={(
@@ -352,8 +368,9 @@ export default async function SourcesPage() {
           </Fold>
         </section>
       </div>
-        )} status={<Status hs={homeSources as HomeSources} items={items} molit={molit} />} />
+        )} />
       </section>
+      </Fold>
       <HashOpen />
     </Page>
   );
