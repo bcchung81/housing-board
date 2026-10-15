@@ -51,6 +51,21 @@ export function viewOf(doc: RegionMapDoc, sido: string): [number, number, number
   return [x0, y0, x1 - x0, y1 - y0];
 }
 
+/* 지도 면(시군구) 고르기: region-map 의 면 이름 → 행정표준 코드(metro-overview 의 코드표). 경기는 시 단위 면이라 구가 있는 시는 구마다 지도 연결을 낸다.
+   code 가 null 이면(이름 대조 실패) 연결을 내지 않는다. 주소는 ?sgg=<면 코드>(예 41280) */
+export type SggUnit = { code: string | null; s: string; n: string; label: string; gu: { code: string; name: string }[] };
+/* 코드표는 metro-overview 의 METRO_AREAS·SIDO_SHORT·guOf 를 받는다(이 파일은 가져오는 것 없이 시험에서 바로 읽힌다) */
+export type SggTable = { areas: Record<string, string>; sidoShort: Record<string, string>; guOf: (unit: string) => string[] };
+export function sggUnits(doc: Pick<RegionMapDoc, 'sgg'>, sido: string, t: SggTable): SggUnit[] {
+  const codeOf = new Map(Object.entries(t.areas).map(([c, n]) => [`${c.slice(0, 2)}|${n}`, c]));
+  return doc.sgg.filter((g) => inScope(sido, g.s)).map((g) => {
+    const code = codeOf.get(`${g.s}|${g.n}`) ?? null;
+    return { code, s: g.s, n: g.n, label: `${t.sidoShort[g.s] ?? g.s} ${g.n}`, gu: code ? t.guOf(code).map((c) => ({ code: c, name: t.areas[c].slice(g.n.length).trim() })) : [] };
+  });
+}
+/* 주소 ?sgg= : 지금 범위에서 고를 수 있는 면 코드일 때만(아니면 선택 없음) */
+export const parseSgg = (doc: Pick<RegionMapDoc, 'sgg'>, sido: string, t: SggTable, v?: string): string | null => (v && sido && sggUnits(doc, sido, t).some((u) => u.code === v) ? v : null);
+
 /* 종류 칩: 켜진 값(쉼표). 모르는 값은 버리고, 하나도 안 남으면 전부 */
 export function parseKinds(v?: string): CalKind[] {
   const on = (v ?? '').split(',').filter((x): x is CalKind => (CAL_KINDS as string[]).includes(x));

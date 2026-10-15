@@ -16,8 +16,9 @@ import annualJson from '../../../data/board/region-annual.json';
 import type { AreaFactsDoc } from '../../../lib/board/area-facts';
 import { fmt, lastMonth, monthLabel, ymDot } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
+import { METRO_AREAS, SIDO_SHORT, guOf } from '../../../lib/board/metro-overview';
 import { mapScopeHref } from '../../../lib/board/map-href';
-import { CAL_KINDS, CAL_TYPE, aheadAll, parseKinds, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
+import { CAL_KINDS, CAL_TYPE, aheadAll, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
 import { getProjectsIndex } from '../../../lib/board/projects-index';
 import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '../../../lib/board/projects-view';
 import type { Metric } from '../../../lib/board/types';
@@ -30,13 +31,14 @@ const annual = annualJson as unknown as AnnualDoc;
 const facts = areaFactsJson as AreaFactsDoc;
 /* 시도 칩 순서(행정 순, 2026-07부터 광주·전남은 '전남광주' 12) */
 const ORDER = ['11', '26', '27', '28', '12', '30', '31', '36', '41', '51', '43', '44', '52', '47', '48', '50'];
+const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
 const man = (v: number) => (v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
 const AHEAD_TIP = '사업 원장의 현재 예정(모집공고·준공·입주) · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌 · 막대 한 조각 = 사업 하나(높이 = 호수, 전국은 종류별로 묶음) · 지도 원 넓이 = 호수(지도는 서울·인천·경기만) · 예정일은 계획이라 바뀔 수 있고 청약 자격은 모집공고에서 확인';
 const LINKA = 'text-foreground underline-offset-[3px] hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
-type Q = { sido?: string; m?: string; kind?: string; metric?: string };
+type Q = { sido?: string; m?: string; kind?: string; metric?: string; sgg?: string };
 
-/* 지역 공급(옛 우리 동네 + 공급 실적): 지역 칩 → ① 앞으로 12개월 → ② 지난 공급 실적 → ③ 동네 여건(서울·인천·경기만). 선택은 모두 주소(?sido=&m=&kind=&metric=)에 남는다.
+/* 지역 공급(옛 우리 동네 + 공급 실적): 지역 칩 → ① 앞으로 12개월 → ② 지난 공급 실적 → ③ 동네 여건(서울·인천·경기만). 선택은 모두 주소(?sido=&m=&kind=&metric=&sgg=)에 남는다(sgg = 지도에서 고른 시군구 — 칩을 누르면 풀린다).
    지역: 처음 열면 수도권(서울·인천·경기 — ?sido 없음), ?sido=all 전국, ?sido=NN 시도 하나. 머리 줄에 같은 범위의 사업 화면(점검 필요) 연결.
    시안: docs/design/home-concept/region.html. 9.4 국민 예측가능성 지시(F-09)·연도별 실적(F-05)·전국↔시도(F-01) */
 export default async function RegionPage({ searchParams }: { searchParams: Promise<Q> }) {
@@ -129,7 +131,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
           </ChipGroup>
         </PanelHead>
         {list.length ? (
-          <Ahead key={`${sido}|${kinds.join(',')}`} sido={sido} regionName={name} months={months} nowM={nowM} list={list} initialM={m}
+          <Ahead key={`${sido}|${kinds.join(',')}`} sido={sido} regionName={name} months={months} nowM={nowM} list={list} initialM={m} initialSgg={parseSgg(regionMap, sido, SGG_TABLE, q.sgg)}
             map={view ? { view, sgg: regionMap.sgg, districts: regionMap.districts } : null} />
         ) : <p className="m-0 text-[14px] text-muted-foreground">{name} · 12개월 안 {kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정 없음</p>}
       </Card>
