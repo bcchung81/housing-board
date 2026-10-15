@@ -7,7 +7,7 @@ import StageSteps from './StageSteps';
 import { Card } from '../ui/card';
 import { PanelHead } from '../page';
 import { mapHref } from '../../lib/board/map-href';
-import { BOARD_CIR, BOARD_NAMES, CAND_NAME, CAND_PLAN, PLAN_COL, STATUS_NAME, STATUS_TIP, isMetro, lateOf, nextOf, statusOf, type ProjectRow } from '../../lib/board/projects-view';
+import { BOARD_CIR, BOARD_NAMES, CAND_NAME, CAND_PLAN, PLAN_COL, isMetro, lateOf, nextOf, statusLabel, statusOf, statusTip, type ProjectRow } from '../../lib/board/projects-view';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 const NOTE = 'm-0 rounded-[10px] border border-border bg-muted px-4 py-2.5 text-[15px] text-muted-foreground';
@@ -35,7 +35,7 @@ export default function Candidate({ row: r, sggName, sources, stageHref }: { row
           <div><dt>단계</dt><dd>{BOARD_CIR[r.board]} {BOARD_NAMES[r.board]}</dd></div>
           <div><dt>계획 호수</dt><dd className="tabular-nums">{r.units > 0 ? `${fmt(r.units)}호` : <span className="text-muted-foreground">미확인</span>}</dd></div>
           <div><dt>{r.issued ? PLAN_COL : CAND_PLAN}</dt><dd className="tabular-nums">{next ? <span className={next.muted ? 'text-muted-foreground' : undefined} title={next.title}>{next.text}{next.tag ? <span className="ml-1.5 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] text-muted-foreground">{next.tag}</span> : null}</span> : <span className="text-muted-foreground">없음</span>}</dd></div>
-          <div><dt>판정</dt><dd title={STATUS_TIP[st]}>{STATUS_NAME[st]}{late !== null ? <span className="text-muted-foreground tabular-nums"> · 경과 {late}개월</span> : null}{st === 'none' && r.why ? <span className="text-muted-foreground"> · {r.why === 'LH 후보' ? 'LH 후보(판정 대상 아님)' : r.why}</span> : null}</dd></div>
+          <div><dt>판정</dt><dd title={statusTip(r)}>{statusLabel(r)}{late !== null ? <span className="text-muted-foreground tabular-nums"> · 경과 {late}개월</span> : null}{st === 'none' && r.why ? <span className="text-muted-foreground"> · {r.why === 'LH 후보' ? 'LH 후보(판정 대상 아님)' : r.why}</span> : null}</dd></div>
           <div><dt>출처</dt><dd>{sources.join(' · ')}</dd></div>
         </dl>
       </Card>

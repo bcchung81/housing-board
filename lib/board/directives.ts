@@ -25,7 +25,8 @@ const f = (n: number) => n.toLocaleString('en-US');
 export const nation = (L: LedgerBoard) => (L.scope.coverage === 'NATIONWIDE' ? '전국' : '전국 아님');
 export const ledgerMix = (L: LedgerBoard) => { const b = L.scope.bySource; return b ? `발급 ${f(b.issued)} · LH 후보 ${f(b.lhCandidates)} · 건축HUB 후보 ${f(b.hubBulkCandidates)}${b.home ? ` · 수도권 HOME ${f(b.home)}` : ''}` : `발급 ${f(L.scope.issued)} · 후보 ${f(L.scope.candidates)}`; };
 export const ledgerJudged = (L: LedgerBoard) => { const b = L.scope.bySource, s = L.judgment.excludedStartOverdue; return `판정 ${f(L.scope.judged)}건(발급 사업은 착공·준공, 건축HUB 후보는 준공 예정 경과만 · 판정 밖: LH 후보 ${f(b?.lhCandidates ?? L.judgment.excluded.projects)}건${s ? `, 건축HUB 후보의 착공 예정 경과 ${f(s.pairs)}건` : ''})`; };
-const L_ = (L: LedgerBoard) => `원장 ${L.observedMonth} 기준 · ${nation(L)}`;
+const ymDot = (ym: string) => ym.replace('-', '.');
+const L_ = (L: LedgerBoard) => `원장 ${ymDot(L.observedMonth)} 기준 · ${nation(L)}`;
 
 export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start, bottleneck }: DirectiveInput): Directive[] {
   const neck = bottleneck(L.delayByStage), upSum = L.upcoming.reduce((n, m) => n + m.units, 0);
@@ -36,13 +37,13 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start, b
       sub: yoy === null ? undefined : { text: `${yoy >= 0 ? '▲' : '▼'}${Math.abs(yoy).toFixed(1)}%`, tone: yoy >= 0 ? 'ok' : 'bad' },
       basis: `통계누리 전국 착공 ${span} 누계와 전년 같은 기간 대비(보고자료와 같은 계산). 계획(목표) 물량 원천이 없어 계획 대비 달성률은 내지 못합니다.`,
       p: ['p-chart'] },
-    { date: '08.19', t: '사업장별 현황판', ...val(undefined, f(L.scope.projects), '사업'), basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})`,
+    { date: '08.19', t: '사업장별 현황판', ...val(undefined, f(L.scope.projects), '건'), basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})`,
       p: ['p-region'] },
     { date: '09.03', t: '범부처 통합·병목', ...(neck ? val(`병목 ${K[neck.i]}`, f(neck.units), '호') : val('병목', '없음', '')), basis: `${L_(L)} · 병목 = 지연 호수(경과 6개월 이상 사업의 계획 호수)가 가장 큰 단계 — 사업 화면 '어디서 막혀 있는가'와 같은 계산(판정한 사업 ${L.scope.judged}건 기준)`,
       p: ['p-trend', 'p-agency'] },
-    { date: '09.04', t: '예측가능성', ...val('준공 예정', f(upSum), '호'), basis: `${L_(L)} · 향후 12개월(${L.upcoming[0].ym}~${L.upcoming[L.upcoming.length - 1].ym}) 준공 예정 호수 합`,
+    { date: '09.04', t: '예측가능성', ...val('준공 예정', f(upSum), '호'), basis: `${L_(L)} · 향후 12개월(${ymDot(L.upcoming[0].ym)}~${ymDot(L.upcoming[L.upcoming.length - 1].ym)}) 준공 예정 호수 합`,
       p: ['p-fut'] },
-    { date: '09.18', t: '일정 지연 관리', ...val('지연', f(L.judgment.delay.projects), '사업'), sub: { text: `주의 ${f(L.judgment.caution.projects)}`, tone: 'warn' }, basis: `${L_(L)} · ${ledgerJudged(L)} 중 지연·주의`,
+    { date: '09.18', t: '일정 지연 관리', ...val('지연', f(L.judgment.delay.projects), '건'), sub: { text: `주의 ${f(L.judgment.caution.projects)}`, tone: 'warn' }, basis: `${L_(L)} · ${ledgerJudged(L)} 중 지연·주의`,
       p: ['p-trend'] },
     { date: '09.30', t: '국민 공개·공식 원천', ...val('원천', f(sourceCount), '곳'), basis: '원천 카탈로그(data/board/sources.json)에 등록된 원천 수',
       p: ['p-flow'] },

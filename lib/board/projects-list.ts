@@ -3,21 +3,21 @@
 import type { Cell, Col, Row } from '../grid/spec';
 import { mapHref } from './map-href';
 import {
-  AGENCY_NAME, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, CAND_NAME, EVENT_NAME, PLAN_COL, STATUS_NAME, STATUS_TIP,
-  agencyKey, isMetro, lateOf, listHref, nextOf, statusOf, ymText, type Filters, type ProjectRow, type Status,
+  AGENCY_NAME, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, CAND_NAME, EVENT_NAME, PLAN_COL,
+  agencyKey, isMetro, lateOf, listHref, nextOf, statusLabel, statusOf, statusTip, ymText, type Filters, type ProjectRow, type Status,
 } from './projects-view';
 
 /* '경기도 고양시 일산동구' → '경기 고양시 일산동구'(표가 전국이라 시도를 붙이되 짧게), drop 이면 시도를 뺀다 */
 export const sggLabel = (name: string, sido?: string, drop = false) => { const t = name.split(' '); return t.length < 2 ? name : drop ? t.slice(1).join(' ') : sido ? `${sido} ${t.slice(1).join(' ')}` : name; };
 
-/* 상태 칸 견본: 정상·주의는 색 면, 지연은 빨간 테두리, 장기 지연은 빨간 면, 일정 없음은 빗금 */
+/* 상태 칸 견본: 정상·주의는 색 면, 지연은 빨간 테두리, 장기 지연은 빨간 면, 판정 없음(준공 완료·판정 일정 없음·일정 없음)은 빗금 */
 type Sw = { kind: 'fill' | 'outline' | 'hatch'; color?: string };
 export const STATUS_SW: Record<Status, Sw> = { ok: { kind: 'fill', color: 'var(--ok)' }, caution: { kind: 'fill', color: 'var(--warn)' }, delay: { kind: 'outline', color: 'var(--bad)' }, long: { kind: 'fill', color: 'var(--bad)' }, none: { kind: 'hatch' } };
 const STATUS_SORT: Record<Status, number> = { long: 0, delay: 1, caution: 2, none: 3, ok: 4 };
 export function statusCell(r: ProjectRow): Cell {
   const s = statusOf(r), w = STATUS_SW[s];
   const why = s === 'none' && r.why ? ` — ${r.why === 'LH 후보' ? 'LH 후보(판정 대상 아님)' : r.why}` : '';
-  return { text: STATUS_NAME[s], sort: STATUS_SORT[s], title: `${STATUS_TIP[s]}${why}`, ...(w.kind === 'hatch' ? { mark: 'hatch' as const, muted: true } : w.kind === 'outline' ? { swatch: w.color, mark: 'outline' as const, tone: 'bad' as const } : { swatch: w.color, ...(s === 'long' ? { tone: 'bad' as const } : {}) }) };
+  return { text: statusLabel(r), sort: STATUS_SORT[s], title: `${statusTip(r)}${why}`, ...(w.kind === 'hatch' ? { mark: 'hatch' as const, muted: true } : w.kind === 'outline' ? { swatch: w.color, mark: 'outline' as const, tone: 'bad' as const } : { swatch: w.color, ...(s === 'long' ? { tone: 'bad' as const } : {}) }) };
 }
 /* 현재 예정: projects-view nextOf(간단 보기 서랍과 같은 값). 목록·인쇄 표는 지연(개월) 열이 같은 행에 있어 지난 예정의 '경과 n개월' 꼬리표를 빼고
    날짜를 옅게 둔다(경과 개월은 title 에 — 지연 열·상태와 세 번 겹치지 않게). 지연 열이 없는 간단 보기는 꼬리표를 그대로 쓴다 */
@@ -34,11 +34,15 @@ export const lateCell = (r: ProjectRow): Cell => {
 };
 export const agencyCell = (r: ProjectRow): Cell => { const k = agencyKey(r.agency); return k === 'etc' ? { text: AGENCY_NAME[k], muted: true } : AGENCY_NAME[k]; };
 export const unitsCell = (r: ProjectRow): Cell => (r.units > 0 ? r.units : { na: '미확인' });
-/* 지도 연결점(수도권 사업만 — 지도 자료가 서울·인천·경기). 지도는 다른 루트 레이아웃이라 <a> */
-export const mapCell = (r: ProjectRow): Cell => (isMetro(r.sgg) ? { text: '지도', href: mapHref({ project: r.id }), doc: true, icon: 'map', title: `${r.name} — 지도에서 이 사업 위치 보기` } : null);
+/* 지도 연결점(수도권 사업만 — 지도 자료가 서울·인천·경기). 지도는 다른 루트 레이아웃이라 <a>.
+   noLoc = 상세 서랍과 같은 원천(project-detail.json 의 loc)에 좌표가 없는 사업: 링크는 두되(지도는 시군구로 보인다) 글자 표지 '위치 미확보'와 title 로 알린다 */
+export const NO_LOC = '위치 미확보';
+export const mapCell = (r: ProjectRow, noLoc = false): Cell => (!isMetro(r.sgg) ? null : noLoc
+  ? { text: NO_LOC, href: mapHref({ project: r.id }), doc: true, muted: true, title: `${r.name} — ${NO_LOC}(좌표 없음): 지도에서는 시군구로 보임` }
+  : { text: '지도', href: mapHref({ project: r.id }), doc: true, icon: 'map', title: `${r.name} — 지도에서 이 사업 위치 보기` });
 
-/* 의미 없는 열 버리기: 모든 칸이 빈칸(–)이거나 모두 '기타'인 열은 그리지 않고, 뺀 사실은 표 머리의 title 에 한 번만 */
-const OPTIONAL: Record<string, string> = { agency: '기관(모두 기타)', notice: '공고 확인(모두 없음)', next: `${PLAN_COL}(모두 없음)`, late: '지연(개월)(모두 경과 없음)', map: '지도(수도권 사업만)' };
+/* 의미 없는 열 버리기: 모든 칸이 빈칸(–)이거나 모두 '기관 미상'인 열은 그리지 않고, 뺀 사실은 표 머리의 title 에 한 번만 */
+const OPTIONAL: Record<string, string> = { agency: `기관(모두 ${AGENCY_NAME.etc})`, notice: '공고 확인(모두 없음)', next: `${PLAN_COL}(모두 없음)`, late: '지연(개월)(모두 경과 없음)', map: '지도(수도권 사업만)' };
 const blank = (v: Cell) => v == null || (typeof v === 'object' && (v.na !== undefined || (v.muted && v.text === AGENCY_NAME.etc)));
 export function dropBlank(cols: Col[], rows: Row[]) {
   const gone = cols.filter((c) => c.key in OPTIONAL && rows.length > 0 && rows.every((r) => blank(r.c[c.key])));
@@ -51,7 +55,7 @@ export const LIST_COLS: Col[] = [{ key: 'name', label: '사업', kind: 'text', c
   { key: 'map', label: '지도', kind: 'text', sort: false }];
 
 /* 목록 행: 발급 사업은 상세 서랍(?id=), 후보 사업은 간단 보기(?cand=) */
-export function listRows(list: ProjectRow[], f: Filters, sel: string | null, sido: (code: string) => string | undefined): Row[] {
+export function listRows(list: ProjectRow[], f: Filters, sel: string | null, sido: (code: string) => string | undefined, noLoc: (id: string) => boolean = () => false): Row[] {
   return list.map((r) => {
     const href = r.issued ? listHref(f, { id: r.id }) : listHref(f, { cand: r.id });
     return {
@@ -60,7 +64,7 @@ export function listRows(list: ProjectRow[], f: Filters, sel: string | null, sid
         name: r.issued ? { text: r.name, href, stay: true } : { text: r.name, href, stay: true, title: `${r.name} — ${CAND_NAME}(사업 번호가 아직 없음): 누르면 간단 보기 · 다음 원장에서 번호가 바뀔 수 있음` },
         sgg: sggLabel(r.sggName, sido(r.sgg.slice(0, 2))),
         agency: agencyCell(r), stage: stagePill(r), units: unitsCell(r),
-        notice: r.notice, next: nextCell(r), late: lateCell(r), status: statusCell(r), map: mapCell(r),
+        notice: r.notice, next: nextCell(r), late: lateCell(r), status: statusCell(r), map: mapCell(r, noLoc(r.id)),
       },
     };
   });

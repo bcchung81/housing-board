@@ -9,14 +9,15 @@ import * as React from 'react';
 import Link from 'next/link';
 import { ChevronRight, MapPin } from 'lucide-react';
 import { cn } from 'cn';
-import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, dotFocus, inScope, sggUnits, type AheadEntry, type CalKind } from '../../lib/board/region';
+import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, PAST_DUE, dotFocus, inScope, pastDue, sggUnits, type AheadEntry, type CalKind } from '../../lib/board/region';
 import { mapHref } from '../../lib/board/map-href';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '../../lib/board/metro-overview';
 import MapLink from '../board/MapLink';
 import InfoTip from '../ui/info-tip';
 
 type MapData = { view: [number, number, number, number]; sgg: { s: string; n: string; d: string }[]; districts: { n: string; d: string }[] };
-type Props = { sido: string; regionName: string; months: string[]; nowM: string; list: AheadEntry[]; initialM: string; initialSgg: string | null; map: MapData | null };
+/* refDate = 원장 기준일: 예정 날짜가 이보다 앞선 항목은 '예정일 지남' 표지(합계에는 그대로) */
+type Props = { sido: string; regionName: string; months: string[]; nowM: string; refDate: string; list: AheadEntry[]; initialM: string; initialSgg: string | null; map: MapData | null };
 
 const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
 const WAVE_H = 260, LIST_N = 8;
@@ -36,7 +37,9 @@ const KindChip = ({ t }: { t: CalKind }) => (
   <span className="inline-block flex-none rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: light(CAL_TYPE[t].color, 16), color: CAL_TYPE[t].ink }}>{CAL_TYPE[t].name}</span>
 );
 
-export default function Ahead({ sido, regionName, months, nowM, list, initialM, initialSgg, map }: Props) {
+export default function Ahead({ sido, regionName, months, nowM, refDate, list, initialM, initialSgg, map }: Props) {
+  const past = (e: AheadEntry) => pastDue(e, refDate);
+  const PAST_TIP = `예정 날짜가 원장 기준일(${refDate.replace(/-/g, '.')})보다 앞섰는데 실제 기록이 아직 없음 — 건수·호수 합계에는 그대로 넣음`;
   const [m, setM] = React.useState(initialM);
   const [hover, setHover] = React.useState<string | null>(null);   // 마우스를 올린 달(지도만 그 달을 진하게)
   const [hl, setHl] = React.useState<string | null>(null);         // 누른 사업
@@ -145,7 +148,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
                 onClick={(ev) => { const seg = (ev.target as HTMLElement).closest<HTMLElement>('[data-seg]'); pick(x, seg ? seg.dataset.seg! : null); }}
                 className="btn-reset group/m flex min-w-0 flex-col items-center rounded-[8px] px-0.5 pt-1 pb-0.5 enabled:cursor-pointer enabled:hover:bg-[color-mix(in_srgb,var(--pn2)_70%,transparent)] aria-checked:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
                 <span className="flex h-[36px] flex-col items-center justify-end leading-[1.25] tabular-nums">
-                  {xs.length ? <><b className="text-[13px] whitespace-nowrap">{man(tot[i])}<small className="ml-px text-[11px] font-normal text-muted-foreground">호</small></b><span className="text-[13px] whitespace-nowrap text-muted-foreground">{xs.length}건</span></> : null}
+                  {xs.length ? <><b className="text-[13px] whitespace-nowrap" title={`${monthLabel(x)} ${xs.length}건 ${fmt(tot[i])}호${xs.some(past) ? ` · ${PAST_DUE} ${xs.filter(past).length}건 포함` : ''}`}>{man(tot[i])}<small className="ml-px text-[11px] font-normal text-muted-foreground">호</small></b><span className="text-[13px] whitespace-nowrap text-muted-foreground">{xs.length}건</span></> : null}
                 </span>
                 <span className="relative flex w-full flex-col-reverse items-center" style={{ height: WAVE_H }}>
                   {xs.length
@@ -189,7 +192,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
     /* 초점을 받는 원(고른 달)의 접근 속성: 단추 역할·이름(사업·종류·날짜·호수·위치)·눌림 */
     const dotA11y = (e: AheadEntry) => (foc.keys.includes(e.k) ? {
       tabIndex: e.k === foc.tab ? 0 : -1, role: 'button', 'aria-pressed': e.k === hl,
-      'aria-label': `${e.name} · ${CAL_TYPE[e.type].name} ${dayText(e)} · ${e.units ? `${fmt(e.units)}호` : '호수 미확인'} · ${e.place}${e.loc ? ` · ${LOC_NAME[e.loc]}` : ''}`,
+      'aria-label': `${e.name} · ${CAL_TYPE[e.type].name} ${dayText(e)}${past(e) ? `(${PAST_DUE})` : ''} · ${e.units ? `${fmt(e.units)}호` : '호수 미확인'} · ${e.place}${e.loc ? ` · ${LOC_NAME[e.loc]}` : ''}`,
       onFocus: () => setHot(e.k), onBlur: () => setHot(null),
       className: 'cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-primary',
     } : { className: 'cursor-pointer', 'aria-hidden': true });
@@ -286,6 +289,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
               <span className="min-w-0 flex-1 truncate font-bold" title={e.name}>
                 <Link href={href} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link>
                 {e.drawer ? null : <>{' '}<span className="ml-1 text-[13px] font-normal text-muted-foreground" title="후보 사업(사업 번호가 아직 없음) — 누르면 간단 보기">(후보)</span></>}
+                {past(e) ? <>{' '}<span data-slot="past-due" className="ml-1 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] font-normal whitespace-nowrap text-muted-foreground" title={PAST_TIP}>{PAST_DUE}</span></> : null}
               </span>
               <span className="w-[74px] flex-none whitespace-nowrap text-muted-foreground tabular-nums">{dayText(e)}</span>
               <span className="w-[96px] flex-none truncate text-muted-foreground" title={e.sgg}>{e.place}</span>
@@ -313,7 +317,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
         {hud ? (
           <>
             <b className="block">{hud.e.name}</b>
-            <span className="block tabular-nums"><b style={{ color: CAL_TYPE[hud.e.type].ink }}>{CAL_TYPE[hud.e.type].name}</b> · {dayText(hud.e)} · {hud.e.units ? `${fmt(hud.e.units)}호` : '호수 미확인'}</span>
+            <span className="block tabular-nums"><b style={{ color: CAL_TYPE[hud.e.type].ink }}>{CAL_TYPE[hud.e.type].name}</b> · {dayText(hud.e)}{past(hud.e) ? ` ${PAST_DUE}` : ''} · {hud.e.units ? `${fmt(hud.e.units)}호` : '호수 미확인'}</span>
             <span className="block text-muted-foreground">{hud.e.place}{hud.withLoc && hud.e.loc ? ` · ${LOC_NAME[hud.e.loc]}` : ''}</span>
           </>
         ) : null}

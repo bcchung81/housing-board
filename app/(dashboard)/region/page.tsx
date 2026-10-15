@@ -18,7 +18,7 @@ import { fmt, lastMonth, monthLabel, ymDot } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '../../../lib/board/metro-overview';
 import { mapScopeHref } from '../../../lib/board/map-href';
-import { CAL_KINDS, CAL_TYPE, aheadAll, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
+import { CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
 import { getProjectsIndex } from '../../../lib/board/projects-index';
 import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '../../../lib/board/projects-view';
 import type { Metric } from '../../../lib/board/types';
@@ -32,7 +32,6 @@ const facts = areaFactsJson as AreaFactsDoc;
 /* 시도 칩 순서(행정 순, 2026-07부터 광주·전남은 '전남광주' 12) */
 const ORDER = ['11', '26', '27', '28', '12', '30', '31', '36', '41', '51', '43', '44', '52', '47', '48', '50'];
 const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
-const man = (v: number) => (v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
 const AHEAD_TIP = '사업 원장의 현재 예정(모집공고·준공·입주) · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌 · 막대 한 조각 = 사업 하나(높이 = 호수, 전국은 종류별로 묶음) · 지도 원 넓이 = 호수(지도는 서울·인천·경기만) · 예정일은 계획이라 바뀔 수 있고 청약 자격은 모집공고에서 확인';
 const LINKA = 'text-foreground underline-offset-[3px] hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
@@ -69,6 +68,8 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
   const months = calendar.months;
   const m = pickMonth(months, list, q.m);
   const units = list.reduce((s, e) => s + e.units, 0);
+  /* 예정일 지남(기준일보다 앞선 예정): 표지만 달고 합계에는 그대로 둔다(title 에 적는다) */
+  const past = list.filter((e) => pastDue(e, calendar.referenceDate));
   const view = viewOf(regionMap, sido);
   const nowM = calendar.referenceDate.slice(0, 7);
   const last = lastMonth(molit);
@@ -85,7 +86,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '지역 공급' }]} title="지역 공급"
         tip="앞으로 12개월 예정(원장 현재 예정) → 지난 공급 실적(통계누리) → 동네 여건(서울·인천·경기) 순">
         <span className="ml-auto text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
-          title={`앞으로 12개월(${monthLabel(calendar.from)} ~ ${monthLabel(calendar.to)}) · 원장 기준일 ${calendar.referenceDate} · 통계누리 실적 ${last}까지`}>
+          title={`앞으로 12개월(${monthLabel(calendar.from)} ~ ${monthLabel(calendar.to)}) · 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')} · 통계누리 실적 ${ymDot(last)}까지`}>
           예정 {ymDot(calendar.from)}~{ymDot(calendar.to)} · 실적 {ymDot(last)}
         </span>
       </PageHead>
@@ -108,10 +109,11 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
       </ChipBar>
 
       <Card render={<section aria-label={AHEAD_ALL} />}>
-        <PanelHead title={<>{kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground">{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {man(units)}호</span></>} tip={AHEAD_TIP}>
+        <PanelHead title={<>{kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}>
           <InfoTip label="앞으로 12개월 읽는 법">
             <dl>
               <dt>{AHEAD_ALL}</dt><dd>사업 원장의 현재 예정(모집공고·준공·입주)이 {ymDot(months[0])}~{ymDot(months[11])}에 든 사업 · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌</dd>
+              <dt>{PAST_DUE}</dt><dd>예정 날짜가 원장 기준일보다 앞섰는데 실제 기록이 아직 없는 항목 — 표지만 달고 건수·호수 합계에는 넣음</dd>
               <dt>준공 칩</dt><dd>사업 화면 &apos;{AHEAD_COMPLETION}&apos;과 같은 범위·같은 값</dd>
               <dt>(후보) {CAND_NAME}</dt><dd>사업 번호가 아직 없는 사업 — 누르면 간단 보기</dd>
               <dt>키보드</dt><dd>달 막대는 ←→ 로 옮기고, 지도 원은 Tab 으로 들어가 ←→ 로 옮긴 뒤 Enter 로 그 사업을 고릅니다</dd>
@@ -131,7 +133,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
           </ChipGroup>
         </PanelHead>
         {list.length ? (
-          <Ahead key={`${sido}|${kinds.join(',')}`} sido={sido} regionName={name} months={months} nowM={nowM} list={list} initialM={m} initialSgg={parseSgg(regionMap, sido, SGG_TABLE, q.sgg)}
+          <Ahead key={`${sido}|${kinds.join(',')}`} sido={sido} regionName={name} months={months} nowM={nowM} refDate={calendar.referenceDate} list={list} initialM={m} initialSgg={parseSgg(regionMap, sido, SGG_TABLE, q.sgg)}
             map={view ? { view, sgg: regionMap.sgg, districts: regionMap.districts } : null} />
         ) : <p className="m-0 text-[14px] text-muted-foreground">{name} · 12개월 안 {kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정 없음</p>}
       </Card>

@@ -109,16 +109,16 @@ test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 7
   assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['315', '지연 6~12개월 96 · 장기 12개월+ 219', '/projects?sido=all&status=check'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로');
   assert.deepEqual([q['어디를 먼저 챙기는가'].value, q['어디를 먼저 챙기는가'].sub, q['어디를 먼저 챙기는가'].href], ['대구', '지연·주의 25,072호', '/projects?sido=27']);
   const up = BOARD.upcoming.reduce((s, x) => ({ units: s.units + x.units, projects: s.projects + x.projects }), { units: 0, projects: 0 });
-  assert.deepEqual([q['앞으로 얼마나 공급되는가'].value, q['앞으로 얼마나 공급되는가'].sub, q['앞으로 얼마나 공급되는가'].href], [up.units.toLocaleString('en-US'), `앞으로 12개월 준공 예정 · ${up.projects}건`, '/region?sido=all']);
+  assert.deepEqual([q['앞으로 얼마나 공급되는가'].value, q['앞으로 얼마나 공급되는가'].sub, q['앞으로 얼마나 공급되는가'].href], [up.units.toLocaleString('en-US'), `앞으로 12개월 · 준공 예정 · ${up.projects}건`, '/region?sido=all']);
   assert.equal(up.units, 214975);
 });
 
 test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·주의 2) · 인천 2,890호 · 13,372호 24건 / 1·29 는 목표가 없어 정상 비율 / 시도를 고르면 시군구', () => {
   const q = Q({ policy: pol('97') });
-  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['75.8', '①계획 확인 3,560 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['인천', '지연·주의 2,890호'], ['13,372', '앞으로 12개월 준공 예정 · 24건']]);
+  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['75.8', '①계획 확인 3,560 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['인천', '지연·주의 2,890호'], ['13,372', '앞으로 12개월 · 준공 예정 · 24건']]);
   assert.equal(q['9·7 대책 목표 대비(정책 전체)'].href, undefined, '이미 9·7 렌즈');
   const q129 = Q({ policy: pol('129') });
-  assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100', '% 정상', '판정 38건 · 일정 없음 9']);
+  assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100', '% 정상', '판정 38건 · 판정 없음 9']);
   assert.deepEqual([q129['어디서 막혀 있는가'].value, q129['어디서 막혀 있는가'].muted, q129['어디서 막혀 있는가'].href], ['없음', true, undefined]);
   const qm = Q({ metro: true });
   assert.deepEqual([qm['어디서 막혀 있는가'].href, qm['앞으로 얼마나 공급되는가'].href], ['/projects?sido=metro&stage=2&status=check', '/region'], '수도권(기본) 범위의 링크는 수도권을 지킨다');

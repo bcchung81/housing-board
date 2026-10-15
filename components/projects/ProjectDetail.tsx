@@ -12,7 +12,7 @@ import StageSteps from './StageSteps';
 import StageTimeline, { TimelineLegend } from './StageTimeline';
 import { mapHref } from '../../lib/board/map-href';
 import type { Drawer } from '../../lib/board/projects-index';
-import { AGENCY_NAME, AGENCY_TIP, STATUS_NAME, STATUS_TIP, agencyKey, dayText, hiddenNote, policyLabel, statusOf, timelineOf } from '../../lib/board/projects-view';
+import { AGENCY_NAME, AGENCY_TIP, EVENT_NAME, PAST_DUE, agencyKey, dayText, hiddenNote, pastDueOf, policyLabel, statusLabel, statusTip, timelineOf } from '../../lib/board/projects-view';
 
 const SCOPE: Record<string, string> = { PUBLIC: '공공', PRIVATE_ON_PUBLIC_LAND: '공공택지 민간', UNKNOWN: '미확인' };
 const UNIT: Record<string, string> = { BLOCK: '블록', PROJECT: '사업', AREA_UNKNOWN: '구역 미상' };
@@ -61,7 +61,7 @@ export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: 
     );
   }
   const { row: r, detail: x } = d;
-  const st = statusOf(r), tl = timelineOf(x, d.referenceDate);
+  const tl = timelineOf(x, d.referenceDate);
   const last = x.progress.length ? x.progress[x.progress.length - 1] : null;
   const pol = d.policies.filter((p) => r.policies.includes(p.key));
   const ag = agencyKey(r.agency);
@@ -80,7 +80,7 @@ export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: 
       </div>
 
       <Card render={<section aria-label="단계 타임라인" />}>
-        <PanelHead title={<>단계 타임라인<span className="ml-2 text-[14px] font-normal text-muted-foreground"><span title={STATUS_TIP[st]}>{STATUS_NAME[st]}</span> · <span className={MARK} title="최초 약속 일정(당초)이 원장·HOME 자료에 없어 당초 줄을 그리지 않음 — 지연은 현재 예정일 경과로만 판정">당초 일정 없음</span></span></>}
+        <PanelHead title={<>단계 타임라인<span className="ml-2 text-[14px] font-normal text-muted-foreground"><span title={statusTip(r)}>{statusLabel(r)}</span>{pastDueOf(r) ? <> · <span className={MARK} title={`${EVENT_NAME[r.overdue!.eventType]} 현재 예정일 ${dayText(r.overdue!.planned)}이 기준일보다 앞섰지만 실제 기록이 없음 — 경과 1개월 미만이라 상태는 그대로`}>{PAST_DUE}</span></> : null} · <span className={MARK} title="최초 약속 일정(당초)이 원장·HOME 자료에 없어 당초 줄을 그리지 않음 — 지연은 현재 예정일 경과로만 판정">당초 일정 없음</span></span></>}
           tip="단계마다 두 줄: 현재 = 원장의 현재 예정 하나 · 실제 = 원천에서 확인한 날짜 · 지연 = 현재 예정일 경과 개월(당초 대비가 아님) · 기록이 하나도 없는 단계는 줄을 그리지 않음 · 오른쪽 열은 지연 개월">
           <TimelineLegend t={tl} />
         </PanelHead>

@@ -3,7 +3,7 @@
    시안: docs/design/home-concept/projects.html · assets/app.js(2026-10-14 승인). */
 
 export type Cls = 'ok' | 'caution' | 'delay';
-/* 상태 = 판정(cls) + 장기 지연(지연 중 경과 12개월 이상) + 일정 없음 */
+/* 상태 = 판정(cls) + 장기 지연(지연 중 경과 12개월 이상) + 판정 없음(칸 이름은 준공 완료·판정 일정 없음·일정 없음으로 나눈다 — statusLabel) */
 export type Status = Cls | 'long' | 'none';
 /* 상태 거르기: 상태 하나 또는 '점검 필요'(주의·지연·장기 지연, 지연 개월 큰 순) */
 export type StatusFilter = Status | 'check';
@@ -39,14 +39,21 @@ export const EVENT_NAME: Record<string, string> = { PERMIT: '인허가', CONSTRU
 
 /* 판정 규칙: 주의 1~6개월, 지연 6개월 이상(tools/ledger/board.js JUDGE), 장기 지연 12개월 이상(시안 build-data.mjs LONG_DELAY_MONTHS) */
 export const LONG_DELAY_MONTHS = 12;
-export const STATUS_NAME: Record<Status, string> = { ok: '정상', caution: '주의', delay: '지연', long: '장기 지연', none: '일정 없음' };
-export const STATUS_TIP: Record<Status, string> = { ok: '현재 예정일이 지나지 않음', caution: '현재 예정일 경과 1~6개월', delay: '현재 예정일 경과 6~12개월', long: '현재 예정일 경과 12개월 이상', none: '판정할 현재 예정일이 없음' };
+export const STATUS_NAME: Record<Status, string> = { ok: '정상', caution: '주의', delay: '지연', long: '장기 지연', none: '판정 없음' };
+export const STATUS_TIP: Record<Status, string> = { ok: '현재 예정일이 지나지 않음', caution: '현재 예정일 경과 1~6개월', delay: '현재 예정일 경과 6~12개월', long: '현재 예정일 경과 12개월 이상', none: '판정할 현재 예정일(착공·준공)이 없음 — 준공 완료 · 판정 일정 없음(입주·모집 예정만) · 일정 없음' };
 export const STATUS_ORDER: Status[] = ['ok', 'caution', 'delay', 'long', 'none'];
 /* 구간 이름(칩 메뉴·보조 줄): '지연'은 묶음(지연 + 장기, 경과 6개월 이상)에만 '지연(장기 포함)'으로 쓰고, 구간은 개월을 붙여 구분한다 */
-export const STATUS_RANGE: Record<Status, string> = { ok: '정상', caution: '주의 1~6개월', delay: '지연 6~12개월', long: '장기 12개월+', none: '일정 없음' };
+export const STATUS_RANGE: Record<Status, string> = { ok: '정상', caution: '주의 1~6개월', delay: '지연 6~12개월', long: '장기 12개월+', none: '판정 없음' };
 export const DELAY_GROUP = '지연(장기 포함)';
 export const statusOf = (r: { cls: Cls | null; overdue: { months: number } | null }): Status =>
   r.cls === 'delay' ? (r.overdue && r.overdue.months >= LONG_DELAY_MONTHS ? 'long' : 'delay') : r.cls ?? 'none';
+/* 판정 없음(none)의 칸 이름: 준공을 마친 사업 · 판정 대상 일정(착공·준공)은 없고 입주·모집 예정만 있는 사업 · 그 밖(예정 자료 없음·LH 후보). 범주·건수는 그대로 none 하나 */
+export type NoneKind = 'done' | 'plan' | 'none';
+export const NONE_NAME: Record<NoneKind, string> = { done: '준공 완료', plan: '판정 일정 없음', none: '일정 없음' };
+export const NONE_TIP: Record<NoneKind, string> = { done: '준공 실제가 있어 판정하지 않음(이미 공사를 마친 사업)', plan: '현재 예정(입주·모집)은 있으나 판정 대상 일정(착공·준공)이 없음', none: '판정할 현재 예정일이 없음' };
+export const noneKind = (r: { done?: string; next: unknown; why: string | null }): NoneKind => (r.done ? 'done' : r.next && r.why !== 'LH 후보' ? 'plan' : 'none');
+export const statusLabel = (r: { cls: Cls | null; overdue: { months: number } | null; done?: string; next: unknown; why: string | null }) => { const s = statusOf(r); return s === 'none' ? NONE_NAME[noneKind(r)] : STATUS_NAME[s]; };
+export const statusTip = (r: { cls: Cls | null; overdue: { months: number } | null; done?: string; next: unknown; why: string | null }) => { const s = statusOf(r); return s === 'none' ? NONE_TIP[noneKind(r)] : STATUS_TIP[s]; };
 export const isCheck = (r: ProjectRow) => r.cls === 'caution' || r.cls === 'delay';
 /* 지연 개월: 주의·지연(장기 포함) 사업의 현재 예정일 경과 개월, 아니면 null */
 export const lateOf = (r: ProjectRow) => (isCheck(r) && r.overdue ? r.overdue.months : null);
@@ -64,8 +71,8 @@ export function sggOfAddress(address: string, sido: string, sggNames: Record<str
   return best ? best[0] : null;
 }
 
-/* 기관: 원장 agency_id → 칩·열 이름. LH·SH·GH 밖(지자체·국방부·미연결)은 '기타' */
-export const AGENCY_NAME: Record<string, string> = { lh: 'LH', sh: 'SH', gh: 'GH', etc: '기타' };
+/* 기관: 원장 agency_id → 칩·열 이름. LH·SH·GH 밖(지자체·국방부·미연결)은 '기관 미상'(종합상황판 기관별 진행의 '기관 미상'과 같은 범주·같은 이름) */
+export const AGENCY_NAME: Record<string, string> = { lh: 'LH', sh: 'SH', gh: 'GH', etc: '기관 미상' };
 export const AGENCY_TIP: Record<string, string> = { lh: '한국토지주택공사', sh: '서울주택도시공사', gh: '경기주택도시공사', etc: '시행 기관 미확인(원천에 기관 없음) 또는 LH·SH·GH 밖' };
 export const agencyKey = (id: string | null) => (id && id in AGENCY_NAME && id !== 'etc' ? id : 'etc');
 
@@ -94,20 +101,21 @@ export function rowsOf(bySgg: Record<string, MapRow[]>, extra: Record<string, In
 
 /* ---------- 거르기 ---------- */
 /* metro = 수도권(서울·인천·경기). 지역 거르기가 하나도 없으면 전국 */
-export type Filters = { policy?: Policy; program?: Program; sido?: string; sgg?: string; metro?: boolean; stage?: number; status?: StatusFilter; agency?: string };
+/* gu = 구가 있는 경기 시의 시 코드(41110·41280 …)로 거를 때 그 시의 구 코드들(지도 개요의 면과 같다 — parseFilters ctx.guOf 로 metro-overview guOf 를 받는다). 있으면 시 코드 + 구 코드 사업을 합친다 */
+export type Filters = { policy?: Policy; program?: Program; sido?: string; sgg?: string; gu?: string[]; metro?: boolean; stage?: number; status?: StatusFilter; agency?: string };
 /* 종합상황판·옛 주소가 거는 거르기(?stage·?status·?agency). 지역 없이 이것만 오면 전국(종합상황판 숫자가 전국이라) — 그 밖에 지역이 없으면 기본 범위 수도권 */
 const LEGACY_KEYS = ['stage', 'status', 'agency'] as const;
 type Query = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (typeof v === 'string' ? v : undefined);
 /* 맞지 않는 값은 거르지 않는다. 렌즈는 하나: 정책이 있으면 프로그램은 무시. 단계는 리본 칸 0~5, 옛 주소의 공식 단계 01~06(/stage/NN·종합상황판·계단)은 그 칸으로.
    지역: ?sgg=NNNNN > ?sido=NN > ?sido=all(전국) > ?sido=metro(수도권). 지역이 없으면 기본 수도권 — 단 ?stage·?status·?agency 만 온 주소(종합상황판 링크)는 전국 */
-export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Program[]; sidoOk: (code: string) => boolean }): Filters {
+export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Program[]; sidoOk: (code: string) => boolean; guOf?: (sgg: string) => string[] }): Filters {
   const f: Filters = {};
   const policy = ctx.policies.find((p) => p.key === one(q.policy));
   if (policy) f.policy = policy;
   else { const program = ctx.programs.find((p) => p.name === one(q.program)); if (program) f.program = program; }
   const sgg = one(q.sgg), sido = one(q.sido);
-  if (sgg && /^\d{5}$/.test(sgg) && ctx.sidoOk(sgg.slice(0, 2))) f.sgg = sgg;
+  if (sgg && /^\d{5}$/.test(sgg) && ctx.sidoOk(sgg.slice(0, 2))) { f.sgg = sgg; const gu = ctx.guOf?.(sgg) ?? []; if (gu.length) f.gu = gu; }
   else if (sido && /^\d{2}$/.test(sido) && ctx.sidoOk(sido)) f.sido = sido;
   else if (sido === 'metro' || (sido !== 'all' && !LEGACY_KEYS.some((k) => q[k] !== undefined))) f.metro = true;
   const stage = one(q.stage);
@@ -120,7 +128,7 @@ export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Prog
   return f;
 }
 export const inLens = (r: ProjectRow, f: Filters) => (f.policy ? r.policies.includes(f.policy.key) : f.program ? r.programs.includes(f.program.name) : true);
-export const inRegion = (r: ProjectRow, f: Filters) => (f.sgg ? r.sgg === f.sgg : f.sido ? r.sgg.startsWith(f.sido) : f.metro ? isMetro(r.sgg) : true);
+export const inRegion = (r: ProjectRow, f: Filters) => (f.sgg ? r.sgg === f.sgg || !!f.gu?.includes(r.sgg) : f.sido ? r.sgg.startsWith(f.sido) : f.metro ? isMetro(r.sgg) : true);
 export const inAgency = (r: ProjectRow, f: Filters) => !f.agency || agencyKey(r.agency) === f.agency;
 export const statusOk = (r: ProjectRow, st: StatusFilter | undefined) => !st || (st === 'check' ? isCheck(r) : statusOf(r) === st);
 /* 범위 = 렌즈 × 지역 × 기관(핵심 질문은 상태·단계 칩과 상관없이 이 범위로 센다) */
@@ -261,8 +269,8 @@ export function compareLines(pp: PolicyProgress, policies: Policy[], rows: Proje
 }
 
 /* '앞으로 12개월'의 두 이름: 준공만(사업 핵심 질문·종합상황판) · 모집·준공·입주(지역 공급). 범위는 둘 다 원장 관측 달부터 12개월 */
-export const AHEAD_COMPLETION = '앞으로 12개월 준공 예정';
-export const AHEAD_ALL = '앞으로 12개월 모집·준공·입주 예정';
+export const AHEAD_COMPLETION = '앞으로 12개월 · 준공 예정';
+export const AHEAD_ALL = '앞으로 12개월 · 모집·준공·입주 예정';
 export const aheadMonths = (observedMonth: string) => Array.from({ length: 12 }, (_, i) => addMonths(observedMonth, i));
 
 /* ---------- 핵심 질문 5(시안 app.js questions): 렌즈·지역·기관 범위로 다시 센다(상태·단계 칩과 상관없음) ---------- */
@@ -289,7 +297,7 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
     if (judged.length) {
       const ok = judged.filter((r) => r.cls === 'ok').length;
       Q.push({ q: '계획대로 가고 있는가', href: listHref(f, { status: 'ok' }), value: String(Math.round(ok / judged.length * 100)), unit: '% 정상',
-        sub: `판정 ${fmt(judged.length)}건 · 일정 없음 ${fmt(scope.length - judged.length)}`, tip: '단계 목표가 없는 범위라 현재 예정일을 지키는 사업 비율로 답함 · 판정 사업 중 정상(경과 없음)',
+        sub: `판정 ${fmt(judged.length)}건 · ${STATUS_NAME.none} ${fmt(scope.length - judged.length)}`, tip: '단계 목표가 없는 범위라 현재 예정일을 지키는 사업 비율로 답함 · 판정 사업 중 정상(경과 없음)',
         help: '예정일을 아직 넘기지 않은 사업의 비율입니다. 예정일이 없는 사업은 빼고 셉니다.' });
     }
   }
@@ -324,15 +332,19 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
 }
 
 /* ---------- 현재 예정(목록 칸·인쇄 표·간단 보기 — 같은 열 이름 PLAN_COL): 지난 예정(주의·지연)은 그 달 + '경과 n개월' 꼬리표(색 대신),
-   아니면 다음 현재 예정, 끝난 사업은 실제 준공 달 + '실제' 꼬리표 ---------- */
+   기준일보다 앞섰지만 경과 1개월 미만(상태는 그대로)인 예정은 그 달 + '예정일 지남' 꼬리표, 아니면 다음 현재 예정, 끝난 사업은 실제 준공 달 + '실제' 꼬리표 ---------- */
 export const PLAN_COL = '현재 예정';
 /* 후보 사업의 예정은 원천(건축HUB·LH 파일)에 적힌 값이라 이름을 따로 붙인다 */
 export const CAND_PLAN = '원천 예정(확인 필요)';
 /* 열이 좁아 모집공고는 '모집'(리본 ④와 같은 말) */
 export const NEXT_NAME: Record<string, string> = { ...EVENT_NAME, SUPPLY_NOTICE: '모집' };
+/* 예정일 지남: 현재 예정일이 기준일보다 앞섰는데 실제 기록이 없고 경과가 1개월 미만(판정은 정상 그대로 — 2026-10-15 사용자 결정 D1). 지역 공급의 같은 표지는 lib/board/region.ts PAST_DUE */
+export const PAST_DUE = '예정일 지남';
+export const pastDueOf = (r: ProjectRow) => !!r.overdue && lateOf(r) === null;
 export function nextOf(r: ProjectRow): { text: string; sort: number; title: string; tag?: string; muted?: boolean } | null {
   const late = lateOf(r);
   if (late !== null && r.overdue) return { text: `${ymText(r.overdue.planned)} ${NEXT_NAME[r.overdue.eventType]}`, tag: `경과 ${r.overdue.months}개월`, sort: monthNo(r.overdue.planned), title: `${EVENT_NAME[r.overdue.eventType]} 현재 예정일 경과 ${r.overdue.months}개월 — ${STATUS_NAME[statusOf(r)]}` };
+  if (r.overdue) return { text: `${ymText(r.overdue.planned)} ${NEXT_NAME[r.overdue.eventType]}`, tag: PAST_DUE, sort: monthNo(r.overdue.planned), title: `${EVENT_NAME[r.overdue.eventType]} 현재 예정일 ${dayText(r.overdue.planned)} 지남(기준일보다 앞섬, 실제 기록 없음) — 경과 1개월 미만이라 상태는 ${statusLabel(r)}` };
   if (r.next) return { text: `${ymText(r.next.planned)} ${NEXT_NAME[r.next.eventType]}`, sort: monthNo(r.next.planned), title: `${EVENT_NAME[r.next.eventType]} 현재 예정` };
   if (r.done) return { text: `${ymText(r.done)} 준공`, tag: '실제', muted: true, sort: monthNo(r.done), title: '실제 준공(이미 마친 사업)' };
   return null;

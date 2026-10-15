@@ -21,6 +21,11 @@ export type CalendarDoc = { schema: string; observedMonth: string; referenceDate
 export type RegionMapDoc = { schema: string; view: Record<string, [number, number, number, number]>; sgg: { s: string; n: string; d: string }[]; districts: { n: string; d: string }[] };
 export type AnnualDoc = { schema: string; edition: string; months: string[]; series: Record<'start' | 'sale' | 'complete', Record<string, (number | null)[]>>; permitYearly: Record<string, Record<string, number>>; sourceAsOf: string | null };
 
+/* 예정일 지남: 예정 날짜(day)가 원장 기준일(referenceDate)보다 앞선 항목(실제 기록이 없어 아직 예정 목록에 남은 것). 자료는 그대로 두고 화면이 기준일과 견줘
+   '예정'으로 보이지 않게 표지만 단다 — 합계(건수·호수)에는 그대로 넣고 그 사실을 title 에 적는다(2026-10-15 사용자 결정 D1). 사업 화면 projects-view PAST_DUE 와 같은 말 */
+export const PAST_DUE = '예정일 지남';
+export const pastDue = (e: Pick<CalEntry, 'day'>, referenceDate: string) => !!e.day && e.day < referenceDate;
+
 /* 화면에 넘기는 예정 하나: k = 사업|종류(한 사업이 준공·입주 둘 다 있을 수 있다), sd = 시도, place = 표에 쓰는 짧은 시군구 이름 */
 export type AheadEntry = CalEntry & { k: string; sd: string; place: string };
 

@@ -118,9 +118,9 @@ test("앞으로 12개월: 같은 범위(원장 관측 달부터 12개월) — �
     assert.equal(q.sub, `${V.AHEAD_COMPLETION} · ${comp.length.toLocaleString('en-US')}건`, `${sd || '전국'} 건수`);
   }
   assert.equal(num(Q({})['앞으로 얼마나 공급되는가'].value), BOARD.upcoming.reduce((s, u) => s + u.units, 0));
-  assert.equal(V.AHEAD_COMPLETION, '앞으로 12개월 준공 예정');
-  assert.equal(V.AHEAD_ALL, '앞으로 12개월 모집·준공·입주 예정');
-  assert.match(read('components/board/Board.tsx'), />앞으로 12개월 준공 예정<\/h2>/);
+  assert.equal(V.AHEAD_COMPLETION, '앞으로 12개월 · 준공 예정');
+  assert.equal(V.AHEAD_ALL, '앞으로 12개월 · 모집·준공·입주 예정');
+  assert.match(read('components/board/Board.tsx'), />\{AHEAD_COMPLETION\}<\/h2>/);
   assert.match(read('app/(dashboard)/region/page.tsx'), /kinds\.length === CAL_KINDS\.length \? AHEAD_ALL/);
   for (const f of SCREENS) assert.doesNotMatch(visible(read(f)), /향후 12개월|>앞으로 12개월</, f);
 });

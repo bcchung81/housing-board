@@ -11,7 +11,8 @@ import {
   addedMarks, apart, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '../../lib/board/sample';
 import { ledgerJudged, ledgerMix, makeDirectives, nation as nationOf } from '../../lib/board/directives';
-import { bottleneckOf } from '../../lib/board/projects-view';
+import { AHEAD_COMPLETION, AGENCY_NAME, bottleneckOf } from '../../lib/board/projects-view';
+import { dotDates } from '../../lib/grid/spec';
 import type { LedgerBoard } from '../../lib/board/types';
 import { cn } from 'cn';
 import { sub } from '../page';
@@ -124,7 +125,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const J = L.judgment, d = SJ.delay.units, w = SJ.caution.units, ok = SJ.ok.units, tt = d + w + ok, pct = (x: number) => (x / tt * 100).toFixed(1) + '%';   // J = 기준 달 판정(기관 카드), d·w·ok = 선택 달 판정
   /* 원장 범위: 카드 제목의 title 에 보인다(일부가 전국처럼 보이지 않게) */
   const nation = nationOf(L);
-  const scope = `원장 ${L.observedMonth} 기준 · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)}) · ${nation} · ${real.ledgerOrigin === 'supabase' ? `출처 Supabase(api.board, ${real.ledgerMonth})` : '출처 JSON 대체'}`;
+  const scope = `원장 ${ymDot(L.observedMonth)} 기준 · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)}) · ${nation} · ${real.ledgerOrigin === 'supabase' ? `출처 Supabase(api.board, ${real.ledgerMonth})` : '출처 JSON 대체'}`;
   /* 지연·주의 추이: 판정이 있는 달(0 … NOW)의 호수. 세로 맨 위(tmax)는 이력 최댓값에 맞춘다(눈금선 3개 = 4등분). 선은 viewBox 560×TH(세로 px 그대로), 점·이름표는 같은 좌표를 퍼센트·px 로 얹은 HTML */
   const TH = 168, TPT = 10, TPH = TH - 20, TLBL = 120;   // TLBL = 오른쪽 이름표 칸 폭(px)
   const tmax = trendMax(Math.max(0, ...TR.flatMap((r) => (r ? [r.d, r.w] : [])))), cc = Math.min(cursor, NOW), ct = TR[judgedAt(T, cc)] ?? null, tsel = trendAt(T, TR, cursor);
@@ -133,7 +134,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const pts = (k: 'd' | 'w') => TR.flatMap((r, m) => (r ? [tx(m) + ',' + ty(r[k])] : [])).join(' ');
   const t0 = T.judged[0], tf = TR[t0] ?? null, te = TR[judgedAt(T, NOW)] ?? { d: 0, w: 0 };
   const [eyD, eyW] = apart(tyn(te.d), tyn(te.w), 36, TH - 18), [syD, syW] = apart(tyn(tf?.d ?? 0), tyn(tf?.w ?? 0), 16, TH);   // 이름표 겹침 방지: 아래쪽을 내린다
-  const AM = addedMarks(JS, NOW), amTip = (a: { m: number; sources: string[] }) => `${ml(T, a.m)} 원천 추가: ${a.sources.join('·')} — 이전 달과 직접 비교 주의`;
+  const AM = addedMarks(JS, NOW), amSel = AM.find((a) => a.m === judgedAt(T, cc)), amTip = (a: { m: number; sources: string[] }) => `${ml(T, a.m)} 원천 추가: ${a.sources.join('·')} — 이전 달과 직접 비교 주의`;
   const up = L.upcoming, fi = cursor - NOW, hasFut = fi >= 0 && fi < up.length;
   const maxUp = Math.max(1, ...up.map((m) => m.units)), upSum = up.reduce((n, m) => n + m.units, 0), upProj = up.reduce((n, m) => n + m.projects, 0), UPH = 82;   // UPH = 막대 최대 높이(viewBox 100 중, 위 18은 선택 값 자리)
   const cur = DIR[focus - 1];
@@ -221,7 +222,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
 
           <Card variant="board" className="@container" render={<section id="p-snap" aria-label="선택 시점의 판정과 단계별 호수" />}>
             <div className="mb-2.5 flex flex-wrap items-center gap-2.5">
-              <h2 className={cn(ptitle, 'text-[26px]')} title={`${scope} · 단계 호수는 선택 달, 증감 = 선택 달 − 기준 달(${ml(T, NOW)}) · 판정은 선택 달 이하의 가장 늦은 판정 달(${ml(T, T.judged[0])}~${ml(T, NOW)}, ${ml(T, NOW)} 뒤 달은 ${ml(T, NOW)} 판정) · 판정 기준일 ${SJ.referenceDate} · 지연 = 현재 예정일 경과 ${L.judge.delayMonths}개월 이상, 주의 = ${L.judge.cautionMonths}~${L.judge.delayMonths}개월 · ${ledgerJudged(L)}`}>{ml(T, cursor)}</h2>
+              <h2 className={cn(ptitle, 'text-[26px]')} title={`${scope} · 단계 호수는 선택 달, 증감 = 선택 달 − 기준 달(${ml(T, NOW)}) · 판정은 선택 달 이하의 가장 늦은 판정 달(${ml(T, T.judged[0])}~${ml(T, NOW)}, ${ml(T, NOW)} 뒤 달은 ${ml(T, NOW)} 판정) · 판정 기준일 ${dotDates(SJ.referenceDate)} · 지연 = 현재 예정일 경과 ${L.judge.delayMonths}개월 이상, 주의 = ${L.judge.cautionMonths}~${L.judge.delayMonths}개월 · ${ledgerJudged(L)}`}>{ml(T, cursor)}</h2>
               <Badge variant="solid" className={planned(cursor) ? 'bg-primary text-primary-foreground' : 'bg-foreground text-background'}>{kind(T, cursor)}</Badge>
               <span className={pacts}>{bk >= 0 ? <PanelLink href={`/projects?stage=${bk}&status=check`} full={`병목 단계(${CIR[bk]} ${K[bk]})의 점검 필요 사업(전국)`}>병목 단계</PanelLink> : null}{monthLink ? <PanelLink href={monthLink} full={`${ml(T, cursor)} 월 상세`}>{Number(T.months[cursor].slice(5))}월</PanelLink> : null}</span>
             </div>
@@ -232,6 +233,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                   {judged ? <><span className="bg-bad" style={{ width: `${(d / tt * 100).toFixed(2)}%` }} /><span className="bg-warn" style={{ width: `${(w / tt * 100).toFixed(2)}%` }} /><span className="bg-ok" style={{ width: `${(ok / tt * 100).toFixed(2)}%` }} /></> : null}
                 </div>
                 {showJTag ? <span data-slot="judge-tag" className={cn(jtag, 'flex-none leading-none')}>{jTag}</span> : null}
+                <span data-slot="basis-tag" className="flex-none text-[12px] leading-none whitespace-nowrap text-muted-foreground" title="막대·비율 = 지연·주의·정상 판정 사업의 계획 호수 비율(호수 기준) — 시도 타일의 지연율은 건수 기준">호수 기준</span>
               </div>
               {/* 판정 없는 달은 숫자 대신 '—'(칸 높이는 그대로라 달을 옮겨도 표가 흔들리지 않는다) */}
               <div className="mt-[9px] grid grid-cols-3 gap-2">
@@ -270,14 +272,14 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
           <Card variant="board" className={ringable(cur.p.includes('p-region'))} render={<section id="p-region" aria-label={`시도 ${L.regions.length}곳`} />}>
             <div className={phead}>
               <h2 className={ptitle} title={`${scope} · 시도는 사업의 시군구 코드 앞 2자리 · 큰 숫자 = 지연율(지연 ÷ 판정 사업) · 아래 막대 = 지연 · 주의 · 정상 판정 사업 비율 · 바탕색 = 지연율 구간(${RLAB.join(' / ')}%, 흰 바탕 = 판정 대상 없음) · 건수는 타일에 마우스를 올리면 보입니다 · 판정은 ${judgedText}`}>시도 {L.regions.length}곳</h2>
-              <span className={cn(legend, 'ml-auto flex-nowrap gap-x-1.5')}><span>0</span><span className="flex h-2.5 overflow-hidden rounded-[2px] border border-border" title={`지연율 구간: ${RLAB.join(' / ')}%`}>{RCOL.map((c, i) => <i key={i} className="block w-4" style={{ background: c }} />)}</span><span>30%+</span></span>
+              <span className={cn(legend, 'ml-auto flex-nowrap gap-x-1.5')}><span title="지연율 = 지연 사업 수 ÷ 판정 사업 수(건수 기준)">지연율 · 건수 기준</span><span>0</span><span className="flex h-2.5 overflow-hidden rounded-[2px] border border-border" title={`지연율 구간: ${RLAB.join(' / ')}%`}>{RCOL.map((c, i) => <i key={i} className="block w-4" style={{ background: c }} />)}</span><span>30%+</span></span>
             </div>
             <div className="mt-3 grid flex-1 auto-rows-[minmax(60px,1fr)] grid-cols-4 gap-1.5 mobile:auto-rows-[minmax(54px,1fr)] mobile:gap-1">
               {L.regions.map((r, ri) => {
                 const n = sidoName(r.code), rate = r.judged ? r.delay / r.judged * 100 : null, pos = REGION_POS[r.code];   // 판정된 사업이 없으면 지연율도 없다(중립 색)
                 return (
                   <button key={r.code} type="button" data-slot="board-region" className={cn(btn, 'q-rise card-lift flex flex-col justify-between gap-1 min-w-0 @container rounded-[10px] border border-border bg-[var(--rc)] px-2.5 pt-2 pb-[9px] mobile:px-[7px] mobile:pt-1.5 mobile:pb-[7px] aria-pressed:border-primary aria-pressed:[box-shadow:0_0_0_1px_var(--primary)]')} aria-pressed={r.code === region} onClick={() => setRegion(r.code)} style={{ ['--rc' as string]: rate === null ? 'var(--card)' : RCOL[rcls(rate)], ['--i' as string]: ri * 0.5, ...(pos ? { gridArea: `${pos[0]} / ${pos[1]}` } : {}) }}
-                    title={`${n} · 사업 ${f(r.projects)}건 · 판정 ${f(r.judged)}건 · ` + (rate === null ? '판정 대상 없음' : `지연율 ${rate.toFixed(1)}% · 지연 ${r.delay} · 주의 ${r.caution} · 정상 ${r.ok}`) + (r.code === '12' ? ' · 2026-07부터 광주·전남은 전남광주로 집계됩니다' : '')}
+                    title={`${n} · 사업 ${f(r.projects)}건 · 판정 ${f(r.judged)}건 · ` + (rate === null ? '판정 대상 없음' : `지연율 ${rate.toFixed(1)}% · 지연 ${r.delay} · 주의 ${r.caution} · 정상 ${r.ok}`) + (r.code === '12' ? ' · 2026.07부터 광주·전남은 전남광주로 집계됩니다' : '')}
                     aria-label={`${n} 사업 ${f(r.projects)}건 판정 ${f(r.judged)}건 ` + (rate === null ? '판정 대상 없음' : `지연 ${r.delay} 주의 ${r.caution} 정상 ${r.ok} 지연율 ${rate.toFixed(1)}%`)}>
                     <span className="flex items-baseline justify-between gap-1.5 @max-[105px]:flex-col @max-[105px]:items-start @max-[105px]:gap-0.5">
                       <span className="text-[15px] leading-[1.25] font-bold whitespace-nowrap text-foreground @max-[105px]:text-[13px]">{n}</span>
@@ -301,12 +303,12 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         <div className="mt-3.5 grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-3.5">
           <Card variant="board" className={ringable(cur.p.includes('p-trend'))} render={<section id="p-trend" aria-label="지연·주의 추이" />}>
             <div className={phead}>
-              <h2 className={ptitle} title={`지연·주의 호수(호) · 2025.01~2026.09 건축HUB 과거 판 소급 판정 · 2026.10부터 월 관측 · 이름표 = 선택 달 값과 전월 대비 증감`}>지연·주의 추이</h2>
+              <h2 className={ptitle} title={`지연·주의 호수(호) · 2025.01~2026.09 건축HUB 과거 판 소급 판정 · 2026.10부터 월 관측 · 이름표 = 선택 달 값과 전월 대비 증감(원천이 추가된 달은 판정 대상이 바뀌어 '비교 불가')`}>지연·주의 추이</h2>
             </div>
             {/* 선·격자는 non-scaling-stroke 로 화면 px 굵기를 지키고(1px 미만 흐림 방지, 계획서 14절 T2), 점·글자는 선 위에 겹친 HTML 이라 폭이 줄어도 크기가 그대로다 */}
             <div className="mt-3 flex" style={{ height: TH }}>
               <div className="relative min-w-0 flex-1">
-                <svg id="trend" className="absolute inset-0 size-full" viewBox={`0 0 560 ${TH}`} preserveAspectRatio="none" role="img" aria-label={`지연과 주의 호수 추이, ${ml(T, t0)}부터 ${ml(T, NOW)}까지. ${tf ? `${ml(T, t0)} 지연 ${f(tf.d)}호, 주의 ${f(tf.w)}호. ` : ''}${tsel ? `${ml(T, cc)} 지연 ${f(tsel.d)}호(전월 대비 ${sg(tsel.dd)}), 주의 ${f(tsel.w)}호(${sg(tsel.dw)}).` : `${ml(T, cc)} 판정 없음.`}${AM.map((a) => ` ${ml(T, a.m)} 원천 추가.`).join('')}`}>
+                <svg id="trend" className="absolute inset-0 size-full" viewBox={`0 0 560 ${TH}`} preserveAspectRatio="none" role="img" aria-label={`지연과 주의 호수 추이, ${ml(T, t0)}부터 ${ml(T, NOW)}까지. ${tf ? `${ml(T, t0)} 지연 ${f(tf.d)}호, 주의 ${f(tf.w)}호. ` : ''}${tsel ? (amSel ? `${ml(T, cc)} 지연 ${f(tsel.d)}호, 주의 ${f(tsel.w)}호(원천 추가로 전월과 비교 불가).` : `${ml(T, cc)} 지연 ${f(tsel.d)}호(전월 대비 ${sg(tsel.dd)}), 주의 ${f(tsel.w)}호(${sg(tsel.dw)}).`) : `${ml(T, cc)} 판정 없음.`}${AM.map((a) => ` ${ml(T, a.m)} 원천 추가.`).join('')}`}>
                   {[0.25, 0.5, 0.75].map((fr) => <line key={fr} x1="0" y1={ty(tmax * fr)} x2="560" y2={ty(tmax * fr)} stroke="var(--border)" vectorEffect="non-scaling-stroke" />)}
                   {AM.map((a) => <line key={a.m} data-added-mark x1={tx(a.m)} y1="2" x2={tx(a.m)} y2={TH - 2} stroke="var(--muted-foreground)" strokeDasharray="3 3" vectorEffect="non-scaling-stroke"><title>{amTip(a)}</title></line>)}
                   <g className="q-sweep"><polyline points={pts('w')} fill="none" stroke="var(--warn)" strokeWidth="2.4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /><polyline points={pts('d')} fill="none" stroke="var(--bad)" strokeWidth="2.8" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /></g>
@@ -322,7 +324,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 {([['지연', 'text-bad', eyD, tsel?.d, tsel?.dd], ['주의', 'text-warn', eyW, tsel?.w, tsel?.dw]] as const).map(([name, tone, yy, val, dv]) => (
                   <div key={name} className="absolute left-0 w-full whitespace-nowrap" style={{ top: Math.max(0, yy - 16) }}>
                     <div className={cn('text-[13px] leading-4 font-bold', tone)}>{name}</div>
-                    <div className="text-[15px] leading-[18px] font-bold text-foreground tabular-nums">{val === undefined ? '—' : f(val)}{dv === undefined ? null : <span className="ml-[5px] text-[12px] font-normal text-muted-foreground">{sg(dv)}</span>}</div>
+                    <div className="text-[15px] leading-[18px] font-bold text-foreground tabular-nums">{val === undefined ? '—' : f(val)}{dv === undefined ? null : amSel ? <span className="ml-[5px] text-[12px] font-normal text-muted-foreground" title={`${amTip(amSel)} — 전월 대비 증감을 내지 않음(원천 추가로 판정 대상이 바뀜)`}>비교 불가</span> : <span className="ml-[5px] text-[12px] font-normal text-muted-foreground">{sg(dv)}</span>}</div>
                   </div>
                 ))}
               </div>
@@ -330,15 +332,15 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={cn(sub, 'mt-0.5 flex justify-between')} style={{ paddingRight: TLBL + 4 }}><span>{ml(T, 0)}</span><span>{ml(T, NOW)}</span></div>
           </Card>
 
-          <Card variant="board" className={ringable(cur.p.includes('p-fut'))} render={<section id="p-fut" aria-label="앞으로 12개월 준공 예정" />}>
+          <Card variant="board" className={ringable(cur.p.includes('p-fut'))} render={<section id="p-fut" aria-label={AHEAD_COMPLETION} />}>
             <div className={phead}>
-              <h2 className={ptitle} title={`${scope} · 준공 예정 월별(호) · 준공 실제 기록이 없는 사업의 현재 예정 준공 달(같은 사업은 한 번) · LH 후보의 예정일은 파일 기준일(${real.lhAsOf}) 값으로, 실적 자료보다 ${real.lhAgeMonths}개월 묵었습니다 · 막대를 누르면 그 달을 고릅니다 · 사업 화면·지역 공급의 '앞으로 12개월 준공 예정'과 같은 범위·같은 값 · 지난 시점의 준공 실적은 월 상세·지역별 화면에서 봅니다`}>앞으로 12개월 준공 예정</h2>
+              <h2 className={ptitle} title={`${scope} · 준공 예정 월별(호) · 준공 실제 기록이 없는 사업의 현재 예정 준공 달(같은 사업은 한 번) · LH 후보의 예정일은 파일 기준일(${dotDates(real.lhAsOf)}) 값으로, 실적 자료보다 ${real.lhAgeMonths}개월 묵었습니다 · 막대를 누르면 그 달을 고릅니다 · 사업 화면의 '${AHEAD_COMPLETION}'·지역 공급의 준공 칩과 같은 범위·같은 값 · 지난 시점의 준공 실적은 월 상세·지역별 화면에서 봅니다`}>{AHEAD_COMPLETION}</h2>
               <span className={pacts}><PanelLink href="/agency/lh" full="LH 준공 예정 상세">LH 상세</PanelLink></span>
             </div>
-            <div className="mt-2 flex items-baseline gap-2"><b className={cn(disp, 'text-[30px] leading-[1.1] font-normal')}>{f(upSum)}<small className="text-[18px]">호</small></b><span className="text-[14px] text-muted-foreground">{f(upProj)}사업</span></div>
+            <div className="mt-2 flex items-baseline gap-2"><b className={cn(disp, 'text-[30px] leading-[1.1] font-normal')}>{f(upSum)}<small className="text-[18px]">호</small></b><span className="text-[14px] text-muted-foreground">{f(upProj)}건</span></div>
             <div className="relative mt-2 min-h-[118px] flex-[1_1_118px]">
               <svg id="fmonths" className="absolute inset-0 size-full [&_rect]:cursor-pointer" viewBox="0 0 240 100" preserveAspectRatio="none" role="img" aria-label={`${ymDot(up[0].ym)}부터 ${ymDot(up[up.length - 1].ym)}까지 월별 준공 예정 호수, 합 ${f(upSum)}호(원장 사업 ${f(L.scope.projects)}건, ${nation})`}>
-                {up.map((m, i) => { const h = m.units / maxUp * UPH; return <rect key={m.ym} x={i * 20 + 1.5} y={(100 - h).toFixed(1)} width="17" height={Math.max(h, 0.4).toFixed(1)} fill="var(--st-soon)" className="q-grow-y" style={{ ['--i' as string]: i }} onClick={() => goto(NOW + i)}><title>{`${m.ym.replace('-', '.')} 준공 예정 ${f(m.units)}호 · ${m.projects}사업`}</title></rect>; })}
+                {up.map((m, i) => { const h = m.units / maxUp * UPH; return <rect key={m.ym} x={i * 20 + 1.5} y={(100 - h).toFixed(1)} width="17" height={Math.max(h, 0.4).toFixed(1)} fill="var(--st-soon)" className="q-grow-y" style={{ ['--i' as string]: i }} onClick={() => goto(NOW + i)}><title>{`${m.ym.replace('-', '.')} 준공 예정 ${f(m.units)}호 · ${m.projects}건`}</title></rect>; })}
                 {hasFut ? <rect x={fi * 20 + 0.5} y={(100 - up[fi].units / maxUp * UPH - 1).toFixed(1)} width="19" height={(up[fi].units / maxUp * UPH + 1).toFixed(1)} fill="none" stroke="var(--foreground)" strokeWidth="2" style={{ vectorEffect: 'non-scaling-stroke' }} pointerEvents="none" /> : null}
               </svg>
               {hasFut ? <span className="pointer-events-none absolute -translate-x-1/2 text-[12px] leading-4 font-bold whitespace-nowrap text-foreground tabular-nums" style={{ left: `clamp(20px, ${((fi * 20 + 10) / 240 * 100).toFixed(2)}%, calc(100% - 20px))`, bottom: `calc(${(up[fi].units / maxUp * UPH).toFixed(1)}% + 5px)` }}>{f(up[fi].units)}</span> : null}
@@ -348,7 +350,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
 
           <Card variant="board" className={ringable(cur.p.includes('p-agency'))} render={<section id="p-agency" aria-label="기관별 진행" />}>
             <div className={phead}>
-              <h2 className={ptitle} title={`${scope} · 막대는 기관별 정상·주의·지연·판정 밖 호수(판정된 사업의 물량) · 오른쪽 = 지연 호수 · 전체 지연 ${f(J.delay.units)}호 중 비중 · 판정 밖: ${outNote}`}>기관별 진행</h2>
+              <h2 className={ptitle} title={`${scope} · 막대는 기관별 정상·주의·지연·판정 밖 호수(판정된 사업의 물량) · 오른쪽 = 지연 호수 · 전체 지연 ${f(J.delay.units)}호 중 비중 · 판정 밖: ${dotDates(outNote ?? '')}`}>기관별 진행</h2>
               <div className={phgroup}>
                 <span className={legend} title="막대 색: 정상 · 주의 · 지연 · 판정 밖 호수">{[['bg-ok', '정상'], ['bg-warn', '주의'], ['bg-bad', '지연'], ['bg-[var(--out)] shadow-[inset_0_0_0_1px_var(--out-line)]', '판정 밖']].map(([c, n]) => <Key key={n} className={cn('size-2', c)}>{n}</Key>)}</span>
                 <span className={pacts}><PanelLink href="/projects?sido=all" full="사업 목록(전국) — 기관 메뉴로 거르기">기관별 사업</PanelLink></span>
@@ -358,12 +360,12 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {L.agencies.filter((a) => a.projects).map((a, ai) => {
                 const out = a.units - a.okUnits - a.cautionUnits - a.delayUnits, pw = (n: number) => `${(n / a.units * 100).toFixed(1)}%`;   // out = 판정 밖 호수(LH 후보·예정 없는 사업)
                 return (
-                  <div key={a.id} className={ag} title={`${a.name} ${f(a.units)}호 — 정상 ${f(a.okUnits)} · 주의 ${f(a.cautionUnits)} · 지연 ${f(a.delayUnits)} · 판정 밖 ${f(out)}호${a.excludedUnits ? `(판정 제외 ${f(a.excludedUnits)}호)` : ''}. ${a.id === 'unknown' ? `사업 ${f(a.projects)}건 — ` : ''}${a.note}${a.id === 'unknown' ? `. 판정 밖: ${outNote}` : ''}`}>
-                    <div className={agName}><b>{a.name}</b><span className="text-[13px] font-normal text-muted-foreground">{f(a.units)}호</span></div>
+                  <div key={a.id} className={ag} title={`${a.name} ${f(a.units)}호 — 정상 ${f(a.okUnits)} · 주의 ${f(a.cautionUnits)} · 지연 ${f(a.delayUnits)} · 판정 밖 ${f(out)}호${a.excludedUnits ? `(판정 제외 ${f(a.excludedUnits)}호)` : ''}. ${a.id === 'unknown' ? `사업 ${f(a.projects)}건 — ` : ''}${dotDates(a.note ?? '')}${a.id === 'unknown' ? `. 판정 밖: ${dotDates(outNote ?? '')}` : ''}`}>
+                    <div className={agName}><b>{a.id === 'unknown' ? AGENCY_NAME.etc : a.name}</b><span className="text-[13px] font-normal text-muted-foreground">{f(a.units)}호</span></div>
                     <div className={cn(bar3, 'q-grow-x h-3 mobile:col-span-full mobile:row-start-2')} style={{ ['--i' as string]: ai }} role="img" aria-label={`${a.name} ${f(a.units)}호: 정상 ${f(a.okUnits)} 주의 ${f(a.cautionUnits)} 지연 ${f(a.delayUnits)} 판정 밖 ${f(out)}`}>
                       <span className="block bg-ok" style={{ width: pw(a.okUnits) }} /><span className="block bg-warn" style={{ width: pw(a.cautionUnits) }} /><span className="block bg-bad" style={{ width: pw(a.delayUnits) }} /><span className="block bg-[var(--out)]" style={{ width: pw(out) }} />
                     </div>
-                    <div className={agVal}><b className={cn(disp, 'text-bad')}>{f(a.delayUnits)}</b><span className="text-[13px] text-muted-foreground">{J.delay.units ? Math.round(a.delayUnits / J.delay.units * 100) : 0}%</span></div>
+                    <div className={agVal}><b className={cn(disp, 'text-bad')}>{f(a.delayUnits)}</b><span className="text-[13px] text-muted-foreground">{(J.delay.units ? a.delayUnits / J.delay.units * 100 : 0).toFixed(1)}%</span></div>
                   </div>
                 );
               })}

@@ -140,7 +140,7 @@ test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들�
   assert.match(det, /지도에서 보기 · \$\{loc\}/, '위치 종류(블록·지번·지구·근사·미확보)를 짧게');
   assert.doesNotMatch(det, />기반시설 점검</);
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(read('lib/board/projects-list.ts'), /isMetro\(r\.sgg\) \? \{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
+  assert.match(read('lib/board/projects-list.ts'), /!isMetro\(r\.sgg\) \? null : noLoc[\s\S]*\{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
   assert.match(page, /import \{ mapScopeHref \} from '[./]+lib\/board\/map-href'/);
   assert.doesNotMatch(page, /`\/map\?|: '\/map'/, '지도 주소는 map-href 한 곳');
   const grid = read('components/ui/data-grid.tsx');

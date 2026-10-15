@@ -3,6 +3,7 @@
 import { sidoName } from '../../../../lib/board/calc';
 import { getBoardData } from '../../../../lib/board/data';
 import { getProjectsIndex } from '../../../../lib/board/projects-index';
+import { guOf } from '../../../../lib/board/metro-overview';
 import { LIST_COLS, csvCols, csvRows, dropBlank, listRows } from '../../../../lib/board/projects-list';
 import { applyFilters, listOrder, parseFilters } from '../../../../lib/board/projects-view';
 import { toCsv } from '../../../../lib/grid/spec';
@@ -10,7 +11,7 @@ import { toCsv } from '../../../../lib/grid/spec';
 export async function GET(req: Request) {
   const q = Object.fromEntries(new URL(req.url).searchParams);
   const [{ molit }, idx] = await Promise.all([getBoardData(), getProjectsIndex()]);
-  const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c) });
+  const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c), guOf });
   const rows = listRows(listOrder(applyFilters(idx.rows, f)), f, null, (c) => sidoName(molit, c));
   const body = toCsv(csvCols(dropBlank(LIST_COLS, rows).cols), csvRows(rows));
   const name = `사업목록_${idx.referenceDate.replace(/-/g, '')}.csv`;

@@ -7,20 +7,21 @@ import PrintButton from '../../../components/projects/PrintButton';
 import Candidate, { CandidateHead } from '../../../components/projects/Candidate';
 import ProjectDetail, { DrawerHead } from '../../../components/projects/ProjectDetail';
 import { Pipeline, PolicyCompare, PrintDefs, Questions, ReadHelp } from '../../../components/projects/Summary';
-import { LIST_COLS, dropBlank, lateCell, listRows, nextCell, sggLabel, stagePill, statusCell, agencyCell, unitsCell } from '../../../lib/board/projects-list';
+import { LIST_COLS, NO_LOC, dropBlank, lateCell, listRows, nextCell, sggLabel, stagePill, statusCell, agencyCell, unitsCell } from '../../../lib/board/projects-list';
 import InfoTip from '../../../components/ui/info-tip';
 import { Badge } from '../../../components/ui/badge';
 import { Card } from '../../../components/ui/card';
 import { Chip, ChipBar, ChipGroup, ChipMenu, ChipSep, ClearChip } from '../../../components/ui/chips';
 import { mapScopeHref } from '../../../lib/board/map-href';
+import { METRO_AREAS, SIDO_FULL, guOf } from '../../../lib/board/metro-overview';
 import MapLink from '../../../components/board/MapLink';
 import { DataGrid } from '../../../components/ui/data-grid';
 import { sidoName } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
 import { getPolicyProgress, getProjectDrawer, getProjectsIndex } from '../../../lib/board/projects-index';
 import {
-  AGENCY_NAME, AGENCY_TIP, BOARD_CIR, BOARD_COLOR, BOARD_NAMES, CAND_NAME, DELAY_GROUP, LONG_DELAY_MONTHS, PLAN_COL, STATUS_NAME, STATUS_ORDER, STATUS_RANGE, STATUS_TIP,
-  applyFilters, candidateOf, compareLines, editionText, listHref, listOrder, parseFilters, pipelineOf, policyLabel, priorityOf, questionsOf, scopeOf, summaryOf, ymText,
+  AGENCY_NAME, AGENCY_TIP, BOARD_CIR, BOARD_COLOR, BOARD_NAMES, CAND_NAME, DELAY_GROUP, LONG_DELAY_MONTHS, NONE_NAME, PAST_DUE, PLAN_COL, STATUS_NAME, STATUS_ORDER, STATUS_RANGE, STATUS_TIP,
+  applyFilters, candidateOf, isMetro, compareLines, editionText, listHref, listOrder, parseFilters, pipelineOf, policyLabel, priorityOf, questionsOf, scopeOf, summaryOf, ymText,
   type Filters, type ProjectRow,
 } from '../../../lib/board/projects-view';
 import type { Cell, Col, Row } from '../../../lib/grid/spec';
@@ -34,9 +35,9 @@ const one = (v: string | string[] | undefined) => (typeof v === 'string' ? v : u
    같은 거르기의 CSV 는 /projects/csv?…(route.ts — 열·값은 lib/board/projects-list.ts 하나). */
 async function load(searchParams: Props['searchParams']) {
   const [q, { molit }, idx] = await Promise.all([searchParams, getBoardData(), getProjectsIndex()]);
-  const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c) });
+  const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c), guOf });
   const lens = f.policy ? policyLabel(f.policy) : f.program?.name;
-  const region = f.sgg ? sggLabel(idx.sggNames[f.sgg] ?? f.sgg, sidoName(molit, f.sgg.slice(0, 2))) : f.sido ? sidoName(molit, f.sido) ?? f.sido : f.metro ? '수도권' : '전국';
+  const region = f.sgg ? sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2))) : f.sido ? sidoName(molit, f.sido) ?? f.sido : f.metro ? '수도권' : '전국';
   const label = [lens, region, f.stage !== undefined && `${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`, f.status && (f.status === 'check' ? '점검 필요' : STATUS_NAME[f.status]), f.agency && AGENCY_NAME[f.agency]].filter(Boolean).join(' · ');
   return { f, idx, molit, label, lens, region, id: one(q.id) ?? null, cand: one(q.cand) ?? null, print: one(q.print) === '1' };
 }
@@ -52,6 +53,11 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 /* 원천 이름 HOME 은 보이는 글 대신 title 에(보이는 이름은 '정책 진행 자료') */
+/* 시군구 이름(시도 포함 — sggLabel 이 앞 낱말을 줄인다): 구가 있는 경기 시의 시 코드는 그 구를 합친 이름 '경기도 고양시(덕양구·일산동구·일산서구)' */
+function sggFullName(code: string, names: Record<string, string | null>): string {
+  const gu = guOf(code);
+  return gu.length ? `${SIDO_FULL[code.slice(0, 2)]} ${METRO_AREAS[code]}(${gu.map((c) => METRO_AREAS[c].slice(METRO_AREAS[code].length).trim()).join('·')})` : names[code] ?? code;
+}
 const HOME_TIP = 'HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료(정책별 단계 목표·확인 포함)';
 /* 같은 거르기에서 빠진 하나를 풀면 몇 건인지(빈 결과의 대안) */
 const count = (rows: ProjectRow[], f: Filters) => applyFilters(rows, f).length;
@@ -169,7 +175,9 @@ export default async function ProjectsPage({ searchParams }: Props) {
   }
 
   /* 목록: 열·칸은 lib/board/projects-list.ts(CSV 내려받기와 같은 열) */
-  const gridRows: Row[] = listRows(list, f, sel, (c) => sidoName(molit, c));
+  /* 위치 미확보: 상세 서랍과 같은 자료(getProjectDrawer 의 detail.loc)에 좌표가 없는 수도권 사업 — 목록 지도 열 표지(지도 열은 수도권 사업만) */
+  const noLoc = new Set((await Promise.all(list.filter((r) => r.issued && isMetro(r.sgg)).map(async (r) => { const d = await getProjectDrawer(r.id); return d?.kind === 'detail' && !d.detail.loc ? r.id : null; }))).filter((x): x is string => !!x));
+  const gridRows: Row[] = listRows(list, f, sel, (c) => sidoName(molit, c), (id) => noLoc.has(id));
   const grid = dropBlank(LIST_COLS, gridRows);
   const csvHref = listHref(f).replace(/^\/projects/, '/projects/csv');
   const issued = list.filter((r) => r.issued).length;
@@ -189,7 +197,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
       <div className="contents print:hidden">
         <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '사업' }]} title="사업"
           tip="사업 원장의 사업을 정책·프로그램과 지역·상태·기관으로 거른다(처음은 수도권) · 행을 누르면 오른쪽에 사업 상세 · 보고서 인쇄 = 월간 진척 보고(2026.08.14 지시)">
-          <span className={cn(sub, 'ml-auto whitespace-nowrap tabular-nums mobile:text-[13px]')} title={`사업 원장 ${idx.observedMonth} · 기준일 ${idx.referenceDate}(대체·숨김 사업 제외) · 판정: 현재 예정일 경과 1~6개월 주의, 6개월 이상 지연, ${LONG_DELAY_MONTHS}개월 이상 장기 지연`}>자료 기준 {ref}</span>
+          <span className={cn(sub, 'ml-auto whitespace-nowrap tabular-nums mobile:text-[13px]')} title={`사업 원장 ${ymText(idx.observedMonth)} · 기준일 ${ref}(대체·숨김 사업 제외) · 판정: 현재 예정일 경과 1~6개월 주의, 6개월 이상 지연, ${LONG_DELAY_MONTHS}개월 이상 장기 지연`}>자료 기준 {ref}</span>
           <Link href={listHref(f, { print: '1' })} className={cn(BTN, 'self-center')} title="핵심 질문·단계별 진행·정책 목표 대비·점검 필요 사업·기준일·출처만 담은 월간 보고 보기(인쇄 미리보기)">
             <Printer className="size-4 flex-none text-muted-foreground" aria-hidden="true" />보고서 인쇄
           </Link>
@@ -209,7 +217,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <Chip href={at({ sido: 'all' })} on={!f.metro && !f.sido && !f.sgg} title="전국 사업">전국</Chip>
           <ChipMenu label="시도" on={!!(f.sido || f.sgg)} cols={2}
             items={sidos.map((c) => ({ href: at({ sido: c }), label: sidoName(molit, c)!, on: (f.sido ?? f.sgg?.slice(0, 2)) === c }))} />
-          {f.sgg ? <ClearChip href={at({ sgg: undefined })} title="시군구 거르기 풀기(수도권으로)">{sggLabel(idx.sggNames[f.sgg] ?? f.sgg, sidoName(molit, f.sgg.slice(0, 2)))}</ClearChip> : null}
+          {f.sgg ? <ClearChip href={at({ sgg: undefined })} title="시군구 거르기 풀기(수도권으로)">{sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2)))}</ClearChip> : null}
         </ChipGroup>
         <ChipSep />
         <ChipGroup label="상태" bare>
@@ -234,10 +242,12 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <InfoTip label="목록 읽는 법">
             <dl>
               <dt>기본 순서</dt><dd>점검 필요 순 — 예정일을 오래 넘긴 사업부터 · {CAND_NAME}은 번호가 있는 사업 뒤에(열 머리를 누르면 그 순서로)</dd>
-              <dt>{PLAN_COL}</dt><dd>지금 잡혀 있는 다음 예정일 · 이미 지난 날짜는 옅게(넘긴 개월은 지연 열), 공사를 마친 사업은 &apos;실제&apos;</dd>
+              <dt>{PLAN_COL}</dt><dd>지금 잡혀 있는 다음 예정일 · 이미 지난 날짜는 옅게(넘긴 개월은 지연 열), 기준일보다 앞섰지만 1개월이 안 된 날짜는 &apos;{PAST_DUE}&apos;(상태는 그대로), 공사를 마친 사업은 &apos;실제&apos;</dd>
+              <dt>상태</dt><dd>{STATUS_NAME.ok} · {STATUS_NAME.caution} · {STATUS_NAME.delay} · {STATUS_NAME.long} · {STATUS_NAME.none}({NONE_NAME.done} · {NONE_NAME.plan} — 입주·모집 예정만 · {NONE_NAME.none})</dd>
               <dt>지연(개월)</dt><dd>예정일을 넘긴 개월 수 · {STATUS_RANGE.caution} · {STATUS_RANGE.delay} · {STATUS_RANGE.long}({DELAY_GROUP} = 6개월 이상)</dd>
               <dt>공고 확인</dt><dd>모집공고에서 확인한 호수(공고가 났다고 공사를 마친 것은 아님)</dd>
               <dt>{CAND_NAME}</dt><dd>사업 번호가 아직 없어 상세 일정이 없는 사업 — 누르면 간단 보기</dd>
+              <dt>{NO_LOC}</dt><dd>지도 열 표지 — 좌표가 없어 지도에서는 시군구로 보이는 사업</dd>
             </dl>
           </InfoTip>
           {list.length ? <a href={csvHref} download className={MAPA} title={`지금 거르기 그대로 ${fmt(list.length)}건 · 화면과 같은 열(지도 표지 제외) · CSV(UTF-8, 엑셀에서 열림)`}><Download className="size-3.5" aria-hidden="true" />CSV 내려받기</a> : null}

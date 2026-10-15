@@ -86,16 +86,16 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   assert.match(dir[0].basis, /달성률은 내지 못합니다/);
   assert.match(dir[0].basis, new RegExp(`착공 ${start.year}년 1~${start.upto}월 누계와 전년 같은 기간 대비`), '착공 누계의 기간(통계누리 마지막 달)은 카드 title 에 — 원장 기준 카드들과 기간이 다르다');
   assert.equal(dir[0].sub.note, undefined, '기간 작은 줄은 화면에 두지 않는다(title 로)');
-  assert.deepEqual([dir[1].pre, dir[1].big, dir[1].u], [undefined, S.f(L.scope.projects), '사업']);
+  assert.deepEqual([dir[1].pre, dir[1].big, dir[1].u], [undefined, S.f(L.scope.projects), '건']);
   assert.equal(L.scope.projects, L.scope.issued + L.scope.candidates);
   const b = L.scope.bySource;
-  assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth} 기준 · 전국 · 사업 ${S.f(L.scope.projects)}건\\(발급 ${b.issued} · LH 후보 ${b.lhCandidates} · 건축HUB 후보 ${S.f(b.hubBulkCandidates)}${b.home ? ` · 수도권 HOME ${S.f(b.home)}` : ''}\\)$`));
-  assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth} 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(발급 사업은 착공·준공, 건축HUB 후보는 준공 예정 경과만 · 판정 밖: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의$`));
+  assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 사업 ${S.f(L.scope.projects)}건\\(발급 ${b.issued} · LH 후보 ${b.lhCandidates} · 건축HUB 후보 ${S.f(b.hubBulkCandidates)}${b.home ? ` · 수도권 HOME ${S.f(b.home)}` : ''}\\)$`));
+  assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(발급 사업은 착공·준공, 건축HUB 후보는 준공 예정 경과만 · 판정 밖: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의$`));
   assert.doesNotMatch(dir.map((d) => d.basis).join(' '), /전국 아님/);
   const bk = L.delayByStage.indexOf(Math.max(...L.delayByStage));
   assert.deepEqual([dir[2].pre, dir[2].big, dir[2].u], [`병목 ${S.K[bk]}`, S.f(L.delayByStage[bk]), '호']);
   assert.deepEqual([dir[3].pre, dir[3].big, dir[3].u], ['준공 예정', S.f(L.upcoming.reduce((n, m) => n + m.units, 0)), '호']);
-  assert.deepEqual([dir[4].pre, dir[4].big, dir[4].u], ['지연', S.f(L.judgment.delay.projects), '사업']);
+  assert.deepEqual([dir[4].pre, dir[4].big, dir[4].u], ['지연', S.f(L.judgment.delay.projects), '건']);
   assert.deepEqual(dir[4].sub, { text: `주의 ${S.f(L.judgment.caution.projects)}`, tone: 'warn' });
   assert.equal(makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start, bottleneck: BN })[5].m, '원천 19곳');
   assert.equal(makeDirectives({ sourceCount: 14, stageNames: S.K, ledger: L, start: { ...start, cum: null }, bottleneck: BN })[0].sub, undefined, '누계가 없으면 증감을 내지 않는다');
@@ -276,7 +276,7 @@ test('SAMPLE 표지는 없다(지연·주의 추이도 월 판정 이력), 원�
     assert.doesNotMatch(p, /ptSmall/, `${id}: 제목 옆 설명 글자 없음(title 로)`);
   }
   assert.doesNotMatch(board + realRow, /<Real\b|실데이터<|scopeShort/, '실데이터 표지·보이는 범위 글자 없음');
-  assert.match(board, /const scope = `원장 \$\{L\.observedMonth\} 기준 · 사업 \$\{f\(L\.scope\.projects\)\}건\(\$\{ledgerMix\(L\)\}\) · \$\{nation\} · \$\{real\.ledgerOrigin === 'supabase' \? `출처 Supabase\(api\.board, \$\{real\.ledgerMonth\}\)` : '출처 JSON 대체'\}`;/);
+  assert.match(board, /const scope = `원장 \$\{ymDot\(L\.observedMonth\)\} 기준 · 사업 \$\{f\(L\.scope\.projects\)\}건\(\$\{ledgerMix\(L\)\}\) · \$\{nation\} · \$\{real\.ledgerOrigin === 'supabase' \? `출처 Supabase\(api\.board, \$\{real\.ledgerMonth\}\)` : '출처 JSON 대체'\}`;/);
   assert.match(panel(board, 'p-trend'), /title=\{`지연·주의 호수\(호\) · 2025\.01~2026\.09 건축HUB 과거 판 소급 판정 · 2026\.10부터 월 관측 · /);
   assert.match(panel(realRow, 'p-actual'), /<h2 className=\{ptitle\} title=\{`국토교통 통계누리/, 'p-actual: 출처는 제목 title');
   assert.doesNotMatch(board, /\b(AG|REG|dStage|vals|txSnap)\b/, '시안 SAMPLE 계산(기관·시도·단계 호수)을 쓰지 않는다');
@@ -316,10 +316,10 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(agency.slice(0, agency.indexOf('className={ags}')), /\['bg-\[var\(--out\)\] shadow-\[inset_0_0_0_1px_var\(--out-line\)\]', '판정 밖'\]/, "막대 범례는 제목 줄에, '판정 밖' 견본은 --out 채움 + --out-line 1px 선");
   assert.match(agency, /<span className="block bg-\[var\(--out\)\]" style=\{\{ width: pw\(out\) \}\} \/>/, '판정 밖 막대 조각 = --out');
   assert.match(agency, /전체 지연 \$\{f\(J\.delay\.units\)\}호/);
-  assert.match(agency, /a\.id === 'unknown' \? `\. 판정 밖: \$\{outNote\}`/, '기관 미상 설명은 그 행의 title 에');
+  assert.match(agency, /a\.id === 'unknown' \? `\. 판정 밖: \$\{dotDates\(outNote \?\? ''\)\}`/, '기관 미상 설명은 그 행의 title 에');
   assert.match(agency, /\(판정 제외 \$\{f\(a\.excludedUnits\)\}호\)/, '판정 제외는 행 title 에');
   assert.match(agency, /pw\(a\.okUnits\)[\s\S]*pw\(a\.cautionUnits\)[\s\S]*pw\(a\.delayUnits\)/, '막대는 호수');
-  assert.match(agency, /Math\.round\(a\.delayUnits \/ J\.delay\.units \* 100\)/, '지연 비중은 전체 지연 호수 중 비중');
+  assert.match(agency, /\(J\.delay\.units \? a\.delayUnits \/ J\.delay\.units \* 100 : 0\)\.toFixed\(1\)/, '지연 비중은 전체 지연 호수 중 비중');
 });
 
 test('시도 카드는 월별 실적 흐름(middle)과 같은 줄에 있고, 시행주체별 진행 현황·데이터 흐름 카드는 없다', () => {
@@ -339,7 +339,7 @@ test('향후 12개월 패널은 원장의 준공 예정(upcoming, 2026-10부터 
   assert.match(fut, /fill="var\(--st-soon\)"/, '단색'); assert.doesNotMatch(fut, /linearGradient|Reserve|futRead/, '그라데이션·아래 문장 없음');
   assert.match(board, /upSum = up\.reduce\(\(n, m\) => n \+ m\.units, 0\), upProj = up\.reduce\(\(n, m\) => n \+ m\.projects, 0\)/, '12개월 합');
   assert.ok(L.upcoming.reduce((n, m) => n + m.units, 0) > 0);
-  assert.match(fut, /\{f\(upSum\)\}<small[^>]*>호<\/small>[\s\S]*\{f\(upProj\)\}사업/, '큰 숫자 한 줄');
+  assert.match(fut, /\{f\(upSum\)\}<small[^>]*>호<\/small>[\s\S]*\{f\(upProj\)\}건/, '큰 숫자 한 줄');
   assert.doesNotMatch(board, /real\.lh\b|lhByMonth/);
   assert.equal(L.upcoming.length, 12);
   assert.equal(L.upcoming[0].ym, L.observedMonth);
