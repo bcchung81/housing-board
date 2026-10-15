@@ -1380,7 +1380,7 @@ if (BLOCKS.length) {
   /* 수도권(원장): 합계는 머리 줄과 같은 값(원장 진행 사업), 지도에 그린 사업(전 단계)의 몫은 보조 줄. 아래 막대·범례는 지도에 그린 사업 기준 */
   const mapPart = `지도 표시 ${BLOCKS.length}건 · ${fmt(total)}호${unk ? `(호수 미확인 ${unk}건 제외)` : ''}`;
   $('#sumTotal').innerHTML = HOME_T
-    ? `<span class="big">${SUM_TOTAL.main}</span><span class="unit">호</span> <span class="cnt">원장 진행 ${HOME_T.n}건${HOME_T.q ? `(호수 미확인 ${HOME_T.q}건 제외)` : ''}</span><span class="cnt">${mapPart}${REG.home.unlocated.length ? ` · 위치 미확보 ${REG.home.unlocated.length}건 제외` : ''}</span>`
+    ? `<span class="cnt">${mapPart}${REG.home.unlocated.length ? ` · 위치 미확보 ${REG.home.unlocated.length}건` : ''}</span>`
     : `<span class="big">${fmt(total)}</span><span class="unit">호</span> <span class="cnt">사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''}</span>`;
   $('#sumBar').innerHTML = grp.map((g) => `<i style="width:${total ? 100 * by[g.key] / total : 0}%;background:${g.key === 'plan' || g.key === 'permit' ? `repeating-linear-gradient(90deg,var(--${g.key}) 0 4px,var(--bg) 4px 7px)` : COLOR[g.key]}" title="${g.label} ${gTxt(g)}"></i>`).join('');
   $('#sumBar').setAttribute('aria-label', grp.map((g) => `${g.label} ${gTxt(g)}`).join(', '));

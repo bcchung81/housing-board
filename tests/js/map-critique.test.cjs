@@ -158,10 +158,8 @@ const ovjs = read('assets/js/overview.js'), layoutMap = read('app/(map)/layout.t
 
 test('다듬기 1: 수도권 패널 합계는 머리 줄과 같은 값(SUM_TOTAL.main), 지도에 그린 몫은 보조 줄로 이름을 붙인다', () => {
   const code = noComments(app);
-  assert.match(code, /HOME_T\s*\?\s*`<span class="big">\$\{SUM_TOTAL\.main\}<\/span>/, '패널 큰 숫자 = 머리 줄 합계');
   assert.match(code, /지도 표시 \$\{BLOCKS\.length\}건 · \$\{fmt\(total\)\}호/, '지도에 그린 몫은 이름표를 단 보조 줄');
-  assert.match(code, /위치 미확보 \$\{REG\.home\.unlocated\.length\}건 제외/);
-  assert.match(css, /\.sum \.cnt\+\.cnt\{display:block\}/);
+  assert.match(code, /위치 미확보 \$\{REG\.home\.unlocated\.length\}건`/);
 });
 
 test('다듬기 2: 사업 꼬리표 위에 놓인 학교 거리·통학구역 연결선 글자는 숨긴다(꼬리표 우선)', () => {
@@ -347,4 +345,13 @@ test("5: 원장 행에 dateAlt 가 있으면 카드 '현재 예정' 줄에 '원�
   assert.match(fn, /alt = dateAltOf\(lg\)/);
   assert.match(fn, /\$\{alt \? ` \$\{altMark\(alt\)\}` : ''\}/);
   assert.match(read('assets/js/region.js'), /if \(r\.dateAlt && [^\n]*\) b\.ledger\.dateAlt = \{ source: String\(r\.dateAlt\.source \|\| ''\), planned: String\(r\.dateAlt\.planned\) \};/, '원장 행의 dateAlt 를 b.ledger 로 옮긴다');
+});
+
+test('합계 세 번 표시 정리: 원장 진행 합계(SUM_TOTAL.main)는 머리 줄(syncHudSum) 한 곳에서만 마크업으로 만들고, 패널은 지도 몫만, 알약은 건수 대조만', () => {
+  const code = noComments(app);
+  assert.equal(code.split('${SUM_TOTAL.main}').length - 1, 0, '패널 큰 숫자에 원장 합계를 다시 쓰지 않는다');
+  assert.equal(code.split('${esc(tot.main)}').length - 1, 1, '머리 줄 한 곳');
+  assert.match(code, /\$\('#sumTotal'\)\.innerHTML = HOME_T\s*\? `<span class="cnt">\$\{mapPart\}/);
+  const pill = noComments(read('assets/js/region.js')).match(/사업 원장 \$\{r\.home\.total\}건 · 지도 \$\{r\.home\.drawn\}건`/);
+  assert.ok(pill && !/units|호/.test(pill[0]), '알약은 건수만');
 });

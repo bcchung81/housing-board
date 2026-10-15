@@ -2955,6 +2955,26 @@
       "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
       "description": "실제 준공(ACTUAL COMPLETION) 중 가장 늦은 달 YYYY-MM. 실제 준공 기록이 없으면 칸이 없다(지도 '입주중' 표시). 2026-10-14 추가"
      },
+     "dateAlt": {
+      "type": "object",
+      "description": "준공 예정이 다른 원천(LH 준공 예정 파일)과 다를 때 그 원천 날짜",
+      "required": [
+       "source",
+       "planned"
+      ],
+      "properties": {
+       "source": {
+        "type": "string",
+        "enum": [
+         "LH"
+        ]
+       },
+       "planned": {
+        "type": "string",
+        "format": "date"
+       }
+      }
+     },
      "units": {
       "type": "integer",
       "minimum": 0,
