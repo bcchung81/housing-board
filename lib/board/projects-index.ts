@@ -29,7 +29,7 @@ export const getPolicyProgress = cache(async () => progressJson as unknown as Po
 /* 서랍 자료: detail = 발급 사업(목록 행 + 상세), hidden = 목록에서 뺀 사업(안내 한 줄). 대체된 id 는 대표 사업의 detail 에 from(옛 id·이름)을 붙인다.
    레지스트리에 없거나 발급 전 후보(임시 번호)면 null — 서랍을 열지 않는다 */
 export type Drawer =
-  | { kind: 'detail'; row: ProjectRow; detail: ProjectDetail; sources: Record<string, SourceRef>; agencies: Record<string, string>; referenceDate: string; policies: Policy[]; from: { id: string; name: string } | null }
+  | { kind: 'detail'; row: ProjectRow; detail: ProjectDetail; sources: Record<string, SourceRef>; agencies: Record<string, string>; referenceDate: string; policies: Policy[]; from: { id: string; name: string } | null; label: string | null }
   | { kind: 'hidden'; project: RegistryProject; sggName: string };
 export const getProjectDrawer = cache(async (asked: string): Promise<Drawer | null> => {
   const { allProjects } = await getBoardData();
@@ -43,5 +43,15 @@ export const getProjectDrawer = cache(async (asked: string): Promise<Drawer | nu
   let sgg = id.slice(4, 9), r = map.bySgg[sgg]?.find((x) => x.id === id);
   if (!r) for (const [k, rows] of Object.entries(map.bySgg)) { r = rows.find((x) => x.id === id); if (r) { sgg = k; break; } }
   if (!r) return null;
-  return { kind: 'detail', row: rowsOf({ [sgg]: [r] }, idx.projects, idx.sgg)[0], detail, sources: det.sources, agencies: det.agencies, referenceDate: det.referenceDate, policies: idx.policies, from: t.from };
+  return { kind: 'detail', row: rowsOf({ [sgg]: [r] }, idx.projects, idx.sgg)[0], detail, sources: det.sources, agencies: det.agencies, referenceDate: det.referenceDate, policies: idx.policies, from: t.from, label: await mapLabelOf(sgg, id) };
 });
+
+/* 지도 이름표(짧은 이름, 예: '고양창릉 A4'): 수도권 지도 자료(data/board/home-map/<시군구>.json 의 label — tools/ledger/home-map.js 가 블록 키 '지구 블록'으로 만든다).
+   서랍 제목을 지도와 같은 이름으로 하려고 읽는다(긴 원장 이름은 부제). 수도권 밖·자료 없음이면 null */
+async function mapLabelOf(sgg: string, id: string): Promise<string | null> {
+  if (!/^(11|28|41)\d{3}$/.test(sgg)) return null;
+  try {
+    const doc = (await import(`../../data/board/home-map/${sgg}.json`)).default as { projects: { id: string; label?: string }[] };
+    return doc.projects.find((p) => p.id === id)?.label ?? null;
+  } catch { return null; }
+}

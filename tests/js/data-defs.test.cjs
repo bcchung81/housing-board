@@ -76,7 +76,7 @@ test('D3: 후보 행의 상태 칸·간단 보기는 \'확인 필요\'(판정과
 test('D3: 종합상황판 지연 = 사업 화면 지연, 시도 타일 지연율은 번호 있는 사업으로, 판정 시도는 수도권 3곳', () => {
   const d = makeDirectives({ sourceCount: 1, stageNames: V.BOARD_NAMES, ledger: BOARD, start: { year: '2026', upto: 8, cum: 1, cumLy: 1 }, bottleneck: V.bottleneckOf });
   const q = Q({ sido: 'all' })['어떤 사업이 늦어지는가'];
-  assert.equal(d[4].m, `지연 ${BOARD.judgment.delay.projects}건`);
+  assert.equal(d[4].m, `지연 확정 ${BOARD.judgment.delay.projects}건 · 후보 계산 ${BOARD.judgment.candidate.delay.projects}건`);
   assert.equal(q.value, String(BOARD.judgment.delay.projects), '종합상황판 지연 = 사업 화면 지연(전국)');
   assert.match(q.sub, / · 확인 필요\(후보\) 313$/);
   assert.equal(d[2].m, `병목 ${V.BOARD_NAMES[V.bottleneckOf(BOARD.delayByStage).i]} ${BOARD.delayByStage[2].toLocaleString('en-US')}호`);

@@ -134,7 +134,7 @@ test('#15 날짜 점 표기: 종합상황판·사업·지역 공급 title 의 �
 test('#16 단위 건: 종합상황판 카드·향후 12개월', () => {
   const d = makeDirectives({ sourceCount: 1, stageNames: ['a', 'b', 'c', 'd', 'e', 'f'], ledger: BOARD, start: { year: '2026', upto: 8, cum: 1, cumLy: 1 }, bottleneck: () => null });
   assert.equal(d[1].m, '2,317건');
-  assert.equal(d[4].m, '지연 2건', 'D3: 사업 번호가 있는 사업만(옛 315건 = 2 + 확인 필요 후보 313)');
+  assert.equal(d[4].m, '지연 확정 2건 · 후보 계산 313건', 'D3: 사업 번호가 있는 사업만(옛 315건 = 2 + 확인 필요 후보 313) — 2026-10-15 두 숫자를 같은 크기로');
   assert.ok(d.every((x) => !/사업$/.test(x.u)));
   const board = read('components/board/Board.tsx');
   assert.match(board, /\{f\(upProj\)\}건<\/span>/);

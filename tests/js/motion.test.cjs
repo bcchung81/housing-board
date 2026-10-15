@@ -28,14 +28,13 @@ test('모든 등장 동작은 움직임 줄이기가 아닐 때만 걸린다(미
   assert.doesNotMatch(body, /\b(width|height|top|left|margin|padding):/, '레이아웃 속성을 움직이지 않는다(transform·opacity·clip-path 만)');
 });
 
-test('리본 연출: 서버 렌더부터 쓸기(sweep) → 시간 여행(travel, 2025.01→NOW) → 착지(landed) → 끝. 움직임 줄이기면 건너뛰고, 누르거나 키·휠을 쓰면 바로 끝내고 NOW 로 둔다', () => {
-  assert.match(board, /useState<'sweep' \| 'travel' \| 'landed' \| ''>\('sweep'\)/);
+test('리본 연출: 서버 렌더부터 쓸기(sweep) → 착지(landed) → 끝, 기준 시점은 처음부터 NOW(지난 달을 훑지 않는다 — 2026-10-15 평가). 움직임 줄이기면 건너뛰고, 누르거나 키·휠을 쓰면 바로 끝낸다', () => {
+  assert.match(board, /useState<'sweep' \| 'landed' \| ''>\('sweep'\)/);
   assert.match(board, /if \(window\.matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches\) \{ setIntro\(''\); return; \}/);
   assert.match(board, /const EV = \['pointerdown', 'keydown', 'wheel'\] as const/);
-  assert.match(board, /function skip\(\) \{ end\(\); setCursor\(NOW\); \}/);
-  assert.match(board, /setIntro\('sweep'\); setCursor\(0\);/);
-  assert.match(board, /const m = Math\.min\(NOW, Math\.floor\(\(t - t1\) \/ 60\) \+ 1\);/, '경과 시간으로 달을 정한다(타이머가 늦춰지는 탭에서도 같은 시간에 끝난다)');
-  assert.match(board, /if \(m >= NOW\) \{ setIntro\('landed'\);/);
+  assert.match(board, /const \[cursor, setCursor\] = useState\(NOW\);/);
+  assert.doesNotMatch(board, /setCursor\(0\)|'travel'/, '연출이 기준 시점을 지난 달로 옮기지 않는다');
+  assert.match(board, /setIntro\('landed'\);/);
   assert.match(board, /return end;/, '화면을 떠나면 타이머·듣기를 정리한다');
   assert.match(board, /data-intro=\{intro \|\| undefined\}/);
   assert.match(board, /className="rb-cur"/);

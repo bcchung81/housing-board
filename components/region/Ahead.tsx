@@ -24,6 +24,9 @@ type Props = { sido: string; regionName: string; months: string[]; nowM: string;
 
 const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
 const WAVE_H = 260, LIST_N = 8;
+/* 앞으로 12개월 패널 제목(app/(dashboard)/region/page.tsx 의 PanelHead id="ahead-title") — '보기' 뒤 초점 자리. 'use client' 파일의 값은 서버 화면이 가져다 쓸 수 없어 글자로 둔다 */
+const AHEAD_TITLE_ID = 'ahead-title';
+let focusScopeAfterPick = false;   // 다음에 붙는 Ahead 가 제목으로 초점을 옮길지(시군구 '보기' 직후 한 번)
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 const man = (v: number) => (v === 0 ? '0' : v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
 const niceMax = (v: number) => { if (v <= 0) return 1; const p = 10 ** Math.floor(Math.log10(v)); for (const m of [1, 2, 2.5, 5, 10]) if (v <= m * p) return m * p; return 10 * p; };
@@ -51,6 +54,16 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
   const [sgg, setSgg] = React.useState<string | null>(initialSgg);   // 지도에서 고른 시군구(면 코드)
   const [draft, setDraft] = React.useState(initialSgg ?? '');         // 목록(select)에서 고르는 중인 값 — '보기'·Enter 로 이동
   React.useEffect(() => { setDraft(sgg ?? ''); }, [sgg]);
+  /* '보기'로 시군구를 바꾸면 화면이 새 범위로 다시 그려져(key 가 바뀌어 이 부품이 새로 붙는다) 초점이 BODY 로 빠진다 → 새로 붙은 뒤 결과 영역 제목(앞으로 12개월 h2)으로 */
+  React.useEffect(() => {
+    if (!focusScopeAfterPick) return;
+    focusScopeAfterPick = false;
+    const h = document.getElementById(AHEAD_TITLE_ID);
+    if (!h) return;
+    h.tabIndex = -1;
+    h.focus({ preventScroll: true });
+    h.scrollIntoView({ block: 'nearest' });
+  }, []);
   const [hud, setHud] = React.useState<{ e: AheadEntry; withLoc: boolean } | null>(null);
   const hudRef = React.useRef<HTMLDivElement>(null);
   const waveRef = React.useRef<HTMLDivElement>(null);
@@ -76,8 +89,9 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
     window.history.replaceState(null, '', `?${q.toString()}${window.location.hash}`);
   };
   const router = useRouter();
-  const pickSgg = (c: string | null) => {
+  const pickSgg = (c: string | null, focusAfter = false) => {
     setSgg(c);
+    focusScopeAfterPick = focusAfter;
     const q = new URLSearchParams(window.location.search);
     if (c) q.set('sgg', c); else q.delete('sgg');
     const t = q.toString();
@@ -205,7 +219,7 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
     const units = sggUnits(map, sido, SGG_TABLE), cur = units.find((u) => u.code && u.code === sgg);
     sggBar = (
       <div className="flex min-h-[30px] flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
-        <form data-slot="sgg-pick" className="flex items-center gap-1.5" onSubmit={(ev) => { ev.preventDefault(); if (draft !== (cur?.code ?? '')) pickSgg(draft || null); }}>
+        <form data-slot="sgg-pick" className="flex items-center gap-1.5" onSubmit={(ev) => { ev.preventDefault(); if (draft !== (cur?.code ?? '')) pickSgg(draft || null, true); }}>
         <select aria-label="시군구 고르기('보기' 또는 Enter 로 이 시군구로 거름)" value={draft} onChange={(ev) => setDraft(ev.target.value)}
           onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.currentTarget.form?.requestSubmit(); } }}
           className="h-[30px] max-w-[11rem] cursor-pointer rounded-[8px] border border-border bg-card px-2 text-[14px] text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">

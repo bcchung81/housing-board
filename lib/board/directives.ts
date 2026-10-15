@@ -12,6 +12,8 @@ export type Directive = {
   p: string[];
   /* '목록 ›' 연결: 그 숫자를 만든 사업만 거른 목록(사업 화면 쿼리 — lib/board/projects-view.ts parseFilters 규칙). 사업 목록으로 거를 수 없는 숫자는 가장 가까운 목록으로 보내고 차이를 title 에 */
   list: { href: string; title: string };
+  /* 두 숫자를 같은 크기로 나란히(2026-10-15 사용자 결정 — 일정 지연 관리: 확정 · 후보 계산). 있으면 sub 대신 이 값을 보이고, 두 숫자가 각각 자기 목록으로 이어진다(앞 숫자 = list) */
+  pair?: { pre: string; big: string; u: string; list: { href: string; title: string } };
 };
 const val = (pre: string | undefined, big: string, u: string) => ({ pre, big, u, m: `${pre ? pre + ' ' : ''}${big}${u}` });
 export type DirectiveInput = {
@@ -55,9 +57,19 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start, b
       p: ['p-trend', 'p-agency'], list: neck ? { href: `/projects?sido=all&stage=${neck.i}&status=late`, title: `목록: 병목 단계(${K[neck.i]})의 지연(장기 포함) 사업 — 목록 머리의 계획 호수 = 카드 숫자` } : { href: '/projects?sido=all&status=late', title: '목록: 지연(장기 포함) 사업(병목 없음)' } },
     { date: '09.04', t: '예측가능성', ...val('준공 예정', f(upSum), '호'), basis: `${L_(L)} · 향후 12개월(${ymDot(L.upcoming[0].ym)}~${ymDot(L.upcoming[L.upcoming.length - 1].ym)}) 준공 예정 호수 합`,
       p: ['p-fut'], list: { href: '/region?sido=all&kind=COMPLETION', title: `목록: 지역 공급의 준공 예정(전국, 같은 12개월) — 사업 목록에는 '앞으로 12개월' 거르기가 없어 같은 범위·같은 값인 지역 공급 목록으로` } },
-    { date: '09.18', t: '일정 지연 관리', ...val('지연', f(L.judgment.delay.projects), '건'), sub: { text: `주의 ${f(L.judgment.caution.projects)}`, tone: 'warn' }, basis: `${L_(L)} · ${ledgerJudged(L)} 중 지연·주의${L.judgment.candidate ? ` · ${CAND_TEXT}: ${candText(L.judgment.candidate)}건(지연·주의에 넣지 않음)` : ''}`,
-      p: ['p-trend'], list: { href: '/projects?sido=all&status=late', title: `목록: 지연(장기 포함) 사업(전국) ${f(L.judgment.delay.projects)}건 — 카드 숫자와 같음 · 주의 ${f(L.judgment.caution.projects)}건은 '점검 필요' 거르기` } },
+    lateCard(L),
     { date: '09.30', t: '국민 공개·공식 원천', ...val('원천', f(sourceCount), '곳'), basis: '원천 카탈로그(data/board/sources.json)에 등록된 원천 수',
       p: ['p-flow'], list: { href: '/sources', title: '목록: 데이터 원본(원천 카탈로그) — 사업이 아니라 원천 목록' } },
   ];
+}
+
+/* 일정 지연 관리: 지연 확정(번호 있는 사업) · 후보 계산(번호 없는 후보를 같은 규칙으로 계산한 지연)을 같은 크기로(2026-10-15 사용자 결정). 후보 집계가 없는 옛 집계는 지연 · 주의 */
+function lateCard(L: LedgerBoard): Directive {
+  const J = L.judgment, c = J.candidate, n = f(J.delay.projects);
+  const base = { date: '09.18', t: '일정 지연 관리', basis: `${L_(L)} · ${ledgerJudged(L)} 중 지연·주의${c ? ` · ${CAND_TEXT}: ${candText(c)}건(지연·주의에 넣지 않음)` : ''}`, p: ['p-trend'],
+    list: { href: '/projects?sido=all&status=late', title: `목록: 지연(장기 포함) 사업(전국) ${n}건 — 카드 숫자와 같음 · 주의 ${f(J.caution.projects)}건은 '점검 필요' 거르기` } };
+  if (!c) return { ...base, ...val('지연', n, '건'), sub: { text: `주의 ${f(J.caution.projects)}`, tone: 'warn' } };
+  const cn = f(c.delay.projects);
+  return { ...base, ...val('확정', n, '건'), m: `지연 확정 ${n}건 · 후보 계산 ${cn}건`,
+    pair: { pre: '후보 계산', big: cn, u: '건', list: { href: '/projects?sido=all&status=review', title: `목록: ${CAND_TEXT} 사업(전국) ${f(c.ok.projects + c.caution.projects + c.delay.projects)}건 — 이 중 같은 규칙으로 계산하면 지연 ${cn}건 · 사업 번호가 없어 지연 확정에 넣지 않음` } } };
 }

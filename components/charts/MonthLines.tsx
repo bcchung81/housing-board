@@ -1,6 +1,7 @@
-/* 월별 선 그래프(서버가 SVG 로 그린다). 월마다 /month 로 가는 링크 칸이 있고 키보드로도 닿는다. 값이 없는 달(null)은 선을 끊는다. 잠정치 구간은 빗금.
+/* 월별 선 그래프(서버가 SVG 로 그린다). 월마다 /month 로 가는 링크 칸이 있고 키보드로도 닿는다 — Tab 은 마지막 달 한 번, 그 안에서 ←→·Home·End(RovingKeys). 값이 없는 달(null)은 선을 끊는다. 잠정치 구간은 빗금.
    board = 종합상황판용: 세로축 숫자를 만 단위('20만')로, 그래프가 카드의 남는 높이를 채운다(다른 화면은 쓰지 않는다). */
 import ChartFrame from './ChartFrame';
+import RovingKeys from './RovingKeys';
 import { ymDot } from '../../lib/board/calc';
 
 export type Line = { key: string; label: string; color: string; values: (number | null)[] };
@@ -16,7 +17,7 @@ export default function MonthLines({ months, lines, provisional, href, label, bo
   const prov = months.map((m, i) => (provisional.includes(m) ? i : -1)).filter((i) => i >= 0);
   return (
     <ChartFrame months={months} ticks={[1, 0.75, 0.5, 0.25, 0].map(f => Math.round(top * f))} fmt={board ? man : undefined} fill={board}>
-    <div className={board ? 'relative min-h-[240px] flex-1' : 'relative'}>
+    <RovingKeys className={board ? 'relative min-h-[240px] flex-1' : 'relative'}>
     {/* 잠정치 빗금: SVG 무늬는 가로로만 늘어나는 그래프(preserveAspectRatio none)에서 기울기·굵기가 틀어져 흐려진다 → 그래프 뒤 HTML 띠(45°, 계획서 14절 T3) */}
     {prov.length > 0 ? <div data-slot="chart-prov" aria-hidden="true" className="pointer-events-none absolute inset-y-0 [background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_22%,transparent)_0_2px,transparent_2px_8px)]" style={{ left: `${(L + step * prov[0]) / W * 100}%`, width: `${step * prov.length / W * 100}%` }} /> : null}
     <svg preserveAspectRatio="none" className={board ? 'absolute inset-0 block size-full overflow-visible' : 'relative block h-[240px] w-full overflow-visible'} viewBox={`0 0 ${W} ${H}`} role="img" aria-label={label}>
@@ -30,13 +31,13 @@ export default function MonthLines({ months, lines, provisional, href, label, bo
       )))}
       </g>
       {months.map((m, i) => (
-        <a key={m} href={href(m)} className="cursor-pointer focus-visible:outline-none [&:hover_rect:first-of-type]:fill-foreground/10 [&:focus-visible_rect:first-of-type]:fill-foreground/10">
+        <a key={m} href={href(m)} data-roving tabIndex={i === months.length - 1 ? 0 : -1} className="cursor-pointer focus-visible:outline-none [&:hover_rect:first-of-type]:fill-foreground/10 [&:focus-visible_rect:first-of-type]:fill-foreground/10">
           <title>{`${ymDot(m)}${provisional.includes(m) ? ' (잠정)' : ''} — ` + lines.map((l) => `${l.label} ${l.values[i] === null ? '알 수 없음' : l.values[i]!.toLocaleString('en-US') + '호'}`).join(' · ')}</title>
           <rect x={L + step * i} y={T} width={step} height={H - T - B} fill="transparent" />
         </a>
       ))}
     </svg>
-    </div>
+    </RovingKeys>
     </ChartFrame>
   );
 }

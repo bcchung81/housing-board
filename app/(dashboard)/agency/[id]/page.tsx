@@ -51,7 +51,8 @@ export default async function AgencyDetail({ params }: Props) {
     const files = group ? sources.items.filter((s) => s.group === group) : [];
     const ghRows = a.id === 'gh' ? listOrder((await getProjectsIndex()).rows.filter((r) => r.agency === 'gh')) : [];   // 원장의 GH 사업(종합상황판 기관 칩의 GH 와 같은 기준) · 사업 목록과 같은 순서
     /* 표는 사업 목록과 같은 열·칸(①~⑥ 단계 색 알약·상태·현재 예정) — 행을 누르면 사업 화면 서랍(/projects?sido=all&agency=gh&id=…) */
-    const ghGridRows = listRows(ghRows, { agency: 'gh' }, null, (c) => sidoName(molit, c));
+    /* 상태 칸은 '판정 밖': 머리 경고문대로 이 화면은 기관 신호(정상·주의·지연)를 판정하지 않는다(사업 화면의 판정은 서랍·사업 화면에서) — 2026-10-15 평가 */
+    const ghGridRows = listRows(ghRows, { agency: 'gh' }, null, (c) => sidoName(molit, c)).map((row) => ({ ...row, c: { ...row.c, status: { text: '판정 밖', muted: true, title: '기관별 신호는 일정(당초·변경·현재 예정)이 없어 이 화면에서 판정하지 않음 — 사업 판정은 행을 눌러 사업 상세에서' } } }));
     const ghGrid = dropBlank(LIST_COLS, ghGridRows);
     return (
       <Page>

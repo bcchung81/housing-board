@@ -53,7 +53,8 @@ function CellView({ v, col }: { v: Cell; col: Col }) {
   const inner = (
     <>
       {mark ?? (o?.dashed ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-[1.5px] border-dashed border-line2 align-[-1px]" aria-hidden="true" /> : o?.swatch ? <Swatch color={o.swatch} /> : null)}
-      {o?.pill ? <span className="inline-block rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: `color-mix(in srgb,${o.pill.color} 16%,var(--card))`, color: o.pill.ink }}>{body}</span> : toned}
+      {/* 알약 글자는 단계 글자색을 본문색 쪽으로 20% 당겨 알약 바탕 위 4.5:1 이상(밝은 테마 ② 인허가 3.9 → 5.2, 2026-10-15 평가) */}
+      {o?.pill ? <span className="inline-block rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: `color-mix(in srgb,${o.pill.color} 16%,var(--card))`, color: `color-mix(in srgb,${o.pill.ink} 80%,var(--foreground))` }}>{body}</span> : toned}
       {o?.tag ? <span className="ml-1.5 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] font-normal whitespace-nowrap text-muted-foreground">{o.tag}</span> : null}
       {o?.prov ? <Prov /> : null}
     </>

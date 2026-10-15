@@ -117,7 +117,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
       </ChipBar>
 
       <Card render={<section aria-label="앞으로 12개월" />}>
-        <PanelHead title={<>{isDefaultKinds(kinds) ? AHEAD_COMPLETION : kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}
+        <PanelHead id="ahead-title" title={<>{isDefaultKinds(kinds) ? AHEAD_COMPLETION : kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}
           scope={<ScopeChip scope={scopeName} source="사업 원장" title={sgg ? `${name} 중 ${sggName}만(구가 있는 시는 구를 합침) — 달별 막대·목록·합계·종류 칩 건수가 이 범위 · ×를 누르면 ${name}(으)로` : `사업 원장 현재 예정 · ${name}`} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} />}>
           <InfoTip label="앞으로 12개월 읽는 법">
             <dl>

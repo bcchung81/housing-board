@@ -37,6 +37,8 @@ export function DrawerHead({ d }: { d: Drawer }) {
   const r = d.row, pol = d.policies.filter((x) => r.policies.includes(x.key)), fixed = r.link === 'CONFIRMED';
   return (
     <>
+      {/* 제목은 지도와 같은 짧은 이름(d.label), 원장 사업 이름은 부제(2026-10-15 평가: 지도 '고양창릉 A4' ↔ 서랍 '…A-4BL 아파트 건설공사 1공구') */}
+      {d.label && d.label !== r.name ? <span data-slot="drawer-full" className="basis-full text-[14px] text-muted-foreground" title="사업 원장 이름">{r.name}</span> : null}
       <span className="flex flex-wrap items-center gap-1.5">
         {r.programs.map((g) => <Badge key={g} title="프로그램">{g}</Badge>)}
         {pol.map((x) => <Badge key={x.key} title={`${x.name} · 정책 연결: ${fixed ? '담당자가 확정함' : '담당자가 아직 확정하지 않은 제안(해제된 연결은 빠짐)'}`}>{policyLabel(x)}</Badge>)}
@@ -105,7 +107,7 @@ export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: 
       <details className="group rounded-[12px] border border-border bg-card">
         <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-0.5 rounded-[12px] px-4 py-2.5 text-[15px] font-bold hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
           <ChevronRight className="size-4 flex-none text-muted-foreground transition-transform group-open:rotate-90" aria-hidden="true" />근거
-          <span className="font-normal text-muted-foreground">출처 {x.refs.length}곳{edition ? ` · 자료 기준 ${edition[1]}.${edition[2]}.${edition[3]}` : ''}</span>
+          <span className="font-normal text-muted-foreground">출처 {x.refs.length}곳{edition ? <span title={`HOME 자료를 받은 날 — 화면의 '자료 기준'(원장 기준일 ${dayText(d.referenceDate)})과 다른 날짜`}>{` · HOME 자료 ${edition[1]}.${edition[2]}.${edition[3]} 받음`}</span> : ''}</span>
         </summary>
         <div className="border-t border-border px-4 py-3">
           <Dl className="text-[14px]">

@@ -269,7 +269,9 @@ export default async function ProjectsPage({ searchParams }: Props) {
         </PanelHead>
         {list.length ? (
           <>
-            <p className={cn(sub, 'm-0 mb-1')}>점검 필요 순 · 행을 누르면 상세{list.length > issued ? ` · ${CAND_NAME} ${fmt(list.length - issued)}건은 간단 보기 · 목록 뒤쪽` : ''}</p>
+            <p className={cn(sub, 'm-0 mb-1')}>점검 필요 순 · 행을 누르면 상세{list.length > issued ? ` · ${CAND_NAME} ${fmt(list.length - issued)}건은 간단 보기 · 목록 뒤쪽` : ''}
+              {/* ③착공 목록은 종합상황판 '진척 관리' 착공(통계누리 누계)에서 오는 목록 — 숫자 차이를 툴팁이 아닌 보이는 글로(2026-10-15 평가) */}
+              {f.stage === 2 ? <span data-slot="start-basis" title="종합상황판 '진척 관리'의 착공 호수는 통계누리 주택건설실적(전국 착공 누계)이고, 이 목록은 사업 원장에서 지금 ③착공 단계인 사업이라 건수·호수가 다릅니다"> · 목록은 사업 원장 기준(통계누리 착공 통계와 범위 다름)</span> : null}</p>
             <DataGrid label="사업 목록" maxHeight={640} cols={grid.cols} rows={gridRows} quietCount />
           </>
         ) : (
@@ -286,7 +288,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <Candidate row={cand.row} sggName={sggLabel(cand.row.sggName, sidoName(molit, sidoOf(cand.row)))} sources={cand.sources} stageHref={stageHref} />
         </Drawer>
       ) : (
-        <Drawer id={drawer ? id : null} canonical={sel} closeHref={listHref(f)} title={drawer ? (drawer.kind === 'detail' ? drawer.row.name : drawer.project.name) : null} head={drawer ? <DrawerHead d={drawer} /> : null}
+        <Drawer id={drawer ? id : null} canonical={sel} closeHref={listHref(f)} title={drawer ? (drawer.kind === 'detail' ? drawer.label ?? drawer.row.name : drawer.project.name) : null} head={drawer ? <DrawerHead d={drawer} /> : null}
           back={f.from === 'map' && sel ? { href: mapHref({ project: sel }), label: '지도로 돌아가기', title: '지도에서 이 사업 위치로 돌아가기' } : null}>
           {drawer ? <ProjectDetail d={drawer} stageHref={stageHref} /> : null}
         </Drawer>

@@ -80,7 +80,8 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   dir.forEach((d, i) => { assert.ok(d.basis.length > 10, `표지 title ${i}`); });
   const yoy = (cum - cumLy) / cumLy * 100;
   /* 카드 아랫줄 = 앞말(pre) + 큰 숫자(big) + 단위(u): 문자열을 자르지 않고 나눈 필드로 그린다. m 은 셋을 이은 읽기용 한 줄 */
-  for (const d of dir) assert.equal(d.m, `${d.pre ? d.pre + ' ' : ''}${d.big}${d.u}`);
+  /* 두 숫자 카드(pair — 일정 지연 관리: 확정 · 후보 계산, 2026-10-15 결정)는 '지연 ' + 두 값을 ' · '로 이은 줄 */
+  for (const d of dir) assert.equal(d.m, d.pair ? `지연 ${d.pre} ${d.big}${d.u} · ${d.pair.pre} ${d.pair.big}${d.pair.u}` : `${d.pre ? d.pre + ' ' : ''}${d.big}${d.u}`);
   assert.deepEqual([dir[0].pre, dir[0].big, dir[0].u], ['착공', S.f(cum), '호']);
   assert.equal(dir[0].sub.text, `${yoy >= 0 ? '▲' : '▼'}${Math.abs(yoy).toFixed(1)}%`);
   assert.match(dir[0].basis, /달성률은 내지 못합니다/);
@@ -97,8 +98,12 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   const bk = L.delayByStage.indexOf(Math.max(...L.delayByStage));
   assert.deepEqual([dir[2].pre, dir[2].big, dir[2].u], [`병목 ${S.K[bk]}`, S.f(L.delayByStage[bk]), '호']);
   assert.deepEqual([dir[3].pre, dir[3].big, dir[3].u], ['준공 예정', S.f(L.upcoming.reduce((n, m) => n + m.units, 0)), '호']);
-  assert.deepEqual([dir[4].pre, dir[4].big, dir[4].u], ['지연', S.f(L.judgment.delay.projects), '건']);
-  assert.deepEqual(dir[4].sub, { text: `주의 ${S.f(L.judgment.caution.projects)}`, tone: 'warn' });
+  /* 일정 지연 관리(2026-10-15 결정): 확정 · 후보 계산을 같은 크기로 — 후보 집계가 없으면 옛 지연 · 주의 */
+  assert.deepEqual([dir[4].pre, dir[4].big, dir[4].u], ['확정', S.f(L.judgment.delay.projects), '건']);
+  assert.deepEqual([dir[4].pair.pre, dir[4].pair.big, dir[4].pair.u], ['후보 계산', S.f(L.judgment.candidate.delay.projects), '건']);
+  const old = makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: { ...L, judgment: { ...L.judgment, candidate: undefined } }, start, bottleneck: BN })[4];
+  assert.deepEqual([old.pre, old.big, old.u, old.pair], ['지연', S.f(L.judgment.delay.projects), '건', undefined]);
+  assert.deepEqual(old.sub, { text: `주의 ${S.f(L.judgment.caution.projects)}`, tone: 'warn' });
   assert.equal(makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start, bottleneck: BN })[5].m, '원천 19곳');
   assert.equal(makeDirectives({ sourceCount: 14, stageNames: S.K, ledger: L, start: { ...start, cum: null }, bottleneck: BN })[0].sub, undefined, '누계가 없으면 증감을 내지 않는다');
   const codes = require('../../data/board/molit.json').sido.map((s) => s.code);

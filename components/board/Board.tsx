@@ -12,7 +12,7 @@ import {
   C, CIR, K, PX0, RCOL, REGION_POS, RLAB, VW,
   SCOPE_TAG, addedMarks, apart, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, scopeChangeOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '../../lib/board/sample';
-import { CAND_TEXT, candText, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf } from '../../lib/board/directives';
+import { CAND_TEXT, candText, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf, type Directive } from '../../lib/board/directives';
 import { AHEAD_COMPLETION, AGENCY_NAME, bottleneckOf } from '../../lib/board/projects-view';
 import { dotDates } from '../../lib/grid/spec';
 import type { LedgerBoard } from '../../lib/board/types';
@@ -49,6 +49,18 @@ const hoverBg = 'not-aria-pressed:hover:bg-pn2';
 const tipRow = 'flex items-center justify-between gap-1.5';
 const tipRowKey = 'flex items-center gap-1.5';
 
+/* 지시 카드 값 줄 */
+const dirRow = 'flex min-w-0 flex-wrap items-baseline gap-x-[min(6px,3cqi)] leading-[1.2] whitespace-nowrap';
+const pairNum = 'rounded-[4px] text-foreground no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
+/* 두 숫자 카드의 값 줄: 앞말 + 숫자 + 단위 둘을 같은 크기로(link = 각 숫자를 자기 목록 링크로) */
+function pairVals(x: Directive, link: boolean) {
+  const one = (pre: string, big: string, u: string, l: { href: string; title: string }, k: string) => {
+    const body = <><span className="text-[min(13px,7cqi)] font-bold text-ink2">{pre}</span> <span data-big className={cn(disp, 'font-normal text-[min(24px,11cqi)] leading-[1.15] underline decoration-muted-foreground decoration-dotted decoration-1 underline-offset-[3px]')}>{big}<span className="text-[min(15px,7cqi)]">{u}</span></span></>;
+    return link ? <Link key={k} href={l.href} title={l.title} aria-label={`${x.t} ${pre} ${big}${u} 목록`} data-slot="board-dir-pair-list" className={cn(pairNum, 'pointer-events-auto hover:[&_[data-big]]:text-primary hover:[&_[data-big]]:decoration-solid')}>{body}</Link> : <span key={k}>{body}</span>;
+  };
+  return <>{one(x.pre ?? '', x.big, x.u, x.list, 'a')}<span className="text-[min(14px,7cqi)] text-muted-foreground" aria-hidden="true">·</span>{one(x.pair!.pre, x.pair!.big, x.pair!.u, x.pair!.list, 'b')}</>;
+}
+
 export default function Board({ real, middle }: { real: BoardReal; middle: ReactNode }) {
   const L = real.ledger;
   /* 시점은 원장 집계에서 읽는다: NOW = 기준 달, LAST = 마지막 시점, T.actual = 실제 날짜가 있는 마지막 달 */
@@ -61,8 +73,9 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const [hl, setHl] = useState(-1);
   const [region, setRegion] = useState('11');   // 시도 코드
   const [tip, setTip] = useState<{ m: number; x: number; y: number } | null>(null);
-  /* 리본 첫 화면 연출 단계(app/tailwind.css 의 [data-intro]): sweep 쓸기 → travel 첫 시점→기준 달(NOW) → landed 착지 → '' 끝. 서버 렌더부터 sweep 이라 첫 화면부터 쓸린다 */
-  const [intro, setIntro] = useState<'sweep' | 'travel' | 'landed' | ''>('sweep');
+  /* 리본 첫 화면 연출 단계(app/tailwind.css 의 [data-intro]): sweep 쓸기 → landed 기준 달(NOW) 표시 → '' 끝. 서버 렌더부터 sweep 이라 첫 화면부터 쓸린다.
+     기준 시점은 처음부터 기준 달(NOW) — 지난 달을 훑는 연출을 하지 않아 숫자가 바뀌지 않는다(2026-10-15 평가: 2026.07 값을 먼저 보였다가 바뀌어 회의실에서 혼란) */
+  const [intro, setIntro] = useState<'sweep' | 'landed' | ''>('sweep');
   const svgRef = useRef<SVGSVGElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
@@ -77,29 +90,19 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const dynSvg = useMemo(() => ribbonDynamic(rib, cursor), [rib, cursor]);
 
   useEffect(() => { setTour(!window.matchMedia('(prefers-reduced-motion: reduce)').matches); }, []);   // 시안: reduce 이면 순환 끔
-  useEffect(() => {   // 리본 첫 화면 연출. 움직임 줄이기면 건너뛰고, 사용자가 누르거나 키·휠을 쓰면 바로 끝내고 기준 시점을 기준 달(NOW)로 둔다(누른 곳의 동작은 그대로 이어진다)
+  useEffect(() => {   // 리본 첫 화면 연출. 움직임 줄이기면 건너뛰고, 사용자가 누르거나 키·휠을 쓰면 바로 끝낸다(누른 곳의 동작은 그대로 이어진다). 기준 시점은 내내 NOW
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) { setIntro(''); return; }
     const EV = ['pointerdown', 'keydown', 'wheel'] as const, opt = { capture: true, passive: true };
     const timers: number[] = [];
-    let raf = 0;
-    const off = () => { for (const ev of EV) window.removeEventListener(ev, skip, opt); };
-    const end = () => { timers.forEach(clearTimeout); cancelAnimationFrame(raf); off(); setIntro(''); };
-    function skip() { end(); setCursor(NOW); }
-    for (const ev of EV) window.addEventListener(ev, skip, opt);
-    setIntro('sweep'); setCursor(0);
-    timers.push(window.setTimeout(() => {   // ② 시간 여행: 한 달에 60ms. 경과 시간으로 달을 정해 타이머가 늦춰지는 탭에서도 같은 시간에 끝난다
-      setIntro('travel');
-      const t1 = performance.now();
-      const step = (t: number) => {
-        const m = Math.min(NOW, Math.floor((t - t1) / 60) + 1);
-        setCursor(m);
-        if (m >= NOW) { setIntro('landed'); timers.push(window.setTimeout(() => { off(); setIntro(''); }, 950)); return; }
-        raf = requestAnimationFrame(step);
-      };
-      raf = requestAnimationFrame(step);
+    const off = () => { for (const ev of EV) window.removeEventListener(ev, end, opt); };
+    function end() { timers.forEach(clearTimeout); off(); setIntro(''); }
+    for (const ev of EV) window.addEventListener(ev, end, opt);
+    setIntro('sweep');
+    timers.push(window.setTimeout(() => {   // 쓸기가 끝나면 기준 달 표시가 한 번 반짝인다(landed)
+      setIntro('landed'); timers.push(window.setTimeout(() => { off(); setIntro(''); }, 950));
     }, 1100));
     return end;
-  }, [NOW]);
+  }, []);
   const run = tour && !hold;
   useEffect(() => {   // 지시 순환: 1 초 틱, 7 초마다 다음 지시. 멈춤 단추·마우스·초점으로 멈추면 틱도 멈춘다(진행 막대가 그 자리에 선다)
     if (!run) return;
@@ -192,18 +195,27 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               <button type="button" data-slot="board-dir" title={`${x.date} 지시 · ${x.t}\n${x.basis}`} style={{ ['--i' as string]: i }} className={cn(btn, 'peer q-rise card-lift group/dir @container relative flex h-20 w-full min-w-0 flex-col justify-center gap-[3px] overflow-hidden rounded-[12px] border border-border bg-card px-3.5 aria-pressed:border-primary aria-pressed:bg-accent', hoverBg)} aria-pressed={i === focus - 1} onClick={() => { setFocus(i + 1); setTour(false); }}
                 aria-label={`${x.date} 지시 ${x.t}${x.tag ? `(${x.tag})` : ''}: ${x.m}${x.sub ? `, ${x.sub.text}` : ''}`}>
                 <span className="block min-w-0 truncate pr-11 text-[min(14px,8.5cqi)] leading-5 whitespace-nowrap text-muted-foreground">{x.t}{x.tag ? <span data-slot="dir-tag" className="text-[min(12px,7.5cqi)]"> · {x.tag}</span> : null}</span>
-                <span className="flex min-w-0 flex-wrap items-baseline gap-x-[min(6px,3cqi)] leading-[1.2] whitespace-nowrap">{/* 값이 칸보다 길면 보조 값이 아랫줄로 내려간다 */}
+                {x.pair ? <span className={cn(dirRow, 'invisible')} aria-hidden="true">{pairVals(x, false)}</span> : (
+                <span className={dirRow}>{/* 값이 칸보다 길면 보조 값이 아랫줄로 내려간다 */}
                   {x.pre ? <span className="text-[min(14px,9cqi)] font-bold text-ink2">{x.pre}</span> : null}
                   <span className={cn(disp, 'font-normal text-[min(26px,12cqi)] leading-[1.15] group-aria-pressed/dir:text-primary')}>{x.big}<span className="text-[min(17px,8cqi)]">{x.u}</span></span>
                   {x.sub ? <span className={cn('text-[min(14px,9cqi)] font-bold', x.sub.tone === 'ok' ? 'text-ok' : x.sub.tone === 'bad' ? 'text-bad' : 'text-warn')}>{x.sub.text}</span> : null}
-                </span>
+                </span>)}
                 <span className="absolute bottom-0 left-0 h-[3px] w-0 bg-primary [transition:width_.9s_linear]" style={{ width: i === focus - 1 && tour ? `${(((tick % 7) + 1) / 7 * 100).toFixed(0)}%` : '0' }} />
               </button>
-              {/* 목록 ›: 카드(단추) 밖 형제 링크라 단추 안에 링크가 겹치지 않는다. 그 숫자를 만든 사업만 거른 목록으로(lib/board/directives.ts list) */}
+              {/* 두 숫자 카드(pair — 지연 확정 · 후보 계산): 두 숫자가 각각 자기 목록으로 가는 링크다. 단추 안에 링크를 넣을 수 없어, 단추와 같은 틀(테두리·여백·세로 가운데)의 겹친 층에
+                  같은 줄을 링크로 다시 놓는다(단추 안 줄은 자리만 잡고 보이지 않음). 겹친 층은 누름을 단추로 흘려보내고 링크만 받는다 */}
+              {x.pair ? (
+                <div data-slot="board-dir-pair" className="pointer-events-none absolute inset-0 z-[1] flex flex-col justify-center gap-[3px] overflow-hidden rounded-[12px] border border-transparent px-3.5 @container transition-[translate] peer-hover:-translate-y-0.5 peer-focus-visible:-translate-y-0.5 motion-reduce:transition-none [.peer[aria-pressed=true]~&_[data-big]]:text-primary">
+                  <span className="invisible block truncate text-[min(14px,8.5cqi)] leading-5" aria-hidden="true">{x.t}</span>
+                  <span className={dirRow}>{pairVals(x, true)}</span>
+                </div>
+              ) : (
               <Link href={x.list.href} title={x.list.title} aria-label={`${x.t} 목록`} data-slot="board-dir-list"
                 className="absolute top-[9px] right-2.5 z-[1] inline-flex items-center gap-px rounded-[4px] text-[13px] leading-5 whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-[color,translate] peer-hover:-translate-y-0.5 hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none">
                 목록<ChevronRight className="size-3.5" aria-hidden="true" />
               </Link>
+              )}
               </div>
             ))}
           </div>
@@ -281,11 +293,13 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                   </div>
                 ))}
               </div>
+              {/* 지연 두 숫자(2026-10-15 사용자 결정): 확정(번호 있는 사업) · 후보 계산(번호 없는 후보를 같은 규칙으로 계산한 지연)을 같은 크기로 나란히, 각 숫자는 자기 목록으로 */}
               {judged && SJ.candidate ? (
-                <div data-slot="board-cand" className="mt-1.5 flex flex-wrap items-baseline gap-x-2 text-[13px] text-muted-foreground tabular-nums" title={`사업 번호가 없는 후보(건축HUB 원천 예정일 기준)는 같은 판정 계산을 하되 지연·주의·정상에 넣지 않고 따로 셉니다 — 이미 준공했는데 대장과 연결되지 않았을 수 있습니다 · ${candText(SJ.candidate)}건`}>
-                  <span className="whitespace-nowrap"><b className="font-bold text-foreground">{CAND_TEXT}</b> {f(SJ.candidate.ok.projects + SJ.candidate.caution.projects + SJ.candidate.delay.projects)}건</span>
-                  <span className="whitespace-nowrap">{candText(SJ.candidate)}</span>
-                  <span className="ml-auto"><PanelLink href="/projects?sido=all&status=review" full={`${CAND_TEXT} 사업 목록(전국)`}>후보 목록</PanelLink></span>
+                <div data-slot="board-cand" className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[14px] text-muted-foreground tabular-nums" title={`사업 번호가 없는 후보(건축HUB 원천 예정일 기준) ${f(SJ.candidate.ok.projects + SJ.candidate.caution.projects + SJ.candidate.delay.projects)}건은 같은 판정 계산을 하되 지연·주의·정상에 넣지 않고 따로 셉니다 — 이미 준공했는데 대장과 연결되지 않았을 수 있습니다 · ${candText(SJ.candidate)}건`}>
+                  <b className="font-bold text-foreground">지연</b>
+                  <PanelLink href="/projects?sido=all&status=late" full={`지연 확정 — 지연(장기 포함) 사업 목록(전국 · 지금 기준) · 사업 번호가 있는 사업`}>확정 <b className={cn(disp, 'text-[20px] leading-none text-bad')}>{f(SJ.delay.projects)}</b>건</PanelLink>
+                  <span aria-hidden="true">·</span>
+                  <PanelLink href="/projects?sido=all&status=review" full={`후보 계산 — ${CAND_TEXT} 사업 목록(전국 · 지금 기준) · 번호 없는 후보를 같은 규칙으로 계산하면 지연 ${f(SJ.candidate.delay.projects)}건`}>후보 계산 <b className={cn(disp, 'text-[20px] leading-none text-foreground')}>{f(SJ.candidate.delay.projects)}</b>건</PanelLink>
                 </div>
               ) : null}
             </div>
