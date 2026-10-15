@@ -102,7 +102,7 @@ test('파이프라인 불변식: 칸마다 지금 이 단계 ≤ 거쳐 간 사�
   assert.match(page, /요약 범위<\/b> \{scopeText\}/);
   /* 범위가 다른 블록에는 표지: 정책 목표 대비(정책 전체 · 호), 단계별 진행(사업 원장), 핵심 질문 첫 칸은 이름에 범위(정책 전체) */
   assert.match(read('components/projects/Summary.tsx'), />정책 전체 · 호</);
-  assert.match(read('components/projects/Summary.tsx'), />사업 원장 · \{scope\}</);
+  assert.match(read('components/projects/Summary.tsx'), />사업 원장 · 이 단계까지 온 사업\(호\) · \{scope\}</);
   const q1 = V.questionsOf(rows, { metro: true }, ctx)[0];
   assert.equal(q1.q, '9·7 대책 목표 대비(정책 전체)');
 });

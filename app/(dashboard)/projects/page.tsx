@@ -104,6 +104,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
       <span className="ml-auto"><ReadHelp /></span>
     </div>
   );
+  /* 인쇄: 첫 칸(정책 전체 ①~⑥)이 이미 그 정책의 단계표라, 펼친 '정책 목표 대비'에서는 같은 정책 행을 뺀다(화면은 그대로) */
+  const cmpLines = print && whole?.stages ? lines.filter((l) => l.policy.key !== (f.policy ? f.policy.key : '97')) : lines;
   const summary = (
     <Card render={<section aria-label="요약" />} className="print:break-inside-avoid">
       {whole ? (
@@ -118,7 +120,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
       <div className="mt-5">
         <Pipeline open={pipe.open} shut={pipe.shut} total={pipe.total} on={f.stage} badges={badges} scope={region} href={(i) => at({ stage: f.stage === i ? undefined : String(i) })} />
       </div>
-      <PolicyCompare lines={lines} title={f.policy ? `${policyLabel(f.policy)} 목표 대비` : '정책 목표 대비'} open={print} href={(key) => at({ policy: key })} />
+      <PolicyCompare lines={cmpLines} title={f.policy ? `${policyLabel(f.policy)} 목표 대비` : '정책 목표 대비'} open={print} href={(key) => at({ policy: key })} />
       <PrintDefs />
     </Card>
   );

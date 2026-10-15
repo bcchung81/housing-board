@@ -50,13 +50,13 @@ export function Questions({ list }: { list: Question[] }) {
         const inner = (
           <>
             <span className={cn('flex min-w-0 items-center gap-1.5 pr-7 text-[14px] text-muted-foreground', x.href && 'group-hover/q:text-primary')}>
-              <span className="truncate">{x.q}</span>
+              <span className="truncate" title={x.q}>{x.q}</span>
             </span>
             {x.stages ? <StageRates cells={x.stages} /> : <>
             <b className={cn('font-display text-[28px] leading-[1.2] font-normal whitespace-nowrap tabular-nums', x.tone === 'bad' && 'text-bad', x.muted && 'text-muted-foreground')} style={x.ink ? { color: x.ink } : undefined}>
               {x.value}{x.unit ? <small className="ml-[3px] font-sans text-[14px] font-normal text-muted-foreground">{x.unit}</small> : null}
             </b>
-            <span className="truncate text-[14px] text-muted-foreground tabular-nums">{x.sub}</span>
+            <span className="truncate text-[14px] text-muted-foreground tabular-nums" title={x.sub}>{x.sub}</span>
             </>}
           </>
         );
@@ -81,7 +81,7 @@ export function Pipeline({ open, shut, total, on, href, badges, scope }: { open:
           <p>사업이 계획부터 입주까지 여섯 단계 중 어디까지 왔는지 셉니다.</p>
           <p>큰 숫자는 이 단계까지 온 사업의 집 수(호)이고, &apos;지금 이 단계&apos;는 지금 바로 그 단계에 있는 사업 수입니다. 칸을 누르면 그 사업만 아래 목록에 남습니다.</p>
         </InfoTip>
-        <Badge title="사업 원장의 사업별 단계 기록으로 센 값(아래 정책 목표 대비는 HOME 정책 진행 자료)">사업 원장 · {scope}</Badge>
+        <Badge title="사업 원장의 사업별 단계 기록으로 센 값(아래 정책 목표 대비는 HOME 정책 진행 자료)">사업 원장 · 이 단계까지 온 사업(호) · {scope}</Badge>
         {badges}
       </div>
       <ol className="m-0 mt-3 grid list-none gap-2 p-0 narrow:grid-cols-3! mobile:grid-cols-2!" style={{ gridTemplateColumns: cols }} aria-label="단계별 진행">

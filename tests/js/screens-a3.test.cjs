@@ -68,7 +68,7 @@ test('H8 정책 목표 대비: 기본 접힘(머리에 핵심 한 줄) · 인쇄
   assert.match(sum, /<details data-fold open=\{open\}/);
   assert.match(sum, /\{lines\.map\(\(l\) => <span key=\{l\.policy\.key\}[^>]*>\{compareHead\(l\)\}<\/span>\)\}/);
   assert.match(sum, /c\.actual > c\.target \? <> <b className="text-ok">\{rateOf\(c\)\.word\}<\/b><\/>/);
-  assert.match(read('app/(dashboard)/projects/page.tsx'), /<PolicyCompare lines=\{lines\} title=\{.+ : '정책 목표 대비'\} open=\{print\}/);
+  assert.match(read('app/(dashboard)/projects/page.tsx'), /<PolicyCompare lines=\{cmpLines\} title=\{.+ : '정책 목표 대비'\} open=\{print\}/);
   /* 칩 메뉴 Esc 가 접힘 영역을 메뉴로 알고 닫지 않게 */
   assert.match(read('components/projects/Drawer.tsx'), /details\[open\]:not\(\[data-fold\]\)/);
   const ctx = { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, sidoName: (c) => c, sggName: (c) => c };

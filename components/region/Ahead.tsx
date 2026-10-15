@@ -13,6 +13,7 @@ import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, dotFocus, inScope, sggUnits, type
 import { mapHref } from '../../lib/board/map-href';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '../../lib/board/metro-overview';
 import MapLink from '../board/MapLink';
+import InfoTip from '../ui/info-tip';
 
 type MapData = { view: [number, number, number, number]; sgg: { s: string; n: string; d: string }[]; districts: { n: string; d: string }[] };
 type Props = { sido: string; regionName: string; months: string[]; nowM: string; list: AheadEntry[]; initialM: string; initialSgg: string | null; map: MapData | null };
@@ -209,6 +210,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
         ) : (
           <span className="flex flex-wrap items-center gap-x-2"><b className="font-bold">{cur.n} ·</b><MapLink href={mapHref({ sgg: cur.code! })} full={`${cur.n} 지도에서 크게 보기`}>지도에서 크게 보기</MapLink></span>
         )) : null}
+        <InfoTip label="지도 보는 법" className="ml-auto"><p>원을 누르면(키보드는 Enter) 그 사업을 지도에서 볼 수 있습니다.</p></InfoTip>
       </div>
     );
     mapEl = (
@@ -254,7 +256,7 @@ export default function Ahead({ sido, regionName, months, nowM, list, initialM, 
             className="absolute top-2 right-2 inline-flex max-w-[70%] items-center gap-1 rounded-[8px] border border-border bg-card px-2.5 py-1 text-[14px] font-bold text-foreground no-underline shadow-[var(--shadow-card)] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             <MapPin className="size-4 flex-none" aria-hidden="true" /><span className="truncate">{sel.name}</span><span className="flex-none font-normal text-muted-foreground">지도에서 보기 ›</span>
           </a>
-        ) : <span className="pointer-events-none absolute top-2 right-3 text-[13px] text-muted-foreground">원을 누르면(키보드는 Enter) 그 사업을 지도에서 볼 수 있음</span>; })()}
+        ) : null; })()}
         <ul className="pointer-events-auto absolute bottom-2 left-3 m-0 flex list-none flex-wrap items-center gap-x-2.5 p-0 text-[13px] text-muted-foreground" aria-label="지도 범례">
           <li className="flex items-center gap-1" title="원 넓이 = 호수(호수 미확인은 가장 작은 원)"><i className="block size-[9px] rounded-full bg-mute" aria-hidden="true" />원 넓이 = 호수</li>
           <li className="flex items-center gap-1" title="정확한 좌표가 없어 시군구 중심(또는 근사 위치)에 둔 사업"><i className="block size-[9px] rounded-full border-[1.5px] border-mute" aria-hidden="true" />대표 위치</li>
