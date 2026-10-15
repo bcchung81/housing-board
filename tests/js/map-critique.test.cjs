@@ -102,7 +102,7 @@ test("정책 표기: 지도 카드의 policyTxt 줄에는 연결 상태('연결 
 test("카드 행 이름: 사업 화면과 같은 '현재 예정'·'상태'(펼친 카드·접힌 카드 줄), 사이드바 모음은 '다가오는 준공·입주'", () => {
   const code = noComments(app);
   assert.match(code, /\['상태', `<b class="jd/);
-  assert.match(code, /\['현재 예정', esc\(lt\.next\)\]/);
+  assert.match(code, /\['현재 예정', `\$\{esc\(lt\.next \|\| lt\.due\)\}/);
   assert.match(code, /t\.next \? `현재 예정 \$\{esc\(t\.next\)\}`/);
   assert.doesNotMatch(code, /\['다음 일정'|\['판정'|`다음 \$\{esc\(t\.next\)\}`/);
   assert.match(html, /<h2 id="h-next">다가오는 준공·입주<\/h2>/);
@@ -201,4 +201,44 @@ test('다듬기 5: 지도 사업 카드 아래에 "사업 정보 보기 ›" 링
 test('다듬기 6: 패널 사업 목록의 이름은 지도 꼬리표와 같은 짧은 이름(b.id), 원래 이름은 title', () => {
   assert.match(app, /<b title="\$\{esc\(projName\(b\) !== b\.label \? `\$\{projName\(b\)\} · \$\{b\.label\}` : projName\(b\)\)\}">\$\{esc\(b\.id\)\} \$\{esc\(b\.kind/);
   assert.match(app, /<span class="ht-h"><b>\$\{esc\(b\.id\)\}<\/b>/, '꼬리표도 b.id');
+});
+
+test('계양 번들: 카드·꼬리표·패널 호수는 원장 계획 호수(A3 538·A17 463·A9 475), 번들 호수는 보조 값', () => {
+  const rd = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, '../../', f), 'utf8'));
+  const dir = 'public/regions/incheon-gyeyang/';
+  const raw = { index: { regions: [] }, entry: {}, region: rd(dir + 'region.json'), projects: rd(dir + 'projects.json'), buildings: rd(dir + 'buildings.json'), home: [rd('data/board/home-map/28245.json')] };
+  const r = R.adaptBundle(raw), by = Object.fromEntries(r.blocks.filter((b) => b.pid).map((b) => [b.pid, b]));
+  for (const [pid, led, bundle] of [['techno-A3', 538, 359], ['techno-A17', 463, 309], ['techno-A9', 475, 317]]) {
+    assert.equal(by[pid].units, led, pid);
+    assert.equal(by[pid].bundleUnits, bundle, pid);
+  }
+  assert.equal(by['techno-A2'].units, 747);
+  assert.equal(by['techno-A2'].bundleUnits, undefined, '같은 값이면 보조 값 없음');
+  assert.match(app, /\$\{b\.bundleUnits \? `<small title=/);
+  // 지도에 그린 단지의 호수 합 = 원장에서 같은 사업을 더한 값
+  const led = new Map(raw.home[0].projects.map((p) => [p.id, p.units]));
+  for (const b of r.blocks) if (b.ledger) assert.equal(b.units, led.get(b.ledger.id) || b.units, b.id);
+  assert.ok(r.home.tally.u > 0);
+});
+
+test('개요 12개월 지표 설명은 실제 범위(준공·입주, 모집은 지역 공급만)로 적는다', () => {
+  const ov = fs.readFileSync(path.join(__dirname, '../../assets/js/overview.js'), 'utf8');
+  assert.doesNotMatch(ov, /지역 공급 화면과 같은 기준/);
+  assert.match(ov, /지역 공급 화면은 모집 예정까지 함께 셉니다/);
+});
+
+test('D1: 정상 판정인데 예정일이 기준일보다 앞서면 상태는 그대로, "예정일 지남" 표지만(현재 예정 줄·준공 임박 표지)', () => {
+  const rd = (f) => JSON.parse(fs.readFileSync(path.join(__dirname, '../../', f), 'utf8'));
+  const dir = 'public/regions/incheon-gyeyang/';
+  const r = R.adaptBundle({ index: { regions: [] }, entry: {}, region: rd(dir + 'region.json'), projects: rd(dir + 'projects.json'), buildings: rd(dir + 'buildings.json'), home: [rd('data/board/home-map/28245.json')] });
+  for (const pid of ['techno-A2', 'techno-A3']) {
+    const b = r.blocks.find((x) => x.pid === pid), t = R.ledgerTexts(b.ledger);
+    assert.equal(t.pastDue, true, pid);
+    assert.equal(t.due, '준공 예정 2026.10.11', pid);
+    assert.equal(b.status, '준공 임박', '상태 값은 바꾸지 않는다(표지 글자만 예정일 지남)');
+  }
+  assert.equal(R.ledgerTexts({ cls: 'ok', referenceDate: '2026-10-13', next: { eventType: 'COMPLETION', planned: '2026-11-30' } }).pastDue, undefined);
+  assert.equal(R.ledgerTexts({ cls: 'delay', referenceDate: '2026-10-13', overdue: { eventType: 'COMPLETION', planned: '2026-01-01', months: 9 } }).pastDue, undefined, '지연은 기존 표지');
+  assert.match(app, /b\.status === '준공 임박' && [^;]*pastDue \? '예정일 지남'/);
+  assert.match(app, /lt && \(lt\.next \|\| lt\.pastDue\) \? \['현재 예정'/);
 });

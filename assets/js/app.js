@@ -44,7 +44,7 @@ settleAll();
 /* 화면에 적는 상태 이름: 종합상황판·사업 화면과 같은 낱말(①계획 ②인허가 ③착공 ④모집 ⑤준공 ⑥입주). 지도 상태(status)는 자료 열쇠라 그대로 두고 글자만 바꾼다.
    사용검사를 마친 단지(입주 단계 = 원장 06 = ⑤준공)는 입주 경과 표지(입주 진행·입주 완료·기존 단지)로 적는다(날짜 없으면 입주 진행) */
 const STATUS_TXT = { '사업화': '계획', '계획': '인허가', '건설 단계': '착공', '준공 임박': '준공 임박', '분양중': '모집 중', '입주 단계': '준공' };
-const stTxt = (b) => (window.Settle && (b.settle || b.status === '입주 단계') ? window.Settle.LABEL[b.settle || 'moving'] : STATUS_TXT[b.status] || b.status);
+const stTxt = (b) => (window.Settle && (b.settle || b.status === '입주 단계') ? window.Settle.LABEL[b.settle || 'moving'] : (b.status === '준공 임박' && window.RegionLoader && b.ledger && window.RegionLoader.ledgerTexts(b.ledger).pastDue ? '예정일 지남' : STATUS_TXT[b.status] || b.status));
 const hasEx = () => BLOCKS.some((b) => b.settle === 'existing');
 const KIND = { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'near', '입주 단계': 'soon', '계획': 'permit', '사업화': 'plan' };   // 종류 = 화면 6단계 색 이름(plan ① permit ② build ③ sale ④ soon ⑤ move ⑥). 준공 임박(near)은 ③ 안의 상태라 ③ 색 + 점무늬, 입주 단계(soon)는 ⑤준공
 const kindOf = (b) => (b.priv ? 'priv' : KIND[b.status]);    // 색·무늬를 정하는 종류. 민간 단지는 상태와 상관없이 회색(priv)
@@ -1015,11 +1015,11 @@ function blockPopup(b, clickX) {
   showCard(`<div class="pc pc-split">
     <div class="pc-h"><b class="pc-t" title="${esc([nm, about].filter(Boolean).join('\n'))}">${linkId ? `<a href="${esc(projHref(linkId))}" style="color:inherit">${esc(nm)}</a>` : esc(nm)}</b>${sub ? `<span class="pc-sub">${esc(sub)}</span>` : ''}${chipHtml(KIND[b.status], stTxt(b))}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}${b.approx ? `<span class="pc-chip none" title="${esc(APPROX_TXT)}">근사 위치</span>` : ''}</div>
     <div class="pc-body">
-    <div class="pc-big"><strong>${unitsTxt(b)}</strong>${pidRow ? `<span class="pc-idl"><span class="sr">${pidRow[0]} </span>${pidRow[1]}</span>` : ''}</div>
+    <div class="pc-big"><strong>${unitsTxt(b)}</strong>${b.bundleUnits ? `<small title="3D 상세 자료는 일부 호수(분양분 등)만 담고 있어 원장 계획 호수와 다릅니다">상세 자료 ${fmt(b.bundleUnits)}호</small>` : ''}${pidRow ? `<span class="pc-idl"><span class="sr">${pidRow[0]} </span>${pidRow[1]}</span>` : ''}</div>
     ${b.note ? `<details class="pc-note"><summary title="눌러서 설명 전체 보기">${esc(noteTxt(b.note))}</summary></details>` : ''}
     ${gridHtml([lg && lg.stage ? ['단계', `<span class="stg6"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => `<i class="${x === sn.now ? `on ${sn.k}` : ''}"></i>`).join('')}</span><span title="${esc(sn.now[4])}">${stName(sn.now)}</span>`] : null,
       lt && lt.cls ? ['상태', `<b class="jd ${lg.cls}">${lt.cls}</b>${lt.late ? ` <small${lt.lateTitle ? ` title="${esc(dotDate(lt.lateTitle))}"` : ''}>${esc(lt.late)}</small>` : ''}`] : null,
-      lt && lt.next ? ['현재 예정', esc(lt.next)] : null, ...homeRows(b), b.progress ? ['공정률', `<span title="${esc(dotDate(b.progress.asOf))} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(dotDate(b.moveIn))],
+      lt && (lt.next || lt.pastDue) ? ['현재 예정', `${esc(lt.next || lt.due)}${lt.pastDue ? ' <b class="jd caution" title="예정일이 자료 기준일보다 앞서지만 실적 기록이 아직 없습니다. 상태는 바꾸지 않았습니다">예정일 지남</b>' : ''}`] : null, ...homeRows(b), b.progress ? ['공정률', `<span title="${esc(dotDate(b.progress.asOf))} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(dotDate(b.moveIn))],
       b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`, true] : null])}
     ${sr && sr.level === 'warn' ? `<p class="pc-warn">▲ 학교 개교가 ${esc(sr.detail)}</p>` : ''}
     ${near.length ? `<details class="pc-more pc-near"><summary>주변·시공 <small>${esc(near.map((r) => r[0]).join('·'))}</small></summary>${dlHtml(near)}</details>` : ''}</div>${linkId ? `<a class="pc-open" href="${esc(projHref(linkId))}">사업 정보 보기 ›</a>` : ''}</div>`,
@@ -1080,7 +1080,7 @@ function stopPopup(p, geom, clickX) {
   showCard(`<div class="pc">
     <div class="pc-h"><b>${esc(p.name)}</b>${chipHtml('bus', '버스정류소')}</div>
     ${dlHtml([st && st.no ? ['정류소 번호', esc(st.no)] : null, routes.length ? ['지나는 노선', chips] : null])}
-    <p class="pc-foot">${src ? `출처: ${esc(src.label)}${src.asOf ? ` (${esc(src.asOf)} 받음)` : ''}<br>` : ''}지역 자료를 만들 때 한 번 받은 정보라 이후에 생기거나 바뀐 정류소·노선은 아직 없을 수 있습니다.${routes.some((r) => r.live) ? ' 테두리가 있는 번호 노선은 지도에서 버스 위치를 보여 줍니다.' : ''}</p></div>`,
+    <p class="pc-foot">${src ? `출처: ${esc(src.label)}${src.asOf ? ` (${esc(dotDate(src.asOf))} 받음)` : ''}<br>` : ''}지역 자료를 만들 때 한 번 받은 정보라 이후에 생기거나 바뀐 정류소·노선은 아직 없을 수 있습니다.${routes.some((r) => r.live) ? ' 테두리가 있는 번호 노선은 지도에서 버스 위치를 보여 줍니다.' : ''}</p></div>`,
     [ptRing(geom.coordinates)], 0, clickX);
 }
 function busPopup(p, clickX) {
@@ -1785,7 +1785,7 @@ function buildInfra() {
     return `<li><span class="ihead"><span class="ichip ${esc(m.category)}">${esc(m.category)}</span><b>${esc(m.title)}</b></span>${meta ? `<span class="imeta">${esc(meta)}</span>` : ''}${m.detail ? `<small title="${esc(m.detail)}">${esc(m.detail)}</small>` : ''}<span class="isrc">출처: ${(m.sources || []).map(link).join(' · ')}</span></li>`;
   }).join('');
   $('#infraMeasuresBox').hidden = !measures.length; $('#infraMeasuresN').textContent = `${measures.length}건`;
-  $('#infraSrc').textContent = `기준 ${INFRA.asOf}. 출처: ${(INFRA.sources || []).map((x) => x.label).join(' · ')}. 정류장은 연 1회 수집한 위치 자료이고, 학교 부지는 도시계획시설 결정 자료라 지어졌는지는 알려 주지 않습니다.`;
+  $('#infraSrc').textContent = `기준 ${dotDate(INFRA.asOf)}. 출처: ${(INFRA.sources || []).map((x) => x.label).join(' · ')}. 정류장은 연 1회 수집한 위치 자료이고, 학교 부지는 도시계획시설 결정 자료라 지어졌는지는 알려 주지 않습니다.`;
   $('#secInfra').hidden = false;
 }
 buildInfra();

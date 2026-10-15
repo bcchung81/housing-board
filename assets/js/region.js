@@ -382,7 +382,10 @@
     if (!l) return null;
     const ev = (e) => (e && EVENT_TEXT[e.eventType]) || '';
     const late = l.cls && l.cls !== 'ok' && l.overdue && ev(l.overdue) ? `${ev(l.overdue)} 예정 경과 ${l.overdue.months}개월` : '';
+    /* 판정이 정상인데 예정일이 자료 기준일보다 앞서 있으면(한 달 미만 경과) 상태는 그대로 두고 '예정일 지남' 표지만 붙인다 */
+    const pe = [l.overdue, l.next].find((e) => e && ev(e) && /^\d{4}-\d{2}-\d{2}/.test(e.planned || '')), pastDue = !!(pe && (!l.cls || l.cls === 'ok') && l.referenceDate && String(pe.planned).slice(0, 10) < String(l.referenceDate).slice(0, 10));
     return {
+      ...(pastDue ? { pastDue, due: `${ev(pe)} 예정 ${String(pe.planned).slice(0, 10).replace(/-/g, '.')}` } : {}),
       cls: l.cls ? CLS_TEXT[l.cls] : '', late, lateTitle: late && l.overdue.planned ? `예정일 ${l.overdue.planned}` : '',
       next: l.next && ev(l.next) && ymText(l.next.planned) ? `${ev(l.next)} 예정 ${ymText(l.next.planned)}` : '',
       basis: `${l.origin === 'supabase' ? 'Supabase 원장' : '사업 원장'} ${l.month || ''} 기준`.replace(/\s+/g, ' '), refDate: l.referenceDate || '',
@@ -549,6 +552,10 @@
       const r = matchLedger(b, ix, slug), st = r && STATUS_OF_STAGE[r.stage];
       if (!r) continue;
       if (!b.home) b.home = homeInfo(r);
+      if (finite(r.units) && r.units > 0 && !(b.unitsKnown !== false && b.units === r.units)) {   // 호수는 원장 계획 호수가 기준(번들은 분양분만 셀 수 있다) — 번들 값은 보조 줄로
+        if (b.unitsKnown !== false && b.units > 0) b.bundleUnits = b.units;
+        b.units = r.units; b.unitsKnown = true;
+      }
       if (st && !(r.stage === '04' && b.status === '준공 임박')) b.status = st;
       b.statusBy = 'ledger';
     }

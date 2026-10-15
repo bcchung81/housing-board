@@ -1,6 +1,6 @@
 /* 지도 첫 화면 '수도권 개요'(/map, /map?sido=11|28|41)의 값(순수 함수 — 파일을 읽지 않는다. Node 시험이 그대로 부른다: tests/js/map-overview.test.cjs).
    - 면: data/board/region-map.json 의 시군구 67곳(서울 25 · 인천 11 · 경기 31 — 경기는 시 단위). 경로(투영 정수)는 그대로 넘기고 지도 쪽(assets/js/overview.js)이 경위도 GeoJSON 으로 되돌린다.
-   - 값: 사업 화면(/projects)과 같은 목록 행(getProjectsIndex → rowsOf)과 지역 공급(/region)과 같은 앞으로 12개월 예정(region-calendar.json)으로 센다.
+   - 값: 사업 화면(/projects)과 같은 목록 행(getProjectsIndex → rowsOf)과 지역 공급(/region)과 같은 앞으로 12개월 예정(region-calendar.json)에서 센다(지역 공급은 모집·준공·입주, 개요는 준공·입주만).
      진행 사업 호수 = 현재 단계가 ①계획~④모집(리본 칸 0~3)인 사업의 계획 호수 합(호수 미확인은 건수로 따로)
      지연 사업 = 사업 화면의 '지연(장기 포함)' = 판정 지연(현재 예정일 경과 6개월 이상, 12개월 이상 장기 지연 포함)
      앞으로 12개월 준공·입주 = 지역 공급의 '앞으로 12개월'에서 준공·입주 예정만(종류마다 사업당 하나 — 한 사업이 둘 다면 두 번, 지역 공급 화면 합계와 같다)
