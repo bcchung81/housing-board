@@ -108,6 +108,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .sum .big{font-family:var(--font-disp);font-size:32px;font-weight:400;line-height:1.05;font-variant-numeric:tabular-nums}
 .sum .unit{margin:0 6px 0 4px;font-size:15px;font-weight:700}
 .sum .cnt{font-size:13px;font-weight:400;color:var(--mute)}
+.sum .cnt+.cnt{display:block}
 .sbar{display:flex;gap:2px;height:10px;overflow:hidden}
 .sbar i{display:block;height:100%}
 .sleg{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13px;color:var(--mute)}
@@ -271,6 +272,7 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .pc-more summary::-webkit-details-marker{display:none}
 .pc-more p{margin:3px 0 0;font-size:11.5px;line-height:1.45;color:var(--mute)}
 .pc-split{width:264px;padding:0;gap:0;overflow:hidden}   /* 사업 카드: 머리(제목·상태) 고정, 창이 낮으면 몸통만 스크롤(fitCard 가 .pc 높이를 줄인다) */
+.pc-split>.pc-open{flex:none;margin:0 11px 8px;font-size:12.5px;color:inherit;text-decoration:underline;text-underline-offset:3px}
 .pc-split>.pc-h{flex:none;padding:9px 11px 6px 11px;padding-right:30px}
 .pc-split>.pc-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding:0 11px 9px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .pc-big .pc-idl{margin-left:auto;font-size:12px}
@@ -743,6 +745,8 @@ html[data-map-shell]:not(.dark){--ov-bg:#EEF2F6;--ov-0:#E3E7EC;--ov-1:#b7d3f6;--
   --ov-ink-0:#172B4D;--ov-ink-1:#0B1A33;--ov-ink-2:#0B1A33;--ov-ink-3:#FFFFFF;--ov-ink-4:#FFFFFF;--ov-ink-5:#FFFFFF}
 .ov{display:none}
 html[data-map-mode="overview"] .shell-map .app{display:none}
+html[data-map-mode="overview"] .skip-detail,html:not([data-map-mode="overview"]) .skip-ov{display:none}
+.mapwrap:focus,.ov-mapwrap:focus{outline:none}
 html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minmax(0,1fr);flex:1;min-height:0;min-width:0;position:relative}
 .ov button{font:inherit;color:inherit}
 .ov :focus-visible,.ov-menu :focus-visible,.crumbs a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
@@ -792,6 +796,10 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .ov-rname small{margin-right:5px;font-size:12px;color:var(--mute)}
 .ov-rv{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ov-rank .zero .ov-rv{font-weight:400;color:var(--mute)}
+.ov-rank .ov-zeros>.ov-zbtn{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--ink2)}
+.ov-rank .ov-zeros>.ov-zbtn:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
+.ov-zlist{list-style:none;margin:0;padding:0}
+.ov-zlist li:last-child{border-bottom:0}
 .ov-rgo svg,.ov-menu svg{width:14px;height:14px;fill:none;stroke:var(--mute);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ov-mapwrap{position:relative;min-width:0;min-height:0;overflow:hidden;background:var(--ov-bg)}
 .ov-map{position:absolute;inset:0}

@@ -81,7 +81,7 @@ function OverviewMarkup() {
           <ol className="ov-rank" id="ovRank" />
         </section>
       </aside>
-      <section className="ov-mapwrap" aria-label="수도권 시군구 지도(같은 내용과 고르기는 시군구 목록에도 있습니다)">
+      <section className="ov-mapwrap" id="ovMapWrap" tabIndex={-1} aria-label="수도권 시군구 지도(같은 내용과 고르기는 시군구 목록에도 있습니다)">
         <div className="ov-map" id="ovMap" />
         <div className="ov-labels" id="ovLabels" aria-hidden="true" />
         <div className="ov-tip" id="ovTip" hidden />

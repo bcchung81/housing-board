@@ -29,6 +29,9 @@ export default function MapLayout({ children }: { children: ReactNode }) {
       </head>
       <body className={`font-sans ${doHyeon.variable} [font-synthesis:none]`}>
         <div className="shell-map flex h-screen flex-col overflow-hidden">
+          {/* 지도로 바로가기: 첫 Tab 에서만 보이는 링크(메뉴·순위 목록을 건너뛴다). 개요·상세 중 보이는 지도 쪽 하나만 남긴다(app.css .skip-*) */}
+          <a href="#ovMapWrap" className="skip-ov sr-only rounded-[8px] bg-primary px-4 py-2 text-[15px] font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">지도로 바로가기</a>
+          <a href="#mapMain" className="skip-detail sr-only rounded-[8px] bg-primary px-4 py-2 text-[15px] font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">지도로 바로가기</a>
           <TopNav compact />
           {children}
         </div>

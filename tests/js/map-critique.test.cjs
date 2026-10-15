@@ -151,3 +151,54 @@ test('사업 카드(2026-10-15): 화면 용어(상태·공정률·호·점 날�
   /* 접힘을 펴면 자리를 다시 맞춘다 */
   assert.match(app, /popup\.getElement\(\)\.addEventListener\('toggle', \(\) => \{ if \(popup !== own\) return; popup\.setOffset\(\[0, 0\]\); fitCard\(\); \}, true\)/);
 });
+
+// ---- 지도 마지막 다듬기(2026-10-15, 디자인 평가 A5 남은 지도 문제 6건) ----
+const ovjs = read('assets/js/overview.js'), layoutMap = read('app/(map)/layout.tsx'), pageMap = read('app/(map)/map/page.tsx');
+
+test('다듬기 1: 수도권 패널 합계는 머리 줄과 같은 값(SUM_TOTAL.main), 지도에 그린 몫은 보조 줄로 이름을 붙인다', () => {
+  const code = noComments(app);
+  assert.match(code, /HOME_T\s*\?\s*`<span class="big">\$\{SUM_TOTAL\.main\}<\/span>/, '패널 큰 숫자 = 머리 줄 합계');
+  assert.match(code, /지도 표시 \$\{BLOCKS\.length\}건 · \$\{fmt\(total\)\}호/, '지도에 그린 몫은 이름표를 단 보조 줄');
+  assert.match(code, /위치 미확보 \$\{REG\.home\.unlocated\.length\}건 제외/);
+  assert.match(css, /\.sum \.cnt\+\.cnt\{display:block\}/);
+});
+
+test('다듬기 2: 사업 꼬리표 위에 놓인 학교 거리·통학구역 연결선 글자는 숨긴다(꼬리표 우선)', () => {
+  const code = noComments(app);
+  assert.match(code, /hideLinkLabelsUnder\(placed\);\s*\}/, 'renderHud 끝에서 놓은 꼬리표 상자로 호출');
+  assert.match(code, /map\.setFilter\(layer, ids\.length \? \(base \? \['all', base, cut\] : cut\) : \(base \|\| null\)\)/);
+  assert.match(code, /\['infra-school-label', 'pts', 'id', 12, 't'\]/, '학교 이름 글자도 같은 규칙');
+  assert.match(code, /for \(const id of \['blk-badge', 'blk-badge-top'\]\) if \(map\.getLayer\(id\)\) map\.moveLayer\(id\);/, '지면 꼬리표를 위 층으로 올려 먼저 자리를 잡는다');
+  // 겹침 판정은 순수 사각형 견주기라 같은 식으로 시험: 꼬리표(0,0,100,40)와 글자 상자
+  const hit = (a, b) => a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b;
+  assert.equal(hit({ l: 90, t: 30, r: 200, b: 60 }, { l: 0, t: 0, r: 100, b: 40 }), true);
+  assert.equal(hit({ l: 110, t: 30, r: 200, b: 60 }, { l: 0, t: 0, r: 100, b: 40 }), false);
+});
+
+test('다듬기 3: 개요 순위는 값이 0인 시군구에 번호를 붙이지 않고 목록 끝 "값 없음 n곳" 묶음(접기·키보드)으로 접는다', () => {
+  assert.match(ovjs, /값 없음 \$\{none\.length\}곳/);
+  assert.match(ovjs, /const hit = D\.ok \? list\.filter\(\(u\) => valOf\(u\.v, S\.metric\) > 0\) : list/);
+  assert.match(ovjs, /rankRow\(u, i, false\)/);
+  assert.match(ovjs, /rankRow\(u, 0, true\)/, '0건 행은 순위 자리 비움');
+  assert.match(ovjs, /<button type="button" class="ov-zbtn" aria-expanded=/, '접기 단추는 button(Enter·Space 로 열림)');
+  assert.match(ovjs, /<ol id="ovZeroList" class="ov-zlist"[^>]*hidden/);
+});
+
+test('다듬기 4: /map 첫 Tab 은 지도로 바로가기(개요·상세 각 지도 영역), 평소엔 숨기고 초점일 때만 보인다', () => {
+  assert.ok(layoutMap.indexOf('지도로 바로가기') < layoutMap.indexOf('<TopNav'), '로고보다 앞');
+  assert.match(layoutMap, /href="#ovMapWrap" className="skip-ov sr-only [^"]*focus:not-sr-only/);
+  assert.match(layoutMap, /href="#mapMain" className="skip-detail sr-only [^"]*focus:not-sr-only/);
+  assert.match(pageMap, /id="ovMapWrap" tabIndex=\{-1\}/);
+  assert.match(html, /<main class="mapwrap" id="mapMain" tabindex="-1">/);
+  assert.match(css, /html\[data-map-mode="overview"\] \.skip-detail,html:not\(\[data-map-mode="overview"\]\) \.skip-ov\{display:none\}/);
+});
+
+test('다듬기 5: 지도 사업 카드 아래에 "사업 정보 보기 ›" 링크(서랍 /projects?id=)', () => {
+  assert.match(app, /<a class="pc-open" href="\$\{esc\(projHref\(linkId\)\)\}">사업 정보 보기 ›<\/a>/);
+  assert.match(css, /\.pc-split>\.pc-open\{flex:none;[^}]*text-decoration:underline/);
+});
+
+test('다듬기 6: 패널 사업 목록의 이름은 지도 꼬리표와 같은 짧은 이름(b.id), 원래 이름은 title', () => {
+  assert.match(app, /<b title="\$\{esc\(projName\(b\) !== b\.label \? `\$\{projName\(b\)\} · \$\{b\.label\}` : projName\(b\)\)\}">\$\{esc\(b\.id\)\} \$\{esc\(b\.kind/);
+  assert.match(app, /<span class="ht-h"><b>\$\{esc\(b\.id\)\}<\/b>/, '꼬리표도 b.id');
+});

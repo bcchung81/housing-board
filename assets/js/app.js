@@ -783,6 +783,7 @@ function setupCustom() {
   }
   if (usingVworld) addOfmLabels();
   // 지형 위 바닥(2D) 선 층을 첫 3D 층(sel-3d) 앞으로 모은다: 3D 층 뒤에 끼면 바닥 그림 묶음이 쪼개져 매 프레임 다시 굽는다(계획서 14.3 ③, 2026-10-10 실측 계양 18회/프레임)
+  for (const id of ['blk-badge', 'blk-badge-top']) if (map.getLayer(id)) map.moveLayer(id);   // 사업 꼬리표가 우선: 학교 거리·이름 글자보다 먼저 자리를 잡는다(renderHud 위 hideLinkLabelsUnder 주석)
   if (map.getLayer('sel-3d')) for (const id of ['official-ao', 'infra-link-zone', 'infra-link-new', 'bus-route-line']) if (map.getLayer(id)) map.moveLayer(id, 'sel-3d');
   if (map.getZoom() >= 14.3) { if (!revealed) whenRevealed(() => { map.once('idle', addOfficialShadows); setTimeout(addOfficialShadows, 5000); }); else addOfficialShadows(); }   // 첫 화면이 뜬 뒤에: 건물이 많은 지역(계양 16,724동)에서 그림자 도형 계산과 두 번째 큰 GeoJSON 타일링이 로딩을 늦춘다. 지형이 오지 않아 idle 이 없어도 5초 뒤에는 붙인다
   applyAll();
@@ -1021,7 +1022,7 @@ function blockPopup(b, clickX) {
       lt && lt.next ? ['현재 예정', esc(lt.next)] : null, ...homeRows(b), b.progress ? ['공정률', `<span title="${esc(dotDate(b.progress.asOf))} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(dotDate(b.moveIn))],
       b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`, true] : null])}
     ${sr && sr.level === 'warn' ? `<p class="pc-warn">▲ 학교 개교가 ${esc(sr.detail)}</p>` : ''}
-    ${near.length ? `<details class="pc-more pc-near"><summary>주변·시공 <small>${esc(near.map((r) => r[0]).join('·'))}</small></summary>${dlHtml(near)}</details>` : ''}</div></div>`,
+    ${near.length ? `<details class="pc-more pc-near"><summary>주변·시공 <small>${esc(near.map((r) => r[0]).join('·'))}</small></summary>${dlHtml(near)}</details>` : ''}</div>${linkId ? `<a class="pc-open" href="${esc(projHref(linkId))}">사업 정보 보기 ›</a>` : ''}</div>`,
     b.dongs ? b.dongs.flatMap((x) => x.poly).concat([b.poly]) : [b.poly], hmax, clickX);
 }
 function officialPopup(p, geom, clickX) {
@@ -1354,11 +1355,14 @@ if (BLOCKS.length) {
   const grp = [...STATUS_ORDER.map((st) => ({ key: KIND[st], label: stLabel(st) })), { key: 'priv', label: '공공택지 민간' }].filter((g) => g.key in by);
   const known = new Set(BLOCKS.filter((b) => b.unitsKnown !== false).map(kindOf));   // 호수를 아는 단지가 하나도 없는 묶음은 0 대신 '호수 미확인'
   const gTxt = (g) => (known.has(g.key) ? fmt(by[g.key]) + '호' : '호수 미확인');
-  $('#sumTotal').innerHTML = `<span class="big">${fmt(total)}</span><span class="unit">호</span> <span class="cnt">사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''}</span>`;
+  /* 수도권(원장): 합계는 머리 줄과 같은 값(원장 진행 사업), 지도에 그린 사업(전 단계)의 몫은 보조 줄. 아래 막대·범례는 지도에 그린 사업 기준 */
+  const mapPart = `지도 표시 ${BLOCKS.length}건 · ${fmt(total)}호${unk ? `(호수 미확인 ${unk}건 제외)` : ''}`;
+  $('#sumTotal').innerHTML = HOME_T
+    ? `<span class="big">${SUM_TOTAL.main}</span><span class="unit">호</span> <span class="cnt">원장 진행 ${HOME_T.n}건${HOME_T.q ? `(호수 미확인 ${HOME_T.q}건 제외)` : ''}</span><span class="cnt">${mapPart}${REG.home.unlocated.length ? ` · 위치 미확보 ${REG.home.unlocated.length}건 제외` : ''}</span>`
+    : `<span class="big">${fmt(total)}</span><span class="unit">호</span> <span class="cnt">사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''}</span>`;
   $('#sumBar').innerHTML = grp.map((g) => `<i style="width:${total ? 100 * by[g.key] / total : 0}%;background:${g.key === 'plan' || g.key === 'permit' ? `repeating-linear-gradient(90deg,var(--${g.key}) 0 4px,var(--bg) 4px 7px)` : COLOR[g.key]}" title="${g.label} ${gTxt(g)}"></i>`).join('');
   $('#sumBar').setAttribute('aria-label', grp.map((g) => `${g.label} ${gTxt(g)}`).join(', '));
   if (!HOME_T) SUM_TOTAL = { main: fmt(total), sub: `공급 예정 사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''}`, n: BLOCKS.length, unk };
-  if (HOME_T && REG.home.unlocated.length) $('#sumTotal').querySelector('.cnt').textContent = `지도 표시 사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''} · 위치 미확보 ${REG.home.unlocated.length}건 제외`;
   if (HAS_INFRA) $('#infraChips').innerHTML = infraChipsHtml();
   $('#sumLeg').innerHTML = grp.map((g) => `<span><i class="sw ${g.key}"></i>${g.label} ${known.has(g.key) ? `${fmt(by[g.key])}호 (${pct(by[g.key], total)})` : '호수 미확인'}</span>`).join('');
   setLegend();
@@ -1370,7 +1374,7 @@ if (BLOCKS.length) {
     const bars = fr ? b.dongs.slice().sort((a, c) => a.no.localeCompare(c.no)).map((d) => `<i title="${esc(d.no)}동 ${d.floors}층" style="height:${Math.round(34 * d.floors / 15)}px;background:${mixTone(k, fr[1] > fr[0] ? (d.floors - fr[0]) / (fr[1] - fr[0]) : 1)}"></i>`).join('') : '';
     const mini = b.progress ? `<span class="mini" style="--c:${COLOR[k]}" title="공정률 ${esc(b.progress.rate)}%"><i style="width:${Math.max(b.progress.rate, 1)}%"></i></span>` : '';
     const more = `<span class="more"><span class="stg">${stageInner(b)}</span>${homeLine(b)}${b.progress ? progressRow(b, k) : ''}${bars ? `<span class="fl" title="동별 층수">${bars}</span>` : ''}${b.builder ? `<span class="bld">시공 ${esc(b.builder)}</span>` : ''}</span>`;
-    return `<li><button type="button" class="card" aria-expanded="false" data-id="${esc(b.id)}"${b.approx ? ` title="${esc(APPROX_TXT)}"` : ''} aria-label="${esc(projName(b))} ${esc(stTxt(b))}, ${esc(sub)}"><i class="sw ${k}"></i><b title="${esc(projName(b) !== b.label ? `${projName(b)} · ${b.label}` : projName(b))}">${esc(projName(b))} ${esc(b.kind.replace('(공공분양)', ''))}</b><span class="st" style="color:${COLOR[k]}">${esc(stTxt(b))}${jdMark(b)}</span><span class="sub">${esc(sub)}</span>${mini}${more}</button></li>`;
+    return `<li><button type="button" class="card" aria-expanded="false" data-id="${esc(b.id)}"${b.approx ? ` title="${esc(APPROX_TXT)}"` : ''} aria-label="${esc(projName(b))} ${esc(stTxt(b))}, ${esc(sub)}"><i class="sw ${k}"></i><b title="${esc(projName(b) !== b.label ? `${projName(b)} · ${b.label}` : projName(b))}">${esc(b.id)} ${esc(b.kind.replace('(공공분양)', ''))}</b><span class="st" style="color:${COLOR[k]}">${esc(stTxt(b))}${jdMark(b)}</span><span class="sub">${esc(sub)}</span>${mini}${more}</button></li>`;
   }).join('') + unlocatedHtml();
 
   /* 펼친 단지 카드의 6단계 띠(원장 단계가 있으면 원장 기준) + 원장 판정·다음 일정 한 줄 */
@@ -2003,6 +2007,34 @@ function renderHud() {
       + `<circle cx="${kx}" cy="${ky}" r="3" fill="${col}" stroke="${T.halo}" stroke-width="1.5"/>`);
   }
   $('#hudSvg').innerHTML = parts.join('');
+  hideLinkLabelsUnder(placed);
+}
+/* 사업 꼬리표가 우선(2026-10-15 계양 겹침): ① 지면 꼬리표(blk-badge*)는 다른 글자보다 위 층으로 올려 먼저 자리를 잡게 한다(확대 땐 겹침 허용이라 아래 층이면 학교 거리 글자가 그 위로 겹쳤다).
+   ② 화면 꼬리표(DOM, 멀리서 보는 HUD) 위에 놓인 학교·연결선 글자(symbol)는 DOM 과 충돌 검사를 못 하므로 글자 상자를 어림(글자당 폭, 줄바꿈 10em)해 견주고, 겹친 것만 필터로 숨긴다.
+   숨길 목록이 바뀔 때만 필터를 다시 건다. [레이어, 원자료 점, 겹침 판정 키(속성 이름), 글자 크기, 기준(c: 점이 가운데, t: 점 아래 1.15em)] */
+const TAG_OVER = HAS_INFRA ? [['infra-link-new-label', 'lpts', 'pid', 11.5, 'c', 'new'], ['infra-link-zone-label', 'lpts', 'pid', 11, 'c', 'zone'], ['infra-school-label', 'pts', 'id', 12, 't'], ['infra-site-label', 'spts', 'id', 12, 't']] : [];
+const TAG_BASE = { 'infra-link-new-label': ['==', ['get', 'kind'], 'new'], 'infra-link-zone-label': ['==', ['get', 'kind'], 'zone'] };
+let tagHidden = '';
+function hideLinkLabelsUnder(tags) {
+  if (!TAG_OVER.length || !map.getLayer(TAG_OVER[0][0])) return;
+  const next = [];
+  for (const [layer, src, key, size, anchor, kind] of TAG_OVER) {
+    const ids = [];
+    if (tags.length) for (const f of INFRA_GJ[src].features) {
+      const pr = f.properties; if (kind && pr.kind !== kind) continue;
+      const text = (pr.level === 'warn' && kind === 'new' ? '▲ ' : '') + String(pr.label || ''), wrap = size * 10;
+      const lines = text.split('\n').flatMap((ln) => { const w = ln.length * size * 0.95; return Array(Math.max(1, Math.ceil(w / wrap))).fill(Math.min(w, wrap)); });
+      const w = Math.max(...lines), h = lines.length * size * 1.25, p = map.project(f.geometry.coordinates), pad = 4, top = anchor === 't' ? p.y + size * 1.15 : p.y - h / 2;
+      const r = { l: p.x - w / 2 - pad, t: top - pad, r: p.x + w / 2 + pad, b: top + h + pad };
+      if (tags.some((e) => r.l < e.r && e.l < r.r && r.t < e.b && e.t < r.b)) ids.push(pr[key]);
+    }
+    next.push([layer, ids]);
+  }
+  const sig = JSON.stringify(next); if (sig === tagHidden) return; tagHidden = sig;
+  for (const [layer, ids] of next) {
+    const base = TAG_BASE[layer], cut = ['!', ['in', ['get', TAG_OVER.find((x) => x[0] === layer)[2]], ['literal', ids]]];
+    map.setFilter(layer, ids.length ? (base ? ['all', base, cut] : cut) : (base || null));
+  }
 }
 $('#hudTags').addEventListener('click', (e) => { const t = e.target.closest('button[data-id]'); if (t) focusBlock(t.dataset.id); });
 map.on('rotate', () => {   // 카메라 방향이 바뀌면 '가까운 쪽'도 바뀌므로 라벨 자리를 다시 잡는다(20도 이상 돌았을 때만)

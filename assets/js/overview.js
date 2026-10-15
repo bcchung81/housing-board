@@ -209,7 +209,10 @@
     defBtn.innerHTML = ICON_I;
     defBtn.addEventListener('click', () => { const open = defBtn.getAttribute('aria-expanded') !== 'true'; defBtn.setAttribute('aria-expanded', String(open)); defP.hidden = !open; });
     $('ovCards').addEventListener('click', (e) => { const b = e.target.closest('button[data-s]'); if (b) setSido(S.sido === b.dataset.s ? '' : b.dataset.s, true); });
-    $('ovRank').addEventListener('click', (e) => { const b = e.target.closest('button[data-c]'); if (b) choose(b.dataset.c, b); });
+    $('ovRank').addEventListener('click', (e) => {
+      const z = e.target.closest('.ov-zbtn');
+      if (z) { const on = z.getAttribute('aria-expanded') !== 'true'; z.setAttribute('aria-expanded', String(on)); z.querySelector('.ov-zc').textContent = on ? '▴' : '▾'; $('ovZeroList').hidden = !on; return; }
+      const b = e.target.closest('button[data-c]'); if (b) choose(b.dataset.c, b); });
     if (!D.ok) { $('ovFail').hidden = false; }
     const handle = $('ovHandle');
     if (handle) handle.addEventListener('click', () => { const full = panel.dataset.sheet !== 'full'; panel.dataset.sheet = full ? 'full' : 'peek'; handle.setAttribute('aria-expanded', String(full)); handle.setAttribute('aria-label', full ? '개요 패널 접기' : '개요 패널 펼치기'); placeLabels(false); });
@@ -229,12 +232,17 @@
         + `<span class="ov-cn">${esc(s.name)}</span><span class="ov-cv">${D.ok && s.v ? `${fmt(valOf(s.v, S.metric))}<small>${m.unit}</small>` : '—'}</span>${D.ok && s.v ? bandHtml(s.v.st) : ''}</button>`).join('');
       const list = rankOf(units, S.metric, S.sido);
       $('ovRankH').textContent = `${S.sido ? SIDO_SHORT[S.sido] : '수도권'} 시군구 ${list.length}곳`;
-      $('ovRank').innerHTML = list.map((u, i) => {
+      const rankRow = (u, i, zero) => {
         const x = valOf(u.v, S.metric), more = u.gu && u.gu.length;
         return `<li><button type="button" data-c="${u.code}"${more ? ' aria-haspopup="dialog"' : ''} class="${x ? '' : 'zero'}" title="${esc(more ? `${u.name}: 구를 골라 상세 지도로` : `${u.name} 상세 지도로`)}">`
-          + `<span class="ov-rn">${D.ok ? i + 1 : ''}</span><span class="ov-rname">${S.sido ? '' : `<small>${SIDO_SHORT[u.s]}</small>`}${esc(u.name)}</span>`
+          + `<span class="ov-rn">${D.ok && !zero ? i + 1 : ''}</span><span class="ov-rname">${S.sido ? '' : `<small>${SIDO_SHORT[u.s]}</small>`}${esc(u.name)}</span>`
           + `<span class="ov-rv">${D.ok ? `${fmt(x)}<small>${m.unit}</small>` : ''}</span><span class="ov-rgo">${more ? ICON_MORE : ''}</span></button></li>`;
-      }).join('');
+      };
+      /* 값이 0인 시군구는 순위를 매기지 않고 목록 끝 '값 없음 n곳' 묶음으로 접는다(누르거나 Enter·Space 로 펼친다) */
+      const hit = D.ok ? list.filter((u) => valOf(u.v, S.metric) > 0) : list, none = D.ok ? list.filter((u) => !(valOf(u.v, S.metric) > 0)) : [];
+      const open = $('ovRank').querySelector('.ov-zeros > button[aria-expanded="true"]') !== null;
+      $('ovRank').innerHTML = hit.map((u, i) => rankRow(u, i, false)).join('')
+        + (none.length ? `<li class="ov-zeros"><button type="button" class="ov-zbtn" aria-expanded="${open}" aria-controls="ovZeroList"><span>값 없음 ${none.length}곳</span><span class="ov-zc" aria-hidden="true">${open ? '▴' : '▾'}</span></button><ol id="ovZeroList" class="ov-zlist"${open ? '' : ' hidden'}>${none.map((u) => rankRow(u, 0, true)).join('')}</ol></li>` : '');
       /* 범례 */
       $('ovLegendT').textContent = `${m.name}(${m.unit})`;
       $('ovLegend').innerHTML = D.ok ? legendOf(ups, '').map((x) => `<li><i class="ov-sw c${x.c}"></i>${esc(x.text)}</li>`).join('') : '';
