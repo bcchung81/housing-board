@@ -14,7 +14,7 @@ import ScopeChip from '../../../components/ui/scope-chip';
 import SkipToList from '../../../components/projects/SkipToList';
 import { Card } from '../../../components/ui/card';
 import { Chip, ChipBar, ChipGroup, ChipMenu, ChipSep, ClearChip } from '../../../components/ui/chips';
-import { mapScopeHref } from '../../../lib/board/map-href';
+import { mapHref, mapScopeHref } from '../../../lib/board/map-href';
 import { METRO_AREAS, SIDO_FULL, guOf } from '../../../lib/board/metro-overview';
 import MapLink from '../../../components/board/MapLink';
 import { DataGrid } from '../../../components/ui/data-grid';
@@ -175,9 +175,12 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <PrintButton className={BTN} />
           <Link href={listHref(f)} className={BTN}>닫기</Link>
         </div>
-        {reportHead}
-        {summary}
-        {report}
+        {/* 인쇄 미리보기: 조작 표지(ⓘ 읽는 법·› 등 data-ctl)를 숨기고 인쇄용 정의(data-print-defs)를 펼친다 — 실제 인쇄(@media print)와 같은 모양 */}
+        <div className="contents [&_[data-ctl]]:hidden! [&_[data-print-defs]]:block!">
+          {reportHead}
+          {summary}
+          {report}
+        </div>
       </Page>
     );
   }
@@ -283,7 +286,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <Candidate row={cand.row} sggName={sggLabel(cand.row.sggName, sidoName(molit, sidoOf(cand.row)))} sources={cand.sources} stageHref={stageHref} />
         </Drawer>
       ) : (
-        <Drawer id={drawer ? id : null} canonical={sel} closeHref={listHref(f)} title={drawer ? (drawer.kind === 'detail' ? drawer.row.name : drawer.project.name) : null} head={drawer ? <DrawerHead d={drawer} /> : null}>
+        <Drawer id={drawer ? id : null} canonical={sel} closeHref={listHref(f)} title={drawer ? (drawer.kind === 'detail' ? drawer.row.name : drawer.project.name) : null} head={drawer ? <DrawerHead d={drawer} /> : null}
+          back={f.from === 'map' && sel ? { href: mapHref({ project: sel }), label: '지도로 돌아가기', title: '지도에서 이 사업 위치로 돌아가기' } : null}>
           {drawer ? <ProjectDetail d={drawer} stageHref={stageHref} /> : null}
         </Drawer>
       )}

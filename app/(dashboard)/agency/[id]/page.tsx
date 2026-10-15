@@ -1,11 +1,11 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import StageLegend from '../../../../components/charts/StageLegend';
 import MonthLines from '../../../../components/charts/MonthLines';
 import { ProvKey } from '../../../../components/charts/Legend';
 import { METRIC_COLOR } from '../../../../components/charts/palette';
 import { Page, PageHead, PanelHead, SrcLink, sub } from '../../../../components/page';
+import PanelLink from '../../../../components/board/PanelLink';
 import StageKpis from '../../../../components/StageKpis';
 import { Alert } from '../../../../components/ui/alert';
 import { Badge } from '../../../../components/ui/badge';
@@ -17,7 +17,9 @@ import { AGENCIES } from '../../../../lib/board/agencies';
 import { getBoardData } from '../../../../lib/board/data';
 import { mapHref } from '../../../../lib/board/map-href';
 import { getProjectsIndex } from '../../../../lib/board/projects-index';
-import { BOARD_NAMES, isMetro, sggOfAddress } from '../../../../lib/board/projects-view';
+import { isMetro, listOrder, sggOfAddress } from '../../../../lib/board/projects-view';
+import { LIST_COLS, dropBlank, listRows } from '../../../../lib/board/projects-list';
+import { sidoName } from '../../../../lib/board/calc';
 import { metricBoardLabel } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
 import { dotDates, type Col } from '../../../../lib/grid/spec';
@@ -39,7 +41,7 @@ const blockCount = (bs: { district: string; block: string }[]) => new Set(bs.map
 
 export default async function AgencyDetail({ params }: Props) {
   const { id } = await params;
-  const { lh, molit, sources } = await getBoardData();
+  const { lh, molit, sources } = await getBoardData();   // molit: 시도 짧은 이름(GH 표의 시군구 칸)
   const a = DETAILS.agency.id.test(id) ? AGENCIES.find((x) => x.id === id) : undefined;
   if (!a) notFound();
   const crumbs = [{ label: '종합상황판', href: '/' }, { label: a.name }];
@@ -47,16 +49,18 @@ export default async function AgencyDetail({ params }: Props) {
   if (!a.actor) {   // gh · sh · mnd: 화면에 쓸 데이터가 아직 없다. 받은 파일이 있으면 카탈로그를 보인다.
     const group = a.id === 'sh' ? '서울주택도시공사' : a.id === 'mnd' ? '국방부' : null;
     const files = group ? sources.items.filter((s) => s.group === group) : [];
-    const ghRows = a.id === 'gh' ? (await getProjectsIndex()).rows.filter((r) => r.agency === 'gh') : [];   // 원장의 GH 사업(종합상황판 기관 칩의 GH 와 같은 기준)
+    const ghRows = a.id === 'gh' ? listOrder((await getProjectsIndex()).rows.filter((r) => r.agency === 'gh')) : [];   // 원장의 GH 사업(종합상황판 기관 칩의 GH 와 같은 기준) · 사업 목록과 같은 순서
+    /* 표는 사업 목록과 같은 열·칸(①~⑥ 단계 색 알약·상태·현재 예정) — 행을 누르면 사업 화면 서랍(/projects?sido=all&agency=gh&id=…) */
+    const ghGridRows = listRows(ghRows, { agency: 'gh' }, null, (c) => sidoName(molit, c));
+    const ghGrid = dropBlank(LIST_COLS, ghGridRows);
     return (
       <Page>
         <PageHead crumbs={crumbs} title={a.name} tip={`${a.summary}.`}><Badge title={`${a.summary}.`}>준비 중</Badge></PageHead>
         <Alert><b>기관별 신호(정상·주의·지연)는 일정(당초·변경·현재 예정)이 없어 판정하지 않습니다.</b> {a.id === 'mnd' ? '군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.' : null}</Alert>
         {ghRows.length ? (
           <Card render={<section aria-label="GH 사업" />}>
-            <PanelHead title="GH 사업" tip="사업 원장에서 기관이 GH 인 사업 · 사업 화면의 기관 칩 GH 와 같은 목록"><span className={`${sub} tabular-nums`}>{ghRows.length}건 · {fmt(ghRows.reduce((n, r) => n + r.units, 0))}호</span><Link href="/projects?agency=gh" className="text-[14px]">사업 화면에서 보기</Link></PanelHead>
-            <DataGrid label="GH 사업" cols={[{ key: 'name', label: '사업', kind: 'text', wrap: true }, { key: 'sgg', label: '시군구', kind: 'text' }, { key: 'stage', label: '단계', kind: 'text' }, { key: 'units', label: '호수' }]}
-              rows={ghRows.map((r) => ({ id: r.id, c: { name: { text: r.name, href: `/projects?id=${r.id}` }, sgg: r.sggName, stage: BOARD_NAMES[r.board], units: r.units } }))} />
+            <PanelHead title="GH 사업" tip={`사업 원장에서 기관이 GH 인 사업 · 사업 화면의 기관 칩 GH 와 같은 목록·같은 열 · 행을 누르면 사업 상세${ghGrid.note}`}><span className={`${sub} tabular-nums`}>{ghRows.length}건 · 계획 {fmt(ghRows.reduce((n, r) => n + r.units, 0))}호</span><PanelLink href="/projects?sido=all&agency=gh" full="사업 화면에서 GH 사업 목록 보기">사업 화면에서 보기</PanelLink></PanelHead>
+            <DataGrid label="GH 사업" cols={ghGrid.cols} rows={ghGridRows} maxHeight={640} quietCount />
           </Card>
         ) : null}
         {files.length ? (

@@ -5,6 +5,7 @@ import type { LedgerBoard } from './types';
 /* 카드 아랫줄 = 앞말(pre, 작은 글자) + 큰 숫자(big) + 단위(u) + 보조 값(sub). m 은 그 셋을 이은 한 줄(읽기용 이름). 날짜·지시 이름·기준(basis)은 카드 title */
 export type Directive = {
   date: string; t: string; m: string;
+  tag?: string;                                           // 지시 이름 곁의 짧은 정의 꼬리(같은 이름의 숫자가 화면마다 정의가 다를 때 — 착공 = 통계누리 누계)
   pre?: string; big: string; u: string;
   sub?: { text: string; tone: 'ok' | 'bad' | 'warn' };   // 값 오른쪽의 작은 보조 값
   basis: string;                                          // 카드 title: 값의 기준(기간·범위)과 못 내는 값
@@ -44,7 +45,7 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start, b
   const yoy = start.cum !== null && start.cumLy ? (start.cum - start.cumLy) / start.cumLy * 100 : null;
   const span = `${start.year}년 1~${start.upto}월`;
   return [
-    { date: '08.14', t: '진척 관리', ...val('착공', start.cum === null ? '–' : f(start.cum), start.cum === null ? '' : '호'),
+    { date: '08.14', t: '진척 관리', tag: '통계누리', ...val('착공', start.cum === null ? '–' : f(start.cum), start.cum === null ? '' : '호'),
       sub: yoy === null ? undefined : { text: `${yoy >= 0 ? '▲' : '▼'}${Math.abs(yoy).toFixed(1)}%`, tone: yoy >= 0 ? 'ok' : 'bad' },
       basis: `통계누리 전국 착공 ${span} 누계와 전년 같은 기간 대비(보고자료와 같은 계산). 계획(목표) 물량 원천이 없어 계획 대비 달성률은 내지 못합니다.`,
       p: ['p-chart'], list: { href: '/projects?sido=all&stage=2', title: `목록: 지금 ③${K[2]} 단계인 원장 사업(전국) — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록(건수가 다름)` } },

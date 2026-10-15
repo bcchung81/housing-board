@@ -166,9 +166,11 @@ test('리본 지연 띠·병목: 달마다 그 달(판정 달)의 delayByStage, 
 });
 
 test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹치지 않고 viewBox(960×400) 안에 있다(원장 = 총량 매달 같음, 총량이 해마다 다른 경우도)', () => {
-  const R = S.ribbonOf(T, L.stageUnits, DL);
+  const SF = S.scopeChangeOf(J);   // 판정 기준 변경 달(2026.10) — 아래 줄 꼬리표도 겹침 검사에 든다
+  assert.equal(L.months[SF], '2026-10');
+  const R = S.ribbonOf(T, L.stageUnits, DL, SF);
   // 총량이 해마다 다른 경우: 전국 원장(총량 약 141만 — 2026-10-14 수도권 HOME 교체 전 238만)에서 0.5배 → 1.5배
-  const grow = S.ribbonOf(T, L.stageUnits.map((r, m) => r.map((v) => Math.round(v * (0.5 + m / 45)))), DL);
+  const grow = S.ribbonOf(T, L.stageUnits.map((r, m) => r.map((v) => Math.round(v * (0.5 + m / 45)))), DL, SF);
   for (const [name, g] of [['원장', R], ['총량 증가', grow]]) {
     for (let cur = 0; cur <= T.last; cur++) {
       const o = S.ribbonLabels(g, cur);
@@ -184,7 +186,8 @@ test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹
   assert.ok(S.flatTotal(R) && !S.flatTotal(grow));
   const o = S.ribbonLabels(R, T.now), ST = S.staticTexts(R);
   assert.deepEqual(o.years.map((y) => y.map((t) => t.t)), [['2025년'], ['2026년'], ['2027년'], ['2028년']]);
-  assert.deepEqual(Object.keys(ST).sort(), ['now', 'ticks']);
+  assert.deepEqual(Object.keys(ST).sort(), ['now', 'scope', 'ticks']);   // scope = 판정 기준 변경 꼬리표(2026-10-15, 리본 아래 줄)
+  assert.equal(ST.scope.t, '판정 기준 변경 · 2026.10부터 번호 있는 사업만');
   assert.deepEqual(Object.keys(o).sort(), ['statics', 'total', 'years'], '병목 핀 없음');
   assert.equal(ST.now.t, '기준 2026.10');
   for (const g of [R, grow]) assert.ok(S.ribbonLabels(g, T.now).statics.every((t) => !/붉은 띠|총량 매달/.test(t.t)), '차트 안 설명 글자 없음');
@@ -290,11 +293,11 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(board, /const v = L\.stageUnits\[cursor\], nv = L\.stageUnits\[NOW\], jm = judgedAt\(T, cursor\), judged = jm >= 0, SJ = JS\[judged \? jm : NOW\]!, ds = delayAt\(T, DL, cursor\), bk = bottleneckOf\(SJ\.delayByStage\)\?\.i \?\? -1;/, '선택 달의 판정 = 그 판정 달의 이력 행 · 병목은 사업 화면과 같은 bottleneckOf');
   assert.match(board, /<PanelLink href=\{`\/projects\?sido=all&stage=\$\{bk\}&status=late`\}/, '병목 단계 링크는 리본 칸 번호(옛 0${bk + 1} 은 공식 단계로 읽혀 한 칸 앞 단계로 갔다) · 병목과 같은 범위(지연, 장기 포함)');
   assert.match(board, /const JS = useMemo\(\(\) => judgmentsOf\(L\), \[L\]\), DL = useMemo\(\(\) => delaysOf\(JS\), \[JS\]\)/);
-  assert.match(board, /ribbonOf\(T, L\.stageUnits, DL\)/, '리본 지연 띠도 달마다 판정');
+  assert.match(board, /ribbonOf\(T, L\.stageUnits, DL, SF\)/, '리본 지연 띠도 달마다 판정(SF = 판정 기준 변경 달 — 그 앞 띠는 흐리게)');
   assert.match(board, /showDlt = cursor !== NOW;/);
   assert.match(board, /jTag = judged \? `\$\{ml\(T, jm\)\} 판정` : '판정 없음', showJTag = jm !== cursor;/, '꼬리표는 선택 달과 판정 달이 다를 때만');
   assert.match(snap, /role="img" aria-label=\{judged \? [\s\S]*?\{showJTag \? <span data-slot="judge-tag" className=\{cn\(jtag, '[^']*'\)\}>\{jTag\}<\/span> : null\}/, '판정 막대 오른쪽에 판정 달 꼬리표');
-  assert.match(snap, /<span \/><span className="text-right">호수<\/span>\{showDlt \? <span className="text-right phone:hidden">증감<\/span> : null\}<span className="text-right">지연<\/span>/, "표 머리는 '호수 / (증감) / 지연'(단계 글자 없음), 기준 달이면 증감 칸(머리)이 없다");
+  assert.match(snap, /<span \/><span className="text-right" data-slot="stage-def"[^>]*>호수 <span[^>]*>· \{cursor === NOW \? '지금' : `\$\{Number\(T\.months\[cursor\]\.slice\(5\)\)\}월 말`\}<\/span><\/span>\{showDlt \? <span className="text-right phone:hidden">증감<\/span> : null\}<span className="text-right">지연<\/span>/, "표 머리는 '호수 / (증감) / 지연'(단계 글자 없음), 기준 달이면 증감 칸(머리)이 없다");
   assert.match(snap, /\{dlt === 0 \? '0' : sg\(dlt\)\}/, "증감 0 은 '0'");
   assert.doesNotMatch(snap, /'현재' : sg/, "증감 칸에 '현재' 글자를 쓰지 않는다");
   assert.match(snap, /\{judged \? f\(ds\[i\]\) : '—'\}/, '판정 없는 달의 지연 호수는 —');
@@ -388,6 +391,7 @@ test('추이 그래프: 원천이 새로 들어간 달(addedSources)에만 표�
   assert.deepEqual(S.addedMarks(none, L.now), []);
   const trend = panel(board, 'p-trend');
   assert.match(trend, /AM\.map\(\(a\) => <line [^>]*data-added-mark[^>]*strokeDasharray/, '세로 점선');
-  assert.match(trend, /AM\.map\(\(a\) => <span [^>]*data-added-label[^>]*>원천 추가<\/span>/, '이름표');
+  assert.match(trend, /AM\.map\(\(a\) => <span [^>]*data-added-label[^>]*>\{amName\(a\)\}<\/span>/, '이름표(원천 추가 · 판정 기준 변경 달은 기준 변경)');
+  assert.match(board, /const amName = \(a: \{ m: number \}\) => \(a\.m === SF \? '기준 변경' : '원천 추가'\);/);
   assert.match(board, /원천 추가: \$\{a\.sources\.join\('·'\)\} — 이전 달과 직접 비교 주의/, '툴팁 문구');
 });

@@ -141,7 +141,7 @@ test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들�
   assert.doesNotMatch(det, />기반시설 점검</);
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(read('lib/board/projects-list.ts'), /!isMetro\(r\.sgg\) \? null : noLoc[\s\S]*\{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
-  assert.match(page, /import \{ mapScopeHref \} from '[./]+lib\/board\/map-href'/);
+  assert.match(page, /import \{ mapHref, mapScopeHref \} from '[./]+lib\/board\/map-href'/);   // mapHref = 서랍의 '지도로 돌아가기'(from=map)
   assert.doesNotMatch(page, /`\/map\?|: '\/map'/, '지도 주소는 map-href 한 곳');
   const grid = read('components/ui/data-grid.tsx');
   assert.match(grid, /o\.doc \? <a href=\{o\.href\}/);

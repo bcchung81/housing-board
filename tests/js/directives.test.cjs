@@ -75,7 +75,7 @@ test("메뉴: 보고자료·우리 동네는 화면이 생겨 '준비 중'이 �
 test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림을 넣지 않는다 — 사용자 피드백 2026-10-10)', () => {
   const b = read('components/board/Board.tsx');
   assert.match(b, /<div className="grid grid-cols-2 gap-2 min-\[901px\]:grid-cols-3 min-\[1101px\]:grid-cols-6">/);
-  assert.match(b, /text-muted-foreground">\{x\.t\}<\/span>/, '윗줄은 지시 주제 이름만');
+  assert.match(b, /text-muted-foreground">\{x\.t\}\{x\.tag \? <span data-slot="dir-tag"[^>]*> · \{x\.tag\}<\/span> : null\}<\/span>/, '윗줄은 지시 주제 이름(+ 같은 이름 다른 정의일 때 짧은 꼬리 — 착공 · 통계누리)');
   assert.doesNotMatch(b, /\{x\.date\} · \{x\.t\}<\/span>|x\.sub\.note/, '날짜 접두·기간 작은 줄은 화면에 없다');
   assert.match(b, /data-slot="board-dir" title=\{`\$\{x\.date\} 지시 · \$\{x\.t\}\\n\$\{x\.basis\}`\}/, '날짜·지시 이름·기준은 hover title');
   assert.match(b, /\{x\.pre \? <span className="[^"]*text-\[min\(14px,[^"]*">\{x\.pre\}<\/span> : null\}/, '아랫줄 = 작은 앞말');

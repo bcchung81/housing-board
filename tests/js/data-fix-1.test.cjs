@@ -100,7 +100,7 @@ test('#15 하이픈 날짜는 점 표기, 월 제목 "2026년 10월"은 읽기 �
 test('#12 /agency/gh: 원장 GH 사업 4건을 보이고 사업 화면 기관 칩으로 잇는다', () => {
   const ag = read('app/(dashboard)/agency/[id]/page.tsx');
   assert.match(ag, /r\.agency === 'gh'/);
-  assert.match(ag, /\/projects\?agency=gh/);
+  assert.match(ag, /\/projects\?sido=all&agency=gh/);
   assert.equal(Object.values(json('data/board/projects-index.json').projects).filter((p) => p.agency === 'gh').length, 4);
 });
 

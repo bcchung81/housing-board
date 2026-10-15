@@ -91,7 +91,8 @@ test('region-calendar: 12개월 안의 예정만, 위치(점)는 서울·인천�
 });
 
 test('lib/board/region: 종류 칩(마지막 하나는 못 끔)·고른 달(예정 없는 달이면 첫 예정 달)·전국 합치기', () => {
-  assert.deepEqual(R.parseKinds(undefined), R.CAL_KINDS);
+  assert.deepEqual(R.parseKinds(undefined), ['COMPLETION'], '기본 = 준공만(대표 숫자, 2026-10-15 결정)');
+  assert.deepEqual(R.parseKinds('SUPPLY_NOTICE,COMPLETION,MOVE_IN'), R.CAL_KINDS);
   assert.deepEqual(R.parseKinds('MOVE_IN,x,SUPPLY_NOTICE'), ['SUPPLY_NOTICE', 'MOVE_IN']);
   assert.deepEqual(R.toggleKind(['COMPLETION'], 'MOVE_IN'), ['COMPLETION', 'MOVE_IN']);
   assert.equal(R.toggleKind(['COMPLETION'], 'COMPLETION'), null);

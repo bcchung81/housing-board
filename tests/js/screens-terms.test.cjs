@@ -66,7 +66,7 @@ test(`용어표: ${TERMS.map(([a, b]) => `${a} → ${b}`).join(' · ')}`, () => 
   const sum = read('components/projects/Summary.tsx');
   assert.match(sum, /이 단계까지 온 사업 \{fmt\(c\.n\)\}/);
   assert.match(sum, /지금 이 단계 <b>\{fmt\(c\.now\)\}<\/b>/);
-  assert.match(sum, />단계별 진행<\/h3>/);
+  assert.match(sum, />단계별 진행<\/h2>/);   // h1 → h2 순서(2026-10-15)
   assert.match(read('app/(dashboard)/projects/page.tsx'), /: '다른 정책 목표 대비'\} open=\{print\}/);
   assert.equal(V.CAND_NAME, '후보 사업');
   assert.equal(V.PLAN_COL, '현재 예정');
@@ -120,7 +120,7 @@ test("앞으로 12개월: 같은 범위(원장 관측 달부터 12개월) — �
   assert.equal(V.AHEAD_COMPLETION, '앞으로 12개월 · 준공 예정');
   assert.equal(V.AHEAD_ALL, '앞으로 12개월 · 모집·준공·입주 예정');
   assert.match(read('components/board/Board.tsx'), />\{AHEAD_COMPLETION\}<\/h2>/);
-  assert.match(read('app/(dashboard)/region/page.tsx'), /kinds\.length === CAL_KINDS\.length \? AHEAD_ALL/);
+  assert.match(read('app/(dashboard)/region/page.tsx'), /isDefaultKinds\(kinds\) \? AHEAD_COMPLETION : kinds\.length === CAL_KINDS\.length \? AHEAD_ALL/);   // 기본 대표 = 준공(2026-10-15 결정)
   for (const f of SCREENS) assert.doesNotMatch(visible(read(f)), /향후 12개월|>앞으로 12개월</, f);
 });
 

@@ -81,11 +81,14 @@ export function inSgg(e: Pick<AheadEntry, 'sgg' | 'id' | 'sd'>, unit: string, t:
   return !!c && (c === unit || t.guOf(unit).includes(c));
 }
 
-/* 종류 칩: 켜진 값(쉼표). 모르는 값은 버리고, 하나도 안 남으면 전부 */
+/* 종류 칩: 켜진 값(쉼표). 모르는 값은 버리고, 하나도 안 남으면 기본 = 준공만(대표 숫자 '앞으로 12개월 · 준공 예정' — 사업 화면·종합상황판·지도 개요와 같은 정의, 2026-10-15 결정).
+   모집·입주는 칩으로 더해 본다(분해). 주소 ?kind= 는 기본(준공만)과 다를 때만 적는다 */
+export const KIND_DEFAULT: CalKind[] = ['COMPLETION'];
 export function parseKinds(v?: string): CalKind[] {
   const on = (v ?? '').split(',').filter((x): x is CalKind => (CAL_KINDS as string[]).includes(x));
-  return on.length ? CAL_KINDS.filter((k) => on.includes(k)) : [...CAL_KINDS];
+  return on.length ? CAL_KINDS.filter((k) => on.includes(k)) : [...KIND_DEFAULT];
 }
+export const isDefaultKinds = (ks: CalKind[]) => ks.length === KIND_DEFAULT.length && ks.every((k) => KIND_DEFAULT.includes(k));
 /* 칩 하나를 켜고 끈 결과(마지막 하나는 끌 수 없다 — null) */
 export function toggleKind(on: CalKind[], k: CalKind): CalKind[] | null {
   const next = on.includes(k) ? on.filter((x) => x !== k) : CAL_KINDS.filter((x) => on.includes(x) || x === k);

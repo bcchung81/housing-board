@@ -23,6 +23,7 @@ const tx = (x: Tx) => `<text x="${x.x.toFixed(1)}" y="${x.y.toFixed(1)}" fill="$
 export function chartStatic(g: Ribbon, hl: number): string {
   const { T: TL, X } = g, nowX = X(TL.now + 1), actX = X(TL.actual + 1);
   let s = `<defs><pattern id="hatch" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M-3 3 L3 -3 M0 14 L14 0 M11 17 L17 11" fill="none" stroke="${PAL.hatch}" stroke-width="1.2" stroke-opacity="${PAL.hatchOp}"/></pattern>`
+    + `<pattern id="band-old" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="${PAL.band}" fill-opacity=".28"/><rect width="1.6" height="5" fill="${PAL.band}" fill-opacity=".8"/></pattern>`
     + `<linearGradient id="cur-hud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${PAL.acc}" stop-opacity=".34"/><stop offset=".16" stop-color="${PAL.acc}" stop-opacity=".14"/><stop offset=".84" stop-color="${PAL.acc}" stop-opacity=".14"/><stop offset="1" stop-color="${PAL.acc}" stop-opacity=".34"/></linearGradient>${[0, 1, 2, 3, 4, 5].map(grad).join('')}`
     + `<linearGradient id="rb-scan-g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${PAL.hudAcc}" stop-opacity="0"/><stop offset=".6" stop-color="${PAL.hudAcc}" stop-opacity=".38"/><stop offset=".86" stop-color="#FFFFFF" stop-opacity=".9"/><stop offset="1" stop-color="${PAL.hudAcc}" stop-opacity="0"/></linearGradient></defs>`;
   /* 첫 화면 연출(app/tailwind.css 의 [data-intro]): 축(rb-axes)·층(rb-layers)·기준일(rb-now)을 따로 묶어 차례로 등장시킨다 */
@@ -36,10 +37,18 @@ export function chartStatic(g: Ribbon, hl: number): string {
   }
   /* 층 경계: 전 구간 한 줄로 그어(과거·예정 사이에 세로 이음선이 생기지 않게) 층이 또렷하게 갈린다. 라이트 흰색, 다크 남색(--rb-seam) */
   for (let k = 5; k >= 0; k--) s += `<path d="${rp(g, k, 0, TL.last + 1, false, 3)}" fill="none" stroke="${PAL.seam}" stroke-width="0.9" stroke-opacity="${(0.85 * dimK(hl, k)).toFixed(2)}" stroke-linejoin="round" pointer-events="none"/>`;
-  for (let k = 0; k < 6; k++) s += `<path d="${rp(g, k, 0, TL.last + 1, true, 3)}" fill="${PAL.band}" fill-opacity="${(0.94 * dimK(hl, k)).toFixed(2)}"/>`;
+  /* 지연 띠: 판정 기준 변경 달(g.scopeFrom) 앞은 후보 포함 소급 값이라 옅은 바탕 + 빗금(#band-old), 그 뒤는 번호 있는 사업만(진한 띠) */
+  const sf = g.scopeFrom > 0 ? g.scopeFrom : 0;
+  for (let k = 0; k < 6; k++) {
+    if (sf) s += `<path data-band-old d="${rp(g, k, 0, sf, true, 3)}" fill="url(#band-old)" opacity="${dimK(hl, k).toFixed(2)}"/>`;
+    s += `<path d="${rp(g, k, sf, TL.last + 1, true, 3)}" fill="${PAL.band}" fill-opacity="${(0.94 * dimK(hl, k)).toFixed(2)}"/>`;
+  }
   s += `<rect x="${actX.toFixed(1)}" y="${TOP}" width="${(PX0 + PW - actX).toFixed(1)}" height="${PH}" fill="url(#hatch)" pointer-events="none"/>`;
   s += '</g><g class="rb-now">' + ln(nowX, TOP - 8, nowX, BOT + 2, PAL.ink, 1.4, '5 4');
-  s += tx(T.now) + '</g><g class="rb-axes">';
+  s += tx(T.now);
+  /* 판정 기준 변경: 그 달 왼쪽 끝에 세로 구분선(실선)과 아래 줄 꼬리표 */
+  if (sf) s += `<g data-scope-change>${ln(X(sf), TOP - 8, X(sf), BOT + 2, PAL.ink, 1)}${T.scope ? tx(T.scope) : ''}</g>`;
+  s += '</g><g class="rb-axes">';
   for (let m = 0; m <= TL.last + 1; m++) { const jan = m <= TL.last && TL.months[m].endsWith('-01'); s += `<g opacity="${jan ? 1 : 0.6}">${ln(X(m), BOT, X(m), BOT + (jan ? 7 : 3), PAL.axis, 1)}</g>`; }
   /* 세로축(호): 층이 판을 거의 덮으므로 눈금선은 층 경계색(--rb-seam)을 55% 로 깐 점선으로 층 위에서도 보이게, 0 은 실선. 눈금 글자는 staticTexts 가 정한다(단위는 카드 제목 title) */
   g.ticks.forEach((v, i) => { const y = BOT - v * g.s2; s += (i ? `<g opacity=".55">${ln(PX0, y, PX0 + PW, y, PAL.seam, 1, '3 4')}</g>` : ln(PX0, y, PX0 + PW, y, PAL.mid, 1)); });

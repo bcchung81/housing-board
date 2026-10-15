@@ -19,7 +19,7 @@ import { getBoardData } from '../../../lib/board/data';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '../../../lib/board/metro-overview';
 import { mapScopeHref } from '../../../lib/board/map-href';
 import ScopeChip from '../../../components/ui/scope-chip';
-import { CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, inSgg, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
+import { CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, inSgg, isDefaultKinds, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
 import { getProjectsIndex } from '../../../lib/board/projects-index';
 import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '../../../lib/board/projects-view';
 import type { Metric } from '../../../lib/board/types';
@@ -33,7 +33,7 @@ const facts = areaFactsJson as AreaFactsDoc;
 /* 시도 칩 순서(행정 순, 2026-07부터 광주·전남은 '전남광주' 12) */
 const ORDER = ['11', '26', '27', '28', '12', '30', '31', '36', '41', '51', '43', '44', '52', '47', '48', '50'];
 const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
-const AHEAD_TIP = '사업 원장의 현재 예정(모집공고·준공·입주) · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌 · 막대 한 조각 = 사업 하나(높이 = 호수, 전국은 종류별로 묶음) · 지도 원 넓이 = 호수(지도는 서울·인천·경기만) · 예정일은 계획이라 바뀔 수 있고 청약 자격은 모집공고에서 확인';
+const AHEAD_TIP = '대표 = 준공 예정(사업 화면·종합상황판·지도 개요와 같은 값) · 모집·입주는 종류 칩으로 더해 봄 · 사업 원장의 현재 예정(모집공고·준공·입주) · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌 · 막대 한 조각 = 사업 하나(높이 = 호수, 전국은 종류별로 묶음) · 지도 원 넓이 = 호수(지도는 서울·인천·경기만) · 예정일은 계획이라 바뀔 수 있고 청약 자격은 모집공고에서 확인';
 const LINKA = 'text-foreground underline-offset-[3px] hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
 type Q = { sido?: string; m?: string; kind?: string; metric?: string; sgg?: string };
@@ -63,7 +63,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
     if (sd !== 'metro') s.set('sido', sd || 'all');
     if (sg) s.set('sgg', sg);
     if (m) s.set('m', m);
-    if (ks.length !== CAL_KINDS.length) s.set('kind', ks.join(','));
+    if (!isDefaultKinds(ks)) s.set('kind', ks.join(','));   // 기본(준공만)과 다를 때만
     if (mt !== 'complete') s.set('metric', mt);
     const t = s.toString();
     return t ? `/region?${t}` : '/region';
@@ -116,14 +116,14 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
         </span>
       </ChipBar>
 
-      <Card render={<section aria-label={AHEAD_ALL} />}>
-        <PanelHead title={<>{kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}
+      <Card render={<section aria-label="앞으로 12개월" />}>
+        <PanelHead title={<>{isDefaultKinds(kinds) ? AHEAD_COMPLETION : kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}
           scope={<ScopeChip scope={scopeName} source="사업 원장" title={sgg ? `${name} 중 ${sggName}만(구가 있는 시는 구를 합침) — 달별 막대·목록·합계·종류 칩 건수가 이 범위 · ×를 누르면 ${name}(으)로` : `사업 원장 현재 예정 · ${name}`} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} />}>
           <InfoTip label="앞으로 12개월 읽는 법">
             <dl>
-              <dt>{AHEAD_ALL}</dt><dd>사업 원장의 현재 예정(모집공고·준공·입주)이 {ymDot(months[0])}~{ymDot(months[11])}에 든 사업 · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌</dd>
+              <dt>{AHEAD_COMPLETION}</dt><dd>대표 숫자 — 준공 현재 예정이 {ymDot(months[0])}~{ymDot(months[11])}인 사업(이미 준공 실제가 있으면 뺌) · 사업 화면·종합상황판·지도 개요와 같은 값</dd>
+              <dt>모집 · 입주 칩</dt><dd>같은 기간 모집공고·입주 예정을 더해 봄(종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌)</dd>
               <dt>{PAST_DUE}</dt><dd>예정 날짜가 원장 기준일보다 앞섰는데 실제 기록이 아직 없는 항목 — 표지만 달고 건수·호수 합계에는 넣음</dd>
-              <dt>준공 칩</dt><dd>사업 화면 &apos;{AHEAD_COMPLETION}&apos;과 같은 범위·같은 값</dd>
               <dt>(후보) {CAND_NAME}</dt><dd>사업 번호가 아직 없는 사업 — 누르면 간단 보기</dd>
               <dt>키보드</dt><dd>달 막대는 ←→ 로 옮기고, 지도 원은 Tab 으로 들어가 ←→ 로 옮긴 뒤 Enter 로 그 사업을 고릅니다</dd>
               <dt>예정일</dt><dd>계획이라 바뀔 수 있고, 청약 자격은 모집공고에서 확인</dd>
@@ -135,7 +135,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
               return (
                 <Chip key={t} href={href({ kinds: next ?? kinds })} on={kinds.includes(t)} swatch={{ kind: 'fill', color: CAL_TYPE[t].color }}
                   title={`${scopeName} · 1년 안 ${CAL_TYPE[t].name} 예정 ${xs.length}건 · ${fmt(xs.reduce((s, e) => s + e.units, 0))}호${xs.some((e) => !e.units) ? ` · 호수 미확인 ${xs.filter((e) => !e.units).length}` : ''}`}>
-                  {CAL_TYPE[t].name}<span className="text-muted-foreground tabular-nums">{fmt(xs.length)}</span>
+                  {CAL_TYPE[t].name}<span className="text-muted-foreground tabular-nums">{fmt(xs.length)}건 · {fmt(xs.reduce((s, e) => s + e.units, 0))}호</span>
                 </Chip>
               );
             })}

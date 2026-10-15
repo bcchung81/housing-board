@@ -55,6 +55,13 @@ export const delayAt = (T: Timeline, delays: (number[] | null)[], m: number) => 
 export const trendOf = (T: Timeline, J: (JudgeRow | null)[]) => J.slice(0, T.now + 1).map((r) => (r ? { d: r.delay.units, w: r.caution.units } : null));
 /* 세로 맨 위: 최댓값 이상인 가장 작은 1·1.2·1.5·2·2.5·3·4·5·6·8 × 10^n(눈금 글자가 없어 선이 카드 높이를 고르게 쓰게 한다). 눈금선 3개는 4등분 */
 /* 원천이 새로 들어간 달(addedSources 가 있는 판정 행) — 추이 그래프의 표지. 이전 달과 직접 비교되지 않는다 */
+/* 판정 기준 변경 달: candidate(번호 없는 후보를 따로 셈)가 있는 첫 판정 달 — 그 앞 판정 달(소급 이력)은 후보 포함이라 값이 이어지지 않는다(2026.09 수만 호 → 2026.10 번호 있는 사업만).
+   앞 판정 달이 없거나 후보 포함 판정이 없으면 -1(변경 없음). 리본의 구분선·흐린 띠, 지연·주의 추이의 '기준 변경' 표지, 선택 달의 '후보 포함' 꼬리표가 같은 달을 쓴다 */
+export const scopeChangeOf = (J: (JudgeRow | null)[]) => {
+  const m = J.findIndex((r) => r?.candidate);
+  return m > 0 && J.slice(0, m).some((r) => r && !r.candidate) ? m : -1;
+};
+export const SCOPE_TAG = (ym: string) => `판정 기준 변경 · ${ym}부터 번호 있는 사업만`;
 export const addedMarks = (J: (JudgeRow | null)[], NOW: number) => J.slice(0, NOW + 1).flatMap((r, m) => (r?.addedSources?.length ? [{ m, sources: r.addedSources }] : []));
 export const trendMax = (max: number) => { for (let e = 1; ; e *= 10) for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8]) if (m * e >= max) return m * e; };
 /* 선 끝 이름표의 값: 선택 시점(NOW 까지)의 판정 달 값과 전월 대비 증감(호, 이력 차이). 판정 달이 없으면 null, 앞 달 판정이 없으면 증감 0 */
@@ -85,11 +92,12 @@ export const VW = 960, PX0 = 46, PW = 908, TOP = 52, PH = 320, BOT = TOP + PH; /
 export const xOf = (n: number) => (x: number) => PX0 + x * PW / n;
 export type Geo = { x: number; lw: number[]; up: number[]; dl: number[] };
 /* total = 달마다 단계 합, step = 세로축 눈금 간격(1·2·2.5·5 × 10^n 중 눈금 5칸 이하가 되는 가장 작은 값), ymax = 가장 큰 총량을 step 단위로 올린 값(세로축 맨 위), ticks = 0…ymax 눈금,
-   s2 = 1호의 px, geo = 0.25개월 간격의 층 경계(lw 아래·up 위, 0 은 BOT 에서 쌓는다)와 지연 띠 두께(dl, px), T = 시점, X·pitch = 시점의 x 좌표와 한 달 폭 */
-export type Ribbon = { T: Timeline; X: (x: number) => number; pitch: number; su: number[][]; delay: (number[] | null)[]; total: number[]; step: number; ymax: number; ticks: number[]; s2: number; geo: Geo[] };
+   s2 = 1호의 px, geo = 0.25개월 간격의 층 경계(lw 아래·up 위, 0 은 BOT 에서 쌓는다)와 지연 띠 두께(dl, px), T = 시점, X·pitch = 시점의 x 좌표와 한 달 폭,
+   scopeFrom = 판정 기준 변경 달(scopeChangeOf, 없으면 -1 — 그 앞 지연 띠는 후보 포함 값이라 흐리게 그린다) */
+export type Ribbon = { T: Timeline; X: (x: number) => number; pitch: number; su: number[][]; delay: (number[] | null)[]; total: number[]; step: number; ymax: number; ticks: number[]; s2: number; geo: Geo[]; scopeFrom: number };
 const niceStep = (max: number) => { for (let e = 1; ; e *= 10) for (const m of [1, 2, 2.5, 5]) if (Math.ceil(max / (m * e)) <= 5) return m * e; };
 /* delay = 달마다 단계별 지연 호수(delaysOf, 판정 없는 달 null) */
-export function ribbonOf(tl: Timeline, su: number[][], delay: (number[] | null)[]): Ribbon {
+export function ribbonOf(tl: Timeline, su: number[][], delay: (number[] | null)[], scopeFrom = -1): Ribbon {
   const LAST = tl.last, total = su.map(sum), step = niceStep(Math.max(...total)), n = Math.ceil(Math.max(...total) / step), ymax = n * step, s2 = PH / ymax, geo: Geo[] = [];
   for (let x = 0; x <= LAST + 1 + 1e-9; x += 0.25) {   // 달 m 의 값은 칸 가운데(m + 0.5)에 두고 이웃 달과 곧게 잇는다
     const t = Math.min(LAST, Math.max(0, x - 0.5)), i = Math.floor(t), j = Math.min(LAST, i + 1), u = t - i;
@@ -98,7 +106,7 @@ export function ribbonOf(tl: Timeline, su: number[][], delay: (number[] | null)[
     for (let k = 5; k >= 0; k--) { lw[k] = BOT - below * s2; up[k] = lw[k] - s[k] * s2; below += s[k]; }
     geo.push({ x, lw, up, dl: s.map((v, k) => Math.min(d[k], v) * s2) });   // 띠는 층보다 두꺼울 수 없다
   }
-  return { T: tl, X: xOf(LAST + 1), pitch: PW / (LAST + 1), su, delay, total, step, ymax, ticks: Array.from({ length: n + 1 }, (_, i) => i * step), s2, geo };
+  return { T: tl, X: xOf(LAST + 1), pitch: PW / (LAST + 1), su, delay, total, step, ymax, ticks: Array.from({ length: n + 1 }, (_, i) => i * step), s2, geo, scopeFrom };
 }
 export const rp = (g: Ribbon, k: number, a: number, b: number, band: boolean, precision = 1) => {
   const up: string[] = [], lo: string[] = [];
@@ -135,12 +143,15 @@ const man = (n: number, unit = '만') => (n === 0 ? '0' : `${+(n / 10000).toFixe
 /* 정적 글자(c = ribbon.ts 의 색 이름): 세로축 눈금과 '기준' 글자뿐이다. 붉은 띠 범례·총량 설명·세로축 단위·아래 달 이름은 차트 안에 두지 않는다(카드 제목 줄의 '지연' 칩과 제목 title, 2026-10-12 시안 정리) */
 export function staticTexts(g: Ribbon) {
   const { T, X } = g;
+  const now: Tx = { x: X(T.now + 1), y: 393, t: `기준 ${ml(T, T.now)}`, fs: 13, a: 'middle', c: 'ink', bold: true };
+  /* 판정 기준 변경 꼬리표: 구분선(X(scopeFrom)) 왼쪽 아래 줄, '기준' 글자와 겹치지 않게 그 왼쪽 끝보다 앞에서 끝난다 */
+  const scope: Tx | null = g.scopeFrom > 0 ? { x: Math.min(X(g.scopeFrom) - 4, textBox(now).x - 8), y: 393, t: SCOPE_TAG(ml(T, g.scopeFrom)), fs: 12, a: 'end', c: 'axis' } : null;
   return {
     ticks: g.ticks.map((v): Tx => ({ x: PX0 - 6, y: BOT - v * g.s2 + 3, t: man(v, axisUnit(g) === '호' ? '만' : ''), fs: 13, a: 'end', c: 'axis' })),   // 세로축: 0 에서 ymax 까지 눈금마다
-    now: { x: X(T.now + 1), y: 393, t: `기준 ${ml(T, T.now)}`, fs: 13, a: 'middle', c: 'ink', bold: true } as Tx,
+    now, scope,
   };
 }
-const staticList = (g: Ribbon) => { const s = staticTexts(g); return [...s.ticks, s.now]; };
+const staticList = (g: Ribbon) => { const s = staticTexts(g); return [...s.ticks, s.now, ...(s.scope ? [s.scope] : [])]; };
 
 /* 선택 시점(cur)의 글자: 연도 머리 · 커서 총량 라벨(층 위쪽 안 → 아래쪽 안 → 더미 위 중 비어 있는 곳) */
 export function ribbonLabels(g: Ribbon, cur: number) {

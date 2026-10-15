@@ -114,7 +114,8 @@ export function rowsOf(bySgg: Record<string, MapRow[]>, extra: Record<string, In
 /* ---------- 거르기 ---------- */
 /* metro = 수도권(서울·인천·경기). 지역 거르기가 하나도 없으면 전국 */
 /* gu = 구가 있는 경기 시의 시 코드(41110·41280 …)로 거를 때 그 시의 구 코드들(지도 개요의 면과 같다 — parseFilters ctx.guOf 로 metro-overview guOf 를 받는다). 있으면 시 코드 + 구 코드 사업을 합친다 */
-export type Filters = { policy?: Policy; program?: Program; sido?: string; sgg?: string; gu?: string[]; metro?: boolean; stage?: number; status?: StatusFilter; agency?: string };
+/* from = 'map': 지도 카드의 '사업 정보 보기'(/projects?id=<id>&from=map&sgg=<시군구>)로 왔다 — 서랍 뒤 목록은 그 시군구, 서랍 머리에 '지도로 돌아가기'. 주소(listHref)에는 다시 적지 않는다(서랍을 닫으면 그 시군구 목록에 남는다) */
+export type Filters = { policy?: Policy; program?: Program; sido?: string; sgg?: string; gu?: string[]; metro?: boolean; stage?: number; status?: StatusFilter; agency?: string; from?: 'map' };
 /* 종합상황판·옛 주소가 거는 거르기(?stage·?status·?agency). 지역 없이 이것만 오면 전국(종합상황판 숫자가 전국이라) — 그 밖에 지역이 없으면 기본 범위 수도권 */
 const LEGACY_KEYS = ['stage', 'status', 'agency'] as const;
 type Query = Record<string, string | string[] | undefined>;
@@ -126,7 +127,10 @@ export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Prog
   const policy = ctx.policies.find((p) => p.key === one(q.policy));
   if (policy) f.policy = policy;
   else { const program = ctx.programs.find((p) => p.name === one(q.program)); if (program) f.program = program; }
-  const sgg = one(q.sgg), sido = one(q.sido);
+  const from = one(q.from) === 'map' ? 'map' : undefined;
+  if (from) f.from = from;
+  /* 지도에서 왔는데 ?sgg 가 없으면 사업 id 의 시군구(PRJ-41281-…)로 */
+  const sgg = one(q.sgg) ?? (from ? /^PRJ-(\d{5})-/.exec(one(q.id) ?? '')?.[1] : undefined), sido = one(q.sido);
   if (sgg && /^\d{5}$/.test(sgg) && ctx.sidoOk(sgg.slice(0, 2))) { f.sgg = sgg; const gu = ctx.guOf?.(sgg) ?? []; if (gu.length) f.gu = gu; }
   else if (sido && /^\d{2}$/.test(sido) && ctx.sidoOk(sido)) f.sido = sido;
   else if (sido === 'metro' || (sido !== 'all' && !LEGACY_KEYS.some((k) => q[k] !== undefined))) f.metro = true;

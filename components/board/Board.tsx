@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { ChevronRight, Pause, Play } from 'lucide-react';
 import {
   C, CIR, K, PX0, RCOL, REGION_POS, RLAB, VW,
-  addedMarks, apart, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, sg, timelineOf, trendAt, trendMax, trendOf,
+  SCOPE_TAG, addedMarks, apart, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, scopeChangeOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '../../lib/board/sample';
 import { CAND_TEXT, candText, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf } from '../../lib/board/directives';
 import { AHEAD_COMPLETION, AGENCY_NAME, bottleneckOf } from '../../lib/board/projects-view';
@@ -71,7 +71,8 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const valid = useMemo(() => new Set(real.validMonths), [real.validMonths]);
   /* 달마다 판정(판정 없는 달 null)과 단계별 지연 호수 */
   const JS = useMemo(() => judgmentsOf(L), [L]), DL = useMemo(() => delaysOf(JS), [JS]), TR = useMemo(() => trendOf(T, JS), [T, JS]);
-  const rib = useMemo(() => ribbonOf(T, L.stageUnits, DL), [T, L, DL]);
+  const SF = useMemo(() => scopeChangeOf(JS), [JS]);   // 판정 기준 변경 달(없으면 -1): 그 앞 판정은 후보 포함 소급 값
+  const rib = useMemo(() => ribbonOf(T, L.stageUnits, DL, SF), [T, L, DL, SF]);
   const staticSvg = useMemo(() => chartStatic(rib, hl), [rib, hl]);
   const dynSvg = useMemo(() => ribbonDynamic(rib, cursor), [rib, cursor]);
 
@@ -128,7 +129,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const planned = (m: number) => kind(T, m) === '예정 기준', showDlt = cursor !== NOW;
   const jTag = judged ? `${ml(T, jm)} 판정` : '판정 없음', showJTag = jm !== cursor;
   /* 판정 범위(D3): candidate 가 있는 판정 행은 사업 번호가 있는 사업만(후보는 확인 필요로 따로), 없는 행(소급 이력)은 후보 포함 */
-  const scopeFrom = T.judged.find((m) => JS[m]?.candidate), mixed = judged && !SJ.candidate && scopeFrom !== undefined;   // 판정 달 꼬리표는 선택 달과 판정 달이 다를 때만(예정 달 → 기준 달 판정, 판정 없는 달 → 판정 없음)
+  const scopeFrom = SF >= 0 ? SF : undefined, mixed = judged && !SJ.candidate && scopeFrom !== undefined;   // 판정 달 꼬리표는 선택 달과 판정 달이 다를 때만(예정 달 → 기준 달 판정, 판정 없는 달 → 판정 없음)
   const ymKo = (m: number) => `${T.months[m].slice(0, 4)}년 ${Number(T.months[m].slice(5))}월`, ymDot = (ym: string) => ym.replace('-', '.');
   const J = L.judgment, d = SJ.delay.units, w = SJ.caution.units, ok = SJ.ok.units, tt = d + w + ok, pct = (x: number) => (x / tt * 100).toFixed(1) + '%';   // J = 기준 달 판정(기관 카드), d·w·ok = 선택 달 판정
   /* 원장 범위: 카드 제목의 title 에 보인다(일부가 전국처럼 보이지 않게) */
@@ -144,7 +145,14 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const pts = (k: 'd' | 'w') => TR.flatMap((r, m) => (r ? [tx(m) + ',' + ty(r[k])] : [])).join(' ');
   const t0 = T.judged[0], tf = TR[t0] ?? null, te = TR[judgedAt(T, NOW)] ?? { d: 0, w: 0 };
   const [eyD, eyW] = apart(tyn(te.d), tyn(te.w), 36, TH - 18), [syD, syW] = apart(tyn(tf?.d ?? 0), tyn(tf?.w ?? 0), 16, TH);   // 이름표 겹침 방지: 아래쪽을 내린다
-  const AM = addedMarks(JS, NOW), amSel = AM.find((a) => a.m === judgedAt(T, cc)), amTip = (a: { m: number; sources: string[] }) => `${ml(T, a.m)} 원천 추가: ${a.sources.join('·')} — 이전 달과 직접 비교 주의`;
+  /* 추이의 세로 표지: 원천 추가 달 + 판정 기준 변경 달(리본 구분선과 같은 달 — 둘이 같으면 한 표지). 표지 달은 전월과 '비교 불가' */
+  const AM = [...addedMarks(JS, NOW).filter((a) => a.m !== SF), ...(SF >= 0 && SF <= NOW ? [{ m: SF, sources: JS[SF]?.addedSources ?? [] }] : [])].sort((a, b) => a.m - b.m);
+  const amSel = AM.find((a) => a.m === judgedAt(T, cc));
+  const amTip = (a: { m: number; sources: string[] }) => a.m === SF
+    ? `${SCOPE_TAG(ml(T, a.m))}(그 앞 달은 후보 포함 소급 판정)${a.sources.length ? ` · 원천 추가: ${a.sources.join('·')}` : ''} — 이전 달과 비교 불가`
+    : `${ml(T, a.m)} 원천 추가: ${a.sources.join('·')} — 이전 달과 직접 비교 주의`;
+  const amName = (a: { m: number }) => (a.m === SF ? '기준 변경' : '원천 추가');
+  const scopeAria = scopeFrom !== undefined ? ` ${ml(T, scopeFrom)}에 세로 구분선: ${SCOPE_TAG(ml(T, scopeFrom))}. 그 앞 빗금 띠는 번호 없는 후보를 포함한 값이라 이어서 비교할 수 없습니다.` : '';   // 리본 aria-label
   const up = L.upcoming, fi = cursor - NOW, hasFut = fi >= 0 && fi < up.length;
   const maxUp = Math.max(1, ...up.map((m) => m.units)), upSum = up.reduce((n, m) => n + m.units, 0), upProj = up.reduce((n, m) => n + m.projects, 0), UPH = 82;   // UPH = 막대 최대 높이(viewBox 100 중, 위 18은 선택 값 자리)
   const cur = DIR[focus - 1];
@@ -182,8 +190,8 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             {DIR.map((x, i) => (
               <div key={i} className="relative min-w-0">
               <button type="button" data-slot="board-dir" title={`${x.date} 지시 · ${x.t}\n${x.basis}`} style={{ ['--i' as string]: i }} className={cn(btn, 'peer q-rise card-lift group/dir @container relative flex h-20 w-full min-w-0 flex-col justify-center gap-[3px] overflow-hidden rounded-[12px] border border-border bg-card px-3.5 aria-pressed:border-primary aria-pressed:bg-accent', hoverBg)} aria-pressed={i === focus - 1} onClick={() => { setFocus(i + 1); setTour(false); }}
-                aria-label={`${x.date} 지시 ${x.t}: ${x.m}${x.sub ? `, ${x.sub.text}` : ''}`}>
-                <span className="block min-w-0 truncate pr-11 text-[min(14px,8.5cqi)] leading-5 whitespace-nowrap text-muted-foreground">{x.t}</span>
+                aria-label={`${x.date} 지시 ${x.t}${x.tag ? `(${x.tag})` : ''}: ${x.m}${x.sub ? `, ${x.sub.text}` : ''}`}>
+                <span className="block min-w-0 truncate pr-11 text-[min(14px,8.5cqi)] leading-5 whitespace-nowrap text-muted-foreground">{x.t}{x.tag ? <span data-slot="dir-tag" className="text-[min(12px,7.5cqi)]"> · {x.tag}</span> : null}</span>
                 <span className="flex min-w-0 flex-wrap items-baseline gap-x-[min(6px,3cqi)] leading-[1.2] whitespace-nowrap">{/* 값이 칸보다 길면 보조 값이 아랫줄로 내려간다 */}
                   {x.pre ? <span className="text-[min(14px,9cqi)] font-bold text-ink2">{x.pre}</span> : null}
                   <span className={cn(disp, 'font-normal text-[min(26px,12cqi)] leading-[1.15] group-aria-pressed/dir:text-primary')}>{x.big}<span className="text-[min(17px,8cqi)]">{x.u}</span></span>
@@ -201,23 +209,25 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
           </div>
         </section>
 
-        <div className="mt-3 grid grid-cols-[minmax(0,1fr)_400px] items-stretch gap-3.5 narrow:grid-cols-1">
+        <div className="mt-3 grid grid-cols-[minmax(0,1fr)_clamp(340px,30vw,400px)] items-stretch gap-3.5 narrow:grid-cols-1">
           <Card variant="board" className={ringable(cur.p.includes('p-chart'))} render={<section id="p-chart" aria-label="월별 공급 파동" />}>
             <div className="mb-2 flex flex-wrap items-center gap-3.5">
-              <h2 className={ptitle} title={`${scope} · 달 말 단계별 호수 · ${ml(T, T.actual)}까지 실제 날짜(호수가 가장 많은 원천의 자료 달), 이후 현재 예정(빗금) · 세로축 ${axisUnit(rib)} · 기준 ${ml(T, NOW)} · 붉은 띠 = 단계별 지연 호수(${ml(T, T.judged[0])} 판정부터) · 병목(지연 호수가 가장 큰 단계)은 달에 마우스를 올리면 보입니다${flatTotal(rib) ? ` · 총량 매달 ${f(rib.total[0])}호(같은 사업이 단계만 옮겨 감)` : ''}`}>월별 공급 파동</h2>
+              <h2 className={ptitle} title={`${scope} · 달 말 단계별 호수 · ${ml(T, T.actual)}까지 실제 날짜(호수가 가장 많은 원천의 자료 달), 이후 현재 예정(빗금) · 세로축 ${axisUnit(rib)} · 기준 ${ml(T, NOW)} · 붉은 띠 = 단계별 지연 호수(${ml(T, T.judged[0])} 판정부터${scopeFrom !== undefined ? ` · ${SCOPE_TAG(ml(T, scopeFrom))}, 그 앞 빗금 띠는 후보 포함` : ''}) · 병목(지연 호수가 가장 큰 단계)은 달에 마우스를 올리면 보입니다${flatTotal(rib) ? ` · 총량 매달 ${f(rib.total[0])}호(같은 사업이 단계만 옮겨 감)` : ''}`}>월별 공급 파동</h2>
               {ledgerChip}
               <div data-slot="board-legend" className="ml-auto flex flex-wrap gap-0.5" role="group" aria-label="단계 범례 (누르면 해당 단계를 강조)">
                 {K.map((k, i) => <button key={k} type="button" className={cn(btn, 'flex items-center gap-1.5 rounded-full border border-transparent px-2 py-[3px] text-[14px] [transition:background_.15s,border-color_.15s] aria-pressed:border-primary aria-pressed:bg-accent', hoverBg)} aria-pressed={hl === i} onClick={() => setHl(hl === i ? -1 : i)}><i className="block size-2.5 flex-none rounded-[3px]" style={{ background: C[i] }} />{k}</button>)}
-                <span className="flex items-center gap-1.5 border border-transparent px-2 py-[3px] text-[14px]" title={`붉은 띠 = 단계별 지연 호수(${ml(T, T.judged[0])} 판정부터)`}><i className="block size-2.5 flex-none rounded-[3px] bg-[var(--rb-band)]" />지연</span>
+                <span className="flex items-center gap-1.5 border border-transparent px-2 py-[3px] text-[14px]" title={`붉은 띠 = 단계별 지연 호수(${ml(T, T.judged[0])} 판정부터)${scopeFrom !== undefined ? ` · ${SCOPE_TAG(ml(T, scopeFrom))}` : ''}`}><i className="block size-2.5 flex-none rounded-[3px] bg-[var(--rb-band)]" />지연</span>
+                {scopeFrom !== undefined ? <span data-slot="band-old-key" className="flex items-center gap-1.5 border border-transparent px-2 py-[3px] text-[14px]" title={`빗금 띠 = ${ml(T, scopeFrom - 1)}까지 소급 판정의 지연 호수(번호 없는 후보 포함) — ${SCOPE_TAG(ml(T, scopeFrom))}이라 값이 이어지지 않음(다시 계산하지 않음)`}><i className="block size-2.5 flex-none rounded-[3px] [background:repeating-linear-gradient(45deg,var(--rb-band)_0_1.5px,color-mix(in_srgb,var(--rb-band)_28%,transparent)_1.5px_4px)]" />지연 · 후보 포함</span> : null}
               </div>
             </div>
-            {/* 좁은 화면에서만 가로로 민다. 세로는 숨긴다: overflow-x 가 auto 면 세로도 auto 가 되어, 툴팁·소수점 높이로 1px 만 넘쳐도 세로 스크롤바가 생기고 그 폭만큼 차트가 다시 줄어 그림이 흔들렸다 */}
+            {/* 좁은 화면에서만 가로로 민다. 세로는 숨긴다: overflow-x 가 auto 면 세로도 auto 가 되어, 툴팁·소수점 높이로 1px 만 넘쳐도 세로 스크롤바가 생기고 그 폭만큼 차트가 다시 줄어 그림이 흔들렸다.
+                최소 폭 620px 와 오른쪽 칸 clamp(340px,30vw,400px): 1101~1280px 화면(스크롤바 포함)에서 왼쪽 칸이 760px 보다 좁아 가로 스크롤이 생기던 것을 없앤다(2026-10-15) */}
             <div className="overflow-x-auto overflow-y-hidden rounded-[10px]">
-            <div className="relative min-w-[760px] cursor-pointer rounded-[10px] border border-border bg-chartbg [touch-action:pan-y] mobile:min-w-0" ref={wrapRef} data-intro={intro || undefined}
+            <div className="relative min-w-[620px] cursor-pointer rounded-[10px] border border-border bg-chartbg [touch-action:pan-y] mobile:min-w-0" ref={wrapRef} data-intro={intro || undefined}
               onPointerMove={(e) => { const m = monthAt(e.clientX); if (m < 0) setTip(null); else { const wr = wrapRef.current!.getBoundingClientRect(); setTip({ m, x: e.clientX - wr.left, y: e.clientY - wr.top }); } }}
               onPointerLeave={() => setTip(null)}
               onClick={(e) => { const m = monthAt(e.clientX); if (m >= 0) goto(m); }}>
-              <svg id="chart" shapeRendering="geometricPrecision" ref={svgRef} className="block h-auto w-full [&_text]:[font-family:inherit]" viewBox="0 0 960 400" role="img" aria-label={`${ymKo(0)}부터 ${ymKo(LAST)}까지 원장 사업 ${f(L.scope.projects)}건의 달 말 단계별 호수를 쌓은 월별 리본(${nation}). 바닥부터 쌓은 높이(세로축, 호)가 그 달 총량이고, 층 안의 붉은 띠가 ${ml(T, T.judged[0])} 판정부터의 단계별 지연 호수입니다. 차트를 누르면 그 달을 고릅니다.`}>
+              <svg id="chart" shapeRendering="geometricPrecision" ref={svgRef} className="block h-auto w-full [&_text]:[font-family:inherit]" viewBox="0 0 960 400" role="img" aria-label={`${ymKo(0)}부터 ${ymKo(LAST)}까지 원장 사업 ${f(L.scope.projects)}건의 달 말 단계별 호수를 쌓은 월별 리본(${nation}). 바닥부터 쌓은 높이(세로축, 호)가 그 달 총량이고, 층 안의 붉은 띠가 ${ml(T, T.judged[0])} 판정부터의 단계별 지연 호수입니다.${scopeAria} 차트를 누르면 그 달을 고릅니다.`}>
                 <g dangerouslySetInnerHTML={{ __html: staticSvg }} />
                 <rect x={rib.X(tip ? tip.m : 0).toFixed(1)} y={RIBBON.TOP - 4} width={rib.pitch.toFixed(1)} height={RIBBON.PH + 8} fill={HOVER.fill} fillOpacity={HOVER.opacity} visibility={tip ? 'visible' : 'hidden'} pointerEvents="none" />
                 <rect x={rib.X(cursor).toFixed(1)} y={RIBBON.TOP - 4} width={rib.pitch.toFixed(1)} height={RIBBON.PH + 8} rx="3" fill={CUR.fill} className="rb-cur" pointerEvents="none" />
@@ -234,7 +244,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                     {K.map((k, i) => <div key={k} className={tipRow}><span className={tipRowKey}><i className="block size-[9px] rounded-[2px]" style={{ background: C[i] }} />{CIR[i]} {k}</span><b className={disp}>{f(tipView.vv[i])}</b></div>)}
                     <div className="mt-[3px] border-t border-border pt-[3px]">
                       {tipView.tj ? <>
-                        <div className={tipRow}><span className={cn(tipRowKey, 'text-bad')}>지연</span><b className={disp}>{f(tipView.tj.delay.units)}</b></div><div className={tipRow}><span className={cn(tipRowKey, 'text-warn')}>주의</span><b className={disp}>{f(tipView.tj.caution.units)}</b></div>
+                        <div className={tipRow}><span className={cn(tipRowKey, 'text-bad')}>지연{SF >= 0 && tipView.m < SF ? ' · 후보 포함' : ''}</span><b className={disp}>{f(tipView.tj.delay.units)}</b></div><div className={tipRow}><span className={cn(tipRowKey, 'text-warn')}>주의</span><b className={disp}>{f(tipView.tj.caution.units)}</b></div>
                         <div className={tipRow}><span className={cn(tipRowKey, 'text-primary')}>병목 · {K[tipView.b]}</span><b className={disp}>{f(tipView.dd[tipView.b])}</b></div>
                       </> : <div className={cn(tipRow, 'text-muted-foreground')}>판정은 {ml(T, T.judged[0])}부터</div>}
                     </div>
@@ -282,7 +292,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             {/* 증감 칸은 선택 달이 기준 달이 아닐 때만(기준 달이면 3칸) */}
             <div className={cn('mt-3 grid flex-auto grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-x-3', showDlt ? 'grid-cols-[minmax(0,1fr)_max-content_max-content_max-content] phone:grid-cols-[minmax(0,1fr)_max-content_max-content]' : 'grid-cols-[minmax(0,1fr)_max-content_max-content]')} aria-label={showDlt ? '단계별 호수, 기준 달 대비 증감, 지연 호수' : '단계별 호수, 지연 호수'}>
               <div className="col-span-full grid grid-cols-subgrid items-center px-1.5 pb-0.5 text-[13px] text-muted-foreground">
-                <span /><span className="text-right">호수</span>{showDlt ? <span className="text-right phone:hidden">증감</span> : null}<span className="text-right">지연</span>
+                <span /><span className="text-right" data-slot="stage-def" title={`단계별 호수 = ${cursor === NOW ? '지금' : `${ml(T, cursor)} 말`} 그 단계에 있는 사업의 호수(사업 화면 '단계별 진행'의 큰 숫자는 이 단계까지 온 누적 · 지시 카드 착공은 통계누리 누계)`}>호수 <span className="text-[12px] text-mute">· {cursor === NOW ? '지금' : `${Number(T.months[cursor].slice(5))}월 말`}</span></span>{showDlt ? <span className="text-right phone:hidden">증감</span> : null}<span className="text-right">지연</span>
               </div>
               {K.map((k, i) => {
                 const dlt = v[i] - nv[i], neck = judged && i === bk;
@@ -314,14 +324,21 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 return (
                   <button key={r.code} type="button" data-slot="board-region" className={cn(btn, 'q-rise card-lift flex flex-col justify-between gap-1 min-w-0 @container rounded-[10px] border border-border bg-[var(--rc)] px-2.5 pt-2 pb-[9px] mobile:px-[7px] mobile:pt-1.5 mobile:pb-[7px] aria-pressed:border-primary aria-pressed:[box-shadow:0_0_0_1px_var(--primary)]')} aria-pressed={r.code === region} onClick={() => setRegion(r.code)} style={{ ['--rc' as string]: rate === null ? 'var(--card)' : RCOL[rcls(rate)], ['--i' as string]: ri * 0.5, ...(pos ? { gridArea: `${pos[0]} / ${pos[1]}` } : {}) }}
                     title={`${n} · 사업 ${f(r.projects)}건 · 판정 ${f(r.judged)}건 · ` + (rate === null ? '판정 대상 없음' : `지연율 ${rate.toFixed(1)}% · 지연 ${r.delay} · 주의 ${r.caution} · 정상 ${r.ok}`) + (r.candidate?.judged ? ` · ${CAND_TEXT} ${f(r.candidate.judged)}건(계산하면 지연 ${f(r.candidate.delay)} · 주의 ${f(r.candidate.caution)} · 정상 ${f(r.candidate.ok)} — 판정에 넣지 않음)` : '') + (r.code === '12' ? ' · 2026.07부터 광주·전남은 전남광주로 집계됩니다' : '')}
-                    aria-label={`${n} 사업 ${f(r.projects)}건 판정 ${f(r.judged)}건 ` + (rate === null ? '판정 대상 없음' : `지연 ${r.delay} 주의 ${r.caution} 정상 ${r.ok} 지연율 ${rate.toFixed(1)}%`) + (r.candidate?.judged ? ` ${CAND_TEXT} ${f(r.candidate.judged)}건` : '')}>
+                    aria-label={`${n} 사업 ${f(r.projects)}건 판정 ${f(r.judged)}건 ` + (rate === null ? '판정 대상 없음(번호 있는 사업 없음)' : `지연 ${r.delay} 주의 ${r.caution} 정상 ${r.ok} 지연율 ${rate.toFixed(1)}%`) + (r.candidate?.judged ? ` ${CAND_TEXT} ${f(r.candidate.judged)}건` : '')}>
                     <span className="flex items-baseline justify-between gap-1.5 @max-[105px]:flex-col @max-[105px]:items-start @max-[105px]:gap-0.5">
                       <span className="text-[15px] leading-[1.25] font-bold whitespace-nowrap text-foreground @max-[105px]:text-[13px]">{n}</span>
-                      <span className={cn(disp, 'text-[22px] leading-none whitespace-nowrap @max-[105px]:text-[18px]')}>{rate === null ? '—' : <>{rate.toFixed(1)}<small className="text-[14px] @max-[105px]:text-[12px]">%</small></>}</span>
+                      {rate === null ? null : <span className={cn(disp, 'text-[22px] leading-none whitespace-nowrap @max-[105px]:text-[18px]')}>{rate.toFixed(1)}<small className="text-[14px] @max-[105px]:text-[12px]">%</small></span>}
                     </span>
-                    <span className="flex h-1.5 gap-px bg-[color-mix(in_srgb,var(--card)_70%,transparent)] [&>span]:block [&>span]:h-full [&>span]:min-w-[3px] [&>span]:flex-none" aria-hidden="true">
-                      {rate === null ? null : ([[r.delay, 'bg-bad'], [r.caution, 'bg-warn'], [r.ok, 'bg-ok']] as const).map(([cnt, c]) => cnt ? <span key={c} className={c} style={{ flex: `${cnt} 1 0` }} /> : null)}
-                    </span>
+                    {/* 판정 대상(번호 있는 사업)이 없으면 '—' 대신 이유와 확인 필요(후보) 건수를 글로 */}
+                    {rate === null ? (
+                      <span data-slot="region-none" className="flex flex-wrap gap-x-1.5 text-[12px] leading-[1.3] text-muted-foreground tabular-nums">
+                        <span className="whitespace-nowrap">판정 대상 없음</span>{r.candidate?.judged ? <span className="whitespace-nowrap">확인 필요 {f(r.candidate.judged)}건</span> : null}
+                      </span>
+                    ) : (
+                      <span className="flex h-1.5 gap-px bg-[color-mix(in_srgb,var(--card)_70%,transparent)] [&>span]:block [&>span]:h-full [&>span]:min-w-[3px] [&>span]:flex-none" aria-hidden="true">
+                        {([[r.delay, 'bg-bad'], [r.caution, 'bg-warn'], [r.ok, 'bg-ok']] as const).map(([cnt, c]) => cnt ? <span key={c} className={c} style={{ flex: `${cnt} 1 0` }} /> : null)}
+                      </span>
+                    )}
                   </button>
                 );
               })}
@@ -337,20 +354,20 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         <div className="mt-3.5 grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-3.5">
           <Card variant="board" className={ringable(cur.p.includes('p-trend'))} render={<section id="p-trend" aria-label="지연·주의 추이" />}>
             <div className={phead}>
-              <h2 className={ptitle} title={`지연·주의 호수(호) · 2025.01~2026.09 건축HUB 과거 판 소급 판정 · 2026.10부터 월 관측 · 이름표 = 선택 달 값과 전월 대비 증감(원천이 추가된 달은 판정 대상이 바뀌어 '비교 불가')${scopeFrom !== undefined ? ` · ${ml(T, scopeFrom)}부터 사업 번호가 있는 사업만 판정(그 앞 달 소급 판정은 후보 포함 — 직접 비교 주의)` : ''}`}>지연·주의 추이</h2>
+              <h2 className={ptitle} title={`지연·주의 호수(호) · 2025.01~2026.09 건축HUB 과거 판 소급 판정 · 2026.10부터 월 관측 · 이름표 = 선택 달 값과 전월 대비 증감(원천이 추가된 달은 판정 대상이 바뀌어 '비교 불가')${scopeFrom !== undefined ? ` · ${SCOPE_TAG(ml(T, scopeFrom))}(그 앞 달 소급 판정은 후보 포함 — 비교 불가, 리본의 구분선과 같은 달)` : ''}`}>지연·주의 추이</h2>
               {ledgerChip}
             </div>
             {/* 선·격자는 non-scaling-stroke 로 화면 px 굵기를 지키고(1px 미만 흐림 방지, 계획서 14절 T2), 점·글자는 선 위에 겹친 HTML 이라 폭이 줄어도 크기가 그대로다 */}
             <div className="mt-3 flex" style={{ height: TH }}>
               <div className="relative min-w-0 flex-1">
-                <svg id="trend" className="absolute inset-0 size-full" viewBox={`0 0 560 ${TH}`} preserveAspectRatio="none" role="img" aria-label={`지연과 주의 호수 추이, ${ml(T, t0)}부터 ${ml(T, NOW)}까지. ${tf ? `${ml(T, t0)} 지연 ${f(tf.d)}호, 주의 ${f(tf.w)}호. ` : ''}${tsel ? (amSel ? `${ml(T, cc)} 지연 ${f(tsel.d)}호, 주의 ${f(tsel.w)}호(원천 추가로 전월과 비교 불가).` : `${ml(T, cc)} 지연 ${f(tsel.d)}호(전월 대비 ${sg(tsel.dd)}), 주의 ${f(tsel.w)}호(${sg(tsel.dw)}).`) : `${ml(T, cc)} 판정 없음.`}${AM.map((a) => ` ${ml(T, a.m)} 원천 추가.`).join('')}`}>
+                <svg id="trend" className="absolute inset-0 size-full" viewBox={`0 0 560 ${TH}`} preserveAspectRatio="none" role="img" aria-label={`지연과 주의 호수 추이, ${ml(T, t0)}부터 ${ml(T, NOW)}까지. ${tf ? `${ml(T, t0)} 지연 ${f(tf.d)}호, 주의 ${f(tf.w)}호. ` : ''}${tsel ? (amSel ? `${ml(T, cc)} 지연 ${f(tsel.d)}호, 주의 ${f(tsel.w)}호(${amName(amSel)}으로 전월과 비교 불가).` : `${ml(T, cc)} 지연 ${f(tsel.d)}호(전월 대비 ${sg(tsel.dd)}), 주의 ${f(tsel.w)}호(${sg(tsel.dw)}).`) : `${ml(T, cc)} 판정 없음.`}${AM.map((a) => ` ${a.m === SF ? SCOPE_TAG(ml(T, a.m)) : `${ml(T, a.m)} 원천 추가`}.`).join('')}`}>
                   {[0.25, 0.5, 0.75].map((fr) => <line key={fr} x1="0" y1={ty(tmax * fr)} x2="560" y2={ty(tmax * fr)} stroke="var(--border)" vectorEffect="non-scaling-stroke" />)}
                   {AM.map((a) => <line key={a.m} data-added-mark x1={tx(a.m)} y1="2" x2={tx(a.m)} y2={TH - 2} stroke="var(--muted-foreground)" strokeDasharray="3 3" vectorEffect="non-scaling-stroke"><title>{amTip(a)}</title></line>)}
                   <g className="q-sweep"><polyline points={pts('w')} fill="none" stroke="var(--warn)" strokeWidth="2.4" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /><polyline points={pts('d')} fill="none" stroke="var(--bad)" strokeWidth="2.8" vectorEffect="non-scaling-stroke" strokeLinejoin="round" /></g>
                   <line x1={tx(cc)} y1="2" x2={tx(cc)} y2={TH - 2} stroke="var(--primary)" strokeWidth="2" vectorEffect="non-scaling-stroke" />
                 </svg>
                 <div className="pointer-events-none absolute inset-0" aria-hidden="true">
-                  {AM.map((a) => <span key={a.m} data-added-label className="absolute bottom-0 -translate-x-full whitespace-nowrap bg-card pr-1 text-[12px] leading-4 text-muted-foreground" style={{ left: tpc(a.m) }} title={amTip(a)}>원천 추가</span>)}
+                  {AM.map((a) => <span key={a.m} data-added-label className="absolute bottom-0 -translate-x-full whitespace-nowrap bg-card pr-1 text-[12px] leading-4 text-muted-foreground" style={{ left: tpc(a.m) }} title={amTip(a)}>{amName(a)}</span>)}
                   {ct ? ([['bg-bad', ct.d], ['bg-warn', ct.w]] as const).map(([c, val]) => <i key={c} className={cn('absolute block size-3 -translate-1/2 rounded-full border-[1.5px] border-card', c)} style={{ left: tpc(cc), top: tyn(val) }} />) : null}
                   {tf && t0 < NOW ? ([[tf.d, syD], [tf.w, syW]] as const).map(([val, yy], i) => <span key={i} className="absolute left-0 text-[13px] leading-4 text-muted-foreground tabular-nums" style={{ top: Math.max(0, yy - 24) }}>{f(val)}</span>) : null}
                 </div>
@@ -359,7 +376,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 {([['지연', 'text-bad', eyD, tsel?.d, tsel?.dd], ['주의', 'text-warn', eyW, tsel?.w, tsel?.dw]] as const).map(([name, tone, yy, val, dv]) => (
                   <div key={name} className="absolute left-0 w-full whitespace-nowrap" style={{ top: Math.max(0, yy - 16) }}>
                     <div className={cn('text-[13px] leading-4 font-bold', tone)}>{name}</div>
-                    <div className="text-[15px] leading-[18px] font-bold text-foreground tabular-nums">{val === undefined ? '—' : f(val)}{dv === undefined ? null : amSel ? <span className="ml-[5px] text-[12px] font-normal text-muted-foreground" title={`${amTip(amSel)} — 전월 대비 증감을 내지 않음(원천 추가로 판정 대상이 바뀜)`}>비교 불가</span> : <span className="ml-[5px] text-[12px] font-normal text-muted-foreground">{sg(dv)}</span>}</div>
+                    <div className="text-[15px] leading-[18px] font-bold text-foreground tabular-nums">{val === undefined ? '—' : f(val)}{dv === undefined ? null : amSel ? <span className="ml-[5px] text-[12px] font-normal text-muted-foreground" title={`${amTip(amSel)} — 전월 대비 증감을 내지 않음(${amSel.m === SF ? '판정 기준 변경' : '원천 추가'}으로 판정 대상이 바뀜)`}>비교 불가</span> : <span className="ml-[5px] text-[12px] font-normal text-muted-foreground">{sg(dv)}</span>}</div>
                   </div>
                 ))}
               </div>

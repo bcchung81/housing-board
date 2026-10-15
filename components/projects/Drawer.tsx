@@ -5,11 +5,12 @@
 import type { ReactNode } from 'react';
 import { useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { ChevronRight, X } from 'lucide-react';
 
-type Props = { id: string | null; canonical?: string | null; closeHref: string; title: ReactNode; head?: ReactNode; children?: ReactNode };
+/* back = 온 곳으로 돌아가는 링크(지도에서 왔을 때 '지도로 돌아가기' — /map 은 다른 루트 레이아웃이라 <a>) */
+type Props = { id: string | null; canonical?: string | null; closeHref: string; title: ReactNode; head?: ReactNode; back?: { href: string; label: string; title?: string } | null; children?: ReactNode };
 
-export default function Drawer({ id, canonical, closeHref, title, head, children }: Props) {
+export default function Drawer({ id, canonical, closeHref, title, head, back, children }: Props) {
   const router = useRouter();
   const prev = useRef(id);
   const nav = useRef({ base: false, depth: 0, pop: false, last: id });
@@ -78,10 +79,18 @@ export default function Drawer({ id, canonical, closeHref, title, head, children
           <h2 id="drawer-title" ref={titleRef} tabIndex={-1} className="m-0 min-w-0 font-display text-[24px] leading-[1.2] font-normal tracking-[-0.03em] [overflow-wrap:anywhere] focus:outline-none">{title}</h2>
           {head}
         </div>
-        <button type="button" onClick={close} aria-label="사업 상세 닫기" title="닫기 (Esc)"
-          className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-pn2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-          <X className="size-[18px]" aria-hidden="true" />
-        </button>
+        <div className="flex items-center gap-2">
+          {back ? (
+            <a href={back.href} data-slot="drawer-back" title={back.title ?? back.label}
+              className="group/back inline-flex flex-none items-center gap-px rounded-[4px] text-[14px] leading-[1.45] whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+              {back.label}<ChevronRight className="size-3.5 shrink-0 transition-transform group-hover/back:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
+            </a>
+          ) : null}
+          <button type="button" onClick={close} aria-label="사업 상세 닫기" title="닫기 (Esc)"
+            className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-pn2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            <X className="size-[18px]" aria-hidden="true" />
+          </button>
+        </div>
       </header>
       <div ref={bodyRef} className="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto px-5 pt-4 pb-6">{children}</div>
     </aside>

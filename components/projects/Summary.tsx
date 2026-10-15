@@ -18,6 +18,7 @@ import { AHEAD_COMPLETION, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 const man = (v: number) => (v === 0 ? '0' : v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
 const light = (c: string, p = 28) => `color-mix(in srgb,${c} ${p}%,var(--card))`;
+/* 카드 안 소제목: 화면 제목(h1) 바로 아래 단계라 h2(모양은 작은 회색 소제목) — 인쇄 보기에서도 h1 → h2 순서 */
 const h3 = 'm-0 text-[16px] font-normal text-muted-foreground';
 /* 추정 포함분 막대: 단계색 옅은 면 + 점선 테두리 */
 const EST = (c: string): CSSProperties => ({ background: light(c, 55), outline: `1px dashed ${c}`, outlineOffset: '-1px' });
@@ -75,7 +76,7 @@ export function Pipeline({ open, shut, total, on, href, badges }: { open: PipeCe
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h3 className={h3} title="큰 숫자·막대 = 이 단계까지 온 사업(지금 이 단계이거나 그 뒤 단계에 있는 사업 — ①계획은 전체)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에">단계별 진행</h3>
+        <h2 className={h3} title="큰 숫자·막대 = 이 단계까지 온 사업(지금 이 단계이거나 그 뒤 단계에 있는 사업 — ①계획은 전체)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에">단계별 진행</h2>
         <InfoTip label="단계별 진행">
           <p>사업이 계획부터 입주까지 여섯 단계 중 어디까지 왔는지 셉니다.</p>
           <p>큰 숫자는 이 단계까지 온 사업의 집 수(호)입니다. 지금 착공 단계인 사업은 계획·인허가에도 셉니다. &apos;지금 이 단계&apos;는 지금 바로 그 단계에 있는 사업 수입니다. 칸을 누르면 그 사업만 아래 목록에 남습니다.</p>
@@ -89,13 +90,13 @@ export function Pipeline({ open, shut, total, on, href, badges }: { open: PipeCe
             <>
               <span className="flex items-center gap-1.5 text-[14px] whitespace-nowrap" style={{ color: BOARD_INK[c.i] }}><i className="block size-[9px] flex-none rounded-[2px]" style={{ background: BOARD_COLOR[c.i] }} aria-hidden="true" />{BOARD_CIR[c.i]} {BOARD_NAMES[c.i]}</span>
               <span className="flex flex-col">
-                <b className="font-display text-[24px] leading-[1.15] font-normal tabular-nums">{fmt(c.units)}<small className="ml-[3px] font-sans text-[14px] text-muted-foreground">호</small></b>
+                <b className="font-display text-[24px] leading-[1.15] font-normal tabular-nums">{fmt(c.units)}<small className="ml-[3px] font-sans text-[14px] text-muted-foreground">호</small><small data-slot="stage-def" className="ml-1.5 font-sans text-[12px] font-normal text-muted-foreground" title="이 단계까지 온 누적(지금 이 단계이거나 그 뒤 단계) — 종합상황판 단계표는 지금 그 단계인 호수, 지시 카드 착공은 통계누리 누계">누적</small></b>
                 <span className="text-[14px] text-muted-foreground tabular-nums">이 단계까지 온 사업 {fmt(c.n)} / {fmt(total)}</span>
               </span>
               <span className="relative block h-[6px]" style={{ background: light(BOARD_COLOR[c.i], 22) }} aria-hidden="true">
                 <span className="q-grow-x absolute inset-y-0 left-0" style={{ width: `${c.share}%`, background: BOARD_COLOR[c.i], '--i': c.i } as CSSProperties} />
               </span>
-              <span className={cn('text-[14px] tabular-nums', c.now ? 'text-foreground' : 'text-muted-foreground')}>지금 이 단계 <b>{fmt(c.now)}</b>{c.now ? <span className="ml-0.5 text-muted-foreground" aria-hidden="true">›</span> : null}</span>
+              <span className={cn('text-[14px] tabular-nums', c.now ? 'text-foreground' : 'text-muted-foreground')}>지금 이 단계 <b>{fmt(c.now)}</b>{c.now ? <span data-ctl className="ml-0.5 text-muted-foreground print:hidden" aria-hidden="true">›</span> : null}</span>
             </>
           );
           const box = 'flex h-full w-full min-w-0 flex-col gap-1.5 rounded-[10px] border border-border px-3 py-2.5 text-left text-foreground no-underline';
@@ -173,8 +174,8 @@ export function PolicyCompare({ lines, title, href, open = false }: { lines: Com
       <details data-fold open={open} className="group/fold">
         <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-3 gap-y-1 rounded-[8px] pr-10 hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden"
           title="정책마다 같은 기간 목표 대비 확인 · 단계 목표가 배정된 정책만(1·29·8·13 대책은 목표 없음 — 정책 칩으로 사업은 볼 수 있음) · 확인은 담당자가 아직 확정하지 않은 연결 포함, 담당자 추정 입력은 따로 · 정책 전체 범위(수도권·전국 거르기와 상관없음) · 누르면 펼치기/접기">
-          <ChevronRight className="size-4 flex-none text-muted-foreground transition-transform group-open/fold:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
-          <h3 className={h3}>{title}</h3>
+          <ChevronRight data-ctl className="size-4 flex-none text-muted-foreground transition-transform group-open/fold:rotate-90 motion-reduce:transition-none" aria-hidden="true" />
+          <h2 className={h3}>{title}</h2>
           <span className="text-[14px] text-muted-foreground tabular-nums" title="같은 해 1월~기준 달 누적">{ymText(c0.from)}~{c0.through.slice(5, 7)} · 정책 전체</span>
           {lines.map((l) => <span key={l.policy.key} className="text-[14px] text-foreground tabular-nums">{compareHead(l)}</span>)}
         </summary>
@@ -223,4 +224,4 @@ function Defs() {
   );
 }
 export const ReadHelp = () => <InfoTip label="읽는 법" text="읽는 법"><Defs /></InfoTip>;
-export const PrintDefs = () => <div aria-hidden="true" className="mt-4 hidden border-t border-border pt-3 text-[13px] print:block [&_dd]:m-0 [&_dd]:mb-1 [&_dl]:m-0 [&_dt]:font-bold"><Defs /></div>;
+export const PrintDefs = () => <div aria-hidden="true" className="mt-4 hidden border-t border-border pt-3 text-[13px] print:block [&_dd]:m-0 [&_dd]:mb-1 [&_dl]:m-0 [&_dt]:font-bold" data-print-defs><Defs /></div>;

@@ -4,6 +4,7 @@
    마우스는 조각·원에 HUD(떠 있는 설명)를, 키보드는 달 단추(←→ Home End)·지도 원(고른 달의 원만 초점 — Tab 으로 하나, ←→ 이동, Enter·Space 고르기)과 목록 링크가 같은 정보를 준다. 시안: docs/design/home-concept/assets/app.js PAGES.region
    지도 연결점(수도권 사업만): 목록 행의 지도 표지, 원·조각을 눌러 고른 사업은 지도 상자 위 '지도에서 보기'. 지도(/map)는 다른 루트 레이아웃이라 <a>.
    지도 시군구 고르기(수도권 면): 면을 누르면(원이 먼저) 테두리 강조 + 지도 위 줄에 '{시군구} · 지도에서 크게 보기'(구가 있는 경기 시는 구마다), 키보드는 그 줄의 시군구 목록(select), Esc 로 풀림.
+   목록(select)은 고르기만 하고 이동은 '보기' 단추나 Enter 로 한다 — 값이 바뀌는 즉시 옮기면 Windows 에서 화살표 한 번에도 페이지가 바뀌었다(2026-10-15). 면 클릭은 바로 거른다.
    고르면 주소 ?sgg=<면 코드>로 이동해 서버가 그 시군구만 거른다(달별 막대·고른 달 목록·합계 — 2026-10-15 결정, 구가 있는 시는 구를 합침).
    sido: 'metro' 수도권 · '' 전국 · 'NN' 시도 하나. */
 import * as React from 'react';
@@ -48,6 +49,8 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
   const [hot, setHot] = React.useState<string | null>(null);       // 목록·조각에 올린 사업
   const [more, setMore] = React.useState(false);
   const [sgg, setSgg] = React.useState<string | null>(initialSgg);   // 지도에서 고른 시군구(면 코드)
+  const [draft, setDraft] = React.useState(initialSgg ?? '');         // 목록(select)에서 고르는 중인 값 — '보기'·Enter 로 이동
+  React.useEffect(() => { setDraft(sgg ?? ''); }, [sgg]);
   const [hud, setHud] = React.useState<{ e: AheadEntry; withLoc: boolean } | null>(null);
   const hudRef = React.useRef<HTMLDivElement>(null);
   const waveRef = React.useRef<HTMLDivElement>(null);
@@ -202,7 +205,9 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
     const units = sggUnits(map, sido, SGG_TABLE), cur = units.find((u) => u.code && u.code === sgg);
     sggBar = (
       <div className="flex min-h-[30px] flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
-        <select aria-label="시군구 고르기(고르면 이 시군구로 거름)" value={cur?.code ?? ''} onChange={(ev) => pickSgg(ev.target.value || null)}
+        <form data-slot="sgg-pick" className="flex items-center gap-1.5" onSubmit={(ev) => { ev.preventDefault(); if (draft !== (cur?.code ?? '')) pickSgg(draft || null); }}>
+        <select aria-label="시군구 고르기('보기' 또는 Enter 로 이 시군구로 거름)" value={draft} onChange={(ev) => setDraft(ev.target.value)}
+          onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.currentTarget.form?.requestSubmit(); } }}
           className="h-[30px] max-w-[11rem] cursor-pointer rounded-[8px] border border-border bg-card px-2 text-[14px] text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
           <option value="">시군구 고르기</option>
           {[...new Set(units.map((u) => u.s))].map((sd) => (
@@ -211,6 +216,9 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
             </optgroup>
           ))}
         </select>
+        <button type="submit" disabled={draft === (cur?.code ?? '')}
+          className="btn-reset inline-flex h-[30px] cursor-pointer items-center rounded-[8px] border border-line2 bg-card px-2.5 text-[14px] font-bold text-foreground hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-default disabled:font-normal disabled:text-muted-foreground disabled:hover:bg-card">보기</button>
+        </form>
         {cur ? (cur.gu.length ? (
           <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5"><b className="font-bold">{cur.n} —</b>{cur.gu.map((g) => <MapLink key={g.code} href={mapHref({ sgg: g.code })} full={`${cur.n} ${g.name} 지도에서 크게 보기`}>{g.name} 지도</MapLink>)}</span>
         ) : (
