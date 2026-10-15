@@ -2,6 +2,11 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { preload } from 'react-dom';
 import MapIsland from '../../../components/MapIsland';
+import calendarJson from '../../../data/board/region-calendar.json';
+import regionMapJson from '../../../data/board/region-map.json';
+import { metroOverview, type OverviewDoc } from '../../../lib/board/metro-overview';
+import { getProjectsIndex } from '../../../lib/board/projects-index';
+import type { CalendarDoc, RegionMapDoc } from '../../../lib/board/region';
 
 /* 지도 섬: 기존 지도 앱의 마크업(index.html 의 body)을 그대로 넣고, 스크립트는 MapIsland 가 기존 순서대로 불러온다.
    app.js·시험은 건드리지 않는다. 마크업의 정본은 지금 루트 index.html 이다.
@@ -43,6 +48,58 @@ function regionPreloads(): string[] {
   } catch { return []; }
 }
 
+/* 수도권 개요(쿼리 없는 /map · ?sido=)의 시군구별 값. 사업 화면(/projects)·지역 공급(/region)과 같은 자료(저장소 JSON — 그 화면들처럼 배포 때 갱신)와 같은 계산.
+   원장을 읽지 못하면 경계만(ok: false — 화면이 '수치를 불러오지 못했습니다'를 띄운다) */
+async function overviewDoc(): Promise<OverviewDoc> {
+  const map = regionMapJson as unknown as RegionMapDoc;
+  try {
+    const { rows, sggNames, referenceDate } = await getProjectsIndex();
+    return metroOverview(map, { rows, sggNames, calendar: calendarJson as unknown as CalendarDoc, referenceDate });
+  } catch {
+    return metroOverview(map, null);
+  }
+}
+
+/* 개요 마크업(값·목록은 assets/js/overview.js 가 채운다). 상세 마크업과 함께 내려가고, 모드(레이아웃 <head> 의 MAP_MODE_INIT)에 따라 CSS 가 하나만 보인다 */
+function OverviewMarkup() {
+  return (
+    <div className="ov" id="ov">
+      <aside className="ov-panel" id="ovPanel" aria-label="수도권 개요" data-sheet="peek">
+        <button type="button" className="ov-handle" id="ovHandle" aria-expanded="false" aria-controls="ovPanel" aria-label="개요 패널 펼치기" />
+        <header className="ov-head"><h1>수도권 공급 개요</h1><span className="ov-asof" id="ovAsOf" /></header>
+        <div className="ov-metrics" id="ovMetrics" role="radiogroup" aria-label="지도 색 기준" />
+        <section className="ov-total" aria-labelledby="ovTotalQ">
+          <div className="ov-q"><h2 id="ovTotalQ">수도권 진행 사업 호수</h2><button type="button" className="ov-i" id="ovDefBtn" aria-expanded="false" aria-controls="ovDef" /></div>
+          <p className="ov-def" id="ovDef" hidden />
+          <div className="ov-num" id="ovTotal" />
+          <p className="ov-sub" id="ovTotalSub" />
+        </section>
+        <p className="ov-fail" id="ovFail" role="status" hidden>수치를 불러오지 못했습니다. 경계만 보여 줍니다.</p>
+        <div className="ov-cards" id="ovCards" role="group" aria-label="시도로 맞추기" />
+        <section className="ov-ranks" aria-labelledby="ovRankH">
+          <h2 id="ovRankH">시군구</h2>
+          <ol className="ov-rank" id="ovRank" />
+        </section>
+      </aside>
+      <section className="ov-mapwrap" aria-label="수도권 시군구 지도(같은 내용과 고르기는 시군구 목록에도 있습니다)">
+        <div className="ov-map" id="ovMap" />
+        <div className="ov-labels" id="ovLabels" aria-hidden="true" />
+        <div className="ov-tip" id="ovTip" hidden />
+        <div className="ov-legend"><b id="ovLegendT" /><ul id="ovLegend" /></div>
+        <p className="ov-going" id="ovGoing" role="status" hidden />
+      </section>
+      <div className="ov-menu" id="ovMenu" role="dialog" hidden />
+    </div>
+  );
+}
+
+/* 지도 섬 + 개요 값: 개요 값은 사업 화면과 같은 읽기(getProjectsIndex)를 기다려 넘긴다. 개요 모듈 주소도 여기서 정한다(해시 이름 표 → 없으면 옛 이름).
+   상세 지도의 스크립트 순서는 지도 섬이 index.html 로더와 같게 가진다(개요 모듈은 Next 지도에만 있다) */
+async function Island(props: { assets: Record<string, string>; homeMap: Record<string, string>; homeLite: Record<string, { name: string; n: number; h?: string }> }) {
+  return <MapIsland {...props} overview={await overviewDoc()} overviewSrc={props.assets[OVERVIEW_JS] || OVERVIEW_JS} />;
+}
+const OVERVIEW_JS = '/assets/js/overview.js';
+
 export default function MapPage() {
   const markup = mapMarkup();
   const assets = scriptManifest();
@@ -50,8 +107,9 @@ export default function MapPage() {
   for (const href of regionPreloads()) preload(href, { as: 'fetch', crossOrigin: 'anonymous' });
   return (
     <>
+      <OverviewMarkup />
       <div style={{ display: 'contents' }} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: markup }} />
-      <MapIsland assets={assets} homeMap={homeMapManifest()} homeLite={homeLiteManifest()} />
+      <Island assets={assets} homeMap={homeMapManifest()} homeLite={homeLiteManifest()} />
     </>
   );
 }

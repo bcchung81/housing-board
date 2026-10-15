@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import TopNav from '../../components/TopNav';
 import { THEME_INIT } from '../../lib/shell/theme';
+import { MAP_MODE_INIT } from '../../lib/board/metro-overview';
 import { doHyeon } from '../../lib/shell/fonts';
 import '../tailwind.css';
 
@@ -17,6 +18,8 @@ export default function MapLayout({ children }: { children: ReactNode }) {
     <html lang="ko" data-map-shell="" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+        {/* 첫 그림 전에 모드(수도권 개요 | 상세 지도)를 정한다 — 쿼리가 없으면 개요(lib/board/metro-overview.ts) */}
+        <script dangerouslySetInnerHTML={{ __html: MAP_MODE_INIT }} />
         {/* 지도가 곧 요청할 외부 서버와 미리 연결해 둔다(첫 타일이 빨리 온다) */}
         <link rel="preconnect" href="https://api.vworld.kr" crossOrigin="" />
         <link rel="preconnect" href="https://s3.amazonaws.com" crossOrigin="" />
