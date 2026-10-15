@@ -4,6 +4,7 @@
    선: key 키로 바로 연결 · name 이름·주소 글자만(코드 변환·수동 짝짓기 필요) · need 추가로 확보하면 연결 · none 값·키 없음.
    그림은 components/sources/StageLinks.tsx 가 그린다. 시험: tests/js/pipeline.test.cjs */
 import type { Acquire } from './acquire';
+type AcqRef = Pick<Acquire, 'id' | 'kind'> & Partial<Pick<Acquire, 'status'>>;
 
 export type Level = 'sido' | 'sgg' | 'bjd' | 'pnu' | 'side' | 'prj';
 export type Edge = 'key' | 'name' | 'need' | 'none';
@@ -32,6 +33,7 @@ export type StageNumbers = {
   lhBlocks: number; lhAsOf: string; catalog: Record<string, number>;
   hubBasis: number; permits: number; permitsStarted: number; permitsCompleted: number; plat: number; ledger: number;
   lhNotices: number; myhome: number; myhomePnu: number; stan: number;
+  ledgerNote: string;   // 사업 원장 기준 달과 범위(예: '원장 2026.10 · 전국') — 원장 observedMonth·coverage 에서 만든다
 };
 
 const f = (n: number) => n.toLocaleString('en-US');
@@ -56,20 +58,20 @@ const CURRENT_VIA: Record<string, Via[]> = {
   'LH 공공주택 준공예정현황': ['CSV'], 'LH 준공예정 위치': ['CSV'], 'LH 전국 LH아파트 단지정보': ['CSV'], 'LH 단지코드 · 입주지정일': ['CSV'], 'LH 주택입주계획 hwpx': ['파일'],
 };
 const FILE_VIA: Record<string, Via> = { F1: '파일', F2: '파일', F3: '파일', F4: '파일', F5: 'CSV', F6: 'CSV' };
-export function viaOf(item: LinkItem, acquire: Pick<Acquire, 'id' | 'kind'>[]): Via[] {
+export function viaOf(item: LinkItem, acquire: AcqRef[]): Via[] {
   if (item.internal) return ['내부'];
   if (item.ids) return [...new Set(item.ids.map((id): Via => (acquire.find((a) => a.id === id)!.kind === 'API' ? 'API' : FILE_VIA[id] ?? '파일')))];
   return CURRENT_VIA[item.name] ?? [];
 }
 
 /* 추가 확보 건수: 외부(조사 목록 id 기준 API·파일) + 내부 */
-export function acquireCount(needed: LinkItem[], acquire: Pick<Acquire, 'id' | 'kind'>[]) {
-  const ids = [...new Set(needed.flatMap((n) => n.ids ?? []))];
+export function acquireCount(needed: LinkItem[], acquire: AcqRef[]) {
+  const ids = [...new Set(needed.flatMap((n) => n.ids ?? []))].filter((id) => acquire.find((a) => a.id === id)!.status !== '수집·연결됨');   // 이미 수집·연결된 자료는 추가 확보에서 뺀다
   const api = ids.filter((id) => acquire.find((a) => a.id === id)!.kind === 'API').length;
   return { ext: ids.length, api, file: ids.length - api, internal: needed.filter((n) => n.internal).length };
 }
 
-export function stageLinks(n: StageNumbers, acquire: Pick<Acquire, 'id' | 'kind'>[]): StageLink[] {
+export function stageLinks(n: StageNumbers, acquire: AcqRef[]): StageLink[] {
   const reg = (code: string) => n.registry[code] ?? 0, bun = (status: string) => n.bundle[status] ?? 0;
   const registryItem = (label: string): LinkItem => ({ name: '사업 레지스트리', sub: `${f(n.registryTotal)}건 · ${label}`, level: 'prj', edge: 'key', label: '사업 번호' });
   const stages: StageLink[] = [];
@@ -99,7 +101,7 @@ export function stageLinks(n: StageNumbers, acquire: Pick<Acquire, 'id' | 'kind'
       AGENCY('계획 호수 · 당초 일정'), SCHEDULE('예정일'),
     ],
     outcomes: [
-      { name: '① 계획 층 · 종합상황판', lines: ['지금 원장 2026.10 · 전국 아님', '택지정보 + 기관 입력'] },
+      { name: '① 계획 층 · 종합상황판', lines: [`지금 ${n.ledgerNote}`, '택지정보 + 기관 입력'] },
       { name: '계획 대비 실적', lines: ['계획 호수 원천 없음', '기관 입력으로만'] },
       { name: '당초 대비 지연', lines: ['일정 기록 + 택지 진행이력', '+ 건축HUB 착공예정일'] },
       { name: "지도 '계획' 단지", lines: [`지금 ${f(bun('계획'))}단지`, '지구 경계로 전국'] },
@@ -111,7 +113,7 @@ export function stageLinks(n: StageNumbers, acquire: Pick<Acquire, 'id' | 'kind'
       { data: `SH 공공재개발·재건축 · ${f(n.catalog['datagokr-15124798'] ?? 0)}구역`, keys: '자치구 · 구역명 · 번지 일대', reach: '△ 이름만', cut: '구역 → 필지 · 2023.11 이후 갱신 없음', fix: 'F5 · 주소검색 · A9 사업승인 대조' },
       { data: 'GH 계획 9행 · LH 입주계획 hwpx 2종', keys: '사업지구명 · 블록', reach: '△ 이름만', cut: '카탈로그 밖 · 지구명 → 지구코드', fix: 'F2 택지정보 · A11 블록 경계' },
       { data: `지역 지도 자료 '계획' ${f(bun('계획'))}단지`, keys: 'PNU · 사업 번호', reach: '✓ 사업 번호', cut: `${n.regions}개 지역만`, fix: 'A9·F1 건축HUB 전국 수집' },
-      { data: `사업 레지스트리 · ${f(n.registryTotal)}건`, keys: `사업 번호 · PNU · 관리번호(${f(n.registryRefs)}건)`, reach: '✓ 사업 번호', cut: '계획 단계(01·02) 0건 · 당초 일정 없음', fix: '기관 입력 · 일정 기록 · F2 진행이력' },
+      { data: `사업 레지스트리 · ${f(n.registryTotal)}건`, keys: `사업 번호 · PNU · 관리번호(${f(n.registryRefs)}건)`, reach: '✓ 사업 번호', cut: `계획 단계(01·02) ${f(reg('01') + reg('02'))}건 · 당초 일정 없음`, fix: '기관 입력 · 일정 기록 · F2 진행이력' },
       { data: '정책 후보 사업 266건(분석 표본 · 저장소 밖)', keys: '이름 · 계획 호수(222건)', reach: '✕ 키 없음', cut: '허가·공고와 이을 키 없음', fix: 'F2 택지정보 · 기관 입력' },
     ],
   });

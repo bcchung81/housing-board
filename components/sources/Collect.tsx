@@ -65,7 +65,7 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
 
   return (
     <Card render={<section aria-label="수집 상태" />}>
-      <PanelHead title={<>수집 상태<span className="ml-2 text-[14px] font-normal text-muted-foreground tabular-nums" title={`우리 원천 ${items.length}곳(원천 카탈로그) · HOME 원천 ${hs.sources.length}곳(덤프 수집 실행 ${fmt(hs.runs.total)}회 중 실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted})`}>{all.length}곳 · 실패 {nFail} · 경고 {nWarn}</span></>}
+      <PanelHead title={<>수집 상태<span className="ml-2 text-[14px] font-normal text-muted-foreground tabular-nums" title={`우리 원천 ${items.length}곳(원천 카탈로그) · HOME 원천 ${hs.sources.length}곳(덤프 수집 실행 ${fmt(hs.runs.total)}회 중 실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted})`}>{all.length}곳(우리가 모은 원천 {items.length} + 정책 진행 자료 {hs.sources.length}) · 실패 {nFail} · 경고 {nWarn}</span></>}
         tip="실패·경고 원천만 표로 펼치고, 정상 원천은 기관별로 접음(기관 · 원천 수 · 최근 수집일) · 실패 = 마지막 실행 실패(마지막 정상 값을 씀) · 경고 = 마지막 수집이 일부만 · 우리 = 파일로 받아 둔 원천 카탈로그, HOME = 덤프의 수집 실행 결과">
         <LegendList>
           {nFail ? <li className={KEY}><i className={`${dot} rounded-full bg-bad`} aria-hidden="true" />실패</li> : null}

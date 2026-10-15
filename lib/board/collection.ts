@@ -14,7 +14,7 @@ export const COLLECTION: Record<string, { name: string; method: string; cycle: s
   'datagokr-15066029': { name: 'SH 행복주택 공급계획', method: '공공데이터포털 CSV', cycle: '수동 / 원천 연간', unit: '행' },
   'datagokr-15080989': { name: '전국 LH아파트 단지정보', method: '공공데이터포털 CSV', cycle: '수동 / 원천 연간', unit: '행' },
   'datagokr-15124798': { name: 'SH 공공재개발·재건축 현황', method: '공공데이터포털 CSV', cycle: '수동 / 원천 1회성', unit: '행' },
-  'datagokr-15141761': { name: 'LH 공공주택 준공예정 현황', method: '공공데이터포털 CSV', cycle: '수동 / 원천 연간', unit: '블록' },
+  'datagokr-15141761': { name: 'LH 공공주택 준공예정 현황', method: '공공데이터포털 CSV', cycle: '수동 / 원천 연간', unit: '행(블록×공급유형)' },
   'datagokr-3045249': { name: 'SH 공사계약 정보', method: '공공데이터포털 CSV', cycle: '수동 / 원천 분기', unit: '행' },
   'hub-hs-basis': { name: '건축HUB 주택인허가 · 기본개요', method: '공공 API · 법정동 조회', cycle: '수동 / 정기 수집 미구현', unit: '원천 기록' },
   'bundle-incheon-gyeyang': { name: '인천 계양구 사업 지도 자료', method: '원천 가공 → 지역 JSON', cycle: '수동 / 자료 보완 시', unit: '연결 단지' },
@@ -25,7 +25,7 @@ export const COLLECTION: Record<string, { name: string; method: string; cycle: s
 /* 현재 동작은 코드·보관 파일로 확인. ITEMS.cycle은 목표 주기여서 현재 열에 쓰지 않는다. */
 export const OPERATIONS: Record<string, { method: string; cycle: string; amount: string }> = {
   'hub-hs': { method: '건축HUB API', cycle: '조회 시 · 캐시 24시간', amount: '보관 연결 기록 58건' },
-  ledger: { method: 'API·지역 지도 자료 연결 → JSON', cycle: '수동 발급·검토·배포', amount: '사업 원장' },
+  ledger: { method: 'API·지역 지도 자료 연결 → JSON', cycle: '수동 발급·검토·배포', amount: '사업 레지스트리(번호 발급)' },
   schedule: { method: '월별 예정일 스냅샷', cycle: '미수집', amount: '일정 기록 없음' },
   'hub-ap': { method: '건축HUB API (계획)', cycle: '미수집 · 보류', amount: '미수집' },
   'agency-input': { method: '기관 CSV 입력 (계획)', cycle: '미구현', amount: '입력 기록 없음' },

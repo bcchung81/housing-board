@@ -150,15 +150,15 @@ test('화면 사용 판정은 모든 운영 자료를 포함하고, 사용 근�
   assert.match(read('app/(dashboard)/sources/page.tsx'), /SAMPLE/);
 });
 
-test('추가 확보 필요: API 11건(신규 신청 8·신청됨 미연결 3)·파일 6건, 부족 번호·출처 주소가 있고 화면에서 지도와 카탈로그 사이에 보인다', () => {
+test('추가 확보 필요: 조사 목록 API 11건·파일 6건 중 원장에서 이미 쓰는 6건은 수집·연결됨, 부족 번호·출처 주소가 있고 화면에서 지도와 카탈로그 사이에 보인다', () => {
   const { ACQUIRE, GAPS } = require('../../lib/board/acquire.ts');
   const ids = ACQUIRE.map((a) => a.id);
   assert.equal(new Set(ids).size, ids.length);
   const api = ACQUIRE.filter((a) => a.kind === 'API'), file = ACQUIRE.filter((a) => a.kind === '파일');
   assert.equal(api.length, 11);
   assert.equal(file.length, 6);
-  assert.equal(api.filter((a) => a.status === '신규 신청 필요').length, 8);
-  assert.equal(api.filter((a) => a.status === '신청됨·미연결').length, 3);
+  assert.equal(api.filter((a) => a.status === '신규 신청 필요').length, 6);
+  assert.equal(api.filter((a) => a.status === '신청됨·미연결').length, 2);
   for (const a of ACQUIRE) {
     assert.ok(a.gaps.length && a.gaps.every((g) => GAPS[g]), a.id);
     assert.match(a.url, /^https:\/\//, a.id);
@@ -195,7 +195,7 @@ test('단계별 데이터 연계: ①계획~⑥입주 6탭, 자료는 정해진 
   const { ACQUIRE } = require('../../lib/board/acquire.ts');
   const zero = new Proxy({}, { get: () => 0 });
   const stages = stageLinks({ regions: 3, sgg: 5, registryTotal: 77, registryRefs: 55, registry: { '06': 59, '03': 12, '04': 4, '05': 2 }, bundle: { '계획': 3 },
-    molit: { permit: 1, start: 1, sale: 1, complete: 1, annual: 1 }, months: '2021-09~2026-08', lhBlocks: 351, lhAsOf: '2026-01-27',
+    molit: { permit: 1, start: 1, sale: 1, complete: 1, annual: 1 }, months: '2021-09~2026-08', lhBlocks: 351, lhAsOf: '2026-01-27', ledgerNote: '원장 2026.10 · 전국',
     catalog: zero, hubBasis: 58, permits: 0, permitsStarted: 0, permitsCompleted: 0, plat: 0, ledger: 0, lhNotices: 0, myhome: 0, myhomePnu: 0, stan: 0 }, ACQUIRE);
   assert.deepEqual(stages.map((s) => s.name), ['계획', '인허가', '착공', '모집', '준공', '입주']);
   const ids = new Set(ACQUIRE.map((a) => a.id));
@@ -213,7 +213,7 @@ test('단계별 데이터 연계: ①계획~⑥입주 6탭, 자료는 정해진 
     }
     for (const it of s.needed) assert.ok(it.internal || it.ids?.length, `${s.id}: ${it.name} 은 조사 id 나 내부 표시가 있어야 한다`);
   }
-  assert.deepEqual(stages[0].acquire, { ext: 6, api: 2, file: 4, internal: 2 }, '계획: 외부 6건(API A9·A11 · 파일 F1·F2·F3·F5) + 내부 2건');
+  assert.deepEqual(stages[0].acquire, { ext: 4, api: 2, file: 2, internal: 2 }, '계획: 외부 4건(API A9·A11 · 파일 F2·F3, F1·F5 는 수집·연결됨이라 뺌) + 내부 2건');
   const page = read('app/(dashboard)/sources/page.tsx');
   const at = (k) => page.indexOf(k);
   assert.ok(at('id="stage-links"') < at('id="etc"') && at('id="etc"') < at('label="화면별 데이터 사용과 부족한 자료"') && at('id="acquire"') < at('id="catalog"'), '단계별 연계가 맨 위, 나머지는 기타 탭 안');

@@ -11,9 +11,10 @@ import { Card } from '../../../../components/ui/card';
 import { DataGrid } from '../../../../components/ui/data-grid';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, lhOfMonth, lhUnits, ymDot } from '../../../../lib/board/calc';
 import { getBoardData } from '../../../../lib/board/data';
+import { getProjectsIndex } from '../../../../lib/board/projects-index';
 import { metricBoardLabel } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
-import type { Col } from '../../../../lib/grid/spec';
+import { dotDates, type Col } from '../../../../lib/grid/spec';
 
 const ACT_KS = ['permit', 'start', 'complete'] as const;
 const LH_COLS: Col[] = [{ key: 'district', label: '사업지구', kind: 'text', wrap: true }, { key: 'block', label: '블록', kind: 'text' }, { key: 'type', label: '공급유형', kind: 'text' }, { key: 'units', label: '호수' }, { key: 'date', label: '준공예정일', kind: 'text' }, { key: 'location', label: '위치', kind: 'text', wrap: true }];
@@ -41,6 +42,8 @@ export default async function MonthPage({ params }: Props) {
   if (!DETAILS.month.id.test(ym) || !allMonths.includes(ym)) notFound();
   const actual = molit.months.includes(ym);
   const blocks = lhOfMonth(lh, ym);
+  const blockTotal = new Set(blocks.map((b) => `${b.district}|${b.block}`)).size;   // 파일 한 행은 블록×공급유형 — 고유 블록으로 센다
+  const past = ym < (await getProjectsIndex()).observedMonth;   // 지난 달의 예정은 실제로 준공했는지 모른다
   const last = lastMonth(molit);
   const nb = actual ? neighborMonths(molit, ym) : { prev: allMonths[allMonths.indexOf(ym) - 1] ?? null, next: allMonths[allMonths.indexOf(ym) + 1] ?? null };
   const table = actual ? monthTable(molit, ym) : [];
@@ -64,7 +67,7 @@ export default async function MonthPage({ params }: Props) {
           <StageKpis when="전국" cells={Object.fromEntries(METRICS.map((k) => [k, { value: k === 'permit' && nation.values[k] === null ? <Dash why="자료가 이 달부터라 월 흐름을 알 수 없음" /> : fmt(nation.values[k]) }]))} />
 
           <Card render={<section aria-label="시도별" />}>
-            <PanelHead title="시도별" tip="호 · 통계누리 주택건설실적통계. 2026-07부터 '전남광주'로 집계되고 이전 달은 광주+전남 합산입니다. 인허가는 연초 누계의 차분입니다."><SrcLink /></PanelHead>
+            <PanelHead title="시도별" tip="호 · 통계누리 주택건설실적통계. 2026.07부터 '전남광주'로 집계되고 이전 달은 광주+전남 합산입니다. 인허가는 연초 누계의 차분입니다."><SrcLink /></PanelHead>
             <DataGrid label={`${monthLabel(ym)} 시도별 호수`} cols={[{ key: 'name', label: '시도', kind: 'text' }, ...METRICS.map((k) => ({ key: k, label: metricBoardLabel(k) }))]}
               rows={table.map((r) => ({ id: r.code, pin: r.code === NATION ? 'top' : undefined, c: { name: r.code === NATION ? '전국' : { text: r.name, href: `/region?sido=${r.code}` }, ...r.values } }))} />
           </Card>
@@ -81,8 +84,8 @@ export default async function MonthPage({ params }: Props) {
       ) : null}
 
       <Card render={<section aria-label="LH 준공 예정" />}>
-        <PanelHead title="LH 준공 예정" tip={`LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 ${lh.sourceAsOf}로 ${lhAge}개월 묵었습니다. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.`}>
-          <span className={`${sub} tabular-nums`}>{blocks.length}블록 · {fmt(lhUnits(blocks))}호</span>
+        <PanelHead title="LH 준공 예정" tip={`LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)}로 ${lhAge}개월 묵었습니다. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.`}>
+          <span className={`${sub} tabular-nums`}>{blockTotal}블록 · {fmt(lhUnits(blocks))}호{past && blocks.length ? ' · 파일상 예정(실제 준공 여부 미확인)' : ''}</span>
           {actual ? null : <SrcLink />}
         </PanelHead>
         {blocks.length > 0 ? (

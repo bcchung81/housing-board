@@ -66,9 +66,9 @@ const MAP_COLS: Col[] = [
   { key: 'scope', label: '범위', kind: 'text' },
   { key: 'gap', label: '부족', kind: 'text', wrap: true },
 ];
-const STATUSES: AcquireStatus[] = ['신규 신청 필요', '신청됨·미연결', '받기 조건 있음', '파일 미수집'];
+const STATUSES: AcquireStatus[] = ['신규 신청 필요', '신청됨·미연결', '받기 조건 있음', '파일 미수집', '수집·연결됨'];
 const ACQ_SUM_COLS: Col[] = [
-  { key: 'kind', label: '구분', kind: 'text' }, { key: 'total', label: '추가 확보 필요' },
+  { key: 'kind', label: '구분', kind: 'text' }, { key: 'total', label: '조사 목록' },
   ...STATUSES.map((st) => ({ key: st, label: st, group: '상태' })),
 ];
 const ACQ_COLS: Col[] = [
@@ -180,12 +180,13 @@ export default async function SourcesPage() {
   const molitRows = molitUsed.reduce((n, s) => n + s.count, 0);
   /* 원장 집계 위젯 5개는 같은 원장을 쓰므로 수집 건수는 첫 행에만 센다(합계에 겹쳐 세지 않게) */
   const judgedSido = ledger.regions.filter((r) => r.judged).map((r) => molit.sido.find((x) => x.code === r.code)?.name ?? r.code).join('·');
+  const judgedText = ledger.regions.every((r) => r.judged) ? `${ledger.regions.length}개 시도 모두` : `${judgedSido}만`;   // 종합상황판(Board.tsx)과 같은 문구
   const ledgerRow = (id: string, widget: string, gap: string, first = false): Row => ({ id, c: { widget, kind: '실데이터', data: `원장 ${ledger.observedMonth} 기준 표 · data/board/ledger-board.json`, method: 'tools/ledger → ledger-board.json', cycle: '수동 갱신', count: first ? held(ledger.scope.projects, '사업') : { na: '위 원장과 같음' }, asOf: ledger.observedMonth, gap } });
   const boardRows: Row[] = [
     { id: 'directives', c: { widget: '총리 지시 6건', kind: '실데이터', data: '통계누리 착공 누계 · 사업 원장 집계 · 원천 카탈로그', method: '통계누리 수집 + 원장 집계(tools/ledger/board.js) + sources.json', cycle: '수동 갱신', count: held(items.length, '데이터셋'), asOf: null, gap: `필요: ${nameOf('ledger')} · ${nameOf('agency-input')} · ${nameOf('schedule')}` } },
     ledgerRow('ribbon', '월별 공급 파동', `${nationOf(ledger)}(사업 ${ledger.scope.projects}건 · ${ledgerMix(ledger).replace('수도권 HOME', '수도권 정책 진행 자료')}) · 지연 띠는 ${ledger.trend?.[0]?.month ?? ledger.observedMonth} 판정부터`, true),
     ledgerRow('snap', '선택 시점 판정', `${ledgerJudged(ledger)} · 지난 달은 월 판정 이력`),
-    ledgerRow('region', `시도 ${ledger.regions.length}곳`, `판정은 ${judgedSido}만 · ${nationOf(ledger)} 사업 중`),
+    ledgerRow('region', `시도 ${ledger.regions.length}곳`, `판정은 ${judgedText} · ${nationOf(ledger)} 사업 중`),
     { id: 'actual', c: { widget: '월별 실적 흐름', kind: '실데이터', data: `${nameOf('molit')} 중 ${molitUsed.length}표(인허가·착공·준공·분양) · ${molit.months[0]}~${molit.months[molit.months.length - 1]}`, method: COLLECTION[molitUsed[0].id].method, cycle: COLLECTION[molitUsed[0].id].cycle, count: held(molitRows, '행'), asOf: molitUsed[0].sourceAsOf, gap: SCREEN_USAGE.molit.gap } },
     ledgerRow('trend', '지연·주의 추이', `월 판정 이력(data/board/judgment-history.json): ${ledger.trend?.[0]?.month ?? ledger.observedMonth}~ 건축HUB 과거 판 소급 · ${ledger.observedMonth}부터 월 관측`),
     ledgerRow('future', '향후 12개월 공급 예정', `준공만(착공·모집·입주 예정 없음) · LH 후보 예정일은 파일 기준일 ${lh.sourceAsOf} 값`),
@@ -196,14 +197,15 @@ export default async function SourcesPage() {
   const mark = (s: string) => s.replace(/^[✓△] /, '');
   const hubBasis = items.find((s) => s.id === 'hub-hs-basis')!.count;
   const hubCache = cache.permits?.length ?? 0;   // 대지위치(plat)는 같은 허가의 면적이라 세지 않는다
-  const lhLocal = lh.blocks.filter((b) => b.district.includes('계양')).length;
+  const blockCount = (bs: typeof lh.blocks) => new Set(bs.map((b) => `${b.district}|${b.block}`)).size;   // 파일 한 행은 블록×공급유형이라 고유 블록으로 센다
+  const lhLocal = blockCount(lh.blocks.filter((b) => b.district.includes('계양')));
   const COUNT: Record<string, { count: Row['c'][string]; scope: string | null }> = {
     'hub-hs': { count: { text: `보관 ${fmt(hubBasis)}건 · 캐시 ${fmt(hubCache)}건`, sort: hubBasis + hubCache }, scope: '전국 조회' },
     ledger: { count: held(projects.length, '사업'), scope: `${new Set(projects.map((p) => p.sgg)).size}개 시군구` },
     schedule: { count: { na: '없음' }, scope: null },
     'hub-ap': { count: held(bundles.permits, '허가'), scope: '계양' },
     'agency-input': { count: { na: '없음' }, scope: null },
-    'lh-completion': { count: held(lhLocal, '블록'), scope: `계양 (전국 ${fmt(lh.count)}블록 중)` },
+    'lh-completion': { count: held(lhLocal, '블록'), scope: `계양 (전국 ${fmt(blockCount(lh.blocks))}블록 중)` },
     stan: { count: cached('stan', 'place'), scope: '전국' },
     newschool: { count: cached('eduinfo'), scope: '전국' },
     'school-zone': { count: held(bundles.zones, '구역'), scope: '계양' },
@@ -218,7 +220,7 @@ export default async function SourcesPage() {
     const op = OPERATIONS[i.id], usage = SCREEN_USAGE[i.id];
     const none = usage.map.startsWith('필요');
     const mode = i.id === 'hub-ap' || i.id === 'lh-completion' ? '보관' : i.now === 'none' ? '미연결' : MODE_LABEL[i.now];
-    return { id: i.id, muted: none, c: { name: i.name, use: none ? null : usage.map.startsWith('△') ? `△ ${mark(usage.map)}` : mark(usage.map), mode, method: i.id === 'hub-ap' ? '건축HUB API → 계양 시설 지도 자료' : op.method, cycle: i.id === 'hub-ap' ? '계양 수동 보완' : op.cycle, ...COUNT[i.id], gap: usage.gap } };
+    return { id: i.id, muted: none, c: { name: i.id === 'ledger' ? '사업 레지스트리(번호 발급)' : i.name, use: none ? null : usage.map.startsWith('△') ? `△ ${mark(usage.map)}` : mark(usage.map), mode, method: i.id === 'hub-ap' ? '건축HUB API → 계양 시설 지도 자료' : op.method, cycle: i.id === 'hub-ap' ? '계양 수동 보완' : op.cycle, ...COUNT[i.id], gap: usage.gap } };
   });
   const bundleRows: Row[] = [
     { id: 'map-projects', c: { name: '지역 사업·단지 지도 자료', use: '단지·공정·일정', mode: '보관', method: '공고·API·공사현황 가공 → JSON', cycle: '수동 보완·재배포', count: held(bundles.projects, '단지'), scope: `${regions}개 지역`, gap: '지역 제한 · 일부 층수·입주일 · 일정 변경 이력 없음' } },
@@ -293,14 +295,15 @@ export default async function SourcesPage() {
   });
   /* 추가 확보 필요(조사 결과): 구분별 건수와 상세 */
   const acqCount = (rows: typeof ACQUIRE) => ({ total: rows.length, ...Object.fromEntries(STATUSES.map((st) => [st, rows.filter((a) => a.status === st).length || null])) });
-  const acqApi = ACQUIRE.filter((a) => a.kind === 'API'), acqFile = ACQUIRE.filter((a) => a.kind === '파일');
+  const acqOpen = ACQUIRE.filter((a) => a.status !== '수집·연결됨');   // 아직 확보하지 못한 것(수집·연결됨은 따로 센다)
+  const acqApi = acqOpen.filter((a) => a.kind === 'API'), acqFile = acqOpen.filter((a) => a.kind === '파일');
   const acqSumRows: Row[] = [
     { id: 'api', c: { kind: 'API', ...acqCount(acqApi) } },
     { id: 'file', c: { kind: '파일(CSV·SHP 등)', ...acqCount(acqFile) } },
     { id: 'all', pin: 'bottom', c: { kind: '합계', ...acqCount(ACQUIRE) } },
   ];
   const acqRows: Row[] = ACQUIRE.map((a) => ({ id: a.id, c: {
-    id: a.id, kind: a.kind, name: { text: a.name, href: a.url }, no: a.no, org: a.org, status: a.status,
+    id: a.id, kind: a.kind, name: { text: a.name, href: a.url }, no: a.no, org: a.org, status: a.got ? `${a.status} ${dotDates(a.got)}` : a.status,
     gap: a.gaps.map((g) => GAPS[g].name).join(' · '), screen: [...new Set(a.gaps.flatMap((g) => GAPS[g].screen.split('·')))].join('·'),
     cycle: a.cycle, checked: a.checked === '확인' ? a.checked : { text: a.checked, muted: true }, note: a.note,
   } }));
@@ -319,6 +322,7 @@ export default async function SourcesPage() {
     catalog: Object.fromEntries(items.map((x) => [x.id, x.count])),
     hubBasis, permits: cache.permits?.length ?? 0, permitsStarted: has('permits', 'startedAt'), permitsCompleted: has('permits', 'completedAt'),
     plat: cache.plat?.length ?? 0, ledger: cache.ledger?.length ?? 0, lhNotices: cache.lh?.length ?? 0, myhome: cache.myhome?.length ?? 0, myhomePnu: has('myhome', 'pnu'), stan: cache.stan?.length ?? 0,
+    ledgerNote: `원장 ${ledger.observedMonth.replace('-', '.')} · ${nationOf(ledger)}`,
   }, ACQUIRE);
 
   return (
@@ -327,7 +331,7 @@ export default async function SourcesPage() {
         tip="① 요구사항 충족 → ② 수집 상태 → ③ 연도 확보 → ④ 연결 · 맨 아래 원천 카탈로그(단계별 데이터 연계·원천별 수집 건수·기준일)">
         <ReqTags screen="sources" />
         <span className="text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
-          title={`HOME 자료 ${req.edition.slice(0, 4)}.${req.edition.slice(4, 6)}.${req.edition.slice(6, 8)} 수집 · 사업 원장 기준일 ${req.referenceDate} · 원천 카탈로그 ${items.length}건의 수집일 ${got[0]} ~ ${got[got.length - 1]} · 추가 확보 필요 조사 ${ACQUIRE_ASOF}`}>
+          title={`HOME 자료 ${req.edition.slice(0, 4)}.${req.edition.slice(4, 6)}.${req.edition.slice(6, 8)} 수집 · 사업 원장 기준일 ${dotDates(req.referenceDate)} · 원천 카탈로그 ${items.length}건의 수집일 ${dotDates(got[0])} ~ ${dotDates(got[got.length - 1])} · 추가 확보 필요 조사 ${dotDates(ACQUIRE_ASOF)}`}>
           수집 {editionDay} · 원장 {req.referenceDate.replace(/-/g, '.')}
         </span>
       </PageHead>
@@ -335,7 +339,7 @@ export default async function SourcesPage() {
       <Collect hs={hs} items={items} />
       <Coverage hs={hs} molit={molit} />
       <Links hs={hs} />
-      <Fold title="원천 카탈로그" meta={`단계별 데이터 연계 · 화면별 사용 · 추가 확보 필요 ${ACQUIRE.length}건 · 보관 데이터셋 ${items.length}건`} className="mt-0 shadow-[var(--shadow-card)]">
+      <Fold title="원천 카탈로그" meta={`단계별 데이터 연계 · 화면별 사용 · 추가 확보 필요 ${acqOpen.length}건 · 보관 데이터셋 ${items.length}건`} className="mt-0 shadow-[var(--shadow-card)]">
       <section id="stage-links" aria-labelledby="h-stage" className="scroll-mt-20">
         <PanelHead id="h-stage" title="단계별 데이터 연계" />
         <StageLinks stages={stages} extra={(
@@ -356,7 +360,7 @@ export default async function SourcesPage() {
           <DataGrid label="지도 데이터별 사용과 수집 현황" cols={MAP_COLS} rows={withDetail(mapRows)} />
         </section>
         <section id="acquire" aria-labelledby="h-acquire" className={`scroll-mt-20 ${GRID_DENSE}`}>
-          <h3 id="h-acquire" className={H3} title={`조사 ${ACQUIRE_ASOF}`}>추가 확보 필요 · API {acqApi.length}건 · 파일 {acqFile.length}건</h3>
+          <h3 id="h-acquire" className={H3} title={`조사 ${dotDates(ACQUIRE_ASOF)} · 조사 목록 ${ACQUIRE.length}건 중 수집·연결됨 ${ACQUIRE.length - acqOpen.length}건은 뺌`}>추가 확보 필요 · API {acqApi.length}건 · 파일 {acqFile.length}건</h3>
           <DataGrid label="추가 확보 필요 건수" cols={ACQ_SUM_COLS} rows={acqSumRows} sortable={false} />
           <DataGrid label="추가 확보 필요 API·파일" cols={ACQ_COLS} rows={acqRows} />
         </section>

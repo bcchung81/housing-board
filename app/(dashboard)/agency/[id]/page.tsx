@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import Link from 'next/link';
 import { notFound } from 'next/navigation';
 import StageLegend from '../../../../components/charts/StageLegend';
 import MonthLines from '../../../../components/charts/MonthLines';
@@ -16,15 +17,15 @@ import { AGENCIES } from '../../../../lib/board/agencies';
 import { getBoardData } from '../../../../lib/board/data';
 import { mapHref } from '../../../../lib/board/map-href';
 import { getProjectsIndex } from '../../../../lib/board/projects-index';
-import { isMetro, sggOfAddress } from '../../../../lib/board/projects-view';
+import { BOARD_NAMES, isMetro, sggOfAddress } from '../../../../lib/board/projects-view';
 import { metricBoardLabel } from '../../../../lib/board/stages';
 import { DETAILS } from '../../../../lib/shell/menu';
-import type { Col } from '../../../../lib/grid/spec';
+import { dotDates, type Col } from '../../../../lib/grid/spec';
 
 type Props = { params: Promise<{ id: string }> };
 export const generateStaticParams = () => AGENCIES.map((a) => ({ id: a.id }));
 const KS = [['permit', '인허가'], ['start', '착공'], ['complete', '준공']] as const;
-const YEAR_COLS: Col[] = [{ key: 'y', label: '연도', kind: 'text' }, { key: 'n', label: '건수' }, { key: 'units', label: '호수' }];
+const YEAR_COLS: Col[] = [{ key: 'y', label: '연도', kind: 'text' }, { key: 'n', label: '블록' }, { key: 'units', label: '호수' }];
 const BLOCK_COLS: Col[] = [{ key: 'date', label: '준공예정일', kind: 'text' }, { key: 'district', label: '사업지구', kind: 'text', wrap: true }, { key: 'block', label: '블록', kind: 'text' }, { key: 'type', label: '공급유형', kind: 'text' }, { key: 'units', label: '호수' }, { key: 'location', label: '위치', kind: 'text', wrap: true },
   { key: 'map', label: '지도', kind: 'text', sort: false }];
 
@@ -32,6 +33,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
   return { title: AGENCIES.find((a) => a.id === id)?.name };
 }
+
+/* 파일 한 행은 블록×공급유형이라 같은 블록이 여러 행이다 — 고유 블록(사업지구+블록)으로 센다 */
+const blockCount = (bs: { district: string; block: string }[]) => new Set(bs.map((b) => `${b.district}|${b.block}`)).size;
 
 export default async function AgencyDetail({ params }: Props) {
   const { id } = await params;
@@ -43,10 +47,18 @@ export default async function AgencyDetail({ params }: Props) {
   if (!a.actor) {   // gh · sh · mnd: 화면에 쓸 데이터가 아직 없다. 받은 파일이 있으면 카탈로그를 보인다.
     const group = a.id === 'sh' ? '서울주택도시공사' : a.id === 'mnd' ? '국방부' : null;
     const files = group ? sources.items.filter((s) => s.group === group) : [];
+    const ghRows = a.id === 'gh' ? (await getProjectsIndex()).rows.filter((r) => r.agency === 'gh') : [];   // 원장의 GH 사업(종합상황판 기관 칩의 GH 와 같은 기준)
     return (
       <Page>
         <PageHead crumbs={crumbs} title={a.name} tip={`${a.summary}.`}><Badge title={`${a.summary}.`}>준비 중</Badge></PageHead>
         <Alert><b>기관별 신호(정상·주의·지연)는 일정(당초·변경·현재 예정)이 없어 판정하지 않습니다.</b> {a.id === 'mnd' ? '군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.' : null}</Alert>
+        {ghRows.length ? (
+          <Card render={<section aria-label="GH 사업" />}>
+            <PanelHead title="GH 사업" tip="사업 원장에서 기관이 GH 인 사업 · 사업 화면의 기관 칩 GH 와 같은 목록"><span className={`${sub} tabular-nums`}>{ghRows.length}건 · {fmt(ghRows.reduce((n, r) => n + r.units, 0))}호</span><Link href="/projects?agency=gh" className="text-[14px]">사업 화면에서 보기</Link></PanelHead>
+            <DataGrid label="GH 사업" cols={[{ key: 'name', label: '사업', kind: 'text', wrap: true }, { key: 'sgg', label: '시군구', kind: 'text' }, { key: 'stage', label: '단계', kind: 'text' }, { key: 'units', label: '호수' }]}
+              rows={ghRows.map((r) => ({ id: r.id, c: { name: { text: r.name, href: `/projects?id=${r.id}` }, sgg: r.sggName, stage: BOARD_NAMES[r.board], units: r.units } }))} />
+          </Card>
+        ) : null}
         {files.length ? (
           <Card render={<section aria-label="받은 원천 파일" />}>
             <PanelHead title="받은 원천 파일" tip="아직 화면에서 쓰지 않음"><span className={sub}>{files.length}종</span><SrcLink /></PanelHead>
@@ -65,6 +77,7 @@ export default async function AgencyDetail({ params }: Props) {
   const { observedMonth } = await getProjectsIndex();
   const blocks = lh.blocks.filter((b) => b.date.slice(0, 7) >= observedMonth), past = lh.blocks.length - blocks.length;
   const byYear = [...new Set(blocks.map((b) => b.date.slice(0, 4)))].map((y) => ({ y, blocks: blocks.filter((b) => b.date.startsWith(y)) }));
+  const blockTotal = blockCount(blocks);
   const recent = molit.months.slice(-12).reverse();
   const prov = isProvisional(molit, last);
   /* 블록 → 지도(수도권만): 원장에 같은 이름('지구 블록')의 사업이 있으면 그 사업, 없으면 주소의 시군구 */
@@ -78,7 +91,7 @@ export default async function AgencyDetail({ params }: Props) {
   return (
     <Page>
       <PageHead crumbs={crumbs} title={a.name} tip={`통계누리 시행주체 '${a.actor}'의 전국 월별 호수${a.id === 'lh' ? '와 LH 준공 예정 블록' : ''}.`}
-        meta={`실적 ${ymDot(last)}`} metaTip={`통계누리 주택건설실적통계 · 자료 기간 ${molit.months[0]} ~ ${last}${a.id === 'lh' ? ` · LH 준공예정 파일 기준일 ${lh.sourceAsOf}` : ''}`} />
+        meta={`실적 ${ymDot(last)}`} metaTip={`통계누리 주택건설실적통계 · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}${a.id === 'lh' ? ` · LH 준공예정 파일 기준일 ${dotDates(lh.sourceAsOf)}` : ''}`} />
       <StageKpis when={monthLabel(last)} notes={{ 3: '모집은 시행주체 구분이 없음' }} cells={Object.fromEntries(KS.map(([k]) => [k, { value: fmt(seriesOf(molit, k, NATION).actors![a.actor!][i]), sub: <>{year}년 누계 {fmt(ytd(molit, k, NATION, last, a.actor!))}호{prov ? <Prov /> : null}</> }]))} />
       <Card render={<section aria-label="월별 실적" />}>
         <PanelHead title="월별 실적" tip="전국 · 호 · 빗금은 잠정치 · 통계누리 주택건설실적통계. 인허가는 연초 누계의 차분입니다. ④ 모집은 시행주체 구분이 없고, ①계획(정책·사업화)은 통계누리에 없습니다.">
@@ -95,10 +108,10 @@ export default async function AgencyDetail({ params }: Props) {
       </Card>
       {a.id === 'lh' ? (
         <Card render={<section aria-label="LH 준공 예정" />}>
-          <PanelHead title="LH 준공 예정" tip={`이번 달(${ymDot(observedMonth)})부터 · 준공예정일 순 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${lh.sourceAsOf}. 예정일은 그 시점의 계획입니다.${past ? ` · 예정일이 이번 달 전인 ${past}건은 뺌` : ''} · 지도 열은 수도권 블록만(사업이 있으면 그 사업, 없으면 시군구)`}>
-            <span className={`${sub} tabular-nums`}>{ymDot(observedMonth)}부터 · {fmt(blocks.length)}건 · {fmt(blocks.reduce((s, b) => s + b.units, 0))}호</span>
+          <PanelHead title="LH 준공 예정" tip={`이번 달(${ymDot(observedMonth)})부터 · 준공예정일 순 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)}. 예정일은 그 시점의 계획입니다.${past ? ` · 예정일이 이번 달 전인 ${past}행은 뺌` : ''} · 지도 열은 수도권 블록만(사업이 있으면 그 사업, 없으면 시군구)`}>
+            <span className={`${sub} tabular-nums`}>{ymDot(observedMonth)}부터 · {fmt(blockTotal)}블록 · {fmt(blocks.reduce((s, b) => s + b.units, 0))}호 · 파일 기준 {dotDates(lh.sourceAsOf)}</span>
           </PanelHead>
-          <DataGrid label="LH 준공 예정 연도별" cols={YEAR_COLS} rows={byYear.map((r) => ({ id: r.y, c: { y: r.y, n: r.blocks.length, units: r.blocks.reduce((s, b) => s + b.units, 0) } }))} />
+          <DataGrid label="LH 준공 예정 연도별" cols={YEAR_COLS} rows={byYear.map((r) => ({ id: r.y, c: { y: r.y, n: blockCount(r.blocks), units: r.blocks.reduce((s, b) => s + b.units, 0) } }))} />
           <DataGrid label="LH 준공 예정 블록" cols={BLOCK_COLS} maxHeight={520}
             rows={blocks.map((b, k) => ({ id: String(k), c: { date: { text: b.date, href: `/month/${b.date.slice(0, 7)}` }, district: b.district, block: b.block, type: b.type, units: b.units, location: b.location, map: blockMap(b) } }))} />
         </Card>
