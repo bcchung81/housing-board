@@ -1299,6 +1299,9 @@
 | `projects[].next.eventType` | `PERMIT` · `CONSTRUCTION_START` · `SUPPLY_NOTICE` · `COMPLETION` · `MOVE_IN` | ● |  |
 | `projects[].next.planned` | PartialDate | ● | 원천이 연·월까지만 적은 날짜는 YYYY-MM · YYYY 로 온다(예정일) |
 | `projects[].done` | string `^\d{4}-(0[1-9]\|1[0-2])$` |  | 실제 준공(ACTUAL COMPLETION) 중 가장 늦은 달 YYYY-MM. 실제 준공 기록이 없으면 칸이 없다(지도 '입주중' 표시). 2026-10-14 추가 |
+| `projects[].dateAlt` | object |  | 준공 예정이 다른 원천(LH 준공 예정 파일)과 다를 때 그 원천 날짜 |
+| `projects[].dateAlt.source` | `LH` | ● |  |
+| `projects[].dateAlt.planned` | string(date) | ● |  |
 | `projects[].units` | integer 0~ | ● | 호수(종합상황판과 같은 물량 규칙) |
 | `projects[].pks` | string `^\d+$`[] | ● | 건축HUB 주택인허가 관리번호(= /api/v1/permits 의 properties.refs) |
 | `projects[].pnus` | string `^\d{19}$`[] | ● | 필지 PNU(= /api/v1/permits 의 properties.pnu). 블록 단위 사업은 비어 있을 수 있다 |
