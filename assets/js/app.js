@@ -903,8 +903,9 @@ function bboxOf(rings, hM) {
   const hp = (hM || 0) / mpp * Math.sin(map.getPitch() * Math.PI / 180);   // 기울인 화면에서 건물 높이가 차지하는 세로 픽셀(근사)
   return { x0, x1, top: y0 - hp, bottom: y1 };
 }
-function showCard(html, rings, hM, clickX) {
+function showCard(html, rings, hM, clickX, lead) {
   if (popup) { const o = popup; popup = null; o.remove(); }
+  cardGo = null;   // 꼬리표·목록에서 연 카드면 focusBlock 이 연 뒤에 다시 적는다
   const H = map.getContainer().clientHeight, gap = 12, BAR = 52;
   const W = map.getContainer().clientWidth;
   const bb = bboxOf(rings, hM);
@@ -923,19 +924,36 @@ function showCard(html, rings, hM, clickX) {
   /* 카드 안 접힘(설명·주변·시공)을 펴고 접으면 높이가 바뀌므로 자리를 다시 맞춘다(toggle 은 거품이 없어 capture 로 받는다) */
   const own = popup;
   popup.getElement().addEventListener('toggle', () => { if (popup !== own) return; popup.setOffset([0, 0]); fitCard(); }, true);
-  say(popup.getElement().innerText.replace(/\s+/g, ' '));
+  say((lead || '') + popup.getElement().innerText.replace(/\s+/g, ' '));
 }
-/* Esc: 열린 사업 카드·팝업을 닫고 초점을 연 단추(없거나 사라졌으면 지도)로 돌려준다. 옵션 창이 열려 있거나 입력 중이면 그쪽이 먼저 */
-let cardFrom = null;
+/* Esc: 열린 사업 카드·팝업을 닫고 초점을 연 단추(없거나 사라졌으면 지도)로 돌려준다. 옵션 창이 열려 있거나 입력 중이면 그쪽이 먼저.
+   꼬리표·목록에서 연 사업 카드(cardGo)는 카드가 열릴 때(이동 2초 뒤) 이미 꼬리표가 숨어 초점이 문서로 떨어져 있다(2026-10-15 평가: 닫으면 지도 캔버스로 갔다).
+   그래서 사업 id 로 같은 사업의 꼬리표(#hudTags [data-id])를 다시 찾는다. 꼬리표에서 열었으면 연 자리의 시점으로 돌아가 꼬리표를 다시 그린 뒤 초점을 주고,
+   꼬리표가 화면 밖이라 없으면 사이드바 목록의 같은 사업 단추, 그것도 안 보이면 지도 */
+let cardFrom = null, cardGo = null;   // cardGo: { id, from: 'tag'|'list', cam } — focusBlock 이 연 사업 카드
+const shown = (el) => !!(el && el.isConnected && !el.hidden && el.offsetParent);
+function cardBackTo(id) {
+  const tag = byId($('#hudTags'), 'data-id', id), row = byId($('#projList'), 'data-id', id);
+  return shown(tag) ? tag : shown(row) ? row : map.getCanvas();
+}
 document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape' || !popup || e.defaultPrevented || !$('#optPanel').hidden || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
-  const back = cardFrom && cardFrom.isConnected && cardFrom.offsetParent ? cardFrom : map.getCanvas();
-  popup.remove(); popup = null; cardFrom = null;
-  back.focus(); say('카드를 닫았습니다.');
+  if (e.key !== 'Escape' || !popup || e.defaultPrevented || !$('#optPanel').hidden || !$('#vMenu').hidden || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+  const go = cardGo;
+  popup.remove(); popup = null; cardGo = null;
+  say('카드를 닫았습니다.');
+  if (shown(cardFrom)) { const b = cardFrom; cardFrom = null; b.focus(); return; }
+  cardFrom = null;
+  if (!go) { map.getCanvas().focus(); return; }
+  if (go.from === 'tag' && go.cam && map.getZoom() >= HUD_MAXZ) {   // 꼬리표는 멀리 볼 때만 있다: 연 자리의 시점으로 돌아가 다시 그린 뒤 초점
+    map.once('moveend', () => { renderHud(); cardBackTo(go.id).focus(); });   // 먼저 건다: 움직임 줄이기(dur 0)면 easeTo 안에서 바로 끝난다
+    map.easeTo({ ...go.cam, duration: dur });
+    return;
+  }
+  cardBackTo(go.id).focus();
 });
 /* 카드가 지도 위 다른 상자 뒤로 가려 잘리지 않게(2026-10-13): 오른쪽 위 시점 묶음(.rctl)과 겹치면 가로로 비켜 서고,
    가로로 겹치는 위·아래 상자(왼쪽 위 도구 줄, 주소 입력줄, 범례 띠, 좁은 화면의 아래 시트) 사이 높이에 맞춰 길면 안쪽을 스크롤하게 줄인 뒤 세로로 밀어 넣는다 */
-const CARD_AVOID = ['.topbar', '#cmd', '#botbar', '.maplibregl-ctrl-bottom-right'];
+const CARD_AVOID = ['.topbar', '#cmd', '#botbar', '.maplibregl-ctrl-bottom-right'];   // 보기 메뉴(#vMenu)는 열 때 카드보다 위 층이라 피하지 않는다
 function fitCard() {
   const el = popup.getElement(), pc = el.querySelector('.pc'), m = map.getContainer().getBoundingClientRect();
   const box = (o) => (o && !o.hidden && o.offsetParent ? o.getBoundingClientRect() : null);
@@ -992,7 +1010,10 @@ const ymDot = (d) => String(d || '').slice(0, 7).replace('-', '.');
 /* 사업 이름: 원장이 붙었으면 원장 사업 이름(사업 화면 목록·서랍과 같은 이름), 아니면 자료의 이름, 없으면 지도 이름표 */
 const projName = (b) => String((b.ledger && b.ledger.name) || b.name || b.id);
 const homeRows = (b) => { const x = homeParts(b); return x ? [x.nums ? ['호수', `<span title="${esc(x.title)}">${esc(x.nums)}</span>`, true] : null, x.pol ? ['정책', `<span title="${esc(x.title)}">${esc(x.pol)}</span>`] : null] : []; };
-function blockPopup(b, clickX) {
+/* D2 원천 날짜 다름: 원장 행의 dateAlt { source, planned } — 원천(LH 등)의 예정일이 원장 현재 예정과 다르다. 표지 글자는 사업 화면과 같은 '원천 날짜 다름', 자세한 설명은 title. 필드가 없으면 그리지 않는다 */
+const dateAltOf = (lg) => (lg && lg.dateAlt && lg.dateAlt.planned ? lg.dateAlt : null);
+const altMark = (a) => `<b class="jd caution" title="${esc(`${a.source || '원천'} 자료의 예정일은 ${dotDate(a.planned)}로, 원장의 현재 예정과 다릅니다. 현재 예정은 원장 기준입니다.`)}">원천 날짜 다름(${esc(a.source || '원천')} ${esc(ymDot(a.planned))})</b>`;
+function blockPopup(b, clickX, lead) {
   const fr = floorsRange(b), nr = HAS_CTX ? nearestCtx(centroid(b.poly)) : null;
   const hmax = fr ? floorsToHeight(fr[1]) : 0;
   const ck = HAS_INFRA ? IL.projectChecks(b, INFRA, CTX) : null, zr = ck && ck.edu.find((r) => r.ref && r.ref.zone), sr = ck && ck.edu.find((r) => r.ref && r.ref.school);
@@ -1000,7 +1021,7 @@ function blockPopup(b, clickX) {
   const zone = zr && zr.ref.zone, sameSch = zone && nr && nr.sch && shortSchool(zone.school) === shortSchool(nr.sch.name);
   const schoolRows = sameSch ? [['학교', `${esc(shortSchool(zone.school))} <small>통학구역 · ${IL.shortDist(nr.sch.d)}</small>`]]
     : [nr && nr.sch ? ['학교', `${esc(shortSchool(nr.sch.name))} <small>${IL.shortDist(nr.sch.d)}</small>`] : null, zone ? ['통학구역', `${esc(shortSchool(zone.school))}${zr.ref.d != null ? ` <small>${IL.shortDist(zr.ref.d)}</small>` : ''}`] : null];
-  const lg = b.ledger, lt = LT(b), sn = stageNow(b);
+  const lg = b.ledger, lt = LT(b), sn = stageNow(b), alt = dateAltOf(lg);
   const pidLink = (id) => `<a class="pc-pid" href="${esc(projHref(id))}" title="사업 화면에서 이 사업 열기">${esc(id)}</a>`;
   const linkId = lg ? (lg.issued ? lg.id : null) : b.projectId;   // 이름도 사업 화면으로(후보 id 는 열 수 없어 링크하지 않는다)
   const pidRow = lg ? ['사업 id', lg.issued ? pidLink(lg.id) : `<span class="pc-pid" title="후보 사업(번호 발급 전) — 다음 원장에서 id 가 바뀔 수 있어 바로 여는 링크가 없습니다">${esc(lg.id)}</span> <small>후보 사업</small>`] : b.projectId ? ['사업 id', pidLink(b.projectId)] : null;   // 후보 id 는 resolve 가 열지 못해 링크하지 않는다
@@ -1019,11 +1040,12 @@ function blockPopup(b, clickX) {
     ${b.note ? `<details class="pc-note"><summary title="눌러서 설명 전체 보기">${esc(noteTxt(b.note))}</summary></details>` : ''}
     ${gridHtml([lg && lg.stage ? ['단계', `<span class="stg6"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => `<i class="${x === sn.now ? `on ${sn.k}` : ''}"></i>`).join('')}</span><span title="${esc(sn.now[4])}">${stName(sn.now)}</span>`] : null,
       lt && lt.cls ? ['상태', `<b class="jd ${lg.cls}">${lt.cls}</b>${lt.late ? ` <small${lt.lateTitle ? ` title="${esc(dotDate(lt.lateTitle))}"` : ''}>${esc(lt.late)}</small>` : ''}`] : null,
-      lt && (lt.next || lt.pastDue) ? ['현재 예정', `${esc(lt.next || lt.due)}${lt.pastDue ? ' <b class="jd caution" title="예정일이 자료 기준일보다 앞서지만 실적 기록이 아직 없습니다. 상태는 바꾸지 않았습니다">예정일 지남</b>' : ''}`] : null, ...homeRows(b), b.progress ? ['공정률', `<span title="${esc(dotDate(b.progress.asOf))} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(dotDate(b.moveIn))],
+      lt && (lt.next || lt.pastDue) ? ['현재 예정', `${esc(lt.next || lt.due)}${lt.pastDue ? ' <b class="jd caution" title="예정일이 자료 기준일보다 앞서지만 실적 기록이 아직 없습니다. 상태는 바꾸지 않았습니다">예정일 지남</b>' : ''}${alt ? ` ${altMark(alt)}` : ''}`, !!alt] : alt ? ['현재 예정', `<span class="pc-none">—</span> ${altMark(alt)}`, true] : null,   // 원천 날짜 다름 표지가 붙으면 두 칸 폭
+      ...homeRows(b), b.progress ? ['공정률', `<span title="${esc(dotDate(b.progress.asOf))} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(dotDate(b.moveIn))],
       b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`, true] : null])}
     ${sr && sr.level === 'warn' ? `<p class="pc-warn">▲ 학교 개교가 ${esc(sr.detail)}</p>` : ''}
     ${near.length ? `<details class="pc-more pc-near"><summary>주변·시공 <small>${esc(near.map((r) => r[0]).join('·'))}</small></summary>${dlHtml(near)}</details>` : ''}</div>${linkId ? `<a class="pc-open" href="${esc(projHref(linkId))}">사업 정보 보기 ›</a>` : ''}</div>`,
-    b.dongs ? b.dongs.flatMap((x) => x.poly).concat([b.poly]) : [b.poly], hmax, clickX);
+    b.dongs ? b.dongs.flatMap((x) => x.poly).concat([b.poly]) : [b.poly], hmax, clickX, lead);
 }
 function officialPopup(p, geom, clickX) {
   const none = p.src === '정보없음';   // 높이·층수가 모두 없는 도형: 평면으로만 그렸고, 실재하는 건물인지 알 수 없다
@@ -1459,9 +1481,12 @@ function syncUrl(id) {
     history.replaceState(null, '', u);
   } catch (_) { /* file:// 에서는 막힐 수 있음 */ }
 }
-function focusBlock(id, { toggle = true, tour = false, scroll = true } = {}) {
+function focusBlock(id, { toggle = true, tour = false, scroll = true, from = null } = {}) {
   if (!tour) stopMotion();
   const btn = byId($('#projList'), 'data-id', id), b = BLOCKS.find((x) => x.id === id); if (!b) return;
+  /* 누른 즉시 알린다: 카드는 날아간 뒤(약 2초) 열린다. 그사이 누른 꼬리표·목록 단추는 '이동 중'(aria-busy) 표시 */
+  const c0 = map.getCenter(), cam = { center: [c0.lng, c0.lat], zoom: map.getZoom(), pitch: map.getPitch(), bearing: map.getBearing() };
+  setGoing(id);
   const was = btn && btn.getAttribute('aria-expanded') === 'true';
   document.querySelectorAll('#projList .card').forEach((c) => c.setAttribute('aria-expanded', c === btn && !(toggle && was) ? 'true' : 'false'));
   if (scroll && btn && btn.getAttribute('aria-expanded') === 'true') btn.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });   // 사이드바에서 펼친 카드가 보이게
@@ -1472,10 +1497,18 @@ function focusBlock(id, { toggle = true, tour = false, scroll = true } = {}) {
   syncUrl(id);
   select(null);
   flyTo({ center: centroid(b.poly), zoom: 16.5, pitch: 58, bearing: -10 });
-  map.once('moveend', () => setTimeout(() => blockPopup(b), 80));   // 애니메이션 프레임 안에서 project/unproject를 부르면 지형 렌더가 겹쳐 오류가 나므로 한 박자 뒤에 연다
-  say(`${b.id} 블록으로 이동합니다.`);
+  map.once('moveend', () => setTimeout(() => { setGoing(null); blockPopup(b, undefined, `${b.id} 카드 열림. `); cardGo = popup && from ? { id: b.id, from, cam } : null; }, 80));   // 애니메이션 프레임 안에서 project/unproject를 부르면 지형 렌더가 겹쳐 오류가 나므로 한 박자 뒤에 연다
+  say(`${b.id}로 이동 중`);
 }
-$('#projList').addEventListener('click', (e) => { const btn = e.target.closest('button[data-id]'); if (btn) focusBlock(btn.dataset.id); });
+/* 이동 중 표시: 누른 사업의 꼬리표·목록 단추에 aria-busy(눌린 모양 + 작은 점), 지도 위 가운데에 '…로 이동 중' 띠(낭독은 #sr 이 하므로 aria-hidden).
+   꼬리표는 가까이 날아가면 숨으므로 띠가 카드가 열릴 때까지 남는다. id 가 null 이면 모두 지운다 */
+function setGoing(id) {
+  document.querySelectorAll('#hudTags [aria-busy], #projList [aria-busy]').forEach((el) => el.removeAttribute('aria-busy'));
+  const note = $('#goNote'); note.hidden = id == null; note.textContent = id == null ? '' : `${id}로 이동 중`;
+  if (id == null) return;
+  for (const host of ['#hudTags', '#projList']) { const el = byId($(host), 'data-id', id); if (el) el.setAttribute('aria-busy', 'true'); }
+}
+$('#projList').addEventListener('click', (e) => { const btn = e.target.closest('button[data-id]'); if (btn) focusBlock(btn.dataset.id, { from: 'list' }); });
 /* 타임라인의 점이나 '다음 일정'을 누르면 그 시기 단지로 이동 */
 function showGroup(ids) {
   stopMotion();
@@ -1522,29 +1555,29 @@ $('#vPlane').addEventListener('click', () => map.easeTo({ pitch: map.getPitch() 
 let orbitRaf = 0, orbitOn = false;
 function stopOrbit() {
   if (!orbitOn) return; orbitOn = false; if (orbitRaf) cancelAnimationFrame(orbitRaf); orbitRaf = 0;
-  $('#vOrbit').setAttribute('aria-pressed', 'false'); $('#vOrbit').textContent = '자동'; say('자동 회전을 멈췄습니다.');
+  $('#vOrbit').setAttribute('aria-checked', 'false'); syncViewBtn(); say('자동 회전을 멈췄습니다.');
 }
 function startOrbit() {
   stopTour(); orbitOn = true;
   if (popup) { popup.remove(); popup = null; }   // 돌면 카드가 건물을 가리게 되므로 닫는다
-  $('#vOrbit').setAttribute('aria-pressed', 'true'); $('#vOrbit').textContent = '멈춤'; say('지금 보이는 지도를 그대로 천천히 돌립니다. 지도나 컨트롤을 만지면 멈춥니다.');
+  $('#vOrbit').setAttribute('aria-checked', 'true'); syncViewBtn(); say('지금 보이는 지도를 그대로 천천히 돌립니다. 지도나 컨트롤을 만지면 멈춥니다.');
   // 화면 가운데·확대·기울기를 바꾸지 않고, 지금 보이는 지도를 그 자리에서 돌린다.
   let last = performance.now();
   const tick = (t) => { map.setBearing(map.getBearing() + (t - last) / 1000 * 7.5); last = t; orbitRaf = requestAnimationFrame(tick); };
   orbitRaf = requestAnimationFrame(tick);
 }
-$('#vOrbit').addEventListener('click', () => { stopTour(); if (orbitOn) stopOrbit(); else startOrbit(); });
-if (reduceMotion) $('#vOrbit').hidden = true;
+$('#vOrbit').addEventListener('click', () => { closeViewMenu(true); stopTour(); if (orbitOn) stopOrbit(); else startOrbit(); });
+if (reduceMotion) $('#vOrbit').hidden = true;   // 보기 메뉴에서도 빠진다(vItems 가 숨은 항목을 건너뛴다)
 
 /* 둘러보기(옛 이름 투어): 보이는 단지를 하나씩 날아가 카드까지 열어 보여 주고, 한 바퀴 돌면 전체 보기로 돌아온다. 지도를 만지면 멈춘다. */
 let tourOn = false, tourT = 0;
 function stopTour() {
   if (!tourOn) return; tourOn = false; clearTimeout(tourT); tourT = 0;
-  $('#vTour').setAttribute('aria-pressed', 'false'); $('#vTour').textContent = '둘러보기'; say('둘러보기를 멈췄습니다.');
+  $('#vTour').setAttribute('aria-checked', 'false'); syncViewBtn(); say('둘러보기를 멈췄습니다.');
 }
 function startTour() {
   stopOrbit(); tourOn = true;
-  $('#vTour').setAttribute('aria-pressed', 'true'); $('#vTour').textContent = '멈춤'; say('사업을 차례로 보여 줍니다. 지도를 만지면 멈춥니다.');
+  $('#vTour').setAttribute('aria-checked', 'true'); syncViewBtn(); say('사업을 차례로 보여 줍니다. 지도를 만지면 멈춥니다.');
   const seq = BLOCKS.filter(blockVisible).map((b) => b.id); let i = 0;
   const step = () => {
     if (!tourOn) return;
@@ -1554,7 +1587,7 @@ function startTour() {
   };
   step();
 }
-$('#vTour').addEventListener('click', () => { if (tourOn) stopTour(); else startTour(); });
+$('#vTour').addEventListener('click', () => { closeViewMenu(true); if (tourOn) stopTour(); else startTour(); });
 function stopMotion() { stopOrbit(); stopTour(); }
 for (const ev of ['mousedown', 'touchstart', 'wheel']) map.on(ev, () => stopMotion());
 $('#map').addEventListener('keydown', () => stopMotion());
@@ -1564,7 +1597,7 @@ $('#map').addEventListener('keydown', () => stopMotion());
 const DIRS = ['북', '북동', '동', '남동', '남', '남서', '서', '북서'];
 let holdT = 0, holdRaf = 0, held = false, heldAt = 0;
 const normB = (b) => ((Math.round(b) % 360) + 360) % 360;
-function syncPlane() { const f = String(map.getPitch() < 5), el = $('#vPlane'); if (el.getAttribute('aria-pressed') !== f) el.setAttribute('aria-pressed', f); }
+function syncPlane() { const f = String(map.getPitch() < 5), el = $('#vPlane'); if (el.getAttribute('aria-checked') !== f) el.setAttribute('aria-checked', f); }
 map.on('move', syncPlane);
 function holdStart(dir) {
   stopMotion(); held = false; clearTimeout(holdT);
@@ -1587,6 +1620,43 @@ for (const [sel, dir] of [['#dLeft', -1], ['#dRight', 1]]) {
 }
 $('#zIn').addEventListener('click', () => { stopMotion(); map.zoomIn({ duration: dur }); });
 $('#zOut').addEventListener('click', () => { stopMotion(); map.zoomOut({ duration: dur }); });
+
+/* 보기 메뉴(2026-10-15): 늘 보이는 시점 조작은 확대·축소·나침반·전체만 두고, 평면·둘러보기·좌우 돌리기·자동 회전은 '보기' 단추 하나에 접는다.
+   메뉴 단추 패턴: Enter·Space·↓ 로 열면 첫 항목, ↑ 로 열면 마지막 항목에 초점. 안에서 ↑↓·Home·End 로 옮기고, Esc 는 닫고 '보기' 단추로 돌아온다. Tab·바깥 누름은 닫기만.
+   돌리기·평면은 여러 번 누르도록 연 채로 두고, 둘러보기·자동 회전은 고르면 닫힌다(지도를 보게). 둘러보기·자동 회전이 도는 동안 '보기' 단추에 점을 찍는다 */
+const vBtn = $('#vMenuBtn'), vMenu = $('#vMenu');
+const vItems = () => [...vMenu.querySelectorAll('[role^="menuitem"]')].filter((el) => !el.hidden);
+function syncViewBtn() {
+  const on = tourOn || orbitOn;
+  vBtn.classList.toggle('busy', on);
+  vBtn.setAttribute('aria-label', `보기 메뉴: 평면·둘러보기·돌리기·자동 회전${tourOn ? '. 둘러보는 중' : orbitOn ? '. 자동 회전 중' : ''}`);
+}
+function openViewMenu(at) {
+  const r = vBtn.getBoundingClientRect(), w = $('.mapwrap').getBoundingClientRect();
+  vMenu.hidden = false; vBtn.setAttribute('aria-expanded', 'true');
+  vMenu.style.top = `${Math.round(Math.max(8, Math.min(r.top - w.top, w.height - vMenu.offsetHeight - 8)))}px`;   // '보기' 단추 높이에서, 묶음 왼쪽에
+  const xs = vItems(); if (xs.length) xs[at === 'last' ? xs.length - 1 : 0].focus();
+  scheduleHud();
+}
+function closeViewMenu(refocus) {
+  if (vMenu.hidden) return;
+  vMenu.hidden = true; vBtn.setAttribute('aria-expanded', 'false');
+  if (refocus) vBtn.focus();
+  scheduleHud();
+}
+vBtn.addEventListener('click', () => { if (vMenu.hidden) openViewMenu(); else closeViewMenu(false); });
+vBtn.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowDown' || e.key === 'ArrowUp') { e.preventDefault(); openViewMenu(e.key === 'ArrowUp' ? 'last' : 'first'); }
+});
+vMenu.addEventListener('keydown', (e) => {
+  const xs = vItems(), i = xs.indexOf(document.activeElement);
+  if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeViewMenu(true); return; }
+  if (e.key === 'Tab') { closeViewMenu(false); return; }
+  const to = e.key === 'ArrowDown' ? (i + 1) % xs.length : e.key === 'ArrowUp' ? (i - 1 + xs.length) % xs.length : e.key === 'Home' ? 0 : e.key === 'End' ? xs.length - 1 : -1;
+  if (to < 0 || !xs.length) return;
+  e.preventDefault(); xs[to].focus();
+});
+document.addEventListener('pointerdown', (e) => { if (!vMenu.hidden && !vMenu.contains(e.target) && !vBtn.contains(e.target)) closeViewMenu(false); });
 
 /* 옵션 창: 자주 바꾸지 않는 설정을 모았다. 기본은 모두 켬이고, 꺼 둔 설정이 있으면 버튼에 개수를 보인다. */
 const ALL_ST = new Set(BLOCKS.map((b) => b.status));
@@ -1627,8 +1697,8 @@ function positionOpt() {
       const tip = `${official} · 사업 원장 ${h.n}건${h.q ? `(호수 미확인 ${h.q}건)` : ''}${mapTxt}`;
       return `<button type="button" class="sf" data-status="${bs.length ? live.join('|') : ''}" data-name="${no}${name}" style="--c:${col}" aria-pressed="${bs.length ? 'true' : 'false'}"${bs.length ? '' : ' disabled'} title="${esc(tip)}"><span class="sf-h"><i class="sf-sw"></i>${no}${name}<span class="sf-n">${h.n}건</span></span>${v}</button>`;
     }
-    if (HOME_T) return `<button type="button" class="sf" data-status="" data-name="${no}${name}" style="--c:${col}" aria-pressed="false" disabled title="${official} · 이 단계의 원장 사업이 없습니다" aria-label="${no}${name}, 사업 없음"><span class="sf-h"><i class="sf-sw"></i>${no}${name}</span><b class="sf-v none">—</b></button>`;
-    if (!bs.length) return `<button type="button" class="sf" data-status="" data-name="${no}${name}" style="--c:${col}" aria-pressed="false" disabled title="${official} · 이 단계의 사업이 없습니다" aria-label="${no}${name}, 사업 없음"><span class="sf-h"><i class="sf-sw"></i>${no}${name}</span><b class="sf-v none">—</b></button>`;   // 빈 단계는 이름 + '—'(이유는 title)
+    if (HOME_T) return `<button type="button" class="sf empty" data-status="" data-name="${no}${name}" style="--c:${col}" aria-pressed="false" disabled title="${official} · 이 단계의 원장 사업이 없습니다" aria-label="${no}${name}, 사업 없음"><span class="sf-h"><i class="sf-sw"></i>${no}${name}</span><b class="sf-v none">—</b></button>`;
+    if (!bs.length) return `<button type="button" class="sf empty" data-status="" data-name="${no}${name}" style="--c:${col}" aria-pressed="false" disabled title="${official} · 이 단계의 사업이 없습니다" aria-label="${no}${name}, 사업 없음"><span class="sf-h"><i class="sf-sw"></i>${no}${name}</span><b class="sf-v none">—</b></button>`;   // 빈 단계는 이름 + '—'(이유는 title)
     return `<button type="button" class="sf" data-status="${live.join('|')}" data-name="${no}${name}" style="--c:${col}" aria-pressed="true" title="${official}"><span class="sf-h"><i class="sf-sw"></i>${no}${name}<span class="sf-n">${bs.length}건</span></span>${bs.some((b) => b.unitsKnown !== false) ? `<b class="sf-v">${fmt(units)}<small>호</small></b>` : '<b class="sf-v none sm" title="이 단계 사업의 호수가 원장에 없습니다">호수 미확인</b>'}</button>`;   // 호수를 아는 단지가 없으면 0호 대신
   }).join('');
   $('#stageF').addEventListener('click', (e) => {
@@ -1960,7 +2030,7 @@ function scheduleHud() { if (revealed && !hudRaf) hudRaf = requestAnimationFrame
   if (window.ResizeObserver) new ResizeObserver(set).observe(bb);
   set();
 })();
-const HUD_EXCL = '.topbar, .rctl, .maplibregl-ctrl-bottom-right, #botbar, #cmd:not([hidden]), #optPanel:not([hidden]), #panelToggle';
+const HUD_EXCL = '.topbar, .rctl, .maplibregl-ctrl-bottom-right, #botbar, #cmd:not([hidden]), #optPanel:not([hidden]), #vMenu:not([hidden]), #panelToggle';
 function renderHud() {
   hudRaf = 0;
   const hud = $('#hud'), on = (hudOn || cardsOn) && HAS_PR && BLOCKS.length && map.getZoom() < HUD_MAXZ;
@@ -2036,7 +2106,7 @@ function hideLinkLabelsUnder(tags) {
     map.setFilter(layer, ids.length ? (base ? ['all', base, cut] : cut) : (base || null));
   }
 }
-$('#hudTags').addEventListener('click', (e) => { const t = e.target.closest('button[data-id]'); if (t) focusBlock(t.dataset.id); });
+$('#hudTags').addEventListener('click', (e) => { const t = e.target.closest('button[data-id]'); if (t) focusBlock(t.dataset.id, { from: 'tag' }); });
 map.on('rotate', () => {   // 카메라 방향이 바뀌면 '가까운 쪽'도 바뀌므로 라벨 자리를 다시 잡는다(20도 이상 돌았을 때만)
   const b = map.getBearing(), d = frontBearing == null ? 999 : Math.abs(((b - frontBearing + 540) % 360) - 180);
   if (d >= 20) { const src = map.getSource('block-fronts'); if (src) src.setData(blockFrontsGeoJSON()); }

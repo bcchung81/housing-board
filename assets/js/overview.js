@@ -28,6 +28,7 @@
   /* region-map/1 투영(tools/ledger/region-supply.js): x = (경도−124.5)·cos37.5°·1000, y = (38.4−위도)·1000 */
   const KX = Math.cos((37.5 * Math.PI) / 180) * 1000;
   const unproject = (x, y) => [Math.round((x / KX + 124.5) * 1e5) / 1e5, Math.round((38.4 - y / 1000) * 1e5) / 1e5];
+  const projectLL = (lng, lat) => [(lng - 124.5) * KX, (38.4 - lat) * 1000];   // unproject 의 거꾸로(반올림 없음)
   /* 'M절대 l상대…z' 고리들 → 투영 좌표 고리(닫지 않음) */
   function pathRings(d) {
     const out = [], re = /M(-?\d+) (-?\d+)l([^z]*)z/g;
@@ -156,6 +157,15 @@
     return { href: sggHref(unit.code) };
   }
 
+  /* 점이 면(다각형들: [바깥 고리, 구멍…]) 안인가 — 바깥 고리 안이고 구멍 밖 */
+  const inPolys = (pt, polys) => polys.some((p) => inRing(pt, p[0]) && !p.slice(1).some((h) => inRing(pt, h)));
+  /* 라벨 상자가 자기 면 안인가(2026-10-15 평가: 과천·오산 등 라벨이 이웃 면 위에 놓여 바탕 대비가 2.5:1까지 떨어졌다).
+     corners = 상자 네 귀퉁이(투영 좌표). 네 귀퉁이와 네 변의 가운데가 모두 그 면 안이어야 한다 */
+  function boxInFace(corners, polys) {
+    const mids = corners.map((c, i) => { const d = corners[(i + 1) % corners.length]; return [(c[0] + d[0]) / 2, (c[1] + d[1]) / 2]; });
+    return corners.concat(mids).every((pt) => inPolys(pt, polys));
+  }
+
   /* 라벨 둘레 여백 [가로, 세로](화소, 한쪽). 이웃 라벨과 가로 16px·세로 10px 이상 떨어져 서로 다른 라벨로 읽힌다(글자 테두리 그림자 2px 포함) */
   const LABEL_PAD = [8, 5];
   /* 라벨 놓기(순수): items = [{ x, y, w, h }](중심·크기, 우선순위 순 — 값 큰 것부터), blocked = 미리 막힌 상자 [왼, 위, 오른, 아래].
@@ -189,6 +199,7 @@
     const reduce = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
     const units = D.units || [], byCode = new Map(units.map((u) => [u.code, u]));
     const rings = new Map(units.map((u) => [u.code, pathRings(u.d)]));
+    const faces = new Map(units.map((u) => [u.code, polygonsOf(rings.get(u.code))]));   // 라벨 상자가 자기 면 안인지 볼 때
     const S = { metric: 'u', sido: modeOf(win.location.search).sido, hover: null, menu: null, going: false };
     let map = null, labels = [], ups = [];
 
@@ -246,6 +257,14 @@
       /* 범례 */
       $('ovLegendT').textContent = `${m.name}(${m.unit})`;
       $('ovLegend').innerHTML = D.ok ? legendOf(ups, '').map((x) => `<li><i class="ov-sw c${x.c}"></i>${esc(x.text)}</li>`).join('') : '';
+      /* 빈 상태: 값 있는 시군구가 3곳 미만이면 지도가 거의 회색이라 무엇을 보는지 한 줄로 알린다(예: '수도권 지연 사업 2건 — 인천 서구·경기 오산시') */
+      const note = $('ovEmpty');
+      if (note) {
+        note.textContent = D.ok ? emptyNote(`${scope ? scope.name : '수도권'} ${m.name}`, valOf(v, S.metric), m.unit, hit.map((u) => `${SIDO_SHORT[u.s]} ${u.name}`)) : '';
+        note.hidden = !note.textContent;
+        const lg = $('ovLegend').parentNode;   // 좁은 화면은 범례가 위 띠라 그 아래에 둔다
+        note.style.top = !note.hidden && win.innerWidth <= 768 ? `${lg.offsetTop + lg.offsetHeight + 8}px` : '';
+      }
     }
 
     function setMetric(id) {
@@ -293,7 +312,7 @@
     /* 라벨이 피할 다른 요소(라벨 상자 좌표). 넓은 화면의 패널처럼 지도 밖이면 겹치지 않아 빠진다 */
     function obstacles() {
       const o = labelBox.getBoundingClientRect(), out = [];
-      for (const el of [$('ovLegend').parentNode, panel]) {
+      for (const el of [$('ovLegend').parentNode, panel, $('ovEmpty')]) {
         const r = el && el.getBoundingClientRect();
         if (r && r.width && r.right > o.left && r.left < o.right && r.bottom > o.top && r.top < o.bottom) out.push([r.left - o.left, r.top - o.top, r.right - o.left, r.bottom - o.top]);
       }
@@ -301,7 +320,7 @@
     }
     function placeLabels(rebuild) {
       if (!map) return;
-      const z = map.getZoom(), m = METRICS.find((x) => x.id === S.metric);
+      const m = METRICS.find((x) => x.id === S.metric);
       if (rebuild) {
         labelBox.innerHTML = '';
         labels = rankOf(units, S.metric, S.sido).filter((u) => D.ok && valOf(u.v, S.metric) > 0 && lp.get(u.code)).map((u) => {
@@ -309,17 +328,18 @@
           el.className = `ov-lb c${c}`;
           el.innerHTML = `<b>${esc(u.name)}</b><span>${fmt(valOf(u.v, S.metric))}${m.unit}</span>`;
           labelBox.appendChild(el);
-          return { u, el, w: 0, h: 0, named: null };
+          return { u, el, w: 0, h: 0 };
         });
       }
+      /* 이름과 값을 한 상자로만 보인다: 상자가 자기 면 밖으로 나가면(작은 구·좁은 시) 숫자만 남기지 않고 통째로 숨긴다 — 값은 마우스 올림·목록에서 본다 */
       const items = labels.map((L) => {
-        const named = !(L.u.s === '11' && z < 10.6);
-        if (named !== L.named) { L.el.classList.toggle('bare', !named); L.named = named; L.w = 0; }
         if (!L.w) { L.el.style.display = ''; L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; }
-        const p = map.project(lp.get(L.u.code));
-        return { x: p.x, y: p.y, w: L.w, h: L.h };
+        const p = map.project(lp.get(L.u.code)), x0 = p.x - L.w / 2, y0 = p.y - L.h / 2, x1 = p.x + L.w / 2, y1 = p.y + L.h / 2;
+        const corners = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => { const ll = map.unproject([x, y]); return projectLL(ll.lng, ll.lat); });
+        return { x: p.x, y: p.y, w: L.w, h: L.h, fits: boxInFace(corners, faces.get(L.u.code)) };
       });
-      const show = pickLabels(items, labelBox.clientWidth, labelBox.clientHeight, obstacles());
+      const fit = pickLabels(items.map((it) => (it.fits ? it : { x: -1e6, y: -1e6, w: 0, h: 0 })), labelBox.clientWidth, labelBox.clientHeight, obstacles());
+      const show = items.map((it, i) => it.fits && fit[i]);
       labels.forEach((L, i) => {
         if (!show[i]) { L.el.style.display = 'none'; return; }
         L.el.style.display = '';
@@ -430,8 +450,15 @@
       map.on('click', 'ov-fill', (e) => { const f = e.features && e.features[0]; if (f) { hideTip(); choose(f.properties.code, null, e.point); } });
       new win.MutationObserver(theme).observe(doc.documentElement, { attributes: true, attributeFilter: ['class'] });
     }).catch((e) => { const f = $('ovFail'); f.hidden = false; f.textContent = `지도를 그리지 못했습니다: ${e.message}. 왼쪽 목록에서 시군구를 고를 수 있습니다.`; });
+    if (/[?&]selftest=/.test(win.location.search)) win.__ov = { map: () => map, labels: () => labels, faces, projectLL, boxInFace };   // 시험 전용(브라우저 점검)
     return { state: S };
   }
 
-  return { DETAIL_KEYS, LABEL_PAD, pickLabels, modeOf, sggHref, sidoHref, unproject, pathRings, polygonsOf, toGeoJSON, boxLL, ringsBox, labelPoint, inRing, METRICS, valOf, defOf, breaksOf, classOf, legendOf, rankOf, pickOf, fmt, mount };
+  /* 빈 상태 한 줄: 값 있는 곳이 3곳 미만일 때만. names 는 값 큰 순 '시도 이름' */
+  function emptyNote(what, total, unit, names) {
+    if (names.length >= 3) return '';
+    return names.length ? `${what} ${fmt(total)}${unit} — ${names.join('·')}` : `${what} 0${unit} — 값이 있는 시군구가 없습니다`;
+  }
+
+  return { DETAIL_KEYS, LABEL_PAD, pickLabels, boxInFace, inPolys, projectLL, emptyNote, modeOf, sggHref, sidoHref, unproject, pathRings, polygonsOf, toGeoJSON, boxLL, ringsBox, labelPoint, inRing, METRICS, valOf, defOf, breaksOf, classOf, legendOf, rankOf, pickOf, fmt, mount };
 });

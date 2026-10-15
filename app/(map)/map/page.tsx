@@ -86,6 +86,7 @@ function OverviewMarkup() {
         <div className="ov-labels" id="ovLabels" aria-hidden="true" />
         <div className="ov-tip" id="ovTip" hidden />
         <div className="ov-legend"><b id="ovLegendT" /><ul id="ovLegend" /></div>
+        <p className="ov-empty" id="ovEmpty" role="status" hidden />
         <p className="ov-going" id="ovGoing" role="status" hidden />
       </section>
       <div className="ov-menu" id="ovMenu" role="dialog" hidden />

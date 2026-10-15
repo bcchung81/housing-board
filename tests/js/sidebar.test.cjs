@@ -86,7 +86,7 @@ test('입주 전 점검: 단지 카드는 제목 한 줄 + 주의(▲) 줄만 �
 test('서술 문장 요약: 안내 문단·인허가 목록을 두지 않고, 기준일은 출처 상자로 옮겼다', () => {
   assert.doesNotMatch(html, /id="infraIntro"|id="infraPermits/);
   assert.doesNotMatch(app, /infraIntro|infraPermits|공개 자료로 점검합니다/);
-  assert.match(app, /\$\('#infraSrc'\)\.textContent = `기준 \$\{INFRA\.asOf\}\. 출처: /);
+  assert.match(app, /\$\('#infraSrc'\)\.textContent = `기준 \$\{dotDate\(INFRA\.asOf\)\}\. 출처: /);   // 기준일은 점 표기(dotDate)를 거친다
   // 타임라인 설명은 두 문장 이내(막대 안 '새 학교 없는 기간 N개월'과 겹치는 문장은 뺀다)
   const note = /\$\('#infraTlNote'\)\.textContent = t\.gap\s*\? `([^`]*)`\s*: '([^']*)'/.exec(app);
   assert.ok(note, '#infraTlNote 문구를 찾을 수 없음');

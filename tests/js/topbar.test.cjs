@@ -1,4 +1,4 @@
-// 지도 위 컨트롤: 왼쪽 위는 자료 켜고 끄기 한 줄(옵션·버스위치·건물 흐리게), 오른쪽 위는 시점 조작 한 묶음(확대·축소·나침반 | 전체·평면·투어 | 좌우 돌리기·자동, 2026-10-13).
+// 지도 위 컨트롤: 왼쪽 위는 자료 켜고 끄기 한 줄(옵션·버스위치·건물 흐리게), 오른쪽 위는 시점 조작 한 묶음(확대·축소·나침반 | 전체·보기, 2026-10-15 평면·둘러보기·좌우 돌리기·자동은 보기 메뉴로).
 // 화면에서의 실제 크기·겹침은 별도 헤드리스 Chrome 점검으로 본다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -22,7 +22,7 @@ test('상단 컨트롤은 줄바꿈 없이 한 줄이고, 회전 슬라이더 �
   assert.doesNotMatch(css, /\.dial\b/);
 });
 
-test('왼쪽 위 한 줄은 옵션·버스위치·건물 흐리게, 시점 조작(전체·평면·투어·돌리기·자동)은 오른쪽 위 묶음에 이 순서로 모여 있고, 보기 기준 단추(층수·공정율·입주 시기)는 없다', () => {
+test('왼쪽 위 한 줄은 옵션·버스위치·건물 흐리게, 시점 조작은 오른쪽 위 묶음(확대·축소·나침반 | 전체·보기)과 보기 메뉴(평면·둘러보기·돌리기·자동)에 이 순서로 모여 있고, 보기 기준 단추(층수·공정율·입주 시기)는 없다', () => {
   const head = /<header class="mhead" id="mhead">[\s\S]*?<\/header>/.exec(html);
   assert.ok(head && /id="hudSum"/.test(head[0]), '옛 보기 기준 자리에 공급 요약이 있다');
   assert.doesNotMatch(html + app, /modeSeg|data-mode=|id="timebar"|tRange|tPlay|MODE_SAY|rateH|timeH|dong-ghost|timeMo|blockTimes|moLabel|MO_MAX|monthF|\btm\.mo\b|dongH\(/);   // 지운 이름을 가리키는 식이 남으면 setupCustom 이 멈춰 지도에 배경만 남는다(2026-10-10 실제로 겪음)
@@ -31,11 +31,14 @@ test('왼쪽 위 한 줄은 옵션·버스위치·건물 흐리게, 시점 조�
   const inOrder = (block, ids) => { let at = -1; for (const id of ids) { const i = block.indexOf(`id="${id}"`); assert.ok(i > at, `${id} 위치/순서`); at = i; } };
   inOrder(topbar[0], ['optBtn', 'busLoad', 'dimBtn']);
   const cam = /<div class="rctl"[\s\S]*?\n  <\/div>/.exec(html)[0];
-  inOrder(cam, ['zIn', 'zOut', 'compass', 'vAll', 'vPlane', 'vTour', 'dLeft', 'dRight', 'vOrbit']);
+  inOrder(cam, ['zIn', 'zOut', 'compass', 'vAll', 'vMenuBtn']);
+  const menu = /<div class="vmenu" id="vMenu"[\s\S]*?\n  <\/div>/.exec(html)[0];   // 2026-10-15: 늘 보이는 조작을 줄이려 보기 메뉴로 옮겼다
+  inOrder(menu, ['vPlane', 'vTour', 'dLeft', 'dRight', 'vOrbit']);
   for (const id of ['vAll', 'vPlane', 'vTour', 'dLeft', 'dRight', 'vOrbit']) assert.doesNotMatch(topbar[0], new RegExp(`id="${id}"`), `${id} 는 왼쪽 줄에 없다`);
-  for (const id of ['vAll', 'vPlane', 'vTour', 'dLeft', 'dRight']) assert.match(cam, new RegExp(`id="${id}"[^>]*aria-label="[^"]+"`));   // 글자·그림이 줄어도 이름은 그대로
-  assert.match(cam, /id="dLeft"[^>]*><svg viewBox="0 0 24 24" aria-hidden="true">/);   // 돌리기는 글리프(◀▶) 대신 그린 아이콘
-  assert.equal((cam.match(/class="rsep"/g) || []).length, 2, '무리 셋을 띠 둘로 나눈다');
+  assert.match(cam, /id="vAll"[^>]*aria-label="[^"]+"/);
+  for (const id of ['vPlane', 'vTour', 'dLeft', 'dRight']) assert.match(menu, new RegExp(`id="${id}"[^>]*aria-label="[^"]+"`));   // 글자·그림이 줄어도 이름은 그대로
+  assert.match(menu, /id="dLeft"[^>]*><svg viewBox="0 0 24 24" aria-hidden="true">/);   // 돌리기는 글리프(◀▶) 대신 그린 아이콘
+  assert.equal((cam.match(/class="rsep"/g) || []).length, 1, '무리 둘(확대·축소·나침반 | 전체·보기)을 띠 하나로 나눈다');
 });
 
 test('좌우 돌리기는 ◀▶ 15° 단추와 길게 누르기로 남아 있다(슬라이더 코드는 없다)', () => {

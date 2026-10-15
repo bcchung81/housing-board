@@ -66,7 +66,8 @@ test('Esc: 열린 카드를 닫고 초점을 연 단추(없으면 지도)로 돌
   const h = /document\.addEventListener\('keydown', \(e\) => \{\n  if \(e\.key !== 'Escape' \|\| !popup[\s\S]*?\n\}\);/.exec(app);
   assert.ok(h, 'Esc 처리기를 찾을 수 없음');
   assert.match(h[0], /!\$\('#optPanel'\)\.hidden/); assert.match(h[0], /INPUT\|SELECT\|TEXTAREA/);
-  assert.match(h[0], /: map\.getCanvas\(\);/); assert.match(h[0], /popup\.remove\(\); popup = null;/); assert.match(h[0], /back\.focus\(\)/);
+  assert.match(h[0], /map\.getCanvas\(\)\.focus\(\)/); assert.match(h[0], /popup\.remove\(\); popup = null;/); assert.match(h[0], /b\.focus\(\)/);
+  assert.match(h[0], /!\$\('#vMenu'\)\.hidden/, '보기 메뉴가 열려 있으면 메뉴가 먼저 Esc 를 받는다');
 });
 
 const lum = (h) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
@@ -82,7 +83,7 @@ test('다크 지도: 기존 건물(기반시설) 면은 네이비 바탕 3:1 이
 });
 
 test("공개 문구: 지도 화면에 '투어'·'번들'·'HOME' 같은 내부 용어가 없다(둘러보기·상세 3D)", () => {
-  assert.match(html, /id="vTour"[^>]*aria-label="둘러보기"[^>]*>둘러보기<\/button>/);
+  assert.match(html, /id="vTour"[^>]*aria-label="둘러보기"[^>]*>(?:<i [^>]*><\/i>)?둘러보기<\/button>/);
   const vis = noComments(html) + noComments(app) + noComments(read('assets/js/region.js')) + noComments(read('assets/js/goto.js'));
   assert.doesNotMatch(vis, /투어|번들|HOME 덤프|\(HOME\)/);
 });
@@ -241,4 +242,109 @@ test('D1: 정상 판정인데 예정일이 기준일보다 앞서면 상태는 �
   assert.equal(R.ledgerTexts({ cls: 'delay', referenceDate: '2026-10-13', overdue: { eventType: 'COMPLETION', planned: '2026-01-01', months: 9 } }).pastDue, undefined, '지연은 기존 표지');
   assert.match(app, /b\.status === '준공 임박' && [^;]*pastDue \? '예정일 지남'/);
   assert.match(app, /lt && \(lt\.next \|\| lt\.pastDue\) \? \['현재 예정'/);
+});
+
+/* ---- 5차 평가(2026-10-15, 26/40) 고침: 카드 닫기 초점·이동 중 알림, 보기 메뉴, 개요 라벨, D2 원천 날짜 다름 ---- */
+test('1: 꼬리표·목록에서 연 사업 카드는 누르는 즉시 "…로 이동 중", 열리면 "… 카드 열림"을 알리고, Esc 로 닫으면 사업 id 로 꼬리표(없으면 목록 단추)를 다시 찾아 초점', () => {
+  const fb = /function focusBlock\([\s\S]*?\n\}\n/.exec(app)[0];
+  assert.match(fb, /say\(`\$\{b\.id\}로 이동 중`\)/);
+  assert.match(fb, /blockPopup\(b, undefined, `\$\{b\.id\} 카드 열림\. `\)/);
+  assert.match(fb, /cardGo = popup && from \? \{ id: b\.id, from, cam \} : null/);
+  assert.match(fb, /setGoing\(id\)/); assert.match(fb, /setGoing\(null\)/);   // 이동 중 표시(aria-busy)를 켜고, 카드가 열리면 끈다
+  assert.match(app, /say\(\(lead \|\| ''\) \+ popup\.getElement\(\)\.innerText/);   // 카드 열림 + 카드 내용을 한 번에(#sr aria-live)
+  assert.match(html, /<div id="sr" class="sr" aria-live="polite"><\/div>/);
+  assert.match(app, /\$\('#hudTags'\)\.addEventListener\('click', [^\n]*focusBlock\(t\.dataset\.id, \{ from: 'tag' \}\)/);
+  assert.match(app, /\$\('#projList'\)\.addEventListener\('click', [^\n]*focusBlock\(btn\.dataset\.id, \{ from: 'list' \}\)/);
+  const back = /function cardBackTo\(id\) \{[\s\S]*?\n\}/.exec(app)[0];
+  assert.match(back, /byId\(\$\('#hudTags'\), 'data-id', id\)/); assert.match(back, /byId\(\$\('#projList'\), 'data-id', id\)/);
+  assert.match(back, /shown\(tag\) \? tag : shown\(row\) \? row : map\.getCanvas\(\)/);   // 꼬리표 → 목록 단추 → 지도 순
+  const h = /document\.addEventListener\('keydown', \(e\) => \{\n  if \(e\.key !== 'Escape' \|\| !popup[\s\S]*?\n\}\);/.exec(app)[0];
+  assert.match(h, /go\.from === 'tag' && go\.cam && map\.getZoom\(\) >= HUD_MAXZ/);   // 꼬리표는 멀리 볼 때만 있어 연 자리 시점으로 돌아가 다시 그린 뒤 초점
+  assert.ok(h.indexOf("map.once('moveend'") < h.indexOf('map.easeTo('), 'moveend 를 먼저 걸어야 움직임 줄이기(0ms)에서도 초점이 간다');
+  assert.match(h, /renderHud\(\); cardBackTo\(go\.id\)\.focus\(\)/);
+  assert.match(css, /\.hudtag\[aria-busy="true"\],#projList \.card\[aria-busy="true"\]\{border-color:var\(--acc\)/);
+  assert.match(html, /<p class="gonote" id="goNote" aria-hidden="true" hidden><\/p>/);   // 날아가는 동안 화면에도 '…로 이동 중'(꼬리표는 가까이 가면 숨는다)
+  assert.match(app, /note\.textContent = id == null \? '' : `\$\{id\}로 이동 중`/);
+});
+
+test('2: 늘 보이는 시점 조작은 확대·축소·나침반·전체·보기(5개)로 줄고, 평면·둘러보기·좌우 돌리기·자동 회전은 보기 메뉴(키보드·aria)에 모두 있다', () => {
+  const cam = /<div class="rctl"[\s\S]*?\n  <\/div>/.exec(html)[0];
+  assert.deepEqual([...cam.matchAll(/<button [^>]*id="(\w+)"/g)].map((m) => m[1]), ['zIn', 'zOut', 'compass', 'vAll', 'vMenuBtn']);
+  assert.match(cam, /id="vMenuBtn"[^>]*aria-haspopup="menu" aria-expanded="false" aria-controls="vMenu"[^>]*>보기<\/button>/);
+  const menu = /<div class="vmenu" id="vMenu" role="menu"[^>]*hidden>[\s\S]*?\n  <\/div>/.exec(html);
+  assert.ok(menu, '보기 메뉴(role=menu)를 찾을 수 없음');
+  assert.deepEqual([...menu[0].matchAll(/<button [^>]*id="(\w+)"/g)].map((m) => m[1]), ['vPlane', 'vTour', 'dLeft', 'dRight', 'vOrbit']);
+  for (const id of ['vPlane', 'vTour', 'vOrbit']) assert.match(menu[0], new RegExp(`id="${id}"[^>]*role="menuitemcheckbox" aria-checked="false" tabindex="-1"`));
+  for (const id of ['dLeft', 'dRight']) assert.match(menu[0], new RegExp(`id="${id}"[^>]*role="menuitem" tabindex="-1"`));
+  // 기능은 그대로: 각 항목의 처리기가 남아 있다
+  assert.match(app, /\$\('#vPlane'\)\.addEventListener\('click', \(\) => map\.easeTo\(\{ pitch:/);
+  assert.match(app, /\$\('#vTour'\)\.addEventListener\('click', \(\) => \{ closeViewMenu\(true\); if \(tourOn\) stopTour\(\); else startTour\(\); \}\)/);
+  assert.match(app, /\$\('#vOrbit'\)\.addEventListener\('click', \(\) => \{ closeViewMenu\(true\); stopTour\(\); if \(orbitOn\) stopOrbit\(\); else startOrbit\(\); \}\)/);
+  assert.match(app, /\[\['#dLeft', -1\], \['#dRight', 1\]\]/);
+  // 키보드: 단추에서 ↑↓ 로 열고, 메뉴 안 ↑↓·Home·End, Esc 는 닫고 단추로, Tab 은 닫기
+  assert.match(app, /vBtn\.addEventListener\('keydown'[^\n]*\n\s*if \(e\.key === 'ArrowDown' \|\| e\.key === 'ArrowUp'\)/);
+  const mk = /vMenu\.addEventListener\('keydown'[\s\S]*?\n\}\);/.exec(app)[0];
+  for (const k of ['Escape', 'Tab', 'ArrowDown', 'ArrowUp', 'Home', 'End']) assert.match(mk, new RegExp(`'${k}'`));
+  assert.match(mk, /closeViewMenu\(true\)/);
+  assert.match(app, /function closeViewMenu\(refocus\) \{[\s\S]*?vBtn\.setAttribute\('aria-expanded', 'false'\);\n  if \(refocus\) vBtn\.focus\(\);/);
+  assert.doesNotMatch(app, /textContent = '멈춤'/, '상태는 aria-checked 로(글자를 바꾸지 않는다)');
+  assert.match(app, /HUD_EXCL = [^\n]*#vMenu:not\(\[hidden\]\)/);
+  assert.doesNotMatch(css, /#vTour\{[^}]*word-break/, "'둘러보/기' 두 줄 꺾기 규칙은 없다");
+  // 빈 단계 칸은 좁은 칩
+  assert.match(app, /class="sf empty" data-status=""/);
+  assert.match(css, /\.stagef>\.sf\.empty\{flex:0 0 auto;min-width:0\}/);
+});
+
+const OV = require('../../assets/js/overview.js');
+test('3: 개요 라벨은 이름+값 한 상자만(숫자만 남기는 bare 없음), 상자가 자기 면 밖이면 숨기고, 보이는 라벨 글자는 자기 면 색 바탕에서 4.5:1 이상', () => {
+  const ov = read('assets/js/overview.js');
+  assert.doesNotMatch(ov + css, /\bbare\b/);
+  assert.match(ov, /fits: boxInFace\(corners, faces\.get\(L\.u\.code\)\)/);
+  assert.match(ov, /const show = items\.map\(\(it, i\) => it\.fits && fit\[i\]\)/);
+  // 면 안 판정(구멍 포함): 10×10 정사각형에 가운데 4×4 구멍
+  const sq = [[[0, 0], [10, 0], [10, 10], [0, 10]], [[3, 3], [7, 3], [7, 7], [3, 7]]];
+  const box = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
+  assert.equal(OV.boxInFace(box(0.5, 0.5, 2.5, 2.5), [sq]), true);
+  assert.equal(OV.boxInFace(box(8, 8, 11, 9), [sq]), false, '한 귀퉁이가 면 밖');
+  assert.equal(OV.boxInFace(box(1, 4, 9, 6), [sq]), false, '네 귀퉁이는 면 안이지만 변 가운데가 구멍(이웃 면) 위');
+  assert.deepEqual(OV.projectLL(...OV.unproject(1234, 567)).map(Math.round), [1234, 567]);
+  // 대비: 라벨은 값 > 0 인 면에만(c1~c5) — 단계마다 글자색(--ov-ink-N)을 자기 면색(--ov-N) 위에서 잰다(라이트·다크)
+  const vars = (block) => Object.fromEntries([...block.matchAll(/(--ov-[\w-]+):(#[0-9A-Fa-f]{6})/g)].map((m) => [m[1], m[2]]));
+  const dark = vars(/:root\{--ov-bg[^}]*\}/.exec(css)[0]), light = vars(/html\[data-map-shell\]:not\(\.dark\)\{--ov-bg[^}]*\}/.exec(css)[0]);
+  for (const [name, t] of [['다크', dark], ['라이트', light]]) for (let c = 0; c <= 5; c++) {
+    const r = ratio(t[`--ov-ink-${c}`], t[`--ov-${c}`]);
+    assert.ok(r >= 4.5, `${name} c${c}: ${t[`--ov-ink-${c}`]} / ${t[`--ov-${c}`]} = ${r.toFixed(2)}`);
+  }
+  for (let c = 0; c <= 5; c++) assert.match(css, new RegExp(`\\.ov-lb\\.c${c}\\{color:var\\(--ov-ink-${c}\\);text-shadow:0 0 2px var\\(--ov-${c}\\)`));
+  // 겹침 0: pickLabels 는 놓은 상자끼리 여백(LABEL_PAD) 안에서 닿지 않는다
+  const items = [{ x: 50, y: 50, w: 40, h: 20 }, { x: 60, y: 55, w: 40, h: 20 }, { x: 150, y: 50, w: 40, h: 20 }];
+  assert.deepEqual(OV.pickLabels(items, 400, 200, []), [true, false, true]);
+});
+
+test('4: 개요 패널은 스크롤바 자리를 비워 두고(지표 단추 폭 고정), 값 있는 시군구가 3곳 미만이면 지도 위에 빈 상태 한 줄', () => {
+  assert.match(css, /\.ov-panel\{[^}]*scrollbar-gutter:stable/);
+  assert.equal(OV.emptyNote('수도권 지연 사업', 2, '건', ['인천 서구', '경기 오산시']), '수도권 지연 사업 2건 — 인천 서구·경기 오산시');
+  assert.equal(OV.emptyNote('수도권 지연 사업', 3, '건', ['a', 'b', 'c']), '');
+  assert.match(OV.emptyNote('서울 지연 사업', 0, '건', []), /값이 있는 시군구가 없습니다/);
+  assert.match(read('app/(map)/map/page.tsx'), /<p className="ov-empty" id="ovEmpty" role="status" hidden \/>/);
+});
+
+test("5: 원장 행에 dateAlt 가 있으면 카드 '현재 예정' 줄에 '원천 날짜 다름(LH 2028.12)' 표지(설명은 title), 없으면 그리지 않는다", () => {
+  const fns = /const dateAltOf = [\s\S]*?\nfunction blockPopup/.exec(app)[0];
+  const ctx = {};
+  new (require('node:vm').Script)(`const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    const dotDate = ${/const dotDate = ([^\n]*);/.exec(app)[1]};
+    const ymDot = ${/const ymDot = ([^\n]*);/.exec(app)[1]};
+    ${fns.replace(/\nfunction blockPopup$/, '')}
+    this.dateAltOf = dateAltOf; this.altMark = altMark;`).runInNewContext(ctx);
+  assert.equal(ctx.dateAltOf({ stage: '04' }), null);
+  assert.equal(ctx.dateAltOf(null), null);
+  const a = ctx.dateAltOf({ dateAlt: { source: 'LH', planned: '2028-12-31' } });
+  const html1 = ctx.altMark(a);
+  assert.match(html1, />원천 날짜 다름\(LH 2028\.12\)<\/b>$/);
+  assert.match(html1, /title="LH 자료의 예정일은 2028\.12\.31로/);
+  const fn = /function blockPopup\([\s\S]*?\n\}\n/.exec(app)[0];
+  assert.match(fn, /alt = dateAltOf\(lg\)/);
+  assert.match(fn, /\$\{alt \? ` \$\{altMark\(alt\)\}` : ''\}/);
+  assert.match(read('assets/js/region.js'), /if \(r\.dateAlt && [^\n]*\) b\.ledger\.dateAlt = \{ source: String\(r\.dateAlt\.source \|\| ''\), planned: String\(r\.dateAlt\.planned\) \};/, '원장 행의 dateAlt 를 b.ledger 로 옮긴다');
 });

@@ -370,6 +370,8 @@
         overdue: r.overdue || null, next: r.next || null, done: /^\d{4}-\d{2}/.test(r.done || '') ? String(r.done).slice(0, 7) : null,   // done: 마지막 실제 준공 달(원장 색인에 생기면 입주 경과 표지에 쓴다)
         moveIn: /^\d{4}-\d{2}/.test(r.moveIn || '') ? String(r.moveIn).slice(0, 7) : null,   // 현재 예정 입주 달(수도권 정적 자료에만 있다)
         month: meta.month, referenceDate: meta.referenceDate, origin: meta.origin };
+      /* D2 원천 날짜 다름: 원천(LH 등)의 예정일이 원장 현재 예정과 다른 행에만 있다(지도 카드 표지). 없으면 키도 두지 않는다 */
+      if (r.dateAlt && /^\d{4}-\d{2}/.test(r.dateAlt.planned || '')) b.ledger.dateAlt = { source: String(r.dateAlt.source || ''), planned: String(r.dateAlt.planned) };
       n++;
     }
     return n;

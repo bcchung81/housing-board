@@ -45,7 +45,9 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .regionbox label{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .regionbox select{max-width:235px;min-height:20px;padding:0;border:0;background:transparent;font-family:inherit;cursor:pointer}
 .regionbox select option{background:var(--pn);color:var(--ink)}
-.stagef{flex:1 1 auto;min-width:0;display:grid;grid-template-columns:repeat(6,minmax(96px,1fr));gap:6px;overflow-x:auto;scrollbar-width:none}
+.stagef{flex:1 1 auto;min-width:0;display:flex;gap:6px;overflow-x:auto;scrollbar-width:none}
+.stagef>.sf{flex:1 1 0;min-width:96px}
+.stagef>.sf.empty{flex:0 0 auto;min-width:0}   /* 빈 단계('—')는 이름과 '—'만 들어가는 좁은 칩(2026-10-15 평가: 빈 칸이 값 있는 칸과 같은 폭을 차지했다) */
 .stagef::-webkit-scrollbar{display:none}
 .sf{display:flex;flex-direction:column;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--pn);font:inherit;color:var(--ink);text-align:left;cursor:pointer;touch-action:manipulation}
 .sf:hover:not(:disabled){background:var(--pn2)}
@@ -72,6 +74,11 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .cmd .pv-f{margin:2px 0 4px;white-space:normal;word-break:keep-all}
 .dynhint{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);z-index:5;max-width:min(92vw,520px);padding:5px 14px;border-radius:14px;background:var(--glass-cmd-active);border:1px solid var(--line2);color:var(--ink);font-size:13px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .dynhint[hidden]{display:none}
+/* 사업으로 날아가는 동안(카드가 열리기 전) 지도 위 가운데 위 작은 띠: '…로 이동 중' + 깜빡이는 점(app.js setGoing) */
+.gonote{position:absolute;left:50%;top:12px;z-index:5;transform:translateX(-50%);display:flex;align-items:center;gap:8px;margin:0;padding:5px 14px;border-radius:999px;background:var(--glass-cmd-active);border:1px solid var(--hud-line);box-shadow:var(--tag-shadow);color:var(--ink);font-size:13px;font-weight:700;white-space:nowrap;pointer-events:none}
+.gonote::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--acc);animation:going .9s ease-in-out infinite alternate}
+.gonote[hidden]{display:none}
+@media (prefers-reduced-motion:reduce){.gonote::before{animation:none}}
 /* 위치 안내 한 줄(?project= 로 연 사업이 위치 미확보·근사 위치일 때, region.js mountLocNote). 지도 위 가운데, 닫을 수 있다 */
 .locnote{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:10px;max-width:min(calc(100% - 420px),760px);min-width:min(420px,calc(100% - 24px));padding:9px 8px 9px 14px;border-radius:12px;background:color-mix(in srgb,var(--warn) 16%,var(--pn));border:1px solid color-mix(in srgb,var(--warn) 55%,transparent);box-shadow:0 6px 20px rgba(0,0,0,.18);color:var(--ink);font-size:14px;line-height:1.45}
 .locnote[hidden]{display:none}
@@ -143,6 +150,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .stg{display:contents}
 .jd{font-style:normal;font-weight:700}
 .jd.ok{color:var(--ok,#4ADE9E)}.jd.caution{color:var(--warn)}.jd.delay{color:var(--bad,#FF6B88)}
+.pc-grid dd .jd{white-space:nowrap}   /* 표지('예정일 지남'·'원천 날짜 다름(LH 2026.10)')는 줄 사이에서 끊지 않는다 */
 .ldg{font-size:13px;color:var(--ink2)}
 .stg6{display:inline-flex;gap:2px;margin-right:6px;vertical-align:1px}
 .stg6 i{width:9px;height:6px;border-radius:2px;background:var(--line2)}
@@ -404,6 +412,11 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .hudtag{position:absolute;left:0;top:0;pointer-events:auto;display:flex;flex-direction:column;gap:0;padding:3px 9px 4px;text-align:left;font:inherit;font-size:11.5px;line-height:1.32;white-space:nowrap;color:var(--ink);background:var(--glass-tag);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--hud-line);border-radius:8px;box-shadow:var(--tag-shadow);cursor:pointer;font-variant-numeric:tabular-nums;will-change:transform}
 .hudtag[hidden]{display:none}
 .hudtag:hover{background:var(--glass-tag-hover)}
+/* 이동 중(꼬리표·목록에서 사업을 눌러 카드가 열리기 전, app.js setGoing): 눌린 모양(강조 테두리) + 이름 옆 작은 점이 깜빡인다. 낭독은 #sr '…로 이동 중' */
+.hudtag[aria-busy="true"],#projList .card[aria-busy="true"]{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.hudtag[aria-busy="true"] .ht-h::after,#projList .card[aria-busy="true"]>b::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--acc);vertical-align:middle;animation:going .9s ease-in-out infinite alternate}
+@keyframes going{from{opacity:1}to{opacity:.25}}
+@media (prefers-reduced-motion:reduce){.hudtag[aria-busy="true"] .ht-h::after,#projList .card[aria-busy="true"]>b::after{animation:none}}
 .hudtag .ht-h{display:flex;align-items:baseline;gap:6px}
 .hudtag .ht-h b{font-size:13.5px}
 .hudtag .ht-h i{font-style:normal;font-weight:700;font-size:11.5px;color:var(--cd)}
@@ -445,14 +458,29 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .rctl button:hover{background:var(--glass-tag-hover)}
 .rctl .rsep{display:block;height:5px;border-top:1px solid var(--hud-line);border-bottom:1px solid var(--hud-line);background:color-mix(in srgb,var(--hud-line) 40%,transparent)}
 .rctl .rt{font-size:13px;color:var(--ink2)}
-.rctl #vTour{height:44px;line-height:1.2;word-break:break-all}   /* '둘러보기'를 두 글자씩 두 줄로(묶음 폭 36px) */
+/* '보기' 메뉴 단추: 둘러보기·자동 회전이 도는 동안 오른쪽 위에 강조색 점 */
+.rctl #vMenuBtn{position:relative}
+.rctl #vMenuBtn[aria-expanded="true"]{background:var(--glass-tag-hover);color:var(--ink)}
+.rctl #vMenuBtn.busy::after{content:"";position:absolute;right:4px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 1.5px var(--glass-sum)}
+/* 보기 메뉴(#vMenu, role=menu): 시점 묶음 왼쪽에 '보기' 단추 높이로 뜬다(top 은 app.js 가 맞춘다). 옵션 창과 같은 유리 카드 */
+.vmenu{position:absolute;right:62px;top:120px;z-index:5;display:flex;flex-direction:column;min-width:176px;padding:6px;border-radius:12px;background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur);border:1px solid var(--hud-line);box-shadow:var(--hud-shadow)}
+.vmenu[hidden]{display:none}
+.vmenu .vm{display:flex;align-items:center;gap:10px;min-height:36px;padding:0 10px 0 8px;border:0;border-radius:7px;background:transparent;font:inherit;font-size:13.5px;color:var(--ink);text-align:left;white-space:nowrap;cursor:pointer;touch-action:manipulation}
+.vmenu .vm[hidden]{display:none}
+.vmenu .vm:hover{background:var(--glass-tag-hover)}
+.vmenu .vm:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
+.vmenu .vm svg,.vmenu .vm-k{flex:0 0 auto;width:16px;height:16px}
+.vmenu .vm svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.vmenu .vm-k{position:relative;border:1.5px solid var(--mute);border-radius:4px}
+.vmenu .vm[aria-checked="true"] .vm-k{background:var(--acc);border-color:var(--acc)}
+.vmenu .vm[aria-checked="true"] .vm-k::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--acc-ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.vmenu .vm-sep{display:block;height:1px;margin:4px 2px;background:var(--hud-line)}
+.vmenu .rot{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 /* 키보드 초점: 묶음(.rctl·.tools)은 넘침을 잘라 바깥 고리가 가려지므로 단추 안쪽에 그린다 */
 .rctl button:focus-visible,.tools button:focus-visible{outline:2px solid var(--acc);outline-offset:-3px;border-radius:7px}
 .regionbox select:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:3px}
 .rctl button.rt:hover{color:var(--ink)}
-.rctl .rot{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .rctl svg{display:block;width:24px;height:24px;overflow:visible}
-.rctl .rot svg{width:17px;height:17px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .rctl .cp-bg{fill:none;stroke:var(--mute);stroke-width:1.4}
 .rctl .cp-n{fill:var(--acc)}
 .rctl .cp-s{fill:#5566BE}
@@ -536,7 +564,9 @@ details.isub>ul{margin-top:2px}
   .brand-t b{display:none}   /* 로고가 이미 이름이라 한 줄을 아낀다. 지역 이름은 남긴다 */
   .stagef{order:2}
   /* 6단계 칩은 3칸 × 2줄의 한 줄짜리 칩으로(가로로 잘리지 않게): 이름 · 세대 수만, 단지 수·'세대'는 이름표(aria-label·title)로 */
-  .stagef{flex:1 0 100%;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px}
+  .stagef{flex:1 0 100%;flex-wrap:wrap;gap:4px}
+  .stagef>.sf{flex:1 1 30%;min-width:0}
+  .stagef>.sf.empty{flex:0 0 auto}
   .sf{flex-direction:row;align-items:baseline;gap:6px;padding:3px 8px;border-radius:8px}
   .sf-h{font-size:12px}
   .sf-n,.sf-v small{display:none}
@@ -548,6 +578,8 @@ details.isub>ul{margin-top:2px}
   .pscroll{padding:4px 16px 18px 16px}
   .ptoggle,.hudsum{display:none!important}
   .rctl button{width:40px;height:36px}
+  .vmenu{right:66px}
+  .vmenu .vm{min-height:40px}
   .hudtag{padding:3px 7px 4px 8px;font-size:11px}
   .hudtag .ht-h b{font-size:13px}
   @media (prefers-reduced-motion:reduce){.panel{transition:none}}
@@ -750,7 +782,7 @@ html[data-map-mode="overview"] .skip-detail,html:not([data-map-mode="overview"])
 html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minmax(0,1fr);flex:1;min-height:0;min-width:0;position:relative}
 .ov button{font:inherit;color:inherit}
 .ov :focus-visible,.ov-menu :focus-visible,.crumbs a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.ov-panel{display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:16px 18px 20px;background:var(--bg);border-right:1px solid var(--line);word-break:keep-all;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
+.ov-panel{display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:16px 18px 20px;background:var(--bg);border-right:1px solid var(--line);word-break:keep-all;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}   /* 스크롤바 자리를 늘 비워 두어 지표를 바꿀 때(목록 길이가 바뀌어 막대가 생겼다 사라질 때) 지표 단추 폭이 흔들리지 않는다 */
 .ov-handle{display:none}
 .ov-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .ov-head h1{font-size:22px}
@@ -808,7 +840,6 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .ov-lb{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;line-height:1.2;white-space:nowrap;text-align:center;font-variant-numeric:tabular-nums}
 .ov-lb b{font-size:12px;font-weight:700}
 .ov-lb span{font-size:12.5px;font-weight:700}
-.ov-lb.bare b{display:none}
 .ov-lb.c0{color:var(--ov-ink-0);text-shadow:0 0 2px var(--ov-0),0 0 2px var(--ov-0)}
 .ov-lb.c1{color:var(--ov-ink-1);text-shadow:0 0 2px var(--ov-1),0 0 2px var(--ov-1)}
 .ov-lb.c2{color:var(--ov-ink-2);text-shadow:0 0 2px var(--ov-2),0 0 2px var(--ov-2)}
@@ -830,6 +861,9 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .ov-sw.c0{background:var(--ov-0)}.ov-sw.c1{background:var(--ov-1)}.ov-sw.c2{background:var(--ov-2)}.ov-sw.c3{background:var(--ov-3)}.ov-sw.c4{background:var(--ov-4)}.ov-sw.c5{background:var(--ov-5)}
 .ov-going{position:absolute;left:50%;top:14px;z-index:5;transform:translateX(-50%);margin:0;padding:6px 14px;border:1px solid var(--hud-line);border-radius:999px;background:var(--glass-cmd-active);box-shadow:var(--tag-shadow);font-size:14px;white-space:nowrap}
 .ov-going[hidden]{display:none}
+/* 빈 상태 한 줄(값 있는 시군구가 3곳 미만): 지도 위 가운데 위. 좁은 화면은 위 띠 범례 아래(top 은 overview.js 가 맞춘다) */
+.ov-empty{position:absolute;left:50%;top:14px;z-index:3;transform:translateX(-50%);max-width:calc(100% - 24px);margin:0;padding:6px 14px;border:1px solid var(--hud-line);border-radius:10px;background:var(--glass-hud);box-shadow:var(--tag-shadow);font-size:13.5px;line-height:1.45;color:var(--ink);text-align:center;text-wrap:balance;word-break:keep-all}
+.ov-empty[hidden]{display:none}
 .ov-menu{position:fixed;z-index:60;min-width:220px;max-width:min(300px,calc(100vw - 16px));padding:8px;border:1px solid var(--line2);border-radius:10px;background:var(--pn);box-shadow:var(--hud-shadow);color:var(--ink)}
 .ov-menu[hidden]{display:none}
 .ov-mh{margin:2px 6px 6px;font-size:13px;color:var(--mute)}
