@@ -145,8 +145,8 @@ test('사업 카드(2026-10-15): 화면 용어(상태·공정률·호·점 날�
   assert.match(css, /\.pc-grid\{display:grid;grid-template-columns:1fr 1fr/);
   assert.match(css, /\.pc-note summary\{[^}]*-webkit-line-clamp:2/);
   /* 반투명 유리: backdrop-filter 와, 못 쓰는 브라우저용 @supports 대체(두 테마) */
-  assert.match(css, /(?:^|\n)\.maplibregl-popup-content\{[^}]*background:var\(--glass-hud\);-webkit-backdrop-filter:var\(--glass-card-blur\);backdrop-filter:var\(--glass-card-blur\)/);
-  assert.match(css, /@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{:root\{[^}]*--glass-hud:rgba\(16,26,68,\.98\)/);
+  assert.match(css, /(?:^|\n)\.maplibregl-popup-content\{[^}]*background:var\(--glass-pop\);-webkit-backdrop-filter:var\(--glass-pop-blur\);backdrop-filter:var\(--glass-pop-blur\)/);
+  assert.match(css, /@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{:root\{[^}]*--glass-pop:rgba\(16,26,68,\.98\)/);
   assert.match(css, /@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{html\[data-map-shell\]:not\(\.dark\)\{--glass-hud:rgba\(255,255,255,\.98\)/);
   /* 접힘을 펴면 자리를 다시 맞춘다 */
   assert.match(app, /popup\.getElement\(\)\.addEventListener\('toggle', \(\) => \{ if \(popup !== own\) return; popup\.setOffset\(\[0, 0\]\); fitCard\(\); \}, true\)/);
