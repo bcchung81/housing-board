@@ -11,10 +11,6 @@ import type { CalendarDoc, RegionMapDoc } from './region';
 
 export const OV_SIDO = ['11', '28', '41'] as const;
 
-/* 지도 화면 모드를 첫 그림 전에 정한다(지도 레이아웃 <head>): 상세 매개변수(?project·pnu·bjd·sgg·code·region)가 하나라도 있으면 'detail', 아니면 'overview'.
-   CSS(app.css)가 이 값으로 상세 마크업과 개요 마크업 중 하나만 보이고, 지도 섬(MapIsland)이 그 모드의 스크립트만 부른다. assets/js/overview.js modeOf 와 같은 규칙(시험으로 확인).
-   전역 이름을 남기지 않게 함수로 감싼다(전역 var 가 생기면 같은 이름을 최상위 const 로 쓰는 app.js 가 SyntaxError 로 통째로 멈춘다) */
-export const MAP_MODE_INIT = "(function(){try{var q=new URLSearchParams(location.search);document.documentElement.setAttribute('data-map-mode',['project','pnu','bjd','sgg','code','region'].some(function(k){return q.has(k)})?'detail':'overview')}catch(e){}})()";
 export const SIDO_FULL: Record<string, string> = { '11': '서울특별시', '28': '인천광역시', '41': '경기도' };
 export const SIDO_SHORT: Record<string, string> = { '11': '서울', '28': '인천', '41': '경기' };
 
@@ -38,6 +34,16 @@ export function guOf(unit: string): string[] {
   if (!unit.startsWith('41')) return [];
   return Object.keys(METRO_AREAS).filter((c) => c !== unit && unitOf(c) === unit).sort();
 }
+/* 구가 있는 시 코드들(지도 첫 스크립트가 ?sgg=<시> 를 개요 구 메뉴로 넘길 때) */
+export const GU_CITIES = Object.keys(METRO_AREAS).filter((c) => guOf(c).length);
+/* 지도 화면 모드를 첫 그림 전에 정한다(지도 레이아웃 <head>): 상세 매개변수(?project·pnu·bjd·sgg·code·region)가 하나라도 있으면 'detail', 아니면 'overview'.
+   CSS(app.css)가 이 값으로 상세 마크업과 개요 마크업 중 하나만 보이고, 지도 섬(MapIsland)이 그 모드의 스크립트만 부른다. assets/js/overview.js modeOf 와 같은 규칙(시험으로 확인).
+   구가 있는 경기 시(guOf — 수원·성남·안양·부천·안산·고양·용인·화성)를 ?sgg= 로 열면(2026-10-15 평가 P1: 고양시 41280 이 '0호' 빈 지도) 상세를 열지 않고
+   개요 /map?sido=41&pick=<시> 로 바꿔(replace) 그 시의 구 메뉴를 연다. 지표(?metric=)는 넘긴다. 시 단위 코드에만 적힌 사업(구 미정)을 여는 ?gu=none 은 그대로 상세.
+   전역 이름을 남기지 않게 함수로 감싼다(전역 var 가 생기면 같은 이름을 최상위 const 로 쓰는 app.js 가 SyntaxError 로 통째로 멈춘다) */
+export const MAP_MODE_INIT = "(function(){try{var q=new URLSearchParams(location.search),c=q.get('sgg'),m=q.get('metric'),d=document.documentElement;"
+  + `if(c&&${JSON.stringify(GU_CITIES)}.indexOf(c)>=0&&q.get('gu')!=='none'&&!['project','pnu','bjd','code','region'].some(function(k){return q.has(k)})){d.setAttribute('data-map-mode','overview');location.replace('/map?sido='+c.slice(0,2)+'&pick='+c+(m?'&metric='+encodeURIComponent(m):''));return}`
+  + "d.setAttribute('data-map-mode',['project','pnu','bjd','sgg','code','region'].some(function(k){return q.has(k)})?'detail':'overview')}catch(e){}})()";
 
 /* 값 한 묶음: u = 진행 사업 호수, q = 진행 사업 중 호수 미확인 건수, n = 진행 사업 수, d = 지연 사업 수(장기 포함), a = 앞으로 12개월 준공 호, an = 그 예정 수, mi = 같은 기간 입주 호, mn = 그 예정 수,
    st = 현재 단계(①~⑥)별 사업 수 */

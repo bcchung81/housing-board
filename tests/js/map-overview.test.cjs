@@ -154,7 +154,7 @@ test('누르기: 개요의 모든 시군구(구 메뉴 포함)는 올바른 /map
     if (u.gu.length) {
       assert.ok(p.menu && !p.href, `${u.name}: 구 메뉴`);
       for (const g of p.menu) {
-        assert.equal(g.href, `/map?sgg=${g.code}`);
+        assert.equal(g.href, g.code === u.code ? `/map?sgg=${g.code}&gu=none` : `/map?sgg=${g.code}`);   // 구 미정(시 단위 코드)은 ?gu=none — 없으면 지도 첫 스크립트가 다시 구 메뉴로 넘긴다
         assert.ok(/^41\d{3}$/.test(g.code) && O.unitOf(g.code) === u.code, `${u.name} ${g.name}`);
         assert.ok(O.METRO_AREAS[g.code], `${g.code} 코드표`);
         n++;

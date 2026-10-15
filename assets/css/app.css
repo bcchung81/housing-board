@@ -72,6 +72,13 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .cmd .pv-d>summary::after{content:" ▾";color:var(--mute)}
 .cmd .pv-d[open]>summary::after{content:" ▴"}
 .cmd .pv-f{margin:2px 0 4px;white-space:normal;word-break:keep-all}
+.cmd .pv-list{list-style:none;margin:4px 0 6px;padding:0 2px 0 0;max-height:min(40vh,300px);overflow:auto;white-space:normal;text-align:left;font-size:13px;line-height:1.45;--bad:#FFAFBF;--ok:#4ADE9E}   /* '사업 원장 n건' 목록 — 위치 미확보 목록(.lostpop)과 같은 줄 형식 */
+html[data-map-shell]:not(.dark) .cmd .pv-list{--bad:#8E2C3C;--ok:#1D5946;--warn:#624C00}
+.cmd .pv-list li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:7px 0;border-top:1px solid var(--line)}
+.cmd .pv-list .lp-n{min-width:0}
+.cmd .pv-list small{grid-column:1;color:var(--ink2);font-size:12px}
+.cmd .pv-list li a{grid-column:2;grid-row:1 / span 2;align-self:center;color:var(--acc);font-weight:700;white-space:nowrap;text-underline-offset:3px}
+.cmd .pvbanner:has(.pv-d[open]){width:min(520px,100%)}
 .dynhint{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);z-index:5;max-width:min(92vw,520px);padding:5px 14px;border-radius:14px;background:var(--glass-cmd-active);border:1px solid var(--line2);color:var(--ink);font-size:13px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .dynhint[hidden]{display:none}
 /* 사업으로 날아가는 동안(카드가 열리기 전) 지도 위 가운데 위 작은 띠: '…로 이동 중' + 깜빡이는 점(app.js setGoing) */
@@ -152,7 +159,9 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .jd{font-style:normal;font-weight:700}
 .jd.ok{color:var(--ok,#4ADE9E)}.jd.caution{color:var(--warn)}.jd.delay{color:var(--bad,#FF6B88)}
 .jd.alt{color:var(--mute);font-weight:600;padding:0 4px;border:1px dashed currentColor;border-radius:4px}   /* 원천 날짜 다름: 상태 줄 옆 무채색 표지(상태색은 판정 하나만, 2026-10-15) */
-.pc-grid dd .jd.alt{white-space:nowrap}   /* 표지('원천 날짜 다름(LH 2026.10)')는 줄 사이에서 끊지 않는다. 상태 한 줄('정상 · 예정일 지남(…)')은 칸 폭에서 낱말 단위로 줄바꿈 */
+.pc-grid dd .jd.alt{white-space:nowrap;font-size:11px;font-weight:500;padding:0 3px}   /* 원천 날짜 다름: 이유 줄 뒤 작은 표지, 줄 사이에서 끊지 않는다 */
+.pc-chip.jd-c{background:transparent;font-size:11.5px}.pc-chip.jd-c.ok{border-color:var(--ok,#4ADE9E);color:var(--ok,#4ADE9E)}.pc-chip.jd-c.caution{border-color:var(--warn);color:var(--warn)}.pc-chip.jd-c.delay{border-color:var(--bad,#FF6B88);color:var(--bad,#FF6B88)}
+.pc-why{display:block;margin-top:2px;font-size:12px;font-weight:500;color:var(--ink2)}   /* 상태 칩 아래 이유 한 줄(2026-10-15 평가 A8) */
 .ldg{font-size:13px;color:var(--ink2)}
 .stg6{display:inline-flex;gap:2px;margin-right:6px;vertical-align:1px}
 .stg6 i{width:9px;height:6px;border-radius:2px;background:var(--line2)}
@@ -234,6 +243,16 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .maplegend .src:empty{display:none}
 #fatal{position:absolute;inset:0;background:rgba(10,16,48,.96);color:var(--ink);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:5}
 #fatal[hidden]{display:none}
+/* 열 수 없을 때의 안내(2026-10-15 평가 P1): 앱 글꼴·유리 카드 한 장, 새 구·가까운 구 링크와 '수도권 개요로' */
+#fatal .ft{width:min(440px,100%);text-align:left;padding:20px 22px;border:1px solid var(--hud-line);border-radius:14px;background:var(--glass-card);box-shadow:var(--hud-shadow);font-family:var(--font-body);line-height:1.5}
+#fatal .ft h2{margin:0 0 6px;font-size:17px;font-weight:700;line-height:1.4;color:var(--ink);text-wrap:balance}
+#fatal .ft p{margin:0 0 4px;font-size:14px;color:var(--ink2)}
+#fatal .ft .ft-d{font-size:12.5px;color:var(--mute)}
+#fatal .ft-go{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:14px 0 0;padding:0}
+#fatal .ft-go a{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border:1px solid var(--line2);border-radius:8px;background:var(--pn);color:var(--ink);font-size:14px;font-weight:700;text-decoration:none}
+#fatal .ft-go a:hover{border-color:var(--acc)}
+#fatal .ft-home{display:inline-block;margin-top:16px;font-size:13.5px;color:var(--mute);text-decoration:underline;text-underline-offset:3px}
+#fatal .ft-home:hover{color:var(--ink)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .maplibregl-popup-content{font:13px/1.5 var(--font-body);color:var(--ink);border-radius:12px;border:1px solid var(--hud-line);padding:0;box-shadow:var(--hud-shadow);background:var(--glass-pop);-webkit-backdrop-filter:var(--glass-pop-blur);backdrop-filter:var(--glass-pop-blur);
   --mute:#BEC8E6;--plan:#A8C5FF;--permit:#59D8CA;--edu:#CDBBFF;--bad:#FFAFBF}   /* 사업·건물 카드: HUD 처럼 투명(--glass-pop .78). 옅어진 만큼 카드 안 보조·상태 글자색만 밝게(다크)/진하게(라이트) 해서 흰·검은 지도 위 최악에도 4.5:1 (tests/js/glass.test.cjs) */
@@ -281,7 +300,7 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .pc-more summary::-webkit-details-marker{display:none}
 .pc-more p{margin:3px 0 0;font-size:11.5px;line-height:1.45;color:var(--mute)}
 .pc-split{width:264px;padding:0;gap:0;overflow:hidden}   /* 사업 카드: 머리(제목·상태) 고정, 창이 낮으면 몸통만 스크롤(fitCard 가 .pc 높이를 줄인다) */
-.pc-split>.pc-open{flex:none;margin:0 11px 8px;font-size:12.5px;color:inherit;text-decoration:underline;text-underline-offset:3px}
+.pc-split>.pc-open{flex:none;margin:0 11px 8px;padding-top:7px;border-top:1px solid var(--line);font-size:12.5px;color:inherit;text-decoration:underline;text-underline-offset:3px}
 .pc-split>.pc-h{flex:none;padding:9px 11px 6px 11px;padding-right:30px}
 .pc-split>.pc-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding:0 11px 9px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .pc-big .pc-idl{margin-left:auto;font-size:12px}
@@ -420,6 +439,7 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .hudtag .ht-h b{font-size:13.5px}
 .hudtag .ht-h i{font-style:normal;font-weight:700;font-size:11.5px;color:var(--cd)}
 .hudtag .ht-m{color:var(--ink2)}
+.hudtag .ht-jd{flex:none;align-self:center;width:8px;height:8px;border-radius:50%;background:var(--bad,#FF6B88);box-shadow:0 0 0 1.5px var(--glass-tag)}.hudtag .ht-jd.caution{background:var(--warn)}   /* 이름 옆 상태색 점: 지연 빨강·주의 노랑 */
 .hudtag .ht-w{font-style:normal;font-size:11px;line-height:1;color:var(--warn)}
 .hudtag .ht-bar{flex:0 0 52px;height:6px;background:var(--line);position:relative;overflow:hidden}
 .hudtag .ht-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--c)}
@@ -474,6 +494,11 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .vmenu .vm[aria-checked="true"] .vm-k{background:var(--acc);border-color:var(--acc)}
 .vmenu .vm[aria-checked="true"] .vm-k::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--acc-ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
 .vmenu .vm-sep{display:block;height:1px;margin:4px 2px;background:var(--hud-line)}
+.vmenu .vm-g{display:flex;flex-direction:column}
+.vmenu .vm[role="menuitemradio"] .vm-k{border-radius:50%}   /* 입체·평면: 둘 중 하나(라디오 점) */
+.vmenu .vm[role="menuitemradio"][aria-checked="true"] .vm-k{background:transparent;border-color:var(--acc)}
+.vmenu .vm[role="menuitemradio"][aria-checked="true"] .vm-k::after{left:3px;top:3px;width:7px;height:7px;border:0;border-radius:50%;background:var(--acc);transform:none}
+.vmenu .vm[role="menuitemradio"][aria-checked="true"]{font-weight:700}
 .vmenu .rot{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 /* 키보드 초점: 묶음(.rctl·.tools)은 넘침을 잘라 바깥 고리가 가려지므로 단추 안쪽에 그린다 */
 .rctl button:focus-visible,.tools button:focus-visible{outline:2px solid var(--acc);outline-offset:-3px;border-radius:7px}
@@ -791,6 +816,10 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .ov-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
 .ov-head h1{font-size:22px}
 .ov-asof{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ov-head h1{flex:0 1 auto}.ov-asof{margin-left:auto}
+.ov-back{flex:none;padding:2px 0;border:0;background:none;font:inherit;font-size:13px;color:var(--mute);text-decoration:underline;text-underline-offset:3px;cursor:pointer}   /* ?sido= 로 연 개요에서 수도권 전체로(2026-10-15 평가 P2) */
+.ov-back:hover{color:var(--ink)}
+.ov-back[hidden]{display:none}
 .ov-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:3px;gap:3px;border:1px solid var(--line);border-radius:10px;background:var(--pn)}
 .ov-metrics button{min-height:36px;padding:4px 6px;border:0;border-radius:7px;background:transparent;font-size:13px;line-height:1.3;color:var(--mute);cursor:pointer;transition:background .15s,color .15s}
 .ov-metrics button:hover{background:var(--pn2);color:var(--ink)}
@@ -907,6 +936,11 @@ html[data-map-shell]:not(.dark) .lostpin,html[data-map-shell]:not(.dark) .lostpo
 .lostpin:hover{background:var(--glass-tag-hover)}
 .lostpin[aria-expanded="true"]{border-color:var(--acc)}
 .lostpin .lp-d{color:var(--bad)}
+.lostpin.late{border-color:var(--bad);color:var(--bad)}   /* 지연 지표로 들어왔을 때: 지연이 든 묶음 표지를 빨강으로(2026-10-15 평가 P1) */
+.hudsum .hs-late{display:inline-block;margin-right:10px;padding:1px 9px;border:1px solid var(--bad,#FF6B88);border-radius:999px;color:var(--bad,#FF6B88);font-size:12.5px;font-weight:700;vertical-align:middle;white-space:nowrap}
+.hudsum .hs-late.none{border-color:var(--line2);color:var(--mute)}
+html[data-map-shell]:not(.dark) .hudsum .hs-late:not(.none){--bad:#B4233C}
+.hudsum .hs-a:has(.hs-late){display:flex;align-items:center}
 .hudsum .hs-lost{font:inherit;padding:0;border:0;background:none;color:inherit;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
 .hudsum .hs-lost:hover,.hudsum .hs-lost[aria-expanded="true"]{color:var(--ink)}
 .lostpop{position:fixed;z-index:30;width:320px;max-width:calc(100vw - 16px);max-height:min(60vh,420px);overflow:auto;padding:10px 12px 12px;border:1px solid var(--hud-line);border-radius:12px;background:var(--glass-card);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--hud-shadow);color:var(--ink);font-size:13px;line-height:1.45}

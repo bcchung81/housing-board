@@ -95,7 +95,7 @@ test('공급 요약 내용: 합계는 \'n호 · m건\' 한 줄(문장은 title),
 
 test('상세 카드는 늘 보이는 영역 안에 든다: 시점 묶음과 겹치면 가로로 비켜 서고, 위·아래 상자(도구 줄·입력줄·범례 띠·아래 시트) 사이 높이에 맞춰 줄이고(안쪽 스크롤) 밀어 넣는다', () => {
   const fn = /function showCard\([\s\S]*?\n\}\n/.exec(app)[0];
-  assert.match(fn, /const W = map\.getContainer\(\)\.clientWidth;/);       // 요약 왼쪽 가장자리로 폭을 줄이지 않는다
+  assert.match(fn, /sr = safeRect\(\)/); assert.match(fn, /const roomR = bb\.x1 \+ gap \+ PW <= R, roomL = bb\.x0 - gap - PW >= L;/);   // 요약 왼쪽 가장자리가 아니라 지도 안전 영역(시점 묶음 밖)으로 자리를 잰다
   assert.match(fn, /fitCard\(\);/);
   const fit = /function fitCard\(\) \{[\s\S]*?\n\}\n/.exec(app)[0];
   assert.match(app, /const CARD_AVOID = \['\.topbar', '#cmd', '#botbar', '\.maplibregl-ctrl-bottom-right'\];/);

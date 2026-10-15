@@ -79,8 +79,11 @@
   /* ---------- 상태 ---------- */
   const initialState = () => ({ mode: 'idle', q: '', items: [], sel: 0, searching: false, notice: '', warn: '', reason: '', wantGo: false, target: null });
   const goState = (s, item) => Object.assign({}, s, { mode: 'busy', target: item, wantGo: false, searching: false });
+  /* 2026-07 인천 개편으로 없어진 옛 시군구 코드 → 새 구(region.js REFORMED 와 같은 표, 시험으로 확인). 이 코드를 치면 '표에 없는 코드' 대신 새 구를 알린다 */
+  const REFORMED = { 28110: '인천 중구(28110)는 2026년 7월 개편으로 제물포구(28125)·영종구(28155)로 나뉘었습니다.', 28140: '인천 동구(28140)는 2026년 7월 개편으로 제물포구(28125)에 합쳐졌습니다.', 28260: '인천 서구(28260)는 2026년 7월 개편으로 서해구(28275)·검단구(28290)로 나뉘었습니다.' };
   const noticeOf = (meta, count, qn) => {
     if (count) return '';
+    if (meta && meta.reason === 'unknown-code' && REFORMED[normalize(qn).slice(0, 5)]) return REFORMED[normalize(qn).slice(0, 5)];
     if (meta && meta.reason) return NOTICE[meta.reason] || meta.detail || NOTICE.none;
     return qn.length ? NOTICE.none : '';
   };
@@ -301,5 +304,5 @@
     return handle;
   }
 
-  return { MIN_Q, MAX_Q, DEBOUNCE_MS, RECENT_KEY, NOTICE, DISABLED_TEXT, LOCAL_HINT, normalize, isSearchable, nearOf, searchUrl, highlight, subText, rowsOf, chipsOf, initialState, reduce, view, gotoParams, loadRecent, saveRecent, mount };
+  return { REFORMED, MIN_Q, MAX_Q, DEBOUNCE_MS, RECENT_KEY, NOTICE, DISABLED_TEXT, LOCAL_HINT, normalize, isSearchable, nearOf, searchUrl, highlight, subText, rowsOf, chipsOf, initialState, reduce, view, gotoParams, loadRecent, saveRecent, mount };
 });

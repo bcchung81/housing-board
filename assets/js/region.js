@@ -56,7 +56,7 @@
   function codeUrl(href, name, value, at) {
     const u = new URL(href);
     for (const n of CODE_PARAMS) u.searchParams.delete(n);
-    for (const n of ['region', 'block', 'at']) u.searchParams.delete(n);
+    for (const n of ['region', 'block', 'at', 'gu']) u.searchParams.delete(n);
     u.searchParams.set(name, value);
     if (at) u.searchParams.set('at', at);
     return u.toString();
@@ -385,11 +385,11 @@
     const [y0, m0, d0] = String(a).slice(0, 10).split('-').map(Number), [y1, m1, d1] = String(b).slice(0, 10).split('-').map(Number);
     return Math.max(0, (y1 - y0) * 12 + (m1 - m0) - (d1 < d0 ? 1 : 0));
   }
-  /* 카드의 상태 한 줄(2026-10-15 평가 A7: '상태 정상'·'예정일 지남'·'주의' 를 따로 보이지 않고 한 줄로, 색은 상태색 하나).
-     예: '정상 · 예정일 지남(경과 0개월, 주의는 1개월부터)', '지연 · 준공 예정 경과 9개월' */
-  function statusLine(t) {
+  /* 카드 상태 칸의 이유 한 줄(2026-10-15 평가 A8: 상태는 칩 하나(t.cls), 그 아래 이유 한 줄). 판정이 없거나 이유가 없으면 ''.
+     예: 정상 → '예정일 지남 · 경과 0개월(주의는 1개월부터)', 지연 → '준공 예정 경과 9개월' */
+  function statusReason(t) {
     if (!t || !t.cls) return '';
-    return [t.cls, t.late, t.pastDue ? `예정일 지남(경과 ${t.dueMonths || 0}개월, 주의는 1개월부터)` : ''].filter(Boolean).join(' · ');
+    return [t.late, t.pastDue ? `예정일 지남 · 경과 ${t.dueMonths || 0}개월(주의는 1개월부터)` : ''].filter(Boolean).join(' · ');
   }
   /* 위치 미확보 묶음(homeToProjects 의 unlocated): 건수·지연 건수와 표지 글자 */
   function lostSummary(list) {
@@ -493,7 +493,7 @@
     const rows = Object.entries(table && typeof table === 'object' ? table : {}).filter(([sgg, e]) => isHomeSgg(sgg) && e && e.n > 0 && e.name).sort((a, b) => (a[0] < b[0] ? -1 : 1));
     const cityWithGu = (sgg) => sgg.endsWith('0') && rows.some(([x]) => x !== sgg && x.slice(0, 4) === sgg.slice(0, 4));
     return HOME_SIDO.map((sido) => ({ sido, label: SIDO_SHORT[sido], options: rows.filter(([sgg]) => sgg.slice(0, 2) === sido)
-      .map(([sgg, e]) => ({ value: `sgg:${sgg}`, sgg, name: sggShort(e.name), n: e.n, label: `${sggShort(e.name)}${cityWithGu(sgg) ? '(구 미정)' : ''} · ${e.n}건` })) })).filter((g) => g.options.length);
+      .map(([sgg, e]) => ({ value: `sgg:${sgg}`, sgg, name: sggShort(e.name), n: e.n, city: cityWithGu(sgg), label: `${sggShort(e.name)}${cityWithGu(sgg) ? '(구 미정)' : ''} · ${e.n}건` })) })).filter((g) => g.options.length);
   }
   /* 지도에 그린 사업 지점들 → 첫 시점. 모두가 확대 minZ 이상의 한 화면에 들어가면 그 범위, 아니면 가장 많은 사업이 모인 곳(첫 화면에 건물이 보이게).
      사업이 하나면 그 사업(확대 16). px = 지도 가로 화소 */
@@ -640,7 +640,7 @@
     uniqueIds(blocks);   // 구분 접미사(·2)는 화면에 보이는 순서를 따른다
     const districts = (region.zones || []).filter((z) => Array.isArray(z.poly) && z.poly.length >= 3).map((z) => ({ name: z.name, poly: z.poly }));
     const byKey = new Map();
-    blocks.forEach((b) => { byKey.set(b.id, b); byKey.set(b.pid, b); });
+    blocks.forEach((b) => { byKey.set(b.id, b); byKey.set(b.pid, b); if (b.projectId) byKey.set(b.projectId, b); });   // ?block= 은 사업 id(app.js blockKey), 옛 주소의 짧은 이름도 찾는다
     return {
       slug: region.slug, name: region.name, title: region.title, description: region.description || '',
       sggs: (region.codes || []).filter((c) => c && c.type === 'sigungu' && /^\d{5}$/.test(c.code)).map((c) => c.code),   // 사업 원장을 부를 시군구
@@ -713,13 +713,26 @@
     const opt = (o) => `<option value="${escapeHtml(o.value)}"${on(o) ? ' selected' : ''}>${escapeHtml(o.label)}</option>`;
     sel.innerHTML = none + (groups.length ? homeGroups.map((g) => `<optgroup label="${escapeHtml(g.label)}">${g.options.map(opt).join('')}</optgroup>`).join('') + (rest.length ? `<optgroup label="상세 3D 지역">${rest.map(opt).join('')}</optgroup>` : '')
       : m.options.map(opt).join(''));
-    sel.addEventListener('change', () => { win.location.assign(/^sgg:\d{5}$/.test(sel.value) ? codeUrl(win.location.href, 'sgg', sel.value.slice(4)) : regionUrl(win.location.href, sel.value)); });
+    /* 구가 있는 시의 '(구 미정)'은 ?gu=none 을 붙인다(없으면 지도 첫 스크립트가 개요 구 메뉴로 넘긴다) */
+    const city = new Set(groups.flatMap((g) => g.options.filter((o) => o.city).map((o) => o.value)));
+    sel.addEventListener('change', () => {
+      if (!/^sgg:\d{5}$/.test(sel.value)) { win.location.assign(regionUrl(win.location.href, sel.value)); return; }
+      const u = codeUrl(win.location.href, 'sgg', sel.value.slice(4));
+      win.location.assign(city.has(sel.value) ? `${u}&gu=none` : u);
+    });
     box.hidden = false;
   }
   /* 안내 띠: 한 줄 요약(brief)만 보이고 누르면 전체 문장을 편다(2026-10-10 피드백, 주소 입력줄 아래 반투명 띠 — goto.js 가 옮긴다).
      요약이 없거나 전체와 같으면 전체 한 줄 */
-  function mountBanner(doc, r, notice, brief) {
+  function mountBanner(doc, r, notice, brief, about) {
     const el = doc.getElementById('pvBanner');
+    /* 수도권 원장 시군구: '사업 원장 n건 · 지도 m건 ▾'을 펴면 사업 목록(위치 미확보 목록과 같은 형식, app.js 가 #pvList 를 채운다 — 2026-10-15 평가 P3).
+       설명 문장(about)은 요약의 title, 위치 안내(notice)만 목록 위 한 줄 */
+    if (el && !r.slug && r.home && !r.home.failed && r.home.total) {
+      el.innerHTML = `<details class="pv-d"><summary class="pv-s" title="${escapeHtml(about || '')}">${escapeHtml(brief)}</summary>${notice ? `<p class="pv-f">${escapeHtml(notice)}</p>` : ''}<ul class="pv-list" id="pvList" aria-label="사업 원장 목록"></ul></details>`;
+      el.hidden = false;
+      return;
+    }
     const pre = r.visibility === 'preview';
     const text = [pre ? '미리보기 — 공개 전 자료입니다' : '', notice || ''].filter(Boolean).join(' · ');
     if (!el || !text) return;
@@ -756,18 +769,38 @@
       : '경계·건물만';
     return [warn ? `위치 안내 ${warn.split(' · ').length}건` : '', base].filter(Boolean).join(' · ');
   }
-  function showFatal(doc, html) {
+  /* ---------- 열 수 없을 때의 안내 화면(#fatal) ----------
+     2026-07 인천 행정구역 개편으로 없어진 옛 시군구 코드 → 새 구(국토교통부 법정동코드 2026-09-29: 옛 구의 법정동 이름이 새 구에 그대로 있다 —
+     중구 52곳 → 제물포구 44·영종구 8, 동구 7곳 → 제물포구 7, 서구 22곳 → 서해구 11·검단구 9). goto.js REFORMED 와 같은 표(시험으로 확인) */
+  const REFORMED = {
+    28110: { name: '인천 중구', to: [['28125', '제물포구'], ['28155', '영종구']] },
+    28140: { name: '인천 동구', to: [['28125', '제물포구']] },
+    28260: { name: '인천 서구', to: [['28275', '서해구'], ['28290', '검단구']] },
+  };
+  /* 안내 화면 모델(순수): cq = 연 코드({ name, value }), msg·detail = 해석 실패 문장·자세한 까닭, lite = HOME_LITE 표, regions = 상세 3D 지역 목록.
+     옛 코드면 새 구로, 수도권 코드면 같은 시도에서 코드가 가까운 구 3곳(사업이 있는 곳), 그 밖은 상세 3D 지역. 마지막은 늘 '수도권 개요로' */
+  function fatalModel(cq, msg, lite, regions, detail) {
+    const code = cq ? (/\d{5}/.exec(String(cq.value)) || [''])[0] : '', ref = REFORMED[code];
+    if (ref) return { title: `${ref.name}는 2026년 7월 행정구역 개편으로 ${ref.to.map((t) => t[1]).join('·')}${ref.to.length > 1 ? '로 나뉘었습니다' : '에 합쳐졌습니다'}`,
+      text: `옛 코드 ${code} 대신 새 구로 열어 보세요.`, links: ref.to.map(([c, n]) => ({ href: `/map?sgg=${c}`, label: `${n} (${c})` })) };
+    const sido = code.slice(0, 2);
+    const near = HOME_SIDO.includes(sido) ? Object.entries(lite && typeof lite === 'object' ? lite : {}).filter(([c, e]) => c !== code && c.slice(0, 2) === sido && e && e.n > 0 && e.name)
+      .sort((a, b) => Math.abs(a[0] - code) - Math.abs(b[0] - code) || (a[0] < b[0] ? -1 : 1)).slice(0, 3).map(([c, e]) => ({ href: `/map?sgg=${c}`, label: sggShort(e.name) })) : [];
+    return { title: msg || '지도를 열 수 없습니다', text: near.length ? `같은 ${SIDO_SHORT[sido]}의 가까운 구를 열어 보세요.` : '', detail: detail || '',
+      links: near.length ? near : (regions || []).map((x) => ({ href: `?region=${encodeURIComponent(x.slug)}`, label: x.name })) };
+  }
+  function fatalHtml(m) {
+    return `<div class="ft"><h2>${escapeHtml(m.title)}</h2>${m.text ? `<p>${escapeHtml(m.text)}</p>` : ''}${m.detail ? `<p class="ft-d">${escapeHtml(m.detail)}</p>` : ''}`
+      + `${(m.links || []).length ? `<ul class="ft-go">${m.links.map((l) => `<li><a href="${escapeHtml(l.href)}">${escapeHtml(l.label)}</a></li>`).join('')}</ul>` : ''}<a class="ft-home" href="/map">수도권 개요로</a></div>`;
+  }
+  function showFatal(doc, m) {
     const f = doc.getElementById('fatal'), l = doc.getElementById('loading');
     if (l) l.hidden = true;
-    if (f) { f.innerHTML = html; f.hidden = false; }
+    if (f) { f.innerHTML = fatalHtml(m); f.hidden = false; }
   }
-  /* 코드 해석이 안 될 때 보여 줄 지역 목록 링크(index 를 못 읽으면 빈 문자열) */
-  async function regionLinks(win) {
-    try {
-      const idx = await (await win.fetch('regions/index.json')).json();
-      const items = (idx.regions || []).map((x) => `<li><a href="?region=${encodeURIComponent(x.slug)}">${escapeHtml(x.name)}</a></li>`).join('');
-      return items ? `<ul>${items}</ul>` : '';
-    } catch (e) { return ''; }
+  /* 안내 화면의 상세 3D 지역 목록(index 를 못 읽으면 빈 목록) */
+  async function bundleRegions(win) {
+    try { return ((await (await win.fetch('regions/index.json')).json()).regions || []); } catch (e) { return []; }
   }
   /* 불러와 전역에 올리고 문구·지역 선택기·배너를 반영한다. 실패하면 안내 화면을 보이고 {ok:false} 를 돌려 준다. */
   async function boot(win, doc) {
@@ -776,7 +809,8 @@
     if (cq) {
       const rr = await resolveCode((u) => win.fetch(u), cq);
       if (!rr.ok) {
-        showFatal(doc, `<p>${escapeHtml(rr.message)}</p>${rr.detail ? `<p><code>${escapeHtml(rr.detail)}</code></p>` : ''}${await regionLinks(win)}`);
+        const m = fatalModel(cq, rr.message, win.HOME_LITE, null, rr.detail);
+        showFatal(doc, m.links.length ? m : fatalModel(cq, rr.message, null, await bundleRegions(win), rr.detail));
         return { ok: false, error: 'code', code: rr.code };
       }
       resolved = rr.data;
@@ -808,12 +842,11 @@
     try {
       r = await loadRegion({ fetch: (u) => win.fetch(u), search, home: homeOf && ((region) => homeOf(region).then((h) => { homeGot = h ? h.got : []; return h; })) });
     } catch (e) {
-      showFatal(doc, `<p>지역 자료를 불러오지 못했습니다.</p><p><code>${escapeHtml(e.message)}</code></p>`);
+      showFatal(doc, { title: '지역 자료를 불러오지 못했습니다', text: '잠시 뒤 다시 열어 보세요.', detail: e.message });
       return { ok: false, error: 'load', message: e.message };
     }
     if (!r.ok) {
-      const links = (r.regions || []).map((x) => `<li><a href="?region=${encodeURIComponent(x.slug)}">${escapeHtml(x.name)}</a></li>`).join('');
-      showFatal(doc, `<p>${r.error === 'unknown' ? `‘${escapeHtml(r.requested)}’ 지역을 찾을 수 없습니다.` : '볼 수 있는 지역이 없습니다.'}</p>${links ? `<ul>${links}</ul>` : ''}`);
+      showFatal(doc, fatalModel(null, r.error === 'unknown' ? `‘${r.requested}’ 지역을 찾을 수 없습니다` : '볼 수 있는 지역이 없습니다', null, r.regions));
       return r;
     }
     /* 번들이 있는 지역: 코드로 열었거나 ?dyn=1 이면 번들 밖 건물도 요청 시 조회한다(번들은 지구 주변만 담은 지역이 있음) */
@@ -845,13 +878,13 @@
     const pm = r.permits;
     const hm = r.home;
     const baseNote = r.slug ? '' : hm ? (hm.failed ? '사업 원장 자료를 불러오지 못해 경계와 건물(요청 시 조회)만 보여 줍니다'
-      : `사업 원장 ${hm.total}건 중 ${hm.drawn}건을 대표점(블록·대표 지번·지구 대표점·근사 위치)에 표시합니다. 표시한 점은 사업 경계가 아닙니다. 위치 미확보 ${hm.unlocated.length}건은 목록에만 둡니다`)
+      : `사업 원장 ${hm.total}건 중 ${hm.drawn}건을 대표점(블록·대표 지번·지구 대표점·근사 위치)에 표시합니다. 표시한 점은 사업 경계가 아닙니다${hm.unlocated.length ? `. 위치 미확보 ${hm.unlocated.length}건은 목록에만 둡니다` : ''}`)
       : pm && pm.count ? `상세 3D 자료가 없어 경계·건물(요청 시 조회)·건축HUB 인허가 사업 ${pm.count}곳만 보여 줍니다${pm.ledger && (pm.ledger.blocksMatched + pm.ledger.parcelsRecovered) ? `(건축물대장으로 위치를 찾은 ${pm.ledger.blocksMatched + pm.ledger.parcelsRecovered}곳 포함${pm.unlocated ? `, 필지를 못 찾은 ${pm.unlocated}곳 제외` : ''})` : pm.unlocated ? `(필지를 못 찾은 ${pm.unlocated}곳 제외)` : ''}`
       : pm && pm.fetched && pm.blocks ? `상세 3D 자료가 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 이 법정동의 건축HUB 인허가는 공공주택지구 블록 단위 ${pm.blocks}곳뿐이라 필지 번호가 없어 ${pm.ledger && pm.ledger.used ? '건축물대장과 맞춰 보아도 지번을 정하지 못해 ' : ''}지도에 그릴 수 없습니다`
       : pm && pm.fetched ? `상세 3D 자료가 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 건축HUB 주택인허가에 이 법정동의 공동주택 사업이 없습니다(기록 ${pm.records}건) — 이웃 법정동에 있을 수 있습니다`
       : '상세 3D 자료가 없어 경계와 건물(요청 시 조회)만 보여 줍니다';
     const notes = [resolved ? noticeText(warns) : '', baseNote].filter(Boolean).join(' · ');
-    applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r, notes, bannerBrief(r, warns));
+    applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r, hm && !r.slug && !hm.failed && hm.total ? noticeText(warns) : notes, bannerBrief(r, warns), baseNote);   // 목록 띠(원장 사업이 있을 때)는 위치 안내만, 그 밖은 전체 문장
     mountLocNote(doc, capital && hit && hit.approx ? { name: hit.name, approx: true } : lost ? { id: lost.id, name: lost.name } : null);
     mountCrumbs(win, doc, r, resolved);
   }
@@ -880,5 +913,5 @@
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { HOME_SIDO, isHomeSgg, crumbsOf, crumbsHtml, mountCrumbs, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, statusLine, lostSummary, lostAnchor, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
+  return { REFORMED, fatalModel, fatalHtml, HOME_SIDO, isHomeSgg, crumbsOf, crumbsHtml, mountCrumbs, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, statusReason, lostSummary, lostAnchor, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
 });

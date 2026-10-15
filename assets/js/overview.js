@@ -22,6 +22,10 @@
     return { mode: 'overview', sido: SIDO.includes(s) ? s : '' };
   }
   const sggHref = (code) => `/map?sgg=${encodeURIComponent(code)}`;
+  /* 지표 주소 값(?metric=): 개요 지표 id(u·d·a). 화면 쪽 계약의 'late' 는 지연(d)으로 읽는다 */
+  const metricOf = (search) => { const v = new URLSearchParams(search || '').get('metric'); return v === 'late' ? 'd' : ['u', 'd', 'a'].includes(v) ? v : 'u'; };
+  /* 상세 지도 주소에 지금 지표를 붙인다(기본 '진행 호수'는 붙이지 않는다) — 상세가 지연 맥락(머리 줄 '지연 n' 칩·빨강 묶음 표지)을 이어 받는다 */
+  const withMetric = (href, metric) => (metric && metric !== 'u' ? `${href}&metric=${metric}` : href);
   const sidoHref = (sido) => (sido ? `/map?sido=${sido}` : '/map');
 
   /* ---------- 경계: region-map 경로 → 경위도 ---------- */
@@ -153,8 +157,25 @@
   }
   /* 면을 눌렀을 때: 구가 있으면 메뉴(구 → 주소), 없으면 바로 주소 */
   function pickOf(unit) {
-    if (unit.gu && unit.gu.length) return { menu: unit.gu.map((g) => ({ code: g.code, name: g.name, v: g.v, href: sggHref(g.code) })) };
+    if (unit.gu && unit.gu.length) return { menu: unit.gu.map((g) => ({ code: g.code, name: g.name, v: g.v, href: g.code === unit.code ? `${sggHref(g.code)}&gu=none` : sggHref(g.code) })) };   // 구 미정(시 단위 코드)은 ?gu=none — 없으면 지도 첫 스크립트가 다시 이 메뉴로 넘긴다
     return { href: sggHref(unit.code) };
+  }
+
+  /* 시군구 목록 키보드(로빙 tabindex): names = 보이는 항목의 이름(묶음 단추는 ''), i = 지금 위치, key = 누른 키 → 옮길 위치(-1 이면 그대로).
+     ↑↓ 는 끝에서 멈추고, Home·End 는 처음·끝, 글자 하나는 다음 항목부터 그 글자(한글은 초성도)로 시작하는 이름을 돌며 찾는다 */
+  const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
+  const choOf = (ch) => { const c = String(ch).charCodeAt(0) - 0xac00; return c >= 0 && c < 11172 ? CHO[Math.floor(c / 588)] : ch; };
+  function rankMove(names, i, key) {
+    const n = names.length;
+    if (!n) return -1;
+    if (key === 'ArrowDown') return Math.min(n - 1, i + 1);
+    if (key === 'ArrowUp') return Math.max(0, i - 1);
+    if (key === 'Home') return 0;
+    if (key === 'End') return n - 1;
+    if (String(key).length !== 1 || key === ' ') return -1;
+    const k = key.toLowerCase();
+    for (let s = 1; s <= n; s++) { const j = (i + s) % n, a = String(names[j] || '').charAt(0).toLowerCase(); if (a && (a === k || choOf(a) === k)) return j; }
+    return -1;
   }
 
   /* 점이 면(다각형들: [바깥 고리, 구멍…]) 안인가 — 바깥 고리 안이고 구멍 밖 */
@@ -200,7 +221,8 @@
     const units = D.units || [], byCode = new Map(units.map((u) => [u.code, u]));
     const rings = new Map(units.map((u) => [u.code, pathRings(u.d)]));
     const faces = new Map(units.map((u) => [u.code, polygonsOf(rings.get(u.code))]));   // 라벨 상자가 자기 면 안인지 볼 때
-    const S = { metric: 'u', sido: modeOf(win.location.search).sido, hover: null, menu: null, going: false };
+    const pickOfSearch = new URLSearchParams(win.location.search).get('pick');   // 아래 replaceState 가 주소를 바꾸기 전에 읽는다
+    const S = { metric: metricOf(win.location.search), sido: modeOf(win.location.search).sido, hover: null, menu: null, going: false };
     let map = null, labels = [], ups = [];
 
     /* 패널 */
@@ -220,10 +242,30 @@
     defBtn.innerHTML = ICON_I;
     defBtn.addEventListener('click', () => { const open = defBtn.getAttribute('aria-expanded') !== 'true'; defBtn.setAttribute('aria-expanded', String(open)); defP.hidden = !open; });
     $('ovCards').addEventListener('click', (e) => { const b = e.target.closest('button[data-s]'); if (b) setSido(S.sido === b.dataset.s ? '' : b.dataset.s, true); });
+    $('ovBack').addEventListener('click', () => setSido('', true));   // 시도에서 수도권 전체로
     $('ovRank').addEventListener('click', (e) => {
       const z = e.target.closest('.ov-zbtn');
-      if (z) { const on = z.getAttribute('aria-expanded') !== 'true'; z.setAttribute('aria-expanded', String(on)); z.querySelector('.ov-zc').textContent = on ? '▴' : '▾'; $('ovZeroList').hidden = !on; return; }
+      if (z) { const on = z.getAttribute('aria-expanded') !== 'true'; z.setAttribute('aria-expanded', String(on)); z.querySelector('.ov-zc').textContent = on ? '▴' : '▾'; $('ovZeroList').hidden = !on; rove(); return; }
       const b = e.target.closest('button[data-c]'); if (b) choose(b.dataset.c, b); });
+    /* 시군구 목록: 로빙 tabindex(목록 안 항목 하나만 Tab 으로 들어가고, 안에서는 ↑↓·Home·End·첫 글자로 옮긴다 — 2026-10-15 평가 P3) */
+    const rankBtns = () => [...$('ovRank').querySelectorAll('button')].filter((b) => !b.closest('[hidden]'));
+    let rk = null;   // 목록에서 마지막으로 초점이 있던 항목(시군구 코드, 묶음 단추는 'zeros')
+    const keyOf = (b) => b.dataset.c || 'zeros';
+    function rove() {
+      const bs = rankBtns(), cur = bs.find((b) => keyOf(b) === rk) || bs[0];
+      $('ovRank').querySelectorAll('button').forEach((b) => { b.tabIndex = b === cur ? 0 : -1; });
+    }
+    $('ovRank').addEventListener('focusin', (e) => { const b = e.target.closest('button'); if (b) { rk = keyOf(b); rove(); } });
+    $('ovRank').addEventListener('keydown', (e) => {
+      if (e.altKey || e.ctrlKey || e.metaKey) return;
+      const bs = rankBtns(), i = bs.indexOf(doc.activeElement);
+      if (i < 0) return;
+      const j = rankMove(bs.map((b) => b.dataset.n || ''), i, e.key);
+      if (j < 0) return;
+      e.preventDefault();
+      bs[j].focus();
+      if (bs[j].scrollIntoView) bs[j].scrollIntoView({ block: 'nearest' });
+    });
     if (!D.ok) { $('ovFail').hidden = false; }
     const handle = $('ovHandle');
     if (handle) handle.addEventListener('click', () => { const full = panel.dataset.sheet !== 'full'; panel.dataset.sheet = full ? 'full' : 'peek'; handle.setAttribute('aria-expanded', String(full)); handle.setAttribute('aria-label', full ? '개요 패널 접기' : '개요 패널 펼치기'); placeLabels(false); });
@@ -236,6 +278,8 @@
       doc.documentElement.setAttribute('data-ov-metric', S.metric);   // 면·범례·라벨 색 단계(지연만 빨강, app.css)
       mbox.querySelectorAll('button[data-m]').forEach((b) => { const on = b.dataset.m === S.metric; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
       const scope = S.sido ? (D.sido || []).find((s) => s.code === S.sido) : null, v = scope ? scope.v : D.total;
+      $('ovTitle').textContent = `${scope ? scope.name : '수도권'} 공급 개요`;   // ?sido= 로 열면 제목·합계가 그 시도(2026-10-15 평가 P2)
+      $('ovBack').hidden = !scope;
       $('ovTotalQ').textContent = `${scope ? scope.name : '수도권'} ${m.name}`;
       defBtn.title = defOf(S.metric, D); defBtn.setAttribute('aria-label', `${m.name} 정의 보기`); defP.textContent = defOf(S.metric, D);
       $('ovTotal').innerHTML = D.ok && v ? `<b class="ov-big">${fmt(valOf(v, S.metric))}</b><span class="ov-unit">${m.unit}</span>` : '<b class="ov-big none">—</b>';
@@ -248,7 +292,7 @@
       $('ovRankH').textContent = `${S.sido ? SIDO_SHORT[S.sido] : '수도권'} 시군구 ${list.length}곳`;
       const rankRow = (u, i, zero) => {
         const x = valOf(u.v, S.metric), more = u.gu && u.gu.length;
-        return `<li><button type="button" data-c="${u.code}"${more ? ' aria-haspopup="dialog"' : ''} class="${x ? '' : 'zero'}" title="${esc(more ? `${u.name}: 구를 골라 상세 지도로` : `${u.name} 상세 지도로`)}">`
+        return `<li><button type="button" data-c="${u.code}" data-n="${esc(u.name)}"${more ? ' aria-haspopup="dialog"' : ''} class="${x ? '' : 'zero'}" title="${esc(more ? `${u.name}: 구를 골라 상세 지도로` : `${u.name} 상세 지도로`)}">`
           + `<span class="ov-rn">${D.ok && !zero ? i + 1 : ''}</span><span class="ov-rname">${S.sido ? '' : `<small>${SIDO_SHORT[u.s]}</small>`}${esc(u.name)}</span>`
           + `<span class="ov-rv">${D.ok ? `${fmt(x)}<small>${m.unit}</small>` : ''}</span><span class="ov-rgo">${more ? ICON_MORE : ''}</span></button></li>`;
       };
@@ -257,6 +301,7 @@
       const open = $('ovRank').querySelector('.ov-zeros > button[aria-expanded="true"]') !== null;
       $('ovRank').innerHTML = hit.map((u, i) => rankRow(u, i, false)).join('')
         + (none.length ? `<li class="ov-zeros"><button type="button" class="ov-zbtn" aria-expanded="${open}" aria-controls="ovZeroList"><span>값 없음 ${none.length}곳</span><span class="ov-zc" aria-hidden="true">${open ? '▴' : '▾'}</span></button><ol id="ovZeroList" class="ov-zlist"${open ? '' : ' hidden'}>${none.map((u) => rankRow(u, 0, true)).join('')}</ol></li>` : '');
+      rove();
       /* 범례 */
       $('ovLegendT').textContent = `${m.name}(${m.unit})`;
       $('ovLegend').innerHTML = D.ok ? legendOf(ups, '').map((x) => `<li><i class="ov-sw c${x.c}"></i>${esc(x.text)}</li>`).join('') : '';
@@ -378,7 +423,7 @@
       const u = byCode.get(code);
       if (!u || S.going) return;
       const p = pickOf(u);
-      if (p.href) return go(u, p.href, `${SIDO_SHORT[u.s]} ${u.name}`);
+      if (p.href) return go(u, withMetric(p.href, S.metric), `${SIDO_SHORT[u.s]} ${u.name}`);
       closeMenu(false);
       const m = METRICS.find((x) => x.id === S.metric);
       menu.innerHTML = `<p class="ov-mh" id="ovMenuH">${esc(u.name)} · 구를 고르세요</p><ul>${p.menu.map((g) => `<li><button type="button" data-href="${esc(g.href)}" data-n="${esc(g.name)}"><span>${esc(g.code === u.code ? '구 미정' : g.name.replace(`${u.name} `, ''))}</span><span class="ov-mv">${D.ok && g.v ? `${fmt(valOf(g.v, S.metric))}<small>${m.unit}</small>` : ''}</span></button></li>`).join('')}</ul>`;
@@ -395,7 +440,7 @@
       const first = menu.querySelector('button');
       if (first) first.focus();
     }
-    menu.addEventListener('click', (e) => { const b = e.target.closest('button[data-href]'); if (b && S.menu) go(S.menu.u, b.dataset.href, `${SIDO_SHORT[S.menu.u.s]} ${b.dataset.n}`); });
+    menu.addEventListener('click', (e) => { const b = e.target.closest('button[data-href]'); if (b && S.menu) go(S.menu.u, withMetric(b.dataset.href, S.metric), `${SIDO_SHORT[S.menu.u.s]} ${b.dataset.n}`); });
     menu.addEventListener('keydown', (e) => {
       const bs = [...menu.querySelectorAll('button')], i = bs.indexOf(doc.activeElement);
       if (e.key === 'Escape') { e.preventDefault(); closeMenu(true); return; }
@@ -419,6 +464,10 @@
 
     renderPanel();
     if (S.sido && win.history && win.history.replaceState) win.history.replaceState(null, '', sidoHref(S.sido));
+    /* ?pick=<구가 있는 시>: 상세 지도 ?sgg=<시> 로 연 것을 지도 첫 스크립트가 넘겨 왔다(MAP_MODE_INIT) — 그 시의 구 메뉴를 열고 첫 구에 초점.
+       목록 줄이 보이면 그 줄 옆, 값 없음 묶음에 접혀 있으면 지도 가운데. 주소의 pick 은 위 replaceState 가 지웠다 */
+    const pick = byCode.get(pickOfSearch);
+    if (pick && pick.gu && pick.gu.length) choose(pick.code, rankBtns().find((b) => b.dataset.c === pick.code) || null);
 
     /* 지도는 라이브러리가 오면 붙인다(패널은 먼저 보인다) */
     Promise.resolve(libReady).then(() => {
@@ -463,5 +512,5 @@
     return names.length ? `${what} ${fmt(total)}${unit} — ${names.join('·')}` : `${what} 0${unit} — 값이 있는 시군구가 없습니다`;
   }
 
-  return { DETAIL_KEYS, LABEL_PAD, pickLabels, boxInFace, inPolys, projectLL, emptyNote, modeOf, sggHref, sidoHref, unproject, pathRings, polygonsOf, toGeoJSON, boxLL, ringsBox, labelPoint, inRing, METRICS, valOf, defOf, breaksOf, classOf, legendOf, rankOf, pickOf, fmt, mount };
+  return { DETAIL_KEYS, LABEL_PAD, metricOf, withMetric, rankMove, pickLabels, boxInFace, inPolys, projectLL, emptyNote, modeOf, sggHref, sidoHref, unproject, pathRings, polygonsOf, toGeoJSON, boxLL, ringsBox, labelPoint, inRing, METRICS, valOf, defOf, breaksOf, classOf, legendOf, rankOf, pickOf, fmt, mount };
 });

@@ -118,7 +118,10 @@ requestAnimationFrame(function () { setTimeout(function () {
   </div>
   <!-- 보기 메뉴(2026-10-15 평가: 늘 떠 있는 조작 12개 → 기본 조작만 남기고 나머지는 여기로). 돌리기·평면은 메뉴를 연 채 여러 번 누를 수 있고, 둘러보기·자동 회전은 고르면 닫힌다 -->
   <div class="vmenu" id="vMenu" role="menu" aria-label="보기" hidden>
-    <button type="button" id="vPlane" class="vm" role="menuitemcheckbox" aria-checked="false" tabindex="-1" aria-label="평면 보기" title="위에서 내려다보는 평면으로 바꿉니다. 다시 누르면 비스듬한 입체로 돌아옵니다."><i class="vm-k" aria-hidden="true"></i>평면 보기</button>
+    <div class="vm-g" role="group" aria-label="시점">
+      <button type="button" id="vSolid" class="vm" role="menuitemradio" aria-checked="true" tabindex="-1" aria-label="입체 보기" title="비스듬히 내려다보는 입체로 봅니다."><i class="vm-k" aria-hidden="true"></i>입체 보기</button>
+      <button type="button" id="vPlane" class="vm" role="menuitemradio" aria-checked="false" tabindex="-1" aria-label="평면 보기" title="위에서 내려다보는 평면으로 봅니다."><i class="vm-k" aria-hidden="true"></i>평면 보기</button>
+    </div>
     <button type="button" id="vTour" class="vm" role="menuitemcheckbox" aria-checked="false" tabindex="-1" aria-label="둘러보기" title="사업을 하나씩 차례로 보여 줍니다. 지도를 만지면 멈춥니다."><i class="vm-k" aria-hidden="true"></i>둘러보기</button>
     <i class="vm-sep" role="separator"></i>
     <button type="button" id="dLeft" class="vm rot" role="menuitem" tabindex="-1" aria-label="왼쪽으로 돌리기. 길게 누르면 계속 돕니다" title="왼쪽으로 15° (길게 누르면 계속)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>왼쪽으로 15°</button>
