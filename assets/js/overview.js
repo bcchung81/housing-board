@@ -156,6 +156,19 @@
     return { href: sggHref(unit.code) };
   }
 
+  /* 라벨 둘레 여백 [가로, 세로](화소, 한쪽). 이웃 라벨과 가로 16px·세로 10px 이상 떨어져 서로 다른 라벨로 읽힌다(글자 테두리 그림자 2px 포함) */
+  const LABEL_PAD = [8, 5];
+  /* 라벨 놓기(순수): items = [{ x, y, w, h }](중심·크기, 우선순위 순 — 값 큰 것부터), blocked = 미리 막힌 상자 [왼, 위, 오른, 아래].
+     앞 라벨부터 여백을 둔 상자가 화면 밖이거나 이미 놓은 상자와 닿으면 숨긴다 → 놓은 상자끼리는 가로 2·px, 세로 2·py 이상 떨어진다. 돌려주는 값: 보이는지 배열 */
+  function pickLabels(items, W, H, blocked, pad) {
+    const [px, py] = pad || LABEL_PAD, placed = (blocked || []).slice();
+    return items.map((it) => {
+      const b = [it.x - it.w / 2 - px, it.y - it.h / 2 - py, it.x + it.w / 2 + px, it.y + it.h / 2 + py];
+      if (b[0] < 0 || b[1] < 0 || b[2] > W || b[3] > H || placed.some((q) => b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1])) return false;
+      placed.push(b);
+      return true;
+    });
+  }
   const SIDO_SHORT = { 11: '서울', 28: '인천', 41: '경기' };
   const STAGES = ['①계획', '②인허가', '③착공', '④모집', '⑤준공', '⑥입주'];
   const ST_VAR = ['--st-plan', '--st-permit', '--st-build', '--st-sale', '--st-soon', '--st-move'];
@@ -199,7 +212,8 @@
     $('ovRank').addEventListener('click', (e) => { const b = e.target.closest('button[data-c]'); if (b) choose(b.dataset.c, b); });
     if (!D.ok) { $('ovFail').hidden = false; }
     const handle = $('ovHandle');
-    if (handle) handle.addEventListener('click', () => { const full = panel.dataset.sheet !== 'full'; panel.dataset.sheet = full ? 'full' : 'peek'; handle.setAttribute('aria-expanded', String(full)); handle.setAttribute('aria-label', full ? '개요 패널 접기' : '개요 패널 펼치기'); });
+    if (handle) handle.addEventListener('click', () => { const full = panel.dataset.sheet !== 'full'; panel.dataset.sheet = full ? 'full' : 'peek'; handle.setAttribute('aria-expanded', String(full)); handle.setAttribute('aria-label', full ? '개요 패널 접기' : '개요 패널 펼치기'); placeLabels(false); });
+    panel.addEventListener('transitionend', () => placeLabels(false));   // 아래 시트를 펴고 접으면 라벨이 피할 자리가 바뀐다
 
     function renderPanel() {
       const m = METRICS.find((x) => x.id === S.metric);
@@ -264,9 +278,19 @@
       placeLabels(true);
     }
 
-    /* 라벨: 값이 있는 면만, 값 큰 것부터 놓고 겹치면 숨긴다. 서울 구는 넓게 볼 때 이름 없이 값만 */
+    /* 라벨(DOM): 값이 있는 면만, 값 큰 것부터(MapLibre symbol-sort-key 와 같은 우선순위) 놓고, 앞서 놓은 라벨·범례·아래 시트와 여백(LABEL_PAD, text-padding 격) 안에서 닿으면 숨긴다.
+       지도를 움직이거나 확대할 때마다 다시 놓아 확대하면 숨겼던 라벨이 나타난다. 서울 구는 넓게 볼 때 이름 없이 값만 */
     const lp = new Map(units.map((u) => { const p = labelPoint(rings.get(u.code)); return [u.code, p ? unproject(p[0], p[1]) : null]; }));
     const labelBox = $('ovLabels');
+    /* 라벨이 피할 다른 요소(라벨 상자 좌표). 넓은 화면의 패널처럼 지도 밖이면 겹치지 않아 빠진다 */
+    function obstacles() {
+      const o = labelBox.getBoundingClientRect(), out = [];
+      for (const el of [$('ovLegend').parentNode, panel]) {
+        const r = el && el.getBoundingClientRect();
+        if (r && r.width && r.right > o.left && r.left < o.right && r.bottom > o.top && r.top < o.bottom) out.push([r.left - o.left, r.top - o.top, r.right - o.left, r.bottom - o.top]);
+      }
+      return out;
+    }
     function placeLabels(rebuild) {
       if (!map) return;
       const z = map.getZoom(), m = METRICS.find((x) => x.id === S.metric);
@@ -280,18 +304,19 @@
           return { u, el, w: 0, h: 0, named: null };
         });
       }
-      const W = labelBox.clientWidth, H = labelBox.clientHeight, placed = [];
-      for (const L of labels) {
+      const items = labels.map((L) => {
         const named = !(L.u.s === '11' && z < 10.6);
         if (named !== L.named) { L.el.classList.toggle('bare', !named); L.named = named; L.w = 0; }
         if (!L.w) { L.el.style.display = ''; L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; }
-        const p = map.project(lp.get(L.u.code)), b = [p.x - L.w / 2 - 2, p.y - L.h / 2 - 1, p.x + L.w / 2 + 2, p.y + L.h / 2 + 1];
-        const hit = b[0] < 0 || b[1] < 0 || b[2] > W || b[3] > H || placed.some((q) => b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1]);
-        if (hit) { L.el.style.display = 'none'; continue; }
+        const p = map.project(lp.get(L.u.code));
+        return { x: p.x, y: p.y, w: L.w, h: L.h };
+      });
+      const show = pickLabels(items, labelBox.clientWidth, labelBox.clientHeight, obstacles());
+      labels.forEach((L, i) => {
+        if (!show[i]) { L.el.style.display = 'none'; return; }
         L.el.style.display = '';
-        L.el.style.transform = `translate(${Math.round(p.x - L.w / 2)}px,${Math.round(p.y - L.h / 2)}px)`;
-        placed.push(b);
-      }
+        L.el.style.transform = `translate(${Math.round(items[i].x - L.w / 2)}px,${Math.round(items[i].y - L.h / 2)}px)`;
+      });
     }
 
     /* 마우스 올림 */
@@ -382,6 +407,8 @@
       });
       if (map.touchZoomRotate) map.touchZoomRotate.disableRotation();
       map.on('load', () => { paint(); root.classList.add('ready'); win.OVERVIEW_READY = performance.now(); });
+      /* 웹 글꼴이 늦게 오면 라벨 폭이 달라지므로 다시 재고 놓는다 */
+      if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(() => { for (const L of labels) L.w = 0; placeLabels(false); });
       map.on('move', () => placeLabels(false));
       map.on('resize', () => placeLabels(false));
       map.on('mousemove', 'ov-fill', (e) => {
@@ -398,5 +425,5 @@
     return { state: S };
   }
 
-  return { DETAIL_KEYS, modeOf, sggHref, sidoHref, unproject, pathRings, polygonsOf, toGeoJSON, boxLL, ringsBox, labelPoint, inRing, METRICS, valOf, defOf, breaksOf, classOf, legendOf, rankOf, pickOf, fmt, mount };
+  return { DETAIL_KEYS, LABEL_PAD, pickLabels, modeOf, sggHref, sidoHref, unproject, pathRings, polygonsOf, toGeoJSON, boxLL, ringsBox, labelPoint, inRing, METRICS, valOf, defOf, breaksOf, classOf, legendOf, rankOf, pickOf, fmt, mount };
 });

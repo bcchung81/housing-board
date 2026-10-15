@@ -522,6 +522,23 @@
     projects.sort((a, b) => (a.projectId < b.projectId ? -1 : a.projectId > b.projectId ? 1 : 0));
     return { projects, unlocated: unlocated.map((r) => ({ id: r.id, name: String(r.name || r.id), stage: /^0[1-6]$/.test(r.stage || '') ? r.stage : null, units: finite(r.units) && r.units > 0 ? r.units : null, loc: r.loc && HOME_LOC_TEXT[r.loc.by] ? HOME_LOC_TEXT[r.loc.by] : '' })), total: rows.length };
   }
+  /* 원장 행 → 단계 칸(①~⑥)별 합계와 진행(①계획~④모집) 합계. 수도권 개요(lib/board/metro-overview.ts valuesBySgg)·사업 화면과 같은 정의:
+     칸 = 원장 단계(01·02 → ①, 03 → ②, 04 → ③, 05 → ④, 06 → ⑤, 모르면 ①), 호수 = 계획 호수(없으면 호수 미확인 q 로 센다). 위치 미확보로 지도에 그리지 못한 사업도 센다(lost*).
+     lostIds = 그리지 못한 사업 id(homeToProjects 의 unlocated). 같은 id 는 한 번만 */
+  const BOARD_OF_STAGE = { '01': 0, '02': 0, '03': 1, '04': 2, '05': 3, '06': 4 };
+  function homeTally(docs, lostIds) {
+    const lost = new Set(lostIds || []), seen = new Set();
+    const st = [0, 1, 2, 3, 4, 5].map(() => ({ n: 0, u: 0, q: 0, lostN: 0, lostU: 0 }));
+    for (const d of docs || []) for (const r of (d && Array.isArray(d.projects) ? d.projects : [])) {
+      if (!r || !r.id || seen.has(r.id)) continue;
+      seen.add(r.id);
+      const s = st[BOARD_OF_STAGE[r.stage] ?? 0], u = finite(r.units) && r.units > 0 ? r.units : 0;
+      s.n += 1; if (u) s.u += u; else s.q += 1;
+      if (lost.has(r.id)) { s.lostN += 1; s.lostU += u; }
+    }
+    const prog = st.slice(0, 4).reduce((t, s) => { for (const k of Object.keys(t)) t[k] += s[k]; return t; }, { n: 0, u: 0, q: 0, lostN: 0, lostU: 0 });
+    return Object.assign(prog, { st });
+  }
   /* 원장 행을 단지에 붙인다: b.ledger(attachLedger) + b.home + 상태를 원장 단계로(6절 결정 4: 번들 단지도 사업 표시는 원장 기준, 04 안의 '준공 임박'은 남긴다) */
   function applyHome(blocks, docs, slug) {
     const ok = (docs || []).filter((d) => d && Array.isArray(d.projects));
@@ -594,7 +611,8 @@
       texts: buildTexts(region, blocks, context || null, infra || null),
       regions: (index && index.regions) || [],
       resolveBlock: (param) => (param ? byKey.get(String(param)) || null : null),
-      home: home ? { total: (raw.home || []).reduce((s, d) => s + ((d && d.projects) || []).length, 0), drawn: blocks.filter((b) => b.home).length, unlocated: home.unlocated, failed: !!raw.homeFailed } : null,
+      home: home ? { total: (raw.home || []).reduce((s, d) => s + ((d && d.projects) || []).length, 0), drawn: blocks.filter((b) => b.home).length, unlocated: home.unlocated, failed: !!raw.homeFailed,
+        tally: homeTally(raw.home, home.unlocated.map((r) => r.id)) } : null,
     };
   }
 
@@ -819,5 +837,5 @@
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { HOME_SIDO, isHomeSgg, crumbsOf, crumbsHtml, mountCrumbs, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
+  return { HOME_SIDO, isHomeSgg, crumbsOf, crumbsHtml, mountCrumbs, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
 });

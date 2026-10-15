@@ -239,3 +239,57 @@ test('상세 지도 위 경로: 수도권 › 시도 › 시군구, 앞 둘은 /
   assert.equal(el.hidden, true);
   assert.match(read('index.html'), /<div class="brand-t"><nav class="crumbs" id="mapCrumbs" aria-label="지도 위치" hidden><\/nav><b>공급 지도<\/b>/);
 });
+
+test('라벨 놓기: 값 큰 것부터 놓고, 보이는 라벨 상자끼리·막힌 자리(범례·시트)와는 여백(LABEL_PAD)만큼 떨어지며 화면 밖은 숨긴다', () => {
+  const [px, py] = J.LABEL_PAD;
+  assert.ok(px >= 4 && py >= 2, '여백은 글자 테두리 그림자(2px)보다 넓다');
+  /* 촘촘한 격자에 라벨 200개(앞일수록 우선) — 실제 개요처럼 서로 많이 겹치는 자리 */
+  const items = [];
+  for (let i = 0; i < 200; i++) items.push({ x: 40 + ((i * 37) % 310), y: 30 + ((i * 53) % 540), w: 40 + (i % 5) * 8, h: i % 3 ? 30 : 16 });
+  const blocked = [[0, 500, 200, 600]];
+  const show = J.pickLabels(items, 390, 600, blocked);
+  const box = (it) => [it.x - it.w / 2, it.y - it.h / 2, it.x + it.w / 2, it.y + it.h / 2];
+  const shown = items.filter((_, i) => show[i]).map(box);
+  assert.ok(shown.length > 5 && shown.length < items.length);
+  assert.equal(show[0], true, '가장 앞(값이 가장 큰) 라벨은 자리가 있으면 보인다');
+  for (let i = 0; i < shown.length; i++) {
+    const a = shown[i];
+    assert.ok(a[0] >= px && a[1] >= py && a[2] <= 390 - px && a[3] <= 600 - py, '화면 안');
+    assert.ok(!(a[0] - px < blocked[0][2] && a[2] + px > blocked[0][0] && a[1] - py < blocked[0][3] && a[3] + py > blocked[0][1]), '막힌 자리를 피한다');
+    for (let j = i + 1; j < shown.length; j++) {
+      const b = shown[j], gapX = Math.max(b[0] - a[2], a[0] - b[2]), gapY = Math.max(b[1] - a[3], a[1] - b[3]);
+      assert.ok(gapX >= 2 * px || gapY >= 2 * py, `라벨 ${i}·${j} 이 닿는다`);
+    }
+  }
+  /* 숨긴 라벨은 앞서 놓은 라벨이나 막힌 자리 때문이다(자리가 비었는데 숨기지 않는다) */
+  const again = J.pickLabels(items.filter((_, i) => show[i]), 390, 600, blocked);
+  assert.ok(again.every(Boolean));
+});
+
+test('같은 숫자(개요 ↔ 상세 머리 줄 ↔ 사업 화면): 수도권 시군구마다 상세 지도가 원장 파일로 센 진행(①~④) 호수·건수·호수 미확인이 개요 값, /projects?sgg= 진행 행과 같다', () => {
+  const by = O.valuesBySgg(rows, CAL, IDX.sgg);
+  const codes = Object.keys(MAP.bySgg).filter((c) => O.unitOf(c));
+  assert.ok(codes.length >= 60);
+  for (const c of codes) {
+    const doc = JSON.parse(read(`data/board/home-map/${c}.json`));
+    const t = R.homeTally([doc], R.homeToProjects([doc]).unlocated.map((r) => r.id)), v = by.get(c);
+    assert.deepEqual([t.u, t.n, t.q], [v.u, v.n, v.q], `${c}: 상세 머리 줄 = 개요`);
+    const p = V.applyFilters(rows, { sgg: c }).filter((r) => r.board <= 3);
+    assert.deepEqual([t.u, t.n], [p.reduce((s, r) => s + (r.units > 0 ? r.units : 0), 0), p.length], `${c}: 상세 머리 줄 = 사업 화면 진행`);
+    assert.deepEqual(t.st.map((s) => s.n), v.st, `${c}: 단계 칸 건수 = 개요 단계별 수`);
+  }
+  /* 고양시 덕양구: 진행 8건 8,516호 중 ①계획 1건 2,570호(구 국방대학교)는 위치 미확보라 지도 표시 7건 */
+  const gy = JSON.parse(read('data/board/home-map/41281.json')), t = R.homeTally([gy], R.homeToProjects([gy]).unlocated.map((r) => r.id));
+  assert.deepEqual([t.u, t.n, t.lostN, t.lostU, t.st[0].u], [8516, 8, 1, 2570, 2570]);
+  assert.equal(DOC.units.find((u) => u.code === '41280').gu.find((g) => g.code === '41281').v.u, 8516);
+});
+
+test('상세 머리 줄 연결: 수도권은 합계(#hudSum)·6단계 칸을 원장 기준(REGION.home.tally)으로 적고, 지도에 그리지 못한 진행 사업은 둘째 줄 \'지도 표시 n건(위치 미확보 m건 · k호)\'', () => {
+  const app = read('assets/js/app.js'), reg = read('assets/js/region.js');
+  assert.match(reg, /tally: homeTally\(raw\.home, home\.unlocated\.map\(\(r\) => r\.id\)\)/);
+  assert.match(app, /const HOME_T = REG\.home && !REG\.home\.failed && REG\.home\.tally/);
+  assert.match(app, /let SUM_TOTAL = HOME_T \? homeSumTotal\(HOME_T\) : null/);
+  assert.match(app, /if \(!HOME_T\) SUM_TOTAL = /);
+  assert.match(app, /const h = HOME_T && HOME_T\.st\[i\]/);
+  assert.match(app, /지도 표시 \$\{t\.n - t\.lostN\}건\(\$\{lost\}\)/);
+});

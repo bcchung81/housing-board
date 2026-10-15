@@ -224,7 +224,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 #fatal{position:absolute;inset:0;background:rgba(10,16,48,.96);color:var(--ink);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:5}
 #fatal[hidden]{display:none}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.maplibregl-popup-content{font:13px/1.5 var(--font-body);color:var(--ink);border-radius:12px;border:1px solid var(--hud-line);padding:0;box-shadow:var(--hud-shadow);background:var(--glass-hud);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur)}
+.maplibregl-popup-content{font:13px/1.5 var(--font-body);color:var(--ink);border-radius:12px;border:1px solid var(--hud-line);padding:0;box-shadow:var(--hud-shadow);background:var(--glass-hud);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur)}   /* 사업·건물 카드: 뒤 지도가 비친다. 불투명도는 글자 대비 4.5:1(흰·검은 지도 위 최악)이 지켜지는 가장 옅은 값(--glass-hud, tests/js/glass.test.cjs) */
 .maplibregl-popup-close-button{font-size:18px;width:26px;height:26px;color:var(--ink2)}
 .maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--hud-line)}
 .maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--hud-line)}
@@ -267,6 +267,21 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .pc-more[open] summary::before{content:"▾ "}
 .pc-more summary::-webkit-details-marker{display:none}
 .pc-more p{margin:3px 0 0;font-size:11.5px;line-height:1.45;color:var(--mute)}
+.pc-split{width:264px;padding:0;gap:0;overflow:hidden}   /* 사업 카드: 머리(제목·상태) 고정, 창이 낮으면 몸통만 스크롤(fitCard 가 .pc 높이를 줄인다) */
+.pc-split>.pc-h{flex:none;padding:9px 11px 6px 11px;padding-right:30px}
+.pc-split>.pc-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding:0 11px 9px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.pc-big .pc-idl{margin-left:auto;font-size:12px}
+.pc-note summary{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;list-style:none;cursor:pointer;font-size:12px;line-height:1.45;color:var(--mute)}   /* 설명은 두 줄, 눌러 펼침 */
+.pc-note summary::-webkit-details-marker{display:none}
+.pc-note[open] summary{display:block}
+.pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;margin:0}
+.pc-grid>div{min-width:0}
+.pc-grid>div.w{grid-column:1/-1}
+.pc-grid dt{font-size:11.5px;line-height:1.3;color:var(--mute)}
+.pc-grid dd{margin:0;font-size:12.5px;line-height:1.4;font-weight:500}
+.pc-grid small{font-weight:400;color:var(--mute);font-size:11.5px}
+.pc-near summary small{color:var(--mute);font-size:inherit}
+.pc-near .pc-dl{margin-top:4px}
 .tools button[aria-pressed="true"],.rctl button[aria-pressed="true"]{background:var(--acc);color:var(--acc-ink)}
 .opt b{margin-left:7px;min-width:20px;padding:0 6px;border-radius:10px;background:var(--acc);color:var(--acc-ink);font-size:12px;line-height:1.6;display:inline-block;text-align:center}
 .opt b[hidden]{display:none}
@@ -407,6 +422,7 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .hudsum .hs-total b{font-family:var(--font-disp);font-size:17px;font-weight:400}
 .hudsum .hs-total small{margin-left:1px;font-size:13px;color:var(--mute)}
 .hudsum .hs-n{margin-left:6px;color:var(--mute)}
+.hudsum .hs-map{display:block;margin-top:1px;font-size:13px;line-height:1.3;color:var(--mute)}   /* 수도권: 원장 합계 중 지도에 그리지 못한 사업(위치 미확보) */
 .hudsum .isum{display:flex;flex-wrap:wrap;align-items:center;gap:0 2px;margin:0;padding:2px 4px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;line-height:1.45;color:var(--mute);text-align:left;white-space:nowrap;cursor:pointer}
 .hudsum .isum-go{font-size:15px;line-height:1;transition:transform .15s}
 .hudsum .isum-c{flex:1 0 100%;flex-wrap:nowrap;gap:0 8px}
@@ -592,6 +608,8 @@ html[data-map-shell]:not(.dark){
   --cmd-sub:#526176;--cmd-text:#172B4D;
 }
 html[data-map-shell] body{color-scheme:inherit}
+/* 밝은 테마도 backdrop-filter 를 못 쓰면 뒤가 흐려지지 않아 거의 불투명하게 */
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){html[data-map-shell]:not(.dark){--glass-hud:rgba(255,255,255,.98);--glass-note:rgba(255,255,255,.96)}}
 /* Next 지도(두 테마 공통): 강조색은 대시보드 주색, 6단계 색은 대시보드와 같은 토큰(app/tailwind.css 의 --st-*-ink).
    예전 다크 지도의 주황 강조(#FF8A65)는 상단 메뉴 바의 하늘색 밑줄과 한 화면에 두 강조색을 만들었고, ③착공 주황(#FF9F43)과도 겹쳤다. */
 html[data-map-shell]{--acc:var(--primary);--acc-ink:var(--primary-foreground);
@@ -700,6 +718,7 @@ h1{font-size:22px}h2{font-size:20px;line-height:1.25;margin-bottom:8px}.shead{ma
 .next .nx{padding:10px 12px;row-gap:3px}.next b{font-size:14.5px;line-height:1.5}.next span.s{font-size:13px;line-height:1.5}
 .pc-h b{font-size:18px}.pc-dl{font-size:15px;line-height:1.6;row-gap:5px}.pc-sub,.pc-cap,.pc-foot,.pc-more p{font-size:14px;line-height:1.6}
 .pc-chip{font-size:13px}.pc-big strong{font-size:26px}.pc-big span{font-size:14px}
+.pc-grid dt{font-size:13px}.pc-grid dd{font-size:15px;line-height:1.45}.pc-grid small{font-size:13px}.pc-note summary{font-size:13.5px;line-height:1.5}.pc-big .pc-idl{font-size:13px}
 .tools button{font-size:14px}.cmd-go{font-size:15px}.rctl .rt{font-size:14px}
 .hudtag{font-size:13px;line-height:1.45;padding:4px 10px 5px}.hudtag .ht-h b{font-size:15px}
 .hudsum .hs-total b{font-size:20px}

@@ -120,7 +120,7 @@ function sparkline(h) {
 }
 function progressRow(b, k) {
   const p = b.progress, color = COLOR[k];
-  return `<span class="pg" style="--c:${color}" title="공사 공정율 ${esc(p.rate)}% (${esc(p.asOf)} 기준)"><span>공사</span><span class="bar2"><i style="width:${Math.max(p.rate, 0.8)}%"></i></span><b>${pctTxt(p.rate)}</b>${p.history.length >= 3 ? sparkline(p.history) : ''}</span>`;
+  return `<span class="pg" style="--c:${color}" title="공사 공정률 ${esc(p.rate)}% (${esc(dotDate(p.asOf))} 기준)"><span>공사</span><span class="bar2"><i style="width:${Math.max(p.rate, 0.8)}%"></i></span><b>${pctTxt(p.rate)}</b>${p.history.length >= 3 ? sparkline(p.history) : ''}</span>`;
 }
 const centroid = (poly) => [poly.reduce((a, p) => a + p[0], 0) / poly.length, poly.reduce((a, p) => a + p[1], 0) / poly.length];
 const hex2 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -894,7 +894,7 @@ const TODAY = new Date().toISOString().slice(0, 10);
 const BASIS_STATIC = HAS_GY && GY.meta.basis ? String(GY.meta.basis).replace(/(\d{4})(\d\d)(\d\d)/, '$1-$2-$3') : '';
 const BASIS = DYN_ON ? (BASIS_STATIC ? `${BASIS_STATIC}(${GY.lite ? '사업 둘레' : '지역 자료'}) · 그 밖은 ${TODAY} 조회` : `${TODAY} 조회(요청 시)`) : HAS_GY ? BASIS_STATIC : '-';
 /* 카드는 건물을 가리지 않도록 건물의 오른쪽(없으면 왼쪽, 그것도 없으면 위)에 띄운다. */
-const PW = 236 + 12;           // 카드 폭 + 꼬리
+const PW = 264 + 12;           // 카드 폭(사업 카드 .pc-split, 다른 카드는 236) + 꼬리
 function bboxOf(rings, hM) {
   let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
   for (const r of rings) for (const p of r) { const s = map.project(p); x0 = Math.min(x0, s.x); x1 = Math.max(x1, s.x); y0 = Math.min(y0, s.y); y1 = Math.max(y1, s.y); }
@@ -919,6 +919,9 @@ function showCard(html, rings, hM, clickX) {
   popup = new maplibregl.Popup({ anchor, maxWidth: 'none', offset: [0, 0] }).setLngLat(map.unproject(pt)).setHTML(html).addTo(map);
   popup.on('close', () => { if (selId != null || selDong != null) select(null); });
   fitCard();
+  /* 카드 안 접힘(설명·주변·시공)을 펴고 접으면 높이가 바뀌므로 자리를 다시 맞춘다(toggle 은 거품이 없어 capture 로 받는다) */
+  const own = popup;
+  popup.getElement().addEventListener('toggle', () => { if (popup !== own) return; popup.setOffset([0, 0]); fitCard(); }, true);
   say(popup.getElement().innerText.replace(/\s+/g, ' '));
 }
 /* Esc: 열린 사업 카드·팝업을 닫고 초점을 연 단추(없거나 사라졌으면 지도)로 돌려준다. 옵션 창이 열려 있거나 입력 중이면 그쪽이 먼저 */
@@ -959,6 +962,11 @@ function floorLine(b) {
 }
 const chipHtml = (cls, t) => `<span class="pc-chip ${cls}">${esc(t)}</span>`;
 const dlHtml = (rows) => `<dl class="pc-dl">${rows.filter(Boolean).map(([k, v]) => `<dt>${k}</dt><dd>${v}</dd>`).join('')}</dl>`;
+/* 사업 카드 핵심 항목 2열 격자: [이름, 값, 넓게(두 칸)] */
+const gridHtml = (cells) => `<dl class="pc-grid">${cells.filter(Boolean).map(([k, v, wide]) => `<div${wide ? ' class="w"' : ''}><dt>${k}</dt><dd>${v}</dd></div>`).join('')}</dl>`;
+/* 화면 표기: 날짜는 점(2026.10.11), 우리가 쓴 설명 문장의 '세대'는 화면 단위 '호' */
+const dotDate = (t) => String(t || '').replace(/(?<!\d)((?:19|20)\d{2})-(\d{2})(?:-(\d{2}))?(?!\d)/g, (_, y, m, d) => (d ? `${y}.${m}.${d}` : `${y}.${m}`));
+const noteTxt = (t) => dotDate(t).replace(/(\d[\d,]*)세대/g, '$1호');
 const ringsOf = (g) => (g.type === 'Polygon' ? [g.coordinates[0]] : g.coordinates.map((p) => p[0]));
 function dongBars(b, cur) {
   const max = Math.max(...b.dongs.map((d) => d.floors)), k = kindOf(b);
@@ -975,14 +983,14 @@ function dongPopup(p, clickX) {
     <div class="pc-h"><b title="${esc(dnote)}">${esc(p.no)}동</b><span class="pc-sub">${esc(b.id)}</span>${chipHtml(KIND[b.status], stTxt(b))}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
     <div class="pc-big"><strong>${p.floors}층</strong><span>높이 약 ${Math.round(p.h)} m${p.hEst ? ' (추정)' : ''}</span></div>
     ${dongBars(b, p.no)}<div class="pc-cap">${rank}</div>
-    ${dlHtml([b.progress ? ['단지 공정율', `<span title="${esc(b.progress.asOf)} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['입주', esc(b.moveIn)]])}</div>`,
+    ${dlHtml([b.progress ? ['단지 공정률', `<span title="${esc(dotDate(b.progress.asOf))} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['입주', esc(dotDate(b.moveIn))]])}</div>`,
     b.dongs.flatMap((x) => x.poly), floorsToHeight(r[1]), clickX);
 }
 const shortSchool = (n) => String(n || '').replace(/초등학교$/, '초').replace(/중학교$/, '중').replace(/고등학교$/, '고');
 const ymDot = (d) => String(d || '').slice(0, 7).replace('-', '.');
 /* 사업 이름: 원장이 붙었으면 원장 사업 이름(사업 화면 목록·서랍과 같은 이름), 아니면 자료의 이름, 없으면 지도 이름표 */
 const projName = (b) => String((b.ledger && b.ledger.name) || b.name || b.id);
-const homeRows = (b) => { const x = homeParts(b); return x ? [x.nums ? ['호수', `<span title="${esc(x.title)}">${esc(x.nums)}</span>`] : null, x.pol ? ['정책', `<span title="${esc(x.title)}">${esc(x.pol)}</span>`] : null] : []; };
+const homeRows = (b) => { const x = homeParts(b); return x ? [x.nums ? ['호수', `<span title="${esc(x.title)}">${esc(x.nums)}</span>`, true] : null, x.pol ? ['정책', `<span title="${esc(x.title)}">${esc(x.pol)}</span>`] : null] : []; };
 function blockPopup(b, clickX) {
   const fr = floorsRange(b), nr = HAS_CTX ? nearestCtx(centroid(b.poly)) : null;
   const hmax = fr ? floorsToHeight(fr[1]) : 0;
@@ -996,20 +1004,24 @@ function blockPopup(b, clickX) {
   const linkId = lg ? (lg.issued ? lg.id : null) : b.projectId;   // 이름도 사업 화면으로(후보 id 는 열 수 없어 링크하지 않는다)
   const pidRow = lg ? ['사업 id', lg.issued ? pidLink(lg.id) : `<span class="pc-pid" title="후보 사업(번호 발급 전) — 다음 원장에서 id 가 바뀔 수 있어 바로 여는 링크가 없습니다">${esc(lg.id)}</span> <small>후보 사업</small>`] : b.projectId ? ['사업 id', pidLink(b.projectId)] : null;   // 후보 id 는 resolve 가 열지 못해 링크하지 않는다
   /* 출처·기준·자료 설명은 화면 대신 단지 이름의 title 로(2026-10-13 지도 화면 정리) */
-  const about = [b.src ? `출처: ${b.src}` : '', lt ? `단계·판정: ${lt.basis}${lt.refDate ? ` (판정 기준일 ${lt.refDate})` : ''}` : '', b.outlineHow, nr ? '역·학교: OpenStreetMap, 단지 중심에서 직선거리' : '', zr || sr ? '통학구역·신설예정 학교: 교육부 공개 자료(입주 전 점검)' : ''].filter(Boolean).join('\n');
+  const about = [b.src ? `출처: ${b.src}` : '', lt ? `단계·상태: ${lt.basis}${lt.refDate ? ` (기준일 ${dotDate(lt.refDate)})` : ''}` : '', b.outlineHow, nr ? '역·학교: OpenStreetMap, 단지 중심에서 직선거리' : '', zr || sr ? '통학구역·신설예정 학교: 교육부 공개 자료(입주 전 점검)' : ''].filter(Boolean).join('\n');
   const nm = projName(b), sub = [nm !== b.label ? b.label : '', b.kind.replace('(공공분양)', '')].filter(Boolean).join(' · ');   // 제목은 사업 화면 목록·서랍과 같은 원장 사업 이름(길면 두 줄 말줄임), 블록 이름은 부제
-  showCard(`<div class="pc">
+  /* 높이를 줄인 구조(2026-10-15, 1280×800 에서도 카드 안 스크롤 없음): 머리(제목·상태) 고정 → 호수·사업 id 한 줄 → 설명 2줄(눌러 펼침) →
+     핵심 항목 2열 격자(단계·상태·예정·호수·정책·공정률·층수·입주·공사) → 경고 → '주변·시공'(시공·교통·학교·통학구역·신설 학교, 기본 접힘). 창이 더 낮으면 머리 아래만 스크롤 */
+  const near = [b.builder ? ['시공', esc(b.builder) + (b.contractM ? ` <small>${fmt(Math.round(b.contractM / 100))}억원</small>` : '')] : null,
+    nr && nr.st ? ['교통', `${esc(nr.st.name)} <small>${IL.shortDist(nr.st.d)}</small>`] : null, ...schoolRows,
+    sr ? ['신설 학교', `${esc(IL.shortName(sr.ref.school.name))} <small>${esc(IL.fmtYm(sr.ref.school.openYm))} 개교 · ${IL.shortDist(sr.ref.d)}</small>`] : null].filter(Boolean);
+  showCard(`<div class="pc pc-split">
     <div class="pc-h"><b class="pc-t" title="${esc([nm, about].filter(Boolean).join('\n'))}">${linkId ? `<a href="${esc(projHref(linkId))}" style="color:inherit">${esc(nm)}</a>` : esc(nm)}</b>${sub ? `<span class="pc-sub">${esc(sub)}</span>` : ''}${chipHtml(KIND[b.status], stTxt(b))}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}${b.approx ? `<span class="pc-chip none" title="${esc(APPROX_TXT)}">근사 위치</span>` : ''}</div>
-    <div class="pc-big"><strong>${unitsTxt(b)}</strong></div>
-    ${b.note ? `<div class="pc-cap">${esc(b.note)}</div>` : ''}
-    ${dlHtml([pidRow, lg && lg.stage ? ['단계', `<span class="stg6"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => `<i class="${x === sn.now ? `on ${sn.k}` : ''}"></i>`).join('')}</span><span title="${esc(sn.now[4])}">${stName(sn.now)}</span>`] : null,
-      lt && lt.cls ? ['상태', `<b class="jd ${lg.cls}">${lt.cls}</b>${lt.late ? ` <small${lt.lateTitle ? ` title="${esc(lt.lateTitle)}"` : ''}>${esc(lt.late)}</small>` : ''}`] : null,
-      lt && lt.next ? ['현재 예정', esc(lt.next)] : null, ...homeRows(b), b.progress ? ['공정율', `<span title="${esc(b.progress.asOf)} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(b.moveIn)],
-      b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`] : null,
-      b.builder ? ['시공', esc(b.builder) + (b.contractM ? ` <small>${fmt(Math.round(b.contractM / 100))}억원</small>` : '')] : null,
-      nr && nr.st ? ['교통', `${esc(nr.st.name)} <small>${IL.shortDist(nr.st.d)}</small>`] : null, ...schoolRows,
-      sr ? ['신설 학교', `${esc(IL.shortName(sr.ref.school.name))} <small>${esc(IL.fmtYm(sr.ref.school.openYm))} 개교 · ${IL.shortDist(sr.ref.d)}</small>`] : null])}
-    ${sr && sr.level === 'warn' ? `<p class="pc-warn">▲ 학교 개교가 ${esc(sr.detail)}</p>` : ''}</div>`,
+    <div class="pc-body">
+    <div class="pc-big"><strong>${unitsTxt(b)}</strong>${pidRow ? `<span class="pc-idl"><span class="sr">${pidRow[0]} </span>${pidRow[1]}</span>` : ''}</div>
+    ${b.note ? `<details class="pc-note"><summary title="눌러서 설명 전체 보기">${esc(noteTxt(b.note))}</summary></details>` : ''}
+    ${gridHtml([lg && lg.stage ? ['단계', `<span class="stg6"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => `<i class="${x === sn.now ? `on ${sn.k}` : ''}"></i>`).join('')}</span><span title="${esc(sn.now[4])}">${stName(sn.now)}</span>`] : null,
+      lt && lt.cls ? ['상태', `<b class="jd ${lg.cls}">${lt.cls}</b>${lt.late ? ` <small${lt.lateTitle ? ` title="${esc(dotDate(lt.lateTitle))}"` : ''}>${esc(lt.late)}</small>` : ''}`] : null,
+      lt && lt.next ? ['현재 예정', esc(lt.next)] : null, ...homeRows(b), b.progress ? ['공정률', `<span title="${esc(dotDate(b.progress.asOf))} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(dotDate(b.moveIn))],
+      b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`, true] : null])}
+    ${sr && sr.level === 'warn' ? `<p class="pc-warn">▲ 학교 개교가 ${esc(sr.detail)}</p>` : ''}
+    ${near.length ? `<details class="pc-more pc-near"><summary>주변·시공 <small>${esc(near.map((r) => r[0]).join('·'))}</small></summary>${dlHtml(near)}</details>` : ''}</div></div>`,
     b.dongs ? b.dongs.flatMap((x) => x.poly).concat([b.poly]) : [b.poly], hmax, clickX);
 }
 function officialPopup(p, geom, clickX) {
@@ -1271,7 +1283,7 @@ function setLegend() {
   const rows = [], chips = [];   // rows = 자세한 목록 [기호, 이름, 설명], chips = 요약 한 줄 [기호, 이름]
   const tips = new Map();   // 이름 → title(공식 6단계 번호는 여기에만)
   const add = (sw, t, n, short = t, tip = '') => { rows.push([sw, t, n]); if (short) chips.push([sw, short]); if (tip) tips.set(t, tip); };
-  const NOTE = { '준공 임박': '<small>③착공 · 공정율 90% 이상, 입주 3개월 안</small>' };
+  const NOTE = { '준공 임박': '<small>③착공 · 공정률 90% 이상, 입주 3개월 안</small>' };
   BY_STAGE.forEach((st) => {   // 6단계 순서(①~⑥). ⑤준공(사용검사)은 입주 경과 표지로 나눈다(입주 진행 · 입주 완료, 기존 단지는 옵션을 켰을 때만)
     if (!present.has(st)) return;
     if (st !== '입주 단계') return add(`<i class="sw ${KIND[st]}"></i>`, stLabel(st), NOTE[st] || '', stLabel(st), stTitle(st));
@@ -1317,7 +1329,15 @@ function setLegend() {
   $('#legendList').innerHTML = rows.map(([sw, t, n]) => `<li${tipAttr(t)}>${sw}<span>${t} ${n}</span></li>`).join('') + infraLegend;
   updateBusStat();
 }
-let SUM_TOTAL = null;   // 머리 줄 합계(#hudSum)용: 세대수·단지 수와 보조 문장(title)
+/* 수도권(사업 원장, region.js homeTally): 머리 줄 합계와 6단계 칸은 수도권 개요(/map)·사업 화면(/projects?sgg=)과 같은 원장 기준 —
+   진행(①계획~④모집) 사업의 계획 호수·건수이고, 위치 미확보로 지도에 그리지 못한 사업도 센다. 그리지 못한 진행 사업이 있으면 그 차이를 둘째 줄에 적는다 */
+const HOME_T = REG.home && !REG.home.failed && REG.home.tally ? REG.home.tally : null;
+function homeSumTotal(t) {
+  const lost = t.lostN ? `위치 미확보 ${t.lostN}건${t.lostU ? ` · ${fmt(t.lostU)}호` : ''}` : '';
+  return { main: fmt(t.u), n: t.n, unk: t.q, prog: true, map: lost ? `지도 표시 ${t.n - t.lostN}건(${lost})` : '',
+    sub: `사업 원장의 진행(①계획~④모집) 사업 ${t.n}건의 계획 호수${t.q ? `(호수 미확인 ${t.q}건 제외)` : ''}, 수도권 개요·사업 화면과 같은 기준${lost ? `. 지도 표시 ${t.n - t.lostN}건, 위치가 없어 목록에만 있는 사업 ${lost.replace('위치 미확보 ', '')}` : ''}` };
+}
+let SUM_TOTAL = HOME_T ? homeSumTotal(HOME_T) : null;   // 머리 줄 합계(#hudSum)용: 세대수·단지 수와 보조 문장(title)
 /* 수도권: 원장에는 있지만 위치가 시군구 대표점뿐이거나 없어 지도에 그리지 않은 사업. 목록 끝에 이름만, 누르면 사업 상세 */
 /* ?project= 로 연 사업이 위치 미확보면 목록 맨 위에 한 줄 */
 const lostHtml = () => (RES && RES.lost ? `<li class="empty" id="lostNote">${esc(RES.lost.name)}: 위치 미확보 — 지도에 표시할 위치가 없어 시군구 전체를 보여 줍니다</li>` : '');
@@ -1337,7 +1357,8 @@ if (BLOCKS.length) {
   $('#sumTotal').innerHTML = `<span class="big">${fmt(total)}</span><span class="unit">호</span> <span class="cnt">사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''}</span>`;
   $('#sumBar').innerHTML = grp.map((g) => `<i style="width:${total ? 100 * by[g.key] / total : 0}%;background:${g.key === 'plan' || g.key === 'permit' ? `repeating-linear-gradient(90deg,var(--${g.key}) 0 4px,var(--bg) 4px 7px)` : COLOR[g.key]}" title="${g.label} ${gTxt(g)}"></i>`).join('');
   $('#sumBar').setAttribute('aria-label', grp.map((g) => `${g.label} ${gTxt(g)}`).join(', '));
-  SUM_TOTAL = { main: fmt(total), sub: `공급 예정 사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''}`, n: BLOCKS.length, unk };
+  if (!HOME_T) SUM_TOTAL = { main: fmt(total), sub: `공급 예정 사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''}`, n: BLOCKS.length, unk };
+  if (HOME_T && REG.home.unlocated.length) $('#sumTotal').querySelector('.cnt').textContent = `지도 표시 사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''} · 위치 미확보 ${REG.home.unlocated.length}건 제외`;
   if (HAS_INFRA) $('#infraChips').innerHTML = infraChipsHtml();
   $('#sumLeg').innerHTML = grp.map((g) => `<span><i class="sw ${g.key}"></i>${g.label} ${known.has(g.key) ? `${fmt(by[g.key])}호 (${pct(by[g.key], total)})` : '호수 미확인'}</span>`).join('');
   setLegend();
@@ -1345,9 +1366,9 @@ if (BLOCKS.length) {
   /* 단지 카드: 접어 두고, 눌러서 선택하면 펼친다 */
   $('#projList').innerHTML = lostHtml() + BLOCKS.map((b) => {
     const k = kindOf(b), fr = floorsRange(b);
-    const sub = [b.priv ? '공공택지 민간' : null, b.approx ? '근사 위치' : null, unitsTxt(b), dongN(b) ? `${dongN(b)}개동` : null, fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : null, /^\d/.test(b.moveIn) ? `입주 ${b.moveIn}` : b.moveIn].filter(Boolean).join(' · ');
+    const sub = [b.priv ? '공공택지 민간' : null, b.approx ? '근사 위치' : null, unitsTxt(b), dongN(b) ? `${dongN(b)}개동` : null, fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : null, /^\d/.test(b.moveIn) ? `입주 ${dotDate(b.moveIn)}` : dotDate(b.moveIn)].filter(Boolean).join(' · ');
     const bars = fr ? b.dongs.slice().sort((a, c) => a.no.localeCompare(c.no)).map((d) => `<i title="${esc(d.no)}동 ${d.floors}층" style="height:${Math.round(34 * d.floors / 15)}px;background:${mixTone(k, fr[1] > fr[0] ? (d.floors - fr[0]) / (fr[1] - fr[0]) : 1)}"></i>`).join('') : '';
-    const mini = b.progress ? `<span class="mini" style="--c:${COLOR[k]}" title="공정율 ${esc(b.progress.rate)}%"><i style="width:${Math.max(b.progress.rate, 1)}%"></i></span>` : '';
+    const mini = b.progress ? `<span class="mini" style="--c:${COLOR[k]}" title="공정률 ${esc(b.progress.rate)}%"><i style="width:${Math.max(b.progress.rate, 1)}%"></i></span>` : '';
     const more = `<span class="more"><span class="stg">${stageInner(b)}</span>${homeLine(b)}${b.progress ? progressRow(b, k) : ''}${bars ? `<span class="fl" title="동별 층수">${bars}</span>` : ''}${b.builder ? `<span class="bld">시공 ${esc(b.builder)}</span>` : ''}</span>`;
     return `<li><button type="button" class="card" aria-expanded="false" data-id="${esc(b.id)}"${b.approx ? ` title="${esc(APPROX_TXT)}"` : ''} aria-label="${esc(projName(b))} ${esc(stTxt(b))}, ${esc(sub)}"><i class="sw ${k}"></i><b title="${esc(projName(b) !== b.label ? `${projName(b)} · ${b.label}` : projName(b))}">${esc(projName(b))} ${esc(b.kind.replace('(공공분양)', ''))}</b><span class="st" style="color:${COLOR[k]}">${esc(stTxt(b))}${jdMark(b)}</span><span class="sub">${esc(sub)}</span>${mini}${more}</button></li>`;
   }).join('') + unlocatedHtml();
@@ -1591,9 +1612,18 @@ function positionOpt() {
   $('#optStatus').innerHTML = present.map((st) => `<label><input type="checkbox" data-status="${st}" checked><i class="sw ${KIND[st]}"></i>${stLabel(st)}</label>`).join('');
   if (!HAS_CTX) { $('#lblCtx').hidden = true; $('#lblRing').hidden = true; }
   /* 머리 줄의 6단계 필터: 옵션의 '보일 단지 상태'와 같은 SHOWN 을 켜고 끈다. 단지가 없는 단계는 눌리지 않게 흐리게 둔다 */
-  $('#stageF').hidden = !BLOCKS.length;
-  $('#stageF').innerHTML = STAGES6.map(([no, name, sts, col, official]) => {
+  $('#stageF').hidden = !BLOCKS.length && !(HOME_T && HOME_T.st.some((x) => x.n));
+  $('#stageF').innerHTML = STAGES6.map(([no, name, sts, col, official], i) => {
     const live = sts.filter((st) => ALL_ST.has(st)), bs = BLOCKS.filter((b) => live.includes(b.status)), units = bs.reduce((a, b) => a + b.units, 0);
+    /* 수도권: 칸의 건수·호수는 원장 기준(머리 줄 합계·수도권 개요와 같은 수). 누르면 지도에 그린 그 단계 사업을 숨기고 보인다 — 그린 사업이 없으면 눌리지 않는다 */
+    const h = HOME_T && HOME_T.st[i];
+    if (h && h.n) {
+      const mapTxt = h.lostN ? ` · 지도 표시 ${h.n - h.lostN}건 · 위치 미확보 ${h.lostN}건${h.lostU ? `(${fmt(h.lostU)}호)` : ''}은 목록에만` : '';
+      const v = h.n > h.q ? `<b class="sf-v">${fmt(h.u)}<small>호</small></b>` : '<b class="sf-v none sm" title="이 단계 사업의 호수가 원장에 없습니다">호수 미확인</b>';
+      const tip = `${official} · 사업 원장 ${h.n}건${h.q ? `(호수 미확인 ${h.q}건)` : ''}${mapTxt}`;
+      return `<button type="button" class="sf" data-status="${bs.length ? live.join('|') : ''}" data-name="${no}${name}" style="--c:${col}" aria-pressed="${bs.length ? 'true' : 'false'}"${bs.length ? '' : ' disabled'} title="${esc(tip)}"><span class="sf-h"><i class="sf-sw"></i>${no}${name}<span class="sf-n">${h.n}건</span></span>${v}</button>`;
+    }
+    if (HOME_T) return `<button type="button" class="sf" data-status="" data-name="${no}${name}" style="--c:${col}" aria-pressed="false" disabled title="${official} · 이 단계의 원장 사업이 없습니다" aria-label="${no}${name}, 사업 없음"><span class="sf-h"><i class="sf-sw"></i>${no}${name}</span><b class="sf-v none">—</b></button>`;
     if (!bs.length) return `<button type="button" class="sf" data-status="" data-name="${no}${name}" style="--c:${col}" aria-pressed="false" disabled title="${official} · 이 단계의 사업이 없습니다" aria-label="${no}${name}, 사업 없음"><span class="sf-h"><i class="sf-sw"></i>${no}${name}</span><b class="sf-v none">—</b></button>`;   // 빈 단계는 이름 + '—'(이유는 title)
     return `<button type="button" class="sf" data-status="${live.join('|')}" data-name="${no}${name}" style="--c:${col}" aria-pressed="true" title="${official}"><span class="sf-h"><i class="sf-sw"></i>${no}${name}<span class="sf-n">${bs.length}건</span></span>${bs.some((b) => b.unitsKnown !== false) ? `<b class="sf-v">${fmt(units)}<small>호</small></b>` : '<b class="sf-v none sm" title="이 단계 사업의 호수가 원장에 없습니다">호수 미확인</b>'}</button>`;   // 호수를 아는 단지가 없으면 0호 대신
   }).join('');
@@ -1990,7 +2020,7 @@ function syncHudSum() {
   const side = HAS_INFRA && SUMM && SUMM.blocks.length ? `<button type="button" class="isum" data-act="infra" title="${esc(SUMM.headline)} · 누르면 기반시설 보기" aria-label="입주 전 점검 ${esc(SUMM.headline)}. 누르면 기반시설 보기">${infraSumHtml()}</button>` : '';
   $('#hudSum').classList.toggle('solo', !side);   // 점검 자료가 없는 지역은 합계 열만
   /* 문장(공급 예정 사업 n건, 호수 미확인 m건 제외)은 title 과 화면 낭독기용. 미확인은 값의 성격 표지라 짧게 남긴다 */
-  $('#hudSum').innerHTML = `<div class="hs-a"><div class="hs-total" title="${esc(tot.sub)}"><span class="sr">${esc(tot.sub)}</span><span aria-hidden="true"><b>${esc(tot.main)}</b><small>호</small><span class="hs-n">· ${tot.n}건${tot.unk ? ` · 미확인 ${tot.unk}건` : ''}</span></span></div></div>`
+  $('#hudSum').innerHTML = `<div class="hs-a"><div class="hs-total" title="${esc(tot.sub)}"><span class="sr">${esc(tot.sub)}</span><span aria-hidden="true"><b>${esc(tot.main)}</b><small>호</small><span class="hs-n">· ${tot.prog ? '진행 ' : ''}${tot.n}건${tot.unk ? ` · 미확인 ${tot.unk}건` : ''}</span></span>${tot.map ? `<span class="hs-map" aria-hidden="true">${esc(tot.map)}</span>` : ''}</div></div>`
     + (side ? `<div class="hs-b">${side}</div>` : '');
 }
 function setCollapsed(on, { quiet = false } = {}) {

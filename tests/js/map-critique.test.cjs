@@ -54,7 +54,8 @@ test('사업 카드 제목은 원장 사업 이름(사업 화면 목록·서랍�
 test("단위: 단계 줄·요약은 사업 수 '건'·호수 '호'(단지 아님), 후보는 '후보 사업'", () => {
   const code = noComments(app);
   assert.match(code, /<span class="sf-n">\$\{bs\.length\}건<\/span>/);
-  assert.match(code, /<span class="hs-n">· \$\{tot\.n\}건/);
+  assert.match(code, /<span class="hs-n">· \$\{tot\.prog \? '진행 ' : ''\}\$\{tot\.n\}건/);   // 수도권은 '진행 n건'(원장 ①~④, 수도권 개요와 같은 기준)
+  assert.match(code, /<span class="sf-n">\$\{h\.n\}건<\/span>/);
   assert.doesNotMatch(code, /\}단지<|개 단지|단지 없음|번호 발급 전<\/small>/);
   assert.match(code, /<small>후보 사업<\/small>/);
   assert.match(html, /<h2 id="h-proj">사업<\/h2>/);
@@ -126,4 +127,27 @@ test('다크 지도: 기존 건물 파랑 단계는 지붕(밝게 섞은 윗면)
   assert.ok(ratio(roof(ramp[4]), '#0A1030') >= 3, `지붕 대비 ${ratio(roof(ramp[4]), '#0A1030').toFixed(2)}`);
   assert.ok(lum(ramp[4]) <= lum('#394C96') + 1e-9 && lum(ramp[3]) <= lum('#2E3F82') + 1e-9, '위 두 단은 3차 값(#33468D·#4155A3)보다 한 단계 낮다');
   assert.match(css, /\.sw\.ramp\{background:linear-gradient\(90deg,#17204D,#394C96\)\}/);   // 범례 견본도 같이
+});
+
+test('사업 카드(2026-10-15): 화면 용어(상태·공정률·호·점 날짜), 머리 고정 + 몸통 스크롤, 핵심 2열 격자·설명 두 줄·주변·시공 접힘', () => {
+  const fn = noComments(/function blockPopup\([\s\S]*?\n\}\n/.exec(app)[0]);
+  assert.doesNotMatch(fn, /판정|공정율|세대/, '카드 글자에 옛 용어가 없다');
+  assert.match(fn, /\['공정률', /); assert.match(fn, /\['입주', esc\(dotDate\(b\.moveIn\)\)\]/); assert.match(fn, /esc\(noteTxt\(b\.note\)\)/);
+  assert.match(fn, /<div class="pc pc-split">\s*<div class="pc-h">[\s\S]*<\/div>\s*<div class="pc-body">/, '머리는 몸통 밖(스크롤해도 고정)');
+  assert.match(fn, /gridHtml\(\[/); assert.match(fn, /<details class="pc-note">/); assert.match(fn, /<details class="pc-more pc-near"><summary>주변·시공/);
+  /* 날짜·단위 바꾸기(app.js 의 dotDate·noteTxt 를 그대로 떼어 돌린다) */
+  const src = /const dotDate = [^\n]*\nconst noteTxt = [^\n]*\n/.exec(app)[0];
+  const f = new Function(`${src}; return { dotDate, noteTxt };`)();
+  assert.equal(f.noteTxt('블록 538세대 중 359세대 분양, 179세대는 행복주택입니다. 공사 종료 예정은 2026-10-11입니다.'), '블록 538호 중 359호 분양, 179호는 행복주택입니다. 공사 종료 예정은 2026.10.11입니다.');
+  assert.equal(f.dotDate('2028-09-30'), '2028.09.30'); assert.equal(f.dotDate('2026-12'), '2026.12'); assert.equal(f.dotDate('PRJ-28245-0057'), 'PRJ-28245-0057');
+  assert.match(css, /\.pc-split\{[^}]*overflow:hidden/);
+  assert.match(css, /\.pc-split>\.pc-body\{[^}]*min-height:0[^}]*overflow-y:auto/);
+  assert.match(css, /\.pc-grid\{display:grid;grid-template-columns:1fr 1fr/);
+  assert.match(css, /\.pc-note summary\{[^}]*-webkit-line-clamp:2/);
+  /* 반투명 유리: backdrop-filter 와, 못 쓰는 브라우저용 @supports 대체(두 테마) */
+  assert.match(css, /(?:^|\n)\.maplibregl-popup-content\{[^}]*background:var\(--glass-hud\);-webkit-backdrop-filter:var\(--glass-card-blur\);backdrop-filter:var\(--glass-card-blur\)/);
+  assert.match(css, /@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{:root\{[^}]*--glass-hud:rgba\(16,26,68,\.98\)/);
+  assert.match(css, /@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{html\[data-map-shell\]:not\(\.dark\)\{--glass-hud:rgba\(255,255,255,\.98\)/);
+  /* 접힘을 펴면 자리를 다시 맞춘다 */
+  assert.match(app, /popup\.getElement\(\)\.addEventListener\('toggle', \(\) => \{ if \(popup !== own\) return; popup\.setOffset\(\[0, 0\]\); fitCard\(\); \}, true\)/);
 });
