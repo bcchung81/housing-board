@@ -380,6 +380,40 @@
   const EVENT_TEXT = { PERMIT: '인허가', CONSTRUCTION_START: '착공', SUPPLY_NOTICE: '모집 공고', COMPLETION: '준공', MOVE_IN: '입주' };
   const CLS_TEXT = { ok: '정상', caution: '주의', delay: '지연' };
   const ymText = (v) => { const m = /^(\d{4})(?:-(\d{2}))?/.exec(String(v || '')); return m ? (m[2] ? `${m[1]}.${m[2]}` : m[1]) : ''; };
+  /* 예정일 → 기준일 경과 개월(다 찬 달만, 0 부터) */
+  function monthsBetween(a, b) {
+    const [y0, m0, d0] = String(a).slice(0, 10).split('-').map(Number), [y1, m1, d1] = String(b).slice(0, 10).split('-').map(Number);
+    return Math.max(0, (y1 - y0) * 12 + (m1 - m0) - (d1 < d0 ? 1 : 0));
+  }
+  /* 카드의 상태 한 줄(2026-10-15 평가 A7: '상태 정상'·'예정일 지남'·'주의' 를 따로 보이지 않고 한 줄로, 색은 상태색 하나).
+     예: '정상 · 예정일 지남(경과 0개월, 주의는 1개월부터)', '지연 · 준공 예정 경과 9개월' */
+  function statusLine(t) {
+    if (!t || !t.cls) return '';
+    return [t.cls, t.late, t.pastDue ? `예정일 지남(경과 ${t.dueMonths || 0}개월, 주의는 1개월부터)` : ''].filter(Boolean).join(' · ');
+  }
+  /* 위치 미확보 묶음(homeToProjects 의 unlocated): 건수·지연 건수와 표지 글자 */
+  function lostSummary(list) {
+    const xs = Array.isArray(list) ? list : [], delay = xs.filter((x) => x && x.cls === 'delay').length;
+    return { n: xs.length, delay, text: xs.length ? `위치 미확보 ${xs.length}건${delay ? ` · 지연 ${delay}` : ''}` : '' };
+  }
+  /* 묶음 표지 자리: 위치 미확보 사업 중 시군구·동 대표점(loc.at)이 있으면 그 점. 없으면 시군구 경계(GeoJSON Polygon·MultiPolygon) 안에서
+     지도가 열리는 자리(near)에 가까우면서 사업 표지와 겹치지 않게 약 300 m 떨어진 점(경계 상자 48×48 격자), 경계가 없으면 near */
+  function lostAnchor(list, shape, near) {
+    const hit = (Array.isArray(list) ? list : []).find((x) => x && Array.isArray(x.at));
+    if (hit) return hit.at.slice();
+    const polys = shape && shape.type === 'Polygon' ? [shape.coordinates] : shape && shape.type === 'MultiPolygon' ? shape.coordinates : [];
+    if (!polys.length) return near || null;
+    const inRing = (p, r) => { let o = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const a = r[i], c = r[j]; if ((a[1] > p[1]) !== (c[1] > p[1]) && p[0] < ((c[0] - a[0]) * (p[1] - a[1])) / (c[1] - a[1]) + a[0]) o = !o; } return o; };
+    const inside = (p) => polys.some((poly) => inRing(p, poly[0]) && !poly.slice(1).some((h) => inRing(p, h)));
+    const b = polys.flatMap((poly) => poly[0]).reduce((m, p) => [Math.min(m[0], p[0]), Math.min(m[1], p[1]), Math.max(m[2], p[0]), Math.max(m[3], p[1])], [Infinity, Infinity, -Infinity, -Infinity]);
+    const c = near || [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2], kx = Math.cos((c[1] * Math.PI) / 180), MIN = 300 / 111320;
+    let best = null, bd = Infinity;
+    for (let i = 0; i <= 48; i++) for (let j = 0; j <= 48; j++) {
+      const p = [b[0] + ((b[2] - b[0]) * i) / 48, b[1] + ((b[3] - b[1]) * j) / 48], d = Math.hypot((p[0] - c[0]) * kx, p[1] - c[1]);
+      if (d >= MIN && d < bd && inside(p)) { best = p; bd = d; }
+    }
+    return best ? best.map((v) => Math.round(v * 1e6) / 1e6) : c;
+  }
   function ledgerTexts(l) {
     if (!l) return null;
     const ev = (e) => (e && EVENT_TEXT[e.eventType]) || '';
@@ -387,7 +421,7 @@
     /* 판정이 정상인데 예정일이 자료 기준일보다 앞서 있으면(한 달 미만 경과) 상태는 그대로 두고 '예정일 지남' 표지만 붙인다 */
     const pe = [l.overdue, l.next].find((e) => e && ev(e) && /^\d{4}-\d{2}-\d{2}/.test(e.planned || '')), pastDue = !!(pe && (!l.cls || l.cls === 'ok') && l.referenceDate && String(pe.planned).slice(0, 10) < String(l.referenceDate).slice(0, 10));
     return {
-      ...(pastDue ? { pastDue, due: `${ev(pe)} 예정 ${String(pe.planned).slice(0, 10).replace(/-/g, '.')}` } : {}),
+      ...(pastDue ? { pastDue, due: `${ev(pe)} 예정 ${String(pe.planned).slice(0, 10).replace(/-/g, '.')}`, dueMonths: monthsBetween(pe.planned, l.referenceDate) } : {}),
       cls: l.cls ? CLS_TEXT[l.cls] : '', late, lateTitle: late && l.overdue.planned ? `예정일 ${l.overdue.planned}` : '',
       next: l.next && ev(l.next) && ymText(l.next.planned) ? `${ev(l.next)} 예정 ${ymText(l.next.planned)}` : '',
       basis: `${l.origin === 'supabase' ? 'Supabase 원장' : '사업 원장'} ${l.month || ''} 기준`.replace(/\s+/g, ' '), refDate: l.referenceDate || '',
@@ -525,7 +559,7 @@
       });
     });
     projects.sort((a, b) => (a.projectId < b.projectId ? -1 : a.projectId > b.projectId ? 1 : 0));
-    return { projects, unlocated: unlocated.map((r) => ({ id: r.id, name: String(r.name || r.id), stage: /^0[1-6]$/.test(r.stage || '') ? r.stage : null, units: finite(r.units) && r.units > 0 ? r.units : null, loc: r.loc && HOME_LOC_TEXT[r.loc.by] ? HOME_LOC_TEXT[r.loc.by] : '' })), total: rows.length };
+    return { projects, unlocated: unlocated.map((r) => ({ id: r.id, name: String(r.name || r.id), label: String(r.label || r.name || r.id), cls: r.cls || null, at: r.loc && Array.isArray(r.loc.at) && r.loc.at.length === 2 && r.loc.at.every(finite) ? r.loc.at.slice() : null, stage: /^0[1-6]$/.test(r.stage || '') ? r.stage : null, units: finite(r.units) && r.units > 0 ? r.units : null, loc: r.loc && HOME_LOC_TEXT[r.loc.by] ? HOME_LOC_TEXT[r.loc.by] : '' })), total: rows.length };
   }
   /* 원장 행 → 단계 칸(①~⑥)별 합계와 진행(①계획~④모집) 합계. 수도권 개요(lib/board/metro-overview.ts valuesBySgg)·사업 화면과 같은 정의:
      칸 = 원장 단계(01·02 → ①, 03 → ②, 04 → ③, 05 → ④, 06 → ⑤, 모르면 ①), 호수 = 계획 호수(없으면 호수 미확인 q 로 센다). 위치 미확보로 지도에 그리지 못한 사업도 센다(lost*).
@@ -846,5 +880,5 @@
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { HOME_SIDO, isHomeSgg, crumbsOf, crumbsHtml, mountCrumbs, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
+  return { HOME_SIDO, isHomeSgg, crumbsOf, crumbsHtml, mountCrumbs, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, statusLine, lostSummary, lostAnchor, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
 });

@@ -76,9 +76,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .dynhint[hidden]{display:none}
 /* 사업으로 날아가는 동안(카드가 열리기 전) 지도 위 가운데 위 작은 띠: '…로 이동 중' + 깜빡이는 점(app.js setGoing) */
 .gonote{position:absolute;left:50%;top:12px;z-index:5;transform:translateX(-50%);display:flex;align-items:center;gap:8px;margin:0;padding:5px 14px;border-radius:999px;background:var(--glass-cmd-active);border:1px solid var(--hud-line);box-shadow:var(--tag-shadow);color:var(--ink);font-size:13px;font-weight:700;white-space:nowrap;pointer-events:none}
-.gonote::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--acc);animation:going .9s ease-in-out infinite alternate}
+.gonote::after{content:"";position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:1px;background:var(--acc);transform-origin:left center;animation:gofill 2.2s cubic-bezier(.25,.8,.3,1) both}   /* 이동 중: 맥동하는 점 대신 한 방향으로 한 번 차는 막대(날아가는 시간 약 2초, 2026-10-15 검사기 pulsing-dot) */
 .gonote[hidden]{display:none}
-@media (prefers-reduced-motion:reduce){.gonote::before{animation:none}}
+@keyframes gofill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.gonote::after{animation:none}}
 /* 위치 안내 한 줄(?project= 로 연 사업이 위치 미확보·근사 위치일 때, region.js mountLocNote). 지도 위 가운데, 닫을 수 있다 */
 .locnote{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:10px;max-width:min(calc(100% - 420px),760px);min-width:min(420px,calc(100% - 24px));padding:9px 8px 9px 14px;border-radius:12px;background:color-mix(in srgb,var(--warn) 16%,var(--pn));border:1px solid color-mix(in srgb,var(--warn) 55%,transparent);box-shadow:0 6px 20px rgba(0,0,0,.18);color:var(--ink);font-size:14px;line-height:1.45}
 .locnote[hidden]{display:none}
@@ -150,7 +151,8 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .stg{display:contents}
 .jd{font-style:normal;font-weight:700}
 .jd.ok{color:var(--ok,#4ADE9E)}.jd.caution{color:var(--warn)}.jd.delay{color:var(--bad,#FF6B88)}
-.pc-grid dd .jd{white-space:nowrap}   /* 표지('예정일 지남'·'원천 날짜 다름(LH 2026.10)')는 줄 사이에서 끊지 않는다 */
+.jd.alt{color:var(--mute);font-weight:600;padding:0 4px;border:1px dashed currentColor;border-radius:4px}   /* 원천 날짜 다름: 상태 줄 옆 무채색 표지(상태색은 판정 하나만, 2026-10-15) */
+.pc-grid dd .jd.alt{white-space:nowrap}   /* 표지('원천 날짜 다름(LH 2026.10)')는 줄 사이에서 끊지 않는다. 상태 한 줄('정상 · 예정일 지남(…)')은 칸 폭에서 낱말 단위로 줄바꿈 */
 .ldg{font-size:13px;color:var(--ink2)}
 .stg6{display:inline-flex;gap:2px;margin-right:6px;vertical-align:1px}
 .stg6 i{width:9px;height:6px;border-radius:2px;background:var(--line2)}
@@ -222,12 +224,11 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 #map{position:absolute;inset:0}
 .topbar{position:absolute;left:12px;top:12px;z-index:3;max-width:calc(100% - 64px)}
 /* 지도 위 왼쪽 한 줄: 자료 켜고 끄기(옵션 · 버스위치 · 건물 흐리게). 바 하나가 유리이고 안의 단추는 투명하다. 시점 조작은 오른쪽 위 묶음(.rctl)에 있다(2026-10-13). */
-.tools{display:flex;align-items:stretch;max-width:100%;overflow-x:auto;scrollbar-width:none;border-radius:11px;background:var(--glass-sum);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--hud-line);box-shadow:var(--hud-shadow)}
+.tools{display:flex;align-items:stretch;gap:2px;padding:3px;max-width:100%;overflow-x:auto;scrollbar-width:none;border-radius:11px;background:var(--glass-sum);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--hud-line);box-shadow:var(--hud-shadow)}
 .tools::-webkit-scrollbar{display:none}
 .tools>*{flex:0 0 auto}
-.tools button{min-height:34px;padding:0 12px;border:0;background:transparent;font:inherit;font-size:13.5px;font-weight:400;color:var(--ink2);white-space:nowrap;cursor:pointer;touch-action:manipulation;transition:background-color .15s,color .15s}
+.tools button{min-height:28px;padding:0 12px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13.5px;font-weight:400;color:var(--ink2);white-space:nowrap;cursor:pointer;touch-action:manipulation;transition:background-color .15s,color .15s}
 .tools button:hover{background:var(--glass-tag-hover);color:var(--ink)}
-.tools button+button{border-left:1px solid var(--hud-line)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .maplegend .src{flex:0 0 auto;color:var(--mute);font-size:12px;white-space:nowrap}
 .maplegend .src:empty{display:none}
@@ -414,9 +415,7 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .hudtag:hover{background:var(--glass-tag-hover)}
 /* 이동 중(꼬리표·목록에서 사업을 눌러 카드가 열리기 전, app.js setGoing): 눌린 모양(강조 테두리) + 이름 옆 작은 점이 깜빡인다. 낭독은 #sr '…로 이동 중' */
 .hudtag[aria-busy="true"],#projList .card[aria-busy="true"]{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
-.hudtag[aria-busy="true"] .ht-h::after,#projList .card[aria-busy="true"]>b::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--acc);vertical-align:middle;animation:going .9s ease-in-out infinite alternate}
-@keyframes going{from{opacity:1}to{opacity:.25}}
-@media (prefers-reduced-motion:reduce){.hudtag[aria-busy="true"] .ht-h::after,#projList .card[aria-busy="true"]>b::after{animation:none}}
+.hudtag[aria-busy="true"] .ht-h::after,#projList .card[aria-busy="true"]>b::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--acc);vertical-align:middle}   /* 움직이지 않는 점(진행 막대는 지도 위 '이동 중' 띠에) */
 .hudtag .ht-h{display:flex;align-items:baseline;gap:6px}
 .hudtag .ht-h b{font-size:13.5px}
 .hudtag .ht-h i{font-style:normal;font-weight:700;font-size:11.5px;color:var(--cd)}
@@ -775,6 +774,11 @@ h1{font-size:22px}h2{font-size:20px;line-height:1.25;margin-bottom:8px}.shead{ma
   --ov-ink-0:#E8EDFF;--ov-ink-1:#FFFFFF;--ov-ink-2:#FFFFFF;--ov-ink-3:#0B1A33;--ov-ink-4:#0B1A33;--ov-ink-5:#0B1A33}
 html[data-map-shell]:not(.dark){--ov-bg:#EEF2F6;--ov-0:#E3E7EC;--ov-1:#b7d3f6;--ov-2:#6da7ec;--ov-3:#256abf;--ov-4:#184f95;--ov-5:#0d366b;--ov-line:#FFFFFF;--ov-hl:#0B1A33;
   --ov-ink-0:#172B4D;--ov-ink-1:#0B1A33;--ov-ink-2:#0B1A33;--ov-ink-3:#FFFFFF;--ov-ink-4:#FFFFFF;--ov-ink-5:#FFFFFF}
+/* '지연 사업' 지표만 빨강(bad) 명도 5단계(2026-10-15 결정): 지연은 나쁜 값이라 파랑(양) 대신 빨강. overview.js 가 <html data-ov-metric> 로 고른다. 0 칸·경계선·바탕은 그대로 */
+html[data-ov-metric="d"]{--ov-1:#5E1A2A;--ov-2:#8E2436;--ov-3:#C23A48;--ov-4:#EC8585;--ov-5:#FBCFCB;
+  --ov-ink-1:#FFFFFF;--ov-ink-2:#FFFFFF;--ov-ink-3:#FFFFFF;--ov-ink-4:#2A0A10;--ov-ink-5:#2A0A10}
+html[data-map-shell][data-ov-metric="d"]:not(.dark){--ov-1:#FBD3CF;--ov-2:#F2948E;--ov-3:#C8323D;--ov-4:#9A1F2B;--ov-5:#64101A;
+  --ov-ink-1:#2A0A10;--ov-ink-2:#2A0A10;--ov-ink-3:#FFFFFF;--ov-ink-4:#FFFFFF;--ov-ink-5:#FFFFFF}
 .ov{display:none}
 html[data-map-mode="overview"] .shell-map .app{display:none}
 html[data-map-mode="overview"] .skip-detail,html:not([data-map-mode="overview"]) .skip-ov{display:none}
@@ -895,3 +899,25 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .crumbs [aria-current]{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
 .crumbs .cr-sep{color:var(--mute)}
 .brand-t:has(>.crumbs:not([hidden]))>b{display:none}
+
+/* 위치 미확보 묶음(2026-10-15 평가 A7 P1): 지도 위 점선 테두리 표지(시군구 대표점) + 머리 줄 단추 → 같은 목록 창(#lostPop). 판정 글자색은 카드와 같은 값(4.5:1) */
+.lostpin,.lostpop{--bad:#FFAFBF;--ok:#4ADE9E}
+html[data-map-shell]:not(.dark) .lostpin,html[data-map-shell]:not(.dark) .lostpop{--bad:#8E2C3C;--ok:#1D5946;--warn:#624C00}
+.lostpin{font:inherit;font-size:12.5px;font-weight:700;line-height:1.3;padding:5px 10px;color:var(--ink);background:var(--glass-tag);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1.5px dashed var(--ink2);border-radius:8px;box-shadow:var(--tag-shadow);white-space:nowrap;cursor:pointer}
+.lostpin:hover{background:var(--glass-tag-hover)}
+.lostpin[aria-expanded="true"]{border-color:var(--acc)}
+.lostpin .lp-d{color:var(--bad)}
+.hudsum .hs-lost{font:inherit;padding:0;border:0;background:none;color:inherit;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
+.hudsum .hs-lost:hover,.hudsum .hs-lost[aria-expanded="true"]{color:var(--ink)}
+.lostpop{position:fixed;z-index:30;width:320px;max-width:calc(100vw - 16px);max-height:min(60vh,420px);overflow:auto;padding:10px 12px 12px;border:1px solid var(--hud-line);border-radius:12px;background:var(--glass-card);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--hud-shadow);color:var(--ink);font-size:13px;line-height:1.45}
+.lostpop[hidden]{display:none}
+.lostpop .lp-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.lostpop .lp-h b{font-size:14px}
+.lostpop .lp-x{flex:none;width:28px;height:28px;border:0;border-radius:6px;background:transparent;color:var(--ink2);font-size:18px;line-height:1;cursor:pointer}
+.lostpop .lp-x:hover{background:var(--glass-tag-hover)}
+.lostpop .lp-note{margin:4px 0 8px;color:var(--mute);font-size:12px}
+.lostpop ul{list-style:none;margin:0;padding:0}
+.lostpop li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
+.lostpop .lp-n{min-width:0}
+.lostpop small{grid-column:1;color:var(--ink2);font-size:12px}
+.lostpop li a{grid-column:2;grid-row:1 / span 2;align-self:center;color:var(--acc);font-weight:700;white-space:nowrap;text-underline-offset:3px}

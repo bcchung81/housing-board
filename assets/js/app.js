@@ -87,6 +87,7 @@ const PLAN_ST = ['계획', '사업화'];   // 계획 색 면(blk-plan)으로 그
 const BY_STAGE = STAGES6.flatMap((s) => s[2]);   // 계획 · 건설 단계 · 준공 임박 · 분양중 · 입주 단계
 /* 사업 원장(기획서 M7·M8): region.js 가 지도와 따로 받아 단지에 b.ledger 를 붙인다. 원장 단계가 있으면 6단계 위치는 원장 기준(지도 상태와 다르면 title 에 적는다) */
 const LT = (b) => (b.ledger && window.RegionLoader ? window.RegionLoader.ledgerTexts(b.ledger) : null);
+const statusLine = (t) => (window.RegionLoader ? window.RegionLoader.statusLine(t) : (t && t.cls) || '');
 function stageNow(b) {
   const own = STAGES6.find((x) => x[2].includes(b.status)), l = b.ledger && b.ledger.stage ? stageOfCode(b.ledger.stage) : null;
   if (!l) return { now: own, k: kindOf(b), title: '' };
@@ -103,8 +104,9 @@ function homeParts(b) {
     h.policy ? `정책: ${h.policy.names.join(', ') || '이름 미상'} · ${h.policy.status === 'CONFIRMED' ? '연결 확정' : '확정 전(검토 필요)'}` : '', h.noticeUnits != null ? '공고 확인: 연결된 모집공고의 호수(준공 아님)' : ''].filter(Boolean).join('\n');
   return { nums, pol, title };
 }
-/* 지도 → 화면 연결점: 사업 id 는 사업 화면의 서랍(/projects?id=)으로 문서 이동한다(지도와 대시보드는 다른 루트 레이아웃) */
-const projHref = (id) => `/projects?id=${encodeURIComponent(id)}`;
+/* 지도 → 화면 연결점: 사업 id 는 사업 화면의 서랍(/projects?id=)으로 문서 이동한다(지도와 대시보드는 다른 루트 레이아웃).
+   지도에서 왔다는 표시(from=map)와 돌아올 시군구(sgg: 코드로 연 시군구, 없으면 사업 id 의 시군구)를 붙인다 — 사업 화면이 '지도로 돌아가기'에 쓴다(2026-10-15 계약) */
+const projHref = (id) => { const sgg = (RES && RES.sgg) || (/^PRJ-(\d{5})-/.exec(id) || [])[1] || ''; return `/projects?id=${encodeURIComponent(id)}&from=map${sgg ? `&sgg=${sgg}` : ''}`; };
 const APPROX_TXT = (window.RegionLoader && window.RegionLoader.APPROX_TITLE) || '근사 위치 — 사업 이름으로 찾은 위치라 확인이 필요합니다';
 const homeLine = (b) => { const x = homeParts(b); return x && (x.nums || x.pol) ? `<span class="bld hm" title="${esc(x.title)}">${esc([x.nums, x.pol].filter(Boolean).join(' · '))}</span>` : ''; };
 const jdMark = (b) => {   // 접힌 단지 카드: 원장 주의·지연만. 원장 판정이 없는 인허가 사업은 예정일이 지났는데 기록이 없으면 '예정 경과'(근거는 title)
@@ -945,6 +947,7 @@ document.addEventListener('keydown', (e) => {
   cardFrom = null;
   if (!go) { map.getCanvas().focus(); return; }
   if (go.from === 'tag' && go.cam && map.getZoom() >= HUD_MAXZ) {   // 꼬리표는 멀리 볼 때만 있다: 연 자리의 시점으로 돌아가 다시 그린 뒤 초점
+    cardBackTo(go.id).focus({ preventScroll: true });   // 돌아가는 1~2초 동안 초점이 문서(BODY)로 떨어지지 않게 바로 목록 단추(접혀 있으면 지도)로, 꼬리표가 그려지면 꼬리표로
     map.once('moveend', () => { renderHud(); cardBackTo(go.id).focus(); });   // 먼저 건다: 움직임 줄이기(dur 0)면 easeTo 안에서 바로 끝난다
     map.easeTo({ ...go.cam, duration: dur });
     return;
@@ -1012,7 +1015,7 @@ const projName = (b) => String((b.ledger && b.ledger.name) || b.name || b.id);
 const homeRows = (b) => { const x = homeParts(b); return x ? [x.nums ? ['호수', `<span title="${esc(x.title)}">${esc(x.nums)}</span>`, true] : null, x.pol ? ['정책', `<span title="${esc(x.title)}">${esc(x.pol)}</span>`] : null] : []; };
 /* D2 원천 날짜 다름: 원장 행의 dateAlt { source, planned } — 원천(LH 등)의 예정일이 원장 현재 예정과 다르다. 표지 글자는 사업 화면과 같은 '원천 날짜 다름', 자세한 설명은 title. 필드가 없으면 그리지 않는다 */
 const dateAltOf = (lg) => (lg && lg.dateAlt && lg.dateAlt.planned ? lg.dateAlt : null);
-const altMark = (a) => `<b class="jd caution" title="${esc(`${a.source || '원천'} 자료의 예정일은 ${dotDate(a.planned)}로, 원장의 현재 예정과 다릅니다. 현재 예정은 원장 기준입니다.`)}">원천 날짜 다름(${esc(a.source || '원천')} ${esc(ymDot(a.planned))})</b>`;
+const altMark = (a) => `<b class="jd alt" title="${esc(`${a.source || '원천'} 자료의 예정일은 ${dotDate(a.planned)}로, 원장의 현재 예정과 다릅니다. 현재 예정은 원장 기준입니다.`)}">원천 날짜 다름(${esc(a.source || '원천')} ${esc(ymDot(a.planned))})</b>`;
 function blockPopup(b, clickX, lead) {
   const fr = floorsRange(b), nr = HAS_CTX ? nearestCtx(centroid(b.poly)) : null;
   const hmax = fr ? floorsToHeight(fr[1]) : 0;
@@ -1027,20 +1030,22 @@ function blockPopup(b, clickX, lead) {
   const pidRow = lg ? ['사업 id', lg.issued ? pidLink(lg.id) : `<span class="pc-pid" title="후보 사업(번호 발급 전) — 다음 원장에서 id 가 바뀔 수 있어 바로 여는 링크가 없습니다">${esc(lg.id)}</span> <small>후보 사업</small>`] : b.projectId ? ['사업 id', pidLink(b.projectId)] : null;   // 후보 id 는 resolve 가 열지 못해 링크하지 않는다
   /* 출처·기준·자료 설명은 화면 대신 단지 이름의 title 로(2026-10-13 지도 화면 정리) */
   const about = [b.src ? `출처: ${b.src}` : '', lt ? `단계·상태: ${lt.basis}${lt.refDate ? ` (기준일 ${dotDate(lt.refDate)})` : ''}` : '', b.outlineHow, nr ? '역·학교: OpenStreetMap, 단지 중심에서 직선거리' : '', zr || sr ? '통학구역·신설예정 학교: 교육부 공개 자료(입주 전 점검)' : ''].filter(Boolean).join('\n');
-  const nm = projName(b), sub = [nm !== b.label ? b.label : '', b.kind.replace('(공공분양)', '')].filter(Boolean).join(' · ');   // 제목은 사업 화면 목록·서랍과 같은 원장 사업 이름(길면 두 줄 말줄임), 블록 이름은 부제
+  const nm = projName(b), sub = [nm !== b.id ? nm : '', b.kind.replace('(공공분양)', '')].filter(Boolean).join(' · ');   // 제목은 꼬리표·목록과 같은 짧은 이름(b.id), 원장 사업 이름은 부제와 title(2026-10-15 이름 통일)
+  const headTxt = stTxt(b) === '예정일 지남' ? STATUS_TXT[b.status] || b.status : stTxt(b);   // 예정일 지남은 아래 상태 한 줄에 합쳤다(머리 칩은 지도 표지 색의 단계 이름만)
   /* 높이를 줄인 구조(2026-10-15, 1280×800 에서도 카드 안 스크롤 없음): 머리(제목·상태) 고정 → 호수·사업 id 한 줄 → 설명 2줄(눌러 펼침) →
      핵심 항목 2열 격자(단계·상태·예정·호수·정책·공정률·층수·입주·공사) → 경고 → '주변·시공'(시공·교통·학교·통학구역·신설 학교, 기본 접힘). 창이 더 낮으면 머리 아래만 스크롤 */
   const near = [b.builder ? ['시공', esc(b.builder) + (b.contractM ? ` <small>${fmt(Math.round(b.contractM / 100))}억원</small>` : '')] : null,
     nr && nr.st ? ['교통', `${esc(nr.st.name)} <small>${IL.shortDist(nr.st.d)}</small>`] : null, ...schoolRows,
     sr ? ['신설 학교', `${esc(IL.shortName(sr.ref.school.name))} <small>${esc(IL.fmtYm(sr.ref.school.openYm))} 개교 · ${IL.shortDist(sr.ref.d)}</small>`] : null].filter(Boolean);
   showCard(`<div class="pc pc-split">
-    <div class="pc-h"><b class="pc-t" title="${esc([nm, about].filter(Boolean).join('\n'))}">${linkId ? `<a href="${esc(projHref(linkId))}" style="color:inherit">${esc(nm)}</a>` : esc(nm)}</b>${sub ? `<span class="pc-sub">${esc(sub)}</span>` : ''}${chipHtml(KIND[b.status], stTxt(b))}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}${b.approx ? `<span class="pc-chip none" title="${esc(APPROX_TXT)}">근사 위치</span>` : ''}</div>
+    <div class="pc-h"><b class="pc-t" title="${esc([nm, about].filter(Boolean).join('\n'))}">${linkId ? `<a href="${esc(projHref(linkId))}" style="color:inherit">${esc(b.id)}</a>` : esc(b.id)}</b>${sub ? `<span class="pc-sub">${esc(sub)}</span>` : ''}${chipHtml(KIND[b.status], headTxt)}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}${b.approx ? `<span class="pc-chip none" title="${esc(APPROX_TXT)}">근사 위치</span>` : ''}</div>
     <div class="pc-body">
     <div class="pc-big"><strong>${unitsTxt(b)}</strong>${b.bundleUnits ? `<small title="3D 상세 자료는 일부 호수(분양분 등)만 담고 있어 원장 계획 호수와 다릅니다">상세 자료 ${fmt(b.bundleUnits)}호</small>` : ''}${pidRow ? `<span class="pc-idl"><span class="sr">${pidRow[0]} </span>${pidRow[1]}</span>` : ''}</div>
     ${b.note ? `<details class="pc-note"><summary title="눌러서 설명 전체 보기">${esc(noteTxt(b.note))}</summary></details>` : ''}
     ${gridHtml([lg && lg.stage ? ['단계', `<span class="stg6"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => `<i class="${x === sn.now ? `on ${sn.k}` : ''}"></i>`).join('')}</span><span title="${esc(sn.now[4])}">${stName(sn.now)}</span>`] : null,
-      lt && lt.cls ? ['상태', `<b class="jd ${lg.cls}">${lt.cls}</b>${lt.late ? ` <small${lt.lateTitle ? ` title="${esc(dotDate(lt.lateTitle))}"` : ''}>${esc(lt.late)}</small>` : ''}`] : null,
-      lt && (lt.next || lt.pastDue) ? ['현재 예정', `${esc(lt.next || lt.due)}${lt.pastDue ? ' <b class="jd caution" title="예정일이 자료 기준일보다 앞서지만 실적 기록이 아직 없습니다. 상태는 바꾸지 않았습니다">예정일 지남</b>' : ''}${alt ? ` ${altMark(alt)}` : ''}`, !!alt] : alt ? ['현재 예정', `<span class="pc-none">—</span> ${altMark(alt)}`, true] : null,   // 원천 날짜 다름 표지가 붙으면 두 칸 폭
+      /* 상태 한 줄(판정·경과·예정일 지남을 합침, 색은 판정색 하나). 원천 날짜 다름은 그 줄 옆 표지(무채색). 길어지면 두 칸 폭 */
+      lt && lt.cls ? ['상태', `<b class="jd ${lg.cls}"${lt.pastDue ? ' title="예정일이 자료 기준일보다 앞서지만 실적 기록이 아직 없습니다. 상태는 그대로입니다"' : lt.lateTitle ? ` title="${esc(dotDate(lt.lateTitle))}"` : ''}>${esc(statusLine(lt))}</b>${alt ? ` ${altMark(alt)}` : ''}`, !!(alt || lt.pastDue || lt.late)] : null,
+      lt && (lt.next || lt.pastDue) ? ['현재 예정', `${esc(lt.next || lt.due)}${alt && !lt.cls ? ` ${altMark(alt)}` : ''}`, !!alt && !lt.cls] : alt && !(lt && lt.cls) ? ['현재 예정', `<span class="pc-none">—</span> ${altMark(alt)}`, true] : null,
       ...homeRows(b), b.progress ? ['공정률', `<span title="${esc(dotDate(b.progress.asOf))} 기준">${pctTxt(b.progress.rate)}</span>`] : null, ['층수', floorLine(b)], ['입주', esc(dotDate(b.moveIn))],
       b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`, true] : null])}
     ${sr && sr.level === 'warn' ? `<p class="pc-warn">▲ 학교 개교가 ${esc(sr.detail)}</p>` : ''}
@@ -1357,10 +1362,12 @@ function setLegend() {
 const HOME_T = REG.home && !REG.home.failed && REG.home.tally ? REG.home.tally : null;
 function homeSumTotal(t) {
   const lost = t.lostN ? `위치 미확보 ${t.lostN}건${t.lostU ? ` · ${fmt(t.lostU)}호` : ''}` : '';
-  return { main: fmt(t.u), n: t.n, unk: t.q, prog: true, map: lost ? `지도 표시 ${t.n - t.lostN}건(${lost})` : '',
+  return { main: fmt(t.u), n: t.n, unk: t.q, prog: true, map: lost ? `지도 표시 ${t.n - t.lostN}건(${lost})` : '', mapHead: `지도 표시 ${t.n - t.lostN}건`, lost,
     sub: `사업 원장의 진행(①계획~④모집) 사업 ${t.n}건의 계획 호수${t.q ? `(호수 미확인 ${t.q}건 제외)` : ''}, 수도권 개요·사업 화면과 같은 기준${lost ? `. 지도 표시 ${t.n - t.lostN}건, 위치가 없어 목록에만 있는 사업 ${lost.replace('위치 미확보 ', '')}` : ''}` };
 }
-let SUM_TOTAL = HOME_T ? homeSumTotal(HOME_T) : null;   // 머리 줄 합계(#hudSum)용: 세대수·단지 수와 보조 문장(title)
+let SUM_TOTAL = HOME_T ? homeSumTotal(HOME_T) : null;
+/* 위치 미확보 사업(원장에는 있으나 지도에 그릴 위치가 없음): 지도 위 점선 묶음 표지와 머리 줄 단추가 같은 목록(#lostPop)을 연다 */
+const LOST = REG.home && !REG.home.failed && Array.isArray(REG.home.unlocated) ? REG.home.unlocated : [];   // 머리 줄 합계(#hudSum)용: 세대수·단지 수와 보조 문장(title)
 /* 수도권: 원장에는 있지만 위치가 시군구 대표점뿐이거나 없어 지도에 그리지 않은 사업. 목록 끝에 이름만, 누르면 사업 상세 */
 /* ?project= 로 연 사업이 위치 미확보면 목록 맨 위에 한 줄 */
 const lostHtml = () => (RES && RES.lost ? `<li class="empty" id="lostNote">${esc(RES.lost.name)}: 위치 미확보 — 지도에 표시할 위치가 없어 시군구 전체를 보여 줍니다</li>` : '');
@@ -1368,7 +1375,7 @@ function unlocatedHtml() {
   const u = REG.home && Array.isArray(REG.home.unlocated) ? REG.home.unlocated : [];
   if (!u.length) return '';
   const cur = RES && RES.lost ? RES.lost.id : null;   // ?project= 로 연 위치 없는 사업은 강조한다
-  return `<li class="nearby"><b title="사업 원장에는 있으나 위치가 시군구 대표점뿐이거나 없어 지도에 그리지 않은 사업">위치 미확보 ${u.length}건</b><span class="nb-list">${u.map((x) => `<a href="${esc(projHref(x.id))}"${x.id === cur ? ' aria-current="true" style="font-weight:700;outline:2px solid currentColor;outline-offset:1px"' : ''} title="${esc([x.id, x.stage && stageOfCode(x.stage) ? stName(stageOfCode(x.stage)) : '', x.units ? `${fmt(x.units)}호` : '', x.loc ? `위치: ${x.loc}` : '위치 없음'].filter(Boolean).join(' · '))}">${esc(x.name)}</a>`).join('')}</span></li>`;
+  return `<li class="nearby"><b title="사업 원장에는 있으나 위치가 시군구 대표점뿐이거나 없어 지도에 그리지 않은 사업">위치 미확보 ${u.length}건</b><span class="nb-list">${u.map((x) => `<a href="${esc(projHref(x.id))}"${x.id === cur ? ' aria-current="true" style="font-weight:700;outline:2px solid currentColor;outline-offset:1px"' : ''} title="${esc([x.name, x.id, x.stage && stageOfCode(x.stage) ? stName(stageOfCode(x.stage)) : '', x.units ? `${fmt(x.units)}호` : '', x.loc ? `위치: ${x.loc}` : '위치 없음'].filter(Boolean).join(' · '))}">${esc(x.label || x.name)}</a>`).join('')}</span></li>`;
 }
 if (BLOCKS.length) {
   /* 합계 */
@@ -2009,7 +2016,7 @@ syncCompass();
 let hudRaf = 0; const hudPrev = {}, hudSz = {};
 function renderHudContent() {
   const host = $('#hudTags'); if (!host || !BLOCKS.length) return;
-  if (!host.children.length) host.innerHTML = BLOCKS.map((b) => `<button type="button" class="hudtag" data-id="${esc(b.id)}"></button>`).join('');
+  if (!host.children.length) host.innerHTML = BLOCKS.map((b) => `<button type="button" class="hudtag" data-id="${esc(b.id)}" hidden></button>`).join('');   // 처음 자리를 잡을 때(renderHud)까지 숨긴다: 막이 걷히기 전 약 4초 동안 지도 왼쪽 위(도구 줄 밑)에 여섯 장이 포개져 글자가 가렸다(2026-10-15 검사기 18건)
   const T = TH();
   BLOCKS.forEach((b) => {
     const el = byId(host, 'data-id', b.id), k = kindOf(b);
@@ -2030,7 +2037,7 @@ function scheduleHud() { if (revealed && !hudRaf) hudRaf = requestAnimationFrame
   if (window.ResizeObserver) new ResizeObserver(set).observe(bb);
   set();
 })();
-const HUD_EXCL = '.topbar, .rctl, .maplibregl-ctrl-bottom-right, #botbar, #cmd:not([hidden]), #optPanel:not([hidden]), #vMenu:not([hidden]), #panelToggle';
+const HUD_EXCL = '.topbar, .rctl, .maplibregl-ctrl-bottom-right, #botbar, #cmd:not([hidden]), #optPanel:not([hidden]), #vMenu:not([hidden]), #panelToggle, .lostpin, #lostPop:not([hidden]), #goNote:not([hidden]), #dynHint:not([hidden])';
 function renderHud() {
   hudRaf = 0;
   const hud = $('#hud'), on = (hudOn || cardsOn) && HAS_PR && BLOCKS.length && map.getZoom() < HUD_MAXZ;
@@ -2122,7 +2129,7 @@ function syncHudSum() {
   const side = HAS_INFRA && SUMM && SUMM.blocks.length ? `<button type="button" class="isum" data-act="infra" title="${esc(SUMM.headline)} · 누르면 기반시설 보기" aria-label="입주 전 점검 ${esc(SUMM.headline)}. 누르면 기반시설 보기">${infraSumHtml()}</button>` : '';
   $('#hudSum').classList.toggle('solo', !side);   // 점검 자료가 없는 지역은 합계 열만
   /* 문장(공급 예정 사업 n건, 호수 미확인 m건 제외)은 title 과 화면 낭독기용. 미확인은 값의 성격 표지라 짧게 남긴다 */
-  $('#hudSum').innerHTML = `<div class="hs-a"><div class="hs-total" title="${esc(tot.sub)}"><span class="sr">${esc(tot.sub)}</span><span aria-hidden="true"><b>${esc(tot.main)}</b><small>호</small><span class="hs-n">· ${tot.prog ? '진행 ' : ''}${tot.n}건${tot.unk ? ` · 미확인 ${tot.unk}건` : ''}</span></span>${tot.map ? `<span class="hs-map" aria-hidden="true">${esc(tot.map)}</span>` : ''}</div></div>`
+  $('#hudSum').innerHTML = `<div class="hs-a"><div class="hs-total" title="${esc(tot.sub)}"><span class="sr">${esc(tot.sub)}</span><span aria-hidden="true"><b>${esc(tot.main)}</b><small>호</small><span class="hs-n">· ${tot.prog ? '진행 ' : ''}${tot.n}건${tot.unk ? ` · 미확인 ${tot.unk}건` : ''}</span></span>${tot.map ? `<span class="hs-map">${tot.lost && LOST.length ? `<span aria-hidden="true">${esc(tot.mapHead)} · </span><button type="button" class="hs-lost" aria-expanded="${!$('#lostPop').hidden}" aria-controls="lostPop" title="위치가 없어 지도에 그리지 못한 사업 목록 열기">${esc(tot.lost)}</button>` : `<span aria-hidden="true">${esc(tot.map)}</span>`}</span>` : ''}</div></div>`
     + (side ? `<div class="hs-b">${side}</div>` : '');
 }
 function setCollapsed(on, { quiet = false } = {}) {
@@ -2133,7 +2140,63 @@ function setCollapsed(on, { quiet = false } = {}) {
   if (!quiet) { syncUrl(openId()); say(on ? '사이드바를 접었습니다.' : '사이드바를 펼쳤습니다.'); }
 }
 $('#panelToggle').addEventListener('click', () => setCollapsed(!$('.app').classList.contains('collapsed')));
-$('#hudSum').addEventListener('click', (e) => { if (e.target.closest('.isum')) openInfra(); });
+$('#hudSum').addEventListener('click', (e) => { if (e.target.closest('.isum')) openInfra(); const l = e.target.closest('.hs-lost'); if (l) toggleLost(l); });
+/* ---------- 위치 미확보 묶음(2026-10-15 평가 A7 P1) ----------
+   원장에는 있으나 지도에 그릴 위치가 없는 사업(검단구 지연 2건 등)이 지도에서 사라지지 않게, 시군구 경계 안 대표점에 점선 테두리 묶음 표지
+   '위치 미확보 n건 · 지연 m'을 단다. 표지나 머리 줄 '위치 미확보 n건'을 누르면(Enter·Space) 목록이 펼쳐지고(aria-expanded), 각 항목에서 사업 정보로 간다.
+   Esc·닫기·바깥 누름으로 닫고, 키보드로 열었으면 연 단추로 초점을 돌려준다. 꼬리표는 이 표지를 피한다(HUD_EXCL) */
+const CLS_WORD = { ok: '정상', caution: '주의', delay: '지연' };
+let lostOpener = null;
+const lostTriggers = () => [...document.querySelectorAll('.lostpin, .hs-lost')];
+function lostListHtml() {
+  const sm = window.RegionLoader.lostSummary(LOST), rank = { delay: 0, caution: 1 };
+  const rows = LOST.slice().sort((a, c) => (rank[a.cls] ?? 2) - (rank[c.cls] ?? 2) || String(a.id).localeCompare(String(c.id)));
+  return `<div class="lp-h"><b id="lostPopH">${esc(sm.text)}</b><button type="button" class="lp-x" aria-label="목록 닫기" title="닫기 (Esc)">×</button></div>`
+    + '<p class="lp-note">사업 원장에는 있으나 지도에 표시할 위치가 없거나 시군구 대표점뿐인 사업입니다.</p>'
+    + `<ul>${rows.map((x) => `<li><span class="lp-n"><b title="${esc(x.name)}">${esc(x.label || x.name)}</b>${x.cls ? ` <b class="jd ${esc(x.cls)}">${esc(CLS_WORD[x.cls] || x.cls)}</b>` : ''}</span>`
+      + `<small>${esc([x.stage && stageOfCode(x.stage) ? stName(stageOfCode(x.stage)) : '', x.units ? `${fmt(x.units)}호` : '호수 미확인', x.loc || '위치 없음'].filter(Boolean).join(' · '))}</small>`
+      + `<a href="${esc(projHref(x.id))}">사업 정보 보기 ›</a></li>`).join('')}</ul>`;
+}
+function placeLost() {
+  const pop = $('#lostPop'); if (pop.hidden || !lostOpener || !lostOpener.isConnected) return;
+  const r = lostOpener.getBoundingClientRect(), w = pop.offsetWidth, h = pop.offsetHeight;
+  const left = Math.max(8, Math.min(r.left, innerWidth - w - 8)), below = r.bottom + 8;
+  pop.style.left = `${Math.round(left)}px`;
+  pop.style.top = `${Math.round(below + h <= innerHeight - 8 ? below : Math.max(8, r.top - h - 8))}px`;
+}
+function setLost(open, opener, refocus) {
+  const pop = $('#lostPop');
+  if (open) {
+    pop.innerHTML = lostListHtml(); pop.hidden = false; lostOpener = opener; placeLost();
+    const first = pop.querySelector('a'); if (first) first.focus({ preventScroll: true });
+  } else {
+    pop.hidden = true;
+    const back = lostOpener && lostOpener.isConnected ? lostOpener : lostOpener && lostOpener.classList.contains('hs-lost') ? $('.hs-lost') : null;
+    lostOpener = null;
+    if (refocus && back) back.focus();
+  }
+  lostTriggers().forEach((t) => t.setAttribute('aria-expanded', String(open)));
+}
+function toggleLost(opener) { if (!$('#lostPop').hidden && lostOpener === opener) setLost(false, null, true); else setLost(true, opener); }
+if (LOST.length) {
+  const pin = document.createElement('button');
+  pin.type = 'button'; pin.className = 'lostpin';
+  pin.setAttribute('aria-expanded', 'false'); pin.setAttribute('aria-controls', 'lostPop');
+  pin.title = '위치가 없어 지도에 그리지 못한 사업 — 누르면 목록';
+  const sm = window.RegionLoader.lostSummary(LOST);
+  pin.innerHTML = `위치 미확보 ${sm.n}건${sm.delay ? ` <span class="lp-d">· 지연 ${sm.delay}</span>` : ''}`;
+  pin.addEventListener('click', (e) => { e.stopPropagation(); toggleLost(pin); });
+  const at = window.RegionLoader.lostAnchor(LOST, RES && RES.shape, START.center);
+  if (at) new maplibregl.Marker({ element: pin, anchor: 'center', opacity: '1', opacityWhenCovered: '1' }).setLngLat(at).addTo(map);   // 지형에 가려도 흐리지 않는다
+  pin.setAttribute('aria-label', `${sm.text}. 누르면 목록`);   // Marker 가 붙이는 'Map marker' 대신
+  $('#lostPop').addEventListener('click', (e) => { if (e.target.closest('.lp-x')) setLost(false, null, true); });
+  document.addEventListener('keydown', (e) => {   // 잡는 단계(capture)에서 먼저 받아 카드 Esc 처리보다 앞선다
+    if (e.key !== 'Escape' || $('#lostPop').hidden) return;
+    e.preventDefault(); e.stopPropagation(); setLost(false, null, true);
+  }, true);
+  document.addEventListener('pointerdown', (e) => { if (!$('#lostPop').hidden && !e.target.closest('#lostPop, .lostpin, .hs-lost')) setLost(false, null, false); }, true);
+  map.on('move', placeLost); addEventListener('resize', placeLost);
+}
 syncHudSum();
 setCollapsed(q.get('panel') !== '1', { quiet: true });   // 데스크톱은 접힌 채 열린다(주소에 panel=1 이면 펼침, 2026-10-10 피드백·문서 5.6c). 모바일은 하단 시트가 처음부터 작게 열려 있다
 renderHudContent();

@@ -1,7 +1,7 @@
 /* 지도 첫 화면 '수도권 개요'(/map · /map?sido=11|28|41). 상세 지도(app.js·지역 자료·지형·3D 건물)를 부르지 않는 가벼운 모듈이다.
    자료는 지도 페이지가 서버에서 센 window.OVERVIEW(lib/board/metro-overview.ts — 사업 화면·지역 공급과 같은 계산)이고, 여기서는 그리기만 한다.
    - 면: 시군구 경로(region-map 투영 정수)를 경위도로 되돌려 MapLibre 채움 면으로 그린다(배경 지도 타일 없음).
-   - 지표 3개(진행 사업 호수 · 지연 사업 · 앞으로 12개월 준공·입주)를 한 색상 명도 5단계(분위수 경계)로 칠하고, 0 은 중립 색.
+   - 지표 3개(진행 사업 호수 · 지연 사업 · 앞으로 12개월 준공)를 한 색상 명도 5단계(분위수 경계)로 칠하고, 0 은 중립 색. 지연만 빨강(bad) 단계(<html data-ov-metric="d">), 나머지는 파랑.
    - 시군구를 누르면(또는 순위 목록에서 Enter) 그 시군구로 0.6초 확대한 뒤 상세 지도 /map?sgg=<코드> 로 넘어간다. 구가 있는 경기 시는 작은 메뉴로 구를 고른다.
    순수 함수는 node --test 로 시험한다(tests/js/map-overview.test.cjs). DOM 은 mount 에서만 만진다. */
 (function (root, factory) {
@@ -101,7 +101,7 @@
   const METRICS = [
     { id: 'u', name: '진행 사업 호수', short: '진행 호수', unit: '호' },
     { id: 'd', name: '지연 사업', short: '지연', unit: '건' },
-    { id: 'a', name: '앞으로 12개월 준공·입주', short: '12개월 준공·입주', unit: '호' },
+    { id: 'a', name: '앞으로 12개월 준공', short: '12개월 준공', unit: '호' },
   ];
   const valOf = (v, m) => (v ? v[m] || 0 : 0);
   const fmt = (n) => Math.round(n).toLocaleString('en-US');
@@ -111,7 +111,7 @@
     const m = doc && doc.months;
     if (metric === 'u') return '계획부터 모집까지(①~④) 진행 중인 사업의 계획 호수를 더한 값입니다. 호수가 아직 정해지지 않은 사업은 따로 건수로 셉니다. 사업 화면과 같은 기준입니다.';
     if (metric === 'd') return '예정일을 6개월 넘게 넘긴 사업 수입니다. 12개월 넘게 넘긴 장기 지연도 넣습니다. 사업 화면의 지연(장기 포함)과 같습니다.';
-    return `${m ? `${ymDot(m[0])}~${ymDot(m[1])}` : '앞으로 12개월'}에 공사를 마치거나 입주할 예정인 사업의 호수입니다. 한 사업이 준공과 입주를 모두 앞두면 두 번 셉니다. 지역 공급 화면은 모집 예정까지 함께 셉니다.`;
+    return `${m ? `${ymDot(m[0])}~${ymDot(m[1])}` : '앞으로 12개월'}에 준공(공사 완료) 예정인 사업의 호수입니다. 사업 화면·지역 공급 화면의 준공 예정과 같은 기준입니다. 같은 기간 입주 예정은 마우스를 올리면 따로 보입니다.`;
   }
   /* 2자리 유효숫자로 올림(경계값을 읽기 쉽게) */
   function nice(v) {
@@ -233,12 +233,15 @@
       const m = METRICS.find((x) => x.id === S.metric);
       const vals = units.map((u) => valOf(u.v, S.metric));
       ups = breaksOf(vals);
+      doc.documentElement.setAttribute('data-ov-metric', S.metric);   // 면·범례·라벨 색 단계(지연만 빨강, app.css)
       mbox.querySelectorAll('button[data-m]').forEach((b) => { const on = b.dataset.m === S.metric; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
       const scope = S.sido ? (D.sido || []).find((s) => s.code === S.sido) : null, v = scope ? scope.v : D.total;
       $('ovTotalQ').textContent = `${scope ? scope.name : '수도권'} ${m.name}`;
       defBtn.title = defOf(S.metric, D); defBtn.setAttribute('aria-label', `${m.name} 정의 보기`); defP.textContent = defOf(S.metric, D);
       $('ovTotal').innerHTML = D.ok && v ? `<b class="ov-big">${fmt(valOf(v, S.metric))}</b><span class="ov-unit">${m.unit}</span>` : '<b class="ov-big none">—</b>';
-      $('ovTotalSub').textContent = !D.ok || !v ? '' : S.metric === 'u' ? `진행 ${fmt(v.n)}건${v.q ? ` · 호수 미확인 ${fmt(v.q)}건` : ''}` : S.metric === 'd' ? `전체 사업 ${fmt(v.st.reduce((a, b) => a + b, 0))}건 중` : `예정 ${fmt(v.an)}건`;
+      $('ovTotalSub').textContent = !D.ok || !v ? '' : S.metric === 'u' ? `진행 ${fmt(v.n)}건${v.q ? ` · 호수 미확인 ${fmt(v.q)}건` : ''}` : S.metric === 'd' ? `전체 사업 ${fmt(v.st.reduce((a, b) => a + b, 0))}건 중` : `준공 예정 ${fmt(v.an)}건`;
+      /* 12개월: 대표는 준공. 입주는 마우스 올림 설명(title)에만 분해로 둔다 */
+      $('ovTotal').title = D.ok && v && S.metric === 'a' ? `준공 ${fmt(v.a)}호(${fmt(v.an)}건) · 같은 기간 입주 ${fmt(v.mi || 0)}호(${fmt(v.mn || 0)}건) — 입주는 더하지 않습니다` : '';
       $('ovCards').innerHTML = (D.sido || []).map((s) => `<button type="button" class="ov-card" data-s="${s.code}" aria-pressed="${S.sido === s.code}" title="${esc(`${s.name}로 맞춥니다. 다시 누르면 수도권 전체`)}">`
         + `<span class="ov-cn">${esc(s.name)}</span><span class="ov-cv">${D.ok && s.v ? `${fmt(valOf(s.v, S.metric))}<small>${m.unit}</small>` : '—'}</span>${D.ok && s.v ? bandHtml(s.v.st) : ''}</button>`).join('');
       const list = rankOf(units, S.metric, S.sido);
@@ -293,7 +296,7 @@
     function paint() {
       const vals = new Map(units.map((u) => [u.code, valOf(u.v, S.metric)]));
       for (const f of geo.features) { f.properties.c = D.ok ? classOf(vals.get(f.properties.code), ups) : 0; f.properties.dim = S.sido && f.properties.s !== S.sido ? 1 : 0; }
-      if (map && map.getSource('ov')) map.getSource('ov').setData(geo);
+      if (map && map.getSource('ov')) { map.setPaintProperty('ov-fill', 'fill-color', fillExpr()); map.getSource('ov').setData(geo); }
       placeLabels(true);
     }
     function theme() {
@@ -354,7 +357,7 @@
       tip.innerHTML = `<b>${esc(`${SIDO_SHORT[u.s]} ${u.name}`)}</b>`
         + (D.ok && v ? `<span class="ov-tv">${esc(m.name)} <strong>${fmt(valOf(v, S.metric))}${m.unit}</strong></span>`
           + `<span class="ov-ts">진행 ${fmt(v.n)}건 · 진행 호수 ${fmt(v.u)}호${v.q ? ` · 호수 미확인 ${fmt(v.q)}건` : ''}</span>${bandHtml(v.st)}`
-          + `<span class="ov-ts">지연 ${fmt(v.d)}건 · 12개월 준공·입주 ${fmt(v.a)}호</span>` : '<span class="ov-ts">수치 없음</span>')
+          + `<span class="ov-ts">지연 ${fmt(v.d)}건 · 12개월 준공 ${fmt(v.a)}호(${fmt(v.an)}건) · 입주 ${fmt(v.mi || 0)}호(${fmt(v.mn || 0)}건)</span>` : '<span class="ov-ts">수치 없음</span>')
         + `<span class="ov-th">${u.gu && u.gu.length ? '누르면 구를 고릅니다' : '누르면 상세 지도로'}</span>`;
       tip.hidden = false;
       const W = $('ovMap').clientWidth, H = $('ovMap').clientHeight, w = tip.offsetWidth, h = tip.offsetHeight;

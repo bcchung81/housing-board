@@ -1,9 +1,10 @@
 /* 지도 첫 화면 '수도권 개요'(/map, /map?sido=11|28|41)의 값(순수 함수 — 파일을 읽지 않는다. Node 시험이 그대로 부른다: tests/js/map-overview.test.cjs).
    - 면: data/board/region-map.json 의 시군구 67곳(서울 25 · 인천 11 · 경기 31 — 경기는 시 단위). 경로(투영 정수)는 그대로 넘기고 지도 쪽(assets/js/overview.js)이 경위도 GeoJSON 으로 되돌린다.
-   - 값: 사업 화면(/projects)과 같은 목록 행(getProjectsIndex → rowsOf)과 지역 공급(/region)과 같은 앞으로 12개월 예정(region-calendar.json)에서 센다(지역 공급은 모집·준공·입주, 개요는 준공·입주만).
+   - 값: 사업 화면(/projects)과 같은 목록 행(getProjectsIndex → rowsOf)과 지역 공급(/region)과 같은 앞으로 12개월 예정(region-calendar.json)에서 센다(지역 공급은 모집·준공·입주, 개요는 준공이 대표이고 입주는 마우스 올림 분해로만).
      진행 사업 호수 = 현재 단계가 ①계획~④모집(리본 칸 0~3)인 사업의 계획 호수 합(호수 미확인은 건수로 따로)
      지연 사업 = 사업 화면의 '지연(장기 포함)' = 판정 지연(현재 예정일 경과 6개월 이상, 12개월 이상 장기 지연 포함)
-     앞으로 12개월 준공·입주 = 지역 공급의 '앞으로 12개월'에서 준공·입주 예정만(종류마다 사업당 하나 — 한 사업이 둘 다면 두 번, 지역 공급 화면 합계와 같다)
+     앞으로 12개월 준공 = 지역 공급의 '앞으로 12개월'에서 준공(COMPLETION) 예정만(사업당 하나 — 사업·지역 공급 화면의 대표 '준공 예정'과 같은 정의, 2026-10-15 결정)
+     앞으로 12개월 입주 = 같은 기간 입주(MOVE_IN) 예정(분해용 — 준공과 더하지 않는다)
    - 코드: 원장 시군구 코드 → 면. 서울·인천은 코드 그대로, 경기는 시 단위로 접는다(앞 4자리 + '0': 41281 고양시 덕양구 → 41280 고양시). */
 import type { ProjectRow } from './projects-view';
 import type { CalendarDoc, RegionMapDoc } from './region';
@@ -38,9 +39,9 @@ export function guOf(unit: string): string[] {
   return Object.keys(METRO_AREAS).filter((c) => c !== unit && unitOf(c) === unit).sort();
 }
 
-/* 값 한 묶음: u = 진행 사업 호수, q = 진행 사업 중 호수 미확인 건수, n = 진행 사업 수, d = 지연 사업 수(장기 포함), a = 앞으로 12개월 준공·입주 호, an = 그 예정 수,
+/* 값 한 묶음: u = 진행 사업 호수, q = 진행 사업 중 호수 미확인 건수, n = 진행 사업 수, d = 지연 사업 수(장기 포함), a = 앞으로 12개월 준공 호, an = 그 예정 수, mi = 같은 기간 입주 호, mn = 그 예정 수,
    st = 현재 단계(①~⑥)별 사업 수 */
-export type OvVals = { u: number; q: number; n: number; d: number; a: number; an: number; st: number[] };
+export type OvVals = { u: number; q: number; n: number; d: number; a: number; an: number; mi: number; mn: number; st: number[] };
 export type OvGu = { code: string; name: string; v: OvVals | null };
 export type OvUnit = { code: string; s: string; name: string; d: string; v: OvVals | null; gu: OvGu[] };
 export type OverviewDoc = {
@@ -48,9 +49,9 @@ export type OverviewDoc = {
   total: OvVals | null; sido: { code: string; name: string; v: OvVals | null }[]; units: OvUnit[]; view: Record<string, [number, number, number, number]>;
 };
 
-const zero = (): OvVals => ({ u: 0, q: 0, n: 0, d: 0, a: 0, an: 0, st: [0, 0, 0, 0, 0, 0] });
+const zero = (): OvVals => ({ u: 0, q: 0, n: 0, d: 0, a: 0, an: 0, mi: 0, mn: 0, st: [0, 0, 0, 0, 0, 0] });
 function add(t: OvVals, x: OvVals) {
-  t.u += x.u; t.q += x.q; t.n += x.n; t.d += x.d; t.a += x.a; t.an += x.an;
+  t.u += x.u; t.q += x.q; t.n += x.n; t.d += x.d; t.a += x.a; t.an += x.an; t.mi += x.mi; t.mn += x.mn;
   x.st.forEach((v, i) => { t.st[i] += v; });
 }
 /* 진행 = 리본 칸 0~3(①계획 ②인허가 ③착공 ④모집) */
@@ -72,7 +73,8 @@ export function valuesBySgg(rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | '
     if (e.type !== 'COMPLETION' && e.type !== 'MOVE_IN') continue;
     const c = byName.get(e.sgg);
     if (!c) continue;
-    const v = at(c); v.a += e.units; v.an += 1;
+    const v = at(c);
+    if (e.type === 'COMPLETION') { v.a += e.units; v.an += 1; } else { v.mi += e.units; v.mn += 1; }
   }
   return out;
 }
@@ -93,7 +95,7 @@ export function metroOverview(map: RegionMapDoc, data: { rows: Pick<ProjectRow, 
       for (const [c, x] of by) if (unitOf(c) === code) add(v, x);
       /* 시 단위 코드로만 적힌 사업(구 미정)이 있으면 구 메뉴 맨 끝에 시 자체를 둔다 */
       const self = by.get(code);
-      if (gu.length && self && (self.n || self.d || self.an || self.st.some(Boolean))) gu.push({ code, name: `${g.n}(구 미정)`, v: self });
+      if (gu.length && self && (self.n || self.d || self.an || self.mn || self.st.some(Boolean))) gu.push({ code, name: `${g.n}(구 미정)`, v: self });
     }
     return { code, s: g.s, name: g.n, d: g.d, v, gu };
   });

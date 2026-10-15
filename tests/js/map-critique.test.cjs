@@ -41,10 +41,10 @@ test('지역 선택기: 수도권 시도 목록이 먼저, 같은 곳의 상세 
   assert.match(mount({ slug: '' }, { sgg: '41110' }), /<option value="sgg:41110" selected>수원시\(구 미정\) · 3건<\/option>/);
 });
 
-test('사업 카드 제목은 원장 사업 이름(사업 화면 목록·서랍과 같은 이름, 길면 두 줄 말줄임 + title), 블록 이름은 부제', () => {
+test('사업 카드 제목은 꼬리표·목록과 같은 짧은 이름(b.id, 2026-10-15 이름 통일), 원장 사업 이름은 부제와 title(길면 두 줄 말줄임)', () => {
   assert.match(app, /const projName = \(b\) => String\(\(b\.ledger && b\.ledger\.name\) \|\| b\.name \|\| b\.id\);/);
   const fn = /function blockPopup\([\s\S]*?\n\}\n/.exec(app)[0];
-  assert.match(fn, /const nm = projName\(b\), sub = \[nm !== b\.label \? b\.label : ''/);
+  assert.match(fn, /const nm = projName\(b\), sub = \[nm !== b\.id \? nm : ''/);
   assert.match(fn, /<b class="pc-t" title="\$\{esc\(\[nm, about\]/);
   assert.match(css, /\.pc-h \.pc-t\{[^}]*-webkit-line-clamp:2[^}]*overflow:hidden/);
   const data = JSON.parse(read('data/board/home-map/41113.json')).projects.find((r) => r.id === 'PRJ-41113-0035');
@@ -220,10 +220,10 @@ test('계양 번들: 카드·꼬리표·패널 호수는 원장 계획 호수(A3
   assert.ok(r.home.tally.u > 0);
 });
 
-test('개요 12개월 지표 설명은 실제 범위(준공·입주, 모집은 지역 공급만)로 적는다', () => {
+test('개요 12개월 지표 설명은 준공 기준(사업·지역 공급 화면의 준공 예정과 같은 정의), 입주는 따로 보인다고 적는다', () => {
   const ov = fs.readFileSync(path.join(__dirname, '../../assets/js/overview.js'), 'utf8');
-  assert.doesNotMatch(ov, /지역 공급 화면과 같은 기준/);
-  assert.match(ov, /지역 공급 화면은 모집 예정까지 함께 셉니다/);
+  assert.match(ov, /준공\(공사 완료\) 예정인 사업의 호수입니다\. 사업 화면·지역 공급 화면의 준공 예정과 같은 기준입니다\./);
+  assert.doesNotMatch(ov, /준공·입주/);
 });
 
 test('D1: 정상 판정인데 예정일이 기준일보다 앞서면 상태는 그대로, "예정일 지남" 표지만(현재 예정 줄·준공 임박 표지)', () => {
@@ -354,4 +354,103 @@ test('합계 세 번 표시 정리: 원장 진행 합계(SUM_TOTAL.main)는 머�
   assert.match(code, /\$\('#sumTotal'\)\.innerHTML = HOME_T\s*\? `<span class="cnt">\$\{mapPart\}/);
   const pill = noComments(read('assets/js/region.js')).match(/사업 원장 \$\{r\.home\.total\}건 · 지도 \$\{r\.home\.drawn\}건`/);
   assert.ok(pill && !/units|호/.test(pill[0]), '알약은 건수만');
+});
+
+/* ---- 7차 평가(2026-10-15, 27/40) 지도 쪽 고침: 지연 빨강·위치 미확보 묶음·카드 상태 한 줄·꼬리표 가림·Esc 초점·지도 → 서랍 계약·맥동 없음·이름 통일·12개월 준공 ---- */
+test('A7-1 지연 지표: 개요는 지연만 빨강(bad) 명도 5단계(라이트·다크), 라벨 4.5:1 이상·밝기 순서, overview.js 가 <html data-ov-metric> 로 고르고 면 색을 다시 칠한다', () => {
+  const block = (sel) => { const m = new RegExp(`${sel.replace(/[[\]().:"=]/g, (c) => `\\${c}`)}\\{([^}]*)\\}`).exec(css); assert.ok(m, sel); return Object.fromEntries([...m[1].matchAll(/(--ov-[\w-]+):(#[0-9A-Fa-f]{6})/g)].map((x) => [x[1], x[2]])); };
+  const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+  for (const [sel, dark] of [['html[data-ov-metric="d"]', true], ['html[data-map-shell][data-ov-metric="d"]:not(.dark)', false]]) {
+    const v = block(sel);
+    for (let i = 1; i <= 5; i++) {
+      const [r, g, b] = rgb(v[`--ov-${i}`]);
+      assert.ok(r > g && r > b, `${sel} 단계 ${i} ${v[`--ov-${i}`]} 는 빨강 계열`);
+      assert.ok(ratio(v[`--ov-${i}`], v[`--ov-ink-${i}`]) >= 4.5, `${sel} 단계 ${i} 글자 대비 ${ratio(v[`--ov-${i}`], v[`--ov-ink-${i}`]).toFixed(2)}`);
+    }
+    const L = [1, 2, 3, 4, 5].map((i) => lum(v[`--ov-${i}`]));
+    assert.ok(L.every((x, i) => !i || (dark ? x > L[i - 1] : x < L[i - 1])), `${sel}: 값이 클수록 ${dark ? '밝게' : '짙게'}`);
+  }
+  assert.match(ovjs, /doc\.documentElement\.setAttribute\('data-ov-metric', S\.metric\)/);
+  assert.match(ovjs, /map\.setPaintProperty\('ov-fill', 'fill-color', fillExpr\(\)\); map\.getSource\('ov'\)\.setData\(geo\);/, '지표를 바꾸면 팔레트도 다시');
+});
+
+test('A7-1 위치 미확보 묶음: 시군구 경계 안 점선 표지(건수·지연)와 목록(키보드·aria-expanded·Esc 로 닫고 초점 돌려줌), 머리 줄 단추도 같은 목록', () => {
+  const g = R.homeToProjects([JSON.parse(read('data/board/home-map/28290.json'))]), y = R.homeToProjects([JSON.parse(read('data/board/home-map/11170.json'))]);
+  assert.deepEqual(R.lostSummary(g.unlocated), { n: 3, delay: 2, text: '위치 미확보 3건 · 지연 2' }, '검단구: 지연 2건 모두 위치 미확보');
+  assert.deepEqual(R.lostSummary(y.unlocated), { n: 4, delay: 0, text: '위치 미확보 4건' }, '용산구');
+  assert.deepEqual(R.lostAnchor(y.unlocated, null, [0, 0]), [126.980323, 37.531042], '대표점(loc.at)이 있으면 그 점');
+  const sq = { type: 'Polygon', coordinates: [[[126.6, 37.5], [126.7, 37.5], [126.7, 37.6], [126.6, 37.6], [126.6, 37.5]]] };
+  const a = R.lostAnchor(g.unlocated, sq, [126.65, 37.55]), d = Math.hypot((a[0] - 126.65) * Math.cos(37.55 * Math.PI / 180), a[1] - 37.55) * 111320;
+  assert.ok(a[0] > 126.6 && a[0] < 126.7 && a[1] > 37.5 && a[1] < 37.6 && d >= 300 && d < 600, `경계 안, 지도 시작점에서 300 m 남짓(${Math.round(d)} m)`);
+  assert.match(html, /<div class="lostpop" id="lostPop" role="dialog" aria-labelledby="lostPopH" hidden><\/div>/);
+  const code = noComments(app);
+  assert.match(code, /pin\.type = 'button'; pin\.className = 'lostpin';/);
+  assert.match(code, /pin\.setAttribute\('aria-expanded', 'false'\); pin\.setAttribute\('aria-controls', 'lostPop'\);/);
+  assert.match(code, /new maplibregl\.Marker\(\{ element: pin, anchor: 'center', opacity: '1', opacityWhenCovered: '1' \}\)/);
+  assert.match(code, /class="hs-lost" aria-expanded="\$\{!\$\('#lostPop'\)\.hidden\}" aria-controls="lostPop"/);
+  assert.match(code, /lostTriggers\(\)\.forEach\(\(t\) => t\.setAttribute\('aria-expanded', String\(open\)\)\)/);
+  assert.match(code, /if \(e\.key !== 'Escape' \|\| \$\('#lostPop'\)\.hidden\) return;\s*e\.preventDefault\(\); e\.stopPropagation\(\); setLost\(false, null, true\);\s*\}, true\);/, 'Esc 는 잡는 단계에서 받아 닫고 연 단추로 초점');
+  assert.match(code, /if \(refocus && back\) back\.focus\(\);/);
+  assert.match(code, /<a href="\$\{esc\(projHref\(x\.id\)\)\}">사업 정보 보기 ›<\/a>/);
+  assert.match(css, /\.lostpin\{[^}]*border:1\.5px dashed/);
+});
+
+test('A7-2 카드 상태 한 줄: 판정·경과·예정일 지남을 한 줄(판정색 하나)로, 원천 날짜 다름은 그 옆 무채색 표지, 머리 칩은 단계 이름', () => {
+  const t = R.ledgerTexts({ cls: 'ok', referenceDate: '2026-10-13', next: { eventType: 'COMPLETION', planned: '2026-10-11' } });
+  assert.equal(R.statusLine(t), '정상 · 예정일 지남(경과 0개월, 주의는 1개월부터)');
+  assert.equal(R.statusLine(R.ledgerTexts({ cls: 'delay', referenceDate: '2026-10-13', overdue: { eventType: 'COMPLETION', planned: '2026-01-01', months: 9 } })), '지연 · 준공 예정 경과 9개월');
+  const fn = noComments(/function blockPopup\([\s\S]*?\n\}\n/.exec(app)[0]);
+  assert.match(fn, /\['상태', `<b class="jd \$\{lg\.cls\}"[\s\S]*?>\$\{esc\(statusLine\(lt\)\)\}<\/b>\$\{alt \? ` \$\{altMark\(alt\)\}` : ''\}`/);
+  assert.doesNotMatch(fn, /jd caution"[^>]*>예정일 지남/, "'예정일 지남' 경고색 표지는 따로 없다");
+  assert.match(fn, /chipHtml\(KIND\[b\.status\], headTxt\)/);
+  assert.match(app, /const altMark = \(a\) => `<b class="jd alt"/);
+  assert.match(css, /\.jd\.alt\{color:var\(--mute\)/);
+});
+
+test('A7-3 꼬리표 가림: 꼬리표는 처음 자리를 잡을 때까지 숨기고(도구 줄 밑 포개짐 없음), 이동 중 띠·위치 미확보 표지·목록도 피한다', () => {
+  assert.match(app, /class="hudtag" data-id="\$\{esc\(b\.id\)\}" hidden><\/button>/);
+  assert.match(app, /HUD_EXCL = [^\n]*\.lostpin, #lostPop:not\(\[hidden\]\), #goNote:not\(\[hidden\]\), #dynHint:not\(\[hidden\]\)'/);
+  assert.match(app, /if \(placed\.some\(\(e\) => hit\(r, e\)\)\) \{/, '먼저 놓인 꼬리표와 겹치면 숨김(기존 규칙)');
+});
+
+test('A7-4 Esc 초점: 꼬리표에서 연 카드를 닫으면 시점이 돌아가는 동안에도 바로 목록 단추·지도로 초점, 다 돌아가면 꼬리표로', () => {
+  const h = /document\.addEventListener\('keydown', \(e\) => \{\n  if \(e\.key !== 'Escape' \|\| !popup[\s\S]*?\n\}\);/.exec(app)[0];
+  const now = h.indexOf('cardBackTo(go.id).focus({ preventScroll: true })'), later = h.indexOf("map.once('moveend'");
+  assert.ok(now > 0 && now < later, '닫는 즉시 초점 → moveend 뒤 꼬리표');
+});
+
+test('A7-5 지도 → 서랍 계약: 사업 정보 링크는 /projects?id=<id>&from=map&sgg=<시군구>(코드로 연 시군구, 없으면 id 의 시군구)', () => {
+  const src = /const projHref = [^\n]*\n/.exec(app)[0];
+  const f = (RES) => new Function('RES', `${src}; return projHref;`)(RES);
+  assert.equal(f(null)('PRJ-41281-0092'), '/projects?id=PRJ-41281-0092&from=map&sgg=41281');
+  assert.equal(f({ sgg: '41280' })('PRJ-41281-0092'), '/projects?id=PRJ-41281-0092&from=map&sgg=41280');
+  assert.equal(f(null)('techno-A3'), '/projects?id=techno-A3&from=map');
+});
+
+test('A7-6 맥동 없음: 이동 중 표시는 무한 반복 애니메이션이 없고(한 번 차는 막대·멈춘 점), 도구 줄은 안쪽 여백', () => {
+  assert.doesNotMatch(css, /animation:going|@keyframes going/);
+  assert.match(css, /\.gonote::after\{[^}]*animation:gofill 2\.2s [^};]*both\}/);
+  assert.doesNotMatch(/\.gonote::after\{[^}]*\}/.exec(css)[0], /infinite/);
+  assert.match(css, /@media \(prefers-reduced-motion:reduce\)\{\.gonote::after\{animation:none\}\}/);
+  assert.match(css, /\.tools\{[^}]*gap:2px;padding:3px/);
+});
+
+test('A7-7 이름 통일: 카드 제목·꼬리표·사이드바 목록은 같은 짧은 이름(b.id), 위치 미확보 목록은 짧은 이름(label), 원래 이름은 title', () => {
+  const fn = /function blockPopup\([\s\S]*?\n\}\n/.exec(app)[0];
+  assert.match(fn, /style="color:inherit">\$\{esc\(b\.id\)\}<\/a>` : esc\(b\.id\)\}<\/b>/);
+  assert.match(app, /<span class="ht-h"><b>\$\{esc\(b\.id\)\}<\/b>/);
+  assert.match(app, /<b title="[^"]*projName\(b\)[^"]*">\$\{esc\(b\.id\)\} /);
+  assert.match(app, /<b title="\$\{esc\(x\.name\)\}">\$\{esc\(x\.label \|\| x\.name\)\}<\/b>/);
+  const g = R.homeToProjects([JSON.parse(read('data/board/home-map/41281.json'))]);
+  const s3 = g.projects.find((p) => p.projectId === 'PRJ-41281-0092');
+  assert.equal(s3.label, '고양창릉 S3'); assert.equal(s3.name, '고양창릉 S-03');   // 꼬리표·목록·카드 제목 = '고양창릉 S3', 원장 이름 '고양창릉 S-03' 은 부제·title
+});
+
+test('A7-8 개요 12개월: 대표는 준공(COMPLETION)만, 입주는 마우스 올림 분해(더하지 않음)', () => {
+  const O = require('../../lib/board/metro-overview.ts');
+  assert.equal(OV.METRICS.find((m) => m.id === 'a').name, '앞으로 12개월 준공');
+  const cal = { sido: { '11': [{ type: 'COMPLETION', sgg: '서울특별시 종로구', units: 100 }, { type: 'MOVE_IN', sgg: '서울특별시 종로구', units: 50 }, { type: 'SUPPLY_NOTICE', sgg: '서울특별시 종로구', units: 30 }] } };
+  const v = O.valuesBySgg([], cal, { 11110: '서울특별시 종로구' }).get('11110');
+  assert.deepEqual([v.a, v.an, v.mi, v.mn], [100, 1, 50, 1]);
+  assert.match(ovjs, /12개월 준공 \$\{fmt\(v\.a\)\}호\(\$\{fmt\(v\.an\)\}건\) · 입주 \$\{fmt\(v\.mi \|\| 0\)\}호/);
 });

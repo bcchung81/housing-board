@@ -213,7 +213,7 @@ test('경량 번들 표가 없으면(옛 정적 페이지) 경량 번들을 부�
 
 /* ---------- 지도 → 화면 연결점·표지 ---------- */
 test('연결점: 카드의 사업 id·이름과 위치 미확보 목록은 사업 화면 서랍(/projects?id=)으로 문서 이동한다(옛 /project/ 아님)', () => {
-  assert.match(app, /const projHref = \(id\) => `\/projects\?id=\$\{encodeURIComponent\(id\)\}`/);
+  assert.match(app, /const projHref = \(id\) => \{ const sgg = [^\n]*return `\/projects\?id=\$\{encodeURIComponent\(id\)\}&from=map\$\{sgg \? `&sgg=\$\{sgg\}` : ''\}`; \};/);   // 2026-10-15 지도 → 서랍 계약(from=map·sgg)
   assert.match(app, /const pidLink = \(id\) => `<a class="pc-pid" href="\$\{esc\(projHref\(id\)\)\}"/);
   assert.match(app, /\$\{linkId \? `<a href="\$\{esc\(projHref\(linkId\)\)\}"/);
   assert.match(app, /function unlocatedHtml\(\)[\s\S]*<a href="\$\{esc\(projHref\(x\.id\)\)\}"\$\{x\.id === cur \? ' aria-current="true"/);

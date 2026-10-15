@@ -23,7 +23,7 @@ const AREAS = require('../../schemas/ledger-2026-10/tables/areas.json').rows;
 
 const rows = V.rowsOf(MAP.bySgg, IDX.projects, IDX.sgg);
 const DOC = O.metroOverview(RM, { rows, sggNames: IDX.sgg, calendar: CAL, referenceDate: MAP.referenceDate });
-const KEYS = ['u', 'q', 'n', 'd', 'a', 'an'];
+const KEYS = ['u', 'q', 'n', 'd', 'a', 'an', 'mi', 'mn'];
 
 test('경계: region-map 시군구 67곳(서울 25 · 인천 11 · 경기 31)이 모두 유효한 경위도 면이고 수도권 범위 안에 있다', () => {
   assert.equal(DOC.units.length, 67);
@@ -86,7 +86,7 @@ test('합: 시군구 값의 합 = 시도 합 = 수도권 합(지표 모두), 구
   assert.equal(DOC.total.st.reduce((a, b) => a + b, 0), rows.filter((r) => V.isMetro(r.sgg)).length, '단계 띠 = 수도권 사업 전부');
 });
 
-test('같은 숫자: 진행 사업 호수·지연 건수는 사업 화면 수도권 범위(applyFilters metro), 12개월 준공·입주는 지역 공급 수도권과 같은 정의로 센 값과 같다', () => {
+test('같은 숫자: 진행 사업 호수·지연 건수는 사업 화면 수도권 범위(applyFilters metro), 12개월 준공은 지역 공급 수도권의 준공(COMPLETION) 예정과 같고 입주는 따로 센다(2026-10-15 결정: 대표는 준공)', () => {
   const metro = V.applyFilters(rows, { metro: true });
   const prog = metro.filter((r) => r.board <= 3);
   assert.equal(DOC.total.u, prog.reduce((s, r) => s + (r.units > 0 ? r.units : 0), 0));
@@ -97,15 +97,17 @@ test('같은 숫자: 진행 사업 호수·지연 건수는 사업 화면 수도
   /* 사업 화면 핵심 질문 '어떤 사업이 늦어지는가'(수도권 기본 범위)의 값과도 같다 */
   const ctx = { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, sidoName: (c) => c, sggName: (c) => c };
   assert.equal(V.questionsOf(rows, { metro: true }, ctx).find((q) => q.q === '어떤 사업이 늦어지는가').value, String(late));
-  const ahead = RG.aheadAll(CAL, 'metro', (c) => c).filter((e) => e.type === 'COMPLETION' || e.type === 'MOVE_IN');
+  const ahead = RG.aheadAll(CAL, 'metro', (c) => c).filter((e) => e.type === 'COMPLETION'), movein = RG.aheadAll(CAL, 'metro', (c) => c).filter((e) => e.type === 'MOVE_IN');
   assert.equal(DOC.total.a, ahead.reduce((s, e) => s + e.units, 0));
   assert.equal(DOC.total.an, ahead.length);
+  assert.equal(DOC.total.mi, movein.reduce((s, e) => s + e.units, 0));
+  assert.equal(DOC.total.mn, movein.length);
   /* 시도별로도 같다 */
   for (const s of DOC.sido) {
     const sc = V.applyFilters(rows, { sido: s.code });
     assert.equal(s.v.u, sc.filter((r) => r.board <= 3).reduce((t, r) => t + r.units, 0), `${s.name} 진행 호수`);
     assert.equal(s.v.d, sc.filter((r) => r.cls === 'delay').length, `${s.name} 지연`);
-    assert.equal(s.v.a, RG.aheadAll(CAL, s.code, (c) => c).filter((e) => e.type !== 'SUPPLY_NOTICE').reduce((t, e) => t + e.units, 0), `${s.name} 12개월`);
+    assert.equal(s.v.a, RG.aheadAll(CAL, s.code, (c) => c).filter((e) => e.type === 'COMPLETION').reduce((t, e) => t + e.units, 0), `${s.name} 12개월 준공`);
   }
   /* 기준일·기간 */
   assert.equal(DOC.referenceDate, MAP.referenceDate);
