@@ -288,7 +288,7 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   const snap = panel(board, 'p-snap');
   assert.match(board, /const T = useMemo\(\(\) => timelineOf\(L\), \[L\]\), NOW = T\.now, LAST = T\.last;/, '시점은 원장 집계에서');
   assert.match(board, /const v = L\.stageUnits\[cursor\], nv = L\.stageUnits\[NOW\], jm = judgedAt\(T, cursor\), judged = jm >= 0, SJ = JS\[judged \? jm : NOW\]!, ds = delayAt\(T, DL, cursor\), bk = bottleneckOf\(SJ\.delayByStage\)\?\.i \?\? -1;/, '선택 달의 판정 = 그 판정 달의 이력 행 · 병목은 사업 화면과 같은 bottleneckOf');
-  assert.match(board, /<PanelLink href=\{`\/projects\?stage=\$\{bk\}&status=check`\}/, '병목 단계 링크는 리본 칸 번호(옛 0${bk + 1} 은 공식 단계로 읽혀 한 칸 앞 단계로 갔다)');
+  assert.match(board, /<PanelLink href=\{`\/projects\?sido=all&stage=\$\{bk\}&status=late`\}/, '병목 단계 링크는 리본 칸 번호(옛 0${bk + 1} 은 공식 단계로 읽혀 한 칸 앞 단계로 갔다) · 병목과 같은 범위(지연, 장기 포함)');
   assert.match(board, /const JS = useMemo\(\(\) => judgmentsOf\(L\), \[L\]\), DL = useMemo\(\(\) => delaysOf\(JS\), \[JS\]\)/);
   assert.match(board, /ribbonOf\(T, L\.stageUnits, DL\)/, '리본 지연 띠도 달마다 판정');
   assert.match(board, /showDlt = cursor !== NOW;/);

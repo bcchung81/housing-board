@@ -50,7 +50,7 @@ test('리본 SVG 는 연출 단계별로 묶여 있다: 축·층·기준일·연
 });
 
 test('조용한 등장: 종합상황판의 다른 그래프와 개별 화면 그래프·계단식 6단계', () => {
-  for (const c of ["'q-rise card-lift group/dir", 'q-grow-x flex h-3.5', "'q-rise card-lift flex flex-col", '<g className="q-sweep"><polyline', 'className="q-grow-y"', "cn(bar3, 'q-grow-x h-3"]) assert.ok(board.includes(c), c);
+  for (const c of ["'peer q-rise card-lift group/dir", 'q-grow-x flex h-3.5', "'q-rise card-lift flex flex-col", '<g className="q-sweep"><polyline', 'className="q-grow-y"', "cn(bar3, 'q-grow-x h-3"]) assert.ok(board.includes(c), c);
   assert.match(read('components/charts/MonthLines.tsx'), /<g className="q-sweep">/);
   assert.match(read('components/charts/StackedMonths.tsx'), /<g className="q-grow-y" style=\{\{ \['--i' as string\]: i \* 0\.3 \}\}>/);
 });
@@ -69,7 +69,7 @@ test('카드 호버: 누를 수 있는 카드는 떠오름(card-lift), 누를 �
   for (const sel of ['\n:root {', '\n.dark {']) { const i = css.indexOf(sel), blk = css.slice(i, css.indexOf('\n}\n', i)); assert.match(blk, /--shadow-hover: /); assert.match(blk, /--shadow-hover-soft: /); }
   const card = read('components/ui/card.tsx');
   for (const v of ['panel: "card-soft', 'kpi: "card-soft', 'link: "card-lift', 'source: "card-soft', 'board: "card-soft']) assert.ok(card.includes(v), v);
-  for (const c of ["'q-rise card-lift group/dir", "'q-rise card-lift flex flex-col justify-between", "on && 'is-ringed "]) assert.ok(board.includes(c), c);
+  for (const c of ["'peer q-rise card-lift group/dir", "'q-rise card-lift flex flex-col justify-between", "on && 'is-ringed "]) assert.ok(board.includes(c), c);
   assert.match(read('components/projects/StageSteps.tsx'), /className=\{cn\('card-lift flex h-full min-h-\[64px\]/, '서랍 단계 칸은 누를 수 있는 카드(떠오름)');
   assert.match(css, /\.card-lift:hover:not\(\[aria-pressed="true"\]\):not\(\[aria-current="step"\]\):not\(\.keep-border\) \{ border-color:/);
 });

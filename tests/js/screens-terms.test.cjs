@@ -47,7 +47,7 @@ const TERMS = [
   ['번호 발급 전 사업(후보)', '후보 사업'],
   ['HOME 정책 진행(보이는 표지)', '정책 목표 대비'],
   ['정책별 목표 대비', '정책 목표 대비'],
-  ['계획대로 가고 있는가(정책 칸)', '9·7 대책 목표 대비(정책 전체)'],
+  ['계획대로 가고 있는가(정책 칸)', '9·7 대책 목표 대비(범위는 칩)'],
   ['단계 파이프라인', '단계별 진행'],
   ['다음 일정 · 지난 예정(열)', '현재 예정'],
   ['목표 미배정', '목표 없음'],
@@ -67,7 +67,7 @@ test(`용어표: ${TERMS.map(([a, b]) => `${a} → ${b}`).join(' · ')}`, () => 
   assert.match(sum, /이 단계까지 온 사업 \{fmt\(c\.n\)\}/);
   assert.match(sum, /지금 이 단계 <b>\{fmt\(c\.now\)\}<\/b>/);
   assert.match(sum, />단계별 진행<\/h3>/);
-  assert.match(read('app/(dashboard)/projects/page.tsx'), /: '정책 목표 대비'\} open=\{print\}/);
+  assert.match(read('app/(dashboard)/projects/page.tsx'), /: '다른 정책 목표 대비'\} open=\{print\}/);
   assert.equal(V.CAND_NAME, '후보 사업');
   assert.equal(V.PLAN_COL, '현재 예정');
   assert.equal(V.CAND_PLAN, '원천 예정(확인 필요)');
@@ -99,12 +99,11 @@ test('파이프라인 불변식: 칸마다 지금 이 단계 ≤ 거쳐 간 사�
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /const pipe = pipelineOf\(scope\);/);
   assert.match(page, /단계·상태 거르기는 목록에만/);
-  assert.match(page, /요약 범위<\/b> \{scopeText\}/);
-  /* 범위가 다른 블록에는 표지: 정책 목표 대비(정책 전체 · 호), 단계별 진행(사업 원장), 핵심 질문 첫 칸은 이름에 범위(정책 전체) */
-  assert.match(read('components/projects/Summary.tsx'), />정책 전체 · 호</);
-  assert.match(read('components/projects/Summary.tsx'), />사업 원장 · 이 단계까지 온 사업\(호\) · \{scope\}</);
+  /* 범위가 다른 블록은 카드를 나누고 머리에 범위 칩: 정책 목표 대비(전국 · 정책 진행 자료), 원장 요약(거르기 범위 · 사업 원장) — screens-b */
+  assert.match(page, /<ScopeChip scope="전국" source="정책 진행 자료"/);
+  assert.match(page, /<ScopeChip scope=\{region\} source="사업 원장"/);
   const q1 = V.questionsOf(rows, { metro: true }, ctx)[0];
-  assert.equal(q1.q, '9·7 대책 목표 대비(정책 전체)');
+  assert.equal(q1.q, '9·7 대책 목표 대비');
 });
 
 test("앞으로 12개월: 같은 범위(원장 관측 달부터 12개월) — 사업 '준공 예정' = 지역 공급 '준공' 칩 = 종합상황판 준공 예정, 이름은 종류로 구분", () => {

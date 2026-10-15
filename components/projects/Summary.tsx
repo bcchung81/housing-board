@@ -9,7 +9,6 @@
 import Link from 'next/link';
 import type { CSSProperties, ReactNode } from 'react';
 import { cn } from 'cn';
-import { Badge } from '../ui/badge';
 import { HATCH } from '../ui/chips';
 import InfoTip from '../ui/info-tip';
 import LinkPending from '../ui/link-pending';
@@ -71,7 +70,7 @@ export function Questions({ list }: { list: Question[] }) {
   );
 }
 
-export function Pipeline({ open, shut, total, on, href, badges, scope }: { open: PipeCell[]; shut: number[]; total: number; on?: number; href: (i: number) => string; badges?: ReactNode; scope: string }) {
+export function Pipeline({ open, shut, total, on, href, badges }: { open: PipeCell[]; shut: number[]; total: number; on?: number; href: (i: number) => string; badges?: ReactNode }) {
   const cols = `repeat(${open.length},minmax(0,1fr))${shut.length ? ` minmax(0,${Math.max(0.7, shut.length * 0.45)}fr)` : ''}`;
   return (
     <div>
@@ -81,7 +80,6 @@ export function Pipeline({ open, shut, total, on, href, badges, scope }: { open:
           <p>사업이 계획부터 입주까지 여섯 단계 중 어디까지 왔는지 셉니다.</p>
           <p>큰 숫자는 이 단계까지 온 사업의 집 수(호)입니다. 지금 착공 단계인 사업은 계획·인허가에도 셉니다. &apos;지금 이 단계&apos;는 지금 바로 그 단계에 있는 사업 수입니다. 칸을 누르면 그 사업만 아래 목록에 남습니다.</p>
         </InfoTip>
-        <Badge title="사업 원장의 사업별 단계 기록으로 센 값(아래 정책 목표 대비는 HOME 정책 진행 자료)">사업 원장 · 이 단계까지 온 사업(호) · {scope}</Badge>
         {badges}
       </div>
       <ol className="m-0 mt-3 grid list-none gap-2 p-0 narrow:grid-cols-3! mobile:grid-cols-2!" style={{ gridTemplateColumns: cols }} aria-label="단계별 진행">
@@ -181,7 +179,6 @@ export function PolicyCompare({ lines, title, href, open = false }: { lines: Com
           {lines.map((l) => <span key={l.policy.key} className="text-[14px] text-foreground tabular-nums">{compareHead(l)}</span>)}
         </summary>
         <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <Badge title="HOME 정책 진행 자료의 정책 전체 값(호) — 지역·기관·단계·상태 거르기와 상관없음. 위 단계별 진행(사업 원장, 건)과 출처·단위가 달라 ⑤ 준공 등 숫자가 서로 다를 수 있음">정책 전체 · 호</Badge>
           <ul className="m-0 ml-auto flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[14px] text-muted-foreground" aria-label="범례">
             {lg.map((x) => <li key={x.label} className="flex items-center gap-1 whitespace-nowrap" title={x.tip}><i className={cn('block size-[9px] flex-none rounded-[2px]', x.cls)} style={x.style} aria-hidden="true" />{x.label}</li>)}
           </ul>

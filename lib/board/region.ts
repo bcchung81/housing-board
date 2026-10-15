@@ -70,6 +70,16 @@ export function sggUnits(doc: Pick<RegionMapDoc, 'sgg'>, sido: string, t: SggTab
 }
 /* 주소 ?sgg= : 지금 범위에서 고를 수 있는 면 코드일 때만(아니면 선택 없음) */
 export const parseSgg = (doc: Pick<RegionMapDoc, 'sgg'>, sido: string, t: SggTable, v?: string): string | null => (v && sido && sggUnits(doc, sido, t).some((u) => u.code === v) ? v : null);
+/* 시군구 거르기(?sgg=<면 코드>): 예정 항목의 시군구 이름('경기도 고양시 덕양구') → 코드표 코드(41281). 이름이 코드표에 없으면 사업 id 의 시군구 코드(PRJ-41281-…).
+   구가 있는 시(면 코드 41280)는 시 코드와 그 구 코드(guOf)를 합친다 — 사업 화면 ?sgg= 의 inRegion 과 같은 규칙 */
+export function entrySgg(e: Pick<CalEntry, 'sgg' | 'id'>, sd: string, t: Pick<SggTable, 'areas'>): string | null {
+  const name = e.sgg.split(' ').slice(1).join(' ');
+  return Object.keys(t.areas).find((c) => c.startsWith(sd) && t.areas[c] === name) ?? /^PRJ-(\d{5})-/.exec(e.id)?.[1] ?? null;
+}
+export function inSgg(e: Pick<AheadEntry, 'sgg' | 'id' | 'sd'>, unit: string, t: SggTable): boolean {
+  const c = entrySgg(e, e.sd, t);
+  return !!c && (c === unit || t.guOf(unit).includes(c));
+}
 
 /* 종류 칩: 켜진 값(쉼표). 모르는 값은 버리고, 하나도 안 남으면 전부 */
 export function parseKinds(v?: string): CalKind[] {

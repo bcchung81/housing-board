@@ -3,6 +3,7 @@
 import type { ReactNode } from 'react';
 import { PanelHead, SrcLink } from '../page';
 import { Card } from '../ui/card';
+import ScopeChip from '../ui/scope-chip';
 import Legend from '../charts/Legend';
 import StockLines, { HOUSEHOLD_COLOR, STOCK_COLOR } from '../charts/StockLines';
 import { conditions, stockChart, type AreaFactsDoc } from '../../lib/board/area-facts';
@@ -23,13 +24,14 @@ function Fact({ label, value, unit, sub, tip }: { label: string; value: string; 
   );
 }
 
-export default function Cond({ facts, sido, name }: { facts: AreaFactsDoc; sido: string; name: string }) {
+export default function Cond({ facts, sido, name, sggName }: { facts: AreaFactsDoc; sido: string; name: string; sggName?: string | null }) {
   const c = conditions(facts, sido), chart = stockChart(facts, sido);
   if (!c) return null;
   const ym = (p: string) => p.replace('-', '.');
   return (
     <Card render={<section aria-label="동네 여건" />}>
-      <PanelHead title="동네 여건" tip={`${name} · ${COND_TIP}`}><SrcLink /></PanelHead>
+      <PanelHead title="동네 여건" tip={`${name} · ${COND_TIP}`}
+        scope={<ScopeChip scope={name} source="KOSIS·SGIS" note={sggName ? { text: '시도 단위 자료', title: `${sggName}을 골라도 ${name} 전체 값(시군구 자료 없음)` } : undefined} />}><SrcLink /></PanelHead>
       <div className="grid grid-cols-3 gap-2.5 mobile:grid-cols-1">
         <Fact label="인구" value={c.population ? fmt(c.population.value) : '–'} unit="명" sub={c.population?.period} tip="인구총조사 기반 총인구" />
         <Fact label="주택 재고" value={c.housingUnits ? fmt(c.housingUnits.value) : '–'} unit="호"

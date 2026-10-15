@@ -3,10 +3,12 @@
    세 블록이 같은 고른 달(주소 ?m=)과 강조 사업을 쓴다. 시도·종류 거르기는 서버(칩 링크)가 하고, 이 섬은 달 고르기·강조·지도 원 크기만 맡는다.
    마우스는 조각·원에 HUD(떠 있는 설명)를, 키보드는 달 단추(←→ Home End)·지도 원(고른 달의 원만 초점 — Tab 으로 하나, ←→ 이동, Enter·Space 고르기)과 목록 링크가 같은 정보를 준다. 시안: docs/design/home-concept/assets/app.js PAGES.region
    지도 연결점(수도권 사업만): 목록 행의 지도 표지, 원·조각을 눌러 고른 사업은 지도 상자 위 '지도에서 보기'. 지도(/map)는 다른 루트 레이아웃이라 <a>.
-   지도 시군구 고르기(수도권 면): 면을 누르면(원이 먼저) 테두리 강조 + 지도 위 줄에 '{시군구} · 지도에서 크게 보기'(구가 있는 경기 시는 구마다), 키보드는 그 줄의 시군구 목록(select), Esc 로 풀림. 주소 ?sgg=<면 코드>.
+   지도 시군구 고르기(수도권 면): 면을 누르면(원이 먼저) 테두리 강조 + 지도 위 줄에 '{시군구} · 지도에서 크게 보기'(구가 있는 경기 시는 구마다), 키보드는 그 줄의 시군구 목록(select), Esc 로 풀림.
+   고르면 주소 ?sgg=<면 코드>로 이동해 서버가 그 시군구만 거른다(달별 막대·고른 달 목록·합계 — 2026-10-15 결정, 구가 있는 시는 구를 합침).
    sido: 'metro' 수도권 · '' 전국 · 'NN' 시도 하나. */
 import * as React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronRight, MapPin } from 'lucide-react';
 import { cn } from 'cn';
 import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, PAST_DUE, dotFocus, inScope, pastDue, sggUnits, type AheadEntry, type CalKind } from '../../lib/board/region';
@@ -70,12 +72,13 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
     q.set('m', x);
     window.history.replaceState(null, '', `?${q.toString()}${window.location.hash}`);
   };
+  const router = useRouter();
   const pickSgg = (c: string | null) => {
     setSgg(c);
     const q = new URLSearchParams(window.location.search);
     if (c) q.set('sgg', c); else q.delete('sgg');
     const t = q.toString();
-    window.history.replaceState(null, '', `${window.location.pathname}${t ? `?${t}` : ''}${window.location.hash}`);
+    router.push(`${window.location.pathname}${t ? `?${t}` : ''}`, { scroll: false });
   };
   const pick = (x: string, k: string | null = null, focus = false) => {
     if (!byM[x]?.length) return;
@@ -127,7 +130,7 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
           {[max, max / 2, 0].map((v, i) => (
             <React.Fragment key={i}>
               <span className="absolute inset-x-0 border-t border-border" style={{ top: `${i * 50}%` }} />
-              <span className="absolute right-[calc(100%+8px)] -translate-y-1/2 text-[13px] leading-none whitespace-nowrap text-mute tabular-nums" style={{ top: `${i * 50}%` }}>{man(v)}</span>
+              {list.length ? <span className="absolute right-[calc(100%+8px)] -translate-y-1/2 text-[13px] leading-none whitespace-nowrap text-mute tabular-nums" style={{ top: `${i * 50}%` }}>{man(v)}</span> : null}
             </React.Fragment>
           ))}
         </div>
@@ -199,7 +202,7 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
     const units = sggUnits(map, sido, SGG_TABLE), cur = units.find((u) => u.code && u.code === sgg);
     sggBar = (
       <div className="flex min-h-[30px] flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
-        <select aria-label="시군구 고르기(고르면 지도에서 크게 볼 수 있음)" value={cur?.code ?? ''} onChange={(ev) => pickSgg(ev.target.value || null)}
+        <select aria-label="시군구 고르기(고르면 이 시군구로 거름)" value={cur?.code ?? ''} onChange={(ev) => pickSgg(ev.target.value || null)}
           className="h-[30px] max-w-[11rem] cursor-pointer rounded-[8px] border border-border bg-card px-2 text-[14px] text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
           <option value="">시군구 고르기</option>
           {[...new Set(units.map((u) => u.s))].map((sd) => (
@@ -234,7 +237,7 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
             {map.sgg.filter((g) => inScope(sido, g.s)).map((g, i) => {
               const u = units.find((x) => x.s === g.s && x.n === g.n);
               return u?.code
-                ? <path key={`s${i}`} d={g.d} data-sgg={u.code} fill="var(--card)" stroke="var(--line2)" vectorEffect="non-scaling-stroke" className="cursor-pointer hover:fill-[color-mix(in_srgb,var(--primary)_8%,var(--card))]"><title>{g.n} — 누르면 고르기(지도에서 크게 보기)</title></path>
+                ? <path key={`s${i}`} d={g.d} data-sgg={u.code} fill="var(--card)" stroke="var(--line2)" vectorEffect="non-scaling-stroke" className="cursor-pointer hover:fill-[color-mix(in_srgb,var(--primary)_8%,var(--card))]"><title>{g.n} — 누르면 고르기(이 시군구로 거름)</title></path>
                 : <path key={`s${i}`} d={g.d} fill="var(--card)" stroke="var(--line2)" vectorEffect="non-scaling-stroke"><title>{g.n}</title></path>;
             })}
           </g>
@@ -272,7 +275,8 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
   /* ---------- 고른 달 목록 ---------- */
   const xs = byM[m] ?? [], shown = more ? xs : xs.slice(0, LIST_N);
   const rowIn = (ev: React.SyntheticEvent) => { const r = (ev.target as HTMLElement).closest<HTMLElement>('[data-row]'); setHot(r ? r.dataset.row! : null); };
-  const listEl = (
+  /* 고른 시군구에 12개월 예정이 없으면(지도는 남겨 다른 면을 고르게) 달 목록 대신 한 줄 */
+  const listEl = !list.length ? <p className="m-0 mt-4 text-[14px] text-muted-foreground">{regionName} · 12개월 안 예정 없음</p> : (
     <div className="mt-4" onMouseOver={rowIn} onFocus={rowIn} onMouseLeave={() => setHot(null)}
       onBlur={(ev) => { if (!ev.currentTarget.contains(ev.relatedTarget as Node)) setHot(null); }}>
       <div className="mb-1 flex flex-wrap items-baseline gap-x-3">

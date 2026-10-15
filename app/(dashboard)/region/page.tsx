@@ -18,7 +18,8 @@ import { fmt, lastMonth, monthLabel, ymDot } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '../../../lib/board/metro-overview';
 import { mapScopeHref } from '../../../lib/board/map-href';
-import { CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
+import ScopeChip from '../../../components/ui/scope-chip';
+import { CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, inSgg, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
 import { getProjectsIndex } from '../../../lib/board/projects-index';
 import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '../../../lib/board/projects-view';
 import type { Metric } from '../../../lib/board/types';
@@ -50,11 +51,17 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
   const metric = parseMetric(q.metric);
   const kinds = parseKinds(q.kind);
   const name = sido === 'metro' ? '수도권' : sido ? sidoName(sido) : '전국';
+  /* 시군구 거르기(?sgg=<지도 면 코드>, 서버가 거른다): 앞으로 12개월(달별 막대·고른 달 목록·합계·종류 칩 건수)과 사업 화면 연결이 그 시군구만. 구가 있는 시는 구를 합친다.
+     지난 공급 실적·동네 여건은 시도 단위 자료뿐이라 그대로(머리에 '시도 단위 자료' 표지) */
+  const sgg = parseSgg(regionMap, sido, SGG_TABLE, q.sgg);
+  const sggName = sgg ? METRO_AREAS[sgg] : null;
 
-  const href = (p: { sido?: string; kinds?: CalKind[]; metric?: Metric; m?: string | null }) => {
+  const href = (p: { sido?: string; kinds?: CalKind[]; metric?: Metric; m?: string | null; sgg?: string | null }) => {
     const s = new URLSearchParams();
     const sd = p.sido ?? sido, ks = p.kinds ?? kinds, mt = p.metric ?? metric, m = p.m === undefined ? q.m : p.m;
+    const sg = p.sgg !== undefined ? p.sgg : p.sido !== undefined ? null : sgg;   // 시도를 바꾸면 시군구는 풀린다
     if (sd !== 'metro') s.set('sido', sd || 'all');
+    if (sg) s.set('sgg', sg);
     if (m) s.set('m', m);
     if (ks.length !== CAL_KINDS.length) s.set('kind', ks.join(','));
     if (mt !== 'complete') s.set('metric', mt);
@@ -63,7 +70,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
   };
 
   /* ① 앞으로 12개월 */
-  const all = aheadAll(calendar, sido, sidoName);
+  const all = aheadAll(calendar, sido, sidoName).filter((e) => !sgg || inSgg(e, sgg, SGG_TABLE));
   const list = all.filter((e) => kinds.includes(e.type));
   const months = calendar.months;
   const m = pickMonth(months, list, q.m);
@@ -76,9 +83,10 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
 
   /* 같은 범위의 사업 화면 연결: 점검 필요(주의·지연·장기 지연) 건수 */
   const { rows } = await getProjectsIndex();
-  const pf: Filters = sido === 'metro' ? { metro: true } : sido ? { sido } : {};
-  /* 지도 연결: 수도권 = 지도 첫 화면, 시도 하나 = ?sido=, 전국·수도권 밖 = 없음 */
-  const scopeMap = sido === 'metro' ? mapScopeHref() : sido ? mapScopeHref({ sido }) : null;
+  const pf: Filters = sgg ? { sgg, gu: guOf(sgg) } : sido === 'metro' ? { metro: true } : sido ? { sido } : {};
+  const scopeName = sggName ?? name;
+  /* 지도 연결: 시군구 = ?sgg=, 수도권 = 지도 첫 화면, 시도 하나 = ?sido=, 전국·수도권 밖 = 없음 */
+  const scopeMap = sgg ? mapScopeHref({ sgg }) : sido === 'metro' ? mapScopeHref() : sido ? mapScopeHref({ sido }) : null;
   const check = applyFilters(rows, { ...pf, status: 'check' }).length, inScope = applyFilters(rows, pf).length;
 
   return (
@@ -101,15 +109,16 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
           {ORDER.map((c) => <Chip key={c} href={href({ sido: c })} on={c === sido}>{sidoName(c)}</Chip>)}
         </ChipGroup>
         <span className={`${sub} ml-auto whitespace-nowrap tabular-nums`}>
-          {scopeMap ? <><MapLink href={scopeMap} full={`${name} 지도에서 보기`} />{' · '}</> : null}
-          <Link href={listHref(pf)} className={LINKA} title={`${name} 사업 목록(사업 화면)`}>{name} 사업 {fmt(inScope)}건</Link>
+          {scopeMap ? <><MapLink href={scopeMap} full={`${scopeName} 지도에서 보기`} />{' · '}</> : null}
+          <Link href={listHref(pf)} className={LINKA} title={`${scopeName} 사업 목록(사업 화면)`}>{scopeName} 사업 {fmt(inScope)}건</Link>
           {' · '}
           {check ? <Link href={listHref(pf, { status: 'check' })} className={LINKA} title="주의·지연·장기 지연 사업을 지연 개월 큰 순으로">점검 필요 <b className="text-bad">{fmt(check)}</b> ›</Link> : '점검 필요 0'}
         </span>
       </ChipBar>
 
       <Card render={<section aria-label={AHEAD_ALL} />}>
-        <PanelHead title={<>{kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}>
+        <PanelHead title={<>{kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}
+          scope={<ScopeChip scope={scopeName} source="사업 원장" title={sgg ? `${name} 중 ${sggName}만(구가 있는 시는 구를 합침) — 달별 막대·목록·합계·종류 칩 건수가 이 범위 · ×를 누르면 ${name}(으)로` : `사업 원장 현재 예정 · ${name}`} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} />}>
           <InfoTip label="앞으로 12개월 읽는 법">
             <dl>
               <dt>{AHEAD_ALL}</dt><dd>사업 원장의 현재 예정(모집공고·준공·입주)이 {ymDot(months[0])}~{ymDot(months[11])}에 든 사업 · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌</dd>
@@ -125,24 +134,24 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
               const xs = all.filter((e) => e.type === t), next = toggleKind(kinds, t);
               return (
                 <Chip key={t} href={href({ kinds: next ?? kinds })} on={kinds.includes(t)} swatch={{ kind: 'fill', color: CAL_TYPE[t].color }}
-                  title={`${name} · 1년 안 ${CAL_TYPE[t].name} 예정 ${xs.length}건 · ${fmt(xs.reduce((s, e) => s + e.units, 0))}호${xs.some((e) => !e.units) ? ` · 호수 미확인 ${xs.filter((e) => !e.units).length}` : ''}`}>
+                  title={`${scopeName} · 1년 안 ${CAL_TYPE[t].name} 예정 ${xs.length}건 · ${fmt(xs.reduce((s, e) => s + e.units, 0))}호${xs.some((e) => !e.units) ? ` · 호수 미확인 ${xs.filter((e) => !e.units).length}` : ''}`}>
                   {CAL_TYPE[t].name}<span className="text-muted-foreground tabular-nums">{fmt(xs.length)}</span>
                 </Chip>
               );
             })}
           </ChipGroup>
         </PanelHead>
-        {list.length ? (
-          <Ahead key={`${sido}|${kinds.join(',')}`} sido={sido} regionName={name} months={months} nowM={nowM} refDate={calendar.referenceDate} list={list} initialM={m} initialSgg={parseSgg(regionMap, sido, SGG_TABLE, q.sgg)}
+        {list.length || sgg ? (
+          <Ahead key={`${sido}|${kinds.join(',')}|${sgg ?? ''}`} sido={sido} regionName={scopeName} months={months} nowM={nowM} refDate={calendar.referenceDate} list={list} initialM={m} initialSgg={sgg}
             map={view ? { view, sgg: regionMap.sgg, districts: regionMap.districts } : null} />
         ) : <p className="m-0 text-[14px] text-muted-foreground">{name} · 12개월 안 {kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정 없음</p>}
       </Card>
 
-      <Annual molit={molit} annual={annual} sido={sido} metric={metric} order={ORDER} sidoName={sidoName} href={(p) => href({ ...p, m: null })} />
+      <Annual molit={molit} annual={annual} sido={sido} metric={metric} order={ORDER} sidoName={sidoName} href={(p) => href({ ...p, m: null })} sggName={sggName} />
 
-      {sido && facts.sido[sido] ? <Cond facts={facts} sido={sido} name={name} /> : (
+      {sido && facts.sido[sido] ? <Cond facts={facts} sido={sido} name={name} sggName={sggName} /> : (
         <Card render={<section aria-label="동네 여건" />}>
-          <PanelHead title="동네 여건" tip="인구·가구·주택 재고·미분양(KOSIS·SGIS, HOME 지역 지표)은 서울·인천·경기만 자료가 있어 시도 하나를 고르면 보인다" />
+          <PanelHead title="동네 여건" scope={<ScopeChip scope={name} source="KOSIS·SGIS" note={sggName ? { text: '시도 단위 자료', title: `${sggName}을 골라도 ${name} 전체 값(시군구 자료 없음)` } : undefined} />} tip="인구·가구·주택 재고·미분양(KOSIS·SGIS, HOME 지역 지표)은 서울·인천·경기만 자료가 있어 시도 하나를 고르면 보인다" />
           <p className="m-0 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px] text-muted-foreground">
             {/* 시도 하나를 골랐는데 자료가 없으면 '없음'을 바로 말하고(고르라고 하지 않는다), 수도권·전국이면 시도를 고르게 한다 */}
             <span>{sido && sido !== 'metro' ? `${name} 동네 여건 자료 없음(서울·인천·경기만)` : `인구·주택 재고·미분양은 시도를 고르면 보입니다${sido ? '' : '(서울·인천·경기만 자료 있음)'}`}</span>

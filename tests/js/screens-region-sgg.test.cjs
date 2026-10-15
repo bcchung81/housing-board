@@ -50,7 +50,7 @@ test('주소 ?sgg=: 범위 안의 면 코드만 받고 나머지는 선택 없�
   assert.equal(R.parseSgg(regionMap, '', T, '11170'), null, '전국은 지도 없음');
 });
 
-test('화면: 면 클릭·select·Esc·주소 보존, 칩 주소는 sgg 를 싣지 않는다', () => {
+test('화면: 면 클릭·select·Esc, 고르면 ?sgg= 로 이동(서버가 거름), 시도 칩은 sgg 를 풀고 종류·지표 칩은 지킨다', () => {
   const ahead = read('components/region/Ahead.tsx');
   assert.match(ahead, /data-sgg=\{u\.code\}/);
   assert.match(ahead, /if \(e\) \{ setHud\(null\); pick\(e\.ym, e\.k\); return; \}/, '원 클릭이 먼저');
@@ -59,7 +59,10 @@ test('화면: 면 클릭·select·Esc·주소 보존, 칩 주소는 sgg 를 싣�
   assert.match(ahead, /q\.set\('sgg', c\); else q\.delete\('sgg'\)/);
   assert.match(ahead, /mapHref\(\{ sgg: g\.code \}\)/);
   assert.match(ahead, /누르면 고르기/, 'title');
+  assert.match(ahead, /router\.push\(/, '고르면 서버 렌더로(replaceState 만 하지 않는다)');
+  assert.doesNotMatch(ahead, /replaceState\(null, '', `\$\{window\.location\.pathname\}/);
   const page = read('app/(dashboard)/region/page.tsx');
-  assert.match(page, /initialSgg=\{parseSgg\(regionMap, sido, SGG_TABLE, q\.sgg\)\}/);
-  assert.doesNotMatch(page.match(/const href = [\s\S]*?\n  \};/)[0], /sgg/);
+  assert.match(page, /const sgg = parseSgg\(regionMap, sido, SGG_TABLE, q\.sgg\);/);
+  assert.match(page, /initialSgg=\{sgg\}/);
+  assert.match(page.match(/const href = [\s\S]*?\n  \};/)[0], /const sg = p\.sgg !== undefined \? p\.sgg : p\.sido !== undefined \? null : sgg;/);
 });

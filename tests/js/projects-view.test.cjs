@@ -101,13 +101,13 @@ test('상태: 지연 중 경과 12개월 이상은 장기 지연, 점검 필요 
 
 test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 75.8% 부족 · ③ 착공 1,666호 · 지연 2건(확인 필요 후보 313 따로, D3) · 인천 · 앞으로 12개월 준공 214,975호(= 종합상황판 향후 12개월)', () => {
   const q = Q({});
-  assert.deepEqual(Object.keys(q), ['9·7 대책 목표 대비(정책 전체)', '어디서 막혀 있는가', '어떤 사업이 늦어지는가', '어디를 먼저 챙기는가', '앞으로 얼마나 공급되는가'], '첫 칸은 범위(정책 전체)를 이름에');
-  const a = q['9·7 대책 목표 대비(정책 전체)'];
+  assert.deepEqual(Object.keys(q), ['9·7 대책 목표 대비', '어디서 막혀 있는가', '어떤 사업이 늦어지는가', '어디를 먼저 챙기는가', '앞으로 얼마나 공급되는가'], '첫 칸 범위(전국 · 정책 진행 자료)는 정책 목표 카드 머리의 범위 칩에');
+  const a = q['9·7 대책 목표 대비'];
   assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['75.8', '% 부족', '①계획 확인 3,560 / 목표 14,694', 'bad', '/projects?policy=97&sido=all']);
   for (const x of Object.values(q)) assert.ok(x.help && !/policy-progress|samePeriod|HOME|원장/.test(x.help), `ⓘ 정의는 쉬운 말: ${x.q}`);
   assert.match(a.tip, /담당자 추정 포함\(확인과 따로\): ①계획 5,789호/, '추정 포함은 title 에만');
-  assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['③ 착공', '병목 · 지연(장기 포함) 1,666호', '/projects?sido=all&stage=2&status=check']);
-  assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['2', '지연 6~12개월 0 · 장기 12개월+ 2 · 확인 필요(후보) 313', '/projects?sido=all&status=check'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로, 확인 필요(후보)는 머리 숫자 밖');
+  assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['③ 착공', '병목 · 지연(장기 포함) 1,666호', '/projects?sido=all&stage=2&status=late']);
+  assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['2', '지연 6~12개월 0 · 장기 12개월+ 2 · 확인 필요(후보) 313', '/projects?sido=all&status=late'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로, 확인 필요(후보)는 머리 숫자 밖');
   assert.deepEqual([q['어디를 먼저 챙기는가'].value, q['어디를 먼저 챙기는가'].sub, q['어디를 먼저 챙기는가'].href], ['인천', '지연·주의 2,890호', '/projects?sido=28']);
   const up = BOARD.upcoming.reduce((s, x) => ({ units: s.units + x.units, projects: s.projects + x.projects }), { units: 0, projects: 0 });
   assert.deepEqual([q['앞으로 얼마나 공급되는가'].value, q['앞으로 얼마나 공급되는가'].sub, q['앞으로 얼마나 공급되는가'].href], [up.units.toLocaleString('en-US'), `앞으로 12개월 · 준공 예정 · ${up.projects}건`, '/region?sido=all']);
@@ -117,12 +117,12 @@ test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 7
 test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·주의 2) · 인천 2,890호 · 13,372호 24건 / 1·29 는 목표가 없어 정상 비율 / 시도를 고르면 시군구', () => {
   const q = Q({ policy: pol('97') });
   assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['75.8', '①계획 확인 3,560 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['인천', '지연·주의 2,890호'], ['13,372', '앞으로 12개월 · 준공 예정 · 24건']]);
-  assert.equal(q['9·7 대책 목표 대비(정책 전체)'].href, undefined, '이미 9·7 렌즈');
+  assert.equal(q['9·7 대책 목표 대비'].href, undefined, '이미 9·7 렌즈');
   const q129 = Q({ policy: pol('129') });
   assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100', '% 정상', '판정 38건 · 판정 없음 9']);
   assert.deepEqual([q129['어디서 막혀 있는가'].value, q129['어디서 막혀 있는가'].muted, q129['어디서 막혀 있는가'].href], ['없음', true, undefined]);
   const qm = Q({ metro: true });
-  assert.deepEqual([qm['어디서 막혀 있는가'].href, qm['앞으로 얼마나 공급되는가'].href], ['/projects?sido=metro&stage=2&status=check', '/region'], '수도권(기본) 범위의 링크는 수도권을 지킨다');
+  assert.deepEqual([qm['어디서 막혀 있는가'].href, qm['앞으로 얼마나 공급되는가'].href], ['/projects?sido=metro&stage=2&status=late', '/region'], '수도권(기본) 범위의 링크는 수도권을 지킨다');
   const q41 = Q({ sido: '41' });
   assert.deepEqual([q41['어디를 먼저 챙기는가'].value, q41['어디를 먼저 챙기는가'].href], ['이천시', '/projects?sgg=41500']);
   assert.equal(q41['앞으로 얼마나 공급되는가'].href, '/region?sido=41');

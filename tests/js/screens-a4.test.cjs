@@ -26,10 +26,10 @@ const sido = (c) => MOLIT.sido.find((x) => x.code === c)?.name;
 /* 주석을 뺀 소스(보이는 글 검사용) */
 const code = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/^\s*\/\/.*$/gm, '');
 
-test('1·A 첫 칸: 범위 줄 밖에 따로, ①~⑥ 단계 6줄 — 값은 접힌 정책 목표 대비 9·7 행과 같다', () => {
+test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ 단계 6줄 — 값은 정책 목표 대비 9·7 행과 같다', () => {
   for (const f of [{}, { metro: true }]) {
     const q0 = V.questionsOf(rows, f, ctx)[0];
-    assert.equal(q0.q, '9·7 대책 목표 대비(정책 전체)');
+    assert.equal(q0.q, '9·7 대책 목표 대비');
     assert.equal(q0.stages.length, 6, '단계 6개');
     assert.deepEqual(q0.stages.map((c) => c.board), [0, 1, 2, 3, 4, 5]);
     const line = V.compareLines(PP, IDX.policies, rows, ['97'])[0];
@@ -53,9 +53,9 @@ test('1·A 첫 칸: 범위 줄 밖에 따로, ①~⑥ 단계 6줄 — 값은 접
   assert.match(sum, /whitespace-nowrap tabular-nums/, '줄바꿈 없음');
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /const \[whole, scoped\] = questions\[0\]\?\.stages \? \[questions\[0\], questions\.slice\(1\)\] : \[null, questions\];/);
-  const branch = page.slice(page.indexOf('{whole ? ('), page.indexOf(') : <>{scopeLine}'));
-  assert.ok(branch.indexOf('<Questions list={[whole]} />') < branch.indexOf('{scopeLine}'), '첫 칸은 범위 줄(scopeLine) 앞, 다른 칸 묶음 밖');
-  assert.match(branch, /<div>\{scopeLine\}<Questions list=\{scoped\} \/><\/div>/, '범위 줄은 나머지 질문만 감싼다');
+  const pc = page.slice(page.indexOf('const policyCard'), page.indexOf('const ledgerCard')), lc = page.slice(page.indexOf('const ledgerCard'), page.indexOf('const summary'));
+  assert.match(pc, /\{whole \? <Questions list=\{\[whole\]\} \/> : null\}/, '첫 칸은 정책 목표 카드(원장 요약 카드 밖)');
+  assert.match(lc, /\{scopeLine\}\n\s*<Questions list=\{scoped\} \/>/, '원장 범위 줄은 나머지 질문 위');
   /* 인쇄도 같은 요약(summary)을 쓴다 */
   assert.match(page, /\{reportHead\}\n\s*\{summary\}\n\s*\{report\}/);
 });

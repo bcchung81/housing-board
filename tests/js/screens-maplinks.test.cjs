@@ -49,9 +49,9 @@ test('종합상황판: 시도 타일 선택 줄에 \'{시도} 실적\' 옆 지�
   assert.equal(mapScopeHref({ sido: '48' }), null, '수도권 밖 시도 타일에는 지도 버튼이 없다');
 });
 
-test('지역 공급: 칩 줄 옆 지도 버튼 — 수도권 /map · 시도 하나 ?sido= · 전국·수도권 밖 숨김', () => {
+test('지역 공급: 칩 줄 옆 지도 버튼 — 시군구 ?sgg= · 수도권 /map · 시도 하나 ?sido= · 전국·수도권 밖 숨김', () => {
   const s = read('app/(dashboard)/region/page.tsx');
-  assert.match(s, /const scopeMap = sido === 'metro' \? mapScopeHref\(\) : sido \? mapScopeHref\(\{ sido \}\) : null;/);
+  assert.match(s, /const scopeMap = sgg \? mapScopeHref\(\{ sgg \}\) : sido === 'metro' \? mapScopeHref\(\) : sido \? mapScopeHref\(\{ sido \}\) : null;/);
   assert.match(s, /\{scopeMap \? <><MapLink href=\{scopeMap\}/);
   assert.doesNotMatch(s, /`\/map\?/);
   const scope = (sido) => (sido === 'metro' ? mapScopeHref() : sido ? mapScopeHref({ sido }) : null);

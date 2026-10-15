@@ -6,8 +6,8 @@ export type Cls = 'ok' | 'caution' | 'delay';
 /* 상태 = 판정(cls) + 장기 지연(지연 중 경과 12개월 이상) + 확인 필요(번호가 없는 후보) + 판정 없음(칸 이름은 준공 완료·판정 일정 없음·일정 없음으로 나눈다 — statusLabel).
    판정(정상·주의·지연·장기 지연)은 사업 번호가 있는 사업(issued)만 — 번호가 없는 후보는 같은 계산(cls)을 하되 '확인 필요'로 따로 센다(2026-10-15 사용자 결정 D3) */
 export type Status = Cls | 'long' | 'review' | 'none';
-/* 상태 거르기: 상태 하나 또는 '점검 필요'(주의·지연·장기 지연, 지연 개월 큰 순) */
-export type StatusFilter = Status | 'check';
+/* 상태 거르기: 상태 하나 또는 '점검 필요'(주의·지연·장기 지연, 지연 개월 큰 순) 또는 '지연(장기 포함)'(late — 종합상황판 지연·병목 카드의 숫자와 같은 범위) */
+export type StatusFilter = Status | 'check' | 'late';
 export type LinkStatus = 'CONFIRMED' | 'REVIEW_REQUIRED';
 /* 지도 색인 행(data/board/ledger-map.json · tools/ledger/board.js mapIndexFromLedger) */
 export type MapRow = {
@@ -134,7 +134,7 @@ export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Prog
   if (stage && /^[0-5]$/.test(stage)) f.stage = Number(stage);
   else if (stage && /^0[1-6]$/.test(stage)) f.stage = BOARD_OF_STAGE[stage];
   const status = one(q.status);
-  if (status && (status in STATUS_NAME || status === 'check')) f.status = status as StatusFilter;
+  if (status && (status in STATUS_NAME || status === 'check' || status === 'late')) f.status = status as StatusFilter;
   const agency = one(q.agency);
   if (agency && agency in AGENCY_NAME) f.agency = agency;
   return f;
@@ -142,7 +142,9 @@ export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Prog
 export const inLens = (r: ProjectRow, f: Filters) => (f.policy ? r.policies.includes(f.policy.key) : f.program ? r.programs.includes(f.program.name) : true);
 export const inRegion = (r: ProjectRow, f: Filters) => (f.sgg ? r.sgg === f.sgg || !!f.gu?.includes(r.sgg) : f.sido ? r.sgg.startsWith(f.sido) : f.metro ? isMetro(r.sgg) : true);
 export const inAgency = (r: ProjectRow, f: Filters) => !f.agency || agencyKey(r.agency) === f.agency;
-export const statusOk = (r: ProjectRow, st: StatusFilter | undefined) => !st || (st === 'check' ? isCheck(r) : statusOf(r) === st);
+/* 지연(장기 포함) = 번호가 있는 사업 중 경과 6개월 이상 — 원장 집계 judgment.delay·delayByStage 와 같은 범위 */
+export const isLate = (r: ProjectRow) => r.issued && r.cls === 'delay';
+export const statusOk = (r: ProjectRow, st: StatusFilter | undefined) => !st || (st === 'check' ? isCheck(r) : st === 'late' ? isLate(r) : statusOf(r) === st);
 /* 범위 = 렌즈 × 지역 × 기관(핵심 질문은 상태·단계 칩과 상관없이 이 범위로 센다) */
 export const scopeOf = (rows: ProjectRow[], f: Filters) => rows.filter((r) => inLens(r, f) && inRegion(r, f) && inAgency(r, f));
 /* skip: 그 거르기만 빼고 */
@@ -299,7 +301,7 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
   const pair = cells?.find((c) => c.target != null && c.actual != null);
   if (pol && pair) {
     const short = pair.state === 'short', i = pair.board, r = rateOf(pair);
-    Q.push({ q: `${policyLabel(pol)} 목표 대비(정책 전체)`, href: !f.policy ? listHref(f, { policy: pk! }) : undefined, tone: short ? 'bad' : undefined,
+    Q.push({ q: `${policyLabel(pol)} 목표 대비`, href: !f.policy ? listHref(f, { policy: pk! }) : undefined, tone: short ? 'bad' : undefined,
       value: r.value, unit: r.unit, stages: cells!,
       sub: `${BOARD_CIR[i]}${BOARD_NAMES[i]} 확인 ${fmt(pair.actual!)} / 목표 ${fmt(pair.target!)}`,
       tip: `${pol.name} 단계별 목표 대비 확인(${ymText(pair.from)}~${ymText(pair.through)}) · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 부족·초과·비율은 확인으로만 계산${cells!.some(hasEstimate) ? ` · 담당자 추정 포함(확인과 따로): ${cells!.filter(hasEstimate).map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.withEst!)}호`).join(' · ')}` : ''} · 누르면 이 정책의 사업`,
@@ -316,7 +318,7 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
   /* ② 어디서 막혀: 병목(지연 호수가 가장 큰 단계 — 종합상황판 '병목' 카드와 같은 계산 bottleneckOf) */
   const late = scope.filter(isCheck);
   const byStage = delayByStageOf(scope), neck = bottleneckOf(byStage);
-  Q.push({ q: '어디서 막혀 있는가', href: neck ? listHref(f, { stage: String(neck.i), status: 'check' }) : undefined, ink: neck ? BOARD_INK[neck.i] : undefined, muted: !neck,
+  Q.push({ q: '어디서 막혀 있는가', href: neck ? listHref(f, { stage: String(neck.i), status: 'late' }) : undefined, ink: neck ? BOARD_INK[neck.i] : undefined, muted: !neck,
     value: neck ? `${BOARD_CIR[neck.i]} ${BOARD_NAMES[neck.i]}` : '없음', unit: '', sub: neck ? `병목 · ${DELAY_GROUP} ${fmt(neck.units)}호` : '지연 사업 없음',
     tip: `병목 = ${DELAY_GROUP} 호수(현재 예정일 경과 6개월 이상 사업의 계획 호수)가 가장 큰 단계 · 종합상황판 병목과 같은 계산 · ${byStage.map((v, i) => `${BOARD_CIR[i]} ${fmt(v)}`).join(' · ')}`,
     help: '예정일을 6개월 넘게 넘긴 사업이 가장 많이(호수 기준) 멈춰 있는 단계입니다.' });
@@ -324,8 +326,8 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
   const n = (s: Status) => late.filter((r) => statusOf(r) === s).length;
   /* 확인 필요(후보): 번호가 없는 후보 중 같은 계산으로 지연(장기 포함)인 사업 — 지연 건수에 넣지 않고 따로(D3) */
   const candLate = scope.filter((r) => !r.issued && r.cls === 'delay').length, candText = candLate ? ` · ${STATUS_RANGE.review} ${fmt(candLate)}` : '';
-  Q.push({ q: '어떤 사업이 늦어지는가', href: late.length ? listHref(f, { status: 'check' }) : candLate ? listHref(f, { status: 'review' }) : undefined, value: fmt(n('delay') + n('long')), unit: '건', sub: `${STATUS_RANGE.delay} ${fmt(n('delay'))} · ${STATUS_RANGE.long} ${fmt(n('long'))}${candText}`,
-    tip: `${DELAY_GROUP} = ${STATUS_RANGE.delay} ${fmt(n('delay'))} + ${STATUS_RANGE.long} ${fmt(n('long'))}(사업 번호가 있는 사업만) · ${STATUS_RANGE.caution} ${fmt(n('caution'))}건은 따로${candLate ? ` · ${STATUS_RANGE.review} ${fmt(candLate)}건은 번호가 없는 후보 중 원천 예정일로 계산하면 지연인 사업(지연에 넣지 않음)` : ''} · 누르면 점검 필요 목록`,
+  Q.push({ q: '어떤 사업이 늦어지는가', href: n('delay') + n('long') ? listHref(f, { status: 'late' }) : candLate ? listHref(f, { status: 'review' }) : undefined, value: fmt(n('delay') + n('long')), unit: '건', sub: `${STATUS_RANGE.delay} ${fmt(n('delay'))} · ${STATUS_RANGE.long} ${fmt(n('long'))}${candText}`,
+    tip: `${DELAY_GROUP} = ${STATUS_RANGE.delay} ${fmt(n('delay'))} + ${STATUS_RANGE.long} ${fmt(n('long'))}(사업 번호가 있는 사업만) · ${STATUS_RANGE.caution} ${fmt(n('caution'))}건은 따로${candLate ? ` · ${STATUS_RANGE.review} ${fmt(candLate)}건은 번호가 없는 후보 중 원천 예정일로 계산하면 지연인 사업(지연에 넣지 않음)` : ''} · 누르면 ${DELAY_GROUP} 목록(건수 = 이 숫자)`,
     help: `예정일을 6개월 넘게 넘긴 사업 수입니다. 12개월 넘게 넘긴 사업은 '장기'로 따로 셉니다. 1~6개월 넘긴 사업(주의)은 넣지 않습니다. 사업 번호가 없는 후보는 '확인 필요'로 따로 셉니다(이미 준공했는데 자료가 연결되지 않았을 수 있음).` });
   /* ④ 어디를 먼저: 지연·주의 호수가 가장 큰 시도(시도·시군구를 고르면 시군구) */
   const bySgg = !!(f.sido || f.sgg), acc = new Map<string, number>();

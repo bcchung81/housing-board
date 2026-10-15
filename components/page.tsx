@@ -29,11 +29,12 @@ export function PageHead({ crumbs, title, tip, meta, metaTip, children }: { crum
   );
 }
 
-/* 카드 머리 줄: 제목(설명은 title) … 오른쪽 범례 칩·조용한 링크 */
-export function PanelHead({ title, tip, id, children, className }: { title: ReactNode; tip?: string; id?: string; children?: ReactNode; className?: string }) {
+/* 카드 머리 줄: 제목(설명은 title) + 범위 칩(scope — components/ui/scope-chip) … 오른쪽 범례 칩·조용한 링크 */
+export function PanelHead({ title, tip, id, scope, children, className }: { title: ReactNode; tip?: string; id?: string; scope?: ReactNode; children?: ReactNode; className?: string }) {
   return (
     <div className={cn(phead, 'mb-2', className)}>
       <h2 id={id} className={ptitle} title={tip}>{title}</h2>
+      {scope}
       {children ? <div className={phgroup}>{children}</div> : null}
     </div>
   );

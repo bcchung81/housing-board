@@ -1,9 +1,9 @@
 /* 사업 목록 표의 열·칸(화면 /projects 의 표와 CSV 내려받기 /projects/csv 가 같이 쓴다 — 열 이름·값이 하나). 서버 전용 순수 계산.
    칸 모양은 lib/grid/spec.ts 의 Cell(직렬화되는 값만). */
-import type { Cell, Col, Row } from '../grid/spec';
+import type { Cell, CellObj, Col, Row } from '../grid/spec';
 import { mapHref } from './map-href';
 import {
-  AGENCY_NAME, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, CAND_NAME, EVENT_NAME, PLAN_COL, STATUS_NAME,
+  AGENCY_NAME, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, CAND_NAME, DATE_ALT, EVENT_NAME, PLAN_COL, STATUS_NAME,
   agencyKey, dateAltOf, isMetro, listHref, nextOf, overdueMonthsOf, statusLabel, statusOf, statusTip, ymText, type Filters, type ProjectRow, type Status,
 } from './projects-view';
 
@@ -80,4 +80,11 @@ export function listRows(list: ProjectRow[], f: Filters, sel: string | null, sid
 const noteOf = (r: ProjectRow) => { const a = dateAltOf(r)!; return `${a.text} — ${a.title.replace(/^준공 예정이 원천마다 다름 — /, '')}`; };
 /* CSV 열 = 첫 열 사업 id + 화면에 보이는 열(뺀 빈 열 제외)에서 지도 표지만 뺀다(링크라 값이 없다) + 끝 열 비고. 화면 표에는 id 열이 없어 행에 붙여 넣는다(csvRows) */
 export const csvCols = (cols: Col[]): Col[] => [{ key: 'id', label: '사업 id', kind: 'text' }, ...cols.filter((c) => c.key !== 'map'), { key: 'note', label: '비고', kind: 'text' }];
-export const csvRows = (rows: Row[]): Row[] => rows.map((r) => ({ ...r, c: { id: r.id, ...r.c } }));
+/* CSV '현재 예정' 칸은 날짜·사건만('2025.02 준공') — 화면 꼬리표(예정일 지남·실제·원천 날짜 다름)는 괄호로 붙이지 않고 비고 열로 옮긴다(원천 날짜 다름은 비고에 이미 설명이 있어 꼬리표를 다시 쓰지 않는다) */
+export const csvRows = (rows: Row[]): Row[] => rows.map((r) => {
+  const n = r.c.next, tag = n && typeof n === 'object' ? n.tag : undefined;
+  if (!tag) return { ...r, c: { id: r.id, ...r.c } };
+  const { tag: _drop, ...plain } = n as CellObj;
+  const note = [...tag.split(' · ').filter((t) => !t.startsWith(DATE_ALT)), r.c.note].filter(Boolean).join(' · ');
+  return { ...r, c: { id: r.id, ...r.c, next: plain, ...(note ? { note } : {}) } };
+});

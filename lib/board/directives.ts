@@ -9,6 +9,8 @@ export type Directive = {
   sub?: { text: string; tone: 'ok' | 'bad' | 'warn' };   // 값 오른쪽의 작은 보조 값
   basis: string;                                          // 카드 title: 값의 기준(기간·범위)과 못 내는 값
   p: string[];
+  /* '목록 ›' 연결: 그 숫자를 만든 사업만 거른 목록(사업 화면 쿼리 — lib/board/projects-view.ts parseFilters 규칙). 사업 목록으로 거를 수 없는 숫자는 가장 가까운 목록으로 보내고 차이를 title 에 */
+  list: { href: string; title: string };
 };
 const val = (pre: string | undefined, big: string, u: string) => ({ pre, big, u, m: `${pre ? pre + ' ' : ''}${big}${u}` });
 export type DirectiveInput = {
@@ -45,16 +47,16 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start, b
     { date: '08.14', t: '진척 관리', ...val('착공', start.cum === null ? '–' : f(start.cum), start.cum === null ? '' : '호'),
       sub: yoy === null ? undefined : { text: `${yoy >= 0 ? '▲' : '▼'}${Math.abs(yoy).toFixed(1)}%`, tone: yoy >= 0 ? 'ok' : 'bad' },
       basis: `통계누리 전국 착공 ${span} 누계와 전년 같은 기간 대비(보고자료와 같은 계산). 계획(목표) 물량 원천이 없어 계획 대비 달성률은 내지 못합니다.`,
-      p: ['p-chart'] },
+      p: ['p-chart'], list: { href: '/projects?sido=all&stage=2', title: `목록: 지금 ③${K[2]} 단계인 원장 사업(전국) — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록(건수가 다름)` } },
     { date: '08.19', t: '사업장별 현황판', ...val(undefined, f(L.scope.projects), '건'), basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})`,
-      p: ['p-region'] },
+      p: ['p-region'], list: { href: '/projects?sido=all', title: `목록: 원장 사업 전체(전국) ${f(L.scope.projects)}건 — 카드 숫자와 같음` } },
     { date: '09.03', t: '범부처 통합·병목', ...(neck ? val(`병목 ${K[neck.i]}`, f(neck.units), '호') : val('병목', '없음', '')), basis: `${L_(L)} · 병목 = 지연 호수(경과 6개월 이상 사업의 계획 호수)가 가장 큰 단계 — 사업 화면 '어디서 막혀 있는가'와 같은 계산(판정한 사업 ${L.scope.judged}건 기준)`,
-      p: ['p-trend', 'p-agency'] },
+      p: ['p-trend', 'p-agency'], list: neck ? { href: `/projects?sido=all&stage=${neck.i}&status=late`, title: `목록: 병목 단계(${K[neck.i]})의 지연(장기 포함) 사업 — 목록 머리의 계획 호수 = 카드 숫자` } : { href: '/projects?sido=all&status=late', title: '목록: 지연(장기 포함) 사업(병목 없음)' } },
     { date: '09.04', t: '예측가능성', ...val('준공 예정', f(upSum), '호'), basis: `${L_(L)} · 향후 12개월(${ymDot(L.upcoming[0].ym)}~${ymDot(L.upcoming[L.upcoming.length - 1].ym)}) 준공 예정 호수 합`,
-      p: ['p-fut'] },
+      p: ['p-fut'], list: { href: '/region?sido=all&kind=COMPLETION', title: `목록: 지역 공급의 준공 예정(전국, 같은 12개월) — 사업 목록에는 '앞으로 12개월' 거르기가 없어 같은 범위·같은 값인 지역 공급 목록으로` } },
     { date: '09.18', t: '일정 지연 관리', ...val('지연', f(L.judgment.delay.projects), '건'), sub: { text: `주의 ${f(L.judgment.caution.projects)}`, tone: 'warn' }, basis: `${L_(L)} · ${ledgerJudged(L)} 중 지연·주의${L.judgment.candidate ? ` · ${CAND_TEXT}: ${candText(L.judgment.candidate)}건(지연·주의에 넣지 않음)` : ''}`,
-      p: ['p-trend'] },
+      p: ['p-trend'], list: { href: '/projects?sido=all&status=late', title: `목록: 지연(장기 포함) 사업(전국) ${f(L.judgment.delay.projects)}건 — 카드 숫자와 같음 · 주의 ${f(L.judgment.caution.projects)}건은 '점검 필요' 거르기` } },
     { date: '09.30', t: '국민 공개·공식 원천', ...val('원천', f(sourceCount), '곳'), basis: '원천 카탈로그(data/board/sources.json)에 등록된 원천 수',
-      p: ['p-flow'] },
+      p: ['p-flow'], list: { href: '/sources', title: '목록: 데이터 원본(원천 카탈로그) — 사업이 아니라 원천 목록' } },
   ];
 }

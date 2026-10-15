@@ -10,6 +10,8 @@ import { Pipeline, PolicyCompare, PrintDefs, Questions, ReadHelp } from '../../.
 import { LIST_COLS, NO_LOC, dropBlank, lateCell, listRows, nextCell, sggLabel, stagePill, statusCell, agencyCell, unitsCell } from '../../../lib/board/projects-list';
 import InfoTip from '../../../components/ui/info-tip';
 import { Badge } from '../../../components/ui/badge';
+import ScopeChip from '../../../components/ui/scope-chip';
+import SkipToList from '../../../components/projects/SkipToList';
 import { Card } from '../../../components/ui/card';
 import { Chip, ChipBar, ChipGroup, ChipMenu, ChipSep, ClearChip } from '../../../components/ui/chips';
 import { mapScopeHref } from '../../../lib/board/map-href';
@@ -38,7 +40,7 @@ async function load(searchParams: Props['searchParams']) {
   const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c), guOf });
   const lens = f.policy ? policyLabel(f.policy) : f.program?.name;
   const region = f.sgg ? sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2))) : f.sido ? sidoName(molit, f.sido) ?? f.sido : f.metro ? '수도권' : '전국';
-  const label = [lens, region, f.stage !== undefined && `${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`, f.status && (f.status === 'check' ? '점검 필요' : STATUS_NAME[f.status]), f.agency && AGENCY_NAME[f.agency]].filter(Boolean).join(' · ');
+  const label = [lens, region, f.stage !== undefined && `${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`, f.status && (f.status === 'check' ? '점검 필요' : f.status === 'late' ? DELAY_GROUP : STATUS_NAME[f.status]), f.agency && AGENCY_NAME[f.agency]].filter(Boolean).join(' · ');
   return { f, idx, molit, label, lens, region, id: one(q.id) ?? null, cand: one(q.cand) ?? null, print: one(q.print) === '1' };
 }
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -100,36 +102,42 @@ export default async function ProjectsPage({ searchParams }: Props) {
   ) : null;
   const lines = f.program ? [] : compareLines(pp, idx.policies, rows, f.policy ? [f.policy.key] : idx.policies.map((p) => p.key));
   const listOnly = f.stage !== undefined || !!f.status;
-  const scopeText = [region, lens, f.agency && AGENCY_NAME[f.agency]].filter(Boolean).join(' · ');
-  /* 첫 칸(정책 목표 대비)은 정책 전체 범위라 '요약 범위' 줄 밖 왼쪽에 따로 둔다(범위 줄은 나머지 질문 위에만) */
+  const lensText = [lens, f.agency && AGENCY_NAME[f.agency]].filter(Boolean).join(' · ');
+  /* 범위가 다른 두 숫자 묶음은 카드를 나누고 머리에 범위 칩을 단다: 정책 목표 대비(전국 · 정책 진행 자료 — 거르기와 상관없음) | 원장 요약(거르기 범위 · 사업 원장) */
   const [whole, scoped] = questions[0]?.stages ? [questions[0], questions.slice(1)] : [null, questions];
   const scopeLine = (
     <div className="-mt-1 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-muted-foreground">
-      <span className="tabular-nums"><b className="font-bold text-foreground">요약 범위</b> {scopeText}</span>
+      <ScopeChip scope={region} source="사업 원장" title={`핵심 질문·단계별 진행의 범위: 사업 원장 · ${[region, lensText].filter(Boolean).join(' · ')}(위 거르기에 따라 바뀜)`} />
+      {lensText ? <span className="tabular-nums text-foreground">{lensText}</span> : null}
       <span className={cn(listOnly && 'font-bold text-foreground')} title="핵심 질문·단계별 진행은 정책·지역·기관 거르기를 따르고, 단계·상태 거르기는 아래 목록에만 적용">단계·상태 거르기는 목록에만</span>
       <span className="ml-auto"><ReadHelp /></span>
     </div>
   );
-  /* 인쇄: 첫 칸(정책 전체 ①~⑥)이 이미 그 정책의 단계표라, 펼친 '정책 목표 대비'에서는 같은 정책 행을 뺀다(화면은 그대로) */
-  const cmpLines = print && whole?.stages ? lines.filter((l) => l.policy.key !== (f.policy ? f.policy.key : '97')) : lines;
-  const summary = (
-    <Card render={<section aria-label="요약" />} className="print:break-inside-avoid">
-      {whole ? (
-        <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,4fr)] gap-x-4 gap-y-4 narrow:grid-cols-1">
-          <div className="border-r border-border pr-4 narrow:border-r-0 narrow:pr-0">
-            <div className="-mt-1 mb-3 text-[14px] text-muted-foreground tabular-nums" title="정책 전체 숫자 — 위 지역·기관·단계·상태 거르기와 상관없음"><b className="font-bold text-foreground">정책 전체</b> {ymText(whole.stages![0].from)}~{whole.stages![0].through.slice(5, 7)} · 확인 / 목표</div>
-            <Questions list={[whole]} />
-          </div>
-          <div>{scopeLine}<Questions list={scoped} /></div>
-        </div>
-      ) : <>{scopeLine}<Questions list={scoped} /></>}
-      <div className="mt-5">
-        <Pipeline open={pipe.open} shut={pipe.shut} total={pipe.total} on={f.stage} badges={badges} scope={region} href={(i) => at({ stage: f.stage === i ? undefined : String(i) })} />
+  /* 정책 목표 대비: 첫 칸(그 정책의 ①~⑥)과 같은 정책 행은 접힘에서 뺀다 — 한 정책 행이 두 번 나오지 않게(다른 정책 줄만 접힘에 남는다) */
+  const cmpLines = whole?.stages ? lines.filter((l) => l.policy.key !== (f.policy ? f.policy.key : '97')) : lines;
+  const policyCard = whole || cmpLines.length ? (
+    <Card render={<section aria-label="정책 목표 대비" />} className="min-w-0 print:break-inside-avoid">
+      <div className="-mt-1 mb-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[14px] text-muted-foreground tabular-nums">
+        <ScopeChip scope="전국" source="정책 진행 자료" title={`정책 전체 숫자(호) — ${HOME_TIP} · 위 지역·기관·단계·상태 거르기와 상관없음`} />
+        {whole ? <span title="같은 해 1월~기준 달 누적 · 확인 / 목표(호)">{ymText(whole.stages![0].from)}~{whole.stages![0].through.slice(5, 7)} · 확인 / 목표</span> : null}
       </div>
-      <PolicyCompare lines={cmpLines} title={f.policy ? `${policyLabel(f.policy)} 목표 대비` : '정책 목표 대비'} open={print} href={(key) => at({ policy: key })} />
+      {whole ? <Questions list={[whole]} /> : null}
+      <PolicyCompare lines={cmpLines} title={f.policy ? `${policyLabel(f.policy)} 목표 대비` : '다른 정책 목표 대비'} open={print} href={(key) => at({ policy: key })} />
+    </Card>
+  ) : null;
+  const ledgerCard = (
+    <Card render={<section aria-label="요약" />} className="min-w-0 print:break-inside-avoid">
+      {scopeLine}
+      <Questions list={scoped} />
+      <div className="mt-5">
+        <Pipeline open={pipe.open} shut={pipe.shut} total={pipe.total} on={f.stage} badges={badges} href={(i) => at({ stage: f.stage === i ? undefined : String(i) })} />
+      </div>
       <PrintDefs />
     </Card>
   );
+  const summary = policyCard ? (
+    <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,4fr)] gap-3.5 narrow:grid-cols-1 print:grid-cols-1">{policyCard}{ledgerCard}</div>
+  ) : ledgerCard;
 
   /* 월간 보고: 점검 필요 사업(10줄 이하면 전부, 넘으면 상위 10) · 기준일·출처 */
   const prioAll = priorityOf(scope, Infinity), top = prioAll.slice(0, 10);
@@ -194,6 +202,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
 
   return (
     <Page>
+      {list.length ? <SkipToList /> : null}
       <div className="contents print:hidden">
         <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '사업' }]} title="사업"
           tip="사업 원장의 사업을 정책·프로그램과 지역·상태·기관으로 거른다(처음은 수도권) · 행을 누르면 오른쪽에 사업 상세 · 보고서 인쇄 = 월간 진척 보고(2026.08.14 지시)">
@@ -223,7 +232,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
         <ChipGroup label="상태" bare>
           <Chip href={at({ status: f.status === 'check' ? undefined : 'check' })} on={f.status === 'check'} title="주의·지연·장기 지연 사업만(지연 개월 큰 순)">점검 필요</Chip>
           <ChipMenu label="상태" on={!!f.status && f.status !== 'check'}
-            items={[{ href: at({ status: undefined }), label: '전체', on: false }, ...STATUS_ORDER.map((k) => ({ href: at({ status: k }), label: k === 'long' ? `장기 지연 ${LONG_DELAY_MONTHS}개월+` : STATUS_RANGE[k], on: f.status === k, title: STATUS_TIP[k] }))]} />
+            items={[{ href: at({ status: undefined }), label: '전체', on: false }, ...STATUS_ORDER.map((k) => ({ href: at({ status: k }), label: k === 'long' ? `장기 지연 ${LONG_DELAY_MONTHS}개월+` : STATUS_RANGE[k], on: f.status === k, title: STATUS_TIP[k] })),
+              { href: at({ status: 'late' }), label: DELAY_GROUP, on: f.status === 'late', title: '지연 6~12개월 + 장기 지연(사업 번호가 있는 사업 — 종합상황판 지연 카드와 같은 범위)' }]} />
           {f.stage !== undefined ? <ClearChip href={at({ stage: undefined })} title="단계 거르기 풀기(단계는 아래 단계별 진행 칸으로 고른다)"><SwatchDot color={BOARD_COLOR[f.stage]} />{`${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`}</ClearChip> : null}
         </ChipGroup>
         <ChipSep />
@@ -236,7 +246,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
       {summary}
       {report}
 
-      <Card render={<section aria-label="사업 목록" />} className="print:hidden">
+      <Card render={<section id="projects-list" aria-label="사업 목록" />} className="scroll-mt-4 print:hidden">
         <PanelHead title={<>{`사업 목록 · ${label}`}<span className="ml-2 font-sans text-[14px] font-normal text-muted-foreground tabular-nums" title={`사업마다 원장의 첫 물량 합 · 호수 미확인 ${fmt(s.noUnits)}건은 0`}>{fmt(s.n)}건 · 계획 {fmt(s.units)}호</span></>}
           tip={`기본 순서 = 점검 필요 순(지연 개월 큰 순)${grid.note}`}>
           <InfoTip label="목록 읽는 법">

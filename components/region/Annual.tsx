@@ -4,6 +4,7 @@
 import type { ReactNode } from 'react';
 import { PanelHead, SrcLink, SubTitle } from '../page';
 import { Card } from '../ui/card';
+import ScopeChip from '../ui/scope-chip';
 import { DataGrid } from '../ui/data-grid';
 import { Chip, ChipGroup } from '../ui/chips';
 import { METRIC_COLOR } from '../charts/palette';
@@ -18,9 +19,10 @@ export const METRIC_NAME: Record<Metric, string> = { permit: '인허가', start:
 const METRIC_TIP: Partial<Record<Metric, string>> = { sale: '통계누리 분양 실적(공동주택 입주자 모집 승인 기준) — 리본 ④모집과 같은 단계' };
 export const parseMetric = (v?: string): Metric => ((METRICS as string[]).includes(v ?? '') ? (v as Metric) : 'complete');
 
-type Props = { molit: Molit; annual: AnnualDoc; sido: string; metric: Metric; order: string[]; sidoName: (c: string) => string; href: (p: { sido?: string; metric?: Metric }) => string };
+/* sggName: 지역 공급에서 고른 시군구(있으면 머리에 '시도 단위 자료' 표지 — 이 패널은 시군구로 거를 자료가 없다) */
+type Props = { molit: Molit; annual: AnnualDoc; sido: string; metric: Metric; order: string[]; sidoName: (c: string) => string; href: (p: { sido?: string; metric?: Metric }) => string; sggName?: string | null };
 
-export default function Annual({ molit, annual, sido, metric, order, sidoName, href }: Props) {
+export default function Annual({ molit, annual, sido, metric, order, sidoName, href, sggName }: Props) {
   const name = METRIC_NAME[metric], color = METRIC_COLOR[metric], rname = sido === 'metro' ? '수도권' : sido ? sidoName(sido) : '전국';
   const metro = sido === 'metro';
   const { years, spliced } = metro ? { years: metroYears(molit, annual, metric), spliced: true } : regionYears(molit, annual, metric, sido);
@@ -53,7 +55,8 @@ export default function Annual({ molit, annual, sido, metric, order, sidoName, h
 
   return (
     <Card render={<section aria-label="지난 공급 실적" />}>
-      <PanelHead title={`지난 공급 실적 · 연도별 ${name}`} tip={`${rname} · 호 · 막대 위는 전년 대비(두 해 모두 12/12개월일 때만) · 마지막 해가 부분 연도면 옅은 막대 · ${srcTip}`}>
+      <PanelHead title={`지난 공급 실적 · 연도별 ${name}`}
+        scope={<ScopeChip scope={rname} source="통계누리" title={`통계누리 주택건설실적통계 · ${rname}`} note={sggName ? { text: '시도 단위 자료', title: `${sggName}을 골라도 ${rname} 전체 값(시군구 실적 자료 없음)` } : undefined} />} tip={`${rname} · 호 · 막대 위는 전년 대비(두 해 모두 12/12개월일 때만) · 마지막 해가 부분 연도면 옅은 막대 · ${srcTip}`}>
         <ChipGroup label="지표" className="[&>span:first-child]:sr-only">
           {METRICS.map((k) => <Chip key={k} href={href({ sido, metric: k })} on={k === metric} title={METRIC_TIP[k]} swatch={{ kind: 'fill', color: METRIC_COLOR[k] }}>{METRIC_NAME[k]}</Chip>)}
         </ChipGroup>
