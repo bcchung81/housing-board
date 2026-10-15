@@ -2,7 +2,7 @@
    - 면: data/board/region-map.json 의 시군구 67곳(서울 25 · 인천 11 · 경기 31 — 경기는 시 단위). 경로(투영 정수)는 그대로 넘기고 지도 쪽(assets/js/overview.js)이 경위도 GeoJSON 으로 되돌린다.
    - 값: 사업 화면(/projects)과 같은 목록 행(getProjectsIndex → rowsOf)과 지역 공급(/region)과 같은 앞으로 12개월 예정(region-calendar.json)에서 센다(지역 공급은 모집·준공·입주, 개요는 준공이 대표이고 입주는 마우스 올림 분해로만).
      진행 사업 호수 = 현재 단계가 ①계획~④모집(리본 칸 0~3)인 사업의 계획 호수 합(호수 미확인은 건수로 따로)
-     지연 사업 = 사업 화면의 '지연(장기 포함)' = 판정 지연(현재 예정일 경과 6개월 이상, 12개월 이상 장기 지연 포함)
+     지연 사업 = 사업 화면의 '지연(장기 포함)' = 판정 지연(현재 예정일 경과 6개월 이상, 12개월 이상 장기 지연 포함) — 번호 있는 사업만(후보는 세지 않음)
      앞으로 12개월 준공 = 지역 공급의 '앞으로 12개월'에서 준공(COMPLETION) 예정만(사업당 하나 — 사업·지역 공급 화면의 대표 '준공 예정'과 같은 정의, 2026-10-15 결정)
      앞으로 12개월 입주 = 같은 기간 입주(MOVE_IN) 예정(분해용 — 준공과 더하지 않는다)
    - 코드: 원장 시군구 코드 → 면. 서울·인천은 코드 그대로, 경기는 시 단위로 접는다(앞 4자리 + '0': 41281 고양시 덕양구 → 41280 고양시). */
@@ -64,13 +64,13 @@ function add(t: OvVals, x: OvVals) {
 export const inProgress = (r: { board: number }) => r.board <= 3;
 
 /* 원장 시군구 코드별 값(접기 전). 사업 화면 행(rows)과 지역 공급 예정(calendar)을 받는다 */
-export function valuesBySgg(rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | 'cls'>[], calendar: Pick<CalendarDoc, 'sido'>, sggNames: Record<string, string | null>): Map<string, OvVals> {
+export function valuesBySgg(rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | 'cls' | 'issued'>[], calendar: Pick<CalendarDoc, 'sido'>, sggNames: Record<string, string | null>): Map<string, OvVals> {
   const out = new Map<string, OvVals>(), at = (c: string) => { let v = out.get(c); if (!v) out.set(c, (v = zero())); return v; };
   for (const r of rows) {
     if (!unitOf(r.sgg)) continue;
     const v = at(r.sgg);
     v.st[Math.min(5, Math.max(0, r.board))] += 1;
-    if (r.cls === 'delay') v.d += 1;
+    if (r.issued && r.cls === 'delay') v.d += 1;   // 판정 지연은 번호 있는 사업만(사업 화면 isLate·원장 judgment.delay 와 같은 정의) — 후보의 계산 지연은 세지 않는다
     if (inProgress(r)) { v.n += 1; if (r.units > 0) v.u += r.units; else v.q += 1; }
   }
   /* 예정의 시군구는 이름('경기도 고양시 덕양구')이라 원장 이름표로 코드를 찾는다 */
@@ -88,7 +88,7 @@ export function valuesBySgg(rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | '
 const unitName = (s: string, n: string) => `${SIDO_FULL[s]} ${n}`;
 
 /* 개요 자료 하나. data 가 null 이면(원장을 읽지 못함) 경계만 */
-export function metroOverview(map: RegionMapDoc, data: { rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | 'cls'>[]; calendar: CalendarDoc; sggNames: Record<string, string | null>; referenceDate: string } | null): OverviewDoc {
+export function metroOverview(map: RegionMapDoc, data: { rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | 'cls' | 'issued'>[]; calendar: CalendarDoc; sggNames: Record<string, string | null>; referenceDate: string } | null): OverviewDoc {
   const codeOf = new Map(Object.entries(METRO_AREAS).map(([c, n]) => [`${c.slice(0, 2)}|${n}`, c]));
   const by = data ? valuesBySgg(data.rows, data.calendar, data.sggNames) : null;
   const units: OvUnit[] = map.sgg.filter((g) => (OV_SIDO as readonly string[]).includes(g.s)).map((g) => {

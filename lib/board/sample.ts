@@ -64,18 +64,10 @@ export const scopeChangeOf = (J: (JudgeRow | null)[]) => {
 export const SCOPE_TAG = (ym: string) => `판정 기준 변경 · ${ym}부터 번호 있는 사업만`;
 export const addedMarks = (J: (JudgeRow | null)[], NOW: number) => J.slice(0, NOW + 1).flatMap((r, m) => (r?.addedSources?.length ? [{ m, sources: r.addedSources }] : []));
 export const trendMax = (max: number) => { for (let e = 1; ; e *= 10) for (const m of [1, 1.2, 1.5, 2, 2.5, 3, 4, 5, 6, 8]) if (m * e >= max) return m * e; };
-/* 선 끝 이름표의 값: 선택 시점(NOW 까지)의 판정 달 값과 전월 대비 증감(호, 이력 차이). 판정 달이 없으면 null, 앞 달 판정이 없으면 증감 0 */
+/* 추이 위 줄 숫자: 선택 시점(NOW 까지)의 판정 달 값과 전월 대비 증감(호, 이력 차이). 판정 달이 없으면 null, 앞 달 판정이 없으면 증감 0 */
 export function trendAt(T: Timeline, tr: ({ d: number; w: number } | null)[], cur: number) {
   const j = judgedAt(T, Math.min(cur, T.now)), a = j >= 0 ? tr[j] : null, b = j > 0 ? tr[j - 1] : null;
   return a ? { d: a.d, w: a.w, dd: b ? a.d - b.d : 0, dw: b ? a.w - b.w : 0 } : null;
-}
-/* 두 이름표의 세로 자리(y, 아래로 커진다): 간격이 gap 보다 좁으면 아래쪽을 내리고, 바닥(max)을 넘으면 위쪽을 올린다. 입력 순서대로 돌려준다 */
-export function apart(a: number, b: number, gap: number, max: number): [number, number] {
-  const lowFirst = a > b, up = lowFirst ? b : a;
-  let lo = lowFirst ? a : b, hi = up;
-  if (lo - hi < gap) lo = hi + gap;
-  if (lo > max) { lo = max; hi = Math.min(hi, lo - gap); }
-  return lowFirst ? [lo, hi] : [hi, lo];
 }
 
 /* ── 시도 타일 색(바탕색 = 지연율 단계) ── */

@@ -29,7 +29,7 @@ export default function Annual({ molit, annual, sido, metric, order, sidoName, h
   const last = years[years.length - 1];
   const part = last && !last.complete && last.value !== null ? last : null;
   const months = molit.months;
-  const srcTip = `통계누리 주택건설실적통계 ${ymDot(months[0])}~${ymDot(months[months.length - 1])}(${ymDot(molit.provisional[0])}~ 잠정치)${spliced ? ` · 2018~2021은 HOME 통계(통계누리 서울·인천·경기 시도 자료, 덤프 ${annual.edition}) — 2022~2025 값이 통계누리와 같음` : ''}`;
+  const srcTip = `통계누리 주택건설실적통계 ${ymDot(months[0])}~${ymDot(months[months.length - 1])}(${ymDot(molit.provisional[0])}~ 잠정치)${spliced ? ` · 2018~2021은 정책 진행 자료(HOME)에 담긴 통계누리 서울·인천·경기 시도 자료(${annual.edition.slice(0, 4)}.${annual.edition.slice(4, 6)}.${annual.edition.slice(6, 8)} 판) — 2022~2025 값이 통계누리와 같음` : ''}`;
 
   /* 수도권·전국일 때 시도 × 연도 표(맨 위 합계 행 고정). 모든 칸이 비어 있는 해(열)는 그리지 않는다 */
   let table: ReactNode = null;

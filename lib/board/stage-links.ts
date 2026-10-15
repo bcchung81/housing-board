@@ -34,6 +34,8 @@ export type StageNumbers = {
   hubBasis: number; permits: number; permitsStarted: number; permitsCompleted: number; plat: number; ledger: number;
   lhNotices: number; myhome: number; myhomePnu: number; stan: number;
   ledgerNote: string;   // 사업 원장 기준 달과 범위(예: '원장 2026.10 · 전국') — 원장 observedMonth·coverage 에서 만든다
+  /* 종합상황판 '앞으로 12개월 · 준공 예정'(원장 upcoming 합 — HOME·LH 후보·건축HUB 후보의 준공 현재 예정). 없으면 숫자 없이 기준만 */
+  ahead?: { units: number; projects: number };
 };
 
 const f = (n: number) => n.toLocaleString('en-US');
@@ -243,8 +245,9 @@ export function stageLinks(n: StageNumbers, acquire: AcqRef[]): StageLink[] {
       SCHEDULE('준공 예정일'),
     ],
     outcomes: [
-      { name: '⑤ 준공 층 · 종합상황판', lines: ['실적 = 통계누리', '예정 = LH만'] },
-      { name: '향후 12개월 공급 예정', lines: [`실데이터 · LH ${f(n.lhBlocks)}블록`, `${n.lhAsOf} 기준 · 갱신 필요`] },
+      { name: '⑤ 준공 층 · 종합상황판', lines: ['실적 = 통계누리', '예정 = 원장 현재 예정'] },
+      /* 이름은 종합상황판 카드와 같은 말(projects-view AHEAD_COMPLETION — 이 파일은 다른 .ts 를 가져오지 않아 글자로) */
+      { name: '앞으로 12개월 · 준공 예정', lines: [n.ahead ? `${f(n.ahead.units)}호 · ${f(n.ahead.projects)}건` : '원장 준공 현재 예정', 'HOME · LH · 건축HUB 후보'] },
       { name: '지도 준공 임박', lines: [`지도 자료 ${f(bun('준공 임박'))}단지`, '공정율 + 입주 예정월'] },
       { name: '준공 지연', lines: ['예정일 이력 없음', 'LH 외 시행자 예정 없음'] },
     ],

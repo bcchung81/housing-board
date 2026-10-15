@@ -7,7 +7,8 @@ export type Cls = 'ok' | 'caution' | 'delay';
    판정(정상·주의·지연·장기 지연)은 사업 번호가 있는 사업(issued)만 — 번호가 없는 후보는 같은 계산(cls)을 하되 '확인 필요'로 따로 센다(2026-10-15 사용자 결정 D3) */
 export type Status = Cls | 'long' | 'review' | 'none';
 /* 상태 거르기: 상태 하나 또는 '점검 필요'(주의·지연·장기 지연, 지연 개월 큰 순) 또는 '지연(장기 포함)'(late — 종합상황판 지연·병목 카드의 숫자와 같은 범위) */
-export type StatusFilter = Status | 'check' | 'late';
+/* 'review-late' = 후보 중 같은 계산으로 지연(장기 포함)인 사업 — 종합상황판 '후보 계산 313건'이 여는 목록(누른 숫자 = 목록 건수, 2026-10-16) */
+export type StatusFilter = Status | 'check' | 'late' | 'review-late';
 export type LinkStatus = 'CONFIRMED' | 'REVIEW_REQUIRED';
 /* 지도 색인 행(data/board/ledger-map.json · tools/ledger/board.js mapIndexFromLedger) */
 export type MapRow = {
@@ -17,6 +18,8 @@ export type MapRow = {
   dateAlt?: { source: string; planned: string };
   /* 건축HUB 관리번호(공개 범위 미결 — 화면에는 값 없이 '건축HUB 인허가에서 온 사업'인지만 쓴다) */
   pks?: string[];
+  /* 지도 번들 단지 id('지역slug/단지id' — 계양·광산·나주 번들의 블록·동 윤곽과 이어진 사업). 있으면 지도에 그 단지로 그린다(mapLocOf) */
+  bundles?: string[];
 };
 /* projects-index.json 의 사업별 덧붙임(tools/ledger/projects-index.js): reached = 원천 실제 기록이 있는 리본 칸(1~5), completion = 준공 현재 예정 달(준공 실제 없을 때) */
 export type IndexExtra = { notice?: number; programs?: string[]; policies?: string[]; link?: LinkStatus; agency?: string; reached?: number[]; completion?: string };
@@ -50,6 +53,8 @@ export const STATUS_ORDER: Status[] = ['ok', 'caution', 'delay', 'long', 'review
 /* 구간 이름(칩 메뉴·보조 줄): '지연'은 묶음(지연 + 장기, 경과 6개월 이상)에만 '지연(장기 포함)'으로 쓰고, 구간은 개월을 붙여 구분한다 */
 export const STATUS_RANGE: Record<Status, string> = { ok: '정상', caution: '주의 1~6개월', delay: '지연 6~12개월', long: '장기 12개월+', review: '확인 필요(후보)', none: '판정 없음' };
 export const DELAY_GROUP = '지연(장기 포함)';
+/* 후보 · 지연 계산: 번호가 없는 후보 중 원천 예정일로 계산하면 지연(경과 6개월 이상)인 사업(판정 지연에 넣지 않음 — D3) */
+export const REVIEW_LATE = '후보 · 지연 계산';
 /* 계산 상태: 번호와 상관없이 같은 판정 계산(cls)의 결과 — 후보의 '확인 필요' 안쪽 값(칸 title·간단 보기) */
 type Judgeable = { cls: Cls | null; overdue: { months: number } | null };
 export const calcOf = (r: Judgeable): Exclude<Status, 'review'> =>
@@ -65,6 +70,9 @@ export const statusLabel = (r: Labeled) => { const s = statusOf(r); return s ===
 export const statusTip = (r: Labeled) => { const s = statusOf(r); return s === 'none' ? NONE_TIP[noneKind(r)] : s === 'review' ? `${STATUS_TIP.review} · 계산하면 ${STATUS_NAME[calcOf(r)]}` : STATUS_TIP[s]; };
 /* 점검 필요 = 번호가 있는 사업 중 주의·지연(장기 포함). 후보는 '확인 필요'로 따로 */
 export const isCheck = (r: ProjectRow) => r.issued && (r.cls === 'caution' || r.cls === 'delay');
+/* '판정 밖'은 화면에 쓰지 않는다 — 판정할 예정일이 없는 묶음의 이름은 '일정 정보 없음'(2026-10-16 2차 평가). 원장 집계 글자(lib/board/directives ledgerJudged)를 화면에 낼 때 바꾼다 */
+export const JUDGE_OUT = '일정 정보 없음';
+export const judgeOutText = (s: string) => s.replace(/판정 밖/g, JUDGE_OUT);
 /* 예정일 경과 개월(번호와 상관없는 계산): 주의·지연으로 계산된 사업의 현재 예정일 경과 개월, 아니면 null */
 export const overdueMonthsOf = (r: Judgeable) => ((r.cls === 'caution' || r.cls === 'delay') && r.overdue ? r.overdue.months : null);
 /* 지연 개월: 점검 필요 사업(번호가 있는 주의·지연)의 현재 예정일 경과 개월, 아니면 null */
@@ -99,6 +107,8 @@ const ymOfNo = (n: number) => `${Math.floor(n / 12)}.${String((n % 12) + 1).padS
 /* 'YYYY-MM' 에서 n 달 뒤 */
 export const addMonths = (ym: string, n: number) => { const k = monthNo(ym) + n; return `${Math.floor(k / 12)}-${String((k % 12) + 1).padStart(2, '0')}`; };
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
+/* 비율·공정률 글자: 소수 한 자리 하나로(93.12 → 93.1, 33 → 33.0 — 2026-10-16 3차 평가: 33% 와 93.12% 가 섞였다) */
+export const pct1 = (v: number) => v.toFixed(1);
 
 /* ---------- 목록 행 ---------- */
 export function rowsOf(bySgg: Record<string, MapRow[]>, extra: Record<string, IndexExtra>, sggNames: Record<string, string | null>): ProjectRow[] {
@@ -138,7 +148,7 @@ export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Prog
   if (stage && /^[0-5]$/.test(stage)) f.stage = Number(stage);
   else if (stage && /^0[1-6]$/.test(stage)) f.stage = BOARD_OF_STAGE[stage];
   const status = one(q.status);
-  if (status && (status in STATUS_NAME || status === 'check' || status === 'late')) f.status = status as StatusFilter;
+  if (status && (status in STATUS_NAME || status === 'check' || status === 'late' || status === 'review-late')) f.status = status as StatusFilter;
   const agency = one(q.agency);
   if (agency && agency in AGENCY_NAME) f.agency = agency;
   return f;
@@ -148,7 +158,8 @@ export const inRegion = (r: ProjectRow, f: Filters) => (f.sgg ? r.sgg === f.sgg 
 export const inAgency = (r: ProjectRow, f: Filters) => !f.agency || agencyKey(r.agency) === f.agency;
 /* 지연(장기 포함) = 번호가 있는 사업 중 경과 6개월 이상 — 원장 집계 judgment.delay·delayByStage 와 같은 범위 */
 export const isLate = (r: ProjectRow) => r.issued && r.cls === 'delay';
-export const statusOk = (r: ProjectRow, st: StatusFilter | undefined) => !st || (st === 'check' ? isCheck(r) : st === 'late' ? isLate(r) : statusOf(r) === st);
+export const isReviewLate = (r: ProjectRow) => !r.issued && r.cls === 'delay';
+export const statusOk = (r: ProjectRow, st: StatusFilter | undefined) => !st || (st === 'check' ? isCheck(r) : st === 'late' ? isLate(r) : st === 'review-late' ? isReviewLate(r) : statusOf(r) === st);
 /* 범위 = 렌즈 × 지역 × 기관(핵심 질문은 상태·단계 칩과 상관없이 이 범위로 센다) */
 export const scopeOf = (rows: ProjectRow[], f: Filters) => rows.filter((r) => inLens(r, f) && inRegion(r, f) && inAgency(r, f));
 /* skip: 그 거르기만 빼고 */
@@ -252,21 +263,22 @@ export function policyStageCells(pp: PolicyProgress, policyId: string): StageCel
 export const hasTarget = (c: StageCell | undefined) => !!c && (c.target != null || !!c.yearEnd);
 /* 추정이 섞여 확인과 다른 칸 */
 export const hasEstimate = (c: StageCell) => c.withEst != null && c.actual != null && c.withEst > c.actual;
-/* 확인 대비 목표 비율 글자: 미달은 '부족 n%'(확인 기준), 목표를 넘으면 '초과 n%', 같으면 '100% 달성' */
+/* 확인 대비 목표 비율 글자: 미달은 '부족 n%'(확인 기준), 목표 이상이면 목표 대비 달성률 '달성 n%'(3,560/1,543 → 달성 230.7% — '초과 130.7%'처럼 넘친 몫만 쓰지 않는다, 2026-10-16 2차 평가). 소수 한 자리(pct1, 3차 평가) */
 export function rateOf(c: StageCell): { value: string; unit: string; word: string } {
-  if (c.state === 'short') return { value: String(c.shortfallPct), unit: '% 부족', word: `부족 ${c.shortfallPct}%` };
-  const over = c.target && c.actual != null ? Math.round((c.actual / c.target - 1) * 1000) / 10 : 0;
-  return over > 0 ? { value: String(over), unit: '% 초과', word: `초과 ${over}%` } : { value: '100', unit: '% 달성', word: '달성' };
+  if (c.state === 'short') { const v = pct1(c.shortfallPct ?? 0); return { value: v, unit: '% 부족', word: `부족 ${v}%` }; }
+  const v = pct1(c.target && c.actual != null ? c.actual / c.target * 100 : 100);
+  return { value: v, unit: '% 달성', word: `달성 ${v}%` };
 }
-/* 칸 설명(title): 확인·추정 포함/목표·부족·기간·확인 필요 연결 */
-export function stageCellTip(c: StageCell, polName = '') {
+/* 칸 설명(title): 확인·추정 포함/목표·부족·기간·확인 필요 연결. 확인 값은 HOME 원천 값 그대로 — cells(같은 정책의 여섯 칸)를 주면 같은 확인 값인 다른 단계를 적는다(①계획 = ②인허가 3,560: 원천이 같은 값을 줌) */
+export function stageCellTip(c: StageCell, polName = '', cells: StageCell[] = []) {
   const span = `${ymText(c.from)}~${ymText(c.through)}`;
-  const head = `${polName ? `${polName} ` : ''}${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — HOME 단계 '${c.label}' · ${span}`;
+  const head = `${polName ? `${polName} ` : ''}${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — 정책 진행 자료(HOME) 단계 '${c.label}' · ${span}`;
   if (c.state === 'none' && !c.yearEnd) return `${head} · 목표 없음 · 확인 미확보`;
   const est = hasEstimate(c) ? ` · 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호)` : '';
-  const act = c.actual != null ? `확인 ${fmt(c.actual)}호${c.actualThrough && c.actualThrough !== c.through ? `(${ymText(c.actualThrough)}까지)` : ''}${c.review ? ` — 확인 필요 연결 ${fmt(c.review)}호 포함` : ''}${est}` : `확인 미확보(${c.actualBasis})`;
+  const twin = c.actual != null ? cells.filter((o) => o.board !== c.board && o.actual === c.actual).map((o) => `${BOARD_CIR[o.board]}${BOARD_NAMES[o.board]}`) : [];
+  const act = c.actual != null ? `확인 ${fmt(c.actual)}호(HOME(정책 진행 자료) 원천 값 그대로${twin.length ? ` · ${twin.join('·')} 확인과 같은 값` : ''})${c.actualThrough && c.actualThrough !== c.through ? `(${ymText(c.actualThrough)}까지)` : ''}${c.review ? ` — 확인 필요 연결 ${fmt(c.review)}호 포함` : ''}${est}` : `확인 미확보(${c.actualBasis})`;
   const tgt = c.target != null ? `목표 ${fmt(c.target)}호` : c.yearEnd ? `같은 기간 목표 없음 · 연말 목표 ${dayText(c.yearEnd.date)} ${fmt(c.yearEnd.units)}호` : '목표 없음';
-  const gap = c.state === 'short' && c.gap != null ? ` · 부족 ${fmt(c.gap)}호(${c.shortfallPct}%)` : '';
+  const gap = c.state === 'short' && c.gap != null ? ` · 부족 ${fmt(c.gap)}호(${pct1(c.shortfallPct ?? 0)}%)` : '';
   return `${head} · ${act} / ${tgt}${gap} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}`;
 }
 /* 목표 대비 줄: 렌즈 '전체'면 목표가 배정된 정책 모두, 정책 렌즈면 그 정책 하나(목표가 없으면 없음). 칸은 목표가 있는 단계만, 나머지는 '목표 미배정' 한 번 */
@@ -293,9 +305,19 @@ export const aheadMonths = (observedMonth: string) => Array.from({ length: 12 },
 
 /* ---------- 핵심 질문 5(시안 app.js questions): 렌즈·지역·기관 범위로 다시 센다(상태·단계 칩과 상관없음) ---------- */
 /* help: ⓘ 에 여는 쉬운 말 정의(전문용어 없이). 범위가 다른 첫 칸(정책 목표 대비)은 이름에 범위를 넣는다.
+   note: help 아래 둘째 문단(첫 칸 — 원천 값 그대로라 이상해 보이는 숫자의 출처, sourceNote).
    stages: 첫 칸(정책 목표 대비)은 대표 단계 하나 대신 ①~⑥ 단계마다 확인/목표·비율(접힌 '정책 목표 대비'의 그 정책 행과 같은 policyStageCells) — 있으면 value·unit·sub 대신 그린다 */
-export type Question = { q: string; value: string; unit: string; sub: string; tip: string; help: string; href?: string; tone?: 'bad'; ink?: string; muted?: boolean; stages?: StageCell[] };
+export type Question = { q: string; value: string; unit: string; sub: string; tip: string; help: string; note?: string; href?: string; tone?: 'bad'; ink?: string; muted?: boolean; stages?: StageCell[] };
 export type QuestionCtx = { pp: PolicyProgress; policies: Policy[]; observedMonth: string; sidoName: (code: string) => string; sggName: (code: string) => string };
+/* 정책 목표 대비 ⓘ 둘째 문단: 확인 값은 HOME 원천 값 그대로(검증 대기) — 단계끼리 같은 확인 값(①계획·②인허가 3,560호)과 목표와 똑같은 확인(⑤준공 381/381)을 이름으로(숫자는 바꾸지 않는다) */
+export function sourceNote(cells: StageCell[]): string {
+  const odd: string[] = [];
+  const by = new Map<number, StageCell[]>();
+  for (const c of cells) if (c.actual != null) by.set(c.actual, [...(by.get(c.actual) ?? []), c]);
+  for (const [v, cs] of by) if (cs.length > 1) odd.push(`${cs.map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]}`).join('·')} ${fmt(v)}호`);
+  for (const c of cells) if (c.actual != null && c.target != null && c.actual === c.target) odd.push(`${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.actual)}/${fmt(c.target)}`);
+  return `확인 값은 정책 진행 자료(HOME)의 원천 값 그대로(검증 대기)입니다.${odd.length ? ` ${odd.join(', ')}도 원천이 준 숫자 그대로입니다.` : ''}`;
+}
 export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Question[] {
   const scope = scopeOf(rows, f), Q: Question[] = [];
   /* ① 정책 목표 대비(정책 전체 — 이름에 범위): 정책 렌즈(전체면 9·7)의 같은 기간 목표·확인이 함께 있는 첫 칸. 없으면(목표 없는 렌즈) '계획대로 가고 있는가' = 판정 사업 중 정상 비율 */
@@ -308,13 +330,14 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
     Q.push({ q: `${policyLabel(pol)} 목표 대비`, href: !f.policy ? listHref(f, { policy: pk! }) : undefined, tone: short ? 'bad' : undefined,
       value: r.value, unit: r.unit, stages: cells!,
       sub: `${BOARD_CIR[i]}${BOARD_NAMES[i]} 확인 ${fmt(pair.actual!)} / 목표 ${fmt(pair.target!)}`,
-      tip: `${pol.name} 단계별 목표 대비 확인(${ymText(pair.from)}~${ymText(pair.through)}) · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 부족·초과·비율은 확인으로만 계산${cells!.some(hasEstimate) ? ` · 담당자 추정 포함(확인과 따로): ${cells!.filter(hasEstimate).map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.withEst!)}호`).join(' · ')}` : ''} · 누르면 이 정책의 사업`,
-      help: `${policyLabel(pol)}이 올해 1월부터 단계마다 세운 목표 집 수(호)와, 실제 기록으로 확인한 집 수를 단계별로 나란히 보입니다. 줄마다 '확인 / 목표'와 모자라면 부족 %, 넘치면 초과 %입니다. 목표를 정하지 않은 단계는 '목표 없음'입니다. 정책 전체 숫자라 위에서 고른 지역·기관과 상관없습니다.` });
+      tip: `${pol.name} 단계별 목표 대비 확인(${ymText(pair.from)}~${ymText(pair.through)}) · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 부족·달성 비율은 확인으로만 계산 · 확인 값은 HOME(정책 진행 자료) 원천 값 그대로${cells!.some(hasEstimate) ? ` · 담당자 추정 포함(확인과 따로): ${cells!.filter(hasEstimate).map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.withEst!)}호`).join(' · ')}` : ''} · 누르면 이 정책의 사업`,
+      help: `${policyLabel(pol)}이 올해 1월부터 단계마다 세운 목표 집 수(호)와 실제 기록으로 확인한 집 수입니다. 모자라면 부족 %, 목표 이상이면 달성 %, 목표를 정하지 않은 단계는 '목표 없음'. 정책 전체 숫자라 지역·기관 거르기와 상관없습니다.`,
+      note: sourceNote(cells!) });
   } else {
     const judged = scope.filter((r) => r.cls && r.issued);
     if (judged.length) {
       const ok = judged.filter((r) => r.cls === 'ok').length;
-      Q.push({ q: '계획대로 가고 있는가', href: listHref(f, { status: 'ok' }), value: String(Math.round(ok / judged.length * 100)), unit: '% 정상',
+      Q.push({ q: '계획대로 가고 있는가', href: listHref(f, { status: 'ok' }), value: pct1(ok / judged.length * 100), unit: '% 정상',
         sub: `판정 ${fmt(judged.length)}건 · ${STATUS_NAME.none} ${fmt(scope.length - judged.length)}`, tip: '단계 목표가 없는 범위라 현재 예정일을 지키는 사업 비율로 답함 · 판정 사업 중 정상(경과 없음)',
         help: '예정일을 아직 넘기지 않은 사업의 비율입니다. 예정일이 없는 사업은 빼고 셉니다.' });
     }
@@ -329,8 +352,8 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
   /* ③ 어떤 사업이 늦어지는가: 지연(장기 포함) 건수 = 지연 6~12개월 + 장기 12개월+(주의는 넣지 않는다) */
   const n = (s: Status) => late.filter((r) => statusOf(r) === s).length;
   /* 확인 필요(후보): 번호가 없는 후보 중 같은 계산으로 지연(장기 포함)인 사업 — 지연 건수에 넣지 않고 따로(D3) */
-  const candLate = scope.filter((r) => !r.issued && r.cls === 'delay').length, candText = candLate ? ` · ${STATUS_RANGE.review} ${fmt(candLate)}` : '';
-  Q.push({ q: '어떤 사업이 늦어지는가', href: n('delay') + n('long') ? listHref(f, { status: 'late' }) : candLate ? listHref(f, { status: 'review' }) : undefined, value: fmt(n('delay') + n('long')), unit: '건', sub: `${STATUS_RANGE.delay} ${fmt(n('delay'))} · ${STATUS_RANGE.long} ${fmt(n('long'))}${candText}`,
+  const candLate = scope.filter(isReviewLate).length, candText = candLate ? ` · ${STATUS_RANGE.review} ${fmt(candLate)}` : '';
+  Q.push({ q: '어떤 사업이 늦어지는가', href: n('delay') + n('long') ? listHref(f, { status: 'late' }) : candLate ? listHref(f, { status: 'review-late' }) : undefined, value: fmt(n('delay') + n('long')), unit: '건', sub: `${STATUS_RANGE.delay} ${fmt(n('delay'))} · ${STATUS_RANGE.long} ${fmt(n('long'))}${candText}`,
     tip: `${DELAY_GROUP} = ${STATUS_RANGE.delay} ${fmt(n('delay'))} + ${STATUS_RANGE.long} ${fmt(n('long'))}(사업 번호가 있는 사업만) · ${STATUS_RANGE.caution} ${fmt(n('caution'))}건은 따로${candLate ? ` · ${STATUS_RANGE.review} ${fmt(candLate)}건은 번호가 없는 후보 중 원천 예정일로 계산하면 지연인 사업(지연에 넣지 않음)` : ''} · 누르면 ${DELAY_GROUP} 목록(건수 = 이 숫자)`,
     help: `예정일을 6개월 넘게 넘긴 사업 수입니다. 12개월 넘게 넘긴 사업은 '장기'로 따로 셉니다. 1~6개월 넘긴 사업(주의)은 넣지 않습니다. 사업 번호가 없는 후보는 '확인 필요'로 따로 셉니다(이미 준공했는데 자료가 연결되지 않았을 수 있음).` });
   /* ④ 어디를 먼저: 지연·주의 호수가 가장 큰 시도(시도·시군구를 고르면 시군구) */
@@ -345,7 +368,9 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
   const months = aheadMonths(ctx.observedMonth);
   const up = scope.filter((r) => r.completion && months.includes(r.completion));
   const sido = f.sgg ? f.sgg.slice(0, 2) : f.sido ?? (f.metro ? '' : 'all');
-  Q.push({ q: '앞으로 얼마나 공급되는가', href: `/region${sido ? `?sido=${sido}` : ''}`, value: fmt(up.reduce((s, r) => s + r.units, 0)), unit: '호', sub: `${AHEAD_COMPLETION} · ${fmt(up.length)}건`,
+  /* 시군구 거르기면 지역 공급도 그 시군구(?sgg=, 지도 면 코드 — 수도권만, 경기는 시 단위라 구 코드는 그 시로). 수도권 밖은 시도 */
+  const regionSgg = f.sgg && isMetro(f.sgg) ? (f.sgg.startsWith('41') ? `${f.sgg.slice(0, 4)}0` : f.sgg) : null;
+  Q.push({ q: '앞으로 얼마나 공급되는가', href: `/region${sido ? `?sido=${sido}` : ''}${regionSgg ? `&sgg=${regionSgg}` : ''}`, value: fmt(up.reduce((s, r) => s + r.units, 0)), unit: '호', sub: `${AHEAD_COMPLETION} · ${fmt(up.length)}건`,
     tip: `${AHEAD_COMPLETION} = 이 범위 사업의 준공 현재 예정 달이 ${ymText(months[0])}~${ymText(months[11])}인 사업(이미 준공 실제가 있는 사업 제외) · 지역 공급의 '준공' 칩과 같은 값 · 누르면 지역 공급`,
     help: `${ymText(months[0])}~${ymText(months[11])}에 공사를 마칠 예정인 사업의 호수입니다. 이미 공사를 마친 사업은 뺍니다.` });
   return Q;
@@ -360,15 +385,28 @@ export const CAND_PLAN = '원천 예정(확인 필요)';
 export const NEXT_NAME: Record<string, string> = { ...EVENT_NAME, SUPPLY_NOTICE: '모집' };
 /* 예정일 지남: 현재 예정일이 기준일보다 앞섰는데 실제 기록이 없고 경과가 1개월 미만(판정은 정상 그대로 — 2026-10-15 사용자 결정 D1). 지역 공급의 같은 표지는 lib/board/region.ts PAST_DUE */
 export const PAST_DUE = '예정일 지남';
-export const pastDueOf = (r: ProjectRow) => !!r.overdue && overdueMonthsOf(r) === null;
+/* 상태 옆에 붙일 때는 범위까지: '정상 · 예정일 지남(1개월 미만)' — '경과 0개월'은 쓰지 않는다(지도 카드·종합상황판과 같은 문구, 2026-10-16 2차 평가) */
+export const PAST_DUE_UNDER = `${PAST_DUE}(1개월 미만)`;
+export const pastDueOf = (r: Pick<ProjectRow, 'overdue' | 'cls'>) => !!r.overdue && overdueMonthsOf(r) === null;
+export const statusText = (r: ProjectRow) => `${statusLabel(r)}${pastDueOf(r) ? ` · ${PAST_DUE_UNDER}` : ''}`;
+
+/* 지도 위치(지도와 같은 기준 — assets/js/region.js homeToProjects·HOME_DRAWN_M): 번들 단지와 이어진 사업(bundles — 블록·동 윤곽)이거나
+   위치 종류가 지도에 그리는 것(LH 블록 대표점·주소 근사점·지구 대표점·이름 검색 근사)이면 지도에 그린다. 그 밖(시군구·동 근사 영역·위치 없음)은 지도의 '위치 미확보' 묶음 → null */
+export const MAP_DRAWN_LOC = ['block', 'address', 'district', 'name'] as const;
+export type MapLoc = 'bundle' | (typeof MAP_DRAWN_LOC)[number];
+export function mapLocOf(r: { bundles?: string[] }, loc: { by: string } | null | undefined): MapLoc | null {
+  if (r.bundles?.length) return 'bundle';
+  return loc && (MAP_DRAWN_LOC as readonly string[]).includes(loc.by) ? (loc.by as MapLoc) : null;
+}
 /* 원천 날짜 다름(D2): 준공 현재 예정(HOME)과 LH 준공 예정 파일의 날짜가 다른 사업의 표지. 판정은 HOME 날짜 그대로.
-   보이는 날짜가 준공이 아니면 'LH 준공'으로, 같은 달이면 일까지(계양 A2 HOME 2026.10.11 · LH 2026.10.31) */
+   보이는 날짜가 준공이 아니면 'LH 준공'으로, 같은 달이면 일까지(계양 A2 HOME 2026.10.11 · LH 2026.10.31).
+   day = 늘 일까지(상세 서랍 — 2026-10-16 3차 평가: 'LH 2026.10' 만으로는 현재 예정 2026.10.11 과 무엇이 다른지 몰랐다). 좁은 목록 칸은 달 */
 export const DATE_ALT = '원천 날짜 다름';
-export function dateAltOf(r: Pick<ProjectRow, 'dateAlt' | 'overdue' | 'next' | 'completion'>): { text: string; title: string } | null {
+export function dateAltOf(r: Pick<ProjectRow, 'dateAlt' | 'overdue' | 'next' | 'completion'>, day = false): { text: string; title: string } | null {
   if (!r.dateAlt) return null;
   const shown = r.overdue ?? r.next, isCp = shown?.eventType === 'COMPLETION', home = isCp ? shown!.planned : r.completion;
   const lh = r.dateAlt.planned, same = !!home && home.slice(0, 7) === lh.slice(0, 7);
-  return { text: `${DATE_ALT}(${r.dateAlt.source} ${isCp ? '' : '준공 '}${same ? dayText(lh) : ymText(lh)})`,
+  return { text: `${DATE_ALT}(${r.dateAlt.source} ${isCp ? '' : '준공 '}${day || same ? dayText(lh) : ymText(lh)})`,
     title: `준공 예정이 원천마다 다름 — HOME ${home ? (home.length >= 10 ? dayText(home) : ymText(home)) : '없음'} · ${r.dateAlt.source} 준공 예정 파일 ${dayText(lh)} · 판정은 HOME 날짜로` };
 }
 export function nextOf(r: ProjectRow): { text: string; sort: number; title: string; tag?: string; muted?: boolean; alt?: { text: string; title: string } } | null {
@@ -469,7 +507,7 @@ export function timelineOf(d: ProjectDetail, referenceDate: string): Timeline {
   const years = Array.from({ length: y1 - y0 }, (_, i) => y0 + i);
   return {
     years, today: x(T), todayText: ymOfNo(T), lanes, used,
-    progress: d.progress.map(([day, pct]) => ({ at: x(monthNo(day)), pct, text: `${dayText(day)} 보고 ${pct}%` })),
+    progress: d.progress.map(([day, pct]) => ({ at: x(monthNo(day)), pct, text: `${dayText(day)} 보고 ${pct1(pct)}%` })),
   };
 }
 /* 연 눈금 위치(%): 그해 1월 시작 */

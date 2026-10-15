@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, MapPin } from 'lucide-react';
 import { cn } from 'cn';
-import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, PAST_DUE, dotFocus, inScope, pastDue, sggUnits, type AheadEntry, type CalKind } from '../../lib/board/region';
+import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, PAST_DUE, aheadDay, aheadKindTip, dotFocus, inScope, pastDue, projectHref, sggUnits, ymDotted, type AheadEntry, type CalKind } from '../../lib/board/region';
 import { mapHref } from '../../lib/board/map-href';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '../../lib/board/metro-overview';
 import MapLink from '../board/MapLink';
@@ -31,8 +31,9 @@ const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 const man = (v: number) => (v === 0 ? '0' : v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
 const niceMax = (v: number) => { if (v <= 0) return 1; const p = 10 ** Math.floor(Math.log10(v)); for (const m of [1, 2, 2.5, 5, 10]) if (v <= m * p) return m * p; return 10 * p; };
 const sum = <T,>(a: T[], f: (x: T) => number) => a.reduce((s, x) => s + f(x), 0);
-const monthLabel = (ym: string) => `${ym.slice(0, 4)}년 ${Number(ym.slice(5, 7))}월`;
-const dayText = (e: AheadEntry) => (e.day ? `${Number(e.day.slice(5, 7))}월 ${Number(e.day.slice(8, 10))}일` : `${Number(e.ym.slice(5, 7))}월 중`);
+/* 날짜는 점 표기 하나(2026.10 · 2026.10.11 — lib/board/region aheadDay). 막대 아래 축 눈금만 달 이름('10월') */
+const monthLabel = ymDotted;
+const dayText = aheadDay;
 const light = (c: string, p: number) => `color-mix(in srgb,${c} ${p}%,var(--card))`;
 const hollow = (e: AheadEntry) => e.loc === 'rep' || e.loc === 'area' || e.loc === 'name';
 const onMap = (e: AheadEntry) => METRO.includes(e.sd);
@@ -40,7 +41,7 @@ const HATCH_SW = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,
 const LINK = 'group/action inline-flex flex-none cursor-pointer items-center gap-px rounded-[4px] border-0 bg-transparent p-0 text-[14px] leading-[1.45] whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
 const KindChip = ({ t }: { t: CalKind }) => (
-  <span className="inline-block flex-none rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: light(CAL_TYPE[t].color, 16), color: CAL_TYPE[t].ink }}>{CAL_TYPE[t].name}</span>
+  <span className="inline-block flex-none rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: light(CAL_TYPE[t].color, 16), color: CAL_TYPE[t].ink }} title={aheadKindTip(t)}>{CAL_TYPE[t].name}</span>
 );
 
 export default function Ahead({ sido, regionName, months, nowM, refDate, list, initialM, initialSgg, map }: Props) {
@@ -305,20 +306,21 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
         <h3 className="m-0 text-[16px] font-bold">{monthLabel(m)}</h3>
         <span className="text-[14px] text-muted-foreground tabular-nums">{xs.length}건 · {fmt(sum(xs, (e) => e.units))}호</span>
       </div>
-      <ol className="m-0 list-none columns-2 gap-x-8 p-0 narrow:columns-1" aria-label={`${monthLabel(m)} 예정 사업`}>
+      <ol className="m-0 list-none columns-2 gap-x-8 p-0 narrow:columns-1 min-[1600px]:columns-3" aria-label={`${monthLabel(m)} 예정 사업`}>
         {shown.map((e) => {
-          /* 상세가 있는 사업은 상세 서랍(?id=), 후보 사업은 간단 보기(?cand=) — 막다른 행이 없다 */
-          const href = e.drawer ? `/projects?id=${e.id}` : `/projects?cand=${e.id}`;
+          /* 상세가 있는 사업은 상세 서랍(?id=), 후보 사업은 간단 보기(?cand=) — 막다른 행이 없다. 서랍 뒤 목록은 그 사업이 든 범위(projectHref) */
+          const href = projectHref(e, sido);
           return (
             <li key={e.k} data-row={e.k} data-hl={e.k === hotKey ? '' : undefined} className="flex break-inside-avoid items-center gap-x-3 border-b border-border px-1 py-1.5 text-[14px] leading-[1.5] data-[hl]:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)]">
               <KindChip t={e.type} />
-              <span className="min-w-0 flex-1 truncate font-bold" title={e.name}>
+              {/* 사업명·시군구는 두 줄까지 줄바꿈 후 말줄임(2026-10-16 2차 평가: 한 줄 말줄임이 373→183px 로 잘랐다) */}
+              <span className="line-clamp-2 min-w-0 flex-1 font-bold [overflow-wrap:break-word] [word-break:keep-all]" title={e.name}>
                 <Link href={href} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link>
                 {e.drawer ? null : <>{' '}<span className="ml-1 text-[13px] font-normal text-muted-foreground" title="후보 사업(사업 번호가 아직 없음) — 누르면 간단 보기">(후보)</span></>}
                 {past(e) ? <>{' '}<span data-slot="past-due" className="ml-1 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] font-normal whitespace-nowrap text-muted-foreground" title={PAST_TIP}>{PAST_DUE}</span></> : null}
               </span>
-              <span className="w-[74px] flex-none whitespace-nowrap text-muted-foreground tabular-nums">{dayText(e)}</span>
-              <span className="w-[96px] flex-none truncate text-muted-foreground" title={e.sgg}>{e.place}</span>
+              <span className="w-[80px] flex-none whitespace-nowrap text-muted-foreground tabular-nums">{dayText(e)}</span>
+              <span className="line-clamp-2 w-[112px] flex-none text-muted-foreground [word-break:keep-all]" title={e.sgg}>{e.place}</span>
               <span className="w-[68px] flex-none text-right whitespace-nowrap tabular-nums">{e.units ? `${fmt(e.units)}호` : <span className="text-[13px] text-muted-foreground" title="호수 미확인">미확인</span>}</span>
               <span className="w-5 flex-none">{onMap(e) ? <a href={mapHref({ project: e.id })} title={`${e.name} — 지도에서 보기`} aria-label={`${e.name} 지도에서 보기`} className="flex rounded-[4px] text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"><MapPin className="size-4" aria-hidden="true" /></a> : null}</span>
               <span className="w-4 flex-none"><Link href={href} tabIndex={-1} aria-hidden="true" className="flex text-muted-foreground hover:text-primary"><ChevronRight className="size-4" /></Link></span>

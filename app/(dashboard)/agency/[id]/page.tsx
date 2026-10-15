@@ -12,12 +12,12 @@ import { Badge } from '../../../../components/ui/badge';
 import { Card } from '../../../../components/ui/card';
 import { DataGrid } from '../../../../components/ui/data-grid';
 import { Prov } from '../../../../components/ui';
-import { NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, ymDot, ytd } from '../../../../lib/board/calc';
+import { NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, staleText, ymDot, ytd, ytdSpan } from '../../../../lib/board/calc';
 import { AGENCIES } from '../../../../lib/board/agencies';
 import { getBoardData } from '../../../../lib/board/data';
 import { mapHref } from '../../../../lib/board/map-href';
 import { getProjectsIndex } from '../../../../lib/board/projects-index';
-import { isMetro, listOrder, sggOfAddress } from '../../../../lib/board/projects-view';
+import { dayText, isMetro, listOrder, sggOfAddress } from '../../../../lib/board/projects-view';
 import { LIST_COLS, dropBlank, listRows } from '../../../../lib/board/projects-list';
 import { sidoName } from '../../../../lib/board/calc';
 import { metricBoardLabel } from '../../../../lib/board/stages';
@@ -51,8 +51,8 @@ export default async function AgencyDetail({ params }: Props) {
     const files = group ? sources.items.filter((s) => s.group === group) : [];
     const ghRows = a.id === 'gh' ? listOrder((await getProjectsIndex()).rows.filter((r) => r.agency === 'gh')) : [];   // 원장의 GH 사업(종합상황판 기관 칩의 GH 와 같은 기준) · 사업 목록과 같은 순서
     /* 표는 사업 목록과 같은 열·칸(①~⑥ 단계 색 알약·상태·현재 예정) — 행을 누르면 사업 화면 서랍(/projects?sido=all&agency=gh&id=…) */
-    /* 상태 칸은 '판정 밖': 머리 경고문대로 이 화면은 기관 신호(정상·주의·지연)를 판정하지 않는다(사업 화면의 판정은 서랍·사업 화면에서) — 2026-10-15 평가 */
-    const ghGridRows = listRows(ghRows, { agency: 'gh' }, null, (c) => sidoName(molit, c)).map((row) => ({ ...row, c: { ...row.c, status: { text: '판정 밖', muted: true, title: '기관별 신호는 일정(당초·변경·현재 예정)이 없어 이 화면에서 판정하지 않음 — 사업 판정은 행을 눌러 사업 상세에서' } } }));
+    /* 상태 칸은 '일정 정보 없음': 머리 경고문대로 이 화면은 기관 신호(정상·주의·지연)를 판정하지 않는다(사업 화면의 판정은 서랍·사업 화면에서) — 2026-10-15 평가, 2026-10-16 '판정 밖'에서 바꿈 */
+    const ghGridRows = listRows(ghRows, { agency: 'gh' }, null, (c) => sidoName(molit, c)).map((row) => ({ ...row, c: { ...row.c, status: { text: '일정 정보 없음', muted: true, title: '기관별 신호는 일정(당초·변경·현재 예정)이 없어 이 화면에서 판정하지 않음 — 사업 판정은 행을 눌러 사업 상세에서' } } }));
     const ghGrid = dropBlank(LIST_COLS, ghGridRows);
     return (
       <Page>
@@ -68,7 +68,7 @@ export default async function AgencyDetail({ params }: Props) {
           <Card render={<section aria-label="받은 원천 파일" />}>
             <PanelHead title="받은 원천 파일" tip="아직 화면에서 쓰지 않음"><span className={sub}>{files.length}종</span><SrcLink /></PanelHead>
             <DataGrid label={`${a.name} 받은 원천 파일`} cols={[{ key: 'dataset', label: '데이터셋', kind: 'text', wrap: true }, { key: 'count', label: '건수' }, { key: 'asOf', label: '원천 기준일', kind: 'text' }]}
-              rows={files.map((s) => ({ id: s.id, c: { dataset: { text: s.dataset, href: `/sources#${s.id}` }, count: s.count, asOf: s.sourceAsOf ?? { na: '확인하지 못함' } } }))} />
+              rows={files.map((s) => ({ id: s.id, c: { dataset: { text: s.dataset, href: `/sources#${s.id}` }, count: s.count, asOf: s.sourceAsOf ? dotDates(s.sourceAsOf) : { na: '확인하지 못함' } } }))} />
           </Card>
         ) : null}
       </Page>
@@ -79,7 +79,8 @@ export default async function AgencyDetail({ params }: Props) {
   const lines = KS.map(([k, l]) => ({ key: k, label: l, color: METRIC_COLOR[k], values: seriesOf(molit, k, NATION).actors![a.actor] }));
   const i = molit.months.indexOf(last);
   /* LH 준공 예정은 이번 달(원장 관측 달)부터 — 지난 예정일 블록은 표에서 뺀다(개수는 title 에) */
-  const { observedMonth } = await getProjectsIndex();
+  const { observedMonth, referenceDate: observedRef } = await getProjectsIndex();
+  const lhStale = staleText(lh.sourceAsOf, observedRef);   // LH 파일 낡음 표지(원장 기준일과의 차이)
   const blocks = lh.blocks.filter((b) => b.date.slice(0, 7) >= observedMonth), past = lh.blocks.length - blocks.length;
   const byYear = [...new Set(blocks.map((b) => b.date.slice(0, 4)))].map((y) => ({ y, blocks: blocks.filter((b) => b.date.startsWith(y)) }));
   const blockTotal = blockCount(blocks);
@@ -97,7 +98,7 @@ export default async function AgencyDetail({ params }: Props) {
     <Page>
       <PageHead crumbs={crumbs} title={a.name} tip={`통계누리 시행주체 '${a.actor}'의 전국 월별 호수${a.id === 'lh' ? '와 LH 준공 예정 블록' : ''}.`}
         meta={`실적 ${ymDot(last)}`} metaTip={`통계누리 주택건설실적통계 · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}${a.id === 'lh' ? ` · LH 준공예정 파일 기준일 ${dotDates(lh.sourceAsOf)}` : ''}`} />
-      <StageKpis when={monthLabel(last)} notes={{ 3: '모집은 시행주체 구분이 없음' }} cells={Object.fromEntries(KS.map(([k]) => [k, { value: fmt(seriesOf(molit, k, NATION).actors![a.actor!][i]), sub: <>{year}년 누계 {fmt(ytd(molit, k, NATION, last, a.actor!))}호{prov ? <Prov /> : null}</> }]))} />
+      <StageKpis when={monthLabel(last)} notes={{ 3: '모집은 시행주체 구분이 없음' }} cells={Object.fromEntries(KS.map(([k]) => [k, { value: fmt(seriesOf(molit, k, NATION).actors![a.actor!][i]), sub: <>{ytdSpan(year, Number(last.slice(5)))} {fmt(ytd(molit, k, NATION, last, a.actor!))}호{prov ? <Prov /> : null}</> }]))} />
       <Card render={<section aria-label="월별 실적" />}>
         <PanelHead title="월별 실적" tip="전국 · 호 · 빗금은 잠정치 · 통계누리 주택건설실적통계. 인허가는 연초 누계의 차분입니다. ④ 모집은 시행주체 구분이 없고, ①계획(정책·사업화)은 통계누리에 없습니다.">
           <StageLegend metrics={KS.map(([k]) => k)} names="board" compact />
@@ -114,11 +115,11 @@ export default async function AgencyDetail({ params }: Props) {
       {a.id === 'lh' ? (
         <Card render={<section aria-label="LH 준공 예정" />}>
           <PanelHead title="LH 준공 예정" tip={`이번 달(${ymDot(observedMonth)})부터 · 준공예정일 순 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)}. 예정일은 그 시점의 계획입니다.${past ? ` · 예정일이 이번 달 전인 ${past}행은 뺌` : ''} · 지도 열은 수도권 블록만(사업이 있으면 그 사업, 없으면 시군구)`}>
-            <span className={`${sub} tabular-nums`}>{ymDot(observedMonth)}부터 · {fmt(blockTotal)}블록 · {fmt(blocks.reduce((s, b) => s + b.units, 0))}호 · 파일 기준 {dotDates(lh.sourceAsOf)}</span>
+            <span className={`${sub} tabular-nums`}>{ymDot(observedMonth)}부터 · {fmt(blockTotal)}블록 · {fmt(blocks.reduce((s, b) => s + b.units, 0))}호 · 파일 기준 {dotDates(lh.sourceAsOf)}{lhStale ? <Badge variant="warn" className="ml-1.5" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 원장 기준일 ${dotDates(observedRef)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</Badge> : null}</span>
           </PanelHead>
           <DataGrid label="LH 준공 예정 연도별" cols={YEAR_COLS} rows={byYear.map((r) => ({ id: r.y, c: { y: r.y, n: blockCount(r.blocks), units: r.blocks.reduce((s, b) => s + b.units, 0) } }))} />
           <DataGrid label="LH 준공 예정 블록" cols={BLOCK_COLS} maxHeight={520}
-            rows={blocks.map((b, k) => ({ id: String(k), c: { date: { text: b.date, href: `/month/${b.date.slice(0, 7)}` }, district: b.district, block: b.block, type: b.type, units: b.units, location: b.location, map: blockMap(b) } }))} />
+            rows={blocks.map((b, k) => ({ id: String(k), c: { date: { text: dayText(b.date), sort: b.date, href: `/month/${b.date.slice(0, 7)}` }, district: b.district, block: b.block, type: b.type, units: b.units, location: b.location, map: blockMap(b) } }))} />
         </Card>
       ) : null}
     </Page>

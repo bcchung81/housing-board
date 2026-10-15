@@ -44,12 +44,12 @@ test('1 범위 칩: 공용 컴포넌트(범위 + 출처, 풀기 ×) — 사업 �
   assert.match(chip, /data-slot="scope-chip"/);
   assert.match(chip, /aria-label=\{`\$\{scope\} 거르기 풀기`\}/);
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /<ScopeChip scope="전국" source="정책 진행 자료"/, '정책 목표 카드: 전국 · 정책 진행 자료');
+  assert.match(page, /<ScopeChip scope="정책 전체" source="정책 진행 자료"/, '정책 목표 카드: 정책 전체 · 정책 진행 자료(data-audit-1016 결함 1)');
   assert.match(page, /<ScopeChip scope=\{region\} source="사업 원장"/, '원장 요약: 거르기 범위(수도권·전국·시도·시군구) · 사업 원장');
   const board = read('components/board/Board.tsx');
   assert.match(board, /const ledgerChip = <ScopeChip scope=\{nation === '전국' \? '전국' : '일부 지역'\} source="사업 원장"/);
-  for (const t of ['월별 공급 파동', '시도 \\{L\\.regions\\.length\\}곳', '지연·주의 추이', '\\{AHEAD_COMPLETION\\}', '기관별 진행']) assert.match(board, new RegExp(`>${t}</h2>\\n\\s*\\{ledgerChip\\}`), t);
-  assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<ScopeChip scope="전국" source="통계누리"/);
+  for (const t of ['월별 공급 파동', '시도 \\{L\\.regions\\.length\\}곳', '지연·주의 추이', '\\{AHEAD_COMPLETION\\}', '기관별 진행']) assert.match(board, new RegExp(`>${t}</h2>\\n\\s*<InfoTip [\\s\\S]*?</InfoTip>\\n\\s*\\{ledgerChip\\}`), t);   // 제목 바로 옆 (i)(2026-10-16 3차)
+  assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope="전국" source="통계누리"/);
   const region = read('app/(dashboard)/region/page.tsx');
   assert.match(region, /scope=\{<ScopeChip scope=\{scopeName\} source="사업 원장"[^\n]*clearHref=\{sgg \? href\(\{ sgg: null, m: null \}\) : undefined\}/, '앞으로 12개월: 시군구 칩 + ×');
   assert.match(read('components/region/Annual.tsx'), /<ScopeChip scope=\{rname\} source="통계누리"/);
@@ -110,10 +110,10 @@ test('2 지시 카드 목록 ›: 목록 머리 건수(·계획 호수) = 카드
   assert.equal(String(listOf(q['어떤 사업이 늦어지는가'].href).n), q['어떤 사업이 늦어지는가'].value);
   assert.equal(listOf(q['어디서 막혀 있는가'].href).units, b.units);
   const board = read('components/board/Board.tsx');
-  assert.match(board, /<Link href=\{x\.list\.href\} title=\{x\.list\.title\} aria-label=\{`\$\{x\.t\} 목록`\} data-slot="board-dir-list"/);
+  assert.match(board, /<Link href=\{x\.list\.href\} title=\{x\.list\.title\} aria-label=\{`\$\{x\.t\} \$\{x\.list\.text \?\? '목록'\}`\} data-slot="board-dir-list"/);
   assert.ok(board.indexOf('data-slot="board-dir-list"') > board.indexOf('</button>', board.indexOf('data-slot="board-dir"')), '링크는 단추 밖(형제) — 단추 안에 링크를 넣지 않는다');
   assert.match(board, /<PanelLink href=\{`\/projects\?sido=all&stage=\$\{bk\}&status=late`\}/);
-  assert.match(board, /<PanelLink href="\/projects\?sido=all&status=review"/);
+  assert.match(board, /<PanelLink href="\/projects\?sido=all&status=review-late"/);   // 후보 계산 313 = 그 목록(data-audit-1016 후속 1)
   /* 사업 화면 상태 메뉴·목록 이름에도 '지연(장기 포함)' */
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /\{ href: at\(\{ status: 'late' \}\), label: DELAY_GROUP, on: f\.status === 'late'/);

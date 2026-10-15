@@ -54,7 +54,8 @@ test('지역 공급(9.4 국민 예측가능성): 시도를 고르면 앞으로 1
   assert.match(page, /aheadAll\(calendar, sido, sidoName\)/);
   assert.match(page, /청약 자격은 모집공고에서 확인/);
   assert.match(ahead, /role="radiogroup" aria-label="달 고르기"/, '달은 키보드로 고른다(←→)');
-  assert.match(ahead, /`\/projects\?id=\$\{e\.id\}`/, '사업은 사업 화면 서랍으로 연다');
+  assert.match(ahead, /const href = projectHref\(e, sido\);/, '사업은 사업 화면 서랍으로 연다(범위 붙임 — data-audit-1016 결함 3)');
+  assert.equal(require('../../lib/board/region.ts').projectHref({ id: 'PRJ-28245-0001', drawer: true, sd: '28' }, 'metro'), '/projects?id=PRJ-28245-0001');
   assert.doesNotMatch(page + ahead, /자격 (판정|충족)/);
 });
 
@@ -75,7 +76,7 @@ test("메뉴: 보고자료·우리 동네는 화면이 생겨 '준비 중'이 �
 test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림을 넣지 않는다 — 사용자 피드백 2026-10-10)', () => {
   const b = read('components/board/Board.tsx');
   assert.match(b, /<div className="grid grid-cols-2 gap-2 min-\[901px\]:grid-cols-3 min-\[1101px\]:grid-cols-6">/);
-  assert.match(b, /text-muted-foreground">\{x\.t\}\{x\.tag \? <span data-slot="dir-tag"[^>]*> · \{x\.tag\}<\/span> : null\}<\/span>/, '윗줄은 지시 주제 이름(+ 같은 이름 다른 정의일 때 짧은 꼬리 — 착공 · 통계누리)');
+  assert.match(b, /text-muted-foreground'[^>]*>\{x\.t\}\{x\.tag \? <span data-slot="dir-tag"[^>]*> · \{x\.tag\}<\/span> : null\}<\/span>/, '윗줄은 지시 주제 이름(+ 같은 이름 다른 정의일 때 짧은 꼬리 — 착공 · 통계누리)');
   assert.doesNotMatch(b, /\{x\.date\} · \{x\.t\}<\/span>|x\.sub\.note/, '날짜 접두·기간 작은 줄은 화면에 없다');
   assert.match(b, /data-slot="board-dir" title=\{`\$\{x\.date\} 지시 · \$\{x\.t\}\\n\$\{x\.basis\}`\}/, '날짜·지시 이름·기준은 hover title');
   assert.match(b, /\{x\.pre \? <span className="[^"]*text-\[min\(14px,[^"]*">\{x\.pre\}<\/span> : null\}/, '아랫줄 = 작은 앞말');

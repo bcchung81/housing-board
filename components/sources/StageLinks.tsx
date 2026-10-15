@@ -8,7 +8,8 @@
 import * as React from 'react';
 import { cn } from 'cn';
 import { DataGrid } from '../ui/data-grid';
-import { GRID_DENSE, type Col, type Row } from '../../lib/grid/spec';
+import { GRID_DENSE, dotDates, type Col, type Row } from '../../lib/grid/spec';
+import InfoTip from '../ui/info-tip';
 import { LEVELS, LEVEL_NAME, VIAS, type Edge, type Level, type LinkItem, type StageLink, type Via } from '../../lib/board/stage-links';
 
 const NUM = ['①', '②', '③', '④', '⑤', '⑥'];
@@ -83,7 +84,7 @@ function Diagram({ s }: { s: StageLink }) {
           <rect x={bx} y={iy - BH / 2} width={left ? LW : RW} height={BH} rx="9"
             className={it.edge === 'need' ? 'fill-[color-mix(in_srgb,var(--warn)_12%,var(--card))] stroke-warn' : 'fill-card stroke-border'} strokeWidth="1.2" />
           <text x={bx + 14} y={iy - 5} className="fill-foreground text-[14px] font-bold">{it.name}</text>
-          <text x={bx + 14} y={iy + 16} className="fill-muted-foreground text-[12px]">{it.sub}</text>
+          <text x={bx + 14} y={iy + 16} className="fill-muted-foreground text-[12px]">{dotDates(it.sub)}</text>
           <Badges via={it.via ?? []} right={bx + (left ? LW : RW) - 8} top={iy - BH / 2 + 6} />
           <line x1={x1} y1={iy} x2={xEnd} y2={ty} className={EDGE[it.edge]} strokeWidth="1.6" fill="none" markerEnd={mark(it.edge)} />
           {it.edge === 'none' ? <path d={`M${xEnd - 5},${ty - 5} l10,10 M${xEnd + 5},${ty - 5} l-10,10`} className="stroke-bad" strokeWidth="2" /> : null}
@@ -126,7 +127,7 @@ function Diagram({ s }: { s: StageLink }) {
       <rect x={DX} y={sideTop} width={DW} height={KH} rx="9" strokeWidth="1.6"
         className={s.side.known ? 'fill-[color-mix(in_srgb,var(--primary)_10%,var(--card))] stroke-primary' : 'fill-card stroke-warn [stroke-dasharray:5_4]'} />
       <text x={DC} y={rowY.side - 4} textAnchor="middle" className="fill-foreground text-[14px] font-bold">{s.side.name}</text>
-      <text x={DC} y={rowY.side + 15} textAnchor="middle" className="fill-muted-foreground text-[11px]">{s.side.sub}</text>
+      <text x={DC} y={rowY.side + 15} textAnchor="middle" className="fill-muted-foreground text-[11px]">{dotDates(s.side.sub)}</text>
       <line x1={DC - 14} y1={sideTop} x2={CX + 70} y2={rowY.pnu + KH / 2 + 3} className={EDGE[s.side.toPnu.edge]} strokeWidth="1.6" markerEnd={mark(s.side.toPnu.edge)} />
       <text x={DC} y={(sideTop + rowY.pnu + KH / 2) / 2 + 4} className={cn('text-[12px]', LABEL[s.side.toPnu.edge])}>{s.side.toPnu.label}</text>
       <line x1={DC - 14} y1={sideBottom} x2={CX + 70} y2={rowY.prj - KH / 2 - 3} className={EDGE[s.side.toPrj.edge]} strokeWidth="1.6" markerEnd={mark(s.side.toPrj.edge)} />
@@ -142,7 +143,7 @@ function Diagram({ s }: { s: StageLink }) {
           <line x1={outX(i) + ow / 2} y1={busY} x2={outX(i) + ow / 2} y2={outY - 2} className="stroke-foreground" strokeWidth="1.5" markerEnd={mark('key')} />
           <rect x={outX(i)} y={outY} width={ow} height={outH} rx="9" className="fill-card stroke-foreground" strokeWidth="1.3" />
           <text x={outX(i) + 14} y={outY + 22} className="fill-foreground text-[14px] font-bold">{o.name}</text>
-          {o.lines.map((t, k) => <text key={k} x={outX(i) + 14} y={outY + 42 + k * 16} className="fill-muted-foreground text-[12px]">{t}</text>)}
+          {o.lines.map((t, k) => <text key={k} x={outX(i) + 14} y={outY + 42 + k * 16} className="fill-muted-foreground text-[12px]">{dotDates(t)}</text>)}
         </g>
       ))}
     </svg>
@@ -186,7 +187,7 @@ export default function StageLinks({ stages, extra, status }: { stages: StageLin
           onKeyDown={(e) => { if (e.key === 'ArrowRight') go(tab + 1); else if (e.key === 'ArrowLeft') go(tab - 1); else if (e.key === 'Home') go(0); else if (e.key === 'End') go(total - 1); else return; e.preventDefault(); }}>
           {stages.map((st, i) => (
             <button key={st.id} ref={(el) => { refs.current[i] = el; }} type="button" role="tab" id={`stage-tab-${st.id}`} aria-selected={i === tab} aria-controls={`stage-panel-${st.id}`} tabIndex={i === tab ? 0 : -1}
-              onClick={() => setTab(i)} className={tabCls} title={`공식 단계 ${st.official}`}>
+              onClick={() => setTab(i)} className={tabCls}>
               {NUM[i]} {st.name}
             </button>
           ))}
@@ -211,6 +212,12 @@ export default function StageLinks({ stages, extra, status }: { stages: StageLin
             <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-[1.5px] border-dashed border-bad align-middle" />값·키 없음</span>
             <span className="h-3 w-px bg-border" aria-hidden="true" />
             {VIAS.map((v) => <b key={v} title={VIA_NOTE[v]} className={cn('inline-block rounded-full border px-1.5 text-[13px] leading-[18px] font-bold whitespace-nowrap', VIA_STYLE[v].pill)}>{v}</b>)}
+            <InfoTip label="연계도 읽는 법">
+              <dl>
+                <dt>선</dt><dd>키 연결 = 코드 키로 이어짐 · 이름·주소만 = 글자로만 맞춤 · 확보하면 연결 = 추가 자료가 있으면 이어짐 · 값·키 없음 = 이을 값이 없음</dd>
+                <dt>받는 방식</dt><dd>{VIAS.map((v) => `${v} = ${VIA_NOTE[v]}`).join(' · ')}</dd>
+              </dl>
+            </InfoTip>
           </div>
         ) : null}
       </div>

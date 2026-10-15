@@ -7,7 +7,7 @@ import PrintButton from '../../../components/projects/PrintButton';
 import Candidate, { CandidateHead } from '../../../components/projects/Candidate';
 import ProjectDetail, { DrawerHead } from '../../../components/projects/ProjectDetail';
 import { Pipeline, PolicyCompare, PrintDefs, Questions, ReadHelp } from '../../../components/projects/Summary';
-import { LIST_COLS, NO_LOC, dropBlank, lateCell, listRows, nextCell, sggLabel, stagePill, statusCell, agencyCell, unitsCell } from '../../../lib/board/projects-list';
+import { LIST_COLS, NO_LOC, SGG_MAP, dropBlank, lateCell, listRows, nextCell, sggLabel, stagePill, statusCell, agencyCell, unitsCell } from '../../../lib/board/projects-list';
 import InfoTip from '../../../components/ui/info-tip';
 import { Badge } from '../../../components/ui/badge';
 import ScopeChip from '../../../components/ui/scope-chip';
@@ -22,8 +22,8 @@ import { sidoName } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
 import { getPolicyProgress, getProjectDrawer, getProjectsIndex } from '../../../lib/board/projects-index';
 import {
-  AGENCY_NAME, AGENCY_TIP, BOARD_CIR, BOARD_COLOR, BOARD_NAMES, CAND_NAME, DATE_ALT, DELAY_GROUP, LONG_DELAY_MONTHS, NONE_NAME, PAST_DUE, PLAN_COL, STATUS_NAME, STATUS_ORDER, STATUS_RANGE, STATUS_TIP,
-  applyFilters, candidateOf, isMetro, compareLines, editionText, listHref, listOrder, parseFilters, pipelineOf, policyLabel, priorityOf, questionsOf, scopeOf, summaryOf, ymText,
+  AGENCY_NAME, AGENCY_TIP, BOARD_CIR, BOARD_COLOR, BOARD_NAMES, CAND_NAME, DATE_ALT, DELAY_GROUP, LONG_DELAY_MONTHS, REVIEW_LATE, NONE_NAME, PAST_DUE, PLAN_COL, STATUS_NAME, STATUS_ORDER, STATUS_RANGE, STATUS_TIP,
+  applyFilters, candidateOf, isMetro, mapLocOf, compareLines, editionText, listHref, listOrder, parseFilters, pipelineOf, policyLabel, priorityOf, questionsOf, scopeOf, summaryOf, ymText,
   type Filters, type ProjectRow,
 } from '../../../lib/board/projects-view';
 import type { Cell, Col, Row } from '../../../lib/grid/spec';
@@ -40,7 +40,7 @@ async function load(searchParams: Props['searchParams']) {
   const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c), guOf });
   const lens = f.policy ? policyLabel(f.policy) : f.program?.name;
   const region = f.sgg ? sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2))) : f.sido ? sidoName(molit, f.sido) ?? f.sido : f.metro ? '수도권' : '전국';
-  const label = [lens, region, f.stage !== undefined && `${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`, f.status && (f.status === 'check' ? '점검 필요' : f.status === 'late' ? DELAY_GROUP : STATUS_NAME[f.status]), f.agency && AGENCY_NAME[f.agency]].filter(Boolean).join(' · ');
+  const label = [lens, region, f.stage !== undefined && `${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`, f.status && (f.status === 'check' ? '점검 필요' : f.status === 'late' ? DELAY_GROUP : f.status === 'review-late' ? REVIEW_LATE : STATUS_NAME[f.status]), f.agency && AGENCY_NAME[f.agency]].filter(Boolean).join(' · ');
   return { f, idx, molit, label, lens, region, id: one(q.id) ?? null, cand: one(q.cand) ?? null, print: one(q.print) === '1' };
 }
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -86,7 +86,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const sidos = [...new Set(rows.map(sidoOf))].filter((c) => sidoName(molit, c)).sort();
   const ref = idx.referenceDate.replace(/-/g, '.');
   const sel = drawer ? (drawer.kind === 'detail' ? drawer.row.id : drawer.project.id) : cand ? cand.row.id : null;
-  /* 서랍 단계 칸: 지금 거르기를 유지한 채 그 단계(서랍은 닫는다) */
+  /* 서랍 '같은 단계 사업 목록' 링크: 지금 거르기를 유지한 채 그 단계(서랍은 닫는다 — 단계 칸 자체는 링크가 아니다) */
   const stageHref = (i: number) => listHref(f, { stage: String(i) });
 
   /* 요약: 핵심 질문·파이프라인(렌즈·지역·기관 범위 — 단계·상태 거르기는 목록에만) · 목표 대비(렌즈 '전체'면 목표 있는 정책 모두, 정책 렌즈면 그 정책 — HOME 정책 진행, 정책 전체) */
@@ -103,7 +103,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const lines = f.program ? [] : compareLines(pp, idx.policies, rows, f.policy ? [f.policy.key] : idx.policies.map((p) => p.key));
   const listOnly = f.stage !== undefined || !!f.status;
   const lensText = [lens, f.agency && AGENCY_NAME[f.agency]].filter(Boolean).join(' · ');
-  /* 범위가 다른 두 숫자 묶음은 카드를 나누고 머리에 범위 칩을 단다: 정책 목표 대비(전국 · 정책 진행 자료 — 거르기와 상관없음) | 원장 요약(거르기 범위 · 사업 원장) */
+  /* 범위가 다른 두 숫자 묶음은 카드를 나누고 머리에 범위 칩을 단다: 정책 목표 대비(정책 전체 · 정책 진행 자료 — 거르기와 상관없음) | 원장 요약(거르기 범위 · 사업 원장) */
   const [whole, scoped] = questions[0]?.stages ? [questions[0], questions.slice(1)] : [null, questions];
   const scopeLine = (
     <div className="-mt-1 mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px] text-muted-foreground">
@@ -118,8 +118,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const policyCard = whole || cmpLines.length ? (
     <Card render={<section aria-label="정책 목표 대비" />} className="min-w-0 print:break-inside-avoid">
       <div className="-mt-1 mb-3 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[14px] text-muted-foreground tabular-nums">
-        <ScopeChip scope="전국" source="정책 진행 자료" title={`정책 전체 숫자(호) — ${HOME_TIP} · 위 지역·기관·단계·상태 거르기와 상관없음`} />
-        {whole ? <span title="같은 해 1월~기준 달 누적 · 확인 / 목표(호)">{ymText(whole.stages![0].from)}~{whole.stages![0].through.slice(5, 7)} · 확인 / 목표</span> : null}
+        <ScopeChip scope="정책 전체" source="정책 진행 자료" title={`정책 전체 숫자(호) — 정책에 연결된 사업 전체(세 정책 모두 수도권 정책) · ${HOME_TIP} · 위 지역·기관·단계·상태 거르기와 상관없음`} />
+        {whole ? <span title="같은 해 1월~기준 달 누적 · 확인 / 목표(호)">{ymText(whole.stages![0].from)}~{ymText(whole.stages![0].through)} · 확인 / 목표</span> : null}
       </div>
       {whole ? <Questions list={[whole]} /> : null}
       <PolicyCompare lines={cmpLines} title={f.policy ? `${policyLabel(f.policy)} 목표 대비` : '다른 정책 목표 대비'} open={print} href={(key) => at({ policy: key })} />
@@ -130,14 +130,13 @@ export default async function ProjectsPage({ searchParams }: Props) {
       {scopeLine}
       <Questions list={scoped} />
       <div className="mt-5">
-        <Pipeline open={pipe.open} shut={pipe.shut} total={pipe.total} on={f.stage} badges={badges} href={(i) => at({ stage: f.stage === i ? undefined : String(i) })} />
+        <Pipeline open={pipe.open} total={pipe.total} on={f.stage} badges={badges} href={(i) => at({ stage: f.stage === i ? undefined : String(i) })} />
       </div>
       <PrintDefs />
     </Card>
   );
-  const summary = policyCard ? (
-    <div className="grid grid-cols-[minmax(0,1.3fr)_minmax(0,4fr)] gap-3.5 narrow:grid-cols-1 print:grid-cols-1">{policyCard}{ledgerCard}</div>
-  ) : ledgerCard;
+  /* 두 카드는 위아래로(2026-10-16 3차 평가: 나란히 두면 정책 카드가 원장 카드보다 짧아 아래가 165px·인쇄 보기 414px 비었다 — 정책 카드는 단계 여섯 칸을 가로로 편다) */
+  const summary = policyCard ? <>{policyCard}{ledgerCard}</> : ledgerCard;
 
   /* 월간 보고: 점검 필요 사업(10줄 이하면 전부, 넘으면 상위 10) · 기준일·출처 */
   const prioAll = priorityOf(scope, Infinity), top = prioAll.slice(0, 10);
@@ -186,8 +185,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
   }
 
   /* 목록: 열·칸은 lib/board/projects-list.ts(CSV 내려받기와 같은 열) */
-  /* 위치 미확보: 상세 서랍과 같은 자료(getProjectDrawer 의 detail.loc)에 좌표가 없는 수도권 사업 — 목록 지도 열 표지(지도 열은 수도권 사업만) */
-  const noLoc = new Set((await Promise.all(list.filter((r) => r.issued && isMetro(r.sgg)).map(async (r) => { const d = await getProjectDrawer(r.id); return d?.kind === 'detail' && !d.detail.loc ? r.id : null; }))).filter((x): x is string => !!x));
+  /* 위치 미확보: 지도와 같은 판정(mapLocOf — 번들 블록·동 윤곽이나 지도에 그리는 위치가 없음)인 수도권 사업, 상세 서랍과 같은 값 — 목록 지도 열 표지(지도 열은 수도권 사업만) */
+  const noLoc = new Set((await Promise.all(list.filter((r) => r.issued && isMetro(r.sgg)).map(async (r) => { const d = await getProjectDrawer(r.id); return d?.kind === 'detail' && !mapLocOf(d.row, d.detail.loc) ? r.id : null; }))).filter((x): x is string => !!x));
   const gridRows: Row[] = listRows(list, f, sel, (c) => sidoName(molit, c), (id) => noLoc.has(id));
   const grid = dropBlank(LIST_COLS, gridRows);
   const csvHref = listHref(f).replace(/^\/projects/, '/projects/csv');
@@ -236,7 +235,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <Chip href={at({ status: f.status === 'check' ? undefined : 'check' })} on={f.status === 'check'} title="주의·지연·장기 지연 사업만(지연 개월 큰 순)">점검 필요</Chip>
           <ChipMenu label="상태" on={!!f.status && f.status !== 'check'}
             items={[{ href: at({ status: undefined }), label: '전체', on: false }, ...STATUS_ORDER.map((k) => ({ href: at({ status: k }), label: k === 'long' ? `장기 지연 ${LONG_DELAY_MONTHS}개월+` : STATUS_RANGE[k], on: f.status === k, title: STATUS_TIP[k] })),
-              { href: at({ status: 'late' }), label: DELAY_GROUP, on: f.status === 'late', title: '지연 6~12개월 + 장기 지연(사업 번호가 있는 사업 — 종합상황판 지연 카드와 같은 범위)' }]} />
+              { href: at({ status: 'late' }), label: DELAY_GROUP, on: f.status === 'late', title: '지연 6~12개월 + 장기 지연(사업 번호가 있는 사업 — 종합상황판 지연 카드와 같은 범위)' },
+              { href: at({ status: 'review-late' }), label: REVIEW_LATE, on: f.status === 'review-late', title: '사업 번호가 없는 후보 중 원천 예정일로 계산하면 지연(경과 6개월 이상)인 사업 — 종합상황판 \'후보 계산\'과 같은 범위(판정 지연에 넣지 않음)' }]} />
           {f.stage !== undefined ? <ClearChip href={at({ stage: undefined })} title="단계 거르기 풀기(단계는 아래 단계별 진행 칸으로 고른다)"><SwatchDot color={BOARD_COLOR[f.stage]} />{`${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`}</ClearChip> : null}
         </ChipGroup>
         <ChipSep />
@@ -254,13 +254,15 @@ export default async function ProjectsPage({ searchParams }: Props) {
           tip={`기본 순서 = 점검 필요 순(지연 개월 큰 순)${grid.note}`}>
           <InfoTip label="목록 읽는 법">
             <dl>
+              <dt>계획 호수</dt><dd>머리의 &apos;계획 n호&apos; = 사업마다 원장의 첫 물량을 더한 값(호수 미확인 {fmt(s.noUnits)}건은 0)</dd>
               <dt>기본 순서</dt><dd>점검 필요 순 — 예정일을 오래 넘긴 사업부터 · {CAND_NAME}은 번호가 있는 사업 뒤에(열 머리를 누르면 그 순서로)</dd>
-              <dt>{PLAN_COL}</dt><dd>지금 잡혀 있는 다음 예정일 · 이미 지난 날짜는 옅게(넘긴 개월은 지연 열), 기준일보다 앞섰지만 1개월이 안 된 날짜는 &apos;{PAST_DUE}&apos;(상태는 그대로), 공사를 마친 사업은 &apos;실제&apos; · &apos;{DATE_ALT}&apos; = 준공 예정이 HOME과 LH 준공 예정 파일에서 다름(판정은 HOME 날짜)</dd>
+              <dt>{PLAN_COL}</dt><dd>지금 잡혀 있는 다음 예정일 · 이미 지난 날짜는 옅게(넘긴 개월은 지연 열), 기준일보다 앞섰지만 1개월이 안 된 날짜는 &apos;{PAST_DUE}&apos;(상태는 그대로), 공사를 마친 사업은 &apos;실제&apos; · &apos;{DATE_ALT}&apos; = 준공 예정이 사업 원장(HOME)과 LH 준공 예정 파일에서 다름(판정은 사업 원장 날짜)</dd>
               <dt>상태</dt><dd>{STATUS_NAME.ok} · {STATUS_NAME.caution} · {STATUS_NAME.delay} · {STATUS_NAME.long}(사업 번호가 있는 사업만) · {STATUS_NAME.review}({CAND_NAME} — 같은 계산이지만 판정에 넣지 않음) · {STATUS_NAME.none}({NONE_NAME.done} · {NONE_NAME.plan} — 입주·모집 예정만 · {NONE_NAME.none})</dd>
               <dt>지연(개월)</dt><dd>예정일을 넘긴 개월 수 · {STATUS_RANGE.caution} · {STATUS_RANGE.delay} · {STATUS_RANGE.long}({DELAY_GROUP} = 6개월 이상) · {CAND_NAME}은 옅게</dd>
               <dt>공고 확인</dt><dd>모집공고에서 확인한 호수(공고가 났다고 공사를 마친 것은 아님)</dd>
               <dt>{CAND_NAME}</dt><dd>사업 번호가 아직 없어 상세 일정이 없는 사업 — 누르면 간단 보기</dd>
-              <dt>{NO_LOC}</dt><dd>지도 열 표지 — 좌표가 없어 지도에서는 시군구로 보이는 사업</dd>
+              <dt>{SGG_MAP}</dt><dd>지도 열 표지 — {CAND_NAME}은 지도 자료에 위치가 없어 그 시군구 지도로 감(수도권 밖은 빈칸)</dd>
+              <dt>{NO_LOC}</dt><dd>지도 열 표지 — 지도에 그릴 위치(블록·동 윤곽·대표점)가 없어 지도에서는 시군구로 보이는 사업(지도의 &apos;위치 미확보&apos;와 같은 사업)</dd>
             </dl>
           </InfoTip>
           {list.length ? <a href={csvHref} download className={MAPA} title={`지금 거르기 그대로 ${fmt(list.length)}건 · 화면과 같은 열(지도 표지 제외) · CSV(UTF-8, 엑셀에서 열림)`}><Download className="size-3.5" aria-hidden="true" />CSV 내려받기</a> : null}

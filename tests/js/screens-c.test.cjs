@@ -112,9 +112,9 @@ test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본
   assert.match(ahead, /<form data-slot="sgg-pick"[^>]*onSubmit=\{\(ev\) => \{ ev\.preventDefault\(\); if \(draft !== \(cur\?\.code \?\? ''\)\) pickSgg\(draft \|\| null, true\); \}\}/);
   assert.match(ahead, /if \(ev\.key === 'Enter'\) \{ ev\.preventDefault\(\); ev\.currentTarget\.form\?\.requestSubmit\(\); \}/);
   assert.match(ahead, /<button type="submit"[^>]*>보기<\/button>/);
-  /* 시도 타일: 판정 대상 없음(번호 있는 사업 없음) 13곳은 '—' 대신 이유와 확인 필요 건수 */
+  /* 시도 타일: 판정 대상 없음(번호 있는 사업 없음) 13곳은 '—' 대신 이유와 확인 필요 건수 — 2026-10-16 부터 한 줄 묶음(r2-board 5) */
   assert.equal(BOARD.regions.filter((r) => !r.judged).length, 13);
-  assert.match(board, /data-slot="region-none"[\s\S]*?판정 대상 없음<\/span>\{r\.candidate\?\.judged \? <span className="whitespace-nowrap">확인 필요 \{f\(r\.candidate\.judged\)\}건<\/span> : null\}/);
+  assert.match(board, /판정 대상 없음 \{restRegions\.length\}곳<\/span><span aria-hidden="true">·<\/span><span className="whitespace-nowrap">확인 필요 \{f\(restCand\)\}건<\/span>/);
   assert.doesNotMatch(board, /\{rate === null \? '—'/);
   /* /agency/gh: 사업 목록과 같은 열·칸(①~⑥ 알약), 행 → 서랍 */
   const ag = read('app/(dashboard)/agency/[id]/page.tsx');

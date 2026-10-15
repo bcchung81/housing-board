@@ -89,7 +89,8 @@ test('지도 화면: 지도 앱(.app)이 상단 바 아래 남은 폭·높이를
 
 test('상단 메뉴 바는 화면 폭(100vw) 기준으로 자리·폭을 정해, 문서 스크롤바가 있는 화면과 없는 화면에서 같은 자리다(1470px 보다 좁아도)', () => {
   const nav = read('components/TopNav.tsx');
-  assert.match(nav, /<div className="ml-\[max\(0px,50vw_-_720px\)\] flex h-16 w-\[min\(1440px,100vw\)\] items-center gap-2 px-7 mobile:ml-0 mobile:h-12 mobile:w-auto mobile:px-3">/);
+  /* 2026-10-16: 1600px 이상 대시보드는 본문 틀과 같은 1760px 선(같은 100vw 기준), 지도(compact)는 1440px 그대로 — r2-screens 후속 1 */
+  assert.match(nav, /<div className=\{cn\('ml-\[max\(0px,50vw_-_720px\)\] flex h-16 w-\[min\(1440px,100vw\)\] items-center gap-2 px-7 mobile:ml-0 mobile:h-12 mobile:w-auto mobile:px-3', !compact && 'min-\[1600px\]:ml-\[max\(0px,50vw_-_880px\)\] min-\[1600px\]:w-\[min\(1760px,100vw\)\]'\)\}>/);
   assert.match(nav, /<header className="sticky top-0 z-40 shrink-0 overflow-x-clip /, '스크롤바 밑으로 들어간 몫은 잘라 가로 스크롤이 생기지 않는다');
   assert.doesNotMatch(nav, /max-w-\[1440px\]/, '남은 폭(스크롤바를 뺀 폭)을 따르면 1470px 보다 좁은 화면에서 메뉴 7px·단추 14px 이 움직였다(2026-10-10)');
   assert.doesNotMatch(nav, /mx-auto flex h-16/, 'mx-auto 는 스크롤바를 뺀 폭 기준이라 종합상황판에서만 스크롤바 폭의 절반만큼 왼쪽으로 간다(2026-10-09: 7px)');

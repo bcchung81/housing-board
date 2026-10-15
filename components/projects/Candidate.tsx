@@ -7,8 +7,8 @@ import Link from 'next/link';
 import StageSteps from './StageSteps';
 import { Card } from '../ui/card';
 import { PanelHead } from '../page';
-import { mapHref } from '../../lib/board/map-href';
-import { BOARD_CIR, BOARD_NAMES, CAND_NAME, CAND_PLAN, PLAN_COL, STATUS_NAME, calcOf, isMetro, nextOf, overdueMonthsOf, statusLabel, statusOf, statusTip, type ProjectRow } from '../../lib/board/projects-view';
+import { mapHref, mapScopeHref } from '../../lib/board/map-href';
+import { BOARD_CIR, BOARD_NAMES, CAND_NAME, CAND_PLAN, PAST_DUE_UNDER, PLAN_COL, STATUS_NAME, calcOf, isMetro, nextOf, overdueMonthsOf, pastDueOf, statusLabel, statusOf, statusTip, type ProjectRow } from '../../lib/board/projects-view';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
 const NOTE = 'm-0 rounded-[10px] border border-border bg-muted px-4 py-2.5 text-[15px] text-muted-foreground';
@@ -26,17 +26,20 @@ export default function Candidate({ row: r, sggName, sources, stageHref }: { row
   return (
     <>
       <p role="note" className={NOTE}>{note}</p>
-      <StageSteps current={r.board} reached={r.reached} href={stageHref} />
+      <StageSteps current={r.board} reached={r.reached} listHref={stageHref(r.board)} />
       <Card render={<section aria-label="간단 보기" />}>
         <PanelHead title="간단 보기">
-          {isMetro(r.sgg) ? <a href={mapHref({ project: r.id })} className="text-[14px] text-muted-foreground no-underline hover:text-primary hover:underline" title="지도에서 이 사업 위치 보기">지도에서 보기 ›</a> : null}
+          {/* 번호 없는 후보는 지도 자료에 위치가 없어 시군구 지도로(목록 지도 열 '시군구 지도'와 같은 규칙) */}
+          {isMetro(r.sgg) ? (r.issued
+            ? <a href={mapHref({ project: r.id })} className="text-[14px] text-muted-foreground no-underline hover:text-primary hover:underline" title="지도에서 이 사업 위치 보기">지도에서 보기 ›</a>
+            : <a href={mapScopeHref({ sgg: r.sgg })!} className="text-[14px] text-muted-foreground no-underline hover:text-primary hover:underline" title={`${CAND_NAME}(사업 번호 없음)이라 지도 자료에 위치가 없음 — 이 사업이 있는 시군구 지도로`}>시군구 지도 ›</a>) : null}
         </PanelHead>
         <dl className={FACTS}>
           <div><dt>시군구</dt><dd><Link href={`/projects?sgg=${r.sgg}`} title="이 시군구로 거른 사업 목록">{sggName}</Link></dd></div>
           <div><dt>단계</dt><dd>{BOARD_CIR[r.board]} {BOARD_NAMES[r.board]}</dd></div>
           <div><dt>계획 호수</dt><dd className="tabular-nums">{r.units > 0 ? `${fmt(r.units)}호` : <span className="text-muted-foreground">미확인</span>}</dd></div>
           <div><dt>{r.issued ? PLAN_COL : CAND_PLAN}</dt><dd className="tabular-nums">{next ? <span className={next.muted ? 'text-muted-foreground' : undefined} title={next.title}>{next.text}{next.tag ? <span className="ml-1.5 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] text-muted-foreground">{next.tag}</span> : null}{next.alt ? <span className="ml-1.5 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] text-muted-foreground" title={next.alt.title}>{next.alt.text}</span> : null}</span> : <span className="text-muted-foreground">없음</span>}</dd></div>
-          <div><dt>판정</dt><dd title={statusTip(r)}>{statusLabel(r)}{st === 'review' ? <span className="text-muted-foreground"> · 계산하면 {STATUS_NAME[calcOf(r)]}</span> : null}{late !== null ? <span className="text-muted-foreground tabular-nums"> · 경과 {late}개월</span> : null}{st === 'none' && r.why ? <span className="text-muted-foreground"> · {r.why === 'LH 후보' ? 'LH 후보(판정 대상 아님)' : r.why}</span> : null}</dd></div>
+          <div><dt>판정</dt><dd title={statusTip(r)}>{statusLabel(r)}{st === 'review' ? <span className="text-muted-foreground"> · 계산하면 {STATUS_NAME[calcOf(r)]}</span> : null}{late !== null ? <span className="text-muted-foreground tabular-nums"> · 경과 {late}개월</span> : pastDueOf(r) ? <span className="text-muted-foreground"> · {PAST_DUE_UNDER}</span> : null}{st === 'none' && r.why ? <span className="text-muted-foreground"> · {r.why === 'LH 후보' ? 'LH 후보(판정 대상 아님)' : r.why}</span> : null}</dd></div>
           <div><dt>출처</dt><dd>{sources.join(' · ')}</dd></div>
         </dl>
       </Card>

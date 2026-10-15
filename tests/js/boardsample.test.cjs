@@ -39,18 +39,16 @@ test('지연·주의 추이(월 판정 이력): 점 = 0 … NOW 달마다 하나
     assert.deepEqual(t, { d: TR[m].d, w: TR[m].w, dd: m ? TR[m].d - TR[m - 1].d : 0, dw: m ? TR[m].w - TR[m - 1].w : 0 }, `선택 달 ${m} 의 값 = 이력 값, 증감 = 전월 차이`);
   }
   assert.deepEqual(S.trendAt(T, TR, T.last), S.trendAt(T, TR, T.now), 'NOW 뒤 달은 NOW');
-  /* 이름표 겹침: 간격이 좁으면 아래쪽을 내리고, 바닥을 넘으면 위쪽을 올린다. 입력 순서대로 돌려준다 */
-  assert.deepEqual(S.apart(50, 60, 36, 150), [50, 86]); assert.deepEqual(S.apart(60, 50, 36, 150), [86, 50]);
-  assert.deepEqual(S.apart(50, 120, 36, 150), [50, 120], '충분히 떨어지면 그대로');
-  assert.deepEqual(S.apart(140, 145, 36, 150), [114, 150], '바닥을 넘으면 위쪽을 올린다');
+  /* 2026-10-16(r2-board 6): 오른쪽 이름표 칸 대신 위 줄 숫자 — 이름표 겹침 계산(apart)은 없앴다. 선은 이전 기준(0 … SF-1, 점선)과 지금 기준(SF … NOW) 두 토막 */
+  assert.equal(S.apart, undefined);
   const trend = panel(board, 'p-trend');
-  assert.match(trend, /points=\{pts\('w'\)\}[\s\S]*points=\{pts\('d'\)\}/);
-  assert.match(board, /const pts = \(k: 'd' \| 'w'\) => TR\.flatMap\(\(r, m\) => \(r \? \[tx\(m\) \+ ',' \+ ty\(r\[k\]\)\] : \[\]\)\)\.join\(' '\);/);
-  assert.match(board, /tyn = \(val: number\) => TPT \+ TPH - val \/ tmax \* TPH/, '세로 축척은 이력 최댓값에 맞춘 tmax');
+  assert.match(trend, /points=\{pts\('w', 0, oldEnd\)\}[\s\S]*points=\{pts\('d', 0, oldEnd\)\}[\s\S]*points=\{pts\('w', oldEnd, NOW \+ 1\)\}[\s\S]*points=\{pts\('d', oldEnd, NOW \+ 1\)\}/);
+  assert.match(board, /const pts = \(k: 'd' \| 'w', a: number, b: number\) => TR\.slice\(a, b\)\.flatMap\(\(r, i\) => \(r \? \[tx\(a \+ i\) \+ ',' \+ ty\(r\[k\]\)\] : \[\]\)\)\.join\(' '\);/);
+  assert.match(board, /tyn = \(val: number\) => 100 - val \/ tmax \* 92/, '세로 축척은 이력 최댓값에 맞춘 tmax(세로 %, 위 8% 여백)');
   assert.match(trend, /\[0\.25, 0\.5, 0\.75\]\.map\(\(fr\) => <line /, '눈금선 3개(글자 없음)');
   assert.doesNotMatch(trend, /<text|<Key|legend|txTrend|Reserve/, '범례 칩·아래 문장 없음(svg 안 글자 없음)');
-  assert.match(board, /tsel = trendAt\(T, TR, cursor\)/, '이름표 값 = 선택 달'); assert.match(trend, /tsel\?\.d, tsel\?\.dd/);
-  assert.match(trend, /이름표 = 선택 달 값과 전월 대비 증감/, 'h2 title 끝');
+  assert.match(board, /tsel = trendAt\(T, TR, cursor\)/, '위 줄 숫자 = 선택 달'); assert.match(trend, /tsel\?\.d, tsel\?\.dd/);
+  assert.match(trend, /위 숫자 = 선택 달 값과 전월 대비 증감/, 'h2 title 끝');
   assert.match(trend, /\{ml\(T, 0\)\}<\/span><span>\{ml\(T, NOW\)\}/, 'x축 글자는 양 끝 둘');
 });
 
@@ -93,7 +91,7 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 사업 ${S.f(L.scope.projects)}건\\(발급 ${b.issued} · LH 후보 ${b.lhCandidates} · 건축HUB 후보 ${S.f(b.hubBulkCandidates)}${b.home ? ` · 수도권 HOME ${S.f(b.home)}` : ''}\\)$`));
   /* D3(2026-10-15): 판정은 사업 번호가 있는 사업만, 후보는 '확인 필요(후보)'로 따로 — 카드 title 에 후보 계산 결과 */
   const c = L.judgment.candidate;
-  assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(사업 번호가 있는 사업 — 착공·준공 예정 경과 · 확인 필요\\(후보\\) ${S.f(L.scope.candidateJudged)}건은 번호가 없는 후보라 따로 셈\\(건축HUB 후보, 준공 예정 경과만 계산\\) · 판정 밖: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의 · 확인 필요\\(후보\\): 계산하면 지연 ${S.f(c.delay.projects)} · 주의 ${S.f(c.caution.projects)} · 정상 ${S.f(c.ok.projects)}건\\(지연·주의에 넣지 않음\\)$`));
+  assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(사업 번호가 있는 사업 — 착공·준공 예정 경과 · 확인 필요\\(후보\\) ${S.f(L.scope.candidateJudged)}건은 번호가 없는 후보라 따로 셈\\(건축HUB 후보, 준공 예정 경과만 계산\\) · 일정 정보 없음: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의 · 확인 필요\\(후보\\): 계산하면 지연 ${S.f(c.delay.projects)} · 주의 ${S.f(c.caution.projects)} · 정상 ${S.f(c.ok.projects)}건\\(지연·주의에 넣지 않음\\)$`));
   assert.doesNotMatch(dir.map((d) => d.basis).join(' '), /전국 아님/);
   const bk = L.delayByStage.indexOf(Math.max(...L.delayByStage));
   assert.deepEqual([dir[2].pre, dir[2].big, dir[2].u], [`병목 ${S.K[bk]}`, S.f(L.delayByStage[bk]), '호']);
@@ -227,10 +225,10 @@ test('시도 지리 격자: 4열 × 5줄, 원장의 16개 시도가 모두 자�
   assert.equal(new Set(cells).size, 16, '자리 겹침 없음');
   for (const [r, c] of Object.values(S.REGION_POS)) { assert.ok(r >= 1 && r <= 5 && c >= 1 && c <= 4); assert.ok(!(r === 5 && c >= 2), '요약 칸 자리'); assert.notEqual(`${r}/${c}`, '4/4'); }
   assert.deepEqual([S.REGION_POS['28'], S.REGION_POS['11'], S.REGION_POS['41'], S.REGION_POS['51'], S.REGION_POS['12'], S.REGION_POS['50']], [[1, 1], [1, 2], [1, 3], [1, 4], [4, 1], [5, 1]]);
+  /* 2026-10-16(r2-board 5): 지리 격자 대신 판정 시도 큰 타일 + 묶음 — 지리 자리(REGION_POS)는 묶음을 펼친 칩의 순서(줄·열 순)로 쓴다 */
   const region = panel(board, 'p-region');
-  assert.match(region, /grid-cols-4[^"]*gap-1\.5/); assert.match(region, /auto-rows-\[minmax\(60px,1fr\)\]/);
-  assert.match(region, /\[grid-area:5\/2\/6\/5\]/, '요약 칸 5줄 2~4열');
-  assert.match(region, /pos \? \{ gridArea: /, '표에 없는 코드는 자리를 주지 않아 빈 칸에 이어 붙는다');
+  assert.match(board, /const geo = \(c: string\) => \{ const p = REGION_POS\[c\]; return p \? p\[0\] \* 10 \+ p\[1\] : 99; \};/);
+  assert.match(region, /auto-rows-\[minmax\(84px,1fr\)\]/);
   assert.equal((region.match(/<PanelLink/g) || []).length, 1, '이동 링크는 한 곳(요약 칸)');
   assert.doesNotMatch(region.slice(0, region.indexOf('auto-rows')), /<PanelLink/, '제목 줄에는 링크가 없다');
   assert.doesNotMatch(region, /text-bad">\{r\.delay\}/, '타일 안 세 숫자 칸 없음');
@@ -281,13 +279,13 @@ test('SAMPLE 표지는 없다(지연·주의 추이도 월 판정 이력), 원�
   assert.doesNotMatch(board, /<Sample|SAMPLE/, 'SAMPLE 표지·문구 없음');
   for (const id of ['p-chart', 'p-snap', 'p-region', 'p-agency', 'p-fut']) {
     const p = panel(board, id);
-    assert.match(p, /<h2 className=\{(ptitle|cn\(ptitle, '[^']*'\))\} title=\{`\$\{scope\} · /, `${id}: 제목 title 에 원장 범위`);
+    assert.match(p, /<h2 className=\{(ptitle|cn\(ptitle, '[^']*'\))\} title=\{`\$\{basisLine\} · /, `${id}: 제목 title 에 원장 범위(짧게 — 긴 범위는 (i) 팝오버, 2026-10-16 3차)`);
     assert.doesNotMatch(p, /<Sample \/>/, `${id} 는 실데이터라 SAMPLE 표지가 없어야 한다`);
     assert.doesNotMatch(p, /ptSmall/, `${id}: 제목 옆 설명 글자 없음(title 로)`);
   }
   assert.doesNotMatch(board + realRow, /<Real\b|실데이터<|scopeShort/, '실데이터 표지·보이는 범위 글자 없음');
-  assert.match(board, /const scope = `원장 \$\{ymDot\(L\.observedMonth\)\} 기준 · 사업 \$\{f\(L\.scope\.projects\)\}건\(\$\{ledgerMix\(L\)\}\) · \$\{nation\} · \$\{real\.ledgerOrigin === 'supabase' \? `출처 Supabase\(api\.board, \$\{real\.ledgerMonth\}\)` : '출처 JSON 대체'\}`;/);
-  assert.match(panel(board, 'p-trend'), /title=\{`지연·주의 호수\(호\) · 2025\.01~2026\.09 건축HUB 과거 판 소급 판정 · 2026\.10부터 월 관측 · /);
+  assert.match(board, /const scope = `원장 \$\{ymDot\(L\.observedMonth\)\} 기준 · 사업 \$\{f\(L\.scope\.projects\)\}건\(\$\{ledgerMix\(L\)\}\) · \$\{nation\} · \$\{real\.ledgerOrigin === 'supabase' \? `출처 Supabase\(api\.board, \$\{ymDot\(real\.ledgerMonth\)\}\)` : '출처 JSON 대체'\}`;/);
+  assert.match(panel(board, 'p-trend'), /title="지연·주의 사업의 계획 호수\(호\) · 2025\.01~2026\.09 소급 판정, 2026\.10부터 월 관측"/);
   assert.match(panel(realRow, 'p-actual'), /<h2 className=\{ptitle\} title=\{`국토교통 통계누리/, 'p-actual: 출처는 제목 title');
   assert.doesNotMatch(board, /\b(AG|REG|dStage|vals|txSnap)\b/, '시안 SAMPLE 계산(기관·시도·단계 호수)을 쓰지 않는다');
 });
@@ -302,7 +300,7 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(board, /showDlt = cursor !== NOW;/);
   assert.match(board, /jTag = judged \? `\$\{ml\(T, jm\)\} 판정` : '판정 없음', showJTag = jm !== cursor;/, '꼬리표는 선택 달과 판정 달이 다를 때만');
   assert.match(snap, /role="img" aria-label=\{judged \? [\s\S]*?\{showJTag \? <span data-slot="judge-tag" className=\{cn\(jtag, '[^']*'\)\}>\{jTag\}<\/span> : null\}/, '판정 막대 오른쪽에 판정 달 꼬리표');
-  assert.match(snap, /<span \/><span className="text-right" data-slot="stage-def"[^>]*>호수 <span[^>]*>· \{cursor === NOW \? '지금' : `\$\{Number\(T\.months\[cursor\]\.slice\(5\)\)\}월 말`\}<\/span><\/span>\{showDlt \? <span className="text-right phone:hidden">증감<\/span> : null\}<span className="text-right">지연<\/span>/, "표 머리는 '호수 / (증감) / 지연'(단계 글자 없음), 기준 달이면 증감 칸(머리)이 없다");
+  assert.match(snap, /<span data-slot="stage-now"[^>]*>현재 단계<\/span><span className="text-right" data-slot="stage-def"[^>]*>호수 <span[^>]*>· \{cursor === NOW \? '지금' : `\$\{Number\(T\.months\[cursor\]\.slice\(5\)\)\}월 말`\}<\/span><\/span>\{showDlt \? <span className="text-right phone:hidden">증감<\/span> : null\}<span className="text-right">지연<\/span>/, "표 머리는 '호수 / (증감) / 지연'(단계 글자 없음), 기준 달이면 증감 칸(머리)이 없다");
   assert.match(snap, /\{dlt === 0 \? '0' : sg\(dlt\)\}/, "증감 0 은 '0'");
   assert.doesNotMatch(snap, /'현재' : sg/, "증감 칸에 '현재' 글자를 쓰지 않는다");
   assert.match(snap, /\{judged \? f\(ds\[i\]\) : '—'\}/, '판정 없는 달의 지연 호수는 —');
@@ -313,9 +311,10 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(snap, /ledgerJudged\(L\)/);
   assert.match(snap, /const dlt = v\[i\] - nv\[i\], neck = judged && i === bk;/, '증감 = 선택 달 − 기준 달, 병목 표시는 판정이 있는 달만');
   const region = panel(board, 'p-region');
-  assert.match(region, /\{L\.regions\.map\(/);
-  assert.match(region, /rate = r\.judged \? r\.delay \/ r\.judged \* 100 : null/);
-  assert.match(region, /rate === null \? 'var\(--card\)' : RCOL\[rcls\(rate\)\]/);
+  assert.match(board, /restRegions = L\.regions\.filter\(\(r\) => !r\.judged\)/, '판정 대상 없는 시도는 묶음');
+  assert.match(region, /\{judgedRegions\.map\(/);
+  assert.match(region, /rate = tu \? r\.delayUnits \/ tu \* 100 : 0/, '큰 타일은 판정 시도만 — 지연율은 호수 기준(2026-10-16 3차, 판정 막대와 같은 기준)');
+  assert.match(region, /\['--rc' as string\]: RCOL\[rcls\(rate\)\]/);
   assert.match(region, /판정 대상 없음/);
   assert.match(region, /href=\{`\/region\?sido=\$\{curReg\.code\}`\}/, '시도 실적은 지역 공급(옛 /area/NN 넘김 대신 바로)');
   const agency = panel(board, 'p-agency');
@@ -323,12 +322,12 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(agency, /사업 없음: \{emptyAgencies\.map\(\(a\) => a\.name\)\.join\(' · '\)\}/, '사업 없는 기관은 마지막 한 줄로 묶는다');
   assert.match(agency, /<div key=\{a\.id\} className=\{ag\}/, '기관 행은 같은 세 칸(subgrid)');
   assert.doesNotMatch(agency, /agName\}>[^\n]*판정 제외/, '이름 칸에 판정 제외를 넣지 않는다');
-  assert.match(agency.slice(0, agency.indexOf('className={ags}')), /\['bg-\[var\(--out\)\] shadow-\[inset_0_0_0_1px_var\(--out-line\)\]', '판정 밖'\]/, "막대 범례는 제목 줄에, '판정 밖' 견본은 --out 채움 + --out-line 1px 선");
-  assert.match(agency, /<span className="block bg-\[var\(--out\)\]" style=\{\{ width: pw\(out\) \}\} \/>/, '판정 밖 막대 조각 = --out');
+  assert.match(agency.slice(0, agency.indexOf('className={ags}')), /\['bg-\[var\(--out\)\] shadow-\[inset_0_0_0_1px_var\(--out-line\)\]', NONE_TEXT\]/, "막대 범례는 제목 줄에, '일정 정보 없음' 견본은 --out 채움 + --out-line 1px 선(2026-10-16 '판정 밖'에서 바꿈)");
+  assert.match(agency, /<span className="block bg-\[var\(--out\)\]" style=\{\{ width: pw\(none\) \}\} \/>/, '일정 정보 없음 막대 조각 = --out(확인 필요 후보는 빗금 조각으로 따로)');
   assert.match(agency, /전체 지연 \$\{f\(J\.delay\.units\)\}호/);
-  assert.match(agency, /a\.id === 'unknown' \? `\. 판정 밖: \$\{dotDates\(outNote \?\? ''\)\}`/, '기관 미상 설명은 그 행의 title 에');
-  assert.match(agency, /판정 제외 \$\{f\(a\.excludedUnits\)\}호/, '판정 제외는 행 title 에');
-  assert.match(agency, /\$\{CAND_TEXT\} \$\{f\(a\.candidateUnits\)\}호/, '확인 필요(후보) 호수도 행 title 에(막대에서는 판정 밖, D3)');
+  assert.match(board, /NONE_TIP = `\$\{NONE_TEXT\} = 판정할 현재 예정일이 없는 사업\(준공 완료 포함\)과 LH 후보\(\$\{dotDates\(outNote \?\? ''\)\}\)`/, '일정 정보 없음의 사유(LH 후보)는 제목·범례 title 에');
+  assert.match(agency, /판정 제외 \$\{f\(a\.excludedUnits\)\}호 포함/, '판정 제외는 행 title 에');
+  assert.match(agency, /\$\{CAND_TEXT\} \$\{f\(cand\)\} · \$\{NONE_TEXT\} \$\{f\(none\)\}호/, '확인 필요(후보) 호수도 행 title 에(막대에서는 빗금 조각, D3)');
   assert.match(agency, /pw\(a\.okUnits\)[\s\S]*pw\(a\.cautionUnits\)[\s\S]*pw\(a\.delayUnits\)/, '막대는 호수');
   assert.match(agency, /\(J\.delay\.units \? a\.delayUnits \/ J\.delay\.units \* 100 : 0\)\.toFixed\(1\)/, '지연 비중은 전체 지연 호수 중 비중');
 });

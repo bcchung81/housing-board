@@ -12,7 +12,7 @@ const board = read('components/board/Board.tsx'), lines = read('components/chart
 test('E2 추이 그래프: 줄여 그려도(0.6~1배) 선·격자·현재선 굵기는 화면 px(non-scaling-stroke)', () => {
   const svg = /<svg id="trend"[\s\S]*?<\/svg>/.exec(board)[0];
   const strokes = [...svg.matchAll(/<(line|polyline)[^>]*>/g)].map((m) => m[0]);
-  assert.equal(strokes.length, 5, '격자(3개를 map 으로) 1 · 원천 추가 표지 1 · 지연·주의 선 2 · 현재선 1');
+  assert.equal(strokes.length, 7, '격자(3개를 map 으로) 1 · 원천 추가 표지 1 · 이전 기준(점선) 지연·주의 선 2 · 지금 기준 지연·주의 선 2 · 현재선 1(2026-10-16 r2-board 6)');
   assert.match(svg, /<line [^>]*data-added-mark[^>]*vectorEffect="non-scaling-stroke"/, "원천 추가 표지도 화면 px 굵기");
   for (const s of [...svg.matchAll(/<(?:line|polyline)\b[^>]*\/>/g)].map((m) => m[0])) assert.match(s, /vectorEffect="non-scaling-stroke"/, s.slice(0, 60));
 });

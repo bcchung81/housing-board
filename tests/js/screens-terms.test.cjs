@@ -99,8 +99,8 @@ test('파이프라인 불변식: 칸마다 지금 이 단계 ≤ 거쳐 간 사�
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /const pipe = pipelineOf\(scope\);/);
   assert.match(page, /단계·상태 거르기는 목록에만/);
-  /* 범위가 다른 블록은 카드를 나누고 머리에 범위 칩: 정책 목표 대비(전국 · 정책 진행 자료), 원장 요약(거르기 범위 · 사업 원장) — screens-b */
-  assert.match(page, /<ScopeChip scope="전국" source="정책 진행 자료"/);
+  /* 범위가 다른 블록은 카드를 나누고 머리에 범위 칩: 정책 목표 대비(정책 전체 · 정책 진행 자료), 원장 요약(거르기 범위 · 사업 원장) — screens-b */
+  assert.match(page, /<ScopeChip scope="정책 전체" source="정책 진행 자료"/);
   assert.match(page, /<ScopeChip scope=\{region\} source="사업 원장"/);
   const q1 = V.questionsOf(rows, { metro: true }, ctx)[0];
   assert.equal(q1.q, '9·7 대책 목표 대비');
@@ -169,7 +169,7 @@ test("후보 사업도 행을 누르면 간단 보기 서랍(?cand=<원장 id>) 
   for (const t of ['시군구', '단계', '계획 호수', '판정', '출처']) assert.ok(comp.includes(`<dt>${t}</dt>`), t);
   /* 지역 공급 목록의 후보 행도 막다른 줄이 아니다 */
   const ahead = read('components/region/Ahead.tsx');
-  assert.match(ahead, /: `\/projects\?cand=\$\{e\.id\}`;/);
+  assert.equal(R.projectHref({ id: 'X1', drawer: false, sd: '26' }, ''), '/projects?sido=26&cand=X1');   // 후보는 간단 보기(?cand=), 범위 붙임(data-audit-1016 결함 3)
   assert.match(ahead, /\{' '\}<span[^>]*>\(후보\)<\/span>/, "이름과 '(후보)' 사이에 글자 띄어쓰기");
 });
 
@@ -181,7 +181,7 @@ test('서랍: 목록 링크는 스크롤 유지(scroll=false), 머리는 두 열
   assert.match(drawer, /grid grid-cols-\[minmax\(0,1fr\)_auto\] items-start/);
   assert.match(drawer, /a\[href\$="=\$\{n\.last\}"\]/, '닫으면 ?id=·?cand= 행 링크로 초점');
   assert.match(page, /const stageHref = \(i: number\) => listHref\(f, \{ stage: String\(i\) \}\);/);
-  assert.match(read('components/projects/ProjectDetail.tsx'), /<StageSteps current=\{r\.board\} reached=\{r\.reached\} href=\{stageHref\} \/>/);
+  assert.match(read('components/projects/ProjectDetail.tsx'), /<StageSteps current=\{r\.board\} reached=\{r\.reached\} listHref=\{stageHref\(r\.board\)\} \/>/);
   assert.equal(V.listHref({ sido: '26', status: 'check' }, { stage: '2' }), '/projects?sido=26&stage=2&status=check');
 });
 

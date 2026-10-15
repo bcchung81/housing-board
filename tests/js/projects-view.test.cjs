@@ -119,7 +119,7 @@ test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·
   assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['75.8', '①계획 확인 3,560 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['인천', '지연·주의 2,890호'], ['13,372', '앞으로 12개월 · 준공 예정 · 24건']]);
   assert.equal(q['9·7 대책 목표 대비'].href, undefined, '이미 9·7 렌즈');
   const q129 = Q({ policy: pol('129') });
-  assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100', '% 정상', '판정 38건 · 판정 없음 9']);
+  assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100.0', '% 정상', '판정 38건 · 판정 없음 9']);
   assert.deepEqual([q129['어디서 막혀 있는가'].value, q129['어디서 막혀 있는가'].muted, q129['어디서 막혀 있는가'].href], ['없음', true, undefined]);
   const qm = Q({ metro: true });
   assert.deepEqual([qm['어디서 막혀 있는가'].href, qm['앞으로 얼마나 공급되는가'].href], ['/projects?sido=metro&stage=2&status=late', '/region'], '수도권(기본) 범위의 링크는 수도권을 지킨다');
@@ -183,7 +183,7 @@ test('단계 타임라인(서랍): 수원당수 A5 — 기록 있는 단계만 �
   assert.deepEqual(t.lanes.map((l) => l.plan?.tag ?? null), [null, null, '2027.02', '2027.06']);
   assert.deepEqual(t.lanes.map((l) => l.actual?.tag ?? null), ['2023.12', '2024.11', null, null]);
   assert.deepEqual(t.used, { plan: true, actual: true, late: false, missing: false }, '범례는 그린 표지만');
-  assert.deepEqual(t.progress[t.progress.length - 1], { at: t.progress[t.progress.length - 1].at, pct: 68, text: '2026.10.07 보고 68%' });
+  assert.deepEqual(t.progress[t.progress.length - 1], { at: t.progress[t.progress.length - 1].at, pct: 68, text: '2026.10.07 보고 68.0%' });
   assert.ok(t.progress.every((p, i, a) => i === 0 || p.at >= a[i - 1].at), '보고일 순');
   const late = V.timelineOf({ ...d, progress: [], stages: { CONSTRUCTION_START: { plan: '2025-03', late: { months: 7, cls: 'delay' } }, COMPLETION: { plan: '2026-01', actual: '2026-04' } } }, DET.referenceDate);
   assert.deepEqual([late.lanes[0].plan.tag, late.lanes[0].plan.late, late.lanes[0].late.months], ['2025.03 +7개월', 'delay', 7]);

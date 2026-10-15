@@ -37,7 +37,7 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
   }
   const q0 = V.questionsOf(rows, {}, ctx)[0];
   const words = q0.stages.map((c) => (c.target != null && c.actual != null ? `${c.actual}/${c.target} ${V.rateOf(c).word}` : c.target != null ? '실적 없음' : '목표 없음'));
-  assert.deepEqual(words, ['3560/14694 부족 75.8%', '3560/1543 초과 130.7%', '목표 없음', '4732/8049 부족 41.2%', '381/381 달성', '목표 없음']);
+  assert.deepEqual(words, ['3560/14694 부족 75.8%', '3560/1543 달성 230.7%', '목표 없음', '4732/8049 부족 41.2%', '381/381 달성 100.0%', '목표 없음']);
   assert.match(q0.tip, /담당자 추정 포함\(확인과 따로\): ①계획 5,789호/, '추정 포함은 title 에만');
   assert.match(q0.help, /단계마다/); assert.match(q0.help, /'목표 없음'/);
   /* 목표가 없는 렌즈(1·29)는 단계 줄 없이 범위 줄 안 */
@@ -48,7 +48,7 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
   assert.match(sum, /\{x\.stages \? <StageRates cells=\{x\.stages\} \/> : <>/);
   assert.match(sum, /\{cells\.map\(\(c\) => \{/);
   assert.match(sum, /style=\{both \? \{ color: BOARD_INK\[c\.board\] \} : undefined\}>\{BOARD_CIR\[c\.board\]\}\{BOARD_NAMES\[c\.board\]\}/, '기존 ①~⑥ 번호·단계 글자색');
-  assert.match(sum, /<span className="text-right">목표 없음<\/span>/);
+  assert.match(sum, /: <span>목표 없음<\/span>\}/);
   assert.match(sum, /!both && 'text-muted-foreground'/, '목표 없음은 옅게');
   assert.match(sum, /whitespace-nowrap tabular-nums/, '줄바꿈 없음');
   const page = read('app/(dashboard)/projects/page.tsx');

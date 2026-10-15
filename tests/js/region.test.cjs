@@ -182,7 +182,7 @@ test('문구: 탭 제목, 소제목, 푸터(윤곽·공정율·역학교)', () =
   const p1 = mkProject({ progress: { rate: 1, asOf: '2026-10-01', source: 'lh-cwstt' } });
   const p2 = mkProject({ id: 'p2', label: 'B', outline: { tier: 'official', poly: RING }, dongs: [{ no: '1', tier: 'building', floorsAbove: 5, poly: [RING] }] });
   const t = R.adaptBundle(mkRaw([p1, p2])).texts;
-  assert.equal(t.documentTitle, '주택파동 공급 지도 (테스트구)');
+  assert.equal(t.documentTitle, '테스트구 공급 지도 · 주택파동'); assert.equal(t.headTitle, '테스트구 공급 지도');   // 2026-10-15 2차: 상세 지도 제목은 지역(r2-map.test.cjs)
   assert.equal(t.eyebrow, '주택파동 · 테스트구'); assert.equal(t.description, '설명');
   assert.match(t.footerHtml, /블록 윤곽은 공식 자료, 동 윤곽은 실제 건물 자료, 동 윤곽은 근사값\(10~20 m\)입니다\./);
   assert.match(t.footerHtml, /공정율은 LH 공사현황 기준입니다\./);
@@ -193,7 +193,7 @@ test('문구: 탭 제목, 소제목, 푸터(윤곽·공정율·역학교)', () =
 test('문구: 공정율 출처·맥락이 없으면 그 문장이 없다, HTML 이스케이프', () => {
   const t = R.adaptBundle(mkRaw([mkProject()], mkRegion({ name: 'A&B<구>', title: 'T<b>' }), { context: null })).texts;
   assert.ok(!t.footerHtml.includes('공정율은')); assert.ok(!t.footerHtml.includes('역·학교'));
-  assert.equal(t.documentTitle, '주택파동 공급 지도 (A&B<구>)');  // 제목은 텍스트라 이스케이프하지 않는다
+  assert.equal(t.documentTitle, 'A&B<구> 공급 지도 · 주택파동');  // 제목은 텍스트라 이스케이프하지 않는다
   assert.equal(R.escapeHtml('<a href="x">&</a>'), '&lt;a href=&quot;x&quot;&gt;&amp;&lt;/a&gt;');
 });
 

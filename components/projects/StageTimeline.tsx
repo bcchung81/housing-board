@@ -5,7 +5,7 @@
 import type { ReactNode } from 'react';
 import { cn } from 'cn';
 import { HATCH } from '../ui/chips';
-import { BOARD_CIR, BOARD_COLOR, BOARD_NAMES, BOARD_OFFICIAL, yearAt, type Timeline } from '../../lib/board/projects-view';
+import { BOARD_CIR, BOARD_COLOR, BOARD_NAMES, pct1, yearAt, type Timeline } from '../../lib/board/projects-view';
 
 const light = (c: string, p = 22) => `color-mix(in srgb,${c} ${p}%,var(--card))`;
 const LATE = { delay: 'var(--bad)', caution: 'var(--warn)', ok: 'var(--mute)' } as const;
@@ -49,7 +49,7 @@ export default function StageTimeline({ t }: { t: Timeline }) {
           const c = BOARD_COLOR[l.board];
           return (
             <div key={l.board} className="grid grid-cols-[96px_40px_minmax(0,1fr)_76px] items-center gap-x-3 gap-y-[3px]" role="group" aria-label={`${BOARD_CIR[l.board]} ${BOARD_NAMES[l.board]}`}>
-              <span className="row-span-2 flex items-center gap-1.5 self-center text-[14px] whitespace-nowrap" title={`공식 단계 ${BOARD_OFFICIAL[l.board]}`}><i className="block size-[9px] flex-none rounded-[2px]" style={{ background: c }} aria-hidden="true" />{BOARD_CIR[l.board]} {BOARD_NAMES[l.board]}</span>
+              <span className="row-span-2 flex items-center gap-1.5 self-center text-[14px] whitespace-nowrap"><i className="block size-[9px] flex-none rounded-[2px]" style={{ background: c }} aria-hidden="true" />{BOARD_CIR[l.board]} {BOARD_NAMES[l.board]}</span>
               <Line label="현재">
                 {l.planBar ? <span className="absolute top-[1px] bottom-[1px] rounded-[3px] border-[1.5px] border-dashed" style={{ left: `${l.planBar.from}%`, width: `${Math.max(0.6, l.planBar.to - l.planBar.from)}%`, background: light(c), borderColor: c }} title={l.planBar.title} /> : null}
                 {l.plan ? <>
@@ -76,11 +76,11 @@ export default function StageTimeline({ t }: { t: Timeline }) {
           <div className="grid grid-cols-[148px_minmax(0,1fr)_76px] items-center gap-x-3">
             <span className="text-[14px] whitespace-nowrap text-muted-foreground" title="LH 공사진행 보고 · 보고일마다 점(같은 날 여러 보고는 큰 값)">공정률</span>
             <span className="relative mt-1 block h-[56px] border-t border-dashed border-border">
-              <svg className="absolute inset-0 block size-full overflow-visible" viewBox="0 0 1000 100" preserveAspectRatio="none" role="img" aria-label={`공정률 이력, 마지막 ${last.pct}%`}>
+              <svg className="absolute inset-0 block size-full overflow-visible" viewBox="0 0 1000 100" preserveAspectRatio="none" role="img" aria-label={`공정률 이력, 마지막 ${pct1(last.pct)}%`}>
                 <polyline fill="none" stroke="var(--st-build)" strokeWidth={2} vectorEffect="non-scaling-stroke" strokeLinejoin="round" points={pr.map((p) => `${(p.at * 10).toFixed(1)},${(100 - p.pct).toFixed(1)}`).join(' ')} />
               </svg>
               {pr.map((p, i) => <span key={i} className="absolute size-[7px] -translate-x-1/2 -translate-y-1/2 rounded-full border-[1.5px] border-card" style={{ left: `${p.at}%`, top: `${100 - p.pct}%`, background: 'var(--st-build)' }} title={p.text} />)}
-              <span className={cn('absolute -translate-y-1/2 pl-2 text-[13px] font-bold whitespace-nowrap tabular-nums', last.at > 85 && '-translate-x-full pr-2 pl-0')} style={{ left: `${last.at}%`, top: `${100 - last.pct}%`, color: 'var(--st-build-ink)' }}>{last.pct}%</span>
+              <span className={cn('absolute -translate-y-1/2 pl-2 text-[13px] font-bold whitespace-nowrap tabular-nums', last.at > 85 && '-translate-x-full pr-2 pl-0')} style={{ left: `${last.at}%`, top: `${100 - last.pct}%`, color: 'var(--st-build-ink)' }}>{pct1(last.pct)}%</span>
             </span>
             <span />
           </div>

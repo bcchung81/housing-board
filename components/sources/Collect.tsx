@@ -5,9 +5,10 @@ import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { PanelHead } from '../page';
 import { Card } from '../ui/card';
+import InfoTip from '../ui/info-tip';
 import { DataGrid } from '../ui/data-grid';
 import { HATCH } from '../ui/chips';
-import { GRID_DENSE, type Col, type Row } from '../../lib/grid/spec';
+import { GRID_DENSE, dotDates, type Col, type Row } from '../../lib/grid/spec';
 import { GRID_YEARS, LINK_NAME, coverageRows, statusRows, uniformColumns, type CoverageRow, type HomeSources, type StatusRow } from '../../lib/board/home-sources';
 import { annualSeries } from '../../lib/board/annual';
 import { fmt } from '../../lib/board/calc';
@@ -21,6 +22,8 @@ const HOME_TIP = 'HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 �
 const OWNER = { 우리: '우리', HOME: '정책 진행 자료' } as const;
 /* 기관 이름 중 내부 말('주택파동 지도 번들')은 보이는 글에서 '지도 자료'로 */
 const orgName = (o: string) => o.replace(/지도 번들/g, '지도 자료');
+/* 원천 이름은 말줄임 없이 낱말 단위로 줄바꿈(2026-10-16 2차 평가: 1440 에서 324→263px, 1280 에서 5건이 잘렸다) */
+const WRAP = 'min-w-0 [overflow-wrap:break-word] [word-break:keep-all]';
 const LegendList = ({ children }: { children: ReactNode }) => <ul className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[13px] text-muted-foreground" aria-label="범례">{children}</ul>;
 
 const COLS: Col[] = [
@@ -65,13 +68,19 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
 
   return (
     <Card render={<section aria-label="수집 상태" />}>
-      <PanelHead title={<>수집 상태<span className="ml-2 text-[14px] font-normal text-muted-foreground tabular-nums" title={`우리 원천 ${items.length}곳(원천 카탈로그) · HOME 원천 ${hs.sources.length}곳(덤프 수집 실행 ${fmt(hs.runs.total)}회 중 실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted})`}>{all.length}곳(우리가 모은 원천 {items.length} + 정책 진행 자료 {hs.sources.length}) · 실패 {nFail} · 경고 {nWarn}</span></>}
-        tip="실패·경고 원천만 표로 펼치고, 정상 원천은 기관별로 접음(기관 · 원천 수 · 최근 수집일) · 실패 = 마지막 실행 실패(마지막 정상 값을 씀) · 경고 = 마지막 수집이 일부만 · 우리 = 파일로 받아 둔 원천 카탈로그, HOME = 덤프의 수집 실행 결과">
+      <PanelHead title={<>수집 상태<span className="ml-2 text-[14px] font-normal text-muted-foreground tabular-nums" title={`우리 원천 ${items.length}곳(원천 카탈로그) · 정책 진행 자료(HOME) 원천 ${hs.sources.length}곳(덤프 수집 실행 ${fmt(hs.runs.total)}회 중 실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted})`}>{all.length}곳(우리가 모은 원천 {items.length} + 정책 진행 자료 {hs.sources.length}) · 실패 {nFail} · 경고 {nWarn}</span></>}
+        tip="실패·경고 원천만 표로 펼치고, 정상 원천은 기관별로 접음(기관 · 원천 수 · 최근 수집일) · 실패 = 마지막 실행 실패(마지막 정상 값을 씀) · 경고 = 마지막 수집이 일부만 · 우리 = 파일로 받아 둔 원천 카탈로그, 정책 진행 자료 = HOME 의 수집 실행 결과">
         <LegendList>
           {nFail ? <li className={KEY}><i className={`${dot} rounded-full bg-bad`} aria-hidden="true" />실패</li> : null}
           {nWarn ? <li className={KEY}><i className={`${dot} rounded-full bg-warn`} aria-hidden="true" />경고</li> : null}
           <li className={KEY}><i className={`${dot} rounded-full bg-ok`} aria-hidden="true" />정상</li>
         </LegendList>
+        <InfoTip label="수집 상태 읽는 법">
+          <dl>
+            <dt>실패 · 경고</dt><dd>실패 = 마지막 실행이 실패해 마지막 정상 값을 씀 · 경고 = 마지막 수집이 일부만 됨 · 둘만 표로 펼치고 정상 원천은 기관별로 접음</dd>
+            <dt>우리 · {OWNER.HOME}</dt><dd>우리 = 파일로 받아 둔 원천 카탈로그 · {OWNER.HOME} = HOME(국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료)의 수집 실행 결과</dd>
+          </dl>
+        </InfoTip>
       </PanelHead>
       {rows.length ? (
         <>
@@ -86,14 +95,14 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
             <details key={org} className="group/o min-w-0 border-b border-border">
               <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-[6px] py-1.5 text-[14px] hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
                 <ChevronRight className="size-3.5 flex-none text-muted-foreground transition-transform group-open/o:rotate-90" aria-hidden="true" />
-                <span className="min-w-0 flex-1 truncate font-bold" title={org}>{org}</span>
-                <span className="flex-none text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">{rs.length}곳{maxDay(rs) ? ` · ${maxDay(rs)}` : ''}</span>
+                <span className={`${WRAP} flex-1 font-bold`}>{org}</span>
+                <span className="flex-none text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">{rs.length}곳{maxDay(rs) ? ` · ${dotDates(maxDay(rs)!)}` : ''}</span>
               </summary>
               <ul className="m-0 list-none p-0 pb-2 pl-5 text-[13px] leading-[1.5]">
                 {rs.map((r) => (
                   <li key={`${r.owner}-${r.id}`} className="flex gap-2 py-0.5">
-                    <span className="min-w-0 flex-1 truncate" title={`${r.name} · ${r.owner}`}>{r.name}</span>
-                    <span className="flex-none text-muted-foreground tabular-nums">{[r.asOf ? `기준 ${r.asOf}` : '', r.count !== null ? fmt(r.count) : ''].filter(Boolean).join(' · ')}</span>
+                    <span className={`${WRAP} flex-1`} title={`${r.name} · ${r.owner}`}>{r.name}</span>
+                    <span className="flex-none text-muted-foreground tabular-nums">{[r.asOf ? `기준 ${dotDates(r.asOf)}` : '', r.count !== null ? fmt(r.count) : ''].filter(Boolean).join(' · ')}</span>
                   </li>
                 ))}
               </ul>
@@ -118,12 +127,18 @@ export function Coverage({ hs, molit }: { hs: HomeSources; molit: Molit }) {
   ) : null);
   return (
     <Card render={<section aria-label="연도 확보" />}>
-      <PanelHead title="연도 확보" tip={`원천마다 ${GRID_YEARS[0]}~${GRID_YEARS[now]} 자료가 있는지 · 부분은 일부 월·범위만(${GRID_YEARS[now]}은 진행 중인 해) · 통계누리는 월 자료로 센 값, 나머지는 원장의 사건일·공고일·지표 기간과 HOME 확보 기록 · 빈틈 없는 원천과 올해 자료만 있는 원천은 한 줄로 접음`}>
+      <PanelHead title="연도 확보" tip={`원천마다 ${GRID_YEARS[0]}~${GRID_YEARS[now]} 자료가 있는지 · 부분은 일부 월·범위만(${GRID_YEARS[now]}은 진행 중인 해) · 통계누리는 월 자료로 센 값, 나머지는 원장의 사건일·공고일·지표 기간과 정책 진행 자료(HOME) 확보 기록 · 빈틈 없는 원천과 올해 자료만 있는 원천은 한 줄로 접음`}>
         <LegendList>
           <li className={KEY}><i className={`${dot} bg-primary`} aria-hidden="true" />확보</li>
           <li className={KEY}><i className={dot} style={{ background: PART }} aria-hidden="true" />부분</li>
           <li className={KEY}><i className={`${dot} border border-line2 ${HATCH}`} aria-hidden="true" />미확보</li>
         </LegendList>
+        <InfoTip label="연도 확보 읽는 법">
+          <dl>
+            <dt>확보 · 부분 · 미확보</dt><dd>원천마다 {GRID_YEARS[0]}~{GRID_YEARS[now]}년 자료가 있는지 · 부분 = 일부 월·범위만({GRID_YEARS[now]}년은 진행 중인 해)</dd>
+            <dt>세는 법</dt><dd>통계누리는 월 자료로 셈 · 나머지는 원장의 사건일·공고일·지표 기간과 {OWNER.HOME}의 확보 기록 · 빈틈 없는 원천과 올해 자료만 있는 원천은 한 줄로 접음</dd>
+          </dl>
+        </InfoTip>
       </PanelHead>
       {rest.length ? (
         <div className="overflow-x-auto">
@@ -134,7 +149,7 @@ export function Coverage({ hs, molit }: { hs: HomeSources; molit: Molit }) {
             </div>
             {rest.map((r) => (
               <div key={r.id} role="row" className="contents">
-                <span role="rowheader" className="truncate" title={`${r.name} · ${r.owner}`}>{r.owner === 'HOME' ? <span className="mr-1 text-[11px] text-muted-foreground" title={HOME_TIP}>{OWNER.HOME}</span> : null}{r.name}</span>
+                <span role="rowheader" className={`${WRAP} leading-[1.35]`} title={`${r.name} · ${r.owner}`}>{r.owner === 'HOME' ? <span className="mr-1 text-[11px] text-muted-foreground" title={HOME_TIP}>{OWNER.HOME}</span> : null}{r.name}</span>
                 {r.cells.map((c, i) => (
                   <span key={i} role="cell" title={`${r.name} · ${GRID_YEARS[i]} · ${MARK[c]}`} className="block">
                     {/* 색 칸은 그림만, 읽는 글자는 칠한 칸 밖 sr-only(칠한 바탕 위 숨긴 글자가 대비 검사에 걸리지 않게) */}
@@ -162,6 +177,9 @@ export function Links({ hs }: { hs: HomeSources }) {
           <li className={KEY}><i className={`${dot} bg-primary`} aria-hidden="true" />담당자 확인</li>
           <li className={KEY}><i className={dot} style={{ background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} aria-hidden="true" />담당자 확인 전</li>
         </LegendList>
+        <InfoTip label="연결 읽는 법">
+          <p>정책–프로그램, 프로그램–사업 연결(사업 원장) 수입니다. 담당자 확인 전 = 자동으로 제안했고 담당자가 아직 확인하지 않은 연결 · 해제된 연결은 뺌.</p>
+        </InfoTip>
       </PanelHead>
       <div className="mt-3 grid grid-cols-2 gap-x-10 gap-y-5 narrow:grid-cols-1">
         {hs.links.map((l) => {

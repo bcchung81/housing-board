@@ -27,7 +27,7 @@ test('mapScopeHref: 수도권 = /map, 수도권 시도·시군구 = 각 주소, 
 });
 
 test('사업 행: 수도권 사업만 핀 + 글자 \'지도\'(?project=), 수도권 밖은 칸이 비어 있다', () => {
-  assert.match(read('lib/board/projects-list.ts'), /!isMetro\(r\.sgg\) \? null : noLoc[\s\S]*\{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '수도권 사업만, 밖은 null');
+  assert.match(read('lib/board/projects-list.ts'), /if \(!isMetro\(r\.sgg\)\) return null;[\s\S]*return noLoc[\s\S]*\{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '수도권 사업만, 밖은 null');
   const grid = read('components/ui/data-grid.tsx');
   assert.match(grid, /<MapPin[^>]*\/><span aria-hidden="true">지도<\/span><span className="sr-only">\{d\.text\}<\/span>/, '아이콘 옆에 글자, 읽기 도구에는 전체 설명');
   assert.match(grid, /o\.doc \? <a href=\{o\.href\} className=\{o\.icon \? '[^']*focus-visible:outline-2/, '초점 테두리');

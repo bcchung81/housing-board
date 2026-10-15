@@ -9,7 +9,7 @@ import StockLines, { HOUSEHOLD_COLOR, STOCK_COLOR } from '../charts/StockLines';
 import { conditions, stockChart, type AreaFactsDoc } from '../../lib/board/area-facts';
 import { fmt } from '../../lib/board/calc';
 
-const COND_TIP = '숫자마다 기준연도가 다름 · 재고−가구 차이는 공급 부족 확정치가 아님(공실·점유·실입주량은 이 자료에 없음) · KOSIS·SGIS(HOME 지역 지표) · 서울·인천·경기만';
+const COND_TIP = '숫자마다 기준연도가 다름 · 재고−가구 차이는 공급 부족 확정치가 아님(공실·점유·실입주량은 이 자료에 없음) · KOSIS·SGIS(정책 진행 자료(HOME) 지역 지표) · 서울·인천·경기만';
 
 /* 값과 기준 시점을 한 줄에(넓은 칸에서 오른쪽이 비지 않게). 좁으면 시점이 아래로 내려간다 */
 function Fact({ label, value, unit, sub, tip }: { label: string; value: string; unit: string; sub?: ReactNode; tip: string }) {

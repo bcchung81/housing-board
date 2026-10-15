@@ -69,6 +69,19 @@ export const lhUnits = (blocks: LhBlock[]) => blocks.reduce((a, b) => a + b.unit
 
 /* 달 수(개월) 차이: a 에서 b 까지. */
 export function monthsBetween(a: string, b: string) { return (Number(b.slice(0, 4)) - Number(a.slice(0, 4))) * 12 + Number(b.slice(5, 7)) - Number(a.slice(5, 7)); }
+/* 자료 낡음 표지: 자료 기준일(asOf)이 비교 기준일(ref, 보통 원장 기준일)보다 다 찬 달로 몇 개월 앞섰나(YYYY-MM-DD). 1개월 미만이면 null */
+export function staleText(asOf: string, ref: string) {
+  const n = monthsBetween(asOf, ref) - (Number(ref.slice(8, 10)) < Number(asOf.slice(8, 10)) ? 1 : 0);
+  return n >= 1 ? `${n}개월 전 자료` : null;
+}
+/* 기간 꼬리: 올해 1월부터 upto 월까지의 누계('2026.01~08 누계') */
+export const ytdSpan = (year: string, upto: number) => `${year}.01~${String(upto).padStart(2, '0')} 누계`;
+/* 시도 타일의 호수 기준 지연율 분모: 판정 사업(사업 번호가 있는 사업 — 판정 cls 가 있는 행)의 정상 호수를 시도별로 더한다. 원장 집계 regions 에는 지연·주의 호수만 있다 */
+export function okUnitsBySido(rows: { issued: boolean; cls: string | null; sgg: string; units: number }[]) {
+  const out: Record<string, number> = {};
+  for (const r of rows) if (r.issued && r.cls === 'ok') out[r.sgg.slice(0, 2)] = (out[r.sgg.slice(0, 2)] ?? 0) + r.units;
+  return out;
+}
 
 /* 시도 하나의 LH 준공 예정 달력: fromYm 부터 n개월, 달마다 그 달의 블록(날짜·사업지구 순)과 세대수. 우리 동네(9.4 지시 '공급계획 사전 공개')가 쓴다 */
 /* LH 준공예정 블록 주소(원천 location)의 표시 글: 원천은 주소 칸 여럿을 이어 붙여 시도·시군구가 되풀이된다

@@ -61,6 +61,7 @@ export default function Drawer({ id, canonical, closeHref, title, head, back, ch
     if (!id) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
+      if (document.querySelector('[data-popup-open]')) return;   // 열린 ⓘ 팝오버가 먼저(Esc 는 팝오버만 닫는다 — 서랍 안 ⓘ, 2026-10-16)
       const menu = document.querySelector<HTMLDetailsElement>('details[open]:not([data-fold])');
       if (menu) { menu.open = false; return; }   // 펼친 칩 메뉴가 먼저(접힘 영역 data-fold 은 메뉴가 아니다)
       close();

@@ -12,6 +12,14 @@ export const CAL_TYPE: Record<CalKind, { name: string; color: string; ink: strin
   COMPLETION: { name: '준공', color: 'var(--st-soon)', ink: 'var(--st-soon-ink)' },
   MOVE_IN: { name: '입주', color: 'var(--st-move)', ink: 'var(--st-move-ink)' },
 };
+/* 종류 칩 이름: '앞으로 12개월'의 예정이라는 뜻이 드러나게 '입주 예정'(2026-10-16 2차 평가 — 종합상황판 '⑥입주'(지금 입주 단계인 사업)와 구별). 정의는 title(aheadKindTip) */
+export const AHEAD_KIND: Record<CalKind, string> = { SUPPLY_NOTICE: '모집 예정', COMPLETION: '준공 예정', MOVE_IN: '입주 예정' };
+const KIND_EVENT: Record<CalKind, string> = { SUPPLY_NOTICE: '모집공고', COMPLETION: '준공', MOVE_IN: '입주' };
+const KIND_STAGE: Record<CalKind, string> = { SUPPLY_NOTICE: '④모집', COMPLETION: '⑤준공', MOVE_IN: '⑥입주' };
+export const aheadKindTip = (t: CalKind) => `앞으로 12개월 ${AHEAD_KIND[t]} — 사업 원장의 ${KIND_EVENT[t]} 현재 예정 달이 이 기간인 사업(이미 실제 기록이 있으면 뺌) · 종합상황판 '${KIND_STAGE[t]}'(지금 그 단계인 사업)와 다름`;
+/* 예정일 글자: 점 표기 하나 — 날짜가 있으면 '2026.10.11', 달만 있으면 '2026.10'(2026-10-16 2차 평가: '10월 11일'·'10월 중' 대신) */
+export const aheadDay = (e: Pick<CalEntry, 'day' | 'ym'>) => (e.day ? e.day.slice(0, 10).replace(/-/g, '.') : e.ym.slice(0, 7).replace('-', '.'));
+export const ymDotted = (ym: string) => ym.slice(0, 7).replace('-', '.');
 /* 위치 근거: 점(블록 라벨점·주소 근사점·지구 대표점) · 근사(시군구·동) · 대표(시군구 중심) */
 export type LocKind = 'block' | 'address' | 'district' | 'area' | 'name' | 'rep';
 export const LOC_NAME: Record<LocKind, string> = { block: 'LH 블록 대표점', address: '주소 근사점', district: '지구 대표점', area: '근사 위치(시군구·동)', name: '근사 위치(이름 검색)', rep: '대표 위치(시군구 중심)' };
@@ -48,6 +56,9 @@ export function aheadAll(doc: CalendarDoc, sido: string, sidoName: (code: string
   const one = !!sido && sido !== 'metro';
   return scopeCodes(doc, sido).flatMap((sd) => (doc.sido[sd] ?? []).map((e) => ({ ...e, k: `${e.id}|${e.type}`, sd, place: placeLabel(e.sgg, sidoName(sd), one) }))).sort(byDay);
 }
+/* 예정 항목 → 사업 화면: 상세가 있는 사업은 상세 서랍(?id=), 후보 사업은 간단 보기(?cand=). 서랍 뒤·닫은 뒤 목록이 그 사업을 담도록 범위를 붙인다 —
+   수도권 보기는 사업 화면 기본(수도권) 그대로, 전국·시도 보기는 그 사업의 시도(?sido=NN). 열쇠 순서는 사업 화면 listHref 와 같다(sido 다음 id·cand) */
+export const projectHref = (e: Pick<CalEntry, 'id' | 'drawer'> & { sd: string }, sido: string) => `/projects?${sido === 'metro' ? '' : `sido=${e.sd}&`}${e.drawer ? 'id' : 'cand'}=${e.id}`;
 /* 지도 보기 상자(시도들의 상자를 합친 것). 경계 자료가 없는 범위면 null */
 export function viewOf(doc: RegionMapDoc, sido: string): [number, number, number, number] | null {
   const vs = (sido === 'metro' ? METRO : sido ? [sido] : []).map((c) => doc.view[c]).filter(Boolean);

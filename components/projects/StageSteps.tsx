@@ -1,10 +1,14 @@
-/* 사업 상세 서랍의 단계 줄: 목록·타임라인·지역 공급과 같은 ①~⑥ 이름과 단계색(리본 칸). 공식 6단계 번호(01~06)는 보이는 글에 쓰지 않고 칸 title 에만.
+/* 사업 상세 서랍의 단계 줄: 목록·타임라인·지역 공급과 같은 ①~⑥ 이름과 단계색(리본 칸). 공식 6단계 번호(01~06)는 ①~⑥ 과 어긋나 쓰지 않는다(title 에도 — 2026-10-16 3차 평가).
+   여섯 칸의 정의는 title 만이 아니라 줄 아래 ⓘ(키보드로 열림)에도.
    '지금' 한 칸만 단계색으로 채우고(+ '지금' 꼬리표), 지난 단계는 옅은 체크, 앞 단계는 빈 칸(projects-view stepState). 실제 기록 여부는 title 에.
-   칸을 누르면 지금 거르기를 유지한 채 그 단계인 사업 목록(href 를 화면이 준다). */
+   칸은 링크가 아니다(2026-10-16 2차 평가: 칸을 누르면 서랍이 닫히고 목록으로 넘어갔다) — 칸마다 정의는 title, 지금 단계의 정의는 줄 아래 보이는 글로.
+   목록 이동은 따로 '같은 단계 사업 목록' 링크 하나(listHref — 화면이 지금 거르기를 유지한 목록 주소를 준다). */
+import { Fragment } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { cn } from 'cn';
-import { BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, BOARD_OFFICIAL, stepState } from '../../lib/board/projects-view';
+import InfoTip from '../ui/info-tip';
+import { BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, stepState } from '../../lib/board/projects-view';
 
 /* 칸마다 답할 질문(발표자료 6단계 질문을 리본 칸에 맞춤): ③착공은 공사 진행, ⑤준공은 공사의 끝(사용검사) — ⑤에 ③의 질문을 베끼지 않는다 */
 export const QUESTION = [
@@ -16,28 +20,40 @@ export const QUESTION = [
   '언제 국민이 실제로 들어가는가',
 ] as const;
 
-export default function StageSteps({ current, reached, href }: { current: number; reached: number[]; href: (i: number) => string }) {
+export default function StageSteps({ current, reached, listHref }: { current: number; reached: number[]; listHref: string }) {
   return (
-    <ol className="m-0 grid list-none grid-cols-6 gap-1.5 p-0 mobile:grid-cols-3" aria-label="공급 6단계">
-      {BOARD_NAMES.map((name, i) => {
-        const st = stepState(i, current), on = st === 'now';
-        const c = BOARD_COLOR[i];
-        const rec = i === 0 || reached.includes(i) ? '실제 기록 있음' : '실제 기록 없음';
-        return (
-          <li key={name} className="min-w-0">
-            <Link href={href(i)} aria-current={on ? 'step' : undefined} data-step={st}
-              title={`${BOARD_CIR[i]} ${name} — ${QUESTION[i]} · 공식 단계 ${BOARD_OFFICIAL[i]}${on ? ' · 이 사업의 지금 단계' : st === 'past' ? ` · 지난 단계(${rec})` : ' · 아직 오지 않은 단계'} · 누르면 지금 거르기 안에서 이 단계인 사업`}
-              className={cn('card-lift flex h-full min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[8px] border-2 px-1 py-1.5 text-center no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary',
-                on ? 'text-foreground' : 'border-border bg-card text-muted-foreground')}
-              style={on ? { borderColor: c, background: `color-mix(in srgb,${c} 26%,var(--card))` } : undefined}>
-              <b className={cn('flex items-center gap-1 text-[16px] leading-[1.3] whitespace-nowrap', on ? 'font-bold' : 'font-normal')} style={on ? { color: BOARD_INK[i] } : undefined}>
-                {st === 'past' ? <><Check className="size-4 flex-none opacity-70" aria-hidden="true" /><span className="sr-only">지난 단계 </span></> : null}{BOARD_CIR[i]} {name}
-              </b>
-              {on ? <span className="mt-0.5 rounded-full bg-primary px-2 text-[13px] leading-[18px] font-bold text-primary-foreground">지금</span> : null}
-            </Link>
-          </li>
-        );
-      })}
-    </ol>
+    <div className="flex flex-col gap-1.5">
+      <ol className="m-0 grid list-none grid-cols-6 gap-1.5 p-0 mobile:grid-cols-3" aria-label="공급 6단계">
+        {BOARD_NAMES.map((name, i) => {
+          const st = stepState(i, current), on = st === 'now';
+          const c = BOARD_COLOR[i];
+          const rec = i === 0 || reached.includes(i) ? '실제 기록 있음' : '실제 기록 없음';
+          return (
+            <li key={name} className="min-w-0">
+              <div aria-current={on ? 'step' : undefined} data-step={st}
+                title={`${BOARD_CIR[i]} ${name} — ${QUESTION[i]}${on ? ' · 이 사업의 지금 단계' : st === 'past' ? ` · 지난 단계(${rec})` : ' · 아직 오지 않은 단계'}`}
+                className={cn('flex h-full min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[8px] border-2 px-1 py-1.5 text-center',
+                  on ? 'text-foreground' : 'border-border bg-card text-muted-foreground')}
+                style={on ? { borderColor: c, background: `color-mix(in srgb,${c} 26%,var(--card))` } : undefined}>
+                <b className={cn('flex items-center gap-1 text-[16px] leading-[1.3] whitespace-nowrap', on ? 'font-bold' : 'font-normal')} style={on ? { color: BOARD_INK[i] } : undefined}>
+                  {st === 'past' ? <><Check className="size-4 flex-none opacity-70" aria-hidden="true" /><span className="sr-only">지난 단계 </span></> : null}{BOARD_CIR[i]} {name}
+                </b>
+                {on ? <span className="mt-0.5 rounded-full bg-primary px-2 text-[13px] leading-[18px] font-bold text-primary-foreground">지금</span> : null}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[14px] text-muted-foreground">
+        <span data-slot="stage-def" className="inline-flex flex-wrap items-center gap-x-1"><span><b className="font-bold" style={{ color: BOARD_INK[current] }}>{BOARD_CIR[current]} {BOARD_NAMES[current]}</b> — {QUESTION[current]}</span>
+          <InfoTip label="여섯 단계">
+            <dl>{QUESTION.map((q, i) => <Fragment key={i}><dt>{BOARD_CIR[i]} {BOARD_NAMES[i]}</dt><dd>{q}{i === current ? ' · 지금' : stepState(i, current) === 'past' ? ` · 지난 단계(${i === 0 || reached.includes(i) ? '실제 기록 있음' : '실제 기록 없음'})` : ''}</dd></Fragment>)}</dl>
+            <p>&apos;지금&apos; = 이 사업의 지금 단계 · 체크 = 지난 단계</p>
+          </InfoTip>
+        </span>
+        <Link href={listHref} scroll={false} className="ml-auto whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          title={`지금 목록의 범위(지역·정책·기관 거르기)를 그대로 두고 ${BOARD_CIR[current]} ${BOARD_NAMES[current]} 단계인 사업만 — 서랍은 닫힘`}>같은 단계 사업 목록 ›</Link>
+      </p>
+    </div>
   );
 }

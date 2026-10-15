@@ -75,6 +75,75 @@ test('커밋된 지역 공급·요구사항 자료는 원본으로 다시 만든
   assert.equal(read(OUTS[3]), JSON.stringify(RQ.build()) + '\n');
 });
 
+/* ---------- 시군구 경계: 이웃끼리 같은 선(겹침·틈 없음), 남이 안 덮는 구멍은 메운다 ---------- */
+/* 'M절대 l상대…z' → 고리들(닫지 않음) */
+const ringsOfD = (d) => [...d.matchAll(/M(-?\d+) (-?\d+)l([^z]*)z/g)].map((m) => {
+  let x = +m[1], y = +m[2]; const r = [[x, y]], n = m[3].trim().split(/\s+/).map(Number);
+  for (let i = 0; i + 1 < n.length; i += 2) r.push([x += n[i], y += n[i + 1]]);
+  return r;
+});
+const inRing = ([px, py], r) => { let c = false; for (let i = 0, j = r.length - 1; i < r.length; j = i++) { const [xi, yi] = r[i], [xj, yj] = r[j]; if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) c = !c; } return c; };
+const inFace = (p, rings) => rings.reduce((c, r) => c !== inRing(p, r), false);   // 짝홀 규칙
+/* 격자(res 단위)에 구역마다 짝홀 규칙으로 가로줄을 칠해 셈 → 겹침 칸(2번 이상)·갇힌 빈 칸(바깥 테두리에서 빈 칸끼리 이어 닿지 않는 빈 칸) */
+function raster(units, res) {
+  const all = units.flat(2), xs = all.map((p) => p[0]), ys = all.map((p) => p[1]);
+  const X0 = Math.min(...xs) - 2, Y0 = Math.min(...ys) - 2, W = Math.ceil((Math.max(...xs) + 2 - X0) / res), H = Math.ceil((Math.max(...ys) + 2 - Y0) / res);
+  const cnt = new Uint8Array(W * H);
+  for (const rings of units) {
+    const rows = new Map();
+    for (const r of rings) for (let k = 0; k < r.length; k++) {
+      let [x1, y1] = r[k], [x2, y2] = r[(k + 1) % r.length]; if (y1 === y2) continue; if (y1 > y2) [x1, y1, x2, y2] = [x2, y2, x1, y1];
+      for (let row = Math.ceil((y1 - Y0) / res - 0.5); row <= Math.ceil((y2 - Y0) / res - 0.5) - 1; row++) { const y = Y0 + (row + 0.5) * res; if (!rows.has(row)) rows.set(row, []); rows.get(row).push(x1 + (y - y1) * (x2 - x1) / (y2 - y1)); }
+    }
+    for (const [row, xs2] of rows) { xs2.sort((a, b) => a - b); for (let i = 0; i + 1 < xs2.length; i += 2) for (let c = Math.ceil((xs2[i] - X0) / res - 0.5); c <= Math.ceil((xs2[i + 1] - X0) / res - 0.5) - 1; c++) cnt[row * W + c]++; }
+  }
+  let over = 0; for (const v of cnt) if (v >= 2) over++;
+  const seen = new Uint8Array(cnt.length), st = [];
+  for (let x = 0; x < W; x++) st.push(x, (H - 1) * W + x); for (let y = 0; y < H; y++) st.push(y * W, y * W + W - 1);
+  while (st.length) { const i = st.pop(); if (seen[i] || cnt[i]) continue; seen[i] = 1; const x = i % W; if (x > 0) st.push(i - 1); if (x < W - 1) st.push(i + 1); if (i >= W) st.push(i - W); if (i < (H - 1) * W) st.push(i + W); }
+  let enclosed = 0; for (let i = 0; i < cnt.length; i++) if (!cnt[i] && !seen[i]) enclosed++;
+  return { over, enclosed };
+}
+const unproj = ([x, y]) => [x / (Math.cos(37.5 * Math.PI / 180) * 1000) + 124.5, 38.4 - y / 1000];
+const poly = (...rings) => ({ type: 'Polygon', coordinates: rings.map((r) => [...r, r[0]].map(unproj)) });
+const muni = (name, code, geometry) => ({ region: '경기도', name, admin_codes: [code], longitude: 127, latitude: 37.3, geometry });
+
+test('buildMap: 맞닿은 두 시군구는 공유 경계를 한 번만 줄여 겹침·틈이 없다(시작점·방향이 달라도)', () => {
+  /* 세로 경계 x≈2000: 큰 굽이(진폭 8) + 허용보다 작은 지그재그(±0.45), 1단위마다 점 */
+  const border = Array.from({ length: 101 }, (_, i) => [2000 + 8 * Math.sin(i * Math.PI / 25) + (i % 2 ? 0.45 : -0.45), 1000 + i]);
+  const left = [[1900, 1000], ...border, [1900, 1100]];
+  const right = [[2100, 1100], [2100, 1000], ...border].reverse();
+  const rightRot = [...right.slice(37), ...right.slice(0, 37)];   // 다른 시작점
+  const { doc } = RS.buildMap([muni('왼시', '41001', poly(left)), muni('오른시', '41002', poly(rightRot))], []);
+  const units = doc.sgg.map((g) => ringsOfD(g.d));
+  assert.equal(units.length, 2);
+  assert.deepEqual(raster(units, 0.25), { over: 0, enclosed: 0 });
+});
+
+test('buildMap: 다른 시군구가 안 덮는 구멍은 메우고, 들어앉은 시군구의 구멍은 남겨 그 바깥 고리와 같은 점을 쓴다', () => {
+  const circle = (cx, cy, rad, n) => Array.from({ length: n }, (_, i) => [cx + (rad + (i % 2 ? 0.4 : -0.4)) * Math.cos(2 * Math.PI * i / n), cy + (rad + (i % 2 ? 0.4 : -0.4)) * Math.sin(2 * Math.PI * i / n)]);
+  const outer = [[1000, 1000], [1100, 1000], [1100, 1100], [1000, 1100]];
+  const lone = circle(1030, 1050, 8, 40), inner = circle(1070, 1050, 10, 60);
+  const island = [...inner].reverse(), islandRot = [...island.slice(17), ...island.slice(0, 17)];   // 방향·시작점이 다르다
+  const { doc } = RS.buildMap([muni('바깥시', '41001', poly(outer, lone, inner)), muni('안시', '41002', poly(islandRot))], []);
+  const A = ringsOfD(doc.sgg.find((g) => g.n === '바깥시').d), B = ringsOfD(doc.sgg.find((g) => g.n === '안시').d);
+  assert.ok(inFace([1030, 1050], A), '아무도 안 덮는 구멍은 메운다');
+  assert.ok(!inFace([1070, 1050], A) && inFace([1070, 1050], B), '들어앉은 구역 자리는 구멍으로 남는다');
+  assert.equal(A.length, 2); assert.equal(B.length, 1);
+  const pts = (r) => r.map((p) => p.join()).sort();
+  assert.deepEqual(pts(A[1]), pts(B[0]), '구멍과 들어앉은 구역 바깥 고리가 같은 점');
+  assert.deepEqual(raster([A, B], 0.25), { over: 0, enclosed: 0 });
+});
+
+test('region-map.json 시군구 경계: 겹침 ≤ 3 km², 갇힌 빈 칸 ≤ 6 km², 수원시 팔달구 자리는 수원시가 덮는다', () => {
+  const RES = 0.5, km2 = (n) => n * RES * RES * 0.0888 * 0.1111;
+  const units = regionMap.sgg.map((g) => ringsOfD(g.d));
+  const { over, enclosed } = raster(units, RES);
+  assert.ok(km2(over) <= 3, `겹침 ${km2(over).toFixed(2)} km²`);
+  assert.ok(km2(enclosed) <= 6, `갇힌 빈 칸 ${km2(enclosed).toFixed(2)} km²`);
+  assert.ok(inFace(RS.proj([127.02, 37.28]), ringsOfD(regionMap.sgg.find((g) => g.n === '수원시').d)), '팔달구 중심');
+});
+
 /* ---------- 앞으로 12개월·지도 ---------- */
 test('region-calendar: 12개월 안의 예정만, 위치(점)는 서울·인천·경기만 · 지도 자료는 100 KB 이하', () => {
   assert.equal(calendar.months.length, 12);

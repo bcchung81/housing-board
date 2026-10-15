@@ -5,6 +5,7 @@ import type { CSSProperties } from 'react';
 import Link from 'next/link';
 import { PanelHead } from '../page';
 import { Card } from '../ui/card';
+import InfoTip from '../ui/info-tip';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { HATCH } from '../ui/chips';
 import { VERDICT, countVerdicts, datesOf, directiveText, type RequirementsDoc, type Verdict } from '../../lib/board/requirements';
@@ -25,8 +26,15 @@ export default function Requirements({ doc }: { doc: RequirementsDoc }) {
   const n = countVerdicts(doc);
   return (
     <Card render={<section aria-label="요구사항 충족" />}>
-      <PanelHead title="요구사항 충족" tip="HOME 기능 요구 12가지 · 판정은 실제 자료로 센 근거 지표와 규칙(tools/ledger/requirements.js)으로 냄 — 충족·부분·없음 · 근거 지표에 마우스를 올리면 계산과 규칙 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행">
+      <PanelHead title="요구사항 충족" tip="기능 요구 12가지(F-01~F-12) · 판정은 실제 자료로 센 근거 지표와 규칙(tools/ledger/requirements.js)으로 냄 — 충족·부분·없음 · 근거 지표에 마우스를 올리면 계산과 규칙 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행">
         <span className="text-[14px] text-muted-foreground tabular-nums">충족 <b className="text-foreground">{n.met}</b> · 부분 <b className="text-foreground">{n.part}</b> · 없음 <b className="text-foreground">{n.none}</b></span>
+        <InfoTip label="요구사항 충족 읽는 법">
+          <dl>
+            <dt>판정</dt><dd>충족 · 부분 · 없음 — 실제 자료로 센 근거 지표와 정해 둔 규칙으로 냄(근거 지표에 마우스를 올리면 계산)</dd>
+            <dt>지시</dt><dd>이 요구사항과 관련된 지시 날짜(월.일)</dd>
+            <dt>화면</dt><dd>이 요구사항에 답하는 화면 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행으로 옴</dd>
+          </dl>
+        </InfoTip>
       </PanelHead>
       <Table aria-label="요구사항 충족">
         <TableHeader>

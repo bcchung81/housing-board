@@ -3,6 +3,7 @@ import path from 'node:path';
 import { preload } from 'react-dom';
 import MapIsland from '../../../components/MapIsland';
 import calendarJson from '../../../data/board/region-calendar.json';
+import detailJson from '../../../data/board/project-detail.json';
 import regionMapJson from '../../../data/board/region-map.json';
 import { metroOverview, type OverviewDoc } from '../../../lib/board/metro-overview';
 import { getProjectsIndex } from '../../../lib/board/projects-index';
@@ -35,6 +36,17 @@ function homeMapManifest(): Record<string, string> {
    지도는 h 가 있는 시군구에서 경량 번들을 부르고, 지역 선택기에 이 시군구들을 시도별로 넣는다. 없으면 빈 표 */
 function homeLiteManifest(): Record<string, { name: string; n: number; h?: string }> {
   try { return JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public/assets/home-lite/manifest.json'), 'utf8')); } catch { return {}; }
+}
+
+/* 사업별 최근 공정률(사업 원장 = HOME 보고, 사업 화면 서랍과 같은 project-detail.json): { 사업 id: [보고일, 공정률] }. 지도 카드가 이 값을 정본으로 쓰고
+   지도 원천(번들) 값이 다르면 작은 표지만 단다(app.js progOf, 2026-10-15 2차 평가 P0). 108건 남짓이라 페이지에 바로 싣는다 */
+function homeProgress(doc: { projects?: Record<string, { progress?: [string, number][] }> }): Record<string, [string, number]> {
+  const out: Record<string, [string, number]> = {};
+  for (const [id, d] of Object.entries(doc.projects || {})) {
+    const last = (d.progress || []).filter((x) => Array.isArray(x) && typeof x[0] === 'string' && Number.isFinite(x[1])).sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0)).pop();
+    if (last) out[id] = [last[0], last[1]];
+  }
+  return out;
 }
 
 /* 지역 자료 읽기는 index.json → 기본 지역의 region.json → 나머지 순으로 이어져 왕복이 직렬이다. 앞의 둘은 작고 모든 열기에 쓰이므로 미리 받는다
@@ -96,7 +108,7 @@ function OverviewMarkup() {
 
 /* 지도 섬 + 개요 값: 개요 값은 사업 화면과 같은 읽기(getProjectsIndex)를 기다려 넘긴다. 개요 모듈 주소도 여기서 정한다(해시 이름 표 → 없으면 옛 이름).
    상세 지도의 스크립트 순서는 지도 섬이 index.html 로더와 같게 가진다(개요 모듈은 Next 지도에만 있다) */
-async function Island(props: { assets: Record<string, string>; homeMap: Record<string, string>; homeLite: Record<string, { name: string; n: number; h?: string }> }) {
+async function Island(props: { assets: Record<string, string>; homeMap: Record<string, string>; homeLite: Record<string, { name: string; n: number; h?: string }>; homeProgress: Record<string, [string, number]> }) {
   return <MapIsland {...props} overview={await overviewDoc()} overviewSrc={props.assets[OVERVIEW_JS] || OVERVIEW_JS} />;
 }
 const OVERVIEW_JS = '/assets/js/overview.js';
@@ -110,7 +122,7 @@ export default function MapPage() {
     <>
       <OverviewMarkup />
       <div style={{ display: 'contents' }} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: markup }} />
-      <Island assets={assets} homeMap={homeMapManifest()} homeLite={homeLiteManifest()} />
+      <Island assets={assets} homeMap={homeMapManifest()} homeLite={homeLiteManifest()} homeProgress={homeProgress(detailJson as never)} />
     </>
   );
 }

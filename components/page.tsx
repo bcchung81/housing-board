@@ -1,4 +1,5 @@
 /* 대시보드 화면의 틀. 콘텐츠 상자는 종합상황판·상단 메뉴 바와 같은 1440px 선(px-7)이고, 블록 사이는 같은 간격(gap-3.5)이다.
+   1600px 이상 화면에서는 1760px 까지 넓힌다(2026-10-16 2차 평가: 1920 에서 좌우 268px 씩 비었다 — 종합상황판·상단 메뉴 바는 각자 맞춘다).
    머리글은 빵부스러기 → 제목 h1(설명은 title) + 같은 줄 오른쪽 기준 한 줄. 카드 머리 줄은 제목 h2(덧말은 title) + 오른쪽 범례·조용한 링크(종합상황판 규칙). */
 import type { ComponentProps, ReactNode } from 'react';
 import { cn } from 'cn';
@@ -7,7 +8,7 @@ import PanelLink from './board/PanelLink';
 import { phead, phgroup, ptitle } from './board/styles';
 
 export const Page = ({ children }: { children: ReactNode }) => (
-  <div className="mx-auto flex max-w-[1440px] flex-col gap-3.5 px-7 pb-9 mobile:px-3 mobile:pb-6">{children}</div>
+  <div className="mx-auto flex max-w-[1440px] min-[1600px]:max-w-[1760px] flex-col gap-3.5 px-7 pb-9 mobile:px-3 mobile:pb-6">{children}</div>
 );
 
 /* 카드 안 작은 글씨: .panel .sub */

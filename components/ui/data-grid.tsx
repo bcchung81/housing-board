@@ -39,7 +39,8 @@ const stickyCell = 'sticky left-0 z-[1] bg-inherit group-data-[scrolled]/grid:sh
 /* 보이는 날짜는 점 표기(dotDates — 2026-08-31 → 2026.08.31) */
 const keepWords = (raw: string): React.ReactNode => { const t = dotDates(raw); return /[-~]/.test(t) ? t.split(/( +)/).map((w, i) => (i % 2 || !/[-~]/.test(w) || w.length > 24 ? w : <span key={i} className="whitespace-nowrap">{w}</span>)) : t; };
 
-/* 말줄임 열(clip)의 칸 title: 칸에 title 이 있으면 그것(안쪽 span 이 보인다), 없으면 전체 글자 */
+/* 말줄임 열(clip): 두 줄까지 줄바꿈하고 넘치면 말줄임(2026-10-16 2차 평가 — 한 줄 말줄임은 사업명 262px 를 180px 로 잘랐고, 최소 폭이 clip 값에 묶여 1280 에서 표가 9px 넘쳤다).
+   칸 title: 칸에 title 이 있으면 그것(안쪽 span 이 보인다), 없으면 전체 글자 */
 const clipTitle = (v: Cell, col: Col) => (typeof v === 'object' && v?.title ? undefined : display(v, col.kind).text);
 
 function CellView({ v, col }: { v: Cell; col: Col }) {
@@ -63,7 +64,7 @@ function CellView({ v, col }: { v: Cell; col: Col }) {
 }
 
 /* quietCount: 검색 칸 옆 건수를 찾을 때만 보인다(표 머리에 이미 건수가 있는 사업 목록 — 같은 숫자를 두 번 내지 않는다) */
-export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietCount = false }: { cols: Col[]; rows: Row[]; label: string; sortable?: boolean; maxHeight?: number; quietCount?: boolean }) {
+export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietCount = false, emptyText = '자료 없음' }: { cols: Col[]; rows: Row[]; label: string; sortable?: boolean; maxHeight?: number; quietCount?: boolean; emptyText?: string }) {
   const [sorting, setSorting] = React.useState<SortingState>([]);
   const [q, setQ] = React.useState('');
   const [open, setOpen] = React.useState<ReadonlySet<string>>(new Set());
@@ -133,7 +134,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
             </button>
           ) : <span className="mr-1 inline-block w-4" aria-hidden="true" />) : null}
           {c.clip ? (
-            <span className="block truncate" style={{ maxWidth: c.clip }} title={clipTitle(r.c[c.key], c)}><CellView v={r.c[c.key]} col={c} /></span>
+            <span className="line-clamp-2 whitespace-normal [overflow-wrap:break-word] [word-break:keep-all]" style={{ maxWidth: c.clip }} title={clipTitle(r.c[c.key], c)}><CellView v={r.c[c.key]} col={c} /></span>
           ) : <CellView v={r.c[c.key]} col={c} />}
         </TableCell>
       ))}
@@ -188,6 +189,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
           {shown.map(({ row, i }) => line(row, i, false, want.virtual))}
           {spacer(padBottom, 'pad-bottom')}
           {q.trim() && !data.length ? <TableRow><TableCell colSpan={cols.length} className="text-center whitespace-normal text-muted-foreground">&lsquo;{q.trim()}&rsquo;에 맞는 행이 없습니다</TableCell></TableRow> : null}
+          {!rows.length ? <TableRow><TableCell colSpan={cols.length} className="text-left text-[14px] whitespace-normal text-muted-foreground">{emptyText}</TableCell></TableRow> : null}
           {bottom.map((r) => line(r, -1, true))}
         </TableBody>
       </Table>

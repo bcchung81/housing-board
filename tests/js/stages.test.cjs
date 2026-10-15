@@ -23,12 +23,13 @@ test('공식 6단계: 이름·질문·공개 범위가 발표자료 SHEET 03 과
 
 test('사업 상세(서랍)·목록·타임라인은 같은 리본 칸 번호(①~⑥ 이름·단계색)를 쓰고, 공식 01~06 은 서랍 칸의 title 에만 있다. 단계 거르기는 파이프라인 칸으로 고르고 칩 줄에는 고른 단계만(풀기). 옛 Stepper·StageLadder 는 없다', () => {
   const det = read('components/projects/ProjectDetail.tsx');
-  assert.match(det, /<StageSteps current=\{r\.board\} reached=\{r\.reached\} href=\{stageHref\} \/>/, '지금 단계 = 목록의 단계 알약과 같은 리본 칸(칸 주소는 지금 거르기를 지킨다)');
+  /* 2026-10-16 2차 평가: 칸은 링크가 아니고, 같은 단계 목록은 따로 링크 하나(지금 거르기 유지 — r2-screens 4) */
+  assert.match(det, /<StageSteps current=\{r\.board\} reached=\{r\.reached\} listHref=\{stageHref\(r\.board\)\} \/>/, '지금 단계 = 목록의 단계 알약과 같은 리본 칸(목록 주소는 지금 거르기를 지킨다)');
   for (const f of ['components/projects/ProjectDetail.tsx', 'app/(dashboard)/projects/page.tsx']) assert.doesNotMatch(read(f), /Stepper|StageLadder/, f);
   for (const f of ['components/ui/stepper.tsx', 'components/StageLadder.tsx']) assert.ok(!fs.existsSync(path.join(ROOT, f)), `쓰는 곳이 없는 ${f} 는 지운다`);
   const steps = read('components/projects/StageSteps.tsx');
   assert.match(steps, /\{BOARD_CIR\[i\]\} \{name\}\n\s*<\/b>/, '칸 이름은 ①~⑥');
-  assert.match(steps, /공식 단계 \$\{BOARD_OFFICIAL\[i\]\}/, '공식 번호는 title 에만');
+  assert.doesNotMatch(steps, /공식 단계|BOARD_OFFICIAL/, '공식 01~06 은 ①~⑥ 과 어긋나 title 에도 쓰지 않는다(2026-10-16 3차 평가 — r3-screens 4)');
   assert.doesNotMatch(steps, /BOARD_OFFICIAL_SHORT/);
   assert.match(steps, /aria-current=\{on \? 'step' : undefined\}/);
   assert.match(steps, /\$\{QUESTION\[i\]\}/, '단계마다 답할 질문은 칸의 title');
@@ -39,7 +40,7 @@ test('사업 상세(서랍)·목록·타임라인은 같은 리본 칸 번호(�
 });
 
 test('지도의 단계 필터·단지 카드 단계 위치는 화면과 같은 리본 칸(①계획~⑥입주, 공식 번호는 title)이고, 단지 상태는 사업 레지스트리와 같은 매핑으로 묶인다', () => {
-  assert.match(app, /const STAGES6 = \[\['①', '계획', \['사업화'\], '공식 01 정책 · 02 사업화'\], \['②', '인허가', \['계획'\], '공식 03 인허가'\], \['③', '착공', \['건설 단계', '준공 임박'\], [^\]]+\], \['④', '모집', \['분양중'\], '공식 05 공급'\], \['⑤', '준공', \['입주 단계'\], [^\]]+\], \['⑥', '입주', \[\], '공식 06 입주'\]\]/);
+  assert.match(app, /const STAGES6 = \[\['①', '계획', \['사업화'\], '[^']+'\], \['②', '인허가', \['계획'\], '[^']+'\], \['③', '착공', \['건설 단계', '준공 임박'\], '[^']+'\], \['④', '모집', \['분양중'\], '[^']+'\], \['⑤', '준공', \['입주 단계'\], '[^']+'\], \['⑥', '입주', \[\], '[^']+'\]\]/);   // 다섯째 값은 단계 정의(공식 번호 없음, r3-map 4)
   const view = read('lib/board/projects-view.ts');
   assert.match(view, /export const BOARD_NAMES = \['계획', '인허가', '착공', '모집', '준공', '입주'\] as const;/, '이름은 사업 화면 BOARD_NAMES 와 같다');
   assert.match(app, /const BOARD_OF_STAGE = \{ '01': 0, '02': 0, '03': 1, '04': 2, '05': 3, '06': 4 \};/, '원장 단계 → 칸은 사업 화면 BOARD_OF_STAGE 와 같다');
@@ -73,8 +74,8 @@ test('지표 범례·KPI 는 6칸(StageLegend·StageKpis): 지표가 없는 단�
   assert.match(legend, /\{STAGES\.map\(\(s, i\) => \{/);
   assert.match(legend, /const ON_BOARD: Record<Metric, number> = \{ permit: 1, start: 2, sale: 3, complete: 4 \};/);
   assert.match(legend, /border-dashed border-line2/); assert.match(legend, />자료 없음</);
-  assert.match(kpis, /\{K\.map\(\(name, i\) => \{/, 'KPI 칸은 리본 이름(①계획~⑥입주)'); assert.match(kpis, /자료 없음/); assert.match(kpis, /grid grid-cols-6 gap-2\.5 narrow:grid-cols-3 phone:grid-cols-2/); assert.match(kpis, /title=\{`공급 6단계별 실적 · \$\{when\}`\}/, '시점은 묶음의 title 에 한 번');
-  assert.match(kpis, /const why = `자료 없음 — /, '빈 단계는 — 와 title 이유'); assert.doesNotMatch(kpis, /<span className="text-\[14px\]">\{notes/, '이유 문장을 칸에 보이지 않는다');
+  assert.match(kpis, /\{K\.map\(\(name, i\) => \{/, 'KPI 칸은 리본 이름(①계획~⑥입주)'); assert.match(kpis, /자료 없음/); assert.match(kpis, /grid grid-cols-\[repeat\(auto-fit,minmax\(min\(200px,100%\),1fr\)\)\] gap-2\.5/, '값 있는 단계 카드가 폭을 채운다(2026-10-16 3차)'); assert.match(kpis, /title=\{`공급 6단계별 실적 · \$\{when\}`\}/, '시점은 묶음의 title 에 한 번');
+  assert.match(kpis, /text=\{`자료 없음 \$\{empty\.map\(\(i\) => CIR\[i\]\)\.join\('·'\)\}`\}/, "빈 단계는 칩 하나('자료 없음 ①·⑥'), 이유는 (i) 팝오버(2026-10-16 3차)"); assert.doesNotMatch(kpis, /<span className="text-\[14px\]">\{notes/, '이유 문장을 칸에 보이지 않는다');
   assert.match(read('components/board/RealPanels.tsx'), /<StageLegend metrics=\{METRICS\} names="board" compact \/>/, '종합상황판은 제목 줄의 작은 칩(①·⑥ 자료 없음은 빼고 단계 번호는 title)');
   assert.match(legend, /if \(compact\) return \(/); assert.match(legend, /' 자료 없음'/);
   const pages = { 'app/(dashboard)/month/[id]/page.tsx': ['kpis'], 'app/(dashboard)/agency/[id]/page.tsx': ['legend', 'kpis'] };
@@ -96,7 +97,7 @@ test('표 머리는 리본 단계 이름을 붙인다(②인허가·③착공·�
 
 test('지도 범례·옵션 창의 단지 상태는 6단계 순서이고 리본 칸 이름(①~⑥)이 붙는다, 공식 번호는 title(머리 줄 6단계 필터와 같은 대응)', () => {
   assert.match(app, /const BY_STAGE = STAGES6\.flatMap\(\(s\) => s\[2\]\);/);
-  assert.match(app, /BY_STAGE\.forEach\(\(st\) => \{[^]*?if \(!present\.has\(st\)\) return;\n\s+if \(st !== '입주 단계'\) return add\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, stLabel\(st\), NOTE\[st\] \|\| '', stLabel\(st\), stTitle\(st\)\);/);
+  assert.match(app, /BY_STAGE\.forEach\(\(st\) => \{[^]*?if \(!present\.has\(st\)\) return;\n\s+if \(st !== '입주 단계'\) return add\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, stLabel\(st\), NOTE\[st\] \|\| '', '', stTitle\(st\)\);/);   // 요약 줄 칩 없음(머리 줄 띠가 단계 범례, r3-map 5)
   assert.match(app, /add\('<i class="sw soon"><\/i>', '⑤준공 · 입주 진행'/);    // ⑤준공(사용검사)은 경과 표지로 둘로 나눈다(2026-10-14)
   assert.match(app, /'⑤준공 · 입주 완료'/);
   assert.match(app, /const present = BY_STAGE\.filter\(\(st\) => ALL_ST\.has\(st\)\);/);

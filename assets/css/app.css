@@ -54,6 +54,7 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .sf[aria-pressed="true"]{background:var(--pn2);border-color:var(--acc)}
 .sf[aria-pressed="false"]{opacity:.55}
 .sf:disabled{opacity:1;cursor:default;background:transparent;color:var(--mute)}   /* 빈 단계: 흐리게 겹치지 않고 바탕만 비운다(— 는 보조 글자색) */
+.sf:disabled .sf-sw{background:transparent;box-shadow:inset 0 0 0 1.5px var(--c);opacity:.6}   /* 지도에 그 단계 구역이 없다: 색 칸을 속 빈 테두리로(누를 수 있는 칸의 색 칸 = 지도 구역 색) */
 .sf-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;white-space:nowrap}
 .sf-sw{flex:0 0 auto;width:10px;height:10px;border-radius:3px;background:var(--c)}
 .sf-n{margin-left:auto;font-size:11px;font-weight:400;color:var(--mute)}
@@ -61,6 +62,10 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .sf-v small{margin-left:2px;font-family:var(--font-body);font-size:11px;font-weight:400;color:var(--mute)}   /* 단위는 작고 흐린 본문 글꼴(종합상황판 KPI 단위와 같은 결) */
 .sf-v.none{color:var(--mute)}
 .sf-v.sm{font-family:var(--font-body);font-size:13px;line-height:1.75}   /* 호수 미확인(숫자 자리의 글) */
+.sf-lost{margin-left:6px;font-family:var(--font-body);font-size:12px;font-weight:400;color:var(--mute);text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer}   /* 그 단계 중 지도에 없는(위치 미확보) 호수, 누르면 위치 미확보 목록 */
+.sf-late{display:inline-block;margin-left:4px;font-weight:700;color:#FFAFBF;text-decoration:none}   /* 위치 미확보 몫 중 지연 n(빨강, 묶음 표지 .lp-d 와 같은 색) */
+html[data-map-shell]:not(.dark) .sf-late{color:#8E2C3C}
+.sf.lostonly .sf-sw{background:transparent;box-shadow:inset 0 0 0 1.5px var(--c);opacity:.6}   /* 지도에 구역이 없는 단계(모두 위치 미확보): 색 칸은 속 빈 테두리, 칸 전체가 목록 단추 */
 .stagef[hidden]{display:none}
 .pvbanner{position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:5;max-width:min(92%,720px);padding:4px 14px;border-radius:0 0 8px 8px;background:var(--pn2);border:1px solid var(--line2);border-top:0;color:var(--ink);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pvbanner[hidden]{display:none}
@@ -176,14 +181,13 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .bld{font-size:13px;color:var(--mute)}
 .sw{display:inline-block;width:12px;height:12px;border-radius:3px}
 .sw.sale{background:var(--sale)}
-.sw.build{border:1px solid var(--build);background:repeating-linear-gradient(45deg,var(--build) 0 2px,color-mix(in srgb,var(--build) 16%,transparent) 2px 5px)}
-.sw.near{border:1px solid var(--build);background:radial-gradient(circle,var(--build) 0 2px,color-mix(in srgb,var(--build) 18%,transparent) 2.5px)}
-.sw.soon{border:1px solid var(--soon);background:repeating-linear-gradient(0deg,var(--soon) 0 1px,transparent 1px 4px),repeating-linear-gradient(90deg,var(--soon) 0 1px,color-mix(in srgb,var(--soon) 16%,transparent) 1px 4px)}
+.sw.build,.sw.near{background:var(--build)}   /* 지도 구역은 단계색 단색(2026-10-15 요구 5: 무늬 없앰) */
+.sw.soon{background:var(--soon)}
 .sw.priv{background:var(--priv)}
 .sw.other{border:1.5px dashed #5566BE;background:rgba(85,102,190,.22)}
 .sw.dash{border:1.5px dashed var(--ink);background:transparent}
-.sw.plan{border:1.5px dashed var(--plan)}
-.sw.permit{border:1.5px dashed var(--permit)}
+.sw.plan{border:1.5px dashed var(--plan);background:color-mix(in srgb,var(--plan) 55%,transparent)}   /* ①②: 단계색 면 + 점선 윤곽(지도 blk-line-plan) */
+.sw.permit{border:1.5px dashed var(--permit);background:color-mix(in srgb,var(--permit) 55%,transparent)}
 .sw.approx{border-radius:50%;border:1.5px solid var(--ink);background:radial-gradient(circle,transparent 0 2.2px,var(--ink) 2.3px 3.5px,color-mix(in srgb,var(--ink) 22%,transparent) 3.6px)}   /* 근사 위치: 실선 겹원 + 띠(지도 blk-approx) */
 .sw.ex{background:#374C98}
 .sw.fac-edu{background:#8A7A3A}
@@ -261,7 +265,7 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--hud-line)}
 .maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--hud-line)}
 .maplibregl-popup-anchor-bottom .maplibregl-popup-tip{border-top-color:var(--hud-line)}
-.pc{width:236px;padding:9px 11px 8px;display:flex;flex-direction:column;gap:6px;word-break:keep-all;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+.pc{width:236px;padding:9px 11px 8px;display:flex;flex-direction:column;gap:6px;word-break:keep-all;overflow-wrap:anywhere;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .pc-none{color:var(--mute)}
 .pc-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:1px 6px;padding-right:20px}
 .pc-h b{font-size:14.5px;font-weight:700;line-height:1.35}
@@ -300,7 +304,7 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .pc-more summary::-webkit-details-marker{display:none}
 .pc-more p{margin:3px 0 0;font-size:11.5px;line-height:1.45;color:var(--mute)}
 .pc-split{width:264px;padding:0;gap:0;overflow:hidden}   /* 사업 카드: 머리(제목·상태) 고정, 창이 낮으면 몸통만 스크롤(fitCard 가 .pc 높이를 줄인다) */
-.pc-split>.pc-open{flex:none;margin:0 11px 8px;padding-top:7px;border-top:1px solid var(--line);font-size:12.5px;color:inherit;text-decoration:underline;text-underline-offset:3px}
+.pc-split>.pc-open{flex:none;align-self:flex-start;margin:0 11px 6px;padding-bottom:6px;border-bottom:1px solid var(--line);font-size:12.5px;color:inherit;text-decoration:underline;text-underline-offset:3px}   /* 머리 바로 아래(몸통이 스크롤해도 늘 보인다, 2026-10-16 3차 평가) */
 .pc-split>.pc-h{flex:none;padding:9px 11px 6px 11px;padding-right:30px}
 .pc-split>.pc-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding:0 11px 9px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .pc-big .pc-idl{margin-left:auto;font-size:12px}
@@ -440,6 +444,7 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .hudtag .ht-h i{font-style:normal;font-weight:700;font-size:11.5px;color:var(--cd)}
 .hudtag .ht-m{color:var(--ink2)}
 .hudtag .ht-jd{flex:none;align-self:center;width:8px;height:8px;border-radius:50%;background:var(--bad,#FF6B88);box-shadow:0 0 0 1.5px var(--glass-tag)}.hudtag .ht-jd.caution{background:var(--warn)}   /* 이름 옆 상태색 점: 지연 빨강·주의 노랑 */
+.hudtag .ht-x{margin-left:4px;padding:0 6px;font-style:normal;font-size:10.5px;color:var(--ink);border:1px solid var(--line2);border-radius:999px}   /* 짧은 상태 표지: 예정일 지남(1개월 미만)·준공 임박(카드 이유 줄과 같은 문구) */
 .hudtag .ht-w{font-style:normal;font-size:11px;line-height:1;color:var(--warn)}
 .hudtag .ht-bar{flex:0 0 52px;height:6px;background:var(--line);position:relative;overflow:hidden}
 .hudtag .ht-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--c)}
@@ -593,7 +598,7 @@ details.isub>ul{margin-top:2px}
   .stagef>.sf.empty{flex:0 0 auto}
   .sf{flex-direction:row;align-items:baseline;gap:6px;padding:3px 8px;border-radius:8px}
   .sf-h{font-size:12px}
-  .sf-n,.sf-v small{display:none}
+  .sf-n,.sf-v small,.sf-lost{display:none}
   .sf-v{margin-left:auto;font-size:15px}
   .mapwrap{position:fixed;inset:var(--mh) 0 0 0;height:auto;min-height:0}
   .panel{position:fixed;left:0;right:0;bottom:0;max-width:none;z-index:4;height:var(--sh,176px);max-height:none;border-left:0;border-top:1px solid var(--line2);border-radius:14px 14px 0 0;box-shadow:var(--sheet-shadow);transition:height .25s}
@@ -953,5 +958,6 @@ html[data-map-shell]:not(.dark) .hudsum .hs-late:not(.none){--bad:#B4233C}
 .lostpop ul{list-style:none;margin:0;padding:0}
 .lostpop li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
 .lostpop .lp-n{min-width:0}
+.lostpop li.cur{margin:0 -6px;padding:8px 6px;border-radius:8px;background:var(--glass-tag-hover);box-shadow:inset 3px 0 0 var(--acc)}   /* ?project= 로 연 사업 */
 .lostpop small{grid-column:1;color:var(--ink2);font-size:12px}
 .lostpop li a{grid-column:2;grid-row:1 / span 2;align-self:center;color:var(--acc);font-weight:700;white-space:nowrap;text-underline-offset:3px}

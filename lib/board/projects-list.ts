@@ -1,7 +1,7 @@
 /* 사업 목록 표의 열·칸(화면 /projects 의 표와 CSV 내려받기 /projects/csv 가 같이 쓴다 — 열 이름·값이 하나). 서버 전용 순수 계산.
    칸 모양은 lib/grid/spec.ts 의 Cell(직렬화되는 값만). */
 import type { Cell, CellObj, Col, Row } from '../grid/spec';
-import { mapHref } from './map-href';
+import { mapHref, mapScopeHref } from './map-href';
 import {
   AGENCY_NAME, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, CAND_NAME, DATE_ALT, EVENT_NAME, PLAN_COL, STATUS_NAME,
   agencyKey, dateAltOf, isMetro, listHref, nextOf, overdueMonthsOf, statusLabel, statusOf, statusTip, ymText, type Filters, type ProjectRow, type Status,
@@ -41,11 +41,17 @@ export const lateCell = (r: ProjectRow): Cell => {
 export const agencyCell = (r: ProjectRow): Cell => { const k = agencyKey(r.agency); return k === 'etc' ? { text: AGENCY_NAME[k], muted: true } : AGENCY_NAME[k]; };
 export const unitsCell = (r: ProjectRow): Cell => (r.units > 0 ? r.units : { na: '미확인' });
 /* 지도 연결점(수도권 사업만 — 지도 자료가 서울·인천·경기). 지도는 다른 루트 레이아웃이라 <a>.
-   noLoc = 상세 서랍과 같은 원천(project-detail.json 의 loc)에 좌표가 없는 사업: 링크는 두되(지도는 시군구로 보인다) 글자 표지 '위치 미확보'와 title 로 알린다 */
+   noLoc = 지도에 그릴 위치가 없는 사업(projects-view mapLocOf — 지도·상세 서랍과 같은 판정): 링크는 두되(지도는 시군구로 보인다) 글자 표지 '위치 미확보'와 title 로 알린다 */
 export const NO_LOC = '위치 미확보';
-export const mapCell = (r: ProjectRow, noLoc = false): Cell => (!isMetro(r.sgg) ? null : noLoc
-  ? { text: NO_LOC, href: mapHref({ project: r.id }), doc: true, muted: true, title: `${r.name} — ${NO_LOC}(좌표 없음): 지도에서는 시군구로 보임` }
-  : { text: '지도', href: mapHref({ project: r.id }), doc: true, icon: 'map', title: `${r.name} — 지도에서 이 사업 위치 보기` });
+/* 번호 없는 후보 사업은 지도 자료(사업 위치)에 없다 → 사업 위치 대신 그 시군구 지도(mapScopeHref — 구가 있는 시는 ?sido=41&pick=)로, 이름도 '시군구 지도'로 구별(2026-10-16) */
+export const SGG_MAP = '시군구 지도';
+export const mapCell = (r: ProjectRow, noLoc = false): Cell => {
+  if (!isMetro(r.sgg)) return null;
+  if (!r.issued) { const href = mapScopeHref({ sgg: r.sgg }); return href ? { text: SGG_MAP, href, doc: true, muted: true, title: `${r.name} — ${CAND_NAME}(사업 번호 없음)이라 지도 자료에 위치가 없음: 이 사업이 있는 시군구 지도로` } : null; }
+  return noLoc
+    ? { text: NO_LOC, href: mapHref({ project: r.id }), doc: true, muted: true, title: `${r.name} — ${NO_LOC}(지도에 그릴 위치 없음): 지도에서는 시군구로 보임` }
+    : { text: '지도', href: mapHref({ project: r.id }), doc: true, icon: 'map', title: `${r.name} — 지도에서 이 사업 위치 보기` };
+};
 
 /* 의미 없는 열 버리기: 모든 칸이 빈칸(–)이거나 모두 '기관 미상'인 열은 그리지 않고, 뺀 사실은 표 머리의 title 에 한 번만 */
 const OPTIONAL: Record<string, string> = { agency: `기관(모두 ${AGENCY_NAME.etc})`, notice: '공고 확인(모두 없음)', next: `${PLAN_COL}(모두 없음)`, late: '지연(개월)(모두 경과 없음)', map: '지도(수도권 사업만)' };
@@ -55,8 +61,9 @@ export function dropBlank(cols: Col[], rows: Row[]) {
   return { cols: cols.filter((c) => !gone.includes(c)), note: gone.length ? ` · 이 조건에 값이 없어 뺀 열: ${gone.map((c) => OPTIONAL[c.key]).join(', ')}` : '' };
 }
 
-/* 목록 열: 1280~1440 폭에서 다 보이게 사업·시군구는 한 줄 말줄임(전체는 title) */
-export const LIST_COLS: Col[] = [{ key: 'name', label: '사업', kind: 'text', clip: 'clamp(180px, 100vw - 1120px, 380px)' }, { key: 'sgg', label: '시군구', kind: 'text', clip: 'clamp(120px, 100vw - 1180px, 200px)' }, { key: 'agency', label: '기관', kind: 'text' },
+/* 목록 열: 1280~1440 폭에서 가로 스크롤 없이 보이게 사업·시군구는 두 줄까지 줄바꿈 후 말줄임(전체는 title — data-grid clip). 최소 폭이 글자 길이로 늘지 않아 표가 상자에 맞춰 줄어든다.
+   넓은 화면(1600px 이상, 틀 1760px)에서는 사업 칸이 480px 까지 */
+export const LIST_COLS: Col[] = [{ key: 'name', label: '사업', kind: 'text', clip: 'clamp(160px, 100vw - 1120px, 480px)' }, { key: 'sgg', label: '시군구', kind: 'text', clip: 'clamp(104px, 100vw - 1180px, 240px)' }, { key: 'agency', label: '기관', kind: 'text' },
   { key: 'stage', label: '단계', kind: 'text' }, { key: 'units', label: '계획 호수' }, { key: 'notice', label: '공고 확인' }, { key: 'next', label: PLAN_COL, kind: 'text' }, { key: 'late', label: '지연(개월)' }, { key: 'status', label: '상태', kind: 'text' },
   { key: 'map', label: '지도', kind: 'text', sort: false }];
 

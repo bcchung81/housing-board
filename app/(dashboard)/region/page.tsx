@@ -14,12 +14,12 @@ import calendarJson from '../../../data/board/region-calendar.json';
 import mapJson from '../../../data/board/region-map.json';
 import annualJson from '../../../data/board/region-annual.json';
 import type { AreaFactsDoc } from '../../../lib/board/area-facts';
-import { fmt, lastMonth, monthLabel, ymDot } from '../../../lib/board/calc';
+import { fmt, lastMonth, ymDot } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '../../../lib/board/metro-overview';
 import { mapScopeHref } from '../../../lib/board/map-href';
 import ScopeChip from '../../../components/ui/scope-chip';
-import { CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, inSgg, isDefaultKinds, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
+import { AHEAD_KIND, CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, aheadKindTip, inSgg, isDefaultKinds, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
 import { getProjectsIndex } from '../../../lib/board/projects-index';
 import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '../../../lib/board/projects-view';
 import type { Metric } from '../../../lib/board/types';
@@ -94,7 +94,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '지역 공급' }]} title="지역 공급"
         tip="앞으로 12개월 예정(원장 현재 예정) → 지난 공급 실적(통계누리) → 동네 여건(서울·인천·경기) 순">
         <span className="ml-auto text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
-          title={`앞으로 12개월(${monthLabel(calendar.from)} ~ ${monthLabel(calendar.to)}) · 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')} · 통계누리 실적 ${ymDot(last)}까지`}>
+          title={`앞으로 12개월(${ymDot(calendar.from)} ~ ${ymDot(calendar.to)}) · 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')} · 통계누리 실적 ${ymDot(last)}까지`}>
           예정 {ymDot(calendar.from)}~{ymDot(calendar.to)} · 실적 {ymDot(last)}
         </span>
       </PageHead>
@@ -122,7 +122,8 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
           <InfoTip label="앞으로 12개월 읽는 법">
             <dl>
               <dt>{AHEAD_COMPLETION}</dt><dd>대표 숫자 — 준공 현재 예정이 {ymDot(months[0])}~{ymDot(months[11])}인 사업(이미 준공 실제가 있으면 뺌) · 사업 화면·종합상황판·지도 개요와 같은 값</dd>
-              <dt>모집 · 입주 칩</dt><dd>같은 기간 모집공고·입주 예정을 더해 봄(종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌)</dd>
+              <dt>{AHEAD_KIND.SUPPLY_NOTICE} · {AHEAD_KIND.MOVE_IN} 칩</dt><dd>같은 기간 모집공고·입주 예정을 더해 봄(종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌) · 앞으로 12개월 입주 예정은 종합상황판 &apos;⑥입주&apos;(지금 입주 단계인 사업)와 다름</dd>
+              <dt>달별 막대</dt><dd>막대 한 조각 = 사업 하나(높이 = 호수, 전국은 종류별로 묶음) · 위 숫자 = 그 달 호수, 아래 = 건수 · 고른 칩의 종류만 쌓음</dd>
               <dt>{PAST_DUE}</dt><dd>예정 날짜가 원장 기준일보다 앞섰는데 실제 기록이 아직 없는 항목 — 표지만 달고 건수·호수 합계에는 넣음</dd>
               <dt>(후보) {CAND_NAME}</dt><dd>사업 번호가 아직 없는 사업 — 누르면 간단 보기</dd>
               <dt>키보드</dt><dd>달 막대는 ←→ 로 옮기고, 지도 원은 Tab 으로 들어가 ←→ 로 옮긴 뒤 Enter 로 그 사업을 고릅니다</dd>
@@ -134,8 +135,8 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
               const xs = all.filter((e) => e.type === t), next = toggleKind(kinds, t);
               return (
                 <Chip key={t} href={href({ kinds: next ?? kinds })} on={kinds.includes(t)} swatch={{ kind: 'fill', color: CAL_TYPE[t].color }}
-                  title={`${scopeName} · 1년 안 ${CAL_TYPE[t].name} 예정 ${xs.length}건 · ${fmt(xs.reduce((s, e) => s + e.units, 0))}호${xs.some((e) => !e.units) ? ` · 호수 미확인 ${xs.filter((e) => !e.units).length}` : ''}`}>
-                  {CAL_TYPE[t].name}<span className="text-muted-foreground tabular-nums">{fmt(xs.length)}건 · {fmt(xs.reduce((s, e) => s + e.units, 0))}호</span>
+                  title={`${scopeName} · ${aheadKindTip(t)} · ${xs.length}건 · ${fmt(xs.reduce((s, e) => s + e.units, 0))}호${xs.some((e) => !e.units) ? ` · 호수 미확인 ${xs.filter((e) => !e.units).length}` : ''}`}>
+                  {AHEAD_KIND[t]}<span className="text-muted-foreground tabular-nums">{fmt(xs.length)}건 · {fmt(xs.reduce((s, e) => s + e.units, 0))}호</span>
                 </Chip>
               );
             })}
@@ -150,14 +151,14 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
       <Annual molit={molit} annual={annual} sido={sido} metric={metric} order={ORDER} sidoName={sidoName} href={(p) => href({ ...p, m: null })} sggName={sggName} />
 
       {sido && facts.sido[sido] ? <Cond facts={facts} sido={sido} name={name} sggName={sggName} /> : (
-        <Card render={<section aria-label="동네 여건" />}>
-          <PanelHead title="동네 여건" scope={<ScopeChip scope={name} source="KOSIS·SGIS" note={sggName ? { text: '시도 단위 자료', title: `${sggName}을 골라도 ${name} 전체 값(시군구 자료 없음)` } : undefined} />} tip="인구·가구·주택 재고·미분양(KOSIS·SGIS, HOME 지역 지표)은 서울·인천·경기만 자료가 있어 시도 하나를 고르면 보인다" />
-          <p className="m-0 flex flex-wrap items-center gap-x-4 gap-y-1 text-[15px] text-muted-foreground">
-            {/* 시도 하나를 골랐는데 자료가 없으면 '없음'을 바로 말하고(고르라고 하지 않는다), 수도권·전국이면 시도를 고르게 한다 */}
-            <span>{sido && sido !== 'metro' ? `${name} 동네 여건 자료 없음(서울·인천·경기만)` : `인구·주택 재고·미분양은 시도를 고르면 보입니다${sido ? '' : '(서울·인천·경기만 자료 있음)'}`}</span>
-            {Object.keys(facts.sido).map((c) => <PanelLink key={c} href={href({ sido: c, m: null })} full={`${sidoName(c)} 동네 여건`}>{sidoName(c)}</PanelLink>)}
-          </p>
-        </Card>
+        /* 자료가 없는 범위(수도권·전국·다른 시도)는 빈 카드 대신 한 줄 안내(2026-10-16 2차 평가: 1384×99 카드에 내용 435px — 오른쪽이 비었다) */
+        <section aria-label="동네 여건" data-slot="cond-note" className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[14px] text-muted-foreground"
+          title="인구·가구·주택 재고·미분양(KOSIS·SGIS, 정책 진행 자료(HOME) 지역 지표)은 서울·인천·경기만 자료가 있어 시도 하나를 고르면 보인다">
+          <h2 className="m-0 text-[14px] font-bold text-foreground">동네 여건</h2>
+          {/* 시도 하나를 골랐는데 자료가 없으면 '없음'을 바로 말하고(고르라고 하지 않는다), 수도권·전국이면 시도를 고르게 한다 */}
+          <span>{sido && sido !== 'metro' ? `${name} 자료 없음(서울·인천·경기만)` : '인구·주택 재고·미분양은 시도를 고르면 보입니다'}</span>
+          {Object.keys(facts.sido).map((c) => <PanelLink key={c} href={href({ sido: c, m: null })} full={`${sidoName(c)} 동네 여건`}>{sidoName(c)}</PanelLink>)}
+        </section>
       )}
     </Page>
   );

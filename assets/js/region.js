@@ -386,10 +386,10 @@
     return Math.max(0, (y1 - y0) * 12 + (m1 - m0) - (d1 < d0 ? 1 : 0));
   }
   /* 카드 상태 칸의 이유 한 줄(2026-10-15 평가 A8: 상태는 칩 하나(t.cls), 그 아래 이유 한 줄). 판정이 없거나 이유가 없으면 ''.
-     예: 정상 → '예정일 지남 · 경과 0개월(주의는 1개월부터)', 지연 → '준공 예정 경과 9개월' */
+     예: 정상 → '예정일 지남(1개월 미만)'(대시보드와 같은 문구, '경과 0개월'은 쓰지 않는다 — 2026-10-15 2차 평가), 지연 → '준공 예정 경과 9개월' */
   function statusReason(t) {
     if (!t || !t.cls) return '';
-    return [t.late, t.pastDue ? `예정일 지남 · 경과 ${t.dueMonths || 0}개월(주의는 1개월부터)` : ''].filter(Boolean).join(' · ');
+    return [t.late, t.pastDue ? `예정일 지남(${t.dueMonths >= 1 ? `${t.dueMonths}개월` : '1개월 미만'})` : ''].filter(Boolean).join(' · ');
   }
   /* 위치 미확보 묶음(homeToProjects 의 unlocated): 건수·지연 건수와 표지 글자 */
   function lostSummary(list) {
@@ -616,8 +616,9 @@
     const ctxSentence = context ? `역·학교는 ${/OpenStreetMap/.test(context.source || '') ? 'OpenStreetMap' : (context.source || '출처 미상')}입니다.` : '';
     const infraSentence = infra && infra.asOf ? `기반시설 점검 자료는 ${infra.asOf} 기준 공개 자료입니다.` : '';
     const parts = [tierSentence, progressSentence, ctxSentence, infraSentence, ...(region.notes || [])].filter(Boolean).join(' ');
+    const headTitle = `${sggShort(region.name)} 공급 지도`;   // 상세 지도의 문서 제목·h1 은 그 지역(2026-10-15 2차 평가: 상세에서도 '수도권 공급 개요'로 남았다)
     return {
-      documentTitle: `주택파동 공급 지도 (${region.name})`,
+      documentTitle: `${headTitle} · 주택파동`, headTitle,
       eyebrow: region.title,
       description: region.description || '',
       footerHtml: `건물 © 국토교통부 GIS건물통합정보 (V-World)<br><span id="basis">-</span> 기준${parts ? `<details class="fnote"><summary>자료 안내</summary>${escapeHtml(parts)}</details>` : ''}`,   // 윤곽·공정율·출처 설명은 길어서 접어 둔다
@@ -684,6 +685,10 @@
   /* ---------- 화면 반영(브라우저 전용) ---------- */
   function applyTexts(doc, r) {
     doc.title = r.texts.documentTitle;
+    const h1 = doc.querySelector('#phead h1');
+    if (h1 && r.texts.headTitle) h1.textContent = r.texts.headTitle;
+    const ov = doc.getElementById('ov');   // Next 지도: 상세 모드에서는 개요 마크업(숨김, h1 '수도권 공급 개요')을 걷어 문서의 h1 이 지역 하나만 남게
+    if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
     const meta = doc.querySelector('meta[name="description"]');
     if (meta && r.texts.description) meta.setAttribute('content', r.texts.description);
     const eb = doc.querySelector('.eyebrow');
@@ -720,6 +725,8 @@
       const u = codeUrl(win.location.href, 'sgg', sel.value.slice(4));
       win.location.assign(city.has(sel.value) ? `${u}&gu=none` : u);
     });
+    /* 뒤로 가기로 bfcache 에서 되살아나면 고른 값이 남는다 — 지금 지역으로 되돌린다 */
+    if (win && win.addEventListener) win.addEventListener('pageshow', (e) => { if (e.persisted) for (const o of sel.options) o.selected = o.defaultSelected; });
     box.hidden = false;
   }
   /* 안내 띠: 한 줄 요약(brief)만 보이고 누르면 전체 문장을 편다(2026-10-10 피드백, 주소 입력줄 아래 반투명 띠 — goto.js 가 옮긴다).

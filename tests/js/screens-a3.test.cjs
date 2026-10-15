@@ -62,8 +62,8 @@ test('H8 정책 목표 대비: 기본 접힘(머리에 핵심 한 줄) · 인쇄
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
   assert.deepEqual(lines.map(V.compareHead), ['9·7 · 목표 있는 4단계 중 2단계 부족(①계획·④모집)'], '4차(A4): 머리 줄은 부족률 숫자 없이 단계 이름만');
   const cells = lines[0].cells;
-  assert.equal(V.rateOf(cells[1]).word, '초과 130.7%', '② 인허가 3,560 / 1,543');
-  assert.equal(V.rateOf(cells[4]).word, '달성', '⑤ 준공 381 / 381');
+  assert.equal(V.rateOf(cells[1]).word, '달성 230.7%', '② 인허가 3,560 / 1,543 — 2026-10-16 목표 대비 달성률(옛 \'초과 130.7%\', r2-screens 3)');
+  assert.equal(V.rateOf(cells[4]).word, '달성 100.0%', '⑤ 준공 381 / 381');
   const sum = read('components/projects/Summary.tsx');
   assert.match(sum, /<details data-fold open=\{open\}/);
   assert.match(sum, /\{lines\.map\(\(l\) => <span key=\{l\.policy\.key\}[^>]*>\{compareHead\(l\)\}<\/span>\)\}/);
@@ -80,7 +80,7 @@ test('H10 도움말: 단계별 진행·정책 목표 대비·핵심 질문마다
   const sum = read('components/projects/Summary.tsx');
   assert.match(sum, /<InfoTip label="단계별 진행">/);
   assert.match(sum, /<InfoTip label=\{title\}>/);
-  assert.match(sum, /<InfoTip label=\{x\.q\}><p>\{x\.help\}<\/p><\/InfoTip>/);
+  assert.match(sum, /<InfoTip label=\{x\.q\}><p>\{x\.help\}<\/p>\{x\.note \? <p>\{x\.note\}<\/p> : null\}<\/InfoTip>/);
   const ctx = { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, sidoName: (c) => c, sggName: (c) => c };
   for (const f of [{}, { metro: true }, { policy: IDX.policies[1] }]) for (const x of V.questionsOf(rows, f, ctx)) {
     assert.ok(x.help.length > 10, x.q);
@@ -137,7 +137,8 @@ test('H7 키보드: 지역 지도 원은 고른 달의 원만 초점 대상(Tab 
 
 test("H9 회복·문구: 부산은 '자료 없음(서울·인천·경기만)', 인쇄는 '점검 필요 n건 전부'(10줄 넘으면 상위 10)", () => {
   const region = read('app/(dashboard)/region/page.tsx');
-  assert.match(region, /\$\{name\} 동네 여건 자료 없음\(서울·인천·경기만\)/);
+  /* 2026-10-16: 빈 카드 대신 '동네 여건' 머리 한 줄(r2-screens 6) — 머리 바로 뒤라 '동네 여건'을 되풀이하지 않는다 */
+  assert.match(region, /동네 여건<\/h2>[\s\S]*\$\{name\} 자료 없음\(서울·인천·경기만\)/);
   assert.match(region, /sido && sido !== 'metro' \?/);
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /const prioAll = priorityOf\(scope, Infinity\), top = prioAll\.slice\(0, 10\);/);

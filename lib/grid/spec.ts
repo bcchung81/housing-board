@@ -15,7 +15,7 @@ export type CellObj = { text?: string; sort?: number | string | null; href?: str
   /* tag = 글자 뒤 작은 꼬리표(현재 예정의 '경과 n개월'·'실제' — 색 대신 글로) */
   tag?: string };
 export type Cell = number | string | null | undefined | CellObj;
-/* wrap 은 긴 글자 열(최소 180px, 줄바꿈), clip 은 한 줄 말줄임 열(값 = CSS 최대 폭, 예 'clamp(180px,100vw - 1100px,380px)' — 잘린 칸은 title 로 전체 글자),
+/* wrap 은 긴 글자 열(최소 180px, 줄바꿈), clip 은 두 줄까지 줄바꿈 후 말줄임 열(값 = CSS 최대 폭, 예 'clamp(160px,100vw - 1120px,480px)' — 잘린 칸은 title 로 전체 글자),
    sort:false 는 정렬하지 않는 열, group 이 같은 이웃 열은 위 줄 머리글 한 칸으로 묶인다 */
 export type Col = { key: string; label: string; kind?: Kind; group?: string; groupSwatch?: string; wrap?: boolean; clip?: string; sort?: false };
 /* pin: 합계 행(top 전국 · bottom 총계)은 정렬·검색과 상관없이 그 자리에 둔다. note: 첫 칸 뒤를 한 칸으로 합친 설명(자료 없는 단계 행)

@@ -458,9 +458,16 @@
       st.textContent = `${label} 상세 지도를 여는 중`; st.hidden = false;
       root.setAttribute('aria-busy', 'true');
       const dur = reduce || !map ? 0 : 600;
+      S.cam = map ? { center: map.getCenter(), zoom: map.getZoom() } : null;
       if (map) map.fitBounds(boxLL(ringsBox(rings.get(u.code))), { padding: pad(), duration: dur, maxZoom: 12 });
       win.setTimeout(() => win.location.assign(href), dur + 40);
     }
+    /* 뒤로 가기로 bfcache 에서 되살아나면 '여는 중' 잠금·띠·확대를 풀어 다른 시군구를 다시 고를 수 있게 한다 */
+    win.addEventListener('pageshow', (e) => {
+      if (!e.persisted || !S.going) return;
+      S.going = false; $('ovGoing').hidden = true; root.removeAttribute('aria-busy');
+      if (map && S.cam) map.jumpTo(S.cam);
+    });
 
     renderPanel();
     if (S.sido && win.history && win.history.replaceState) win.history.replaceState(null, '', sidoHref(S.sido));

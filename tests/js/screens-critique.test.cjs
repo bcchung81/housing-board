@@ -140,7 +140,7 @@ test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들�
   assert.match(det, /지도에서 보기 · \$\{loc\}/, '위치 종류(블록·지번·지구·근사·미확보)를 짧게');
   assert.doesNotMatch(det, />기반시설 점검</);
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(read('lib/board/projects-list.ts'), /!isMetro\(r\.sgg\) \? null : noLoc[\s\S]*\{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
+  assert.match(read('lib/board/projects-list.ts'), /if \(!isMetro\(r\.sgg\)\) return null;[\s\S]*return noLoc[\s\S]*\{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
   assert.match(page, /import \{ mapHref, mapScopeHref \} from '[./]+lib\/board\/map-href'/);   // mapHref = 서랍의 '지도로 돌아가기'(from=map)
   assert.doesNotMatch(page, /`\/map\?|: '\/map'/, '지도 주소는 map-href 한 곳');
   const grid = read('components/ui/data-grid.tsx');
@@ -155,7 +155,7 @@ test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들�
 
 test('언어: 판 번호·HOME 덤프·렌즈·검토 중·기준선 없음 대신 짧은 말 · 정책은 "9·7 대책" · 요구사항 지시 날짜는 시간순', () => {
   const page = read('app/(dashboard)/projects/page.tsx'), det = read('components/projects/ProjectDetail.tsx'), sum = read('components/projects/Summary.tsx');
-  const vis = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\.replace\(\/HOME 덤프\/g, 'HOME 자료'\)/g, '');   // 출처 이름 속 'HOME 덤프'를 바꾸는 코드는 뺀다
+  const vis = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\.replace\(\/HOME 덤프\/g, '사업 원장\(HOME\)'\)/g, '');   // 출처 이름 속 'HOME 덤프'를 바꾸는 코드는 뺀다
   for (const [f, s] of [['page', page], ['detail', det], ['summary', sum]]) {
     assert.doesNotMatch(vis(s), /HOME 덤프|기준선 없음|>검토 중|'검토 중'|판 \$\{/, f);
   }

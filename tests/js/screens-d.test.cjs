@@ -29,21 +29,22 @@ const listOf = (href) => {
 const D = makeDirectives({ sourceCount: 19, stageNames: [...V.BOARD_NAMES], ledger: BOARD, start: { year: '2026', upto: 8, cum: 156396, cumLy: 141000 }, bottleneck: V.bottleneckOf });
 const board = read('components/board/Board.tsx');
 
-test('1 지연 헤드라인: 카드 = 확정 2건 · 후보 계산 313건(같은 크기), 숫자마다 자기 목록(late · review)', () => {
+test('1 지연 헤드라인: 카드 = 확정 2건 · 후보 계산 313건(같은 크기), 숫자마다 자기 목록(late · review-late — 2026-10-16 누른 숫자 = 목록 건수로 바꿈, 확인 필요 전체 review 1,839건은 따로)', () => {
   const late = D[4], c = BOARD.judgment.candidate;
   assert.equal(late.t, '일정 지연 관리');
   assert.deepEqual([late.pre, late.big, late.u], ['확정', '2', '건']);
   assert.deepEqual([late.pair.pre, late.pair.big, late.pair.u], ['후보 계산', '313', '건']);
   assert.equal(late.m, '지연 확정 2건 · 후보 계산 313건');
   assert.equal(late.sub, undefined, '작은 보조 값(주의)은 두 숫자로 대신');
-  /* 목록: 확정 = 지연(장기 포함) 2건, 후보 계산 = 확인 필요(후보) 목록(1,839건) 중 계산하면 지연 313건 */
+  /* 목록: 확정 = 지연(장기 포함) 2건, 후보 계산 = 후보 중 계산하면 지연인 313건(?status=review-late) — 확인 필요(후보) 전체 1,839건은 ?status=review */
   assert.equal(late.list.href, '/projects?sido=all&status=late');
   assert.equal(listOf(late.list.href).n, 2);
-  assert.equal(late.pair.list.href, '/projects?sido=all&status=review');
+  assert.equal(late.pair.list.href, '/projects?sido=all&status=review-late');
   const rv = listOf(late.pair.list.href).l;
-  assert.equal(rv.length, 1839);
-  assert.equal(rv.filter((r) => r.cls === 'delay').length, c.delay.projects);
-  assert.match(late.pair.list.title, /1,839건 — 이 중 같은 규칙으로 계산하면 지연 313건/);
+  assert.equal(rv.length, c.delay.projects, '누른 숫자 313 = 목록 313건');
+  assert.ok(rv.every((r) => !r.issued && r.cls === 'delay'));
+  assert.equal(listOf('/projects?sido=all&status=review').l.length, 1839, '확인 필요(후보) 전체 목록은 그대로');
+  assert.match(late.pair.list.title, /후보 · 지연 계산\(전국\) 313건 — 카드 숫자와 같음 · 확인 필요\(후보\) 1,839건 중/);
   /* 화면: 두 숫자는 같은 글자 크기 한 벌(pairVals), 겹친 층의 링크는 단추 밖(형제) */
   assert.match(board, /function pairVals\(x: Directive, link: boolean\)/);
   assert.equal((board.match(/text-\[min\(24px,11cqi\)\]/g) || []).length, 1, '두 숫자가 같은 크기 클래스 하나를 쓴다');
@@ -52,7 +53,7 @@ test('1 지연 헤드라인: 카드 = 확정 2건 · 후보 계산 313건(같은
   /* 해당 패널(선택 시점 판정): 작은 회색 후보 줄 대신 지연 확정 · 후보 계산 두 숫자(같은 크기, 각 목록) */
   const cand = board.slice(board.indexOf('data-slot="board-cand"'), board.indexOf('</div>', board.indexOf('data-slot="board-cand"')));
   assert.match(cand, /<PanelLink href="\/projects\?sido=all&status=late"[^>]*>확정 <b className=\{cn\(disp, 'text-\[20px\] leading-none text-bad'\)\}>\{f\(SJ\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
-  assert.match(cand, /<PanelLink href="\/projects\?sido=all&status=review"[^>]*>후보 계산 <b className=\{cn\(disp, 'text-\[20px\] leading-none text-foreground'\)\}>\{f\(SJ\.candidate\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
+  assert.match(cand, /<PanelLink href="\/projects\?sido=all&status=review-late"[^>]*>후보 계산 <b className=\{cn\(disp, 'text-\[20px\] leading-none text-foreground'\)\}>\{f\(SJ\.candidate\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
   assert.doesNotMatch(cand, /candText\(SJ\.candidate\)\}<\/span>|후보 목록/, '옛 작은 회색 보조 줄 없음');
 });
 
@@ -104,7 +105,7 @@ test('5 지역 공급 \'보기\' 뒤 초점: 새로 붙은 Ahead 가 앞으로 1
 test('6 GH 표 상태 = 판정 밖(머리 경고문과 같은 말) · 단계 알약 글자 대비 4.5 이상(밝은·어두운 테마)', () => {
   const p = read('app/(dashboard)/agency/[id]/page.tsx');
   assert.match(p, /판정하지 않습니다/);
-  assert.match(p, /status: \{ text: '판정 밖', muted: true,/);
+  assert.match(p, /status: \{ text: '일정 정보 없음', muted: true,/);   // 2026-10-16 용어 '판정 밖' → '일정 정보 없음'(r2-board 4)
   const g = read('components/ui/data-grid.tsx');
   assert.match(g, /color: `color-mix\(in srgb,\$\{o\.pill\.ink\} 80%,var\(--foreground\)\)`/);
   assert.match(g, /background: `color-mix\(in srgb,\$\{o\.pill\.color\} 16%,var\(--card\)\)`/);
@@ -137,7 +138,7 @@ test('7 서랍: 제목 = 지도와 같은 짧은 이름(home-map label), 원장 
   assert.match(read('app/(dashboard)/projects/page.tsx'), /title=\{drawer \? \(drawer\.kind === 'detail' \? drawer\.label \?\? drawer\.row\.name : drawer\.project\.name\) : null\}/);
   const d = read('components/projects/ProjectDetail.tsx');
   assert.match(d, /\{d\.label && d\.label !== r\.name \? <span data-slot="drawer-full"[^>]*>\{r\.name\}<\/span> : null\}/);
-  assert.match(d, /HOME 자료 \$\{edition\[1\]\}\.\$\{edition\[2\]\}\.\$\{edition\[3\]\} 받음/);
+  assert.match(d, /사업 원장\(HOME\) \$\{edition\[1\]\}\.\$\{edition\[2\]\}\.\$\{edition\[3\]\} 받음/);   // HOME 이 무엇인지 붙여서(r3-screens 4)
   assert.doesNotMatch(d, /` · 자료 기준 \$\{edition/, '서랍의 HOME 받은 날을 \'자료 기준\'이라 부르지 않는다(화면의 자료 기준 = 원장 기준일)');
   assert.equal(IDX.referenceDate, '2026-10-13');
 });

@@ -117,7 +117,7 @@ test('그리드 부품: TanStack Table v9 정렬(값 없음 맨 뒤)·Virtual(�
 
 /* 데이터 표가 있는 화면(데이터 원본은 마지막 — 다른 세션이 고치는 중). 원시 <Table> 대신 DataGrid 를 쓴다 */
 const PAGES = {
-  'app/(dashboard)/month/[id]/page.tsx': 3,
+  'app/(dashboard)/month/[id]/page.tsx': 4,   // + 원장 준공 예정 사업(2026-10-16 r2-board 1)
   'app/(dashboard)/agency/[id]/page.tsx': 5,
   'app/(dashboard)/projects/page.tsx': 2,   // 사업 목록 + 월간 보고 우선 점검(옛 보고자료 표 3개는 2026-10-14 인쇄 보기로 바뀜)
 };

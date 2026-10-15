@@ -103,7 +103,7 @@ test("정책 표기: 지도 카드의 policyTxt 줄에는 연결 상태('연결 
 test("카드 행 이름: 사업 화면과 같은 '현재 예정'·'상태'(펼친 카드·접힌 카드 줄), 사이드바 모음은 '다가오는 준공·입주'", () => {
   const code = noComments(app);
   assert.match(code, /\['상태', `<span class="pc-chip jd-c/);
-  assert.match(code, /\['현재 예정', `\$\{esc\(lt\.next \|\| lt\.due\)\}/);
+  assert.match(code, /const cur = lt && \(lt\.next \|\| lt\.pastDue\) \? lt\.next \|\| lt\.due : ''/); assert.match(code, /\['현재 예정', `\$\{esc\(cur\)\}/);   // 2026-10-15 2차: 같은 종류 날짜 하나로(dueDedup, r2-map.test.cjs)
   assert.match(code, /t\.next \? `현재 예정 \$\{esc\(t\.next\)\}`/);
   assert.doesNotMatch(code, /\['다음 일정'|\['판정'|`다음 \$\{esc\(t\.next\)\}`/);
   assert.match(html, /<h2 id="h-next">다가오는 준공·입주<\/h2>/);
@@ -113,10 +113,10 @@ test("카드 행 이름: 사업 화면과 같은 '현재 예정'·'상태'(펼�
 test('말풍선 겹침: 단지 카드(HUD)는 자리 후보를 넓히고, 끝내 먼저 놓인 카드와 겹치면 카드만 숨기고 표시선(표지)은 남긴다', () => {
   const fn = /function renderHud\(\) \{[\s\S]*?\n\}\n/.exec(app)[0];
   assert.match(fn, /const cands = \[[^;]*\[x1 \+ 16, y0 - 4 \+ TH_ \+ 6\][^;]*\];/);
-  const skip = /if \(placed\.some\(\(e\) => hit\(r, e\)\)\) \{[\s\S]*?continue;\s*\}\s*placed\.push\(r\);/.exec(fn);
+  const skip = /if \(bestC > 0\) \{[\s\S]*?continue;\s*\}\s*placed\.push\(r\);/.exec(fn);   // 2026-10-15 2차: 먼저 놓인 꼬리표뿐 아니라 입력줄·띠·안전 영역 밖도(r2-map.test.cjs)
   assert.ok(skip, '겹침 처리 블록을 찾을 수 없음');
   assert.match(skip[0], /el\.hidden = true;/); assert.match(skip[0], /parts\.push\(`<path d="\$\{d\}"/);   // 표시선(레티클)은 그대로 그린다
-  assert.ok(fn.indexOf('placed.push(r)') > fn.indexOf('placed.some'), '숨긴 카드는 자리를 차지하지 않는다');
+  assert.ok(fn.indexOf('placed.push(r)') > fn.indexOf('bestC > 0'), '숨긴 카드는 자리를 차지하지 않는다');
   assert.match(app, /'blk-label-lo'[\s\S]{0,400}'text-allow-overlap': false/);   // 지도 안 라벨은 겹침 금지 그대로
 });
 
@@ -133,8 +133,8 @@ test('다크 지도: 기존 건물 파랑 단계는 지붕(밝게 섞은 윗면)
 test('사업 카드(2026-10-15): 화면 용어(상태·공정률·호·점 날짜), 머리 고정 + 몸통 스크롤, 핵심 2열 격자·설명 두 줄·주변·시공 접힘', () => {
   const fn = noComments(/function blockPopup\([\s\S]*?\n\}\n/.exec(app)[0]);
   assert.doesNotMatch(fn, /판정|공정율|세대/, '카드 글자에 옛 용어가 없다');
-  assert.match(fn, /\['공정률', /); assert.match(fn, /dueCell\(b\)/); assert.match(fn, /esc\(noteTxt\(b\.note\)\)/);
-  assert.match(fn, /<div class="pc pc-split">\s*<div class="pc-h">[\s\S]*<\/div>\s*<div class="pc-body">/, '머리는 몸통 밖(스크롤해도 고정)');
+  assert.match(fn, /\['공정률', /); assert.match(fn, /dueDedup\(b, cur, alt\)/); assert.match(fn, /esc\(noteTxt\(b\.note\)\)/);
+  assert.match(fn, /<div class="pc pc-split">\s*<div class="pc-h">[\s\S]*<\/div>\s*\$\{linkId \? `<a class="pc-open"[^\n]*\n\s*<div class="pc-body">/, '머리(와 사업 정보 링크, r3-map 3)는 몸통 밖(스크롤해도 고정)');
   assert.match(fn, /gridHtml\(\[/); assert.match(fn, /<details class="pc-note">/); assert.match(fn, /<details class="pc-more pc-near"><summary>주변·시공/);
   /* 날짜·단위 바꾸기(app.js 의 dotDate·noteTxt 를 그대로 떼어 돌린다) */
   const src = /const dotDate = [^\n]*\nconst noteTxt = [^\n]*\n/.exec(app)[0];
@@ -239,7 +239,7 @@ test('D1: 정상 판정인데 예정일이 기준일보다 앞서면 상태는 �
   assert.equal(R.ledgerTexts({ cls: 'ok', referenceDate: '2026-10-13', next: { eventType: 'COMPLETION', planned: '2026-11-30' } }).pastDue, undefined);
   assert.equal(R.ledgerTexts({ cls: 'delay', referenceDate: '2026-10-13', overdue: { eventType: 'COMPLETION', planned: '2026-01-01', months: 9 } }).pastDue, undefined, '지연은 기존 표지');
   assert.match(app, /b\.status === '준공 임박' && [^;]*pastDue \? '예정일 지남'/);
-  assert.match(app, /lt && \(lt\.next \|\| lt\.pastDue\) \? \['현재 예정'/);
+  assert.match(app, /const cur = lt && \(lt\.next \|\| lt\.pastDue\) \? lt\.next \|\| lt\.due : ''/); assert.match(app, /cur \? \['현재 예정'/);
 });
 
 /* ---- 5차 평가(2026-10-15, 26/40) 고침: 카드 닫기 초점·이동 중 알림, 보기 메뉴, 개요 라벨, D2 원천 날짜 다름 ---- */
@@ -344,7 +344,7 @@ test("5: 원장 행에 dateAlt 가 있으면 카드 '현재 예정' 줄에 '원�
   assert.match(html1, /title="LH 자료의 예정일은 2028\.12\.31로/);
   const fn = /function blockPopup\([\s\S]*?\n\}\n/.exec(app)[0];
   assert.match(fn, /alt = dateAltOf\(lg\)/);
-  assert.match(fn, /\$\{alt \? `\$\{why \? ' ' : ''\}\$\{altMark\(alt\)\}` : ''\}<\/span>/);   // 이유 줄 뒤 작은 표지(8차)
+  assert.match(fn, /\$\{alt \? `\$\{why \? ' ' : ''\}\$\{am\}` : ''\}<\/span>/);   // am = altMark(alt, 원장 현재 예정일)(r3-map 2)   // 이유 줄 뒤 작은 표지(8차)
   assert.match(read('assets/js/region.js'), /if \(r\.dateAlt && [^\n]*\) b\.ledger\.dateAlt = \{ source: String\(r\.dateAlt\.source \|\| ''\), planned: String\(r\.dateAlt\.planned\) \};/, '원장 행의 dateAlt 를 b.ledger 로 옮긴다');
 });
 
@@ -399,7 +399,7 @@ test('A7-1 위치 미확보 묶음: 시군구 경계 안 점선 표지(건수·�
 test('A7-2·A8-5 카드 상태: 판정 칩 하나 + 이유 한 줄(경과·예정일 지남·준공 임박), 원천 날짜 다름은 이유 줄 뒤 작은 무채색 표지, 머리 칩은 단계 이름', () => {
   const t = R.ledgerTexts({ cls: 'ok', referenceDate: '2026-10-13', next: { eventType: 'COMPLETION', planned: '2026-10-11' } });
   assert.equal(t.cls, '정상');
-  assert.equal(R.statusReason(t), '예정일 지남 · 경과 0개월(주의는 1개월부터)');
+  assert.equal(R.statusReason(t), '예정일 지남(1개월 미만)');   // 2026-10-15 2차: '경과 0개월' 대신(r2-map.test.cjs)
   assert.equal(R.statusReason(R.ledgerTexts({ cls: 'delay', referenceDate: '2026-10-13', overdue: { eventType: 'COMPLETION', planned: '2026-01-01', months: 9 } })), '준공 예정 경과 9개월');
   assert.equal(R.statusReason(R.ledgerTexts({ cls: 'ok', referenceDate: '2026-10-13', next: { eventType: 'COMPLETION', planned: '2026-12-01' } })), '');
   const fn = noComments(/function blockPopup\([\s\S]*?\n\}\n/.exec(app)[0]);
@@ -409,14 +409,14 @@ test('A7-2·A8-5 카드 상태: 판정 칩 하나 + 이유 한 줄(경과·예�
   assert.doesNotMatch(fn, /statusLine/);
   assert.doesNotMatch(fn, /jd caution"[^>]*>예정일 지남/, "'예정일 지남' 경고색 표지는 따로 없다");
   assert.match(fn, /chipHtml\(KIND\[b\.status\], headTxt\)/);
-  assert.match(app, /const altMark = \(a\) => `<b class="jd alt"/);
+  assert.match(app, /const altMark = \(a, home\) => `<b class="jd alt"/);
   assert.match(css, /\.jd\.alt\{color:var\(--mute\)/);
 });
 
 test('A7-3 꼬리표 가림: 꼬리표는 처음 자리를 잡을 때까지 숨기고(도구 줄 밑 포개짐 없음), 이동 중 띠·위치 미확보 표지·목록도 피한다', () => {
   assert.match(app, /class="hudtag" data-id="\$\{esc\(b\.id\)\}" hidden><\/button>/);
-  assert.match(app, /HUD_EXCL = [^\n]*\.lostpin, #lostPop:not\(\[hidden\]\), #goNote:not\(\[hidden\]\), #dynHint:not\(\[hidden\]\)'/);
-  assert.match(app, /if \(placed\.some\(\(e\) => hit\(r, e\)\)\) \{/, '먼저 놓인 꼬리표와 겹치면 숨김(기존 규칙)');
+  assert.match(app, /HUD_EXCL = [^\n]*\.lostpin, #lostPop:not\(\[hidden\]\), #goNote:not\(\[hidden\]\), #dynHint:not\(\[hidden\]\)[^']*'/);
+  assert.match(app, /if \(bestC > 0\) \{/, '먼저 놓인 꼬리표(또는 지도 위 상자)와 겹치면 숨김');
 });
 
 test('A7-4 Esc 초점: 꼬리표에서 연 카드를 닫으면 시점이 돌아가는 동안에도 바로 목록 단추·지도로 초점, 다 돌아가면 꼬리표로', () => {
@@ -515,7 +515,7 @@ test('A8-3 지표가 상세로 이어진다: 개요 지표를 주소(?metric=d)�
   assert.match(ov8, /go\(u, withMetric\(p\.href, S\.metric\)/); assert.match(ov8, /go\(S\.menu\.u, withMetric\(b\.dataset\.href, S\.metric\)/);
   assert.match(app8, /const LATE = \['d', 'late'\]\.includes\(q\.get\('metric'\)\);/);
   assert.match(app8, /\$\{ln \? `지연 \$\{ln\}` : '지연 없음'\}/);
-  assert.match(app8, /pin\.classList\.toggle\('late', LATE && sm\.delay > 0\)/);
+  assert.match(app8, /pin\.classList\.toggle\('late', \(LATE \|\| !!\(CUR_LOST && CUR_LOST\.cls === 'delay'\)\) && sm\.delay > 0\)/);   // 지연 사업으로 열어도(r3-map 1b)
   assert.match(app8, /if \(LATE && sm\.delay\) whenRevealed\(\(\) => \{ if \(!popup && !q\.get\('block'\) && !\(RES && RES\.block\)\) setLost\(true, pin, false\); \}\);/);
   assert.match(css, /\.lostpin\.late\{border-color:var\(--bad\);color:var\(--bad\)\}/);
   assert.match(app8, /<span class="ht-jd \$\{jc\}" title="\$\{CLS_WORD\[jc\]\}"><\/span>/);
@@ -537,9 +537,9 @@ test('A8-4 지도 위 요소: 묶음 표지는 안전 영역 안, 목록·카드
   assert.doesNotMatch(sc, /Math\.max\(bb\.top - gap, 320\)/, '대상 위로 밀어 올리지 않는다');
   const fc = /function fitCard\(\) \{[\s\S]*?\n\}\n/.exec(app)[0];
   assert.match(fc, /if \(av && av\.anchor === 'bottom'\) bottom = Math\.min\(bottom, av\.top\);/); assert.match(fc, /if \(av && av\.anchor === 'top'\) top = Math\.max\(top, av\.bottom\);/);
-  const fa = /function fitAll\(\) \{[\s\S]*?\n\}\n/.exec(app)[0];
+  const fa = /function fitAll\(first = false\) \{[\s\S]*?\n\}\n/.exec(app)[0];
   assert.match(fa, /const pts = BLOCKS\.flatMap\(\(b\) => b\.poly\)/, '근사 위치 겹원(b.approx)도 BLOCKS 의 poly 라 범위에 든다');
-  assert.match(fa, /for \(let i = 0; i < 4; i\+\+\) \{\s*const ps = pts\.map\(\(p\) => map\.project\(p\)\)/); assert.match(fa, /map\.jumpTo\(was\);\s*map\.easeTo\(/);
+  assert.match(fa, /for \(let i = 0; i < 4; i\+\+\) \{\s*const ps = pts\.map\(\(p\) => map\.project\(p\)\)/); assert.match(fa, /map\.jumpTo\(was\);\s*if \(first\) \{[^\n]*\}\s*map\.easeTo\(/);   // first = 첫 화면 맞춤(r3-map 6)
   assert.match(app8, /const blockKey = \(id\) => \{ const b = [^;]*; return b \? b\.projectId \|\| b\.pid \|\| b\.id : null; \};/);
   assert.match(app8, /set\('block', blockKey\(id\)\);/);
   assert.match(/document\.addEventListener\('keydown', \(e\) => \{\n  if \(e\.key !== 'Escape' \|\| !popup[\s\S]*?\n\}\);/.exec(app)[0], /if \(new URL\(location\.href\)\.searchParams\.has\('block'\)\) syncUrl\(null\);/);
@@ -556,7 +556,7 @@ test('A8-5 카드: 입주 칸에 준공 예정을 넣지 않는다(칸 이름 = 
   assert.deepEqual(f({ moveIn: '준공 예정 2027.10' }), ['준공 예정', '2027.10']);
   assert.deepEqual(f({ moveIn: '2026-12' }), ['입주', '2026.12']);
   assert.deepEqual(f({ moveIn: '준공 예정 2026-10-11' }), ['준공 예정', '2026.10.11']);
-  assert.match(css, /\.pc-split>\.pc-open\{flex:none;margin:0 11px 8px;padding-top:7px;border-top:1px solid var\(--line\)/);
+  assert.match(css, /\.pc-split>\.pc-open\{flex:none;[^}]*border-bottom:1px solid var\(--line\)/);   // 링크는 머리 아래, 몸통과 사이 구분선(r3-map 3)
   assert.match(css, /\.pc-why\{display:block;/);
 });
 
@@ -591,4 +591,31 @@ test('A8-9 안내 띠: 위치 미확보가 0건이면 그 문장이 없고, 펼�
   assert.equal(el.innerHTML, '<details class="pv-d"><summary class="pv-s" title="설명 문장">사업 원장 4건 · 지도 4건</summary><ul class="pv-list" id="pvList" aria-label="사업 원장 목록"></ul></details>', '번들 지역(계양)은 목록 띠를 만들지 않는다(안내가 없으면 그대로)');
   assert.match(app8, /\$\('#pvList'\)\.innerHTML = ledgerRows\(BLOCKS\.filter\(\(b\) => b\.home\)\.map\(/);
   assert.match(app8, /<ul>\$\{ledgerRows\(LOST\)\}<\/ul>/, '위치 미확보 목록과 같은 줄 함수');
+});
+
+test('지역 선택기: 뒤로 가기(bfcache)로 돌아오면 고른 값이 지금 지역으로 되돌아온다, 새로 열면 그대로', () => {
+  const opts = [{ selected: false, defaultSelected: true }, { selected: true, defaultSelected: false }];
+  const sel = { options: opts, innerHTML: '', addEventListener() {} };
+  const handlers = [];
+  const doc = { getElementById: (id) => (id === 'regionSel' ? sel : id === 'regionBox' ? { hidden: true } : null) };
+  const win = { HOME_LITE: LITE, RESOLVED: null, location: { href: 'http://x.test/map' }, addEventListener: (t, f) => { if (t === 'pageshow') handlers.push(f); } };
+  R.mountSelector(doc, { regions: REGIONS, name: '', slug: 'incheon-gyeyang' }, win);
+  assert.equal(handlers.length, 1, 'pageshow 처리기 하나');
+  handlers[0]({ persisted: false });
+  assert.deepEqual(opts.map((o) => o.selected), [false, true], '새로 열면 그대로');
+  handlers[0]({ persisted: true });
+  assert.deepEqual(opts.map((o) => o.selected), [true, false], 'bfcache 복원이면 지금 지역(defaultSelected)으로 되돌린다');
+});
+
+test('지도 수도권 개요: 뒤로 가기 복원 처리기가 여는 중 잠금·띠·aria-busy 를 풀고 카메라를 되돌리며, 카메라 저장은 확대 전에 한다', () => {
+  const src = read('assets/js/overview.js');
+  const h = src.match(/addEventListener\('pageshow', \(e\) => \{([\s\S]*?)\n    \}\);/);
+  assert.ok(h, 'pageshow 처리기');
+  assert.match(h[1], /if \(!e\.persisted \|\| !S\.going\) return;/);
+  assert.match(h[1], /S\.going = false;/);
+  assert.match(h[1], /\$\('ovGoing'\)\.hidden = true;/);
+  assert.match(h[1], /root\.removeAttribute\('aria-busy'\);/);
+  assert.match(h[1], /map\.jumpTo\(S\.cam\);/);
+  const go = src.slice(src.indexOf('function go(u, href, label)'));
+  assert.ok(go.indexOf('S.cam =') > 0 && go.indexOf('S.cam =') < go.indexOf('map.fitBounds('), 'S.cam 저장이 fitBounds 보다 앞');
 });

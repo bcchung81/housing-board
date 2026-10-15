@@ -44,10 +44,9 @@ test("라이트 배경은 V-World 백지도('white'): 장소 글자가 그림에
   for (const kv of ["text: '#172B4D'", "halo: '#FFFFFF'", "sub: '#526176'"]) assert.ok(line.includes(kv), kv);
 });
 
-test('블록 무늬는 24px 그림을 배율 2 로 올려 12px 주기로 반복하고, 멀리서는 옅어진다(기울인 지도의 무아레 방지)', () => {
-  assert.match(app, /function patternImage\(kind\) \{\n  const s = 24,/);
-  for (const n of ['hatch', 'dots', 'cross']) assert.match(app, new RegExp(`map\\.addImage\\('${n}', patternImage\\('${n}'\\), \\{ pixelRatio: 2 \\}\\)`));
-  for (const n of ['hatch', 'dots', 'cross']) assert.match(app, new RegExp(`'fill-pattern': '${n}', 'fill-opacity': PAT_OP`));
+test('블록 면은 무늬 없이 현재 단계색 단색이다(2026-10-15 요구 5: 무늬는 멀리서 옅어져 단계가 안 보였다 — tests/js/map-stage-view.test.cjs)', () => {
+  assert.doesNotMatch(app, /patternImage|'fill-pattern'|PAT_OP/);
+  for (const id of ['blk-sale', 'blk-build', 'blk-soon', 'blk-move', 'blk-plan']) assert.match(app, new RegExp(`add\\(\\{ id: '${id}', type: 'fill', [^\\n]*'fill-color': kindExpr\\(T\\.color\\), 'fill-opacity': areaOp\\(\\)`), id);
 });
 
 test('숨긴 패널 구역은 실제로 숨는다(.sec 의 display:flex 가 hidden 을 덮지 않게). 오른쪽 점 레일·쪽수 표시는 없다(2026-10-13)', () => {

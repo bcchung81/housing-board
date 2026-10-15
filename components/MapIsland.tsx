@@ -12,6 +12,7 @@ type W = Window & {
   __mapBooted?: boolean;
   HOME_MAP?: Record<string, string>;
   HOME_LITE?: Record<string, { name: string; n: number; h?: string }>;
+  HOME_PROGRESS?: Record<string, [string, number]>;
   LoadView?: { ctl: () => LoadCtl };
   RegionLoader?: { boot: (w: Window, d: Document) => Promise<{ ok?: boolean } | null> };
   GotoBar?: { mount: (w: Window, d: Document) => void };
@@ -34,7 +35,7 @@ function load(src: string) {
   });
 }
 
-export default function MapIsland({ assets = {}, homeMap = {}, homeLite = {}, overview, overviewSrc }: { assets?: Record<string, string>; homeMap?: Record<string, string>; homeLite?: Record<string, { name: string; n: number; h?: string }>; overview?: OverviewDoc; overviewSrc?: string }) {
+export default function MapIsland({ assets = {}, homeMap = {}, homeLite = {}, homeProgress = {}, overview, overviewSrc }: { assets?: Record<string, string>; homeMap?: Record<string, string>; homeLite?: Record<string, { name: string; n: number; h?: string }>; homeProgress?: Record<string, [string, number]>; overview?: OverviewDoc; overviewSrc?: string }) {
   useEffect(() => {
     ASSETS = assets;
     const w = window as W;
@@ -51,6 +52,7 @@ export default function MapIsland({ assets = {}, homeMap = {}, homeLite = {}, ov
       return;
     }
     w.HOME_MAP = homeMap;   // 수도권 시군구 → 지도 정적 자료 해시(region.js 가 assets/home-map/<시군구>.<해시>.json 을 부른다)
+    w.HOME_PROGRESS = homeProgress;   // 사업 id → [보고일, 공정률](사업 원장 = 서랍과 같은 값, app.js 카드의 공정률 정본)
     w.HOME_LITE = homeLite;   // 수도권 시군구 → 이름·사업 수·경량 번들 해시(region.js: assets/home-lite/<시군구>.<해시>.json, 지역 선택기 목록)
     const fatal = (e: Error) => {
       const f = document.getElementById('fatal'), l = document.getElementById('loading');
