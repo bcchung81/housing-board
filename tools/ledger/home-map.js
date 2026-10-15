@@ -21,7 +21,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const P = require('./paths');
-const { mapIndexFromLedger, loadTables } = require('./board');
+const { mapIndexFromLedger, loadTables, loadLhBlocks } = require('./board');
 const { readHome, latestHomeDir, homeAvailable, blockKey } = require('./home-source');
 
 const HOME_SIDO = ['11', '28', '41'];
@@ -140,8 +140,8 @@ function withNameSearch(loc, g) {
   if (!g || (loc && loc.by !== 'area')) return loc ?? null;
   return { by: 'name', at: [r6(g.at[0]), r6(g.at[1])], basis: 'NAME_SEARCH', status: 'REVIEW', match: String(g.match ?? '') };
 }
-function homeMapFromLedger(tables, { referenceDate, observedMonth, edition = null, locations = new Map(), homeIds = {}, geocode = new Map(), names = new Map() } = {}) {
-  const index = mapIndexFromLedger(tables, { referenceDate, observedMonth });
+function homeMapFromLedger(tables, { referenceDate, observedMonth, edition = null, locations = new Map(), homeIds = {}, geocode = new Map(), names = new Map(), lhBlocks = null } = {}) {
+  const index = mapIndexFromLedger(tables, { referenceDate, observedMonth, lhBlocks });
   const project = new Map(tables.projects.map((p) => [p.local_project_id, p]));
   const bjds = new Map();
   for (const l of [...tables.project_locations].sort((a, b) => byStr(a.bjd_code ?? '', b.bjd_code ?? ''))) if (l.bjd_code && !bjds.has(l.local_project_id)) bjds.set(l.local_project_id, l.bjd_code);
@@ -180,7 +180,7 @@ if (require.main === module) {
   const homeIds = JSON.parse(fs.readFileSync(path.join(dir, 'mappings/home-ids.json'), 'utf8'));
   const geocode = require('./home-geocode').adoptedOf(path.join(dir, 'mappings/home-geocode.json'));
   const names = new Map(tables.areas.filter((a) => a.level === 'SGG').map((a) => [a.area_code, a.area_name]));
-  const docs = homeMapFromLedger(tables, { referenceDate: P.referenceDateOf(dir), observedMonth: month, edition: home.edition, locations: homeLocations(home.kinds, homeIds), homeIds, geocode, names });
+  const docs = homeMapFromLedger(tables, { referenceDate: P.referenceDateOf(dir), observedMonth: month, edition: home.edition, locations: homeLocations(home.kinds, homeIds), homeIds, geocode, names, lhBlocks: loadLhBlocks() });
   const out = path.join(P.ROOT, OUT_DIR);
   fs.mkdirSync(out, { recursive: true });
   for (const f of fs.readdirSync(out)) if (/^\d{5}\.json$/.test(f) && !docs[f.slice(0, 5)]) fs.rmSync(path.join(out, f));

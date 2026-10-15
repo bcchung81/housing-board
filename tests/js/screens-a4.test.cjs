@@ -102,11 +102,12 @@ test('3 날짜 점 표기: 그리드 칸·설명 줄은 하이픈 날짜를 점�
 });
 
 test("4 지연 세 번 표시: 목록·인쇄의 현재 예정은 '경과' 꼬리표 없이 옅게(경과는 title), 간단 보기는 꼬리표 유지", () => {
-  const late = rows.filter((r) => V.lateOf(r) !== null);
+  /* 경과 개월은 번호 있는 사업(지연 열 판정 색)과 후보(지연 열 옅게, D3) 모두 같은 계산 overdueMonthsOf */
+  const late = rows.filter((r) => V.overdueMonthsOf(r) !== null);
   assert.ok(late.length > 300);
   for (const r of late) {
     const c = L.nextCell(r);
-    assert.equal(c.tag, undefined, r.id); assert.equal(c.muted, true); assert.match(c.title, /경과 \d+개월/);
+    assert.equal(c.tag, V.dateAltOf(r)?.text, r.id); assert.equal(c.muted, true); assert.match(c.title, /경과 \d+개월/);   // 꼬리표는 원천 날짜 다름(D2)만
     assert.equal(V.nextOf(r).tag, `경과 ${r.overdue.months}개월`, '간단 보기(지연 열 없음)는 꼬리표');
   }
   const done = rows.find((r) => r.done && V.lateOf(r) === null && !r.next);
@@ -193,11 +194,13 @@ test('B 기본 정렬: 번호 있는 사업 먼저, 후보 사업은 모두 뒤(
   assert.ok(firstCand > 0);
   assert.ok(all.slice(firstCand).every((r) => !r.issued), '후보 행은 모든 번호 있는 사업 뒤');
   const cands = all.slice(firstCand);
-  assert.ok(cands.every((r, i) => i === 0 || (V.lateOf(cands[i - 1]) ?? -1) >= (V.lateOf(r) ?? -1)), '후보끼리는 기존 순서(지연순)');
-  assert.ok(cands.some((r) => V.lateOf(r) !== null), '원천 예정일이 지난 후보가 있다(판정은 그대로)');
+  assert.ok(cands.every((r, i) => i === 0 || (V.overdueMonthsOf(cands[i - 1]) ?? -1) >= (V.overdueMonthsOf(r) ?? -1)), '후보끼리는 기존 순서(같은 계산의 경과순)');
+  assert.ok(cands.some((r) => V.overdueMonthsOf(r) !== null), '원천 예정일이 지난 후보가 있다');
+  assert.ok(cands.every((r) => V.lateOf(r) === null), '후보는 지연 개월(판정)이 없다 — 확인 필요(D3)');
   const q = Object.fromEntries(V.questionsOf(rows, {}, ctx).map((x) => [x.q, x]));
-  assert.equal(q['어떤 사업이 늦어지는가'].value, '315', '지연 건수 그대로');
-  assert.equal(rows.filter((r) => ['delay', 'long'].includes(V.statusOf(r))).length, 315);
+  assert.equal(q['어떤 사업이 늦어지는가'].value, '2', '지연 건수 = 번호 있는 사업만(D3)');
+  assert.equal(rows.filter((r) => ['delay', 'long'].includes(V.statusOf(r))).length, 2);
+  assert.equal(rows.filter((r) => V.statusOf(r) === 'review' && r.cls === 'delay').length, 313, '옛 315 = 2 + 확인 필요(후보) 313');
   /* 열 머리 정렬은 그리드가 따로(listOrder 는 기본 순서만) · CSV 는 같은 순서 */
   assert.match(read('app/(dashboard)/projects/csv/route.ts'), /listOrder\(applyFilters\(idx\.rows, f\)\)/);
 });

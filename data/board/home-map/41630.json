@@ -7,6 +7,6 @@
   "edition": "20261014T102506Z",
   "projects": [
     {"id":"PRJ-41630-0098","name":"조달청)양주옥정 A-22BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-16"},"units":1126,"pks":[],"pnus":[],"bundles":[],"label":"양주옥정 A22","agency":"lh","moveIn":null,"completion":"2028-05-16","noticeUnits":null,"bjd":"4163010800","loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},
-    {"id":"PRJ-41630-0099","name":"양주회천 A26","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-06-05"},"units":792,"pks":[],"pnus":[],"bundles":[],"label":"양주회천 A26","agency":"lh","moveIn":"2029-10","completion":"2029-06-05","noticeUnits":792,"bjd":"4163011700","loc":{"by":"area","at":[127.014156,37.805403],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}}
+    {"id":"PRJ-41630-0099","name":"양주회천 A26","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-06-05"},"dateAlt":{"source":"LH","planned":"2029-12-31"},"units":792,"pks":[],"pnus":[],"bundles":[],"label":"양주회천 A26","agency":"lh","moveIn":"2029-10","completion":"2029-06-05","noticeUnits":792,"bjd":"4163011700","loc":{"by":"area","at":[127.014156,37.805403],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}}
   ]
 }

@@ -13,7 +13,7 @@ const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { convert, loadInputs, readHubBulk, readNational, readStageInput, stageFileOf, renderTable } = require('../../tools/ledger/convert');
 const H = require('../../tools/ledger/home-source');
-const { boardFromLedger, mapIndexFromLedger, loadTables } = require('../../tools/ledger/board');
+const { boardFromLedger, mapIndexFromLedger, loadTables, loadLhBlocks } = require('../../tools/ledger/board');
 const { validate } = require('../../tools/ledger/validate');
 const { parseLegalDong } = require('../../tools/ledger/legal-dong');
 const P = require('../../tools/ledger/paths');
@@ -269,7 +269,7 @@ test('지도 계약: 사업 행의 done = 실제 준공(ACTUAL COMPLETION) 중 �
   }
   assert.ok(rows.filter((r) => 'done' in r).length > 100);
   for (const r of rows) assert.equal(r.done, last.get(r.id), r.id);
-  const t = loadTables(), m = mapIndexFromLedger(t, { referenceDate: M.referenceDate, observedMonth: M.observedMonth });
+  const t = loadTables(), m = mapIndexFromLedger(t, { referenceDate: M.referenceDate, observedMonth: M.observedMonth, lhBlocks: loadLhBlocks() });
   assert.deepEqual(m, M);
   assert.ok(boardFromLedger(t, { referenceDate: M.referenceDate, observedMonth: M.observedMonth }).scope.projects === rows.length);
 });

@@ -272,7 +272,7 @@ test('--refresh 거부·건너뜀: 가장 늦은 원장 폴더가 아니면 오�
 
 /* ---------- 고정 경로를 인자로 바꾼 뒤 지금 결과가 같은지 ---------- */
 const H = require('../../tools/ledger/hub-bulk');
-const { boardFromLedger, mapIndexFromLedger, renderMap, render, loadTables, loadHistory } = require('../../tools/ledger/board');
+const { boardFromLedger, mapIndexFromLedger, renderMap, render, loadTables, loadHistory, loadLhBlocks } = require('../../tools/ledger/board');
 const ROOT = path.join(__dirname, '..', '..');
 const L = require('../../data/board/ledger-board.json');
 
@@ -293,7 +293,7 @@ test('board.js --month 경로(그 달 표 · 달 기록 기준일)로 다시 만
   const dir = P.ledgerDir(L.observedMonth), tables = loadTables(path.join(dir, 'tables'));
   const ref = P.referenceDateOf(dir);
   assert.equal(fs.readFileSync(path.join(ROOT, 'data/board/ledger-board.json'), 'utf8'), `${render(boardFromLedger(tables, { referenceDate: ref, observedMonth: L.observedMonth, history: loadHistory() }))}\n`);
-  assert.equal(fs.readFileSync(path.join(ROOT, 'data/board/ledger-map.json'), 'utf8'), renderMap(mapIndexFromLedger(tables, { referenceDate: ref, observedMonth: L.observedMonth })));
+  assert.equal(fs.readFileSync(path.join(ROOT, 'data/board/ledger-map.json'), 'utf8'), renderMap(mapIndexFromLedger(tables, { referenceDate: ref, observedMonth: L.observedMonth, lhBlocks: loadLhBlocks() })));
 });
 
 const rawZips = fs.existsSync(path.join(H.RAW, 'manifest.json')) ? Object.values(JSON.parse(fs.readFileSync(path.join(H.RAW, 'manifest.json'), 'utf8')).files).map((f) => path.join(H.RAW, f.zip)) : [];

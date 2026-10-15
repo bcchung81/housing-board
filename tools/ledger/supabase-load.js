@@ -19,7 +19,7 @@ const zlib = require('node:zlib');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { isDeepStrictEqual } = require('node:util');
-const { boardFromLedger, mapIndexFromLedger, loadHistory, MAP_OUT } = require('./board');
+const { boardFromLedger, mapIndexFromLedger, loadHistory, loadLhBlocks, MAP_OUT } = require('./board');
 const { validate } = require('./validate');
 
 const ROOT = path.join(__dirname, '..', '..');
@@ -79,7 +79,7 @@ function checkBoard(tables, fileBoard, month, history = []) {
 
 /* 파일 지도 색인과 다시 계산한 색인이 같아야 한다(기준일·달은 보드 파일과 같게). 같으면 색인을 돌려준다 */
 function checkMap(tables, fileMap, board) {
-  const index = mapIndexFromLedger(tables, { referenceDate: board.referenceDate, observedMonth: board.observedMonth });
+  const index = mapIndexFromLedger(tables, { referenceDate: board.referenceDate, observedMonth: board.observedMonth, lhBlocks: loadLhBlocks() });
   if (!isDeepStrictEqual(index, fileMap)) throw new Error(`mapIndexFromLedger 결과가 ${MAP_OUT} 와 다르다(node tools/ledger/board.js 로 다시 만들고 확인)`);
   return index;
 }

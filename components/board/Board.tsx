@@ -10,7 +10,7 @@ import {
   C, CIR, K, PX0, RCOL, REGION_POS, RLAB, VW,
   addedMarks, apart, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '../../lib/board/sample';
-import { ledgerJudged, ledgerMix, makeDirectives, nation as nationOf } from '../../lib/board/directives';
+import { CAND_TEXT, candText, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf } from '../../lib/board/directives';
 import { AHEAD_COMPLETION, AGENCY_NAME, bottleneckOf } from '../../lib/board/projects-view';
 import { dotDates } from '../../lib/grid/spec';
 import type { LedgerBoard } from '../../lib/board/types';
@@ -120,7 +120,9 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   /* 선택 시점의 값. 단계 호수·증감은 선택 시점을 따르고(증감 = 선택 − 기준 달), 판정 값은 선택 시점 이하의 가장 늦은 판정 달(jm, 이력 달 또는 기준 달)의 값이다 — 판정 달이 없으면 판정 없음 */
   const v = L.stageUnits[cursor], nv = L.stageUnits[NOW], jm = judgedAt(T, cursor), judged = jm >= 0, SJ = JS[judged ? jm : NOW]!, ds = delayAt(T, DL, cursor), bk = bottleneckOf(SJ.delayByStage)?.i ?? -1;   // 병목: 사업 화면 '어디서 막혀 있는가'와 같은 계산(projects-view bottleneckOf)
   const planned = (m: number) => kind(T, m) === '예정 기준', showDlt = cursor !== NOW;
-  const jTag = judged ? `${ml(T, jm)} 판정` : '판정 없음', showJTag = jm !== cursor;   // 판정 달 꼬리표는 선택 달과 판정 달이 다를 때만(예정 달 → 기준 달 판정, 판정 없는 달 → 판정 없음)
+  const jTag = judged ? `${ml(T, jm)} 판정` : '판정 없음', showJTag = jm !== cursor;
+  /* 판정 범위(D3): candidate 가 있는 판정 행은 사업 번호가 있는 사업만(후보는 확인 필요로 따로), 없는 행(소급 이력)은 후보 포함 */
+  const scopeFrom = T.judged.find((m) => JS[m]?.candidate), mixed = judged && !SJ.candidate && scopeFrom !== undefined;   // 판정 달 꼬리표는 선택 달과 판정 달이 다를 때만(예정 달 → 기준 달 판정, 판정 없는 달 → 판정 없음)
   const ymKo = (m: number) => `${T.months[m].slice(0, 4)}년 ${Number(T.months[m].slice(5))}월`, ymDot = (ym: string) => ym.replace('-', '.');
   const J = L.judgment, d = SJ.delay.units, w = SJ.caution.units, ok = SJ.ok.units, tt = d + w + ok, pct = (x: number) => (x / tt * 100).toFixed(1) + '%';   // J = 기준 달 판정(기관 카드), d·w·ok = 선택 달 판정
   /* 원장 범위: 카드 제목의 title 에 보인다(일부가 전국처럼 보이지 않게) */
@@ -233,6 +235,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                   {judged ? <><span className="bg-bad" style={{ width: `${(d / tt * 100).toFixed(2)}%` }} /><span className="bg-warn" style={{ width: `${(w / tt * 100).toFixed(2)}%` }} /><span className="bg-ok" style={{ width: `${(ok / tt * 100).toFixed(2)}%` }} /></> : null}
                 </div>
                 {showJTag ? <span data-slot="judge-tag" className={cn(jtag, 'flex-none leading-none')}>{jTag}</span> : null}
+                {mixed ? <span data-slot="judge-tag" className={cn(jtag, 'flex-none leading-none')} title={`이 달 판정은 소급 이력이라 사업 번호가 없는 후보를 포함합니다 — ${ml(T, scopeFrom!)}부터 판정은 번호가 있는 사업만(후보는 ${CAND_TEXT}로 따로)`}>후보 포함</span> : null}
                 <span data-slot="basis-tag" className="flex-none text-[12px] leading-none whitespace-nowrap text-muted-foreground" title="막대·비율 = 지연·주의·정상 판정 사업의 계획 호수 비율(호수 기준) — 시도 타일의 지연율은 건수 기준">호수 기준</span>
               </div>
               {/* 판정 없는 달은 숫자 대신 '—'(칸 높이는 그대로라 달을 옮겨도 표가 흔들리지 않는다) */}
@@ -245,6 +248,13 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                   </div>
                 ))}
               </div>
+              {judged && SJ.candidate ? (
+                <div data-slot="board-cand" className="mt-1.5 flex flex-wrap items-baseline gap-x-2 text-[13px] text-muted-foreground tabular-nums" title={`사업 번호가 없는 후보(건축HUB 원천 예정일 기준)는 같은 판정 계산을 하되 지연·주의·정상에 넣지 않고 따로 셉니다 — 이미 준공했는데 대장과 연결되지 않았을 수 있습니다 · ${candText(SJ.candidate)}건`}>
+                  <span className="whitespace-nowrap"><b className="font-bold text-foreground">{CAND_TEXT}</b> {f(SJ.candidate.ok.projects + SJ.candidate.caution.projects + SJ.candidate.delay.projects)}건</span>
+                  <span className="whitespace-nowrap">{candText(SJ.candidate)}</span>
+                  <span className="ml-auto"><PanelLink href="/projects?sido=all&status=review" full={`${CAND_TEXT} 사업 목록(전국)`}>후보 목록</PanelLink></span>
+                </div>
+              ) : null}
             </div>
             {/* 증감 칸은 선택 달이 기준 달이 아닐 때만(기준 달이면 3칸) */}
             <div className={cn('mt-3 grid flex-auto grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-x-3', showDlt ? 'grid-cols-[minmax(0,1fr)_max-content_max-content_max-content] phone:grid-cols-[minmax(0,1fr)_max-content_max-content]' : 'grid-cols-[minmax(0,1fr)_max-content_max-content]')} aria-label={showDlt ? '단계별 호수, 기준 달 대비 증감, 지연 호수' : '단계별 호수, 지연 호수'}>
@@ -271,7 +281,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
 
           <Card variant="board" className={ringable(cur.p.includes('p-region'))} render={<section id="p-region" aria-label={`시도 ${L.regions.length}곳`} />}>
             <div className={phead}>
-              <h2 className={ptitle} title={`${scope} · 시도는 사업의 시군구 코드 앞 2자리 · 큰 숫자 = 지연율(지연 ÷ 판정 사업) · 아래 막대 = 지연 · 주의 · 정상 판정 사업 비율 · 바탕색 = 지연율 구간(${RLAB.join(' / ')}%, 흰 바탕 = 판정 대상 없음) · 건수는 타일에 마우스를 올리면 보입니다 · 판정은 ${judgedText}`}>시도 {L.regions.length}곳</h2>
+              <h2 className={ptitle} title={`${scope} · 시도는 사업의 시군구 코드 앞 2자리 · 큰 숫자 = 지연율(지연 ÷ 판정 사업, 판정은 사업 번호가 있는 사업만 — 후보는 ${CAND_TEXT}로 따로) · 아래 막대 = 지연 · 주의 · 정상 판정 사업 비율 · 바탕색 = 지연율 구간(${RLAB.join(' / ')}%, 흰 바탕 = 판정 대상 없음) · 건수는 타일에 마우스를 올리면 보입니다 · 판정은 ${judgedText}`}>시도 {L.regions.length}곳</h2>
               <span className={cn(legend, 'ml-auto flex-nowrap gap-x-1.5')}><span title="지연율 = 지연 사업 수 ÷ 판정 사업 수(건수 기준)">지연율 · 건수 기준</span><span>0</span><span className="flex h-2.5 overflow-hidden rounded-[2px] border border-border" title={`지연율 구간: ${RLAB.join(' / ')}%`}>{RCOL.map((c, i) => <i key={i} className="block w-4" style={{ background: c }} />)}</span><span>30%+</span></span>
             </div>
             <div className="mt-3 grid flex-1 auto-rows-[minmax(60px,1fr)] grid-cols-4 gap-1.5 mobile:auto-rows-[minmax(54px,1fr)] mobile:gap-1">
@@ -279,8 +289,8 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 const n = sidoName(r.code), rate = r.judged ? r.delay / r.judged * 100 : null, pos = REGION_POS[r.code];   // 판정된 사업이 없으면 지연율도 없다(중립 색)
                 return (
                   <button key={r.code} type="button" data-slot="board-region" className={cn(btn, 'q-rise card-lift flex flex-col justify-between gap-1 min-w-0 @container rounded-[10px] border border-border bg-[var(--rc)] px-2.5 pt-2 pb-[9px] mobile:px-[7px] mobile:pt-1.5 mobile:pb-[7px] aria-pressed:border-primary aria-pressed:[box-shadow:0_0_0_1px_var(--primary)]')} aria-pressed={r.code === region} onClick={() => setRegion(r.code)} style={{ ['--rc' as string]: rate === null ? 'var(--card)' : RCOL[rcls(rate)], ['--i' as string]: ri * 0.5, ...(pos ? { gridArea: `${pos[0]} / ${pos[1]}` } : {}) }}
-                    title={`${n} · 사업 ${f(r.projects)}건 · 판정 ${f(r.judged)}건 · ` + (rate === null ? '판정 대상 없음' : `지연율 ${rate.toFixed(1)}% · 지연 ${r.delay} · 주의 ${r.caution} · 정상 ${r.ok}`) + (r.code === '12' ? ' · 2026.07부터 광주·전남은 전남광주로 집계됩니다' : '')}
-                    aria-label={`${n} 사업 ${f(r.projects)}건 판정 ${f(r.judged)}건 ` + (rate === null ? '판정 대상 없음' : `지연 ${r.delay} 주의 ${r.caution} 정상 ${r.ok} 지연율 ${rate.toFixed(1)}%`)}>
+                    title={`${n} · 사업 ${f(r.projects)}건 · 판정 ${f(r.judged)}건 · ` + (rate === null ? '판정 대상 없음' : `지연율 ${rate.toFixed(1)}% · 지연 ${r.delay} · 주의 ${r.caution} · 정상 ${r.ok}`) + (r.candidate?.judged ? ` · ${CAND_TEXT} ${f(r.candidate.judged)}건(계산하면 지연 ${f(r.candidate.delay)} · 주의 ${f(r.candidate.caution)} · 정상 ${f(r.candidate.ok)} — 판정에 넣지 않음)` : '') + (r.code === '12' ? ' · 2026.07부터 광주·전남은 전남광주로 집계됩니다' : '')}
+                    aria-label={`${n} 사업 ${f(r.projects)}건 판정 ${f(r.judged)}건 ` + (rate === null ? '판정 대상 없음' : `지연 ${r.delay} 주의 ${r.caution} 정상 ${r.ok} 지연율 ${rate.toFixed(1)}%`) + (r.candidate?.judged ? ` ${CAND_TEXT} ${f(r.candidate.judged)}건` : '')}>
                     <span className="flex items-baseline justify-between gap-1.5 @max-[105px]:flex-col @max-[105px]:items-start @max-[105px]:gap-0.5">
                       <span className="text-[15px] leading-[1.25] font-bold whitespace-nowrap text-foreground @max-[105px]:text-[13px]">{n}</span>
                       <span className={cn(disp, 'text-[22px] leading-none whitespace-nowrap @max-[105px]:text-[18px]')}>{rate === null ? '—' : <>{rate.toFixed(1)}<small className="text-[14px] @max-[105px]:text-[12px]">%</small></>}</span>
@@ -293,7 +303,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               })}
               <div data-slot="board-region-sum" aria-live="polite" className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 rounded-[10px] border border-border bg-card px-3.5 py-2 [grid-area:5/2/6/5] mobile:gap-x-2.5 mobile:gap-y-0.5 mobile:px-2 mobile:py-1.5">
                 <b className="text-[15px]">{sidoName(curReg.code)}</b>
-                <span className="flex gap-2.5 text-[14px] whitespace-nowrap text-muted-foreground mobile:gap-1.5 mobile:text-[13px]"><span>지연<strong className="ml-[3px] text-bad">{f(curReg.delay)}</strong></span><span>주의<strong className="ml-[3px] text-warn">{f(curReg.caution)}</strong></span><span>정상<strong className="ml-[3px] text-ok">{f(curReg.ok)}</strong></span><span>건</span></span>
+                <span className="flex gap-2.5 text-[14px] whitespace-nowrap text-muted-foreground mobile:gap-1.5 mobile:text-[13px]"><span>지연<strong className="ml-[3px] text-bad">{f(curReg.delay)}</strong></span><span>주의<strong className="ml-[3px] text-warn">{f(curReg.caution)}</strong></span><span>정상<strong className="ml-[3px] text-ok">{f(curReg.ok)}</strong></span><span>건</span>{curReg.candidate?.judged ? <span title={`사업 번호가 없는 후보 — 같은 계산을 하되 판정에 넣지 않음 · 계산하면 지연 ${f(curReg.candidate.delay)} · 주의 ${f(curReg.candidate.caution)} · 정상 ${f(curReg.candidate.ok)}`}>· 확인 필요<strong className="ml-[3px] text-foreground">{f(curReg.candidate.judged)}</strong></span> : null}</span>
                 <span className={cn(pacts, 'mobile:ml-0')}><PanelLink href={`/region?sido=${curReg.code}`} full={`${sidoName(curReg.code)} 실적(실데이터) 상세`}>{sidoName(curReg.code)} 실적</PanelLink>{curRegMap ? <MapLink href={curRegMap} full={`${sidoName(curReg.code)} 지도에서 보기`} /> : null}</span>
               </div>
             </div>
@@ -303,7 +313,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         <div className="mt-3.5 grid grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] gap-3.5">
           <Card variant="board" className={ringable(cur.p.includes('p-trend'))} render={<section id="p-trend" aria-label="지연·주의 추이" />}>
             <div className={phead}>
-              <h2 className={ptitle} title={`지연·주의 호수(호) · 2025.01~2026.09 건축HUB 과거 판 소급 판정 · 2026.10부터 월 관측 · 이름표 = 선택 달 값과 전월 대비 증감(원천이 추가된 달은 판정 대상이 바뀌어 '비교 불가')`}>지연·주의 추이</h2>
+              <h2 className={ptitle} title={`지연·주의 호수(호) · 2025.01~2026.09 건축HUB 과거 판 소급 판정 · 2026.10부터 월 관측 · 이름표 = 선택 달 값과 전월 대비 증감(원천이 추가된 달은 판정 대상이 바뀌어 '비교 불가')${scopeFrom !== undefined ? ` · ${ml(T, scopeFrom)}부터 사업 번호가 있는 사업만 판정(그 앞 달 소급 판정은 후보 포함 — 직접 비교 주의)` : ''}`}>지연·주의 추이</h2>
             </div>
             {/* 선·격자는 non-scaling-stroke 로 화면 px 굵기를 지키고(1px 미만 흐림 방지, 계획서 14절 T2), 점·글자는 선 위에 겹친 HTML 이라 폭이 줄어도 크기가 그대로다 */}
             <div className="mt-3 flex" style={{ height: TH }}>
@@ -360,7 +370,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {L.agencies.filter((a) => a.projects).map((a, ai) => {
                 const out = a.units - a.okUnits - a.cautionUnits - a.delayUnits, pw = (n: number) => `${(n / a.units * 100).toFixed(1)}%`;   // out = 판정 밖 호수(LH 후보·예정 없는 사업)
                 return (
-                  <div key={a.id} className={ag} title={`${a.name} ${f(a.units)}호 — 정상 ${f(a.okUnits)} · 주의 ${f(a.cautionUnits)} · 지연 ${f(a.delayUnits)} · 판정 밖 ${f(out)}호${a.excludedUnits ? `(판정 제외 ${f(a.excludedUnits)}호)` : ''}. ${a.id === 'unknown' ? `사업 ${f(a.projects)}건 — ` : ''}${dotDates(a.note ?? '')}${a.id === 'unknown' ? `. 판정 밖: ${dotDates(outNote ?? '')}` : ''}`}>
+                  <div key={a.id} className={ag} title={`${a.name} ${f(a.units)}호 — 정상 ${f(a.okUnits)} · 주의 ${f(a.cautionUnits)} · 지연 ${f(a.delayUnits)} · 판정 밖 ${f(out)}호${a.excludedUnits || a.candidateUnits ? `(${[a.excludedUnits ? `판정 제외 ${f(a.excludedUnits)}호` : '', a.candidateUnits ? `${CAND_TEXT} ${f(a.candidateUnits)}호` : ''].filter(Boolean).join(' · ')})` : ''}. ${a.id === 'unknown' ? `사업 ${f(a.projects)}건 — ` : ''}${dotDates(a.note ?? '')}${a.id === 'unknown' ? `. 판정 밖: ${dotDates(outNote ?? '')}` : ''}`}>
                     <div className={agName}><b>{a.id === 'unknown' ? AGENCY_NAME.etc : a.name}</b><span className="text-[13px] font-normal text-muted-foreground">{f(a.units)}호</span></div>
                     <div className={cn(bar3, 'q-grow-x h-3 mobile:col-span-full mobile:row-start-2')} style={{ ['--i' as string]: ai }} role="img" aria-label={`${a.name} ${f(a.units)}호: 정상 ${f(a.okUnits)} 주의 ${f(a.cautionUnits)} 지연 ${f(a.delayUnits)} 판정 밖 ${f(out)}`}>
                       <span className="block bg-ok" style={{ width: pw(a.okUnits) }} /><span className="block bg-warn" style={{ width: pw(a.cautionUnits) }} /><span className="block bg-bad" style={{ width: pw(a.delayUnits) }} /><span className="block bg-[var(--out)]" style={{ width: pw(out) }} />

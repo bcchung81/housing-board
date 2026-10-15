@@ -20,7 +20,7 @@ import { sidoName } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
 import { getPolicyProgress, getProjectDrawer, getProjectsIndex } from '../../../lib/board/projects-index';
 import {
-  AGENCY_NAME, AGENCY_TIP, BOARD_CIR, BOARD_COLOR, BOARD_NAMES, CAND_NAME, DELAY_GROUP, LONG_DELAY_MONTHS, NONE_NAME, PAST_DUE, PLAN_COL, STATUS_NAME, STATUS_ORDER, STATUS_RANGE, STATUS_TIP,
+  AGENCY_NAME, AGENCY_TIP, BOARD_CIR, BOARD_COLOR, BOARD_NAMES, CAND_NAME, DATE_ALT, DELAY_GROUP, LONG_DELAY_MONTHS, NONE_NAME, PAST_DUE, PLAN_COL, STATUS_NAME, STATUS_ORDER, STATUS_RANGE, STATUS_TIP,
   applyFilters, candidateOf, isMetro, compareLines, editionText, listHref, listOrder, parseFilters, pipelineOf, policyLabel, priorityOf, questionsOf, scopeOf, summaryOf, ymText,
   type Filters, type ProjectRow,
 } from '../../../lib/board/projects-view';
@@ -242,9 +242,9 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <InfoTip label="목록 읽는 법">
             <dl>
               <dt>기본 순서</dt><dd>점검 필요 순 — 예정일을 오래 넘긴 사업부터 · {CAND_NAME}은 번호가 있는 사업 뒤에(열 머리를 누르면 그 순서로)</dd>
-              <dt>{PLAN_COL}</dt><dd>지금 잡혀 있는 다음 예정일 · 이미 지난 날짜는 옅게(넘긴 개월은 지연 열), 기준일보다 앞섰지만 1개월이 안 된 날짜는 &apos;{PAST_DUE}&apos;(상태는 그대로), 공사를 마친 사업은 &apos;실제&apos;</dd>
-              <dt>상태</dt><dd>{STATUS_NAME.ok} · {STATUS_NAME.caution} · {STATUS_NAME.delay} · {STATUS_NAME.long} · {STATUS_NAME.none}({NONE_NAME.done} · {NONE_NAME.plan} — 입주·모집 예정만 · {NONE_NAME.none})</dd>
-              <dt>지연(개월)</dt><dd>예정일을 넘긴 개월 수 · {STATUS_RANGE.caution} · {STATUS_RANGE.delay} · {STATUS_RANGE.long}({DELAY_GROUP} = 6개월 이상)</dd>
+              <dt>{PLAN_COL}</dt><dd>지금 잡혀 있는 다음 예정일 · 이미 지난 날짜는 옅게(넘긴 개월은 지연 열), 기준일보다 앞섰지만 1개월이 안 된 날짜는 &apos;{PAST_DUE}&apos;(상태는 그대로), 공사를 마친 사업은 &apos;실제&apos; · &apos;{DATE_ALT}&apos; = 준공 예정이 HOME과 LH 준공 예정 파일에서 다름(판정은 HOME 날짜)</dd>
+              <dt>상태</dt><dd>{STATUS_NAME.ok} · {STATUS_NAME.caution} · {STATUS_NAME.delay} · {STATUS_NAME.long}(사업 번호가 있는 사업만) · {STATUS_NAME.review}({CAND_NAME} — 같은 계산이지만 판정에 넣지 않음) · {STATUS_NAME.none}({NONE_NAME.done} · {NONE_NAME.plan} — 입주·모집 예정만 · {NONE_NAME.none})</dd>
+              <dt>지연(개월)</dt><dd>예정일을 넘긴 개월 수 · {STATUS_RANGE.caution} · {STATUS_RANGE.delay} · {STATUS_RANGE.long}({DELAY_GROUP} = 6개월 이상) · {CAND_NAME}은 옅게</dd>
               <dt>공고 확인</dt><dd>모집공고에서 확인한 호수(공고가 났다고 공사를 마친 것은 아님)</dd>
               <dt>{CAND_NAME}</dt><dd>사업 번호가 아직 없어 상세 일정이 없는 사업 — 누르면 간단 보기</dd>
               <dt>{NO_LOC}</dt><dd>지도 열 표지 — 좌표가 없어 지도에서는 시군구로 보이는 사업</dd>

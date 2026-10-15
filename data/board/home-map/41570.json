@@ -6,6 +6,6 @@
   "referenceDate": "2026-10-13",
   "edition": "20261014T102506Z",
   "projects": [
-    {"id":"PRJ-41570-0073","name":"조달청)김포고촌2 A1BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-06-29"},"units":350,"pks":[],"pnus":[],"bundles":[],"label":"김포고촌2 A1","agency":"lh","moveIn":"2028-07","completion":"2027-06-29","noticeUnits":262,"bjd":"4157025300","loc":{"by":"block","at":[126.768225,37.606713],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}}
+    {"id":"PRJ-41570-0073","name":"조달청)김포고촌2 A1BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-06-29"},"dateAlt":{"source":"LH","planned":"2027-07-31"},"units":350,"pks":[],"pnus":[],"bundles":[],"label":"김포고촌2 A1","agency":"lh","moveIn":"2028-07","completion":"2027-06-29","noticeUnits":262,"bjd":"4157025300","loc":{"by":"block","at":[126.768225,37.606713],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}}
   ]
 }

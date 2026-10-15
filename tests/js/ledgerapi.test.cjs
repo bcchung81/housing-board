@@ -105,5 +105,6 @@ test('계약 문서: /api/v1/ledger 경로·LedgerResponse 가 openapi.json 에 
   assert.deepEqual(op.parameters.map((p) => p.name), ['sgg']);
   const props = doc.components.schemas.LedgerProject.required, at = props.indexOf('next') + 1;
   assert.ok(doc.components.schemas.LedgerProject.properties.done && !props.includes('done'), 'done(마지막 실제 준공 달)은 있을 때만');
-  for (const r of Object.values(MAP.bySgg).flat()) assert.deepEqual(Object.keys(r), 'done' in r ? [...props.slice(0, at), 'done', ...props.slice(at)] : props);
+  assert.ok(doc.components.schemas.LedgerProject.properties.dateAlt && !props.includes('dateAlt'), 'dateAlt(원천 날짜 다름 { source, planned }, 2026-10-15 D2)은 있을 때만');
+  for (const r of Object.values(MAP.bySgg).flat()) assert.deepEqual(Object.keys(r), [...props.slice(0, at), ...('done' in r ? ['done'] : []), ...('dateAlt' in r ? ['dateAlt'] : []), ...props.slice(at)]);
 });

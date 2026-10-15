@@ -1,7 +1,7 @@
 /* 사업 화면 요약 카드의 세 부분(서버가 그린다 — 값은 lib/board/projects-view.ts). 시안: docs/design/home-concept/assets/app.js questions·pipeline·policyCompare.
    - Questions: 핵심 질문 5칸(정책 목표 대비·어디서 막힘·어떤 사업·어디 먼저·앞으로 얼마). 누르면 그 답의 거르기(또는 지역 공급)로 간다. 칸마다 쉬운 말 정의 ⓘ(help).
      첫 칸(정책 목표 대비, 정책 전체 범위)은 page 가 '요약 범위' 줄 밖에 따로 두고, 대표 단계 하나 대신 ①~⑥ 단계마다 확인/목표·비율을 작은 줄로(StageRates).
-   - Pipeline(보이는 이름 '단계별 진행'): 리본 칸마다 이 단계까지 온 사업(실제 기록이 있거나 지금 그 단계 — 계획 호수·비율 막대)과 지금 이 단계(누르면 거르는 기준). 둘 다 없는 칸은 접은 한 칸(점선)으로 한 번만.
+   - Pipeline(보이는 이름 '단계별 진행'): 리본 칸마다 이 단계까지 온 사업(지금 이 단계이거나 그 뒤 단계 — 현재 단계 기준 누적이라 ①계획 = 전체, 계획 호수·비율 막대)과 지금 이 단계(누르면 거르는 기준). 둘 다 없는 칸은 접은 한 칸(점선)으로 한 번만.
    - ReadHelp: 핵심 정의(지연 구간 · 확인과 담당자 추정 · 이 단계까지 온 사업과 지금 · 병목 · 앞으로 12개월)를 눌러서 여는 ⓘ 하나로(인쇄에는 펼친 목록).
    - PolicyCompare: 정책별 같은 기간 목표 대비 확인 — 기본 접힘(<details>, 머리에 핵심 한 줄 compareHead), 인쇄 보기는 펼침. 목표가 있는 단계만 칸으로, 나머지는 '목표 없음' 한 번.
      확인과 담당자 추정을 섞지 않는다 — 막대는 확인(실색) 뒤에 추정 포함분(옅은 점선), 숫자는 '확인 / 목표' 와 아래 '추정 포함' 줄. 부족·초과·비율은 확인으로만 낸다.
@@ -76,17 +76,17 @@ export function Pipeline({ open, shut, total, on, href, badges, scope }: { open:
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h3 className={h3} title="큰 숫자·막대 = 이 단계까지 온 사업(그 단계 실제 기록이 있거나 지금 그 단계인 사업)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에">단계별 진행</h3>
+        <h3 className={h3} title="큰 숫자·막대 = 이 단계까지 온 사업(지금 이 단계이거나 그 뒤 단계에 있는 사업 — ①계획은 전체)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에">단계별 진행</h3>
         <InfoTip label="단계별 진행">
           <p>사업이 계획부터 입주까지 여섯 단계 중 어디까지 왔는지 셉니다.</p>
-          <p>큰 숫자는 이 단계까지 온 사업의 집 수(호)이고, &apos;지금 이 단계&apos;는 지금 바로 그 단계에 있는 사업 수입니다. 칸을 누르면 그 사업만 아래 목록에 남습니다.</p>
+          <p>큰 숫자는 이 단계까지 온 사업의 집 수(호)입니다. 지금 착공 단계인 사업은 계획·인허가에도 셉니다. &apos;지금 이 단계&apos;는 지금 바로 그 단계에 있는 사업 수입니다. 칸을 누르면 그 사업만 아래 목록에 남습니다.</p>
         </InfoTip>
         <Badge title="사업 원장의 사업별 단계 기록으로 센 값(아래 정책 목표 대비는 HOME 정책 진행 자료)">사업 원장 · 이 단계까지 온 사업(호) · {scope}</Badge>
         {badges}
       </div>
       <ol className="m-0 mt-3 grid list-none gap-2 p-0 narrow:grid-cols-3! mobile:grid-cols-2!" style={{ gridTemplateColumns: cols }} aria-label="단계별 진행">
         {open.map((c) => {
-          const tip = `${BOARD_CIR[c.i]} ${BOARD_NAMES[c.i]} — 이 단계까지 온 사업 ${fmt(c.n)}건(${c.share.toFixed(0)}% · 그 단계 실제 기록이 있거나${c.i === 0 ? ' 계획 호수를 확인했거나' : ''} 지금 그 단계인 사업) · 계획 호수 ${fmt(c.units)}호 · 지금 이 단계 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만 목록에' : ''}`;
+          const tip = `${BOARD_CIR[c.i]} ${BOARD_NAMES[c.i]} — 이 단계까지 온 사업 ${fmt(c.n)}건(${c.share.toFixed(0)}% · 지금 이 단계이거나 그 뒤 단계인 사업) · 계획 호수 ${fmt(c.units)}호 · 지금 이 단계 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만 목록에' : ''}`;
           const body = (
             <>
               <span className="flex items-center gap-1.5 text-[14px] whitespace-nowrap" style={{ color: BOARD_INK[c.i] }}><i className="block size-[9px] flex-none rounded-[2px]" style={{ background: BOARD_COLOR[c.i] }} aria-hidden="true" />{BOARD_CIR[c.i]} {BOARD_NAMES[c.i]}</span>
@@ -113,9 +113,9 @@ export function Pipeline({ open, shut, total, on, href, badges, scope }: { open:
         {shut.length ? (
           <li className="min-w-0">
             <div className="flex h-full min-h-[80px] flex-col justify-center gap-0.5 rounded-[10px] border border-dashed border-line2 px-3 py-2.5"
-              title={`${shut.map((i) => `${BOARD_CIR[i]} ${BOARD_NAMES[i]}`).join(' · ')} — 실제 기록이 있는 사업도, 지금 이 단계인 사업도 없음${shut.includes(5) ? ' · 입주 실적은 원천에서 집계하지 않음(실제 시작일만)' : ''}`}>
+              title={`${shut.map((i) => `${BOARD_CIR[i]} ${BOARD_NAMES[i]}`).join(' · ')} — 이 단계까지 온 사업이 없음${shut.includes(5) ? ' · 입주 실적은 원천에서 집계하지 않음(실제 시작일만)' : ''}`}>
               <span className="text-[14px] text-muted-foreground">{shut.map((i) => `${BOARD_CIR[i]}${BOARD_NAMES[i]}`).join(' · ')}</span>
-              <span className="text-[14px] text-muted-foreground">기록 없음</span>
+              <span className="text-[14px] text-muted-foreground">사업 없음</span>
             </div>
           </li>
         ) : null}
@@ -217,9 +217,9 @@ export function PolicyCompare({ lines, title, href, open = false }: { lines: Com
 function Defs() {
   return (
     <dl>
-      <dt>{DELAY_GROUP}</dt><dd>지금 잡혀 있는 예정일을 6개월 넘게 넘긴 사업 — 6~12개월은 지연, 12개월이 넘으면 장기(1~6개월 넘긴 주의는 따로 셈)</dd>
+      <dt>{DELAY_GROUP}</dt><dd>지금 잡혀 있는 예정일을 6개월 넘게 넘긴 사업 — 6~12개월은 지연, 12개월이 넘으면 장기(1~6개월 넘긴 주의는 따로 셈) · 사업 번호가 없는 후보는 &apos;확인 필요&apos;로 따로 셈</dd>
       <dt>확인 · 담당자 추정 포함</dt><dd>확인 = 실제 기록으로 확인한 집 수(호) · 담당자 추정 포함 = 여기에 담당자가 짐작해 넣은 값을 더한 수(부족·초과 비율은 확인한 수로만 계산)</dd>
-      <dt>이 단계까지 온 사업 · 지금 이 단계</dt><dd>이 단계까지 온 사업 = 그 단계 기록이 있거나 지금 그 단계에 있는 사업 · 지금 이 단계 = 지금 바로 그 단계에 있는 사업(칸을 누르면 목록이 그 사업만)</dd>
+      <dt>이 단계까지 온 사업 · 지금 이 단계</dt><dd>이 단계까지 온 사업 = 지금 그 단계이거나 그 뒤 단계에 있는 사업(①계획은 전체) · 지금 이 단계 = 지금 바로 그 단계에 있는 사업(칸을 누르면 목록이 그 사업만)</dd>
       <dt>병목</dt><dd>예정일을 6개월 넘게 넘긴 사업의 집 수가 가장 많이 몰린 단계(종합상황판과 같은 계산)</dd>
       <dt>{AHEAD_COMPLETION}</dt><dd>자료 기준 달부터 12개월 안에 공사를 마칠 예정인 사업(이미 공사를 마친 사업은 뺌)</dd>
     </dl>

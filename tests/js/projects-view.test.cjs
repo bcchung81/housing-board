@@ -80,34 +80,35 @@ test('거르기 읽기·주소: 맞지 않는 값은 거르지 않고, 렌즈는
   assert.deepEqual(['lh', 'sh', 'gh', 'etc'].map((a) => V.applyFilters(rows, { agency: a }).length), [269, 24, 4, 2020], '기타 = 기관 미연결(지자체·국방부 포함)');
 });
 
-test('상태: 지연 중 경과 12개월 이상은 장기 지연, 점검 필요 = 주의·지연·장기 지연(지연 개월 큰 순)', () => {
+test('상태: 지연 중 경과 12개월 이상은 장기 지연, 점검 필요 = 번호 있는 사업의 주의·지연·장기 지연(지연 개월 큰 순), 번호 없는 후보는 확인 필요(D3)', () => {
   const n = (s) => rows.filter((r) => V.statusOf(r) === s).length;
-  assert.deepEqual(['ok', 'caution', 'delay', 'long', 'none'].map(n), [1607, 86, 96, 219, 309]);
+  assert.deepEqual(['ok', 'caution', 'delay', 'long', 'review', 'none'].map(n), [165, 2, 0, 2, 1839, 309]);
   assert.equal(n('delay') + n('long'), BOARD.judgment.delay.projects, '지연 + 장기 지연 = 보드 판정 지연');
   assert.equal(n('caution'), BOARD.judgment.caution.projects);
+  assert.equal(n('review'), BOARD.scope.candidateJudged, '확인 필요 = 보드의 후보 계산 건수');
   const chk = V.listOrder(V.applyFilters(rows, { status: 'check' }), { status: 'check' });
-  assert.equal(chk.length, 401);
+  assert.equal(chk.length, 4);
   /* 번호가 있는 사업 먼저, 후보 사업은 뒤(2026-10-15 결정) — 그 안에서 지연 개월 큰 순 */
   const sameGroup = (a, b) => !!a.issued === !!b.issued;
   assert.ok(chk.every((r, i) => i === 0 || (!!chk[i - 1].issued >= !!r.issued && (!sameGroup(chk[i - 1], r) || V.lateOf(chk[i - 1]) >= V.lateOf(r)))), '번호 있는 사업 먼저 · 지연 개월 큰 순');
   const top = V.priorityOf(rows);
-  assert.deepEqual(top.map(V.lateOf), [81, 71, 70, 68, 65, 58, 58, 50, 49, 43], '월간 보고 우선 점검 상위 10');
-  assert.deepEqual([top[5].name, top[5].count, top[5].units], ['온천2구역아파트', 4, 3853], '같은 시군구·같은 이름(한 단지의 동·공구)은 한 줄로 합친다 — 상위 10에 같은 이름이 되풀이되지 않는다');
+  assert.deepEqual(top.map(V.lateOf), [19, 19, 2, 1], '월간 보고 우선 점검 = 번호 있는 사업의 주의·지연만(D3 — 후보는 확인 필요로 따로)');
+  assert.deepEqual(top.map((r) => r.name), ['인천검단 35', '인천검단 AA13-1', '인천검단 AA-21BL 아파트 건설공사 7공구', '이천장호원 B2BL 아파트 건설공사 1공구']);
   assert.equal(new Set(top.map((r) => `${r.sgg}|${r.name}`)).size, top.length);
   const all = V.listOrder(V.applyFilters(rows, {}));
-  assert.ok(all.every((r, i) => i === 0 || (!!all[i - 1].issued >= !!r.issued && (!sameGroup(all[i - 1], r) || (V.lateOf(all[i - 1]) ?? -1) >= (V.lateOf(r) ?? -1)))), '목록 기본 순서 = 번호 있는 사업 먼저, 그 안에서 점검 필요 순(지연 개월 큰 순, 경과 없는 사업은 뒤)');
+  assert.ok(all.every((r, i) => i === 0 || (!!all[i - 1].issued >= !!r.issued && (!sameGroup(all[i - 1], r) || (V.overdueMonthsOf(all[i - 1]) ?? -1) >= (V.overdueMonthsOf(r) ?? -1)))), '목록 기본 순서 = 번호 있는 사업 먼저, 그 안에서 예정일 경과 개월 큰 순(후보끼리도 같은 계산 순, 경과 없는 사업은 뒤)');
 });
 
-test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 75.8% 부족 · ② 인허가 113,632호 · 지연 315건 · 대구 · 앞으로 12개월 준공 214,975호(= 종합상황판 향후 12개월)', () => {
+test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 75.8% 부족 · ③ 착공 1,666호 · 지연 2건(확인 필요 후보 313 따로, D3) · 인천 · 앞으로 12개월 준공 214,975호(= 종합상황판 향후 12개월)', () => {
   const q = Q({});
   assert.deepEqual(Object.keys(q), ['9·7 대책 목표 대비(정책 전체)', '어디서 막혀 있는가', '어떤 사업이 늦어지는가', '어디를 먼저 챙기는가', '앞으로 얼마나 공급되는가'], '첫 칸은 범위(정책 전체)를 이름에');
   const a = q['9·7 대책 목표 대비(정책 전체)'];
   assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['75.8', '% 부족', '①계획 확인 3,560 / 목표 14,694', 'bad', '/projects?policy=97&sido=all']);
   for (const x of Object.values(q)) assert.ok(x.help && !/policy-progress|samePeriod|HOME|원장/.test(x.help), `ⓘ 정의는 쉬운 말: ${x.q}`);
   assert.match(a.tip, /담당자 추정 포함\(확인과 따로\): ①계획 5,789호/, '추정 포함은 title 에만');
-  assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['② 인허가', '병목 · 지연(장기 포함) 83,715호', '/projects?sido=all&stage=1&status=check']);
-  assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['315', '지연 6~12개월 96 · 장기 12개월+ 219', '/projects?sido=all&status=check'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로');
-  assert.deepEqual([q['어디를 먼저 챙기는가'].value, q['어디를 먼저 챙기는가'].sub, q['어디를 먼저 챙기는가'].href], ['대구', '지연·주의 25,072호', '/projects?sido=27']);
+  assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['③ 착공', '병목 · 지연(장기 포함) 1,666호', '/projects?sido=all&stage=2&status=check']);
+  assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['2', '지연 6~12개월 0 · 장기 12개월+ 2 · 확인 필요(후보) 313', '/projects?sido=all&status=check'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로, 확인 필요(후보)는 머리 숫자 밖');
+  assert.deepEqual([q['어디를 먼저 챙기는가'].value, q['어디를 먼저 챙기는가'].sub, q['어디를 먼저 챙기는가'].href], ['인천', '지연·주의 2,890호', '/projects?sido=28']);
   const up = BOARD.upcoming.reduce((s, x) => ({ units: s.units + x.units, projects: s.projects + x.projects }), { units: 0, projects: 0 });
   assert.deepEqual([q['앞으로 얼마나 공급되는가'].value, q['앞으로 얼마나 공급되는가'].sub, q['앞으로 얼마나 공급되는가'].href], [up.units.toLocaleString('en-US'), `앞으로 12개월 · 준공 예정 · ${up.projects}건`, '/region?sido=all']);
   assert.equal(up.units, 214975);
@@ -127,15 +128,15 @@ test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·
   assert.equal(q41['앞으로 얼마나 공급되는가'].href, '/region?sido=41');
 });
 
-test('단계 파이프라인: 거쳐 간 사업(실제 기록 또는 지금 그 단계)이 있는 칸만 열고 나머지는 접은 한 칸 — 전체 ⑥만, 9·7 ⑤⑥, 1·29 ②~⑥', () => {
+test('단계 파이프라인: 이 단계까지 온 사업(현재 단계 기준 누적, D4 — ①계획 = 전체)이 있는 칸만 열고 나머지는 접은 한 칸 — 전체 ⑥만, 9·7 ⑤⑥, 1·29 ②~⑥', () => {
   const p = (f) => V.pipelineOf(V.applyFilters(rows, f, 'stage'));
   const all = p({});
-  assert.deepEqual(all.open.map((c) => [c.i, c.n]), [[0, 2306], [1, 1967], [2, 615], [3, 582], [4, 382]]);
+  assert.deepEqual(all.open.map((c) => [c.i, c.n]), [[0, 2317], [1, 2174], [2, 938], [3, 744], [4, 382]]);
   assert.deepEqual(all.shut, [5]);
   assert.equal(all.total, 2317);
-  assert.equal(all.open[0].units, rows.reduce((s, r) => s + r.units, 0), '①은 계획 호수가 있거나 지금 ①인 사업(호수 0 은 더해도 합은 같다)');
+  assert.equal(all.open[0].units, rows.reduce((s, r) => s + r.units, 0), '①은 범위 전체');
   const p97 = p({ policy: pol('97') });
-  assert.deepEqual([p97.open.map((c) => [c.i, c.n, c.units]), p97.shut, p97.total], [[[0, 141, 129771], [1, 10, 6751], [2, 103, 70673], [3, 35, 24468]], [4, 5], 141]);
+  assert.deepEqual([p97.open.map((c) => [c.i, c.n, c.units]), p97.shut, p97.total], [[[0, 141, 129771], [1, 106, 72966], [2, 104, 71267], [3, 35, 24468]], [4, 5], 141]);
   assert.deepEqual(p({ policy: pol('129') }).shut, [1, 2, 3, 4, 5]);
   assert.ok(rows.every((r) => r.reached.every((i) => i >= 1 && i <= 5)), 'reached 는 리본 칸 1~5');
 });

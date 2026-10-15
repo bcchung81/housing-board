@@ -13,13 +13,15 @@ export function timelineOf(L: { months: string[]; now: number; actualThrough?: s
 }
 /* 한 달의 판정(data/board/judgment-history.json 의 행 모양). 기준 달은 원장 집계 자신의 judgment */
 type Judged = { projects: number; units: number };
-export type JudgeRow = { month: string; referenceDate: string; ok: Judged; caution: Judged; delay: Judged; delayByStage: number[]; cautionByStage: number[]; judged: number; addedSources?: string[] };
-type JudgeSource = { months: string[]; now: number; referenceDate: string; judgment: { ok: Judged; caution: Judged; delay: Judged }; delayByStage: number[]; cautionByStage: number[]; scope: { judged: number }; trend?: JudgeRow[] };
+/* ok·caution·delay = 판정(사업 번호가 있는 사업만), candidate = 번호가 없는 후보의 같은 계산(확인 필요). candidate 가 없는 행(2026-09 까지의 소급 이력·옛 집계)은 후보 포함 판정 */
+type CandJudged = { ok: Judged; caution: Judged; delay: Judged };
+export type JudgeRow = { month: string; referenceDate: string; ok: Judged; caution: Judged; delay: Judged; candidate?: CandJudged; delayByStage: number[]; cautionByStage: number[]; judged: number; addedSources?: string[] };
+type JudgeSource = { months: string[]; now: number; referenceDate: string; judgment: { ok: Judged; caution: Judged; delay: Judged; candidate?: CandJudged }; delayByStage: number[]; cautionByStage: number[]; scope: { judged: number }; trend?: JudgeRow[] };
 /* 달(시점 번호)마다 판정 행, 판정 없는 달은 null */
 export function judgmentsOf(L: JudgeSource): (JudgeRow | null)[] {
   const out: (JudgeRow | null)[] = L.months.map(() => null);
   for (const r of L.trend ?? []) { const i = L.months.indexOf(r.month); if (i >= 0 && i <= L.now) out[i] = r; }
-  out[L.now] ??= { month: L.months[L.now], referenceDate: L.referenceDate, ok: L.judgment.ok, caution: L.judgment.caution, delay: L.judgment.delay, delayByStage: L.delayByStage, cautionByStage: L.cautionByStage, judged: L.scope.judged };
+  out[L.now] ??= { month: L.months[L.now], referenceDate: L.referenceDate, ok: L.judgment.ok, caution: L.judgment.caution, delay: L.judgment.delay, ...(L.judgment.candidate ? { candidate: L.judgment.candidate } : {}), delayByStage: L.delayByStage, cautionByStage: L.cautionByStage, judged: L.scope.judged };
   return out;
 }
 export const CIR = ['①', '②', '③', '④', '⑤', '⑥'];

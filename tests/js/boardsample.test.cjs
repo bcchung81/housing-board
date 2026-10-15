@@ -90,7 +90,9 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   assert.equal(L.scope.projects, L.scope.issued + L.scope.candidates);
   const b = L.scope.bySource;
   assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 사업 ${S.f(L.scope.projects)}건\\(발급 ${b.issued} · LH 후보 ${b.lhCandidates} · 건축HUB 후보 ${S.f(b.hubBulkCandidates)}${b.home ? ` · 수도권 HOME ${S.f(b.home)}` : ''}\\)$`));
-  assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(발급 사업은 착공·준공, 건축HUB 후보는 준공 예정 경과만 · 판정 밖: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의$`));
+  /* D3(2026-10-15): 판정은 사업 번호가 있는 사업만, 후보는 '확인 필요(후보)'로 따로 — 카드 title 에 후보 계산 결과 */
+  const c = L.judgment.candidate;
+  assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(사업 번호가 있는 사업 — 착공·준공 예정 경과 · 확인 필요\\(후보\\) ${S.f(L.scope.candidateJudged)}건은 번호가 없는 후보라 따로 셈\\(건축HUB 후보, 준공 예정 경과만 계산\\) · 판정 밖: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의 · 확인 필요\\(후보\\): 계산하면 지연 ${S.f(c.delay.projects)} · 주의 ${S.f(c.caution.projects)} · 정상 ${S.f(c.ok.projects)}건\\(지연·주의에 넣지 않음\\)$`));
   assert.doesNotMatch(dir.map((d) => d.basis).join(' '), /전국 아님/);
   const bk = L.delayByStage.indexOf(Math.max(...L.delayByStage));
   assert.deepEqual([dir[2].pre, dir[2].big, dir[2].u], [`병목 ${S.K[bk]}`, S.f(L.delayByStage[bk]), '호']);
@@ -317,7 +319,8 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(agency, /<span className="block bg-\[var\(--out\)\]" style=\{\{ width: pw\(out\) \}\} \/>/, '판정 밖 막대 조각 = --out');
   assert.match(agency, /전체 지연 \$\{f\(J\.delay\.units\)\}호/);
   assert.match(agency, /a\.id === 'unknown' \? `\. 판정 밖: \$\{dotDates\(outNote \?\? ''\)\}`/, '기관 미상 설명은 그 행의 title 에');
-  assert.match(agency, /\(판정 제외 \$\{f\(a\.excludedUnits\)\}호\)/, '판정 제외는 행 title 에');
+  assert.match(agency, /판정 제외 \$\{f\(a\.excludedUnits\)\}호/, '판정 제외는 행 title 에');
+  assert.match(agency, /\$\{CAND_TEXT\} \$\{f\(a\.candidateUnits\)\}호/, '확인 필요(후보) 호수도 행 title 에(막대에서는 판정 밖, D3)');
   assert.match(agency, /pw\(a\.okUnits\)[\s\S]*pw\(a\.cautionUnits\)[\s\S]*pw\(a\.delayUnits\)/, '막대는 호수');
   assert.match(agency, /\(J\.delay\.units \? a\.delayUnits \/ J\.delay\.units \* 100 : 0\)\.toFixed\(1\)/, '지연 비중은 전체 지연 호수 중 비중');
 });

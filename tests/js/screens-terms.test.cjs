@@ -75,7 +75,7 @@ test(`용어표: ${TERMS.map(([a, b]) => `${a} → ${b}`).join(' · ')}`, () => 
   assert.deepEqual([V.STATUS_RANGE.caution, V.STATUS_RANGE.delay, V.STATUS_RANGE.long], ['주의 1~6개월', '지연 6~12개월', '장기 12개월+']);
   for (const f of [{}, { metro: true }, { sido: '26' }]) {
     const q = Q(f);
-    assert.match(q['어떤 사업이 늦어지는가'].sub, /^지연 6~12개월 [\d,]+ · 장기 12개월\+ [\d,]+$/);
+    assert.match(q['어떤 사업이 늦어지는가'].sub, /^지연 6~12개월 [\d,]+ · 장기 12개월\+ [\d,]+(?: · 확인 필요\(후보\) [\d,]+)?$/);
     if (q['어디서 막혀 있는가'].sub !== '지연 사업 없음') assert.match(q['어디서 막혀 있는가'].sub, /^병목 · 지연\(장기 포함\) [\d,]+호$/);
   }
   /* 서랍 단계 줄: 공식 번호는 보이는 글에 없고 title 에만, ⑤ 준공 질문은 ③ 착공 질문을 베끼지 않는다 */

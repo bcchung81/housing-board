@@ -3,34 +3,40 @@
 import type { Cell, Col, Row } from '../grid/spec';
 import { mapHref } from './map-href';
 import {
-  AGENCY_NAME, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, CAND_NAME, EVENT_NAME, PLAN_COL,
-  agencyKey, isMetro, lateOf, listHref, nextOf, statusLabel, statusOf, statusTip, ymText, type Filters, type ProjectRow, type Status,
+  AGENCY_NAME, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, CAND_NAME, EVENT_NAME, PLAN_COL, STATUS_NAME,
+  agencyKey, dateAltOf, isMetro, listHref, nextOf, overdueMonthsOf, statusLabel, statusOf, statusTip, ymText, type Filters, type ProjectRow, type Status,
 } from './projects-view';
 
 /* '경기도 고양시 일산동구' → '경기 고양시 일산동구'(표가 전국이라 시도를 붙이되 짧게), drop 이면 시도를 뺀다 */
 export const sggLabel = (name: string, sido?: string, drop = false) => { const t = name.split(' '); return t.length < 2 ? name : drop ? t.slice(1).join(' ') : sido ? `${sido} ${t.slice(1).join(' ')}` : name; };
 
-/* 상태 칸 견본: 정상·주의는 색 면, 지연은 빨간 테두리, 장기 지연은 빨간 면, 판정 없음(준공 완료·판정 일정 없음·일정 없음)은 빗금 */
+/* 상태 칸 견본: 정상·주의는 색 면, 지연은 빨간 테두리, 장기 지연은 빨간 면, 확인 필요(후보)는 회색 테두리, 판정 없음(준공 완료·판정 일정 없음·일정 없음)은 빗금 */
 type Sw = { kind: 'fill' | 'outline' | 'hatch'; color?: string };
-export const STATUS_SW: Record<Status, Sw> = { ok: { kind: 'fill', color: 'var(--ok)' }, caution: { kind: 'fill', color: 'var(--warn)' }, delay: { kind: 'outline', color: 'var(--bad)' }, long: { kind: 'fill', color: 'var(--bad)' }, none: { kind: 'hatch' } };
-const STATUS_SORT: Record<Status, number> = { long: 0, delay: 1, caution: 2, none: 3, ok: 4 };
+export const STATUS_SW: Record<Status, Sw> = { ok: { kind: 'fill', color: 'var(--ok)' }, caution: { kind: 'fill', color: 'var(--warn)' }, delay: { kind: 'outline', color: 'var(--bad)' }, long: { kind: 'fill', color: 'var(--bad)' }, review: { kind: 'outline', color: 'var(--muted-foreground)' }, none: { kind: 'hatch' } };
+const STATUS_SORT: Record<Status, number> = { long: 0, delay: 1, caution: 2, review: 2.5, none: 3, ok: 4 };
 export function statusCell(r: ProjectRow): Cell {
   const s = statusOf(r), w = STATUS_SW[s];
   const why = s === 'none' && r.why ? ` — ${r.why === 'LH 후보' ? 'LH 후보(판정 대상 아님)' : r.why}` : '';
-  return { text: statusLabel(r), sort: STATUS_SORT[s], title: `${statusTip(r)}${why}`, ...(w.kind === 'hatch' ? { mark: 'hatch' as const, muted: true } : w.kind === 'outline' ? { swatch: w.color, mark: 'outline' as const, tone: 'bad' as const } : { swatch: w.color, ...(s === 'long' ? { tone: 'bad' as const } : {}) }) };
+  return { text: statusLabel(r), sort: STATUS_SORT[s], title: `${statusTip(r)}${why}`, ...(w.kind === 'hatch' ? { mark: 'hatch' as const, muted: true } : w.kind === 'outline' ? { swatch: w.color, mark: 'outline' as const, ...(s === 'delay' ? { tone: 'bad' as const } : { muted: true }) } : { swatch: w.color, ...(s === 'long' ? { tone: 'bad' as const } : {}) }) };
 }
 /* 현재 예정: projects-view nextOf(간단 보기 서랍과 같은 값). 목록·인쇄 표는 지연(개월) 열이 같은 행에 있어 지난 예정의 '경과 n개월' 꼬리표를 빼고
-   날짜를 옅게 둔다(경과 개월은 title 에 — 지연 열·상태와 세 번 겹치지 않게). 지연 열이 없는 간단 보기는 꼬리표를 그대로 쓴다 */
+   날짜를 옅게 둔다(경과 개월은 title 에 — 지연 열·상태와 세 번 겹치지 않게). 지연 열이 없는 간단 보기는 꼬리표를 그대로 쓴다.
+   원천 날짜 다름(D2)은 꼬리표 끝에 붙이고 설명은 title 에 */
 export const nextCell = (r: ProjectRow): Cell => {
   const n = nextOf(r);
-  if (!n || lateOf(r) === null) return n;
-  return { text: n.text, sort: n.sort, title: n.title, muted: true };
+  if (!n) return n;
+  const { alt, ...c } = n, past = overdueMonthsOf(r) !== null;
+  const tag = [past ? undefined : c.tag, alt?.text].filter(Boolean).join(' · ');
+  return { text: c.text, sort: c.sort, title: alt ? `${c.title} · ${alt.title}` : c.title, ...(past || c.muted ? { muted: true } : {}), ...(tag ? { tag } : {}) };
 };
 /* 칸마다 title 을 붙이면 2,317행 목록의 화면 자료가 커진다 — 설명은 열 머리에 두고 칸에는 뜻이 다른 것(상태·현재 예정·지연)만 */
 export const stagePill = (r: ProjectRow): Cell => ({ text: `${BOARD_CIR[r.board]} ${BOARD_NAMES[r.board]}`, sort: r.board, pill: { color: BOARD_COLOR[r.board], ink: BOARD_INK[r.board] } });
+/* 지연(개월): 번호가 있는 사업은 판정 색, 후보는 같은 계산의 경과 개월을 옅게(판정에 넣지 않음 — 확인 필요) */
 export const lateCell = (r: ProjectRow): Cell => {
-  const late = lateOf(r);
-  return late === null ? null : { text: `+${late}`, sort: late, tone: r.cls === 'caution' ? 'warn' : 'bad', strong: r.cls !== 'caution', title: `${EVENT_NAME[r.overdue!.eventType]} 예정 ${ymText(r.overdue!.planned)} 경과` };
+  const late = overdueMonthsOf(r);
+  if (late === null) return null;
+  if (!r.issued) return { text: `+${late}`, sort: late, muted: true, title: `${EVENT_NAME[r.overdue!.eventType]} 원천 예정 ${ymText(r.overdue!.planned)} 경과 — ${CAND_NAME}이라 판정에 넣지 않음(${STATUS_NAME.review})` };
+  return { text: `+${late}`, sort: late, tone: r.cls === 'caution' ? 'warn' : 'bad', strong: r.cls !== 'caution', title: `${EVENT_NAME[r.overdue!.eventType]} 예정 ${ymText(r.overdue!.planned)} 경과` };
 };
 export const agencyCell = (r: ProjectRow): Cell => { const k = agencyKey(r.agency); return k === 'etc' ? { text: AGENCY_NAME[k], muted: true } : AGENCY_NAME[k]; };
 export const unitsCell = (r: ProjectRow): Cell => (r.units > 0 ? r.units : { na: '미확인' });
@@ -65,10 +71,13 @@ export function listRows(list: ProjectRow[], f: Filters, sel: string | null, sid
         sgg: sggLabel(r.sggName, sido(r.sgg.slice(0, 2))),
         agency: agencyCell(r), stage: stagePill(r), units: unitsCell(r),
         notice: r.notice, next: nextCell(r), late: lateCell(r), status: statusCell(r), map: mapCell(r, noLoc(r.id)),
+        ...(r.dateAlt ? { note: noteOf(r) } : {}),
       },
     };
   });
 }
-/* CSV 열 = 첫 열 사업 id + 화면에 보이는 열(뺀 빈 열 제외)에서 지도 표지만 뺀다(링크라 값이 없다). 화면 표에는 id 열이 없어 행에 붙여 넣는다(csvRows) */
-export const csvCols = (cols: Col[]): Col[] => [{ key: 'id', label: '사업 id', kind: 'text' }, ...cols.filter((c) => c.key !== 'map')];
+/* CSV 비고(화면 표에는 열이 없고 현재 예정 칸의 꼬리표·title 로 보인다): 원천 날짜 다름(D2) — 'HOME 날짜 · LH 날짜 · 판정은 HOME' */
+const noteOf = (r: ProjectRow) => { const a = dateAltOf(r)!; return `${a.text} — ${a.title.replace(/^준공 예정이 원천마다 다름 — /, '')}`; };
+/* CSV 열 = 첫 열 사업 id + 화면에 보이는 열(뺀 빈 열 제외)에서 지도 표지만 뺀다(링크라 값이 없다) + 끝 열 비고. 화면 표에는 id 열이 없어 행에 붙여 넣는다(csvRows) */
+export const csvCols = (cols: Col[]): Col[] => [{ key: 'id', label: '사업 id', kind: 'text' }, ...cols.filter((c) => c.key !== 'map'), { key: 'note', label: '비고', kind: 'text' }];
 export const csvRows = (rows: Row[]): Row[] => rows.map((r) => ({ ...r, c: { id: r.id, ...r.c } }));

@@ -11,7 +11,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { isDeepStrictEqual } = require('node:util');
-const { boardFromLedger, mapIndexFromLedger, loadHistory, MAP_OUT } = require('./board');
+const { boardFromLedger, mapIndexFromLedger, loadHistory, loadLhBlocks, MAP_OUT } = require('./board');
 const { validate } = require('./validate');
 const { readEnv, readTables, client, SCREEN_FILES } = require('./supabase-load');
 
@@ -87,7 +87,7 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
   const storedMap = { schema: 'ledger-map/1', observedMonth: month, referenceDate: list[0]?.reference_date, bySgg: Object.fromEntries(list.map((r) => [r.sgg_code, r.rows])) };
   const fileMap = JSON.parse(fs.readFileSync(path.join(root, MAP_OUT), 'utf8'));
   check(list.every((r) => r.reference_date === row?.reference_date), 'api.map 의 기준일 ≠ 보드 기준일');
-  check(isDeepStrictEqual(storedMap, mapIndexFromLedger(db, { referenceDate: row?.reference_date, observedMonth: month })), '저장한 지도 색인 ≠ mapIndexFromLedger(DB 표)');
+  check(isDeepStrictEqual(storedMap, mapIndexFromLedger(db, { referenceDate: row?.reference_date, observedMonth: month, lhBlocks: loadLhBlocks() })), '저장한 지도 색인 ≠ mapIndexFromLedger(DB 표)');
   check(isDeepStrictEqual(storedMap, fileMap), `저장한 지도 색인 ≠ ${MAP_OUT}`);
   log(`지도: 시군구 ${list.length} · 사업 ${list.reduce((s, r) => s + r.rows.length, 0)} · 저장본 = 재계산 = 파일 ${problems.some((p) => p.includes('지도')) ? '아님' : '같음'}`);
 

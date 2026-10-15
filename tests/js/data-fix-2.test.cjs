@@ -30,26 +30,27 @@ const pf = (q) => V.parseFilters(q, ctx);
 const sido = (c) => ({ 11: '서울', 28: '인천', 41: '경기' })[c] ?? c;
 
 test('#3·D1 현재 예정: 경과 1개월 미만으로 지난 예정은 그 날짜 + \'예정일 지남\'(빈칸 0), 상태는 그대로', () => {
-  const past = rows.filter((r) => r.overdue && V.lateOf(r) === null);
+  const past = rows.filter((r) => V.pastDueOf(r));
   assert.equal(past.length, 29);
   for (const r of past) {
     const n = V.nextOf(r);
     assert.ok(n, r.id);
     assert.equal(n.tag, V.PAST_DUE);
     assert.equal(n.text, `${V.ymText(r.overdue.planned)} ${V.NEXT_NAME[r.overdue.eventType]}`);
-    assert.equal(V.statusOf(r), r.cls, '상태 판정은 바꾸지 않는다');
+    assert.equal(V.statusOf(r), r.issued ? r.cls : 'review', '상태 판정은 바꾸지 않는다(번호가 없는 후보는 확인 필요 — D3)');
   }
   assert.equal(V.PAST_DUE, '예정일 지남');
   assert.equal(R.PAST_DUE, V.PAST_DUE, '지역 공급과 같은 말');
   assert.equal(rows.filter((r) => r.cls && !V.nextOf(r)).length, 0, '판정 사업의 현재 예정 빈칸 0(전 20행)');
-  for (const id of ['PRJ-28245-0055', 'PRJ-28245-0057', 'PRJ-41131-0048']) {
+  /* 계양 A2·A3 은 원천 날짜 다름(D2: HOME 10.11 · LH 10.31) 표지가 꼬리표 끝에 붙는다 */
+  for (const [id, tag] of [['PRJ-28245-0055', '예정일 지남 · 원천 날짜 다름(LH 2026.10.31)'], ['PRJ-28245-0057', '예정일 지남 · 원천 날짜 다름(LH 2026.10.31)'], ['PRJ-41131-0048', '예정일 지남']]) {
     const r = byId[id], cell = L.nextCell(r);
-    assert.equal(cell.tag, '예정일 지남', `${id} 목록 칸`);
+    assert.equal(cell.tag, tag, `${id} 목록 칸`);
     assert.match(cell.text, /^2026\.10 준공$/);
     assert.equal(V.statusOf(r), 'ok');
-    assert.equal(S.csvValue(cell, 'text'), '2026.10 준공 (예정일 지남)', 'CSV 도 같은 값');
+    assert.equal(S.csvValue(cell, 'text'), `2026.10 준공 (${tag})`, 'CSV 도 같은 값');
   }
-  assert.equal(L.nextCell(byId['PRJ-28290-0058']).tag, undefined, '지연 행(지연 열이 있는 목록)은 꼬리표 없이 옅게 — 그대로');
+  assert.equal(L.nextCell(byId['PRJ-28290-0058']).tag, '원천 날짜 다름(LH 2028.12)', '지연 행(지연 열이 있는 목록)은 경과 꼬리표 없이 옅게 — 원천 날짜 다름만');
   assert.match(V.nextOf(byId['PRJ-28290-0058']).tag, /^경과 \d+개월$/, '간단 보기의 지연 꼬리표는 그대로');
   assert.match(read('components/projects/ProjectDetail.tsx'), /pastDueOf\(r\) \?[\s\S]*\{PAST_DUE\}/, '서랍 머리에도 표지');
   assert.match(read('components/projects/Candidate.tsx'), /next = nextOf\(r\)/, '간단 보기는 nextOf 그대로');
@@ -70,8 +71,11 @@ test('#21 상태 이름: 판정 없음을 준공 완료 · 판정 일정 없음 
   assert.equal(V.STATUS_RANGE.none, '판정 없음', '칩 이름(묶음)');
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /<dt>상태<\/dt><dd>[\s\S]*NONE_NAME\.done[\s\S]*NONE_NAME\.plan[\s\S]*NONE_NAME\.none/, '목록 읽는 법 ⓘ 에 상태 정의');
+  /* D3(2026-10-15): 번호가 없는 후보 1,839건(옛 정상 1,442 · 주의 84 · 지연 96 · 장기 217)은 확인 필요 — 판정 없음 309 는 그대로 */
   const st = {}; for (const r of rows) st[V.statusOf(r)] = (st[V.statusOf(r)] ?? 0) + 1;
-  assert.deepEqual(st, { none: 309, ok: 1607, long: 219, delay: 96, caution: 86 }, '상태 건수 불변');
+  assert.deepEqual(st, { none: 309, ok: 165, review: 1839, long: 2, caution: 2 }, '상태 건수');
+  const calc = {}; for (const r of rows) calc[V.calcOf(r)] = (calc[V.calcOf(r)] ?? 0) + 1;
+  assert.deepEqual(calc, { none: 309, ok: 1607, long: 219, delay: 96, caution: 86 }, '같은 계산(번호와 상관없이)은 그대로');
 });
 
 test('#25 시 단위 코드: 구가 있는 경기 시는 구 사업을 합치고, 지도 개요와 같은 건수', () => {
@@ -130,7 +134,7 @@ test('#15 날짜 점 표기: 종합상황판·사업·지역 공급 title 의 �
 test('#16 단위 건: 종합상황판 카드·향후 12개월', () => {
   const d = makeDirectives({ sourceCount: 1, stageNames: ['a', 'b', 'c', 'd', 'e', 'f'], ledger: BOARD, start: { year: '2026', upto: 8, cum: 1, cumLy: 1 }, bottleneck: () => null });
   assert.equal(d[1].m, '2,317건');
-  assert.equal(d[4].m, '지연 315건');
+  assert.equal(d[4].m, '지연 2건', 'D3: 사업 번호가 있는 사업만(옛 315건 = 2 + 확인 필요 후보 313)');
   assert.ok(d.every((x) => !/사업$/.test(x.u)));
   const board = read('components/board/Board.tsx');
   assert.match(board, /\{f\(upProj\)\}건<\/span>/);
@@ -200,12 +204,13 @@ test('D1 지역 공급: 기준일보다 앞선 예정은 표지만, 합계에는
   assert.match(page, /이 합계에 들어 있음/);
 });
 
-test('불변식: 지연 315건 = 사업 지연(장기 포함) · 9·7 8,049·4,732·8,742 · 수도권 227,976호·262건 · CSV = 목록', () => {
-  assert.equal(BOARD.judgment.delay.projects, 315);
+test('불변식: 지연 2건(D3 — 번호 있는 사업만, 옛 315 = 2 + 확인 필요 313) = 사업 지연(장기 포함) · 9·7 8,049·4,732·8,742 · 수도권 227,976호·262건 · CSV = 목록', () => {
+  assert.equal(BOARD.judgment.delay.projects, 2);
+  assert.equal(BOARD.judgment.delay.projects + BOARD.judgment.candidate.delay.projects, 315);
   const all = V.applyFilters(rows, pf({ sido: 'all' }));
-  assert.equal(all.filter((r) => ['delay', 'long'].includes(V.statusOf(r))).length, 315);
+  assert.equal(all.filter((r) => ['delay', 'long'].includes(V.statusOf(r))).length, 2);
   const q = Object.fromEntries(V.questionsOf(rows, pf({ sido: 'all' }), { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, sidoName: sido, sggName: (c) => c }).map((x) => [x.q, x]));
-  assert.equal(q['어떤 사업이 늦어지는가'].value, '315');
+  assert.equal(q['어떤 사업이 늦어지는가'].value, '2');
   const s97 = PP.policies.find((p) => p.policyId.includes('97') || p.name.includes('9·7')).stages.SUPPLY.samePeriod.find((y) => y.year === 2026);
   assert.deepEqual([s97.target, s97.actual, s97.actualWithEstimates], [8049, 4732, 8742]);
   const metro = V.summaryOf(V.applyFilters(rows, pf({})));

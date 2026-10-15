@@ -3,8 +3,9 @@
    시안: docs/design/home-concept/projects.html · assets/app.js(2026-10-14 승인). */
 
 export type Cls = 'ok' | 'caution' | 'delay';
-/* 상태 = 판정(cls) + 장기 지연(지연 중 경과 12개월 이상) + 판정 없음(칸 이름은 준공 완료·판정 일정 없음·일정 없음으로 나눈다 — statusLabel) */
-export type Status = Cls | 'long' | 'none';
+/* 상태 = 판정(cls) + 장기 지연(지연 중 경과 12개월 이상) + 확인 필요(번호가 없는 후보) + 판정 없음(칸 이름은 준공 완료·판정 일정 없음·일정 없음으로 나눈다 — statusLabel).
+   판정(정상·주의·지연·장기 지연)은 사업 번호가 있는 사업(issued)만 — 번호가 없는 후보는 같은 계산(cls)을 하되 '확인 필요'로 따로 센다(2026-10-15 사용자 결정 D3) */
+export type Status = Cls | 'long' | 'review' | 'none';
 /* 상태 거르기: 상태 하나 또는 '점검 필요'(주의·지연·장기 지연, 지연 개월 큰 순) */
 export type StatusFilter = Status | 'check';
 export type LinkStatus = 'CONFIRMED' | 'REVIEW_REQUIRED';
@@ -12,6 +13,8 @@ export type LinkStatus = 'CONFIRMED' | 'REVIEW_REQUIRED';
 export type MapRow = {
   id: string; name: string | null; issued: boolean; stage: string; cls: Cls | null; why: string | null;
   overdue: { eventType: string; planned: string; months: number } | null; next: { eventType: string; planned: string } | null; done?: string; units: number;
+  /* 원천 날짜 다름(D2): 준공 현재 예정(HOME — 판정에 쓰는 날짜)과 LH 준공 예정 파일의 날짜가 다른 사업만(tools/ledger/board.js dateAltOf) */
+  dateAlt?: { source: string; planned: string };
   /* 건축HUB 관리번호(공개 범위 미결 — 화면에는 값 없이 '건축HUB 인허가에서 온 사업'인지만 쓴다) */
   pks?: string[];
 };
@@ -39,24 +42,33 @@ export const EVENT_NAME: Record<string, string> = { PERMIT: '인허가', CONSTRU
 
 /* 판정 규칙: 주의 1~6개월, 지연 6개월 이상(tools/ledger/board.js JUDGE), 장기 지연 12개월 이상(시안 build-data.mjs LONG_DELAY_MONTHS) */
 export const LONG_DELAY_MONTHS = 12;
-export const STATUS_NAME: Record<Status, string> = { ok: '정상', caution: '주의', delay: '지연', long: '장기 지연', none: '판정 없음' };
-export const STATUS_TIP: Record<Status, string> = { ok: '현재 예정일이 지나지 않음', caution: '현재 예정일 경과 1~6개월', delay: '현재 예정일 경과 6~12개월', long: '현재 예정일 경과 12개월 이상', none: '판정할 현재 예정일(착공·준공)이 없음 — 준공 완료 · 판정 일정 없음(입주·모집 예정만) · 일정 없음' };
-export const STATUS_ORDER: Status[] = ['ok', 'caution', 'delay', 'long', 'none'];
+export const STATUS_NAME: Record<Status, string> = { ok: '정상', caution: '주의', delay: '지연', long: '장기 지연', review: '확인 필요', none: '판정 없음' };
+export const STATUS_TIP: Record<Status, string> = { ok: '현재 예정일이 지나지 않음', caution: '현재 예정일 경과 1~6개월', delay: '현재 예정일 경과 6~12개월', long: '현재 예정일 경과 12개월 이상',
+  review: '사업 번호가 없는 후보 — 원천(건축HUB) 예정일로 같은 계산을 하지만 판정에 넣지 않고 따로 셈(이미 준공했는데 대장과 연결되지 않았을 수 있음)',
+  none: '판정할 현재 예정일(착공·준공)이 없음 — 준공 완료 · 판정 일정 없음(입주·모집 예정만) · 일정 없음' };
+export const STATUS_ORDER: Status[] = ['ok', 'caution', 'delay', 'long', 'review', 'none'];
 /* 구간 이름(칩 메뉴·보조 줄): '지연'은 묶음(지연 + 장기, 경과 6개월 이상)에만 '지연(장기 포함)'으로 쓰고, 구간은 개월을 붙여 구분한다 */
-export const STATUS_RANGE: Record<Status, string> = { ok: '정상', caution: '주의 1~6개월', delay: '지연 6~12개월', long: '장기 12개월+', none: '판정 없음' };
+export const STATUS_RANGE: Record<Status, string> = { ok: '정상', caution: '주의 1~6개월', delay: '지연 6~12개월', long: '장기 12개월+', review: '확인 필요(후보)', none: '판정 없음' };
 export const DELAY_GROUP = '지연(장기 포함)';
-export const statusOf = (r: { cls: Cls | null; overdue: { months: number } | null }): Status =>
+/* 계산 상태: 번호와 상관없이 같은 판정 계산(cls)의 결과 — 후보의 '확인 필요' 안쪽 값(칸 title·간단 보기) */
+type Judgeable = { cls: Cls | null; overdue: { months: number } | null };
+export const calcOf = (r: Judgeable): Exclude<Status, 'review'> =>
   r.cls === 'delay' ? (r.overdue && r.overdue.months >= LONG_DELAY_MONTHS ? 'long' : 'delay') : r.cls ?? 'none';
+export const statusOf = (r: Judgeable & { issued: boolean }): Status => (r.cls && !r.issued ? 'review' : calcOf(r));
 /* 판정 없음(none)의 칸 이름: 준공을 마친 사업 · 판정 대상 일정(착공·준공)은 없고 입주·모집 예정만 있는 사업 · 그 밖(예정 자료 없음·LH 후보). 범주·건수는 그대로 none 하나 */
 export type NoneKind = 'done' | 'plan' | 'none';
 export const NONE_NAME: Record<NoneKind, string> = { done: '준공 완료', plan: '판정 일정 없음', none: '일정 없음' };
 export const NONE_TIP: Record<NoneKind, string> = { done: '준공 실제가 있어 판정하지 않음(이미 공사를 마친 사업)', plan: '현재 예정(입주·모집)은 있으나 판정 대상 일정(착공·준공)이 없음', none: '판정할 현재 예정일이 없음' };
 export const noneKind = (r: { done?: string; next: unknown; why: string | null }): NoneKind => (r.done ? 'done' : r.next && r.why !== 'LH 후보' ? 'plan' : 'none');
-export const statusLabel = (r: { cls: Cls | null; overdue: { months: number } | null; done?: string; next: unknown; why: string | null }) => { const s = statusOf(r); return s === 'none' ? NONE_NAME[noneKind(r)] : STATUS_NAME[s]; };
-export const statusTip = (r: { cls: Cls | null; overdue: { months: number } | null; done?: string; next: unknown; why: string | null }) => { const s = statusOf(r); return s === 'none' ? NONE_TIP[noneKind(r)] : STATUS_TIP[s]; };
-export const isCheck = (r: ProjectRow) => r.cls === 'caution' || r.cls === 'delay';
-/* 지연 개월: 주의·지연(장기 포함) 사업의 현재 예정일 경과 개월, 아니면 null */
-export const lateOf = (r: ProjectRow) => (isCheck(r) && r.overdue ? r.overdue.months : null);
+type Labeled = Judgeable & { issued: boolean; done?: string; next: unknown; why: string | null };
+export const statusLabel = (r: Labeled) => { const s = statusOf(r); return s === 'none' ? NONE_NAME[noneKind(r)] : STATUS_NAME[s]; };
+export const statusTip = (r: Labeled) => { const s = statusOf(r); return s === 'none' ? NONE_TIP[noneKind(r)] : s === 'review' ? `${STATUS_TIP.review} · 계산하면 ${STATUS_NAME[calcOf(r)]}` : STATUS_TIP[s]; };
+/* 점검 필요 = 번호가 있는 사업 중 주의·지연(장기 포함). 후보는 '확인 필요'로 따로 */
+export const isCheck = (r: ProjectRow) => r.issued && (r.cls === 'caution' || r.cls === 'delay');
+/* 예정일 경과 개월(번호와 상관없는 계산): 주의·지연으로 계산된 사업의 현재 예정일 경과 개월, 아니면 null */
+export const overdueMonthsOf = (r: Judgeable) => ((r.cls === 'caution' || r.cls === 'delay') && r.overdue ? r.overdue.months : null);
+/* 지연 개월: 점검 필요 사업(번호가 있는 주의·지연)의 현재 예정일 경과 개월, 아니면 null */
+export const lateOf = (r: ProjectRow) => (isCheck(r) ? overdueMonthsOf(r) : null);
 
 /* 정책 이름: 화면에는 '9·7 대책'처럼 짧은 이름 + '대책'(정책 코드만 내지 않는다) */
 export const policyLabel = (p: { short: string }) => `${p.short} 대책`;
@@ -139,7 +151,7 @@ export function applyFilters(rows: ProjectRow[], f: Filters, skip?: 'stage' | 's
 }
 /* 목록 순서(기본): 번호가 있는 사업 먼저, 후보 사업(원천 예정이라 확인 필요)은 뒤에 — 그 안에서 점검 필요 순(지연 개월 큰 순, 같으면 호수 큰 순), 경과 없는 사업은 원래 순서로 뒤에.
    판정·상태·지연 건수는 그대로이고 순서만 나눈다(2026-10-15 사용자 결정). 열 머리로 정렬을 바꾸면 그 정렬을 따른다(그리드) */
-export const listOrder = (rows: ProjectRow[]) => [...rows].sort((a, b) => Number(!a.issued) - Number(!b.issued) || (lateOf(b) ?? -1) - (lateOf(a) ?? -1) || (lateOf(a) === null ? 0 : b.units - a.units));
+export const listOrder = (rows: ProjectRow[]) => [...rows].sort((a, b) => Number(!a.issued) - Number(!b.issued) || (overdueMonthsOf(b) ?? -1) - (overdueMonthsOf(a) ?? -1) || (overdueMonthsOf(a) === null ? 0 : b.units - a.units));
 
 /* 거르기 주소: 열쇠 순서를 고정한다. patch 의 undefined 는 그 거르기를 푼다. 렌즈(policy·program)는 하나, 시도를 고르면 시군구가 풀리고 시군구를 고르면 시도가 풀린다.
    지역 sido: 'NN' · 'metro'(수도권) · 'all'(전국). 지역이 비면 기본 수도권 — 'metro' 는 ?stage·?status·?agency 가 함께 있을 때만 적는다(없으면 기본과 같아 뺀다) */
@@ -164,15 +176,15 @@ export function summaryOf(rows: ProjectRow[]) {
   const units = rows.reduce((s, r) => s + r.units, 0), notice = rows.reduce((s, r) => s + (r.notice ?? 0), 0);
   return {
     n: rows.length, units, notice, noticeProjects: rows.filter((r) => r.notice != null).length,
-    delay: rows.filter((r) => r.cls === 'delay').length, review: rows.filter((r) => r.link === 'REVIEW_REQUIRED').length, confirmed: rows.filter((r) => r.link === 'CONFIRMED').length,
+    delay: rows.filter((r) => r.issued && r.cls === 'delay').length, review: rows.filter((r) => r.link === 'REVIEW_REQUIRED').length, confirmed: rows.filter((r) => r.link === 'CONFIRMED').length,
     noticeRatio: units ? notice / units * 100 : null, noUnits: rows.filter((r) => !(r.units > 0)).length,
   };
 }
 
-/* ---------- 단계 파이프라인: 칸마다 그 단계를 거쳐 간 사업 수·그 계획 호수. 기록이 없는 칸은 접는다 ---------- */
-/* 칸의 두 숫자: 거쳐 간 n = 그 단계 실제 기록이 있거나(①은 계획 호수가 있거나) 지금 그 단계인 사업(누적, 큰 숫자·막대) · 지금 now = 지금 그 단계인 사업(칸을 누르면 거르는 기준).
-   지금 그 단계인 사업은 그 단계에 들어와 있으므로 거쳐 간 사업에 넣는다 — 실제 기록 없이 단계만 올라간 사업(예: 준공 실제 없이 06 인 사업) 때문에 지금 > 거쳐 간 이 되던 것을 막는다(불변식 now ≤ n) */
-export const reachedAt = (r: ProjectRow, i: number) => r.board === i || (i === 0 ? r.units > 0 : r.reached.includes(i));
+/* ---------- 단계 파이프라인: 칸마다 이 단계까지 온 사업 수·그 계획 호수. 기록이 없는 칸은 접는다 ---------- */
+/* 칸의 두 숫자: 이 단계까지 온 n = 지금 단계가 이 칸이거나 그 뒤인 사업(현재 단계 기준 누적 — 지금 ③인 사업은 ①·②에도 센다, 2026-10-15 사용자 결정 D4.
+   그래서 ①계획 = 범위 전체이고 칸이 뒤로 갈수록 줄어든다) · 지금 now = 지금 그 단계인 사업(칸을 누르면 거르는 기준 — 병목·'지금 이 단계'는 그대로 현재 단계) */
+export const reachedAt = (r: ProjectRow, i: number) => r.board >= i;
 export type PipeCell = { i: number; n: number; units: number; share: number; now: number };
 export function pipelineOf(rows: ProjectRow[]) {
   const cells: PipeCell[] = BOARD_NAMES.map((_, i) => {
@@ -185,9 +197,9 @@ export function pipelineOf(rows: ProjectRow[]) {
 
 /* ---------- 병목: 종합상황판 카드·리본·사업 핵심 질문이 함께 쓰는 한 계산 ---------- */
 /* 단계별 지연 호수 = 지연(현재 예정일 경과 6개월 이상, 장기 지연 포함) 사업의 계획 호수를 지금 단계(리본 칸)별로 더한 값 — 원장 집계 delayByStage 와 같다 */
-export function delayByStageOf(rows: { cls: Cls | null; board: number; units: number }[]): number[] {
+export function delayByStageOf(rows: { cls: Cls | null; board: number; units: number; issued: boolean }[]): number[] {
   const out = [0, 0, 0, 0, 0, 0];
-  for (const r of rows) if (r.cls === 'delay') out[r.board] += r.units;
+  for (const r of rows) if (r.issued && r.cls === 'delay') out[r.board] += r.units;   // 판정(번호가 있는 사업)만 — 원장 delayByStage 와 같다
   return out;
 }
 /* 병목 = 지연 호수가 가장 큰 단계(같으면 앞 단계). 지연 호수가 하나도 없으면 null */
@@ -293,7 +305,7 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
       tip: `${pol.name} 단계별 목표 대비 확인(${ymText(pair.from)}~${ymText(pair.through)}) · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 부족·초과·비율은 확인으로만 계산${cells!.some(hasEstimate) ? ` · 담당자 추정 포함(확인과 따로): ${cells!.filter(hasEstimate).map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.withEst!)}호`).join(' · ')}` : ''} · 누르면 이 정책의 사업`,
       help: `${policyLabel(pol)}이 올해 1월부터 단계마다 세운 목표 집 수(호)와, 실제 기록으로 확인한 집 수를 단계별로 나란히 보입니다. 줄마다 '확인 / 목표'와 모자라면 부족 %, 넘치면 초과 %입니다. 목표를 정하지 않은 단계는 '목표 없음'입니다. 정책 전체 숫자라 위에서 고른 지역·기관과 상관없습니다.` });
   } else {
-    const judged = scope.filter((r) => r.cls);
+    const judged = scope.filter((r) => r.cls && r.issued);
     if (judged.length) {
       const ok = judged.filter((r) => r.cls === 'ok').length;
       Q.push({ q: '계획대로 가고 있는가', href: listHref(f, { status: 'ok' }), value: String(Math.round(ok / judged.length * 100)), unit: '% 정상',
@@ -310,9 +322,11 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
     help: '예정일을 6개월 넘게 넘긴 사업이 가장 많이(호수 기준) 멈춰 있는 단계입니다.' });
   /* ③ 어떤 사업이 늦어지는가: 지연(장기 포함) 건수 = 지연 6~12개월 + 장기 12개월+(주의는 넣지 않는다) */
   const n = (s: Status) => late.filter((r) => statusOf(r) === s).length;
-  Q.push({ q: '어떤 사업이 늦어지는가', href: late.length ? listHref(f, { status: 'check' }) : undefined, value: fmt(n('delay') + n('long')), unit: '건', sub: `${STATUS_RANGE.delay} ${fmt(n('delay'))} · ${STATUS_RANGE.long} ${fmt(n('long'))}`,
-    tip: `${DELAY_GROUP} = ${STATUS_RANGE.delay} ${fmt(n('delay'))} + ${STATUS_RANGE.long} ${fmt(n('long'))} · ${STATUS_RANGE.caution} ${fmt(n('caution'))}건은 따로 · 누르면 점검 필요 목록`,
-    help: `예정일을 6개월 넘게 넘긴 사업 수입니다. 12개월 넘게 넘긴 사업은 '장기'로 따로 셉니다. 1~6개월 넘긴 사업(주의)은 넣지 않습니다.` });
+  /* 확인 필요(후보): 번호가 없는 후보 중 같은 계산으로 지연(장기 포함)인 사업 — 지연 건수에 넣지 않고 따로(D3) */
+  const candLate = scope.filter((r) => !r.issued && r.cls === 'delay').length, candText = candLate ? ` · ${STATUS_RANGE.review} ${fmt(candLate)}` : '';
+  Q.push({ q: '어떤 사업이 늦어지는가', href: late.length ? listHref(f, { status: 'check' }) : candLate ? listHref(f, { status: 'review' }) : undefined, value: fmt(n('delay') + n('long')), unit: '건', sub: `${STATUS_RANGE.delay} ${fmt(n('delay'))} · ${STATUS_RANGE.long} ${fmt(n('long'))}${candText}`,
+    tip: `${DELAY_GROUP} = ${STATUS_RANGE.delay} ${fmt(n('delay'))} + ${STATUS_RANGE.long} ${fmt(n('long'))}(사업 번호가 있는 사업만) · ${STATUS_RANGE.caution} ${fmt(n('caution'))}건은 따로${candLate ? ` · ${STATUS_RANGE.review} ${fmt(candLate)}건은 번호가 없는 후보 중 원천 예정일로 계산하면 지연인 사업(지연에 넣지 않음)` : ''} · 누르면 점검 필요 목록`,
+    help: `예정일을 6개월 넘게 넘긴 사업 수입니다. 12개월 넘게 넘긴 사업은 '장기'로 따로 셉니다. 1~6개월 넘긴 사업(주의)은 넣지 않습니다. 사업 번호가 없는 후보는 '확인 필요'로 따로 셉니다(이미 준공했는데 자료가 연결되지 않았을 수 있음).` });
   /* ④ 어디를 먼저: 지연·주의 호수가 가장 큰 시도(시도·시군구를 고르면 시군구) */
   const bySgg = !!(f.sido || f.sgg), acc = new Map<string, number>();
   for (const r of late) { const k = bySgg ? r.sgg : r.sgg.slice(0, 2); acc.set(k, (acc.get(k) ?? 0) + r.units); }
@@ -340,10 +354,25 @@ export const CAND_PLAN = '원천 예정(확인 필요)';
 export const NEXT_NAME: Record<string, string> = { ...EVENT_NAME, SUPPLY_NOTICE: '모집' };
 /* 예정일 지남: 현재 예정일이 기준일보다 앞섰는데 실제 기록이 없고 경과가 1개월 미만(판정은 정상 그대로 — 2026-10-15 사용자 결정 D1). 지역 공급의 같은 표지는 lib/board/region.ts PAST_DUE */
 export const PAST_DUE = '예정일 지남';
-export const pastDueOf = (r: ProjectRow) => !!r.overdue && lateOf(r) === null;
-export function nextOf(r: ProjectRow): { text: string; sort: number; title: string; tag?: string; muted?: boolean } | null {
-  const late = lateOf(r);
-  if (late !== null && r.overdue) return { text: `${ymText(r.overdue.planned)} ${NEXT_NAME[r.overdue.eventType]}`, tag: `경과 ${r.overdue.months}개월`, sort: monthNo(r.overdue.planned), title: `${EVENT_NAME[r.overdue.eventType]} 현재 예정일 경과 ${r.overdue.months}개월 — ${STATUS_NAME[statusOf(r)]}` };
+export const pastDueOf = (r: ProjectRow) => !!r.overdue && overdueMonthsOf(r) === null;
+/* 원천 날짜 다름(D2): 준공 현재 예정(HOME)과 LH 준공 예정 파일의 날짜가 다른 사업의 표지. 판정은 HOME 날짜 그대로.
+   보이는 날짜가 준공이 아니면 'LH 준공'으로, 같은 달이면 일까지(계양 A2 HOME 2026.10.11 · LH 2026.10.31) */
+export const DATE_ALT = '원천 날짜 다름';
+export function dateAltOf(r: Pick<ProjectRow, 'dateAlt' | 'overdue' | 'next' | 'completion'>): { text: string; title: string } | null {
+  if (!r.dateAlt) return null;
+  const shown = r.overdue ?? r.next, isCp = shown?.eventType === 'COMPLETION', home = isCp ? shown!.planned : r.completion;
+  const lh = r.dateAlt.planned, same = !!home && home.slice(0, 7) === lh.slice(0, 7);
+  return { text: `${DATE_ALT}(${r.dateAlt.source} ${isCp ? '' : '준공 '}${same ? dayText(lh) : ymText(lh)})`,
+    title: `준공 예정이 원천마다 다름 — HOME ${home ? (home.length >= 10 ? dayText(home) : ymText(home)) : '없음'} · ${r.dateAlt.source} 준공 예정 파일 ${dayText(lh)} · 판정은 HOME 날짜로` };
+}
+export function nextOf(r: ProjectRow): { text: string; sort: number; title: string; tag?: string; muted?: boolean; alt?: { text: string; title: string } } | null {
+  const n = nextBase(r), alt = dateAltOf(r);
+  return n && alt ? { ...n, alt } : n;
+}
+function nextBase(r: ProjectRow): { text: string; sort: number; title: string; tag?: string; muted?: boolean } | null {
+  const late = overdueMonthsOf(r);
+  if (late !== null && r.overdue) return { text: `${ymText(r.overdue.planned)} ${NEXT_NAME[r.overdue.eventType]}`, tag: `경과 ${r.overdue.months}개월`, sort: monthNo(r.overdue.planned),
+    title: r.issued ? `${EVENT_NAME[r.overdue.eventType]} 현재 예정일 경과 ${r.overdue.months}개월 — ${STATUS_NAME[statusOf(r)]}` : `${EVENT_NAME[r.overdue.eventType]} 원천 예정일 경과 ${r.overdue.months}개월 — ${CAND_NAME}이라 판정에 넣지 않음(${STATUS_NAME.review})` };
   if (r.overdue) return { text: `${ymText(r.overdue.planned)} ${NEXT_NAME[r.overdue.eventType]}`, tag: PAST_DUE, sort: monthNo(r.overdue.planned), title: `${EVENT_NAME[r.overdue.eventType]} 현재 예정일 ${dayText(r.overdue.planned)} 지남(기준일보다 앞섬, 실제 기록 없음) — 경과 1개월 미만이라 상태는 ${statusLabel(r)}` };
   if (r.next) return { text: `${ymText(r.next.planned)} ${NEXT_NAME[r.next.eventType]}`, sort: monthNo(r.next.planned), title: `${EVENT_NAME[r.next.eventType]} 현재 예정` };
   if (r.done) return { text: `${ymText(r.done)} 준공`, tag: '실제', muted: true, sort: monthNo(r.done), title: '실제 준공(이미 마친 사업)' };

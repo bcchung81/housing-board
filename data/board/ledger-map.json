@@ -137,7 +137,7 @@
       {"id":"PRJ-11590-0067","name":"흑석2","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1055,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11590-0068","name":"동작우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":30,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11590-0069","name":"본동","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1046,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11590-0070","name":"수방사군부지 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-30"},"units":556,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11590-0070","name":"수방사군부지 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-30"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":556,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11620": [
       {"id":"PRJ-11620-0056","name":"관악세무서","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":25,"pks":[],"pnus":[],"bundles":[]}
@@ -956,8 +956,8 @@
       {"id":"PRJ-28125-0027","name":"인천송림4 주거환경개선사업 건설공사 1공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-21"},"units":1198,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28155": [
-      {"id":"PRJ-28155-0036","name":"인천영종 A62","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":792,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28155-0037","name":"인천영종 A-24BL 아파트 건설공사 12공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-03"},"units":641,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28155-0036","name":"인천영종 A62","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2028-06-30"},"units":792,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28155-0037","name":"인천영종 A-24BL 아파트 건설공사 12공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-03"},"dateAlt":{"source":"LH","planned":"2028-08-31"},"units":641,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28177": [
       {"id":"PRJ-28177-0064","name":"제물포 도심공공복합","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2026"},"units":3500,"pks":[],"pnus":[],"bundles":[]}
@@ -966,29 +966,29 @@
       {"id":"PRJ-28200-0066","name":"남인천 우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":29,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28237": [
-      {"id":"PRJ-28237-0065","name":"인천부평(도시재생뉴딜) A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":350,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28237-0065","name":"인천부평(도시재생뉴딜) A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":350,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28245": [
-      {"id":"PRJ-28245-0052","name":"조달청)인천계양 A-10BL 아파트 건설공사 4공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-08-19"},"units":778,"pks":[],"pnus":["2824511000104480001"],"bundles":["incheon-gyeyang/techno-A10"]},
+      {"id":"PRJ-28245-0052","name":"조달청)인천계양 A-10BL 아파트 건설공사 4공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-08-19"},"dateAlt":{"source":"LH","planned":"2028-09-30"},"units":778,"pks":[],"pnus":["2824511000104480001"],"bundles":["incheon-gyeyang/techno-A10"]},
       {"id":"PRJ-28245-0053","name":"인천계양 A6","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":663,"pks":[],"pnus":["2824510900101840001"],"bundles":["incheon-gyeyang/techno-A6"]},
       {"id":"PRJ-28245-0054","name":"인천계양 A17","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-07-26"},"units":463,"pks":[],"pnus":["2824510900102770001"],"bundles":["incheon-gyeyang/techno-A17"]},
-      {"id":"PRJ-28245-0055","name":"인천계양(공공주택) A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":null,"units":747,"pks":[],"pnus":["2824511000104130003"],"bundles":["incheon-gyeyang/techno-A2"]},
-      {"id":"PRJ-28245-0056","name":"인천계양 A9","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-28"},"units":475,"pks":[],"pnus":["2824511000102030001"],"bundles":["incheon-gyeyang/techno-A9"]},
-      {"id":"PRJ-28245-0057","name":"인천계양(공공주택) A3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":null,"units":538,"pks":[],"pnus":["2824511000104090003"],"bundles":["incheon-gyeyang/techno-A3"]}
+      {"id":"PRJ-28245-0055","name":"인천계양(공공주택) A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":null,"dateAlt":{"source":"LH","planned":"2026-10-31"},"units":747,"pks":[],"pnus":["2824511000104130003"],"bundles":["incheon-gyeyang/techno-A2"]},
+      {"id":"PRJ-28245-0056","name":"인천계양 A9","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-28"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":475,"pks":[],"pnus":["2824511000102030001"],"bundles":["incheon-gyeyang/techno-A9"]},
+      {"id":"PRJ-28245-0057","name":"인천계양(공공주택) A3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":null,"dateAlt":{"source":"LH","planned":"2026-10-31"},"units":538,"pks":[],"pnus":["2824511000104090003"],"bundles":["incheon-gyeyang/techno-A3"]}
     ],
     "28275": [
-      {"id":"PRJ-28275-0034","name":"인천서구(거북이기지) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-09"},"units":58,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28275-0034","name":"인천서구(거북이기지) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-09"},"dateAlt":{"source":"LH","planned":"2027-03-31"},"units":58,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28275-0035","name":"청라동 92-29","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":110,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28275-0036","name":"인천가정2 B2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-28"},"units":308,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28275-0037","name":"인천서구(석남어울림) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-09"},"units":110,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28275-0036","name":"인천가정2 B2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-28"},"dateAlt":{"source":"LH","planned":"2028-03-30"},"units":308,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28275-0037","name":"인천서구(석남어울림) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-09"},"dateAlt":{"source":"LH","planned":"2027-03-31"},"units":110,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28275-0038","name":"인천검암","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28290": [
       {"id":"PRJ-28290-0054","name":"인천검단 AA19BL 민간참여 공공주택건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"units":1323,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28290-0055","name":"인천검단 AA19","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2027-11"},"units":991,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28290-0056","name":"인천검단 35","issued":true,"stage":"04","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-02-18","months":19},"next":null,"units":964,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28290-0057","name":"인천검단 AA-21BL 아파트 건설공사 7공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-07","months":2},"next":null,"units":1224,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28290-0058","name":"인천검단 AA13-1","issued":true,"stage":"04","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-02-18","months":19},"next":null,"units":702,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28290-0057","name":"인천검단 AA-21BL 아파트 건설공사 7공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-07","months":2},"next":null,"dateAlt":{"source":"LH","planned":"2026-12-31"},"units":1224,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28290-0058","name":"인천검단 AA13-1","issued":true,"stage":"04","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-02-18","months":19},"next":null,"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":702,"pks":[],"pnus":[],"bundles":[]}
     ],
     "30110": [
       {"id":"PRJ-30110-0001","name":"대전동구 A1","issued":false,"stage":"04","cls":null,"why":"LH 후보","overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-03-31"},"units":420,"pks":[],"pnus":[],"bundles":[]},
@@ -1303,10 +1303,10 @@
       {"id":"PRJ-41110-0003","name":"국토지리정보원","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2027-12"},"units":240,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41113": [
-      {"id":"PRJ-41113-0032","name":"수원당수 B3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":394,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41113-0032","name":"수원당수 B3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":394,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41113-0033","name":"권선구 서둔동 208-16","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":29,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41113-0034","name":"수원당수 B2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-07-07"},"units":347,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41113-0035","name":"수원당수 A-5BL 아파트 건설공사 5공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-02-03"},"units":726,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41113-0034","name":"수원당수 B2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-07-07"},"dateAlt":{"source":"LH","planned":"2028-06-30"},"units":347,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41113-0035","name":"수원당수 A-5BL 아파트 건설공사 5공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-02-03"},"dateAlt":{"source":"LH","planned":"2027-01-31"},"units":726,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41130": [
       {"id":"PRJ-41130-0001","name":"성남세관","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":76,"pks":[],"pnus":[],"bundles":[]},
@@ -1316,22 +1316,22 @@
       {"id":"PRJ-41131-0046","name":"성남복정2 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2030-02-28"},"units":594,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41131-0047","name":"성남 금토2","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41131-0048","name":"민간참여) 성남신촌 A-1BL 민간참여 공공주택 건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-12","months":0},"next":null,"units":227,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41131-0049","name":"성남금토 A4","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-07-30"},"units":1150,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41131-0050","name":"성남금토 A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-09-16","months":0},"next":{"eventType":"MOVE_IN","planned":"2027-01"},"units":438,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41131-0049","name":"성남금토 A4","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-07-30"},"dateAlt":{"source":"LH","planned":"2027-06-30"},"units":1150,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41131-0050","name":"성남금토 A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-09-16","months":0},"next":{"eventType":"MOVE_IN","planned":"2027-01"},"dateAlt":{"source":"LH","planned":"2026-12-31"},"units":438,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41133": [
       {"id":"PRJ-41133-0025","name":"성남 여수2","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41135": [
-      {"id":"PRJ-41135-0125","name":"성남낙생 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-31"},"units":1400,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41135-0125","name":"성남낙생 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-31"},"dateAlt":{"source":"LH","planned":"2029-01-30"},"units":1400,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41150": [
-      {"id":"PRJ-41150-0096","name":"의정부우정 A2","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-15"},"units":463,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41150-0096","name":"의정부우정 A2","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-15"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":463,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41150-0097","name":"의정부법조타운 S1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41150-0098","name":"의정부3동 우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2028-06"},"units":262,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41150-0099","name":"의정부법조타운 S3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"units":544,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41150-0100","name":"조달청)의정부우정 A-3BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-28"},"units":640,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41150-0101","name":"조달청)의정부우정 A-1BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-01"},"units":538,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41150-0099","name":"의정부법조타운 S3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"dateAlt":{"source":"LH","planned":"2029-02-28"},"units":544,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41150-0100","name":"조달청)의정부우정 A-3BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-28"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":640,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41150-0101","name":"조달청)의정부우정 A-1BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-01"},"dateAlt":{"source":"LH","planned":"2027-11-30"},"units":538,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41170": [
       {"id":"PRJ-41170-0001","name":"서안양우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2028-06"},"units":200,"pks":[],"pnus":[],"bundles":[]}
@@ -1343,20 +1343,20 @@
     ],
     "41192": [
       {"id":"PRJ-41192-0060","name":"부천종합운동장 역세권 A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-25"},"units":550,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41192-0061","name":"부천종합운동장 역세권 A1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-25"},"units":293,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41192-0062","name":"부천역곡 A2","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-31"},"units":1464,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41192-0061","name":"부천종합운동장 역세권 A1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-25"},"dateAlt":{"source":"LH","planned":"2028-03-31"},"units":293,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41192-0062","name":"부천역곡 A2","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-31"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":1464,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41192-0063","name":"원미공원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41192-0064","name":"원미사거리 북측","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41194": [
-      {"id":"PRJ-41194-0061","name":"부천괴안 A-1BL 아파트 건설공사 2공구 (","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-04-30"},"units":499,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41194-0061","name":"부천괴안 A-1BL 아파트 건설공사 2공구 (","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-04-30"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":499,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41196": [
-      {"id":"PRJ-41196-0098","name":"부천대장 A5","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"units":314,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41196-0099","name":"부천대장 A7","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-23"},"units":473,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41196-0100","name":"부천대장 A8","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-23"},"units":392,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41196-0098","name":"부천대장 A5","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"dateAlt":{"source":"LH","planned":"2027-11-30"},"units":314,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41196-0099","name":"부천대장 A7","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-23"},"dateAlt":{"source":"LH","planned":"2027-10-29"},"units":473,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41196-0100","name":"부천대장 A8","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-23"},"dateAlt":{"source":"LH","planned":"2027-10-29"},"units":392,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41196-0101","name":"부천대장 A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-31"},"units":548,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41196-0102","name":"부천대장 A6","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"units":227,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41196-0102","name":"부천대장 A6","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"dateAlt":{"source":"LH","planned":"2027-11-30"},"units":227,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41196-0103","name":"부천대장 A-1BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-07-19"},"units":1002,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41196-0104","name":"부천대장 A-12BL 통합형 민간참여 공공주택건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-30"},"units":795,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41196-0111","name":"원종역사 복합개발","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
@@ -1386,102 +1386,102 @@
       {"id":"PRJ-41270-0001","name":"안산신길2 A1,A3","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":357,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41273": [
-      {"id":"PRJ-41273-0023","name":"안산신길2 B1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":387,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41273-0023","name":"안산신길2 B1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2029-02-28"},"units":387,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41273-0024","name":"안산신길2 A6","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":251,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41281": [
       {"id":"PRJ-41281-0088","name":"고양창릉 A-4BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-11-14"},"units":900,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41281-0089","name":"고양창릉 S-04","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-11-13"},"units":1024,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41281-0090","name":"고양창릉 S-6BL 아파트 건설공사 3공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-13"},"units":430,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41281-0091","name":"고양창릉 S-02","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-06-07"},"units":1057,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41281-0091","name":"고양창릉 S-02","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-06-07"},"dateAlt":{"source":"LH","planned":"2029-05-31"},"units":1057,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41281-0092","name":"고양창릉 S-03","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-10-31"},"units":1282,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41281-0093","name":"고양시 소재 구 국방대학교","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2570,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41281-0094","name":"고양창릉 S-5BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-11-14"},"units":759,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41281-0095","name":"고양창릉 S-01","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-04-08"},"units":494,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41281-0095","name":"고양창릉 S-01","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-04-08"},"dateAlt":{"source":"LH","planned":"2029-02-28"},"units":494,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41285": [
-      {"id":"PRJ-41285-0048","name":"고양장항 S-1BL 아파트 건설공사 5공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-12-18"},"units":869,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41285-0049","name":"고양장항 S-2BL 아파트 건설공사 6공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-07"},"units":945,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41285-0048","name":"고양장항 S-1BL 아파트 건설공사 5공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-12-18"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":869,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41285-0049","name":"고양장항 S-2BL 아파트 건설공사 6공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-07"},"dateAlt":{"source":"LH","planned":"2027-05-31"},"units":945,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41290": [
       {"id":"PRJ-41290-0030","name":"과천 경마장·방첩사 부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":9800,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41290-0031","name":"과천지식정보타운 S-12","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":1424,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41290-0032","name":"조달청)과천주암 C-1BL 공동주택 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-12-15"},"units":1338,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41290-0033","name":"과천주암(뉴스테이) C2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":1030,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41290-0031","name":"과천지식정보타운 S-12","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2027-08-31"},"units":1424,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41290-0032","name":"조달청)과천주암 C-1BL 공동주택 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-12-15"},"dateAlt":{"source":"LH","planned":"2028-11-30"},"units":1338,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41290-0033","name":"과천주암(뉴스테이) C2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"dateAlt":{"source":"LH","planned":"2028-02-28"},"units":1030,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41290-0039","name":"과천과천 공공주택지구","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2029"},"units":10000,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41310": [
       {"id":"PRJ-41310-0044","name":"구리갈매역세권 A-3","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":287,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41310-0045","name":"조달청)구리갈매역세권 A-2BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-03"},"units":362,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41310-0046","name":"구리갈매역세권 A-1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":1791,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41310-0047","name":"조달청)구리갈매역세권 A-4BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-14"},"units":561,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41310-0045","name":"조달청)구리갈매역세권 A-2BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-03"},"dateAlt":{"source":"LH","planned":"2029-01-31"},"units":362,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41310-0046","name":"구리갈매역세권 A-1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"dateAlt":{"source":"LH","planned":"2027-10-31"},"units":1791,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41310-0047","name":"조달청)구리갈매역세권 A-4BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-14"},"dateAlt":{"source":"LH","planned":"2028-08-31"},"units":561,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41360": [
-      {"id":"PRJ-41360-0188","name":"조달청)남양주진접2 A-1BL 아파트 건설공사 5공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-03-23"},"units":920,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0188","name":"조달청)남양주진접2 A-1BL 아파트 건설공사 5공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-03-23"},"dateAlt":{"source":"LH","planned":"2028-02-29"},"units":920,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0189","name":"남양주왕숙 A-1BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-27"},"units":629,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0190","name":"남양주왕숙 A-3BL 아파트 건설공사 7공구 (","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-04-27"},"units":428,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0191","name":"남양주왕숙2 A03","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-02-09"},"units":686,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0192","name":"조달청)남양주진접2 B-1BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-10"},"units":260,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0193","name":"남양주왕숙 S-18","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-04-30"},"units":965,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0194","name":"남양주왕숙2 A01","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-31"},"units":812,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0191","name":"남양주왕숙2 A03","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-02-09"},"dateAlt":{"source":"LH","planned":"2029-04-28"},"units":686,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0192","name":"조달청)남양주진접2 B-1BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-10"},"dateAlt":{"source":"LH","planned":"2028-08-31"},"units":260,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0193","name":"남양주왕숙 S-18","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-04-30"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":965,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0194","name":"남양주왕숙2 A01","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-31"},"dateAlt":{"source":"LH","planned":"2027-05-31"},"units":812,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0195","name":"다산지금A3","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2027"},"units":518,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0196","name":"남양주왕숙 B-2BL 아파트 건설공사 5공구 (","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-05"},"units":587,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0197","name":"남양주진접2 A7","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-20"},"units":710,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0197","name":"남양주진접2 A7","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-20"},"dateAlt":{"source":"LH","planned":"2028-11-30"},"units":710,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0198","name":"남양주왕숙 A-17","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":379,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0199","name":"조달청)남양주진접2 A-4BL 아파트 건설공사 4공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-31"},"units":448,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0199","name":"조달청)남양주진접2 A-4BL 아파트 건설공사 4공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-31"},"dateAlt":{"source":"LH","planned":"2028-04-30"},"units":448,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0200","name":"남양주 군부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":4180,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0201","name":"조달청)남양주진접2 A-3BL 아파트 건설공사 3공구 (","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-06"},"units":366,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0202","name":"조달청)남양주왕숙 A-24BL 아파트 건설공사 4공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-05"},"units":589,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0203","name":"조달청)남양주왕숙 B-17BL 아파트 건설공사 3공구 (","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-10"},"units":491,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0201","name":"조달청)남양주진접2 A-3BL 아파트 건설공사 3공구 (","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-06"},"dateAlt":{"source":"LH","planned":"2029-08-31"},"units":366,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0202","name":"조달청)남양주왕숙 A-24BL 아파트 건설공사 4공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-05"},"dateAlt":{"source":"LH","planned":"2028-12-29"},"units":589,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0203","name":"조달청)남양주왕숙 B-17BL 아파트 건설공사 3공구 (","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-10"},"dateAlt":{"source":"LH","planned":"2028-10-31"},"units":491,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0204","name":"조달청)남양주왕숙 A-2BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-14"},"units":608,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0205","name":"남양주왕숙 B-1BL 아파트 건설공사 6공구 (","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-10"},"units":560,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0206","name":"조달청)남양주왕숙 A-6BL 아파트 건설공사 8공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-22"},"units":954,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0207","name":"남양주왕숙 A-25BL 아파트 건설공사","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-29"},"units":1298,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41360-0207","name":"남양주왕숙 A-25BL 아파트 건설공사","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-29"},"dateAlt":{"source":"LH","planned":"2028-10-31"},"units":1298,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41370": [
-      {"id":"PRJ-41370-0046","name":"오산세교2 A-12BL 민간참여 공공주택건설사업","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-08-29"},"units":433,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41370-0047","name":"오산세교2 A11","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-14"},"units":399,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41370-0046","name":"오산세교2 A-12BL 민간참여 공공주택건설사업","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-08-29"},"dateAlt":{"source":"LH","planned":"2027-09-30"},"units":433,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41370-0047","name":"오산세교2 A11","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-14"},"dateAlt":{"source":"LH","planned":"2028-03-31"},"units":399,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41390": [
-      {"id":"PRJ-41390-0084","name":"조달청)시흥하중 A-4BL 공동주택 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-04-09"},"units":584,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41390-0084","name":"조달청)시흥하중 A-4BL 공동주택 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-04-09"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":584,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41390-0085","name":"시흥거모 A4","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"units":510,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41390-0086","name":"시흥거모 A5","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-11-04"},"units":435,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41390-0086","name":"시흥거모 A5","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-11-04"},"dateAlt":{"source":"LH","planned":"2029-02-28"},"units":435,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41390-0087","name":"시흥거모 S1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":300,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41390-0088","name":"조달청)시흥하중 A-2BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-08-10"},"units":412,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41390-0088","name":"조달청)시흥하중 A-2BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-08-10"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":412,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41390-0089","name":"시흥거모 A6","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":480,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41390-0090","name":"시흥대야역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41390-0091","name":"시흥하중 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-02"},"units":600,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41390-0091","name":"시흥하중 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-02"},"dateAlt":{"source":"LH","planned":"2028-03-01"},"units":600,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41390-0092","name":"시흥거모 A10","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":301,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41410": [
-      {"id":"PRJ-41410-0042","name":"군포대야미 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-12-15"},"units":378,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41410-0043","name":"군포대야미 A-2BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-27"},"units":1511,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41410-0042","name":"군포대야미 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-12-15"},"dateAlt":{"source":"LH","planned":"2028-09-29"},"units":378,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41410-0043","name":"군포대야미 A-2BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-27"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":1511,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41430": [
-      {"id":"PRJ-41430-0045","name":"의왕월암 A3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"units":642,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41430-0046","name":"의왕월암 A1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"units":674,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41430-0047","name":"의왕청계2 A1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-25"},"units":480,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41430-0048","name":"의왕초평(뉴스테이) A4","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":381,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41430-0045","name":"의왕월암 A3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"dateAlt":{"source":"LH","planned":"2028-04-28"},"units":642,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41430-0046","name":"의왕월암 A1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"dateAlt":{"source":"LH","planned":"2027-11-30"},"units":674,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41430-0047","name":"의왕청계2 A1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-25"},"dateAlt":{"source":"LH","planned":"2027-02-26"},"units":480,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41430-0048","name":"의왕초평(뉴스테이) A4","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"dateAlt":{"source":"LH","planned":"2027-09-30"},"units":381,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41450": [
       {"id":"PRJ-41450-0073","name":"하남 신장테니스장 부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":300,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41450-0074","name":"하남교산 A-2BL 공공주택 건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-07-31"},"units":1115,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41450-0074","name":"하남교산 A-2BL 공공주택 건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-07-31"},"dateAlt":{"source":"LH","planned":"2027-10-31"},"units":1115,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41463": [
       {"id":"PRJ-41463-0089","name":"기흥구 신갈동 17-27","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":40,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41480": [
-      {"id":"PRJ-41480-0112","name":"파주운정3 A20BL 아파트 건설공사 13공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2026-12-25"},"units":612,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41480-0112","name":"파주운정3 A20BL 아파트 건설공사 13공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2026-12-25"},"dateAlt":{"source":"LH","planned":"2027-06-30"},"units":612,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41500": [
-      {"id":"PRJ-41500-0072","name":"이천장호원 B2BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-22","months":1},"next":null,"units":620,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41500-0072","name":"이천장호원 B2BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-22","months":1},"next":null,"dateAlt":{"source":"LH","planned":"2026-12-31"},"units":620,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41570": [
-      {"id":"PRJ-41570-0073","name":"조달청)김포고촌2 A1BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-06-29"},"units":350,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41570-0073","name":"조달청)김포고촌2 A1BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-06-29"},"dateAlt":{"source":"LH","planned":"2027-07-31"},"units":350,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41590": [
-      {"id":"PRJ-41590-0035","name":"화성동탄2 C-27","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-07-19"},"units":563,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41590-0036","name":"화성동탄2 C-14","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-12-31"},"units":850,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41590-0035","name":"화성동탄2 C-27","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-07-19"},"dateAlt":{"source":"LH","planned":"2028-11-30"},"units":563,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41590-0036","name":"화성동탄2 C-14","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-12-31"},"dateAlt":{"source":"LH","planned":"2028-05-31"},"units":850,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41590-0037","name":"민간참여) 화성동탄2 C-14 민간참여 공공주택 건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-30"},"units":610,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41595": [
@@ -1492,7 +1492,7 @@
     ],
     "41630": [
       {"id":"PRJ-41630-0098","name":"조달청)양주옥정 A-22BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-16"},"units":1126,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41630-0099","name":"양주회천 A26","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-06-05"},"units":792,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41630-0099","name":"양주회천 A26","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-06-05"},"dateAlt":{"source":"LH","planned":"2029-12-31"},"units":792,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41830": [
       {"id":"PRJ-41830-0020","name":"조달청)양평공흥(고령자) 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-23"},"units":150,"pks":[],"pnus":[],"bundles":[]}

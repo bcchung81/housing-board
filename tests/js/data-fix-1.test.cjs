@@ -64,7 +64,10 @@ test('#10·#8·#30 /sources 이름표: 사업 레지스트리(번호 발급)·�
   assert.match(read('components/sources/Collect.tsx'), /\(우리가 모은 원천 \{items\.length\} \+ 정책 진행 자료 \{hs\.sources\.length\}\)/);
   assert.match(page, /개 시도 모두/);
   assert.doesNotMatch(page, /`판정은 \$\{judgedSido\}만/);
-  assert.ok(json('data/board/ledger-board.json').regions.every((r) => r.judged), '16곳 모두 판정');
+  /* D3(2026-10-15): 판정은 사업 번호가 있는 사업만 — 번호 있는 사업이 판정된 시도는 수도권 3곳, 나머지는 후보(확인 필요)만 있다 */
+  const regs = json('data/board/ledger-board.json').regions;
+  assert.deepEqual(regs.filter((r) => r.judged).map((r) => r.code), ['11', '28', '41'], '판정 시도 = 서울·인천·경기');
+  assert.ok(regs.filter((r) => !r.judged).every((r) => r.candidate.judged > 0), '그 밖 13곳은 확인 필요(후보)만');
 });
 
 test('#14 블록 수는 고유 블록(사업지구+블록), 파일 행은 행이라고 쓴다', () => {

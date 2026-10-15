@@ -5,7 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { boardFromLedger, mapIndexFromLedger, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, OUT } = require('../../tools/ledger/board');
+const { boardFromLedger, mapIndexFromLedger, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, loadLhBlocks, OUT } = require('../../tools/ledger/board');
 const { lastDay } = require('../../tools/ledger/paths');
 
 const L = require('../../data/board/ledger-board.json');
@@ -33,14 +33,18 @@ test('판정 개월 경계: 꽉 찬 달 수(기준일의 일이 끝 날짜의 �
   assert.equal(elapsedMonths('2026-12-31', '2026-10-10'), 0, '아직 오지 않은 예정');
 });
 
-test('판정 = 정상 · 주의 · 지연(발급 사업 + 수도권 HOME 사업 + 건축HUB 대용량 후보의 준공 예정 경과, 2026-10 첫 판 3,411 = 2,757 · 134 · 520 → 단계별 원천(건축물대장 준공 실제) 뒤 2,811 · 132 · 468 → 단계 올리기(2026-10-13) 뒤 2,812 · 133 · 466 → 수도권 HOME 교체(2026-10-14) 뒤 2,009 = 1,608 · 86 · 315), LH 후보는 판정에서 뺀다', () => {
+test('판정 = 정상 · 주의 · 지연(발급 사업 + 수도권 HOME 사업 + 건축HUB 대용량 후보의 준공 예정 경과, 2026-10 첫 판 3,411 = 2,757 · 134 · 520 → 단계별 원천(건축물대장 준공 실제) 뒤 2,811 · 132 · 468 → 단계 올리기(2026-10-13) 뒤 2,812 · 133 · 466 → 수도권 HOME 교체(2026-10-14) 뒤 2,009 = 1,608 · 86 · 315 → D3(2026-10-15) 번호 있는 사업만 169 = 165 · 2 · 2, 후보 1,839 = 1,442 · 84 · 313 은 확인 필요로 따로), LH 후보는 판정에서 뺀다', () => {
   const j = board.judgment;
   assert.deepEqual([board.scope.judged, j.ok.projects, j.caution.projects, j.delay.projects], [L.scope.judged, L.judgment.ok.projects, L.judgment.caution.projects, L.judgment.delay.projects], '저장된 보드와 같다');
   assert.equal(j.ok.projects + j.caution.projects + j.delay.projects, board.scope.judged);
   const of = (f) => live.filter(f).length;
   const lhN = of((p) => p.source_ref === 'datagokr-15141761'), bulkN = of((p) => p.source_ref === BULK), issuedN = of((p) => p.issued_at), homeN = of(isHome);
   assert.equal(j.excluded.projects, lhN, '판정 제외 = LH 후보 전부');
-  assert.deepEqual(board.scope, { projects: N, issued: issuedN, candidates: N - issuedN, judged: L.scope.judged, units: board.scope.units, coverage: 'NATIONWIDE', bySource: { issued: of((p) => p.issued_at && !isHome(p)), lhCandidates: lhN, hubBulkCandidates: bulkN, home: homeN }, sido: new Set(live.map((p) => p.sgg_code.slice(0, 2))).size, withEvents: L.scope.withEvents });
+  const c = j.candidate;
+  assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, board.scope.candidateJudged, '확인 필요(후보) = 번호가 없는 후보의 같은 계산');
+  assert.deepEqual([j.ok.projects + c.ok.projects, j.caution.projects + c.caution.projects, j.delay.projects + c.delay.projects], [1607, 86, 315], '판정 + 확인 필요 = D3 이전 판정(1,607 · 86 · 315)');
+  assert.equal(sum(board.regions.map((r) => r.candidate.judged)), board.scope.candidateJudged);
+  assert.deepEqual(board.scope, { projects: N, issued: issuedN, candidates: N - issuedN, judged: L.scope.judged, candidateJudged: L.scope.candidateJudged, units: board.scope.units, coverage: 'NATIONWIDE', bySource: { issued: of((p) => p.issued_at && !isHome(p)), lhCandidates: lhN, hubBulkCandidates: bulkN, home: homeN }, sido: new Set(live.map((p) => p.sgg_code.slice(0, 2))).size, withEvents: L.scope.withEvents });
   assert.equal(board.scope.bySource.issued + lhN + bulkN + homeN, N, '발급 + LH 후보 + 건축HUB 대용량 후보 + 수도권 HOME');
   assert.ok(homeN > 0 && live.filter((p) => ['11', '28', '41'].includes(p.sgg_code.slice(0, 2))).every(isHome), '수도권 사업은 모두 HOME');
   assert.equal(board.scope.units, L.scope.units);
@@ -218,7 +222,7 @@ test('저장된 data/board/ledger-board.json 이 도구로 다시 만든 것과 
 });
 
 /* ---------- 지도 색인(mapIndexFromLedger → data/board/ledger-map.json) ---------- */
-const index = mapIndexFromLedger(tables, { referenceDate: REF, observedMonth: MONTH });
+const index = mapIndexFromLedger(tables, { referenceDate: REF, observedMonth: MONTH, lhBlocks: loadLhBlocks() });   // 원천 날짜 다름(D2) 대조에 LH 준공 예정 파일
 const rows = Object.values(index.bySgg).flat();
 
 test('지도 색인: 모든 사업(대체된 사업 제외 — 2026-10-14 수도권 HOME 교체 뒤 2,318건, 그 전 3,845건)이 시군구마다 id 순으로 한 번씩, 시군구 키는 사업의 sgg_code', () => {
@@ -232,19 +236,20 @@ test('지도 색인: 모든 사업(대체된 사업 제외 — 2026-10-14 수도
     assert.ok(list.every((r) => sgg[r.id] === k), k);
     assert.deepEqual(list.map((r) => r.id), list.map((r) => r.id).slice().sort(), `${k} id 순`);
   }
-  for (const r of rows) assert.deepEqual(Object.keys(r), ['id', 'name', 'issued', 'stage', 'cls', 'why', 'overdue', 'next', ...('done' in r ? ['done'] : []), 'units', 'pks', 'pnus', 'bundles']);
+  for (const r of rows) assert.deepEqual(Object.keys(r), ['id', 'name', 'issued', 'stage', 'cls', 'why', 'overdue', 'next', ...('done' in r ? ['done'] : []), ...('dateAlt' in r ? ['dateAlt'] : []), 'units', 'pks', 'pnus', 'bundles']);
 });
 
-test('지도 색인의 판정 합계(건수·호수) = 보드 판정, 대상이 아닌 사업은 why 로 까닭(LH 후보 273 = 보드 제외)', () => {
+test('지도 색인의 판정 합계(건수·호수) = 보드 판정(번호 있는 사업) + 확인 필요(후보, D3), 대상이 아닌 사업은 why 로 까닭(LH 후보 273 = 보드 제외)', () => {
   const j = board.judgment;
   for (const c of ['ok', 'caution', 'delay']) {
-    const xs = rows.filter((r) => r.cls === c);
+    const xs = rows.filter((r) => r.cls === c && r.issued), cs = rows.filter((r) => r.cls === c && !r.issued);
     assert.deepEqual({ projects: xs.length, units: sum(xs.map((r) => r.units)) }, j[c], c);
+    assert.deepEqual({ projects: cs.length, units: sum(cs.map((r) => r.units)) }, { projects: j.candidate[c].projects, units: j.candidate[c].units }, `후보 ${c}`);
   }
   assert.equal(sum(rows.map((r) => r.units)), board.scope.units);
   assert.ok(rows.every((r) => (r.cls === null) === (r.why !== null)));
   assert.deepEqual([rows.filter((r) => r.why === 'LH 후보').length, sum(rows.filter((r) => r.why === 'LH 후보').map((r) => r.units))], [j.excluded.projects, j.excluded.units]);
-  assert.equal(rows.filter((r) => r.why === '예정 없음').length, N - board.scope.judged - j.excluded.projects);
+  assert.equal(rows.filter((r) => r.why === '예정 없음').length, N - board.scope.judged - board.scope.candidateJudged - j.excluded.projects);
 });
 
 test('지도 색인의 overdue 는 보드의 예정일 경과에서 판정에 넣은 것 중 가장 큰 것, next 는 기준일 뒤 가장 이른 예정(실제가 있는 종류 제외)', () => {

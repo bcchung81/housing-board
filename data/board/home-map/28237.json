@@ -6,6 +6,6 @@
   "referenceDate": "2026-10-13",
   "edition": "20261014T102506Z",
   "projects": [
-    {"id":"PRJ-28237-0065","name":"인천부평(도시재생뉴딜) A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":350,"pks":[],"pnus":[],"bundles":[],"label":"인천부평(도시재생뉴딜) A","agency":"lh","moveIn":"2028-02","completion":"2027-10-19","noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.716926,37.4943],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}}
+    {"id":"PRJ-28237-0065","name":"인천부평(도시재생뉴딜) A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":350,"pks":[],"pnus":[],"bundles":[],"label":"인천부평(도시재생뉴딜) A","agency":"lh","moveIn":"2028-02","completion":"2027-10-19","noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.716926,37.4943],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}}
   ]
 }
