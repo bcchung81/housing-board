@@ -225,10 +225,11 @@ test('시도 지리 격자: 4열 × 5줄, 원장의 16개 시도가 모두 자�
   assert.equal(new Set(cells).size, 16, '자리 겹침 없음');
   for (const [r, c] of Object.values(S.REGION_POS)) { assert.ok(r >= 1 && r <= 5 && c >= 1 && c <= 4); assert.ok(!(r === 5 && c >= 2), '요약 칸 자리'); assert.notEqual(`${r}/${c}`, '4/4'); }
   assert.deepEqual([S.REGION_POS['28'], S.REGION_POS['11'], S.REGION_POS['41'], S.REGION_POS['51'], S.REGION_POS['12'], S.REGION_POS['50']], [[1, 1], [1, 2], [1, 3], [1, 4], [4, 1], [5, 1]]);
-  /* 2026-10-16(r2-board 5): 지리 격자 대신 판정 시도 큰 타일 + 묶음 — 지리 자리(REGION_POS)는 묶음을 펼친 칩의 순서(줄·열 순)로 쓴다 */
+  /* 2026-10-16 4차(r4-board 1): 2차의 '판정 시도 큰 타일 + 묶음'을 되돌려 다시 16칸 지리 격자 */
   const region = panel(board, 'p-region');
-  assert.match(board, /const geo = \(c: string\) => \{ const p = REGION_POS\[c\]; return p \? p\[0\] \* 10 \+ p\[1\] : 99; \};/);
-  assert.match(region, /auto-rows-\[minmax\(84px,1fr\)\]/);
+  assert.match(region, /auto-rows-\[minmax\(68px,1fr\)\] grid-cols-4 gap-1\.5/);
+  assert.match(region, /\[grid-area:5\/2\/6\/5\]/, '요약 칸 5줄 2~4열');
+  assert.match(region, /pos \? \{ gridArea: /, '표에 없는 코드는 자리를 주지 않아 빈 칸에 이어 붙는다');
   assert.equal((region.match(/<PanelLink/g) || []).length, 1, '이동 링크는 한 곳(요약 칸)');
   assert.doesNotMatch(region.slice(0, region.indexOf('auto-rows')), /<PanelLink/, '제목 줄에는 링크가 없다');
   assert.doesNotMatch(region, /text-bad">\{r\.delay\}/, '타일 안 세 숫자 칸 없음');
@@ -311,10 +312,10 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(snap, /ledgerJudged\(L\)/);
   assert.match(snap, /const dlt = v\[i\] - nv\[i\], neck = judged && i === bk;/, '증감 = 선택 달 − 기준 달, 병목 표시는 판정이 있는 달만');
   const region = panel(board, 'p-region');
-  assert.match(board, /restRegions = L\.regions\.filter\(\(r\) => !r\.judged\)/, '판정 대상 없는 시도는 묶음');
-  assert.match(region, /\{judgedRegions\.map\(/);
-  assert.match(region, /rate = tu \? r\.delayUnits \/ tu \* 100 : 0/, '큰 타일은 판정 시도만 — 지연율은 호수 기준(2026-10-16 3차, 판정 막대와 같은 기준)');
-  assert.match(region, /\['--rc' as string\]: RCOL\[rcls\(rate\)\]/);
+  assert.match(region, /\{L\.regions\.map\(/, '16곳 모두 타일(2026-10-16 4차)');
+  assert.match(region, /none = !r\.judged/, '판정 대상(번호 있는 사업)이 없는 시도');
+  assert.match(region, /rate = tu \? r\.delayUnits \/ tu \* 100 : 0/, '지연율은 호수 기준(2026-10-16 3차, 판정 막대와 같은 기준)');
+  assert.match(region, /\['--rc' as string\]: none \? 'var\(--card\)' : RCOL\[rcls\(rate\)\]/);
   assert.match(region, /판정 대상 없음/);
   assert.match(region, /href=\{`\/region\?sido=\$\{curReg\.code\}`\}/, '시도 실적은 지역 공급(옛 /area/NN 넘김 대신 바로)');
   const agency = panel(board, 'p-agency');
@@ -324,7 +325,7 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.doesNotMatch(agency, /agName\}>[^\n]*판정 제외/, '이름 칸에 판정 제외를 넣지 않는다');
   assert.match(agency.slice(0, agency.indexOf('className={ags}')), /\['bg-\[var\(--out\)\] shadow-\[inset_0_0_0_1px_var\(--out-line\)\]', NONE_TEXT\]/, "막대 범례는 제목 줄에, '일정 정보 없음' 견본은 --out 채움 + --out-line 1px 선(2026-10-16 '판정 밖'에서 바꿈)");
   assert.match(agency, /<span className="block bg-\[var\(--out\)\]" style=\{\{ width: pw\(none\) \}\} \/>/, '일정 정보 없음 막대 조각 = --out(확인 필요 후보는 빗금 조각으로 따로)');
-  assert.match(agency, /전체 지연 \$\{f\(J\.delay\.units\)\}호/);
+  assert.match(agency, /\$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호/, "전국 지연 중 몫(2026-10-16 4차 r4-board 5)");
   assert.match(board, /NONE_TIP = `\$\{NONE_TEXT\} = 판정할 현재 예정일이 없는 사업\(준공 완료 포함\)과 LH 후보\(\$\{dotDates\(outNote \?\? ''\)\}\)`/, '일정 정보 없음의 사유(LH 후보)는 제목·범례 title 에');
   assert.match(agency, /판정 제외 \$\{f\(a\.excludedUnits\)\}호 포함/, '판정 제외는 행 title 에');
   assert.match(agency, /\$\{CAND_TEXT\} \$\{f\(cand\)\} · \$\{NONE_TEXT\} \$\{f\(none\)\}호/, '확인 필요(후보) 호수도 행 title 에(막대에서는 빗금 조각, D3)');

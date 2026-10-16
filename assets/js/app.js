@@ -144,6 +144,19 @@ function progressRow(b, k) {
   const p = progOf(b), color = COLOR[k], hist = p.by === 'map' ? b.progress.history : [];
   return `<span class="pg" style="--c:${color}" title="공사 공정률 ${esc(p.rate)}% (${esc(dotDate(p.asOf))} ${p.by === 'ledger' ? '보고, 사업 원장' : '기준'})"><span>공사</span><span class="bar2"><i style="width:${Math.max(p.rate, 0.8)}%"></i></span><b>${progTxt(p)}</b>${hist.length >= 3 ? sparkline(hist) : ''}</span>`;
 }
+/* 공사 기간 정본(2026-10-16 4차 '같은 사업, 다른 착공일'): 원장(사업 화면 서랍과 같은 값 — 지도 페이지가 window.HOME_DATES[사업 id] = { s: 착공 실제, e: 준공(실제, 없으면 현재 예정), done }로 넘긴다)에 날짜가 있으면 그 값.
+   지도 원천(상세 3D 공사현황)과 달이 다르면 작은 표지('원천 날짜 다름(상세 3D 2024.03)')만, 두 원천은 title. 칸은 예전처럼 지도 원천에 공사 기간이 있을 때만.
+   seenYm = 카드의 다른 칸이 이미 '상세 3D' 표지로 말한 달(그 끝 날짜는 다시 표지하지 않는다) */
+const HOME_DATES = window.HOME_DATES || {};
+function spanOf(b, seenYm) {
+  const src = b.progress && b.progress.start && b.progress.end ? b.progress : null;
+  if (!src) return null;
+  const id = (b.ledger && b.ledger.id) || b.projectId, h = (id && HOME_DATES[id]) || {};
+  return { s: h.s || src.start, e: h.e || src.end, h, src, ds: !!h.s && ymDot(h.s) !== ymDot(src.start), de: !!h.e && ymDot(h.e) !== ymDot(src.end) && ymDot(src.end) !== seenYm };
+}
+const spanLedger = (h) => [h.s ? `착공 실제 ${dotDate(h.s)}` : '', h.e ? `준공 ${h.done ? '실제' : '예정'} ${dotDate(h.e)}` : ''].filter(Boolean).join(' · ');
+const spanAlt = (p) => (p.ds && p.de ? `${ymDot(p.src.start)} ~ ${ymDot(p.src.end)}` : p.ds ? ymDot(p.src.start) : `~ ${ymDot(p.src.end)}`);
+const spanCell = (p) => `<span title="${esc(p.h.s || p.h.e ? `공사 기간: 사업 원장(${spanLedger(p.h)})${p.h.s && p.h.e ? '' : ', 나머지는 상세 3D 자료'}` : '공사 기간: 상세 3D 자료')}">${ymDot(p.s)} ~ ${ymDot(p.e)}</span>${p.ds || p.de ? ` <b class="jd alt" title="${esc(`사업 원장: ${spanLedger(p.h)}\n${progSrc(p.src)}(상세 3D): 공사 ${dotDate(p.src.start)} ~ ${dotDate(p.src.end)}\n공사 기간은 원장 기준입니다.`)}">원천 날짜 다름(상세 3D ${esc(spanAlt(p))})</b>` : ''}`;
 const centroid = (poly) => [poly.reduce((a, p) => a + p[0], 0) / poly.length, poly.reduce((a, p) => a + p[1], 0) / poly.length];
 const hex2 = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const mixHex = (a, b, t) => '#' + hex2(a).map((v, i) => Math.round(v + (hex2(b)[i] - v) * t).toString(16).padStart(2, '0')).join('');
@@ -1070,6 +1083,7 @@ function blockPopup(b, clickX, lead) {
   const lg = b.ledger, lt = LT(b), sn = stageNow(b), alt = dateAltOf(lg), pg = progOf(b);
   const pe = lg && (lg.overdue || lg.next), am = alt ? altMark(alt, pe && pe.planned) : '';   // 원천 날짜 다름 표지(원장 현재 예정과 같은 달이면 일까지)
   const cur = lt && (lt.next || lt.pastDue) ? lt.next || lt.due : '', dd = dueDedup(b, cur, alt);   // 현재 예정(원장)과 같은 종류의 입주·준공 칸은 하나로
+  const sp = spanOf(b, (/상세 3D (\d{4}\.\d{2})/.exec(dd.mark) || [])[1]);   // 공사 기간: 원장 착공 실제·준공이 정본, 상세 3D 와 달이 다르면 표지
   const pidLink = (id) => `<a class="pc-pid" href="${esc(projHref(id))}" title="사업 화면에서 이 사업 열기">${esc(id)}</a>`;
   const linkId = lg ? (lg.issued ? lg.id : null) : b.projectId;   // 이름도 사업 화면으로(후보 id 는 열 수 없어 링크하지 않는다)
   const pidRow = lg ? ['사업 id', lg.issued ? pidLink(lg.id) : `<span class="pc-pid" title="후보 사업(번호 발급 전) — 다음 원장에서 id 가 바뀔 수 있어 바로 여는 링크가 없습니다">${esc(lg.id)}</span> <small>후보 사업</small>`] : b.projectId ? ['사업 id', pidLink(b.projectId)] : null;   // 후보 id 는 resolve 가 열지 못해 링크하지 않는다
@@ -1095,7 +1109,7 @@ function blockPopup(b, clickX, lead) {
       lt && lt.cls ? ['상태', `<span class="pc-chip jd-c ${lg.cls}"${lt.pastDue ? ' title="예정일이 자료 기준일보다 앞서지만 실적 기록이 아직 없습니다. 상태는 그대로입니다"' : lt.lateTitle ? ` title="${esc(dotDate(lt.lateTitle))}"` : ''}>${esc(lt.cls)}</span>${why || alt ? `<span class="pc-why">${esc(why)}${alt ? `${why ? ' ' : ''}${am}` : ''}</span>` : ''}`, !!(why || alt)] : null,
       cur ? ['현재 예정', `${esc(cur)}${alt && !lt.cls ? ` ${am}` : ''}${dd.mark}`, (!!alt && !lt.cls) || !!dd.mark] : alt && !(lt && lt.cls) ? ['현재 예정', `<span class="pc-none">—</span> ${am}`, true] : null,
       ...homeRows(b), pg ? ['공정률', progCell(pg), pg.by === 'ledger'] : null, ['층수', floorLine(b)], dd.cell,
-      b.progress && b.progress.start && b.progress.end ? ['공사', `${ymDot(b.progress.start)} ~ ${ymDot(b.progress.end)}`, true] : null])}
+      sp ? ['공사', spanCell(sp), true] : null])}
     ${sr && sr.level === 'warn' ? `<p class="pc-warn">▲ 학교 개교가 ${esc(sr.detail)}</p>` : ''}
     ${near.length ? `<details class="pc-more pc-near"><summary>주변·시공 <small>${esc(near.map((r) => r[0]).join('·'))}</small></summary>${dlHtml(near)}</details>` : ''}</div></div>`,
     b.dongs ? b.dongs.flatMap((x) => x.poly).concat([b.poly]) : [b.poly], hmax, clickX, lead);

@@ -16,7 +16,7 @@ test('A5-2 9·7 단계표는 한 번(화면·인쇄 모두 — 첫 칸 유지, �
 });
 test('A5-3 말줄임(truncate) 되는 핵심 질문 글에 전체 글 title', () => {
   const s = read('components/projects/Summary.tsx');
-  assert.match(s, /className="truncate" title=\{x\.q\}/);
+  assert.match(s, /className="line-clamp-2 \[word-break:keep-all\]" title=\{x\.q\}/, 'r4-screens 3: 말줄임 대신 두 줄 + 전체 글 title');
   assert.match(s, /tabular-nums" title=\{x\.sub\}>\{x\.sub\}/);
 });
 test('A5-4 단계별 진행의 출처·범위는 원장 요약 카드 머리의 범위 칩(사업 원장)으로 — 단계별 진행 머리에 같은 표지를 되풀이하지 않는다', () => {

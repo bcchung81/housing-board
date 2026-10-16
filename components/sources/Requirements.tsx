@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { PanelHead } from '../page';
 import { Card } from '../ui/card';
 import InfoTip from '../ui/info-tip';
+import ScopeChip from '../ui/scope-chip';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { HATCH } from '../ui/chips';
 import { VERDICT, countVerdicts, datesOf, directiveText, type RequirementsDoc, type Verdict } from '../../lib/board/requirements';
@@ -24,9 +25,13 @@ const Mark = ({ v }: { v: Verdict }) => (
 
 export default function Requirements({ doc }: { doc: RequirementsDoc }) {
   const n = countVerdicts(doc);
+  /* 범위 칩 title: 근거 지표의 모수(requirements.json measures — 타입은 lib/board/requirements.ts 밖이라 여기서 좁힌다) */
+  const m = (doc as RequirementsDoc & { measures?: { base: number; ledgerProjects: number } }).measures;
   return (
     <Card render={<section aria-label="요구사항 충족" />}>
-      <PanelHead title="요구사항 충족" tip="기능 요구 12가지(F-01~F-12) · 판정은 실제 자료로 센 근거 지표와 규칙(tools/ledger/requirements.js)으로 냄 — 충족·부분·없음 · 근거 지표에 마우스를 올리면 계산과 규칙 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행">
+      <PanelHead title="요구사항 충족"
+        scope={<ScopeChip scope="수도권" source="정책 진행 자료" title={`판정 근거 지표는 정책 진행 자료(HOME)의 수도권 사업${m ? ` ${m.base}건` : ''} 기준(정책·프로그램 연결이 수도권 사업뿐) · 원장 사업 수(F-01)만 전국${m ? ` ${m.ledgerProjects.toLocaleString('en-US')}건` : ''}`} />}
+        tip="기능 요구 12가지(F-01~F-12) · 판정은 실제 자료로 센 근거 지표와 규칙(tools/ledger/requirements.js)으로 냄 — 충족·부분·없음 · 근거 지표에 마우스를 올리면 계산과 규칙 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행">
         <span className="text-[14px] text-muted-foreground tabular-nums">충족 <b className="text-foreground">{n.met}</b> · 부분 <b className="text-foreground">{n.part}</b> · 없음 <b className="text-foreground">{n.none}</b></span>
         <InfoTip label="요구사항 충족 읽는 법">
           <dl>

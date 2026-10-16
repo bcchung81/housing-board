@@ -37,7 +37,7 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
   }
   const q0 = V.questionsOf(rows, {}, ctx)[0];
   const words = q0.stages.map((c) => (c.target != null && c.actual != null ? `${c.actual}/${c.target} ${V.rateOf(c).word}` : c.target != null ? '실적 없음' : '목표 없음'));
-  assert.deepEqual(words, ['3560/14694 부족 75.8%', '3560/1543 달성 230.7%', '목표 없음', '4732/8049 부족 41.2%', '381/381 달성 100.0%', '목표 없음']);
+  assert.deepEqual(words, ['3560/14694 달성 24.2%', '3560/1543 달성 230.7%', '목표 없음', '4732/8049 달성 58.8%', '381/381 달성 100.0%', '목표 없음']);
   assert.match(q0.tip, /담당자 추정 포함\(확인과 따로\): ①계획 5,789호/, '추정 포함은 title 에만');
   assert.match(q0.help, /단계마다/); assert.match(q0.help, /'목표 없음'/);
   /* 목표가 없는 렌즈(1·29)는 단계 줄 없이 범위 줄 안 */
@@ -63,7 +63,7 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
 test('A 접힌 정책 목표 대비 머리 줄: 이름표 없는 부족률 숫자 없이 단계 이름', () => {
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
   for (const l of lines) assert.doesNotMatch(V.compareHead(l), /\d%/, l.policy.key);
-  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 2단계 부족(①계획·④모집)');
+  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 2단계 미달(①계획·④모집)');
 });
 
 test('2 보이는 글의 내부 용어: HOME·번들·확정 전/확정은 title 로, ⓘ 정의는 쉬운 말', () => {

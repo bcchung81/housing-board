@@ -237,9 +237,10 @@ export type PolicyProgress = {
 /* HOME 의 6단계 → 리본 칸: 사업화 ①계획 · 인허가 ② · 착공 ③ · 공급(분양·모집) ④ · 준공 ⑤ · 입주 예정 ⑥ */
 export const PP_STAGES = ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'COMPLETION', 'MOVE_IN'] as const;
 /* state: short 목표 미달 · met 목표 이상 · noTarget 목표 없음(확인 값만) · noActual 확인 미확보(목표만) · none 둘 다 없음.
-   withEst = 추정 포함 확인(없으면 확인과 같다), yearEnd = 같은 기간 목표가 없고 다음 목표 점이 연말인 착공(9·7 원문 연도별 목표) */
+   withEst = 추정 포함 확인(없으면 확인과 같다), fill·estFill = 막대 폭(%), mark = 목표(100% 기준선)의 막대 안 자리(%) — 막대 폭은 max(목표, 확인)이라
+   미달은 기준선이 오른쪽 끝(100), 초과는 확인이 끝까지 차고 기준선이 목표 자리(② 1,543/3,560 → 43.3, 2026-10-16 4차 평가), yearEnd = 같은 기간 목표가 없고 다음 목표 점이 연말인 착공(9·7 원문 연도별 목표) */
 export type StageCell = { board: number; key: string; label: string; target: number | null; actual: number | null; withEst: number | null; review: number | null; gap: number | null; shortfallPct: number | null;
-  status: string; state: 'short' | 'met' | 'noTarget' | 'noActual' | 'none'; from: string; through: string; actualThrough: string | null; fill: number; estFill: number;
+  status: string; state: 'short' | 'met' | 'noTarget' | 'noActual' | 'none'; from: string; through: string; actualThrough: string | null; fill: number; estFill: number; mark: number;
   targetBasis: string; actualBasis: string; yearEnd: { date: string; units: number } | null };
 export function policyStageCells(pp: PolicyProgress, policyId: string): StageCell[] | null {
   const pol = pp.policies.find((p) => p.policyId === policyId);
@@ -255,6 +256,7 @@ export function policyStageCells(pp: PolicyProgress, policyId: string): StageCel
       board, key, label: st?.label ?? key, target, actual, withEst, review: s?.actualReviewUnits ?? null, gap: s?.gap ?? null, shortfallPct: s?.shortfallPct ?? null, status: s?.status ?? 'NONE', state,
       from: s?.from ?? `${year}-01-01`, through: s?.through ?? pp.referenceMonthEnd, actualThrough: s?.actualThrough ?? null,
       fill: target && actual != null ? Math.min(100, actual / target * 100) : 0, estFill: target && withEst != null ? Math.min(100, withEst / target * 100) : 0,
+      mark: target && actual != null ? 100 * target / Math.max(target, actual) : 100,
       targetBasis: st?.targetBasis ?? '', actualBasis: st?.actualBasis ?? '',
       yearEnd: key === 'CONSTRUCTION' && after && after.date.endsWith('-12-31') ? { date: after.date, units: after.units } : null,
     };
@@ -263,13 +265,12 @@ export function policyStageCells(pp: PolicyProgress, policyId: string): StageCel
 export const hasTarget = (c: StageCell | undefined) => !!c && (c.target != null || !!c.yearEnd);
 /* 추정이 섞여 확인과 다른 칸 */
 export const hasEstimate = (c: StageCell) => c.withEst != null && c.actual != null && c.withEst > c.actual;
-/* 확인 대비 목표 비율 글자: 미달은 '부족 n%'(확인 기준), 목표 이상이면 목표 대비 달성률 '달성 n%'(3,560/1,543 → 달성 230.7% — '초과 130.7%'처럼 넘친 몫만 쓰지 않는다, 2026-10-16 2차 평가). 소수 한 자리(pct1, 3차 평가) */
+/* 확인 대비 목표 비율 글자: 모든 칸을 목표 대비 달성률 '달성 n%' 하나로(3,560/14,694 → 달성 24.2%, 3,560/1,543 → 달성 230.7% — 미달을 '부족 n%'로 따로 쓰지 않는다, 2026-10-16 4차 평가). 소수 한 자리(pct1) */
 export function rateOf(c: StageCell): { value: string; unit: string; word: string } {
-  if (c.state === 'short') { const v = pct1(c.shortfallPct ?? 0); return { value: v, unit: '% 부족', word: `부족 ${v}%` }; }
   const v = pct1(c.target && c.actual != null ? c.actual / c.target * 100 : 100);
   return { value: v, unit: '% 달성', word: `달성 ${v}%` };
 }
-/* 칸 설명(title): 확인·추정 포함/목표·부족·기간·확인 필요 연결. 확인 값은 HOME 원천 값 그대로 — cells(같은 정책의 여섯 칸)를 주면 같은 확인 값인 다른 단계를 적는다(①계획 = ②인허가 3,560: 원천이 같은 값을 줌) */
+/* 칸 설명(title): 확인·추정 포함/목표·달성률·기간·확인 필요 연결. 확인 값은 HOME 원천 값 그대로 — cells(같은 정책의 여섯 칸)를 주면 같은 확인 값인 다른 단계를 적는다(①계획 = ②인허가 3,560: 원천이 같은 값을 줌) */
 export function stageCellTip(c: StageCell, polName = '', cells: StageCell[] = []) {
   const span = `${ymText(c.from)}~${ymText(c.through)}`;
   const head = `${polName ? `${polName} ` : ''}${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — 정책 진행 자료(HOME) 단계 '${c.label}' · ${span}`;
@@ -278,16 +279,16 @@ export function stageCellTip(c: StageCell, polName = '', cells: StageCell[] = []
   const twin = c.actual != null ? cells.filter((o) => o.board !== c.board && o.actual === c.actual).map((o) => `${BOARD_CIR[o.board]}${BOARD_NAMES[o.board]}`) : [];
   const act = c.actual != null ? `확인 ${fmt(c.actual)}호(HOME(정책 진행 자료) 원천 값 그대로${twin.length ? ` · ${twin.join('·')} 확인과 같은 값` : ''})${c.actualThrough && c.actualThrough !== c.through ? `(${ymText(c.actualThrough)}까지)` : ''}${c.review ? ` — 확인 필요 연결 ${fmt(c.review)}호 포함` : ''}${est}` : `확인 미확보(${c.actualBasis})`;
   const tgt = c.target != null ? `목표 ${fmt(c.target)}호` : c.yearEnd ? `같은 기간 목표 없음 · 연말 목표 ${dayText(c.yearEnd.date)} ${fmt(c.yearEnd.units)}호` : '목표 없음';
-  const gap = c.state === 'short' && c.gap != null ? ` · 부족 ${fmt(c.gap)}호(${pct1(c.shortfallPct ?? 0)}%)` : '';
-  return `${head} · ${act} / ${tgt}${gap} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}`;
+  const rate = c.target != null && c.actual != null ? ` · ${rateOf(c).word}${c.state === 'short' && c.gap != null ? `(목표까지 ${fmt(c.gap)}호)` : ''}` : '';
+  return `${head} · ${act} / ${tgt}${rate} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}`;
 }
 /* 목표 대비 줄: 렌즈 '전체'면 목표가 배정된 정책 모두, 정책 렌즈면 그 정책 하나(목표가 없으면 없음). 칸은 목표가 있는 단계만, 나머지는 '목표 미배정' 한 번 */
 export type CompareLine = { policy: Policy; cells: StageCell[]; none: number[]; n: number; units: number; review: number; confirmed: number };
-/* 접힌 '정책 목표 대비' 머리의 한 줄: 부족률 숫자 없이 목표가 있는 단계 수와 부족한 단계 이름만(단계별 비율은 핵심 질문 첫 칸·펼친 칸에 — 같은 화면에 이름표 없는 부족률이 둘 나오지 않게) */
+/* 접힌 '정책 목표 대비' 머리의 한 줄: 비율 숫자 없이 목표가 있는 단계 수와 목표에 못 미친(미달) 단계 이름만(단계별 비율은 핵심 질문 첫 칸·펼친 칸에 — 같은 화면에 이름표 없는 부족률이 둘 나오지 않게) */
 export function compareHead(l: CompareLine) {
   const tgt = l.cells.filter((c) => c.target != null), short = tgt.filter((c) => c.state === 'short');
   if (!tgt.length) return `${l.policy.short} 목표만 있음`;
-  return short.length ? `${l.policy.short} · 목표 있는 ${tgt.length}단계 중 ${short.length}단계 부족(${short.map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]}`).join('·')})` : `${l.policy.short} · 목표 있는 ${tgt.length}단계 모두 달성`;
+  return short.length ? `${l.policy.short} · 목표 있는 ${tgt.length}단계 중 ${short.length}단계 미달(${short.map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]}`).join('·')})` : `${l.policy.short} · 목표 있는 ${tgt.length}단계 모두 달성`;
 }
 export function compareLines(pp: PolicyProgress, policies: Policy[], rows: ProjectRow[], keys: string[]): CompareLine[] {
   return policies.filter((p) => keys.includes(p.key)).flatMap((policy) => {
@@ -330,8 +331,8 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
     Q.push({ q: `${policyLabel(pol)} 목표 대비`, href: !f.policy ? listHref(f, { policy: pk! }) : undefined, tone: short ? 'bad' : undefined,
       value: r.value, unit: r.unit, stages: cells!,
       sub: `${BOARD_CIR[i]}${BOARD_NAMES[i]} 확인 ${fmt(pair.actual!)} / 목표 ${fmt(pair.target!)}`,
-      tip: `${pol.name} 단계별 목표 대비 확인(${ymText(pair.from)}~${ymText(pair.through)}) · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 부족·달성 비율은 확인으로만 계산 · 확인 값은 HOME(정책 진행 자료) 원천 값 그대로${cells!.some(hasEstimate) ? ` · 담당자 추정 포함(확인과 따로): ${cells!.filter(hasEstimate).map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.withEst!)}호`).join(' · ')}` : ''} · 누르면 이 정책의 사업`,
-      help: `${policyLabel(pol)}이 올해 1월부터 단계마다 세운 목표 집 수(호)와 실제 기록으로 확인한 집 수입니다. 모자라면 부족 %, 목표 이상이면 달성 %, 목표를 정하지 않은 단계는 '목표 없음'. 정책 전체 숫자라 지역·기관 거르기와 상관없습니다.`,
+      tip: `${pol.name} 단계별 목표 대비 확인(${ymText(pair.from)}~${ymText(pair.through)}) · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 달성률은 확인으로만 계산 · 확인 값은 HOME(정책 진행 자료) 원천 값 그대로${cells!.some(hasEstimate) ? ` · 담당자 추정 포함(확인과 따로): ${cells!.filter(hasEstimate).map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.withEst!)}호`).join(' · ')}` : ''} · 누르면 이 정책의 사업`,
+      help: `${policyLabel(pol)}이 올해 1월부터 단계마다 세운 목표 집 수(호)와 실제 기록으로 확인한 집 수입니다. 달성 % = 확인 ÷ 목표(100%가 목표), 목표를 정하지 않은 단계는 '목표 없음'. 정책 전체 숫자라 지역·기관 거르기와 상관없습니다.`,
       note: sourceNote(cells!) });
   } else {
     const judged = scope.filter((r) => r.cls && r.issued);

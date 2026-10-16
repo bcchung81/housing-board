@@ -40,6 +40,12 @@ export const ledgerJudged = (L: LedgerBoard) => {
 /* 번호가 없는 후보의 같은 계산(D3) — 화면 이름 '확인 필요(후보)'(사업 화면 STATUS_RANGE.review 와 같은 말) */
 export const CAND_TEXT = '확인 필요(후보)';
 export const candText = (c: { ok: { projects: number }; caution: { projects: number }; delay: { projects: number } }) => `계산하면 지연 ${f(c.delay.projects)} · 주의 ${f(c.caution.projects)} · 정상 ${f(c.ok.projects)}`;
+/* 판정 비율의 모수(선택 시점 카드): 판정 사업 건수·호수와 전체 호수(리본 총량 = 원장 전체 호수) 중 판정 호수 비율 */
+type Pu = { projects: number; units: number };
+export const judgeBase = (j: { ok: Pu; caution: Pu; delay: Pu }, total: number) => {
+  const p = j.ok.projects + j.caution.projects + j.delay.projects, u = j.ok.units + j.caution.units + j.delay.units;
+  return `판정 ${f(p)}건 · ${f(u)}호 · 전체의 ${(total ? u / total * 100 : 0).toFixed(1)}%`;
+};
 const ymDot = (ym: string) => ym.replace('-', '.');
 const L_ = (L: LedgerBoard) => `원장 ${ymDot(L.observedMonth)} 기준 · ${nation(L)}`;
 

@@ -63,10 +63,10 @@ test("2 예정일 지남 문구: '정상 · 예정일 지남(1개월 미만)' �
   for (const [f, s] of [['Board', board], ['month', month], ['agency', agency], ['month-ahead', read('lib/board/month-ahead.ts')]]) assert.doesNotMatch(code(s), /경과 0개월|경과 \$\{[^}]*\.months\}개월/, f);   // 규칙 설명('경과 6개월 이상')은 괜찮다
 });
 
-test('3 기관별 진행의 % = 지연 중 비중(열 머리·title)', () => {
+test('3 기관별 진행의 % = 전국 지연 중 몫(열 머리·title — 2026-10-16 4차 r4-board 5 에서 \'지연 중 비중\'을 바꿈)', () => {
   const ag = panel('p-agency');
-  assert.match(ag, /data-slot="agency-head"[\s\S]*?지연 중 비중/, '열 머리');
-  assert.match(ag, /title=\{`[^`]*전체 지연 \$\{f\(J\.delay\.units\)\}호 중 \$\{a\.name\} 비중`\}/, '값 title');
+  assert.match(ag, /data-slot="agency-head"[\s\S]*?\{whole\} 지연 중 몫/, '열 머리');
+  assert.match(ag, /title=\{`[^`]*\$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호 중 \$\{a\.name\} 몫`\}/, '값 title');
 });
 
 test("4 용어: '판정 밖' → '일정 정보 없음'(종합상황판·기관 화면·지시 카드 설명), 후보는 '확인 필요(후보)' 조각으로 따로", () => {
@@ -81,18 +81,14 @@ test("4 용어: '판정 밖' → '일정 정보 없음'(종합상황판·기관 
   assert.match(board, /cand = a\.candidateUnits \?\? 0, none = out - cand/);
 });
 
-test('5 시도 타일: 판정 대상이 있는 시도를 앞에 크게, 나머지는 한 줄 묶음(판정 대상 없음 n곳 · 확인 필요 n건 + 펼치기)', () => {
+test('5 시도 타일: 판정 대상은 서울·인천·경기 3곳, 13곳은 판정 대상 없음 — 2026-10-16 4차 사용자 지시로 묶음을 되돌려 16칸 모두 타일(r4-board 1)', () => {
   const judged = BOARD.regions.filter((r) => r.judged), rest = BOARD.regions.filter((r) => !r.judged);
   assert.deepEqual(judged.map((r) => r.code), ['11', '28', '41']);
   assert.equal(rest.length, 13);
   const reg = panel('p-region');
-  assert.match(reg, /judgedRegions\.map\(/, '판정 시도 큰 타일');
-  assert.match(board, /judgedRegions = L\.regions\.filter\(\(r\) => r\.judged\)/);
-  assert.match(reg, /data-slot="region-fold"[^>]*aria-expanded=\{foldOpen\}/, '묶음 펼치기 단추');
-  assert.match(reg, /판정 대상 없음 \{restRegions\.length\}곳/);
-  assert.match(reg, /확인 필요 \{f\(restCand\)\}건/);
-  assert.doesNotMatch(reg, /data-slot="region-none"/, '타일마다 같은 문구를 되풀이하지 않는다');
-  assert.equal((code(reg).match(/판정 대상 없음/g) || []).length <= 2, true, "'판정 대상 없음' 글자는 묶음 한 곳(+title)");
+  assert.match(reg, /\{L\.regions\.map\(\(r, ri\) =>/, '16곳 모두 타일');
+  assert.doesNotMatch(board, /region-fold|judgedRegions|restRegions/, '한 줄 묶음 없음');
+  assert.match(reg, /data-slot="region-none"/, '판정 대상 없는 칸마다 짧은 표기');
 });
 
 test('6 지연·주의 추이: 기준 변경 뒤 값(큰 숫자)과 이전 기준(빗금 띠·점선)을 함께, 고정 높이·오른쪽 이름표 칸 없이 카드 높이를 채운다', () => {

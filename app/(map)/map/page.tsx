@@ -49,6 +49,19 @@ function homeProgress(doc: { projects?: Record<string, { progress?: [string, num
   return out;
 }
 
+/* 사업별 공사 기간 날짜(사업 원장, 사업 화면 서랍과 같은 project-detail.json 의 stages): { 사업 id: { s: 착공 실제, e: 준공(실제, 없으면 현재 예정), done: 준공 실제 } }.
+   지도 카드가 공사 기간을 이 값으로 쓰고 지도 원천(상세 3D) 달이 다르면 작은 표지만 단다(app.js spanOf, 2026-10-16 4차). 착공은 실제만 싣는다 */
+type StageEv = { plan?: string; actual?: string };
+function homeDates(doc: { projects?: Record<string, { stages?: Record<string, StageEv> }> }): Record<string, { s?: string; e?: string; done?: true }> {
+  const out: Record<string, { s?: string; e?: string; done?: true }> = {};
+  const day = (v?: string) => (typeof v === 'string' && /^\d{4}-\d{2}/.test(v) ? v : undefined);
+  for (const [id, d] of Object.entries(doc.projects || {})) {
+    const st = d.stages || {}, s = day(st.CONSTRUCTION_START?.actual), done = day(st.COMPLETION?.actual), e = done || day(st.COMPLETION?.plan);
+    if (s || e) out[id] = { ...(s ? { s } : {}), ...(e ? { e } : {}), ...(done ? { done: true as const } : {}) };
+  }
+  return out;
+}
+
 /* 지역 자료 읽기는 index.json → 기본 지역의 region.json → 나머지 순으로 이어져 왕복이 직렬이다. 앞의 둘은 작고 모든 열기에 쓰이므로 미리 받는다
    (기본 지역이 아닌 지역·코드로 열면 4 KB 정도가 헛될 뿐이다. 큰 buildings.json 은 지역을 알아야 하므로 미리 받지 않는다) */
 function regionPreloads(): string[] {
@@ -108,7 +121,7 @@ function OverviewMarkup() {
 
 /* 지도 섬 + 개요 값: 개요 값은 사업 화면과 같은 읽기(getProjectsIndex)를 기다려 넘긴다. 개요 모듈 주소도 여기서 정한다(해시 이름 표 → 없으면 옛 이름).
    상세 지도의 스크립트 순서는 지도 섬이 index.html 로더와 같게 가진다(개요 모듈은 Next 지도에만 있다) */
-async function Island(props: { assets: Record<string, string>; homeMap: Record<string, string>; homeLite: Record<string, { name: string; n: number; h?: string }>; homeProgress: Record<string, [string, number]> }) {
+async function Island(props: { assets: Record<string, string>; homeMap: Record<string, string>; homeLite: Record<string, { name: string; n: number; h?: string }>; homeProgress: Record<string, [string, number]>; homeDates: Record<string, { s?: string; e?: string; done?: true }> }) {
   return <MapIsland {...props} overview={await overviewDoc()} overviewSrc={props.assets[OVERVIEW_JS] || OVERVIEW_JS} />;
 }
 const OVERVIEW_JS = '/assets/js/overview.js';
@@ -122,7 +135,7 @@ export default function MapPage() {
     <>
       <OverviewMarkup />
       <div style={{ display: 'contents' }} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: markup }} />
-      <Island assets={assets} homeMap={homeMapManifest()} homeLite={homeLiteManifest()} homeProgress={homeProgress(detailJson as never)} />
+      <Island assets={assets} homeMap={homeMapManifest()} homeLite={homeLiteManifest()} homeProgress={homeProgress(detailJson as never)} homeDates={homeDates(detailJson as never)} />
     </>
   );
 }

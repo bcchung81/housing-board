@@ -6,7 +6,8 @@
      여섯 칸은 늘 같은 폭(2026-10-16 2차 평가: 없는 칸을 하나로 합치면 폭이 고르지 않고 인쇄 보기 오른쪽이 빈다) — 둘 다 없는 칸은 제자리에 점선 칸 '사업 없음'.
    - ReadHelp: 핵심 정의(지연 구간 · 확인과 담당자 추정 · 이 단계까지 온 사업과 지금 · 병목 · 앞으로 12개월)를 눌러서 여는 ⓘ 하나로(인쇄에는 펼친 목록).
    - PolicyCompare: 정책별 같은 기간 목표 대비 확인 — 기본 접힘(<details>, 머리에 핵심 한 줄 compareHead), 인쇄 보기는 펼침. 목표가 있는 단계만 칸으로, 나머지는 '목표 없음' 한 번.
-     확인과 담당자 추정을 섞지 않는다 — 막대는 확인(실색) 뒤에 추정 포함분(옅은 점선), 숫자는 '확인 / 목표' 와 아래 '추정 포함' 줄. 부족·달성 비율은 확인으로만 낸다.
+     확인과 담당자 추정을 섞지 않는다 — 막대는 확인(실색) 뒤에 추정 포함분(옅은 점선), 숫자는 '확인 / 목표' 와 아래 '추정 포함' 줄. 달성률은 확인으로만 낸다.
+     비율은 모든 칸이 목표 대비 달성률 '달성 n%' 하나(2026-10-16 4차 평가 — 미달을 '부족 n%'로 따로 쓰지 않는다), 막대에는 목표 = 100% 기준선(TargetLine, 세로 줄).
      정책–사업 연결 상태(확정·확정 전)는 보이는 글에 쓰지 않고 정책 이름 title 에만. */
 import Link from 'next/link';
 import { Fragment, type CSSProperties, type ReactNode } from 'react';
@@ -25,7 +26,10 @@ const h3 = 'm-0 text-[16px] font-normal text-muted-foreground';
 /* 추정 포함분 막대: 단계색 옅은 면 + 점선 테두리 */
 const EST = (c: string): CSSProperties => ({ background: light(c, 55), outline: `1px dashed ${c}`, outlineOffset: '-1px' });
 
-/* 첫 칸의 단계 칸 미니 막대: 확인/목표(단계색 실색) 뒤에 담당자 추정 포함(옅은 점선) · 목표 미달은 빨간 테두리 · 목표만 있고 실적 없음은 빗금 · 목표 없음은 점선 한 줄 */
+/* 목표 = 100% 기준선: 막대 안 at%(미달은 오른쪽 끝, 초과는 목표 자리 — StageCell.mark) 세로 줄, 막대 위아래로 2px 나온다 */
+const TargetLine = ({ at }: { at: number }) => <span data-slot="target-line" className="absolute -inset-y-[2px] w-[2px] -translate-x-full bg-foreground" style={{ left: `${at}%` }} />;
+
+/* 첫 칸의 단계 칸 미니 막대: 확인/목표(단계색 실색) 뒤에 담당자 추정 포함(옅은 점선) · 목표 = 100% 기준선 · 목표 미달은 빨간 테두리 · 목표만 있고 실적 없음은 빗금 · 목표 없음은 점선 한 줄 */
 function MiniBar({ c }: { c: StageCell }) {
   const color = BOARD_COLOR[c.board];
   if (c.target == null) return <span className="my-[2px] block h-[2px] border-t border-dashed border-line2" aria-hidden="true" />;
@@ -35,11 +39,12 @@ function MiniBar({ c }: { c: StageCell }) {
       {hasEstimate(c) ? <span className="absolute inset-y-0 left-0" style={{ width: `${c.estFill}%`, ...EST(color) }} /> : null}
       <span className="absolute inset-y-0 left-0" style={{ width: `${c.fill}%`, background: color }} />
       {c.state === 'short' ? <span className="absolute inset-0 border border-bad" /> : null}
+      <TargetLine at={c.mark} />
     </span>
   );
 }
 
-/* 첫 칸의 단계 칸(가로 여섯 칸 — 단계별 진행과 같은 폭): 단계 이름(단계 글자색) · 부족·달성 n%(확인 기준 — rateOf) / 미니 막대 / 확인 / 목표.
+/* 첫 칸의 단계 칸(가로 여섯 칸 — 단계별 진행과 같은 폭): 단계 이름(단계 글자색) · 달성 n%(확인 기준 — rateOf) / 미니 막대 / 확인 / 목표.
    목표가 없는 단계는 '목표 없음'(옅게), 담당자 추정 포함은 칸 title 에 */
 function StageRates({ cells }: { cells: StageCell[] }) {
   return (
@@ -70,7 +75,7 @@ export function Questions({ list }: { list: Question[] }) {
         const inner = (
           <>
             <span className={cn('flex min-w-0 items-center gap-1.5 pr-7 text-[14px] text-muted-foreground', x.href && 'group-hover/q:text-primary')}>
-              <span className="truncate" title={x.q}>{x.q}</span>
+              <span className="line-clamp-2 [word-break:keep-all]" title={x.q}>{x.q}</span>{/* 말줄임 대신 두 줄까지(2026-10-16 4차 평가) */}
             </span>
             {x.stages ? <StageRates cells={x.stages} /> : <>
             <b className={cn('font-display text-[28px] leading-[1.2] font-normal whitespace-nowrap tabular-nums', x.tone === 'bad' && 'text-bad', x.muted && 'text-muted-foreground')} style={x.ink ? { color: x.ink } : undefined}>
@@ -146,7 +151,7 @@ export function Pipeline({ open, total, on, href, badges }: { open: PipeCell[]; 
 
 /* 목표 칸 하나: 목표·확인(+추정 포함) 막대 · 실적 없음 · 연말 목표만 */
 function TargetCell({ c, pol }: { c: StageCell; pol: string }) {
-  const color = BOARD_COLOR[c.board], tip = c.target != null ? `${pol} ${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — ${ymText(c.from)}~${ymText(c.through)} · 확인 ${c.actual != null ? `${fmt(c.actual)}호` : '없음'}${c.review ? `(확정 전 연결 ${fmt(c.review)}호 포함)` : ''}${hasEstimate(c) ? ` · 담당자 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호 — 확인과 구분)` : ''} / 목표 ${fmt(c.target)}호${c.state === 'short' ? ` · 부족 ${fmt(c.gap ?? 0)}호(${pct1(c.shortfallPct ?? 0)}%, 확인 기준)` : c.actual != null && c.actual > c.target ? ` · ${rateOf(c).word}(확인 기준)` : ''} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}` : '';
+  const color = BOARD_COLOR[c.board], tip = c.target != null ? `${pol} ${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — ${ymText(c.from)}~${ymText(c.through)} · 확인 ${c.actual != null ? `${fmt(c.actual)}호` : '없음'}${c.review ? `(확정 전 연결 ${fmt(c.review)}호 포함)` : ''}${hasEstimate(c) ? ` · 담당자 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호 — 확인과 구분)` : ''} / 목표 ${fmt(c.target)}호${c.actual != null ? ` · ${rateOf(c).word}(확인 기준)${c.state === 'short' ? ` · 목표까지 ${fmt(c.gap ?? 0)}호` : ''}` : ''} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}` : '';
   if (c.target != null && c.actual != null) {
     const short = c.state === 'short', est = hasEstimate(c);
     return (
@@ -155,9 +160,10 @@ function TargetCell({ c, pol }: { c: StageCell; pol: string }) {
           {est ? <span className="absolute inset-y-0 left-0" style={{ width: `${c.estFill}%`, ...EST(color) }} /> : null}
           <span className="absolute inset-y-0 left-0" style={{ width: `${c.fill}%`, background: color }} />
           {short ? <span className="absolute inset-0 border-[1.5px] border-bad" /> : null}
+          <TargetLine at={c.mark} />
         </span>
         <span className="text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">
-          <b className={cn('text-[14px]', short ? 'text-bad' : 'text-foreground')}>{fmt(c.actual)}</b> / {fmt(c.target)}{short ? <> <b className="text-bad">{rateOf(c).word}</b></> : c.actual > c.target ? <> <b className="text-ok">{rateOf(c).word}</b></> : null}
+          <b className={cn('text-[14px]', short ? 'text-bad' : 'text-foreground')}>{fmt(c.actual)}</b> / {fmt(c.target)} <b className={short ? 'text-bad' : c.actual > c.target ? 'text-ok' : 'text-foreground'}>{rateOf(c).word}</b>
         </span>
         {est ? <span className="text-[13px] whitespace-nowrap text-muted-foreground tabular-nums">담당자 추정 포함 {fmt(c.withEst!)}</span> : null}
       </div>
@@ -185,8 +191,8 @@ export function PolicyCompare({ lines, title, href, open = false }: { lines: Com
   const used = lines.flatMap((l) => l.cells.filter(hasTarget));
   const c0 = lines[0].cells[0];
   const lg: { label: string; tip: string; cls?: string; style?: CSSProperties }[] = [{ label: '확인', cls: 'bg-mute', tip: '확인 호수(단계색 실색) — 원천·연결 사건과 담당자 측정값 중 추정이 아닌 것' }];
-  if (used.some(hasEstimate)) lg.push({ label: '담당자 추정 포함', tip: '담당자 추정 입력(기한이 지난 단계에 담당자가 고른 현재값)을 더한 값(옅은 점선) — 비율·부족은 확인으로만', style: EST('var(--mute)') });
-  if (used.some((c) => c.target != null)) lg.push({ label: '목표', tip: '같은 기간 목표(같은 색 옅게)', style: { background: light('var(--mute)', 30) } });
+  if (used.some(hasEstimate)) lg.push({ label: '담당자 추정 포함', tip: '담당자 추정 입력(기한이 지난 단계에 담당자가 고른 현재값)을 더한 값(옅은 점선) — 달성률은 확인으로만', style: EST('var(--mute)') });
+  if (used.some((c) => c.target != null)) lg.push({ label: '목표(100%)', tip: '같은 기간 목표 = 100% 기준선(세로 줄) — 막대가 줄을 넘으면 목표 이상', cls: 'w-[2px]! rounded-none! bg-foreground' });
   if (used.some((c) => c.target != null && c.actual == null)) lg.push({ label: '실적 없음', cls: `border border-line2 ${HATCH}`, tip: '목표는 있으나 확인 실적 원천이 없음(빗금)' });
   if (used.some((c) => c.state === 'short')) lg.push({ label: '목표 미달', cls: 'border-[1.5px] border-bad', tip: '확인이 목표에 못 미침(빨간 테두리)' });
   /* 기본 접힘(목록 앞 블록을 줄인다) — 머리에 정책마다 핵심 한 줄. ⓘ 는 summary 밖(누르면 접힘이 바뀌지 않게) */
@@ -225,7 +231,7 @@ export function PolicyCompare({ lines, title, href, open = false }: { lines: Com
       <span className="absolute top-[-2px] right-0">
         <InfoTip label={title}>
           <p>정부가 정책에서 정한 단계별 목표 호수와 실제 기록으로 확인한 호수를 같은 기간(올해 1월부터)끼리 견줍니다. 단계 목표가 배정된 정책만 보입니다(목표가 없는 정책은 정책 칩으로 사업만 봄).</p>
-          <p>정책 전체 숫자라 지역·기관 거르기와 상관없습니다. 목표보다 적으면 &apos;부족 %&apos;, 목표 이상이면 &apos;달성 %&apos;(확인 기준)입니다. 확인 값은 정책 진행 자료(HOME)의 원천 값 그대로(검증 대기)입니다.</p>
+          <p>정책 전체 숫자라 지역·기관 거르기와 상관없습니다. 비율은 모두 &apos;달성 %&apos; = 확인 ÷ 목표(100%가 목표, 확인 기준)입니다. 확인 값은 정책 진행 자료(HOME)의 원천 값 그대로(검증 대기)입니다.</p>
           <dl>{lg.map((x) => <Fragment key={x.label}><dt>{x.label}</dt><dd>{x.tip}</dd></Fragment>)}</dl>
         </InfoTip>
       </span>
@@ -238,7 +244,7 @@ function Defs() {
   return (
     <dl>
       <dt>{DELAY_GROUP}</dt><dd>지금 잡혀 있는 예정일을 6개월 넘게 넘긴 사업 — 6~12개월은 지연, 12개월이 넘으면 장기(1~6개월 넘긴 주의는 따로 셈) · 사업 번호가 없는 후보는 &apos;확인 필요&apos;로 따로 셈</dd>
-      <dt>확인 · 담당자 추정 포함</dt><dd>확인 = 실제 기록으로 확인한 집 수(호, 정책 진행 자료(HOME) 원천 값 그대로) · 담당자 추정 포함 = 여기에 담당자가 짐작해 넣은 값을 더한 수(부족·달성 비율은 확인한 수로만 계산)</dd>
+      <dt>확인 · 담당자 추정 포함</dt><dd>확인 = 실제 기록으로 확인한 집 수(호, 정책 진행 자료(HOME) 원천 값 그대로) · 담당자 추정 포함 = 여기에 담당자가 짐작해 넣은 값을 더한 수(달성률은 확인한 수로만 계산)</dd>
       <dt>이 단계까지 온 사업 · 지금 이 단계</dt><dd>이 단계까지 온 사업 = 지금 그 단계이거나 그 뒤 단계에 있는 사업(①계획은 전체) · 지금 이 단계 = 지금 바로 그 단계에 있는 사업(칸을 누르면 목록이 그 사업만)</dd>
       <dt>병목</dt><dd>예정일을 6개월 넘게 넘긴 사업의 집 수가 가장 많이 몰린 단계(종합상황판과 같은 계산)</dd>
       <dt>{AHEAD_COMPLETION}</dt><dd>자료 기준 달부터 12개월 안에 공사를 마칠 예정인 사업(이미 공사를 마친 사업은 뺌)</dd>

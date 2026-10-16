@@ -15,7 +15,8 @@ const COND_TIP = '숫자마다 기준연도가 다름 · 재고−가구 차이�
 function Fact({ label, value, unit, sub, tip }: { label: string; value: string; unit: string; sub?: ReactNode; tip: string }) {
   return (
     <Card variant="kpi" title={tip}>
-      <span className="flex min-w-0 items-center gap-1.5 truncate text-[14px] text-muted-foreground"><i className="block size-[9px] flex-none rounded-[3px] bg-line2" aria-hidden="true" />{label}</span>
+      {/* 칸 이름은 말줄임 없이 두 줄까지(2026-10-16 4차 평가 — 1280·1440 좁은 칸) */}
+      <span className="flex min-w-0 items-start gap-1.5 text-[14px] text-muted-foreground"><i className="mt-[6px] block size-[9px] flex-none rounded-[3px] bg-line2" aria-hidden="true" /><span className="line-clamp-2 [word-break:keep-all]">{label}</span></span>
       <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
         <b className="font-display text-[min(30px,15cqi)] leading-[1.2] font-normal whitespace-nowrap tabular-nums">{value}<small className="ml-[3px] font-sans text-[14px] font-normal text-muted-foreground">{unit}</small></b>
         {sub ? <span className="text-[13px] text-muted-foreground tabular-nums">{sub}</span> : null}

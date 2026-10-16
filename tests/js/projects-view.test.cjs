@@ -99,11 +99,11 @@ test('상태: 지연 중 경과 12개월 이상은 장기 지연, 점검 필요 
   assert.ok(all.every((r, i) => i === 0 || (!!all[i - 1].issued >= !!r.issued && (!sameGroup(all[i - 1], r) || (V.overdueMonthsOf(all[i - 1]) ?? -1) >= (V.overdueMonthsOf(r) ?? -1)))), '목록 기본 순서 = 번호 있는 사업 먼저, 그 안에서 예정일 경과 개월 큰 순(후보끼리도 같은 계산 순, 경과 없는 사업은 뒤)');
 });
 
-test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 75.8% 부족 · ③ 착공 1,666호 · 지연 2건(확인 필요 후보 313 따로, D3) · 인천 · 앞으로 12개월 준공 214,975호(= 종합상황판 향후 12개월)', () => {
+test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 달성 24.2%(r4-screens 1) · ③ 착공 1,666호 · 지연 2건(확인 필요 후보 313 따로, D3) · 인천 · 앞으로 12개월 준공 214,975호(= 종합상황판 향후 12개월)', () => {
   const q = Q({});
   assert.deepEqual(Object.keys(q), ['9·7 대책 목표 대비', '어디서 막혀 있는가', '어떤 사업이 늦어지는가', '어디를 먼저 챙기는가', '앞으로 얼마나 공급되는가'], '첫 칸 범위(전국 · 정책 진행 자료)는 정책 목표 카드 머리의 범위 칩에');
   const a = q['9·7 대책 목표 대비'];
-  assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['75.8', '% 부족', '①계획 확인 3,560 / 목표 14,694', 'bad', '/projects?policy=97&sido=all']);
+  assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['24.2', '% 달성', '①계획 확인 3,560 / 목표 14,694', 'bad', '/projects?policy=97&sido=all']);
   for (const x of Object.values(q)) assert.ok(x.help && !/policy-progress|samePeriod|HOME|원장/.test(x.help), `ⓘ 정의는 쉬운 말: ${x.q}`);
   assert.match(a.tip, /담당자 추정 포함\(확인과 따로\): ①계획 5,789호/, '추정 포함은 title 에만');
   assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['③ 착공', '병목 · 지연(장기 포함) 1,666호', '/projects?sido=all&stage=2&status=late']);
@@ -116,7 +116,7 @@ test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 7
 
 test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·주의 2) · 인천 2,890호 · 13,372호 24건 / 1·29 는 목표가 없어 정상 비율 / 시도를 고르면 시군구', () => {
   const q = Q({ policy: pol('97') });
-  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['75.8', '①계획 확인 3,560 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['인천', '지연·주의 2,890호'], ['13,372', '앞으로 12개월 · 준공 예정 · 24건']]);
+  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['24.2', '①계획 확인 3,560 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['인천', '지연·주의 2,890호'], ['13,372', '앞으로 12개월 · 준공 예정 · 24건']]);
   assert.equal(q['9·7 대책 목표 대비'].href, undefined, '이미 9·7 렌즈');
   const q129 = Q({ policy: pol('129') });
   assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100.0', '% 정상', '판정 38건 · 판정 없음 9']);
@@ -141,7 +141,7 @@ test('단계 파이프라인: 이 단계까지 온 사업(현재 단계 기준 �
   assert.ok(rows.every((r) => r.reached.every((i) => i >= 1 && i <= 5)), 'reached 는 리본 칸 1~5');
 });
 
-test('9·7 목표 대비 = policy-progress samePeriod(2026-01~09), 확인과 담당자 추정을 나눈다: 공급 목표 8,049 · 확인 4,732 · 추정 포함 8,742 → 부족 41.2%', () => {
+test('9·7 목표 대비 = policy-progress samePeriod(2026-01~09), 확인과 담당자 추정을 나눈다: 공급 목표 8,049 · 확인 4,732 · 추정 포함 8,742 → 달성 58.8%(목표까지 3,317호)', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
   const st = PP.policies[0].stages;
   assert.deepEqual(cells.map((c) => c.key), ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'COMPLETION', 'MOVE_IN']);
@@ -153,7 +153,7 @@ test('9·7 목표 대비 = policy-progress samePeriod(2026-01~09), 확인과 담
   assert.deepEqual([sup.state, sup.target, sup.actual, sup.withEst, sup.gap, sup.shortfallPct], ['short', 8049, 4732, 8742, 3317, 41.2]);
   assert.equal(V.hasEstimate(sup), true);
   assert.equal(Math.round(sup.fill * 10) / 10, 58.8); assert.equal(sup.estFill, 100, '추정 포함 막대는 목표에서 멈춘다');
-  for (const t of ['확인 4,732호', '추정 포함 8,742호', '8,049', '부족 3,317호(41.2%)', '2026.01~2026.09']) assert.ok(V.stageCellTip(sup).includes(t), t);
+  for (const t of ['확인 4,732호', '추정 포함 8,742호', '8,049', '달성 58.8%(목표까지 3,317호)', '2026.01~2026.09']) assert.ok(V.stageCellTip(sup).includes(t), t);
   const biz = cells[0];
   assert.deepEqual([biz.state, biz.target, biz.actual, biz.withEst, biz.gap, biz.shortfallPct], ['short', 14694, 3560, 5789, 11134, 75.8]);
   assert.deepEqual(cells.map((c) => c.state), ['short', 'met', 'noTarget', 'short', 'met', 'none'], '착공은 같은 기간 목표가 없다(연말 점), 입주는 목표·확인 모두 없음');

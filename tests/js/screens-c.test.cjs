@@ -60,7 +60,7 @@ test('2 ③착공 세 숫자에 보이는 정의 꼬리: 종합상황판 단계�
   const D = makeDirectives({ sourceCount: 30, stageNames: [...V.BOARD_NAMES], ledger: BOARD, start: { year: '2026', upto: 8, cum: 156396, cumLy: 1 }, bottleneck: V.bottleneckOf });
   assert.equal(D[0].tag, '통계누리');
   assert.equal(D[0].pre, '착공');
-  assert.match(board, /\{x\.tag \? <span data-slot="dir-tag"[^>]*> · \{x\.tag\}<\/span> : null\}/, '지시 카드 윗줄에 보인다');
+  assert.match(board, /\{x\.tag \? <span data-slot="dir-tag"[^>]*>\{x\.tag\}<\/span> : null\}/, '지시 카드 제목 아래 작은 줄에 보인다(2026-10-16 4차 r4-board 4)');
   /* 세 값이 실제로 다른 정의임: 단계표(지금 ③) ≠ 단계별 진행(③까지 온 누적) */
   const now3 = BOARD.stageUnits[BOARD.now][2], pipe = V.pipelineOf(V.scopeOf(rows, {})).open.find((c) => c.i === 2);
   assert.ok(pipe.units > now3, `누적 ${pipe.units} > 지금 ${now3}`);
@@ -112,9 +112,9 @@ test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본
   assert.match(ahead, /<form data-slot="sgg-pick"[^>]*onSubmit=\{\(ev\) => \{ ev\.preventDefault\(\); if \(draft !== \(cur\?\.code \?\? ''\)\) pickSgg\(draft \|\| null, true\); \}\}/);
   assert.match(ahead, /if \(ev\.key === 'Enter'\) \{ ev\.preventDefault\(\); ev\.currentTarget\.form\?\.requestSubmit\(\); \}/);
   assert.match(ahead, /<button type="submit"[^>]*>보기<\/button>/);
-  /* 시도 타일: 판정 대상 없음(번호 있는 사업 없음) 13곳은 '—' 대신 이유와 확인 필요 건수 — 2026-10-16 부터 한 줄 묶음(r2-board 5) */
+  /* 시도 타일: 판정 대상 없음(번호 있는 사업 없음) 13곳은 '—' 대신 이유와 확인 필요 건수 — 2026-10-16 4차부터 다시 16칸 타일마다(r4-board 1) */
   assert.equal(BOARD.regions.filter((r) => !r.judged).length, 13);
-  assert.match(board, /판정 대상 없음 \{restRegions\.length\}곳<\/span><span aria-hidden="true">·<\/span><span className="whitespace-nowrap">확인 필요 \{f\(restCand\)\}건<\/span>/);
+  assert.match(board, /data-slot="region-none"[^>]*>판정 대상 없음\{r\.candidate\?\.judged \? <> · 확인 필요 \{f\(r\.candidate\.judged\)\}건<\/> : null\}/);
   assert.doesNotMatch(board, /\{rate === null \? '—'/);
   /* /agency/gh: 사업 목록과 같은 열·칸(①~⑥ 알약), 행 → 서랍 */
   const ag = read('app/(dashboard)/agency/[id]/page.tsx');

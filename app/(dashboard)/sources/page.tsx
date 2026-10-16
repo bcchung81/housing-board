@@ -15,6 +15,7 @@ import requirementsJson from '../../../data/board/requirements.json';
 import type { RequirementsDoc } from '../../../lib/board/requirements';
 import { DataGrid } from '../../../components/ui/data-grid';
 import InfoTip from '../../../components/ui/info-tip';
+import ScopeChip from '../../../components/ui/scope-chip';
 import { fmt } from '../../../lib/board/calc';
 import { getBoardData } from '../../../lib/board/data';
 import { ledgerJudged, ledgerMix, nation as nationOf } from '../../../lib/board/directives';
@@ -347,7 +348,7 @@ export default async function SourcesPage() {
       <Links hs={hs} />
       <Fold title="원천 카탈로그" meta={`단계별 데이터 연계 · 화면별 사용 · 추가 확보 필요 ${acqOpen.length}건 · 보관 데이터셋 ${items.length}건`} className="mt-0 shadow-[var(--shadow-card)]">
       <section id="stage-links" aria-labelledby="h-stage" className="scroll-mt-20">
-        <PanelHead id="h-stage" title="단계별 데이터 연계" />
+        <PanelHead id="h-stage" title="단계별 데이터 연계" scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 사업 원장(전국)·통계누리(전국)·지역 지도 자료를 그대로 센 값" />} />
         <StageLinks stages={stages} extra={(
       <div id="etc">
         <p className={`${legend} m-0 justify-end text-[13px]`} aria-label="표지" title="수집 건수 = 보관 레코드 + 로컬 캐시(.cache) 응답 레코드">

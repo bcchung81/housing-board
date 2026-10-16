@@ -80,7 +80,7 @@ test('2 정책 전체 카드 빈자리 없음: 요약은 두 카드를 위아래
 
 test('3 숫자 형식: 비율·공정률은 소수 한 자리, 날짜는 점', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
-  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? V.rateOf(c).word : null)), ['부족 75.8%', '달성 230.7%', null, '부족 41.2%', '달성 100.0%', null]);
+  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? V.rateOf(c).word : null)), ['달성 24.2%', '달성 230.7%', null, '달성 58.8%', '달성 100.0%', null]);
   assert.equal(V.pct1(93.12), '93.1');
   assert.equal(V.pct1(33), '33.0');
   /* 서랍 공정률·타임라인 */
