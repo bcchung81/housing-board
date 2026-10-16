@@ -1,0 +1,68 @@
+{
+  "slug": "gyeonggi-siheung",
+  "name": "경기 시흥시",
+  "title": "주택파동 · 경기 시흥시",
+  "description": "시흥하중·시흥거모 지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 13.0,
+  "pitch": 52,
+  "codes": [
+    {
+      "code": "41390",
+      "type": "sigungu",
+      "name": "시흥시"
+    }
+  ],
+  "sigungu": "41390",
+  "bjdongs": "auto",
+  "jibun_slug": {},
+  "myhome": {
+    "signguNm": [
+      "시흥시"
+    ],
+    "pnuPrefix": [
+      "4139"
+    ]
+  },
+  "zones": [
+    {
+      "id": "hajung",
+      "name": "시흥하중 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "시흥하중 공공주택지구"
+      },
+      "search_bbox": [
+        126.784,
+        37.381,
+        126.816,
+        37.412
+      ],
+      "name_reject": "거모",
+      "label_strip": [
+        "시흥하중지구",
+        "하중지구"
+      ],
+      "short": "시흥하중"
+    },
+    {
+      "id": "geomo",
+      "name": "시흥거모 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "시흥거모 공공주택지구"
+      },
+      "search_bbox": [
+        126.757,
+        37.33,
+        126.799,
+        37.366
+      ],
+      "name_reject": "하중",
+      "label_strip": [
+        "시흥거모지구",
+        "거모지구"
+      ],
+      "short": "시흥거모"
+    }
+  ]
+}

@@ -240,6 +240,11 @@ QUOTA_XML = (b"<OpenAPI_ServiceResponse><cmmMsgHeader><errMsg>SERVICE ERROR</err
              b"<returnReasonCode>22</returnReasonCode></cmmMsgHeader></OpenAPI_ServiceResponse>")
 
 
+PER_SECOND_XML = (b"<OpenAPI_ServiceResponse><cmmMsgHeader><errMsg>SERVICE ERROR</errMsg>"
+                  b"<returnAuthMsg>LIMITED_NUMBER_OF_SERVICE_REQUESTS_PER_SECOND_EXCEEDS_ERROR</returnAuthMsg>"
+                  b"<returnReasonCode>22</returnReasonCode></cmmMsgHeader></OpenAPI_ServiceResponse>")
+
+
 def quota_json():
     return body({"response": {"header": {"resultCode": "22", "resultMsg": "LIMITED"}}})
 
@@ -280,10 +285,45 @@ class BuildKeyPool(unittest.TestCase):
             self.assertIn("serviceKey=k2", fetch.urls[1])
             self.assertEqual(client.calls["key-switch"], 1)
 
-    def test_http_429_also_switches(self):
-        client, fetch = self._client([(429, b""), (200, hub_page([{"a": 1}], 1))])
+    def test_http_429_with_daily_limit_body_switches(self):
+        client, fetch = self._client([(429, QUOTA_XML), (200, hub_page([{"a": 1}], 1))])
         self.assertEqual(client.hub_basis("28245", "10700"), [{"a": 1}])
         self.assertIn("serviceKey=k2", fetch.urls[1])
+
+    def _throttle_client(self, responses, pool=("k1", "k2")):
+        keys = api.Keys(pool[0], FAKE_VW, "example.test", tuple(pool))
+        fetch, waits = FakeFetch(responses), []
+        return api.Client(keys, fetch=fetch, sleep=waits.append), fetch, waits
+
+    def test_per_second_limit_waits_and_retries_with_the_same_key(self):
+        # 초당 한도(HTTP 429 + PER_SECOND, 또는 HTTP 200 + XML)는 하루 한도가 아니다: 같은 키로 쉬었다 다시 부른다
+        for bad in ((429, PER_SECOND_XML), (200, PER_SECOND_XML)):
+            client, fetch, waits = self._throttle_client([bad, bad, (200, hub_page([{"a": 1}], 1))])
+            self.assertEqual(client.hub_basis("28245", "10700"), [{"a": 1}])
+            self.assertTrue(all("serviceKey=k1" in u for u in fetch.urls))
+            self.assertEqual(client.calls["key-switch"], 0)
+            self.assertEqual(waits, list(api.THROTTLE_WAITS_S[:2]))     # 점점 길게
+
+    def test_bare_http_429_is_not_taken_as_daily_quota(self):
+        client, fetch, waits = self._throttle_client([(429, b""), (200, hub_page([{"a": 1}], 1))])
+        self.assertEqual(client.hub_basis("28245", "10700"), [{"a": 1}])
+        self.assertIn("serviceKey=k1", fetch.urls[1])
+        self.assertEqual(client.calls["throttle-wait"], 1)
+
+    def test_retry_after_header_sets_the_wait(self):
+        client, _, waits = self._throttle_client([(429, b"", {"Retry-After": "7"}), (200, hub_page([], 0))])
+        client.hub_basis("28245", "10700")
+        self.assertEqual(waits, [7.0])
+
+    def test_throttle_that_never_clears_raises_throttled_not_quota(self):
+        n = len(api.THROTTLE_WAITS_S) + 1
+        client, fetch, waits = self._throttle_client([(429, PER_SECOND_XML)] * n)
+        with self.assertRaises(api.Throttled) as cm:
+            client.hub_basis("28245", "10700")
+        self.assertNotIsInstance(cm.exception, api.QuotaExceeded)
+        self.assertEqual(len(fetch.urls), n)
+        self.assertEqual(client.calls["key-switch"], 0)
+        self.assertNotIn("k1", str(cm.exception))
 
     def test_dead_key_is_not_used_again_in_the_same_run(self):
         client, fetch = self._client([(200, quota_json()), (200, hub_page([{"a": 1}], 1)), (200, hub_page([{"b": 2}], 1))])

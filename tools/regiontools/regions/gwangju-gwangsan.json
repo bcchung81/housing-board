@@ -1,0 +1,30 @@
+{
+  "slug": "gwangju-gwangsan",
+  "name": "광주 광산구",
+  "title": "주택파동 · 광주 광산구",
+  "description": "광주선운2 공공주택지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 15,
+  "pitch": 52,
+  "codes": [
+    {"code": "12330", "type": "sigungu", "name": "광산구"},
+    {"code": "12330106", "type": "bjdong", "name": "운수동"},
+    {"code": "12330107", "type": "bjdong", "name": "선암동"},
+    {"code": "12330108", "type": "bjdong", "name": "소촌동"}
+  ],
+  "sigungu": "12330",
+  "bjdongs": ["10600", "10700", "10800"],
+  "jibun_slug": {"10600": "unsu", "10700": "seonam", "10800": "sochon"},
+  "myhome": {"signguNm": ["광산구"]},
+  "zones": [
+    {
+      "id": "sunwoon2",
+      "name": "광주선운2 공공주택지구",
+      "type": "공공주택지구",
+      "match": {"contains": "광주선운2"},
+      "search_bbox": [126.770, 35.135, 126.800, 35.162],
+      "name_reject": "선운(?!2)",
+      "label_strip": ["광주선운2지구", "선운2지구"],
+      "short": "광주선운2"
+    }
+  ]
+}

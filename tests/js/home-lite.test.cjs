@@ -41,13 +41,14 @@ function liteFixture() {
   return { doc, opts: { features, districts, blocks, inside, basis: '20261014', edition: '20261014T102506Z' } };
 }
 
-test('경량 번들 생성기: 위치 있는 사업 둘레 300 m 건물만(중심점 순·겹치면 하나), 시군구 지구·블록, 같은 입력 → 같은 바이트', () => {
+test('경량 번들 생성기: 위치 있는 사업 둘레 300 m 건물 + 블록 사업이 든 작은 지구 안 건물(중심점 순·겹치면 하나), 시군구 지구·블록, 같은 입력 → 같은 바이트', () => {
   const a = liteFixture(), b = liteFixture();
   b.opts.features.reverse(); b.opts.districts.reverse(); b.opts.blocks.reverse();   // 원천 순서가 바뀌어도 같은 바이트
   const da = L.liteDoc(a.doc, a.opts), db = L.liteDoc(b.doc, b.opts);
   assert.equal(L.renderLite(da), L.renderLite(db));
-  assert.equal(da.buildings.length, 3);   // 300 m 밖(약 450 m) 건물·시군구 대표점 둘레·같은 건물 둘째는 뺀다
-  assert.ok(!da.buildings.some((f) => [126.9001, 126.8051].includes(f.geometry.coordinates[0][0][0][0])));
+  assert.equal(da.buildings.length, 4);   // 시군구 대표점 둘레·같은 건물 둘째는 뺀다. 300 m 밖(약 450 m) '먼 건물'은 블록 사업이 든 작은 지구(고양창릉 픽스처) 안이라 담는다
+  assert.ok(!da.buildings.some((f) => f.geometry.coordinates[0][0][0][0] === 126.9001));
+  assert.ok(da.buildings.some((f) => f.geometry.coordinates[0][0][0][0] === 126.8051)); assert.deepEqual(da.wide, ['고양창릉 공공주택지구']);
   assert.deepEqual(da.projects, [['PRJ-41281-0001', 2], ['PRJ-41281-0002', 1]]);
   assert.deepEqual(da.districts.map((d) => d.name), ['고양창릉 공공주택지구', '먼 지구']);
   assert.deepEqual(da.blocks.map((x) => x.label), ['고양창릉 S2']);   // 사업 표지와 같은 점(A4)·시군구 밖은 뺀다

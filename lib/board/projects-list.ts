@@ -4,7 +4,7 @@ import type { Cell, CellObj, Col, Row } from '../grid/spec';
 import { mapHref, mapScopeHref } from './map-href';
 import {
   AGENCY_NAME, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, CAND_NAME, DATE_ALT, EVENT_NAME, PLAN_COL, STATUS_NAME,
-  agencyKey, dateAltOf, isMetro, listHref, nextOf, overdueMonthsOf, statusLabel, statusOf, statusTip, ymText, type Filters, type ProjectRow, type Status,
+  agencyKey, dateAltOf, isMetro, listHref, lostGuide, nextOf, overdueMonthsOf, statusLabel, statusOf, statusTip, ymText, type Filters, type ProjectRow, type Status,
 } from './projects-view';
 
 /* '경기도 고양시 일산동구' → '경기 고양시 일산동구'(표가 전국이라 시도를 붙이되 짧게), drop 이면 시도를 뺀다 */
@@ -49,7 +49,7 @@ export const mapCell = (r: ProjectRow, noLoc = false): Cell => {
   if (!isMetro(r.sgg)) return null;
   if (!r.issued) { const href = mapScopeHref({ sgg: r.sgg }); return href ? { text: SGG_MAP, href, doc: true, muted: true, title: `${r.name} — ${CAND_NAME}(사업 번호 없음)이라 지도 자료에 위치가 없음: 이 사업이 있는 시군구 지도로` } : null; }
   return noLoc
-    ? { text: NO_LOC, href: mapHref({ project: r.id }), doc: true, muted: true, title: `${r.name} — ${NO_LOC}(지도에 그릴 위치 없음): 지도에서는 시군구로 보임` }
+    ? { text: NO_LOC, href: mapHref({ project: r.id }), doc: true, muted: true, title: `${r.name} — ${NO_LOC}(지도에 그릴 위치 없음): 지도에서는 시군구로 보임 · ${lostGuide(r.stage)}` }
     : { text: '지도', href: mapHref({ project: r.id }), doc: true, icon: 'map', title: `${r.name} — 지도에서 이 사업 위치 보기` };
 };
 

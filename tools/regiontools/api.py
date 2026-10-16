@@ -3,6 +3,11 @@
 비밀 취급: 키는 .env.local에서 읽어 요청에만 쓴다. 요청 URL·키를 출력·로그·파일에 남기지 않는다.
 캐시 파일 이름은 키를 뺀 매개변수의 해시이고, 내용은 응답 본문만이다. 캐시 폴더는 호출하는 쪽이 저장소 밖으로 정한다.
 건축HUB는 간헐적으로 503·빈 본문을 주므로 최대 5회까지 점점 길게 기다리며 다시 시도한다.
+호출 한도(공공데이터포털, lib/datagokr.js 와 같은 구분):
+  - 초당 한도(본문에 …REQUESTS_PER_SECOND…, 보통 HTTP 429)와 본문으로 가릴 수 없는 HTTP 429 는 하루 한도가 아니다:
+    Retry-After 가 있으면 그만큼, 없으면 THROTTLE_WAITS_S 만큼 점점 길게 쉬고 같은 키로 다시 부른다(실측: 막히면 20초 넘게 안 풀림).
+    끝까지 풀리지 않으면 Throttled(키를 바꾸지 않음).
+  - 일일 한도는 본문이 확실할 때만: resultCode 22 · returnReasonCode 22 · LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS → QuotaExceeded.
 """
 from __future__ import annotations
 
@@ -28,6 +33,8 @@ OVERPASS_URL = "https://overpass-api.de/api/interpreter"
 SECRET_PARAMS = ("serviceKey", "key", "domain")
 MAX_ATTEMPTS = 5
 WAIT_STEP_S = 2.0
+THROTTLE_WAITS_S = (2.0, 5.0, 10.0, 20.0, 40.0)   # 초당 한도에 걸렸을 때 쉬는 시간(차례로). 합 77초
+MAX_RETRY_AFTER_S = 120.0
 USER_AGENT = "housing-board-regiontools/1.0"
 
 
@@ -41,6 +48,10 @@ class MissingKey(RuntimeError):
 
 class QuotaExceeded(ApiError):
     """공공데이터포털 일일 호출 한도(resultCode 22 · LIMITED_NUMBER…) 초과. 다른 키가 있으면 그 키로 이어서 부른다."""
+
+
+class Throttled(ApiError):
+    """초당 호출 한도(또는 본문으로 가릴 수 없는 HTTP 429)가 쉬었다 불러도 풀리지 않음. 하루 한도가 아니므로 키를 바꾸지 않는다."""
 
 
 @dataclass(frozen=True)
@@ -142,14 +153,35 @@ def pan_id(url) -> str | None:
 
 
 def _default_fetch(url, data=None, headers=None, timeout=60):
+    """(상태, 본문, 응답 헤더 dict). 시험용 가짜 fetch 는 (상태, 본문)만 돌려도 된다."""
     req = urllib.request.Request(url, data=data, headers=headers or {"User-Agent": USER_AGENT})
     try:
         with urllib.request.urlopen(req, timeout=timeout) as r:
-            return r.status, r.read()
+            return r.status, r.read(), dict(r.headers.items())
     except urllib.error.HTTPError as e:
-        return e.code, e.read() or b""
+        return e.code, e.read() or b"", dict(e.headers.items()) if e.headers else {}
     except Exception as e:  # 네트워크 오류는 재시도 대상
-        return -1, type(e).__name__.encode()
+        return -1, type(e).__name__.encode(), {}
+
+
+def _unpack(res):
+    """fetch 결과 → (상태, 본문, 헤더). 헤더가 없는 2-튜플도 받는다."""
+    status, raw = res[0], res[1]
+    return status, raw, (res[2] if len(res) > 2 and res[2] else {})
+
+
+def _retry_after(headers) -> float | None:
+    for k, v in (headers or {}).items():
+        if str(k).lower() == "retry-after":
+            try:
+                return max(0.0, min(float(str(v).strip()), MAX_RETRY_AFTER_S))
+            except ValueError:
+                return None
+    return None
+
+
+_PER_SECOND = re.compile(rb"PER_SECOND", re.IGNORECASE)
+_DAILY = re.compile(rb"LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS")
 
 
 _AUTH_ERR = re.compile(rb"<returnAuthMsg>([^<]+)</returnAuthMsg>|<returnReasonCode>(\d+)</returnReasonCode>")
@@ -185,11 +217,23 @@ class Client:
             return json.loads(cp.read_text(encoding="utf-8"))
         full = url + "?" + urllib.parse.urlencode(params)
         last = "응답 없음"
-        for attempt in range(1, MAX_ATTEMPTS + 1):
+        attempt, throttles = 1, 0
+        while True:
             self.calls["net"] += 1
             self.calls[name] += 1
-            status, raw = self.fetch(full, None, {"User-Agent": USER_AGENT}, timeout)
-            m = _AUTH_ERR.search(raw or b"")
+            status, raw, headers = _unpack(self.fetch(full, None, {"User-Agent": USER_AGENT}, timeout))
+            raw = raw or b""
+            error_body = status == 429 or raw.lstrip()[:1] == b"<"      # 한도 오류는 HTTP 429 이거나 XML 본문으로 온다
+            if error_body and (_PER_SECOND.search(raw) or (status == 429 and not _DAILY.search(raw))):
+                # 초당 한도: 하루 한도가 아니므로 쉬었다 같은 키로 다시 부른다(이 쉼은 MAX_ATTEMPTS 에 세지 않는다)
+                if throttles >= len(THROTTLE_WAITS_S):
+                    raise Throttled(f"{name}: 초당 호출 한도가 {len(THROTTLE_WAITS_S)}번 쉬어도 풀리지 않음(HTTP {status})")
+                wait = _retry_after(headers)
+                self.calls["throttle-wait"] += 1
+                self.sleep(THROTTLE_WAITS_S[throttles] if wait is None else wait)
+                throttles += 1
+                continue
+            m = _AUTH_ERR.search(raw)
             if m:
                 code = (m.group(1) or m.group(2) or b"").decode("utf-8", "replace").strip()
                 if "LIMITED_NUMBER" in code or code == "22":
@@ -197,7 +241,7 @@ class Client:
                 if not any(t in code for t in _RETRYABLE_AUTH):
                     raise self._err(f"{name}: 인증·서비스 오류 {code}")
                 last = f"서비스 오류 {code}"
-            elif status == 429:
+            elif status == 429:      # 본문이 일일 한도라고 말할 때만 여기에 온다
                 raise QuotaExceeded(f"{name}: 일일 호출 한도 초과(HTTP 429)")
             elif status != 200:
                 last = f"HTTP {status}"
@@ -220,9 +264,10 @@ class Client:
                     if verdict.startswith("fatal:"):
                         raise self._err(f"{name}: {verdict[6:]}")
                     last = verdict[6:]
-            if attempt < MAX_ATTEMPTS:
-                self.sleep(WAIT_STEP_S * attempt)
-        raise self._err(f"{name}: {MAX_ATTEMPTS}회 시도 실패({last})")
+            if attempt >= MAX_ATTEMPTS:
+                raise self._err(f"{name}: {MAX_ATTEMPTS}회 시도 실패({last})")
+            self.sleep(WAIT_STEP_S * attempt)
+            attempt += 1
 
     # ---- data.go.kr ----
     @staticmethod
@@ -320,7 +365,7 @@ class Client:
         for attempt in range(1, attempts + 1):
             self.calls["net"] += 1
             self.calls[name] += 1
-            status, raw = self.fetch(EDUINFO_URL, data, headers, 60)
+            status, raw, _ = _unpack(self.fetch(EDUINFO_URL, data, headers, 60))
             if status == 200:
                 try:
                     rows = json.loads(raw.decode("utf-8")).get("result")
@@ -394,7 +439,7 @@ class Client:
                 break
             self.calls["net"] += 1
             self.calls[name] += 1
-            status, raw = self.fetch(OVERPASS_URL, data, {"User-Agent": USER_AGENT}, max(5, min(90, remaining)))
+            status, raw, _ = _unpack(self.fetch(OVERPASS_URL, data, {"User-Agent": USER_AGENT}, max(5, min(90, remaining))))
             if status == 200:
                 try:
                     payload = json.loads(raw.decode("utf-8"))

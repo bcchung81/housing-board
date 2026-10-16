@@ -271,5 +271,134 @@ class BuildingCap(unittest.TestCase):
         self.assertEqual(res["meta"]["capped_dropped"], 10)
 
 
+class RegionConfigFiles(unittest.TestCase):
+    """지역 설정은 tools/regiontools/regions/<slug>.json(지역마다 한 파일). 옛 REGIONS 사전과 같은 값이어야 한다."""
+
+    def test_existing_two_regions_keep_their_old_settings(self):
+        (g,) = BR.load_region("gwangju-gwangsan")
+        self.assertEqual((g.zone_id, g.zone_type, g.sigungu, g.bjdongs, g.search_bbox, g.zone_centroid_bbox, g.zone_short),
+                         ("sunwoon2", "공공주택지구", "12330", ["10600", "10700", "10800"], (126.770, 35.135, 126.800, 35.162),
+                          None, "광주선운2"))
+        self.assertEqual(g.jibun_slug, {"10600": "unsu", "10700": "seonam", "10800": "sochon"})
+        self.assertEqual(g.name_reject, r"선운(?!2)")
+        self.assertTrue(g.zone_match("광주선운2 공공주택지구"))
+        self.assertFalse(g.zone_match("광주선운 택지"))
+        self.assertTrue(g.myhome_filter({"signguNm": " 광산구 "}))
+        self.assertFalse(g.myhome_filter({"signguNm": "나주시", "hsmpNm": "빛가람"}))
+        (n,) = BR.load_region("jeonnam-naju")
+        self.assertEqual((n.zone_id, n.zone_type, n.bjdongs, n.zone_centroid_bbox), ("bitgaram", "혁신도시", ["13400"],
+                                                                                   (126.76, 35.00, 126.82, 35.05)))
+        self.assertTrue(n.zone_match(" 광주 전남 공동혁신도시 개발사업 "))
+        self.assertFalse(n.zone_match("광주 전남 공동혁신도시 개발사업 2단계"))
+        self.assertTrue(n.myhome_filter({"signguNm": "", "pblancNm": "나주 빛가람 행복주택"}))
+        self.assertFalse(n.myhome_filter({"signguNm": "광산구", "hsmpNm": "선운"}))
+        self.assertEqual(n.label_strip[0], "광주전남공동혁신도시")
+
+    def test_every_config_file_loads_with_unique_zone_ids_and_known_zone_types(self):
+        slugs = BR.region_slugs()
+        self.assertIn("gyeonggi-namyangju", slugs)
+        for slug in slugs:
+            zones = BR.load_region(slug)
+            self.assertTrue(zones, slug)
+            self.assertEqual(len({z.zone_id for z in zones}), len(zones), slug)
+            for z in zones:
+                self.assertIn(z.zone_type, BR.ZONE_TYPES)
+                self.assertEqual(len(z.search_bbox), 4)
+                self.assertEqual({x.slug for x in zones}, {slug})
+
+    def test_multi_zone_region_shares_region_values(self):
+        zones = BR.load_region("gyeonggi-namyangju")
+        self.assertEqual([z.zone_id for z in zones], ["wangsuk", "wangsuk2", "jinjeop2"])
+        self.assertEqual({(z.sigungu, z.bjdongs, z.name) for z in zones}, {("41360", "auto", "경기 남양주시")})
+        wang, wang2, _ = zones
+        self.assertTrue(wang.zone_match("남양주왕숙 공공주택지구"))
+        self.assertFalse(wang.zone_match("남양주왕숙2 공공주택지구"))   # 이름이 같게 시작해도 다른 지구
+        self.assertTrue(wang2.zone_match("남양주왕숙2 공공주택지구"))
+        self.assertTrue(zones[0].myhome_filter({"signguNm": "", "pnu": "4136025321100010000"}))
+
+    def test_bad_config_is_rejected(self):
+        import json
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as t:
+            base = json.loads((BR.CONFIG_DIR / "gwangju-gwangsan.json").read_text(encoding="utf-8"))
+            for bad in ({"zones": []}, {"bjdongs": []}, {"slug": "other"},
+                        {"zones": [dict(base["zones"][0], type="신도시아님")]},
+                        {"zones": [base["zones"][0], base["zones"][0]]}):
+                (Path(t) / "gwangju-gwangsan.json").write_text(json.dumps(dict(base, **bad), ensure_ascii=False), encoding="utf-8")
+                with self.assertRaises((ValueError, KeyError)):
+                    BR.load_region("gwangju-gwangsan", Path(t))
+
+
+class MultiZone(unittest.TestCase):
+    def test_block_permits_from_another_zone_bjdong_are_not_candidates(self):
+        plan = Plan()
+        plan.setUp()
+        plan.cfg = BR.dataclasses.replace(plan.cfg, zone_bjdongs=["10700"])   # 이 지구의 법정동은 10700 뿐
+        res = plan.plan()
+        # 마이홈(A-1)·지번 인허가는 필지 위치로 그대로 연결되고, 블록 인허가(A-2 층수 대조)만 빠진다
+        self.assertEqual(sorted(p["id"] for p in res["projects"]), ["z1-A1", "z1-unsu-546"])
+        self.assertGreater(res["stats"]["permit_block_other_bjdong"], 0)
+        self.assertFalse(any("B-1" in str(x.get("name")) for x in res["exclusions"]))
+
+    def test_features_in_tiles_only_when_v_world_says_the_box_is_too_big_and_dedupes(self):
+        from regiontools import api
+
+        class C:
+            def __init__(self):
+                self.boxes, self.calls = [], __import__("collections").Counter()
+
+            def vworld_features(self, layer, bbox=None):
+                self.boxes.append(bbox)
+                if bbox[2] - bbox[0] > 0.03:
+                    raise api.ApiError(f"vworld-{layer}: INVALID_RANGE 너무 큼")
+                return [{"id": "A", "geometry": None}, {"id": f"B{bbox[0]}", "geometry": None}]
+        c = C()
+        out = BR.features_in(c, "LT_C_BLDGINFO", [(0, 0, 0.01, 0.01)])
+        self.assertEqual(len(c.boxes), 1)
+        self.assertEqual(len(out), 2)
+        c = C()
+        out = BR.features_in(c, "LT_C_BLDGINFO", [(0, 0, 0.04, 0.01)])
+        self.assertEqual(len(c.boxes), 3)                    # 큰 상자 1 + 0.02° 칸 2
+        self.assertEqual([f["id"] for f in out], ["A", "B0", "B0.02"])   # 칸 경계에서 두 번 온 A 는 한 번만
+        self.assertEqual(c.calls["tiled"], 1)
+
+        class D(C):
+            def vworld_features(self, layer, bbox=None):
+                raise api.ApiError("vworld-x: INVALID_KEY")
+        with self.assertRaises(api.ApiError):
+            BR.features_in(D(), "LT_C_BLDGINFO", [(0, 0, 0.01, 0.01)])
+
+    def test_zone_bjdongs_uses_dong_codes_and_ri_codes_inside_eup_and_skips_other_cities(self):
+        dong = {"type": "Feature", "id": "e1", "geometry": poly_geom(box(0, 0, 10, 10)),
+                "properties": {"emd_cd": "41360104", "emd_kor_nm": "일패동", "full_nm": "경기도 남양주시 일패동"}}
+        eup = {"type": "Feature", "id": "e2", "geometry": poly_geom(box(10, 0, 20, 10)),
+               "properties": {"emd_cd": "41360253", "emd_kor_nm": "진접읍", "full_nm": "경기도 남양주시 진접읍"}}
+        other = {"type": "Feature", "id": "e3", "geometry": poly_geom(box(20, 0, 30, 10)),
+                 "properties": {"emd_cd": "41310101", "emd_kor_nm": "갈매동", "full_nm": "경기도 구리시 갈매동"}}
+        ri = {"type": "Feature", "id": "r1", "geometry": poly_geom(box(10, 0, 20, 10)),
+              "properties": {"li_cd": "4136025321", "li_kor_nm": "내각리"}}
+
+        class C:
+            calls = __import__("collections").Counter()
+
+            def vworld_features(self, layer, bbox=None):
+                return {"LT_C_ADEMD_INFO": [dong, eup, other], "LT_C_ADRI_INFO": [ri]}[layer]
+        feats = [{"geometry": poly_geom(box(x, 1, x + 2, 3))} for x in (1, 4, 12, 22)]
+        cfg = BR.load_region("gyeonggi-namyangju")[0]
+        found, others = BR.zone_bjdongs(cfg, C(), {"bbox": (0, 0, 30, 10), "features": feats})
+        self.assertEqual(found, {"10400": "일패동", "25321": "진접읍 내각리"})
+        self.assertEqual(others, {"경기도 구리시 갈매동"})
+
+    def test_context_of_several_zones_is_merged_by_name(self):
+        a = {"stations": [{"name": "갑역", "lon": 1, "lat": 1}], "schools": [{"name": "가초", "lon": 1, "lat": 1}], "asOf": "d"}
+        b = {"stations": [{"name": "갑역", "lon": 2, "lat": 2}, {"name": "을역", "lon": 3, "lat": 3}], "schools": [], "asOf": "d"}
+        m = BR._merge_context([a, b])
+        self.assertEqual([x["name"] for x in m["stations"]], ["갑역", "을역"])
+        self.assertEqual(m["stations"][0]["lon"], 1)
+        self.assertIs(BR._merge_context([a]), a)
+        self.assertIsNone(BR._merge_context([]))
+
+
 if __name__ == "__main__":
     unittest.main()

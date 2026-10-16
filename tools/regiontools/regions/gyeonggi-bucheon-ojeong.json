@@ -1,0 +1,50 @@
+{
+  "slug": "gyeonggi-bucheon-ojeong",
+  "name": "경기 부천시 오정구",
+  "title": "주택파동 · 경기 부천시 오정구",
+  "description": "부천대장 공공주택지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 14.0,
+  "pitch": 52,
+  "codes": [
+    {
+      "code": "41196",
+      "type": "sigungu",
+      "name": "부천시 오정구"
+    }
+  ],
+  "sigungu": "41196",
+  "bjdongs": "auto",
+  "jibun_slug": {},
+  "myhome": {
+    "signguNm": [
+      "부천시",
+      "부천시 오정구",
+      "오정구"
+    ],
+    "pnuPrefix": [
+      "4119"
+    ]
+  },
+  "zones": [
+    {
+      "id": "daejang",
+      "name": "부천대장 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "부천대장 공공주택지구"
+      },
+      "search_bbox": [
+        126.751,
+        37.522,
+        126.817,
+        37.563
+      ],
+      "name_reject": null,
+      "label_strip": [
+        "부천대장지구",
+        "대장지구"
+      ],
+      "short": "부천대장"
+    }
+  ]
+}

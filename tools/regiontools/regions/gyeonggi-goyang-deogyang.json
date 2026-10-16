@@ -1,0 +1,50 @@
+{
+  "slug": "gyeonggi-goyang-deogyang",
+  "name": "경기 고양시 덕양구",
+  "title": "주택파동 · 경기 고양시 덕양구",
+  "description": "고양창릉 공공주택지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 13.6,
+  "pitch": 52,
+  "codes": [
+    {
+      "code": "41281",
+      "type": "sigungu",
+      "name": "고양시 덕양구"
+    }
+  ],
+  "sigungu": "41281",
+  "bjdongs": "auto",
+  "jibun_slug": {},
+  "myhome": {
+    "signguNm": [
+      "고양시",
+      "고양시 덕양구",
+      "덕양구"
+    ],
+    "pnuPrefix": [
+      "4128"
+    ]
+  },
+  "zones": [
+    {
+      "id": "changneung",
+      "name": "고양창릉 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "고양창릉 공공주택지구"
+      },
+      "search_bbox": [
+        126.831,
+        37.59,
+        126.903,
+        37.653
+      ],
+      "name_reject": null,
+      "label_strip": [
+        "고양창릉지구",
+        "창릉지구"
+      ],
+      "short": "고양창릉"
+    }
+  ]
+}

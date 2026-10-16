@@ -399,6 +399,25 @@ export function mapLocOf(r: { bundles?: string[] }, loc: { by: string } | null |
   if (r.bundles?.length) return 'bundle';
   return loc && (MAP_DRAWN_LOC as readonly string[]).includes(loc.by) ? (loc.by as MapLoc) : null;
 }
+/* 위치 미확보 사업 안내(2026-10-16): 무엇을 넣으면 지도에 나오는지. 우선순위 — 시군구 대표점뿐(rep) > 계획 단계(원장 01~03) > 건설 이후(04~).
+   지도 목록(assets/js/app.js lostGuide)과 같은 문구 */
+export type LostGuideKind = 'rep' | 'plan' | 'build';
+export const LOST_ENTRY = '대표 지번 주소를 입력하면';
+export const LOST_GUIDE: Record<LostGuideKind, string> = {
+  rep: '시군구 대표점에 임시로 표시 중 · 대표 지번 주소를 입력하면 정확한 위치로 표시됩니다',
+  plan: '대표 지번 주소나 좌표를 입력하면 지도에 표시됩니다',
+  build: '건축허가 정보와 연결되면 지도에 표시됩니다 · 대표 지번 주소를 입력해도 됩니다',
+};
+export const lostGuideKind = (stage: string | null | undefined, hasRep = false): LostGuideKind => (hasRep ? 'rep' : /^0[123]$/.test(stage ?? '') || !stage ? 'plan' : 'build');
+export const lostGuide = (stage: string | null | undefined, hasRep = false) => LOST_GUIDE[lostGuideKind(stage, hasRep)];
+/* (i) 상세: 담당자가 입력할 항목과 검증 */
+export const LOST_INPUT = {
+  required: '대표 지번 주소 또는 좌표(경위도, WGS84) 중 하나 + 근거(출처 URL·문서명)',
+  optional: '지구명·블록명, 사업 구역 경계 파일(GeoJSON·SHP), 건축허가 관리번호',
+  check: '주소 검색 결과가 1곳이고, 시군구가 사업과 같아야 합니다',
+  note: '담당자 입력 화면은 준비 중',
+};
+
 /* 원천 날짜 다름(D2): 준공 현재 예정(HOME)과 LH 준공 예정 파일의 날짜가 다른 사업의 표지. 판정은 HOME 날짜 그대로.
    보이는 날짜가 준공이 아니면 'LH 준공'으로, 같은 달이면 일까지(계양 A2 HOME 2026.10.11 · LH 2026.10.31).
    day = 늘 일까지(상세 서랍 — 2026-10-16 3차 평가: 'LH 2026.10' 만으로는 현재 예정 2026.10.11 과 무엇이 다른지 몰랐다). 좁은 목록 칸은 달 */

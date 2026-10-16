@@ -1,7 +1,10 @@
 #!/usr/bin/env python3
 """API로 지역 지도 번들(region·projects·buildings·context)을 만든다.
 
-  python3 tools/regiontools/build_region.py gwangju-gwangsan|jeonnam-naju [--cache-dir DIR] [--out DIR]
+  python3 tools/regiontools/build_region.py <slug> [--cache-dir DIR] [--out DIR]
+
+지역 설정은 tools/regiontools/regions/<slug>.json(지역마다 한 파일, 지구 여러 개 가능). bjdongs 가 "auto" 면
+지구 피처 중심이 든 법정동·리(V-World 행정구역)에서 인허가 법정동을 정한다.
 
 키(.env.local의 DATA_GO_KR_KEY·VWORLD_KEY 또는 VWORLD_DEV_KEY·VWORLD_DOMAIN)가 있을 때만 동작한다. 키·요청 URL은 출력하지 않는다.
 --cache-dir(또는 환경변수 REGIONBUILD_CACHE)를 주면 응답을 그 폴더에 캐시한다. 저장소 밖 폴더를 쓴다.
@@ -18,6 +21,8 @@ from __future__ import annotations
 
 import argparse
 import collections
+import dataclasses
+import json
 import os
 import re
 import sys
@@ -37,6 +42,7 @@ from regiontools.status import compute_status, flag_future  # noqa: E402
 ROOT = Path(__file__).resolve().parents[2]
 APT_TYPES = {"공동주택", "아파트", "주상복합"}
 PUBLIC_LAND_TYPES = {"택지개발", "공공주택지구", "혁신도시", "신도시"}
+ZONE_TYPES = PUBLIC_LAND_TYPES | {"도시개발", "산업단지", "기타"}     # schemas/bundle/region.schema.json zones[].type
 SRC_MYHOME, SRC_HUB, SRC_BLD, SRC_BLOCK, SRC_CAD = (
     "myhome-notice", "hub-housing-permit", "vworld-bldginfo", "vworld-lhblpn", "vworld-cadastral")
 PRIVATE_NOTE = "시행자 미확인, 인허가의 세대 유형이 민간분양·민간임대"
@@ -69,7 +75,7 @@ class RegionConfig:
     zone_match: Callable[[str], bool]
     search_bbox: tuple
     sigungu: str
-    bjdongs: list
+    bjdongs: list    # 인허가를 받을 법정동 코드 5자리. "auto" 면 지구 피처 중심이 든 법정동·리에서 정한다(zone_bjdongs)
     jibun_slug: dict
     myhome_filter: Callable[[dict], bool]
     name_reject: str | None
@@ -79,6 +85,7 @@ class RegionConfig:
     max_buildings: int = 20000   # 보통은 걸리지 않는 안전 상한. 넘으면 큰 건물부터 남기고 meta.capped_dropped 에 뺀 수를 적는다
     min_building_m2: float = 10.0
     context_radius_m: int = 3000
+    zone_bjdongs: list | None = None   # bjdongs="auto" 일 때 이 지구의 법정동. 지번 없는 블록 인허가는 이 법정동 것만 이 지구 후보로 본다
 
 
 def _sources(today: str) -> list:
@@ -98,40 +105,67 @@ def _sources(today: str) -> list:
     ]
 
 
-REGIONS = {
-    "gwangju-gwangsan": RegionConfig(
-        slug="gwangju-gwangsan", name="광주 광산구", title="주택파동 · 광주 광산구",
-        description="광주선운2 공공주택지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
-        zoom=15, pitch=52,
-        codes=[{"code": "12330", "type": "sigungu", "name": "광산구"},
-               {"code": "12330106", "type": "bjdong", "name": "운수동"},
-               {"code": "12330107", "type": "bjdong", "name": "선암동"},
-               {"code": "12330108", "type": "bjdong", "name": "소촌동"}],
-        zone_id="sunwoon2", zone_name="광주선운2 공공주택지구", zone_type="공공주택지구",
-        zone_match=lambda zn: "광주선운2" in zn,
-        search_bbox=(126.770, 35.135, 126.800, 35.162),
-        sigungu="12330", bjdongs=["10600", "10700", "10800"],
-        jibun_slug={"10600": "unsu", "10700": "seonam", "10800": "sochon"},
-        myhome_filter=lambda it: (it.get("signguNm") or "").strip() == "광산구",
-        name_reject=r"선운(?!2)", label_strip=["광주선운2지구", "선운2지구"], zone_short="광주선운2"),
-    "jeonnam-naju": RegionConfig(
-        slug="jeonnam-naju", name="전남 나주시", title="주택파동 · 전남 나주시",
-        description="광주·전남 공동혁신도시(빛가람)의 공공주택과 공공택지 위 민간 단지를 3차원 지도로 보여 줍니다.",
-        zoom=14.5, pitch=52,
-        codes=[{"code": "12170", "type": "sigungu", "name": "나주시"},
-               {"code": "12170134", "type": "bjdong", "name": "빛가람동"}],
-        zone_id="bitgaram", zone_name="광주 전남 공동혁신도시(빛가람)", zone_type="혁신도시",
-        zone_match=lambda zn: zn.strip() == "광주 전남 공동혁신도시 개발사업",
-        zone_centroid_bbox=(126.76, 35.00, 126.82, 35.05),
-        search_bbox=(126.74, 34.99, 126.84, 35.06),
-        sigungu="12170", bjdongs=["13400"], jibun_slug={"13400": ""},
-        myhome_filter=lambda it: ((it.get("signguNm") or "").strip() == "나주시"
-                                  or "빛가람" in (it.get("hsmpNm") or "") or "빛가람" in (it.get("pblancNm") or "")),
-        name_reject=None,
-        label_strip=["광주전남공동혁신도시", "광주·전남 공동혁신도시", "광주전남 공동혁신도시", "광주 전남 공동혁신도시",
-                     "광주 전남혁신도시", "광주전남혁신", "혁신도시", "빛가람동"],
-        zone_short="빛가람"),
-}
+CONFIG_DIR = Path(__file__).resolve().parent / "regions"   # 지역 설정 파일 regions/<slug>.json (지역마다 한 파일이라 동시에 고쳐도 겹치지 않는다)
+
+
+def _zone_matcher(rule: dict) -> Callable[[str], bool]:
+    """지구 이름(LT_C_LHBLPN zonename) 규칙: {"equals": 이름}(앞뒤 공백 무시) 또는 {"contains": 글자}."""
+    if "equals" in rule:
+        v = str(rule["equals"])
+        return lambda zn: zn.strip() == v
+    if "contains" in rule:
+        v = str(rule["contains"])
+        return lambda zn: v in zn
+    raise ValueError(f"지구 이름 규칙을 모름: {rule}")
+
+
+def _myhome_matcher(rule: dict) -> Callable[[dict], bool]:
+    """마이홈 공고 거르기: 시군구 이름(signguNm)이 같거나, PNU 가 접두어로 시작하거나, 단지·공고 이름에 글자가 있으면."""
+    names = {str(x) for x in rule.get("signguNm") or []}
+    prefixes = tuple(str(x) for x in rule.get("pnuPrefix") or [])
+    words = [str(x) for x in rule.get("textContains") or []]
+
+    def match(it: dict) -> bool:
+        if (it.get("signguNm") or "").strip() in names:
+            return True
+        if prefixes and str(it.get("pnu") or "").strip().startswith(prefixes):
+            return True
+        return any(w in (it.get("hsmpNm") or "") or w in (it.get("pblancNm") or "") for w in words)
+    return match
+
+
+def region_slugs(config_dir: Path = CONFIG_DIR) -> list[str]:
+    return sorted(p.stem for p in Path(config_dir).glob("*.json"))
+
+
+def load_region(slug: str, config_dir: Path = CONFIG_DIR) -> list[RegionConfig]:
+    """지역 설정 파일 → 지구마다 RegionConfig 하나(지역 공통 값은 같고 지구 값만 다르다)."""
+    d = json.loads((Path(config_dir) / f"{slug}.json").read_text(encoding="utf-8"))
+    if d.get("slug") != slug:
+        raise ValueError(f"{slug}.json 의 slug 가 다름: {d.get('slug')!r}")
+    bj = d["bjdongs"]
+    if bj != "auto" and not (isinstance(bj, list) and bj):
+        raise ValueError(f"{slug}: bjdongs 는 법정동 코드 목록이거나 \"auto\"")
+    base = dict(slug=slug, name=d["name"], title=d["title"], description=d.get("description") or "", zoom=d["zoom"],
+                pitch=d["pitch"], codes=d["codes"], sigungu=str(d["sigungu"]), bjdongs=bj,
+                jibun_slug=dict(d.get("jibun_slug") or {}), myhome_filter=_myhome_matcher(d.get("myhome") or {}))
+    for k in ("max_buildings", "min_building_m2", "context_radius_m"):
+        if k in d:
+            base[k] = d[k]
+    zones = d.get("zones") or []
+    ids = [z["id"] for z in zones]
+    if not zones or len(set(ids)) != len(ids):
+        raise ValueError(f"{slug}: 지구가 없거나 지구 id 가 겹침 {ids}")
+    out = []
+    for z in zones:
+        if z["type"] not in ZONE_TYPES:
+            raise ValueError(f"{slug}/{z['id']}: 지구 유형 {z['type']!r} 는 {sorted(ZONE_TYPES)} 중 하나여야 함")
+        cb = z.get("centroid_bbox")
+        out.append(RegionConfig(**base, zone_id=z["id"], zone_name=z["name"], zone_type=z["type"],
+                                zone_match=_zone_matcher(z["match"]), search_bbox=tuple(z["search_bbox"]),
+                                zone_centroid_bbox=tuple(cb) if cb else None, name_reject=z.get("name_reject"),
+                                label_strip=list(z.get("label_strip") or []), zone_short=z["short"]))
+    return out
 
 
 # ------------------------------------------------------------------ 이름·코드 정규화(순수 함수)
@@ -510,6 +544,9 @@ def plan_projects(cfg: RegionConfig, *, apt_blocks, buildings, myhome, parcels, 
     pnu_groups: dict[str, dict] = {}
     for r in permits:
         if is_block_record(r):
+            if cfg.zone_bjdongs is not None and str(r.get("bjdongCd") or "").strip() not in cfg.zone_bjdongs:
+                stats["permit_block_other_bjdong"] += 1   # 여러 지구 지역: 다른 지구 법정동의 블록 인허가(같은 블록 이름이 지구마다 있다)
+                continue
             text = f"{r.get('bldNm') or ''} {r.get('splotNm') or ''}"
             if cfg.name_reject and re.search(cfg.name_reject, text):
                 stats["permit_other_zone_name"] += 1
@@ -735,10 +772,36 @@ def fetch_zone(cfg: RegionConfig, client: api.Client) -> dict:
             "touches_search_edge": touches, "blocktypes": collections.Counter(f["properties"].get("blocktype") for f in zone)}
 
 
+MAX_PARCEL_CALLS = 300   # 조회할 필지가 이보다 많으면 지구 범위 필지를 한꺼번에 받는다
+def features_in(client, layer: str, bboxes) -> list:
+    """상자 여러 개의 피처. V-World 가 상자가 너무 크다고(INVALID_RANGE, 실측 15.77 km²) 하면 그 상자만 0.02° 칸으로 나눠 받는다.
+    겹친 상자·칸 경계에서 두 번 온 피처는 V-World id 로 한 번만."""
+    out, seen = [], set()
+    for bb in bboxes:
+        try:
+            parts = [client.vworld_features(layer, bbox=bb)]
+        except api.ApiError as e:
+            if "INVALID_RANGE" not in str(e):
+                raise
+            client.calls["tiled"] += 1
+            parts = [client.vworld_features(layer, bbox=t) for t in existence.tiles(bb)]
+        for fs in parts:
+            for f in fs:
+                fid = f.get("id")
+                if fid is not None:
+                    if fid in seen:
+                        continue
+                    seen.add(fid)
+                out.append(f)
+    return out
+
+
 def fetch_buildings(cfg: RegionConfig, client: api.Client, zone_bbox, basis: str) -> dict:
-    bb = tuple(round(v, 6) for v in geo.expand_bbox(zone_bbox, 0.003))
-    raw = client.vworld_features("LT_C_BLDGINFO", bbox=bb)
-    emds = client.vworld_features("LT_C_ADEMD_INFO", bbox=bb)
+    """zone_bbox: 지구 bbox 하나 또는 여러 개(여러 지구 지역). 각각 0.003° 넓혀 받는다."""
+    boxes = [zone_bbox] if isinstance(zone_bbox[0], (int, float)) else list(zone_bbox)
+    bbs = [tuple(round(v, 6) for v in geo.expand_bbox(b, 0.003)) for b in boxes]
+    raw = features_in(client, "LT_C_BLDGINFO", bbs)
+    emds = features_in(client, "LT_C_ADEMD_INFO", bbs)
     emd_polys = [(str((e.get("properties") or {}).get("full_nm") or "").split()[-1:] or [""], e.get("geometry")) for e in emds]
     factor = B.compute_factor([B.raw_values(f.get("properties") or {}) for f in raw])
     feats, tiny, broken = [], 0, 0
@@ -761,9 +824,44 @@ def fetch_buildings(cfg: RegionConfig, client: api.Client, zone_bbox, basis: str
         capped = len(feats) - cfg.max_buildings
         feats = feats[:cfg.max_buildings]
     src = collections.Counter(f["properties"]["src"] for _, f in feats)
-    return {"raw": raw, "features": [f for _, f in feats], "factor": factor, "bbox": bb,
+    return {"raw": raw, "features": [f for _, f in feats], "factor": factor, "bbox": bbs[0] if len(bbs) == 1 else bbs,
             "meta": B.make_meta(basis, factor, capped_dropped=capped or None), "stats": {"raw": len(raw), "tiny_dropped": tiny, "broken": broken,
                                                           "capped_dropped": capped, "src": dict(src)}}
+
+
+def zone_bjdongs(cfg: RegionConfig, client: api.Client, zone: dict) -> tuple[dict, set]:
+    """지구 피처 중심이 든 법정동(동) 또는 리(읍·면) → {법정동 코드 5자리: 이름}. 같은 시가 아닌 곳은 이름만 따로 돌려준다."""
+    bb = tuple(round(v, 6) for v in zone["bbox"])
+    def indexed(feats):
+        return [(geo.bbox_of(list(geo.geometry_points(f["geometry"]))), f) for f in feats if f.get("geometry")]
+    emds = indexed(features_in(client, "LT_C_ADEMD_INFO", [bb]))
+    ris = None
+    found, other = {}, set()
+
+    def at(pt, items):
+        for (x0, y0, x1, y1), f in items:
+            if x0 <= pt[0] <= x1 and y0 <= pt[1] <= y1 and geo.point_in_geometry(pt, f["geometry"]):
+                return f["properties"]
+        return None
+    for f in zone["features"]:
+        c = _safe_centroid(f.get("geometry"))
+        e = at(c, emds) if c else None
+        if not e:
+            continue
+        cd, nm = str(e.get("emd_cd") or ""), str(e.get("emd_kor_nm") or "")
+        if cd[:4] != cfg.sigungu[:4]:          # 같은 시(앞 4자리)가 아니면 다른 시군구: 이 지역 인허가로 받지 않는다
+            other.add(str(e.get("full_nm") or cd))
+            continue
+        if nm.endswith(("읍", "면")):
+            if ris is None:
+                ris = indexed(features_in(client, "LT_C_ADRI_INFO", [bb]))
+            r = at(c, ris)
+            if r:
+                li = str(r.get("li_cd") or "")
+                found[li[5:10]] = f"{nm} {r.get('li_kor_nm') or ''}".strip()
+        else:
+            found[cd[5:8] + "00"] = nm
+    return dict(sorted(found.items())), other
 
 
 def fetch_context(client: api.Client, center, radius_m: int, today_s: str):
@@ -792,65 +890,149 @@ def fetch_context(client: api.Client, center, radius_m: int, today_s: str):
     return bundle.context_doc(stations, schools, today_s, OSM_SOURCE)
 
 
-def build(cfg: RegionConfig, client: api.Client, today: date, out_dir: Path, with_context: bool = True) -> dict:
+def _merge_context(docs: list[dict]) -> dict | None:
+    """지구마다 받은 역·학교를 이름으로 한 번만(첫 지구 것 우선)."""
+    if not docs:
+        return None
+    if len(docs) == 1:
+        return docs[0]
+    out = dict(docs[0])
+    for key in ("stations", "schools"):
+        seen, xs = set(), []
+        for d in docs:
+            for x in d[key]:
+                if x["name"] not in seen:
+                    seen.add(x["name"])
+                    xs.append(x)
+        out[key] = xs
+    return out
+
+
+def build(cfgs, client: api.Client, today: date, out_dir: Path, with_context: bool = True) -> dict:
+    """cfgs: 지구마다 RegionConfig 하나(load_region). 지역 공통 값(slug·이름·시군구·마이홈 거르기)은 첫 지구 것을 쓴다."""
+    if isinstance(cfgs, RegionConfig):
+        cfgs = [cfgs]
+    cfg = cfgs[0]
     t0 = time.time()
     today_s, basis = today.isoformat(), today.strftime("%Y%m%d")
-    zone = fetch_zone(cfg, client)
-    bld = fetch_buildings(cfg, client, zone["bbox"], basis)
-    bld["existence"] = existence.apply(client, bld["features"], [zone["poly"]], zone["bbox"], bld["meta"])   # 지구 안 철거 잔존 의심 건물에 g=1(existence.py)
+    zones = [fetch_zone(z, client) for z in cfgs]
+    auto_bj: dict = {}
+    if cfg.bjdongs == "auto":
+        bj_all, other_all = {}, set()
+        for i, z in enumerate(zones):
+            found, other = zone_bjdongs(cfg, client, z)
+            cfgs[i] = dataclasses.replace(cfgs[i], zone_bjdongs=sorted(found))
+            bj_all.update(found)
+            other_all |= other
+        auto_bj = {"bjdongs": dict(sorted(bj_all.items())), "other_sigungu": sorted(other_all)}
+        bjdongs = sorted(bj_all)
+    else:
+        bjdongs = list(cfg.bjdongs)
+    bld = fetch_buildings(cfg, client, zones[0]["bbox"] if len(zones) == 1 else [z["bbox"] for z in zones], basis)
+    # 지구 안 철거 잔존 의심 건물에 g=1(existence.py). 지구마다 그 지구 범위로 본다
+    ex_stats = []
+    for z in zones:
+        zb = z["bbox"]
+        sub = bld["features"] if len(zones) == 1 else [
+            f for f in bld["features"]
+            if (lambda c: c is not None and zb[0] - 0.003 <= c[0] <= zb[2] + 0.003 and zb[1] - 0.003 <= c[1] <= zb[3] + 0.003)(
+                _safe_centroid(f["geometry"]))]
+        ex_stats.append(existence.apply(client, sub, [z["poly"]], zb, None))
+    done = [x for x in ex_stats if "skipped" not in x]
+    bld["meta"].pop("existence", None)
+    if done:
+        bld["meta"]["existence"] = {"source": existence.LAYER, "minCover": done[0]["minCover"],
+                                    "recentYear": done[0]["recentYear"], "flagged": sum(x["flagged"] for x in done)}
+    bld["existence"] = ex_stats
     notices = client.myhome_notices()
     all_items = notices["rental"] + notices["sale"]
     myhome = [it for it in all_items if cfg.myhome_filter(it)]
     permits, dong_rows = [], []
-    for bj in cfg.bjdongs:
+    for bj in bjdongs:
         permits += client.hub_basis(cfg.sigungu, bj)
         dong_rows += client.hub_dong(cfg.sigungu, bj)
+    pnus = sorted(pnus_to_fetch(myhome, permits))
     parcels = {}
-    for pnu in sorted(pnus_to_fetch(myhome, permits)):
-        f = client.parcel(pnu)
-        parcels[pnu] = f.get("geometry") if f else None
-    plan = plan_projects(cfg, apt_blocks=zone["apt_blocks"], buildings=bld["raw"], myhome=myhome, parcels=parcels,
-                         permits=permits, dong_rows=dong_rows, today=today)
+    if len(pnus) <= MAX_PARCEL_CALLS:
+        for pnu in pnus:
+            f = client.parcel(pnu)
+            parcels[pnu] = f.get("geometry") if f else None
+        parcel_mode = "pnu"
+    else:   # 필지가 많으면 하나씩 부르지 않고 지구 범위 필지를 한꺼번에 받아 고른다(지구 밖 필지는 없음으로 남는다)
+        want = set(pnus)
+        got = {}
+        for f in features_in(client, "LP_PA_CBND_BUBUN", [tuple(round(v, 6) for v in z["bbox"]) for z in zones]):
+            pnu = str((f.get("properties") or {}).get("pnu") or "")
+            if pnu in want and pnu not in got:
+                got[pnu] = f.get("geometry")
+        parcels = {pnu: got.get(pnu) for pnu in pnus}
+        parcel_mode = "bbox"
+    plans = []
+    for zc, z in zip(cfgs, zones):
+        plans.append(plan_projects(zc, apt_blocks=z["apt_blocks"], buildings=bld["raw"], myhome=myhome, parcels=parcels,
+                                   permits=permits, dong_rows=dong_rows, today=today))
+    if len(plans) == 1:
+        plan = plans[0]
+    else:
+        order = {s: i for i, s in enumerate(["분양중", "건설 단계", "준공 임박", "입주 단계", "계획"])}
+        projects = sorted((p for pl in plans for p in pl["projects"]),
+                          key=lambda p: (order[p["status"]], -(p.get("units") or 0), p["label"]))
+        plan = {"projects": projects, "other_blocks": [b for pl in plans for b in pl["other_blocks"]],
+                "exclusions": [dict(x, zone=zc.zone_id) for zc, pl in zip(cfgs, plans) for x in pl["exclusions"]],
+                "stats": {zc.zone_id: dict(pl["stats"]) for zc, pl in zip(cfgs, plans)}}
 
     context, ctx_err = None, None
     if with_context:
         try:
-            context = fetch_context(client, zone["center"], cfg.context_radius_m, today_s)
+            context = _merge_context([fetch_context(client, z["center"], cfg.context_radius_m, today_s) for z in zones])
         except Exception as e:  # 실패하면 생략
             ctx_err = type(e).__name__ + ": " + api.redact(str(e), client.keys.secrets())[:200]
 
-    zone_doc = {"id": cfg.zone_id, "name": cfg.zone_name, "type": cfg.zone_type,
-                "publicLand": cfg.zone_type in PUBLIC_LAND_TYPES, "poly": zone["poly"]}
+    zone_docs = [{"id": zc.zone_id, "name": zc.zone_name, "type": zc.zone_type,
+                  "publicLand": zc.zone_type in PUBLIC_LAND_TYPES, "poly": z["poly"]} for zc, z in zip(cfgs, zones)]
+    if len(zones) == 1:
+        center = zones[0]["center"]
+    else:
+        bb = geo.bbox_of([pt for z in zones for pt in z["poly"]])
+        center = ((bb[0] + bb[2]) / 2, (bb[1] + bb[3]) / 2)
     region = bundle.region_doc(slug=cfg.slug, name=cfg.name, title=cfg.title, description=cfg.description,
-                               center=zone["center"], zoom=cfg.zoom, pitch=cfg.pitch, codes=cfg.codes,
-                               zones=[zone_doc], sources=_sources(today_s), updated=today_s)
+                               center=center, zoom=cfg.zoom, pitch=cfg.pitch, codes=cfg.codes,
+                               zones=zone_docs, sources=_sources(today_s), updated=today_s)
     written = bundle.write_bundle(out_dir, region, bundle.projects_doc(plan["projects"], plan["other_blocks"]),
                                   bundle.buildings_doc(bld["features"], bld["meta"]), context)
-    return {"zone": zone, "buildings": bld, "plan": plan, "myhome_total": len(all_items), "myhome_region": len(myhome),
-            "permits": len(permits), "dong_rows": len(dong_rows), "parcels": parcels, "context": context,
+    return {"zones": zones, "zone_cfgs": cfgs, "buildings": bld, "plan": plan, "myhome_total": len(all_items),
+            "myhome_region": len(myhome), "bjdongs": bjdongs, "auto_bjdongs": auto_bj, "permits": len(permits),
+            "dong_rows": len(dong_rows), "parcels": parcels, "parcel_mode": parcel_mode, "context": context,
             "context_error": ctx_err, "written": written, "elapsed_s": round(time.time() - t0, 1),
             "calls": dict(client.calls)}
 
 
 def _report(cfg: RegionConfig, res: dict) -> str:
-    z, b, plan = res["zone"], res["buildings"], res["plan"]
-    lines = [f"# {cfg.slug} ({cfg.name})",
-             f"- 지구 피처 {len(z['features'])}개, 공동주택 블록 {len(z['apt_blocks'])}개, 중심 {tuple(round(v, 6) for v in z['center'])}"
-             + (" (경고: 지구가 검색 범위 경계에 닿음)" if z["touches_search_edge"] else ""),
-             f"- 건물: 원본 {b['stats']['raw']} → 번들 {len(b['features'])} (10㎡ 미만 {b['stats']['tiny_dropped']}, "
-             f"퇴화 {b['stats']['broken']}, 상한 초과 {b['stats']['capped_dropped']}) 높이 출처 {b['stats']['src']}",
-             f"- meta.factor: {b['factor'] or '없음(표본 30개 미만 → 화면 기본 2.85 m/층)'}",
-             existence.report(b["existence"]),
-             f"- 마이홈 공고 전체 {res['myhome_total']}건 중 지역 {res['myhome_region']}건, 인허가 기본개요 {res['permits']}건, "
-             f"동 개요 {res['dong_rows']}행, 필지 조회 {len(res['parcels'])}건(없음 {sum(1 for v in res['parcels'].values() if not v)})",
-             f"- 통계: {dict(plan['stats'])}",
-             f"- 단지 {len(plan['projects'])}개, 이름 모르는 주택 용지 {len(plan['other_blocks'])}개"]
+    b, plan = res["buildings"], res["plan"]
+    lines = [f"# {cfg.slug} ({cfg.name})"]
+    for zc, z, ex in zip(res["zone_cfgs"], res["zones"], b["existence"]):
+        lines.append(f"- 지구 {zc.zone_id}({zc.zone_name}): 피처 {len(z['features'])}개, 공동주택 블록 {len(z['apt_blocks'])}개, "
+                     f"중심 {tuple(round(v, 6) for v in z['center'])}" + (" (경고: 지구가 검색 범위 경계에 닿음)" if z["touches_search_edge"] else ""))
+        if zc.zone_bjdongs is not None:
+            lines.append(f"  - 법정동(자동) {zc.zone_bjdongs}")
+        lines.append("  " + existence.report(ex))
+    if res["auto_bjdongs"]:
+        lines.append(f"- 법정동(자동) {res['auto_bjdongs']['bjdongs']}" + (
+            f", 같은 시가 아니라 뺀 곳 {res['auto_bjdongs']['other_sigungu']}" if res["auto_bjdongs"]["other_sigungu"] else ""))
+    lines += [f"- 건물: 원본 {b['stats']['raw']} → 번들 {len(b['features'])} (10㎡ 미만 {b['stats']['tiny_dropped']}, "
+              f"퇴화 {b['stats']['broken']}, 상한 초과 {b['stats']['capped_dropped']}) 높이 출처 {b['stats']['src']}",
+              f"- meta.factor: {b['factor'] or '없음(표본 30개 미만 → 화면 기본 2.85 m/층)'}",
+              f"- 마이홈 공고 전체 {res['myhome_total']}건 중 지역 {res['myhome_region']}건, 인허가 기본개요 {res['permits']}건, "
+              f"동 개요 {res['dong_rows']}행, 필지 조회 {len(res['parcels'])}건(없음 {sum(1 for v in res['parcels'].values() if not v)}"
+              + (", 지구 범위 한꺼번에" if res["parcel_mode"] == "bbox" else "") + ")",
+              f"- 통계: {dict(plan['stats'])}",
+              f"- 단지 {len(plan['projects'])}개, 이름 모르는 주택 용지 {len(plan['other_blocks'])}개"]
     for p in plan["projects"]:
         lines.append(f"  - {p['id']} | {p['label']} | {p['status']} | {p['sponsorClass']} | {p['sponsor']['name']} | "
                      f"세대 {p.get('units')} | 동 {p.get('dongCount')} (관측 {len(p.get('dongs') or [])}) | {p['name']}")
     lines.append(f"- 제외 {len(plan['exclusions'])}건")
     for x in plan["exclusions"]:
-        lines.append(f"  - {x.get('name')} (세대 {x.get('units')}): {x['reason']}")
+        lines.append(f"  - {(x['zone'] + ' ') if x.get('zone') else ''}{x.get('name')} (세대 {x.get('units')}): {x['reason']}")
     ctx = res["context"]
     lines.append(f"- context: " + (f"역 {len(ctx['stations'])}, 학교 {len(ctx['schools'])}" if ctx else f"생략 ({res['context_error']})"))
     for p in res["written"]:
@@ -861,7 +1043,7 @@ def _report(cfg: RegionConfig, res: dict) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser(prog="build_region", description="API로 지역 지도 번들을 만든다.")
-    ap.add_argument("slug", choices=sorted(REGIONS))
+    ap.add_argument("slug", choices=region_slugs())
     ap.add_argument("--env", default=str(ROOT / ".env.local"), help="키 파일(기본 저장소의 .env.local)")
     ap.add_argument("--cache-dir", default=os.environ.get("REGIONBUILD_CACHE"), help="응답 캐시 폴더(저장소 밖)")
     ap.add_argument("--refresh", action="store_true", help="캐시를 무시하고 다시 받기")
@@ -877,12 +1059,13 @@ def main(argv=None) -> int:
     if args.cache_dir and Path(args.cache_dir).resolve().is_relative_to(ROOT):
         print("오류: 캐시 폴더는 저장소 밖이어야 합니다.")
         return 2
-    cfg = REGIONS[args.slug]
+    cfgs = load_region(args.slug)
+    cfg = cfgs[0]
     today = date.fromisoformat(args.today) if args.today else date.today()
     out = Path(args.out) if args.out else ROOT / "regions" / cfg.slug
     client = api.Client(keys, cache_dir=args.cache_dir, refresh=args.refresh)
     try:
-        res = build(cfg, client, today, out, with_context=not args.no_context)
+        res = build(cfgs, client, today, out, with_context=not args.no_context)
     except api.ApiError as e:
         print(f"오류: API 호출 실패 — {e}")
         return 1

@@ -1,0 +1,90 @@
+{
+  "slug": "gyeonggi-seongnam-sujeong",
+  "name": "경기 성남시 수정구",
+  "title": "주택파동 · 경기 성남시 수정구",
+  "description": "성남복정2·성남신촌·성남금토 지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 13.0,
+  "pitch": 52,
+  "codes": [
+    {
+      "code": "41131",
+      "type": "sigungu",
+      "name": "성남시 수정구"
+    }
+  ],
+  "sigungu": "41131",
+  "bjdongs": "auto",
+  "jibun_slug": {},
+  "myhome": {
+    "signguNm": [
+      "성남시",
+      "성남시 수정구",
+      "수정구"
+    ],
+    "pnuPrefix": [
+      "4113"
+    ]
+  },
+  "zones": [
+    {
+      "id": "bokjeong2",
+      "name": "성남복정2 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "성남복정2 공공주택지구"
+      },
+      "search_bbox": [
+        127.131,
+        37.44,
+        127.156,
+        37.463
+      ],
+      "name_reject": "복정1|신촌|금토",
+      "label_strip": [
+        "성남복정2지구",
+        "복정2지구"
+      ],
+      "short": "성남복정2"
+    },
+    {
+      "id": "sinchon",
+      "name": "성남신촌 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "성남신촌 공공주택지구"
+      },
+      "search_bbox": [
+        127.094,
+        37.45,
+        127.118,
+        37.472
+      ],
+      "name_reject": "복정|금토",
+      "label_strip": [
+        "성남신촌지구",
+        "신촌지구"
+      ],
+      "short": "성남신촌"
+    },
+    {
+      "id": "geumto",
+      "name": "성남금토 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "성남금토 공공주택지구"
+      },
+      "search_bbox": [
+        127.067,
+        37.392,
+        127.11,
+        37.425
+      ],
+      "name_reject": "복정|신촌",
+      "label_strip": [
+        "성남금토지구",
+        "금토지구"
+      ],
+      "short": "성남금토"
+    }
+  ]
+}

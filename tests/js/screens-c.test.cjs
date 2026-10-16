@@ -60,7 +60,7 @@ test('2 ③착공 세 숫자에 보이는 정의 꼬리: 종합상황판 단계�
   const D = makeDirectives({ sourceCount: 30, stageNames: [...V.BOARD_NAMES], ledger: BOARD, start: { year: '2026', upto: 8, cum: 156396, cumLy: 1 }, bottleneck: V.bottleneckOf });
   assert.equal(D[0].tag, '통계누리');
   assert.equal(D[0].pre, '착공');
-  assert.match(board, /\{x\.tag \? <span data-slot="dir-tag"[^>]*>\{x\.tag\}<\/span> : null\}/, '지시 카드 제목 아래 작은 줄에 보인다(2026-10-16 4차 r4-board 4)');
+  assert.match(board, /const small = \[x\.tag, x\.note\]\.filter\(Boolean\);[\s\S]*?<span data-slot="dir-tag"[^>]*>\{small\.map/, '지시 카드 제목 아래 작은 줄에 원천 꼬리가 보인다(2026-10-16 4차 r4-board 4 · 5차 board-dir-fit)');
   /* 세 값이 실제로 다른 정의임: 단계표(지금 ③) ≠ 단계별 진행(③까지 온 누적) */
   const now3 = BOARD.stageUnits[BOARD.now][2], pipe = V.pipelineOf(V.scopeOf(rows, {})).open.find((c) => c.i === 2);
   assert.ok(pipe.units > now3, `누적 ${pipe.units} > 지금 ${now3}`);

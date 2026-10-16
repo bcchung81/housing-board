@@ -955,6 +955,8 @@ html[data-map-shell]:not(.dark) .hudsum .hs-late:not(.none){--bad:#B4233C}
 .lostpop .lp-x{flex:none;width:28px;height:28px;border:0;border-radius:6px;background:transparent;color:var(--ink2);font-size:18px;line-height:1;cursor:pointer}
 .lostpop .lp-x:hover{background:var(--glass-tag-hover)}
 .lostpop .lp-note{margin:4px 0 8px;color:var(--mute);font-size:12px}
+.lostpop .lp-guide{margin:0 0 8px;font-size:12px;font-weight:600;cursor:help}
+.lostpop .lp-i{color:var(--mute)}
 .lostpop ul{list-style:none;margin:0;padding:0}
 .lostpop li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
 .lostpop .lp-n{min-width:0}

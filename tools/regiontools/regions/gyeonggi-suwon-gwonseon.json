@@ -1,0 +1,50 @@
+{
+  "slug": "gyeonggi-suwon-gwonseon",
+  "name": "경기 수원시 권선구",
+  "title": "주택파동 · 경기 수원시 권선구",
+  "description": "수원당수 공공주택지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 14.5,
+  "pitch": 52,
+  "codes": [
+    {
+      "code": "41113",
+      "type": "sigungu",
+      "name": "수원시 권선구"
+    }
+  ],
+  "sigungu": "41113",
+  "bjdongs": "auto",
+  "jibun_slug": {},
+  "myhome": {
+    "signguNm": [
+      "수원시",
+      "수원시 권선구",
+      "권선구"
+    ],
+    "pnuPrefix": [
+      "4111"
+    ]
+  },
+  "zones": [
+    {
+      "id": "dangsu",
+      "name": "수원당수 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "수원당수 공공주택지구"
+      },
+      "search_bbox": [
+        126.926,
+        37.266,
+        126.96,
+        37.299
+      ],
+      "name_reject": "당수2",
+      "label_strip": [
+        "수원당수지구",
+        "당수지구"
+      ],
+      "short": "수원당수"
+    }
+  ]
+}

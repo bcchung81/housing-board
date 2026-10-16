@@ -13,7 +13,7 @@ import StageTimeline, { TimelineLegend } from './StageTimeline';
 import { mapHref } from '../../lib/board/map-href';
 import type { Drawer } from '../../lib/board/projects-index';
 import InfoTip from '../ui/info-tip';
-import { AGENCY_NAME, AGENCY_TIP, EVENT_NAME, PAST_DUE_UNDER, agencyKey, dateAltOf, dayText, hiddenNote, mapLocOf, pastDueOf, pct1, policyLabel, statusLabel, statusTip, timelineOf } from '../../lib/board/projects-view';
+import { AGENCY_NAME, AGENCY_TIP, EVENT_NAME, PAST_DUE_UNDER, agencyKey, dateAltOf, dayText, hiddenNote, LOST_INPUT, lostGuide, mapLocOf, pastDueOf, pct1, policyLabel, statusLabel, statusTip, timelineOf } from '../../lib/board/projects-view';
 
 const SCOPE: Record<string, string> = { PUBLIC: '공공', PRIVATE_ON_PUBLIC_LAND: '공공택지 민간', UNKNOWN: '미확인' };
 const UNIT: Record<string, string> = { BLOCK: '블록', PROJECT: '사업', AREA_UNKNOWN: '구역 미상' };
@@ -118,7 +118,7 @@ export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: 
         </PanelHead>
         <dl className={FACTS}>
           <div><dt>시군구</dt><dd><Link href={`/projects?sgg=${r.sgg}`} title="이 시군구로 거른 사업 목록">{r.sggName}</Link></dd></div>
-          <div><dt>위치</dt><dd>{ml ? <span title={ml === 'bundle' ? '지도 자료의 LH 블록·동 윤곽과 이어진 사업' : x.loc?.basis ?? undefined}>{LOC[ml]}</span> : <None tip={NO_LOC_TIP(x.loc?.by)}>위치 미확보</None>}{x.bjd.length ? <span className="text-muted-foreground tabular-nums" title="법정동 코드"> · {x.bjd.join(', ')}</span> : null}</dd></div>
+          <div><dt>위치</dt><dd>{ml ? <span title={ml === 'bundle' ? '지도 자료의 LH 블록·동 윤곽과 이어진 사업' : x.loc?.basis ?? undefined}>{LOC[ml]}</span> : <None tip={NO_LOC_TIP(x.loc?.by)}>위치 미확보</None>}{ml ? null : <span className="mt-0.5 flex items-start gap-0.5 text-[13px] text-muted-foreground"><span>{lostGuide(r.stage, x.loc?.by === 'area')}</span><InfoTip label="위치 입력 안내" className="-mt-1"><dl><dt>필수</dt><dd>{LOST_INPUT.required}</dd><dt>선택</dt><dd>{LOST_INPUT.optional}</dd><dt>확인</dt><dd>{LOST_INPUT.check}</dd></dl><p>{LOST_INPUT.note}</p></InfoTip></span>}{x.bjd.length ? <span className="text-muted-foreground tabular-nums" title="법정동 코드"> · {x.bjd.join(', ')}</span> : null}</dd></div>
           <div><dt>시행</dt><dd title={AGENCY_TIP[ag]}>{r.agency ? d.agencies[r.agency] ?? AGENCY_NAME[ag] : <None tip={AGENCY_TIP.etc}>미확인</None>}</dd></div>
           <div><dt>구분</dt><dd title={x.basis ?? undefined}>{SCOPE[x.scope] ?? x.scope} · {UNIT[x.unit] ?? x.unit}</dd></div>
           <div><dt>정책 연결</dt><dd>{pol.length ? pol.map((p, i) => <span key={p.key} title={`정책 연결: ${r.link === 'CONFIRMED' ? '담당자가 확정함' : '담당자가 아직 확정하지 않은 제안'}`}>{i ? ' · ' : ''}{policyLabel(p)}</span>) : <None>연결 없음</None>}</dd></div>

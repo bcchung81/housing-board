@@ -1,0 +1,51 @@
+{
+  "slug": "gyeonggi-pyeongtaek",
+  "name": "경기 평택시",
+  "title": "주택파동 · 경기 평택시",
+  "description": "고덕 국제화계획지구 및 택지개발지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 13.3,
+  "pitch": 52,
+  "codes": [
+    {
+      "code": "41220",
+      "type": "sigungu",
+      "name": "평택시"
+    }
+  ],
+  "sigungu": "41220",
+  "bjdongs": "auto",
+  "jibun_slug": {},
+  "myhome": {
+    "signguNm": [
+      "평택시"
+    ],
+    "pnuPrefix": [
+      "4122"
+    ]
+  },
+  "zones": [
+    {
+      "id": "godeok",
+      "name": "고덕 국제화계획지구 및 택지개발지구",
+      "type": "택지개발",
+      "match": {
+        "equals": "고덕 국제화계획지구 및 택지개발지구"
+      },
+      "search_bbox": [
+        127.001,
+        37.015,
+        127.079,
+        37.084
+      ],
+      "name_reject": null,
+      "label_strip": [
+        "평택고덕국제화계획지구",
+        "평택고덕국제신도시",
+        "고덕국제화계획지구",
+        "평택고덕지구",
+        "고덕국제신도시"
+      ],
+      "short": "평택고덕"
+    }
+  ]
+}

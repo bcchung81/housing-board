@@ -1,0 +1,88 @@
+{
+  "slug": "gyeonggi-namyangju",
+  "name": "경기 남양주시",
+  "title": "주택파동 · 경기 남양주시",
+  "description": "남양주왕숙·남양주왕숙2·남양주진접2 지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 12.6,
+  "pitch": 52,
+  "codes": [
+    {
+      "code": "41360",
+      "type": "sigungu",
+      "name": "남양주시"
+    }
+  ],
+  "sigungu": "41360",
+  "bjdongs": "auto",
+  "jibun_slug": {},
+  "myhome": {
+    "signguNm": [
+      "남양주시"
+    ],
+    "pnuPrefix": [
+      "4136"
+    ]
+  },
+  "zones": [
+    {
+      "id": "wangsuk",
+      "name": "남양주왕숙 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "남양주왕숙 공공주택지구"
+      },
+      "search_bbox": [
+        127.138,
+        37.62,
+        127.207,
+        37.704
+      ],
+      "name_reject": "왕숙2|진접2",
+      "label_strip": [
+        "남양주왕숙지구",
+        "왕숙지구"
+      ],
+      "short": "남양주왕숙"
+    },
+    {
+      "id": "wangsuk2",
+      "name": "남양주왕숙2 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "남양주왕숙2 공공주택지구"
+      },
+      "search_bbox": [
+        127.16,
+        37.598,
+        127.205,
+        37.637
+      ],
+      "name_reject": "왕숙(?!2)|진접2",
+      "label_strip": [
+        "남양주왕숙2지구",
+        "왕숙2지구"
+      ],
+      "short": "남양주왕숙2"
+    },
+    {
+      "id": "jinjeop2",
+      "name": "남양주진접2 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "남양주진접2 공공주택지구"
+      },
+      "search_bbox": [
+        127.156,
+        37.683,
+        127.192,
+        37.72
+      ],
+      "name_reject": "왕숙",
+      "label_strip": [
+        "남양주진접2지구",
+        "진접2지구"
+      ],
+      "short": "남양주진접2"
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "slug": "gyeonggi-uijeongbu",
+  "name": "경기 의정부시",
+  "title": "주택파동 · 경기 의정부시",
+  "description": "의정부우정·의정부법조타운 지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 12.9,
+  "pitch": 52,
+  "codes": [
+    {
+      "code": "41150",
+      "type": "sigungu",
+      "name": "의정부시"
+    }
+  ],
+  "sigungu": "41150",
+  "bjdongs": "auto",
+  "jibun_slug": {},
+  "myhome": {
+    "signguNm": [
+      "의정부시"
+    ],
+    "pnuPrefix": [
+      "4115"
+    ]
+  },
+  "zones": [
+    {
+      "id": "ujeong",
+      "name": "의정부우정 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "의정부우정 공공주택지구"
+      },
+      "search_bbox": [
+        127.012,
+        37.745,
+        127.055,
+        37.778
+      ],
+      "name_reject": "법조타운",
+      "label_strip": [
+        "의정부우정지구",
+        "우정지구"
+      ],
+      "short": "의정부우정"
+    },
+    {
+      "id": "beopjo",
+      "name": "의정부법조타운 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "의정부법조타운 공공주택지구"
+      },
+      "search_bbox": [
+        127.076,
+        37.712,
+        127.113,
+        37.741
+      ],
+      "name_reject": "우정",
+      "label_strip": [
+        "의정부법조타운지구",
+        "법조타운지구"
+      ],
+      "short": "의정부법조타운"
+    }
+  ]
+}

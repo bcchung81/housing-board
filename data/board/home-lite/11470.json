@@ -6,6 +6,7 @@
   "basis": "20261014",
   "radiusM": 300,
   "approxRadiusM": 150,
+  "wide": [],
   "projects": [["PRJ-11470-0088",40],["PRJ-11470-0089",227]],
   "districts": [],
   "blocks": [],

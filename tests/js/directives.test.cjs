@@ -76,14 +76,14 @@ test("메뉴: 보고자료·우리 동네는 화면이 생겨 '준비 중'이 �
 test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림을 넣지 않는다 — 사용자 피드백 2026-10-10)', () => {
   const b = read('components/board/Board.tsx');
   assert.match(b, /<div className="grid grid-cols-2 gap-2 min-\[901px\]:grid-cols-3 min-\[1101px\]:grid-cols-6">/);
-  assert.match(b, /text-muted-foreground [^']*'[^>]*>\s*\{x\.t\}\{x\.tag \? <span data-slot="dir-tag"[^>]*>\{x\.tag\}<\/span> : null\}\s*<\/span>/, '윗줄은 지시 주제 이름(+ 같은 이름 다른 정의일 때 짧은 꼬리 — 통계누리, 2026-10-16 4차부터 제목 아래 작은 줄)');
+  assert.match(b, /text-muted-foreground [^"]*">\{x\.t\}<\/span>\s*\{small\.length \? <span data-slot="dir-tag"/, '윗줄은 지시 주제 이름(+ 같은 이름 다른 정의일 때 짧은 꼬리 — 통계누리, 2026-10-16 4차부터 제목 아래 작은 줄)');
   assert.doesNotMatch(b, /\{x\.date\} · \{x\.t\}<\/span>|x\.sub\.note/, '날짜 접두·기간 작은 줄은 화면에 없다');
   assert.match(b, /data-slot="board-dir" title=\{`\$\{x\.date\} 지시 · \$\{x\.t\}\\n\$\{x\.basis\}`\}/, '날짜·지시 이름·기준은 hover title');
   assert.match(b, /\{x\.pre \? <span className="[^"]*text-\[min\(14px,[^"]*">\{x\.pre\}<\/span> : null\}/, '아랫줄 = 작은 앞말');
   assert.match(b, /text-\[min\(26px,12cqi\)\][^>]*>\{x\.big\}<span className="text-\[min\(17px,8cqi\)\]">\{x\.u\}<\/span>/, '+ 카드 폭에 맞춰 줄어드는 큰 숫자 + 작은 단위');
   assert.doesNotMatch(b, /<Real title=\{x\.basis\}/, '카드에 실데이터 표지를 달지 않는다');
   assert.doesNotMatch(b, /DIR_TL|top-\[83\.5px\]/);
-  assert.match(b, /data-slot="board-dir"[^>]*className=\{cn\(btn, '[^']*\bmin-h-20 [^']*justify-center/, '카드 높이 80px 이상(제목이 두 줄이면 자람), 줄들을 세로 가운데에');
+  assert.match(b, /data-slot="board-dir"[^>]*className=\{cn\(btn, '[^']*\bmin-h-20 [^']*justify-between[^']*\bpy-2\.5/, '카드 높이 80px 이상(내용만큼 자람), 제목 위·값 아래, 위아래 여백');
   assert.doesNotMatch(read('app/tailwind.css'), /\[data-slot="board-dir"\] \{ padding/, '데스크톱 덧댄 위아래 여백 없음');
 });
 

@@ -47,7 +47,7 @@ test("2 기간·단위 꼬리: 진척 관리 '2026.01~08 누계'(값 줄 회색 
   assert.equal(DIR[0].t, '진척 관리');
   assert.equal(DIR[0].note, '2026.01~08 누계');
   assert.equal(C.ytdSpan('2026', 8), '2026.01~08 누계');
-  assert.match(board, /\{x\.note \? <span data-slot="dir-note" className="[^"]*text-muted-foreground[^"]*">\{x\.note\}<\/span> : null\}/);
+  assert.match(board, /\[x\.tag, x\.note\]\.filter\(Boolean\)/, '기간 꼬리는 제목 아래 작은 줄(원천 꼬리와 한 줄)');
   assert.match(panel('p-actual', real), /data-slot="actual-unit"[^>]*>단위 호</);
   assert.match(agency, /sub: <>\{ytdSpan\(year, Number\(last\.slice\(5\)\)\)\} \{fmt\(ytd\(molit, k, NATION, last, a\.actor!\)\)\}호/);
   assert.doesNotMatch(code(agency), /\{year\}년 누계/);

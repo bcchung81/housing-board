@@ -53,22 +53,30 @@ const tipRowKey = 'flex items-center gap-1.5';
 
 /* 지시 카드 값 줄 */
 const dirRow = 'flex min-w-0 flex-wrap items-baseline gap-x-[min(6px,3cqi)] leading-[1.2] whitespace-nowrap';
+/* 두 숫자 카드의 값 줄: 두 숫자를 위아래 두 줄로(좁은 카드에서 한 줄에 못 들어가 글자를 줄이지 않게 — 13px 이상 유지) */
+const pairRow = 'flex min-w-0 flex-col items-start leading-[1.2] whitespace-nowrap';
+/* 오른쪽 아래 목록 링크의 글자 틀. 값 줄 끝에 같은 글자를 보이지 않게 놓아(자리표) 링크 자리를 흐름 안에서 잡는다 — 값과 안 맞으면 자리표가 아랫줄로 내려가고 링크도 따라간다 */
+const dirListText = 'inline-flex items-center gap-px text-[13px] leading-5 whitespace-nowrap';
 const pairNum = 'rounded-[4px] text-foreground no-underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 /* 두 숫자 카드의 값 줄: 앞말 + 숫자 + 단위 둘을 같은 크기로(link = 각 숫자를 자기 목록 링크로) */
 function pairVals(x: Directive, link: boolean) {
   const one = (pre: string, big: string, u: string, l: { href: string; title: string }, k: string) => {
-    const body = <><span className="text-[min(13px,7cqi)] font-bold text-ink2">{pre}</span> <span data-big className={cn(disp, 'font-normal text-[min(24px,11cqi)] leading-[1.15] underline decoration-muted-foreground decoration-dotted decoration-1 underline-offset-[3px]')}>{big}<span className="text-[min(15px,7cqi)]">{u}</span></span></>;
+    const body = <><span className="text-[13px] font-bold text-ink2">{pre}</span> <span data-big className={cn(disp, 'font-normal text-[min(24px,11cqi)] leading-[1.15] underline decoration-muted-foreground decoration-dotted decoration-1 underline-offset-[3px]')}>{big}<span className="text-[max(13px,min(15px,7cqi))]">{u}</span></span></>;
     return link ? <Link key={k} href={l.href} title={l.title} aria-label={`${x.t} ${pre} ${big}${u} 목록`} data-slot="board-dir-pair-list" className={cn(pairNum, 'pointer-events-auto hover:[&_[data-big]]:text-primary hover:[&_[data-big]]:decoration-solid')}>{body}</Link> : <span key={k}>{body}</span>;
   };
-  return <>{one(x.pre ?? '', x.big, x.u, x.list, 'a')}<span className="text-[min(14px,7cqi)] text-muted-foreground" aria-hidden="true">·</span>{one(x.pair!.pre, x.pair!.big, x.pair!.u, x.pair!.list, 'b')}</>;
+  return <>{one(x.pre ?? '', x.big, x.u, x.list, 'a')}{one(x.pair!.pre, x.pair!.big, x.pair!.u, x.pair!.list, 'b')}</>;
 }
-/* 지시 카드 윗줄(제목): 말줄임 없이 낱말 단위로 줄바꿈하고(2026-10-16 4차 — 1280 에서 '진척 관리 · 통계누리'·'국민 공개·공식 원천'이 잘렸다),
-   원천 꼬리(tag)는 제목 아래 작은 회색 줄. 오른쪽 여백 = 위 (i)·목록 링크 자리. hide = 두 숫자 카드의 겹친 층에서 자리만 잡는 같은 틀 */
-const dirTitle = (x: Directive, hide = false) => (
-  <span className={cn('block min-w-0 text-[min(14px,8.5cqi)] leading-5 text-muted-foreground [word-break:keep-all]', x.pair ? 'pr-8' : x.list.text ? 'pr-[112px]' : 'pr-[72px]', hide && 'invisible')} aria-hidden={hide || undefined}>
-    {x.t}{x.tag ? <span data-slot="dir-tag" className="block text-[min(12px,7.5cqi)] leading-4">{x.tag}</span> : null}
-  </span>
-);
+/* 지시 카드 윗줄(제목): 말줄임 없이 낱말 단위로 줄바꿈하고, 원천 꼬리(tag)와 기간(note)은 제목 아래 작은 회색 한 줄('통계누리 · 2026.01~08 누계' — 조각 단위로만 줄바꿈).
+   오른쪽 여백은 제목 줄의 (i) 자리(pr-8)만 — 목록 링크는 카드 오른쪽 아래(값 줄 끝)라 제목 폭을 줄이지 않는다. hide = 두 숫자 카드의 겹친 층에서 자리만 잡는 같은 틀 */
+const dirTitle = (x: Directive, hide = false) => {
+  const small = [x.tag, x.note].filter(Boolean);
+  return (
+    <span className={cn('block min-w-0', hide && 'invisible')} aria-hidden={hide || undefined}>
+      <span className="block pr-8 text-[min(14px,8.5cqi)] leading-5 text-muted-foreground [word-break:keep-all]">{x.t}</span>
+      {small.length ? <span data-slot="dir-tag" className="block text-[min(12px,7.5cqi)] leading-4 text-muted-foreground [word-break:keep-all]">{small.map((t, k) => <span key={k} className="whitespace-nowrap">{t}{k < small.length - 1 ? ' · ' : ''}</span>)}</span> : null}
+    </span>
+  );
+};
 
 export default function Board({ real, middle }: { real: BoardReal; middle: ReactNode }) {
   const L = real.ledger;
@@ -212,38 +220,39 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
           <div className="grid grid-cols-2 gap-2 min-[901px]:grid-cols-3 min-[1101px]:grid-cols-6">
             {DIR.map((x, i) => (
               <div key={i} className="relative min-w-0">
-              <button type="button" data-slot="board-dir" title={`${x.date} 지시 · ${x.t}\n${x.basis}`} style={{ ['--i' as string]: i }} className={cn(btn, 'peer q-rise card-lift group/dir @container relative flex min-h-20 h-full w-full min-w-0 flex-col justify-center gap-[3px] overflow-hidden rounded-[12px] border border-border bg-card px-3.5 aria-pressed:border-primary aria-pressed:bg-accent', hoverBg)} aria-pressed={i === focus - 1} onClick={() => { setFocus(i + 1); setTour(false); }}
+              <button type="button" data-slot="board-dir" title={`${x.date} 지시 · ${x.t}\n${x.basis}`} style={{ ['--i' as string]: i }} className={cn(btn, 'peer q-rise card-lift group/dir @container relative flex min-h-20 h-full w-full min-w-0 flex-col justify-between gap-1.5 rounded-[12px] border border-border bg-card px-3.5 py-2.5 aria-pressed:border-primary aria-pressed:bg-accent', hoverBg)} aria-pressed={i === focus - 1} onClick={() => { setFocus(i + 1); setTour(false); }}
                 aria-label={`${x.date} 지시 ${x.t}${x.tag ? `(${x.tag})` : ''}: ${x.m}${x.sub ? `, ${x.sub.text}` : ''}${x.note ? `, ${x.note}` : ''}`}>
                 {dirTitle(x)}
-                {x.pair ? <span className={cn(dirRow, 'invisible')} aria-hidden="true">{pairVals(x, false)}</span> : (
+                {x.pair ? <span className={cn(pairRow, 'invisible')} aria-hidden="true">{pairVals(x, false)}</span> : (
                 <span className={dirRow}>{/* 값이 칸보다 길면 보조 값이 아랫줄로 내려간다 */}
                   {x.pre ? <span className="text-[min(14px,9cqi)] font-bold text-ink2">{x.pre}</span> : null}
                   <span className={cn(disp, 'font-normal text-[min(26px,12cqi)] leading-[1.15] group-aria-pressed/dir:text-primary')}>{x.big}<span className="text-[min(17px,8cqi)]">{x.u}</span></span>
                   {x.sub ? <span className={cn('text-[min(14px,9cqi)] font-bold', x.sub.tone === 'ok' ? 'text-ok' : x.sub.tone === 'bad' ? 'text-bad' : 'text-warn')}>{x.sub.text}</span> : null}
-                  {x.note ? <span data-slot="dir-note" className="text-[min(12px,7.5cqi)] text-muted-foreground">{x.note}</span> : null}
+                  <span data-slot="dir-list-gap" className={cn(dirListText, 'invisible ml-auto')} aria-hidden="true">{x.list.text ?? '목록'}<ChevronRight className="size-3.5" aria-hidden="true" /></span>
                 </span>)}
-                <span className="absolute bottom-0 left-0 h-[3px] w-0 bg-primary [transition:width_.9s_linear]" style={{ width: i === focus - 1 && tour ? `${(((tick % 7) + 1) / 7 * 100).toFixed(0)}%` : '0' }} />
+                <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[inherit]"><span className="absolute bottom-0 left-0 h-[3px] w-0 bg-primary [transition:width_.9s_linear]" style={{ width: i === focus - 1 && tour ? `${(((tick % 7) + 1) / 7 * 100).toFixed(0)}%` : '0' }} /></span>
               </button>
               {/* 두 숫자 카드(pair — 지연 확정 · 후보 계산): 두 숫자가 각각 자기 목록으로 가는 링크다. 단추 안에 링크를 넣을 수 없어, 단추와 같은 틀(테두리·여백·세로 가운데)의 겹친 층에
                   같은 줄을 링크로 다시 놓는다(단추 안 줄은 자리만 잡고 보이지 않음). 겹친 층은 누름을 단추로 흘려보내고 링크만 받는다 */}
               {x.pair ? (
-                <div data-slot="board-dir-pair" className="pointer-events-none absolute inset-0 z-[1] flex flex-col justify-center gap-[3px] overflow-hidden rounded-[12px] border border-transparent px-3.5 @container transition-[translate] peer-hover:-translate-y-0.5 peer-focus-visible:-translate-y-0.5 motion-reduce:transition-none [.peer[aria-pressed=true]~&_[data-big]]:text-primary">
+                <div data-slot="board-dir-pair" className="pointer-events-none absolute inset-0 z-[1] flex flex-col justify-between gap-1.5 rounded-[12px] border border-transparent px-3.5 py-2.5 @container transition-[translate] peer-hover:-translate-y-0.5 peer-focus-visible:-translate-y-0.5 motion-reduce:transition-none [.peer[aria-pressed=true]~&_[data-big]]:text-primary">
                   {dirTitle(x, true)}
-                  <span className={dirRow}>{pairVals(x, true)}</span>
+                  <span className={pairRow}>{pairVals(x, true)}</span>
                 </div>
               ) : null}
-              {/* 오른쪽 위: 정의 (i)(키보드·회의실 화면에서도 열리는 팝오버) + 목록 링크(글자 = 무엇이 열리는지, 없으면 '목록'). 단추 밖 형제라 단추 안에 단추·링크가 들어가지 않는다 */}
+              {/* 오른쪽 위: 정의 (i)(키보드·회의실 화면에서도 열리는 팝오버). 단추 밖 형제라 단추 안에 단추·링크가 들어가지 않는다 */}
               <div className="absolute top-[5px] right-2.5 z-[2] flex items-center gap-1 transition-[translate] peer-hover:-translate-y-0.5 motion-reduce:transition-none">
                 <InfoTip label={`${x.t} 기준`} className="h-7 px-0.5">
                   <p>{x.basis}</p>{x.list.text ? <p>{x.list.title}</p> : null}
                 </InfoTip>
-                {x.pair ? null : (
-                  <Link href={x.list.href} title={x.list.title} aria-label={`${x.t} ${x.list.text ?? '목록'}`} data-slot="board-dir-list"
-                    className="inline-flex items-center gap-px rounded-[4px] text-[13px] leading-5 whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
-                    {x.list.text ?? '목록'}<ChevronRight className="size-3.5" aria-hidden="true" />
-                  </Link>
-                )}
               </div>
+              {/* 오른쪽 아래: 목록 링크(글자 = 무엇이 열리는지, 없으면 '목록'). 값 줄 끝의 보이지 않는 같은 글자(dir-list-gap)가 자리를 잡아 값·제목과 겹치지 않는다 */}
+              {x.pair ? null : (
+                <Link href={x.list.href} title={x.list.title} aria-label={`${x.t} ${x.list.text ?? '목록'}`} data-slot="board-dir-list"
+                  className={cn(dirListText, 'absolute right-3.5 bottom-[11px] z-[2] rounded-[4px] text-muted-foreground no-underline underline-offset-[3px] transition-[translate] peer-hover:-translate-y-0.5 hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary motion-reduce:transition-none')}>
+                  {x.list.text ?? '목록'}<ChevronRight className="size-3.5" aria-hidden="true" />
+                </Link>
+              )}
               </div>
             ))}
           </div>

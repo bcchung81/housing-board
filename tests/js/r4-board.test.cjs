@@ -67,8 +67,8 @@ test("4 카드 제목은 말줄임 없음: 지시 카드 제목은 두 줄까지
   assert.doesNotMatch(code(board), /\btruncate\b/, '종합상황판에 말줄임 없음');
   assert.match(board, /const dirTitle = /);
   assert.match(board, /\[word-break:keep-all\]/);
-  assert.match(board, /\{x\.tag \? <span data-slot="dir-tag" className="block [^"]*text-\[min\(12px,7\.5cqi\)\][^"]*">\{x\.tag\}<\/span> : null\}/, "꼬리는 ' · ' 없이 아랫줄");
-  assert.match(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, '[^']*\bmin-h-20 [^']*justify-center/, '카드 높이 80px 이상');
+  assert.match(board, /<span data-slot="dir-tag" className="block [^"]*text-\[min\(12px,7\.5cqi\)\][^"]*">\{small\.map/, '꼬리는 제목 아래 작은 줄');
+  assert.match(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, '[^']*\bmin-h-20 [^']*justify-between[^']*\bpy-2\.5/, '카드 높이 80px 이상');
   assert.doesNotMatch(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, '[^']* h-20 /, '고정 높이 h-20 없음');
   const dirs = board.slice(board.indexOf('id="board-dirs"'), board.indexOf('</section>', board.indexOf('id="board-dirs"')));
   assert.equal((dirs.match(/\{dirTitle\(x(, true)?\)\}/g) || []).length, 2, '단추와 두 숫자 겹친 층이 같은 제목 틀');

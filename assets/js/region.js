@@ -128,15 +128,17 @@
     const home = opts && opts.home;   // 수도권: { doc } (doc 이 null 이면 받지 못함) — 인허가·기반시설 없이 원장 사업만
     if (home) {
       const docs = home.doc ? [home.doc] : [], lite = home.lite && Array.isArray(home.lite.buildings) ? home.lite : null;
-      /* 경량 번들(home-lite): 사업 둘레 건물은 처음부터 그리고(번들 밖은 그대로 요청 시 조회 — dynamic), 지구 공동주택용지 면은 지구 경계로, 다른 블록 라벨점은 옅은 점 표지로 */
+      /* 경량 번들(home-lite): 사업 둘레 건물은 처음부터 그리고(번들 밖은 그대로 요청 시 조회 — dynamic), 지구 공동주택용지 면은 지구 경계로,
+         다른 블록은 LH 블록 다각형(poly)이 있으면 그 윤곽, 없으면 라벨점 둘레 옅은 점 표지로. 사업의 LH 블록 링(projects 셋째 칸)은 사업 구역으로(homeToProjects) */
       const zones = lite ? (lite.districts || []).flatMap((d) => (d.polys || []).filter((g) => Array.isArray(g) && g.length >= 4).map((g) => ({ name: String(d.name || ''), poly: g.slice(0, g.length - 1) }))) : [];
-      const others = lite ? (lite.blocks || []).filter((x) => Array.isArray(x.at) && x.at.every(finite)).map((x) => ring8(x.at, 22)) : [];
+      const others = lite ? (lite.blocks || []).filter((x) => Array.isArray(x.at) && x.at.every(finite)).map((x) => (liteRing(x.poly) || ring8(x.at, 22))) : [];
+      const shapes = new Map(lite ? (lite.projects || []).filter((x) => Array.isArray(x) && x[0] && liteRing(x[2])).map((x) => [String(x[0]), liteRing(x[2])]) : []);
       const pts = docs.flatMap((d) => d.projects || []).filter((x) => x && x.loc && HOME_DRAWN_M[x.loc.by] && Array.isArray(x.loc.at) && x.loc.at.length === 2 && x.loc.at.every(finite) && !(x.bundles || []).length).map((x) => x.loc.at);
       const region = { slug: '', name, notes: home.doc ? [] : ['사업 원장 자료를 불러오지 못했습니다. 잠시 뒤 다시 열어 보세요.'], title: name,
-        description: `${name}의 공급 사업은 사업 원장 기준입니다. 위치는 대표점이며 사업 경계가 아닙니다.${lite ? ` 건물은 사업 둘레 ${lite.radiusM || 300} m를 미리 담았고 그 밖은 확대하면 불러옵니다.` : ''}`,
+        description: `${name}의 공급 사업은 사업 원장 기준입니다. ${shapes.size ? 'LH 블록 위치가 잡힌 사업은 블록 경계, 나머지 위치는 대표점이며 사업 경계가 아닙니다.' : '위치는 대표점이며 사업 경계가 아닙니다.'}${lite ? ` 건물은 사업 둘레 ${lite.radiusM || 300} m${(lite.wide || []).length ? `와 공공주택지구 ${lite.wide.length}곳 전체` : ''}를 미리 담았고 그 밖은 확대하면 불러옵니다.` : ''}`,
         view: homeView(pts, opts.px) || { center: resolved.center || [127.0, 37.5], zoom: Math.round((zoomForBbox(resolved.bbox) || 12) * 10) / 10, pitch: 50, bearing: 0 }, sources: [], zones };
       const buildings = { type: 'FeatureCollection', meta: { basis: (lite && lite.basis) || '', factor: {} }, features: lite ? liteFeatures(lite.buildings) : [], dynamic: true, lite: !!lite };
-      const b = Object.assign({ ok: true }, adaptBundle({ index: index || { regions: [] }, entry: { visibility: 'public' }, region, projects: { projects: [], otherBlocks: others }, buildings, context: null, infra: null, home: docs, homeFailed: !home.doc }));
+      const b = Object.assign({ ok: true }, adaptBundle({ index: index || { regions: [] }, entry: { visibility: 'public' }, region, projects: { projects: [], otherBlocks: others }, buildings, context: null, infra: null, home: docs, homeFailed: !home.doc, shapes }));
       b.lite = lite ? { buildings: buildings.features.length, districts: (lite.districts || []).length, blocks: others.length, radiusM: lite.radiusM || 300 } : null;
       b.nearby = (Array.isArray(resolved.neighbors) ? resolved.neighbors : []).filter((x) => x && /^\d{10}$/.test(String(x.bjd)) && x.name).map((x) => ({ bjd: String(x.bjd), name: String(x.name) })).slice(0, 150);
       b.permits = null;
@@ -536,9 +538,15 @@
     for (let i = 0; i < 24; i++) { const a = i / 24 * Math.PI * 2; out.push([Math.round((c[0] + Math.cos(a) * dn) * 1e7) / 1e7, Math.round((c[1] + Math.sin(a) * dl) * 1e7) / 1e7]); }
     return out;
   }
+  /* 경량 번들의 닫힌 링([[경도, 위도]...], 첫 점 = 끝 점) → 열린 링(지도 단지 poly 모양), 형식이 맞지 않으면 null */
+  function liteRing(g) {
+    if (!Array.isArray(g) || g.length < 4 || !g.every((p) => Array.isArray(p) && p.length === 2 && p.every(finite))) return null;
+    return g.slice(0, g.length - 1).map((p) => p.slice());
+  }
   /* 원장 행 → 번들 단지 모양(adaptProject 입력). 그릴 위치가 없는 행은 unlocated. 같은 점에 여럿이면(지구 대표점 등) 점 둘레 원 위에 id 순으로 벌린다.
+     shapes(사업 id → 열린 링, 경량 번들의 LH 블록 다각형)가 있는 LH 블록 라벨점 사업은 그 블록을 사업 구역(공식 윤곽 — 단계색 면)으로 그린다.
      skip(r) 이 참인 행(번들 단지와 이어진 행)은 뺀다 */
-  function homeToProjects(docs, skip) {
+  function homeToProjects(docs, skip, shapes) {
     const rows = [].concat(...(docs || []).filter((d) => d && Array.isArray(d.projects)).map((d) => d.projects)).filter((r) => r && r.id && !(skip && skip(r)));
     const drawable = (r) => r.loc && HOME_DRAWN_M[r.loc.by] && Array.isArray(r.loc.at) && r.loc.at.length === 2 && r.loc.at.every(finite);
     const groups = new Map(), unlocated = [];
@@ -553,7 +561,8 @@
         sponsorClass: r.agency ? 'public' : 'unknown', kind: AGENCY_TEXT[r.agency] || '공공주택 사업', status: STATUS_OF_STAGE[r.stage] || '사업화',
         units: finite(r.units) && r.units > 0 ? r.units : null, dongCount: 0,
         moveIn: /^\d{4}-\d{2}/.test(r.moveIn || '') ? String(r.moveIn).slice(0, 7) : ym ? `준공 예정 ${ym[1]}.${ym[2]}` : null,
-        outline: r.loc.by === 'name' ? { tier: 'point', poly: ring24(c, HOME_DRAWN_M.name), how: `${APPROX_TITLE}${r.loc.match ? `(검색 일치: ${r.loc.match})` : ''}${n > 1 ? ` · 같은 점 ${n}곳을 벌려 놓음` : ''}` }
+        outline: r.loc.by === 'block' && shapes && shapes.get(r.id) ? { tier: 'official', poly: shapes.get(r.id), how: `LH 블록 경계(V-World 토지이용계획 블록, 라벨점을 품은 주택 용지) · 위치 ${r.loc.status === 'CONFIRMED' ? '확인' : '검토 중'}` }
+          : r.loc.by === 'name' ? { tier: 'point', poly: ring24(c, HOME_DRAWN_M.name), how: `${APPROX_TITLE}${r.loc.match ? `(검색 일치: ${r.loc.match})` : ''}${n > 1 ? ` · 같은 점 ${n}곳을 벌려 놓음` : ''}` }
           : { tier: 'point', poly: ring8(c, HOME_DRAWN_M[r.loc.by]), how: `${HOME_LOC_TEXT[r.loc.by]} 둘레 표지${n > 1 ? `(같은 점 ${n}곳을 벌려 놓음)` : ''} · 위치 ${r.loc.status === 'CONFIRMED' ? '확인' : '검토 중'}` },
         dongs: null, events: [], sources: [HOME_SOURCE.id], home: homeInfo(r), ...(r.loc.by === 'name' ? { approx: true } : {}),
       });
@@ -632,7 +641,7 @@
     /* 수도권 원장 자료(raw.home = 시군구 파일들): 번들 단지와 이어지지 않은 원장 사업은 대표점 표지로 더하고, 붙일 수 있는 원장 행은 모두 붙인다 */
     if (Array.isArray(raw.home)) {
       const bundleKeys = new Set(list.map((p) => `${region.slug}/${p.id}`)), ids = new Set(list.map((p) => p.projectId).filter(Boolean));
-      home = homeToProjects(raw.home, (r) => ids.has(r.id) || (r.bundles || []).some((k) => bundleKeys.has(String(k))));
+      home = homeToProjects(raw.home, (r) => ids.has(r.id) || (r.bundles || []).some((k) => bundleKeys.has(String(k))), raw.shapes);
       if (home.projects.length) { list = list.concat(home.projects); region = Object.assign({}, region, { sources: [...(region.sources || []), HOME_SOURCE] }); }
     }
     let blocks = list.map((p) => adaptProject(p, region));
@@ -655,7 +664,7 @@
       texts: buildTexts(region, blocks, context || null, infra || null),
       regions: (index && index.regions) || [],
       resolveBlock: (param) => (param ? byKey.get(String(param)) || null : null),
-      home: home ? { total: (raw.home || []).reduce((s, d) => s + ((d && d.projects) || []).length, 0), drawn: blocks.filter((b) => b.home).length, unlocated: home.unlocated, failed: !!raw.homeFailed,
+      home: home ? { total: (raw.home || []).reduce((s, d) => s + ((d && d.projects) || []).length, 0), drawn: blocks.filter((b) => b.home).length, blocks: blocks.filter((b) => b.home && b.outlineTier === 'official').length, unlocated: home.unlocated, failed: !!raw.homeFailed,
         tally: homeTally(raw.home, home.unlocated.map((r) => r.id)) } : null,
     };
   }
@@ -885,7 +894,7 @@
     const pm = r.permits;
     const hm = r.home;
     const baseNote = r.slug ? '' : hm ? (hm.failed ? '사업 원장 자료를 불러오지 못해 경계와 건물(요청 시 조회)만 보여 줍니다'
-      : `사업 원장 ${hm.total}건 중 ${hm.drawn}건을 대표점(블록·대표 지번·지구 대표점·근사 위치)에 표시합니다. 표시한 점은 사업 경계가 아닙니다${hm.unlocated.length ? `. 위치 미확보 ${hm.unlocated.length}건은 목록에만 둡니다` : ''}`)
+      : `사업 원장 ${hm.total}건 중 ${hm.drawn}건을 ${hm.blocks ? `표시합니다(LH 블록 ${hm.blocks}건은 블록 경계, 나머지는 대표점)` : '대표점(블록·대표 지번·지구 대표점·근사 위치)에 표시합니다'}. 표시한 점은 사업 경계가 아닙니다${hm.unlocated.length ? `. 위치 미확보 ${hm.unlocated.length}건은 목록에만 둡니다` : ''}`)
       : pm && pm.count ? `상세 3D 자료가 없어 경계·건물(요청 시 조회)·건축HUB 인허가 사업 ${pm.count}곳만 보여 줍니다${pm.ledger && (pm.ledger.blocksMatched + pm.ledger.parcelsRecovered) ? `(건축물대장으로 위치를 찾은 ${pm.ledger.blocksMatched + pm.ledger.parcelsRecovered}곳 포함${pm.unlocated ? `, 필지를 못 찾은 ${pm.unlocated}곳 제외` : ''})` : pm.unlocated ? `(필지를 못 찾은 ${pm.unlocated}곳 제외)` : ''}`
       : pm && pm.fetched && pm.blocks ? `상세 3D 자료가 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 이 법정동의 건축HUB 인허가는 공공주택지구 블록 단위 ${pm.blocks}곳뿐이라 필지 번호가 없어 ${pm.ledger && pm.ledger.used ? '건축물대장과 맞춰 보아도 지번을 정하지 못해 ' : ''}지도에 그릴 수 없습니다`
       : pm && pm.fetched ? `상세 3D 자료가 없어 경계와 건물(요청 시 조회)만 보여 줍니다. 건축HUB 주택인허가에 이 법정동의 공동주택 사업이 없습니다(기록 ${pm.records}건) — 이웃 법정동에 있을 수 있습니다`
@@ -920,5 +929,5 @@
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { REFORMED, fatalModel, fatalHtml, HOME_SIDO, isHomeSgg, crumbsOf, crumbsHtml, mountCrumbs, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, statusReason, lostSummary, lostAnchor, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
+  return { REFORMED, fatalModel, fatalHtml, HOME_SIDO, isHomeSgg, crumbsOf, crumbsHtml, mountCrumbs, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, liteRing, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, statusReason, lostSummary, lostAnchor, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
 });

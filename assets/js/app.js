@@ -2288,12 +2288,24 @@ const lostTriggers = () => [...document.querySelectorAll('.lostpin, .hs-lost, #s
 /* 사업 원장 목록 한 줄(위치 미확보 목록·안내 띠 '사업 원장 n건' 목록이 같은 형식): 짧은 이름 · 판정 / 단계 · 호수 · 위치 근거 / 사업 정보 링크. 지연·주의 먼저 */
 const LIST_RANK = { delay: 0, caution: 1 };
 const ledgerRows = (xs) => xs.slice().sort((a, c) => (LIST_RANK[a.cls] ?? 2) - (LIST_RANK[c.cls] ?? 2) || String(a.id).localeCompare(String(c.id))).map((x) => `<li${CUR_LOST && x.id === CUR_LOST.id ? ' class="cur" aria-current="true"' : ''}><span class="lp-n"><b title="${esc(x.name)}">${esc(x.label || x.name)}</b>${x.cls ? ` <b class="jd ${esc(x.cls)}">${esc(CLS_WORD[x.cls] || x.cls)}</b>` : ''}</span>`
-  + `<small>${esc([x.stage && stageOfCode(x.stage) ? stName(stageOfCode(x.stage)) : '', x.units ? `${fmt(x.units)}호` : '호수 미확인', x.loc || '위치 없음'].filter(Boolean).join(' · '))}</small>`
+  + `<small>${esc([x.stage && stageOfCode(x.stage) ? stName(stageOfCode(x.stage)) : '', x.units ? `${fmt(x.units)}호` : '호수 미확인', x.loc || '위치 없음', x.mark || ''].filter(Boolean).join(' · '))}</small>`
   + `<a href="${esc(projHref(x.id))}">사업 정보 보기 ›</a></li>`).join('');
+/* 위치 미확보 안내(lib/board/projects-view.ts LOST_GUIDE 와 같은 문구): 시군구 대표점뿐(rep) > 계획 단계 원장 01~03(plan) > 건설 이후(build) */
+const LOST_GUIDE = { rep: '시군구 대표점에 임시로 표시 중 · 대표 지번 주소를 입력하면 정확한 위치로 표시됩니다', plan: '대표 지번 주소나 좌표를 입력하면 지도에 표시됩니다', build: '건축허가 정보와 연결되면 지도에 표시됩니다 · 대표 지번 주소를 입력해도 됩니다' };
+const LOST_MARK = { rep: '임시 표시', plan: '주소·좌표 입력 필요', build: '건축허가 연결 필요' };
+const lostKind = (x) => (x.at ? 'rep' : !x.stage || /^0[123]$/.test(x.stage) ? 'plan' : 'build');
+function lostGuide() {
+  LOST.forEach((x) => { x.mark = LOST_MARK[lostKind(x)]; });   // 사업별 줄의 짧은 표지(ledgerRows 가 x.mark 를 쓴다)
+  const kinds = [...new Set(LOST.map(lostKind))], one = kinds.length === 1 ? kinds[0] : null;
+  const line = one ? LOST_GUIDE[one] : '사업마다 필요한 입력이 다릅니다 · 대표 지번 주소나 좌표를 입력하면 지도에 표시됩니다';
+  const tip = ['필수: 대표 지번 주소 또는 좌표(경위도, WGS84) 중 하나 + 근거(출처 URL·문서명)', '선택: 지구명·블록명, 사업 구역 경계 파일(GeoJSON·SHP), 건축허가 관리번호', '확인: 주소 검색 결과가 1곳이고 시군구가 사업과 같아야 합니다', '담당자 입력 화면은 준비 중'].join('\n');
+  return `<p class="lp-guide" title="${esc(tip)}">${esc(line)} <span class="lp-i" aria-hidden="true">ⓘ</span><span class="sr">${esc(tip.replace(/\n/g, '. '))}</span></p>`;
+}
 function lostListHtml() {
   const sm = window.RegionLoader.lostSummary(LOST);
   return `<div class="lp-h"><b id="lostPopH">${esc(sm.text)}</b><button type="button" class="lp-x" aria-label="목록 닫기" title="닫기 (Esc)">×</button></div>`
     + '<p class="lp-note">사업 원장에는 있으나 지도에 표시할 위치가 없거나 시군구 대표점뿐인 사업입니다.</p>'
+    + lostGuide()
     + `<ul>${ledgerRows(LOST)}</ul>`;
 }
 function placeLost() {

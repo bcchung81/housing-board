@@ -1,0 +1,49 @@
+{
+  "slug": "gyeonggi-guri",
+  "name": "경기 구리시",
+  "title": "주택파동 · 경기 구리시",
+  "description": "구리갈매역세권 공공주택지구의 공공주택과 공공택지 위 민간 단지 공급 현황을 3차원 지도로 보여 줍니다.",
+  "zoom": 14.2,
+  "pitch": 52,
+  "codes": [
+    {
+      "code": "41310",
+      "type": "sigungu",
+      "name": "구리시"
+    }
+  ],
+  "sigungu": "41310",
+  "bjdongs": "auto",
+  "jibun_slug": {},
+  "myhome": {
+    "signguNm": [
+      "구리시"
+    ],
+    "pnuPrefix": [
+      "4131"
+    ]
+  },
+  "zones": [
+    {
+      "id": "galmae-station",
+      "name": "구리갈매역세권 공공주택지구",
+      "type": "공공주택지구",
+      "match": {
+        "equals": "구리갈매역세권 공공주택지구"
+      },
+      "search_bbox": [
+        127.096,
+        37.61,
+        127.135,
+        37.654
+      ],
+      "name_reject": "갈매(?!역세권)",
+      "label_strip": [
+        "구리갈매역세권지구",
+        "갈매역세권지구",
+        "갈매역세권"
+      ],
+      "short": "구리갈매역세권"
+    }
+  ]
+}
