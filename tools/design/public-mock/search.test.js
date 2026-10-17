@@ -189,5 +189,17 @@ t('큰 지도 주소: lib/board/map-href.ts 와 같은 결과(사업 > 시군구
   const opts = [{ kind: 'region' }, { kind: 'home' }, { kind: 'map' }, { kind: 'project' }, { kind: 'map' }, { kind: 'region' }];
   assert.strictEqual(ctx.stepOpt(opts, 0, 1), 3, '↓ 는 내 동네로·지도 건너뜀'); assert.strictEqual(ctx.stepOpt(opts, 2, 1), 3); assert.strictEqual(ctx.stepOpt(opts, 4, 1), 5); assert.strictEqual(ctx.stepOpt(opts, 3, -1), 0);
 });
-const N = 25; console.log(`${pass}/${N} 통과`);
+t("보기 대상 토글 이름은 '일반사용자'·'정책담당자' (옛 '국민'·'담당자' 버튼 글자 없음)", () => {
+  assert(/data-aud="public"[^>]*><span>일반사용자<\/span>/.test(h)); assert(/data-aud="admin"[^>]*><span>정책담당자<\/span>/.test(h));
+  assert(!h.includes('>국민<') && !h.includes('>담당자<'));
+});
+t('.sr 규칙은 한 번만 정의되고 li 에 class="sr" 를 쓰지 않는다(시트 줄은 sli)', () => {
+  assert.strictEqual((h.match(/^\.sr \{/gm) || []).length, 1);
+  assert(!/<li[^>]*class="[^"]*\bsr\b/.test(h)); assert(h.includes('<li class="sli'));
+});
+t("운영판 결과 파일의 메뉴 '종합상황판' href 는 /citizen", () => {
+  const o = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'assets', 'citizen', 'index.html'), 'utf8');
+  assert(/routes = \['\/citizen', /.test(o)); assert(o.includes('일반사용자'));
+});
+const N = 28; console.log(`${pass}/${N} 통과`);
 process.exit(pass === N ? 0 : 1);

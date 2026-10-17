@@ -60,10 +60,15 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
             <path fill="currentColor" d="M8 28 27 12Q36 4 45 12L64 28 57 36 39 21Q36 18 33 21L15 36Z" />
             <path fill="#D65535" d="M8 43C18 33 27 32 38 40C48 48 54 45 64 35V48C54 58 45 60 34 51C25 44 18 43 8 54Z" />
           </svg>
-          <span className="whitespace-nowrap text-[30px] font-normal leading-none tracking-[-0.035em]">주택파동</span>
+          <span className="whitespace-nowrap text-[30px] max-[599px]:hidden font-normal leading-none tracking-[-0.035em]">주택파동</span>
         </a>
         <nav id="main-menu" aria-label="주 메뉴" className="mx-auto mobile:hidden"><ul className="m-0 flex list-none p-0">{items}</ul></nav>
         <div className="flex items-center gap-1 mobile:ml-auto">
+          {/* 보기 대상: 지금 화면이 정책담당자라 그 칸이 고른 상태. 일반사용자 칸은 선택을 저장하고 /citizen 으로 이동(기본 이동 유지) */}
+          <div role="group" aria-label="보기 대상" className="mr-1 flex h-9 items-stretch rounded-full border border-border text-[14px] max-[599px]:text-[13px]">
+            <a href="/citizen" className="relative flex items-center whitespace-nowrap rounded-l-full px-3 text-muted-foreground no-underline before:absolute before:inset-x-0 before:-inset-y-1 before:content-[''] hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-[599px]:px-2" onClick={() => { try { localStorage.setItem('audience', 'public'); } catch (_) { /* 저장소를 못 써도 이동은 그대로 */ } }}>일반사용자</a>
+            <span aria-current="page" className="flex items-center whitespace-nowrap rounded-r-full bg-primary/10 px-3 font-bold text-foreground max-[599px]:px-2">정책담당자</span>
+          </div>
           <button type="button" className="flex size-9 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-pn2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" aria-pressed={dark} aria-label="다크 모드" title="다크 모드 전환" onClick={toggleTheme}>
               <Moon className="size-[18px] dark:hidden" aria-hidden="true" /><Sun className="hidden size-[18px] dark:block" aria-hidden="true" />
           </button>

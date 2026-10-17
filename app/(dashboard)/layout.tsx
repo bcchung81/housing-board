@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import TopNav from '../../components/TopNav';
 import { getBoardData } from '../../lib/board/data';
-import { THEME_INIT } from '../../lib/shell/theme';
+import { AUDIENCE_INIT, THEME_INIT } from '../../lib/shell/theme';
 import { doHyeon } from '../../lib/shell/fonts';
 import '../tailwind.css';
 
@@ -20,6 +20,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
     <html lang="ko" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+        <script dangerouslySetInnerHTML={{ __html: AUDIENCE_INIT }} />
         <meta name="board-source" content={`${origin}:${month}:run${runId ?? '-'}`} />
       </head>
       {/* 본문 바탕·글꼴(옛 dash.css 의 body): 위쪽 오른편이 살짝 밝아지는 바탕(--page-bg, 테마별), 15px/1.55.

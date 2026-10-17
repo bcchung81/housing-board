@@ -75,7 +75,7 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .skip { position: absolute; left: 12px; top: -80px; z-index: 60; display: inline-flex; align-items: center; min-height: 44px; padding: 0 16px; border-radius: 10px; background: var(--primary); color: var(--primary-foreground); font-weight: 700; text-decoration: none; }
 .skip:focus { top: 10px; }
 
-/* ---------- 머리(TopNav: 56px, 로고 · 가운데 메뉴 5 · 오른쪽 [국민|담당자] + 테마) ---------- */
+/* ---------- 머리(TopNav: 56px, 로고 · 가운데 메뉴 5 · 오른쪽 [일반사용자|정책담당자] + 테마) ---------- */
 .top { position: sticky; top: 0; z-index: 40; overflow-x: clip; background: var(--card); border-bottom: 1px solid var(--border); box-shadow: 0 1px 8px rgba(15,23,42,.025); font-family: var(--font-display); }
 .top-in { width: min(1440px, 100%); margin: 0 auto; height: 56px; display: flex; align-items: center; gap: 8px; padding: 0 24px; }
 @media (min-width: 1600px) { .top-in { width: min(1760px, 100%); } }
@@ -98,7 +98,7 @@ nav.main + .tools { margin-left: 0; }
 .dark .i-moon, :root:not(.dark) .i-sun { display: none; }
 #burger { display: none; }
 
-/* [국민 | 담당자]: aria-pressed 두 단추(둘 다 Tab 으로 닿는다). 눌리는 칸은 44px, 보이는 알약은 32px */
+/* [일반사용자 | 정책담당자]: aria-pressed 두 단추(둘 다 Tab 으로 닿는다). 눌리는 칸은 44px, 보이는 알약은 32px */
 .aud { display: inline-flex; align-items: center; font-family: var(--font-sans); }
 .aud button { height: 44px; padding: 0 2px; border: 0; background: none; cursor: pointer; }
 .aud button span { display: inline-flex; align-items: center; height: 32px; padding: 0 11px; border: 1px solid var(--border); background: var(--muted); font-size: 14px; color: var(--muted-foreground); white-space: nowrap; transition: background .15s, color .15s; }
@@ -500,8 +500,8 @@ svg.map { display: block; overflow: hidden; }
 .mh { position: sticky; top: var(--bar-h, 46px); z-index: 1; display: flex; align-items: baseline; gap: 10px; margin: 0 -14px; padding: 8px 20px 6px; background: color-mix(in srgb, var(--muted) 92%, var(--popover)); font-family: var(--font-sans); font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--border); }
 .mh span { font-size: 14px; font-weight: 400; color: var(--muted-foreground); }
 .srows { list-style: none; margin: 0; padding: 0; }
-.sr { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
-.sr.me { background: color-mix(in srgb, var(--primary) 7%, transparent); }
+.sli { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
+.sli.me { background: color-mix(in srgb, var(--primary) 7%, transparent); }
 .srow { flex: 1; min-width: 0; display: grid; grid-template-columns: 10px 34px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 48px; padding: 4px 6px; text-decoration: none; color: inherit; }
 .srow:hover { background: var(--pn2); }
 .srow .dot { width: 10px; height: 10px; }
@@ -587,6 +587,8 @@ svg.map { display: block; overflow: hidden; }
 }
 @media (max-width: 599px) {
   .top-in { height: 56px; }
+  .logo span { display: none; }
+  .aud button span { font-size: 13px; padding: 0 8px; }
   .pub { padding-top: var(--s3); gap: var(--s3); }
   .sum { padding: var(--s3) var(--s4) var(--s4); gap: var(--s2); }
   .sum-h { font-size: 26px; }
@@ -656,7 +658,7 @@ svg.map { display: block; overflow: hidden; }
   .logo { margin-right: 4px; gap: 7px; }
   .logo svg { width: 28px; height: 28px; }
   .logo span { font-size: 25px; }
-  .aud button span { padding: 0 9px; }
+  .aud button span { padding: 0 8px; }
   #q { height: 52px; font-size: 17px; }
 }
 </style>
@@ -699,8 +701,8 @@ svg.map { display: block; overflow: hidden; }
     <div class="tools">
       <div class="aud" role="group" aria-label="보기 대상" id="aud">
         <span class="aud-note" id="aud-note" hidden></span>
-        <button type="button" data-aud="public" aria-pressed="true"><span>국민</span></button>
-        <button type="button" data-aud="admin" aria-pressed="false"><span>담당자</span></button>
+        <button type="button" data-aud="public" aria-pressed="true"><span>일반사용자</span></button>
+        <button type="button" data-aud="admin" aria-pressed="false"><span>정책담당자</span></button>
       </div>
       <button type="button" class="icon-btn" id="theme" aria-pressed="false" aria-label="다크 모드" title="다크 모드 전환">
         <svg class="i i-moon"><use href="#i-moon"/></svg><svg class="i i-sun"><use href="#i-sun"/></svg>
@@ -744,7 +746,7 @@ svg.map { display: block; overflow: hidden; }
       <section class="card cell" id="c-pj" aria-labelledby="c-pj-h"></section>
     </div>
     <p class="src" id="src"><button type="button" class="tip-btn" popovertarget="tip-src" aria-label="출처와 기준일"><svg class="i"><use href="#i-info"/></svg></button><span>출처 <b>건축HUB · LH · 청약홈</b></span><span class="opt-t">· 2026.10.13 기준</span><span class="opt-t">· 예정일은 바뀔 수 있어요</span>
-      <button type="button" class="to-admin" id="to-admin">전체 통계<span class="opt-t"> 보기(담당자 화면)</span><svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></button></p>
+      <button type="button" class="to-admin" id="to-admin">전체 통계<span class="opt-t"> 보기(정책담당자 화면)</span><svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></button></p>
   </section>
   <div class="sr" role="status" id="live"></div>
   <div class="toast" id="toast" hidden></div>
@@ -795,7 +797,7 @@ svg.map { display: block; overflow: hidden; }
     <button type="button" data-s="zero">사업 0곳</button>
     <button type="button" data-s="limit">검색 한도</button>
     <button type="button" data-s="outside">수도권 밖</button>
-    <button type="button" data-s="admin">담당자</button></span>
+    <button type="button" data-s="admin">정책담당자</button></span>
     <output id="demo-out" aria-live="polite"></output>
   </div>
 </details>
@@ -1733,7 +1735,7 @@ function sheetRow(x, isS, homeKey) {
   const uk = unitKey(x.sgg), me = homeKey && uk === homeKey, where = isS ? areaOf(uk) || areaOf(x.sgg) : null;
   const d = SH.kind === 'ev' && x.when.length === 10 ? `${+x.when.slice(8, 10)}일` : '';
   const sub = SH.kind === 'ev' ? NEXT[x.k] : x.yt;
-  return `<li class="sr${me ? ' me' : ''}"><a class="srow" href="#/projects?id=${x.id}" data-go="/projects?id=${x.id}" title="${esc(x.name || '이름 미정')}">
+  return `<li class="sli${me ? ' me' : ''}"><a class="srow" href="#/projects?id=${x.id}" data-go="/projects?id=${x.id}" title="${esc(x.name || '이름 미정')}">
       <i class="dot${x.prep ? ' prep' : ''}" style="${x.dot}" aria-hidden="true"></i><span class="d">${d}</span>
       <span class="t">${me ? ico('pin') : ''}${where ? `<b>${esc(nameOf(where))}</b> · ` : ''}${esc(shortName(x.name))}<span class="k"> · ${sub}</span></span>
       <span class="u">${x.u ? fmt(x.u) + '호' : '호수 미정'}</span></a>${SH.kind === 'ev' && x.k === 0 ? EXT(x).replace('class="ext"', 'class="ext sm"').replace('청약홈에서 찾기', '청약홈') : ''}${CAPITAL.includes(x.sgg.slice(0, 2)) && /^PRJ-/.test(x.id) ? mapBtn(mapHref({ project: x.id }), shortName(x.name)) : ''}</li>`;
@@ -2009,7 +2011,7 @@ function locate() {
   }, () => { S.loc = 'denied'; renderLoc(); }, { timeout: 10000, maximumAge: 600000 });
 }
 
-/* 보기 대상 [국민 | 담당자]: aria-pressed 두 단추. 국민은 한 화면 요약, 담당자는 9구역 전체 통계. 바뀐 것을 꼬리표로 알린다 */
+/* 보기 대상 [일반사용자 | 정책담당자]: aria-pressed 두 단추. 국민은 한 화면 요약, 담당자는 9구역 전체 통계. 바뀐 것을 꼬리표로 알린다 */
 const audBtns = [...document.querySelectorAll('#aud button')];
 let audTimer = 0;
 function setAud(a, { save = true, tell = false } = {}) {
@@ -2019,7 +2021,7 @@ function setAud(a, { save = true, tell = false } = {}) {
   if (a === 'admin') { S.open = false; renderAC(); closeSheet(); } else requestAnimationFrame(() => drawMap());
   const note = $('#aud-note');
   if (tell) {
-    const msg = a === 'admin' ? '담당자 화면 · 전체 통계를 펼쳤어요' : '국민 화면 · 한 화면 요약으로 바꿨어요';
+    const msg = a === 'admin' ? '정책담당자 화면 · 전체 통계를 펼쳤어요' : '일반사용자 화면 · 한 화면 요약으로 바꿨어요';
     $('#live').textContent = msg; note.textContent = msg; note.hidden = false;
     clearTimeout(audTimer); audTimer = setTimeout(() => { note.hidden = true; }, 4000);
   } else note.hidden = true;
@@ -2076,9 +2078,9 @@ document.querySelectorAll('.demo button[data-s]').forEach((b) => b.addEventListe
 
 /* 처음: 주소의 ?s= 가 있으면 그 상태, 없으면 기억한 동네(재방문) 또는 IP 추천(첫 방문). ?v= 는 시군구 코드(그곳을 본다) */
 if (OPS) {
-  /* 운영판: 상태 막대·이동 주소 출력은 ?demo=1 일 때만. 머리 메뉴는 앱 실제 경로. 이 페이지는 늘 국민 모드(담당자는 '/') */
+  /* 운영판: 상태 막대·이동 주소 출력은 ?demo=1 일 때만. 머리 메뉴는 앱 실제 경로. 이 페이지는 늘 일반사용자 모드(정책담당자는 '/') */
   if (!DEMO_ON) { $('#demo')?.remove(); $('#tip-demo')?.remove(); }
-  const routes = ['/', '/map', '/projects', '/region', '/sources'];
+  const routes = ['/citizen', '/map', '/projects', '/region', '/sources'];
   document.querySelectorAll('.menu a, .mnav a').forEach((a, i) => { a.href = routes[i % 5]; });
   html.dataset.aud = 'public';
   /* 첫 방문 IP 시도 추천: /api/v1/geo → { sido }. 없거나 실패면 시도 고르기 칩 */

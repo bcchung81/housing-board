@@ -122,7 +122,7 @@ test('두 루트 레이아웃이 tailwind.css 를 가져온다: 대시보드는 
   for (const f of ['app/(dashboard)/layout.tsx', 'app/(map)/layout.tsx']) assert.match(read(f), /import '\.\.\/tailwind\.css';/, f);
   const dash = read('app/(dashboard)/layout.tsx');
   assert.match(read('lib/shell/theme.ts'), /localStorage\.getItem\('theme'\)==='dark'/);
-  assert.match(dash, /import \{ THEME_INIT \} from/);
+  assert.match(dash, /import \{ (AUDIENCE_INIT, )?THEME_INIT \} from/);
   assert.doesNotMatch(dash, /className="dark"/, '대시보드는 기본이 라이트다');
   assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" data-map-shell="" suppressHydrationWarning>/);
   assert.match(read('components/TopNav.tsx'), /localStorage\.setItem\('theme'/);
