@@ -120,6 +120,21 @@ test('buildMap: 맞닿은 두 시군구는 공유 경계를 한 번만 줄여 �
   assert.deepEqual(raster(units, 0.25), { over: 0, enclosed: 0 });
 });
 
+test('buildMap: 이웃 경계 두 줄 없음 — 양쪽 꼭짓점이 살짝 어긋난 공유 경계도 한 줄로 합친다', () => {
+  /* 같은 굽은 경계를 왼쪽은 정수 높이마다, 오른쪽은 반 칸 어긋난 높이마다(±0.05 흔들림) 그렸다. 끝점(이음점)만 같다 */
+  const curve = (t) => [2000 + 8 * Math.sin(t * Math.PI / 25), 1000 + t];
+  const a = Array.from({ length: 101 }, (_, i) => curve(i));
+  const b = Array.from({ length: 100 }, (_, i) => { const [x, y] = curve(i + 0.5); return [x + (i % 2 ? 0.05 : -0.05), y]; });
+  const left = [[1900, 1000], ...a, [1900, 1100]];
+  const right = [[2100, 1100], [2100, 1000], a[0], ...b, a[100]].reverse();
+  const { doc } = RS.buildMap([muni('왼시', '41001', poly(left)), muni('오른시', '41002', poly(right))], []);
+  const units = doc.sgg.map((g) => ringsOfD(g.d));
+  const border = (rings) => rings[0].filter(([x]) => x > 1950 && x < 2050).map((p) => p.join()).sort();
+  assert.ok(border(units[0]).length > 5, '굽이가 남는다');
+  assert.deepEqual(border(units[0]), border(units[1]), '양쪽 경계가 같은 점(한 줄)');
+  assert.deepEqual(raster(units, 0.25), { over: 0, enclosed: 0 });
+});
+
 test('buildMap: 다른 시군구가 안 덮는 구멍은 메우고, 들어앉은 시군구의 구멍은 남겨 그 바깥 고리와 같은 점을 쓴다', () => {
   const circle = (cx, cy, rad, n) => Array.from({ length: n }, (_, i) => [cx + (rad + (i % 2 ? 0.4 : -0.4)) * Math.cos(2 * Math.PI * i / n), cy + (rad + (i % 2 ? 0.4 : -0.4)) * Math.sin(2 * Math.PI * i / n)]);
   const outer = [[1000, 1000], [1100, 1000], [1100, 1100], [1000, 1100]];

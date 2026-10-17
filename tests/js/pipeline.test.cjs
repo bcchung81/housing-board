@@ -48,7 +48,7 @@ test("'지금' 문구의 수치는 저장소 자료와 같다: 살아 있는 레
   const ledger = P.STEPS.find((s) => s.id === 'ledger').now;
   assert.match(ledger, /278건\(70개 시군구/); assert.match(ledger, /0건/);
   const routes = [];
-  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'route.ts' && !p.includes('/revalidate/') && !p.includes('/v1/ledger/')) routes.push(p); } };   // ledger 는 원천이 아니라 보관한 원장(api.map)을 읽는다
+  const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'route.ts' && !p.includes('/revalidate/') && !p.includes('/v1/ledger/') && !p.includes('/v1/geo/')) routes.push(p); } };   // ledger 는 원천이 아니라 보관한 원장(api.map)을, geo 는 요청 헤더만 읽는다
   walk(path.join(ROOT, 'app/api'));
   assert.equal(routes.length, 8);
   assert.match(P.LIVE.now, /^8개:/);

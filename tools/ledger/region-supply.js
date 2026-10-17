@@ -64,7 +64,7 @@ function buildCalendar(tables, mapRows, from) {
 }
 
 /* ---------- 지도: 위도 37.5° 보정 등장방형 하나(1000 = 위도 1°), 세 시도가 같은 좌표를 쓰고 시도마다 보기 상자만 다르다 ---------- */
-const GEO_COS = Math.cos(37.5 * Math.PI / 180), GEO_TOL = 0.8;
+const GEO_COS = Math.cos(37.5 * Math.PI / 180), GEO_TOL = 0.8, GEO_SNAP = 0.5;
 const proj = ([lon, lat]) => [(lon - 124.5) * GEO_COS * 1000, (38.4 - lat) * 1000];
 /* Douglas-Peucker. 닫힌 고리는 처음·끝이 같은 점이라 선분 대신 그 점과의 거리 */
 function dp(pts, tol) {
@@ -107,6 +107,36 @@ function interiorPoint(r) {
   let k = 0; for (let i = 2; i + 1 < xs.length; i += 2) if (xs[i + 1] - xs[i] > xs[k + 1] - xs[k]) k = i;
   return [(xs[k] + xs[k + 1]) / 2, y];
 }
+/* 꼭짓점 맞붙이기: 원천의 이웃 다각형은 같은 경계를 서로 다른 꼭짓점으로 그린 곳이 많다(어긋남 대부분 0.1단위 미만).
+   그대로면 꼭짓점 키가 안 맞아 양쪽이 따로 줄여져 두 줄과 가는 틈이 된다.
+   다른 시군구 경계에서 eps 안에 있는 꼭짓점을 그 경계의 가장 가까운 선분에 (옮기지 않고) 끼워 넣는다 → 양쪽 고리가 같은 점들을 지나 같은 호가 된다.
+   판정은 모두 끼워 넣기 전 좌표로 한 번에 해서 입력 순서와 상관없다. eps 보다 넓은 물길·해안 틈은 그대로 둔다
+   (eps 를 1 이상으로 키우면 옮기지 않은 점이 이웃 선을 끌어당겨 오히려 두 줄·겹침이 는다 — 2026-10-16 실측) */
+function snapUnits(units, eps) {
+  const C = 4, grid = new Map(), has = units.map(() => new Set()), segs = [];
+  units.forEach((ps, u) => { for (const p of ps) for (const r of p) r.forEach((a, i) => {
+    has[u].add(keyOf(a));
+    const b = r[(i + 1) % r.length], s = { u, a, b, add: new Map() }; segs.push(s);
+    for (let cx = Math.floor((Math.min(a[0], b[0]) - eps) / C); cx <= Math.floor((Math.max(a[0], b[0]) + eps) / C); cx++)
+      for (let cy = Math.floor((Math.min(a[1], b[1]) - eps) / C); cy <= Math.floor((Math.max(a[1], b[1]) + eps) / C); cy++) { const k = `${cx},${cy}`; if (!grid.has(k)) grid.set(k, []); grid.get(k).push(s); }
+  }); });
+  units.forEach((ps, u) => { for (const p of ps) for (const r of p) for (const v of r) {
+    const best = new Map();   // 이웃 시군구 → [거리, 선분, t]
+    for (const s of grid.get(`${Math.floor(v[0] / C)},${Math.floor(v[1] / C)}`) ?? []) {
+      if (s.u === u || has[s.u].has(keyOf(v))) continue;
+      const dx = s.b[0] - s.a[0], dy = s.b[1] - s.a[1], l2 = dx * dx + dy * dy;
+      const t = l2 ? Math.max(0, Math.min(1, ((v[0] - s.a[0]) * dx + (v[1] - s.a[1]) * dy) / l2)) : 0;
+      const d = Math.hypot(v[0] - s.a[0] - t * dx, v[1] - s.a[1] - t * dy), cur = best.get(s.u);
+      if (d <= eps && (!cur || d < cur[0])) best.set(s.u, [d, s, t]);
+    }
+    for (const [, s, t] of best.values()) s.add.set(keyOf(v), [t, v]);
+  } });
+  let i = 0;
+  return units.map((ps) => ps.map((p) => p.map((r) => r.flatMap((a) => {
+    const s = segs[i++];
+    return [a, ...[...s.add].sort(([ka, [ta]], [kb, [tb]]) => ta - tb || (ka < kb ? -1 : 1)).map(([, [, v]]) => v)];
+  }))));
+}
 /* units: 시군구마다 다각형들(투영 좌표, [바깥 고리, ...구멍]) → 시군구마다 { d, box }, 메운 구멍 수 */
 function sggPaths(units) {
   /* 열린 고리(닫는 점·연달아 같은 점 뺌) */
@@ -119,10 +149,15 @@ function sggPaths(units) {
     if (!keep) filled++;
     return keep;
   })]));
+  units = snapUnits(units, GEO_SNAP);
   /* 꼭짓점마다 쓰는 시군구 집합 → 집합이 바뀌는 점 = 이음점 */
   const users = new Map();
   units.forEach((ps, u) => { for (const p of ps) for (const r of p) for (const q of r) { const k = keyOf(q); if (!users.has(k)) users.set(k, new Set()); users.get(k).add(u); } });
   const sig = new Map([...users].map(([k, s]) => [k, [...s].sort((a, b) => a - b).join()]));
+  /* 변(이웃한 두 꼭짓점)마다 쓰는 시군구 집합: 양쪽 고리에서 이웃 순서가 엇갈린 곳(맞붙이기 뒤 거의 같은 두 점)도 이음점으로 끊어 그 앞뒤 호는 같게 줄인다 */
+  const edgeKey = (a, b) => (a < b ? `${a}|${b}` : `${b}|${a}`), edges = new Map();
+  units.forEach((ps, u) => { for (const p of ps) for (const r of p) r.forEach((q, i) => { const k = edgeKey(keyOf(q), keyOf(r[(i + 1) % r.length])); if (!edges.has(k)) edges.set(k, new Set()); edges.get(k).add(u); }); });
+  const esig = new Map([...edges].map(([k, s]) => [k, [...s].sort((a, b) => a - b).join()]));
   /* 호는 정규 방향(꼭짓점 키를 이은 문자열이 작은 쪽)으로 한 번만 줄이고, 반대로 쓰는 쪽은 뒤집어 쓴다 → 입력 순서와 상관없이 양쪽이 같은 점 */
   const cache = new Map();
   const simplify = (arc, ks) => {
@@ -132,7 +167,8 @@ function sggPaths(units) {
   };
   const ringOf = (r) => {
     const n = r.length, ks = r.map(keyOf), sg = ks.map((k) => sig.get(k));
-    const isJ = sg.map((s, i) => s !== sg[(i + n - 1) % n] || s !== sg[(i + 1) % n]);
+    const es = ks.map((k, i) => esig.get(edgeKey(k, ks[(i + 1) % n])));   // es[i] = 변 i→i+1
+    const isJ = sg.map((s, i) => s !== sg[(i + n - 1) % n] || s !== sg[(i + 1) % n] || s !== es[i] || s !== es[(i + n - 1) % n]);
     const j0 = isJ.indexOf(true);
     if (j0 < 0) {   // 이음점 없는 고리(섬, 남의 바깥 고리와 같은 구멍): 가장 작은 키에서 시작하는 닫힌 호 하나
       let s = 0; for (let i = 1; i < n; i++) if (ks[i] < ks[s]) s = i;

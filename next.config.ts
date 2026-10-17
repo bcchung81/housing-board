@@ -49,6 +49,11 @@ const config: NextConfig = {
     ];
   },
 
+  /* 대국민 모드 정적 페이지(assets/citizen/index.html)의 깔끔한 주소 */
+  async rewrites() {
+    return [{ source: '/citizen', destination: '/assets/citizen/index.html' }];
+  },
+
   /* 핸들러가 실행 때 읽는 파일을 함수 묶음에 넣고(경로를 계산해 읽어 자동 추적이 못 찾는다), 로컬 캐시와 큰 번들은 뺀다.
      이전 vercel.json functions 의 includeFiles·excludeFiles 와 같은 규칙: resolve 8.9 MB → 44 KB 로 줄였던 것. */
   outputFileTracingIncludes: {
