@@ -6,14 +6,14 @@
    월 상세(/month/{연-월})·기관 상세(/agency/{기관})는 종합상황판 위젯 링크가 쓰므로 남는다(메뉴에는 없다). 지역 공급은 상세 화면이 없다(?sido= 거르기). */
 
 export type MenuId = 'home' | 'map' | 'projects' | 'region' | 'sources';
-export type MenuItem = { id: MenuId; href: string; label: string; soon?: boolean };
+export type MenuItem = { id: MenuId; href: string; label: string; soon?: boolean; adminOnly?: boolean };
 
 export const MENU: MenuItem[] = [
   { id: 'home', href: '/', label: '종합상황판' },
   { id: 'map', href: '/map', label: '지도' },
-  { id: 'projects', href: '/projects', label: '사업' },
-  { id: 'region', href: '/region', label: '지역 공급' },
-  { id: 'sources', href: '/sources', label: '데이터 원본' },
+  { id: 'projects', href: '/projects', label: '사업', adminOnly: true },
+  { id: 'region', href: '/region', label: '지역 공급', adminOnly: true },
+  { id: 'sources', href: '/sources', label: '데이터 원본', adminOnly: true },
 ];
 
 /* 첫 경로 마디 → 강조할 메뉴. 월 상세·기관 상세(/agency/{기관})는 종합상황판 위젯에서 내려가므로 종합상황판을 강조한다(빵부스러기도 '종합상황판 › 기관') */

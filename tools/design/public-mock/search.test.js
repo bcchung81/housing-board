@@ -2,7 +2,7 @@
 const fs = require('fs'), assert = require('assert'), vm = require('vm');
 const h = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'docs', 'design', '대국민-모드-시안.html'), 'utf8');
 const code = [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((c) => c.includes('function makeSearch'));
-const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.yrLine = yrLine; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.arcsOf = arcsOf; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.statusCounts = statusCounts; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome; this.ro = ro; this.daysBetween = daysBetween; this.ddayText = ddayText; this.inYear = inYear; this.yearBucket = yearBucket; this.noticeName = noticeName; this.fullDate = fullDate; this.blockOf = blockOf;', ctx);
+const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.yrLine = yrLine; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.arcsOf = arcsOf; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.statusCounts = statusCounts; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome; this.ro = ro; this.daysBetween = daysBetween; this.ddayText = ddayText; this.inYear = inYear; this.yearBucket = yearBucket; this.noticeName = noticeName; this.fullDate = fullDate; this.blockOf = blockOf; this.inLabel = inLabel; this.distinctNames = distinctNames; this.geoSido = geoSido; this.searchProjects = searchProjects; this.sp = sp;', ctx);
 const S = ctx.makeSearch(ctx.D);
 const labels = (r) => r.regions.items.map((x) => x.label);
 let pass = 0; const t = (name, fn) => { try { fn(); pass++; console.log('PASS', name); } catch (e) { console.log('FAIL', name, e.message); } };
@@ -159,9 +159,9 @@ t("지도 짧은 이름: 시·군·구를 떼고('남양주시' → '남양주',
   assert.strictEqual(ctx.shortNames(ctx.unitsFor(D, S, '11').map((x) => x.name))['중구'], '중구');
 });
 t('들어올 해 둘째 줄: 정해진 비율 30% 미만이면 "…만 … · 대부분 아직 계획 단계예요", 30% 이상이면 지금 문장, 0이면 "아직 없어요"', () => {
-  assert.strictEqual(ctx.yrLine(299, 1000).join(''), '이 중 299 집만 들어올 해가 정해졌어요 · 대부분 아직 계획 단계예요');
-  assert.strictEqual(ctx.yrLine(300, 1000).join(''), '이 중 300 집은 들어올 해가 정해졌어요');
-  assert.strictEqual(ctx.yrLine(1268, 112116).join(''), '이 중 1,268 집만 들어올 해가 정해졌어요 · 대부분 아직 계획 단계예요');
+  assert.strictEqual(ctx.yrLine(299, 1000).join(''), '이 중 299집만 들어올 해가 정해졌어요 · 대부분 아직 계획 단계예요');
+  assert.strictEqual(ctx.yrLine(300, 1000).join(''), '이 중 300집은 들어올 해가 정해졌어요');
+  assert.strictEqual(ctx.yrLine(1268, 112116).join(''), '이 중 1,268집만 들어올 해가 정해졌어요 · 대부분 아직 계획 단계예요');
   assert.strictEqual(ctx.yrLine(0, 500)[0], '아직 들어올 해가 정해진 집은 없어요');
 });
 t('일정 시트 묶음: 달별 건수 합 = 전체 n, 종류 칩으로 거른 뒤 합 일치, 지역별 합 = 달별 합, 묶음 안 모집 공고 먼저', () => {
@@ -304,5 +304,83 @@ t('r9 상위 10 숫자 표기(메인 결정): 상위 10(휴대폰 5)은 반드�
   assert(/\.map \.lb-g \.plb \{ fill: var\(--card\); fill-opacity: \.92; stroke: var\(--line2\); stroke-width: 1; \}/.test(h));
   assert(h.includes('r="${p.pill ? 2.5 : 3}"'), '닻 점 지름 5px');
 });
-const N = 43; console.log(`${pass}/${N} 통과`);
+const TPL = fs.readFileSync(require('path').join(__dirname, 'template.html'), 'utf8');
+t("r10-1 검색 '사업 n개 모두 보기'는 옆 시트(페이지 이동 없음): 시트 건수 = 검색 결과 건수, 머리 '‘ㄱㅇ’ 검색 결과 · 사업 n개'", () => {
+  for (const q of ['ㄱㅇ', '남양주', 'rPdid', '과천']) { const r = S.search(q); assert.strictEqual(ctx.searchProjects(S, q).length, r.projects.total, q); }
+  assert(S.search('ㄱㅇ').projects.total > 5);
+  assert(!TPL.includes('/projects?q='), '정책담당자 /projects 로 가지 않는다');
+  assert(TPL.includes("else openSearchSheet(o.q, $('#q'));"));
+  assert(TPL.includes("$('#sheet-h').textContent = `‘${SH.q}’ 검색 결과`;") && TPL.includes("$('#sheet-sub').textContent = `사업 ${fmt(items.length)}개`;"));
+  assert(/items\.map\(\(x\) => sheetRow\(x, true, homeKey, nm\)\)/.test(TPL), '줄은 시트 줄 모양');
+});
+t("r10-4 사업 줄 '들어와요' 대신 일정 이름: 고양창릉 A-4 → '입주 2028년 1월', 이름 붙은 해 = 들어올 해(inYear)", () => {
+  const D = ctx.D; let n = 0;
+  for (const [c, rows] of Object.entries(D.prj)) for (const p of rows) { const y = ctx.inYear(D, c, p), l = ctx.inLabel(D, c, p); if (!y) assert.strictEqual(l, '연도 미정'); else { assert(/^(입주|준공) \d{4}년/.test(l), l); assert.strictEqual(l.slice(3, 7), y, c + p[0]); } n++; }
+  const g = Object.entries(D.prj).flatMap(([c, rows]) => rows.filter((p) => p[1] === '고양창릉 A-4BL 아파트 건설공사 1공구').map((p) => ctx.inLabel(D, c, p)));
+  assert.deepStrictEqual(g, ['입주 2028년 1월']);
+  assert(!/`\$\{x\.yt\} 들어와요`/.test(TPL) && TPL.includes('<span class="when">${x.il}</span>'));
+  assert(TPL.includes('사업마다 입주 예정 해(입주 기준)에'), 'ⓘ 입주 기준');
+  console.log(`  ${n}건 들어올 때 말 = 들어올 해`);
+});
+t('r10-5 시트 사업 줄 상태 글자(색 점만이 아님): 호수 아래 상태 + 접근 이름에 포함', () => {
+  assert(TPL.includes('<span class="stt"><span class="sr">, </span>${st}</span>'));
+  assert(/st = ev \? '' : STATUS\[stOf\(x\.b\)\]\[0\]/.test(TPL));
+});
+t('r10-6 보기 바뀜 알림: role=status·aria-live=polite 영역이 문서(시트 밖)와 시트 안에 늘 있고, 고르기마다 "○○ 보는 중 · 앞으로 n집"', () => {
+  assert(/<div class="sr" role="status" aria-live="polite" aria-atomic="true" id="live"><\/div>/.test(TPL));
+  assert(/<aside class="sheet"[\s\S]*?id="sheet-live"[\s\S]*?<\/aside>/.test(TPL), '시트 안 영역');
+  assert(!TPL.includes("$('#live').textContent ="), '알림은 say() 하나로');
+  assert(TPL.includes("`${nameOf(vr)} 보는 중 · ${amtOf(vr)}`"));
+  assert.strictEqual(ctx.sp('1만'), ' '); assert.strictEqual(ctx.sp('9,660'), '');
+});
+t("r10-8 같은 목록 안 이름 겹침: 고양창릉(4블록) 두 곳은 'A-4'·'S-04'를 덧붙이고, 겹치지 않으면 그대로", () => {
+  const D = ctx.D, rows = Object.entries(D.prj).filter(([c]) => c.startsWith('4128')).flatMap(([c, rs]) => rs.map((p) => ({ id: `PRJ-${c}-${p[0]}`, name: p[1] })));
+  const m = ctx.distinctNames(rows), v = Object.values(m);
+  assert(v.includes('고양창릉(4블록) A-4') && v.includes('고양창릉(4블록) S-04'), v.filter((x) => x.includes('창릉')).join(','));
+  for (const pre of ['4136', '41', '11', '28']) { const L = Object.entries(D.prj).filter(([c]) => c.startsWith(pre)).flatMap(([c, rs]) => rs.filter((p) => ctx.OF_STAGE[p[2]] <= 3).map((p) => ({ id: `PRJ-${c}-${p[0]}`, name: p[1] })));
+    const vv = Object.values(ctx.distinctNames(L)).filter((x) => !x.startsWith('이름 미정')); assert.strictEqual(new Set(vv).size, vv.length, pre + ' 겹침 ' + vv.filter((x, i) => vv.indexOf(x) !== i).slice(0, 3)); }
+  assert.strictEqual(ctx.distinctNames([{ id: 'a', name: '과천지식정보타운 S-12' }]).a, '과천지식정보타운(12블록)');
+});
+t("r10-9 수도권 밖 IP: /api/v1/geo 의 광주 29·전남 46 → 12, 제주 49 → 50, 수도권·그 밖 시도는 그대로, 모르는 코드는 null", () => {
+  assert.strictEqual(ctx.geoSido('29', S), '12'); assert.strictEqual(ctx.geoSido('46', S), '12'); assert.strictEqual(ctx.geoSido('49', S), '50');
+  for (const c of ['11', '28', '41', '26', '51', '52', '36']) assert.strictEqual(ctx.geoSido(c, S), c);
+  assert.strictEqual(ctx.geoSido('99', S), null); assert.strictEqual(ctx.geoSido(null, S), null);
+  assert(TPL.includes("const sd = j && j.sido ? geoSido(String(j.sido), IX) : null;"));
+  assert(TPL.includes("(CAPITAL.includes(S.guess) ? CAPITAL : [S.guess, ...CAPITAL])"), '칩 줄 첫 칩 = 추천 시도');
+});
+t("r10-10 숫자와 '집'(316집·1.6만 집), 큰 지도 링크는 지도 아이콘, 값 0 막대에 '0', 보조 글자 16px(15px 없음)", () => {
+  assert(TPL.includes('${sp(labelNum(t.u))}집이 들어와요'));
+  assert(TPL.includes("큰 지도에서 보기${ico('map')}</a>`;") && !TPL.includes("큰 지도에서 보기${ico('ext')}"));
+  assert(TPL.includes("${y.u ? labelNum(y.u) : '0'}"));
+  const pubCss = TPL.slice(TPL.indexOf('<style>'), TPL.indexOf('</style>')).split('\n').filter((l) => /font-size: 15px/.test(l));
+  assert(pubCss.every((l) => /^\.mnav a|^\.dir \.t/.test(l)), pubCss.join('\n'));
+});
+t('r10-7 지도 옆 순위: 내 동네 핀은 이름 칸 밖(순위 숫자 아래)', () => {
+  assert(TPL.includes("x.key === homeKey && cap ? `<span class=\"me\" aria-hidden=\"true\">${ico('pin')}</span>` : ''"));
+  assert(/\.rank \.rk > \.me \{ grid-column: 1; grid-row: 2;/.test(TPL));
+});
+t("r10-3 '사업' 칸 = 호수 큰 순(같으면 들어올 해 빠른 순), '다가오는 일정'에 보인 사업은 빼고 채움(dedupPj)", () => {
+  assert(TPL.includes("const big = prj.slice().sort((a, b) => b.u - a.u || (a.y || '9999').localeCompare(b.y || '9999')).slice(0, 9);"));
+  assert(/function dedupPj\(\)/.test(TPL) && (TPL.match(/dedupPj\(\);/g) || []).length >= 2);
+});
+t("r10b 메뉴: 일반사용자 관점은 종합상황판·지도 2개, 정책담당자 관점은 5개(가로 메뉴·펼침 메뉴 같은 규칙)", () => {
+  const navs = [...TPL.matchAll(/<ul class="menu">([\s\S]*?)<\/ul>|<nav class="mnav"[^>]*><ul>([\s\S]*?)<\/ul>/g)].map((m) => m[1] || m[2]);
+  assert.strictEqual(navs.length, 2);
+  for (const n of navs) { const li = [...n.matchAll(/<li( class="adm")?><a [^>]*>([^<]+)<\/a>/g)]; assert.deepStrictEqual(li.filter((x) => !x[1]).map((x) => x[2]), ['종합상황판', '지도']); assert.deepStrictEqual(li.map((x) => x[2]), ['종합상황판', '지도', '사업', '지역 공급', '데이터 원본']); }
+  assert(TPL.includes('html:not([data-aud="admin"]) :is(.menu, .mnav) li.adm { display: none; }'));
+});
+t('r10b 시트 [달별|지역별] 누름 칸 44px 이상(34px + 위아래 6px 투명 확장, .seg 가 자르지 않음)', () => {
+  assert(/\.seg button::before \{ content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; \}/.test(TPL));
+  assert(!/\.seg \{[^}]*overflow: hidden/.test(TPL)); assert(34 + 12 >= 44);
+});
+t('r10b 이름·블록 표기도 같은 서로 다른 사업: 시군구가 다르면 시군구 이름, 같으면 호수를 작은 글자로', () => {
+  const D = ctx.D, items = ctx.searchProjects(S, 'ㄱㅇ').map((x) => ({ id: x.id, name: x.name, sgg: x.sgg, u: x.units, stage: x.stage }));
+  const nm = ctx.distinctNames(items, D), seen = {}, twins = [];
+  for (const x of items) { const k = nm[x.id] + '|' + (nm.sub[x.id] || ''); if (/^이름 미정/.test(nm[x.id])) continue; const same = seen[k] && items.find((y) => y.id === seen[k]); if (same && same.name === x.name && same.sgg === x.sgg && same.u === x.u && same.stage === x.stage) { twins.push(nm[x.id]); continue; } assert(!seen[k] || seen[k] === x.id, '겹침 ' + k); seen[k] = x.id; }
+  console.log('  원천 값까지 같은 쌍(구별 불가):', twins.join(', ') || '없음');
+  const ga = items.filter((x) => x.name === '가야1 재개발'); assert.strictEqual(ga.map((x) => nm.sub[x.id]).join(','), '935호,933호');
+  assert.deepStrictEqual(Object.keys(nm).length, new Set(items.map((x) => x.id)).size, 'sub 는 열거되지 않는다');
+  assert(TPL.includes('<small class="nsub">'));
+});
+const N = 55; console.log(`${pass}/${N} 통과`);
 process.exit(pass === N ? 0 : 1);

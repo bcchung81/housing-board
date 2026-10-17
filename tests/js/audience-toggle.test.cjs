@@ -134,3 +134,17 @@ test('TopNav: 보기 대상 묶음과 테마 스위치 사이에 1×20px 구분�
   assert.doesNotMatch(src.slice(d, d + 160), /max-\[599px\]:hidden/);
   assert.match(src, /<div className="flex items-center gap-3">/);
 });
+
+test('TopNav: 사업·지역 공급·데이터 원본만 정책담당자 표지(adminOnly)이고 html[data-aud=public] 이면 CSS 로 숨긴다', () => {
+  const menu = read('lib/shell/menu.ts');
+  const flagged = [...menu.matchAll(/\{ id: '(\w+)'[^}]*adminOnly: true[^}]*\}/g)].map((m) => m[1]);
+  assert.deepEqual(flagged, ['projects', 'region', 'sources']);
+  assert.doesNotMatch(menu, /id: 'home'[^}]*adminOnly/);
+  assert.doesNotMatch(menu, /id: 'map'[^}]*adminOnly/);
+  const nav = read('components/TopNav.tsx');
+  assert.ok(nav.includes("m.adminOnly && '[html[data-aud=public]_&]:hidden'"), '숨김 선택자');
+  assert.ok(nav.includes("data-aud-only={m.adminOnly ? 'admin' : undefined}"), '표지');
+  /* 가로 메뉴와 펼침 메뉴가 같은 items 를 쓰므로 둘 다 적용된다 */
+  assert.equal((nav.match(/\{items\}/g) || []).length, 2);
+  assert.match(nav, /m\.id === 'map' \|\| href === '\/citizen'/, '지도 <a> 규칙 그대로');
+});

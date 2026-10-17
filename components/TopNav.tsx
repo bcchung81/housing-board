@@ -4,6 +4,7 @@
    안쪽 상자는 스크롤바를 뺀 폭이 아니라 화면 폭(100vw) 기준으로 폭·자리를 정한다: 문서 스크롤바가 있는 화면(종합상황판·사업…)과 없는 화면(우리 동네·지도)을
    오갈 때 메뉴 바가 움직이지 않게. 폭도 100vw 기준이라 1470px 보다 좁은 화면에서도 같고(2026-10-10: 메뉴 7px·테마 단추 14px 이동), 스크롤바 밑으로 들어가는 몫은 overflow-x-clip 으로 자른다
    (오른쪽 여백 28px 이 스크롤바 15px 보다 넓어 단추는 가려지지 않는다). 900px 이하는 여백이 12px 이라 예전처럼 남은 폭을 쓴다.
+   사업·지역 공급·데이터 원본은 정책담당자 관점에서만 보인다(li 의 data-aud-only="admin", html[data-aud=public] 이면 CSS 로 숨김: 첫 그림부터). 화면 자체는 일반사용자도 주소로 열 수 있다.
    지도로 가는 링크와 지도 안의 모든 링크는 <Link> 대신 <a> 로 둔다: 지도는 루트 레이아웃이 달라 들어갈 때·나올 때 전체 문서가 새로 열린다
    (app.js 는 문서당 한 번만 도는 스크립트라서).
    보기 대상(관점)은 첫 그림 전 스크립트(AUDIENCE_INIT)가 정한 html[data-aud] 를 따른다: 스위치 손잡이·글자 강조는 그 표시를 보는 CSS 로 그리고,
@@ -64,7 +65,7 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
     const label = (<>{m.label}{m.soon ? <em className="ml-1.5 hidden rounded-full border border-border px-1.5 py-px text-[12px] not-italic min-[1280px]:inline">준비 중</em> : null}</>);
     const cls = cn(linkBase, 'h-16 px-2 text-[16px] font-normal min-[1101px]:px-3 min-[1101px]:text-[18px] mobile:h-11 mobile:px-4 mobile:text-[14px]', on && 'text-foreground after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-primary min-[1101px]:after:inset-x-3 mobile:after:inset-x-0 mobile:after:inset-y-2 mobile:after:right-auto mobile:after:h-auto mobile:after:w-0.5');
     return (
-      <li key={m.id} className="flex">
+      <li key={m.id} className={cn('flex', m.adminOnly && '[html[data-aud=public]_&]:hidden')} data-aud-only={m.adminOnly ? 'admin' : undefined}>
         {/* /citizen 은 Next 화면이 아니라 정적 문서(next.config 의 rewrites)라 <a> 로 간다 */}
         {compact || m.id === 'map' || href === '/citizen'
           ? <a href={href} className={cls} aria-current={on && (compact ? m.id === 'map' : exact) ? 'page' : undefined} title={m.label}>{label}</a>

@@ -140,4 +140,13 @@ if (svg && vis(svg)) {
 }
 /* 숫자 일치(G10): 요약 문장 · 순위 · 시트와 같은 정의인지 화면 값으로 */
 R.nums = { sentence: document.querySelector('#sum-h .n')?.getAttribute('title') || null, rank: [...document.querySelectorAll('.rk .v')].map((v) => v.textContent).slice(0, 6), badges: [...document.querySelectorAll('.badges li b')].map((b) => b.textContent) };
+/* r10: 시트 줄 이름 잘림(2줄 넘침·말줄임) · 순위 이름 말줄임 · 알림 영역 · 보이는 목록 안 같은 이름(서로 다른 사업) */
+const cut = (el) => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
+const sheetCut = [...document.querySelectorAll('.sheet .srow .t')].filter((el) => vis(el) && cut(el)).map((el) => el.textContent.trim().slice(0, 24));
+const rankCut = [...document.querySelectorAll('.rk .nm')].filter((el) => vis(el) && cut(el)).map((el) => el.textContent.trim());
+const dup = [];
+document.querySelectorAll('.evs, .srows').forEach((ul) => { if (!vis(ul)) return; const m = new Map();
+  ul.querySelectorAll(':scope > li').forEach((li) => { if (!vis(li)) return; const a = li.querySelector('[data-prj]'), t = li.querySelector('.nm, .t'); if (!a || !t) return; const n = t.textContent.split(' · ').filter((x) => !/^(모집 공고|착공|준공|입주|연도 미정)/.test(x)).join(' · ').trim(); if (!m.has(n)) m.set(n, new Set()); m.get(n).add(a.dataset.prj); });
+  for (const [n, s] of m) if (s.size > 1 && !/이름 미정/.test(n)) dup.push(n); });
+R.r10 = { sheetNameCut: sheetCut.length, sheetNameCutAt: sheetCut.slice(0, 3), rankNameCut: rankCut, live: [...document.querySelectorAll('[aria-live]')].filter((e) => !e.closest('#demo')).map((e) => e.id + ':' + e.textContent.trim().slice(0, 40)), dupNames: dup.slice(0, 4) };
 return R; })()

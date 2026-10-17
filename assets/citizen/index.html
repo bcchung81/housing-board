@@ -91,6 +91,8 @@ svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor;
 .menu a[aria-current]::after { content: ''; position: absolute; left: 8px; right: 8px; bottom: 0; height: 2px; background: var(--primary); }
 @media (min-width: 1101px) { .menu a { padding: 0 12px; font-size: 18px; } .menu a[aria-current]::after { left: 12px; right: 12px; } }
 .menu a:focus-visible { outline-offset: -8px; box-shadow: none; }
+/* 사용자 결정(r10): 일반사용자 관점 메뉴는 종합상황판·지도 2개, 사업·지역 공급·데이터 원본은 정책담당자 관점에서만(앱 TopNav 와 같은 규칙). 자리는 그대로 가운데 */
+html:not([data-aud="admin"]) :is(.menu, .mnav) li.adm { display: none; }
 .tools { margin-left: auto; display: flex; align-items: center; gap: 12px; }
 nav.main { margin: 0 auto; }
 nav.main + .tools { margin-left: 0; }
@@ -188,9 +190,9 @@ html:not([data-aud="admin"]) .aud-l.l-pub, html[data-aud="admin"] .aud-l.l-adm {
 /* 자동완성 상자 */
 .ac { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 6px); max-height: min(70vh, 580px); overflow-y: auto; padding: 6px; border: 1px solid var(--border); border-radius: 14px; background: var(--popover); box-shadow: var(--shadow-pop); }
 .ac[hidden] { display: none; }
-.ac-note { display: flex; align-items: center; gap: 6px; margin: 4px 8px 2px; font-size: 15px; color: var(--muted-foreground); }
+.ac-note { display: flex; align-items: center; gap: 6px; margin: 4px 8px 2px; font-size: 16px; color: var(--muted-foreground); }
 .ac-note b { color: var(--foreground); }
-.ac-h { display: flex; align-items: baseline; gap: 6px; padding: 10px 10px 4px; font-size: 15px; font-weight: 700; color: var(--muted-foreground); }
+.ac-h { display: flex; align-items: baseline; gap: 6px; padding: 10px 10px 4px; font-size: 16px; font-weight: 700; color: var(--muted-foreground); }
 .ac-h .n { font-weight: 400; font-variant-numeric: tabular-nums; }
 .ac-h .end { margin-left: auto; font-weight: 400; }
 .opt { display: grid; grid-template-columns: 20px minmax(64px, 1fr) auto; align-items: center; gap: 0 10px; min-height: 48px; padding: 6px 10px; border-radius: 10px; cursor: pointer; }
@@ -199,31 +201,31 @@ html:not([data-aud="admin"]) .aud-l.l-pub, html[data-aud="admin"] .aud-l.l-adm {
 .opt > svg.i { color: var(--muted-foreground); }
 .opt .nm { font-size: 16px; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
 .opt .nm b, .opt .sub b { font-weight: 800; color: var(--foreground); }
-.opt .sub { grid-column: 2; font-size: 15px; line-height: 1.4; color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.opt .end { grid-row: 1 / span 2; grid-column: 3; display: flex; align-items: center; gap: 8px; font-size: 15px; color: var(--muted-foreground); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.opt.more .nm { color: var(--primary); font-size: 15px; }
+.opt .sub { grid-column: 2; font-size: 16px; line-height: 1.4; color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.opt .end { grid-row: 1 / span 2; grid-column: 3; display: flex; align-items: center; gap: 8px; font-size: 16px; color: var(--muted-foreground); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.opt.more .nm { color: var(--primary); font-size: 16px; }
 .optrow { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: stretch; gap: 4px; }
-.opt.sethome { display: flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 12px; margin: 2px 0; border: 1px solid var(--line2); border-radius: 999px; font-size: 15px; font-weight: 700; color: var(--foreground); white-space: nowrap; align-self: center; }
+.opt.sethome { display: flex; align-items: center; gap: 5px; min-height: 44px; padding: 0 12px; margin: 2px 0; border: 1px solid var(--line2); border-radius: 999px; font-size: 16px; font-weight: 700; color: var(--foreground); white-space: nowrap; align-self: center; }
 .opt.sethome svg.i { width: 14px; height: 14px; color: var(--primary); }
 .zero-tag { color: var(--muted-foreground); }
 .srv { padding: 0 10px 8px; }
 .srv .bar { height: 12px; margin: 8px 0 0 30px; border-radius: 6px; background: var(--muted); }
 .srv .bar + .bar { width: 46%; }
 .srv .bar:first-of-type { width: 62%; }
-.srv-none { margin: 2px 10px 8px 40px; font-size: 15px; color: var(--muted-foreground); }
+.srv-none { margin: 2px 10px 8px 40px; font-size: 16px; color: var(--muted-foreground); }
 .srv-none span { display: block; color: var(--foreground); }
 /* 내 동네 저장 알림(6초, 되돌리기) */
 .toast { position: fixed; left: 50%; bottom: 24px; z-index: 90; transform: translateX(-50%); display: flex; align-items: center; gap: var(--s3); max-width: calc(100vw - 24px); padding: 8px 8px 8px 16px; border: 1px solid var(--border); border-radius: 12px; background: var(--popover); box-shadow: var(--shadow-pop); font-size: 16px; font-weight: 700; }
 .toast[hidden] { display: none; }
 .others details summary { display: inline-flex; align-items: center; min-height: 44px; color: var(--primary); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; font-size: 16px; }
 .others p { margin: 0; }
-.srv-limit { display: flex; align-items: center; gap: 6px; margin: 4px 10px 8px; font-size: 15px; color: var(--warn); font-weight: 700; }
+.srv-limit { display: flex; align-items: center; gap: 6px; margin: 4px 10px 8px; font-size: 16px; color: var(--warn); font-weight: 700; }
 .ac-empty { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px 4px; font-size: 16px; }
 .ac-empty svg.i { color: var(--muted-foreground); }
 .ac-empty span { color: var(--muted-foreground); }
-.keys { display: flex; gap: 12px; justify-content: flex-end; padding: 6px 10px 2px; border-top: 1px solid var(--border); margin-top: 4px; font-size: 15px; color: var(--muted-foreground); }
+.keys { display: flex; gap: 12px; justify-content: flex-end; padding: 6px 10px 2px; border-top: 1px solid var(--border); margin-top: 4px; font-size: 16px; color: var(--muted-foreground); }
 .keys[hidden] { display: none; }
-kbd { font-family: var(--font-sans); font-size: 15px; border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; color: var(--muted-foreground); background: var(--card); }
+kbd { font-family: var(--font-sans); font-size: 16px; border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 0 5px; color: var(--muted-foreground); background: var(--card); }
 
 /* 내 동네 줄: 상태 묶음(줄바꿈) + [현 위치](늘 첫 줄 오른쪽) */
 .loc { display: flex; align-items: center; gap: var(--s2) var(--s3); min-height: 44px; font-size: 16px; }
@@ -233,7 +235,7 @@ kbd { font-family: var(--font-sans); font-size: 15px; border: 1px solid var(--li
 .loc .here .hint { font-weight: 400; }
 .loc .here.viewing b { font-weight: 800; }
 .loc .hint { color: var(--muted-foreground); white-space: nowrap; }
-.loc .guess-tag { font-size: 15px; font-weight: 700; color: var(--primary); border: 1px dashed var(--primary); border-radius: 999px; padding: 0 8px; line-height: 20px; }
+.loc .guess-tag { font-size: 16px; font-weight: 700; color: var(--primary); border: 1px dashed var(--primary); border-radius: 999px; padding: 0 8px; line-height: 20px; }
 /* 단추: 보이는 높이 36px, 누르는 칸은 위아래 투명 확장(::before)으로 44px. 옆으로는 늘리지 않아 이웃 단추와 겹치지 않는다 */
 .btn { position: relative; display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 36px; padding: 0 14px; border-radius: 10px; font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap; transition: filter .15s, background .15s, opacity .15s; }
 /* 누름 칸: ::before 는 안쪽(padding) 상자 기준이라 테두리를 더해 계산한다 — 36px(테두리 1.5) 단추는 위아래 6px, 32px 알약(테두리 1)은 7px 늘려 44 이상 */
@@ -249,7 +251,7 @@ kbd { font-family: var(--font-sans); font-size: 15px; border: 1px solid var(--li
 .loc .st.warn { color: var(--warn); font-weight: 700; }
 .loc .gps { flex: none; }
 .loc .btn { height: 44px; }
-.loc .st.fix { flex-basis: 100%; font-size: 15px; }
+.loc .st.fix { flex-basis: 100%; font-size: 16px; }
 .loc .st.fix svg.i { width: 15px; height: 15px; }
 .spin { animation: spin .9s linear infinite; transform-origin: 50% 50%; }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -271,16 +273,16 @@ kbd { font-family: var(--font-sans); font-size: 15px; border: 1px solid var(--li
   .loc .hint, .loc .st.fix { flex: 0 1 auto; flex-basis: auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .bot-row, .cell { min-height: 0; }
 }
-.ext { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 12px; border: 1px solid var(--line2); border-radius: 999px; font-size: 15px; font-weight: 700; text-decoration: none; white-space: nowrap; }
+.ext { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 12px; border: 1px solid var(--line2); border-radius: 999px; font-size: 16px; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .ext:hover { background: var(--pn2); border-color: var(--primary); }
 .ext svg.i { width: 14px; height: 14px; }
-.dd { display: inline-block; padding: 0 7px; border: 1.5px solid var(--foreground); border-radius: 6px; font-size: 15px; font-weight: 700; line-height: 20px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.dd { display: inline-block; padding: 0 7px; border: 1.5px solid var(--foreground); border-radius: 6px; font-size: 16px; font-weight: 700; line-height: 20px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .cm { font-family: var(--font-sans); font-weight: 800; font-size: .82em; letter-spacing: 0; }
 .none { margin: 0; font-size: 16px; color: var(--muted-foreground); }
 
 /* ① 요약 카드: 한 문장 → 들어올 해 → 가장 가까운 일정(가장 큰 위계 2) → 상태 → 시도 한 줄 */
 .sum { display: flex; flex-direction: column; gap: 8px; min-width: 0; min-height: 0; padding: var(--s4) var(--s5) var(--s4); background: var(--sum-bg); }
-.sum-meta { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-height: 28px; font-size: 15px; color: var(--muted-foreground); white-space: nowrap; }
+.sum-meta { display: flex; flex-wrap: nowrap; align-items: center; gap: 6px; min-height: 28px; font-size: 16px; color: var(--muted-foreground); white-space: nowrap; }
 .sum-meta svg.i { color: var(--primary); }
 .sum-meta .tip-btn { margin-left: 2px; }
 /* 누름 칸 44×44(상자 그대로), 보이는 칸은 가운데 32×32 — 바깥 여백 −6px 로 자리 차지는 32 */
@@ -289,7 +291,7 @@ kbd { font-family: var(--font-sans); font-size: 15px; border: 1px solid var(--li
 .mapi:hover::after { background: var(--pn2); }
 .mapi:focus-visible { outline-offset: -6px; }
 .mapi svg.i { width: 18px; height: 18px; }
-.sido-link { position: relative; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; height: 44px; margin-top: -8px; margin-bottom: -8px; padding: 0 2px; border: 0; background: none; color: var(--primary); font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
+.sido-link { position: relative; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; height: 44px; margin-top: -8px; margin-bottom: -8px; padding: 0 2px; border: 0; background: none; color: var(--primary); font-size: 16px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
 .sido-link svg.i { width: 14px; height: 14px; }
 .sum-h { font-size: 29px; line-height: 1.2; letter-spacing: -.02em; word-break: keep-all; overflow-wrap: break-word; }
 .sum-h .n { color: var(--primary); font-variant-numeric: tabular-nums; }
@@ -303,7 +305,7 @@ kbd { font-family: var(--font-sans); font-size: 15px; border: 1px solid var(--li
 /* 가장 가까운 일정: 카드 안 흰 칸 하나(카드 속 카드가 아니라 바탕색 구획) */
 .ne { position: relative; display: grid; gap: 4px; min-width: 0; padding: 2px 0 2px 16px; }
 .ne::before { content: ''; position: absolute; left: 0; top: 2px; bottom: 2px; width: 4px; border-radius: 2px; background: var(--k, var(--primary)); }
-.ne-k { font-family: var(--font-sans); font-size: 15px; font-weight: 700; color: var(--muted-foreground); }
+.ne-k { font-family: var(--font-sans); font-size: 16px; font-weight: 700; color: var(--muted-foreground); }
 .ne-when { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin: 0; }
 .ne-when .w { font-family: var(--font-display); font-size: 27px; line-height: 1.15; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .ne-when .kd { font-family: var(--font-display); font-size: 21px; line-height: 1.15; color: var(--ink2); white-space: nowrap; }
@@ -317,7 +319,7 @@ kbd { font-family: var(--font-sans); font-size: 15px; border: 1px solid var(--li
 .ne-row .ne-what { flex: 1 1 170px; }
 .ne .ext { margin: 4px 0 2px; }
 /* 상태 배지: 단계색 점 + 중립 글자 */
-.badges { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; list-style: none; margin: 0; padding: 0; font-size: 15px; color: var(--ink2); }
+.badges { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; list-style: none; margin: 0; padding: 0; font-size: 16px; color: var(--ink2); }
 .badges .k { color: var(--muted-foreground); }
 .badges li { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .badges li b { color: var(--foreground); font-variant-numeric: tabular-nums; }
@@ -328,7 +330,7 @@ kbd { font-family: var(--font-sans); font-size: 15px; border: 1px solid var(--li
 .sum-foot { display: grid; gap: var(--s2); margin-top: auto; }
 .sum-act { display: flex; flex-wrap: wrap; gap: var(--s2); }
 .near { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); }
-.near .k { flex-basis: 100%; font-size: 15px; color: var(--muted-foreground); }
+.near .k { flex-basis: 100%; font-size: 16px; color: var(--muted-foreground); }
 .near button { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0 16px; border: 1.5px solid var(--line2); border-radius: 999px; background: var(--card); font-size: 16px; font-weight: 700; cursor: pointer; white-space: nowrap; }
 .near button::before { content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
 .near button:hover { background: var(--pn2); border-color: var(--primary); }
@@ -340,17 +342,17 @@ kbd { font-family: var(--font-sans); font-size: 15px; border: 1px solid var(--li
 .mapc-h h2 { display: flex; align-items: center; gap: 8px; font-size: 20px; line-height: 1.25; }
 .mapc { position: relative; }
 .mapc-h { padding-right: 190px; }
-.big-map { position: absolute; top: 12px; right: 16px; height: 36px; margin: 0; padding: 0 14px; font-size: 15px; }
+.big-map { position: absolute; top: 12px; right: 16px; height: 36px; margin: 0; padding: 0 14px; font-size: 16px; }
 .big-map::before { top: -5px; bottom: -5px; }   /* 36px(테두리 1) → 누름 칸 44px */
 .mapc-h h2 svg.pico { width: 18px; height: 20px; flex: none; }
 .lg-sido { display: none; }
-.legend { list-style: none; margin: 0 0 0 auto; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 15px; color: var(--ink2); font-variant-numeric: tabular-nums; }
-.legend .lg-u { font-size: 15px; }
+.legend { list-style: none; margin: 0 0 0 auto; padding: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 4px 12px; font-size: 16px; color: var(--ink2); font-variant-numeric: tabular-nums; }
+.legend .lg-u { font-size: 16px; }
 .legend li { display: inline-flex; align-items: center; gap: 5px; white-space: nowrap; }
 .legend i { width: 14px; height: 14px; border-radius: 3px; background: var(--c); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--foreground) 22%, transparent); }
 svg.hsw { display: block; width: 14px; height: 14px; border-radius: 3px; flex: none; outline: 1px solid color-mix(in srgb, var(--foreground) 22%, transparent); outline-offset: -1px; }
 .c0 { --c: var(--ch0); } .c1 { --c: var(--ch1); } .c2 { --c: var(--ch2); } .c3 { --c: var(--ch3); } .c4 { --c: var(--ch4); }
-.prep-chip { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border: 1px dashed var(--line2); border-radius: 999px; font-size: 15px; color: var(--muted-foreground); white-space: nowrap; }
+.prep-chip { display: inline-flex; align-items: center; gap: 5px; height: 26px; padding: 0 10px; border: 1px dashed var(--line2); border-radius: 999px; font-size: 16px; color: var(--muted-foreground); white-space: nowrap; }
 .mapc-b { display: grid; grid-template-columns: minmax(0, 1fr) 196px; gap: var(--s4); min-height: 0; }
 .stage { position: relative; min-width: 0; min-height: 0; }
 .mapbox { position: absolute; inset: 0; border-radius: 10px; }
@@ -422,7 +424,7 @@ svg.map { display: block; overflow: hidden; }
 /* 많은 곳 순위(상위 5 + 보는 곳) */
 .rank { align-self: start; display: grid; gap: 2px; min-width: 0; }
 .rank h3 { display: flex; align-items: baseline; justify-content: space-between; gap: 6px; padding: 0 6px 4px; font-size: 17px; line-height: 1.3; }
-.rank h3 span { font-family: var(--font-sans); font-size: 15px; color: var(--muted-foreground); }
+.rank h3 span { font-family: var(--font-sans); font-size: 16px; color: var(--muted-foreground); }
 .rank ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
 .rank ol > li:not(.gap), .hbars ol > li:not(.gap) { display: flex; align-items: center; gap: 2px; }
 .rank ol > li > .rk, .hbars ol > li > .rk { flex: 1; min-width: 0; }
@@ -431,13 +433,16 @@ svg.map { display: block; overflow: hidden; }
 .rk:hover, .rk.hl { background: var(--pn2); }
 .rk[aria-current] { background: color-mix(in srgb, var(--primary) 8%, transparent); }
 .rk[aria-current]::after { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 2px; background: var(--primary); }
-.rk .no { font-size: 15px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.rk .no { font-size: 16px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
 .rk .nm { font-size: 16px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rk .v { font-size: 16px; font-variant-numeric: tabular-nums; }
 .rk .bar { grid-column: 2 / 4; height: 6px; border-radius: 3px; background: color-mix(in srgb, var(--primary) 16%, transparent); overflow: hidden; }
 .rk .bar i { display: block; height: 100%; border-radius: 3px; background: var(--ch3); }
 .rk .me { display: inline-flex; vertical-align: -2px; margin-left: 3px; color: var(--primary); }
 .rk .me svg.i { width: 14px; height: 14px; }
+/* r10 지도 옆 순위: 내 동네 핀은 이름 칸 밖 — 순위 숫자 아래(막대 줄 왼쪽 칸)에 둔다(이름이 잘리지 않게) */
+.rank .rk > .me { grid-column: 1; grid-row: 2; justify-self: center; margin: -5px 0; }
+.rank .rk > .me svg.i { width: 13px; height: 13px; }
 /* 수도권 밖: 경계 대신 가로 막대 순위(상위 8 + 보는 곳) */
 .hbars { align-self: start; min-width: 0; }
 .hbars ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
@@ -450,8 +455,8 @@ svg.map { display: block; overflow: hidden; }
 .cell { display: flex; flex-direction: column; gap: 4px; min-width: 0; padding: 10px var(--s4) 10px; }
 .cell-h { display: flex; align-items: center; gap: 6px; min-height: 32px; }
 .cell-h h2 { font-size: 20px; line-height: 1.25; white-space: nowrap; }
-.cell-h .scope { font-size: 15px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
-.all { position: relative; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 10px 0 12px; border: 1px solid var(--line2); border-radius: 999px; background: var(--card); font-size: 15px; font-weight: 700; color: var(--foreground); cursor: pointer; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.cell-h .scope { font-size: 16px; color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.all { position: relative; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; height: 32px; padding: 0 10px 0 12px; border: 1px solid var(--line2); border-radius: 999px; background: var(--card); font-size: 16px; font-weight: 700; color: var(--foreground); cursor: pointer; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .all::before { content: ''; position: absolute; left: 0; right: 0; top: -7px; bottom: -7px; }
 .all:hover { background: var(--pn2); border-color: var(--primary); }
 .all svg.i { width: 14px; height: 14px; color: var(--muted-foreground); }
@@ -464,32 +469,32 @@ svg.map { display: block; overflow: hidden; }
 .evs > li[hidden] { display: none; }
 .ev { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0 var(--s3); min-height: 44px; padding: 3px 6px; line-height: 1.35; border-radius: 8px; text-decoration: none; color: inherit; }
 .ev:hover { background: var(--pn2); }
-.ev .when { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 15px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ev .when { display: flex; align-items: center; gap: 8px; min-width: 0; font-size: 16px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ev .when b { font-size: 16px; }
 .ev .kind { color: var(--ink2); }
-.ev .nm { grid-column: 1; font-size: 15px; color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.ev .u { grid-column: 2; grid-row: 1; align-self: center; font-size: 15px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ev .nm { grid-column: 1; font-size: 16px; color: var(--muted-foreground); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.ev .u { grid-column: 2; grid-row: 1; align-self: center; font-size: 16px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .ev .st { grid-column: 2; grid-row: 2; justify-self: end; }
-.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 15px; color: var(--ink2); white-space: nowrap; }
+.badge { display: inline-flex; align-items: center; gap: 5px; font-size: 16px; color: var(--ink2); white-space: nowrap; }
 /* 언제 들어오나: 해마다 막대(올해 ~ 5년 뒤) + 연도 미정(빗금) */
 .yrs { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; align-items: end; flex: 1 1 auto; min-height: 96px; max-height: 150px; }
 .yrs li { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; justify-items: center; height: 100%; min-width: 0; }
-.yrs .v { font-size: 15px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.yrs .v { font-size: 16px; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .yrs .v.z { font-weight: 400; color: var(--muted-foreground); }
 .yrs .b { align-self: end; width: min(100%, 34px); min-height: 0; border-radius: 4px 4px 0 0; background: var(--ch3); }
 .yrs .tbd .b { background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='6' height='6'%3E%3Cpath d='M0 6L6 0' stroke='%238C98A8' stroke-width='1.5'/%3E%3C/svg%3E"), var(--ch0); box-shadow: inset 0 0 0 1px var(--line2); }
-.yrs .y { width: 100%; padding-top: 4px; border-top: 1px solid var(--line2); font-size: 15px; line-height: 1.15; text-align: center; white-space: nowrap; color: var(--ink2); }
+.yrs .y { width: 100%; padding-top: 4px; border-top: 1px solid var(--line2); font-size: 16px; line-height: 1.15; text-align: center; white-space: nowrap; color: var(--ink2); }
 .yrs .tbd .y { white-space: normal; word-break: keep-all; }
-.hh { display: flex; align-items: center; gap: 4px; margin: 0; font-size: 15px; color: var(--muted-foreground); }
+.hh { display: flex; align-items: center; gap: 4px; margin: 0; font-size: 16px; color: var(--muted-foreground); }
 .hh b { color: var(--foreground); font-variant-numeric: tabular-nums; }
 .pjs .ev .nm { color: var(--foreground); font-size: 16px; }
 .pjs .ev .when { color: var(--muted-foreground); }
 
 /* 출처·기준일 한 줄 + 전체 통계(담당자 화면) */
-.src { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; min-height: 32px; margin: 0; font-size: 15px; color: var(--muted-foreground); }
+.src { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; min-height: 32px; margin: 0; font-size: 16px; color: var(--muted-foreground); }
 .src .tip-btn { margin: -8px -4px; }
 .src b { color: var(--foreground); font-weight: 700; }
-.to-admin { position: relative; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 4px; border: 0; background: none; color: var(--primary); font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
+.to-admin { position: relative; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; min-height: 32px; padding: 0 4px; border: 0; background: none; color: var(--primary); font-size: 16px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; white-space: nowrap; }
 .to-admin::before { content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
 .to-admin svg.i { width: 14px; height: 14px; }
 
@@ -500,47 +505,53 @@ svg.map { display: block; overflow: hidden; }
 @keyframes sheet-in { from { transform: translateX(24px); opacity: .4; } }
 .sheet-h { display: flex; align-items: center; gap: 8px; padding: 10px 10px 10px 20px; border-bottom: 1px solid var(--border); }
 .sheet-h h2 { font-size: 22px; line-height: 1.25; }
-.sheet-h p { margin: 0; font-size: 15px; color: var(--muted-foreground); }
+.sheet-h p { margin: 0; font-size: 16px; color: var(--muted-foreground); }
 .sheet-h .icon-btn { margin-left: auto; flex: none; }
 .sheet-b { flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 8px 14px 24px; }
 .sheet-b h3 { display: flex; align-items: baseline; gap: 8px; margin: 14px 6px 4px; font-size: 18px; }
-.sheet-b h3 span { font-family: var(--font-sans); font-size: 15px; color: var(--muted-foreground); }
+.sheet-b h3 span { font-family: var(--font-sans); font-size: 16px; color: var(--muted-foreground); }
 .sheet-b .yrs { height: 150px; margin: 8px 6px 4px; }
 /* 시트 머리 막대: 종류 칩(여러 개) · 내 동네만 · 달별/지역별 */
 .sh-bar { position: sticky; top: -8px; z-index: 2; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: -8px -14px 4px; padding: 10px 14px; background: var(--popover); border-bottom: 1px solid var(--border); }
 .chips2 { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip2 { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 34px; padding: 0 12px; border: 1px solid var(--line2); border-radius: 999px; background: var(--card); color: var(--ink2); font-size: 15px; cursor: pointer; white-space: nowrap; }
-.chip2::before { content: ''; position: absolute; left: 0; right: 0; top: -5px; bottom: -5px; }
+.chip2 { position: relative; display: inline-flex; align-items: center; gap: 4px; height: 34px; padding: 0 12px; border: 1px solid var(--line2); border-radius: 999px; background: var(--card); color: var(--ink2); font-size: 16px; cursor: pointer; white-space: nowrap; }
+.chip2::before { content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
 .chip2 b { font-variant-numeric: tabular-nums; }
 .chip2[aria-pressed="true"] { border-color: var(--primary); background: color-mix(in srgb, var(--primary) 12%, var(--card)); color: var(--foreground); font-weight: 700; }
 .chip2 svg.i { width: 14px; height: 14px; color: var(--primary); }
-.seg { display: inline-flex; margin-left: auto; border: 1px solid var(--line2); border-radius: 10px; overflow: hidden; }
-.seg button { position: relative; height: 34px; padding: 0 12px; border: 0; background: var(--card); color: var(--ink2); font-size: 15px; cursor: pointer; }
+.seg { display: inline-flex; margin-left: auto; border: 1px solid var(--line2); border-radius: 10px; }
+.seg button:first-child { border-radius: 9px 0 0 9px; } .seg button:last-child { border-radius: 0 9px 9px 0; }
+.seg button::before { content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }   /* 34px → 누름 칸 46px(투명 확장, .seg 가 자르지 않게 overflow 를 풀었다) */
+.seg button { position: relative; height: 34px; padding: 0 12px; border: 0; background: var(--card); color: var(--ink2); font-size: 16px; cursor: pointer; }
 .seg button + button { border-left: 1px solid var(--line2); }
 .seg button[aria-pressed="true"] { background: color-mix(in srgb, var(--primary) 14%, var(--card)); color: var(--foreground); font-weight: 700; }
 .seg button:focus-visible { outline-offset: -3px; box-shadow: none; }
 /* 달별·해별 묶음: 고정 머리 줄 + 줄 */
 .mg { margin: 0; }
 .mh { position: sticky; top: var(--bar-h, 46px); z-index: 1; display: flex; align-items: baseline; gap: 10px; margin: 0 -14px; padding: 8px 20px 6px; background: color-mix(in srgb, var(--muted) 92%, var(--popover)); font-family: var(--font-sans); font-size: 16px; font-weight: 700; border-bottom: 1px solid var(--border); }
-.mh span { font-size: 15px; font-weight: 400; color: var(--muted-foreground); }
+.mh span { font-size: 16px; font-weight: 400; color: var(--muted-foreground); }
 .srows { list-style: none; margin: 0; padding: 0; }
 .sli { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border); }
 .sli.me { background: color-mix(in srgb, var(--primary) 7%, transparent); }
 .srow { flex: 1; min-width: 0; display: grid; grid-template-columns: 10px 34px minmax(0, 1fr) auto; align-items: center; gap: 8px; min-height: 48px; padding: 4px 6px; text-decoration: none; color: inherit; }
 .srow:hover { background: var(--pn2); }
 .srow .dot { width: 10px; height: 10px; }
-.srow .d { font-size: 15px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.srow .d { font-size: 16px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .srow .t { min-width: 0; font-size: 16px; line-height: 1.35; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .srow .t svg.i { width: 14px; height: 14px; color: var(--primary); vertical-align: -2px; margin-right: 3px; }
 .srow .t .k { color: var(--muted-foreground); }
-.srow .u { font-size: 15px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.ext.sm { height: 30px; margin: 0 4px 0 0; padding: 0 10px; font-size: 15px; }
+.srow .u { display: flex; flex-direction: column; align-items: flex-end; font-size: 16px; line-height: 1.3; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.srow .stt { font-weight: 400; color: var(--muted-foreground); }
+.nsub { font-size: 16px; font-weight: 400; color: var(--muted-foreground); }   /* 같은 이름 구별(시군구·호수) */
+.nod > .srow { grid-template-columns: 10px minmax(0, 1fr) auto; }
+.sheet.q .srow .t { display: block; overflow: visible; -webkit-line-clamp: unset; }   /* r10 검색 결과 시트: 지역 · 긴 원래 이름도 줄임 없이 */   /* r10 날짜가 없는 줄: 날짜 칸을 접어 이름 폭을 넓힌다 */
+.ext.sm { height: 30px; margin: 0 4px 0 0; padding: 0 10px; font-size: 16px; }
 .ext.sm::before { top: -8px; bottom: -8px; }
 .ag { border-bottom: 1px solid var(--border); }
 .ag.me > summary { background: color-mix(in srgb, var(--primary) 7%, transparent); }
 .ag > summary { display: grid; grid-template-columns: auto minmax(0, auto) minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 48px; padding: 4px 6px; cursor: pointer; font-size: 16px; list-style: none; }
 .ag > summary::-webkit-details-marker { display: none; }
-.ag > summary span { color: var(--muted-foreground); font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ag > summary span { color: var(--muted-foreground); font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ag > summary .n { color: var(--foreground); font-weight: 700; font-variant-numeric: tabular-nums; }
 .ag[open] > summary { border-bottom: 1px solid var(--border); }
 
@@ -549,20 +560,20 @@ svg.map { display: block; overflow: hidden; }
 .pc-back::before { top: 0; bottom: 0; }
 .pc-back svg.i { width: 18px; height: 18px; }
 .pc-facts { display: flex; flex-wrap: wrap; gap: 10px 32px; margin: 10px 6px 4px; }
-.pc-facts dt { font-size: 15px; color: var(--muted-foreground); }
+.pc-facts dt { font-size: 16px; color: var(--muted-foreground); }
 .pc-facts dd { display: flex; align-items: center; gap: 6px; margin: 2px 0 0; font-size: 18px; font-weight: 700; }
 .pc-tl { list-style: none; margin: 0 6px; padding: 0; }
 .pc-tl li { display: grid; grid-template-columns: 10px 76px minmax(0, 1fr) auto; align-items: center; gap: 10px; min-height: 48px; border-bottom: 1px solid var(--border); font-size: 16px; }
 .pc-tl .k { font-weight: 700; color: var(--ink2); }
-.pc-tl .tag { font-size: 15px; color: var(--muted-foreground); }
+.pc-tl .tag { font-size: 16px; color: var(--muted-foreground); }
 .pc-tl li.done .tag { color: var(--ok); font-weight: 700; }
 .pc-act { display: flex; flex-wrap: wrap; gap: 8px 10px; margin: 18px 6px 2px; }
-.pc-act .ext { height: 36px; font-size: 15px; }
+.pc-act .ext { height: 36px; font-size: 16px; }
 .pc-act + .nt { margin: 6px 6px 0; }
-.pc-more { margin: 22px 6px 0; font-size: 15px; }
+.pc-more { margin: 22px 6px 0; font-size: 16px; }
 .pc-more a { display: inline-flex; align-items: center; min-height: 44px; color: var(--muted-foreground); }
 /* 공고 이름 줄 + 복사 단추(보이는 36px, 누름 칸 44px) */
-.nt { display: flex; align-items: center; gap: 2px; min-width: 0; margin: 0; font-size: 15px; line-height: 1.4; color: var(--muted-foreground); }
+.nt { display: flex; align-items: center; gap: 2px; min-width: 0; margin: 0; font-size: 16px; line-height: 1.4; color: var(--muted-foreground); }
 .nt-l { min-width: 0; overflow-wrap: anywhere; }
 .nt b { font-weight: 700; color: var(--foreground); }
 .cp { position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; padding: 0; border: 0; border-radius: 8px; background: none; color: var(--primary); cursor: pointer; }
@@ -572,7 +583,9 @@ svg.map { display: block; overflow: hidden; }
 .ne-row.has-nt .ne-what { flex-basis: 100%; }
 .ne-row .nt { flex: 0 1 auto; }
 .sli { flex-wrap: wrap; }
-.nt.sl { flex-basis: 100%; padding: 0 6px 4px 66px; margin-top: -8px; }
+.sl2 { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 2px 10px; padding: 0 6px 6px 24px; margin-top: -6px; }   /* r10 모집 공고 줄 둘째 줄: [청약홈] + 공고 이름 */
+.sl2 .ext.sm { margin: 0; }
+.nt.sl { flex: 0 1 auto; }
 
 /* ---------- 지금 종합상황판(9구역) — 시안에서는 제목과 대략적인 높이만 ---------- */
 .mark { display: flex; align-items: center; gap: 10px; margin: 22px 0 0; font-size: 13px; color: var(--muted-foreground); }
@@ -602,12 +615,12 @@ svg.map { display: block; overflow: hidden; }
   .band { grid-template-columns: minmax(0, 1fr) minmax(0, max-content); }
   .sum { padding: var(--s4); }
   .sum-h { font-size: 25px; }
-  .mapc-b { grid-template-columns: minmax(0, 1fr) 176px; gap: var(--s3); }
+  .mapc-b { grid-template-columns: minmax(0, 1fr) 200px; gap: var(--s3); }   /* r10: 순위 이름('남양주시')이 잘리지 않는 폭 */
 }
 @media (min-width: 900px) { .sum-act.alt { display: none; } .sum-meta { flex-wrap: wrap; row-gap: 2px; } .sum-meta .sido-link { margin-left: 8px; } }
 @media (max-width: 899px) { .sido-link.wide-only { display: none; } }
 /* 메타 줄 '○○ 지도로 ↗': 글자 링크(누름 칸 44px) */
-.map-link { position: relative; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; height: 44px; margin-top: -8px; margin-bottom: -8px; color: var(--primary); font-size: 15px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
+.map-link { position: relative; margin-left: auto; display: inline-flex; align-items: center; gap: 4px; height: 44px; margin-top: -8px; margin-bottom: -8px; color: var(--primary); font-size: 16px; font-weight: 700; text-decoration: underline; text-underline-offset: 3px; white-space: nowrap; }
 .map-link svg.i { width: 14px; height: 14px; flex: none; }
 .sum-meta .sum-map { margin: -8px -6px -8px auto; }
 @media (min-width: 900px) and (max-width: 1199px) { .sum .ne-k, .sum.viewing .badges { display: none; } .sum.viewing .sum-h { font-size: 23px; } }
@@ -652,7 +665,7 @@ svg.map { display: block; overflow: hidden; }
   .mapc-h { padding-right: 0; }
   .big-map { position: static; justify-self: end; }
   .stage { height: 320px; }
-  .lg-sido { display: inline; margin-left: auto; font-size: 15px; font-weight: 700; color: var(--ink2); white-space: nowrap; }
+  .lg-sido { display: inline; margin-left: auto; font-size: 16px; font-weight: 700; color: var(--ink2); white-space: nowrap; }
   .mapc-h h2 { font-size: 18px; }
   .legend { gap: 2px 8px; }
   .rank h3 { display: none; }
@@ -661,13 +674,13 @@ svg.map { display: block; overflow: hidden; }
   .rank li.gap { display: none; }
   .hbars .rk { grid-template-columns: 22px minmax(70px, 110px) minmax(0, 1fr) 64px; column-gap: 6px; }
   /* 칸 3개: 한 줄 요약 + 전체 n */
-  .cell { gap: 0; padding: 3px var(--s3) 5px; }
+  .cell { gap: 0; padding: 2px var(--s3) 3px; }
   .cell > :not(.cell-h, .one) { display: none; }
   .one { display: block; }
   .cell-h h2 { font-size: 18px; }
   .sheet { top: auto; left: 0; width: 100%; max-height: 82dvh; border-left: 0; border-top: 1px solid var(--border); border-radius: 16px 16px 0 0; animation-name: sheet-up; }
   @keyframes sheet-up { from { transform: translateY(24px); opacity: .4; } }
-  .src { padding-bottom: 4px; }
+  .src { padding-bottom: 2px; }
   .to-admin { margin-left: 0; }
   /* 내 동네 띠: 한 줄에 들어가면 한 줄, 넘치면 단추 묶음이 다음 줄로 */
   .loc { flex-wrap: wrap; row-gap: 0; column-gap: var(--s2); }
@@ -705,8 +718,8 @@ svg.map { display: block; overflow: hidden; }
   .cell-h { min-height: 30px; }
   /* 어르신: 국민 영역 글자 하한 15px */
   .pub .opt .sub { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-  .pub :is(.ac-note, .ac-h, .opt .sub, .opt .end, .opt.sethome, .loc, .loc .guess-tag, .sum-meta, .dd, .ne-k, .badges, .ext, .btn, .sido-link, .legend, .prep-chip, .rk .no, .all, .src, .to-admin, .hh, .ev .when, .ev .nm, .ev .u, .badge, .near .k, .cell-h .scope) { font-size: 15px; }
-  .sheet :is(.ev .when, .ev .nm, .ev .u, .badge, .sheet-h p, .yrs .v, .yrs .y, h3 span) { font-size: 15px; }
+  .pub :is(.ac-note, .ac-h, .opt .sub, .opt .end, .opt.sethome, .loc, .loc .guess-tag, .sum-meta, .dd, .ne-k, .badges, .ext, .btn, .sido-link, .legend, .prep-chip, .rk .no, .all, .src, .to-admin, .hh, .ev .when, .ev .nm, .ev .u, .badge, .near .k, .cell-h .scope) { font-size: 16px; }
+  .sheet :is(.ev .when, .ev .nm, .ev .u, .badge, .sheet-h p, .yrs .v, .yrs .y, h3 span) { font-size: 16px; }
 }
 @media (max-width: 599px) {
   /* 검색 줄: [내 동네로]·[지도] 단추는 이름 아랫줄로(이름이 0px 로 눌리지 않게) */
@@ -757,7 +770,7 @@ svg.map { display: block; overflow: hidden; }
       <span>주택파동</span>
     </a>
     <nav class="main" aria-label="주 메뉴"><ul class="menu">
-      <li><a href="#" aria-current="page">종합상황판</a></li><li><a href="#">지도</a></li><li><a href="#">사업</a></li><li><a href="#">지역 공급</a></li><li><a href="#">데이터 원본</a></li>
+      <li><a href="#" aria-current="page">종합상황판</a></li><li><a href="#">지도</a></li><li class="adm"><a href="#">사업</a></li><li class="adm"><a href="#">지역 공급</a></li><li class="adm"><a href="#">데이터 원본</a></li>
     </ul></nav>
     <div class="tools">
       <div class="aud" id="aud" title="일반사용자 ↔ 정책담당자 화면 바꾸기">
@@ -772,7 +785,7 @@ svg.map { display: block; overflow: hidden; }
     </div>
   </div>
   <nav class="mnav" id="mnav" aria-label="주 메뉴"><ul>
-    <li><a href="#" aria-current="page">종합상황판</a></li><li><a href="#">지도</a></li><li><a href="#">사업</a></li><li><a href="#">지역 공급</a></li><li><a href="#">데이터 원본</a></li>
+    <li><a href="#" aria-current="page">종합상황판</a></li><li><a href="#">지도</a></li><li class="adm"><a href="#">사업</a></li><li class="adm"><a href="#">지역 공급</a></li><li class="adm"><a href="#">데이터 원본</a></li>
   </ul></nav>
 </header>
 
@@ -839,7 +852,7 @@ svg.map { display: block; overflow: hidden; }
   </div>
 </main>
 <!-- 알림·읽어 주기 영역: 시트가 열려 본문이 inert 여도 읽히게 main 밖에 둔다 -->
-<div class="sr" role="status" id="live"></div>
+<div class="sr" role="status" aria-live="polite" aria-atomic="true" id="live"></div>
 <div class="toast" id="toast" hidden></div>
 
 <!-- 시안 상태 전환(제품 화면이 아님): 화면 아래 가운데 떠 있는 점선 알약. 문서 높이에 들지 않고 접고 펼 수 있다 -->
@@ -859,6 +872,7 @@ svg.map { display: block; overflow: hidden; }
     <button type="button" data-s="zero">사업 0곳</button>
     <button type="button" data-s="limit">검색 한도</button>
     <button type="button" data-s="outside">수도권 밖</button>
+    <button type="button" data-s="ipout">광주 IP</button>
     <button type="button" data-s="admin">정책담당자</button></span>
     <output id="demo-out" aria-live="polite"></output>
   </div>
@@ -869,12 +883,14 @@ svg.map { display: block; overflow: hidden; }
 <aside class="sheet" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheet-h" hidden>
   <div class="sheet-h"><div><h2 id="sheet-h" tabindex="-1"></h2><p id="sheet-sub"></p></div><button type="button" class="icon-btn" id="sheet-x" aria-label="닫기"><svg class="i"><use href="#i-x"/></svg></button></div>
   <div class="sheet-b" id="sheet-b"></div>
+  <!-- 시트가 열려 있으면(aria-modal) 바깥 알림 영역 대신 이곳이 읽힌다 -->
+  <div class="sr" role="status" aria-live="polite" aria-atomic="true" id="sheet-live"></div>
 </aside>
 
 <div class="tip" id="tip-demo" popover><b>시안 상태</b><p>단추로 대표 상태를 바꿔 본다. 지역·사업 이름·단계·호수·일정은 사업 원장 값(2026.10.13)이고, 검색은 시안 안의 실제 색인으로 돈다.</p><p>IP 시도 추천과 [현 위치] 판정은 흉내다(위치 권한을 묻지 않는다). 주소·장소 묶음은 실제 앱에서 지도 주소 검색이 채우는 자리라, 시안은 잠깐 기다린 뒤 '주소 결과 없음'을 보인다. 링크를 누르면 이동할 주소만 오른쪽에 보인다. 주소에 ?v=시군구 코드를 붙이면 그곳을 본다.</p></div>
 <div class="tip" id="tip-head" popover><b>앞으로 들어올 집</b><p>아직 다 짓지 않은 공공 주택 사업의 계획 호수를 더한 값이에요. 계획(①)·인허가(②)를 '준비 중', 착공(③)을 '짓는 중', 모집(④)을 '모집 시작'으로 셉니다. 계획 단계는 몇 년 뒤에 들어올 집일 수 있어요.</p><p>'들어올 해가 정해진 집'은 준공·입주 예정 해가 있는 집이에요(입주 해가 있으면 입주 해, 없으면 준공 해). 요약·지도·숫자·목록·검색이 모두 같은 숫자예요. 정책담당자 화면의 ①계획~④모집과 같은 숫자예요. 지도는 1만 이상을 '1.6만'처럼 줄여 쓰고, 순위 목록은 '23,592'처럼 다 씁니다.</p><p>출처: 국토교통부 건축HUB(인허가)·LH·청약홈(모집 공고) · 기준일 2026.10.13</p></div>
 <div class="tip" id="tip-map" popover><b>지도 읽는 법</b><p>시군구 면이 높이 솟을수록 앞으로 들어올 집이 많아요. 높이는 많은 곳끼리도 차이가 보이게 호수의 제곱근에 맞췄고(같은 시도 안에서 같은 배율), 지나치게 솟지 않게 낮게 잡았어요. 면 위 숫자는 호수이고 1만 이상은 '1.6만'처럼 줄여 씁니다.</p><p>면 색은 범례에 적은 호수 구간이에요. 같은 시도 안 시군구를 호수 순으로 네 구간으로 나눴고, 범례의 '사업 없음' 색 면은 진행 중인 사업이 없는 곳이에요(평평). 경기도에서 구가 있는 시는 시 하나로 묶었습니다. 기준일 2026.10.13</p></div>
-<div class="tip" id="tip-when" popover><b>언제 들어오나</b><p>사업마다 입주 예정 해에 호수를 더했어요. 입주 해가 없으면 준공 예정 해에 더합니다. 준공·입주 예정 해가 없는 사업은 '연도 미정'이에요. 예정일은 사업 시행자 계획이라 바뀔 수 있어요.</p><p>가구 수: 통계청 장래가구추계(시도 단위)에서 올해와 내년 가구 수의 차이예요. 이 화면의 집 수는 공공 사업만이라 둘을 바로 비교하지는 않아요.</p><p id="tip-when-hh"></p></div>
+<div class="tip" id="tip-when" popover><b>언제 들어오나</b><p>사업마다 입주 예정 해(입주 기준)에 호수를 더했어요. 입주 해가 없으면 준공 예정 해에 더합니다. 그래서 같은 사업의 준공 일정과 해가 다를 수 있어요. 준공·입주 예정 해가 없는 사업은 '연도 미정'이에요. 예정일은 사업 시행자 계획이라 바뀔 수 있어요.</p><p>가구 수: 통계청 장래가구추계(시도 단위)에서 올해와 내년 가구 수의 차이예요. 이 화면의 집 수는 공공 사업만이라 둘을 바로 비교하지는 않아요.</p><p id="tip-when-hh"></p></div>
 <div class="tip" id="tip-src" popover><b>출처와 기준일</b><p>국토교통부 건축HUB(인허가)·LH·청약홈(모집 공고) 등 공공 자료를 모은 사업 목록 기준일 2026.10.13, 지역 공급 달력 2026.10~2027.09(기준일 2026.10.13). 남은 날은 오늘 날짜 기준이에요.</p><p>예정일은 사업 시행자 계획이라 바뀔 수 있어요. 날짜가 정해지지 않은 일정은 달까지만 씁니다('10월 중').</p></div>
 
 
@@ -1111,7 +1127,8 @@ const mapScopeHref = (o = {}) => { if (o.sgg) return METRO_SIDO.includes(o.sgg.s
 /* 들어올 해 둘째 줄: 정해진 비율이 30% 미만이면 '…만 … · 대부분 아직 계획 단계예요'(정직하게). [앞, 숫자, 뒤] */
 function yrLine(has, total) {
   if (!has) return ['아직 들어올 해가 정해진 집은 없어요', '', ''];
-  return has / total < .3 ? ['이 중 ', labelNum(has), ' 집만 들어올 해가 정해졌어요 · 대부분 아직 계획 단계예요'] : ['이 중 ', labelNum(has), ' 집은 들어올 해가 정해졌어요'];
+  const n = labelNum(has);
+  return has / total < .3 ? ['이 중 ', n, sp(n) + '집만 들어올 해가 정해졌어요 · 대부분 아직 계획 단계예요'] : ['이 중 ', n, sp(n) + '집은 들어올 해가 정해졌어요'];
 }
 /* 들어올 해(r9): 입주(실제·예정) 해 → 없으면 준공(실제·예정) 해(사업 카드 자료 D.det) → 없으면 원장 다음 일정이 준공·입주일 때 그 해 → 없으면 ''(연도 미정).
    c = 원장 시군구 코드, p = 원장 줄 [번호, 이름, 단계, 호수, 다음 일정 종류, 예정일] */
@@ -1132,6 +1149,39 @@ function noticeName(n) {
 const blockOf = (n) => (n.match(/\b[A-Z]{1,3}-?\d+(?:-\d+)?\b(?![\s\S]*\b[A-Z]{1,3}-?\d)/) || [''])[0];
 /* 사업 카드 날짜 말: 해까지 늘 쓴다 — '2027년 7월 30일' · '2027년 11월' · '2027년' · 없으면 '미정' */
 const fullDate = (w) => (!w ? '미정' : w.length >= 10 ? `${w.slice(0, 4)}년 ${+w.slice(5, 7)}월 ${+w.slice(8, 10)}일` : w.length === 7 ? `${w.slice(0, 4)}년 ${+w.slice(5, 7)}월` : `${w.slice(0, 4)}년`);
+/* r10 들어올 때 말: 들어올 해(inYear)와 같은 근거에 일정 이름을 붙인다 — '입주 2028년 1월' · '준공 2027년 11월 14일' · '연도 미정' */
+function inLabel(D, c, p) {
+  const s = D.det?.[`PRJ-${c}-${p[0]}`]?.[1] || [];
+  if (s[3] && s[3][0]) return '입주 ' + fullDate(s[3][0]);
+  if (s[2] && s[2][0]) return '준공 ' + fullDate(s[2][0]);
+  if ((p[4] === 2 || p[4] === 3) && p[5]) return (p[4] === 3 ? '입주 ' : '준공 ') + fullDate(p[5]);
+  return '연도 미정';
+}
+/* r10 같은 목록 안 이름 겹침: 보이는 이름(shortName)이 같은 사업이 둘 이상이면 공고 이름의 블록 표기('A-4'·'S-04')를 덧붙인다. items = [{id, name}] → { id: 보이는 이름 } */
+/* 블록 표기로도 같으면 이름 뒤 작은 글자(out.sub, 열거되지 않는 속성): 시군구가 다르면 시군구 이름, 같으면 호수, 그래도 같으면 상태. items 에 sgg·u 가 있으면 쓴다 */
+function distinctNames(items, D) {
+  const ids = new Map(); for (const x of items) if (!ids.has(x.id)) ids.set(x.id, x);
+  const c = {}; for (const x of ids.values()) { const s = shortName(x.name); c[s] = (c[s] || 0) + 1; }
+  const out = {}; for (const [id, x] of ids) { const s = shortName(x.name), b = c[s] > 1 ? blockOf(noticeName(x.name || '')) : ''; out[id] = b ? `${s} ${b}` : s; }
+  const g = {}; for (const id of ids.keys()) (g[out[id]] = g[out[id]] || []).push(id);
+  const sggName = (c) => { const f = (D?.sgg || []).find((r) => r[0] === c)?.[1] || ''; return f.slice(f.indexOf(' ') + 1); };
+  const sub = {};
+  for (const L of Object.values(g)) {
+    if (L.length < 2 || /^이름 미정/.test(out[L[0]])) continue;
+    const by = (f) => { const v = L.map((id) => f(ids.get(id))); return new Set(v).size === v.length ? v : null; };
+    const v = by((x) => (x.sgg ? sggName(x.sgg) : '')) || by((x) => (x.u ? `${x.u.toLocaleString('ko-KR')}호` : '')) || by((x) => { const b = x.b ?? OF_STAGE[x.stage]; return b == null ? '' : ['준비 중', '준비 중', '짓는 중', '모집 시작', '준공'][b]; });   // 그래도 같으면 상태
+    if (v) L.forEach((id, i) => { if (v[i]) sub[id] = v[i]; });
+  }
+  Object.defineProperty(out, 'sub', { value: sub, enumerable: false });
+  return out;
+}
+/* r10 IP 시도(lib/board/ip-sido 의 행정 표준 코드) → 색인 시도. 통합된 곳은 지금 코드로(광주 29·전남 46 → 12 전남광주통합특별시, 제주 49 → 50). 색인에 없으면 null */
+const GEO_ALIAS = { '29': '12', '46': '12', '49': '50' };
+const geoSido = (code, IX) => { const c = GEO_ALIAS[code] || code; return code && IX.regionOf[c]?.kind === 'sido' ? c : null; };
+/* r10 검색 '사업 n개 모두 보기' 시트: 검색 결과 사업 전부(자동완성과 같은 순서·같은 건수) */
+const searchProjects = (IX, q) => IX.search(q, { projectMax: Infinity }).projects.items;
+/* r10 숫자와 '집': '316집'·'9,660집'은 붙이고 만 단위('1.6만 집')만 띄운다 */
+const sp = (n) => (/만$/.test(n) ? ' ' : '');
 /* 일정 시트 묶음: 달별(날짜가 달까지 있으면 그 달, 해만 있으면 '그해(달 미정)'). 묶음 안은 모집 공고 먼저, 그다음 날짜순 */
 const KIND_CHIP = (k) => (k === 0 ? 'sale' : k === 1 ? 'build' : 'done');
 function groupByMonth(evs, today) {
@@ -1307,6 +1357,9 @@ const IX = makeSearch(D);
 const fmt = (n) => n.toLocaleString('ko-KR');
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ico = (id, cls = '') => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
+/* r10 화면 읽기 알림: 늘 문서에 있는 role=status 영역에 쓴다. 시트가 열려 있으면(aria-modal 이라 바깥이 숨는다) 시트 안 영역에 */
+function say(msg) { const inS = !$('#sheet').hidden, el = $(inS ? '#sheet-live' : '#live'); $(inS ? '#live' : '#sheet-live').textContent = ''; el.textContent = msg; }
+const amtOf = (r) => { const u = sumOf(D, r.codes).u, n = labelNum(u); return u ? `앞으로 ${n}${sp(n)}집` : '진행 중인 사업 없음'; };
 
 /* 일정 종류(원장 next.eventType) → 이름. 지역 공급 달력 종류(모집 공고·준공·입주) → 같은 번호 */
 const NEXT = ['모집 공고', '착공', '준공', '입주'];
@@ -1370,7 +1423,7 @@ function yearsOf(codes) {
   for (const c of codes) for (const p of D.prj[c] || []) { const b = OF_STAGE[p[2]]; if (b > 3) continue; const y = Y[yearBucket(D, c, p)]; y.u += p[3]; y.n++; y.list.push(prjRow(c, p)); }
   return Y;
 }
-const prjRow = (c, p) => ({ id: `PRJ-${c}-${p[0]}`, sgg: c, name: p[1] || '', b: OF_STAGE[p[2]], u: p[3], k: p[4], when: p[5], yt: yearText(c, p) });
+const prjRow = (c, p) => ({ id: `PRJ-${c}-${p[0]}`, sgg: c, name: p[1] || '', b: OF_STAGE[p[2]], u: p[3], k: p[4], when: p[5], yt: yearText(c, p), y: inYear(D, c, p), il: inLabel(D, c, p) });
 /* 사업 목록: 다음 일정이 가까운 순(오늘 이후), 일정이 없거나 지난 것은 뒤, 같으면 호수 큰 순 */
 const prjKey = (x) => (x.k >= 0 && x.when && whenKey(x.when) >= TODAY ? whenKey(x.when) : '9');
 function projectsOf(codes) {
@@ -1406,7 +1459,7 @@ function renderLoc() {
   let mid;
   if (busy) mid = `<span class="st">좌표는 이 기기 안에서만 씁니다</span>`;
   else if (S.loc === 'nogeo') mid = `<span class="st warn">${ico('warn')}이 지역 경계는 준비 중이에요 — 검색으로 동네를 골라 주세요</span><button type="button" class="btn btn-txt" data-act="pick">검색으로 고르기</button>`;
-  else if (!h && !v && !S.guessKnown) mid = `<span class="here">${ico('pin')}시도를 골라 주세요</span>${['11', '28', '41'].map((c) => `<button type="button" class="btn btn-out" data-act="sido" data-code="${c}">${{ '11': '서울', '28': '인천', '41': '경기' }[c]}</button>`).join('')}<button type="button" class="btn btn-txt" data-act="sidos" aria-controls="ac-list">다른 시도</button>`;
+  else if (!h && !v && !S.guessKnown) mid = `<span class="here">${ico('pin')}시도를 골라 주세요</span>${(CAPITAL.includes(S.guess) ? CAPITAL : [S.guess, ...CAPITAL]).map((c) => `<button type="button" class="btn btn-out" data-act="sido" data-code="${c}">${IX.SIDO_SHORT[c]}</button>`).join('')}<button type="button" class="btn btn-txt" data-act="sidos" aria-controls="ac-list">다른 시도</button>`;
   else if (S.loc === 'denied') mid = `<span class="st warn">${ico('warn')}위치 권한 꺼짐</span><button type="button" class="btn btn-txt" data-act="pick">검색으로 고르기</button><span class="st fix">${ico('info')}${matchMedia('(pointer: coarse)').matches ? '브라우저 설정 → 사이트 권한 → 위치' : '주소창 왼쪽 자물쇠 → 위치 → 허용'}으로 다시 켜요</span>`;
   else if (v) mid = `<span class="here viewing">${ico('eye')}<b>${esc(nameOf(v))}</b> 보는 중</span>${h ? `<span class="hint vh" title="내 동네 ${esc(nameOf(h))}">· 내 동네 ${esc(nameOf(h))}</span>` : ''}`;
   else if (h && h.kind === 'sido') mid = `<span class="here">${ico('pin')}${esc(h.label)}</span><span class="hint" title="${CAPITAL.includes(h.code) ? '지도' : '목록'}에서 시군구를 고르세요">· ${CAPITAL.includes(h.code) ? '지도' : '목록'}에서 시군구를 고르세요</span><button type="button" class="btn btn-txt" data-act="pick">바꾸기</button>`;
@@ -1421,6 +1474,8 @@ const EXT = (e) => { const n = noticeName(e.name); return `<a class="ext" href="
 /* 공고 이름 줄(작은 글자) + 복사 단추(누름 칸 44px, 누르면 '복사했어요') */
 const NT = (name, cls = '') => { const n = noticeName(name), shown = /\bshort\b/.test(cls) ? blockOf(n) || n : n; return `<p class="nt ${cls}"><span class="nt-l"${shown !== n ? ` title="${esc(n)}"` : ''}>공고 이름 <b>${esc(shown)}</b></span><button type="button" class="cp" data-copy="${esc(n)}" aria-label="공고 이름 ${esc(n)} 복사" title="공고 이름 복사">${ico('copy')}</button></p>`; };
 /* 사업 링크: 페이지를 옮기지 않고 옆 시트의 사업 카드를 연다 */
+/* 같은 이름 구별 작은 글자(distinctNames 의 sub) */
+const NSUB = (nm, id) => (nm.sub?.[id] ? ` <small class="nsub">${esc(nm.sub[id])}</small>` : '');
 const PRJA = (id) => `href="#prj-${id}" data-prj="${id}" aria-haspopup="dialog"`;
 function renderSum() {
   const r = areaOf(viewCode()), isS = r.kind === 'sido', sd = sidoOf(r), sido = areaOf(sd);
@@ -1435,7 +1490,7 @@ function renderSum() {
   } else {
     const ys = yrSplit(r.codes), lead = upcoming(r.codes)[0], sc = statusCounts(D, r.codes);
     const where = isS && lead ? areaOf(unitKey(lead.sgg)) || areaOf(lead.sgg) : null;
-    body = `<h1 class="sum-h" id="sum-h">${esc(name)}에 앞으로 <span class="n" title="${fmt(t.u)}호">${labelNum(t.u)}</span> 집이 들어와요</h1>
+    body = `<h1 class="sum-h" id="sum-h">${esc(name)}에 앞으로 <span class="n" title="${fmt(t.u)}호">${labelNum(t.u)}</span>${sp(labelNum(t.u))}집이 들어와요</h1>
       <div><p class="yr-l">${(() => { const [a, n, b] = yrLine(ys.has, t.u); return `${a}${n ? `<b>${n}</b>` : ''}${esc(b).replace(' · 대부분 아직 계획 단계예요', '<span class="yr-more"> · 대부분 아직 계획 단계예요</span>')}`; })()}</p>
         <div class="yrbar" role="img" aria-label="들어올 해가 정해진 집 ${fmt(ys.has)}호, 연도 미정 ${fmt(ys.tbd)}호"><i class="has" style="flex:${ys.has} 1 0" title="들어올 해가 정해짐 ${fmt(ys.has)}호"></i><i class="tbd" style="flex:${ys.tbd} 1 0" title="연도 미정 ${fmt(ys.tbd)}호"></i></div></div>
       ${lead ? `<section class="ne" aria-labelledby="ne-h" style="--k:var(--st-${['sale', 'build', 'soon', 'move'][lead.k]})"><h3 class="ne-k" id="ne-h">가장 가까운 일정</h3>
@@ -1462,12 +1517,20 @@ function fitEv() {
   const c = $('#c-ev'); if (!c) return; const rows = [...c.querySelectorAll('.evs > li')]; rows.forEach((r) => { r.hidden = false; });
   $('#sum')?.classList.remove('tight');
   c.querySelector('.one')?.style.removeProperty('display');
-  if (!matchMedia('(min-width: 900px) and (min-height: 700px)').matches) { rows.forEach((r, i) => { r.hidden = i >= 3; }); return; }   // 좁은 화면은 3줄
+  if (!matchMedia('(min-width: 900px) and (min-height: 700px)').matches) { rows.forEach((r, i) => { r.hidden = i >= 3; }); dedupPj(); return; }   // 좁은 화면은 3줄
   for (let i = rows.length - 1; i >= 0 && c.scrollHeight > c.clientHeight + 1; i--) rows[i].hidden = true;
   /* 머리 줄조차 안 들어가면(낮은 화면의 '보는 중' 요약) 요약 카드의 사업 수 줄·막대를 접어 칸 머리 줄 자리를 낸다 */
   if (c.scrollHeight > c.clientHeight + 1) { $('#sum').classList.add('tight'); for (let i = rows.length - 1; i >= 0; i--) rows[i].hidden = false; for (let i = rows.length - 1; i >= 0 && c.scrollHeight > c.clientHeight + 1; i--) rows[i].hidden = true; }
   /* 줄이 하나도 안 들어가면 한 줄 요약(.one)이라도 보인다(들어갈 때만) */
   const one = c.querySelector('.one'); if (one) { one.style.display = ''; if (rows.length && rows.every((r) => r.hidden)) { one.style.display = 'block'; if (c.scrollHeight > c.clientHeight + 1) one.style.display = ''; } }
+  dedupPj();
+}
+/* r10 '사업' 칸: '다가오는 일정' 칸에 지금 보이는 사업은 빼고 호수 큰 순 3개(모자라면 겹치는 사업으로 채운다) */
+function dedupPj() {
+  const seen = new Set([...document.querySelectorAll('#c-ev .evs > li:not([hidden]) [data-prj]')].map((a) => a.dataset.prj));
+  const rows = [...document.querySelectorAll('#c-pj .pjs > li')], fresh = rows.filter((r) => !seen.has(r.querySelector('[data-prj]').dataset.prj)).slice(0, 3);
+  const keep = new Set([...fresh, ...rows.filter((r) => !fresh.includes(r)).slice(0, 3 - fresh.length)]);
+  rows.forEach((r) => { r.hidden = !keep.has(r); });
 }
 /* ---------- ② 3D 지도 카드: 범례 · [무대 | 많은 곳] ----------
    v7b 원칙: 지도 기하(판·기둥·기본 라벨)는 시도와 무대 크기에만 의존한다. 같은 시도 안에서 고르면(지도·순위·검색·키보드)
@@ -1481,14 +1544,14 @@ function rankHtml(units, cap, viewKey, homeKey) {
   const n = rankN(cap), rk = rankTop(units, viewKey, n), umax = Math.max(1, ...units.map((x) => x.u));
   const vAt = rk.findIndex((x) => x.key === viewKey), mx = (j) => (vAt >= 3 ? j >= 2 && j !== vAt : j >= 3);
   const row = (x, j) => { const i = units.indexOf(x); return `${i >= n ? '<li class="gap" aria-hidden="true"></li>' : ''}<li class="${x.key === viewKey ? 'view' : ''}${mx(j) ? ' mx' : ''}"><button type="button" class="rk" data-area="${x.key}" data-src="rank" tabindex="-1"${x.key === viewKey ? ' aria-current="true"' : ''} aria-label="${i + 1}위 ${esc(x.name)} ${x.u ? fmt(x.u) + '호' : '진행 사업 없음'}${x.key === homeKey ? ' · 내 동네' : ''}">
-    <span class="no" aria-hidden="true">${i + 1}</span><span class="nm" aria-hidden="true" title="${esc(x.name)}">${esc(x.name)}${x.key === homeKey ? `<span class="me">${ico('pin')}</span>` : ''}</span><span class="v" aria-hidden="true">${x.u ? fmt(x.u) : '0'}</span><span class="bar" aria-hidden="true"><i style="width:${(x.u / umax * 100).toFixed(1)}%"></i></span></button>${mapBtn(mapScopeHref({ sgg: x.key }), x.name, 'rk-map')}</li>`; };
+    <span class="no" aria-hidden="true">${i + 1}</span><span class="nm" aria-hidden="true" title="${esc(x.name)}">${esc(x.name)}${x.key === homeKey && !cap ? `<span class="me">${ico('pin')}</span>` : ''}</span><span class="v" aria-hidden="true">${x.u ? fmt(x.u) : '0'}</span>${x.key === homeKey && cap ? `<span class="me" aria-hidden="true">${ico('pin')}</span>` : ''}<span class="bar" aria-hidden="true"><i style="width:${(x.u / umax * 100).toFixed(1)}%"></i></span></button>${mapBtn(mapScopeHref({ sgg: x.key }), x.name, 'rk-map')}</li>`; };
   return rk.map(row).join('') + (rk.length <= n ? '<li class="gap keep" aria-hidden="true"></li><li class="keep mx" aria-hidden="true"><span class="rk-ph"></span></li>' : '');
 }
 /* lib/board/map-href.ts 규칙: 시군구 /map?sgg=, 구가 있는 경기 시 /map?sido=41&pick=, 시도 /map?sido=, 수도권 밖 /map */
 const scopeHref = (sd, viewKey) => mapScopeHref(viewKey ? { sgg: viewKey } : { sido: sd });
 /* 지도 아이콘 단추(누르면 큰 지도). 누름 칸 44px, 이름은 '○○ 큰 지도에서 보기' */
 const mapBtn = (href, label, cls = '') => (href ? `<a class="mapi ${cls}" href="${href}" data-go="${href}" aria-label="${esc(label)} 큰 지도에서 보기" title="${esc(label)} 큰 지도에서 보기">${ico('map')}</a>` : '');
-const bigMap = (sd, viewKey) => !scopeHref(sd, viewKey) ? '' : `<a class="ext big-map" id="big-map" href="${scopeHref(sd, viewKey)}" data-go="${scopeHref(sd, viewKey)}" title="사업 위치와 진행 단계를 큰 지도에서 봅니다">큰 지도에서 보기${ico('ext')}</a>`;
+const bigMap = (sd, viewKey) => !scopeHref(sd, viewKey) ? '' : `<a class="ext big-map" id="big-map" href="${scopeHref(sd, viewKey)}" data-go="${scopeHref(sd, viewKey)}" title="사업 위치와 진행 단계를 큰 지도에서 봅니다">큰 지도에서 보기${ico('map')}</a>`;
 function renderMapCard() {
   const vr = areaOf(viewCode()), sd = sidoOf(vr), sido = areaOf(sd), cap = CAPITAL.includes(sd);
   const viewKey = vr.kind === 'sgg' ? unitKey(vr.code) : null;
@@ -1847,15 +1910,15 @@ function cellScope() {
   const r = areaOf(viewCode());
   return sum(r.codes).n ? { r, fb: false } : { r: areaOf(sidoOf(r)), fb: true };
 }
-const evRow = (e, withArea) => { const where = withArea && e.sgg ? areaOf(unitKey(e.sgg)) || areaOf(e.sgg) : null;
+const evRow = (e, withArea, nm = {}) => { const where = withArea && e.sgg ? areaOf(unitKey(e.sgg)) || areaOf(e.sgg) : null;
   return `<li><a class="ev" ${PRJA(e.id)}><span class="when"><b>${whenText(e.when)}</b><span class="kind">${NEXT[e.k]}</span>${dday(e.when)}</span><span class="u">${e.u ? fmt(e.u) + '호' : ''}</span>
-    <span class="nm" title="${esc(e.name)}">${where ? esc(nameOf(where)) + ' · ' : ''}${esc(shortName(e.name))}</span></a>${CAPITAL.includes(sidoOf(areaOf(e.sgg) || { kind: 'sgg', code: e.sgg })) && /^PRJ-/.test(e.id) ? mapBtn(mapHref({ project: e.id }), shortName(e.name)) : ''}</li>`; };
-const pjRow = (x, withArea) => { const where = withArea ? areaOf(unitKey(x.sgg)) || areaOf(x.sgg) : null;
-  return `<li><a class="ev" ${PRJA(x.id)}><span class="nm" title="${esc(x.name || '이름 미정')}">${where ? esc(nameOf(where)) + ' · ' : ''}${esc(shortName(x.name))}</span><span class="u">${x.u ? fmt(x.u) + '호' : ''}</span>
-    <span class="when">${x.yt === '연도 미정' ? '연도 미정' : `${x.yt} 들어와요`}</span><span class="st">${badge(x.b, x.k)}</span></a>${CAPITAL.includes(x.sgg.slice(0, 2)) ? mapBtn(mapHref({ project: x.id }), shortName(x.name)) : ''}</li>`; };
+    <span class="nm" title="${esc(e.name)}">${where ? esc(nameOf(where)) + ' · ' : ''}${esc(nm[e.id] || shortName(e.name))}${NSUB(nm, e.id)}</span></a>${CAPITAL.includes(sidoOf(areaOf(e.sgg) || { kind: 'sgg', code: e.sgg })) && /^PRJ-/.test(e.id) ? mapBtn(mapHref({ project: e.id }), shortName(e.name)) : ''}</li>`; };
+const pjRow = (x, withArea, nm = {}) => { const where = withArea ? areaOf(unitKey(x.sgg)) || areaOf(x.sgg) : null;
+  return `<li><a class="ev" ${PRJA(x.id)}><span class="nm" title="${esc(x.name || '이름 미정')}">${where ? esc(nameOf(where)) + ' · ' : ''}${esc(nm[x.id] || shortName(x.name))}${NSUB(nm, x.id)}</span><span class="u">${x.u ? fmt(x.u) + '호' : ''}</span>
+    <span class="when">${x.il}</span><span class="st">${badge(x.b, x.k)}</span></a>${CAPITAL.includes(x.sgg.slice(0, 2)) ? mapBtn(mapHref({ project: x.id }), shortName(x.name)) : ''}</li>`; };
 function yrsChart(Y, label) {
   const ymax = Math.max(1, ...Y.map((y) => y.u));
-  return `<ol class="yrs" role="img" aria-label="${esc(label)}: ${Y.map((y, i) => `${YBL[i]} ${fmt(y.u)}호`).join(', ')}">${Y.map((y, i) => `<li class="${i === 6 ? 'tbd' : ''}" aria-hidden="true"><span class="v${y.u ? '' : ' z'}">${y.u ? labelNum(y.u) : '&nbsp;'}</span><span class="b" style="height:${y.u ? `max(4px, ${(y.u / ymax * 100).toFixed(1)}%)` : '0'}"></span><span class="y">${i === 6 ? '연도 미정' : YB[i]}</span></li>`).join('')}</ol>`;
+  return `<ol class="yrs" role="img" aria-label="${esc(label)}: ${Y.map((y, i) => `${YBL[i]} ${fmt(y.u)}호`).join(', ')}">${Y.map((y, i) => `<li class="${i === 6 ? 'tbd' : ''}" aria-hidden="true"><span class="v${y.u ? '' : ' z'}">${y.u ? labelNum(y.u) : '0'}</span><span class="b" style="height:${y.u ? `max(4px, ${(y.u / ymax * 100).toFixed(1)}%)` : '0'}"></span><span class="y">${i === 6 ? '연도 미정' : YB[i]}</span></li>`).join('')}</ol>`;
 }
 function renderCells() {
   const { r, fb } = cellScope(), isS = r.kind === 'sido', sc = fb ? `<span class="scope" title="${esc(r.label)} 전체">· ${esc(r.label)} 전체</span>` : '';
@@ -1863,20 +1926,23 @@ function renderCells() {
   const all = (kind, n, what) => `<button type="button" class="all" data-sheet="${kind}" aria-haspopup="dialog" aria-label="${what} 전체 ${fmt(n)}개 보기">전체 ${fmt(n)}${ico('arrow')}</button>`;
   /* 일정 */
   const e0 = evs[0];
+  /* r10 '사업' 칸은 호수 큰 순(같으면 들어올 해 빠른 순) 후보 9개 — '다가오는 일정' 칸에 보인 사업은 fitEv 뒤 dedupPj 가 빼고 다음 순서로 3개를 채운다 */
+  const big = prj.slice().sort((a, b) => b.u - a.u || (a.y || '9999').localeCompare(b.y || '9999')).slice(0, 9);
+  const nm = distinctNames([...evs.slice(0, 6), ...big], D);
   $('#c-ev').innerHTML = `<div class="cell-h"><h2 id="c-ev-h">다가오는 일정</h2>${sc}${evs.length ? all('ev', evs.length, '일정') : ''}</div>
-    ${evs.length ? `<ul class="evs">${evs.slice(0, 6).map((e) => evRow(e, isS)).join('')}</ul>` : '<p class="none">정해진 일정이 아직 없어요</p>'}
-    <p class="one">${e0 ? `<b>${whenText(e0.when)}</b> ${NEXT[e0.k]} · ${esc(shortName(e0.name))}` : '정해진 일정이 아직 없어요'}</p>`;
+    ${evs.length ? `<ul class="evs">${evs.slice(0, 6).map((e) => evRow(e, isS, nm)).join('')}</ul>` : '<p class="none">정해진 일정이 아직 없어요</p>'}
+    <p class="one">${e0 ? `<b>${whenText(e0.when)}</b> ${NEXT[e0.k]} · ${esc(nm[e0.id] || shortName(e0.name))}` : '정해진 일정이 아직 없어요'}</p>`;
   /* 언제 들어오나 */
   const hh = D.hh[sidoOf(r)], best = Y.slice(0, 6).reduce((m, y, i) => (y.u > (Y[m]?.u || 0) ? i : m), -1);
   $('#c-yr').innerHTML = `<div class="cell-h"><h2 id="c-yr-h">언제 들어오나</h2>${sc}<button type="button" class="tip-btn" popovertarget="tip-when" aria-label="언제 들어오나의 뜻과 출처"><svg class="i"><use href="#i-info"/></svg></button>${prj.length ? all('yr', prj.length, '해별 사업') : ''}</div>
     ${yrsChart(Y, '들어올 해별 집 수')}
     ${hh && isS ? `<p class="hh">${esc(areaOf(sidoOf(r)).label)} 가구는 해마다 약 <b>+${labelNum(hh[0])}</b> 늘어요</p>` : ''}
-    <p class="one">${best >= 0 && Y[best].u ? `<b>${YBL[best]}</b>에 가장 많이 들어와요 · <b>${labelNum(Y[best].u)}</b> 집` : '들어올 해가 정해진 집이 아직 없어요'}</p>`;
+    <p class="one">${best >= 0 && Y[best].u ? `<b>${YBL[best]}</b>에 가장 많이 들어와요 · <b>${labelNum(Y[best].u)}</b>${sp(labelNum(Y[best].u))}집` : '들어올 해가 정해진 집이 아직 없어요'}</p>`;
   /* 사업 */
   const th = $('#tip-when-hh'); if (th) th.textContent = hh ? `${areaOf(sidoOf(r)).label} 가구는 해마다 약 +${labelNum(hh[0])} 늘어요(통계청 장래가구추계, 시도 단위).` : '';
   $('#c-pj').innerHTML = `<div class="cell-h"><h2 id="c-pj-h">사업</h2>${sc}${prj.length ? all('pj', prj.length, '사업') : ''}</div>
-    ${prj.length ? `<ul class="evs pjs">${prj.slice(0, 3).map((x) => pjRow(x, isS)).join('')}</ul>` : '<p class="none">진행 중인 사업이 없어요</p>'}
-    <p class="one">${prj.length ? `사업 <b>${fmt(prj.length)}</b>개 · 가장 가까운 곳 ${esc(shortName(prj[0].name))}` : '진행 중인 사업이 없어요'}</p>`;
+    ${prj.length ? `<ul class="evs pjs">${big.map((x, i) => pjRow(x, isS, nm).replace('<li>', i < 3 ? '<li>' : '<li hidden>')).join('')}</ul>` : '<p class="none">진행 중인 사업이 없어요</p>'}
+    <p class="one">${prj.length ? `사업 <b>${fmt(prj.length)}</b>개 · 가장 큰 사업 ${esc(nm[big[0].id] || shortName(big[0].name))}` : '진행 중인 사업이 없어요'}</p>`;
 }
 
 /* ---------- 옆 시트('전체 n'): 오른쪽 패널(휴대폰은 아래). Esc·바깥 누르기·닫기 단추, 초점 가둠, 연 단추로 초점 복귀 ----------
@@ -1891,22 +1957,39 @@ function sheetItems() {
   if (SH.kind === 'ev') return upcoming(r.codes).map((e) => ({ ...e, chip: KIND_CHIP(e.k), dot: `--c:var(--st-${EV_DOT[e.k]})` }));
   return projectsOf(r.codes).map((x) => ({ ...x, chip: String(stOf(x.b)), dot: STATUS[stOf(x.b)][2] ? `--c:var(--st-${STATUS[stOf(x.b)][2]})` : '', prep: !STATUS[stOf(x.b)][2], grp: x.yt === '연도 미정' ? '9999' : x.yt.slice(0, 4) }));
 }
-function sheetRow(x, isS, homeKey) {
+/* r10 줄: 날짜가 없는('○월 중') 줄은 날짜 칸을 접고(nod), 모집 공고 줄의 [청약홈]·공고 이름은 둘째 줄. 사업 줄은 호수 아래 상태 글자(색 점만으로 말하지 않는다) */
+function sheetRow(x, isS, homeKey, nm = {}) {
   const uk = unitKey(x.sgg), me = homeKey && uk === homeKey, where = isS ? areaOf(uk) || areaOf(x.sgg) : null;
-  const d = SH.kind === 'ev' && x.when.length === 10 ? `${+x.when.slice(8, 10)}일` : '';
-  const sub = SH.kind === 'ev' ? NEXT[x.k] : x.yt;
-  return `<li class="sli${me ? ' me' : ''}"><a class="srow" ${PRJA(x.id)} title="${esc(x.name || '이름 미정')}">
-      <i class="dot${x.prep ? ' prep' : ''}" style="${x.dot}" aria-hidden="true"></i><span class="d">${d}</span>
-      <span class="t">${me ? ico('pin') : ''}${where ? `<b>${esc(nameOf(where))}</b> · ` : ''}${esc(shortName(x.name))}<span class="k"> · ${sub}</span>${SH.kind !== 'ev' ? planMark(x.b, x.k) : ''}</span>
-      <span class="u">${x.u ? fmt(x.u) + '호' : '호수 미정'}</span></a>${SH.kind === 'ev' && x.k === 0 ? EXT(x).replace('class="ext"', 'class="ext sm"').replace('청약홈에서 찾기', '청약홈') : ''}${CAPITAL.includes(x.sgg.slice(0, 2)) && /^PRJ-/.test(x.id) ? mapBtn(mapHref({ project: x.id }), shortName(x.name)) : ''}${SH.kind === 'ev' && x.k === 0 ? NT(x.name, 'sl short') : ''}</li>`;
+  const ev = SH.kind === 'ev', d = ev && x.when.length === 10 ? `${+x.when.slice(8, 10)}일` : '';
+  const sub = ev ? NEXT[x.k] : x.il, st = ev ? '' : STATUS[stOf(x.b)][0], notice = ev && x.k === 0;
+  return `<li class="sli${me ? ' me' : ''}${d ? '' : ' nod'}"><a class="srow" ${PRJA(x.id)} title="${esc(x.name || '이름 미정')}">
+      <i class="dot${x.prep ? ' prep' : ''}" style="${x.dot}" aria-hidden="true"></i>${d ? `<span class="d">${d}</span>` : ''}
+      <span class="t">${me ? ico('pin') : ''}${where ? `<b>${esc(nameOf(where))}</b> · ` : ''}${esc(nm[x.id] || shortName(x.name))}${NSUB(nm, x.id)}<span class="k"> · ${sub}</span>${!ev ? planMark(x.b, x.k) : ''}</span>
+      <span class="u">${x.u ? fmt(x.u) + '호' : '호수 미정'}${st ? `<span class="stt"><span class="sr">, </span>${st}</span>` : ''}</span></a>${CAPITAL.includes(x.sgg.slice(0, 2)) && /^PRJ-/.test(x.id) ? mapBtn(mapHref({ project: x.id }), nm[x.id] || shortName(x.name)) : ''}${notice ? `<div class="sl2">${EXT(x).replace('class="ext"', 'class="ext sm"').replace('청약홈에서 찾기', '청약홈')}${NT(x.name, 'sl short')}</div>` : ''}</li>`;
+}
+/* r10 검색 결과 시트: '‘ㄱㅇ’ 검색 결과 · 사업 n개' — 검색어로 거른 사업 전부(자동완성과 같은 순서), 줄은 사업 시트 줄, 누르면 사업 카드 */
+function renderSearchSheet() {
+  const hr = S.home ? areaOf(S.home) : null, homeKey = hr && hr.kind === 'sgg' ? unitKey(hr.code) : null;
+  const items = searchProjects(IX, SH.q).map((x) => prjOf(x.id)).filter(Boolean).map(({ c, p }) => { const x = prjRow(c, p), i = stOf(x.b); return { ...x, dot: STATUS[i][2] ? `--c:var(--st-${STATUS[i][2]})` : '', prep: !STATUS[i][2] }; });
+  const nm = distinctNames(items, D);
+  $('#sheet-h').textContent = `‘${SH.q}’ 검색 결과`;
+  $('#sheet-sub').textContent = `사업 ${fmt(items.length)}개`;
+  $('#sheet-b').innerHTML = items.length ? `<ul class="srows" aria-label="검색 결과 사업 ${fmt(items.length)}개">${items.map((x) => sheetRow(x, true, homeKey, nm)).join('')}</ul>` : '<p class="none">찾은 사업이 없어요</p>';
+}
+function openSearchSheet(q, from) {
+  Object.assign(SH, { kind: 'q', q, chips: new Set(), mine: false, mode: 'time', card: null, back: null });
+  renderSheet(); $('#sheet-b').scrollTop = 0;
+  showSheet(from);
 }
 function renderSheet() {
+  $('#sheet').classList.toggle('q', SH.kind === 'q');
+  if (SH.kind === 'q') return renderSearchSheet();
   const { r } = cellScope(), isS = r.kind === 'sido', sd = sidoOf(r);
   const hr = S.home ? areaOf(S.home) : null, homeKey = hr && hr.kind === 'sgg' && sidoOf(hr) === sd ? unitKey(hr.code) : null;
   let items = sheetItems();
   if (SH.mine && homeKey) items = items.filter((x) => unitKey(x.sgg) === homeKey);
   const chips = CHIPS[SH.kind === 'ev' ? 'ev' : 'pj'], cnt = (c) => items.filter((x) => x.chip === c).length;
-  const shown = items.filter((x) => SH.chips.has(x.chip));
+  const shown = items.filter((x) => SH.chips.has(x.chip)), nm = distinctNames(items, D);
   const bar = `<div class="sh-bar"><div class="chips2" role="group" aria-label="종류로 거르기">${chips.filter(([c]) => cnt(c)).map(([c, l]) => `<button type="button" class="chip2" data-chip="${c}" aria-pressed="${SH.chips.has(c)}">${l} <b>${fmt(cnt(c))}</b></button>`).join('')}</div>
     ${isS && homeKey ? `<button type="button" class="chip2 mine" data-mine aria-pressed="${SH.mine}">${ico('pin')}내 동네만</button>` : ''}
     ${isS ? `<div class="seg" role="group" aria-label="묶는 방법"><button type="button" data-mode="time" aria-pressed="${SH.mode === 'time'}">${SH.kind === 'ev' ? '달별' : '해별'}</button><button type="button" data-mode="area" aria-pressed="${SH.mode === 'area'}">지역별</button></div>` : ''}</div>`;
@@ -1914,11 +1997,11 @@ function renderSheet() {
   if (!shown.length) body = '<p class="none">고른 종류의 항목이 없어요</p>';
   else if (isS && SH.mode === 'area') {
     body = groupByArea(shown, (x) => unitKey(x.sgg)).map((g) => { const a = areaOf(g.key) || areaOf(g.items[0].sgg), f = g.items[0];
-      return `<details class="ag${g.key === homeKey ? ' me' : ''}"><summary>${mapBtn(mapScopeHref({ sgg: g.key }), nameOf(a), 'in-sum')}<b>${esc(nameOf(a))}</b><span>${SH.kind === 'ev' ? `${whenText(f.when)} ${NEXT[f.k]}` : f.yt}</span><span class="n">${fmt(g.items.length)}건</span></summary><ul class="srows">${g.items.map((x) => sheetRow(x, false, homeKey)).join('')}</ul></details>`; }).join('');
+      return `<details class="ag${g.key === homeKey ? ' me' : ''}"><summary>${mapBtn(mapScopeHref({ sgg: g.key }), nameOf(a), 'in-sum')}<b>${esc(nameOf(a))}</b><span>${SH.kind === 'ev' ? `${whenText(f.when)} ${NEXT[f.k]}` : f.yt}</span><span class="n">${fmt(g.items.length)}건</span></summary><ul class="srows">${g.items.map((x) => sheetRow(x, false, homeKey, nm)).join('')}</ul></details>`; }).join('');
   } else {
     const groups = SH.kind === 'ev' ? groupByMonth(shown, TODAY) : [...new Set(shown.map((x) => x.grp))].sort().map((y) => ({ key: y, label: y === '9999' ? '연도 미정' : `${y}년 들어와요`, items: shown.filter((x) => x.grp === y).sort((a, b) => prjKey(a).localeCompare(prjKey(b)) || b.u - a.u) }));
     body = groups.map((g) => { const by = chips.map(([c, l]) => [l, g.items.filter((x) => x.chip === c).length]).filter(([, n]) => n).map(([l, n]) => `${l} ${fmt(n)}건`).join(' · ');
-      return `<section class="mg" aria-label="${esc(g.label)}"><h3 class="mh">${esc(g.label)}<span>${by}</span></h3><ul class="srows">${g.items.map((x) => sheetRow(x, isS, homeKey)).join('')}</ul></section>`; }).join('');
+      return `<section class="mg" aria-label="${esc(g.label)}"><h3 class="mh">${esc(g.label)}<span>${by}</span></h3><ul class="srows">${g.items.map((x) => sheetRow(x, isS, homeKey, nm)).join('')}</ul></section>`; }).join('');
   }
   const sb = $('#sheet-b');
   sb.innerHTML = bar + (SH.kind === 'yr' ? yrsChart(yearsOf(r.codes), '들어올 해별 집 수') : '') + body;
@@ -2036,7 +2119,7 @@ function pick(source, code) {
   if (r.save) store.set('myArea', r.home);
   renderAll();
   hlUnit(document.activeElement?.id === 'mapbox' ? S.mapAt : null);
-  $('#live').textContent = r.save ? `내 동네를 ${ro(nameOf(areaOf(r.home)))} 정했습니다` : `${nameOf(vr)} 보는 중`;
+  say(r.save ? `내 동네를 ${ro(nameOf(areaOf(r.home)))} 정했어요 · ${amtOf(areaOf(r.home))}` : `${nameOf(vr)} 보는 중 · ${amtOf(vr)}`);
 }
 
 /* ---------- 검색 · 자동완성 ---------- */
@@ -2062,11 +2145,11 @@ function renderAC() {
   const ac = $('#ac'), list = $('#ac-list'), input = $('#q');
   $('#sfield').classList.toggle('has', !!S.q);
   if (S.open && !q && S.sidos) {   // [다른 시도]: 입력 없이 시도 17곳(고르면 [맞아요]·시도 칩과 같이 그 시도를 정한다)
-    const opts = [], all = IX.regions.filter((x) => x.kind === 'sido');
+    const opts = [], all = IX.regions.filter((x) => x.kind === 'sido').sort((a, b) => (b.code === S.guess) - (a.code === S.guess));
     list.innerHTML = `<div role="group" aria-labelledby="g-sd"><div class="ac-h" id="g-sd" role="presentation">시도<span class="n">${fmt(all.length)}곳</span></div>${all.map((x) => { const id = `o-${opts.length}`; opts.push({ id, kind: 'sido', code: x.code }); return `<div class="opt" role="option" id="${id}" aria-selected="false">${ico('pin')}<span class="nm">${esc(x.label)}</span><span class="sub"></span><span class="end">${x.projects ? `사업 ${fmt(x.projects)}개 · ${fmt(x.units)}호` : '<span class="zero-tag">진행 사업 없음</span>'}</span></div>`; }).join('')}</div>`;
     S.opts = opts; list.hidden = false; $('#ac-note').innerHTML = ''; $('#ac-srv').innerHTML = ''; $('#keys').hidden = false; ac.hidden = false;
     input.setAttribute('aria-expanded', 'true'); if (S.active >= opts.length) S.active = -1; paintActive();
-    $('#live').textContent = `시도 ${all.length}곳 목록, 위아래 화살표로 고르세요`; return;
+    say(`시도 ${all.length}곳 목록, 위아래 화살표로 고르세요`); return;
   }
   if (!S.open || !q) { ac.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); return; }
   const r = IX.search(q), sdv = sidoOf(areaOf(viewCode()));
@@ -2124,7 +2207,7 @@ function renderAC() {
   input.setAttribute('aria-expanded', String(!!opts.length));
   if (S.active >= opts.length) S.active = -1;
   paintActive();
-  $('#live').textContent = hits ? `지역 ${r.regions.total}곳, 사업 ${r.projects.total}개` : r.suggest.length ? `${q}: 결과 없음. ${r.suggest[0].label}을 찾으셨나요?` : `${q}: 지역·사업 결과 없음`;
+  say(hits ? `지역 ${r.regions.total}곳, 사업 ${r.projects.total}개` : r.suggest.length ? `${q}: 결과 없음. ${r.suggest[0].label}을 찾으셨나요?` : `${q}: 지역·사업 결과 없음`);
 }
 function paintActive() {
   const input = $('#q');
@@ -2140,19 +2223,19 @@ function choose(i) {
   else if (o.kind === 'home') { const prev = S.home; pick('search-home', o.code); toastUndo(prev); }
   else if (o.kind === 'project') openProject(o.pid, $('#q'));
   else if (o.kind === 'map' || o.kind === 'addr') go(o.href);
-  else go(`/projects?q=${encodeURIComponent(o.q)}`);
+  else openSearchSheet(o.q, $('#q'));   // '사업 n개 모두 보기': 페이지를 옮기지 않고 옆 시트에 검색 결과 사업 전부
 }
 /* 내 동네 저장 알림: '남양주시를 내 동네로 정했어요 · [되돌리기]' 6초(live 영역 포함) */
 let toastT = 0;
 function toastUndo(prev) {
   const el = $('#toast'), name = nameOf(areaOf(S.home));
   el.innerHTML = `<span>${esc(eul(name))} 내 동네로 정했어요</span><button type="button" class="btn btn-txt" id="undo">되돌리기</button>`;
-  el.hidden = false; $('#live').textContent = `${eul(name)} 내 동네로 정했어요. 되돌리려면 되돌리기 단추`;
-  $('#undo').onclick = () => { const u = undoHome(prev); S.home = u.home; S.view = u.view; S.mapAt = null; if (u.save) store.set('myArea', u.home); if (u.clear) { try { localStorage.removeItem('myArea'); } catch (_) {} } el.hidden = true; renderAll(); $('#live').textContent = '내 동네를 되돌렸어요'; $('#q').focus(); };
+  el.hidden = false; say(`${eul(name)} 내 동네로 정했어요. 되돌리려면 되돌리기 단추`);
+  $('#undo').onclick = () => { const u = undoHome(prev); S.home = u.home; S.view = u.view; S.mapAt = null; if (u.save) store.set('myArea', u.home); if (u.clear) { try { localStorage.removeItem('myArea'); } catch (_) {} } el.hidden = true; renderAll(); say('내 동네를 되돌렸어요'); $('#q').focus(); };
   clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 6000);
 }
 /* 알림 한 줄(4초): 복사했어요 등 */
-function toastMsg(msg) { const el = $('#toast'); el.innerHTML = `<span>${esc(msg)}</span>`; el.hidden = false; $('#live').textContent = msg; clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 4000); }
+function toastMsg(msg) { const el = $('#toast'); el.innerHTML = `<span>${esc(msg)}</span>`; el.hidden = false; say(msg); clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 4000); }
 function copyText(t) {
   const done = () => toastMsg(`공고 이름 '${t}'${eul(t).slice(t.length)} 복사했어요`);
   const old = () => { const a = document.createElement('textarea'); a.value = t; a.setAttribute('readonly', ''); a.style.cssText = 'position:fixed;left:-9999px'; document.body.append(a); a.select(); try { document.execCommand('copy'); } catch (_) {} a.remove(); done(); };
@@ -2217,7 +2300,7 @@ document.addEventListener('click', (e) => {
   if (t.dataset.act === 'yes') pick('yes', S.guess);
   if (t.dataset.act === 'sido') { S.guess = t.dataset.code; S.guessKnown = true; pick('yes', t.dataset.code); }
   if (t.dataset.act === 'sethome') pick('set-home', S.view);
-  if (t.dataset.act === 'back') { S.view = null; S.mapAt = null; renderAll(); $('#live').textContent = `${ro(nameOf(areaOf(viewCode())))} 돌아왔습니다`; }
+  if (t.dataset.act === 'back') { S.view = null; S.mapAt = null; renderAll(); say(`${ro(nameOf(areaOf(viewCode())))} 돌아왔어요 · ${amtOf(areaOf(viewCode()))}`); }
   if (t.dataset.act === 'pick') { input.focus(); input.select(); }
   if (t.dataset.act === 'sidos') { S.q = ''; input.value = ''; S.sidos = true; S.open = true; S.active = -1; input.focus(); renderAC(); }
 });
@@ -2254,7 +2337,7 @@ function setAud(a, { save = true, tell = false } = {}) {
   const note = $('#aud-note');
   if (tell) {
     const msg = a === 'admin' ? '정책담당자 화면 · 전체 통계를 펼쳤어요' : '일반사용자 화면 · 한 화면 요약으로 바꿨어요';
-    $('#live').textContent = msg; note.textContent = msg; note.hidden = false;
+    say(msg); note.textContent = msg; note.hidden = false;
     clearTimeout(audTimer); audTimer = setTimeout(() => { note.hidden = true; }, 4000);
   } else note.hidden = true;
 }
@@ -2284,7 +2367,8 @@ document.fonts.ready.then(() => { if (VIEW) drawMap(true); });
 
 /* ---------- 시안 상태 ---------- */
 const DEMO = {
-  first: () => { S.home = null; S.loc = 'guess'; },
+  first: () => { S.home = null; S.loc = 'guess'; S.guess = '41'; },
+  ipout: () => { S.home = null; S.loc = 'guess'; S.guess = geoSido('29', IX); S.guessKnown = true; },   // 광주 IP: /api/v1/geo → { sido: '29' }
   yes: () => { S.home = '41'; S.loc = 'set'; },
   cho: () => { DEMO.back(); return () => typed('ㄱㅇ'); },
   en: () => { DEMO.back(); return () => typed('rPdid'); },
@@ -2322,7 +2406,7 @@ if (OPS) {
   /* 첫 방문 IP 시도 추천: /api/v1/geo → { sido }. 없거나 실패면 시도 고르기 칩 */
   S.guessKnown = false;
   fetch('/api/v1/geo').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((j) => {
-    const sd = j && j.sido && areaOf(String(j.sido)) ? String(j.sido) : null;
+    const sd = j && j.sido ? geoSido(String(j.sido), IX) : null;   // 수도권 밖(광주 29 등)도 그 시도를 추천한다
     if (sd) { S.guess = sd; S.guessKnown = true; if (!S.home && !S.view) renderAll(); else renderLoc(); }
   });
 }
