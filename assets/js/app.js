@@ -169,8 +169,10 @@ const STATIC_N = HAS_GY ? GY.features.length : 0;   // 번들에 든 건물 수(
 
 /* ---------- 지도 ---------- */
 const KEY = String(window.VWORLD_KEY || '').trim();
-let usingVworld = !!KEY;
 const q = new URLSearchParams(location.search);
+/* 배경은 OpenFreeMap 벡터가 기본이다(2026-10-17): 2배 화면에서 배경 선명도가 V-World 래스터의 5.8~10배였고(실측), 지명 벡터 타일을 이미 받고 있어 비용도 적다.
+   ?base=vworld 면 V-World 래스터(키 필요) — 비교·되돌림용. 그 경로의 WMTS·라이트 보정·실패 전환 코드는 그대로 둔다 */
+let usingVworld = !!KEY && q.get('base') === 'vworld';
 /* 지도 위에 그리는 모든 색은 여기서만 정한다(스타일을 다시 불러와도 같은 값으로 다시 그려진다). */
 const THEME = {
   vw: String(window.VWORLD_LAYER || 'midnight'), ofm: 'dark', bg: '#0A1030', text: '#E8EDFF', sub: '#9AA8D6', halo: '#0A1030', sky: ['#0A1030', '#0E1740'],
@@ -209,7 +211,7 @@ $('#baseNote').textContent = '';   // 배경 지도 출처는 지도 오른쪽 �
 /* 지형 타일: 상황판 안(Next.js, SHELL)에서는 우리 서버 중계(/api/v1/terrain → CDN 1년 캐시)로 받는다. S3(미국 동부) 직접은 장당 응답 시작 ~0.7 s 라 첫 로딩이 가장 길었다(계획서 16절).
    API 가 없는 옛 정적 열기(index.html 직접)는 S3 를 그대로 쓴다 */
 const DEM_TILES = [SHELL ? `${location.origin}/api/v1/terrain?z={z}&x={x}&y={y}` : 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png'];
-const STATUS = { loaded: false, errors: [], officialData: HAS_GY, projects: HAS_PR, base: KEY ? 'vworld' : 'openfreemap' };   // 시험용 상태. ?selftest 일 때만 window에 공개한다
+const STATUS = { loaded: false, errors: [], officialData: HAS_GY, projects: HAS_PR, base: usingVworld ? 'vworld' : 'openfreemap' };   // 시험용 상태. ?selftest 일 때만 window에 공개한다
 if (q.get('selftest')) window.__mapStatus = STATUS;
 /* 주소 ?at=경도,위도,확대[,기울기,방위] 로 시작 위치를 바꾼다(어디를 봐야 하는지 알려 줄 때). 값이 이상하면 무시한다 */
 function atParam() {
@@ -280,7 +282,8 @@ let ringOn = q.get('ring') !== '0';                            // 역 반경 원
 let infraOn = q.get('infra') !== '0';                          // 입주 전 점검(학교·정류장·전기 시설): 기본 켬. 자료가 있는 지역에서만 쓰인다
 let zoneOn = q.get('zone') !== '0';                            // 초등 통학구역 경계: 기본 켬
 let busOn = q.get('bus') !== '0';                              // 버스 노선·위치(3D): 기본 켬. 실시간 노선이 있는 지역에서만 쓰인다
-let dimExisting = q.get('dim') !== '0';                       // 기존 건물 흐리게: 기본 켬 = 학교·병원·공공시설만 3D, 나머지는 채우지 않은 점선 윤곽만(주소에 dim=0 이면 끔 = 모두 3D). 옵션 창이 아니라 위 도구 줄의 '건물 흐리게' 단추
+let dimExisting = q.get('dim') === '1';                       // 기존 건물 흐리게: 켬 = 학교·병원·공공시설만 3D, 나머지는 채우지 않은 점선 윤곽만. 기본 끔(모두 3D), 주소 dim=1 이면 켬. 옵션 창이 아니라 위 도구 줄의 '건물 흐리게' 단추
+// 기본 켬이던 것을 2026-10-17 사용자 결정(화면 품질 우선)으로 끔으로 바꿨다 — 확대 16.5 에서도 건물이 점선 윤곽으로만 보였다
 map.on('error', (e) => {
   STATUS.errors.push((e && e.error && e.error.message) || String(e));
   // V-World 타일이 거절되면(키 오류·등록하지 않은 주소 등) 한 번만 OpenFreeMap으로 바꾼다.
@@ -304,6 +307,16 @@ function badgeImage(kind) {
   x.fillStyle = plan ? TH().bg : col; x.fill();
   if (plan) { roundRectPath(x, 3, 3, W - 6, H - 6, 9); x.lineWidth = 1.8; x.setLineDash([4, 3]); x.strokeStyle = col; x.stroke(); }
   return { data: x.getImageData(0, 0, W, H), opts: { pixelRatio: 2, stretchX: [[14, 34]], stretchY: [[11, 17]], content: [12, 8, 36, 20] } };
+}
+/* 기존 건물 벽면 무늬(12 m 이상, official-3d-tex): 바탕 = 그 높이대 램프 색, 층 줄 = 바탕 −14%(8 px 마다 2 px), 창 = 바탕 +16%(4×4 px, 8 px 격자).
+   32 px 그림을 pixelRatio 2 로 써서 화면 16 px 마다 되풀이한다. 무늬는 화면 픽셀 단위라 실제 층수와 맞지 않는다(질감용) — 그래서 12 m 미만(1~3층)은 단색으로 둔다 */
+function facadeImage(color) {
+  const S = 32, c = document.createElement('canvas'); c.width = S; c.height = S; const x = c.getContext('2d');
+  const tone = (k) => '#' + hex2(color).map((v) => Math.max(0, Math.min(255, Math.round(v * k))).toString(16).padStart(2, '0')).join('');
+  x.fillStyle = color; x.fillRect(0, 0, S, S);
+  x.fillStyle = tone(0.86); for (let y = 0; y < S; y += 8) x.fillRect(0, y + 6, S, 2);   // 층 줄
+  x.fillStyle = tone(1.16); for (let y = 0; y < S; y += 8) for (let a = 0; a < S; a += 8) x.fillRect(a + 2, y + 1, 4, 4);   // 창
+  return { data: x.getImageData(0, 0, S, S), opts: { pixelRatio: 2 } };
 }
 /* 지면 라벨 그림: 짙은 네이비 카드(M3의 칩 문법: 얇은 테두리 + 왼쪽 상태색 띠). 상태색 단색 알약(bd-*)보다 대비가 약해 HUD 카드와 같은 결이다.
    지도 안 기호는 backdrop-filter를 못 쓰므로 투명도를 .9로 두어 어떤 건물 위에서도 글자 대비(밝은 글자 #E8EDFF 기준 10:1 이상)가 유지된다. */
@@ -577,7 +590,7 @@ function addOfficialShadows() {
     paint: { 'fill-extrusion-color': sh[0], 'fill-extrusion-height': 0.06, 'fill-extrusion-base': 0, 'fill-extrusion-opacity': sh[1] } }, 'official-3d');
   applyOfficial();   // 흐리게가 켜져 있으면 시설 건물의 그림자만 남긴다
 }
-const OFFICIAL_LAYERS = ['official-far', 'official-3d', 'official-roof'];
+const OFFICIAL_LAYERS = ['official-far', 'official-3d', 'official-3d-tex', 'official-roof'];
 /* 실재하는지 알 수 없는 도형은 솟게 하지 않고 평면(official-flat·official-flat-line)으로만 그린다. 둘이다:
    ① src '정보없음': 높이·층수가 모두 없는 도형. 원천(V-World 건물 레이어)에는 대장에 연결되지 않은 도형이 남아 있어 신도시(나주 혁신도시)에서는 차로·공원 위에도 놓인다.
    ② g=1: 신도시 지구 안에서 지금 있는 건물(도로명주소 건물)과 겹치지 않는 옛 건물(철거 의심). 대장 속성이 있어도 철거된 자리에 남은 것이다(tools/regiontools/existence.py, dataset.md 2.6).
@@ -644,6 +657,7 @@ function setupCustom() {
     if (PR.otherBlocks && PR.otherBlocks.length) src('other-blocks', { type: 'geojson', data: { type: 'FeatureCollection', features: PR.otherBlocks.map((r) => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[...r, r[0]]] } })) } });
     for (const k of ['sale', 'build', 'near', 'soon', 'priv', 'plan', 'permit']) { if (!map.hasImage('bd-' + k)) { const b = badgeImage(k); map.addImage('bd-' + k, b.data, b.opts); } if (!map.hasImage('gl-' + k)) { const g = groundImage(k); map.addImage('gl-' + k, g.data, g.opts); } }
   }
+  if (HAS_GY) for (let k = 1; k <= 4; k++) if (!map.hasImage('fac-' + k)) { const im = facadeImage(T.ramp[k]); map.addImage('fac-' + k, im.data, im.opts); }   // 벽면 무늬(12·25·45·70 m 구간). 테마를 바꾸면 setStyle 로 그림이 사라져 다시 만든다
   if (HAS_INFRA) for (const k of INFRA_ICONS) if (!map.hasImage('ic-' + k)) { const im = infraIcon(k); map.addImage('ic-' + k, im.data, im.opts); }
   if (HAS_CTX) { const g = ctxGeoJSON(); src('ctx-st', { type: 'geojson', data: g.st, attribution: '역·학교 © OpenStreetMap contributors' }); src('ctx-sch', { type: 'geojson', data: g.sch }); src('ctx-ring', { type: 'geojson', data: g.ring }); }
   if (HAS_INFRA) for (const [id, d] of [['infra-sites', INFRA_GJ.sites], ['infra-pts', INFRA_GJ.pts], ['infra-stops', INFRA_GJ.stops], ['infra-zone', INFRA_GJ.zones], ['infra-zone-pt', INFRA_GJ.zpts], ['infra-site-pts', INFRA_GJ.spts], ['infra-links', INFRA_GJ.links], ['infra-link-pts', INFRA_GJ.lpts], ['infra-rings', INFRA_GJ.rings]]) src(id, { type: 'geojson', data: d });
@@ -729,8 +743,11 @@ function setupCustom() {
     // 건물 아래 바닥이 살짝 어두워지는 접지 음영(의사 AO)
     add({ id: 'official-ao', type: 'line', source: 'official', minzoom: 15, filter: KNOWN_H,
       paint: { 'line-color': ao[0], 'line-opacity': ao[1], 'line-width': ['interpolate', ['exponential', 2], ['zoom'], 15, 2, 18, 14], 'line-blur': ['interpolate', ['linear'], ['zoom'], 15, 2, 18, 8] } });
-    add({ id: 'official-3d', type: 'fill-extrusion', source: 'official', minzoom: 14, filter: KNOWN_H,
+    // 벽: 12 m 미만은 단색(official-3d), 12 m 이상은 벽면 무늬(official-3d-tex, facadeImage). 무늬가 있으면 fill-extrusion-color 는 쓰이지 않는다. 지붕(official-roof)은 모두 단색
+    add({ id: 'official-3d', type: 'fill-extrusion', source: 'official', minzoom: 14, filter: ['all', KNOWN_H, ['<', ['get', 'eh'], 12]],
       paint: { 'fill-extrusion-color': ['get', 'c'], 'fill-extrusion-height': ['max', 0.5, ['-', ['get', 'eh'], ROOF_T]], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 1 } });
+    add({ id: 'official-3d-tex', type: 'fill-extrusion', source: 'official', minzoom: 14, filter: ['all', KNOWN_H, ['>=', ['get', 'eh'], 12]],
+      paint: { 'fill-extrusion-pattern': ['step', ['get', 'eh'], 'fac-1', 25, 'fac-2', 45, 'fac-3', 70, 'fac-4'], 'fill-extrusion-height': ['max', 0.5, ['-', ['get', 'eh'], ROOF_T]], 'fill-extrusion-base': 0, 'fill-extrusion-opacity': 1 } });
     add({ id: 'official-roof', type: 'fill-extrusion', source: 'official', minzoom: 14, filter: KNOWN_H,
       paint: { 'fill-extrusion-color': ['get', 'cr'], 'fill-extrusion-base': ['max', 0.5, ['-', ['get', 'eh'], ROOF_T]], 'fill-extrusion-height': ['max', 1.3, ['get', 'eh']], 'fill-extrusion-opacity': 1 } });
   }
@@ -821,6 +838,7 @@ function setupCustom() {
   if (map.getLayer('sel-3d')) for (const id of ['official-ao', 'infra-link-zone', 'infra-link-new', 'bus-route-line']) if (map.getLayer(id)) map.moveLayer(id, 'sel-3d');
   if (map.getZoom() >= 14.3) { if (!revealed) whenRevealed(() => { map.once('idle', addOfficialShadows); setTimeout(addOfficialShadows, 5000); }); else addOfficialShadows(); }   // 첫 화면이 뜬 뒤에: 건물이 많은 지역(계양 16,724동)에서 그림자 도형 계산과 두 번째 큰 GeoJSON 타일링이 로딩을 늦춘다. 지형이 오지 않아 idle 이 없어도 5초 뒤에는 붙인다
   applyAll();
+  if (!usingVworld) for (const l of layers) if (map.getLayer(l.id) && (l['source-layer'] === 'building' || (l['source-layer'] === 'poi' && !/transit/.test(l.id)))) map.setLayoutProperty(l.id, 'visibility', 'none');   // OpenFreeMap 자체 건물(liberty building·building-3d, dark building)은 우리 건물과 겹쳐 두 번 그려지고, 상점 POI(liberty poi_r1·r7·r20)는 사업 카드·시설 이름표와 섞여 어지럽다 → 숨긴다. 역·정류장(poi_transit)은 둔다
   if (!usingVworld) for (const l of layers) if (l.type === 'symbol' && /name/.test(JSON.stringify(map.getLayoutProperty(l.id, 'text-field') || ''))) map.setLayoutProperty(l.id, 'text-field', ['coalesce', ['get', 'name:ko'], ['get', 'name']]);
   perfMark('setup');
 }
@@ -1236,14 +1254,15 @@ function applyMode() {
   applySel();
   renderHudContent();
 }
-/* 기존 건물 레이어. '기존 건물 흐리게'(기본 켬)이면 학교·병원·공공시설(IS_FAC)만 평소처럼 3D 로 두고, 나머지 건물은 채우지 않은 점선 윤곽(official-outline)으로만 그린다.
+/* 기존 건물 레이어. '기존 건물 흐리게'(기본 끔, 주소 dim=1)가 켜져 있으면 학교·병원·공공시설(IS_FAC)만 평소처럼 3D 로 두고, 나머지 건물은 채우지 않은 점선 윤곽(official-outline)으로만 그린다.
    끄면 모든 건물이 3D 로 채워진다. 고른 건물은 sel-3d 가 따로 그리므로 여기서 뺀다(윤곽·클릭 판도 마찬가지). */
 function applyOfficial() {
   if (!map.getLayer('official-3d')) return;
   const dim = dimExisting, notSel = selId == null ? null : ['!=', ['get', 'i'], selId];
   const but = (f) => (notSel ? ['all', f, notSel] : f);
   const solid = (f) => but(dim ? ['all', f, IS_FAC] : f);   // 3D(또는 평면 면)로 그리는 건물
-  map.setFilter('official-3d', solid(KNOWN_H)); map.setFilter('official-roof', solid(KNOWN_H));
+  map.setFilter('official-3d', solid(['all', KNOWN_H, ['<', ['get', 'eh'], 12]])); map.setFilter('official-roof', solid(KNOWN_H));
+  if (map.getLayer('official-3d-tex')) map.setFilter('official-3d-tex', solid(['all', KNOWN_H, ['>=', ['get', 'eh'], 12]]));   // 12 m 이상 벽(무늬)
   if (map.getLayer('official-far')) map.setFilter('official-far', solid(['all', ['>=', ['get', 'eh'], 10], KNOWN_H]));   // 멀리서도 평면 도형(정보없음·g=1)은 솟지 않는다(높이 10 m 이상 철거 의심 건물이 남던 구멍)
   for (const id of ['official-flat', 'official-flat-line']) if (map.getLayer(id)) map.setFilter(id, solid(NO_INFO));
   if (map.getLayer('official-ao')) map.setFilter('official-ao', dim ? ['all', KNOWN_H, IS_FAC] : KNOWN_H);
@@ -1352,7 +1371,7 @@ map.on('click', (e) => {
   const far = map.getZoom() < 14.3;     // 멀리서는 점이 단지를 대표하므로 점을 먼저 고른다
   const pickInfra = () => (HAS_INFRA && infraOn ? pick(['infra-school']) || pick(['infra-stop']) || pick(['infra-site-fill']) : undefined);
   const pickBus = () => { if (!(HAS_BUS && busOn && map.getLayer('bus-3d'))) return undefined; const r = 7, p = e.point; return map.queryRenderedFeatures([[p.x - r, p.y - r], [p.x + r, p.y + r]], { layers: ['bus-3d'] })[0]; };   // 버스는 작아서 주변 7px 안까지
-  const f = pickBus() || (far && (pick(['blk-dot']) || pick(BLK_FILLS))) || pick(['dong-3d']) || pick(BLK_FILLS) || pick(['blk-dot', 'blk-badge', 'blk-badge-top']) || pickInfra() || pick(['official-3d', 'official-roof', 'official-far']) || pick(['official-flat']) || pick(['official-hit']);
+  const f = pickBus() || (far && (pick(['blk-dot']) || pick(BLK_FILLS))) || pick(['dong-3d']) || pick(BLK_FILLS) || pick(['blk-dot', 'blk-badge', 'blk-badge-top']) || pickInfra() || pick(['official-3d', 'official-3d-tex', 'official-roof', 'official-far']) || pick(['official-flat']) || pick(['official-hit']);
   if (popup) { const o = popup; popup = null; o.remove(); }
   if (!f) { select(null); return; }
   if (f.layer.id === 'bus-3d') { select(null); busPopup(f.properties, e.point.x); }
@@ -1571,7 +1590,7 @@ const blockKey = (id) => { const b = id == null ? null : BLOCKS.find((x) => x.id
 function syncUrl(id) {
   try {
     const u = new URL(location.href), set = (k, v) => (v ? u.searchParams.set(k, v) : u.searchParams.delete(k));
-    set('block', blockKey(id)); set('priv', privOn ? '' : '0'); set('ex', exOn ? '1' : ''); set('mode', ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '' : '0'); set('hud', hudOn ? '' : '0'); set('cards', cardsOn ? '' : '0'); set('dim', dimExisting ? '' : '0'); set('infra', HAS_INFRA && !infraOn ? '0' : ''); set('zone', HAS_INFRA && !zoneOn ? '0' : ''); set('bus', HAS_BUS && !busOn ? '0' : ''); set('panel', $('.app').classList.contains('collapsed') ? '' : '1');
+    set('block', blockKey(id)); set('priv', privOn ? '' : '0'); set('ex', exOn ? '1' : ''); set('mode', ''); set('ctx', ctxOn ? '' : '0'); set('ring', ringOn ? '' : '0'); set('hud', hudOn ? '' : '0'); set('cards', cardsOn ? '' : '0'); set('dim', dimExisting ? '1' : ''); set('infra', HAS_INFRA && !infraOn ? '0' : ''); set('zone', HAS_INFRA && !zoneOn ? '0' : ''); set('bus', HAS_BUS && !busOn ? '0' : ''); set('panel', $('.app').classList.contains('collapsed') ? '' : '1');
     history.replaceState(null, '', u);
   } catch (_) { /* file:// 에서는 막힐 수 있음 */ }
 }
@@ -2056,7 +2075,7 @@ if (INTRO_ON) (function introStack() {
   const STACK = [
     [],                                                                                        // ① 배경 지도·지형 음영
     ['district-mask', 'district-line', 'resolved-fill', 'resolved-halo', 'resolved-line'],    // ② 지구 경계·마스크(코드로 연 경계 포함)
-    ['official-flat', 'official-flat-line', 'official-outline', 'official-ao', 'official-shadow', 'official-far', 'official-3d', 'official-roof'],   // ③ 기존 건물
+    ['official-flat', 'official-flat-line', 'official-outline', 'official-ao', 'official-shadow', 'official-far', 'official-3d', 'official-3d-tex', 'official-roof'],   // ③ 기존 건물
     ['other-fill', 'other-line', ...BLK_FILLS, 'blk-judge', 'blk-line', 'blk-line-plan', 'blk-line-approx'],                  // ④ 단지 면·무늬·윤곽
     ['dong-shadow', 'dong-line', 'dong-3d'],                                     // ⑤ 동 3D(높이는 grow 가 키운다)
     ['blk-dot', 'blk-label-lo', 'blk-badge', 'blk-badge-top', 'dong-label', 'fac-label', 'district-label', 'ctx-ring', 'ctx-school', 'ctx-station', 'ctx-ring-label', 'ctx-station-label', 'ctx-school-label', ...INFRA_LAYERS, ...INFRA_MODE_LAYERS, ...ZONE_LAYERS, ...BUS_LAYERS],   // ⑥ 이름표·역·학교·기반시설·버스(+ HUD)

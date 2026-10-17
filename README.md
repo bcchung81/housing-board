@@ -36,8 +36,8 @@ npm run build && npm start       # 운영과 같은 빌드로 확인(포트 3000
 - `python3 -m http.server 8000` 같은 정적 서버로도 지도는 열리지만 **버스 위치 함수가 없어(404) 노선 선만 보입니다.** 이때 하단 범례에 `버스 선만`, 옵션에 `위치 서버 없음`이 뜹니다.
 
 - 화면에 `지역 자료를 불러오지 못했습니다. regions/index.json: Failed to fetch`가 뜨면 `file://`로 열었거나 서버가 꺼져 있는 것입니다. 서버를 켜고 `http://localhost:포트/`로 여세요.
-- 인터넷이 필요합니다: 배경지도(V-World), 지형 고도(AWS), 지명 글자(OpenFreeMap)를 내려받습니다.
-- V-World 배경을 쓰려면 `config.js`에 인증키를 넣습니다(`config.example.js` 참고). 비어 있으면 OpenFreeMap 어두운 지도로 대신 나옵니다.
+- 인터넷이 필요합니다: 배경지도·지명 글자(OpenFreeMap), 지형 고도(AWS)를 내려받습니다.
+- 배경지도는 OpenFreeMap 벡터(라이트 `liberty`·다크 `dark`)가 기본이고, 주소에 `?base=vworld` 를 붙이면 V-World 래스터로 봅니다(`config.js`에 인증키 필요, `config.example.js` 참고).
 - 지도 아래 가운데의 입력줄(`/` 키로 바로)에 장소 이름(`하남시청`, 지금 보는 곳 근처 먼저)·동 이름·지번(`장위동 68-37`)·도로명·법정동 코드(8·10자리)·PNU(19자리)를 치면 그곳으로 지도를 다시 엽니다. 투명도로 상태를 말합니다(대기 .78 · 입력 중 .94 · 비활성 .62). 서버(`node scripts/dev.js`·Vercel)가 없으면 비활성으로 보입니다.
 - 지역이 둘 이상이면 지역 선택기가 보입니다(머리 줄 로고 옆, 사이드바가 접혀 있을 때는 지도 오른쪽 위 요약 카드 왼쪽 위). 지역 목록에 없는 `?region=` 값은 안내 화면이 뜹니다.
 - **지도는 팝업(`window.open`)이나 새 탭으로 여세요. `<iframe>`에는 넣을 수 없습니다**(응답 헤더 `X-Frame-Options: DENY`, `frame-ancestors 'none'`).
@@ -194,7 +194,7 @@ node scripts/smoke.js [주소] ["하남시 감일동" …]   # 전국 표본 59�
 
 Vercel은 Next.js 프로젝트로 빌드합니다(`vercel.json`의 `framework: nextjs`·`buildCommand: npm run build`·`outputDirectory: .next`·함수 지역 `icn1`. 프로젝트 설정에 남은 옛 빌드 명령·출력 폴더를 덮어쓰려고 명시합니다). `npm run build`의 `prebuild`가 `scripts/build.js`를 돌려 `assets/`·`regions/`를 `public/`에 모으고 `config.js`를 만든 뒤 `next build`가 화면과 `/api/*` 함수를 만듭니다. 함수(`app/api/**/route.ts`)는 `handlers/`의 핸들러를 가져가고, 함수가 읽는 `regions/`·`registry/` 파일은 `next.config.ts`의 `outputFileTracingIncludes`로 함께 올라가며, 로컬 캐시·큰 번들은 `outputFileTracingExcludes`로 뺍니다. 보안·캐시 헤더도 `next.config.ts`입니다. 운영 빌드(`VERCEL_ENV=production`)는 `visibility: preview` 지역을 뺍니다. `data/raw/`·`data/processed/`·`data/tools/`·`videos/`·`tools/`·`tests/`·`docs/`와 `*.md`는 올라가지 않습니다.
 
-**인증키**: `config.js`와 `.env*`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(OpenFreeMap 어두운 지도)로 빌드합니다.
+**인증키**: `config.js`와 `.env*`는 저장소에 없습니다(`.gitignore`). Vercel 프로젝트 환경변수 `VWORLD_KEY`(선택: `VWORLD_LAYER`)를 넣으면 빌드가 `public/config.js`를 만들어 줍니다. 환경변수가 없으면 로컬 `config.js`, 그것도 없으면 빈 키(`?base=vworld` 여도 OpenFreeMap 배경)로 빌드합니다.
 
 ```
 vercel env add VWORLD_KEY production      # 값은 프롬프트에 붙여넣기

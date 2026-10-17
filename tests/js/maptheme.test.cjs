@@ -35,7 +35,7 @@ test('지도 스크립트는 지도 셸에서 단계색을 CSS 토큰으로 읽�
   }
 });
 
-test("라이트 배경은 V-World 백지도('white'): 장소 글자가 그림에 박히지 않아 기울여도 번지지 않고 벡터 지명과 겹치지 않는다", () => {
+test("`?base=vworld` 일 때 라이트 배경은 V-World 백지도('white'): 장소 글자가 그림에 박히지 않아 기울여도 번지지 않고 벡터 지명과 겹치지 않는다", () => {
   assert.match(app, /const LIGHT_THEME = \{[\s\S]*?vw: 'white', ofm: 'liberty', raster: \{ 'raster-saturation': -0\.35, 'raster-contrast': -0\.05 \}/, '백지도의 공원 무늬는 채도로 누르고, 대비는 조금만 낮춘다(−0.12 는 뭉개져 보였다: 같은 화면 가장자리 선명도 15.71→16.43, 2026-10-10 계획서 14절 T4)');
   assert.match(app, /\{ id: 'vworld', type: 'raster', source: 'vworld', paint: TH\(\)\.raster \|\| \{\} \}/);
   /* 줄 끝 주석이 같은 줄의 라이트 글자·테두리 색을 삼키면 지도 글자가 다크 값(밝은 글자·남색 테두리)으로 그려진다(2026-10-09 실제로 겪음) */
