@@ -1,4 +1,4 @@
-/* v7 화면 측정(브라우저에서 실행, 결과 JSON). 관문: G1 넘침·잘림·오류 · G3 누르는 크기 · G5 첫 화면 · G6 기둥·라벨 겹침 ·
+/* v7 화면 측정(브라우저에서 실행, 결과 JSON). 관문: G1 넘침·잘림·오류 · G3 누르는 크기 · G5 첫 화면 · G6 라벨 겹침(실제 getBBox) ·
    G7 기둥이 가리는 면 넓이 · G9 글자 크기 · G13 문서 높이 · G14 금지어 · G15 기둥 정합. 시안 상태 막대(#demo)는 재지 않는다.
    콘솔 오류는 페이지보다 먼저 심은 window.__errs 를 읽는다(없으면 null) */
 (() => {
@@ -79,7 +79,13 @@ if (svg && vis(svg)) {
   for (const l of leads) for (const b of lbs) if (b.key !== l.key) { const E = [[[b.x0, b.y0], [b.x1, b.y0]], [[b.x1, b.y0], [b.x1, b.y1]], [[b.x1, b.y1], [b.x0, b.y1]], [[b.x0, b.y1], [b.x0, b.y0]]]; if (E.some(([p, q]) => sx(l.a, l.b, p, q))) leadThru++; }
   const his = [...svg.querySelectorAll('.hil [data-box]')].map((g) => { const [x, y, w, h] = g.dataset.box.split(',').map(Number); return { key: g.dataset.area, x0: x - w / 2, x1: x + w / 2, y0: y - h / 2, y1: y + h / 2 }; });
   const ov = (a, b) => a.x0 < b.x1 - .5 && b.x0 < a.x1 - .5 && a.y0 < b.y1 - .5 && b.y0 < a.y1 - .5;
-  let lbOv = 0; for (let i = 0; i < lbs.length; i++) for (let j = i + 1; j < lbs.length; j++) if (ov(lbs[i], lbs[j])) lbOv++;
+  /* 겹침은 그려진 글자의 실제 상자(getBBox)로 잰다: 기본 묶음(흐리게 된 것 제외)·맥락 이름·띄운 알약 */
+  const gb = (el) => { const b = el.getBBox(); return { x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height }; };
+  const uni = (a, b) => (a ? { x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) } : b);
+  const realB = [...svg.querySelectorAll('.lbls .lb-g:not(.dim)')].map((g) => { let u = null; g.querySelectorAll('text').forEach((t) => { u = uni(u, gb(t)); }); const pl = g.querySelector('.pill'); if (pl && getComputedStyle(pl).display !== 'none') u = uni(u, gb(pl)); return { key: g.dataset.area, nm: g.dataset.nm, ...u }; });
+  const ctxEl = svg.querySelector('.lb-ctx:not(.dim)'); if (ctxEl) realB.push({ key: 'ctx', nm: ctxEl.textContent, ...gb(ctxEl) });
+  svg.querySelectorAll('.hil .lb-hi').forEach((g) => realB.push({ key: 'hi:' + g.dataset.area, nm: 'hi:' + g.dataset.area, ...gb(g.querySelector('rect')) }));
+  const ovAt = []; let lbOv = 0; for (let i = 0; i < realB.length; i++) for (let j = i + 1; j < realB.length; j++) if (ov(realB[i], realB[j])) { lbOv++; ovAt.push(`${realB[i].nm}×${realB[j].nm}`); }
   const pos = Object.entries(uOf).filter(([, u]) => u > 0).sort((a, b) => b[1] - a[1]), top5 = pos.slice(0, 5).map(([k2]) => k2);
   const shownK = new Set([...lbs.map((b) => b.key), ...his.map((b) => b.key)]);
   let hiOn5 = 0; for (const h of his) for (const l of lbs) if (top5.includes(l.key) && ov(h, l)) hiOn5++;
@@ -104,9 +110,9 @@ if (svg && vis(svg)) {
   const namesShown = new Set([...lbs.filter((b) => b.nm).map((b) => b.key), ...his.map((b) => b.key)]);
   /* 맥락 시도 이름: 보이는지, 시군구 묶음과 겹치지 않는지. 뺀 묶음이 어느 면 위에 놓였는지(판 바깥 여백만 허용) */
   const ctxT = svg.querySelector('.lb-ctx'); let ctxOv = 0, ctxShown = !!ctxT;
-  if (ctxT && ctxT.dataset.box) { const [x, y, w, h] = ctxT.dataset.box.split(',').map(Number), cb = { x0: x - w / 2, x1: x + w / 2, y0: y - h / 2, y1: y + h / 2 }; ctxOv = lbs.filter((b) => ov(b, cb)).length; }
+  if (ctxT) { const cb = gb(ctxT); ctxOv = realB.filter((b) => b.key !== 'ctx' && ov(b, cb)).length; }
   const outOnFace = lbs.filter((b) => b.lead).filter((b) => [[b.x, b.y], [b.x0 + 2, b.y0 + 2], [b.x1 - 2, b.y0 + 2], [b.x0 + 2, b.y1 - 2], [b.x1 - 2, b.y1 - 2]].some(([x, y]) => { const k2 = at(x, y); return k2 && k2 !== 'wall'; })).map((b) => b.key);
-  R.G6 = { ctxShown, ctxOverlap: ctxOv, outLabelOnFace: outOnFace, leaderDarkMax: Math.round(leadDark), outLabelOnDark: outOnDark, namesShown: namesShown.size, faceCount: fgs.length, nameRatio: +(namesShown.size / fgs.length).toFixed(2), leaders: leads.length, leaderCross: leadX, leaderThruLabel: leadThru, leaderMax: Math.round(leadMax), labels: lbs.length, faces: pos.length, labelOverlap: lbOv, overlayOnTop5: hiOn5, labelOutOfStage: out, top5Hidden: top5.filter((k2) => !shownK.has(k2)) };
+  R.G6 = { ctxShown, ctxOverlap: ctxOv, outLabelOnFace: outOnFace, leaderDarkMax: Math.round(leadDark), outLabelOnDark: outOnDark, namesShown: namesShown.size, faceCount: fgs.length, nameRatio: +(namesShown.size / fgs.length).toFixed(2), leaders: leads.length, leaderCross: leadX, leaderThruLabel: leadThru, leaderMax: Math.round(leadMax), labels: lbs.length, faces: pos.length, labelOverlap: lbOv, labelOverlapAt: ovAt.slice(0, 4), top10Num: pos.slice(0, 10).filter(([k2]) => lbs.some((b) => b.key === k2 && b.v)).length + '/' + Math.min(10, pos.length), overlayOnTop5: hiOn5, labelOutOfStage: out, top5Hidden: top5.filter((k2) => !shownK.has(k2)) };
   /* G15: h = 3 + (Hmax − 3)·√(u/umax)(오차 ≤ 0.5px), 높이 순위 = 호수 순위, 0호 = 0, 라벨 값 = 호수 */
   const hm = +svg.dataset.hmax, umax = Math.max(...Object.values(uOf)), hs = fgs.map((g) => ({ u: +g.dataset.u, h: +g.dataset.h }));
   const err = Math.max(0, ...hs.map((x) => Math.abs(x.h - (x.u > 0 ? 3 + (hm - 3) * Math.sqrt(x.u / umax) : 0))));

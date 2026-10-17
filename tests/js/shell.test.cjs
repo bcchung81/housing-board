@@ -74,7 +74,7 @@ test('지도는 루트 레이아웃이 따로이고(들어갈 때·나올 때 �
   assert.match(read('app/(dashboard)/layout.tsx'), /<html lang="ko" suppressHydrationWarning>/);   // 라이트가 기본, 저장된 테마가 다크일 때만 그리기 전에 class=dark
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/layout.tsx')), '최상위 layout.tsx 가 있으면 두 레이아웃이 하나로 합쳐진다');
   const nav = read('components/TopNav.tsx');
-  assert.match(nav, /compact \|\| m\.id === 'map'\s*\?\s*<a href=\{m\.href\}/);
+  assert.match(nav, /compact \|\| m\.id === 'map' \|\| href === '\/citizen'\s*\?\s*<a href=\{href\}/);   // 일반사용자의 '종합상황판'(/citizen)도 정적 문서라 <a>
   assert.match(read('app/(map)/layout.tsx'), /<TopNav compact \/>/);
   assert.match(read('app/(dashboard)/layout.tsx'), /<TopNav \/>/);
 });

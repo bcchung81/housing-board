@@ -150,13 +150,11 @@ function sumOf(D, codes) {
   for (const c of codes) for (const p of D.prj[c] || []) { const b = OF_STAGE[p[2]]; if (b > 3) continue; st[b] += p[3]; u += p[3]; n++; }
   return { u, n, st };
 }
-/* 보기와 내 동네: 면·막대·카드·이웃·검색 결과는 보기만 바꾼다. 저장은 [내 동네로 정하기]·[현 위치]·[맞아요]·검색의 '내 동네로'
-   그리고 [맞아요]로 시도만 정한 뒤 그 시도의 시군구를 고를 때뿐이다 */
+/* 보기와 내 동네: 면·막대·카드·이웃·검색 결과는 보기만 바꾼다([맞아요]로 시도만 정한 뒤에도). 저장은 [내 동네로 정하기]·[현 위치]·[맞아요]·검색의 '내 동네로'뿐이다
+   — 시도만 정한 사람은 시군구를 고른 뒤 요약 카드의 [내 동네로 정하기]로 저장한다 */
 const SAVE_SOURCES = ['set-home', 'gps', 'yes', 'search-home'];
 function decidePick(state, source, code) {
-  const isSido = (c) => String(c).length === 2;
   if (SAVE_SOURCES.includes(source)) return { home: code, view: null, save: true };
-  if (state.home && isSido(state.home) && !isSido(code) && code.startsWith(state.home)) return { home: code, view: null, save: true };
   return { home: state.home, view: code === state.home ? null : code, save: false };
 }
 if (typeof module !== 'undefined') module.exports = { makeSearch, sumOf, decidePick };

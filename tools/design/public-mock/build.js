@@ -16,7 +16,7 @@ for (const mode of ['demo', 'ops']) {
     '/*__DATA__*/': JSON.stringify(D).replace(/</g, '\\u003c'),
     '/*__MODE__*/': mode,
     '/*LEDGER_DOT*/': dot(D.meta.ledgerRef), '/*LEDGER_REF*/': dot(D.meta.ledgerRef),
-    '/*CAL_RANGE*/': `${dot(D.meta.calFrom)}~${dot(D.meta.calTo)}`, '/*CAL_REF*/': dot(D.meta.calRef), '/*TODAY*/': dot(D.meta.today),
+    '/*CAL_RANGE*/': `${dot(D.meta.calFrom)}~${dot(D.meta.calTo)}`, '/*CAL_REF*/': dot(D.meta.calRef),
   };
   for (const [k, v] of Object.entries(rep)) { if (!h.includes(k)) throw new Error('missing ' + k); h = h.split(k).join(v); }
   if (mode === 'ops') {

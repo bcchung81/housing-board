@@ -2,7 +2,7 @@
 const fs = require('fs'), assert = require('assert'), vm = require('vm');
 const h = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'docs', 'design', '대국민-모드-시안.html'), 'utf8');
 const code = [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((c) => c.includes('function makeSearch'));
-const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.yrLine = yrLine; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.arcsOf = arcsOf; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.statusCounts = statusCounts; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome;', ctx);
+const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.yrLine = yrLine; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.arcsOf = arcsOf; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.statusCounts = statusCounts; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome; this.ro = ro; this.daysBetween = daysBetween; this.ddayText = ddayText;', ctx);
 const S = ctx.makeSearch(ctx.D);
 const labels = (r) => r.regions.items.map((x) => x.label);
 let pass = 0; const t = (name, fn) => { try { fn(); pass++; console.log('PASS', name); } catch (e) { console.log('FAIL', name, e.message); } };
@@ -21,7 +21,7 @@ t("'부산' 검색 숫자 = 상황판 부산 큰 숫자(sumOf ①~④), 모든 �
   const bad = S.regions.filter((r) => { const b = ctx.sumOf(ctx.D, r.codes); return b.u !== r.units || b.n !== r.projects; }).map((r) => r.label);
   assert.strictEqual(bad.length, 0, bad.slice(0, 5).join(','));
 });
-t('보기와 내 동네 분리: 면·카드·이웃·검색은 저장하지 않고, [내 동네로 정하기]·[현 위치]·검색 내 동네로·[맞아요] 뒤 시군구만 저장한다', () => {
+t('보기와 내 동네 분리: 면·순위·카드·이웃·검색은 저장하지 않고([맞아요] 뒤에도), [내 동네로 정하기]·[현 위치]·검색 내 동네로·[맞아요]만 저장한다', () => {
   const mem = { myArea: '41360' }, store = { get: (k) => mem[k] ?? null, set: (k, v) => { mem[k] = v; } };
   let st = { home: store.get('myArea'), view: null };
   const act = (src, code) => { const r = ctx.decidePick(st, src, code); st = { home: r.home, view: r.view }; if (r.save) store.set('myArea', r.home); return r; };
@@ -31,8 +31,10 @@ t('보기와 내 동네 분리: 면·카드·이웃·검색은 저장하지 않�
   act('gps', '41360'); assert.strictEqual(mem.myArea, '41360');
   act('search-home', '28245'); assert.strictEqual(mem.myArea, '28245');
   st = { home: null, view: null }; act('face', '41280'); assert.strictEqual(mem.myArea, '28245', '첫 방문 둘러보기는 저장 안 함');
-  act('yes', '41'); assert.strictEqual(mem.myArea, '41'); act('face', '41280'); assert.strictEqual(mem.myArea, '41280', '[맞아요] 뒤 시군구 선택은 저장');
-  act('search', '26'); assert.strictEqual(mem.myArea, '41280', '다른 시도 보기는 저장 안 함');
+  act('yes', '41'); assert.strictEqual(mem.myArea, '41'); act('face', '41280'); assert.strictEqual(mem.myArea, '41', '[맞아요] 뒤에도 지도 누름은 보기만'); assert.strictEqual(st.view, '41280');
+  for (const src of ['face', 'rank', 'search']) { act(src, '41130'); assert.strictEqual(mem.myArea, '41', src + ' 누름 뒤 myArea 그대로'); }
+  act('set-home', st.view); assert.strictEqual(mem.myArea, '41130', '시군구를 고른 뒤 [내 동네로 정하기]로 저장');
+  act('search', '26'); assert.strictEqual(mem.myArea, '41130', '다른 시도 보기는 저장 안 함');
 });
 t('숫자 정의 하나(v7): 요약 합계 = 지도 면 합 = 많은 곳 순위 숫자 — 경기·서울·인천·부산', () => {
   const D = ctx.D;
@@ -189,9 +191,31 @@ t('큰 지도 주소: lib/board/map-href.ts 와 같은 결과(사업 > 시군구
   const opts = [{ kind: 'region' }, { kind: 'home' }, { kind: 'map' }, { kind: 'project' }, { kind: 'map' }, { kind: 'region' }];
   assert.strictEqual(ctx.stepOpt(opts, 0, 1), 3, '↓ 는 내 동네로·지도 건너뜀'); assert.strictEqual(ctx.stepOpt(opts, 2, 1), 3); assert.strictEqual(ctx.stepOpt(opts, 4, 1), 5); assert.strictEqual(ctx.stepOpt(opts, 3, -1), 0);
 });
-t("보기 대상 토글 이름은 '일반사용자'·'정책담당자' (옛 '국민'·'담당자' 버튼 글자 없음)", () => {
-  assert(/data-aud="public"[^>]*><span>일반사용자<\/span>/.test(h)); assert(/data-aud="admin"[^>]*><span>정책담당자<\/span>/.test(h));
+t("보기 대상 이름은 '일반사용자'·'정책담당자' (옛 '국민'·'담당자' 버튼 글자 없음)", () => {
+  assert(/class="aud-l l-pub" data-aud="public"[^>]*>일반사용자<\/span>/.test(h)); assert(/class="aud-l l-adm" data-aud="admin"[^>]*>정책담당자<\/span>/.test(h));
   assert(!h.includes('>국민<') && !h.includes('>담당자<'));
+});
+t('머리 줄 스위치(header-unify-spec 1절): role="switch" 두 개(보기 대상·테마), aria-checked·이름, 트랙 48×28·손잡이 22px·누름 44px 이상, lucide 아이콘', () => {
+  const sw = [...h.matchAll(/<button[^>]*role="switch"[^>]*>/g)].map((m) => m[0]);
+  assert.strictEqual(sw.length, 2, sw.join('\n'));
+  assert(sw.some((b) => /id="aud-sw"/.test(b) && /aria-checked="false"/.test(b) && /aria-label="정책담당자 화면"/.test(b)));
+  assert(sw.some((b) => /id="theme"/.test(b) && /aria-checked="false"/.test(b) && /aria-label="다크 모드"/.test(b)));
+  assert(/\.sw \{[^}]*width: 48px; height: 28px;/.test(h)); assert(/\.sw \.knob \{[^}]*width: 22px; height: 22px;/.test(h));
+  const m = h.match(/\.sw::before \{[^}]*top: -(\d+)px; bottom: -(\d+)px;/); assert(m && 28 - 2 + +m[1] + +m[2] >= 44, '누름 칸');
+  for (const id of ['i-user', 'i-brief', 'i-sun', 'i-moon']) assert(h.includes(`<symbol id="${id}"`), id);
+  assert(!/aria-pressed="(true|false)"><span>(일반사용자|정책담당자)/.test(h), '옛 분절 단추');
+});
+t('머리 줄 치수(header-unify-spec 3절): 높이 64px(앱 TopNav 처럼 900 이하 48px), 안쪽 폭 100vw 기준 1440px·좌우 28px(1600 이상 1760px), 900 이하 좌우 12px', () => {
+  assert(/\.top-in \{[^}]*width: min\(1440px, 100vw\); margin-left: max\(0px, calc\(50vw - 720px\)\); height: 64px;[^}]*padding: 0 28px;/.test(h));
+  assert(/min-width: 1600px\) \{ \.top-in \{ width: min\(1760px, 100vw\); margin-left: max\(0px, calc\(50vw - 880px\)\);/.test(h));
+  assert(/max-width: 900px\) \{\s*\.top-in \{ height: 48px; width: auto; margin-left: 0; padding: 0 12px; \}/.test(h));
+  assert(/\.menu a \{[^}]*height: 64px;/.test(h));
+});
+t('카드·칸 제목(header-unify-spec 4절): 지도 카드·칸 제목은 Do Hyeon 20px(600 미만 18px), ⓘ 에 정책담당자 화면과 같은 숫자 한 줄', () => {
+  assert(/\.mapc-h h2 \{[^}]*font-size: 20px; line-height: 1\.25;/.test(h)); assert(!/\.mapc-h h2 \{[^}]*font-family: var\(--font-sans\)/.test(h));
+  assert(/\.cell-h h2 \{[^}]*font-size: 20px;/.test(h));
+  assert(/^h1, h2, h3, h4 \{ font-family: var\(--font-display\)/m.test(h));
+  assert(h.includes('정책담당자 화면의 ①계획~④모집과 같은 숫자예요'));
 });
 t('.sr 규칙은 한 번만 정의되고 li 에 class="sr" 를 쓰지 않는다(시트 줄은 sli)', () => {
   assert.strictEqual((h.match(/^\.sr \{/gm) || []).length, 1);
@@ -201,5 +225,26 @@ t("운영판 결과 파일의 메뉴 '종합상황판' href 는 /citizen", () =>
   const o = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'assets', 'citizen', 'index.html'), 'utf8');
   assert(/routes = \['\/citizen', /.test(o)); assert(o.includes('일반사용자'));
 });
-const N = 28; console.log(`${pass}/${N} 통과`);
+t('지도 누름은 저장하지 않는다: [맞아요]로 시도(41)만 정한 뒤 지도 면·순위·검색 지역을 눌러도 myArea 는 41 그대로, 보기만 바뀐다', () => {
+  for (const src of ['face', 'rank', 'search', 'near', 'card']) { const r = ctx.decidePick({ home: '41', view: null }, src, '41130'); assert(!r.save, src); assert.strictEqual(r.home, '41'); assert.strictEqual(r.view, '41130'); }
+  const r = ctx.decidePick({ home: '41360', view: null }, 'face', '41130'); assert(!r.save && r.home === '41360');
+});
+t("날짜 칩: 날짜까지 모르는 일정('2026-10'·'2027')은 칩 없이 쓰고, 화면에 '날짜 미정' 칩이 없다", () => {
+  assert.strictEqual(ctx.ddayText('2026-10', '2026-10-17'), ''); assert.strictEqual(ctx.ddayText('2027', '2026-10-17'), '');
+  assert(!h.includes('날짜 미정'), '날짜 미정 글자');
+});
+t('남은 날: 자정 기준 정수 — 10/17 에서 10/30 은 13일, 같은 날은 오늘, 지난 날·90일 넘으면 비움', () => {
+  assert.strictEqual(ctx.daysBetween('2026-10-17', '2026-10-30'), 13); assert.strictEqual(ctx.ddayText('2026-10-30', '2026-10-17'), '13일 남음');
+  assert.strictEqual(ctx.ddayText('2026-10-17', '2026-10-17'), '오늘'); assert.strictEqual(ctx.ddayText('2026-10-16', '2026-10-17'), ''); assert.strictEqual(ctx.ddayText('2027-03-01', '2026-10-17'), '');
+  assert.strictEqual(ctx.daysBetween('2027-03-27', '2027-03-29'), 2, '서머타임 없는 자정 차');
+});
+t("조사: 숫자·영문 뒤는 읽는 소리로 — 'S-12로'·'A-3으로'·'B10으로'·'고양시로'·'서울 강남으로', 'S-10을'·'S-12를'", () => {
+  for (const [w, x] of [['S-12', 'S-12로'], ['A-3', 'A-3으로'], ['B10', 'B10으로'], ['고양시', '고양시로'], ['서울 강남', '서울 강남으로'], ['남양주 A-17', '남양주 A-17로'], ['계양구', '계양구로'], ['서울', '서울로']]) assert.strictEqual(ctx.ro(w), x);
+  assert.strictEqual(ctx.eul('S-10'), 'S-10을'); assert.strictEqual(ctx.eul('S-12'), 'S-12를'); assert.strictEqual(ctx.eul('고양시'), '고양시를');
+  assert(!/'으로 찾아|}'으로/.test(h), "'…'으로 고정 조사");
+});
+t('시트 종류 칩: 0건 칩은 그리지 않는다(모집 공고 0 같은 칩 없음)', () => {
+  assert(/chips\.filter\(\(\[c\]\) => cnt\(c\)\)\.map/.test(h));
+});
+const N = 36; console.log(`${pass}/${N} 통과`);
 process.exit(pass === N ? 0 : 1);
