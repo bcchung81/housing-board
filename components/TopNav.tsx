@@ -15,6 +15,7 @@ import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { cn } from 'cn';
 import { MENU, activeMenuId } from '../lib/shell/menu';
+import { displayAudience } from '../lib/shell/theme';
 import { Switch } from './ui/switch';
 
 type Audience = 'public' | 'admin';
@@ -28,10 +29,15 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);          // 900px 이하의 펼침 메뉴
   const [dark, setDark] = useState(false);
   const [aud, setAud] = useState<Audience | null>(null);
+  useEffect(() => { setDark(document.documentElement.classList.contains('dark')); }, []);
+  /* 표시 관점 = 경로 규칙(정책담당자 전용 화면은 admin, /map 은 저장값). 첫 그림 전에는 AUDIENCE_INIT 이, 앱 안 이동으로 경로가 바뀌면 여기서 다시 정한다 */
   useEffect(() => {
-    setDark(document.documentElement.classList.contains('dark'));
-    setAud(document.documentElement.dataset.aud === 'admin' ? 'admin' : 'public');
-  }, []);
+    let saved: Audience = 'public';
+    try { saved = localStorage.getItem('audience') === 'admin' ? 'admin' : 'public'; } catch (_) { /* 저장소를 못 쓰면 일반사용자 */ }
+    const next = displayAudience(pathname, saved);
+    document.documentElement.dataset.aud = next;
+    setAud(next);
+  }, [pathname]);
   useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
     if (!open) return;
@@ -48,7 +54,7 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
     window.dispatchEvent(new Event('housing:theme-change'));
   };
 
-  /* 보기 대상을 바꾸면 저장하고 그 관점의 첫 화면으로 간다(같은 관점이면 그대로) */
+  /* 보기 대상을 바꾸면 저장하고 그 관점의 첫 화면으로 간다(같은 관점이면 그대로). 정책담당자 전용 화면은 늘 정책담당자로 보이므로 끄는 동작만 있다 */
   const chooseAudience = (next: Audience) => {
     if (next === aud) return;
     setAud(next);
@@ -88,24 +94,25 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
         <nav id="main-menu" aria-label="주 메뉴" className="mx-auto mobile:hidden"><ul className="m-0 flex list-none p-0">{items}</ul></nav>
         <div className="flex items-center mobile:ml-auto">
           <div className="flex items-center gap-3">
-            {/* 보기 대상 스위치: 꺼짐 = 일반사용자(사람), 켜짐 = 정책담당자(서류가방). 600px 이상은 양옆 글자(지금 관점 진하게, 눌러도 바뀐다),
-                600px 미만은 지금 관점 글자 하나만 스위치 왼쪽에. 이름은 스위치가 가지므로 글자는 읽기 도구에서 숨긴다 */}
-            <div className="flex items-center gap-2 font-sans text-[14px] max-[599px]:text-[13px]" title="일반사용자 ↔ 정책담당자 화면 바꾸기">
-              <span aria-hidden="true" className="cursor-pointer whitespace-nowrap font-bold text-foreground [html[data-aud=admin]_&]:font-normal [html[data-aud=admin]_&]:text-muted-foreground max-[599px]:[html[data-aud=admin]_&]:hidden" onClick={() => chooseAudience('public')}>일반사용자</span>
+            {/* 보기 대상 스위치: 꺼짐 = 일반사용자(사람), 켜짐 = 정책담당자(서류가방). 양옆 글자는 모든 폭에서 14px 로 둘 다 보인다(지금 관점 진하게, 눌러도 바뀐다). 이름은 스위치가 가지므로 글자는 읽기 도구에서 숨긴다 */}
+            <div className="flex items-center gap-2 font-sans text-[14px]" title="일반사용자 ↔ 정책담당자 화면 바꾸기">
+              <span aria-hidden="true" className="cursor-pointer whitespace-nowrap font-bold text-foreground [html[data-aud=admin]_&]:font-normal [html[data-aud=admin]_&]:text-muted-foreground" onClick={() => chooseAudience('public')}>일반사용자</span>
               <Switch on="admin" checked={aud === 'admin'} onCheckedChange={(v) => chooseAudience(v ? 'admin' : 'public')} aria-label="정책담당자 화면" offIcon={<User aria-hidden="true" />} onIcon={<BriefcaseBusiness aria-hidden="true" />} />
-              <span aria-hidden="true" className="cursor-pointer whitespace-nowrap text-muted-foreground [html[data-aud=admin]_&]:font-bold [html[data-aud=admin]_&]:text-foreground max-[599px]:-order-1 max-[599px]:hidden max-[599px]:[html[data-aud=admin]_&]:inline" onClick={() => chooseAudience('admin')}>정책담당자</span>
+              <span aria-hidden="true" className="cursor-pointer whitespace-nowrap text-muted-foreground [html[data-aud=admin]_&]:font-bold [html[data-aud=admin]_&]:text-foreground" onClick={() => chooseAudience('admin')}>정책담당자</span>
             </div>
-            {/* 보기 대상 묶음과 테마 스위치를 가르는 세로 구분선(1×20px, 좌우 gap-3 12px) */}
-            <span aria-hidden="true" data-role="switch-divider" className="h-5 w-px shrink-0 bg-border" />
+            {/* 보기 대상 묶음과 테마 스위치를 가르는 세로 구분선(1×20px, 좌우 gap-3 12px). 599px 이하는 없고 테마 스위치도 펼침 메뉴 맨 아래 줄로 옮긴다 */}
+            <span aria-hidden="true" data-role="switch-divider" className="h-5 w-px shrink-0 bg-border max-[599px]:hidden" />
             {/* 테마 스위치: 꺼짐(라이트) = 해, 켜짐(다크) = 달 */}
-            <Switch on="dark" checked={dark} onCheckedChange={toggleTheme} aria-label="다크 모드" title="다크 모드 전환" offIcon={<Sun aria-hidden="true" />} onIcon={<Moon aria-hidden="true" />} />
+            <Switch on="dark" checked={dark} onCheckedChange={toggleTheme} aria-label="다크 모드" title="다크 모드 전환" className="max-[599px]:hidden" offIcon={<Sun aria-hidden="true" />} onIcon={<Moon aria-hidden="true" />} />
           </div>
           <button type="button" className="ml-1 hidden size-9 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-foreground hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary mobile:flex" aria-expanded={open} aria-controls="main-menu-list" aria-label="메뉴" onClick={() => setOpen(!open)}>
             {open ? <X className="size-[20px]" aria-hidden="true" /> : <Menu className="size-[20px]" aria-hidden="true" />}
           </button>
         </div>
       </div>
-      {open ? <nav id="main-menu-list" aria-label="주 메뉴" className="hidden border-t border-border bg-card shadow-[var(--shadow-pop)] mobile:block"><ul className="m-0 flex list-none flex-col p-0">{items}</ul></nav> : null}
+      {open ? <nav id="main-menu-list" aria-label="주 메뉴" className="hidden border-t border-border bg-card shadow-[var(--shadow-pop)] mobile:block"><ul className="m-0 flex list-none flex-col p-0">{items}</ul>
+        {/* 599px 이하: 테마 스위치는 펼침 메뉴 맨 아래 줄 */}
+        <div className="hidden h-11 items-center justify-between border-t border-border px-4 font-display text-[14px] max-[599px]:flex"><span aria-hidden="true">다크 모드</span><Switch on="dark" checked={dark} onCheckedChange={toggleTheme} aria-label="다크 모드" offIcon={<Sun aria-hidden="true" />} onIcon={<Moon aria-hidden="true" />} /></div></nav> : null}
     </header>
   );
 }

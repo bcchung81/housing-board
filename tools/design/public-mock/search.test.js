@@ -2,7 +2,7 @@
 const fs = require('fs'), assert = require('assert'), vm = require('vm');
 const h = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'docs', 'design', '대국민-모드-시안.html'), 'utf8');
 const code = [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((c) => c.includes('function makeSearch'));
-const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.yrLine = yrLine; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.arcsOf = arcsOf; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.statusCounts = statusCounts; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome; this.ro = ro; this.daysBetween = daysBetween; this.ddayText = ddayText; this.inYear = inYear; this.yearBucket = yearBucket; this.noticeName = noticeName; this.fullDate = fullDate; this.blockOf = blockOf; this.inLabel = inLabel; this.distinctNames = distinctNames; this.geoSido = geoSido; this.searchProjects = searchProjects; this.sp = sp;', ctx);
+const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.yrLine = yrLine; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.arcsOf = arcsOf; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.statusCounts = statusCounts; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome; this.ro = ro; this.daysBetween = daysBetween; this.ddayText = ddayText; this.inYear = inYear; this.yearBucket = yearBucket; this.noticeName = noticeName; this.fullDate = fullDate; this.blockOf = blockOf; this.inLabel = inLabel; this.distinctNames = distinctNames; this.geoSido = geoSido; this.searchProjects = searchProjects; this.sp = sp; this.addrArea = addrArea; this.inDate = inDate; this.inCmp = inCmp; this.dayKey = dayKey;', ctx);
 const S = ctx.makeSearch(ctx.D);
 const labels = (r) => r.regions.items.map((x) => x.label);
 let pass = 0; const t = (name, fn) => { try { fn(); pass++; console.log('PASS', name); } catch (e) { console.log('FAIL', name, e.message); } };
@@ -195,9 +195,11 @@ t("보기 대상 이름은 '일반사용자'·'정책담당자' (옛 '국민'·'
   assert(/class="aud-l l-pub" data-aud="public"[^>]*>일반사용자<\/span>/.test(h)); assert(/class="aud-l l-adm" data-aud="admin"[^>]*>정책담당자<\/span>/.test(h));
   assert(!h.includes('>국민<') && !h.includes('>담당자<'));
 });
-t('머리 줄 스위치(header-unify-spec 1절): role="switch" 두 개(보기 대상·테마), aria-checked·이름, 트랙 48×28·손잡이 22px·누름 44px 이상, lucide 아이콘', () => {
+t('머리 줄 스위치(header-unify-spec 1절): role="switch" 보기 대상 하나·테마 둘(머리 줄 / 599 이하 메뉴 펼침, 한 번에 하나만 보임), aria-checked·이름, 트랙 48×28·손잡이 22px·누름 44px 이상, lucide 아이콘', () => {
   const sw = [...h.matchAll(/<button[^>]*role="switch"[^>]*>/g)].map((m) => m[0]);
-  assert.strictEqual(sw.length, 2, sw.join('\n'));
+  assert.strictEqual(sw.length, 3, sw.join('\n'));
+  assert(sw.some((b) => /id="theme-m"/.test(b) && /class="sw sw-theme"/.test(b) && /aria-label="다크 모드"/.test(b)), '메뉴 펼침 테마 스위치');
+  assert(/@media \(max-width: 599px\) \{[^}]*\}\s*\.tools > \.sw-theme, \.tsep \{ display: none; \}/.test(h), '599 이하 머리 줄 테마 스위치·구분선 숨김');
   assert(sw.some((b) => /id="aud-sw"/.test(b) && /aria-checked="false"/.test(b) && /aria-label="정책담당자 화면"/.test(b)));
   assert(sw.some((b) => /id="theme"/.test(b) && /aria-checked="false"/.test(b) && /aria-label="다크 모드"/.test(b)));
   assert(/\.sw \{[^}]*width: 48px; height: 28px;/.test(h)); assert(/\.sw \.knob \{[^}]*width: 22px; height: 22px;/.test(h));
@@ -294,7 +296,7 @@ t('r9-10 보이는 h1 = 요약 문장(#sum-h), 담당자 판 제목은 h2, 머�
   const tpl = fs.readFileSync(require('path').join(__dirname, 'template.html'), 'utf8');
   assert(/<h1 class="sum-h" id="sum-h">/.test(tpl) && /<h1 class="sum-h zero" id="sum-h">/.test(tpl));
   assert(tpl.includes('<header class="bhead"><h2>') && !/<h1>/.test(tpl));
-  assert(/<\/div>\s*<span class="tsep" aria-hidden="true"><\/span>\s*<button type="button" class="sw" id="theme"/.test(tpl));
+  assert(/<\/div>\s*<span class="tsep" aria-hidden="true"><\/span>\s*<button type="button" class="sw sw-theme" id="theme"/.test(tpl));
   assert(/\.tsep \{ flex: none; width: 1px; height: 20px; background: var\(--border\); \}/.test(tpl));
 });
 t('r9 상위 10 숫자 표기(메인 결정): 상위 10(휴대폰 5)은 반드시 이름 / 숫자 — 자리가 없으면 카드색 알약 + 닻 점 지시선, 실제 상자 검사에서도 빼지 않는다', () => {
@@ -382,5 +384,65 @@ t('r10b 이름·블록 표기도 같은 서로 다른 사업: 시군구가 다�
   assert.deepStrictEqual(Object.keys(nm).length, new Set(items.map((x) => x.id)).size, 'sub 는 열거되지 않는다');
   assert(TPL.includes('<small class="nsub">'));
 });
-const N = 55; console.log(`${pass}/${N} 통과`);
+t("r11-1 주소·장소 결과 → 지역(지도 면 단위): 41360112xx → 남양주 41360, PNU 도 앞 5자리, 경기 구는 시(41111 수원 장안구 → 41110 · 41131 성남 수정구 → 41130), 그 밖 구가 있는 시는 시, 모르면 null", () => {
+  const A = (c) => ctx.addrArea(S, c);
+  assert.strictEqual(A('4136011200'), '41360'); assert.strictEqual(A('4136011299'), '41360'); assert.strictEqual(A('4136011200160840000'), '41360'); assert.strictEqual(A('41360'), '41360');
+  assert.strictEqual(A('4111112900'), '41110'); assert.strictEqual(A('4113110100'), '41130'); assert.strictEqual(A('4128110100'), '41280');
+  assert.strictEqual(A('5211110100'), S.regionOf['52111'].parent || '52111'); assert.strictEqual(A('2632010100'), '26320');
+  assert.strictEqual(A('99999'), null); assert.strictEqual(A(''), null); assert.strictEqual(A('41'), null);
+  for (const k of ['41360', '41110', '41130', '41280']) assert.strictEqual(ctx.unitKey ? ctx.unitKey(k) : k, k);
+  /* 화면: 같은 시군구가 여러 줄이면 지역 묶음 맨 위 한 줄('다산동 → 남양주시'), 주소 줄은 줄 누름 = 보기 · [지도] = 큰 지도에서 열기 */
+  assert(TPL.includes("merged = Object.keys(aCnt).filter((k) => aCnt[k] > 1 && !inR.has(k))"));
+  assert(TPL.includes("`${esc(q)} → <b>${esc(nameOf(x))}</b>`"));
+  assert(TPL.includes("noHome: inR.has(k) || merged.includes(k)") && TPL.includes("큰 지도에서 ${o.href ? '열기' : '보기'}"));
+  const dsn = { '4136011200': 1, '4148012100': 1, '4136011200160840000': 1, '4136011200134730000': 1, '4136011200144380000': 1 };
+  const m = TPL.match(/'다산동': \[([\s\S]*?)\],\n  '별내'/); assert(m, '데모 흉내 응답');
+  const codes = [...m[1].matchAll(/code: '(\d+)'/g)].map((x) => x[1]); assert.deepStrictEqual(codes.sort(), Object.keys(dsn).sort());
+  const keys = codes.map(A); assert.strictEqual(keys.filter((k) => k === '41360').length, 4); assert(keys.includes('41480'));
+});
+t("r11-2 사업 시트 순서 = 줄에 보이는 날짜(입주 → 준공 → 다음 일정) 가까운 순, 해 묶음 안에서도 월·일 순, 머리 글자 '들어올 날 가까운 순'", () => {
+  const D = ctx.D;
+  for (const pre of ['41360', '4128', '41', '11', '26']) {
+    const rows = Object.entries(D.prj).filter(([c]) => c.startsWith(pre)).flatMap(([c, rs]) => rs.filter((p) => ctx.OF_STAGE[p[2]] <= 3).map((p) => ({ d: ctx.inDate(D, c, p), when: p[5], u: p[3], il: ctx.inLabel(D, c, p), y: ctx.inYear(D, c, p) })));
+    rows.sort(ctx.inCmp);
+    for (let i = 1; i < rows.length; i++) assert(ctx.dayKey(rows[i - 1].d) <= ctx.dayKey(rows[i].d), pre + ' ' + rows[i - 1].il + ' > ' + rows[i].il);
+    for (const x of rows) assert.strictEqual(x.y, x.d.slice(0, 4)); 
+    const lab = rows.filter((x) => x.d).map((x) => x.il); assert(lab.every((l) => /^(입주|준공) /.test(l)));
+  }
+  assert.strictEqual(ctx.dayKey('2027-08'), '2027-08-32'); assert(ctx.dayKey('2027-08-15') < ctx.dayKey('2027-08')); assert(ctx.dayKey('2027-12') < ctx.dayKey('2027')); assert(ctx.dayKey('2027') < ctx.dayKey(''));
+  assert(TPL.includes('return out.sort(inCmp);') && TPL.includes('.sort(inCmp) }));') && TPL.includes("' · 들어올 날 가까운 순'") && !TPL.includes('다음 일정이 가까운 순'));
+});
+t("r11-3 '다가오는 일정' 칸은 요약 '가장 가까운 일정'(upcoming 첫째)을 빼고 그다음부터, 첫 줄 위 '그다음 일정', 휴대폰 한 줄 요약도 칸 첫 줄(evc[0]) — 시트는 처음부터", () => {
+  assert(TPL.includes("const skip = !fb && evs.length ? 1 : 0, evc = evs.slice(skip);"));
+  assert(TPL.includes("<p class=\"ev-nx\">그다음 일정</p>") && TPL.includes("const e0 = evc[0];") && TPL.includes("${skip ? '그다음 일정은 아직 없어요' : '정해진 일정이 아직 없어요'}"));
+  assert(TPL.includes("const lead = upcoming(r.codes)[0]") || TPL.includes("lead = upcoming(r.codes)[0]"));
+  assert(TPL.includes("all('ev', evs.length, '일정')"), '전체 n = 처음부터 전부');
+});
+t("r11-5 [다른 동네]·[바꾸기]: 빈 입력 대신 목록을 바로 펼친다 — 안내 '초성(ㄱㅇ)이나 동 이름으로도 찾아요', 수도권 많은 곳 8 + 시도 16, aria-expanded=true", () => {
+  assert(TPL.includes("if (t.dataset.act === 'pick') { S.q = ''; input.value = ''; S.sidos = false; S.pickAll = true; S.open = true;"));
+  const br = TPL.slice(TPL.indexOf('if (S.open && !q && S.pickAll)'), TPL.indexOf('if (S.open && !q && S.sidos)'));
+  assert(br.includes('초성(ㄱㅇ)이나 동 이름으로도 찾아요') && br.includes("input.setAttribute('aria-expanded', 'true')") && br.includes('regionOpt(x, opts'));
+  const D = ctx.D, top = ['11', '28', '41'].flatMap((sd) => ctx.unitsFor(D, S, sd)).filter((x) => x.u > 0 && S.regionOf[x.key]).sort((a, b) => b.u - a.u).slice(0, 8);
+  assert.strictEqual(top.length, 8); assert.strictEqual(S.regions.filter((x) => x.kind === 'sido').length, 16);
+  console.log('  많은 곳 8:', top.map((x) => S.regionOf[x.key].label).join(' · '));
+});
+t("r11-6 범례 '620호 미만'(~ 없음), 지역 줄은 늘 [내 동네로](시도 포함), 같은 이름 시군구는 시도 짧은 이름('부산 북구 보는 중'), ⓘ 16px·제곱근 없음·①② 는 정책담당자 줄에만, 메뉴 Esc", () => {
+  assert(TPL.includes('`${fmt(C.br[0])}<span class="lg-u">호</span> 미만`') && !TPL.includes('`~${fmt(C.br[0])}'));
+  assert(!/if \(x\.kind !== 'sgg'\)/.test(TPL.slice(TPL.indexOf('function regionOpt'), TPL.indexOf('function renderAC'))), '시도 줄도 내 동네로');
+  assert.strictEqual(S.regionOf['26320'].label, '부산 북구'); assert.strictEqual(S.regionOf['27230'].label, '대구 북구'); assert.strictEqual(S.regionOf['41360'].label, '남양주시'); assert.strictEqual(S.regionOf['41281']?.label ?? '고양시 덕양구', '고양시 덕양구');
+  assert(TPL.includes('const nameOf = (r) => r.label;') && TPL.includes('${esc(nameOf(v))}</b> 보는 중'));
+  assert(/\.tip \{[^}]*font-size: 16px;/.test(TPL));
+  const tips = [...TPL.matchAll(/<div class="tip" id="tip-(head|map|when|src)" popover>([\s\S]*?)<\/div>/g)].map((m) => m[2]);
+  assert.strictEqual(tips.length, 4); assert(!tips.join('').includes('제곱근')); assert(TPL.includes('많을수록 높게, 차이가 너무 커 보이지 않게 줄였어요'));
+  const circled = tips.join('').split('</p>').filter((p) => /[①②③④]/.test(p)); assert.strictEqual(circled.length, 1, circled.join('|')); assert(circled[0].includes('정책담당자 화면'));
+  assert(TPL.includes("if (e.key === 'Escape' && $('#mnav').classList.contains('open')"));
+  assert(TPL.includes('data-act="sethome"${isS ?'), '시도를 볼 때도 내 동네로 정하기');
+});
+t("r11-6 지도 '사업 없음'(ch0)과 가장 옅은 칸(ch1) 대비 1.5 이상 — 라이트·다크", () => {
+  const css = TPL.slice(TPL.indexOf('<style>'), TPL.indexOf('</style>')), lum = (x) => { const c = [1, 3, 5].map((i) => parseInt(x.slice(i, i + 2), 16) / 255).map((v) => (v <= .03928 ? v / 12.92 : ((v + .055) / 1.055) ** 2.4)); return .2126 * c[0] + .7152 * c[1] + .0722 * c[2]; };
+  const cr = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + .05) / (Math.min(x, y) + .05); };
+  const light = css.slice(css.indexOf(':root {'), css.indexOf('.dark {')), dark = css.slice(css.indexOf('.dark {'), css.indexOf('* { box-sizing'));
+  for (const [nm, blk] of [['light', light], ['dark', dark]]) { const g = (k) => blk.match(new RegExp(`--${k}: (#[0-9A-Fa-f]{6})`))[1]; const r = cr(g('ch0'), g('ch1')); assert(r >= 1.5, nm + ' ' + r.toFixed(2)); console.log(`  ${nm} ch0/ch1 ${r.toFixed(2)} · ch1/ch2 ${cr(g('ch1'), g('ch2')).toFixed(2)}`); }
+});
+const N = 61; console.log(`${pass}/${N} 통과`);
 process.exit(pass === N ? 0 : 1);

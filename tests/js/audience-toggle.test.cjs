@@ -48,9 +48,12 @@ test('TopNav: 보기 대상 스위치(사람/서류가방)와 테마 스위치(�
   assert.ok(a > 0 && a < t && t < m, '보기 대상 → 테마 → 메뉴 단추');
   assert.match(nav, /<div className="flex items-center gap-3">/, '스위치끼리 12px');
   assert.match(nav, /className="ml-1 hidden size-9/, '메뉴 단추 앞 4px');
-  /* 600px 이상 양옆 글자(지금 관점 진하게), 600px 미만 지금 관점 글자 하나만 스위치 왼쪽 */
-  assert.match(nav, /font-bold text-foreground \[html\[data-aud=admin\]_&\]:font-normal[^"]*max-\[599px\]:\[html\[data-aud=admin\]_&\]:hidden" onClick=\{\(\) => chooseAudience\('public'\)\}>일반사용자</);
-  assert.match(nav, /\[html\[data-aud=admin\]_&\]:font-bold[^"]*max-\[599px\]:-order-1 max-\[599px\]:hidden max-\[599px\]:\[html\[data-aud=admin\]_&\]:inline" onClick=\{\(\) => chooseAudience\('admin'\)\}>정책담당자</);
+  /* 양옆 글자는 모든 폭에서 14px 로 둘 다 보인다(지금 관점 진하게) */
+  assert.match(nav, /font-sans text-\[14px\]" title=/);
+  assert.doesNotMatch(nav, /text-\[13px\]/);
+  assert.match(nav, /font-bold text-foreground \[html\[data-aud=admin\]_&\]:font-normal[^"]*" onClick=\{\(\) => chooseAudience\('public'\)\}>일반사용자</);
+  assert.match(nav, /\[html\[data-aud=admin\]_&\]:font-bold[^"]*" onClick=\{\(\) => chooseAudience\('admin'\)\}>정책담당자</);
+  assert.doesNotMatch(nav.slice(nav.indexOf('onClick={() => chooseAudience(\'public\')}')-200, nav.indexOf('>정책담당자</span>')), /max-\[599px\]/);
 });
 
 test("TopNav: 로고·'종합상황판' 은 관점 첫 화면(일반사용자 /citizen, 정책담당자 '/'), 스위치를 바꾸면 저장하고 그 첫 화면으로", () => {
@@ -58,7 +61,7 @@ test("TopNav: 로고·'종합상황판' 은 관점 첫 화면(일반사용자 /c
   assert.match(nav, /const homeOf = \(a: Audience \| null\) => \(a === 'public' \? '\/citizen' : '\/'\);/);
   assert.match(nav, /const href = m\.id === 'home' \? home : m\.href;/);
   assert.match(nav, /href=\{home\} aria-label="주택파동 종합상황판 처음으로"/);
-  assert.match(nav, /setAud\(document\.documentElement\.dataset\.aud === 'admin' \? 'admin' : 'public'\)/, '수화 뒤 html[data-aud] 로 맞춘다');
+  assert.match(nav, /setAud\(next\)/, '수화 뒤 경로 규칙으로 맞춘다');
   assert.match(nav, /localStorage\.setItem\('audience', next\)/);
   assert.match(nav, /document\.documentElement\.dataset\.aud = next;/);
   assert.match(nav, /window\.location\.assign\(homeOf\(next\)\)/);
@@ -81,10 +84,14 @@ function run(pathname, saved, throws = false) {
 
 test("AUDIENCE_INIT: html[data-aud] 를 정한다(없음·public → 'public', admin → 'admin')", () => {
   assert.equal(run('/map', null).aud, 'public');
-  assert.equal(run('/projects', 'public').aud, 'public');
+  assert.equal(run('/projects', 'public').aud, 'admin', '정책담당자 전용 화면은 저장값과 상관없이 admin');
+  for (const p of ['/', '/region', '/sources', '/month/2026-09', '/agency/lh']) assert.equal(run(p, 'public').aud, 'admin', p);
   assert.equal(run('/projects', 'admin').aud, 'admin');
   assert.equal(run('/map', 'x').aud, 'public');
-  assert.deepEqual(run('/', null, true), { calls: [], aud: 'public' }, '저장소를 못 쓰면 일반사용자로 보이되 넘기지 않는다');
+  assert.equal(run('/map', 'public').aud, 'public');
+  assert.equal(run('/map', 'admin').aud, 'admin');
+  assert.deepEqual(run('/', null, true), { calls: [], aud: 'admin' }, '저장소를 못 쓰면 넘기지 않는다(전용 화면은 admin)');
+  assert.deepEqual(run('/map', null, true), { calls: [], aud: 'public' }, '/map 은 저장값을 못 읽으면 일반사용자');
 });
 
 test("AUDIENCE_INIT: '/' 에서만, 정책담당자가 아니면(없음·public) /citizen 으로 보낸다", () => {
@@ -124,15 +131,31 @@ test('isTrackingOnly: 추적 키만이면 true, 하나라도 다른 키가 있�
   assert.match(read('proxy.ts'), /search && !isTrackingOnly\(searchParams\)/);
 });
 
-test('TopNav: 보기 대상 묶음과 테마 스위치 사이에 1×20px 구분선(--border), 600px 미만에서도 유지', () => {
+test('TopNav: 보기 대상 묶음과 테마 스위치 사이에 1×20px 구분선(--border), 599px 이하에서는 없고 테마는 펼침 메뉴 맨 아래 줄', () => {
   const src = read('components/TopNav.tsx');
   const i = src.indexOf('aria-label="정책담당자 화면"');
   const d = src.indexOf('data-role="switch-divider"');
   const th = src.indexOf('aria-label="다크 모드"');
   assert.ok(i > 0 && i < d && d < th);
-  assert.match(src.slice(d - 40, d + 160), /h-5 w-px shrink-0 bg-border/);
-  assert.doesNotMatch(src.slice(d, d + 160), /max-\[599px\]:hidden/);
+  assert.match(src.slice(d - 40, d + 160), /h-5 w-px shrink-0 bg-border max-\[599px\]:hidden/);
+  assert.match(src.slice(th, th + 120), /className="max-\[599px\]:hidden"/, '머리 줄 테마 스위치는 599 이하에서 숨김');
+  const row = src.indexOf('max-[599px]:flex"><span aria-hidden="true">다크 모드</span>');
+  assert.ok(row > src.indexOf('{items}</ul>') && src.indexOf('<Switch on="dark"', row) > row, '펼침 메뉴 목록 아래 줄에 테마 스위치');
   assert.match(src, /<div className="flex items-center gap-3">/);
+});
+
+test('TopNav: 앱 안 이동으로 경로가 바뀌면 usePathname 변화에 맞춰 html[data-aud] 를 다시 정한다', () => {
+  const src = read('components/TopNav.tsx');
+  assert.match(src, /const next = displayAudience\(pathname, saved\);\s*document\.documentElement\.dataset\.aud = next;\s*setAud\(next\);\s*\}, \[pathname\]\);/);
+  const theme = read('lib/shell/theme.ts');
+  const out = ts.transpileModule(theme, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 } }).outputText;
+  const m = { exports: {} };
+  new Function('module', 'exports', out)(m, m.exports);
+  const { displayAudience } = m.exports;
+  assert.equal(displayAudience('/projects', 'public'), 'admin');
+  assert.equal(displayAudience('/', 'public'), 'admin');
+  assert.equal(displayAudience('/map', 'public'), 'public');
+  assert.equal(displayAudience('/map', 'admin'), 'admin');
 });
 
 test('TopNav: 사업·지역 공급·데이터 원본만 정책담당자 표지(adminOnly)이고 html[data-aud=public] 이면 CSS 로 숨긴다', () => {
