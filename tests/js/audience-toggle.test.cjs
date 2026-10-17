@@ -104,3 +104,33 @@ test('두 레이아웃((dashboard)·(map))이 THEME_INIT 뒤에 AUDIENCE_INIT �
     assert.ok(a > 0 && b > a, f);
   }
 });
+
+/* proxy.ts 의 추적용 쿼리 판별(순수 함수)과 머리 줄 구분선 */
+test('isTrackingOnly: 추적 키만이면 true, 하나라도 다른 키가 있으면 false, 빈 쿼리는 false', () => {
+  const out = ts.transpileModule(read('proxy.ts'), { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020, esModuleInterop: true } }).outputText;
+  const file = path.join(ROOT, 'proxy.ts');
+  const m = new Module(file, module);
+  m.filename = file;
+  m.paths = Module._nodeModulePaths(ROOT);
+  m._compile(out, file);
+  const t = (q) => m.exports.isTrackingOnly(new URLSearchParams(q));
+  assert.equal(t('fbclid=a'), true);
+  assert.equal(t('utm_source=x&utm_medium=y'), true);
+  assert.equal(t('gclid=1&ref=kakao&_ga=2'), true);
+  assert.equal(t('region=서울'), false);
+  assert.equal(t('fbclid=a&code=1'), false);
+  assert.equal(t('utm_source=x&pnu=1'), false);
+  assert.equal(t(''), false);
+  assert.match(read('proxy.ts'), /search && !isTrackingOnly\(searchParams\)/);
+});
+
+test('TopNav: 보기 대상 묶음과 테마 스위치 사이에 1×20px 구분선(--border), 600px 미만에서도 유지', () => {
+  const src = read('components/TopNav.tsx');
+  const i = src.indexOf('aria-label="정책담당자 화면"');
+  const d = src.indexOf('data-role="switch-divider"');
+  const th = src.indexOf('aria-label="다크 모드"');
+  assert.ok(i > 0 && i < d && d < th);
+  assert.match(src.slice(d - 40, d + 160), /h-5 w-px shrink-0 bg-border/);
+  assert.doesNotMatch(src.slice(d, d + 160), /max-\[599px\]:hidden/);
+  assert.match(src, /<div className="flex items-center gap-3">/);
+});

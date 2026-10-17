@@ -45,7 +45,15 @@ R.G13.ok = !pub || R.G13.ratio <= R.G13.limit + 1e-3;
 let minPub = 99, minAt = '', minLbl = 99; const tw = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
 while (tw.nextNode()) { const n = tw.currentNode; if (!n.textContent.trim()) continue; const el = n.parentElement; if (!el || skip(el) || !el.closest('.pub, .sheet') || el.closest('.sr') || !vis(el)) continue; const px = parseFloat(getComputedStyle(el).fontSize);
   if (el.closest('svg.map')) { minLbl = Math.min(minLbl, px); continue; } if (px < minPub) { minPub = px; minAt = desc(el) + ' "' + n.textContent.trim().slice(0, 12) + '"'; } }
-R.G9 = { minPub, minAt, minMapLabel: minLbl === 99 ? null : minLbl, ok: minPub >= (vw < 600 ? 15 : 14) && (minLbl === 99 || minLbl >= 13) };
+/* r9: 본문(이름·문장·줄) 16px, 보조 15px 이상 */
+const BODY = '.opt .nm, .yr-l, .ne-what, .none, .ev .when b, .pjs .ev .nm, .srow .t, .pc-tl li';
+const bodyUnder16 = [...document.querySelectorAll(BODY)].filter((el) => !skip(el) && vis(el) && el.closest('.pub, .sheet') && !el.closest('.opt.more') && parseFloat(getComputedStyle(el).fontSize) < 16 && !(vw < 600 && el.closest('.loc'))).map((el) => desc(el)).slice(0, 4);
+R.G9 = { minPub, minAt, minMapLabel: minLbl === 99 ? null : minLbl, bodyUnder16, ok: minPub >= 15 && (minLbl === 99 || minLbl >= 13) };
+/* 검색 줄 이름 폭(r9): 자동완성이 열려 있으면 보이는 지역·사업 이름 폭의 최소(> 40px) */
+const nmW = [...document.querySelectorAll('.ac .opt .nm')].filter(vis).map((el) => Math.round(el.getBoundingClientRect().width));
+R.search = nmW.length ? { nameMinW: Math.min(...nmW), rows: nmW.length, ok: Math.min(...nmW) > 40 } : null;
+/* 보이는 h1 */
+R.h1 = [...document.querySelectorAll('h1')].filter(vis).map((h) => h.textContent.trim().slice(0, 30));
 /* G2 대비: 국민 영역·시트의 HTML 글자(바탕 겹을 합성) 4.5:1(큰 글자 3:1), 지도 라벨은 글자색 vs 둘레(halo)색 */
 const cvs = document.createElement('canvas'); cvs.width = cvs.height = 1; const cx2 = cvs.getContext('2d', { willReadFrequently: true });
 const rgba = (c) => { cx2.clearRect(0, 0, 1, 1); cx2.fillStyle = '#000'; cx2.fillStyle = c; cx2.fillRect(0, 0, 1, 1); const d = cx2.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2], d[3] / 255]; };
@@ -70,10 +78,10 @@ if (svg && vis(svg)) {
   const W = +svg.getAttribute('width'), H = +svg.getAttribute('height');
   const fgs = [...svg.querySelectorAll('.faces > .fg')];
   const uOf = Object.fromEntries(fgs.map((g) => [g.dataset.area, +g.dataset.u]));
-  const lbs = [...svg.querySelectorAll('.lbls .lb-g:not(.dim)')].map((g) => { const [x, y, w, h] = g.dataset.box.split(',').map(Number); return { key: g.dataset.area, v: g.dataset.v, nm: g.dataset.nm, lead: g.dataset.lead ? g.dataset.lead.split(',').map(Number) : null, x, y, x0: x - w / 2, x1: x + w / 2, y0: y - h / 2, y1: y + h / 2 }; });
+  const lbs = [...svg.querySelectorAll('.lbls .lb-g:not(.dim)')].map((g) => { const [x, y, w, h] = g.dataset.box.split(',').map(Number); return { key: g.dataset.area, v: g.dataset.v, nm: g.dataset.nm, pill: g.classList.contains('pl'), lead: g.dataset.lead ? g.dataset.lead.split(',').map(Number) : null, x, y, x0: x - w / 2, x1: x + w / 2, y0: y - h / 2, y1: y + h / 2 }; });
   /* 지시선: 서로 교차 0, 남의 묶음 통과 0, 길이 ≤ 60px */
   const sx = (a, b, c, d) => { const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])); return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0; };
-  const leads = lbs.filter((b) => b.lead).map((b) => ({ key: b.key, a: [b.lead[0], b.lead[1]], b: [b.lead[2], b.lead[3]] }));
+  const leads = lbs.filter((b) => b.lead).map((b) => ({ key: b.key, pill: b.pill, a: [b.lead[0], b.lead[1]], b: [b.lead[2], b.lead[3]] }));
   let leadX = 0, leadThru = 0; const leadMax = Math.max(0, ...leads.map((l) => Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1])));
   for (let i = 0; i < leads.length; i++) for (let j = i + 1; j < leads.length; j++) if (sx(leads[i].a, leads[i].b, leads[j].a, leads[j].b)) leadX++;
   for (const l of leads) for (const b of lbs) if (b.key !== l.key) { const E = [[[b.x0, b.y0], [b.x1, b.y0]], [[b.x1, b.y0], [b.x1, b.y1]], [[b.x1, b.y1], [b.x0, b.y1]], [[b.x0, b.y1], [b.x0, b.y0]]]; if (E.some(([p, q]) => sx(l.a, l.b, p, q))) leadThru++; }
@@ -82,7 +90,7 @@ if (svg && vis(svg)) {
   /* 겹침은 그려진 글자의 실제 상자(getBBox)로 잰다: 기본 묶음(흐리게 된 것 제외)·맥락 이름·띄운 알약 */
   const gb = (el) => { const b = el.getBBox(); return { x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height }; };
   const uni = (a, b) => (a ? { x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) } : b);
-  const realB = [...svg.querySelectorAll('.lbls .lb-g:not(.dim)')].map((g) => { let u = null; g.querySelectorAll('text').forEach((t) => { u = uni(u, gb(t)); }); const pl = g.querySelector('.pill'); if (pl && getComputedStyle(pl).display !== 'none') u = uni(u, gb(pl)); return { key: g.dataset.area, nm: g.dataset.nm, ...u }; });
+  const realB = [...svg.querySelectorAll('.lbls .lb-g:not(.dim)')].map((g) => { let u = null; g.querySelectorAll('text').forEach((t) => { u = uni(u, gb(t)); }); const pl = g.querySelector('.pill'); if (pl && getComputedStyle(pl).display !== 'none') u = uni(u, gb(pl)); const pb2 = g.querySelector('.plb'); if (pb2) u = uni(u, gb(pb2)); return { key: g.dataset.area, nm: g.dataset.nm, ...u }; });
   const ctxEl = svg.querySelector('.lb-ctx:not(.dim)'); if (ctxEl) realB.push({ key: 'ctx', nm: ctxEl.textContent, ...gb(ctxEl) });
   svg.querySelectorAll('.hil .lb-hi').forEach((g) => realB.push({ key: 'hi:' + g.dataset.area, nm: 'hi:' + g.dataset.area, ...gb(g.querySelector('rect')) }));
   const ovAt = []; let lbOv = 0; for (let i = 0; i < realB.length; i++) for (let j = i + 1; j < realB.length; j++) if (ov(realB[i], realB[j])) { lbOv++; ovAt.push(`${realB[i].nm}×${realB[j].nm}`); }
@@ -112,6 +120,15 @@ if (svg && vis(svg)) {
   const ctxT = svg.querySelector('.lb-ctx'); let ctxOv = 0, ctxShown = !!ctxT;
   if (ctxT) { const cb = gb(ctxT); ctxOv = realB.filter((b) => b.key !== 'ctx' && ov(b, cb)).length; }
   const outOnFace = lbs.filter((b) => b.lead).filter((b) => [[b.x, b.y], [b.x0 + 2, b.y0 + 2], [b.x1 - 2, b.y0 + 2], [b.x0 + 2, b.y1 - 2], [b.x1 - 2, b.y1 - 2]].some(([x, y]) => { const k2 = at(x, y); return k2 && k2 !== 'wall'; })).map((b) => b.key);
+  /* r9: 면 안 묶음의 실제 상자 중 자기 윗면 위 비율(최소, 6×3 표본) · 지시선이 남의 면(모든 면) 위를 지나는 길이(최대) · 묶음 간 실제 간격(최소) · 무대 밖 실제 상자 수 */
+  const fsh = realB.filter((b) => !b.key.startsWith('hi:') && b.key !== 'ctx' && !lbs.find((l) => l.key === b.key)?.lead).map((b) => { let n = 0; for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) if (at(b.x0 + (b.x1 - b.x0) * (i + .5) / 6, b.y0 + (b.y1 - b.y0) * (j + .5) / 3) === b.key) n++; return { key: b.key, r: n / 18 }; }).sort((a, b) => a.r - b.r);
+  const otherLen = (l) => { const L2 = Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1]), n = Math.max(1, Math.ceil(L2 / 2)); let d = 0; for (let i = 1; i < n; i++) { const k2 = at(l.a[0] + (l.b[0] - l.a[0]) * i / n, l.a[1] + (l.b[1] - l.a[1]) * i / n); if (k2 && k2 !== 'wall' && k2 !== l.key) d += L2 / n; } return d; };
+  const leadOther = Math.max(0, ...leads.filter((l) => !l.pill).map(otherLen)), pillLeadOther = Math.max(0, ...leads.filter((l) => l.pill).map(otherLen));
+  const base = realB.filter((b) => !b.key.startsWith('hi:'));
+  let gapMin = 99, gapAt = ''; for (let i = 0; i < base.length; i++) for (let j = i + 1; j < base.length; j++) { const a = base[i], b = base[j], g = Math.max(a.x0 - b.x1, b.x0 - a.x1, a.y0 - b.y1, b.y0 - a.y1); if (g < gapMin) { gapMin = g; gapAt = a.nm + '×' + b.nm; } }
+  const outReal = base.filter((b) => b.x0 < 0 || b.y0 < 0 || b.x1 > W || b.y1 > H).map((b) => b.nm);
+  const leadMin = leads.length ? Math.round(Math.min(...leads.map((l) => Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1])))) : null;
+  R.G6r9 = { faceShareMin: fsh.length ? +fsh[0].r.toFixed(2) : null, faceShareMinAt: fsh[0]?.key || null, under70: fsh.filter((x) => x.r < .7).map((x) => x.key), leaderOtherMax: Math.round(leadOther), pillLeaderOtherMax: Math.round(pillLeadOther), pills: lbs.filter((b) => b.pill).map((b) => b.nm), gapMin: +gapMin.toFixed(1), gapMinAt: gapAt, outOfStageReal: outReal, leaderMin: leadMin };
   R.G6 = { ctxShown, ctxOverlap: ctxOv, outLabelOnFace: outOnFace, leaderDarkMax: Math.round(leadDark), outLabelOnDark: outOnDark, namesShown: namesShown.size, faceCount: fgs.length, nameRatio: +(namesShown.size / fgs.length).toFixed(2), leaders: leads.length, leaderCross: leadX, leaderThruLabel: leadThru, leaderMax: Math.round(leadMax), labels: lbs.length, faces: pos.length, labelOverlap: lbOv, labelOverlapAt: ovAt.slice(0, 4), top10Num: pos.slice(0, 10).filter(([k2]) => lbs.some((b) => b.key === k2 && b.v)).length + '/' + Math.min(10, pos.length), overlayOnTop5: hiOn5, labelOutOfStage: out, top5Hidden: top5.filter((k2) => !shownK.has(k2)) };
   /* G15: h = 3 + (Hmax − 3)·√(u/umax)(오차 ≤ 0.5px), 높이 순위 = 호수 순위, 0호 = 0, 라벨 값 = 호수 */
   const hm = +svg.dataset.hmax, umax = Math.max(...Object.values(uOf)), hs = fgs.map((g) => ({ u: +g.dataset.u, h: +g.dataset.h }));

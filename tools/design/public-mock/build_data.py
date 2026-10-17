@@ -47,6 +47,14 @@ for code, L in lm['bySgg'].items():
     # 다음 고비(원장 next): 종류 번호(NEXT) · 예정일('2027-09-27' · '2026-10' · '2027'), 없으면 -1 · ''
     prj[code] = [[p['id'].split('-')[2], p['name'], int(p['stage']), p['units'] or 0,
                   NEXT.index(p['next']['eventType']) if p.get('next') else -1, (p.get('next') or {}).get('planned') or ''] for p in L]
+# 사업 카드 자료(project-detail): 사업 id → [시행 기관 이름, [모집 공고·착공·준공·입주 각 [날짜, 실제 1 / 예정 0] 또는 None]]. 실제가 있으면 실제
+pd = json.load(open(R + 'data/board/project-detail.json'))
+AG = {'lh': 'LH', 'gh': 'GH', 'sh': 'SH', 'local': '지자체', 'mnd': '국방부'}
+det = {}
+for pid, x in pd['projects'].items():
+    st = x.get('stages') or {}
+    s = [([st[k]['actual'], 1] if st.get(k, {}).get('actual') else [st[k]['plan'], 0] if st.get(k, {}).get('plan') else None) for k in NEXT]
+    if x.get('agency') or any(s): det[pid] = [AG.get(x.get('agency'), ''), s]
 TYPES = rc['kinds']
 cal = []
 for sd, L in rc['sido'].items():
@@ -137,8 +145,8 @@ af = json.load(open(R + 'data/board/area-facts.json'))
 y0 = meta['today'][:4]; y1 = str(int(y0) + 1)
 hh = {sd: [v['forecast_households'][y1] - v['forecast_households'][y0], y0, y1]
       for sd, v in af['sido'].items() if y0 in v.get('forecast_households', {}) and y1 in v['forecast_households']}
-out = {'meta': meta, 'sgg': sggs, 'prj': prj, 'cal': cal, 'neigh': neigh, 'map': mapdoc, 'hh': hh}
+out = {'meta': meta, 'sgg': sggs, 'prj': prj, 'cal': cal, 'neigh': neigh, 'map': mapdoc, 'hh': hh, 'det': det}
 json.dump(out, open(sys.argv[1], 'w'), ensure_ascii=False, separators=(',', ':'))
 print('zero', zero); print('neigh', {k: [(c, sgg[c], len(lm['bySgg'][c])) for c in v] for k, v in neigh.items()})
 print('adj 41280', [AREAS[c] for c in adj['41280']], 'none', [c for c, v in adj.items() if not v])
-print('sgg', len(sggs), 'prj', sum(len(v) for v in prj.values()), 'cal', len(cal))
+print('sgg', len(sggs), 'prj', sum(len(v) for v in prj.values()), 'cal', len(cal), 'det', len(det))

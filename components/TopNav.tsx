@@ -94,6 +94,8 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
               <Switch on="admin" checked={aud === 'admin'} onCheckedChange={(v) => chooseAudience(v ? 'admin' : 'public')} aria-label="정책담당자 화면" offIcon={<User aria-hidden="true" />} onIcon={<BriefcaseBusiness aria-hidden="true" />} />
               <span aria-hidden="true" className="cursor-pointer whitespace-nowrap text-muted-foreground [html[data-aud=admin]_&]:font-bold [html[data-aud=admin]_&]:text-foreground max-[599px]:-order-1 max-[599px]:hidden max-[599px]:[html[data-aud=admin]_&]:inline" onClick={() => chooseAudience('admin')}>정책담당자</span>
             </div>
+            {/* 보기 대상 묶음과 테마 스위치를 가르는 세로 구분선(1×20px, 좌우 gap-3 12px) */}
+            <span aria-hidden="true" data-role="switch-divider" className="h-5 w-px shrink-0 bg-border" />
             {/* 테마 스위치: 꺼짐(라이트) = 해, 켜짐(다크) = 달 */}
             <Switch on="dark" checked={dark} onCheckedChange={toggleTheme} aria-label="다크 모드" title="다크 모드 전환" offIcon={<Sun aria-hidden="true" />} onIcon={<Moon aria-hidden="true" />} />
           </div>

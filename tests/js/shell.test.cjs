@@ -105,7 +105,7 @@ test('지도 머리 줄(.mhead)의 바탕·아래 선·지역 글자는 상단 �
 
 test('옛 지도 주소(/?region=…)는 쿼리를 그대로 두고 /map 으로 보낸다', () => {
   const proxy = read('proxy.ts');
-  assert.match(proxy, /const \{ search \} = request\.nextUrl;/);
+  assert.match(proxy, /const \{ search, searchParams \} = request\.nextUrl;/);
   assert.match(proxy, /NextResponse\.redirect\(new URL\('\/map' \+ search, request\.url\)\)/);
   assert.match(proxy, /matcher: '\/'/);
 });
