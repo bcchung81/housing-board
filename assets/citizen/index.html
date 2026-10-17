@@ -371,7 +371,7 @@ svg.map { display: block; overflow: hidden; }
 .map .lbls .lb-ctx { font-size: 13px; font-weight: 400; fill: var(--muted-foreground); stroke: var(--ctx); stroke-width: 3px; }
 .map .lb-hi rect { fill: var(--card); stroke: var(--foreground); stroke-width: 1.5; }
 .map .hil text { font: 700 14px var(--font-sans); text-anchor: middle; dominant-baseline: central; font-variant-numeric: tabular-nums; pointer-events: none; }
-.map .lb-g { transition: opacity .12s; }
+.map .lbls, .map .lbls *, .map .hil, .map .hil * { pointer-events: none; }   /* 라벨·알약·지시선은 포인터를 받지 않는다 — 밑의 면이 가리킴·클릭을 받는다(알약이 포인터 밑에 생겼다 사라지며 깜빡이던 결함) */
 /* 이름 / 숫자 묶음: 이름 13px 보통, 숫자 14px 굵게. 0호 면은 이름만 옅게(대비 4.5:1 이상). 고른·가리킨 묶음은 같은 자리에서 알약 바탕 */
 .map .lbls .lb.nm { font-size: 14px; font-weight: 400; }
 @media (max-width: 599px) { .map .lbls .lb.nm { font-size: 13px; } }
@@ -1639,11 +1639,11 @@ function drawOverlay() {
 }
 /* 가리킴(마우스·순위 줄 초점): 1.5px 선 + 이름표. 지도 초점(키보드 위치)은 paintRings 가 따로 그린다 */
 function hlUnit(key) {
-  if (VIEW?.cap && (VIEW.hoverKey || null) !== (key || null)) { VIEW.hoverKey = key || null; paintRings(); drawOverlay(); }
+  if (VIEW?.cap && (VIEW.hoverKey || null) !== (key || null)) { VIEW.hoverKey = key || null; cancelAnimationFrame(hlUnit.f); hlUnit.f = requestAnimationFrame(() => { paintRings(); drawOverlay(); }); }
   document.querySelectorAll('.rk').forEach((c) => c.classList.toggle('hl', !!key && c.dataset.area === key));
 }
 document.addEventListener('mouseover', (e) => { const t = e.target.closest?.('.map [data-area], .rk'); if (t) hlUnit(t.dataset.area); });
-document.addEventListener('mouseout', (e) => { const t = e.target.closest?.('.map [data-area], .rk'); if (t) hlUnit(document.activeElement?.id === 'mapbox' ? S.mapAt : null); });
+document.addEventListener('mouseout', (e) => { const t = e.target.closest?.('.map [data-area], .rk'); if (!t) return; if (e.relatedTarget?.closest?.('.map [data-area], .rk')) return; hlUnit(document.activeElement?.id === 'mapbox' ? S.mapAt : null); });
 document.addEventListener('focusin', (e) => { const t = e.target; if (t.id === 'mapbox') { paintRings(); hlUnit(S.mapAt); } else if (t.matches?.('.rk')) hlUnit(t.dataset.area); });
 document.addEventListener('focusout', (e) => { if (e.target.matches?.('#mapbox, .rk')) { hlUnit(null); requestAnimationFrame(paintRings); } });
 
