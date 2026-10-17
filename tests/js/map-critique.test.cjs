@@ -479,7 +479,7 @@ test('A8-1 구가 있는 시 코드로 상세를 열면 개요 구 메뉴로 넘
   assert.deepEqual(runInit('?sgg=41281'), { mode: 'detail', went: [] });
   assert.deepEqual(runInit('?project=PRJ-41280-0001&sgg=41280'), { mode: 'detail', went: [] });
   assert.match(ov8, /const pick = byCode\.get\(pickOfSearch\);\s*if \(pick && pick\.gu && pick\.gu\.length\) choose\(pick\.code, /, '개요는 ?pick= 의 구 메뉴를 열고(choose 가 첫 구에 초점)');
-  assert.match(ov8, /const first = menu\.querySelector\('button'\);\s*if \(first\) first\.focus\(\);/);
+  assert.match(ov8, /const first = menu\.querySelector\('button\[data-href\]'\);\s*if \(first\) first\.focus\(\);/, '첫 구 단추에 초점(닫기 단추가 아니라)');
   /* 지역 선택기의 '(구 미정)'도 ?gu=none 으로 연다 */
   const lite = { 41280: { name: '경기도 고양시', n: 2 }, 41281: { name: '경기도 고양시 덕양구', n: 8 } };
   assert.deepEqual(R.homeSelectorGroups(lite)[0].options.map((o) => [o.value, o.city]), [['sgg:41280', true], ['sgg:41281', false]]);

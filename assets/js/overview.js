@@ -350,6 +350,7 @@
       map.setPaintProperty('ov-fill', 'fill-color', fillExpr());
       map.setPaintProperty('ov-line', 'line-color', css('--ov-line'));
       map.setPaintProperty('ov-hover', 'line-color', css('--ov-hl'));
+      if (map.getLayer('ov-pick')) map.setPaintProperty('ov-pick', 'line-color', css('--acc'));
       placeLabels(true);
     }
 
@@ -374,7 +375,7 @@
         labels = rankOf(units, S.metric, S.sido).filter((u) => D.ok && valOf(u.v, S.metric) > 0 && lp.get(u.code)).map((u) => {
           const el = doc.createElement('span'), c = classOf(valOf(u.v, S.metric), ups);
           el.className = `ov-lb c${c}`;
-          el.innerHTML = `<b>${esc(u.name)}</b><span>${fmt(valOf(u.v, S.metric))}${m.unit}</span>`;
+          el.innerHTML = `<b>${esc(u.name)}${u.gu && u.gu.length ? '<i class="ov-lmore" aria-hidden="true">›</i>' : ''}</b><span>${fmt(valOf(u.v, S.metric))}${m.unit}</span>`;   // › = 누르면 구를 고른다(순위 목록의 › 와 같은 뜻)
           labelBox.appendChild(el);
           return { u, el, w: 0, h: 0 };
         });
@@ -413,10 +414,23 @@
 
     /* 고르기 → 구 메뉴 또는 확대 후 이동 */
     const menu = $('ovMenu');
+    /* 구 선택 단계임을 지도에서도 보이게(2026-10-17 사용자 요청 "세부 선택이 필요하면 분간되게"): 고른 시만 또렷하고(ov-pick 윤곽·채움 1) 나머지 면 0.4·라벨 흐림, 위 상태 띠에 '구를 골라 주세요' */
+    const FILL_OP = ['case', ['==', ['get', 'dim'], 1], 0.35, 1];
+    function pickOn(u) {
+      root.classList.add('picking');
+      if (map && map.getLayer('ov-pick')) { map.setFilter('ov-pick', ['==', ['get', 'code'], u.code]); map.setPaintProperty('ov-fill', 'fill-opacity', ['case', ['==', ['get', 'code'], u.code], 1, 0.4]); }
+      const st = $('ovGoing'); st.textContent = `${SIDO_SHORT[u.s]} ${u.name} · 구를 골라 주세요`; st.hidden = false;
+    }
+    function pickOff() {
+      root.classList.remove('picking');
+      if (map && map.getLayer('ov-pick')) { map.setFilter('ov-pick', ['==', ['get', 'code'], '']); map.setPaintProperty('ov-fill', 'fill-opacity', FILL_OP); }
+      if (!S.going) $('ovGoing').hidden = true;
+    }
     function closeMenu(refocus) {
       if (!S.menu) return;
       const back = S.menu.opener;
       menu.hidden = true; menu.innerHTML = ''; S.menu = null;
+      pickOff();
       if (refocus && back && back.focus) back.focus();
     }
     function choose(code, opener, at) {
@@ -426,10 +440,12 @@
       if (p.href) return go(u, withMetric(p.href, S.metric), `${SIDO_SHORT[u.s]} ${u.name}`);
       closeMenu(false);
       const m = METRICS.find((x) => x.id === S.metric);
-      menu.innerHTML = `<p class="ov-mh" id="ovMenuH">${esc(u.name)} · 구를 고르세요</p><ul>${p.menu.map((g) => `<li><button type="button" data-href="${esc(g.href)}" data-n="${esc(g.name)}"><span>${esc(g.code === u.code ? '구 미정' : g.name.replace(`${u.name} `, ''))}</span><span class="ov-mv">${D.ok && g.v ? `${fmt(valOf(g.v, S.metric))}<small>${m.unit}</small>` : ''}</span></button></li>`).join('')}</ul>`;
+      /* 메뉴는 마우스 올림 설명과 구분되는 '선택 단계'로: 굵은 제목 + 한 줄 안내 + 닫기, 줄마다 › (목록 줄과 같은 문법) */
+      menu.innerHTML = `<div class="ov-mt"><p class="ov-mh" id="ovMenuH">${esc(u.name)} · 구를 골라 주세요</p><button type="button" class="ov-mx" data-close="1" aria-label="닫기">✕</button></div><p class="ov-ms">상세 지도는 구 단위로 열립니다</p><ul>${p.menu.map((g) => `<li><button type="button" data-href="${esc(g.href)}" data-n="${esc(g.name)}"><span>${esc(g.code === u.code ? '구 미정' : g.name.replace(`${u.name} `, ''))}</span><span class="ov-mv">${D.ok && g.v ? `${fmt(valOf(g.v, S.metric))}<small>${m.unit}</small>` : ''}${ICON_MORE}</span></button></li>`).join('')}</ul>`;
       menu.setAttribute('aria-labelledby', 'ovMenuH');
       menu.hidden = false;
       S.menu = { u, opener: opener || null };
+      pickOn(u);
       /* 자리: 목록에서 열면 그 줄 옆, 지도에서 열면 누른 곳 */
       const vw = win.innerWidth, vh = win.innerHeight, w = menu.offsetWidth, h = menu.offsetHeight;
       let x, y;
@@ -437,12 +453,15 @@
       else { const r = $('ovMap').getBoundingClientRect(); x = r.left + (at ? at.x : r.width / 2) + 10; y = r.top + (at ? at.y : r.height / 2) - 12; }
       x = Math.min(Math.max(8, x), vw - w - 8); y = Math.min(Math.max(8, y), vh - h - 8);
       menu.style.left = `${Math.round(x)}px`; menu.style.top = `${Math.round(y)}px`;
-      const first = menu.querySelector('button');
+      const first = menu.querySelector('button[data-href]');
       if (first) first.focus();
     }
-    menu.addEventListener('click', (e) => { const b = e.target.closest('button[data-href]'); if (b && S.menu) go(S.menu.u, withMetric(b.dataset.href, S.metric), `${SIDO_SHORT[S.menu.u.s]} ${b.dataset.n}`); });
+    menu.addEventListener('click', (e) => {
+      if (e.target.closest('button[data-close]')) { closeMenu(true); return; }
+      const b = e.target.closest('button[data-href]'); if (b && S.menu) go(S.menu.u, withMetric(b.dataset.href, S.metric), `${SIDO_SHORT[S.menu.u.s]} ${b.dataset.n}`);
+    });
     menu.addEventListener('keydown', (e) => {
-      const bs = [...menu.querySelectorAll('button')], i = bs.indexOf(doc.activeElement);
+      const bs = [...menu.querySelectorAll('button[data-href]')], i = bs.indexOf(doc.activeElement);
       if (e.key === 'Escape') { e.preventDefault(); closeMenu(true); return; }
       const k = e.key === 'ArrowDown' || (e.key === 'Tab' && !e.shiftKey) ? 1 : e.key === 'ArrowUp' || (e.key === 'Tab' && e.shiftKey) ? -1 : 0;
       if (!k || !bs.length) return;
@@ -487,9 +506,10 @@
         bounds: viewBounds(S.sido), fitBoundsOptions: { padding: pad() },
         style: { version: 8, sources: { ov: { type: 'geojson', data: geo } }, layers: [
           { id: 'ov-bg', type: 'background', paint: { 'background-color': css('--ov-bg') } },
-          { id: 'ov-fill', type: 'fill', source: 'ov', paint: { 'fill-color': fillExpr(), 'fill-opacity': ['case', ['==', ['get', 'dim'], 1], 0.35, 1] } },
+          { id: 'ov-fill', type: 'fill', source: 'ov', paint: { 'fill-color': fillExpr(), 'fill-opacity': FILL_OP } },
           { id: 'ov-line', type: 'line', source: 'ov', paint: { 'line-color': css('--ov-line'), 'line-width': 1 } },
           { id: 'ov-hover', type: 'line', source: 'ov', filter: ['==', ['get', 'code'], ''], paint: { 'line-color': css('--ov-hl'), 'line-width': 2.5 } },
+          { id: 'ov-pick', type: 'line', source: 'ov', filter: ['==', ['get', 'code'], ''], paint: { 'line-color': css('--acc'), 'line-width': 3.5 } },   // 구 메뉴가 열린 시(pickOn)
         ] },
       });
       if (map.touchZoomRotate) map.touchZoomRotate.disableRotation();
