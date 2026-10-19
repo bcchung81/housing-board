@@ -143,7 +143,9 @@ export function yearlyOf(months: string[], values: (number | null)[], provisiona
 /* 시도 하나('' = 전국)의 연도별 실적: 통계누리 2022~. 서울·인천·경기는 2018~2021 을 HOME 통계(같은 통계누리 시도 자료 — 2022~2025 값이 같다, 시험으로 확인)로 앞에 잇는다.
    인허가는 HOME 에 연 단위만 있다 */
 export function regionYears(molit: Molit, annual: AnnualDoc, metric: Metric, code: string): { years: YearVal[]; spliced: boolean } {
-  const years = yearlyOf(molit.months, molit.metrics[metric].series[code || '00'].total, molit.provisional, NATION_FROM);   // = annualSeries(…) 의 2022~ (값을 가져오지 않아 Node 시험이 이 파일만 읽는다)
+  const total = molit.metrics[metric].series[code || '00']?.total;
+  if (!total) return { years: [], spliced: false };   // 자료에 없는 시도 코드는 오류 대신 빈 연도
+  const years = yearlyOf(molit.months, total, molit.provisional, NATION_FROM);   // = annualSeries(…) 의 2022~ (값을 가져오지 않아 Node 시험이 이 파일만 읽는다)
   if (!METRO.includes(code)) return { years, spliced: false };
   const early: YearVal[] = metric === 'permit'
     ? [2018, 2019, 2020, 2021].map((year) => { const v = annual.permitYearly[code]?.[String(year)] ?? null; return { year, value: v, months: v === null ? 0 : 12, first: v === null ? null : 1, last: v === null ? null : 12, complete: v !== null, provisional: false }; })

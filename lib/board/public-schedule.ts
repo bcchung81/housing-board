@@ -71,4 +71,4 @@ export function yearRank(byCode: Record<string, YearVal[]>, code: string): { yea
   const vals = Object.values(byCode).map((ys) => ys.find((y) => y.year === mine.year)).filter((y): y is YearVal => !!y && y.complete && y.value !== null).map((y) => y.value as number);
   return { year: mine.year, rank: 1 + vals.filter((v) => v > (mine.value as number)).length, of: vals.length, value: mine.value as number };
 }
-export const rankText = (metricName: string, r: { year: number; rank: number; of: number; value: number }) => `${r.year}년 ${metricName} ${r.of}곳 중 ${r.rank}위 · ${hoText(r.value)}`;
+export const rankText = (metricName: string, r: { year: number; rank: number; of: number; value: number }) => `${r.year}년 ${metricName} 수도권 ${r.of}곳 중 ${r.rank}위 · ${hoText(r.value)}`;

@@ -39,8 +39,6 @@ function easyNames<T extends { id: string; name: string; sgg: string; units: num
 }
 /* 시도 칩 순서(서울·경기·인천 — 제안서 5.4) */
 const CHIPS = ['11', '41', '28'];
-/* 시도 순위는 전국 16곳 사이에서(정책 /region 시도 칩과 같은 행정 순) */
-const ORDER = ['11', '26', '27', '28', '12', '30', '31', '36', '41', '51', '43', '44', '52', '47', '48', '50'];
 
 type Q = { sido?: string; sgg?: string; m?: string; kind?: string; metric?: string };
 
@@ -102,7 +100,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
     const done = [...years].filter((y) => y.complete && y.value !== null).pop();
     if (done) rank = `${done.year}년 ${name} ${mname} ${hoText(done.value as number)}`;
   } else {
-    const r = yearRank(Object.fromEntries(ORDER.map((c) => [c, regionYears(molit, annual, metric, c).years])), sido);
+    const r = yearRank(Object.fromEntries(METRO.map((c) => [c, regionYears(molit, annual, metric, c).years])), sido);
     if (r) rank = rankText(mname, r);
   }
 

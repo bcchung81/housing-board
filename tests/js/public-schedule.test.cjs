@@ -76,11 +76,10 @@ test('지난 몇 년: 착공·준공 둘, 민간 포함 범위 이름, 순위 �
   assert.equal(P.parsePublicMetric('permit'), 'complete');
   assert.match(PAGE, /모든 주택\(민간 포함\)/);
   assert.match(PAGE, /yoy=\{false\}/);
-  const ORDER = ['11', '26', '27', '28', '12', '30', '31', '36', '41', '51', '43', '44', '52', '47', '48', '50'];
-  const byCode = Object.fromEntries(ORDER.map((c) => [c, R.regionYears(molit, annual, 'complete', c).years]));
+  const byCode = Object.fromEntries(R.METRO.map((c) => [c, R.regionYears(molit, annual, 'complete', c).years]));
   const r = P.yearRank(byCode, '41');
-  assert.deepEqual(r, { year: 2025, rank: 1, of: 16, value: 82390 });
-  assert.equal(P.rankText('준공', r), '2025년 준공 16곳 중 1위 · 8만 2,390호');
+  assert.deepEqual(r, { year: 2025, rank: 1, of: 3, value: 82390 });
+  assert.equal(P.rankText('준공', r), '2025년 준공 수도권 3곳 중 1위 · 8만 2,390호');
   const metro = R.metroYears(molit, annual, 'complete').find((y) => y.year === 2025);
   assert.equal(metro.value, 143542);
 });
@@ -112,4 +111,17 @@ test('사업 이름 = 사업 찾기와 같은 쉬운 이름, BL 원문 0, 링크
   assert.match(AHEAD, /findHref\(\{ id: e\.id \}\)/);
   assert.equal(L.findHref({ id: 'X1' }), '/citizen/projects?id=X1');
   assert.doesNotMatch(AHEAD, /\?\$\{e\.drawer \? 'id' : 'cand'\}/);
+});
+
+test('시도 순위: 수도권 3시도 안에서 오류 없이 계산되고, 자료에 없는 코드는 빈 연도', () => {
+  assert.deepEqual(R.regionYears(molit, annual, 'complete', '29').years, []);
+  for (const metric of ['start', 'complete']) {
+    const by = Object.fromEntries(R.METRO.map((c) => [c, R.regionYears(molit, annual, metric, c).years]));
+    for (const c of R.METRO) {
+      const r = P.yearRank(by, c);
+      assert.ok(r && r.of === 3 && r.rank >= 1 && r.rank <= 3, `${metric} ${c}`);
+      assert.match(P.rankText('준공', r), /^\d{4}년 준공 수도권 3곳 중 [123]위 · /);
+    }
+  }
+  assert.doesNotMatch(PAGE, /\bORDER\b/);
 });
