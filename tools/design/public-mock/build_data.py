@@ -1,5 +1,5 @@
 # 시안에 넣을 색인·자료를 저장소 JSON 에서 뽑는다(읽기만). 출력: data.json
-import json, re, sys, collections
+import json, re, sys, collections, datetime
 import os
 R = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..')) + '/'
 pi = json.load(open(R + 'data/board/projects-index.json'))
@@ -45,8 +45,17 @@ NEXT = ['SUPPLY_NOTICE', 'CONSTRUCTION_START', 'COMPLETION', 'MOVE_IN']
 prj = {}
 for code, L in lm['bySgg'].items():
     # 다음 고비(원장 next): 종류 번호(NEXT) · 예정일('2027-09-27' · '2026-10' · '2027'), 없으면 -1 · ''
+    # 7번째 칸(있을 때만): 사업 필지 PNU — 공고(마이홈·청약홈) pnu 와 사업을 코드로만 잇는다(이름으로 잇지 않는다)
     prj[code] = [[p['id'].split('-')[2], p['name'], int(p['stage']), p['units'] or 0,
-                  NEXT.index(p['next']['eventType']) if p.get('next') else -1, (p.get('next') or {}).get('planned') or ''] for p in L]
+                  NEXT.index(p['next']['eventType']) if p.get('next') else -1, (p.get('next') or {}).get('planned') or ''] + ([p['pnus']] if p.get('pnus') else []) for p in L]
+# 원장 판정(사업 일정표 상태 칩, 정책 화면과 같은 판정 lib/board/projects-view statusOf): 시군구 → { 번호: [0 정상 · 1 주의 · 2 지연, 예정일 경과 개월, 경과한 고비 번호(0 모집 공고 · 1 착공 · 2 준공 · 3 입주 · 4 허가 · 없으면 -1)] }.
+# 판정이 있는 번호 있는 사업만(번호 없는 후보는 '확인 필요'라 판정에 넣지 않는다 — 없으면 '일정 미정')
+JD = {'ok': 0, 'caution': 1, 'delay': 2}
+JDEV = {'SUPPLY_NOTICE': 0, 'CONSTRUCTION_START': 1, 'COMPLETION': 2, 'MOVE_IN': 3, 'PERMIT': 4}   # 세 번째 칸 = 예정일이 지난 고비(없으면 -1) — 화면이 '준공 예정일이 n개월 지났어요' 를 만든다
+jd = {}
+for code, L in lm['bySgg'].items():
+    m = {p['id'].split('-')[2]: [JD[p['cls']], (p.get('overdue') or {}).get('months') or 0, JDEV.get((p.get('overdue') or {}).get('eventType'), -1)] for p in L if p.get('issued') and p.get('cls') in JD}
+    if m: jd[code] = m
 # 사업 카드 자료(project-detail): 사업 id → [시행 기관 이름, [모집 공고·착공·준공·입주 각 [날짜, 실제 1 / 예정 0] 또는 None]]. 실제가 있으면 실제
 pd = json.load(open(R + 'data/board/project-detail.json'))
 AG = {'lh': 'LH', 'gh': 'GH', 'sh': 'SH', 'local': '지자체', 'mnd': '국방부'}
@@ -62,7 +71,7 @@ for sd, L in rc['sido'].items():
         cal.append([code_of_name.get(e['sgg']) if e['sgg'] not in names_in_idx else [k for k, v in sgg.items() if v == e['sgg']][0], e['ym'], e['day'] or 0, TYPES.index(e['type']), e['name'], e['units'] or 0, e['id']])
 sggs = [[k, v, 0] for k, v in sorted(sgg.items())] + [[k, v, 1] for k, v in sorted(zero.items())]
 meta = {'ledgerRef': lm['referenceDate'], 'ledgerMonth': lm['observedMonth'], 'calRef': rc['referenceDate'], 'calFrom': rc['from'], 'calTo': rc['to'],
-        'idxRef': pi['referenceDate'], 'today': '2026-10-16'}
+        'idxRef': pi['referenceDate'], 'today': datetime.date.today().isoformat()}   # 빌드한 날(가구 증가 해 계산용). 화면의 '오늘'은 브라우저의 실제 날짜
 # 지도 그림: region-map 경계(자체 투영) + 면 코드(lib/board/metro-overview.ts AREAS 를 그대로 읽는다) + 안쪽 대표점
 ts = open(R + 'lib/board/metro-overview.ts').read()
 areas_str = ''.join(re.findall(r"'([^']*)'", re.search(r"const AREAS = ([^;]*);", ts).group(1)))
@@ -140,13 +149,77 @@ for g in rm['sgg']:
 UP = {u[0]: pts(u[3]) for u in units}
 adj = {u[0]: [o[0] for o in units if o[0] != u[0] and o[1] == u[1] and len(UP[u[0]] & UP[o[0]]) >= 2] for u in units}
 mapdoc = {'view': rm['view'], 'units': units, 'edition': rm.get('edition'), 'adj': adj}
+# 공고 0건 넓히기용 이웃(수도권 지도 면 전부, 시도 경계를 넘어서도): 경계 꼭짓점을 2개 이상 공유. 코드는 지도 면 코드(경기는 시)
+nb = {u[0]: [o[0] for o in units if o[0] != u[0] and len(UP[u[0]] & UP[o[0]]) >= 2] for u in units}
+# 데모판 공고 표본(운영판은 /api/v1/notices): 마이홈 원천(schemas/ledger-2026-10/raw/myhome) 수도권 행을 API 와 같은 모양으로. 키·개인 정보 없음.
+# 날짜는 받은 날(sampleRef) 기준이라 화면이 오늘 날짜만큼 옮겨 보인다(표본임을 ⓘ에 적는다)
+TGT = [('신혼부부', r'신혼'), ('신생아', r'신생아'), ('청년', r'청년'), ('다자녀', r'다자녀'), ('고령자', r'고령자')]
+def ymd(v): v = str(v or ''); return f'{v[:4]}-{v[4:6]}-{v[6:8]}' if len(v) == 8 else None
+notices, seen = [], set()
+mh = json.load(open(R + 'schemas/ledger-2026-10/raw/myhome/manifest.json'))
+for kind in ('rental', 'sale'):
+    for x in json.load(open(R + f'schemas/ledger-2026-10/raw/myhome/{kind}.json'))['items']:
+        if x.get('brtcNm') not in SDN.values(): continue
+        sg = (x.get('pnu') or '')[:5] or code_of_name.get(f"{x['brtcNm']} {x.get('signguNm') or ''}".strip())
+        nid = f"rental-{x['pblancId']}" if kind == 'rental' else f"sale-{x['pblancId']}-{x['houseSn']}"
+        if not sg or not ymd(x.get('endDe')) or (nid, sg) in seen: continue
+        seen.add((nid, sg))
+        notices.append({'id': nid, 'kind': kind, 'title': x['pblancNm'], 'agency': x.get('suplyInsttNm'), 'status': x.get('sttusNm'), 'housingType': x.get('houseTyNm'),
+                        'supplyType': x.get('suplyTyNm') or None, 'complex': x.get('hsmpNm') or None, 'units': x.get('sumSuplyCo') or None, 'address': (x.get('fullAdres') or '').strip() or None,
+                        'pnu': x.get('pnu') or None, 'announcedAt': ymd(x.get('rcritPblancDe')), 'applyFrom': ymd(x.get('beginDe')), 'applyTo': ymd(x.get('endDe')), 'url': x.get('pcUrl'), 'source': 'myhome',
+                        'deposit': x.get('rentGtn') or None, 'monthlyRent': x.get('mtRntchrg') or None, 'targets': [t for t, rx in TGT if re.search(rx, x['pblancNm'])], 'sgg': sg})
+meta['sampleRef'] = mh['fetched_at'][:10]
 # 가구 증가(통계청 장래가구추계, 시도 단위): 올해 → 내년 차이. 자료가 있는 시도만(지금은 서울·인천·경기)
 af = json.load(open(R + 'data/board/area-facts.json'))
 y0 = meta['today'][:4]; y1 = str(int(y0) + 1)
 hh = {sd: [v['forecast_households'][y1] - v['forecast_households'][y0], y0, y1]
       for sd, v in af['sido'].items() if y0 in v.get('forecast_households', {}) and y1 in v['forecast_households']}
-out = {'meta': meta, 'sgg': sggs, 'prj': prj, 'cal': cal, 'neigh': neigh, 'map': mapdoc, 'hh': hh, 'det': det}
+# 사업 위치 점(r14): data/board/home-map/<시군구>.json 의 loc{by, at:[경도,위도]} → region-map 과 같은 자체 투영(tools/ledger/region-supply.js proj) 정수 [x, y, 정확 1 / 근사 0].
+# 정확 = 블록 라벨점·주소·지구 대표점, 근사 = 영역 근사·이름 검색. 사업 id 는 원장(ledger-map)과 같은 'PRJ-<시군구>-<번호>'
+import glob
+GEO_COS = math.cos(37.5 * math.pi / 180)
+EXACT = {'block': 1, 'address': 1, 'district': 1, 'area': 0, 'name': 0}
+lid = {p['id'] for L in lm['bySgg'].values() for p in L}
+pt = {}
+for f in sorted(glob.glob(R + 'data/board/home-map/*.json')):
+    for p in json.load(open(f))['projects']:
+        l = p.get('loc') or {}
+        if p['id'] in lid and l.get('at') and l.get('by') in EXACT:
+            lon, lat = l['at']; pt[p['id']] = [round((lon - 124.5) * GEO_COS * 1000), round((38.4 - lat) * 1000), EXACT[l['by']]]
+# 사업 카드 덧붙임(ex): 사업 id → [유형 번호(pg), 법정동 이름, 공고 물량, [다른 기관, 예정일], [공정률 기준 날짜, 최근 %, 3개월 전 %]]. 값이 없는 칸은 null, 뒤쪽 null 은 자른다.
+# 유형 = projects-index programs 첫 값(화면용 짧은 이름 표 PG_SHORT, 원래 이름은 title) · 법정동 = home-map bjd → areas.json BJD 이름의 마지막 낱말 · 공고 물량 = home-map noticeUnits
+# 다른 기관 예정일 = home-map dateAlt · 공정률 = project-detail progress 의 최근 값과 그 날짜 3개월 전(그날 이전 마지막 값, 없으면 null). 전체 시계열은 넣지 않는다
+PG_SHORT = {'공공주택 건설': '공공주택 건설', '도심 공공주택 복합사업': '도심 복합사업', '노후청사·공공부지': '노후청사·공공부지', '공공택지·공공분양': '공공택지 분양', '3기 신도시': '3기 신도시', '건설형 공공임대': '공공임대 건설',
+            '노후 공공임대 재건축': '노후 임대 재건축', '공공시설·유휴부지 개발': '공공시설·유휴부지 개발', '군 유휴부지': '군 유휴부지', '도심 내 유휴부지 활용 공급': '도심 유휴부지 활용', '철도부지 복합개발': '철도부지 복합개발',
+            '공공시설 이전': '공공시설 이전', '서울 남부권 공공택지 공급 조기화': '남부권 공공택지 공급', '신규 공공주택지구': '신규 주택지구', '우수입지 공공택지 분양': '우수입지 택지 분양', '유휴부지·노후청사 복합개발': '유휴·청사 복합개발',
+            '공공택지 공급 조기화': '공공택지 공급'}
+assert {x['name'] for x in pi['programs']} <= set(PG_SHORT), [x['name'] for x in pi['programs'] if x['name'] not in PG_SHORT]
+pg = [[PG_SHORT[x['name']], x['name']] for x in pi['programs']]
+BJD = {r['area_code']: r['area_name'].split(' ')[-1] for r in areas if r['level'] == 'BJD'}
+def months_before(d, n):
+    y, m, dd = int(d[:4]), int(d[5:7]), int(d[8:10]); m -= n
+    while m < 1: m += 12; y -= 1
+    return '%04d-%02d-%02d' % (y, m, min(dd, __import__('calendar').monthrange(y, m)[1]))
+ex = {}
+hm = {}
+for f in sorted(glob.glob(R + 'data/board/home-map/*.json')):
+    for p in json.load(open(f))['projects']: hm[p['id']] = p
+for pid in lid:
+    pr = (pi['projects'].get(pid) or {}).get('programs') or []
+    h = hm.get(pid) or {}
+    da = h.get('dateAlt')
+    sr = [x for x in ((pd['projects'].get(pid) or {}).get('progress') or []) if x[1] is not None]
+    pgs = None
+    if sr:
+        last = sr[-1]; old = [x for x in sr if x[0] <= months_before(last[0], 3)]
+        pgs = [last[0][:7], round(last[1], 2), round(old[-1][1], 2) if old else None]
+    v = [[x['name'] for x in pi['programs']].index(pr[0]) if pr else None, BJD.get(h.get('bjd')) if h.get('bjd') else None, h.get('noticeUnits') or None,
+         [da['source'], da['planned']] if da and da.get('planned') else None, pgs]
+    while v and v[-1] is None: v.pop()
+    if v: ex[pid] = v
+
+out = {'meta': meta, 'sgg': sggs, 'prj': prj, 'cal': cal, 'neigh': neigh, 'nb': nb, 'map': mapdoc, 'hh': hh, 'det': det, 'jd': jd, 'notices': notices, 'pt': pt, 'pg': pg, 'ex': ex}
 json.dump(out, open(sys.argv[1], 'w'), ensure_ascii=False, separators=(',', ':'))
 print('zero', zero); print('neigh', {k: [(c, sgg[c], len(lm['bySgg'][c])) for c in v] for k, v in neigh.items()})
 print('adj 41280', [AREAS[c] for c in adj['41280']], 'none', [c for c, v in adj.items() if not v])
-print('sgg', len(sggs), 'prj', sum(len(v) for v in prj.values()), 'cal', len(cal), 'det', len(det))
+print('sgg', len(sggs), 'prj', sum(len(v) for v in prj.values()), 'cal', len(cal), 'det', len(det), 'jd', sum(len(v) for v in jd.values()), 'notices', len(notices), 'nb 41450', nb['41450'], 'pt', len(pt), 'exact', sum(v[2] for v in pt.values()), 'ex', len(ex), 'ex유형', sum(1 for v in ex.values() if v[0] is not None), 'ex동', sum(1 for v in ex.values() if len(v)>1 and v[1]), 'ex공고', sum(1 for v in ex.values() if len(v)>2 and v[2]), 'ex기관', sum(1 for v in ex.values() if len(v)>3 and v[3]), 'ex공정', sum(1 for v in ex.values() if len(v)>4 and v[4]))

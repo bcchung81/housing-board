@@ -7,8 +7,9 @@ import { Fragment } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import { cn } from 'cn';
-import InfoTip from '../ui/info-tip';
-import { BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, stepState } from '../../lib/board/projects-view';
+import InfoTip from '@/components/ui/info-tip';
+import { Card } from '@/components/ui/card';
+import { BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, stepState } from '@/lib/board/projects-view';
 
 /* 칸마다 답할 질문(발표자료 6단계 질문을 리본 칸에 맞춤): ③착공은 공사 진행, ⑤준공은 공사의 끝(사용검사) — ⑤에 ③의 질문을 베끼지 않는다 */
 export const QUESTION = [
@@ -30,21 +31,21 @@ export default function StageSteps({ current, reached, listHref }: { current: nu
           const rec = i === 0 || reached.includes(i) ? '실제 기록 있음' : '실제 기록 없음';
           return (
             <li key={name} className="min-w-0">
-              <div aria-current={on ? 'step' : undefined} data-step={st}
+              <Card variant="inset" aria-current={on ? 'step' : undefined} data-step={st}
                 title={`${BOARD_CIR[i]} ${name} — ${QUESTION[i]}${on ? ' · 이 사업의 지금 단계' : st === 'past' ? ` · 지난 단계(${rec})` : ' · 아직 오지 않은 단계'}`}
-                className={cn('flex h-full min-h-[64px] flex-col items-center justify-center gap-0.5 rounded-[8px] border-2 px-1 py-1.5 text-center',
-                  on ? 'text-foreground' : 'border-border bg-card text-muted-foreground')}
-                style={on ? { borderColor: c, background: `color-mix(in srgb,${c} 26%,var(--card))` } : undefined}>
-                <b className={cn('flex items-center gap-1 text-[16px] leading-[1.3] whitespace-nowrap', on ? 'font-bold' : 'font-normal')} style={on ? { color: BOARD_INK[i] } : undefined}>
+                className={cn('flex h-full min-h-[64px] flex-col items-center justify-center gap-0.5 text-center',
+                  on ? 'font-bold text-foreground' : 'text-muted-foreground')}
+                style={on ? { background: `color-mix(in srgb,${c} 26%,var(--card))` } : undefined}>
+                <b className={cn('flex items-center gap-1 text-base leading-sub whitespace-nowrap', on ? 'font-bold' : 'font-normal')} style={on ? { color: BOARD_INK[i] } : undefined}>
                   {st === 'past' ? <><Check className="size-4 flex-none opacity-70" aria-hidden="true" /><span className="sr-only">지난 단계 </span></> : null}{BOARD_CIR[i]} {name}
                 </b>
-                {on ? <span className="mt-0.5 rounded-full bg-primary px-2 text-[13px] leading-[18px] font-bold text-primary-foreground">지금</span> : null}
-              </div>
+                {on ? <span className="mt-0.5 rounded-full bg-primary px-2 py-0.5 text-sm leading-none font-bold text-primary-foreground">지금</span> : null}
+              </Card>
             </li>
           );
         })}
       </ol>
-      <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-[14px] text-muted-foreground">
+      <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
         <span data-slot="stage-def" className="inline-flex flex-wrap items-center gap-x-1"><span><b className="font-bold" style={{ color: BOARD_INK[current] }}>{BOARD_CIR[current]} {BOARD_NAMES[current]}</b> — {QUESTION[current]}</span>
           <InfoTip label="여섯 단계">
             <dl>{QUESTION.map((q, i) => <Fragment key={i}><dt>{BOARD_CIR[i]} {BOARD_NAMES[i]}</dt><dd>{q}{i === current ? ' · 지금' : stepState(i, current) === 'past' ? ` · 지난 단계(${i === 0 || reached.includes(i) ? '실제 기록 있음' : '실제 기록 없음'})` : ''}</dd></Fragment>)}</dl>

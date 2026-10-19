@@ -45,15 +45,15 @@ test('1 지연 헤드라인: 카드 = 확정 2건 · 후보 계산 313건(같은
   assert.ok(rv.every((r) => !r.issued && r.cls === 'delay'));
   assert.equal(listOf('/projects?sido=all&status=review').l.length, 1839, '확인 필요(후보) 전체 목록은 그대로');
   assert.match(late.pair.list.title, /후보 · 지연 계산\(전국\) 313건 — 카드 숫자와 같음 · 확인 필요\(후보\) 1,839건 중/);
-  /* 화면: 두 숫자는 같은 글자 크기 한 벌(pairVals), 겹친 층의 링크는 단추 밖(형제) */
-  assert.match(board, /function pairVals\(x: Directive, link: boolean\)/);
-  assert.equal((board.match(/text-\[min\(24px,11cqi\)\]/g) || []).length, 1, '두 숫자가 같은 크기 클래스 하나를 쓴다');
-  assert.ok(board.indexOf('data-slot="board-dir-pair"') > board.indexOf('</button>', board.indexOf('data-slot="board-dir"')), '링크 층은 단추 밖');
-  assert.match(board, /\{x\.pair \? \(\s*<div data-slot="board-dir-pair" className="pointer-events-none absolute inset-0/);
+  /* 화면: 두 숫자는 같은 글자 크기 한 벌(dirVals 의 one — 6장 공통 규격, 2026-10-18), 겹친 층의 링크는 단추 밖(형제) */
+  assert.match(board, /function dirVals\(x: Directive, link: boolean\)/);
+  assert.equal((board.slice(board.indexOf('function dirVals'), board.indexOf('/* 줄1: 지시 이름')).match(/text-md @min-\[180px\]:text-lg/g) || []).length, 1, '두 숫자가 같은 크기 클래스 하나를 쓴다');
+  assert.ok(board.indexOf('data-slot="board-dir-value"') > board.indexOf('</button>', board.indexOf('data-slot="board-dir"')), '링크 층은 단추 밖');
+  assert.match(board, /<div data-slot="board-dir-value" className=\{cn\(dirFrame, 'ui-dir-layer pointer-events-none absolute inset-0/);
   /* 해당 패널(선택 시점 판정): 작은 회색 후보 줄 대신 지연 확정 · 후보 계산 두 숫자(같은 크기, 각 목록) */
   const cand = board.slice(board.indexOf('data-slot="board-cand"'), board.indexOf('</div>', board.indexOf('data-slot="board-cand"')));
-  assert.match(cand, /<PanelLink href="\/projects\?sido=all&status=late"[^>]*>확정 <b className=\{cn\(disp, 'text-\[20px\] leading-none text-bad'\)\}>\{f\(SJ\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
-  assert.match(cand, /<PanelLink href="\/projects\?sido=all&status=review-late"[^>]*>후보 계산 <b className=\{cn\(disp, 'text-\[20px\] leading-none text-foreground'\)\}>\{f\(SJ\.candidate\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
+  assert.match(cand, /<PanelLink href="\/projects\?sido=all&status=late"[^>]*>확정 <b className=\{cn\(disp, 'text-lg leading-none text-bad'\)\}>\{f\(SJ\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
+  assert.match(cand, /<PanelLink href="\/projects\?sido=all&status=review-late"[^>]*>후보 계산 <b className=\{cn\(disp, 'text-lg leading-none text-foreground'\)\}>\{f\(SJ\.candidate\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
   assert.doesNotMatch(cand, /candText\(SJ\.candidate\)\}<\/span>|후보 목록/, '옛 작은 회색 보조 줄 없음');
 });
 
@@ -109,8 +109,8 @@ test('6 GH 표 상태 = 판정 밖(머리 경고문과 같은 말) · 단계 알
   const g = read('components/ui/data-grid.tsx');
   assert.match(g, /color: `color-mix\(in srgb,\$\{o\.pill\.ink\} 80%,var\(--foreground\)\)`/);
   assert.match(g, /background: `color-mix\(in srgb,\$\{o\.pill\.color\} 16%,var\(--card\)\)`/);
-  /* app/tailwind.css 의 테마 값으로 계산 */
-  const css = read('app/tailwind.css');
+  /* app/globals.css 의 테마 값으로 계산 */
+  const css = read('app/globals.css');
   const blocks = [css.slice(css.indexOf('--st-plan:'), css.indexOf('--actor-local:')), css.slice(css.lastIndexOf('--st-plan:'), css.lastIndexOf('--actor-local:'))];
   const theme = [css.slice(0, css.indexOf('--st-plan:')), css.slice(css.indexOf('--actor-local:'), css.lastIndexOf('--st-plan:'))];
   const hex = (s, k) => { const m = new RegExp(`--${k}:\\s*(#[0-9A-Fa-f]{6})`).exec(s); assert.ok(m, k); return [1, 3, 5].map((i) => parseInt(m[1].slice(i, i + 2), 16) / 255); };
@@ -156,7 +156,7 @@ test('8 월별 실적 차트: Tab 은 차트에 한 번(마지막 달), 안에�
 test('9 착공 카드(통계누리) → ③착공 목록(원장): 목록 머리에 범위 차이를 보이는 글로', () => {
   assert.equal(D[0].list.href, '/projects?sido=all&stage=2');
   const p = read('app/(dashboard)/projects/page.tsx');
-  assert.match(p, /\{f\.stage === 2 \? <span data-slot="start-basis"[^>]*> · 목록은 사업 원장 기준\(통계누리 착공 통계와 범위 다름\)<\/span> : null\}/);
+  assert.match(p, /\{f\.stage === 2 \? <InfoTip label="착공 목록 범위"[^>]*><p data-slot="start-basis">목록은 사업 원장 기준\(통계누리 착공 통계와 범위 다름\)/, '2026-10-18 서술형 정리: 보이는 글 대신 ⓘ');
   const l = listOf(D[0].list.href);
   assert.deepEqual([l.n, l.units], [194, 107554], '목록 194건 · 107,554호(원장)');
 });

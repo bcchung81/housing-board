@@ -1,11 +1,11 @@
-import Board, { type BoardReal } from '../../components/board/Board';
-import RealPanels from '../../components/board/RealPanels';
-import { NATION, lastMonth, nextYm, okUnitsBySido, ytd } from '../../lib/board/calc';
-import { getBoardData } from '../../lib/board/data';
-import { getProjectsIndex } from '../../lib/board/projects-index';
-import { monthIds } from '../../lib/board/month-ahead';
-import type { CalendarDoc } from '../../lib/board/region';
-import calendarJson from '../../data/board/region-calendar.json';
+import Board, { type BoardReal } from '@/components/board/Board';
+import RealPanels from '@/components/board/RealPanels';
+import { NATION, lastMonth, nextYm, okUnitsBySido, ytd } from '@/lib/board/calc';
+import { getBoardData } from '@/lib/board/data';
+import { getProjectsIndex } from '@/lib/board/projects-index';
+import { monthIds } from '@/lib/board/month-ahead';
+import type { CalendarDoc } from '@/lib/board/region';
+import calendarJson from '@/data/board/region-calendar.json';
 
 const calendar = calendarJson as unknown as CalendarDoc;
 

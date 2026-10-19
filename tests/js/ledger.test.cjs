@@ -18,10 +18,11 @@ const schema = (t) => JSON.parse(fs.readFileSync(path.join(DIR, `${t}.schema.jso
 const by = (rows, f) => rows.reduce((m, r) => ({ ...m, [f(r)]: (m[f(r)] ?? 0) + 1 }), {});
 
 const HOME_TABLES = ['policy_targets', 'area_facts'];   // HOME 덤프 표(마이그레이션 *_ledger_refine.sql) — HOME 판이 없으면 빈 표
+const RESEARCH_TABLES = ['source_documents', 'evidence'];   // 정책→입주 원천 수집 파이프라인 출력(tools/research/chain) — 변환기·DB 에 싣지 않는 연구 표
 
 test('스키마: 표 16개 + HOME 표 2개 + 공통 1개, draft 2020-12, $id = 파일 이름, 파일 모양 { schema_version, table, rows }', () => {
-  assert.deepEqual(fs.readdirSync(DIR).sort(), [...TABLES, ...HOME_TABLES, 'common'].map((t) => `${t}.schema.json`).sort());
-  for (const t of [...TABLES, ...HOME_TABLES]) {
+  assert.deepEqual(fs.readdirSync(DIR).sort(), [...TABLES, ...HOME_TABLES, ...RESEARCH_TABLES, 'common'].map((t) => `${t}.schema.json`).sort());
+  for (const t of [...TABLES, ...HOME_TABLES, ...RESEARCH_TABLES]) {
     const s = schema(t);
     assert.equal(s.$schema, 'https://json-schema.org/draft/2020-12/schema', t);
     assert.equal(s.$id, `${t}.schema.json`);

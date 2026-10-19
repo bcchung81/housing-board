@@ -1,13 +1,14 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { preload } from 'react-dom';
-import MapIsland from '../../../components/MapIsland';
-import calendarJson from '../../../data/board/region-calendar.json';
-import detailJson from '../../../data/board/project-detail.json';
-import regionMapJson from '../../../data/board/region-map.json';
-import { metroOverview, type OverviewDoc } from '../../../lib/board/metro-overview';
-import { getProjectsIndex } from '../../../lib/board/projects-index';
-import type { CalendarDoc, RegionMapDoc } from '../../../lib/board/region';
+import MapIsland from '@/components/MapIsland';
+import calendarJson from '@/data/board/region-calendar.json';
+import detailJson from '@/data/board/project-detail.json';
+import koreaSidoJson from '@/data/board/korea-sido.json';
+import regionMapJson from '@/data/board/region-map.json';
+import { metroOverview, type OverviewDoc } from '@/lib/board/metro-overview';
+import { getProjectsIndex } from '@/lib/board/projects-index';
+import type { CalendarDoc, RegionMapDoc } from '@/lib/board/region';
 
 /* 지도 섬: 기존 지도 앱의 마크업(index.html 의 body)을 그대로 넣고, 스크립트는 MapIsland 가 기존 순서대로 불러온다.
    app.js·시험은 건드리지 않는다. 마크업의 정본은 지금 루트 index.html 이다.
@@ -79,38 +80,51 @@ async function overviewDoc(): Promise<OverviewDoc> {
   const map = regionMapJson as unknown as RegionMapDoc;
   try {
     const { rows, sggNames, referenceDate } = await getProjectsIndex();
-    return metroOverview(map, { rows, sggNames, calendar: calendarJson as unknown as CalendarDoc, referenceDate });
+    return withNation(metroOverview(map, { rows, sggNames, calendar: calendarJson as unknown as CalendarDoc, referenceDate }));
   } catch {
-    return metroOverview(map, null);
+    return withNation(metroOverview(map, null));
   }
 }
+/* 전국 보기 맥락 면: 전국 시도 외곽(tools/ledger/korea-sido.js — V-World 행정구역 시도, 공공누리 제1유형)의 보기 상자와 시도 면만 넘긴다 */
+const withNation = (doc: OverviewDoc): OverviewDoc => ({ ...doc, nation: { view: koreaSidoJson.view as [number, number, number, number], sido: koreaSidoJson.sido.map((x) => ({ s: x.s, n: x.n, d: x.d, l: x.l as [number, number] })) } });
 
-/* 개요 마크업(값·목록은 assets/js/overview.js 가 채운다). 상세 마크업과 함께 내려가고, 모드(레이아웃 <head> 의 MAP_MODE_INIT)에 따라 CSS 가 하나만 보인다 */
+/* 첫 그림의 관점별 문구: html[data-aud]( <head> 의 AUDIENCE_INIT )가 admin 이 아니면 일반사용자 문구. 스크립트가 채운 뒤에는 이 스팬이 없어진다 */
+const OV_AUD_CSS = 'html[data-aud=admin] .ov-aud-public,html:not([data-aud=admin]) .ov-aud-admin{display:none}';
+
+/* 개요 마크업(값·목록은 assets/js/overview.js, 지도는 진짜 3D 공용 모듈 assets/js/map3d-gl.js — 안 되면 assets/js/map3d.js SVG 판 — 가 채운다). 상세 마크업과 함께 내려가고, 모드(레이아웃 <head> 의 MAP_MODE_INIT)에 따라 CSS 가 하나만 보인다.
+   data-gl = 진짜 3D 공용 모듈 주소(해시 이름 표 → 없으면 옛 이름, 페이지가 미리 받는다) · data-maplibre = 상세 지도와 같은 maplibre 주소(개요 모듈이 WebGL 판정 뒤 부른다) */
 function OverviewMarkup() {
+  const glSrc = scriptManifest()[MAP3D_GL_JS] || MAP3D_GL_JS;
   return (
-    <div className="ov" id="ov">
+    <div className="ov" id="ov" data-gl={glSrc} data-maplibre={MAPLIBRE}>
+      <style>{OV_AUD_CSS}</style>
       <aside className="ov-panel" id="ovPanel" aria-label="수도권 개요" data-sheet="peek">
         <button type="button" className="ov-handle" id="ovHandle" aria-expanded="false" aria-controls="ovPanel" aria-label="개요 패널 펼치기" />
-        <header className="ov-head"><h1 id="ovTitle">수도권 공급 개요</h1><button type="button" className="ov-back" id="ovBack" hidden>수도권 전체</button><span className="ov-asof" id="ovAsOf" /></header>
+        <header className="ov-head"><h2 id="ovTitle"><span className="ov-aud-admin">수도권 공급 개요</span><span className="ov-aud-public">수도권 공급 예정 호수</span></h2><button type="button" className="ov-back" id="ovBack" hidden>수도권 전체</button><span className="ov-asof" id="ovAsOf" /></header>
         <div className="ov-metrics" id="ovMetrics" role="radiogroup" aria-label="지도 색 기준" />
         <section className="ov-total" aria-labelledby="ovTotalQ">
-          <div className="ov-q"><h2 id="ovTotalQ">수도권 진행 사업 호수</h2><button type="button" className="ov-i" id="ovDefBtn" aria-expanded="false" aria-controls="ovDef" /></div>
+          <div className="ov-q"><h3 id="ovTotalQ"><span className="ov-aud-admin">수도권 진행 사업 호수</span><span className="ov-aud-public">수도권 공급 예정 호수</span></h3><button type="button" className="ov-i" id="ovDefBtn" aria-expanded="false" aria-controls="ovDef" /></div>
           <p className="ov-def" id="ovDef" hidden />
           <div className="ov-num" id="ovTotal" />
           <p className="ov-sub" id="ovTotalSub" />
         </section>
         <p className="ov-fail" id="ovFail" role="status" hidden>수치를 불러오지 못했습니다. 경계만 보여 줍니다.</p>
         <div className="ov-cards" id="ovCards" role="group" aria-label="시도로 맞추기" />
+        {/* 순위 막대 목록: 패널 남은 높이에 들어가는 줄만 보이고(overview.js 가 줄 수를 잰다 — 패널은 세로 스크롤 없음), 전체는 '전체 n ›' 목록(#ovSheet)에서 */}
         <section className="ov-ranks" aria-labelledby="ovRankH">
-          <h2 id="ovRankH">시군구</h2>
+          <div className="ov-rh"><h3 id="ovRankH">시군구</h3><button type="button" className="ov-all" id="ovAll" aria-haspopup="dialog" aria-expanded="false" aria-controls="ovSheet" /></div>
           <ol className="ov-rank" id="ovRank" />
         </section>
+        <div className="ov-sheet" id="ovSheet" role="dialog" aria-labelledby="ovSheetH" hidden>
+          <div className="ov-sh"><h3 id="ovSheetH">시군구</h3><button type="button" className="ov-mx" id="ovSheetX" aria-label="닫기">✕</button></div>
+          <ol className="ov-rank" id="ovRankAll" />
+        </div>
       </aside>
       <section className="ov-mapwrap" id="ovMapWrap" tabIndex={-1} aria-label="수도권 시군구 지도(같은 내용과 고르기는 시군구 목록에도 있습니다)">
-        <div className="ov-map" id="ovMap" />
-        <div className="ov-labels" id="ovLabels" aria-hidden="true" />
+        {/* 3D 지도 무대(진짜 3D 는 캔버스 칸 + 이 svg 가 라벨 덮개, SVG 판은 assets/js/map3d.js 가 svg 를 채운다 — /citizen 과 같은 구현). 탭 정지점은 지도 하나, 화살표로 옮기고 Enter 로 고른다 */}
+        <div className="ov-map" id="ovMap"><div className="ov-stage" id="ovStage" tabIndex={0} role="listbox" aria-label="수도권 시군구 지도"><svg className="map" role="presentation" /></div></div>
         <div className="ov-tip" id="ovTip" hidden />
-        <div className="ov-legend"><b id="ovLegendT" /><ul id="ovLegend" /></div>
+        <div className="ov-legend"><b id="ovLegendT" /><ul id="ovLegend" /><small className="ov-lh" id="ovLegendH" /></div>
         <p className="ov-empty" id="ovEmpty" role="status" hidden />
         <p className="ov-going" id="ovGoing" role="status" hidden />
       </section>
@@ -122,9 +136,11 @@ function OverviewMarkup() {
 /* 지도 섬 + 개요 값: 개요 값은 사업 화면과 같은 읽기(getProjectsIndex)를 기다려 넘긴다. 개요 모듈 주소도 여기서 정한다(해시 이름 표 → 없으면 옛 이름).
    상세 지도의 스크립트 순서는 지도 섬이 index.html 로더와 같게 가진다(개요 모듈은 Next 지도에만 있다) */
 async function Island(props: { assets: Record<string, string>; homeMap: Record<string, string>; homeLite: Record<string, { name: string; n: number; h?: string }>; homeProgress: Record<string, [string, number]>; homeDates: Record<string, { s?: string; e?: string; done?: true }> }) {
-  return <MapIsland {...props} overview={await overviewDoc()} overviewSrc={props.assets[OVERVIEW_JS] || OVERVIEW_JS} />;
+  return <MapIsland {...props} overview={await overviewDoc()} overviewSrc={props.assets[OVERVIEW_JS] || OVERVIEW_JS} map3dSrc={props.assets[MAP3D_JS] || MAP3D_JS} />;
 }
 const OVERVIEW_JS = '/assets/js/overview.js';
+const MAP3D_JS = '/assets/js/map3d.js';   // 개요 3D 지도 공용 모듈(/citizen 과 같은 구현) — 개요 모듈보다 먼저 실행한다
+const MAP3D_GL_JS = '/assets/js/map3d-gl.js';   // 진짜 3D 공용 모듈(전역 MapGL) — 개요 모듈이 동적으로 부른다(지도 섬은 그대로)
 
 export default function MapPage() {
   const markup = mapMarkup();
@@ -133,6 +149,7 @@ export default function MapPage() {
   for (const href of regionPreloads()) preload(href, { as: 'fetch', crossOrigin: 'anonymous' });
   return (
     <>
+      <h1 className="sr">지도</h1>
       <OverviewMarkup />
       <div style={{ display: 'contents' }} suppressHydrationWarning dangerouslySetInnerHTML={{ __html: markup }} />
       <Island assets={assets} homeMap={homeMapManifest()} homeLite={homeLiteManifest()} homeProgress={homeProgress(detailJson as never)} homeDates={homeDates(detailJson as never)} />

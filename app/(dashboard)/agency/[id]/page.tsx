@@ -1,28 +1,29 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import StageLegend from '../../../../components/charts/StageLegend';
-import MonthLines from '../../../../components/charts/MonthLines';
-import { ProvKey } from '../../../../components/charts/Legend';
-import { METRIC_COLOR } from '../../../../components/charts/palette';
-import { Page, PageHead, PanelHead, SrcLink, sub } from '../../../../components/page';
-import PanelLink from '../../../../components/board/PanelLink';
-import StageKpis from '../../../../components/StageKpis';
-import { Alert } from '../../../../components/ui/alert';
-import { Badge } from '../../../../components/ui/badge';
-import { Card } from '../../../../components/ui/card';
-import { DataGrid } from '../../../../components/ui/data-grid';
-import { Prov } from '../../../../components/ui';
-import { NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, staleText, ymDot, ytd, ytdSpan } from '../../../../lib/board/calc';
-import { AGENCIES } from '../../../../lib/board/agencies';
-import { getBoardData } from '../../../../lib/board/data';
-import { mapHref } from '../../../../lib/board/map-href';
-import { getProjectsIndex } from '../../../../lib/board/projects-index';
-import { dayText, isMetro, listOrder, sggOfAddress } from '../../../../lib/board/projects-view';
-import { LIST_COLS, dropBlank, listRows } from '../../../../lib/board/projects-list';
-import { sidoName } from '../../../../lib/board/calc';
-import { metricBoardLabel } from '../../../../lib/board/stages';
-import { DETAILS } from '../../../../lib/shell/menu';
-import { dotDates, type Col } from '../../../../lib/grid/spec';
+import StageLegend from '@/components/charts/StageLegend';
+import MonthLines from '@/components/charts/MonthLines';
+import { ProvKey } from '@/components/charts/Legend';
+import { METRIC_COLOR } from '@/components/charts/palette';
+import { Page, PageHead, PanelHead, SrcLink, sub } from '@/components/page';
+import PanelLink from '@/components/board/PanelLink';
+import StageKpis from '@/components/StageKpis';
+import { Alert } from '@/components/ui/alert';
+import InfoTip from '@/components/ui/info-tip';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { DataGrid } from '@/components/ui/data-grid';
+import { Prov } from '@/components/ui';
+import { NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, staleText, ymDot, ytd, ytdSpan } from '@/lib/board/calc';
+import { AGENCIES } from '@/lib/board/agencies';
+import { getBoardData } from '@/lib/board/data';
+import { mapHref } from '@/lib/board/map-href';
+import { getProjectsIndex } from '@/lib/board/projects-index';
+import { dayText, isMetro, listOrder, sggOfAddress } from '@/lib/board/projects-view';
+import { LIST_COLS, dropBlank, listRows } from '@/lib/board/projects-list';
+import { sidoName } from '@/lib/board/calc';
+import { metricBoardLabel } from '@/lib/board/stages';
+import { DETAILS } from '@/lib/shell/menu';
+import { dotDates, type Col } from '@/lib/grid/spec';
 
 type Props = { params: Promise<{ id: string }> };
 export const generateStaticParams = () => AGENCIES.map((a) => ({ id: a.id }));
@@ -57,7 +58,7 @@ export default async function AgencyDetail({ params }: Props) {
     return (
       <Page>
         <PageHead crumbs={crumbs} title={a.name} tip={`${a.summary}.`}><Badge title={`${a.summary}.`}>준비 중</Badge></PageHead>
-        <Alert><b>기관별 신호(정상·주의·지연)는 일정(당초·변경·현재 예정)이 없어 판정하지 않습니다.</b> {a.id === 'mnd' ? '군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.' : null}</Alert>
+        <Alert><b>일정이 없어 기관 신호를 판정하지 않습니다.</b><InfoTip label="판정하지 않는 까닭" className="ml-1 align-middle"><p>기관별 신호(정상·주의·지연)는 일정(당초·변경·현재 예정)이 없어 판정하지 않습니다.</p>{a.id === 'mnd' ? <p>군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.</p> : null}</InfoTip></Alert>
         {ghRows.length ? (
           <Card render={<section aria-label="GH 사업" />}>
             <PanelHead title="GH 사업" tip={`사업 원장에서 기관이 GH 인 사업 · 사업 화면의 기관 칩 GH 와 같은 목록·같은 열 · 행을 누르면 사업 상세${ghGrid.note}`}><span className={`${sub} tabular-nums`}>{ghRows.length}건 · 계획 {fmt(ghRows.reduce((n, r) => n + r.units, 0))}호</span><PanelLink href="/projects?sido=all&agency=gh" full="사업 화면에서 GH 사업 목록 보기">사업 화면에서 보기</PanelLink></PanelHead>

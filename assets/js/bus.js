@@ -27,11 +27,15 @@
   const SCALE_FULL_ZOOM = 17.5, SCALE_MAX = 4;             // 이 확대부터 실제 크기, 멀어질수록 키운다(최대 4배)
   const PASS_M = 500;                                     // 노선 경로가 단지 중심에서 이 거리 안이면 '지나는 단지'(빌드가 실시간 노선을 고르는 기준 BUS_LIVE_M 과 같다)
   const MIN_POLL_S = 60, MAX_BACKOFF_S = 600;
-  const TYPE_COLORS = [['간선', '#56B4E9'], ['지선', '#5BD6A8'], ['광역', '#FF8A65'], ['급행', '#FF8A65'], ['좌석', '#FF8A65'], ['순환', '#E6C34D'], ['마을', '#E6C34D']];
-  const OTHER_COLOR = '#9AA8D6';
+  /* 노선 종류 → 색 토큰 이름(app/globals.css --map-bus-*). 값은 지도가 테마마다 setPalette 로 넣는다 */
+  const TYPE_TOKENS = [['간선', '--map-bus-trunk'], ['지선', '--map-bus-branch'], ['광역', '--map-bus-express'], ['급행', '--map-bus-express'], ['좌석', '--map-bus-express'], ['순환', '--map-bus-loop'], ['마을', '--map-bus-loop']];
+  const OTHER_TOKEN = '--map-bus-other';
+  let PALETTE = {};
+  const setPalette = (p) => { PALETTE = p || {}; };
 
   const finite = (v) => typeof v === 'number' && Number.isFinite(v);
-  const routeColor = (type) => { const t = String(type || ''); const hit = TYPE_COLORS.find(([k]) => t.includes(k)); return hit ? hit[1] : OTHER_COLOR; };
+  const routeToken = (type) => { const t = String(type || ''); const hit = TYPE_TOKENS.find(([k]) => t.includes(k)); return hit ? hit[1] : OTHER_TOKEN; };
+  const routeColor = (type) => PALETTE[routeToken(type)] || '';
   const rad = (d) => d * Math.PI / 180;
   const kx = (lat) => 111320 * Math.cos(rad(lat)), KY = 110540;
 
@@ -162,6 +166,6 @@
     };
   }
 
-  return { routeColor, distM, bearing, segDistM, pathDistM, parse, headingOf, scaleFor, boxRing, busRing, busParts, features, interpolate, withHeading, passes, nearestBlock, fmtDist, ageText, pollDelayMs, describe,
-    BUS_LEN_M, BUS_WID_M, MODEL, MODEL_BLOB, GLASS_COLOR, SCALE_FULL_ZOOM, SCALE_MAX, PASS_M, MIN_POLL_S, TYPE_COLORS };
+  return { routeToken, routeColor, setPalette, distM, bearing, segDistM, pathDistM, parse, headingOf, scaleFor, boxRing, busRing, busParts, features, interpolate, withHeading, passes, nearestBlock, fmtDist, ageText, pollDelayMs, describe,
+    BUS_LEN_M, BUS_WID_M, MODEL, MODEL_BLOB, GLASS_COLOR, SCALE_FULL_ZOOM, SCALE_MAX, PASS_M, MIN_POLL_S, TYPE_TOKENS };
 });

@@ -5,14 +5,15 @@ import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
 import { cn } from 'cn';
 
-export default function Fold({ title, meta, children, className }: { title: string; meta?: string; children: ReactNode; className?: string }) {
+/* plain = 다른 접는 상자 안에 든 상자: 테두리·그림자 상자를 또 두지 않고 위 구분선만(카드 안 카드 금지) */
+export default function Fold({ title, meta, children, className, plain = false }: { title: string; meta?: string; children: ReactNode; className?: string; plain?: boolean }) {
   return (
-    <details suppressHydrationWarning className={cn('group mt-3 rounded-[12px] border border-border bg-card', className)}>
-      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-0.5 rounded-[12px] px-4 py-2.5 text-[15px] font-bold hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+    <details suppressHydrationWarning className={cn('group mt-3', plain ? 'border-t border-border' : 'rounded-card border border-border bg-card shadow-card', className)}>
+      <summary className={cn('flex cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-0.5 px-4 py-2.5 text-base font-bold hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden', plain ? 'rounded-tile' : 'rounded-card')}>
         <ChevronRight className="size-4 flex-none text-muted-foreground transition-transform group-open:rotate-90" aria-hidden="true" />
         {title}{meta ? <span className="font-normal text-muted-foreground">{meta}</span> : null}
       </summary>
-      <div className="border-t border-border px-4 py-3">{children}</div>
+      <div className={cn('py-3', plain ? 'px-0' : 'border-t border-border px-4')}>{children}</div>
     </details>
   );
 }

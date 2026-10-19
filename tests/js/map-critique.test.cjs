@@ -9,6 +9,7 @@ const R = require('../../assets/js/region.js');
 const ROOT = path.join(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const html = read('index.html'), css = read('assets/css/app.css'), app = read('assets/js/app.js');
+const { mapVars, mapCss } = require('./map-tokens.cjs');   // 색 값은 app/globals.css 에 있고 app.css 는 var() 로 가리킨다(2026-10-18)
 const noComments = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|\s)\/\/ .*$/gm, '').replace(/<!--[\s\S]*?-->/g, '');   // 블록·줄 끝 주석·HTML 주석을 뺀 코드
 
 const LITE = {
@@ -58,7 +59,7 @@ test("단위: 단계 줄·요약은 사업 수 '건'·호수 '호'(단지 아님
   assert.match(code, /<span class="sf-n">\$\{h\.n\}건<\/span>/);
   assert.doesNotMatch(code, /\}단지<|개 단지|단지 없음|번호 발급 전<\/small>/);
   assert.match(code, /<small>후보 사업<\/small>/);
-  assert.match(html, /<h2 id="h-proj">사업<\/h2>/);
+  assert.match(html, /<h3 id="h-proj">사업<\/h3>/);
 });
 
 test('Esc: 열린 카드를 닫고 초점을 연 단추(없으면 지도)로 돌려준다. 옵션 창·입력 중이면 그쪽이 먼저', () => {
@@ -73,11 +74,12 @@ test('Esc: 열린 카드를 닫고 초점을 연 단추(없으면 지도)로 돌
 const lum = (h) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
 const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
 test('다크 지도: 기존 건물(기반시설) 면은 네이비 바탕 3:1 이상이면서 사업 표지 색(①~⑥)보다 어둡다 — 사업 표지가 주인공', () => {
-  const fac = /fac: \{ edu: \{ c: '(#\w{6})'[^}]*\}, med: \{ c: '(#\w{6})'[^}]*\}, pub: \{ c: '(#\w{6})'/.exec(app).slice(1);
-  const stage = [...(/const COLOR = \{([^}]*)\}/.exec(app)[1]).matchAll(/(\w+): '(#\w{6})'/g)].filter(([, k]) => k !== 'priv').map((m) => m[2]);
+  const D = require('./map-js-theme.cjs').mapTheme('dark');   // 지도 칠하기 색은 globals 토큰에서 읽는다(2026-10-18)
+  const fac = ['edu', 'med', 'pub'].map((k) => D.fac[k].c);
+  const stage = Object.entries(D.color).filter(([k]) => k !== 'priv').map(([, v]) => v);
   const dimmest = Math.min(...stage.map(lum));
   for (const c of fac) {
-    assert.ok(ratio(c, '#0A1030') >= 3, `${c} 대비 ${ratio(c, '#0A1030').toFixed(2)}`);
+    assert.ok(ratio(c, '#111111') >= 3, `${c} 대비 ${ratio(c, '#111111').toFixed(2)}`);
     assert.ok(lum(c) < dimmest, `${c} 가 사업 표지 색보다 밝다`);
   }
 });
@@ -106,7 +108,7 @@ test("카드 행 이름: 사업 화면과 같은 '현재 예정'·'상태'(펼�
   assert.match(code, /const cur = lt && \(lt\.next \|\| lt\.pastDue\) \? lt\.next \|\| lt\.due : ''/); assert.match(code, /\['현재 예정', `\$\{esc\(cur\)\}/);   // 2026-10-15 2차: 같은 종류 날짜 하나로(dueDedup, r2-map.test.cjs)
   assert.match(code, /t\.next \? `현재 예정 \$\{esc\(t\.next\)\}`/);
   assert.doesNotMatch(code, /\['다음 일정'|\['판정'|`다음 \$\{esc\(t\.next\)\}`/);
-  assert.match(html, /<h2 id="h-next">다가오는 준공·입주<\/h2>/);
+  assert.match(html, /<h3 id="h-next">다가오는 준공·입주<\/h3>/);
   assert.equal(R.ledgerTexts({ cls: 'caution', overdue: { eventType: 'COMPLETION', planned: '2026-06-01', months: 4 } }).late, '준공 예정 경과 4개월');   // 사업 화면 '경과 n개월'과 같은 어순
 });
 
@@ -121,13 +123,14 @@ test('말풍선 겹침: 단지 카드(HUD)는 자리 후보를 넓히고, 끝내
 });
 
 test('다크 지도: 기존 건물 파랑 단계는 지붕(밝게 섞은 윗면)까지 네이비 바탕 3:1 이상이면서 모든 단계 색보다 어둡다', () => {
-  const ramp = /ramp: \['(#\w{6})', '(#\w{6})', '(#\w{6})', '(#\w{6})', '(#\w{6})'\], flat/.exec(app).slice(1);
+  const D = require('./map-js-theme.cjs').mapTheme('dark');   // 지도 칠하기 색은 globals 토큰에서 읽는다(2026-10-18)
+  const ramp = D.ramp;
   const roof = (h) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(h.slice(i, i + 2), 16) * 0.74 + 255 * 0.26).toString(16).padStart(2, '0')).join('');   // paintBuildings: 지붕 = 흰색 26% 섞음
-  const stage = [...(/const COLOR = \{([^}]*)\}/.exec(app)[1]).matchAll(/(\w+): '(#\w{6})'/g)].filter(([, k]) => k !== 'priv').map((m) => m[2]);
+  const stage = Object.entries(D.color).filter(([k]) => k !== 'priv').map(([, v]) => v);
   assert.ok(lum(roof(ramp[4])) < Math.min(...stage.map(lum)), '가장 밝은 파랑 지붕이 단계 색보다 밝다');
-  assert.ok(ratio(roof(ramp[4]), '#0A1030') >= 3, `지붕 대비 ${ratio(roof(ramp[4]), '#0A1030').toFixed(2)}`);
+  assert.ok(ratio(roof(ramp[4]), '#111111') >= 3, `지붕 대비 ${ratio(roof(ramp[4]), '#111111').toFixed(2)}`);
   assert.ok(lum(ramp[4]) <= lum('#394C96') + 1e-9 && lum(ramp[3]) <= lum('#2E3F82') + 1e-9, '위 두 단은 3차 값(#33468D·#4155A3)보다 한 단계 낮다');
-  assert.match(css, /\.sw\.ramp\{background:linear-gradient\(90deg,#17204D,#394C96\)\}/);   // 범례 견본도 같이
+  assert.match(mapCss('dark'), /\.sw\.ramp\{background:linear-gradient\(90deg,#17204D,#394C96\)\}/);   // 범례 견본도 같이
 });
 
 test('사업 카드(2026-10-15): 화면 용어(상태·공정률·호·점 날짜), 머리 고정 + 몸통 스크롤, 핵심 2열 격자·설명 두 줄·주변·시공 접힘', () => {
@@ -147,8 +150,8 @@ test('사업 카드(2026-10-15): 화면 용어(상태·공정률·호·점 날�
   assert.match(css, /\.pc-note summary\{[^}]*-webkit-line-clamp:2/);
   /* 반투명 유리: backdrop-filter 와, 못 쓰는 브라우저용 @supports 대체(두 테마) */
   assert.match(css, /(?:^|\n)\.maplibregl-popup-content\{[^}]*background:var\(--glass-pop\);-webkit-backdrop-filter:var\(--glass-pop-blur\);backdrop-filter:var\(--glass-pop-blur\)/);
-  assert.match(css, /@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{:root\{[^}]*--glass-pop:rgba\(16,26,68,\.98\)/);
-  assert.match(css, /@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{html\[data-map-shell\]:not\(\.dark\)\{--glass-hud:rgba\(255,255,255,\.98\)/);
+  assert.equal(mapVars({ theme: 'dark', fallback: true })['--glass-pop'], 'rgba(17,17,17,.98)');   // 대체값은 app/globals.css 의 @supports not 안
+  assert.equal(mapVars({ theme: 'light', fallback: true })['--glass-hud'], 'rgba(255,255,255,.98)');
   /* 접힘을 펴면 자리를 다시 맞춘다 */
   assert.match(app, /popup\.getElement\(\)\.addEventListener\('toggle', \(\) => \{ if \(popup !== own\) return; popup\.setOffset\(\[0, 0\]\); fitCard\(\); \}, true\)/);
 });
@@ -295,33 +298,28 @@ test('2: 늘 보이는 시점 조작은 확대·축소·나침반·전체·보�
 });
 
 const OV = require('../../assets/js/overview.js');
-test('3: 개요 라벨은 이름+값 한 상자만(숫자만 남기는 bare 없음), 상자가 자기 면 밖이면 숨기고, 보이는 라벨 글자는 자기 면 색 바탕에서 4.5:1 이상', () => {
-  const ov = read('assets/js/overview.js');
-  assert.doesNotMatch(ov + css, /\bbare\b/);
-  assert.match(ov, /fits: boxInFace\(corners, faces\.get\(L\.u\.code\)\)/);
-  assert.match(ov, /const show = items\.map\(\(it, i\) => it\.fits && fit\[i\]\)/);
-  // 면 안 판정(구멍 포함): 10×10 정사각형에 가운데 4×4 구멍
-  const sq = [[[0, 0], [10, 0], [10, 10], [0, 10]], [[3, 3], [7, 3], [7, 7], [3, 7]]];
-  const box = (x0, y0, x1, y1) => [[x0, y0], [x1, y0], [x1, y1], [x0, y1]];
-  assert.equal(OV.boxInFace(box(0.5, 0.5, 2.5, 2.5), [sq]), true);
-  assert.equal(OV.boxInFace(box(8, 8, 11, 9), [sq]), false, '한 귀퉁이가 면 밖');
-  assert.equal(OV.boxInFace(box(1, 4, 9, 6), [sq]), false, '네 귀퉁이는 면 안이지만 변 가운데가 구멍(이웃 면) 위');
-  assert.deepEqual(OV.projectLL(...OV.unproject(1234, 567)).map(Math.round), [1234, 567]);
-  // 대비: 라벨은 값 > 0 인 면에만(c1~c5) — 단계마다 글자색(--ov-ink-N)을 자기 면색(--ov-N) 위에서 잰다(라이트·다크)
-  const vars = (block) => Object.fromEntries([...block.matchAll(/(--ov-[\w-]+):(#[0-9A-Fa-f]{6})/g)].map((m) => [m[1], m[2]]));
-  const dark = vars(/:root\{--ov-bg[^}]*\}/.exec(css)[0]), light = vars(/html\[data-map-shell\]:not\(\.dark\)\{--ov-bg[^}]*\}/.exec(css)[0]);
+test('3: 개요 라벨은 /citizen 과 같은 3D 이름표(이름 / 숫자 두 줄 묶음, 공용 모듈 Map3D.labels)뿐이고(HTML 라벨·숫자만 남기는 bare 없음), 글자는 자기 면 단계 글자색으로 4.5:1 이상', () => {
+  const ov = read('assets/js/overview.js'), m3 = read('assets/js/map3d.js'), m3css = read('assets/css/map3d.css');
+  assert.doesNotMatch(ov + css + m3css, /\bbare\b/);
+  assert.match(ov, /M3\.labels\(svg\.querySelector\('\.lbls'\), G, inScope\(\), \{ strict: !S\.sido \}\)/, '이름표는 공용 모듈(수도권 전체는 겹치면 숨김)');
+  assert.doesNotMatch(ov, /ov-lb|ovLabels/, '개요 HTML 라벨 층 없음');
+  /* 두 줄 묶음: 이름(짧은 이름)과 숫자('1.6만'), 면 단계 글자색 클래스 fN */
+  assert.match(m3, /<text class="lb nm f\$\{c\}" x="\$\{b\.x\}" y="\$\{two \? b\.y - 9 : b\.y\}">\$\{esc\(p\.nm\)\}<\/text>\$\{two \? `<text class="lb f\$\{c\}"/);
+  const M3 = require('../../assets/js/map3d.js');
+  assert.equal(M3.labelNum(16388), '1.6만'); assert.equal(M3.labelNum(10330), '1만'); assert.equal(M3.labelNum(3885), '3,885');
+  assert.deepEqual(M3.shortNames(['남양주시', '중구', '고양시', '광주시']), { 남양주시: '남양주', 중구: '중구', 고양시: '고양', 광주시: '광주' });
+  // 대비: 라벨 글자색(--map-ov-ink-N = --ov-ink-N)을 자기 면색(--map-ov-N) 위에서 잰다(라이트·다크)
+  const dark = mapVars({ theme: 'dark' }), light = mapVars({ theme: 'light' });
   for (const [name, t] of [['다크', dark], ['라이트', light]]) for (let c = 0; c <= 5; c++) {
     const r = ratio(t[`--ov-ink-${c}`], t[`--ov-${c}`]);
     assert.ok(r >= 4.5, `${name} c${c}: ${t[`--ov-ink-${c}`]} / ${t[`--ov-${c}`]} = ${r.toFixed(2)}`);
   }
-  for (let c = 0; c <= 5; c++) assert.match(css, new RegExp(`\\.ov-lb\\.c${c}\\{color:var\\(--ov-ink-${c}\\);text-shadow:0 0 2px var\\(--ov-${c}\\)`));
-  // 겹침 0: pickLabels 는 놓은 상자끼리 여백(LABEL_PAD) 안에서 닿지 않는다
-  const items = [{ x: 50, y: 50, w: 40, h: 20 }, { x: 60, y: 55, w: 40, h: 20 }, { x: 150, y: 50, w: 40, h: 20 }];
-  assert.deepEqual(OV.pickLabels(items, 400, 200, []), [true, false, true]);
+  for (let c = 0; c <= 5; c++) assert.match(m3css, new RegExp(`\\.map \\.lb\\.f${c} \\{ fill: var\\(--map-ov-ink-${c}\\); stroke: color-mix\\(in srgb, var\\(--map-ov-${c}\\) 85%, transparent\\); \\}`));
+  for (let c = 0; c <= 5; c++) assert.match(m3css, new RegExp(`\\.map \\.c${c} \\{ --c: var\\(--map-ov-${c}\\); \\}`), '면 색 단계 = 범례 견본(--ov-N = --map-ov-N)');
 });
 
-test('4: 개요 패널은 스크롤바 자리를 비워 두고(지표 단추 폭 고정), 값 있는 시군구가 3곳 미만이면 지도 위에 빈 상태 한 줄', () => {
-  assert.match(css, /\.ov-panel\{[^}]*scrollbar-gutter:stable/);
+test('4: 개요 패널은 세로 스크롤이 없고(2026-10-18 — 순위 막대 목록이 남은 높이만 쓴다, 스크롤바 자리도 없음), 값 있는 시군구가 3곳 미만이면 지도 위에 빈 상태 한 줄', () => {
+  assert.match(css, /\.ov-panel\{position:relative;[^}]*overflow:hidden;/); assert.doesNotMatch(css, /\.ov-panel\{[^}]*(overflow-y:auto|scrollbar-gutter)/);
   assert.equal(OV.emptyNote('수도권 지연 사업', 2, '건', ['인천 서구', '경기 오산시']), '수도권 지연 사업 2건 — 인천 서구·경기 오산시');
   assert.equal(OV.emptyNote('수도권 지연 사업', 3, '건', ['a', 'b', 'c']), '');
   assert.match(OV.emptyNote('서울 지연 사업', 0, '건', []), /값이 있는 시군구가 없습니다/);
@@ -359,9 +357,9 @@ test('합계 세 번 표시 정리: 원장 진행 합계(SUM_TOTAL.main)는 머�
 
 /* ---- 7차 평가(2026-10-15, 27/40) 지도 쪽 고침: 지연 빨강·위치 미확보 묶음·카드 상태 한 줄·꼬리표 가림·Esc 초점·지도 → 서랍 계약·맥동 없음·이름 통일·12개월 준공 ---- */
 test('A7-1 지연 지표: 개요는 지연만 빨강(bad) 명도 5단계(라이트·다크), 라벨 4.5:1 이상·밝기 순서, overview.js 가 <html data-ov-metric> 로 고르고 면 색을 다시 칠한다', () => {
-  const block = (sel) => { const m = new RegExp(`${sel.replace(/[[\]().:"=]/g, (c) => `\\${c}`)}\\{([^}]*)\\}`).exec(css); assert.ok(m, sel); return Object.fromEntries([...m[1].matchAll(/(--ov-[\w-]+):(#[0-9A-Fa-f]{6})/g)].map((x) => [x[1], x[2]])); };
+  const block = (sel) => mapVars({ theme: /:not\(\.dark\)/.test(sel) ? 'light' : 'dark', metric: 'd' });   // 지표 d 의 html 값(app/globals.css 의 --map-ov-*)
   const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
-  for (const [sel, dark] of [['html[data-ov-metric="d"]', true], ['html[data-map-shell][data-ov-metric="d"]:not(.dark)', false]]) {
+  for (const sel of ['html[data-ov-metric="d"]', 'html[data-map-shell][data-ov-metric="d"]:not(.dark)']) {
     const v = block(sel);
     for (let i = 1; i <= 5; i++) {
       const [r, g, b] = rgb(v[`--ov-${i}`]);
@@ -369,10 +367,13 @@ test('A7-1 지연 지표: 개요는 지연만 빨강(bad) 명도 5단계(라이�
       assert.ok(ratio(v[`--ov-${i}`], v[`--ov-ink-${i}`]) >= 4.5, `${sel} 단계 ${i} 글자 대비 ${ratio(v[`--ov-${i}`], v[`--ov-ink-${i}`]).toFixed(2)}`);
     }
     const L = [1, 2, 3, 4, 5].map((i) => lum(v[`--ov-${i}`]));
-    assert.ok(L.every((x, i) => !i || (dark ? x > L[i - 1] : x < L[i - 1])), `${sel}: 값이 클수록 ${dark ? '밝게' : '짙게'}`);
+    assert.ok(L.every((x, i) => !i || x < L[i - 1]), `${sel}: 값이 클수록 짙게(다크도 옅음 → 짙음)`);
   }
   assert.match(ovjs, /doc\.documentElement\.setAttribute\('data-ov-metric', S\.metric\)/);
-  assert.match(ovjs, /map\.setPaintProperty\('ov-fill', 'fill-color', fillExpr\(\)\); map\.getSource\('ov'\)\.setData\(geo\);/, '지표를 바꾸면 팔레트도 다시');
+  /* 2026-10-18 3D 개요: 지표를 바꾸면 면 색 단계(cN)·면 이름만 다시 칠한다(Map3D.recolor) — 기하(Map3D.geom·draw)는 다시 만들지 않는다(G16) */
+  const paint = ovjs.slice(ovjs.indexOf('    function paint() {'), ovjs.indexOf('\n    }\n', ovjs.indexOf('    function paint() {')));
+  assert.match(paint, /unitOf\(\); M3\.recolor\(svg, G\); placeLabels\(\); paintFaces\(\);/, '지표를 바꾸면 팔레트도 다시');
+  assert.doesNotMatch(paint, /drawMap|M3\.draw|M3\.geom/);
 });
 
 test('A7-1 위치 미확보 묶음: 시군구 경계 안 점선 표지(건수·지연)와 목록(키보드·aria-expanded·Esc 로 닫고 초점 돌려줌), 머리 줄 단추도 같은 목록', () => {
@@ -409,7 +410,7 @@ test('A7-2·A8-5 카드 상태: 판정 칩 하나 + 이유 한 줄(경과·예�
   assert.doesNotMatch(fn, /statusLine/);
   assert.doesNotMatch(fn, /jd caution"[^>]*>예정일 지남/, "'예정일 지남' 경고색 표지는 따로 없다");
   assert.match(fn, /chipHtml\(KIND\[b\.status\], headTxt\)/);
-  assert.match(app, /const altMark = \(a, home\) => `<b class="jd alt"/);
+  assert.match(app, /const altMark = \(a, home\) => `<b class="jd alt ov-aud-admin"/);   // 원천 날짜 다름은 정책담당자 관점에만(2026-10-18)
   assert.match(css, /\.jd\.alt\{color:var\(--mute\)/);
 });
 
@@ -458,7 +459,7 @@ test('A7-8 개요 12개월: 대표는 준공(COMPLETION)만, 입주는 마우스
   const cal = { sido: { '11': [{ type: 'COMPLETION', sgg: '서울특별시 종로구', units: 100 }, { type: 'MOVE_IN', sgg: '서울특별시 종로구', units: 50 }, { type: 'SUPPLY_NOTICE', sgg: '서울특별시 종로구', units: 30 }] } };
   const v = O.valuesBySgg([], cal, { 11110: '서울특별시 종로구' }).get('11110');
   assert.deepEqual([v.a, v.an, v.mi, v.mn], [100, 1, 50, 1]);
-  assert.match(ovjs, /12개월 준공 \$\{fmt\(v\.a\)\}호\(\$\{fmt\(v\.an\)\}건\) · 입주 \$\{fmt\(v\.mi \|\| 0\)\}호/);
+  assert.match(ovjs, /12개월'\} 준공 \$\{fmt\(v\.a\)\}호\(\$\{fmt\(v\.an\)\}건\) · 입주 \$\{fmt\(v\.mi \|\| 0\)\}호/);
 });
 
 /* ---- 8차 독립 평가(2026-10-15, 배포 전 마지막) 지도 결함 1~9 ---- */
@@ -501,7 +502,7 @@ test('A8-2 개편 전 옛 코드(28110·28140·28260)는 새 구로 안내하고
   const h = R.fatalHtml(m);
   assert.match(h, /^<div class="ft"><h2>/); assert.match(h, /<ul class="ft-go"><li><a href="\/map\?sgg=28275">서해구 \(28275\)<\/a><\/li>/); assert.match(h, /<a class="ft-home" href="\/map">수도권 개요로<\/a><\/div>$/);
   assert.doesNotMatch(read('assets/js/region.js'), /<code>/);
-  assert.match(css, /#fatal \.ft\{[^}]*border-radius:14px;background:var\(--glass-card\)[^}]*font-family:var\(--font-body\)/);
+  assert.match(css, /#fatal \.ft\{[^}]*border-radius:var\(--radius-card\);background:var\(--glass-card\)[^}]*font-family:var\(--font-sans\)/);
   /* 주소 이동 입력줄도 같은 표: 옛 코드를 치면 새 구를 알린다 */
   assert.deepEqual(Object.keys(G8.REFORMED).sort(), Object.keys(R.REFORMED).sort());
   for (const [c, x] of Object.entries(R.REFORMED)) for (const [code] of x.to) assert.ok(G8.REFORMED[c].includes(code), `${c} → ${code}`);
@@ -518,8 +519,8 @@ test('A8-3 지표가 상세로 이어진다: 개요 지표를 주소(?metric=d)�
   assert.match(app8, /pin\.classList\.toggle\('late', \(LATE \|\| !!\(CUR_LOST && CUR_LOST\.cls === 'delay'\)\) && sm\.delay > 0\)/);   // 지연 사업으로 열어도(r3-map 1b)
   assert.match(app8, /if \(LATE && sm\.delay\) whenRevealed\(\(\) => \{ if \(!popup && !q\.get\('block'\) && !\(RES && RES\.block\)\) setLost\(true, pin, false\); \}\);/);
   assert.match(css, /\.lostpin\.late\{border-color:var\(--bad\);color:var\(--bad\)\}/);
-  assert.match(app8, /<span class="ht-jd \$\{jc\}" title="\$\{CLS_WORD\[jc\]\}"><\/span>/);
-  assert.match(css, /\.hudtag \.ht-jd\{[^}]*border-radius:50%;background:var\(--bad/);
+  assert.match(app8, /<span class="ht-jd \$\{jc\} ov-aud-admin" title="\$\{CLS_WORD\[jc\]\}"><\/span>/);   // 판정 점은 정책담당자 관점에만(2026-10-18)
+  assert.match(css, /.hudtag \.ht-jd\{[^}]*border-radius:var\(--radius-full\);background:var\(--bad/);
   /* 검단구: 지연 2건이 모두 위치 미확보 → 칩 '지연 2' */
   const g = R.homeToProjects([JSON.parse(read('data/board/home-map/28290.json'))]);
   assert.equal(g.unlocated.filter((x) => x.cls === 'delay').length + g.projects.filter((p) => p.cls === 'delay').length, 2);
@@ -561,15 +562,16 @@ test('A8-5 카드: 입주 칸에 준공 예정을 넣지 않는다(칸 이름 = 
 });
 
 test('A8-6 ?sido= 개요: 제목·합계가 그 시도이고 수도권 전체로 돌아가는 단추가 있다', () => {
-  assert.match(page8, /<h1 id="ovTitle">수도권 공급 개요<\/h1><button type="button" className="ov-back" id="ovBack" hidden>수도권 전체<\/button>/);
-  assert.match(ov8, /\$\('ovTitle'\)\.textContent = `\$\{scope \? scope\.name : '수도권'\} 공급 개요`;/);
+  assert.equal((page8.match(/<h1[ >]/g) || []).length, 1, "문서 h1 은 개요·상세 공통 화면 읽기 전용 '지도' 하나"); assert.match(page8, /<h1 className="sr">지도<\/h1>\s*<OverviewMarkup \/>/);
+  assert.match(page8, /<header className="ov-head"><h2 id="ovTitle"><span className="ov-aud-admin">수도권 공급 개요<\/span><span className="ov-aud-public">수도권 공급 예정 호수<\/span><\/h2><button type="button" className="ov-back" id="ovBack" hidden>수도권 전체<\/button>/);
+  assert.match(ov8, /\$\('ovTitle'\)\.textContent = titleOf\(scope \? scope\.name : '수도권', isPub\(\)\);/);
   assert.match(ov8, /\$\('ovBack'\)\.hidden = !scope;/); assert.match(ov8, /\$\('ovBack'\)\.addEventListener\('click', \(\) => setSido\('', true\)\);/);
 });
 
 test('A8-7 보기 메뉴: 입체·평면 중 지금 시점 하나만 aria-checked(라디오 점), 둘러보기·자동 회전은 켜짐 여부', () => {
   assert.match(app8, /function syncPlane\(\) \{ const flat = map\.getPitch\(\) < 5; for \(const \[id, on\] of \[\['#vPlane', flat\], \['#vSolid', !flat\]\]\)/);
   assert.match(app8, /\$\('#vSolid'\)\.addEventListener\('click', /);
-  assert.match(css, /\.vmenu \.vm\[role="menuitemradio"\]\[aria-checked="true"\] \.vm-k::after\{[^}]*border-radius:50%;background:var\(--acc\)/);
+  assert.match(css, /\.vmenu \.vm\[role="menuitemradio"\]\[aria-checked="true"\] \.vm-k::after\{[^}]*border-radius:var\(--radius-full\);background:var\(--acc\)/);
 });
 
 test('A8-8 개요 시군구 목록 키보드: 로빙 tabindex, ↑↓·Home·End, 첫 글자(한글 초성 포함)로 옮긴다', () => {
@@ -578,7 +580,8 @@ test('A8-8 개요 시군구 목록 키보드: 로빙 tabindex, ↑↓·Home·End
   assert.equal(J8.rankMove(names, 2, 'Home'), 0); assert.equal(J8.rankMove(names, 0, 'End'), 5);
   assert.equal(J8.rankMove(names, 0, '고'), 3); assert.equal(J8.rankMove(names, 0, 'ㄱ'), 3); assert.equal(J8.rankMove(names, 3, 'ㄱ'), 5); assert.equal(J8.rankMove(names, 5, 'ㄱ'), 0);
   assert.equal(J8.rankMove(names, 0, ' '), -1); assert.equal(J8.rankMove(names, 0, 'Tab'), -1);
-  assert.match(ov8, /\$\('ovRank'\)\.querySelectorAll\('button'\)\.forEach\(\(b\) => \{ b\.tabIndex = b === cur \? 0 : -1; \}\);/);
+  assert.match(ov8, /const rankBtns = \(L\) => \[\.\.\.L\.querySelectorAll\('button'\)\]\.filter\(\(b\) => !b\.closest\('\[hidden\]'\)\);/, '숨긴 줄(넘친 줄·접힌 묶음)은 건너뛴다');
+  assert.match(ov8, /L\.querySelectorAll\('button'\)\.forEach\(\(b\) => \{ b\.tabIndex = b === cur \? 0 : -1; \}\);/); assert.match(ov8, /const LISTS = \[\$\('ovRank'\), \$\('ovRankAll'\)\];/, '패널 막대 목록 · 전체 목록 둘 다');
   assert.match(ov8, /data-n="\$\{esc\(u\.name\)\}"/);
 });
 
@@ -586,9 +589,10 @@ test('A8-9 안내 띠: 위치 미확보가 0건이면 그 문장이 없고, 펼�
   assert.match(read('assets/js/region.js'), /표시한 점은 사업 경계가 아닙니다\$\{hm\.unlocated\.length \? `\. 위치 미확보 \$\{hm\.unlocated\.length\}건은 목록에만 둡니다` : ''\}/);
   const el = { hidden: true, innerHTML: '' }, doc = { getElementById: () => el };
   R.mountBanner(doc, { slug: '', home: { total: 4, failed: false } }, '', '사업 원장 4건 · 지도 4건', '설명 문장');
-  assert.equal(el.innerHTML, '<details class="pv-d"><summary class="pv-s" title="설명 문장">사업 원장 4건 · 지도 4건</summary><ul class="pv-list" id="pvList" aria-label="사업 원장 목록"></ul></details>');
+  /* '사업 원장'은 정책담당자 관점 낱말, 일반사용자에게는 '사업'(관점 CSS ov-aud-*, 2026-10-18) */
+  assert.equal(el.innerHTML, '<details class="pv-d"><summary class="pv-s" title="설명 문장"><span class="ov-aud-admin">사업 원장</span><span class="ov-aud-public">사업</span> 4건 · 지도 4건</summary><ul class="pv-list" id="pvList" aria-label="사업 원장 목록"></ul></details>');
   R.mountBanner(doc, { slug: 'incheon-gyeyang', home: { total: 6, failed: false }, visibility: 'public' }, '');
-  assert.equal(el.innerHTML, '<details class="pv-d"><summary class="pv-s" title="설명 문장">사업 원장 4건 · 지도 4건</summary><ul class="pv-list" id="pvList" aria-label="사업 원장 목록"></ul></details>', '번들 지역(계양)은 목록 띠를 만들지 않는다(안내가 없으면 그대로)');
+  assert.equal(el.innerHTML, '<details class="pv-d"><summary class="pv-s" title="설명 문장"><span class="ov-aud-admin">사업 원장</span><span class="ov-aud-public">사업</span> 4건 · 지도 4건</summary><ul class="pv-list" id="pvList" aria-label="사업 원장 목록"></ul></details>', '번들 지역(계양)은 목록 띠를 만들지 않는다(안내가 없으면 그대로)');
   assert.match(app8, /\$\('#pvList'\)\.innerHTML = ledgerRows\(BLOCKS\.filter\(\(b\) => b\.home\)\.map\(/);
   assert.match(app8, /<ul>\$\{ledgerRows\(LOST\)\}<\/ul>/, '위치 미확보 목록과 같은 줄 함수');
 });
@@ -607,7 +611,7 @@ test('지역 선택기: 뒤로 가기(bfcache)로 돌아오면 고른 값이 지
   assert.deepEqual(opts.map((o) => o.selected), [true, false], 'bfcache 복원이면 지금 지역(defaultSelected)으로 되돌린다');
 });
 
-test('지도 수도권 개요: 뒤로 가기 복원 처리기가 여는 중 잠금·띠·aria-busy 를 풀고 카메라를 되돌리며, 카메라 저장은 확대 전에 한다', () => {
+test('지도 수도권 개요: 뒤로 가기 복원 처리기가 여는 중 잠금·띠·aria-busy·고른 곳 면 효과를 풀고, 여는 동안은 고른 곳 면 효과만(지도 확대·카메라 없음)', () => {
   const src = read('assets/js/overview.js');
   const h = src.match(/addEventListener\('pageshow', \(e\) => \{([\s\S]*?)\n    \}\);/);
   assert.ok(h, 'pageshow 처리기');
@@ -615,7 +619,9 @@ test('지도 수도권 개요: 뒤로 가기 복원 처리기가 여는 중 잠�
   assert.match(h[1], /S\.going = false;/);
   assert.match(h[1], /\$\('ovGoing'\)\.hidden = true;/);
   assert.match(h[1], /root\.removeAttribute\('aria-busy'\);/);
-  assert.match(h[1], /map\.jumpTo\(S\.cam\);/);
-  const go = src.slice(src.indexOf('function go(u, href, label)'));
-  assert.ok(go.indexOf('S.cam =') > 0 && go.indexOf('S.cam =') < go.indexOf('map.fitBounds('), 'S.cam 저장이 fitBounds 보다 앞');
+  assert.match(h[1], /S\.pick = null; paintFaces\(\);/);
+  const go = src.slice(src.indexOf('function go(u, href, label)'), src.indexOf("win.addEventListener('pageshow'"));
+  assert.match(go, /S\.pick = u\.code; paintFaces\(\);/, '여는 곳은 고른 곳 면 효과');
+  assert.match(go, /win\.setTimeout\(\(\) => win\.location\.assign\(href\), 40\);/);
+  assert.doesNotMatch(src, /fitBounds|jumpTo|S\.cam\b|maplibregl/, 'MapLibre 카메라 없음');
 });

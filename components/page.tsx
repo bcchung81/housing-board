@@ -12,7 +12,7 @@ export const Page = ({ children }: { children: ReactNode }) => (
 );
 
 /* 카드 안 작은 글씨: .panel .sub */
-export const sub = 'text-[14px] text-muted-foreground';
+export const sub = 'text-sm text-muted-foreground';
 /* 표 안의 '값 없음'(.tbl .na). 표 밖의 .na 는 스타일이 없었으므로 쓰지 않는다 */
 export const na = 'text-muted-foreground';
 
@@ -22,9 +22,9 @@ export function PageHead({ crumbs, title, tip, meta, metaTip, children }: { crum
     <header className="-mb-0.5 pt-4">
       {crumbs ? <Crumbs items={crumbs} /> : null}
       <div className={cn('flex flex-wrap items-baseline gap-x-3 gap-y-1', crumbs && 'mt-1')}>
-        <h1 className="m-0 min-w-0 font-display text-[28px] leading-[1.2] font-normal tracking-[-0.03em] text-foreground [overflow-wrap:anywhere] mobile:text-[22px]" title={tip}>{title}</h1>
+        <h1 className="m-0 min-w-0 text-h1 font-bold text-foreground [overflow-wrap:anywhere]" title={tip}>{title}</h1>
         {children}
-        {meta ? <span className={cn(sub, 'ml-auto whitespace-nowrap tabular-nums mobile:text-[13px]')} title={metaTip}>{meta}</span> : null}
+        {meta ? <span className={cn(sub, 'ml-auto whitespace-nowrap tabular-nums mobile:text-sm')} title={metaTip}>{meta}</span> : null}
       </div>
     </header>
   );
@@ -42,8 +42,8 @@ export function PanelHead({ title, tip, id, scope, children, className }: { titl
 }
 /* 표·그래프 아래 출처 문장 대신 카드 머리 줄 오른쪽의 조용한 링크(한 화면에 하나) */
 export const SrcLink = ({ href = '/sources' }: { href?: string }) => <PanelLink href={href} full="데이터 원본">데이터 원본</PanelLink>;
-/* 카드 안 소제목: .page h3 */
-export const SubTitle = ({ className, ...p }: ComponentProps<'h3'>) => <h3 className={cn('mt-5 mb-2 text-[16px] font-normal text-muted-foreground', className)} {...p} />;
+/* 카드 안 소제목: h3 역할(16/700, globals 의 .ui-h3) */
+export const SubTitle = ({ className, ...p }: ComponentProps<'h3'>) => <h3 className={cn('ui-h3 mt-5 mb-2 text-muted-foreground', className)} {...p} />;
 
 /* 빈 값: 긴 문장 대신 — (이유는 title) */
 export const Dash = ({ why }: { why: string }) => <span className="text-muted-foreground" title={why} aria-label={why}>—</span>;
@@ -55,5 +55,5 @@ export const kpisGrid = 'grid grid-cols-[repeat(auto-fill,minmax(min(240px,100%)
 export const cols2 = 'grid grid-cols-[repeat(auto-fit,minmax(min(420px,100%),1fr))] gap-x-3.5';
 /* 정의 목록(.dl) */
 export const Dl = ({ className, ...p }: ComponentProps<'dl'>) => (
-  <dl className={cn('m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-[16px] leading-[1.6] [&_dt]:text-muted-foreground [&_dd]:m-0 [&_dd]:[overflow-wrap:anywhere]', className)} {...p} />
+  <dl className={cn('m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-2.5 text-base [&_dt]:text-muted-foreground [&_dd]:m-0 [&_dd]:[overflow-wrap:anywhere]', className)} {...p} />
 );

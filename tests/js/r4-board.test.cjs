@@ -34,7 +34,7 @@ test('1 시도 16곳: 전국 16칸 지리 격자(4열, REGION_POS 자리), 판�
   for (const s of ['region-fold', 'board-region-rest', 'foldOpen', 'restRegions', 'judgedRegions']) assert.doesNotMatch(board, new RegExp(s), s);
   /* 3차 유지: 호수 기준 지연율 · 타일 아래 '지연 n호 · n건' · 범례 · (i) */
   assert.match(reg, /rate = tu \? r\.delayUnits \/ tu \* 100 : 0/);
-  assert.match(reg, /지연 \{f\(r\.delayUnits\)\}호 · \{f\(r\.delay\)\}건/);
+  assert.match(reg, /(?:지연 <\/span>)?\{f\(r\.delayUnits\)\}호(?:<span className="@max-\[105px\]:hidden">)? · \{f\(r\.delay\)\}건/);
   assert.match(reg, />지연율 · 호수 기준</);
   assert.match(reg, /<\/h2>\s*<InfoTip label="시도 지연율 기준"/);
   assert.doesNotMatch(code(reg), /아래 한 줄 묶음/, '(i) 설명도 격자에 맞춘다');
@@ -60,20 +60,19 @@ test("2 판정 비율 모수: '판정 169건 · 168,152호 · 전체의 11.8%'(�
 test('3 범위 칩: 종합상황판 패널 머리마다(선택 시점 카드 포함) — 원장 위젯 전국 · 사업 원장, 월별 실적 흐름 전국 · 통계누리', () => {
   for (const id of ['p-chart', 'p-snap', 'p-region', 'p-trend', 'p-fut', 'p-agency']) assert.match(headOf(id), /<\/InfoTip>\s*\{ledgerChip\}/, id);
   assert.match(headOf('p-actual', real), /<ScopeChip scope="전국" source="통계누리"/);
-  assert.match(board, /import ScopeChip from '\.\.\/ui\/scope-chip';/);
+  assert.match(board, /import ScopeChip from '@\/components\/ui\/scope-chip';/);
 });
 
-test("4 카드 제목은 말줄임 없음: 지시 카드 제목은 두 줄까지 줄바꿈(낱말 단위), 원천 꼬리('통계누리')는 제목 아래 작은 회색 줄, 카드는 내용만큼 자란다", () => {
-  assert.doesNotMatch(code(board), /\btruncate\b/, '종합상황판에 말줄임 없음');
+test("4 지시 카드 두 줄 고정(2026-10-18 통일 규격): 줄1 = 지시 이름(길면 말줄임, 꼬리 없음), 줄2 = 값 — 단추와 겹친 층이 같은 두 줄 틀, 카드는 내용만큼 자란다", () => {
   assert.match(board, /const dirTitle = /);
-  assert.match(board, /\[word-break:keep-all\]/);
-  assert.match(board, /<span data-slot="dir-tag" className="block [^"]*text-\[min\(12px,7\.5cqi\)\][^"]*">\{small\.map/, '꼬리는 제목 아래 작은 줄');
-  assert.match(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, '[^']*\bmin-h-20 [^']*justify-between[^']*\bpy-2\.5/, '카드 높이 80px 이상');
-  assert.doesNotMatch(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, '[^']* h-20 /, '고정 높이 h-20 없음');
+  assert.doesNotMatch(board, /data-slot="dir-tag"/, "원천 꼬리('통계누리')는 줄1에 없다 — (i) 기준에");
+  assert.match(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, dirFrame, '[^']*\bmin-h-16 /, '카드 높이 64px 이상');
+  assert.doesNotMatch(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, dirFrame, '[^']* h-16 /, '고정 높이 h-16 없음');
   const dirs = board.slice(board.indexOf('id="board-dirs"'), board.indexOf('</section>', board.indexOf('id="board-dirs"')));
-  assert.equal((dirs.match(/\{dirTitle\(x(, true)?\)\}/g) || []).length, 2, '단추와 두 숫자 겹친 층이 같은 제목 틀');
+  assert.equal((dirs.match(/\{dirTitle\(x(, true)?\)\}/g) || []).length, 2, '단추와 겹친 층이 같은 제목 틀');
   const DIR = D.makeDirectives({ sourceCount: 40, stageNames: ['계획', '인허가', '착공', '모집', '준공', '입주'], ledger: BOARD, start: { year: '2026', upto: 8, cum: 1, cumLy: 1 }, bottleneck: () => null });
-  assert.deepEqual([DIR[0].t, DIR[0].tag, DIR[5].t], ['진척 관리', '통계누리', '국민 공개·공식 원천']);
+  assert.deepEqual([DIR[0].t, DIR[0].tag, DIR[0].pre, DIR[5].t], ['진척 관리', undefined, '착공 누계', '국민 공개·공식 원천']);
+  assert.match(DIR[0].basis, /^통계누리 /, '원천은 (i) 기준 첫머리');
 });
 
 test("5 기관별 진행 % = '전국 지연 중 몫'(열 머리·값·title)", () => {

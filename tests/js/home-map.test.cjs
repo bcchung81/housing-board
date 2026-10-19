@@ -151,7 +151,8 @@ test('지도: 수도권 시군구(?sgg=41281)는 permits·infra·ledger 를 부�
     assert.equal(b.poly.length, row.loc.by === 'name' ? 24 : 8); assert.equal(b.outlineTier, 'point'); assert.equal(!!b.approx, row.loc.by === 'name');   // 이름 검색 근사는 원(24각) + 점선
   }
   assert.equal(win.LEDGER, null); assert.equal(win.GY_INFRA, null); assert.equal(win.GY_BUILDINGS.dynamic, true);   // 원장은 이미 붙었고, 건물은 배경으로 요청 시 조회
-  assert.match(els.pvBanner.innerHTML, new RegExp(`사업 원장 ${doc.projects.length}건 · 지도 ${drawn.length}건`));
+  /* '사업 원장'은 정책담당자 관점 낱말, 일반사용자에게는 '사업'(관점 CSS ov-aud-*, 2026-10-18) */
+  assert.match(els.pvBanner.innerHTML, new RegExp(`<span class="ov-aud-admin">사업 원장</span><span class="ov-aud-public">사업</span> ${doc.projects.length}건 · 지도 ${drawn.length}건`));
 });
 
 test('지도: 수도권 법정동·필지로 열어도 permits 를 부르지 않는다. 표에 없는 시군구는 파일도 부르지 않고 빈 원장, 받지 못하면 그렇다고 알린다', async () => {

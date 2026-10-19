@@ -1,0 +1,475 @@
+{
+  "description": "단계 원천 설정(정책 무관). 엔진(tools/research/chain/run.py)은 정책을 policies.json 에서, 원천 경로·API 이름·조인 키·대조 칸·독립성 판단·README 글을 이 파일에서 받는다. 원천 형식 파서는 코드(readers.py).",
+  "checked_at": "2026-10-17",
+  "checked_at_note": "evidence.checked_by = TOOL 행의 checked_at. 규칙·입력을 바꿔 다시 확인하면 이 날짜를 고친다(실행 시각을 쓰지 않아 같은 입력이면 바이트까지 같다). AGENT 행은 원본/web/manifest.json 의 받은 날짜.",
+  "paths": {
+    "research_dir": "docs/speech/research",
+    "work_dir": "docs/speech/research/dataset/_work",
+    "policy_dir": "docs/speech/research/01.정책"
+  },
+  "home": {
+    "dump_dir": "schemas/ledger-2026-10/raw/home/20261014T102506Z",
+    "tables": ["project", "stage_evidence", "collection_link", "document_evidence", "evidence_bridge", "notice",
+               "execution_schedule", "home_identity_alias", "lh_completion_plan", "policy", "home_program_mapping",
+               "policy_delivery_plan"],
+    "policy_field": "proposed_policy",
+    "document_source_id": "official_document",
+    "id_map": "schemas/ledger-2026-10/mappings/home-ids.json",
+    "id_keys": ["HPR", "PRO", "LH"],
+    "id_keys_note": "tools/ledger/home-source.js 의 키 순위 HPR > PRO > LH > BLK. BLK 는 시군구 코드 해석이 필요해 쓰지 않는다.",
+    "unmapped_prefix": "HOME:",
+    "subject_table": "projects"
+  },
+  "policy_sites": "policy_sites.jsonl",
+  "program_checks": {
+    "glob": "docs/speech/research/01.정책/프로그램_원문대조_*.csv",
+    "prefix": "프로그램_원문대조_",
+    "note": "파일 이름 꼬리를 _ 로 나눈 토큰에 정책 slug 가 있는 파일만 쓴다. 정책 칸이 있으면 그 칸에 정책 발표일(policies.json announced)이 든 행만.",
+    "policy_cols": ["정책"],
+    "program_cols": ["프로그램", "프로그램(HOME)"],
+    "verdict_cols": ["판정"],
+    "page_cols": ["원문_PDF쪽"],
+    "locator_cols": ["원문_위치(인쇄/PDF쪽, 절 제목)", "위치"],
+    "doc_cols": ["원문_파일"],
+    "quote_cols": ["원문 인용"],
+    "doc_base": "docs/speech/research/01.정책",
+    "verdict_prefix": [["일치", "MATCH"], ["원문에 있음", "MATCH"], ["같은 뜻 있음", "MATCH"], ["원문에 없음", "NOT_IN_SOURCE"]]
+  },
+  "web_result": {
+    "path": "docs/speech/research/웹확인_결과.csv",
+    "not_found_value": "원문에서 못 찾음",
+    "note": "키 (단계, HOME 근거 URL, project_id). 반영한 행은 checked_by AGENT, 대조_성격은 sha_비교 '다름' 이면 독립 원천 대조."
+  },
+  "reverify": {
+    "path": "docs/speech/research/재검증_02-06.csv",
+    "srcmap": [["mart_jty", "hub_bulk", "mart_jty_01.txt 행 %s "], ["부동산원", "movein_reb_csv", "CSV 행 %s "],
+               ["LH아파트 단지정보", "lh_complex_csv", "CSV 행 %s "]],
+    "expect": {"일치(호수 범위 차이)": ["일치", "범위"], "원본 값 없음(입주지정 빈칸)": ["원본 칸 비어 있음", null],
+               "일치": ["일치", null], "불일치": ["불일치", null]}
+  },
+  "home_sources": {
+    "_note": "저장소에 원본이 없는 HOME 원천(원본 없음 행)의 자료명·비고. 없는 원천은 _default.",
+    "official_document": {"label": "공식 문서(HOME 원 파일 {original_file})",
+                          "note": "HOME 덤프에 원 파일 경로·sha256 만 있고 파일은 저장소에 없음"},
+    "lh_sale": {"label": "LH 청약플러스 공급계획(웹 목록)", "note": "LH 공급계획 화면 사본이 저장소에 없음", "with_method": true},
+    "lh_rent": {"label": "LH 청약플러스 공급계획(웹 목록)", "note": "LH 공급계획 화면 사본이 저장소에 없음", "with_method": true},
+    "lh_incheon_sale": {"label": "LH 청약플러스 공급계획(웹 목록)", "note": "LH 공급계획 화면 사본이 저장소에 없음", "with_method": true},
+    "lh_incheon_rent": {"label": "LH 청약플러스 공급계획(웹 목록)", "note": "LH 공급계획 화면 사본이 저장소에 없음", "with_method": true},
+    "_default": {"label": "HOME 원천 {source_id}", "note": "HOME 원천 {source_id} 의 원 자료가 저장소에 없음", "with_method": true}
+  },
+  "sources": {
+    "lh_construction_pdf": {
+      "path": "data/raw/lh/public/LH_건설공사현황_20260701_주택품질안전처.pdf",
+      "label": "LH 건설공사현황(2026년 공사추진현황 7월 기준) PDF",
+      "org": "한국토지주택공사",
+      "excerpt": "LH_건설공사현황",
+      "copy_dir": "04.건설",
+      "copy_prefix": "LH_건설공사현황_20260701",
+      "home_source_ids": ["lh_construction", "lh_incheon_construction"],
+      "join": "HOME 건설 원천 사업(PRO_) 이름 ⊂ PDF 줄(공백·괄호 무시) → 공사규모=HOME 호수 → 착공일",
+      "compare": ["착공일", "준공일", "공사규모(호)", "공정률(%)", "시공회사(줄 안 포함)"],
+      "independence": "SAME_SOURCE(HOME lh_construction 이 읽은 같은 기관 같은 자료). 선행 단계 추정(PREREQUISITE) 근거면 EXISTENCE",
+      "doc_urls": {}
+    },
+    "lh_completion_csv": {
+      "path": "data/raw/datagokr/15141761_한국토지주택공사_공공주택 준공예정현황_20260127.csv",
+      "encoding": "cp949",
+      "label": "LH 공공주택 준공예정현황(15141761, 2026-01-27) CSV",
+      "org": "한국토지주택공사",
+      "excerpt": "공공주택_준공예정현황",
+      "home_source_ids": ["lh_completion_plan"],
+      "fields": {"district": "사업지구명", "block": "블록명", "supply_type": "공급유형", "units": "세대수", "date": "준공예정일"},
+      "join_label": "사업지구명|블록명|공급유형",
+      "join": "HOME lh_completion_plan.source_object_id = 사업지구명|블록명|공급유형(그대로 같음), 여러 행이면 세대수=HOME 호수",
+      "compare": ["준공예정일", "세대수"],
+      "independence": "SAME_SOURCE",
+      "doc_urls": {"data/raw/datagokr/15141761_한국토지주택공사_공공주택 준공예정현황_20260127.csv": "https://www.data.go.kr/data/15141761/fileData.do"}
+    },
+    "hub_bulk": {
+      "zip": "schemas/ledger-2026-10/raw/hub-bulk/주택인허가_기본개요_2026-08.zip",
+      "manifest": "schemas/ledger-2026-10/raw/hub-bulk/manifest.json",
+      "part": "basic",
+      "label": "건축HUB 주택인허가 기본개요(2026-08 데이터)",
+      "org": "국토교통부(건축HUB)",
+      "excerpt": "건축HUB_주택인허가_기본개요",
+      "home_source_ids": ["building_hub"],
+      "fields": {"pk": "관리_주택대장_PK", "name": "건물_명", "block": "블록", "units": "총_세대_수(세대)", "date": "승인_일"},
+      "join": "건물_명 = HOME 근거명(공백·괄호 무시) → 총_세대_수=HOME 호수 → 승인_일",
+      "compare": ["승인_일", "총_세대_수(HOME source_units 가 있으면 그 값)"],
+      "independence": "SAME_SOURCE(HOME 근거는 같은 기관 OpenAPI, 대조는 대용량 판)",
+      "note": " · HOME 근거 URL 은 주택인허가 OpenAPI(15136560) 안내 쪽, 대조는 같은 기관 대용량 파일",
+      "doc_urls": {"schemas/ledger-2026-10/raw/hub-bulk/주택인허가_기본개요_2026-08.zip": "https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do"}
+    },
+    "applyhome": {
+      "dir": "schemas/ledger-2026-10/raw/applyhome",
+      "ops": ["getAPTLttotPblancDetail", "getUrbtyOfctlLttotPblancDetail", "getRemndrLttotPblancDetail",
+              "getPblPvtRentLttotPblancDetail", "getOPTLttotPblancDetail"],
+      "key": "HOUSE_MANAGE_NO",
+      "label": "청약홈 분양정보 조회 서비스(15098547) Detail",
+      "org": "한국부동산원",
+      "excerpt": "청약홈_분양정보",
+      "home_source_ids": ["cheongyak"],
+      "drop_fields": ["MDHS_TELNO"],
+      "fields": {"name": "HOUSE_NM", "notice_date": "RCRIT_PBLANC_DE", "units": "TOT_SUPLY_HSHLDCO", "move": "MVN_PREARNGE_YM"},
+      "join": "HOME notice.house_manage_no = HOUSE_MANAGE_NO",
+      "independence": "SAME_SOURCE",
+      "doc_urls": {
+        "schemas/ledger-2026-10/raw/applyhome/getAPTLttotPblancDetail.json": "https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getAPTLttotPblancDetail",
+        "schemas/ledger-2026-10/raw/applyhome/getUrbtyOfctlLttotPblancDetail.json": "https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getUrbtyOfctlLttotPblancDetail",
+        "schemas/ledger-2026-10/raw/applyhome/getRemndrLttotPblancDetail.json": "https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getRemndrLttotPblancDetail",
+        "schemas/ledger-2026-10/raw/applyhome/getPblPvtRentLttotPblancDetail.json": "https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getPblPvtRentLttotPblancDetail",
+        "schemas/ledger-2026-10/raw/applyhome/getOPTLttotPblancDetail.json": "https://api.odcloud.kr/api/ApplyhomeInfoDetailSvc/v1/getOPTLttotPblancDetail"
+      }
+    },
+    "lh_notice": {
+      "notice_dir": "schemas/ledger-2026-10/raw/lh-notice",
+      "detail_dir": "schemas/ledger-2026-10/raw/lh-notice-detail",
+      "key": "PAN_ID",
+      "label": "LH 분양임대공고문(15058530)·공고별 상세정보(15057999)·공급정보(15056765)",
+      "org": "한국토지주택공사",
+      "excerpts": {"notices": "LH_공고목록", "details": "LH_공고상세_단지", "supply": "LH_공급정보"},
+      "home_source_ids": ["lh_notice_detail"],
+      "window_start": "20240101",
+      "window_note": "수집 창 2024-01-01~2026-10-13 (raw/lh-notice manifest)",
+      "fields": {"notice_date": "PAN_DT", "post_date": "PAN_NT_ST_DT", "title": "PAN_NM"},
+      "labels": {"supply_block_re": "dsList0\\d", "supply_name": ["단지명"], "supply_count": ["금회공급세대수", "금회공급 세대수"],
+                 "detail_block": "dsSbd", "detail_name": ["단지명"], "detail_total": ["총세대수"], "detail_move": ["입주예정월"]},
+      "join": "HOME document_evidence.notice_no = PAN_ID, 단지 여럿이면 단지명 안의 블록(정규화)",
+      "independence": "SAME_SOURCE",
+      "doc_urls": {
+        "schemas/ledger-2026-10/raw/lh-notice/notices.json": "https://apis.data.go.kr/B552555/lhLeaseNoticeInfo1/lhLeaseNoticeInfo1",
+        "schemas/ledger-2026-10/raw/lh-notice/supply.json": "https://apis.data.go.kr/B552555/lhLeaseNoticeSplInfo1/getLeaseNoticeSplInfo1",
+        "schemas/ledger-2026-10/raw/lh-notice-detail/details.json": "https://apis.data.go.kr/B552555/lhLeaseNoticeDtlInfo1/getLeaseNoticeDtlInfo1"
+      }
+    },
+    "movein_hwpx": {
+      "files": [
+        {"path": "data/raw/lh/public/LH_2025년_주택입주계획_공시용.hwpx", "label": "LH 2025년 주택입주계획(공시용) HWPX"},
+        {"path": "data/raw/lh/public/LH_2026년_주택입주계획_공시용.hwpx", "label": "LH 2026년 주택입주계획(공시용) HWPX"}
+      ],
+      "columns": ["사업지구", "블록", "주택규모", "주택유형", "호수", "입주월"],
+      "org": "한국토지주택공사",
+      "excerpt": "LH_주택입주계획",
+      "copy_dir": "06.입주",
+      "home_source_ids": [],
+      "cross": {"match": "district_block", "district_col": "사업지구", "block_col": "블록",
+                "value": "{사업지구} {블록} · {주택유형} · {호수}호 · 입주월 {입주월}", "month_col": "입주월",
+                "extra": " · 원본은 주택유형별 행(호수 범위 다름)", "key": "사업지구=지구, 블록=블록(정규화)"},
+      "independence": "INDEPENDENT(HOME 이 쓰지 않은 원천, 이름 대조 후보)",
+      "doc_urls": {}
+    },
+    "lh_complex_csv": {
+      "path": "data/raw/datagokr/15080989_한국토지주택공사_전국 LH아파트 단지정보_20260810.csv",
+      "label": "전국 LH아파트 단지정보(15080989, 2026-08-10) CSV",
+      "org": "한국토지주택공사",
+      "excerpt": "LH아파트_단지정보",
+      "home_source_ids": [],
+      "cross": {"match": "name", "name_col": "단지명",
+                "value": "단지명 {단지명} · 세대수 {세대수} · 준공일 {준공일} · 입주지정 {입주지정시작일}~{입주지정종료일}",
+                "month_col": "입주지정시작일", "extra": " · 입주지정시작일을 입주월로 비교", "key": "단지명에 지구·블록 포함"},
+      "independence": "INDEPENDENT",
+      "doc_urls": {"data/raw/datagokr/15080989_한국토지주택공사_전국 LH아파트 단지정보_20260810.csv": "https://www.data.go.kr/data/15080989/fileData.do"}
+    },
+    "movein_reb_csv": {
+      "path": "schemas/ledger-2026-10/raw/move-in/한국부동산원_주택공급정보_입주예정물량정보_20260630.csv",
+      "label": "한국부동산원 입주예정물량정보(15111714, 2026-06-30) CSV",
+      "org": "한국부동산원",
+      "excerpt": "부동산원_입주예정물량",
+      "home_source_ids": [],
+      "cross": {"match": "name", "name_col": "아파트명",
+                "value": "아파트명 {아파트명} · 세대수 {세대수} · 입주예정월 {입주예정월}",
+                "month_col": "입주예정월", "extra": "", "key": "아파트명에 지구·블록 포함"},
+      "independence": "INDEPENDENT",
+      "doc_urls": {"schemas/ledger-2026-10/raw/move-in/한국부동산원_주택공급정보_입주예정물량정보_20260630.csv": "https://www.data.go.kr/data/15111714/fileData.do"}
+    }
+  },
+  "normalization_note": "정규화 규칙(모든 단계 공통): 이름은 공백·괄호·가운뎃점을 빼고 비교한다. 블록은 대문자로 바꾸고 공백·`-`·끝의 `BL`/`블록`/`블럭` 을 빼고 숫자 앞 0 을 뺀다(A-07BL → A7, S-04 → S4). 지구는 첫 `(` 앞을 기본 지구명으로 하고(공백·끝의 `지구` 제거), 첫 괄호 속 말이 장소 구분이면 보존한다(인천서구(거북이기지)·인천서구(석남어울림) 은 다른 지구). 괄호 속 말이 사업 유형·관리 부호(공공주택·뉴스테이·택·`06,택3` 등)이면 버린다(인천계양(공공주택) → 인천계양). 이름 문자열 대조에서 숫자 없는 블록(`A`)은 앞뒤가 영문·숫자가 아닌 정확 일치만 인정하고, 블록은 지구명이 나온 자리 뒤에서만 찾는다. 날짜는 구분자(`.` `-` `년` `월` 공백)만 빼고 숫자열이 같으면 같다고 본다. 같은 사업으로 본 근거 키는 추출 CSV 의 `원본_위치`(키: …)와 `비고` 에 있다. 호수가 범위(전체/부분/금회 공급)가 달라 다른 경우는 불일치로 세지 않고 비고에 \"호수 범위\"로 적었다. 사업 레코드(HOME PRO id)는 `사업_id` 칸에서 원장 사업 id(`schemas/ledger-2026-10/mappings/home-ids.json`)로 합친다.",
+  "verdict_note": "`대조` → evidence verdict: 일치 MATCH · 불일치 MISMATCH · 원천값 수집 SOURCED(HOME 값 없이 원천에서 값을 직접 수집, 위치 기록) · 미도달 확인 ABSENT_CONFIRMED(원천이 그 사업을 덮는 범위에서 찾아도 없음, search_scope 에 원천·기준일·조회 키) · 원본에서 못 찾음·원본 칸 비어 있음 NOT_IN_SOURCE · 수집 범위 밖 OUT_OF_SCOPE · 원본 없음 NO_ORIGINAL · 비교 불가·근거없음 UNVERIFIED. `대조_성격` → basis: 존재 확인 EXISTENCE(선행 단계 추정 근거라 날짜 없이 기록의 존재·호수만) · 같은 원천 재확인 SAME_SOURCE(HOME 이 읽은 것과 같은 파일·API 를 다시 읽음 = 옮겨 적기 확인) · 독립 원천 대조 INDEPENDENT(HOME 이 쓰지 않은 원천, 웹 원문 중 HOME 기록과 sha 가 다른 판). `비교 불가` = 원본 행은 찾았으나 비교할 칸이 한쪽에 없음, `원본 칸 비어 있음` = 같은 지구·블록 행은 있으나 비교할 칸이 공란, `수집 범위 밖` = 원본 수집 창(예: LH 공고 2024-01-01~) 밖이라 저장소에 없음. 코드 판정은 checked_by TOOL, `웹확인_결과.csv`(다른 작업의 에이전트 웹 확인)로 채운 행은 AGENT. HOME_표 `(HOME 연결 없음: 독립 수집)` 행은 HOME 이 가리키지 않은 권위 원천을 사업 위치 키로 직접 찾은 것이다(규칙 `config/stage_sources.json` independent). 한 대조에 원 파일이 여럿이면 evidence 는 파일마다 한 행이다.",
+  "stages": [
+    {"code": "02", "home_stage": "BUSINESS", "dir": "02.사업화", "name": "사업화", "module": "s02_business",
+     "judgement": "stage_evidence", "program_cols": true, "uses_pdf_copy": true,
+     "readme": {
+       "summary": "HOME stage_evidence BUSINESS ↔ LH 건설공사현황 PDF·LH 공급계획·공식 문서",
+       "define": "HOME 단계 코드 BUSINESS = 02 사업화(지구 지정·사업계획 등 사업이 실체를 갖춘 단계). HOME 은 stage_evidence 표에 사업×단계마다 상태(확정/검토/미연결)와 선택 근거를 둔다.",
+       "link": "stage_evidence.selected 의 source_entity_id 가 LH 건설 원천 사업(PRO_)이면 그 사업명으로 LH 건설공사현황 PDF 행을 찾는다(이름 포함 비교, 공백·괄호 무시 → 여러 행이면 공사규모=호수 → 착공일). LH 공급계획(lh_sale·lh_rent 등)이 근거이면 저장소 원천에는 공급계획 사본이 없어 원본 없음으로 두고, 웹확인_결과.csv 의 LH 공급계획 엑셀(2026-10-16 현재판) 대조로 채운다. 공식 문서(official_document)는 HOME 이 원 파일 경로·sha256 만 갖고 있어 웹 원문으로 채운 것만 판정이 있다. 그 밖의 HOME 원천은 `HOME 원천 <source_id>` 원본 없음.",
+       "limit": ["9·7 기준: 사업화 근거는 모두 \"선행 단계 도달 추정(PREREQUISITE)\" 또는 \"공급계획에 이름이 있음(SIMILAR)\"이고 사건일(날짜)이 없다. 일치는 \"HOME 이 든 근거 기록이 원본에 있고 호수가 같다\"는 뜻이다.",
+                 "지구 지정 고시·택지정보시스템 원본이 저장소에 없다(택지정보 6종 미수집)."]}},
+    {"code": "03", "home_stage": "APPROVAL", "dir": "03.인허가", "name": "인허가", "module": "s03_approval",
+     "judgement": "stage_evidence", "uses_pdf_copy": true,
+     "readme": {
+       "summary": "stage_evidence APPROVAL·문서 근거 ↔ 건축HUB 주택인허가 대용량·고시문",
+       "define": "HOME 단계 코드 APPROVAL = 03 인허가(주택건설사업계획 승인 등). stage_evidence 의 APPROVAL 행과 evidence_bridge·document_evidence 의 APPROVAL 사실을 쓴다.",
+       "link": "근거가 건축HUB(building_hub)이면 HOME 근거명(source_name)과 대용량 파일의 건물_명을 공백·괄호 무시로 같게 보고 잇고, 여러 행이면 총_세대_수=HOME 호수, 다음 승인_일로 좁힌다. 비교 칸은 승인_일(HOME event_date)과 총_세대_수. 근거가 LH 건설 원천(선행 단계 추정)이면 PDF 행의 존재와 호수만 본다. 공식 문서 근거(토지이음 고시 등)는 원 파일이 저장소에 없어 원본 없음.",
+       "limit": ["건축HUB 근거에 HOME 이 승인 원천 세대수(source_units)와 범위 관계(relation_type, 예 PART_OF_APPROVAL)를 적었으면 원본 총세대수는 source_units 와 비교하고, 사업 호수와의 차이는 \"호수 범위 차이\"로 비고에만 적는다.",
+                 "HOME 근거 URL 은 주택인허가 OpenAPI(15136560) 안내 쪽이고, 대조는 같은 기관 대용량 파일(2026-08 데이터)로 했다. API 와 대용량 판의 시점 차이가 있을 수 있다.",
+                 "선행 단계 추정으로 확정된 인허가 행은 인허가 날짜가 없다. 대용량 파일에서 그 사업의 승인일을 따로 찾아 넣지 않았다(HOME 이 잇지 않은 연결을 만들지 않음)."]}},
+    {"code": "04", "home_stage": "CONSTRUCTION", "dir": "04.건설", "name": "건설", "module": "s04_construction",
+     "judgement": null,
+     "readme": {
+       "summary": "사업 건설 기록·준공예정 ↔ LH 건설공사현황 PDF·준공예정 CSV(15141761)·정책 후속 문서",
+       "define": "HOME 단계 코드 CONSTRUCTION = 04 건설(착공~준공). HOME project 의 건설 원천 값(착공·공정률·준공예정·호수·시공사), evidence_bridge 의 건설 사실, home_identity_alias 로 걸린 LH 준공예정 레코드를 쓴다.",
+       "link": "LH 건설 원천 사업은 사업명으로 PDF 행을 찾는다(위 규칙). 준공예정은 HOME lh_completion_plan 의 source_object_id(사업지구명|블록명|공급유형)를 CSV 세 칸과 그대로 같게 보고 잇는다. PDF 날짜 YY-MM-DD 는 20YY 로 읽어 비교한다. 정책 사업의 착공 계획(연도·월)은 정책 원문 값이라 원본 없음.",
+       "limit": ["PDF 텍스트 추출은 사업지구·현장명·시공회사의 칸 경계를 잃는다. 이 세 칸은 한 칸으로 두었고, 시공사는 그 칸 안에 HOME 시공사 문자열이 있는지로만 보았다.",
+                 "LH 준공예정 CSV 는 2026-01-27 판이고 PDF 는 2026년 7월 기준이라 같은 사업이라도 준공일이 다를 수 있다.",
+                 "HOME 정체성 별칭(home_identity_alias)의 준공예정 연결은 HOME 에서도 검토 상태다."]}},
+    {"code": "05", "home_stage": "SUPPLY", "dir": "05.공급", "name": "공급", "module": "s05_supply",
+     "judgement": "collection_link", "applyhome_date": {"field": "notice_date", "label": "모집공고일"},
+     "readme": {
+       "summary": "모집공고 ↔ 청약홈 API·LH 공고 API·LH 공급계획",
+       "define": "HOME 단계 코드 SUPPLY = 05 공급(입주자 모집공고). collection_link 의 SUPPLY 연결(청약홈 공고), evidence_bridge 의 LH 공고·청약홈 사실, 사업 자체 공급계획 예정월을 쓴다.",
+       "link": "청약홈은 HOME notice 의 house_manage_no 를 청약홈 Detail 5종의 HOUSE_MANAGE_NO 와 같게 보고 잇는다(모집공고일 RCRIT_PBLANC_DE, 공급세대수 TOT_SUPLY_HSHLDCO). LH 공고는 HOME 문서 근거의 notice_no 를 PAN_ID 로 보고 공고목록(공고일 PAN_DT; 정정공고는 게시일 PAN_NT_ST_DT 가 달라 비고에 함께 적음)·상세(dsSbd 의 총세대수·입주예정월)·공급정보(금회공급 세대수 합)와 잇는다. 상세·공급정보는 공고 유형마다 필드 이름이 달라 응답에 함께 온 한글 설명표(…Nm 블록)의 \"단지명\"·\"총세대수\"·\"입주예정월\"·\"금회공급 세대수\" 로 칸을 찾는다. 한 공고에 단지가 여럿이면 단지명 안의 블록(정규화)으로 고른다.",
+       "limit": ["LH 공급계획(청약플러스 sp/list)은 저장소 원천에 없어, 사업 자체 공급 예정월은 웹 원문(2026-10-16 받은 현재판 엑셀)으로만 대조했다. HOME 이 읽은 시점의 판과 같다는 보장은 없다(덤프에 해시 없음).",
+                 "정정공고는 공고일 PAN_DT 와 게시일 PAN_NT_ST_DT 가 다르다. HOME 근거(문서 근거)의 공고일은 PAN_DT 와 같고, HOME lh_notice 표는 PAN_NT_ST_DT 를 쓴다. 다른 행은 비고에 두 날짜를 함께 적었다.",
+                 "LH 공급정보(supply.json)는 공고일 최신 600건만 받아 오래된 공고는 금회공급세대수를 비교하지 못한다. 이 경우 HOME 금회 호수와 원본 총세대수는 범위 차이로 비고에만 적었다."]}},
+    {"code": "06", "home_stage": "MOVE_IN", "dir": "06.입주", "name": "입주", "module": "s06_movein",
+     "judgement": "collection_link", "applyhome_date": {"field": "move", "label": "입주예정월"},
+     "cross_sources": ["movein_hwpx", "lh_complex_csv", "movein_reb_csv"],
+     "readme": {
+       "summary": "입주 예정월 ↔ 청약홈·LH 공고 상세, 교차 후보(LH 입주계획 HWPX·부동산원·LH 단지정보)",
+       "define": "HOME 단계 코드 MOVE_IN = 06 입주(입주 예정·입주). HOME 값은 모두 계획(입주 예정월)이며 실제 입주 실적은 없다. collection_link MOVE_IN(청약홈 공고의 입주예정월), evidence_bridge 의 LH 공고 입주예정월, 사업 공급계획 행의 입주월, 정책 사업의 입주 전망을 쓴다.",
+       "link": "청약홈은 HOUSE_MANAGE_NO 로 MVN_PREARNGE_YM 을, LH 공고는 PAN_ID 로 dsSbd 의 입주예정월을 비교한다. 이와 별도로 HOME 이 잇지 않은 로컬 입주 원본(LH 2025·2026 주택입주계획 HWPX, LH아파트 단지정보, 부동산원 입주예정물량)에서 지구(정규화)와 블록(정규화)이 같은 행을 찾아 \"(HOME 연결 없음: 이름 대조)\" 행(HOME_상태 미연결, 대조_성격 독립 원천 대조)으로 남겼다. 비교할 HOME 입주월은 collection_link·evidence_bridge·사업 레코드의 LH 공급계획 행(project.payload.rows[].move_in_month)을 모두 모은 것이다. HOME 입주월이 없으면 근거없음으로 두고 후보만 보인다. 이 후보 행은 추적표 대표 행이 되지 않고 `교차_후보_값`·`교차_대조` 칸에만 나온다.",
+       "limit": ["이름 대조 행은 HOME 이 연결하지 않은 후보다. 같은 사업인지는 담당 확인이 필요하다. 원본이 같은 블록의 다른 유형 행(예: 행복주택 사업에 공공분양 행)일 수 있다.",
+                 "LH 주택입주계획 HWPX 는 2025·2026년 입주분만 담고, 부동산원 파일은 30세대 이상·2026-08 이후 입주분이다.",
+                 "HOME 입주 값은 모두 예정월이고 원본도 예정값이다. 실제 입주를 확인한 원본은 없다."]}}
+  ],
+  "independent": {
+    "description": "독립 수집 경로(정책 무관): 사업(원장 id)마다 HOME 덤프가 가리키지 않은 권위 원천을 사업 위치·식별자로 직접 찾는다. (a) 원장 행(HOME 유래 source_ref 제외) → source_ref 의 원천 원본에서 원 레코드를 다시 읽어 확인하고, (b) 원장에 없으면 원천 원본을 위치 키로 찾는다. 추출 CSV 에서는 HOME_표 '(HOME 연결 없음: 독립 수집)' 행이다. HOME 값이 있으면 같은 종류(stages 의 세 번째 칸: 승인일·착공일·공사준공·LH준공예정·공고일·입주월·공급예정월·호수)끼리 대조(원천이 HOME 원천과 다르면 INDEPENDENT, 같으면 SAME_SOURCE), 없으면 '원천값 수집'(SOURCED). HOME 값은 실제(ACTUAL) 사실만 실제 칸과, 계획은 같은 원천 종류의 계획 칸과만 비교한다(연 단위 정책 계획값은 비교하지 않음).",
+    "home_ref_prefix": "home-dump-",
+    "ledger": {
+      "tables_dir": "schemas/ledger-2026-10/tables",
+      "routes": {
+        "hub-bulk-hs-2026-08": {"source": "hub_basic", "identifier": "HUB_HS_PK"},
+        "datagokr-15098547": {"source": "applyhome_x", "notice": true},
+        "datagokr-15058530": {"source": "lh_notice_x", "notice": true},
+        "datagokr-15057999": {"source": "lh_notice_x", "notice": true},
+        "datagokr-15141761": {"source": "lh_completion", "identifier": "AREA_BLOCK"}
+      },
+      "event_stage": {"PERMIT": "03", "CONSTRUCTION_START": "04", "COMPLETION": "04", "SUPPLY_NOTICE": "05", "MOVE_IN": "06"},
+      "note": "routes 에 없는 source_ref 의 원장 행은 원 레코드 재확인 경로가 없어 report 에 건수만 남긴다. 원장 값은 그대로 쓰지 않고, 찾은 원 레코드 값과 다르면 비고에 적는다."
+    },
+    "keys": {
+      "lh_block_sgg": "schemas/ledger-2026-10/mappings/lh-block-sgg.json",
+      "min_name_len": 3,
+    "name_strip_suffixes": ["구역", "일원"],
+    "site_name_rules": {"strip": ["노후공공임대재건축", "노후임대재건축", "단지"], "tails": ["부지", "일원", "일대"],
+                        "old_markers": ["\uf000", "◯구", "◯", "舊", "구."], "old_words": ["구"], "skip_kinds": ["AGGREGATE", "NOT_SITE"],
+                        "min_contain": 4, "distinct_tails": ["북측", "남측", "동측", "서측", "인근", "일대"], "region_lexicon": "schemas/ledger-2026-10/raw/legal-dong/국토교통부_법정동코드_20260929.csv"},
+    "site_name_note": "정책 지명 연결(home.site_matches)의 이름 비교 정규화: 공백 무시, PDF 깨짐·옛 표기(◯구·◯·舊·구., 낱말 '구') 제거, 끝 꼬리(부지·일원·일대, 노후임대재건축·단지) 제거, 앞 지역 낱말(법정동코드 파일의 시도·시군구·읍면동 이름, 존재·폐지 모두) 제거. 지명 쪽 지역 낱말은 사업 시도·시군구 안이어야 하고, 양쪽에 동 이름이 있으면 같아야 한다. 정규화 뒤 완전 일치, 또는 한쪽이 다른 쪽을 포함(짧은 쪽 4자 이상)하고 남는 부분이 다른 지역 이름이나 위치 구분(북측·남측·동측·서측·인근·일대)이 아닐 때만 잇는다. 지명이 핵심 이름 뒤에 숫자만 붙은 것(가양 → 가양7)은 지명 호수 = 사업 계획 호수일 때만. 근거 없는 유사도 매칭은 하지 않는다.",
+    "name_markers": ["공공주택", "공공임대", "공공분양", "행복주택", "청년주택", "공공지원", "공공재개발", "공공재건축"],
+    "name_markers_note": "이름 키로 찾은 원천 레코드는 이름 칸에 공공주택 표지 중 하나가 있어야 쓴다(역·동 이름만 같은 민간 단지를 막음). 시군구 이름과 같은 변형(예: 동대문구 일원 → 동대문구)은 이름 키로 쓰지 않는다.",
+    "home_stage_claims": {"APPROVAL": "03", "CONSTRUCTION": "04", "PLANNED_SUPPLY": "03"},
+    "home_stage_claims_note": "HOME 사업 레코드의 stage 주장. 이 단계 이상을 주장하는데 원천에서 못 찾으면 미도달로 두지 않고 단계 순서 모순 목록에 남긴다. PLANNED_SUPPLY(올해 LH 공급계획)는 입주자모집 전에 사업계획승인이 있어야 하므로 03 도달 주장으로 본다.",
+    "block_loose": {"regex": "^([A-Z])[a-z]+-?0*(\\d+)$", "note": "블록 표기 차이 흡수: 대문자 하나 뒤 소문자 부호(Ab37·Aa38·Abc12)는 같은 블록의 표기 차이로 보고, 엄격 대조(norm_block)로 건축HUB 기록이 하나도 없을 때만 대문자+숫자(A37)로 다시 찾는다."},
+    "block_aliases": [
+      {"district": "인천검단", "blocks": ["A13-1", "AA19"], "evidence": "LH 건설공사현황(2026-07-01) PDF p.1 줄 42: 블록 칸 A13-1 · 현장명 '인천검단 AA19BL 민간참여 공공주택건설사업'"},
+      {"district": "의왕초평", "blocks": ["04", "A4"], "evidence": "LH 건설공사현황(2026-07-01) PDF p.4 줄 66: 블록 칸 04 · 현장명 '의왕초평 A4BL 민간참여 공공주택 건설사업'"},
+      {"district": "평택고덕국제화계획", "blocks": ["Aa34", "A34"], "evidence": "LH 건설공사현황(2026-07-01) PDF p.3 줄 41: 블록 칸 Aa34 · 현장명 '평택고덕 A-34BL 민간참여 공공주택건설사업'"},
+      {"district": "평택고덕국제화계획", "blocks": ["Ab31", "A31"], "evidence": "LH 건설공사현황(2026-07-01) PDF p.3 줄 45: 블록 칸 Ab31 · 현장명 '평택고덕 A-31BL 민간참여 공공주택건설사업'"},
+      {"district": "평택고덕국제화계획", "blocks": ["Ab35", "A35"], "evidence": "LH 건설공사현황(2026-07-01) PDF p.3 줄 46: 블록 칸 Ab35 · 현장명 '평택고덕 A-35BL 민간참여 공공주택건설사업'"},
+      {"district": "평택고덕국제화계획", "blocks": ["Abc12", "A12"], "evidence": "LH 건설공사현황(2026-07-01) PDF p.3 줄 50: 블록 칸 Abc12 · 현장명 '평택고덕 A-12BL 민간참여 공공주택건설사업'"},
+      {"district": "화성동탄2", "blocks": ["A1", "C14"], "evidence": "LH 건설공사현황(2026-07-01) PDF p.4 줄 14: 블록 칸 A1 · 현장명 '화성동탄2 C-14 민간참여 공공주택 건설사업'"}
+    ],
+    "block_aliases_note": "다른 이름의 블록(A13-1 ↔ AA19 등)은 원천의 한 행에 두 이름이 함께 나올 때만 잇는다(evidence 칸이 그 행). 같은 지구의 블록 칸과 현장명 블록이 다르고 현장명에 다른 지구·블록이 함께 나오지 않는 행만 골랐다(‘A 및 B’ 묶음 계약은 별칭이 아님).",
+    "name_site_regex": "^(\\S+)\\s+((?:[A-Za-z가-힣]{0,2}-?\\d+[A-Za-z]?)(?:\\s*[,·]\\s*[A-Za-z가-힣]{0,2}-?\\d+[A-Za-z]?)*)$",
+    "name_site_note": "지구·블록 칸이 빈 사업은 이름이 '<지구> <블록>[,<블록>]' 꼴이면 지구·블록으로 읽는다(LH 공급계획 지구명 표기). 블록이 여럿이면 블록마다 찾는다.",
+      "district_suffixes": ["공공주택사업지구", "공공주택지구", "택지개발사업지구", "택지개발지구", "도시개발사업지구", "도시개발구역",
+                            "보금자리주택지구", "국민임대주택단지", "공공주택", "택지지구", "지구", "신도시", "내"],
+      "note": "블록 키 = 시도(시군구 코드 앞 2자리) + 지구 같음(공백·유형 꼬리 무시, 지구명 뒤 숫자면 다른 지구) + 블록 같음(norm_block). 원천 지구 칸이 비면 법정동(원장 project_locations 또는 lh-block-sgg) + 블록. 이름 키 = 시군구(원장 projects.sgg_code) + 사업 이름 변형(공백·괄호 무시 전체, 끝의 name_strip_suffixes 를 뗀 것, 괄호 앞·괄호 속 각각; 3자 이상, 이름 바로 뒤가 숫자가 아님) 중 하나. 이름 키로 못 찾은 것은 변형 모두에 없을 때만 미도달로 본다. 이름 키 레코드는 name_markers 표지가 있어야 쓴다(건축HUB 는 총세대수 = HOME 호수이면 표지 없이도 쓴다). 블록 키는 블록 칸 대조 외에 건물_명·특수지_명·블록 글에서 지구·블록을 함께 찾는다. 블록 키가 있으면 이름 키는 쓰지 않는다."
+    },
+    "sources": {
+      "hub_basic": {
+        "label": "건축HUB 주택인허가 기본개요(2026-08 데이터) · 위치 키", "org": "국토교통부(건축HUB)", "excerpt": "독립_건축HUB_주택인허가", "plan_fields": ["착공예정일", "사용검사예정일"],
+        "zip": "schemas/ledger-2026-10/raw/hub-bulk/주택인허가_기본개요_2026-08.zip", "manifest": "schemas/ledger-2026-10/raw/hub-bulk/manifest.json", "part": "basic",
+        "cols": {"pk": "관리_주택대장_PK", "sgg": "시군구_코드", "bjd": "법정동_코드", "district": "특수지_명", "block": "블록", "name": "건물_명", "addr": "대지_위치", "units": "총_세대_수(세대)"},
+      "min_units_record": 1,
+      "min_units_note": "총세대수 0 기록(대용량의 대부분, 주택 아닌 대장·미완성)은 행으로 쓰지 않고, 같은 키에 걸리면 미도달 판단만 막는다.",
+        "stages": {"03": [["승인일", "승인_일", "승인일"], ["총세대수", "총_세대_수(세대)", null]],
+                   "04": [["착공일", "착공_일", "착공일"], ["착공예정일", "착공_예정_일", null], ["사용검사예정일", "사용_검사_예정_일", null], ["사용검사일", "사용_검사_일", null]]},
+        "home_source_ids": ["building_hub"], "as_of": "2026-08-31",
+        "scope": "주택인허가(사업계획승인) 전국, 2026-08 데이터(2026-08-31 기준)",
+        "doc_url": "https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do"
+      },
+      "lh_pdf": {
+        "label": "LH 건설공사현황(2026-07-01 기준) PDF · 위치 키", "org": "한국토지주택공사", "excerpt": "독립_LH_건설공사현황", "plan_fields": ["준공일"],
+        "stages": {"02": [["공사규모(호)", "공사규모", "호수"]], "04": [["착공일", "착공일", "착공일"], ["준공일", "준공일", "공사준공"], ["공정률(%)", "공정률(%)", null]]},
+        "home_source_ids": ["lh_construction", "lh_incheon_construction"], "developer": "LH", "as_of": "2026-07-01",
+      "work_types": ["건축"], "work_types_note": "공종이 건축인 줄만 쓴다(전기/통신·토목·기계·조경 줄은 같은 블록의 다른 계약이라 착공·준공일이 다름).",
+        "scope": "LH 시행 공사 중 현장(2026년 공사추진현황 7월 기준)"
+      },
+      "lh_completion": {
+        "label": "LH 공공주택 준공예정현황(15141761, 2026-01-27) CSV · 위치 키", "org": "한국토지주택공사", "excerpt": "독립_LH_준공예정",
+        "stages": {"02": [["세대수(공급유형별)", "세대수", "호수"]], "04": [["준공예정일", "준공예정일", "LH준공예정"]],
+                   "06": [["준공예정일(입주 아님, 입주는 준공 뒤)", "준공예정일", null]]},
+        "plan_fields": ["준공예정일", "준공예정일(입주 아님, 입주는 준공 뒤)"],
+        "home_source_ids": ["lh_completion_plan"], "developer": "LH", "as_of": "2026-01-27",
+        "scope": "LH 공공주택 준공예정 블록(2026-01-27 판)"
+      },
+      "lh_supply_plan": {
+        "label": "LH 2026년 공급계획 엑셀(청약플러스, 2026-10-16 받음)", "org": "한국토지주택공사", "excerpt": "독립_LH_공급계획",
+        "files": [
+          {"path": "docs/speech/research/02.사업화/원본/web/공급계획(분양주택)_20261016.xls", "url": "https://apply.lh.or.kr/lhapply/apply/noti/sp/list.do?sUppAisTpCd=05",
+           "header": ["지구명", "공급예정시기"], "cols": {"name": "지구명", "type": "공급유형", "total": "총 세대수", "units": "공급호수", "month": "공급예정시기", "movein": null, "note": "비고"}},
+          {"path": "docs/speech/research/02.사업화/원본/web/공급계획(임대주택)_20261016.xls", "url": "https://apply.lh.or.kr/lhapply/apply/noti/sp/list.do?sUppAisTpCd=06",
+           "header": ["지구명/공급예정지역", "공급예정시기"], "cols": {"name": "지구명/공급예정지역", "type": "유형", "total": null, "units": "공급호수", "month": "공급예정시기", "movein": "입주예정", "note": "비고"}}
+        ],
+        "stages": {"02": [["총세대수", "total", "호수"], ["공급호수 합", "units", null], ["공급예정시기", "month", "공급예정월"]],
+                   "05": [["공급예정시기", "month", "공급예정월"]],
+                   "06": [["입주예정", "movein", "입주월"]]},
+        "plan_fields": ["공급예정시기", "입주예정"],
+        "home_source_ids": ["lh_sale", "lh_rent", "lh_incheon_sale", "lh_incheon_rent"], "developer": "LH", "as_of": "2026-10-16", "plan": true,
+        "scope": "LH 2026년 공급계획(분양·임대)"
+      },
+      "applyhome_x": {
+        "label": "청약홈 분양정보 Detail(15098547) · 위치 키", "org": "한국부동산원", "excerpt": "독립_청약홈", "plan_fields": ["입주예정월"],
+        "stages": {"05": [["모집공고일", "RCRIT_PBLANC_DE", "공고일"], ["공급세대수", "TOT_SUPLY_HSHLDCO", null]],
+                   "06": [["입주예정월", "MVN_PREARNGE_YM", "입주월"]]},
+        "name_cols": ["HOUSE_NM"], "addr_col": "HSSPLY_ADRES", "id_col": "HOUSE_MANAGE_NO", "units_col": "TOT_SUPLY_HSHLDCO",
+        "match_note": "블록 키는 주택명과 공급위치(괄호 속 지구·블록 표기 포함)를 함께 본다. 그래도 없으면 브랜드 단지명 규칙: 공급위치에 사업 시군구, 주택명에 블록·지구명 앞부분(시군구 줄기 뗀 앞 2자), 공급세대수 = HOME 계획 호수일 때만.",
+        "home_source_ids": ["cheongyak"], "as_of": "2026-10-12", "scope": "청약홈 입주자모집공고 전 기간·전국(Detail 5종)"
+      },
+      "lh_notice_x": {
+        "label": "LH 분양임대공고문 목록(15058530)·상세(15057999) · 위치 키", "org": "한국토지주택공사", "excerpt": "독립_LH_공고", "plan_fields": ["입주예정월"],
+        "stages": {"05": [["공고일", "PAN_DT", "공고일"]], "06": [["입주예정월", "_move", "입주월"]]},
+        "name_col": "PAN_NM", "type_col": "AIS_TP_CD_NM",
+        "exclude_types": ["매입임대", "집주인임대", "전세임대", "신축다세대매입임대", "가정어린이집"],
+        "exclude_title_words": ["상가", "점포", "용지", "토지", "매각"],
+        "home_source_ids": ["lh_notice_detail"], "developer": "LH", "as_of": "2026-10-13", "scope": "LH 분양·임대 공고 2024-01-01~2026-10-13"
+      },
+  "lh_notice_old": {
+    "label": "LH 분양임대공고문 목록 2019~2023(15058530 같은 API, 05.공급/원본/api) · 위치 키", "org": "한국토지주택공사", "excerpt": "독립_LH_공고_2019-2023",
+    "path": "docs/speech/research/05.공급/원본/api/lh-notice-2019-2023/notices.json", "manifest": "docs/speech/research/05.공급/원본/api/lh-notice-2019-2023/manifest.json",
+    "stages": {"05": [["공고일", "PAN_DT", "공고일"]]},
+    "name_col": "PAN_NM", "type_col": "AIS_TP_CD_NM", "window": ["2019-01-01", "2023-12-31"], "bad_pages_note": "manifest bad_pages: {n}개 조각 못 받음({detail}, 조각당 최대 25건)",
+    "home_source_ids": ["lh_notice_detail"], "developer": "LH", "as_of": "2023-12-31",
+    "note": "manifest.json 이 있을 때만 읽는다(받는 중인 파일은 쓰지 않음). 제외 유형·제목어는 lh_notice_x 와 같다."
+  },
+      "hug": {
+        "label": "HUG 분양이력정보(사업장별) · 위치 키", "org": "주택도시보증공사", "excerpt": "독립_HUG_분양이력",
+        "path": "schemas/ledger-2026-10/raw/hug-sale-history/infoDistributionHistory.json",
+        "stages": {"05": [["모집공고승인일", "COLL_ANNO_APVL_DT", "공고일"], ["총호수", "TOT_HOCO", null]]},
+        "name_cols": ["BSU_NM"], "addr_col": "AREA_DTL_DCD_NM", "home_source_ids": [], "as_of": "2026-10-12",
+        "doc_url": "https://www.khug.or.kr/infoDistributionHistory.do"
+      },
+      "myhome": {
+        "label": "마이홈 공공주택 모집공고(현재 공고) · 위치 키", "org": "국토교통부(마이홈)", "excerpt": "독립_마이홈",
+        "files": ["schemas/ledger-2026-10/raw/myhome/rental.json", "schemas/ledger-2026-10/raw/myhome/sale.json"],
+        "stages": {"05": [["모집공고일", "rcritPblancDe", "공고일"]]},
+        "name_cols": ["pblancNm", "hsmpNm"], "addr_col": "fullAdres", "pnu_col": "pnu", "home_source_ids": [], "as_of": "2026-10-13"
+      },
+      "lh_web": {
+        "label": "LH 청약플러스 입주자모집공고 상세 HTML(2026-10-17 받음)", "org": "한국토지주택공사", "excerpt": "독립_LH_공고상세_웹", "plan_fields": ["입주예정일"],
+        "manifest": "docs/speech/research/05.공급/원본/web/manifest.json", "prefix": "lhw_",
+        "stages": {"05": [["공고일", "notice_date", "공고일"]], "06": [["입주예정일", "move", "입주월"]]},
+        "home_source_ids": ["lh_notice_detail"], "developer": "LH",
+        "regex": {"title": "목록 소득계산방법 (?:--> )?(.{4,120}?) (?:유의사항|공고상태)", "notice_date": "공고일 (\\d{4}\\.\\d{2}\\.\\d{2})",
+                  "move": "입주예정일 : (\\d{4}년 \\d{1,2}월)", "location": "소재지 : (.{4,120}?) 전용면적"},
+        "note": "HTML 은 그 파일 안의 공고명·소재지로 사업을 찾는다(manifest 의 공고 번호·첨부 이름은 쓰지 않는다)."
+      },
+      "policy_table": {
+      "label": "정책 후속 발표 사업별 일정표(policy_sites.jsonl 의 표 행, 정책 해석 작업)", "org": "국토교통부", "excerpt": "독립_정책후속표", "plan_fields": ["사업승인", "이주년도", "착공년도", "입주년도"],
+      "candidate_sources": ["FOLLOWUP_RULE_TABLE"],
+      "fields_regex": {"사업승인": "사업승인 ’(\\d{2}(?:\\.\\d{1,2})?)", "이주년도": "이주년도 ’(\\d{2})", "착공년도": "착공년도 ’(\\d{2})", "입주년도": "입주년도 ’(\\d{2})"},
+      "stages": {"03": [["사업승인", "사업승인", "승인연도"]], "04": [["착공년도", "착공년도", "착공연도"], ["이주년도", "이주년도", null]],
+                 "06": [["입주년도", "입주년도", "입주연도"]]},
+      "home_source_ids": [], "plan": true,
+      "note": "정책 해석 작업이 policy_sites.jsonl 에 옮긴 정책 후속 발표 표의 행(사업승인·이주·착공·입주 연도). 사업과는 정책 지명 연결 규칙(home.site_matches)으로 잇는다. 계획값이라 단계 도달 근거로 쓰지 않는다. HOME 근거 URL 이 같은 문서면 같은 원천 재확인."
+    },
+    "agency_notice": {
+      "label": "SH·GH·iH 입주자 모집공고 목록(2023-01 이후, 2026-10-17 받음)", "org": "서울주택도시공사·경기주택도시공사·인천도시공사", "excerpt": "독립_지방공사_공고", "plan_fields": ["입주예정월"],
+      "dir": "docs/speech/research/05.공급/원본/web",
+      "lists": [
+        {"agency": "SH", "path": "sh/목록.csv", "sido": "11", "names": ["SH", "서울주택도시공사"], "scope_note": "서울주거포털 SH 공고 목록 범위만(SH 누리집 전체 공고 아님)"},
+        {"agency": "GH", "path": "gh/목록.csv", "sido": "41", "names": ["GH", "경기주택도시공사"], "scope_note": "GH 청약 누리집 공고 목록"},
+        {"agency": "iH", "path": "ih/목록.csv", "sido": "28", "names": ["iH", "IH", "인천도시공사"], "scope_note": "iH 공지 게시판 중 모집공고(당첨 결과·토지 공급 공고 제외)"}],
+      "cols": {"title": "제목", "date": "공고일", "no": "공고번호", "url": "상세URL", "fix": "정정여부", "detail": "상세저장파일", "doc": "공고문저장파일"},
+      "include_words": ["모집"],
+      "exclude_words": ["결과", "당첨", "발표", "토지", "용지", "상가", "점포", "매각", "동호수", "계약", "서류", "추첨", "이주자택지", "입주안내", "선정"],
+      "followup_words": ["예비", "잔여", "추가", "선착순", "재공급"],
+      "title_clean_regex": "\\[[^\\]]*\\]|\\((?:최초|재공고|정정[^)]*)\\)|\\(\\d{4}\\.[^)]*\\)|정정공고|재공고",
+      "move_regex": "입주\\s*(?:예정|시기)[^0-9]{0,20}(\\d{4})\\s*[.년]\\s*(\\d{1,2})", "pdf_pages": 2,
+      "stages": {"05": [["공고일", "공고일", "공고일"]], "06": [["입주예정월", "_move", "입주월"]]},
+      "home_source_ids": ["gh_notice"], "window_start": "2023-01-01", "as_of": "2026-10-17",
+      "scope": "SH·GH·iH 모집공고 2023-01-01~2026-10-17",
+      "note": "최초 모집공고만 공급 근거로 쓴다: 제목에 '모집'이 있고 결과·토지·상가 등 제외어가 없으며, 예비·잔여·추가 모집은 뺀다. 정정·재공고는 정리한 제목이 같은 묶음으로 보고 가장 이른 공고일 하나만 행으로 남긴다(묶음 수는 비고). 사업 매칭은 시도(기관) + 제목의 지구·블록, 블록 키가 없으면 이름(기관이 공공이라 공공주택 표지는 보지 않음). 입주예정월은 저장된 공고문 PDF 앞 쪽에 있을 때만."
+    },
+"site_status": {
+  "label": "정책 후속 발표의 사이트 단위 사업 목록·추진 상태(원문 문장 확인)", "org": "국토교통부·재정경제부", "excerpt": "독립_후속발표_추진상태",
+  "docs": [
+    {"doc_path": "docs/speech/research/01.정책/원본/9-7+1-29_후속_260428/260428(석간) 도심 내 공공주택 3만 4천 호 공급 ‘속도전’(공공택지기획과).pdf",
+     "site_pages": [2, 3], "status": "국가 정책사업 의결(제18회 국무회의 2026-04-28, 사업 목록 26개 첨부)",
+     "status_quote": "제18회 국무회의(4.28일)에서 국가 정책사업으로 의결", "status_page": 1}
+  ],
+  "stages": {"02": [["추진 상태", "status", null]]},
+  "home_source_ids": [],
+  "note": "여러 정책을 함께 다룬 후속 발표라 프로그램→사업 연결 확인에는 쓰지 않지만(link_attribution), 사이트 단위 행(사업명·면적·호수)과 그 목록 전체에 걸린 추진 상태 문장이 있으면 02 사업화 근거(원천값 수집)로 쓴다. 추진 상태 문장(status_quote)이 원 PDF 그 쪽 텍스트에 실제로 있어야 쓴다(원문 문자열 게이트). 호수·면적은 위치(원문 행)에만 두고 도달 근거로 치지 않는다. 정책 원문 1·29 안건 13~18쪽의 사이트 행은 호수·면적만 있어 02 근거로 쓰지 않는다."
+},
+    "lh_web_pdf": {
+        "label": "LH 입주자모집공고문 본문 PDF(2026-10-17 받음)", "org": "한국토지주택공사", "excerpt": "독립_LH_공고문_PDF",
+        "max_pages": 1,
+        "stages": {"05": [["모집공고일", "notice_date", "공고일"]]},
+        "home_source_ids": ["lh_notice_detail"], "developer": "LH",
+        "regex": {"notice_date": "모집공고일은\\s*(\\d{4}\\.\\s*\\d{1,2}\\.\\s*\\d{1,2})", "location": "공급위치\\s*:\\s*([^❚■]{4,200})"},
+        "location_fallback_chars": 800,
+        "note": "PDF 첫 쪽 텍스트의 '공급위치' 문장(없으면 첫 쪽 앞 800자)으로 사업을 찾는다. 입주예정 시기는 표 안에 있어 텍스트로 안정적으로 읽히지 않아 쓰지 않는다."
+      }
+    },
+    "absent": {
+      "03": {"sources": ["hub_basic"], "min_units": 30,
+             "note": "주택인허가(사업계획승인) 대용량에서 위치 키로 찾은 기록이 없으면 2026-08-31 기준 인허가 미도달. 호수를 알고 30 미만이면 건축법 허가 대상일 수 있어 범위 밖."},
+      "04": {"derive_from": "03", "lh_rule": {"developer": "LH", "not_in": ["lh_pdf", "lh_completion"], "need": "hub_basic", "hub_empty": ["착공_일", "사용_검사_일"]},
+             "note": "인허가 미도달이면 착공 불가(파생). LH 사업은 공사추진현황(2026-07-01)·준공예정(2026-01-27)에 없고 인허가 기록의 착공일·사용검사일이 비어 있으면 착공 미도달."},
+      "05": {"derive_from": "03", "searched": ["applyhome_x", "lh_notice_x", "lh_notice_old", "hug", "myhome", "lh_web", "lh_web_pdf", "agency_notice"],
+           "pre_supply": {"source": "lh_supply_plan", "field": "month", "note_field": "note", "notice_as_of": "2026-10-13",
+                            "skip_note_words": ["사전청약"], "skip_unless_source": "lh_notice_old",
+                            "note": "LH 공급계획의 공급예정시기가 모두 공고 원천 기준일(LH 공고 2026-10-13·청약홈 2026-10-12)보다 뒤이고 공고 원천 어디에도 없으면 모집공고 미도달(파생). 비고에 사전청약이 있으면 2024-01 전 공고 가능성이 있어 범위 밖."},
+             "lh_rule": {"developer": "LH", "notice_sources": ["lh_notice_old", "lh_notice_x"], "approval_after": "20190101",
+                         "note": "LH 사업이 LH 공고 2019-01~2026-10-13(두 목록)과 청약홈·HUG·마이홈·LH 공고 상세에서 위치 키로 공고가 없고, 인허가 기록 승인일이 모두 2019-01-01 이후(그 전 공고·사전청약이 있을 수 없음)면 모집공고 미도달(직접 탐색). 2019-2023 목록이 없으면(manifest 없음) 쓰지 않는다."},
+             "agency_rule": {"source": "agency_notice", "approval_after": "20230101",
+                           "note": "SH·GH·iH 사업(HOME 시행자)이 그 기관 모집공고 목록 범위(2023-01~수집일)에 공고가 없고, 다른 공고 원천에도 없으며, 인허가 기록의 승인일이 모두 2023-01-01 이후(그 전 공고가 있을 수 없음)면 모집공고 미도달."},
+             "note": "인허가 미도달이고 공고 원천(청약홈 전 기간·LH 공고 2024-01~·HUG·마이홈·LH 공고 상세)에서 위치 키로 찾은 공고가 없으면 모집공고 미도달."},
+      "06": {"derive_from": "03",
+             "pre_completion": {"started": [["lh_pdf", "착공일"], ["hub_basic", "착공_일"]],
+                                "completion": [["lh_pdf", "준공일", "2026-07-01"], ["lh_completion", "준공예정일", "2026-01-27"],
+                                               ["hub_basic", "사용_검사_예정_일", "2026-08-31"]],
+                                "actual": [["hub_basic", "사용_검사_일"]],
+                                "note": "입주는 준공(사용검사) 뒤에만 가능하다. 원천에 착공 기록이 있고, 원천의 준공(예정)일이 모두 그 원천 기준일보다 뒤이며 사용검사일이 없으면 입주 미도달(파생)."}, "note": "인허가 미도달이면 준공·입주 불가(파생).", "note_from_05": "모집공고 미도달이면 입주 불가(파생)."}
+    },
+    "unverified_reasons": {
+    "02_name": "02 원천(LH 공급계획·건설공사현황·준공예정)은 LH 블록 키만 덮음, 이름 키 사업은 범위 밖",
+    "02": "블록 키로 LH 02 원천에서 못 찾음",
+    "03": "주택인허가에서 못 찾음, 미도달 조건(범위·단계 순서) 안 맞음",
+    "04": "착공 기록 못 찾음(건축HUB 착공일 칸이 드묾), 미도달 조건 안 맞음",
+    "05": "공고 원천에서 못 찾음(LH 공고 2019-01 이전·SH/GH 임대 공고는 범위 밖, 또는 LH 아닌 사업), 미도달 판단 안 함",
+    "06": "입주 예정 원천에서 못 찾음, 미도달 판단 안 함"
+  },
+  "link_attribution": {
+    "followup_dir_regex": "^(.+)_후속_[^/]+$",
+    "row_status": {"field": "attribution_status", "ids": "policy_attribution", "own": "귀속", "other": "다른 정책 귀속",
+                   "note": "policy_sites.jsonl 의 행 단위 귀속(설계 6.1)이 먼저다: 귀속(이 정책 id 포함)이면 다부모 문서라도 연결 확인에 쓰고, 다른 정책 귀속이면 쓰지 않는다. 공통·빈칸이면 아래 문서 규칙."},
+    "parent_sep": "+",
+    "shared_note": "여러 정책 공통 언급",
+    "note": "귀속은 문서로 판정한다(추출 방법 candidate_source 는 쓰지 않는다): 지명의 doc_path 가 그 정책 policies.json docs_dir 안이면 원문 귀속, 폴더 이름이 '<부모slug>_후속_…' 이고 부모가 이 정책 하나뿐이면 후속 발표 귀속. 그 밖(정례브리핑, 부모가 둘 이상인 후속 발표 등)은 여러 정책 공통 언급이라 프로그램→사업 연결 확인에 쓰지 않는다. 그런 지명은 지구 단위 합계 언급이라 사업(블록) 단계 근거로도 쓰지 않는다."
+  },
+  "type_guard": {
+    "rules": [
+      {"project_words": ["도심 공공주택 복합", "도심공공주택복합", "도심복합"], "conflict_words": ["재개발(도시정비)", "재건축(도시정비)", "가로주택", "소규모재건축", "소규모재개발", "주택재개발", "주택재건축"]},
+      {"project_words": ["공공택지", "공공주택지구", "신규 공공주택지구"], "conflict_words": ["재개발(도시정비)", "재건축(도시정비)", "가로주택"]}
+    ],
+    "units_regex": ["세대수\\s*(\\d[\\d,]*)", "(\\d[\\d,]*)\\s*세대"],
+    "units_ratio": 3,
+    "note": "이름만으로 다른 사업의 근거를 붙이지 않는다: 사업 유형(HOME 프로그램·유형)과 원천 값의 사업 유형이 config 의 충돌 쌍이면, 또는 이름으로 이은 근거(웹 확인·이름 키)에서 원천 세대수와 HOME 계획 호수가 units_ratio 배 넘게 다르면, 그 행은 '비교 불가'(UNVERIFIED)로 내리고 비고에 남긴다."
+  },
+  "review": {
+    "csv": "review_stage_order.csv",
+    "md": "검토_단계순서.md",
+    "md_note": "md 는 paths.research_dir 아래, csv 는 _work/<policy_id>/ 아래.",
+    "cause_block": "블록 표기 차이",
+    "cause_name": "이름 차이",
+    "cause_hub": "HUB 칸 깨짐",
+    "cause_none": "원천에 같은 지구 기록 없음(시점 차이 또는 다른 이름)",
+    "cause_notice": "공고 미탐지(공고 제목 표기 차이 또는 2019 전 공고)",
+    "note": "추정 원인: 같은 시도 건축HUB 에서 지구명이 나오는 기록 중 블록 숫자가 같고 문자만 다르면 블록 표기 차이, 블록 칸에 숫자가 없거나 비어 블록을 읽을 수 없으면 HUB 칸 깨짐, 이름 키 사업이거나 지구명이 나오는 기록이 있어도 블록이 다르면 이름 차이, 지구명이 나오는 기록이 없으면 원천에 같은 지구 기록 없음."
+  },
+  "order_note": "단계 순서 모순: 뒤 단계에 원천 근거(일치·불일치·원천값 수집, 계획값만 있는 행은 제외)가 있으면 앞 단계를 미도달로 두지 않는다. 미도달 대신 '비교 불가'(UNVERIFIED)로 두고 비고와 README 검토 목록에 남긴다."
+  }
+}

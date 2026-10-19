@@ -85,7 +85,8 @@ test('4 서랍 단계 칸: 누르면 목록으로 넘어가지 않고 정의를 
 
 test('5 넘침·말줄임: 사업·시군구 칸은 두 줄 후 말줄임(최소 폭이 글자 길이로 늘지 않음) · 지역 공급 목록 줄바꿈 · 데이터 원본 원천명 줄바꿈', () => {
   const g = read('components/ui/data-grid.tsx');
-  assert.match(g, /c\.clip \? \(\s*<span className="line-clamp-2 whitespace-normal/, '말줄임 열은 두 줄');
+  assert.match(g, /c\.clip \? \(\s*longWord\([^)]*\)\s*\? <span className="block truncate"[\s\S]*?: <span className="line-clamp-2 whitespace-normal \[overflow-wrap:normal\]/, '말줄임 열은 두 줄, 칸보다 길 수 있는 낱말이 있으면 쪼개지 않고 한 줄 말줄임(2.5)');
+  assert.ok(!/line-clamp-2[^"]*overflow-wrap:break-word/.test(g), '말줄임 열은 낱말 중간에서 끊지 않는다');
   const a = read('components/region/Ahead.tsx');
   assert.ok(!/w-\[96px\] flex-none truncate/.test(a), '시군구 96px 한 줄 말줄임 없음');
   assert.ok(!/min-w-0 flex-1 truncate font-bold/.test(a), '사업명 한 줄 말줄임 없음');
@@ -93,7 +94,7 @@ test('5 넘침·말줄임: 사업·시군구 칸은 두 줄 후 말줄임(최소
   const c = read('components/sources/Collect.tsx');
   assert.ok(!/truncate/.test(c), '원천명 말줄임 없음');
   /* 연도 확보 격자의 최소 폭은 가로 스크롤 감싸개 안 */
-  assert.match(c, /<div className="overflow-x-auto">\s*<div role="table"[^>]*min-w-\[520px\]/);
+  assert.match(c, /<div className="relative overflow-x-auto">\s*<div role="table"[^>]*min-w-\[680px\]/);
 });
 
 test('6 빈 공간: 수도권·전국 동네 여건은 카드 대신 한 줄 · 단계별 진행은 여섯 칸 같은 폭(⑤⑥ 없음 칸도 따로)', () => {
@@ -126,14 +127,14 @@ test('9 입주 표기: 지역 공급 종류 칩은 \'입주 예정\'이고 정�
   assert.match(read('app/(dashboard)/region/page.tsx'), /AHEAD_KIND\[t\]/);
 });
 
-test('후속 1 상단 메뉴 바: 대시보드는 1600px 이상에서 본문 틀과 같은 1760px 선, 지도(compact)는 머리 줄(app.css .mhead 1440px 선)에 맞춰 그대로', () => {
+test('후속 1 상단 메뉴 바: 대시보드는 1600px 이상에서 본문 틀과 같은 1760px 선, 지도(compact)도 같은 선(2026-10-18 통일)', () => {
   const nav = read('components/TopNav.tsx');
-  assert.match(nav, /!compact && 'min-\[1600px\]:ml-\[max\(0px,50vw_-_880px\)\] min-\[1600px\]:w-\[min\(1760px,100vw\)\]'/);
+  assert.match(nav, /mobile:px-3 min-\[1600px\]:ml-\[max\(0px,50vw_-_880px\)\] min-\[1600px\]:w-\[min\(1760px,100vw\)\]/);
   assert.match(nav, /ml-\[max\(0px,50vw_-_720px\)\] flex h-16 w-\[min\(1440px,100vw\)\]/, '1600px 아래·지도는 1440px 선');
   /* 1760 = 880 × 2, 본문 틀과 같은 값 */
   assert.match(read('components/page.tsx'), /min-\[1600px\]:max-w-\[1760px\]/);
   assert.match(read('app/(map)/layout.tsx'), /<TopNav compact \/>/);
-  assert.match(read('assets/css/app.css'), /\.shell-map \.mhead\{padding-left:calc\(max\(0px,50vw - 720px\) \+ 28px\)/, '지도 머리 줄은 1440px 선(넓히지 않음)');
+  assert.match(read('assets/css/app.css'), /\.shell-map \.mhead\{padding-left:calc\(max\(0px,50vw - 720px\) \+ 28px\)/, '지도 머리 줄 1600px 아래는 1440px 선');
 });
 
 test('후속 2 후보 사업 지도 열: 수도권은 시군구 지도(구가 있는 시는 pick)·이름 \'시군구 지도\', 수도권 밖은 숨김, 번호 있는 사업은 사업 위치', () => {

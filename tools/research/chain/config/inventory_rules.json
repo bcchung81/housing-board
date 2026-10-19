@@ -1,0 +1,1292 @@
+{
+ "description": "inventory.py(팀 수집 관리표 ↔ 우리 원천 대조, 수집항목 중복 제거) 규칙. 코드는 이 파일을 해석만 한다. 사이트 URL·데이터셋 번호·오퍼레이션·판단 기준은 모두 여기에 둔다. 각 줄의 why 는 근거(저장소 문서·manifest).",
+ "paths": {
+  "docs": "docs/speech/research/dataset/source_documents.json",
+  "evidence": "docs/speech/research/dataset/evidence.json",
+  "ledger": "schemas/ledger-2026-10/tables/sources.json",
+  "owner": "docs/speech/research/원천주체_단계별.csv",
+  "schema_dir": "schemas/ledger",
+  "raw_roots": [
+   "schemas/ledger-2026-10/raw",
+   "data/raw"
+  ]
+ },
+ "portal_hosts": [
+  "data.go.kr",
+  "data.seoul.go.kr"
+ ],
+ "portal_hosts_note": "검색 창구: 사이트 단위로 맞추지 않는다(개별 데이터셋 번호로만)",
+ "portal_name_regex": "검색|개방목록|열린데이터",
+ "internal_route_regex": "내부",
+ "dataset_number_regex": "data\\.go\\.kr/data/(\\d+)/",
+ "stat_token_regexes": [
+  "molit_(\\d{3,5})_",
+  "주택건설실적통계 (\\d{3,5})"
+ ],
+ "stat_token_note": "통계누리 통계표 번호: data/raw/molit 파일 이름 ↔ 원장 sources dataset_name",
+ "id_query_keys": [
+  "id",
+  "bid",
+  "list_no",
+  "nttNo",
+  "nttSn",
+  "newsId",
+  "articleNo",
+  "seq",
+  "idx",
+  "attachNo",
+  "fileId",
+  "hRsId"
+ ],
+ "aliases_note": "관리표 사이트 URL 과 우리 수집이 URL·데이터셋 번호로 바로 이어지지 않는 경우. match: 정규화 URL 앞부분(쿼리 없으면 경로까지, exact 면 같음) 또는 'host:<호스트>'(www. 뺌). refs: 'ledger:<source_ref>'(fnmatch) 또는 raw 경로(fnmatch). doc_hosts: 그 호스트의 문서. doc_paths: 그 경로 아래 문서. owner: 원천주체 표에서 찾을 낱말.",
+ "aliases": [
+  {
+   "match": "https://www.data.go.kr/data/15136560/",
+   "refs": [
+    "ledger:hub-hs-basis",
+    "schemas/ledger-2026-10/raw/hub",
+    "schemas/ledger-2026-10/raw/hub-refresh"
+   ],
+   "why": "주택인허가 OpenAPI(HsPmsHubService) 응답 — raw/hub 파일 endpoint"
+  },
+  {
+   "match": "https://www.data.go.kr/data/15134735/",
+   "refs": [
+    "ledger:hub-bulk-bld-*",
+    "schemas/ledger-2026-10/raw/hub-bulk-bld"
+   ],
+   "why": "같은 건축물대장(표제부·총괄표제부)을 API 대신 건축HUB 대용량 판으로 받음(단계별-원천-수집.md ⑤)"
+  },
+  {
+   "match": "https://www.data.go.kr/data/15029176/",
+   "refs": [
+    "schemas/ledger-2026-10/raw/hub-bulk-ap"
+   ],
+   "why": "같은 건축인허가 기본개요를 건축HUB 대용량 판으로 받음(단계별-원천-수집.md ②·③)"
+  },
+  {
+   "match": "https://www.data.go.kr/data/15058453/",
+   "refs": [
+    "ledger:datagokr-15073271",
+    "schemas/ledger-2026-10/raw/molit-complex-file"
+   ],
+   "why": "K-apt 기본정보 API 는 시험 호출만, 같은 항목(사용승인일·세대수·시행사)을 15073271 파일로 받음(단계별-원천-수집.md ⑥)"
+  },
+  {
+   "match": "https://www.data.go.kr/data/15021148/",
+   "refs": [
+    "data/raw/infra/*초중등학교위치*"
+   ],
+   "why": "같은 기관(한국교육시설안전원)의 학교 위치 파일(데이터셋 15159184)로 받음 — 번호 다름(data/raw/infra/README.md)"
+  },
+  {
+   "match": "https://www.data.go.kr/data/15021149/",
+   "refs": [
+    "data/raw/infra/*초등학교통학구역*",
+    "data/raw/infra/*학교학구도연계정보*"
+   ],
+   "why": "같은 기관의 통학구역·학구도 연계 파일(15159265·15159266)로 받음 — 번호 다름(data/raw/infra/README.md)"
+  },
+  {
+   "match": "https://stat.molit.go.kr/portal/cate/statMetaView.do?hRsId=31",
+   "refs": [
+    "ledger:molit-permit-*"
+   ],
+   "why": "통계누리 주택건설실적통계 인허가 통계표 CSV(1946 월별·666 연간)"
+  },
+  {
+   "match": "https://stat.molit.go.kr/portal/cate/statMetaView.do?hRsId=471",
+   "refs": [
+    "ledger:molit-start-*"
+   ],
+   "why": "통계누리 주택건설실적통계 착공 통계표 CSV(5386)"
+  },
+  {
+   "match": "https://stat.molit.go.kr/portal/cate/statMetaView.do?hRsId=468",
+   "refs": [
+    "ledger:molit-complete-*"
+   ],
+   "why": "통계누리 주택건설실적통계 준공 통계표 CSV(5372)"
+  },
+  {
+   "match": "https://stat.molit.go.kr/portal/m/stat/recentList.do",
+   "refs": [
+    "ledger:molit-sale-*",
+    "ledger:home-dump-*-unsold"
+   ],
+   "why": "통계누리 분양실적 통계표 CSV(5557)·미분양(HOME 덤프 경유)"
+  },
+  {
+   "match": "host:myhome.go.kr",
+   "refs": [
+    "ledger:myhome-hwspr02",
+    "ledger:datagokr-15110581",
+    "schemas/ledger-2026-10/raw/myhome",
+    "schemas/ledger-2026-10/raw/myhome-complex"
+   ],
+   "owner": [
+    "마이홈포털"
+   ],
+   "why": "마이홈포털 공개 API(HWSPR02 모집공고·HWSPR04 공공임대 단지)로 받음"
+  },
+  {
+   "match": "host:apply.lh.or.kr",
+   "refs": [
+    "ledger:datagokr-15058530",
+    "ledger:datagokr-15057999",
+    "schemas/ledger-2026-10/raw/lh-notice",
+    "schemas/ledger-2026-10/raw/lh-notice-detail",
+    "data/raw/lh/cwstt",
+    "data/raw/lh/notices",
+    "data/raw/lh/pamphlets"
+   ],
+   "owner": [
+    "LH 청약플러스",
+    "LH 분양임대공고문"
+   ],
+   "why": "LH청약플러스 공고의 공공데이터포털 API(분양임대공고문·공고별 상세)와 청약플러스 공사현황·공고문 사본(data/README.md)"
+  },
+  {
+   "match": "https://www.lh.or.kr/",
+   "exact": true,
+   "refs": [
+    "data/raw/lh/public"
+   ],
+   "owner": [
+    "LH 건설공사현황",
+    "LH 주택입주계획"
+   ],
+   "why": "LH 누리집 사전정보공표 게시판 파일(건설공사현황·주택입주계획·공공분양공급현황) 사본(data/README.md)"
+  },
+  {
+   "match": "host:gh.or.kr",
+   "refs": [
+    "data/raw/gh/*"
+   ],
+   "why": "GH 누리집 분양·임대 계획표·주택공고 목록 사본(data/README.md)"
+  },
+  {
+   "match": "host:apply.gh.or.kr",
+   "refs": [
+    "ledger:home-dump-*-gh-notice"
+   ],
+   "doc_paths": [
+    "docs/speech/research/05.공급/원본/web/gh/"
+   ],
+   "why": "GH 공고 목록(HOME 덤프 경유)·GH 주택청약 공고 상세·공고문(05.공급/원본/web/gh/목록.csv)"
+  },
+  {
+   "match": "https://www.hub.go.kr/portal/psg/idx-hub-service-info.do",
+   "refs": [
+    "schemas/ledger-2026-10/raw/hub-bulk*",
+    "ledger:hub-bulk-*"
+   ],
+   "owner": [
+    "건축HUB 주택인허가 대용량",
+    "건축HUB 대용량"
+   ],
+   "why": "건축HUB 대용량 제공(hub.go.kr)에서 받은 판"
+  },
+  {
+   "match": "host:vworld.kr",
+   "refs": [
+    "schemas/ledger-2026-10/raw/vworld-district",
+    "data/raw/vworld/*"
+   ],
+   "owner": [
+    "V-World"
+   ],
+   "why": "V-World 데이터 API(사업지구 경계·블록)·GIS건물통합정보"
+  },
+  {
+   "match": "https://www.eum.go.kr/web/gs/gv/gvGosiList.jsp",
+   "exact": true,
+   "doc_hosts": [
+    "eum.go.kr"
+   ],
+   "doc_paths": [
+    "docs/speech/research/02.사업화/원본/web/gosi/",
+    "docs/speech/research/03.인허가/원본/web/gosi/"
+   ],
+   "owner": [
+    "토지이음"
+   ],
+   "why": "토지이음 고시정보 — 고시 상세·첨부 문서(02·03 원본/web/gosi 포함)"
+  },
+  {
+   "match": "https://cleanup.seoul.go.kr/cleanup/view/redevelop.do",
+   "exact": true,
+   "doc_hosts": [
+    "cleanup.seoul.go.kr"
+   ],
+   "owner": [
+    "정보몽땅"
+   ],
+   "why": "서울 정비사업 정보몽땅 — 사업장 카페 화면"
+  },
+  {
+   "match": "https://housing.seoul.go.kr/site/main/sh/publicLease/list",
+   "exact": true,
+   "doc_hosts": [
+    "i-sh.co.kr"
+   ],
+   "doc_paths": [
+    "docs/speech/research/05.공급/원본/web/sh/"
+   ],
+   "owner": [
+    "SH 공고"
+   ],
+   "why": "SH 공고를 원 게시처(i-sh.co.kr)에서 받음 — 서울주거포털 SH 공고는 같은 공고의 재게시, 분양·임대를 한 목록으로 받음(05.공급/원본/web/sh/목록.csv)"
+  },
+  {
+   "match": "https://housing.seoul.go.kr/site/main/sh/publicSale/01/list",
+   "exact": true,
+   "doc_hosts": [
+    "i-sh.co.kr"
+   ],
+   "doc_paths": [
+    "docs/speech/research/05.공급/원본/web/sh/"
+   ],
+   "owner": [
+    "SH 공고"
+   ],
+   "why": "SH 공고를 원 게시처(i-sh.co.kr)에서 받음 — 서울주거포털 SH 공고는 같은 공고의 재게시, 분양·임대를 한 목록으로 받음(05.공급/원본/web/sh/목록.csv)"
+  },
+  {
+   "match": "https://www.ih.co.kr/main/sale_lease/general/ih.jsp",
+   "exact": true,
+   "doc_paths": [
+    "docs/speech/research/05.공급/원본/web/ih/"
+   ],
+   "owner": [
+    "iH 공고"
+   ],
+   "why": "iH 공고 게시판(bbsMsgDetail) 상세·공고문으로 받음(05.공급/원본/web/ih/목록.csv)"
+  }
+ ],
+ "operations_note": "공공데이터포털 데이터셋 번호 → API 오퍼레이션. pattern: 자료명 정규식(위에서부터 처음 맞는 것), raw: 우리 원본(fnmatch), why: 근거",
+ "operations": {
+  "15136560": {
+   "label": "건축HUB 주택인허가정보 API",
+   "ops": [
+    {
+     "name": "기본개요",
+     "pattern": "기본개요",
+     "raw": [
+      "schemas/ledger-2026-10/raw/hub/*.json",
+      "schemas/ledger-2026-10/raw/hub-refresh/*.json",
+      "schemas/ledger-2026-10/raw/hub-bulk/주택인허가_기본개요_*.zip"
+     ],
+     "why": "raw/hub 파일 endpoint getHpBasisOulnInfo · 대용량 기본개요 zip"
+    },
+    {
+     "name": "대지위치",
+     "pattern": "대지위치",
+     "raw": [
+      "schemas/ledger-2026-10/raw/hub-bulk/주택인허가_대지위치_*.zip"
+     ],
+     "why": "대용량 대지위치 zip"
+    },
+    {
+     "name": "행위개요",
+     "pattern": "행위개요",
+     "raw": [
+      "schemas/ledger-2026-10/raw/hub-bulk/주택인허가_행위개요_*.zip"
+     ],
+     "why": "대용량 행위개요 zip"
+    },
+    {
+     "name": "동별개요",
+     "pattern": "동별개요",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "층별개요",
+     "pattern": "층별개요",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "호별개요",
+     "pattern": "호별개요",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "부대시설",
+     "pattern": "부대시설",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "주차장",
+     "pattern": "주차장",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "전유공용면적",
+     "pattern": "전유.{0,3}공용",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "오수정화시설",
+     "pattern": "오수정화",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "지역지구구역",
+     "pattern": "지역.?지구.?구역",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "복리분양시설",
+     "pattern": "복리분양",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "유형별주택수",
+     "pattern": "유형별 ?주택수",
+     "raw": [],
+     "why": ""
+    }
+   ]
+  },
+  "15134735": {
+   "label": "건축HUB 건축물대장정보 API",
+   "ops": [
+    {
+     "name": "총괄표제부",
+     "pattern": "총괄표제부",
+     "raw": [
+      "schemas/ledger-2026-10/raw/hub-bulk-bld/건축물대장_총괄표제부_*.zip"
+     ],
+     "why": "대용량 총괄표제부 zip"
+    },
+    {
+     "name": "표제부",
+     "pattern": "표제부",
+     "raw": [
+      "schemas/ledger-2026-10/raw/hub-bulk-bld/건축물대장_표제부_*.zip"
+     ],
+     "why": "대용량 표제부 zip"
+    },
+    {
+     "name": "기본개요",
+     "pattern": "기본개요",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "층별개요",
+     "pattern": "층별개요",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "전유부",
+     "pattern": "전유부",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "지역지구구역",
+     "pattern": "지역.?지구",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "부속지번",
+     "pattern": "부속지번",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "주택가격",
+     "pattern": "주택가격",
+     "raw": [],
+     "why": ""
+    }
+   ]
+  },
+  "15098547": {
+   "label": "청약홈 분양정보 조회 서비스",
+   "ops": [
+    {
+     "name": "getRemndrLttotPblancDetail",
+     "pattern": "무순위|잔여세대",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome/getRemndrLttotPblancDetail.json"
+     ],
+     "why": ""
+    },
+    {
+     "name": "getUrbtyOfctlLttotPblancDetail",
+     "pattern": "오피스텔|도시형",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome/getUrbtyOfctlLttotPblancDetail.json"
+     ],
+     "why": ""
+    },
+    {
+     "name": "getPblPvtRentLttotPblancDetail",
+     "pattern": "공공지원 ?민간임대",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome/getPblPvtRentLttotPblancDetail.json"
+     ],
+     "why": ""
+    },
+    {
+     "name": "getOPTLttotPblancDetail",
+     "pattern": "임의공급",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome/getOPTLttotPblancDetail.json"
+     ],
+     "why": ""
+    },
+    {
+     "name": "getAPTLttotPblancMdl",
+     "pattern": "주택형|특별공급 배정",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome/getAPTLttotPblancMdl.json"
+     ],
+     "why": "칸 HOUSE_TY·SUPLY_HSHLDCO·SPSPLY_HSHLDCO"
+    },
+    {
+     "name": "getAPTLttotPblancDetail",
+     "pattern": "모집공고 상세|접수 일정|당첨 발표|입주예정월|공급규모|사업지 주소",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome/getAPTLttotPblancDetail.json"
+     ],
+     "why": "칸 RCRIT_PBLANC_DE·RCEPT_BGNDE·PRZWNER_PRESNATN_DE·CNTRCT_CNCLS_BGNDE·MVN_PREARNGE_YM·TOT_SUPLY_HSHLDCO·HSSPLY_ADRES"
+    }
+   ]
+  },
+  "15098905": {
+   "label": "청약홈 청약경쟁률·특별공급 현황 서비스",
+   "ops": [
+    {
+     "name": "getAPTSpsplyReqstStus",
+     "pattern": "특별공급 신청",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome-cmpet/getAPTSpsplyReqstStus.json"
+     ],
+     "why": ""
+    },
+    {
+     "name": "getAptLttotPblancScore",
+     "pattern": "가점",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome-cmpet/getAptLttotPblancScore.json"
+     ],
+     "why": ""
+    },
+    {
+     "name": "getPblPvtRentLttotPblancCmpet",
+     "pattern": "공공지원 ?민간임대",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome-cmpet/getPblPvtRentLttotPblancCmpet.json"
+     ],
+     "why": ""
+    },
+    {
+     "name": "getUrbtyOfctlLttotPblancCmpet",
+     "pattern": "오피스텔|도시형",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome-cmpet/getUrbtyOfctlLttotPblancCmpet.json"
+     ],
+     "why": ""
+    },
+    {
+     "name": "getRemndrLttotPblancCmpet",
+     "pattern": "무순위|잔여세대",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome-cmpet/getRemndrLttotPblancCmpet.json"
+     ],
+     "why": ""
+    },
+    {
+     "name": "getAPTLttotPblancCmpet",
+     "pattern": "일반공급 경쟁률",
+     "raw": [
+      "schemas/ledger-2026-10/raw/applyhome-cmpet/getAPTLttotPblancCmpet.json"
+     ],
+     "why": ""
+    }
+   ]
+  },
+  "15058453": {
+   "label": "K-apt 공동주택 기본정보 API",
+   "ops": [
+    {
+     "name": "상세정보",
+     "pattern": "편의시설|교통",
+     "raw": [],
+     "why": ""
+    },
+    {
+     "name": "기본정보",
+     "pattern": "기본정보|위치정보|주소|세대수|분양형태|난방|사용승인|연면적|관리운영|관리방식",
+     "raw": [
+      "schemas/ledger-2026-10/raw/molit-complex-file/*.xlsx"
+     ],
+     "why": "기본정보 응답 칸(kaptUsedate·kaptdaCnt·codeSaleNm·codeHeatNm·kaptTarea·codeMgrNm, raw/kapt-list manifest 시험 기록) — 같은 항목을 15073271 파일로 받음"
+    }
+   ]
+  }
+ },
+ "name_normalization": {
+  "synonyms": [
+   [
+    "공공\\s*[·/]\\s*민간|사업주체별|부문별",
+    " 부문별 "
+   ],
+   [
+    "아파트\\s*[·/]\\s*비아파트|주택\\s*유형별|유형별",
+    " 유형별 "
+   ],
+   [
+    "지역별|시도별",
+    " 시도별 "
+   ],
+   [
+    "연도별|연간",
+    " 연도별 "
+   ],
+   [
+    "잠정치?\\s*[·/]\\s*확정치?|확정치?\\s*[·/]\\s*잠정치?",
+    " 잠정확정 "
+   ],
+   [
+    "주택\\s*규모별|규모별|면적별",
+    " 규모별 "
+   ],
+   [
+    "(인허가|허가|착공|준공|분양)(실적|호수|건수|통계)",
+    " \\1 \\2 "
+   ],
+   [
+    "(승인|착공|준공|개원|개교|입주|공고|발표|지정|고시|체결)(일자|일)(?![가-힣])",
+    "\\1 일 "
+   ],
+   [
+    "일자",
+    " 일 "
+   ],
+   [
+    "운영\\s*중인?",
+    " "
+   ],
+   [
+    "미분양주택",
+    " 미분양 주택 "
+   ],
+   [
+    "공공지원\\s*민간임대",
+    " 공공지원민간임대 "
+   ],
+   [
+    "공간\\s*경계",
+    " 경계 "
+   ],
+   [
+    "([가-힣]{2,})(건수|호수|실적)(?![가-힣])",
+    " \\1 \\2 "
+   ]
+  ],
+  "stopwords": [
+   "건수",
+   "공식",
+   "관련",
+   "구분",
+   "누계",
+   "등",
+   "및",
+   "수",
+   "실적",
+   "여부",
+   "운영",
+   "원자료",
+   "자료",
+   "전체",
+   "정보",
+   "주택",
+   "중",
+   "중인",
+   "통계",
+   "현황",
+   "호수",
+   "후보"
+  ],
+  "strip_suffix": "별",
+  "split_regex": "[\\s·/,()\\[\\]{}<>「」『』〈〉:;+\\-–—~↔→]+",
+  "note": "R3: 동의어 맞춤 → 낱말 끝 strip_suffix 뗌(3글자 이상) → 불용어 → 원천 이름에 든 낱말 뺌"
+ },
+ "judge_rules_note": "사이트 판단(필요/참고/범위 밖). 위에서부터 처음 맞는 규칙. when 의 조건 중 하나라도 맞으면 맞음(OR), all 은 모두(AND). field: route(수집 경로·형식), name(공식 원천명), units(관리표 행의 연결 가능 단위, 행이 없으면 원천명), name_units(둘 다). flag: internal·all_coop(모든 행이 협조 요청)·portal.",
+ "judge_rules": [
+  {
+   "verdict": "범위 밖",
+   "why": "기관 내부·협조 요청 자료(공개 원천 아님)",
+   "when": [
+    {
+     "flag": "internal"
+    },
+    {
+     "flag": "all_coop"
+    }
+   ]
+  },
+  {
+   "verdict": "범위 밖",
+   "why": "기반시설·수요 지표 — 정책→입주 단계 사실이 아님(지도 기반시설 화면 원천)",
+   "when": [
+    {
+     "field": "name",
+     "regex": "학교|학구|어린이집|보육|생활SOC|에너지|청약통장"
+    }
+   ]
+  },
+  {
+   "verdict": "참고",
+   "why": "검색 창구(포털) — 개별 데이터셋은 그 번호의 행·관리표 미수록 행에서 대조",
+   "when": [
+    {
+     "flag": "portal"
+    }
+   ]
+  },
+  {
+   "verdict": "참고",
+   "why": "법령·제도 — 단계 사실 판정의 근거 조항, 사업 값 아님",
+   "when": [
+    {
+     "field": "name_units",
+     "regex": "법령|입법|법제처"
+    }
+   ]
+  },
+  {
+   "verdict": "참고",
+   "why": "재정·조달·금융 — 사업 단계 사실 보강 후보(사업 키로 바로 잇지 못함)",
+   "when": [
+    {
+     "field": "name_units",
+     "regex": "예산|재정|재원|리츠|조달|입찰|계약|나라장터"
+    }
+   ]
+  },
+  {
+   "verdict": "참고",
+   "why": "공급 결과 지표 — 단계 사실(공고일·입주일)이 아님",
+   "when": [
+    {
+     "field": "name",
+     "regex": "경쟁률|가점"
+    }
+   ]
+  },
+  {
+   "verdict": "필요",
+   "why": "정책 원문(01) — 목표·프로그램·지명의 원문 근거",
+   "when": [
+    {
+     "all": [
+      {
+       "field": "units",
+       "regex": "정책|발표|문서"
+      },
+      {
+       "field": "route",
+       "regex": "PDF|HWP|웹"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "verdict": "필요",
+   "why": "사업 단위 단계 사실(02~06)의 원천 — 사업 키로 이을 수 있음",
+   "when": [
+    {
+     "field": "units",
+     "regex": "사업|지구|블록|필지|대지|허가|승인|고시|인가|공고|단지|구역|공구|건물|심의|원천파일"
+    }
+   ]
+  },
+  {
+   "verdict": "참고",
+   "why": "집계 통계 — 사업 단위로 잇지 못함, 총량 대조용",
+   "when": [
+    {
+     "field": "units",
+     "regex": "통계|집계|지역|격자"
+    }
+   ]
+  },
+  {
+   "verdict": "참고",
+   "why": "단위 미상 — 자료별 확인 필요",
+   "when": [
+    {
+     "always": true
+    }
+   ]
+  }
+ ],
+ "link_map_note": "관리표 연계필드 식별자(정규식, 위에서부터 처음 맞는 것) → 우리 표.칸. 칸 이름은 실행 때 schemas/ledger 로 검사",
+ "link_map": [
+  {
+   "pattern": "^policy_id·program_id$",
+   "target": "links.from_local_id · links.to_local_id",
+   "kind": "같음",
+   "note": "link_type POLICY_PROGRAM"
+  },
+  {
+   "pattern": "^policy_id$",
+   "target": "policies.local_policy_id · evidence.policy_id",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^policy_name$",
+   "target": "policies.policy_name",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^policy_source_uri$",
+   "target": "evidence.doc_id · source_documents.canonical_url",
+   "kind": "같음",
+   "note": "evidence subject_table policies 의 문서"
+  },
+  {
+   "pattern": "^policy_announcement_date$",
+   "target": "policies.announcement_date",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^policy_effective_date$",
+   "target": "",
+   "kind": "없음",
+   "note": "시행일 칸 없음"
+  },
+  {
+   "pattern": "^program_id$",
+   "target": "programs.local_program_id",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^program_name$",
+   "target": "programs.program_name",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^program_parent_policy_id$",
+   "target": "links.from_local_id",
+   "kind": "같음",
+   "note": "link_type POLICY_PROGRAM"
+  },
+  {
+   "pattern": "^target_basis$",
+   "target": "policy_targets.stage_code",
+   "kind": "같음",
+   "note": "착공·인허가 등 단계 코드"
+  },
+  {
+   "pattern": "^target_unit_count$",
+   "target": "policy_targets.target_units",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^target_start_year$",
+   "target": "policy_targets.period_start",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^target_end_year$",
+   "target": "policy_targets.period_end",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^target_area$",
+   "target": "policy_targets.area_codes",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^target_plan_version$",
+   "target": "evidence.doc_id",
+   "kind": "부분",
+   "note": "버전 칸 없음 — 문서별 원문값은 evidence 행으로만"
+  },
+  {
+   "pattern": "^project_internal_id$|^HOME 사업 ID$",
+   "target": "projects.local_project_id · identifiers.id_value · evidence.external_ref",
+   "kind": "같음",
+   "note": "HOME id 는 identifiers id_type HOME"
+  },
+  {
+   "pattern": "^official_project_id$",
+   "target": "identifiers.id_value",
+   "kind": "부분",
+   "note": "id_type LH_AREA_BLOCK_CODE·AREA_BLOCK — SH·GH·iH 사업 id 없음"
+  },
+  {
+   "pattern": "^project_name_alias$",
+   "target": "projects.project_name",
+   "kind": "부분",
+   "note": "별칭 표 없음(이름 하나)"
+  },
+  {
+   "pattern": "^notice_no$",
+   "target": "notices.notice_id",
+   "kind": "부분",
+   "note": "모집공고 번호만, 관보·토지이음 고시번호 칸 없음(evidence.locator 글)"
+  },
+  {
+   "pattern": "^parcel_pnu$",
+   "target": "project_locations.pnu · notices.pnu",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^legal_dong_code$",
+   "target": "project_locations.bjd_code",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^lat_long$",
+   "target": "",
+   "kind": "없음",
+   "note": "좌표 칸 없음"
+  },
+  {
+   "pattern": "^milestone_code$",
+   "target": "events.event_type",
+   "kind": "같음",
+   "note": "PERMIT·CONSTRUCTION_START·COMPLETION·SUPPLY_NOTICE·MOVE_IN"
+  },
+  {
+   "pattern": "^planned_date$",
+   "target": "events.event_date",
+   "kind": "같음",
+   "note": "date_type PLANNED"
+  },
+  {
+   "pattern": "^actual_date$",
+   "target": "events.event_date",
+   "kind": "같음",
+   "note": "date_type ACTUAL"
+  },
+  {
+   "pattern": "^observation_source_uri$",
+   "target": "evidence.doc_id · source_documents.canonical_url · events.source_ref",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^connection_evidence_status$",
+   "target": "evidence.verdict · links.review_status · identifiers.match_status",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^record_observed_at$",
+   "target": "source_documents.collected_at · events.observed_month",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^record_asof_date$",
+   "target": "sources.data_as_of · projects.as_of",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^source_file_hash$",
+   "target": "source_documents.sha256",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^data_license$",
+   "target": "sources.license",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "^briefing_published_at$",
+   "target": "source_documents.published_at",
+   "kind": "부분",
+   "note": "정례브리핑 문서를 받으면 doc_type BRIEFING 행"
+  },
+  {
+   "pattern": "^briefing_",
+   "target": "",
+   "kind": "없음",
+   "note": "정례브리핑 회차·후속과제 칸 없음"
+  },
+  {
+   "pattern": "^indicator_",
+   "target": "",
+   "kind": "없음",
+   "note": "발표 지표(목표·실적·전망) 표 없음 — policy_targets 는 목표만"
+  },
+  {
+   "pattern": "^contact_verified_source$",
+   "target": "source_documents.publisher_dept",
+   "kind": "부분",
+   "note": "부서만(개인 이름·연락처는 담지 않음)"
+  },
+  {
+   "pattern": "사업지구명|지구ID",
+   "target": "identifiers.id_value · projects.project_name",
+   "kind": "부분",
+   "note": "id_type AREA_BLOCK(지구+블록), 지구 id 칸 없음"
+  },
+  {
+   "pattern": "블록명|주택용지번호",
+   "target": "identifiers.id_value",
+   "kind": "같음",
+   "note": "id_type AREA_BLOCK·LH_AREA_BLOCK_CODE"
+  },
+  {
+   "pattern": "고시·인가번호",
+   "target": "evidence.locator",
+   "kind": "부분",
+   "note": "고시번호 칸 없음 — 대조 위치 글로만"
+  },
+  {
+   "pattern": "법정동코드·지번·PNU",
+   "target": "project_locations.bjd_code · project_locations.pnu",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "주택인허가 PK",
+   "target": "identifiers.id_value",
+   "kind": "같음",
+   "note": "id_type HUB_HS_PK"
+  },
+  {
+   "pattern": "건축 인허가 PK",
+   "target": "identifiers.id_value",
+   "kind": "같음",
+   "note": "id_type HUB_AP_PK"
+  },
+  {
+   "pattern": "공사명·공구ID·계약번호",
+   "target": "",
+   "kind": "없음",
+   "note": "공사 계약·공구 표 없음"
+  },
+  {
+   "pattern": "실제 착공일",
+   "target": "events.event_date",
+   "kind": "같음",
+   "note": "event_type CONSTRUCTION_START · date_type ACTUAL"
+  },
+  {
+   "pattern": "단지명·주택형·공고번호",
+   "target": "complexes.complex_name · units.housing_type · notices.notice_id",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "청약홈 주택관리번호",
+   "target": "notices.notice_id",
+   "kind": "같음",
+   "note": "notice_system APPLYHOME"
+  },
+  {
+   "pattern": "LH/SH/GH/iH 공고번호",
+   "target": "notices.notice_id",
+   "kind": "부분",
+   "note": "notice_system LH·GH — SH·iH 없음"
+  },
+  {
+   "pattern": "모집공고 입주예정월",
+   "target": "events.event_month · complexes.move_in_month",
+   "kind": "같음",
+   "note": "event_type MOVE_IN · date_type PLANNED"
+  },
+  {
+   "pattern": "건축물대장 건물PK",
+   "target": "identifiers.id_value",
+   "kind": "같음",
+   "note": "id_type BLDRGST_PK"
+  },
+  {
+   "pattern": "K-apt 단지코드",
+   "target": "identifiers.id_value",
+   "kind": "같음",
+   "note": "id_type KAPT_CODE"
+  },
+  {
+   "pattern": "학교ID|학구ID",
+   "target": "",
+   "kind": "없음",
+   "note": "기반시설은 원장 밖(지도 번들 infra.json)"
+  },
+  {
+   "pattern": "어린이집 시설ID",
+   "target": "",
+   "kind": "없음",
+   "note": "기반시설은 원장 밖"
+  },
+  {
+   "pattern": "기준일·발표일·수집일",
+   "target": "sources.data_as_of · policies.announcement_date · source_documents.collected_at",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "근거 문서URL·문서해시",
+   "target": "source_documents.canonical_url · source_documents.sha256",
+   "kind": "같음",
+   "note": ""
+  },
+  {
+   "pattern": "자료 수준",
+   "target": "projects.project_unit · source_documents.doc_type",
+   "kind": "부분",
+   "note": "집계(stat_facts)와 사업(events)은 표가 다름"
+  }
+ ],
+ "check_map": [
+  {
+   "pattern": "링크 열람",
+   "ours": "source_documents.canonical_url·saved, 웹확인_결과.csv",
+   "metric": "M2 출처 목록 완전성",
+   "state": "부분(쓰인 문서만 열람)"
+  },
+  {
+   "pattern": "API 서비스 신청",
+   "ours": "공공데이터포털·V-World·HUG 키(.env.local, 값 미기록)",
+   "metric": "단계별-원천-수집.md 3절",
+   "state": "부분(KOSIS·통계누리 키 없음)"
+  },
+  {
+   "pattern": "smoke",
+   "ours": "raw/*/manifest.json 호출 수·행 수·totalCount 대조",
+   "metric": "단계별-원천-수집.md 1절",
+   "state": "수행(받은 API)"
+  },
+  {
+   "pattern": "필수 키",
+   "ours": "identifiers·notices·project_locations",
+   "metric": "연계필드_대응.csv",
+   "state": "수행"
+  },
+  {
+   "pattern": "수치 기준 분해",
+   "ours": "policy_targets.stage_code(단계별 목표)",
+   "metric": "M1 정책 값",
+   "state": "수행"
+  },
+  {
+   "pattern": "포함·순증",
+   "ours": "evidence(정책 목표 항목, 해명자료 문서)",
+   "metric": "M1·M4 01",
+   "state": "부분"
+  },
+  {
+   "pattern": "변경 이력",
+   "ours": "evidence 문서별 원문값 · source_documents.published_at",
+   "metric": "M1",
+   "state": "부분(목표 버전 칸 없음)"
+  },
+  {
+   "pattern": "세부 프로그램",
+   "ours": "programs · links(POLICY_PROGRAM·PROGRAM_PROJECT)",
+   "metric": "M1·M4, tests/test_research_chain_rules.py",
+   "state": "수행"
+  },
+  {
+   "pattern": "연결 단위|수집자료 수준",
+   "ours": "projects.project_unit · stat_facts 와 events 분리 · 수집항목_통합.csv",
+   "metric": "설계 5절",
+   "state": "수행"
+  },
+  {
+   "pattern": "교육 인프라|신설 학교|신설 어린이집",
+   "ours": "원천사이트_대조.csv 판단 범위 밖",
+   "metric": "—",
+   "state": "해당 없음(파이프라인 밖)"
+  },
+  {
+   "pattern": "담당자·부서 정합",
+   "ours": "원천주체_단계별.csv · source_documents.publisher_dept(부서만)",
+   "metric": "설계 1절 원천 주체",
+   "state": "수행(개인 연락처 미수집)"
+  },
+  {
+   "pattern": "저작권",
+   "ours": "sources.license · data/README.md 이용허락",
+   "metric": "—",
+   "state": "부분"
+  },
+  {
+   "pattern": "원본보존",
+   "ours": "source_documents.sha256·saved·collected_at",
+   "metric": "M2, tests/test_research_chain_dataset.py",
+   "state": "수행"
+  },
+  {
+   "pattern": "주택 유형 표준화",
+   "ours": "projects.public_scope · units.housing_type",
+   "metric": "—",
+   "state": "부분"
+  },
+  {
+   "pattern": "이중트랙",
+   "ours": "events.date_type PLANNED·ACTUAL·ESTIMATED",
+   "metric": "—",
+   "state": "수행"
+  },
+  {
+   "pattern": "팀 내부 원천 대조",
+   "ours": "evidence external_ref·external_value(HOME 덤프) MATCH·MISMATCH",
+   "metric": "M1",
+   "state": "수행"
+  },
+  {
+   "pattern": "정례브리핑 원본",
+   "ours": "원천사이트_대조.csv 해당 출처ID",
+   "metric": "M2",
+   "state": "미실행(원본 미수집)"
+  },
+  {
+   "pattern": "브리핑 지표|145건",
+   "ours": "없음",
+   "metric": "—",
+   "state": "미실행"
+  },
+  {
+   "pattern": "지구별 착공 실적",
+   "ours": "evidence 사업×단계(04)",
+   "metric": "M1·M4",
+   "state": "부분"
+  },
+  {
+   "pattern": "자동 수집 주기",
+   "ours": "P0 발견(Exa, config/policies_discovered.json)",
+   "metric": "설계 2절",
+   "state": "부분(보도자료 발견만)"
+  },
+  {
+   "pattern": "공개 담당자",
+   "ours": "개인 연락처는 수집하지 않음",
+   "metric": "설계 1절",
+   "state": "해당 없음"
+  },
+  {
+   "pattern": "공식 원문 우선",
+   "ours": "evidence.basis·verdict(존재 확인은 확인됨에서 뺌)",
+   "metric": "M1 정의",
+   "state": "수행"
+  },
+  {
+   "pattern": "외부ID 없을 때",
+   "ours": "evidence subject_id HOME:<PRO id>, 이름만으로 확정 금지",
+   "metric": "M1, tests/test_research_chain_independent.py",
+   "state": "수행"
+  },
+  {
+   "pattern": "정비계획 vs 사업",
+   "ours": "gaps.jsonl 판정(범위 밖·판단 보류)",
+   "metric": "M4 02",
+   "state": "부분"
+  },
+  {
+   "pattern": "지구와 블록",
+   "ours": "identifiers AREA_BLOCK · projects.project_unit BLOCK",
+   "metric": "—",
+   "state": "부분"
+  },
+  {
+   "pattern": "GIS 참고성",
+   "ours": "고시문 대조 evidence(03)",
+   "metric": "M1",
+   "state": "부분"
+  },
+  {
+   "pattern": "허가PK 호환",
+   "ours": "identifiers HUB_HS_PK·HUB_AP_PK",
+   "metric": "—",
+   "state": "부분(구·신 PK 전환표 없음)"
+  },
+  {
+   "pattern": "허가결정 구분",
+   "ours": "events PERMIT",
+   "metric": "—",
+   "state": "부분(심의·조건부 구분 없음)"
+  },
+  {
+   "pattern": "착공의 정의",
+   "ours": "events CONSTRUCTION_START ACTUAL·ESTIMATED",
+   "metric": "—",
+   "state": "수행"
+  },
+  {
+   "pattern": "공정률",
+   "ours": "events PROGRESS progress_pct, LH 건설공사현황 기준월",
+   "metric": "—",
+   "state": "부분"
+  },
+  {
+   "pattern": "공고계획 구분",
+   "ours": "notices · events SUPPLY_NOTICE",
+   "metric": "—",
+   "state": "부분"
+  },
+  {
+   "pattern": "사전·본청약",
+   "ours": "notices(사전청약은 연결만, 단계 사실에 안 씀)",
+   "metric": "단계별-원천-수집.md 5절",
+   "state": "부분"
+  },
+  {
+   "pattern": "준공과 입주",
+   "ours": "events COMPLETION·MOVE_IN 분리",
+   "metric": "—",
+   "state": "수행"
+  },
+  {
+   "pattern": "민감정보",
+   "ours": "common.scrub(전화번호·담당자 이름 지움), 출력 개인정보 검사",
+   "metric": "tests/test_research_chain_inventory.py",
+   "state": "수행"
+  },
+  {
+   "pattern": "결측·공백",
+   "ours": "evidence verdict UNVERIFIED·NO_ORIGINAL·OUT_OF_SCOPE 구분",
+   "metric": "M1",
+   "state": "수행"
+  },
+  {
+   "pattern": "기간 비교",
+   "ours": "stat_facts.provisional · ym",
+   "metric": "—",
+   "state": "부분"
+  },
+  {
+   "pattern": "갱신 방식",
+   "ours": "raw manifest fetched_at·sha256 · 판 폴더(raw/home/<덤프시각>)",
+   "metric": "—",
+   "state": "부분"
+  }
+ ]
+}

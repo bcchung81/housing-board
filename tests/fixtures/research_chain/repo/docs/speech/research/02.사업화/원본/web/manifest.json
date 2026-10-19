@@ -1,0 +1,38 @@
+{
+ "source": "시험 웹 원문",
+ "fetched_at": "2026-10-17T00:00:00Z",
+ "notes": "ego lite 로 받음",
+ "files": {
+  "p1": {
+   "filename": "page.html",
+   "url": "https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancInfo.do?panId=1&mi=9",
+   "method": "ego lite",
+   "fetched_at": "2026-10-17T00:00:01Z",
+   "kind": "입주자모집공고 상세(HTML)",
+   "dept": "시험지역본부",
+   "attachments": [
+    {
+     "filename": "a.pdf",
+     "download": "https://apply.lh.or.kr/lhapply/lhFile.do?fileid=11",
+     "saved": true,
+     "path": "attach/1/a.pdf",
+     "path_stage": "02.사업화"
+    },
+    {
+     "filename": "b.hwp",
+     "download": "https://apply.lh.or.kr/lhapply/lhFile.do?fileid=12",
+     "saved": false,
+     "reason": "용량 제한으로 받지 않음",
+     "size_bytes": 10
+    }
+   ]
+  },
+  "kdi": {
+   "filename": "copy.pdf",
+   "url": "https://eiec.kdi.re.kr/policy/callDownload.do?num=1&filenum=2",
+   "method": "ego lite",
+   "fetched_at": "2026-10-17T00:00:02Z",
+   "kind": "재게시본"
+  }
+ }
+}

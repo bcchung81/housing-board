@@ -277,3 +277,12 @@ test('산출물에 HOME 원본의 담당자 이름·입력 사유 원문이 0건
     assert.deepEqual([...t.reasons].filter((r) => s.includes(r)), [], `${f}: 사유`);
   }
 });
+
+test('카드 안 카드는 테두리형(inset): 동네 여건 숫자 칸·12개월 막대 틀·지도 틀·연결 칸, 각진 틀 없음', () => {
+  assert.match(read('components/region/Cond.tsx'), /<Card variant="inset" className="@container/, '동네 여건 숫자 칸');
+  const ahead = read('components/region/Ahead.tsx');
+  assert.match(ahead, /<Card variant="inset" className="h-full p-0">\{wave\}<\/Card>/, '달별 막대 틀');
+  assert.match(ahead, /<Card variant="inset"[^>]*>\{mapEl\}<\/Card>/, '지도 틀');
+  assert.match(read('components/sources/Collect.tsx'), /<Card key=\{l\.type\} variant="inset"/, '연결 칸');
+  for (const f of ['components/region/Ahead.tsx', 'components/sources/Collect.tsx', 'components/sources/Fold.tsx']) assert.doesNotMatch(read(f), /rounded-none|rounded-\[0/, `${f}: 각진 상자`);
+});

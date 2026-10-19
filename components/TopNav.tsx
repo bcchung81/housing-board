@@ -14,8 +14,9 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { cn } from 'cn';
-import { MENU, activeMenuId } from '../lib/shell/menu';
-import { displayAudience } from '../lib/shell/theme';
+import { mapHref } from '@/lib/board/map-href';
+import { MENU, activeMenuId, myAreaScope, peerHref } from '@/lib/shell/menu';
+import { displayAudience } from '@/lib/shell/theme';
 import { Switch } from './ui/switch';
 
 type Audience = 'public' | 'admin';
@@ -29,6 +30,7 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
   const [open, setOpen] = useState(false);          // 900px 이하의 펼침 메뉴
   const [dark, setDark] = useState(false);
   const [aud, setAud] = useState<Audience | null>(null);
+  const [mapTo, setMapTo] = useState('/map');   // 머리 메뉴 '지도' 주소: 일반사용자가 내 동네를 정했으면 그 동네(수화 뒤에 정한다 — 서버 렌더는 '/map')
   useEffect(() => { setDark(document.documentElement.classList.contains('dark')); }, []);
   /* 표시 관점 = 경로 규칙(정책담당자 전용 화면은 admin, /map 은 저장값). 첫 그림 전에는 AUDIENCE_INIT 이, 앱 안 이동으로 경로가 바뀌면 여기서 다시 정한다 */
   useEffect(() => {
@@ -37,6 +39,9 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
     const next = displayAudience(pathname, saved);
     document.documentElement.dataset.aud = next;
     setAud(next);
+    let area: string | null = null;
+    try { area = localStorage.getItem('myArea'); } catch (_) { /* 저장소를 못 쓰면 동네 없음 */ }
+    setMapTo(next === 'public' ? mapHref(myAreaScope(area)) : '/map');
   }, [pathname]);
   useEffect(() => { setOpen(false); }, [pathname]);
   useEffect(() => {
@@ -60,18 +65,18 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
     setAud(next);
     document.documentElement.dataset.aud = next;
     try { localStorage.setItem('audience', next); } catch (_) { /* 저장소를 못 써도 이동은 그대로 */ }
-    window.location.assign(homeOf(next));
+    window.location.assign(peerHref(pathname, window.location.search, next) ?? homeOf(next));   // 짝 화면(사업 ↔ 사업 찾기 등)이 있으면 그리로
   };
   const home = homeOf(aud);
 
   const items = MENU.map((m) => {
     const on = active === m.id;
-    const href = m.id === 'home' ? home : m.href;
+    const href = m.id === 'home' ? home : m.id === 'map' ? mapTo : m.href;
     const exact = pathname === href;
-    const label = (<>{m.label}{m.soon ? <em className="ml-1.5 hidden rounded-full border border-border px-1.5 py-px text-[12px] not-italic min-[1280px]:inline">준비 중</em> : null}</>);
-    const cls = cn(linkBase, 'h-16 px-2 text-[16px] font-normal min-[1101px]:px-3 min-[1101px]:text-[18px] mobile:h-11 mobile:px-4 mobile:text-[14px]', on && 'text-foreground after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-primary min-[1101px]:after:inset-x-3 mobile:after:inset-x-0 mobile:after:inset-y-2 mobile:after:right-auto mobile:after:h-auto mobile:after:w-0.5');
+    const label = (<>{m.label}{m.soon ? <em className="ml-1.5 hidden rounded-full border border-border px-1.5 py-px text-sm not-italic min-[1280px]:inline">준비 중</em> : null}</>);
+    const cls = cn(linkBase, 'h-16 px-2 text-(length:--fs-nav) font-normal min-[1101px]:px-3 mobile:h-11 mobile:px-4', on && 'text-foreground after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-primary min-[1101px]:after:inset-x-3 mobile:after:inset-x-0 mobile:after:inset-y-2 mobile:after:right-auto mobile:after:h-auto mobile:after:w-0.5');
     return (
-      <li key={m.id} className={cn('flex', m.adminOnly && '[html[data-aud=public]_&]:hidden')} data-aud-only={m.adminOnly ? 'admin' : undefined}>
+      <li key={m.id} className={cn('flex', m.adminOnly && '[html[data-aud=public]_&]:hidden', m.publicOnly && '[html[data-aud=admin]_&]:hidden')} data-aud-only={m.adminOnly ? 'admin' : m.publicOnly ? 'public' : undefined}>
         {/* /citizen 은 Next 화면이 아니라 정적 문서(next.config 의 rewrites)라 <a> 로 간다 */}
         {compact || m.id === 'map' || href === '/citizen'
           ? <a href={href} className={cls} aria-current={on && (compact ? m.id === 'map' : exact) ? 'page' : undefined} title={m.label}>{label}</a>
@@ -81,21 +86,27 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
   });
 
   return (
-    <header className="sticky top-0 z-40 shrink-0 overflow-x-clip border-b border-border bg-card font-display font-normal text-card-foreground shadow-[0_1px_8px_rgba(15,23,42,.025)] print:hidden">
-      {/* 1600px 이상 대시보드는 본문 틀(components/page.tsx)과 같이 1760px 선. 지도(compact)는 머리 줄(app.css .shell-map .mhead)이 1440px 선에 맞춰져 있어 그대로 둔다 */}
-      <div className={cn('ml-[max(0px,50vw_-_720px)] flex h-16 w-[min(1440px,100vw)] items-center gap-2 px-7 mobile:ml-0 mobile:h-12 mobile:w-auto mobile:px-3', !compact && 'min-[1600px]:ml-[max(0px,50vw_-_880px)] min-[1600px]:w-[min(1760px,100vw)]')}>
-        <a className="mr-3 flex h-full shrink-0 items-center gap-[9px] text-[#0F1A3D] no-underline dark:text-foreground focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary" href={home} aria-label="주택파동 종합상황판 처음으로">
-          <svg className="block size-[33px] shrink-0" viewBox="4 4 64 60" aria-hidden="true">
-            <path fill="currentColor" d="M8 28 27 12Q36 4 45 12L64 28 57 36 39 21Q36 18 33 21L15 36Z" />
-            <path fill="#D65535" d="M8 43C18 33 27 32 38 40C48 48 54 45 64 35V48C54 58 45 60 34 51C25 44 18 43 8 54Z" />
+    <header className="sticky top-0 z-40 shrink-0 overflow-x-clip border-b border-border bg-card font-normal text-card-foreground shadow-card print:hidden">
+      {/* 1600px 이상 대시보드는 본문 틀(components/page.tsx)과 같이 1760px 선. 지도(compact)도 같은 선이다(app.css .shell-map .mhead 가 같은 1440/1760px 선에 맞춘다) */}
+      <div className={cn('ml-[max(0px,50vw_-_720px)] flex h-16 w-[min(1440px,100vw)] items-center gap-2 px-7 mobile:ml-0 mobile:h-12 mobile:w-auto mobile:px-3 min-[1600px]:ml-[max(0px,50vw_-_880px)] min-[1600px]:w-[min(1760px,100vw)]')}>
+        <a className="mr-3 flex h-full shrink-0 items-center no-underline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary" href={home} aria-label="The주택 종합상황판 처음으로">
+          <svg className="block h-(--logo-h) w-auto shrink-0 max-[599px]:hidden" viewBox="0 0 250 64" aria-hidden="true">
+            {/* 로고 한 벌(lockup): 열린 문 심벌 + The(클레이) + 주택(잉크). 원본 docs/design/the-jutaek-logo/. 한글 윤곽은 Noto Sans KR Bold 에서 뽑았다(SIL OFL 1.1, assets/fonts/noto-sans-kr/LICENSE) */}
+            <path className="fill-logo-ink" d="M9 25.7 32.9 6.4Q36 3.9 39.1 6.4L63 25.7V55Q63 59 59 59H51.8V30.1L37.3 18.3Q36 17.2 34.7 18.3L20.2 30.1V52.6H26.2V59H13Q9 59 9 55Z" />
+            <path className="fill-logo-wave" fillRule="evenodd" d="M29.4 28.7 48.2 21.1V51.4L29.4 59V28.7ZM41.4 34.9A2.65 2.65 0 1 0 41.4 40.2A2.65 2.65 0 1 0 41.4 34.9Z" />
+            <g className="fill-logo-wave" transform="translate(80 9.1) scale(2.275)"><path d="M0.5 2.2H10.6L11.8 3.4V5H7.7V17.8H4.6V5H0.5Z" /><path d="M13.3 2.2H16.3V7.9C17.1 6.8 18.3 6.2 19.8 6.2C22.5 6.2 24 7.9 24 10.8V17.8H21V11.2C21 9.5 20.3 8.7 19 8.7C17.4 8.7 16.3 9.8 16.3 11.6V17.8H13.3Z" /><path fillRule="evenodd" d="M31 6.2C34.3 6.2 35.7 8.6 35.7 11.6V12.8H28.3C28.5 14.5 29.6 15.4 31.3 15.4C32.6 15.4 33.6 15 34.6 14.3L35.4 16.5C34.2 17.5 32.8 18 31.1 18C27.5 18 25.3 15.7 25.3 12.1C25.3 8.7 27.5 6.2 31 6.2ZM28.3 10.7H32.9C32.7 9.2 32 8.5 30.8 8.5C29.5 8.5 28.6 9.3 28.3 10.7Z" /></g>
+            <g className="fill-logo-ink"><path d="M183.42 16.60H188.70V17.88Q188.70 20.06 187.99 22.11Q187.29 24.16 185.88 25.91Q184.47 27.66 182.44 29.05Q180.42 30.43 177.78 31.39Q175.14 32.35 171.91 32.76L169.68 28.07Q172.50 27.70 174.71 26.95Q176.92 26.20 178.55 25.18Q180.19 24.16 181.28 22.97Q182.38 21.79 182.90 20.47Q183.42 19.15 183.42 17.88ZM185.20 16.60H190.43V17.88Q190.43 19.15 190.95 20.47Q191.48 21.79 192.57 22.97Q193.66 24.16 195.32 25.18Q196.98 26.20 199.16 26.95Q201.35 27.70 204.17 28.07L201.94 32.76Q198.71 32.35 196.07 31.39Q193.43 30.43 191.41 29.05Q189.38 27.66 187.99 25.91Q186.61 24.16 185.90 22.11Q185.20 20.06 185.20 17.88ZM183.74 38.67H189.79V54.09H183.74ZM167.86 35.17H205.99V40.04H167.86ZM171.23 14.10H202.49V18.88H171.23Z" /><path d="M209.27 31.16H212.18Q215.23 31.16 217.67 31.09Q220.10 31.03 222.28 30.82Q224.47 30.62 226.79 30.25L227.33 35.08Q224.92 35.48 222.65 35.71Q220.37 35.94 217.85 35.99Q215.32 36.03 212.18 36.03H209.27ZM209.27 14.74H225.83V19.56H215.1V33.85H209.27ZM213.37 23.02H225.42V27.57H213.37ZM237.98 11.92H243.76V37.67H237.98ZM232.98 22.24H239.67V27.11H232.98ZM229.02 12.69H234.66V37.40H229.02ZM214.78 39.44H243.76V54.09H237.71V44.31H214.78Z" /></g>
           </svg>
-          <span className="whitespace-nowrap text-[30px] max-[599px]:hidden font-normal leading-none tracking-[-0.035em]">주택파동</span>
+          <svg className="hidden size-(--logo-mark) shrink-0 max-[599px]:block" viewBox="4 4 64 60" aria-hidden="true">
+            <path className="fill-logo-ink" d="M9 25.7 32.9 6.4Q36 3.9 39.1 6.4L63 25.7V55Q63 59 59 59H51.8V30.1L37.3 18.3Q36 17.2 34.7 18.3L20.2 30.1V52.6H26.2V59H13Q9 59 9 55Z" />
+            <path className="fill-logo-wave" fillRule="evenodd" d="M29.4 28.7 48.2 21.1V51.4L29.4 59V28.7ZM41.4 34.9A2.65 2.65 0 1 0 41.4 40.2A2.65 2.65 0 1 0 41.4 34.9Z" />
+          </svg>
         </a>
         <nav id="main-menu" aria-label="주 메뉴" className="mx-auto mobile:hidden"><ul className="m-0 flex list-none p-0">{items}</ul></nav>
         <div className="flex items-center mobile:ml-auto">
           <div className="flex items-center gap-3">
             {/* 보기 대상 스위치: 꺼짐 = 일반사용자(사람), 켜짐 = 정책담당자(서류가방). 양옆 글자는 모든 폭에서 14px 로 둘 다 보인다(지금 관점 진하게, 눌러도 바뀐다). 이름은 스위치가 가지므로 글자는 읽기 도구에서 숨긴다 */}
-            <div className="flex items-center gap-2 font-sans text-[14px]" title="일반사용자 ↔ 정책담당자 화면 바꾸기">
+            <div className="flex items-center gap-2 font-sans text-sm" title="일반사용자 ↔ 정책담당자 화면 바꾸기">
               <span aria-hidden="true" className="cursor-pointer whitespace-nowrap font-bold text-foreground [html[data-aud=admin]_&]:font-normal [html[data-aud=admin]_&]:text-muted-foreground" onClick={() => chooseAudience('public')}>일반사용자</span>
               <Switch on="admin" checked={aud === 'admin'} onCheckedChange={(v) => chooseAudience(v ? 'admin' : 'public')} aria-label="정책담당자 화면" offIcon={<User aria-hidden="true" />} onIcon={<BriefcaseBusiness aria-hidden="true" />} />
               <span aria-hidden="true" className="cursor-pointer whitespace-nowrap text-muted-foreground [html[data-aud=admin]_&]:font-bold [html[data-aud=admin]_&]:text-foreground" onClick={() => chooseAudience('admin')}>정책담당자</span>
@@ -105,14 +116,14 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
             {/* 테마 스위치: 꺼짐(라이트) = 해, 켜짐(다크) = 달 */}
             <Switch on="dark" checked={dark} onCheckedChange={toggleTheme} aria-label="다크 모드" title="다크 모드 전환" className="max-[599px]:hidden" offIcon={<Sun aria-hidden="true" />} onIcon={<Moon aria-hidden="true" />} />
           </div>
-          <button type="button" className="ml-1 hidden size-9 cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-foreground hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary mobile:flex" aria-expanded={open} aria-controls="main-menu-list" aria-label="메뉴" onClick={() => setOpen(!open)}>
+          <button type="button" className="ml-1 hidden size-9 cursor-pointer items-center justify-center rounded-tile border-0 bg-transparent p-0 text-foreground hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary mobile:flex" aria-expanded={open} aria-controls="main-menu-list" aria-label="메뉴" onClick={() => setOpen(!open)}>
             {open ? <X className="size-[20px]" aria-hidden="true" /> : <Menu className="size-[20px]" aria-hidden="true" />}
           </button>
         </div>
       </div>
-      {open ? <nav id="main-menu-list" aria-label="주 메뉴" className="hidden border-t border-border bg-card shadow-[var(--shadow-pop)] mobile:block"><ul className="m-0 flex list-none flex-col p-0">{items}</ul>
+      {open ? <nav id="main-menu-list" aria-label="주 메뉴" className="hidden border-t border-border bg-card shadow-pop mobile:block"><ul className="m-0 flex list-none flex-col p-0">{items}</ul>
         {/* 599px 이하: 테마 스위치는 펼침 메뉴 맨 아래 줄 */}
-        <div className="hidden h-11 items-center justify-between border-t border-border px-4 font-display text-[14px] max-[599px]:flex"><span aria-hidden="true">다크 모드</span><Switch on="dark" checked={dark} onCheckedChange={toggleTheme} aria-label="다크 모드" offIcon={<Sun aria-hidden="true" />} onIcon={<Moon aria-hidden="true" />} /></div></nav> : null}
+        <div className="hidden h-11 items-center justify-between border-t border-border px-4 text-sm max-[599px]:flex font-normal"><span aria-hidden="true">다크 모드</span><Switch on="dark" checked={dark} onCheckedChange={toggleTheme} aria-label="다크 모드" offIcon={<Sun aria-hidden="true" />} onIcon={<Moon aria-hidden="true" />} /></div></nav> : null}
     </header>
   );
 }

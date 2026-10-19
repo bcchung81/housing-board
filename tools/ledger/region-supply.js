@@ -137,8 +137,10 @@ function snapUnits(units, eps) {
     return [a, ...[...s.add].sort(([ka, [ta]], [kb, [tb]]) => ta - tb || (ka < kb ? -1 : 1)).map(([, [, v]]) => v)];
   }))));
 }
-/* units: 시군구마다 다각형들(투영 좌표, [바깥 고리, ...구멍]) → 시군구마다 { d, box }, 메운 구멍 수 */
-function sggPaths(units) {
+/* units: 시군구마다 다각형들(투영 좌표, [바깥 고리, ...구멍]) → 시군구마다 { d, box }, 메운 구멍 수.
+   opt(전국 시도 경계 tools/ledger/korea-sido.js 가 쓴다): tol 줄이기 허용 오차(기본 GEO_TOL) · minArea 남길 고리 넓이 하한(단위², 기본 2) */
+function sggPaths(units, opt = {}) {
+  const tol = opt.tol ?? GEO_TOL, minArea = opt.minArea ?? 2;
   /* 열린 고리(닫는 점·연달아 같은 점 뺌) */
   const open = (r) => r.filter((p, i) => keyOf(p) !== keyOf(r[(i || r.length) - 1]));
   units = units.map((ps) => ps.map((p) => p.map(open)).filter((p) => p[0].length >= 3).map((p) => p.filter((r) => r.length >= 3)));
@@ -162,7 +164,7 @@ function sggPaths(units) {
   const cache = new Map();
   const simplify = (arc, ks) => {
     const f = ks.join('|'), b = [...ks].reverse().join('|'), rev = b < f, key = rev ? b : f;
-    if (!cache.has(key)) cache.set(key, dp(rev ? [...arc].reverse() : arc, GEO_TOL));
+    if (!cache.has(key)) cache.set(key, dp(rev ? [...arc].reverse() : arc, tol));
     return rev ? [...cache.get(key)].reverse() : cache.get(key);
   };
   const ringOf = (r) => {
@@ -189,7 +191,7 @@ function sggPaths(units) {
   /* 바깥 고리가 빠지면 그 구멍도 뺀다 */
   const paths = units.map((ps) => {
     const box = [Infinity, Infinity, -Infinity, -Infinity];
-    const d = ps.map(([outer, ...holes]) => { const o = ringPath(ringOf(outer), 2, box); return o && o + holes.map((h) => ringPath(ringOf(h), 2, box)).join(''); }).join('');
+    const d = ps.map(([outer, ...holes]) => { const o = ringPath(ringOf(outer), minArea, box); return o && o + holes.map((h) => ringPath(ringOf(h), minArea, box)).join(''); }).join('');
     return { d, box };
   });
   return { paths, filled };
@@ -287,4 +289,4 @@ if (require.main === module) {
   console.log(`${OUT.annual}: ${out.annual.months[0]}~${out.annual.months[out.annual.months.length - 1]} (판 ${out.annual.edition})`);
 }
 
-module.exports = { KINDS, METRO, addM, monthOf, buildCalendar, buildMap, placeCalendar, buildAnnual, pathOf, proj, build, OUT };
+module.exports = { KINDS, METRO, addM, monthOf, buildCalendar, buildMap, placeCalendar, buildAnnual, pathOf, proj, dp, sggPaths, build, OUT };

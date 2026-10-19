@@ -13,6 +13,7 @@ import { DETAILS } from '../shell/menu';
 import { getBoardData } from './data';
 import { drawerTarget, rowsOf, type IndexExtra, type MapRow, type Policy, type PolicyProgress, type ProjectDetail, type ProjectRow, type Program } from './projects-view';
 import type { RegistryProject } from './types';
+import { AGENCY_SHORT, stepsOf, type Steps } from './public-labels';
 
 type IndexDoc = { observedMonth: string; referenceDate: string; policies: Policy[]; programs: Program[]; sgg: Record<string, string | null>; projects: Record<string, IndexExtra> };
 type MapDoc = { observedMonth: string; referenceDate: string; bySgg: Record<string, MapRow[]> };
@@ -25,6 +26,17 @@ export const getProjectsIndex = cache(async () => {
 });
 
 export const getPolicyProgress = cache(async () => progressJson as unknown as PolicyProgress);
+
+/* 일반사용자 사업 찾기(/citizen/projects) 목록 칸: 사업 id → 네 고비(모집 공고·착공·준공·입주, 실제 > 예정) · 시행 기관 짧은 이름 · 마지막 공정률(%).
+   /citizen 빌드(tools/design/public-mock/build_data.py 의 det·ex)와 같은 규칙 — public-labels stepsOf·AGENCY_SHORT */
+export const getPublicDetails = cache(async () => {
+  const det = detailJson as unknown as DetailDoc, out: Record<string, { steps: Steps; agency: string; progress: number | null; progressAt: string | null; progress1: number | null }> = {};
+  for (const [id, x] of Object.entries(det.projects)) {
+    const sr = x.progress.filter((p) => p[1] != null), last = sr.length ? sr[sr.length - 1] : null;
+    out[id] = { steps: stepsOf(x.stages), agency: (x.agency && AGENCY_SHORT[x.agency]) || '', progress: last ? Math.round(Math.round(last[1] * 100) / 100) : null, progressAt: last ? last[0] : null, progress1: last ? Math.round(last[1] * 10) / 10 : null };
+  }
+  return out;
+});
 
 /* 서랍 자료: detail = 발급 사업(목록 행 + 상세), hidden = 목록에서 뺀 사업(안내 한 줄). 대체된 id 는 대표 사업의 detail 에 from(옛 id·이름)을 붙인다.
    레지스트리에 없거나 발급 전 후보(임시 번호)면 null — 서랍을 열지 않는다 */

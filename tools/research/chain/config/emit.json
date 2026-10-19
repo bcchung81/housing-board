@@ -1,0 +1,5 @@
+{
+  "description": "emit.py 가 읽는 저장소 경로(날짜가 든 원장 스냅숏 경로는 코드에 두지 않는다). ledger_tables 는 읽기만 하는 운영 원장 표(정책·프로그램·목표·연결·사업·지역·원천), schemas 는 검증에 쓰는 원장 스키마 폴더.",
+  "ledger_tables": "schemas/ledger-2026-10/tables",
+  "schemas": "schemas/ledger"
+}

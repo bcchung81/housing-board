@@ -2,18 +2,19 @@
    통계누리 '분양' 실적(입주자 모집 승인 기준)은 화면 전체에서 리본 ④와 같은 '모집'으로 부른다. 연도 범위가 시도마다 달라(수도권 2018~, 나머지 2022~) 차트 아래 한 줄로 밝힌다.
    서울·인천·경기는 2018~2021 을 HOME 통계(통계누리 시도 자료)로 앞에 잇는다(lib/board/region.ts regionYears). 부분 연도는 옅은 막대·머리글 기간 표기, 전년 대비는 완결 연도만. */
 import type { ReactNode } from 'react';
-import { PanelHead, SrcLink, SubTitle } from '../page';
-import { Card } from '../ui/card';
-import ScopeChip from '../ui/scope-chip';
-import { DataGrid } from '../ui/data-grid';
-import { Chip, ChipGroup } from '../ui/chips';
-import { METRIC_COLOR } from '../charts/palette';
-import YearBars from '../charts/YearBars';
-import { spanLabel } from '../../lib/board/annual';
-import { METRICS, NATION, ymDot } from '../../lib/board/calc';
-import { METRO, NATION_FROM, metroYears, regionYears, type AnnualDoc } from '../../lib/board/region';
-import type { Metric, Molit } from '../../lib/board/types';
-import type { Col, Row } from '../../lib/grid/spec';
+import { PanelHead, SrcLink, SubTitle } from '@/components/page';
+import { Card } from '@/components/ui/card';
+import InfoTip from '@/components/ui/info-tip';
+import ScopeChip from '@/components/ui/scope-chip';
+import { DataGrid } from '@/components/ui/data-grid';
+import { Chip, ChipGroup } from '@/components/ui/chips';
+import { METRIC_COLOR } from '@/components/charts/palette';
+import YearBars from '@/components/charts/YearBars';
+import { spanLabel } from '@/lib/board/annual';
+import { METRICS, NATION, ymDot } from '@/lib/board/calc';
+import { METRO, NATION_FROM, metroYears, regionYears, type AnnualDoc } from '@/lib/board/region';
+import type { Metric, Molit } from '@/lib/board/types';
+import type { Col, Row } from '@/lib/grid/spec';
 
 export const METRIC_NAME: Record<Metric, string> = { permit: '인허가', start: '착공', sale: '모집', complete: '준공' };
 const METRIC_TIP: Partial<Record<Metric, string>> = { sale: '통계누리 분양 실적(공동주택 입주자 모집 승인 기준) — 리본 ④모집과 같은 단계' };
@@ -60,17 +61,22 @@ export default function Annual({ molit, annual, sido, metric, order, sidoName, h
         <ChipGroup label="지표" className="[&>span:first-child]:sr-only">
           {METRICS.map((k) => <Chip key={k} href={href({ sido, metric: k })} on={k === metric} title={METRIC_TIP[k]} swatch={{ kind: 'fill', color: METRIC_COLOR[k] }}>{METRIC_NAME[k]}</Chip>)}
         </ChipGroup>
-        <ul className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[14px] text-muted-foreground" aria-label="범례">
-          <li className="flex items-center gap-1 whitespace-nowrap"><i className="block size-[9px] flex-none rounded-[2px]" style={{ background: color }} aria-hidden="true" />완결 연도</li>
-          {part ? <li className="flex items-center gap-1 whitespace-nowrap" title={`부분 연도 · ${part.months}/12개월${part.provisional ? ' · 잠정치 포함' : ''}`}><i className="block size-[9px] flex-none rounded-[2px] border border-dashed" style={{ borderColor: color, background: `color-mix(in srgb,${color} 38%,var(--card))` }} aria-hidden="true" />{part.year} {spanLabel(part)}</li> : null}
+        <ul className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-sm text-muted-foreground" aria-label="범례">
+          <li className="flex items-center gap-1 whitespace-nowrap"><i className="block size-[9px] flex-none rounded-chip" style={{ background: color }} aria-hidden="true" />완결 연도</li>
+          {part ? <li className="flex items-center gap-1 whitespace-nowrap" title={`부분 연도 · ${part.months}/12개월${part.provisional ? ' · 잠정치 포함' : ''}`}><i className="block size-[9px] flex-none rounded-chip border border-dashed" style={{ borderColor: color, background: `color-mix(in srgb,${color} 38%,var(--card))` }} aria-hidden="true" />{part.year} {spanLabel(part)}</li> : null}
         </ul>
+        <InfoTip label="연도 범위·출처">
+          <p>
+            {spliced ? <><span title="HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료(2018~2021 시도 통계)">{`${years[0]?.year}~${NATION_FROM - 1}년은 정책 진행 자료에 담긴 같은 통계누리 시도 자료`}</span>{`, ${NATION_FROM}년부터 통계누리 월 자료`}</> : `${NATION_FROM}년부터(통계누리 월 자료 — ${months[0].slice(0, 4)}년은 ${Number(months[0].slice(5))}월부터라 뺌) · 서울·인천·경기는 2018년부터(수도권 칩)`}
+            {part ? ` · ${part.year}년은 ${spanLabel(part)}만${part.provisional ? '(잠정치 포함)' : ''}` : ''}
+          </p>
+        </InfoTip>
         <SrcLink />
       </PanelHead>
-      <YearBars series={years} color={color} label={`${rname} 연도별 ${name} 호수, ${years[0]?.year}년부터 ${ymDot(months[months.length - 1])}까지`} />
-      <p className="m-0 mt-2 text-[14px] text-muted-foreground">
-        {spliced ? <><span title="HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료(2018~2021 시도 통계)">{`${years[0]?.year}~${NATION_FROM - 1}년은 정책 진행 자료에 담긴 같은 통계누리 시도 자료`}</span>{`, ${NATION_FROM}년부터 통계누리 월 자료`}</> : `${NATION_FROM}년부터(통계누리 월 자료 — ${months[0].slice(0, 4)}년은 ${Number(months[0].slice(5))}월부터라 뺌) · 서울·인천·경기는 2018년부터(수도권 칩)`}
-        {part ? ` · ${part.year}년은 ${spanLabel(part)}만${part.provisional ? '(잠정치 포함)' : ''}` : ''}
-      </p>
+      {/* 차트 틀은 이 카드 안이라 테두리·바탕을 걷는다(카드 안 카드 금지). 좁은 폭에서는 전년 대비 꼬리표를 하나 걸러 숨겨 겹치지 않게(값은 막대 툴팁·아래 표에 있다) */}
+      <div className="[&_[data-slot=chart-frame]]:rounded-none [&_[data-slot=chart-frame]]:border-0 [&_[data-slot=chart-frame]]:bg-transparent max-[720px]:[&_[data-slot=chart-frame]_span[style*=bottom]:nth-of-type(even)]:invisible">
+        <YearBars series={years} color={color} label={`${rname} 연도별 ${name} 호수, ${years[0]?.year}년부터 ${ymDot(months[months.length - 1])}까지`} />
+      </div>
       {table ? <div className="mt-5">{table}</div> : null}
     </Card>
   );

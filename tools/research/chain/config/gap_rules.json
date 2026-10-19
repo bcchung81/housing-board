@@ -1,0 +1,151 @@
+{
+  "description": "M4 누락 검증(역방향 대조) 02 사업화·03 인허가 규칙(정책 무관). tools/research/chain/gaps.py 가 읽는다. 정책은 policies.json, checked_at·HOME 덤프·원천 경로는 stage_sources.json 에서 받고, 여기에는 대조 규칙·어휘·질의 템플릿만 둔다.",
+  "output": {
+    "gaps_file": "gaps.jsonl",
+    "stages": ["02", "03"],
+    "report_02": "docs/speech/research/02.사업화/누락검증_02.md",
+    "report_03": "docs/speech/research/03.인허가/누락검증_03.md",
+    "report_max_rows": 10,
+    "matched_max_ids": 5,
+    "report_notes": {
+      "02": [
+        "지명 후보는 01 정책 해석(policy_sites.jsonl·FOLLOWUP_SITE 행)의 분류를 그대로 받는다. 비교 표현·묶음 낱말이 SITE 로 분류된 것은 여기서도 후보가 된다(누락 확정이라도 사람이 원문 문장을 볼 것).",
+        "지구 단위 지명(블록 없음)이 같은 지구 블록 사업 여럿에 맞으면 판단 보류다. 이 정책 사슬에 같은 지구 사업이 하나라도 있으면 이미 있음으로 둔다(어느 블록까지 정책 대상인지는 원문이 정하지 않음).",
+        "프로그램 조건은 원문 한 문장에서 지역·단계·기간이 모두 나올 때만 확정한다. 권위 원천은 LH 행(공급계획 2026년판·건설공사현황 2026-07·준공예정 2026-01)뿐이라 LH 밖 사업주체(SH·GH·민간) 사업은 보지 못한다.",
+        "LH 건설공사현황 PDF 의 본부 칸으로 읽은 시도는 거칠어(인천지역본부가 부천을 맡는 등) 블록 키 대조에서는 시도를 비교하지 않는다."
+      ],
+      "03": [
+        "건축HUB 대조는 원장 project_locations 의 PNU 또는 (법정동, 블록)이 있는 사업만 한다. 도심 부지형 사업(지구·블록·필지 없음)은 위치 키가 없어 대상이 아니다.",
+        "Exa 고시 찾기는 인허가 근거(03 evidence 확인 행)가 없는 사업만 한다. 독립 수집이 미도달 확인(ABSENT_CONFIRMED)으로 둔 사업은 확인됨으로 보고 찾지 않았다.",
+        "Exa 후보는 본문 문자열 대조만 거쳤고 원 파일을 받지 않았다. 언론·블로그 게시물도 후보에 든다(게시처 칸 참고). 고시일은 본문에 '고시일' 표기가 있을 때만 적는다."
+      ]
+    }
+  },
+  "dataset": {
+    "links": "docs/speech/research/dataset/links.json",
+    "evidence_glob": "evidence*.jsonl",
+    "evidence_glob_note": "엔진 evidence.jsonl 뿐 아니라 고시 대조(evidence_gosi)·조건 대조(evidence_rule)·정책 해석(evidence_policy) 등 _work/<policy_id>/evidence*.jsonl 전부를 읽는다(2026-10-17 감사: evidence.jsonl 만 읽어 근거 있는 19행을 누락으로 냄).",
+    "policy_sites": "policy_sites.jsonl",
+    "policy_programs": "policy_programs.jsonl",
+    "confirmed_verdicts": ["MATCH", "MISMATCH", "SOURCED", "NOT_IN_SOURCE", "ABSENT_CONFIRMED"],
+    "unconfirmed_basis": ["EXISTENCE"],
+    "note": "데이터셋 정책 사슬 = 이 정책 evidence*.jsonl 의 projects 대상 ∪ links.json 에서 이 정책 POLICY_PROGRAM 프로그램의 PROGRAM_PROJECT 사업. '근거 있음' = 그 단계 evidence 중 verdict 가 confirmed_verdicts 이고 basis 가 unconfirmed_basis 가 아닌 행이 하나라도 있음(설계 1절 M1 '확인됨')."
+  },
+  "registry": {
+    "ledger_tables": "schemas/ledger-2026-10/tables",
+    "home_tables": ["project", "home_identity_alias"],
+    "area_block_id_type": "AREA_BLOCK",
+    "hub_id_type": "HUB_HS_PK",
+    "note": "레지스트리 = 원장 projects(이름·시군구) + identifiers 의 AREA_BLOCK(지구|블록) + HOME 사업 레코드(최신 개정, 지구·블록·지역·호수). HOME 사업은 home.project_subject_ids 규칙으로 원장 id 에 합치고 못 합치면 HOME:<PRO id>."
+  },
+  "sido_prefix": {
+    "서울": "11", "부산": "26", "대구": "27", "인천": "28", "광주": "29", "대전": "30", "울산": "31", "세종": "36",
+    "경기": "41", "충북": "43", "충청북": "43", "충남": "44", "충청남": "44", "전남": "46", "전라남": "46",
+    "경북": "47", "경상북": "47", "경남": "48", "경상남": "48", "제주": "50", "강원": "51", "전북": "52", "전라북": "52"
+  },
+  "sido_prefix_note": "지역·본부·주소 글의 앞부분(가장 긴 것 먼저)으로 시도 코드를 정한다. LH 본부 이름(예 '대구경북지역본부')처럼 두 시도를 묶은 것은 앞 시도로 읽힌다(수도권 거름에는 영향 없음).",
+  "region_words": {
+    "수도권": ["11", "28", "41"], "서울": ["11"], "인천": ["28"], "경기": ["41"], "부산": ["26"], "대구": ["27"],
+    "광주": ["29"], "대전": ["30"], "울산": ["31"], "세종": ["36"], "충북": ["43"], "충남": ["44"], "전남": ["46"],
+    "경북": ["47"], "경남": ["48"], "제주": ["50"], "강원": ["51"], "전북": ["52"], "비수도권": ["26", "27", "29", "30", "31", "36", "43", "44", "46", "47", "48", "50", "51", "52"]
+  },
+  "site_match": {
+    "strip_regex": ["◯\\s*구", "舊", "(?<![가-힣])구\\s*\\.", "\\(.*?\\)", "[\\[\\]「」｢｣]"],
+    "drop_suffixes": ["공공주택지구", "택지개발지구", "공공주택", "부지", "일대", "일원", "지구", "블록"],
+    "admin_suffix_regex": "^[가-힣]{1,4}(특별시|광역시|특별자치시|특별자치도|도)$",
+    "name_district_regex": "^(?:\\(?조달청\\)\\s*)?([가-힣]+\\d*)(?:\\([^)]*\\))?\\s*(?:공공주택지구|지구)?\\s*[A-Za-z]{1,3}-?\\d",
+    "name_district_note": "사업 이름이 '<지구> <블록 부호>' 꼴(앞의 '(조달청)' 무시)이면 앞 지구명을 지구 키로 더한다. 지구 같음 판단은 common.district_eq(지명 키를 원천 쪽으로).",
+    "admin_token_regex": "[가-힣]{1,2}(시|군|구)",
+    "min_exact_len": 2,
+    "min_contains_len": 3,
+    "min_reverse_len": 3,
+    "note": "지명 → 레지스트리 단계: (1) 지구+블록(지명에 블록이 있을 때: 지구 같음 + 블록 같음, 또는 사업 이름 글에 지구·블록) (2) 이름 같음(공백·괄호·꼬리 낱말을 뗀 키가 사업 이름 키 또는 지구 키와 같음) (3) 이름 포함(사업 이름이 키를 품음, 키 3자 이상) (4) 이름만 비슷(지명 낱말이 모두 사업 이름에 흩어져 있거나, 사업 이름 키(min_reverse_len 자 이상)가 지명 키 안에 있거나, 사업 이름 낱말 둘 이상이 모두 지명 낱말에 있음). 시도가 둘 다 있으면 같아야 한다. 가장 강한 단계의 후보만 쓴다."
+  },
+  "site_verdicts": {
+    "present": "이 정책 사슬 사업과 맞음",
+    "link_missing": "레지스트리에 있으나 이 정책 사슬에 연결 안 됨",
+    "project_missing": "레지스트리(원장·HOME)에 없음",
+    "ambiguous": "후보 둘 이상",
+    "similar_only": "이름만 비슷",
+    "aggregate": "개별 지명 아님(묶음·주택 유형·서수)",
+    "other_policy": "다른 정책 소관(원문이 그 정책을 가리키고 그 정책 사슬에 연결됨)"
+  },
+  "programs": {
+    "sentence_fields": ["definition", "target_text"],
+    "exclude_condition_keys": ["예", "현행", "현황", "실적", "기존", "예시", "現", "개요", "구성", "검토안", "논의 분야"],
+    "exclude_prefix_regex": "^\\s*\\((현행|현황|실적|기존|예시|개요)\\)",
+    "required": ["region", "stage", "period"],
+    "stage_words": [["분양", "분양"], ["착공", "착공"], ["입주", "입주"], ["준공", "준공"], ["공급", "공급"]],
+    "developer_words": {"LH": ["LH", "한국토지주택공사"]},
+    "other_developer_words": ["SH", "GH", "iH", "민간", "지자체", "조합"],
+    "land_words": {"공공택지": ["공공택지"]},
+    "type_words": {"분양": ["분양"], "임대": ["임대"]},
+    "uncovered_words": ["매입", "정비", "재건축", "재개발", "도심복합", "복합사업", "오피스텔", "다세대", "다가구", "빈집", "모듈러", "기숙사", "민간임대", "리츠", "생숙", "공실상가", "용도전환", "비주택"],
+    "period_regex": {
+      "quarter": "[’‘']\\s?(\\d{2})년\\s*(\\d)\\s*분기",
+      "half": "[’‘']\\s?(\\d{2})\\.\\s*(上|下)",
+      "until": "[’‘']\\s?(\\d{2})년\\s*까지",
+      "range": "[’‘']\\s?(\\d{2})\\s*[~～∼]\\s*[’‘']?\\s?(\\d{2})",
+      "year": "[’‘']\\s?(\\d{2})년"
+    },
+    "note": "프로그램(SUPPLY) 하나의 원문 문장(definition·target_text·조건 값 중 현행·현황·예시 등 제외) 하나에서 지역·단계 낱말·기간이 모두 나와야 '조건 확정'이다. 사업주체가 LH 이거나 적히지 않았으면 LH 원천의 행은 그 조건의 부분집합이다. 다른 사업주체만 적혔거나 원천이 덮지 못하는 유형 낱말(uncovered_words)이 프로그램 이름·문장에 있으면 '원천 범위 밖'으로 집계만 한다. 기간 '까지'는 정책 발표일부터 그 해 말까지."
+  },
+  "sources_02": {
+    "lh_supply_plan": {
+      "stages": ["분양", "공급"],
+      "types": {"분양": "분양", "임대": "임대"},
+      "file_type": {"공급계획(분양주택)": "분양", "공급계획(임대주택)": "임대"},
+      "month_regex": "(\\d{4})\\D*(\\d{1,2})",
+      "region_col": "지역",
+      "sido_strict": true
+    },
+    "lh_pdf": {
+      "stages": ["착공"],
+      "row_filter": {"단위": "호"},
+      "region_col": "본부",
+      "date_col": "착공일",
+      "sido_strict": false,
+      "sido_note": "본부 이름으로 읽은 시도는 거칠다(인천지역본부가 부천 등 경기 일부를 맡음). 지역 조건 거름에만 쓰고 블록 키 대조에서는 시도를 비교하지 않는다."
+    },
+    "lh_completion": {
+      "stages": ["준공", "입주"],
+      "region_col": "위치",
+      "date_col": "준공예정일",
+      "sido_strict": true
+    },
+    "non_public_land_words": ["주환", "주거환경", "재생", "정비", "복합개발", "가로주택", "매입", "도시재생", "리모델링"],
+    "block_regex": "^[A-Za-z가-힣]{0,3}-?\\d+(?:-\\d+)?[A-Za-z]?$",
+    "note": "권위 원천 블록 행: LH 공급계획 엑셀(지구명 = '<지구> <블록>', 지역 칸), LH 건설공사현황 PDF(공종 건축·단위 호, 블록 칸, 지구 = 사업지구 칸 첫 낱말, 본부 칸), LH 준공예정 CSV(사업지구명·블록명·위치·준공예정일). 경로는 stage_sources.json(independent.sources·sources). 택지 조건 '공공택지'는 행에 블록이 있고 non_public_land_words 가 없을 때만 맞음."
+  },
+  "hub": {
+    "parts": {"basic": "basic", "site": "site"},
+    "cols": {"pk": "관리_주택대장_PK", "sgg": "시군구_코드", "bjd": "법정동_코드", "plat": "대지_구분_코드", "bun": "번", "ji": "지",
+             "district": "특수지_명", "block": "블록", "name": "건물_명", "units": "총_세대_수(세대)", "approve": "승인_일", "addr": "대지_위치"},
+    "plat_land": {"0": "1", "1": "2"},
+    "pk_regex": "(?<!\\d)(\\d{10,22})(?!\\d)",
+    "note": "건축HUB 주택인허가 대용량(기본개요·대지위치). 필지 키 PNU = 시군구 5 + 법정동 5 + 대지구분(0→1 일반, 1→2 산) + 번 4 + 지 4(lib/permits.js makePnu 와 같음). 대지구분 2(블록)는 PNU 가 없어 법정동 + 블록으로 찾는다. 사업과 '연결됨' = 원장 identifiers 의 HUB_HS_PK 이거나 이 정책 evidence 의 그 사업 행 글(locator·original_value·notes)에 관리번호가 있음. 다른 사업의 identifiers 에 있으면 '같은 필지 다른 사업'(범위 밖). 총세대수 0 기록은 주택 사업 기록인지 몰라 판단 보류. 사업 필지가 대표 필지(pnu_scope REPRESENTATIVE)면 같은 필지 다른 블록일 수 있어 판단 보류."
+  },
+  "exa": {
+    "cache_dir": "docs/speech/research/03.인허가/원본/_exa_gaps",
+    "script": "tools/research/exa.js",
+    "max_calls": 80,
+    "templates": {
+      "block": "{district} {block} 주택건설사업계획 승인 고시",
+      "name": "{name} 주택건설사업계획 승인 고시"
+    },
+    "block_letter_regex": "[A-Za-z가-힣]",
+    "ignore_numeric_blocks": ["1"],
+    "numeric_block_regex": "(지구)?-?0*{block}(BL|블록|블럭|단지)",
+    "ignore_numeric_blocks_note": "숫자만인 블록 '1'(단일 단지 표기, 예 행복주택 '<지구> 1')은 고시문에 나오지 않아 본문 대조에 쓰지 않는다. 그 밖의 숫자 블록(예 35)은 본문에 블록으로 있어야 한다.",
+    "name_strip_regex": ["^\\(?조달청\\)", "\\[[^\\]]*\\]", "[()]", "(아파트|건설공사|\\d+공구).*$"],
+    "approval_words": ["사업계획", "승인"],
+    "gosi_no_regex": "(?:고시|공고)\\s*제\\s*(\\d{4}\\s*-\\s*\\d+)\\s*호",
+    "quote_scrub": [["[가-힣]{2,4}\\s*(기자|특파원|주무관|사무관|팀장|과장)", "[이름 생략] \\1"], ["=[가-힣]{2,4}\\s*(?=기자)", "="]],
+    "quote_scrub_note": "Exa 본문 인용에서 개인 이름(기자·공무원 직함 앞 2~4자)을 지운다. 전화번호는 common.scrub 이 지운다.",
+    "gosi_title_regex": "#+\\s*고시정보\\s+(.+?)\\s+-\\s+고시번호",
+    "gosi_date_regex": "고시일\\W{0,5}(\\d{4}-\\d{2}-\\d{2})",
+    "contents_prefilter": true,
+    "timeout_sec": 120,
+    "note": "인허가 근거가 없는 데이터셋 사업(03 evidence 확인 행 없음)마다 질의 하나. 블록 키(지구·블록)가 있으면 block 템플릿, 없으면 name 템플릿. 검색 결과 중 제목·하이라이트에 지구(또는 이름)가 있는 URL 만 본문(contents)을 한 번에 받는다. 본문에 지구·블록(또는 이름)과 approval_words 가 모두 있으면 후보(판단 보류, 원 파일 미확보). 응답은 cache_dir 에 질의·URL 묶음의 sha256 앞 16자 이름으로 저장하고 같은 요청은 캐시를 쓴다. 네트워크 호출은 --exa 일 때만, 합계 max_calls 이내(캐시 파일 수 포함)."
+  }
+}

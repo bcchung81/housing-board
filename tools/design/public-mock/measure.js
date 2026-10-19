@@ -1,4 +1,4 @@
-/* v7 화면 측정(브라우저에서 실행, 결과 JSON). 관문: G1 넘침·잘림·오류 · G3 누르는 크기 · G5 첫 화면 · G6 라벨 겹침(실제 getBBox) ·
+/* v10(r17 B '신문 1면': 글자 단계 44·64 · 단 상자(#sum·#mapc·.cell) 넘침 · 상태별 사업 수 .facts · 공고 상태 .nt-st · 가장 많은 해 반전 R.yrs) · v9(r15: 지시선 0 · 강조형 카드 0 · 고른 곳 면 효과 R.sel) · v8(r14: 글꼴 분포 R.type · 사업 점 R.pts · G9 새 기준) · v7 화면 측정(브라우저에서 실행, 결과 JSON). 관문: G1 넘침·잘림·오류 · G3 누르는 크기 · G5 첫 화면 · G6 라벨 겹침(실제 getBBox) ·
    G7 기둥이 가리는 면 넓이 · G9 글자 크기 · G13 문서 높이 · G14 금지어 · G15 기둥 정합. 시안 상태 막대(#demo)는 재지 않는다.
    콘솔 오류는 페이지보다 먼저 심은 window.__errs 를 읽는다(없으면 null) */
 (() => {
@@ -17,7 +17,7 @@ document.querySelectorAll('body *').forEach((el) => { if (skip(el) || !vis(el) |
   else clip.push(desc(el) + ' "' + el.textContent.trim().slice(0, 24) + '"'); });
 /* 카드 밖으로 나간 자식(overflow hidden 이 아니어도): .card 마다 보이는 자손 상자가 카드 상자를 1px 넘게 벗어나면 센다 */
 const outCard = [];
-document.querySelectorAll('.card').forEach((c) => { if (skip(c) || !vis(c)) return; const cb = c.getBoundingClientRect();
+document.querySelectorAll('.card, #sum, #mapc, .cell').forEach((c) => { if (skip(c) || !vis(c)) return; const cb = c.getBoundingClientRect();
   c.querySelectorAll('*').forEach((el) => { if (el.closest('.sr, svg, .tip') || !vis(el)) return; const r = el.getBoundingClientRect(); if (r.left < cb.left - 1 || r.right > cb.right + 1 || r.top < cb.top - 1 || r.bottom > cb.bottom + 1) outCard.push(desc(c) + '>' + desc(el)); }); });
 R.G1 = { outOfCard: outCard.length, outOfCardAt: outCard.slice(0, 4), scrollW: document.documentElement.scrollWidth, overX: document.documentElement.scrollWidth > vw, offenders: offs.slice(0, 6), clipped: clip.slice(0, 6), clippedN: clip.length, ellipsis: ell, ellipsisNoTitle: ellNoTitle.slice(0, 6), errors: window.__errs || null };
 /* G3 누르는 대상 44px(::before 투명 확장 포함). 지도 면(svg)은 순위·검색이 같은 동작이라 따로 센다 */
@@ -34,7 +34,7 @@ R.G3 = { total: tot, under44: small.length, items: small.slice(0, 10), svgTarget
 /* G5 첫 화면 */
 const pos = (sel) => { const el = document.querySelector(sel); if (!el || !vis(el)) return null; const r = el.getBoundingClientRect(); return { top: Math.round(r.top), bottom: Math.round(r.bottom), seen: Math.round(Math.max(0, Math.min(r.bottom, vh) - Math.max(r.top, 0))) }; };
 const st = pos('#mstage') || pos('.hbars');
-R.G5 = { search: pos('#q'), sentence: pos('#sum-h'), nearest: pos('.ne') || pos('#sum .none'), map: st, ok: null };
+R.G5 = { search: pos('#q'), sentence: pos('#sum-h'), nearest: pos('#apply'), map: st, ok: null };   // r13 가장 가까운 일정 → 지금 신청 칸
 R.G5.sum = pos('#sum'); R.G5.cellHead = pos('.cell-h');
 if (pub) { const f = R.G5, inV = (p) => p && p.top >= 0 && p.bottom <= vh; R.G5.ok = vw >= 900 ? !!(inV(f.search) && inV(f.sum) && st && st.bottom <= vh && f.cellHead && f.cellHead.top < vh) : !!(inV(f.search) && inV(f.sentence) && (inV(f.nearest) || !f.nearest) && st && st.seen >= 120); }
 /* G13 문서 높이(시안 상태 막대는 떠 있어 들지 않는다) */
@@ -48,7 +48,14 @@ while (tw.nextNode()) { const n = tw.currentNode; if (!n.textContent.trim()) con
 /* r9: 본문(이름·문장·줄) 16px, 보조 15px 이상 */
 const BODY = '.opt .nm, .yr-l, .ne-what, .none, .ev .when b, .pjs .ev .nm, .srow .t, .pc-tl li';
 const bodyUnder16 = [...document.querySelectorAll(BODY)].filter((el) => !skip(el) && vis(el) && el.closest('.pub, .sheet') && !el.closest('.opt.more') && parseFloat(getComputedStyle(el).fontSize) < 16 && !(vw < 600 && el.closest('.loc'))).map((el) => desc(el)).slice(0, 4);
-R.G9 = { minPub, minAt, minMapLabel: minLbl === 99 ? null : minLbl, bodyUnder16, ok: minPub >= 15 && (minLbl === 99 || minLbl >= 13) };
+R.G9 = { minPub, minAt, minMapLabel: minLbl === 99 ? null : minLbl, bodyUnder16, ok: minPub >= 14 && bodyUnder16.length === 0 && (minLbl === 99 || minLbl >= 14) };   // r14: 본문 16 · 보조 14 · 지도 라벨 14 이상 · 12px 0
+/* r14 글꼴 분포(보이는 글자 전부, 시안 상태 막대 제외): Do Hyeon 0 · 크기 8단계 밖 0 · 굵기 400·700 밖 0 · 첫 글꼴 Noto Sans KR · 실제로 실린 글꼴 */
+{ const STEP = [12, 14, 16, 18, 20, 24, 30, 38, 44, 64], fam = {}, size = {}, wt = {}, badSize = [], badWt = []; let doHyeon = 0, n12 = 0; const tw4 = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  while (tw4.nextNode()) { const nd = tw4.currentNode; if (!nd.textContent.trim()) continue; const el = nd.parentElement; if (!el || skip(el) || el.closest('.sr') || !vis(el)) continue; const cs = getComputedStyle(el), px = parseFloat(cs.fontSize), w = cs.fontWeight, f0 = cs.fontFamily.split(',')[0].replace(/["']/g, '').trim();
+    fam[f0] = (fam[f0] || 0) + 1; size[px] = (size[px] || 0) + 1; wt[w] = (wt[w] || 0) + 1; if (/do ?hyeon/i.test(cs.fontFamily)) doHyeon++; if (px === 12 && el.closest('.pub, .sheet')) n12++;
+    if (!STEP.includes(px)) badSize.push(desc(el) + ':' + px); if (w !== '400' && w !== '700') badWt.push(desc(el) + ':' + w); }
+  const loaded = [...document.fonts].filter((f) => f.status === 'loaded').map((f) => f.family.replace(/["']/g, '') + ' ' + f.weight);
+  R.type = { doHyeon, fam, size, wt, badSize: badSize.slice(0, 6), badSizeN: badSize.length, badWt: badWt.slice(0, 6), badWtN: badWt.length, pub12: n12, loaded: [...new Set(loaded)], ok: !doHyeon && !badSize.length && !badWt.length && !n12 && Object.keys(fam).every((f) => f === 'Noto Sans KR') }; }
 /* 검색 줄 이름 폭(r9): 자동완성이 열려 있으면 보이는 지역·사업 이름 폭의 최소(> 40px) */
 const nmW = [...document.querySelectorAll('.ac .opt .nm')].filter(vis).map((el) => Math.round(el.getBoundingClientRect().width));
 R.search = nmW.length ? { nameMinW: Math.min(...nmW), rows: nmW.length, ok: Math.min(...nmW) > 40 } : null;
@@ -68,7 +75,7 @@ while (tw3.nextNode()) { const n = tw3.currentNode; if (!n.textContent.trim()) c
 let lbMin = 99, lbAt = ''; document.querySelectorAll('svg.map .lbls text, svg.map .hil text').forEach((t) => { if (!vis(t)) return; const cs = getComputedStyle(t); if (cs.stroke === 'none' || parseFloat(cs.strokeWidth) === 0) { const r = crt(parse(cs.fill), parse(getComputedStyle(t.parentElement.querySelector('rect') || t).fill)); if (r < lbMin) { lbMin = r; lbAt = 'box:' + t.textContent; } return; } const r = crt(parse(cs.fill), over(parse(cs.stroke), [255, 255, 255, 1])); const r2 = crt(parse(cs.fill), over(parse(cs.stroke), [10, 16, 48, 1])); const rr = Math.min(r, r2); if (rr < lbMin) { lbMin = rr; lbAt = t.textContent; } });
 R.G2 = { textMin: +g2min.toFixed(2), textMinAt: g2at, textFail: g2fail, mapLabelMin: lbMin === 99 ? null : +lbMin.toFixed(2), mapLabelMinAt: lbAt };
 /* G14 쉬운 말: 국민 영역 보이는 글자(시트 포함, ⓘ·시안 상태 제외) */
-const BAN = ['①', '②', '③', '④', 'BL', 'D-', '원장', '완공 연도 나옴', '아직 모름', '나머지', '단계 구분도', '제곱근'];
+const BAN = ['①', '②', '③', '④', 'BL', 'D-', '원장', '완공 연도 나옴', '아직 모름', '나머지', '단계 구분도', '제곱근', '모집 시작'];   // r13 '모집 시작' → '모집 끝남'
 let txt = ''; const tw2 = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
 while (tw2.nextNode()) { const el = tw2.currentNode.parentElement; if (el && !skip(el) && el.closest('.pub, .sheet') && vis(el)) txt += tw2.currentNode.textContent + '\n'; }
 R.G14 = { hits: BAN.filter((w) => (/^[A-Z]/.test(w) ? new RegExp(`(?<![A-Za-z])${w}(?![A-Za-z])`) : new RegExp(w)).test(txt)) };
@@ -78,19 +85,15 @@ if (svg && vis(svg)) {
   const W = +svg.getAttribute('width'), H = +svg.getAttribute('height');
   const fgs = [...svg.querySelectorAll('.faces > .fg')];
   const uOf = Object.fromEntries(fgs.map((g) => [g.dataset.area, +g.dataset.u]));
-  const lbs = [...svg.querySelectorAll('.lbls .lb-g:not(.dim)')].map((g) => { const [x, y, w, h] = g.dataset.box.split(',').map(Number); return { key: g.dataset.area, v: g.dataset.v, nm: g.dataset.nm, pill: g.classList.contains('pl'), lead: g.dataset.lead ? g.dataset.lead.split(',').map(Number) : null, x, y, x0: x - w / 2, x1: x + w / 2, y0: y - h / 2, y1: y + h / 2 }; });
-  /* 지시선: 서로 교차 0, 남의 묶음 통과 0, 길이 ≤ 60px */
-  const sx = (a, b, c, d) => { const o = (p, q, r) => Math.sign((q[0] - p[0]) * (r[1] - p[1]) - (q[1] - p[1]) * (r[0] - p[0])); return o(a, b, c) * o(a, b, d) < 0 && o(c, d, a) * o(c, d, b) < 0; };
-  const leads = lbs.filter((b) => b.lead).map((b) => ({ key: b.key, pill: b.pill, a: [b.lead[0], b.lead[1]], b: [b.lead[2], b.lead[3]] }));
-  let leadX = 0, leadThru = 0; const leadMax = Math.max(0, ...leads.map((l) => Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1])));
-  for (let i = 0; i < leads.length; i++) for (let j = i + 1; j < leads.length; j++) if (sx(leads[i].a, leads[i].b, leads[j].a, leads[j].b)) leadX++;
-  for (const l of leads) for (const b of lbs) if (b.key !== l.key) { const E = [[[b.x0, b.y0], [b.x1, b.y0]], [[b.x1, b.y0], [b.x1, b.y1]], [[b.x1, b.y1], [b.x0, b.y1]], [[b.x0, b.y1], [b.x0, b.y0]]]; if (E.some(([p, q]) => sx(l.a, l.b, p, q))) leadThru++; }
+  const lbs = [...svg.querySelectorAll('.lbls .lb-g:not(.dim)')].map((g) => { const [x, y, w, h] = g.dataset.box.split(',').map(Number); return { key: g.dataset.area, v: g.dataset.v, nm: g.dataset.nm, pill: g.classList.contains('pl'), x, y, x0: x - w / 2, x1: x + w / 2, y0: y - h / 2, y1: y + h / 2 }; });
+  /* r15 지시선 0(선·닻 점·data-lead) · 덮는 강조형 0(흰 카드 .lb-hi · 흰 알약 .pill) */
+  const leaders = svg.querySelectorAll('.lb-ld, .lb-ldc, .lb-dot, [data-lead]').length, hiCards = svg.querySelectorAll('.lb-hi, .lb-g .pill').length;
   const his = [...svg.querySelectorAll('.hil [data-box]')].map((g) => { const [x, y, w, h] = g.dataset.box.split(',').map(Number); return { key: g.dataset.area, x0: x - w / 2, x1: x + w / 2, y0: y - h / 2, y1: y + h / 2 }; });
   const ov = (a, b) => a.x0 < b.x1 - .5 && b.x0 < a.x1 - .5 && a.y0 < b.y1 - .5 && b.y0 < a.y1 - .5;
   /* 겹침은 그려진 글자의 실제 상자(getBBox)로 잰다: 기본 묶음(흐리게 된 것 제외)·맥락 이름·띄운 알약 */
   const gb = (el) => { const b = el.getBBox(); return { x0: b.x, y0: b.y, x1: b.x + b.width, y1: b.y + b.height }; };
   const uni = (a, b) => (a ? { x0: Math.min(a.x0, b.x0), y0: Math.min(a.y0, b.y0), x1: Math.max(a.x1, b.x1), y1: Math.max(a.y1, b.y1) } : b);
-  const realB = [...svg.querySelectorAll('.lbls .lb-g:not(.dim)')].map((g) => { let u = null; g.querySelectorAll('text').forEach((t) => { u = uni(u, gb(t)); }); const pl = g.querySelector('.pill'); if (pl && getComputedStyle(pl).display !== 'none') u = uni(u, gb(pl)); const pb2 = g.querySelector('.plb'); if (pb2) u = uni(u, gb(pb2)); return { key: g.dataset.area, nm: g.dataset.nm, ...u }; });
+  const realB = [...svg.querySelectorAll('.lbls .lb-g:not(.dim)')].map((g) => { let u = null; g.querySelectorAll('text').forEach((t) => { u = uni(u, gb(t)); }); const pb2 = g.querySelector('.plb'); if (pb2) u = uni(u, gb(pb2)); return { key: g.dataset.area, nm: g.dataset.nm, ...u }; });
   const ctxEl = svg.querySelector('.lb-ctx:not(.dim)'); if (ctxEl) realB.push({ key: 'ctx', nm: ctxEl.textContent, ...gb(ctxEl) });
   svg.querySelectorAll('.hil .lb-hi').forEach((g) => realB.push({ key: 'hi:' + g.dataset.area, nm: 'hi:' + g.dataset.area, ...gb(g.querySelector('rect')) }));
   const ovAt = []; let lbOv = 0; for (let i = 0; i < realB.length; i++) for (let j = i + 1; j < realB.length; j++) if (ov(realB[i], realB[j])) { lbOv++; ovAt.push(`${realB[i].nm}×${realB[j].nm}`); }
@@ -107,11 +110,8 @@ if (svg && vis(svg)) {
   for (let i = 0; i < W * H; i++) if (px[i * 4 + 2] === 1 && px[i * 4 + 3] === 255) seen[px[i * 4] + (px[i * 4 + 1] << 8)]++;
   const vr = fgs.map((g, i) => ({ key: g.dataset.area, px: areaPx[i], r: areaPx[i] ? Math.min(1, seen[i + 1] / areaPx[i]) : 1 })).filter((x) => x.px >= 4);
   const at = (x, y) => { x = Math.round(x); y = Math.round(y); if (x < 0 || y < 0 || x >= W || y >= H) return null; const k = (y * W + x) * 4; return px[k + 2] === 1 ? fgs[px[k] + (px[k + 1] << 8) - 1]?.dataset.area : 'wall'; };
-  const lbOcc = lbs.filter((b) => !b.lead && at(b.x, b.y) !== b.key).map((b) => b.key);
-  /* 지시선이 남의 진한 면(c3·c4) 위를 지나는 길이(최대), 뺀 묶음이 남의 c2 이상 면 위에 놓인 수 */
-  const cls = Object.fromEntries(fgs.map((g) => [g.dataset.area, +(g.querySelector('.f').getAttribute('class').match(/c(\d)/) || [0, 0])[1]]));
-  const leadDark = Math.max(0, ...leads.map((l) => { const L2 = Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1]), n = Math.max(1, Math.ceil(L2 / 2)); let d = 0; for (let i = 1; i < n; i++) { const k2 = at(l.a[0] + (l.b[0] - l.a[0]) * i / n, l.a[1] + (l.b[1] - l.a[1]) * i / n); if (k2 && k2 !== 'wall' && k2 !== l.key && cls[k2] >= 3) d += L2 / n; } return d; }));
-  const outOnDark = lbs.filter((b) => b.lead).filter((b) => [[b.x, b.y], [b.x0 + 2, b.y0 + 2], [b.x1 - 2, b.y0 + 2], [b.x0 + 2, b.y1 - 2], [b.x1 - 2, b.y1 - 2]].some(([x, y]) => { const k2 = at(x, y); return k2 && k2 !== 'wall' && k2 !== b.key && cls[k2] >= 2; })).map((b) => b.key);
+  const lbOcc = lbs.filter((b) => !b.pill && at(b.x, b.y) !== b.key).map((b) => b.key);
+  const pillOff = lbs.filter((b) => b.pill && at(b.x, b.y) !== b.key).map((b) => b.key);   // 옅은 바탕 묶음 가운데가 자기 면 위가 아닌 곳(떨어진 자리)
   vr.sort((a, b) => a.r - b.r);
   const pb = svg.querySelector('.faces').getBBox();
   R.G7 = { plateUse: +Math.max(pb.width / W, pb.height / H).toFixed(2), plateWH: [Math.round(pb.width), Math.round(pb.height), W, H], minVisible: +vr[0].r.toFixed(3), minAt: `${vr[0].key}(${vr[0].px}px²)`, avgVisible: +(vr.reduce((a, b) => a + b.r, 0) / vr.length).toFixed(3), under70: vr.filter((x) => x.r < .7).map((x) => `${x.key}:${(x.r * 100).toFixed(0)}%/${x.px}px²`), labelOnOtherFace: lbOcc.length, labelOnOtherFaceAt: lbOcc.slice(0, 4), Hmax: +svg.dataset.hmax, k: +svg.dataset.k };
@@ -119,17 +119,16 @@ if (svg && vis(svg)) {
   /* 맥락 시도 이름: 보이는지, 시군구 묶음과 겹치지 않는지. 뺀 묶음이 어느 면 위에 놓였는지(판 바깥 여백만 허용) */
   const ctxT = svg.querySelector('.lb-ctx'); let ctxOv = 0, ctxShown = !!ctxT;
   if (ctxT) { const cb = gb(ctxT); ctxOv = realB.filter((b) => b.key !== 'ctx' && ov(b, cb)).length; }
-  const outOnFace = lbs.filter((b) => b.lead).filter((b) => [[b.x, b.y], [b.x0 + 2, b.y0 + 2], [b.x1 - 2, b.y0 + 2], [b.x0 + 2, b.y1 - 2], [b.x1 - 2, b.y1 - 2]].some(([x, y]) => { const k2 = at(x, y); return k2 && k2 !== 'wall'; })).map((b) => b.key);
-  /* r9: 면 안 묶음의 실제 상자 중 자기 윗면 위 비율(최소, 6×3 표본) · 지시선이 남의 면(모든 면) 위를 지나는 길이(최대) · 묶음 간 실제 간격(최소) · 무대 밖 실제 상자 수 */
-  const fsh = realB.filter((b) => !b.key.startsWith('hi:') && b.key !== 'ctx' && !lbs.find((l) => l.key === b.key)?.lead).map((b) => { let n = 0; for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) if (at(b.x0 + (b.x1 - b.x0) * (i + .5) / 6, b.y0 + (b.y1 - b.y0) * (j + .5) / 3) === b.key) n++; return { key: b.key, r: n / 18 }; }).sort((a, b) => a.r - b.r);
-  const otherLen = (l) => { const L2 = Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1]), n = Math.max(1, Math.ceil(L2 / 2)); let d = 0; for (let i = 1; i < n; i++) { const k2 = at(l.a[0] + (l.b[0] - l.a[0]) * i / n, l.a[1] + (l.b[1] - l.a[1]) * i / n); if (k2 && k2 !== 'wall' && k2 !== l.key) d += L2 / n; } return d; };
-  const leadOther = Math.max(0, ...leads.filter((l) => !l.pill).map(otherLen)), pillLeadOther = Math.max(0, ...leads.filter((l) => l.pill).map(otherLen));
+  /* r9: 면 안 묶음의 실제 상자 중 자기 윗면 위 비율(최소, 6×3 표본) · 묶음 간 실제 간격(최소) · 무대 밖 실제 상자 수 */
+  const fsh = realB.filter((b) => !b.key.startsWith('hi:') && b.key !== 'ctx' && !lbs.find((l) => l.key === b.key)?.pill).map((b) => { let n = 0; for (let i = 0; i < 6; i++) for (let j = 0; j < 3; j++) if (at(b.x0 + (b.x1 - b.x0) * (i + .5) / 6, b.y0 + (b.y1 - b.y0) * (j + .5) / 3) === b.key) n++; return { key: b.key, r: n / 18 }; }).sort((a, b) => a.r - b.r);
   const base = realB.filter((b) => !b.key.startsWith('hi:'));
   let gapMin = 99, gapAt = ''; for (let i = 0; i < base.length; i++) for (let j = i + 1; j < base.length; j++) { const a = base[i], b = base[j], g = Math.max(a.x0 - b.x1, b.x0 - a.x1, a.y0 - b.y1, b.y0 - a.y1); if (g < gapMin) { gapMin = g; gapAt = a.nm + '×' + b.nm; } }
   const outReal = base.filter((b) => b.x0 < 0 || b.y0 < 0 || b.x1 > W || b.y1 > H).map((b) => b.nm);
-  const leadMin = leads.length ? Math.round(Math.min(...leads.map((l) => Math.hypot(l.b[0] - l.a[0], l.b[1] - l.a[1])))) : null;
-  R.G6r9 = { faceShareMin: fsh.length ? +fsh[0].r.toFixed(2) : null, faceShareMinAt: fsh[0]?.key || null, under70: fsh.filter((x) => x.r < .7).map((x) => x.key), leaderOtherMax: Math.round(leadOther), pillLeaderOtherMax: Math.round(pillLeadOther), pills: lbs.filter((b) => b.pill).map((b) => b.nm), gapMin: +gapMin.toFixed(1), gapMinAt: gapAt, outOfStageReal: outReal, leaderMin: leadMin };
-  R.G6 = { ctxShown, ctxOverlap: ctxOv, outLabelOnFace: outOnFace, leaderDarkMax: Math.round(leadDark), outLabelOnDark: outOnDark, namesShown: namesShown.size, faceCount: fgs.length, nameRatio: +(namesShown.size / fgs.length).toFixed(2), leaders: leads.length, leaderCross: leadX, leaderThruLabel: leadThru, leaderMax: Math.round(leadMax), labels: lbs.length, faces: pos.length, labelOverlap: lbOv, labelOverlapAt: ovAt.slice(0, 4), top10Num: pos.slice(0, 10).filter(([k2]) => lbs.some((b) => b.key === k2 && b.v)).length + '/' + Math.min(10, pos.length), overlayOnTop5: hiOn5, labelOutOfStage: out, top5Hidden: top5.filter((k2) => !shownK.has(k2)) };
+  R.G6r9 = { faceShareMin: fsh.length ? +fsh[0].r.toFixed(2) : null, faceShareMinAt: fsh[0]?.key || null, under70: fsh.filter((x) => x.r < .7).map((x) => x.key), pills: lbs.filter((b) => b.pill).map((b) => b.nm), pillOffFace: pillOff, gapMin: +gapMin.toFixed(1), gapMinAt: gapAt, outOfStageReal: outReal };
+  R.G6 = { ctxShown, ctxOverlap: ctxOv, leaders, hiCards, namesShown: namesShown.size, faceCount: fgs.length, nameRatio: +(namesShown.size / fgs.length).toFixed(2), labels: lbs.length, faces: pos.length, labelOverlap: lbOv, labelOverlapAt: ovAt.slice(0, 4), top10Num: pos.slice(0, 10).filter(([k2]) => lbs.some((b) => b.key === k2 && b.v)).length + '/' + Math.min(10, pos.length), overlayOnTop5: hiOn5, labelOutOfStage: out, top5Hidden: top5.filter((k2) => !shownK.has(k2)) };
+  /* r15 고른 곳 면 효과(가리킴과 같은 필터 · 1.5px 윤곽), 고른 곳 이름 굵기 */
+  const sf = svg.querySelector('.f[aria-selected="true"]'), rg = svg.querySelector('.ring'), sl = sf && svg.querySelector(`.lbls .lb-g[data-area="${sf.dataset.area}"] .nm`);
+  R.sel = sf ? { key: sf.dataset.area, filter: getComputedStyle(sf).filter, ring: rg && rg.getAttribute('d') === sf.getAttribute('d') ? getComputedStyle(rg).strokeWidth : 'none', label: sl ? getComputedStyle(sl).fontWeight : 'none', hover: (svg.querySelector('.f.hl') && getComputedStyle(svg.querySelector('.f.hl')).filter) || null } : null;
   /* G15: h = 3 + (Hmax − 3)·√(u/umax)(오차 ≤ 0.5px), 높이 순위 = 호수 순위, 0호 = 0, 라벨 값 = 호수 */
   const hm = +svg.dataset.hmax, umax = Math.max(...Object.values(uOf)), hs = fgs.map((g) => ({ u: +g.dataset.u, h: +g.dataset.h }));
   const err = Math.max(0, ...hs.map((x) => Math.abs(x.h - (x.u > 0 ? 3 + (hm - 3) * Math.sqrt(x.u / umax) : 0))));
@@ -139,7 +138,7 @@ if (svg && vis(svg)) {
   R.G15 = { Hmax: hm, sqrtErr: +err.toFixed(3), rankInversions: inv, zeroFlat: hs.every((x) => x.u > 0 || x.h === 0), badLabels: badLabel, faceSum: Object.values(uOf).reduce((a, b) => a + b, 0), dash: [...svg.querySelectorAll('*')].filter((e) => getComputedStyle(e).strokeDasharray !== 'none').length };
 }
 /* 숫자 일치(G10): 요약 문장 · 순위 · 시트와 같은 정의인지 화면 값으로 */
-R.nums = { sentence: document.querySelector('#sum-h .n')?.getAttribute('title') || null, rank: [...document.querySelectorAll('.rk .v')].map((v) => v.textContent).slice(0, 6), badges: [...document.querySelectorAll('.badges li b')].map((b) => b.textContent) };
+R.nums = { sentence: document.querySelector('#sum-h .n')?.getAttribute('title') || null, rank: [...document.querySelectorAll('.rk .v')].map((v) => v.textContent).slice(0, 6), badges: [...document.querySelectorAll('.facts dd')].map((b) => b.textContent.replace('곳', '')), headline: document.querySelector('#sum-h')?.textContent.trim() || null };
 /* r10: 시트 줄 이름 잘림(2줄 넘침·말줄임) · 순위 이름 말줄임 · 알림 영역 · 보이는 목록 안 같은 이름(서로 다른 사업) */
 const cut = (el) => el.scrollHeight > el.clientHeight + 1 || el.scrollWidth > el.clientWidth + 1;
 const sheetCut = [...document.querySelectorAll('.sheet .srow .t')].filter((el) => vis(el) && cut(el)).map((el) => el.textContent.trim().slice(0, 24));
@@ -149,4 +148,12 @@ document.querySelectorAll('.evs, .srows').forEach((ul) => { if (!vis(ul)) return
   ul.querySelectorAll(':scope > li').forEach((li) => { if (!vis(li)) return; const a = li.querySelector('[data-prj]'), t = li.querySelector('.nm, .t'); if (!a || !t) return; const n = t.textContent.split(' · ').filter((x) => !/^(모집 공고|착공|준공|입주|연도 미정)/.test(x)).join(' · ').trim(); if (!m.has(n)) m.set(n, new Set()); m.get(n).add(a.dataset.prj); });
   for (const [n, s] of m) if (s.size > 1 && !/이름 미정/.test(n)) dup.push(n); });
 R.r10 = { sheetNameCut: sheetCut.length, sheetNameCutAt: sheetCut.slice(0, 3), rankNameCut: rankCut, live: [...document.querySelectorAll('[aria-live]')].filter((e) => !e.closest('#demo')).map((e) => e.id + ':' + e.textContent.trim().slice(0, 40)), dupNames: dup.slice(0, 4) };
+/* r13 G16 비교용 상자(실행마다 같은 값이어야 한다): 요약·지도 카드·아래 줄·무대 · 지금 신청 칸 · svg 다시 만든 횟수 */
+const bx = (sel) => { const el = document.querySelector(sel); if (!el) return null; const r = el.getBoundingClientRect(); return [Math.round(r.left + scrollX), Math.round(r.top + scrollY), Math.round(r.width), Math.round(r.height)].join(','); };
+const ps = document.querySelector('#mstage svg.pts');
+R.pts = ps ? { n: +(ps.dataset.n || 0), hid: +(ps.dataset.hid || 0), exact: ps.querySelectorAll('.pt:not(.ap):not(.hid)').length, approx: ps.querySelectorAll('.pt.ap:not(.hid)').length, label: ps.querySelector('.pts-g')?.getAttribute('aria-label') || null, legend: [...document.querySelectorAll('#mapc .lg-pt')].map((l) => l.style.visibility || 'visible').join(',') } : null;
+R.boxes = { sum: bx('#sum'), mapc: bx('#mapc'), bot: bx('.bot-row'), stage: bx('#mstage') || bx('.hbars'), apply: bx('#apply'), geo: window.__geo || 0, hmax: document.querySelector('svg.map')?.dataset.hmax || null };
+R.apply = (() => { const a = document.querySelector('#apply'); if (!a) return null; return { busy: a.getAttribute('aria-busy'), rows: [...a.querySelectorAll('.nts > li:not(.sk)')].filter(vis).length, msg: a.querySelector('.ap-msg')?.textContent || null, more: [...a.querySelectorAll('.ap-more > *')].filter(vis).map((e) => e.textContent.trim()), chips: [...a.querySelectorAll('.nt-when')].filter(vis).map((e) => e.querySelector('.sr')?.textContent.replace(/, $/, '')), clip: a.scrollHeight > a.clientHeight + 1 }; })();
+R.yrs = (() => { const ol = document.querySelector('#c-yr .yrs'); if (!ol || !vis(ol)) return null; const L = [...ol.children].map((li) => ({ y: li.querySelector('.y').textContent, v: li.querySelector('.v').title, max: li.classList.contains('max'), bg: getComputedStyle(li).backgroundColor, fs: getComputedStyle(li.querySelector('.v')).fontSize })); return { cells: L.length, max: L.filter((x) => x.max).map((x) => x.y), fs: L[0]?.fs, cut: [...ol.querySelectorAll('.v')].filter((v) => v.scrollWidth > v.parentElement.clientWidth - 23).length }; })();
+R.hl = (() => { const h = document.querySelector('#sum-h'); return h ? { fs: getComputedStyle(h).fontSize, lines: Math.round(h.getBoundingClientRect().height / parseFloat(getComputedStyle(h).lineHeight)), numColor: getComputedStyle(h.querySelector('.n') || h).color } : null; })();
 return R; })()

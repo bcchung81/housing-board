@@ -40,7 +40,7 @@ export function Switch({ checked, onCheckedChange, on, offIcon, onIcon, classNam
       onClick={() => onCheckedChange(!checked)}
       {...props}
     >
-      <span aria-hidden="true" className={cn('pointer-events-none absolute top-0.5 left-0.5 flex size-[22px] items-center justify-center rounded-full bg-white text-foreground shadow-[0_1px_2px_rgb(0_0_0/25%)] transition-transform duration-150 ease-[ease] motion-reduce:transition-none dark:text-[#10243D] [&_svg]:size-3.5', s.knob)}>
+      <span aria-hidden="true" className={cn('pointer-events-none absolute top-0.5 left-0.5 flex size-[22px] items-center justify-center rounded-full bg-white text-foreground shadow-card transition-transform duration-150 ease-[ease] motion-reduce:transition-none dark:text-primary-foreground [&_svg]:size-3.5', s.knob)}>
         <span className={cn('flex', s.off)}>{offIcon}</span>
         <span className={s.on}>{onIcon}</span>
       </span>

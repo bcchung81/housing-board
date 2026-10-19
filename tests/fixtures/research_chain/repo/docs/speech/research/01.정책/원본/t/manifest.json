@@ -1,0 +1,16 @@
+{
+ "source": "시험 보도자료(담당부서 시험과)",
+ "fetched_at": "2026-10-16T00:00:00+00:00",
+ "endpoint": "https://www.molit.go.kr/USR/NEWS/m_71/dtl.jsp?id=1&lcmspage=2",
+ "params": {
+  "posted": "2026-01-01 10:00",
+  "dept": "시험과"
+ },
+ "files": {
+  "press": {
+   "filename": "press.pdf",
+   "url": "https://molit.go.kr/portal/common/download/DownloadMltm2.jsp?FileName=a.pdf&FilePath=/up/a.pdf",
+   "kind": "보도자료 본문"
+  }
+ }
+}

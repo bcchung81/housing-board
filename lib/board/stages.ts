@@ -8,7 +8,6 @@ export const STAGES = [
   { code: '05', name: '공급', q: '언제, 누구에게, 몇 호를 분양·임대하는가', scope: 'pub', data: '마이홈 모집공고, LH 공급정보, 청약홈 2건' },
   { code: '06', name: '입주', q: '언제 실제 주택으로 완성되어 국민이 들어가는가', scope: 'pub', data: '청약홈 입주예정월, LH 단지정보 파일' },
 ] as const;
-export const stageName = (code: string) => STAGES.find((s) => s.code === code)?.name ?? code;
 
 /* 통계누리 실적 지표 → 6단계. 스펙 9.2·사업 레지스트리(lib/projects.js stageOf)와 같은 대응이다(준공 = 사용검사 = 06 입주).
    01 정책·02 사업화는 통계누리에 없어 지표를 보이는 화면에서 '자료 없음' 칸으로 자리만 보인다(components/charts/StageLegend.tsx · components/StageKpis.tsx) */

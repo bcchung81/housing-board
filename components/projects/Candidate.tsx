@@ -5,40 +5,45 @@
    판정 칸: 후보는 목록 상태 칸과 같은 말 '확인 필요'(판정에 넣지 않음, D3)와 같은 계산의 결과·경과 개월. 원천 날짜 다름(D2)은 예정 칸 꼬리표. */
 import Link from 'next/link';
 import StageSteps from './StageSteps';
-import { Card } from '../ui/card';
-import { PanelHead } from '../page';
-import { mapHref, mapScopeHref } from '../../lib/board/map-href';
-import { BOARD_CIR, BOARD_NAMES, CAND_NAME, CAND_PLAN, PAST_DUE_UNDER, PLAN_COL, STATUS_NAME, calcOf, isMetro, nextOf, overdueMonthsOf, pastDueOf, statusLabel, statusOf, statusTip, type ProjectRow } from '../../lib/board/projects-view';
+import { Card } from '@/components/ui/card';
+import InfoTip from '@/components/ui/info-tip';
+import { PanelHead } from '@/components/page';
+import { mapHref, mapScopeHref } from '@/lib/board/map-href';
+import { BOARD_CIR, BOARD_NAMES, CAND_NAME, CAND_PLAN, PAST_DUE_UNDER, PLAN_COL, STATUS_NAME, calcOf, isMetro, nextOf, overdueMonthsOf, pastDueOf, statusLabel, statusOf, statusTip, type ProjectRow } from '@/lib/board/projects-view';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
-const NOTE = 'm-0 rounded-[10px] border border-border bg-muted px-4 py-2.5 text-[15px] text-muted-foreground';
-const FACTS = 'm-0 grid grid-cols-[repeat(auto-fit,minmax(min(180px,100%),1fr))] gap-x-10 gap-y-3 text-[16px] leading-[1.6] [&_dd]:m-0 [&_dt]:text-[14px] [&_dt]:text-muted-foreground';
+const NOTE = 'm-0 flex items-center gap-1 ui-inset text-base text-muted-foreground';
+const FACTS = 'm-0 grid grid-cols-[repeat(auto-fit,minmax(min(180px,100%),1fr))] gap-x-10 gap-y-3 text-base leading-body [&_dd]:m-0 [&_dt]:text-sm [&_dt]:text-muted-foreground';
 
 export const CandidateHead = ({ row }: { row: ProjectRow }) => (
-  <span className="rounded-[4px] border border-line2 px-1.5 text-[13px] leading-[20px] whitespace-nowrap text-muted-foreground" title="사업 번호가 아직 없는 사업 — 다음 원장에서 id 가 바뀔 수 있음">{row.issued ? '상세 자료 없음' : CAND_NAME}</span>
+  <span className="ui-chip" title="사업 번호가 아직 없는 사업 — 다음 원장에서 id 가 바뀔 수 있음">{row.issued ? '상세 자료 없음' : CAND_NAME}</span>
 );
 
 export default function Candidate({ row: r, sggName, sources, stageHref }: { row: ProjectRow; sggName: string; sources: string[]; stageHref: (i: number) => string }) {
   const st = statusOf(r), next = nextOf(r), late = overdueMonthsOf(r);
-  const note = r.issued ? '상세 자료가 없어 목록에 있는 값만 보입니다'
+  /* 화면에는 짧은 꼬리표, 풀어 쓴 문장은 ⓘ */
+  const note = r.issued ? '목록 값만 표시' : next ? '번호 없는 후보 · 예정일 확인 필요' : '번호 없는 후보 · 예정일 없음';
+  const noteTip = r.issued ? '상세 자료가 없어 목록에 있는 값만 보입니다'
     : next ? '사업 번호가 아직 없는 후보 사업입니다 · 예정일은 원천 자료에 적힌 값이라 확인이 필요합니다'
     : '사업 번호가 아직 없는 후보 사업입니다 · 예정일 자료가 없습니다';
   return (
     <>
-      <p role="note" className={NOTE}>{note}</p>
-      <StageSteps current={r.board} reached={r.reached} listHref={stageHref(r.board)} />
+      <div role="note" className={NOTE}>{note}<InfoTip label="간단 보기"><p>{noteTip}</p></InfoTip></div>
+      <Card render={<section aria-label="단계" />}>
+        <StageSteps current={r.board} reached={r.reached} listHref={stageHref(r.board)} />
+      </Card>
       <Card render={<section aria-label="간단 보기" />}>
         <PanelHead title="간단 보기">
           {/* 번호 없는 후보는 지도 자료에 위치가 없어 시군구 지도로(목록 지도 열 '시군구 지도'와 같은 규칙) */}
           {isMetro(r.sgg) ? (r.issued
-            ? <a href={mapHref({ project: r.id })} className="text-[14px] text-muted-foreground no-underline hover:text-primary hover:underline" title="지도에서 이 사업 위치 보기">지도에서 보기 ›</a>
-            : <a href={mapScopeHref({ sgg: r.sgg })!} className="text-[14px] text-muted-foreground no-underline hover:text-primary hover:underline" title={`${CAND_NAME}(사업 번호 없음)이라 지도 자료에 위치가 없음 — 이 사업이 있는 시군구 지도로`}>시군구 지도 ›</a>) : null}
+            ? <a href={mapHref({ project: r.id })} className="text-sm text-muted-foreground no-underline hover:text-primary hover:underline" title="지도에서 이 사업 위치 보기">지도에서 보기 ›</a>
+            : <a href={mapScopeHref({ sgg: r.sgg })!} className="text-sm text-muted-foreground no-underline hover:text-primary hover:underline" title={`${CAND_NAME}(사업 번호 없음)이라 지도 자료에 위치가 없음 — 이 사업이 있는 시군구 지도로`}>시군구 지도 ›</a>) : null}
         </PanelHead>
         <dl className={FACTS}>
           <div><dt>시군구</dt><dd><Link href={`/projects?sgg=${r.sgg}`} title="이 시군구로 거른 사업 목록">{sggName}</Link></dd></div>
           <div><dt>단계</dt><dd>{BOARD_CIR[r.board]} {BOARD_NAMES[r.board]}</dd></div>
           <div><dt>계획 호수</dt><dd className="tabular-nums">{r.units > 0 ? `${fmt(r.units)}호` : <span className="text-muted-foreground">미확인</span>}</dd></div>
-          <div><dt>{r.issued ? PLAN_COL : CAND_PLAN}</dt><dd className="tabular-nums">{next ? <span className={next.muted ? 'text-muted-foreground' : undefined} title={next.title}>{next.text}{next.tag ? <span className="ml-1.5 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] text-muted-foreground">{next.tag}</span> : null}{next.alt ? <span className="ml-1.5 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] text-muted-foreground" title={next.alt.title}>{next.alt.text}</span> : null}</span> : <span className="text-muted-foreground">없음</span>}</dd></div>
+          <div><dt>{r.issued ? PLAN_COL : CAND_PLAN}</dt><dd className="tabular-nums">{next ? <span className={next.muted ? 'text-muted-foreground' : undefined} title={next.title}>{next.text}{next.tag ? <span className="ui-chip ml-1.5">{next.tag}</span> : null}{next.alt ? <span className="ui-chip ml-1.5" title={next.alt.title}>{next.alt.text}</span> : null}</span> : <span className="text-muted-foreground">없음</span>}</dd></div>
           <div><dt>판정</dt><dd title={statusTip(r)}>{statusLabel(r)}{st === 'review' ? <span className="text-muted-foreground"> · 계산하면 {STATUS_NAME[calcOf(r)]}</span> : null}{late !== null ? <span className="text-muted-foreground tabular-nums"> · 경과 {late}개월</span> : pastDueOf(r) ? <span className="text-muted-foreground"> · {PAST_DUE_UNDER}</span> : null}{st === 'none' && r.why ? <span className="text-muted-foreground"> · {r.why === 'LH 후보' ? 'LH 후보(판정 대상 아님)' : r.why}</span> : null}</dd></div>
           <div><dt>출처</dt><dd>{sources.join(' · ')}</dd></div>
         </dl>

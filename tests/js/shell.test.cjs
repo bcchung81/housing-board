@@ -9,9 +9,13 @@ const ROOT = path.join(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const { MENU, SECTIONS, DETAILS, activeMenuId } = require('../../lib/shell/menu.ts');
 
-test('상단 메뉴는 다섯 목적지이고 경로·식별자가 겹치지 않는다(2026-10-14: 보고자료·사업 상세 → 사업, 공급 실적·우리 동네 → 지역 공급)', () => {
-  assert.deepEqual(MENU.map((m) => m.href), ['/', '/map', '/projects', '/region', '/sources']);
-  assert.deepEqual(MENU.map((m) => m.label), ['종합상황판', '지도', '사업', '지역 공급', '데이터 원본']);
+test('상단 메뉴는 관점마다 다섯·네 목적지이고 경로·식별자가 겹치지 않는다(2026-10-14: 보고자료·사업 상세 → 사업, 공급 실적·우리 동네 → 지역 공급 · 2026-10-19 일반사용자 사업 찾기·공급 일정)', () => {
+  const admin = MENU.filter((m) => !m.publicOnly), pub = MENU.filter((m) => !m.adminOnly);
+  assert.deepEqual(admin.map((m) => m.href), ['/', '/map', '/projects', '/region', '/sources']);
+  assert.deepEqual(admin.map((m) => m.label), ['종합상황판', '지도', '사업', '지역 공급', '데이터 원본']);
+  assert.deepEqual(pub.map((m) => m.href), ['/', '/map', '/citizen/projects', '/citizen/schedule'], "일반사용자 '종합상황판'은 TopNav 가 /citizen 으로 바꾼다");
+  assert.deepEqual(pub.map((m) => m.label), ['종합상황판', '지도', '사업 찾기', '공급 일정']);
+  assert.equal(new Set(MENU.map((m) => m.href)).size, MENU.length);
   assert.equal(new Set(MENU.map((m) => m.id)).size, MENU.length);
   assert.deepEqual(MENU.filter((m) => m.soon).map((m) => m.id), []);
 });
@@ -31,6 +35,9 @@ test('파생 상세는 부모 메뉴를 강조한다: 월·기관은 종합상�
   for (const p of ['/project/PRJ-11290-0001', '/reports', '/area', '/area/11', '/my-area', '/stage/04']) assert.equal(activeMenuId(p), null, p);   // 없앤 화면(next.config.ts 가 넘긴다)
   assert.equal(activeMenuId('/map'), 'map');
   assert.equal(activeMenuId('/nope'), null);
+  assert.equal(activeMenuId('/citizen/projects'), 'find');
+  assert.equal(activeMenuId('/citizen/schedule'), 'schedule');
+  assert.equal(activeMenuId('/citizen/nope'), null);
 });
 
 test('상세 식별자는 새로 만들지 않는다: PRJ id·기관·연월만 열리고 나머지는 거른다. 지역 공급은 상세가 없다(?sido=)', () => {
@@ -90,7 +97,7 @@ test('지도 화면: 지도 앱(.app)이 상단 바 아래 남은 폭·높이를
 test('상단 메뉴 바는 화면 폭(100vw) 기준으로 자리·폭을 정해, 문서 스크롤바가 있는 화면과 없는 화면에서 같은 자리다(1470px 보다 좁아도)', () => {
   const nav = read('components/TopNav.tsx');
   /* 2026-10-16: 1600px 이상 대시보드는 본문 틀과 같은 1760px 선(같은 100vw 기준), 지도(compact)는 1440px 그대로 — r2-screens 후속 1 */
-  assert.match(nav, /<div className=\{cn\('ml-\[max\(0px,50vw_-_720px\)\] flex h-16 w-\[min\(1440px,100vw\)\] items-center gap-2 px-7 mobile:ml-0 mobile:h-12 mobile:w-auto mobile:px-3', !compact && 'min-\[1600px\]:ml-\[max\(0px,50vw_-_880px\)\] min-\[1600px\]:w-\[min\(1760px,100vw\)\]'\)\}>/);
+  assert.match(nav, /<div className=\{cn\('ml-\[max\(0px,50vw_-_720px\)\] flex h-16 w-\[min\(1440px,100vw\)\] items-center gap-2 px-7 mobile:ml-0 mobile:h-12 mobile:w-auto mobile:px-3 min-\[1600px\]:ml-\[max\(0px,50vw_-_880px\)\] min-\[1600px\]:w-\[min\(1760px,100vw\)\]'\)\}>/);
   assert.match(nav, /<header className="sticky top-0 z-40 shrink-0 overflow-x-clip /, '스크롤바 밑으로 들어간 몫은 잘라 가로 스크롤이 생기지 않는다');
   assert.doesNotMatch(nav, /max-w-\[1440px\]/, '남은 폭(스크롤바를 뺀 폭)을 따르면 1470px 보다 좁은 화면에서 메뉴 7px·단추 14px 이 움직였다(2026-10-10)');
   assert.doesNotMatch(nav, /mx-auto flex h-16/, 'mx-auto 는 스크롤바를 뺀 폭 기준이라 종합상황판에서만 스크롤바 폭의 절반만큼 왼쪽으로 간다(2026-10-09: 7px)');
@@ -108,4 +115,17 @@ test('옛 지도 주소(/?region=…)는 쿼리를 그대로 두고 /map 으로 
   assert.match(proxy, /const \{ search, searchParams \} = request\.nextUrl;/);
   assert.match(proxy, /NextResponse\.redirect\(new URL\('\/map' \+ search, request\.url\)\)/);
   assert.match(proxy, /matcher: '\/'/);
+});
+
+test('지도 머리 줄: compact 도 1600px 이상 1760px 선이고 .mhead 도 같은 선, 탭 제목은 The주택', () => {
+  const fs = require('node:fs');
+  const nav = fs.readFileSync('components/TopNav.tsx', 'utf8');
+  assert.ok(!/!compact\s*&&\s*'min-\[1600px\]/.test(nav), 'compact 가 1760 선에서 빠져 있다');
+  assert.match(nav, /mobile:px-3 min-\[1600px\]:ml-\[max\(0px,50vw_-_880px\)\] min-\[1600px\]:w-\[min\(1760px,100vw\)\]/);
+  const css = fs.readFileSync('assets/css/app.css', 'utf8');
+  assert.match(css, /@media \(min-width:1600px\)\{\.shell-map \.mhead\{padding-left:calc\(max\(0px,50vw - 880px\) \+ 28px\)/);
+  // TopNav 요소(header·nav·ul·li·a·button·svg·input)를 바꾸는 전역 요소 선택자가 없다
+  assert.ok(!/(^|\n)(header|nav|ul|li|a|button|svg|input)\s*[,{]/.test(css));
+  assert.match(fs.readFileSync('app/(map)/layout.tsx', 'utf8'), /title: 'The주택 지도'/);
+  assert.match(fs.readFileSync('app/(dashboard)/layout.tsx', 'utf8'), /template: '%s · The주택'/);
 });

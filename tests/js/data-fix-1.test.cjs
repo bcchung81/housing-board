@@ -107,6 +107,6 @@ test('#12 /agency/gh: 원장 GH 사업 4건을 보이고 사업 화면 기관 �
 test('#20·#29 LH 준공 예정: 표 머리에 파일 기준일, 지난 달에는 파일상 예정 표기', () => {
   assert.match(read('app/(dashboard)/agency/[id]/page.tsx'), /· 파일 기준 \{dotDates\(lh\.sourceAsOf\)\}/);
   const mo = read('app/(dashboard)/month/[id]/page.tsx');
-  assert.match(mo, /파일상 예정\(실제 준공 여부 미확인\)/);
+  assert.match(mo, /파일상 예정일 — 실제 준공 여부 미확인[^]*예정\(미확인\)/);
   assert.match(mo, /const idx = await getProjectsIndex\(\);\n  const past = ym < idx\.observedMonth;/);
 });

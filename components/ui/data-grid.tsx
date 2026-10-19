@@ -8,10 +8,10 @@ import LinkPending from './link-pending';
 import { constructSortFn, createColumnHelper, createSortedRowModel, rowSortingFeature, tableFeatures, useTable, type SortingState } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from 'cn';
-import { Swatch } from '../charts/Legend';
-import { Prov } from '../ui';
+import { Swatch } from '@/components/charts/Legend';
+import { Prov } from '@/components/ui';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
-import { compare, display, dotDates, filterRows, groupStarts, headerRows, sortValue, splitPinned, wants, type Cell, type Col, type Row } from '../../lib/grid/spec';
+import { compare, display, dotDates, filterRows, groupStarts, headerRows, sortValue, splitPinned, wants, type Cell, type Col, type Row } from '@/lib/grid/spec';
 
 /* 데이터 그리드(계획서 17절): TanStack Table v9(정렬)과 TanStack Virtual(긴 표)을 기존 Table 마크업 위에 얹는다. 헤드리스라 모양은 Table 그대로다.
    - 머리글을 누르면 정렬(숫자는 큰 값부터, 글자는 가나다순 → 반대 → 원래 순서). 값이 없는 칸은 방향과 상관없이 맨 뒤. th 에 aria-sort.
@@ -33,7 +33,7 @@ const ROW_H = 46;   // 한 줄 행 높이(16px × 1.6 + 위아래 10px + 테두�
 const TONE = { ok: 'text-ok', bad: 'text-bad', warn: 'text-warn', na: 'text-muted-foreground' } as const;
 const HATCH = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_45%,transparent)_0_1.5px,transparent_1.5px_3.5px)]';
 const zebra = 'bg-[color-mix(in_srgb,var(--pn2)_45%,var(--card))]';   // 불투명이라야 붙은 첫 열 밑으로 글자가 비치지 않는다
-const stickyCell = 'sticky left-0 z-[1] bg-inherit group-data-[scrolled]/grid:shadow-[6px_0_6px_-6px_rgb(0_0_0/0.25)]';   // 옆으로 민 동안만 오른쪽 그림자
+const stickyCell = 'sticky left-0 z-[1] bg-inherit group-data-[scrolled]/grid:shadow-edge';   // 옆으로 민 동안만 오른쪽 그림자
 
 /* 하이픈·물결이 든 짧은 낱말(2026-08-31, 2021-09~2026-08, 61-79번지)은 줄을 바꿀 때 가운데서 끊지 않는다(브라우저는 하이픈 뒤에서 끊는다) */
 /* 보이는 날짜는 점 표기(dotDates — 2026-08-31 → 2026.08.31) */
@@ -43,20 +43,24 @@ const keepWords = (raw: string): React.ReactNode => { const t = dotDates(raw); r
    칸 title: 칸에 title 이 있으면 그것(안쪽 span 이 보인다), 없으면 전체 글자 */
 const clipTitle = (v: Cell, col: Col) => (typeof v === 'object' && v?.title ? undefined : display(v, col.kind).text);
 
+/* 낱말 하나가 이 길이를 넘으면 칸(최소 160px)보다 길 수 있다: 두 줄 말줄임은 칸에 맞춰 낱말을 쪼개므로(예 '정보대(서빙…') 쪼개지 않고 한 줄 말줄임으로 둔다. 전체는 title */
+const LONG_WORD = 10;
+const longWord = (v: Cell, col: Col) => display(v, col.kind).text.split(/\s+/).some((w) => w.length > LONG_WORD);
+
 function CellView({ v, col }: { v: Cell; col: Col }) {
   const d = display(v, col.kind);
   const o = typeof v === 'object' && v !== null ? v : undefined;
-  const text = o?.icon === 'map' ? <><MapPin className="inline size-3.5 align-[-2px]" aria-hidden="true" /><span aria-hidden="true">지도</span><span className="sr-only">{d.text}</span></> : o?.code ? <code>{d.text}</code> : keepWords(d.text);
-  const body = o?.href ? (o.doc ? <a href={o.href} className={o.icon ? 'inline-flex items-center gap-1 rounded-[4px] p-0.5 whitespace-nowrap text-muted-foreground hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary' : undefined}>{text}</a> : <Link href={o.href} scroll={o.stay ? false : undefined} className="relative">{text}<LinkPending /></Link>) : text;
-  const mark = o?.mark === 'hatch' ? <i className={cn('mr-1.5 inline-block size-[11px] rounded-[3px] border border-line2 align-[-1px]', HATCH)} aria-hidden="true" />
-    : o?.mark === 'outline' ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-2 align-[-1px]" style={{ borderColor: o.swatch }} aria-hidden="true" /> : null;
+  const text = o?.icon === 'map' ? <><MapPin className="inline size-3.5 align-[-2px]" aria-hidden="true" /><span aria-hidden="true">지도</span><span className="sr-only">{d.text}</span></> : o?.code ? <code className="whitespace-nowrap">{d.text}</code> : keepWords(d.text);
+  const body = o?.href ? (o.doc ? <a href={o.href} className={o.icon ? 'inline-flex items-center gap-1 rounded-chip p-0.5 whitespace-nowrap text-muted-foreground hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-primary' : undefined}>{text}</a> : <Link href={o.href} scroll={o.stay ? false : undefined} className="relative">{text}<LinkPending /></Link>) : text;
+  const mark = o?.mark === 'hatch' ? <i className={cn('mr-1.5 inline-block size-[11px] rounded-chip border border-line2 align-[-1px]', HATCH)} aria-hidden="true" />
+    : o?.mark === 'outline' ? <i className="mr-1.5 inline-block size-[11px] rounded-chip border-2 align-[-1px]" style={{ borderColor: o.swatch }} aria-hidden="true" /> : null;
   const toned = d.tone ? <span className={cn(TONE[d.tone], o?.strong && 'font-bold')}>{body}</span> : o?.strong ? <b>{body}</b> : body;
   const inner = (
     <>
-      {mark ?? (o?.dashed ? <i className="mr-1.5 inline-block size-[11px] rounded-[3px] border-[1.5px] border-dashed border-line2 align-[-1px]" aria-hidden="true" /> : o?.swatch ? <Swatch color={o.swatch} /> : null)}
+      {mark ?? (o?.dashed ? <i className="mr-1.5 inline-block size-[11px] rounded-chip border border-dashed border-line2 align-[-1px]" aria-hidden="true" /> : o?.swatch ? <Swatch color={o.swatch} /> : null)}
       {/* 알약 글자는 단계 글자색을 본문색 쪽으로 20% 당겨 알약 바탕 위 4.5:1 이상(밝은 테마 ② 인허가 3.9 → 5.2, 2026-10-15 평가) */}
-      {o?.pill ? <span className="inline-block rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: `color-mix(in srgb,${o.pill.color} 16%,var(--card))`, color: `color-mix(in srgb,${o.pill.ink} 80%,var(--foreground))` }}>{body}</span> : toned}
-      {o?.tag ? <span className="ml-1.5 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] font-normal whitespace-nowrap text-muted-foreground">{o.tag}</span> : null}
+      {o?.pill ? <span className="inline-block rounded-full px-2 text-sm leading-body font-bold whitespace-nowrap" style={{ background: `color-mix(in srgb,${o.pill.color} 16%,var(--card))`, color: `color-mix(in srgb,${o.pill.ink} 80%,var(--foreground))` }}>{body}</span> : toned}
+      {o?.tag ? <span className="ml-1.5 inline-block rounded-chip border border-line2 px-1 text-sm leading-sub font-normal whitespace-nowrap text-muted-foreground">{o.tag}</span> : null}
       {o?.prov ? <Prov /> : null}
     </>
   );
@@ -107,7 +111,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
     <tr key={`${r.id}-detail`} id={detailId(r)}>
       <TableCell colSpan={cols.length} className="bg-pn2 px-3 py-2 text-left whitespace-normal">
         <div className="w-0 min-w-full [&_th]:[word-break:normal]!">
-          <p className="m-0 text-[13px] text-muted-foreground">예시 {r.detail!.rows.length.toLocaleString('en-US')}건 / 전체 {r.detail!.total.toLocaleString('en-US')}건 · {r.detail!.source}</p>
+          <p className="m-0 text-sm text-muted-foreground">예시 {r.detail!.rows.length.toLocaleString('en-US')}건 / 전체 {r.detail!.total.toLocaleString('en-US')}건 · {r.detail!.source}</p>
           <DataGrid label={`${label} · ${display(r.c[first], cols[0].kind).text} 예시`} cols={r.detail!.cols} rows={r.detail!.rows} sortable={false} />
         </div>
       </TableCell>
@@ -126,7 +130,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
           <TableCell colSpan={cols.length - 1} className="text-left whitespace-normal" title={r.noteTitle}>{dotDates(r.note)}</TableCell>
         </>
       ) : cols.map((c) => (
-        <TableCell key={c.key} className={cn(c.key === first && stickyCell, c.kind === 'text' && 'text-left', c.wrap && 'min-w-[180px] whitespace-normal [word-break:keep-all]', starts.has(c.key) && 'border-l')}>
+        <TableCell key={c.key} className={cn(c.key === first && stickyCell, c.kind === 'text' && 'text-left', (c.kind === 'int' || c.kind === 'delta' || c.kind === 'pct') && 'whitespace-nowrap!', c.wrap && 'min-w-[180px] whitespace-normal [word-break:keep-all]', starts.has(c.key) && 'border-l')}>
           {expandable && c.key === first ? (r.detail ? (
             <button type="button" aria-expanded={open.has(r.id)} aria-controls={open.has(r.id) ? detailId(r) : undefined} aria-label={`${display(r.c[first], cols[0].kind).text} 예시 ${open.has(r.id) ? '접기' : '펼치기'}`} onClick={() => toggle(r.id)}
               className="mr-1 inline-flex size-4 cursor-pointer items-center justify-center border-0 bg-transparent p-0 align-[-2px] text-muted-foreground hover:text-foreground focus-visible:outline-2 focus-visible:outline-primary">
@@ -134,7 +138,9 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
             </button>
           ) : <span className="mr-1 inline-block w-4" aria-hidden="true" />) : null}
           {c.clip ? (
-            <span className="line-clamp-2 whitespace-normal [overflow-wrap:break-word] [word-break:keep-all]" style={{ maxWidth: c.clip }} title={clipTitle(r.c[c.key], c)}><CellView v={r.c[c.key]} col={c} /></span>
+            longWord(r.c[c.key], c)
+              ? <span className="block truncate" style={{ maxWidth: c.clip }} title={clipTitle(r.c[c.key], c)}><CellView v={r.c[c.key]} col={c} /></span>
+              : <span className="line-clamp-2 whitespace-normal [overflow-wrap:normal] [word-break:keep-all]" style={{ maxWidth: c.clip }} title={clipTitle(r.c[c.key], c)}><CellView v={r.c[c.key]} col={c} /></span>
           ) : <CellView v={r.c[c.key]} col={c} />}
         </TableCell>
       ))}
@@ -150,9 +156,9 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
           <label className="relative block w-full max-w-[320px]">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <input type="search" value={q} onChange={(e) => setQ(e.target.value)} placeholder="이 표에서 찾기" aria-label={`${label} 안에서 찾기`}
-              className="h-10 w-full rounded-[10px] border-[1.5px] border-line2 bg-card pr-3 pl-9 text-[15px] text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary" />
+              className="h-10 w-full rounded-tile border border-line2 bg-card pr-3 pl-9 text-base text-foreground placeholder:text-muted-foreground focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-primary" />
           </label>
-          <span className="text-[14px] text-muted-foreground tabular-nums" aria-live="polite">{q.trim() ? `${data.length.toLocaleString('en-US')}건 / 전체 ${body.length.toLocaleString('en-US')}건` : quietCount ? '' : `${body.length.toLocaleString('en-US')}건`}</span>
+          <span className="text-sm text-muted-foreground tabular-nums" aria-live="polite">{q.trim() ? `${data.length.toLocaleString('en-US')}건 / 전체 ${body.length.toLocaleString('en-US')}건` : quietCount ? '' : `${body.length.toLocaleString('en-US')}건`}</span>
         </div>
       ) : null}
       <Table aria-label={label} aria-rowcount={want.virtual ? lead + list.length + bottom.length : undefined}
@@ -169,7 +175,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
                 return (
                   <TableHead key={h.key ?? `g${hi}`} colSpan={h.colSpan > 1 ? h.colSpan : undefined} rowSpan={h.rowSpan > 1 ? h.rowSpan : undefined}
                     aria-sort={can ? (dir === 'asc' ? 'ascending' : dir === 'desc' ? 'descending' : 'none') : undefined}
-                    className={cn('z-[2]', h.key === first && 'left-0 z-[3] group-data-[scrolled]/grid:shadow-[6px_0_6px_-6px_rgb(0_0_0/0.25)]', !h.key && 'text-center', h.key && textCol.has(h.key) && 'text-left', (h.key ? starts.has(h.key) : true) && h.key !== first && 'border-l', dir && 'text-foreground')}>
+                    className={cn('z-[2]', h.key === first && 'left-0 z-[3] group-data-[scrolled]/grid:shadow-edge', !h.key && 'text-center', h.key && textCol.has(h.key) && 'text-left', (h.key ? starts.has(h.key) : true) && h.key !== first && 'border-l', dir && 'text-foreground')}>
                     {h.swatch ? <Swatch color={h.swatch} /> : null}
                     {can ? (
                       <button type="button" onClick={column!.getToggleSortingHandler()} title="눌러서 정렬"
@@ -189,7 +195,7 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
           {shown.map(({ row, i }) => line(row, i, false, want.virtual))}
           {spacer(padBottom, 'pad-bottom')}
           {q.trim() && !data.length ? <TableRow><TableCell colSpan={cols.length} className="text-center whitespace-normal text-muted-foreground">&lsquo;{q.trim()}&rsquo;에 맞는 행이 없습니다</TableCell></TableRow> : null}
-          {!rows.length ? <TableRow><TableCell colSpan={cols.length} className="text-left text-[14px] whitespace-normal text-muted-foreground">{emptyText}</TableCell></TableRow> : null}
+          {!rows.length ? <TableRow><TableCell colSpan={cols.length} className="text-left text-sm whitespace-normal text-muted-foreground">{emptyText}</TableCell></TableRow> : null}
           {bottom.map((r) => line(r, -1, true))}
         </TableBody>
       </Table>

@@ -73,22 +73,22 @@ export default function Drawer({ id, canonical, closeHref, title, head, back, ch
   if (!id || !children) return null;
   return (
     <aside role="dialog" aria-modal="false" aria-labelledby="drawer-title"
-      className="fixed top-16 right-0 bottom-0 z-30 flex w-[min(60vw,980px)] flex-col border-l border-border shadow-[var(--shadow-pop)] [background:var(--page-bg)] print:hidden mobile:top-12 mobile:w-full">
+      className="fixed top-16 right-0 bottom-0 z-30 flex w-[min(60vw,980px)] flex-col border-l border-border shadow-pop [background:var(--page-bg)] print:hidden mobile:top-12 mobile:w-full">
       {/* 머리: 왼쪽 열(제목 + 배지·id, 줄바꿈) · 오른쪽 열(× — 긴 이름에서도 오른쪽 위에 고정) */}
       <header className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-3 border-b border-border bg-card py-2.5 pr-3 pl-5">
         <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
-          <h2 id="drawer-title" ref={titleRef} tabIndex={-1} className="m-0 min-w-0 font-display text-[24px] leading-[1.2] font-normal tracking-[-0.03em] [overflow-wrap:anywhere] focus:outline-none">{title}</h2>
+          <h2 id="drawer-title" ref={titleRef} tabIndex={-1} className="m-0 min-w-0 text-h2 leading-title font-bold [overflow-wrap:anywhere] focus:outline-none">{title}</h2>
           {head}
         </div>
         <div className="flex items-center gap-2">
           {back ? (
             <a href={back.href} data-slot="drawer-back" title={back.title ?? back.label}
-              className="group/back inline-flex flex-none items-center gap-px rounded-[4px] text-[14px] leading-[1.45] whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+              className="group/back inline-flex flex-none items-center gap-px rounded-chip text-sm leading-body whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
               {back.label}<ChevronRight className="size-3.5 shrink-0 transition-transform group-hover/back:translate-x-0.5 motion-reduce:transition-none" aria-hidden="true" />
             </a>
           ) : null}
           <button type="button" onClick={close} aria-label="사업 상세 닫기" title="닫기 (Esc)"
-            className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-[8px] border-0 bg-transparent p-0 text-muted-foreground hover:bg-pn2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            className="flex size-9 flex-none cursor-pointer items-center justify-center rounded-tile border-0 bg-transparent p-0 text-muted-foreground hover:bg-pn2 hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             <X className="size-[18px]" aria-hidden="true" />
           </button>
         </div>

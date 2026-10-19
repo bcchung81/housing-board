@@ -74,17 +74,22 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   const last = C.lastMonth(molit), cum = C.ytd(molit, 'start', C.NATION, last), cumLy = C.ytd(molit, 'start', C.NATION, C.nextYm(last, -12));
   const start = { year: last.slice(0, 4), upto: Number(last.slice(5)), cum, cumLy };
   const dir = makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start, bottleneck: BN });
-  assert.deepEqual(dir.map((d) => [d.date, d.t, d.p]), [['08.14', '진척 관리', ['p-chart']], ['08.19', '사업장별 현황판', ['p-region']], ['09.03', '범부처 통합·병목', ['p-trend', 'p-agency']], ['09.04', '예측가능성', ['p-fut']], ['09.18', '일정 지연 관리', ['p-trend']], ['09.30', '국민 공개·공식 원천', ['p-flow']]]);
+  assert.deepEqual(dir.map((d) => [d.date, d.t, d.p]), [['08.14', '진척 관리', ['p-chart']], ['08.19', '사업장별 현황판', ['p-region']], ['09.03', '범부처 통합·병목', ['p-trend', 'p-agency']], ['09.04', '예측가능성', ['p-fut']], ['09.18', '일정 지연 관리', ['p-trend']], ['09.30', '국민 공개·공식 원천', ['p-actual']]]);   // 국민 공개·공식 원천 = 월별 실적 흐름(통계누리 공식 원천, RealPanels 의 section id) — 옛 p-flow 는 없는 id라 누름이 아무 일도 하지 않았다(2026-10-18)
+  const shown = ['Board', 'RealPanels'].map((f) => fs.readFileSync(path.join(__dirname, `../../components/board/${f}.tsx`), 'utf8')).join('');
+  for (const d of dir) for (const id of d.p) assert.ok(shown.includes(`id="${id}"`), `연결 패널 ${id} 가 화면에 있다`);
   dir.forEach((d, i) => { assert.ok(d.basis.length > 10, `표지 title ${i}`); });
   const yoy = (cum - cumLy) / cumLy * 100;
   /* 카드 아랫줄 = 앞말(pre) + 큰 숫자(big) + 단위(u): 문자열을 자르지 않고 나눈 필드로 그린다. m 은 셋을 이은 읽기용 한 줄 */
   /* 두 숫자 카드(pair — 일정 지연 관리: 확정 · 후보 계산, 2026-10-15 결정)는 '지연 ' + 두 값을 ' · '로 이은 줄 */
   for (const d of dir) assert.equal(d.m, d.pair ? `지연 ${d.pre} ${d.big}${d.u} · ${d.pair.pre} ${d.pair.big}${d.pair.u}` : `${d.pre ? d.pre + ' ' : ''}${d.big}${d.u}`);
-  assert.deepEqual([dir[0].pre, dir[0].big, dir[0].u], ['착공', S.f(cum), '호']);
-  assert.equal(dir[0].sub.text, `${yoy >= 0 ? '▲' : '▼'}${Math.abs(yoy).toFixed(1)}%`);
+  assert.deepEqual([dir[0].pre, dir[0].big, dir[0].u], ['착공 누계', S.f(cum), '호'], "앞말 '착공 누계'(옛 꼬리 '누계'를 앞말로 — 2026-10-18 사용자 결정)");
+  const yoyText = `${yoy >= 0 ? '+' : '−'}${Math.abs(yoy).toFixed(1)}%`;
+  assert.equal(dir[0].sub, yoyText, '증감은 부호 글자만(색·▲ 없음 — 초록 = 정상 판정색과 섞이지 않게)');
+  assert.ok(dir[0].basis.includes(`전년 같은 기간 대비 ${yoyText}`), '좁은 카드에서 숨는 증감도 (i) 기준에 남는다');
+  for (const d of dir) assert.deepEqual(Object.keys(d).filter((k) => ['tag', 'note'].includes(k)), [], '꼬리(tag·note) 필드 없음 — 기준은 (i)');
+  for (const d of dir) assert.deepEqual(Object.keys(d.list).sort(), ['href', 'title'], '링크 글자(list.text) 없음 — 숫자 자체가 링크');
   assert.match(dir[0].basis, /달성률은 내지 못합니다/);
-  assert.match(dir[0].basis, new RegExp(`착공 ${start.year}년 1~${start.upto}월 누계와 전년 같은 기간 대비`), '착공 누계의 기간(통계누리 마지막 달)은 카드 title 에 — 원장 기준 카드들과 기간이 다르다');
-  assert.equal(dir[0].sub.note, undefined, '기간 작은 줄은 화면에 두지 않는다(title 로)');
+  assert.match(dir[0].basis, new RegExp(`^통계누리 전국 착공 ${start.year}년 1~${start.upto}월 누계 · 전년 같은 기간 대비`), '원천(통계누리)·기간(통계누리 마지막 달)은 카드 title·(i) 에 — 원장 기준 카드들과 기간이 다르다');
   assert.deepEqual([dir[1].pre, dir[1].big, dir[1].u], [undefined, S.f(L.scope.projects), '건']);
   assert.equal(L.scope.projects, L.scope.issued + L.scope.candidates);
   const b = L.scope.bySource;
@@ -101,7 +106,7 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   assert.deepEqual([dir[4].pair.pre, dir[4].pair.big, dir[4].pair.u], ['후보 계산', S.f(L.judgment.candidate.delay.projects), '건']);
   const old = makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: { ...L, judgment: { ...L.judgment, candidate: undefined } }, start, bottleneck: BN })[4];
   assert.deepEqual([old.pre, old.big, old.u, old.pair], ['지연', S.f(L.judgment.delay.projects), '건', undefined]);
-  assert.deepEqual(old.sub, { text: `주의 ${S.f(L.judgment.caution.projects)}`, tone: 'warn' });
+  assert.equal(old.sub, `주의 ${S.f(L.judgment.caution.projects)}`);
   assert.equal(makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start, bottleneck: BN })[5].m, '원천 19곳');
   assert.equal(makeDirectives({ sourceCount: 14, stageNames: S.K, ledger: L, start: { ...start, cum: null }, bottleneck: BN })[0].sub, undefined, '누계가 없으면 증감을 내지 않는다');
   const codes = require('../../data/board/molit.json').sido.map((s) => s.code);
@@ -272,7 +277,7 @@ const realRow = fs.readFileSync(path.join(__dirname, '../../components/board/Rea
 function panel(src, id) {
   const i = src.indexOf(`id="${id}"`);
   assert.ok(i >= 0, `${id} 패널이 있어야 한다`);
-  const j = src.indexOf('</Card>', i);   // 패널은 <Card variant="board" render={<section id=…/>}> … </Card>
+  const j = src.indexOf('</Card>', i);   // 패널은 <Card variant="section" render={<section id=…/>}> … </Card>
   return src.slice(i, j);
 }
 
@@ -280,13 +285,13 @@ test('SAMPLE 표지는 없다(지연·주의 추이도 월 판정 이력), 원�
   assert.doesNotMatch(board, /<Sample|SAMPLE/, 'SAMPLE 표지·문구 없음');
   for (const id of ['p-chart', 'p-snap', 'p-region', 'p-agency', 'p-fut']) {
     const p = panel(board, id);
-    assert.match(p, /<h2 className=\{(ptitle|cn\(ptitle, '[^']*'\))\} title=\{`\$\{basisLine\} · /, `${id}: 제목 title 에 원장 범위(짧게 — 긴 범위는 (i) 팝오버, 2026-10-16 3차)`);
+    assert.match(p, /<h2 className=\{(ptitle|cn\(ptitleBase, '[^']*'\))\} title=\{`\$\{basisLine\} · /, `${id}: 제목 title 에 원장 범위(짧게 — 긴 범위는 (i) 팝오버, 2026-10-16 3차)`);
     assert.doesNotMatch(p, /<Sample \/>/, `${id} 는 실데이터라 SAMPLE 표지가 없어야 한다`);
     assert.doesNotMatch(p, /ptSmall/, `${id}: 제목 옆 설명 글자 없음(title 로)`);
   }
   assert.doesNotMatch(board + realRow, /<Real\b|실데이터<|scopeShort/, '실데이터 표지·보이는 범위 글자 없음');
   assert.match(board, /const scope = `원장 \$\{ymDot\(L\.observedMonth\)\} 기준 · 사업 \$\{f\(L\.scope\.projects\)\}건\(\$\{ledgerMix\(L\)\}\) · \$\{nation\} · \$\{real\.ledgerOrigin === 'supabase' \? `출처 Supabase\(api\.board, \$\{ymDot\(real\.ledgerMonth\)\}\)` : '출처 JSON 대체'\}`;/);
-  assert.match(panel(board, 'p-trend'), /title="지연·주의 사업의 계획 호수\(호\) · 2025\.01~2026\.09 소급 판정, 2026\.10부터 월 관측"/);
+  assert.match(panel(board, 'p-trend'), /title="지연·주의 사업의 계획 호수\(단위 호 — 위 숫자·선 모두\) · 2025\.01~2026\.09 소급 판정, 2026\.10부터 월 관측"/, '단위 호는 보이는 글자가 아니라 제목 title(2026-10-18)');
   assert.match(panel(realRow, 'p-actual'), /<h2 className=\{ptitle\} title=\{`국토교통 통계누리/, 'p-actual: 출처는 제목 title');
   assert.doesNotMatch(board, /\b(AG|REG|dStage|vals|txSnap)\b/, '시안 SAMPLE 계산(기관·시도·단계 호수)을 쓰지 않는다');
 });
@@ -323,7 +328,7 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(agency, /사업 없음: \{emptyAgencies\.map\(\(a\) => a\.name\)\.join\(' · '\)\}/, '사업 없는 기관은 마지막 한 줄로 묶는다');
   assert.match(agency, /<div key=\{a\.id\} className=\{ag\}/, '기관 행은 같은 세 칸(subgrid)');
   assert.doesNotMatch(agency, /agName\}>[^\n]*판정 제외/, '이름 칸에 판정 제외를 넣지 않는다');
-  assert.match(agency.slice(0, agency.indexOf('className={ags}')), /\['bg-\[var\(--out\)\] shadow-\[inset_0_0_0_1px_var\(--out-line\)\]', NONE_TEXT\]/, "막대 범례는 제목 줄에, '일정 정보 없음' 견본은 --out 채움 + --out-line 1px 선(2026-10-16 '판정 밖'에서 바꿈)");
+  assert.match(agency.slice(0, agency.indexOf('className={ags}')), /\['bg-\[var\(--out\)\] inset-ring-1 inset-ring-\(--out-line\)', NONE_TEXT\]/, "막대 범례는 제목 줄에, '일정 정보 없음' 견본은 --out 채움 + --out-line 1px 선(2026-10-16 '판정 밖'에서 바꿈)");
   assert.match(agency, /<span className="block bg-\[var\(--out\)\]" style=\{\{ width: pw\(none\) \}\} \/>/, '일정 정보 없음 막대 조각 = --out(확인 필요 후보는 빗금 조각으로 따로)');
   assert.match(agency, /\$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호/, "전국 지연 중 몫(2026-10-16 4차 r4-board 5)");
   assert.match(board, /NONE_TIP = `\$\{NONE_TEXT\} = 판정할 현재 예정일이 없는 사업\(준공 완료 포함\)과 LH 후보\(\$\{dotDates\(outNote \?\? ''\)\}\)`/, '일정 정보 없음의 사유(LH 후보)는 제목·범례 title 에');
@@ -334,10 +339,11 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
 });
 
 test('시도 카드는 월별 실적 흐름(middle)과 같은 줄에 있고, 시행주체별 진행 현황·데이터 흐름 카드는 없다', () => {
-  assert.match(board, /<div className=\{row2\}>\s*\{middle\}\s*<Card variant="board"[^>]*id="p-region"/);
-  /* 시도 칸은 지리 격자 4열이 들어가는 620px */
+  assert.match(board, /<div className=\{cn\(row2, cur\.p\.includes\('p-actual'\) && linkedActual\)\}>\s*\{middle\}\s*<Card variant="section"[^>]*id="p-region"/);
+  /* 1280px 이상은 6열 기본 격자의 3 + 3(2026-10-18 — 시도 칸 약 600px 에서도 지리 격자 4열 타일 약 135px) */
   const styles = fs.readFileSync(path.join(__dirname, '../../components/board/styles.ts'), 'utf8');
-  assert.equal(Number(/export const row2 = "[^"]*grid-cols-\[minmax\(0,1fr\)_(\d+)px\]/.exec(styles)[1]), 620);
+  assert.match(styles, /export const row2 = `\$\{grid6\} grid-cols-1 min-\[1280px\]:\[&>\*\]:col-span-3`;/);
+  assert.match(styles, /export const grid6 = "[^"]*min-\[1280px\]:grid-cols-6 min-\[1280px\]:gap-3"/);
   assert.doesNotMatch(board, /id="p-flow"/);
   assert.doesNotMatch(realRow, /id="p-actors"/);
 });
@@ -374,7 +380,7 @@ test('카드의 이동 링크는 아래 줄이 아니라 제목 줄 오른쪽(pa
   assert.match(head(panel(realRow, 'p-actual')), /className=\{pacts\}><PanelLink/, 'p-actual');
   assert.doesNotMatch(board + realRow, /plink/, '카드 아래 링크 줄(plink)은 없다');
   const link = fs.readFileSync(path.join(__dirname, '../../components/board/PanelLink.tsx'), 'utf8');
-  assert.match(link, /text-\[14px\][^"]*text-muted-foreground[^"]*hover:text-primary[^"]*focus-visible:text-primary[^"]*focus-visible:outline-2/, '14px 흐린 글자, 올림·포커스 때 주색, 보이는 포커스 고리');
+  assert.match(link, /text-sm[^"]*text-muted-foreground[^"]*hover:text-primary[^"]*focus-visible:text-primary[^"]*focus-visible:outline-2/, '14px 흐린 글자, 올림·포커스 때 주색, 보이는 포커스 고리');
   assert.doesNotMatch(link, /bg-primary|rounded-md|\bh-7\b/, '채움·둥근 상자 없음');
   assert.match(link, /title=\{full\}/, '줄인 이름 대신 원래 이름은 title 로 보인다');
 });

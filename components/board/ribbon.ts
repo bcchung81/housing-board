@@ -2,7 +2,7 @@
    정적 부분(층·띠·축)은 범례 강조(hl)에만, 동적 부분(연도 띠·총량 괄호)은 선택 시점(cur)에만 달라진다. 병목은 차트 안에 핀으로 두지 않고 툴팁에 둔다(2026-10-12 시안 정리). */
 import { C, PH, PW, PX0, TOP, BOT, ribbonLabels, rp, staticTexts, yearsOf, yr, type Ribbon, type Tx } from '../../lib/board/sample';
 
-/* 리본 차트의 선·글자·층 경계 색: 테마별 값은 app/tailwind.css 의 --rb-* (라이트·다크). SVG 속성이 var() 로 읽는다 */
+/* 리본 차트의 선·글자·층 경계 색: 테마별 값은 app/globals.css 의 --rb-* (라이트·다크). SVG 속성이 var() 로 읽는다 */
 /* 층마다 세로 그라데이션(#rbg0~5): 위 = 단계색 70% + 하이라이트 30%, 가운데 = 단계색, 아래 = 단계색 86% + 그늘 14%. 두 테마 모두 위가 빛나고 아래가 깊어 물결처럼 보인다.
    색은 stop-color '속성'이 아니라 style 로 준다: 속성 값의 color-mix() 는 브라우저가 읽지 못해 검정으로 칠했다(2026-10-10 화면으로 확인). */
 const grad = (k: number) => `<linearGradient id="rbg${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:color-mix(in srgb, ${C[k]} 70%, var(--rb-hi))"/><stop offset=".5" style="stop-color:${C[k]}"/><stop offset="1" style="stop-color:color-mix(in srgb, ${C[k]} 86%, var(--rb-lo))"/></linearGradient>`;
@@ -25,8 +25,8 @@ export function chartStatic(g: Ribbon, hl: number): string {
   let s = `<defs><pattern id="hatch" width="14" height="14" patternUnits="userSpaceOnUse"><path d="M-3 3 L3 -3 M0 14 L14 0 M11 17 L17 11" fill="none" stroke="${PAL.hatch}" stroke-width="1.2" stroke-opacity="${PAL.hatchOp}"/></pattern>`
     + `<pattern id="band-old" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="${PAL.band}" fill-opacity=".28"/><rect width="1.6" height="5" fill="${PAL.band}" fill-opacity=".8"/></pattern>`
     + `<linearGradient id="cur-hud" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${PAL.acc}" stop-opacity=".34"/><stop offset=".16" stop-color="${PAL.acc}" stop-opacity=".14"/><stop offset=".84" stop-color="${PAL.acc}" stop-opacity=".14"/><stop offset="1" stop-color="${PAL.acc}" stop-opacity=".34"/></linearGradient>${[0, 1, 2, 3, 4, 5].map(grad).join('')}`
-    + `<linearGradient id="rb-scan-g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${PAL.hudAcc}" stop-opacity="0"/><stop offset=".6" stop-color="${PAL.hudAcc}" stop-opacity=".38"/><stop offset=".86" stop-color="#FFFFFF" stop-opacity=".9"/><stop offset="1" stop-color="${PAL.hudAcc}" stop-opacity="0"/></linearGradient></defs>`;
-  /* 첫 화면 연출(app/tailwind.css 의 [data-intro]): 축(rb-axes)·층(rb-layers)·기준일(rb-now)을 따로 묶어 차례로 등장시킨다 */
+    + `<linearGradient id="rb-scan-g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${PAL.hudAcc}" stop-opacity="0"/><stop offset=".6" stop-color="${PAL.hudAcc}" stop-opacity=".38"/><stop offset=".86" stop-color="${PAL.hudTxt}" stop-opacity=".9"/><stop offset="1" stop-color="${PAL.hudAcc}" stop-opacity="0"/></linearGradient></defs>`;
+  /* 첫 화면 연출(app/globals.css 의 [data-intro]): 축(rb-axes)·층(rb-layers)·기준일(rb-now)을 따로 묶어 차례로 등장시킨다 */
   const T = staticTexts(g);
   s += '<g class="rb-axes">';
   yearsOf(TL).slice(1).forEach((y) => { s += ln(X(y.a), TOP - 10, X(y.a), BOT, PAL.sep, 1, '2 4'); });
@@ -56,12 +56,11 @@ export function chartStatic(g: Ribbon, hl: number): string {
   return s;
 }
 
-/* 리본 위 라벨: HUD 판(남색 반투명 유리 + 밝은 가장자리 선 + 왼쪽 3px 강조 띠) 위에 흰 글자. 흰 판이 리본 색을 가리던 것을 바꿨다(2026-10-10).
-   글자에 외곽선을 겹치면 축소 시 획이 뭉개져서 판과 글자를 따로 그린다. accent = 강조 띠 색(총량은 밝은 주색 --rb-hud-acc) */
-function labelSVG(b: { x: number; y: number; w: number; center: number; baseline: number }, text: string, accent: string): string {
+/* 리본 위 라벨: HUD 판(남색 반투명 유리 + 밝은 가장자리 선) 위에 흰 글자. 흰 판이 리본 색을 가리던 것을 바꿨다(2026-10-10).
+   글자에 외곽선을 겹치면 축소 시 획이 뭉개져서 판과 글자를 따로 그린다. 2026-10-18 강조 재배분: 매달 같은 총량이 화면에서 가장 큰 강조가 되지 않게 14 보통 글자, 왼쪽 강조 띠 없음 */
+function labelSVG(b: { x: number; y: number; w: number; center: number; baseline: number }, text: string): string {
   return `<rect x="${b.x.toFixed(2)}" y="${b.y.toFixed(2)}" width="${b.w}" height="24" rx="5" fill="${PAL.hud}" stroke="${PAL.hudLine}" stroke-width=".75"/>`
-    + `<rect x="${(b.x + 3).toFixed(2)}" y="${(b.y + 4).toFixed(2)}" width="3" height="16" rx="1.5" fill="${accent}"/>`
-    + `<text x="${(b.center + 3).toFixed(2)}" y="${b.baseline.toFixed(2)}" fill="${PAL.hudTxt}" font-size="15" font-weight="600" text-anchor="middle">${text}</text>`;
+    + `<text x="${b.center.toFixed(2)}" y="${b.baseline.toFixed(2)}" fill="${PAL.hudTxt}" font-size="14" text-anchor="middle">${text}</text>`;
 }
 
 /* 동적 부분: 연도 띠 · 총량 괄호와 라벨(선택 시점) */
@@ -77,6 +76,6 @@ export function ribbonDynamic(g: Ribbon, cur: number): string {
   const top = BOT - g.total[cur] * g.s2, bx = X(cur + 0.5);
   const cl = (x1: number, y1: number, x2: number, y2: number, w: number, d?: boolean) => `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${PAL.cur}" stroke-width="${w}"${d ? ' stroke-dasharray="2 2"' : ''}/>`;
   s += '<g class="rb-marks">' + cl(bx, top, bx, BOT, 1.4, true) + cl(bx - 8, top, bx + 8, top, 2) + cl(bx - 8, BOT, bx + 8, BOT, 2);
-  s += labelSVG(L.total, L.total.text, PAL.hudAcc);
+  s += labelSVG(L.total, L.total.text);
   return s + '</g>';
 }

@@ -120,7 +120,8 @@ test('빈 결과 회복: 거르기 풀기·전국에서 보기 등 건수가 있
   assert.match(page, /이 조건의 사업이 없습니다/);
   for (const t of ['상태·단계 거르기 풀기', '전국에서 보기', '정책·기관 거르기 풀기', '모두 풀기']) assert.ok(page.includes(t), t);
   assert.match(page, /\.filter\(\(a\) => a\.n > 0\)/);
-  assert.match(page, /\$\{CAND_NAME\} \$\{fmt\(list\.length - issued\)\}건은 간단 보기/);
+  assert.match(page, /\$\{CAND_NAME\} \$\{fmt\(list\.length - issued\)\}건 뒤쪽/);
+  assert.match(page, /\$\{CAND_NAME\}은 간단 보기\(번호가 있는 사업 뒤\)/, '풀어 쓴 안내는 목록 머리 줄 title');
   /* 실제 자료: 수도권 + 장기 지연 + ⑤준공 은 비고, 상태·단계를 풀면 사업이 있다 */
   const f = { metro: true, status: 'long', stage: 4 };
   assert.equal(V.applyFilters(rows, f).length, 0);
@@ -132,7 +133,7 @@ test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들�
   const files = ['components/projects/ProjectDetail.tsx', 'components/region/Ahead.tsx', 'app/(dashboard)/agency/[id]/page.tsx'];
   for (const f of files) {
     const s = read(f);
-    assert.match(s, /import \{ mapHref \} from '[./]+lib\/board\/map-href'/, f);
+    assert.match(s, /import \{ mapHref \} from '@\/lib\/board\/map-href'/, f);
     assert.doesNotMatch(s, /`\/map\?(project|sgg)=/, `${f}: 지도 주소를 직접 쓰지 않는다`);
   }
   const det = read('components/projects/ProjectDetail.tsx');
@@ -141,7 +142,7 @@ test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들�
   assert.doesNotMatch(det, />기반시설 점검</);
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(read('lib/board/projects-list.ts'), /if \(!isMetro\(r\.sgg\)\) return null;[\s\S]*return noLoc[\s\S]*\{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
-  assert.match(page, /import \{ mapHref, mapScopeHref \} from '[./]+lib\/board\/map-href'/);   // mapHref = 서랍의 '지도로 돌아가기'(from=map)
+  assert.match(page, /import \{ mapHref, mapScopeHref \} from '@\/lib\/board\/map-href'/);   // mapHref = 서랍의 '지도로 돌아가기'(from=map)
   assert.doesNotMatch(page, /`\/map\?|: '\/map'/, '지도 주소는 map-href 한 곳');
   const grid = read('components/ui/data-grid.tsx');
   assert.match(grid, /o\.doc \? <a href=\{o\.href\}/);

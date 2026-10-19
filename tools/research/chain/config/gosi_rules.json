@@ -1,0 +1,297 @@
+{
+ "description": "토지이음 고시 조회·대조 규칙(정책 무관). tools/research/chain/gosi.py 가 읽는다. 사업 속성(지구·블록·이름) → 고시 제목 검색어, 고시 종류 → 단계, 최초/변경 구분, HOME 값 대조, 미도달 판단 범위를 여기서 정한다. 정책 id·사업명·지명은 쓰지 않는다.",
+ "source": {
+  "label": "토지이음 고시정보",
+  "org": "국토교통부(토지이음, 고시는 각 기관 입력)",
+  "list_url": "https://www.eum.go.kr/web/gs/gv/gvGosiList.jsp",
+  "detail_url": "https://www.eum.go.kr/web/gs/gv/gvGosiDet.jsp",
+  "download_url": "https://www.eum.go.kr/web/FileDownload.do",
+  "encoding": "cp949",
+  "list_params": {
+   "pageNo": "{page}",
+   "zonenm": "{query}",
+   "listSize": "{page_size}"
+  },
+  "list_params_note": "목록 화면 form#frmGosi 의 POST(action gvGosiList.jsp). zonenm = 고시제목 검색어(제목 부분 문자열, 공백도 글자로 본다). 글은 EUC-KR(cp949)로 보낸다. 화면 아래 '다음목록' 고리는 결과가 끝나도 늘 있어서 쪽 행 수가 page_size 보다 적으면 끝으로 본다.",
+  "detail_params": {
+   "seq": "{seq}"
+  },
+  "download_params": {
+   "file": "{file}",
+   "gosi": "Y",
+   "seq": "{seq}"
+  },
+  "download_note": "상세 화면 download(url, file) 과 같은 POST(form frm: file·gosi=Y·seq)",
+  "page_size": 50,
+  "max_pages": 10,
+  "delay_sec": 1.2,
+  "request_budget": 560,
+  "request_budget_note": "한 번 실행의 새 요청 한도(사람이 정한 상한 600 에서 수동 확인 요청 몫을 뺌). 한도에 닿으면 남은 질의·상세·첨부는 받지 않고 그 사업은 UNVERIFIED(사유 기록)",
+  "timeout_sec": 40,
+  "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+  "list_marker": "gvGosiDet.jsp?seq=",
+  "list_empty_marker": "tbl02",
+  "detail_marker": "컨텐츠 내용",
+  "coverage": "토지이음 등재 고시 전체(고시일 기간 조건 없음)"
+ },
+ "store": {
+  "subdir": "원본/web/gosi",
+  "cache_subdir": "_cache",
+  "manifest": "원본/web/manifest.json",
+  "key_prefix": "u1_",
+  "method": "HTTP(tools/research/chain/gosi.py, 로그인 없음)",
+  "report_md": "03.인허가/고시대조.md"
+ },
+ "targets": {
+  "fields": {
+   "stage_02": "02",
+   "stage_03": "03"
+  },
+  "verdicts": [
+   "UNVERIFIED"
+  ],
+  "skip_note_regex": "파생",
+  "order_review_csv": "review_stage_order.csv",
+  "order_subject_col": "subject_id",
+  "order_stage_col": "단계",
+  "ledger_projects": "schemas/ledger-2026-10/tables/projects.json",
+  "note": "대상 = evidence.jsonl 의 projects 행 중 field 가 stage_02·stage_03 이고 verdict UNVERIFIED 인 항목(notes 에 '파생' 이 든 행 제외) + 단계 순서 모순 목록(review_stage_order.csv)의 사업·단계. 원장(projects.json)에 없는 사업 id(HOME:…)는 evidence 를 만들지 않고 고시대조.md 목록에만 둔다.",
+  "order_note": "단계 순서 모순 목록의 02·03 행은 대상에 넣고, 다른 단계 행(04 등)은 고시로 풀 수 없어 고시대조.md 표에 '남음(고시 대상 단계 아님)'으로만 둔다."
+ },
+ "queries": {
+  "min_len": 2,
+  "max_per_subject": 3,
+  "name_split_regex": "[\\s()\\[\\]（）·,]+",
+  "min_token_len": 3,
+  "strip_suffix_regex": "(?<=\\d)구역$",
+  "stop_tokens": [
+   "복합개발",
+   "유휴부지",
+   "노후청사",
+   "공공주택지구",
+   "공공주택",
+   "공공분양",
+   "행복주택",
+   "재건축",
+   "재개발",
+   "아파트",
+   "건설공사",
+   "민간참여",
+   "공공주택건설사업",
+   "주거환경개선사업",
+   "조달청",
+   "도심공공복합",
+   "이전부지",
+   "업무용지",
+   "우체국",
+   "세무서",
+   "경찰서",
+   "복합청사",
+   "주민센터",
+   "근린공원"
+  ],
+  "admin_token_regex": "^[가-힣0-9]+(동|구|시|군|읍|면|리)$",
+  "admin_note": "행정 구역 이름만인 낱말(…동·…구)은 결과가 많고 사업을 가리키지 않아 검색어로 쓰지 않는다.",
+  "stop_note": "이름을 낱말로 나눠 고시제목 검색어를 만든다. 사업 유형·시설 이름 같은 일반 낱말은 검색어로 쓰지 않는다(결과가 많고 다른 사업이 섞인다). 대조(게이트)는 낱말이 아니라 사업 이름 전체 변형(stage_sources independent.keys 의 name_variants)으로 한다.",
+  "name_district_regex": "([가-힣]+\\d*)\\s*$",
+  "name_district_note": "블록 키 사업은 지구 기본명(split_district) 과 함께, 사업 이름에서 블록 표기 바로 앞의 한글 지명(예: '…지구명 A-1BL …' 의 '지구명')도 검색어·게이트 지구명으로 쓴다(지구 칸이 고시 제목 표기와 다른 경우).",
+  "name_block_suffix_regex": "\\s*(BL|블록|블럭)",
+  "hangul_block_note": "이름에서 읽은 블록(stage_sources independent.keys.name_site_regex)에 한글이 있으면(예: …2 지구명) 블록이 아니라 이름으로 본다(이름 키).",
+  "max_pages_name": 2,
+  "max_pages_name_note": "이름 낱말 질의는 앞 2쪽(100건)까지만 받는다. 넘으면 결과 일부만 본 것으로 기록(미도달 판단에 쓰지 않음). 지구 질의는 source.max_pages."
+ },
+ "kinds": [
+  {
+   "id": "CANCEL",
+   "stage": null,
+   "label": "승인 취소·지정 해제",
+   "title_regex": "취소|해제|폐지"
+  },
+  {
+   "id": "NOT_DECISION",
+   "stage": null,
+   "label": "신청·공람·의견청취(처분 아님)",
+   "title_regex": "신청|공람|열람|의견\\s*청취"
+  },
+  {
+   "id": "COMPLEX_PLAN_APPROVAL",
+   "stage": "03",
+   "label": "도심 공공주택 복합사업계획 승인",
+   "scope": "block",
+   "title_regex": "복합사업\\s*계획\\s*(변경\\s*)?(\\(\\d+차\\)\\s*)?승인"
+  },
+  {
+   "id": "HOUSING_PLAN_APPROVAL",
+   "stage": "03",
+   "label": "주택건설사업계획 승인",
+   "scope": "block",
+   "title_regex": "사업\\s*계획\\s*(변경\\s*)?승인|사업계획승인"
+  },
+  {
+   "id": "COMPLEX_DISTRICT",
+   "stage": "02",
+   "label": "도심 공공주택 복합지구 지정",
+   "scope": "district",
+   "title_regex": "복합\\s*지구\\s*(의\\s*)?(지정|변경)"
+  },
+  {
+   "id": "DISTRICT_DESIGNATION",
+   "stage": "02",
+   "label": "공공주택지구·택지개발지구 지정",
+   "scope": "district",
+   "title_regex": "(공공주택|택지개발|보금자리주택)(예정)?\\s*지구\\s*(지구\\s*)?(의\\s*)?(지정|변경)"
+  },
+  {
+   "id": "DISTRICT_PLAN",
+   "stage": "02",
+   "label": "지구계획 승인",
+   "scope": "district",
+   "title_regex": "지구\\s*계획.{0,24}승인"
+  },
+  {
+   "id": "REDEVELOPMENT_ZONE",
+   "stage": "02",
+   "label": "정비구역 지정",
+   "scope": "district",
+   "title_regex": "정비\\s*구역.{0,6}(지정|변경)"
+  }
+ ],
+ "kinds_note": "고시 제목에 첫 번째로 맞는 종류(위에서 아래 순서). stage null 은 근거로 쓰지 않고 비고에만 남긴다. scope block = 블록(또는 이름) 단위 고시라 지구+블록 게이트, district = 지구 단위 고시라 지구명 게이트(블록 없음). COMPLEX_PLAN_APPROVAL 은 도심 공공주택 복합사업의 사업계획승인(공공주택 특별법)이라 03 으로 본다(요청 목록 밖 추가).",
+ "program_kinds": [
+  {
+   "program_regex": "도심\\s*공공\\s*주택\\s*복합|도심\\s*공공\\s*복합",
+   "kinds": [
+    "COMPLEX_DISTRICT",
+    "COMPLEX_PLAN_APPROVAL"
+   ]
+  },
+  {
+   "program_regex": "재건축|재개발|정비",
+   "kinds": [
+    "REDEVELOPMENT_ZONE",
+    "HOUSING_PLAN_APPROVAL"
+   ]
+  },
+  {
+   "program_regex": "공공주택지구|신도시|공공택지|택지|공공주택\\s*건설|공공\\s*임대|공공분양",
+   "kinds": [
+    "DISTRICT_DESIGNATION",
+    "DISTRICT_PLAN",
+    "HOUSING_PLAN_APPROVAL"
+   ]
+  }
+ ],
+ "program_kinds_note": "HOME 사업 레코드의 program 이 첫 번째로 맞는 줄의 고시 종류만 그 사업 근거로 쓴다(예: 도심 공공주택 복합사업에 같은 역 이름의 재개발 정비구역 고시가 붙지 않게). 어느 줄에도 맞지 않으면 모든 종류.",
+ "change": {
+  "head_end_regex": "고시합니다|고시한다|공고합니다",
+  "head_max": 600,
+  "verb_regex": "(승인|지정|인가)",
+  "change_before_regex": "변경(\\d+차)?(을|를|하여|하고)?$",
+  "change_after_regex": "^변경",
+  "title_change_regex": "변경",
+  "note": "최초/변경 구분은 고시문의 첫 고시 문장('…고시합니다' 앞, 공백·괄호 무시)에서 마지막 처분 낱말(승인·지정·인가)로 정한다. 바로 앞이 '변경'(또는 '변경N차')이거나 바로 뒤가 '변경'이면 변경, 아니면 최초(문장 앞쪽의 '…변경 승인 고시된 지구에 대하여' 같은 앞 고시 인용은 보지 않는다). 읽는 순서: 첨부 고시문(PDF·HWPX, 관보·기관 원문) → 상세 HTML 의 컨텐츠 내용(기관이 게시판에 옮겨 적은 글) → 제목. 첨부가 원문이라 먼저 쓰고, 둘이 다르면 근거 칸에 적는다(예: 제목·게시 본문은 '승인'인데 고시문은 '변경승인'). HWP 첨부는 글을 읽지 않는다."
+ },
+ "attachments": {
+  "exts": [
+   "pdf",
+   "hwpx",
+   "hwp"
+  ],
+  "skip_regex": "도면|고시도|지형도|위치도|조서|\\.(jpg|jpeg|png|gif|zip)$",
+  "prefer_regex": "고시",
+  "max_per_gosi": 1,
+  "pdf_pages": 2,
+  "text_exts": [
+   "pdf",
+   "hwpx"
+  ],
+  "note": "고시문으로 보이는 첨부 1개만 받는다(도면·조서 제외, 이름에 '고시' 든 것 먼저). HWP 는 받기만 하고 글은 상세 HTML 본문을 쓴다."
+ },
+ "fetch_policy": {
+  "02_per_kind": "earliest",
+  "03": "all",
+  "note": "02 는 사업·종류마다 고시일이 가장 이른 것(최초 지정·승인) 하나만 상세를 받는다(변경 차수는 목록 값만 비고에). 03 은 게이트를 지난 고시 모두(최초·변경)."
+ },
+ "region": {
+  "sido_prefixes": [
+   "서울",
+   "부산",
+   "대구",
+   "인천",
+   "광주",
+   "대전",
+   "울산",
+   "세종",
+   "경기",
+   "강원",
+   "충청북",
+   "충북",
+   "충청남",
+   "충남",
+   "전북",
+   "전라북",
+   "전남",
+   "전라남",
+   "경상북",
+   "경북",
+   "경상남",
+   "경남",
+   "제주"
+  ],
+  "note": "고시번호 앞 기관(…고시 제…호 앞) 또는 담당기관이 시도 이름으로 시작하면 사업 지역(HOME region) 첫 두 글자와 같아야 한다. 국토교통부 등 중앙 기관은 거르지 않는다."
+ },
+ "home_compare": {
+  "03": {
+   "fact_milestones": {
+    "INITIAL_APPROVAL": "최초",
+    "APPROVAL": "최초",
+    "AMENDED_APPROVAL": "변경",
+    "CHANGE_APPROVAL": "변경"
+   },
+   "exclude_event_types": [
+    "사업시행인가"
+   ],
+   "stage_evidence_events": {
+    "PERMIT": [
+     "최초",
+     "승인일"
+    ],
+    "AMENDED_APPROVAL": [
+     "변경",
+     "고시일"
+    ]
+   },
+   "fact_date_kind": "고시일"
+  },
+  "02": {
+   "fact_milestones": {},
+   "exclude_event_types": [
+    "조합설립인가"
+   ],
+   "stage_evidence_events": {},
+   "fact_date_kind": "고시일"
+  },
+  "date_tolerance_days": {
+   "고시일": 0,
+   "승인일": 14
+  },
+  "note": "HOME 값 = 덤프 evidence_bridge·document_evidence 의 단계 사실(ACTUAL) + stage_evidence 선택 사건일. 같은 날(승인일은 고시일보다 14일 안쪽 앞)이면 구분까지 대조(다르면 MISMATCH), 같은 구분 HOME 값이 있는데 날짜가 다르면 MISMATCH, 비교할 HOME 값이 없으면 SOURCED. 02 의 HOME 사실은 조합설립인가뿐이라 고시와 비교하지 않는다."
+ },
+ "absent": {
+  "03": {
+   "key": "block",
+   "need_district_seen": true
+  },
+  "02": null,
+  "note": "고시를 하나도 못 찾았을 때 ABSENT_CONFIRMED 는 03 · 블록 키 사업만: 지구명 질의 결과를 끝까지 받았고(max_pages 안), 그 결과에 같은 지구 고시가 1건 이상 있어(지구 표기가 고시 제목과 맞음) 블록 고시가 없을 때. 다른 원천에 그 단계·뒤 단계 근거가 있거나 단계 순서 모순 대상이면 미도달로 두지 않는다. 이름 키 사업·02(지구 지정이 토지이음 등재 전일 수 있음)는 못 찾으면 UNVERIFIED."
+ },
+ "positive_verdicts": [
+  "MATCH",
+  "MISMATCH",
+  "SOURCED"
+ ],
+ "muni_check": {
+  "muni_regex": "^([가-힣]{2,})(시|군|구)?$",
+  "note": "이름 키 사업은 상세(제목·본문·담당기관·첨부 글)에 사업의 시군구 이름(HOME municipality, 끝의 시·군·구를 뗀 것)이 있어야 한다(같은 시설 이름의 다른 지역 고시를 막음). municipality 가 시군구 이름 꼴이 아니면(확인 필요 등) 보지 않는다."
+ }
+}

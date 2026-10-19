@@ -143,7 +143,7 @@ function makeSearch(D) {
   }
   return { search, regions, regionOf, projects, stat, SIDO_SHORT };
 }
-/* 앞으로 들어올 집(진행 사업 호수): 리본 칸 ①~④(원장 단계 01~05). lib/board/metro-overview.ts 의 u 와 같은 정의 */
+/* 공급 예정 호수(진행 사업 호수): 리본 칸 ①~④(원장 단계 01~05). lib/board/metro-overview.ts 의 u 와 같은 정의 */
 const OF_STAGE = { 1: 0, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4 };
 function sumOf(D, codes) {
   const st = [0, 0, 0, 0]; let u = 0, n = 0;

@@ -1,0 +1,890 @@
+{
+  "description": "설명자료 HTML(docs/speech/research/조사결과_설명자료.html)의 구성 문구. explain.py 가 읽는다. 정책 id·수치는 넣지 않는다(수치는 파이프라인 출력에서 읽는다). open_items 는 메인이 채운다.",
+  "output": "docs/speech/research/조사결과_설명자료.html",
+  "title": "정책 → 입주 원천 조사 결과",
+  "subtitle": "정책 발표문에서 시작해 프로그램, 사업, 인허가·착공·공급·입주 6단계까지 원천 문서로 확인한 결과를 파이프라인 출력에서 그대로 읽어 만들었습니다. 기준일 {checked_at}. 이 문서의 수치는 모두 파일에서 읽으며 손으로 쓴 수치는 없습니다.",
+  "target_pct": 90,
+  "stage_names": {
+    "01": "정책",
+    "02": "사업화",
+    "03": "인허가",
+    "04": "건설",
+    "05": "공급",
+    "06": "입주"
+  },
+  "conclusion": {
+    "all_met": "정책 {n}개 모두 M1 목표(확인률 {t}% 이상)를 세 기준에서 모두 달성했습니다.",
+    "mixed": "M1 목표(확인률 {t}% 이상, 정책별)는 정책 {n}개 중 {met}개만 세 기준에서 모두 달성했고 {miss}개는 미달입니다.",
+    "none_met": "M1 목표(확인률 {t}% 이상, 정책별)는 정책 {n}개 중 달성한 곳이 없습니다.",
+    "no_data": "M1 을 계산할 입력(evidence 또는 품질 리포트)이 아직 없습니다.",
+    "basis_note": "달성은 세 기준(미도달 포함 · 파생 미도달 제외 · 미도달 제외)이 모두 목표 이상일 때만 셉니다. 미도달 포함 기준만으로는 {inc_met}개가 목표 이상입니다.",
+    "bullets": [
+      "분모는 세 기준 모두 같은 전체 항목 수입니다. 항목은 evidence 의 (subject_table, subject_id, field) 하나입니다.",
+      "'미도달 확인'은 원천을 찾아봐도 기록이 없음을 확인한 것입니다. 앞 단계가 도달하지 않았다고 이어서 판단한 '파생 미도달'(basis RULE)은 직접 확인이 아니므로 따로 뺀 값을 함께 보입니다.",
+      "원천에 근거가 없다고 확인된 항목(NOT_IN_SOURCE)은 확인됨으로 세지만 품질 문제로 따로 남깁니다."
+    ]
+  },
+  "sections": {
+    "s1": {
+      "title": "1. 사슬 한눈에",
+      "note": "상자 오른쪽 숫자는 그 단계의 확인된 항목 수와 전체 항목 수입니다(미도달 포함 기준). 막대는 미도달을 뺀 확인률이고, 아래 글에 세 기준을 함께 적었습니다."
+    },
+    "s2": {
+      "title": "2. 원천과 작성 주체",
+      "note": "단계별 원천마다 ① 업무 주체(법에 따라 그 일을 하는 기관), ② 입력처(결과를 시스템에 처음 입력하는 곳), ③ 공개 부서(데이터를 포털·누리집에 올리고 관리하는 부서)를 원문 표기로 확인했습니다. 개인 이름·연락처는 옮기지 않았습니다."
+    },
+    "s3": {
+      "title": "3. 품질 지표",
+      "note": "M1 원천 확인률, M2 출처 목록 완전성, M3 표본 정확도, M4 누락 검증입니다. 정의는 부록에 있습니다."
+    },
+    "s4": {
+      "title": "4. 주요 발견과 HOME 수정 제안",
+      "note": "원문과 HOME 값이 다르거나 원문 근거가 없는 항목입니다. 사업 id 는 HOME 레코드 id 이고, 원천 위치는 파일 이름만 적었습니다."
+    },
+    "s5": {
+      "title": "5. 수집 파이프라인",
+      "note": "정책에 무관한 단계 구조입니다. 정책은 설정 파일로만 들어옵니다."
+    },
+    "s6": {
+      "title": "6. 데이터셋 구조",
+      "note": "프로젝트 원장 형식(ledger/1)에 source_documents 와 evidence 두 표를 더하고, 나머지는 기존 표를 씁니다."
+    },
+    "s7": {
+      "title": "7. 수집항목과 원천 사이트",
+      "note": "팀 수집 관리표와 우리 수집 결과를 양방향으로 대조한 결과입니다."
+    },
+    "s8": {
+      "title": "8. 남은 것과 결정할 것",
+      "note": ""
+    },
+    "appendix": {
+      "title": "부록 · 측정 정의와 재현"
+    }
+  },
+  "missing_text": "아직 없음",
+  "open_items_empty": "메인 정리 예정",
+  "open_items": [],
+  "measure_defs": [
+    [
+      "미도달 포함",
+      "확인된 항목 / 전체 항목. 확인됨 = 그 항목의 evidence 중 하나라도 verdict 가 MATCH · MISMATCH · SOURCED · NOT_IN_SOURCE · ABSENT_CONFIRMED 이고 basis 가 EXISTENCE 가 아님."
+    ],
+    [
+      "파생 미도달 제외",
+      "위에서 파생 미도달(verdict ABSENT_CONFIRMED 이고 basis RULE: 선행 단계 미도달에서 이어서 판단한 것)로만 확인된 항목을 뺀 값. 분모는 같음."
+    ],
+    [
+      "미도달 제외",
+      "ABSENT_CONFIRMED 로만 확인된 항목을 모두 뺀 값. 분모는 같음."
+    ]
+  ],
+  "repro_commands": [
+    "python3 tools/research/chain/pipeline.py"
+  ],
+  "key_files": [
+    [
+      "tools/research/chain/",
+      "파이프라인 코드"
+    ],
+    [
+      "tools/research/chain/config/",
+      "정책·원천·규칙 설정(정책 목록 policies.json, 단계 원천 stage_sources.json, 이 문서의 문구 explain.json)"
+    ],
+    [
+      "docs/speech/research/파이프라인_설계.md",
+      "지표·단계·설정·데이터셋 구조의 계약"
+    ],
+    [
+      "docs/speech/research/품질_리포트.csv",
+      "M1~M4 리포트"
+    ],
+    [
+      "docs/speech/research/dataset/",
+      "원장 형식 최종 표(source_documents · evidence · policies · programs · policy_targets · links)"
+    ],
+    [
+      "docs/speech/research/dataset/_work/",
+      "정책별 중간 출력(evidence*.jsonl · gaps.jsonl · report.json)"
+    ],
+    [
+      "docs/speech/research/README.md",
+      "정책별 사슬·집계·주요 불일치"
+    ]
+  ],
+  "deck": {
+    "output": "docs/speech/research/조사결과_발표.html",
+    "page_title": "정책에서 입주까지, 원천에서 표준으로",
+    "org_alias": [
+      [
+        "한국토지주택공사",
+        "LH"
+      ],
+      [
+        "주택도시보증공사",
+        "HUG"
+      ],
+      [
+        "서울주택도시개발공사",
+        "SH"
+      ],
+      [
+        "서울주택도시공사",
+        "SH"
+      ],
+      [
+        "경기주택도시공사",
+        "GH"
+      ],
+      [
+        "인천도시공사",
+        "iH"
+      ],
+      [
+        "한국부동산원",
+        "부동산원"
+      ],
+      [
+        "국토교통부",
+        "국토부"
+      ],
+      [
+        "기획재정부",
+        "기재부"
+      ],
+      [
+        "재정경제부",
+        "재경부"
+      ]
+    ],
+    "alias_note": "약칭: {pairs}",
+    "cover": {
+      "kicker": "SHEET 01 · 데이터 원천과 표준화",
+      "brand": "주택공급 상황판 · 정책 → 입주 원천 조사",
+      "title": [
+        "정책에서 입주까지,",
+        "원천에서 표준으로"
+      ],
+      "rows": [
+        [
+          "도면명",
+          "데이터의 원천 → 표준화"
+        ],
+        [
+          "기준일",
+          "{checked_at}"
+        ],
+        [
+          "범위",
+          "정책 {n}개({names}), {stages}단계({first}→{last})"
+        ]
+      ]
+    },
+    "acts": {
+      "0": "한눈에 보기",
+      "1": "① 흩어진 원천",
+      "2": "② 수집",
+      "3": "③ 표준 데이터셋",
+      "4": "④ 원천 기준 표준화",
+      "5": "마무리",
+      "a": "부록"
+    },
+    "titles": {
+      "overview": "문서 {docs}건을 모아 표준 표 {tables}개로 정리하고 원문과 대조했다",
+      "s2": "원천 {rows}개 중 {diff}개는 일하는 기관과 공개하는 곳이 다르다",
+      "s3": "원천 사이트 {sites}곳, 형식 {fmts}가지 — 기관 공통 사업 번호는 없다",
+      "s4": "정책 발표부터 입주예정까지 문서 {docs}건을 {methods}가지 방법으로 모았다",
+      "s5": "모은 문서의 {pct}가 비정형 — 원문에 글자 그대로 있는 값만 받았다",
+      "s6": "모은 문서와 대조 결과를 표준 표 {tables}개로 정리했다",
+      "s7": "사업 하나를 정책에서 입주까지 {total}단계 중 {n}단계 원천 문서로 따라갔다",
+      "s8": "항목 {n}종마다 기준 원천을 정하고, 표준 데이터셋에는 원문 값을 넣는다",
+      "s9_some": "원천 확인률 {range} — 목표 {t}%는 {names}만 달성",
+      "s9_all": "원천 확인률 {range} — 정책 {n}개 모두 목표 {t}% 달성",
+      "s9_none": "원천 확인률 {range} — 목표 {t}%를 넘은 정책은 아직 없다",
+      "s10": "HOME 값 {mm}건이 원문과 달랐다 — 고칠 점 {ex}건을 제안한다",
+      "s11": "새 정책은 설정에 한 줄만 더한다 — 코드 안의 정책 값 {hits}건",
+      "a1": "측정 정의와 정책별 세 기준 수치",
+      "a2": "용어 풀이 · 다시 만드는 방법 · 상세 문서",
+      "missing": "{label} — 입력이 아직 없음"
+    },
+    "leads": {
+      "overview": "오늘 이야기는 네 막: 흩어진 원천 → 수집 → 표준 데이터셋 → 원천 기준 표준화",
+      "s2": "같은 사업 정보라도 ① 일하는 기관, ② 입력하는 곳, ③ 공개하는 곳이 단계마다 다르다",
+      "s3": "같은 정책·사업 자료가 여러 사이트·기관·형식에 흩어져 있고, 서로 잇는 공통 번호가 없다",
+      "s4": "정책 발표부터 입주예정까지, 단계마다 다른 원천에서 원문을 모았다",
+      "s5": "한글·PDF·웹페이지처럼 표가 아닌 문서가 대부분이라, 값마다 원문 위치를 확인했다",
+      "s6": "문서 목록과 원천 대조 기록을 기존 사업 원장 표와 같은 형식으로 묶었다",
+      "s7": "한 사업의 단계별 값이 어느 기관의 어느 문서에서 왔는지 한 줄씩 보인다",
+      "s8": "항목마다 믿을 원천(기준 원천)을 하나 정해 두고, 그 원문 값과 대조했다",
+      "s9": "원천 확인 = 항목 값을 원 문서에서 찾아 같음·다름·원문에 없음·아직 단계 전 중 하나로 판정한 것",
+      "s10": "HOME(기존 상황판 입력값)을 원문과 대조해 다른 값과 고칠 점을 찾았다",
+      "s11": "정책이 늘어도 같은 순서로 처리하고, 정책 값은 설정 파일에만 둔다",
+      "a1": "발표 수치의 정의와, 정책마다 세 기준으로 다시 센 값",
+      "a2": "판정 코드와 용어의 뜻, 이 덱을 다시 만드는 명령"
+    },
+    "overview": {
+      "cards": [
+        {
+          "act": "1",
+          "bigs": [
+            [
+              "{sites}곳",
+              "원천 사이트"
+            ],
+            [
+              "{orgs}곳",
+              "제공 기관"
+            ]
+          ],
+          "line": "정책·사업 자료가 기관마다 다른 사이트에 흩어져 있다"
+        },
+        {
+          "act": "2",
+          "bigs": [
+            [
+              "{docs}건",
+              "수집 문서"
+            ],
+            [
+              "{upct}",
+              "비정형(한글·PDF·웹페이지)"
+            ]
+          ],
+          "line": "원문 파일을 그대로 받아 두고 값의 위치를 기록했다"
+        },
+        {
+          "act": "3",
+          "bigs": [
+            [
+              "{tables}개",
+              "표준 표"
+            ]
+          ],
+          "line": "문서 목록·원천 대조 기록 {extra}개 + 사업 원장 표 {ledger}개"
+        },
+        {
+          "act": "4",
+          "bigs": [
+            [
+              "{range}",
+              "원천 확인률"
+            ],
+            [
+              "{mm}건",
+              "HOME(기존 상황판 입력값)과 다른 값"
+            ]
+          ],
+          "line": "원문을 기준으로 삼아 기존 입력값을 바로잡는다"
+        }
+      ]
+    },
+    "closing": {
+      "title": [
+        "원천기관이 공통 ID와 정본 칸을",
+        "처음부터 내면, 사후 대조가 줄어든다."
+      ],
+      "lead": "AI로 연결해 본 지금, 이제는 처음부터 연결되는 행정 데이터 구조를 만들자. 정책·프로그램·사업·단계 사건의 공통 ID를 담당기관이 관리하고 API가 그 ID와 원천 위치를 함께 전달한다.",
+      "ref": "docs/speech/발표자료용.md.md 최종 제안"
+    },
+    "s2": {
+      "cols": [
+        "단계",
+        "① 일하는 기관",
+        "② 입력하는 곳",
+        "③ 공개하는 곳"
+      ],
+      "none": "①과 같음",
+      "diff_label": "다름",
+      "note": "금색 칸: ③에 ①과 다른 기관이 나옴 · 단계 아래: ①·③이 다른 원천 수/전체 · 칸마다 많이 나온 기관 2곳"
+    },
+    "s3": {
+      "labels": {
+        "sites": "원천 사이트",
+        "orgs": "제공 기관",
+        "formats": "문서 형식",
+        "ids": "기관 공통 사업 번호",
+        "press": "같은 정책, 부처별 보도자료",
+        "dept": "같은 일, 과 이름"
+      },
+      "sites_sub": "팀 관리표 {listed}곳 + 새로 찾은 {ours}곳, 같은 주소 {merged}곳 합침",
+      "orgs_sub": "원천 사이트를 내는 기관 이름 가짓수",
+      "formats_sub": "수집 문서 {docs}건의 파일 형식",
+      "ids_big": "없음",
+      "ids_sub": "연계 항목 {n}개 중 같음 {same} · 일부 {part} · 없음 {none}",
+      "press_big": "{n}개",
+      "quote_file": "참고/단계별_담당기관_부서_20261017.md",
+      "quote_pattern": "[^.\\n]*?\\d+가지 가까이[^(\\n.]*"
+    },
+    "s4": {
+      "stage_kinds": {
+        "01": "보도자료·안건",
+        "02": "지구 지정 고시·공급계획",
+        "03": "승인 고시·인허가 자료",
+        "04": "건설 현황 자료",
+        "05": "모집공고·첨부파일",
+        "06": "입주예정 물량"
+      },
+      "unit": "건",
+      "overlap_note": "문서 하나가 여러 단계에 쓰이면 단계마다 셉니다(여러 단계에 걸친 문서 {multi}건, 단계 합계 {sum}건).",
+      "methods_note": "수집 방법별 문서 수(전체 {docs}건)",
+      "methods": {
+        "EGO_LITE": "브라우저 자동 수집",
+        "HTTP": "웹 요청",
+        "EXA_CONTENTS": "Exa 본문 받기",
+        "EXA_SEARCH": "Exa 검색",
+        "API": "API 요청",
+        "REPO_RAW": "기존 원장 자료",
+        "HOME_DUMP": "HOME 자료"
+      }
+    },
+    "s5": {
+      "unstructured": [
+        "PDF",
+        "HWP",
+        "HWPX",
+        "HTML",
+        "DOCX"
+      ],
+      "formats": {
+        "HWP": "한글(HWP)",
+        "HTML": "웹페이지",
+        "JSON": "API 응답",
+        "PDF": "PDF",
+        "HWPX": "한글(HWPX)",
+        "DOCX": "워드"
+      },
+      "formats_note": "파일 형식별 문서 수(전체 {docs}건)",
+      "gate": "원문 확인 규칙: 뽑아낸 값이 원 파일에 글자 그대로 있고 몇 쪽인지 기록돼야 받는다.",
+      "cards": {
+        "dup": "중복 문서",
+        "dup_sub": "같은 주소 {u}건 · 같은 파일 내용 {s}건",
+        "inventory": "팀 관리표 항목",
+        "inventory_sub": "겹친 항목을 합친 수",
+        "attach": "첨부파일 목록 등록",
+        "attach_sub": "게시물 첨부파일 중 문서 목록에 오른 비율",
+        "saved": "대조에 쓴 문서 원본 보존",
+        "saved_sub": "원천 대조에 쓴 문서 중 원 파일을 보관한 비율"
+      }
+    },
+    "s6": {
+      "ledger_tables": [
+        "policies",
+        "programs",
+        "policy_targets",
+        "links",
+        "projects"
+      ],
+      "names": {
+        "source_documents": "문서 목록",
+        "evidence": "원천 대조 기록",
+        "policies": "정책",
+        "programs": "프로그램",
+        "policy_targets": "정책 목표",
+        "links": "연결",
+        "projects": "사업"
+      },
+      "ledger_dir": "schemas/ledger-2026-10/tables",
+      "schema_dir": "schemas/ledger",
+      "doc_note": "모은 문서 하나에 한 줄",
+      "ev_note": "항목 하나를 원문 하나와 대조한 기록",
+      "doc_unit": "건",
+      "row_unit": "개",
+      "proj_note": "사업 표 {all}개는 기존 사업 원장 전체이고, 이번 대조에 쓰인 사업은 {used}개다.",
+      "validate_ok": "표 형식 검사 통과",
+      "validate_fail": "표 형식 검사 실패",
+      "validate_na": "표 형식 검사 확인 못 함",
+      "validate_hint": "검사 도구 없음"
+    },
+    "s7": {
+      "example_policy_index": 0,
+      "rule": "사례 선정 규칙: 원문에서 값을 찾은 단계가 가장 많고, 독립 원천 근거가 많은 사업. 같으면 사업 번호 순.",
+      "cols": [
+        "단계",
+        "확인한 값",
+        "원천 문서",
+        "만든 기관"
+      ],
+      "max_parts": 2,
+      "doc_names": {
+        "getAPTLttotPblancDetail": "청약홈 분양정보 상세",
+        "notices": "LH 공고 목록",
+        "details": "LH 공고 상세"
+      },
+      "doc_types": {
+        "PRESS_RELEASE": "보도자료",
+        "AGENDA": "안건",
+        "BRIEFING": "브리핑",
+        "CLARIFICATION": "해명자료",
+        "GOSI": "고시",
+        "RECRUIT_NOTICE": "모집공고",
+        "NOTICE_ATTACHMENT": "공고 첨부파일",
+        "API_RESPONSE": "API 응답",
+        "DATA_FILE": "공공데이터 파일",
+        "WEB_PAGE": "웹페이지",
+        "PLAN_LIST": "계획 목록",
+        "REPORT": "보고서",
+        "OTHER": "원 문서"
+      }
+    },
+    "s8": {
+      "principle": "표준 데이터셋에는 원문 값을 넣고, HOME 값은 비교용 칸에 따로 남긴다.",
+      "cols": [
+        "항목",
+        "기준 원천",
+        "만드는 기관",
+        "대조 기록 수"
+      ],
+      "unit": "건",
+      "rows": [
+        {
+          "item": "정책 목표·프로그램",
+          "source": "정책 원문(안건·보도자료)",
+          "stage": "01",
+          "match": [
+            "안건"
+          ]
+        },
+        {
+          "item": "사업화",
+          "source": "지구 지정·복합지구 고시, LH 공급계획",
+          "stage": "02",
+          "match": [
+            "지구 지정",
+            "공급계획"
+          ]
+        },
+        {
+          "item": "사업계획승인",
+          "source": "승인권자 고시문, 건축HUB 주택인허가",
+          "stage": "03",
+          "match": [
+            "고시",
+            "건축HUB"
+          ]
+        },
+        {
+          "item": "착공·준공",
+          "source": "건축HUB, LH 건설공사현황",
+          "stage": "04",
+          "match": [
+            "건축HUB",
+            "건설공사현황"
+          ]
+        },
+        {
+          "item": "공고",
+          "source": "LH 공고·청약홈·SH·GH·iH",
+          "stage": "05",
+          "match": [
+            "공고",
+            "청약홈"
+          ]
+        },
+        {
+          "item": "입주예정",
+          "source": "부동산원 입주예정물량, 공고문",
+          "stage": "06",
+          "match": [
+            "입주예정",
+            "공급계획"
+          ]
+        }
+      ]
+    },
+    "s9": {
+      "verdicts": [
+        [
+          "MATCH",
+          "같음",
+          "HOME 값과 원문이 같다"
+        ],
+        [
+          "MISMATCH",
+          "다름",
+          "HOME 값과 원문이 다르다"
+        ],
+        [
+          "SOURCED",
+          "원천에서 직접 수집",
+          "비교할 HOME 값 없이 원문에서 값을 땄다"
+        ],
+        [
+          "NOT_IN_SOURCE",
+          "원문에 근거 없음",
+          "원문에서 그 값을 찾을 수 없다고 확인"
+        ],
+        [
+          "ABSENT_CONFIRMED",
+          "아직 단계 전",
+          "그 단계 기록이 아직 없음을 확인(미도달)"
+        ]
+      ],
+      "basis": [
+        [
+          "INDEPENDENT",
+          "독립 원천",
+          "HOME 이 쓰지 않은 원천으로 확인"
+        ],
+        [
+          "SAME_SOURCE",
+          "같은 원천",
+          "HOME 이 읽은 원천을 다시 읽어 확인"
+        ],
+        [
+          "RULE",
+          "규칙 판정",
+          "원문 조건이나 앞 단계 결과로 판단(파생)"
+        ]
+      ],
+      "legend_title": "판정 다섯 가지",
+      "bar_inc": "전체 판정 기준",
+      "bar_na": "도달한 단계만",
+      "items_label": "항목",
+      "audit": "조사하지 않은 검증자가 표본 {n}건을 다시 확인 → 오류 {err}건(목표 2% 이하)",
+      "audit_pending": "조사하지 않은 검증자의 표본 재확인: 측정 중",
+      "note": "두 막대의 차이 = 아직 그 단계에 이르지 않아 '기록 없음'으로 확인한 항목 · 초록 선 = 목표 {t}%"
+    },
+    "s10": {
+      "cols": [
+        "사업",
+        "항목",
+        "HOME 값",
+        "원문 값"
+      ],
+      "max_mismatch": 3,
+      "max_text": 3,
+      "sentence_limit": 90,
+      "priority": [
+        "지표",
+        "원문에 없는",
+        "표기"
+      ],
+      "note": "다른 값 {mm}건 = 사업 이름·항목·HOME 값·원문 값이 모두 같은 줄을 하나로 센 수(합치기 전 {raw}건). 위 표는 단계별 대표 1건."
+    },
+    "s11": {
+      "flow": [
+        "새 정책 찾기(Exa 검색)",
+        "원문 받기",
+        "값 뽑기·원문 확인",
+        "사업과 잇기",
+        "단계별 자료 모으기",
+        "판정·표준 표 출력"
+      ],
+      "cards": [
+        {
+          "label": "처리한 정책",
+          "big": "{n}개",
+          "sub": "새 후보 {cand}건 확인 대기 · 정책은 설정 파일에 한 줄씩"
+        },
+        {
+          "label": "코드 안의 정책 값",
+          "big": "{hits}건",
+          "sub": "파이프라인 파일 {files}개에서 정책 번호를 검색"
+        },
+        {
+          "label": "다시 실행한 결과",
+          "big": "같음",
+          "sub": "기준일 {checked_at} · 두 번 실행해 바이트까지 같음"
+        }
+      ]
+    },
+    "appendix": {
+      "defs_title": "측정 정의",
+      "table_title": "정책별 세 기준 수치(분모 = 정책별 전체 항목)",
+      "table_cols": [
+        "정책",
+        "전체 항목",
+        "미도달 포함",
+        "파생 미도달 제외",
+        "미도달 제외",
+        "독립 원천 항목"
+      ],
+      "glossary_title": "용어 풀이",
+      "glossary_cols": [
+        "코드·용어",
+        "뜻"
+      ],
+      "glossary": [
+        [
+          "HOME",
+          "기존 주택공급 상황판에 입력된 값. 원천 대조의 비교 대상"
+        ],
+        [
+          "미도달",
+          "그 단계 기록이 원천에 아직 없음을 확인한 것(판정 ABSENT_CONFIRMED)"
+        ],
+        [
+          "파생 미도달",
+          "앞 단계가 도달하지 않아 이어서 미도달로 본 것(ABSENT_CONFIRMED 이고 근거 RULE)"
+        ]
+      ],
+      "repro_title": "재현 명령",
+      "detail_title": "상세 문서",
+      "detail": "docs/speech/research/조사결과_설명자료.html",
+      "detail_note": "질의응답용 상세 문서(절 1~8, 부록)",
+      "report": "docs/speech/research/품질_리포트.csv"
+    }
+  },
+  "team": {
+    "description": "팀 공유판(explain_team.py)의 문구. 발표 덱과 같은 15장을 세로 문서로 펼치고 장마다 원천 위치를 줄이지 않고 적는다. 수치·목록은 출력 파일에서 읽는다. 경로 틀의 {research}·{work}·{dataset}·{ledger_dir}·{schema_dir}·{quote_file} 은 설정에서 채우고, * 는 실제 파일 목록으로 펼친다.",
+    "output": "docs/speech/research/조사결과_팀공유.html",
+    "page_title": "조사결과 팀 공유판",
+    "kicker": "TEAM COPY · 원천 위치 전체판",
+    "title": "정책 → 입주 원천 조사결과 — 팀 공유판",
+    "checked_label": "기준일",
+    "deck_label": "발표판",
+    "guide_title": "이 문서 읽는 법",
+    "guide": [
+      "발표판(docs/speech/research/조사결과_발표.html)과 같은 15장이다. 장마다 위에 발표 장면을 줄여 넣었고, 아래 '이 장의 원천 위치(전체)'에 그 장의 근거 파일·문서를 줄이지 않고 모두 적었다.",
+      "로컬 경로는 저장소 루트 기준 전체 경로로 적었다. 원천 파일 대부분은 docs/speech/research/ 아래에 있고, 링크는 이 문서(docs/speech/research/) 기준 상대 경로라 저장소를 받은 상태에서 누르면 파일이 열린다.",
+      "원 URL이 있는 문서는 웹으로 열 수 있다. URL 속 인증키 모양 값(serviceKey·apiKey·token 등)은 ***로 가렸다.",
+      "행이 많은 표(원천 사이트·수집 문서·원천주체 표)는 접어 두었다. 제목 줄을 누르면 펼쳐진다. 이 문서에는 원 파일 본문을 넣지 않고 위치만 적었다."
+    ],
+    "toc_title": "목차",
+    "src_title": "이 장의 원천 위치(전체)",
+    "files_title": "출처 줄의 파일",
+    "files_missing": "맞는 파일 아직 없음",
+    "file_missing": "파일 아직 없음",
+    "picked_badge": "발표판 표시",
+    "sources": {
+      "cover": [
+        "tools/research/chain/config/stage_sources.json",
+        "tools/research/chain/config/policies.json",
+        "tools/research/chain/config/explain.json"
+      ],
+      "overview": [
+        "{dataset}/*.json",
+        "{research}/원천사이트_대조.csv",
+        "{research}/품질_리포트.csv",
+        "{research}/README.md"
+      ],
+      "s2": [
+        "{research}/원천주체_단계별.csv"
+      ],
+      "s3": [
+        "{research}/원천사이트_대조.csv",
+        "{research}/연계필드_대응.csv",
+        "{research}/원천주체_단계별.md",
+        "{research}/{quote_file}"
+      ],
+      "s4": [
+        "{dataset}/source_documents.json"
+      ],
+      "s5": [
+        "{dataset}/source_documents.json",
+        "{research}/품질_리포트.csv",
+        "{research}/수집항목_통합.csv"
+      ],
+      "s6": [
+        "{dataset}/*.json",
+        "{ledger_dir}/projects.json"
+      ],
+      "s7": [
+        "{work}/*/evidence*.jsonl",
+        "{dataset}/source_documents.json",
+        "{dataset}/evidence.json",
+        "{ledger_dir}/projects.json"
+      ],
+      "s8": [
+        "{research}/원천주체_단계별.csv",
+        "{work}/*/evidence*.jsonl"
+      ],
+      "s9": [
+        "{work}/*/evidence*.jsonl",
+        "{research}/품질_리포트.csv"
+      ],
+      "s10": [
+        "{research}/README.md",
+        "tools/research/chain/config/report_notes.json"
+      ],
+      "s11": [
+        "tools/research/chain/config/policies.json",
+        "tools/research/chain/config/policies_discovered.json"
+      ],
+      "closing": [
+        "docs/speech/발표자료용.md.md"
+      ],
+      "a1": [
+        "tools/research/chain/config/explain.json",
+        "{work}/*/evidence*.jsonl"
+      ],
+      "a2": [
+        "{research}/조사결과_설명자료.html",
+        "{research}/품질_리포트.csv"
+      ]
+    },
+    "overview": {
+      "title": "카드 수치별 근거 파일",
+      "cols": [
+        "막",
+        "수치",
+        "뜻",
+        "근거 파일"
+      ],
+      "line_label": "카드 아래 줄",
+      "files": {
+        "sites": [
+          "{research}/원천사이트_대조.csv"
+        ],
+        "orgs": [
+          "{research}/원천사이트_대조.csv"
+        ],
+        "docs": [
+          "{dataset}/source_documents.json"
+        ],
+        "upct": [
+          "{dataset}/source_documents.json"
+        ],
+        "tables": [
+          "{dataset}/source_documents.json",
+          "{dataset}/evidence.json",
+          "{dataset}/policies.json",
+          "{dataset}/programs.json",
+          "{dataset}/policy_targets.json",
+          "{dataset}/links.json",
+          "{ledger_dir}/projects.json"
+        ],
+        "extra": [
+          "{dataset}/source_documents.json",
+          "{dataset}/evidence.json"
+        ],
+        "ledger": [
+          "{dataset}/policies.json",
+          "{dataset}/programs.json",
+          "{dataset}/policy_targets.json",
+          "{dataset}/links.json",
+          "{ledger_dir}/projects.json"
+        ],
+        "range": [
+          "{work}/*/evidence*.jsonl",
+          "{research}/품질_리포트.csv"
+        ],
+        "mm": [
+          "{research}/README.md"
+        ]
+      }
+    },
+    "s2": {
+      "title": "원천주체_단계별.csv 전 행",
+      "summary": "원천주체 표 {n}행 펼치기",
+      "cols": [
+        "단계",
+        "원천",
+        "①업무주체",
+        "①근거",
+        "②입력처",
+        "②근거",
+        "③공개부서",
+        "③근거",
+        "게시처"
+      ]
+    },
+    "s3": {
+      "sites_title": "원천 사이트 전체(원천사이트_대조.csv)",
+      "sites_note": "사이트 번호는 같은 공식URL(앞의 http·www와 끝 / 를 뺀 값, 없으면 공식원천명)을 한 곳으로 센 번호다. 행 {rows}개 = 관리표 {listed} + 새로 찾은 {ours}, 같은 곳 합침 {merged} → {n}곳.",
+      "listed_summary": "관리표에 있던 원천 {n}행 펼치기",
+      "ours_summary": "이번에 새로 찾은 원천 {n}행 펼치기",
+      "cols": [
+        "사이트 번호",
+        "통합출처ID",
+        "제공기관",
+        "공식원천명",
+        "소관부서",
+        "공식URL"
+      ],
+      "fields_title": "연계필드 대응 전체(연계필드_대응.csv)",
+      "fields_summary": "연계필드 {n}행 펼치기",
+      "quote_title": "부처별 보도자료 인용 원문",
+      "quote_label": "인용 원문(원천주체_단계별.md '기준표와 다른 점' 절 첫 행의 '우리 원문 값')",
+      "dept_label": "담당 부서 문장 원문"
+    },
+    "s4": {
+      "title": "수집 문서 전체(dataset/source_documents.json)",
+      "note": "문서 {n}건을 첫 단계로 나눠 한 번씩만 적었다. 여러 단계에 걸친 문서는 '단계' 칸에 모든 단계를 적었다(발표판 단계별 수는 겹쳐 센 수).",
+      "summary": "{stage} — {n}건 펼치기",
+      "none_stage": "단계 없음",
+      "cols": [
+        "doc_id",
+        "단계",
+        "제목",
+        "형식",
+        "수집 방법",
+        "발행기관·부서",
+        "로컬 경로",
+        "원 URL"
+      ],
+      "not_saved": "원 파일 보존 안 함"
+    },
+    "s5": {
+      "pointer": "이 장의 수집 문서 {n}건 전체(형식 칸 포함)는 5장 원천 위치에 있다.",
+      "link": "5장 수집 문서 목록으로"
+    },
+    "s6": {
+      "title": "표준 데이터셋 표 {n}개",
+      "cols": [
+        "표",
+        "파일",
+        "행 수",
+        "스키마 파일"
+      ],
+      "validator": "표 형식 검사 도구"
+    },
+    "s7": {
+      "title": "사례 사업의 단계별 근거 문서",
+      "head": [
+        "사업",
+        "사업 id",
+        "정책",
+        "프로그램"
+      ],
+      "link_label": "정책 → 사업 연결",
+      "fields": [
+        "판정·근거",
+        "데이터셋 값(전체)",
+        "문서 제목(전체)",
+        "발행기관·부서",
+        "로컬 경로",
+        "원 URL",
+        "쪽·위치(locator)",
+        "문서 id",
+        "evidence_id"
+      ],
+      "no_doc": "문서 목록에서 못 찾음"
+    },
+    "s8": {
+      "title": "항목별 원천주체 행 전체",
+      "cols": [
+        "단계",
+        "원천",
+        "①업무주체",
+        "게시처"
+      ]
+    },
+    "s9": {
+      "title": "판정에 쓰인 파일",
+      "cols": [
+        "정책",
+        "policy_id",
+        "원천 대조 기록 파일"
+      ],
+      "report_label": "품질 리포트",
+      "audit_label": "M3 감사 파일(최신 판)",
+      "audit_missing": "M3 감사 기록 아직 없음"
+    },
+    "s10": {
+      "mm_title": "HOME 불일치 전체 {n}건(README 원 줄 {raw}건)",
+      "fields": [
+        "정책",
+        "단계",
+        "HOME 레코드 id",
+        "HOME 값(전체)",
+        "원천 값(전체)",
+        "근거 파일(전체)"
+      ],
+      "texts_title": "수정 제안 전문 {n}건"
+    },
+    "s11": {
+      "config_title": "정책 설정 파일",
+      "files_title": "정책 번호를 검사한 코드 파일 {n}개"
+    }
+  }
+}

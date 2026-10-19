@@ -10,22 +10,22 @@ import { cn } from 'cn';
 import LinkPending from './link-pending';
 
 export const HATCH = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_45%,transparent)_0_1.5px,transparent_1.5px_3.5px)]';
-const CHIP = 'relative flex items-center gap-1.5 rounded-full border border-transparent px-2 py-[3px] text-[14px] leading-[1.5] whitespace-nowrap text-foreground no-underline [transition:background_.15s,border-color_.15s] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-[1500px]:px-1';
+const CHIP = 'relative flex items-center gap-1.5 rounded-full border border-transparent px-2 py-0.75 text-sm leading-body whitespace-nowrap text-foreground no-underline [transition:background_.15s,border-color_.15s] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary max-[1500px]:px-1';
 const ON = 'border-primary bg-accent';
 const OFF = 'hover:bg-pn2';
 
 export type Swatch = { kind: 'fill' | 'outline' | 'hatch'; color?: string };
 export function SwatchMark({ kind, color, className }: Swatch & { className?: string }) {
-  return <i aria-hidden="true" className={cn('block size-2.5 flex-none rounded-[3px]', kind === 'outline' && 'border-2', kind === 'hatch' && `border border-line2 ${HATCH}`, className)}
+  return <i aria-hidden="true" className={cn('block size-2.5 flex-none rounded-chip', kind === 'outline' && 'border-2', kind === 'hatch' && `border border-line2 ${HATCH}`, className)}
     style={kind === 'fill' ? { background: color } : kind === 'outline' ? { borderColor: color } : undefined} />;
 }
 
 export function ChipBar({ children, label = '거르기', className }: { children: ReactNode; label?: string; className?: string }) {
-  return <nav aria-label={label} className={cn('flex flex-wrap items-center gap-x-3 gap-y-2 rounded-[12px] border border-border bg-card px-3 py-2 shadow-[var(--shadow-card)]', className)}>{children}</nav>;
+  return <nav aria-label={label} className={cn('ui-tile-compact flex flex-wrap items-center gap-x-3 gap-y-2', className)}>{children}</nav>;
 }
 /* bare: 묶음 이름을 화면에 내지 않는다(읽기 도구에만) — 칩이 많은 줄(사업 화면 시안)이 1440 에서도 한 줄에 들게 */
 export function ChipGroup({ label, children, className, bare = false }: { label: string; children: ReactNode; className?: string; bare?: boolean }) {
-  return <div role="group" aria-label={label} className={cn('flex flex-wrap items-center gap-0.5', className)}><span className={cn('mr-1 text-[13px] text-muted-foreground', bare ? 'sr-only' : 'min-[901px]:max-[1439px]:sr-only')}>{label}</span>{children}</div>;
+  return <div role="group" aria-label={label} className={cn('flex flex-wrap items-center gap-0.5', className)}><span className={cn('mr-1 text-sm text-muted-foreground', bare ? 'sr-only' : 'min-[901px]:max-[1439px]:sr-only')}>{label}</span>{children}</div>;
 }
 export const ChipSep = () => <span className="h-5 w-px bg-border mobile:hidden" aria-hidden="true" />;
 
@@ -44,7 +44,7 @@ export function ClearChip({ href, title, children }: { href: string; title: stri
 
 /* doc: 다른 루트 레이아웃(지도 /map)으로 가는 항목 — <Link> 가 아니라 <a>(문서 이동) */
 export type MenuItem = { href: string; label: string; on?: boolean; title?: string; doc?: boolean };
-const ITEM = 'block rounded-[8px] px-3 py-1.5 text-[14px] whitespace-nowrap text-foreground no-underline hover:bg-pn2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary';
+const ITEM = 'block rounded-chip px-3 py-1.5 text-sm whitespace-nowrap text-foreground no-underline hover:bg-pn2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary';
 /* fixed: 고른 값이 있어도 이름(label)을 그대로 보인다(지도 시군구 고르기처럼 거르기가 아닌 메뉴). right: 펼침 목록을 오른쪽 끝에 맞춘다 */
 export function ChipMenu({ label, on, items, cols = 1, title, fixed = false, right = false }: { label: ReactNode; on?: boolean; items: MenuItem[]; cols?: 1 | 2; title?: string; fixed?: boolean; right?: boolean }) {
   const current = fixed ? undefined : items.find((i) => i.on)?.label;
@@ -53,7 +53,7 @@ export function ChipMenu({ label, on, items, cols = 1, title, fixed = false, rig
       <summary title={title ?? current} className={cn(CHIP, 'cursor-pointer list-none [&::-webkit-details-marker]:hidden', on ? ON : OFF)}>
         <span className="max-w-[9em] truncate">{current ?? label}</span><ChevronDown className="size-3.5 shrink-0 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden="true" />
       </summary>
-      <div className={cn('absolute top-full z-30', right ? 'right-0' : 'left-0', 'mt-1 max-h-[60vh] min-w-[160px] overflow-y-auto rounded-[10px] border border-border bg-popover p-1 text-popover-foreground shadow-[var(--shadow-pop)]')}>
+      <div className={cn('absolute top-full z-30', right ? 'right-0' : 'left-0', 'mt-1 max-h-[60vh] min-w-[160px] overflow-y-auto rounded-tile border border-border bg-popover p-1 text-popover-foreground shadow-pop')}>
         <ul className={cn('m-0 list-none p-0', cols === 2 ? 'grid grid-cols-2 gap-0.5' : 'flex flex-col gap-0.5')}>
           {items.map((i) => (
             <li key={i.href}>

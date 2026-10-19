@@ -1,0 +1,1 @@
+{"schema_version": "ledger/1", "table": "programs", "rows": [{"local_program_id": "PRG_A", "program_name": "프로그램 A", "program_definition": null, "source_ref": "home-src", "review_status": "CONFIRMED"}, {"local_program_id": "PRG_B", "program_name": "다른 정책 프로그램", "program_definition": null, "source_ref": "home-src", "review_status": "REVIEW_REQUIRED"}]}

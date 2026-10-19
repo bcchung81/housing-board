@@ -7,7 +7,7 @@ const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
-const board = read('components/board/Board.tsx'), lines = read('components/charts/MonthLines.tsx'), tw = read('app/tailwind.css'), css = read('assets/css/app.css'), app = read('assets/js/app.js');
+const board = read('components/board/Board.tsx'), lines = read('components/charts/MonthLines.tsx'), tw = read('app/globals.css'), css = read('assets/css/app.css'), app = read('assets/js/app.js');
 
 test('E2 추이 그래프: 줄여 그려도(0.6~1배) 선·격자·현재선 굵기는 화면 px(non-scaling-stroke)', () => {
   const svg = /<svg id="trend"[\s\S]*?<\/svg>/.exec(board)[0];
@@ -24,17 +24,11 @@ test('E3 잠정치 빗금: 가로로 늘어나는 SVG 무늬 대신 그래프 �
   assert.match(lines, /<svg preserveAspectRatio="none" className=\{board \? 'absolute inset-0 block size-full overflow-visible' : 'relative block/, '그래프(SVG)가 띠 위에 그려진다(종합상황판은 남는 높이를 채우는 absolute)');
 });
 
-test('E4 글꼴 역할: 본문은 시스템 한글 글꼴, 로고·메뉴·제목·큰 숫자는 Do Hyeon(대시보드·지도 같은 규칙)', () => {
-  assert.match(tw, /--font-sans: 'Apple SD Gothic Neo', 'Malgun Gothic', 'Noto Sans KR', sans-serif;/);
-  assert.match(tw, /--font-display: var\(--font-do-hyeon, 'Do Hyeon'\)/);
-  assert.match(tw, /h1, h2, h3 \{\n    font-family: var\(--font-display\);/);
-  for (const f of ['app/(dashboard)/layout.tsx', 'app/(map)/layout.tsx']) { const s = read(f); assert.match(s, /className=\{`font-sans \$\{doHyeon\.variable\}/, f); assert.doesNotMatch(s, /doHyeon\.className/, f); }
-  assert.match(read('components/TopNav.tsx'), /<header className="[^"]*font-display/);
-  assert.match(read('components/ui.tsx'), /<b className="font-display text-\[min\(30px,15cqi\)\]/, 'KPI 큰 숫자는 Do Hyeon, 칸이 좁으면 줄어든다');
-  assert.match(read('components/board/styles.ts'), /export const disp = "font-display /);
-  assert.match(css, /:root\{--font-body:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;--font-disp:var\(--font-do-hyeon,'Do Hyeon'\)/);
-  for (const r of [/body\{font-family:var\(--font-body\);/, /\.maplibregl-map\{font-family:var\(--font-body\)\}/, /\.maplibregl-popup-content\{font:13px\/1\.5 var\(--font-body\);/, /h1\{margin:0;font-family:var\(--font-disp\);/, /\.sum \.big\{font-family:var\(--font-disp\);/]) assert.match(css, r);
-  assert.doesNotMatch(css.replace(/:root\{--font-body[^\n]*\n/, ''), /var\(--font-do-hyeon/, 'Do Hyeon 은 --font-disp 로만 쓴다');
+test('E4 글꼴 역할: 지도 글꼴은 Noto Sans KR 하나(Do Hyeon 폐지 2026-10-17), 제목·큰 숫자도 본문 글꼴 700', () => {
+  /* 앱(app·components)의 글꼴은 tests/js/font-scale.test.cjs 가 잠근다(2026-10-17: Do Hyeon 폐지, Noto Sans KR 하나) */
+  assert.match(tw, /--font-sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;/);   // 글꼴 값은 app/globals.css 한 곳(2026-10-18), 지도 CSS 는 var(--font-sans)
+  for (const r of [/body\{font-family:var\(--font-sans\);/, /\.maplibregl-map\{font-family:var\(--font-sans\)\}/, /\.maplibregl-popup-content\{font:var\(--text-sm\)\/1\.5 var\(--font-sans\);/, /h1\{margin:0;font-family:var\(--font-sans\);font-size:var\(--text-md\);font-weight:700;/, /\.sum \.big\{font-family:var\(--font-sans\);font-size:var\(--text-2xl\);font-weight:700;/]) assert.match(css, r);
+  assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /do-hyeon|font-disp/i, '지도 CSS 에 Do Hyeon 없음');
 });
 
 test('E5 지도 바닥 텍스처: 2D 선 층은 첫 3D 층(sel-3d) 앞으로 모으고, dong-line 은 minzoom 대신 투명도 단계', () => {

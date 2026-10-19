@@ -66,7 +66,7 @@ test(`용어표: ${TERMS.map(([a, b]) => `${a} → ${b}`).join(' · ')}`, () => 
   const sum = read('components/projects/Summary.tsx');
   assert.match(sum, /이 단계까지 온 사업 \{fmt\(c\.n\)\}/);
   assert.match(sum, /지금 이 단계 <b>\{fmt\(c\.now\)\}<\/b>/);
-  assert.match(sum, />단계별 진행<\/h2>/);   // h1 → h2 순서(2026-10-15)
+  assert.match(sum, />단계별 진행<\/h3>/);   // 소제목 h3 역할 16/700(2026-10-18 제목 역할 통일)
   assert.match(read('app/(dashboard)/projects/page.tsx'), /: '다른 정책 목표 대비'\} open=\{print\}/);
   assert.equal(V.CAND_NAME, '후보 사업');
   assert.equal(V.PLAN_COL, '현재 예정');
@@ -170,7 +170,7 @@ test("후보 사업도 행을 누르면 간단 보기 서랍(?cand=<원장 id>) 
   /* 지역 공급 목록의 후보 행도 막다른 줄이 아니다 */
   const ahead = read('components/region/Ahead.tsx');
   assert.equal(R.projectHref({ id: 'X1', drawer: false, sd: '26' }, ''), '/projects?sido=26&cand=X1');   // 후보는 간단 보기(?cand=), 범위 붙임(data-audit-1016 결함 3)
-  assert.match(ahead, /\{' '\}<span[^>]*>\(후보\)<\/span>/, "이름과 '(후보)' 사이에 글자 띄어쓰기");
+  assert.match(ahead, /\{' '\}<span[^>]*>\{W\.cand\}<\/span>/, "이름과 '(후보)' 사이에 글자 띄어쓰기");
 });
 
 test('서랍: 목록 링크는 스크롤 유지(scroll=false), 머리는 두 열 격자(× 오른쪽 고정), 단계 칸은 지금 거르기 유지', () => {
@@ -186,7 +186,7 @@ test('서랍: 목록 링크는 스크롤 유지(scroll=false), 머리는 두 열
 });
 
 test('회의실 투사: 보조 글자색(라이트 --muted-foreground)은 카드·바탕·강조 면 위 6:1 이상', () => {
-  const css = read('app/tailwind.css');
+  const css = read('app/globals.css');
   const light = css.slice(css.indexOf('\n:root {'), css.indexOf('\n}\n', css.indexOf('\n:root {')));
   const t = (n) => new RegExp(`--${n}:\\s*(#[0-9A-Fa-f]{6})`).exec(light)[1];
   const lum = (hex) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };

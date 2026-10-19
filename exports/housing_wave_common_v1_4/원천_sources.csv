@@ -1,0 +1,11 @@
+﻿source_ref,source_owner,provider,dataset_name,source_url,source_record_key,data_as_of,collected_at,original_filename,notes
+WAVE-SRC-01,HOUSING_WAVE,한국토지주택공사(공공데이터포털),공공주택 준공예정현황(15141761),https://www.data.go.kr/data/15141761/fileData.do,사업지구명+블록명+공급유형,2026-01-27,2026-10-02,15141761_한국토지주택공사_공공주택 준공예정현황_20260127.csv,종합상황판 '향후 12개월 공급 예정'이 읽는 자료(data/board/lh-completion.json)
+WAVE-SRC-02,HOUSING_WAVE,주택파동,사업 레지스트리(registry/projects.json),,id(PRJ-시군구5-일련4),2026-10-06,,projects.json,로컬 사업번호 발급처. 레코드는 건축HUB 주택인허가 기본개요와 지도 번들에서 발급
+WAVE-SRC-03,HOUSING_WAVE,주택파동,인천 계양구 지도 번들(regions/incheon-gyeyang),,id,2026-10-03,,projects.json,지도 화면 단지. 단지별 근거는 LH 입주자모집공고·청약플러스 공사현황
+WAVE-SRC-04,HOUSING_WAVE,한국토지주택공사(LH청약플러스),공사현황 · 인천계양 블록별 공정율 이력,https://apply.lh.or.kr/lhapply/land/cwsttList.do,지구명+블록+기준일,2026-09-30,2026-10-03,lh_공사현황_인천계양_공정율_이력_20261003.csv,지도 공정율의 원천(번들 progress). 수집일은 파일 이름의 날짜
+WAVE-SRC-05,HOUSING_WAVE,한국토지주택공사(사전정보공표),건설공사현황(2026-07-01) · 인천계양 추출,,현장명,2026-07-01,,LH_건설공사현황_20260701_주택품질안전처.pdf,지도 시공사의 원천. 인천계양 22행을 LH_건설공사현황_20260701_인천계양_추출.csv 로 추림. 공정률은 7월 기준 건축공사 공정률(청약플러스 블록 공정율과 기준 다름)
+WAVE-SRC-06,HOUSING_WAVE,한국토지주택공사,LH 입주자모집공고(2024-10-09 정정)·팸플릿 · 인천계양 A2,,,2024-10-09,,LH_인천계양A2_입주자모집공고문_정정20241009.pdf,지도 단지의 세대수·입주예정 근거
+WAVE-SRC-07,HOUSING_WAVE,한국토지주택공사,LH 입주자모집공고(2024-09-20 정정)·팸플릿 · 인천계양 A3,,,2024-09-20,,LH_인천계양A3_입주자모집공고문_정정20240920.pdf,지도 단지의 세대수·입주예정 근거
+WAVE-SRC-08,HOUSING_WAVE,한국토지주택공사,LH 입주자모집공고(2026-09-14 정정)·팸플릿 · 인천계양 A6,,,2026-09-14,,LH_인천계양A6_입주자모집공고문_정정20260914.pdf,지도 단지의 세대수·입주예정 근거
+WAVE-SRC-09,HOUSING_WAVE,한국토지주택공사,LH 입주자모집공고(2026-05-14 정정)·팸플릿 · 인천계양 A9,,,2026-05-14,,LH_인천계양A9_입주자모집공고문_20260514.pdf,지도 단지의 세대수·입주예정 근거
+WAVE-SRC-10,HOUSING_WAVE,한국토지주택공사,LH 입주자모집공고(2026-09-30)·팸플릿 · 인천계양 A17,,,2026-09-30,,LH_인천계양A17_입주자모집공고문_20260930.pdf,지도 단지의 세대수·입주예정 근거

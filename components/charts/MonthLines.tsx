@@ -2,7 +2,7 @@
    board = 종합상황판용: 세로축 숫자를 만 단위('20만')로, 그래프가 카드의 남는 높이를 채운다(다른 화면은 쓰지 않는다). */
 import ChartFrame from './ChartFrame';
 import RovingKeys from './RovingKeys';
-import { ymDot } from '../../lib/board/calc';
+import { ymDot } from '@/lib/board/calc';
 
 export type Line = { key: string; label: string; color: string; values: (number | null)[] };
 const W = 960, H = 240, L = 0, R = 0, T = 0, B = 0;

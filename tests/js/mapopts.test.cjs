@@ -40,7 +40,8 @@ test('public/ 사본이 원본과 같다(지도는 public/assets 를 내보낸�
 
 test('사업 원장 판정(M8): 주의·지연만 단지 테두리·점 테두리로, 색은 의미 토큰(--warn·--bad), 단계 필터를 따르고, 원장은 뒤에 붙는다', () => {
   assert.match(app, /const JUDGED = \['match', \['get', 'cls'\], \['caution', 'delay'\], true, false\]/);
-  assert.match(app, /'delay', v\('--bad', '#FF6B88'\), 'caution', v\('--warn', '#FFC24D'\)/);
+  assert.match(app, /'delay', TH\(\)\.bad, 'caution', TH\(\)\.warn/);   // 테마 색표가 globals 의미 토큰에서 읽는다(2026-10-18)
+  assert.match(app, /bad: tok\('--bad'\), warn: tok\('--warn'\)/);
   assert.match(app, /add\(\{ id: 'blk-judge', type: 'line', source: 'blocks', filter: JUDGED,/);
   assert.ok(app.indexOf("id: 'blk-judge'") < app.indexOf("id: 'blk-line',"), '단계색 윤곽 아래에 깐다');
   assert.match(app, /map\.setFilter\('blk-judge', \['all', f, JUDGED\]\)/);

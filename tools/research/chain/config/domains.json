@@ -1,0 +1,33 @@
+{
+  "description": "도메인 → 운영 기관(org), 정부·공공기관 원 게시처 여부(gov_original), 그 기관의 공식 누리집 여부(own_site). 가장 긴 접미사가 맞는 줄을 쓴다. own_site=true 는 그 기관이 자기 사이트에 직접 올린 게시물·첨부라서 발행기관을 그 기관으로 본다(방법 '공식 누리집 게시', publisher_rules.json ⑧). 토지이음·공공데이터포털·정보몽땅처럼 여러 기관의 자료를 모아 싣는 사이트와 재게시처(gov_original=false)는 own_site 가 아니다. 다른 근거가 없으면 이 기관을 쓰고 notes 에 '도메인 추정'을 적는다. host_org(게시 사이트 운영 기관)도 이 표로 채운다. gov_original=false 는 전재·재게시·비공식 사이트(같은 내용의 정부 원 게시처 URL 이 있으면 그것을 canonical_url 로 고른다). 옮겨 온 곳: legacy trace_907 의 DOMAIN_ORG·URL_NAMES 표.",
+  "domains": {
+    "molit.go.kr": {"org": "국토교통부", "gov_original": true, "own_site": true},
+    "opm.go.kr": {"org": "국무조정실", "gov_original": true, "own_site": true},
+    "fsc.go.kr": {"org": "금융위원회", "gov_original": true, "own_site": true},
+    "eum.go.kr": {"org": "국토교통부(토지이음)", "gov_original": true},
+    "hub.go.kr": {"org": "국토교통부(건축HUB)", "gov_original": true},
+    "mofe.go.kr": {"org": "재정경제부", "gov_original": true, "own_site": true},
+    "incheon.go.kr": {"org": "인천광역시", "gov_original": true, "own_site": true},
+    "icbp.go.kr": {"org": "인천광역시 부평구", "gov_original": true, "own_site": true},
+    "anyang.go.kr": {"org": "안양시", "gov_original": true, "own_site": true},
+    "housing.seoul.go.kr": {"org": "서울특별시", "gov_original": true, "own_site": true},
+    "smc.seoul.kr": {"org": "서울특별시의회", "gov_original": true},
+    "cleanup.seoul.go.kr": {"org": "서울특별시(정비사업 정보몽땅)", "gov_original": true},
+    "lh.or.kr": {"org": "한국토지주택공사", "gov_original": true, "own_site": true},
+    "apply.lh.or.kr": {"org": "한국토지주택공사", "gov_original": true, "own_site": true},
+    "i-sh.co.kr": {"org": "서울주택도시개발공사", "gov_original": true, "own_site": true},
+    "gh.or.kr": {"org": "경기주택도시공사", "gov_original": true, "own_site": true},
+    "ih.co.kr": {"org": "인천도시공사", "gov_original": true, "own_site": true},
+    "khug.or.kr": {"org": "주택도시보증공사", "gov_original": true, "own_site": true},
+    "reb.or.kr": {"org": "한국부동산원", "gov_original": true, "own_site": true},
+    "data.go.kr": {"org": "행정안전부(공공데이터포털)", "gov_original": true},
+    "apis.data.go.kr": {"org": "행정안전부(공공데이터포털)", "gov_original": true},
+    "api.odcloud.kr": {"org": "행정안전부(공공데이터포털)", "gov_original": true},
+    "korea.kr": {"org": "문화체육관광부(정책브리핑)", "gov_original": false},
+    "eiec.kdi.re.kr": {"org": "KDI 경제정보센터", "gov_original": false},
+    "d.nts.go.kr": {"org": "국세청", "gov_original": false},
+    "files-scs.pstatic.net": {"org": "네이버(파일 서버, 비공식 미러)", "gov_original": false},
+    "jaegebal.com": {"org": "재개발 정보 사이트(비공식)", "gov_original": false},
+    "api.exa.ai": {"org": "Exa", "gov_original": false}
+  }
+}

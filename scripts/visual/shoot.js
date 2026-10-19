@@ -59,6 +59,7 @@ console.log("작업 공간", task.spaceId);
 const page = task.page("p1");
 let injected = null;
 try {
+/* 다크가 기본이 되었으므로(2026-10-18) 저장값이 없으면 'light' 를 심어 라이트 기준선 의미를 유지한다(다크 상태 촬영은 'dark' 를 먼저 저장하므로 그대로 둔다) */
 /* 방문한 링크의 색을 방문 전과 같게 보이게 한다. 브라우저가 방문 기록을 비동기로 반영해서, 같은 화면이 실행 때마다 링크 색이 달랐다
    (2026-10-09: 데이터 원본의 '기관별' 링크가 파랑/보라로 갈림). @layer base 안의 우선순위 0(:where)이라 색을 직접 정한 링크(Tailwind 유틸리티·옛 CSS)는 그대로다.
    상단 메뉴 바의 sticky 는 static 으로 찍는다: 맨 위(스크롤 0)에서 겉모습은 같지만, sticky 는 별도 합성 레이어를 만들어 본문 래스터가 미세하게(최대 차이 14)
@@ -66,7 +67,7 @@ try {
 /* 스크롤바를 숨긴다: 스크롤바가 있느냐에 따라 본문 폭이 소수 픽셀 달라져 카드·표의 1px 테두리가 실행마다 다르게 그려졌다
    (2026-10-09: 같은 화면 두 번에 최대 차이 25). 숨기면 폭이 화면 폭 그대로라 결정적이다. */
 await page.cdp("Emulation.setScrollbarsHidden", { hidden: true });
-injected = (await page.cdp("Page.addScriptToEvaluateOnNewDocument", { source: "document.addEventListener('DOMContentLoaded', () => { const s = document.createElement('style'); s.textContent = '@layer base{:where(a:visited){color:LinkText}} header.sticky{position:static!important}'; document.head.appendChild(s); });"  })).identifier;
+injected = (await page.cdp("Page.addScriptToEvaluateOnNewDocument", { source: "try{if(!localStorage.getItem('theme'))localStorage.setItem('theme','light')}catch(e){} document.addEventListener('DOMContentLoaded', () => { const s = document.createElement('style'); s.textContent = '@layer base{:where(a:visited){color:LinkText}} header.sticky{position:static!important}'; document.head.appendChild(s); });"  })).identifier;
 await page.goto(C.base + "/");
 await page.waitForLoadState();
 const DPR = await page.evaluate(() => devicePixelRatio);   // 이 브라우저의 화면 배율(예 1.1). 뷰포트 폭은 이만큼 나뉘어 적용되므로 미리 곱해 준다

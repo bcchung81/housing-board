@@ -2,39 +2,39 @@ import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { Fragment } from 'react';
 import type { Metadata } from 'next';
-import { Dl, Page, PageHead, PanelHead } from '../../../components/page';
-import { legend } from '../../../components/board/styles';
-import Fold from '../../../components/sources/Fold';
-import HashOpen from '../../../components/sources/HashOpen';
-import StageLinks from '../../../components/sources/StageLinks';
-import ReqTags from '../../../components/ReqTags';
-import Requirements from '../../../components/sources/Requirements';
-import { Collect, Coverage, Links } from '../../../components/sources/Collect';
-import homeSources from '../../../data/board/home-sources.json';
-import requirementsJson from '../../../data/board/requirements.json';
-import type { RequirementsDoc } from '../../../lib/board/requirements';
-import { DataGrid } from '../../../components/ui/data-grid';
-import InfoTip from '../../../components/ui/info-tip';
-import ScopeChip from '../../../components/ui/scope-chip';
-import { fmt } from '../../../lib/board/calc';
-import { getBoardData } from '../../../lib/board/data';
-import { ledgerJudged, ledgerMix, nation as nationOf } from '../../../lib/board/directives';
-import { CIR, K } from '../../../lib/board/sample';
-import { ITEMS, MODE_LABEL } from '../../../lib/board/pipeline';
-import { COLLECTION, OPERATIONS, bytesLabel } from '../../../lib/board/collection';
-import { SCREEN_USAGE, sourceGap, sourceUsage } from '../../../lib/board/screen-usage';
-import { cacheRecords, csvDetail, detailOf, readJson } from '../../../lib/board/samples';
-import { ACQUIRE, ACQUIRE_ASOF, GAPS, type AcquireStatus } from '../../../lib/board/acquire';
-import { stageLinks } from '../../../lib/board/stage-links';
-import { AHEAD_COMPLETION, judgeOutText } from '../../../lib/board/projects-view';
-import type { HomeSources } from '../../../lib/board/home-sources';
-import regionIndex from '../../../regions/index.json';
-import type { Source } from '../../../lib/board/types';
-import { GRID_DENSE, dotDates, type Col, type Detail, type Row } from '../../../lib/grid/spec';
+import { Dl, Page, PageHead, PanelHead } from '@/components/page';
+import { legend } from '@/components/board/styles';
+import Fold from '@/components/sources/Fold';
+import HashOpen from '@/components/sources/HashOpen';
+import StageLinks from '@/components/sources/StageLinks';
+import ReqTags from '@/components/ReqTags';
+import Requirements from '@/components/sources/Requirements';
+import { Collect, Coverage, Links, showOrg } from '@/components/sources/Collect';
+import homeSources from '@/data/board/home-sources.json';
+import requirementsJson from '@/data/board/requirements.json';
+import type { RequirementsDoc } from '@/lib/board/requirements';
+import { DataGrid } from '@/components/ui/data-grid';
+import InfoTip from '@/components/ui/info-tip';
+import ScopeChip from '@/components/ui/scope-chip';
+import { fmt } from '@/lib/board/calc';
+import { getBoardData } from '@/lib/board/data';
+import { ledgerJudged, ledgerMix, nation as nationOf } from '@/lib/board/directives';
+import { CIR, K } from '@/lib/board/sample';
+import { ITEMS, MODE_LABEL } from '@/lib/board/pipeline';
+import { COLLECTION, OPERATIONS, bytesLabel } from '@/lib/board/collection';
+import { SCREEN_USAGE, sourceGap, sourceUsage } from '@/lib/board/screen-usage';
+import { cacheRecords, csvDetail, detailOf, readJson } from '@/lib/board/samples';
+import { ACQUIRE, ACQUIRE_ASOF, GAPS, type AcquireStatus } from '@/lib/board/acquire';
+import { stageLinks } from '@/lib/board/stage-links';
+import { AHEAD_COMPLETION, judgeOutText } from '@/lib/board/projects-view';
+import type { HomeSources } from '@/lib/board/home-sources';
+import regionIndex from '@/regions/index.json';
+import type { Source } from '@/lib/board/types';
+import { GRID_DENSE, dotDates, type Col, type Detail, type Row } from '@/lib/grid/spec';
 
 export const metadata: Metadata = { title: '데이터 원본' };
 
-const H3 = 'mt-5 mb-1 text-[16px] font-normal';   // 기타 탭 안의 구역 제목
+const H3 = 'mt-5 mb-1 text-base font-normal';   // 기타 탭 안의 구역 제목
 /* 기타 탭 표의 표지 뜻: 머리 줄 범례 칩(뜻은 title) */
 const MARKS: [string, string][] = [['✓ 사용', '사용'], ['△ 일부 지역·가공본', '일부 지역·가공본'], ['미연결', '필요하나 연결 안 됨'], ['SAMPLE', '시안 고정값'], ['보관', '파일로 받아 둠'], ['실시간', '화면 조회 때 요청']];
 
@@ -146,13 +146,13 @@ function bundleCounts() {
 }
 
 /* 카탈로그(data/board/sources.json) 설명의 보이는 글: 하이픈 날짜는 점 표기, 내부 말 '번들'은 '지도 자료'(원본 값은 그대로) */
-const plain = (t: string) => dotDates(t).replace(/지도 번들|번들/g, '지도 자료');
+const plain = (t: string) => showOrg(dotDates(t));
 function SourceDetail({ s }: { s: Source }) {
   return (
     <section id={s.id} aria-label={s.dataset} className="scroll-mt-20 border-b border-border py-3 last:border-b-0">
-      <h3 className="m-0 text-[14px]">{s.dataset}</h3>
-      <p className="mt-1 mb-1.5 text-[13px] text-muted-foreground">{plain(s.description)}</p>
-      <Dl className="text-[13px]">
+      <h3 className="m-0 text-sm">{s.dataset}</h3>
+      <p className="mt-1 mb-1.5 text-sm text-muted-foreground">{plain(s.description)}</p>
+      <Dl className="text-sm">
         <dt>기관</dt><dd>{plain(s.provider)}</dd>
         <dt>조회 조건</dt><dd>{Object.entries(s.query).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : String(v)}`).join(' · ')}</dd>
         <dt>활용 화면</dt><dd>{s.usedBy.length ? s.usedBy.join(' · ') : '화면 미연결'}</dd>
@@ -187,15 +187,17 @@ export default async function SourcesPage() {
   /* 원장 집계 위젯 5개는 같은 원장을 쓰므로 수집 건수는 첫 행에만 센다(합계에 겹쳐 세지 않게) */
   const judgedSido = ledger.regions.filter((r) => r.judged).map((r) => molit.sido.find((x) => x.code === r.code)?.name ?? r.code).join('·');
   const judgedText = ledger.regions.every((r) => r.judged) ? `${ledger.regions.length}개 시도 모두` : `${judgedSido}만`;   // 종합상황판(Board.tsx)과 같은 문구
-  const ledgerRow = (id: string, widget: string, gap: string, first = false): Row => ({ id, c: { widget, kind: REAL, data: `원장 ${ledger.observedMonth} 기준 표 · data/board/ledger-board.json`, method: 'tools/ledger → ledger-board.json', cycle: '수동 갱신', count: first ? held(ledger.scope.projects, '사업') : { na: '위 원장과 같음' }, asOf: ledger.observedMonth, gap } });
+  /* 칸에는 짧은 말만, 파일 경로·규칙은 칸 title(툴팁) */
+  const tipped = (text: string, title: string) => ({ text, title });
+  const ledgerRow = (id: string, widget: string, gap: Row['c'][string], first = false): Row => ({ id, c: { widget, kind: REAL, data: tipped(`원장 ${ledger.observedMonth} 기준`, `원장 ${ledger.observedMonth} 기준 표 · data/board/ledger-board.json`), method: tipped('원장 집계', 'tools/ledger → ledger-board.json'), cycle: '수동 갱신', count: first ? held(ledger.scope.projects, '사업') : { na: '위 원장과 같음' }, asOf: ledger.observedMonth, gap } });
   const boardRows: Row[] = [
-    { id: 'directives', c: { widget: '총리 지시 6건', kind: REAL, data: '통계누리 착공 누계 · 사업 원장 집계 · 원천 카탈로그', method: '통계누리 수집 + 원장 집계(tools/ledger/board.js) + sources.json', cycle: '수동 갱신', count: held(items.length, '데이터셋'), asOf: null, gap: `필요: ${nameOf('ledger')} · ${nameOf('agency-input')} · ${nameOf('schedule')}` } },
-    ledgerRow('ribbon', '월별 공급 파동', `${nationOf(ledger)}(사업 ${fmt(ledger.scope.projects)}건 · ${ledgerMix(ledger).replace('수도권 HOME', '수도권 정책 진행 자료')}) · 지연 띠는 ${ledger.trend?.[0]?.month ?? ledger.observedMonth} 판정부터`, true),
+    { id: 'directives', c: { widget: '총리 지시 6건', kind: REAL, data: '통계누리 착공 누계 · 사업 원장 집계 · 원천 카탈로그', method: tipped('통계누리·원장·카탈로그', '통계누리 수집 + 원장 집계(tools/ledger/board.js) + sources.json'), cycle: '수동 갱신', count: held(items.length, '데이터셋'), asOf: null, gap: `필요: ${nameOf('ledger')} · ${nameOf('agency-input')} · ${nameOf('schedule')}` } },
+    ledgerRow('ribbon', '월별 공급 파동', tipped(`${nationOf(ledger)}(사업 ${fmt(ledger.scope.projects)}건)`, `${nationOf(ledger)}(사업 ${fmt(ledger.scope.projects)}건 · ${ledgerMix(ledger).replace('수도권 HOME', '수도권 정책 진행 자료')}) · 지연 띠는 ${ledger.trend?.[0]?.month ?? ledger.observedMonth} 판정부터`), true),
     ledgerRow('snap', '선택 시점 판정', `${judgeOutText(ledgerJudged(ledger))} · 지난 달은 월 판정 이력`),
     ledgerRow('region', `시도 ${ledger.regions.length}곳`, `판정은 ${judgedText} · ${nationOf(ledger)} 사업 중`),
-    { id: 'actual', c: { widget: '월별 실적 흐름', kind: REAL, data: `${nameOf('molit')} 중 ${molitUsed.length}표(인허가·착공·준공·분양) · ${molit.months[0]}~${molit.months[molit.months.length - 1]}`, method: COLLECTION[molitUsed[0].id].method, cycle: COLLECTION[molitUsed[0].id].cycle, count: held(molitRows, '행'), asOf: molitUsed[0].sourceAsOf, gap: SCREEN_USAGE.molit.gap } },
-    ledgerRow('trend', '지연·주의 추이', `월 판정 이력(data/board/judgment-history.json): ${ledger.trend?.[0]?.month ?? ledger.observedMonth}~ 건축HUB 과거 판 소급 · ${ledger.observedMonth}부터 월 관측`),
-    ledgerRow('future', AHEAD_COMPLETION, `준공만(착공·모집·입주 예정 없음) · LH 후보 예정일은 파일 기준일 ${lh.sourceAsOf} 값`),
+    { id: 'actual', c: { widget: '월별 실적 흐름', kind: REAL, data: tipped(`${nameOf('molit')} ${molitUsed.length}표 · ${molit.months[0]}~${molit.months[molit.months.length - 1]}`, `${nameOf('molit')} 중 ${molitUsed.length}표(인허가·착공·준공·분양)`), method: COLLECTION[molitUsed[0].id].method, cycle: COLLECTION[molitUsed[0].id].cycle, count: held(molitRows, '행'), asOf: molitUsed[0].sourceAsOf, gap: SCREEN_USAGE.molit.gap } },
+    ledgerRow('trend', '지연·주의 추이', tipped(`월 판정 이력 · ${ledger.trend?.[0]?.month ?? ledger.observedMonth}~ 소급`, `월 판정 이력(data/board/judgment-history.json): ${ledger.trend?.[0]?.month ?? ledger.observedMonth}~ 건축HUB 과거 판 소급 · ${ledger.observedMonth}부터 월 관측`)),
+    ledgerRow('future', AHEAD_COMPLETION, tipped('준공만(착공·모집·입주 예정 없음)', `LH 후보 예정일은 파일 기준일 ${lh.sourceAsOf} 값`)),
     ledgerRow('agency', '기관별 진행', `기관 미상 ${ledger.agencies.find((a) => a.id === 'unknown')?.projects ?? 0}건 · ${nameOf('agency-input')} 없음`),
   ];
 
@@ -226,13 +228,13 @@ export default async function SourcesPage() {
     const op = OPERATIONS[i.id], usage = SCREEN_USAGE[i.id];
     const none = usage.map.startsWith('필요');
     const mode = i.id === 'hub-ap' || i.id === 'lh-completion' ? '보관' : i.now === 'none' ? '미연결' : MODE_LABEL[i.now];
-    return { id: i.id, muted: none, c: { name: i.id === 'ledger' ? '사업 레지스트리(번호 발급)' : i.name, use: none ? null : usage.map.startsWith('△') ? `△ ${mark(usage.map)}` : mark(usage.map), mode, method: i.id === 'hub-ap' ? '건축HUB API → 계양 시설 지도 자료' : op.method, cycle: i.id === 'hub-ap' ? '계양 수동 보완' : op.cycle, ...COUNT[i.id], gap: usage.gap } };
+    return { id: i.id, muted: none, c: { name: i.id === 'ledger' ? '사업 레지스트리(번호 발급)' : i.name, use: none ? null : usage.map.startsWith('△') ? `△ ${mark(usage.map)}` : mark(usage.map), mode, method: i.id === 'hub-ap' ? '건축HUB API' : op.method, cycle: i.id === 'hub-ap' ? '계양 수동 보완' : op.cycle, ...COUNT[i.id], gap: usage.gap } };
   });
   const bundleRows: Row[] = [
-    { id: 'map-projects', c: { name: '지역 사업·단지 지도 자료', use: '단지·공정·일정', mode: '보관', method: '공고·API·공사현황 가공 → JSON', cycle: '수동 보완·재배포', count: held(bundles.projects, '단지'), scope: `${regions}개 지역`, gap: '지역 제한 · 일부 층수·입주일 · 일정 변경 이력 없음' } },
-    { id: 'map-buildings', c: { name: '지역 건물 보관본', use: '기존 건물', mode: '보관', method: 'V-World 파일·API 가공 → JSON', cycle: '수동 보완·재배포', count: held(bundles.buildings, '건물'), scope: `${regions}개 지역`, gap: '높이·층수 완전성 · 보관본 최신성' } },
+    { id: 'map-projects', c: { name: '지역 사업·단지 지도 자료', use: '단지·공정·일정', mode: '보관', method: '공고·API·공사현황 가공', cycle: '수동 보완·재배포', count: held(bundles.projects, '단지'), scope: `${regions}개 지역`, gap: '지역 제한 · 일부 층수·입주일 · 일정 변경 이력 없음' } },
+    { id: 'map-buildings', c: { name: '지역 건물 보관본', use: '기존 건물', mode: '보관', method: 'V-World 파일·API 가공', cycle: '수동 보완·재배포', count: held(bundles.buildings, '건물'), scope: `${regions}개 지역`, gap: '높이·층수 완전성 · 보관본 최신성' } },
     { id: 'map-context', c: { name: '역·기존 학교 위치', use: '주변 역·학교', mode: '보관', method: 'OpenStreetMap → context.json', cycle: '수동 보완·재배포', count: held(bundles.context, '위치'), scope: `${regions}개 지역`, gap: '공식 학교 배정·통학구역 대조' } },
-    { id: 'map-infra', c: { name: '기반시설·교통 점검 지도 자료', use: '△ 계양 시설 점검', mode: '보관', method: 'API·파일·보도 확인 → infra.json', cycle: '수동 보완·재배포', count: held(bundles.infra, '항목'), scope: `${bundles.infraRegions}개 지역`, gap: `${regions - bundles.infraRegions}개 지역 상세 시설 점검 없음` } },
+    { id: 'map-infra', c: { name: '기반시설·교통 점검 지도 자료', use: '△ 계양 시설 점검', mode: '보관', method: 'API·파일·보도 확인', cycle: '수동 보완·재배포', count: held(bundles.infra, '항목'), scope: `${bundles.infraRegions}개 지역`, gap: `${regions - bundles.infraRegions}개 지역 상세 시설 점검 없음` } },
     { id: 'building-register', c: { name: '건축물대장 · 총괄표제부', use: '위치·준공 보강', mode: '실시간', method: '건축HUB API', cycle: '조회 시 · 캐시 24시간', count: cached('ledger'), scope: '전국 조회', gap: '블록·합필 위치 매칭 실패 · 조회 권한·한도 누락' } },
   ];
   const rank = { 보관: 0, 혼합: 1, 실시간: 2, 미연결: 3 } as Record<string, number>;
@@ -244,7 +246,7 @@ export default async function SourcesPage() {
   const boardReal = countBy(boardRows, 'kind', REAL), mapUsed = mapRows.length - countBy(mapRows, 'mode', '미연결');
   const screenRows: Row[] = [
     { id: 'board', c: { screen: { text: '종합상황판', href: '/' }, count: total(boardRows), total: boardRows.length, real: boardReal, sample: boardRows.length - boardReal, store: boardRows.filter((r) => r.c.method).length, live: 0, none: boardMissing.length, scope: '전국 · 시도 · 월', gap: boardMissing.join(' · ') } },
-    { id: 'map', c: { screen: { text: '지도', href: '/map' }, count: total(mapRows), total: mapUsed, real: mapUsed, sample: 0, store: countBy(mapRows, 'mode', '보관'), live: countBy(mapRows, 'mode', '실시간'), none: mapMissing.length, scope: `지도 자료 ${regions}개 지역 · 조회 전국`, gap: `${mapMissing.join(' · ')} · 시설 점검 ${bundles.infraRegions}개 지역 · 공고↔사업 연결` } },
+    { id: 'map', c: { screen: { text: '지도', href: '/map' }, count: total(mapRows), total: mapUsed, real: mapUsed, sample: 0, store: countBy(mapRows, 'mode', '보관'), live: countBy(mapRows, 'mode', '실시간'), none: mapMissing.length, scope: `지도 자료 ${regions}개 지역 · 조회 전국`, gap: tipped(`${mapMissing.join(' · ')} · 점검 ${bundles.infraRegions}개 지역`, `${mapMissing.join(' · ')} · 시설 점검 ${bundles.infraRegions}개 지역 · 공고↔사업 연결`) } },
   ];
 
   /* 행을 누르면 펼치는 실제 레코드 예시(앞 10건). 번들·레지스트리·보관 JSON 은 배포본에도 있고, 원본 CSV·캐시는 로컬에만 있다 */
@@ -337,7 +339,7 @@ export default async function SourcesPage() {
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '데이터 원본' }]} title="데이터 원본"
         tip="① 요구사항 충족 → ② 수집 상태 → ③ 연도 확보 → ④ 연결 · 맨 아래 원천 카탈로그(단계별 데이터 연계·원천별 수집 건수·기준일)">
         <ReqTags screen="sources" />
-        <span className="text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
+        <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums mobile:text-sm"
           title={`정책 진행 자료(HOME) ${req.edition.slice(0, 4)}.${req.edition.slice(4, 6)}.${req.edition.slice(6, 8)} 수집 · 사업 원장 기준일 ${dotDates(req.referenceDate)} · 원천 카탈로그 ${items.length}건의 수집일 ${dotDates(got[0])} ~ ${dotDates(got[got.length - 1])} · 추가 확보 필요 조사 ${dotDates(ACQUIRE_ASOF)}`}>
           수집 {editionDay} · 원장 {req.referenceDate.replace(/-/g, '.')}
         </span>
@@ -346,13 +348,13 @@ export default async function SourcesPage() {
       <Collect hs={hs} items={items} />
       <Coverage hs={hs} molit={molit} />
       <Links hs={hs} />
-      <Fold title="원천 카탈로그" meta={`단계별 데이터 연계 · 화면별 사용 · 추가 확보 필요 ${acqOpen.length}건 · 보관 데이터셋 ${items.length}건`} className="mt-0 shadow-[var(--shadow-card)]">
+      <Fold title="원천 카탈로그" meta={`단계별 데이터 연계 · 화면별 사용 · 추가 확보 필요 ${acqOpen.length}건 · 보관 데이터셋 ${items.length}건`} className="mt-0">
       <section id="stage-links" aria-labelledby="h-stage" className="scroll-mt-20">
         <PanelHead id="h-stage" title="단계별 데이터 연계" scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 사업 원장(전국)·통계누리(전국)·지역 지도 자료를 그대로 센 값" />} />
         <StageLinks stages={stages} extra={(
       <div id="etc">
-        <p className={`${legend} m-0 justify-end text-[13px]`} aria-label="표지" title="수집 건수 = 보관 레코드 + 로컬 캐시(.cache) 응답 레코드">
-          {MARKS.map(([k, v]) => <span key={k} className="rounded-full border border-border px-1.5 leading-[18px] whitespace-nowrap" title={v}>{k}</span>)}
+        <p className={`${legend} m-0 justify-end text-sm`} aria-label="표지" title="수집 건수 = 보관 레코드 + 로컬 캐시(.cache) 응답 레코드">
+          {MARKS.map(([k, v]) => <span key={k} className="rounded-full border border-border px-1.5 leading-sub whitespace-nowrap" title={v}>{k}</span>)}
           <InfoTip label="표지 뜻">
             <dl>{MARKS.map(([k, v]) => <Fragment key={k}><dt>{k}</dt><dd>{v}</dd></Fragment>)}</dl>
             <p>{REAL} = 원천에서 센 값을 쓰는 위젯 · 수집 건수 = 보관 레코드 + 로컬 캐시(.cache) 응답 레코드</p>
@@ -372,7 +374,7 @@ export default async function SourcesPage() {
         </section>
         <section id="acquire" aria-labelledby="h-acquire" className={`scroll-mt-20 ${GRID_DENSE}`}>
           <div className="mt-5 mb-1 flex items-center gap-1">
-            <h3 id="h-acquire" className="m-0 text-[16px] font-normal" title={`조사 ${dotDates(ACQUIRE_ASOF)} · 조사 목록 ${ACQUIRE.length}건 중 수집·연결됨 ${ACQUIRE.length - acqOpen.length}건은 뺌`}>추가 확보 필요 · API {acqApi.length}건 · 파일 {acqFile.length}건</h3>
+            <h3 id="h-acquire" className="m-0 text-base font-normal" title={`조사 ${dotDates(ACQUIRE_ASOF)} · 조사 목록 ${ACQUIRE.length}건 중 수집·연결됨 ${ACQUIRE.length - acqOpen.length}건은 뺌`}>추가 확보 필요 · API {acqApi.length}건 · 파일 {acqFile.length}건</h3>
             <InfoTip label="추가 확보 필요"><p>{dotDates(ACQUIRE_ASOF)} 조사 목록 {ACQUIRE.length}건 중 이미 수집·연결된 {ACQUIRE.length - acqOpen.length}건을 뺀 수입니다. 상태 = 신청·받기 조건·파일 수집 여부.</p></InfoTip>
           </div>
           <DataGrid label="추가 확보 필요 건수" cols={ACQ_SUM_COLS} rows={acqSumRows} sortable={false} />
@@ -380,9 +382,9 @@ export default async function SourcesPage() {
         </section>
         <section id="catalog" aria-labelledby="h-catalog" className={`scroll-mt-20 ${GRID_DENSE}`}>
           <h3 id="h-catalog" className={H3}>보관 원천 · 기준일·데이터량</h3>
-          <Fold title="보관 데이터셋 목록" meta={`${items.length}건 · 수집일 · 실측 용량 · 부족한 자료`}>
+          <Fold plain title="보관 데이터셋 목록" meta={`${items.length}건 · 수집일 · 실측 용량 · 부족한 자료`}>
             <DataGrid label="원천 카탈로그 요약" cols={CATALOG_COLS} rows={catalogRows} />
-            <Fold title="원천 조회 조건·이용허락" meta={`${items.length}건`}>
+            <Fold plain title="원천 조회 조건·이용허락" meta={`${items.length}건`}>
               {items.map((s) => <SourceDetail key={s.id} s={s} />)}
             </Fold>
           </Fold>

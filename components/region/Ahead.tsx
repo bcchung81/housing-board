@@ -12,15 +12,19 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, MapPin } from 'lucide-react';
 import { cn } from 'cn';
-import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, PAST_DUE, aheadDay, aheadKindTip, dotFocus, inScope, pastDue, projectHref, sggUnits, ymDotted, type AheadEntry, type CalKind } from '../../lib/board/region';
-import { mapHref } from '../../lib/board/map-href';
-import { METRO_AREAS, SIDO_SHORT, guOf } from '../../lib/board/metro-overview';
-import MapLink from '../board/MapLink';
-import InfoTip from '../ui/info-tip';
+import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, aheadDay, aheadKindTip, dotFocus, inScope, pastDue, projectHref, sggUnits, ymDotted, type AheadEntry, type CalKind } from '@/lib/board/region';
+import { mapHref } from '@/lib/board/map-href';
+import { findHref } from '@/lib/board/public-labels';
+import { POLICY_WORDS, koDay, koMonth, type AheadWords } from '@/lib/board/public-schedule';
+import { METRO_AREAS, SIDO_SHORT, guOf } from '@/lib/board/metro-overview';
+import MapLink from '@/components/board/MapLink';
+import { Card } from '@/components/ui/card';
+import InfoTip from '@/components/ui/info-tip';
 
 type MapData = { view: [number, number, number, number]; sgg: { s: string; n: string; d: string }[]; districts: { n: string; d: string }[] };
 /* refDate = 원장 기준일: 예정 날짜가 이보다 앞선 항목은 '예정일 지남' 표지(합계에는 그대로) */
-type Props = { sido: string; regionName: string; months: string[]; nowM: string; refDate: string; list: AheadEntry[]; initialM: string; initialSgg: string | null; map: MapData | null };
+/* words: 화면에 보이는 말(기본 = 정책 판). 일반사용자 공급 일정은 public-schedule 의 PUBLIC_WORDS 를 넘긴다 */
+type Props = { words?: AheadWords; sido: string; regionName: string; months: string[]; nowM: string; refDate: string; list: AheadEntry[]; initialM: string; initialSgg: string | null; map: MapData | null };
 
 const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
 const WAVE_H = 260, LIST_N = 8;
@@ -32,21 +36,22 @@ const man = (v: number) => (v === 0 ? '0' : v >= 10000 ? `${+(v / 10000).toFixed
 const niceMax = (v: number) => { if (v <= 0) return 1; const p = 10 ** Math.floor(Math.log10(v)); for (const m of [1, 2, 2.5, 5, 10]) if (v <= m * p) return m * p; return 10 * p; };
 const sum = <T,>(a: T[], f: (x: T) => number) => a.reduce((s, x) => s + f(x), 0);
 /* 날짜는 점 표기 하나(2026.10 · 2026.10.11 — lib/board/region aheadDay). 막대 아래 축 눈금만 달 이름('10월') */
-const monthLabel = ymDotted;
-const dayText = aheadDay;
 const light = (c: string, p: number) => `color-mix(in srgb,${c} ${p}%,var(--card))`;
 const hollow = (e: AheadEntry) => e.loc === 'rep' || e.loc === 'area' || e.loc === 'name';
 const onMap = (e: AheadEntry) => METRO.includes(e.sd);
 const HATCH_SW = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_45%,transparent)_0_1.5px,transparent_1.5px_3.5px)]';
-const LINK = 'group/action inline-flex flex-none cursor-pointer items-center gap-px rounded-[4px] border-0 bg-transparent p-0 text-[14px] leading-[1.45] whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
+const LINK = 'group/action inline-flex flex-none cursor-pointer items-center gap-px rounded-chip border-0 bg-transparent p-0 text-sm leading-body whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
-const KindChip = ({ t }: { t: CalKind }) => (
-  <span className="inline-block flex-none rounded-full px-2 text-[13px] leading-[20px] font-bold whitespace-nowrap" style={{ background: light(CAL_TYPE[t].color, 16), color: CAL_TYPE[t].ink }} title={aheadKindTip(t)}>{CAL_TYPE[t].name}</span>
+const KindChip = ({ t, name, tip }: { t: CalKind; name: string; tip: string }) => (
+  <span className="inline-block flex-none rounded-full px-2 text-sm leading-body font-bold whitespace-nowrap" style={{ background: light(CAL_TYPE[t].color, 16), color: CAL_TYPE[t].ink }} title={tip}>{name}</span>
 );
 
-export default function Ahead({ sido, regionName, months, nowM, refDate, list, initialM, initialSgg, map }: Props) {
+export default function Ahead({ words, sido, regionName, months, nowM, refDate, list, initialM, initialSgg, map }: Props) {
+  const W = words ?? POLICY_WORDS;
+  const monthLabel = (ym: string) => (W.date === 'ko' ? koMonth(ym) : ymDotted(ym));
+  const dayText = (e: Pick<AheadEntry, 'day' | 'ym'>) => (W.date === 'ko' ? koDay(e) : aheadDay(e));
   const past = (e: AheadEntry) => pastDue(e, refDate);
-  const PAST_TIP = `예정 날짜가 원장 기준일(${refDate.replace(/-/g, '.')})보다 앞섰는데 실제 기록이 아직 없음 — 건수·호수 합계에는 그대로 넣음`;
+  const PAST_TIP = W.pastTip ?? `예정 날짜가 원장 기준일(${refDate.replace(/-/g, '.')})보다 앞섰는데 실제 기록이 아직 없음 — 건수·호수 합계에는 그대로 넣음`;
   const [m, setM] = React.useState(initialM);
   const [hover, setHover] = React.useState<string | null>(null);   // 마우스를 올린 달(지도만 그 달을 진하게)
   const [hl, setHl] = React.useState<string | null>(null);         // 누른 사업
@@ -126,7 +131,7 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
   const max = niceMax(Math.max(1, ...tot));
   const segs = (xs: AheadEntry[], x: string) => (!sido
     /* 전국: 사업이 많아(달마다 수십~수백) 조각 대신 종류별로 묶는다 */
-    ? CAL_KINDS.map((t) => { const ys = xs.filter((e) => e.type === t), u = sum(ys, (e) => e.units); return u ? <span key={t} className="relative block w-full flex-none border-t border-chartbg" style={{ height: `${u / max * 100}%`, background: CAL_TYPE[t].color }} title={`${monthLabel(x)} ${CAL_TYPE[t].name} ${ys.length}건 · ${fmt(u)}호`} /> : null; })
+    ? CAL_KINDS.map((t) => { const ys = xs.filter((e) => e.type === t), u = sum(ys, (e) => e.units); return u ? <span key={t} className="relative block w-full flex-none border-t border-chartbg" style={{ height: `${u / max * 100}%`, background: CAL_TYPE[t].color }} title={`${monthLabel(x)} ${W.kind[t]} ${ys.length}${W.count} · ${fmt(u)}호`} /> : null; })
     : [...xs].sort((a, b) => CAL_KINDS.indexOf(a.type) - CAL_KINDS.indexOf(b.type) || b.units - a.units).map((e) => (e.units
       ? <span key={e.k} data-seg={e.k} data-hl={e.k === hotKey ? '' : undefined} className="relative block min-h-[3px] w-full flex-none border-t border-chartbg data-[hl]:z-[1] data-[hl]:outline-2 data-[hl]:outline-foreground" style={{ height: `${e.units / max * 100}%`, background: CAL_TYPE[e.type].color }} />
       : <span key={e.k} data-seg={e.k} data-hl={e.k === hotKey ? '' : undefined} className={cn('relative block h-[7px] w-full flex-none border border-b-0 data-[hl]:z-[1] data-[hl]:outline-2 data-[hl]:outline-foreground', HATCH_SW)} style={{ borderColor: CAL_TYPE[e.type].color }} />)));
@@ -141,14 +146,14 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
     pick(ok[(n + ok.length) % ok.length], null, true);
   };
   const wave = (
-    <div data-slot="chart-frame" className="relative h-full rounded-[10px] border border-border bg-chartbg py-2.5 pr-3 pl-[54px]"
+    <div data-slot="chart-frame" className="relative h-full py-2.5 pr-3 pl-13.5"
       onMouseLeave={() => { setHover(null); setHud(null); }}>
       <div className="relative">
         <div aria-hidden="true" className="pointer-events-none absolute inset-x-0" style={{ top: 40, height: WAVE_H }}>
           {[max, max / 2, 0].map((v, i) => (
             <React.Fragment key={i}>
               <span className="absolute inset-x-0 border-t border-border" style={{ top: `${i * 50}%` }} />
-              {list.length ? <span className="absolute right-[calc(100%+8px)] -translate-y-1/2 text-[13px] leading-none whitespace-nowrap text-mute tabular-nums" style={{ top: `${i * 50}%` }}>{man(v)}</span> : null}
+              {list.length ? <span className="absolute right-[calc(100%+8px)] -translate-y-1/2 text-sm leading-none whitespace-nowrap text-mute tabular-nums" style={{ top: `${i * 50}%` }}>{man(v)}</span> : null}
             </React.Fragment>
           ))}
         </div>
@@ -165,20 +170,20 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
             const xs = byM[x], on = x === m;
             return (
               <button key={x} type="button" role="radio" aria-checked={on} data-m={x} disabled={!xs.length} tabIndex={xs.length ? (on ? 0 : -1) : undefined}
-                aria-label={`${monthLabel(x)} ${xs.length}건 ${fmt(tot[i])}호`}
+                aria-label={`${monthLabel(x)} ${xs.length}${W.count} ${fmt(tot[i])}호`}
                 onClick={(ev) => { const seg = (ev.target as HTMLElement).closest<HTMLElement>('[data-seg]'); pick(x, seg ? seg.dataset.seg! : null); }}
-                className="btn-reset group/m flex min-w-0 flex-col items-center rounded-[8px] px-0.5 pt-1 pb-0.5 enabled:cursor-pointer enabled:hover:bg-[color-mix(in_srgb,var(--pn2)_70%,transparent)] aria-checked:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
-                <span className="flex h-[36px] flex-col items-center justify-end leading-[1.25] tabular-nums">
-                  {xs.length ? <><b className="text-[13px] whitespace-nowrap" title={`${monthLabel(x)} ${xs.length}건 ${fmt(tot[i])}호${xs.some(past) ? ` · ${PAST_DUE} ${xs.filter(past).length}건 포함` : ''}`}>{man(tot[i])}<small className="ml-px text-[11px] font-normal text-muted-foreground">호</small></b><span className="text-[13px] whitespace-nowrap text-muted-foreground">{xs.length}건</span></> : null}
+                className="btn-reset group/m flex min-w-0 flex-col items-center rounded-tile px-0.5 pt-1 pb-0.5 enabled:cursor-pointer enabled:hover:bg-[color-mix(in_srgb,var(--pn2)_70%,transparent)] aria-checked:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)] focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
+                <span className="flex h-[36px] flex-col items-center justify-end leading-sub tabular-nums">
+                  {xs.length ? <><b className="text-sm whitespace-nowrap phone:hidden phone:group-aria-checked/m:inline" title={`${monthLabel(x)} ${xs.length}${W.count} ${fmt(tot[i])}호${xs.some(past) ? ` · ${W.past} ${xs.filter(past).length}${W.count} 포함` : ''}`}>{man(tot[i])}<small className="ml-px text-sm font-normal text-muted-foreground">호</small></b><span className="text-sm whitespace-nowrap text-muted-foreground phone:hidden phone:group-aria-checked/m:inline">{xs.length}{W.count}</span></> : null}
                 </span>
                 <span className="relative flex w-full flex-col-reverse items-center" style={{ height: WAVE_H }}>
                   {xs.length
-                    ? <span className="q-grow-y flex h-full w-[min(30px,62%)] flex-col-reverse [&>span:last-child]:rounded-t-[3px]" style={{ ['--i' as string]: i }}>{segs(xs, x)}</span>
-                    : <><span className="text-[13px] leading-none text-muted-foreground">없음</span><span className="mb-1 block h-[5px] w-px bg-line2" /></>}
+                    ? <span className="q-grow-y flex h-full w-[min(30px,62%)] flex-col-reverse [&>span:last-child]:rounded-t-chip" style={{ ['--i' as string]: i }}>{segs(xs, x)}</span>
+                    : <>{W.none ? <span className="text-sm leading-none text-muted-foreground phone:hidden">{W.none}</span> : null}<span className="mb-1 block h-[5px] w-px bg-line2" /></>}
                 </span>
-                <span className="mt-1.5 flex flex-col items-center leading-[1.25]">
-                  <span className="rounded-full px-1.5 text-[13px] whitespace-nowrap tabular-nums group-aria-checked/m:bg-primary group-aria-checked/m:font-bold group-aria-checked/m:text-primary-foreground">{Number(x.slice(5))}월</span>
-                  <span className="h-4 text-[12px] whitespace-nowrap text-muted-foreground">{x === nowM ? '이번 달' : x.endsWith('-01') ? x.slice(0, 4) : ''}</span>
+                <span className="mt-1.5 flex flex-col items-center leading-sub">
+                  <span className="rounded-full px-1.5 text-sm whitespace-nowrap tabular-nums group-aria-checked/m:bg-primary group-aria-checked/m:font-bold group-aria-checked/m:text-primary-foreground">{Number(x.slice(5))}<span className="phone:hidden">월</span></span>
+                  <span className="h-4 text-sm whitespace-nowrap text-muted-foreground">{x === nowM ? '이번 달' : x.endsWith('-01') ? x.slice(0, 4) : ''}</span>
                 </span>
               </button>
             );
@@ -213,17 +218,17 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
     /* 초점을 받는 원(고른 달)의 접근 속성: 단추 역할·이름(사업·종류·날짜·호수·위치)·눌림 */
     const dotA11y = (e: AheadEntry) => (foc.keys.includes(e.k) ? {
       tabIndex: e.k === foc.tab ? 0 : -1, role: 'button', 'aria-pressed': e.k === hl,
-      'aria-label': `${e.name} · ${CAL_TYPE[e.type].name} ${dayText(e)}${past(e) ? `(${PAST_DUE})` : ''} · ${e.units ? `${fmt(e.units)}호` : '호수 미확인'} · ${e.place}${e.loc ? ` · ${LOC_NAME[e.loc]}` : ''}`,
+      'aria-label': `${e.name} · ${W.kind[e.type]} ${dayText(e)}${past(e) ? `(${W.past})` : ''} · ${e.units ? `${fmt(e.units)}호` : W.unitsUnknownLong} · ${e.place}${e.loc ? ` · ${LOC_NAME[e.loc]}` : ''}`,
       onFocus: () => setHot(e.k), onBlur: () => setHot(null),
       className: 'cursor-pointer outline-none focus-visible:outline-2 focus-visible:outline-primary',
     } : { className: 'cursor-pointer', 'aria-hidden': true });
     const units = sggUnits(map, sido, SGG_TABLE), cur = units.find((u) => u.code && u.code === sgg);
     sggBar = (
-      <div className="flex min-h-[30px] flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
+      <div className="flex min-h-[30px] flex-wrap items-center gap-x-3 gap-y-1 text-sm">
         <form data-slot="sgg-pick" className="flex items-center gap-1.5" onSubmit={(ev) => { ev.preventDefault(); if (draft !== (cur?.code ?? '')) pickSgg(draft || null, true); }}>
         <select aria-label="시군구 고르기('보기' 또는 Enter 로 이 시군구로 거름)" value={draft} onChange={(ev) => setDraft(ev.target.value)}
           onKeyDown={(ev) => { if (ev.key === 'Enter') { ev.preventDefault(); ev.currentTarget.form?.requestSubmit(); } }}
-          className="h-[30px] max-w-[11rem] cursor-pointer rounded-[8px] border border-border bg-card px-2 text-[14px] text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+          className="h-[30px] max-w-[11rem] cursor-pointer rounded-tile border border-border bg-card px-2 text-sm text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
           <option value="">시군구 고르기</option>
           {[...new Set(units.map((u) => u.s))].map((sd) => (
             <optgroup key={sd} label={units.find((u) => u.s === sd)!.label.split(' ')[0]}>
@@ -232,7 +237,7 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
           ))}
         </select>
         <button type="submit" disabled={draft === (cur?.code ?? '')}
-          className="btn-reset inline-flex h-[30px] cursor-pointer items-center rounded-[8px] border border-line2 bg-card px-2.5 text-[14px] font-bold text-foreground hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-default disabled:font-normal disabled:text-muted-foreground disabled:hover:bg-card">보기</button>
+          className="btn-reset inline-flex h-[30px] cursor-pointer items-center rounded-tile border border-line2 bg-card px-2.5 text-sm font-bold text-foreground hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:cursor-default disabled:font-normal disabled:text-muted-foreground disabled:hover:bg-card">보기</button>
         </form>
         {cur ? (cur.gu.length ? (
           <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5"><b className="font-bold">{cur.n} —</b>{cur.gu.map((g) => <MapLink key={g.code} href={mapHref({ sgg: g.code })} full={`${cur.n} ${g.name} 지도에서 크게 보기`}>{g.name} 지도</MapLink>)}</span>
@@ -243,7 +248,7 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
       </div>
     );
     mapEl = (
-      <div ref={mapBox} data-slot="chart-frame" className="relative min-h-[340px] flex-1 overflow-hidden rounded-[10px] border border-border bg-chartbg"
+      <div ref={mapBox} data-slot="chart-frame" className="relative min-h-[340px] flex-1 overflow-hidden"
         onMouseMove={(ev) => { lastMouse.current = ev; if (hud) place(ev); }}
         onMouseOver={(ev) => { lastMouse.current = ev; const d = (ev.target as Element).closest<SVGElement>('[data-dot]'); const e = d ? byK.get(d.dataset.dot!) : undefined; setHud(e ? { e, withLoc: true } : null); }}
         onMouseLeave={() => setHud(null)}
@@ -260,7 +265,7 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
             {map.sgg.filter((g) => inScope(sido, g.s)).map((g, i) => {
               const u = units.find((x) => x.s === g.s && x.n === g.n);
               return u?.code
-                ? <path key={`s${i}`} d={g.d} data-sgg={u.code} fill="var(--card)" stroke="var(--line2)" vectorEffect="non-scaling-stroke" className="cursor-pointer hover:fill-[color-mix(in_srgb,var(--primary)_8%,var(--card))]"><title>{g.n} — 누르면 고르기(이 시군구로 거름)</title></path>
+                ? <path key={`s${i}`} d={g.d} data-sgg={u.code} fill="var(--card)" stroke="var(--line2)" vectorEffect="non-scaling-stroke" className="cursor-pointer hover:fill-[color-mix(in_srgb,var(--primary)_8%,var(--card))]"><title>{`${g.n} — 누르면 고르기(이 시군구로 거름)`}</title></path>
                 : <path key={`s${i}`} d={g.d} fill="var(--card)" stroke="var(--line2)" vectorEffect="non-scaling-stroke"><title>{g.n}</title></path>;
             })}
           </g>
@@ -282,14 +287,14 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
         </svg>
         {(() => { const sel = hl ? byK.get(hl) : undefined; return sel && onMap(sel) ? (
           <a href={mapHref({ project: sel.id })} title={`${sel.name} — 지도에서 이 사업 위치와 주변 보기`}
-            className="absolute top-2 right-2 inline-flex max-w-[70%] items-center gap-1 rounded-[8px] border border-border bg-card px-2.5 py-1 text-[14px] font-bold text-foreground no-underline shadow-[var(--shadow-card)] hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
+            className="absolute top-2 right-2 inline-flex max-w-[70%] items-center gap-1 rounded-tile border border-border bg-card px-2.5 py-1 text-sm font-bold text-foreground no-underline shadow-card hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">
             <MapPin className="size-4 flex-none" aria-hidden="true" /><span className="truncate">{sel.name}</span><span className="flex-none font-normal text-muted-foreground">지도에서 보기 ›</span>
           </a>
         ) : null; })()}
-        <ul className="pointer-events-auto absolute bottom-2 left-3 m-0 flex list-none flex-wrap items-center gap-x-2.5 p-0 text-[13px] text-muted-foreground" aria-label="지도 범례">
+        <ul className="pointer-events-auto absolute bottom-2 left-3 m-0 flex list-none flex-wrap items-center gap-x-2.5 p-0 text-sm text-muted-foreground" aria-label="지도 범례">
           <li className="flex items-center gap-1" title="원 넓이 = 호수(호수 미확인은 가장 작은 원)"><i className="block size-[9px] rounded-full bg-mute" aria-hidden="true" />원 넓이 = 호수</li>
-          <li className="flex items-center gap-1" title="정확한 좌표가 없어 시군구 중심(또는 근사 위치)에 둔 사업"><i className="block size-[9px] rounded-full border-[1.5px] border-mute" aria-hidden="true" />대표 위치</li>
-          <li className="flex items-center gap-1" title="공공주택지구 공동주택용지(V-World LT_C_LHBLPN)"><i className="block size-[9px] rounded-[2px]" style={{ background: 'color-mix(in srgb,var(--muted-foreground) 20%,transparent)' }} aria-hidden="true" />지구</li>
+          <li className="flex items-center gap-1" title="정확한 좌표가 없어 시군구 중심(또는 근사 위치)에 둔 사업"><i className="block size-[9px] rounded-full border-2 border-mute" aria-hidden="true" />대표 위치</li>
+          <li className="flex items-center gap-1" title="공공주택지구 공동주택용지(V-World LT_C_LHBLPN)"><i className="block size-[9px] rounded-chip" style={{ background: 'color-mix(in srgb,var(--muted-foreground) 20%,transparent)' }} aria-hidden="true" />지구</li>
         </ul>
       </div>
     );
@@ -299,53 +304,54 @@ export default function Ahead({ sido, regionName, months, nowM, refDate, list, i
   const xs = byM[m] ?? [], shown = more ? xs : xs.slice(0, LIST_N);
   const rowIn = (ev: React.SyntheticEvent) => { const r = (ev.target as HTMLElement).closest<HTMLElement>('[data-row]'); setHot(r ? r.dataset.row! : null); };
   /* 고른 시군구에 12개월 예정이 없으면(지도는 남겨 다른 면을 고르게) 달 목록 대신 한 줄 */
-  const listEl = !list.length ? <p className="m-0 mt-4 text-[14px] text-muted-foreground">{regionName} · 12개월 안 예정 없음</p> : (
+  const listEl = !list.length ? <p className="m-0 mt-4 text-sm text-muted-foreground">{regionName} · 12개월 안 예정 없음</p> : (
     <div className="mt-4" onMouseOver={rowIn} onFocus={rowIn} onMouseLeave={() => setHot(null)}
       onBlur={(ev) => { if (!ev.currentTarget.contains(ev.relatedTarget as Node)) setHot(null); }}>
       <div className="mb-1 flex flex-wrap items-baseline gap-x-3">
-        <h3 className="m-0 text-[16px] font-bold">{monthLabel(m)}</h3>
-        <span className="text-[14px] text-muted-foreground tabular-nums">{xs.length}건 · {fmt(sum(xs, (e) => e.units))}호</span>
+        <h3 className="m-0 text-base font-bold">{monthLabel(m)}</h3>
+        <span className={cn('text-muted-foreground tabular-nums', W.large ? 'text-base' : 'text-sm')}>{xs.length}{W.count} · {fmt(sum(xs, (e) => e.units))}호</span>
       </div>
       <ol className="m-0 list-none columns-2 gap-x-8 p-0 narrow:columns-1 min-[1600px]:columns-3" aria-label={`${monthLabel(m)} 예정 사업`}>
         {shown.map((e) => {
-          /* 상세가 있는 사업은 상세 서랍(?id=), 후보 사업은 간단 보기(?cand=) — 막다른 행이 없다. 서랍 뒤 목록은 그 사업이 든 범위(projectHref) */
+          /* 상세가 있는 사업은 상세 서랍(?id=), 후보 사업은 간단 보기(?cand=) — 일반사용자 판은 사업 찾기 ?id= / 이름 검색 ?q= — 막다른 행이 없다. 서랍 뒤 목록은 그 사업이 든 범위(projectHref) */
           const href = projectHref(e, sido);
+          const to = W.hrefBase ? (e.drawer ? findHref({ id: e.id }) : findHref({ q: e.name })) : href;   // 일반사용자 판은 사업 찾기로
           return (
-            <li key={e.k} data-row={e.k} data-hl={e.k === hotKey ? '' : undefined} className="flex break-inside-avoid items-center gap-x-3 border-b border-border px-1 py-1.5 text-[14px] leading-[1.5] data-[hl]:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)]">
-              <KindChip t={e.type} />
+            <li key={e.k} data-row={e.k} data-hl={e.k === hotKey ? '' : undefined} className={cn('flex break-inside-avoid items-center gap-x-3 phone:flex-wrap phone:gap-y-0.5 border-b border-border px-1 py-1.5 leading-body data-[hl]:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)]', W.large ? 'text-base' : 'text-sm')}>
+              <KindChip t={e.type} name={W.kind[e.type]} tip={W.kindTip?.[e.type] ?? aheadKindTip(e.type)} />
               {/* 사업명·시군구는 두 줄까지 줄바꿈 후 말줄임(2026-10-16 2차 평가: 한 줄 말줄임이 373→183px 로 잘랐다) */}
-              <span className="line-clamp-2 min-w-0 flex-1 font-bold [overflow-wrap:break-word] [word-break:keep-all]" title={e.name}>
-                <Link href={href} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link>
-                {e.drawer ? null : <>{' '}<span className="ml-1 text-[13px] font-normal text-muted-foreground" title="후보 사업(사업 번호가 아직 없음) — 누르면 간단 보기">(후보)</span></>}
-                {past(e) ? <>{' '}<span data-slot="past-due" className="ml-1 inline-block rounded-[4px] border border-line2 px-1 text-[12px] leading-[18px] font-normal whitespace-nowrap text-muted-foreground" title={PAST_TIP}>{PAST_DUE}</span></> : null}
+              <span className="line-clamp-2 min-w-0 flex-1 phone:basis-[calc(100%-60px)] font-bold [overflow-wrap:break-word] [word-break:keep-all]" title={e.name}>
+                <Link href={to} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link>
+                {e.drawer ? null : <>{' '}<span className="ml-1 text-sm font-normal text-muted-foreground" title={W.candTip}>{W.cand}</span></>}
+                {past(e) ? <>{' '}<span data-slot="past-due" className="ml-1 inline-block rounded-chip border border-line2 px-1 text-sm leading-sub font-normal whitespace-nowrap text-muted-foreground" title={PAST_TIP}>{W.past}</span></> : null}
               </span>
-              <span className="w-[80px] flex-none whitespace-nowrap text-muted-foreground tabular-nums">{dayText(e)}</span>
+              <span className={cn('flex-none whitespace-nowrap text-muted-foreground tabular-nums', W.large ? 'w-[88px]' : 'w-[80px]')}>{dayText(e)}</span>
               <span className="line-clamp-2 w-[112px] flex-none text-muted-foreground [word-break:keep-all]" title={e.sgg}>{e.place}</span>
-              <span className="w-[68px] flex-none text-right whitespace-nowrap tabular-nums">{e.units ? `${fmt(e.units)}호` : <span className="text-[13px] text-muted-foreground" title="호수 미확인">미확인</span>}</span>
-              <span className="w-5 flex-none">{onMap(e) ? <a href={mapHref({ project: e.id })} title={`${e.name} — 지도에서 보기`} aria-label={`${e.name} 지도에서 보기`} className="flex rounded-[4px] text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"><MapPin className="size-4" aria-hidden="true" /></a> : null}</span>
-              <span className="w-4 flex-none"><Link href={href} tabIndex={-1} aria-hidden="true" className="flex text-muted-foreground hover:text-primary"><ChevronRight className="size-4" /></Link></span>
+              <span className={cn('flex-none text-right whitespace-nowrap tabular-nums', W.large ? 'w-[84px]' : 'w-[68px]')}>{e.units ? `${fmt(e.units)}호` : <span className="text-sm text-muted-foreground" title={W.unitsUnknownLong}>{W.unitsUnknown}</span>}</span>
+              <span className="w-5 flex-none">{onMap(e) ? <a href={mapHref({ project: e.id })} title={`${e.name} — 지도에서 보기`} aria-label={`${e.name} 지도에서 보기`} className="flex rounded-chip text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"><MapPin className="size-4" aria-hidden="true" /></a> : null}</span>
+              <span className="w-4 flex-none"><Link href={to} tabIndex={-1} aria-hidden="true" className="flex text-muted-foreground hover:text-primary"><ChevronRight className="size-4" /></Link></span>
             </li>
           );
         })}
       </ol>
-      {xs.some((e) => !e.drawer) ? <p className="m-0 mt-1.5 text-[14px] text-muted-foreground">(후보) = 사업 번호가 아직 없는 후보 사업 · 누르면 간단 보기</p> : null}
-      {xs.length > shown.length ? <button type="button" onClick={() => setMore(true)} className={cn('btn-reset mt-2', LINK)}>더 보기 · 외 {xs.length - shown.length}건 {fmt(sum(xs.slice(LIST_N), (e) => e.units))}호</button> : null}
+      {xs.some((e) => !e.drawer) ? <InfoTip label={`${W.cand} 표시`}>{words ? <p>{W.cand} = {W.candTip}</p> : <p>(후보) = 사업 번호가 아직 없는 후보 사업 · 누르면 간단 보기</p>}</InfoTip> : null}
+      {xs.length > shown.length ? <button type="button" onClick={() => setMore(true)} className={cn('btn-reset mt-2', LINK)}>더 보기 · 외 {xs.length - shown.length}{W.count} {fmt(sum(xs.slice(LIST_N), (e) => e.units))}호</button> : null}
     </div>
   );
 
   return (
     <>
       <div className={map ? 'grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] gap-3.5 narrow:grid-cols-1' : 'grid grid-cols-1'}>
-        <div className="min-w-0">{wave}</div>
-        {map ? <div className="flex min-w-0 flex-col gap-2" onKeyDown={(ev) => { if (ev.key === 'Escape' && sgg) pickSgg(null); }}>{sggBar}{mapEl}</div> : null}
+        <Card variant="inset" className="h-full p-0">{wave}</Card>
+        {map ? <div className="flex min-w-0 flex-col gap-2" onKeyDown={(ev) => { if (ev.key === 'Escape' && sgg) pickSgg(null); }}>{sggBar}<Card variant="inset" className="flex min-h-0 flex-1 flex-col overflow-hidden p-0">{mapEl}</Card></div> : null}
       </div>
       {listEl}
       <div ref={hudRef} hidden={!hud} role="presentation" style={{ left: -9999, top: 0 }}
-        className="pointer-events-none fixed z-50 max-w-[300px] rounded-[8px] border border-border bg-popover px-2.5 py-1.5 text-[13px] leading-[1.45] text-popover-foreground shadow-[var(--shadow-pop)]">
+        className="pointer-events-none fixed z-50 max-w-[300px] rounded-tile border border-border bg-popover px-2.5 py-1.5 text-sm leading-body text-popover-foreground shadow-pop">
         {hud ? (
           <>
             <b className="block">{hud.e.name}</b>
-            <span className="block tabular-nums"><b style={{ color: CAL_TYPE[hud.e.type].ink }}>{CAL_TYPE[hud.e.type].name}</b> · {dayText(hud.e)}{past(hud.e) ? ` ${PAST_DUE}` : ''} · {hud.e.units ? `${fmt(hud.e.units)}호` : '호수 미확인'}</span>
+            <span className="block tabular-nums"><b style={{ color: CAL_TYPE[hud.e.type].ink }}>{W.kind[hud.e.type]}</b> · {dayText(hud.e)}{past(hud.e) ? ` ${W.past}` : ''} · {hud.e.units ? `${fmt(hud.e.units)}호` : W.unitsUnknownLong}</span>
             <span className="block text-muted-foreground">{hud.e.place}{hud.withLoc && hud.e.loc ? ` · ${LOC_NAME[hud.e.loc]}` : ''}</span>
           </>
         ) : null}

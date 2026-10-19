@@ -53,7 +53,7 @@ test("H1 서랍 단계 줄: '지금' 한 칸만 채우고 지난 단계는 옅�
   }
   const steps = read('components/projects/StageSteps.tsx');
   assert.match(steps, /const st = stepState\(i, current\), on = st === 'now';/);
-  assert.match(steps, /style=\{on \? \{ borderColor: c, background: `color-mix\(in srgb,\$\{c\} 26%,var\(--card\)\)` \} : undefined\}/, '단계색 면은 지금 칸에만');
+  assert.match(steps, /style=\{on \? \{ background: `color-mix\(in srgb,\$\{c\} 26%,var\(--card\)\)` \} : undefined\}/, '단계색 면은 지금 칸에만');
   assert.match(steps, /\{st === 'past' \? <><Check [^>]*aria-hidden="true" \/><span className="sr-only">지난 단계 <\/span><\/> : null\}/);
   assert.doesNotMatch(steps, /done \?/, '지난 단계를 단계색으로 칠하지 않는다');
 });
@@ -138,7 +138,7 @@ test('H7 키보드: 지역 지도 원은 고른 달의 원만 초점 대상(Tab 
 test("H9 회복·문구: 부산은 '자료 없음(서울·인천·경기만)', 인쇄는 '점검 필요 n건 전부'(10줄 넘으면 상위 10)", () => {
   const region = read('app/(dashboard)/region/page.tsx');
   /* 2026-10-16: 빈 카드 대신 '동네 여건' 머리 한 줄(r2-screens 6) — 머리 바로 뒤라 '동네 여건'을 되풀이하지 않는다 */
-  assert.match(region, /동네 여건<\/h2>[\s\S]*\$\{name\} 자료 없음\(서울·인천·경기만\)/);
+  assert.match(region, /동네 여건<\/h3>[\s\S]*\$\{name\} 자료 없음\(서울·인천·경기만\)/);
   assert.match(region, /sido && sido !== 'metro' \?/);
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /const prioAll = priorityOf\(scope, Infinity\), top = prioAll\.slice\(0, 10\);/);

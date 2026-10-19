@@ -1,8 +1,14 @@
-/* 지도 첫 화면 '수도권 개요'(/map · /map?sido=11|28|41). 상세 지도(app.js·지역 자료·지형·3D 건물)를 부르지 않는 가벼운 모듈이다.
+/* 지도 첫 화면 '수도권 개요'(/map · /map?sido=11|28|41). 상세 지도(app.js·지역 자료·지형·3D 건물·MapLibre)를 부르지 않는 가벼운 모듈이다.
    자료는 지도 페이지가 서버에서 센 window.OVERVIEW(lib/board/metro-overview.ts — 사업 화면·지역 공급과 같은 계산)이고, 여기서는 그리기만 한다.
-   - 면: 시군구 경로(region-map 투영 정수)를 경위도로 되돌려 MapLibre 채움 면으로 그린다(배경 지도 타일 없음).
-   - 지표 3개(진행 사업 호수 · 지연 사업 · 앞으로 12개월 준공)를 한 색상 명도 5단계(분위수 경계)로 칠하고, 0 은 중립 색. 지연만 빨강(bad) 단계(<html data-ov-metric="d">), 나머지는 파랑.
-   - 시군구를 누르면(또는 순위 목록에서 Enter) 그 시군구로 0.6초 확대한 뒤 상세 지도 /map?sgg=<코드> 로 넘어간다. 구가 있는 경기 시는 작은 메뉴로 구를 고른다.
+   - 면: 시군구 경로(region-map 투영 정수)를 /citizen 과 같은 진짜 3D(MapLibre GL fill-extrusion — 공용 모듈 assets/js/map3d-gl.js · MapGL, 바탕 지도 없이 시군구 면만)로 그리고,
+     주소 ?gl=0 · WebGL 없음 · 불러오기 실패면 SVG 흉내 3D(공용 모듈 assets/js/map3d.js · 모양 assets/css/map3d.css)로 대체한다(면 높이 = 진행 호수, 색 = 지표 단계).
+     진짜 3D 는 시도를 고르면(시도 카드·면 누름·?sido=) 그 시도로 부드럽게 확대(flyTo), 풀면 수도권 본토로 축소한다 — 판·높이 배율·색 구간은 그대로.
+     범위는 수도권 전체(쿼리 없음 — 세 시도 시군구 면이 무대를 채우고, 강화·옹진 섬 면은 그리지 않으며(값·순위·합계에는 그대로 든다), 수도권 밖 시도는 평평한 맥락 면으로 무대 밖은 잘림, data/board/korea-sido.json) 또는 ?sido= 의 시도(나머지 시도는 맥락 면).
+     보기는 수도권 → 시도 2단이다(2026-10-18 사용자 지시 — /citizen 수도권 지도와 같은 범위·색, 그 전의 전국 보기는 없앴다). 수도권 보기에서 면·시도 카드를 누르면 그 시도로 확대하고, 수도권 밖 면은 고를 수 없다.
+     지표를 바꾸면 색·이름표 숫자만 다시 칠하고 기하는 다시 만들지 않는다.
+   - 지표 3개(진행 사업 호수 · 지연 사업 · 앞으로 12개월 준공)를 명도 5단계(분위수 경계)로 칠하고, 0 은 중립 색. 지연만 빨강(bad) 단계(<html data-ov-metric="d">), 나머지는 /citizen 과 같은 연두→남보라 램프(globals --map-ov-*).
+   - 시군구를 누르면(시도 지도·순위 목록에서 Enter) 상세 지도 /map?sgg=<코드> 로 넘어간다. 구가 있는 경기 시는 작은 메뉴로 구를 고른다.
+   - 순위는 가로 막대 목록(값 비례 · 면과 같은 단계 색): 패널 남은 높이에 들어가는 줄만 보이고(rowsFit · ResizeObserver) 전체는 '전체 n ›' 목록(#ovSheet, 그 안만 스크롤).
    순수 함수는 node --test 로 시험한다(tests/js/map-overview.test.cjs). DOM 은 mount 에서만 만진다. */
 (function (root, factory) {
   const api = factory();
@@ -23,16 +29,12 @@
   }
   const sggHref = (code) => `/map?sgg=${encodeURIComponent(code)}`;
   /* 지표 주소 값(?metric=): 개요 지표 id(u·d·a). 화면 쪽 계약의 'late' 는 지연(d)으로 읽는다 */
-  const metricOf = (search) => { const v = new URLSearchParams(search || '').get('metric'); return v === 'late' ? 'd' : ['u', 'd', 'a'].includes(v) ? v : 'u'; };
+  const metricOf = (search, pub) => { const v = new URLSearchParams(search || '').get('metric'), r = v === 'late' ? 'd' : ['u', 'd', 'a'].includes(v) ? v : 'u'; return pub && r === 'd' ? 'u' : r; };   // pub(일반사용자 관점)은 지연 지표가 없어 u 로 본다
   /* 상세 지도 주소에 지금 지표를 붙인다(기본 '진행 호수'는 붙이지 않는다) — 상세가 지연 맥락(머리 줄 '지연 n' 칩·빨강 묶음 표지)을 이어 받는다 */
   const withMetric = (href, metric) => (metric && metric !== 'u' ? `${href}&metric=${metric}` : href);
   const sidoHref = (sido) => (sido ? `/map?sido=${sido}` : '/map');
 
-  /* ---------- 경계: region-map 경로 → 경위도 ---------- */
-  /* region-map/1 투영(tools/ledger/region-supply.js): x = (경도−124.5)·cos37.5°·1000, y = (38.4−위도)·1000 */
-  const KX = Math.cos((37.5 * Math.PI) / 180) * 1000;
-  const unproject = (x, y) => [Math.round((x / KX + 124.5) * 1e5) / 1e5, Math.round((38.4 - y / 1000) * 1e5) / 1e5];
-  const projectLL = (lng, lat) => [(lng - 124.5) * KX, (38.4 - lat) * 1000];   // unproject 의 거꾸로(반올림 없음)
+  /* ---------- 경계: region-map 경로(투영 정수) ---------- */
   /* 'M절대 l상대…z' 고리들 → 투영 좌표 고리(닫지 않음) */
   function pathRings(d) {
     const out = [], re = /M(-?\d+) (-?\d+)l([^z]*)z/g;
@@ -54,34 +56,12 @@
     }
     return c;
   }
-  /* 고리들 → 다각형들: 다른 고리 안에 든 고리는 그 고리의 구멍으로(경로는 바깥·구멍을 구분하지 않고 이어 적는다) */
-  function polygonsOf(rings) {
-    const order = rings.map((r, i) => ({ r, i, a: ringArea(r) })).sort((p, q) => q.a - p.a), polys = [];
-    for (const o of order) {
-      const host = polys.find((p) => inRing(o.r[0], p[0]));
-      if (host) host.push(o.r); else polys.push([o.r]);
-    }
-    return polys;
-  }
-  const closeLL = (r) => { const ll = r.map((p) => unproject(p[0], p[1])); ll.push(ll[0].slice()); return ll; };
-  /* 개요 면 → GeoJSON(경도·위도). properties: code · s(시도) · name */
-  function toGeoJSON(units) {
-    return {
-      type: 'FeatureCollection',
-      features: (units || []).map((u, id) => {
-        const polys = polygonsOf(pathRings(u.d)).map((p) => p.map(closeLL));
-        return { type: 'Feature', id, properties: { code: u.code, s: u.s, name: u.name }, geometry: polys.length === 1 ? { type: 'Polygon', coordinates: polys[0] } : { type: 'MultiPolygon', coordinates: polys } };
-      }),
-    };
-  }
-  /* 투영 상자 [x, y, 너비, 높이] → 경위도 [[서, 남], [동, 북]] */
-  const boxLL = (b) => { const a = unproject(b[0], b[1] + b[3]), c = unproject(b[0] + b[2], b[1]); return [a, c]; };
   function ringsBox(rings) {
     const b = [Infinity, Infinity, -Infinity, -Infinity];
     for (const r of rings) for (const [x, y] of r) { b[0] = Math.min(b[0], x); b[1] = Math.min(b[1], y); b[2] = Math.max(b[2], x); b[3] = Math.max(b[3], y); }
     return [b[0], b[1], b[2] - b[0], b[3] - b[1]];
   }
-  /* 라벨 자리: 가장 큰 고리 안에서 변과 가장 먼 격자점(오목한 시군구도 면 안에 든다) */
+  /* 라벨 시작점: 가장 큰 고리 안에서 변과 가장 먼 격자점(오목한 시군구도 면 안에 든다). 3D 판에서는 Map3D.labelPoint 가 다듬은 면 안인지 다시 본다 */
   function labelPoint(rings) {
     const r = rings.slice().sort((p, q) => ringArea(q) - ringArea(p))[0];
     if (!r) return null;
@@ -101,18 +81,47 @@
     return best || r[0];
   }
 
+  /* 3D 판 범위: 수도권(sido '')은 섬(강화·옹진)을 뺀 세 시도 본토 면(2026-10-18 사용자 지시 '섬지역은 배제하고 수도권 기준으로' — 섬 삽입 지도도 없다. 무대 = 본토 판 상자),
+     시도는 그 시도 면만(인천 확대 보기는 섬 삽입 지도로 강화·옹진을 그대로 보인다 — 지도에서 두 군을 고를 수 있는 유일한 곳).
+     맥락 시도를 고르는 상자는 region-map 시도 상자(인천은 옹진 때문에 null → 판 상자 + 4%, /citizen 과 같은 규칙). 수도권 보기의 맥락 면은 mount 가 geom 에 따로 넘긴다(ctxBase) */
+  const ISLES = ['28710', '28720'];
+  function scopeOf(units, sido, view) {
+    const codes = (units || []).filter((u) => !sido || u.s === sido).map((u) => u.code), isles = codes.filter((c) => ISLES.includes(c));
+    return { own: codes.filter((c) => !isles.includes(c)), isles: sido ? isles : [], view: sido && sido !== '28' && view ? view[sido] || null : null };
+  }
+  /* 수도권 보기 geom 옵션: 시도 외곽 면 묶음(prep 한 nat)을 평평한 맥락 면으로, 판 면이 있는 수도권 시도는 뺀다. 무대는 판 상자(fit 없음 — /citizen 과 같은 크기감) */
+  const nationOpt = (nat) => (nat ? { ctxBase: nat, ctxOmit: SIDO } : {});
+  /* 진짜 3D 맥락 면(평평한 면 층, 고를 수 없음): 전국 시도 외곽 가운데 수도권 밖만 [{ code, d }] */
+  const glCtxOf = (sido) => (sido || []).filter((x) => !SIDO.includes(x.s)).map((x) => ({ code: x.s, d: x.d }));
+  /* 진짜 3D 를 시도할지: 공용 모듈 주소가 있고 주소가 ?gl=0 이 아니면 'load'(WebGL 판정·maplibre 불러오기 뒤 'gl'), 아니면 처음부터 'svg' */
+  const glModeOf = (search, src) => (!src || new URLSearchParams(search || '').get('gl') === '0' ? 'svg' : 'load');
+  const MAPLIBRE = '/assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js';   // 상세 지도(MapIsland LIBS)와 같은 주소 — 상세로 넘어가면 브라우저 캐시를 그대로 쓴다
+  /* 순위 막대 목록에 보이는 줄 수: 목록 칸 높이(avail) ÷ 한 줄 높이(rowH), 줄 수(n) 이하 — 넘치는 줄은 숨기고 '전체 n ›' 이 받는다(패널 세로 스크롤 없음) */
+  const rowsFit = (avail, rowH, n) => (rowH > 0 ? Math.max(0, Math.min(n, Math.floor((avail + .5) / rowH))) : n);
+  /* 막대 길이(%): 목록 최댓값 대비, 0 이 아니면 최소 2% */
+  const barPct = (v, max) => (v > 0 && max > 0 ? Math.max(2, Math.round((v / max) * 1000) / 10) : 0);
+  /* Map3D.prep 입력: 코드·시도·이름·경로 + 라벨 시작점(labelPoint) */
+  const seedOf = (units) => (units || []).map((u) => { const p = labelPoint(pathRings(u.d)) || [0, 0]; return { code: u.code, s: u.s, n: u.name, d: u.d, lx: p[0], ly: p[1] }; });
+
   /* ---------- 지표·색 단계 ---------- */
   const METRICS = [
     { id: 'u', name: '진행 사업 호수', short: '진행 호수', unit: '호' },
     { id: 'd', name: '지연 사업', short: '지연', unit: '건' },
     { id: 'a', name: '앞으로 12개월 준공', short: '12개월 준공', unit: '호' },
   ];
+  /* 일반사용자 관점의 지표: 지연을 빼고 이름을 /citizen 과 맞춘다. 정책담당자 관점은 METRICS 그대로 */
+  const PUBLIC_NAMES = { u: { name: '공급 예정 호수', short: '공급 예정 호수' }, a: { name: '1년 안 준공', short: '1년 안 준공' } };
+  const metricsFor = (pub) => (pub ? METRICS.filter((m) => PUBLIC_NAMES[m.id]).map((m) => ({ ...m, ...PUBLIC_NAMES[m.id] })) : METRICS);
+  const titleOf = (name, pub) => `${name} ${pub ? '공급 예정 호수' : '공급 개요'}`;
+  const totalSubOf = (metric, v, pub) => metric === 'u' ? (pub ? `사업 ${fmt(v.n)}곳` : `진행 ${fmt(v.n)}건${v.q ? ` · 호수 미확인 ${fmt(v.q)}건` : ''}`) : metric === 'd' ? `전체 사업 ${fmt(v.st.reduce((a, b) => a + b, 0))}건 중` : `준공 예정 ${fmt(v.an)}건`;
   const valOf = (v, m) => (v ? v[m] || 0 : 0);
   const fmt = (n) => Math.round(n).toLocaleString('en-US');
   const ymDot = (ym) => (ym ? `${ym.slice(0, 4)}.${ym.slice(5, 7)}` : '');
   const dayDot = (d) => (d ? d.slice(0, 10).replace(/-/g, '.') : '');
-  function defOf(metric, doc) {
+  function defOf(metric, doc, pub) {
     const m = doc && doc.months;
+    if (pub && metric === 'u') return '계획부터 모집까지 진행 중인 사업의 계획 호수를 더한 값입니다. 호수가 아직 정해지지 않은 사업은 빠집니다.';
+    if (pub) return `${m ? `${ymDot(m[0])}~${ymDot(m[1])}` : '앞으로 1년'}에 준공(공사 완료) 예정인 사업의 호수입니다. 같은 기간 입주 예정은 마우스를 올리면 따로 보입니다.`;
     if (metric === 'u') return '계획부터 모집까지(①~④) 진행 중인 사업의 계획 호수를 더한 값입니다. 호수가 아직 정해지지 않은 사업은 따로 건수로 셉니다. 사업 화면과 같은 기준입니다.';
     if (metric === 'd') return '예정일을 6개월 넘게 넘긴 사업 수입니다. 12개월 넘게 넘긴 장기 지연도 넣습니다. 사업 화면의 지연(장기 포함)과 같습니다.';
     return `${m ? `${ymDot(m[0])}~${ymDot(m[1])}` : '앞으로 12개월'}에 준공(공사 완료) 예정인 사업의 호수입니다. 사업 화면·지역 공급 화면의 준공 예정과 같은 기준입니다. 같은 기간 입주 예정은 마우스를 올리면 따로 보입니다.`;
@@ -178,28 +187,6 @@
     return -1;
   }
 
-  /* 점이 면(다각형들: [바깥 고리, 구멍…]) 안인가 — 바깥 고리 안이고 구멍 밖 */
-  const inPolys = (pt, polys) => polys.some((p) => inRing(pt, p[0]) && !p.slice(1).some((h) => inRing(pt, h)));
-  /* 라벨 상자가 자기 면 안인가(2026-10-15 평가: 과천·오산 등 라벨이 이웃 면 위에 놓여 바탕 대비가 2.5:1까지 떨어졌다).
-     corners = 상자 네 귀퉁이(투영 좌표). 네 귀퉁이와 네 변의 가운데가 모두 그 면 안이어야 한다 */
-  function boxInFace(corners, polys) {
-    const mids = corners.map((c, i) => { const d = corners[(i + 1) % corners.length]; return [(c[0] + d[0]) / 2, (c[1] + d[1]) / 2]; });
-    return corners.concat(mids).every((pt) => inPolys(pt, polys));
-  }
-
-  /* 라벨 둘레 여백 [가로, 세로](화소, 한쪽). 이웃 라벨과 가로 16px·세로 10px 이상 떨어져 서로 다른 라벨로 읽힌다(글자 테두리 그림자 2px 포함) */
-  const LABEL_PAD = [8, 5];
-  /* 라벨 놓기(순수): items = [{ x, y, w, h }](중심·크기, 우선순위 순 — 값 큰 것부터), blocked = 미리 막힌 상자 [왼, 위, 오른, 아래].
-     앞 라벨부터 여백을 둔 상자가 화면 밖이거나 이미 놓은 상자와 닿으면 숨긴다 → 놓은 상자끼리는 가로 2·px, 세로 2·py 이상 떨어진다. 돌려주는 값: 보이는지 배열 */
-  function pickLabels(items, W, H, blocked, pad) {
-    const [px, py] = pad || LABEL_PAD, placed = (blocked || []).slice();
-    return items.map((it) => {
-      const b = [it.x - it.w / 2 - px, it.y - it.h / 2 - py, it.x + it.w / 2 + px, it.y + it.h / 2 + py];
-      if (b[0] < 0 || b[1] < 0 || b[2] > W || b[3] > H || placed.some((q) => b[0] < q[2] && b[2] > q[0] && b[1] < q[3] && b[3] > q[1])) return false;
-      placed.push(b);
-      return true;
-    });
-  }
   const SIDO_SHORT = { 11: '서울', 28: '인천', 41: '경기' };
   const STAGES = ['①계획', '②인허가', '③착공', '④모집', '⑤준공', '⑥입주'];
   const ST_VAR = ['--st-plan', '--st-permit', '--st-build', '--st-sale', '--st-soon', '--st-move'];
@@ -213,29 +200,28 @@
   }
 
   /* ---------- 화면 ---------- */
-  function mount(win, doc, libReady) {
-    const D = win.OVERVIEW, root = doc.getElementById('ov');
+  function mount(win, doc) {
+    const D = win.OVERVIEW, root = doc.getElementById('ov'), M3 = win.Map3D;
     if (!root || !D) return null;
     const $ = (id) => doc.getElementById(id);
-    const reduce = !!(win.matchMedia && win.matchMedia('(prefers-reduced-motion: reduce)').matches);
     const units = D.units || [], byCode = new Map(units.map((u) => [u.code, u]));
-    const rings = new Map(units.map((u) => [u.code, pathRings(u.d)]));
-    const faces = new Map(units.map((u) => [u.code, polygonsOf(rings.get(u.code))]));   // 라벨 상자가 자기 면 안인지 볼 때
     const pickOfSearch = new URLSearchParams(win.location.search).get('pick');   // 아래 replaceState 가 주소를 바꾸기 전에 읽는다
-    const S = { metric: metricOf(win.location.search), sido: modeOf(win.location.search).sido, hover: null, menu: null, going: false };
-    let map = null, labels = [], ups = [];
+    const isPub = () => doc.documentElement.getAttribute('data-aud') !== 'admin', ms = () => metricsFor(isPub());   // 관점은 head 의 AUDIENCE_INIT 이 html[data-aud] 에 먼저 넣는다
+    const S = { metric: metricOf(win.location.search, isPub()), sido: modeOf(win.location.search).sido, hover: null, menu: null, going: false, pick: null, at: null };
+    let ups = [];
 
     /* 패널 */
     const panel = $('ovPanel');
     $('ovAsOf').textContent = D.referenceDate ? `${dayDot(D.referenceDate)} 기준` : '';
     const mbox = $('ovMetrics');
-    mbox.innerHTML = METRICS.map((m) => `<button type="button" role="radio" data-m="${m.id}" aria-checked="${m.id === S.metric}" tabindex="${m.id === S.metric ? 0 : -1}">${esc(m.short)}</button>`).join('');
+    const buildTabs = () => { mbox.innerHTML = ms().map((m) => `<button type="button" role="radio" data-m="${m.id}" aria-checked="${m.id === S.metric}" tabindex="${m.id === S.metric ? 0 : -1}">${esc(m.short)}</button>`).join(''); };
+    buildTabs();
     mbox.addEventListener('click', (e) => { const b = e.target.closest('button[data-m]'); if (b) setMetric(b.dataset.m); });
     mbox.addEventListener('keydown', (e) => {
-      const i = METRICS.findIndex((m) => m.id === S.metric), k = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
+      const MS = ms(), i = MS.findIndex((m) => m.id === S.metric), k = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0;
       if (!k) return;
       e.preventDefault();
-      setMetric(METRICS[(i + k + METRICS.length) % METRICS.length].id);
+      setMetric(MS[(i + k + MS.length) % MS.length].id);
       mbox.querySelector(`[data-m="${S.metric}"]`).focus();
     });
     const defBtn = $('ovDefBtn'), defP = $('ovDef');
@@ -243,67 +229,93 @@
     defBtn.addEventListener('click', () => { const open = defBtn.getAttribute('aria-expanded') !== 'true'; defBtn.setAttribute('aria-expanded', String(open)); defP.hidden = !open; });
     $('ovCards').addEventListener('click', (e) => { const b = e.target.closest('button[data-s]'); if (b) setSido(S.sido === b.dataset.s ? '' : b.dataset.s, true); });
     $('ovBack').addEventListener('click', () => setSido('', true));   // 시도에서 수도권 전체로
-    $('ovRank').addEventListener('click', (e) => {
+    /* 시군구 목록 둘(#ovRank 패널 막대 목록 · #ovRankAll '전체 n' 목록)은 같은 사건을 받는다: 누름 → 상세(구 메뉴), 가리킴·초점 ↔ 면 효과, 로빙 tabindex */
+    const LISTS = [$('ovRank'), $('ovRankAll')];
+    for (const L of LISTS) L.addEventListener('click', (e) => {
       const z = e.target.closest('.ov-zbtn');
-      if (z) { const on = z.getAttribute('aria-expanded') !== 'true'; z.setAttribute('aria-expanded', String(on)); z.querySelector('.ov-zc').textContent = on ? '▴' : '▾'; $('ovZeroList').hidden = !on; rove(); return; }
+      if (z) { const on = z.getAttribute('aria-expanded') !== 'true'; z.setAttribute('aria-expanded', String(on)); z.querySelector('.ov-zc').textContent = on ? '▴' : '▾'; $('ovZeroList').hidden = !on; rove(L); return; }
       const b = e.target.closest('button[data-c]'); if (b) choose(b.dataset.c, b); });
-    /* 시군구 목록: 로빙 tabindex(목록 안 항목 하나만 Tab 으로 들어가고, 안에서는 ↑↓·Home·End·첫 글자로 옮긴다 — 2026-10-15 평가 P3) */
-    const rankBtns = () => [...$('ovRank').querySelectorAll('button')].filter((b) => !b.closest('[hidden]'));
+    /* 시군구 목록: 로빙 tabindex(목록 안 항목 하나만 Tab 으로 들어가고, 안에서는 ↑↓·Home·End·첫 글자로 옮긴다 — 2026-10-15 평가 P3). 숨긴 줄(넘친 줄·접힌 묶음)은 건너뛴다 */
+    const rankBtns = (L) => [...L.querySelectorAll('button')].filter((b) => !b.closest('[hidden]'));
     let rk = null;   // 목록에서 마지막으로 초점이 있던 항목(시군구 코드, 묶음 단추는 'zeros')
     const keyOf = (b) => b.dataset.c || 'zeros';
-    function rove() {
-      const bs = rankBtns(), cur = bs.find((b) => keyOf(b) === rk) || bs[0];
-      $('ovRank').querySelectorAll('button').forEach((b) => { b.tabIndex = b === cur ? 0 : -1; });
+    function rove(L) {
+      const bs = rankBtns(L), cur = bs.find((b) => keyOf(b) === rk) || bs[0];
+      L.querySelectorAll('button').forEach((b) => { b.tabIndex = b === cur ? 0 : -1; });
     }
-    $('ovRank').addEventListener('focusin', (e) => { const b = e.target.closest('button'); if (b) { rk = keyOf(b); rove(); } });
-    $('ovRank').addEventListener('keydown', (e) => {
-      if (e.altKey || e.ctrlKey || e.metaKey) return;
-      const bs = rankBtns(), i = bs.indexOf(doc.activeElement);
-      if (i < 0) return;
-      const j = rankMove(bs.map((b) => b.dataset.n || ''), i, e.key);
-      if (j < 0) return;
-      e.preventDefault();
-      bs[j].focus();
-      if (bs[j].scrollIntoView) bs[j].scrollIntoView({ block: 'nearest' });
-    });
+    for (const L of LISTS) {
+      L.addEventListener('focusin', (e) => { const b = e.target.closest('button'); if (b) { rk = keyOf(b); rove(L); } });
+      L.addEventListener('keydown', (e) => {
+        if (e.altKey || e.ctrlKey || e.metaKey) return;
+        const bs = rankBtns(L), i = bs.indexOf(doc.activeElement);
+        if (i < 0) return;
+        const j = rankMove(bs.map((b) => b.dataset.n || ''), i, e.key);
+        if (j < 0) return;
+        e.preventDefault();
+        bs[j].focus();
+        if (bs[j].scrollIntoView) bs[j].scrollIntoView({ block: 'nearest' });
+      });
+    }
+    /* '전체 n ›' 목록: 패널 위에 덮는 목록(그 안만 스크롤). Esc·닫기로 닫고 여는 단추로 초점을 돌린다 */
+    const sheetEl = $('ovSheet'), allBtn = $('ovAll');
+    function openSheet(on) {
+      sheetEl.hidden = !on; allBtn.setAttribute('aria-expanded', String(on));
+      if (on) { rove($('ovRankAll')); const f = rankBtns($('ovRankAll')).find((b) => b.tabIndex === 0); if (f) f.focus(); } else allBtn.focus();
+    }
+    allBtn.addEventListener('click', () => openSheet(sheetEl.hidden));
+    $('ovSheetX').addEventListener('click', () => openSheet(false));
+    sheetEl.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !S.menu) { e.preventDefault(); openSheet(false); } });
+    /* 패널 막대 목록에 들어가는 줄 수: 목록 칸 높이 ÷ 첫 줄 높이(넘친 줄은 hidden — 패널은 스크롤하지 않는다) */
+    function fitRanks() {
+      const L = $('ovRank'), li = [...L.children], h = li[0] ? li[0].offsetHeight : 0, n = rowsFit(L.clientHeight, h, li.length);
+      li.forEach((x, i) => { x.hidden = i >= n; });
+      rove(L);
+    }
     if (!D.ok) { $('ovFail').hidden = false; }
     const handle = $('ovHandle');
-    if (handle) handle.addEventListener('click', () => { const full = panel.dataset.sheet !== 'full'; panel.dataset.sheet = full ? 'full' : 'peek'; handle.setAttribute('aria-expanded', String(full)); handle.setAttribute('aria-label', full ? '개요 패널 접기' : '개요 패널 펼치기'); placeLabels(false); });
-    panel.addEventListener('transitionend', () => placeLabels(false));   // 아래 시트를 펴고 접으면 라벨이 피할 자리가 바뀐다
+    if (handle) handle.addEventListener('click', () => { const full = panel.dataset.sheet !== 'full'; panel.dataset.sheet = full ? 'full' : 'peek'; handle.setAttribute('aria-expanded', String(full)); handle.setAttribute('aria-label', full ? '개요 패널 접기' : '개요 패널 펼치기'); });   // 지도 무대는 접힌 시트 위까지라 펴고 접어도 다시 그리지 않는다
 
     function renderPanel() {
-      const m = METRICS.find((x) => x.id === S.metric);
+      const m = ms().find((x) => x.id === S.metric);
       const vals = units.map((u) => valOf(u.v, S.metric));
       ups = breaksOf(vals);
       doc.documentElement.setAttribute('data-ov-metric', S.metric);   // 면·범례·라벨 색 단계(지연만 빨강, app.css)
       mbox.querySelectorAll('button[data-m]').forEach((b) => { const on = b.dataset.m === S.metric; b.setAttribute('aria-checked', String(on)); b.tabIndex = on ? 0 : -1; });
       const scope = S.sido ? (D.sido || []).find((s) => s.code === S.sido) : null, v = scope ? scope.v : D.total;
-      $('ovTitle').textContent = `${scope ? scope.name : '수도권'} 공급 개요`;   // ?sido= 로 열면 제목·합계가 그 시도(2026-10-15 평가 P2)
+      $('ovTitle').textContent = titleOf(scope ? scope.name : '수도권', isPub());   // ?sido= 로 열면 제목·합계가 그 시도(2026-10-15 평가 P2)
       $('ovBack').hidden = !scope;
       $('ovTotalQ').textContent = `${scope ? scope.name : '수도권'} ${m.name}`;
-      defBtn.title = defOf(S.metric, D); defBtn.setAttribute('aria-label', `${m.name} 정의 보기`); defP.textContent = defOf(S.metric, D);
+      defBtn.title = defOf(S.metric, D, isPub()); defBtn.setAttribute('aria-label', `${m.name} 정의 보기`); defP.textContent = defOf(S.metric, D, isPub());
       $('ovTotal').innerHTML = D.ok && v ? `<b class="ov-big">${fmt(valOf(v, S.metric))}</b><span class="ov-unit">${m.unit}</span>` : '<b class="ov-big none">—</b>';
-      $('ovTotalSub').textContent = !D.ok || !v ? '' : S.metric === 'u' ? `진행 ${fmt(v.n)}건${v.q ? ` · 호수 미확인 ${fmt(v.q)}건` : ''}` : S.metric === 'd' ? `전체 사업 ${fmt(v.st.reduce((a, b) => a + b, 0))}건 중` : `준공 예정 ${fmt(v.an)}건`;
+      $('ovTotalSub').textContent = !D.ok || !v ? '' : totalSubOf(S.metric, v, isPub());
       /* 12개월: 대표는 준공. 입주는 마우스 올림 설명(title)에만 분해로 둔다 */
       $('ovTotal').title = D.ok && v && S.metric === 'a' ? `준공 ${fmt(v.a)}호(${fmt(v.an)}건) · 같은 기간 입주 ${fmt(v.mi || 0)}호(${fmt(v.mn || 0)}건) — 입주는 더하지 않습니다` : '';
       $('ovCards').innerHTML = (D.sido || []).map((s) => `<button type="button" class="ov-card" data-s="${s.code}" aria-pressed="${S.sido === s.code}" title="${esc(`${s.name}로 맞춥니다. 다시 누르면 수도권 전체`)}">`
         + `<span class="ov-cn">${esc(s.name)}</span><span class="ov-cv">${D.ok && s.v ? `${fmt(valOf(s.v, S.metric))}<small>${m.unit}</small>` : '—'}</span>${D.ok && s.v ? bandHtml(s.v.st) : ''}</button>`).join('');
-      const list = rankOf(units, S.metric, S.sido);
-      $('ovRankH').textContent = `${S.sido ? SIDO_SHORT[S.sido] : '수도권'} 시군구 ${list.length}곳`;
+      const list = rankOf(units, S.metric, S.sido), where = S.sido ? SIDO_SHORT[S.sido] : '수도권';
+      $('ovRankH').textContent = `${where} 시군구`;
+      $('ovSheetH').textContent = `${where} 시군구 ${list.length}곳`;
+      allBtn.innerHTML = `전체 ${list.length}${ICON_MORE}`; allBtn.setAttribute('aria-label', `${where} 시군구 전체 ${list.length}곳 목록`);
+      /* 막대 줄: 순위 · 이름 · 막대(값 비례, 지도 면과 같은 단계 색 cN) · 값. 막대 최댓값은 이 목록의 1위 */
+      const top = D.ok ? Math.max(0, ...list.map((u) => valOf(u.v, S.metric))) : 0;
       const rankRow = (u, i, zero) => {
         const x = valOf(u.v, S.metric), more = u.gu && u.gu.length;
         return `<li><button type="button" data-c="${u.code}" data-n="${esc(u.name)}"${more ? ' aria-haspopup="dialog"' : ''} class="${x ? '' : 'zero'}" title="${esc(more ? `${u.name}: 구를 골라 상세 지도로` : `${u.name} 상세 지도로`)}">`
           + `<span class="ov-rn">${D.ok && !zero ? i + 1 : ''}</span><span class="ov-rname">${S.sido ? '' : `<small>${SIDO_SHORT[u.s]}</small>`}${esc(u.name)}</span>`
+          + `<span class="ov-rbar" aria-hidden="true">${D.ok && x ? `<i class="ov-sw c${classOf(x, ups)}" style="width:${barPct(x, top)}%"></i>` : ''}</span>`
           + `<span class="ov-rv">${D.ok ? `${fmt(x)}<small>${m.unit}</small>` : ''}</span><span class="ov-rgo">${more ? ICON_MORE : ''}</span></button></li>`;
       };
-      /* 값이 0인 시군구는 순위를 매기지 않고 목록 끝 '값 없음 n곳' 묶음으로 접는다(누르거나 Enter·Space 로 펼친다) */
+      /* 값이 0인 시군구는 순위를 매기지 않는다: 패널 막대 목록에는 값 있는 곳만, '전체 n' 목록 끝에 '값 없음 n곳' 묶음으로 접는다(누르거나 Enter·Space 로 펼친다) */
       const hit = D.ok ? list.filter((u) => valOf(u.v, S.metric) > 0) : list, none = D.ok ? list.filter((u) => !(valOf(u.v, S.metric) > 0)) : [];
-      const open = $('ovRank').querySelector('.ov-zeros > button[aria-expanded="true"]') !== null;
-      $('ovRank').innerHTML = hit.map((u, i) => rankRow(u, i, false)).join('')
+      const open = $('ovRankAll').querySelector('.ov-zeros > button[aria-expanded="true"]') !== null;
+      $('ovRank').innerHTML = hit.map((u, i) => rankRow(u, i, false)).join('');
+      $('ovRankAll').innerHTML = hit.map((u, i) => rankRow(u, i, false)).join('')
         + (none.length ? `<li class="ov-zeros"><button type="button" class="ov-zbtn" aria-expanded="${open}" aria-controls="ovZeroList"><span>값 없음 ${none.length}곳</span><span class="ov-zc" aria-hidden="true">${open ? '▴' : '▾'}</span></button><ol id="ovZeroList" class="ov-zlist"${open ? '' : ' hidden'}>${none.map((u) => rankRow(u, 0, true)).join('')}</ol></li>` : '');
-      rove();
+      fitRanks(); rove($('ovRankAll'));
       /* 범례 */
       $('ovLegendT').textContent = `${m.name}(${m.unit})`;
+      /* 면 높이는 지표와 상관없이 진행 호수(기하를 다시 만들지 않는다) — 색 지표가 다를 때만 한 줄로 알린다. 자리는 늘 두어 범례 높이가 바뀌지 않게 */
+      $('ovLegendH').textContent = `높이: ${ms().find((x) => x.id === 'u').name}`; $('ovLegendH').style.visibility = S.metric === 'u' ? 'hidden' : '';
       $('ovLegend').innerHTML = D.ok ? legendOf(ups, '').map((x) => `<li><i class="ov-sw c${x.c}"></i>${esc(x.text)}</li>`).join('') : '';
       /* 빈 상태: 값 있는 시군구가 3곳 미만이면 지도가 거의 회색이라 무엇을 보는지 한 줄로 알린다(예: '수도권 지연 사업 2건 — 인천 서구·경기 오산시') */
       const note = $('ovEmpty');
@@ -316,95 +328,143 @@
     }
 
     function setMetric(id) {
-      if (!METRICS.some((m) => m.id === id) || id === S.metric) return;
+      if (!ms().some((m) => m.id === id) || id === S.metric) return;
       S.metric = id; renderPanel(); paint();
     }
     function setSido(sido, push) {
       S.sido = sido;
       if (push && win.history && win.history.replaceState) win.history.replaceState(null, '', sidoHref(sido));
-      renderPanel(); paint();
-      if (map) map.fitBounds(viewBounds(sido), { padding: pad(), duration: reduce ? 0 : 500 });
+      renderPanel(); drawMap(true);   // 범위가 바뀌면 SVG 판은 기하를 새로 만들고, 진짜 3D 는 그 범위로 날아간다(flyTo)
     }
 
-    /* 지도 */
-    const VIEW = D.view || {};
-    function viewBounds(sido) {
-      const bs = (sido ? [sido] : SIDO).map((s) => VIEW[s]).filter(Boolean);
-      const x0 = Math.min(...bs.map((b) => b[0])), y0 = Math.min(...bs.map((b) => b[1])), x1 = Math.max(...bs.map((b) => b[0] + b[2])), y1 = Math.max(...bs.map((b) => b[1] + b[3]));
-      return boxLL([x0, y0, x1 - x0, y1 - y0]);
+    /* ---------- 지도: 3D 단계 구분도(공용 모듈 Map3D — /citizen 과 같은 구현) ----------
+       무대(#ovStage)는 넓은 화면에서 지도 칸 전체(왼쪽 범례 칸은 판이 비켜 간다), 좁은 화면(≤768)에서는 위 범례 띠와 접힌 아래 시트 사이.
+       기하는 범위·무대 크기·휴대폰 여부가 바뀔 때만 만들고(drawMap), 지표를 바꾸면 색·이름표만 다시 칠한다(paint). 면 높이 = 진행 호수(√ 척도) */
+    const VIEW = D.view || {}, stage = $('ovStage'), svg = stage.querySelector('svg.map'), legendBox = $('ovLegend').parentNode;
+    const seeds = seedOf(units), base = M3.prep(seeds);
+    /* 수도권 보기 맥락 면(시도 외곽 16곳 — 페이지가 korea-sido.json 에서 붙인다). 없으면 판 둘레는 빈 바탕 */
+    const nat = D.nation ? M3.prep(D.nation.sido.map((x) => ({ code: x.s, s: x.s, n: x.n, d: x.d, lx: x.l[0], ly: x.l[1] }))) : null;
+    const hOf = Object.fromEntries(units.map((u) => [u.code, D.ok ? valOf(u.v, 'u') : 0]));
+    const ux = new Map(units.map((u) => [u.code, { key: u.code, s: u.s, name: u.name, u: 0, c: 0 }]));   // 이름표·색 단계 단위(지표마다 u·c 만 바꾼다, 그린 면이 같은 객체를 가리킨다)
+    const unitOf = () => { for (const u of units) { const x = ux.get(u.code); x.u = D.ok ? valOf(u.v, S.metric) : 0; x.c = D.ok ? classOf(x.u, ups) : 0; } };
+    const inScope = () => [...ux.values()].filter((x) => !S.sido || x.s === S.sido);
+    const ariaOf = (x) => { const m = ms().find((q) => q.id === S.metric); return `${SIDO_SHORT[x.s]} ${x.name} ${D.ok ? `${fmt(x.u)}${m.unit}` : '수치 없음'}`; };
+    const sheet = () => win.matchMedia('(max-width: 768px)').matches;
+    const clsOf = () => Object.fromEntries([...ux.values()].map((x) => [x.key, x.c]));
+    let G = null, drawn = '';
+
+    /* ---------- 진짜 3D(2026-10-18 사용자 결정 — 공용 모듈 MapGL, /citizen 과 같은 구현) ----------
+       GL.mode: 'load'(공용 모듈·maplibre 를 부르는 중 — 무대는 비워 두고 패널이 먼저) · 'gl' · 'svg'(?gl=0 · 모듈 주소 없음 · WebGL 없음 · 불러오기·붙이기 실패 · 8초 안에 첫 그림 없음 · 맥락 잃음 → 아래 SVG 판).
+       지도 하나를 끝까지 쓴다(source 는 붙일 때 한 번): 범위 = 시도 → flyTo(시도), 수도권 → flyTo(null). 높이 = 진행 호수(판 하나 배율), 지표 전환 = 색 단계(setClasses)·색(setColors)·이름표만.
+       섬(강화·옹진)은 면이 없다(값·순위·합계에는 그대로 — 순위 목록에서 고른다). 수도권 밖 시도는 평평한 맥락 면 층(방향 감각, 고를 수 없음). 라벨은 무대 위 덮개 svg(svg.map — SVG 판과 같은 마크업·모양) */
+    const GL = { mode: glModeOf(win.location.search, root.dataset.gl), map: null, cols: '', G: null, drawn: false, narrow: false };
+    const glOn = () => GL.mode === 'gl' && !!GL.map && GL.map.ready;
+    const script = (src) => new Promise((ok, no) => { const s = doc.createElement('script'); s.src = src; s.async = true; s.onload = () => ok(); s.onerror = () => no(new Error(src)); doc.head.appendChild(s); });
+    function glFallback() {
+      const m = GL.map, was = GL.mode; GL.map = null; GL.mode = 'svg'; GL.G = null;   // 먼저 끊는다(떼는 동안 맥락 잃음 사건이 다시 와도 한 번만)
+      if (m) { try { m.destroy(); } catch (_) { /* 이미 잃은 맥락 */ } m.el.remove(); }
+      svg.classList.remove('glov'); svg.removeAttribute('aria-hidden'); svg.setAttribute('role', 'presentation'); svg.innerHTML = '';
+      if (was !== 'svg') drawMap(true);
     }
-    /* 좁은 화면은 아래 시트가 지도 아래쪽을 덮으므로 그만큼 비운다 */
-    const pad = () => (win.innerWidth <= 768 ? { top: ($('ovLegend').parentNode.offsetHeight || 0) + 18, left: 12, right: 12, bottom: Math.min(panel.offsetHeight, $('ovMap').clientHeight * 0.6) + 12 } : 28);
-    const css = (n) => (win.getComputedStyle(doc.documentElement).getPropertyValue(n) || '').trim();
-    const fillExpr = () => ['match', ['get', 'c'], 1, css('--ov-1'), 2, css('--ov-2'), 3, css('--ov-3'), 4, css('--ov-4'), 5, css('--ov-5'), css('--ov-0')];
-    const geo = toGeoJSON(units);
+    const glAria = () => { const x = S.at && ux.get(S.at); stage.setAttribute('aria-label', `${S.sido ? SIDO_SHORT[S.sido] : '수도권'} 시군구 지도${x ? `, ${ariaOf(x)}` : ''}. 화살표로 옮기고 Enter 로 ${S.sido ? '상세 지도를 엽니다' : '그 시도를 확대합니다'}`); };
+    function glMount() {
+      const el = doc.createElement('div'); el.className = 'glmap'; stage.prepend(el);
+      /* 넓은 화면은 판이 왼쪽 아래 범례 칸을 비켜 간다(SVG 판 left 와 같은 값) */
+      const left = () => { if (sheet()) return 12; const sb = stage.getBoundingClientRect(), lb = legendBox.getBoundingClientRect(); return Math.max(12, Math.ceil(lb.right - sb.left) + 8); };
+      try { GL.map = win.MapGL.mount(el, { units: seeds, target: S.sido || null, ctx: D.nation ? glCtxOf(D.nation.sido) : [], padding: ({ hmax }) => ({ top: hmax + 14, right: 12, bottom: 14, left: left() }) }); }
+      catch (_) { el.remove(); glFallback(); return; }
+      const wait = win.setTimeout(() => { if (GL.map && !GL.map.ready) glFallback(); }, 8000);
+      GL.map.on('ready', () => { win.clearTimeout(wait); GL.map.overlay(svg); drawMap(true); }).on('settle', glSettle).on('lost', glFallback)
+        .on('hover', (k) => { hover(k && byCode.has(k) ? k : null); if (!k) hideTip(); })
+        .on('pick', glPick);
+      GL.map.map.on('mousemove', (e) => { const u = S.hover && byCode.get(S.hover); if (u && !S.menu && e.originalEvent) showTip(u, ptOf(e.originalEvent)); });   // 모듈의 가리킴 사건 뒤라 S.hover 가 이미 지금 면
+    }
+    /* 그리기(drawMap 이 부른다): 붙이기 → 크기 → 처음이면 색·높이(진행 호수) → 범위로 날기. 움직이지 않으면 바로, 움직이면 가라앉을 때(settle) 이름표를 놓는다 */
+    function glDraw(force, narrow) {
+      if (GL.mode === 'load') return;
+      unitOf(); GL.narrow = narrow;
+      stage.setAttribute('role', 'img'); stage.removeAttribute('aria-activedescendant'); glAria();
+      if (!GL.map) { glMount(); return; }
+      if (!GL.map.ready) return;
+      const resized = GL.map.setSize(), first = !GL.drawn;
+      if (first) { GL.drawn = true; glColors(); GL.map.setValues(hOf, clsOf(), { duration: 0 }); }
+      const moved = GL.map.flyTo(S.sido || null, { duration: first ? 0 : undefined });
+      if (!moved && (first || force || resized)) glSettle();
+      if (!root.classList.contains('ready')) { root.classList.add('ready'); win.OVERVIEW_READY = performance.now(); }
+    }
+    /* 가라앉음: 화면 라벨 점 목록(키보드 이동 Map3D.keyMove 가 SVG 판과 같은 길로 쓴다 — 지금 범위의 면만) → 키보드 위치 → 이름표·면 효과 */
+    function glSettle() {
+      if (!glOn()) return;
+      GL.G = { k: 1, F: GL.map.faces().filter((f) => ux.has(f.key) && (!S.sido || ux.get(f.key).s === S.sido)).map((f) => ({ x: ux.get(f.key), bx: f.x, by: f.y })) };
+      if (!S.at || !GL.G.F.some((f) => f.x.key === S.at)) S.at = (GL.G.F.slice().sort((a, b) => hOf[b.x.key] - hOf[a.x.key])[0] || { x: {} }).x.key || null;
+      glAria(); placeLabels(); paintFaces();
+    }
+    /* 면 누름(캔버스): 수도권 보기·다른 시도 면 → 그 시도로 확대, 지금 시도 면 → 상세(구가 있는 시는 구 메뉴) */
+    function glPick(code, e) {
+      const u = byCode.get(code); if (!u) return;
+      hideTip();
+      if (u.s !== S.sido) { setSido(u.s, true); return; }
+      S.at = code; choose(code, null, e && e.originalEvent ? ptOf(e.originalEvent) : null);
+    }
+    /* 색 다시 칠하기(지표 — 지연 빨강 html[data-ov-metric] · 테마): 토큰을 지도 칸에서 다시 읽어 바뀌었을 때만 paint 를 바꾼다 */
+    function glColors() {
+      if (!GL.map) return;
+      const c = win.MapGL.readColors(GL.map.el), k = JSON.stringify(c);
+      if (k !== GL.cols) { GL.cols = k; GL.map.setColors(c); }
+    }
+    if (GL.mode === 'load') (win.MapGL ? Promise.resolve() : script(root.dataset.gl))
+      .then(() => { if (!win.MapGL || !win.MapGL.supported(doc)) throw new Error('webgl'); return win.MapGL.load(root.dataset.maplibre || MAPLIBRE, doc); })
+      .then(() => { if (GL.mode === 'load') { GL.mode = 'gl'; drawMap(true); } }, () => glFallback());
+
+    function drawMap(force) {
+      /* 좁은 화면: 무대 위쪽 = 범례 띠 아래(범례 높이는 지표와 상관없이 같게 둔다 — app.css) */
+      stage.style.top = sheet() ? `${legendBox.offsetTop + legendBox.offsetHeight + 8}px` : '';
+      const W = Math.floor(stage.clientWidth), H = Math.floor(stage.clientHeight); if (W < 60 || H < 60) return;
+      const narrow = win.matchMedia('(max-width: 599px)').matches, wide = !sheet(), key = [S.sido, W, H, narrow, wide].join();
+      if (GL.mode !== 'svg') { glDraw(force, narrow); return; }   // 진짜 3D(불러오는 중이면 비워 둔다) — SVG 판은 그리지 않는다
+      if (!force && G && key === drawn) return;
+      drawn = key; unitOf();
+      const sc = scopeOf(units, S.sido, VIEW), sb = stage.getBoundingClientRect(), lb = legendBox.getBoundingClientRect();
+      /* 넓은 화면은 범례(왼쪽 아래 고정 폭) 오른쪽부터 판을 놓고, 섬 삽입 지도는 그 칸 위쪽에 */
+      const g = M3.geom(base, { ...sc, ...(S.sido ? {} : nationOpt(nat)), W, H, narrow, uOf: hOf, left: wide ? Math.ceil(lb.right - sb.left) + 8 : 0, insetTop: wide });
+      G = M3.draw(svg, g, { units: [...ux.values()], nameOf: (c) => (byCode.get(c) || {}).name || '', hFloor: !S.sido || S.sido === '11' ? 6 : 8, aria: ariaOf });
+      stage.setAttribute('role', 'listbox'); stage.setAttribute('aria-label', S.sido ? `${SIDO_SHORT[S.sido]} 시군구 지도. 화살표로 옮기고 Enter 로 상세 지도를 엽니다` : '수도권 시군구 지도. 화살표로 옮기고 Enter 로 그 시도를 확대합니다');
+      if (!S.at || !G.F.some((f) => f.x.key === S.at)) S.at = (inScope().filter((x) => G.F.some((f) => f.x.key === x.key)).sort((a, b) => hOf[b.key] - hOf[a.key])[0] || {}).key || null;
+      placeLabels(); paintFaces();
+      if (!root.classList.contains('ready')) { root.classList.add('ready'); win.OVERVIEW_READY = performance.now(); }
+    }
+    /* 지표를 바꿀 때: 색 단계·면 이름만 다시 칠하고 이름표를 다시 놓는다(기하는 그대로, G16) */
     function paint() {
-      const vals = new Map(units.map((u) => [u.code, valOf(u.v, S.metric)]));
-      for (const f of geo.features) { f.properties.c = D.ok ? classOf(vals.get(f.properties.code), ups) : 0; f.properties.dim = S.sido && f.properties.s !== S.sido ? 1 : 0; }
-      if (map && map.getSource('ov')) { map.setPaintProperty('ov-fill', 'fill-color', fillExpr()); map.getSource('ov').setData(geo); }
-      placeLabels(true);
+      if (glOn()) { unitOf(); glColors(); GL.map.setClasses(clsOf()); placeLabels(); paintFaces(); return; }   // 진짜 3D: 색 단계·색만(높이·필터·source 그대로)
+      if (!G) return;
+      unitOf(); M3.recolor(svg, G); placeLabels(); paintFaces();
     }
-    function theme() {
-      if (!map || !map.getLayer('ov-fill')) return;
-      map.setPaintProperty('ov-bg', 'background-color', css('--ov-bg'));
-      map.setPaintProperty('ov-fill', 'fill-color', fillExpr());
-      map.setPaintProperty('ov-line', 'line-color', css('--ov-line'));
-      map.setPaintProperty('ov-hover', 'line-color', css('--ov-hl'));
-      if (map.getLayer('ov-pick')) map.setPaintProperty('ov-pick', 'line-color', css('--acc'));
-      placeLabels(true);
+    /* 이름표: /citizen 과 같은 규칙(이름 / 숫자 두 줄, 짧은 이름, 값 큰 순 그리디 — 시도 판은 상위 5 반드시, 겹치면 숨김). 숫자는 지금 지표 값('1.6만'), 단위는 범례 */
+    function placeLabels() {
+      if (glOn()) { if (GL.G) GL.map.labels(svg.querySelector('.lbls'), inScope(), { strict: !S.sido, narrow: GL.narrow }); return; }   // 같은 규칙(모듈 placeLabels)
+      if (G) M3.labels(svg.querySelector('.lbls'), G, inScope(), { strict: !S.sido });   // 수도권 전체는 서울 구가 작게 몰려 상위라도 겹치면 숨긴다(순위 목록·마우스 올림이 받는다)
     }
-
-    /* 라벨(DOM): 값이 있는 면만, 값 큰 것부터(MapLibre symbol-sort-key 와 같은 우선순위) 놓고, 앞서 놓은 라벨·범례·아래 시트와 여백(LABEL_PAD, text-padding 격) 안에서 닿으면 숨긴다.
-       지도를 움직이거나 확대할 때마다 다시 놓아 확대하면 숨겼던 라벨이 나타난다. 서울 구는 넓게 볼 때 이름 없이 값만 */
-    const lp = new Map(units.map((u) => { const p = labelPoint(rings.get(u.code)); return [u.code, p ? unproject(p[0], p[1]) : null]; }));
-    const labelBox = $('ovLabels');
-    /* 라벨이 피할 다른 요소(라벨 상자 좌표). 넓은 화면의 패널처럼 지도 밖이면 겹치지 않아 빠진다 */
-    function obstacles() {
-      const o = labelBox.getBoundingClientRect(), out = [];
-      for (const el of [$('ovLegend').parentNode, panel, $('ovEmpty')]) {
-        const r = el && el.getBoundingClientRect();
-        if (r && r.width && r.right > o.left && r.left < o.right && r.bottom > o.top && r.top < o.bottom) out.push([r.left - o.left, r.top - o.top, r.right - o.left, r.bottom - o.top]);
-      }
-      return out;
+    /* 면 효과: 구 메뉴가 열린 시(pick)·여는 중인 곳 = 고른 곳, 마우스·순위 줄 = 가리킨 곳, 지도 초점 = 키보드 위치 */
+    function paintFaces() {
+      if (glOn()) { GL.map.select(S.pick); GL.map.hover(S.hover || (doc.activeElement === stage ? S.at : null)); }   // feature-state 만(고른 곳 5px · 가리킴·키보드 2px)
+      else if (!G) return;
+      else { M3.paintFaces(svg, { sel: S.pick, hover: S.hover, kb: doc.activeElement === stage ? S.at : null }); if (S.at) stage.setAttribute('aria-activedescendant', `f-${S.at}`); }
+      for (const L of LISTS) L.querySelectorAll('button[data-c]').forEach((b) => b.classList.toggle('hl', b.dataset.c === S.hover));
     }
-    function placeLabels(rebuild) {
-      if (!map) return;
-      const m = METRICS.find((x) => x.id === S.metric);
-      if (rebuild) {
-        labelBox.innerHTML = '';
-        labels = rankOf(units, S.metric, S.sido).filter((u) => D.ok && valOf(u.v, S.metric) > 0 && lp.get(u.code)).map((u) => {
-          const el = doc.createElement('span'), c = classOf(valOf(u.v, S.metric), ups);
-          el.className = `ov-lb c${c}`;
-          el.innerHTML = `<b>${esc(u.name)}${u.gu && u.gu.length ? '<i class="ov-lmore" aria-hidden="true">›</i>' : ''}</b><span>${fmt(valOf(u.v, S.metric))}${m.unit}</span>`;   // › = 누르면 구를 고른다(순위 목록의 › 와 같은 뜻)
-          labelBox.appendChild(el);
-          return { u, el, w: 0, h: 0 };
-        });
-      }
-      /* 이름과 값을 한 상자로만 보인다: 상자가 자기 면 밖으로 나가면(작은 구·좁은 시) 숫자만 남기지 않고 통째로 숨긴다 — 값은 마우스 올림·목록에서 본다 */
-      const items = labels.map((L) => {
-        if (!L.w) { L.el.style.display = ''; L.w = L.el.offsetWidth; L.h = L.el.offsetHeight; }
-        const p = map.project(lp.get(L.u.code)), x0 = p.x - L.w / 2, y0 = p.y - L.h / 2, x1 = p.x + L.w / 2, y1 = p.y + L.h / 2;
-        const corners = [[x0, y0], [x1, y0], [x1, y1], [x0, y1]].map(([x, y]) => { const ll = map.unproject([x, y]); return projectLL(ll.lng, ll.lat); });
-        return { x: p.x, y: p.y, w: L.w, h: L.h, fits: boxInFace(corners, faces.get(L.u.code)) };
-      });
-      const fit = pickLabels(items.map((it) => (it.fits ? it : { x: -1e6, y: -1e6, w: 0, h: 0 })), labelBox.clientWidth, labelBox.clientHeight, obstacles());
-      const show = items.map((it, i) => it.fits && fit[i]);
-      labels.forEach((L, i) => {
-        if (!show[i]) { L.el.style.display = 'none'; return; }
-        L.el.style.display = '';
-        L.el.style.transform = `translate(${Math.round(items[i].x - L.w / 2)}px,${Math.round(items[i].y - L.h / 2)}px)`;
-      });
+    function hover(code) {
+      if ((S.hover || null) === (code || null)) return;
+      S.hover = code || null; paintFaces();
     }
 
     /* 마우스 올림 */
     const tip = $('ovTip');
     function showTip(u, pt) {
-      const m = METRICS.find((x) => x.id === S.metric), v = u.v;
+      const m = ms().find((x) => x.id === S.metric), v = u.v, pub = isPub();
       tip.innerHTML = `<b>${esc(`${SIDO_SHORT[u.s]} ${u.name}`)}</b>`
         + (D.ok && v ? `<span class="ov-tv">${esc(m.name)} <strong>${fmt(valOf(v, S.metric))}${m.unit}</strong></span>`
-          + `<span class="ov-ts">진행 ${fmt(v.n)}건 · 진행 호수 ${fmt(v.u)}호${v.q ? ` · 호수 미확인 ${fmt(v.q)}건` : ''}</span>${bandHtml(v.st)}`
-          + `<span class="ov-ts">지연 ${fmt(v.d)}건 · 12개월 준공 ${fmt(v.a)}호(${fmt(v.an)}건) · 입주 ${fmt(v.mi || 0)}호(${fmt(v.mn || 0)}건)</span>` : '<span class="ov-ts">수치 없음</span>')
-        + `<span class="ov-th">${u.gu && u.gu.length ? '누르면 구를 고릅니다' : '누르면 상세 지도로'}</span>`;
+          + `<span class="ov-ts">${pub ? `사업 ${fmt(v.n)}곳` : `진행 ${fmt(v.n)}건 · 진행 호수 ${fmt(v.u)}호${v.q ? ` · 호수 미확인 ${fmt(v.q)}건` : ''}`}</span>${bandHtml(v.st)}`
+          + `<span class="ov-ts">${pub ? '' : `지연 ${fmt(v.d)}건 · `}${pub ? '1년 안' : '12개월'} 준공 ${fmt(v.a)}호(${fmt(v.an)}건) · 입주 ${fmt(v.mi || 0)}호(${fmt(v.mn || 0)}건)</span>` : '<span class="ov-ts">수치 없음</span>')
+        + `<span class="ov-th">${!S.sido || u.s !== S.sido ? `누르면 ${SIDO_SHORT[u.s]} 지도로` : u.gu && u.gu.length ? '누르면 구를 고릅니다' : '누르면 상세 지도로'}</span>`;
       tip.hidden = false;
       const W = $('ovMap').clientWidth, H = $('ovMap').clientHeight, w = tip.offsetWidth, h = tip.offsetHeight;
       const x = pt.x + 16 + w > W ? pt.x - 16 - w : pt.x + 16, y = Math.min(Math.max(8, pt.y - h / 2), H - h - 8);
@@ -414,16 +474,13 @@
 
     /* 고르기 → 구 메뉴 또는 확대 후 이동 */
     const menu = $('ovMenu');
-    /* 구 선택 단계임을 지도에서도 보이게(2026-10-17 사용자 요청 "세부 선택이 필요하면 분간되게"): 고른 시만 또렷하고(ov-pick 윤곽·채움 1) 나머지 면 0.4·라벨 흐림, 위 상태 띠에 '구를 골라 주세요' */
-    const FILL_OP = ['case', ['==', ['get', 'dim'], 1], 0.35, 1];
+    /* 구 선택 단계임을 지도에서도 보이게(2026-10-17 사용자 요청 "세부 선택이 필요하면 분간되게"): 고른 시는 면 효과(솟지 않음)·나머지 면 흐림·라벨 흐림(app.css .ov.picking), 위 상태 띠에 '구를 골라 주세요' */
     function pickOn(u) {
-      root.classList.add('picking');
-      if (map && map.getLayer('ov-pick')) { map.setFilter('ov-pick', ['==', ['get', 'code'], u.code]); map.setPaintProperty('ov-fill', 'fill-opacity', ['case', ['==', ['get', 'code'], u.code], 1, 0.4]); }
+      root.classList.add('picking'); S.pick = u.code; paintFaces();
       const st = $('ovGoing'); st.textContent = `${SIDO_SHORT[u.s]} ${u.name} · 구를 골라 주세요`; st.hidden = false;
     }
     function pickOff() {
-      root.classList.remove('picking');
-      if (map && map.getLayer('ov-pick')) { map.setFilter('ov-pick', ['==', ['get', 'code'], '']); map.setPaintProperty('ov-fill', 'fill-opacity', FILL_OP); }
+      root.classList.remove('picking'); if (!S.going) { S.pick = null; paintFaces(); }
       if (!S.going) $('ovGoing').hidden = true;
     }
     function closeMenu(refocus) {
@@ -439,9 +496,9 @@
       const p = pickOf(u);
       if (p.href) return go(u, withMetric(p.href, S.metric), `${SIDO_SHORT[u.s]} ${u.name}`);
       closeMenu(false);
-      const m = METRICS.find((x) => x.id === S.metric);
+      const m = ms().find((x) => x.id === S.metric);
       /* 메뉴는 마우스 올림 설명과 구분되는 '선택 단계'로: 굵은 제목 + 한 줄 안내 + 닫기, 줄마다 › (목록 줄과 같은 문법) */
-      menu.innerHTML = `<div class="ov-mt"><p class="ov-mh" id="ovMenuH">${esc(u.name)} · 구를 골라 주세요</p><button type="button" class="ov-mx" data-close="1" aria-label="닫기">✕</button></div><p class="ov-ms">상세 지도는 구 단위로 열립니다</p><ul>${p.menu.map((g) => `<li><button type="button" data-href="${esc(g.href)}" data-n="${esc(g.name)}"><span>${esc(g.code === u.code ? '구 미정' : g.name.replace(`${u.name} `, ''))}</span><span class="ov-mv">${D.ok && g.v ? `${fmt(valOf(g.v, S.metric))}<small>${m.unit}</small>` : ''}${ICON_MORE}</span></button></li>`).join('')}</ul>`;
+      menu.innerHTML = `<div class="ov-mt"><p class="ov-mh" id="ovMenuH" title="상세 지도는 구 단위로 열립니다">${esc(u.name)} · 구를 골라 주세요</p><button type="button" class="ov-mx" data-close="1" aria-label="닫기">✕</button></div><ul>${p.menu.map((g) => `<li><button type="button" data-href="${esc(g.href)}" data-n="${esc(g.name)}"><span>${esc(g.code === u.code ? '구 미정' : g.name.replace(`${u.name} `, ''))}</span><span class="ov-mv">${D.ok && g.v ? `${fmt(valOf(g.v, S.metric))}<small>${m.unit}</small>` : ''}${ICON_MORE}</span></button></li>`).join('')}</ul>`;
       menu.setAttribute('aria-labelledby', 'ovMenuH');
       menu.hidden = false;
       S.menu = { u, opener: opener || null };
@@ -473,19 +530,17 @@
     function go(u, href, label) {
       if (S.going) return;
       S.going = true; closeMenu(false); hideTip();
+      S.pick = u.code; paintFaces();   // 여는 곳은 고른 곳 면 효과
       const st = $('ovGoing');
       st.textContent = `${label} 상세 지도를 여는 중`; st.hidden = false;
       root.setAttribute('aria-busy', 'true');
-      const dur = reduce || !map ? 0 : 600;
-      S.cam = map ? { center: map.getCenter(), zoom: map.getZoom() } : null;
-      if (map) map.fitBounds(boxLL(ringsBox(rings.get(u.code))), { padding: pad(), duration: dur, maxZoom: 12 });
-      win.setTimeout(() => win.location.assign(href), dur + 40);
+      win.setTimeout(() => win.location.assign(href), 40);
     }
-    /* 뒤로 가기로 bfcache 에서 되살아나면 '여는 중' 잠금·띠·확대를 풀어 다른 시군구를 다시 고를 수 있게 한다 */
+    /* 뒤로 가기로 bfcache 에서 되살아나면 '여는 중' 잠금·띠·고른 곳 효과를 풀어 다른 시군구를 다시 고를 수 있게 한다 */
     win.addEventListener('pageshow', (e) => {
       if (!e.persisted || !S.going) return;
       S.going = false; $('ovGoing').hidden = true; root.removeAttribute('aria-busy');
-      if (map && S.cam) map.jumpTo(S.cam);
+      S.pick = null; paintFaces();
     });
 
     renderPanel();
@@ -493,44 +548,45 @@
     /* ?pick=<구가 있는 시>: 상세 지도 ?sgg=<시> 로 연 것을 지도 첫 스크립트가 넘겨 왔다(MAP_MODE_INIT) — 그 시의 구 메뉴를 열고 첫 구에 초점.
        목록 줄이 보이면 그 줄 옆, 값 없음 묶음에 접혀 있으면 지도 가운데. 주소의 pick 은 위 replaceState 가 지웠다 */
     const pick = byCode.get(pickOfSearch);
-    if (pick && pick.gu && pick.gu.length) choose(pick.code, rankBtns().find((b) => b.dataset.c === pick.code) || null);
+    if (pick && pick.gu && pick.gu.length) choose(pick.code, rankBtns($('ovRank')).find((b) => b.dataset.c === pick.code) || null);
 
-    /* 지도는 라이브러리가 오면 붙인다(패널은 먼저 보인다) */
-    Promise.resolve(libReady).then(() => {
-      const ml = win.maplibregl;
-      if (!ml) throw new Error('지도 라이브러리를 불러오지 못했습니다');
-      const all = viewBounds(''), span = [all[1][0] - all[0][0], all[1][1] - all[0][1]];
-      map = new ml.Map({
-        container: 'ovMap', attributionControl: false, dragRotate: false, pitchWithRotate: false, touchPitch: false, renderWorldCopies: false, minZoom: 6.5, maxZoom: 12,
-        maxBounds: [[all[0][0] - span[0] * 1.5, all[0][1] - span[1] * 1.5], [all[1][0] + span[0] * 1.5, all[1][1] + span[1] * 1.5]],   // 좁은 화면에서도 아래 시트를 비운 시점이 잘리지 않게 넉넉히
-        bounds: viewBounds(S.sido), fitBoundsOptions: { padding: pad() },
-        style: { version: 8, sources: { ov: { type: 'geojson', data: geo } }, layers: [
-          { id: 'ov-bg', type: 'background', paint: { 'background-color': css('--ov-bg') } },
-          { id: 'ov-fill', type: 'fill', source: 'ov', paint: { 'fill-color': fillExpr(), 'fill-opacity': FILL_OP } },
-          { id: 'ov-line', type: 'line', source: 'ov', paint: { 'line-color': css('--ov-line'), 'line-width': 1 } },
-          { id: 'ov-hover', type: 'line', source: 'ov', filter: ['==', ['get', 'code'], ''], paint: { 'line-color': css('--ov-hl'), 'line-width': 2.5 } },
-          { id: 'ov-pick', type: 'line', source: 'ov', filter: ['==', ['get', 'code'], ''], paint: { 'line-color': css('--acc'), 'line-width': 3.5 } },   // 구 메뉴가 열린 시(pickOn)
-        ] },
-      });
-      if (map.touchZoomRotate) map.touchZoomRotate.disableRotation();
-      map.on('load', () => { paint(); root.classList.add('ready'); win.OVERVIEW_READY = performance.now(); });
-      /* 웹 글꼴이 늦게 오면 라벨 폭이 달라지므로 다시 재고 놓는다 */
-      if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(() => { for (const L of labels) L.w = 0; placeLabels(false); });
-      map.on('move', () => placeLabels(false));
-      map.on('resize', () => placeLabels(false));
-      map.on('mousemove', 'ov-fill', (e) => {
-        const f = e.features && e.features[0], u = f && byCode.get(f.properties.code);
-        if (!u) return;
-        map.getCanvas().style.cursor = 'pointer';
-        if (S.hover !== u.code) { S.hover = u.code; map.setFilter('ov-hover', ['==', ['get', 'code'], u.code]); }
-        showTip(u, e.point);
-      });
-      map.on('mouseleave', 'ov-fill', () => { S.hover = null; map.getCanvas().style.cursor = ''; map.setFilter('ov-hover', ['==', ['get', 'code'], '']); hideTip(); });
-      map.on('click', 'ov-fill', (e) => { const f = e.features && e.features[0]; if (f) { hideTip(); choose(f.properties.code, null, e.point); } });
-      new win.MutationObserver(theme).observe(doc.documentElement, { attributes: true, attributeFilter: ['class'] });
-    }).catch((e) => { const f = $('ovFail'); f.hidden = false; f.textContent = `지도를 그리지 못했습니다: ${e.message}. 왼쪽 목록에서 시군구를 고를 수 있습니다.`; });
-    if (/[?&]selftest=/.test(win.location.search)) win.__ov = { map: () => map, labels: () => labels, faces, projectLL, boxInFace };   // 시험 전용(브라우저 점검)
-    return { state: S };
+    /* 지도 그리기와 사건: 면 가리킴(마우스 올림 설명)·누름 → 상세(구가 있는 시는 구 메뉴), 순위 줄 가리킴·초점 ↔ 면 효과, 지도 키보드(Map3D.keyMove) */
+    const ptOf = (e) => { const r = $('ovMap').getBoundingClientRect(); return { x: e.clientX - r.left, y: e.clientY - r.top }; };
+    const faceOf = (t) => { const el = t && t.closest && t.closest('.map [data-area]'); return el && byCode.get(el.dataset.area) && G && G.F.some((f) => f.x.key === el.dataset.area) ? byCode.get(el.dataset.area) : null; };
+    svg.addEventListener('mousemove', (e) => { const u = faceOf(e.target); if (!u) { hover(null); hideTip(); return; } hover(u.code); if (!S.menu) showTip(u, ptOf(e)); });
+    svg.addEventListener('mouseleave', () => { hover(null); hideTip(); });
+    /* 수도권 보기에서 면을 누르면 그 시도로 확대(시군구 상세는 시도 보기·순위 목록에서). 맥락 면(수도권 밖)은 data-area 가 없어 고르지 않는다 */
+    svg.addEventListener('click', (e) => { const u = faceOf(e.target); if (u) { hideTip(); if (!S.sido) { setSido(u.s, true); return; } S.at = u.code; choose(u.code, null, ptOf(e)); } });
+    for (const L of LISTS) {
+      L.addEventListener('mouseover', (e) => { const b = e.target.closest('button[data-c]'); if (b) hover(b.dataset.c); });
+      L.addEventListener('mouseout', (e) => { if (!(e.relatedTarget && e.relatedTarget.closest && e.relatedTarget.closest('.ov-rank button[data-c]'))) hover(doc.activeElement && doc.activeElement.dataset ? doc.activeElement.dataset.c : null); });
+      L.addEventListener('focusin', (e) => { const b = e.target.closest('button[data-c]'); hover(b ? b.dataset.c : null); });
+      L.addEventListener('focusout', () => hover(null));
+    }
+    stage.addEventListener('focus', () => { hover(S.at); paintFaces(); });
+    stage.addEventListener('blur', () => { hover(null); paintFaces(); });
+    stage.addEventListener('keydown', (e) => {
+      const KG = glOn() ? GL.G : G;   // 진짜 3D 도 화면 라벨 점 목록으로 같은 키보드 이동
+      if (!KG || e.altKey || e.ctrlKey || e.metaKey) return;
+      const r = M3.keyMove(KG, S.at, e.key); if (!r) return;
+      e.preventDefault();
+      if (r.enter && !S.sido) { const u = byCode.get(r.key); if (u) setSido(u.s, true); return; }   // 수도권 보기: Enter 는 그 시도로 확대
+      if (r.enter) { const f = KG.F.find((q) => q.x.key === r.key), sb = stage.getBoundingClientRect(), mb = $('ovMap').getBoundingClientRect(); choose(r.key, null, f ? { x: sb.left - mb.left + f.bx, y: sb.top - mb.top + f.by } : null); return; }
+      S.at = r.key; hover(r.key); paintFaces(); if (glOn()) glAria();
+    });
+    drawMap(true);
+    let rq = 0; const redraw = () => { win.cancelAnimationFrame(rq); rq = win.requestAnimationFrame(() => drawMap(false)); };
+    if (win.ResizeObserver) new win.ResizeObserver(redraw).observe(stage); else win.addEventListener('resize', redraw);
+    /* 순위 막대 목록 줄 수는 목록 칸 높이가 바뀔 때마다(창 크기·시트 펴기·지표 문구 높이) 다시 잰다 */
+    if (win.ResizeObserver) new win.ResizeObserver(() => fitRanks()).observe($('ovRank')); else win.addEventListener('resize', fitRanks);
+    /* 웹 글꼴이 늦게 오면 이름표 폭이 달라지므로 다시 놓는다 */
+    if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(() => placeLabels());
+    /* 관점 스위치로 html[data-aud] 가 바뀌면 탭·문구를 새 관점으로 다시 그린다(일반사용자에게 지연은 없다) */
+    if (win.MutationObserver) new win.MutationObserver(() => { if (isPub() && S.metric === 'd') S.metric = 'u'; buildTabs(); renderPanel(); paint(); }).observe(doc.documentElement, { attributes: true, attributeFilter: ['data-aud'] });
+    /* 테마 전환(html.dark): 진짜 3D 는 토큰을 다시 읽어 칠한다(SVG 판은 CSS 변수라 그대로) */
+    if (win.MutationObserver) new win.MutationObserver(() => { if (glOn()) glColors(); }).observe(doc.documentElement, { attributes: true, attributeFilter: ['class'] });
+    if (/[?&]selftest=/.test(win.location.search)) win.__ov = { G: () => G, gl: () => GL, base, state: S };   // 시험 전용(브라우저 점검)
+    return { state: S, gl: GL };
   }
 
   /* 빈 상태 한 줄: 값 있는 곳이 3곳 미만일 때만. names 는 값 큰 순 '시도 이름' */
@@ -539,5 +595,5 @@
     return names.length ? `${what} ${fmt(total)}${unit} — ${names.join('·')}` : `${what} 0${unit} — 값이 있는 시군구가 없습니다`;
   }
 
-  return { DETAIL_KEYS, LABEL_PAD, metricOf, withMetric, rankMove, pickLabels, boxInFace, inPolys, projectLL, emptyNote, modeOf, sggHref, sidoHref, unproject, pathRings, polygonsOf, toGeoJSON, boxLL, ringsBox, labelPoint, inRing, METRICS, valOf, defOf, breaksOf, classOf, legendOf, rankOf, pickOf, fmt, mount };
+  return { DETAIL_KEYS, ISLES, SIDO, MAPLIBRE, nationOpt, glCtxOf, glModeOf, rowsFit, barPct, metricOf, withMetric, rankMove, emptyNote, modeOf, sggHref, sidoHref, pathRings, ringsBox, labelPoint, inRing, scopeOf, seedOf, METRICS, metricsFor, titleOf, totalSubOf, valOf, defOf, breaksOf, classOf, legendOf, rankOf, pickOf, fmt, mount };
 });

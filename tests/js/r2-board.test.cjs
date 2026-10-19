@@ -108,13 +108,13 @@ test("7 종합상황판 단계표 머리 = '현재 단계'(지역 공급의 '입
 });
 
 test('8 다크 링크 대비: muted-foreground 다크 값이 다크 바탕·카드에서 4.5:1 이상, 링크는 색 전환 애니메이션 없이 바로 테마 색', () => {
-  const css = read('app/tailwind.css');
+  const css = read('app/globals.css');
   const dark = css.slice(css.indexOf('\n.dark {'), css.indexOf('}', css.indexOf('\n.dark {')));
   const tok = (k) => new RegExp(`--${k}: (#[0-9A-Fa-f]{6})`).exec(dark)[1];
   const lum = (h) => { const c = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
   const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
   for (const bg of ['background', 'card', 'pn2', 'accent']) assert.ok(ratio(tok('muted-foreground'), tok(bg)) >= 4.5, `${bg} ${ratio(tok('muted-foreground'), tok(bg)).toFixed(2)}:1`);
-  assert.ok(ratio('#4D5B6F', '#0A1030') < 4.5, '라이트 값이 남으면 대비 부족(평가 실측 2.4~2.7:1)');
+  assert.ok(ratio('#4D5B6F', '#111111') < 4.5, '라이트 값이 남으면 대비 부족(평가 실측 2.4~2.7:1)');
   for (const f of ['components/board/PanelLink.tsx', 'components/board/MapLink.tsx']) assert.doesNotMatch(read(f), /transition-colors/, f);
   assert.doesNotMatch(board, /data-slot="board-dir-list"[^>]*transition-\[color/, "지시 카드 '목록' 링크");
 });
@@ -127,9 +127,12 @@ test('9 날짜 점 표기: 월 상세·기관 화면의 LH 준공예정일 칸�
   assert.equal(V.dayText('2026-10-31'), '2026.10.31');
 });
 
-test('10 넓은 화면: 종합상황판 최대 폭 1760px, 1600px 이상에서 오른쪽 칸·아래 줄 열을 넓혀 채운다', () => {
+test('10 넓은 화면: 종합상황판 최대 폭 1760px, 1280px 이상은 한 6열 격자(리본 4 + 선택 시점 2, 아래 줄 2 + 2 + 2)라 1600px 이상도 같은 비율로 넓어진다', () => {
   assert.doesNotMatch(board, /max-w-\[1440px\]/);
   assert.match(board, /board-desktop mx-auto max-w-\[1760px\]/);
-  assert.match(board, /min-\[1600px\]:grid-cols-\[minmax\(0,1fr\)_clamp\(400px,26vw,460px\)\]/);
-  assert.match(board, /min-\[1600px\]:grid-cols-3/);
+  assert.doesNotMatch(board, /min-\[1600px\]:grid-cols/, '1600px 따로 정한 열 없음(2026-10-18 6열 기본 격자)');
+  assert.match(board, /<div className=\{cn\(grid6, 'grid-cols-\[minmax\(0,1fr\)_clamp\(340px,30vw,400px\)\] narrow:grid-cols-1'\)\}>/, '1행: 1280px 미만은 원래 두 칸');
+  assert.match(board, /className=\{cn\(panel, 'min-\[1280px\]:col-span-4', linked/);
+  assert.match(board, /className=\{cn\(panel, '@container min-\[1280px\]:col-span-2'\)\}/);
+  assert.match(board, /<div className=\{cn\(grid6, 'grid-cols-\[repeat\(auto-fit,minmax\(min\(300px,100%\),1fr\)\)\] min-\[1280px\]:\[&>\*\]:col-span-2'\)\}>/, '3행: 2 + 2 + 2');
 });

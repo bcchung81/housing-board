@@ -1,0 +1,32 @@
+{
+  "description": "파이프라인이 처리하는 정책 목록(검토를 거친 것만). 새 정책은 discover 단계가 policies_discovered.json 에 후보로 쌓고, 사람이 원 게시물·발행기관을 확인한 뒤 여기로 옮긴다. 코드에는 정책 id·날짜·URL 을 쓰지 않는다.",
+  "policies": [
+    {
+      "policy_id": "POL_2025_0907",
+      "slug": "9-7",
+      "name": "주택공급 확대방안 (9·7)",
+      "announced": "2025-09-07",
+      "canonical_url": "https://www.molit.go.kr/USR/NEWS/m_71/dtl.jsp?id=95091185",
+      "docs_dir": "docs/speech/research/01.정책/원본/9-7",
+      "home_policy_id": "POL_2025_0907"
+    },
+    {
+      "policy_id": "POL_2026_0129",
+      "slug": "1-29",
+      "name": "도심 주택공급 확대 및 신속화 방안 (1·29)",
+      "announced": "2026-01-29",
+      "canonical_url": "https://www.molit.go.kr/USR/NEWS/m_71/dtl.jsp?id=95091650",
+      "docs_dir": "docs/speech/research/01.정책/원본/1-29",
+      "home_policy_id": "POL_2026_0129"
+    },
+    {
+      "policy_id": "POL_2026_0813",
+      "slug": "8-13",
+      "name": "주택 신속공급 방안 (8·13)",
+      "announced": "2026-08-13",
+      "canonical_url": "https://www.molit.go.kr/USR/NEWS/m_71/dtl.jsp?id=95092303",
+      "docs_dir": "docs/speech/research/01.정책/원본/8-13",
+      "home_policy_id": "POL_2026_0813"
+    }
+  ]
+}

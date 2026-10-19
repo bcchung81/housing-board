@@ -9,6 +9,7 @@ const FL = require('../../assets/js/facility.js');
 const ROOT = path.join(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const app = read('assets/js/app.js'), css = read('assets/css/app.css'), html = read('index.html');
+const { mapCss } = require('./map-tokens.cjs');   // 견본 색 값은 app/globals.css(--map-*), app.css 는 var() 로 가리킨다
 const cls = (n, u) => FL.classify({ n, u });
 
 test('이름 키워드가 먼저: 학교·유치원·어린이집은 교육, 병원은 의료, 구청·경찰·경로당은 공공·복지', () => {
@@ -74,12 +75,15 @@ test('실자료 회귀: 계양에서 교육·공공복지·의료가 칠해지�
 const hue = (h) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16) / 255), mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn; if (!d) return 0; const x = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4; return (x * 60 + 360) % 360; };
 const hueGap = (a, b) => { const d = Math.abs(hue(a) - hue(b)); return Math.min(d, 360 - d); };
 const lum = (h) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; const [r, g, b] = [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16)); return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b); };
-const contrastOnNavy = (h) => (lum(h) + 0.05) / (lum('#0A1030') + 0.05);   // 지도 바탕(THEME.bg) 위 이름표 글자
-const FAC = (() => { const m = /fac: \{ edu: \{ c: '(#\w{6})', t: '(#\w{6})' \}, med: \{ c: '(#\w{6})', t: '(#\w{6})' \}, pub: \{ c: '(#\w{6})', t: '(#\w{6})' \} \}/.exec(app); assert.ok(m, 'THEME.fac 를 찾을 수 없음'); return { edu: { c: m[1], t: m[2] }, med: { c: m[3], t: m[4] }, pub: { c: m[5], t: m[6] } }; })();
+/* 지도 칠하기 색은 app.js 가 globals 토큰에서 읽는다(2026-10-18): 다크 지도 값으로 푼다(tests/js/map-js-theme.cjs) */
+const DARK = require('./map-js-theme.cjs').mapTheme('dark');
+const contrastOnNavy = (h) => (lum(h) + 0.05) / (lum(DARK.bg) + 0.05);   // 지도 바탕(THEME.bg) 위 이름표 글자
+const FAC = DARK.fac;
 
 test('강조색은 상태색·점검 보라와 색상각이 18° 이상 떨어지고, 이름표 글자는 네이비 바탕에서 4.5:1 이상이다', () => {
-  const status = [...(/const COLOR = \{([^}]*)\}/.exec(app)[1]).matchAll(/(\w+): '(#\w{6})'/g)].filter(([, k]) => k !== 'plan' && k !== 'priv').map((m) => [m[1], m[2]]);   // 회색 계열은 색상각이 뜻이 없다
-  status.push(['edu(신설 학교)', '#B79CFF']);
+  assert.equal(DARK.bg.toUpperCase(), '#111111');
+  const status = Object.entries(DARK.color).filter(([k]) => k !== 'plan' && k !== 'priv');   // 회색 계열은 색상각이 뜻이 없다
+  status.push(['edu(신설 학교)', DARK.infra.edu]);
   for (const [k, v] of Object.entries(FAC)) {
     for (const [n, c] of status) assert.ok(hueGap(v.c, c) >= 18, `${k} ${v.c} ↔ ${n} ${c}: ${hueGap(v.c, c).toFixed(0)}°`);
     assert.ok(contrastOnNavy(v.t) >= 4.5, `${k} 글자 ${v.t} ${contrastOnNavy(v.t).toFixed(1)}:1`);
@@ -108,7 +112,7 @@ test('이름표 층(fac-label)은 이름 있는 기반시설만, 확대 15.2부�
 
 test('범례에 기존 학교·병원·공공시설 한 줄이 있고 견본 색이 CSS 와 THEME 에서 같다', () => {
   assert.match(app, /add\('<i class="sw fac-edu"><\/i><i class="sw fac-med"><\/i><i class="sw fac-pub"><\/i>', '기존 학교·병원·공공시설'/);
-  for (const k of ['edu', 'med', 'pub']) assert.match(css, new RegExp(`\\.sw\\.fac-${k}\\{background:${FAC[k].c}\\}`, 'i'));
+  for (const k of ['edu', 'med', 'pub']) assert.match(mapCss('dark'), new RegExp(`\\.sw\\.fac-${k}\\{background:${FAC[k].c}\\}`, 'i'));
 });
 
 test('공식 건물 팝업 부제에 분류명이 붙고, 분류 모듈은 화면 스크립트보다 먼저 불러온다', () => {

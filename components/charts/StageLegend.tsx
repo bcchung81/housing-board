@@ -4,9 +4,9 @@
    compact 는 카드 제목 줄에 넣는 작은 칩: 지표가 있는 단계만, 지표 이름에 선 색 밑줄(폭을 더 쓰지 않아 1280px 의 좁은 카드에서도 한 줄). 단계 번호는 title 에(종합상황판 월별 실적 흐름, 2026-10-11). */
 import { cn } from 'cn';
 import { METRIC_COLOR } from './palette';
-import { METRIC_LABEL, METRIC_STAGE, STAGES } from '../../lib/board/stages';
-import { CIR, K } from '../../lib/board/sample';
-import type { Metric } from '../../lib/board/types';
+import { METRIC_LABEL, METRIC_STAGE, STAGES } from '@/lib/board/stages';
+import { CIR, K } from '@/lib/board/sample';
+import type { Metric } from '@/lib/board/types';
 
 /* 리본 이름에서 지표의 자리: ②인허가 ③착공 ④모집(분양) ⑤준공. ①계획·⑥입주는 통계누리에 없다 */
 const ON_BOARD: Record<Metric, number> = { permit: 1, start: 2, sale: 3, complete: 4 };
@@ -14,7 +14,7 @@ const ON_BOARD: Record<Metric, number> = { permit: 1, start: 2, sale: 3, complet
 export default function StageLegend({ metrics, names = 'official', compact = false }: { metrics: readonly Metric[]; names?: 'official' | 'board'; compact?: boolean }) {
   const metricAt = (i: number, code: string) => metrics.find((m) => (names === 'board' ? ON_BOARD[m] === i : METRIC_STAGE[m] === code));
   if (compact) return (
-    <ul className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-[13px] text-muted-foreground" aria-label="범례 · 실적 지표"
+    <ul className="m-0 flex list-none flex-wrap items-center gap-x-2.5 gap-y-0.5 p-0 text-sm text-muted-foreground" aria-label="범례 · 실적 지표"
       title={STAGES.map((s, i) => { const k = metricAt(i, s.code), stage = names === 'board' ? K[i] : s.name; return `${names === 'board' ? CIR[i] : s.code}${stage}${k ? (METRIC_LABEL[k] !== stage ? `(${METRIC_LABEL[k]})` : '') : ' 자료 없음'}`; }).join(' · ')}>
       {STAGES.map((s, i) => {
         const k = metricAt(i, s.code);
@@ -23,15 +23,15 @@ export default function StageLegend({ metrics, names = 'official', compact = fal
     </ul>
   );
   return (
-    <ul className="m-0 mt-2 flex list-none flex-wrap gap-x-[14px] gap-y-1.5 p-0 text-[14px] text-foreground" aria-label="범례 · 공급 6단계">
+    <ul className="m-0 mt-2 flex list-none flex-wrap gap-x-[14px] gap-y-1.5 p-0 text-sm text-foreground" aria-label="범례 · 공급 6단계">
       {STAGES.map((s, i) => {
         const k = metrics.find((m) => (names === 'board' ? ON_BOARD[m] === i : METRIC_STAGE[m] === s.code));
         const stage = names === 'board' ? K[i] : s.name;
         return (
           <li key={s.code} className={cn('flex items-center gap-1.5', !k && 'text-muted-foreground')}>
-            <i className={cn('block size-[11px] rounded-[3px]', !k && 'border-[1.5px] border-dashed border-line2')} style={k ? { background: METRIC_COLOR[k] } : undefined} aria-hidden="true" />
+            <i className={cn('block size-[11px] rounded-chip', !k && 'border border-dashed border-line2')} style={k ? { background: METRIC_COLOR[k] } : undefined} aria-hidden="true" />
             <span className="tabular-nums">{names === 'board' ? CIR[i] : s.code}</span>{stage}{k && METRIC_LABEL[k] !== stage ? `(${METRIC_LABEL[k]})` : ''}
-            {k ? null : <span className="text-[12px]">자료 없음</span>}
+            {k ? null : <span className="text-sm">자료 없음</span>}
           </li>
         );
       })}

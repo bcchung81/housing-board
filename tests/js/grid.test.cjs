@@ -125,7 +125,7 @@ test('대시보드 표 15개는 DataGrid 로 그린다(원시 Table 없음, 표�
   for (const [f, n] of Object.entries(PAGES)) {
     const s = read(f);
     assert.doesNotMatch(s, /components\/ui\/table'/, `${f}: ui/table 을 직접 쓰지 않는다`);
-    assert.match(s, /import \{ DataGrid \} from '[./]+components\/ui\/data-grid';/, f);
+    assert.match(s, /import \{ DataGrid \} from '@\/components\/ui\/data-grid';/, f);
     const grids = [...s.matchAll(/<DataGrid\b[^>]*\blabel="[^"]+"|<DataGrid\b[^>]*\blabel=\{/g)].length;
     assert.equal(grids, n, `${f}: DataGrid ${n}개(이름 있는)`);
   }
@@ -133,7 +133,7 @@ test('대시보드 표 15개는 DataGrid 로 그린다(원시 Table 없음, 표�
 
 test('데이터 원본: 원천 카탈로그 19곳을 정렬되는 요약 그리드로 먼저 보이고, 행은 원천 조회 조건(#id)으로 잇는다', () => {
   const s = read('app/(dashboard)/sources/page.tsx');
-  assert.match(s, /import \{ DataGrid \} from '[./]+components\/ui\/data-grid';/);
+  assert.match(s, /import \{ DataGrid \} from '@\/components\/ui\/data-grid';/);
   assert.match(s, /<DataGrid label="원천 카탈로그 요약" cols=\{CATALOG_COLS\} rows=\{catalogRows\}[^>]*\/>/);
   assert.match(s, /dataset: \{ text: c\.name, href: `#\$\{s\.id\}` \}/, '행 이름은 원천 상세 앵커로');
   assert.match(s, /sort: s\.count/, '단위가 붙은 데이터량도 숫자로 정렬');

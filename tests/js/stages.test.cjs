@@ -1,5 +1,5 @@
 'use strict';
-// 단계 표기(docs/product/화면-배색-개선-계획.md 5절)를 정적으로 고정한다.
+// 단계 표기(DESIGN.md '문구'의 6단계 이름)를 정적으로 고정한다.
 // 문구는 발표자료(docs/주택파동_발표자료.html)의 SHEET 03 '주택공급 6단계, 단계마다 답해야 할 질문'과 SHEET 02 '정책적 필요성'에서 직접 읽어 대조한다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -76,7 +76,12 @@ test('지표 범례·KPI 는 6칸(StageLegend·StageKpis): 지표가 없는 단�
   assert.match(legend, /border-dashed border-line2/); assert.match(legend, />자료 없음</);
   assert.match(kpis, /\{K\.map\(\(name, i\) => \{/, 'KPI 칸은 리본 이름(①계획~⑥입주)'); assert.match(kpis, /자료 없음/); assert.match(kpis, /grid grid-cols-\[repeat\(auto-fit,minmax\(min\(200px,100%\),1fr\)\)\] gap-2\.5/, '값 있는 단계 카드가 폭을 채운다(2026-10-16 3차)'); assert.match(kpis, /title=\{`공급 6단계별 실적 · \$\{when\}`\}/, '시점은 묶음의 title 에 한 번');
   assert.match(kpis, /text=\{`자료 없음 \$\{empty\.map\(\(i\) => CIR\[i\]\)\.join\('·'\)\}`\}/, "빈 단계는 칩 하나('자료 없음 ①·⑥'), 이유는 (i) 팝오버(2026-10-16 3차)"); assert.doesNotMatch(kpis, /<span className="text-\[14px\]">\{notes/, '이유 문장을 칸에 보이지 않는다');
-  assert.match(read('components/board/RealPanels.tsx'), /<StageLegend metrics=\{METRICS\} names="board" compact \/>/, '종합상황판은 제목 줄의 작은 칩(①·⑥ 자료 없음은 빼고 단계 번호는 title)');
+  /* 종합상황판 월별 실적 흐름은 제목 줄의 작은 칩: 지표가 있는 단계만(①·⑥ 자료 없음은 빼고 단계 번호는 title), 견본은 선 = 12×3px 막대(2026-10-18 범례 견본 두 모양 — tags.tsx Key line) */
+  const real = read('components/board/RealPanels.tsx');
+  assert.match(real, /\{METRICS\.map\(\(k\) => <li key=\{k\}><Key line sw=\{METRIC_COLOR\[k\]\}>\{LABEL\[k\]\}<\/Key><\/li>\)\}/);
+  assert.match(real, /title=\{LEGEND_TITLE\}/);
+  assert.match(real, /const LEGEND_TITLE = K\.map\(\(s, i\) => \{ const k = METRICS\.find\(\(m\) => ON_BOARD\[m\] === i\);[^\n]*' 자료 없음'/);
+  assert.match(read('components/board/tags.tsx'), /line \? 'h-\[3px\] w-3 rounded-full' : 'size-2\.5 rounded-chip'/, '견본 두 모양: 선 12×3 · 면 10px');
   assert.match(legend, /if \(compact\) return \(/); assert.match(legend, /' 자료 없음'/);
   const pages = { 'app/(dashboard)/month/[id]/page.tsx': ['kpis'], 'app/(dashboard)/agency/[id]/page.tsx': ['legend', 'kpis'] };
   for (const [f, want] of Object.entries(pages)) {
@@ -97,8 +102,8 @@ test('표 머리는 리본 단계 이름을 붙인다(②인허가·③착공·�
 
 test('지도 범례·옵션 창의 단지 상태는 6단계 순서이고 리본 칸 이름(①~⑥)이 붙는다, 공식 번호는 title(머리 줄 6단계 필터와 같은 대응)', () => {
   assert.match(app, /const BY_STAGE = STAGES6\.flatMap\(\(s\) => s\[2\]\);/);
-  assert.match(app, /BY_STAGE\.forEach\(\(st\) => \{[^]*?if \(!present\.has\(st\)\) return;\n\s+if \(st !== '입주 단계'\) return add\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, stLabel\(st\), NOTE\[st\] \|\| '', '', stTitle\(st\)\);/);   // 요약 줄 칩 없음(머리 줄 띠가 단계 범례, r3-map 5)
-  assert.match(app, /add\('<i class="sw soon"><\/i>', '⑤준공 · 입주 진행'/);    // ⑤준공(사용검사)은 경과 표지로 둘로 나눈다(2026-10-14)
+  assert.match(app, /BY_STAGE\.forEach\(\(st\) => \{[^]*?if \(!present\.has\(st\)\) return;\n\s+if \(st !== '입주 단계'\) return stg\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, stLabel\(st\), NOTE\[st\] \|\| '', stTitle\(st\)\);/);   // 정책담당자 요약 줄 칩 없음(머리 줄 띠가 단계 범례), 일반사용자는 띠가 없어 요약 칩(r3-map 5)
+  assert.match(app, /stg\('<i class="sw soon"><\/i>', '⑤준공 · 입주 진행'/);    // ⑤준공(사용검사)은 경과 표지로 둘로 나눈다(2026-10-14)
   assert.match(app, /'⑤준공 · 입주 완료'/);
   assert.match(app, /const present = BY_STAGE\.filter\(\(st\) => ALL_ST\.has\(st\)\);/);
   assert.match(app, /\$\{stLabel\(st\)\}<\/label>/);

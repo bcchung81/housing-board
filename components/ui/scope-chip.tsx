@@ -6,10 +6,10 @@ import Link from 'next/link';
 import { X } from 'lucide-react';
 import { cn } from 'cn';
 
-export type ScopeSource = '사업 원장' | '정책 진행 자료' | '통계누리' | 'KOSIS·SGIS';
+export type ScopeSource = '사업 원장' | '정책 진행 자료' | '통계누리' | 'KOSIS·SGIS' | '공공 사업' | '모든 주택(민간 포함)';
 export default function ScopeChip({ scope, source, title, clearHref, note, className }: { scope: string; source?: ScopeSource; title?: string; clearHref?: string; note?: { text: string; title: string }; className?: string }) {
   const chip = (
-    <span data-slot="scope-chip" title={title} className={cn('inline-flex h-6 flex-none items-center font-sans gap-1 rounded-full border border-line2 bg-card pr-1 pl-2.5 text-[13px] leading-none whitespace-nowrap', !clearHref && 'pr-2.5', className)}>
+    <span data-slot="scope-chip" title={title} className={cn('inline-flex h-6 flex-none items-center font-sans gap-1 rounded-full border border-line2 bg-card pr-1 pl-2.5 text-sm leading-none whitespace-nowrap', !clearHref && 'pr-2.5', className)}>
       <b className="font-bold text-foreground">{scope}</b>
       {source ? <span className="text-muted-foreground"><span aria-hidden="true">· </span>{source}</span> : null}
       {clearHref ? (
@@ -20,5 +20,5 @@ export default function ScopeChip({ scope, source, title, clearHref, note, class
       ) : null}
     </span>
   );
-  return note ? <span className="inline-flex flex-none items-center gap-1.5">{chip}<span data-slot="scope-note" title={note.title} className="font-sans text-[13px] whitespace-nowrap text-muted-foreground">{note.text}</span></span> : chip;
+  return note ? <span className="inline-flex flex-none items-center gap-1.5">{chip}<span data-slot="scope-note" title={note.title} className="font-sans text-sm whitespace-nowrap text-muted-foreground">{note.text}</span></span> : chip;
 }

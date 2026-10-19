@@ -3,16 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>주택파동 공급 지도</title>
+<title>The주택 지도</title>
 <meta name="description" content="공공주택 공급 현황을 V-World 공식 건물 위에 3차원으로 보여 주는 지도">
 <!-- 지역 자료(regions/*.json)를 fetch 로 읽으므로 로컬에서는 서버가 필요합니다: node scripts/dev.js (버스 위치 /api/bus 포함. 정적 서버 python3 -m http.server 는 노선 선만 보임) -->
 <!-- 지도가 곧 요청할 외부 서버와 미리 연결해 둡니다(첫 타일이 빨리 옵니다) -->
 <link rel="preconnect" href="https://api.vworld.kr" crossorigin>
 <link rel="preconnect" href="https://s3.amazonaws.com" crossorigin>
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<!-- 글꼴은 Noto Sans KR 하나(로컬 번들 400·700, 외부 글꼴 서버 요청 없음). assets/css/app.css 도 같은 파일을 @import 한다: Next 의 /map 은 이 head 를 쓰지 않고 body 만 가져가므로 -->
+<link rel="stylesheet" href="assets/fonts/noto-sans-kr/noto-sans-kr.css">
 <link rel="stylesheet" href="assets/vendor/maplibre-gl/5.24.0/maplibre-gl.css">
 <link rel="stylesheet" href="assets/css/app.css">
 <!-- 첫 화면(불러오는 중 안내)을 먼저 그린 뒤, 스크립트를 순서대로 불러옵니다. loadview.js 는 그 진행을 영역별로 그린다. -->
@@ -32,11 +31,11 @@ requestAnimationFrame(function () { setTimeout(function () {
 </script>
 </head>
 <body>
-<noscript><p style="padding:24px;font:16px sans-serif">이 지도는 자바스크립트가 필요합니다. 브라우저에서 자바스크립트를 켜 주세요.</p></noscript>
+<noscript><p style="padding:24px;font:16px sans-serif">자바스크립트를 켜 주세요.</p></noscript>
 <div class="app collapsed">
 <header class="mhead" id="mhead">
   <div class="brand">
-    <img class="brand-logo" src="assets/img/wave-lockup-ondark.svg" alt="주택파동" width="123" height="34">
+    <img class="brand-logo" src="assets/img/wave-lockup-ondark.svg" alt="주택공급" width="123" height="34">
     <div class="brand-t"><nav class="crumbs" id="mapCrumbs" aria-label="지도 위치" hidden></nav><b>공급 지도</b><span class="hd-region" id="hdRegion"></span>
       <div class="regionbox" id="regionBox" hidden><label for="regionSel">지역</label><select id="regionSel"></select></div></div>
   </div>
@@ -46,36 +45,35 @@ requestAnimationFrame(function () { setTimeout(function () {
 <aside class="panel" id="panel" aria-label="공급 현황" data-sheet="peek">
   <button type="button" class="handle" id="sheetHandle" aria-expanded="false" aria-controls="panel" aria-label="패널 크기 바꾸기"></button>
   <header class="phead" id="phead">
-    <div class="eyebrow">주택파동</div>
-    <h1>공급 현황</h1>
+    <h2>공급 현황</h2>
   </header>
   <div class="pscroll" id="pscroll" tabindex="0" role="region" aria-label="공급 현황 내용">
 
   <section class="sum" aria-labelledby="h-sum">
-    <h2 id="h-sum">공급 예정 합계</h2>
+    <h3 id="h-sum">공급 예정 합계</h3>
     <b id="sumTotal">-</b>
     <div class="sbar" id="sumBar" role="img" aria-label="단계별 호수 비율"></div>
     <div class="sleg" id="sumLeg"></div>
   </section>
 
   <section class="sec" aria-labelledby="h-next">
-    <h2 id="h-next">다가오는 준공·입주</h2>
+    <h3 id="h-next">다가오는 준공·입주</h3>
     <ul class="next" id="nextList"></ul>
   </section>
 
   <section class="sec" aria-labelledby="h-proj">
-    <h2 id="h-proj">사업</h2>
+    <h3 id="h-proj">사업</h3>
     <ul class="list" id="projList"></ul>
   </section>
 
   <section class="sec" id="secNotice" aria-labelledby="h-notice" hidden>
-    <h2 id="h-notice">공공 모집 공고</h2>
+    <h3 id="h-notice">공공 모집 공고</h3>
     <p class="inote" id="noticeSub"></p>
     <ul class="list nlist" id="noticeList"></ul>
   </section>
 
   <section class="sec" id="secInfra" aria-labelledby="h-infra" hidden>
-    <div class="shead"><h2 id="h-infra"><button type="button" class="sech" id="infraToggle" aria-expanded="false" aria-controls="infraBody"><span>입주 전 점검</span><span class="sech-h" aria-hidden="true"></span></button></h2><span class="isum-c" id="infraChips"></span><button type="button" class="plink" id="infraGo" title="단지와 학교·정류장·전기 시설을 한 화면에 맞춥니다">기반시설 보기</button></div>
+    <div class="shead"><h3 id="h-infra"><button type="button" class="sech" id="infraToggle" aria-expanded="false" aria-controls="infraBody"><span>입주 전 점검</span><span class="sech-h" aria-hidden="true"></span></button></h3><span class="isum-c" id="infraChips"></span><button type="button" class="plink" id="infraGo" title="단지와 학교·정류장·전기 시설을 한 화면에 맞춥니다">기반시설 보기</button></div>
     <div class="sbody" id="infraBody" hidden>
     <div class="isub" id="infraTlBox" hidden><h3>입주와 기반시설 시점</h3><svg class="itl" id="infraTl" role="img" aria-label=""></svg><p class="inote" id="infraTlNote"></p></div>
     <ul class="list" id="infraList"></ul>
@@ -86,7 +84,7 @@ requestAnimationFrame(function () { setTimeout(function () {
   </section>
 
   <section class="sec" aria-labelledby="h-tl">
-    <h2 id="h-tl">입주·준공 예정</h2>
+    <h3 id="h-tl">입주·준공 예정</h3>
     <svg class="tl" id="timeline" viewBox="0 0 300 118" role="img" aria-label="입주 및 준공 예정 시기 타임라인"></svg>
   </section>
 
@@ -137,22 +135,22 @@ requestAnimationFrame(function () { setTimeout(function () {
   </div>
   <div class="optpanel" id="optPanel" role="group" aria-label="지도 옵션" hidden>
     <fieldset><legend>보일 단지 상태</legend><div id="optStatus"></div>
-      <label id="lblPriv" hidden><input type="checkbox" id="privChip">공공택지 민간 단지 <small>회색 면</small></label>
+      <label id="lblPriv" hidden title="회색 면으로 표시"><input type="checkbox" id="privChip">공공택지 민간 단지</label>
       <label id="lblEx" hidden title="⑤준공 뒤 24개월이 지난 단지. 기본은 숨김"><input type="checkbox" id="exChip">기존 단지 <small id="exN"></small></label>
     </fieldset>
     <fieldset><legend>지도에 겹쳐 보기</legend>
-      <label id="lblCtx"><input type="checkbox" id="ctxChip">역 · 학교 <small>OpenStreetMap</small></label>
-      <label id="lblRing"><input type="checkbox" id="ringChip">역 반경 원 <small>500 m · 1 km</small></label>
+      <label id="lblCtx" title="출처 OpenStreetMap"><input type="checkbox" id="ctxChip">역 · 학교</label>
+      <label id="lblRing" title="500 m · 1 km 원"><input type="checkbox" id="ringChip">역 반경 원</label>
     </fieldset>
     <fieldset id="fsInfra" hidden><legend>입주 전 점검</legend>
-      <label id="lblInfra"><input type="checkbox" id="infraChip">학교 · 정류장 · 전기 시설 <small>공개 자료</small></label>
-      <label id="lblZone"><input type="checkbox" id="zoneChip">초등 통학구역 경계 <small>점선</small></label>
-      <label id="lblBus" hidden><input type="checkbox" id="busChip">버스 노선 · 위치 <small>3D, 버튼으로 조회</small></label>
+      <label id="lblInfra" title="공개 자료 기준"><input type="checkbox" id="infraChip">학교 · 정류장 · 전기 시설</label>
+      <label id="lblZone" title="점선으로 표시"><input type="checkbox" id="zoneChip">초등 통학구역 경계</label>
+      <label id="lblBus" hidden title="3D 로 표시, 버튼을 누를 때만 조회"><input type="checkbox" id="busChip">버스 노선 · 위치</label>
       <button type="button" class="reset" id="busGo" hidden title="지금 지도 가운데에서 가장 가까운 버스로 이동합니다">가장 가까운 버스 보기</button>
     </fieldset>
     <fieldset><legend>화면</legend>
-      <label><input type="checkbox" id="hudChip">단지 모서리 표시선 <small>꺾쇠</small></label>
-      <label id="lblCards"><input type="checkbox" id="cardsChip">단지 정보 카드 <small>떠 있는 상자</small></label>
+      <label title="꺾쇠 모양 표시선"><input type="checkbox" id="hudChip">단지 모서리 표시선</label>
+      <label id="lblCards" title="지도 위에 떠 있는 상자"><input type="checkbox" id="cardsChip">단지 정보 카드</label>
     </fieldset>
     <button type="button" class="reset" id="optReset">기본값으로 되돌리기</button>
   </div>

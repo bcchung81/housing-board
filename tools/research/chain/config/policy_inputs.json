@@ -1,0 +1,424 @@
+{
+  "description": "policy.py(P2) 입력: HOME 덤프에서 뽑은 값(원장 표·CSV)과 수동 대조 CSV 의 위치·열, 수동 대조 행 → 항목 대응표. 정책 고유 값은 여기(설정)에만 둔다.",
+  "work_dir": "docs/speech/research/dataset/_work",
+  "home": {
+    "ledger_dir": "schemas/ledger-2026-10/tables",
+    "policies_csv": "docs/speech/research/01.정책/추출_정책_HOME.csv",
+    "programs_csv": "docs/speech/research/01.정책/추출_프로그램_HOME.csv",
+    "targets_csv": {
+      "POL_2025_0907": "docs/speech/research/01.정책/추출_9-7_목표_HOME.csv"
+    },
+    "group_program_id": "{policy_id}.{group}",
+    "targets_csv_note": "목표 CSV 는 정책 id 열이 없어 정책별로 경로를 준다. 프로그램군 id 는 원장 규칙 '{policy_id}.{group}' 으로 원장 프로그램 id 와 잇는다."
+  },
+  "manual": {
+    "checked_at": "2026-10-16",
+    "doc_root": "docs/speech/research/01.정책",
+    "note": "수동 대조 CSV 는 에이전트가 원 파일을 읽고 만든 것(README 조사일 2026-10-16). 자동 판정을 못 한 항목만 checked_by AGENT 로 옮긴다.",
+    "values": [
+      {
+        "path": "docs/speech/research/01.정책/값대조_9-7.csv",
+        "label_col": "항목",
+        "home_col": "HOME 값",
+        "value_col": "원문 값",
+        "locator_col": "원문 쪽(인쇄/PDF)",
+        "verdict_col": "판정",
+        "note_cols": [
+          "비고"
+        ],
+        "file_col": "원문_파일",
+        "locator_format": "인쇄/PDF {}",
+        "rows": [
+          {
+            "row": 1,
+            "label": "목표",
+            "items": [
+              "policies#POL_2025_0907#target_units",
+              "policy_targets#POL_2025_0907|*|04|11+28+41|2026-01-01|2030-12-31#target_units"
+            ]
+          },
+          {
+            "row": 2,
+            "label": "표 합계",
+            "items": []
+          },
+          {
+            "row": 3,
+            "label": "반올림 미배분",
+            "items": []
+          },
+          {
+            "row": 4,
+            "label": "범위",
+            "items": [
+              "policies#POL_2025_0907#scope_region"
+            ]
+          },
+          {
+            "row": 5,
+            "label": "지표",
+            "items": [
+              "policies#POL_2025_0907#target_indicator"
+            ]
+          },
+          {
+            "row": 6,
+            "label": "joint_region_units",
+            "items": [
+              "policy_targets#POL_2025_0907|*|04|28+41|2026-01-01|2030-12-31#target_units"
+            ]
+          },
+          {
+            "row": 7,
+            "label": "서울 배분",
+            "items": [
+              "policy_targets#POL_2025_0907|*|04|11|2026-01-01|2030-12-31#target_units"
+            ]
+          },
+          {
+            "row": 8,
+            "label": "경기·인천 배분",
+            "items": [
+              "policy_targets#POL_2025_0907|*|04|41|2026-01-01|2030-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|04|28|2026-01-01|2030-12-31#target_units"
+            ]
+          },
+          {
+            "row": 9,
+            "label": "2026 전체/서울",
+            "items": [
+              "policy_targets#POL_2025_0907|*|04|11+28+41|2026-01-01|2026-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|04|11|2026-01-01|2026-12-31#target_units"
+            ]
+          },
+          {
+            "row": 10,
+            "label": "2027",
+            "items": [
+              "policy_targets#POL_2025_0907|*|04|11+28+41|2027-01-01|2027-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|04|11|2027-01-01|2027-12-31#target_units"
+            ]
+          },
+          {
+            "row": 11,
+            "label": "2028",
+            "items": [
+              "policy_targets#POL_2025_0907|*|04|11+28+41|2028-01-01|2028-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|04|11|2028-01-01|2028-12-31#target_units"
+            ]
+          },
+          {
+            "row": 12,
+            "label": "2029",
+            "items": [
+              "policy_targets#POL_2025_0907|*|04|11+28+41|2029-01-01|2029-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|04|11|2029-01-01|2029-12-31#target_units"
+            ]
+          },
+          {
+            "row": 13,
+            "label": "2030",
+            "items": [
+              "policy_targets#POL_2025_0907|*|04|11+28+41|2030-01-01|2030-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|04|11|2030-01-01|2030-12-31#target_units"
+            ]
+          },
+          {
+            "row": 14,
+            "label_prefix": "PUBLIC_LAND",
+            "items": [
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_LAND|04|11+28+41|2026-01-01|2030-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_LAND|04|11+28+41|2026-01-01|2026-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_LAND|04|11+28+41|2027-01-01|2027-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_LAND|04|11+28+41|2028-01-01|2028-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_LAND|04|11+28+41|2029-01-01|2029-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_LAND|04|11+28+41|2030-01-01|2030-12-31#target_units",
+              "links#POLICY_PROGRAM|POL_2025_0907|POL_2025_0907.PUBLIC_LAND#POLICY_PROGRAM"
+            ]
+          },
+          {
+            "row": 15,
+            "label_prefix": "PUBLIC_REUSE",
+            "items": [
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_REUSE|04|11+28+41|2026-01-01|2030-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_REUSE|04|11+28+41|2026-01-01|2026-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_REUSE|04|11+28+41|2027-01-01|2027-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_REUSE|04|11+28+41|2028-01-01|2028-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_REUSE|04|11+28+41|2029-01-01|2029-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PUBLIC_REUSE|04|11+28+41|2030-01-01|2030-12-31#target_units",
+              "links#POLICY_PROGRAM|POL_2025_0907|POL_2025_0907.PUBLIC_REUSE#POLICY_PROGRAM"
+            ]
+          },
+          {
+            "row": 16,
+            "label_prefix": "URBAN",
+            "items": [
+              "policy_targets#POL_2025_0907|POL_2025_0907.URBAN|04|11+28+41|2026-01-01|2030-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.URBAN|04|11+28+41|2026-01-01|2026-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.URBAN|04|11+28+41|2027-01-01|2027-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.URBAN|04|11+28+41|2028-01-01|2028-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.URBAN|04|11+28+41|2029-01-01|2029-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.URBAN|04|11+28+41|2030-01-01|2030-12-31#target_units",
+              "links#POLICY_PROGRAM|POL_2025_0907|POL_2025_0907.URBAN#POLICY_PROGRAM"
+            ]
+          },
+          {
+            "row": 17,
+            "label_prefix": "PRIVATE",
+            "items": [
+              "policy_targets#POL_2025_0907|POL_2025_0907.PRIVATE|04|11+28+41|2026-01-01|2030-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PRIVATE|04|11+28+41|2026-01-01|2026-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PRIVATE|04|11+28+41|2027-01-01|2027-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PRIVATE|04|11+28+41|2028-01-01|2028-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PRIVATE|04|11+28+41|2029-01-01|2029-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.PRIVATE|04|11+28+41|2030-01-01|2030-12-31#target_units",
+              "links#POLICY_PROGRAM|POL_2025_0907|POL_2025_0907.PRIVATE#POLICY_PROGRAM"
+            ]
+          },
+          {
+            "row": 18,
+            "label_prefix": "OTHER",
+            "items": [
+              "policy_targets#POL_2025_0907|POL_2025_0907.OTHER|04|11+28+41|2026-01-01|2030-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.OTHER|04|11+28+41|2026-01-01|2026-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.OTHER|04|11+28+41|2027-01-01|2027-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.OTHER|04|11+28+41|2028-01-01|2028-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.OTHER|04|11+28+41|2029-01-01|2029-12-31#target_units",
+              "policy_targets#POL_2025_0907|POL_2025_0907.OTHER|04|11+28+41|2030-01-01|2030-12-31#target_units",
+              "links#POLICY_PROGRAM|POL_2025_0907|POL_2025_0907.OTHER#POLICY_PROGRAM"
+            ]
+          },
+          {
+            "row": 19,
+            "label": "프로그램 5개 합계",
+            "items": []
+          },
+          {
+            "row": 20,
+            "label_prefix": "입주 2023",
+            "items": [
+              "policy_targets#POL_2025_0907|*|06|11+28+41|2023-01-01|2023-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|06|11|2023-01-01|2023-12-31#target_units"
+            ]
+          },
+          {
+            "row": 21,
+            "label_prefix": "입주 2024",
+            "items": [
+              "policy_targets#POL_2025_0907|*|06|11+28+41|2024-01-01|2024-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|06|11|2024-01-01|2024-12-31#target_units"
+            ]
+          },
+          {
+            "row": 22,
+            "label_prefix": "입주 2025",
+            "items": [
+              "policy_targets#POL_2025_0907|*|06|11+28+41|2025-01-01|2025-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|06|11|2025-01-01|2025-12-31#target_units"
+            ]
+          },
+          {
+            "row": 23,
+            "label_prefix": "입주 2026",
+            "items": [
+              "policy_targets#POL_2025_0907|*|06|11+28+41|2026-01-01|2026-12-31#target_units",
+              "policy_targets#POL_2025_0907|*|06|11|2026-01-01|2026-12-31#target_units"
+            ]
+          },
+          {
+            "row": 24,
+            "label": "(참고) 10년 평균",
+            "items": []
+          },
+          {
+            "row": 25,
+            "label": "입주 범위",
+            "items": []
+          },
+          {
+            "row": 26,
+            "label": "관리목표 채택",
+            "items": []
+          }
+        ]
+      },
+      {
+        "path": "docs/speech/research/01.정책/값대조_8-13_1-29.csv",
+        "label_col": "항목",
+        "home_col": "HOME",
+        "value_col": "원문",
+        "locator_col": "원문 위치",
+        "verdict_col": "판정",
+        "note_cols": [],
+        "file_col": null,
+        "locator_format": "{}",
+        "rows": [
+          {
+            "row": 1,
+            "label": "이름",
+            "items": [
+              "policies#POL_2026_0813#policy_name"
+            ]
+          },
+          {
+            "row": 2,
+            "label": "발표일",
+            "items": [
+              "policies#POL_2026_0813#announcement_date"
+            ]
+          },
+          {
+            "row": 3,
+            "label": "지표",
+            "items": [
+              "policies#POL_2026_0813#target_indicator"
+            ]
+          },
+          {
+            "row": 4,
+            "label": "범위",
+            "items": [
+              "policies#POL_2026_0813#scope_region"
+            ]
+          },
+          {
+            "row": 5,
+            "label": "목표 물량",
+            "items": [
+              "policies#POL_2026_0813#target_units"
+            ]
+          },
+          {
+            "row": 6,
+            "label": "기간",
+            "items": []
+          },
+          {
+            "row": 7,
+            "label": "근거 URL",
+            "items": [
+              "policies#POL_2026_0813#source_url"
+            ]
+          },
+          {
+            "row": 8,
+            "label": "이름",
+            "items": [
+              "policies#POL_2026_0129#policy_name"
+            ]
+          },
+          {
+            "row": 9,
+            "label": "발표일",
+            "items": [
+              "policies#POL_2026_0129#announcement_date"
+            ]
+          },
+          {
+            "row": 10,
+            "label": "지표",
+            "items": [
+              "policies#POL_2026_0129#target_indicator"
+            ]
+          },
+          {
+            "row": 11,
+            "label": "범위",
+            "items": [
+              "policies#POL_2026_0129#scope_region"
+            ]
+          },
+          {
+            "row": 12,
+            "label": "목표 물량",
+            "items": [
+              "policies#POL_2026_0129#target_units"
+            ]
+          },
+          {
+            "row": 13,
+            "label": "근거 URL",
+            "items": [
+              "policies#POL_2026_0129#source_url"
+            ]
+          }
+        ]
+      }
+    ],
+    "programs": [
+      {
+        "path": "docs/speech/research/01.정책/프로그램_원문대조_9-7.csv",
+        "policy_id": "POL_2025_0907",
+        "name_col": "프로그램",
+        "value_col": "원문_위치(인쇄/PDF쪽, 절 제목)",
+        "locator_col": "원문_PDF쪽",
+        "verdict_col": "판정",
+        "note_cols": [
+          "판정_상세"
+        ],
+        "file_col": "원문_파일",
+        "locator_format": "PDF {}쪽"
+      },
+      {
+        "path": "docs/speech/research/01.정책/프로그램_원문대조_8-13_1-29.csv",
+        "policy_col": "정책",
+        "policy_map": {
+          "주택 신속공급 방안 (8·13, 2026-08-13)": "POL_2026_0813",
+          "도심 주택공급 확대 및 신속화 방안 (1·29, 2026-01-29)": "POL_2026_0129"
+        },
+        "name_col": "프로그램(HOME)",
+        "value_col": "원문 인용",
+        "locator_col": "위치",
+        "verdict_col": "판정",
+        "note_cols": [],
+        "file_col": null,
+        "locator_format": "{}"
+      }
+    ],
+    "item_key_note": "항목 키 = <subject_table>#<subject_id>#<field> (subject_id 는 설계 5.2 형식)"
+  },
+  "date_line_markers": [
+    "보도시점",
+    "배포",
+    "보도일시"
+  ],
+  "max_note_chars": 240,
+  "doc_priority_policy": [
+    [
+      "보도자료",
+      0
+    ],
+    [
+      "방안 본문",
+      1
+    ],
+    [
+      "안건",
+      2
+    ]
+  ],
+  "doc_priority_detail": [
+    [
+      "방안 본문",
+      0
+    ],
+    [
+      "안건",
+      1
+    ],
+    [
+      "보도자료",
+      2
+    ]
+  ],
+  "doc_priority_note": "문서 순서(manifest kind 와 파일명에 든 낱말). 정책 값(이름·발표일·발행기관)은 보도자료부터, 목표·프로그램·지명은 방안 본문(안건)부터 찾는다.",
+  "followups_summary": "followups-2026-10-17.json",
+  "followups_note": "discover.py --followups --until <날짜> 가 남긴 요약(캐시 폴더). 후속 발표·원 게시물 첨부 목록·해명 검색 결과.",
+  "gap_report": "docs/speech/research/01.정책/누락검증_01.md",
+  "report_max_rows": 60,
+  "name_normalize": {
+    "◯구": "舊",
+    "◯": "舊"
+  },
+  "name_normalize_note": "PDF 글자 추출에서 '舊'가 '◯구'·'◯'로 깨진다. 지명(site_name)만 앞에서부터 차례로 고치고 quote 는 원문 추출 그대로 둔다."
+}

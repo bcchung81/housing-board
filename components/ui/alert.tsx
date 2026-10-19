@@ -7,7 +7,7 @@ function Alert({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="alert"
       role="note"
-      className={cn("rounded-[12px] border border-dashed border-line2 bg-muted px-[18px] py-4 text-[14px] text-muted-foreground [&_b]:text-foreground", className)}
+      className={cn("rounded-tile border border-dashed border-line2 bg-muted px-tile-x py-tile-y text-sm text-muted-foreground [&_b]:text-foreground", className)}
       {...props}
     />
   )

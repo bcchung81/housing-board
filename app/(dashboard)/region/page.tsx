@@ -1,28 +1,28 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Page, PageHead, PanelHead, sub } from '../../../components/page';
-import PanelLink from '../../../components/board/PanelLink';
-import MapLink from '../../../components/board/MapLink';
-import { Card } from '../../../components/ui/card';
-import { Chip, ChipBar, ChipGroup, ChipSep } from '../../../components/ui/chips';
-import InfoTip from '../../../components/ui/info-tip';
-import Ahead from '../../../components/region/Ahead';
-import Annual, { parseMetric } from '../../../components/region/Annual';
-import Cond from '../../../components/region/Cond';
-import areaFactsJson from '../../../data/board/area-facts.json';
-import calendarJson from '../../../data/board/region-calendar.json';
-import mapJson from '../../../data/board/region-map.json';
-import annualJson from '../../../data/board/region-annual.json';
-import type { AreaFactsDoc } from '../../../lib/board/area-facts';
-import { fmt, lastMonth, ymDot } from '../../../lib/board/calc';
-import { getBoardData } from '../../../lib/board/data';
-import { METRO_AREAS, SIDO_SHORT, guOf } from '../../../lib/board/metro-overview';
-import { mapScopeHref } from '../../../lib/board/map-href';
-import ScopeChip from '../../../components/ui/scope-chip';
-import { AHEAD_KIND, CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, aheadKindTip, inSgg, isDefaultKinds, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '../../../lib/board/region';
-import { getProjectsIndex } from '../../../lib/board/projects-index';
-import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '../../../lib/board/projects-view';
-import type { Metric } from '../../../lib/board/types';
+import { Page, PageHead, PanelHead, sub } from '@/components/page';
+import PanelLink from '@/components/board/PanelLink';
+import MapLink from '@/components/board/MapLink';
+import { Card } from '@/components/ui/card';
+import { Chip, ChipBar, ChipGroup, ChipSep } from '@/components/ui/chips';
+import InfoTip from '@/components/ui/info-tip';
+import Ahead from '@/components/region/Ahead';
+import Annual, { parseMetric } from '@/components/region/Annual';
+import Cond from '@/components/region/Cond';
+import areaFactsJson from '@/data/board/area-facts.json';
+import calendarJson from '@/data/board/region-calendar.json';
+import mapJson from '@/data/board/region-map.json';
+import annualJson from '@/data/board/region-annual.json';
+import type { AreaFactsDoc } from '@/lib/board/area-facts';
+import { fmt, lastMonth, ymDot } from '@/lib/board/calc';
+import { getBoardData } from '@/lib/board/data';
+import { METRO_AREAS, SIDO_SHORT, guOf } from '@/lib/board/metro-overview';
+import { mapScopeHref } from '@/lib/board/map-href';
+import ScopeChip from '@/components/ui/scope-chip';
+import { AHEAD_KIND, CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, aheadKindTip, inSgg, isDefaultKinds, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
+import { getProjectsIndex } from '@/lib/board/projects-index';
+import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '@/lib/board/projects-view';
+import type { Metric } from '@/lib/board/types';
 
 export const metadata: Metadata = { title: '지역 공급' };
 
@@ -93,7 +93,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
     <Page>
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '지역 공급' }]} title="지역 공급"
         tip="앞으로 12개월 예정(원장 현재 예정) → 지난 공급 실적(통계누리) → 동네 여건(서울·인천·경기) 순">
-        <span className="ml-auto text-[14px] whitespace-nowrap text-muted-foreground tabular-nums mobile:text-[13px]"
+        <span className="ml-auto text-sm whitespace-nowrap text-muted-foreground tabular-nums mobile:text-sm"
           title={`앞으로 12개월(${ymDot(calendar.from)} ~ ${ymDot(calendar.to)}) · 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')} · 통계누리 실적 ${ymDot(last)}까지`}>
           예정 {ymDot(calendar.from)}~{ymDot(calendar.to)} · 실적 {ymDot(last)}
         </span>
@@ -117,7 +117,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
       </ChipBar>
 
       <Card render={<section aria-label="앞으로 12개월" />}>
-        <PanelHead id="ahead-title" title={<>{isDefaultKinds(kinds) ? AHEAD_COMPLETION : kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-[14px] font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}
+        <PanelHead id="ahead-title" title={<>{isDefaultKinds(kinds) ? AHEAD_COMPLETION : kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-sm font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}
           scope={<ScopeChip scope={scopeName} source="사업 원장" title={sgg ? `${name} 중 ${sggName}만(구가 있는 시는 구를 합침) — 달별 막대·목록·합계·종류 칩 건수가 이 범위 · ×를 누르면 ${name}(으)로` : `사업 원장 현재 예정 · ${name}`} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} />}>
           <InfoTip label="앞으로 12개월 읽는 법">
             <dl>
@@ -145,16 +145,16 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
         {list.length || sgg ? (
           <Ahead key={`${sido}|${kinds.join(',')}|${sgg ?? ''}`} sido={sido} regionName={scopeName} months={months} nowM={nowM} refDate={calendar.referenceDate} list={list} initialM={m} initialSgg={sgg}
             map={view ? { view, sgg: regionMap.sgg, districts: regionMap.districts } : null} />
-        ) : <p className="m-0 text-[14px] text-muted-foreground">{name} · 12개월 안 {kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정 없음</p>}
+        ) : <p className="m-0 text-sm text-muted-foreground">{name} · 12개월 안 {kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정 없음</p>}
       </Card>
 
       <Annual molit={molit} annual={annual} sido={sido} metric={metric} order={ORDER} sidoName={sidoName} href={(p) => href({ ...p, m: null })} sggName={sggName} />
 
       {sido && facts.sido[sido] ? <Cond facts={facts} sido={sido} name={name} sggName={sggName} /> : (
         /* 자료가 없는 범위(수도권·전국·다른 시도)는 빈 카드 대신 한 줄 안내(2026-10-16 2차 평가: 1384×99 카드에 내용 435px — 오른쪽이 비었다) */
-        <section aria-label="동네 여건" data-slot="cond-note" className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[14px] text-muted-foreground"
+        <section aria-label="동네 여건" data-slot="cond-note" className="flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-sm text-muted-foreground"
           title="인구·가구·주택 재고·미분양(KOSIS·SGIS, 정책 진행 자료(HOME) 지역 지표)은 서울·인천·경기만 자료가 있어 시도 하나를 고르면 보인다">
-          <h2 className="m-0 text-[14px] font-bold text-foreground">동네 여건</h2>
+          <h3 className="ui-h3">동네 여건</h3>
           {/* 시도 하나를 골랐는데 자료가 없으면 '없음'을 바로 말하고(고르라고 하지 않는다), 수도권·전국이면 시도를 고르게 한다 */}
           <span>{sido && sido !== 'metro' ? `${name} 자료 없음(서울·인천·경기만)` : '인구·주택 재고·미분양은 시도를 고르면 보입니다'}</span>
           {Object.keys(facts.sido).map((c) => <PanelLink key={c} href={href({ sido: c, m: null })} full={`${sidoName(c)} 동네 여건`}>{sidoName(c)}</PanelLink>)}

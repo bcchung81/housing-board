@@ -34,14 +34,14 @@ test('1 P0 공정률: 원장 값(93.12%, 2026.07.01 보고)이 정본, 지도 �
   assert.deepEqual([p.rate, p.asOf, p.by], [93.12, '2026-07-01', 'ledger']);
   const cell = H.progCell(p);
   assert.match(cell, />93\.12%<\/span> <small>2026\.07\.01 보고<\/small>/);
-  assert.match(cell, /<b class="jd alt" title="LH 공사현황 자료의 공정률은 100%\(2026\.10\.01 기준\)로, 원장 보고 값 93\.12%\(2026\.07\.01 보고\)와 다릅니다\. 공정률은 원장 기준입니다\.">원천 값 다름: 100%\(상세 3D\)<\/b>/);
+  assert.match(cell, /<b class="jd alt ov-aud-admin" title="LH 공사현황 자료의 공정률은 100%\(2026\.10\.01 기준\)로, 원장 보고 값 93\.12%\(2026\.07\.01 보고\)와 다릅니다\. 공정률은 원장 기준입니다\.">원천 값 다름: 100%\(상세 3D\)<\/b>/);
   assert.match(H.progressRow(b, 'build'), /<b>93\.12%<\/b>/, '사이드바 목록도 같은 값');
   assert.equal(H.progOf({ ...b, progress: { ...b.progress, rate: 93.12 } }).alt, null);
   const m = H.progOf({ id: 'x', progress: { rate: 41.5, asOf: '2026-09-01', history: [] } });
   assert.deepEqual([m.rate, m.by], [41.5, 'map']);
   assert.doesNotMatch(H.progCell(m), /보고|원천 값 다름/);
   /* 지도 페이지가 서랍과 같은 project-detail.json 의 마지막 보고를 넘긴다 */
-  assert.match(page, /import detailJson from '\.\.\/\.\.\/\.\.\/data\/board\/project-detail\.json';/);
+  assert.match(page, /import detailJson from '@\/data\/board\/project-detail\.json';/);
   assert.match(page, /homeProgress=\{homeProgress\(detailJson as never\)\}/);
   assert.doesNotMatch(page, /export function homeProgress/, 'page 파일은 기본 내보내기 밖의 내보내기를 두지 않는다(Next)');
   assert.match(island, /w\.HOME_PROGRESS = homeProgress;/);
@@ -139,13 +139,13 @@ test("5 상세 모드 제목: h1·document.title 은 지역('고양시 덕양구
   const raw = { index: { regions: [] }, entry: { visibility: 'public' }, region: { slug: '', name: '경기도 고양시 덕양구', title: '경기도 고양시 덕양구', sources: [], zones: [] }, projects: { projects: [] }, buildings: { type: 'FeatureCollection', meta: { factor: {} }, features: [] }, context: null, infra: null };
   const t = R.adaptBundle(raw).texts;
   assert.equal(t.headTitle, '고양시 덕양구 공급 지도');
-  assert.equal(t.documentTitle, '고양시 덕양구 공급 지도 · 주택파동');
+  assert.equal(t.documentTitle, '고양시 덕양구 공급 지도 · 주택공급');
   const h1 = { textContent: '공급 현황' }, ov = { parentNode: { removed: null, removeChild(x) { this.removed = x; } } };
-  const doc = { title: '', querySelector: (s) => (s === '#phead h1' ? h1 : null), getElementById: (id) => (id === 'ov' ? ov : null) };
+  const doc = { title: '', querySelector: (s) => (s === '#phead h2' ? h1 : null), getElementById: (id) => (id === 'ov' ? ov : null) };
   R.applyTexts(doc, { texts: t });
-  assert.equal(doc.title, '고양시 덕양구 공급 지도 · 주택파동');
+  assert.equal(doc.title, '고양시 덕양구 공급 지도 · 주택공급');
   assert.equal(h1.textContent, '고양시 덕양구 공급 지도');
-  assert.equal(ov.parentNode.removed, ov, "개요 마크업(h1 '수도권 공급 개요')을 걷는다");
+  assert.equal(ov.parentNode.removed, ov, "개요 마크업(h2 '수도권 공급 개요')을 걷는다");
 });
 
 test('6 1차 회귀: 단계색 채움(다크 .6→.4, 라이트 .45→.3), soloShown, 카드 안전 영역', () => {
@@ -170,7 +170,8 @@ test('7 대표점 사업: 첫 화면 확대에서 지름 44px 이상 단계색 �
   const layer = grab(/add\(\{ id: 'blk-pin', [\s\S]*?\} \}\);/);
   assert.match(layer, /source: 'block-pts', maxzoom: PIN_Z\[1\], filter: \['==', \['get', 'pt'\], true\]/);
   assert.match(layer, /'circle-radius': PIN_R, 'circle-color': kindExpr\(T\.color\)/);
-  assert.match(layer, /'#FFFFFF'\], 'circle-stroke-width'/);
+  assert.match(layer, /T\.outline\], 'circle-stroke-width'/);   // 흰 테두리 = 테마 색표의 지도 윤곽 토큰(2026-10-18)
+  assert.equal(require('./map-js-theme.cjs').mapTheme('dark').outline.toUpperCase(), '#FFFFFF');
   assert.match(app, /pt: b\.outlineTier === 'point'/);
   assert.match(app, /const BLK_FILLS = \[[^\]]*'blk-pin'\]/, '누르면 사업 카드·첫 연출 ④에 함께');
   assert.match(grab(/function applyFilters\(\) \{[\s\S]*?\n\}\n/), /map\.setPaintProperty\('blk-pin', 'circle-opacity', pinOp\(0\.35\)\)/, '띠 강조(SHOWN)에 따라 흐리게');

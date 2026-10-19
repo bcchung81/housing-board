@@ -17,8 +17,12 @@ function bodies(sel) {
   }
   return out;
 }
+// 역할 토큰(var(--fs-*))은 :root 기본값(정책담당자 14px)으로 읽는다. 일반사용자 관점은 본문·표만 16px 로 더 크다. 값은 app/globals.css(지도 라벨 --fs-label-map 만 app.css)
+const TOKEN = (() => { const o = {}; for (const m of (read('app/globals.css') + css).matchAll(/--fs-([\w-]+):\s*(\d+)px/g)) if (!(m[1] in o)) o[m[1]] = +m[2]; return o; })();
+const TEXT = (() => { const o = {}; for (const m of read('app/globals.css').matchAll(/--text-(\w+):\s*(\d+)px/g)) if (!(m[1] in o)) o[m[1]] = +m[2]; return o; })();   // 8단계 --text-xs…3xl
+const pxOf = (b) => { const m = /font-size:(?:([\d.]+)px|var\(--fs-([\w-]+)\)|var\(--text-(\w+)\))/.exec(b); return m ? (m[1] ? +m[1] : m[2] ? TOKEN[m[2]] : TEXT[m[3]]) : null; };
 const fontPx = (sel) => {
-  const sizes = bodies(sel).map((b) => /font-size:([\d.]+)px/.exec(b)).filter(Boolean).map((m) => +m[1]);
+  const sizes = bodies(sel).map(pxOf).filter((x) => x != null);
   assert.ok(sizes.length, `${sel} 에 font-size(px) 규칙이 있어야 한다`);
   return sizes;
 };
@@ -48,21 +52,21 @@ test('공급 요약은 머리 줄에 늘 있어 사이드바를 접어도 보이
   assert.doesNotMatch(css, /\.hudsum \.hs-region/);
 });
 
-test('사이드바 글자는 13px 아래로 내려가지 않는다', () => {
+test('사이드바 글자는 14px 아래로 내려가지 않는다(2026-10-17 크기 8단계: 12·14·16·…)', () => {
   const SEL = ['.sleg', '.card .st', '.card .sub', '.stage span', '.stage span small', '.pg', '.bld', '.foot',
     '.next span.s', '.inote', '.isub h3', '.icard .iw', '.im', '.ichip', '.imeta', '.isrc', '.ibtn .s',
     '#infraMeasures small', '.shead .hc', '.plink', '.ihead b', '.ibtn b'];
-  for (const s of SEL) for (const px of fontPx(s)) assert.ok(px >= 13, `${s} ${px}px (13px 이상 필요)`);
+  for (const s of SEL) for (const px of fontPx(s)) assert.ok(px >= 14, `${s} ${px}px (14px 이상 필요)`);
 });
 
-test('데스크톱 사이드바: 구역 제목은 종합상황판 카드 제목과 같은 20px(2026-10-13), 사이드바 이름 22px, 본문 글자는 한 단계 작게(2026-10-10 피드백, 문서 5.6c) 단지 이름 15.5px·보조 13px, 폭 380px', () => {
+test('데스크톱 사이드바: 구역 제목은 종합상황판 카드 제목과 같은 20px(2026-10-13), 사이드바 이름 22px, 본문 글자는 관점 토큰(정책담당자 14px · 일반사용자 16px, 2026-10-17) 단지 이름 16px, 폭 380px', () => {
   const desk = /\/\* 데스크톱 가독성[\s\S]*?\n\}\n/.exec(css)[0];
-  const deskPx = (sel) => [...desk.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(sel)).map((m) => /font-size:([\d.]+)px/.exec(m[2])).filter(Boolean).map((m) => +m[1]);
+  const deskPx = (sel) => [...desk.matchAll(/([^{}]+)\{([^{}]*)\}/g)].filter((m) => m[1].split(',').map((x) => x.trim()).includes(sel)).map((m) => pxOf(m[2])).filter((x) => x != null);
   const only = (sel, px) => { const v = deskPx(sel); assert.ok(v.length && v.every((x) => x === px), `${sel} ${v} (모두 ${px}px)`); };
-  only('h2', 20); only('.card b', 15.5); only('h1', 22);   // 구역 제목 20px(종합상황판 카드 제목) > 단지 이름 15.5px
-  for (const sel of ['.card .sub', '.card .st', '.next span.s', '.sleg', '.stage span', '.foot', '.inote', '.sum .cnt']) only(sel, 13);
-  only('.next b', 14.5); only('.sum b', 15);
-  assert.ok(fontPx('.sum .big').every((x) => x <= 32), `합계 숫자 ${fontPx('.sum .big')}px (32px 이하)`);
+  only('h2', 20); only('.card b', 16); only('h2', 20); assert.ok(!/<h1[ >]/.test(fs.readFileSync(path.join(__dirname, '../../index.html'), 'utf8')), '상세 마크업에 보이는 h1 없음');   // 구역 제목 20px(종합상황판 카드 제목) > 단지 이름 16px
+  for (const sel of ['.card .sub', '.card .st', '.next span.s', '.sleg', '.stage span', '.foot', '.inote', '.sum .cnt']) only(sel, 14);   // 본문 토큰(--fs-body) 기본 14px, 일반사용자 관점 16px
+  only('.next b', 14); only('.sum b', 16);
+  assert.ok(fontPx('.sum .big').every((x) => x <= 30), `합계 숫자 ${fontPx('.sum .big')}px (30px 이하)`);
   assert.match(css, /grid-template-columns:minmax\(0,1fr\) 380px/);
   assert.doesNotMatch(css, /grid-template-columns:minmax\(0,1fr\) 420px/);
 });
@@ -118,7 +122,7 @@ test('입주 전 점검: 구역 전체가 기본 접힘이고, 안의 개교 일
   assert.ok(btn, '#infraToggle(구역 제목 단추)이 있어야 한다');
   assert.match(btn[0], /aria-expanded="false"/);
   assert.match(btn[0], /aria-controls="infraBody"/);
-  assert.match(html, /<h2 id="h-infra"><button/);                      // 구역 제목(h2)이 곧 단추라 고정 제목·레일 코드는 그대로 쓴다
+  assert.match(html, /<h3 id="h-infra"><button/);                      // 구역 제목(h2)이 곧 단추라 고정 제목·레일 코드는 그대로 쓴다
   assert.match(html, /<div class="sbody" id="infraBody" hidden>/);
   for (const id of ['infraSchoolsBox', 'infraMeasuresBox']) assert.match(html, new RegExp(`<details class="isub" id="${id}" hidden>`));   // open 없음
   assert.match(html, /<details class="isub" id="infraSrcBox">/);
@@ -134,12 +138,12 @@ test('입주 전 점검: 구역 전체가 기본 접힘이고, 안의 개교 일
 test('입주 전 점검 요약은 머리 줄 단추 하나만 두고, 사이드바는 구역 머리(제목 + 신호 칩 + 조용한 링크)로 대신한다(2026-10-13)', () => {
   assert.doesNotMatch(html, /id="infraSum"/);
   assert.doesNotMatch(app, /#infraSum\b/);
-  const head = /<div class="shead"><h2 id="h-infra">[\s\S]*?<\/div>/.exec(html);
+  const head = /<div class="shead"><h3 id="h-infra">[\s\S]*?<\/div>/.exec(html);
   assert.ok(head, '입주 전 점검 구역 머리(.shead)가 있어야 한다');
   assert.match(head[0], /<span class="isum-c" id="infraChips"><\/span>/);
   assert.match(head[0], /<button type="button" class="plink" id="infraGo"[^>]*>기반시설 보기<\/button>/);
   assert.match(app, /\$\('#infraChips'\)\.innerHTML = infraChipsHtml\(\);/);
-  assert.match(css, /\.pscroll>section>h2,\.pscroll>section>\.shead\{position:sticky/);   // 구역 머리가 제목처럼 위에 붙는다
+  assert.match(css, /\.pscroll>section>h3,\.pscroll>section>\.shead\{position:sticky/);   // 구역 머리가 제목처럼 위에 붙는다
 });
 
 test('사이드바 글은 어절 단위로 줄을 바꾼다(keep-all + overflow-wrap) / 지역 상자는 머리 줄(#mhead)에 있다', () => {

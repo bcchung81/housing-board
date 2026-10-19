@@ -19,7 +19,9 @@ test('dateOf·safeUrl·titleKey: 점 날짜(달력에 없으면 null)·LH 링크
 test('notice: 주택 공고만(분양 05·39·54 → sale, 임대 06·13 → rental), 진행 중만, 마이홈 공고와 같은 모양에 source:lh', () => {
   const n = L.notice(row());
   assert.deepEqual(n, { id: 'lh-2015122300020858', kind: 'rental', title: '인천석남 어울림센터 행복주택 입주자 최초모집', agency: '한국토지주택공사', status: '공고중', housingType: '임대주택', supplyType: '임대주택',
-    complex: null, units: null, address: null, pnu: null, announcedAt: '2026-09-30', applyFrom: null, applyTo: '2026-10-20', url: row().DTL_URL, source: 'lh' });
+    complex: null, units: null, address: null, pnu: null, announcedAt: '2026-09-30', applyFrom: null, applyTo: '2026-10-20', url: row().DTL_URL, source: 'lh',
+    deposit: null, monthlyRent: null, targets: [], sgg: null, sggName: null });
+  assert.deepEqual(L.notice(row({ PAN_NM: '[경기] 청년·신혼부부 매입임대' })).targets, ['신혼부부', '청년']);
   for (const [code, kind] of [['05', 'sale'], ['39', 'sale'], ['54', 'sale'], ['06', 'rental'], ['13', 'rental']]) assert.equal(L.notice(row({ UPP_AIS_TP_CD: code })).kind, kind);
   for (const code of ['01', '22', '', '99']) assert.equal(L.notice(row({ UPP_AIS_TP_CD: code })), null, `유형 ${code} 는 주택 공고가 아님`);
   for (const ss of ['접수마감', '상담요청', '']) assert.equal(L.notice(row({ PAN_SS: ss })), null);
@@ -124,4 +126,16 @@ test('fetchLh: 일시 오류는 다시, 4xx 는 바로, 하루 한도는 e.quota
   const waits = []; let k = 0;
   assert.equal(L.listOf(await go(async () => (++k < 3 ? raw(429, perSec) : ok(LIST([row()]))), { sleep: async (ms) => { waits.push(ms); } })).rows.length, 1); assert.deepEqual(waits, [1100, 2200]);
   await assert.rejects(go(async () => raw(429, perSec)), (e) => e.throttled === true && !e.quota);
+});
+
+test('forSido: 시도가 같은 진행 중 주택 공고, 제목으로 시군구를 하나로 정할 수 있을 때만 sgg·sggName(구가 있으면 구), 마이홈 제목 제외', () => {
+  const regions = [{ code: '41110', name: '경기도 수원시' }, { code: '41117', name: '경기도 수원시 영통구' }, { code: '41450', name: '경기도 하남시' }, { code: '41130', name: '경기도 성남시' }];
+  const g = (over) => row({ CNP_CD_NM: '경기도', ...over });
+  const rows = [g({ PAN_ID: 'A', PAN_NM: '하남시 행복주택', PAN_NT_ST_DT: '2026.10.05' }), g({ PAN_ID: 'B', PAN_NM: '수원영통 행복주택', PAN_NT_ST_DT: '2026.10.04' }), g({ PAN_ID: 'C', PAN_NM: '수원 매입임대', PAN_NT_ST_DT: '2026.10.03' }),
+    g({ PAN_ID: 'D', PAN_NM: '하남·성남 통합 공고', PAN_NT_ST_DT: '2026.10.02' }), g({ PAN_ID: 'E', PAN_NM: '[경기남부] 청년 매입임대', PAN_NT_ST_DT: '2026.10.01' }), g({ PAN_ID: 'F', PAN_NM: '경기 행복주택', CNP_CD_NM: '경기도 외', PAN_NT_ST_DT: '2026.09.30' }),
+    g({ PAN_ID: 'G', PAN_NM: '서울 행복주택', CNP_CD_NM: '서울특별시' }), g({ PAN_ID: 'H', PAN_NM: '전국 공고', CNP_CD_NM: '전국' }), g({ PAN_ID: 'I', PAN_NM: '하남 상가', UPP_AIS_TP_CD: '22' }), g({ PAN_ID: 'J', PAN_NM: '하남 마이홈 공고' })];
+  const out = L.forSido(rows, '경기도', regions, new Set([L.titleKey('하남 마이홈 공고')]));
+  assert.deepEqual(out.map((n) => [n.id, n.sgg, n.sggName]), [['lh-A', '41450', '경기도 하남시'], ['lh-B', '41117', '경기도 수원시 영통구'], ['lh-C', '41110', '경기도 수원시'], ['lh-D', null, null], ['lh-E', null, null], ['lh-F', null, null]]);
+  assert.deepEqual(out[0]._supply.PAN_ID, 'A'); assert.deepEqual(out[4].targets, ['청년']);
+  assert.deepEqual(L.forSido(null, '경기도', regions), []);
 });

@@ -1,0 +1,13 @@
+{
+ "policies": [
+  {
+   "policy_id": "POL_T",
+   "slug": "t",
+   "name": "시험 정책",
+   "announced": "2026-01-01",
+   "canonical_url": null,
+   "docs_dir": "docs/speech/research/01.정책/원본/t",
+   "home_policy_id": "POL_T"
+  }
+ ]
+}

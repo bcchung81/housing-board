@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "evidence.schema.json",
+  "title": "ledger/evidence",
+  "description": "대조 기록. 항목(subject_table·subject_id·field) × 원천 대조 1건 = 1행. 기대 항목에 근거가 없으면 UNVERIFIED 행을 남겨 항목 전체가 나타나게 한다. 설계 docs/speech/research/파이프라인_설계.md 5.2. 운영 원장(Supabase)에는 싣지 않는 연구 표.",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "table",
+    "rows"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "ledger/1"
+    },
+    "table": {
+      "const": "evidence"
+    },
+    "rows": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/row"
+      }
+    }
+  },
+  "$defs": {
+    "row": {
+      "type": "object",
+      "required": [
+        "evidence_id",
+        "policy_id",
+        "subject_table",
+        "subject_id",
+        "field",
+        "external_ref",
+        "stage_code",
+        "dataset_value",
+        "external_value",
+        "doc_id",
+        "locator",
+        "original_value",
+        "verdict",
+        "basis",
+        "search_scope",
+        "checked_by",
+        "checked_at",
+        "notes"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "evidence_id": {
+          "type": "string",
+          "pattern": "^EV-[0-9a-f]{16}$",
+          "description": "EV- + sha256(subject_table|subject_id|field|external_ref|doc_id|locator) 앞 16자"
+        },
+        "policy_id": {
+          "$ref": "common.schema.json#/$defs/local_id",
+          "description": "이 대조가 속한 정책 사슬"
+        },
+        "subject_table": {
+          "type": "string",
+          "pattern": "^[a-z][a-z_]*$",
+          "description": "대상 항목의 표(policies·programs·policy_targets·links·projects·events 등)"
+        },
+        "subject_id": {
+          "type": "string",
+          "minLength": 1,
+          "description": "대상 행 id(구분자 '|'): policies <policy_id> · programs <program_id> · policy_targets <policy_id>|<program_id 또는 *>|<stage_code 또는 *>|<area_codes 를 + 로 이음>|<period_start>|<period_end> · links <link_type>|<from>|<to> · projects 원장 사업 id(PRJ-…), 못 이으면 HOME:<PRO id>"
+        },
+        "field": {
+          "type": "string",
+          "minLength": 1,
+          "description": "대상 칸"
+        },
+        "external_ref": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "외부 입력 레코드 id(HOME PRO_… 등)"
+        },
+        "stage_code": {
+          "$ref": "common.schema.json#/$defs/stage_code"
+        },
+        "dataset_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "데이터셋 최종값(원문값)"
+        },
+        "external_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "외부 입력 값(HOME)"
+        },
+        "doc_id": {
+          "anyOf": [
+            {
+              "type": "string",
+              "pattern": "^(DOC|URL)-[0-9a-f]{16}$"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "source_documents 의 문서. 근거 문서가 없으면(UNVERIFIED) null"
+        },
+        "locator": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "원문 위치(PDF 쪽, CSV 행, JSON 경로, 고시번호)"
+        },
+        "original_value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "원문 표기 그대로"
+        },
+        "verdict": {
+          "enum": [
+            "MATCH",
+            "MISMATCH",
+            "SOURCED",
+            "NOT_IN_SOURCE",
+            "ABSENT_CONFIRMED",
+            "EXISTS_ONLY",
+            "OUT_OF_SCOPE",
+            "NO_ORIGINAL",
+            "UNVERIFIED"
+          ],
+          "description": "MATCH·MISMATCH 외부 입력과 비교 · SOURCED 비교할 외부 값 없이 원천에서 값을 직접 수집하고 위치를 기록 · NOT_IN_SOURCE · ABSENT_CONFIRMED · EXISTS_ONLY · OUT_OF_SCOPE · NO_ORIGINAL · UNVERIFIED"
+        },
+        "basis": {
+          "anyOf": [
+            {
+              "enum": [
+                "INDEPENDENT",
+                "SAME_SOURCE",
+                "RULE",
+                "EXISTENCE"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "INDEPENDENT 외부 입력이 쓰지 않은 원천 · SAME_SOURCE 외부 입력이 읽은 원천을 다시 읽음 · RULE 원문의 프로그램 정의 조건을 사업 속성 원천으로 대조 · EXISTENCE 값 없이 기록 존재만"
+        },
+        "search_scope": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "ABSENT_CONFIRMED 일 때 찾아본 원천·기준일·조회 키"
+        },
+        "checked_by": {
+          "enum": [
+            "TOOL",
+            "AGENT",
+            "REVIEWER"
+          ],
+          "description": "TOOL 결정적 코드 · AGENT LLM 에이전트가 원문을 읽고 판정 · REVIEWER 사람(이름 없이 역할만)"
+        },
+        "checked_at": {
+          "$ref": "common.schema.json#/$defs/date"
+        },
+        "notes": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "verdict": {
+                "const": "ABSENT_CONFIRMED"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "search_scope": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}

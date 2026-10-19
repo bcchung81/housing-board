@@ -1,25 +1,25 @@
-:root{--ink:#E8EDFF;--ink2:#D6DEFA;--mute:#9AA8D6;--line:#22305E;--line2:#3A4C8C;--bg:#0A1030;--pn:#101A44;--pn2:#16225A;--acc:#FF8A65;--acc-ink:#2A0E04;--warn:#FFD66E;--on-c:#10162E;
-  /* 6단계 색(상황판 시안 M3). 모집·착공·준공·입주·계획은 app.js 의 COLOR 와 같은 값이다 */
-  --sale:#C7D0DA;--build:#FF9F43;--soon:#A5E56D;--move:#D9A6FF;--plan:#7BA7FF;--permit:#45D3C4;--priv:#98A3C9;
-  /* 지도 위 HUD 유리(단지 표지·요약·범례·하단 바·옵션·툴바·상세 카드). 값을 바꾸면 tests/js/glass.test.cjs 가 글자 대비(4.5:1)를 다시 확인한다.
-     짙은 네이비를 거의 불투명하게 깔아, 뒤 지도가 가장 밝은 곳에서도 밝은 글자가 읽힌다. */
-  --glass-tag:rgba(16,26,68,.92);--glass-tag-hover:rgba(27,42,102,.96);--glass-sum:rgba(10,16,48,.92);--glass-card:rgba(16,26,68,.94);
-  --glass-hud:rgba(16,26,68,.87);--glass-note:rgba(10,16,48,.66);   /* 단지 상세 카드(대비가 지켜지는 가장 옅은 쪽)·입력줄 아래 안내 띠(본문 글자만), 2026-10-10 피드백 '가리지 않게 투명하게' */
+/* 색·글꼴 값은 app/globals.css 한 곳에 있다(2026-10-18 값 그대로 옮김). 여기서는 지도 이름이 그 토큰을 가리키기만 한다: 두 테마 공통 토큰과 값이 같으면 공통 토큰을,
+   지도에만 있는 값이면 globals 의 '지도 전용' 구역(--map-*)을 가리킨다. --ink2·--line2·--pn2·--ok·--bad 는 globals 의 같은 이름을 그대로 쓴다.
+   독립 index.html 은 globals.css 를 싣지 않아 색이 빠진다(운영에 배포되지 않고 /map 마크업의 정본으로만 쓴다). */
+:root{--ink:var(--foreground);--mute:var(--map-mute);--line:var(--border);--bg:var(--background);--pn:var(--card);--warn:var(--map-warn);--on-c:var(--map-on-c);
+  /* 지도 위 HUD 유리(단지 표지·요약·범례·하단 바·옵션·툴바·상세 카드). 값(globals 의 --map-glass-*)을 바꾸면 tests/js/glass.test.cjs 가 글자 대비(4.5:1)를 다시 확인한다.
+     짙은 바탕을 거의 불투명하게 깔아, 뒤 지도가 가장 밝은 곳에서도 글자가 읽힌다. 단지 상세 카드(--glass-hud)는 대비가 지켜지는 가장 옅은 쪽, 입력줄 아래 안내 띠(--glass-note)는 본문 글자만 */
+  --glass-tag:var(--map-glass-tag);--glass-tag-hover:var(--map-glass-tag-hover);--glass-sum:var(--map-glass-sum);--glass-card:var(--map-glass-card);
+  --glass-hud:var(--map-glass-hud);--glass-note:var(--map-glass-note);
   --glass-blur:blur(6px) saturate(1.1);--glass-card-blur:blur(3px) saturate(1.05);
-  --glass-pop:rgba(16,26,68,.78);--glass-pop-blur:blur(12px) saturate(1.2);   /* 사업·건물 카드(팝업) 전용 HUD 유리 2026-10-15: 더 투명하고 더 흐리게. 대비는 카드 안 글자색(.maplibregl-popup-content 의 --ink 등)을 진하게 해서 지킨다 */
-  --hud-line:#3A4C8C;
-  --glass-cmd-active:rgba(10,16,48,.94);--glass-cmd-idle:rgba(10,16,48,.78);--glass-cmd-off:rgba(10,16,48,.62);--cmd-sub:#D6DEFA;--cmd-text:#E8EDFF;
-  --mh:108px;
-  /* 떠 있는 상자의 그림자: 다크는 짙게, 라이트(아래 덮어쓰기)는 남색으로 옅게 */
-  --hud-shadow:0 10px 26px rgba(0,0,0,.42);--tag-shadow:0 6px 16px rgba(0,0,0,.4);--sheet-shadow:0 -4px 18px rgba(0,0,0,.5);--stuck-shadow:0 7px 8px -7px rgba(0,0,0,.7);--card-hover-shadow:0 6px 16px rgba(0,0,0,.38)}
-/* backdrop-filter 를 못 쓰는 브라우저는 뒤가 비쳐 글자가 흐려지므로 거의 불투명하게 둔다 */
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){:root{--glass-tag:rgba(16,26,68,.97);--glass-sum:rgba(10,16,48,.97);--glass-card:rgba(16,26,68,.98);--glass-hud:rgba(16,26,68,.98);--glass-pop:rgba(16,26,68,.98);--glass-note:rgba(10,16,48,.96);--glass-cmd-active:rgba(10,16,48,.97);--glass-cmd-idle:rgba(10,16,48,.96);--glass-cmd-off:rgba(10,16,48,.96)}}
+  --glass-pop:var(--map-glass-pop);--glass-pop-blur:blur(12px) saturate(1.2);   /* 사업·건물 카드(팝업) 전용 HUD 유리 2026-10-15: 더 투명하고 더 흐리게. 대비는 카드 안 글자색(.maplibregl-popup-content 의 --mute 등)을 진하게 해서 지킨다 */
+  --hud-line:var(--line2);
+  --glass-cmd-active:var(--map-glass-cmd-active);--glass-cmd-idle:var(--map-glass-cmd-idle);--glass-cmd-off:var(--map-glass-cmd-off);--cmd-sub:var(--map-cmd-sub);--cmd-text:var(--foreground);
+  --mh:124px;
+  /* 떠 있는 상자의 그림자: 다크는 짙게, 라이트는 남색으로 옅게 */
+  --hud-shadow:var(--map-hud-shadow);--tag-shadow:var(--map-tag-shadow);--sheet-shadow:var(--map-sheet-shadow);--stuck-shadow:var(--map-stuck-shadow);--card-hover-shadow:var(--map-card-hover-shadow)}
 *{box-sizing:border-box}
 html,body{height:100%;margin:0}
-/* 글꼴 역할(2026-10-10, 계획서 14절 T1): 본문·카드·라벨은 시스템 한글 본문 글꼴, 로고·제목·큰 숫자는 Do Hyeon(대시보드 app/tailwind.css 와 같은 규칙) */
-:root{--font-body:'Apple SD Gothic Neo','Malgun Gothic','Noto Sans KR',sans-serif;--font-disp:var(--font-do-hyeon,'Do Hyeon'),'Apple SD Gothic Neo','Malgun Gothic',sans-serif}body{--font-disp:var(--font-do-hyeon,'Do Hyeon'),'Apple SD Gothic Neo','Malgun Gothic',sans-serif}   /* next/font 의 --font-do-hyeon 은 body 에 붙는다 — :root 에서만 풀면 글꼴 이름이 'Do Hyeon' 으로 떨어져(Next 셸에는 그 이름의 글꼴이 없음) 숫자·제목이 시스템 글꼴로 보였다(2026-10-13) */
-body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-size:14px;line-height:1.5;color-scheme:dark}
-.maplibregl-map{font-family:var(--font-body)}
+/* 글꼴·크기 체계(2026-10-17): 글꼴은 Noto Sans KR 하나(로컬 번들 assets/fonts/noto-sans-kr, 400·700; Next /map 은 루트 레이아웃이, 독립 index.html 은 head 의 link 가 싣는다). 위계는 크기와 굵기로만 만든다. 크기는 12·14·16·18·20·24·30·38px 여덟 단계, 굵기는 400·700 두 가지.
+   글꼴(--font-sans)·크기 8단계(--text-*)·역할 토큰(--fs-*)은 app/globals.css 의 것을 그대로 쓴다: 기본(정책담당자)은 본문·표 14px, 일반사용자 관점(html[data-aud="public"])은 본문·표 16px. 보조 설명·범례·지도 라벨은 어느 관점이나 14px 이상(--fs-label-map 은 지도 전용이라 여기 둔다). 시험: tests/js/map-fonts.test.cjs */
+:root{--fs-label-map:14px}
+body{font-family:var(--font-sans);color:var(--ink);background:var(--bg);font-size:var(--fs-body);line-height:1.5;color-scheme:dark}
+.maplibregl-map{font-family:var(--font-sans)}
 /* 데스크톱: 위에 머리 줄(로고·6단계 필터·보기 기준), 그 아래 왼쪽 지도와 오른쪽 패널(380px). 접으면 지도가 전체 폭 */
 .app{display:grid;grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:68px minmax(0,1fr);height:100vh}
 .app.collapsed{grid-template-columns:minmax(0,1fr)}
@@ -29,16 +29,16 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .pscroll{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:4px 18px 28px 18px;display:flex;flex-direction:column;gap:18px;scrollbar-width:none;word-break:keep-all;overflow-wrap:break-word}   /* 한글은 어절 단위로 줄을 바꾸고, 어절이 칸보다 길 때만 끊는다 */
 .pscroll::-webkit-scrollbar{display:none}
 .pscroll:focus-visible{outline-offset:-3px}
-.pscroll>section>h2,.pscroll>section>.shead{position:sticky;top:0;z-index:2;background:var(--bg);padding:8px 0 5px}
-.pscroll>section.stuck>h2,.pscroll>section.stuck>.shead{box-shadow:var(--stuck-shadow)}
+.pscroll>section>h3,.pscroll>section>.shead{position:sticky;top:0;z-index:2;background:var(--bg);padding:8px 0 5px}
+.pscroll>section.stuck>h3,.pscroll>section.stuck>.shead{box-shadow:var(--stuck-shadow)}
 .card{scroll-margin-top:46px;scroll-margin-bottom:16px}
 /* 머리 줄: 로고 + 지역 · 6단계 필터 · 보기 기준 */
-.mhead{grid-column:1 / -1;grid-row:1;position:relative;z-index:6;display:flex;align-items:center;gap:16px;min-width:0;padding:0 16px;background:rgba(12,20,56,.98);border-bottom:1px solid var(--line)}
+.mhead{grid-column:1 / -1;grid-row:1;position:relative;z-index:6;display:flex;align-items:center;gap:16px;min-width:0;padding:0 16px;border-bottom:1px solid var(--line)}
 .brand{display:flex;align-items:center;gap:12px;flex:none;color:var(--ink)}
 .brand-logo{display:block;height:34px;width:auto}
 .brand-t{display:flex;flex-direction:column;gap:2px;padding-left:12px;border-left:1px solid var(--line2)}
-.brand-t b{font-family:var(--font-disp);font-size:19px;font-weight:400;line-height:1.1}
-.hd-region,.regionbox select{font-size:12.5px;line-height:1.3;color:var(--mute)}
+.brand-t b{font-family:var(--font-sans);font-size:var(--text-lg);font-weight:700;line-height:1.1}
+.hd-region,.regionbox select{font-size:var(--text-sm);line-height:1.3;color:var(--mute)}
 .hd-region[hidden]{display:none}
 .regionbox{display:flex;align-items:center;gap:8px;margin:0}
 .regionbox[hidden]{display:none}
@@ -49,105 +49,104 @@ body{font-family:var(--font-body);color:var(--ink);background:var(--bg);font-siz
 .stagef>.sf{flex:1 1 0;min-width:96px}
 .stagef>.sf.empty{flex:0 0 auto;min-width:0}   /* 빈 단계('—')는 이름과 '—'만 들어가는 좁은 칩(2026-10-15 평가: 빈 칸이 값 있는 칸과 같은 폭을 차지했다) */
 .stagef::-webkit-scrollbar{display:none}
-.sf{display:flex;flex-direction:column;min-width:0;padding:6px 10px;border:1px solid var(--line);border-radius:10px;background:var(--pn);font:inherit;color:var(--ink);text-align:left;cursor:pointer;touch-action:manipulation}
+.sf{display:flex;flex-direction:column;min-width:0;padding:6px 10px;border:var(--border-w) solid var(--line);border-radius:var(--radius-tile);background:var(--pn);font:inherit;color:var(--ink);text-align:left;cursor:pointer;touch-action:manipulation}
 .sf:hover:not(:disabled){background:var(--pn2)}
 .sf[aria-pressed="true"]{background:var(--pn2);border-color:var(--acc)}
 .sf[aria-pressed="false"]{opacity:.55}
 .sf:disabled{opacity:1;cursor:default;background:transparent;color:var(--mute)}   /* 빈 단계: 흐리게 겹치지 않고 바탕만 비운다(— 는 보조 글자색) */
 .sf:disabled .sf-sw{background:transparent;box-shadow:inset 0 0 0 1.5px var(--c);opacity:.6}   /* 지도에 그 단계 구역이 없다: 색 칸을 속 빈 테두리로(누를 수 있는 칸의 색 칸 = 지도 구역 색) */
-.sf-h{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:700;white-space:nowrap}
-.sf-sw{flex:0 0 auto;width:10px;height:10px;border-radius:3px;background:var(--c)}
-.sf-n{margin-left:auto;font-size:11px;font-weight:400;color:var(--mute)}
-.sf-v{font-family:var(--font-disp);font-size:19px;font-weight:400;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
-.sf-v small{margin-left:2px;font-family:var(--font-body);font-size:11px;font-weight:400;color:var(--mute)}   /* 단위는 작고 흐린 본문 글꼴(종합상황판 KPI 단위와 같은 결) */
+.sf-h{display:flex;align-items:center;gap:6px;font-size:var(--text-xs);font-weight:700;white-space:nowrap}
+.sf-sw{flex:0 0 auto;width:10px;height:10px;border-radius:var(--radius-chip);background:var(--c)}
+.sf-n{margin-left:auto;font-size:var(--fs-meta);font-weight:400;color:var(--mute)}
+.sf-v{font-family:var(--font-sans);font-size:var(--text-lg);font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
+.sf-v small{margin-left:2px;font-family:var(--font-sans);font-size:var(--fs-meta);font-weight:400;color:var(--mute)}   /* 단위는 작고 흐린 본문 글꼴(종합상황판 KPI 단위와 같은 결) */
 .sf-v.none{color:var(--mute)}
-.sf-v.sm{font-family:var(--font-body);font-size:13px;line-height:1.75}   /* 호수 미확인(숫자 자리의 글) */
-.sf-lost{margin-left:6px;font-family:var(--font-body);font-size:12px;font-weight:400;color:var(--mute);text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer}   /* 그 단계 중 지도에 없는(위치 미확보) 호수, 누르면 위치 미확보 목록 */
-.sf-late{display:inline-block;margin-left:4px;font-weight:700;color:#FFAFBF;text-decoration:none}   /* 위치 미확보 몫 중 지연 n(빨강, 묶음 표지 .lp-d 와 같은 색) */
-html[data-map-shell]:not(.dark) .sf-late{color:#8E2C3C}
+.sf-v.sm{font-family:var(--font-sans);font-size:var(--text-sm);line-height:1.75}   /* 호수 미확인(숫자 자리의 글) */
+.sf-lost{margin-left:6px;font-family:var(--font-sans);font-size:var(--fs-meta);font-weight:400;color:var(--mute);text-decoration:underline dotted;text-underline-offset:2px;cursor:pointer}   /* 그 단계 중 지도에 없는(위치 미확보) 호수, 누르면 위치 미확보 목록 */
+.sf-late{display:inline-block;margin-left:4px;font-weight:700;color:var(--map-bad-ink);text-decoration:none}   /* 위치 미확보 몫 중 지연 n(빨강, 묶음 표지 .lp-d 와 같은 색) */
 .sf.lostonly .sf-sw{background:transparent;box-shadow:inset 0 0 0 1.5px var(--c);opacity:.6}   /* 지도에 구역이 없는 단계(모두 위치 미확보): 색 칸은 속 빈 테두리, 칸 전체가 목록 단추 */
 .stagef[hidden]{display:none}
-.pvbanner{position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:5;max-width:min(92%,720px);padding:4px 14px;border-radius:0 0 8px 8px;background:var(--pn2);border:1px solid var(--line2);border-top:0;color:var(--ink);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pvbanner{position:absolute;left:50%;top:0;transform:translateX(-50%);z-index:5;max-width:min(92%,720px);padding:4px 14px;border-radius:0 0 var(--radius-tile) var(--radius-tile);background:var(--pn2);border:1px solid var(--line2);border-top:0;color:var(--ink);font-size:var(--text-sm);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .pvbanner[hidden]{display:none}
-.cmd .pvbanner{position:static;transform:none;align-self:center;max-width:100%;margin-top:6px;padding:2px 12px;border:1px solid var(--hud-line);border-radius:999px;background:var(--glass-note);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);color:var(--ink);font-size:13px;line-height:1.6}   /* 입력줄 아래 반투명 요약 띠(goto.js 가 옮긴다) */
-.cmd .pvbanner:has(.pv-d[open]){border-radius:12px}
+.cmd .pvbanner{position:static;transform:none;align-self:center;max-width:100%;margin-top:6px;padding:2px 12px;border:1px solid var(--hud-line);border-radius:var(--radius-full);background:var(--glass-note);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);color:var(--ink);font-size:var(--text-sm);line-height:1.6}   /* 입력줄 아래 반투명 요약 띠(goto.js 가 옮긴다) */
+.cmd .pvbanner:has(.pv-d[open]){border-radius:var(--radius-card)}
 .cmd .pv-s{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cmd .pv-d>summary{list-style:none;cursor:pointer}
 .cmd .pv-d>summary::-webkit-details-marker{display:none}
 .cmd .pv-d>summary::after{content:" ▾";color:var(--mute)}
 .cmd .pv-d[open]>summary::after{content:" ▴"}
 .cmd .pv-f{margin:2px 0 4px;white-space:normal;word-break:keep-all}
-.cmd .pv-list{list-style:none;margin:4px 0 6px;padding:0 2px 0 0;max-height:min(40vh,300px);overflow:auto;white-space:normal;text-align:left;font-size:13px;line-height:1.45;--bad:#FFAFBF;--ok:#4ADE9E}   /* '사업 원장 n건' 목록 — 위치 미확보 목록(.lostpop)과 같은 줄 형식 */
-html[data-map-shell]:not(.dark) .cmd .pv-list{--bad:#8E2C3C;--ok:#1D5946;--warn:#624C00}
+.cmd .pv-list{list-style:none;margin:4px 0 6px;padding:0 2px 0 0;max-height:min(40vh,300px);overflow:auto;white-space:normal;text-align:left;font-size:var(--text-sm);line-height:1.45;--bad:var(--map-bad-ink);--ok:var(--map-ok-ink);--warn:var(--map-warn-ink)}   /* '사업 원장 n건' 목록 — 위치 미확보 목록(.lostpop)과 같은 줄 형식 */
 .cmd .pv-list li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:7px 0;border-top:1px solid var(--line)}
 .cmd .pv-list .lp-n{min-width:0}
-.cmd .pv-list small{grid-column:1;color:var(--ink2);font-size:12px}
+.cmd .pv-list small{grid-column:1;color:var(--ink2);font-size:var(--fs-meta)}
 .cmd .pv-list li a{grid-column:2;grid-row:1 / span 2;align-self:center;color:var(--acc);font-weight:700;white-space:nowrap;text-underline-offset:3px}
 .cmd .pvbanner:has(.pv-d[open]){width:min(520px,100%)}
-.dynhint{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);z-index:5;max-width:min(92vw,520px);padding:5px 14px;border-radius:14px;background:var(--glass-cmd-active);border:1px solid var(--line2);color:var(--ink);font-size:13px;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.dynhint{position:absolute;left:50%;bottom:56px;transform:translateX(-50%);z-index:5;max-width:min(92vw,520px);padding:5px 14px;border-radius:var(--radius-card);background:var(--glass-cmd-active);border:1px solid var(--line2);color:var(--ink);font-size:var(--fs-body);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .dynhint[hidden]{display:none}
 /* 사업으로 날아가는 동안(카드가 열리기 전) 지도 위 가운데 위 작은 띠: '…로 이동 중' + 깜빡이는 점(app.js setGoing) */
-.gonote{position:absolute;left:50%;top:12px;z-index:5;transform:translateX(-50%);display:flex;align-items:center;gap:8px;margin:0;padding:5px 14px;border-radius:999px;background:var(--glass-cmd-active);border:1px solid var(--hud-line);box-shadow:var(--tag-shadow);color:var(--ink);font-size:13px;font-weight:700;white-space:nowrap;pointer-events:none}
-.gonote::after{content:"";position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:1px;background:var(--acc);transform-origin:left center;animation:gofill 2.2s cubic-bezier(.25,.8,.3,1) both}   /* 이동 중: 맥동하는 점 대신 한 방향으로 한 번 차는 막대(날아가는 시간 약 2초, 2026-10-15 검사기 pulsing-dot) */
+.gonote{position:absolute;left:50%;top:12px;z-index:5;transform:translateX(-50%);display:flex;align-items:center;gap:8px;margin:0;padding:5px 14px;border-radius:var(--radius-full);background:var(--glass-cmd-active);border:1px solid var(--hud-line);box-shadow:var(--tag-shadow);color:var(--ink);font-size:var(--text-sm);font-weight:700;white-space:nowrap;pointer-events:none}
+.gonote::after{content:"";position:absolute;left:14px;right:14px;bottom:2px;height:2px;border-radius:var(--radius-chip);background:var(--acc);transform-origin:left center;animation:gofill 2.2s cubic-bezier(.25,.8,.3,1) both}   /* 이동 중: 맥동하는 점 대신 한 방향으로 한 번 차는 막대(날아가는 시간 약 2초, 2026-10-15 검사기 pulsing-dot) */
 .gonote[hidden]{display:none}
 @keyframes gofill{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @media (prefers-reduced-motion:reduce){.gonote::after{animation:none}}
 /* 위치 안내 한 줄(?project= 로 연 사업이 위치 미확보·근사 위치일 때, region.js mountLocNote). 지도 위 가운데, 닫을 수 있다 */
-.locnote{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:10px;max-width:min(calc(100% - 420px),760px);min-width:min(420px,calc(100% - 24px));padding:9px 8px 9px 14px;border-radius:12px;background:color-mix(in srgb,var(--warn) 16%,var(--pn));border:1px solid color-mix(in srgb,var(--warn) 55%,transparent);box-shadow:0 6px 20px rgba(0,0,0,.18);color:var(--ink);font-size:14px;line-height:1.45}
+.locnote{position:absolute;left:50%;top:12px;transform:translateX(-50%);z-index:4;display:flex;align-items:center;gap:10px;max-width:min(calc(100% - 420px),760px);min-width:min(420px,calc(100% - 24px));padding:9px 8px 9px 14px;border-radius:var(--radius-card);background:color-mix(in srgb,var(--warn) 16%,var(--pn));border:1px solid color-mix(in srgb,var(--warn) 55%,transparent);box-shadow:var(--map-note-shadow);color:var(--ink);font-size:var(--fs-body);line-height:1.45}
 .locnote[hidden]{display:none}
 .locnote .ln-i{flex:none;width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linejoin:round}
 .locnote .ln-t{flex:1;min-width:0}
 .locnote .ln-t b{font-weight:700}
 .locnote .ln-t a{color:inherit;text-decoration:underline;text-underline-offset:3px;white-space:nowrap}
-.locnote .ln-x{flex:none;display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:8px;background:transparent;color:inherit;cursor:pointer}
+.locnote .ln-x{flex:none;display:grid;place-items:center;width:30px;height:30px;border:0;border-radius:var(--radius-tile);background:transparent;color:inherit;cursor:pointer}
 .locnote .ln-x:hover{background:color-mix(in srgb,var(--ink) 10%,transparent)}
 .locnote .ln-x:focus-visible{outline:2px solid var(--ink);outline-offset:1px}
 .locnote .ln-x svg{width:16px;height:16px;stroke:currentColor;stroke-width:2;stroke-linecap:round}
-.list .empty{padding:14px 6px;color:var(--mute);font-size:13.5px}
-.nlist li{padding:9px 6px;border-top:1px solid var(--line);list-style:none;font-size:13px;line-height:1.5}
+.list .empty{padding:14px 6px;color:var(--mute);font-size:var(--fs-body)}
+.nlist li{padding:9px 6px;border-top:1px solid var(--line);list-style:none;font-size:var(--fs-body);line-height:1.5}
 .nlist li:first-child{border-top:0}
-.nlist .nt{display:block;font-weight:700;font-size:13.5px;color:var(--ink)}
+.nlist .nt{display:block;font-weight:700;font-size:var(--fs-body);color:var(--ink)}
 .nlist .nm{display:block;color:var(--mute)}
 .nlist .na{display:flex;flex-wrap:wrap;gap:6px;margin-top:5px}
-.nlist .na a{display:inline-block;min-height:30px;padding:4px 10px;border:1px solid var(--line);border-radius:8px;background:var(--pn);color:var(--ink);text-decoration:none;font-size:12.5px;line-height:20px}
+.nlist .na a{display:inline-block;min-height:30px;padding:4px 10px;border:var(--border-w) solid var(--line);border-radius:var(--radius-tile);background:var(--pn);color:var(--ink);text-decoration:none;font-size:var(--text-sm);line-height:20px}
 .nlist .na a:hover{background:var(--pn2);border-color:var(--line2)}
-.list .nearby{padding:6px 6px 14px;list-style:none;font-size:13px}
+.list .nearby{padding:6px 6px 14px;list-style:none;font-size:var(--fs-body)}
 .list .nearby b{display:block;margin-bottom:6px;color:var(--ink)}
 .list .nearby .nb-list{display:flex;flex-wrap:wrap;gap:6px}
-.list .nearby a{display:inline-block;min-height:32px;padding:5px 10px;border:1px solid var(--line);border-radius:8px;background:var(--pn);color:var(--ink);text-decoration:none;font-size:13px;line-height:20px}
+.list .nearby a{display:inline-block;min-height:32px;padding:5px 10px;border:var(--border-w) solid var(--line);border-radius:var(--radius-tile);background:var(--pn);color:var(--ink);text-decoration:none;font-size:var(--fs-body);line-height:20px}
 .list .nearby a:hover{background:var(--pn2);border-color:var(--line2)}
-h1{margin:0;font-family:var(--font-disp);font-size:18px;font-weight:400;line-height:1.3}
-h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-height:1.3;color:var(--ink2)}
-.eyebrow{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+h1{margin:0;font-family:var(--font-sans);font-size:var(--text-md);font-weight:700;line-height:1.3}
+h2{margin:0;font-family:var(--font-sans);font-size:var(--text-base);font-weight:700;line-height:1.3;color:var(--ink2)}
+h3{margin:0;font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;line-height:1.3;color:var(--ink2)}   /* 모든 폭에서 역할 토큰 16px. 아래 901px 이상 블록에만 있으면 좁은 화면에서 브라우저 기본 1.17em(14×1.17=16.38px)이 된다 */
+.phead h2{min-width:0;max-width:100%;font-size:var(--fs-h2);line-height:1.25;overflow-wrap:anywhere;text-wrap:balance}   /* 모든 폭 20px, 좁은 시트에서도 패널 안에서 줄바꿈 */
 .sec{display:flex;flex-direction:column;gap:6px}
 .sec[hidden]{display:none}
 .list{list-style:none;margin:0;padding:0}
 .list li+li{margin-top:6px}
 .sum{display:flex;flex-direction:column;gap:6px}
-.sum b{display:block;font-size:15px}
-.sum .big{font-family:var(--font-disp);font-size:32px;font-weight:400;line-height:1.05;font-variant-numeric:tabular-nums}
-.sum .unit{margin:0 6px 0 4px;font-size:15px;font-weight:700}
-.sum .cnt{font-size:13px;font-weight:400;color:var(--mute)}
+.sum b{display:block;font-size:var(--text-base)}
+.sum .big{font-family:var(--font-sans);font-size:var(--text-2xl);font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
+.sum .unit{margin:0 6px 0 4px;font-size:var(--text-base);font-weight:700}
+.sum .cnt{font-size:var(--fs-body);font-weight:400;color:var(--mute)}
 .sum .cnt+.cnt{display:block}
 .sbar{display:flex;gap:2px;height:10px;overflow:hidden}
 .sbar i{display:block;height:100%}
-.sleg{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:13px;color:var(--mute)}
+.sleg{display:flex;flex-wrap:wrap;gap:2px 14px;font-size:var(--fs-body);color:var(--mute)}
 .sleg span{display:inline-flex;align-items:center;gap:6px}
-.card{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:2px 12px;align-items:center;width:100%;text-align:left;padding:9px 12px;border:1px solid var(--line);border-radius:10px;background:var(--pn);font:inherit;color:inherit;cursor:pointer}
+.card{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:2px 12px;align-items:center;width:100%;text-align:left;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-tile);background:var(--pn);font:inherit;color:inherit;cursor:pointer}
 .card:hover,.card:focus-visible{background:var(--pn2)}
 .card[aria-expanded="true"]{background:var(--pn2);border-color:var(--line2)}
-.card b{font-size:15.5px;font-weight:700}
-.card .st{font-size:13px;font-weight:700}
-.card .sub{grid-column:2 / 4;font-size:13px;color:var(--mute)}
+.card b{font-size:var(--text-base);font-weight:700}
+.card .st{font-size:var(--text-sm);font-weight:700}
+.card .sub{grid-column:2 / 4;font-size:var(--fs-body);color:var(--mute)}
 .card .more{grid-column:2 / 4;display:none;flex-direction:column;gap:8px;margin-top:6px}
 .card[aria-expanded="true"] .more{display:flex}
 .mini{grid-column:2 / 4;height:5px;background:var(--line);position:relative;overflow:hidden}
 .mini i{position:absolute;left:0;top:0;bottom:0;background:var(--c)}
 .card[aria-expanded="true"] .mini{display:none}
 .stage{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:4px}
-.stage span{display:flex;flex-direction:column;gap:2px;font-size:13px;color:var(--mute);text-align:center}
-.stage span::before{content:"";display:block;height:7px;border-radius:4px;background:var(--line)}
-.stage span small{min-height:18px;font-size:13px;color:var(--mute)}
+.stage span{display:flex;flex-direction:column;gap:2px;font-size:var(--fs-body);color:var(--mute);text-align:center}
+.stage span::before{content:"";display:block;height:7px;border-radius:var(--radius-chip);background:var(--line)}
+.stage span small{min-height:18px;font-size:var(--fs-body);color:var(--mute)}
 .stage span.now{color:var(--ink);font-weight:700}
 .stage span.now small{font-weight:400;color:var(--ink2)}
 .stage span.now.sale::before{background:var(--sale)}
@@ -159,76 +158,76 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 .stage span.now.priv::before{background:var(--priv)}
 .stage span.now.plan::before{background:var(--plan)}
 .stage span.now::before{background:var(--mute)}   /* 원장 단계가 01 정책·02 사업화(그 단계의 지도 상태색이 없음) */
-/* 사업 원장 판정(기획서 M8): 정상·주의·지연은 대시보드와 같은 의미 토큰. 독립 index.html 에는 tailwind.css 가 없어 다크 값으로 대신한다 */
+/* 사업 원장 판정(기획서 M8): 정상·주의·지연은 대시보드와 같은 의미 토큰(app/globals.css 의 --ok·--warn·--bad) */
 .stg{display:contents}
 .jd{font-style:normal;font-weight:700}
-.jd.ok{color:var(--ok,#4ADE9E)}.jd.caution{color:var(--warn)}.jd.delay{color:var(--bad,#FF6B88)}
-.jd.alt{color:var(--mute);font-weight:600;padding:0 4px;border:1px dashed currentColor;border-radius:4px}   /* 원천 날짜 다름: 상태 줄 옆 무채색 표지(상태색은 판정 하나만, 2026-10-15) */
-.pc-grid dd .jd.alt{white-space:nowrap;font-size:11px;font-weight:500;padding:0 3px}   /* 원천 날짜 다름: 이유 줄 뒤 작은 표지, 줄 사이에서 끊지 않는다 */
-.pc-chip.jd-c{background:transparent;font-size:11.5px}.pc-chip.jd-c.ok{border-color:var(--ok,#4ADE9E);color:var(--ok,#4ADE9E)}.pc-chip.jd-c.caution{border-color:var(--warn);color:var(--warn)}.pc-chip.jd-c.delay{border-color:var(--bad,#FF6B88);color:var(--bad,#FF6B88)}
-.pc-why{display:block;margin-top:2px;font-size:12px;font-weight:500;color:var(--ink2)}   /* 상태 칩 아래 이유 한 줄(2026-10-15 평가 A8) */
-.ldg{font-size:13px;color:var(--ink2)}
+.jd.ok{color:var(--ok)}.jd.caution{color:var(--warn)}.jd.delay{color:var(--bad)}
+.jd.alt{color:var(--mute);font-weight:700;padding:0 4px;border:1px dashed currentColor;border-radius:var(--radius-chip)}   /* 원천 날짜 다름: 상태 줄 옆 무채색 표지(상태색은 판정 하나만, 2026-10-15) */
+.pc-grid dd .jd.alt{white-space:nowrap;font-size:var(--text-xs);font-weight:400;padding:0 3px}   /* 원천 날짜 다름: 이유 줄 뒤 작은 표지, 줄 사이에서 끊지 않는다 */
+.pc-chip.jd-c{background:transparent;font-size:var(--text-xs)}.pc-chip.jd-c.ok{border-color:var(--ok);color:var(--ok)}.pc-chip.jd-c.caution{border-color:var(--warn);color:var(--warn)}.pc-chip.jd-c.delay{border-color:var(--bad);color:var(--bad)}
+.pc-why{display:block;margin-top:2px;font-size:var(--text-sm);font-weight:400;color:var(--ink2)}   /* 상태 칩 아래 이유 한 줄(2026-10-15 평가 A8) */
+.ldg{font-size:var(--fs-body);color:var(--ink2)}
 .stg6{display:inline-flex;gap:2px;margin-right:6px;vertical-align:1px}
-.stg6 i{width:9px;height:6px;border-radius:2px;background:var(--line2)}
+.stg6 i{width:9px;height:6px;border-radius:var(--radius-chip);background:var(--line2)}
 .stg6 i.on{background:var(--mute)}.stg6 i.on.sale{background:var(--sale)}.stg6 i.on.build{background:var(--build)}.stg6 i.on.soon{background:var(--soon)}.stg6 i.on.move{background:var(--move)}.stg6 i.on.plan{background:var(--plan)}.stg6 i.on.permit{background:var(--permit)}.stg6 i.on.near{background:var(--build)}.stg6 i.on.priv{background:var(--priv)}
-.pg{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2)}
+.pg{display:flex;align-items:center;gap:8px;font-size:var(--fs-body);color:var(--ink2)}
 .pg .bar2{flex:1 1 auto;height:8px;background:var(--line);position:relative;overflow:hidden}
 .pg .bar2 i{position:absolute;left:0;top:0;bottom:0;background:var(--c)}
 .pg b{font-weight:700;min-width:44px;text-align:right}
 .pg svg{flex:0 0 56px;height:18px}
 .fl{display:flex;align-items:flex-end;gap:3px;height:36px}
-.fl i{display:block;flex:0 0 10px;border-radius:1px 1px 0 0}
-.bld{font-size:13px;color:var(--mute)}
-.sw{display:inline-block;width:12px;height:12px;border-radius:3px}
+.fl i{display:block;flex:0 0 10px;border-radius:var(--radius-chip) var(--radius-chip) 0 0}
+.bld{font-size:var(--fs-body);color:var(--mute)}
+.sw{display:inline-block;width:12px;height:12px;border-radius:var(--radius-chip)}
 .sw.sale{background:var(--sale)}
 .sw.build,.sw.near{background:var(--build)}   /* 지도 구역은 단계색 단색(2026-10-15 요구 5: 무늬 없앰) */
 .sw.soon{background:var(--soon)}
 .sw.priv{background:var(--priv)}
-.sw.other{border:1.5px dashed #5566BE;background:rgba(85,102,190,.22)}
+.sw.other{border:1.5px dashed var(--map-other);background:var(--map-other-fill)}
 .sw.dash{border:1.5px dashed var(--ink);background:transparent}
 .sw.plan{border:1.5px dashed var(--plan);background:color-mix(in srgb,var(--plan) 55%,transparent)}   /* ①②: 단계색 면 + 점선 윤곽(지도 blk-line-plan) */
 .sw.permit{border:1.5px dashed var(--permit);background:color-mix(in srgb,var(--permit) 55%,transparent)}
-.sw.approx{border-radius:50%;border:1.5px solid var(--ink);background:radial-gradient(circle,transparent 0 2.2px,var(--ink) 2.3px 3.5px,color-mix(in srgb,var(--ink) 22%,transparent) 3.6px)}   /* 근사 위치: 실선 겹원 + 띠(지도 blk-approx) */
-.sw.ex{background:#374C98}
-.sw.fac-edu{background:#8A7A3A}
-.sw.fac-med{background:#A5566A}
-.sw.fac-pub{background:#3F7F5E}
-.sw.ramp{background:linear-gradient(90deg,#17204D,#394C96)}
-.sw.ghost{border:1.5px solid var(--mute);background:rgba(108,125,192,.3)}
+.sw.approx{border-radius:var(--radius-full);border:1.5px solid var(--ink);background:radial-gradient(circle,transparent 0 2.2px,var(--ink) 2.3px 3.5px,color-mix(in srgb,var(--ink) 22%,transparent) 3.6px)}   /* 근사 위치: 실선 겹원 + 띠(지도 blk-approx) */
+.sw.ex{background:var(--map-ex)}
+.sw.fac-edu{background:var(--map-fac-edu)}
+.sw.fac-med{background:var(--map-fac-med)}
+.sw.fac-pub{background:var(--map-fac-pub)}
+.sw.ramp{background:linear-gradient(90deg,var(--map-ramp-lo),var(--map-ramp-hi))}
+.sw.ghost{border:1.5px solid var(--mute);background:var(--map-ghost-fill)}
 .sw.outline{border:1.5px dashed var(--mute);background:transparent}
-.sw.stn{border-radius:50%;border:3px solid var(--bg);background:#fff;box-shadow:0 0 0 1px var(--mute)}
-.sw.sch{border-radius:50%;width:9px;height:9px;margin:0 1px;background:var(--mute)}
+.sw.stn{border-radius:var(--radius-full);border:3px solid var(--bg);background:var(--map-stn-fill);box-shadow:0 0 0 1px var(--mute)}
+.sw.sch{border-radius:var(--radius-full);width:9px;height:9px;margin:0 1px;background:var(--mute)}
 .sw.jd-w{background:transparent;border:2.5px solid var(--warn)}
-.sw.jd-d{background:transparent;border:2.5px solid var(--bad,#FF6B88)}
-.sw.tone{background:linear-gradient(90deg,#4A5A99,#C7D0DA)}
-.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;font-size:13.5px;margin:0;padding:0;list-style:none}
+.sw.jd-d{background:transparent;border:2.5px solid var(--bad)}
+.sw.tone{background:linear-gradient(90deg,var(--map-tone-lo),var(--map-tone-hi))}
+.legend{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;font-size:var(--fs-legend);margin:0;padding:0;list-style:none}
 .legend li{display:flex;align-items:center;gap:8px}
 .tl{width:100%;height:auto;display:block}
 .botbar{position:absolute;left:0;right:0;bottom:0;z-index:2;display:flex;flex-direction:column}
 /* 범례: 하단 한 줄(기호+짧은 이름). 누르면 위쪽으로 자세한 목록이 펼쳐진다 */
-.maplegend{position:relative;background:var(--glass-sum);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border-top:1px solid var(--hud-line);font-size:12.5px}
+.maplegend{position:relative;background:var(--glass-sum);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border-top:1px solid var(--hud-line);font-size:var(--fs-legend)}
 .maplegend summary{display:flex;align-items:center;gap:12px;min-height:32px;padding:4px 14px;cursor:pointer;list-style:none}
 .maplegend summary::-webkit-details-marker{display:none}
 .lgrow{display:flex;align-items:center;gap:12px;flex:1 1 auto;min-width:0;overflow-x:auto;white-space:nowrap;scrollbar-width:none}
 .lgrow::-webkit-scrollbar{display:none}
 .lgrow>span{display:inline-flex;align-items:center;gap:5px;flex:0 0 auto}
 .lgrow .lgi{width:17px;height:17px}
-.lgmore{flex:0 0 auto;font-size:12px;color:var(--mute)}
+.lgmore{flex:0 0 auto;font-size:var(--fs-meta);color:var(--mute)}
 .maplegend summary:hover .lgmore{color:var(--acc)}
 .lgmore::after{content:" ▴"}
 .maplegend[open] .lgmore::after{content:" ▾"}
-.maplegend ul{position:absolute;left:12px;bottom:100%;z-index:3;width:280px;max-height:calc(100vh - 260px);overflow:auto;margin:0 0 6px;padding:10px 12px;list-style:none;display:flex;flex-direction:column;gap:6px;border-radius:12px;background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur);border:1px solid var(--hud-line);box-shadow:var(--hud-shadow);font-size:13px}
+.maplegend ul{position:absolute;left:12px;bottom:100%;z-index:3;width:280px;max-height:calc(100vh - 260px);overflow:auto;margin:0 0 6px;padding:var(--pad-tile-y) var(--pad-tile-x);list-style:none;display:flex;flex-direction:column;gap:6px;border-radius:var(--radius-card);background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur);border:var(--border-w) solid var(--hud-line);box-shadow:var(--shadow-pop);font-size:var(--fs-legend)}
 .maplegend li{display:flex;align-items:center;gap:8px}
-.maplegend li small{color:var(--mute);font-size:12px}
+.maplegend li small{color:var(--mute);font-size:var(--fs-meta)}
 .maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right{bottom:var(--botbar-h,0px)}
 /* 축척·출처 컨트롤: 라이브러리 기본(흰 상자·검은 글자)이 어두운 지도에서 튀어서 지도 위 유리와 같은 결로 맞춘다 */
-.maplibregl-ctrl.maplibregl-ctrl-scale{background:var(--glass-sum);border-color:var(--ink2);color:var(--ink);font-size:11px;line-height:1.5}
+.maplibregl-ctrl.maplibregl-ctrl-scale{background:var(--glass-sum);border-color:var(--ink2);color:var(--ink);font-size:var(--text-xs);line-height:1.5}
 .maplibregl-ctrl.maplibregl-ctrl-attrib{background:var(--glass-sum);color:var(--ink2)}
 .maplibregl-ctrl.maplibregl-ctrl-attrib a{color:var(--ink2)}
 .maplibregl-ctrl-attrib.maplibregl-compact{border:1px solid var(--hud-line)}
 .maplibregl-ctrl-attrib-button{filter:invert(1)}
-.foot{margin:auto 0 0;padding-top:4px;font-size:13px;line-height:1.6;color:var(--mute)}
-.foot summary{cursor:pointer;font-weight:600;list-style:none}
+.foot{margin:auto 0 0;padding-top:4px;font-size:var(--fs-body);line-height:1.6;color:var(--mute)}
+.foot summary{cursor:pointer;font-weight:700;list-style:none}
 .foot summary::-webkit-details-marker{display:none}
 .foot summary::before{content:"▸ "}
 .foot details[open] summary::before{content:"▾ "}
@@ -237,41 +236,40 @@ h2{margin:0;font-family:var(--font-disp);font-size:16px;font-weight:400;line-hei
 #map{position:absolute;inset:0}
 .topbar{position:absolute;left:12px;top:12px;z-index:3;max-width:calc(100% - 64px)}
 /* 지도 위 왼쪽 한 줄: 자료 켜고 끄기(옵션 · 버스위치 · 건물 흐리게). 바 하나가 유리이고 안의 단추는 투명하다. 시점 조작은 오른쪽 위 묶음(.rctl)에 있다(2026-10-13). */
-.tools{display:flex;align-items:stretch;gap:2px;padding:3px;max-width:100%;overflow-x:auto;scrollbar-width:none;border-radius:11px;background:var(--glass-sum);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--hud-line);box-shadow:var(--hud-shadow)}
+.tools{display:flex;align-items:stretch;gap:2px;padding:3px;max-width:100%;overflow-x:auto;scrollbar-width:none;border-radius:var(--radius-tile);background:var(--glass-sum);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:var(--border-w) solid var(--hud-line);box-shadow:var(--shadow-pop)}
 .tools::-webkit-scrollbar{display:none}
 .tools>*{flex:0 0 auto}
-.tools button{min-height:28px;padding:0 12px;border:0;border-radius:8px;background:transparent;font:inherit;font-size:13.5px;font-weight:400;color:var(--ink2);white-space:nowrap;cursor:pointer;touch-action:manipulation;transition:background-color .15s,color .15s}
+.tools button{min-height:28px;padding:0 12px;border:0;border-radius:var(--radius-tile);background:transparent;font:inherit;font-size:var(--text-sm);font-weight:400;color:var(--ink2);white-space:nowrap;cursor:pointer;touch-action:manipulation;transition:background-color .15s,color .15s}
 .tools button:hover{background:var(--glass-tag-hover);color:var(--ink)}
 :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.maplegend .src{flex:0 0 auto;color:var(--mute);font-size:12px;white-space:nowrap}
+.maplegend .src{flex:0 0 auto;color:var(--mute);font-size:var(--fs-meta);white-space:nowrap}
 .maplegend .src:empty{display:none}
-#fatal{position:absolute;inset:0;background:rgba(10,16,48,.96);color:var(--ink);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:5}
+#fatal{position:absolute;inset:0;background:var(--map-fatal-bg);color:var(--ink);display:flex;align-items:center;justify-content:center;text-align:center;padding:24px;z-index:5}
 #fatal[hidden]{display:none}
 /* 열 수 없을 때의 안내(2026-10-15 평가 P1): 앱 글꼴·유리 카드 한 장, 새 구·가까운 구 링크와 '수도권 개요로' */
-#fatal .ft{width:min(440px,100%);text-align:left;padding:20px 22px;border:1px solid var(--hud-line);border-radius:14px;background:var(--glass-card);box-shadow:var(--hud-shadow);font-family:var(--font-body);line-height:1.5}
-#fatal .ft h2{margin:0 0 6px;font-size:17px;font-weight:700;line-height:1.4;color:var(--ink);text-wrap:balance}
-#fatal .ft p{margin:0 0 4px;font-size:14px;color:var(--ink2)}
-#fatal .ft .ft-d{font-size:12.5px;color:var(--mute)}
+#fatal .ft{width:min(440px,100%);text-align:left;padding:var(--pad-card);border:var(--border-w) solid var(--hud-line);border-radius:var(--radius-card);background:var(--glass-card);box-shadow:var(--shadow-pop);font-family:var(--font-sans);line-height:1.5}
+#fatal .ft h2{margin:0 0 6px;font-size:var(--text-md);font-weight:700;line-height:1.4;color:var(--ink);text-wrap:balance}
+#fatal .ft p{margin:0 0 4px;font-size:var(--text-sm);color:var(--ink2)}
+#fatal .ft .ft-d{font-size:var(--text-sm);color:var(--mute)}
 #fatal .ft-go{display:flex;flex-wrap:wrap;gap:8px;list-style:none;margin:14px 0 0;padding:0}
-#fatal .ft-go a{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border:1px solid var(--line2);border-radius:8px;background:var(--pn);color:var(--ink);font-size:14px;font-weight:700;text-decoration:none}
+#fatal .ft-go a{display:inline-flex;align-items:center;min-height:34px;padding:0 14px;border:1px solid var(--line2);border-radius:var(--radius-tile);background:var(--pn);color:var(--ink);font-size:var(--text-sm);font-weight:700;text-decoration:none}
 #fatal .ft-go a:hover{border-color:var(--acc)}
-#fatal .ft-home{display:inline-block;margin-top:16px;font-size:13.5px;color:var(--mute);text-decoration:underline;text-underline-offset:3px}
+#fatal .ft-home{display:inline-block;margin-top:16px;font-size:var(--text-sm);color:var(--mute);text-decoration:underline;text-underline-offset:3px}
 #fatal .ft-home:hover{color:var(--ink)}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
-.maplibregl-popup-content{font:13px/1.5 var(--font-body);color:var(--ink);border-radius:12px;border:1px solid var(--hud-line);padding:0;box-shadow:var(--hud-shadow);background:var(--glass-pop);-webkit-backdrop-filter:var(--glass-pop-blur);backdrop-filter:var(--glass-pop-blur);
-  --mute:#BEC8E6;--plan:#A8C5FF;--permit:#59D8CA;--edu:#CDBBFF;--bad:#FFAFBF}   /* 사업·건물 카드: HUD 처럼 투명(--glass-pop .78). 옅어진 만큼 카드 안 보조·상태 글자색만 밝게(다크)/진하게(라이트) 해서 흰·검은 지도 위 최악에도 4.5:1 (tests/js/glass.test.cjs) */
-html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:#624C00;--plan:#2D5081;--permit:#225853;--edu:#5D4185;--power:#6F4612;--ok:#1D5946;--bad:#8E2C3C}
-.maplibregl-popup-close-button{font-size:18px;width:26px;height:26px;color:var(--ink2)}
+.maplibregl-popup-content{font:var(--text-sm)/1.5 var(--font-sans);color:var(--ink);border-radius:var(--radius-card);border:var(--border-w) solid var(--hud-line);padding:0;box-shadow:var(--shadow-pop);background:var(--glass-pop);-webkit-backdrop-filter:var(--glass-pop-blur);backdrop-filter:var(--glass-pop-blur);
+  --mute:var(--map-pop-mute);--warn:var(--map-warn-ink);--plan:var(--map-pop-plan);--permit:var(--map-pop-permit);--edu:var(--map-pop-edu);--power:var(--map-pop-power);--ok:var(--map-ok-ink);--bad:var(--map-bad-ink)}   /* 사업·건물 카드: HUD 처럼 투명(--glass-pop .78). 옅어진 만큼 카드 안 보조·상태 글자색만 밝게(다크)/진하게(라이트) 해서 흰·검은 지도 위 최악에도 4.5:1 (tests/js/glass.test.cjs) */
+.maplibregl-popup-close-button{font-size:var(--text-md);width:26px;height:26px;color:var(--ink2)}
 .maplibregl-popup-anchor-left .maplibregl-popup-tip{border-right-color:var(--hud-line)}
 .maplibregl-popup-anchor-right .maplibregl-popup-tip{border-left-color:var(--hud-line)}
 .maplibregl-popup-anchor-bottom .maplibregl-popup-tip{border-top-color:var(--hud-line)}
 .pc{width:236px;padding:9px 11px 8px;display:flex;flex-direction:column;gap:6px;word-break:keep-all;overflow-wrap:anywhere;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
 .pc-none{color:var(--mute)}
 .pc-h{display:flex;align-items:baseline;flex-wrap:wrap;gap:1px 6px;padding-right:20px}
-.pc-h b{font-size:14.5px;font-weight:700;line-height:1.35}
+.pc-h b{font-size:var(--text-sm);font-weight:700;line-height:1.35}
 .pc-h .pc-t{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;max-width:100%}   /* 원장 사업 이름이 길면 두 줄 말줄임(전체는 title) */
-.pc-sub{font-size:12px;color:var(--mute)}
-.pc-chip{display:inline-block;font-size:11.5px;font-weight:700;line-height:1.5;padding:0 7px;border:1px solid;border-radius:999px;white-space:nowrap}
+.pc-sub{font-size:var(--text-sm);color:var(--mute)}
+.pc-chip{display:inline-block;font-size:var(--text-xs);font-weight:700;line-height:1.5;padding:0 7px;border:1px solid;border-radius:var(--radius-full);white-space:nowrap}
 .pc-chip.sale{background:var(--sale);border-color:var(--sale);color:var(--on-c)}
 .pc-chip.build{background:var(--build);border-color:var(--build);color:var(--on-c)}
 .pc-chip.near{background:var(--build);border-color:var(--build);color:var(--on-c)}
@@ -279,75 +277,75 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .pc-chip.move{background:var(--move);border-color:var(--move);color:var(--on-c)}
 .pc-chip.plan{background:transparent;border-style:dashed;border-color:var(--plan);color:var(--plan)}
 .pc-chip.permit{background:transparent;border-style:dashed;border-color:var(--permit);color:var(--permit)}
-.pc-chip.priv{background:#2A3568;border-color:var(--priv);color:var(--ink2)}
+.pc-chip.priv{background:var(--map-chip-priv-bg);border-color:var(--priv);color:var(--ink2)}
 .pc-chip.off{background:transparent;border-color:var(--ink2);color:var(--ink2)}
 .pc-chip.est{background:transparent;border-color:var(--warn);color:var(--warn)}
 .pc-chip.none{background:transparent;border-style:dashed;border-color:var(--mute);color:var(--ink2)}
 .pc-big{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 10px}
-.pc-big strong{font-family:var(--font-disp);font-size:21px;line-height:1.15;font-weight:400}
-.pc-big span{font-size:12.5px;color:var(--ink2)}
+.pc-big strong{font-family:var(--font-sans);font-size:var(--text-lg);line-height:1.15;font-weight:700}
+.pc-big span{font-size:var(--text-sm);color:var(--ink2)}
 .pc-bars{display:flex;align-items:flex-end;gap:3px;height:22px}
-.pc-bars i{flex:0 0 10px;background:#2D3E86}
-.pc-bars i.on{background:var(--tone);outline:1.5px solid rgba(232,237,255,.8)}
-.pc-cap{font-size:12px;color:var(--mute);margin-top:-3px}
-.pc-pid{font-variant-numeric:tabular-nums;font-size:12px;letter-spacing:.2px;color:inherit;text-decoration:underline dotted;text-underline-offset:2px}
-.pc-dl{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;margin:0;font-size:12.5px;line-height:1.45}
+.pc-bars i{flex:0 0 10px;background:var(--map-bars-bg)}
+.pc-bars i.on{background:var(--tone);outline:1.5px solid var(--map-bars-on-line)}
+.pc-cap{font-size:var(--text-sm);color:var(--mute);margin-top:-3px}
+.pc-pid{font-variant-numeric:tabular-nums;font-size:var(--fs-meta);letter-spacing:.2px;color:inherit;text-decoration:underline dotted;text-underline-offset:2px}
+.pc-dl{display:grid;grid-template-columns:auto 1fr;gap:1px 10px;margin:0;font-size:var(--text-sm);line-height:1.45}
 .pc-dl dt{color:var(--mute)}
-.pc-dl dd{margin:0;font-weight:500}
-.pc-dl small{font-weight:400;color:var(--mute);font-size:11.5px;white-space:nowrap}
-.pc-warn{font-size:12px;color:var(--warn);margin:0}
-.pc-foot{margin:0;padding-top:5px;border-top:1px solid var(--hud-line);font-size:11.5px;line-height:1.45;color:var(--mute)}
+.pc-dl dd{margin:0;font-weight:400}
+.pc-dl small{font-weight:400;color:var(--mute);font-size:var(--fs-meta);white-space:nowrap}
+.pc-warn{font-size:var(--text-sm);color:var(--warn);margin:0}
+.pc-foot{margin:0;padding-top:5px;border-top:1px solid var(--hud-line);font-size:var(--text-sm);line-height:1.45;color:var(--mute)}
 .pc-foot:empty{display:none}
-.pc-more summary{cursor:pointer;font-size:11.5px;color:var(--mute);list-style:none}
+.pc-more summary{cursor:pointer;font-size:var(--text-sm);color:var(--mute);list-style:none}
 .pc-more summary::before{content:"▸ "}
 .pc-more[open] summary::before{content:"▾ "}
 .pc-more summary::-webkit-details-marker{display:none}
-.pc-more p{margin:3px 0 0;font-size:11.5px;line-height:1.45;color:var(--mute)}
+.pc-more p{margin:3px 0 0;font-size:var(--text-sm);line-height:1.45;color:var(--mute)}
 .pc-split{width:264px;padding:0;gap:0;overflow:hidden}   /* 사업 카드: 머리(제목·상태) 고정, 창이 낮으면 몸통만 스크롤(fitCard 가 .pc 높이를 줄인다) */
-.pc-split>.pc-open{flex:none;align-self:flex-start;margin:0 11px 6px;padding-bottom:6px;border-bottom:1px solid var(--line);font-size:12.5px;color:inherit;text-decoration:underline;text-underline-offset:3px}   /* 머리 바로 아래(몸통이 스크롤해도 늘 보인다, 2026-10-16 3차 평가) */
+.pc-split>.pc-open{flex:none;align-self:flex-start;margin:0 11px 6px;padding-bottom:6px;border-bottom:1px solid var(--line);font-size:var(--text-sm);color:inherit;text-decoration:underline;text-underline-offset:3px}   /* 머리 바로 아래(몸통이 스크롤해도 늘 보인다, 2026-10-16 3차 평가) */
 .pc-split>.pc-h{flex:none;padding:9px 11px 6px 11px;padding-right:30px}
 .pc-split>.pc-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:6px;padding:0 11px 9px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
-.pc-big .pc-idl{margin-left:auto;font-size:12px}
-.pc-note summary{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;list-style:none;cursor:pointer;font-size:12px;line-height:1.45;color:var(--mute)}   /* 설명은 두 줄, 눌러 펼침 */
+.pc-big .pc-idl{margin-left:auto;font-size:var(--text-xs)}
+.pc-note summary{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;line-clamp:2;overflow:hidden;list-style:none;cursor:pointer;font-size:var(--text-sm);line-height:1.45;color:var(--mute)}   /* 설명은 두 줄, 눌러 펼침 */
 .pc-note summary::-webkit-details-marker{display:none}
 .pc-note[open] summary{display:block}
 .pc-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px 12px;margin:0}
 .pc-grid>div{min-width:0}
 .pc-grid>div.w{grid-column:1/-1}
-.pc-grid dt{font-size:11.5px;line-height:1.3;color:var(--mute)}
-.pc-grid dd{margin:0;font-size:12.5px;line-height:1.4;font-weight:500}
-.pc-grid small{font-weight:400;color:var(--mute);font-size:11.5px}
+.pc-grid dt{font-size:var(--text-xs);line-height:1.3;color:var(--mute)}
+.pc-grid dd{margin:0;font-size:var(--text-sm);line-height:1.4;font-weight:400}
+.pc-grid small{font-weight:400;color:var(--mute);font-size:var(--fs-meta)}
 .pc-near summary small{color:var(--mute);font-size:inherit}
 .pc-near .pc-dl{margin-top:4px}
 .tools button[aria-pressed="true"],.rctl button[aria-pressed="true"]{background:var(--acc);color:var(--acc-ink)}
-.opt b{margin-left:7px;min-width:20px;padding:0 6px;border-radius:10px;background:var(--acc);color:var(--acc-ink);font-size:12px;line-height:1.6;display:inline-block;text-align:center}
+.opt b{margin-left:7px;min-width:20px;padding:0 6px;border-radius:var(--radius-tile);background:var(--acc);color:var(--acc-ink);font-size:var(--text-xs);line-height:1.6;display:inline-block;text-align:center}
 .opt b[hidden]{display:none}
 .tools .opt[aria-expanded="true"]{box-shadow:inset 0 -3px 0 var(--acc)}
-.optpanel{position:absolute;z-index:4;left:var(--ox,12px);top:var(--oy,56px);width:272px;display:flex;flex-direction:column;gap:12px;padding:12px 14px;border-radius:12px;background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur);border:1px solid var(--hud-line);box-shadow:var(--hud-shadow);font-size:13.5px}
+.optpanel{position:absolute;z-index:4;left:var(--ox,12px);top:var(--oy,56px);width:272px;display:flex;flex-direction:column;gap:12px;padding:var(--pad-tile-y) var(--pad-tile-x);border-radius:var(--radius-card);background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur);border:var(--border-w) solid var(--hud-line);box-shadow:var(--shadow-pop);font-size:var(--text-sm)}
 .optpanel[hidden]{display:none}
 .optpanel fieldset{border:0;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;min-width:0}
-.optpanel legend{padding:0;margin-bottom:4px;font-size:12.5px;font-weight:700;color:var(--mute)}
+.optpanel legend{padding:0;margin-bottom:4px;font-size:var(--text-sm);font-weight:700;color:var(--mute)}
 .optpanel label{display:flex;align-items:center;gap:9px;min-height:34px;cursor:pointer}
 .optpanel input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:var(--acc);flex:0 0 auto}
-.optpanel label small{color:var(--mute);font-size:12px}
+.optpanel label small{color:var(--mute);font-size:var(--text-sm)}
 .optpanel [hidden]{display:none}
-.optpanel label.dis{color:#6B79AE;cursor:default}
-.optpanel .reset{min-height:40px;border:1px solid var(--hud-line);border-radius:8px;background:transparent;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}
+.optpanel label.dis{color:var(--map-dis);cursor:default}
+.optpanel .reset{min-height:40px;border:1px solid var(--hud-line);border-radius:var(--radius-tile);background:transparent;font:inherit;font-size:var(--text-sm);color:var(--ink);cursor:pointer}
 .optpanel .reset:hover{background:var(--glass-tag-hover)}
 /* 로딩 화면(2026-10-10): 흐리게 비치는 지도 위 유리 카드 — 브랜드 표지(지붕 + 물결), 지역 이름, 경과 시간, 영역 다섯의 실시간 진행.
    줄마다 [이름 | 실제 비율 막대(받은/요청, 각짐) | n/m · 지금 받는 것 또는 ✓ 끝난 시각]. 값은 assets/js/loadview.js 가 0.1초마다 그린다.
    첫 idle 에서 hidden 이 되며 서서히 걷힌다(display allow-discrete) */
 #loading{position:absolute;inset:0;z-index:3;display:flex;align-items:center;justify-content:center;padding:16px;background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:blur(5px) saturate(1.05);backdrop-filter:blur(5px) saturate(1.05);color:var(--ink);opacity:1;transition:opacity .35s ease,display .35s allow-discrete}
 #loading[hidden]{display:none;opacity:0}
-.ld-card{width:min(400px,100%);display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px 14px;padding:18px 20px 16px;border:1px solid var(--hud-line);border-radius:14px;background:var(--glass-card);box-shadow:var(--hud-shadow)}
+.ld-card{width:min(400px,100%);display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:14px 14px;padding:var(--pad-card);border:var(--border-w) solid var(--hud-line);border-radius:var(--radius-card);background:var(--glass-card);box-shadow:var(--shadow-pop)}
 .ld-mark{display:block;width:44px;height:44px;color:var(--ink);overflow:visible}
-.ld-mark .ld-wave{fill:#D65535;transform-box:fill-box;transform-origin:50% 50%;animation:ld-wave 1.8s ease-in-out infinite}
+.ld-mark .ld-wave{fill:var(--map-wave);transform-box:fill-box;transform-origin:50% 50%;animation:ld-wave 1.8s ease-in-out infinite}
 .ld-text{min-width:0}
-.ld-text b{display:block;font-size:18px;font-weight:400;line-height:1.3;color:var(--ink)}
-.ld-text span{display:block;margin-top:2px;font-size:13px;line-height:1.4;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ld-time{align-self:start;font-size:13px;line-height:1.3;color:var(--mute);font-variant-numeric:tabular-nums}
+.ld-text b{display:block;font-size:var(--text-md);font-weight:400;line-height:1.3;color:var(--ink)}
+.ld-text span{display:block;margin-top:2px;font-size:var(--text-sm);line-height:1.4;color:var(--mute);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ld-time{align-self:start;font-size:var(--text-sm);line-height:1.3;color:var(--mute);font-variant-numeric:tabular-nums}
 .ld-rows{grid-column:1 / -1;display:flex;flex-direction:column;gap:9px;margin:0;padding:0;list-style:none}
-.ld-rows li{display:grid;grid-template-columns:78px minmax(0,1fr) 112px;align-items:center;gap:10px;min-width:0;font-size:12.5px;line-height:1.3;color:var(--mute);transition:color .2s}
+.ld-rows li{display:grid;grid-template-columns:78px minmax(0,1fr) 112px;align-items:center;gap:10px;min-width:0;font-size:var(--text-sm);line-height:1.3;color:var(--mute);transition:color .2s}
 .ld-name{white-space:nowrap}
 .ld-val{text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
 .ld-bar{position:relative;display:block;height:4px;overflow:hidden;background:var(--line)}
@@ -366,60 +364,60 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 }
 
 .tlp{cursor:pointer}
-.tlp:hover circle,.tlp:focus-visible circle{stroke:#fff;stroke-width:2.2}
+.tlp:hover circle,.tlp:focus-visible circle{stroke:var(--map-tl-hover);stroke-width:2.2}
 .tlp:focus-visible{outline:none}
 .next{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
 .next li{display:block}
-.next .nx{display:grid;grid-template-columns:78px minmax(0,1fr);gap:0 10px;align-items:center;width:100%;text-align:left;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--pn);font:inherit;color:inherit;cursor:pointer}
+.next .nx{display:grid;grid-template-columns:88px minmax(0,1fr);gap:0 10px;align-items:center;width:100%;text-align:left;padding:8px 10px;border:var(--border-w) solid var(--line);border-radius:var(--radius-tile);background:var(--pn);font:inherit;color:inherit;cursor:pointer}
 .next .nx:hover,.next .nx:focus-visible{background:var(--pn2)}
-.next .dn{font-family:var(--font-disp);font-size:19px;font-weight:400;line-height:1.1;color:var(--soon);font-variant-numeric:tabular-nums;white-space:nowrap}
+.next .dn{font-family:var(--font-sans);font-size:var(--text-lg);font-weight:700;line-height:1.1;color:var(--soon);font-variant-numeric:tabular-nums;white-space:nowrap}
 .next .dn.move{color:var(--move)}
-.next b{font-size:14px}
-.next span.s{display:block;font-size:13px;color:var(--mute)}
-/* 주소 이동 입력줄(하단 커맨드 라인). 어두운 유리의 투명도가 상태를 말한다: 입력 중 .94 · 대기 .78(지도가 비침) · 비활성 .62. 값은 :root 의 --glass-cmd-* (tests/js/glass.test.cjs 가 밝은 글자 대비를 확인) */
+.next b{font-size:var(--text-sm)}
+.next span.s{display:block;font-size:var(--fs-body);color:var(--mute)}
+/* 주소 이동 입력줄(하단 커맨드 라인). 어두운 유리의 투명도가 상태를 말한다: 입력 중 .94 · 대기 .78(지도가 비침) · 비활성 .62. 값은 app/globals.css 의 --map-glass-cmd-* (tests/js/glass.test.cjs 가 밝은 글자 대비를 확인) */
 .cmd{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(var(--botbar-h,33px) + 12px);z-index:4;width:min(560px,calc(100% - 96px));display:flex;flex-direction:column;--cmd-bg:var(--glass-cmd-idle);color:var(--cmd-text)}
 .cmd[hidden]{display:none}
 .cmd[data-state="active"],.cmd[data-state="busy"]{--cmd-bg:var(--glass-cmd-active)}
 .cmd[data-state="disabled"]{--cmd-bg:var(--glass-cmd-off)}
 .cmd-bar,.cmd-res,.cmd-parse{position:relative;background:var(--cmd-bg);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--hud-line);box-shadow:var(--hud-shadow);transition:background-color .18s}
-.cmd-bar{display:flex;align-items:center;gap:10px;height:46px;margin:0;padding:0 8px 0 16px;border-radius:999px}
+.cmd-bar{display:flex;align-items:center;gap:10px;height:46px;margin:0;padding:0 8px 0 16px;border-radius:var(--radius-full)}
 .cmd-bar:focus-within{outline:2px solid var(--acc);outline-offset:2px}
-.cmd-prompt{flex:0 0 auto;font-size:18px;font-weight:700;line-height:1;color:var(--acc)}
-.cmd-bar input{flex:1 1 auto;min-width:0;height:34px;border:0;background:transparent;font:inherit;font-size:15px;font-weight:500;color:var(--cmd-text);outline:none}
+.cmd-prompt{flex:0 0 auto;font-size:var(--text-md);font-weight:700;line-height:1;color:var(--acc)}
+.cmd-bar input{flex:1 1 auto;min-width:0;height:34px;border:0;background:transparent;font:inherit;font-size:var(--text-base);font-weight:400;color:var(--cmd-text);outline:none}
 .cmd-bar input::placeholder{color:var(--cmd-sub);opacity:1}
 .cmd-bar input:disabled{cursor:not-allowed}
-.cmd-key{flex:0 0 auto;min-width:20px;height:20px;padding:0 5px;border:1px solid var(--hud-line);border-radius:5px;font:inherit;font-size:11.5px;font-weight:400;line-height:18px;text-align:center;color:var(--cmd-sub)}
+.cmd-key{flex:0 0 auto;min-width:20px;height:20px;padding:0 5px;border:1px solid var(--hud-line);border-radius:var(--radius-chip);font:inherit;font-size:var(--text-xs);font-weight:400;line-height:18px;text-align:center;color:var(--cmd-sub)}
 .cmd-key[hidden],.cmd-clear[hidden]{display:none}
-.cmd-clear{flex:0 0 auto;width:30px;height:30px;border:0;border-radius:50%;background:transparent;color:var(--cmd-text);font-size:20px;line-height:1;cursor:pointer}
-.cmd-clear:hover{background:rgba(232,237,255,.14)}
-.cmd-go{flex:0 0 auto;height:32px;padding:0 14px;border:0;border-radius:999px;background:var(--acc);color:var(--acc-ink);font:inherit;font-size:13px;font-weight:700;cursor:pointer}
+.cmd-clear{flex:0 0 auto;width:30px;height:30px;border:0;border-radius:var(--radius-full);background:transparent;color:var(--cmd-text);font-size:var(--text-lg);line-height:1;cursor:pointer}
+.cmd-clear:hover{background:var(--map-cmd-hover)}
+.cmd-go{flex:0 0 auto;height:32px;padding:0 14px;border:0;border-radius:var(--radius-full);background:var(--acc);color:var(--acc-ink);font:inherit;font-size:var(--text-sm);font-weight:700;cursor:pointer}
 .cmd-go:disabled{background:transparent;color:var(--cmd-sub);font-weight:400;cursor:default}
 .cmd-go[hidden]{display:none}
-.cmd-spin{display:none;flex:0 0 auto;width:16px;height:16px;border:2px solid rgba(232,237,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite}
+.cmd-spin{display:none;flex:0 0 auto;width:16px;height:16px;border:2px solid var(--map-spin-track);border-top-color:var(--map-spin-head);border-radius:var(--radius-full);animation:spin .8s linear infinite}
 .cmd[data-state="busy"] .cmd-spin{display:block}
 .cmd[data-state="busy"] .cmd-go{display:none}
 .cmd[data-state="disabled"] .cmd-bar{border-style:dashed}
-.cmd-res{margin-bottom:-1px;max-height:min(46vh,360px);overflow:auto;padding-bottom:6px;border-radius:14px 14px 0 0}
+.cmd-res{margin-bottom:-1px;max-height:min(46vh,360px);overflow:auto;padding-bottom:6px;border-radius:var(--radius-card) var(--radius-card) 0 0}
 .cmd-res[hidden],.cmd-parse[hidden]{display:none}
 .cmd-res[data-stale="1"] .cmd-o{opacity:.7}
-.cmd-h{padding:9px 14px 3px;font-size:11.5px;font-weight:700;color:var(--cmd-sub)}
+.cmd-h{padding:9px 14px 3px;font-size:var(--text-xs);font-weight:700;color:var(--cmd-sub)}
 .cmd-o{display:flex;align-items:center;gap:10px;padding:7px 14px;cursor:pointer}
-.cmd-o:hover,.cmd-o[aria-selected="true"]{background:rgba(232,237,255,.14)}
+.cmd-o:hover,.cmd-o[aria-selected="true"]{background:var(--map-cmd-hover)}
 .cmd-ic{flex:0 0 auto;display:flex}
 .cmd-m{flex:1 1 auto;min-width:0;display:flex;align-items:baseline;gap:12px}
-.cmd-t{flex:0 0 auto;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:pre;font-size:14px;font-weight:500}
+.cmd-t{flex:0 0 auto;max-width:60%;overflow:hidden;text-overflow:ellipsis;white-space:pre;font-size:var(--text-sm);font-weight:400}
 .cmd-t b{font-weight:700;text-decoration:underline;text-underline-offset:3px}
-.cmd-s{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;color:var(--cmd-sub)}
-.cmd-tier{flex:0 0 auto;display:flex;align-items:center;gap:5px;font-size:11.5px;color:var(--cmd-sub)}
-.cmd-tier i{display:inline-block;width:9px;height:9px;border:1.5px solid #fff}
-.cmd-tier i.sw-bundle{background:#fff}
+.cmd-s{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--text-sm);color:var(--cmd-sub)}
+.cmd-tier{flex:0 0 auto;display:flex;align-items:center;gap:5px;font-size:var(--text-xs);color:var(--cmd-sub)}
+.cmd-tier i{display:inline-block;width:9px;height:9px;border:1.5px solid var(--map-cmd-tier)}
+.cmd-tier i.sw-bundle{background:var(--map-cmd-tier)}
 .cmd-tier i.sw-edge{border-style:dashed;border-color:var(--cmd-sub)}
-.cmd-n,.cmd-w{padding:12px 14px;font-size:13px;color:var(--cmd-sub)}
-.cmd-w{padding:8px 14px 2px;font-size:12px}
-.cmd-parse{margin-top:-1px;display:flex;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;align-items:center;gap:6px;padding:7px 14px;font-size:12px;border-radius:0 0 14px 14px}
+.cmd-n,.cmd-w{padding:12px 14px;font-size:var(--text-sm);color:var(--cmd-sub)}
+.cmd-w{padding:8px 14px 2px;font-size:var(--text-sm)}
+.cmd-parse{margin-top:-1px;display:flex;flex-wrap:nowrap;overflow:hidden;white-space:nowrap;align-items:center;gap:6px;padding:7px 14px;font-size:var(--text-sm);border-radius:0 0 var(--radius-card) var(--radius-card)}
 .cmd-parse::before{content:"인식";font-weight:700;color:var(--cmd-sub);margin-right:2px}
 .cmd-sep{color:var(--cmd-sub)}
-.cmd-chip{display:flex;gap:5px;padding:1px 7px;border:1px solid var(--line2);border-radius:999px}
+.cmd-chip{display:flex;gap:5px;padding:1px 7px;border:1px solid var(--line2);border-radius:var(--radius-full)}
 .cmd-chip i{font-style:normal;color:var(--cmd-sub)}
 .cmd-chip b{font-weight:700}
 .cmd-chip.last{border-color:var(--acc);min-width:0}
@@ -433,40 +431,40 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .hud{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
 .hud[hidden]{display:none}
 .hud-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.hudtag{position:absolute;left:0;top:0;pointer-events:auto;display:flex;flex-direction:column;gap:0;padding:3px 9px 4px;text-align:left;font:inherit;font-size:11.5px;line-height:1.32;white-space:nowrap;color:var(--ink);background:var(--glass-tag);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--hud-line);border-radius:8px;box-shadow:var(--tag-shadow);cursor:pointer;font-variant-numeric:tabular-nums;will-change:transform}
+.hudtag{position:absolute;left:0;top:0;pointer-events:auto;display:flex;flex-direction:column;gap:0;padding:3px 9px 4px;text-align:left;font:inherit;font-size:var(--fs-label-map);line-height:1.32;white-space:nowrap;color:var(--ink);background:var(--glass-tag);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--hud-line);border-radius:var(--radius-tile);box-shadow:var(--tag-shadow);cursor:pointer;font-variant-numeric:tabular-nums;will-change:transform}
 .hudtag[hidden]{display:none}
 .hudtag:hover{background:var(--glass-tag-hover)}
 /* 이동 중(꼬리표·목록에서 사업을 눌러 카드가 열리기 전, app.js setGoing): 눌린 모양(강조 테두리) + 이름 옆 작은 점이 깜빡인다. 낭독은 #sr '…로 이동 중' */
 .hudtag[aria-busy="true"],#projList .card[aria-busy="true"]{border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
-.hudtag[aria-busy="true"] .ht-h::after,#projList .card[aria-busy="true"]>b::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:50%;background:var(--acc);vertical-align:middle}   /* 움직이지 않는 점(진행 막대는 지도 위 '이동 중' 띠에) */
+.hudtag[aria-busy="true"] .ht-h::after,#projList .card[aria-busy="true"]>b::after{content:"";display:inline-block;width:6px;height:6px;margin-left:6px;border-radius:var(--radius-full);background:var(--acc);vertical-align:middle}   /* 움직이지 않는 점(진행 막대는 지도 위 '이동 중' 띠에) */
 .hudtag .ht-h{display:flex;align-items:baseline;gap:6px}
-.hudtag .ht-h b{font-size:13.5px}
-.hudtag .ht-h i{font-style:normal;font-weight:700;font-size:11.5px;color:var(--cd)}
+.hudtag .ht-h b{font-size:var(--fs-label-map)}
+.hudtag .ht-h i{font-style:normal;font-weight:700;font-size:var(--fs-label-map);color:var(--cd)}
 .hudtag .ht-m{color:var(--ink2)}
-.hudtag .ht-jd{flex:none;align-self:center;width:8px;height:8px;border-radius:50%;background:var(--bad,#FF6B88);box-shadow:0 0 0 1.5px var(--glass-tag)}.hudtag .ht-jd.caution{background:var(--warn)}   /* 이름 옆 상태색 점: 지연 빨강·주의 노랑 */
-.hudtag .ht-x{margin-left:4px;padding:0 6px;font-style:normal;font-size:10.5px;color:var(--ink);border:1px solid var(--line2);border-radius:999px}   /* 짧은 상태 표지: 예정일 지남(1개월 미만)·준공 임박(카드 이유 줄과 같은 문구) */
-.hudtag .ht-w{font-style:normal;font-size:11px;line-height:1;color:var(--warn)}
+.hudtag .ht-jd{flex:none;align-self:center;width:8px;height:8px;border-radius:var(--radius-full);background:var(--bad);box-shadow:0 0 0 1.5px var(--glass-tag)}.hudtag .ht-jd.caution{background:var(--warn)}   /* 이름 옆 상태색 점: 지연 빨강·주의 노랑 */
+.hudtag .ht-x{margin-left:4px;padding:0 6px;font-style:normal;font-size:var(--fs-label-map);color:var(--ink);border:1px solid var(--line2);border-radius:var(--radius-full)}   /* 짧은 상태 표지: 예정일 지남(1개월 미만)·준공 임박(카드 이유 줄과 같은 문구) */
+.hudtag .ht-w{font-style:normal;font-size:var(--fs-label-map);line-height:1;color:var(--warn)}
 .hudtag .ht-bar{flex:0 0 52px;height:6px;background:var(--line);position:relative;overflow:hidden}
 .hudtag .ht-bar i{position:absolute;left:0;top:0;bottom:0;background:var(--c)}
 /* 사이드바 접기 단추: 지도 오른쪽 가장자리 아래쪽(위쪽은 시점 묶음 .rctl 이 쓴다). 펼쳐 있을 때는 작은 손잡이, 접혀 있을 때는 '공급 현황' 탭 */
-.ptoggle{position:absolute;right:0;bottom:calc(var(--botbar-h,33px) + 84px);z-index:3;width:20px;height:68px;padding:0;border:1px solid var(--line2);border-right:0;border-radius:8px 0 0 8px;background:var(--pn);color:var(--ink);font:inherit;font-size:20px;line-height:1;cursor:pointer}
+.ptoggle{position:absolute;right:0;bottom:calc(var(--botbar-h,33px) + 84px);z-index:3;width:20px;height:68px;padding:0;border:1px solid var(--line2);border-right:0;border-radius:var(--radius-tile) 0 0 var(--radius-tile);background:var(--pn);color:var(--ink);font:inherit;font-size:var(--text-lg);line-height:1;cursor:pointer}
 .ptoggle:hover{background:var(--pn2)}
-.ptoggle .pt-l{display:none;writing-mode:vertical-rl;text-orientation:sideways;font-size:13px;font-weight:700;letter-spacing:.02em;white-space:nowrap}   /* 한 글자씩 세워 쌓지 않고 90° 돌린 한 줄로 읽힌다 */
+.ptoggle .pt-l{display:none;writing-mode:vertical-rl;text-orientation:sideways;font-size:var(--text-sm);font-weight:700;line-height:1.25;letter-spacing:.02em;white-space:nowrap}   /* 한 글자씩 세워 쌓지 않고 90° 돌린 한 줄로 읽힌다 */
 .app.collapsed .ptoggle{width:30px;height:auto;padding:12px 0;display:flex;flex-direction:column;align-items:center;gap:8px}
 .app.collapsed .ptoggle .pt-l{display:block}
 /* 공급 요약(머리 줄 오른쪽): 합계 한 줄('3,173세대 · 6단지', 문장은 title) | 입주 전 점검 단추(위 줄 조용한 링크 '입주 전 점검 ›', 아래 줄 신호 칩).
    상태별 막대·범례는 사이드바 '공급 예정 합계'에만 있다(2026-10-13). 1100px 이하는 점검 단추를 빼고(사이드바 구역 머리에 있다), 900px 이하는 하단 시트가 대신한다 */
-.hudsum{flex:none;margin-left:auto;display:grid;grid-template-columns:auto auto;align-items:center;min-width:0;color:var(--ink);font-size:13px}
+.hudsum{flex:none;margin-left:auto;display:grid;grid-template-columns:auto auto;align-items:center;min-width:0;color:var(--ink);font-size:var(--text-sm)}
 .hudsum.solo{grid-template-columns:auto}
 .hudsum .hs-a{min-width:0;padding-right:14px}
 .hudsum .hs-b{display:flex;align-items:center;min-width:0;padding-left:14px;border-left:1px solid var(--line)}
 .hudsum .hs-total{white-space:nowrap;font-variant-numeric:tabular-nums}
-.hudsum .hs-total b{font-family:var(--font-disp);font-size:17px;font-weight:400}
-.hudsum .hs-total small{margin-left:1px;font-size:13px;color:var(--mute)}
+.hudsum .hs-total b{font-family:var(--font-sans);font-size:var(--text-md);font-weight:700}
+.hudsum .hs-total small{margin-left:1px;font-size:var(--text-sm);color:var(--mute)}
 .hudsum .hs-n{margin-left:6px;color:var(--mute)}
-.hudsum .hs-map{display:block;margin-top:1px;font-size:13px;line-height:1.3;color:var(--mute)}   /* 수도권: 원장 합계 중 지도에 그리지 못한 사업(위치 미확보) */
-.hudsum .isum{display:flex;flex-wrap:wrap;align-items:center;gap:0 2px;margin:0;padding:2px 4px;border:0;border-radius:6px;background:transparent;font:inherit;font-size:13px;line-height:1.45;color:var(--mute);text-align:left;white-space:nowrap;cursor:pointer}
-.hudsum .isum-go{font-size:15px;line-height:1;transition:transform .15s}
+.hudsum .hs-map{display:block;margin-top:1px;font-size:var(--text-sm);line-height:1.3;color:var(--mute)}   /* 수도권: 원장 합계 중 지도에 그리지 못한 사업(위치 미확보) */
+.hudsum .isum{display:flex;flex-wrap:wrap;align-items:center;gap:0 2px;margin:0;padding:2px 4px;border:0;border-radius:var(--radius-chip);background:transparent;font:inherit;font-size:var(--text-sm);line-height:1.45;color:var(--mute);text-align:left;white-space:nowrap;cursor:pointer}
+.hudsum .isum-go{font-size:var(--text-base);line-height:1;transition:transform .15s}
 .hudsum .isum-c{flex:1 0 100%;flex-wrap:nowrap;gap:0 8px}
 .hudsum .isum:hover,.hudsum .isum:focus-visible{color:var(--acc)}
 .hudsum .isum:hover .isum-h,.hudsum .isum:focus-visible .isum-h{text-decoration:underline;text-underline-offset:3px}
@@ -476,66 +474,66 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 .maplibregl-popup{z-index:3}
 /* 우측 상단 시점 묶음(카메라 조작을 한곳에, 2026-10-13): 확대·축소·나침반 | 전체·평면·투어 | 왼쪽·오른쪽 돌리기·자동 돌기를 한 줄기로.
    나침반은 누르면 북쪽이 위로 오고, 방향(도)은 이름표로 알린다. 무리 사이는 굵은 띠(.rsep)로 나눈다 */
-.rctl{position:absolute;right:12px;top:12px;z-index:3;display:flex;flex-direction:column;border-radius:11px;overflow:hidden;background:var(--glass-sum);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1px solid var(--hud-line);box-shadow:var(--hud-shadow)}
-.rctl button{display:flex;align-items:center;justify-content:center;width:36px;height:34px;padding:0;border:0;background:transparent;font:inherit;font-size:19px;line-height:1;color:var(--ink);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.rctl{position:absolute;right:12px;top:12px;z-index:3;display:flex;flex-direction:column;border-radius:var(--radius-tile);overflow:hidden;background:var(--glass-sum);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:var(--border-w) solid var(--hud-line);box-shadow:var(--shadow-pop)}
+.rctl button{display:flex;align-items:center;justify-content:center;width:36px;height:34px;padding:0;border:0;background:transparent;font:inherit;font-size:var(--text-lg);line-height:1;color:var(--ink);cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
 .rctl button+button{border-top:1px solid var(--hud-line)}
 .rctl button:hover{background:var(--glass-tag-hover)}
 .rctl .rsep{display:block;height:5px;border-top:1px solid var(--hud-line);border-bottom:1px solid var(--hud-line);background:color-mix(in srgb,var(--hud-line) 40%,transparent)}
-.rctl .rt{font-size:13px;color:var(--ink2)}
+.rctl .rt{font-size:var(--text-sm);color:var(--ink2)}
 /* '보기' 메뉴 단추: 둘러보기·자동 회전이 도는 동안 오른쪽 위에 강조색 점 */
 .rctl #vMenuBtn{position:relative}
 .rctl #vMenuBtn[aria-expanded="true"]{background:var(--glass-tag-hover);color:var(--ink)}
-.rctl #vMenuBtn.busy::after{content:"";position:absolute;right:4px;top:5px;width:7px;height:7px;border-radius:50%;background:var(--acc);box-shadow:0 0 0 1.5px var(--glass-sum)}
+.rctl #vMenuBtn.busy::after{content:"";position:absolute;right:4px;top:5px;width:7px;height:7px;border-radius:var(--radius-full);background:var(--acc);box-shadow:0 0 0 1.5px var(--glass-sum)}
 /* 보기 메뉴(#vMenu, role=menu): 시점 묶음 왼쪽에 '보기' 단추 높이로 뜬다(top 은 app.js 가 맞춘다). 옵션 창과 같은 유리 카드 */
-.vmenu{position:absolute;right:62px;top:120px;z-index:5;display:flex;flex-direction:column;min-width:176px;padding:6px;border-radius:12px;background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur);border:1px solid var(--hud-line);box-shadow:var(--hud-shadow)}
+.vmenu{position:absolute;right:62px;top:120px;z-index:5;display:flex;flex-direction:column;min-width:176px;padding:6px;border-radius:var(--radius-card);background:var(--glass-card);-webkit-backdrop-filter:var(--glass-card-blur);backdrop-filter:var(--glass-card-blur);border:var(--border-w) solid var(--hud-line);box-shadow:var(--shadow-pop)}
 .vmenu[hidden]{display:none}
-.vmenu .vm{display:flex;align-items:center;gap:10px;min-height:36px;padding:0 10px 0 8px;border:0;border-radius:7px;background:transparent;font:inherit;font-size:13.5px;color:var(--ink);text-align:left;white-space:nowrap;cursor:pointer;touch-action:manipulation}
+.vmenu .vm{display:flex;align-items:center;gap:10px;min-height:36px;padding:0 10px 0 8px;border:0;border-radius:var(--radius-tile);background:transparent;font:inherit;font-size:var(--text-sm);color:var(--ink);text-align:left;white-space:nowrap;cursor:pointer;touch-action:manipulation}
 .vmenu .vm[hidden]{display:none}
 .vmenu .vm:hover{background:var(--glass-tag-hover)}
 .vmenu .vm:focus-visible{outline:2px solid var(--acc);outline-offset:-2px}
 .vmenu .vm svg,.vmenu .vm-k{flex:0 0 auto;width:16px;height:16px}
 .vmenu .vm svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.vmenu .vm-k{position:relative;border:1.5px solid var(--mute);border-radius:4px}
+.vmenu .vm-k{position:relative;border:1.5px solid var(--mute);border-radius:var(--radius-chip)}
 .vmenu .vm[aria-checked="true"] .vm-k{background:var(--acc);border-color:var(--acc)}
 .vmenu .vm[aria-checked="true"] .vm-k::after{content:"";position:absolute;left:4px;top:1px;width:4px;height:8px;border:solid var(--acc-ink);border-width:0 2px 2px 0;transform:rotate(45deg)}
 .vmenu .vm-sep{display:block;height:1px;margin:4px 2px;background:var(--hud-line)}
 .vmenu .vm-g{display:flex;flex-direction:column}
-.vmenu .vm[role="menuitemradio"] .vm-k{border-radius:50%}   /* 입체·평면: 둘 중 하나(라디오 점) */
+.vmenu .vm[role="menuitemradio"] .vm-k{border-radius:var(--radius-full)}   /* 입체·평면: 둘 중 하나(라디오 점) */
 .vmenu .vm[role="menuitemradio"][aria-checked="true"] .vm-k{background:transparent;border-color:var(--acc)}
-.vmenu .vm[role="menuitemradio"][aria-checked="true"] .vm-k::after{left:3px;top:3px;width:7px;height:7px;border:0;border-radius:50%;background:var(--acc);transform:none}
+.vmenu .vm[role="menuitemradio"][aria-checked="true"] .vm-k::after{left:3px;top:3px;width:7px;height:7px;border:0;border-radius:var(--radius-full);background:var(--acc);transform:none}
 .vmenu .vm[role="menuitemradio"][aria-checked="true"]{font-weight:700}
 .vmenu .rot{user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 /* 키보드 초점: 묶음(.rctl·.tools)은 넘침을 잘라 바깥 고리가 가려지므로 단추 안쪽에 그린다 */
-.rctl button:focus-visible,.tools button:focus-visible{outline:2px solid var(--acc);outline-offset:-3px;border-radius:7px}
-.regionbox select:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:3px}
+.rctl button:focus-visible,.tools button:focus-visible{outline:2px solid var(--acc);outline-offset:-3px;border-radius:var(--radius-tile)}
+.regionbox select:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:var(--radius-chip)}
 .rctl button.rt:hover{color:var(--ink)}
 .rctl svg{display:block;width:24px;height:24px;overflow:visible}
 .rctl .cp-bg{fill:none;stroke:var(--mute);stroke-width:1.4}
 .rctl .cp-n{fill:var(--acc)}
-.rctl .cp-s{fill:#5566BE}
+.rctl .cp-s{fill:var(--map-compass-s)}
 @media (min-width:901px){.app.collapsed .panel{display:none}}
 /* 입주 전 점검(기반시설): 사이드바 구역, 범례 견본, 상세 카드 칩. 자료가 없는 지역에서는 구역과 레일 점이 숨는다. */
-:root{--edu:#B79CFF;--power:#FFC24D}
+:root{--edu:var(--map-edu);--power:var(--map-power)}
 #secInfra[hidden],#fsInfra[hidden]{display:none}
 /* 구역 제목이 곧 접기·펼치기 단추다. 접힌 동안은 제목 한 줄만 남는다 */
 .shead{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px}
-.shead h2{margin:0}
+.shead h3{margin:0}
 .shead .isum-c{order:3;flex:1 0 100%}
 .shead .isum-c:empty{display:none}
-.shead .hc{font-size:13px}
+.shead .hc{font-size:var(--text-sm)}
 .sech{display:flex;align-items:baseline;gap:6px;padding:0;border:0;background:none;font:inherit;color:inherit;text-align:left;cursor:pointer}
 .sech:hover .sech-h{color:var(--ink)}
-.sech-h{font-size:13px;font-weight:600;color:var(--mute)}
+.sech-h{font-size:var(--text-sm);font-weight:700;color:var(--mute)}
 .sech-h::after{content:"▾"}
 .sech[aria-expanded="true"] .sech-h::after{content:"▴"}
-.plink{flex:none;margin-left:auto;padding:0;border:0;border-radius:4px;background:none;font:inherit;font-size:14px;line-height:1.45;color:var(--mute);white-space:nowrap;cursor:pointer;text-underline-offset:3px;transition:color .15s}   /* 조용한 글자 링크(대시보드 PanelLink 와 같은 말씨): 14px 보조 글자 + ›, 마우스 올림·포커스 주색 */
+.plink{flex:none;margin-left:auto;padding:0;border:0;border-radius:var(--radius-chip);background:none;font:inherit;font-size:var(--text-sm);line-height:1.45;color:var(--mute);white-space:nowrap;cursor:pointer;text-underline-offset:3px;transition:color .15s}   /* 조용한 글자 링크(대시보드 PanelLink 와 같은 말씨): 14px 보조 글자 + ›, 마우스 올림·포커스 주색 */
 .plink::after{content:"›";display:inline-block;margin-left:2px;transition:transform .15s}
 .plink:hover,.plink:focus-visible{color:var(--acc);text-decoration:underline}
 .plink:hover::after{transform:translateX(2px)}
 @media (prefers-reduced-motion:reduce){.plink,.plink::after{transition:none}.plink:hover::after{transform:none}}
 .sbody{display:flex;flex-direction:column;gap:10px}
 .sbody[hidden]{display:none}
-.inote{margin:0;font-size:13px;line-height:1.6;color:var(--mute)}
+.inote{margin:0;font-size:var(--fs-body);line-height:1.6;color:var(--mute)}
 .inotes{list-style:none;padding:0;display:flex;flex-direction:column;gap:3px}
 .inotes[hidden]{display:none}
 .inotes b{font-weight:700;color:var(--ink2)}
@@ -543,40 +541,40 @@ html[data-map-shell]:not(.dark) .maplibregl-popup-content{--mute:#445162;--warn:
 details.isub{display:block}
 .isub>summary{display:flex;align-items:baseline;gap:8px;padding:8px 0 6px;border-bottom:1px solid var(--line);cursor:pointer;list-style:none}
 .isub>summary::-webkit-details-marker{display:none}
-.isub>summary::before{content:"▸";flex:0 0 auto;color:var(--mute);font-size:13px}
+.isub>summary::before{content:"▸";flex:0 0 auto;color:var(--mute);font-size:var(--text-sm)}
 .isub[open]>summary::before{content:"▾"}
 .isub>summary:hover{background:var(--pn)}
 .isub>summary h3{margin:0}
-.isub .isn{margin-left:auto;font-size:13px;color:var(--mute)}
+.isub .isn{margin-left:auto;font-size:var(--fs-body);color:var(--mute)}
 details.isub>ul{margin-top:2px}
 .isub[hidden]{display:none}
-.isub h3{margin:0;font-size:14px;font-weight:700;color:var(--ink)}
+.isub h3{margin:0;font-size:var(--fs-h3);font-weight:700;color:var(--ink)}
 .ilist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column}
 .icard{align-items:start}
-.icard .iw{grid-column:2 / 4;font-size:13px;line-height:1.5;color:var(--ink2)}
-.icard .iw b{font-weight:600}
-.im{display:inline-block;margin-right:3px;font-size:13px;font-weight:700;line-height:1.5;white-space:nowrap}
+.icard .iw{grid-column:2 / 4;font-size:var(--fs-body);line-height:1.5;color:var(--ink2)}
+.icard .iw b{font-weight:700}
+.im{display:inline-block;margin-right:3px;font-size:var(--text-sm);font-weight:700;line-height:1.5;white-space:nowrap}
 .im.warn{color:var(--warn)}
 .ibtn{display:grid;grid-template-columns:64px minmax(0,1fr);gap:0 10px;align-items:start;width:100%;text-align:left;padding:7px 4px;border:0;border-bottom:1px solid var(--line);background:none;font:inherit;color:inherit;cursor:pointer}
 .ibtn:hover,.ibtn:focus-visible{background:var(--pn)}
-.ibtn .iy{font-size:15px;font-weight:700;line-height:1.35;color:var(--edu);font-variant-numeric:tabular-nums;white-space:nowrap}
-.ibtn b{font-size:14px}
-.ibtn .s{display:block;font-size:13px;line-height:1.45;color:var(--mute)}
+.ibtn .iy{font-size:var(--text-base);font-weight:700;line-height:1.35;color:var(--edu);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ibtn b{font-size:var(--text-sm)}
+.ibtn .s{display:block;font-size:var(--fs-body);line-height:1.45;color:var(--mute)}
 #infraMeasures li{display:flex;flex-direction:column;gap:3px;padding:8px 4px;border-bottom:1px solid var(--line)}
 .ihead{display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px}
-.ihead b{font-size:14px}
-.ichip{display:inline-block;font-size:13px;font-weight:700;line-height:1.5;color:var(--mute);white-space:nowrap}
+.ihead b{font-size:var(--text-sm)}
+.ichip{display:inline-block;font-size:var(--text-sm);font-weight:700;line-height:1.5;color:var(--mute);white-space:nowrap}
 .ichip.교통{color:var(--ink)}
 .ichip.교육{color:var(--edu)}
 .ichip.전기{color:var(--power)}
-.imeta{font-size:13px;font-weight:700;color:var(--ink2)}
-#infraMeasures small{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:13px;line-height:1.5;color:var(--mute)}
-.isrc{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:13px;color:var(--mute)}
+.imeta{font-size:var(--text-sm);font-weight:700;color:var(--ink2)}
+#infraMeasures small{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;font-size:var(--fs-body);line-height:1.5;color:var(--mute)}
+.isrc{display:block;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font-size:var(--fs-body);color:var(--mute)}
 .isrc a{color:var(--plan);text-underline-offset:2px}
-.sw.edu{border-radius:50%;width:11px;height:11px;margin:0 .5px;background:var(--edu);border:2px solid var(--bg);box-shadow:0 0 0 1.5px var(--edu)}
-.sw.edu-site{border:1.5px dashed var(--edu);background:rgba(183,156,255,.14)}
-.sw.power{border:1.5px solid var(--power);background:rgba(255,194,77,.22)}
-.sw.stop{width:8px;height:8px;margin:0 2px;border-radius:50%;background:var(--ink);border:1.5px solid var(--bg);box-shadow:0 0 0 1px var(--mute)}
+.sw.edu{border-radius:var(--radius-full);width:11px;height:11px;margin:0 .5px;background:var(--edu);border:2px solid var(--bg);box-shadow:0 0 0 1.5px var(--edu)}
+.sw.edu-site{border:1.5px dashed var(--edu);background:var(--map-edu-site-fill)}
+.sw.power{border:1.5px solid var(--power);background:var(--map-power-fill)}
+.sw.stop{width:8px;height:8px;margin:0 2px;border-radius:var(--radius-full);background:var(--ink);border:1.5px solid var(--bg);box-shadow:0 0 0 1px var(--mute)}
 .sw.zone{border:1.5px dashed var(--edu);background:none}
 .pc-chip.edu{background:var(--edu);border-color:var(--edu);color:var(--on-c)}
 .pc-chip.site{background:transparent;border-style:dashed;border-color:var(--edu);color:var(--edu)}
@@ -596,12 +594,12 @@ details.isub>ul{margin-top:2px}
   .stagef{flex:1 0 100%;flex-wrap:wrap;gap:4px}
   .stagef>.sf{flex:1 1 30%;min-width:0}
   .stagef>.sf.empty{flex:0 0 auto}
-  .sf{flex-direction:row;align-items:baseline;gap:6px;padding:3px 8px;border-radius:8px}
-  .sf-h{font-size:12px}
+  .sf{flex-direction:row;align-items:baseline;gap:6px;padding:3px 8px;border-radius:var(--radius-tile)}
+  .sf-h{font-size:var(--text-xs)}
   .sf-n,.sf-v small,.sf-lost{display:none}
-  .sf-v{margin-left:auto;font-size:15px}
+  .sf-v{margin-left:auto;font-size:var(--text-base)}
   .mapwrap{position:fixed;inset:var(--mh) 0 0 0;height:auto;min-height:0}
-  .panel{position:fixed;left:0;right:0;bottom:0;max-width:none;z-index:4;height:var(--sh,176px);max-height:none;border-left:0;border-top:1px solid var(--line2);border-radius:14px 14px 0 0;box-shadow:var(--sheet-shadow);transition:height .25s}
+  .panel{position:fixed;left:0;right:0;bottom:0;max-width:none;z-index:4;height:var(--sh,176px);max-height:none;border-left:0;border-top:1px solid var(--line2);border-radius:var(--radius-card) var(--radius-card) 0 0;box-shadow:var(--sheet-shadow);transition:height .25s}
   .phead{padding:0 16px 8px}
   .phead.scrolled{padding-top:6px}
   .pscroll{padding:4px 16px 18px 16px}
@@ -609,41 +607,41 @@ details.isub>ul{margin-top:2px}
   .rctl button{width:40px;height:36px}
   .vmenu{right:66px}
   .vmenu .vm{min-height:40px}
-  .hudtag{padding:3px 7px 4px 8px;font-size:11px}
-  .hudtag .ht-h b{font-size:13px}
+  .hudtag{padding:3px 7px 4px 8px;font-size:var(--fs-label-map)}
+  .hudtag .ht-h b{font-size:var(--fs-label-map)}
   @media (prefers-reduced-motion:reduce){.panel{transition:none}}
   .handle{display:flex;align-items:center;justify-content:center;width:100%;min-height:36px;border:0;background:none;cursor:pointer;flex:0 0 auto}
-  .handle::before{content:"";width:44px;height:5px;border-radius:3px;background:var(--line2)}
+  .handle::before{content:"";width:44px;height:5px;border-radius:var(--radius-chip);background:var(--line2)}
   .botbar{display:none}
   .cmd{left:12px;right:68px;top:56px;bottom:auto;transform:none;width:auto;flex-direction:column-reverse}   /* 좁은 화면은 아래 시트가 있으니 위쪽, 후보는 아래로 */
   .cmd .pvbanner{order:-1;align-self:stretch;text-align:center}   /* 위아래가 뒤집힌 입력줄에서도 띠는 입력줄(·후보) 아래 */
-  .cmd-res{margin-bottom:0;margin-top:-1px;max-height:40vh;border-radius:0 0 14px 14px}
+  .cmd-res{margin-bottom:0;margin-top:-1px;max-height:40vh;border-radius:0 0 var(--radius-card) var(--radius-card)}
   .cmd-parse,.cmd-key{display:none}
-  .cmd-bar input{font-size:16px}   /* iOS 가 16px 미만 입력칸을 확대하지 않게 */
+  .cmd-bar input{font-size:var(--text-base)}   /* iOS 가 16px 미만 입력칸을 확대하지 않게 */
   /* 좁은 화면: 버튼 줄이 지도를 가리지 않게 한 줄로 두고 옆으로 밀어 본다 */
   .topbar{max-width:calc(100% - 68px)}
-  .tools button{min-height:40px;padding:0 10px;font-size:12.5px}
+  .tools button{min-height:40px;padding:0 10px;font-size:var(--text-sm)}
   .optpanel{left:12px;right:12px;width:auto}
   .maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right{bottom:calc(var(--sh,176px) + 4px)}
 }
 /* ---- 입주 전 점검 시각화: 신호 표시, 요약 줄, 타임라인, 범례 기호. 이 화면의 다른 글자(상태·보조 설명)와 같은 크기·무게로 맞춘다 ---- */
-.hc{display:inline-flex;align-items:baseline;gap:2px;font-style:normal;font-size:11.5px;font-weight:600;line-height:1.35;white-space:nowrap;color:var(--mute)}
-.hc u{text-decoration:none;font-size:11px}
+.hc{display:inline-flex;align-items:baseline;gap:2px;font-style:normal;font-size:var(--text-xs);font-weight:700;line-height:1.35;white-space:nowrap;color:var(--mute)}
+.hc u{text-decoration:none;font-size:var(--fs-meta)}
 .hc.warn{color:var(--warn);font-weight:700}
-.hc.none{color:var(--mute);font-weight:500}
+.hc.none{color:var(--mute);font-weight:400}
 .isum-c{display:flex;flex-wrap:wrap;gap:0 9px}
 .itl{display:block;width:100%;height:auto;overflow:visible}
 .itl text{font-family:inherit;paint-order:stroke;stroke:var(--bg);stroke-width:3px;stroke-linejoin:round}
 .lgi{width:19px;height:19px;flex:none}
 .sw.link{width:22px;height:0;border-top:3px dashed var(--edu);background:none}
 .sw.linkz{width:22px;height:0;border-top:2px solid var(--mute);background:none}
-.sw.ring{width:14px;height:14px;border:2px dashed var(--ink);border-radius:50%;background:rgba(255,214,110,.12)}
-.sw.bus3d{width:20px;height:11px;border-radius:2px;background:linear-gradient(#10162E 0 38%,#56B4E9 38% 100%);box-shadow:0 0 0 1px rgba(232,237,255,.35)}
-.pc-route{display:inline-block;margin:0 4px 2px 0;padding:0 6px;border-radius:4px;font-style:normal;font-size:12.5px;font-weight:700;line-height:1.55;color:var(--on-c);background:var(--rc,#9AA8D6)}
-.pc-route.live{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--rc,#9AA8D6)}
+.sw.ring{width:14px;height:14px;border:2px dashed var(--ink);border-radius:var(--radius-full);background:var(--map-ring-fill)}
+.sw.bus3d{width:20px;height:11px;border-radius:var(--radius-chip);background:linear-gradient(var(--map-bus-roof) 0 38%,var(--map-bus-body) 38% 100%);box-shadow:0 0 0 1px var(--map-bus-line)}
+.pc-route{display:inline-block;margin:0 4px 2px 0;padding:0 6px;border-radius:var(--radius-chip);font-style:normal;font-size:var(--text-sm);font-weight:700;line-height:1.55;color:var(--on-c);background:var(--rc)}
+.pc-route.live{box-shadow:0 0 0 2px var(--bg),0 0 0 3.5px var(--rc)}
 .maplegend li.lgrid{flex-direction:column;align-items:flex-start;gap:4px}
-.lgrid b{font-size:13px}
-.lgrid div{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;width:100%;font-size:12.5px}
+.lgrid b{font-size:var(--text-sm)}
+.lgrid div{display:grid;grid-template-columns:1fr 1fr;gap:4px 10px;width:100%;font-size:var(--text-sm)}
 .lgrid div span{display:inline-flex;align-items:center;gap:5px;white-space:nowrap}
 .lgrid small{line-height:1.45}
 
@@ -662,28 +660,15 @@ details.isub>ul{margin-top:2px}
 }
 
 /* Next 지도는 대시보드의 저장된 테마를 따른다. 독립 지도 페이지의 기존 팔레트와 분리한다. */
-html[data-map-shell]:not(.dark){
-  color-scheme:light;
-  --ink:#172B4D;--ink2:#344960;--mute:#526176;--line:#DFE5ED;--line2:#B9C6D6;
-  --bg:#EEF2F6;--pn:#FFFFFF;--pn2:#EAF0F6;--warn:#7F6300;
-  --edu:#7955AD;--power:#895716;--hud-line:#B9C6D6;
-  --hud-shadow:0 8px 22px rgba(15,23,42,.14);--tag-shadow:0 4px 12px rgba(15,23,42,.12);--sheet-shadow:0 -4px 18px rgba(15,23,42,.14);--stuck-shadow:0 7px 8px -7px rgba(15,23,42,.18);--card-hover-shadow:0 6px 16px rgba(15,23,42,.12);
-  --glass-tag:rgba(255,255,255,.96);--glass-tag-hover:rgba(234,240,246,.98);
-  --glass-sum:rgba(255,255,255,.96);--glass-card:rgba(255,255,255,.97);--glass-hud:rgba(255,255,255,.9);--glass-pop:rgba(255,255,255,.78);--glass-note:rgba(255,255,255,.62);
-  --glass-cmd-active:rgba(255,255,255,.98);--glass-cmd-idle:rgba(255,255,255,.96);--glass-cmd-off:rgba(245,247,250,.96);
-  --cmd-sub:#526176;--cmd-text:#172B4D;
-}
+html[data-map-shell]:not(.dark){color-scheme:light}   /* 두 테마의 색 값은 app/globals.css 의 :root(라이트)·.dark(다크) */
 html[data-map-shell] body{color-scheme:inherit}
-/* 밝은 테마도 backdrop-filter 를 못 쓰면 뒤가 흐려지지 않아 거의 불투명하게 */
-@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){html[data-map-shell]:not(.dark){--glass-hud:rgba(255,255,255,.98);--glass-pop:rgba(255,255,255,.98);--glass-note:rgba(255,255,255,.96)}}
-/* Next 지도(두 테마 공통): 강조색은 대시보드 주색, 6단계 색은 대시보드와 같은 토큰(app/tailwind.css 의 --st-*-ink).
+/* Next 지도(두 테마 공통): 강조색은 대시보드 주색, 6단계 색은 대시보드와 같은 토큰(app/globals.css 의 --st-*-ink).
    예전 다크 지도의 주황 강조(#FF8A65)는 상단 메뉴 바의 하늘색 밑줄과 한 화면에 두 강조색을 만들었고, ③착공 주황(#FF9F43)과도 겹쳤다. */
 html[data-map-shell]{--acc:var(--primary);--acc-ink:var(--primary-foreground);
   --sale:var(--st-sale-ink);--build:var(--st-build-ink);--soon:var(--st-soon-ink);--move:var(--st-move-ink);--plan:var(--st-plan-ink);--permit:var(--st-permit-ink);--priv:var(--st-priv-ink)}
-/* 머리 줄의 바탕·아래 선·지역 글자는 위 상단 메뉴 바(TopNav)와 같은 Tailwind 토큰(app/tailwind.css)을 쓴다. 두 테마 모두 */
+/* 머리 줄의 바탕·아래 선·지역 글자는 위 상단 메뉴 바(TopNav)와 같은 Tailwind 토큰(app/globals.css)을 쓴다. 두 테마 모두 */
 html[data-map-shell] .mhead{background:var(--card);border-bottom-color:var(--border)}
 html[data-map-shell] .hd-region,html[data-map-shell] .regionbox select{color:var(--muted-foreground)}
-html[data-map-shell]:not(.dark) #fatal{background:rgba(245,247,250,.96)}
 html[data-map-shell]:not(.dark) .pc-chip.priv{background:var(--pn2)}
 html[data-map-shell]:not(.dark) .pc-bars i{background:var(--line2)}
 html[data-map-shell]:not(.dark) .optpanel label.dis{color:var(--mute)}
@@ -697,7 +682,7 @@ html[data-map-shell]:not(.dark) .cmd-tier i.sw-bundle{background:var(--ink)}
 
 /* 데스크톱 가독성: 본문·보조 정보와 카드 여백을 같은 기준으로 맞춘다. */
 @media (min-width:901px){
-body{font-size:16px;line-height:1.6}
+body{font-size:var(--fs-body);line-height:1.6}
 .sf-h,
 .sf-n,
 .sf-v small,
@@ -723,7 +708,7 @@ body{font-size:16px;line-height:1.6}
 .cmd-parse,
 .hudtag,
 .hudtag .ht-h i,
-.hudsum .hs-total small{font-size:13px}
+.hudsum .hs-total small{font-size:var(--text-sm)}
 .hd-region,.regionbox select,
 .pvbanner,
 .dynhint,
@@ -743,7 +728,7 @@ body{font-size:16px;line-height:1.6}
 .hudsum,
 .hudsum .hs-n,
 .hudsum .isum,
-.hudsum .isum .hc{font-size:14px}
+.hudsum .isum .hc{font-size:var(--text-sm)}
 .list .empty,
 .nlist li,
 .nlist .nt,
@@ -770,24 +755,24 @@ body{font-size:16px;line-height:1.6}
 .ichip,
 .imeta,
 #infraMeasures small,
-.isrc{font-size:13px}   /* 공급 현황 사이드바는 지도 옆 보조 정보라 한 단계 작게(2026-10-10 피드백 '글씨가 너무 크다', 문서 5.6c: 13px 아래로는 내리지 않는다) */
+.isrc{font-size:var(--fs-body)}   /* 공급 현황 사이드바 본문은 관점 토큰(--fs-body: 정책담당자 14px, 일반사용자 16px). 2026-10-10 피드백 '글씨가 너무 크다' 때문에 한 단계 작게 두었던 13px 은 14px 아래로 내리지 않는 8단계 체계로 올렸다 */
 .shell-map .app{grid-template-columns:minmax(0,1fr) 380px;grid-template-rows:88px minmax(0,1fr)}
 .shell-map .app.collapsed{grid-template-columns:minmax(0,1fr)}
 .mhead{gap:12px;padding:8px 16px}
-/* 머리 줄 안쪽 왼쪽·오른쪽 선을 상단 메뉴 바(TopNav: 화면 폭 100vw 기준 가운데 1440px, 좌우 28px)와 맞춘다. 지도·사이드바는 전체 폭 그대로 */
+/* 머리 줄 안쪽 왼쪽·오른쪽 선을 상단 메뉴 바(TopNav: 화면 폭 100vw 기준 가운데 1440px, 1600px 이상 1760px, 좌우 28px)와 맞춘다. 지도·사이드바는 전체 폭 그대로 */
 .shell-map .mhead{padding-left:calc(max(0px,50vw - 720px) + 28px);padding-right:calc(max(0px,50vw - 720px) + 28px)}
-h1{font-size:22px}h2{font-size:20px;line-height:1.25;margin-bottom:8px}.shead{margin-bottom:8px}   /* 구역 제목은 종합상황판 카드 제목(Do Hyeon 20px)과 같은 크기, 사이드바 이름(h1)은 한 단계 크게 */
-.brand-t b{font-size:22px}.sf-v{font-size:22px}.sf-h{font-size:14px}.sf{padding:8px 10px;gap:3px}
+h2{font-size:var(--fs-h2);line-height:1.25;margin-bottom:8px}h3{margin:0;font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;line-height:1.3;color:var(--ink2)}.phead h2{margin:0;font-family:var(--font-sans);font-weight:700;line-height:1.3}.shead{margin-bottom:8px}   /* 구역 제목은 종합상황판 카드 제목(20px)과 같은 크기, 사이드바 이름(#phead h2)도 같은 역할 토큰(--fs-h2, 모든 폭에서 20px). 문서 h1 은 화면 읽기 전용 '지도' 하나 */
+.brand-t b{font-size:var(--text-lg)}.sf-v{font-size:var(--text-lg)}.sf-h{font-size:var(--text-sm)}.sf{padding:8px 10px;gap:3px}
 .phead{padding:12px 16px 8px}.pscroll{padding:8px 16px 20px 16px}
-.card{padding:10px 12px;row-gap:5px}.card b{font-size:15.5px;line-height:1.4}.card .sub{font-size:13px;line-height:1.5}
-.card .st{font-size:13px}.sum b{font-size:15px}.sum .cnt{font-size:13px}
-.next .nx{padding:10px 12px;row-gap:3px}.next b{font-size:14.5px;line-height:1.5}.next span.s{font-size:13px;line-height:1.5}
-.pc-h b{font-size:18px}.pc-dl{font-size:15px;line-height:1.6;row-gap:5px}.pc-sub,.pc-cap,.pc-foot,.pc-more p{font-size:14px;line-height:1.6}
-.pc-chip{font-size:13px}.pc-big strong{font-size:26px}.pc-big span{font-size:14px}
-.pc-grid dt{font-size:13px}.pc-grid dd{font-size:15px;line-height:1.45}.pc-grid small{font-size:13px}.pc-note summary{font-size:13.5px;line-height:1.5}.pc-big .pc-idl{font-size:13px}
-.tools button{font-size:14px}.cmd-go{font-size:15px}.rctl .rt{font-size:14px}
-.hudtag{font-size:13px;line-height:1.45;padding:4px 10px 5px}.hudtag .ht-h b{font-size:15px}
-.hudsum .hs-total b{font-size:20px}
+.card{padding:10px 12px;row-gap:5px}.card b{font-size:var(--text-base);line-height:1.4}.card .sub{font-size:var(--fs-body);line-height:1.5}
+.card .st{font-size:var(--text-sm)}.sum b{font-size:var(--text-base)}.sum .cnt{font-size:var(--fs-body)}
+.next .nx{padding:10px 12px;row-gap:3px}.next b{font-size:var(--text-sm);line-height:1.5}.next span.s{font-size:var(--fs-body);line-height:1.5}
+.pc-h b{font-size:var(--text-md)}.pc-dl{font-size:var(--text-base);line-height:1.6;row-gap:5px}.pc-sub,.pc-cap,.pc-foot,.pc-more p{font-size:var(--text-sm);line-height:1.6}
+.pc-chip{font-size:var(--text-sm)}.pc-big strong{font-size:var(--text-xl)}.pc-big span{font-size:var(--text-sm)}
+.pc-grid dt{font-size:var(--text-sm)}.pc-grid dd{font-size:var(--text-base);line-height:1.45}.pc-grid small{font-size:var(--text-sm)}.pc-note summary{font-size:var(--text-sm);line-height:1.5}.pc-big .pc-idl{font-size:var(--text-sm)}
+.tools button{font-size:var(--text-sm)}.cmd-go{font-size:var(--text-base)}.rctl .rt{font-size:var(--text-sm)}
+.hudtag{font-size:var(--fs-label-map);line-height:1.45;padding:4px 10px 5px}.hudtag .ht-h b{font-size:var(--text-base)}
+.hudsum .hs-total b{font-size:var(--text-lg)}
 }
 /* 카드 호버(2026-10-10, 대시보드 card-lift 와 같은 결): 패널의 단지 카드·다음 일정이 1px 떠오르고 그림자가 깊어진다.
    손가락 기기에는 남지 않게 (hover:hover) 에서만, 움직임 줄이기면 떠오르지 않는다. 머리 줄 점검 단추(.hudsum .isum)는 조용한 링크라 떠오르지 않는다 */
@@ -800,15 +785,8 @@ h1{font-size:22px}h2{font-size:20px;line-height:1.25;margin-bottom:8px}.shead{ma
 /* ---------- 수도권 개요(지도 첫 화면 /map · ?sido=, assets/js/overview.js) ----------
    모드는 레이아웃 <head> 의 MAP_MODE_INIT 가 html[data-map-mode] 에 적는다(쿼리가 없으면 overview). 개요에서는 상세 마크업(.app)을 감추고, 상세에서는 개요를 감춘다.
    면 색: 한 색상(파랑) 명도 5단계 + 값 0 중립 색. 라이트·다크 단계를 따로 두고, 라벨 글자는 단계마다 4.5:1 이상인 쪽(--ov-ink-N)을 쓴다 */
-:root{--ov-bg:#0A1030;--ov-0:#18213F;--ov-1:#104281;--ov-2:#256abf;--ov-3:#3987e5;--ov-4:#86b6ef;--ov-5:#cde2fb;--ov-line:#33447A;--ov-hl:#FFFFFF;
-  --ov-ink-0:#E8EDFF;--ov-ink-1:#FFFFFF;--ov-ink-2:#FFFFFF;--ov-ink-3:#0B1A33;--ov-ink-4:#0B1A33;--ov-ink-5:#0B1A33}
-html[data-map-shell]:not(.dark){--ov-bg:#EEF2F6;--ov-0:#E3E7EC;--ov-1:#b7d3f6;--ov-2:#6da7ec;--ov-3:#256abf;--ov-4:#184f95;--ov-5:#0d366b;--ov-line:#FFFFFF;--ov-hl:#0B1A33;
-  --ov-ink-0:#172B4D;--ov-ink-1:#0B1A33;--ov-ink-2:#0B1A33;--ov-ink-3:#FFFFFF;--ov-ink-4:#FFFFFF;--ov-ink-5:#FFFFFF}
-/* '지연 사업' 지표만 빨강(bad) 명도 5단계(2026-10-15 결정): 지연은 나쁜 값이라 파랑(양) 대신 빨강. overview.js 가 <html data-ov-metric> 로 고른다. 0 칸·경계선·바탕은 그대로 */
-html[data-ov-metric="d"]{--ov-1:#5E1A2A;--ov-2:#8E2436;--ov-3:#C23A48;--ov-4:#EC8585;--ov-5:#FBCFCB;
-  --ov-ink-1:#FFFFFF;--ov-ink-2:#FFFFFF;--ov-ink-3:#FFFFFF;--ov-ink-4:#2A0A10;--ov-ink-5:#2A0A10}
-html[data-map-shell][data-ov-metric="d"]:not(.dark){--ov-1:#FBD3CF;--ov-2:#F2948E;--ov-3:#C8323D;--ov-4:#9A1F2B;--ov-5:#64101A;
-  --ov-ink-1:#2A0A10;--ov-ink-2:#2A0A10;--ov-ink-3:#FFFFFF;--ov-ink-4:#FFFFFF;--ov-ink-5:#FFFFFF}
+:root{--ov-bg:var(--background);--ov-0:var(--map-ov-0);--ov-1:var(--map-ov-1);--ov-2:var(--map-ov-2);--ov-3:var(--map-ov-3);--ov-4:var(--map-ov-4);--ov-5:var(--map-ov-5);--ov-line:var(--map-ov-line);--ov-hl:var(--map-ov-hl);
+  --ov-ink-0:var(--map-ov-ink-0);--ov-ink-1:var(--map-ov-ink-1);--ov-ink-2:var(--map-ov-ink-2);--ov-ink-3:var(--map-ov-ink-3);--ov-ink-4:var(--map-ov-ink-4);--ov-ink-5:var(--map-ov-ink-5)}   /* '지연 사업' 지표(html[data-ov-metric="d"])의 빨강 5단계도 globals 의 --map-ov-* 가 바꾼다 */
 .ov{display:none}
 html[data-map-mode="overview"] .shell-map .app{display:none}
 html[data-map-mode="overview"] .skip-detail,html:not([data-map-mode="overview"]) .skip-ov{display:none}
@@ -816,125 +794,146 @@ html[data-map-mode="overview"] .skip-detail,html:not([data-map-mode="overview"])
 html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minmax(0,1fr);flex:1;min-height:0;min-width:0;position:relative}
 .ov button{font:inherit;color:inherit}
 .ov :focus-visible,.ov-menu :focus-visible,.crumbs a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
-.ov-panel{display:flex;flex-direction:column;gap:14px;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-gutter:stable;padding:16px 18px 20px;background:var(--bg);border-right:1px solid var(--line);word-break:keep-all;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}   /* 스크롤바 자리를 늘 비워 두어 지표를 바꿀 때(목록 길이가 바뀌어 막대가 생겼다 사라질 때) 지표 단추 폭이 흔들리지 않는다 */
+.ov-panel{position:relative;display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;padding:16px 18px 20px;background:var(--bg);border-right:1px solid var(--line);word-break:keep-all}   /* 세로 스크롤 없음(2026-10-18 사용자 피드백): 순위 막대 목록이 남은 높이만 쓰고 넘친 줄은 '전체 n ›' 목록(#ovSheet)으로 */
 .ov-handle{display:none}
-.ov-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
-.ov-head h1{font-size:22px}
-.ov-asof{font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
-.ov-head h1{flex:0 1 auto}.ov-asof{margin-left:auto}
-.ov-back{flex:none;padding:2px 0;border:0;background:none;font:inherit;font-size:13px;color:var(--mute);text-decoration:underline;text-underline-offset:3px;cursor:pointer}   /* ?sido= 로 연 개요에서 수도권 전체로(2026-10-15 평가 P2) */
+.ov-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 10px}
+.ov-head h2{font-size:var(--fs-h2);font-weight:700}
+.ov-asof{font-size:var(--fs-body);color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}
+.ov-head h2{flex:0 1 auto;text-wrap:balance}.ov-asof{margin-left:auto}
+.ov-back{flex:none;padding:2px 0;border:0;background:none;font:inherit;font-size:var(--text-sm);color:var(--mute);text-decoration:underline;text-underline-offset:3px;cursor:pointer}   /* ?sido= 로 연 개요에서 수도권 전체로(2026-10-15 평가 P2) */
 .ov-back:hover{color:var(--ink)}
 .ov-back[hidden]{display:none}
-.ov-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));padding:3px;gap:3px;border:1px solid var(--line);border-radius:10px;background:var(--pn)}
-.ov-metrics button{min-height:36px;padding:4px 6px;border:0;border-radius:7px;background:transparent;font-size:13px;line-height:1.3;color:var(--mute);cursor:pointer;transition:background .15s,color .15s}
+.ov-metrics{display:flex;flex-wrap:wrap;gap:6px}
+.ov-metrics button{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:36px;padding:4px 6px;border:var(--border-w) solid var(--line);border-radius:var(--radius-tile);background:transparent;font-size:var(--text-sm);line-height:1.3;color:var(--mute);cursor:pointer;transition:background .15s,color .15s}
 .ov-metrics button:hover{background:var(--pn2);color:var(--ink)}
-.ov-metrics button[aria-checked="true"]{background:var(--acc);color:var(--acc-ink);font-weight:700}
+.ov-metrics button[aria-checked="true"]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:700}
 .ov-total{display:flex;flex-direction:column;gap:2px}
 .ov-q{display:flex;align-items:center;gap:4px}
-.ov-q h2{margin:0;font-family:var(--font-body);font-size:14px;font-weight:700;line-height:1.4;color:var(--ink2)}
-.ov-i{display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:7px;background:transparent;color:var(--mute);cursor:pointer}
+.ov-q h3{margin:0;font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;line-height:var(--lh-sub);color:var(--ink2)}
+.ov-i{display:grid;place-items:center;width:28px;height:28px;padding:0;border:0;border-radius:var(--radius-tile);background:transparent;color:var(--mute);cursor:pointer}
 .ov-i:hover,.ov-i[aria-expanded="true"]{background:var(--pn2);color:var(--ink)}
 .ov-i svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
 .ov-i svg .dot{fill:currentColor;stroke:none}
-.ov-def{margin:2px 0 6px;padding:8px 10px;border-radius:8px;background:var(--pn);border:1px solid var(--line);font-size:13px;line-height:1.55;color:var(--ink2)}
+.ov-def{margin:2px 0 6px;padding:8px 10px;border-radius:var(--radius-tile);background:var(--pn);border:var(--border-w) solid var(--line);font-size:var(--fs-body);line-height:1.55;color:var(--ink2)}
 .ov-def[hidden]{display:none}
 .ov-num{display:flex;align-items:baseline;gap:4px}
-.ov-big{font-family:var(--font-disp);font-size:34px;font-weight:400;line-height:1.05;font-variant-numeric:tabular-nums}
+.ov-big{font-family:var(--font-sans);font-size:var(--text-3xl);font-weight:700;line-height:1.05;font-variant-numeric:tabular-nums}
 .ov-big.none{color:var(--mute)}
-.ov-unit{font-size:15px;font-weight:700}
-.ov-sub{margin:0;font-size:13px;color:var(--mute);font-variant-numeric:tabular-nums}
-.ov-fail{margin:0;padding:8px 10px;border-radius:8px;border:1px solid color-mix(in srgb,var(--warn) 55%,transparent);background:color-mix(in srgb,var(--warn) 14%,var(--pn));font-size:13px}
+.ov-unit{font-size:var(--text-base);font-weight:700}
+.ov-sub{margin:0;font-size:var(--fs-body);color:var(--mute);font-variant-numeric:tabular-nums}
+.ov-fail{margin:0;padding:8px 10px;border-radius:var(--radius-tile);border:1px solid color-mix(in srgb,var(--warn) 55%,transparent);background:color-mix(in srgb,var(--warn) 14%,var(--pn));font-size:var(--text-sm)}
 .ov-fail[hidden]{display:none}
 .ov-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.ov-card{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0;padding:9px 10px 10px;border:1px solid var(--line);border-radius:10px;background:var(--pn);text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
+.ov-card{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0;container-type:inline-size;padding:var(--pad-compact-y) var(--pad-compact-x);border:var(--border-w) solid var(--line);border-radius:var(--radius-tile);background:var(--pn);text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
 .ov-card:hover{background:var(--pn2);border-color:var(--line2)}
 .ov-card[aria-pressed="true"]{background:var(--pn2);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
-.ov-cn{font-size:13px;font-weight:700;color:var(--ink2)}
-.ov-cv{font-family:var(--font-disp);font-size:20px;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.ov-cv small,.ov-rv small,.ov-mv small{margin-left:1px;font-family:var(--font-body);font-size:11.5px;color:var(--mute)}
-.ov-band{display:flex;gap:1px;height:6px;margin-top:3px;border-radius:2px;overflow:hidden}
+.ov-cn{font-size:var(--text-sm);font-weight:700;color:var(--ink2)}
+.ov-cv{font-family:var(--font-sans);font-weight:700;font-size:var(--text-md);letter-spacing:-.03em;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
+/* 숫자는 자르지 않는다: 칸(내용 폭)이 좁으면 글자 단계를 내린다. '112,116호' 폭 ≈ 3.6em+단위 15px → 18px 80 · 16px 73 · 14px 65 · 12px 63 */
+@container (max-width:83px){.ov-cv{font-size:var(--text-base)}}
+@container (max-width:75px){.ov-cv{font-size:var(--text-sm)}.ov-cv small{font-size:var(--text-xs)}}
+@container (max-width:66px){.ov-cv{font-size:var(--text-xs)}}
+.ov-cn{white-space:nowrap}
+.ov-cv small,.ov-rv small,.ov-mv small{margin-left:1px;font-family:var(--font-sans);font-size:var(--fs-meta);color:var(--mute)}
+.ov-band{display:flex;gap:1px;height:6px;margin-top:3px;border-radius:var(--radius-chip);overflow:hidden}
 .ov-band.none{background:var(--line)}
 .ov-band i{display:block;min-width:2px;height:100%}
-.ov-ranks{display:flex;flex-direction:column;gap:6px;min-height:0}
-.ov-ranks h2{margin:4px 0 0;font-family:var(--font-body);font-size:14px;font-weight:700;color:var(--ink2)}
-.ov-rank{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
-.ov-rank li{border-bottom:1px solid var(--line)}
-.ov-rank button{display:grid;grid-template-columns:26px minmax(0,1fr) auto 16px;align-items:center;gap:8px;width:100%;min-height:36px;padding:5px 4px;border:0;background:transparent;text-align:left;cursor:pointer}
+.ov-ranks{flex:1 1 0;display:flex;flex-direction:column;gap:6px;min-height:0}
+.ov-rh{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px}
+.ov-ranks h3,.ov-sh h3{margin:0;font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;color:var(--ink2)}
+/* '전체 n ›' 알약: 주색 옅은 틴트, 테두리 없음, 보이는 높이 28 · 누름 칸 44(::before) */
+.ov-all{position:relative;flex:none;display:inline-flex;align-items:center;gap:2px;height:28px;padding:0 6px 0 10px;border:0;border-radius:var(--radius-full);background:color-mix(in oklab,var(--acc) var(--tint-mix),var(--pn));color:var(--acc);font-size:var(--text-sm);font-weight:700;font-variant-numeric:tabular-nums;cursor:pointer}
+.ov-all::before{content:"";position:absolute;inset:-8px -2px}
+.ov-all:hover,.ov-all[aria-expanded="true"]{background:color-mix(in oklab,var(--acc) var(--tint-mix-on),var(--pn))}
+.ov-all svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+/* 순위 막대 목록: 칸 높이만큼만(넘친 줄은 overview.js fitRanks 가 hidden), 줄 = 순위 · 이름 · 막대(지도 면과 같은 단계 색) · 값 */
+.ov-panel .ov-rank{flex:1 1 0;min-height:0;overflow:hidden}
+.ov-rank{list-style:none;margin:0;padding:0}
+.ov-rank button{display:grid;grid-template-columns:22px minmax(0,96px) minmax(0,1fr) auto 14px;align-items:center;gap:8px;width:100%;min-height:34px;padding:4px 4px;border:0;border-radius:var(--radius-chip);background:transparent;text-align:left;cursor:pointer}
+.ov-rbar{display:block;height:10px;border-radius:var(--radius-chip);background:color-mix(in srgb,var(--line) 55%,transparent);overflow:hidden}
+.ov-rbar .ov-sw{display:block;height:100%;border:0;border-radius:var(--radius-chip)}
+.ov-rank .zero .ov-rbar{background:transparent}
 .ov-rank button:hover{background:var(--pn2)}
-.ov-rn{font-size:12.5px;color:var(--mute);text-align:right;font-variant-numeric:tabular-nums}
-.ov-rname{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ov-rname small{margin-right:5px;font-size:12px;color:var(--mute)}
-.ov-rv{font-size:14px;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
+.ov-rn{font-size:var(--text-xs);color:var(--mute);text-align:right;font-variant-numeric:tabular-nums}
+.ov-rname{font-size:var(--fs-table);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ov-rname small{margin-right:5px;font-size:var(--fs-meta);color:var(--mute)}
+.ov-rv{font-size:var(--fs-table);font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 .ov-rank .zero .ov-rv{font-weight:400;color:var(--mute)}
-.ov-rank .ov-zeros>.ov-zbtn{display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--ink2)}
+.ov-rank .ov-zeros>.ov-zbtn{display:flex;justify-content:space-between;font-size:var(--text-sm);font-weight:700;color:var(--ink2)}
 .ov-rank .ov-zeros>.ov-zbtn:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
 .ov-zlist{list-style:none;margin:0;padding:0}
-.ov-zlist li:last-child{border-bottom:0}
+.ov-rank .ov-zeros{margin-top:6px;border-top:1px solid var(--line)}
+/* '전체 n' 목록: 패널을 덮는 판(그 안만 스크롤), 머리 = 제목 + 닫기 */
+.ov-sheet{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;gap:8px;padding:16px 10px 12px 18px;background:var(--bg);box-shadow:var(--shadow-pop)}
+.ov-sheet[hidden]{display:none}
+.ov-sh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:8px}
+.ov-sh .ov-mx{display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:var(--radius-tile);background:transparent;color:var(--mute);cursor:pointer}
+.ov-sh .ov-mx:hover{background:var(--pn2);color:var(--ink)}
+.ov-sheet .ov-rank{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:8px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
 .ov-rgo svg,.ov-menu svg{width:14px;height:14px;fill:none;stroke:var(--mute);stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 .ov-mapwrap{position:relative;min-width:0;min-height:0;overflow:hidden;background:var(--ov-bg)}
 .ov-map{position:absolute;inset:0}
-.ov-labels{position:absolute;inset:0;pointer-events:none;overflow:hidden;opacity:0;transition:opacity .2s}
-.ov.ready .ov-labels{opacity:1}
-.ov-lb{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;line-height:1.2;white-space:nowrap;text-align:center;font-variant-numeric:tabular-nums}
-.ov-lb b{font-size:12px;font-weight:700}
-.ov-lb span{font-size:12.5px;font-weight:700}
-.ov-lb.c0{color:var(--ov-ink-0);text-shadow:0 0 2px var(--ov-0),0 0 2px var(--ov-0)}
-.ov-lb.c1{color:var(--ov-ink-1);text-shadow:0 0 2px var(--ov-1),0 0 2px var(--ov-1)}
-.ov-lb.c2{color:var(--ov-ink-2);text-shadow:0 0 2px var(--ov-2),0 0 2px var(--ov-2)}
-.ov-lb.c3{color:var(--ov-ink-3);text-shadow:0 0 2px var(--ov-3),0 0 2px var(--ov-3)}
-.ov-lb.c4{color:var(--ov-ink-4);text-shadow:0 0 2px var(--ov-4),0 0 2px var(--ov-4)}
-.ov-lb.c5{color:var(--ov-ink-5);text-shadow:0 0 2px var(--ov-5),0 0 2px var(--ov-5)}
-.ov-tip{position:absolute;left:0;top:0;z-index:4;display:flex;flex-direction:column;gap:3px;max-width:280px;padding:9px 12px 10px;border:1px solid var(--hud-line);border-radius:10px;background:var(--glass-card);box-shadow:var(--hud-shadow);font-size:13px;line-height:1.45;pointer-events:none}
+/* 3D 단계 구분도 무대(assets/js/map3d.js · 모양은 assets/css/map3d.css — /citizen 과 같은 파일). 넓은 화면은 지도 칸 전체(판은 왼쪽 범례 칸을 비켜 간다), 좁은 화면은 위 범례 띠(top 은 overview.js)와 접힌 아래 시트 사이 */
+.ov-stage{position:absolute;inset:12px;outline:none}
+.ov-stage:focus-visible::after{content:"";position:absolute;inset:-3px;border:var(--border-w-on) solid var(--ring);border-radius:var(--radius-tile);pointer-events:none}
+/* 진짜 3D(assets/js/map3d-gl.js · MapGL): 캔버스 칸(.glmap)과 라벨 덮개 svg(.glov)가 무대 전체. 덮개는 포인터를 받지 않는다(가리킴·누름은 캔버스), 움직이는 동안 라벨은 모듈이 바로 옮긴다(전이 없음) */
+.ov-stage>.glmap,.ov-stage>svg.glov{position:absolute;inset:0}
+.ov-stage>svg.glov{pointer-events:none}
+.ov-stage>svg.glov .lbls .lb-g{transition:none}
+.ov-rank button.hl{background:var(--pn2)}
+.ov-tip{position:absolute;left:0;top:0;z-index:4;display:flex;flex-direction:column;gap:3px;max-width:280px;padding:9px 12px 10px;border:var(--border-w) solid var(--hud-line);border-radius:var(--radius-tile);background:var(--glass-card);box-shadow:var(--hud-shadow);font-size:var(--text-sm);line-height:1.45;pointer-events:none}
 .ov-tip[hidden]{display:none}
-.ov-tip>b{font-size:15px}
+.ov-tip>b{font-size:var(--text-base)}
 .ov-tv strong{font-variant-numeric:tabular-nums}
 .ov-ts{color:var(--ink2);font-variant-numeric:tabular-nums}
-.ov-th{color:var(--mute);font-size:12.5px}
+.ov-th{color:var(--mute);font-size:var(--text-sm)}
 .ov-tip .ov-band{margin:2px 0}
-.ov-legend{position:absolute;left:12px;bottom:12px;z-index:3;padding:8px 12px 9px;border:1px solid var(--hud-line);border-radius:10px;background:var(--glass-hud);box-shadow:var(--tag-shadow);font-size:13px}
-.ov-legend b{display:block;margin-bottom:4px;font-size:13px}
+.ov-legend{position:absolute;left:12px;bottom:12px;z-index:3;width:168px;padding:var(--pad-compact-y) var(--pad-tile-x);border:var(--border-w) solid var(--hud-line);border-radius:var(--radius-tile);background:var(--glass-hud);box-shadow:var(--tag-shadow);font-size:var(--fs-legend)}
+.ov-legend b{display:block;margin-bottom:4px;font-size:var(--fs-legend)}
 .ov-legend ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;font-variant-numeric:tabular-nums}
 .ov-legend li{display:flex;align-items:center;gap:7px;white-space:nowrap}
-.ov-sw{flex:none;width:16px;height:11px;border-radius:2px;border:1px solid var(--ov-line)}
+.ov-lh{display:block;margin-top:4px;font-size:var(--fs-legend);color:var(--mute)}   /* 색 지표가 진행 호수가 아닐 때 '높이: …'(자리는 늘 둔다) */
+.ov-sw{flex:none;width:16px;height:11px;border-radius:var(--radius-chip);border:1px solid var(--ov-line)}
 .ov-sw.c0{background:var(--ov-0)}.ov-sw.c1{background:var(--ov-1)}.ov-sw.c2{background:var(--ov-2)}.ov-sw.c3{background:var(--ov-3)}.ov-sw.c4{background:var(--ov-4)}.ov-sw.c5{background:var(--ov-5)}
-.ov-going{position:absolute;left:50%;top:14px;z-index:5;transform:translateX(-50%);margin:0;padding:6px 14px;border:1px solid var(--hud-line);border-radius:999px;background:var(--glass-cmd-active);box-shadow:var(--tag-shadow);font-size:14px;white-space:nowrap}
+.ov-going{position:absolute;left:50%;top:14px;z-index:5;transform:translateX(-50%);margin:0;padding:6px 14px;border:1px solid var(--hud-line);border-radius:var(--radius-full);background:var(--glass-cmd-active);box-shadow:var(--tag-shadow);font-size:var(--text-sm);white-space:nowrap}
 .ov-going[hidden]{display:none}
 /* 빈 상태 한 줄(값 있는 시군구가 3곳 미만): 지도 위 가운데 위. 좁은 화면은 위 띠 범례 아래(top 은 overview.js 가 맞춘다) */
-.ov-empty{position:absolute;left:50%;top:14px;z-index:3;transform:translateX(-50%);max-width:calc(100% - 24px);margin:0;padding:6px 14px;border:1px solid var(--hud-line);border-radius:10px;background:var(--glass-hud);box-shadow:var(--tag-shadow);font-size:13.5px;line-height:1.45;color:var(--ink);text-align:center;text-wrap:balance;word-break:keep-all}
+.ov-empty{position:absolute;left:50%;top:14px;z-index:3;transform:translateX(-50%);max-width:calc(100% - 24px);margin:0;padding:6px 14px;border:1px solid var(--hud-line);border-radius:var(--radius-tile);background:var(--glass-hud);box-shadow:var(--tag-shadow);font-size:var(--text-sm);line-height:1.45;color:var(--ink);text-align:center;text-wrap:balance;word-break:keep-all}
 .ov-empty[hidden]{display:none}
 /* 구 메뉴 = 선택 단계(2026-10-17): 마우스 올림 설명(ov-tip)과 구분되게 강조색 테두리·굵은 제목·안내 한 줄·닫기. 열린 동안 .ov.picking 이 지도 라벨을 흐리고 overview.js 가 고른 시만 또렷하게 둔다 */
-.ov-menu{position:fixed;z-index:60;min-width:240px;max-width:min(320px,calc(100vw - 16px));padding:10px 10px 8px;border:2px solid var(--acc);border-radius:12px;background:var(--pn);box-shadow:0 14px 34px rgb(0 0 0 / 35%),var(--hud-shadow);color:var(--ink)}
+.ov-menu{position:fixed;z-index:60;min-width:240px;max-width:min(320px,calc(100vw - 16px));padding:var(--pad-compact-y) var(--pad-compact-x);border:var(--border-w-on) solid var(--acc);border-radius:var(--radius-card);background:var(--pn);box-shadow:var(--map-menu-shadow),var(--hud-shadow);color:var(--ink)}
 .ov-menu[hidden]{display:none}
 .ov-mt{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
-.ov-mh{margin:0 0 0 4px;font-size:15px;font-weight:700;color:var(--ink);line-height:1.3}
-.ov-ms{margin:2px 4px 8px;font-size:12.5px;color:var(--mute)}
-.ov-menu .ov-mx{flex:none;width:28px;min-height:28px;padding:0;justify-content:center;font-size:14px;color:var(--mute)}
+.ov-mh{margin:0 0 0 4px;font-size:var(--text-base);font-weight:700;color:var(--ink);line-height:1.3}
+.ov-menu .ov-mx{flex:none;width:28px;min-height:28px;padding:0;justify-content:center;font-size:var(--text-sm);color:var(--mute)}
 .ov-menu ul{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
 .ov-menu li{border-bottom:1px solid var(--line)}
-.ov-menu button{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-height:38px;padding:5px 6px 5px 8px;border:0;border-radius:7px;background:transparent;font:inherit;font-size:14px;color:inherit;text-align:left;cursor:pointer}
+.ov-menu button{display:flex;align-items:center;justify-content:space-between;gap:14px;width:100%;min-height:38px;padding:5px 6px 5px 8px;border:0;border-radius:var(--radius-tile);background:transparent;font:inherit;font-size:var(--text-sm);color:inherit;text-align:left;cursor:pointer}
 .ov-menu button:hover,.ov-menu button:focus-visible{background:var(--pn2)}
 .ov-mv{display:inline-flex;align-items:center;gap:6px;font-weight:700;font-variant-numeric:tabular-nums}
-.ov-lmore{margin-left:2px;font-style:normal;font-weight:700;opacity:.8}
-.ov.picking .ov-labels{opacity:.35}
+.ov.picking .map .lbls{opacity:.35}
+.ov.picking .map .faces>.fg:not(:has(.f[aria-selected="true"])){opacity:.4}   /* 구 메뉴가 열린 동안 고른 시만 또렷하게(고른 시는 솟지 않고 면 효과) */
 .ov.picking .ov-tip{display:none}
-@media (prefers-reduced-motion:reduce){.ov-labels,.ov-metrics button,.ov-card{transition:none}}
+@media (prefers-reduced-motion:reduce){.ov-metrics button,.ov-card{transition:none}}
 /* 좁은 화면(≤768): 지도가 화면 전체, 패널은 아래 시트(처음엔 합계·지표·시도 카드까지, 손잡이로 펼치면 시군구 목록) */
 @media (max-width:768px){
   html[data-map-mode="overview"] .ov{display:block}
   .ov-mapwrap{position:absolute;inset:0}
-  .ov-panel{position:absolute;left:0;right:0;bottom:0;z-index:6;max-height:44%;padding:22px 14px 14px;gap:10px;border-right:0;border-top:1px solid var(--line);border-radius:14px 14px 0 0;box-shadow:var(--sheet-shadow);overflow:hidden}
-  .ov-panel[data-sheet="full"]{max-height:86%;overflow-y:auto}
+  .ov-panel{position:absolute;left:0;right:0;bottom:0;z-index:6;height:44%;padding:22px 14px 14px;gap:10px;border-right:0;border-top:1px solid var(--line);border-radius:var(--radius-card) var(--radius-card) 0 0;box-shadow:var(--sheet-shadow);overflow:hidden}
+  .ov-panel[data-sheet="full"]{height:86%}   /* 펴도 스크롤하지 않고 순위 막대 줄이 늘어난다 */
+  .ov-sheet{padding:22px 6px 12px 14px;border-radius:var(--radius-card) var(--radius-card) 0 0}
   .ov-handle{display:block;position:absolute;left:50%;top:0;width:64px;height:22px;transform:translateX(-50%);padding:0;border:0;background:transparent;cursor:pointer}
-  .ov-handle::before{content:"";position:absolute;left:16px;right:16px;top:8px;height:4px;border-radius:2px;background:var(--line2)}
-  .ov-head h1{font-size:19px}
-  .ov-big{font-size:28px}
-  .ov-cv{font-size:17px}
-  .ov-legend{top:10px;bottom:auto;left:10px;right:10px;padding:6px 9px;font-size:12px}
-  .ov-legend b{font-size:12px}
-  .ov-legend ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:2px 10px}
+  .ov-handle::before{content:"";position:absolute;left:16px;right:16px;top:8px;height:4px;border-radius:var(--radius-chip);background:var(--line2)}
+  .ov-head h2{font-size:var(--fs-h2)}
+  .ov-big{font-size:var(--text-2xl)}
+  .ov-cv{font-size:var(--text-md)}
+  .ov-legend{top:10px;bottom:auto;left:10px;right:10px;width:auto;padding:6px 9px;font-size:var(--fs-legend)}
+  .ov-legend b{font-size:var(--fs-legend)}
+  .ov-legend ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(1lh,auto));gap:2px 10px}   /* 칸이 3개 이하여도 두 줄 높이(지표를 바꿔도 지도 무대가 그대로) */
+  .ov-stage{inset:auto 8px calc(44% + 8px) 8px}
 }
 /* 상세 지도 위 경로(수도권 › 시도 › 시군구, region.js mountCrumbs): 있으면 머리 줄의 '공급 지도' 자리에 */
-.crumbs{display:flex;align-items:center;gap:6px;min-width:0;font-size:15px;line-height:1.3;white-space:nowrap}
+.crumbs{display:flex;align-items:center;gap:6px;min-width:0;font-size:var(--text-base);line-height:1.3;white-space:nowrap}
 .crumbs[hidden]{display:none}
 .crumbs a{color:var(--mute);text-decoration:none;text-underline-offset:3px}
 .crumbs a:hover{color:var(--ink);text-decoration:underline}
@@ -943,31 +942,31 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .brand-t:has(>.crumbs:not([hidden]))>b{display:none}
 
 /* 위치 미확보 묶음(2026-10-15 평가 A7 P1): 지도 위 점선 테두리 표지(시군구 대표점) + 머리 줄 단추 → 같은 목록 창(#lostPop). 판정 글자색은 카드와 같은 값(4.5:1) */
-.lostpin,.lostpop{--bad:#FFAFBF;--ok:#4ADE9E}
-html[data-map-shell]:not(.dark) .lostpin,html[data-map-shell]:not(.dark) .lostpop{--bad:#8E2C3C;--ok:#1D5946;--warn:#624C00}
-.lostpin{font:inherit;font-size:12.5px;font-weight:700;line-height:1.3;padding:5px 10px;color:var(--ink);background:var(--glass-tag);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1.5px dashed var(--ink2);border-radius:8px;box-shadow:var(--tag-shadow);white-space:nowrap;cursor:pointer}
+.lostpin,.lostpop{--bad:var(--map-bad-ink);--ok:var(--map-ok-ink);--warn:var(--map-warn-ink)}
+.lostpin{font:inherit;font-size:var(--fs-label-map);font-weight:700;line-height:1.3;padding:5px 10px;color:var(--ink);background:var(--glass-tag);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);border:1.5px dashed var(--ink2);border-radius:var(--radius-tile);box-shadow:var(--tag-shadow);white-space:nowrap;cursor:pointer}
 .lostpin:hover{background:var(--glass-tag-hover)}
 .lostpin[aria-expanded="true"]{border-color:var(--acc)}
 .lostpin .lp-d{color:var(--bad)}
 .lostpin.late{border-color:var(--bad);color:var(--bad)}   /* 지연 지표로 들어왔을 때: 지연이 든 묶음 표지를 빨강으로(2026-10-15 평가 P1) */
-.hudsum .hs-late{display:inline-block;margin-right:10px;padding:1px 9px;border:1px solid var(--bad,#FF6B88);border-radius:999px;color:var(--bad,#FF6B88);font-size:12.5px;font-weight:700;vertical-align:middle;white-space:nowrap}
+.hudsum .hs-late{display:inline-block;margin-right:10px;padding:1px 9px;border:1px solid var(--bad);border-radius:var(--radius-full);color:var(--bad);font-size:var(--text-xs);font-weight:700;vertical-align:middle;white-space:nowrap}
 .hudsum .hs-late.none{border-color:var(--line2);color:var(--mute)}
-html[data-map-shell]:not(.dark) .hudsum .hs-late:not(.none){--bad:#B4233C}
+.hudsum .hs-late:not(.none){--bad:var(--map-late-bad)}
 .hudsum .hs-a:has(.hs-late){display:flex;align-items:center}
 .hudsum .hs-lost{font:inherit;padding:0;border:0;background:none;color:inherit;text-decoration:underline dotted;text-underline-offset:3px;cursor:pointer}
 .hudsum .hs-lost:hover,.hudsum .hs-lost[aria-expanded="true"]{color:var(--ink)}
-.lostpop{position:fixed;z-index:30;width:320px;max-width:calc(100vw - 16px);max-height:min(60vh,420px);overflow:auto;padding:10px 12px 12px;border:1px solid var(--hud-line);border-radius:12px;background:var(--glass-card);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--hud-shadow);color:var(--ink);font-size:13px;line-height:1.45}
+.lostpop{position:fixed;z-index:30;width:320px;max-width:calc(100vw - 16px);max-height:min(60vh,420px);overflow:auto;padding:var(--pad-tile-y) var(--pad-tile-x);border:var(--border-w) solid var(--hud-line);border-radius:var(--radius-card);background:var(--glass-card);-webkit-backdrop-filter:var(--glass-blur);backdrop-filter:var(--glass-blur);box-shadow:var(--shadow-pop);color:var(--ink);font-size:var(--text-sm);line-height:1.45}
 .lostpop[hidden]{display:none}
 .lostpop .lp-h{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.lostpop .lp-h b{font-size:14px}
-.lostpop .lp-x{flex:none;width:28px;height:28px;border:0;border-radius:6px;background:transparent;color:var(--ink2);font-size:18px;line-height:1;cursor:pointer}
+.lostpop .lp-h b{font-size:var(--text-sm)}
+.lostpop .lp-x{flex:none;width:28px;height:28px;border:0;border-radius:var(--radius-chip);background:transparent;color:var(--ink2);font-size:var(--text-md);line-height:1;cursor:pointer}
 .lostpop .lp-x:hover{background:var(--glass-tag-hover)}
-.lostpop .lp-note{margin:4px 0 8px;color:var(--mute);font-size:12px}
-.lostpop .lp-guide{margin:0 0 8px;font-size:12px;font-weight:600;cursor:help}
+.lostpop .lp-guide{margin:0 0 8px;font-size:var(--text-sm);font-weight:700;cursor:help}
 .lostpop .lp-i{color:var(--mute)}
 .lostpop ul{list-style:none;margin:0;padding:0}
 .lostpop li{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 0;border-top:1px solid var(--line)}
 .lostpop .lp-n{min-width:0}
-.lostpop li.cur{margin:0 -6px;padding:8px 6px;border-radius:8px;background:var(--glass-tag-hover);box-shadow:inset 3px 0 0 var(--acc)}   /* ?project= 로 연 사업 */
-.lostpop small{grid-column:1;color:var(--ink2);font-size:12px}
+.lostpop li.cur{margin:0 -6px;padding:8px 6px;border-radius:var(--radius-tile);background:var(--glass-tag-hover);box-shadow:inset 0 0 0 var(--border-w) var(--acc)}   /* ?project= 로 연 사업 */
+.lostpop small{grid-column:1;color:var(--ink2);font-size:var(--fs-meta)}
 .lostpop li a{grid-column:2;grid-row:1 / span 2;align-self:center;color:var(--acc);font-weight:700;white-space:nowrap;text-underline-offset:3px}
+/* 지도 머리 줄(.mhead) 좌우 선: 1600px 이상은 TopNav 도 1760px 선(대시보드와 같음). 위 1440px 선 규칙(.shell-map .mhead)을 덮는다 */
+@media (min-width:1600px){.shell-map .mhead{padding-left:calc(max(0px,50vw - 880px) + 28px);padding-right:calc(max(0px,50vw - 880px) + 28px)}}   /* 1600px 이상은 TopNav 도 1760px 선(대시보드와 같음) */

@@ -53,6 +53,8 @@ export type OvUnit = { code: string; s: string; name: string; d: string; v: OvVa
 export type OverviewDoc = {
   schema: 'metro-overview/1'; ok: boolean; referenceDate: string | null; months: [string, string] | null;
   total: OvVals | null; sido: { code: string; name: string; v: OvVals | null }[]; units: OvUnit[]; view: Record<string, [number, number, number, number]>;
+  /* 전국 보기 맥락 면(지도 페이지가 data/board/korea-sido.json 에서 붙인다 — 같은 투영 정수, 시도 16곳). 없으면 지도는 수도권만 */
+  nation?: { view: [number, number, number, number]; sido: { s: string; n: string; d: string; l: [number, number] }[] };
 };
 
 const zero = (): OvVals => ({ u: 0, q: 0, n: 0, d: 0, a: 0, an: 0, mi: 0, mn: 0, st: [0, 0, 0, 0, 0, 0] });

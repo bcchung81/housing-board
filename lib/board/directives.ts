@@ -2,18 +2,17 @@
    통계누리 전국 착공 누계(보고자료와 같은 ytd), 사업 원장 집계(ledger-board.json), 원천 카탈로그 건수. */
 import type { LedgerBoard } from './types';
 
-/* 카드 아랫줄 = 앞말(pre, 작은 글자) + 큰 숫자(big) + 단위(u) + 보조 값(sub). m 은 그 셋을 이은 한 줄(읽기용 이름). 날짜·지시 이름·기준(basis)은 카드 title */
+/* 카드 아랫줄 = 앞말(pre) + 큰 숫자(big) + 단위(u) + 보조 값(sub — 색 없는 증감). m 은 그 셋을 이은 한 줄(읽기용 이름). 날짜·지시 이름·기준(basis)은 카드 title·(i).
+   2026-10-18 지시 카드 통일 규격: 두 줄 고정(지시 이름 / 값), 꼬리·링크 글자 없음 — 숫자 자체가 목록 링크(list) */
 export type Directive = {
   date: string; t: string; m: string;
-  tag?: string;                                           // 지시 이름 곁의 짧은 정의 꼬리(같은 이름의 숫자가 화면마다 정의가 다를 때 — 착공 = 통계누리 누계)
   pre?: string; big: string; u: string;
-  sub?: { text: string; tone: 'ok' | 'bad' | 'warn' };   // 값 오른쪽의 작은 보조 값
-  basis: string;                                          // 카드 title: 값의 기준(기간·범위)과 못 내는 값
+  sub?: string;                                           // 값 오른쪽의 보조 값(증감 '+10.8%' — 색·화살표 없음, 좁은 카드에서는 숨기고 basis 에 같은 값)
+  basis: string;                                          // 카드 title·(i): 값의 기준(기간·범위)과 못 내는 값
   p: string[];
-  /* '목록 ›' 연결: 그 숫자를 만든 사업만 거른 목록(사업 화면 쿼리 — lib/board/projects-view.ts parseFilters 규칙). 사업 목록으로 거를 수 없는 숫자는 가장 가까운 목록으로 보내고 차이를 title 에 */
-  list: { href: string; title: string; text?: string };   // text = 보이는 링크 글자(없으면 '목록') — 카드 숫자와 다른 것을 열 때 무엇이 열리는지 보이게
-  note?: string;                                          // 값 줄 끝의 짧은 회색 꼬리(기간 — '2026.01~08 누계')
-  /* 두 숫자를 같은 크기로 나란히(2026-10-15 사용자 결정 — 일정 지연 관리: 확정 · 후보 계산). 있으면 sub 대신 이 값을 보이고, 두 숫자가 각각 자기 목록으로 이어진다(앞 숫자 = list) */
+  /* 숫자 링크: 그 숫자를 만든 사업만 거른 목록(사업 화면 쿼리 — lib/board/projects-view.ts parseFilters 규칙). 사업 목록으로 거를 수 없는 숫자는 가장 가까운 목록으로 보내고 차이를 title 에 */
+  list: { href: string; title: string };
+  /* 두 숫자를 같은 크기로 나란히(2026-10-15 사용자 결정 — 일정 지연 관리: 확정 · 후보 계산). 두 숫자가 각각 자기 목록으로 이어진다(앞 숫자 = list) */
   pair?: { pre: string; big: string; u: string; list: { href: string; title: string } };
 };
 const val = (pre: string | undefined, big: string, u: string) => ({ pre, big, u, m: `${pre ? pre + ' ' : ''}${big}${u}` });
@@ -53,13 +52,13 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start, b
   const neck = bottleneck(L.delayByStage), upSum = L.upcoming.reduce((n, m) => n + m.units, 0);
   const yoy = start.cum !== null && start.cumLy ? (start.cum - start.cumLy) / start.cumLy * 100 : null;
   const span = `${start.year}년 1~${start.upto}월`;
-  const startNow = L.stageProjects?.[L.now]?.[2];   // 원장에서 지금 ③착공 단계인 사업 수(진척 관리 '목록' 링크가 여는 목록의 건수)
+  const yoyText = yoy === null ? null : `${yoy >= 0 ? '+' : '−'}${Math.abs(yoy).toFixed(1)}%`;   // 증감: 부호 글자만(초록 = 정상 판정색과 섞이지 않게 색·▲ 없음)
+  const startNow = L.stageProjects?.[L.now]?.[2];   // 원장에서 지금 ③착공 단계인 사업 수(진척 관리 숫자 링크가 여는 목록의 건수)
   return [
-    { date: '08.14', t: '진척 관리', tag: '통계누리', ...val('착공', start.cum === null ? '–' : f(start.cum), start.cum === null ? '' : '호'),
-      sub: yoy === null ? undefined : { text: `${yoy >= 0 ? '▲' : '▼'}${Math.abs(yoy).toFixed(1)}%`, tone: yoy >= 0 ? 'ok' : 'bad' },
-      note: `${start.year}.01~${String(start.upto).padStart(2, '0')} 누계`,   // calc.ts ytdSpan 과 같은 글(이 파일은 다른 .ts 를 가져오지 않는다)
-      basis: `통계누리 전국 착공 ${span} 누계와 전년 같은 기간 대비(보고자료와 같은 계산). 계획(목표) 물량 원천이 없어 계획 대비 달성률은 내지 못합니다.`,
-      p: ['p-chart'], list: { href: '/projects?sido=all&stage=2', text: startNow === undefined ? undefined : `원장 ${f(startNow)}건`, title: `목록: 지금 ③${K[2]} 단계인 원장 사업(전국)${startNow === undefined ? '' : ` ${f(startNow)}건`} — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록(건수가 다름)` } },
+    { date: '08.14', t: '진척 관리', ...val('착공 누계', start.cum === null ? '–' : f(start.cum), start.cum === null ? '' : '호'),
+      sub: yoyText ?? undefined,
+      basis: `통계누리 전국 착공 ${span} 누계${yoyText ? ` · 전년 같은 기간 대비 ${yoyText}` : '와 전년 같은 기간 대비'}(보고자료와 같은 계산). 계획(목표) 물량 원천이 없어 계획 대비 달성률은 내지 못합니다.`,
+      p: ['p-chart'], list: { href: '/projects?sido=all&stage=2', title: `목록: 지금 ③${K[2]} 단계인 원장 사업(전국)${startNow === undefined ? '' : ` ${f(startNow)}건`} — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록(건수가 다름)` } },
     { date: '08.19', t: '사업장별 현황판', ...val(undefined, f(L.scope.projects), '건'), basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})`,
       p: ['p-region'], list: { href: '/projects?sido=all', title: `목록: 원장 사업 전체(전국) ${f(L.scope.projects)}건 — 카드 숫자와 같음` } },
     { date: '09.03', t: '범부처 통합·병목', ...(neck ? val(`병목 ${K[neck.i]}`, f(neck.units), '호') : val('병목', '없음', '')), basis: `${L_(L)} · 병목 = 지연 호수(경과 6개월 이상 사업의 계획 호수)가 가장 큰 단계 — 사업 화면 '어디서 막혀 있는가'와 같은 계산(판정한 사업 ${L.scope.judged}건 기준)`,
@@ -68,7 +67,7 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start, b
       p: ['p-fut'], list: { href: '/region?sido=all&kind=COMPLETION', title: `목록: 지역 공급의 준공 예정(전국, 같은 12개월) — 사업 목록에는 '앞으로 12개월' 거르기가 없어 같은 범위·같은 값인 지역 공급 목록으로` } },
     lateCard(L),
     { date: '09.30', t: '국민 공개·공식 원천', ...val('원천', f(sourceCount), '곳'), basis: '데이터 원본 화면의 원천 카탈로그에 등록된 원천 수',
-      p: ['p-flow'], list: { href: '/sources', title: '목록: 데이터 원본(원천 카탈로그) — 사업이 아니라 원천 목록' } },
+      p: ['p-actual'], list: { href: '/sources', title: '목록: 데이터 원본(원천 카탈로그) — 사업이 아니라 원천 목록' } },
   ];
 }
 
@@ -77,7 +76,7 @@ function lateCard(L: LedgerBoard): Directive {
   const J = L.judgment, c = J.candidate, n = f(J.delay.projects);
   const base = { date: '09.18', t: '일정 지연 관리', basis: `${L_(L)} · ${ledgerJudged(L)} 중 지연·주의${c ? ` · ${CAND_TEXT}: ${candText(c)}건(지연·주의에 넣지 않음)` : ''}`, p: ['p-trend'],
     list: { href: '/projects?sido=all&status=late', title: `목록: 지연(장기 포함) 사업(전국) ${n}건 — 카드 숫자와 같음 · 주의 ${f(J.caution.projects)}건은 '점검 필요' 거르기` } };
-  if (!c) return { ...base, ...val('지연', n, '건'), sub: { text: `주의 ${f(J.caution.projects)}`, tone: 'warn' } };
+  if (!c) return { ...base, ...val('지연', n, '건'), sub: `주의 ${f(J.caution.projects)}` };
   const cn = f(c.delay.projects);
   return { ...base, ...val('확정', n, '건'), m: `지연 확정 ${n}건 · 후보 계산 ${cn}건`,
     pair: { pre: '후보 계산', big: cn, u: '건', list: { href: '/projects?sido=all&status=review-late', title: `목록: 후보 · 지연 계산(전국) ${cn}건 — 카드 숫자와 같음 · ${CAND_TEXT} ${f(c.ok.projects + c.caution.projects + c.delay.projects)}건 중 같은 규칙으로 계산하면 지연 · 사업 번호가 없어 지연 확정에 넣지 않음` } } };

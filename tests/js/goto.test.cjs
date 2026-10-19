@@ -239,7 +239,7 @@ test('구조: index.html 에 입력줄 마크업(콤보박스·목록·인식 �
   assert.match(html, /load\('assets\/js\/app\.js'\); \}\)\.then\(function \(\) \{ return load\('assets\/js\/goto\.js'\)[^}]*GotoBar\.mount\(window, document\)[^}]*\}\)\.catch\(function \(\) \{\}\)/);   // 실패해도 지도는 열린다
   assert.match(css, /\.mapwrap\.hascmd \.dynhint\{/);
   const mobile = /@media \(max-width:900px\)\{([\s\S]*?)\n\}\n/.exec(css)[1];
-  assert.match(mobile, /\.cmd\{left:12px;right:68px;top:56px;bottom:auto;/); assert.match(mobile, /\.cmd-bar input\{font-size:16px\}/);
+  assert.match(mobile, /\.cmd\{left:12px;right:68px;top:56px;bottom:auto;/); assert.match(mobile, /\.cmd-bar input\{font-size:var\(--text-base\)\}/);
   assert.match(css, /\.cmd\[hidden\]\{display:none\}/); assert.match(css, /\.cmd-res\[hidden\],\.cmd-parse\[hidden\]\{display:none\}/);
   assert.match(css, /@keyframes spin/); assert.match(css, /prefers-reduced-motion:reduce\)\{\.cmd-bar,\.cmd-res,\.cmd-parse\{transition:none\}/);
 });
@@ -307,4 +307,13 @@ test('mount: 마우스를 올려 다시 그려도 목록 스크롤 위치를 지
   assert.equal(page.el.input.attrs['aria-activedescendant'], 'cmdO2'); assert.equal(top, 120); assert.equal(into, 0);
   page.el.input.fire('keydown', { key: 'ArrowUp' });
   assert.equal(page.el.input.attrs['aria-activedescendant'], 'cmdO1'); assert.equal(into, 1);   // 키보드는 선택 줄을 보이게
+});
+
+test('개요 시도 타일 숫자는 자르지 않고 칸이 좁으면 글자 단계를 내린다', () => {
+  const rule = (sel) => { const m = new RegExp(`(?:^|\\n)${sel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\{([^}]*)\\}`).exec(css); assert.ok(m, `${sel} 규칙`); return m[1]; };
+  const cv = rule('.ov-cv');
+  assert.match(cv, /white-space:nowrap/); assert.doesNotMatch(cv, /overflow:hidden|text-overflow/, '숫자 말줄임 금지');
+  assert.match(rule('.ov-card'), /container-type:inline-size/);
+  assert.match(css, /@container \(max-width:\d+px\)\{\.ov-cv\{font-size:var\(--text-base\)\}\}/);
+  assert.doesNotMatch(rule('.ov-cn'), /overflow:hidden|text-overflow/, '이름 말줄임 금지');
 });

@@ -1,7 +1,7 @@
 {
  "openapi": "3.1.0",
  "info": {
-  "title": "주택파동 지도 API",
+  "title": "주택공급 지도 API",
   "version": "1.0.0",
   "description": "번들이 없는 지역도 지도가 열리도록 하는 요청 시 조회 API. 열리는 방식은 3등급: A 번들(regions/<slug>) · B 번들 없는 법정동·필지(경계·건물·인허가·기반시설 요청 시 조회) · C 번들 없는 시군구(경계만). 이 문서가 서버·화면 사이의 계약이며 tests/js/contract.test.cjs 가 실제 응답이 이 스키마를 지키는지 확인한다.",
   "license": {
@@ -341,7 +341,7 @@
    "get": {
     "operationId": "getNotices",
     "summary": "공공 모집 공고(마이홈·LH)",
-    "description": "시군구 하나의 공공주택 모집공고(임대·분양)를 돌려준다: 마이홈포털(HWSPR02)과 LH 분양임대공고문(15058530)을 합친다. 번들이 없는 지역에도 지금 모집 중인 공공주택을 보이려는 것이며 화면은 사이드바에 비동기로 채운다. 마이홈 원천은 시군구 필터가 없는 전국 목록(100건씩, 1시간 캐시)이라 행정표준코드의 시군구 이름으로 거른다. LH 공고문은 시도만 있어 제목에 시군구·법정동 이름이 있는 것만 싣고(제목 기준 추정, 마이홈과 제목이 같으면 마이홈만), 공급정보(15056765)로 단지명·세대수를 채운다. 한쪽이 실패하면 나머지를 주고 meta.partial 에 알린다.",
+    "description": "시군구 하나(sgg) 또는 시도 전체(sido)의 공공주택 모집공고(임대·분양)를 돌려준다. 민영 분양은 청약홈(15098547)에서 더한다: 마이홈포털(HWSPR02)과 LH 분양임대공고문(15058530)을 합친다. 번들이 없는 지역에도 지금 모집 중인 공공주택을 보이려는 것이며 화면은 사이드바에 비동기로 채운다. 마이홈 원천은 시군구 필터가 없는 전국 목록(100건씩, 1시간 캐시)이라 행정표준코드의 시군구 이름으로 거른다. LH 공고문은 시도만 있어 제목에 시군구·법정동 이름이 있는 것만 싣고(제목 기준 추정, 마이홈과 제목이 같으면 마이홈만), 공급정보(15056765)로 단지명·세대수를 채운다. 한쪽이 실패하면 나머지를 주고 meta.partial 에 알린다.",
     "tags": [
      "notices"
     ],
@@ -349,11 +349,21 @@
      {
       "name": "sgg",
       "in": "query",
-      "required": true,
-      "description": "시군구 5자리(구가 있는 시는 구 코드나 시 코드 모두 가능)",
+      "required": false,
+      "description": "시군구 5자리(구가 있는 시는 구 코드나 시 코드 모두 가능). sido 와 함께 주면 400",
       "schema": {
        "type": "string",
        "pattern": "^[0-9\\s-]+$"
+      }
+     },
+     {
+      "name": "sido",
+      "in": "query",
+      "required": false,
+      "description": "시도 2자리(행정표준코드 시도). 그 시도 안 모든 시군구의 공고를 돌려준다. sgg 와 함께 주면 400, 표준코드 표에 없으면 404",
+      "schema": {
+       "type": "string",
+       "pattern": "^[0-9]{2}$"
       }
      }
     ],
@@ -377,7 +387,7 @@
       }
      },
      "400": {
-      "description": "invalid-query(쿼리) · invalid-code(시군구가 아님). s-maxage=3600",
+      "description": "invalid-query(쿼리: sgg·sido 중 하나만) · invalid-code(시군구·시도 코드가 아님). s-maxage=3600",
       "content": {
        "application/problem+json": {
         "schema": {
@@ -387,7 +397,7 @@
       }
      },
      "404": {
-      "description": "표준코드 표에 없는 시군구",
+      "description": "표준코드 표에 없는 시군구(sgg) 또는 시도(sido). unknown-code",
       "content": {
        "application/problem+json": {
         "schema": {
@@ -2715,13 +2725,75 @@
       ],
       "description": "마이홈·LH 주소만(원천 링크를 그대로 믿지 않는다)"
      },
+     "deposit": {
+      "oneOf": [
+       {
+        "type": "integer",
+        "minimum": 0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "임대 보증금(원). 임대가 아니거나 값이 없으면 null(0 포함). 분양가는 싣지 않는다"
+     },
+     "monthlyRent": {
+      "oneOf": [
+       {
+        "type": "integer",
+        "minimum": 0
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "임대 월 임대료(원). 임대가 아니거나 값이 없으면 null(0 포함)"
+     },
+     "targets": {
+      "type": "array",
+      "items": {
+       "type": "string",
+       "enum": [
+        "신혼부부",
+        "신생아",
+        "청년",
+        "다자녀",
+        "고령자"
+       ]
+      },
+      "description": "제목에 적힌 대상(순서 고정). 없으면 []. 자격 판정이 아니다"
+     },
+     "sgg": {
+      "oneOf": [
+       {
+        "type": "string",
+        "pattern": "^\\d{5}$"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "공고가 속한 시군구 5자리"
+     },
+     "sggName": {
+      "oneOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "표준코드 시군구 이름('경기도 김포시')"
+     },
      "source": {
       "type": "string",
       "enum": [
        "myhome",
-       "lh"
+       "lh",
+       "applyhome"
       ],
-      "description": "출처: myhome(마이홈포털 HWSPR02) · lh(한국토지주택공사 분양임대공고문). lh 공고는 주소·필지가 없고(pnu null) 제목에 시군구·법정동 이름이 있을 때만 그 시군구에 실리며(제목 기준 추정), 단지명·세대수는 공급정보(15056765)에서 채운다. 마이홈과 제목이 같은 LH 공고는 마이홈 쪽만 싣는다"
+      "description": "출처: myhome(마이홈포털 HWSPR02) · lh(한국토지주택공사 분양임대공고문). applyhome(청약홈 분양정보 15098547, 민영 분양만)은 건설사·분양가 없이 접수 마감이 오늘 이후인 공고만. lh 공고는 주소·필지가 없고(pnu null) 제목에 시군구·법정동 이름이 있을 때만 그 시군구에 실리며(제목 기준 추정), 단지명·세대수는 공급정보(15056765)에서 채운다. 마이홈과 제목이 같은 LH 공고는 마이홈 쪽만 싣는다"
      }
     }
    },
@@ -2729,7 +2801,6 @@
     "type": "object",
     "required": [
      "type",
-     "sgg",
      "name",
      "asOf",
      "items",
@@ -2741,7 +2812,13 @@
      },
      "sgg": {
       "type": "string",
-      "pattern": "^\\d{5}$"
+      "pattern": "^\\d{5}$",
+      "description": "시군구 질의(?sgg=)일 때 요청한 시군구 5자리"
+     },
+     "sido": {
+      "type": "string",
+      "pattern": "^\\d{2}$",
+      "description": "시도 질의(?sido=)일 때 요청한 시도 2자리"
      },
      "name": {
       "type": "string",
@@ -2795,10 +2872,11 @@
           "rental",
           "sale",
           "lh",
-          "lh-supply"
+          "lh-supply",
+          "applyhome"
          ]
         },
-        "description": "일부가 실패해 나머지만 준 경우(이때 응답은 짧게만 캐시): rental·sale(마이홈 목록) · lh(LH 공고문 목록) · lh-supply(LH 공급정보, 단지명·세대수 없음)"
+        "description": "일부가 실패해 나머지만 준 경우(이때 응답은 짧게만 캐시): rental·sale(마이홈 목록) · lh(LH 공고문 목록) · lh-supply(LH 공급정보, 단지명·세대수 없음) · applyhome(청약홈 민영 분양)"
        },
        "lh": {
         "type": "integer",
@@ -2809,6 +2887,16 @@
         "type": "integer",
         "minimum": 0,
         "description": "그 가운데 LH 공고 수"
+       },
+       "applyhome": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "전국 청약홈 민영 분양 공고 수(접수 마감이 오늘 이후)"
+       },
+       "applyhomeMatched": {
+        "type": "integer",
+        "minimum": 0,
+        "description": "그 가운데 이 질의 지역에 실린 청약홈 공고 수"
        }
       }
      }

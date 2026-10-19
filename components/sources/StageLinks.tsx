@@ -7,10 +7,10 @@
    주소의 #id 가 그 안을 가리키면(기관별 화면의 /sources#원천) 기타 탭을 연 뒤 접힌 상자를 열고 그 자리로 간다. */
 import * as React from 'react';
 import { cn } from 'cn';
-import { DataGrid } from '../ui/data-grid';
-import { GRID_DENSE, dotDates, type Col, type Row } from '../../lib/grid/spec';
-import InfoTip from '../ui/info-tip';
-import { LEVELS, LEVEL_NAME, VIAS, type Edge, type Level, type LinkItem, type StageLink, type Via } from '../../lib/board/stage-links';
+import { DataGrid } from '@/components/ui/data-grid';
+import { GRID_DENSE, dotDates, type Col, type Row } from '@/lib/grid/spec';
+import InfoTip from '@/components/ui/info-tip';
+import { LEVELS, LEVEL_NAME, VIAS, type Edge, type Level, type LinkItem, type StageLink, type Via } from '@/lib/board/stage-links';
 
 const NUM = ['①', '②', '③', '④', '⑤', '⑥'];
 /* 도식 좌표(viewBox 폭 W): 왼쪽 상자 · 가운데 사슬 · 곁가지 키 · 오른쪽 상자. BH 상자 높이, KH 사슬 높이, STEP 같은 고리 안 상자 간격 */
@@ -45,7 +45,7 @@ function Badges({ via, right, top }: { via: Via[]; right: number; top: number })
         return (
           <g key={v}>
             <rect x={at} y={top} width={w} height={16} rx="8" strokeWidth="1" className={VIA_STYLE[v].box} />
-            <text x={at + w / 2} y={top + 12} textAnchor="middle" className={cn('text-[11px] font-bold', VIA_STYLE[v].text)}>{v}</text>
+            <text x={at + w / 2} y={top + 12} textAnchor="middle" className={cn('text-xs font-bold', VIA_STYLE[v].text)}>{v}</text>
           </g>
         );
       })}
@@ -83,12 +83,12 @@ function Diagram({ s }: { s: StageLink }) {
         <g key={`${left ? 'l' : 'r'}-${l}-${i}`}>
           <rect x={bx} y={iy - BH / 2} width={left ? LW : RW} height={BH} rx="9"
             className={it.edge === 'need' ? 'fill-[color-mix(in_srgb,var(--warn)_12%,var(--card))] stroke-warn' : 'fill-card stroke-border'} strokeWidth="1.2" />
-          <text x={bx + 14} y={iy - 5} className="fill-foreground text-[14px] font-bold">{it.name}</text>
-          <text x={bx + 14} y={iy + 16} className="fill-muted-foreground text-[12px]">{dotDates(it.sub)}</text>
+          <text x={bx + 14} y={iy - 5} className="fill-foreground text-sm font-bold">{it.name}</text>
+          <text x={bx + 14} y={iy + 16} className="fill-muted-foreground text-sm">{dotDates(it.sub)}</text>
           <Badges via={it.via ?? []} right={bx + (left ? LW : RW) - 8} top={iy - BH / 2 + 6} />
           <line x1={x1} y1={iy} x2={xEnd} y2={ty} className={EDGE[it.edge]} strokeWidth="1.6" fill="none" markerEnd={mark(it.edge)} />
           {it.edge === 'none' ? <path d={`M${xEnd - 5},${ty - 5} l10,10 M${xEnd + 5},${ty - 5} l-10,10`} className="stroke-bad" strokeWidth="2" /> : null}
-          <text x={lx} y={ly} textAnchor="middle" className={cn('text-[12px]', LABEL[it.edge])}>{it.label}</text>
+          <text x={lx} y={ly} textAnchor="middle" className={cn('text-sm', LABEL[it.edge])}>{it.label}</text>
         </g>
       );
     });
@@ -97,14 +97,14 @@ function Diagram({ s }: { s: StageLink }) {
   const spine = (l: Exclude<Level, 'side'>) => (
     <g key={l}>
       <rect x={SX} y={rowY[l] - KH / 2} width={SW} height={KH} rx="9" strokeWidth="1.5" className="fill-[color-mix(in_srgb,var(--primary)_10%,var(--card))] stroke-primary" />
-      <text x={CX} y={rowY[l] - 4} textAnchor="middle" className="fill-foreground text-[14px] font-bold">{LEVEL_NAME[l].name}</text>
-      <text x={CX} y={rowY[l] + 16} textAnchor="middle" className="fill-muted-foreground font-mono text-[12px]">{LEVEL_NAME[l].key}</text>
+      <text x={CX} y={rowY[l] - 4} textAnchor="middle" className="fill-foreground text-sm font-bold">{LEVEL_NAME[l].name}</text>
+      <text x={CX} y={rowY[l] + 16} textAnchor="middle" className="fill-muted-foreground text-sm">{LEVEL_NAME[l].key}</text>
     </g>
   );
   const down = (a: Level, b: Level, label?: string) => (
     <g key={`${a}-${b}`}>
       <line x1={CX} y1={rowY[a] + KH / 2} x2={CX} y2={rowY[b] - KH / 2 - 2} className="stroke-foreground" strokeWidth="1.5" markerEnd={mark('key')} />
-      {label ? <text x={CX - 8} y={(rowY[a] + rowY[b]) / 2 + 4} textAnchor="end" className="fill-muted-foreground text-[12px]">{label}</text> : null}
+      {label ? <text x={CX - 8} y={(rowY[a] + rowY[b]) / 2 + 4} textAnchor="end" className="fill-muted-foreground text-sm">{label}</text> : null}
     </g>
   );
   const sideTop = rowY.side - KH / 2, sideBottom = rowY.side + KH / 2, spineX = CX - 30;
@@ -115,23 +115,23 @@ function Diagram({ s }: { s: StageLink }) {
         <marker id={`${uid}-f`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" className="fill-foreground" /></marker>
         <marker id={`${uid}-w`} viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" className="fill-warn" /></marker>
       </defs>
-      <text x={LX + LW / 2} y="24" textAnchor="middle" className="fill-foreground text-[13px] font-bold">지금 가진 자료 · {s.current.length}종</text>
-      <text x={CX} y="24" textAnchor="middle" className="fill-foreground text-[13px] font-bold">연결 고리(키)</text>
-      <text x={RX + RW / 2} y="24" textAnchor="middle" className="fill-warn text-[13px] font-bold">{rightHead}</text>
+      <text x={LX + LW / 2} y="24" textAnchor="middle" className="fill-foreground text-sm font-bold">지금 가진 자료 · {s.current.length}종</text>
+      <text x={CX} y="24" textAnchor="middle" className="fill-foreground text-sm font-bold">연결 고리(키)</text>
+      <text x={RX + RW / 2} y="24" textAnchor="middle" className="fill-warn text-sm font-bold">{rightHead}</text>
 
       {(['sido', 'sgg', 'bjd', 'pnu', 'prj'] as const).map(spine)}
       {down('sido', 'sgg', '코드 앞자리')}{down('sgg', 'bjd')}{down('bjd', 'pnu')}
       <line x1={spineX} y1={rowY.pnu + KH / 2} x2={spineX} y2={rowY.prj - KH / 2 - 2} className="stroke-foreground" strokeWidth="1.5" markerEnd={mark('key')} />
-      <text x={spineX - 8} y={(rowY.pnu + KH / 2 + sideTop) / 2 + 4} textAnchor="end" className="fill-foreground text-[12px]">{s.pnuToPrj}</text>
+      <text x={spineX - 8} y={(rowY.pnu + KH / 2 + sideTop) / 2 + 4} textAnchor="end" className="fill-foreground text-sm">{s.pnuToPrj}</text>
 
       <rect x={DX} y={sideTop} width={DW} height={KH} rx="9" strokeWidth="1.6"
         className={s.side.known ? 'fill-[color-mix(in_srgb,var(--primary)_10%,var(--card))] stroke-primary' : 'fill-card stroke-warn [stroke-dasharray:5_4]'} />
-      <text x={DC} y={rowY.side - 4} textAnchor="middle" className="fill-foreground text-[14px] font-bold">{s.side.name}</text>
-      <text x={DC} y={rowY.side + 15} textAnchor="middle" className="fill-muted-foreground text-[11px]">{dotDates(s.side.sub)}</text>
+      <text x={DC} y={rowY.side - 4} textAnchor="middle" className="fill-foreground text-sm font-bold">{s.side.name}</text>
+      <text x={DC} y={rowY.side + 15} textAnchor="middle" className="fill-muted-foreground text-sm">{dotDates(s.side.sub)}</text>
       <line x1={DC - 14} y1={sideTop} x2={CX + 70} y2={rowY.pnu + KH / 2 + 3} className={EDGE[s.side.toPnu.edge]} strokeWidth="1.6" markerEnd={mark(s.side.toPnu.edge)} />
-      <text x={DC} y={(sideTop + rowY.pnu + KH / 2) / 2 + 4} className={cn('text-[12px]', LABEL[s.side.toPnu.edge])}>{s.side.toPnu.label}</text>
+      <text x={DC} y={(sideTop + rowY.pnu + KH / 2) / 2 + 4} className={cn('text-sm', LABEL[s.side.toPnu.edge])}>{s.side.toPnu.label}</text>
       <line x1={DC - 14} y1={sideBottom} x2={CX + 70} y2={rowY.prj - KH / 2 - 3} className={EDGE[s.side.toPrj.edge]} strokeWidth="1.6" markerEnd={mark(s.side.toPrj.edge)} />
-      <text x={DC} y={(sideBottom + rowY.prj - KH / 2) / 2 + 4} className={cn('text-[12px]', LABEL[s.side.toPrj.edge])}>{s.side.toPrj.label}</text>
+      <text x={DC} y={(sideBottom + rowY.prj - KH / 2) / 2 + 4} className={cn('text-sm', LABEL[s.side.toPrj.edge])}>{s.side.toPrj.label}</text>
 
       {items(s.current, true)}
       {items(s.needed, false)}
@@ -142,8 +142,8 @@ function Diagram({ s }: { s: StageLink }) {
         <g key={o.name}>
           <line x1={outX(i) + ow / 2} y1={busY} x2={outX(i) + ow / 2} y2={outY - 2} className="stroke-foreground" strokeWidth="1.5" markerEnd={mark('key')} />
           <rect x={outX(i)} y={outY} width={ow} height={outH} rx="9" className="fill-card stroke-foreground" strokeWidth="1.3" />
-          <text x={outX(i) + 14} y={outY + 22} className="fill-foreground text-[14px] font-bold">{o.name}</text>
-          {o.lines.map((t, k) => <text key={k} x={outX(i) + 14} y={outY + 42 + k * 16} className="fill-muted-foreground text-[12px]">{dotDates(t)}</text>)}
+          <text x={outX(i) + 14} y={outY + 22} className="fill-foreground text-sm font-bold">{o.name}</text>
+          {o.lines.map((t, k) => <text key={k} x={outX(i) + 14} y={outY + 42 + k * 16} className="fill-muted-foreground text-sm">{dotDates(t)}</text>)}
         </g>
       ))}
     </svg>
@@ -179,11 +179,11 @@ export default function StageLinks({ stages, extra, status }: { stages: StageLin
   const go = (i: number) => { const n = (i + total) % total; setTab(n); refs.current[n]?.focus(); };
   const s = tab < ETC ? stages[tab] : null;
   const rows: Row[] = s ? s.rows.map((r, i) => ({ id: String(i), c: r })) : [];
-  const tabCls = 'h-8 cursor-pointer rounded-[8px] border-0 bg-transparent px-3 text-[14px] font-bold whitespace-nowrap text-ink2 [transition:background_.15s,color_.15s] not-aria-selected:hover:bg-pn2 aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary';
+  const tabCls = 'h-8 cursor-pointer rounded-tile border-0 bg-transparent px-3 text-sm font-bold whitespace-nowrap text-ink2 [transition:background_.15s,color_.15s] not-aria-selected:hover:bg-card aria-selected:bg-primary aria-selected:text-primary-foreground focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary';
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <div role="tablist" aria-label="공급 6단계" className="flex w-fit max-w-full flex-wrap rounded-[10px] bg-card p-[3px] shadow-[var(--shadow-card)]"
+        <div role="tablist" aria-label="공급 6단계" className="flex w-fit max-w-full flex-wrap rounded-tile bg-pn2 p-0.5"
           onKeyDown={(e) => { if (e.key === 'ArrowRight') go(tab + 1); else if (e.key === 'ArrowLeft') go(tab - 1); else if (e.key === 'Home') go(0); else if (e.key === 'End') go(total - 1); else return; e.preventDefault(); }}>
           {stages.map((st, i) => (
             <button key={st.id} ref={(el) => { refs.current[i] = el; }} type="button" role="tab" id={`stage-tab-${st.id}`} aria-selected={i === tab} aria-controls={`stage-panel-${st.id}`} tabIndex={i === tab ? 0 : -1}
@@ -205,13 +205,13 @@ export default function StageLinks({ stages, extra, status }: { stages: StageLin
           ) : null}
         </div>
         {s ? (
-          <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1 text-[13px] text-muted-foreground" aria-label="범례">
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1 text-sm text-muted-foreground" aria-label="범례">
             <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-2 border-foreground align-middle" />키 연결</span>
-            <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-[1.5px] border-dashed border-foreground align-middle" />이름·주소만</span>
+            <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-2 border-dashed border-foreground align-middle" />이름·주소만</span>
             <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-2 border-warn align-middle" />확보하면 연결</span>
-            <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-[1.5px] border-dashed border-bad align-middle" />값·키 없음</span>
+            <span className="whitespace-nowrap"><i className="mr-1 inline-block w-5 border-t-2 border-dashed border-bad align-middle" />값·키 없음</span>
             <span className="h-3 w-px bg-border" aria-hidden="true" />
-            {VIAS.map((v) => <b key={v} title={VIA_NOTE[v]} className={cn('inline-block rounded-full border px-1.5 text-[13px] leading-[18px] font-bold whitespace-nowrap', VIA_STYLE[v].pill)}>{v}</b>)}
+            {VIAS.map((v) => <b key={v} title={VIA_NOTE[v]} className={cn('inline-block rounded-full border px-1.5 text-sm leading-sub font-bold whitespace-nowrap', VIA_STYLE[v].pill)}>{v}</b>)}
             <InfoTip label="연계도 읽는 법">
               <dl>
                 <dt>선</dt><dd>키 연결 = 코드 키로 이어짐 · 이름·주소만 = 글자로만 맞춤 · 확보하면 연결 = 추가 자료가 있으면 이어짐 · 값·키 없음 = 이을 값이 없음</dd>
@@ -223,7 +223,7 @@ export default function StageLinks({ stages, extra, status }: { stages: StageLin
       </div>
       {s ? <div role="tabpanel" id={`stage-panel-${s.id}`} aria-labelledby={`stage-tab-${s.id}`} className="mt-3 grid gap-3">
         {/* 도식은 본문 폭에 맞춰 줄어든다(화면을 넘치지 않음). 휴대폰 폭에서만 읽히게 상자 안에서 옆으로 민다 */}
-        <div className="overflow-x-auto rounded-[12px] border border-border bg-card px-2 py-1">
+        <div className="relative overflow-x-auto px-2 py-1">
           <Diagram s={s} />
         </div>
         <div className={GRID_DENSE}>

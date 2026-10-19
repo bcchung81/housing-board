@@ -1,0 +1,78 @@
+/* 3D 단계 구분도(assets/js/map3d.js)의 모양 하나 — /citizen 은 build.js 가 template <style> 의 자리표시(__MAP3D_CSS__)에, /map 수도권 개요는 지도 레이아웃이 <link> 로 넣는다.
+   색·글자·두께는 globals 토큰만(--map-ov-0~5 면 단계 · --map-ov-ink-N 라벨 글자 · --map-ov-line 경계 · --map-shade 그늘(띄운 고른 곳의 옆면·그림자 포함) · --map-ctx 맥락 시도). 점선·빗금 없음 */
+/* 면 색 단계(cN): /map 개요(assets/js/overview.js classOf)와 같은 --map-ov-0(값 없음) ~ 5 */
+.map .c0 { --c: var(--map-ov-0); } .map .c1 { --c: var(--map-ov-1); } .map .c2 { --c: var(--map-ov-2); } .map .c3 { --c: var(--map-ov-3); } .map .c4 { --c: var(--map-ov-4); } .map .c5 { --c: var(--map-ov-5); }
+svg.map { display: block; overflow: hidden; }
+/* 3D 판: 판 아래 옅은 그림자 · 판 옆면(사업 없음 면 색을 그늘과 섞음) · 맥락 시도 면(경기 지도의 서울: --map-ctx 면 + 카드색 경계선 — 사업 없음 면(--map-ov-0)과 대비 1.3 이상) */
+.map .shd { fill: color-mix(in srgb, var(--map-shade) 10%, transparent); }
+.dark .map .shd { fill: color-mix(in srgb, var(--map-shade) 55%, transparent); }
+.map .slab { fill: color-mix(in srgb, var(--map-ov-0) 62%, var(--map-shade)); }
+.map .ctx { fill: var(--map-ctx); stroke: var(--card); stroke-width: .75; }
+/* 바다 쪽 둘레: 판 두께 아래 1px 씩 2겹 아주 옅은 판(필터 없음) */
+.map .sea { fill: color-mix(in srgb, var(--map-shade) 6%, transparent); }
+.dark .map .sea { fill: color-mix(in srgb, var(--map-shade) 40%, transparent); }
+.map { shape-rendering: geometricPrecision; }
+.map .f { fill: var(--c); stroke: var(--map-ov-line); stroke-width: .75; stroke-linejoin: round; stroke-linecap: round; cursor: pointer; transition: filter .12s, fill .12s; }
+/* 옆벽: 면 색을 그늘(--map-shade)과 섞은 값(빛은 위 왼쪽 하나). 판 바깥 둘레선 1.25px */
+.map .w { stroke: none; cursor: pointer; }
+.map .w { fill: color-mix(in srgb, var(--c) 78%, var(--map-shade)); }
+.dark .map .w { fill: color-mix(in srgb, var(--c) 55%, var(--map-shade)); }
+/* 옆벽 방향별 명암(선택형 — map3d.js draw o.shade 를 켠 화면만 .l1~l3 이 붙는다): 빛은 위 왼쪽 하나 — 왼쪽을 향한 벽 l1 밝게 · 보는 쪽 l2(위 기본과 같다) · 오른쪽을 향한 벽 l3 어둡게.
+   새 색 없이 면 색(--c)과 그늘(--map-shade)의 섞는 비율만 바꾼다. 돌려 보면 벽 방향이 바뀌어 같은 면의 벽 명암도 바뀐다 */
+.map .w.l1 { fill: color-mix(in srgb, var(--c) 88%, var(--map-shade)); }
+.map .w.l3 { fill: color-mix(in srgb, var(--c) 64%, var(--map-shade)); }
+.dark .map .w.l1 { fill: color-mix(in srgb, var(--c) 68%, var(--map-shade)); }
+.dark .map .w.l3 { fill: color-mix(in srgb, var(--c) 40%, var(--map-shade)); }
+.map .ol { fill: none; stroke: var(--line2); stroke-width: 1.25; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; }
+/* 고른 곳·가리킨 곳·키보드 위치(2026-10-18 사용자 피드백): 검은 굵은 윤곽 없이 그림만 띄운다 — map3d.js paintFaces 가 .lift 층에 사본(그림자·옆면·옆벽·윗면)을 놓는다.
+   기하(면 높이 값·경계·라벨 자리)는 그대로이고 transform 으로만 올린다(G16). 고른 곳 5px + 바닥 그림자 한 겹, 가리킴·키보드 2px(그림자 없음). 흰 알약·흰 카드·지시선 없음 */
+.map .lift, .map .lift * { pointer-events: none; }
+/* 윤곽: 그 면 단계 계열에서 대비가 나는 단계(낮은 단계는 두 단계 진한 쪽, 높은 단계는 두 단계 옅은 쪽), 1.25px */
+.map .lift .c0 { --ce: var(--map-ov-3); } .map .lift .c1 { --ce: var(--map-ov-3); } .map .lift .c2 { --ce: var(--map-ov-4); } .map .lift .c3 { --ce: var(--map-ov-1); } .map .lift .c4 { --ce: var(--map-ov-2); } .map .lift .c5 { --ce: var(--map-ov-2); }
+.map .lift .up-shd { fill: color-mix(in srgb, var(--map-shade) 22%, transparent); transform: translate(2px, 3px); }
+.dark .map .lift .up-shd { fill: color-mix(in srgb, var(--map-shade) 60%, transparent); }
+.map .lift :is(.up-side, .up-w) { fill: color-mix(in srgb, var(--c) 62%, var(--map-shade)); }
+.map .lift .up-w.l1 { fill: color-mix(in srgb, var(--c) 74%, var(--map-shade)); }
+.map .lift .up-w.l3 { fill: color-mix(in srgb, var(--c) 50%, var(--map-shade)); }
+.map .lift .up-top { fill: color-mix(in srgb, var(--c) 94%, var(--card)); stroke: var(--ce); stroke-width: 1.25; stroke-linejoin: round; }
+.dark .map .lift .up-top { fill: color-mix(in srgb, var(--c) 94%, var(--foreground)); }
+.map .lift .on .up, .map .lbls .lb-g.up-on { transform: translateY(-5px); }
+.map .lift .hv .up, .map .lbls .lb-g.up-hv, .map :is(.kb-halo, .kb) { transform: translateY(-2px); }
+/* 띄우기 전이: 짧은 지수형 감속(올라가는 0.22s · 그림자는 옅게 나타남). 사본은 칠할 때마다 새로 만들어지므로 처음 모양은 @starting-style(바닥 자리)에서 출발한다.
+   이름표는 같은 요소의 class 만 바뀌어 보통 전이로 따라 올라간다. 줄이기 동작이면 전이 없이 지금처럼 */
+.map .lift .up, .map .lbls .lb-g { transition: transform .22s cubic-bezier(.16, 1, .3, 1); }
+.map .lift .up-shd { transition: opacity .22s cubic-bezier(.16, 1, .3, 1); }
+@starting-style { .map .lift .up { transform: translateY(0); } .map .lift .up-shd { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .map .lift :is(.up, .up-shd), .map .lbls .lb-g, .map :is(.kb-halo, .kb) { transform: none; } }
+@media (prefers-reduced-motion: reduce) { .map .lift :is(.up, .up-shd), .map .lbls .lb-g { transition: none; } }
+/* 돌려 보기 끄는 동안(map3d.js attachOrbit 가 무대에 .orbiting): 잡은 손 모양, 글자 선택 없음 */
+.orbiting { user-select: none; -webkit-user-select: none; }
+.orbiting .map, .orbiting .map :is(.f, .w) { cursor: grabbing; }
+.orbiting .map .sea { visibility: hidden; }   /* 끄는 동안 바다 둘레는 다시 그리지 않는다(reproject sea: false) — 놓으면 다시 그려 보인다 */
+/* 키보드 위치: 2px 초점 색 + 밑에 4.5px 바탕색 바깥선(띄운 면과 같이 2px 올림). 점선은 쓰지 않는다 */
+.map :is(.kb-halo, .kb) { fill: none; stroke-linejoin: round; stroke-linecap: round; pointer-events: none; }
+.map .kb-halo { stroke: var(--card); stroke-width: 4.5; }
+.map .kb { stroke: var(--ring); stroke-width: 2; }
+.map .isle { fill: var(--c); opacity: .55; stroke: var(--map-ov-line); stroke-width: .5; pointer-events: none; }
+/* 면 위 이름·숫자: 단계마다 4.5:1 이상인 글자색(--map-ov-ink-N, /map 개요 라벨과 같다) + 그 면 색 테두리 */
+.map .lbls text { font-family: var(--font-sans); font-size: var(--text-base); font-weight: 700; text-anchor: middle; dominant-baseline: central; font-variant-numeric: tabular-nums; paint-order: stroke; stroke-linejoin: round; pointer-events: none; }
+.map .lb { stroke-width: 3px; }
+.map .lb.f0 { fill: var(--map-ov-ink-0); stroke: color-mix(in srgb, var(--map-ov-0) 85%, transparent); }
+.map .lb.f1 { fill: var(--map-ov-ink-1); stroke: color-mix(in srgb, var(--map-ov-1) 85%, transparent); }
+.map .lb.f2 { fill: var(--map-ov-ink-2); stroke: color-mix(in srgb, var(--map-ov-2) 85%, transparent); }
+.map .lb.f3 { fill: var(--map-ov-ink-3); stroke: color-mix(in srgb, var(--map-ov-3) 85%, transparent); }
+.map .lb.f4 { fill: var(--map-ov-ink-4); stroke: color-mix(in srgb, var(--map-ov-4) 85%, transparent); }
+.map .lb.f5 { fill: var(--map-ov-ink-5); stroke: color-mix(in srgb, var(--map-ov-5) 85%, transparent); }
+.map .lbls .lb-ctx { font-size: var(--fs-legend); font-weight: 400; fill: var(--foreground); stroke: var(--map-ctx); stroke-width: 3px; }
+.map .lbls .lb-ctx.far { fill: color-mix(in srgb, var(--foreground) 78%, var(--map-ctx)); }   /* 전국 보기 수도권 밖 시도 이름: 옅게(맥락 면 위 4.5:1 이상) */
+.map .lbls, .map .lbls *, .map .hil, .map .hil * { pointer-events: none; }   /* 라벨·핀은 포인터를 받지 않는다 — 밑의 면이 가리킴·클릭을 받는다 */
+/* 이름 / 숫자 묶음: 이름 14px 보통(--fs-legend), 숫자 16px 굵게. 0호 면은 이름만 옅게(대비 4.5:1 이상). 고른 곳은 같은 자리에서 이름만 굵게(바탕 없음) */
+.map .lbls .lb.nm { font-size: var(--fs-legend); font-weight: 400; }   /* 지도 라벨 14px 이상(G9, 휴대폰 포함) */
+.map .lb-g.z .lb.nm { fill: var(--muted-foreground); stroke: var(--map-ov-0); }
+.map .lb-g.sel .lb.nm { font-weight: 700; }
+/* 면 밖으로 넘친 묶음(자기 면 라벨 점 위): 흰 상자·알약 없이 글자 + 바탕색 두꺼운 테두리. 상자(.plb)는 자리 재기용으로만 남기고 칠하지 않는다 */
+.map .lb-g .plb { fill: none; stroke: none; }
+.map .lb-g.pl .lb { fill: var(--foreground); stroke: var(--card); stroke-width: 4px; }
+.map .inset-bg { fill: var(--card); stroke: var(--border); }
+.map .inset-t { font-family: var(--font-sans); font-size: var(--fs-legend); font-weight: 400; fill: var(--muted-foreground); }
+.map .inset-n { font-family: var(--font-sans); font-size: var(--fs-legend); font-weight: 700; fill: var(--foreground); text-anchor: middle; }

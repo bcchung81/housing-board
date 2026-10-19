@@ -226,7 +226,7 @@ test('표지: 이름 검색 근사 위치는 실선 겹원 + 띠(①계획 점�
   assert.match(app, /id: 'blk-line-approx', type: 'line', source: 'blocks', filter: \['==', \['get', 'approx'\], true\], paint: \{ 'line-color': kindExpr\(T\.color\), 'line-width': 1\.6 \} \}/, '점선 아님');
   assert.match(app, /id: 'blk-approx', type: 'fill', source: 'blocks', filter: \['==', \['get', 'approx'\], true\]/);
   assert.match(app, /coordinates: b\.approx \? approxRings\(b\.poly\) :/, '바깥 원 + 안쪽 원(구멍)');
-  assert.match(app, /add\('<i class="sw approx"><\/i>', '근사 위치'/); assert.match(css, /\.sw\.approx\{border-radius:50%;border:1\.5px solid/);
+  assert.match(app, /add\('<i class="sw approx"><\/i>', '근사 위치'/); assert.match(css, /\.sw\.approx\{border-radius:var\(--radius-full\);border:1\.5px solid/);
   assert.match(html, /id="locNote" role="status" hidden>[\s\S]*?id="locNoteX" aria-label="안내 닫기"/);
   assert.match(app, /approx: !!b\.approx/);
   assert.match(app, /const NOT_APPROX = \['!=', \['get', 'approx'\], true\]/);

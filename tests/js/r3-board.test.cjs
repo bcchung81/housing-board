@@ -26,8 +26,8 @@ const head = (id, s = board) => { const p = panel(id, s); return p.slice(0, p.in
 const DIR = D.makeDirectives({ sourceCount: 40, stageNames: ['계획', '인허가', '착공', '모집', '준공', '입주'], ledger: BOARD, start: { year: '2026', upto: 8, cum: 156396, cumLy: 150000 }, bottleneck: V.bottleneckOf });
 
 test('1 핵심 숫자 정의는 (i) 팝오버: 지시 카드 6장 · 월별 공급 파동 · 판정·병목 · 시도 · 월별 실적 흐름 · 추이 · 12개월 준공 · 기관별 — 제목 바로 옆', () => {
-  assert.match(board, /import InfoTip from '\.\.\/ui\/info-tip';/);
-  assert.match(real, /import InfoTip from '\.\.\/ui\/info-tip';/);
+  assert.match(board, /import InfoTip from '@\/components\/ui\/info-tip';/);
+  assert.match(real, /import InfoTip from '@\/components\/ui\/info-tip';/);
   for (const id of ['p-chart', 'p-snap', 'p-region', 'p-trend', 'p-fut', 'p-agency']) assert.match(head(id), /<\/h2>\s*<InfoTip label=/, `${id}: 제목 바로 옆 (i)`);
   assert.match(head('p-actual', real), /<\/h2>\s*<InfoTip label=/, 'p-actual');
   /* 지시 카드: 단추 밖(형제) 겹친 자리의 (i) — 정의(basis)를 팝오버 본문으로 */
@@ -43,12 +43,15 @@ test('1 핵심 숫자 정의는 (i) 팝오버: 지시 카드 6장 · 월별 공�
   }
 });
 
-test("2 기간·단위 꼬리: 진척 관리 '2026.01~08 누계'(값 줄 회색 꼬리), 월별 실적 흐름 '단위 호', 기관 KPI 누계 기간", () => {
+test("2 기간·단위: 진척 관리 '착공 누계'(기간 2026년 1~8월은 (i) 기준 — 2026-10-18 꼬리를 줄1에서 뺐다), 월별 실적 흐름 '단위 호'는 제목 title, 기관 KPI 누계 기간", () => {
   assert.equal(DIR[0].t, '진척 관리');
-  assert.equal(DIR[0].note, '2026.01~08 누계');
+  assert.equal(DIR[0].pre, '착공 누계');
+  assert.equal(DIR[0].note, undefined);
+  assert.match(DIR[0].basis, /^통계누리 전국 착공 2026년 1~8월 누계/);
   assert.equal(C.ytdSpan('2026', 8), '2026.01~08 누계');
-  assert.match(board, /\[x\.tag, x\.note\]\.filter\(Boolean\)/, '기간 꼬리는 제목 아래 작은 줄(원천 꼬리와 한 줄)');
-  assert.match(panel('p-actual', real), /data-slot="actual-unit"[^>]*>단위 호</);
+  assert.doesNotMatch(board, /x\.tag|x\.note/, '줄1 꼬리 없음');
+  assert.match(panel('p-actual', real), /<h2 className=\{ptitle\} title=\{`[^`]*단위 호\(세로축 20만 = 20만 호\)/);
+  assert.doesNotMatch(real, /data-slot="actual-unit"/, "보이는 '단위 호' 글자 없음");
   assert.match(agency, /sub: <>\{ytdSpan\(year, Number\(last\.slice\(5\)\)\)\} \{fmt\(ytd\(molit, k, NATION, last, a\.actor!\)\)\}호/);
   assert.doesNotMatch(code(agency), /\{year\}년 누계/);
 });
@@ -63,17 +66,17 @@ test('3 지연 기준 하나: 시도 타일 지연율 = 지연 호수 ÷ 판정 
   assert.match(reg, />지연율 · 호수 기준</);
   assert.doesNotMatch(code(board), /건수 기준/);
   assert.match(board, /rate = tu \? r\.delayUnits \/ tu \* 100 : 0/);
-  assert.match(reg, /지연 \{f\(r\.delayUnits\)\}호 · \{f\(r\.delay\)\}건/, "타일 아래 '지연 1,666호 · 2건'");
+  assert.match(reg, /(?:지연 <\/span>)?\{f\(r\.delayUnits\)\}호(?:<span className="@max-\[105px\]:hidden">)? · \{f\(r\.delay\)\}건/, "타일 아래 '지연 1,666호 · 2건'");
   assert.match(reg, /\[\[r\.delayUnits, 'bg-bad'\], \[r\.cautionUnits, 'bg-warn'\], \[ok, 'bg-ok'\]\]/, '막대도 호수');
   assert.match(board, /data-slot="basis-tag"[^>]*title="[^"]*시도 타일도 호수 기준[^"]*"/);
 });
 
-test("4 진척 관리 링크 글자 = 무엇이 열리는지('원장 194건 ›'): 원장 지금 ③착공 단계 사업 수", () => {
+test("4 진척 관리 숫자 링크 = 원장 지금 ③착공 단계 사업 목록 — 건수(194건)가 카드 숫자와 다른 것은 숫자 링크 title·(i)에(2026-10-18 링크 글자 '원장 194건 ›'를 없앰)", () => {
   assert.equal(BOARD.stageProjects[BOARD.now][2], 194);
-  assert.equal(DIR[0].list.text, '원장 194건');
-  assert.match(DIR[0].list.title, /원장 사업\(전국\) 194건/);
-  assert.match(board, /\{x\.list\.text \?\? '목록'\}<ChevronRight/);
-  assert.match(board, /aria-label=\{`\$\{x\.t\} \$\{x\.list\.text \?\? '목록'\}`\}/, '읽기 이름에 보이는 글자가 들어간다');
+  assert.equal(DIR[0].list.text, undefined);
+  assert.match(DIR[0].list.title, /원장 사업\(전국\) 194건 — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록\(건수가 다름\)/);
+  assert.match(board, /<Link href=\{l\.href\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\}/, '읽기 이름에 보이는 숫자가 들어간다');
+  assert.match(board, /<p className="text-muted-foreground">\{x\.list\.title\}<\/p>/, '(i) 에도 목록 설명');
 });
 
 test("5 용어: 종합상황판·기관·월 화면 글자에 '공식 0N' 번호·'실데이터' 없음", () => {

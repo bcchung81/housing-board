@@ -6,9 +6,9 @@ import { Fragment, type ReactNode } from 'react';
 import { Kpi } from './ui';
 import InfoTip from './ui/info-tip';
 import { METRIC_COLOR } from './charts/palette';
-import { METRIC_BOARD, metricBoardLabel } from '../lib/board/stages';
-import { CIR, K } from '../lib/board/sample';
-import type { Metric } from '../lib/board/types';
+import { METRIC_BOARD, metricBoardLabel } from '@/lib/board/stages';
+import { CIR, K } from '@/lib/board/sample';
+import type { Metric } from '@/lib/board/types';
 
 type Cell = { value: ReactNode; sub?: ReactNode };
 
@@ -27,7 +27,7 @@ export default function StageKpis({ cells, when, notes }: { cells: Partial<Recor
       </div>
       {empty.length ? (
         <div data-slot="stage-kpis-empty">
-          <InfoTip label="자료 없는 단계" text={`자료 없음 ${empty.map((i) => CIR[i]).join('·')}`} className="text-[13px]">
+          <InfoTip label="자료 없는 단계" text={`자료 없음 ${empty.map((i) => CIR[i]).join('·')}`} className="text-sm">
             <dl>{empty.map((i) => <Fragment key={i}><dt>{CIR[i]} {K[i]}</dt><dd>{notes?.[i] ?? '통계누리에 없는 단계'}</dd></Fragment>)}</dl>
           </InfoTip>
         </div>

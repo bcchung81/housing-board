@@ -148,7 +148,8 @@ test('결함 4: 데이터 원본 — 원장 사업 수 쉼표 · 12개월 위젯
 test('결함 5: 종합상황판 지연·주의 추이·기관별 진행 숫자에 단위(호)가 보인다', () => {
   const board = read('components/board/Board.tsx');
   const panel = (id) => board.slice(board.indexOf(`id="${id}"`), board.indexOf('</Card>', board.indexOf(`id="${id}"`)));
-  assert.match(panel('p-trend'), /data-slot="trend-unit"[^>]*>단위 호</, '추이 머리 줄에 단위');
+  assert.match(panel('p-trend'), /<h2 className=\{ptitle\} title="[^"]*단위 호[^"]*">지연·주의 추이<\/h2>/, '추이 단위는 제목 title(2026-10-18 — 보이는 \'단위 호\' 글자는 다른 패널처럼 title 로)');
+  assert.doesNotMatch(panel('p-trend'), /data-slot="trend-unit"/);
   assert.match(panel('p-agency'), /\{f\(a\.delayUnits\)\}<small[^>]*>호<\/small><\/b>/, '기관 지연 호수');
 });
 

@@ -2,24 +2,24 @@ import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
-import PanelLink from '../../../../components/board/PanelLink';
-import { ACTOR_COLOR } from '../../../../components/charts/palette';
-import { Dash, Page, PageHead, PanelHead, SrcLink, sub } from '../../../../components/page';
-import StageKpis from '../../../../components/StageKpis';
-import { Badge } from '../../../../components/ui/badge';
-import { Card } from '../../../../components/ui/card';
-import { DataGrid } from '../../../../components/ui/data-grid';
-import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, lhOfMonth, lhUnits, staleText, ymDot } from '../../../../lib/board/calc';
-import { getBoardData } from '../../../../lib/board/data';
-import { getProjectsIndex } from '../../../../lib/board/projects-index';
-import { dateAltOf, dayText, isMetro, statusLabel } from '../../../../lib/board/projects-view';
-import { mapCell, sggLabel } from '../../../../lib/board/projects-list';
-import { pastDue, projectHref, type CalendarDoc } from '../../../../lib/board/region';
-import { dueStatus, monthDue, monthIds } from '../../../../lib/board/month-ahead';
-import { metricBoardLabel } from '../../../../lib/board/stages';
-import { DETAILS } from '../../../../lib/shell/menu';
-import { dotDates, type Col } from '../../../../lib/grid/spec';
-import calendarJson from '../../../../data/board/region-calendar.json';
+import PanelLink from '@/components/board/PanelLink';
+import { ACTOR_COLOR } from '@/components/charts/palette';
+import { Dash, Page, PageHead, PanelHead, SrcLink, sub } from '@/components/page';
+import StageKpis from '@/components/StageKpis';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import { DataGrid } from '@/components/ui/data-grid';
+import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, lhOfMonth, lhUnits, staleText, ymDot } from '@/lib/board/calc';
+import { getBoardData } from '@/lib/board/data';
+import { getProjectsIndex } from '@/lib/board/projects-index';
+import { dateAltOf, dayText, isMetro, statusLabel } from '@/lib/board/projects-view';
+import { mapCell, sggLabel } from '@/lib/board/projects-list';
+import { pastDue, projectHref, type CalendarDoc } from '@/lib/board/region';
+import { dueStatus, monthDue, monthIds } from '@/lib/board/month-ahead';
+import { metricBoardLabel } from '@/lib/board/stages';
+import { DETAILS } from '@/lib/shell/menu';
+import { dotDates, type Col } from '@/lib/grid/spec';
+import calendarJson from '@/data/board/region-calendar.json';
 
 const ACT_KS = ['permit', 'start', 'complete'] as const;
 const LH_COLS: Col[] = [{ key: 'district', label: '사업지구', kind: 'text', wrap: true }, { key: 'block', label: '블록', kind: 'text' }, { key: 'type', label: '공급유형', kind: 'text' }, { key: 'units', label: '호수' }, { key: 'date', label: '준공예정일', kind: 'text' }, { key: 'location', label: '위치', kind: 'text', wrap: true }];
@@ -77,7 +77,7 @@ export default async function MonthPage({ params }: Props) {
         {actual ? <Badge variant="ok" title="통계누리 실적이 있는 달">실적</Badge> : <Badge title="실적 자료가 없는 달 — 준공 예정만">예정</Badge>}
         {actual && isProvisional(molit, ym) ? <Badge variant="warn" title="통계누리가 잠정치로 낸 달입니다. 확정치는 2027년 9월 공표 예정">잠정</Badge> : null}
         <nav aria-label="이웃 달" className="ml-auto flex gap-4">
-          {nb.prev ? <Link href={`/month/${nb.prev}`} title={`이전 달 ${monthLabel(nb.prev)}`} className="inline-flex items-center gap-px rounded-[4px] text-[14px] text-muted-foreground no-underline underline-offset-[3px] tabular-nums transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><ChevronLeft className="size-3.5" aria-hidden="true" />{ymDot(nb.prev)}</Link> : null}
+          {nb.prev ? <Link href={`/month/${nb.prev}`} title={`이전 달 ${monthLabel(nb.prev)}`} className="inline-flex items-center gap-px rounded-chip text-sm text-muted-foreground no-underline underline-offset-[3px] tabular-nums transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><ChevronLeft className="size-3.5" aria-hidden="true" />{ymDot(nb.prev)}</Link> : null}
           {nb.next ? <PanelLink href={`/month/${nb.next}`} full={`다음 달 ${monthLabel(nb.next)}`}>{ymDot(nb.next)}</PanelLink> : null}
         </nav>
       </PageHead>
@@ -115,7 +115,7 @@ export default async function MonthPage({ params }: Props) {
 
       <Card render={<section aria-label="LH 준공 예정" />}>
         <PanelHead title="LH 준공 예정" tip={`LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)}${lhStale ? `(원장 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')})` : ''}. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.${due.length ? ' · 날짜는 파일 값 그대로(위 준공 예정 사업은 HOME 날짜 — 다르면 원천 날짜 다름 표지)' : ''}`}>
-          <span className={`${sub} tabular-nums`}>{blockTotal}블록 · {fmt(lhUnits(blocks))}호{past && blocks.length ? ' · 파일상 예정(실제 준공 여부 미확인)' : ''} · 파일 기준 {dotDates(lh.sourceAsOf)}{lhStale ? <Badge variant="warn" className="ml-1.5" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 원장 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</Badge> : null}</span>
+          <span className={`${sub} tabular-nums`}>{blockTotal}블록 · {fmt(lhUnits(blocks))}호{past && blocks.length ? <span title="파일상 예정일 — 실제 준공 여부 미확인"> · 예정(미확인)</span> : null} · 파일 기준 {dotDates(lh.sourceAsOf)}{lhStale ? <Badge variant="warn" className="ml-1.5" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 원장 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</Badge> : null}</span>
           {actual ? null : <SrcLink />}
         </PanelHead>
         {blocks.length > 0 ? (

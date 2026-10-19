@@ -1,13 +1,13 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
-import TopNav from '../../components/TopNav';
-import { AUDIENCE_INIT, THEME_INIT } from '../../lib/shell/theme';
-import { MAP_MODE_INIT } from '../../lib/board/metro-overview';
-import { doHyeon } from '../../lib/shell/fonts';
-import '../tailwind.css';
+import TopNav from '@/components/TopNav';
+import { AUDIENCE_INIT, THEME_INIT } from '@/lib/shell/theme';
+import { MAP_MODE_INIT } from '@/lib/board/metro-overview';
+import '@/assets/fonts/noto-sans-kr/noto-sans-kr.css';   // 본문 글꼴 Noto Sans KR(저장소 안 로컬 파일, 외부 글꼴 요청 없음)
+import '@/app/globals.css';
 
 export const metadata: Metadata = {
-  title: '주택파동 공급 지도',
+  title: 'The주택 지도',
   description: '공공주택 공급 현황을 V-World 공식 건물 위에 3차원으로 보여 주는 지도',
 };
 
@@ -28,12 +28,14 @@ export default function MapLayout({ children }: { children: ReactNode }) {
         <link rel="preconnect" href="https://tiles.openfreemap.org" crossOrigin="" />
         <link rel="stylesheet" href="/assets/vendor/maplibre-gl/5.24.0/maplibre-gl.css" />
         <link rel="stylesheet" href="/assets/css/app.css" />
+        {/* 수도권 개요의 3D 단계 구분도 모양(assets/js/map3d.js 와 짝, /citizen 과 같은 파일) */}
+        <link rel="stylesheet" href="/assets/css/map3d.css" />
       </head>
-      <body className={`font-sans ${doHyeon.variable} [font-synthesis:none]`}>
+      <body className={`font-sans [font-synthesis:none]`}>
         <div className="shell-map flex h-screen flex-col overflow-hidden">
           {/* 지도로 바로가기: 첫 Tab 에서만 보이는 링크(메뉴·순위 목록을 건너뛴다). 개요·상세 중 보이는 지도 쪽 하나만 남긴다(app.css .skip-*) */}
-          <a href="#ovMapWrap" className="skip-ov sr-only rounded-[8px] bg-primary px-4 py-2 text-[15px] font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">지도로 바로가기</a>
-          <a href="#mapMain" className="skip-detail sr-only rounded-[8px] bg-primary px-4 py-2 text-[15px] font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">지도로 바로가기</a>
+          <a href="#ovMapWrap" className="skip-ov sr-only rounded-tile bg-primary px-4 py-2 text-base font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">지도로 바로가기</a>
+          <a href="#mapMain" className="skip-detail sr-only rounded-tile bg-primary px-4 py-2 text-base font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">지도로 바로가기</a>
           <TopNav compact />
           {children}
         </div>

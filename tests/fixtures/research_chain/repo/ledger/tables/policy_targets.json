@@ -1,0 +1,1 @@
+{"schema_version": "ledger/1", "table": "policy_targets", "rows": [{"local_policy_id": "POL_T", "local_program_id": null, "stage_code": "04", "area_codes": ["00"], "period_start": "2026-01-01", "period_end": "2026-12-31", "target_units": 1000, "evidence": null, "source_ref": "home-src", "review_status": "REVIEW_REQUIRED"}]}

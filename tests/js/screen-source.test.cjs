@@ -54,7 +54,7 @@ test('data.ts 는 getBoardData 하나로 원장(loadLedgerBoard)과 화면 자�
 });
 
 test('대시보드 화면은 번들 JSON 을 직접 가져오지 않고 getBoardData 로 읽는다', () => {
-  const files = ['app/(dashboard)/page.tsx', 'app/(dashboard)/region/page.tsx', 'components/board/RealPanels.tsx', 'components/sources/Overview.tsx', 'components/sources/Summary.tsx'];
+  const files = ['app/(dashboard)/page.tsx', 'app/(dashboard)/region/page.tsx', 'components/board/RealPanels.tsx'];
   for (const f of files) { const s = read(f); assert.match(s, /getBoardData/, f); assert.doesNotMatch(s, /board\/(molit|lh-completion|sources)\.json|registry\/projects\.json/, f); }
   for (const f of ['month/[id]', 'agency/[id]']) assert.doesNotMatch(read(`app/(dashboard)/${f}/page.tsx`), /dynamicParams/, f);
   assert.match(read('app/(dashboard)/layout.tsx'), /name="board-source"/);

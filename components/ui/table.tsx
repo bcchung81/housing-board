@@ -8,10 +8,10 @@ import { cn } from "cn"
    containerProps 는 데이터 그리드가 그 컨테이너를 세로 스크롤 상자(가상 스크롤 기준)로 쓸 때 ref·style 을 건넨다. */
 function Table({ className, containerClassName, containerProps, ...props }: React.ComponentProps<"table"> & { containerClassName?: string; containerProps?: React.ComponentProps<"div"> }) {
   return (
-    <div data-slot="table-container" {...containerProps} className={cn("mt-2 overflow-x-auto rounded-[10px] border border-border", containerClassName)}>
+    <div data-slot="table-container" {...containerProps} className={cn("relative mt-2 overflow-x-auto rounded-tile border border-border", containerClassName)}>
       <table
         data-slot="table"
-        className={cn("w-full border-collapse text-[16px] leading-[1.6] tabular-nums [&_a]:text-foreground [&_a]:no-underline [&_a:hover]:underline", className)}
+        className={cn("w-full border-collapse text-(length:--fs-table) leading-body tabular-nums [&_a]:text-foreground [&_a]:no-underline [&_a:hover]:underline", className)}
         {...props}
       />
     </div>
@@ -34,7 +34,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
   return (
     <th
       data-slot="table-head"
-      className={cn("sticky top-0 border-b border-border bg-muted px-2.5 py-2.5 text-right text-[14px] font-bold whitespace-nowrap text-muted-foreground first:text-left", className)}
+      className={cn("sticky top-0 border-b border-border bg-muted px-2.5 py-2.5 text-right text-(length:--fs-table) font-bold whitespace-nowrap text-muted-foreground first:text-left", className)}
       {...props}
     />
   )

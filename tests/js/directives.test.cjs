@@ -1,5 +1,5 @@
 'use strict';
-// 총리 지시 6건을 요구사항으로 반영한 화면(docs/product/화면-배색-개선-계획.md 6절)을 확인한다.
+// 총리 지시 6건을 요구사항으로 반영한 화면(2026-10-10, DESIGN.md 결정 이력)을 확인한다.
 // 8.14 정례 보고 → 보고자료, 9.4 국민 예측가능성 → 우리 동네, 9.30 쉬운 설명 → 사업 상세의 '다음 단계'. 숫자는 calc.ts 의 순수 함수로 다시 세어 대조한다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -73,23 +73,24 @@ test("메뉴: 보고자료·우리 동네는 화면이 생겨 '준비 중'이 �
   for (const f of ['app/(dashboard)/projects/page.tsx', 'app/(dashboard)/region/page.tsx']) assert.ok(fs.existsSync(path.join(ROOT, f)), f);   // 보고자료 → 사업 인쇄 보기, 우리 동네 → 지역 공급(2026-10-14)
 });
 
-test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림을 넣지 않는다 — 사용자 피드백 2026-10-10)', () => {
+test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림을 넣지 않는다 — 사용자 피드백 2026-10-10) — 2026-10-18 통일 규격: 두 줄(지시 이름 / 앞말 + 숫자 + 단위)', () => {
   const b = read('components/board/Board.tsx');
-  assert.match(b, /<div className="grid grid-cols-2 gap-2 min-\[901px\]:grid-cols-3 min-\[1101px\]:grid-cols-6">/);
-  assert.match(b, /text-muted-foreground [^"]*">\{x\.t\}<\/span>\s*\{small\.length \? <span data-slot="dir-tag"/, '윗줄은 지시 주제 이름(+ 같은 이름 다른 정의일 때 짧은 꼬리 — 통계누리, 2026-10-16 4차부터 제목 아래 작은 줄)');
-  assert.doesNotMatch(b, /\{x\.date\} · \{x\.t\}<\/span>|x\.sub\.note/, '날짜 접두·기간 작은 줄은 화면에 없다');
+  assert.match(b, /<div className="grid grid-cols-2 gap-3 min-\[901px\]:grid-cols-3 min-\[1280px\]:grid-cols-6">/, '1280px 이상 6열 · 901~1279px 3열 · 900px 이하 2열(간격 12 하나, 2026-10-19)');
+  assert.match(b, /text-sm leading-5', hide && 'invisible'\)\} aria-hidden=\{hide \|\| undefined\}>\{x\.t\}<\/span>/, '윗줄은 지시 주제 이름뿐(꼬리 없음)');
+  assert.doesNotMatch(b, /\{x\.date\} · \{x\.t\}<\/span>|x\.sub\.note|data-slot="dir-tag"/, '날짜 접두·꼬리 작은 줄은 화면에 없다');
   assert.match(b, /data-slot="board-dir" title=\{`\$\{x\.date\} 지시 · \$\{x\.t\}\\n\$\{x\.basis\}`\}/, '날짜·지시 이름·기준은 hover title');
-  assert.match(b, /\{x\.pre \? <span className="[^"]*text-\[min\(14px,[^"]*">\{x\.pre\}<\/span> : null\}/, '아랫줄 = 작은 앞말');
-  assert.match(b, /text-\[min\(26px,12cqi\)\][^>]*>\{x\.big\}<span className="text-\[min\(17px,8cqi\)\]">\{x\.u\}<\/span>/, '+ 카드 폭에 맞춰 줄어드는 큰 숫자 + 작은 단위');
+  assert.match(b, /\{pre \? <span className="ui-dir-label text-sm">\{pre\}<\/span> : null\}/, '아랫줄 = 앞말 14/400');
+  assert.match(b, /text-md @min-\[180px\]:text-lg[^>]*>\{big\}<span className="text-sm font-normal">\{u\}<\/span>/, '+ 큰 숫자 20(좁으면 18) + 단위 14');
   assert.doesNotMatch(b, /<Real title=\{x\.basis\}/, '카드에 실데이터 표지를 달지 않는다');
   assert.doesNotMatch(b, /DIR_TL|top-\[83\.5px\]/);
-  assert.match(b, /data-slot="board-dir"[^>]*className=\{cn\(btn, '[^']*\bmin-h-20 [^']*justify-between[^']*\bpy-2\.5/, '카드 높이 80px 이상(내용만큼 자람), 제목 위·값 아래, 위아래 여백');
-  assert.doesNotMatch(read('app/tailwind.css'), /\[data-slot="board-dir"\] \{ padding/, '데스크톱 덧댄 위아래 여백 없음');
+  assert.match(b, /data-slot="board-dir"[^>]*className=\{cn\(btn, dirFrame, '[^']*\bmin-h-16 /, '카드 높이 64px 이상(내용만큼 자람)');
+  assert.match(b, /const dirFrame = 'ui-dir @container';/, '틀은 globals 부품 .ui-dir(제목 위·값 아래, 여백 12/16, 바깥 카드 반경 — 2026-10-19)');
+  assert.doesNotMatch(read('app/globals.css'), /\[data-slot="board-dir"\] \{ padding/, '데스크톱 덧댄 위아래 여백 없음');
 });
 
 test('종합상황판 리본 차트: 상자는 가로로만 밀리고(세로 스크롤바로 그림이 흔들리지 않게), 선택한 달의 기준 막대는 테두리 없는 반투명 HUD 막대다', () => {
   const b = read('components/board/Board.tsx'), r = read('components/board/ribbon.ts');
-  assert.match(b, /<div className="overflow-x-auto overflow-y-hidden rounded-\[10px\]">/);
+  assert.match(b, /<div className="mt-3 overflow-x-auto overflow-y-hidden">/, '본문 시작 간격 mt-3(패널 머리 줄 통일)');
   assert.match(b, /rx="3" fill=\{CUR\.fill\} className="rb-cur" pointerEvents="none" \/>/);
   assert.doesNotMatch(b, /stroke=\{CUR\./, '기준 막대에 테두리가 없다');
   assert.match(r, /export const CUR = \{ fill: 'url\(#cur-hud\)' \};/);
@@ -97,7 +98,7 @@ test('종합상황판 리본 차트: 상자는 가로로만 밀리고(세로 스
 });
 
 test('종합상황판 리본 그라데이션·12개월 막대 단색: 층마다 위 하이라이트→단계색→아래 그늘, 색은 style 로 준다(stop-color 속성의 color-mix 는 검정으로 칠해졌다), 층 경계는 --rb-seam', () => {
-  const r = read('components/board/ribbon.ts'), b = read('components/board/Board.tsx'), tw = read('app/tailwind.css');
+  const r = read('components/board/ribbon.ts'), b = read('components/board/Board.tsx'), tw = read('app/globals.css');
   assert.match(r, /<stop offset="0" style="stop-color:color-mix\(in srgb, \$\{C\[k\]\} 70%, var\(--rb-hi\)\)"\/>/);
   assert.match(r, /<stop offset="1" style="stop-color:color-mix\(in srgb, \$\{C\[k\]\} 86%, var\(--rb-lo\)\)"\/>/);
   assert.doesNotMatch(r + b, /stop-color="color-mix|stopColor=\{`color-mix/, 'color-mix 를 stop-color 속성에 넣지 않는다');
@@ -107,12 +108,14 @@ test('종합상황판 리본 그라데이션·12개월 막대 단색: 층마다 
   for (const sel of ['\n:root {', '\n.dark {']) { const i = tw.indexOf(sel), blk = tw.slice(i, tw.indexOf('\n}\n', i)); assert.match(blk, /--rb-hi: #/); assert.match(blk, /--rb-lo: #/); }
 });
 
-test('리본 위 라벨·툴팁은 흰 판이 아니라 HUD 유리다: 반투명 남색 판 + 밝은 가장자리 + 강조 띠 + 흰 글자, 뒤가 가장 밝아도 4.5:1', () => {
-  const r = read('components/board/ribbon.ts'), b = read('components/board/Board.tsx'), tw = read('app/tailwind.css');
+test('리본 위 라벨·툴팁은 흰 판이 아니라 HUD 유리다: 반투명 남색 판 + 밝은 가장자리 + 흰 글자(강조 띠 없음), 뒤가 가장 밝아도 4.5:1', () => {
+  const r = read('components/board/ribbon.ts'), b = read('components/board/Board.tsx'), tw = read('app/globals.css');
   assert.match(r, /fill="\$\{PAL\.hud\}" stroke="\$\{PAL\.hudLine\}"/);
   assert.match(r, /fill="\$\{PAL\.hudTxt\}"/);
   assert.doesNotMatch(r + tw, /rb-halo/, '흰 판 토큰(--rb-halo)은 없다');
-  assert.match(r, /labelSVG\(L\.total, L\.total\.text, PAL\.hudAcc\)/, '커서 총량 라벨의 강조 띠 = 밝은 주색');
+  assert.match(r, /labelSVG\(L\.total, L\.total\.text\)/);
+  assert.match(r, /font-size="14" text-anchor="middle">\$\{text\}<\/text>/, '총량 라벨은 14 보통 글자(2026-10-18 강조 재배분 — 매달 같은 총량이 가장 큰 강조가 되지 않게)');
+  assert.doesNotMatch(r.slice(r.indexOf('function labelSVG'), r.indexOf('export function ribbonDynamic')), /width="3"|accent|font-weight/, '왼쪽 3px 강조 띠·굵은 글자 없음(색 왼쪽 테두리 금지)');
   assert.match(read('lib/board/sample.ts'), /tt = `\$\{f\(g\.total\[cur\]\)\}호`/);
   assert.match(b, /data-slot="board-tip" className="dark [^"]*bg-\[color-mix\(in_srgb,var\(--popover\)_88%,transparent\)\][^"]*backdrop-blur-\[6px\]/, '툴팁은 다크 범위의 반투명 유리');
   // 대비: 유리(rgb a%)를 가장 밝은 바탕(흰색) 위에 깔았을 때 흰 글자

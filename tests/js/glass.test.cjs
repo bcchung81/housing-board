@@ -9,27 +9,21 @@ const path = require('node:path');
 const ROOT = path.join(__dirname, '..', '..');
 const css = fs.readFileSync(path.join(ROOT, 'assets/css/app.css'), 'utf8');
 const app = fs.readFileSync(path.join(ROOT, 'assets/js/app.js'), 'utf8');
+const { mapVars, mapCss, GLOBALS } = require('./map-tokens.cjs');   // 값은 app/globals.css 에 있고 app.css 는 var() 로 가리킨다(2026-10-18): 별칭을 따라가 실제 값을 읽는다
 
 const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
 const lum = (c) => { const f = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * f(c[0]) + 0.7152 * f(c[1]) + 0.0722 * f(c[2]); };
 const ratio = (a, b) => { const [hi, lo] = [lum(a), lum(b)].sort((x, y) => y - x); return (hi + 0.05) / (lo + 0.05); };
 const over = (rgba, backdrop) => { const [r, g, b, a] = rgba; return [r, g, b].map((v, i) => v * a + backdrop[i] * (1 - a)); };
 
-function rootVars() {
-  // 줄 맨 앞의 :root 블록만 읽는다(@supports not 안의 대체값 :root 는 따로 본다). 기반시설 보라·노랑(--edu·--power)은 아래쪽 :root 에 있다.
-  const blocks = [...css.matchAll(/(?:^|\n):root\{([^}]*)\}/g)];
-  assert.ok(blocks.length, ':root 블록이 있어야 한다');
-  const vars = {};
-  for (const b of blocks) for (const [, k, v] of b[1].matchAll(/(--[\w-]+):([^;]+);?/g)) vars[k] = v.trim();
-  return vars;
-}
-const VARS = rootVars();
+const VARS = mapVars({ theme: 'dark' });   // 다크 지도의 html 값(@supports not 안의 대체값은 따로 본다)
 function glass(name) {
   const m = /^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/.exec(VARS[name] || '');
   assert.ok(m, `${name} 은 rgba(...) 여야 한다: ${VARS[name]}`);
   return [+m[1], +m[2], +m[3], +m[4]];
 }
-const STATUS = [...(/const COLOR = \{([^}]*)\}/.exec(app)[1]).matchAll(/#[0-9A-Fa-f]{6}/g)].map((x) => x[0]);   // 모집·착공·준공·입주·계획·공공택지 민간
+const { mapTheme } = require('./map-js-theme.cjs');   // 지도 칠하기 색(app.js 가 globals 토큰에서 읽는다, 2026-10-18)
+const STATUS = Object.values(mapTheme('dark').color);   // 모집·착공·준공·입주·계획·공공택지 민간(다크 --st-*-ink)
 
 // 지도에서 가장 밝은/어두운 면.
 const MAP = { lightest: '#FFFFFF', darkest: '#000000' };
@@ -54,8 +48,7 @@ test('상세 카드(--glass-hud)는 기존 카드보다 옅고, 안내 띠(--gla
   assert.ok(glass('--glass-hud')[3] < glass('--glass-card')[3], '상세 카드가 다른 카드보다 비친다');
   assert.ok(glass('--glass-note')[3] <= 0.7, `안내 띠 ${glass('--glass-note')[3]}`);
   check('--glass-note', [VARS['--ink']], [MAP.lightest, MAP.darkest]);
-  const lightBlock = /html\[data-map-shell\]:not\(\.dark\)\{([^}]*)\}/.exec(css)[1];
-  const L = {}; for (const [, k, v] of lightBlock.matchAll(/(--[\w-]+):([^;]+);?/g)) L[k] = v.trim();
+  const L = mapVars({ theme: 'light' });
   const rgba = (v) => /^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/.exec(v).slice(1).map(Number);
   for (const [n, texts] of [['--glass-hud', [L['--ink'], L['--ink2'], L['--mute'], L['--warn']]], ['--glass-note', [L['--ink']]]]) {
     assert.ok(L[n], `밝은 테마 ${n}`);
@@ -65,12 +58,14 @@ test('상세 카드(--glass-hud)는 기존 카드보다 옅고, 안내 띠(--gla
   assert.match(css, /(?:^|\n)\.maplibregl-popup-content\{[^}]*background:var\(--glass-pop\)/);
 });
 
-test('독립 지도는 기존 다크 배경을 유지하고 Next 지도는 저장된 테마에 따라 배경을 선택한다', () => {
+test('지도 배경은 저장된 테마(html.dark)를 따른다: 다크는 midnight·dark·검정 바탕, 라이트는 V-World 백지도·liberty', () => {
   assert.match(app, /window\.VWORLD_LAYER \|\| 'midnight'/);
-  assert.match(app, /ofm: 'dark'/);
-  assert.match(app, /bg: '#0A1030'/);
-  assert.match(app, /const TH = \(\) => LIGHT_MAP \? LIGHT_THEME : THEME/);
-  assert.match(app, /vw: 'white', ofm: 'liberty'/, "라이트는 V-World 백지도: 'Base' 는 장소 글자가 그림에 박혀 기울인 지도에서 번지고 벡터 지명과 겹쳤다");
+  const D = mapTheme('dark'), L = mapTheme('light');
+  assert.equal(D.ofm, 'dark'); assert.equal(D.bg.toUpperCase(), '#111111');
+  assert.match(app, /let LIGHT_MAP = SHELL && !document\.documentElement\.classList\.contains\('dark'\);/);
+  assert.match(app, /THEME = buildTheme\(LIGHT_MAP, tokOf\(getComputedStyle\(document\.documentElement\)\)\);/);
+  assert.match(app, /const TH = \(\) => THEME;/);
+  assert.deepEqual([L.vw, L.ofm], ['white', 'liberty'], "라이트는 V-World 백지도: 'Base' 는 장소 글자가 그림에 박혀 기울인 지도에서 번지고 벡터 지명과 겹쳤다");
   assert.doesNotMatch(css, /data-theme/i);
   assert.doesNotMatch(app, /nightChip|setTheme|reTheme/i);
 });
@@ -100,18 +95,17 @@ test('표지·요약·카드가 유리 변수와 backdrop-filter 를 쓴다(-web
 });
 
 test('backdrop-filter 를 못 쓰는 브라우저용 @supports not 대체가 거의 불투명(.94 이상)하다', () => {
-  const m = /@supports not \(\(backdrop-filter:blur\(1px\)\) or \(-webkit-backdrop-filter:blur\(1px\)\)\)\{:root\{([^}]*)\}\}/.exec(css);
-  assert.ok(m, '@supports not 블록이 있어야 한다');
-  for (const [, k, v] of m[1].matchAll(/(--glass-[\w-]+):([^;]+);?/g)) {
-    const mm = /rgba\(\d+,\d+,\d+,([\d.]+)\)/.exec(v);
-    if (mm) assert.ok(+mm[1] >= 0.94, `${k} 대체값 ${v}`);
+  assert.match(GLOBALS, /@supports not \(\(backdrop-filter: blur\(1px\)\) or \(-webkit-backdrop-filter: blur\(1px\)\)\) \{/, '@supports not 블록이 있어야 한다(app/globals.css)');
+  const F = mapVars({ theme: 'dark', fallback: true });
+  for (const k of ['--glass-tag', '--glass-sum', '--glass-card', '--glass-hud', '--glass-pop', '--glass-note', '--glass-cmd-active', '--glass-cmd-idle', '--glass-cmd-off']) {
+    const mm = /rgba\(\d+,\d+,\d+,([\d.]+)\)/.exec(F[k]);
+    assert.ok(mm && +mm[1] >= 0.94, `${k} 대체값 ${F[k]}`);
   }
-  assert.match(m[1], /--glass-card/); assert.match(m[1], /--glass-hud/); assert.match(m[1], /--glass-pop/); assert.match(m[1], /--glass-note/);
 });
 
 test('상태 칩과 막대 같은 작은 색 요소는 불투명을 유지한다', () => {
   assert.match(css, /\.pc-chip\.sale\{background:var\(--sale\)/);
-  assert.match(css, /\.pc-chip\.priv\{background:#2A3568/);
+  assert.match(mapCss('dark'), /\.pc-chip\.priv\{background:#2E2E2E/);
   assert.doesNotMatch(css, /\.pc-chip[^{]*\{[^}]*rgba\(/);
 });
 
@@ -156,18 +150,13 @@ test('입력줄 유리: 입력줄·후보·인식 칩이 상태별 변수와 bac
   assert.match(rule('.cmd'), /--cmd-bg:var\(--glass-cmd-idle\)/);
   assert.match(rule('.cmd[data-state="active"],.cmd[data-state="busy"]'), /--cmd-bg:var\(--glass-cmd-active\)/);
   assert.match(rule('.cmd[data-state="disabled"]'), /--cmd-bg:var\(--glass-cmd-off\)/);
-  const fb = /@supports not[^{]*\{\s*:root\{([^}]*)\}\}/.exec(css)[1];
-  for (const n of ['--glass-cmd-active', '--glass-cmd-idle', '--glass-cmd-off']) { const m = new RegExp(`${n}:rgba\\(\\d+,\\d+,\\d+,([\\d.]+)\\)`).exec(fb); assert.ok(m && +m[1] >= 0.94, `${n} 대체값`); }
+  const fb = mapVars({ theme: 'dark', fallback: true });
+  for (const n of ['--glass-cmd-active', '--glass-cmd-idle', '--glass-cmd-off']) { const m = /^rgba\(\d+,\d+,\d+,([\d.]+)\)$/.exec(fb[n]); assert.ok(m && +m[1] >= 0.94, `${n} 대체값`); }
 });
 
 
 test('라이트 지도 HUD 본문·보조·상태 글자는 가장 밝고 어두운 지도 위에서 4.5:1 이상이다', () => {
-  const light = /html\[data-map-shell\]:not\(\.dark\)\{([^}]*)\}/.exec(css)[1];
-  const shell = /html\[data-map-shell\]\{([^}]*)\}/.exec(css)[1];   // 두 테마 공통: 단계색·강조색은 대시보드 토큰을 가리킨다
-  const tw = fs.readFileSync(path.join(ROOT, 'app/tailwind.css'), 'utf8'), twLight = tw.slice(tw.indexOf('\n:root {'), tw.indexOf('\n}\n', tw.indexOf('\n:root {')));
-  const twVar = (n) => { const m = new RegExp(`${n}:\\s*(#[0-9A-Fa-f]{6})`).exec(twLight); assert.ok(m, `app/tailwind.css 라이트 ${n}`); return m[1]; };
-  const resolve = (v) => { const m = /^var\((--[\w-]+)\)$/.exec(v); return m ? twVar(m[1]) : v; };
-  const vars = Object.fromEntries([...shell.matchAll(/(--[\w-]+):([^;]+);?/g), ...light.matchAll(/(--[\w-]+):([^;]+);?/g)].map((m) => [m[1], resolve(m[2].trim())]));
+  const vars = mapVars({ theme: 'light' });   // 두 테마 공통(html[data-map-shell]: 단계색·강조색은 대시보드 토큰)과 라이트 값을 globals 까지 따라간 값
   const text = ['--ink', '--ink2', '--mute', '--warn', '--sale', '--build', '--soon', '--move', '--plan', '--priv', '--edu', '--power'];
   for (const glassName of ['--glass-tag', '--glass-tag-hover', '--glass-sum', '--glass-card']) {
     const g = vars[glassName].match(/[\d.]+/g).map(Number);
@@ -185,24 +174,13 @@ test('사업·건물 카드(팝업)는 전용 HUD 유리(.72~.82, 흐림 10~14px
   assert.match(pop, /-webkit-backdrop-filter:var\(--glass-pop-blur\)/); assert.match(pop, /[^-]backdrop-filter:var\(--glass-pop-blur\)/);
   const b = /--glass-pop-blur:blur\((\d+)px\) saturate\(([\d.]+)\)/.exec(css);
   assert.ok(b && +b[1] >= 10 && +b[1] <= 14 && +b[2] >= 1.1 && +b[2] <= 1.3, '--glass-pop-blur 는 blur 10~14px, saturate 1.1~1.3');
-  const vars = (block) => { const o = {}; for (const [, k, v] of block.matchAll(/(--[\w-]+):([^;}]+)[;}]?/g)) o[k] = v.trim(); return o; };
-  const light = /html\[data-map-shell\]:not\(\.dark\)\{([^}]*)\}/.exec(css)[1];
-  const L = vars(light);
-  const D = { ...VARS, ...vars(pop) };   // 다크: :root 값 위에 카드 안 덮어쓰기
-  const lightPop = /html\[data-map-shell\]:not\(\.dark\) \.maplibregl-popup-content\{([^}]*)\}/.exec(css)[1];
-  const LC = { ...L, ...vars(lightPop) };
+  const D = mapVars({ theme: 'dark', scope: '.maplibregl-popup-content' });   // 카드 안 덮어쓰기(.maplibregl-popup-content 의 --mute 등)까지 겹친 값
+  const LC = mapVars({ theme: 'light', scope: '.maplibregl-popup-content' });
   const names = ['--ink', '--ink2', '--mute', '--warn', '--plan', '--permit', '--edu', '--power', '--ok', '--bad'];
-  const okBad = { '--ok': '#4ADE9E', '--bad': '#FF6B88' };   // 다크는 대시보드 토큰(app/tailwind.css .dark)과 같은 값
-  const lightTw = { '--ok': '#287B61', '--bad': '#BD3A50' };
-  const dark = { ...D, ...Object.fromEntries(Object.entries(okBad).filter(([k]) => !D[k])) };
-  const lt = { ...LC, ...Object.fromEntries(Object.entries(lightTw).filter(([k]) => !LC[k] || /var\(/.test(LC[k]))) };
-  const plan = { '--plan': '#7BA7FF' }, planL = { '--plan': '#365F99' };   // --plan·--permit 는 html[data-map-shell] 이 대시보드 토큰으로 잇는다(위 값은 두 테마 토큰 실값)
-  const permit = { '--permit': '#45D3C4' }, permitL = { '--permit': '#327F79' };
-  Object.assign(dark, Object.fromEntries(Object.entries({ ...plan, ...permit }).filter(([k]) => !vars(pop)[k] || /var\(/.test(vars(pop)[k]))));
-  Object.assign(lt, Object.fromEntries(Object.entries({ ...planL, ...permitL }).filter(([k]) => !vars(lightPop)[k] || /var\(/.test(vars(lightPop)[k]))));
-  const popA = (cssText) => { const m = /--glass-pop:rgba\((\d+),(\d+),(\d+),([\d.]+)\)/.exec(cssText); assert.ok(m, '--glass-pop'); return [+m[1], +m[2], +m[3], +m[4]]; };
-  const gd = popA(css.slice(0, css.indexOf('}')));
-  const gl = popA(light);
+  const dark = D, lt = LC;
+  const popA = (v) => { const m = /^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/.exec(v || ''); assert.ok(m, '--glass-pop'); return [+m[1], +m[2], +m[3], +m[4]]; };
+  const gd = popA(D['--glass-pop']);
+  const gl = popA(LC['--glass-pop']);
   for (const g of [gd, gl]) assert.ok(g[3] >= 0.72 && g[3] <= 0.82, `--glass-pop 투명도 ${g[3]}`);
   for (const [th, g, V] of [['다크', gd, dark], ['라이트', gl, lt]]) for (const n of names) {
     assert.match(V[n] || '', /^#[0-9A-Fa-f]{6}$/, `${th} ${n} 값`);

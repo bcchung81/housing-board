@@ -110,8 +110,10 @@ test('2 지시 카드 목록 ›: 목록 머리 건수(·계획 호수) = 카드
   assert.equal(String(listOf(q['어떤 사업이 늦어지는가'].href).n), q['어떤 사업이 늦어지는가'].value);
   assert.equal(listOf(q['어디서 막혀 있는가'].href).units, b.units);
   const board = read('components/board/Board.tsx');
-  assert.match(board, /<Link href=\{x\.list\.href\} title=\{x\.list\.title\} aria-label=\{`\$\{x\.t\} \$\{x\.list\.text \?\? '목록'\}`\} data-slot="board-dir-list"/);
-  assert.ok(board.indexOf('data-slot="board-dir-list"') > board.indexOf('</button>', board.indexOf('data-slot="board-dir"')), '링크는 단추 밖(형제) — 단추 안에 링크를 넣지 않는다');
+  assert.match(board, /<Link href=\{l\.href\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\} data-slot="board-dir-list"/, '숫자 자체가 목록 링크(2026-10-18)');
+  const btn = board.slice(board.indexOf('data-slot="board-dir" title='), board.indexOf('</button>', board.indexOf('data-slot="board-dir" title=')));
+  assert.match(btn, /\{dirVals\(x, false\)\}/, '단추 안 값 줄은 링크 없이 자리만');
+  assert.ok(board.indexOf('{dirVals(x, true)}') > board.indexOf('</button>', board.indexOf('data-slot="board-dir" title=')), '링크는 단추 밖(겹친 층) — 단추 안에 링크를 넣지 않는다');
   assert.match(board, /<PanelLink href=\{`\/projects\?sido=all&stage=\$\{bk\}&status=late`\}/);
   assert.match(board, /<PanelLink href="\/projects\?sido=all&status=review-late"/);   // 후보 계산 313 = 그 목록(data-audit-1016 후속 1)
   /* 사업 화면 상태 메뉴·목록 이름에도 '지연(장기 포함)' */
@@ -120,15 +122,35 @@ test('2 지시 카드 목록 ›: 목록 머리 건수(·계획 호수) = 카드
   assert.match(page, /f\.status === 'late' \? DELAY_GROUP/);
 });
 
-test('3 지시 카드 자동 넘김: 멈춤 단추(aria-label·aria-pressed) · 마우스·초점이 있으면 멈춤 · 움직임 줄이기면 처음부터 멈춤', () => {
+test('3 지시 카드 자동 넘김 없음(2026-10-17 사용자 지시): 단추·타이머·진행 띠·멈춤 처리 코드 0, 카드를 누르면 고르고 첫 카드가 기본', () => {
   const board = read('components/board/Board.tsx');
-  assert.match(board, /data-slot="dir-pause" aria-controls="board-dirs" aria-pressed=\{!tour\} aria-label="지시 카드 자동 넘김 멈춤"/);
-  assert.match(board, /onClick=\{\(\) => setTour\(\(t\) => !t\)\}/);
-  assert.match(board, /<section id="board-dirs" aria-label="총리 지시 6건"\n\s*onMouseEnter=\{\(\) => setHold\(true\)\} onMouseLeave=\{\(\) => setHold\(false\)\}\n\s*onFocus=\{\(\) => setHold\(true\)\} onBlur=\{\(e\) => \{ if \(!e\.currentTarget\.contains\(e\.relatedTarget as Node \| null\)\) setHold\(false\); \}\}>/);
-  assert.match(board, /const run = tour && !hold;/);
-  assert.match(board, /if \(!run\) return;\n\s*const id = setInterval/, '멈추면 틱도 멈춘다');
-  assert.match(board, /const \[tour, setTour\] = useState\(false\);/, '서버 렌더·움직임 줄이기는 멈춘 채 시작');
-  assert.match(board, /useEffect\(\(\) => \{ setTour\(!window\.matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches\); \}, \[\]\);/);
+  assert.doesNotMatch(board, /dir-pause|setTour|\btour\b|setHold|\bhold\b|setTick|\btick\b|setInterval|자동 넘김|7초|Pause|Play\b/);
+  assert.doesNotMatch(board, /h-\[3px\] w-0 bg-primary/, '진행 띠 없음');
+  assert.match(board, /const \[focus, setFocus\] = useState\(1\);/);
+  assert.match(board, /onClick=\{\(\) => pick\(i\)\}/);
+  assert.match(board, /const pick = \(i: number\) => \{\n    setFocus\(i \+ 1\);/);
+  assert.match(board, /<section id="board-dirs" aria-label="총리 지시 6건">/);
+});
+
+test('3b 종합상황판 맨 위 줄 없음: h1 은 sr-only, 원장·실적 날짜는 지시 카드 묶음 바로 아래 오른쪽 끝 14px 한 줄', () => {
+  const board = read('components/board/Board.tsx');
+  assert.doesNotMatch(board, /<header /);
+  assert.match(board, /<h1 className="sr-only">주택공급 종합상황판<\/h1>/);
+  assert.doesNotMatch(board, /원장 \{L\.referenceDate/);
+});
+
+test('3c 지시 카드 모서리 card(14 — 페이지 바탕 위 바깥 카드, 2026-10-18) · 1px 테두리 · 카드 그림자 · 고른 카드는 주색 옅은 면 + 1px 주색(2026-10-19, 2px·안쪽 고리 없음) · 진행 띠 없음 · 두 줄', () => {
+  const board = read('components/board/Board.tsx'), css = read('app/globals.css');
+  const btn = board.slice(board.indexOf('data-slot="board-dir" title='), board.indexOf('</button>', board.indexOf('data-slot="board-dir" title=')));
+  const cls = btn.match(/className=\{cn\(btn, dirFrame, '([^']*)'/)[1], frame = board.match(/const dirFrame = '([^']*)';/)[1];
+  assert.doesNotMatch(cls + frame, /\brounded-none\b|rounded-\[|ui-tile-compact/);
+  assert.match(frame, /\bui-dir\b/);
+  assert.match(cls, /\bui-dir-face ui-pick\b/);
+  const rule = (sel) => (css.match(new RegExp(`\\n  ${sel.replace(/[.[\]()*+?^$|]/g, '\\$&')} \\{([^}]*)\\}`)) || [])[1] || '';
+  assert.match(rule('.ui-dir'), /border: var\(--border-w\) solid transparent;[\s\S]*border-radius: var\(--radius-card\);/, '바깥 카드 반경(--radius-card 14) · 1px 테두리 자리');
+  assert.match(rule('.ui-dir-face'), /border-color: var\(--border\);\s*box-shadow: var\(--shadow-card\);/, '다른 패널과 같은 카드 그림자');
+  assert.match(css, /\.ui-pick\[aria-pressed="true"\] \{ background-color: color-mix\(in oklab, var\(--primary\) var\(--tint-mix\), var\(--card\)\); border-color: var\(--primary\); \}/);
+  assert.doesNotMatch(cls, /aria-pressed:|box-shadow|bg-accent/);
 });
 
 test('4 지역 공급 시군구 거르기: 고양시(41280) = 덕양·일산동·일산서 구 합 · 안산(41270) = 시 + 구 · 이름 코드 = id 코드', () => {

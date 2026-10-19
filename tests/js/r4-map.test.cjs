@@ -45,8 +45,9 @@ test("A2: 공사 기간 시작은 원장 착공 실제(2023.10), 상세 3D 2024.
   const sp = H.spanOf(b);
   assert.deepEqual([sp.s, sp.e], ['2023-10-25', '2026-10-11']);
   const cell = H.spanCell(sp);
-  assert.match(cell, /^<span title="[^"]*">2023\.10 ~ 2026\.10<\/span> <b class="jd alt" title="([^"]*)">원천 날짜 다름\(상세 3D 2024\.03\)<\/b>$/);
-  const tip = /<b class="jd alt" title="([^"]*)"/.exec(cell)[1];
+  /* 원천 날짜 다름 표지는 정책담당자 관점에만(ov-aud-admin, 2026-10-18) */
+  assert.match(cell, /^<span title="[^"]*">2023\.10 ~ 2026\.10<\/span> <b class="jd alt ov-aud-admin" title="([^"]*)">원천 날짜 다름\(상세 3D 2024\.03\)<\/b>$/);
+  const tip = /<b class="jd alt ov-aud-admin" title="([^"]*)"/.exec(cell)[1];
   assert.match(tip, /사업 원장: 착공 실제 2023\.10\.25 · 준공 예정 2026\.10\.11/);
   assert.match(tip, /LH 공사현황\(상세 3D\): 공사 2024\.03\.29 ~ 2026\.10\.11/);
   assert.doesNotMatch(cell, /HOME|번들/, '지도에 내부 낱말 없음');

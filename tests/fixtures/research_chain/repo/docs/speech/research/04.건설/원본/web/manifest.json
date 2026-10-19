@@ -1,0 +1,12 @@
+{
+ "source": "시험 포털",
+ "fetched_at": "2026-10-17T00:00:00Z",
+ "files": {
+  "o_data_go_kr_15000001": {
+   "filename": "data_go_kr_15000001_fileData.html",
+   "url": "https://www.data.go.kr/data/15000001/fileData.do",
+   "method": "ego lite",
+   "kind": "공공데이터포털 파일데이터 안내"
+  }
+ }
+}

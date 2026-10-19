@@ -4,11 +4,11 @@
    링크는 <Link> 가 아니라 <a>: 클라이언트 이동(pushState)은 CSS :target 을 바꾸지 않아 데이터 원본의 그 행이 강조되지 않는다. 서버 컴포넌트(<details> — 스크립트 없음). */
 import { ChevronDown } from 'lucide-react';
 import { cn } from 'cn';
-import requirementsJson from '../data/board/requirements.json';
-import { VERDICT, reqsFor, tagTitle, type RequirementsDoc, type Screen } from '../lib/board/requirements';
+import requirementsJson from '@/data/board/requirements.json';
+import { VERDICT, reqsFor, tagTitle, type RequirementsDoc, type Screen } from '@/lib/board/requirements';
 
 const doc = requirementsJson as RequirementsDoc;
-const CHIP = 'flex cursor-pointer list-none items-center gap-1 rounded-[6px] border border-line2 px-2 text-[14px] leading-[24px] font-bold whitespace-nowrap text-muted-foreground tabular-nums hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden';
+const CHIP = 'flex h-6.5 cursor-pointer list-none items-center gap-1 rounded-chip border border-line2 px-2 text-sm font-bold whitespace-nowrap text-muted-foreground tabular-nums hover:border-primary hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden';
 
 export default function ReqTags({ screen, ids, className }: { screen: Screen; ids?: string[]; className?: string }) {
   const list = reqsFor(doc, screen).filter((r) => !ids || ids.includes(r.id));
@@ -18,13 +18,13 @@ export default function ReqTags({ screen, ids, className }: { screen: Screen; id
       <summary className={CHIP} title="이 화면이 답하는 요구사항 — 누르면 목록, 항목을 누르면 데이터 원본의 판정">
         요구사항 {list.length}<ChevronDown className="size-3.5 shrink-0 transition-transform group-open:rotate-180" aria-hidden="true" />
       </summary>
-      <ul className="absolute top-full right-0 z-30 m-0 mt-1 flex max-h-[60vh] min-w-[300px] list-none flex-col gap-0.5 overflow-y-auto rounded-[10px] border border-border bg-popover p-1 text-popover-foreground shadow-[var(--shadow-pop)]">
+      <ul className="absolute top-full right-0 z-30 m-0 mt-1 flex max-h-[60vh] min-w-[300px] list-none flex-col gap-0.5 overflow-y-auto rounded-tile border border-border bg-popover p-1 text-popover-foreground shadow-pop">
         {list.map((r) => (
           <li key={r.id}>
-            <a href={`/sources#${r.id}`} title={tagTitle(doc, r)} className="flex items-baseline gap-2 rounded-[8px] px-3 py-1.5 text-[14px] whitespace-nowrap text-foreground no-underline hover:bg-pn2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
+            <a href={`/sources#${r.id}`} title={tagTitle(doc, r)} className="flex items-baseline gap-2 rounded-chip px-3 py-1.5 text-sm whitespace-nowrap text-foreground no-underline hover:bg-pn2 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary">
               <span className="min-w-0 flex-1">{r.title}</span>
-              <span className="text-[13px] text-muted-foreground">{VERDICT[r.verdict].name}</span>
-              <span className="text-[13px] text-muted-foreground tabular-nums">{r.id}</span>
+              <span className="text-sm text-muted-foreground">{VERDICT[r.verdict].name}</span>
+              <span className="text-sm text-muted-foreground tabular-nums">{r.id}</span>
             </a>
           </li>
         ))}

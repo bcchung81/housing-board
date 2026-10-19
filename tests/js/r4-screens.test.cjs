@@ -89,3 +89,20 @@ test("4 '후보 계산' 정의 한 줄: 목록 머리 ⓘ · 상태 칩 ⓘ", ()
   const bar = page.slice(page.indexOf('<ChipGroup label="상태" bare>'), page.indexOf('<ChipGroup label="기관" bare>'));
   assert.ok(tips(bar).some((t) => t.includes('{REVIEW_LATE_DEF}')), '상태 칩 ⓘ');
 });
+
+test('카드 안의 카드(2026-10-18): 핵심 질문 칸·정책 줄은 inset, 서랍 구역은 구역 카드(row 아님)+안쪽 inset, 막대 틀은 둥글게', () => {
+  const sum = read('components/projects/Summary.tsx');
+  const q = sum.slice(sum.indexOf('export function Questions'), sum.indexOf('export function Pipeline'));
+  assert.doesNotMatch(q, /divide-x/, '핵심 질문 칸 사이 세로 구분선 없음');
+  assert.match(q, /<li key=\{x\.q\} className=\{cn\(cardVariants\(\{ variant: 'inset' \}\)/, '질문 칸마다 안쪽 카드');
+  assert.match(sum, /<Card variant="inset" key=\{l\.policy\.key\}/, '정책별 줄도 안쪽 카드');
+  assert.doesNotMatch(sum, /block h-\[[68]px\](?!\s*rounded-full)["']/, '막대 틀(6·8px)은 rounded-full');
+  for (const f of ['ProjectDetail', 'Candidate']) {
+    const s = read(`components/projects/${f}.tsx`);
+    assert.doesNotMatch(s, /variant="row"/, `${f}: 서랍 구역은 구분선 줄이 아니라 구역 카드`);
+    assert.match(s, /<Card render=\{<section aria-label="(개요|간단 보기)"/, `${f}: 구역 카드`);
+  }
+  const det = read('components/projects/ProjectDetail.tsx');
+  assert.match(det, /<Card render=\{<section aria-label="단계와 핵심 수치" \/>\}[\s\S]*<StageSteps[\s\S]*<Kpi variant="inset"/, '단계 6칸·핵심 수치는 구역 카드 안의 inset');
+  assert.match(read('components/projects/StageTimeline.tsx'), /rounded-tile border border-border bg-chartbg/, '타임라인 차트 면도 테두리 둥근 카드');
+});

@@ -1,0 +1,2256 @@
+<!doctype html>
+<html lang="ko" data-elev="raised" data-page="citizen" data-aud="public">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The주택 — M6(열린 문과 중정) + T3(테라코타 포인트) 로고 집중 발전안</title>
+<meta name="description" content="사용자 선택안 M6(열린 문과 중정) + T3(The 테라코타 + 주택) 조합의 조형·비례·광학 커닝을 고도화한 정밀 로고 발전안 및 스펙 문서">
+<link id="dynamic-favicon" rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='4 4 64 60'><path fill='%230F1A3D' d='M9 25.5 32.8 6.3Q36 3.7 39.2 6.3L63 25.5V55Q63 59 59 59H51.5V30.2L38.2 19.4Q36 17.6 33.8 19.4L20.5 30.2V59H13Q9 59 9 55Z'/><path fill='%23D65535' fill-rule='evenodd' d='M29.5 28.5 48 21V52L29.5 59.5V28.5ZM40.5 34.5V41.5H44.2V34.5H40.5Z'/></svg>">
+<link rel="stylesheet" href="../../../assets/fonts/noto-sans-kr/noto-sans-kr.css">
+<style>
+/* ── 1. 정본 토큰 (app/globals.css 및 DESIGN.md 100% 준수) ── */
+:root {
+  color-scheme: light;
+  --background: #FFFFFF;
+  --foreground: #172B4D;
+  --card: #FFFFFF;
+  --card-foreground: #172B4D;
+  --popover: #FFFFFF;
+  --popover-foreground: #172B4D;
+  --primary: #23466D;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EAF0F6;
+  --secondary-foreground: #172B4D;
+  --muted: #F3F5F8;
+  --muted-foreground: #4D5B6F;
+  --accent: #EDF3F9;
+  --accent-foreground: #172B4D;
+  --destructive: #C94359;
+  --border: #D5DCE6;
+  --input: #B9C6D6;
+  --ring: #23466D;
+  --ink2: #344960;
+  --mute: #5F6E82;
+  --line2: #B9C6D6;
+  --pn2: #EAF0F6;
+  --ok: #287B61;
+  --warn: #7F6300;
+  --bad: #BD3A50;
+  --chartbg: #FAFBFD;
+  --page-bg: #FFFFFF;
+  --inset-bg: var(--card);
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 6%), 0 1px 3px rgb(15 23 42 / 4%);
+  --shadow-pop: 0 8px 22px rgb(15 23 42 / 14%);
+  --shadow-hover: 0 10px 24px rgb(15 23 42 / 12%), 0 2px 6px rgb(15 23 42 / 8%);
+  --st-plan: #3D7BD8;
+  --st-permit: #16998D;
+  --st-build: #DA7426;
+  --st-sale: #7286A8;
+  --st-soon: #5B9B3A;
+  --st-move: #8B67CC;
+  --st-plan-ink: #365F99;
+  --st-permit-ink: #327F79;
+  --st-build-ink: #8E541D;
+  --st-sale-ink: #536278;
+  --st-soon-ink: #526E35;
+  --st-move-ink: #795B9E;
+  --knob: #FFFFFF;
+  --tint-mix: 12%;
+  --tint-mix-on: 20%;
+  --logo-ink: #0F1A3D;
+  --logo-wave: #D65535;
+
+  /* 8단계 글자 크기 + 역할 토큰 */
+  --text-xs: 12px;
+  --text-xs--line-height: 1.4;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.5;
+  --text-base: 16px;
+  --text-base--line-height: 1.6;
+  --text-md: 18px;
+  --text-md--line-height: 1.4;
+  --text-lg: 20px;
+  --text-lg--line-height: 1.3;
+  --text-xl: 24px;
+  --text-xl--line-height: 1.2;
+  --text-2xl: 30px;
+  --text-2xl--line-height: 1.2;
+  --text-3xl: 38px;
+  --text-3xl--line-height: 1.1;
+  --font-sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+
+  --fs-body: 14px;
+  --fs-table: 14px;
+  --fs-meta: 14px;
+  --fs-legend: 14px;
+  --fs-kpi: 30px;
+  --fs-h1: 30px;
+  --fs-h2: 20px;
+  --fs-h3: 16px;
+  --fs-caption: 12px;
+  --lh-title: 1.2;
+  --lh-sub: 1.3;
+  --lh-body: 1.5;
+
+  --radius-chip: 4px;
+  --radius-tile: 10px;
+  --radius-card: 14px;
+  --radius-full: 9999px;
+  --border-w: 1px;
+  --border-w-on: 2px;
+
+  --pad-card: 20px;
+  --pad-tile-y: 12px;
+  --pad-tile-x: 16px;
+  --pad-compact-y: 8px;
+  --pad-compact-x: 10px;
+  --pad-chip-x: 8px;
+
+  --fs-logo: 20px;
+  --logo-mark: 28px;
+  --fs-nav: 16px;
+  --btn-h: 36px;
+  --btn-h-sm: 32px;
+  --btn-gap: 6px;
+}
+
+html.dark {
+  color-scheme: dark;
+  --background: #111111;
+  --foreground: #F2F2F2;
+  --card: #111111;
+  --card-foreground: #F2F2F2;
+  --popover: #1A1A1A;
+  --popover-foreground: #F2F2F2;
+  --primary: #9DBCE9;
+  --primary-foreground: #10243D;
+  --secondary: #1F1F1F;
+  --secondary-foreground: #F2F2F2;
+  --muted: #1F1F1F;
+  --muted-foreground: #B3B3B3;
+  --accent: #262626;
+  --accent-foreground: #F2F2F2;
+  --destructive: #FF6B88;
+  --border: #3B3B3B;
+  --input: #6B6B6B;
+  --ring: #9DBCE9;
+  --ink2: #D0D0D0;
+  --mute: #A6A6A6;
+  --line2: #6B6B6B;
+  --pn2: #262626;
+  --ok: #4ADE9E;
+  --warn: #FFC24D;
+  --bad: #FF6B88;
+  --chartbg: #0F0F0F;
+  --page-bg: #111111;
+  --inset-bg: var(--card);
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 4%);
+  --shadow-pop: 0 8px 22px rgb(0 0 0 / 45%);
+  --shadow-hover: 0 12px 28px rgb(0 0 0 / 50%), inset 0 1px 0 rgb(255 255 255 / 7%);
+  --st-plan: #6F96E6;
+  --st-permit: #3BB5A9;
+  --st-build: #E08A3C;
+  --st-sale: #A3AEBF;
+  --st-soon: #8CC45C;
+  --st-move: #B98BE0;
+  --st-plan-ink: #7BA7FF;
+  --st-permit-ink: #45D3C4;
+  --st-build-ink: #FF9F43;
+  --st-sale-ink: #C7D0DA;
+  --st-soon-ink: #A5E56D;
+  --st-move-ink: #D9A6FF;
+  --knob: #FFFFFF;
+  --tint-mix: 14%;
+  --tint-mix-on: 22%;
+  --logo-ink: #F2F2F2;
+  --logo-wave: #D65535;
+}
+
+html[data-aud="public"] {
+  --fs-body: 16px;
+  --fs-table: 16px;
+  --lh-body: 1.6;
+}
+
+html[data-elev="raised"] {
+  --page-bg: #F4F5F7;
+  --card: #FFFFFF;
+  --inset-bg: #FFFFFF;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 6%), 0 4px 12px rgb(15 23 42 / 6%);
+  --shadow-hover: 0 2px 4px rgb(15 23 42 / 8%), 0 10px 24px rgb(15 23 42 / 12%);
+}
+
+html.dark[data-elev="raised"] {
+  --page-bg: #111111;
+  --card: #1A1A1B;
+  --inset-bg: #232325;
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 6%), 0 8px 24px rgb(0 0 0 / 35%);
+  --shadow-hover: inset 0 1px 0 rgb(255 255 255 / 9%), 0 12px 28px rgb(0 0 0 / 50%);
+}
+
+html[data-page="citizen"] {
+  --primary: #1F53B8;
+  --ring: #1F53B8;
+  --cz-accent: #B6351B;
+  --cz-accent-on: #FFFFFF;
+  --cz-summary-bg: #0E5E66;
+  --cz-badge-ink: #FFFFFF;
+  --cz-summary-fg: #FFFFFF;
+  --cz-summary-muted: #CFE7E8;
+  --cz-summary-num: #FFC2A6;
+  --cz-summary-plan: #89C3FE;
+  --cz-summary-build: #FEAC5F;
+  --cz-summary-sale: #C4D2E5;
+  --cz-summary-line: #5A979C;
+  --cz-summary-panel: #1A6F77;
+  --cz-apply-bg: #FAEBE8;
+}
+
+html.dark[data-page="citizen"] {
+  --primary: #8BB4FE;
+  --ring: #8BB4FE;
+  --cz-accent: #FD8965;
+  --cz-accent-on: var(--card);
+  --cz-summary-bg: #0B4D54;
+  --cz-badge-ink: #111111;
+  --cz-apply-bg: #352825;
+}
+
+* {
+  box-sizing: border-box;
+}
+html {
+  scroll-padding-top: 84px;
+  scroll-behavior: smooth;
+}
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: 400;
+  color: var(--foreground);
+  background: var(--page-bg);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  font-synthesis: none;
+  -webkit-font-smoothing: antialiased;
+}
+button, input, select, textarea, code, pre {
+  font-family: inherit;
+  color: inherit;
+}
+h1, h2, h3, h4 {
+  margin: 0;
+  font-weight: 700;
+  text-wrap: balance;
+}
+svg.i {
+  width: 16px;
+  height: 16px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ── 2. 공통 UI 부품 ── */
+.ui-card {
+  min-width: 0;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--card);
+  color: var(--card-foreground);
+  padding: var(--pad-card);
+  box-shadow: var(--shadow-card);
+}
+.ui-tile {
+  min-width: 0;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-tile);
+  background: var(--card);
+  color: var(--card-foreground);
+  padding: var(--pad-tile-y) var(--pad-tile-x);
+  box-shadow: var(--shadow-card);
+}
+.ui-inset {
+  min-width: 0;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-tile);
+  background: var(--inset-bg);
+  color: var(--card-foreground);
+  padding: var(--pad-compact-y) var(--pad-compact-x);
+}
+.ui-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border: var(--border-w) solid var(--line2);
+  border-radius: var(--radius-chip);
+  padding: 0 var(--pad-chip-x);
+  font-size: var(--fs-meta);
+  line-height: var(--lh-body);
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.ui-chip-primary {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: color-mix(in oklab, var(--primary) var(--tint-mix), var(--card));
+  font-weight: 700;
+}
+.ui-chip-wave {
+  border-color: color-mix(in oklab, var(--logo-wave) 55%, var(--border));
+  color: var(--logo-wave);
+  background: color-mix(in oklab, var(--logo-wave) 12%, var(--card));
+  font-weight: 700;
+}
+.ui-chip-ok {
+  border-color: var(--ok);
+  color: var(--ok);
+  background: color-mix(in oklab, var(--ok) 12%, var(--card));
+  font-weight: 700;
+}
+.ui-btn {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: center;
+  gap: var(--btn-gap);
+  height: var(--btn-h);
+  border: var(--border-w) solid transparent;
+  border-radius: var(--radius-tile);
+  background: var(--primary);
+  color: var(--primary-foreground);
+  padding: 0 var(--pad-tile-x);
+  font-size: var(--text-sm);
+  line-height: var(--lh-sub);
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background-color .15s, border-color .15s, color .15s, transform .15s;
+}
+.ui-btn:hover {
+  background-color: color-mix(in oklab, var(--primary) 85%, transparent);
+}
+.ui-btn-outline {
+  border-color: var(--border);
+  background: var(--card);
+  color: var(--foreground);
+}
+.ui-btn-outline:hover {
+  background: var(--pn2);
+}
+.ui-btn-outline[aria-pressed="true"] {
+  border-color: var(--primary);
+  background: color-mix(in oklab, var(--primary) var(--tint-mix), var(--card));
+  color: var(--primary);
+}
+.ui-btn-sm {
+  height: var(--btn-h-sm);
+  padding: 0 var(--pad-compact-x);
+  font-size: var(--fs-meta);
+}
+
+/* ── 3. 실제 /citizen 상단 메뉴 바 (header.top) 정본 스타일 ── */
+header.top {
+  position: relative;
+  z-index: 30;
+  overflow-x: clip;
+  background: var(--card);
+  color: var(--card-foreground);
+  border-bottom: var(--border-w) solid var(--border);
+  box-shadow: var(--shadow-card);
+}
+.top-in {
+  width: 100%;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 28px;
+}
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-right: 12px;
+  color: var(--logo-ink);
+  text-decoration: none;
+  height: 100%;
+  flex: none;
+}
+.logo:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: -2px;
+}
+.logo svg.mark-svg {
+  width: var(--logo-mark);
+  height: var(--logo-mark);
+  flex: none;
+  display: block;
+}
+.logo svg .wave {
+  fill: var(--logo-wave);
+}
+.logo > span,
+.logo .wm-root {
+  font-size: var(--fs-logo);
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* ── T3(테라코타 포인트형) 정밀 워드마크 4안 타이포 규칙 ── */
+/* T3-A: 광학 커닝 표준형 (The 18px/700 --logo-wave 광학 밀착 + 주택 20px/700 --logo-ink) */
+.wm-t3a {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: var(--fs-logo);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--logo-ink);
+}
+.wm-t3a .en {
+  font-size: var(--text-md); /* 18px */
+  font-weight: 700;
+  color: var(--logo-wave);
+  letter-spacing: -0.03em;
+  transform: translateY(-0.5px);
+  margin-right: 0.5px;
+}
+.wm-t3a .ko {
+  font-size: var(--fs-logo); /* 20px */
+  font-weight: 700;
+  color: var(--logo-ink);
+  letter-spacing: -0.035em;
+}
+
+/* T3-B: 대문자 건축형 (THE 16px/700 --logo-wave 직선 구조 + 주택 20px/700 --logo-ink) */
+.wm-t3b {
+  display: inline-flex;
+  align-items: baseline;
+  font-size: var(--fs-logo);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--logo-ink);
+}
+.wm-t3b .en {
+  font-size: var(--text-base); /* 16px */
+  font-weight: 700;
+  color: var(--logo-wave);
+  letter-spacing: -0.01em;
+  transform: translateY(-1px);
+  margin-right: 1.5px;
+}
+.wm-t3b .ko {
+  font-size: var(--fs-logo); /* 20px */
+  font-weight: 700;
+  color: var(--logo-ink);
+  letter-spacing: -0.035em;
+}
+
+/* T3-C: 주춧돌 언더라인형 (The 16px/700 + 2px 테라코타 주춧돌 바 + 주택 20px/700) */
+.wm-t3c {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: var(--fs-logo);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--logo-ink);
+}
+.wm-t3c .en {
+  display: inline-block;
+  font-size: var(--text-base); /* 16px */
+  font-weight: 700;
+  color: var(--logo-wave);
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  padding-bottom: 1.5px;
+  border-bottom: 2px solid var(--logo-wave);
+  transform: translateY(-0.5px);
+}
+.wm-t3c .ko {
+  font-size: var(--fs-logo); /* 20px */
+  font-weight: 700;
+  color: var(--logo-ink);
+  letter-spacing: -0.035em;
+}
+
+/* T3-D: 절제된 사선과 열린 카운터, 한글에 맞춘 광학 중심 */
+.wm-t3d {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.09em;
+  font-size: var(--fs-logo);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--logo-ink);
+  white-space: nowrap;
+}
+.wm-t3d svg.the-vec {
+  width: 1.8em;
+  height: 1em;
+  flex: none;
+  display: block;
+  overflow: visible;
+  transform: translateY(0.025em);
+}
+.wm-t3d svg.the-vec .wave {
+  fill: var(--logo-wave);
+}
+.wm-t3d .ko {
+  font-size: 1em;
+  font-weight: 700;
+  color: var(--logo-ink);
+  letter-spacing: -0.04em;
+}
+
+/* T3-0: 초안 기준 (보정 전 T3) */
+.wm-t30 {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+  font-size: var(--fs-logo);
+  font-weight: 700;
+  line-height: 1;
+  color: var(--logo-ink);
+}
+.wm-t30 .en {
+  font-size: var(--text-md);
+  font-weight: 700;
+  color: var(--logo-wave);
+}
+.wm-t30 .ko {
+  font-size: var(--fs-logo);
+  font-weight: 700;
+}
+
+/* 메뉴 · 우측 도구 */
+.menu {
+  margin: 0;
+  display: flex;
+  list-style: none;
+  padding: 0;
+}
+.menu a {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 64px;
+  padding: 0 12px;
+  font-size: var(--fs-nav);
+  color: var(--muted-foreground);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .15s;
+}
+.menu a:hover {
+  color: var(--foreground);
+}
+.menu a[aria-current] {
+  color: var(--foreground);
+}
+.menu a[aria-current]::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: var(--border-w-on);
+  background: var(--primary);
+}
+html[data-page="citizen"] .menu a[aria-current]::after {
+  background: var(--cz-accent);
+}
+html:not([data-aud="admin"]) .menu li.adm {
+  display: none;
+}
+nav.main {
+  margin: 0 auto;
+}
+.tools {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.tsep {
+  flex: none;
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+}
+.sw {
+  position: relative;
+  display: block;
+  flex: none;
+  width: 48px;
+  height: 28px;
+  padding: 0;
+  border: var(--border-w) solid var(--line2);
+  border-radius: var(--radius-full);
+  background: var(--muted);
+  cursor: pointer;
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.sw .knob {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  background: var(--knob);
+  color: var(--foreground);
+  box-shadow: var(--shadow-card);
+  pointer-events: none;
+  transition: transform .15s ease;
+}
+html.dark .sw .knob {
+  color: var(--primary-foreground);
+}
+.sw .knob svg.i {
+  width: 14px;
+  height: 14px;
+}
+.sw .k-on {
+  display: none;
+}
+html.dark .sw-theme,
+html[data-aud="admin"] .sw-aud {
+  border-color: var(--foreground);
+  background: var(--foreground);
+}
+html.dark .sw-theme,
+html.dark[data-aud="admin"] .sw-aud {
+  border-color: var(--primary);
+  background: var(--primary);
+}
+html.dark .sw-theme .knob,
+html[data-aud="admin"] .sw-aud .knob {
+  transform: translateX(20px);
+}
+html.dark .sw-theme .k-off,
+html[data-aud="admin"] .sw-aud .k-off {
+  display: none;
+}
+html.dark .sw-theme .k-on,
+html[data-aud="admin"] .sw-aud .k-on {
+  display: flex;
+}
+.aud {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--text-sm);
+}
+.aud-l {
+  color: var(--muted-foreground);
+  white-space: nowrap;
+  cursor: pointer;
+}
+html:not([data-aud="admin"]) .aud-l.l-pub,
+html[data-aud="admin"] .aud-l.l-adm {
+  font-weight: 700;
+  color: var(--foreground);
+}
+
+/* ── 4. 문서 상단 고정 바 & 전체 레이아웃 ── */
+.doc-bar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  background: color-mix(in oklab, var(--card) 92%, transparent);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-bottom: var(--border-w) solid var(--border);
+}
+.doc-bar-in {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  min-height: 56px;
+  padding: 8px 24px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.doc-brand {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.doc-brand-title {
+  font-size: var(--text-base);
+  font-weight: 700;
+}
+.doc-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.wrap {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 24px 24px 72px;
+  display: grid;
+  gap: 24px;
+}
+
+.hero-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.hero-head h1 {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-title);
+  letter-spacing: -0.025em;
+}
+.hero-sub {
+  margin: 6px 0 0;
+  font-size: var(--text-base);
+  color: var(--muted-foreground);
+}
+
+/* ── 섹션 1: 실시간 헤더 미리보기 무대 ── */
+.stage-box {
+  display: grid;
+  gap: 16px;
+}
+.preview-frame {
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--page-bg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+}
+.preview-label-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 16px;
+  background: var(--muted);
+  border-bottom: var(--border-w) solid var(--border);
+  font-size: var(--fs-meta);
+  color: var(--muted-foreground);
+}
+.preview-label-bar b {
+  color: var(--foreground);
+}
+
+.citizen-context {
+  padding: 14px 28px 18px;
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr);
+  gap: 14px;
+  background: var(--page-bg);
+}
+.admin-context {
+  display: none;
+  padding: 14px 28px 18px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  background: var(--page-bg);
+}
+html[data-aud="admin"] .citizen-context {
+  display: none;
+}
+html[data-aud="admin"] .admin-context {
+  display: grid;
+}
+.ctx-smry {
+  border-radius: var(--radius-card);
+  padding: 14px 16px;
+  background: var(--cz-summary-bg, #0E5E66);
+  color: #FFFFFF;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 8px;
+}
+.ctx-smry-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-sm);
+  color: #CFE7E8;
+}
+.ctx-smry-kpi {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.ctx-smry-kpi strong {
+  font-size: var(--text-2xl);
+  line-height: 1.1;
+  color: #FFC2A6;
+  font-variant-numeric: tabular-nums;
+}
+.ctx-apply {
+  border: var(--border-w) solid color-mix(in oklab, var(--cz-accent, #B6351B) 30%, var(--card));
+  border-radius: var(--radius-card);
+  background: var(--cz-apply-bg, #FAEBE8);
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.preview-lower-grid {
+  display: grid;
+  grid-template-columns: 390px 260px minmax(0, 1fr);
+  gap: 16px;
+  align-items: stretch;
+}
+.mobile-frame {
+  width: 390px;
+  max-width: 100%;
+  border: var(--border-w) solid var(--border);
+  border-radius: var(--radius-card);
+  background: var(--page-bg);
+  overflow: hidden;
+  box-shadow: var(--shadow-card);
+  display: flex;
+  flex-direction: column;
+}
+.mobile-top-in {
+  height: 48px;
+  padding: 0 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--card);
+  border-bottom: var(--border-w) solid var(--border);
+}
+.mobile-top-in .logo {
+  min-width: 44px;
+  margin-right: 0;
+}
+.mobile-top-in.hide-wm .logo .wm-slot {
+  display: none;
+}
+
+.favicon-stage {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 12px;
+}
+.browser-tab-mock {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: var(--radius-tile);
+  background: var(--muted);
+  border: var(--border-w) solid var(--border);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+.scale-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-around;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: var(--radius-tile);
+  background: var(--muted);
+  border: var(--border-w) solid var(--border);
+}
+.scale-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.scale-box {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-chip);
+  background: var(--card);
+  border: var(--border-w) solid var(--border);
+  color: var(--logo-ink);
+  box-shadow: var(--shadow-card);
+}
+.scale-box svg .wave {
+  fill: var(--logo-wave);
+}
+
+.code-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 10px;
+}
+.code-pre {
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: var(--radius-tile);
+  background: var(--muted);
+  border: var(--border-w) solid var(--border);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: var(--text-xs);
+  line-height: 1.5;
+  color: var(--foreground);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+/* ── 섹션 2: 초안(Before) → 정밀 발전안(After) 작도·광학 비교 ── */
+.ba-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.15fr;
+  gap: 16px;
+  align-items: stretch;
+}
+.ba-pane {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+.blueprint-stage {
+  position: relative;
+  height: 220px;
+  border-radius: var(--radius-tile);
+  border: var(--border-w) solid var(--border);
+  background:
+    linear-gradient(to right, color-mix(in oklab, var(--primary) 7%, transparent) 1px, transparent 1px) 0 0 / 20px 20px,
+    linear-gradient(to bottom, color-mix(in oklab, var(--primary) 7%, transparent) 1px, transparent 1px) 0 0 / 20px 20px,
+    var(--chartbg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 16px;
+  overflow: hidden;
+}
+.blueprint-stage svg.bp-svg {
+  width: 124px;
+  height: 124px;
+  color: var(--logo-ink);
+  overflow: visible;
+}
+.blueprint-stage svg.bp-svg .wave {
+  fill: var(--logo-wave);
+}
+.bp-guide {
+  pointer-events: none;
+  transition: opacity .2s ease;
+}
+body.hide-guides .bp-guide {
+  opacity: 0;
+}
+.ba-lockup-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-radius: var(--radius-tile);
+  border: var(--border-w) solid var(--border);
+  background: var(--card);
+}
+.ba-points {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  font-size: var(--text-sm);
+  color: var(--ink2);
+}
+.ba-points li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  line-height: 1.5;
+}
+.ba-points li .tag-num {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius-full);
+  background: color-mix(in oklab, var(--logo-wave) 16%, var(--card));
+  color: var(--logo-wave);
+  font-size: var(--text-xs);
+  font-weight: 700;
+}
+
+/* ── 섹션 3: M6 정밀 발전 6안 그리드 ── */
+.sec-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.sec-head h2 {
+  font-size: var(--text-xl);
+  line-height: var(--lh-title);
+}
+.sec-head p {
+  margin: 0;
+  font-size: var(--fs-meta);
+  color: var(--muted-foreground);
+}
+
+.mark-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
+}
+.mark-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.mark-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: color-mix(in oklab, var(--primary) 50%, var(--border));
+}
+.mark-card[aria-pressed="true"] {
+  border-width: var(--border-w-on);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary), var(--shadow-card);
+}
+.mark-card.is-legacy[aria-pressed="true"] {
+  border-color: var(--logo-wave);
+  box-shadow: 0 0 0 1px var(--logo-wave), var(--shadow-card);
+}
+
+.mc-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.mc-title {
+  font-size: var(--fs-h2);
+  font-weight: 700;
+  line-height: var(--lh-sub);
+}
+.mc-en {
+  display: block;
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--muted-foreground);
+  margin-top: 2px;
+}
+
+.mc-stage {
+  display: grid;
+  grid-template-columns: 96px minmax(0, 1fr);
+  gap: 10px;
+}
+.mc-big-box {
+  height: 96px;
+  border-radius: var(--radius-tile);
+  border: var(--border-w) solid var(--border);
+  background: var(--chartbg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  color: var(--logo-ink);
+}
+.mc-big-box svg {
+  width: 56px;
+  height: 56px;
+}
+.mc-big-box svg .wave {
+  fill: var(--logo-wave);
+}
+.mc-big-box span {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.mc-right-stack {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 8px;
+}
+.mc-header-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  border-radius: var(--radius-tile);
+  border: var(--border-w) solid var(--border);
+  background: var(--card);
+  color: var(--logo-ink);
+}
+.mc-header-strip.dark-strip {
+  background: #111111;
+  border-color: #3B3B3B;
+  color: #F2F2F2;
+  --logo-ink: #F2F2F2;
+}
+.mc-header-strip .mini-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.mc-header-strip .mini-logo svg.mark-svg {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+.mc-header-strip .mini-logo svg .wave {
+  fill: #D65535;
+}
+.mc-strip-tag {
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.mc-header-strip.dark-strip .mc-strip-tag {
+  color: #B3B3B3;
+}
+
+.mc-desc {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink2);
+  line-height: 1.55;
+}
+.mc-meta-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: var(--border-w) solid var(--border);
+  font-size: var(--text-xs);
+  font-weight: 700;
+  color: var(--muted-foreground);
+}
+.mc-fav-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.mc-fav-pair span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: var(--radius-chip);
+  background: var(--muted);
+  border: var(--border-w) solid var(--border);
+  color: var(--logo-ink);
+}
+.mc-fav-pair svg .wave {
+  fill: var(--logo-wave);
+}
+
+/* ── 섹션 4: T3 워드마크 정밀 4안 그리드 ── */
+.wm-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  gap: 16px;
+}
+.wm-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+  cursor: pointer;
+  transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+}
+.wm-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  border-color: color-mix(in oklab, var(--primary) 50%, var(--border));
+}
+.wm-card[aria-pressed="true"] {
+  border-width: var(--border-w-on);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px var(--primary), var(--shadow-card);
+}
+.wm-showcase {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.wm-sample-box {
+  height: 68px;
+  padding: 0 14px;
+  border-radius: var(--radius-tile);
+  border: var(--border-w) solid var(--border);
+  background: var(--card);
+  color: var(--logo-ink);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.wm-sample-box.dark-sample {
+  background: #111111;
+  border-color: #3B3B3B;
+  color: #F2F2F2;
+  --logo-ink: #F2F2F2;
+  --ink2: #D0D0D0;
+  --card: #111111;
+}
+.wm-sample-box .logo-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+}
+.wm-sample-box .logo-pair svg.mark-svg {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+.wm-sample-box .logo-pair svg .wave {
+  fill: var(--logo-wave);
+}
+.wm-spec-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  font-size: var(--text-sm);
+  color: var(--ink2);
+}
+.wm-spec-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.wm-spec-list li::before {
+  content: '•';
+  color: var(--logo-wave);
+  font-weight: 700;
+}
+
+/* 채택안: 제목과 배지에 독립된 행을 주고 로고를 충분한 여백에 배치 */
+.wm-card[data-wm-id="T3-D"] .mc-top {
+  flex-direction: column;
+  gap: 8px;
+}
+.wm-card[data-wm-id="T3-D"] .mc-title {
+  text-wrap: balance;
+  word-break: keep-all;
+}
+.wm-card[data-wm-id="T3-D"] .mc-en {
+  font-weight: 400;
+  line-height: 1.5;
+}
+.wm-card[data-wm-id="T3-D"] .wm-showcase {
+  grid-template-columns: 1fr;
+}
+.wm-card[data-wm-id="T3-D"] .wm-sample-box {
+  min-height: 80px;
+  padding-inline: 20px;
+  gap: 16px;
+}
+.wm-card[data-wm-id="T3-D"] .logo-pair {
+  gap: 10px;
+}
+.wm-card[data-wm-id="T3-D"] .wm-t3d {
+  font-size: var(--text-xl);
+}
+.wm-card[data-wm-id="T3-D"] .logo-pair .mark-svg {
+  width: 34px;
+  height: 34px;
+}
+.wm-card[data-wm-id="T3-D"] .wm-spec-list {
+  line-height: 1.6;
+  gap: 8px;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+  text-wrap: pretty;
+}
+
+/* ── 섹션 5: 6×4 조합 매트릭스 표 ── */
+.matrix-wrap {
+  overflow-x: auto;
+}
+.matrix-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+}
+.matrix-table th,
+.matrix-table td {
+  border: var(--border-w) solid var(--border);
+  padding: 10px 12px;
+  text-align: left;
+  vertical-align: middle;
+}
+.matrix-table th {
+  background: var(--muted);
+  font-weight: 700;
+  color: var(--foreground);
+  white-space: nowrap;
+}
+.matrix-cell-btn {
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 8px 10px;
+  border-radius: var(--radius-tile);
+  border: var(--border-w) solid transparent;
+  background: transparent;
+  color: var(--logo-ink);
+  cursor: pointer;
+  transition: background-color .15s, border-color .15s;
+}
+.matrix-cell-btn:hover {
+  background: var(--pn2);
+  border-color: var(--line2);
+}
+.matrix-cell-btn.active-combo {
+  background: color-mix(in oklab, var(--primary) var(--tint-mix), var(--card));
+  border-color: var(--primary);
+}
+.matrix-cell-btn svg.mark-svg {
+  width: 28px;
+  height: 28px;
+  flex: none;
+}
+.matrix-cell-btn svg .wave {
+  fill: var(--logo-wave);
+}
+
+@media (max-width: 1100px) {
+  .preview-lower-grid,
+  .ba-grid {
+    grid-template-columns: 1fr;
+  }
+  .citizen-context,
+  .admin-context {
+    grid-template-columns: 1fr;
+  }
+}
+@media (max-width: 640px) {
+  .wrap {
+    padding: 16px 12px 48px;
+  }
+  .mark-grid,
+  .wm-grid {
+    grid-template-columns: 1fr;
+  }
+  .wm-showcase {
+    grid-template-columns: 1fr;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- 공통 아이콘 스프라이트 -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-brief" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="7" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2m-7.07-14.93 1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></symbol>
+  </defs>
+</svg>
+
+<!-- ── 상단 고정 컨트롤 바 ── -->
+<div class="doc-bar" role="region" aria-label="시안 문서 제어 막대">
+  <div class="doc-bar-in">
+    <div class="doc-brand">
+      <span class="ui-chip ui-chip-wave">M6 + T3 MASTER REFINEMENT</span>
+      <span class="doc-brand-title">The주택 · 열린 문과 중정(M6) + 테라코타 포인트(T3) 집중 발전안</span>
+      <span class="ui-chip ui-chip-ok" id="current-selection-badge">선택: M6-V1 정밀 건축 인장 + T3-A 광학 커닝 표준형</span>
+    </div>
+    <div class="doc-controls">
+      <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" id="btn-aud-public" aria-pressed="true">일반사용자 (/citizen)</button>
+      <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" id="btn-aud-admin" aria-pressed="false">정책담당자 (/)</button>
+      <span class="tsep" aria-hidden="true"></span>
+      <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" id="btn-theme-light" aria-pressed="true">라이트 모드</button>
+      <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" id="btn-theme-dark" aria-pressed="false">다크 모드</button>
+    </div>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <!-- ── 문서 머리말 ── -->
+  <section class="hero-head">
+    <div>
+      <h1>열린 문과 중정(M6) + 테라코타 포인트(T3) 정밀 발전안</h1>
+      <p class="hero-sub">선택하신 <b>M6(육각 박공 집 + 중정 안뜰 + 열린 입주문)</b>과 <b>T3(<code>The</code> 테라코타 + <code>주택</code> 네이비/화이트)</b>의 비례·원근 각도·네거티브 스페이스·영한 광학 커닝을 정밀 작도로 고도화했습니다.</p>
+    </div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <a class="ui-btn ui-btn-outline ui-btn-sm" href="#sec-live">1. 실시간 헤더 검증</a>
+      <a class="ui-btn ui-btn-outline ui-btn-sm" href="#sec-before-after">2. 초안→발전안 작도 비교</a>
+      <a class="ui-btn ui-btn-outline ui-btn-sm" href="#sec-marks">3. M6 정밀 변주 6안</a>
+      <a class="ui-btn ui-btn-outline ui-btn-sm" href="#sec-wordmarks">4. T3 워드마크 4안</a>
+      <a class="ui-btn ui-btn-outline ui-btn-sm" href="#sec-matrix">5. 6×4 조합 매트릭스</a>
+    </div>
+  </section>
+
+  <!-- ── 섹션 1: 실제 /citizen 64px 상단 바 & 390px 모바일 헤더 실시간 미리보기 ── -->
+  <section class="ui-card stage-box" id="sec-live" aria-label="실제 상단 메뉴 바 실시간 미리보기">
+    <div class="sec-head" style="margin-bottom:0">
+      <div>
+        <h2>1. 실제 <code>/citizen</code> 상단 메뉴 바(64px) · 모바일(48px) 실시간 검증</h2>
+        <p>아래 추천 조합 단추나 시안 카드를 누르면 64px 데스크톱 헤더·390px 모바일 헤더·파비콘·코드 스니펫에 즉시 반영됩니다.</p>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px" id="preset-buttons">
+        <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" data-preset-m="M6-V1" data-preset-t="T3-A">추천 정본 · 건축 인장 (M6-V1 + T3-A)</button>
+        <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" data-preset-m="M6-V2" data-preset-t="T3-A">처마와 마중문 (M6-V2 + T3-A)</button>
+        <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" data-preset-m="M6-V3" data-preset-t="T3-B">입체 중정 + 대문자 (M6-V3 + T3-B)</button>
+        <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" data-preset-m="M6-V4" data-preset-t="T3-C">아치 중정 + 주춧돌 (M6-V4 + T3-C)</button>
+        <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" data-preset-m="M6-V6" data-preset-t="T3-D">미니멀 + 벡터 락업 (M6-V6 + T3-D)</button>
+        <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" data-preset-m="M6-0" data-preset-t="T3-0">보정 전 초안 비교 (M6-0 + T3-0)</button>
+      </div>
+    </div>
+
+    <div class="preview-frame">
+      <div class="preview-label-bar">
+        <span><b>데스크톱 상단 메뉴 바 (높이 64px · 로고 마크 28px · 간격 9px · 워드마크 20px)</b> — <code>header.top &gt; .top-in &gt; a.logo</code></span>
+        <span id="live-token-readout"><code>--logo-ink: #0F1A3D</code> · <code>--logo-wave: #D65535</code> · <code>viewBox="4 4 64 60"</code></span>
+      </div>
+
+      <header class="top">
+        <div class="top-in">
+          <a class="logo" href="#sec-live" id="live-desktop-logo" aria-label="The주택 종합상황판 처음으로"></a>
+          <nav class="main" aria-label="주 메뉴">
+            <ul class="menu">
+              <li><a href="#sec-live" aria-current="page">종합상황판</a></li>
+              <li><a href="#sec-live">지도</a></li>
+              <li class="adm"><a href="#sec-live">사업</a></li>
+              <li class="adm"><a href="#sec-live">지역 공급</a></li>
+              <li class="adm"><a href="#sec-live">데이터 원본</a></li>
+            </ul>
+          </nav>
+          <div class="tools">
+            <div class="aud" title="일반사용자·정책담당자 화면 바꾸기">
+              <span class="aud-l l-pub" data-aud-click="public" aria-hidden="true">일반사용자</span>
+              <button type="button" class="sw sw-aud" id="header-aud-sw" role="switch" aria-checked="false" aria-label="정책담당자 화면">
+                <span class="knob" aria-hidden="true">
+                  <span class="k-off"><svg class="i"><use href="#i-user"/></svg></span>
+                  <span class="k-on"><svg class="i"><use href="#i-brief"/></svg></span>
+                </span>
+              </button>
+              <span class="aud-l l-adm" data-aud-click="admin" aria-hidden="true">정책담당자</span>
+            </div>
+            <span class="tsep" aria-hidden="true"></span>
+            <button type="button" class="sw sw-theme" id="header-theme-sw" role="switch" aria-checked="false" aria-label="다크 모드" title="다크 모드 전환">
+              <span class="knob" aria-hidden="true">
+                <span class="k-off"><svg class="i"><use href="#i-sun"/></svg></span>
+                <span class="k-on"><svg class="i"><use href="#i-moon"/></svg></span>
+              </span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <!-- 일반사용자 /citizen 화면 상단 카드 맥락 -->
+      <div class="citizen-context">
+        <div class="ctx-smry">
+          <div class="ctx-smry-top">
+            <span><b>경기도 성남시</b> · 내 동네 공급 요약</span>
+            <span class="ui-chip" style="border-color:#5A979C;color:#CFE7E8;background:#1A6F77">일반사용자 /citizen</span>
+          </div>
+          <div class="ctx-smry-kpi">
+            <strong>34,820</strong>
+            <span>호 공급 진행 중 (착공·분양·입주)</span>
+          </div>
+        </div>
+        <div class="ctx-apply">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px">
+              <span class="ui-chip" style="border-color:var(--cz-accent);color:var(--cz-accent);font-weight:700">지금 신청 가능 · 3건</span>
+              <span style="font-size:var(--text-sm);color:var(--muted-foreground)">열린 입주문(<code>--logo-wave</code>)과 워드마크 <code>The</code>의 테라코타 포인트가 <code>/citizen</code>의 산호 강조색(<code>--cz-accent</code>)과 시각적 리듬을 이룹니다.</span>
+            </div>
+            <div style="font-size:var(--text-base);font-weight:700">성남금토 A-4BL 공공분양 (뉴:홈 나눔형) · 740호 모집 공고</div>
+          </div>
+          <span class="ui-btn ui-btn-sm" style="background:var(--cz-accent);color:#FFFFFF">청약홈 공고 ↗</span>
+        </div>
+      </div>
+
+      <!-- 정책담당자 / 화면 상단 KPI 맥락 -->
+      <div class="admin-context">
+        <div class="ui-inset">
+          <div style="font-size:var(--fs-meta);color:var(--muted-foreground)">계획·인허가</div>
+          <div style="font-size:var(--text-xl);font-weight:700;color:var(--st-plan-ink)">142,500호</div>
+        </div>
+        <div class="ui-inset">
+          <div style="font-size:var(--fs-meta);color:var(--muted-foreground)">착공·건설 중</div>
+          <div style="font-size:var(--text-xl);font-weight:700;color:var(--st-build-ink)">68,420호</div>
+        </div>
+        <div class="ui-inset">
+          <div style="font-size:var(--fs-meta);color:var(--muted-foreground)">입주자 모집</div>
+          <div style="font-size:var(--text-xl);font-weight:700;color:var(--st-sale-ink)">29,110호</div>
+        </div>
+        <div class="ui-inset">
+          <div style="font-size:var(--fs-meta);color:var(--muted-foreground)">준공·입주</div>
+          <div style="font-size:var(--text-xl);font-weight:700;color:var(--st-move-ink)">41,890호</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하단 3열: 모바일 390px(48px) 헤더 + 파비콘 다중 크기 검증 + 즉시 복사 가능한 HTML/SVG 스니펫 -->
+    <div class="preview-lower-grid">
+      <div class="mobile-frame">
+        <div class="preview-label-bar">
+          <span><b>모바일 헤더 (390px · 높이 48px)</b></span>
+          <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" id="btn-toggle-mobile-wm" style="height:24px;padding:0 8px;font-size:12px" aria-pressed="true">심벌만 보기 (599px 기본)</button>
+        </div>
+        <div class="mobile-top-in" id="mobile-header-in">
+          <a class="logo" href="#sec-live" id="live-mobile-logo" aria-label="The주택 종합상황판 처음으로"></a>
+          <div class="tools" style="gap:6px">
+            <div class="aud" style="gap:6px">
+              <span class="aud-l l-pub" data-aud-click="public">일반사용자</span>
+              <button type="button" class="sw sw-aud" role="switch" aria-checked="false" aria-label="정책담당자 화면">
+                <span class="knob" aria-hidden="true">
+                  <span class="k-off"><svg class="i"><use href="#i-user"/></svg></span>
+                  <span class="k-on"><svg class="i"><use href="#i-brief"/></svg></span>
+                </span>
+              </button>
+              <span class="aud-l l-adm" data-aud-click="admin">정책담당자</span>
+            </div>
+            <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" style="width:36px;height:36px;padding:0;border-color:transparent;background:transparent" aria-label="메뉴">
+              <svg class="i"><use href="#i-menu"/></svg>
+            </button>
+          </div>
+        </div>
+        <div style="padding:12px;font-size:var(--text-xs);color:var(--muted-foreground)">
+          중정 개방폭을 <code>24→31</code>단위로 넓혀 28px 단독 아이콘에서도 '집 + 열린 문'이 뭉개지지 않습니다.
+        </div>
+      </div>
+
+      <div class="ui-tile favicon-stage">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <strong style="font-size:var(--text-sm)">파비콘 · 크기별 시인성 검증</strong>
+          <span class="ui-chip">16 · 28 · 64px</span>
+        </div>
+        <div class="browser-tab-mock">
+          <span id="live-tab-favicon" style="display:inline-flex;width:16px;height:16px;color:var(--logo-ink)"></span>
+          <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">The주택 — 내 동네 공공 주택 공급</span>
+        </div>
+        <div class="scale-row">
+          <div class="scale-item">
+            <div class="scale-box" style="width:28px;height:28px" id="scale-16"></div>
+            <span>16px</span>
+          </div>
+          <div class="scale-item">
+            <div class="scale-box" style="width:42px;height:42px" id="scale-28"></div>
+            <span>28px (정본)</span>
+          </div>
+          <div class="scale-item">
+            <div class="scale-box" style="width:72px;height:72px" id="scale-64"></div>
+            <span>64px</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="ui-tile code-card">
+        <div style="display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px">
+          <div>
+            <strong style="font-size:var(--text-sm)">즉시 적용 가능한 <code>&lt;a class="logo"&gt;</code> 마크업</strong>
+            <span style="font-size:var(--text-xs);color:var(--muted-foreground);margin-left:6px"><code>template.html</code> · <code>assets/citizen/index.html</code> · <code>TopNav.tsx</code> 호환</span>
+          </div>
+          <button type="button" class="ui-btn ui-btn-sm" id="btn-copy-code">
+            <svg class="i"><use href="#i-copy"/></svg>
+            <span id="copy-btn-label">HTML 복사</span>
+          </button>
+        </div>
+        <pre class="code-pre" id="live-code-snippet"></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 섹션 2: 초안(Before) vs 정밀 발전안(After) 작도 그리드 및 4대 보정 포인트 ── -->
+  <section class="ui-card" id="sec-before-after" aria-label="초안 대비 정밀 기하학 및 광학 보정 비교">
+    <div class="sec-head">
+      <div>
+        <h2>2. 초안(M6+T3) 진단 및 정밀 작도 보정 (Before → After)</h2>
+        <p>초안 M6의 불균일한 두께와 좁은 중정, 작은 손잡이 구멍을 건축적 비례(법선 두께 <code>11.5u</code> 통일 · 중정 폭 <code>31u</code> 확장 · <code>22°</code> 등각 투시)로 재설계했습니다.</p>
+      </div>
+      <button type="button" class="ui-btn ui-btn-outline ui-btn-sm" id="btn-toggle-guides" aria-pressed="true">작도 보조선 표시 중</button>
+    </div>
+
+    <div class="ba-grid">
+      <!-- Before: 초안 M6-0 + T3-0 -->
+      <div class="ui-tile ba-pane">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <strong style="font-size:var(--text-base)">Before · 초안 (M6-0 + T3-0)</strong>
+            <div style="font-size:var(--text-xs);color:var(--muted-foreground)">개선 전 초기 스케치</div>
+          </div>
+          <span class="ui-chip">보정 전</span>
+        </div>
+        <div class="blueprint-stage">
+          <svg class="bp-svg" viewBox="4 4 64 60" aria-hidden="true">
+            <path fill="currentColor" opacity="0.88" d="M10 26 33 7Q36 4.5 39 7L62 26V55Q62 59 58 59H48V28.5L36 18.5 24 28.5V59H14Q10 59 10 55Z"/>
+            <path class="wave" fill-rule="evenodd" d="M28 27.5 44 21V52.5L28 59V27.5ZM38.5 35.5V41.5H41.5V35.5H38.5Z"/>
+            <!-- 초안 한계 표시 보조선 -->
+            <g class="bp-guide" stroke="#C94359" stroke-width="0.6" fill="none" stroke-dasharray="2 1.5">
+              <line x1="10" y1="45" x2="24" y2="45"/>
+              <line x1="24" y1="45" x2="28" y2="45"/>
+              <line x1="44" y1="45" x2="48" y2="45"/>
+              <circle cx="36" cy="18.5" r="2.2"/>
+              <circle cx="40" cy="38.5" r="3.5"/>
+            </g>
+          </svg>
+          <div style="font-size:var(--text-xs);color:var(--bad);font-weight:700">기둥(14u) 대비 얇은 지붕(9.8u) · 좌우 4u 어중간한 틈 · 작은 손잡이(3u)</div>
+        </div>
+        <div class="ba-lockup-bar">
+          <span style="display:inline-flex;align-items:center;gap:9px;color:var(--logo-ink)">
+            <svg width="28" height="28" viewBox="4 4 64 60" aria-hidden="true">
+              <path fill="currentColor" d="M10 26 33 7Q36 4.5 39 7L62 26V55Q62 59 58 59H48V28.5L36 18.5 24 28.5V59H14Q10 59 10 55Z"/>
+              <path fill="#D65535" fill-rule="evenodd" d="M28 27.5 44 21V52.5L28 59V27.5ZM38.5 35.5V41.5H41.5V35.5H38.5Z"/>
+            </svg>
+            <span class="wm-t30"><span class="en">The</span><span class="ko">주택</span></span>
+          </span>
+          <span class="mc-strip-tag">28px 초안</span>
+        </div>
+      </div>
+
+      <!-- After: 선택된 발전안 실시간 작도 -->
+      <div class="ui-tile ba-pane" style="border-color:var(--primary)">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <strong style="font-size:var(--text-base)" id="after-pane-title">After · 정밀 발전안 (M6-V1 + T3-A)</strong>
+            <div style="font-size:var(--text-xs);color:var(--muted-foreground)">현재 선택된 시안의 정밀 작도</div>
+          </div>
+          <span class="ui-chip ui-chip-ok">정밀 보정 완료</span>
+        </div>
+        <div class="blueprint-stage">
+          <svg class="bp-svg" viewBox="4 4 64 60" aria-hidden="true" id="after-bp-svg"></svg>
+          <div style="font-size:var(--text-xs);color:var(--ok);font-weight:700" id="after-bp-caption">법선 두께 11.5u 통일 · 좌측 9u 중정 개방 · 우측 3.5u 경첩 슬릿 · 22° 등각 투시</div>
+        </div>
+        <div class="ba-lockup-bar">
+          <span style="display:inline-flex;align-items:center;gap:9px;color:var(--logo-ink)" id="after-lockup-sample"></span>
+          <span class="mc-strip-tag">28px 정본</span>
+        </div>
+      </div>
+
+      <!-- 4대 핵심 품질 향상 내역 -->
+      <div class="ui-tile ba-pane">
+        <strong style="font-size:var(--text-base)">4대 정밀 품질 향상 (Quality Engineering)</strong>
+        <ul class="ba-points">
+          <li>
+            <span class="tag-num">1</span>
+            <div><b>지붕·기둥 스트로크 균일화 (<code>11.5u</code>)</b>: 초안의 무거운 기둥(`14u`)과 얇은 지붕(`9.8u`) 편차를 바로잡아, 바깥 지붕·좌우 기둥·안쪽 천장 마루(`Q36 17.6`)가 균일한 두께와 동심 곡률을 갖도록 재작도했습니다.</div>
+          </li>
+          <li>
+            <span class="tag-num">2</span>
+            <div><b>중정 개방감 30% 확대 &amp; 경첩 구조화</b>: 중정 폭을 `24u → 31u`(`x=20.5..51.5`)로 넓히고 문을 우측 문설주 쪽에 붙여 배치해, 왼쪽에 <b>9u 폭의 시원한 햇살 중정(안뜰)</b>이 열리도록 개선했습니다.</div>
+          </li>
+          <li>
+            <span class="tag-num">3</span>
+            <div><b>28px · 16px 저해상도 힌팅(Hinting)</b>: 문 윗변·아랫변 기울기를 `22°` 등각 투시선으로 평행 정렬하고, 뭉개지던 작은 손잡이(`3×6`)를 28px에서도 선명한 비례(`3.7×7` 또는 솔리드)로 정돈했습니다.</div>
+          </li>
+          <li>
+            <span class="tag-num">4</span>
+            <div><b>T3 워드마크 영·한 광학 일체화</b>: 테라코타 <code>The</code>의 자간(`-0.03em`)·베이스라인(`-0.5px`)을 미세 보정해 한글 <code>주택</code>(`-0.035em`)과 시각적 윗선(Cap-line)을 맞추고 어색한 틈을 없앴습니다.</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 섹션 3: M6(열린 문과 중정) 정밀 발전 6안 (M6-V1 ~ M6-V6) ── -->
+  <section id="sec-marks" aria-label="M6 열린 문과 중정 정밀 발전 6안">
+    <div class="sec-head">
+      <div>
+        <h2>3. M6(열린 문과 중정) 정밀 발전 6안 비교</h2>
+        <p>선택하신 M6의 메타포(박공 집 + 중정 안뜰 + 열린 테라코타 입주문)를 유지하면서, 건축 디테일과 시인성을 6가지 방향으로 정밀하게 다듬었습니다.</p>
+      </div>
+      <span class="ui-chip ui-chip-primary">카드를 클릭하면 상단 헤더와 작도 비교 창에 즉시 반영됩니다</span>
+    </div>
+
+    <div class="mark-grid" id="mark-cards-container"></div>
+  </section>
+
+  <!-- ── 섹션 4: T3(The 테라코타 + 주택) 워드마크 정밀 4안 ── -->
+  <section id="sec-wordmarks" aria-label="T3 테라코타 포인트 워드마크 정밀 4안">
+    <div class="sec-head">
+      <div>
+        <h2>4. T3(<code>The</code> 테라코타 + <code>주택</code>) 워드마크 정밀 4안</h2>
+        <p>심벌의 열린 입주문(<code>--logo-wave</code>)과 한 덩어리로 읽히는 T3 워드마크의 영·한 비례와 결합 방식을 4가지로 정교화했습니다.</p>
+      </div>
+      <span class="ui-chip ui-chip-primary">카드를 클릭하면 상단 헤더의 워드마크가 바뀝니다</span>
+    </div>
+
+    <div class="wm-grid" id="wm-cards-container"></div>
+  </section>
+
+  <!-- ── 섹션 5: M6 발전 6안 × T3 워드마크 4안 조합 매트릭스 ── -->
+  <section class="ui-card" id="sec-matrix" aria-label="M6 6안과 T3 4안 조합 매트릭스">
+    <div class="sec-head">
+      <div>
+        <h2>5. M6 발전 6안 × T3 워드마크 4안 (24가지 정밀 조합 매트릭스)</h2>
+        <p>원하는 칸을 클릭하면 상단 64px 데스크톱 헤더·390px 모바일 헤더·코드 스니펫에 즉시 반영됩니다.</p>
+      </div>
+    </div>
+    <div class="matrix-wrap">
+      <table class="matrix-table" id="combo-matrix-table">
+        <thead>
+          <tr>
+            <th style="width:210px">M6 심벌 변주 \ T3 워드마크</th>
+            <th>T3-A · 광학 커닝 표준형<br><span style="font-size:12px;font-weight:400;color:var(--muted-foreground)">The(18/테라코타 밀착) + 주택(20)</span></th>
+            <th>T3-B · 대문자 건축형<br><span style="font-size:12px;font-weight:400;color:var(--muted-foreground)">THE(16/직선 기하학) + 주택(20)</span></th>
+            <th>T3-C · 주춧돌 언더라인형<br><span style="font-size:12px;font-weight:400;color:var(--muted-foreground)">The(2px 기단선) + 주택(20)</span></th>
+            <th>T3-D · 박공 벡터 락업형<br><span style="font-size:12px;font-weight:400;color:var(--muted-foreground)">사선 컷 The(SVG) + 주택(20)</span></th>
+          </tr>
+        </thead>
+        <tbody id="matrix-tbody"></tbody>
+      </table>
+    </div>
+  </section>
+
+</main>
+
+<script>
+(function () {
+  /* ── 1. M6(열린 문과 중정) 정밀 발전 6안 + 초안(M6-0) 데이터 ── */
+  var MARKS = [
+    {
+      id: 'M6-V1',
+      badge: '발전 01 · 정본 추천',
+      badgeCls: 'ui-chip-ok',
+      title: '정밀 건축 인장 (Architectural Portal)',
+      en: 'Uniform 11.5u Frame + 31u Courtyard + 22° Isometric Door',
+      desc: '지붕과 좌우 기둥의 법선 두께를 11.5단위로 균일하게 맞추고 안쪽 중정 폭을 31단위로 넓혔습니다. 우측 문설주에서 22° 등각 투시로 열리는 테라코타 입주문과 좌측 9단위 햇살 중정의 대비가 28px·16px에서도 가장 또렷합니다.',
+      metaphor: '균일 11.5u 육각 박공 + 좌측 9u 중정 여백 + 우측 경첩 입주문',
+      caption: '법선 두께 11.5u 통일 · 좌측 9u 중정 개방 · 우측 3.5u 경첩 슬릿 · 22° 등각 투시',
+      svgInner:
+        '<path fill="currentColor" d="M9 25.5 32.8 6.3Q36 3.7 39.2 6.3L63 25.5V55Q63 59 59 59H51.5V30.2L38.2 19.4Q36 17.6 33.8 19.4L20.5 30.2V59H13Q9 59 9 55Z"/>' +
+        '<path class="wave" fill-rule="evenodd" d="M29.5 28.5 48 21V52L29.5 59.5V28.5ZM40.5 34.5V41.5H44.2V34.5H40.5Z"/>'
+    },
+    {
+      id: 'M6-V2',
+      badge: '발전 02 · 처마 강조',
+      badgeCls: 'ui-chip-primary',
+      title: '처마와 마중문 (Overhanging Eaves & Door)',
+      en: 'Classic Overhanging Gable + Threshold Plinth + Open Door',
+      desc: '기존 The주택의 상징이었던 양옆으로 뻗은 박공 처마(x=6..66)를 계승하면서, 좌측 기둥 바닥에 마중 주춧돌을 놓고 우측에서 테라코타 입주문이 활짝 열리도록 설계해 친근한 집의 인상을 강화했습니다.',
+      metaphor: '양옆 돌출 처마 + 좌측 마중 주춧돌 + 테라코타 입주문',
+      caption: '처마 폭 60u 확장 · 좌측 마중 주춧돌 기단 · 22° 열린 입주문',
+      svgInner:
+        '<path fill="currentColor" d="M6 27 32.8 6Q36 3.5 39.2 6L66 27 60.8 33.5 57 30.3V55Q57 59 53 59H48.5V25.2L37.5 16.4Q36 15.2 34.5 16.4L23.5 25.2V52H27.5V59H19Q15 59 15 55V30.3L11.2 33.5Z"/>' +
+        '<path class="wave" fill-rule="evenodd" d="M30 28 45.8 21.5V52.5L30 59V28ZM39.5 35V42H43V35H39.5Z"/>'
+    },
+    {
+      id: 'M6-V3',
+      badge: '발전 03 · 3D 입체 조형',
+      badgeCls: 'ui-chip-primary',
+      title: '입체 중정 하우스 (Isometric Courtyard)',
+      en: '3D Architectural Mass + Pivoting Portal Wing',
+      desc: '/citizen 화면의 3D 시군구·단지 지도와 조형 언어를 맞춘 입체 시안입니다. 좌측 박공·외벽·바닥 기단(currentColor)이 L자형 안뜰을 감싸고, 우측 전체가 입체적인 테라코타 문과 문설주(class="wave")로 열립니다.',
+      metaphor: '박공+좌측 중정 바닥 기단 + 우측 입체 도어 게이트',
+      caption: 'L자형 중정 바닥 기단(y=52..59) + 입체 도어 & 우측 문설주 통합',
+      svgInner:
+        '<path fill="currentColor" d="M9 25.5 32.8 6.2Q36 3.6 39.2 6.2L63 25.5 56.2 31.2 36 15 20.5 27.6V52H31V59H13Q9 59 9 55Z"/>' +
+        '<path class="wave" fill-rule="evenodd" d="M34 25.5 52 18V49.5L34 59V25.5ZM44.5 33V40H48V33H44.5ZM55.5 29.5 63 25.5V55Q63 59 59 59H55.5V29.5Z"/>'
+    },
+    {
+      id: 'M6-V4',
+      badge: '발전 04 · 온화한 보금자리',
+      badgeCls: 'ui-chip-primary',
+      title: '아치 중정과 입주문 (Arch Courtyard & Door)',
+      en: 'Hexagonal Gable Exterior + Vaulted Arch Interior',
+      desc: '바깥은 단단한 육각 박공지붕으로 건축적 신뢰감을 주고, 안쪽 중정 천장은 부드러운 둥근 아치(Arch)로 감싸 안락한 보금자리의 감성을 더했습니다. 아치 곡선과 사선 입주문의 대비가 우아합니다.',
+      metaphor: '육각 박공 외벽 + 둥근 아치 안뜰 + 사선 입주문',
+      caption: '외곽 직선 박공(38.9°) + 내부 반원 아치(R=15u) + 사선 도어',
+      svgInner:
+        '<path fill="currentColor" d="M9 25.5 32.8 6.3Q36 3.7 39.2 6.3L63 25.5V55Q63 59 59 59H51V33C51 23.5 44.3 17.5 36 17.5C27.7 17.5 21 23.5 21 33V59H13Q9 59 9 55Z"/>' +
+        '<path class="wave" fill-rule="evenodd" d="M29.5 29.5 47.5 22V52L29.5 59.5V29.5ZM40.2 35.5V42.5H43.8V35.5H40.2Z"/>'
+    },
+    {
+      id: 'M6-V5',
+      badge: '발전 05 · 내 집 마련 상징',
+      badgeCls: 'ui-chip-primary',
+      title: '대칭 게이트와 키홈 (Grand Keyhome)',
+      en: 'Symmetrical Gatehouse + Circular Keyhole Handle',
+      desc: '좌우 대칭의 든든한 박공 게이트와 좌측 디딤돌 안쪽에 큼직한 원형 손잡이 보이드(r=3.2u)를 가진 테라코타 대문을 배치해, "내 집 마련의 열쇠(Keyhome)"와 입주의 순간을 상징적으로 담았습니다.',
+      metaphor: '대칭 박공 게이트 + 디딤돌 + 원형 키홈 보이드 도어',
+      caption: '좌측 디딤돌 + 지름 6.4u 원형 보이드 손잡이 (28px 선명도 확보)',
+      svgInner:
+        '<path fill="currentColor" d="M9 25.5 32.8 6.3Q36 3.7 39.2 6.3L63 25.5V55Q63 59 59 59H51.5V29.8L36 17.2 20.5 29.8V52.5H26.5V59H13Q9 59 9 55Z"/>' +
+        '<path class="wave" fill-rule="evenodd" d="M29.5 28 48.5 20.5V52L29.5 59.5V28ZM42 34A3.2 3.2 0 1 0 42 40.4A3.2 3.2 0 1 0 42 34Z"/>'
+    },
+    {
+      id: 'M6-V6',
+      badge: '발전 06 · 16px 파비콘 특화',
+      badgeCls: 'ui-chip-ok',
+      title: '미니멀 투톤 파사드 (Minimal Duotone)',
+      en: 'Ultra-Crisp Solid Door — 16px & 28px Small-Size Master',
+      desc: '작은 손잡이 구멍을 과감히 덜어내고 굵고 명쾌한 박공 집 프레임(12u)과 솔리드 테라코타 도어의 면 대비로만 완성했습니다. 16px 브라우저 탭 파비콘과 28px 모바일 헤더에서 가장 강렬하고 깨끗하게 읽힙니다.',
+      metaphor: '12u 굵은 박공 프레임 + 무결점 솔리드 사선 도어',
+      caption: '내부 구멍 0개 · 최소 꼭짓점 · 16px 파비콘 시인성 극대화',
+      svgInner:
+        '<path fill="currentColor" d="M8.5 25.5 32.6 6.2Q36 3.5 39.4 6.2L63.5 25.5V55Q63.5 59 59.5 59H51.5V30.5L36 18 20.5 30.5V59H12.5Q8.5 59 8.5 55Z"/>' +
+        '<path class="wave" d="M30 28.5 48 21V52L30 59.5Z"/>'
+    },
+    {
+      id: 'M6-0',
+      badge: '초안 기준 (보정 전)',
+      badgeCls: 'ui-chip-wave',
+      isLegacy: true,
+      title: 'M6 초안 (개선 전 초기안)',
+      en: 'Initial M6 Draft — 비교 검증용',
+      desc: '보정 전 초안: 기둥(14u) 대비 지붕(9.8u)이 얇고, 중정(24u) 한가운데에 문(16u)이 떠 있어 좌우 4u의 어중간한 틈이 생기며 작은 손잡이(3×6)가 16px에서 뭉개지는 한계가 있었습니다.',
+      metaphor: '초기 스케치 (비교 기준)',
+      caption: '보정 전 초안 (기둥 14u / 지붕 9.8u / 중정 24u)',
+      svgInner:
+        '<path fill="currentColor" d="M10 26 33 7Q36 4.5 39 7L62 26V55Q62 59 58 59H48V28.5L36 18.5 24 28.5V59H14Q10 59 10 55Z"/>' +
+        '<path class="wave" fill-rule="evenodd" d="M28 27.5 44 21V52.5L28 59V27.5ZM38.5 35.5V41.5H41.5V35.5H38.5Z"/>'
+    }
+  ];
+
+  /* ── 2. T3(테라코타 포인트형) 정밀 워드마크 4안 + 초안(T3-0) 데이터 ── */
+  // 하나의 벡터 원본을 카드·헤더·조합표·복사 코드에서 함께 사용합니다.
+  // e의 카운터는 evenodd로 뚫어 축소 시에도 내부 공간을 유지합니다.
+  var T3D_WORDMARK =
+    '<span class="wm-root wm-t3d" role="img" aria-label="The주택">' +
+      '<svg class="the-vec" viewBox="0 0 36 20" aria-hidden="true" focusable="false">' +
+        '<path class="wave" d="M0.6 2.1H10.8L12 3.3V5H7.8V17.8H4.7V5H0.6Z"/>' +
+        '<path class="wave" d="M13.4 2.1H16.4V7.9C17.2 6.8 18.4 6.2 19.9 6.2C22.6 6.2 24.1 7.9 24.1 10.8V17.8H21.1V11.2C21.1 9.5 20.4 8.7 19.1 8.7C17.5 8.7 16.4 9.8 16.4 11.6V17.8H13.4Z"/>' +
+        '<path class="wave" fill-rule="evenodd" d="M31 6.2C34.3 6.2 35.7 8.6 35.7 11.6V12.9H28.3C28.6 14.6 29.7 15.5 31.4 15.5C32.7 15.5 33.7 15.1 34.7 14.4L35.5 16.6C34.3 17.5 32.9 18 31.2 18C27.5 18 25.3 15.7 25.3 12.1C25.3 8.7 27.5 6.2 31 6.2ZM28.3 10.8H32.9C32.8 9.3 32.1 8.5 30.8 8.5C29.5 8.5 28.6 9.3 28.3 10.8Z"/>' +
+      '</svg>' +
+      '<span class="ko" aria-hidden="true">주택</span>' +
+    '</span>';
+
+  var WORDMARKS = [
+    {
+      id: 'T3-A',
+      badge: 'T3 발전 A · 정본 추천',
+      badgeCls: 'ui-chip-ok',
+      title: 'The주택 (광학 커닝·윗선 정렬 표준형)',
+      en: 'Optical Kerning — The(18px/-0.03em 테라코타) + 주택(20px/-0.035em)',
+      html: '<span class="wm-root wm-t3a"><span class="en">The</span><span class="ko">주택</span></span>',
+      snippetHtml: '<span><span style="font-size:18px;color:var(--logo-wave);letter-spacing:-0.03em;margin-right:0.5px">The</span><span style="letter-spacing:-0.035em">주택</span></span>',
+      specs: [
+        '초안에서 들떠 보이던 e와 주 사이 간격을 0.5px 광학 밀착으로 조이고, The의 자간(-0.03em)과 베이스라인(-0.5px)을 보정해 한글 "주택"의 윗선과 정확히 맞췄습니다.',
+        'M6 심벌의 열린 테라코타 입주문(--logo-wave)이 "The"를 거쳐 "주택"(--logo-ink)으로 자연스럽게 이어집니다.'
+      ]
+    },
+    {
+      id: 'T3-B',
+      badge: 'T3 발전 B · 직선 기하학',
+      badgeCls: 'ui-chip-primary',
+      title: 'THE주택 (대문자 건축 정렬형)',
+      en: 'Architectural All-Caps — THE(16px/700 테라코타) + 주택(20px/700)',
+      html: '<span class="wm-root wm-t3b"><span class="en">THE</span><span class="ko">주택</span></span>',
+      snippetHtml: '<span><span style="font-size:16px;color:var(--logo-wave);letter-spacing:-0.01em;margin-right:1.5px">THE</span><span style="letter-spacing:-0.035em">주택</span></span>',
+      specs: [
+        '소문자 h·e의 곡선 대신 M6 심벌의 수직 기둥·수평 바닥선과 기하학적으로 호응하는 대문자 "THE"(16px/700)를 사용했습니다.',
+        'T·H·E의 수평 상단·하단 라인이 한글 "주택"의 수평 획(ㅡ, ㅜ)과 단단한 건축적 블록을 이룹니다.'
+      ]
+    },
+    {
+      id: 'T3-C',
+      badge: 'T3 발전 C · 주춧돌 기단선',
+      badgeCls: 'ui-chip-primary',
+      title: 'The주택 (테라코타 주춧돌 언더라인형)',
+      en: 'Plinth Underline — The(16px + 2px 주춧돌 바) + 주택(20px)',
+      html: '<span class="wm-root wm-t3c"><span class="en">The</span><span class="ko">주택</span></span>',
+      snippetHtml: '<span style="display:inline-flex;align-items:center;gap:3px"><span style="font-size:16px;color:var(--logo-wave);border-bottom:2px solid var(--logo-wave);padding-bottom:1.5px">The</span><span style="letter-spacing:-0.035em">주택</span></span>',
+      specs: [
+        '16px "The" 아래에 2px 두께의 테라코타 주춧돌 선(Plinth bar)을 받쳐 한글 "주택"(20px)과의 높이 차이를 건축적 기단으로 해결했습니다.',
+        '심벌의 열린 문지방과 워드마크의 주춧돌 선이 수평으로 호응합니다.'
+      ]
+    },
+    {
+      id: 'T3-D',
+      badge: 'T3-D · 채택안 정밀 보정',
+      badgeCls: 'ui-chip-ok',
+      title: 'The주택 · 열린 문, 단단한 이름',
+      en: 'Refined lockup · 사선의 개성과 고른 글자 균형',
+      html: T3D_WORDMARK,
+      snippetHtml: T3D_WORDMARK,
+      specs: [
+        'T의 끝에 짧은 사선 컷을 더해 열린 문의 인상을 이어갑니다. h·e의 곡선과 내부 여백을 다듬어 작은 크기에서도 또렷하게 읽힙니다.',
+        '벡터 The와 한글 주택의 중심선·획 무게를 맞추고, 두 언어 사이의 간격을 정돈했습니다. 테라코타와 짙은 남색으로 따뜻함과 신뢰를 함께 담습니다.'
+      ]
+    },
+    {
+      id: 'T3-0',
+      badge: '초안 기준 (보정 전)',
+      badgeCls: 'ui-chip',
+      title: 'The주택 (초안 T3 — 보정 전)',
+      en: 'Initial T3 Draft — 비교 검증용',
+      html: '<span class="wm-root wm-t30"><span class="en">The</span><span class="ko">주택</span></span>',
+      snippetHtml: '<span><span style="font-size:18px;color:var(--logo-wave);margin-right:2px">The</span><span>주택</span></span>',
+      specs: [
+        '보정 전 초안: The와 주택 사이에 2px 간격이 있어 e와 주 사이가 벌어져 보이고, 한글 자간이 넓어 심벌 대비 밀도가 다소 느슨했습니다.'
+      ]
+    }
+  ];
+
+  var state = {
+    markId: 'M6-V5',
+    wmId: 'T3-D',
+    dark: false,
+    aud: 'public',
+    showMobileWm: true,
+    showGuides: true
+  };
+
+  function getMark(id) {
+    for (var i = 0; i < MARKS.length; i++) {
+      if (MARKS[i].id === id) return MARKS[i];
+    }
+    return MARKS[0];
+  }
+
+  function getWm(id) {
+    for (var i = 0; i < WORDMARKS.length; i++) {
+      if (WORDMARKS[i].id === id) return WORDMARKS[i];
+    }
+    return WORDMARKS[0];
+  }
+
+  function buildMarkSvg(mark, cls) {
+    return '<svg class="' + (cls || 'mark-svg') + '" viewBox="4 4 64 60" aria-hidden="true">' + mark.svgInner + '</svg>';
+  }
+
+  function updateFavicon(mark) {
+    var ink = state.dark ? '%23F2F2F2' : '%230F1A3D';
+    var wave = '%23D65535';
+    var raw = mark.svgInner
+      .replace(/fill="currentColor"/g, "fill='" + ink + "'")
+      .replace(/class="wave"/g, "fill='" + wave + "'")
+      .replace(/"/g, "'");
+    var uri = "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='4 4 64 60'>" + raw + "</svg>";
+    var link = document.getElementById('dynamic-favicon');
+    if (link) link.setAttribute('href', uri);
+  }
+
+  /* After 작도 SVG (보조선 포함) 업데이트 */
+  function updateBlueprintPane() {
+    var mark = getMark(state.markId);
+    var wm = getWm(state.wmId);
+    document.getElementById('after-pane-title').textContent =
+      'After · ' + mark.id + ' (' + mark.title.split(' (')[0] + ') + ' + wm.id;
+    document.getElementById('after-bp-caption').textContent = mark.caption;
+
+    var guides =
+      '<g class="bp-guide" stroke="#1F53B8" stroke-width="0.55" fill="none" stroke-dasharray="2 1.5">' +
+        '<!-- 중심축 x=36 -->' +
+        '<line x1="36" y1="4" x2="36" y2="62" stroke-opacity="0.6"/>' +
+        '<!-- 중정 경계선 x=20.5, x=51.5 -->' +
+        '<line x1="20.5" y1="16" x2="20.5" y2="61" stroke="#287B61"/>' +
+        '<line x1="51.5" y1="16" x2="51.5" y2="61" stroke="#287B61"/>' +
+        '<!-- 22° 등각 투시선 -->' +
+        '<line x1="24" y1="30.7" x2="54" y2="18.6" stroke="#D65535"/>' +
+        '<line x1="24" y1="61.7" x2="54" y2="49.6" stroke="#D65535"/>' +
+      '</g>';
+
+    document.getElementById('after-bp-svg').innerHTML = mark.svgInner + guides;
+    document.getElementById('after-lockup-sample').innerHTML =
+      buildMarkSvg(mark, 'mark-svg') + wm.html;
+  }
+
+  function renderMarkCards() {
+    var container = document.getElementById('mark-cards-container');
+    var wm = getWm(state.wmId);
+    var html = '';
+    for (var i = 0; i < MARKS.length; i++) {
+      var m = MARKS[i];
+      var pressed = m.id === state.markId ? 'true' : 'false';
+      var legacyCls = m.isLegacy ? ' is-legacy' : '';
+      html +=
+        '<article class="ui-card mark-card' + legacyCls + '" role="button" tabindex="0" data-mark-id="' + m.id + '" aria-pressed="' + pressed + '">' +
+          '<div class="mc-top">' +
+            '<div>' +
+              '<div class="mc-title">' + m.id + ' · ' + m.title + '</div>' +
+              '<span class="mc-en">' + m.en + '</span>' +
+            '</div>' +
+            '<span class="ui-chip ' + m.badgeCls + '">' + m.badge + '</span>' +
+          '</div>' +
+          '<div class="mc-stage">' +
+            '<div class="mc-big-box" title="64px 확대 검증">' +
+              buildMarkSvg(m, '') +
+              '<span>64px 확대</span>' +
+            '</div>' +
+            '<div class="mc-right-stack">' +
+              '<div class="mc-header-strip" title="라이트 헤더 28px 실제 크기">' +
+                '<span class="mini-logo">' + buildMarkSvg(m, 'mark-svg') + wm.html + '</span>' +
+                '<span class="mc-strip-tag">28px 라이트</span>' +
+              '</div>' +
+              '<div class="mc-header-strip dark-strip" title="다크 헤더 28px 실제 크기">' +
+                '<span class="mini-logo">' + buildMarkSvg(m, 'mark-svg') + wm.html + '</span>' +
+                '<span class="mc-strip-tag">28px 다크</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          '<p class="mc-desc">' + m.desc + '</p>' +
+          '<div class="mc-meta-foot">' +
+            '<span>핵심: ' + m.metaphor + '</span>' +
+            '<span class="mc-fav-pair">' +
+              '<span title="16px 파비콘"><svg width="16" height="16" viewBox="4 4 64 60" aria-hidden="true">' + m.svgInner + '</svg>16px</span>' +
+              '<span title="32px 아이콘"><svg width="22" height="22" viewBox="4 4 64 60" aria-hidden="true">' + m.svgInner + '</svg>32px</span>' +
+            '</span>' +
+          '</div>' +
+        '</article>';
+    }
+    container.innerHTML = html;
+  }
+
+  function renderWmCards() {
+    var container = document.getElementById('wm-cards-container');
+    var mark = getMark(state.markId);
+    var html = '';
+    for (var i = 0; i < WORDMARKS.length; i++) {
+      var w = WORDMARKS[i];
+      var pressed = w.id === state.wmId ? 'true' : 'false';
+      var specsHtml = '';
+      for (var j = 0; j < w.specs.length; j++) {
+        specsHtml += '<li><span>' + w.specs[j] + '</span></li>';
+      }
+      html +=
+        '<article class="ui-card wm-card" role="button" tabindex="0" data-wm-id="' + w.id + '" aria-pressed="' + pressed + '">' +
+          '<div class="mc-top">' +
+            '<div>' +
+              '<div class="mc-title">' + w.id + ' · ' + w.title + '</div>' +
+              '<span class="mc-en">' + w.en + '</span>' +
+            '</div>' +
+            '<span class="ui-chip ' + w.badgeCls + '">' + w.badge + '</span>' +
+          '</div>' +
+          '<div class="wm-showcase">' +
+            '<div class="wm-sample-box">' +
+              '<span class="logo-pair">' + buildMarkSvg(mark, 'mark-svg') + w.html + '</span>' +
+              '<span class="mc-strip-tag">라이트</span>' +
+            '</div>' +
+            '<div class="wm-sample-box dark-sample">' +
+              '<span class="logo-pair">' + buildMarkSvg(mark, 'mark-svg') + w.html + '</span>' +
+              '<span class="mc-strip-tag" style="color:#B3B3B3">다크</span>' +
+            '</div>' +
+          '</div>' +
+          '<ul class="wm-spec-list">' + specsHtml + '</ul>' +
+        '</article>';
+    }
+    container.innerHTML = html;
+  }
+
+  function renderMatrix() {
+    var tbody = document.getElementById('matrix-tbody');
+    var wmCols = ['T3-A', 'T3-B', 'T3-C', 'T3-D'];
+    var html = '';
+    for (var i = 0; i < 6; i++) {
+      var m = MARKS[i]; // M6-V1 ~ M6-V6
+      html += '<tr>';
+      html += '<th>' + m.id + ' · ' + m.title.split(' (')[0] + '<br><span style="font-size:12px;font-weight:400;color:var(--muted-foreground)">' + m.badge + '</span></th>';
+      for (var j = 0; j < wmCols.length; j++) {
+        var w = getWm(wmCols[j]);
+        var isCurrent = (state.markId === m.id && state.wmId === w.id);
+        html +=
+          '<td>' +
+            '<button type="button" class="matrix-cell-btn' + (isCurrent ? ' active-combo' : '') + '" data-combo-m="' + m.id + '" data-combo-t="' + w.id + '">' +
+              buildMarkSvg(m, 'mark-svg') +
+              w.html +
+            '</button>' +
+          '</td>';
+      }
+      html += '</tr>';
+    }
+    tbody.innerHTML = html;
+  }
+
+  function updateLivePreview() {
+    var mark = getMark(state.markId);
+    var wm = getWm(state.wmId);
+
+    // 1. 데스크톱 64px 헤더 로고
+    document.getElementById('live-desktop-logo').innerHTML =
+      buildMarkSvg(mark, 'mark-svg') + wm.html;
+
+    // 2. 모바일 48px 헤더 로고
+    document.getElementById('live-mobile-logo').innerHTML =
+      buildMarkSvg(mark, 'mark-svg') + '<span class="wm-slot">' + wm.html + '</span>';
+    document.getElementById('mobile-header-in').classList.toggle('hide-wm', !state.showMobileWm);
+
+    // 3. 파비콘 & 스케일 검증
+    document.getElementById('live-tab-favicon').innerHTML =
+      '<svg width="16" height="16" viewBox="4 4 64 60" aria-hidden="true">' + mark.svgInner + '</svg>';
+    document.getElementById('scale-16').innerHTML =
+      '<svg width="16" height="16" viewBox="4 4 64 60" aria-hidden="true">' + mark.svgInner + '</svg>';
+    document.getElementById('scale-28').innerHTML =
+      '<svg width="28" height="28" viewBox="4 4 64 60" aria-hidden="true">' + mark.svgInner + '</svg>';
+    document.getElementById('scale-64').innerHTML =
+      '<svg width="56" height="56" viewBox="4 4 64 60" aria-hidden="true">' + mark.svgInner + '</svg>';
+    updateFavicon(mark);
+
+    // 4. 선택 배지
+    document.getElementById('current-selection-badge').textContent =
+      '선택: ' + mark.id + ' ' + mark.title.split(' (')[0] + ' + ' + wm.id + ' ' + wm.title.split(' (')[0];
+
+    // 5. 코드 스니펫
+    var code =
+      '<a class="logo" href="#" aria-label="The주택 종합상황판 처음으로">\n' +
+      '  <svg viewBox="4 4 64 60" aria-hidden="true">\n' +
+      '    ' + mark.svgInner.replace(/><path/g, '>\n    <path') + '\n' +
+      '  </svg>\n' +
+      '  ' + wm.snippetHtml + '\n' +
+      '</a>';
+    document.getElementById('live-code-snippet').textContent = code;
+
+    // 6. 프리셋 단추 활성 상태
+    var presetBtns = document.querySelectorAll('[data-preset-m]');
+    for (var i = 0; i < presetBtns.length; i++) {
+      var b = presetBtns[i];
+      var match = b.getAttribute('data-preset-m') === state.markId && b.getAttribute('data-preset-t') === state.wmId;
+      b.setAttribute('aria-pressed', match ? 'true' : 'false');
+    }
+
+    updateBlueprintPane();
+    renderMarkCards();
+    renderWmCards();
+    renderMatrix();
+  }
+
+  function applyTheme(dark) {
+    state.dark = dark;
+    document.documentElement.classList.toggle('dark', dark);
+    document.getElementById('btn-theme-light').setAttribute('aria-pressed', !dark ? 'true' : 'false');
+    document.getElementById('btn-theme-dark').setAttribute('aria-pressed', dark ? 'true' : 'false');
+    document.getElementById('header-theme-sw').setAttribute('aria-checked', dark ? 'true' : 'false');
+    var inkHex = dark ? '#F2F2F2' : '#0F1A3D';
+    document.getElementById('live-token-readout').innerHTML =
+      '<code>--logo-ink: ' + inkHex + '</code> · <code>--logo-wave: #D65535</code> · <code>viewBox="4 4 64 60"</code>';
+    updateFavicon(getMark(state.markId));
+  }
+
+  function applyAudience(aud) {
+    state.aud = aud;
+    document.documentElement.setAttribute('data-aud', aud);
+    if (aud === 'public') {
+      document.documentElement.setAttribute('data-page', 'citizen');
+    } else {
+      document.documentElement.removeAttribute('data-page');
+    }
+    document.getElementById('btn-aud-public').setAttribute('aria-pressed', aud === 'public' ? 'true' : 'false');
+    document.getElementById('btn-aud-admin').setAttribute('aria-pressed', aud === 'admin' ? 'true' : 'false');
+    var sws = document.querySelectorAll('.sw-aud');
+    for (var i = 0; i < sws.length; i++) {
+      sws[i].setAttribute('aria-checked', aud === 'admin' ? 'true' : 'false');
+    }
+  }
+
+  document.addEventListener('click', function (e) {
+    var markCard = e.target.closest('[data-mark-id]');
+    if (markCard) {
+      state.markId = markCard.getAttribute('data-mark-id');
+      updateLivePreview();
+      return;
+    }
+    var wmCard = e.target.closest('[data-wm-id]');
+    if (wmCard) {
+      state.wmId = wmCard.getAttribute('data-wm-id');
+      updateLivePreview();
+      return;
+    }
+    var comboBtn = e.target.closest('[data-combo-m]');
+    if (comboBtn) {
+      state.markId = comboBtn.getAttribute('data-combo-m');
+      state.wmId = comboBtn.getAttribute('data-combo-t');
+      updateLivePreview();
+      return;
+    }
+    var presetBtn = e.target.closest('[data-preset-m]');
+    if (presetBtn) {
+      state.markId = presetBtn.getAttribute('data-preset-m');
+      state.wmId = presetBtn.getAttribute('data-preset-t');
+      updateLivePreview();
+      return;
+    }
+    var audClick = e.target.closest('[data-aud-click]');
+    if (audClick) {
+      applyAudience(audClick.getAttribute('data-aud-click'));
+      return;
+    }
+    if (e.target.closest('.sw-aud')) {
+      applyAudience(state.aud === 'public' ? 'admin' : 'public');
+      return;
+    }
+    if (e.target.closest('.sw-theme')) {
+      applyTheme(!state.dark);
+      return;
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      var card = e.target.closest('[data-mark-id], [data-wm-id]');
+      if (card) {
+        e.preventDefault();
+        card.click();
+      }
+    }
+  });
+
+  document.getElementById('btn-theme-light').addEventListener('click', function () { applyTheme(false); });
+  document.getElementById('btn-theme-dark').addEventListener('click', function () { applyTheme(true); });
+  document.getElementById('btn-aud-public').addEventListener('click', function () { applyAudience('public'); });
+  document.getElementById('btn-aud-admin').addEventListener('click', function () { applyAudience('admin'); });
+
+  document.getElementById('btn-toggle-mobile-wm').addEventListener('click', function () {
+    state.showMobileWm = !state.showMobileWm;
+    this.setAttribute('aria-pressed', state.showMobileWm ? 'true' : 'false');
+    this.textContent = state.showMobileWm ? '심벌만 보기 (599px 기본)' : '워드마크 함께 보기';
+    updateLivePreview();
+  });
+
+  document.getElementById('btn-toggle-guides').addEventListener('click', function () {
+    state.showGuides = !state.showGuides;
+    document.body.classList.toggle('hide-guides', !state.showGuides);
+    this.setAttribute('aria-pressed', state.showGuides ? 'true' : 'false');
+    this.textContent = state.showGuides ? '작도 보조선 표시 중' : '작도 보조선 켜기';
+  });
+
+  document.getElementById('btn-copy-code').addEventListener('click', function () {
+    var code = document.getElementById('live-code-snippet').textContent;
+    var label = document.getElementById('copy-btn-label');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(function () {
+        label.textContent = '복사 완료!';
+        setTimeout(function () { label.textContent = 'HTML 복사'; }, 1600);
+      });
+    }
+  });
+
+  updateLivePreview();
+})();
+</script>
+</body>
+</html>

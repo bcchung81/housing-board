@@ -677,7 +677,7 @@
 
 ## 4. `GET /api/v1/notices` — 공공 모집 공고(마이홈·LH)
 
-시군구 하나의 공공주택 모집공고(임대·분양)를 돌려준다: 마이홈포털(HWSPR02)과 LH 분양임대공고문(15058530)을 합친다. 번들이 없는 지역에도 지금 모집 중인 공공주택을 보이려는 것이며 화면은 사이드바에 비동기로 채운다. 마이홈 원천은 시군구 필터가 없는 전국 목록(100건씩, 1시간 캐시)이라 행정표준코드의 시군구 이름으로 거른다. LH 공고문은 시도만 있어 제목에 시군구·법정동 이름이 있는 것만 싣고(제목 기준 추정, 마이홈과 제목이 같으면 마이홈만), 공급정보(15056765)로 단지명·세대수를 채운다. 한쪽이 실패하면 나머지를 주고 meta.partial 에 알린다.
+시군구 하나(sgg) 또는 시도 전체(sido)의 공공주택 모집공고(임대·분양)를 돌려준다. 민영 분양은 청약홈(15098547)에서 더한다: 마이홈포털(HWSPR02)과 LH 분양임대공고문(15058530)을 합친다. 번들이 없는 지역에도 지금 모집 중인 공공주택을 보이려는 것이며 화면은 사이드바에 비동기로 채운다. 마이홈 원천은 시군구 필터가 없는 전국 목록(100건씩, 1시간 캐시)이라 행정표준코드의 시군구 이름으로 거른다. LH 공고문은 시도만 있어 제목에 시군구·법정동 이름이 있는 것만 싣고(제목 기준 추정, 마이홈과 제목이 같으면 마이홈만), 공급정보(15056765)로 단지명·세대수를 채운다. 한쪽이 실패하면 나머지를 주고 meta.partial 에 알린다.
 
 - operationId: `getNotices`
 
@@ -685,7 +685,8 @@
 
 | 이름 | 필수 | 형식 | 설명 |
 |---|---|---|---|
-| `sgg` | ● | string `^[0-9\s-]+$` | 시군구 5자리(구가 있는 시는 구 코드나 시 코드 모두 가능) |
+| `sgg` |  | string `^[0-9\s-]+$` | 시군구 5자리(구가 있는 시는 구 코드나 시 코드 모두 가능). sido 와 함께 주면 400 |
+| `sido` |  | string `^[0-9]{2}$` | 시도 2자리(행정표준코드 시도). 그 시도 안 모든 시군구의 공고를 돌려준다. sgg 와 함께 주면 400, 표준코드 표에 없으면 404 |
 
 ### 응답 `200`
 
@@ -696,7 +697,8 @@
 | 항목 | 형식 | 필수 | 설명 |
 |---|---|---|---|
 | `type` | `"Notices"` | ● |  |
-| `sgg` | string `^\d{5}$` | ● |  |
+| `sgg` | string `^\d{5}$` |  | 시군구 질의(?sgg=)일 때 요청한 시군구 5자리 |
+| `sido` | string `^\d{2}$` |  | 시도 질의(?sido=)일 때 요청한 시도 2자리 |
 | `name` | string | ● | 행정표준코드 시군구 이름('경기도 하남시') |
 | `asOf` | string(date) | ● |  |
 | `items` | Notice[] | ● | 공고일 최신 순(마이홈·LH 합침). 구가 있는 시는 시 전체가 구 공고를 모두 포함 |
@@ -715,15 +717,22 @@
 | `items[].applyFrom` | string(date) \| null |  |  |
 | `items[].applyTo` | string(date) \| null |  |  |
 | `items[].url` | string `^https://(www\.myhome\.go\…` \| null |  | 마이홈·LH 주소만(원천 링크를 그대로 믿지 않는다) |
-| `items[].source` | `myhome` · `lh` |  | 출처: myhome(마이홈포털 HWSPR02) · lh(한국토지주택공사 분양임대공고문). lh 공고는 주소·필지가 없고(pnu null) 제목에 시군구·법정동 이름이 있을 때만 그 시군구에 실리며(제목 기준 추정), 단지명·세대수는 공급정보(15056765)에서 채운다. 마이홈과 제목이 같은 LH 공고는 마이홈 쪽만 싣는다 |
+| `items[].deposit` | integer 0~ \| null |  | 임대 보증금(원). 임대가 아니거나 값이 없으면 null(0 포함). 분양가는 싣지 않는다 |
+| `items[].monthlyRent` | integer 0~ \| null |  | 임대 월 임대료(원). 임대가 아니거나 값이 없으면 null(0 포함) |
+| `items[].targets` | `신혼부부` · `신생아` · `청년` · `다자녀` · `고령자`[] |  | 제목에 적힌 대상(순서 고정). 없으면 []. 자격 판정이 아니다 |
+| `items[].sgg` | string `^\d{5}$` \| null |  | 공고가 속한 시군구 5자리 |
+| `items[].sggName` | string \| null |  | 표준코드 시군구 이름('경기도 김포시') |
+| `items[].source` | `myhome` · `lh` · `applyhome` |  | 출처: myhome(마이홈포털 HWSPR02) · lh(한국토지주택공사 분양임대공고문). applyhome(청약홈 분양정보 15098547, 민영 분양만)은 건설사·분양가 없이 접수 마감이 오늘 이후인 공고만. lh 공고는 주소·필지가 없고(pnu null) 제목에 시군구·법정동 이름이 있을 때만 그 시군구에 실리며(제목 기준 추정), 단지명·세대수는 공급정보(15056765)에서 채운다. 마이홈과 제목이 같은 LH 공고는 마이홈 쪽만 싣는다 |
 | `meta` | object | ● |  |
 | `meta.source` | string | ● |  |
 | `meta.rental` | integer 0~ | ● | 전국 마이홈 임대 공고 수 |
 | `meta.sale` | integer 0~ | ● | 전국 마이홈 분양 공고 수 |
 | `meta.matched` | integer 0~ | ● | 이 시군구에 실린 공고 수(마이홈 + LH) |
-| `meta.partial` | `rental` · `sale` · `lh` · `lh-supply`[] |  | 일부가 실패해 나머지만 준 경우(이때 응답은 짧게만 캐시): rental·sale(마이홈 목록) · lh(LH 공고문 목록) · lh-supply(LH 공급정보, 단지명·세대수 없음) |
+| `meta.partial` | `rental` · `sale` · `lh` · `lh-supply` · `applyhome`[] |  | 일부가 실패해 나머지만 준 경우(이때 응답은 짧게만 캐시): rental·sale(마이홈 목록) · lh(LH 공고문 목록) · lh-supply(LH 공급정보, 단지명·세대수 없음) · applyhome(청약홈 민영 분양) |
 | `meta.lh` | integer 0~ | ● | 전국 LH 진행 중 공고 수(공고중·접수중·정정공고중, 토지·상가 포함 — 주택 공고만 거르기 전) |
 | `meta.lhMatched` | integer 0~ | ● | 그 가운데 LH 공고 수 |
+| `meta.applyhome` | integer 0~ |  | 전국 청약홈 민영 분양 공고 수(접수 마감이 오늘 이후) |
+| `meta.applyhomeMatched` | integer 0~ |  | 그 가운데 이 질의 지역에 실린 청약홈 공고 수 |
 
 ### 동작
 
@@ -735,8 +744,8 @@
 
 | HTTP | `code` | 설명 |
 |---|---|---|
-| 400 | `invalid-query` · `invalid-code` | invalid-query(쿼리) · invalid-code(시군구가 아님). s-maxage=3600 |
-| 404 | `unknown-code` | 표준코드 표에 없는 시군구 |
+| 400 | `invalid-query` · `invalid-code` | invalid-query(쿼리: sgg·sido 중 하나만) · invalid-code(시군구·시도 코드가 아님). s-maxage=3600 |
+| 404 | `unknown-code` | 표준코드 표에 없는 시군구(sgg) 또는 시도(sido). unknown-code |
 | 405 | `method` | GET·HEAD 만 허용(Allow 헤더) |
 | 429 | `keys-exhausted` | 인증키 한도(keys-exhausted). Retry-After |
 | 502 | `upstream` | 원천 서비스 오류(원인 문구는 싣지 않음). Cache-Control: no-store |

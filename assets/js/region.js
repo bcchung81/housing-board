@@ -627,7 +627,7 @@
     const parts = [tierSentence, progressSentence, ctxSentence, infraSentence, ...(region.notes || [])].filter(Boolean).join(' ');
     const headTitle = `${sggShort(region.name)} 공급 지도`;   // 상세 지도의 문서 제목·h1 은 그 지역(2026-10-15 2차 평가: 상세에서도 '수도권 공급 개요'로 남았다)
     return {
-      documentTitle: `${headTitle} · 주택파동`, headTitle,
+      documentTitle: `${headTitle} · 주택공급`, headTitle,
       eyebrow: region.title,
       description: region.description || '',
       footerHtml: `건물 © 국토교통부 GIS건물통합정보 (V-World)<br><span id="basis">-</span> 기준${parts ? `<details class="fnote"><summary>자료 안내</summary>${escapeHtml(parts)}</details>` : ''}`,   // 윤곽·공정율·출처 설명은 길어서 접어 둔다
@@ -694,9 +694,9 @@
   /* ---------- 화면 반영(브라우저 전용) ---------- */
   function applyTexts(doc, r) {
     doc.title = r.texts.documentTitle;
-    const h1 = doc.querySelector('#phead h1');
+    const h1 = doc.querySelector('#phead h2');
     if (h1 && r.texts.headTitle) h1.textContent = r.texts.headTitle;
-    const ov = doc.getElementById('ov');   // Next 지도: 상세 모드에서는 개요 마크업(숨김, h1 '수도권 공급 개요')을 걷어 문서의 h1 이 지역 하나만 남게
+    const ov = doc.getElementById('ov');   // Next 지도: 상세 모드에서는 개요 마크업(숨김, h2 '수도권 공급 개요')을 걷는다. 문서 h1 은 두 모드 공통 화면 읽기 전용 '지도' 하나
     if (ov && ov.parentNode) ov.parentNode.removeChild(ov);
     const meta = doc.querySelector('meta[name="description"]');
     if (meta && r.texts.description) meta.setAttribute('content', r.texts.description);
@@ -740,12 +740,14 @@
   }
   /* 안내 띠: 한 줄 요약(brief)만 보이고 누르면 전체 문장을 편다(2026-10-10 피드백, 주소 입력줄 아래 반투명 띠 — goto.js 가 옮긴다).
      요약이 없거나 전체와 같으면 전체 한 줄 */
+  /* 관점별 낱말: '사업 원장'은 정책담당자 관점에만, 일반사용자에게는 '사업'(지도 페이지의 관점 CSS ov-aud-*, app/(map)/map/page.tsx — 관점을 바꾸면 바로 따른다) */
+  const audWords = (html) => html.replace(/사업 원장/g, '<span class="ov-aud-admin">사업 원장</span><span class="ov-aud-public">사업</span>');
   function mountBanner(doc, r, notice, brief, about) {
     const el = doc.getElementById('pvBanner');
     /* 수도권 원장 시군구: '사업 원장 n건 · 지도 m건 ▾'을 펴면 사업 목록(위치 미확보 목록과 같은 형식, app.js 가 #pvList 를 채운다 — 2026-10-15 평가 P3).
        설명 문장(about)은 요약의 title, 위치 안내(notice)만 목록 위 한 줄 */
     if (el && !r.slug && r.home && !r.home.failed && r.home.total) {
-      el.innerHTML = `<details class="pv-d"><summary class="pv-s" title="${escapeHtml(about || '')}">${escapeHtml(brief)}</summary>${notice ? `<p class="pv-f">${escapeHtml(notice)}</p>` : ''}<ul class="pv-list" id="pvList" aria-label="사업 원장 목록"></ul></details>`;
+      el.innerHTML = `<details class="pv-d"><summary class="pv-s" title="${escapeHtml(about || '')}">${audWords(escapeHtml(brief))}</summary>${notice ? `<p class="pv-f">${escapeHtml(notice)}</p>` : ''}<ul class="pv-list" id="pvList" aria-label="사업 원장 목록"></ul></details>`;
       el.hidden = false;
       return;
     }

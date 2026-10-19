@@ -14,11 +14,17 @@ const lhRow = (id, nm, over = {}) => ({ PAN_ID: id, PAN_NM: nm, CNP_CD_NM: '경�
 const ok = (json) => ({ ok: true, status: 200, json: async () => json, text: async () => JSON.stringify(json) });
 const raw = (status, text) => ({ ok: status < 400, status, json: async () => JSON.parse(text || 'null'), text: async () => text });
 const N = (id, brtc, sgg, over = {}) => ({ pblancId: id, houseSn: 0, sttusNm: '일반공고', pblancNm: `공고 ${id}`, suplyInsttNm: 'LH', houseTyNm: '아파트', brtcNm: brtc, signguNm: sgg, fullAdres: `${brtc} ${sgg} 어딘가 1`, rcritPblancDe: '20261001', beginDe: '20261012', endDe: '20261014', pcUrl: `https://www.myhome.go.kr/n/${id}`, ...over });
+const AH = (rows) => ({ page: 1, perPage: 500, totalCount: 2907, currentCount: rows.length, matchCount: rows.length, data: rows });
+const ahRow = (no, adres, over = {}) => ({ HOUSE_MANAGE_NO: no, PBLANC_NO: no, HOUSE_NM: `단지 ${no}`, HOUSE_DTL_SECD_NM: '민영', HOUSE_SECD_NM: 'APT', HSSPLY_ADRES: adres, SUBSCRPT_AREA_CODE_NM: '경기', RCRIT_PBLANC_DE: '2026-10-02',
+  SPSPLY_RCEPT_BGNDE: '2026-10-12', RCEPT_BGNDE: '2026-10-13', RCEPT_ENDDE: '2026-10-14', TOT_SUPLY_HSHLDCO: 100, PBLANC_URL: `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${no}`, CNSTRCT_ENTRPS_NM: '건설사', ...over });
+const SIDO41 = [row('4100000000', '경기도'), row('4145000000', '경기도 하남시'), row('4157000000', '경기도 김포시')];
 const RENTAL = [N('1', '경기도', '하남시'), N('2', '경기도', '하남시', { rcritPblancDe: '20261003' }), N('3', '서울특별시', '성북구')], SALE = [N('9', '경기도', '하남시', { suplyHoCo: undefined, sumSuplyCo: '309' })];
 
 function defaultFetch(url) {
   const u = new URL(url);
+  if (u.pathname.endsWith('/getStanReginCdList') && u.searchParams.get('umd_cd') === '000') return ok(stanJson(u.searchParams.get('sido_cd') === '41' ? SIDO41 : []));   // 시도 안 시군구 행
   if (u.pathname.endsWith('/getStanReginCdList')) return ok(stanJson(u.searchParams.get('sgg_cd') === '450' ? [row('4145000000', '경기도 하남시'), row('4145011400', '경기도 하남시 감일동')] : []));
+  if (u.pathname.endsWith('/getAPTLttotPblancDetail')) return ok(AH([]));                                                    // 청약홈: 기본은 접수 중 민영 공고 없음
   if (u.pathname.endsWith('/rsdtRcritNtcList')) return ok(mh(RENTAL));
   if (u.pathname.endsWith('/ltRsdtRcritNtcList')) return ok(mh(SALE));
   if (u.pathname.endsWith('/lhLeaseNoticeInfo1')) return ok(LHOK([]));                                                       // LH 공고문: 기본은 진행 중 공고 없음
@@ -37,7 +43,8 @@ function harness(over = {}) {
   return { run, calls, clock };
 }
 const isLh = (u) => /\/lhLeaseNotice(Info1|SplInfo1)\//.test(new URL(u).pathname);
-const LH_SOURCE_TEXT = '마이홈포털 공공주택 모집공고(HWSPR02) + 한국토지주택공사 분양임대공고문(15058530)·공급정보(15056765)';
+const LH_SOURCE_TEXT = '마이홈포털 공공주택 모집공고(HWSPR02) + 한국토지주택공사 분양임대공고문(15058530)·공급정보(15056765) + 한국부동산원 청약홈 분양정보(15098547, 민영)';
+const isAh = (u) => new URL(u).pathname.endsWith('/getAPTLttotPblancDetail');
 const isList = (u) => /\/(rsdtRcritNtcList|ltRsdtRcritNtcList)$/.test(new URL(u).pathname);
 
 test('시군구의 공고: 임대·분양을 거르고 공고일 최신 순, 이름·집계·캐시 헤더, 키는 응답에 없다', async () => {
@@ -45,7 +52,8 @@ test('시군구의 공고: 임대·분양을 거르고 공고일 최신 순, 이
   const r = await h.run('/api/v1/notices?sgg=41450');
   assert.equal(r.status, 200); assert.equal(r.json.type, 'Notices'); assert.equal(r.json.sgg, '41450'); assert.equal(r.json.name, '경기도 하남시'); assert.equal(r.json.asOf, '2026-10-05');
   assert.deepEqual(r.json.items.map((i) => [i.id, i.kind, i.units]), [['rental-2', 'rental', null], ['rental-1', 'rental', null], ['sale-9', 'sale', 309]]);   // 최신 공고(2, 10-03)가 앞, 공고일이 같으면 id 순(1 → sale-9)
-  assert.deepEqual(r.json.meta, { source: LH_SOURCE_TEXT, rental: 3, sale: 1, lh: 0, matched: 3, lhMatched: 0 });
+  assert.deepEqual(r.json.meta, { source: LH_SOURCE_TEXT, rental: 3, sale: 1, lh: 0, applyhome: 0, matched: 3, lhMatched: 0, applyhomeMatched: 0 });
+  assert.ok(r.json.items.every((i) => i.sgg === '41450' && i.sggName === '경기도 하남시' && Array.isArray(i.targets) && 'deposit' in i && 'monthlyRent' in i));
   assert.ok(r.json.items.every((i) => i.source === 'myhome'));
   assert.equal(r.headers['cache-control'], 'public, s-maxage=3600, stale-while-revalidate=3600');
   assert.ok(!r.raw.includes('NOTICE-KEY'));
@@ -59,9 +67,9 @@ test('여러 쪽: 총건수만큼 100건씩 이어 받는다. 한쪽 목록만 �
   const a = await pages.run('/api/v1/notices?sgg=41450'); assert.equal(a.json.meta.rental, 2); assert.equal(pages.calls.filter((u) => new URL(u).pathname.endsWith('/rsdtRcritNtcList')).length, 2);
   const half = harness({ fetch: (url) => (new URL(url).pathname.endsWith('/ltRsdtRcritNtcList') ? raw(503, '') : defaultFetch(url)) });
   const b = await half.run('/api/v1/notices?sgg=41450'); assert.equal(b.status, 200); assert.deepEqual(b.json.meta.partial, ['sale']); assert.equal(b.json.meta.sale, 0); assert.equal(b.json.items.length, 2); assert.equal(b.headers['cache-control'], 'public, s-maxage=60');
-  const dead = harness({ fetch: (url) => (isList(url) || isLh(url) ? raw(503, '') : defaultFetch(url)) }); const c = await dead.run('/api/v1/notices?sgg=41450'); assert.equal(c.status, 502); assert.equal(c.json.code, 'upstream'); assert.equal(c.headers['cache-control'], 'no-store');
+  const dead = harness({ fetch: (url) => (isList(url) || isLh(url) || isAh(url) ? raw(503, '') : defaultFetch(url)) }); const c = await dead.run('/api/v1/notices?sgg=41450'); assert.equal(c.status, 502); assert.equal(c.json.code, 'upstream'); assert.equal(c.headers['cache-control'], 'no-store');
   const none = await harness({ env: {} }).run('/api/v1/notices?sgg=41450'); assert.equal(none.status, 503); assert.equal(none.json.code, 'not-configured');
-  const quota = harness({ fetch: (url) => (isList(url) || isLh(url) ? raw(429, '') : defaultFetch(url)) }); const q = await quota.run('/api/v1/notices?sgg=41450'); assert.equal(q.status, 429); assert.equal(q.json.code, 'keys-exhausted'); assert.ok(Number(q.headers['retry-after']) > 0);
+  const quota = harness({ fetch: (url) => (isList(url) || isLh(url) || isAh(url) ? raw(429, '') : defaultFetch(url)) }); const q = await quota.run('/api/v1/notices?sgg=41450'); assert.equal(q.status, 429); assert.equal(q.json.code, 'keys-exhausted'); assert.ok(Number(q.headers['retry-after']) > 0);
 });
 
 test('거절: 쿼리·코드 종류(법정동·PNU 는 시군구가 아님)·표준코드 표에 없는 시군구(404)·방식', async () => {
@@ -102,9 +110,11 @@ test('LH 공고문: 진행 중 주택 공고를 받아 제목에 시군구 이�
   assert.deepEqual(r.json.items.map((i) => [i.id, i.source]), [['lh-L2', 'lh'], ['lh-L9', 'lh'], ['rental-1', 'myhome'], ['lh-L8', 'lh']]);   // 공고일 최신 순: L2 10-04 · L9 10-03 · rental-1 10-01 · L8 09-20
   const l2 = r.json.items[0];
   assert.deepEqual(l2, { id: 'lh-L2', kind: 'sale', title: '하남감일 A-1블록 국민임대주택 입주자 모집공고', agency: '한국토지주택공사', status: '공고중', housingType: '분양주택', supplyType: '임대주택', complex: '하남감일A1', units: 100,
-    address: null, pnu: null, announcedAt: '2026-10-04', applyFrom: null, applyTo: '2026-10-20', url: 'https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancInfo.do?panId=L2', source: 'lh' });
+    address: null, pnu: null, announcedAt: '2026-10-04', applyFrom: null, applyTo: '2026-10-20', url: 'https://apply.lh.or.kr/lhapply/apply/wt/wrtanc/selectWrtancInfo.do?panId=L2', source: 'lh',
+    deposit: null, monthlyRent: null, targets: [], sgg: '41450', sggName: '경기도 하남시' });
   assert.equal(r.json.items[1].complex, null); assert.equal(r.json.items[1].units, null);                                                      // 공급정보가 비어 있으면 그대로 null
-  assert.deepEqual(r.json.meta, { source: LH_SOURCE_TEXT, rental: 2, sale: 0, lh: 9, matched: 4, lhMatched: 3 });
+  assert.deepEqual(r.json.meta, { source: LH_SOURCE_TEXT, rental: 2, sale: 0, lh: 9, applyhome: 0, matched: 4, lhMatched: 3, applyhomeMatched: 0 });
+  assert.deepEqual(r.json.items.find((i) => i.id === 'lh-L9').targets, ['청년']);
   assert.equal(r.headers['cache-control'], 'public, s-maxage=3600, stale-while-revalidate=3600'); assert.ok(!r.raw.includes('NOTICE-KEY'));
   assert.ok(!r.raw.includes('_supply'), '내부 연결 값은 응답에 없다');
   const lists = h.calls.filter((u) => new URL(u).pathname.endsWith('/lhLeaseNoticeInfo1'));
@@ -145,4 +155,58 @@ test('LH 공고문: 공급정보만 실패하면 공고는 나가고 meta.partia
   const quota = '<OpenAPI_ServiceResponse><cmmMsgHeader><errMsg>SERVICE ERROR</errMsg><returnAuthMsg>LIMITED_NUMBER_OF_SERVICE_REQUESTS_EXCEEDS_ERROR</returnAuthMsg><returnReasonCode>22</returnReasonCode></cmmMsgHeader></OpenAPI_ServiceResponse>';
   const lhQuota = harness({ fetch: (url) => (isLh(url) ? raw(200, quota) : defaultFetch(url)) });
   const d = await lhQuota.run('/api/v1/notices?sgg=41450'); assert.equal(d.status, 200); assert.deepEqual(d.json.meta.partial, ['lh']);   // LH 한도는 마이홈 공고를 막지 않는다
+});
+
+/* ---------- 계약 확장(2026-10-17): 임대 가격·대상·시군구·청약홈 민영 분양·시도 질의 ---------- */
+test('임대 보증금·월세, 대상 칩, 청약홈 민영 분양(국민 제외·마감 지남 제외·cond 로 접수 마감 오늘 이후만), source applyhome, 1시간 캐시', async () => {
+  const rent = [N('1', '경기도', '하남시', { pblancNm: '하남 청년·신혼부부 매입임대', rentGtn: 18551000, mtRntchrg: 114150 }), N('2', '경기도', '하남시', { rentGtn: 0, mtRntchrg: 0 })];
+  const ah = [ahRow('A1', '경기도　하남시　감일동　１', { HOUSE_NM: '하남 감일 자이', RCRIT_PBLANC_DE: '2026-10-04', RCEPT_ENDDE: '2026-10-21' }), ahRow('A2', '경기도 하남시 2', { HOUSE_DTL_SECD_NM: '국민' }),
+    ahRow('A3', '경기도 하남시 3', { RCEPT_ENDDE: '2026-10-04' }), ahRow('A4', '경기도 김포시 4', { RCEPT_ENDDE: '2026-10-21' })];
+  const h = harness({ fetch: (url) => { const u = new URL(url); if (u.pathname.endsWith('/rsdtRcritNtcList')) return ok(mh(rent)); if (u.pathname.endsWith('/ltRsdtRcritNtcList')) return ok(mh([])); if (isAh(url)) return ok(AH(ah)); return defaultFetch(url); } });
+  const r = await h.run('/api/v1/notices?sgg=41450');
+  assert.equal(r.status, 200);
+  assert.deepEqual(r.json.items.map((i) => [i.id, i.source]), [['applyhome-A1-A1', 'applyhome'], ['rental-1', 'myhome'], ['rental-2', 'myhome']]);
+  assert.deepEqual(r.json.items[0], { id: 'applyhome-A1-A1', kind: 'sale', title: '하남 감일 자이', agency: null, status: null, housingType: 'APT', supplyType: '민영 분양', complex: null, units: 100,
+    address: '경기도 하남시 감일동 1', pnu: null, announcedAt: '2026-10-04', applyFrom: '2026-10-12', applyTo: '2026-10-21', url: 'https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=A1', source: 'applyhome',
+    deposit: null, monthlyRent: null, targets: [], sgg: '41450', sggName: '경기도 하남시' });
+  const r1 = r.json.items[1]; assert.deepEqual([r1.deposit, r1.monthlyRent, r1.targets], [18551000, 114150, ['신혼부부', '청년']]);
+  const r2 = r.json.items[2]; assert.deepEqual([r2.deposit, r2.monthlyRent, r2.targets], [null, null, []]);
+  assert.equal(r.json.meta.applyhome, 4); assert.equal(r.json.meta.applyhomeMatched, 1); assert.ok(!r.raw.includes('건설사'), '건설사 이름은 내보내지 않는다'); assert.ok(!r.raw.includes('NOTICE-KEY'));
+  const ahCalls = h.calls.filter(isAh); assert.equal(ahCalls.length, 1);
+  const q = new URL(ahCalls[0]).searchParams; assert.equal(q.get('serviceKey'), 'NOTICE-KEY-1'); assert.equal(q.get('returnType'), 'JSON'); assert.equal(q.get('cond[RCEPT_ENDDE::GTE]'), '2026-10-05');   // 오늘(KST)
+  await h.run('/api/v1/notices?sgg=41450'); assert.equal(h.calls.filter(isAh).length, 1, '캐시');
+  h.clock.t += 3600 * 1000 + 1; await h.run('/api/v1/notices?sgg=41450'); assert.equal(h.calls.filter(isAh).length, 2, '1시간 뒤 다시');
+});
+
+test('청약홈 실패(연결·한도)는 나머지 원천을 내보내고 meta.partial 에 applyhome(짧게 캐시)', async () => {
+  for (const bad of [raw(503, ''), raw(429, '')]) {
+    const h = harness({ fetch: (url) => (isAh(url) ? bad : defaultFetch(url)) });
+    const r = await h.run('/api/v1/notices?sgg=41450');
+    assert.equal(r.status, 200); assert.deepEqual(r.json.meta.partial, ['applyhome']); assert.equal(r.json.items.length, 3); assert.equal(r.json.meta.applyhome, 0); assert.equal(r.headers['cache-control'], 'public, s-maxage=60');
+  }
+});
+
+test('?sido=: 시도 전체 공고, 항목마다 sgg·sggName(시군구를 정할 수 없으면 null), 머리는 sido·name', async () => {
+  const rent = [N('1', '경기도', '하남시'), N('5', '경기도', '김포시', { fullAdres: '경기도　김포시　마산동　１', rentGtn: 5000000, mtRntchrg: 90000 }), N('6', '경기도', '없는시', { fullAdres: '' }), N('3', '서울특별시', '성북구')];
+  const ah = [ahRow('A1', '경기도 김포시 4', { RCEPT_ENDDE: '2026-10-21' }), ahRow('A2', '김포 마산동', { RCEPT_ENDDE: '2026-10-21' }), ahRow('A3', '서울특별시 강남구 1', { SUBSCRPT_AREA_CODE_NM: '서울', RCEPT_ENDDE: '2026-10-21' })];
+  const lh = { '공고중': [lhRow('L1', '김포 행복주택', { PAN_NT_ST_DT: '2026.10.03' }), lhRow('L2', '[경기] 청년 매입임대', { PAN_NT_ST_DT: '2026.10.03' }), lhRow('L3', '서울 행복주택', { CNP_CD_NM: '서울특별시' })] };
+  const h = harness({ fetch: (url) => { const u = new URL(url); if (u.pathname.endsWith('/rsdtRcritNtcList')) return ok(mh(rent)); if (u.pathname.endsWith('/ltRsdtRcritNtcList')) return ok(mh([])); if (isAh(url)) return ok(AH(ah)); return lhFetch(lh, () => ok(SUP([])))(url); } });
+  const r = await h.run('/api/v1/notices?sido=41');
+  assert.equal(r.status, 200); assert.equal(r.json.type, 'Notices'); assert.equal(r.json.sido, '41'); assert.equal(r.json.name, '경기도'); assert.equal(r.json.asOf, '2026-10-05'); assert.ok(!('sgg' in r.json));
+  const by = Object.fromEntries(r.json.items.map((i) => [i.id, [i.sgg, i.sggName]]));
+  assert.deepEqual(by, { 'rental-1': ['41450', '경기도 하남시'], 'rental-5': ['41570', '경기도 김포시'], 'rental-6': [null, null], 'applyhome-A1-A1': ['41570', '경기도 김포시'], 'applyhome-A2-A2': [null, null],
+    'lh-L1': ['41570', '경기도 김포시'], 'lh-L2': [null, null] });
+  assert.deepEqual(r.json.items.find((i) => i.id === 'rental-5').deposit, 5000000);
+  assert.equal(r.json.meta.matched, 7); assert.equal(r.json.meta.lhMatched, 2); assert.equal(r.json.meta.applyhomeMatched, 2); assert.equal(r.headers['cache-control'], 'public, s-maxage=3600, stale-while-revalidate=3600');
+  const stan = h.calls.filter((u) => new URL(u).pathname.endsWith('/getStanReginCdList')); assert.equal(stan.length, 1); assert.equal(new URL(stan[0]).searchParams.get('umd_cd'), '000'); assert.equal(new URL(stan[0]).searchParams.get('sido_cd'), '41');
+  const n = h.calls.length; await h.run('/api/v1/notices?sido=41'); assert.equal(h.calls.length, n, '시도 시군구 표·목록은 캐시');
+});
+
+test('거절: sgg 와 sido 를 함께 주면 400, sido 는 시도 2자리만, 표준코드 표에 없는 시도 404', async () => {
+  const h = harness();
+  for (const [url, code, reason] of [['/api/v1/notices?sgg=41360&sido=41', 'invalid-query'], ['/api/v1/notices?sido=41&sido=11', 'invalid-query'], ['/api/v1/notices?sido=41450', 'invalid-code', 'type-mismatch'],
+    ['/api/v1/notices?sido=99', 'invalid-code', 'unknown-sido'], ['/api/v1/notices?sido=ab', 'invalid-code', 'not-digits']]) {
+    const r = await h.run(url); assert.equal(r.status, 400, url); assert.equal(r.json.code, code, url); if (reason) assert.equal(r.json.reason, reason, url);
+  }
+  const nf = await h.run('/api/v1/notices?sido=11'); assert.equal(nf.status, 404); assert.equal(nf.json.code, 'unknown-code'); assert.equal(nf.json.sido, '11');
 });

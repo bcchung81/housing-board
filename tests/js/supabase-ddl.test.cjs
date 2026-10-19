@@ -20,7 +20,8 @@ const NEW_TABLES = ['policy_targets', 'area_facts'];   // *_ledger_refine.sql �
 const SCOPE = scopeFile ? fs.readFileSync(path.join(MIG_DIR, scopeFile), 'utf8').replace(/--[^\n]*/g, '') : '';
 
 const common = JSON.parse(fs.readFileSync(path.join(SCHEMA_DIR, 'common.schema.json'), 'utf8')).$defs;
-const TABLES = fs.readdirSync(SCHEMA_DIR).filter((f) => f !== 'common.schema.json').map((f) => f.replace('.schema.json', ''));
+const RESEARCH_TABLES = ['source_documents', 'evidence'];   // 연구 파이프라인 출력 표(tools/research/chain) — DB 에 싣지 않는다
+const TABLES = fs.readdirSync(SCHEMA_DIR).filter((f) => f !== 'common.schema.json').map((f) => f.replace('.schema.json', '')).filter((t) => !RESEARCH_TABLES.includes(t));
 const rowSchema = (t) => JSON.parse(fs.readFileSync(path.join(SCHEMA_DIR, `${t}.schema.json`), 'utf8')).$defs.row;
 
 // 스키마에 없고 DB 에만 있는 열: 적재 열, 대리 키, links 의 외래 키용 생성 열

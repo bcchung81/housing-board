@@ -26,7 +26,7 @@ export function judgmentsOf(L: JudgeSource): (JudgeRow | null)[] {
 }
 export const CIR = ['①', '②', '③', '④', '⑤', '⑥'];
 export const K = ['계획', '인허가', '착공', '모집', '준공', '입주'];
-/* 6단계 색: 테마별 값은 app/tailwind.css 의 --st-* (차트 면 색, 라이트·다크). SVG 와 인라인 스타일이 var() 로 읽는다 */
+/* 6단계 색: 테마별 값은 app/globals.css 의 --st-* (차트 면 색, 라이트·다크). SVG 와 인라인 스타일이 var() 로 읽는다 */
 export const C = ['var(--st-plan)', 'var(--st-permit)', 'var(--st-build)', 'var(--st-sale)', 'var(--st-soon)', 'var(--st-move)'];
 
 /* ── 계산 ── */
@@ -115,14 +115,14 @@ export const rp = (g: Ribbon, k: number, a: number, b: number, band: boolean, pr
    라벨(HUD 판)은 판 상자로 겹침을 본다. ribbon.ts 가 이 자리를 그리고, tests/js/boardsample.test.cjs 가 46개 시점에서 겹치지 않음을 확인한다. ── */
 export type Box = { x: number; y: number; w: number; h: number };
 export type Tx = { x: number; y: number; t: string; fs: number; a: 'start' | 'middle' | 'end'; c: string; bold?: boolean };
-export const HY1 = 14, HY2 = 33;   // 머리 두 줄의 기준선: 위 줄 = 연도별 총량(총량이 매달 같으면 비움), 아래 줄 = 증감(또는 연도)
+export const HY1 = 15, HY2 = 34;   // 머리 두 줄의 기준선: 위 줄 = 연도별 총량(총량이 매달 같으면 비움), 아래 줄 = 증감(또는 연도)
 export const textW = (t: string, fs: number) => [...t].reduce((w, c) => w + fs * (/[가-힣]/.test(c) ? 0.9 : /[\s.,·:()]/.test(c) ? 0.35 : 0.6), 0);
 export const textBox = (x: Tx): Box => { const w = textW(x.t, x.fs); return { x: x.a === 'middle' ? x.x - w / 2 : x.a === 'end' ? x.x - w : x.x, y: x.y - 0.9 * x.fs, w, h: 1.2 * x.fs }; };
 export const hit = (a: Box, b: Box) => a.x < b.x + b.w && b.x < a.x + a.w && a.y < b.y + b.h && b.y < a.y + a.h;
 export const inView = (b: Box) => b.x >= 0 && b.y >= 0 && b.x + b.w <= VW && b.y + b.h <= 400;
-/* HUD 라벨 판: 너비는 한글 15·그 밖 9 + 여백 22, 가운데는 차트 안으로 당긴다, 판 높이 24(기준선 위 17) */
+/* HUD 라벨 판(글자 14 보통 — 2026-10-18): 너비는 한글 13·그 밖 9 + 좌우 여백 20, 가운데는 차트 안으로 당긴다, 판 높이 24(기준선 위 17) */
 export function labelBox(x: number, baseline: number, text: string) {
-  const w = [...text].reduce((s, c) => s + (/[가-힣]/.test(c) ? 15 : 9), 0) + 22;
+  const w = [...text].reduce((s, c) => s + (/[가-힣]/.test(c) ? 13 : 9), 0) + 20;
   const center = Math.max(w / 2 + 6, Math.min(PX0 + PW - w / 2, x));
   return { center, x: center - w / 2, y: baseline - 17, w, h: 24, baseline };
 }
@@ -135,11 +135,11 @@ const man = (n: number, unit = '만') => (n === 0 ? '0' : `${+(n / 10000).toFixe
 /* 정적 글자(c = ribbon.ts 의 색 이름): 세로축 눈금과 '기준' 글자뿐이다. 붉은 띠 범례·총량 설명·세로축 단위·아래 달 이름은 차트 안에 두지 않는다(카드 제목 줄의 '지연' 칩과 제목 title, 2026-10-12 시안 정리) */
 export function staticTexts(g: Ribbon) {
   const { T, X } = g;
-  const now: Tx = { x: X(T.now + 1), y: 393, t: `기준 ${ml(T, T.now)}`, fs: 13, a: 'middle', c: 'ink', bold: true };
+  const now: Tx = { x: X(T.now + 1), y: 393, t: `기준 ${ml(T, T.now)}`, fs: 14, a: 'middle', c: 'ink', bold: true };
   /* 판정 기준 변경 꼬리표: 구분선(X(scopeFrom)) 왼쪽 아래 줄, '기준' 글자와 겹치지 않게 그 왼쪽 끝보다 앞에서 끝난다 */
   const scope: Tx | null = g.scopeFrom > 0 ? { x: Math.min(X(g.scopeFrom) - 4, textBox(now).x - 8), y: 393, t: SCOPE_TAG(ml(T, g.scopeFrom)), fs: 12, a: 'end', c: 'axis' } : null;
   return {
-    ticks: g.ticks.map((v): Tx => ({ x: PX0 - 6, y: BOT - v * g.s2 + 3, t: man(v, axisUnit(g) === '호' ? '만' : ''), fs: 13, a: 'end', c: 'axis' })),   // 세로축: 0 에서 ymax 까지 눈금마다
+    ticks: g.ticks.map((v): Tx => ({ x: PX0 - 6, y: BOT - v * g.s2 + 3, t: man(v, axisUnit(g) === '호' ? '만' : ''), fs: 14, a: 'end', c: 'axis' })),   // 세로축: 0 에서 ymax 까지 눈금마다
     now, scope,
   };
 }
@@ -151,9 +151,9 @@ export function ribbonLabels(g: Ribbon, cur: number) {
   const YT = Y.map((y) => g.total[y.b]);   // 해마다 마지막 달(마지막 해는 마지막 시점)의 총량
   YT.forEach((tv, i) => {
     const x = (X(Y[i].a) + X(Y[i].b + 1)) / 2, on = i === yi;
-    if (fl) { yrs.push([{ x, y: HY2, t: `${Y[i].y}년`, fs: 15, a: 'middle', c: on ? 'yrOn' : 'yrOff', bold: true }]); return; }
+    if (fl) { yrs.push([{ x, y: HY2, t: `${Y[i].y}년`, fs: 16, a: 'middle', c: on ? 'yrOn' : 'yrOff', bold: true }]); return; }
     const dv = i > 0 ? tv - YT[i - 1] : 0;
-    yrs.push([{ x, y: HY1, t: `${Y[i].y}년 ${f(tv)}호`, fs: 15, a: 'middle', c: on ? 'yrOn' : 'yrOff', bold: true }, dv ? { x, y: HY2, t: `${dv > 0 ? '▲' : '▼'} ${sg(dv)}호 (${sg(Math.round(dv / YT[i - 1] * 100))}%)`, fs: 14, a: 'middle', c: 'pos', bold: true }
+    yrs.push([{ x, y: HY1, t: `${Y[i].y}년 ${f(tv)}호`, fs: 16, a: 'middle', c: on ? 'yrOn' : 'yrOff', bold: true }, dv ? { x, y: HY2, t: `${dv > 0 ? '▲' : '▼'} ${sg(dv)}호 (${sg(Math.round(dv / YT[i - 1] * 100))}%)`, fs: 14, a: 'middle', c: 'pos', bold: true }
       : { x, y: HY2, t: i > 0 ? '전년과 같음' : '기준 연도', fs: 14, a: 'middle', c: 'axis' }]);
   });
   const used: Box[] = [...staticList(g), ...yrs.flat()].map(textBox);

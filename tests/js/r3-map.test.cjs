@@ -61,7 +61,7 @@ test('1(b) ?project= 로 연 위치 미확보 사업: 목록(#lostPop)을 저절
   assert.match(sl, /const first = pop\.querySelector\(focus === 'cur' \? 'li\[aria-current="true"\] a' : 'a'\);/);
   assert.match(sl, /if \(focus === 'cur'\) first\.closest\('li'\)\.scrollIntoView\(\{ block: 'nearest' \}\);/);
   assert.match(app, /pin\.classList\.toggle\('late', \(LATE \|\| !!\(CUR_LOST && CUR_LOST\.cls === 'delay'\)\) && sm\.delay > 0\);/);
-  assert.match(css, /\.lostpop li\.cur\{[^}]*box-shadow:inset 3px 0 0 var\(--acc\)/);
+  assert.match(css, /\.lostpop li\.cur\{[^}]*box-shadow:inset 0 0 0 var\(--border-w\) var\(--acc\)/);
 });
 
 test("1(b) 6단계 띠: 위치 미확보 몫에 지연이 있으면 '지연 n' 빨강 표지(그 칸의 단계로 센다, 단계 모르면 ①)", () => {
@@ -73,8 +73,9 @@ test("1(b) 6단계 띠: 위치 미확보 몫에 지연이 있으면 '지연 n' �
   const wt = grab(/\(function wireTop\(\) \{[\s\S]*?\n\}\)\(\);/);
   assert.match(wt, /const ld = h\.lostN \? lostLate\(i\) : 0;/);
   assert.match(wt, /\$\{lostTxt\}\$\{ld \? ` <b class="sf-late">지연 \$\{ld\}<\/b>` : ''\}<\/span>/);
-  assert.match(css, /\.sf-late\{display:inline-block;[^}]*color:#FFAFBF[^}]*\}/);
-  assert.match(css, /html\[data-map-shell\]:not\(\.dark\) \.sf-late\{color:#8E2C3C\}/);
+  const { mapCss } = require('./map-tokens.cjs');   // 색 값은 app/globals.css 의 --map-bad-ink(라이트·다크), app.css 는 가리키기만 한다
+  assert.match(mapCss('dark'), /\.sf-late\{display:inline-block;[^}]*color:#FFAFBF[^}]*\}/);
+  assert.match(mapCss('light'), /\.sf-late\{display:inline-block;[^}]*color:#8E2C3C[^}]*\}/);
 });
 
 test("2 꼬리표 = 단계 + 판정 상태('③착공 · 정상'), 예정일 지남은 카드 이유 줄과 같은 '예정일 지남(1개월 미만)' 짧은 표지", () => {
@@ -90,10 +91,11 @@ test("2 꼬리표 = 단계 + 판정 상태('③착공 · 정상'), 예정일 지
   assert.deepEqual(H.tagState({ id: 'C', status: '입주 단계', settle: 'moving' }), { main: '⑤입주 진행', mark: '' });
   const hc = grab(/function renderHudContent\(\) \{[\s\S]*?\n\}\n/);
   assert.match(hc, /ts = tagState\(b\)/);
-  assert.match(hc, /<i>\$\{esc\(ts\.main\)\}<\/i>/);
+  /* 단계는 늘, ' · 판정'은 정책담당자 관점에만(ov-aud-admin, 2026-10-18) */
+  assert.match(hc, /<i>\$\{esc\(ts\.main\.split\(' · '\)\[0\]\)\}\$\{ts\.main\.includes\(' · '\) \? `<span class="ov-aud-admin"> · \$\{esc\(ts\.main\.split\(' · '\)\[1\]\)\}<\/span>` : ''\}<\/i>/);
   assert.match(hc, /<span class="ht-m">\$\{unitsTxt\(b\)\}\$\{ts\.mark \? ` <em class="ht-x">\$\{esc\(ts\.mark\)\}<\/em>` : ''\}<\/span>/);
   assert.doesNotMatch(hc, /stTxt\(b\)/, "꼬리표에 '③예정일 지남'(stTxt)을 쓰지 않는다");
-  assert.match(css, /\.hudtag \.ht-x\{[^}]*border-radius:999px/);
+  assert.match(css, /\.hudtag \.ht-x\{[^}]*border-radius:var\(--radius-full\)/);
 });
 
 test("2 카드 원천 날짜 다름: 원장 현재 예정과 같은 달이면 일 단위('LH 2026.10.31'), 다른 달이면 달('LH 2028.12')", () => {
@@ -126,12 +128,15 @@ test("4 단계 정의: 띠·카드 툴팁에 '공식 01~06' 번호를 쓰지 않
 
 test('5 하단 범례 요약(#legendSum)은 비단계 표지만: 단계 견본은 머리 줄 띠가 맡고, 자세히 목록에는 남는다', () => {
   const lg = grab(/BY_STAGE\.forEach\(\(st\) => \{   \/\/ 6단계 순서[\s\S]*?\n  \}\);\n/);
-  assert.match(lg, /add\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, stLabel\(st\), NOTE\[st\] \|\| '', '', stTitle\(st\)\)/, '단계 칸: 요약 칩 없음(자세히 목록만)');
-  assert.match(lg, /add\('<i class="sw soon"><\/i>', '⑤준공 · 입주 진행', '<small>준공 6개월 안<\/small>', '', stTitle\(st\)\)/);
+  /* 2026-10-18: 6단계 띠(#stageF)는 두 관점 모두 보이므로 단계 칸은 요약 줄에 넣지 않고 자세히 목록에만 둔다 */
+  assert.match(app, /const stg = \(sw, t, n, tip\) => \{ rows\.push\(\[sw, t, n, ''\]\); if \(tip\) tips\.set\(t, tip\); \};/);
+  assert.match(lg, /stg\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, stLabel\(st\), NOTE\[st\] \|\| '', stTitle\(st\)\)/, '단계 칸: 자세히 목록만');
+  assert.match(lg, /stg\('<i class="sw soon"><\/i>', '⑤준공 · 입주 진행', '<small>준공 6개월 안<\/small>', stTitle\(st\)\)/);
+  assert.match(app, /\$\('#legendSum'\)\.innerHTML = chips\.map\(\(\[sw, t, c\]\) => `<span\$\{tipAttr\(t\)\}\$\{clsAttr\(c\)\}>/);
   assert.match(lg, /add\('<i class="sw soon" style="opacity:\.45"><\/i>', '⑤준공 · 입주 완료', '<small>준공 7~24개월, 흐리게<\/small>', '입주 완료', stTitle\(st\)\)/, '흐리게 그린 입주 완료는 비단계 표지로 남긴다');
   /* 비단계 표지(근사 위치·주의/지연 테두리·기존 건물)는 요약에 남는다(short 기본값 = 이름) */
   assert.match(app, /add\('<i class="sw approx"><\/i>', '근사 위치', '<small>이름으로 찾은 위치, 겹원 · 확인 필요<\/small>', '근사 위치', APPROX_TXT\);/);
-  assert.match(app, /if \(jd\[0\] \+ jd\[1\]\) add\([^\n]*'<small>상태, 굵은 테두리<\/small>', ''\);/);
+  assert.match(app, /if \(jd\[0\] \+ jd\[1\]\) add\([^\n]*'<small>상태, 굵은 테두리<\/small>', '', '', 'ov-aud-admin'\);/);   // 원장 판정 줄은 정책담당자 관점에만
   assert.match(app, /else add\('<i class="sw ramp"><\/i>', '기존 건물', '<small>높을수록 밝게, 색조는 참고<\/small>'\);/);
 });
 

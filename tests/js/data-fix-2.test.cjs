@@ -128,7 +128,7 @@ test('#15 날짜 점 표기: 종합상황판·사업·지역 공급 title 의 �
   const region = read('app/(dashboard)/region/page.tsx');
   assert.match(region, /원장 기준일 \$\{calendar\.referenceDate\.replace\(\/-\/g, '\.'\)\} · 통계누리 실적 \$\{ymDot\(last\)\}까지/);
   /* 지역 공급 예정 목록도 점 표기 하나(2026-10-16 2차 평가 — '10월 11일'·'10월 중'·'2026년 10월' 대신 2026.10.11·2026.10, r2-screens 8) */
-  assert.match(read('components/region/Ahead.tsx'), /const dayText = aheadDay;/);
+  assert.match(read('components/region/Ahead.tsx'), /const dayText = \(e: Pick<AheadEntry, 'day' \| 'ym'>\) => \(W\.date === 'ko' \? koDay\(e\) : aheadDay\(e\)\);/);
   assert.equal(S.dotDates('2026-10-13'), '2026.10.13');
 });
 
@@ -161,7 +161,7 @@ test('#19 지역 공급 합계는 정확한 호수(축 눈금만 근삿값), 달
   assert.match(page, /\{fmt\(list\.length\)\}건 · \{fmt\(units\)\}호/);
   assert.doesNotMatch(page, /man\(/);
   const ahead = read('components/region/Ahead.tsx');
-  assert.match(ahead, /title=\{`\$\{monthLabel\(x\)\} \$\{xs\.length\}건 \$\{fmt\(tot\[i\]\)\}호/);
+  assert.match(ahead, /title=\{`\$\{monthLabel\(x\)\} \$\{xs\.length\}\$\{W\.count\} \$\{fmt\(tot\[i\]\)\}호/);
   const metro = R.aheadAll(calendar, 'metro', sido);
   assert.equal(metro.reduce((s, e) => s + e.units, 0), 27494, '수도권 12개월 예정 합(정확한 값)');
 });
@@ -196,8 +196,8 @@ test('D1 지역 공급: 기준일보다 앞선 예정은 표지만, 합계에는
   assert.equal(R.pastDue({ day: ref }, ref), false, '기준일 당일은 예정');
   assert.equal(R.pastDue({ day: null }, ref), false, '날짜 없는 달 예정은 표지 없음');
   const ahead = read('components/region/Ahead.tsx');
-  assert.match(ahead, /past\(e\) \? <>[\s\S]*data-slot="past-due"[\s\S]*\{PAST_DUE\}/, '목록 행 표지');
-  assert.match(ahead, /past\(hud\.e\) \? ` \$\{PAST_DUE\}`/, 'HUD');
+  assert.match(ahead, /past\(e\) \? <>[\s\S]*data-slot="past-due"[\s\S]*\{W\.past\}/, '목록 행 표지');
+  assert.match(ahead, /past\(hud\.e\) \? ` \$\{W\.past\}`/, 'HUD');
   assert.match(ahead, /합계에는 그대로 넣음/);
   const page = read('app/(dashboard)/region/page.tsx');
   assert.match(page, /refDate=\{calendar\.referenceDate\}/);

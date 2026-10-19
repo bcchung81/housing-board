@@ -36,7 +36,7 @@ test('1 정의는 (i) 팝오버로: 단계별 진행 누적 · 정책 목표 대
   assert.match(list, /<dt>계획 호수<\/dt>/, '목록 ⓘ: 머리의 계획 호수 합');
   /* 서랍: 단계 칸 정의 · 상태(판정 규칙) · 공정률 */
   const steps = read('components/projects/StageSteps.tsx');
-  assert.match(steps, /import InfoTip from '\.\.\/ui\/info-tip'/);
+  assert.match(steps, /import InfoTip from '@\/components\/ui\/info-tip'/);
   assert.match(tips(steps).join(''), /QUESTION\.map/, '서랍 단계 ⓘ: 여섯 단계 정의');
   const det = read('components/projects/ProjectDetail.tsx');
   const dt = tips(det).join('');

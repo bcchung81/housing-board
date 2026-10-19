@@ -127,7 +127,6 @@ test('모든 수집 원천과 운영 데이터에 방법·현재 주기가 있�
   assert.match(OPERATIONS.schedule.cycle, /미수집/);
   assert.equal(bytesLabel(1024), '1.0 KiB');
   assert.match(page, /현재 수집 주기/);
-  assert.match(read('components/sources/Flow.tsx'), /\{s\.does\}/, '단계 상세에 하는 일');
   for (const s of [...P.STEPS, P.LIVE]) assert.ok(s.does.length > 0, s.id);
 });
 

@@ -21,6 +21,6 @@ test('(i) 상세에 필수·선택·검증·준비 중 문구', () => {
 test('지도 목록(app.js)에 안내 줄이 있고 같은 문구를 쓴다', () => {
   const js = fs.readFileSync(__dirname + '/../../assets/js/app.js', 'utf8');
   assert.match(js, /function lostGuide\(/);
-  assert.match(js, /class="lp-guide"/);
+  assert.match(js, /class="lp-guide ov-aud-admin"/);   // 위치 입력 안내는 정책담당자 관점에만(2026-10-18)
   for (const t of Object.values(V.LOST_GUIDE)) assert.ok(js.includes(t), t);
 });

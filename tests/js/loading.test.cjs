@@ -97,8 +97,6 @@ test('로딩 막(S1): 지형을 기다리지 않고 setupCustom 소스가 준비
   for (const k of ['reveal', 'projects', 'demFirst', 'dem']) assert.match(app, new RegExp(`perfMark\\('${k}'\\)`), k);
 });
 
-test('글꼴은 display block: 대체 글꼴로 먼저 그렸다 바꾸면 상단 메뉴가 좌우로 오므라든다(메뉴 708→655px)', () => {
-  const fonts = read('lib/shell/fonts.ts');
-  assert.match(fonts, /display: 'block',/);
-  assert.doesNotMatch(fonts, /display: 'swap'/);
+test('본문 글꼴 Noto Sans KR 은 저장소 안 로컬 파일을 CSS 로 싣는다(외부 글꼴 요청 없음)', () => {
+  for (const f of ['app/(dashboard)/layout.tsx', 'app/(map)/layout.tsx']) assert.match(read(f), /import '@\/assets\/fonts\/noto-sans-kr\/noto-sans-kr\.css';/, f);
 });

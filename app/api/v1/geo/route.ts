@@ -1,4 +1,4 @@
-import { ipSido } from '../../../../lib/board/ip-sido';
+import { ipSido } from '@/lib/board/ip-sido';
 
 export const dynamic = 'force-dynamic';
 

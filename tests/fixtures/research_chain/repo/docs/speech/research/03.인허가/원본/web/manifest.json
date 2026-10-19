@@ -1,0 +1,21 @@
+{
+ "source": "시험 고시",
+ "fetched_at": "2026-10-17T00:00:00Z",
+ "files": {
+  "u1_det_1": {
+   "filename": "gosi/eum_gosi_seq1.html",
+   "url": "https://www.eum.go.kr/web/gs/gv/gvGosiDet.jsp?seq=1&pageNo=3",
+   "method": "HTTP",
+   "kind": "토지이음 고시 상세",
+   "attachments": [
+    {
+     "filename": "a.pdf",
+     "download": "https://www.eum.go.kr/web/FileDownload.do (POST file=/a.pdf&seq=1)",
+     "saved": true,
+     "path": "gosi/eum_gosi_seq1_a.pdf",
+     "path_stage": "03.인허가"
+    }
+   ]
+  }
+ }
+}

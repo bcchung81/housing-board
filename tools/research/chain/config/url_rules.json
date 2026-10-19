@@ -1,0 +1,23 @@
+{
+  "description": "URL 정규화 규칙(ids.py canonical_url). 공통: 스킴·호스트 소문자, 기본 포트 제거, host_aliases 로 같은 사이트 호스트를 하나로, 퍼센트 인코딩을 한 가지로, 빈 값 쿼리 제거, 쿼리 이름순 정렬, 조각(#) 제거 — 단 #page=N 은 locator 로 돌려준다. '<URL> (POST <본문>)' 기록은 본문을 같은 규칙으로 정리해 그 모양 그대로 둔다(GET 주소가 아니라 식별자). rules 는 위에서부터 처음 맞는 하나만 쓴다: host(별칭 적용 뒤)와 path(같음) 또는 path_regex, keep_params(이것만 남김) 또는 drop_params(이것을 지움).",
+  "host_aliases": {
+    "molit.go.kr": "www.molit.go.kr",
+    "lh.or.kr": "www.lh.or.kr",
+    "korea.kr": "www.korea.kr",
+    "eum.go.kr": "www.eum.go.kr"
+  },
+  "global_drop_params": ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "jsessionid"],
+  "rules": [
+    {"host": "www.eum.go.kr", "path": "/web/gs/gv/gvGosiDet.jsp", "keep_params": ["seq"], "why": "고시 상세는 seq 하나로 정해진다. pageNo·검색 조건·깨진 chrgorg 는 목록 화면 상태"},
+    {"host": "www.molit.go.kr", "path": "/USR/I0204/m_45/dtl.jsp", "keep_params": ["idx"], "why": "행정규칙 상세는 idx. lcmspage·search_* 는 목록 상태"},
+    {"host": "www.molit.go.kr", "path": "/USR/NEWS/m_71/dtl.jsp", "keep_params": ["id"], "why": "보도자료 상세는 id. lcmspage 는 목록 쪽"},
+    {"host": "www.molit.go.kr", "path_regex": "^/[a-z]+/USR/[A-Z0-9]+/m_[0-9]+/dtl\\.jsp$", "keep_params": ["id"], "why": "소속 기관 누리집 게시물 상세(id)"},
+    {"host": "www.molit.go.kr", "path": "/portal/common/download/DownloadMltm2.jsp", "keep_params": ["FilePath"], "why": "서버 파일 경로가 파일을 정한다. FileName 은 내려받을 때 붙는 이름"},
+    {"host": "www.molit.go.kr", "path": "/LCMS/DWN.jsp", "keep_params": ["fold", "fileName"]},
+    {"host": "www.korea.kr", "path": "/common/download.do", "keep_params": ["fileId"], "why": "tblKey 는 게시판 종류 표시"},
+    {"host": "www.korea.kr", "path_regex": "^/(briefing|news)/[A-Za-z]+View\\.do$", "keep_params": ["newsId"]},
+    {"host": "www.lh.or.kr", "path": "/board.es", "keep_params": ["bid", "list_no"], "why": "mid·act 는 메뉴·화면 상태"},
+    {"host": "www.lh.or.kr", "path": "/boardDownload.es", "keep_params": ["bid", "list_no", "seq"]},
+    {"host": "apply.lh.or.kr", "path": "/lhapply/apply/wt/wrtanc/selectWrtancInfo.do", "drop_params": ["mi"], "why": "mi 는 메뉴 번호"}
+  ]
+}

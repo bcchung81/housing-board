@@ -10,13 +10,13 @@ export default function InfoTip({ label, text, children, className }: { label: s
   return (
     <Popover.Root>
       <Popover.Trigger aria-label={`${label} 설명`} data-ctl
-        className={cn('btn-reset inline-flex h-7 flex-none cursor-pointer items-center gap-1 rounded-[6px] px-1 text-[14px] text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary data-[popup-open]:text-primary print:hidden', className)}>
+        className={cn('btn-reset inline-flex h-7 flex-none cursor-pointer items-center gap-1 rounded-chip px-1 text-sm text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary data-[popup-open]:text-primary print:hidden', className)}>
         <Info className="size-4 flex-none" aria-hidden="true" />{text ? <span>{text}</span> : null}
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Positioner sideOffset={6} align="start" collisionPadding={12} className="z-50">
-          <Popover.Popup className="max-w-[min(420px,calc(100vw-24px))] rounded-[10px] border border-border bg-popover px-4 py-3 text-[14px] leading-[1.55] text-popover-foreground shadow-[var(--shadow-pop)] outline-none transition-[opacity,translate] duration-150 ease-out data-[ending-style]:translate-y-[-2px] data-[ending-style]:opacity-0 data-[starting-style]:translate-y-[-2px] data-[starting-style]:opacity-0 motion-reduce:transition-none">
-            <Popover.Title className="m-0 mb-1.5 text-[14px] font-bold">{label}</Popover.Title>
+          <Popover.Popup className="max-w-[min(420px,calc(100vw-24px))] rounded-tile border border-border bg-popover px-tile-x py-tile-y text-sm leading-body text-popover-foreground shadow-pop outline-none transition-[opacity,translate] duration-150 ease-out data-[ending-style]:translate-y-[-2px] data-[ending-style]:opacity-0 data-[starting-style]:translate-y-[-2px] data-[starting-style]:opacity-0 motion-reduce:transition-none">
+            <Popover.Title className="m-0 mb-1.5 text-sm font-bold">{label}</Popover.Title>
             <div className="[&_dd]:m-0 [&_dd]:mb-1.5 [&_dd]:text-muted-foreground [&_dl]:m-0 [&_dt]:font-bold [&_p]:m-0 [&_p+p]:mt-1.5">{children}</div>
           </Popover.Popup>
         </Popover.Positioner>

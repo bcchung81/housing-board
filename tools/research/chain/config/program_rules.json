@@ -1,0 +1,296 @@
+{
+  "description": "프로그램 → 사업 연결(links PROGRAM_PROJECT)을 원문의 프로그램 정의·조건으로 검사하는 규칙(rules.py, basis RULE). 프로그램마다 원문 조건을 조건식(속성·연산·값·원문 쪽·quote)으로 적는다. 값(value_text)은 quote 에 그대로 있어야 하고 quote 는 그 쪽 원문 텍스트에 있어야 한다(원문 문자열 게이트, 공백 무시). 원문에 조건이 없거나 모호하면 규칙을 만들지 않고 status UNKNOWN(조건 미상)과 사유를 둔다. 정책 고유 값은 여기에만 둔다.",
+  "sources": {
+    "ledger_dir": "schemas/ledger-2026-10/tables",
+    "lh_zone": "schemas/ledger-2026-10/raw/vworld-district/LT_C_LHZONE.geojson",
+    "lh_zone_label": "V-World LH 택지·사업지구 경계(LT_C_LHZONE) zonename",
+    "unknown_markers": ["확인 필요"],
+    "unknown_markers_note": "HOME 덤프가 값을 모를 때 쓰는 표기. 이 말이 든 값은 '값 없음'으로 본다.",
+    "reference_lists": [
+      {"path": "docs/speech/research/dataset/_work/reference/dosim_candidates.jsonl", "kind": "도심 복합사업", "region_field": "sigungu",
+       "label": "국토부 도심 공공주택 복합사업 후보지 발표(2021~2022, 1~6·8·9차)",
+       "developer_text": {"doc_path": "docs/speech/research/01.정책/원본/참고_도심복합후보지/210331_95085373/(안건자료)210331(14시이후)3080 주택공급대책 제1차 선도사업 후보지 발표.pdf", "page": 11, "quote": "(인허가권)국토부 또는 지자체 / (도시계획)지자체 / (시행자)LH․SH․GH 등", "value_text": ["LH", "SH", "GH"]}},
+      {"path": "docs/speech/research/dataset/_work/POL_2026_0813/policy_sites.jsonl", "doc_contains": "8-13_후속_260930", "kind": "도심 복합사업",
+       "region_field": "sido", "label": "도심 공공주택 복합사업 서울 11곳 신규 후보지 선정(8·13 후속 9·30)",
+       "developer_text": {"doc_path": "docs/speech/research/01.정책/원본/참고_도심복합후보지/210331_95085373/(안건자료)210331(14시이후)3080 주택공급대책 제1차 선도사업 후보지 발표.pdf", "page": 11, "quote": "(인허가권)국토부 또는 지자체 / (도시계획)지자체 / (시행자)LH․SH․GH 등", "value_text": ["LH", "SH", "GH"]}}
+    ],
+    "reference_lists_note": "developer_text 는 후보지 발표문의 사업 유형 일반 문구(사업지별 표기 아님, 2026-10-17 메인 결정): 목록에 이름이 있는 사업에 한해 사업주체 근거로 쓰고, 이은 고시문에 사업자 표기가 있으면 그것을 먼저 쓴다. 사업 유형 기록(site_record) 원천: 그 목록에 이름이 있으면 kind 의 사업 대상지 기록이 있는 것으로 본다. 이름 대조는 name_rules(엔진 지명 규칙과 같은 정규화)와 지역 일치.",
+    "gosi_glob": "docs/speech/research/dataset/_work/*/evidence_gosi.jsonl",
+    "gosi_verdicts": ["SOURCED", "MATCH", "MISMATCH"],
+    "gosi_note": "토지이음 고시 대조 행(다른 단계가 사업에 이은 고시). 고시 제목과 고시문 '사업의 종류' 를 vocab.zone_kinds 로 읽어 사업 유형 기록으로, 고시문의 developer_labels 뒤 developer_names 표기를 사업주체로 쓴다.",
+    "developer_labels": ["공공주택사업자", "사업시행자", "시행자"],
+    "developer_names": ["한국토지주택공사", "서울주택도시공사", "경기주택도시공사", "인천도시공사"],
+    "developer_window": 150,
+    "name_rules": {"old_markers": ["\uf000", "◯구", "◯", "舊", "구."], "tails": ["인근", "일대", "일원", "주변", "부지"], "min_len": 3,
+                   "region_lexicon": "schemas/ledger-2026-10/raw/legal-dong/국토교통부_법정동코드_20260929.csv"},
+    "name_rules_note": "엔진 지명 규칙(stage_sources keys.site_name_rules)과 같은 정규화: 옛 표기(舊 등) 제거, 공백·괄호·가운뎃점 무시(괄호 뗀 이름·괄호 속 이름도 키), 앞의 시도·시군구 낱말(법정동코드 이름) 제거, 끝 꼬리(인근·일대·일원·주변·부지) 제거. 키가 같고 지역 낱말이 사업 시군구와 맞아야 한다(동 이름은 떼지 않는다). 포함·유사도 대조는 하지 않는다."
+  },
+  "vocab": {
+    "region": {
+      "수도권": ["11", "28", "41"],
+      "서울": ["11"],
+      "인천": ["28"],
+      "경기": ["41"],
+      "성남": ["4113"]
+    },
+    "region_note": "원문 지역 낱말 → 시군구 코드 앞자리(법정동코드 체계). 원장 projects.sgg_code 가 이 앞자리로 시작하면 그 지역이다.",
+    "developer": {
+      "LH": ["lh", "LH", "한국토지주택공사"],
+      "공공": ["lh", "sh", "gh", "ih", "LH", "SH", "GH", "iH", "IH", "한국토지주택공사", "서울주택도시공사", "경기주택도시공사", "인천도시공사"]
+    },
+    "developer_note": "원문 사업주체 낱말 → 원장 agencies.agency_id 또는 HOME 시행자 표기. '공공' 은 공공주택사업자(LH·지방공사).",
+    "zone_kinds": [
+      ["도심공공주택복합지구", "도심 복합사업"],
+      ["도심공공주택복합사업", "도심 복합사업"],
+      ["공급촉진지구", "민간임대 공급촉진지구"],
+      ["공공주택지구", "공공택지"],
+      ["택지개발", "공공택지"],
+      ["국민임대주택단지", "공공택지"],
+      ["보금자리주택지구", "공공택지"]
+    ],
+    "zone_kinds_note": "V-World LH 택지·사업지구 이름(공백 지움)에 든 낱말 → 지구 종류, 위에서부터 처음 맞는 것. 공공택지는 주택법 제2조 제24호(공공주택지구조성사업·택지개발사업 등으로 개발·조성하는 택지). 도시개발구역·경제자유구역처럼 시행 방식에 따라 공공택지 여부가 갈리는 이름은 종류를 정하지 않는다(검사 못함).",
+    "zone_name_lead": ["서울", "인천", "경기", "부산", "대구", "광주", "대전", "울산", "세종"],
+    "zone_name_lead_note": "지구 이름 앞에 붙는 시도 줄임말. 사업 지구명과 견줄 때 이 말을 뗀 이름도 함께 본다."
+  },
+  "unsourced_attributes": {
+    "existing_complex": {"label": "기존 단지 준공연도·임대 유형", "reason": "사업(재건축 대상 단지)과 LH 임대단지 목록을 잇는 키가 원장에 없다."},
+    "former_use": {"label": "부지의 기존 용도", "reason": "청사·국공유지·철도·군부지·이전 기관 부지 같은 부지 소유·용도 원천이 원장에 없다."}
+  },
+  "policies": {
+    "POL_2025_0907": {
+      "doc_path": "docs/speech/research/01.정책/원본/9-7/250908(조간)(안건)_새정부_「주택공급_확대방안」(주택정책과).pdf",
+      "programs": {
+        "3기 신도시": {
+          "status": "RULE",
+          "source_program": "참고1 수도권 공공택지 주택공급 확대(3기 신도시 지구 목록)",
+          "rule_sets": [
+            {
+              "label": "3기 신도시 지구",
+              "conditions": [
+                {"attribute": "district", "op": "name_prefix_in", "value_text": ["하남교산", "남양주왕숙", "인천계양", "고양창릉", "부천대장", "광명시흥", "의왕군포안산", "화성진안"], "page": 14, "printed_page": 11, "quote": "1｣ 하남교산, 남양주왕숙, 인천계양, 고양창릉, 부천대장, 광명시흥, 의왕군포안산, 화성진안", "note": "각주 1｣ 이 '3기 신도시1｣' 의 지구 목록. 지구명 앞부분 일치(예: 남양주왕숙2)도 그 지구로 본다."},
+                {"attribute": "land_zone", "op": "zone_kind_in", "value_text": ["공공택지"], "page": 14, "printed_page": 11, "quote": "참고1 수도권 공공택지 주택공급 확대"}
+              ]
+            }
+          ]
+        },
+        "공공택지·공공분양": {
+          "status": "RULE",
+          "source_program": "우수입지 공공택지 분양 추진",
+          "rule_sets": [
+            {
+              "label": "수도권 공공택지 분양(’25.4분기~’26년)",
+              "conditions": [
+                {"attribute": "region", "op": "region_in", "value_text": ["수도권"], "page": 13, "printed_page": 10, "quote": "수도권 공공택지에서 ’25년 4분기 0.5만호, ’26년 2.7만호 분양 예정"},
+                {"attribute": "land_zone", "op": "zone_kind_in", "value_text": ["공공택지"], "page": 13, "printed_page": 10, "quote": "수도권 공공택지에서 ’25년 4분기 0.5만호, ’26년 2.7만호 분양 예정"},
+                {"attribute": "supply_date", "op": "within", "value_text": ["’25년 4분기", "’26년"], "page": 13, "printed_page": 10, "quote": "수도권 공공택지에서 ’25년 4분기 0.5만호, ’26년 2.7만호 분양 예정"},
+                {"attribute": "tenure", "op": "contains_any", "value_text": ["분양"], "page": 13, "printed_page": 10, "quote": "수도권 공공택지에서 ’25년 4분기 0.5만호, ’26년 2.7만호 분양 예정"}
+              ]
+            }
+          ]
+        },
+        "우수입지 공공택지 분양": {
+          "status": "RULE",
+          "source_program": "우수입지 공공택지 분양 추진",
+          "same_as": "공공택지·공공분양"
+        },
+        "공공택지 공급 조기화": {
+          "status": "RULE",
+          "source_program": "서울 남부권 등 공공택지 공급 조기화 및 공급여력 확충",
+          "rule_sets": [
+            {
+              "label": "수도권 공공택지",
+              "conditions": [
+                {"attribute": "region", "op": "region_in", "value_text": ["수도권"], "page": 13, "printed_page": 10, "quote": "수도권에서 신규 공공택지 검토(’25.下,3만호)"},
+                {"attribute": "land_zone", "op": "zone_kind_in", "value_text": ["공공택지"], "page": 13, "printed_page": 10, "quote": "서울 남부권 등 공공택지 공급 조기화 및 공급여력 확충"}
+              ]
+            }
+          ]
+        },
+        "서울 남부권 공공택지 공급 조기화": {
+          "status": "RULE",
+          "source_program": "서울 남부권 등 공공택지 공급 조기화 및 공급여력 확충",
+          "rule_sets": [
+            {
+              "label": "서울 남부권 신규 공공택지 ’29년 착공",
+              "conditions": [
+                {"attribute": "land_zone", "op": "zone_kind_in", "value_text": ["공공택지"], "page": 13, "printed_page": 10, "quote": "서울 서초구 서리풀(2만호), 과천 과천(1만호) 등 서울 남부권 신규 공공택지는 ’29년 착공 등 차질없이 추진"},
+                {"attribute": "start_date", "op": "within", "value_text": ["’29년"], "page": 13, "printed_page": 10, "quote": "서울 서초구 서리풀(2만호), 과천 과천(1만호) 등 서울 남부권 신규 공공택지는 ’29년 착공 등 차질없이 추진", "note": "'서울 남부권' 은 원문에 경계가 정의되지 않아(과천 포함) 지역 조건으로 쓰지 않는다."}
+              ]
+            }
+          ]
+        },
+        "노후 공공임대 재건축": {
+          "status": "RULE",
+          "source_program": "노후 공공임대주택 전면 재건축",
+          "rule_sets": [
+            {
+              "label": "서울 노후 공공임대 재건축, ’30년까지 착공",
+              "conditions": [
+                {"attribute": "region", "op": "region_in", "value_text": ["서울"], "page": 19, "printed_page": 16, "quote": "서울 주요 입지에 있는 준공 30년 이상 경과한 노후 영구임대 등"},
+                {"attribute": "existing_complex", "op": "unsourced", "value_text": ["준공 30년 이상 경과한 노후 영구임대 등"], "page": 19, "printed_page": 16, "quote": "서울 주요 입지에 있는 준공 30년 이상 경과한 노후 영구임대 등"},
+                {"attribute": "start_date", "op": "by", "value_text": ["’30년까지"], "page": 19, "printed_page": 16, "quote": "공공임대 주택을 재건축하여 ’30년까지 수도권 2.3만호 착공"}
+              ]
+            }
+          ]
+        },
+        "철도부지 복합개발": {
+          "status": "RULE",
+          "source_program": "철도역 등 활용 주택 공급",
+          "rule_sets": [
+            {
+              "label": "철도 관련 부지 복합개발",
+              "conditions": [
+                {"attribute": "former_use", "op": "unsourced", "value_text": ["철도 관련 부지"], "page": 24, "printed_page": 21, "quote": "철도 관련 부지를 복합 개발하여 1인가구ㆍ청년 특화주택 등 건설"}
+              ]
+            }
+          ]
+        },
+        "도심 공공주택 복합사업": {
+          "status": "RULE",
+          "source_program": "공공 도심복합사업 시즌2",
+          "rule_sets": [
+            {
+              "label": "공공 도심복합사업, ’30년까지 수도권 착공",
+              "conditions": [
+                {"attribute": "site_record", "op": "record_kind_any", "value_text": ["도심 복합사업"], "page": 25, "printed_page": 22, "quote": "공공 도심복합사업 제도 개선을 통해 ’30년까지 수도권 5만호 착공", "value_note": "원문 표기 '도심복합사업' 을 지구 종류 '도심 복합사업' 으로 읽는다(공백 무시)."},
+                {"attribute": "region", "op": "region_in", "value_text": ["수도권"], "page": 25, "printed_page": 22, "quote": "공공 도심복합사업 제도 개선을 통해 ’30년까지 수도권 5만호 착공"},
+                {"attribute": "start_date", "op": "by", "value_text": ["’30년까지"], "page": 25, "printed_page": 22, "quote": "공공 도심복합사업 제도 개선을 통해 ’30년까지 수도권 5만호 착공"}
+              ]
+            }
+          ]
+        },
+        "유휴부지·노후청사 복합개발": {
+          "status": "RULE",
+          "source_program": "노후 공공청사 등 재정비ㆍ복합개발 / 도심 내 유휴부지 활용 공급",
+          "rule_sets": [
+            {
+              "label": "노후 공공청사 등 재정비ㆍ복합개발",
+              "conditions": [
+                {"attribute": "former_use", "op": "unsourced", "value_text": ["노후 공공청사, 국유지"], "page": 21, "printed_page": 18, "quote": "도심 우수입지 주택 공급을 위해 노후 공공청사, 국유지 등을 재정비하여"},
+                {"attribute": "region", "op": "region_in", "value_text": ["수도권"], "page": 21, "printed_page": 18, "quote": "’30년까지 수도권 2.8만호(기재부 국유재산심의委 2만호 포함) 착공"},
+                {"attribute": "start_date", "op": "by", "value_text": ["’30년까지"], "page": 21, "printed_page": 18, "quote": "’30년까지 수도권 2.8만호(기재부 국유재산심의委 2만호 포함) 착공"}
+              ]
+            },
+            {
+              "label": "도심 내 유휴부지 활용 공급",
+              "conditions": [
+                {"attribute": "former_use", "op": "unsourced", "value_text": ["국·공유지, 유휴부지"], "page": 23, "printed_page": 20, "quote": "서울 도심 내 국·공유지, 유휴부지에 생활SOC와 주택을 복합 개발하여"},
+                {"attribute": "region", "op": "region_in", "value_text": ["서울"], "page": 23, "printed_page": 20, "quote": "’30년까지 서울 4천호 착공"},
+                {"attribute": "start_date", "op": "by", "value_text": ["’30년까지"], "page": 23, "printed_page": 20, "quote": "’30년까지 서울 4천호 착공"}
+              ]
+            }
+          ]
+        },
+        "도심 내 유휴부지 활용 공급": {
+          "status": "RULE",
+          "source_program": "도심 내 유휴부지 활용 공급",
+          "rule_sets": [
+            {
+              "label": "도심 내 유휴부지 활용 공급",
+              "conditions": [
+                {"attribute": "former_use", "op": "unsourced", "value_text": ["국·공유지, 유휴부지"], "page": 23, "printed_page": 20, "quote": "서울 도심 내 국·공유지, 유휴부지에 생활SOC와 주택을 복합 개발하여"},
+                {"attribute": "region", "op": "region_in", "value_text": ["서울"], "page": 23, "printed_page": 20, "quote": "’30년까지 서울 4천호 착공"},
+                {"attribute": "start_date", "op": "by", "value_text": ["’30년까지"], "page": 23, "printed_page": 20, "quote": "’30년까지 서울 4천호 착공"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "POL_2026_0129": {
+      "doc_path": "docs/speech/research/01.정책/원본/1-29/260129(석간)(안건)_도심 주택공급 확대 및 신속화 방안(주택공급정책과 등).pdf",
+      "common_conditions": [
+        {"attribute": "region", "op": "region_in", "value_text": ["서울", "경기", "인천"], "page": 7, "printed_page": 3, "quote": "서울 3.2만호(53.3%), 경기 2.8만호(46.5%), 인천 0.1천호(0.2%) 공급"},
+        {"attribute": "start_date", "op": "from", "value_text": ["’27년부터"], "page": 7, "printed_page": 3, "quote": "최대한 속도감 있게 추진하여 ’27년부터 주택 착공"}
+      ],
+      "common_conditions_note": "안건 'Ⅰ. 추진방향' 은 이 공급계획의 모든 부지(도심 내 공공부지 활용·노후청사 복합개발·신규 공공주택지구)에 걸린다.",
+      "programs": {
+        "노후청사·공공부지": {
+          "status": "RULE",
+          "source_program": "노후청사 복합개발 / 도심 내 공공부지 활용",
+          "rule_sets": [
+            {
+              "label": "노후청사 복합개발",
+              "conditions": [
+                {"attribute": "former_use", "op": "unsourced", "value_text": ["노후청사, 유휴부지"], "page": 16, "printed_page": 12, "quote": "노후청사, 유휴부지 등을 검토하여 1만호(34개소) 규모의 사업지 발굴"}
+              ]
+            },
+            {
+              "label": "도심 내 공공부지 활용",
+              "conditions": [
+                {"attribute": "former_use", "op": "unsourced", "value_text": ["도심 유휴부지, 낡고 오래된 청사"], "page": 10, "printed_page": 6, "quote": "본래 기능이 축소된 도심 유휴부지, 낡고 오래된 청사 등 활용도는 낮지만"}
+              ]
+            }
+          ]
+        },
+        "공공시설 이전": {
+          "status": "RULE",
+          "source_program": "도심 내 공공부지 활용(기관 이전 부지)",
+          "rule_sets": [
+            {
+              "label": "기관 이전 부지",
+              "conditions": [
+                {"attribute": "former_use", "op": "unsourced", "value_text": ["기관 이전"], "page": 7, "printed_page": 3, "quote": "기관 이전 등 후속 절차도 신속히 이행해 공급 시기 조기화"}
+              ]
+            }
+          ]
+        },
+        "공공시설·유휴부지 개발": {
+          "status": "RULE",
+          "source_program": "Ⅲ. 입지별 세부 추진방안 · 도심 내 공공부지 활용",
+          "rule_sets": [
+            {
+              "label": "도심 유휴부지·노후 청사",
+              "conditions": [
+                {"attribute": "former_use", "op": "unsourced", "value_text": ["도심 유휴부지, 낡고 오래된 청사"], "page": 10, "printed_page": 6, "quote": "본래 기능이 축소된 도심 유휴부지, 낡고 오래된 청사 등 활용도는 낮지만"}
+              ]
+            }
+          ]
+        },
+        "군 유휴부지": {
+          "status": "RULE",
+          "source_program": "도심 내 공공부지 활용(군부지·군부대)",
+          "rule_sets": [
+            {
+              "label": "도심 유휴부지(군부지)",
+              "conditions": [
+                {"attribute": "former_use", "op": "unsourced", "value_text": ["도심 유휴부지"], "page": 10, "printed_page": 6, "quote": "본래 기능이 축소된 도심 유휴부지, 낡고 오래된 청사 등 활용도는 낮지만"}
+              ]
+            }
+          ]
+        },
+        "신규 공공주택지구": {
+          "status": "RULE",
+          "source_program": "신규 공공주택지구 조성",
+          "rule_sets": [
+            {
+              "label": "성남 신규 공공주택지구, ’30년 착공",
+              "conditions": [
+                {"attribute": "region", "op": "region_in", "value_text": ["성남"], "page": 13, "printed_page": 9, "quote": "판교 테크노밸리 및 성남 시청과 인접한 우수 입지에", "note": "공공주택지구 지정은 이 프로그램이 할 일이라 지금 지구 경계(V-World)로 검사하지 않는다."},
+                {"attribute": "start_date", "op": "within", "value_text": ["‘30년"], "page": 13, "printed_page": 9, "quote": "‘30년착공 추진"}
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "POL_2026_0813": {
+      "doc_path": "docs/speech/research/01.정책/원본/8-13/260813 (안건) 주택 신속공급 방안(국토교통부).pdf",
+      "programs": {
+        "도심 공공주택 복합사업": {
+          "status": "RULE",
+          "source_program": "도심 공공주택 복합사업 확대",
+          "rule_sets": [
+            {
+              "label": "공공 주도 도심 복합사업",
+              "conditions": [
+                {"attribute": "developer", "op": "developer_in", "value_text": ["공공"], "page": 28, "printed_page": 24, "quote": "공공 주도로 신속 추진*이 가능한 도심 복합사업을", "note": "원문 '’30년까지 5.1만호 착공' 은 수도권 착공 목표이고, 같은 원문 붙임(25쪽)에 지방 사업지(부산·광주)도 있어 지역·기간 조건으로 쓰지 않는다."},
+                {"attribute": "site_record", "op": "record_kind_any", "value_text": ["도심 복합사업"], "page": 28, "printed_page": 24, "quote": "공공 주도로 신속 추진*이 가능한 도심 복합사업을"}
+              ]
+            }
+          ]
+        }
+      }
+    }
+  }
+}

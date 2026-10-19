@@ -9,7 +9,7 @@ const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
-const app = read('assets/js/app.js'), css = read('assets/css/app.css'), tw = read('app/tailwind.css');
+const app = read('assets/js/app.js'), css = read('assets/css/app.css'), tw = read('app/globals.css');
 const block = (re) => { const m = re.exec(app); assert.ok(m, String(re)); return m[0]; };
 
 /* 대비(WCAG 상대 휘도) */
@@ -19,10 +19,13 @@ const lum = (c) => 0.2126 * lin(c[0]) + 0.7152 * lin(c[1]) + 0.0722 * lin(c[2]);
 const ratio = (a, b) => { const x = lum(a), y = lum(b); return (Math.max(x, y) + 0.05) / (Math.min(x, y) + 0.05); };
 const over = (c, bg, a) => c.map((v, i) => v * a + bg[i] * (1 - a));
 
-const COLOR = Function(`return ${block(/const COLOR = (\{[^}]*\})/).replace(/^const COLOR = /, '')}`)();
+/* 지도 칠하기 색은 app.js 가 globals 토큰에서 읽는다(2026-10-18): 테마별 실제 값으로 푼다(tests/js/map-js-theme.cjs) */
+const { mapTheme } = require('./map-js-theme.cjs');
+const DARK = mapTheme('dark'), LIGHT = mapTheme('light');
+const COLOR = DARK.color;
 const STAGE_KIND = Function(`return ${/const STAGE_KIND = (\[[^\]]*\])/.exec(app)[1]}`)();
-const DARK_BG = /vw: String\(window\.VWORLD_LAYER \|\| 'midnight'\), ofm: 'dark', bg: '(#[0-9A-F]{6})'/.exec(app)[1];
-const LIGHT_BG = /vw: 'white', ofm: 'liberty', [^\n]*?bg: '(#[0-9A-F]{6})'/.exec(app)[1];
+const DARK_BG = DARK.bg, LIGHT_BG = LIGHT.bg;
+const rgba = (v) => { const m = /^rgba\((\d+),(\d+),(\d+),([\d.]+)\)$/.exec(v); assert.ok(m, v); return m.slice(1).map(Number); };
 
 /* 불투명도 식(areaOp·lineOp·privOp)을 SHOWN·LIGHT_MAP 을 바꿔 가며 평가한다 */
 const opSrc = block(/const AREA_OP = [\s\S]*?\nconst lineOp = [^\n]*\n/);
@@ -39,10 +42,12 @@ test('구역 채움: 다크에서 6단계 색 모두 배경 대비 3:1 이상, �
 });
 
 test('꼬리표의 단계 번호 글자: 다크 남색 꼬리표 위 4.5:1 이상, 라이트 흰 꼬리표 위 4.5:1 이상(--st-*-ink)', () => {
-  const navy = over([16, 26, 68], hex(DARK_BG), 0.9);   // groundImage 다크 바탕 rgba(16,26,68,.9)
+  assert.match(app, /x\.fillStyle = TH\(\)\.glass;/, 'groundImage 바탕 = 테마의 지면 라벨 카드 바탕');
+  const dg = rgba(DARK.glass), lg = rgba(LIGHT.glass);
+  const navy = over(dg.slice(0, 3), hex(DARK_BG), dg[3]);   // groundImage 다크 바탕 rgba(17,17,17,.9)
   for (const k of STAGE_KIND) assert.ok(ratio(hex(COLOR[k]), navy) >= 4.5, `다크 ${k}`);
   const light = tw.slice(tw.indexOf('\n:root {'), tw.indexOf('\n}\n', tw.indexOf('\n:root {')));
-  const paper = over([255, 255, 255], hex(LIGHT_BG), 0.97);   // groundImage 라이트 바탕 rgba(255,255,255,.97)
+  const paper = over(lg.slice(0, 3), hex(LIGHT_BG), lg[3]);   // groundImage 라이트 바탕 rgba(255,255,255,.97)
   for (const k of STAGE_KIND) {
     const v = new RegExp(`--st-${k}-ink:\\s*(#[0-9A-Fa-f]{6})`).exec(light)[1];
     assert.ok(ratio(hex(v), paper) >= 4.5, `라이트 ${k} ${v} ${ratio(hex(v), paper).toFixed(2)}`);
@@ -88,12 +93,14 @@ test('색 종류는 현재 단계(stageNow): 구역 속성 kind·꼬리표 sn/sc
   assert.match(gt, /return \['format', \['get', 'sn'\], \{ [^}]*'text-color': \['to-color', \['get', 'sc'\]\] \},\s*(\/\/[^\n]*)?\n\s*\['get', 'id'\]/, '맨 앞 단계 번호·이름을 단계색으로');
   const hc = block(/function renderHudContent\(\) \{[\s\S]*?\n\}\n/);
   assert.match(hc, /sn = stageNow\(b\), k = sn\.k;/); assert.match(hc, /el\.dataset\.k = k;/);
-  assert.match(hc, /<i>\$\{esc\(ts\.main\)\}<\/i>/, "'③착공 · 정상'처럼 번호 + 단계 + 판정 글자(색만으로 구별하지 않는다, tagState — r3-map 2)");
+  /* '③착공 · 정상'처럼 번호 + 단계 + 판정 글자(색만으로 구별하지 않는다, tagState — r3-map 2). 판정 글자는 정책담당자 관점에만(ov-aud-admin, 2026-10-18) */
+  assert.match(hc, /<i>\$\{esc\(ts\.main\.split\(' · '\)\[0\]\)\}\$\{ts\.main\.includes\(' · '\) \? `<span class="ov-aud-admin"> · \$\{esc\(ts\.main\.split\(' · '\)\[1\]\)\}<\/span>` : ''\}<\/i>/);
   assert.match(block(/function renderHud\(\) \{[\s\S]*?\n\}\n/), /k = el\.dataset\.k \|\| kindOf\(b\), col = T\.color\[k\]/);
   /* 띠 색 = 구역 색: 띠 칸 색(stageColor)과 구역 색(kindExpr)이 같은 COLOR 를 같은 종류로 읽는다 */
   assert.match(app, /const stageColor = \(i\) => COLOR\[STAGE_KIND\[i\]\];/);
   assert.match(app, /function kindExpr\(colors\) \{ return \['match', \['get', 'kind'\], 'sale', colors\.sale, 'build', colors\.build, 'near', colors\.near, 'soon', colors\.soon, 'permit', colors\.permit, 'priv', colors\.priv, colors\.plan\]; \}/);
-  assert.match(app, /THEME = \{[\s\S]*?color: COLOR,/);
+  /* COLOR 는 테마 색표의 color 와 같은 한 객체(readTheme 이 값을 채우고 THEME.color 로 건다) */
+  assert.match(app, /Object\.assign\(COLOR, THEME\.color\); THEME\.color = COLOR;/);
 });
 
 test('6단계 띠 = 범례: 누르면 그 단계만, 같은 칸을 다시 누르면 전체(soloShown), 빈 칸은 눌리지 않고 흐린 색 칸', () => {

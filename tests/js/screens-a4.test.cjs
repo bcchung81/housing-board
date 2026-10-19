@@ -73,7 +73,7 @@ test('2 보이는 글의 내부 용어: HOME·번들·확정 전/확정은 title
   assert.doesNotMatch(code(read('components/region/Annual.tsx')), /년은 HOME 통계/);
   /* 데이터 원본: 보이는 문자열 값(따옴표·템플릿)에 '번들' 없음 */
   const strs = (s) => [...code(s).matchAll(/'([^'\n]*)'|`([^`]*)`/g)].map((m) => m[1] ?? m[2]);
-  for (const f of ['app/(dashboard)/sources/page.tsx', 'components/sources/Overview.tsx', 'components/sources/StageLinks.tsx', 'lib/board/collection.ts', 'lib/board/stage-links.ts']) {
+  for (const f of ['app/(dashboard)/sources/page.tsx', 'components/sources/StageLinks.tsx', 'lib/board/collection.ts', 'lib/board/stage-links.ts']) {
     assert.deepEqual(strs(read(f)).filter((t) => t.includes('번들')), [], f);
   }
   assert.ok(!require('../../lib/board/screen-usage.ts').SCREEN_USAGE['hub-ap'].map.includes('번들'));
@@ -116,8 +116,8 @@ test("4 지연 세 번 표시: 목록·인쇄의 현재 예정은 '경과' 꼬�
   assert.match(read('components/projects/Candidate.tsx'), /next = nextOf\(r\)/);
 });
 
-/* ---------- 5 대비: app/tailwind.css 토큰 값으로 계산 ---------- */
-const css = read('app/tailwind.css');
+/* ---------- 5 대비: app/globals.css 토큰 값으로 계산 ---------- */
+const css = read('app/globals.css');
 const block = (sel) => { const i = css.indexOf(`\n${sel} {`); return css.slice(i, css.indexOf('\n}\n', i)); };
 const tok = (b, n) => { const m = new RegExp(`--${n}:\\s*(#[0-9A-Fa-f]{6})`).exec(b); assert.ok(m, `--${n}`); return m[1]; };
 const rgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
@@ -140,7 +140,7 @@ test('5 대비: 빨간 글자는 카드·얼룩 행·강조 면 위 4.5:1, 흐�
   assert.doesNotMatch(board, /opacity-(70|85)/, '흐린 0·호를 opacity 로 흐리지 않는다');
   assert.match(board, /!v\[i\] && 'text-muted-foreground'/);
   assert.match(board, /judged && ds\[i\] \? 'text-bad' : judged \? 'text-muted-foreground' : 'text-mute'/);
-  assert.match(board, /text-\[13px\] font-normal">호<\/small>/);
+  assert.match(board, /text-sm font-normal">호<\/small>/);
   /* 연도 확보: 칠한 칸 안에 숨긴 글자를 두지 않는다(글자는 칠한 칸 밖 sr-only) */
   const col = read('components/sources/Collect.tsx');
   assert.match(col, /<span aria-hidden="true" className=\{`block h-\[18px\][^>]*\n?[^>]*\/>\n\s*<span className="sr-only">\{MARK\[c\]\}<\/span>/);

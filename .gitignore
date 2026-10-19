@@ -69,3 +69,8 @@ schemas/*/raw/lh-public-complex/*.json
 schemas/*/raw/lh-notice-detail/*.json
 schemas/*/raw/hug-sale-history/*.json
 !schemas/*/raw/*/manifest.json
+
+# 발표 원천 조사 수집물(재생성 가능, 약 512MB — tools/research/chain) · 개인 사진 · sed 부산물(2026-10-19 체크포인트)
+docs/speech/research/
+docs/speech/KakaoTalk_Photo_*
+*.css-E

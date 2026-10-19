@@ -1,0 +1,43 @@
+{
+  "description": "오케스트레이터(tools/research/chain/pipeline.py)가 돌리는 단계 목록. 단계마다 스크립트·인터프리터 옵션·인자를 둔다. 인자 속 {이름} 은 values 에서 정한 값으로 바꾼다. policy_args 가 있는 단계는 --policy 때 args 대신 그것을 쓰고, null 이면 --policy 여도 전체(args)로 돈다(정책 전체를 모으는 단계). 정책 값은 넣지 않는다.",
+  "watch": ["docs/speech/research"],
+  "watch_ignore": [".DS_Store", "__pycache__"],
+  "values": {
+    "checked_at": {"from_json": "tools/research/chain/config/stage_sources.json", "path": ["checked_at"]},
+    "discover_since": {"from_json": "tools/research/chain/config/policies_discovered.json", "path": ["runs", -1, 1], "note": "마지막 발견 실행의 끝 날짜(runs 마지막 줄의 둘째 값)"},
+    "today": {"today": true},
+    "inventory_xlsx": {"find_file": "~/Downloads", "pattern": "*1~6단계 통합 데이터 수집 관리표*.xlsx", "private": true,
+                       "note": "팀 수집 관리표(읽기만, 저장소로 복사하지 않음). 파일 이름에 사람 이름이 있어 출력에는 경로 대신 sha256 앞 12자만 보인다. pipeline.py --xlsx 로 바꿀 수 있다"}
+  },
+  "network_stages": [
+    {"id": "discover", "name": "P0 새 정책 발견(Exa)", "script": "tools/research/chain/discover.py", "python_flags": [],
+     "args": ["--since", "{discover_since}", "--until", "{today}"], "policy_args": null},
+    {"id": "followups", "name": "M4 01 후속 발표 찾기·받기", "script": "tools/research/chain/discover.py", "python_flags": [],
+     "args": ["--followups", "--until", "{today}"], "policy_args": null},
+    {"id": "gosi_fetch", "name": "토지이음 고시 조회(캐시에 없는 것만)", "script": "tools/research/chain/gosi.py", "python_flags": ["-P", "-E"],
+     "args": ["--all"], "policy_args": ["--policy", "{policy_id}"],
+     "note": "캐시가 있는 질의는 다시 부르지 않는다. 전부 다시 부르려면 python3 -P -E tools/research/chain/gosi.py --all --refresh 를 따로 돌린다"}
+  ],
+  "stages": [
+    {"id": "policy", "name": "P2 정책 해석", "script": "tools/research/chain/policy.py", "python_flags": ["-I"],
+     "args": ["--checked-at", "{checked_at}"], "policy_args": ["--policy", "{policy_id}", "--checked-at", "{checked_at}"]},
+    {"id": "run", "name": "P3~P8 단계 수집 엔진", "script": "tools/research/chain/run.py", "python_flags": [],
+     "args": ["--all"], "policy_args": ["--policy", "{policy_id}"]},
+    {"id": "rules", "name": "P3 프로그램 조건 규칙", "script": "tools/research/chain/rules.py", "python_flags": ["-I"],
+     "args": ["--all"], "policy_args": ["--policy", "{policy_id}"]},
+    {"id": "gosi", "name": "고시 대조(캐시만)", "script": "tools/research/chain/gosi.py", "python_flags": ["-P", "-E"],
+     "args": ["--all", "--offline"], "policy_args": ["--policy", "{policy_id}", "--offline"]},
+    {"id": "gaps", "name": "M4 누락 검증 01~03", "script": "tools/research/chain/gaps.py", "python_flags": ["-I"],
+     "args": ["--all"], "policy_args": ["--policy", "{policy_id}"]},
+    {"id": "emit", "name": "P9 출력·지표·스키마 검사", "script": "tools/research/chain/emit.py", "python_flags": [],
+     "args": [], "policy_args": null},
+    {"id": "inventory", "name": "M2 팀 관리표 대조", "script": "tools/research/chain/inventory.py", "python_flags": ["-P", "-E"],
+     "args": ["--xlsx", "{inventory_xlsx}"], "policy_args": null},
+    {"id": "explain", "name": "설명자료 HTML", "script": "tools/research/chain/explain.py", "python_flags": ["-P", "-E"],
+     "args": [], "policy_args": null},
+    {"id": "explain_deck", "name": "발표 덱 HTML", "script": "tools/research/chain/explain_deck.py", "python_flags": ["-P", "-E"],
+     "args": [], "policy_args": null},
+    {"id": "explain_team", "name": "팀 공유판 HTML(원천 위치 전체)", "script": "tools/research/chain/explain_team.py", "python_flags": ["-P", "-E"],
+     "args": [], "policy_args": null}
+  ]
+}

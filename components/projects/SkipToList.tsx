@@ -11,7 +11,7 @@ export default function SkipToList() {
         a.focus();
         a.scrollIntoView({ block: 'center' });
       }}
-      className="sr-only rounded-[8px] bg-primary px-4 py-2 text-[15px] font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">
+      className="sr-only rounded-tile bg-primary px-4 py-2 text-base font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">
       목록으로 바로가기
     </a>
   );

@@ -4,6 +4,9 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const B = require('../../assets/js/bus.js');
+/* 노선 색은 globals 의 --map-bus-* (지도가 테마마다 setPalette 로 넣는다): 다크 값으로 시험한다 */
+const BUS_DARK = require('./map-tokens.cjs').mapVars({ theme: 'dark' });
+B.setPalette(Object.fromEntries(['trunk', 'branch', 'express', 'loop', 'other'].map((k) => [`--map-bus-${k}`, BUS_DARK[`--map-bus-${k}`]])));
 
 const close = (a, b, tol = 1e-6) => assert.ok(Math.abs(a - b) <= tol, `${a} ≉ ${b}`);
 const cen = (b) => b.c;

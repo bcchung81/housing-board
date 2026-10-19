@@ -1,0 +1,272 @@
+{
+  "description": "P0 발견·P1 원문 확보 설정(discover.py). 질의 문구, 정부 원 게시처 도메인·게시판 규칙, 전재처 → 원 게시처 찾기 규칙. 정책 고유 값(정책 이름·날짜·URL)은 넣지 않는다.",
+  "cache_dir": "docs/speech/research/01.정책/원본/_discovery",
+  "discovered_file": "tools/research/chain/config/policies_discovered.json",
+  "policies_file": "tools/research/chain/config/policies.json",
+  "search": {
+    "note": "Exa /search 는 권장형 {query, type:auto, contents:{highlights:true}} 에 기간(startPublishedDate·endPublishedDate)만 더한다. 기간은 '마지막 실행 이후 새로 나온 것'을 찾는 과업이라 쓴다. numResults 는 기본값(10)을 두고, 긴 창은 window_months 로 나눠 같은 질의를 창마다 던진다.",
+    "window_months": 3,
+    "queries": [
+      "정부 주택공급 대책 발표 보도자료",
+      "국토교통부 주택 공급 방안 발표 수도권 만호 공급",
+      "관계장관회의 주택공급 방안 논의 발표"
+    ]
+  },
+  "policy_filter": {
+    "note": "제목(전재처 꼬리표를 뗀 것)으로 주택공급 정책 보도자료 후보를 고른다. 사람이 확인하기 전 거르는 규칙일 뿐이다.",
+    "title_include_regex": "(주택\\s*공급|공급\\s*(확대|촉진|방안|대책)|\\d+(\\.\\d+)?\\s*만\\s*호)",
+    "title_exclude_regex": "(해명|설명자료|반박|사실은|인사|채용|입찰|공모전|행사|일정|개최 안내|장관동정|동정\\]|현장점검|\\[참고\\])"
+  },
+  "title_suffix_regex": "\\s+[-|]\\s+(보도자료|부처 브리핑|정책뉴스|사실은 이렇습니다|경제정책자료|브리핑룸).*$|\\s*\\|\\s*[^|]*$",
+  "title_match_threshold": 0.5,
+  "max_title_research": 8,
+  "min_title_chars": 8,
+  "kst_offset_hours": 9,
+  "http": {
+    "user_agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+    "timeout_seconds": 60
+  },
+  "domains": [
+    {
+      "host_suffix": "molit.go.kr",
+      "org": "국토교통부",
+      "role": "original",
+      "board": {
+        "name": "보도자료",
+        "detail_url_regex": "^https?://(www\\.)?molit\\.go\\.kr/USR/NEWS/m_71/dtl\\.jsp\\?",
+        "id_param": "id",
+        "canonical_detail": "https://www.molit.go.kr/USR/NEWS/m_71/dtl.jsp?id={id}",
+        "exa_detail": "https://www.molit.go.kr/USR/NEWS/m_71/dtl.jsp?lcmspage=1&id={id}",
+        "exa_detail_note": "Exa contents 는 lcmspage=1 이 붙은 주소만 받는다(id 만 있는 주소는 307 CRAWL_REDIRECT).",
+        "list_url": "https://www.molit.go.kr/USR/NEWS/m_71/lst.jsp",
+        "list_params": {
+          "search_regdate_s": "{date_from}",
+          "search_regdate_e": "{date_to}",
+          "srch_usr_titl": "Y",
+          "search": "{keyword}"
+        },
+        "list_note": "목록 검색은 HTTP GET. 누리집이 첫 요청에 쿠키를 주고 307 로 같은 주소를 다시 부르게 하므로 쿠키를 유지한다.",
+        "dept_label": "담당부서",
+        "posted_label": "등록일",
+        "title_regex": "<h4[^>]*>\\s*([^<]+?)\\s*<",
+        "attachment_href_regex": "href=\"([^\"]*(?:DownloadMltm2\\.jsp|LCMS/DWN\\.jsp)[^\"]*)\"",
+        "attachment_name_params": [
+          "FileName",
+          "fileName"
+        ],
+        "page_param": "lcmspage"
+      }
+    },
+    {
+      "host_suffix": "korea.kr",
+      "org": "정책브리핑",
+      "role": "repost",
+      "paths": {
+        "/briefing/pressReleaseView.do": "press_repost",
+        "/briefing/policyBriefingView.do": "briefing",
+        "/briefing/actuallyView.do": "clarification",
+        "/news/policyNewsView.do": "news"
+      },
+      "publisher_regex": "이 자료는\\s*([^\\s의]+)의\\s*보도자료를\\s*전재",
+      "attachment_regex": "(?:첨부파일\\s*:|내려받기)\\s*(.+?\\.(?:hwpx|hwp|pdf))\\s*바로보기",
+      "attachment_note": "브리핑(속기본) 쪽에는 전재 문구가 없어 첨부 이름(보도자료·안건 파일명)으로 원 보도자료 제목을 만든다.",
+      "copy_attachment_regex": "href=\"(/common/download\\.do\\?fileId=\\d+[^\"]*)\""
+    },
+    {
+      "host_suffix": "eiec.kdi.re.kr",
+      "org": "KDI 경제교육·정보센터",
+      "role": "repost"
+    },
+    {
+      "host_suffix": "nts.go.kr",
+      "org": "국세청",
+      "role": "repost"
+    },
+    {
+      "host_suffix": "mofe.go.kr",
+      "org": "재정경제부",
+      "role": "original"
+    },
+    {
+      "host_suffix": "moef.go.kr",
+      "org": "기획재정부",
+      "role": "original"
+    },
+    {
+      "host_suffix": "fsc.go.kr",
+      "org": "금융위원회",
+      "role": "original",
+      "copy_attachment_regex": "href=\"(/comm/getFile\\?[^\"]+)\""
+    },
+    {
+      "host_suffix": "opm.go.kr",
+      "org": "국무조정실",
+      "role": "original",
+      "board": {
+        "name": "보도자료",
+        "detail_url_regex": "^https?://(www\\.)?opm\\.go\\.kr/opm/news/press-release\\.do\\?",
+        "id_param": "articleNo",
+        "canonical_detail": "https://www.opm.go.kr/opm/news/press-release.do?mode=view&articleNo={id}",
+        "exa_detail": "https://www.opm.go.kr/opm/news/press-release.do?mode=view&articleNo={id}",
+        "dept_label": "담당부서",
+        "posted_label": "등록일 :",
+        "title_regex": "게시판읽기&#40;(?:\\[보도자료\\]\\s*)?(.+?)&#41;",
+        "attachment_href_regex": "href=\"(\\?mode=download&amp;articleNo=\\d+&amp;attachNo=\\d+)\"",
+        "attachment_name_params": []
+      }
+    }
+  ],
+  "orgs": [
+    "국토교통부",
+    "기획재정부",
+    "재정경제부",
+    "금융위원회",
+    "국무조정실",
+    "국세청",
+    "행정안전부",
+    "국방부",
+    "교육부",
+    "농림축산식품부",
+    "국가유산청",
+    "서울특별시",
+    "경기도",
+    "인천광역시"
+  ],
+  "structure_schema": {
+    "note": "P2 후보용 Exa outputSchema(속성 10개 이하가 Exa 제한). 후보일 뿐이고 수용은 원 파일 문자열 게이트가 정한다.",
+    "query_template": "{name} 발표 보도자료 주요 내용 공급 물량 지구",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "targets": {
+          "type": "array",
+          "description": "정책이 밝힌 주택 공급·착공 목표 구절(원문 표기 그대로, 예: '...NN만호...')",
+          "items": {
+            "type": "object",
+            "properties": {
+              "text": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "text"
+            ]
+          }
+        },
+        "programs": {
+          "type": "array",
+          "description": "정책에 포함된 공급 사업·과제 이름(원문 표기)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          }
+        },
+        "sites": {
+          "type": "array",
+          "description": "원문에 나온 공급 대상 지구·부지·단지 이름과 호수(원문 표기)",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "units": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          }
+        }
+      },
+      "required": [
+        "targets",
+        "programs",
+        "sites"
+      ]
+    }
+  },
+  "followup": {
+    "note": "M4 01: 같은 정책의 후속 발표. 원 게시처 게시판 제목 검색(등록일 = 가장 이른 정책 발표일 ~ --until)으로 모으고, 제목에 부모 정책 표지(발표일 'M.D' 또는 정책 이름)가 있는 것만 남긴다. 받은 파일은 docs_root/<slug>/.",
+    "keywords": [
+      "후속조치",
+      "후속 조치"
+    ],
+    "max_pages": 12,
+    "docs_root": "docs/speech/research/01.정책/원본",
+    "slug_infix": "_후속_",
+    "clarification_query": "{name} 해명 설명자료",
+    "clarification_title_regex": "(해명|설명|사실은)",
+    "clarification_days_after": 90,
+    "note2": "제목에 '후속조치'가 없는 후속 발표: body_keywords 게시판 검색과 exa_queries(창 exa_window_months)로 원 게시물 후보를 모으고, 제목이 body_title_regex 에 맞는 것만 첨부 PDF 본문을 읽어 부모 정책 표지(정책 이름·발표일 M.D) 앞뒤 body_window 글자 안에 '후속'이 있으면 후속 발표로 본다.",
+    "body_keywords": [
+      "후보지",
+      "복합사업",
+      "도심복합",
+      "공공재개발",
+      "노후청사",
+      "유휴부지",
+      "재건축",
+      "공공임대"
+    ],
+    "body_title_regex": "(후보지|선정|공급|착공|지구|복합|공공재개발|노후청사|유휴부지|만\\s*호|천\\s*호)",
+    "body_window": 120,
+    "body_max_pdfs": 2,
+    "exa_window_months": 7,
+    "exa_queries": [
+      "도심 공공주택 복합사업 신규 후보지 선정 국토교통부",
+      "공공재개발 후보지 선정 국토교통부 보도자료",
+      "노후 공공청사 복합개발 사업지 선정 국토교통부",
+      "주택 신속공급 방안 후속 국토교통부 보도자료",
+      "주택공급 확대방안 후속 국토교통부 보도자료",
+      "도심 주택공급 확대 신속화 방안 후속 국토교통부"
+    ],
+    "max_save_bytes": 20000000,
+    "max_save_note": "같은 이름의 다른 형식이 있는 첨부만 한도를 넘으면 저장하지 않고 manifest 에 saved=false·사유를 남긴다."
+  },
+  "progress_reports": {
+    "note": "이행 실적 공식 발표(정례브리핑 등). 원 게시처 url 을 받고(P1), copies 의 같은 발표 게시물 첨부와 sha256 을 비교한다. 관련 정책은 원문 표기(정책 이름·발표일 M.D)로 정한다.",
+    "items": [
+      {
+        "url": "https://www.opm.go.kr/opm/news/press-release.do?mode=view&articleNo=163888",
+        "slug": "정례브리핑_261016",
+        "copies": [
+          "https://www.molit.go.kr/USR/NEWS/m_71/dtl.jsp?id=95092499",
+          "https://www.fsc.go.kr/no010101/87948",
+          "https://www.korea.kr/briefing/policyBriefingView.do?newsId=156785506"
+        ],
+        "metric_docs_regex": "(별첨1|브리프)"
+      }
+    ]
+  },
+  "reference_sets": [
+    {
+      "slug": "참고_도심복합후보지",
+      "note": "프로그램 조건 대조용 속성 원천(정책 policy_sites 아님): 도심 공공주택 복합사업 후보지 발표(1~N차). 게시판 제목 검색 + 빠진 차수는 Exa 로 찾아 원 게시물로 잇는다. 후보지 발표와 같은 시기의 예정지구·본지구 지정 발표(7·8차 후보지가 함께 실린 경우)도 받는다.",
+      "date_from": "2021-01-01",
+      "date_to": "2023-06-30",
+      "board_keywords": [
+        "3080",
+        "도심복합",
+        "복합사업",
+        "도심공공복합",
+        "후보지"
+      ],
+      "title_regex": "((3080|도심복합|도심공공복합|복합사업).*(후보지|예정지구|본 ?지구)|후보지.*(도심복합|복합사업))",
+      "exclude_regex": "(방문|공모|공사중단|재개발|재건축|소규모|관리지역|동정)",
+      "exa_queries": [
+        "도심 공공주택 복합사업 7차 후보지 선정 국토교통부",
+        "도심 공공주택 복합사업 8차 후보지 선정 국토교통부"
+      ],
+      "out_name": "dosim_candidates.jsonl"
+    }
+  ]
+}

@@ -58,9 +58,11 @@ test('2 ③착공 세 숫자에 보이는 정의 꼬리: 종합상황판 단계�
   const sum_ = read('components/projects/Summary.tsx');
   assert.match(sum_, /<small data-slot="stage-def"[^>]*>누적<\/small>/, '단계별 진행 큰 숫자 곁: 누적');
   const D = makeDirectives({ sourceCount: 30, stageNames: [...V.BOARD_NAMES], ledger: BOARD, start: { year: '2026', upto: 8, cum: 156396, cumLy: 1 }, bottleneck: V.bottleneckOf });
-  assert.equal(D[0].tag, '통계누리');
-  assert.equal(D[0].pre, '착공');
-  assert.match(board, /const small = \[x\.tag, x\.note\]\.filter\(Boolean\);[\s\S]*?<span data-slot="dir-tag"[^>]*>\{small\.map/, '지시 카드 제목 아래 작은 줄에 원천 꼬리가 보인다(2026-10-16 4차 r4-board 4 · 5차 board-dir-fit)');
+  /* 지시 카드: 보이는 앞말 '착공 누계'(단계표 '③ 착공' = 지금 단계와 다른 말 — 2026-10-18 사용자 결정), 원천(통계누리)·기간은 (i) 기준 첫머리(줄1 꼬리는 뺐다) */
+  assert.equal(D[0].tag, undefined);
+  assert.equal(D[0].pre, '착공 누계');
+  assert.match(D[0].basis, /^통계누리 전국 착공 2026년 1~8월 누계/);
+  assert.match(board, /<p>\{x\.basis\}<\/p>/, '기준은 카드 (i) 팝오버에 보인다');
   /* 세 값이 실제로 다른 정의임: 단계표(지금 ③) ≠ 단계별 진행(③까지 온 누적) */
   const now3 = BOARD.stageUnits[BOARD.now][2], pipe = V.pipelineOf(V.scopeOf(rows, {})).open.find((c) => c.i === 2);
   assert.ok(pipe.units > now3, `누적 ${pipe.units} > 지금 ${now3}`);
@@ -102,8 +104,8 @@ test('3 지도 → 서랍: ?from=map&sgg= 는 그 시군구 목록 위에 서랍
 test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본', () => {
   /* 제목: 사업 화면(h1 사업 / 인쇄 h1 월간 주택공급 보고) 아래 카드 소제목은 h2 — h3 로 건너뛰지 않는다 */
   const sum_ = read('components/projects/Summary.tsx');
-  assert.doesNotMatch(sum_, /<h3/);
-  assert.equal((sum_.match(/<h2 className=\{h3\}/g) || []).length, 2, '단계별 진행 · 정책 목표 대비');
+  assert.equal((sum_.match(/<h3 className="ui-h3"/g) || []).length, 1, '단계별 진행은 소제목 h3 역할(16/700 — 2026-10-18 제목 역할 통일)');
+  assert.equal((sum_.match(/<h2 className=\{h3\}/g) || []).length, 1, '정책 목표 대비');
   assert.doesNotMatch(read('app/(dashboard)/projects/page.tsx'), /<h3/);
   /* 시군구 select: 바꾸면 고르기만(setDraft), 이동은 form 제출('보기'·Enter) */
   const ahead = read('components/region/Ahead.tsx');
