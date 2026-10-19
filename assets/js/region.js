@@ -234,7 +234,7 @@
     return [...new Set((warnings || []).map((w) => NOTICE_TEXT[w]).filter(Boolean))].join(' · ');
   }
   const PROBLEM_TEXT = {
-    'invalid-code': '코드 형식이 맞지 않습니다', 'unknown-code': '표준코드 표에 없는 코드입니다', 'unknown-project': '발급되지 않은 사업 id 입니다', 'unsupported-level': '시도 단위는 열 수 없습니다',
+    'invalid-code': '코드 형식이 맞지 않습니다', 'unknown-code': '표준코드 표에 없는 코드입니다', 'unknown-project': '발급되지 않은 사업 id 입니다', 'unsupported-level': '시도 단위는 열 수 없습니다', 'out-of-scope': '수도권만 제공합니다',
     'keys-exhausted': '오늘 코드 해석 한도에 닿았습니다. 잠시 뒤 다시 시도하세요', 'not-configured': '코드 해석 서비스가 설정되어 있지 않습니다', upstream: '코드 해석 서비스를 부르지 못했습니다',
   };
   /* /api/v1/resolve 호출 → { ok:true, data } | { ok:false, code, message } */
@@ -797,7 +797,8 @@
   };
   /* 안내 화면 모델(순수): cq = 연 코드({ name, value }), msg·detail = 해석 실패 문장·자세한 까닭, lite = HOME_LITE 표, regions = 상세 3D 지역 목록.
      옛 코드면 새 구로, 수도권 코드면 같은 시도에서 코드가 가까운 구 3곳(사업이 있는 곳), 그 밖은 상세 3D 지역. 마지막은 늘 '수도권 개요로' */
-  function fatalModel(cq, msg, lite, regions, detail) {
+  function fatalModel(cq, msg, lite, regions, detail, problemCode) {
+    if (problemCode === 'out-of-scope') return { title: msg || '수도권만 제공합니다', text: '', detail: detail || '', links: [] };   // 2026-10-19 수도권 한정: 링크 없이 문구만
     const code = cq ? (/\d{5}/.exec(String(cq.value)) || [''])[0] : '', ref = REFORMED[code];
     if (ref) return { title: `${ref.name}는 2026년 7월 행정구역 개편으로 ${ref.to.map((t) => t[1]).join('·')}${ref.to.length > 1 ? '로 나뉘었습니다' : '에 합쳐졌습니다'}`,
       text: `옛 코드 ${code} 대신 새 구로 열어 보세요.`, links: ref.to.map(([c, n]) => ({ href: `/map?sgg=${c}`, label: `${n} (${c})` })) };
@@ -827,8 +828,8 @@
     if (cq) {
       const rr = await resolveCode((u) => win.fetch(u), cq);
       if (!rr.ok) {
-        const m = fatalModel(cq, rr.message, win.HOME_LITE, null, rr.detail);
-        showFatal(doc, m.links.length ? m : fatalModel(cq, rr.message, null, await bundleRegions(win), rr.detail));
+        const m = fatalModel(cq, rr.message, win.HOME_LITE, null, rr.detail, rr.code);
+        showFatal(doc, m.links.length || rr.code === 'out-of-scope' ? m : fatalModel(cq, rr.message, null, await bundleRegions(win), rr.detail));
         return { ok: false, error: 'code', code: rr.code };
       }
       resolved = rr.data;

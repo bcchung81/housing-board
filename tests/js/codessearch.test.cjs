@@ -51,7 +51,7 @@ function defaultFetch(url) {
 }
 function harness(over = {}) {
   const calls = [], clock = { t: Date.parse('2026-10-05T03:00:00Z') };
-  const env = over.env || { DATA_GO_KR_KEY_RESOLVE_1: 'STAN-KEY-1', VWORLD_KEY: 'VW-OPERATING', VWORLD_DEV_KEY: 'VW-DEV', VWORLD_DOMAIN: 'localhost' };
+  const env = over.env || { DATA_GO_KR_KEY_RESOLVE_1: 'STAN-KEY-1', VWORLD_KEY: 'VW-OPERATING', VWORLD_DEV_KEY: 'VW-DEV', VWORLD_DOMAIN: 'localhost', NON_CAPITAL_LIVE: '1' };   // 2026-10-19 수도권 한정: 수도권 밖은 NON_CAPITAL_LIVE=1 일 때만
   const now = () => clock.t;
   const svc = api.createService({ env, now, sleep: async () => {}, readCoverage: () => COV, cache: createCache({ persist: false, now }), pool: createKeyPool({ env, now, store: memoryStore() }), fetch: async (url) => { calls.push(url); return (over.fetch || defaultFetch)(url, calls.length); } });
   const handler = svc.handler;

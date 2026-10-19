@@ -2,14 +2,16 @@
 import { cache } from 'react';
 import { loadLedgerBoard } from './ledger-source';
 import { loadScreens } from './screen-source';
+import { capitalLh, capitalMolit } from './calc';
 
 /* 요청마다 한 번만 읽는다(cache). ledger 는 사업 원장 집계(종합상황판 카드), AHEAD_FROM 은 앞으로의 물량을 세는 기준 달:
    종합상황판의 '향후 12개월'과 같은 달(원장 관측 달 — 월 갱신을 따라간다). 보고자료·우리 동네가 쓴다.
-   projects 는 살아 있는 레지스트리 사업(대체 supersededBy·숨김 hiddenAt 제외 — 수도권은 HOME 사업이 대신한다), allProjects 는 전부(사업 상세가 옛 id 를 새 사업으로 넘기거나 안내한다) */
+   projects 는 살아 있는 레지스트리 사업(대체 supersededBy·숨김 hiddenAt 제외 — 수도권은 HOME 사업이 대신한다), allProjects 는 전부(사업 상세가 옛 id 를 새 사업으로 넘기거나 안내한다).
+   통계누리·LH 준공예정은 수도권으로 줄여 넘긴다(calc.ts capitalMolit·capitalLh — 2026-10-19 결정: 화면은 수도권, 통계누리 합계 자리 '00' = 서울+인천+경기) */
 export const getBoardData = cache(async () => {
   const [l, s] = await Promise.all([loadLedgerBoard(), loadScreens()]);
   return {
-    molit: s.molit, lh: s.lh, sources: s.sources, projects: s.projects.filter((p) => !p.supersededBy && !p.hiddenAt), allProjects: s.projects,
+    molit: capitalMolit(s.molit), lh: capitalLh(s.lh), sources: s.sources, projects: s.projects.filter((p) => !p.supersededBy && !p.hiddenAt), allProjects: s.projects,
     ledger: l.board, AHEAD_FROM: l.board.observedMonth,
     origin: s.origin, month: s.month, runId: s.runId,
     ledgerOrigin: l.origin, ledgerMonth: l.month,

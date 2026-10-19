@@ -39,7 +39,7 @@ async function load(searchParams: Props['searchParams']) {
   const [q, { molit }, idx] = await Promise.all([searchParams, getBoardData(), getProjectsIndex()]);
   const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c), guOf });
   const lens = f.policy ? policyLabel(f.policy) : f.program?.name;
-  const region = f.sgg ? sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2))) : f.sido ? sidoName(molit, f.sido) ?? f.sido : f.metro ? '수도권' : '전국';
+  const region = f.sgg ? sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2))) : f.sido ? sidoName(molit, f.sido) ?? f.sido : '수도권';   // 원장이 수도권만이라 ?sido=all 도 수도권(2026-10-19 결정)
   const tail = [f.stage !== undefined && `${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`, f.status && (f.status === 'check' ? '점검 필요' : f.status === 'late' ? DELAY_GROUP : f.status === 'review-late' ? REVIEW_LATE : STATUS_NAME[f.status]), f.agency && AGENCY_NAME[f.agency]];
   const label = [lens, region, ...tail].filter(Boolean).join(' · ');
   /* 목록 제목: 지역은 머리의 범위 칩이 보이므로 뺀다 */
@@ -74,7 +74,7 @@ const SwatchDot = ({ color }: { color: string }) => <i className="block size-2.5
 const BTN = 'btn-reset inline-flex h-8 items-center gap-1.5 rounded-tile border border-line2 bg-card px-3 text-sm font-bold whitespace-nowrap text-foreground no-underline hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
 /* 사업(목록·상세 서랍·월간 보고). 2026-10-14 시안(docs/design/home-concept/projects.html) — 칩 한 줄 → 요약(핵심 질문 5 · 단계 파이프라인 · 목표 대비 · 읽는 법) → 목록.
-   목록은 사업 원장의 살아 있는 사업(대체·숨김 제외) 중 지역 범위 — 처음 열면 수도권(서울·인천·경기), '전국' 칩으로 전국. 기본 순서는 점검 필요 순(지연 개월 큰 순). 행을 누르면 오른쪽 서랍에 사업 상세(?id=, 발급 사업),
+   목록은 사업 원장의 살아 있는 사업(대체·숨김 제외) 중 지역 범위 — 처음 열면 수도권(서울·인천·경기, 원장 전체 — 2026-10-19 결정으로 전국 칩 없음). 기본 순서는 점검 필요 순(지연 개월 큰 순). 행을 누르면 오른쪽 서랍에 사업 상세(?id=, 발급 사업),
    번호 발급 전 사업(후보)은 간단 보기(?cand= — id 가 다음 원장에서 바뀔 수 있어 주소를 나눈다).
    요약 범위: 핵심 질문·파이프라인은 정책·지역·기관 거르기를 따르고, 단계·상태 거르기는 목록에만(요약 머리에 표지). 정책별 목표 대비와 핵심 질문 ①은 HOME 정책 진행 자료의 정책 전체 값(표지).
    보고서 인쇄(?print=1 · @media print): 핵심 질문·단계별 진행·정책 목표 대비(펼침)·점검 필요 사업(10줄 넘으면 상위 10)·기준일·출처만(8.14 지시 '매월 진척상황 보고'). 옛 /reports·/project/:id 는 next.config.ts 가 넘긴다. */
@@ -205,7 +205,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
   /* 빈 결과: 푸는 동작과 가까운 대안(건수가 있는 것만) */
   const alts = !list.length ? [
     ...(f.status || f.stage !== undefined ? [{ label: '상태·단계 거르기 풀기', href: at({ status: undefined, stage: undefined }), n: count(rows, { ...f, status: undefined, stage: undefined }) }] : []),
-    ...(f.metro || f.sido || f.sgg ? [{ label: '전국에서 보기', href: listHref({ ...f, metro: false, sido: undefined, sgg: undefined }), n: count(rows, { ...f, metro: false, sido: undefined, sgg: undefined }) }] : []),
+    ...(f.metro || f.sido || f.sgg ? [{ label: '수도권 전체 보기', href: listHref({ ...f, metro: false, sido: undefined, sgg: undefined }), n: count(rows, { ...f, metro: false, sido: undefined, sgg: undefined }) }] : []),
     ...(f.policy || f.program || f.agency ? [{ label: '정책·기관 거르기 풀기', href: at({ policy: undefined, program: undefined, agency: undefined }), n: count(rows, { ...f, policy: undefined, program: undefined, agency: undefined }) }] : []),
   ].filter((a) => a.n > 0) : [];
 
@@ -232,7 +232,6 @@ export default async function ProjectsPage({ searchParams }: Props) {
         <ChipSep />
         <ChipGroup label="지역" bare>
           <Chip href={at({ sido: 'metro' })} on={!!f.metro} title="서울·인천·경기(처음 열 때 범위)">수도권</Chip>
-          <Chip href={at({ sido: 'all' })} on={!f.metro && !f.sido && !f.sgg} title="전국 사업">전국</Chip>
           <ChipMenu label="시도" on={!!(f.sido || f.sgg)} cols={2}
             items={sidos.map((c) => ({ href: at({ sido: c }), label: sidoName(molit, c)!, on: (f.sido ?? f.sgg?.slice(0, 2)) === c }))} />
           {f.sgg ? <ClearChip href={at({ sgg: undefined })} title="시군구 거르기 풀기(수도권으로)">{sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2)))}</ClearChip> : null}
@@ -283,7 +282,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
           <>
             <p className={cn(sub, 'm-0 mb-1')} title={`행을 누르면 사업 상세${list.length > issued ? ` · ${CAND_NAME}은 간단 보기(번호가 있는 사업 뒤)` : ''}`}>점검 필요 순{list.length > issued ? ` · ${CAND_NAME} ${fmt(list.length - issued)}건 뒤쪽` : ''}
               {/* ③착공 목록은 종합상황판 '진척 관리' 착공(통계누리 누계)에서 오는 목록 — 숫자 차이를 툴팁이 아닌 보이는 글로(2026-10-15 평가) */}
-              {f.stage === 2 ? <InfoTip label="착공 목록 범위" className="align-middle"><p data-slot="start-basis">목록은 사업 원장 기준(통계누리 착공 통계와 범위 다름) — 종합상황판 &apos;진척 관리&apos;의 착공 호수는 통계누리 주택건설실적(전국 착공 누계)이고, 이 목록은 사업 원장에서 지금 ③착공 단계인 사업이라 건수·호수가 다릅니다</p></InfoTip> : null}</p>
+              {f.stage === 2 ? <InfoTip label="착공 목록 범위" className="align-middle"><p data-slot="start-basis">목록은 사업 원장 기준(통계누리 착공 통계와 범위 다름) — 종합상황판 &apos;진척 관리&apos;의 착공 호수는 통계누리 주택건설실적(수도권 착공 누계)이고, 이 목록은 사업 원장에서 지금 ③착공 단계인 사업이라 건수·호수가 다릅니다</p></InfoTip> : null}</p>
             <DataGrid label="사업 목록" maxHeight={640} cols={listCols} rows={gridRows} quietCount />
           </>
         ) : (

@@ -22,6 +22,9 @@ const savedIds = read('mappings/hub-candidate-ids.json');
 const saved = Object.fromEntries(['projects', 'identifiers', 'project_locations', 'review_required'].map((t) => [t, read(`tables/${t}.json`).rows]));
 const BULK = `hub-bulk-hs-${H.DATA_MONTH}`;
 const inputs = (records, hubIds) => loadInputs({ lhSgg: read('mappings/lh-block-sgg.json'), legalDong, hubBulk: { ...bulk, records }, hubIds });
+/* 2026-10-19 수도권 한정: 저장된 원장(saved)에는 건축HUB 대용량 행이 없다(수도권은 HOME, 그 밖은 convert --sidos 로 뺀다).
+   대용량 규칙(후보 id·관리번호 한 번만·매핑)은 HOME 판·범위를 넣기 전의 전국 변환(pre)으로 본다 — 판정 이력 소급(trend.js)이 이 경로를 쓴다 */
+const pre = convert(inputs(bulk.records, savedIds));
 
 /* 기본개요 한 줄(29열) */
 const row = (o) => {
@@ -115,7 +118,7 @@ test('블록 코드·지구 낱말: A-2 ≈ A2 ≈ A2BL ≈ A02 ≈ A-2블록, �
 });
 
 test('후보 id: 매핑으로 다시 만들면 같은 id, 새 필지의 새 관리번호는 시군구의 다음 번호(장기 미갱신으로 빠진 id 다음), 기존 필지의 새 관리번호는 그 사업 id', () => {
-  const existing = saved.project_locations.find((l) => l.source_ref === BULK && l.pnu);
+  const existing = pre.project_locations.find((l) => l.source_ref === BULK && l.pnu);
   const host = bulk.records.find((r) => savedIds[r.pk] === existing.local_project_id);
   const extra = [
     { ...host, pk: '9999999999999999999998', apprv: '2026-08-01', insp: null },
@@ -124,7 +127,8 @@ test('후보 id: 매핑으로 다시 만들면 같은 id, 새 필지의 새 관�
   const t = convert(inputs([...bulk.records, ...extra], savedIds));
   const idOf = (pk) => t.identifiers.find((i) => i.id_type === 'HUB_HS_PK' && i.id_value === pk)?.local_project_id;
   assert.equal(idOf('9999999999999999999998'), existing.local_project_id);
-  const max = Math.max(...[...saved.projects.map((p) => p.local_project_id), ...Object.values(savedIds)].filter((id) => id.startsWith('PRJ-11290-')).map((id) => +id.slice(-4)));
+  // 2026-10-19 수도권 한정: 원장(saved)의 HOME 사업 id 도 본다(pre 에는 HOME 이 없다 — 시군구 다음 번호는 레지스트리 카운터·매핑 중 가장 큰 번호 다음)
+  const max = Math.max(...[...saved.projects.map((p) => p.local_project_id), ...pre.projects.map((p) => p.local_project_id), ...Object.values(savedIds)].filter((id) => id.startsWith('PRJ-11290-')).map((id) => +id.slice(-4)));
   assert.equal(idOf('9999999999999999999999'), `PRJ-11290-${String(max + 1).padStart(4, '0')}`);
   const live = new Set(bulk.records.map((r) => r.pk));
   for (const [pk, id] of Object.entries(savedIds)) if (live.has(pk)) assert.equal(idOf(pk), id, pk);
@@ -147,27 +151,25 @@ test('LH 블록 연결: 시군구·블록 코드·지구 이름이 맞으면 LH 
   assert.deepEqual([sep.project_unit, sep.stage_code, sep.issued_at, sep.public_scope], ['BLOCK', '04', null, 'UNKNOWN']);
 });
 
-test('관리번호는 한 번만: 대용량 기록마다 식별자 한 행(사업 또는 LH 후보) · 시군구 미해결 검토 · 레지스트리와 겹침 중 하나 — 수도권(11·28·41) 기록은 HOME 덤프가 정본이라 원장에 없다(2026-10-14)', () => {
-  const ids = saved.identifiers.filter((i) => i.id_type === 'HUB_HS_PK');
+test('관리번호는 한 번만: 대용량 기록마다 식별자 한 행(사업 또는 LH 후보) · 시군구 미해결 검토 · 레지스트리와 겹침 중 하나(전국 변환 pre) — 저장된 원장은 수도권 HOME 만이라 대용량 관리번호가 없다(2026-10-19)', () => {
+  assert.equal(saved.identifiers.filter((i) => i.source_ref === BULK).length, 0, '2026-10-19 수도권 한정: 원장에 건축HUB 대용량 식별자 없음');
+  const ids = pre.identifiers.filter((i) => i.id_type === 'HUB_HS_PK');
   assert.equal(new Set(ids.map((i) => i.id_value)).size, ids.length);
   const fromBulk = new Set(ids.filter((i) => i.source_ref === BULK).map((i) => i.id_value));
-  const unresolved = new Set(saved.review_required.filter((r) => r.review_type === 'SGG_UNRESOLVED' && r.source_ref === BULK).map((r) => r.record_key));
+  const unresolved = new Set(pre.review_required.filter((r) => r.review_type === 'SGG_UNRESOLVED' && r.source_ref === BULK).map((r) => r.record_key));
   const registry = new Set(ids.filter((i) => i.source_ref !== BULK).map((i) => i.id_value));
-  const mapper = H.codeMapper(legalDong.rows, legalDong.abolished);
-  const capital = (r) => ['11', '28', '41'].includes(H.locate(r, mapper).sgg?.slice(0, 2));
-  for (const r of bulk.records) assert.equal([fromBulk.has(r.pk), unresolved.has(r.pk), registry.has(r.pk)].filter(Boolean).length, capital(r) ? 0 : 1, r.pk);
-  const regLeft = bulk.records.filter((r) => registry.has(r.pk)).length, cap = bulk.records.filter(capital).length;
-  assert.ok(cap > 0);
-  assert.equal(fromBulk.size, bulk.records.length - unresolved.size - regLeft - cap, '2026-08 판: 4,103 - 미해결 5 - 레지스트리 - 수도권');
+  for (const r of bulk.records) assert.equal([fromBulk.has(r.pk), unresolved.has(r.pk), registry.has(r.pk)].filter(Boolean).length, 1, r.pk);
+  const regLeft = bulk.records.filter((r) => registry.has(r.pk)).length;
+  assert.equal(fromBulk.size, bulk.records.length - unresolved.size - regLeft, '2026-08 판: 4,103 - 미해결 5 - 레지스트리');
 });
 
 test('매핑은 더하기만: 장기 미갱신으로 빠진 관리번호의 id 도 매핑에 남고(사업은 없음), 대용량 후보 사업은 모두 매핑의 id', () => {
-  const projOf = new Set(Object.values(savedIds)), bulkProjects = saved.projects.filter((p) => p.source_ref === BULK);
+  const projOf = new Set(Object.values(savedIds)), bulkProjects = pre.projects.filter((p) => p.source_ref === BULK);
   assert.ok(Object.keys(savedIds).length >= 13588, '관리번호 13,588개(2026-10 첫 실행)에서 늘기만 한다');
   assert.ok(bulkProjects.length > 0, '2026-08 판 3,495');
   assert.ok(bulkProjects.every((p) => projOf.has(p.local_project_id)));
   const live = new Set(bulk.records.map((r) => r.pk)), gone = Object.keys(savedIds).filter((pk) => !live.has(pk));
   assert.ok(gone.length > 9000, `빠진 관리번호 ${gone.length}`);
-  const ids = new Set(saved.projects.map((p) => p.local_project_id)), liveIds = new Set([...live].map((pk) => savedIds[pk]));
+  const ids = new Set(pre.projects.map((p) => p.local_project_id)), liveIds = new Set([...live].map((pk) => savedIds[pk]));
   assert.ok(gone.filter((pk) => !liveIds.has(savedIds[pk])).every((pk) => !ids.has(savedIds[pk])), '빠진 관리번호만 가리키던 id 는 사업이 없다');
 });

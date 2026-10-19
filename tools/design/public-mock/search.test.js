@@ -18,11 +18,14 @@ t('없는 말이면 0건이고 후보도 없다', () => { const r = S.search('�
 t("'남양쥬' 는 0건이지만 '남양주시' 를 찾으셨나요 후보로 낸다", () => { const r = S.search('남양쥬'); assert.strictEqual(r.regions.total + r.projects.total, 0); assert.strictEqual(r.suggest[0]?.label, '남양주시', JSON.stringify(r.suggest.map((x) => x.label))); assert.strictEqual(r.suggest[0].code, '41360'); });
 t("'고양시' 는 구를 묶은 시 단위 항목이 맨 위다", () => { const r = S.search('고양시'); const x = r.regions.items[0]; assert.strictEqual(x.label, '고양시'); assert.strictEqual(x.code, '41280'); assert(x.codes.length >= 2 && x.codes.every((c) => c.startsWith('4128')), x.codes); assert(!labels(r).some((l) => l.startsWith('고양시 ')), labels(r)); for (const q of ['수원시', '성남시', '용인시', '부천시', '안산시', '안양시']) { const y = S.search(q).regions.items[0]; assert(y && y.label === q && /0$/.test(y.code), q); } });
 t("'별내' 처럼 색인에 없는 동 이름은 주소 묶음으로 넘긴다", () => { const r = S.search('별내'); assert.strictEqual(r.regions.total + r.projects.total, 0); assert(r.addr && r.addrFirst); });
-t('같은 이름이 둘이면 시도까지 붙는다', () => { const r = S.search('중구'); const l = labels(r); assert(l.length >= 2 && l.every((x) => / 중구$/.test(x) && x !== '중구'), l); assert(new Set(l).size === l.length); const g = S.search('강서구'); assert.strictEqual(JSON.stringify([...labels(g)].sort()), JSON.stringify(['부산 강서구', '서울 강서구'])); });
-t("'부산' 검색 숫자 = 상황판 부산 큰 숫자(sumOf ①~④), 모든 지역 항목도 같은 정의", () => {
-  const x = S.search('부산').regions.items.find((r) => r.kind === 'sido' && r.code === '26');
-  const big = ctx.sumOf(ctx.D, S.regionOf['26'].codes);
-  assert(x, 'no 부산'); assert.strictEqual(x.units, big.u); assert.strictEqual(x.projects, big.n);
+/* 2026-10-19 수도권 한정: 색인(서울·인천·경기)에 같은 이름 시군구가 없다(인천 중구는 제물포·영종구로 바뀌었고 부산 강서구는 수도권 밖) — 실제 색인은 이름 그대로, 시도를 붙이는 규칙은 작은 표본 색인(DUP)으로 본다 */
+const DUP = ctx.makeSearch({ sgg: [['11140', '서울특별시 중구', 0], ['26110', '부산광역시 중구', 0], ['11500', '서울특별시 강서구', 0], ['26440', '부산광역시 강서구', 0], ['26320', '부산광역시 북구', 0], ['27230', '대구광역시 북구', 0]], prj: {} });
+t('같은 이름이 둘이면 시도까지 붙는다', () => { assert.strictEqual(JSON.stringify(labels(S.search('중구'))), '["중구"]', '2026-10-19 수도권 한정: 서울 중구 하나'); assert.strictEqual(JSON.stringify(labels(S.search('강서구'))), '["강서구"]', '2026-10-19 수도권 한정'); const r = DUP.search('중구'); const l = labels(r); assert(l.length >= 2 && l.every((x) => / 중구$/.test(x) && x !== '중구'), l); assert(new Set(l).size === l.length); const g = DUP.search('강서구'); assert.strictEqual(JSON.stringify([...labels(g)].sort()), JSON.stringify(['부산 강서구', '서울 강서구'])); });
+t("'부산' 검색은 0건(2026-10-19 수도권 한정 — 옛 '부산 큰 숫자' 단언 대체), 경기 검색 숫자 = 상황판 경기 큰 숫자(sumOf ①~④), 모든 지역 항목도 같은 정의", () => {
+  const out = S.search('부산'); assert.strictEqual(out.regions.total + out.projects.total, 0, '2026-10-19 수도권 한정: 수도권 밖 지역·사업 없음'); assert(!S.regions.some((r) => !['11', '28', '41'].includes(r.code.slice(0, 2))), '색인 = 수도권만');
+  const x = S.search('경기').regions.items.find((r) => r.kind === 'sido' && r.code === '41');
+  const big = ctx.sumOf(ctx.D, S.regionOf['41'].codes);
+  assert(x, 'no 경기'); assert.strictEqual(x.units, big.u); assert.strictEqual(x.projects, big.n);
   const bad = S.regions.filter((r) => { const b = ctx.sumOf(ctx.D, r.codes); return b.u !== r.units || b.n !== r.projects; }).map((r) => r.label);
   assert.strictEqual(bad.length, 0, bad.slice(0, 5).join(','));
 });
@@ -41,9 +44,9 @@ t('보기와 내 동네 분리: 면·순위·카드·이웃·검색은 저장하
   act('set-home', st.view); assert.strictEqual(mem.myArea, '41130', '시군구를 고른 뒤 [내 동네로 정하기]로 저장');
   act('search', '26'); assert.strictEqual(mem.myArea, '41130', '다른 시도 보기는 저장 안 함');
 });
-t('숫자 정의 하나(v7): 요약 합계 = 지도 면 합 = 많은 곳 순위 숫자 — 경기·서울·인천·부산', () => {
+t('숫자 정의 하나(v7): 요약 합계 = 지도 면 합 = 많은 곳 순위 숫자 — 경기·서울·인천', () => {
   const D = ctx.D;
-  for (const sd of ['41', '11', '28', '26']) {
+  for (const sd of ['41', '11', '28']) {   // 2026-10-19 수도권 한정: 부산(26)은 색인에 없다
     const units = ctx.unitsFor(D, S, sd), big = ctx.sumOf(D, S.regionOf[sd].codes);
     assert.strictEqual(units.reduce((a, x) => a + x.u, 0), big.u, sd + ' 면 합');
     assert.strictEqual(units.reduce((a, x) => a + x.n, 0), big.n, sd + ' 사업 수 합');
@@ -51,7 +54,7 @@ t('숫자 정의 하나(v7): 요약 합계 = 지도 면 합 = 많은 곳 순위 
     assert.deepStrictEqual(rk.map((x) => x.u), units.filter((x) => x.u > 0).slice(0, rk.length).map((x) => x.u), sd + ' 순위 = 호수 내림차순');
     for (const x of units) { const r = S.regionOf[x.key]; if (r) assert.strictEqual(r.units, x.u, sd + ' 검색 숫자 ' + x.name); }
   }
-  assert.strictEqual(ctx.sumOf(D, S.regionOf['26'].codes).u, 154329, '부산 154,329');
+  assert.strictEqual(S.regionOf['26'], undefined, '2026-10-19 수도권 한정: 옛 부산 154,329 단언 대체 — 부산은 색인에 없다');
   const g = ctx.unitsFor(D, S, '41'), r6 = ctx.rankTop(g, '41630', 5);
   assert.strictEqual(r6.length, 6); assert.strictEqual(r6[5].key, '41630', '순위 밖 보는 곳은 6번째 줄');
   assert.strictEqual(ctx.rankTop(g, '41290', 5).length, 5, '순위 안 보는 곳은 그대로 5줄');
@@ -278,7 +281,7 @@ t('r9-2 사업 링크는 사업 카드(옆 시트)를 연다 — 다음 준공 �
   for (const c of ['ev', 'srow']) assert(new RegExp(`<a class="${c}" \\$\\{PRJA\\(`).test(tpl), c);
   assert(tpl.includes('<a class="nx" href="/citizen/projects?id=${nx.id}" data-go="/citizen/projects?id=${nx.id}" data-k="${nx.k}"'), '다음 준공 줄 = 사업 찾기 상세(2026-10-19 D3)');
   assert.strictEqual((tpl.match(/data-go="\/projects\?id=/g) || []).length, 0, '정책담당자 화면(/projects?id=) 직접 이동 없음');
-  assert.strictEqual((tpl.match(/data-go="\/citizen\/projects\?id=\$\{id\}">자세히 보기<\/a>/g) || []).length, 1, '시트 안 자세히 보기 하나 = 사업 찾기 상세');
+  assert.strictEqual((tpl.match(/data-go="\/citizen\/projects\?id=\$\{id\}">자세히 보기<\/a>/g) || []).length, 2, '시트 안 하나 + 지도 위 카드(mapCardHtml) 하나 = 모두 사업 찾기 상세 (2026-10-19: 지도에서 연 사업은 카드가 생겨 1 → 2)');
   assert(!tpl.includes('자세히 보기(정책담당자 화면)') && tpl.includes('id="pc-back"'));
   const pd = JSON.parse(fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'data', 'board', 'project-detail.json'), 'utf8')).projects;
   const AG = { lh: 'LH', gh: 'GH', sh: 'SH', local: '지자체', mnd: '국방부' }, K = ['SUPPLY_NOTICE', 'CONSTRUCTION_START', 'COMPLETION', 'MOVE_IN'];
@@ -389,11 +392,12 @@ t("r10-8 같은 목록 안 이름 겹침: 고양창릉(4블록) 두 곳은 'A-4'
     const vv = Object.values(ctx.distinctNames(L)).filter((x) => !x.startsWith('이름 미정')); assert.strictEqual(new Set(vv).size, vv.length, pre + ' 겹침 ' + vv.filter((x, i) => vv.indexOf(x) !== i).slice(0, 3)); }
   assert.strictEqual(ctx.distinctNames([{ id: 'a', name: '과천지식정보타운 S-12' }]).a, '과천지식정보타운(12블록)');
 });
-t("r10-9 수도권 밖 IP: /api/v1/geo 의 광주 29·전남 46 → 12, 제주 49 → 50, 수도권·그 밖 시도는 그대로, 모르는 코드는 null", () => {
-  assert.strictEqual(ctx.geoSido('29', S), '12'); assert.strictEqual(ctx.geoSido('46', S), '12'); assert.strictEqual(ctx.geoSido('49', S), '50');
-  for (const c of ['11', '28', '41', '26', '51', '52', '36']) assert.strictEqual(ctx.geoSido(c, S), c);
+t("r10-9 수도권 밖 IP(2026-10-19 수도권 한정): /api/v1/geo 의 수도권 시도는 그대로, 수도권 밖(광주 29·전남 46·제주 49·부산 26 …)·모르는 코드는 null → 추천 없이 기본 경기(41) 보기 + 시도 고르기", () => {
+  for (const c of ['11', '28', '41']) assert.strictEqual(ctx.geoSido(c, S), c);
+  for (const c of ['29', '46', '49', '12', '50', '26', '51', '52', '36']) assert.strictEqual(ctx.geoSido(c, S), null, c + ' 2026-10-19 수도권 한정: 옛 전남광주·제주 바꿈(GEO_ALIAS)·그 시도 추천 대체');
   assert.strictEqual(ctx.geoSido('99', S), null); assert.strictEqual(ctx.geoSido(null, S), null);
-  assert(TPL.includes("const sd = j && j.sido ? geoSido(String(j.sido), IX) : null;"));
+  assert(TPL.includes("const sd = j && j.sido ? geoSido(String(j.sido), IX) : null;") && TPL.includes("if (sd) { S.guess = sd; S.guessKnown = true;") && TPL.includes("const S = { home: null, view: null, loc: 'guess', guess: '41', guessKnown: !OPS,"), 'null 이면 S.guess 기본 41 그대로(시도 고르기)');
+  assert(!TPL.includes('GEO_ALIAS') && TPL.includes("S.guess = geoSido('29', IX) || '41'; S.guessKnown = false;"), '데모 광주 IP 도 오류 없이 기본 경기');
   assert(!TPL.includes("(CAPITAL.includes(S.guess) ? CAPITAL : [S.guess, ...CAPITAL])"), '2026-10-19 안내 줄 시도 칩은 상단 필터 줄로 옮겼다(수도권 밖은 [다른 시도])');
 });
 t("r10-10 숫자와 '호'(316호·1.6만 호), 큰 지도 링크는 지도 아이콘, 값 0 막대에 '0', 보조 글자 16px(15px 없음)", () => {
@@ -436,7 +440,10 @@ t('r10b 이름·블록 표기도 같은 서로 다른 사업: 시군구가 다�
   const nm = ctx.distinctNames(items, D), seen = {}, twins = [];
   for (const x of items) { const k = nm[x.id] + '|' + (nm.sub[x.id] || ''); if (/^이름 미정/.test(nm[x.id])) continue; const same = seen[k] && items.find((y) => y.id === seen[k]); if (same && same.name === x.name && same.sgg === x.sgg && same.u === x.u && same.stage === x.stage) { twins.push(nm[x.id]); continue; } assert(!seen[k] || seen[k] === x.id, '겹침 ' + k); seen[k] = x.id; }
   console.log('  원천 값까지 같은 쌍(구별 불가):', twins.join(', ') || '없음');
-  const ga = items.filter((x) => x.name === '가야1 재개발'); assert.strictEqual(ga.map((x) => nm.sub[x.id]).join(','), '935호,933호');
+  /* 2026-10-19 수도권 한정: 옛 표본 '가야1 재개발'(935호·933호)은 수도권 밖(부산)이라 색인에 없다 — 수도권 원장에는 이름·블록이 같은 서로 다른 사업이 없어 규칙은 만든 표본으로 본다 */
+  assert.strictEqual(Object.keys(nm.sub).length, 0, '수도권 ㄱㅇ 결과에는 작은 글자가 필요한 쌍이 없다');
+  const fx = [{ id: 'a', name: '가야1 재개발', sgg: '41360', u: 935, stage: 3 }, { id: 'b', name: '가야1 재개발', sgg: '41360', u: 933, stage: 3 }, { id: 'c', name: '보람 재건축', sgg: '41360', u: 100 }, { id: 'd', name: '보람 재건축', sgg: '41290', u: 100 }];
+  const nf = ctx.distinctNames(fx, D); assert.strictEqual(['a', 'b'].map((k) => nf.sub[k]).join(','), '935호,933호'); assert.strictEqual(['c', 'd'].map((k) => nf.sub[k]).join(','), '남양주시,과천시');
   assert.deepStrictEqual(Object.keys(nm).length, new Set(items.map((x) => x.id)).size, 'sub 는 열거되지 않는다');
   assert(TPL.includes('<small class="nsub">'));
 });
@@ -444,7 +451,7 @@ t("r11-1 주소·장소 결과 → 지역(지도 면 단위): 41360112xx → 남
   const A = (c) => ctx.addrArea(S, c);
   assert.strictEqual(A('4136011200'), '41360'); assert.strictEqual(A('4136011299'), '41360'); assert.strictEqual(A('4136011200160840000'), '41360'); assert.strictEqual(A('41360'), '41360');
   assert.strictEqual(A('4111112900'), '41110'); assert.strictEqual(A('4113110100'), '41130'); assert.strictEqual(A('4128110100'), '41280');
-  assert.strictEqual(A('5211110100'), S.regionOf['52111'].parent || '52111'); assert.strictEqual(A('2632010100'), '26320');
+  assert.strictEqual(A('5211110100'), null); assert.strictEqual(A('2632010100'), null);   // 2026-10-19 수도권 한정: 전주 완산구·부산 북구는 색인에 없다(옛 '그 시·구 코드' 단언 대체)
   assert.strictEqual(A('99999'), null); assert.strictEqual(A(''), null); assert.strictEqual(A('41'), null);
   for (const k of ['41360', '41110', '41130', '41280']) assert.strictEqual(ctx.unitKey ? ctx.unitKey(k) : k, k);
   /* 화면: 같은 시군구가 여러 줄이면 지역 묶음 맨 위 한 줄('다산동 → 남양주시'), 주소 줄은 줄 누름 = 보기 · [지도] = 큰 지도에서 열기 */
@@ -474,19 +481,19 @@ t("r13 '다가오는 일정' 칸(#c-ev)은 없애고 '언제 들어오나' 칸 �
   assert(!TPL.includes('<h3>다가오는 준공·입주</h3>') && TPL.includes('findBtn(prj.length, r, f)') && !/countBtn\('(ev|yr|tl)'/.test(TPL), '2026-10-18 아래 줄 = 사업 카드 한 장: 개수 단추는 사업 시트 하나(옛 일정·해별 단추 없음)');
   assert(TPL.includes("const nx = eventsOf(r.codes).filter((e) => e.k >= 2)") && TPL.includes('<span class="k">다음 ${NEXT[nx.k]}</span>'), '다음 준공·입주 줄');
 });
-t("r11-5 [다른 동네]·[바꾸기]: 빈 입력 대신 목록을 바로 펼친다 — 안내 '초성(ㄱㅇ)이나 동 이름으로도 찾아요', 수도권 많은 곳 8 + 시도 16, aria-expanded=true", () => {
+t("r11-5 [다른 동네]·[바꾸기]: 빈 입력 대신 목록을 바로 펼친다 — 안내 '초성(ㄱㅇ)이나 동 이름으로도 찾아요', 수도권 많은 곳 8 + 시도 3, aria-expanded=true", () => {
   assert(TPL.includes("if (t.dataset.act === 'pick') { S.q = ''; input.value = ''; S.sidos = false; S.pickAll = true; S.open = true;"));
   const br = TPL.slice(TPL.indexOf('if (S.open && !q && S.pickAll)'), TPL.indexOf('if (S.open && !q && S.sidos)'));
   assert(!br.includes('초성(ㄱㅇ)이나 동 이름으로도 찾아요') && br.includes("$('#ac-note').innerHTML = '';") && TPL.includes('<span class="sr" id="q-help">초성(ㄱㅇ)이나 영문 자판(rPdid)으로 쳐도 찾습니다.') && br.includes("input.setAttribute('aria-expanded', 'true')") && br.includes('regionOpt(x, opts'), '2026-10-18 서술형 정리: 보이는 안내 줄 없음, 화면 읽기 설명은 유지');
   assert(TPL.includes('placeholder="동네·사업·주소 · 초성(ㄱㅇ) 가능"'), '2.5: 안내 줄 대신 입력칸 placeholder 로 초성 검색을 알린다');
   const D = ctx.D, top = ['11', '28', '41'].flatMap((sd) => ctx.unitsFor(D, S, sd)).filter((x) => x.u > 0 && S.regionOf[x.key]).sort((a, b) => b.u - a.u).slice(0, 8);
-  assert.strictEqual(top.length, 8); assert.strictEqual(S.regions.filter((x) => x.kind === 'sido').length, 16);
+  assert.strictEqual(top.length, 8); assert.strictEqual(S.regions.filter((x) => x.kind === 'sido').length, 3);   // 2026-10-19 수도권 한정: 시도 16 → 3(서울·인천·경기)
   console.log('  많은 곳 8:', top.map((x) => S.regionOf[x.key].label).join(' · '));
 });
 t("r11-6 범례 '620호 미만'(~ 없음), 지역 줄은 늘 [내 동네로](시도 포함), 같은 이름 시군구는 시도 짧은 이름('부산 북구 보는 중'), ⓘ 16px·제곱근 없음·①② 는 정책담당자 줄에만, 메뉴 Esc", () => {
   assert(TPL.includes('`${fmt(C.br[0])} 미만`') && !TPL.includes('`~${fmt(C.br[0])}'));   // r16 세로 범례: 맨 아래 칸의 읽는 이름
   assert(!/if \(x\.kind !== 'sgg'\)/.test(TPL.slice(TPL.indexOf('function regionOpt'), TPL.indexOf('function renderAC'))), '시도 줄도 내 동네로');
-  assert.strictEqual(S.regionOf['26320'].label, '부산 북구'); assert.strictEqual(S.regionOf['27230'].label, '대구 북구'); assert.strictEqual(S.regionOf['41360'].label, '남양주시'); assert.strictEqual(S.regionOf['41281']?.label ?? '고양시 덕양구', '고양시 덕양구');
+  assert.strictEqual(DUP.regionOf['26320'].label, '부산 북구'); assert.strictEqual(DUP.regionOf['27230'].label, '대구 북구'); assert.strictEqual(S.regionOf['26320'], undefined); assert.strictEqual(S.regionOf['41360'].label, '남양주시');   // 2026-10-19 수도권 한정: 같은 이름 규칙은 표본 색인(DUP), 실제 색인에 부산 없음 assert.strictEqual(S.regionOf['41281']?.label ?? '고양시 덕양구', '고양시 덕양구');
   assert(TPL.includes('const nameOf = (r) => r.label;') && TPL.includes('${esc(nameOf(v))}</b> 보는 중'));
   assert(/\.tip \{[^}]*font-size: var\(--fs-body\);/.test(TPL));   // 일반사용자 관점 본문 16px(html[data-aud=public])
   const tips = [...TPL.matchAll(/<div class="tip" id="tip-(head|map|pj|src)" popover>([\s\S]*?)<\/div>/g)].map((m) => m[2]);
@@ -561,7 +568,7 @@ t("r13 원장 ④단계 이름 '모집 끝남'(배지·시트 칩·사업 카드
 });
 t('r13 공고 ↔ 사업은 PNU 로만: A17 pnu 2824510900102770001 = PRJ-28245-0054, 원장 줄 7번째 칸, 이름으로 잇지 않는다', () => {
   const ix = ctx.pnuIndex(ctx.D); assert.strictEqual(ix.get('2824510900102770001'), 'PRJ-28245-0054');
-  assert(ix.size > 1000, ix.size);
+  assert(ix.size >= 6, ix.size);   // 2026-10-19 수도권 한정: 수도권 HOME 262 사업 중 PNU 가 있는 사업은 6곳(옛 전국 1,716곳 — 데이터 전환 전에도 수도권은 6곳)
   const a17 = ctx.D.notices.find((n) => n.pnu === '2824510900102770001'); assert(a17 && a17.sgg === '28245', '데모 표본에 A17');
   const nf = TPL.slice(TPL.indexOf('const noticesForPrj'), TPL.indexOf('/* ---------- ② 3D 지도 카드')); assert(nf.includes('n.pnu && pn.has(n.pnu)') && !/title|name/.test(nf.replace('noticesForPrj', '')), '이름 비교 없음');
 });
@@ -900,7 +907,7 @@ t('r19-1·레일(2026-10-18 nested-cards 정리): globals .ui-hud 부품은 그�
   assert(CSS.includes(".mapc-b { display: grid; grid-template-columns: minmax(0, 1fr) 240px; grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: 'stage rail' 'tband rail';") && CSS.includes('.stage { position: relative; min-width: 0; min-height: 0; }'), '무대 열 · 레일 열');
   const rail = CSS.match(/\n\.rail \{([^}]*)\}/)[1];
   assert(rail.includes('border-left: var(--border-w) solid var(--border);') && !/background|border-radius|box-shadow|backdrop|border:/.test(rail), '레일 = 1px 구분선만');
-  assert(!/hud-col|ui-hud/.test(TPL.replace(/\/\*[\s\S]*?\*\//g, '')) && !/margin-left: calc\(-1 \*/.test(CSS), '판·겹침 없음');
+  assert(!/hud-col|ui-hud/.test(TPL.replace(/\/\*[\s\S]*?\*\//g, '').replace('mapcard ui-hud in', '')) && !/margin-left: calc\(-1 \*/.test(CSS), '판·겹침 없음');
   const mob = CSS.slice(CSS.indexOf('@media (max-width: 599px) {\n  .logo .lk-full'));
   assert(mob.includes("grid-template-areas: 'stage' 'tband' 'rail';") && mob.includes('.rail { padding: var(--s3) 0 0; border-left: 0; border-top: var(--border-w) solid var(--border); }'), '휴대폰: 무대 → 시간 띠 → 레일(위 구분선)');
   /* 순위 줄: 1~3위 원 배지 · 줄마다 지도 단계 색 막대 · 누름·가리킴·키보드는 그대로(.rk · data-src="rank" · data-rove) */
@@ -1017,5 +1024,34 @@ t('2026-10-19 상단 필터 = 시도(서울·경기·인천) + 단계(전체·�
   assert(TPL.includes('all.filter((x) => stOf(x.b) === f)') && TPL.includes('findBtn(prj.length, r, f)') && TPL.includes('${STATUS[f][0]} 사업이 없어요'));
   assert(!TPL.includes('sido-pick'), '안내 줄의 시도 칩은 필터 줄과 겹쳐 없앤다');
 });
-const N = 97; console.log(`${pass}/${N} 통과`);
+t('지도에서 연 사업 = 지도 위 카드(#sheet 안 씀) · 핵심 필드 · 사업 찾기/공급 일정/큰 지도 링크 · Esc·바깥·닫기 · 기호 0 (2026-10-19)', () => {
+  const GXR = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'app', 'globals.css'), 'utf8');
+  const fn = (name) => { const i = TPL.indexOf(`function ${name}(`); assert(i > 0, name); return TPL.slice(i, TPL.indexOf('\n}\n', i)); };
+  /* 지도 점(svg.pts)을 누르면 카드, 표·목록·검색은 옛 시트 — 지도 경로를 시트로 고정하던 옛 단언(r9-2 의 시트 하나)은 위에서 2 로 고쳤다 */
+  assert(TPL.includes("if (!(t.closest('svg.pts') && openMapCard(t.dataset.prj))) openProject(t.dataset.prj, t);"), '지도 점만 카드, 나머지는 시트');
+  const open = fn('openMapCard'), card = fn('mapCardHtml');
+  assert(!/#sheet|showSheet|openProject|SH\./.test(open + card), '카드는 #sheet 를 쓰지 않는다');
+  assert(open.includes("setAttribute('role', 'dialog')") && open.includes("'aria-labelledby', 'mc-h'") && open.includes("'aria-modal', 'false'") && card.includes('id="mc-h"'), '비모달 dialog + 이름표');
+  assert(open.includes("el.querySelector('a[href]').focus"), '열면 첫 링크로 초점');
+  /* 핵심 필드 있음 / 시행 기관·일정 4줄·근거 없음 */
+  for (const k of ['progHtml(x, ex)', '다음 일정 <b>', '들어올 때 <b>', 'fmt(x.u)', 'area.sub']) assert(card.includes(k), k);
+  assert(!/det\[0\]|시행|cardSteps|pc-tl|청약홈|EXT\(|NT\(/.test(card), '시행 기관·일정 4줄·공고는 카드에서 뺀다');
+  assert(card.includes('/citizen/projects?id=${id}') && card.includes('/citizen/schedule?sido=${sido}&amp;sgg=${unitKey(c)}') && card.includes("mapHref({ project: id })"), '자세히 보기 · 공급 일정 · 큰 지도');
+  assert(/ui-btn ui-btn-sm/.test(card) && /ui-btn ui-btn-outline ui-btn-sm/.test(card) && card.includes('id="mc-x"') && card.includes('aria-label="닫기"'), 'globals 단추 부품만');
+  assert(TPL.includes("e.key === 'Escape' && MC.el?.isConnected") && TPL.includes("e.target.closest('#mapcard, svg.pts .pt')") && fn('closeMapCard').includes("$('#mapbox')"), 'Esc · 바깥 누름 · 초점 복귀');
+  /* 위치: 점 곁 · 뒤집기 · 무대 안(레일 안 가림) · 점이 사라지면 닫기 · 움직이는 동안 숨김 */
+  const pl = fn('placeMapCard');
+  assert(pl.includes("pt.dataset.xy") && pl.includes('tries') && pl.includes('W - w - m') && pl.includes('closeMapCard(false)'), '점 곁 · 뒤집기 · 경계 · 사라지면 닫기');
+  assert(fn('paintPts').includes('placeMapCard();') && /\.stage\.glmv \.mapcard/.test(TPL), '지도가 가라앉으면 다시 붙이고 움직이는 동안 숨긴다');
+  assert(TPL.includes("st.append(el)") && TPL.includes('id="mstage"'), '카드는 무대 안(오른쪽 레일은 별도 칸)');
+  /* 모양: 토큰만 · 움직임 줄이기 */
+  assert(/--mapcard-w: \d+px;/.test(GXR) && /--mapcard-alpha: 9\d%;/.test(GXR), '토큰은 globals');
+  const mc = TPLCSS.match(/\.mapcard \{[^}]*\}/)[0];
+  assert(!/#[0-9a-f]{3,8}\b|rgb\(/i.test(mc) && mc.includes('var(--mapcard-w)') && mc.includes('--shadow-pop'), '값 하드코딩 없음');
+  assert(/@media \(prefers-reduced-motion: no-preference\) \{ \.mapcard\.in \{ animation/.test(TPLCSS), '등장 효과는 움직임 줄이기가 아닐 때만');
+  /* 기호 0: 카드 마크업의 보이는 글에 이모지·원 숫자·화살표·도형·꺾쇠 없음 */
+  const vis = card.replace(/<[^>]*>/g, ' ');
+  assert(!/[\u2460-\u24FF\u2190-\u21FF\u25A0-\u25FF\u2022\u203A\u2039\u{1F300}-\u{1FAFF}]/u.test(vis), '보이는 글에 기호 없음');
+});
+const N = 98; console.log(`${pass}/${N} 통과`);
 process.exit(pass === N ? 0 : 1);

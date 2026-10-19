@@ -1,6 +1,6 @@
 'use strict';
 // 수도권 HOME 덤프 정본(tools/ledger/home-source.js, 계획 docs/product/데이터-정제-계획.md 4절 D4·D5): 재덤프 리허설.
-// ① 같은 판 두 번 → 표 바이트 동일 ② 비수도권 행은 변경 전(git HEAD 의 표)과 바이트 동일 ③ 전국 = 시도 합 ④ 수도권 사업 = HOME 사업(시군구가 정해진 블록 묶음), 같은 블록 두 사업 0
+// ① 같은 판 두 번 → 표 바이트 동일 ② 수도권 밖 사업·딸린 행 없음(2026-10-19 결정), 사업과 무관한 비HOME 행은 변경 전(git HEAD 의 표)과 같다 ③ 수도권 = 시도 합 ④ 수도권 사업 = HOME 사업(시군구가 정해진 블록 묶음), 같은 블록 두 사업 0
 // ⑤ 연결(home_mapping)만 바꾼 가짜 판 → links 만 바뀌고 사업 id 그대로(HPR_ 를 바꾼 판도 사업 id 그대로) ⑥ HOME statistic = 통계누리 stat_facts(서울·인천·경기 겹치는 기간)
 // HOME 원본(jsonl.gz)은 저장소에 없다(gitignore, Storage) — 없으면 원본이 필요한 시험은 건너뛴다.
 const test = require('node:test');
@@ -42,7 +42,7 @@ const inputs = () => {
     hubIds: read('mappings/hub-candidate-ids.json'), national: readNational(path.join(BASE, 'raw')), stage: readStageInput(stageFileOf(BASE)) });
   return base;
 };
-const run = (homeDir = HOME_DIR) => { const report = {}; const t = convert({ ...inputs(), home: H.readHome(homeDir), homeIds, report }); return { t, report }; };
+const run = (homeDir = HOME_DIR) => { const report = {}; const t = convert({ ...inputs(), home: H.readHome(homeDir), homeIds, sidos: H.HOME_SIDO, report }); return { t, report }; };   // 2026-10-19 수도권 한정: monthly.js convertArgs 처럼 --sidos 11,28,41
 const files = (t) => Object.fromEntries(Object.entries(t).map(([k, rows]) => [k, renderTable(k, rows)]));
 
 /* 판 폴더를 복사하고 kind 하나를 고친 가짜 판(manifest 의 sha256·행 수도 맞춘다 — readHome 이 확인한다) */
@@ -99,28 +99,25 @@ test('저장된 표: GH 공고·HOME 식별자 종류가 표 계약(schemas/ledg
   assert.equal(saved.identifiers.filter((i) => i.id_type === 'MANUAL' && /^(HPR_|PRO_|LH_)/.test(i.id_value)).length, 0);
 });
 
-test('② 비수도권 행은 변경 전(git HEAD 의 표)과 바이트 동일 — 사업·식별자·위치·단지·이벤트·호수·공고 연결·검토는 비수도권 사업 몫, 공고·원천은 HEAD 행이 그대로 앞에, 통계·지역·기관은 통째로', (t) => {
+test('② 수도권 밖 사업과 딸린 행(식별자·위치·단지·이벤트·호수·공고 연결·검토)은 없다(2026-10-19 결정 — 원장 사업은 HOME 수도권만) · 공고·원천의 비HOME 행은 HEAD 행에서 수도권 밖 시군구 공고만 빠진 그대로, 통계·지역·기관은 통째로', (t) => {
   let head;
   try { head = Object.fromEntries(TABLES.map((x) => { try { return [x, JSON.parse(execFileSync('git', ['show', `HEAD:schemas/ledger-2026-10/tables/${x}.json`], { cwd: ROOT, maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'ignore'] }).toString()).rows]; } catch { return [x, null]; } })); } catch { return t.skip('git 없음'); }
-  const capIds = (rows) => new Set(rows.filter((p) => isCap(p.sgg_code)).map((p) => p.local_project_id));
-  const capHead = capIds(head.projects), capNow = capIds(saved.projects);
+  /* 2026-10-19 수도권 한정: 비수도권 행은 '변경 전과 같다'가 아니라 '없다'(convert --sidos, home-source.js keepSido) */
+  assert.ok(saved.projects.length > 0 && saved.projects.every((p) => isCap(p.sgg_code)), 'projects: 모두 수도권');
+  const cap = new Set(saved.projects.map((p) => p.local_project_id));
+  for (const x of ['identifiers', 'project_locations', 'complexes', 'events', 'units', 'notice_links']) assert.ok(saved[x].every((r) => cap.has(r.local_project_id)), `${x}: 수도권 사업 몫만`);
+  assert.ok(saved.review_required.every((r) => (r.local_project_id ? cap.has(r.local_project_id) : r.source_ref.startsWith(H.HOME_PREFIX)) && String(r.record_key).split('|').every((k) => !/^PRJ-/.test(k) || cap.has(k))), 'review_required: 수도권 사업 또는 HOME 원천 행만');
   const lines = (rows) => rows.map((r) => JSON.stringify(r));
-  const own = (rows, cap) => rows.filter((r) => !cap.has(r.local_project_id));
-  for (const x of ['projects', 'identifiers', 'project_locations', 'complexes', 'events', 'units', 'notice_links']) {
-    const pick = (rows, cap) => (x === 'projects' ? rows.filter((p) => !isCap(p.sgg_code)) : own(rows, cap));
-    assert.deepEqual(lines(pick(saved[x], capNow)), lines(pick(head[x], capHead)), x);
-  }
-  const review = (rows, cap) => rows.filter((r) => !cap.has(r.local_project_id) && !String(r.record_key).split('|').some((k) => cap.has(k)) && !r.source_ref.startsWith(H.HOME_PREFIX));
-  assert.deepEqual(lines(review(saved.review_required, capNow)), lines(review(head.review_required, capHead)), 'review_required');
   const reg = (rows) => rows.map((r) => (r.source_ref === 'housing-wave-registry' ? { ...r, data_as_of: null } : r));   // 레지스트리 원천의 기준일 = registry.updatedAt(HOME 발급으로 바뀐다)
   /* HOME 행(source_ref home-dump-<판>)은 판마다 갈아끼우므로 빼고 본다 — 새 판이면 판 이름이 바뀐다 */
   const notHome = (rows) => rows.filter((r) => !String(r.source_ref).startsWith(H.HOME_PREFIX));
-  for (const x of ['notices', 'sources']) { const h = notHome(head[x]); assert.deepEqual(lines(reg(notHome(saved[x]).slice(0, h.length))), lines(reg(h)), `${x}: HEAD 행이 그대로 앞에`); }
-  assert.ok(saved.notices.slice(head.notices.length).every((n) => n.source_ref.startsWith(H.HOME_PREFIX)) && saved.sources.slice(head.sources.length).every((s) => s.source_ref.startsWith(H.HOME_PREFIX)), '뒤에 붙은 것은 HOME 공고·원천뿐');
+  const kept = (n) => !n.sgg_code || isCap(n.sgg_code);   // 수도권 밖 시군구 공고는 뺀다(시군구 없는 공고는 남긴다)
+  assert.deepEqual(lines(notHome(saved.notices)), lines(notHome(head.notices).filter(kept)), 'notices: HEAD 의 비HOME 공고 중 수도권 밖 시군구만 빠진 그대로');
+  assert.deepEqual(lines(reg(notHome(saved.sources))), lines(reg(notHome(head.sources))), 'sources: HEAD 행 그대로(원천 메타는 사업이 아니다)');
   for (const x of ['stat_facts', 'areas', 'agencies']) assert.equal(lines(saved[x]).join('\n'), lines(head[x]).join('\n'), x);
 });
 
-test('③ 전국 = 시도 합(종합상황판 ledger-board.json 과 지도 색인): 사업·호수·판정·정상·주의·지연', () => {
+test('③ 수도권 = 시도 합(종합상황판 ledger-board.json 과 지도 색인): 사업·호수·판정·정상·주의·지연', () => {
   const L = require('../../data/board/ledger-board.json');
   const sum = (f) => L.regions.reduce((s, r) => s + f(r), 0);
   assert.equal(sum((r) => r.projects), L.scope.projects);
@@ -133,7 +130,8 @@ test('③ 전국 = 시도 합(종합상황판 ledger-board.json 과 지도 색�
   for (const r of L.regions) assert.equal(rows.filter((x) => Object.keys(M.bySgg).find((k) => M.bySgg[k].includes(x)).slice(0, 2) === r.code).length, r.projects, r.code);
   const live = saved.projects.filter((p) => !p.superseded_by);
   assert.equal(L.scope.projects, live.length);
-  assert.ok(L.scope.bySource.home > 0 && L.scope.coverage === 'NATIONWIDE');
+  assert.ok(L.scope.bySource.home > 0 && L.scope.coverage === 'CAPITAL');   // 2026-10-19 수도권 한정: 사업이 모두 수도권 HOME → coverage CAPITAL(전엔 건축HUB 전국 후보가 있어 NATIONWIDE)
+  assert.deepEqual(L.regions.map((r) => r.code), CAP, '시도는 사업이 있는 서울·인천·경기만');
 });
 
 test('④ 수도권 사업 수 = HOME 사업 중 시군구가 정해진 것(같은 시도·지구·블록은 한 사업), 같은 블록 두 사업 0, 시군구 미정은 검토 목록', { skip: SKIP }, () => {
@@ -267,7 +265,7 @@ test('지도 계약: 사업 행의 done = 실제 준공(ACTUAL COMPLETION) 중 �
     const m = e.event_date ? e.event_date.slice(0, 7) : e.event_month ?? `${e.event_year}-12`;
     if (!last.has(e.local_project_id) || last.get(e.local_project_id) < m) last.set(e.local_project_id, m);
   }
-  assert.ok(rows.filter((r) => 'done' in r).length > 100);
+  assert.equal(rows.filter((r) => 'done' in r).length, rows.filter((r) => last.has(r.id)).length);   // 2026-10-19 수도권 한정: HOME 사업에는 준공 실제가 없어 0행(전엔 건축HUB 후보 100건 넘게)
   for (const r of rows) assert.equal(r.done, last.get(r.id), r.id);
   const t = loadTables(), m = mapIndexFromLedger(t, { referenceDate: M.referenceDate, observedMonth: M.observedMonth, lhBlocks: loadLhBlocks() });
   assert.deepEqual(m, M);

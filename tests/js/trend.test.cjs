@@ -95,8 +95,18 @@ test('이력 파일: 2025-01~2026-09 소급 행(한 줄에 하나), 판은 editi
   assert.deepEqual(L.trend.slice(0, -1), loadHistory().filter((r) => r.month < L.observedMonth));
   const own = L.trend[L.trend.length - 1];
   assert.deepEqual([own.month, own.basis, own.edition, own.referenceDate], [L.observedMonth, 'OBSERVED', ED, L.referenceDate]);
-  if (own.month === '2026-10') assert.deepEqual(own.addedSources, ['건축물대장', '청약홈', 'HUG', 'LH 공고 상세'], '2026-10 은 단계별 원천을 처음 판정에 쓴 달(부동산원·K-apt·마이홈 단지는 식별자뿐이라 판정에 안 쓴다)');
+  /* 2026-10-19 수도권 한정: 단계별 원천 행은 모두 비수도권 사업 몫이라 빠졌고(수도권은 HOME), 판정 사업이 단계별 원천을 쓰지 않아 원천 추가 표지가 없다(전엔 건축물대장·청약홈·HUG·LH 공고 상세) */
+  if (own.month === '2026-10') assert.equal(own.addedSources, undefined);
   assert.deepEqual([own.ok, own.caution, own.delay, own.delayByStage, own.cautionByStage, own.judged], [L.judgment.ok, L.judgment.caution, L.judgment.delay, L.delayByStage, L.cautionByStage, L.scope.judged]);
+});
+
+test('소급 범위·뜻: HOME 판이 있는 달 폴더면 원장과 같은 수도권(11·28·41)으로 소급하고(2026-10-19 결정), 소급 행은 번호 없는 대용량 후보도 판정에 넣는다(candidate 칸 없음 = 화면의 후보 포함 소급)', () => {
+  const ctx = T.loadContext();
+  assert.deepEqual(ctx.base.sidos, ['11', '28', '41']);
+  const t = { projects: [{ local_project_id: 'A', issued_at: null, source_ref: 'hub-bulk-hs-2026-08' }, { local_project_id: 'B', issued_at: null, source_ref: 'datagokr-15141761' }, { local_project_id: 'C', issued_at: '2026-10-14', source_ref: 'home-dump-x' }] };
+  assert.deepEqual(T.withCandidates(t).projects.map((p) => p.issued_at), ['BACKFILL', null, '2026-10-14'], '대용량 후보만 판정에 넣는다(LH 후보는 예전처럼 판정 밖)');
+  const h = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/board/judgment-history.json'), 'utf8'));
+  assert.ok(h.rows.filter((r) => r.basis === 'BACKFILL').every((r) => !('candidate' in r)), '소급 행에는 candidate 칸이 없다');
 });
 
 test('boardFromLedger: 이력 중 관측 달과 그 뒤 행은 버리고 이번 달 판정 행을 붙인다, 이력이 없으면 trend 는 한 행', () => {

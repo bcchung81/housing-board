@@ -46,7 +46,8 @@ test('② 요약 표 단계 3줄 합 = 큰 숫자(sumOf): 모든 시도·시군�
   for (const r of IX.regions) { const s = ctx.stageSums(D, r.codes); assert.equal(s.length, 3); assert.equal(s[0] + s[1] + s[2], ctx.sumOf(D, r.codes).u, r.label); }
   assert.deepEqual(plain(ctx.STAGE3), ['준비 중', '짓는 중', '모집 끝남']);
   /* 단계 모드 지도 값의 합 = 시도 띠 칸 */
-  for (const sd of ['41', '11', '28', '26']) for (let i = 0; i < 3; i++) assert.equal(Object.values(ctx.modeValues(D, IX, sd, { k: 's', i })).reduce((a, b) => a + b, 0), ctx.stageSums(D, IX.regionOf[sd].codes)[i], `${sd} 단계 ${i}`);
+  /* 2026-10-19 수도권 한정: 부산(26)은 색인에 없어 시도 셋만 */
+  for (const sd of ['41', '11', '28']) for (let i = 0; i < 3; i++) assert.equal(Object.values(ctx.modeValues(D, IX, sd, { k: 's', i })).reduce((a, b) => a + b, 0), ctx.stageSums(D, IX.regionOf[sd].codes)[i], `${sd} 단계 ${i}`);
   /* 화면 연결: 단계 줄 = stageSums, 큰 숫자 = sum(r.codes)(전체 모드) — 같은 보는 곳 r */
   assert.match(fnBody('bandHtml'), /const t = sum\(r\.codes\);[\s\S]*const S3 = stageSums\(D, r\.codes\), top = topStage\(S3\);[\s\S]*S3\.map\(\(u, i\) =>/);
   assert.match(fnBody('headHtml'), /const t = sum\(r\.codes\), name = nameOf\(r\);[\s\S]*const u = m\.k === 'all' \? t\.u : modeOf\(D, r\.codes, m\)/);
@@ -152,7 +153,7 @@ test('⑤ 배치: 1440 에서 지도 카드 약 74%(72~75%), 마크업·휴대�
   assert.match(CSS, /\.mapc \{ position: relative; display: grid; grid-template-rows: minmax\(0, 1fr\);/, '지도 카드 = 몸통 한 줄(무대 + 시간 띠 | 레일)');
   assert.doesNotMatch(TPL, /mapc-h|id="sband"|\.sband|\.sb \{/, '머리 띠·6단계 띠 없음'); assert.match(CSS, /\.tband \{ display: flex; align-items: center; gap: var\(--s2\); height: 44px;/);
   assert.match(CSS, /\.tchips \{[^}]*min-width: 0;[^}]*overflow-x: auto;/, '해 칸이 넘치면 띠 안에서만 밀린다(390 가로 넘침 없음)');
-  assert.doesNotMatch(TPL.replace(/\/\*[\s\S]*?\*\//g, ''), /ui-hud|hud-col|class="facts"|\.facts/, '카드 안 판·상태 칸 없음');
+  assert.doesNotMatch(TPL.replace(/\/\*[\s\S]*?\*\//g, '').replace('mapcard ui-hud in', ''), /ui-hud|hud-col|class="facts"|\.facts/, '카드 안 판·상태 칸 없음 (2026-10-19: 지도 위 사업 카드 .mapcard 의 ui-hud 만 예외)');
   assert.match(fnBody('renderMapCard'), /\$\('#mapc'\)\.innerHTML = `<div class="mapc-b\$\{cap \? '' : ' nomap'\}">\$\{bodyH\}<\/div>`;/, '지도 카드 = 몸통만');
   assert.match(fnBody('tbandHtml'), /const bm = bigMap\(VIEW\.sd, VIEW\.viewKey\);[\s\S]*<span class="tctl">\$\{play\}\$\{rot\}\$\{bm \? `<span class="tmap">\$\{bm\}<\/span>` : ''\}<\/span>/, '큰 지도 = 시간 띠 오른쪽 단추 묶음(보는 곳 기준 주소)');
   /* 미리보기는 옅게(.pv) — 큰 숫자·요약 구역 */

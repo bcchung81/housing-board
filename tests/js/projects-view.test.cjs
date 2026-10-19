@@ -32,13 +32,16 @@ test('두 파일은 지금 원장 표에서 다시 만든 것과 바이트가 �
   assert.equal(IDX.referenceDate, MAP.referenceDate, '지도 색인과 같은 기준일');
 });
 
-test('목록 행 = 원장의 살아 있는 사업 전부(대체 10·숨김 55 제외), 발급 278 · 후보 2,039', () => {
-  assert.equal(rows.length, 2317);
+test('목록 행 = 원장의 살아 있는 사업 전부(대체 10·숨김 71 제외), 발급 262 · 후보 0 — 모두 수도권', () => {
+  // 2026-10-19 수도권 한정: 목록 2,317 → 262 (비수도권 후보 2,039 제거·광산 4·나주 12 숨김 → 발급 278 → 262, 숨김 55 → 71, 대체 10 그대로)
+  assert.equal(rows.length, 262);
+  assert.ok(rows.every((r) => ['11', '28', '41'].includes(r.sgg.slice(0, 2))), '원장 사업은 모두 서울·인천·경기');
   assert.equal(new Set(rows.map((r) => r.id)).size, rows.length);
   const gone = new Set(REG.filter((p) => p.supersededBy || p.hiddenAt).map((p) => p.id));
-  assert.equal(gone.size, 65);
+  assert.equal(gone.size, 81);
   assert.ok(rows.every((r) => !gone.has(r.id)), '대체·숨김 사업은 목록에 없다');
-  assert.equal(rows.filter((r) => r.issued).length, 278);
+  assert.equal(rows.filter((r) => r.issued).length, 262);
+  assert.equal(rows.filter((r) => !r.issued).length, 0, '번호 없는 후보 0');
   const live = new Set(REG.filter((p) => !p.supersededBy && !p.hiddenAt).map((p) => p.id));
   assert.ok(rows.filter((r) => r.issued).every((r) => live.has(r.id)), '발급 행 = 살아 있는 레지스트리 사업');
   assert.deepEqual(Object.keys(DET.projects).sort(), rows.filter((r) => r.issued).map((r) => r.id).sort(), '상세 자료는 발급 사업만');
@@ -77,15 +80,15 @@ test('거르기 읽기·주소: 맞지 않는 값은 거르지 않고, 렌즈는
   /* 기관·상태·단계가 함께 걸린다 */
   const g = { agency: 'lh', status: 'check', stage: 2 };
   assert.ok(V.applyFilters(rows, g).every((r) => r.agency === 'lh' && ['caution', 'delay'].includes(r.cls) && r.board === 2));
-  assert.deepEqual(['lh', 'sh', 'gh', 'etc'].map((a) => V.applyFilters(rows, { agency: a }).length), [269, 24, 4, 2020], '기타 = 기관 미연결(지자체·국방부 포함)');
+  assert.deepEqual(['lh', 'sh', 'gh', 'etc'].map((a) => V.applyFilters(rows, { agency: a }).length), [129, 24, 4, 105], '기타 = 기관 미연결(지자체·국방부 포함) — 2026-10-19 수도권 한정: 269·2020 → 129·105 (비수도권 후보 제거, 합 262)');
 });
 
 test('상태: 지연 중 경과 12개월 이상은 장기 지연, 점검 필요 = 번호 있는 사업의 주의·지연·장기 지연(지연 개월 큰 순), 번호 없는 후보는 확인 필요(D3)', () => {
   const n = (s) => rows.filter((r) => V.statusOf(r) === s).length;
-  assert.deepEqual(['ok', 'caution', 'delay', 'long', 'review', 'none'].map(n), [165, 2, 0, 2, 1839, 309]);
+  assert.deepEqual(['ok', 'caution', 'delay', 'long', 'review', 'none'].map(n), [165, 2, 0, 2, 0, 93]);   // 2026-10-19 수도권 한정: 확인 필요 1,839 → 0, 판정 없음 309 → 93 (후보 제거·숨긴 광산·나주 발급 16 제외)
   assert.equal(n('delay') + n('long'), BOARD.judgment.delay.projects, '지연 + 장기 지연 = 보드 판정 지연');
   assert.equal(n('caution'), BOARD.judgment.caution.projects);
-  assert.equal(n('review'), BOARD.scope.candidateJudged, '확인 필요 = 보드의 후보 계산 건수');
+  assert.equal(n('review'), BOARD.scope.candidateJudged, '확인 필요 = 보드의 후보 계산 건수(둘 다 0)');
   const chk = V.listOrder(V.applyFilters(rows, { status: 'check' }), { status: 'check' });
   assert.equal(chk.length, 4);
   /* 번호가 있는 사업 먼저, 후보 사업은 뒤(2026-10-15 결정) — 그 안에서 지연 개월 큰 순 */
@@ -99,7 +102,7 @@ test('상태: 지연 중 경과 12개월 이상은 장기 지연, 점검 필요 
   assert.ok(all.every((r, i) => i === 0 || (!!all[i - 1].issued >= !!r.issued && (!sameGroup(all[i - 1], r) || (V.overdueMonthsOf(all[i - 1]) ?? -1) >= (V.overdueMonthsOf(r) ?? -1)))), '목록 기본 순서 = 번호 있는 사업 먼저, 그 안에서 예정일 경과 개월 큰 순(후보끼리도 같은 계산 순, 경과 없는 사업은 뒤)');
 });
 
-test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 달성 24.2%(r4-screens 1) · ③ 착공 1,666호 · 지연 2건(확인 필요 후보 313 따로, D3) · 인천 · 앞으로 12개월 준공 214,975호(= 종합상황판 향후 12개월)', () => {
+test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → 달성 24.2%(r4-screens 1) · ③ 착공 1,666호 · 지연 2건(확인 필요 후보 없음, D3) · 인천 · 앞으로 12개월 준공 13,372호(= 종합상황판 향후 12개월)', () => {
   const q = Q({});
   assert.deepEqual(Object.keys(q), ['9·7 대책 목표 대비', '어디서 막혀 있는가', '어떤 사업이 늦어지는가', '어디를 먼저 챙기는가', '앞으로 얼마나 공급되는가'], '첫 칸 범위(전국 · 정책 진행 자료)는 정책 목표 카드 머리의 범위 칩에');
   const a = q['9·7 대책 목표 대비'];
@@ -107,11 +110,11 @@ test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → �
   for (const x of Object.values(q)) assert.ok(x.help && !/policy-progress|samePeriod|HOME|원장/.test(x.help), `ⓘ 정의는 쉬운 말: ${x.q}`);
   assert.match(a.tip, /담당자 추정 포함\(확인과 따로\): ①계획 5,789호/, '추정 포함은 title 에만');
   assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['③ 착공', '병목 · 지연(장기 포함) 1,666호', '/projects?sido=all&stage=2&status=late']);
-  assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['2', '지연 6~12개월 0 · 장기 12개월+ 2 · 확인 필요(후보) 313', '/projects?sido=all&status=late'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로, 확인 필요(후보)는 머리 숫자 밖');
+  assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['2', '지연 6~12개월 0 · 장기 12개월+ 2', '/projects?sido=all&status=late'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로. 2026-10-19 수도권 한정: 후보 0이라 확인 필요(후보) 꼬리 없음');
   assert.deepEqual([q['어디를 먼저 챙기는가'].value, q['어디를 먼저 챙기는가'].sub, q['어디를 먼저 챙기는가'].href], ['인천', '지연·주의 2,890호', '/projects?sido=28']);
   const up = BOARD.upcoming.reduce((s, x) => ({ units: s.units + x.units, projects: s.projects + x.projects }), { units: 0, projects: 0 });
   assert.deepEqual([q['앞으로 얼마나 공급되는가'].value, q['앞으로 얼마나 공급되는가'].sub, q['앞으로 얼마나 공급되는가'].href], [up.units.toLocaleString('en-US'), `앞으로 12개월 · 준공 예정 · ${up.projects}건`, '/region?sido=all']);
-  assert.equal(up.units, 214975);
+  assert.equal(up.units, 13372);   // 2026-10-19 수도권 한정: 앞으로 12개월 214,975 → 13,372호 (24건)
 });
 
 test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·주의 2) · 인천 2,890호 · 13,372호 24건 / 1·29 는 목표가 없어 정상 비율 / 시도를 고르면 시군구', () => {
@@ -131,9 +134,9 @@ test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·
 test('단계 파이프라인: 이 단계까지 온 사업(현재 단계 기준 누적, D4 — ①계획 = 전체)이 있는 칸만 열고 나머지는 접은 한 칸 — 전체 ⑥만, 9·7 ⑤⑥, 1·29 ②~⑥', () => {
   const p = (f) => V.pipelineOf(V.applyFilters(rows, f, 'stage'));
   const all = p({});
-  assert.deepEqual(all.open.map((c) => [c.i, c.n]), [[0, 2317], [1, 2174], [2, 938], [3, 744], [4, 382]]);
-  assert.deepEqual(all.shut, [5]);
-  assert.equal(all.total, 2317);
+  assert.deepEqual(all.open.map((c) => [c.i, c.n]), [[0, 262], [1, 119], [2, 107], [3, 36]]);   // 2026-10-19 수도권 한정: 2,317·2,174·938·744·382 → 262·119·107·36, ⑤ 준공 칸은 이 단계까지 온 사업이 없어 접힘
+  assert.deepEqual(all.shut, [4, 5]);
+  assert.equal(all.total, 262);
   assert.equal(all.open[0].units, rows.reduce((s, r) => s + r.units, 0), '①은 범위 전체');
   const p97 = p({ policy: pol('97') });
   assert.deepEqual([p97.open.map((c) => [c.i, c.n, c.units]), p97.shut, p97.total], [[[0, 141, 129771], [1, 106, 72966], [2, 104, 71267], [3, 35, 24468]], [4, 5], 141]);
@@ -208,10 +211,11 @@ test('서랍이 열 것(?id=): 발급 사업 → 그 사업, 대체된 옛 id �
   assert.ok(sup.length > 0);
   for (const p of sup) assert.deepEqual(V.drawerTarget(p.id, REG, has), { kind: 'detail', id: p.supersededBy, from: { id: p.id, name: p.name } }, p.id);
   const hid = REG.filter((p) => p.hiddenAt && !p.supersededBy);
-  assert.equal(hid.length, 55);
+  assert.equal(hid.length, 71);   // 2026-10-19 수도권 한정: 숨김 55 → 71 (광산 4·나주 12 추가)
   for (const p of hid) assert.equal(V.drawerTarget(p.id, REG, has).kind, 'hidden', p.id);
-  const cand = rows.find((r) => !r.issued);
-  assert.equal(V.drawerTarget(cand.id, REG, has), null, '발급 전 후보는 임시 번호라 서랍을 열지 않는다');
+  // 2026-10-19 수도권 한정: 원장에 후보 행이 없어 임시 후보 번호(CAND-…)로 확인한다
+  assert.ok(rows.every((r) => r.issued), '원장 행은 모두 발급 사업');
+  assert.equal(V.drawerTarget('CAND-28245-0001', REG, has), null, '발급 전 후보는 임시 번호라 서랍을 열지 않는다');
   for (const x of ['PRJ-0000-0001', 'x', '']) assert.equal(V.drawerTarget(x, REG, has), null, x);
 });
 
@@ -262,7 +266,8 @@ test('숨김 사업 안내: 한 줄 + 이유는 title, 덤프 판 번호·내부
     const n = V.hiddenNote(p.hiddenAt, p.hiddenReason);
     assert.equal(n.text, `${p.hiddenAt.replace(/-/g, '.')}부터 목록에서 뺀 사업입니다 · 대신할 사업 없음`);
     assert.doesNotMatch(n.title, /데이터-정제|절 \d|\d{8}T\d{6}Z/, p.id);
-    assert.ok(IDX.sgg[p.sgg], `${p.id}: 시군구 ${p.sgg} 이름이 있다`);
+    // 2026-10-19 수도권 한정: 색인 시군구 이름은 수도권만 — 숨긴 광산·나주(12·46)는 이름 없이 코드로 안내
+    assert.ok(IDX.sgg[p.sgg] || !['11', '28', '41'].includes(p.sgg.slice(0, 2)), `${p.id}: 수도권 시군구 ${p.sgg} 이름이 있다`);
   }
   assert.equal(V.hiddenNote('2026-10-14', 'HOME 덤프 20261013T140241Z 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)').title, 'HOME 자료에 대응 사업이 없다(수도권은 HOME 이 정본)');
 });

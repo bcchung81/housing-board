@@ -35,7 +35,7 @@ const inputs = loadInputs({
   national,
   stage: readStageInput(stageFileOf(BASE)),
 });
-const rebuilt = HAVE_HOME ? convert({ ...inputs, home: HOME.readHome(HOME_DIR), homeIds: read('mappings/home-ids.json'), report: {} }) : null;
+const rebuilt = HAVE_HOME ? convert({ ...inputs, home: HOME.readHome(HOME_DIR), homeIds: read('mappings/home-ids.json'), sidos: HOME.HOME_SIDO, report: {} }) : null;   // 2026-10-19 수도권 한정: 저장된 표 = monthly.js convertArgs(--sidos 11,28,41)
 const preReport = {};
 const pre = convert({ ...inputs, report: preReport });
 const BULK = `hub-bulk-hs-${ED}`, MYHOME = 'myhome-hwspr02', LH_NOTICE = 'datagokr-15058530', MOVE_IN = 'datagokr-15111714';
@@ -45,7 +45,7 @@ test('저장된 2026-10 기준 표 18개(HOME 표 policy_targets·area_facts 포
   assert.deepEqual(validate(saved), []);
 });
 
-test('같은 입력(법정동코드·LH 매핑·건축HUB 스냅샷·건축HUB 대용량·후보 id 매핑·전국 공고·입주예정·단계별 원천·HOME 판·HOME id 매핑)으로 다시 만들면 저장된 표와 같다', { skip: !HAVE_HOME && 'HOME 원본(jsonl.gz) 없음 — Storage 에서 받거나 tools/ledger/home-dump.py' }, () => {
+test('같은 입력(법정동코드·LH 매핑·건축HUB 스냅샷·건축HUB 대용량·후보 id 매핑·전국 공고·입주예정·단계별 원천·HOME 판·HOME id 매핑·수도권 범위)으로 다시 만들면 저장된 표와 같다', { skip: !HAVE_HOME && 'HOME 원본(jsonl.gz) 없음 — Storage 에서 받거나 tools/ledger/home-dump.py' }, () => {
   for (const [table, rows] of Object.entries(rebuilt)) {
     assert.equal(rows.length, saved[table].length, table);
     rows.forEach((r, i) => { if (JSON.stringify(r) !== JSON.stringify(saved[table][i])) assert.deepEqual(saved[table][i], r, `${table}[${i}]`); });   // 큰 표의 deepEqual 실패 출력이 느려 다른 행만 비교한다

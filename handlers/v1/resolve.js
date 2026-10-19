@@ -23,6 +23,7 @@ const { createKeyPool, fileStore, memoryStore, KeyPoolError } = require('../../l
 const { createCache, defaultDir } = require('../../lib/cache.js');
 const { createStan } = require('../../lib/stan.js');
 const codes = require('../../lib/codes.js');
+const scope = require('../../lib/scope.js');
 const { readCoverage } = require('../../lib/coverage.js');   // 시군구 코드 → 번들(코드 검색 API 와 공용)
 const Projects = require('../../lib/projects.js');
 const { readRegistry } = require('../../lib/registry.js');
@@ -129,6 +130,7 @@ function createHandler(overrides = {}) {
     const asked = codes.classify(input);
     if (!asked.ok) return problem(res, 400, 'invalid-code', '코드 형식이 맞지 않습니다', asked.detail, { reason: asked.reason }, 'public, s-maxage=3600');
     if (given[0] !== 'code' && given[0] !== asked.type) return problem(res, 400, 'invalid-code', '코드 종류가 다릅니다', `${given[0]}= 에 ${asked.type} 코드가 왔습니다`, { reason: 'type-mismatch' }, 'public, s-maxage=3600');
+    if (!scope.nonCapitalAllowed(env) && asked.type !== 'project' && !scope.inCapitalSido(asked.sido)) return scope.denyScope(problem, res, asked.sido);   // 2026-10-19 수도권 한정
     if (asked.type === 'sido') return problem(res, 422, 'unsupported-level', '시도 단위는 지도 대상이 아닙니다', '시군구(5자리) 이하 코드를 쓰세요', undefined, 'public, s-maxage=3600');
     /* 사업 id: 레지스트리에서 사업의 위치를 찾아 그 위치(필지 → 법정동 → 시군구)의 코드로 아래 해석을 그대로 한다. 위치는 사업이 갖고 있어 요청이 정하지 못한다 */
     let c = asked, proj = null;
@@ -139,6 +141,7 @@ function createHandler(overrides = {}) {
       const at = hit.project.pnus[0] || hit.project.bjdCodes[0] || hit.project.sgg;
       c = codes.classify(at);
       if (!c.ok || c.type === 'sido') return problem(res, 502, 'upstream', '사업 레지스트리의 위치가 맞지 않습니다', '관리자에게 알려 주세요');   // 검사를 통과한 레지스트리에서는 일어나지 않는다
+      if (!scope.nonCapitalAllowed(env) && !scope.inCapitalSido(c.sido)) return scope.denyScope(problem, res, c.sido);   // 2026-10-19 수도권 한정: 사업 위치의 시도로 다시 본다(숨긴 광산·나주 사업 id 등)
     }
 
     const wantGeometry = params.has('geometry') ? params.get('geometry') !== '0' : c.type !== 'sgg';

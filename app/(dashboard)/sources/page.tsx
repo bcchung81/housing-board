@@ -33,6 +33,8 @@ import type { Source } from '@/lib/board/types';
 import { GRID_DENSE, dotDates, type Col, type Detail, type Row } from '@/lib/grid/spec';
 
 export const metadata: Metadata = { title: '데이터 원본' };
+/* 지역 지도 번들: 공개 지역만(광산·나주는 preview — 2026-10-19 결정: 화면은 수도권만, scripts/build.js·lib/coverage.js 와 같은 규칙) */
+const REGIONS = regionIndex.regions.filter((r) => r.visibility === 'public');
 
 const H3 = 'mt-5 mb-1 text-base font-normal';   // 기타 탭 안의 구역 제목
 /* 기타 탭 표의 표지 뜻: 머리 줄 범례 칩(뜻은 title) */
@@ -118,7 +120,7 @@ function bundleCounts() {
   const counts = { projects: 0, buildings: 0, context: 0, infra: 0, infraRegions: 0, permits: 0, zones: 0 };
   const rec: Record<'projects' | 'buildings' | 'context' | 'infra' | 'permits' | 'zones', Rec[]> = { projects: [], buildings: [], context: [], infra: [], permits: [], zones: [] };
   const arr = (d: Record<string, unknown>, k: string) => (Array.isArray(d[k]) ? d[k] as Rec[] : []);
-  for (const { slug } of regionIndex.regions) {
+  for (const { slug } of REGIONS) {
     const read = (name: string): Record<string, unknown> => {
       try { return JSON.parse(readFileSync(path.join(process.cwd(), 'regions', slug, `${name}.json`), 'utf8')); } catch { return {}; }
     };
@@ -169,7 +171,7 @@ export default async function SourcesPage() {
   const bundles = bundleCounts();
   const req = requirementsJson as unknown as RequirementsDoc, hs = homeSources as HomeSources;
   const editionDay = `${req.edition.slice(0, 4)}.${req.edition.slice(4, 6)}.${req.edition.slice(6, 8)}`;   // 덤프 시각 '20261014T102506Z'(UTC) — 한국 날짜도 같은 날
-  const regions = regionIndex.regions.length;
+  const regions = REGIONS.length;
   const nameOf = (id: string) => ITEMS.find((i) => i.id === id)!.name;
   const missing = (screen: 'board' | 'map') => ITEMS.filter((i) => SCREEN_USAGE[i.id][screen].startsWith('필요')).map((i) => i.name);
 
@@ -213,7 +215,7 @@ export default async function SourcesPage() {
     schedule: { count: { na: '없음' }, scope: null },
     'hub-ap': { count: held(bundles.permits, '허가'), scope: '계양' },
     'agency-input': { count: { na: '없음' }, scope: null },
-    'lh-completion': { count: held(lhLocal, '블록'), scope: `계양 (전국 ${fmt(blockCount(lh.blocks))}블록 중)` },
+    'lh-completion': { count: held(lhLocal, '블록'), scope: `계양 (수도권 ${fmt(blockCount(lh.blocks))}블록 중)` },
     stan: { count: cached('stan', 'place'), scope: '전국' },
     newschool: { count: cached('eduinfo'), scope: '전국' },
     'school-zone': { count: held(bundles.zones, '구역'), scope: '계양' },
@@ -257,7 +259,7 @@ export default async function SourcesPage() {
   const PROCESSED: Record<string, string> = { 'molit-permit-monthly': '인허가_월별누계', 'molit-start-monthly': '착공_월계', 'molit-complete-monthly': '준공_월계', 'molit-sale-apt': '분양_공동주택', 'molit-permit-annual': '인허가_지역별_연간' };
   const DETAIL: Record<string, Detail | undefined> = {
     directives: detailOf(items.map((x) => ({ id: x.id, dataset: x.dataset, provider: x.provider, count: x.count, sourceAsOf: x.sourceAsOf, collectedAt: x.collectedAt?.slice(0, 10) })), 'data/board/sources.json'),
-    actual: detailOf(molitRecs, 'data/board/molit.json · 전국'),
+    actual: detailOf(molitRecs, 'data/board/molit.json · 수도권'),
     ribbon: detailOf(ledger.months.map((ym, i) => ({ 월: ym, ...Object.fromEntries(K.map((k, j) => [`${CIR[j]} ${k}`, ledger.stageUnits[i][j]])) })), 'data/board/ledger-board.json · stageUnits'),
     snap: detailOf(ledger.overdue as unknown as Rec[], 'data/board/ledger-board.json · overdue'),
     region: detailOf(ledger.regions as unknown as Rec[], 'data/board/ledger-board.json · regions'),
@@ -350,7 +352,7 @@ export default async function SourcesPage() {
       <Links hs={hs} />
       <Fold title="원천 카탈로그" meta={`단계별 데이터 연계 · 화면별 사용 · 추가 확보 필요 ${acqOpen.length}건 · 보관 데이터셋 ${items.length}건`} className="mt-0">
       <section id="stage-links" aria-labelledby="h-stage" className="scroll-mt-20">
-        <PanelHead id="h-stage" title="단계별 데이터 연계" scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 사업 원장(전국)·통계누리(전국)·지역 지도 자료를 그대로 센 값" />} />
+        <PanelHead id="h-stage" title="단계별 데이터 연계" scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 사업 원장(수도권)·통계누리(수도권)·지역 지도 자료를 그대로 센 값" />} />
         <StageLinks stages={stages} extra={(
       <div id="etc">
         <p className={`${legend} m-0 justify-end text-sm`} aria-label="표지" title="수집 건수 = 보관 레코드 + 로컬 캐시(.cache) 응답 레코드">

@@ -35,9 +35,10 @@ test('수도권만: 서울·인천·경기 밖은 범위에 들어오지 않는�
   assert.deepEqual(['11', '28', '41'].map(P.parsePublicSido), ['11', '28', '41']);
   const all = R.aheadAll(calendar, 'metro', sidoName);
   assert.ok(all.length > 0 && all.every((e) => ['11', '28', '41'].includes(e.sd)));
-  assert.ok(Object.keys(calendar.sido).length > 3, '자료에는 수도권 밖이 있지만 화면 범위는 걸러진다');
+  // 2026-10-19 수도권 한정: region-calendar 시도 16 → 3 이라 자료에도 수도권 밖이 없다
+  assert.deepEqual(Object.keys(calendar.sido).sort(), ['11', '28', '41'], '자료의 시도가 서울·인천·경기뿐');
   assert.doesNotMatch(PAGE, /sido=all|전국/);
-  // 시도 순위의 기준은 전국 16곳이지만 화면 칩은 서울·경기·인천뿐
+  // 화면 칩은 서울·경기·인천뿐
   assert.match(PAGE, /const CHIPS = \['11', '41', '28'\]/);
 });
 

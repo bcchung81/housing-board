@@ -13,6 +13,7 @@
    시험: tests/js/terrainapi.test.cjs */
 'use strict';
 const { createCache, defaultDir } = require('../../lib/cache.js');
+const scope = require('../../lib/scope.js');
 
 const UPSTREAM = 'https://s3.amazonaws.com/elevation-tiles-prod/terrarium';
 const MAX_Z = 14;
@@ -45,12 +46,12 @@ function createHandler(overrides = {}) {
     budget.used += 1;
     return true;
   };
-  const problem = (res, status, code, title, detail) => {
+  const problem = (res, status, code, title, detail, extra, cc) => {
     res.statusCode = status;
     res.setHeader('Content-Type', 'application/problem+json; charset=utf-8');
-    res.setHeader('Cache-Control', status === 404 ? 'public, s-maxage=86400' : status >= 500 || status === 429 ? 'no-store' : 'public, s-maxage=60');
+    res.setHeader('Cache-Control', cc || (status === 404 ? 'public, s-maxage=86400' : status >= 500 || status === 429 ? 'no-store' : 'public, s-maxage=60'));
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.end(JSON.stringify({ type: `/problems/${code}`, title, status, code, detail }));
+    res.end(JSON.stringify(Object.assign({ type: `/problems/${code}`, title, status, code, detail }, extra)));
   };
 
   return async function terrain(req, res) {
@@ -60,6 +61,7 @@ function createHandler(overrides = {}) {
     const [z, x, y] = ['z', 'x', 'y'].map((k) => (/^\d{1,6}$/.test(q.get(k) || '') ? Number(q.get(k)) : NaN));
     if (extra.length || ![z, x, y].every(Number.isInteger)) return problem(res, 400, 'invalid-query', '잘못된 요청', 'z·x·y 정수만 받습니다');
     if (z > MAX_Z || x >= 2 ** z || y >= 2 ** z || !inKorea(z, x, y)) return problem(res, 400, 'out-of-range', '범위 밖 타일', `한국 범위의 z 0~${MAX_Z} 타일만 중계합니다`);
+    if (!scope.nonCapitalAllowed(env) && !scope.overlapsCapital(lonOf(x, z), latOf(y + 1, z), lonOf(x + 1, z), latOf(y, z))) return scope.denyScope(problem, res);   // 2026-10-19 수도권 한정(낮은 배율 타일은 겹쳐 허용)
 
     const key = `terrain:${z}/${x}/${y}`;
     let b64 = cache.get(key);

@@ -6,6 +6,22 @@ export const METRICS: Metric[] = ['permit', 'start', 'sale', 'complete'];   // 6
 export const ACTORS: Actor[] = ['지자체', 'LH', '주택업체', '민간'];
 export const ACTOR_NOTE = '공공(지자체·LH·주택업체)과 민간으로 나눈 시행주체별 호수입니다. 네 분류의 합이 총계입니다.';
 
+/* 화면 범위 = 수도권(2026-10-19 사용자 결정: 원장·화면은 서울·인천·경기 HOME 만). 원본 molit.json·lh-completion.json·Supabase 값은 전국 그대로 두고 화면에 넘길 때 줄인다 */
+export const CAPITAL = ['11', '28', '41'];
+export const CAPITAL_NAME = '수도권';
+/* 통계누리: 합계 자리(NATION '00')를 세 시도 합으로 바꾸고 시도 목록을 [수도권, 서울, 인천, 경기]로. 세 시도 중 빈 달(null)이 있으면 그 달 합도 null */
+export function capitalMolit(m: Molit): Molit {
+  const add = (xs: (number | null)[][]) => xs[0].map((_, i) => (xs.some((x) => x[i] === null || x[i] === undefined) ? null : xs.reduce((n, x) => n + (x[i] as number), 0)));
+  const sum = (ss: Series[]): Series => ({ total: add(ss.map((x) => x.total)), ...(ss[0].actors ? { actors: Object.fromEntries((Object.keys(ss[0].actors) as Actor[]).map((a) => [a, add(ss.map((x) => x.actors?.[a] ?? x.total.map(() => null)))])) as Record<Actor, (number | null)[]> } : {}) });
+  const metrics = Object.fromEntries(Object.entries(m.metrics).map(([k, v]) => [k, { ...v, series: { [NATION]: sum(CAPITAL.map((c) => v.series[c])), ...Object.fromEntries(CAPITAL.map((c) => [c, v.series[c]])) } }])) as unknown as Molit['metrics'];
+  return { ...m, sido: [{ code: NATION, name: CAPITAL_NAME }, ...m.sido.filter((x) => CAPITAL.includes(x.code))], metrics };
+}
+/* LH 준공예정: 수도권 블록만(건수 = 행 수, 호수 = 합) */
+export function capitalLh(lh: LhData): LhData {
+  const blocks = lh.blocks.filter((b) => CAPITAL.includes(b.sido));
+  return { ...lh, blocks, count: blocks.length, units: blocks.reduce((n, b) => n + b.units, 0) };
+}
+
 export const fmt = (n: number | null | undefined) => (n === null || n === undefined ? '–' : n.toLocaleString('en-US'));
 export const ymDot = (ym: string) => ym.replace('-', '.');
 export const monthLabel = (ym: string) => `${ym.slice(0, 4)}년 ${Number(ym.slice(5))}월`;

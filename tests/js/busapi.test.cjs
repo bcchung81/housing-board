@@ -15,7 +15,7 @@ function harness(over = {}) {
   const calls = [];
   const clock = { t: 1_000_000 };
   const fetchImpl = over.fetch || (async () => resp(ok([item('인천73아1091', '126.7', 37.5, 7, '가정류장')])));
-  const env = over.env || { DATA_GO_KR_KEY: KEY };
+  const env = over.env || { DATA_GO_KR_KEY: KEY, NON_CAPITAL_LIVE: '1' };   // 2026-10-19 수도권 한정: 수도권 밖은 NON_CAPITAL_LIVE=1 일 때만
   const now = () => clock.t;
   const pool = createKeyPool({ env, now, store: memoryStore() });
   const handler = bus.createHandler({

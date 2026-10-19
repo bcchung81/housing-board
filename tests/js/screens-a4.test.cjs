@@ -104,7 +104,8 @@ test('3 날짜 점 표기: 그리드 칸·설명 줄은 하이픈 날짜를 점�
 test("4 지연 세 번 표시: 목록·인쇄의 현재 예정은 '경과' 꼬리표 없이 옅게(경과는 title), 간단 보기는 꼬리표 유지", () => {
   /* 경과 개월은 번호 있는 사업(지연 열 판정 색)과 후보(지연 열 옅게, D3) 모두 같은 계산 overdueMonthsOf */
   const late = rows.filter((r) => V.overdueMonthsOf(r) !== null);
-  assert.ok(late.length > 300);
+  // 2026-10-19 수도권 한정: 경과 계산 사업 > 300 → 4 (후보 313 이 비수도권이라 빠지고 주의 2·지연 2 만 남음)
+  assert.equal(late.length, 4);
   for (const r of late) {
     const c = L.nextCell(r);
     assert.equal(c.tag, V.dateAltOf(r)?.text, r.id); assert.equal(c.muted, true); assert.match(c.title, /경과 \d+개월/);   // 꼬리표는 원천 날짜 다름(D2)만
@@ -190,17 +191,21 @@ test('B 기본 정렬: 번호 있는 사업 먼저, 후보 사업은 모두 뒤(
   const all = V.listOrder(V.applyFilters(rows, {}));
   assert.equal(all.length, V.applyFilters(rows, {}).length);
   assert.ok(all[0].issued, '첫 행은 번호 있는 사업');
-  const firstCand = all.findIndex((r) => !r.issued);
+  // 2026-10-19 수도권 한정: 원장에 후보(번호 없는 사업)가 0건이라 실제 목록은 전부 번호 있는 사업. 후보 순서 규칙은 후보 행을 섞은 가상 목록으로 본다
+  assert.ok(all.every((r) => r.issued), '원장 행은 모두 번호 있는 사업');
+  const fake = [...rows.slice(0, 3).map((r, i) => ({ ...r, id: `C${i}`, issued: false })), ...rows.slice(3, 6)];
+  const mixed = V.listOrder(V.applyFilters(fake, {}));
+  const firstCand = mixed.findIndex((r) => !r.issued);
   assert.ok(firstCand > 0);
-  assert.ok(all.slice(firstCand).every((r) => !r.issued), '후보 행은 모든 번호 있는 사업 뒤');
-  const cands = all.slice(firstCand);
+  assert.ok(mixed.slice(firstCand).every((r) => !r.issued), '후보 행은 모든 번호 있는 사업 뒤');
+  const cands = mixed.slice(firstCand);
   assert.ok(cands.every((r, i) => i === 0 || (V.overdueMonthsOf(cands[i - 1]) ?? -1) >= (V.overdueMonthsOf(r) ?? -1)), '후보끼리는 기존 순서(같은 계산의 경과순)');
-  assert.ok(cands.some((r) => V.overdueMonthsOf(r) !== null), '원천 예정일이 지난 후보가 있다');
   assert.ok(cands.every((r) => V.lateOf(r) === null), '후보는 지연 개월(판정)이 없다 — 확인 필요(D3)');
   const q = Object.fromEntries(V.questionsOf(rows, {}, ctx).map((x) => [x.q, x]));
   assert.equal(q['어떤 사업이 늦어지는가'].value, '2', '지연 건수 = 번호 있는 사업만(D3)');
   assert.equal(rows.filter((r) => ['delay', 'long'].includes(V.statusOf(r))).length, 2);
-  assert.equal(rows.filter((r) => V.statusOf(r) === 'review' && r.cls === 'delay').length, 313, '옛 315 = 2 + 확인 필요(후보) 313');
+  // 2026-10-19 수도권 한정: 확인 필요(후보) 313 → 0 (후보가 모두 비수도권이었음)
+  assert.equal(rows.filter((r) => V.statusOf(r) === 'review' && r.cls === 'delay').length, 0, '확인 필요(후보) 0');
   /* 열 머리 정렬은 그리드가 따로(listOrder 는 기본 순서만) · CSV 는 같은 순서 */
   assert.match(read('app/(dashboard)/projects/csv/route.ts'), /listOrder\(applyFilters\(idx\.rows, f\)\)/);
 });

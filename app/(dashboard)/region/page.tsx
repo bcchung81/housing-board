@@ -19,7 +19,7 @@ import { getBoardData } from '@/lib/board/data';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '@/lib/board/metro-overview';
 import { mapScopeHref } from '@/lib/board/map-href';
 import ScopeChip from '@/components/ui/scope-chip';
-import { AHEAD_KIND, CAL_KINDS, CAL_TYPE, PAST_DUE, aheadAll, aheadKindTip, inSgg, isDefaultKinds, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
+import { AHEAD_KIND, CAL_KINDS, CAL_TYPE, METRO, PAST_DUE, aheadAll, aheadKindTip, inSgg, isDefaultKinds, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
 import { getProjectsIndex } from '@/lib/board/projects-index';
 import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '@/lib/board/projects-view';
 import type { Metric } from '@/lib/board/types';
@@ -30,27 +30,27 @@ const calendar = calendarJson as unknown as CalendarDoc;
 const regionMap = mapJson as unknown as RegionMapDoc;
 const annual = annualJson as unknown as AnnualDoc;
 const facts = areaFactsJson as AreaFactsDoc;
-/* 시도 칩 순서(행정 순, 2026-07부터 광주·전남은 '전남광주' 12) */
-const ORDER = ['11', '26', '27', '28', '12', '30', '31', '36', '41', '51', '43', '44', '52', '47', '48', '50'];
+/* 시도 칩: 서울·인천·경기(2026-10-19 결정 — 화면은 수도권만, 전국 칩 없음) */
+const ORDER = METRO;
 const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
-const AHEAD_TIP = '대표 = 준공 예정(사업 화면·종합상황판·지도 개요와 같은 값) · 모집·입주는 종류 칩으로 더해 봄 · 사업 원장의 현재 예정(모집공고·준공·입주) · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌 · 막대 한 조각 = 사업 하나(높이 = 호수, 전국은 종류별로 묶음) · 지도 원 넓이 = 호수(지도는 서울·인천·경기만) · 예정일은 계획이라 바뀔 수 있고 청약 자격은 모집공고에서 확인';
+const AHEAD_TIP = '대표 = 준공 예정(사업 화면·종합상황판·지도 개요와 같은 값) · 모집·입주는 종류 칩으로 더해 봄 · 사업 원장의 현재 예정(모집공고·준공·입주) · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌 · 막대 한 조각 = 사업 하나(높이 = 호수) · 지도 원 넓이 = 호수(지도는 서울·인천·경기만) · 예정일은 계획이라 바뀔 수 있고 청약 자격은 모집공고에서 확인';
 const LINKA = 'text-foreground underline-offset-[3px] hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
 type Q = { sido?: string; m?: string; kind?: string; metric?: string; sgg?: string };
 
 /* 지역 공급(옛 우리 동네 + 공급 실적): 지역 칩 → ① 앞으로 12개월 → ② 지난 공급 실적 → ③ 동네 여건(서울·인천·경기만). 선택은 모두 주소(?sido=&m=&kind=&metric=&sgg=)에 남는다(sgg = 지도에서 고른 시군구 — 칩을 누르면 풀린다).
-   지역: 처음 열면 수도권(서울·인천·경기 — ?sido 없음), ?sido=all 전국, ?sido=NN 시도 하나. 머리 줄에 같은 범위의 사업 화면(점검 필요) 연결.
+   지역: 처음 열면 수도권(서울·인천·경기 — ?sido 없음, 옛 ?sido=all 도 수도권), ?sido=NN 시도 하나. 머리 줄에 같은 범위의 사업 화면(점검 필요) 연결.
    시안: docs/design/home-concept/region.html. 9.4 국민 예측가능성 지시(F-09)·연도별 실적(F-05)·전국↔시도(F-01) */
 export default async function RegionPage({ searchParams }: { searchParams: Promise<Q> }) {
   const q = await searchParams;
   const { molit } = await getBoardData();
   const short = Object.fromEntries(molit.sido.map((s) => [s.code, s.name]));
   const sidoName = (c: string) => short[c] ?? c;
-  /* 지역: 'metro'(기본) · ''(전국 ?sido=all) · 'NN' */
-  const sido = q.sido && ORDER.includes(q.sido) ? q.sido : q.sido === 'all' ? '' : 'metro';
+  /* 지역: 'metro'(기본 — 옛 ?sido=all·수도권 밖 코드도) · 'NN'(서울·인천·경기) */
+  const sido = q.sido && ORDER.includes(q.sido) ? q.sido : 'metro';
   const metric = parseMetric(q.metric);
   const kinds = parseKinds(q.kind);
-  const name = sido === 'metro' ? '수도권' : sido ? sidoName(sido) : '전국';
+  const name = sido === 'metro' ? '수도권' : sidoName(sido);
   /* 시군구 거르기(?sgg=<지도 면 코드>, 서버가 거른다): 앞으로 12개월(달별 막대·고른 달 목록·합계·종류 칩 건수)과 사업 화면 연결이 그 시군구만. 구가 있는 시는 구를 합친다.
      지난 공급 실적·동네 여건은 시도 단위 자료뿐이라 그대로(머리에 '시도 단위 자료' 표지) */
   const sgg = parseSgg(regionMap, sido, SGG_TABLE, q.sgg);
@@ -102,7 +102,6 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
       <ChipBar label="지역">
         <ChipGroup label="범위" className="[&>span:first-child]:sr-only">
           <Chip href={href({ sido: 'metro' })} on={sido === 'metro'} title="서울·인천·경기(처음 열 때 범위)">수도권</Chip>
-          <Chip href={href({ sido: '' })} on={!sido}>전국</Chip>
         </ChipGroup>
         <ChipSep />
         <ChipGroup label="시도" className="[&>span:first-child]:sr-only">
@@ -123,7 +122,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
             <dl>
               <dt>{AHEAD_COMPLETION}</dt><dd>대표 숫자 — 준공 현재 예정이 {ymDot(months[0])}~{ymDot(months[11])}인 사업(이미 준공 실제가 있으면 뺌) · 사업 화면·종합상황판·지도 개요와 같은 값</dd>
               <dt>{AHEAD_KIND.SUPPLY_NOTICE} · {AHEAD_KIND.MOVE_IN} 칩</dt><dd>같은 기간 모집공고·입주 예정을 더해 봄(종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌) · 앞으로 12개월 입주 예정은 종합상황판 &apos;⑥입주&apos;(지금 입주 단계인 사업)와 다름</dd>
-              <dt>달별 막대</dt><dd>막대 한 조각 = 사업 하나(높이 = 호수, 전국은 종류별로 묶음) · 위 숫자 = 그 달 호수, 아래 = 건수 · 고른 칩의 종류만 쌓음</dd>
+              <dt>달별 막대</dt><dd>막대 한 조각 = 사업 하나(높이 = 호수) · 위 숫자 = 그 달 호수, 아래 = 건수 · 고른 칩의 종류만 쌓음</dd>
               <dt>{PAST_DUE}</dt><dd>예정 날짜가 원장 기준일보다 앞섰는데 실제 기록이 아직 없는 항목 — 표지만 달고 건수·호수 합계에는 넣음</dd>
               <dt>(후보) {CAND_NAME}</dt><dd>사업 번호가 아직 없는 사업 — 누르면 간단 보기</dd>
               <dt>키보드</dt><dd>달 막대는 ←→ 로 옮기고, 지도 원은 Tab 으로 들어가 ←→ 로 옮긴 뒤 Enter 로 그 사업을 고릅니다</dd>

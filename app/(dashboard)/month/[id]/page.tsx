@@ -9,7 +9,7 @@ import StageKpis from '@/components/StageKpis';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { DataGrid } from '@/components/ui/data-grid';
-import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, lhOfMonth, lhUnits, staleText, ymDot } from '@/lib/board/calc';
+import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, sidoName, lhOfMonth, lhUnits, staleText, ymDot } from '@/lib/board/calc';
 import { getBoardData } from '@/lib/board/data';
 import { getProjectsIndex } from '@/lib/board/projects-index';
 import { dateAltOf, dayText, isMetro, statusLabel } from '@/lib/board/projects-view';
@@ -50,7 +50,7 @@ export default async function MonthPage({ params }: Props) {
   const blockTotal = new Set(blocks.map((b) => `${b.district}|${b.block}`)).size;   // 파일 한 행은 블록×공급유형 — 고유 블록으로 센다
   const idx = await getProjectsIndex();
   const past = ym < idx.observedMonth;   // 지난 달의 예정은 실제로 준공했는지 모른다
-  /* 원장 그 달 준공 예정(전국): 종합상황판 '앞으로 12개월' 그 달 막대·지역 공급 준공 예정과 같은 건수·호수 */
+  /* 원장 그 달 준공 예정(원장 범위 — 수도권): 종합상황판 '앞으로 12개월' 그 달 막대·지역 공급 준공 예정과 같은 건수·호수 */
   const due = monthDue(calendar, ym), dueUnits = due.reduce((n, e) => n + e.units, 0);
   const byId = new Map(idx.rows.map((r) => [r.id, r]));
   const sidoShort = (c: string) => molit.sido.find((x) => x.code === c)?.name;
@@ -67,13 +67,13 @@ export default async function MonthPage({ params }: Props) {
   const last = lastMonth(molit);
   const nb = actual ? neighborMonths(molit, ym) : { prev: allMonths[allMonths.indexOf(ym) - 1] ?? null, next: allMonths[allMonths.indexOf(ym) + 1] ?? null };
   const table = actual ? monthTable(molit, ym) : [];
-  const nation = table.find((r) => r.code === NATION);
+  const nation = table.find((r) => r.code === NATION), area = sidoName(molit, NATION) ?? '전국';   // 범위 이름(통계누리 합계 자리 — 수도권, lib/board/data.ts)
   const i = molit.months.indexOf(ym);
   const lhStale = staleText(lh.sourceAsOf, calendar.referenceDate);   // LH 파일 낡음 표지(원장 기준일과의 차이 — 기관 화면과 같은 기준)
   return (
     <Page>
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: monthLabel(ym) }]} title={monthLabel(ym)}
-        tip={actual ? `전국·시도별 인허가·착공·모집·준공 호수와 시행주체별 호수${due.length ? ', 원장 준공 예정 사업' : ''}${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. ${due.length ? '원장 준공 예정 사업' : ''}${due.length && blocks.length ? '과 ' : ''}${blocks.length ? 'LH 준공 예정 블록' : ''}만 있습니다.`}>
+        tip={actual ? `${area}·시도별 인허가·착공·모집·준공 호수와 시행주체별 호수${due.length ? ', 원장 준공 예정 사업' : ''}${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. ${due.length ? '원장 준공 예정 사업' : ''}${due.length && blocks.length ? '과 ' : ''}${blocks.length ? 'LH 준공 예정 블록' : ''}만 있습니다.`}>
         {actual ? <Badge variant="ok" title="통계누리 실적이 있는 달">실적</Badge> : <Badge title="실적 자료가 없는 달 — 준공 예정만">예정</Badge>}
         {actual && isProvisional(molit, ym) ? <Badge variant="warn" title="통계누리가 잠정치로 낸 달입니다. 확정치는 2027년 9월 공표 예정">잠정</Badge> : null}
         <nav aria-label="이웃 달" className="ml-auto flex gap-4">
@@ -84,16 +84,16 @@ export default async function MonthPage({ params }: Props) {
 
       {actual && nation ? (
         <>
-          <StageKpis when="전국" cells={Object.fromEntries(METRICS.map((k) => [k, { value: k === 'permit' && nation.values[k] === null ? <Dash why="자료가 이 달부터라 월 흐름을 알 수 없음" /> : fmt(nation.values[k]) }]))} />
+          <StageKpis when={area} cells={Object.fromEntries(METRICS.map((k) => [k, { value: k === 'permit' && nation.values[k] === null ? <Dash why="자료가 이 달부터라 월 흐름을 알 수 없음" /> : fmt(nation.values[k]) }]))} />
 
           <Card render={<section aria-label="시도별" />}>
-            <PanelHead title="시도별" tip="호 · 통계누리 주택건설실적통계. 2026.07부터 '전남광주'로 집계되고 이전 달은 광주+전남 합산입니다. 인허가는 연초 누계의 차분입니다."><SrcLink /></PanelHead>
+            <PanelHead title="시도별" tip="호 · 통계누리 주택건설실적통계. 인허가는 연초 누계의 차분입니다."><SrcLink /></PanelHead>
             <DataGrid label={`${monthLabel(ym)} 시도별 호수`} cols={[{ key: 'name', label: '시도', kind: 'text' }, ...METRICS.map((k) => ({ key: k, label: metricBoardLabel(k) }))]}
-              rows={table.map((r) => ({ id: r.code, pin: r.code === NATION ? 'top' : undefined, c: { name: r.code === NATION ? '전국' : { text: r.name, href: `/region?sido=${r.code}` }, ...r.values } }))} />
+              rows={table.map((r) => ({ id: r.code, pin: r.code === NATION ? 'top' : undefined, c: { name: r.code === NATION ? area : { text: r.name, href: `/region?sido=${r.code}` }, ...r.values } }))} />
           </Card>
 
           <Card render={<section aria-label="시행주체별" />}>
-            <PanelHead title="시행주체별" tip="전국 · 호 · ④ 모집은 시행주체 구분이 없습니다. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다." />
+            <PanelHead title="시행주체별" tip={`${area} · 호 · ④ 모집은 시행주체 구분이 없습니다. 지자체·LH·주택업체는 공공, 민간은 민간부문입니다.`} />
             <DataGrid label={`${monthLabel(ym)} 시행주체별 호수`} cols={[{ key: 'actor', label: '시행주체', kind: 'text' }, ...ACT_KS.map((k) => ({ key: k, label: metricBoardLabel(k) }))]}
               rows={[
                 ...ACTORS.map((a) => ({ id: a, c: { actor: { text: a, swatch: ACTOR_COLOR[a] }, ...Object.fromEntries(ACT_KS.map((k) => [k, seriesOf(molit, k, NATION).actors![a][i]])) } })),
@@ -105,9 +105,9 @@ export default async function MonthPage({ params }: Props) {
 
       {due.length ? (
         <Card render={<section aria-label="준공 예정 사업" />}>
-          <PanelHead title="준공 예정 사업" tip={`사업 원장 ${ymDot(calendar.observedMonth)} · 준공 실제가 없는 사업의 준공 현재 예정(사업당 하나) · 전국 · 종합상황판 '앞으로 12개월'·지역 공급의 준공 예정과 같은 자료·같은 값 · 날짜는 HOME 정본, LH 파일 날짜가 다르면 '원천 날짜 다름' · 예정일 지남 = 원장 기준일(${dotDates(calendar.referenceDate)})보다 앞섰는데 실제 기록 없음(합계에 포함)`}>
+          <PanelHead title="준공 예정 사업" tip={`사업 원장 ${ymDot(calendar.observedMonth)} · 준공 실제가 없는 사업의 준공 현재 예정(사업당 하나) · ${area} · 종합상황판 '앞으로 12개월'·지역 공급의 준공 예정과 같은 자료·같은 값 · 날짜는 HOME 정본, LH 파일 날짜가 다르면 '원천 날짜 다름' · 예정일 지남 = 원장 기준일(${dotDates(calendar.referenceDate)})보다 앞섰는데 실제 기록 없음(합계에 포함)`}>
             <span className={`${sub} tabular-nums`}>{fmt(due.length)}건 · {fmt(dueUnits)}호 · 원장 {dotDates(calendar.referenceDate)}</span>
-            <PanelLink href={`/region?sido=all&m=${ym}`} full={`지역 공급에서 ${monthLabel(ym)} 준공 예정 보기(전국)`}>지역 공급</PanelLink>
+            <PanelLink href={`/region?sido=all&m=${ym}`} full={`지역 공급에서 ${monthLabel(ym)} 준공 예정 보기(${area})`}>지역 공급</PanelLink>
           </PanelHead>
           <DataGrid label={`${monthLabel(ym)} 준공 예정 사업`} cols={DUE_COLS} rows={dueRows} quietCount />
         </Card>

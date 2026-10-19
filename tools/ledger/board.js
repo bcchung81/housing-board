@@ -30,6 +30,7 @@ const LH_SOURCE = 'datagokr-15141761';
 const BULK_PREFIX = 'hub-bulk-hs-';   // 건축HUB 주택인허가 전국 대용량(tools/ledger/hub-bulk.js), 뒤에 자료 달
 const HOME_PREFIX = 'home-dump-';     // HOME 덤프(tools/ledger/home-source.js), 뒤에 덤프 시각(-원천 접미). 수도권(11·28·41) 사업의 정본
 const isHome = (ref) => ref.startsWith(HOME_PREFIX);
+const CAPITAL = ['11', '28', '41'];   // 수도권(서울·인천·경기) — home-source.js HOME_SIDO 와 같다
 const FIRST_MONTH = '2025-01', LAST = 45;   // 보드 시점 0 … 45
 const JUDGE = { cautionMonths: 1, delayMonths: 6 };
 /* 물량 종류 우선순위: 사업에 있는 첫 종류만 쓴다(기준이 다른 물량은 더하지 않는다) */
@@ -180,7 +181,8 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
   const byStageNow = (c) => { const v = [0, 0, 0, 0, 0, 0]; for (const x of judged) if (x.cls === c) v[x.stages[now]] += x.units; return v; };
   const counts = (xs) => { const ys = xs.filter((x) => x.issued); return { ok: ys.filter((x) => x.cls === 'ok').length, caution: ys.filter((x) => x.cls === 'caution').length, delay: ys.filter((x) => x.cls === 'delay').length }; };
 
-  const regions = tables.areas.filter((a) => a.level === 'SIDO').sort((a, b) => a.area_code.localeCompare(b.area_code)).map((a) => {
+  /* 시도: 원장에 사업이 있는 시도만(2026-10-19 — 원장이 수도권 HOME 만이면 서울·인천·경기 3곳) */
+  const regions = tables.areas.filter((a) => a.level === 'SIDO' && projects.some((x) => x.p.sgg_code.slice(0, 2) === a.area_code)).sort((a, b) => a.area_code.localeCompare(b.area_code)).map((a) => {
     const xs = projects.filter((x) => x.p.sgg_code.slice(0, 2) === a.area_code);
     const ys = xs.filter((x) => x.issued), cs = xs.filter((x) => x.cls && !x.issued);
     return { code: a.area_code, name: a.area_name, projects: xs.length, units: sum(xs), judged: ys.filter((x) => x.cls).length, ...counts(xs), delayUnits: sum(ys.filter((x) => x.cls === 'delay')), cautionUnits: sum(ys.filter((x) => x.cls === 'caution')),
@@ -200,7 +202,8 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
   const bundle = noAgency.filter((x) => x.p.source_ref.startsWith('bundle-'));
   const privateCount = bundle.filter((x) => x.p.public_scope === 'PRIVATE_ON_PUBLIC_LAND').length;
   const bundleText = `지역 번들 ${bundle.length}건${privateCount ? `(공공택지 민간 ${privateCount})` : ''}`;
-  agencies.push(agencyRow('unknown', UNKNOWN_AGENCY, noAgency, `시행 기관 미연결: 건축HUB ${hubCount.toLocaleString('en-US')}건 · ${bulkCount ? `건축HUB 전국 후보 ${bulkCount.toLocaleString('en-US')}건 · ` : ''}${homeCount ? `수도권 HOME ${homeCount.toLocaleString('en-US')}건 · ` : ''}${bundleText}`));
+  const unknownParts = [hubCount ? `건축HUB ${hubCount.toLocaleString('en-US')}건` : '', bulkCount ? `건축HUB 전국 후보 ${bulkCount.toLocaleString('en-US')}건` : '', homeCount ? `수도권 HOME ${homeCount.toLocaleString('en-US')}건` : '', bundle.length ? bundleText : ''].filter(Boolean);   // 0건인 원천은 적지 않는다
+  agencies.push(agencyRow('unknown', UNKNOWN_AGENCY, noAgency, noAgency.length ? `시행 기관 미연결: ${unknownParts.join(' · ')}` : '원장에 사업 없음'));
 
   /* 향후 12개월 준공 예정: 준공 실제 기록이 없는 사업의 현재 예정 준공 하나(원천 순위)를 그 사업의 준공 달로 본다 */
   const upcoming = months.slice(now, now + 12).map((ym) => ({ ym, units: 0, projects: 0 }));
@@ -234,7 +237,8 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
     judge: { ...JUDGE, dataAsOf, rule: `발급 사업(건축HUB 스냅샷)은 착공·준공 예정 경과를 판정하고, 건축HUB 대용량 후보는 사용검사(준공) 예정 경과만 계산한다(착공 실제일 기록이 약 7% 뿐이라 착공 예정 경과는 자료 누락이 많다). 판정 건수는 사업 번호가 있는 사업만 세고, 번호가 없는 후보는 같은 계산을 '확인 필요(후보)'로 따로 센다. LH 후보는 판정하지 않는다.${homeProjects ? ' 수도권(서울·인천·경기) 사업은 HOME 덤프가 정본이고 착공·준공 예정 경과를 판정한다.' : ''}` },
     scope: {
       projects: projects.length, issued: projects.length - candidates.length, candidates: candidates.length, judged: judged.length, candidateJudged: candJudged.length, units: sum(projects),
-      coverage: bulkCandidates ? 'NATIONWIDE' : 'PARTIAL',   // 건축HUB 전국 대용량을 실었으면 전국(수도권은 HOME 덤프로 바꿔도 전국 — 시도 합 = 전국)
+      /* 건축HUB 전국 대용량을 실었으면 전국(수도권은 HOME 덤프로 바꿔도 전국 — 시도 합 = 전국), 사업이 모두 수도권 HOME 이면 수도권(2026-10-19 결정 — convert --sidos 11,28,41) */
+      coverage: bulkCandidates ? 'NATIONWIDE' : homeProjects && projects.every((x) => CAPITAL.includes(x.p.sgg_code.slice(0, 2))) ? 'CAPITAL' : 'PARTIAL',
       /* 원천별 사업 수(합 = projects): 발급(HOME 밖) · LH 후보 · 건축HUB 후보 · 수도권 HOME(발급 여부와 상관없이) */
       bySource: { issued: projects.filter((x) => x.issued && !x.home).length, lhCandidates, hubBulkCandidates: bulkCandidates, ...(homeProjects ? { home: homeProjects } : {}) },
       sido: new Set(projects.map((x) => x.p.sgg_code.slice(0, 2))).size,

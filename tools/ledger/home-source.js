@@ -799,11 +799,30 @@ function replaceSido(t, home, { sidos = HOME_SIDO, registry } = {}) {
   return report;
 }
 
+/* ---------- 수도권 밖 빼기(2026-10-19 사용자 결정: 원장 사업은 HOME 수도권만) ---------- */
+/* t(convert 의 표, 고친다): 시도 sidos 밖 사업과 그 사업에 딸린 행(단지·식별자·위치·이벤트·호수·공고 연결·검토)을 뺀다. id 발급(assignHomeIds)과 수도권 교체(replaceSido) 뒤에
+   부르므로 수도권 행은 그대로(순서도)다. 검토 행 중 사업이 없는 행은 HOME 원천 것만 남긴다(나머지는 시군구를 모르는 비HOME 원천 행). 공고는 시군구가 수도권 밖이고
+   남은 연결이 가리키지 않는 것만 뺀다(시군구가 없는 공고 — LH 목록·HOME 공고 — 는 남긴다). 지역(areas)·통계(stat_facts)·원천(sources)은 사업이 아니라 그대로 둔다 */
+function keepSido(t, { sidos = HOME_SIDO } = {}) {
+  const inside = (code) => sidos.includes(String(code).slice(0, 2));
+  const before = Object.fromEntries(Object.entries(t).map(([k, v]) => [k, v.length]));
+  const bySource = {};
+  for (const p of t.projects.filter((x) => !inside(x.sgg_code))) bySource[p.source_ref] = (bySource[p.source_ref] ?? 0) + 1;
+  t.projects = t.projects.filter((p) => inside(p.sgg_code));
+  const kept = new Set(t.projects.map((p) => p.local_project_id));
+  for (const name of ['complexes', 'identifiers', 'project_locations', 'events', 'units', 'notice_links']) t[name] = t[name].filter((r) => kept.has(r.local_project_id));
+  t.review_required = t.review_required.filter((r) => (r.local_project_id ? kept.has(r.local_project_id) : String(r.source_ref).startsWith(HOME_PREFIX))
+    && String(r.record_key).split('|').every((k) => !/^PRJ-\d{5}-\d{4}$/.test(k) || kept.has(k)));
+  const linked = new Set(t.notice_links.map((l) => `${l.notice_system}|${l.notice_id}`));
+  t.notices = t.notices.filter((n) => !n.sgg_code || inside(n.sgg_code) || linked.has(`${n.notice_system}|${n.notice_id}`));
+  return { sidos, removedProjects: before.projects - t.projects.length, bySource, removed: Object.fromEntries(Object.entries(t).map(([k, v]) => [k, before[k] - v.length]).filter(([, n]) => n > 0)) };
+}
+
 /* ---------- 레지스트리 발급(scripts/issue-projects.js --home) ---------- */
 /* 원장 표(convert --home --out 의 결과)의 HOME 사업을 레지스트리에 발급·갱신하고, 수도권의 다른 발급 사업을 HOME 사업으로 대체(supersededBy)하거나 숨긴다(hiddenAt).
    대응 규칙(근거 rule): LH_BLOCK — LH 준공예정 매핑(lh-block-sgg.json)이 그 레지스트리 사업에 붙인 지구·블록의 BLK 키가 HOME 매핑에 있음,
      NAME_BLOCK — 사업 이름(통째 또는 첫 낱말을 지구로)에서 읽은 지구·블록의 BLK 키가 HOME 매핑에 있음. 대응이 없으면 숨김(id 는 남겨 /project/<id> 가 안내로 열린다 — 정제 계획 6절 3).
-   이번 판에 없는 HOME 발급 사업도 숨긴다. 레지스트리를 바꾸지 않고 { registry, issued, updated, superseded, hidden } 을 돌려준다 */
+   이번 판에 없는 HOME 발급 사업과 수도권 밖 발급 사업(2026-10-19 결정)도 숨긴다. 레지스트리를 바꾸지 않고 { registry, issued, updated, superseded, hidden } 을 돌려준다 */
 function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
   const reg = JSON.parse(JSON.stringify(registry));
   reg.counters ??= {};
@@ -868,9 +887,11 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
     } else if (p.supersededBy) out.superseded.push({ from: p.id, name: p.name ?? null, into: p.supersededBy, rule: 'KEPT', key: null });
     else hide(p, `HOME 덤프 ${edition} 에 대응 사업이 없다(수도권은 HOME 이 정본 — 데이터-정제-계획 6절 3)`);
   }
+  /* 수도권 밖 발급 사업(광산·나주 번들 등): 원장에 행이 없으니 숨긴다(id 는 남긴다 — 2026-10-19 결정: 원장 사업은 HOME 수도권만) */
+  for (const p of reg.projects.filter((x) => !isHomeEntry(x) && !HOME_SIDO.includes(x.sgg.slice(0, 2)) && !x.supersededBy)) hide(p, '수도권만 제공(2026-10-19 결정 — 원장 사업은 HOME 수도권만)');
   reg.projects.sort((a, b) => byStr(a.id, b.id));
   reg.updatedAt = today;
   return { registry: reg, ...out };
 }
 
-module.exports = { programKey, officerTerms, scrubKinds, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, issueHome, serialOf };
+module.exports = { programKey, officerTerms, scrubKinds, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, keepSido, issueHome, serialOf };

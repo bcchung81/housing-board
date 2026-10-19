@@ -24,6 +24,7 @@ const { VWORLD_ADDRESS_URL, VWORLD_SEARCH_URL, vworldCreds, redactVworld } = req
 const { createStan } = require('../../../lib/stan.js');
 const { readCoverage } = require('../../../lib/coverage.js');
 const codes = require('../../../lib/codes.js');
+const scope = require('../../../lib/scope.js');
 
 const MIN_Q = 2;
 const MAX_Q = 60;
@@ -81,6 +82,9 @@ function createService(overrides = {}) {
   };
   const problem = (res, status, code, title, detail, extra, cc) => send(res, status, Object.assign({ type: `/problems/${code}`, title, status, code, detail }, extra),
     cc || (status >= 500 || status === 429 ? 'no-store' : 'public, s-maxage=60'), 'application/problem+json; charset=utf-8');
+
+  /* 2026-10-19 수도권 한정: 수도권 밖 후보는 응답에서 뺀다(오류가 아니라 빈 목록). 후보 code 는 표준코드(사업 id 는 PRJ-<시군구5>) */
+  const inScope = (it) => { if (scope.nonCapitalAllowed(env)) return true; const c = codes.classify(it.code); return c.ok && scope.inCapitalSido(c.sido); };
 
   /* ---------- 후보 만들기 ---------- */
   const tierOf = (kind, sgg) => (coverageOf()[sgg] ? 'bundle' : kind === 'sgg' ? 'edge' : 'req');
@@ -212,7 +216,7 @@ function createService(overrides = {}) {
       const r = await codeItems(digits);
       meta.sources.push('행정표준코드');
       if (r.reason) { meta.reason = r.reason; meta.detail = r.detail; }
-      return { items: r.items.slice(0, limit), meta };
+      return { items: r.items.filter(inScope).slice(0, limit), meta };
     }
     const creds = vworldCreds(env), wantVw = !!creds.key, wantAddr = wantVw && /\d/.test(q);
     const [names, addr, places] = await Promise.allSettled([nameRows(q), wantAddr ? addressItems(q, creds) : Promise.resolve([]), wantVw ? placeItems(q, near, creds) : Promise.resolve([])]);
@@ -229,7 +233,7 @@ function createService(overrides = {}) {
     if (names.status === 'fulfilled') { for (const r of names.value.slice(0, placeList.length ? 4 : limit)) add(rowItem(r)); meta.sources.push('행정표준코드'); }
     for (const it of placeList) add(it);
     if (places.status === 'fulfilled' && wantVw) meta.sources.push('V-World 장소');
-    return { items: items.slice(0, limit), meta };
+    return { items: items.filter(inScope).slice(0, limit), meta };
   }
 
   const handler = async function handler(req, res) {

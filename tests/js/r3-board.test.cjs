@@ -47,7 +47,7 @@ test("2 기간·단위: 진척 관리 '착공 누계'(기간 2026년 1~8월은 (
   assert.equal(DIR[0].t, '진척 관리');
   assert.equal(DIR[0].pre, '착공 누계');
   assert.equal(DIR[0].note, undefined);
-  assert.match(DIR[0].basis, /^통계누리 전국 착공 2026년 1~8월 누계/);
+  assert.match(DIR[0].basis, /^통계누리 수도권 착공 2026년 1~8월 누계/);   // 2026-10-19 수도권 한정: 통계누리 범위 '전국' → '수도권'(합계 자리 = 서울+인천+경기)
   assert.equal(C.ytdSpan('2026', 8), '2026.01~08 누계');
   assert.doesNotMatch(board, /x\.tag|x\.note/, '줄1 꼬리 없음');
   assert.match(panel('p-actual', real), /<h2 className=\{ptitle\} title=\{`[^`]*단위 호\(세로축 20만 = 20만 호\)/);
@@ -71,10 +71,11 @@ test('3 지연 기준 하나: 시도 타일 지연율 = 지연 호수 ÷ 판정 
   assert.match(board, /data-slot="basis-tag"[^>]*title="[^"]*시도 타일도 호수 기준[^"]*"/);
 });
 
-test("4 진척 관리 숫자 링크 = 원장 지금 ③착공 단계 사업 목록 — 건수(194건)가 카드 숫자와 다른 것은 숫자 링크 title·(i)에(2026-10-18 링크 글자 '원장 194건 ›'를 없앰)", () => {
-  assert.equal(BOARD.stageProjects[BOARD.now][2], 194);
+test("4 진척 관리 숫자 링크 = 원장 지금 ③착공 단계 사업 목록 — 건수(71건)가 카드 숫자와 다른 것은 숫자 링크 title·(i)에(2026-10-18 링크 글자 '원장 194건 ›'를 없앰)", () => {
+  // 2026-10-19 수도권 한정: 원장 지금 ③착공 사업 194건(전국) → 71건(수도권), 범위 글 '(전국)' → '(수도권)'
+  assert.equal(BOARD.stageProjects[BOARD.now][2], 71);
   assert.equal(DIR[0].list.text, undefined);
-  assert.match(DIR[0].list.title, /원장 사업\(전국\) 194건 — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록\(건수가 다름\)/);
+  assert.match(DIR[0].list.title, /원장 사업\(수도권\) 71건 — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록\(건수가 다름\)/);
   assert.match(board, /<Link href=\{l\.href\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\}/, '읽기 이름에 보이는 숫자가 들어간다');
   assert.match(board, /<p className="text-muted-foreground">\{x\.list\.title\}<\/p>/, '(i) 에도 목록 설명');
 });
@@ -111,7 +112,7 @@ test("7 단계 카드: 값 없는 단계는 칩 하나('자료 없음 ①·④·
 
 test('8 날짜는 점 표기: 원장 출처 달·월별 실적 읽기 이름', () => {
   assert.match(board, /출처 Supabase\(api\.board, \$\{ymDot\(real\.ledgerMonth\)\}\)/);
-  assert.match(real, /label=\{`전국 월별 인허가·착공·모집·준공 호수, \$\{ymDot\(molit\.months\[0\]\)\}부터 \$\{ymDot\(last\)\}까지`\}/);
+  assert.match(real, /label=\{`\$\{area\} 월별 인허가·착공·모집·준공 호수, \$\{ymDot\(molit\.months\[0\]\)\}부터 \$\{ymDot\(last\)\}까지`\}/);
   for (const [f, s] of [['Board', board], ['RealPanels', real], ['month', month], ['agency', agency]]) {
     assert.doesNotMatch(code(s), /[^/]\$\{(real\.ledgerMonth|last|molit\.months\[0\]|lh\.sourceAsOf|calendar\.referenceDate|observedRef)\}/, `${f}: 날짜 값을 그대로 쓰지 않는다(주소 안은 괜찮다)`);
   }

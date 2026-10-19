@@ -16,6 +16,8 @@ const fs = require('fs');
 const path = require('path');
 const { createKeyPool, fileStore, memoryStore, isQuotaError, KeyPoolError } = require('../lib/keys.js');
 const { createCache, defaultDir } = require('../lib/cache.js');
+const scope = require('../lib/scope.js');
+const codes = require('../lib/codes.js');
 
 const ENDPOINT = 'https://apis.data.go.kr/1613000/BusLcInfoInqireService/getRouteAcctoBusLcList';
 const DAILY_BUDGET = 8000;
@@ -31,6 +33,16 @@ function readLiveRoutes(slug) {
     const infra = JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ path.join(require('../lib/root.js').ROOT, 'regions', slug, 'infra.json'), 'utf8'));
     const routes = (infra.busRoutes || []).filter((r) => r && r.live && typeof r.id === 'string').map((r) => r.id);
     return infra.busCityCode && routes.length ? { city: Number(infra.busCityCode), routes } : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* 지역 번들 region.json 의 시군구 코드가 가리키는 시도 목록 — 번들이 없으면 null */
+function readRegionSidos(slug) {
+  try {
+    const reg = JSON.parse(fs.readFileSync(/*turbopackIgnore: true*/ path.join(require('../lib/root.js').ROOT, 'regions', slug, 'region.json'), 'utf8'));
+    return (reg.codes || []).filter((x) => x && x.type === 'sigungu').map((x) => codes.classify(x.code)).filter((c) => c.ok).map((c) => c.sido);
   } catch (e) {
     return null;
   }
@@ -74,7 +86,7 @@ async function fetchRoute(deps, key, city, routeId) {
 
 function createHandler(overrides) {
   const deps = Object.assign({
-    fetch: (...a) => fetch(...a), env: process.env, now: () => Date.now(), readLiveRoutes, sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
+    fetch: (...a) => fetch(...a), env: process.env, now: () => Date.now(), readLiveRoutes, readRegionSidos, sleep: (ms) => new Promise((r) => setTimeout(r, ms)),
   }, overrides);
   const dir = defaultDir(deps.env);
   const cache = deps.cache || createCache({ dir, now: deps.now });
@@ -95,6 +107,8 @@ function createHandler(overrides) {
     const keys = [...new Set(params.keys())];
     const slug = params.get('region') || '';
     if (keys.length !== 1 || keys[0] !== 'region' || params.getAll('region').length !== 1 || !REGION.test(slug)) return send(res, 400, { error: 'query' }, 'public, s-maxage=3600');
+    const sidos = scope.nonCapitalAllowed(deps.env) ? null : deps.readRegionSidos(slug);
+    if (sidos && !sidos.every(scope.inCapitalSido)) return send(res, scope.OUT_OF_SCOPE.status, { error: scope.OUT_OF_SCOPE.code, title: scope.OUT_OF_SCOPE.title, detail: scope.OUT_OF_SCOPE.detail }, scope.OUT_OF_SCOPE.cache);   // 2026-10-19 수도권 한정
     const live = deps.readLiveRoutes(slug);
     if (!live) return send(res, 404, { error: 'no-live-routes' }, 'public, s-maxage=3600');
     if (!pool.hasKeys('BUS')) return send(res, 503, { error: 'not-configured' }, 'no-store');

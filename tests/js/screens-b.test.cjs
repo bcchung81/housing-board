@@ -47,9 +47,10 @@ test('1 범위 칩: 공용 컴포넌트(범위 + 출처, 풀기 ×) — 사업 �
   assert.match(page, /<ScopeChip scope="정책 전체" source="정책 진행 자료"/, '정책 목표 카드: 정책 전체 · 정책 진행 자료(data-audit-1016 결함 1)');
   assert.match(page, /<ScopeChip scope=\{region\} source="사업 원장"/, '원장 요약: 거르기 범위(수도권·전국·시도·시군구) · 사업 원장');
   const board = read('components/board/Board.tsx');
-  assert.match(board, /const ledgerChip = <ScopeChip scope=\{nation === '전국' \? '전국' : '일부 지역'\} source="사업 원장"/);
+  // 2026-10-19 수도권 한정: 범위 칩 = nation(수도권) — '전국'이면 전국, 아니면 '일부 지역' 분기 대신 '전국 아님'만 '일부 지역'
+  assert.match(board, /const ledgerChip = <ScopeChip scope=\{nation === '전국 아님' \? '일부 지역' : nation\} source="사업 원장"/);
   for (const t of ['월별 공급 파동', '시도 \\{L\\.regions\\.length\\}곳', '지연·주의 추이', '\\{AHEAD_COMPLETION\\}', '기관별 진행']) assert.match(board, new RegExp(`>${t}</h2>\\n\\s*<InfoTip [\\s\\S]*?</InfoTip>\\n\\s*\\{ledgerChip\\}`), t);   // 제목 바로 옆 (i)(2026-10-16 3차)
-  assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope="전국" source="통계누리"/);
+  assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope=\{area\} source="통계누리"/);   // 2026-10-19 수도권 한정: 범위 이름 = 통계누리 합계 자리 이름(수도권)
   const region = read('app/(dashboard)/region/page.tsx');
   assert.match(region, /scope=\{<ScopeChip scope=\{scopeName\} source="사업 원장"[^\n]*clearHref=\{sgg \? href\(\{ sgg: null, m: null \}\) : undefined\}/, '앞으로 12개월: 시군구 칩 + ×');
   assert.match(read('components/region/Annual.tsx'), /<ScopeChip scope=\{rname\} source="통계누리"/);
@@ -78,7 +79,7 @@ test('2 지시 카드 목록 ›: 목록 머리 건수(·계획 호수) = 카드
   const D = makeDirectives({ sourceCount: 30, stageNames: [...V.BOARD_NAMES], ledger: BOARD, start: { year: '2026', upto: 8, cum: 1, cumLy: 1 }, bottleneck: V.bottleneckOf });
   assert.ok(D.every((d) => d.list && d.list.href && d.list.title), '카드마다 목록 링크');
   const [start, sites, neck, ahead, delay, src] = D;
-  /* 사업장별 현황판: 사업 2,317건 = 목록 2,317건 */
+  /* 사업장별 현황판: 사업 262건 = 목록 262건 */
   assert.equal(listOf(sites.list.href).n, BOARD.scope.projects);
   assert.equal(sites.big, BOARD.scope.projects.toLocaleString('en-US'));
   /* 일정 지연 관리: 지연 2건 = 지연(장기 포함) 목록 2건(?status=delay 는 6~12개월만이라 0건 — 장기 2건이 빠진다) */
@@ -104,7 +105,7 @@ test('2 지시 카드 목록 ›: 목록 머리 건수(·계획 호수) = 카드
   /* 선택 시점 패널: 확인 필요(후보) 건수 = 후보 목록 */
   const c = BOARD.judgment.candidate;
   assert.equal(listOf('/projects?sido=all&status=review').n, c.ok.projects + c.caution.projects + c.delay.projects);
-  assert.equal(c.delay.projects, 313);
+  assert.equal(c.delay.projects, 0);   // 2026-10-19 수도권 한정: 후보 계산 313 → 0 (후보가 모두 비수도권이었음, 목록도 0건)
   /* 핵심 질문 '어떤 사업이 늦어지는가'·'어디서 막혀 있는가'도 같은 거르기(late) */
   const q = Object.fromEntries(V.questionsOf(rows, V.parseFilters({ sido: 'all' }, fctx), qctx).map((x) => [x.q, x]));
   assert.equal(String(listOf(q['어떤 사업이 늦어지는가'].href).n), q['어떤 사업이 늦어지는가'].value);

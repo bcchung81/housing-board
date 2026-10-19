@@ -47,8 +47,11 @@ test('#2 추가 확보 필요: 원장에서 쓰는 6건은 수집·연결됨(수
   assert.ok(ACQUIRE_ASOF > '2026-10-10');
   /* 근거: 원장 judge.dataAsOf 에 A1·A2·A10·F6 이 있고 sources 에 F1·F5 가 있다 */
   const asOf = json('data/board/ledger-board.json').judge.dataAsOf;
-  for (const id of ['15058530', '15057999', '15098547', '15111714']) assert.ok(asOf[`datagokr-${id}`], id);
-  assert.ok(asOf['hub-bulk-bld-2026-08']);
+  // 2026-10-19 수도권 한정: judge.dataAsOf 는 판정한 행의 원천만 적는데 판정 행이 수도권 HOME 뿐이라 datagokr-*·hub-bulk-* 키가 빠지고 home-dump-* 만 남는다. A1·A2·A10·F6 이 쓰이는 근거는 원장 sources 표(source_ref)에 둔다
+  assert.deepEqual(Object.keys(asOf).filter((k) => !k.startsWith('home-dump-')), []);
+  assert.ok(Object.keys(asOf).length >= 1);
+  const srcText = JSON.stringify(json('schemas/ledger-2026-10/tables/sources.json').rows.map((r) => r.source_ref));
+  for (const id of ['15058530', '15057999', '15098547', '15111714']) assert.ok(srcText.includes(`datagokr-${id}`), id);
   const { stageLinks } = require('../../lib/board/stage-links.ts');
   const zero = new Proxy({}, { get: () => 0 });
   const st = stageLinks({ regions: 3, sgg: 5, registryTotal: 1, registryRefs: 1, registry: {}, bundle: {}, molit: { permit: 1, start: 1, sale: 1, complete: 1, annual: 1 }, months: '', lhBlocks: 1, lhAsOf: '', ledgerNote: '', catalog: zero,
@@ -83,7 +86,7 @@ test('#14 블록 수는 고유 블록(사업지구+블록), 파일 행은 행이
   const ag = read('app/(dashboard)/agency/[id]/page.tsx');
   assert.match(ag, /fmt\(blockTotal\)\}블록/);
   assert.doesNotMatch(ag, /blocks\.length\)\}건/);
-  assert.match(read('app/(dashboard)/sources/page.tsx'), /전국 \$\{fmt\(blockCount\(lh\.blocks\)\)\}블록 중/);
+  assert.match(read('app/(dashboard)/sources/page.tsx'), /수도권 \$\{fmt\(blockCount\(lh\.blocks\)\)\}블록 중/);   // 2026-10-19 수도권 한정: 범위 글 '전국' → '수도권' (/sources lh-completion scope)
   assert.doesNotMatch(read('lib/board/agencies.ts'), /351블록/);
   assert.match(read('lib/board/collection.ts'), /unit: '행\(블록×공급유형\)'/);
 });

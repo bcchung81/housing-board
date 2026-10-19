@@ -14,6 +14,7 @@
 const { createCache, defaultDir } = require('../../lib/cache.js');
 const { VWORLD_URL, vworldCreds, redactVworld } = require('../../lib/vworld.js');
 const Bld = require('../../lib/buildings.js');
+const scope = require('../../lib/scope.js');
 
 const LAYER = 'LT_C_BLDGINFO';
 const PAGE_SIZE = 1000;
@@ -88,6 +89,7 @@ function createHandler(overrides = {}) {
     const cell = Bld.parseCell(params.get('cell'));
     if (!cell) return problem(res, 400, 'invalid-cell', '칸 번호가 맞지 않습니다', '한국 범위(경도 124~132, 위도 33~39)의 정수 칸 번호만 받습니다', undefined, 'public, s-maxage=3600');
     const [ix, iy] = cell;
+    if (!scope.nonCapitalAllowed(env) && !scope.overlapsCapital(...Bld.cellBbox(ix, iy))) return scope.denyScope(problem, res);   // 2026-10-19 수도권 한정
     const creds = vworldCreds(env);
     if (!creds.key) return problem(res, 503, 'not-configured', 'V-World 키가 설정되어 있지 않습니다', 'VWORLD_KEY 가 없습니다');
     try {

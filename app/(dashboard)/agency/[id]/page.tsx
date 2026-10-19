@@ -76,7 +76,7 @@ export default async function AgencyDetail({ params }: Props) {
     );
   }
 
-  const last = lastMonth(molit), year = last.slice(0, 4);
+  const last = lastMonth(molit), year = last.slice(0, 4), area = sidoName(molit, NATION) ?? '전국';   // 범위 이름(통계누리 합계 자리 — 수도권, lib/board/data.ts)
   const lines = KS.map(([k, l]) => ({ key: k, label: l, color: METRIC_COLOR[k], values: seriesOf(molit, k, NATION).actors![a.actor] }));
   const i = molit.months.indexOf(last);
   /* LH 준공 예정은 이번 달(원장 관측 달)부터 — 지난 예정일 블록은 표에서 뺀다(개수는 title 에) */
@@ -97,16 +97,16 @@ export default async function AgencyDetail({ params }: Props) {
   };
   return (
     <Page>
-      <PageHead crumbs={crumbs} title={a.name} tip={`통계누리 시행주체 '${a.actor}'의 전국 월별 호수${a.id === 'lh' ? '와 LH 준공 예정 블록' : ''}.`}
+      <PageHead crumbs={crumbs} title={a.name} tip={`통계누리 시행주체 '${a.actor}'의 ${area} 월별 호수${a.id === 'lh' ? '와 LH 준공 예정 블록' : ''}.`}
         meta={`실적 ${ymDot(last)}`} metaTip={`통계누리 주택건설실적통계 · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}${a.id === 'lh' ? ` · LH 준공예정 파일 기준일 ${dotDates(lh.sourceAsOf)}` : ''}`} />
       <StageKpis when={monthLabel(last)} notes={{ 3: '모집은 시행주체 구분이 없음' }} cells={Object.fromEntries(KS.map(([k]) => [k, { value: fmt(seriesOf(molit, k, NATION).actors![a.actor!][i]), sub: <>{ytdSpan(year, Number(last.slice(5)))} {fmt(ytd(molit, k, NATION, last, a.actor!))}호{prov ? <Prov /> : null}</> }]))} />
       <Card render={<section aria-label="월별 실적" />}>
-        <PanelHead title="월별 실적" tip="전국 · 호 · 빗금은 잠정치 · 통계누리 주택건설실적통계. 인허가는 연초 누계의 차분입니다. ④ 모집은 시행주체 구분이 없고, ①계획(정책·사업화)은 통계누리에 없습니다.">
+        <PanelHead title="월별 실적" tip={`${area} · 호 · 빗금은 잠정치 · 통계누리 주택건설실적통계. 인허가는 연초 누계의 차분입니다. ④ 모집은 시행주체 구분이 없고, ①계획(정책·사업화)은 통계누리에 없습니다.`}>
           <StageLegend metrics={KS.map(([k]) => k)} names="board" compact />
           {molit.provisional.length ? <ProvKey /> : null}
           <SrcLink />
         </PanelHead>
-        <MonthLines months={molit.months} lines={lines} provisional={molit.provisional} href={(ym) => `/month/${ym}`} label={`${a.name} 전국 월별 인허가·착공·준공 호수`} />
+        <MonthLines months={molit.months} lines={lines} provisional={molit.provisional} href={(ym) => `/month/${ym}`} label={`${a.name} ${area} 월별 인허가·착공·준공 호수`} />
       </Card>
       <Card render={<section aria-label="최근 12개월" />}>
         <PanelHead title="최근 12개월" tip="호" />

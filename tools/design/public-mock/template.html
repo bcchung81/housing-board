@@ -561,6 +561,20 @@ svg.ptsw .r { fill: none; stroke: var(--foreground); stroke-width: 1.5; }
 .pj-band i.on { background: var(--c); }   /* 칸마다 자기 단계색(6단계 사다리와 같은 --st-*) */
 .pj-sn { min-width: 0; font-size: var(--fs-meta); color: var(--muted-foreground); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .pj-sn b { color: var(--c-ink); font-weight: 700; }
+/* 지도 위 사업 카드(2026-10-19): 점 곁에 띄우는 비모달 작은 판. .ui-hud 유리(지도 면 위라 --mapcard-alpha) · 핵심만 · 상세는 사업 찾기·공급 일정으로 */
+.mapcard { --hud-alpha: var(--mapcard-alpha); position: absolute; z-index: 6; width: min(var(--mapcard-w), calc(100% - 16px)); padding: var(--pad-tile-y) var(--pad-tile-x); box-shadow: var(--shadow-pop); }
+.mapcard[hidden] { display: none; }
+.stage.glmv .mapcard, .stage:is(.orbiting, .turning, .morph) .mapcard { opacity: 0; pointer-events: none; }
+.mc-h { display: flex; align-items: flex-start; gap: 4px; }
+.mc-h h3 { flex: 1; min-width: 0; margin: 0; font-size: var(--text-md); line-height: var(--lh-sub); overflow-wrap: anywhere; }
+.mc-h .ui-btn { flex: none; margin: -4px -8px 0 0; }
+.mc-sub { margin: 2px 0 0; font-size: var(--fs-meta); color: var(--muted-foreground); }
+.mc-st { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; margin: 8px 0 0; }
+.mc-ln { margin: 4px 0 0; font-size: var(--fs-meta); color: var(--muted-foreground); }
+.mc-ln b { color: var(--foreground); font-weight: 400; }
+.mc-act { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 12px 0 0; }
+.mc-act .mapi { margin: -6px -6px -6px auto; }
+@media (prefers-reduced-motion: no-preference) { .mapcard.in { animation: mc-in .16s var(--ease) backwards; } @keyframes mc-in { from { transform: translateY(4px); opacity: 0; } } }
 .pjs .ev .pj-nx { grid-area: nx; min-width: 0; font-size: var(--fs-meta); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 .pjs .ev .when { grid-area: when; }
 .pjs .ev .pj-jd { grid-area: jd; display: flex; min-width: 0; }
@@ -876,7 +890,7 @@ svg.ptsw .r { fill: none; stroke: var(--foreground); stroke-width: 1.5; }
     </div>
     <div class="grid2">
       <section class="ui-card blk" aria-label="월별 실적 흐름"><h2>월별 실적 흐름</h2><div class="body" style="min-height:300px"></div></section>
-      <section class="ui-card blk" aria-label="시도 16곳"><h2>시도 16곳</h2><div class="body" style="min-height:300px"></div></section>
+      <section class="ui-card blk" aria-label="시도 3곳"><h2>시도 3곳</h2><div class="body" style="min-height:300px"></div></section>
     </div>
     <div class="grid3">
       <section class="ui-card blk" aria-label="지연·주의 추이"><h2>지연·주의 추이</h2><div class="body" style="min-height:200px"></div></section>
@@ -1176,9 +1190,8 @@ function distinctNames(items, D) {
   Object.defineProperty(out, 'sub', { value: sub, enumerable: false });
   return out;
 }
-/* r10 IP 시도(lib/board/ip-sido 의 행정 표준 코드) → 색인 시도. 통합된 곳은 지금 코드로(광주 29·전남 46 → 12 전남광주통합특별시, 제주 49 → 50). 색인에 없으면 null */
-const GEO_ALIAS = { '29': '12', '46': '12', '49': '50' };
-const geoSido = (code, IX) => { const c = GEO_ALIAS[code] || code; return code && IX.regionOf[c]?.kind === 'sido' ? c : null; };
+/* r10 IP 시도(lib/board/ip-sido 의 행정 표준 코드) → 색인 시도. 2026-10-19 수도권 한정: 색인은 서울·인천·경기뿐이라 수도권 밖·모르는 코드는 null(추천 없이 기본 보기 S.guess 경기 41 + 시도 고르기) */
+const geoSido = (code, IX) => (code && IX.regionOf[code]?.kind === 'sido' ? code : null);
 /* r10 검색 '사업 n개 모두 보기' 시트: 검색 결과 사업 전부(자동완성과 같은 순서·같은 건수) */
 const searchProjects = (IX, q) => IX.search(q, { projectMax: Infinity }).projects.items;
 /* r10 숫자와 '호': '316호'·'9,660호'은 붙이고 만 단위('1.6만 호')만 띄운다 */
@@ -1421,7 +1434,7 @@ function renderLoc() {
   const gps = `<button type="button" class="ui-btn ui-btn-outline gps" id="gps" aria-describedby="gps-note"${busy ? ' disabled aria-busy="true"' : ''}>${bico(busy ? 'run' : 'gps', 'inline-start', busy ? 'spin' : '')}<span>${busy ? '찾는 중' : '현 위치'}</span></button><span class="sr" id="gps-note">좌표는 이 기기 안에서만 써서 시군구를 찾고, 찾은 곳을 내 동네로 정합니다</span>`;
   let mid;
   if (busy) mid = `<span class="st">좌표는 이 기기 안에서만 씁니다</span>`;
-  else if (S.loc === 'nogeo' || S.loc === 'nofile') mid = `<span class="st warn">${ico('warn')}${S.loc === 'nofile' ? '경계 자료를 불러오지 못했어요' : '위치로 시군구를 찾지 못했어요'}</span><button type="button" class="ui-btn ui-btn-ghost" data-act="pick">${bico('search')}검색으로 고르기</button>`;
+  else if (S.loc === 'nogeo' || S.loc === 'nofile' || S.loc === 'outside') mid = `<span class="st warn">${ico('warn')}${S.loc === 'nofile' ? '경계 자료를 불러오지 못했어요' : S.loc === 'outside' ? '수도권만 볼 수 있어요' : '위치로 시군구를 찾지 못했어요'}</span><button type="button" class="ui-btn ui-btn-ghost" data-act="pick">${bico('search')}검색으로 고르기</button>`;
   else if (!h && !v && !S.guessKnown) mid = `<span class="here">${ico('pin')}시도를 골라 주세요</span><button type="button" class="ui-btn ui-btn-ghost" data-act="sidos" aria-controls="ac-list">${bico('map')}다른 시도</button>`;
   else if (S.loc === 'denied') mid = `<span class="st warn">${ico('warn')}위치 권한 꺼짐</span><button type="button" class="ui-btn ui-btn-ghost" data-act="pick">${bico('search')}검색으로 고르기</button><span class="st"><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" popovertarget="tip-gps" aria-label="위치 권한 다시 켜는 법"><svg class="i"><use href="#i-info"/></svg></button></span>`;
   else if (v) mid = `<span class="here viewing">${ico('eye')}<b>${esc(nameOf(v))}</b> 보는 중</span>${h ? `<span class="hint vh" title="내 동네 ${esc(nameOf(h))}">· 내 동네 ${esc(nameOf(h))}</span>` : ''}`;
@@ -2037,6 +2050,56 @@ function paintSelection() {
   drawOverlay();
   paintPts();
 }
+/* ---------- 지도 위 사업 카드(2026-10-19 사용자 지시): 지도의 사업 점을 누르면 옆 시트(#sheet) 대신 그 점 곁에 작은 비모달 카드를 띄운다.
+   핵심만(이름 · 지역 · 호수 · 진행 띠 · 다음 일정 · 들어올 때). 상세는 사업 찾기(?id=), 이 지역 일정은 공급 일정, 큰 지도는 /map?project=.
+   위치: 점 화면 좌표(paintPts 가 GL 이면 GLS.map.project, SVG 대체면 ptXY 로 계산해 둔 data-xy)에 붙이고, 지도가 움직이는 동안(.glmv·돌리기)은 숨겼다가 가라앉을 때(paintPts) 다시 붙인다.
+   무대 밖으로 나가면 오른쪽 → 왼쪽 → 위 → 아래 순으로 뒤집는다. 카드는 무대(#mstage) 안이라 오른쪽 레일(순위·범례)은 가리지 않는다. 점이 보는 곳에서 사라지면(시도·시군구 바뀜) 닫는다 ---------- */
+const MC = { id: null, el: null };
+function mapCardHtml(id) {
+  const { c, p } = prjOf(id), x = prjRow(c, p), ex = pjEx(id), area = areaOf(c), nx = nextStep(prjMarks(D, c, p, TODAY)), sn = shortName(x.name);
+  const nm = /^이름 미정/.test(sn) ? sn.replace('이름 미정', '이름이 아직 없는 사업') : sn, sido = c.slice(0, 2), sch = `/citizen/schedule?sido=${sido}&amp;sgg=${unitKey(c)}`;
+  return `<div class="mc-h"><h3 id="mc-h" title="${esc(x.name || '이름이 아직 없는 사업')}">${esc(nm)}</h3><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm" id="mc-x" aria-label="닫기"><svg class="i"><use href="#i-x"/></svg></button></div>
+    <p class="mc-sub">${esc(area ? area.sub : '')}${x.u ? ` · ${fmt(x.u)}호` : ' · 호수 미정'}</p>
+    <p class="mc-st">${progHtml(x, ex)}</p>
+    <p class="mc-ln">다음 일정 <b>${stepText(nx)}</b></p>
+    <p class="mc-ln">들어올 때 <b>${esc(x.il)}</b></p>
+    <div class="mc-act"><a class="ui-btn ui-btn-sm" href="/citizen/projects?id=${id}" data-go="/citizen/projects?id=${id}">자세히 보기</a><a class="ui-btn ui-btn-outline ui-btn-sm" href="${sch}" data-go="${sch}">공급 일정</a>${mapBtn(mapHref({ project: id }), nm)}</div>`;
+}
+function openMapCard(id) {
+  const st = $('#mstage'); if (!st || !prjOf(id)) return false;
+  closeMapCard(false);
+  const el = document.createElement('div');
+  el.className = 'mapcard ui-hud in'; el.id = 'mapcard'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-labelledby', 'mc-h'); el.setAttribute('aria-modal', 'false');
+  el.innerHTML = mapCardHtml(id); st.append(el);
+  Object.assign(MC, { id, el });
+  st.querySelectorAll('svg.pts .pt').forEach((a) => a.classList.toggle('on', a.dataset.prj === id));
+  placeMapCard();
+  el.querySelector('a[href]').focus({ preventScroll: true });
+  return true;
+}
+function closeMapCard(restore = true) {
+  const { el, id } = MC; if (!el) return;
+  const had = el.contains(document.activeElement); el.remove();
+  Object.assign(MC, { id: null, el: null });
+  document.querySelectorAll('#mstage svg.pts .pt.on').forEach((a) => a.classList.remove('on'));
+  if (restore && had) (document.querySelector(`#mstage svg.pts .pt[data-prj="${id}"]`) || $('#mapbox'))?.focus({ preventScroll: true });
+}
+function placeMapCard() {
+  const { el, id } = MC; if (!el) return;
+  if (!el.isConnected) { Object.assign(MC, { id: null, el: null }); return; }
+  const st = $('#mstage'), pt = st?.querySelector(`svg.pts .pt[data-prj="${id}"]`);
+  if (!pt) { closeMapCard(false); return; }
+  const [cx, cy] = pt.dataset.xy.split(',').map(Number), W = st.clientWidth, H = st.clientHeight, w = el.offsetWidth, h = el.offsetHeight, gap = 14, m = 8;
+  const clampX = (v) => Math.max(m, Math.min(v, W - w - m)), clampY = (v) => Math.max(m, Math.min(v, H - h - m));
+  const fits = ([x, y]) => x >= m && y >= m && x + w <= W - m && y + h <= H - m;
+  const tries = [[cx + gap, clampY(cy - h / 2)], [cx - gap - w, clampY(cy - h / 2)], [clampX(cx - w / 2), cy - gap - h], [clampX(cx - w / 2), cy + gap]];
+  const [x, y] = tries.find(fits) || [clampX(cx - w / 2), clampY(cy + gap)];
+  el.style.left = `${Math.round(x)}px`; el.style.top = `${Math.round(y)}px`;
+}
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && MC.el?.isConnected) { e.preventDefault(); closeMapCard(); } });
+document.addEventListener('pointerdown', (e) => { if (MC.el?.isConnected && !e.target.closest('#mapcard, svg.pts .pt')) closeMapCard(false); });
+document.addEventListener('click', (e) => { if (e.target.closest('#mc-x')) closeMapCard(); });
+window.addEventListener('resize', () => placeMapCard());
 /* ---------- r14 사업 위치 점: 보는 시군구(보기 또는 내 동네) 안 사업만, 지도 svg 는 건드리지 않고 점 층(svg.pts)만 다시 칠한다(G16) ----------
    좌표 = region-map 자체 투영 정수(D.pt) → 판 좌표(geomFor 의 P) − 그 면 윗면 높이. 정확(블록·주소·지구) = 채운 점, 대략(영역·이름) = 속이 빈 실선 고리.
    점 순서: 대략 → 정확(정확이 위), 같은 묶음 안은 서→동. 키보드: 한 번의 Tab 으로 들어와 화살표로 옮기고 Enter 로 사업 카드 */
@@ -2051,10 +2114,11 @@ function paintPts() {
   const L = f ? ptsOf(key).map((x) => ({ ...x, xy: (glOn() ? GLS.map.project(MapGL.toLngLat(x.p), key) : ptXY(VIEW.G, f, x.p)).map(r1) })).sort((a, b) => a.p[2] - b.p[2] || a.xy[0] - b.xy[0]) : [];
   g.setAttribute('aria-label', L.length ? `${f.x.name} 사업 위치 ${L.length}곳` : '사업 위치'); g.classList.toggle('inv', !!f && f.x.c >= 3);
   g.innerHTML = L.map((x, i) => { const [cx, cy] = x.xy, ex = x.p[2] === 1, c = `cx="${cx}" cy="${cy}"`;
-    return `<a class="pt${ex ? '' : ' ap'}" href="#prj-${x.id}" data-prj="${x.id}" aria-haspopup="dialog" tabindex="${i ? -1 : 0}" data-xy="${cx},${cy}" aria-label="${esc(shortName(x.name))} ${fmt(x.u)}호${ex ? '' : ' · 대략 위치'}"><circle class="pt-hit" ${c} r="8"/>${ex ? '' : `<circle class="pt-h" ${c} r="3.5"/>`}<circle class="pt-d" ${c} r="3.5"/></a>`; }).join('');
+    return `<a class="pt${ex ? '' : ' ap'}${MC.id === x.id && MC.el?.isConnected ? ' on' : ''}" href="#prj-${x.id}" data-prj="${x.id}" aria-haspopup="dialog" tabindex="${i ? -1 : 0}" data-xy="${cx},${cy}" aria-label="${esc(shortName(x.name))} ${fmt(x.u)}호${ex ? '' : ' · 대략 위치'}"><circle class="pt-hit" ${c} r="8"/>${ex ? '' : `<circle class="pt-h" ${c} r="3.5"/>`}<circle class="pt-d" ${c} r="3.5"/></a>`; }).join('');
   document.querySelectorAll('#mapc .lg-pts').forEach((p) => { p.hidden = !L.length; });
   sv.dataset.n = L.length;
   maskPts();
+  placeMapCard();
 }
 /* 라벨 글자가 점 위에 오게: 점과 겹치는 라벨 묶음의 글자만 복제해 점 층 맨 위(.pts-top, 같은 CSS)에 다시 그린다 — 알약 바탕·면은 점 밑, 글자는 점 위.
    점 가운데가 글자 상자 안이면(글자 밑에 가린 점) 세어 둔다(누름·초점은 그대로) */
@@ -2135,12 +2199,14 @@ const pjEx = (id) => {
 };
 /* 진행 띠 6칸 = 계획·인허가·착공·모집 공고·준공·입주(원장 board 0~5), 칸 색 = 그 단계의 --st-* */
 const BAND = ['plan', 'permit', 'build', 'sale', 'soon', 'move'];
+/* 진행 = 6칸 띠 + 지금 단계 이름 + 공사 n% — 사업 표 줄과 지도 위 사업 카드가 같이 쓴다 */
+const progHtml = (x, ex) => `<span class="st" style="--c-ink:var(--st-${STATUS[stOf(x.b)][2] || 'plan'}-ink)"><span class="pj-band" aria-hidden="true">${BAND.map((n, i) => `<i${i <= x.b ? ` class="on" style="--c:var(--st-${n})"` : ''}></i>`).join('')}</span><span class="pj-sn"${ex.pt ? ` title="${esc(ex.pt)}"` : ''}><b>${STATUS[stOf(x.b)][0]}</b>${planMark(x.b, x.k)}${ex.pc != null ? ` · 공사 ${ex.pc}%` : ''}</span></span>`;
 const pjRow = (x, withArea, nm = {}) => {
   const where = withArea ? areaOf(unitKey(x.sgg)) || areaOf(x.sgg) : null, o = prjOf(x.id), st = o ? nextStep(prjMarks(D, o.c, o.p, TODAY)) : null;
   const jd = o ? prjJudge(D, o.c, o.p) : { k: 'none', t: '일정 미정' }, ag = D.det[x.id]?.[0] || '', ex = pjEx(x.id), wh = [where ? nameIn(where) : '', ex.dg].filter(Boolean).join(' ');
   const full = [x.name || '이름 미정', wh, x.u ? `${fmt(x.u)}호` : '', STATUS[stOf(x.b)][0] + (ex.pc != null ? ` · 공사 ${ex.pc}%` : ''), `다음 일정 ${st ? `${NEXT[st.k]} ${fullDate(st.d)} ${st.real ? '완료' : '예정'}` : '미정'}`, x.il, jd.t, ag ? `시행 ${ag}` : '', ex.alt, ex.ty ? ex.ty[1] : '', ex.nt ? `공고 ${fmt(ex.nt)}호` : '', ex.pt].filter(Boolean).join(' · ');
   return `<li><a class="ev" ${PRJA(x.id)} data-unit="${unitKey(x.sgg)}" title="${esc(full)}" aria-label="${esc(full)}"><span class="nmw"><span class="nm">${esc(nm[x.id] || shortName(x.name))}${NSUB(nm, x.id)}</span>${ex.ty ? `<span class="ui-chip pj-ty" title="${esc(ex.ty[1])}">${esc(ex.ty[0])}</span>` : ''}${ex.nt ? `<span class="pj-nt">공고 ${fmt(ex.nt)}호</span>` : ''}${wh ? `<span class="pj-dg">${esc(wh)}</span>` : ''}</span>${x.u ? `<span class="u">${fmt(x.u)}호</span>` : '<span class="u tbd">미정</span>'}`
-    + `<span class="st" style="--c-ink:var(--st-${STATUS[stOf(x.b)][2] || 'plan'}-ink)"><span class="pj-band" aria-hidden="true">${BAND.map((n, i) => `<i${i <= x.b ? ` class="on" style="--c:var(--st-${n})"` : ''}></i>`).join('')}</span><span class="pj-sn"${ex.pt ? ` title="${esc(ex.pt)}"` : ''}><b>${STATUS[stOf(x.b)][0]}</b>${planMark(x.b, x.k)}${ex.pc != null ? ` · 공사 ${ex.pc}%` : ''}</span></span><span class="pj-nx${st ? '' : ' tbd'}"${ex.alt ? ` title="${esc(ex.alt)}"` : ''}>${stepText(st)}</span><span class="when" title="${esc(x.il)}">${x.il}</span><span class="pj-jd">${jd.t ? `<span class="ui-chip ${jd.k}">${jd.t}</span>` : ''}</span>${ag ? `<span class="pj-ag">${esc(ag)}</span>` : '<span class="pj-ag tbd">미정</span>'}</a>${CAPITAL.includes(x.sgg.slice(0, 2)) ? mapBtn(mapHref({ project: x.id }), shortName(x.name)) : ''}</li>`;
+    + `${progHtml(x, ex)}<span class="pj-nx${st ? '' : ' tbd'}"${ex.alt ? ` title="${esc(ex.alt)}"` : ''}>${stepText(st)}</span><span class="when" title="${esc(x.il)}">${x.il}</span><span class="pj-jd">${jd.t ? `<span class="ui-chip ${jd.k}">${jd.t}</span>` : ''}</span>${ag ? `<span class="pj-ag">${esc(ag)}</span>` : '<span class="pj-ag tbd">미정</span>'}</a>${CAPITAL.includes(x.sgg.slice(0, 2)) ? mapBtn(mapHref({ project: x.id }), shortName(x.name)) : ''}</li>`;
 };
 const yrHead = (i) => (i === 5 ? `${Y0 + 5}~` : String(Y0 + i));
 /* r16 개수 링크 '20 ›': 숫자는 정보라 남기고 '전체'는 뺀다(이름은 aria-label) */
@@ -2406,13 +2472,13 @@ function regionOpt(x, opts, main, o = {}) {
   if (!o.noHome) { const hid = `o-${opts.length}`; opts.push({ id: hid, kind: 'home', code: x.code }); home = `<div class="opt sethome" role="option" id="${hid}" aria-selected="false" aria-label="${esc(eul(x.label))} 내 동네로 정하기${x.kind === 'sido' ? '(시도만)' : ''}">${ico('home')}내 동네로</div>`; }
   return `<div class="optrow" role="presentation">${row}${home}${mapOpt()}</div>`;
 }
-/* r11 [다른 동네]: 입력 없이 펼치는 목록 — 수도권에서 공급 예정 호수가 많은 시군구 8곳(지도 면 단위) + 시도 16곳 */
+/* r11 [다른 동네]: 입력 없이 펼치는 목록 — 수도권에서 공급 예정 호수가 많은 시군구 8곳(지도 면 단위) + 시도 3곳(2026-10-19 수도권 한정 — 색인이 서울·인천·경기뿐) */
 const pickTop = () => CAPITAL.flatMap((sd) => unitsFor(D, IX, sd)).filter((x) => x.u > 0 && areaOf(x.key)).sort((a, b) => b.u - a.u).slice(0, 8).map((x) => areaOf(x.key));
 function renderAC() {
   const q = S.q.trim();
   const ac = $('#ac'), list = $('#ac-list'), input = $('#q');
   $('#sfield').classList.toggle('has', !!S.q);
-  if (S.open && !q && S.pickAll) {   // r11 [다른 동네]: 안내 한 줄 + 수도권 많은 곳 8 + 시도 16(줄 누름 = 보기, [내 동네로] = 저장)
+  if (S.open && !q && S.pickAll) {   // r11 [다른 동네]: 안내 한 줄 + 수도권 많은 곳 8 + 시도 3(줄 누름 = 보기, [내 동네로] = 저장)
     const opts = [], top = pickTop(), sds = IX.regions.filter((x) => x.kind === 'sido');
     list.innerHTML = `<div role="group" aria-labelledby="g-top"><div class="ac-h" id="g-top" role="presentation">수도권 많은 곳<span class="n">${fmt(top.length)}곳</span></div>${top.map((x) => regionOpt(x, opts, esc(x.label))).join('')}</div>`
       + `<div role="group" aria-labelledby="g-sd"><div class="ac-h" id="g-sd" role="presentation">시도<span class="n">${fmt(sds.length)}곳</span></div>${sds.map((x) => regionOpt(x, opts, esc(x.label), { sub: '' })).join('')}</div>`;
@@ -2420,7 +2486,7 @@ function renderAC() {
     input.setAttribute('aria-expanded', 'true'); if (S.active >= opts.length) S.active = -1; paintActive();
     say(`수도권 많은 곳 ${top.length}곳과 시도 ${sds.length}곳 목록, 위아래 화살표로 고르세요. 초성이나 동 이름으로도 찾아요`); return;
   }
-  if (S.open && !q && S.sidos) {   // [다른 시도]: 입력 없이 시도 17곳(고르면 [맞아요]·시도 칩과 같이 그 시도를 정한다)
+  if (S.open && !q && S.sidos) {   // [다른 시도]: 입력 없이 수도권 시도 3곳(고르면 [맞아요]·시도 칩과 같이 그 시도를 정한다)
     const opts = [], all = IX.regions.filter((x) => x.kind === 'sido').sort((a, b) => (b.code === S.guess) - (a.code === S.guess));
     list.innerHTML = `<div role="group" aria-labelledby="g-sd"><div class="ac-h" id="g-sd" role="presentation">시도<span class="n">${fmt(all.length)}곳</span></div>${all.map((x) => { const id = `o-${opts.length}`; opts.push({ id, kind: 'sido', code: x.code }); return `<div class="opt" role="option" id="${id}" aria-selected="false">${ico('pin')}<span class="nm">${esc(x.label)}</span><span class="sub"></span><span class="end">${x.projects ? `사업 ${fmt(x.projects)}개 · ${fmt(x.units)}호` : '<span class="zero-tag">진행 사업 없음</span>'}</span></div>`; }).join('')}</div>`;
     S.opts = opts; list.hidden = false; $('#ac-note').innerHTML = ''; $('#ac-srv').innerHTML = ''; $('#keys').hidden = false; ac.hidden = false;
@@ -2545,7 +2611,7 @@ function typed(q) {
   if (q.replace(/\s+/g, '').length < 2) { S.addr = 'done'; return; }
   addrTimer = setTimeout(async () => {
     try { const res = await fetch(`/api/v1/codes/search?q=${encodeURIComponent(q)}&limit=5`); if (res.status === 429) S.limit = true;
-      const j = res.ok ? await res.json() : null; if (S.q === q) S.addrItems = (j?.items || []).slice(0, 5); }
+      const j = res.ok ? await res.json() : null; if (S.q === q) S.addrItems = (j?.items || []).filter((a) => CAPITAL.includes(String(a.code || '').slice(0, 2))).slice(0, 5); }   // 2026-10-19 수도권 한정: 수도권 밖 주소는 뺀다(API 도 운영에서 거른다)
     catch (_) { if (S.q === q) S.addrItems = []; }
     if (S.q === q) { S.addr = 'done'; if (S.open) renderAC(); }
   }, 350);
@@ -2585,7 +2651,7 @@ document.addEventListener('click', (e) => {
   if (!t) return;
   if (t.dataset.copy) { copyText(t.dataset.copy); return; }
   if (t.dataset.nt) { openNtSheet(t.dataset.nt, t); return; }
-  if (t.dataset.prj) { e.preventDefault(); openProject(t.dataset.prj, t); return; }
+  if (t.dataset.prj) { e.preventDefault(); if (!(t.closest('svg.pts') && openMapCard(t.dataset.prj))) openProject(t.dataset.prj, t); return; }   // 지도 점 = 지도 위 카드, 표·목록 = 옆 시트
   if (t.dataset.go) { e.preventDefault(); go(t.dataset.go); return; }
   if (t.dataset.sheet) { openSheet(t.dataset.sheet, t); return; }
   if (t.dataset.area) { pick(t.dataset.src || 'near', t.dataset.area); return; }
@@ -2617,22 +2683,14 @@ function findCode(lon, lat, at) {
   for (const [q, v] of votes) if (v > n) { best = q; n = v; }
   return best;
 }
-/* 색인에 없는 시군구(사업이 한 건도 없는 곳)는 경계 자료의 이름으로 사업 0 항목을 만든다 → 제목 '아직 예정된 공공주택이 없어요'. 시도가 색인에 없으면 null */
-function areaFromGeo(code, data) {
-  if (areaOf(code)) return areaOf(code);
-  const row = data && data.sgg.find((x) => x[0] === code), sd = code.slice(0, 2);
-  if (!row || !areaOf(sd)) return null;
-  const sh = row[1].slice(row[1].indexOf(' ') + 1), dup = IX.regions.some((x) => x.kind === 'sgg' && x.label === sh), label = dup ? `${IX.SIDO_SHORT[sd]} ${sh}` : sh;
-  const r = { kind: 'sgg', code, label, sub: row[1], short: label, zero: true, codes: [code], projects: 0, units: 0, preps: [] };
-  IX.regions.push(r); IX.regionOf[code] = r;
-  return r;
-}
+/* 2026-10-19 수도권 한정: 경계 자료로 찾은 수도권 밖 시군구는 'outside'(안내만, 내 동네로 저장하지 않는다 — 옛 사업 0 항목 만들기 areaFromGeo 는 없앴다) */
 async function locateCode(lon, lat) {
   const first = areaAtLonLat(lon, lat);
   if (first && areaOf(first)) return { code: first };
   const data = await SggLocate.load(GEO_URL);
   const code = findCode(lon, lat, (lo, la) => areaAtLonLat(lo, la) || (data ? SggLocate.locate(data, lo, la) : null));
-  if (code && (areaOf(code) || areaFromGeo(code, data))) return { code };
+  if (code && areaOf(code)) return { code };
+  if (code && !CAPITAL.includes(code.slice(0, 2))) return { code: null, fail: 'outside' };
   return { code: null, fail: data ? 'nogeo' : 'nofile' };
 }
 function locate() {
@@ -2697,7 +2755,7 @@ Promise.all(['400 14px', '700 14px', '700 16px'].map((f) => document.fonts.load(
 /* ---------- 시안 상태 ---------- */
 const DEMO = {
   first: () => { S.home = null; S.loc = 'guess'; S.guess = '41'; },
-  ipout: () => { S.home = null; S.loc = 'guess'; S.guess = geoSido('29', IX); S.guessKnown = true; },   // 광주 IP: /api/v1/geo → { sido: '29' }
+  ipout: () => { S.home = null; S.loc = 'guess'; S.guess = geoSido('29', IX) || '41'; S.guessKnown = false; },   // 광주 IP: /api/v1/geo → { sido: '29' } — 2026-10-19 수도권 한정: 추천 없이 기본 경기 보기 + 시도 고르기
   yes: () => { S.home = '41'; S.loc = 'set'; },
   cho: () => { DEMO.back(); return () => typed('ㄱㅇ'); },
   en: () => { DEMO.back(); return () => typed('rPdid'); },
@@ -2709,12 +2767,12 @@ const DEMO = {
   goyang: () => DEMO.view(), seoul: () => { DEMO.back(); S.view = '11'; }, incheon: () => { DEMO.back(); S.view = '28'; },
   zero: () => { S.home = '41820'; S.loc = 'set'; },
   limit: () => { DEMO.back(); S.limit = true; return () => typed('남양주'); },
-  outside: () => { S.home = '26'; S.loc = 'set'; },
+  outside: () => { S.home = null; S.loc = 'outside'; },   // 2026-10-19 수도권 한정: 현 위치가 수도권 밖 → 안내만(저장 안 함)
   admin: () => { DEMO.back(); setAud('admin', { save: false }); },
 };
 function demo(s) {
   clearTimeout(locTimer); clearTimeout(addrTimer);
-  closeSheet(); S.limit = false; S.open = false; S.sidos = false; S.pickAll = false; S.q = ''; input.value = ''; S.active = -1; S.view = null; S.mapAt = null;
+  closeSheet(); S.limit = false; S.open = false; S.sidos = false; S.pickAll = false; S.q = ''; input.value = ''; S.active = -1; S.view = null; S.mapAt = null; S.guessKnown = true;
   $('#demo-out').textContent = '';
   if (s !== 'admin') setAud('public', { save: false });
   const after = (DEMO[s] || DEMO.first)();
@@ -2736,7 +2794,7 @@ if (OPS) {
   /* 첫 방문 IP 시도 추천: /api/v1/geo → { sido }. 없거나 실패면 시도 고르기 칩 */
   S.guessKnown = false;
   fetch('/api/v1/geo').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((j) => {
-    const sd = j && j.sido ? geoSido(String(j.sido), IX) : null;   // 수도권 밖(광주 29 등)도 그 시도를 추천한다
+    const sd = j && j.sido ? geoSido(String(j.sido), IX) : null;   // 2026-10-19 수도권 한정: 수도권 밖(광주 29 등)은 null → 기본 경기(41) 보기 + 시도 고르기
     if (sd) { S.guess = sd; S.guessKnown = true; if (!S.home && !S.view) renderAll(); else renderLoc(); }
   });
 }
@@ -2745,7 +2803,7 @@ const start = new URLSearchParams(location.search).get('s'), v0 = new URLSearchP
 if (DEMO_ON && start && DEMO[start]) { demo(start); if (v0 && areaOf(v0)) pick('search', v0); }
 else {
   const saved = store.get('myArea');
-  if (saved && areaOf(saved)) { S.home = saved; S.loc = 'set'; }
+  if (saved && areaOf(saved)) { S.home = saved; S.loc = 'set'; }   // 2026-10-19 수도권 한정: 색인(수도권)에 없는 옛 내 동네는 무시하고 기본 보기
   renderAll(); renderAC();
   if (v0 && areaOf(v0)) pick('search', v0);
   document.querySelectorAll('.demo button[data-s]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === (S.home ? '' : 'first'))));

@@ -69,7 +69,9 @@ test('3 용어: 목표를 넘으면 \'달성 n%\'(②인허가 3,560/1,543 = 달
   assert.match(V.stageCellTip(permit, '', cells), /①계획 확인과 같은 값/);
   assert.ok(!read('components/projects/Summary.tsx').includes("'초과'"));
   const judged = V.judgeOutText(ledgerJudged(BOARD));
-  assert.ok(!judged.includes('판정 밖') && judged.includes('일정 정보 없음'), judged);
+  // 2026-10-19 수도권 한정: LH 후보·건축HUB 후보가 0건이라 ledgerJudged 문구에 '일정 정보 없음' 꼬리가 없다 → 치환 규칙은 옛 문구 '판정 밖'으로 확인
+  assert.ok(!judged.includes('판정 밖') && !judged.includes('일정 정보 없음'), judged);
+  assert.equal(V.judgeOutText('판정 밖: LH 후보 1건'), '일정 정보 없음: LH 후보 1건');
   assert.match(read('app/(dashboard)/sources/page.tsx'), /judgeOutText\(ledgerJudged\(ledger\)\)/);
   for (const f of ['app/(dashboard)/sources/page.tsx', 'app/(dashboard)/projects/page.tsx', 'app/(dashboard)/region/page.tsx', 'components/projects/Summary.tsx', 'components/projects/ProjectDetail.tsx']) assert.ok(!read(f).includes("'판정 밖'"), f);
 });
@@ -140,7 +142,9 @@ test('후속 1 상단 메뉴 바: 대시보드는 1600px 이상에서 본문 틀
 test('후속 2 후보 사업 지도 열: 수도권은 시군구 지도(구가 있는 시는 pick)·이름 \'시군구 지도\', 수도권 밖은 숨김, 번호 있는 사업은 사업 위치', () => {
   const L = require('../../lib/board/projects-list.ts');
   /* 지금 원장의 후보 2,039건은 모두 수도권 밖(→ 빈칸)이라 수도권 후보는 같은 행을 시군구만 바꿔 만든다(다음 원장에 생길 때의 규칙) */
-  const base = rows.find((r) => !r.issued);
+  // 2026-10-19 수도권 한정: 원장에 후보(번호 없는 사업)가 0건이라 발급 사업 행을 issued:false 로 바꿔 후보 행을 만든다
+  assert.ok(rows.every((r) => r.issued), '원장에 후보 행이 없다');
+  const base = { ...rows[0], issued: false };
   for (const sgg of ['11680', '28245', '41281', '41280', '41135']) {
     const c = L.mapCell({ ...base, sgg });
     assert.equal(c.text, '시군구 지도', sgg);
@@ -149,8 +153,7 @@ test('후속 2 후보 사업 지도 열: 수도권은 시군구 지도(구가 �
     assert.match(c.title, /후보 사업/);
     assert.equal(c.icon, undefined, '사업 위치 지도 표지와 구별');
   }
-  assert.equal(rows.filter((r) => !r.issued && L.mapCell(r) !== null).length, 0, '수도권 밖 후보는 모두 빈칸');
-  assert.equal(L.mapCell(rows.find((r) => !r.issued && !V.isMetro(r.sgg))), null, '수도권 밖 후보는 빈칸');
+  assert.equal(L.mapCell({ ...base, sgg: '26110' }), null, '수도권 밖 후보는 빈칸(부산 중구로 바꾼 가상 행)');
   assert.match(L.mapCell(A2).href, /\/map\?project=PRJ-28245-0055/, '번호 있는 사업은 사업 위치');
   /* 간단 보기 서랍도 같은 규칙 */
   assert.match(read('components/projects/Candidate.tsx'), /mapScopeHref\(\{ sgg: r\.sgg \}\)[\s\S]*시군구 지도 ›/);

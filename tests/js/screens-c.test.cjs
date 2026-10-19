@@ -34,7 +34,8 @@ test('1 리본: 2026.10 판정 기준 변경 — 구분선·꼬리표, 그 앞 �
   const T = S.timelineOf(BOARD), J = S.judgmentsOf(BOARD), SF = S.scopeChangeOf(J);
   assert.equal(BOARD.months[SF], '2026-10', '변경 달 = candidate 가 처음 있는 판정 달');
   assert.ok(J[SF - 1].delay.units > 10000 && J[SF].delay.units === 1666, '2026.09 수만 호 → 2026.10 1,666호(다시 계산하지 않는다)');
-  assert.deepEqual(BOARD.trend.find((r) => r.month === '2026-10').addedSources.length > 0, true, '같은 달에 원천 추가도 있다(표지는 하나)');
+  // 2026-10-19 수도권 한정: 2026-10 행의 addedSources(원천 추가) 5건은 모두 비수도권 사업 몫이라 사라졌다 → 변경 표지는 판정 기준 변경 하나뿐
+  assert.equal(BOARD.trend.find((r) => r.month === '2026-10').addedSources, undefined, '같은 달에 원천 추가 없음');
   assert.equal(S.scopeChangeOf(S.judgmentsOf({ ...BOARD, trend: [] })), -1, '소급 이력이 없으면 변경 없음');
   const g = S.ribbonOf(T, BOARD.stageUnits, S.delaysOf(J), SF);
   assert.equal(S.staticTexts(g).scope.t, '판정 기준 변경 · 2026.10부터 번호 있는 사업만');
@@ -61,14 +62,14 @@ test('2 ③착공 세 숫자에 보이는 정의 꼬리: 종합상황판 단계�
   /* 지시 카드: 보이는 앞말 '착공 누계'(단계표 '③ 착공' = 지금 단계와 다른 말 — 2026-10-18 사용자 결정), 원천(통계누리)·기간은 (i) 기준 첫머리(줄1 꼬리는 뺐다) */
   assert.equal(D[0].tag, undefined);
   assert.equal(D[0].pre, '착공 누계');
-  assert.match(D[0].basis, /^통계누리 전국 착공 2026년 1~8월 누계/);
+  assert.match(D[0].basis, /^통계누리 수도권 착공 2026년 1~8월 누계/);
   assert.match(board, /<p>\{x\.basis\}<\/p>/, '기준은 카드 (i) 팝오버에 보인다');
   /* 세 값이 실제로 다른 정의임: 단계표(지금 ③) ≠ 단계별 진행(③까지 온 누적) */
   const now3 = BOARD.stageUnits[BOARD.now][2], pipe = V.pipelineOf(V.scopeOf(rows, {})).open.find((c) => c.i === 2);
   assert.ok(pipe.units > now3, `누적 ${pipe.units} > 지금 ${now3}`);
 });
 
-test('2 앞으로 12개월 대표 = 준공 예정: 지역 공급 기본(준공만)·사업 화면·종합상황판·지도 계산 규칙이 같은 값(수도권·전국)', () => {
+test('2 앞으로 12개월 대표 = 준공 예정: 지역 공급 기본(준공만)·사업 화면·종합상황판·지도 계산 규칙이 같은 값(수도권 13,372호)', () => {
   assert.deepEqual(R.parseKinds(undefined), ['COMPLETION']);
   const completion = (sido) => sum(R.aheadAll(CAL, sido, (c) => c).filter((e) => R.parseKinds(undefined).includes(e.type)), (e) => e.units);
   const q5 = (f) => num(V.questionsOf(rows, f, qctx).find((x) => x.q === '앞으로 얼마나 공급되는가').value);
@@ -77,9 +78,10 @@ test('2 앞으로 12개월 대표 = 준공 예정: 지역 공급 기본(준공�
   assert.equal(completion('metro'), 13372, '수도권 대표(준공 예정)');
   assert.equal(q5({ metro: true }), 13372, '사업 화면 수도권');
   assert.equal(mapRule, 13372, '지도 개요 규칙');
-  assert.equal(completion(''), 214975);
-  assert.equal(q5({}), 214975);
-  assert.equal(sum(BOARD.upcoming, (m) => m.units), 214975, '종합상황판(전국)');
+  // 2026-10-19 수도권 한정: 전국 214,975호 → 수도권과 같은 13,372호 (캘린더·원장이 수도권뿐이라 '전국'(필터 없음)도 같은 값)
+  assert.equal(completion(''), 13372);
+  assert.equal(q5({}), 13372);
+  assert.equal(sum(BOARD.upcoming, (m) => m.units), 13372, '종합상황판(수도권)');
   const region = read('app/(dashboard)/region/page.tsx');
   assert.match(region, /isDefaultKinds\(kinds\) \? AHEAD_COMPLETION/, '기본 제목 = 앞으로 12개월 · 준공 예정');
   assert.match(region, /if \(!isDefaultKinds\(ks\)\) s\.set\('kind'/, '주소는 기본(준공)과 다를 때만');
@@ -115,7 +117,9 @@ test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본
   assert.match(ahead, /if \(ev\.key === 'Enter'\) \{ ev\.preventDefault\(\); ev\.currentTarget\.form\?\.requestSubmit\(\); \}/);
   assert.match(ahead, /<button type="submit"[^>]*>보기<\/button>/);
   /* 시도 타일: 판정 대상 없음(번호 있는 사업 없음) 13곳은 '—' 대신 이유와 확인 필요 건수 — 2026-10-16 4차부터 다시 16칸 타일마다(r4-board 1) */
-  assert.equal(BOARD.regions.filter((r) => !r.judged).length, 13);
+  // 2026-10-19 수도권 한정: 판정 대상 없는 시도 13 → 0 (시도 타일이 서울·인천·경기 3곳뿐이고 모두 번호 있는 사업이 있다)
+  assert.equal(BOARD.regions.length, 3);
+  assert.equal(BOARD.regions.filter((r) => !r.judged).length, 0);
   assert.match(board, /data-slot="region-none"[^>]*>판정 대상 없음\{r\.candidate\?\.judged \? <> · 확인 필요 \{f\(r\.candidate\.judged\)\}건<\/> : null\}/);
   assert.doesNotMatch(board, /\{rate === null \? '—'/);
   /* /agency/gh: 사업 목록과 같은 열·칸(①~⑥ 알약), 행 → 서랍 */
@@ -139,9 +143,10 @@ test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본
   }
 });
 
-test('불변식: 지연 2건 · 후보 1,839건 · 앞으로 12개월 전국 214,975호', () => {
+test('불변식: 지연 2건 · 후보 0건 · 앞으로 12개월 수도권 13,372호', () => {
   const j = BOARD.judgment, c = j.candidate;
   assert.equal(j.delay.projects, 2);
-  assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 1839);
-  assert.equal(sum(BOARD.upcoming, (m) => m.units), 214975);
+  // 2026-10-19 수도권 한정: 후보 1,839 → 0, 앞으로 12개월 214,975 → 13,372호
+  assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 0);
+  assert.equal(sum(BOARD.upcoming, (m) => m.units), 13372);
 });

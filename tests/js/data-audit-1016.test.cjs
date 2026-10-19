@@ -117,15 +117,18 @@ test('결함 2: 시군구 거르기의 앞으로 12개월 링크 = 같은 시군
 /* ---------- 결함 3: 지역 공급 목록의 사업 링크(/projects?id= · ?cand=)가 범위 없이 열려, 수도권 밖 사업도 수도권 목록 위에 서랍이 열렸다(닫으면 그 사업이 없는 목록) ---------- */
 test('결함 3: 지역 공급 → 사업 서랍 링크는 그 사업이 들어 있는 목록 범위로', () => {
   assert.equal(typeof R.projectHref, 'function');
-  const busan = R.aheadAll(CAL, '', sidoName).find((e) => e.sd === '26' && !e.drawer);
-  const gwangju = R.aheadAll(CAL, '', sidoName).find((e) => e.sd === '12' && e.drawer) ?? { ...busan, sd: '12', drawer: true, id: 'PRJ-12170-0001' };
+  // 2026-10-19 수도권 한정: 부산 후보(?cand)·광주 사업 예시가 달력에서 사라졌다 → 전체 보기(''·all)는 수도권 사업뿐이고 모두 상세 서랍(?id=) 사업. 후보 모양(?cand)은 같은 항목의 drawer 를 끈 합성 항목으로 본다
+  const all = R.aheadAll(CAL, '', sidoName);
+  assert.ok(all.length > 0 && all.every((e) => R.METRO.includes(e.sd) && e.drawer), '전체 보기 = 수도권 사업, 모두 상세 서랍');
+  const inc = all.find((e) => e.sd === '28');
+  const cand = { ...inc, drawer: false };
   const metroE = R.aheadAll(CAL, 'metro', sidoName).find((e) => e.drawer);
-  assert.equal(R.projectHref(busan, ''), `/projects?sido=26&cand=${busan.id}`, '전국 보기의 부산 후보 → 부산 목록 + 간단 보기');
-  assert.equal(R.projectHref(busan, '26'), `/projects?sido=26&cand=${busan.id}`);
-  assert.equal(R.projectHref(gwangju, ''), `/projects?sido=12&id=${gwangju.id}`);
+  assert.equal(R.projectHref(inc, ''), `/projects?sido=28&id=${inc.id}`, '전체 보기의 인천 사업 → 인천 목록 + 서랍');
+  assert.equal(R.projectHref(cand, ''), `/projects?sido=28&cand=${inc.id}`, '후보 모양이면 간단 보기(cand)');
+  assert.equal(R.projectHref(inc, '28'), `/projects?sido=28&id=${inc.id}`);
   assert.equal(R.projectHref(metroE, 'metro'), `/projects?id=${metroE.id}`, '수도권 보기는 사업 화면 기본(수도권) 그대로');
   /* 링크가 여는 목록에 그 사업이 있다(서랍 뒤 목록·닫기 후 목록) */
-  for (const sd of ['', 'metro', '26', '11']) for (const e of R.aheadAll(CAL, sd, sidoName).slice(0, 40)) {
+  for (const sd of ['', 'metro', '28', '11']) for (const e of R.aheadAll(CAL, sd, sidoName).slice(0, 40)) {
     const href = R.projectHref(e, sd);
     const q = Object.fromEntries(new URL(href, 'http://x').searchParams);
     assert.equal(q.id ?? q.cand, e.id);
@@ -158,11 +161,12 @@ test('후속 1: 후보 계산 숫자 → ?status=review-late 목록·CSV 건수�
   const c = BOARD.judgment.candidate;
   const D = require('../../lib/board/directives.ts').makeDirectives({ sourceCount: 1, stageNames: V.BOARD_NAMES, ledger: BOARD, start: { year: '2026', upto: 8, cum: 1, cumLy: 1 }, bottleneck: V.bottleneckOf });
   const late = D.find((d) => d.t === '일정 지연 관리');
-  assert.equal(late.pair.list.href, '/projects?sido=all&status=review-late');
-  assert.equal(String(listOf(late.pair.list.href).length), late.pair.big, '카드 숫자 = 목록 건수');
-  assert.equal(listOf(late.pair.list.href).length, c.delay.projects);
-  assert.ok(listOf(late.pair.list.href).every((r) => !r.issued && r.cls === 'delay'));
-  assert.equal(listOf('/projects?sido=all&status=review').length, c.ok.projects + c.caution.projects + c.delay.projects, '확인 필요(후보) 전체는 그대로');
+  // 2026-10-19 수도권 한정: 후보(번호 없는 건축HUB·LH 후보)가 원장에서 빠져 후보 계산이 0 — 카드는 쌍 숫자(pair) 없이 '지연 n건', 후보 목록은 비어 있고 확인 필요 전체도 0
+  assert.equal(late.pair, undefined, '후보 0이면 쌍 숫자 없음');
+  assert.deepEqual([c.ok.projects, c.caution.projects, c.delay.projects], [0, 0, 0]);
+  assert.ok(rows.every((r) => r.issued), '원장 사업은 모두 번호 있음(후보 없음)');
+  assert.equal(listOf('/projects?sido=all&status=review-late').length, c.delay.projects);
+  assert.equal(listOf('/projects?sido=all&status=review').length, c.ok.projects + c.caution.projects + c.delay.projects, '확인 필요(후보) 전체도 0');
   /* 종합상황판 선택 시점 카드의 링크도 같은 주소 */
   const board = read('components/board/Board.tsx');
   assert.match(board, /<PanelLink href="\/projects\?sido=all&status=review-late"[^>]*>후보 계산 <b/);
@@ -174,9 +178,8 @@ test('후속 1: 후보 계산 숫자 → ?status=review-late 목록·CSV 건수�
   assert.match(page, /\{ href: at\(\{ status: 'review-late' \}\), label: REVIEW_LATE, on: f\.status === 'review-late'/, '상태 메뉴 칩');
   assert.match(read('app/(dashboard)/projects/csv/route.ts'), /listRows\(listOrder\(applyFilters\(idx\.rows, f\)\)/, 'CSV 도 같은 거르기');
   /* 사업 화면 핵심 질문: 번호 있는 지연이 없고 후보 지연만 있으면 그 목록으로 */
-  const q = Q({ sido: '26' })['어떤 사업이 늦어지는가'];
-  assert.equal(q.href, '/projects?sido=26&status=review-late');
-  assert.equal(listOf(q.href).length, rows.filter((r) => r.sgg.startsWith('26') && !r.issued && r.cls === 'delay').length);
+  const q = Q({ sido: '28' })['어떤 사업이 늦어지는가'];
+  assert.ok(q && !/review-late/.test(q.href), '후보 지연이 없으면 후보 목록으로 보내지 않는다');
 });
 
 /* ---------- 후속 2: 지도 개요의 지연 수 d 는 번호 있는 사업만(사업 화면 '지연(장기 포함)'과 같은 정의) ---------- */
@@ -196,11 +199,13 @@ test('후속 3: 단계별 연계 ⑤ — 앞으로 12개월 · 준공 예정(HOM
   const zero = new Proxy({}, { get: () => 0 });
   const ahead = { units: sum(BOARD.upcoming, (m) => m.units), projects: sum(BOARD.upcoming, (m) => m.projects) };
   const st = stageLinks({ regions: 3, sgg: 5, registryTotal: 1, registryRefs: 1, registry: {}, bundle: {}, molit: { permit: 1, start: 1, sale: 1, complete: 1, annual: 1 }, months: '2021-09~2026-08',
-    lhBlocks: 351, lhAsOf: '2026-01-27', ledgerNote: '원장 2026.10 · 전국', ahead, catalog: zero, hubBasis: 0, permits: 0, permitsStarted: 0, permitsCompleted: 0, plat: 0, ledger: 0, lhNotices: 0, myhome: 0, myhomePnu: 0, stan: 0 }, ACQUIRE);
+    lhBlocks: 351, lhAsOf: '2026-01-27', ledgerNote: '원장 2026.10 · 수도권', ahead, catalog: zero, hubBasis: 0, permits: 0, permitsStarted: 0, permitsCompleted: 0, plat: 0, ledger: 0, lhNotices: 0, myhome: 0, myhomePnu: 0, stan: 0 }, ACQUIRE);
   const done = st.find((s) => s.name === '준공');
   const o = done.outcomes.find((x) => x.name === V.AHEAD_COMPLETION);
   assert.ok(o, '이름 = 종합상황판 카드 이름');
-  assert.deepEqual(o.lines, ['214,975호 · 414건', 'HOME · LH · 건축HUB 후보']);
+  // 2026-10-19 수도권 한정: 앞으로 12개월 준공 예정 214,975호·414건 → 13,372호·24건(원장 upcoming 합 — 수도권 HOME 뿐)
+  assert.deepEqual([ahead.units, ahead.projects], [13372, 24]);
+  assert.deepEqual(o.lines, ['13,372호 · 24건', 'HOME · LH · 건축HUB 후보']);
   assert.deepEqual(done.outcomes.find((x) => x.name.startsWith('⑤ 준공 층')).lines, ['실적 = 통계누리', '예정 = 원장 현재 예정']);
   assert.ok(!done.outcomes.some((x) => x.lines.some((l) => /LH만|갱신 필요/.test(l)) || x.name === '향후 12개월 공급 예정'), '옛 기준 설명 없음');
   /* 원천 구성: 12개월 준공 예정 사업은 HOME(수도권 발급)·LH 후보·건축HUB 후보에서 온다 */

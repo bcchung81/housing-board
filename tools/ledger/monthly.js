@@ -181,7 +181,8 @@ async function run({ root = P.ROOT, month, dryRun = false, now = Date.now(), exe
 
 /* convert.js 인자(그 달 폴더의 입력, --hub-bulk = snapshot/<bulkFile>). 단계별 원천 중간 스냅샷(snapshot/stage-*.json, 가장 늦은 것)이 있으면 --stage 로 넘긴다 —
    그 스냅샷은 수동 단계(tools/ledger/stage-snapshot.js, 원본 API 자료가 CI 에 없다)라 월 갱신이 만들지 않는다.
-   HOME 덤프 판(raw/home/<덤프시각>, 가장 늦은 것)이 있으면 --home 과 id 매핑 --home-ids(mappings/home-ids.json)를 넘긴다 — 수도권은 HOME 이 정본이라 원본(jsonl.gz)이 없으면 convert 가 멈춘다(Storage 에서 받거나 home-dump.py — raw-store.js pull 은 아직 HOME 을 받지 않는다) */
+   HOME 덤프 판(raw/home/<덤프시각>, 가장 늦은 것)이 있으면 --home 과 id 매핑 --home-ids(mappings/home-ids.json)를 넘긴다 — 수도권은 HOME 이 정본이라 원본(jsonl.gz)이 없으면 convert 가 멈춘다(Storage 에서 받거나 home-dump.py — raw-store.js pull 은 아직 HOME 을 받지 않는다).
+   HOME 판이 있으면 --sidos 11,28,41 도 넘긴다 — 원장 사업은 HOME 수도권만(2026-10-19 사용자 결정, 수도권 밖 사업·딸린 행을 뺀다) */
 function convertArgs(root, dir, month, bulkFile) {
   const rel = (p) => path.relative(root, p);
   const dong = fs.readdirSync(path.join(dir, 'raw/legal-dong')).filter((f) => f.endsWith('.csv')).sort().pop();
@@ -190,7 +191,7 @@ function convertArgs(root, dir, month, bulkFile) {
   return ['--month', month, '--lh-sgg', rel(path.join(dir, 'mappings/lh-block-sgg.json')), '--hub-events', rel(path.join(dir, 'snapshot/hub-events.json')),
     '--legal-dong', rel(path.join(dir, 'raw/legal-dong', dong)), '--hub-bulk', rel(path.join(dir, 'snapshot', bulkFile)),
     '--hub-ids', rel(path.join(dir, 'mappings/hub-candidate-ids.json')), '--national', rel(path.join(dir, 'raw')), ...(stage ? ['--stage', rel(path.join(snap, stage))] : []),
-    ...(home ? ['--home', rel(home), '--home-ids', rel(path.join(dir, 'mappings/home-ids.json'))] : []), '--out', rel(path.join(dir, 'tables'))];
+    ...(home ? ['--home', rel(home), '--home-ids', rel(path.join(dir, 'mappings/home-ids.json')), '--sidos', require('./home-source').HOME_SIDO.join(',')] : []), '--out', rel(path.join(dir, 'tables'))];
 }
 
 /* 9·7 정책 단계별 목표·확인(policy-progress.js → data/board/policy-progress.json)과 사업 화면 자료(projects-index.js → projects-index·project-detail.json) 인자:

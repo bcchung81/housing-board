@@ -27,13 +27,14 @@ const board = read('components/board/Board.tsx'), month = read('app/(dashboard)/
 const panel = (id) => board.slice(board.indexOf(`id="${id}"`), board.indexOf('</Card>', board.indexOf(`id="${id}"`)));
 const sum = (xs) => xs.reduce((s, e) => s + e.units, 0);
 
-test('1 월 상세 = 원장 그 달 준공 예정: 2026.10 전국 18건 8,807호(종합상황판 앞으로 12개월 막대와 같은 값), 수도권 4건 1,806호(지역 공급과 같은 값), 날짜는 HOME', () => {
+test('1 월 상세 = 원장 그 달 준공 예정: 2026.10 수도권 4건 1,806호(종합상황판 앞으로 12개월 막대·지역 공급과 같은 값 — 원장이 수도권뿐), 날짜는 HOME', () => {
   const oct = MA.monthDue(CAL, '2026-10');
-  assert.equal(oct.length, 18); assert.equal(sum(oct), 8807);
+  // 2026-10-19 수도권 한정: 원장 사업이 수도권뿐이라 월 상세 2026.10 = 18건 8,807호 → 4건 1,806호(전엔 수도권 밖 14건 포함)
+  assert.equal(oct.length, 4); assert.equal(sum(oct), 1806);
   assert.deepEqual([oct.length, sum(oct)], [BOARD.upcoming[0].projects, BOARD.upcoming[0].units], '종합상황판 앞으로 12개월 첫 달과 같다');
   for (const u of BOARD.upcoming) { const m = MA.monthDue(CAL, u.ym); assert.deepEqual([m.length, sum(m)], [u.projects, u.units], u.ym); }
   const metro = oct.filter((e) => R.METRO.includes(e.sd));
-  assert.deepEqual([metro.length, sum(metro)], [4, 1806], '지역 공급(수도권) 10월 4건 1,806호');
+  assert.deepEqual([metro.length, sum(metro)], [oct.length, sum(oct)], '지역 공급(수도권) 10월 = 월 상세 전체 — 수도권 밖 예정 없음');
   assert.ok(metro.some((e) => /성남신촌/.test(e.name) && e.units === 227) && metro.some((e) => /서울공릉/.test(e.name) && e.units === 294));
   const a2 = oct.find((e) => e.id === 'PRJ-28245-0055');
   assert.equal(V.dayText(a2.day), '2026.10.11', 'HOME 정본 날짜');
@@ -63,7 +64,7 @@ test("2 예정일 지남 문구: '정상 · 예정일 지남(1개월 미만)' �
   for (const [f, s] of [['Board', board], ['month', month], ['agency', agency], ['month-ahead', read('lib/board/month-ahead.ts')]]) assert.doesNotMatch(code(s), /경과 0개월|경과 \$\{[^}]*\.months\}개월/, f);   // 규칙 설명('경과 6개월 이상')은 괜찮다
 });
 
-test('3 기관별 진행의 % = 전국 지연 중 몫(열 머리·title — 2026-10-16 4차 r4-board 5 에서 \'지연 중 비중\'을 바꿈)', () => {
+test('3 기관별 진행의 % = 범위(whole) 지연 중 몫(열 머리·title — 2026-10-16 4차 r4-board 5 에서 \'지연 중 비중\'을 바꿈)', () => {
   const ag = panel('p-agency');
   assert.match(ag, /data-slot="agency-head"[\s\S]*?\{whole\} 지연 중 몫/, '열 머리');
   assert.match(ag, /title=\{`[^`]*\$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호 중 \$\{a\.name\} 몫`\}/, '값 title');
@@ -81,12 +82,13 @@ test("4 용어: '판정 밖' → '일정 정보 없음'(종합상황판·기관 
   assert.match(board, /cand = a\.candidateUnits \?\? 0, none = out - cand/);
 });
 
-test('5 시도 타일: 판정 대상은 서울·인천·경기 3곳, 13곳은 판정 대상 없음 — 2026-10-16 4차 사용자 지시로 묶음을 되돌려 16칸 모두 타일(r4-board 1)', () => {
+test('5 시도 타일: 시도는 서울·인천·경기 3곳뿐이고 모두 판정 대상이 있다 — 묶음 없이 모두 타일(r4-board 1)', () => {
   const judged = BOARD.regions.filter((r) => r.judged), rest = BOARD.regions.filter((r) => !r.judged);
   assert.deepEqual(judged.map((r) => r.code), ['11', '28', '41']);
-  assert.equal(rest.length, 13);
+  // 2026-10-19 수도권 한정: 시도 16칸(판정 대상 없는 13곳) → 3칸 모두 판정 대상 있음
+  assert.equal(rest.length, 0); assert.equal(BOARD.regions.length, 3);
   const reg = panel('p-region');
-  assert.match(reg, /\{L\.regions\.map\(\(r, ri\) =>/, '16곳 모두 타일');
+  assert.match(reg, /\{L\.regions\.map\(\(r, ri\) =>/, '시도 모두 타일');
   assert.doesNotMatch(board, /region-fold|judgedRegions|restRegions/, '한 줄 묶음 없음');
   assert.match(reg, /data-slot="region-none"/, '판정 대상 없는 칸마다 짧은 표기');
 });

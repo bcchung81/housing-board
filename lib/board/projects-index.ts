@@ -10,7 +10,7 @@ import indexJson from '../../data/board/projects-index.json';
 import detailJson from '../../data/board/project-detail.json';
 import progressJson from '../../data/board/policy-progress.json';
 import { DETAILS } from '../shell/menu';
-import { getBoardData } from './data';
+import { SGG, getBoardData } from './data';
 import { drawerTarget, rowsOf, type IndexExtra, type MapRow, type Policy, type PolicyProgress, type ProjectDetail, type ProjectRow, type Program } from './projects-view';
 import type { RegistryProject } from './types';
 import { AGENCY_SHORT, stepsOf, type Steps } from './public-labels';
@@ -48,7 +48,7 @@ export const getProjectDrawer = cache(async (asked: string): Promise<Drawer | nu
   const idx = indexJson as unknown as IndexDoc, det = detailJson as unknown as DetailDoc;
   const t = drawerTarget(asked, allProjects, (id) => id in det.projects, DETAILS.project.id);
   if (!t) return null;
-  if (t.kind === 'hidden') return { kind: 'hidden', project: t.project, sggName: idx.sgg[t.project.sgg] ?? t.project.sgg };
+  if (t.kind === 'hidden') return { kind: 'hidden', project: t.project, sggName: idx.sgg[t.project.sgg] ?? SGG[t.project.sgg]?.name ?? t.project.sgg };   // 색인은 수도권만 — 숨긴 수도권 밖 사업(광산·나주)은 레지스트리 시군구 이름표
   const id = t.id, detail = det.projects[id];
   /* 사업 id 의 시군구 칸(PRJ-{시군구5}-{일련4})으로 먼저 찾고, 없으면 전부 본다 */
   const map = mapJson as unknown as MapDoc;

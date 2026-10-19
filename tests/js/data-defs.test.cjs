@@ -34,15 +34,16 @@ const Q = (q) => Object.fromEntries(V.questionsOf(rows, pf(q), qctx).map((x) => 
 const sum = (xs) => xs.reduce((s, x) => s + x, 0);
 
 /* ---------- D3 ---------- */
-test('D3: 지연 건수는 번호 있는 사업만(2건), 후보는 확인 필요로 따로(313건) — 둘을 더하면 예전 315건', () => {
+test('D3: 지연 건수는 번호 있는 사업만(2건), 후보는 확인 필요로 따로(수도권 한정으로 0건) — 예전 전국 315건 = 2 + 313', () => {
   const j = BOARD.judgment, c = j.candidate;
   assert.deepEqual([j.ok.projects, j.caution.projects, j.delay.projects], [165, 2, 2]);
-  assert.deepEqual([c.ok.projects, c.caution.projects, c.delay.projects], [1442, 84, 313]);
-  assert.equal(j.delay.projects + c.delay.projects, 315, '예전 종합상황판 지연 315건 = 2 + 313');
-  assert.equal(j.caution.projects + c.caution.projects, 86, '예전 주의 86건');
-  assert.equal(j.ok.projects + c.ok.projects, 1607, '예전 정상 1,607건');
+  // 2026-10-19 수도권 한정: 번호 없는 후보(건축HUB 대용량·LH 준공예정)가 원장에서 빠져 후보 계산 1442·84·313 → 0·0·0, 후보 판정 1,839 → 0. 그래서 지연 합 = 2, 주의 합 = 2, 정상 합 = 165
+  assert.deepEqual([c.ok.projects, c.caution.projects, c.delay.projects], [0, 0, 0]);
+  assert.equal(j.delay.projects + c.delay.projects, 2);
+  assert.equal(j.caution.projects + c.caution.projects, 2);
+  assert.equal(j.ok.projects + c.ok.projects, 165);
   assert.equal(BOARD.scope.judged, 169);
-  assert.equal(BOARD.scope.candidateJudged, 1839);
+  assert.equal(BOARD.scope.candidateJudged, 0);
   /* 행에서 다시 센 값 = 집계 */
   assert.equal(rows.filter((r) => r.issued && r.cls === 'delay').length, j.delay.projects);
   assert.equal(rows.filter((r) => !r.issued && r.cls === 'delay').length, c.delay.projects);
@@ -56,7 +57,9 @@ test('D3: 지연 건수는 번호 있는 사업만(2건), 후보는 확인 필�
 });
 
 test('D3: 후보 행의 상태 칸·간단 보기는 \'확인 필요\'(판정과 다른 모양), 같은 계산 결과는 title·보조 글', () => {
-  const cand = rows.find((r) => !r.issued && r.cls === 'delay');
+  // 2026-10-19 수도권 한정: 원장에 후보 행이 없다(전엔 후보 1,839곳) → 후보 모양은 번호 있는 지연 사업에서 issued 를 끈 합성 행으로 확인하고, 실제 후보 행은 0임을 본다
+  assert.equal(rows.filter((r) => !r.issued).length, 0, '원장에 번호 없는 후보 행이 없다');
+  const cand = { ...rows.find((r) => r.issued && r.cls === 'delay'), issued: false };
   const cell = L.statusCell(cand);
   assert.equal(cell.text, '확인 필요');
   assert.equal(cell.mark, 'outline');
@@ -70,15 +73,16 @@ test('D3: 후보 행의 상태 칸·간단 보기는 \'확인 필요\'(판정과
   const comp = read('components/projects/Candidate.tsx');
   assert.match(comp, /statusLabel\(r\)\}\{st === 'review'/, '간단 보기의 판정 칸도 statusLabel(=확인 필요)');
   assert.match(comp, /계산하면 \{STATUS_NAME\[calcOf\(r\)\]\}/);
-  assert.equal(V.applyFilters(rows, pf({ sido: 'all', status: 'review' })).length, 1839, '상태 거르기 ?status=review');
+  assert.equal(V.applyFilters(rows, pf({ sido: 'all', status: 'review' })).length, 0, '상태 거르기 ?status=review — 후보가 없어 0건(전엔 1,839)');
 });
 
 test('D3: 종합상황판 지연 = 사업 화면 지연, 시도 타일 지연율은 번호 있는 사업으로, 판정 시도는 수도권 3곳', () => {
   const d = makeDirectives({ sourceCount: 1, stageNames: V.BOARD_NAMES, ledger: BOARD, start: { year: '2026', upto: 8, cum: 1, cumLy: 1 }, bottleneck: V.bottleneckOf });
   const q = Q({ sido: 'all' })['어떤 사업이 늦어지는가'];
-  assert.equal(d[4].m, `지연 확정 ${BOARD.judgment.delay.projects}건 · 후보 계산 ${BOARD.judgment.candidate.delay.projects}건`);
-  assert.equal(q.value, String(BOARD.judgment.delay.projects), '종합상황판 지연 = 사업 화면 지연(전국)');
-  assert.match(q.sub, / · 확인 필요\(후보\) 313$/);
+  // 2026-10-19 수도권 한정: 후보 0이라 카드 한 줄이 '지연 확정 n건 · 후보 계산 n건' → '지연 n건'(쌍 숫자 없음)
+  assert.equal(d[4].m, `지연 ${BOARD.judgment.delay.projects}건`);
+  assert.equal(q.value, String(BOARD.judgment.delay.projects), '종합상황판 지연 = 사업 화면 지연(수도권)');
+  assert.doesNotMatch(q.sub, /확인 필요\(후보\)/, '2026-10-19 수도권 한정: 후보 0이라 보조 글에 \'· 확인 필요(후보) n\' 이 붙지 않는다(전엔 313)');
   assert.equal(d[2].m, `병목 ${V.BOARD_NAMES[V.bottleneckOf(BOARD.delayByStage).i]} ${BOARD.delayByStage[2].toLocaleString('en-US')}호`);
   assert.equal(Q({ sido: 'all' })['어디서 막혀 있는가'].value, '③ 착공', '병목도 같은 값');
   for (const r of BOARD.regions) {
@@ -171,6 +175,7 @@ test('불변식: CSV = 목록(행·순서), 9·7 숫자, 수도권 227,976호·2
   assert.deepEqual([s97.target, s97.actual, s97.actualWithEstimates], [8049, 4732, 8742]);
   const metro = V.summaryOf(V.applyFilters(rows, pf({})));
   assert.deepEqual([metro.n, metro.units], [262, 227976]);
-  assert.equal(sum(BOARD.upcoming.map((u) => u.units)), 214975);
-  assert.equal(Q({ sido: 'all' })['앞으로 얼마나 공급되는가'].value, '214,975');
+  // 2026-10-19 수도권 한정: 향후 12개월 준공 예정 214,975호(414곳) → 13,372호(24곳)
+  assert.equal(sum(BOARD.upcoming.map((u) => u.units)), 13372);
+  assert.equal(Q({ sido: 'all' })['앞으로 얼마나 공급되는가'].value, '13,372');
 });

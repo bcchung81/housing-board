@@ -1,0 +1,1189 @@
+<!doctype html>
+<html lang="ko" data-elev="raised" data-page="citizen">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>요약 카드 배경 후보</title>
+<link rel="stylesheet" href="../../assets/fonts/noto-sans-kr/noto-sans-kr.css">
+<style>
+/* ── app/globals.css 내보내기 층(빌드가 넣음, 고치지 말 것) ── */
+/* 라이트 팔레트(2026-10-09). 글자색은 흰 바탕에서 4.5:1, 차트 면·선은 3:1 이상(tests/js/tailwind.test.cjs). 주색은 선택·조작·링크에 쓰는 남색이며, 주의·지연 색과 분리한다.
+   배색 개선(DESIGN.md): 바탕을 한 단계 내려 카드와 면을 나누고, 주의는 노랑 쪽(착공 주황과 색상각 20° 이상)으로 옮겼다. */
+:root {
+  color-scheme: light;
+  --background: #FFFFFF;
+  --foreground: #172B4D;
+  --card: #FFFFFF;
+  --card-foreground: #172B4D;
+  --popover: #FFFFFF;
+  --popover-foreground: #172B4D;
+  --primary: #23466D;
+  --primary-foreground: #FFFFFF;
+  --secondary: #EAF0F6;
+  --secondary-foreground: #172B4D;
+  --muted: #F3F5F8;
+  --muted-foreground: #4D5B6F;   /* 회의실 투사용 한 단계 진하게(2026-10-14): 카드 6.9:1 · 바탕 6.1:1 · 강조 면 6.0:1 */
+  --accent: #EDF3F9;
+  --accent-foreground: #172B4D;
+  --destructive: #C94359;
+  --border: #D5DCE6;   /* 흰 바탕과 흰 카드가 같아져(2026-10-17 바탕 통일) 카드 경계가 묻히지 않게 한 단계 진하게 */
+  --input: #B9C6D6;
+  --ring: #23466D;
+  --chart-1: #3D7BD8;
+  --chart-2: #16998D;
+  --chart-3: #DA7426;
+  --chart-4: #5B9B3A;
+  --chart-5: #8B67CC;
+  /* shadcn 기본 토큰에 없는 이 앱의 색 */
+  --ink2: #344960;
+  --mute: #5F6E82;
+  --line2: #B9C6D6;
+  --pn2: #EAF0F6;
+  --ok: #287B61;
+  --warn: #7F6300;
+  --bad: #BD3A50;   /* 한 단계 진하게(2026-10-15): 얼룩 행·강조 면(--accent) 위 빨간 글자도 4.5:1 이상(옛 #C94359 은 4.24~4.46:1) */
+  --chartbg: #FAFBFD;
+  /* 종합상황판 기관별 진행의 '판정 밖' 막대 조각·견본(견본은 --out-line 1px 선) */
+  --out: #CBD3DE;
+  --out-line: #8693A5;
+  /* 본문 바탕(라이트·다크 모두 단색: 일반사용자 화면 /citizen 과 같은 흰색·검정) */
+  --page-bg: #FFFFFF;
+  /* 안쪽 카드(.ui-inset)의 면. 기본은 카드와 같다(입체 단계 raised 에서만 달라진다) */
+  --inset-bg: var(--card);
+  /* 면·떠 있는 상자의 그림자. 라이트는 남색 그림자를 옅게, 다크는 카드 위쪽 1px 하이라이트와 짙은 그림자 */
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 6%), 0 1px 3px rgb(15 23 42 / 4%);
+  --shadow-pop: 0 8px 22px rgb(15 23 42 / 14%);
+  --shadow-hud: 0 4px 14px rgb(15 23 42 / 8%);   /* HUD 판: 떠 있는 그림자를 약하게 */
+  /* 카드 호버: 누를 수 있는 카드(떠오름)·누를 수 없는 카드(테두리·그림자만) */
+  --shadow-hover: 0 10px 24px rgb(15 23 42 / 12%), 0 2px 6px rgb(15 23 42 / 8%);
+  --shadow-hover-soft: 0 4px 14px rgb(15 23 42 / 8%);
+  /* 6단계 색(계획·인허가·착공·모집·준공·입주)과 공공택지 민간. 이름은 의미, 값은 테마별.
+     --st-*: 차트 면·선·막대(차트 바탕 위 3:1 이상), --st-*-ink: 글자·칩·지도 위 기호(카드 위 4.5:1 이상). 지도(assets/js/app.js)도 이 값을 읽는다 */
+  /* 2026-10-10: 밝기를 고르게(OKLCH L .59~.66) 맞추고 채도를 올렸다(C .03~.11 → .06~.16). 어둡게 내려 맞춘 대비가 '흙빛'으로 칙칙해 보였다 */
+  --st-plan: #3D7BD8;
+  --st-permit: #16998D;
+  --st-build: #DA7426;
+  --st-sale: #7286A8;
+  --st-soon: #5B9B3A;
+  --st-move: #8B67CC;
+  --st-priv: #8C99AB;
+  --st-plan-ink: #365F99;
+  --st-permit-ink: #327F79;
+  --st-build-ink: #8E541D;
+  --st-sale-ink: #536278;
+  --st-soon-ink: #526E35;
+  --st-move-ink: #795B9E;
+  --st-priv-ink: #53637A;
+  /* 시행주체: 공공 3주체는 서로 다른 색상, 민간은 뒤로 물러나는 중립 회색(components/charts/palette.ts 의 ACTOR_COLOR) */
+  --actor-local: #8160A8;
+  --actor-lh: #3D63A0;
+  --actor-builder: #B05A84;
+  --actor-private: #8693A5;
+  --real-bg: #E8F3EF;
+  /* 지연율 바탕색 6단계: 0 은 중립, 그 위는 한 색상(로즈)이 단계마다 한 방향으로 짙어진다 */
+  --region-0: #F1F4F8;
+  --region-1: #F8EFF1;
+  --region-2: #F6E4E8;
+  --region-3: #F3D7DD;
+  --region-4: #EFC8D0;
+  --region-5: #EAB7C2;
+  /* 월별 공급 파동 리본 차트의 선·글자·층 경계(components/board/ribbon.ts 의 PAL) */
+  --rb-mid: rgba(15, 26, 61, .22);
+  --rb-sep: rgba(15, 26, 61, .16);
+  --rb-axis: #5F6E82;
+  --rb-ink: #172B4D;
+  --rb-cur: #172B4D;
+  --rb-hatch: #FFFFFF;
+  --rb-seam: #FFFFFF;
+  --rb-band: #C94359;
+  --rb-acc: #23466D;
+  --rb-dim: rgba(15, 26, 61, .35);
+  --rb-pos: #287B61;
+  --rb-yr-on: #172B4D;
+  --rb-yr-off: #5F6E82;
+  /* 리본 위 라벨(선택 달 총량·병목 핀)의 HUD 판: 어두운 반투명 유리 + 흰 글자. 뒤의 리본 색이 비치고, 뒤가 가장 밝아도 흰 글자 5.5:1 이상 */
+  --rb-hud: rgb(15 26 61 / 66%);
+  --rb-hud-line: rgb(255 255 255 / 28%);
+  --rb-hud-txt: #FFFFFF;
+  --rb-hud-acc: #9DBCE9;   /* 총량 라벨의 강조 띠: 남색 유리 위에서 보이는 밝은 주색 */
+  --rb-pin: #FFFFFF;
+  --rb-hover: #172B4D;
+  /* 리본·막대 그라데이션: 위는 하이라이트와 섞고(--rb-hi) 아래는 그늘과 섞는다(--rb-lo) */
+  --rb-hi: #FFFFFF;
+  --rb-lo: #0F1A3D;
+  /* /citizen 3D 판: 그늘(옆면·바다·막)·맥락 시도 면(사업 없음 면 --map-ov-0 과 대비 1.3 이상)·스위치 손잡이. 맥락 면 위 글자는 --foreground */
+  --map-shade: #0F1A3D;
+  --map-ctx: #C3CBD6;
+  --knob: #FFFFFF;
+  --disabled-opacity: .6;
+  /* 옅은 틴트(2026-10-18 카드 색감): 넓은 면은 의미 색을 이만큼만 바탕(--card·--inset-bg)에 섞는다(color-mix in oklab). 가리킨 면은 --tint-mix-on. */
+  --tint-mix: 12%;
+  --tint-mix-on: 20%;
+  /* 머리 줄 로고: 지붕(글자색)·물결(주황) */
+  --logo-ink: #132543;
+  --logo-wave: #C75036;
+}
+
+/* 다크 팔레트(2026-10-17 바탕 통일): 일반사용자 화면 /citizen 야간판과 같은 중립 검정 묶음. 주색·6단계 색·판정색·차트 고유색은 그대로 */
+.dark {
+  color-scheme: dark;
+  --background: #111111;
+  --foreground: #F2F2F2;
+  --card: #111111;
+  --card-foreground: #F2F2F2;
+  --popover: #1A1A1A;
+  --popover-foreground: #F2F2F2;
+  --primary: #9DBCE9;
+  --primary-foreground: #10243D;
+  --secondary: #1F1F1F;
+  --secondary-foreground: #F2F2F2;
+  --muted: #1F1F1F;
+  --muted-foreground: #B3B3B3;
+  --accent: #262626;
+  --accent-foreground: #F2F2F2;
+  --destructive: #FF6B88;
+  --border: #3B3B3B;
+  --input: #6B6B6B;
+  --ring: #9DBCE9;
+  --chart-1: #6F96E6;
+  --chart-2: #3BB5A9;
+  --chart-3: #E08A3C;
+  --chart-4: #8CC45C;
+  --chart-5: #B98BE0;
+  --ink2: #D0D0D0;
+  --mute: #A6A6A6;
+  --line2: #6B6B6B;
+  --pn2: #262626;
+  --ok: #4ADE9E;
+  --warn: #FFC24D;
+  --bad: #FF6B88;
+  --chartbg: #0F0F0F;
+  --out: #333333;
+  --out-line: #6B6B6B;
+  --page-bg: #111111;
+  --inset-bg: var(--card);
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 4%);
+  --shadow-pop: 0 8px 22px rgb(0 0 0 / 45%);
+  --shadow-hud: 0 6px 18px rgb(0 0 0 / 30%);
+  --shadow-hover: 0 12px 28px rgb(0 0 0 / 50%), inset 0 1px 0 rgb(255 255 255 / 7%);
+  --shadow-hover-soft: 0 6px 18px rgb(0 0 0 / 38%), inset 0 1px 0 rgb(255 255 255 / 5%);
+  /* 차트 면은 채도를 한 단계 낮춰(차트 바탕 위 6~9:1) 제목·숫자(14:1)보다 앞서지 않게 하고, 글자·칩은 시안의 밝은 값을 그대로 쓴다 */
+  --st-plan: #6F96E6;
+  --st-permit: #3BB5A9;
+  --st-build: #E08A3C;
+  --st-sale: #A3AEBF;
+  --st-soon: #8CC45C;
+  --st-move: #B98BE0;
+  --st-priv: #8A95BD;
+  --st-plan-ink: #7BA7FF;
+  --st-permit-ink: #45D3C4;
+  --st-build-ink: #FF9F43;
+  --st-sale-ink: #C7D0DA;
+  --st-soon-ink: #A5E56D;
+  --st-move-ink: #D9A6FF;
+  --st-priv-ink: #98A3C9;
+  --actor-local: #B98BE0;
+  --actor-lh: #6F96E6;
+  --actor-builder: #E487B5;
+  --actor-private: #5A6A9E;
+  --real-bg: #163C34;
+  --region-0: #17224A;
+  --region-1: #2A2452;
+  --region-2: #3E2654;
+  --region-3: #522853;
+  --region-4: #662A51;
+  --region-5: #7A2C4E;
+  --rb-mid: rgba(232, 237, 255, .2);
+  --rb-sep: rgba(232, 237, 255, .16);
+  --rb-axis: #8FA0C8;
+  --rb-ink: #E8EDFF;
+  --rb-cur: #FFFFFF;
+  --rb-hatch: #111111;
+  --rb-seam: #0F0F0F;
+  --rb-band: #FF6B88;
+  --rb-acc: #9DBCE9;
+  --rb-dim: rgba(232, 237, 255, .35);
+  --rb-pos: #4ADE9E;
+  --rb-yr-on: #FFFFFF;
+  --rb-yr-off: #B4C0E6;
+  --rb-hud: rgb(0 0 0 / 60%);
+  --rb-hud-line: rgb(157 188 233 / 45%);
+  --rb-hud-txt: #FFFFFF;
+  --rb-hud-acc: #9DBCE9;
+  --rb-pin: #FFFFFF;
+  --rb-hover: #FFFFFF;
+  --rb-hi: #FFFFFF;
+  --rb-lo: #000000;
+  --map-shade: #000000;
+  --map-ctx: #3D3D3D;
+  --knob: #FFFFFF;
+  --disabled-opacity: .6;
+  --tint-mix: 14%;   /* 어두운 바탕은 한 단계 더 섞어야 색이 보인다 */
+  --tint-mix-on: 22%;
+  --logo-ink: #F8F7F3;
+  --logo-wave: #ED9275;
+}
+
+/* 지도 전용(/map, assets/css/app.css 가 지도 이름 --ink·--glass-* 등으로 가리킨다). 2026-10-18 지도 CSS 가 따로 갖던 색 값을 값 그대로 이곳으로 옮겼다.
+   위 공통 토큰과 두 테마 값이 모두 같은 것은 app.css 가 공통 토큰을 바로 가리키고, 여기에는 지도에만 있는 값(--map-*)만 둔다. 라이트는 :root, 다크는 .dark.
+   유리·글자색을 바꾸면 tests/js/glass.test.cjs 가 흰·검은 지도 위 글자 대비(4.5:1)를 다시 확인한다. */
+:root {
+  /* 보조 글자·주의 글자·단계색 칩 위 글자, 기반시설 보라(교육)·노랑(전기), 입력줄 보조 글자 */
+  --map-mute: #526176;
+  --map-warn: #7F6300;
+  --map-on-c: #10162E;
+  --map-edu: #7955AD;
+  --map-power: #895716;
+  --map-cmd-sub: #526176;
+  /* 지도 위 HUD 유리(단지 표지·요약·범례·하단 바·옵션·툴바·상세 카드·팝업·안내 띠·입력줄 3단) */
+  --map-glass-tag: rgba(255,255,255,.96);
+  --map-glass-tag-hover: rgba(234,240,246,.98);
+  --map-glass-sum: rgba(255,255,255,.96);
+  --map-glass-card: rgba(255,255,255,.97);
+  --map-glass-hud: rgba(255,255,255,.9);
+  --hud-bg: color-mix(in oklab, var(--card) var(--hud-alpha), transparent);   /* 떠 있는 HUD 판(.ui-hud) 바탕 = 카드 색 유리(테마·입체 단계를 따라간다). 흐림을 못 쓰는 브라우저는 아래 @supports 가 불투명도를 올린다 */
+  --map-glass-note: rgba(255,255,255,.62);
+  --map-glass-pop: rgba(255,255,255,.78);
+  --map-glass-cmd-active: rgba(255,255,255,.98);
+  --map-glass-cmd-idle: rgba(255,255,255,.96);
+  --map-glass-cmd-off: rgba(245,247,250,.96);
+  /* 떠 있는 상자의 그림자: 라이트는 남색으로 옅게, 다크는 짙게 */
+  --map-hud-shadow: 0 8px 22px rgba(15,23,42,.14);
+  --map-tag-shadow: 0 4px 12px rgba(15,23,42,.12);
+  --map-sheet-shadow: 0 -4px 18px rgba(15,23,42,.14);
+  --map-stuck-shadow: 0 7px 8px -7px rgba(15,23,42,.18);
+  --map-card-hover-shadow: 0 6px 16px rgba(15,23,42,.12);
+  --map-note-shadow: 0 6px 20px rgba(0,0,0,.18);
+  --map-menu-shadow: 0 14px 34px rgb(0 0 0 / 35%);
+  /* 사업·건물 카드(팝업)와 위치 미확보 목록·입력줄 아래 목록 안의 판정·보조 글자: 옅은 유리 위 4.5:1 이 되게 다크는 밝게, 라이트는 진하게 */
+  --map-bad-ink: #8E2C3C;
+  --map-ok-ink: #1D5946;
+  --map-warn-ink: #624C00;
+  --map-late-bad: #B4233C;
+  --map-pop-mute: #445162;
+  --map-pop-plan: #2D5081;
+  --map-pop-permit: #225853;
+  --map-pop-edu: #5D4185;
+  --map-pop-power: #6F4612;
+  /* 낱낱의 지도 부품: 열 수 없음 막, 공공택지 민간 칩, 층수 막대, 고를 수 없는 옵션, 입력줄 후보 강조·조회 중 표시·후보 등급 표지 */
+  --map-fatal-bg: rgba(255,255,255,.96);
+  --map-chip-priv-bg: #EAF0F6;
+  --map-bars-bg: #B9C6D6;
+  --map-bars-on-line: rgba(232,237,255,.8);
+  --map-dis: #526176;
+  --map-cmd-hover: #EAF0F6;
+  --map-spin-track: #B9C6D6;
+  --map-spin-head: #23466D;
+  --map-cmd-tier: #172B4D;
+  /* 범례 견본·표지(두 테마 같은 값): 그 밖 구역, 공공 사업 면, 시설 3종, 건물 색 단계, 정보 없음 건물, 역, 층수 색 띠, 기반시설 면, 버스 */
+  --map-other: #778EAB;
+  --map-other-fill: rgba(85,102,190,.22);
+  --map-ex: #374C98;
+  --map-fac-edu: #BE9900;
+  --map-fac-med: #C94359;
+  --map-fac-pub: #2A9D5C;
+  --map-ramp-lo: #DDE5EE;
+  --map-ramp-hi: #819DBC;
+  --map-ghost-fill: rgba(159,180,205,.25);
+  --map-stn-fill: #fff;
+  --map-tone-lo: #4A5A99;
+  --map-tone-hi: #C7D0DA;
+  --map-edu-site-fill: rgba(183,156,255,.14);
+  --map-power-fill: rgba(255,194,77,.22);
+  --map-ring-fill: rgba(255,214,110,.12);
+  --map-bus-roof: #10162E;
+  --map-bus-body: #56B4E9;
+  --map-bus-line: rgba(232,237,255,.35);
+  /* 그 밖: 시기표 점 마우스 올림 테두리, 로딩 표지 물결, 나침반 남쪽 바늘 */
+  --map-tl-hover: #fff;
+  --map-wave: #D65535;
+  --map-compass-s: #5566BE;
+  /* 수도권 지도 면(/map 개요·/citizen 같은 값, 2026-10-18 배색 안 2): 연두→남보라 다색 명도 5단계(짙을수록 많음) + 값 0 중립(1단계와 밝기 차를 두려고 옅게), 경계선·마우스 올림 선, 단계별 라벨 글자(4.5:1 이상인 쪽) */
+  --map-ov-0: #EEF1F4;
+  --map-ov-1: #D5E88A;
+  --map-ov-2: #63D18F;
+  --map-ov-3: #0D9FA6;
+  --map-ov-4: #0168B4;
+  --map-ov-5: #3A2F8E;
+  --map-ov-line: #FFFFFF;
+  --map-ov-hl: #0B1A33;
+  --map-ov-ink-0: #172B4D;
+  --map-ov-ink-1: #0B1A33;
+  --map-ov-ink-2: #0B1A33;
+  --map-ov-ink-3: #0B1A33;
+  --map-ov-ink-4: #FFFFFF;
+  --map-ov-ink-5: #FFFFFF;
+  /* 라이트 단계 모드 램프(/citizen 짓는 중·모집 끝남 모드, 2026-10-18 배색 안 2) — 이름이 다른 새 토큰, --map-ov-1~5 는 그대로 */
+  --ramp-build-1: #FCCDA2;
+  --ramp-build-2: #F7A65F;
+  --ramp-build-3: #E07A2A;
+  --ramp-build-4: #B25615;
+  --ramp-build-5: #7A380B;
+  --ramp-build-ink-1: #0B1A33;
+  --ramp-build-ink-2: #0B1A33;
+  --ramp-build-ink-3: #0B1A33;
+  --ramp-build-ink-4: #FFFFFF;
+  --ramp-build-ink-5: #FFFFFF;
+  --ramp-sale-1: #CBD4E2;
+  --ramp-sale-2: #A2B1C8;
+  --ramp-sale-3: #7487A7;
+  --ramp-sale-4: #516488;
+  --ramp-sale-5: #334461;
+  --ramp-sale-ink-1: #0B1A33;
+  --ramp-sale-ink-2: #0B1A33;
+  --ramp-sale-ink-3: #0B1A33;
+  --ramp-sale-ink-4: #FFFFFF;
+  --ramp-sale-ink-5: #FFFFFF;
+  /* 지도 칠하기 색(assets/js/app.js buildTheme 이 읽는다). 라이트 값 */
+  --map-bg: #F5F7FA;
+  --map-sky: #E5EDF5;
+  --map-horizon: #F5F7FA;
+  --map-mask: #FFFFFF;
+  --map-dong-shadow: #334960;
+  --map-hill-shadow: #72859B;
+  --map-hill-hi: #FFFFFF;
+  --map-hill-accent: #C3CFDC;
+  --map-district: #537294;
+  --map-other-line: #A8B9CD;
+  --map-ramp-2: #CBD6E3;
+  --map-ramp-3: #B9C9DA;
+  --map-ramp-4: #9FB4CD;
+  --map-flat: #D7E1EC;
+  --map-ghost-line: #637B96;
+  --map-tone-sale-lo: #C9D1DE;
+  --map-tone-build-lo: #F1CAAD;
+  --map-tone-soon-lo: #C1D9B4;
+  --map-tone-move-lo: #D3C5EC;
+  --map-tone-plan-lo: #B5CDF0;
+  --map-tone-permit-lo: #B4DDD8;
+  --map-tone-priv-lo: #CED6E0;
+  --map-transit: #344960;
+  --map-icon-ink: #FFFFFF;
+  --map-fac-edu-ink: #806B13;
+  --map-fac-med-ink: #A92B42;
+  --map-fac-pub-ink: #1A7A44;
+  --map-badge-edge: rgba(10,10,10,.94);
+  --map-glass-label: rgba(255,255,255,.97);
+  --map-resolved: #FF8A65;
+  --map-outline: #FFFFFF;
+  --map-sel: #F0E442;
+  /* 버스 노선 종류색(assets/js/bus.js): 간선·지선·광역/급행/좌석·순환/마을·그 밖. 라이트는 흰 지도 위 3:1 이상 */
+  --map-bus-trunk: #0072B2;
+  --map-bus-branch: #0E7F5C;
+  --map-bus-express: #C4411A;
+  --map-bus-loop: #8A6A00;
+  --map-bus-other: #5A6BA8;
+}
+.dark {
+  --map-mute: #B3B3B3;
+  --map-warn: #FFD66E;
+  --map-edu: #B79CFF;
+  --map-power: #FFC24D;
+  --map-cmd-sub: #D0D0D0;
+  --map-glass-tag: rgba(17,17,17,.92);
+  --map-glass-tag-hover: rgba(38,38,38,.96);
+  --map-glass-sum: rgba(10,10,10,.92);
+  --map-glass-card: rgba(17,17,17,.94);
+  --map-glass-hud: rgba(17,17,17,.87);
+  --map-glass-note: rgba(10,10,10,.66);
+  --map-glass-pop: rgba(17,17,17,.78);
+  --map-glass-cmd-active: rgba(10,10,10,.94);
+  --map-glass-cmd-idle: rgba(10,10,10,.78);
+  --map-glass-cmd-off: rgba(10,10,10,.62);
+  --map-hud-shadow: 0 10px 26px rgba(0,0,0,.42);
+  --map-tag-shadow: 0 6px 16px rgba(0,0,0,.4);
+  --map-sheet-shadow: 0 -4px 18px rgba(0,0,0,.5);
+  --map-stuck-shadow: 0 7px 8px -7px rgba(0,0,0,.7);
+  --map-card-hover-shadow: 0 6px 16px rgba(0,0,0,.38);
+  --map-bad-ink: #FFAFBF;
+  --map-ok-ink: #4ADE9E;
+  --map-warn-ink: #FFD66E;
+  --map-late-bad: #FF6B88;
+  --map-pop-mute: #BEC8E6;
+  --map-pop-plan: #A8C5FF;
+  --map-pop-permit: #59D8CA;
+  --map-pop-edu: #CDBBFF;
+  --map-pop-power: #FFC24D;
+  --map-fatal-bg: rgba(17,17,17,.96);
+  --map-chip-priv-bg: #2E2E2E;
+  --map-bars-bg: #2D3E86;
+  --map-dis: #6B79AE;
+  --map-cmd-hover: rgba(232,237,255,.14);
+  --map-spin-track: rgba(232,237,255,.35);
+  --map-spin-head: #fff;
+  --map-cmd-tier: #fff;
+  --map-ov-0: #262626;
+  --map-ov-1: #E9F098;
+  --map-ov-2: #75DF8F;
+  --map-ov-3: #0AB8B9;
+  --map-ov-4: #0375C9;
+  --map-ov-5: #4D42C1;
+  --map-ov-line: #7A7A7A;
+  --map-ov-hl: #FFFFFF;
+  --map-ov-ink-0: #E8EDFF;
+  --map-ov-ink-1: #0B1A33;
+  --map-ov-ink-2: #0B1A33;
+  --map-ov-ink-3: #0B1A33;
+  --map-ov-ink-4: #FFFFFF;
+  --map-ov-ink-5: #FFFFFF;
+  /* 다크 단계 모드 램프(/citizen 짓는 중·모집 끝남 모드, 2026-10-18 배색 안 2) — 이름이 다른 새 토큰, --map-ov-1~5 는 그대로 */
+  --ramp-build-1: #FDE3CB;
+  --ramp-build-2: #F8B678;
+  --ramp-build-3: #EC8C3F;
+  --ramp-build-4: #CC6A1F;
+  --ramp-build-5: #A44F10;
+  --ramp-build-ink-1: #0B1A33;
+  --ramp-build-ink-2: #0B1A33;
+  --ramp-build-ink-3: #0B1A33;
+  --ramp-build-ink-4: #0B1A33;
+  --ramp-build-ink-5: #FFFFFF;
+  --ramp-sale-1: #DCE3EC;
+  --ramp-sale-2: #B2BFD2;
+  --ramp-sale-3: #8697B4;
+  --ramp-sale-4: #5F7296;
+  --ramp-sale-5: #4B5D82;
+  --ramp-sale-ink-1: #0B1A33;
+  --ramp-sale-ink-2: #0B1A33;
+  --ramp-sale-ink-3: #0B1A33;
+  --ramp-sale-ink-4: #FFFFFF;
+  --ramp-sale-ink-5: #FFFFFF;
+  /* 지도 칠하기 색 다크 값 */
+  --map-bg: #111111;
+  --map-sky: #111111;
+  --map-horizon: #1A1A1A;
+  --map-mask: #000000;
+  --map-dong-shadow: #000000;
+  --map-hill-shadow: #000000;
+  --map-hill-hi: #4A4A4A;
+  --map-hill-accent: #1C1C1C;
+  --map-district: #B8C4F0;
+  --map-other: #5566BE;
+  --map-other-line: #3A4C8C;
+  --map-ramp-lo: #17204D;
+  --map-ramp-2: #222E66;
+  --map-ramp-3: #273675;
+  --map-ramp-4: #2E3F82;
+  --map-ramp-hi: #394C96;
+  --map-flat: #16225A;
+  --map-ghost-fill: rgba(108,125,192,.3);
+  --map-ghost-line: #9AA8D6;
+  --map-tone-sale-lo: #7C8696;
+  --map-tone-build-lo: #B86F2A;
+  --map-tone-soon-lo: #6B9F3E;
+  --map-tone-move-lo: #9A6FC0;
+  --map-tone-plan-lo: #4A6FB5;
+  --map-tone-permit-lo: #2F8F86;
+  --map-tone-priv-lo: #59648E;
+  --map-transit: #F2F2F2;
+  --map-icon-ink: #10162E;
+  --map-fac-edu: #8A7A3A;
+  --map-fac-med: #A5566A;
+  --map-fac-pub: #3F7F5E;
+  --map-fac-edu-ink: #FFD84D;
+  --map-fac-med-ink: #FF8FA0;
+  --map-fac-pub-ink: #7FE3A8;
+  --map-badge-edge: rgba(10,10,10,.94);
+  --map-glass-label: rgba(17,17,17,.9);
+  --map-resolved: #FF8A65;
+  --map-outline: #FFFFFF;
+  --map-sel: #F0E442;
+  --map-bus-trunk: #56B4E9;
+  --map-bus-branch: #5BD6A8;
+  --map-bus-express: #FF8A65;
+  --map-bus-loop: #E6C34D;
+  --map-bus-other: #9AA8D6;
+}
+/* 개요의 '지연 사업' 지표만 빨강(bad) 명도 5단계(2026-10-15 결정). overview.js 가 <html data-ov-metric> 로 고른다. 0 칸·경계선·바탕은 그대로 */
+:root[data-ov-metric="d"] {
+  --map-ov-1: #FBD3CF;
+  --map-ov-2: #F2948E;
+  --map-ov-3: #C8323D;
+  --map-ov-4: #9A1F2B;
+  --map-ov-5: #64101A;
+  --map-ov-ink-1: #2A0A10;
+  --map-ov-ink-2: #2A0A10;
+  --map-ov-ink-3: #FFFFFF;
+  --map-ov-ink-4: #FFFFFF;
+  --map-ov-ink-5: #FFFFFF;
+}
+.dark[data-ov-metric="d"] {
+  --map-ov-1: #FBD3CF;
+  --map-ov-2: #F2948E;
+  --map-ov-3: #DC4B55;
+  --map-ov-4: #B8303F;
+  --map-ov-5: #94202F;
+  --map-ov-ink-1: #2A0A10;
+  --map-ov-ink-2: #2A0A10;
+  --map-ov-ink-3: #2A0A10;
+  --map-ov-ink-4: #FFFFFF;
+  --map-ov-ink-5: #FFFFFF;
+}
+/* backdrop-filter 를 못 쓰는 브라우저는 뒤가 흐려지지 않아 글자가 흐려지므로 거의 불투명하게(라이트는 옅은 셋만) */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html:root {
+    --hud-alpha: 96%;   /* html:root — 뒤의 크기 토큰 :root(--hud-alpha 18%)보다 앞서게 */
+  }
+  :root {
+    --map-glass-hud: rgba(255,255,255,.98);
+    --map-glass-pop: rgba(255,255,255,.98);
+    --map-glass-note: rgba(255,255,255,.96);
+  }
+  .dark {
+    --map-glass-tag: rgba(17,17,17,.97);
+    --map-glass-sum: rgba(10,10,10,.97);
+    --map-glass-card: rgba(17,17,17,.98);
+    --map-glass-hud: rgba(17,17,17,.98);
+    --map-glass-pop: rgba(17,17,17,.98);
+    --map-glass-note: rgba(10,10,10,.96);
+    --map-glass-cmd-active: rgba(10,10,10,.97);
+    --map-glass-cmd-idle: rgba(10,10,10,.96);
+    --map-glass-cmd-off: rgba(10,10,10,.96);
+  }
+}
+
+/* 크기 8단계(줄 간격 포함). 기본 Tailwind 크기(text-lg=18px 등)는 지우고 이 단계만 둔다. 굵기는 400·700 두 가지(font-normal·font-bold)만 쓴다.
+   xs 12: 배지·축 눈금처럼 굵기 700 이고 대비 4.5:1 이상인 곳에만(읽는 문장에는 쓰지 않는다). 1600px 이상 확대는 하지 않는다.
+   순수 :root 변수라 Tailwind 가 훑지 않는 곳(지도 CSS·스크립트·정적 /citizen)도 var(--text-*) 로 읽는다. 유틸리티 text-xs~3xl 은 맨 위 블록이 이 변수를 가리킨다 */
+:root {
+  --text-xs: 12px;
+  --text-xs--line-height: 1.4;
+  --text-sm: 14px;
+  --text-sm--line-height: 1.5;
+  --text-base: 16px;
+  --text-base--line-height: 1.6;
+  --text-md: 18px;
+  --text-md--line-height: 1.4;
+  --text-lg: 20px;
+  --text-lg--line-height: 1.3;
+  --text-xl: 24px;
+  --text-xl--line-height: 1.2;
+  --text-2xl: 30px;
+  --text-2xl--line-height: 1.2;
+  --text-3xl: 38px;
+  --text-3xl--line-height: 1.1;
+  --font-sans: 'Noto Sans KR', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+}
+
+/* 역할 토큰: 화면 안에서 쓰는 글자 크기는 역할 이름(text-h1·h2·h3·body·table·meta·legend·kpi·caption)으로 부른다.
+   정책담당자(html[data-aud=admin], 정책담당자 전용 화면은 저장값과 상관없이 늘 이 값)는 본문·표 14px, 일반사용자는 16px.
+   그 밖의 역할(보조 설명·범례 14, 핵심 숫자 30, 패널 제목 20, 소제목 16, 축·각주 12)은 두 관점이 같고, 화면 제목 h1 은 900px 이하에서 24px.
+   줄 높이는 역할 셋: 제목·KPI(--lh-title) · 소제목(--lh-sub) · 본문(--lh-body, 관점별). 자간은 기본값만 쓴다. */
+:root {
+  --fs-body: 14px;
+  --fs-table: 14px;
+  --fs-meta: 14px;
+  --fs-legend: 14px;
+  --fs-kpi: 30px;
+  --fs-h1: 30px;
+  --fs-h2: 20px;
+  --fs-h3: 16px;
+  --fs-caption: 12px;
+  --lh-title: 1.2;
+  --lh-sub: 1.3;
+  --lh-body: 1.5;
+  /* 반경: 칩·태그 4 · 안쪽 카드·타일·입력·표 틀·막대 틀 10 · 바깥(구역) 카드 14 · 알약 full. 카드 모양 상자는 모두 둥글다(각진 반경 0 금지).
+     화면 가장자리에 붙는 구조 판(상단 머리 줄·오른쪽 서랍 판·지도 사이드 패널 판)만 카드가 아니라서 예외 */
+  --radius-chip: 4px;
+  --radius-tile: 10px;
+  --radius-card: 14px;
+  --radius-full: 9999px;
+  /* 테두리: 1px. 고른 것·현재인 것만 2px */
+  --border-w: 1px;
+  --border-w-on: 2px;
+  /* 그림자는 카드(--shadow-card)·떠 있는 상자(--shadow-pop) 둘(값은 위 팔레트, 테마별). 표의 붙은 첫 열을 옆으로 민 동안의 가장자리 그늘만 따로 */
+  --shadow-edge: 6px 0 6px -6px rgb(0 0 0 / 25%);
+  /* 카드 여백: 구역 카드 20(900px 이하 16) · 타일 12/16(위아래/좌우) · 촘촘 타일 8/10 · 칩 좌우 8 */
+  --pad-card: 20px;
+  --pad-tile-y: 12px;
+  --pad-tile-x: 16px;
+  --pad-compact-y: 8px;
+  --pad-compact-x: 10px;
+  --pad-chip-x: 8px;
+  /* 사업 표 '진행' 띠(/citizen): 6칸(계획·인허가·착공·모집 공고·준공·입주) 칸 폭·높이·간격, 남은 칸은 --line2. 채운 칸은 그 칸 단계의 --st-* */
+  --pj-band-w: 14px;
+  --pj-band-h: 8px;
+  --pj-band-gap: 2px;
+  /* 지도 위 사업 카드(/citizen, .mapcard): 폭 상한 · 지도 면 위에 통째로 띄우므로 HUD 유리 불투명도 80% 이상(글자 4.5:1) */
+  --mapcard-w: 304px;
+  --mapcard-alpha: 94%;
+  /* 머리 줄(상단 메뉴 바, 높이 64·모바일 48은 그대로): 로고 한 벌 높이 32(폭 125는 비율, 900px 이하 25.6) · 600px 미만 심벌만 28 · 메뉴 16/400(1100px 이하 14). 로고·메뉴(앱 TopNav·/citizen)는 이 셋만 쓴다. 로고 색 --logo-ink(집·주택)·--logo-wave(문·The, 클레이 역할) */
+  --logo-h: 32px;
+  --logo-mark: 28px;
+  --fs-nav: 16px;
+  /* 카드 머리 부품(.ui-card-head): 제목 줄 높이 44 · 간격 8. 머리 줄 개수 단추는 .ui-btn.ui-btn-secondary.ui-btn-sm */
+  --head-h: 44px;
+  --head-gap: 8px;
+  /* 단추(shadcn 4.21.4 base-nova Button 을 옮김): 높이 기본 36(shadcn h-8 32 + 4: 이 앱의 보이는 단추 높이 36)·sm 32(h-7 28 + 4) · 간격 6/4(gap-1.5/1) ·
+     아이콘 쪽 여백 8/6(has-data-[icon]:pl-2/pl-1.5) · 아이콘 16(size-4) · 가리킨 채움 단추 = 주색 80%(bg-primary/80) · 다크 테두리 단추 면 입력선 색 30%/50%(dark:bg-input/30·/50) · 보조 단추 가리킴 = 본문색 5% 섞기 */
+  --btn-h: 36px;
+  --btn-h-sm: 32px;
+  --btn-gap: 6px;
+  --btn-gap-sm: 4px;
+  --btn-pad-icon: 8px;
+  --btn-pad-icon-sm: 6px;
+  --btn-icon: 16px;
+  --btn-fill-hover: 80%;
+  --btn-wash: 30%;
+  --btn-wash-on: 50%;
+  --btn-sec-hover: 5%;
+  --tabs-pad: 3px;
+  --tabs-radius: calc(var(--radius-tile) - var(--tabs-pad));
+  /* 떠 있는 HUD 판(.ui-hud, 2026-10-18 사용자 피드백 '배경은 투명하게'): 카드 색 18% 유리 + 흐림 6px·채도 1.1 + 테두리 38%.
+     글자 대비는 판이 지도 면 밖(카드 위)에 놓이고 지도 면에는 테두리·여백만 걸칠 때의 값이다(흐림 번짐 포함 최악 5.4:1). 판을 지도 면 위에 통째로 띄우면 --hud-alpha 80% 이상이어야 4.5:1 */
+  --hud-alpha: 18%;
+  --hud-line-mix: 38%;
+  --hud-backdrop: blur(6px) saturate(1.1);
+}
+html[data-aud='public'] {
+  --fs-body: 16px;
+  --fs-table: 16px;
+  --lh-body: 1.6;
+}
+@media (max-width: 900px) {
+  :root {
+    --fs-h1: 24px;
+    --pad-card: 16px;
+    --logo-h: 25.6px;
+  }
+}
+@media (max-width: 1100px) {
+  :root {
+    --fs-nav: 14px;
+  }
+}
+
+/* 카드 호버 C: 누를 수 있는 카드(card-lift)는 2px 떠오르고 그림자가 깊어진다(2026-10-18 내보내기 구간으로 옮김: /citizen 도 같은 규칙).
+   손가락 기기에는 호버가 남지 않게 (hover: hover) 에서만, 움직임 줄이기면 떠오르지 않는다. 눌린 카드(aria-pressed·현재 단계)의 고리는 호버 중에도 지킨다 */
+@layer utilities {
+  .card-lift { transition: transform .18s cubic-bezier(.2, .7, .2, 1), box-shadow .18s ease, border-color .18s ease, background-color .18s ease; }
+  @media (hover: hover) {
+    .card-lift:hover { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+    .card-lift:hover:not([aria-pressed="true"]):not([aria-current="step"]):not(.keep-border) { border-color: color-mix(in srgb, var(--primary) 45%, var(--border)); }   /* keep-border: 테두리 색이 뜻을 가진 카드(계단 칸의 공개 범위)는 색을 지킨다 */
+    .card-lift[aria-pressed="true"]:hover { box-shadow: 0 0 0 1px var(--primary), var(--shadow-hover); }
+    .card-lift[aria-current="step"]:hover { box-shadow: 0 0 0 2px var(--primary), var(--shadow-hover); }
+    .dark .card-lift[aria-current="step"]:hover { box-shadow: var(--shadow-hover); }
+  }
+  .card-lift:focus-visible { transform: translateY(-2px); box-shadow: var(--shadow-hover); }
+  .card-lift:active { transform: translateY(0); box-shadow: var(--shadow-card); transition-duration: .08s; }
+  @media (prefers-reduced-motion: reduce) {
+    .card-lift:hover, .card-lift:focus-visible, .card-lift:active { transform: none; }
+  }
+}
+
+/* 입체 단계 raised(2026-10-18 시범: /citizen 의 <html data-elev="raised"> 에만). 바탕 < 카드 < 안쪽 카드 순으로 면이 한 단계씩 밝고(다크) / 바탕만 옅은 회색(라이트),
+   그림자는 두 겹. 앱 화면은 이 속성이 없어 값이 그대로다. 테두리(--border)는 그대로 둔다 */
+html[data-elev="raised"] {
+  --page-bg: #F4F5F7;
+  --card: #FFFFFF;
+  --inset-bg: #FFFFFF;
+  --shadow-card: 0 1px 2px rgb(15 23 42 / 6%), 0 4px 12px rgb(15 23 42 / 6%);
+  --shadow-hover: 0 2px 4px rgb(15 23 42 / 8%), 0 10px 24px rgb(15 23 42 / 12%);
+}
+html.dark[data-elev="raised"] {
+  --page-bg: #111111;
+  --card: #1A1A1B;
+  --inset-bg: #232325;
+  --shadow-card: inset 0 1px 0 rgb(255 255 255 / 6%), 0 8px 24px rgb(0 0 0 / 35%);
+  --shadow-hover: inset 0 1px 0 rgb(255 255 255 / 9%), 0 12px 28px rgb(0 0 0 / 50%);
+}
+
+/* 일반사용자 화면 /citizen 배색 안 2 '색 카드'(2026-10-18 사용자 확정): 이 화면만 주색을 코발트로 덮고 산호 강조(--cz-*)를 더한다(지도 램프 --map-ov-* 는 2026-10-18 부터 위 :root·.dark 기본값을 /map 개요와 함께 쓴다). 정책 화면·/map 주색은 위 :root·.dark 값 그대로. 규칙: DESIGN.md */
+html[data-page="citizen"] {
+  --primary: #1F53B8;
+  --ring: #1F53B8;
+  --cz-accent: #B6351B;
+  --cz-accent-on: #FFFFFF;
+  --cz-summary-bg: #0E5E66;
+  --cz-badge-ink: #FFFFFF;
+  --cz-summary-fg: #FFFFFF;
+  --cz-summary-muted: #CFE7E8;
+  --cz-summary-num: #FFC2A6;
+  --cz-summary-plan: #89C3FE;
+  --cz-summary-build: #FEAC5F;
+  --cz-summary-sale: #C4D2E5;
+  --cz-summary-line: #5A979C;
+  --cz-summary-panel: #1A6F77;
+}
+html.dark[data-page="citizen"] {
+  --primary: #8BB4FE;
+  --ring: #8BB4FE;
+  --cz-accent: #FD8965;
+  --cz-accent-on: var(--card);
+  --cz-summary-bg: #0B4D54;
+  --cz-badge-ink: #111111;
+}
+
+html[data-page="citizen"] .smry { --sf: var(--cz-summary-bg); background: var(--cz-summary-bg); border-color: var(--cz-summary-bg); color: var(--cz-summary-fg); --foreground: var(--cz-summary-fg); --muted-foreground: var(--cz-summary-muted); --primary: var(--cz-summary-num); --primary-foreground: var(--cz-summary-bg); --cz-accent: var(--cz-summary-num); --st-plan-ink: var(--cz-summary-plan); --st-build-ink: var(--cz-summary-build); --st-sale-ink: var(--cz-summary-sale); --line2: var(--cz-summary-line); --border: var(--cz-summary-line); --pn2: var(--cz-summary-panel); --ring: var(--cz-summary-fg); }   /* 요약 카드: 짙은 청록 채움 + 흰 글자, 안쪽 토큰만 덮는다(템플릿 <style> 은 토큰을 정의하지 않는다) */
+html[data-page="citizen"] #tband { --primary: var(--cz-accent); --primary-foreground: var(--cz-accent-on); }   /* 시간 띠: 고른 단추는 부품(.ui-btn aria-pressed)이 주색으로 그린다 — 주색만 산호로 갈아 끼운다 */
+html[data-page="citizen"] #fbar [data-fst="0"][aria-pressed="true"] { color: var(--st-plan-ink); }   /* 상단 단계 필터: 고른 단계 탭은 글자색만 단계 글자색(배경은 탭 부품 그대로) */
+html[data-page="citizen"] #fbar [data-fst="1"][aria-pressed="true"] { color: var(--st-build-ink); }
+html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var(--st-sale-ink); }
+
+/* 부품 클래스(순수 CSS, 토큰 var() 만): 앱의 shadcn Card(components/ui/card.tsx)와 정적 /citizen 이 같은 모양을 쓴다.
+   components 레이어라 Tailwind 유틸리티(utilities 레이어)가 늘 이긴다 — 화면에서 여백·배치만 덧붙인다. 규칙: DESIGN.md */
+
+/* 한국어 줄바꿈(전 화면): 낱말 가운데서 끊지 않고(keep-all), 한 낱말이 칸보다 길 때만 끊는다. 제목은 줄 길이를 고르게(balance) */
+@layer base {
+  body {
+    word-break: keep-all;
+    overflow-wrap: break-word;
+  }
+  h1, h2, h3, [data-slot="card-title"] {
+    text-wrap: balance;
+  }
+}
+
+/* 브라우저 기본 요소: 선택 영역·캐럿·포커스 고리·스크롤바·체크 컨트롤을 토큰 색으로 맞춘다.
+   :where() 로 우선순위 0 — .ui-btn·.card-lift 같은 개별 :focus-visible 규칙이 늘 이긴다 */
+@layer base {
+  html {
+    accent-color: var(--primary);
+    scrollbar-color: var(--line2) transparent;
+    scrollbar-width: thin;
+  }
+  ::selection {
+    background: color-mix(in oklab, var(--primary) 25%, var(--background));
+    color: var(--foreground);
+  }
+  :where(input, textarea, [contenteditable]) {
+    caret-color: var(--primary);
+  }
+  :where(:focus-visible) {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+}
+
+@layer components {
+  /* 카드 등급: 구역 카드 · 타일 · 촘촘 타일 · 줄(테두리 없이 아래 구분선) */
+  .ui-card {
+    min-width: 0;
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius-card);
+    background: var(--card);
+    color: var(--card-foreground);
+    padding: var(--pad-card);
+    box-shadow: var(--shadow-card);
+  }
+  .ui-tile {
+    min-width: 0;
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius-tile);
+    background: var(--card);
+    color: var(--card-foreground);
+    padding: var(--pad-tile-y) var(--pad-tile-x);
+    box-shadow: var(--shadow-card);
+  }
+  .ui-tile-compact {
+    min-width: 0;
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius-tile);
+    background: var(--card);
+    color: var(--card-foreground);
+    padding: var(--pad-compact-y) var(--pad-compact-x);
+  }
+  /* 안쪽 카드(테두리형): 카드(구역·서랍) 안의 묶음. 바깥 카드와 같은 1px 테두리·카드색 바탕, 반경 tile, 그림자 없음, 여백 compact.
+     모양은 .ui-tile-compact 와 같아도 쓰임이 다르다 — compact 는 페이지 바탕 위, inset 은 카드 안(2단까지, 안쪽 카드 안에 또 카드 금지) */
+  .ui-inset {
+    min-width: 0;
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius-tile);
+    background: var(--inset-bg);
+    color: var(--card-foreground);
+    padding: var(--pad-compact-y) var(--pad-compact-x);
+  }
+  .ui-row {
+    min-width: 0;
+    border-bottom: var(--border-w) solid var(--border);
+    padding: var(--pad-compact-y) 0;
+  }
+  /* 글자 역할: 제목 셋 · 보조 글 · 축·각주 · 핵심 숫자 */
+  .ui-h1, .ui-h2, .ui-h3 {
+    margin: 0;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .ui-h1 {
+    font-size: var(--fs-h1);
+    line-height: var(--lh-title);
+  }
+  .ui-h2 {
+    font-size: var(--fs-h2);
+    line-height: var(--lh-sub);
+  }
+  .ui-h3 {
+    font-size: var(--fs-h3);
+    line-height: var(--lh-sub);
+  }
+  .ui-meta {
+    font-size: var(--fs-meta);
+    line-height: var(--lh-body);
+    color: var(--muted-foreground);
+  }
+  .ui-caption {
+    font-size: var(--fs-caption);
+    line-height: var(--lh-body);
+    color: var(--muted-foreground);
+  }
+  .ui-kpi {
+    font-size: var(--fs-kpi);
+    line-height: var(--lh-title);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+  /* 칩(태그): 반경 4 한 줄. 알약은 border-radius: var(--radius-full) 을 덧붙인다 */
+  .ui-chip {
+    display: inline-flex;
+    align-items: center;
+    border: var(--border-w) solid var(--line2);
+    border-radius: var(--radius-chip);
+    padding: 0 var(--pad-chip-x);
+    font-size: var(--fs-meta);
+    line-height: var(--lh-body);
+    color: var(--muted-foreground);
+    white-space: nowrap;
+  }
+  /* 주색 칩: 강조 태그(추천·태그) */
+  .ui-chip-primary {
+    border-color: var(--primary);
+    color: var(--primary);
+    font-weight: 700;
+  }
+  /* 단추(2026-10-18, shadcn 4.21.4 base-nova Button 의 cva 값을 옮김 — npx shadcn@4.21.4 add button --view):
+     .ui-btn = 기본 변형(주색 채움)·기본 크기, 변형 .ui-btn-secondary · .ui-btn-outline · .ui-btn-ghost, 크기 .ui-btn-sm · .ui-btn-icon(정사각, sm 과 겹쳐 쓴다).
+     shadcn → 이 앱: rounded-lg → --radius-tile · font-medium → 700(굵기 400·700 둘) · text-sm → 기본 --fs-body / sm --fs-meta · 아이콘은 data-icon="inline-start|inline-end" 쪽 여백만 줄인다.
+     초점은 shadcn ring-3 ring/50(옅은 고리) 대신 2px --ring 외곽선(초점 고리 3:1 관문), 눌림은 1px 내려앉음(aria-haspopup 단추 제외), 꺼짐은 --disabled-opacity.
+     고른 것(aria-pressed="true")은 규칙대로 주색 옅은 면 + 주색 글자(테두리 2px 아님) */
+  .ui-btn {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    gap: var(--btn-gap);
+    height: var(--btn-h);
+    border: var(--border-w) solid transparent;
+    border-radius: var(--radius-tile);
+    background: var(--primary);
+    background-clip: padding-box;
+    color: var(--primary-foreground);
+    padding: 0 var(--pad-compact-x);
+    font: inherit;
+    font-size: var(--fs-body);
+    line-height: var(--lh-sub);
+    font-weight: 700;
+    white-space: nowrap;
+    text-decoration: none;
+    user-select: none;
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s, color .15s, transform .15s;
+  }
+  .ui-btn svg {
+    flex-shrink: 0;
+    width: var(--btn-icon);
+    height: var(--btn-icon);
+    pointer-events: none;
+  }
+  .ui-btn:has(> [data-icon="inline-start"]) {
+    padding-left: var(--btn-pad-icon);
+  }
+  .ui-btn:has(> [data-icon="inline-end"]) {
+    padding-right: var(--btn-pad-icon);
+  }
+  .ui-btn:hover {
+    background-color: color-mix(in oklab, var(--primary) var(--btn-fill-hover), transparent);
+  }
+  .ui-btn-secondary {
+    background: var(--secondary);
+    color: var(--secondary-foreground);
+  }
+  .ui-btn-secondary:hover {
+    background-color: color-mix(in oklch, var(--secondary), var(--foreground) var(--btn-sec-hover));
+  }
+  .ui-btn-outline {
+    border-color: var(--border);
+    background: var(--background);
+    color: var(--foreground);
+  }
+  .ui-btn-ghost {
+    background: transparent;
+    color: inherit;
+  }
+  .ui-btn-outline:hover, .ui-btn-ghost:hover, .ui-btn-outline[aria-expanded="true"], .ui-btn-ghost[aria-expanded="true"] {
+    background-color: var(--muted);
+    color: var(--foreground);
+  }
+  .dark .ui-btn-outline {
+    border-color: var(--input);
+    background: color-mix(in oklab, var(--input) var(--btn-wash), transparent);
+  }
+  .dark .ui-btn-outline:hover {
+    background-color: color-mix(in oklab, var(--input) var(--btn-wash-on), transparent);
+  }
+  .dark .ui-btn-ghost:hover {
+    background-color: color-mix(in oklab, var(--muted) var(--btn-wash-on), transparent);
+  }
+  .ui-btn[aria-pressed="true"], .ui-btn[aria-pressed="true"]:hover {
+    background-color: color-mix(in oklab, var(--primary) var(--tint-mix), var(--card));
+    color: var(--primary);
+  }
+  .ui-btn-outline[aria-pressed="true"] {
+    border-color: var(--primary);
+  }
+  .ui-btn-sm {
+    height: var(--btn-h-sm);
+    gap: var(--btn-gap-sm);
+    font-size: var(--fs-meta);
+  }
+  .ui-btn-sm:has(> [data-icon="inline-start"]) {
+    padding-left: var(--btn-pad-icon-sm);
+  }
+  .ui-btn-sm:has(> [data-icon="inline-end"]) {
+    padding-right: var(--btn-pad-icon-sm);
+  }
+  .ui-btn-icon {
+    width: var(--btn-h);
+    padding: 0;
+  }
+  .ui-btn-icon.ui-btn-sm {
+    width: var(--btn-h-sm);
+  }
+  .ui-btn:focus-visible {
+    outline: var(--border-w-on) solid var(--ring);
+    outline-offset: var(--border-w-on);
+  }
+  .ui-btn:active:not([aria-haspopup]):not(:disabled) {
+    transform: translateY(var(--border-w));
+  }
+  .ui-btn:disabled {
+    pointer-events: none;
+    opacity: var(--disabled-opacity);
+  }
+  /* 탭 목록(2026-10-19, shadcn 4.21.4 Tabs 의 TabsList·TabsTrigger 값을 옮김 — 거르기·모드 고르기용, 탭 패널 없음):
+     .ui-tabs = 틀(--muted 바탕·여백 3·반경 tile·높이 36), 그 안의 button 이 탭. 고른 것은 aria-pressed="true"(거르기라 role="tab" 이 아니라 group + 눌림 단추).
+     shadcn → 이 앱: bg-background → --card · font-medium → 700(굵기 400·700 둘) · 다크는 --input 30% 바탕 + --input 테두리 · 초점은 2px --ring 외곽선.
+     개수 배지 .n = 작은 알약(12/700, 숫자만). 단계 글자색 같은 의미색은 화면 범위가 color 만 덮는다 */
+  .ui-tabs {
+    display: inline-flex;
+    align-items: center;
+    gap: 0;
+    height: var(--btn-h);
+    border-radius: var(--radius-tile);
+    background: var(--muted);
+    color: var(--muted-foreground);
+    padding: var(--tabs-pad);
+  }
+  .ui-tabs > button {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: var(--btn-gap);
+    align-self: stretch;
+    border: var(--border-w) solid transparent;
+    border-radius: var(--tabs-radius);
+    background: transparent;
+    color: inherit;
+    padding: 0 var(--pad-compact-x);
+    font: inherit;
+    font-size: var(--fs-meta);
+    line-height: var(--lh-sub);
+    font-weight: 400;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: background-color .15s, border-color .15s, color .15s;
+  }
+  .ui-tabs > button:hover {
+    color: var(--foreground);
+  }
+  .ui-tabs > button[aria-pressed="true"] {
+    background: var(--card);
+    color: var(--foreground);
+    font-weight: 700;
+    box-shadow: var(--shadow-card);
+  }
+  .dark .ui-tabs > button[aria-pressed="true"] {
+    border-color: var(--input);
+    background: color-mix(in oklab, var(--input) var(--btn-wash), transparent);
+    box-shadow: none;
+  }
+  .ui-tabs > button:focus-visible {
+    outline: var(--border-w-on) solid var(--ring);
+    outline-offset: var(--border-w-on);
+  }
+  .ui-tabs .n {
+    display: inline-flex;
+    align-items: center;
+    border-radius: var(--radius-full);
+    background: color-mix(in oklab, var(--muted-foreground) var(--btn-wash), transparent);
+    color: var(--foreground);
+    padding: 0 var(--btn-gap);
+    font-size: var(--fs-caption);
+    line-height: var(--lh-body);
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+  /* 카드 머리(2026-10-18): 제목 줄. 장식 아이콘 배지는 두지 않는다(2026-10-18 사용자 결정 '기호 + 장식 아이콘' 빼기).
+     머리 줄 개수 단추('일정 4 ›')는 단추 부품 .ui-btn.ui-btn-secondary.ui-btn-sm(내용 아이콘 + 글자 + 꺾쇠). 눈썹 글·그라데이션 글자·색 왼쪽 테두리는 쓰지 않는다 */
+  .ui-card-head {
+    display: flex;
+    align-items: center;
+    gap: var(--head-gap);
+    min-width: 0;
+    min-height: var(--head-h);
+  }
+  /* 떠 있는 HUD 판(2026-10-18 사용자 피드백 '지도 범례·순위를 떠 있는 형태로', '배경은 투명하게'): 지도 옆·위에 겹쳐 띄우는 판.
+     바탕은 카드 색 유리(--hud-bg, 18%) + 흐림(--hud-backdrop), 반투명 1px 테두리, 반경 tile, 약한 떠 있는 그림자(--shadow-hud), 촘촘 여백.
+     배치(position·위치)는 화면이 정한다. /citizen 지도 카드의 많은 곳·범례가 쓰고 /map 개요 판도 쓸 수 있다(지도 면 위에 통째로 띄우면 --hud-alpha 를 올린다) */
+  .ui-hud {
+    min-width: 0;
+    border: var(--border-w) solid color-mix(in oklab, var(--border) var(--hud-line-mix), transparent);
+    border-radius: var(--radius-tile);
+    background: var(--hud-bg);
+    -webkit-backdrop-filter: var(--hud-backdrop);
+    backdrop-filter: var(--hud-backdrop);
+    color: var(--foreground);
+    padding: var(--pad-compact-y) var(--pad-compact-x);
+    box-shadow: var(--shadow-hud);
+  }
+  /* 짧은 라벨 한 줄 + 말줄임(전체 이름은 title 로 준다) */
+  .ui-truncate {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+/* ── 내보내기 층 끝 ── */
+  --ease: cubic-bezier(.2, .7, .2, 1);
+  --s1: 4px; --s2: 8px; --s3: 12px; --s4: 16px; --s5: 24px; --s6: 32px; --s7: 48px;
+}
+
+@layer base {
+  * { box-sizing: border-box; }
+  html { scroll-padding-top: 64px; }
+  body { margin: 0; font-family: var(--font-sans); font-size: var(--fs-body); line-height: var(--lh-body); font-weight: 400; color: var(--foreground); background: var(--page-bg); font-synthesis: none; }
+  button, input { font: inherit; color: inherit; }
+  a { color: inherit; text-underline-offset: 3px; }
+  h1, h2, h3, h4 { font-weight: 700; margin: 0; text-wrap: balance; }
+}
+#q, .band { scroll-margin-top: 64px; }
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+svg.i { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.ui-btn { position: relative; }
+.ui-btn::before { content: ''; position: absolute; left: 0; right: 0; top: -6px; bottom: -6px; }
+.ui-btn-sm::before { top: -7px; bottom: -7px; }
+.ui-btn-icon::before { left: -5px; right: -5px; }
+.ui-btn-icon.ui-btn-sm::before { left: -7px; right: -7px; }
+.ui-btn[aria-busy="true"] { cursor: progress; }
+.tip-btn { margin: -8px -4px; vertical-align: middle; flex: none; color: var(--muted-foreground); }   /* ⓘ = 단추 부품 ghost · icon · sm(32, 누름 46). 보조 글 색만 덧붙인다 */
+.sm-nm { position: relative; display: flex; align-items: center; gap: var(--s2); min-width: 0; font-size: var(--fs-body); line-height: var(--lh-sub); }
+.sm-p { flex: 1 1 auto; display: flex; align-items: center; gap: 2px; min-width: 0; font-weight: 700; white-space: nowrap; }
+.sm-a { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.sm-p svg.sm-cv { flex: none; width: 16px; height: 16px; color: var(--muted-foreground); }
+.sm-rk { flex: none; font-variant-numeric: tabular-nums; }
+.sm-nm > .tip-btn { flex: none; margin: -8px -6px; }
+.sum-h { position: relative; display: flex; align-items: center; justify-content: space-between; gap: var(--s3); min-width: 0; }
+.sum-h .sm-k { min-width: 0; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; font-size: var(--fs-meta); font-weight: 400; line-height: var(--lh-sub); color: var(--muted-foreground); }
+.sum-h .sm-k b { font-weight: 700; color: var(--foreground); }
+.sum-h.zero .sm-z { font-size: var(--fs-h3); line-height: var(--lh-sub); }
+.sum-h .nw { position: relative; flex: none; white-space: nowrap; }   /* 숫자 묶음 + 단위는 한 덩어리 */
+.sum-h .n { color: var(--primary); font-variant-numeric: tabular-nums; display: inline-block; }   /* inline-block: 값이 바뀔 때 transform 이 먹도록 */
+.sm-st { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; grid-auto-rows: 44px; column-gap: var(--s3); align-content: center; height: calc(132px + var(--s1) * 2 + var(--border-w) * 2); margin: 0 calc(var(--s2) * -1); padding: var(--s1) 0; border-top: var(--border-w) solid var(--border); border-bottom: var(--border-w) solid var(--border); }
+.sm-r { --c: var(--st-plan); --c-ink: var(--st-plan-ink); position: relative; grid-column: 1 / -1; display: grid; grid-template-columns: subgrid; align-items: center; min-width: 0; padding: 0 var(--s2); border: 0; border-radius: var(--radius-chip); background: none; font: inherit; font-size: var(--fs-body); line-height: var(--lh-sub); color: var(--foreground); text-align: left; cursor: pointer; transition: background-color .15s; }
+.sm-r.s1 { --c: var(--st-build); --c-ink: var(--st-build-ink); }
+.sm-r.s2 { --c: var(--st-sale); --c-ink: var(--st-sale-ink); }
+.sm-sn { white-space: nowrap; }
+.sm-sv { font-weight: 400; font-variant-numeric: tabular-nums; text-align: right; white-space: nowrap; }
+.sm-b { display: flex; height: 10px; min-width: 0; }
+.sm-b > i { flex: 0 0 0; min-width: 2px; height: 100%; border-radius: var(--radius-full); background: var(--c-ink); }   /* 막대는 모든 줄이 단계색 글자용 진한 쪽(--c-ink) 100%: 주색 바탕에서도 3:1 이상(2026-10-18 배색: 칙칙함 해소) */
+.sm-r.top .sm-sv { font-weight: 700; }
+.sm-r.z .sm-b > i { min-width: 0; }
+.sm-r.z .sm-sv { color: var(--muted-foreground); }
+.sm-r:hover { background: color-mix(in oklab, var(--c) var(--tint-mix), transparent); }
+.sm-r[aria-pressed="true"] { background: color-mix(in oklab, var(--c) var(--tint-mix-on), var(--sf)); }
+.sm-r[aria-pressed="true"] :is(.sm-sn, .sm-sv) { font-weight: 700; }
+.sm-r:focus-visible { outline: var(--border-w-on) solid var(--ring); outline-offset: -2px; }
+/* 다음 준공·입주 줄(두 줄, 누르면 사업 카드): [다음 준공 · 날짜 · D-day 칩] / [시군구 · 사업 이름(말줄임) · 호수]. 날짜가 달까지만이면 칩 대신 '10월'.
+   30일 안이면 칩을 주색으로 채운다(그 밖엔 옅은 칩) */
+.nx { position: relative; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: 'k d . dd' 'nm nm nm u'; align-items: center; column-gap: var(--s2); min-width: 0; margin: 0 calc(var(--s2) * -1); padding: var(--s1) var(--s2); border-radius: var(--radius-tile); font-size: var(--fs-body); line-height: var(--lh-sub); color: var(--foreground); text-decoration: none; }
+.nx:hover { background: var(--pn2); }
+.nx .k { grid-area: k; font-size: var(--fs-meta); font-weight: 700; color: var(--muted-foreground); white-space: nowrap; }
+.nx .d { grid-area: d; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nx .sm-dd { grid-area: dd; justify-self: end; line-height: var(--lh-sub); font-variant-numeric: tabular-nums; }
+.nx .sm-dd.on { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); font-weight: 700; }
+.nx .dm { grid-area: dd; justify-self: end; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nx .nm { grid-area: nm; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: color-mix(in srgb, var(--foreground) 35%, transparent); }
+.nx .u { grid-area: u; font-weight: 700; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.nx:hover .nm { text-decoration-color: currentColor; color: var(--primary); }
+.sum-h .n { color: var(--cz-accent); }
+/* ── 비교 판 전용 ── */
+.smry { --sf: var(--card); flex: none; display: grid; grid-template-rows: 36px 44px auto 52px; row-gap: var(--s1); background: var(--sf); width: 400px; height: 328px; }
+html[data-page="citizen"] .smry.g { background: linear-gradient(135deg, var(--bg), var(--bg2)); }
+body { background: #FFFFFF; padding: 16px 24px 40px; }
+html.dark body { background: #111111; }
+.bar { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+.bar p { margin: 0; font-weight: 700; }
+.bar button { min-height: 36px; padding: 0 14px; border: 1px solid var(--border); border-radius: 8px; background: var(--card); color: var(--foreground); cursor: pointer; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, 400px); gap: 28px 24px; }
+.cell { margin: 0; width: 400px; }
+.cell figcaption { margin-bottom: 6px; font-size: 14px; color: var(--foreground); }
+.cell code { font-size: 13px; }
+.cell .cr { margin: 6px 0 0; font-size: 12px; color: var(--muted-foreground); font-variant-numeric: tabular-nums; }
+.dk, .lt { display: none; }
+html:not(.dark) .lt, html.dark .dk { display: block; }
+.c-A.m0{--bg:#132543;--bg2:#132543;--cz-summary-bg:#132543;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DAE3F1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#768192;--cz-summary-panel:#283954}
+.c-A.m1{--bg:#132543;--bg2:#1B255F;--cz-summary-bg:#132543;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DADDF1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#768192;--cz-summary-panel:#283954}
+.c-B.m0{--bg:#7A2E1F;--bg2:#7A2E1F;--cz-summary-bg:#7A2E1F;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#F1DEDA;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#B2867D;--cz-summary-panel:#864133}
+.c-B.m1{--bg:#7A2E1F;--bg2:#96262A;--cz-summary-bg:#7A2E1F;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#F1DADB;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#B2867D;--cz-summary-panel:#864133}
+.c-C.m0{--bg:#3A2F8E;--bg2:#3A2F8E;--cz-summary-bg:#3A2F8E;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DDDAF1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#8D86BD;--cz-summary-panel:#4C4298}
+.c-C.m1{--bg:#3A2F8E;--bg2:#3845A9;--cz-summary-bg:#3A2F8E;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DADDF1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#8D86BD;--cz-summary-panel:#4C4298}
+.c-D.m0{--bg:#1F2633;--bg2:#1F2633;--cz-summary-bg:#1F2633;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DFE4EC;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#7D8189;--cz-summary-panel:#333A45}
+.c-D.m1{--bg:#1F2633;--bg2:#2C3049;--cz-summary-bg:#1F2633;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DFE1EC;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#7D8189;--cz-summary-panel:#333A45}
+.c-E.m0{--bg:#0E5E66;--bg2:#0E5E66;--cz-summary-bg:#0E5E66;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DAEFF1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#73A2A6;--cz-summary-panel:#246C74}
+.c-E.m1{--bg:#0E5E66;--bg2:#125E83;--cz-summary-bg:#0E5E66;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DAE9F1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#73A2A6;--cz-summary-panel:#246C74}
+.dk .c-A.m0{--bg:#1A325B;--bg2:#1A325B;--cz-summary-bg:#1A325B;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DAE2F1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#7A88A0;--cz-summary-panel:#2F446A}
+.dk .c-A.m1{--bg:#1A325B;--bg2:#222D77;--cz-summary-bg:#1A325B;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DADDF1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#7A88A0;--cz-summary-panel:#2F446A}
+.dk .c-B.m0{--bg:#8E3624;--bg2:#8E3624;--cz-summary-bg:#8E3624;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#F1DEDA;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#BD8A80;--cz-summary-panel:#984838}
+.dk .c-B.m1{--bg:#8E3624;--bg2:#A62A2E;--cz-summary-bg:#8E3624;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#F1DADB;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#BD8A80;--cz-summary-panel:#984838}
+.dk .c-C.m0{--bg:#4337A5;--bg2:#4337A5;--cz-summary-bg:#4337A5;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DDDAF1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#928BCB;--cz-summary-panel:#5449AD}
+.dk .c-C.m1{--bg:#4337A5;--bg2:#3E4DBA;--cz-summary-bg:#4337A5;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DADDF1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#928BCB;--cz-summary-panel:#5449AD}
+.dk .c-D.m0{--bg:#2B3446;--bg2:#2B3446;--cz-summary-bg:#2B3446;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DFE3EC;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#848994;--cz-summary-panel:#3E4657}
+.dk .c-D.m1{--bg:#2B3446;--bg2:#393C5C;--cz-summary-bg:#2B3446;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#E0E1EB;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#848994;--cz-summary-panel:#3E4657}
+.dk .c-E.m0{--bg:#0B4D54;--bg2:#0B4D54;--cz-summary-bg:#0B4D54;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DAEFF1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#71989C;--cz-summary-panel:#215D63}
+.dk .c-E.m1{--bg:#0B4D54;--bg2:#0F5374;--cz-summary-bg:#0B4D54;--cz-summary-fg:#FFFFFF;--cz-summary-muted:#DAE9F1;--cz-summary-num:#FFC2A6;--cz-summary-plan:#89C3FE;--cz-summary-build:#FEAC5F;--cz-summary-sale:#C4D2E5;--cz-summary-line:#71989C;--cz-summary-panel:#215D63}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><symbol id="i-info" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="info"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></symbol></svg>
+<div class="bar"><p>요약 카드 배경 후보 — 단색/그라데이션, 라이트·다크</p><button type="button" id="tg" aria-pressed="false">라이트</button></div>
+<div class="lt grid">
+<figure class="cell lt-c"><figcaption><b>A 로고 잉크 남색 · 추천</b> · 단색<br><code>#132543</code></figcaption><section class="ui-card smry c-A m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 15.3 · 보조 11.8 · 큰 숫자 9.8 · 막대 최소 8.2</p></figure>
+<figure class="cell lt-c"><figcaption><b>B 짙은 클레이</b> · 단색<br><code>#7A2E1F</code></figcaption><section class="ui-card smry c-B m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 9.4 · 보조 7.2 · 큰 숫자 6.0 · 막대 최소 5.0</p></figure>
+<figure class="cell lt-c"><figcaption><b>C 남보라</b> · 단색<br><code>#3A2F8E</code></figcaption><section class="ui-card smry c-C m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 10.6 · 보조 7.8 · 큰 숫자 6.8 · 막대 최소 5.7</p></figure>
+<figure class="cell lt-c"><figcaption><b>D 먹색</b> · 단색<br><code>#1F2633</code></figcaption><section class="ui-card smry c-D m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 15.2 · 보조 11.9 · 큰 숫자 9.8 · 막대 최소 8.2</p></figure>
+<figure class="cell lt-c"><figcaption><b>기준(지금) 짙은 청록</b> · 단색<br><code>#0E5E66</code></figcaption><section class="ui-card smry c-E m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 7.5 · 보조 6.3 · 큰 숫자 4.8 · 막대 최소 4.0</p></figure>
+<figure class="cell lt-c"><figcaption><b>A 로고 잉크 남색 · 추천</b> · 그라데이션<br><code>#132543 → #1B255F</code></figcaption><section class="ui-card smry c-A m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 14.2 · 보조 10.6 · 큰 숫자 9.2 · 막대 최소 7.6 (밝은 끝)</p></figure>
+<figure class="cell lt-c"><figcaption><b>B 짙은 클레이</b> · 그라데이션<br><code>#7A2E1F → #96262A</code></figcaption><section class="ui-card smry c-B m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 8.1 · 보조 6.1 · 큰 숫자 5.2 · 막대 최소 4.3 (밝은 끝)</p></figure>
+<figure class="cell lt-c"><figcaption><b>C 남보라</b> · 그라데이션<br><code>#3A2F8E → #3845A9</code></figcaption><section class="ui-card smry c-C m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 8.1 · 보조 6.0 · 큰 숫자 5.2 · 막대 최소 4.4 (밝은 끝)</p></figure>
+<figure class="cell lt-c"><figcaption><b>D 먹색</b> · 그라데이션<br><code>#1F2633 → #2C3049</code></figcaption><section class="ui-card smry c-D m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 12.9 · 보조 9.9 · 큰 숫자 8.3 · 막대 최소 6.9 (밝은 끝)</p></figure>
+<figure class="cell lt-c"><figcaption><b>기준(지금) 짙은 청록</b> · 그라데이션<br><code>#0E5E66 → #125E83</code></figcaption><section class="ui-card smry c-E m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 7.1 · 보조 5.7 · 큰 숫자 4.6 · 막대 최소 3.8 (밝은 끝)</p></figure>
+</div>
+<div class="dk grid">
+<figure class="cell dk"><figcaption><b>A 로고 잉크 남색 · 추천</b> · 단색<br><code>#1A325B</code></figcaption><section class="ui-card smry c-A m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 12.7 · 보조 9.8 · 큰 숫자 8.2 · 막대 최소 6.8 · 바탕/#111 1.5</p></figure>
+<figure class="cell dk"><figcaption><b>B 짙은 클레이</b> · 단색<br><code>#8E3624</code></figcaption><section class="ui-card smry c-B m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 7.8 · 보조 6.0 · 큰 숫자 5.0 · 막대 최소 4.2 · 바탕/#111 2.4</p></figure>
+<figure class="cell dk"><figcaption><b>C 남보라</b> · 단색<br><code>#4337A5</code></figcaption><section class="ui-card smry c-C m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 9.0 · 보조 6.6 · 큰 숫자 5.8 · 막대 최소 4.8 · 바탕/#111 2.1</p></figure>
+<figure class="cell dk"><figcaption><b>D 먹색</b> · 단색<br><code>#2B3446</code></figcaption><section class="ui-card smry c-D m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 12.5 · 보조 9.7 · 큰 숫자 8.0 · 막대 최소 6.7 · 바탕/#111 1.5</p></figure>
+<figure class="cell dk"><figcaption><b>기준(지금) 짙은 청록</b> · 단색<br><code>#0B4D54</code></figcaption><section class="ui-card smry c-E m0" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 9.5 · 보조 8.0 · 큰 숫자 6.1 · 막대 최소 5.1 · 바탕/#111 2.0</p></figure>
+<figure class="cell dk"><figcaption><b>A 로고 잉크 남색 · 추천</b> · 그라데이션<br><code>#1A325B → #222D77</code></figcaption><section class="ui-card smry c-A m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 12.3 · 보조 9.1 · 큰 숫자 7.9 · 막대 최소 6.6 (밝은 끝) · 바탕/#111 1.5</p></figure>
+<figure class="cell dk"><figcaption><b>B 짙은 클레이</b> · 그라데이션<br><code>#8E3624 → #A62A2E</code></figcaption><section class="ui-card smry c-B m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 7.0 · 보조 5.3 · 큰 숫자 4.5 · 막대 최소 3.8 (밝은 끝) · 바탕/#111 2.4</p></figure>
+<figure class="cell dk"><figcaption><b>C 남보라</b> · 그라데이션<br><code>#4337A5 → #3E4DBA</code></figcaption><section class="ui-card smry c-C m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 7.1 · 보조 5.2 · 큰 숫자 4.5 · 막대 최소 3.8 (밝은 끝) · 바탕/#111 2.1</p></figure>
+<figure class="cell dk"><figcaption><b>D 먹색</b> · 그라데이션<br><code>#2B3446 → #393C5C</code></figcaption><section class="ui-card smry c-D m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 10.6 · 보조 8.2 · 큰 숫자 6.8 · 막대 최소 5.7 (밝은 끝) · 바탕/#111 1.5</p></figure>
+<figure class="cell dk"><figcaption><b>기준(지금) 짙은 청록</b> · 그라데이션<br><code>#0B4D54 → #0F5374</code></figcaption><section class="ui-card smry c-E m1 g" aria-label="요약 카드"><div class="sm-nm"><span class="sm-p"><span class="sm-a">서울특별시</span></span><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" aria-label="공급 예정 호수의 뜻과 출처"><svg class="i" aria-hidden="true"><use href="#i-info"/></svg></button></div><h1 class="ui-h1 sum-h"><span class="sm-k">공급 예정 호수</span> <span class="nw"><span class="n">11만 2,116</span>호</span></h1><div class="sm-st" role="group" aria-label="단계별 호수"><button type="button" class="sm-r s0 top" aria-pressed="false"><span class="sm-sn">준비 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.9899;"></i></span><b class="sm-sv">11만 983</b></button><button type="button" class="sm-r s1" aria-pressed="false"><span class="sm-sn">짓는 중</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0.0101;"></i></span><b class="sm-sv">1,133</b></button><button type="button" class="sm-r s2 z" aria-pressed="false"><span class="sm-sn">모집 끝남</span><span class="sm-b" aria-hidden="true"><i style="flex-grow: 0;"></i></span><b class="sm-sv">0</b></button></div><a class="nx" href="#"><span class="k">다음 준공</span><b class="d">10.31</b><span class="ui-chip sm-dd on">D-12</span><span class="nm">노원구 · 서울공릉 1</span><span class="u">294호</span></a></section><p class="cr">흰 글자 8.4 · 보조 6.7 · 큰 숫자 5.4 · 막대 최소 4.5 (밝은 끝) · 바탕/#111 2.0</p></figure>
+</div>
+<script>
+var h=document.documentElement,b=document.getElementById('tg');
+b.onclick=function(){var d=h.classList.toggle('dark');b.textContent=d?'다크':'라이트';b.setAttribute('aria-pressed',d)};
+</script>
+</body>
+</html>

@@ -210,6 +210,7 @@ test('neighbors: 같은 시군구의 읍면동(리 제외)을 법정동·필지�
 test('옛 광주(29)·전남(46) 코드로 열면 400 이 아니라 통합 코드(12)로 해석하고 legacy-code 로 알린다(/map?sgg=29200)', async () => {
   const rows = [ROW('1233000000', '전남광주통합특별시 광산구'), ROW('1233010600', '전남광주통합특별시 광산구 운수동')];
   const h = harness({
+    env: { DATA_GO_KR_KEY_RESOLVE_1: 'SECRET-R1', VWORLD_KEY: 'VW-SECRET', VWORLD_DOMAIN: 'localhost', NON_CAPITAL_LIVE: '1' },   // 2026-10-19 수도권 한정: 수도권 밖은 NON_CAPITAL_LIVE=1 일 때만
     fetch: async (url) => {
       const u = new URL(url);
       if (u.hostname === 'apis.data.go.kr') return { ok: true, status: 200, json: async () => (u.searchParams.get('sido_cd') === '12' && u.searchParams.get('sgg_cd') === '330' ? stanJson(rows) : { RESULT: { resultCode: 'INFO-3' } }) };

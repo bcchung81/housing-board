@@ -37,16 +37,17 @@ test('단계가 가리키는 코드 위치는 저장소에 실제로 있다(없�
   for (const s of [...P.STEPS, P.LIVE]) for (const f of s.code) assert.ok(fs.existsSync(path.join(ROOT, f)), `${s.id}: ${f}`);
 });
 
-test("'지금' 문구의 수치는 저장소 자료와 같다: 살아 있는 레지스트리 278건·70개 시군구(수도권 HOME 262, 옛 수도권 61 = 대체 6 + 숨김 55, HOME 중복 대체 4 — 2026-10-14)·일정 0건, 번들 단지 22곳, 실시간 API 8개", () => {
+test("'지금' 문구의 수치는 저장소 자료와 같다: 살아 있는 레지스트리 262건·68개 시군구(모두 수도권 HOME, 옛 수도권 61 = 대체 6 + 숨김 55, HOME 중복 대체 4, 수도권 밖 16 숨김 — 2026-10-19)·일정 0건, 번들 단지 6곳, 실시간 API 8개", () => {
+  // 2026-10-19 수도권 한정: 광산 4·나주 12 발급 사업을 숨겨(issue-projects --home) 살아 있는 사업 278 → 262, 시군구 70 → 68, 숨김 55 → 71, 번들 단지 참조 22 → 6(계양만)
   const live = registry.filter((p) => !p.supersededBy && !p.hiddenAt);
-  assert.equal(live.length, 278);
-  assert.equal(new Set(live.map((p) => p.sgg)).size, 70);
+  assert.equal(live.length, 262);
+  assert.equal(new Set(live.map((p) => p.sgg)).size, 68);
   assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'home')).length, 262);
-  assert.deepEqual([registry.filter((p) => p.supersededBy).length, registry.filter((p) => p.hiddenAt).length], [10, 55]);
+  assert.deepEqual([registry.filter((p) => p.supersededBy).length, registry.filter((p) => p.hiddenAt).length], [10, 71]);
   assert.equal(registry.filter((p) => p.schedule).length, 0);
-  assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'bundle')).length, 22);
+  assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'bundle')).length, 6);
   const ledger = P.STEPS.find((s) => s.id === 'ledger').now;
-  assert.match(ledger, /278건\(70개 시군구/); assert.match(ledger, /0건/);
+  assert.match(ledger, /262건\(68개 시군구/); assert.match(ledger, /0건/);
   const routes = [];
   const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'route.ts' && !p.includes('/revalidate/') && !p.includes('/v1/ledger/') && !p.includes('/v1/geo/')) routes.push(p); } };   // ledger 는 원천이 아니라 보관한 원장(api.map)을, geo 는 요청 헤더만 읽는다
   walk(path.join(ROOT, 'app/api'));

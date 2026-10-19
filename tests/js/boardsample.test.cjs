@@ -89,42 +89,50 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   for (const d of dir) assert.deepEqual(Object.keys(d).filter((k) => ['tag', 'note'].includes(k)), [], '꼬리(tag·note) 필드 없음 — 기준은 (i)');
   for (const d of dir) assert.deepEqual(Object.keys(d.list).sort(), ['href', 'title'], '링크 글자(list.text) 없음 — 숫자 자체가 링크');
   assert.match(dir[0].basis, /달성률은 내지 못합니다/);
-  assert.match(dir[0].basis, new RegExp(`^통계누리 전국 착공 ${start.year}년 1~${start.upto}월 누계 · 전년 같은 기간 대비`), '원천(통계누리)·기간(통계누리 마지막 달)은 카드 title·(i) 에 — 원장 기준 카드들과 기간이 다르다');
+  assert.match(dir[0].basis, new RegExp(`^통계누리 수도권 착공 ${start.year}년 1~${start.upto}월 누계 · 전년 같은 기간 대비`), '원천(통계누리)·기간(통계누리 마지막 달)은 카드 title·(i) 에 — 원장 기준 카드들과 기간이 다르다');   // 2026-10-19 수도권 한정: 범위 글 '전국' → '수도권'(통계누리 합계 자리 = 서울+인천+경기)
   assert.deepEqual([dir[1].pre, dir[1].big, dir[1].u], [undefined, S.f(L.scope.projects), '건']);
   assert.equal(L.scope.projects, L.scope.issued + L.scope.candidates);
   const b = L.scope.bySource;
-  assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 사업 ${S.f(L.scope.projects)}건\\(발급 ${b.issued} · LH 후보 ${b.lhCandidates} · 건축HUB 후보 ${S.f(b.hubBulkCandidates)}${b.home ? ` · 수도권 HOME ${S.f(b.home)}` : ''}\\)$`));
+  // 2026-10-19 수도권 한정: 범위 '수도권', 0건 원천(발급·LH 후보·건축HUB 후보)은 적지 않아 HOME 한 곳만 남는다
+  assert.deepEqual([L.scope.coverage, b.issued, b.lhCandidates, b.hubBulkCandidates], ['CAPITAL', 0, 0, 0]);
+  assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 수도권 · 사업 ${S.f(L.scope.projects)}건\\(수도권 HOME ${S.f(b.home)}\\)$`));
   /* D3(2026-10-15): 판정은 사업 번호가 있는 사업만, 후보는 '확인 필요(후보)'로 따로 — 카드 title 에 후보 계산 결과 */
   const c = L.judgment.candidate;
-  assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 전국 · 판정 ${S.f(L.scope.judged)}건\\(사업 번호가 있는 사업 — 착공·준공 예정 경과 · 확인 필요\\(후보\\) ${S.f(L.scope.candidateJudged)}건은 번호가 없는 후보라 따로 셈\\(건축HUB 후보, 준공 예정 경과만 계산\\) · 일정 정보 없음: LH 후보 ${b.lhCandidates}건, 건축HUB 후보의 착공 예정 경과 ${S.f(L.judgment.excludedStartOverdue.pairs)}건\\) 중 지연·주의 · 확인 필요\\(후보\\): 계산하면 지연 ${S.f(c.delay.projects)} · 주의 ${S.f(c.caution.projects)} · 정상 ${S.f(c.ok.projects)}건\\(지연·주의에 넣지 않음\\)$`));
+  // 2026-10-19 수도권 한정: 후보 0건이라 후보·LH·착공 예정 경과 문장이 모두 빠지고 '판정 n건(…) 중 지연·주의' 만 남는다
+  assert.deepEqual([L.scope.candidateJudged, c.delay.projects, c.caution.projects, c.ok.projects, L.judgment.excluded.projects, L.judgment.excludedStartOverdue.pairs], [0, 0, 0, 0, 0, 0]);
+  assert.match(dir[4].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 수도권 · 판정 ${S.f(L.scope.judged)}건\\(사업 번호가 있는 사업 — 착공·준공 예정 경과\\) 중 지연·주의$`));
   assert.doesNotMatch(dir.map((d) => d.basis).join(' '), /전국 아님/);
   const bk = L.delayByStage.indexOf(Math.max(...L.delayByStage));
   assert.deepEqual([dir[2].pre, dir[2].big, dir[2].u], [`병목 ${S.K[bk]}`, S.f(L.delayByStage[bk]), '호']);
   assert.deepEqual([dir[3].pre, dir[3].big, dir[3].u], ['준공 예정', S.f(L.upcoming.reduce((n, m) => n + m.units, 0)), '호']);
   /* 일정 지연 관리(2026-10-15 결정): 확정 · 후보 계산을 같은 크기로 — 후보 집계가 없으면 옛 지연 · 주의 */
-  assert.deepEqual([dir[4].pre, dir[4].big, dir[4].u], ['확정', S.f(L.judgment.delay.projects), '건']);
-  assert.deepEqual([dir[4].pair.pre, dir[4].pair.big, dir[4].pair.u], ['후보 계산', S.f(L.judgment.candidate.delay.projects), '건']);
+  // 2026-10-19 수도권 한정: 후보가 0이라 쌍 숫자(후보 계산) 없이 '지연 n건' + sub '주의 n'(옛 모양)
+  assert.deepEqual([dir[4].pre, dir[4].big, dir[4].u, dir[4].pair], ['지연', S.f(L.judgment.delay.projects), '건', undefined]);
+  assert.equal(dir[4].sub, `주의 ${S.f(L.judgment.caution.projects)}`);
   const old = makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: { ...L, judgment: { ...L.judgment, candidate: undefined } }, start, bottleneck: BN })[4];
   assert.deepEqual([old.pre, old.big, old.u, old.pair], ['지연', S.f(L.judgment.delay.projects), '건', undefined]);
   assert.equal(old.sub, `주의 ${S.f(L.judgment.caution.projects)}`);
   assert.equal(makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start, bottleneck: BN })[5].m, '원천 19곳');
   assert.equal(makeDirectives({ sourceCount: 14, stageNames: S.K, ledger: L, start: { ...start, cum: null }, bottleneck: BN })[0].sub, undefined, '누계가 없으면 증감을 내지 않는다');
   const codes = require('../../data/board/molit.json').sido.map((s) => s.code);
-  assert.equal(L.regions.length, 16);
+  // 2026-10-19 수도권 한정: 원장 시도 = 서울·인천·경기 3곳(전엔 16곳 + 12 전남광주)
+  assert.deepEqual(L.regions.map((r) => r.code), ['11', '28', '41']);
   for (const r of L.regions) assert.ok(codes.includes(r.code), `${r.name} → ${r.code}`);
-  assert.ok(L.regions.some((r) => r.code === '12'), '2026-07 통합: 광주·전남은 12(전남광주) 하나');
 });
 
-test('원장 집계와 화면 시점이 같은 칸이다: 46개월(2025-01~2028-10), NOW = 2026-10, 실제 날짜는 2026-08까지, 단계 6칸', () => {
+test('원장 집계와 화면 시점이 같은 칸이다: 46개월(2025-01~2028-10), NOW = 2026-10, 실제 날짜는 2026-10까지, 단계 6칸', () => {
   assert.equal(L.schema, 'ledger-board/1');
   assert.deepEqual([T.months, T.now, T.last], [L.months, L.now, L.months.length - 1]);
   assert.deepEqual([T.last, T.months[0], T.months[T.last]], [45, '2025-01', '2028-10']);
   assert.equal(L.observedMonth, T.months[T.now], '첫 판 NOW = 21(2026-10)');
-  /* 실제 날짜 = 건축HUB 대용량 판의 데이터 월(첫 판 2026-08, 19) */
-  const ed = L.trend[L.trend.length - 1].edition, a = L.months.indexOf(ed);
+  /* 실제 날짜 = 원장 원천(HOME 덤프)의 데이터 월 — 2026-10-19 수도권 한정: 건축HUB 대용량 2026-08(19) → HOME 덤프 2026-10(21, actualSource home-dump-…). trend 소급 행의 edition 은 건축HUB 판(2026-08)으로 남는다 */
+  const ed = L.actualThrough, a = L.months.indexOf(ed);
+  assert.deepEqual([ed, a, L.trend[L.trend.length - 1].edition], ['2026-10', 21, '2026-08']);
+  assert.match(L.actualSource, /^home-dump-/);
   assert.deepEqual([L.actualThrough, T.actual, L.actualIndex], [ed, a, a]);
-  assert.deepEqual([S.kind(T, a), ...Array.from({ length: T.now - a - 1 }, (_, i) => S.kind(T, a + 1 + i)), S.kind(T, T.now), S.kind(T, T.now + 1)],
-    ['실적 기준', ...Array(T.now - a - 1).fill('예정 기준'), '현재', '예정 기준'], '실제 날짜 뒤 달(첫 판 2026.09)은 예정 기준');
+  // 2026-10-19 수도권 한정: 실제 날짜 달 = 기준 달(21) 이라 '실제 뒤 ~ 기준 앞' 예정 기준 달이 없다(전엔 2026.09 한 달)
+  assert.equal(a, T.now);
+  assert.deepEqual([S.kind(T, a - 1), S.kind(T, T.now), S.kind(T, T.now + 1)], ['실적 기준', '현재', '예정 기준']);
   assert.equal(T0.actual, T0.now, 'actualThrough 가 없는 옛 집계는 기준 달까지 실제');
   for (const row of L.stageUnits) assert.equal(row.length, S.K.length);
   assert.equal(L.delayByStage.length, S.K.length);
@@ -138,7 +146,7 @@ test('리본 차트 기하(원장): 좌표 상수는 시안과 같고, 층 두�
   G.x.forEach(([v, x]) => near(R.X(v), x, `X(${v})`));
   assert.ok(S.textBox(S.staticTexts(R).now).y >= S.BOT + 7, '기준 글자 상자가 플롯(BOT)·1월 눈금(7) 안으로 들어가지 않는다');
   R.total.forEach((t, m) => assert.equal(t, L.stageUnits[m].reduce((a, b) => a + b, 0), `총량 ${m}`));
-  assert.equal(R.step, 500000); assert.equal(R.ymax, 1500000, '세로 축척은 가장 큰 총량을 눈금 간격 단위로 올린 값(수도권 HOME 교체 뒤 총량 약 141만, 2026-10-14)');
+  assert.equal(R.step, 50000); assert.equal(R.ymax, 250000, '세로 축척은 가장 큰 총량을 눈금 간격 단위로 올린 값(2026-10-19 수도권 한정: 총량 227,976호 — 전엔 약 141만 → 간격 50만·ymax 150만)');
   assert.ok(R.ymax >= Math.max(...R.total) && R.ymax - Math.max(...R.total) < R.step);
   near(R.s2, S.PH / R.ymax, 's2');
   assert.equal(R.geo.length, 4 * (T.last + 1) + 1, '0.25개월 간격');
@@ -177,7 +185,7 @@ test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹
   const SF = S.scopeChangeOf(J);   // 판정 기준 변경 달(2026.10) — 아래 줄 꼬리표도 겹침 검사에 든다
   assert.equal(L.months[SF], '2026-10');
   const R = S.ribbonOf(T, L.stageUnits, DL, SF);
-  // 총량이 해마다 다른 경우: 전국 원장(총량 약 141만 — 2026-10-14 수도권 HOME 교체 전 238만)에서 0.5배 → 1.5배
+  // 총량이 해마다 다른 경우: 수도권 원장(총량 약 22.8만 — 2026-10-19 수도권 한정 전 141만)에서 0.5배 → 1.5배
   const grow = S.ribbonOf(T, L.stageUnits.map((r, m) => r.map((v) => Math.round(v * (0.5 + m / 45)))), DL, SF);
   for (const [name, g] of [['원장', R], ['총량 증가', grow]]) {
     for (let cur = 0; cur <= T.last; cur++) {
@@ -199,8 +207,9 @@ test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹
   assert.deepEqual(Object.keys(o).sort(), ['statics', 'total', 'years'], '병목 핀 없음');
   assert.equal(ST.now.t, '기준 2026.10');
   for (const g of [R, grow]) assert.ok(S.ribbonLabels(g, T.now).statics.every((t) => !/붉은 띠|총량 매달/.test(t.t)), '차트 안 설명 글자 없음');
-  assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '50만', '100만', '150만']); assert.equal(S.axisUnit(R), '호');
-  const big = S.ribbonOf(T, L.stageUnits.map((r) => r.map((v) => v * 8)), DL);   // ymax 1,000만 이상: '만' 을 빼 눈금이 왼쪽 여백에 들어가고 단위는 머리 글자로
+  assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '5만', '10만', '15만', '20만', '25만']);   // 2026-10-19 수도권 한정: 총량 22.8만 → 5만 간격 눈금(전엔 50만 간격 0~150만)
+   assert.equal(S.axisUnit(R), '호');
+  const big = S.ribbonOf(T, L.stageUnits.map((r) => r.map((v) => v * 50)), DL);   // 2026-10-19 수도권 한정: 총량 22.8만이라 ×8 → ×50(1,140만). ymax 1,000만 이상: '만' 을 빼 눈금이 왼쪽 여백에 들어가고 단위는 머리 글자로
   assert.ok(big.ymax >= 10000000); assert.ok(S.staticTexts(big).ticks.every((t) => !t.t.includes('만'))); assert.equal(S.axisUnit(big), '만 호');
   ST.ticks.forEach((t, i) => near(t.y, S.BOT - R.ticks[i] * R.s2 + 3, `눈금 y ${i}`));
   const small = S.ribbonOf(T, L.stageUnits.map(() => [10000, 20000, 30000, 20000, 5000, 4000]), DL);   // 총량 89,000: 5만 간격이면 2칸이지만 더 잘게 5칸 이하 중 가장 작은 간격
@@ -223,18 +232,20 @@ test('시도 타일 색 단계: 0 은 맨 앞, 경계값은 위 단계로 넘어
   assert.equal(S.RCOL.length, 6); assert.equal(S.RLAB.length, 6);
 });
 
-test('시도 지리 격자: 4열 × 5줄, 원장의 16개 시도가 모두 자리를 갖고 겹치지 않으며 5줄 2~4열(요약 칸)·4/4 는 비어 있다', () => {
+test('시도 3칸 한 줄: 원장 시도는 서울·인천·경기 3곳, 4곳 이하면 REGION_POS 지리 격자를 쓰지 않고 시도 수만큼 한 줄 열 + 아래 요약 칸 전체 폭', () => {
+  // 2026-10-19 수도권 한정: 전국 16칸 지리 격자(4열 × 5줄) → 시도 3칸 한 줄. REGION_POS 표 자체(16곳)는 sample.ts 에 남아 있어 표의 무결성만 본다
   const codes = L.regions.map((r) => r.code);
-  assert.equal(codes.length, 16);
-  const cells = codes.map((c) => { assert.ok(S.REGION_POS[c], `${c} 자리`); return S.REGION_POS[c].join('/'); });
-  assert.equal(new Set(cells).size, 16, '자리 겹침 없음');
+  assert.deepEqual(codes, ['11', '28', '41']);
+  assert.equal(L.scope.sido, 3);
+  const cells = Object.values(S.REGION_POS).map((p) => p.join('/'));
+  assert.equal(new Set(cells).size, 16, 'REGION_POS 표 자리 겹침 없음');
   for (const [r, c] of Object.values(S.REGION_POS)) { assert.ok(r >= 1 && r <= 5 && c >= 1 && c <= 4); assert.ok(!(r === 5 && c >= 2), '요약 칸 자리'); assert.notEqual(`${r}/${c}`, '4/4'); }
-  assert.deepEqual([S.REGION_POS['28'], S.REGION_POS['11'], S.REGION_POS['41'], S.REGION_POS['51'], S.REGION_POS['12'], S.REGION_POS['50']], [[1, 1], [1, 2], [1, 3], [1, 4], [4, 1], [5, 1]]);
-  /* 2026-10-16 4차(r4-board 1): 2차의 '판정 시도 큰 타일 + 묶음'을 되돌려 다시 16칸 지리 격자 */
   const region = panel(board, 'p-region');
-  assert.match(region, /auto-rows-\[minmax\(68px,1fr\)\] grid-cols-4 gap-1\.5/);
-  assert.match(region, /\[grid-area:5\/2\/6\/5\]/, '요약 칸 5줄 2~4열');
-  assert.match(region, /pos \? \{ gridArea: /, '표에 없는 코드는 자리를 주지 않아 빈 칸에 이어 붙는다');
+  assert.match(board, /const geo = L\.regions\.length > 4;/, '시도가 4곳 이하면 지리 격자를 쓰지 않는다');
+  assert.match(region, /geo \? 'grid-cols-4' : 'grid-rows-\[minmax\(68px,1fr\)_auto\]'/);
+  assert.match(region, /gridTemplateColumns: `repeat\(\$\{L\.regions\.length\}, minmax\(0, 1fr\)\)`/, '열 = 시도 수');
+  assert.match(region, /geo \? '\[grid-area:5\/2\/6\/5\]' : 'col-span-full'/, '요약 칸: 격자면 5줄 2~4열, 한 줄이면 아래 전체 폭');
+  assert.match(region, /pos && geo \? \{ gridArea: /, '한 줄일 땐 자리를 주지 않는다');
   assert.equal((region.match(/<PanelLink/g) || []).length, 1, '이동 링크는 한 곳(요약 칸)');
   assert.doesNotMatch(region.slice(0, region.indexOf('auto-rows')), /<PanelLink/, '제목 줄에는 링크가 없다');
   assert.doesNotMatch(region, /text-bad">\{r\.delay\}/, '타일 안 세 숫자 칸 없음');

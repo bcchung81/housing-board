@@ -22,6 +22,7 @@ const { createCache, defaultDir } = require('../../lib/cache.js');
 const { VWORLD_URL, vworldCreds, redactVworld } = require('../../lib/vworld.js');
 const { thinGeometry, largestPolygon } = require('../../lib/geom.js');
 const codes = require('../../lib/codes.js');
+const scope = require('../../lib/scope.js');
 const Permits = require('../../lib/permits.js');
 const { createStan } = require('../../lib/stan.js');
 const Projects = require('../../lib/projects.js');
@@ -282,6 +283,7 @@ function createService(overrides = {}) {
     if (names.some((n) => !ALLOWED.has(n)) || !params.has('bjd') || params.getAll('bjd').length !== 1) return problem(res, 400, 'invalid-query', '쿼리가 맞지 않습니다', 'bjd=<법정동 10자리> 하나만 받습니다', undefined, 'public, s-maxage=3600');
     const c = codes.classify(params.get('bjd'));
     if (!c.ok || c.type !== 'bjd') return problem(res, 400, 'invalid-code', '법정동 코드가 맞지 않습니다', c.ok ? `${c.type} 코드가 왔습니다. 법정동(8 또는 10자리)만 받습니다` : c.detail, c.ok ? { reason: 'type-mismatch' } : { reason: c.reason }, 'public, s-maxage=3600');
+    if (!scope.nonCapitalAllowed(env) && !scope.inCapitalSido(c.sido)) return scope.denyScope(problem, res, c.sido);   // 2026-10-19 수도권 한정
     const bjd = c.bjd, creds = vworldCreds(env);
     if (!creds.key || !pool.hasKeys('RESOLVE')) return problem(res, 503, 'not-configured', '인증키가 설정되어 있지 않습니다', 'RESOLVE 용도 공공데이터포털 키와 V-World 키가 필요합니다');
     try {

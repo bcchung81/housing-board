@@ -86,14 +86,18 @@ test(`용어표: ${TERMS.map(([a, b]) => `${a} → ${b}`).join(' · ')}`, () => 
   assert.match(qs[4], /사용검사/);
 });
 
-test('파이프라인 불변식: 칸마다 지금 이 단계 ≤ 거쳐 간 사업 — 전국·수도권·시도·정책·기관 범위 모두', () => {
+test('파이프라인 불변식: 칸마다 지금 이 단계 ≤ 거쳐 간 사업 — 수도권 전체·시도·정책·기관 범위 모두', () => {
   const scopes = [{}, { metro: true }, ...MOLIT.sido.map((s) => ({ sido: s.code })), ...IDX.policies.map((p) => ({ policy: p })), { agency: 'lh' }, { agency: 'etc' }];
   for (const f of scopes) {
     const p = V.pipelineOf(V.scopeOf(rows, f));
     for (const c of p.open) assert.ok(c.now <= c.n, `${JSON.stringify(f.sido ?? f.policy?.key ?? f.agency ?? f)} ${c.i}: 지금 ${c.now} > 거쳐 간 ${c.n}`);
   }
   /* 재평가에서 깨졌던 칸: 전국 ⑤ 준공, 수도권 ② 인허가 */
-  const all = V.pipelineOf(rows).open.find((c) => c.i === 4);
+  // 2026-10-19 수도권 한정: 원장이 수도권 HOME 뿐이라 ⑤ 준공·⑥ 입주는 거쳐 간 사업이 없어 닫힌 칸(shut) — 열린 ④ 모집 칸으로 같은 불변식을 본다
+  const pall = V.pipelineOf(rows);
+  assert.deepEqual(pall.shut, [4, 5]);
+  assert.equal(pall.open.find((c) => c.i === 4), undefined);
+  const all = pall.open.find((c) => c.i === 3);
   assert.ok(all.now <= all.n);
   /* 요약 범위: 단계별 진행은 상태·단계 거르기를 따르지 않는다(목록에만) */
   const page = read('app/(dashboard)/projects/page.tsx');
@@ -145,15 +149,19 @@ test('보이는 도움말: 핵심 정의는 눌러서 여는 ⓘ(Base UI Popover
 });
 
 test("후보 사업도 행을 누르면 간단 보기 서랍(?cand=<원장 id>) — 이름·시군구·단계·호수·원천 예정(확인 필요)·판정·출처, 안내 글은 예정 유무에 맞춘다", () => {
-  const cand = rows.find((r) => !r.issued && r.cls === 'delay');
-  const c = V.candidateOf(rows, cand.id);
+  // 2026-10-19 수도권 한정: 원장에 번호 없는 후보 행이 없다(전엔 건축HUB 후보 1,839·LH 후보) → 번호 있는 지연 사업을 issued=false 로 바꾼 합성 후보 행을 rows 에 더해 같은 동작을 본다
+  assert.equal(rows.filter((r) => !r.issued).length, 0);
+  const base = rows.find((r) => r.issued && r.cls === 'delay');
+  const cand = { ...base, id: 'PRJ-99999-0001', issued: false, pks: undefined, why: null };
+  const lhc = { ...base, id: 'PRJ-99999-0002', issued: false, pks: undefined, why: 'LH 후보' };
+  const rowsC = [...rows, cand, lhc];
+  const c = V.candidateOf(rowsC, cand.id);
   assert.equal(c.row.id, cand.id);
   assert.ok(c.sources.length >= 1);
   assert.ok(!c.sources.some((s) => /\d{10,}/.test(s)), '관리번호 값은 보이지 않는다');
-  assert.equal(V.candidateOf(rows, 'PRJ-00000-0000'), null);
-  assert.equal(V.candidateOf(rows, null), null);
-  const lh = rows.find((r) => !r.issued && r.why === 'LH 후보');
-  assert.ok(V.candidateOf(rows, lh.id).sources.includes('LH 준공 예정 파일'));
+  assert.equal(V.candidateOf(rowsC, 'PRJ-00000-0000'), null);
+  assert.equal(V.candidateOf(rowsC, null), null);
+  assert.ok(V.candidateOf(rowsC, lhc.id).sources.includes('LH 준공 예정 파일'));
   assert.match(V.nextOf(cand).tag, /^경과 \d+개월$/, "지난 예정은 빨강 대신 '경과 n개월' 꼬리표");
   assert.equal(V.nextOf(cand).tone, undefined);
   /* 주소: 상세(?id=)와 나눈다 */

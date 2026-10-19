@@ -82,13 +82,16 @@ test('기본 범위·기본 정렬: 쿼리 없이 열면 수도권, 명시적 ?s
   }
   const metro = V.applyFilters(rows, { metro: true });
   assert.equal(metro.length, rows.filter((r) => ['11', '28', '41'].includes(r.sgg.slice(0, 2))).length);
+  assert.deepEqual(V.applyFilters(rows, {}).map((r) => r.id), metro.map((r) => r.id), '2026-10-19 수도권 한정: ?sido=all(거르기 없음)도 수도권과 같은 목록');
   const list = V.listOrder(metro);
   assert.ok(list.every((r, i) => i === 0 || (V.lateOf(list[i - 1]) ?? -1) >= (V.lateOf(r) ?? -1)), '지연 개월 큰 순');
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /const list = listOrder\(applyFilters\(rows, f\)\);/, '상태와 상관없이 기본 순서 = 점검 필요 순');
   /* 지역 공급도 처음은 수도권 */
   const region = read('app/(dashboard)/region/page.tsx');
-  assert.match(region, /q\.sido === 'all' \? '' : 'metro'/);
+  // 2026-10-19 수도권 한정: ?sido=all(전국)이 없어졌다 — 목록에 없는 값(옛 all·수도권 밖 코드)은 모두 'metro'
+  assert.match(region, /const sido = q\.sido && ORDER\.includes\(q\.sido\) \? q\.sido : 'metro';/);
+  assert.ok(!R.aheadAll(calendar, 'metro', sidoName).some((e) => !/^(서울|인천|경기) /.test(e.place)));
   assert.match(region, /if \(sd !== 'metro'\) s\.set\('sido', sd \|\| 'all'\);/);
   assert.equal(R.aheadAll(calendar, 'metro', sidoName).length, ['11', '28', '41'].reduce((n, c) => n + (calendar.sido[c] ?? []).length, 0));
   assert.ok(R.aheadAll(calendar, 'metro', sidoName).every((e) => /^(서울|인천|경기) /.test(e.place)), '수도권 목록은 시도 이름을 붙인다');
@@ -100,11 +103,12 @@ test('기본 범위·기본 정렬: 쿼리 없이 열면 수도권, 명시적 ?s
   assert.equal(my[0].year, 2018, '수도권은 2018년부터');
 });
 
-test('칩 줄: 단계 칩 없음(파이프라인 칸으로) · 상태는 점검 필요 + 메뉴 · 수도권/전국 칩 · 모두 풀기 · 요구사항은 칩 하나로 접는다', () => {
+test('칩 줄: 단계 칩 없음(파이프라인 칸으로) · 상태는 점검 필요 + 메뉴 · 수도권 칩(전국 칩 없음) · 모두 풀기 · 요구사항은 칩 하나로 접는다', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
   const bar = page.slice(page.indexOf('<ChipBar'), page.indexOf('</ChipBar>'));
   assert.doesNotMatch(bar, /BOARD_NAMES\.map/);
-  assert.match(bar, />수도권<\/Chip>/); assert.match(bar, />전국<\/Chip>/);
+  assert.match(bar, />수도권<\/Chip>/);
+  assert.doesNotMatch(bar, />전국<\/Chip>/, '2026-10-19 수도권 한정: 전국 칩 없음');
   assert.match(bar, />점검 필요<\/Chip>/); assert.match(bar, /<ChipMenu label="상태"/);
   assert.doesNotMatch(bar, /STATUS_ORDER\.map\(statusChip\)/, '상태 칩 5개를 늘어놓지 않는다');
   assert.match(bar, /<Chip href="\/projects"[^>]*>모두 풀기<\/Chip>/);
@@ -115,10 +119,10 @@ test('칩 줄: 단계 칩 없음(파이프라인 칸으로) · 상태는 점검 
   assert.doesNotMatch(read('components/projects/Summary.tsx') + page, /F-0\d/);
 });
 
-test('빈 결과 회복: 거르기 풀기·전국에서 보기 등 건수가 있는 대안만 보이고, 후보 사업은 간단 보기로 연다는 것을 보이는 글로', () => {
+test('빈 결과 회복: 거르기 풀기·수도권 전체 보기 등 건수가 있는 대안만 보이고, 후보 사업은 간단 보기로 연다는 것을 보이는 글로', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /이 조건의 사업이 없습니다/);
-  for (const t of ['상태·단계 거르기 풀기', '전국에서 보기', '정책·기관 거르기 풀기', '모두 풀기']) assert.ok(page.includes(t), t);
+  for (const t of ['상태·단계 거르기 풀기', '수도권 전체 보기', '정책·기관 거르기 풀기', '모두 풀기']) assert.ok(page.includes(t), t);
   assert.match(page, /\.filter\(\(a\) => a\.n > 0\)/);
   assert.match(page, /\$\{CAND_NAME\} \$\{fmt\(list\.length - issued\)\}건 뒤쪽/);
   assert.match(page, /\$\{CAND_NAME\}은 간단 보기\(번호가 있는 사업 뒤\)/, '풀어 쓴 안내는 목록 머리 줄 title');

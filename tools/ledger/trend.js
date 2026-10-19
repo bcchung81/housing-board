@@ -10,7 +10,8 @@
      ④ convert: README 의 명령과 같은 입력(LH 매핑·법정동·후보 id 매핑(읽기만)·전국 공고·입주예정)에 hubBulk = 그 판, hubEvents = ③, observedMonth = D. validate 오류 0 이어야 한다.
      ⑤ 시간 되감기(rewind): 기간 끝이 기준일 뒤인 ACTUAL 이벤트를 모두 뺀다. 대용량 후보가 아닌 사업은 단계가 준공(06)·착공(04) 이상인데 그 근거가 기준일 뒤 실제뿐이면
         (기준일 이전 실제가 없고 뒤 실제가 있으면 — 근거는 표의 실제 이벤트와 2026-10 API 스냅샷의 실제 이벤트) 준공 → 04, 착공 → 03 으로 낮춘다. 근거 없는 단계는 그대로.
-     ⑥ boardFromLedger(되감은 표, { referenceDate: 그 달 말, observedMonth: D }) 의 이번 달 행(trend 마지막 행)을 basis BACKFILL 로 싣는다.
+     ⑥ boardFromLedger(되감은 표, { referenceDate: 그 달 말, observedMonth: D }) 의 이번 달 행(trend 마지막 행)을 basis BACKFILL 로 싣는다. 번호 없는 대용량 후보도 판정에 넣는다(withCandidates —
+        candidate 칸 없는 행 = 후보 포함 소급). 범위는 원장과 같다: HOME 판이 있는 달 폴더면 수도권(11·28·41)만(2026-10-19 결정).
    - 관측(OBSERVED, 2026-10 부터): 그 달 data/board/ledger-board.json 의 판정 행을 그대로 붙인다(--close). 관측 행이 있는 달은 소급으로 덮지 않는다.
    달마다 하는 일: 새 달 원장·보드를 만들기 전에 지난 달 보드로 `node tools/ledger/trend.js --close` → 새 달 원장 → `node tools/ledger/board.js`.
    실행: node tools/ledger/trend.js [--month YYYY-MM]           → 폴더의 판으로 소급 행을 다시 계산해 이력 파일을 쓴다(관측 행은 남긴다, 약 1~2분)
@@ -101,11 +102,12 @@ async function attachStatic2608(byPkList, rawDir = H.RAW) {
 }
 const sortedRecords = (m) => [...m.values()].sort((a, b) => (a.pk < b.pk ? -1 : a.pk > b.pk ? 1 : 0));
 
-/* 고정 입력(README 의 convert 명령과 같은 것). 후보 id 매핑은 읽기만 */
+/* 고정 입력(README 의 convert 명령과 같은 것). 후보 id 매핑은 읽기만. 그 달 폴더에 HOME 판이 있으면 원장과 같은 범위(수도권 11·28·41 — 2026-10-19 결정, monthly.js convertArgs --sidos)로 소급한다 */
 function loadContext(dir = BASE) {
   const dong = dongFile(dir);
   const legalDong = parseLegalDong(fs.readFileSync(dong), path.basename(dong));
-  const base = loadInputs({ lhSgg: json(path.join(dir, 'mappings/lh-block-sgg.json')), legalDong, hubIds: json(path.join(dir, 'mappings/hub-candidate-ids.json')), national: readNational(path.join(dir, 'raw')) });
+  const HOME = require('./home-source');
+  const base = loadInputs({ lhSgg: json(path.join(dir, 'mappings/lh-block-sgg.json')), legalDong, hubIds: json(path.join(dir, 'mappings/hub-candidate-ids.json')), national: readNational(path.join(dir, 'raw')), sidos: HOME.latestHomeDir(dir) ? HOME.HOME_SIDO : null });
   return { base, apiEvents: json(path.join(dir, 'snapshot/hub-events.json')).rows };
 }
 
@@ -115,6 +117,9 @@ function tablesFor(ctx, { ed, records, reg, month, hubEvents }) {
   const events = hubEvents ?? eventsFromHub({ bulk: reg }, ctx.base.registry, month);
   return convert({ ...ctx.base, observedMonth: month, hubBulk, hubEvents: events, report: {} });
 }
+
+/* 소급 행의 판정 범위: 번호 없는 건축HUB 대용량 후보도 판정에 넣는다(2026-10-15 결정 D3 이전과 같은 뜻 — 화면은 candidate 칸이 없는 행을 '후보 포함 소급'으로 읽는다, lib/board/sample.ts scopeChangeOf) */
+const withCandidates = (t) => ({ ...t, projects: t.projects.map((p) => (!p.issued_at && p.source_ref.startsWith(BULK_PREFIX) ? { ...p, issued_at: 'BACKFILL' } : p)) });
 
 /* 시간 되감기(머리 주석 ⑤). extraActual = 단계 근거로만 보는 실제 이벤트(2026-10 API 스냅샷) */
 function rewind(t, ref, extraActual = []) {
@@ -169,8 +174,9 @@ async function backfill({ observedMonth, base = BASE, log = console.log } = {}) 
     const tables = tablesFor(ctx, { ed, records: sortedRecords(recs[H.permitFloor(ref)]), reg, month });
     const errors = validate(tables);
     if (errors.length) throw new Error(`${month}: validate 오류 ${errors.length}건 — ${errors.slice(0, 3).join(' / ')}`);
-    const board = boardFromLedger(rewind(tables, ref, ctx.apiEvents), { referenceDate: ref, observedMonth: month });
-    const row = { ...board.trend[board.trend.length - 1], basis: 'BACKFILL' };
+    const board = boardFromLedger(withCandidates(rewind(tables, ref, ctx.apiEvents)), { referenceDate: ref, observedMonth: month });
+    const { candidate: _none, ...last } = board.trend[board.trend.length - 1];
+    const row = { ...last, basis: 'BACKFILL' };
     rows.push(row);
     editionsUsed[ed.month] = { zip: ed.zip, sha256: ed.sha256 };
     log(`${month} 판 ${ed.month} 기준일 ${ref}: 지연 ${row.delay.projects}/${row.delay.units} · 주의 ${row.caution.projects}/${row.caution.units} · 정상 ${row.ok.projects}/${row.ok.units} (판정 ${row.judged})`);
@@ -192,7 +198,7 @@ async function close({ base = BASE, log = console.log } = {}) {
   log(`${row.month} OBSERVED 행을 ${HISTORY} 에 붙였다: 지연 ${row.delay.projects}/${row.delay.units} · 주의 ${row.caution.projects}/${row.caution.units}`);
 }
 
-module.exports = { editionsOf, pickEdition, readBasic, attachStatic2608, sortedRecords, registryPks, loadContext, tablesFor, rewind, renderHistory, RULE };
+module.exports = { editionsOf, pickEdition, readBasic, attachStatic2608, sortedRecords, registryPks, loadContext, tablesFor, rewind, withCandidates, renderHistory, RULE };
 
 if (require.main === module) {
   const i = process.argv.indexOf('--month'), month = i > 0 ? process.argv[i + 1] : null;

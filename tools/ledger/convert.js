@@ -53,8 +53,9 @@ const SUSPECT_FIELD = { permit_approved: 'apprv', construction_start: 'stcns', c
      national?: readNational() 의 { myhome, lhNotice, moveIn }(전국 모집공고·입주예정물량, legalDong 필요),
      stage?: readStageInput() 의 단계별 원천 중간 스냅샷(legalDong 필요, 소급 경로 trend.js 는 쓰지 않는다 — 미래 자료가 과거 판정에 새지 않게),
      home?: home-source.js readHome 의 HOME 덤프 판(legalDong 필요) — 주면 수도권(11·28·41)의 원장 행을 HOME 행으로 갈아끼운다(replaceSido, 단계 올리기 전), homeIds?: { 키: id }(mappings/home-ids.json),
+     sidos?: 원장에 남길 시도 코드 목록(예 ['11','28','41'] — 2026-10-19 결정: 원장 사업은 HOME 수도권만). 주면 id 발급·수도권 교체 뒤에 그 밖의 사업과 딸린 행을 뺀다(home-source.js keepSido),
      report?: 건축HUB 대용량·공고·입주예정 처리 건수를 채울 빈 객체(home 이면 report.homeIds 에 이번 판의 키를 더한 매핑 — 열거되지 않는 칸) } */
-function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencies, sggNames, lhSgg = [], hubEvents = [], legalDong = null, hubBulk = null, hubIds = {}, national = null, stage = null, home = null, homeIds = {}, report = {} }) {
+function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencies, sggNames, lhSgg = [], hubEvents = [], legalDong = null, hubBulk = null, hubIds = {}, national = null, stage = null, home = null, homeIds = {}, sidos = null, report = {} }) {
   if (!/^\d{4}-\d{2}$/.test(observedMonth ?? '')) throw new Error('observedMonth(YYYY-MM)가 필요하다');
   const t = { areas: [], agencies: [], policies: [], programs: [], links: [], projects: [], identifiers: [], project_locations: [], complexes: [], events: [], units: [], notices: [], notice_links: [], stat_facts: [], sources: [], review_required: [], policy_targets: [], area_facts: [] };
   /* HOME 발급 사업(레지스트리 refs.system home, scripts/issue-projects.js --home): 사업 행은 HOME 판에서만 만든다. HOME 사업으로의 대체(supersededBy)는 HOME 판을 넣을 때만 잇는다 */
@@ -310,6 +311,7 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
     report.home = { edition: home.edition, ...hr, ids: { groups: build.groups.length, fresh, conflicts }, replaced };
     Object.defineProperty(report, 'homeIds', { value: HOME.mergeHomeIds(homeIds, build.groups, ids), enumerable: false });
   }
+  if (sidos) report.scope = HOME.keepSido(t, { sidos });
 
   raiseStages(t, observedMonth, report);
   t.areas = [...areas.values()].sort((a, b) => a.area_code.localeCompare(b.area_code));
@@ -508,7 +510,7 @@ function addNational(t, { myhome, lhNotice, moveIn, legalDong, observedMonth, ow
 
 /* 저장소에서 입력을 읽는다. 시군구 이름 표(SGG)는 lib/board/data.ts 안에 있고 그 파일은 JSON 을 import 해 Node 가 바로 못 읽으므로
    tests/js/board.test.cjs 와 같은 방법으로 객체 글자만 꺼낸다. */
-function loadInputs({ observedMonth = '2026-10', lhSgg, hubEvents, legalDong, hubBulk, hubIds, national, stage, home, homeIds } = {}) {
+function loadInputs({ observedMonth = '2026-10', lhSgg, hubEvents, legalDong, hubBulk, hubIds, national, stage, home, homeIds, sidos } = {}) {
   const json = (p) => JSON.parse(fs.readFileSync(path.join(ROOT, p), 'utf8'));
   const src = fs.readFileSync(path.join(ROOT, 'lib/board/data.ts'), 'utf8');
   const sggNames = Function(`return (${/export const SGG[^=]*= (\{[\s\S]*?\n\});/.exec(src)[1]})`)();
@@ -517,7 +519,7 @@ function loadInputs({ observedMonth = '2026-10', lhSgg, hubEvents, legalDong, hu
     bundles: SLUGS.map((slug) => ({ slug, region: json(`regions/${slug}/region.json`), projects: json(`regions/${slug}/projects.json`).projects })),
     agencies: require(path.join(ROOT, 'lib/board/agencies.ts')).AGENCIES,
     sggNames, lhSgg: lhSgg ?? [], hubEvents: hubEvents ?? [], legalDong: legalDong ?? null, hubBulk: hubBulk ?? null, hubIds: hubIds ?? {}, national: national ?? null, stage: stage ?? null,
-    home: home ?? null, homeIds: homeIds ?? {}, observedMonth,
+    home: home ?? null, homeIds: homeIds ?? {}, sidos: sidos ?? null, observedMonth,
   };
 }
 
@@ -578,7 +580,7 @@ const renderHubIds = (ids) => `{\n${Object.entries(ids).map(([k, v]) => `${JSON.
 module.exports = { convert, raiseStages, STAGE_OF_EVENT, loadInputs, readHubBulk, readNational, readStageInput, stageFileOf, isStageSource, mergeHubIds, renderHubIds, renderTable, HOME };
 
 /* 실행: node tools/ledger/convert.js [--month 2026-10] [--lh-sgg <매핑.json>] [--hub-events <스냅샷.json>] [--legal-dong <법정동코드 원본>]
-     [--hub-bulk <중간 스냅샷.json> --hub-ids <후보 id 매핑.json>] [--national <raw 폴더>] [--stage <snapshot/stage-*.json>] [--home <HOME 판 폴더> --home-ids <매핑.json>] [--out <폴더>]
+     [--hub-bulk <중간 스냅샷.json> --hub-ids <후보 id 매핑.json>] [--national <raw 폴더>] [--stage <snapshot/stage-*.json>] [--home <HOME 판 폴더> --home-ids <매핑.json>] [--sidos 11,28,41] [--out <폴더>]
    --out 을 주면 검증을 통과했을 때만 표마다 <폴더>/<표>.json 을 쓰고(한 행 한 줄 — 변경을 줄 단위로 보려고), --hub-ids·--home-ids 파일에 새 id 를 더한다.
    --home 은 판 폴더(schemas/ledger-<달>/raw/home/<덤프시각>) — 원본 jsonl.gz 가 없으면(저장소에는 manifest 만) Storage 에서 받거나 home-dump.py 로 다시 뽑는다(raw-store.js pull 은 아직 HOME 을 받지 않는다). */
 if (require.main === module) {
@@ -597,7 +599,7 @@ if (require.main === module) {
     hubBulk: arg('--hub-bulk') ? readHubBulk(arg('--hub-bulk')) : null, hubIds,
     national: arg('--national') ? readNational(arg('--national')) : null,
     stage: arg('--stage') ? readStageInput(arg('--stage')) : null,
-    home: homeDir ? HOME.readHome(homeDir) : null, homeIds,
+    home: homeDir ? HOME.readHome(homeDir) : null, homeIds, sidos: arg('--sidos') ? arg('--sidos').split(',') : null,
   }), report });
   for (const [name, rows] of Object.entries(tables)) console.log(`${name.padEnd(18)} ${rows.length}`);
   if (Object.keys(report).length) console.log('건축HUB 대용량·공고·입주예정·단계별 원천', JSON.stringify(report));

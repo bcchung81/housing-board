@@ -12,9 +12,8 @@ const ROOT = path.join(__dirname, '..', '..');
 const FILE = path.join(ROOT, 'assets/geo/korea-sgg.json');
 const text = fs.readFileSync(FILE, 'utf8');
 const data = JSON.parse(text);
-const ours = new Map(JSON.parse(fs.readFileSync(path.join(ROOT, 'tools/design/public-mock/data.json'), 'utf8')).sgg.map(([c, n]) => [c, n]));
-/* 원천(V-World, 2026-10-18)에는 있지만 data.json sgg 에 없는 곳(우리 자료에 사업이 없어 목록에 없다) — 코드는 행정표준코드와 같다 */
-const NOT_IN_OURS = { 43800: '충청북도 단양군', 47840: '경상북도 성주군', 47920: '경상북도 봉화군', 51750: '강원특별자치도 영월군', 52740: '전북특별자치도 장수군' };
+/* 2026-10-19 수도권 한정: data.json sgg 는 수도권만(원장 사업이 수도권 HOME 만)이라, 코드·이름은 원장 지역 표(법정동코드 시군구 — schemas/ledger-2026-10/tables/areas.json)와 맞춘다 */
+const ours = new Map(JSON.parse(fs.readFileSync(path.join(ROOT, 'schemas/ledger-2026-10/tables/areas.json'), 'utf8')).rows.filter((a) => a.level === 'SGG').map((a) => [a.area_code, a.area_name]));
 
 test('알려진 청사 좌표 → 시군구 코드(data.json sgg 와 같은 코드)', () => {
   const cases = [
@@ -38,7 +37,7 @@ test('알려진 청사 좌표 → 시군구 코드(data.json sgg 와 같은 코�
   ];
   for (const [name, lon, lat, code] of cases) {
     assert.strictEqual(locate(data, lon, lat), code, name);
-    assert.ok(ours.has(code), `${name}: ${code} 가 data.json sgg 에 있다`);
+    assert.ok(ours.has(code), `${name}: ${code} 가 원장 지역 표에 있다`);
   }
 });
 
@@ -54,14 +53,14 @@ test('바다·외국 좌표와 잘못된 입력 → null', () => {
   assert.strictEqual(locate(null, 127.38, 36.35), null);
 });
 
-test('모든 코드가 data.json sgg(또는 대응표·허용 목록)에 있고, 수도권 밖 data.json sgg 는 빠짐없이 들어 있다', () => {
+test('모든 코드가 원장 지역 표(또는 대응표)에 있고 이름이 같으며, 수도권 밖 시군구는 구가 있는 시(구로 나눠 들어 있음)만 빼고 빠짐없이 들어 있다', () => {
   const codes = data.sgg.map(([c]) => c);
   assert.strictEqual(new Set(codes).size, codes.length, '코드 중복 없음');
   const aliasTo = new Set(Object.values(ALIAS));
   const extra = codes.filter((c) => !ours.has(c) && !aliasTo.has(c));
-  assert.deepStrictEqual(Object.fromEntries(extra.map((c) => [c, data.sgg.find((s) => s[0] === c)[1]])), NOT_IN_OURS);
+  assert.deepStrictEqual(extra, []);
   const missing = [...ours.keys()].filter((c) => !SKIP_SIDO.includes(c.slice(0, 2)) && !codes.includes(c));
-  assert.deepStrictEqual(missing, []);
+  assert.ok(missing.every((c) => codes.some((x) => x !== c && x.slice(0, 4) === c.slice(0, 4))), `구가 있는 시만 빠진다: ${missing}`);   // 청주·천안·포항·창원·전주
   for (const [c, n] of data.sgg) if (ours.has(c)) assert.strictEqual(n, ours.get(c), `${c} 이름`);
 });
 

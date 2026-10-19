@@ -91,11 +91,11 @@ function measure(x) {
 function judge(m) {
   const N = m.base;
   return {
-    'F-01': { verdict: m.policySidos >= m.sidoTotal ? 'met' : m.ledgerProjects > 0 ? 'part' : 'none', metric: `정책 연결 시도 ${m.policySidos}/${m.sidoTotal}`, tip: `원장 사업 ${f(m.ledgerProjects)}건은 전국이지만 정책·프로그램 연결은 수도권 HOME 사업만 · 규칙: 정책 연결이 모든 시도면 충족, 원장만 전국이면 부분` },
+    'F-01': { verdict: m.policySidos >= m.sidoTotal ? 'met' : m.ledgerProjects > 0 ? 'part' : 'none', metric: `정책 연결 시도 ${m.policySidos}/${m.sidoTotal}`, tip: `원장 사업 ${f(m.ledgerProjects)}건과 정책·프로그램 연결은 수도권(서울·인천·경기) HOME 사업만(2026-10-19 결정) · 규칙: 정책 연결이 모든 시도면 충족, 일부 시도면 부분` },
     'F-02': { verdict: m.pairCells === 6 ? 'met' : m.pairCells > 0 ? 'part' : 'none', metric: `목표·실적 같은 칸 ${m.pairCells}/6`, tip: `9·7 단계 6칸 중 같은 기간(${m.refYear}.01~${m.refMonth}) 목표와 확인이 둘 다 있는 칸 · 1·29·8·13 은 단계 목표 없음 · 규칙: 6칸 모두면 충족, 1칸 이상 부분` },
     'F-03': { verdict: pct(m.stageCells, m.stageCellsTotal) >= 80 ? 'met' : m.stageCells > 0 ? 'part' : 'none', metric: `단계 실적 근거 ${pct(m.stageCells, m.stageCellsTotal)}%`, tip: `사업 ${N} × 단계 5(②인허가~⑥입주) 중 원천 실제 기록이 있는 칸 ${f(m.stageCells)}/${f(m.stageCellsTotal)} · 규칙: 80% 이상 충족, 0 초과 부분` },
     'F-04': { verdict: pct(m.plan, N) >= 95 ? 'met' : pct(m.plan, N) >= 50 ? 'part' : 'none', metric: `계획 호수 ${Math.round(pct(m.plan, N))}%`, tip: `사업명·지역은 ${N}건 모두, 계획 호수는 ${m.plan}/${N} · 정밀 위치 ${m.locPrecise}건 · 규칙: 95% 이상 충족, 50% 이상 부분` },
-    'F-05': { verdict: pct(m.anyPlan, N) >= 95 ? 'met' : m.anyPlan > 0 ? 'part' : 'none', metric: `예정 일정 1개 이상 ${Math.round(pct(m.anyPlan, N))}%`, tip: `날짜가 있는 단계 예정이 하나라도 있는 사업 ${m.anyPlan}/${N} · 연도별 실적은 전국 2022~, 서울·인천·경기 2018~ · 규칙: 95% 이상 충족, 0 초과 부분` },
+    'F-05': { verdict: pct(m.anyPlan, N) >= 95 ? 'met' : m.anyPlan > 0 ? 'part' : 'none', metric: `예정 일정 1개 이상 ${Math.round(pct(m.anyPlan, N))}%`, tip: `날짜가 있는 단계 예정이 하나라도 있는 사업 ${m.anyPlan}/${N} · 연도별 실적은 서울·인천·경기 2018~ · 규칙: 95% 이상 충족, 0 초과 부분` },
     'F-06': { verdict: m.baselineProjects + m.ledgerBaseline > 0 ? 'part' : 'none', metric: `기준선 사업 ${m.baselineProjects}/${N}`, tip: `담당자가 채택한 일정 기준선(HOME 일정 입력 ${f(m.baselineRows)}건)이 있는 사업 ${m.baselineProjects}/${N} · 원장의 당초 예정 ${m.ledgerBaseline}건 · 지연 판정은 아직 현재 예정일 경과 기준(당초 대비 아님) · 규칙: 기준선이 있으면 부분, 없으면 없음` },
     'F-07': { verdict: m.causes > 0 ? 'part' : 'none', metric: `원인·조치 기록 ${m.causes}건`, tip: `병목 원인·담당기관·조치계획 기록(HOME execution_case) ${m.causes}건 · 규칙: 기록이 있으면 부분, 없으면 없음` },
     'F-08': { verdict: m.agencyTargets > 0 ? 'met' : m.agencyKnown > 0 ? 'part' : 'none', metric: `기관 식별 ${Math.round(pct(m.agencyKnown, N))}%`, tip: `LH·SH·GH 로 시행 기관을 아는 사업 ${m.agencyKnown}/${N} · 기관별 배정 목표 ${m.agencyTargets}건 · 규칙: 배정 목표가 있으면 충족, 기관만 알면 부분` },

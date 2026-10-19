@@ -35,6 +35,8 @@ async function fetchMap(doFetch, url, key, sgg) {
 }
 
 /* 대체 자료: 저장소의 지도 색인(같은 함수로 만든 파일). 처음 쓸 때 읽는다 */
+const codes = require('../../lib/codes.js');
+const scope = require('../../lib/scope.js');
 const readFallback = () => require('../../data/board/ledger-map.json');
 
 function createHandler(overrides = {}) {
@@ -45,12 +47,12 @@ function createHandler(overrides = {}) {
   /* 라우트(app/api/v1/ledger/route.ts)가 unstable_cache 로 감싼다. 감싼 함수의 인자(url·key·sgg)가 캐시 키다 */
   const load = (overrides.wrap || ((fn) => fn))((url, key, sgg) => fetchMap(doFetch, url, key, sgg));
 
-  const problem = (res, status, code, title, detail) => {
+  const problem = (res, status, code, title, detail, extra, cc) => {
     res.statusCode = status;
     res.setHeader('Content-Type', 'application/problem+json; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, s-maxage=60');
+    res.setHeader('Cache-Control', cc || 'public, s-maxage=60');
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.end(JSON.stringify({ type: `/problems/${code}`, title, status, code, detail }));
+    res.end(JSON.stringify(Object.assign({ type: `/problems/${code}`, title, status, code, detail }, extra)));
   };
 
   return async function ledger(req, res) {
@@ -59,6 +61,8 @@ function createHandler(overrides = {}) {
     if ([...q.keys()].some((k) => !ALLOWED.has(k)) || q.getAll('sgg').length !== 1) return problem(res, 400, 'invalid-query', '잘못된 요청', 'sgg 하나만 받습니다');
     const sgg = q.get('sgg');
     if (!/^\d{5}$/.test(sgg)) return problem(res, 400, 'invalid-code', '잘못된 코드', 'sgg 는 시군구 5자리 숫자입니다');
+    const c = codes.classify(sgg);   // 옛 광주·전남 코드도 새 시도로 판정한다
+    if (!scope.nonCapitalAllowed(env) && !(c.ok && scope.inCapitalSido(c.sido))) return scope.denyScope(problem, res, c.ok ? c.sido : undefined);   // 2026-10-19 수도권 한정
 
     let out;
     const url = env.NEXT_PUBLIC_SUPABASE_URL, key = env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;

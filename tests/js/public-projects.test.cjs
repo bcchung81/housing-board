@@ -173,7 +173,8 @@ test('수도권만: 수도권 밖 시도·시군구 주소는 수도권으로, �
     assert.ok(!f.sido && !f.sgg, `${JSON.stringify(q)}: 시도·시군구 거르기 없음 → 화면 지역 이름 '수도권'`);
     assert.ok(listOf(q).every((x) => P.METRO.includes(x.sgg.slice(0, 2))), JSON.stringify(q));
   }
-  assert.ok(rows.some((r) => !V.isMetro(r.sgg)), '원장에는 수도권 밖 사업이 있다(걸러짐을 보는 시험)');
+  // 2026-10-19 수도권 한정: 원장 사업이 모두 HOME 수도권이라 수도권 밖 행이 없다(걸러짐 대신 원장이 수도권뿐임을 본다)
+  assert.ok(rows.length > 0 && rows.every((r) => V.isMetro(r.sgg)), '원장 사업은 모두 수도권');
   assert.deepEqual(parse({ sgg: '41280' }).gu, guOf('41280'), '구가 있는 경기 시는 그 구들');
 });
 

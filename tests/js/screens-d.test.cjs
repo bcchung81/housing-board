@@ -29,22 +29,21 @@ const listOf = (href) => {
 const D = makeDirectives({ sourceCount: 19, stageNames: [...V.BOARD_NAMES], ledger: BOARD, start: { year: '2026', upto: 8, cum: 156396, cumLy: 141000 }, bottleneck: V.bottleneckOf });
 const board = read('components/board/Board.tsx');
 
-test('1 지연 헤드라인: 카드 = 확정 2건 · 후보 계산 313건(같은 크기), 숫자마다 자기 목록(late · review-late — 2026-10-16 누른 숫자 = 목록 건수로 바꿈, 확인 필요 전체 review 1,839건은 따로)', () => {
+test('1 지연 헤드라인: 카드 = 지연 2건 · 주의 2(후보 0이라 쌍 숫자 없음), 후보가 있을 때의 쌍 숫자 화면 코드는 그대로(late · review-late)', () => {
   const late = D[4], c = BOARD.judgment.candidate;
   assert.equal(late.t, '일정 지연 관리');
-  assert.deepEqual([late.pre, late.big, late.u], ['확정', '2', '건']);
-  assert.deepEqual([late.pair.pre, late.pair.big, late.pair.u], ['후보 계산', '313', '건']);
-  assert.equal(late.m, '지연 확정 2건 · 후보 계산 313건');
-  assert.equal(late.sub, undefined, '작은 보조 값(주의)은 두 숫자로 대신');
-  /* 목록: 확정 = 지연(장기 포함) 2건, 후보 계산 = 후보 중 계산하면 지연인 313건(?status=review-late) — 확인 필요(후보) 전체 1,839건은 ?status=review */
+  // 2026-10-19 수도권 한정: 후보 계산 313·확인 필요 1,839 → 0. 후보가 0이면 카드는 쌍 숫자 없이 '지연 n건' + sub '주의 n'(옛 후보 없는 모양)
+  assert.deepEqual([late.pre, late.big, late.u], ['지연', '2', '건']);
+  assert.equal(late.pair, undefined, '후보 계산 쌍 없음');
+  assert.equal(late.m, '지연 2건');
+  assert.equal(late.sub, '주의 2', '작은 보조 값(주의)');
+  assert.equal(c.delay.projects, 0);
+  /* 목록: 지연 = 지연(장기 포함) 2건. 후보 목록(?status=review-late·review)은 0건 */
   assert.equal(late.list.href, '/projects?sido=all&status=late');
   assert.equal(listOf(late.list.href).n, 2);
-  assert.equal(late.pair.list.href, '/projects?sido=all&status=review-late');
-  const rv = listOf(late.pair.list.href).l;
-  assert.equal(rv.length, c.delay.projects, '누른 숫자 313 = 목록 313건');
-  assert.ok(rv.every((r) => !r.issued && r.cls === 'delay'));
-  assert.equal(listOf('/projects?sido=all&status=review').l.length, 1839, '확인 필요(후보) 전체 목록은 그대로');
-  assert.match(late.pair.list.title, /후보 · 지연 계산\(전국\) 313건 — 카드 숫자와 같음 · 확인 필요\(후보\) 1,839건 중/);
+  assert.equal(listOf('/projects?sido=all&status=review-late').l.length, 0, '후보 계산 목록 0건');
+  assert.equal(listOf('/projects?sido=all&status=review').l.length, 0, '확인 필요(후보) 전체 목록 0건');
+  assert.match(late.list.title, /지연\(장기 포함\) 사업\(수도권\) 2건/);
   /* 화면: 두 숫자는 같은 글자 크기 한 벌(dirVals 의 one — 6장 공통 규격, 2026-10-18), 겹친 층의 링크는 단추 밖(형제) */
   assert.match(board, /function dirVals\(x: Directive, link: boolean\)/);
   assert.equal((board.slice(board.indexOf('function dirVals'), board.indexOf('/* 줄1: 지시 이름')).match(/text-md @min-\[180px\]:text-lg/g) || []).length, 1, '두 숫자가 같은 크기 클래스 하나를 쓴다');
@@ -64,13 +63,14 @@ test('2 첫 연출: 기준 시점은 처음부터 현재(NOW) — 지난 달(202
   assert.match(board, /data-intro=\{intro \|\| undefined\}/);
 });
 
-test('3 핵심 질문 보조 줄: 말줄임 없이 줄바꿈(1280·인쇄에서 확인 필요(후보) 313이 잘리지 않게)', () => {
+test('3 핵심 질문 보조 줄: 말줄임 없이 줄바꿈(후보가 있을 때 1280·인쇄에서 확인 필요(후보) 꼬리가 잘리지 않게)', () => {
   const s = read('components/projects/Summary.tsx');
   const line = s.split('\n').find((l) => l.includes('data-slot="q-sub"'));
   assert.ok(line, 'q-sub');
   assert.doesNotMatch(line, /truncate|whitespace-nowrap|line-clamp/);
   const q = V.questionsOf(rows, V.parseFilters({ sido: 'all' }, fctx), { pp: require('../../data/board/policy-progress.json'), policies: IDX.policies, observedMonth: IDX.observedMonth, sidoName: (c) => c, sggName: (c) => c }).find((x) => x.q === '어떤 사업이 늦어지는가');
-  assert.equal(q.sub, '지연 6~12개월 0 · 장기 12개월+ 2 · 확인 필요(후보) 313');
+  // 2026-10-19 수도권 한정: 확인 필요(후보) 313 꼬리 삭제 (후보 0건)
+  assert.equal(q.sub, '지연 6~12개월 0 · 장기 12개월+ 2');
 });
 
 test('4 구가 있는 시 → 지도 ?sido=41&pick=<시 코드>(구 코드·구 없는 시는 ?sgg=)', () => {
@@ -158,14 +158,16 @@ test('9 착공 카드(통계누리) → ③착공 목록(원장): 목록 머리�
   const p = read('app/(dashboard)/projects/page.tsx');
   assert.match(p, /\{f\.stage === 2 \? <InfoTip label="착공 목록 범위"[^>]*><p data-slot="start-basis">목록은 사업 원장 기준\(통계누리 착공 통계와 범위 다름\)/, '2026-10-18 서술형 정리: 보이는 글 대신 ⓘ');
   const l = listOf(D[0].list.href);
-  assert.deepEqual([l.n, l.units], [194, 107554], '목록 194건 · 107,554호(원장)');
+  // 2026-10-19 수도권 한정: ③착공 목록 194건·107,554호 → 71건·48,320호 (= BOARD.stageUnits 지금 ③ 48,320, 후보 제외)
+  assert.deepEqual([l.n, l.units], [71, 48320], '목록 71건 · 48,320호(원장)');
 });
 
-test('불변식: 지연 2 · 후보 계산 313 · 후보 1,839 · 수도권 262건 227,976호', () => {
+test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227,976호', () => {
   assert.equal(BOARD.judgment.delay.projects, 2);
-  assert.equal(BOARD.judgment.candidate.delay.projects, 313);
+  // 2026-10-19 수도권 한정: 후보 계산 313·후보 1,839 → 0
+  assert.equal(BOARD.judgment.candidate.delay.projects, 0);
   const c = BOARD.judgment.candidate;
-  assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 1839);
+  assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 0);
   const metro = listOf('/projects?sido=metro');
   assert.deepEqual([metro.n, metro.units], [262, 227976]);
 });

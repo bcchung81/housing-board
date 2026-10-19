@@ -11,7 +11,7 @@ import {
   C, CIR, K, PX0, RCOL, REGION_POS, RLAB, VW,
   SCOPE_TAG, addedMarks, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, scopeChangeOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '@/lib/board/sample';
-import { CAND_TEXT, candText, judgeBase, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf, type Directive } from '@/lib/board/directives';
+import { CAND_TEXT, candCount, candText, judgeBase, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf, type Directive } from '@/lib/board/directives';
 import { AHEAD_COMPLETION, AGENCY_NAME, bottleneckOf } from '@/lib/board/projects-view';
 import { dotDates } from '@/lib/grid/spec';
 import { staleText } from '@/lib/board/calc';
@@ -152,11 +152,11 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const J = L.judgment, d = SJ.delay.units, w = SJ.caution.units, ok = SJ.ok.units, tt = d + w + ok, pct = (x: number) => (x / tt * 100).toFixed(1) + '%';   // J = 기준 달 판정(기관 카드), d·w·ok = 선택 달 판정
   const jTot = rib.total[judged ? jm : NOW];   // 판정 비율의 모수 '전체' = 판정 달의 리본 총량(원장 전체 호수)
   /* 원장 범위: 카드 제목의 title 에 보인다(일부가 전국처럼 보이지 않게) */
-  const nation = nationOf(L), whole = nation === '전국' ? '전국' : '원장 전체';   // whole = 기관별 진행 '전국 지연 중 몫'의 전체
+  const nation = nationOf(L), whole = nation === '전국 아님' ? '원장 전체' : nation;   // whole = 기관별 진행 '전국 지연 중 몫'의 전체
   const scope = `원장 ${ymDot(L.observedMonth)} 기준 · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)}) · ${nation} · ${real.ledgerOrigin === 'supabase' ? `출처 Supabase(api.board, ${ymDot(real.ledgerMonth)})` : '출처 JSON 대체'}`;
   const basisLine = `원장 ${ymDot(L.observedMonth)} 기준 · ${nation}`;   // 카드 제목 title 의 짧은 범위(긴 범위·규칙은 제목 옆 (i) 팝오버)
   /* 범위 칩(숫자 묶음 머리): 원장 위젯은 '전국 · 사업 원장', 월별 실적 흐름은 '전국 · 통계누리'(RealPanels) */
-  const ledgerChip = <ScopeChip scope={nation === '전국' ? '전국' : '일부 지역'} source="사업 원장" title={`사업 원장 집계 — ${scope}`} />;
+  const ledgerChip = <ScopeChip scope={nation === '전국 아님' ? '일부 지역' : nation} source="사업 원장" title={`사업 원장 집계 — ${scope}`} />;
   /* 지연·주의 추이: 판정이 있는 달(0 … NOW)의 호수. 세로 맨 위(tmax)는 이력 최댓값에 맞춘다(눈금선 3개 = 4등분).
      2026-10-16 평가(고정 높이 168px·오른쪽 이름표 칸 120px 이라 카드 아래·오른쪽이 비었다): 위 줄 = 선택 달 값(큰 숫자), 아래 = 이력 선이 카드의 남는 높이를 채운다.
      선은 viewBox 560×100(세로는 % 그대로, preserveAspectRatio none), 점·표지는 같은 좌표를 퍼센트로 얹은 HTML. 판정 기준 변경 달(SF) 앞은 후보 포함 소급이라 빗금 띠 + 점선, 그 뒤는 실선·점(둘을 잇지 않는다) */
@@ -182,7 +182,9 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const sidoName = (code: string) => real.sido[code] ?? code;
   const curReg = L.regions.find((r) => r.code === region)!;
   const curRegMap = mapScopeHref({ sido: curReg.code });   // 수도권 시도만 지도 연결(그 밖은 null)
-  /* 시도 타일: 전국 16칸 지리 격자(2026-10-16 4차 사용자 지시 — 2차의 '판정 시도만 크게 + 나머지 한 줄 묶음'을 되돌림). 판정 대상이 없는 칸은 흰 바탕 + 짧은 표기 */
+  /* 시도 타일: 전국 16칸 지리 격자(2026-10-16 4차 사용자 지시 — 2차의 '판정 시도만 크게 + 나머지 한 줄 묶음'을 되돌림). 판정 대상이 없는 칸은 흰 바탕 + 짧은 표기.
+     원장이 수도권만(2026-10-19 결정 — 서울·인천·경기 3칸)이면 지리 격자 대신 한 줄 + 아래 요약 칸(geo false) */
+  const geo = L.regions.length > 4;
   const judgedNames = L.regions.filter((r) => r.judged).map((r) => sidoName(r.code)).join('·');
   const judgedText = L.regions.every((r) => r.judged) ? `${L.regions.length}개 시도 모두` : `${judgedNames}만`;
   const emptyAgencies = L.agencies.filter((a) => !a.projects);
@@ -289,7 +291,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 <p className="text-muted-foreground">{ledgerJudged(L)}</p>
               </InfoTip>
               {ledgerChip}
-              <span className={pacts}>{bk >= 0 ? <PanelLink href={`/projects?sido=all&stage=${bk}&status=late`} full={`병목 단계(${CIR[bk]} ${K[bk]})의 지연(장기 포함) 사업(전국 · 지금 기준)`}>병목 단계</PanelLink> : null}{monthLink ? <PanelLink href={monthLink} full={`${ml(T, cursor)} 월 상세`}>{Number(T.months[cursor].slice(5))}월</PanelLink> : null}</span>
+              <span className={pacts}>{bk >= 0 ? <PanelLink href={`/projects?sido=all&stage=${bk}&status=late`} full={`병목 단계(${CIR[bk]} ${K[bk]})의 지연(장기 포함) 사업(${nation} · 지금 기준)`}>병목 단계</PanelLink> : null}{monthLink ? <PanelLink href={monthLink} full={`${ml(T, cursor)} 월 상세`}>{Number(T.months[cursor].slice(5))}월</PanelLink> : null}</span>
             </div>
             <div className="mt-3">
               {/* '현재'·'예정 기준' 표지(머리 줄이 두 줄로 넘쳐 2026-10-18 막대 줄 왼쪽으로 옮김)와 판정 달 꼬리표는 막대 줄에, 선택 달과 판정 달이 다를 때만(제목 줄은 '예정 기준' 표지와 이동 링크로 폭이 없다) */}
@@ -315,12 +317,12 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 ))}
               </div>
               {/* 지연 두 숫자(2026-10-15 사용자 결정): 확정(번호 있는 사업) · 후보 계산(번호 없는 후보를 같은 규칙으로 계산한 지연)을 같은 크기로 나란히, 각 숫자는 자기 목록으로 */}
-              {judged && SJ.candidate ? (
+              {judged && SJ.candidate && candCount(SJ.candidate) ? (
                 <div data-slot="board-cand" className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm text-muted-foreground tabular-nums" title={`사업 번호가 없는 후보(건축HUB 원천 예정일 기준) ${f(SJ.candidate.ok.projects + SJ.candidate.caution.projects + SJ.candidate.delay.projects)}건은 같은 판정 계산을 하되 지연·주의·정상에 넣지 않고 따로 셉니다 — 이미 준공했는데 대장과 연결되지 않았을 수 있습니다 · ${candText(SJ.candidate)}건`}>
                   <b className="font-bold text-foreground">지연</b>
-                  <PanelLink href="/projects?sido=all&status=late" full={`지연 확정 — 지연(장기 포함) 사업 목록(전국 · 지금 기준) · 사업 번호가 있는 사업`}>확정 <b className={cn(disp, 'text-lg leading-none text-bad')}>{f(SJ.delay.projects)}</b>건</PanelLink>
+                  <PanelLink href="/projects?sido=all&status=late" full={`지연 확정 — 지연(장기 포함) 사업 목록(${nation} · 지금 기준) · 사업 번호가 있는 사업`}>확정 <b className={cn(disp, 'text-lg leading-none text-bad')}>{f(SJ.delay.projects)}</b>건</PanelLink>
                   <span aria-hidden="true">·</span>
-                  <PanelLink href="/projects?sido=all&status=review-late" full={`후보 계산 — 번호 없는 후보 중 같은 규칙으로 계산하면 지연인 사업 ${f(SJ.candidate.delay.projects)}건 목록(전국 · 지금 기준)`}>후보 계산 <b className={cn(disp, 'text-lg leading-none text-foreground')}>{f(SJ.candidate.delay.projects)}</b>건</PanelLink>
+                  <PanelLink href="/projects?sido=all&status=review-late" full={`후보 계산 — 번호 없는 후보 중 같은 규칙으로 계산하면 지연인 사업 ${f(SJ.candidate.delay.projects)}건 목록(${nation} · 지금 기준)`}>후보 계산 <b className={cn(disp, 'text-lg leading-none text-foreground')}>{f(SJ.candidate.delay.projects)}</b>건</PanelLink>
                 </div>
               ) : null}
             </div>
@@ -358,11 +360,11 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {ledgerChip}
               <span className={cn(legend, 'ml-auto flex-nowrap gap-x-1.5')}><span title="지연율 = 지연 호수 ÷ 판정 사업 호수(호수 기준 — 선택 시점 판정 막대와 같은 기준)">지연율 · 호수 기준</span><span>0</span><span className="flex h-2.5 overflow-hidden rounded-chip border border-border" title={`지연율 구간: ${RLAB.join(' / ')}%`}>{RCOL.map((c, i) => <i key={i} className="block w-4" style={{ background: c }} />)}</span><span>30%+</span></span>
             </div>
-            <div className="mt-3 grid flex-1 auto-rows-[minmax(68px,1fr)] grid-cols-4 gap-1.5 mobile:auto-rows-[minmax(56px,1fr)] mobile:gap-1">
+            <div className={cn('mt-3 grid flex-1 auto-rows-[minmax(68px,1fr)] gap-1.5 mobile:auto-rows-[minmax(56px,1fr)] mobile:gap-1', geo ? 'grid-cols-4' : 'grid-rows-[minmax(68px,1fr)_auto]')} style={geo ? undefined : { gridTemplateColumns: `repeat(${L.regions.length}, minmax(0, 1fr))` }}>
               {L.regions.map((r, ri) => {
                 const n = sidoName(r.code), pos = REGION_POS[r.code], none = !r.judged, ok = real.regionOkUnits[r.code] ?? 0, tu = ok + r.cautionUnits + r.delayUnits, rate = tu ? r.delayUnits / tu * 100 : 0;   // 지연율 = 지연 호수 ÷ 판정 호수(선택 시점 판정 막대와 같은 호수 기준) · none = 판정 대상(번호 있는 사업) 없음
                 return (
-                  <button key={r.code} type="button" data-slot="board-region" className={cn(btn, 'q-rise ui-press flex flex-col justify-between gap-1 min-w-0 @container ui-inset ui-region')} aria-pressed={r.code === region} onClick={() => setRegion(r.code)} style={{ ['--rc' as string]: none ? 'var(--card)' : RCOL[rcls(rate)], ['--i' as string]: ri * 0.5, ...(pos ? { gridArea: `${pos[0]} / ${pos[1]}` } : {}) }}
+                  <button key={r.code} type="button" data-slot="board-region" className={cn(btn, 'q-rise ui-press flex flex-col justify-between gap-1 min-w-0 @container ui-inset ui-region')} aria-pressed={r.code === region} onClick={() => setRegion(r.code)} style={{ ['--rc' as string]: none ? 'var(--card)' : RCOL[rcls(rate)], ['--i' as string]: ri * 0.5, ...(pos && geo ? { gridArea: `${pos[0]} / ${pos[1]}` } : {}) }}
                     title={none
                       ? `${n} · 사업 ${f(r.projects)}건 · 판정 대상 없음(번호 있는 사업 없음)` + (r.candidate?.judged ? ` · ${CAND_TEXT} ${f(r.candidate.judged)}건(계산하면 지연 ${f(r.candidate.delay)} · 주의 ${f(r.candidate.caution)} · 정상 ${f(r.candidate.ok)} — 판정에 넣지 않음)` : '') + (r.code === '12' ? ' · 2026.07부터 광주·전남은 전남광주로 집계됩니다' : '')
                       : `${n} · 판정 ${f(r.judged)}건 ${f(tu)}호 · 지연율 ${rate.toFixed(1)}%(호수 기준) · 지연 ${f(r.delayUnits)}호(${r.delay}건) · 주의 ${f(r.cautionUnits)}호(${r.caution}건) · 정상 ${f(ok)}호(${r.ok}건)` + (r.candidate?.judged ? ` · ${CAND_TEXT} ${f(r.candidate.judged)}건(계산하면 지연 ${f(r.candidate.delay)} · 주의 ${f(r.candidate.caution)} · 정상 ${f(r.candidate.ok)} — 판정에 넣지 않음)` : '')}
@@ -384,7 +386,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                   </button>
                 );
               })}
-              <div data-slot="board-region-sum" aria-live="polite" className="flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 ui-inset [grid-area:5/2/6/5] mobile:gap-x-2.5 mobile:gap-y-0.5">
+              <div data-slot="board-region-sum" aria-live="polite" className={cn('flex min-w-0 flex-wrap items-center gap-x-4 gap-y-1 ui-inset mobile:gap-x-2.5 mobile:gap-y-0.5', geo ? '[grid-area:5/2/6/5]' : 'col-span-full')}>
                 <b className="text-base">{sidoName(curReg.code)}</b>
                 <span className="flex gap-2.5 text-sm whitespace-nowrap text-muted-foreground tabular-nums mobile:gap-1.5"><span>지연<strong className="ml-[3px] text-bad">{f(curReg.delay)}</strong></span><span>주의<strong className="ml-[3px] text-warn">{f(curReg.caution)}</strong></span><span>정상<strong className="ml-[3px] text-ok">{f(curReg.ok)}</strong></span><span>건</span>{curReg.candidate?.judged ? <span title={`사업 번호가 없는 후보 — 같은 계산을 하되 판정에 넣지 않음 · 계산하면 지연 ${f(curReg.candidate.delay)} · 주의 ${f(curReg.candidate.caution)} · 정상 ${f(curReg.candidate.ok)}`}>· 확인 필요<strong className="ml-[3px] text-foreground">{f(curReg.candidate.judged)}</strong></span> : null}</span>
                 <span className={cn(pacts, 'mobile:ml-0')}><PanelLink href={`/region?sido=${curReg.code}`} full={`${sidoName(curReg.code)} 실적 상세`}>{sidoName(curReg.code)} 실적</PanelLink>{curRegMap ? <MapLink href={curRegMap} full={`${sidoName(curReg.code)} 지도에서 보기`} /> : null}</span>
@@ -473,7 +475,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {ledgerChip}
               <div className={phgroup}>
                 <span className={legend} title={`막대 색: 정상 · 주의 · 지연 · 확인 필요(후보, 빗금) · ${NONE_TEXT} 호수 — ${NONE_TIP}`}>{[['bg-ok', '정상'], ['bg-warn', '주의'], ['bg-bad', '지연'], [candHatch, '확인 필요'], ['bg-[var(--out)] inset-ring-1 inset-ring-(--out-line)', NONE_TEXT]].map(([c, n]) => <Key key={n} className={c}>{n}</Key>)}</span>
-                <span className={pacts}><PanelLink href="/projects?sido=all" full="사업 목록(전국) — 기관 메뉴로 거르기">기관별 사업</PanelLink></span>
+                <span className={pacts}><PanelLink href="/projects?sido=all" full={`사업 목록(${nation}) — 기관 메뉴로 거르기`}>기관별 사업</PanelLink></span>
               </div>
             </div>
             <div className={ags}>

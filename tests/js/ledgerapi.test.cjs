@@ -59,9 +59,9 @@ test('Supabase: 공개용 키·api 스키마로 최신 달 → 그 달의 시군
 });
 
 test('빈 목록: 원장에 없는 시군구는 200 + projects [] (Supabase 도 JSON 도)', async () => {
-  const a = await run({ fetch: fakeMap })('/api/v1/ledger?sgg=99999');
+  const a = await run({ fetch: fakeMap })('/api/v1/ledger?sgg=41999');   // 2026-10-19 수도권 한정: 99999 는 알 수 없는 시도라 막힌다
   assert.deepEqual([a.status, a.json.origin, a.json.projects], [200, 'supabase', []]);
-  const b = await run({ env: {}, fetch: () => { throw new Error('호출하면 안 됨'); } })('/api/v1/ledger?sgg=99999');
+  const b = await run({ env: {}, fetch: () => { throw new Error('호출하면 안 됨'); } })('/api/v1/ledger?sgg=41999');   // 2026-10-19 수도권 한정: 99999 는 알 수 없는 시도라 막힌다
   assert.deepEqual([b.status, b.json.origin, b.json.projects], [200, 'json', []]);
 });
 

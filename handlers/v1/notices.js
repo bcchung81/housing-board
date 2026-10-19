@@ -28,6 +28,7 @@ const { fetchPage } = require('../../lib/datagokr.js');
 const { createCache, defaultDir } = require('../../lib/cache.js');
 const { createStan, STAN_URL } = require('../../lib/stan.js');
 const codes = require('../../lib/codes.js');
+const scope = require('../../lib/scope.js');
 const M = require('../../lib/myhome.js');
 const L = require('../../lib/lhnotice.js');
 const A = require('../../lib/applyhome.js');
@@ -148,6 +149,7 @@ function createHandler(overrides = {}) {
     const bySido = names[0] === 'sido', want = bySido ? 'sido' : 'sgg';
     const c = codes.classify(params.get(want));
     if (!c.ok || c.type !== want) return problem(res, 400, 'invalid-code', bySido ? '시도 코드가 맞지 않습니다' : '시군구 코드가 맞지 않습니다', c.ok ? `${c.type} 코드가 왔습니다. ${bySido ? '시도(2자리)' : '시군구(5자리)'}만 받습니다` : c.detail, c.ok ? { reason: 'type-mismatch' } : { reason: c.reason }, 'public, s-maxage=3600');
+    if (!scope.nonCapitalAllowed(env) && !scope.inCapitalSido(c.sido)) return scope.denyScope(problem, res, c.sido);   // 2026-10-19 수도권 한정
     if (!pool.hasKeys('RESOLVE')) return problem(res, 503, 'not-configured', '인증키가 설정되어 있지 않습니다', 'RESOLVE 용도 공공데이터포털 키가 필요합니다');
     const label = bySido ? c.sido : c.sgg;
     try {

@@ -701,6 +701,9 @@
   --pj-band-w: 14px;
   --pj-band-h: 8px;
   --pj-band-gap: 2px;
+  /* 지도 위 사업 카드(/citizen, .mapcard): 폭 상한 · 지도 면 위에 통째로 띄우므로 HUD 유리 불투명도 80% 이상(글자 4.5:1) */
+  --mapcard-w: 304px;
+  --mapcard-alpha: 94%;
   /* 머리 줄(상단 메뉴 바, 높이 64·모바일 48은 그대로): 로고 한 벌 높이 32(폭 125는 비율, 900px 이하 25.6) · 600px 미만 심벌만 28 · 메뉴 16/400(1100px 이하 14). 로고·메뉴(앱 TopNav·/citizen)는 이 셋만 쓴다. 로고 색 --logo-ink(집·주택)·--logo-wave(문·The, 클레이 역할) */
   --logo-h: 32px;
   --logo-mark: 28px;
