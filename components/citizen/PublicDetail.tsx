@@ -9,7 +9,7 @@ import { Card } from '@/components/ui/card';
 import InfoTip from '@/components/ui/info-tip';
 import PublicSteps from './PublicSteps';
 import type { PublicWin } from '@/lib/board/project-window';
-import { NEXT, PAST_DUE_PUBLIC, PAST_DUE_TIP, factLine, fullDate, ho, noticeName, nxOf, periodEnd, prjJudge, sourceName, type Steps } from '@/lib/board/public-labels';
+import { NEXT, NOTICE_SITE, PAST_DUE_PUBLIC, PAST_DUE_TIP, factLine, fullDate, ho, noticeName, nxOf, periodEnd, prjJudge, sourceName, type Steps } from '@/lib/board/public-labels';
 
 /* 일정 4줄의 차례(제안서 4.4): 착공 · 모집 공고 · 준공 · 입주 — NEXT 번호 */
 const ORDER = [1, 0, 2, 3];
@@ -27,6 +27,7 @@ export default function PublicDetail({ d, x, today, pastDue, links }: Props) {
   const rows = ORDER.map((k) => ({ k, v: steps[k] ?? (nx.k === k && nx.d ? ([nx.d, 0] as [string, 0]) : null) }));
   const noSchedule = rows.every((w) => !w.v);
   const noticeStep = rows.find((w) => w.k === 0)?.v;
+  const notices = d.detail.notices;
   const alt = r.dateAlt ? `${r.dateAlt.source} 자료에는 준공 ${fullDate(r.dateAlt.planned)} 예정` : null;
   const src = x?.agency || '시행 기관';
   /* 출처: 쉬운 이름으로 묶고(같은 이름은 하나), 원문 주소가 있으면 첫 주소 */
@@ -70,7 +71,22 @@ export default function PublicDetail({ d, x, today, pastDue, links }: Props) {
             ))}
           </dl>
         )}
-        {noticeStep ? (
+        {notices?.length ? (
+          <ul className="mt-3 mb-0 flex list-none flex-col gap-1.5 p-0 text-meta" aria-label="청약 공고">
+            {notices.map((n) => (
+              <li key={`${n.system}${n.id}`} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                {n.url ? (
+                  <a href={n.url} target="_blank" rel="noopener noreferrer" className={`${LINK} whitespace-normal`} title={`${NOTICE_SITE[n.system] ?? '원문'} 공고 상세가 새 창으로 열려요`}>
+                    <span className="text-foreground">{n.title}</span><ExternalLink className="ml-1 size-3.5 shrink-0" aria-hidden="true" /><span className="sr-only">(새 창)</span>
+                  </a>
+                ) : <span className="text-foreground">{n.title}</span>}
+                {n.date ? <span className="tabular-nums text-muted-foreground">{fullDate(n.date)}</span> : null}
+                {n.review !== 'CONFIRMED' ? <span className="ui-chip" title="사업과 공고의 연결을 확인하고 있어요">확인 중</span> : null}
+              </li>
+            ))}
+            {d.detail.noticesMore ? <li className="text-muted-foreground">{`외 ${d.detail.noticesMore}건`}</li> : null}
+          </ul>
+        ) : noticeStep ? (
           <p className="mt-3 mb-0 flex flex-wrap items-center gap-x-2 text-meta text-muted-foreground">
             <a href="https://www.applyhome.co.kr/" target="_blank" rel="noopener noreferrer" className={LINK} title={`청약홈이 새 창으로 열려요. 공고 이름 '${noticeName(r.name)}'(으)로 찾아 보세요`}>
               청약홈에서 찾기<ExternalLink className="ml-1 size-3.5 shrink-0" aria-hidden="true" /><span className="sr-only">(새 창)</span>
@@ -103,6 +119,7 @@ export function PublicHead({ head }: { head: PublicWin['head'] }) {
       <span>{head.area}</span>
       {head.agency ? <span>{`시행 ${head.agency}`}</span> : null}
       {head.program ? <span className="ui-chip" title={head.program.name}>{head.program.short}</span> : null}
+      {head.types?.map((t) => <span key={t.name} className="ui-chip" title={`원천 이름: ${t.raw.join(' · ')}`}>{t.name}</span>)}
     </span>
   );
 }

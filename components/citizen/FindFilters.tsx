@@ -1,5 +1,5 @@
 'use client';
-/* 사업 찾기(/citizen/projects) 거르기 한 줄: 이름 검색(.ui-search) · 지역 탭(수도권·서울·경기·인천 + 시군구 메뉴·풀기) · 단계 탭(전체·준비 중·짓는 중·모집 끝남).
+/* 사업 찾기(/citizen/projects) 거르기 한 줄: 이름 검색(.ui-search) · 지역 탭(수도권·서울·경기·인천 + 시군구 메뉴·풀기) · 단계 탭(전체·계획·인허가·착공·모집).
    지역 = 채움 탭 .ui-tabs-seg, 단계 = 밑줄 탭 .ui-tabs-line(고른 단계는 단계 글자색 --tab-c, /citizen 과 같음) — 눌림 단추, role=group — 누르면 주소(?sido·?sgg·?stage·?q)를 바꾼다. 검색은 스크립트가 없어도 GET 폼으로 동작한다.
    지역을 고르면 늘 주소에 적는다(수도권도 ?sido=metro) — 주소에 지역이 없을 때만 내 동네로 한 번 옮긴다(MyAreaFirst). */
 import * as React from 'react';
@@ -10,14 +10,14 @@ import { ChipMenu, ClearChip } from '@/components/ui/chips';
 import { FIND_BASE, STAGE_GROUP_NAME, findHref, type FindQuery, type StageGroup } from '@/lib/board/public-labels';
 
 const SIDO_TABS: [string, string][] = [['metro', '수도권'], ['11', '서울'], ['41', '경기'], ['28', '인천']];
-const STAGES: (StageGroup | '')[] = ['', 'prep', 'build', 'sale'];
+const STAGES: (StageGroup | '')[] = ['', 'plan', 'permit', 'build', 'sale'];
 /* 탭 누름 칸 44px(보이는 높이 --ctl-h 40 안쪽 32 + 위아래 6) */
 const HIT = 'relative before:absolute before:inset-x-0 before:-inset-y-1.5';
 /* 시군구 메뉴·풀기 칩(공용 칩 부품)을 탭과 같은 높이 --ctl-h · 같은 반경(tile) 로 맞춘다. 안 고른 메뉴는 채움 탭 틀과 같은 면(--muted, 테두리·그림자 없음) */
 const MENU = '[&_summary]:h-(--ctl-h) [&_summary]:rounded-tile [&_summary]:px-3 [&_a]:h-(--ctl-h) [&_a]:rounded-tile [&_a]:px-3';
 const MENU_OFF = '[&_summary]:border-transparent [&_summary]:bg-muted [&_summary]:shadow-none';
-/* 단계 탭 색: 준비 중 = 계획 · 짓는 중 = 짓는 중 · 모집 끝남 = 판매(전체는 기본 --foreground) */
-const STAGE_INK: Record<string, string> = { prep: '[--tab-c:var(--st-plan-ink)]', build: '[--tab-c:var(--st-build-ink)]', sale: '[--tab-c:var(--st-sale-ink)]' };
+/* 단계 탭 색: 단계 글자색 --st-*-ink(전체는 기본 --foreground) */
+const STAGE_INK: Record<string, string> = { plan: '[--tab-c:var(--st-plan-ink)]', permit: '[--tab-c:var(--st-permit-ink)]', build: '[--tab-c:var(--st-build-ink)]', sale: '[--tab-c:var(--st-sale-ink)]' };
 
 type Props = { sido: string; sgg: { code: string; label: string } | null; sggItems: { code: string; label: string }[]; stage?: StageGroup; q: string };
 

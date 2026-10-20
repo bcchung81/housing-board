@@ -10,10 +10,14 @@ import { sggLabel } from './projects-list';
 import { candidateOf, isMetro, mapLocOf, pastDueOf, type MapLoc, type Policy, type ProjectDetail, type ProjectRow } from './projects-view';
 import { mapHref } from './map-href';
 import { METRO_AREAS, SIDO_SHORT, unitOf } from './metro-overview';
-import { PG_SHORT, groupOfBoard, shortName, type StageGroup, type Steps } from './public-labels';
+import { PG_SHORT, groupOfBoard, noticeUrl, shortName, type StageGroup, type Steps } from './public-labels';
 
 export type WinRow = Omit<ProjectRow, 'pks' | 'bundles'>;
-export type WinDetail = Omit<ProjectDetail, 'bjd'>;
+/* 공고 줄: 원장 공고 + 상세 주소(서버가 만든다 — noticeUrl). review 가 CONFIRMED 가 아니면 화면이 '확인 필요'(정책담당자)·'확인 중'(일반사용자) 표지를 단다.
+   확정 연결 먼저 · 공고일 최근 순 NOTICE_SHOW 건만 싣고 나머지는 noticesMore(건수 — 화면 '외 n건') */
+export type WinNotice = { system: string; id: string; title: string; date: string | null; review: string; url: string | null };
+type WinNotices = { notices?: WinNotice[]; noticesMore?: number };
+export type WinDetail = Omit<ProjectDetail, 'bjd' | 'notices'> & WinNotices;
 type Base = { asked: string; canonical: string; title: string; dataAsOf: string };
 /* 정책담당자: 발급 사업 상세(ProjectDetail + DrawerHead) · 목록에서 뺀 사업(안내) · 번호 없는 후보 간단 보기(Candidate + CandidateHead) */
 export type AdminDetailWin = Base & { kind: 'detail'; view: 'admin'; row: WinRow; detail: WinDetail; sources: Record<string, SourceRef>; agencies: Record<string, string>; referenceDate: string; policies: Policy[];
@@ -22,16 +26,23 @@ export type HiddenWin = Base & { kind: 'hidden'; view: 'admin'; project: { id: s
 export type CandidateWin = Base & { kind: 'candidate'; view: 'admin'; row: WinRow; sggName: string; sources: string[] };
 /* 일반사용자: 사업 찾기 상세(PublicDetail + 머리 — 지역·시행·유형). today 는 페이지가 넣을 때만(없으면 클라이언트가 오늘 날짜) */
 export type PublicExtra = { steps: Steps; agency: string; progress: number | null; progressAt: string | null; progress1: number | null };
-export type PublicWin = Base & { kind: 'detail'; view: 'public'; row: WinRow; detail: { refs: string[] }; sources: Record<string, SourceRef>; referenceDate: string; extra: PublicExtra | null; pastDue: boolean;
-  head: { area: string; agency: string; program: { name: string; short: string } | null }; links: { map: string; schedule: string }; sameStage: StageGroup | null; today?: string };
+export type PublicWin = Base & { kind: 'detail'; view: 'public'; row: WinRow; detail: { refs: string[] } & WinNotices; sources: Record<string, SourceRef>; referenceDate: string; extra: PublicExtra | null; pastDue: boolean;
+  head: { area: string; agency: string; program: { name: string; short: string } | null; types?: { name: string; raw: string[] }[] }; links: { map: string; schedule: string }; sameStage: StageGroup | null; today?: string };
 export type ProjectWindow = AdminDetailWin | HiddenWin | CandidateWin | PublicWin;
 
 /* 허용 목록: 이름을 적은 칸만 옮긴다(원장 행 JSON 에는 타입에 없는 칸 — 필지 pnus 등 — 도 있어 빼기 대신 고르기) */
 const ROW_KEYS = ['id', 'name', 'issued', 'stage', 'cls', 'why', 'overdue', 'next', 'done', 'units', 'dateAlt', 'sgg', 'sggName', 'notice', 'programs', 'policies', 'link', 'agency', 'reached', 'completion', 'board'] as const satisfies readonly (keyof WinRow)[];
-const DETAIL_KEYS = ['unit', 'agency', 'scope', 'basis', 'asOf', 'issuedAt', 'source', 'stages', 'progress', 'refs', 'loc'] as const satisfies readonly (keyof WinDetail)[];
+const DETAIL_KEYS = ['unit', 'agency', 'scope', 'basis', 'asOf', 'issuedAt', 'source', 'stages', 'progress', 'refs', 'loc', 'types'] as const satisfies readonly (keyof WinDetail)[];
 const only = <T extends object>(o: T, keys: readonly (keyof T)[]) => Object.fromEntries(keys.filter((k) => o[k] !== undefined).map((k) => [k, o[k]]));
 const rowOf = (r: ProjectRow) => only(r, ROW_KEYS) as WinRow;
-const detailOf = (x: ProjectDetail) => only(x, DETAIL_KEYS) as WinDetail;
+const NOTICE_SHOW = 3;
+const noticesOf = (x: ProjectDetail): WinNotices => {
+  if (!x.notices?.length) return {};
+  const all = [...x.notices].sort((a, b) => +(a.review !== 'CONFIRMED') - +(b.review !== 'CONFIRMED') || (b.date ?? '').localeCompare(a.date ?? '') || b.id.localeCompare(a.id));   // 확정 연결 먼저(검토 중 LH 공고가 확정 청약홈 공고를 밀어내지 않게), 그 안에서 최근 순
+  const notices = all.slice(0, NOTICE_SHOW).map((n) => ({ system: n.system, id: n.id, title: n.title, date: n.date, review: n.review, url: noticeUrl(n.system, n.id, n.url) }));
+  return { notices, ...(all.length > NOTICE_SHOW ? { noticesMore: all.length - NOTICE_SHOW } : {}) };
+};
+const detailOf = (x: ProjectDetail) => ({ ...only(x, DETAIL_KEYS), ...noticesOf(x) }) as WinDetail;
 const pick = (all: Record<string, SourceRef>, refs: string[]) => Object.fromEntries(refs.filter((k) => all[k]).map((k) => [k, all[k]]));
 
 /* asked = 주소의 id(옛 id 면 canonical 이 대표 사업 id), view = 관점. opts.cand = 후보 간단 보기(?cand=, 정책담당자만) · opts.today = 일반사용자 페이지 첫 창의 오늘(한국 시각).
@@ -62,8 +73,8 @@ export async function projectWindow(asked: string, view: 'admin' | 'public', opt
   const r = d.row, sd = r.sgg.slice(0, 2), x = (await getPublicDetails())[r.id] ?? null;
   /* 시도를 뗀 시군구 이름: 원장 이름('인천광역시 계양구' → '계양구'), 구가 있는 경기 시 코드는 지도 코드표(/citizen/projects sggShort 와 같다) */
   const n = idx.sggNames[r.sgg], sggShort = n ? n.slice(n.indexOf(' ') + 1) : METRO_AREAS[r.sgg] ?? r.sgg;
-  return { kind: 'detail', view, asked, canonical: r.id, title: shortName(r.name), dataAsOf, row: rowOf(r), detail: { refs: d.detail.refs }, sources: pick(d.sources, d.detail.refs),
+  return { kind: 'detail', view, asked, canonical: r.id, title: shortName(r.name), dataAsOf, row: rowOf(r), detail: { refs: d.detail.refs, ...noticesOf(d.detail) }, sources: pick(d.sources, d.detail.refs),
     referenceDate: d.referenceDate, extra: x, pastDue: pastDueOf(r),
-    head: { area: `${SIDO_SHORT[sd]} ${sggShort}`, agency: x?.agency ?? '', program: r.programs[0] ? { name: r.programs[0], short: PG_SHORT[r.programs[0]] ?? r.programs[0] } : null },
+    head: { area: `${SIDO_SHORT[sd]} ${sggShort}`, agency: x?.agency ?? '', program: r.programs[0] ? { name: r.programs[0], short: PG_SHORT[r.programs[0]] ?? r.programs[0] } : null, ...(d.detail.types ? { types: d.detail.types } : {}) },
     links: { map: mapHref({ project: r.id }), schedule: `/citizen/schedule?sido=${sd}&sgg=${unitOf(r.sgg) ?? r.sgg}` }, sameStage: groupOfBoard(r.board), ...(opts.today ? { today: opts.today } : {}) };
 }

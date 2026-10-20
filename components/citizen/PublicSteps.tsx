@@ -34,7 +34,6 @@ export default function PublicSteps({ current }: { current: number }) {
         <span><b className="font-bold" style={{ color: BOARD_INK[current] }}>{LADDER[current]}</b> — {LADDER_Q[current]}</span>
         <InfoTip label="여섯 단계">
           <dl>{LADDER.map((n, i) => <Fragment key={n}><dt>{n}</dt><dd>{LADDER_Q[i]}{STATE[stepState(i, current)]}</dd></Fragment>)}</dl>
-          <p>준비 중 = 계획·허가, 짓는 중 = 착공, 모집 끝남 = 모집 공고까지 온 사업이에요</p>
         </InfoTip>
       </p>
     </div>

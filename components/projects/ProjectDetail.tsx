@@ -2,7 +2,7 @@
    머리(이름·프로그램·정책(연결 상태는 title)·id) → 단계 줄(①~⑥, 목록과 같은 번호·색) → 핵심 수치(계획·공고 확인·공정률, 있는 것만) → 단계 타임라인(상태·'당초 일정 없음' 한 번) → 개요(지도에서 보기 · 위치 종류) → 근거(접힘).
    숨김 사업(대응 사업 없음)은 한 줄 안내와 개요만. 대체된 옛 id 는 대표 사업을 그리고 맨 위에 한 줄 안내. 건축HUB 관리번호는 공개 범위가 미결(기획서 Q4)이라 보이지 않는다. */
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, ExternalLink } from 'lucide-react';
 import PanelLink from '@/components/board/PanelLink';
 import { Dl, FactNote, PanelHead } from '@/components/page';
 import { SwatchMark } from '@/components/ui/chips';
@@ -13,6 +13,7 @@ import { Card } from '@/components/ui/card';
 import StageSteps from './StageSteps';
 import StageTimeline, { TimelineLegend } from './StageTimeline';
 import { mapHref } from '@/lib/board/map-href';
+import { NOTICE_SITE } from '@/lib/board/public-labels';
 import type { AdminDetailWin, HiddenWin } from '@/lib/board/project-window';
 import InfoTip from '@/components/ui/info-tip';
 import { AGENCY_NAME, AGENCY_TIP, EVENT_NAME, PAST_DUE_UNDER, agencyKey, dateAltOf, dayText, hiddenNote, LOST_INPUT, lostGuide, pastDueOf, pct1, policyLabel, statusLabel, statusOf, statusTip, timelineOf } from '@/lib/board/projects-view';
@@ -43,6 +44,7 @@ export function DrawerHead({ d }: { d: AdminDetailWin | HiddenWin }) {
       {d.label && d.label !== r.name ? <span data-slot="drawer-full" className="basis-full text-sm text-muted-foreground" title="사업 원장 이름">{r.name}</span> : null}
       <span className="flex flex-wrap items-center gap-1.5">
         {r.programs.map((g) => <Badge key={g} title="프로그램">{g}</Badge>)}
+        {d.detail.types?.map((t) => <Badge key={t.name} title={`공급 유형 · 원천 이름: ${t.raw.join(' · ')}`}>{t.name}</Badge>)}
         {pol.map((x) => <Badge key={x.key} title={`${x.name} · 정책 연결: ${fixed ? '담당자가 확정함' : '담당자가 아직 확정하지 않은 제안(해제된 연결은 빠짐)'}`}>{policyLabel(x)}</Badge>)}
       </span>
       <code className="text-sm text-muted-foreground" title="사업 id">{r.id}</code>
@@ -129,6 +131,20 @@ export default function ProjectDetail({ d, stageHref }: { d: AdminDetailWin | Hi
           <div><dt>구분</dt><dd title={x.basis ?? undefined}>{SCOPE[x.scope] ?? x.scope} · {UNIT[x.unit] ?? x.unit}</dd></div>
           <div><dt>정책 연결</dt><dd>{pol.length ? pol.map((p, i) => <span key={p.key} title={`정책 연결: ${r.link === 'CONFIRMED' ? '담당자가 확정함' : '담당자가 아직 확정하지 않은 제안'}`}>{i ? ' · ' : ''}{policyLabel(p)}</span>) : <None>연결 없음</None>}</dd></div>
         </dl>
+        {x.notices?.length ? (
+          <ul className="mt-3 mb-0 flex list-none flex-col gap-1.5 p-0 text-sm" aria-label="청약 공고">
+            {x.notices.map((n) => (
+              <li key={`${n.system}${n.id}`} className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                {n.url ? (
+                  <a href={n.url} target="_blank" rel="noopener noreferrer" title={`${NOTICE_SITE[n.system] ?? '원문'} 공고 상세가 새 창으로 열려요`}>{n.title}<ExternalLink className="ml-1 inline size-3.5 align-text-bottom" aria-hidden="true" /><span className="sr-only">(새 창)</span></a>
+                ) : <span>{n.title}</span>}
+                {n.date ? <span className="tabular-nums text-muted-foreground">{dayText(n.date)}</span> : null}
+                {n.review !== 'CONFIRMED' ? <Badge title="사업과 공고의 연결이 아직 확정되지 않았어요">확인 필요</Badge> : null}
+              </li>
+            ))}
+            {x.noticesMore ? <li className="text-muted-foreground">{`외 ${x.noticesMore}건`}</li> : null}
+          </ul>
+        ) : null}
       </Card>
 
       <Card render={<details className="group" />}>

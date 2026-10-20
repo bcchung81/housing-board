@@ -64,6 +64,13 @@ for pid, x in pd['projects'].items():
     st = x.get('stages') or {}
     s = [([st[k]['actual'], 1] if st.get(k, {}).get('actual') else [st[k]['plan'], 0] if st.get(k, {}).get('plan') else None) for k in NEXT]
     if x.get('agency') or any(s): det[pid] = [AG.get(x.get('agency'), ''), s]
+# 준공·입주(2026-10-20 일반사용자 6단계): 원장 단계(stage)는 06 까지라 입주를 가르지 못한다. 화면 사업(project-detail)에 실제 준공·입주일이 있으면 단계를 올린다
+# (실제 입주일 → 7 입주, 실제 준공일 → 6 준공). 기록이 없으면 그대로 — 지금은 두 단계 모두 0 이다. 큰 숫자(공급 예정 호수)는 이 둘을 세지 않는다
+for code, rows in prj.items():
+    for row in rows:
+        s = (det.get(f'PRJ-{code}-{row[0]}') or [None, []])[1]
+        if len(s) > 3 and s[3] and s[3][1]: row[2] = 7
+        elif len(s) > 2 and s[2] and s[2][1]: row[2] = max(row[2], 6)
 TYPES = rc['kinds']
 cal = []
 for sd, L in rc['sido'].items():

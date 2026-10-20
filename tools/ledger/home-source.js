@@ -8,6 +8,9 @@
    - 시군구: LH 준공예정 별칭의 지구·블록(mappings/lh-block-sgg.json) → LH 블록 위치점의 지구 코드(zonecode 앞 5자리) → 주소 → 시군구 이름 → 지구 이름. 못 정하면 사업을 만들지 않고
      review_required(SGG_UNRESOLVED). 시 단위 코드(예 41280 고양시)와 그 아래 구 코드가 함께 나오면 구 코드.
    - 일정: 원천 날짜 칸의 정밀도(일·월·연)를 그대로 둔다. 원천 칸 = CONFIRMED, HOME 자동 연결(LH 준공예정 별칭·청약 공고·건축HUB 허가 후보) = REVIEW_REQUIRED.
+   - HOME 근거 연결(evidence_bridge, 2026-10-20 D9·D7): HOME 이 채택한 연결(status CONFIRMED, 추정 아님 — bridgeAdopted)만 쓴다. 검토 전 후보(REVIEW)·해제(RELEASED)는 버린다.
+     D9 LH·GH·SH·지자체 공고문(원문 주소의 기관 사이트로 가름 — moveInDocOf) 입주 예정월(달 이상, 연도 원천은 달로 바꾸지 않음) → MOVE_IN 예정(원천 -lh-doc·-gh-doc·-sh-doc·-local-doc), 달 이상 입주 일정이 없는 사업만. D7 원문 주소의 공고 번호(코드만) → notice_links REVIEW_REQUIRED(원천 -bridge),
+     연결만 더하고 사건·단계·공고 확인 호수는 바꾸지 않는다. 담당자 칸(actor 등)은 옮기지 않는다.
    - 정책·프로그램·연결: REVIEW → REVIEW_REQUIRED, CONFIRMED → CONFIRMED. 정책이 UNASSIGNED·MON_*·RELEASED 인 연결은 넣지 않는다. 재매칭본은 판마다 통째로 바뀐다(links).
    - 지역 지표(area_stat·unsold) → area_facts. 통계(statistic)는 싣지 않는다(통계누리 실적을 유지 — 6절 2, 대조 시험만).
    순수 함수(buildHome·assignHomeIds·homeRows·replaceSido)는 파일을 읽거나 쓰지 않는다. 읽기는 readHome, 쓰기는 convert.js --out(home-ids)·scripts/issue-projects.js --home(레지스트리). */
@@ -86,7 +89,7 @@ function latestHomeDir(monthDir) {
 const homeAvailable = (dir) => !!dir && Object.keys(JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8')).files).every((f) => fs.existsSync(path.join(dir, f)));
 const refsOf = (edition) => {
   const b = `${HOME_PREFIX}${edition}`;
-  return { main: b, lhPlan: `${b}-lh-plan`, report: `${b}-report`, notice: `${b}-notice`, lhNotice: `${b}-lh-notice`, ghNotice: `${b}-gh-notice`, stage: `${b}-stage`, policy: `${b}-policy`, area: (g) => `${b}-area-${g.replace(/_/g, '-')}`, unsold: `${b}-unsold` };
+  return { main: b, lhPlan: `${b}-lh-plan`, report: `${b}-report`, notice: `${b}-notice`, lhNotice: `${b}-lh-notice`, ghNotice: `${b}-gh-notice`, lhDoc: `${b}-lh-doc`, ghDoc: `${b}-gh-doc`, shDoc: `${b}-sh-doc`, localDoc: `${b}-local-doc`, bridge: `${b}-bridge`, stage: `${b}-stage`, policy: `${b}-policy`, area: (g) => `${b}-area-${g.replace(/_/g, '-')}`, unsold: `${b}-unsold` };
 };
 
 /* ---------- 날짜 ---------- */
@@ -532,6 +535,37 @@ const agencyOf = (dev) => AGENCY.find(([re]) => re.test(String(dev ?? '').trim()
 const projectName = (p, lone) => ((lone && (p.warnings ?? []).includes('MULTI_SITE_CONTRACT')) || CODE_NAME.test(p.name ?? '') ? siteName(p) ?? trim(p.name, 200) : trim(p.name, 200));
 const trim = (s, n = 160) => { const t = String(s ?? '').replace(/\s+/g, ' ').trim(); return t ? (t.length > n ? `${t.slice(0, n - 1)}…` : t) : null; };
 
+/* HOME 근거 연결(evidence_bridge — 원천 문서 하나 ↔ 사업후보 PRO 하나, 담당자 확인 기록) 신뢰 규칙(2026-10-20 D9·D7): HOME 이 채택한 연결(status CONFIRMED)만 쓴다.
+   검토 전 후보(REVIEW)·해제(RELEASED)·추정(inferred true)은 쓰지 않는다 — HOME 화면에도 사업 근거로 나오지 않는 연결이다. 담당자 칸(actor·actor_basis·review_actor 등)·사유 글은 옮기지 않는다 */
+const bridgeAdopted = (p) => p.status === 'CONFIRMED' && p.inferred !== true;
+/* 공고 원문 주소 → { system, id, param }: https 이고 공고 사이트 세 곳(LH 청약플러스·청약홈·GH)일 때 주소의 공고 번호 칸만 읽는다(공고명·사업명은 보지 않는다).
+   LH panId = LH 공고 PAN_ID · 청약홈 houseManageNo-pblancNo = 청약홈 공고 번호 · GH pbancNo = GH 공고 source_object_id. 그 밖은 null */
+const NOTICE_HOSTS = { 'apply.lh.or.kr': 'LH', 'applyhome.co.kr': 'APPLYHOME', 'www.applyhome.co.kr': 'APPLYHOME', 'apply.gh.or.kr': 'GH' };
+function noticeKeyOfUrl(url) {
+  let u;
+  try { u = new URL(String(url ?? '')); } catch { return null; }
+  const system = u.protocol === 'https:' ? NOTICE_HOSTS[u.hostname] : null, q = u.searchParams;
+  if (system === 'LH' && /^\d+$/.test(q.get('panId') ?? '')) return { system, id: q.get('panId'), param: 'panId' };
+  if (system === 'APPLYHOME' && /^\d+$/.test(q.get('houseManageNo') ?? '') && /^\d+$/.test(q.get('pblancNo') ?? '')) return { system, id: `${q.get('houseManageNo')}-${q.get('pblancNo')}`, param: 'houseManageNo·pblancNo' };
+  if (system === 'GH' && /^\d+$/.test(q.get('pbancNo') ?? '')) return { system, id: q.get('pbancNo'), param: 'pbancNo' };
+  return null;
+}
+/* 입주 예정월을 싣는 공고문 원천(D9): 근거 원문 주소(https)의 기관 사이트로만 가른다(문서·사업 이름은 보지 않는다). 돌려주는 것 { kind, label, code } 또는 null.
+   LH = 청약플러스 공고 상세(panId) · GH = GH 공고 상세(pbancNo) · SH = SH 누리집(www.i-sh.co.kr) · 지자체 = 시·도·시군구 누리집(*.go.kr 중 중앙 기관 사이트 CENTRAL_GO_KR 제외).
+   국토부 등 중앙 발표·그 밖의 사이트·공고 번호가 없는 LH 목록 주소는 넣지 않는다 */
+const CENTRAL_GO_KR = new Set(['molit.go.kr', 'www.molit.go.kr', 'www.data.go.kr', 'www.eum.go.kr', 'www.k-apt.go.kr']);
+function moveInDocOf(url) {
+  const key = noticeKeyOfUrl(url);
+  if (key?.system === 'LH') return { kind: 'lh', label: 'LH 공고문', code: `panId ${key.id}` };
+  if (key?.system === 'GH') return { kind: 'gh', label: 'GH 공고문', code: `pbancNo ${key.id}` };
+  let u;
+  try { u = new URL(String(url ?? '')); } catch { return null; }
+  if (u.protocol !== 'https:') return null;
+  if (u.hostname === 'www.i-sh.co.kr') return { kind: 'sh', label: 'SH 공고문', code: null };
+  if (/\.go\.kr$/.test(u.hostname) && !CENTRAL_GO_KR.has(u.hostname)) return { kind: 'local', label: '지자체 공고문', code: null };
+  return null;
+}
+
 /* build(buildHome) + ids(assignHomeIds) → 원장 표 조각 { projects, identifiers, project_locations, events, units, notices, notice_links, review_required, policies, programs, links, policy_targets, area_facts, sources } 과 report.
    registry: 레지스트리(HOME 발급 사업의 issuedAt, 수도권 대체 사업의 번들 단지 식별자), notices: 이번 표에 이미 있는 공고(공고번호로 중복을 거른다) */
 function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
@@ -712,6 +746,40 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
     }
   }
 
+  /* 공고문 입주 예정월(2026-10-20 사용자 결정 D9 — LH 공고문, 같은 날 GH·SH·지자체 공고문으로 넓힘): HOME 근거 연결(bridgeAdopted 만) 중 원문 주소가 공고문 원천(moveInDocOf —
+     주소의 기관 사이트로만 가른다)인 것의 입주 예정(fact MOVE_IN · PLAN)을 MOVE_IN 예정(CURRENT)으로 싣는다(원천은 기관별 -lh-doc·-gh-doc·-sh-doc·-local-doc).
+     날짜가 달 이상 정밀할 때만(연도만·연말 환산 date_precision YEAR·date_conversion 은 달을 지어내니 뺀다).
+     사업에 입주 실제가 있거나 달 이상 정밀한 입주 예정이 이미 있으면(위 원천 공급계획·청약 공고 연결) 싣지 않는다. 연도만 있던 사업은 달 예정을 더한다 — 현재 예정은 원천 순위
+     (board.js SOURCE_RANK: 공고문 원천이 HOME 원천 공급계획보다 앞)로 달 쪽이 된다. 같은 사업·같은 달은 한 번(먼저 나온 근거 하나). 공고 연결 자체는 아래 D7 */
+  const moveInHad = new Map();   // 사업 → 'precise'(실제 또는 달 이상 예정) | 'year'
+  for (const e of t.events) if (e.event_type === 'MOVE_IN') moveInHad.set(e.local_project_id, e.date_type === 'ACTUAL' || e.event_date || e.event_month ? 'precise' : moveInHad.get(e.local_project_id) ?? 'year');
+  const docMonths = new Map();   // 사업 → Map(달 → 첫 근거)
+  R.docMoveIn = { facts: 0, notAdopted: 0, imprecise: 0, noProject: 0, hadPrecise: 0, added: 0, sharpened: 0, events: { lh: 0, gh: 0, sh: 0, local: 0 } };
+  for (const r of [...(K.evidence_bridge ?? [])].sort((a, b) => byStr(a.entity_id, b.entity_id))) {
+    const p = r.payload, doc = moveInDocOf(p.evidence_url);
+    const facts = doc ? (p.facts ?? []).filter((f) => f.milestone === 'MOVE_IN' && f.kind === 'PLAN') : [];
+    if (!facts.length) continue;
+    R.docMoveIn.facts += facts.length;
+    if (!bridgeAdopted(p)) { R.docMoveIn.notAdopted += facts.length; continue; }
+    const pid = pidOfPro.get(p.project_id) ?? pidOfHpr.get(p.project_id);
+    if (!pid) { R.docMoveIn.noProject += facts.length; continue; }
+    for (const f of facts) {
+      const x = f.date_precision === 'YEAR' || f.date_conversion ? null : dateParts(f.date);
+      if (!x || x.event_year) { R.docMoveIn.imprecise++; continue; }
+      const m = docMonths.get(pid) || docMonths.set(pid, new Map()).get(pid), k = x.event_date ?? x.event_month;
+      if (!m.has(k)) m.set(k, { x, f, r, doc });
+    }
+  }
+  const docRef = { lh: refs.lhDoc, gh: refs.ghDoc, sh: refs.shDoc, local: refs.localDoc };
+  for (const [pid, m] of [...docMonths].sort(([a], [b]) => byStr(a, b))) {
+    if (moveInHad.get(pid) === 'precise') { R.docMoveIn.hadPrecise++; continue; }
+    R.docMoveIn[moveInHad.get(pid) === 'year' ? 'sharpened' : 'added']++;
+    for (const [, { x, f, r, doc }] of [...m].sort(([a], [b]) => byStr(a, b))) {
+      R.docMoveIn.events[doc.kind]++;
+      ev(pid, { event_type: 'MOVE_IN', date_type: 'PLANNED', plan_basis: 'CURRENT', ...x, event_detail: trim(`${doc.label}${doc.code ? ` ${doc.code}` : ''} 입주 예정 ${f.date_label ?? f.date}${f.basis ? ` · ${f.basis}` : ''} · HOME 근거 연결 ${r.entity_id}`, 300), source_ref: docRef[doc.kind] });
+    }
+  }
+
   /* 공고: 청약홈(notice)·LH(lh_notice). 이미 표에 있는 공고번호는 거른다. GH 공고(gh_notice)는 notice_system='GH', 공고번호 = 원천 개체 번호(source_object_id) */
   const have = new Set(notices.map((n) => `${n.notice_system}|${n.notice_id}`));
   const addNotice = (row) => { const k = `${row.notice_system}|${row.notice_id}`; if (have.has(k)) return false; have.add(k); t.notices.push(row); return true; };
@@ -732,6 +800,27 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
     if (!id) continue;
     const ok = addNotice({ notice_system: 'GH', notice_id: id, notice_title: trim(p.name, 300) ?? id, sgg_code: null, pnu: null, announced_on: dayOf(p.source_date), apply_start: null, apply_end: null, observed_on: p.base_date, source_ref: refs.ghNotice });
     R.notices[ok ? 'gh' : 'ghDup']++;
+  }
+  /* 공고 ↔ 사업 연결 늘리기(2026-10-20 사용자 결정 D7): HOME 근거 연결(bridgeAdopted 만)의 원문 주소에 든 공고 번호(noticeKeyOfUrl — 코드만, 이름 비교 없음)가
+     공고 표에 있으면 (공고, 사업) 연결을 더한다. 사람이 이 연결을 확인하기 전이라 모두 REVIEW_REQUIRED(화면 '확인 필요'·'확인 중'). 이미 있는 쌍(위 청약 공고 연결)은 그대로 둔다.
+     연결만 더한다 — 모집공고 사건(SUPPLY_NOTICE)·단계·판정·공고 확인 호수(home-map.js noticeUnitsOf — 물량·모집공고 실제 사건만 센다)는 바꾸지 않는다.
+     evidence 끝의 '원문 <주소>'는 사업 상세 공고 줄의 상세 주소다(projects-index.js) */
+  R.bridgeLinks = { added: 0, LH: 0, APPLYHOME: 0, GH: 0, notAdopted: 0, noProject: 0, noNotice: 0, existing: 0 };
+  const linked = new Set(t.notice_links.map((l) => `${l.notice_system}|${l.notice_id}|${l.local_project_id}`));
+  for (const r of [...(K.evidence_bridge ?? [])].sort((a, b) => byStr(a.entity_id, b.entity_id))) {
+    const p = r.payload, key = noticeKeyOfUrl(p.evidence_url);
+    if (!key) continue;
+    if (!bridgeAdopted(p)) { R.bridgeLinks.notAdopted++; continue; }
+    const pid = pidOfPro.get(p.project_id) ?? pidOfHpr.get(p.project_id);
+    if (!pid) { R.bridgeLinks.noProject++; continue; }
+    if (!have.has(`${key.system}|${key.id}`)) { R.bridgeLinks.noNotice++; continue; }
+    const k = `${key.system}|${key.id}|${pid}`;
+    if (linked.has(k)) { R.bridgeLinks.existing++; continue; }
+    linked.add(k);
+    const url = new URL(p.evidence_url).href, head = `E1_EVIDENCE_URL_CODE: HOME 근거 연결 ${r.entity_id} 원문 주소 ${key.param} ${key.id}`;
+    t.notice_links.push({ notice_system: key.system, notice_id: key.id, local_project_id: pid, evidence: `${head} · 원문 ${url}`.length <= 300 ? `${head} · 원문 ${url}` : head, review_status: 'REVIEW_REQUIRED', source_ref: refs.bridge });
+    R.bridgeLinks.added++;
+    R.bridgeLinks[key.system]++;
   }
   /* 연결된 공고가 표에 없으면(청약홈 공고 행이 덤프에 없는 경우) 연결을 뺀다 */
   t.notice_links = t.notice_links.filter((l) => have.has(`${l.notice_system}|${l.notice_id}`));
@@ -805,6 +894,13 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
   addSource(refs.stage, 'HOME PoC(건축HUB 허가 후보 대조)', 'HOME 단계 근거(stage_evidence) — 인허가 사건일 후보', asOf, cnt(K.stage_evidence, (r) => r.payload.stage === 'APPROVAL'), '자동 대조(EXACT·SIMILAR)로 고른 건축HUB 허가일. 담당자 검토 전.', 'STA_');
   addSource(refs.notice, '한국부동산원 청약홈(HOME 덤프 경유)', '청약홈 분양정보(15098547) 공고 표본과 HOME 공고 연결(collection_link)', [...new Set(K.notice.map((r) => r.payload.base_date))].sort().pop() ?? null, K.notice.length, '공고번호(주택관리번호-공고번호)로 기존 공고와 중복을 걸렀다. 연결은 검토 전(REVIEW).', 'house_manage_no');
   addSource(refs.lhNotice, '한국토지주택공사(HOME 덤프 경유)', 'LH 분양임대공고 목록(HOME lh_notice)', [...new Set(K.lh_notice.map((r) => r.payload.base_date))].sort().pop() ?? null, K.lh_notice.length, '공고번호(PAN_ID)로 기존 LH 공고와 중복을 걸렀다.', 'PAN_ID');
+  const docNote = 'HOME 이 채택한(CONFIRMED) 근거 연결의 공고문 입주 예정월(달 이상)만. 사업에 달 이상 입주 예정·실제가 없을 때만 실었다. 실제 입주 아님.';
+  const addDoc = (ref, provider, name, key) => addSource(ref, provider, `${name} 입주 예정월 — HOME 근거 연결(evidence_bridge)`, asOf, t.events.filter((e) => e.source_ref === ref).length, docNote, key);
+  addDoc(refs.lhDoc, '한국토지주택공사(HOME 덤프 경유)', 'LH 공고문(분양·임대 공고 상세)', 'panId');
+  addDoc(refs.ghDoc, '경기주택도시공사(HOME 덤프 경유)', 'GH 공고문(모집공고 상세)', 'pbancNo');
+  addDoc(refs.shDoc, '서울주택도시공사(HOME 덤프 경유)', 'SH 공고문', null);
+  addDoc(refs.localDoc, '지방자치단체(HOME 덤프 경유)', '지자체 공고문', null);
+  addSource(refs.bridge, 'HOME PoC(근거 연결)', 'HOME 근거 연결(evidence_bridge) 원문 주소의 공고 번호 — 공고 ↔ 사업 연결', asOf, t.notice_links.filter((l) => l.source_ref === refs.bridge).length, 'HOME 이 채택한(CONFIRMED) 근거 연결의 원문 주소에 든 공고 번호(LH panId · 청약홈 houseManageNo-pblancNo · GH pbancNo)로만 이었다(이름 비교 없음). 사람이 확인하기 전이라 REVIEW_REQUIRED.', 'panId · pbancNo');
   addSource(refs.ghNotice, '경기주택도시공사(HOME 덤프 경유)', 'GH 공고 목록(HOME gh_notice)', [...new Set(K.gh_notice.map((r) => r.payload.base_date))].sort().pop() ?? null, K.gh_notice.length, '공고번호(source_object_id)로 기존 공고와 중복을 걸렀다. 시군구·접수 기간은 원천에 없어 비웠다.', 'source_object_id');
   addSource(refs.policy, 'HOME PoC(정부 발표 원문)', 'HOME 정책·공급 계획표·프로그램·사업 연결(policy·policy_delivery_plan·home_program_mapping·home_mapping)', asOf, K.policy.length + K.home_program_mapping.length + K.home_mapping.length, '연결은 판마다 통째로 바뀐다(팀원 재매칭). REVIEW → REVIEW_REQUIRED.', 'POL_ · PRG_');
   for (const g of [...new Set(K.area_stat.map((r) => r.payload.metric_group))].sort()) addSource(refs.area(g), 'HOME PoC(KOSIS·SGIS 경유)', `HOME 지역 지표 ${g}`, null, cnt(K.area_stat, (r) => r.payload.metric_group === g), trim(K.area_stat.find((r) => r.payload.metric_group === g).payload.definition, 300), null);
@@ -1016,4 +1112,4 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
   return { registry: reg, ...out };
 }
 
-module.exports = { PUBLIC_TIER, AGENCY_SOURCES, programKey, officerTerms, scrubKinds, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, siteKeys, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, keepSido, issueHome, serialOf };
+module.exports = { PUBLIC_TIER, AGENCY_SOURCES, programKey, officerTerms, scrubKinds, bridgeAdopted, noticeKeyOfUrl, moveInDocOf, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, siteKeys, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, keepSido, issueHome, serialOf };

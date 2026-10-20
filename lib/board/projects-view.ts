@@ -476,6 +476,8 @@ export type StageEv = { plan?: string; planSrc?: string; actual?: string; actual
 export type ProjectDetail = {
   unit: string; agency: string | null; scope: string; basis: string | null; asOf: string; issuedAt: string; source: string; bjd: string[];
   stages: Partial<Record<string, StageEv>>; progress: [string, number][]; refs: string[]; loc?: { by: string; basis: string | null };
+  /* 청약 공고(공고일 순, url = 원문 상세 주소가 있을 때)와 공급 유형(쉬운 이름 + 원천 이름) — tools/ledger/projects-index.js, 없으면 칸 없음 */
+  notices?: { system: string; id: string; title: string; date: string | null; review: string; url?: string }[]; types?: { name: string; raw: string[] }[];
 };
 export const STAGE_EVENTS = ['PERMIT', 'CONSTRUCTION_START', 'SUPPLY_NOTICE', 'COMPLETION', 'MOVE_IN'] as const;
 

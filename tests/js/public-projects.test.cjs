@@ -195,8 +195,9 @@ test('수도권만: 수도권 밖 시도·시군구 주소는 수도권으로, �
 });
 
 test('거르기: 단계 묶음(/citizen 상단 필터와 같음)·이름 검색(초성)·주소 모양', () => {
-  assert.deepEqual(P.STAGE_GROUPS, { prep: [0, 1], build: [2], sale: [3] });
-  assert.deepEqual(Object.values(P.STAGE_GROUP_NAME), ['준비 중', '짓는 중', '모집 끝남']);
+  assert.deepEqual(P.STAGE_GROUPS, { plan: [0], permit: [1], build: [2], sale: [3] }, '공식 단계 이름(2026-10-20) — 이 목록은 공급 예정 ①~④만');
+  assert.deepEqual(Object.values(P.STAGE_GROUP_NAME), ['계획', '인허가', '착공', '모집']);
+  assert.deepEqual([...P.STAGE_NAME], ['계획', '인허가', '착공', '모집', '준공', '입주'], '일반사용자 단계 이름 6개 = /citizen 템플릿 STAGE6'); assert.equal(P.groupOfBoard(4), null);
   for (const b of [0, 1, 2, 3]) assert.equal(P.STAGE_GROUP_NAME[P.groupOfBoard(b)], P.STAGE_NAME[b]);
   assert.ok(P.nameMatch('계양', ['인천계양(2블록)']) && P.nameMatch('ㅇㅊㄱㅇ', ['인천계양(2블록)']) && P.nameMatch('인천 계양', ['인천계양']) && !P.nameMatch('검단', ['인천계양']));
   assert.equal(P.findHref({ sgg: '28245', sido: '28', stage: 'build', q: '계양', id: 'PRJ-28245-0052' }), '/citizen/projects?sgg=28245&stage=build&q=%EA%B3%84%EC%96%91&id=PRJ-28245-0052');

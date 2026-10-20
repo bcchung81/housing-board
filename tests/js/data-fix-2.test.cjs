@@ -63,10 +63,11 @@ test('#21 상태 이름: 판정 없음을 준공 완료 · 판정 일정 없음 
   // 2026-10-20 HOME 판: 판정 없음 93 → 195(새 사업 122 중 일정 없는 것 — 일정 없음 80 → 183, 판정 일정 없음 13 → 12)
   assert.equal(none.length, 100);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) — 둘 다 판정 일정이 없던 사업이라 판정 없음만 192 → 100 · 2026-10-20 같은 현장 병합 6쌍: 평택고덕 대표 3곳이 공사 계약 일정을 넘겨받아 판정 대상(정상)이 됨 195 → 192
   const by = (k) => none.filter((r) => V.noneKind(r) === k);
-  assert.equal(by('plan').length, 12);
-  assert.equal(by('plan').filter((r) => V.isMetro(r.sgg)).length, 12);
+  assert.equal(by('plan').length, 13);   // 2026-10-20 D9 SH 공고문 입주 예정: 고덕강일 3단지(PRJ-11740-0102)가 다음 일정이 생겨 일정 없음 → 판정 일정 없음(12 → 13)
+  assert.ok(by('plan').some((r) => r.id === 'PRJ-11740-0102'));
+  assert.equal(by('plan').filter((r) => V.isMetro(r.sgg)).length, 13);
   assert.equal(by('done').length, 0);
-  assert.equal(by('none').length, 88);   // 2026-10-20 공공 분류 안2: 빠진 민간 92곳은 모두 일정 없음 180 → 88 · 2026-10-20 같은 현장 병합 6쌍: 일정 없던 평택고덕 대표 3곳이 판정 대상이 됨 183 → 180
+  assert.equal(by('none').length, 87);   // D9: 88 → 87(위 고덕강일 3단지)   // 2026-10-20 공공 분류 안2: 빠진 민간 92곳은 모두 일정 없음 180 → 88 · 2026-10-20 같은 현장 병합 6쌍: 일정 없던 평택고덕 대표 3곳이 판정 대상이 됨 183 → 180
   assert.ok(by('done').every((r) => r.done));
   const doneRow = { ...none[0], done: '2026-01', next: null };   // 준공 완료 이름은 합성 행으로 확인(원장엔 해당 행이 없다)
   assert.deepEqual([V.statusLabel(doneRow), V.statusLabel(by('plan')[0]), V.statusLabel(by('none')[0])], ['준공 완료', '판정 일정 없음', '일정 없음']);
@@ -171,7 +172,7 @@ test('#19 지역 공급 합계는 정확한 호수(축 눈금만 근삿값), 달
   const ahead = read('components/region/Ahead.tsx');
   assert.match(ahead, /title=\{`\$\{monthLabel\(x\)\} \$\{xs\.length\}\$\{W\.count\} \$\{fmt\(tot\[i\]\)\}호/);
   const metro = R.aheadAll(calendar, 'metro', sido);
-  assert.equal(metro.reduce((s, e) => s + e.units, 0), 28692, '수도권 12개월 예정 합(정확한 값)');   // 2026-10-20 HOME 판 27,494 → 28,692
+  assert.equal(metro.reduce((s, e) => s + e.units, 0), 31362, '수도권 12개월 예정 합(정확한 값)');   // 2026-10-20 HOME 판 27,494 → 28,692 → D9 LH 공고문 입주 예정 2곳(성남신촌 A-1 227 · 이천장호원 B2 620) 29,539 → GH·SH 공고문 2곳(다산지금 A3 518 · 고덕강일 3단지 1,305) 31,362
 });
 
 test('#24 지연율 기준 표기: 시도 타일·선택 시점 막대 모두 호수 기준(2026-10-16 3차 — 한 화면 한 기준)', () => {

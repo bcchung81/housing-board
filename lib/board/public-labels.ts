@@ -52,8 +52,8 @@ export function noticeName(n: string | null | undefined): string {
   return (n || '').trim().replace(/^조달청\)\s*/, '').replace(/(\b[A-Z]{0,3}-?\d+)BL\b/g, '$1').replace(/\s*(아파트|공동주택)?\s*(건설|신축)공사.*$/, '').replace(/\s*\d+공구.*$/, '').replace(/\s+/g, ' ').trim() || (n || '').trim();
 }
 export const blockOf = (n: string) => (n.match(/\b[A-Z]{1,3}-?\d+(?:-\d+)?\b(?![\s\S]*\b[A-Z]{1,3}-?\d)/) || [''])[0];
-/* 일반사용자 단계 이름(리본 칸 b 0~5): 준비 중 = ①②, 짓는 중 = ③, 모집 끝남 = ④(템플릿 STATUS·distinctNames 표) */
-export const STAGE_NAME = ['준비 중', '준비 중', '짓는 중', '모집 끝남', '준공', '입주'] as const;
+/* 일반사용자 단계 이름(리본 칸 b 0~5) = 공식 6단계 이름 그대로(2026-10-20 사용자 결정 — 옛 준비 중·짓는 중·모집 끝남 폐기, 템플릿 STAGE6·STATUS 와 같다) */
+export const STAGE_NAME = ['계획', '인허가', '착공', '모집', '준공', '입주'] as const;
 /* 같은 목록 안 이름 겹침: 보이는 이름이 같으면 공고 이름의 블록 표기를 덧붙이고, 그래도 같으면 sub(열거되지 않는 속성)에 지역 → 호수 → 단계.
    sggName = 시군구 코드 → 시도를 뗀 이름(템플릿 D.sgg 이름의 첫 낱말 뒤) */
 export type NameIn = { id: string; name: string; sgg?: string; u?: number; b?: number };
@@ -66,7 +66,7 @@ export function distinctNames(items: NameIn[], sggName: (code: string) => string
   for (const L of Object.values(g)) {
     if (L.length < 2 || /^이름 미정/.test(out[L[0]])) continue;
     const by = (f: (x: NameIn) => string) => { const v = L.map((id) => f(ids.get(id)!)); return new Set(v).size === v.length ? v : null; };
-    const v = by((x) => (x.sgg ? sggName(x.sgg) : '')) || by((x) => (x.u ? `${x.u.toLocaleString('ko-KR')}호` : '')) || by((x) => (x.b == null ? '' : ['준비 중', '준비 중', '짓는 중', '모집 끝남', '준공'][x.b] ?? ''));
+    const v = by((x) => (x.sgg ? sggName(x.sgg) : '')) || by((x) => (x.u ? `${x.u.toLocaleString('ko-KR')}호` : '')) || by((x) => (x.b == null ? '' : STAGE_NAME[x.b] ?? ''));
     if (v) L.forEach((id, i) => { if (v[i]) sub[id] = v[i]; });
   }
   Object.defineProperty(out, 'sub', { value: sub, enumerable: false });
@@ -139,7 +139,7 @@ export function factLine(j: Judge, overdue: { eventType: string; planned: string
 }
 
 /* ---------- 상세 사다리(D5: /citizen 과 같은 '착공·준공', 원 숫자 없음) ---------- */
-export const LADDER = ['계획', '허가', '착공', '모집 공고', '준공', '입주'] as const;
+export const LADDER = ['계획', '인허가', '착공', '모집', '준공', '입주'] as const;   // 공식 6단계 이름(2026-10-20 사용자 결정 — /citizen 요약·탭과 같은 말)
 export const LADDER_Q = [
   '어디에 몇 호를 지을지 정했어요',
   '지을 수 있게 허가를 받는 단계예요',
@@ -148,11 +148,11 @@ export const LADDER_Q = [
   '공사를 마치고 사용 승인을 받았어요',
   '사람들이 들어가 살기 시작해요',
 ] as const;
-/* 단계 거르기(/citizen 상단 필터와 같은 묶음): 준비 중 = 칸 0·1 · 짓는 중 = 2 · 모집 끝남 = 3 */
-export const STAGE_GROUPS = { prep: [0, 1], build: [2], sale: [3] } as const;
+/* 단계 거르기(/citizen 상단 필터와 같은 공식 이름): 계획 = 칸 0 · 인허가 = 1 · 착공 = 2 · 모집 = 3. 이 목록은 공급 예정 사업(①~④)만이라 준공·입주 묶음은 없다 */
+export const STAGE_GROUPS = { plan: [0], permit: [1], build: [2], sale: [3] } as const;
 export type StageGroup = keyof typeof STAGE_GROUPS;
-export const STAGE_GROUP_NAME: Record<StageGroup, string> = { prep: '준비 중', build: '짓는 중', sale: '모집 끝남' };
-export const groupOfBoard = (b: number): StageGroup | null => (b <= 1 ? 'prep' : b === 2 ? 'build' : b === 3 ? 'sale' : null);
+export const STAGE_GROUP_NAME: Record<StageGroup, string> = { plan: '계획', permit: '인허가', build: '착공', sale: '모집' };
+export const groupOfBoard = (b: number): StageGroup | null => (b === 0 ? 'plan' : b === 1 ? 'permit' : b === 2 ? 'build' : b === 3 ? 'sale' : null);
 
 /* ---------- 숫자 ---------- */
 /* 큰 합계 '22만 7,976호'(템플릿 bigNum + 단위) · 비교 숫자 '1,285호' */
@@ -218,7 +218,7 @@ export function nameMatch(q: string, names: string[]): boolean {
 }
 
 /* ---------- 주소 ---------- */
-/* /citizen/projects?sido=NN|sgg=NNNNN&stage=prep|build|sale&q=이름&id=사업. 시군구가 있으면 시도는 적지 않는다(시군구 앞 두 자리) */
+/* /citizen/projects?sido=NN|sgg=NNNNN&stage=plan|permit|build|sale&q=이름&id=사업. 시군구가 있으면 시도는 적지 않는다(시군구 앞 두 자리) */
 export type FindQuery = { sido?: string; sgg?: string; stage?: StageGroup; q?: string; id?: string };
 export const FIND_BASE = '/citizen/projects';
 export function findHref(v: FindQuery): string {
@@ -230,3 +230,18 @@ export function findHref(v: FindQuery): string {
   const s = p.toString();
   return s ? `${FIND_BASE}?${s}` : FIND_BASE;
 }
+
+/* 청약홈 공고 상세 주소(공고 번호 houseManageNo-pblancNo 두 토막). 청약홈 공고가 아니거나 번호 모양이 다르면 null — 서버(project-window)가 만든다 */
+export function applyhomeUrl(system: string, id: string): string | null {
+  const m = system === 'APPLYHOME' ? /^(\d+)-(\d+)$/.exec(id) : null;
+  return m ? `https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?houseManageNo=${m[1]}&pblancNo=${m[2]}` : null;
+}
+/* 공고 상세 주소(서버 project-window 가 만든다): 원천 주소(자료 url — HOME 근거 연결의 원문 주소)가 https 이고 공고 사이트 세 곳(LH 청약플러스·청약홈·GH)이면 그것,
+   아니면 청약홈 공고 번호로 만든 주소, 그 밖은 null */
+const NOTICE_HOSTS = new Set(['apply.lh.or.kr', 'applyhome.co.kr', 'www.applyhome.co.kr', 'apply.gh.or.kr']);
+export function noticeUrl(system: string, id: string, url?: string | null): string | null {
+  try { const u = new URL(url ?? ''); if (u.protocol === 'https:' && NOTICE_HOSTS.has(u.hostname)) return u.href; } catch { /* 주소 아님 */ }
+  return applyhomeUrl(system, id);
+}
+/* 공고 줄 링크 안내의 사이트 이름 */
+export const NOTICE_SITE: Record<string, string> = { APPLYHOME: '청약홈', LH: 'LH 청약플러스', GH: 'GH 주택청약' };

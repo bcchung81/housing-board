@@ -144,7 +144,7 @@ function makeSearch(D) {
   return { search, regions, regionOf, projects, stat, SIDO_SHORT };
 }
 /* 공급 예정 호수(진행 사업 호수): 리본 칸 ①~④(원장 단계 01~05). lib/board/metro-overview.ts 의 u 와 같은 정의 */
-const OF_STAGE = { 1: 0, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4 };
+const OF_STAGE = { 1: 0, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4, 7: 5 };   // 리본 칸 0 계획 · 1 인허가 · 2 착공 · 3 모집 · 4 준공 · 5 입주(7 = 실제 입주일이 있는 사업, build_data.py)
 function sumOf(D, codes) {
   const st = [0, 0, 0, 0]; let u = 0, n = 0;
   for (const c of codes) for (const p of D.prj[c] || []) { const b = OF_STAGE[p[2]]; if (b > 3) continue; st[b] += p[3]; u += p[3]; n++; }

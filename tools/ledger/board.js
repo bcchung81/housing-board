@@ -42,10 +42,11 @@ const REACHED = { CONSTRUCTION_START: '04', COMPLETION: '06' };
 const BULK_SKIP = 'CONSTRUCTION_START';   // 대용량 후보에서 판정하지 않는 이벤트
 /* 종류별 원천 순위(현재 예정 고르기): 목록의 원천이 앞 순서대로 먼저, 목록 밖 원천은 그 뒤에서 bySource. 항목은 원천 이름 또는 정규식(덤프 시각이 붙는 HOME 원천).
    입주예정 = 한국부동산원 입주예정물량 → LH 공고 상세 → 청약홈(2026-10-13 결정 — 자료 기준일만 보면 받은 날이 최근인 청약홈이 이겨 지난 달 예정이 앞섰다)
-     → HOME 청약 본공고의 입주 예정월 → HOME 원천 공급계획의 입주월(HOME roadmap.source_events 와 같은 순서 — 본공고가 공급계획보다 구체적이다).
+     → HOME 청약 본공고의 입주 예정월 → HOME 근거 연결의 LH·GH·SH·지자체 공고문 입주 예정월(-lh-doc·-gh-doc·-sh-doc·-local-doc, 2026-10-20 D9 — 연도만 있던 사업의 달 예정이 앞서게)
+     → HOME 원천 공급계획의 입주월(HOME roadmap.source_events 와 같은 순서 — 본공고가 공급계획보다 구체적이다).
    준공예정 = HOME 원천(공사 계약 준공예정) → HOME LH 준공예정 별칭(파일 기준일이 늦어 bySource 로도 같지만 덤프 판이 바뀌어도 순서를 고정한다) */
 const SOURCE_RANK = {
-  MOVE_IN: ['datagokr-15111714', 'datagokr-15057999', 'datagokr-15098547', /^home-dump-.+-notice$/, /^home-dump-[^-]+$/],
+  MOVE_IN: ['datagokr-15111714', 'datagokr-15057999', 'datagokr-15098547', /^home-dump-.+-notice$/, /^home-dump-.+-(lh|gh|sh|local)-doc$/, /^home-dump-[^-]+$/],
   COMPLETION: [/^home-dump-[^-]+$/, /^home-dump-.+-lh-plan$/],
 };
 const rankOf = (e) => { const i = SOURCE_RANK[e.event_type]?.findIndex((x) => (typeof x === 'string' ? x === e.source_ref : x.test(e.source_ref))) ?? -1; return i < 0 ? Number.MAX_SAFE_INTEGER : i; };

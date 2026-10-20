@@ -17,10 +17,11 @@ const path = require('node:path');
 const P = require('./paths');
 const { projectStates, mapIndexFromLedger, loadTables, endOf, isShown, isRenewal } = require('./board');
 const { noticeUnitsOf } = require('./home-map');
+const { typesOf } = require('./housing-types');
 
 const INDEX_OUT = 'data/board/projects-index.json';
 const DETAIL_OUT = 'data/board/project-detail.json';
-const EXTRA_TABLES = ['links', 'programs', 'policies'];
+const EXTRA_TABLES = ['links', 'programs', 'policies', 'notice_links', 'notices'];
 /* 단계 사건(원장 event_type) — 사업 상세 타임라인의 줄 순서 */
 const STAGE_EVENTS = ['PERMIT', 'CONSTRUCTION_START', 'SUPPLY_NOTICE', 'COMPLETION', 'MOVE_IN'];
 const BOARD_OF_EVENT = { PERMIT: 1, CONSTRUCTION_START: 2, SUPPLY_NOTICE: 3, COMPLETION: 4, MOVE_IN: 5 };
@@ -96,6 +97,23 @@ function projectDetailFromLedger(tables, { referenceDate, observedMonth, locs = 
   const group = (rows) => { const m = new Map(); for (const r of rows) (m.get(r.local_project_id) || m.set(r.local_project_id, []).get(r.local_project_id)).push(r); return m; };
   const evOf = group(tables.events), locOf = group(tables.project_locations), unitOf = group(tables.units);
   const usedRefs = new Set();
+  /* 청약 공고(notice_links → notices, 옛 id 는 superseded_by 사슬로 대표 id 에) · 공급 유형(units.housing_type 묶음 — housing-types.js). 표가 없는 입력(옛 시험 자료)은 건너뛴다 */
+  const sup = new Map(tables.projects.filter((p) => p.superseded_by).map((p) => [p.local_project_id, p.superseded_by]));
+  const finalId = (id) => { let s = id; for (let i = 0; sup.has(s) && i < 10; i++) s = sup.get(s); return s; };
+  const noticeBy = new Map((tables.notices ?? []).map((n) => [`${n.notice_system}|${n.notice_id}`, n]));
+  /* 같은 공고 번호는 사업마다 한 번(옛 id 둘이 같은 공고에 이어진 경우 등 — 하나라도 CONFIRMED 면 CONFIRMED). 상세 주소: 연결 evidence 끝의 '원문 <주소>'(HOME 근거 연결 — home-source.js D7)가
+     https 이고 공고 사이트 세 곳일 때만 url 칸(창 자료 lib/board/project-window.ts 가 한 번 더 거른다, 청약홈은 공고 번호로 만든다) */
+  const urlOf = (evidence) => { const m = /· 원문 (https:\/\/(?:apply\.lh\.or\.kr|(?:www\.)?applyhome\.co\.kr|apply\.gh\.or\.kr)\/\S+)$/.exec(evidence ?? ''); return m ? m[1] : null; };
+  const noticesOf = new Map();
+  for (const l of tables.notice_links ?? []) {
+    const n = noticeBy.get(`${l.notice_system}|${l.notice_id}`);
+    if (!n) continue;
+    const id = finalId(l.local_project_id), m = noticesOf.get(id) || noticesOf.set(id, new Map()).get(id), k = `${l.notice_system}|${l.notice_id}`, url = urlOf(l.evidence);
+    const prev = m.get(k) ?? { system: l.notice_system, id: l.notice_id, title: n.notice_title, date: n.announced_on, review: l.review_status };
+    if (l.review_status === 'CONFIRMED') prev.review = 'CONFIRMED';
+    if (url && !prev.url) prev.url = url;
+    m.set(k, prev);
+  }
   const projects = {};
   for (const x of [...states].filter((s) => s.issued).sort((a, b) => byStr(a.p.local_project_id, b.p.local_project_id))) {
     const id = x.p.local_project_id, evs = evOf.get(id) ?? [];
@@ -123,12 +141,15 @@ function projectDetailFromLedger(tables, { referenceDate, observedMonth, locs = 
       prog.set(e.event_date, Math.max(prog.get(e.event_date) ?? -1, e.progress_pct));
     }
     for (const u of unitOf.get(id) ?? []) refs.add(u.source_ref);
+    const notices = [...(noticesOf.get(id)?.values() ?? [])].sort((a, b) => byStr(a.date ?? '', b.date ?? '') || byStr(a.id, b.id));
+    const types = typesOf((unitOf.get(id) ?? []).map((u) => u.housing_type));
     for (const r of refs) usedRefs.add(r);
     projects[id] = {
       unit: x.p.project_unit, agency: x.p.agency_id, scope: x.p.public_scope, basis: x.p.public_basis, asOf: x.p.as_of, issuedAt: x.p.issued_at, source: x.p.source_ref,
       bjd: [...new Set((locOf.get(id) ?? []).map((l) => l.bjd_code).filter(Boolean))].sort(),
       stages, progress: [...prog].sort((a, b) => byStr(a[0], b[0])), refs: [...refs].sort(),
       ...(locs.has(id) ? { loc: locs.get(id) } : {}),
+      ...(notices.length ? { notices } : {}), ...(types.length ? { types } : {}),
     };
   }
   const sources = {};

@@ -2,7 +2,7 @@
 const fs = require('fs'), assert = require('assert'), vm = require('vm');
 const h = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'docs', 'design', '대국민-모드-시안.html'), 'utf8');
 const code = [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((c) => c.includes('function makeSearch'));
-const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.stageSums = stageSums; this.yearSums = yearSums; this.unitCodes = unitCodes; this.modeOf = modeOf; this.modeValues = modeValues; this.yearRange = yearRange; this.modeView = modeView; this.headParts = headParts; this.pressMode = pressMode; this.sameMode = sameMode; this.MODE_ALL = MODE_ALL; this.STAGE3 = STAGE3; this.classesOf = classesOf; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome; this.ro = ro; this.daysBetween = daysBetween; this.ddayText = ddayText; this.inYear = inYear; this.yearBucket = yearBucket; this.noticeName = noticeName; this.fullDate = fullDate; this.blockOf = blockOf; this.inLabel = inLabel; this.distinctNames = distinctNames; this.geoSido = geoSido; this.searchProjects = searchProjects; this.sp = sp; this.addrArea = addrArea; this.inDate = inDate; this.inCmp = inCmp; this.dayKey = dayKey; this.noticeList = noticeList; this.noticeStatus = noticeStatus; this.noticePeriod = noticePeriod; this.noticePrice = noticePrice; this.noticeTargets = noticeTargets; this.noticeTitle = noticeTitle; this.noticeType = noticeType; this.widen = widen; this.pnuIndex = pnuIndex; this.neun = neun; this.safeUrl = safeUrl; this.fillNear = fillNear; this.ptXY = Map3D.ptXY; this.bigNum = bigNum;', ctx);
+const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.stageSums = stageSums; this.yearSums = yearSums; this.unitCodes = unitCodes; this.modeOf = modeOf; this.modeValues = modeValues; this.yearRange = yearRange; this.modeView = modeView; this.headParts = headParts; this.pressMode = pressMode; this.sameMode = sameMode; this.MODE_ALL = MODE_ALL; this.STAGE6 = STAGE6; this.SUPPLY_N = SUPPLY_N; this.STAGE_Q = STAGE_Q; this.classesOf = classesOf; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome; this.ro = ro; this.daysBetween = daysBetween; this.ddayText = ddayText; this.inYear = inYear; this.yearBucket = yearBucket; this.noticeName = noticeName; this.fullDate = fullDate; this.blockOf = blockOf; this.inLabel = inLabel; this.distinctNames = distinctNames; this.geoSido = geoSido; this.searchProjects = searchProjects; this.sp = sp; this.addrArea = addrArea; this.inDate = inDate; this.inCmp = inCmp; this.dayKey = dayKey; this.noticeList = noticeList; this.noticeStatus = noticeStatus; this.noticePeriod = noticePeriod; this.noticePrice = noticePrice; this.noticeTargets = noticeTargets; this.noticeTitle = noticeTitle; this.noticeType = noticeType; this.widen = widen; this.pnuIndex = pnuIndex; this.neun = neun; this.safeUrl = safeUrl; this.fillNear = fillNear; this.ptXY = Map3D.ptXY; this.bigNum = bigNum;', ctx);
 const S = ctx.makeSearch(ctx.D);
 const labels = (r) => r.regions.items.map((x) => x.label);
 /* 3D 지도 공용 모듈(/map 수도권 개요와 같은 구현): 스크립트·모양은 assets/js/map3d.js·assets/css/map3d.css 에 있고 build.js 가 끼워 넣는다.
@@ -59,9 +59,14 @@ t('숫자 정의 하나(v7): 요약 합계 = 지도 면 합 = 많은 곳 순위 
   assert.strictEqual(r6.length, 6); assert.strictEqual(r6[5].key, '41630', '순위 밖 보는 곳은 6번째 줄');
   assert.strictEqual(ctx.rankTop(g, '41290', 5).length, 5, '순위 안 보는 곳은 그대로 5줄');
 });
-t('6단계 띠(2026-10-18, 요약 카드 상태별 사업 수 칸을 대체): 준비 중 + 짓는 중 + 모집 끝남 호수 합 = 보는 곳 제목 큰 숫자(sumOf) — 시도·시군구 모두', () => {
+t('6단계 줄(2026-10-20 공식 이름): 계획 + 인허가 + 착공 + 모집 호수 합 = 보는 곳 제목 큰 숫자(sumOf), 준공·입주는 큰 숫자 밖 — 시도·시군구 모두', () => {
   const D = ctx.D;
-  for (const r of S.regions) { const c = ctx.stageSums(D, r.codes); assert.strictEqual(c[0] + c[1] + c[2], r.units, r.label); assert.strictEqual(c.length, 3); }
+  for (const r of S.regions) { const c = ctx.stageSums(D, r.codes); assert.strictEqual(c[0] + c[1] + c[2] + c[3], r.units, r.label); assert.strictEqual(c.length, 6); }
+  assert.deepStrictEqual([...ctx.STAGE6], ['계획', '인허가', '착공', '모집', '준공', '입주'], '단계 이름 6개·순서(원 숫자·옛 3단계 이름 없음)'); assert.strictEqual(ctx.SUPPLY_N, 4);
+  /* 준공·입주 줄은 큰 숫자 밖: 준공(6)·입주(7) 사업을 끼워 넣으면 해당 칸만 늘고 큰 숫자(sumOf)는 그대로 */
+  const D2 = JSON.parse(JSON.stringify(D)), c0 = S.regionOf['41360'].codes[0]; D2.prj[c0].push(['T1', '시험 준공', 6, 100, -1, ''], ['T2', '시험 입주', 7, 40, -1, '']);
+  const a0 = ctx.stageSums(D, S.regionOf['41360'].codes), a1 = ctx.stageSums(D2, S.regionOf['41360'].codes);
+  assert.strictEqual(a1[4] - a0[4], 100); assert.strictEqual(a1[5] - a0[5], 40); assert.strictEqual(ctx.sumOf(D2, S.regionOf['41360'].codes).u, ctx.sumOf(D, S.regionOf['41360'].codes).u, '큰 숫자는 준공·입주를 세지 않는다');
   const c = ctx.stageSums(D, S.regionOf['41360'].codes); console.log('  남양주시 띠:', c.join(' · '));
 });
 t('지도 라벨(v7d): 값 = 원장 값(1만 이상 0.1만 단위), 면 위 라벨끼리 겹침 0, 가장 큰 값이 먼저', () => {
@@ -184,7 +189,7 @@ t('요약 표 큰 숫자 줄은 지도 모드를 따른다(2026-10-18 통합 요
   const YBLT = ['2026년(올해)', '2027년', '2028년', '2029년', '2030년', '2031년 이후', '연도 미정'];
   assert.deepStrictEqual([...ctx.headParts(ctx.MODE_ALL, 16388, YBLT)], ['공급 예정 호수', '1만 6,388', '호']);
   assert.deepStrictEqual([...ctx.headParts({ k: 'y', i: 2 }, 9660, YBLT)], ['2028년 공급 호수', '9,660', '호']);
-  assert.deepStrictEqual([...ctx.headParts({ k: 's', i: 1 }, 9660, YBLT)], ['짓는 중', '9,660', '호']);
+  assert.deepStrictEqual([...ctx.headParts({ k: 's', i: 2 }, 9660, YBLT)], ['착공', '9,660', '호']);
   assert(!/yrLine|class="yr-l"/.test(fs.readFileSync(require('path').join(__dirname, 'template.html'), 'utf8')), '들어올 해 정해짐 줄 없음');
   { const T = fs.readFileSync(require('path').join(__dirname, 'template.html'), 'utf8'); assert(!T.includes('그 비율이 낮으면') && /id="tip-head" popover>[^\n]*<p id="tip-head-hh"><\/p><\/div>/.test(T), 'ⓘ: 옛 비율 막대 설명은 빼고 가구 증가 한 줄 자리(2026-10-18 사업 일정표)'); }
 });
@@ -308,7 +313,7 @@ t("r9-3 들어올 해 = 입주 → 준공 → 원장 다음 일정(준공·입�
 });
 t("r9-6 지도 제목은 두 테마 공통 '높을수록 … 호수가 많아요'(색 말 없음), ⓘ 색 설명도 테마 중립", () => {
   assert(h.includes('시군구 면이 높이 솟을수록 공급 예정 호수가 많아요'), '높이 읽는 법은 ⓘ(2026-10-18 지도 카드 제목 = 한 문장 h1, 범례 제목 = 모드 이름)');
-  assert(h.includes("const modeName = (m) => (m.k === 'y' ? `${YBL[m.i]} 공급 호수` : m.k === 's' ? `${STAGE3[m.i]} 호` : '공급 예정 호수');"));
+  assert(h.includes("const modeName = (m) => (m.k === 'y' ? `${YBL[m.i]} 공급 호수` : m.k === 's' ? `${STAGE6[m.i]} 호수` : '공급 예정 호수');"));
   assert(!/진할수록|가장 옅은 회색/.test(h));
 });
 t("r9-7 공고 이름: 원래 이름의 블록 표기('S-12'·'C-1')를 살리고 군더더기만 뺀다, 복사 단추 누름 칸 44px", () => {
@@ -562,9 +567,9 @@ t('r13 0건 넓히기 순서: 내 동네 → 이웃(D.nb, 시도 경계 넘어) 
 t('달력에 넣기 기능 없음: 문구·.ics·text/calendar 0', () => {
   for (const w of ['달력에 넣기', '.ics', 'text/calendar']) assert(!TPL.includes(w), w);
 });
-t("r13 원장 ④단계 이름 '모집 끝남'(배지·시트 칩·사업 카드·검색·ⓘ) — '모집 시작' 없음", () => {
+t("r13 원장 ④단계 이름 '모집'(배지·시트 칩·사업 카드·검색·ⓘ, 2026-10-20 공식 이름) — '모집 시작'·'모집 끝남' 없음", () => {
   assert(!TPL.includes('모집 시작'), '모집 시작 남음');
-  assert(TPL.includes("['모집 끝남', '', 'sale']") && TPL.includes("['2', '모집 끝남']") && TPL.includes("모집 공고가 이미 나간 사업을 '모집 끝남'으로 셉니다") && TPL.includes('모집 끝남 = ④'));
+  assert(TPL.includes("['모집', '', 'sale']") && TPL.includes("['3', '모집']") && TPL.includes('들어올 사람을 모집하는 공고가 나갔어요') && !TPL.includes('모집 끝남'));
 });
 t('r13 공고 ↔ 사업은 PNU 로만: A17 pnu 2824510900102770001 = PRJ-28245-0054, 원장 줄 7번째 칸, 이름으로 잇지 않는다', () => {
   const ix = ctx.pnuIndex(ctx.D); assert.strictEqual(ix.get('2824510900102770001'), 'PRJ-28245-0054');
@@ -715,7 +720,7 @@ t("r16-1 공고 카드: 한 건 = 링크 하나(새 창, rel=noopener) · 첫 �
   assert(TPL.includes('<p class="ap-near" id="ap-near">근처에서</p>') && TPL.includes('지금 접수 중인 공고가 없어요'), "'근처에서'·0건 안내 유지");
 });
 t('r16-2 범례(2026-10-18 레일): 많은 곳 순위 아래, /map 개요 범례와 같은 모양 — 견본 + 구간 글자, 0(없음)부터 커지는 순 · 견본 색 단계 = 면 색 단계 · 제목 = 지도 모드 이름 · 사업 위치 점 · 휴대폰은 가로로 늘어놓기', () => {
-  const modeNameT = (m) => (m.k === 'y' ? `${['2026년(올해)', '2027년', '2028년'][m.i]} 공급 호수` : m.k === 's' ? `${ctx.STAGE3[m.i]} 호` : '공급 예정 호수');
+  const modeNameT = (m) => (m.k === 'y' ? `${['2026년(올해)', '2027년', '2028년'][m.i]} 공급 호수` : m.k === 's' ? `${ctx.STAGE6[m.i]} 호수` : '공급 예정 호수');
   const fmtT = (v) => Number(v).toLocaleString('en-US'), labelNumT = (v) => (v / 1e4).toFixed(1) + '만';
   const L = new Function('fmt', 'esc', 'modeName', 'TIP_MAP', 'labelNum', srcOf('function legendHtml(', '\n}\n') + '\n}\nreturn legendHtml;')(fmtT, escT, modeNameT, '<b>i</b>', labelNumT);
   const C4 = { br: [1300, 3200, 4900], lv: (r) => [0, 1, 2, 4, 5][r] }, legend = L(C4, ctx.MODE_ALL);
@@ -734,10 +739,10 @@ t('r16-2 범례(2026-10-18 레일): 많은 곳 순위 아래, /map 개요 범례
   assert(!/l2/.test(legend) && /class="lg-tk l2"/.test(L({ br: [10000, 20000, 30000, 40000], lv: (r) => r }, ctx.MODE_ALL)), '눈금이 겹칠 만큼 넓으면 한 칸 건너 둘째 줄(.l2), 좁으면 한 줄');
   const order = ['class="lg-h"', 'class="lg-bar"', 'class="lg-ticks"'].map((x) => legend.indexOf(x)); assert(order[0] > 0 && order.every((v, i) => !i || order[i - 1] < v) && !legend.includes('lg-pt'), '제목(모드 이름 ⓘ) → 막대 → 눈금(사업 위치 점 범례는 2026-10-19 지웠다)');
   assert(legend.startsWith('<div class="lgv" role="group" aria-label="바닥 색 구간(공급 예정 호수), 단위 호"><h3 class="lg-h"><span class="lg-t">공급 예정 호수</span><b>i</b></h3>') && !/ui-hud|ui-inset|ui-card/.test(legend), "범례 머리 = 모드 이름 + ⓘ 만('호 호' 없음, 단위는 aria-label), 판 없음");
-  assert(L(C4, { k: 'y', i: 2 }).includes('<span class="lg-t">2028년 공급 호수</span>') && L(C4, { k: 's', i: 1 }).includes('aria-label="바닥 색 구간(짓는 중 호), 단위 호"') && L(C4, { k: 'y', i: 2 }).includes('aria-label="없음"'), '모드 제목 · 0 칸 이름');
+  assert(L(C4, { k: 'y', i: 2 }).includes('<span class="lg-t">2028년 공급 호수</span>') && L(C4, { k: 's', i: 2 }).includes('aria-label="바닥 색 구간(착공 호수), 단위 호"') && L(C4, { k: 'y', i: 2 }).includes('aria-label="없음"'), '모드 제목 · 0 칸 이름');
   assert(L({ br: [], lv: () => 3 }, ctx.MODE_ALL).includes('title="1호 이상"') && !L({ br: [], lv: () => 3 }, ctx.MODE_ALL).includes('<li>'), '구간이 하나여도 깨지지 않는다');
-  const hd = new Function('esc', 'YBL', 'STAGE3', 'areaOf', 'VIEW', srcOf('const modeShort = ', '\nconst zeroWord') + '\nreturn rankHead;')(escT, ['2026년(올해)', '2027년', '2028년'], ctx.STAGE3, () => ({ label: '서울' }), { sd: '11' });
-  assert.strictEqual(hd(ctx.MODE_ALL), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 전체 기간</span><span>단위: 호</span></p>'); assert.strictEqual(hd({ k: 'y', i: 2 }), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 2028년</span><span>단위: 호</span></p>'); assert.strictEqual(hd({ k: 'y', i: 0 }), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 2026년</span><span>단위: 호</span></p>'); assert.strictEqual(hd({ k: 's', i: 1 }), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 짓는 중</span><span>단위: 호</span></p>', '순위 머리가 모드를 따른다');
+  const hd = new Function('esc', 'YBL', 'STAGE6', 'areaOf', 'VIEW', srcOf('const modeShort = ', '\nconst zeroWord') + '\nreturn rankHead;')(escT, ['2026년(올해)', '2027년', '2028년'], ctx.STAGE6, () => ({ label: '서울' }), { sd: '11' });
+  assert.strictEqual(hd(ctx.MODE_ALL), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 전체 기간</span><span>단위: 호</span></p>'); assert.strictEqual(hd({ k: 'y', i: 2 }), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 2028년</span><span>단위: 호</span></p>'); assert.strictEqual(hd({ k: 'y', i: 0 }), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 2026년</span><span>단위: 호</span></p>'); assert.strictEqual(hd({ k: 's', i: 2 }), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 착공</span><span>단위: 호</span></p>', '순위 머리가 모드를 따른다');
   assert(TPL.includes("$('#mapc .rank-head')") && TPL.includes('rh.innerHTML = rankHead(curMode())'), '모드가 바뀌면(미리보기 포함) 순위 머리도 갱신');
   assert(TPL.includes("${tband}${legendHtml(VIEW.C, MODE_ALL)}<div class=\"rail\">${list('rank', `<div class=\"rank-head\">${rankHead(MODE_ALL)}</div>`)}</div>") && TPL.includes("$('#mapc').innerHTML = `<div class=\"mapc-b${cap ? '' : ' nomap'}\">${bodyH}</div>`;"), '레일: 많은 곳 → 눈금 범례(시도 전체는 요약 표 이름 줄의 시도 단추, 2026-10-18)');
   assert(!/\.rail > \.sido-link|\.lg-list|lg-tight|rk-tight|\.lg-u\b|\.sido-link|lg-sido/.test(CSS) && CSS.includes('.mapc-b.rk5 .rank ol > li.m5 { display: none; }') && CSS.includes('.mapc-b.rk3 .rank ol > li.mx { display: none; }'), '시도 전체는 숨길 때 자리 없음(display), 순위 줄이기 7 → 5 → 3');
@@ -845,11 +850,11 @@ t('r18-1 카드 머리 공용 부품(globals 내보내기 층): .ui-card-head(�
   assert(!/class="all"|ui-count/.test(TPL) && (TPL.match(/class="ui-btn ui-btn-secondary ui-btn-sm all[" ]/g) || []).length === 1 && (TPL.match(/class="ui-btn ui-btn-link ui-btn-sm all[" ]/g) || []).length === 2 && TPL.includes('class="ui-btn ui-btn-ghost ui-btn-sm sm-sd"'), 'r19 머리 줄 개수 단추 = .ui-btn.ui-btn-secondary.ui-btn-sm · 시도 전체 = 요약 표 이름 줄의 ghost · sm 시도 단추(2026-10-18)');
   assert(!/background-clip:\s*text|-webkit-text-fill-color/.test(TPLCSS + GXR), '그라데이션 글자 없음');
 });
-t('r18-2 요약 카드 색감: 상태별 3칸 = 단계색 점 + 옅은 틴트 + 단계 글자색 숫자(준비 중 ①② --st-plan · 짓는 중 ③ --st-build · 모집 끝남 ④ --st-sale), 다음 준공 = 준공색 띠(입주는 입주색, 아이콘 없음), 공고 상태 칸 = 접수 중 --ok · 마감 임박 --warn · 접수 예정 --primary, 글자 대비 4.5:1(라이트·다크 계산)', () => {
-  assert(TPL.includes("const STATUS = [['준비 중', 'prep', ''], ['짓는 중', '', 'build'], ['모집 끝남', '', 'sale']") && TPL.includes('준비 중 = 계획·인허가, 짓는 중 = 착공, 모집 끝남 = 모집'), '단어 ↔ 단계(tip-head 정의)');
-  /* 2026-10-18 통합 요약 표: 단계 3줄 = 이름 | 단계색 막대(폭 = 비율) | 호수. 가장 많은 단계 줄(.top)만 막대가 제 단계색·숫자 굵게, 나머지 막대는 단계색을 옅게 섞는다. 고정된 줄 = 단계색 틴트(--tint-mix-on) + 굵게 */
-  assert(TPL.includes('<button type="button" class="sm-r s${i}${i === top ? \' top\' : \'\'}${u ? \'\' : \' z\'}" data-st="${i}" data-v="${u}" aria-pressed="false" aria-label="${lb}, 지도에서 보기" title="${lb}"><span class="sm-sn">${STAGE3[i]}</span><span class="sm-b" aria-hidden="true"><i style="flex-grow:${(t.u ? u / t.u : 0).toFixed(4)}"></i></span><b class="sm-sv">${bigNum(u)}</b></button>'));
-  assert(/\.sm-r \{ --c: var\(--st-plan\); --c-ink: var\(--st-plan-ink\);[^}]*grid-template-columns: subgrid;/.test(CSS) && /\.sm-r\.s1 \{ --c: var\(--st-build\); --c-ink: var\(--st-build-ink\); \}/.test(CSS) && /\.sm-r\.s2 \{ --c: var\(--st-sale\); --c-ink: var\(--st-sale-ink\); \}/.test(CSS) && /\.sm-b > i \{[^}]*background: var\(--c-ink\); \}/.test(CSS) && CSS.includes('.sm-r.top .sm-sv { font-weight: 700; }') && /\.sm-r\[aria-pressed="true"\] \{ background: color-mix\(in oklab, var\(--c\) var\(--tint-mix-on\), var\(--sf\)\); \}/.test(CSS) && /\.sm-st \{[^}]*grid-auto-rows: 44px;/.test(CSS), '단계 줄 색 · 1급 가장 많은 줄 · 2급 고정 줄 · 누름 44');
+t('r18-2 요약 카드 색감: 단계 6줄 = 단계색 점 + 옅은 틴트 + 단계 글자색 숫자(계획 --st-plan · 인허가 --st-permit · 착공 --st-build · 모집 --st-sale · 준공 --st-soon · 입주 --st-move), 다음 준공 = 준공색 띠(입주는 입주색, 아이콘 없음), 공고 상태 칸 = 접수 중 --ok · 마감 임박 --warn · 접수 예정 --primary, 글자 대비 4.5:1(라이트·다크 계산)', () => {
+  assert(TPL.includes("const STATUS = [['계획', '', 'plan'], ['인허가', '', 'permit'], ['착공', '', 'build'], ['모집', '', 'sale'], ['준공', '', 'soon'], ['입주', '', 'move']]") && TPL.includes('계획·인허가·착공·모집 네 단계를 더해요') && TPL.includes('이미 지은 준공·입주 호수는 이 숫자에 넣지 않고'), '단어 ↔ 단계(tip-head 정의)');
+  /* 2026-10-18 통합 요약 표(10-20 6줄): 단계 줄 = 이름 | 단계색 막대(폭 = 비율) | 호수. 가장 많은 단계 줄(.top)만 막대가 제 단계색·숫자 굵게, 나머지 막대는 단계색을 옅게 섞는다. 고정된 줄 = 단계색 틴트(--tint-mix-on) + 굵게 */
+  assert(TPL.includes('<button type="button" class="sm-r s${i}${i === top ? \' top\' : \'\'}${u ? \'\' : \' z\'}" data-st="${i}" data-v="${u}" aria-pressed="false" aria-label="${lb}, 지도에서 보기" title="${tt}"><span class="sm-sn">${STAGE6[i]}</span><span class="sm-b" aria-hidden="true"><i style="flex-grow:${(t.u ? Math.min(1, u / t.u) : 0).toFixed(4)}"></i></span><b class="sm-sv">${bigNum(u)}</b></button>'));
+  assert(/\.sm-r \{ --c: var\(--st-plan\); --c-ink: var\(--st-plan-ink\);[^}]*grid-template-columns: subgrid;/.test(CSS) && ['permit', 'build', 'sale', 'soon', 'move'].every((k, j) => CSS.includes(`.sm-r.s${j + 1} { --c: var(--st-${k}); --c-ink: var(--st-${k}-ink); }`)) && /\.sm-b > i \{[^}]*background: var\(--c-ink\); \}/.test(CSS) && CSS.includes('.sm-r.top .sm-sv { font-weight: 700; }') && /\.sm-r\[aria-pressed="true"\] \{ background: color-mix\(in oklab, var\(--c\) var\(--tint-mix-on\), var\(--sf\)\); \}/.test(CSS) && /\.sm-st \{[^}]*grid-auto-rows: 44px;/.test(CSS), '단계 줄 색 · 1급 가장 많은 줄 · 2급 고정 줄 · 누름 44');
   assert(TPL.includes('<a class="nx" href="/citizen/projects?id=${nx.id}" data-go="/citizen/projects?id=${nx.id}" data-k="${nx.k}"') && TPL.includes(`"><span class="k">다음 \${NEXT[nx.k]}</span>`) && /\.nx \{[^}]*grid-template-areas: 'k d \. dd' 'nm nm nm u';/.test(CSS) && !/\.nx \{[^}]*border(-bottom)?:/.test(CSS) && CSS.includes('.nx .sm-dd.on { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); font-weight: 700; }'), '다음 준공 줄(요약 표 안, 테두리·면 없음) · 30일 안 D-day 칩 = 주색 채움');
   assert(/\.smry \{ --sf: var\(--card\);/.test(CSS) && !/\.smry \{[^}]*(?:margin: calc|border-color:|background: color-mix)/.test(CSS) && /html\[data-page="citizen"\] \.smry \{ --sf: var\(--cz-summary-bg\); background: linear-gradient\(135deg, var\(--cz-summary-bg\), var\(--cz-summary-bg-2\)\); border-color: var\(--cz-summary-bg\); color: var\(--cz-summary-fg\);/.test(GXR), '요약 = 별개 카드(.ui-card) + 짙은 클레이 그라데이션 채움·흰 글자(2026-10-19 사용자 선택 B 클레이 그라데이션 — 2026-10-18 안 2 — 값은 globals 범위 블록 --cz-summary-*, 템플릿은 틴트를 더하지 않는다), 카드 가장자리까지 붙은 구역 아님');
   const ntRow = new Function('noticeTargets', 'noticePrice', 'noticeType', 'noticeTitle', 'noticeStatus', 'noticePeriod', 'esc', 'safeUrl', 'ico', 'TODAY', 'noticeSpan', srcOf('function ntRow', '\nconst SKEL') + '\nreturn ntRow;')(ctx.noticeTargets, ctx.noticePrice, ctx.noticeType, ctx.noticeTitle, ctx.noticeStatus, ctx.noticePeriod, escT, ctx.safeUrl, icoT, '2026-10-17', ctx.noticeSpan);
@@ -1006,33 +1011,33 @@ t('2026-10-19 필터를 검색 줄로: .band 한 줄(검색 · 보는 곳 · 시
   assert(TPL.includes('.band-r { flex: 1 0 auto; max-width: 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s5); }'), '오른쪽 묶음: 보는 곳 왼쪽 · 거르기 오른쪽, 모자라면 거르기가 아래 줄');
   assert(TPL.includes('  .band > .sbox { flex-basis: 100%; max-width: none; }'), '899 이하: 검색 한 줄');
   const m = TPL.slice(TPL.indexOf('/* 띠(2026-10-19): 검색 한 줄'));
-  assert(m.includes('.band-r > .loc { flex: 1 1 100%; }') && m.includes('.loc .gps { margin-left: auto; }') && m.includes('.fbar { flex: 1 1 100%; gap: var(--s2); }') && m.includes('.fbar .ui-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: 100%; }') && m.includes('.fbar .ui-tabs:last-child { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto; }'), '599 이하: 검색 → 보는 곳 → 시도 탭(3칸) → 단계 탭(2 × 2), 가로 넘침 없음');
+  assert(m.includes('.band-r > .loc { flex: 1 1 100%; }') && m.includes('.loc .gps { margin-left: auto; }') && m.includes('.fbar { flex: 1 1 100%; gap: var(--s2); }') && m.includes('.fbar .ui-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: 100%; }') && m.includes('.fbar .ui-tabs:last-child { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); height: auto; }'), '599 이하: 검색 → 보는 곳 → 시도 탭(3칸) → 단계 탭(7개 = 4칸 × 2줄, 2026-10-20), 가로 넘침 없음');
   assert(TPL.includes('<div class="ui-search" id="sfield">') && !/\.sfield\b|#q \{|#q:focus/.test(TPLCSS) && TPL.includes('.ui-search.has .clear { display: flex; }'), '검색 입력은 부품 .ui-search(화면에 모양 규칙 없음), 지우기는 입력이 있을 때만');
   { const GX = require(require('path').join(ROOT, 'scripts', 'globals-export.js')).extractExport(fs.readFileSync(require('path').join(ROOT, 'app', 'globals.css'), 'utf8'));
     assert(/--ctl-h: 40px;/.test(GX) && GX.includes('html[data-page="citizen"] .band { --btn-h: var(--ctl-h); }'), '한 줄 조작 높이 40(검색·탭·단추)');
     const se = GX.slice(GX.indexOf('  .ui-search {'), GX.indexOf('  /* 카드 머리(2026-10-18)'));
     assert(/\.ui-search > input \{[^}]*height: var\(--btn-h\);[^}]*background: var\(--card\);[^}]*text-overflow: ellipsis;/.test(se) && /\.ui-search > input:focus-visible \{\s*border-color: var\(--ring\);\s*outline: var\(--border-w-on\) solid var\(--ring\);/.test(se) && /\.ui-search:focus-within > svg \{\s*color: var\(--primary\);/.test(se) && !/box-shadow:\s*0 0 /.test(se) && !/#[0-9a-fA-F]{3,8}\b|rgb\(|\d+px/.test(se), '검색 입력 부품: 높이 토큰 · 카드 면 · 초점 = 주색 테두리 + 2px 외곽선 · 돋보기 주색 · 0 오프셋 후광 없음 · 리터럴 0'); }
 });
-t('2026-10-19 상단 필터 = 시도(서울·경기·인천) + 단계(전체·준비 중·짓는 중·모집 끝남): 부품 단추만, 모드·사업 표와 동기, 중복 칩 없음', () => {
+t('2026-10-19 상단 필터 = 시도(서울·경기·인천) + 단계(전체·계획·인허가·착공·모집·준공·입주): 부품 단추만, 모드·사업 표와 동기, 중복 칩 없음', () => {
   const fb = TPL.slice(TPL.indexOf('<div class="fbar" id="fbar">'), TPL.indexOf('<div class="top-row">'));
   assert(fb.indexOf('시도로 보기') < fb.indexOf('단계로 보기'));
   assert.deepStrictEqual([...fb.matchAll(/data-vsido="(\d+)"[^>]*>([^<]+)</g)].map((m) => m[1] + m[2]), ['11서울', '41경기', '28인천'], '서울·경기·인천 순서');
-  assert.deepStrictEqual([...fb.matchAll(/data-fst="(\w+)"[^>]*>([^<]+)</g)].map((m) => m[1] + m[2]), ['all전체', '0준비 중', '1짓는 중', '2모집 끝남']);
+  assert.deepStrictEqual([...fb.matchAll(/data-fst="(\w+)"[^>]*>([^<]+)</g)].map((m) => m[1] + m[2]), ['all전체', '0계획', '1인허가', '2착공', '3모집', '4준공', '5입주']);
   assert.strictEqual((fb.match(/class="ui-tabs ui-tabs-seg" role="group" aria-label="시도로 보기"/g) || []).length, 1, '시도 = 채움 탭(2026-10-19)');
   assert.strictEqual((fb.match(/class="ui-tabs ui-tabs-line" role="group" aria-label="단계로 보기"/g) || []).length, 1, '단계 = 밑줄 탭(2026-10-19)');
   assert(!/ui-btn/.test(fb) && !/role="tab"/.test(fb), '단추 부품·role=tab 없음(거르기라 group + aria-pressed)');
-  assert.strictEqual((fb.match(/<span class="n"><\/span>/g) || []).length, 4, '배지는 단계 탭 4개에만(시도 탭 없음)');
+  assert.strictEqual((fb.match(/<span class="n"><\/span>/g) || []).length, 7, '배지는 단계 탭 7개(전체 + 6단계)에만(시도 탭 없음)');
   assert(fb.match(/role="group" aria-label="단계로 보기"/) && fb.match(/role="group" aria-label="시도로 보기"/));
   assert(!/<style[^>]*>[\s\S]*#fbar[^{]*\{[^}]*(#[0-9a-fA-F]{3,6}|rgb)/.test(TPL), '템플릿 #fbar 규칙에 색 리터럴 없음');
   const GCSS = fs.readFileSync(require('path').join(ROOT, 'app', 'globals.css'), 'utf8');
-  for (const [i, k] of [['0', 'plan'], ['1', 'build'], ['2', 'sale']]) assert(GCSS.includes(`html[data-page="citizen"] #fbar [data-fst="${i}"] { --tab-c: var(--st-${k}-ink); }`), `단계색 ${k}(고른 탭 글자·옅은 면·테두리·배지)`);
+  for (const [i, k] of [['0', 'plan'], ['1', 'permit'], ['2', 'build'], ['3', 'sale'], ['4', 'soon'], ['5', 'move']]) assert(GCSS.includes(`html[data-page="citizen"] #fbar [data-fst="${i}"] { --tab-c: var(--st-${k}-ink); }`), `단계색 ${k}(고른 탭 글자·옅은 면·테두리·배지)`);
   { const ol = GCSS.slice(GCSS.indexOf('  .ui-tabs-outline {'), GCSS.indexOf('  /* 검색 입력(2026-10-19'));
     assert(/\.ui-tabs-outline \{\s*--tab-c: var\(--primary\);\s*border: var\(--border-w\) solid var\(--border\);\s*background: var\(--card\);/.test(ol) && /\[aria-current="true"\]\), \.dark \.ui-tabs-outline > :is\(button, a\):is\(\[aria-pressed="true"\], \[aria-current="true"\]\) \{\s*border-color: var\(--tab-c\);\s*background: color-mix\(in oklab, var\(--tab-c\) var\(--tint-mix\), var\(--card\)\);\s*color: var\(--tab-c\);/.test(ol) && /\[aria-current="true"\]\) \.n \{\s*background: var\(--tab-c\);\s*color: var\(--card\);/.test(ol), '테두리형 탭: 카드 면 틀 · 고른 탭 = 그 색 옅은 면 + 1px + 글자 · 배지 채움'); }
   assert(!/#fbar \[data-fst="\d"\] \{ --primary/.test(GCSS), '옛 --primary 덮어쓰기 없음');
   { const GX = require(require('path').join(ROOT, 'scripts', 'globals-export.js')).extractExport(GCSS), tabs = GX.slice(GX.indexOf('  .ui-tabs {'), GX.indexOf('  /* 카드 머리(2026-10-18)'));
     assert(tabs.length > 500 && !/#[0-9a-fA-F]{3,8}\b|rgb\(|\d+px/.test(tabs), '.ui-tabs 는 토큰(var)만 · 리터럴 0');
     assert(/\.ui-tabs \{[^}]*background: var\(--muted\);[^}]*padding: var\(--tabs-pad\)/.test(tabs) && /\[aria-current="true"\]\) \{\s*background: var\(--card\);[^}]*font-weight: 700;[^}]*box-shadow: var\(--shadow-card\)/.test(tabs) && /\.dark \.ui-tabs > :is\(button, a\):is\(\[aria-pressed="true"\], \[aria-current="true"\]\) \{\s*border-color: var\(--input\)/.test(tabs) && /\.ui-tabs \.n \{[^}]*font-size: var\(--fs-caption\);[^}]*font-weight: 700/.test(tabs) && /--tabs-pad: 3px;/.test(GX), '틀 · 고른 탭 · 다크 · 배지'); }
-  assert(TPL.includes("n.textContent = String(cnt[n.parentNode.dataset.fst])") && TPL.includes('all.forEach((x) => { cnt[stOf(x.b)]++; })') && TPL.includes('projectsOf(cellScope().r.codes)'), '배지 건수 = 보는 지역의 단계별 사업 건수(projectsOf · stOf · cellScope)');
+  assert(TPL.includes("n.textContent = String(cnt[n.parentNode.dataset.fst])") && TPL.includes('cnt[OF_STAGE[p[2]]]++; cnt.all++;') && TPL.includes('for (const c of cellScope().r.codes) for (const p of D.prj[c] || [])'), '배지 건수 = 보는 지역의 6단계별 사업 건수(OF_STAGE · cellScope, 전체 = 여섯 합)');
   /* 동기: 모드가 바뀔 때마다(applyMode 두 길)·보는 곳이 바뀔 때마다(renderAll) 한 함수가 칠하고, 해 모드면 단계 단추는 모두 풀린다 */
   assert(TPL.includes("renderHead(); paintBand(); paintTband(); paintFbar(); return; }") && TPL.includes('paintBand(); paintTband(); paintFbar();   // 요약 표') && TPL.includes('renderCells(); paintFbar(); fitApply();'));
   assert(TPL.includes("b.dataset.fst === 'all' ? m.k === 'all' : m.k === 's' && +b.dataset.fst === m.i") && TPL.includes("String(b.dataset.vsido === sd)"));
@@ -1087,6 +1092,21 @@ const ahWant = (r, today) => {   // 시험 쪽 단계 계산(원천 칸 이름 �
   return ['끝남', `${d.RCRIT_PBLANC_DE.slice(0, 4)}.${d.RCRIT_PBLANC_DE.slice(5, 7)} 공고`];
 };
 const ahSorted = (list, today) => list.map((r, i) => ({ r, i, live: ahWant(r, today)[0] !== '끝남' })).sort((a, b) => b.live - a.live || b.r.d.RCRIT_PBLANC_DE.localeCompare(a.r.d.RCRIT_PBLANC_DE) || b.r.d.HOUSE_MANAGE_NO.localeCompare(a.r.d.HOUSE_MANAGE_NO)).map((x) => x.r);
+
+t('지금 신청 공고 카드 호수(U12, 2026-10-20): units 가 있으면 셋째 줄 끝 \'120호\'(자리 쉼표), 단지 이름·주소는 보이는 글에 없고 링크 title·화면 읽기 글에만, 없으면 아무것도 안 붙임', () => {
+  const base = { id: 'x', title: '시험 공고', agency: 'SH', status: '접수중', housingType: '아파트', supplyType: '국민임대', applyFrom: '2000-01-01', applyTo: '2999-12-31', url: 'https://www.myhome.go.kr/x', targets: ['신혼부부'], deposit: null, monthlyRent: null };
+  const ntRow = new Function('noticeTargets', 'noticePrice', 'noticeType', 'noticeTitle', 'noticeStatus', 'noticePeriod', 'TODAY', 'esc', 'safeUrl', 'fmt', 'ico', 'spanBar', srcOf('function ntRow(', '\n/* 접수 기간 띠') + '\nreturn ntRow;')(ctx.noticeTargets, ctx.noticePrice, ctx.noticeType, ctx.noticeTitle, ctx.noticeStatus, ctx.noticePeriod, '2026-10-20', (x) => String(x).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'), ctx.safeUrl, (n) => n.toLocaleString('ko-KR'), () => '<svg></svg>', () => '');
+  const withU = ntRow({ ...base, complex: '가나다단지', units: 1200, address: '서울특별시 종로구 어딘가 1' }, ''), noU = ntRow({ ...base, complex: null, units: null, address: null }, ''), zero = ntRow({ ...base, units: 0 }, '');
+  const nt3 = (h) => (h.match(/<span class="nt3"[\s\S]*?<\/span><\/span>(?=<svg|<\/span>|\s*<svg)/) || [''])[0];
+  assert(/<span class="un">1,200호<\/span><\/span><\/span>/.test(withU), '호수는 셋째 줄 맨 끝(자리 쉼표 + 단위 호)');
+  assert(!/class="un"/.test(noU) && !/class="un"/.test(zero), 'units 없음·0 이면 아무것도 안 붙인다');
+  const visible = withU.replace(/ (title|aria-label)="[^"]*"/g, '').replace(/<span class="sr">[^<]*<\/span>/g, '').replace(/<[^>]+>/g, ' ');
+  assert(!visible.includes('가나다단지') && !visible.includes('종로구'), '단지 이름·주소는 보이는 글에 없다');
+  assert(/<a class="ntc [^>]*title="시험 공고\n가나다단지, 서울특별시 종로구 어딘가 1"/.test(withU) && /<span class="sr">가나다단지, 서울특별시 종로구 어딘가 1 \(공고 원문, 새 창\)<\/span>/.test(withU), '링크 title + 화면 읽기 글에만');
+  assert(!/<a class="ntc [^>]*title=/.test(noU), '이름·주소가 없으면 title 도 없다');
+  assert.strictEqual((withU.match(/class="nt[123]"/g) || []).length, 3, '카드 세 줄 규격 그대로');
+  assert(/\.nt3 \.un \{/.test(TPL));
+});
 
 t('청약 단지-1 카드 머리 = 제목 \'청약 단지\' + (i) 하나(사업 n개 링크 단추 없음) · 열 머리 9칸(2026-10-20 한 줄) = 구분 · 이름 · 위치 · 세대 · 특별공급 · 주택형 · 일정 · 입주 · 시공·시행 · ⓘ = 원천기관 · 수집 기준일 · 원문 안내', () => {
   const h = ahCard('11650'), head = h.slice(0, h.indexOf('</div>'));
@@ -1293,5 +1313,5 @@ t('2026-10-19 지도 레일: 범례 구간 단추(aria-pressed 고정·다시 �
   assert(CSS.includes('.lgv[data-band] .lg-bar .lg-sw:not(.on) { opacity: var(--cz-dim-op); }') && CSS.includes('.lgv[data-band] .lg-grad > .lg-sw.on { z-index: 1; box-shadow: var(--shadow-hud); }'), '2026-10-19 그라데이션 범례: 고른 구간 조각만 떠 보이고(그림자) 나머지 조각은 옅게 덮인다');
   assert(/--cz-dim-op: \.\d+;/.test(GXR) && /--map-dim-mix: \d+%;/.test(GXR), '흐림 값 = globals 토큰');
 });
-const N = 106; console.log(`${pass}/${N} 통과`);
+const N = 107; console.log(`${pass}/${N} 통과`);
 process.exit(pass === N ? 0 : 1);

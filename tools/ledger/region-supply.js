@@ -26,7 +26,7 @@ const monthOf = (e) => (e.event_date ? e.event_date.slice(0, 7) : e.event_month 
 
 /* ---------- 앞으로 12개월(종류마다 현재 예정 하나 — tools/ledger/board.js 와 같은 순위) ---------- */
 const SOURCE_RANK = {
-  MOVE_IN: ['datagokr-15111714', 'datagokr-15057999', 'datagokr-15098547', /^home-dump-.+-notice$/, /^home-dump-[^-]+$/],
+  MOVE_IN: ['datagokr-15111714', 'datagokr-15057999', 'datagokr-15098547', /^home-dump-.+-notice$/, /^home-dump-.+-(lh|gh|sh|local)-doc$/, /^home-dump-[^-]+$/],
   COMPLETION: [/^home-dump-[^-]+$/, /^home-dump-.+-lh-plan$/],
 };
 const rankOf = (e) => { const i = SOURCE_RANK[e.event_type]?.findIndex((x) => (typeof x === 'string' ? x === e.source_ref : x.test(e.source_ref))) ?? -1; return i < 0 ? Number.MAX_SAFE_INTEGER : i; };

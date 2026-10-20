@@ -105,7 +105,7 @@ function noticeUnitsOf(tables) {
 /* 종류별 현재 예정 하나 — 입주·준공 칸에 적는 값. 원천 순위는 board.js SOURCE_RANK 와 같다(그 파일은 내보내지 않아 옮겨 적는다,
    시험이 board.js 의 다음 일정과 맞는지 본다). 순위가 같으면 원천 이름 순 → 날짜 순 첫 것 */
 const SOURCE_RANK = {
-  MOVE_IN: ['datagokr-15111714', 'datagokr-15057999', 'datagokr-15098547', /^home-dump-.+-notice$/, /^home-dump-[^-]+$/],
+  MOVE_IN: ['datagokr-15111714', 'datagokr-15057999', 'datagokr-15098547', /^home-dump-.+-notice$/, /^home-dump-.+-(lh|gh|sh|local)-doc$/, /^home-dump-[^-]+$/],
   COMPLETION: [/^home-dump-[^-]+$/, /^home-dump-.+-lh-plan$/],
 };
 const rankOf = (e) => { const i = SOURCE_RANK[e.event_type].findIndex((x) => (typeof x === 'string' ? x === e.source_ref : x.test(e.source_ref))); return i < 0 ? Number.MAX_SAFE_INTEGER : i; };

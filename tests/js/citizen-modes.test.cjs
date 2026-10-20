@@ -14,7 +14,7 @@ const TPL = fs.readFileSync(path.join(SRC, 'template.html'), 'utf8');
 const BUILT = fs.readFileSync(path.join(ROOT, 'docs', 'design', '대국민-모드-시안.html'), 'utf8');
 const code = [...BUILT.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((c) => c.includes('function makeSearch'));
 const ctx = {}; vm.createContext(ctx);
-vm.runInContext(code + '\nObject.assign(this, { D, makeSearch, sumOf, unitsFor, yearSums, stageSums, unitCodes, modeOf, modeValues, yearRange, modeView, headParts, pressMode, sameMode, MODE_ALL, STAGE3, classesOf, yearBucket, ISLES, CAPITAL, mapScope });', ctx);
+vm.runInContext(code + '\nObject.assign(this, { D, makeSearch, sumOf, unitsFor, yearSums, stageSums, unitCodes, modeOf, modeValues, yearRange, modeView, headParts, pressMode, sameMode, MODE_ALL, STAGE6, SUPPLY_N, classesOf, yearBucket, ISLES, CAPITAL, mapScope });', ctx);
 const D = ctx.D, IX = ctx.makeSearch(D);
 const plain = (v) => JSON.parse(JSON.stringify(v));   // vm 쪽 배열·객체를 이 쪽 값으로(deepEqual 의 프로토타입 비교 피하기)
 const fnBody = (name) => { const i = TPL.indexOf(`function ${name}(`); assert.ok(i >= 0, name); return TPL.slice(i, TPL.indexOf('\n}\n', i)); };
@@ -42,16 +42,16 @@ test('① 해별 지도 값 = 언제 들어오나 막대 값: 보는 시군구(�
   console.log(`  면·해 ${n}쌍 같음`);
 });
 
-test('② 요약 표 단계 3줄 합 = 큰 숫자(sumOf): 모든 시도·시군구, 줄은 준비 중 · 짓는 중 · 모집 끝남(일반사용자 단계 이름)', () => {
-  for (const r of IX.regions) { const s = ctx.stageSums(D, r.codes); assert.equal(s.length, 3); assert.equal(s[0] + s[1] + s[2], ctx.sumOf(D, r.codes).u, r.label); }
-  assert.deepEqual(plain(ctx.STAGE3), ['준비 중', '짓는 중', '모집 끝남']);
+test('② 요약 표 단계 6줄 앞 4줄 합 = 큰 숫자(sumOf): 모든 시도·시군구, 줄은 계획 · 인허가 · 착공 · 모집 | 준공 · 입주(공식 단계 이름, 2026-10-20)', () => {
+  for (const r of IX.regions) { const s = ctx.stageSums(D, r.codes); assert.equal(s.length, 6); assert.equal(s[0] + s[1] + s[2] + s[3], ctx.sumOf(D, r.codes).u, r.label); }
+  assert.deepEqual(plain(ctx.STAGE6), ['계획', '인허가', '착공', '모집', '준공', '입주']); assert.equal(ctx.SUPPLY_N, 4);
   /* 단계 모드 지도 값의 합 = 시도 띠 칸 */
   /* 2026-10-19 수도권 한정: 부산(26)은 색인에 없어 시도 셋만 */
-  for (const sd of ['41', '11', '28']) for (let i = 0; i < 3; i++) assert.equal(Object.values(ctx.modeValues(D, IX, sd, { k: 's', i })).reduce((a, b) => a + b, 0), ctx.stageSums(D, IX.regionOf[sd].codes)[i], `${sd} 단계 ${i}`);
+  for (const sd of ['41', '11', '28']) for (let i = 0; i < 6; i++) assert.equal(Object.values(ctx.modeValues(D, IX, sd, { k: 's', i })).reduce((a, b) => a + b, 0), ctx.stageSums(D, IX.regionOf[sd].codes)[i], `${sd} 단계 ${i}`);
   /* 화면 연결: 단계 줄 = stageSums, 큰 숫자 = sum(r.codes)(전체 모드) — 같은 보는 곳 r */
-  assert.match(fnBody('bandHtml'), /const t = sum\(r\.codes\);[\s\S]*const S3 = stageSums\(D, r\.codes\), top = topStage\(S3\);[\s\S]*S3\.map\(\(u, i\) =>/);
+  assert.match(fnBody('bandHtml'), /const t = sum\(r\.codes\);[\s\S]*const S6 = stageSums\(D, r\.codes\), top = topStage\(S6\);[\s\S]*S6\.map\(\(u, i\) =>/);
   assert.match(fnBody('headHtml'), /const t = sum\(r\.codes\), name = nameOf\(r\);[\s\S]*const u = m\.k === 'all' \? t\.u : modeOf\(D, r\.codes, m\)/);
-  assert.match(fnBody('bandHtml'), /<i style="flex-grow:\$\{\(t\.u \? u \/ t\.u : 0\)\.toFixed\(4\)\}"><\/i>/, '막대 폭 = 비율');
+  assert.match(fnBody('bandHtml'), /<i style="flex-grow:\$\{\(t\.u \? Math\.min\(1, u \/ t\.u\) : 0\)\.toFixed\(4\)\}"><\/i>/, '막대 폭 = 비율');
   assert.match(CSS, /\.sm-st \{[^}]*grid-auto-rows: 44px;/, '단계 줄 누름 44px');
 });
 
@@ -102,11 +102,11 @@ test('④ 모드별 색 구간 = 높이 값: 면 값 하나(vals)로 색 단계(
   assert.match(fnBody('drawMap'), /own: g\.own\.map\(\(q\) => \(\{ \.\.\.q, u: VIEW\.mvals\[q\.code\] \|\| 0 \}\)\)/);
   assert.match(fnBody('drawMap'), /view: VIEW\.view \|\| undefined, shade: true, umax: VIEW\.umax, scope: VIEW\.scope, hide: hideOf\(VIEW\.scope\) \}/);   // 2026-10-19: 보는 시도 밖 면 = 맥락 회색(scope), 이웃 1단계 밖은 그리지 않음(hide)
   assert.match(fnBody('paintLegend'), /legendHtml\(VIEW\.C, m\)/);
-  assert.match(TPL, /const modeName = \(m\) => \(m\.k === 'y' \? `\$\{YBL\[m\.i\]\} 공급 호수` : m\.k === 's' \? `\$\{STAGE3\[m\.i\]\} 호` : '공급 예정 호수'\);/, '범례 제목 = 모드 이름');
+  assert.match(TPL, /const modeName = \(m\) => \(m\.k === 'y' \? `\$\{YBL\[m\.i\]\} 공급 호수` : m\.k === 's' \? `\$\{STAGE6\[m\.i\]\} 호수` : '공급 예정 호수'\);/, '범례 제목 = 모드 이름');
   /* 제목도 모드를 따른다 */
   const YBLT = ['2026년(올해)', '2027년', '2028년', '2029년', '2030년', '2031년 이후', '연도 미정'];
   assert.deepEqual(plain(ctx.headParts({ k: 'y', i: 2 }, 9660, YBLT)), ['2028년 공급 호수', '9,660', '호']);
-  assert.deepEqual(plain(ctx.headParts({ k: 's', i: 1 }, 9660, YBLT)), ['짓는 중', '9,660', '호']);
+  assert.deepEqual(plain(ctx.headParts({ k: 's', i: 2 }, 9660, YBLT)), ['착공', '9,660', '호']);
 });
 
 test('④-2 수도권 한 판(2026-10-18): 서울·인천·경기 어느 시도를 봐도 지도 범위·배율·면 높이·색 구간이 같고, 다른 시도 면도 같은 구간으로 칠한다(없음으로 어둡게 그리지 않는다)', () => {

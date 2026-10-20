@@ -15,7 +15,7 @@ const BUILT = fs.readFileSync(path.join(ROOT, 'docs', 'design', '대국민-모�
 const OPS = fs.readFileSync(path.join(ROOT, 'assets', 'citizen', 'index.html'), 'utf8');
 const code = [...BUILT.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((c) => c.includes('function makeSearch'));
 const ctx = {}; vm.createContext(ctx);
-vm.runInContext(code + '\nObject.assign(this, { D, makeSearch, sumOf, stageSums, topStage, rankPos, nxDday, unitsFor, rankTop, modeOf, headParts, pressMode, MODE_ALL, STAGE3, bigNum, sweep, FX, fxOff });', ctx);
+vm.runInContext(code + '\nObject.assign(this, { D, makeSearch, sumOf, stageSums, topStage, rankPos, nxDday, unitsFor, rankTop, modeOf, headParts, pressMode, MODE_ALL, STAGE6, STAGE_Q, SUPPLY_N, bigNum, sweep, FX, fxOff });', ctx);
 const D = ctx.D, IX = ctx.makeSearch(D);
 const plain = (v) => JSON.parse(JSON.stringify(v));
 const fnBody = (name) => { const i = TPL.indexOf(`function ${name}(`); assert.ok(i >= 0, name); return TPL.slice(i, TPL.indexOf('\n}\n', i) + 2); };
@@ -26,39 +26,42 @@ const unitKey = (c) => (c.startsWith('41') ? c.slice(0, 4) + '0' : IX.regionOf[c
 const sum = (codes) => ctx.sumOf(D, codes);
 /* 화면 함수(원본 글)를 필요한 이름만 넣어 만든다 */
 const make = (name, deps) => new Function(...Object.keys(deps), `${fnBody(name)}\nreturn ${name};`)(...Object.values(deps));
-const bandHtml = make('bandHtml', { sum, D, areaOf: (c) => IX.regionOf[c], unitKey, bico: () => '', esc, nameOf: (r) => r.label, fmt, stageSums: ctx.stageSums, topStage: ctx.topStage, STAGE3: ctx.STAGE3, bigNum: ctx.bigNum });
+const bandHtml = make('bandHtml', { sum, D, areaOf: (c) => IX.regionOf[c], unitKey, bico: () => '', esc, nameOf: (r) => r.label, fmt, stageSums: ctx.stageSums, topStage: ctx.topStage, STAGE6: ctx.STAGE6, STAGE_Q: ctx.STAGE_Q, SUPPLY_N: ctx.SUPPLY_N, bigNum: ctx.bigNum });
 const YBL = ['2026년(올해)', '2027년', '2028년', '2029년', '2030년', '2031년 이후', '연도 미정'];
 const headHtml = make('headHtml', { sum, nameOf: (r) => r.label, esc, modeOf: ctx.modeOf, D, headParts: ctx.headParts, YBL, fmt });
 const rows = (h) => [...h.matchAll(/<button type="button" class="sm-r s(\d)([^"]*)" data-st="\d" data-v="(\d+)"/g)].map((m) => ({ i: +m[1], cls: m[2], v: +m[3] }));
 const bigOf = (h) => { const m = h.match(/<span class="n" title="([\d,]+)호">/); return m ? +m[1].replace(/,/g, '') : null; };
 
-test('① 단계 3줄 합 = 큰 숫자: 모든 시도·시군구(그려진 줄의 data-v 합 = h1 의 숫자 = sumOf), 사업이 없는 곳은 줄 대신 이웃 단추와 \'아직 예정된 공공주택이 없어요\'', () => {
+test('① 단계 6줄 중 앞 4줄 합 = 큰 숫자(준공·입주는 구분선 아래 큰 숫자 밖): 모든 시도·시군구(그려진 줄의 data-v 합 = h1 의 숫자 = sumOf), 사업이 없는 곳은 줄 대신 이웃 단추와 \'아직 예정된 공공주택이 없어요\'', () => {
   let n = 0, z = 0;
   for (const r of IX.regions) {
     const t = sum(r.codes), b = bandHtml(r, false), h = headHtml(r, ctx.MODE_ALL);
     if (!t.n) { assert.equal(rows(b).length, 0, r.label); assert.match(h, /<h1 class="ui-h1 sum-h zero" id="sum-h">.*아직 예정된 공공주택이 없어요/); z++; continue; }
     const R = rows(b);
-    assert.deepEqual(R.map((x) => x.i), [0, 1, 2], r.label);
-    assert.equal(R.reduce((a, x) => a + x.v, 0), bigOf(h), `${r.label} 줄 합 = 큰 숫자`);
+    assert.deepEqual(R.map((x) => x.i), [0, 1, 2, 3, 4, 5], r.label);
+    assert.equal(R.slice(0, 4).reduce((a, x) => a + x.v, 0), bigOf(h), `${r.label} 앞 4줄 합 = 큰 숫자`);
+    assert.ok(b.indexOf('class="sm-sep"') > b.indexOf('class="sm-r s3') && b.indexOf('class="sm-sep"') < b.indexOf('class="sm-r s4'), `${r.label} 구분선은 모집(넷째 줄)과 준공 사이`);
+    assert.equal((b.match(/class="sm-sep"/g) || []).length, 1);
     assert.equal(bigOf(h), t.u, r.label);
-    /* 막대 폭 = 비율(합이 1 을 넘지 않는다) */
-    const g = [...b.matchAll(/flex-grow:([\d.]+)/g)].map((m) => +m[1]); assert.ok(g.reduce((a, x) => a + x, 0) <= 1.0002, r.label);
+    /* 막대 폭 = 큰 숫자 대비 비율(앞 넷 합이 1 을 넘지 않는다, 준공·입주는 1 로 자른다) */
+    const g = [...b.matchAll(/flex-grow:([\d.]+)/g)].map((m) => +m[1]); assert.ok(g.slice(0, 4).reduce((a, x) => a + x, 0) <= 1.0002 && g.every((x) => x <= 1), r.label);
     n++;
   }
   /* 모드면 큰 숫자 = 그 모드 값, 이름 = 모드 이름(해 모드는 해가 굵게) */
   const nyj = IX.regionOf['41360'];
-  const hy = headHtml(nyj, { k: 'y', i: 2 }), hs = headHtml(nyj, { k: 's', i: 1 });
+  const hy = headHtml(nyj, { k: 'y', i: 2 }), hs = headHtml(nyj, { k: 's', i: 2 });
   assert.match(hy, /<span class="sm-k"><b>2028년<\/b> 공급 호수<\/span>/); assert.equal(bigOf(hy), ctx.modeOf(D, nyj.codes, { k: 'y', i: 2 }));
-  assert.match(hs, /<span class="sm-k">짓는 중<\/span>/); assert.equal(bigOf(hs), ctx.stageSums(D, nyj.codes)[1]);
+  assert.match(hs, /<span class="sm-k">착공<\/span>/); assert.equal(bigOf(hs), ctx.stageSums(D, nyj.codes)[2]);
   console.log(`  줄 합 = 큰 숫자 ${n}곳 · 사업 없는 곳 ${z}곳`);
 });
 
 test('② 가장 많은 단계 줄(1급): 최댓값 줄 하나만 .top, 같으면 앞 단계, 0 은 .z(막대 없이 옅게)', () => {
   assert.equal(ctx.topStage([5, 5, 1]), 0, '동률이면 앞 단계'); assert.equal(ctx.topStage([1, 5, 5]), 1); assert.equal(ctx.topStage([0, 3, 9]), 2);
   assert.equal(ctx.topStage([0, 0, 0]), -1, '모두 0 이면 없음'); assert.equal(ctx.topStage([0, 0, 4]), 2);
+  assert.equal(ctx.topStage([1, 2, 3, 4, 9, 9]), 3, '준공·입주는 큰 숫자 밖이라 가장 많은 단계에서 뺀다'); assert.equal(ctx.topStage([0, 0, 0, 0, 9, 9]), -1);
   for (const r of IX.regions) {
     if (!sum(r.codes).n) continue;
-    const S = plain(ctx.stageSums(D, r.codes)), R = rows(bandHtml(r, false)), top = R.filter((x) => / top/.test(x.cls));
+    const S = plain(ctx.stageSums(D, r.codes)).slice(0, 4), R = rows(bandHtml(r, false)), top = R.filter((x) => / top/.test(x.cls));
     const want = S.indexOf(Math.max(...S));
     if (Math.max(...S) > 0) { assert.equal(top.length, 1, r.label); assert.equal(top[0].i, want, r.label); }
     R.forEach((x) => assert.equal(/ z/.test(x.cls), x.v === 0, `${r.label} ${x.i} 0 표시`));
@@ -144,7 +147,7 @@ test('⑦ 강조 금지 목록(색 왼쪽/오른쪽 테두리 2px 이상 · 0 �
   assert.doesNotMatch(sm, /background-clip:\s*text|-webkit-text-fill-color|linear-gradient|radial-gradient|backdrop-filter/, '그라데이션 글자·유리 없음');
   assert.doesNotMatch(sm, /\.smry \{[^}]*margin: /, '요약은 카드 가장자리까지 붙은 구역이 아니라 자기 카드');
   assert.match(sm, /\.smry \{[^}]*grid-template-rows: 36px 44px auto 52px;[^}]*background: var\(--sf\);/, '줄 높이 고정 · 별개 카드 강조 바탕');
-  assert.match(sm, /\.sm-st \{[^}]*height: calc\(132px \+ var\(--s1\) \* 2 \+ var\(--border-w\) \* 2\);/);
+  assert.match(sm, /\.sm-st \{[^}]*height: calc\(264px \+ var\(--s3\) \+ var\(--s1\) \* 2 \+ var\(--border-w\) \* 2\);/);
   /* 훑음: 첫 그리기·줄임 설정이면 없음, 켜지면 .fx-sw 를 0.6초 */
   const W = (reduce) => ({ matchMedia: () => ({ matches: reduce }), setTimeout: (f, ms) => { W.ms = ms; return 1; }, clearTimeout: () => {} });
   const el = () => { const s = new Set(); return { classList: { add: (c) => s.add(c), remove: (c) => s.delete(c), has: (c) => s.has(c) }, offsetWidth: 1 }; };
@@ -155,4 +158,25 @@ test('⑦ 강조 금지 목록(색 왼쪽/오른쪽 테두리 2px 이상 · 0 �
   assert.match(CSS, /:is\(\.sm-nm, \.sum-h, \.sm-r, \.nx\)\.fx-sw::after \{[^}]*animation: sm-sweep \.6s cubic-bezier\(\.16, 1, \.3, 1\) forwards; \}/, '지수형 감속 0.6초');
   /* 요약 표에는 등장 연출이 없다(지도 처음 솟음만 연출된 순간) — 첫 그리기는 훑지 않는다 */
   assert.match(fnBody('renderHead'), /first = !box\.dataset\.on;/); assert.match(fnBody('paintBand'), /const first = el\.dataset\.sig === undefined/);
+});
+
+test('⑥ 준공·입주 줄(2026-10-20): 구분선 아래·큰 숫자 밖, 값은 지은 호수, 색은 --st-soon·--st-move, 단계 탭 7개·모드 6개', () => {
+  const D2 = JSON.parse(JSON.stringify(D)), c0 = IX.regionOf['41360'].codes[0];
+  D2.prj[c0].push(['T1', '시험 준공', 6, 100, -1, ''], ['T2', '시험 입주', 7, 40, -1, '']);
+  const band2 = make('bandHtml', { sum: (cs) => ctx.sumOf(D2, cs), D: D2, areaOf: (c) => IX.regionOf[c], unitKey, bico: () => '', esc, nameOf: (r) => r.label, fmt, stageSums: ctx.stageSums, topStage: ctx.topStage, STAGE6: ctx.STAGE6, STAGE_Q: ctx.STAGE_Q, SUPPLY_N: ctx.SUPPLY_N, bigNum: ctx.bigNum });
+  const r = IX.regionOf['41360'], b = band2(r, false), R = rows(b);
+  assert.deepEqual(R.slice(4).map((x) => x.v), [ctx.stageSums(D, r.codes)[4] + 100, ctx.stageSums(D, r.codes)[5] + 40], '준공·입주 줄 = 이미 지은 호수');
+  assert.equal(R.slice(0, 4).reduce((a, x) => a + x.v, 0), ctx.sumOf(D2, r.codes).u, '앞 4줄 합 = 큰 숫자 — 준공·입주는 더하지 않는다');
+  assert.ok(b.indexOf('class="sm-sep"') < b.indexOf('class="sm-r s4') && b.indexOf('class="sm-r s3') < b.indexOf('class="sm-sep"'), '구분선 아래에 준공·입주');
+  assert.match(b, /<span class="sm-sn">준공<\/span>/); assert.match(b, /<span class="sm-sn">입주<\/span>/); assert.doesNotMatch(b, /[①②③④⑤⑥]|준비 중|짓는 중|모집 끝남/);
+  assert.match(b, /title="준공 100호\. 공사를 마치고 사용 승인을 받았어요"/, '뜻은 툴팁에 쉬운 말로');
+  assert.ok(/\.sm-sep \{[^}]*height: var\(--border-w\); background: var\(--border\);/.test(CSS) && CSS.includes('.sm-st:has(> .sm-sep) { grid-template-rows: repeat(4, 44px) var(--s3) repeat(2, 44px); }'));
+  for (const [j, k] of [[1, 'permit'], [2, 'build'], [3, 'sale'], [4, 'soon'], [5, 'move']]) assert.ok(CSS.includes(`.sm-r.s${j} { --c: var(--st-${k}); --c-ink: var(--st-${k}-ink); }`), `s${j}`);
+  /* 단계 탭 7개(전체 + 6)와 599 이하 배치 4칸 × 2줄 */
+  assert.deepEqual([...TPL.matchAll(/data-fst="(\w+)"/g)].map((m) => m[1]), ['all', '0', '1', '2', '3', '4', '5']);
+  assert.ok(CSS.includes('.fbar .ui-tabs:last-child { grid-auto-flow: row; grid-template-columns: repeat(4, minmax(0, 1fr)); height: auto; }'));
+  /* 지도 모드: 준공·입주도 단계 모드로 같은 값, 해마다처럼 한 표본(6개)으로 색 구간을 묶는다 */
+  assert.match(TPL, /mode\.k === 's' \? STAGE6\.map\(\(_, i\) => \(\{ k: 's', i \}\)\)/);
+  assert.match(TPL, /\['', '', 'build', 'sale', '', ''\]\[m\.i\]/, '램프는 착공·모집만(나머지 넷은 기본 램프)');
+  assert.equal(ctx.modeOf(D2, r.codes, { k: 's', i: 4 }), ctx.stageSums(D, r.codes)[4] + 100);
 });
