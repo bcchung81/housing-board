@@ -53,7 +53,7 @@ const SUSPECT_FIELD = { permit_approved: 'apprv', construction_start: 'stcns', c
      national?: readNational() 의 { myhome, lhNotice, moveIn }(전국 모집공고·입주예정물량, legalDong 필요),
      stage?: readStageInput() 의 단계별 원천 중간 스냅샷(legalDong 필요, 소급 경로 trend.js 는 쓰지 않는다 — 미래 자료가 과거 판정에 새지 않게),
      home?: home-source.js readHome 의 HOME 덤프 판(legalDong 필요) — 주면 수도권(11·28·41)의 원장 행을 HOME 행으로 갈아끼운다(replaceSido, 단계 올리기 전), homeIds?: { 키: id }(mappings/home-ids.json),
-     sidos?: 원장에 남길 시도 코드 목록(예 ['11','28','41'] — 2026-10-19 결정: 원장 사업은 HOME 수도권만). 주면 id 발급·수도권 교체 뒤에 그 밖의 사업과 딸린 행을 뺀다(home-source.js keepSido),
+     sidos?: 원장에 남길 시도 코드 목록(예 ['11','28','41'] — 2026-10-19 결정: 원장 사업은 HOME 수도권만). 주면 id 발급·수도권 교체 뒤에 그 밖의 사업과 딸린 행, 그 밖의 지역·통계 행(전국 '00' 포함, 2026-10-20 결정)을 뺀다(home-source.js keepSido),
      report?: 건축HUB 대용량·공고·입주예정 처리 건수를 채울 빈 객체(home 이면 report.homeIds 에 이번 판의 키를 더한 매핑 — 열거되지 않는 칸) } */
 function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencies, sggNames, lhSgg = [], hubEvents = [], legalDong = null, hubBulk = null, hubIds = {}, national = null, stage = null, home = null, homeIds = {}, sidos = null, report = {} }) {
   if (!/^\d{4}-\d{2}$/.test(observedMonth ?? '')) throw new Error('observedMonth(YYYY-MM)가 필요하다');
@@ -304,17 +304,17 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
   /* HOME 덤프: 수도권 원장 행을 HOME 행으로(단계 올리기 전 — HOME 실제 이벤트도 같은 규칙으로 올린다) */
   if (home) {
     if (!legalDong) throw new Error('home 에는 legalDong 이 필요하다');
-    const build = HOME.buildHome(home, { areaRows: legalDong.rows, lhSgg });
-    const { ids, fresh, conflicts } = HOME.assignHomeIds(build.groups, { homeIds, counters: registry.counters, taken: [...t.projects.map((p) => p.local_project_id), ...Object.values(hubIds)] });
+    const build = HOME.buildHome(home, { areaRows: legalDong.rows, lhSgg, homeIds });
+    const { ids, fresh, conflicts, merged } = HOME.assignHomeIds(build.groups, { homeIds, counters: registry.counters, taken: [...t.projects.map((p) => p.local_project_id), ...Object.values(hubIds)] });
     const { tables, report: hr } = HOME.homeRows(build, ids, { registry, observedMonth, notices: t.notices });
     const replaced = HOME.replaceSido(t, tables, { registry });
-    report.home = { edition: home.edition, ...hr, ids: { groups: build.groups.length, fresh, conflicts }, replaced };
-    Object.defineProperty(report, 'homeIds', { value: HOME.mergeHomeIds(homeIds, build.groups, ids), enumerable: false });
+    report.home = { edition: home.edition, ...hr, ids: { groups: build.groups.length, fresh, conflicts, merged }, replaced };
+    Object.defineProperty(report, 'homeIds', { value: HOME.mergeHomeIds(homeIds, build.groups, ids, merged), enumerable: false });
   }
+  t.areas = [...areas.values()].sort((a, b) => a.area_code.localeCompare(b.area_code));
   if (sidos) report.scope = HOME.keepSido(t, { sidos });
 
   raiseStages(t, observedMonth, report);
-  t.areas = [...areas.values()].sort((a, b) => a.area_code.localeCompare(b.area_code));
   return t;
 }
 

@@ -7,7 +7,8 @@
       {"id":"PRJ-11110-0021","name":"신문로2-12","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":180,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11140": [
-      {"id":"PRJ-11140-0037","name":"신당(약수역)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11140-0037","name":"신당(약수역)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11140-0038","name":"황학동 청계 지역주택조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11170": [
       {"id":"PRJ-11170-0043","name":"강변강서","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
@@ -22,16 +23,62 @@
     ],
     "11200": [
       {"id":"PRJ-11200-0176","name":"금호23","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":764,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11200-0177","name":"성수동 舊 서울경찰청기마대 부지","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-06"},"units":260,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11200-0177","name":"성수동 舊 서울경찰청기마대 부지","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-06"},"units":260,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11200-0178","name":"금호동4가 1310","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11200-0179","name":"장미아파트주택재건축정비사업","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11215": [
       {"id":"PRJ-11215-0031","name":"성동초 인근","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":254,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11215-0032","name":"중곡역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11215-0033","name":"아차산역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":1663,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11215-0033","name":"아차산역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":1663,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0034","name":"서울특별시 광진구 구의동 210-16번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0035","name":"서울특별시 광진구 구의동 63-32번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0036","name":"서울특별시 광진구 자양동 614-13번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":10,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0037","name":"구의 파크뷰","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":12,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0038","name":"서울특별시 광진구 구의동 210-12번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":15,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0039","name":"서울특별시 광진구 자양동 839-11번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":8,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0040","name":"서울특별시 광진구 자양동 623-26번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":10,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0041","name":"서울특별시 광진구 구의동 231-9번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0042","name":"서울특별시 광진구 구의동 634-7번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":12,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0043","name":"구의동 210-18","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":14,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0044","name":"서울특별시 광진구 구의동 634-3번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":13,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0045","name":"서울특별시 광진구 자양동 667-14번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":22,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0046","name":"자양동 613-33","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0047","name":"르베르떼 구의","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0048","name":"자양동601-4,5번지 도시형생활주택","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":29,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0049","name":"구의동 231-56 도시형생활주택 신축공사","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":11,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0050","name":"서울특별시 광진구 자양동 635-38번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":8,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0051","name":"서울특별시 광진구 구의동 221-13번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0052","name":"자양동 624-4","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0053","name":"자양동 841-3","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":8,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0054","name":"서울특별시 광진구 구의동 232-28번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":10,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0055","name":"서울특별시 광진구 구의동 30-39번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":13,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0056","name":"구의동 210-36 단지형다세대주택","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0057","name":"서울특별시 광진구 구의동 251-66번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0058","name":"구의동 231-47","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":10,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0059","name":"카이벨로체 자양3차","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":8,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0060","name":"자양동 617-20","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":10,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0061","name":"서울특별시 광진구 구의동 242-41번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0062","name":"구의동 232-38","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0063","name":"서울특별시 광진구 구의동 242-9번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0064","name":"자양동 662-2번지 도시형생활주택","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":14,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0065","name":"카이벨로체 구의1차","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":26,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0066","name":"서울특별시 광진구 자양동 621-11번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":14,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0067","name":"서울특별시 광진구 자양동 613-24번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":12,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0068","name":"서울특별시 광진구 구의동 239-86번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":6,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0069","name":"서울특별시 광진구 자양동 846-9번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0070","name":"구의동 221-25 ,26 신축건축물","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":12,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0071","name":"구의동 643-4","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0072","name":"광진구 구의동 652-8,9 도시형생활주택 신축공사","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":17,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0073","name":"서울특별시 광진구 자양동 217-3번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":12,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0074","name":"구의동 64-25","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":16,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0075","name":"자양동 217-3","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":12,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11215-0076","name":"구의동 232-60","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":22,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11230": [
       {"id":"PRJ-11230-0098","name":"용두1-6","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":977,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11230-0099","name":"동대문구 일원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1500,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11230-0099","name":"동대문구 일원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1500,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11230-0100","name":"제기1주택재건축정비구역(지정개발자방식)","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11260": [
       {"id":"PRJ-11260-0063","name":"용마산역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
@@ -39,19 +86,32 @@
       {"id":"PRJ-11260-0065","name":"상봉역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11260-0066","name":"사가정역","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11260-0067","name":"면목(상봉터미널)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11260-0068","name":"중랑 면목행정복합타운","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2027-06"},"units":712,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11260-0068","name":"중랑 면목행정복합타운","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2027-06"},"units":712,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11260-0069","name":"세광하니타운가로주택정비사업조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11290": [
       {"id":"PRJ-11290-0062","name":"장위12","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11290-0063","name":"성신여대입구역 북측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":755,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11290-0064","name":"장위8","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2846,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11290-0064","name":"장위8","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2846,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11290-0065","name":"장위 4구역 주택재개발정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2840,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11290-0066","name":"동선제2구역 주택재개발정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":334,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11290-0067","name":"장위제6구역 주택재개발정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1637,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11290-0068","name":"보문제5구역 주택재개발정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":199,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11290-0069","name":"종암동 개운산마을 가로주택정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11305": [
       {"id":"PRJ-11305-0041","name":"수유12구역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11305-0042","name":"강북5","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":688,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11305-0043","name":"송중동 주민센터","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1083,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11305-0044","name":"미아16구역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11305-0045","name":"번동2단지","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":3048,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11305-0045","name":"번동2단지","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":3048,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11305-0046","name":"번동2구역 가로주택정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11305-0047","name":"번동 4구역 가로주택 정비사업 조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11305-0048","name":"미아동 783-15","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":12,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11305-0049","name":"번동1구역 가로주택정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11305-0050","name":"번동 5구역 가로주택 정비사업 조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11305-0051","name":"번동 3구역 가로주택 정비사업 조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11305-0052","name":"미아동 231-1","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":12,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11320": [
       {"id":"PRJ-11320-0033","name":"쌍문동 교육연구시설","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2029-10"},"units":1171,"pks":[],"pnus":[],"bundles":[]},
@@ -70,7 +130,8 @@
       {"id":"PRJ-11350-0096","name":"서울공릉 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2026-10-31"},"units":294,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11350-0098","name":"태릉 CC","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":6800,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11350-0099","name":"중계1단지","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2028"},"units":1370,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11350-0100","name":"서울공릉(복합개발) 1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2027-10"},"units":60,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11350-0100","name":"서울공릉(복합개발) 1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2027-10"},"units":60,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11350-0102","name":"대명아파트 소규모재건축정비사업위원회","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11380": [
       {"id":"PRJ-11380-0083","name":"불광2 329-32","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
@@ -82,17 +143,32 @@
       {"id":"PRJ-11380-0089","name":"불광1 근린공원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11380-0090","name":"은평구 불광동 일원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1300,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11380-0091","name":"녹번동근린공원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2676,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11380-0092","name":"백련산 서측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":961,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11380-0092","name":"백련산 서측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":961,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11380-0094","name":"서울특별시 은평구 응암동 427-73번지","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11380-0095","name":"신사1 주택재건축정비사업 조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":424,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11380-0096","name":"갈현제1구역 주택재개발정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":4124,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11380-0097","name":"대조제1구역주택재개발정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2451,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11380-0098","name":"응암동 596-14","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11410": [
       {"id":"PRJ-11410-0033","name":"연희2","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1067,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11410-0034","name":"고은산 서측","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2577,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11410-0035","name":"충정로1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":297,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11410-0036","name":"홍은1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":329,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11410-0036","name":"홍은1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":329,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11410-0037","name":"아스트로","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":10,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11410-0038","name":"연희동 112-36 단독주택","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11410-0039","name":"홍은동277-200번지 일대 가로주택정비사업","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11410-0040","name":"영천구역주택재개발정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11410-0041","name":"태원D&C(주) 메종 드 연희 주택","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11410-0042","name":"연희제1구역 주택재개발정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":959,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11440": [
       {"id":"PRJ-11440-0071","name":"아현동 699번지 일대","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11440-0072","name":"망원체육공원 인근","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":940,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11440-0072","name":"망원체육공원 인근","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":940,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11440-0074","name":"연남동 244-16일원 LH참여형 가로주택정비사업","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11440-0075","name":"공덕1구역 주택재건축정비사업 조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11440-0076","name":"신수동무쇠막 지역주택조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11440-0077","name":"마포로3구역제3지구 도시환경정비사업조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11470": [
       {"id":"PRJ-11470-0087","name":"염창역 남측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":4222,"pks":[],"pnus":[],"bundles":[]},
@@ -107,18 +183,22 @@
       {"id":"PRJ-11500-0104","name":"강서 군부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":918,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11500-0105","name":"강서 국회대로 인근","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11500-0106","name":"마곡지구 17단지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":381,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11500-0107","name":"화곡역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":2335,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11500-0107","name":"화곡역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":2335,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11500-0109","name":"등촌1구역주택재건축정비사업조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":543,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11530": [
       {"id":"PRJ-11530-0094","name":"서울시 구로구 구로동 87-1","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":40,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11530-0095","name":"오류동역 남측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":858,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11530-0096","name":"대림역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11530-0096","name":"대림역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11530-0097","name":"고척제4구역 주택재개발정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":983,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11530-0098","name":"길훈아파트 주택재건축정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":295,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11545": [
       {"id":"PRJ-11545-0043","name":"서울세관 구로지원센터","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2029-10"},"units":437,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11545-0044","name":"금천구청역 유휴부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11545-0045","name":"남부여성발전센터(양육친화주택)","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2027-11"},"units":200,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11545-0046","name":"금천 공군부대","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2900,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11545-0046","name":"금천 공군부대","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2900,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11545-0047","name":"시흥동 현대아파트 재건축정비사업","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11560": [
       {"id":"PRJ-11560-0137","name":"신길2구역","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
@@ -131,13 +211,18 @@
       {"id":"PRJ-11560-0144","name":"당산동 양육친화주택","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2027-10"},"units":380,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11560-0145","name":"서울대방(복합개발) 1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2027-09"},"units":61,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11560-0147","name":"영등포역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11560-0148","name":"신길4","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1273,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11560-0148","name":"신길4","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1273,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11560-0149","name":"유원제일1차아파트 주택재건축정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":550,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11590": [
       {"id":"PRJ-11590-0067","name":"흑석2","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1055,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11590-0068","name":"동작우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":30,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11590-0069","name":"본동","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1046,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11590-0070","name":"수방사군부지 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-30"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":556,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11590-0070","name":"수방사군부지 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-30"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":556,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11590-0073","name":"흑석9재정비촉진구역 주택재개발정비사업","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1470,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11590-0074","name":"동작1 주택재건축 조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11590-0075","name":"노량진2재정비촉진구역 조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":404,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11590-0076","name":"노량진6재정비촉진구역 조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1499,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11620": [
       {"id":"PRJ-11620-0056","name":"관악세무서","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":25,"pks":[],"pnus":[],"bundles":[]}
@@ -145,12 +230,18 @@
     "11650": [
       {"id":"PRJ-11650-0079","name":"이수역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":918,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11650-0080","name":"서울 서리풀","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2029"},"units":20000,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11650-0081","name":"구 한국교육개발원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":700,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11650-0081","name":"구 한국교육개발원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":700,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11650-0082","name":"방배신동아아파트 재건축정비사업조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11650-0083","name":"방배5구역주택재건축정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":3064,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11650-0084","name":"반포주공1단지(1,2,4주구) 주택재건축정비사업 조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":5007,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11650-0085","name":"신반포22차아파트 주택재건축정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":160,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11680": [
       {"id":"PRJ-11680-0112","name":"강남구청","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-04"},"units":360,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11680-0113","name":"수서 노후 임대 재건축","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":3899,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11680-0114","name":"서울의료원 남측부지","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2028-12"},"units":518,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11680-0114","name":"서울의료원 남측부지","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2028-12"},"units":518,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11680-0115","name":"개포1동주공아파트 주택재건축정비사업조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11680-0116","name":"도곡삼호아파트 주택재건축정비사업조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":308,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11710": [
       {"id":"PRJ-11710-0085","name":"송파우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":51,"pks":[],"pnus":[],"bundles":[]},
@@ -161,50 +252,73 @@
     ],
     "11740": [
       {"id":"PRJ-11740-0102","name":"고덕강일 3단지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1305,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11740-0103","name":"고덕역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11740-0103","name":"고덕역","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11740-0104","name":"현대하이츠빌라가로주택정비사업조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28125": [
-      {"id":"PRJ-28125-0027","name":"인천송림4 주거환경개선사업 건설공사 1공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-21"},"units":1198,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28125-0027","name":"인천송림4 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-30"},"units":1198,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28155": [
       {"id":"PRJ-28155-0036","name":"인천영종 A62","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2028-06-30"},"units":792,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28155-0037","name":"인천영종 A-24BL 아파트 건설공사 12공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-03"},"dateAlt":{"source":"LH","planned":"2028-08-31"},"units":641,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28155-0037","name":"인천영종 A-24BL 아파트 건설공사 12공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-02-03"},"dateAlt":{"source":"LH","planned":"2028-08-31"},"units":641,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28155-0040","name":"인천영종 A63","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2026"},"units":293,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28155-0041","name":"인천영종 A57","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2026"},"units":272,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28177": [
-      {"id":"PRJ-28177-0064","name":"제물포 도심공공복합","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2026"},"units":3500,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28177-0064","name":"제물포 도심공공복합","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2026"},"units":3500,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28177-0065","name":"도화 공공임대 주택건설사업(B3BL)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":435,"pks":[],"pnus":[],"bundles":[]}
+    ],
+    "28185": [
+      {"id":"PRJ-28185-0072","name":"송도 주택건설사업(Rc5-1BL)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1508,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28200": [
       {"id":"PRJ-28200-0066","name":"남인천 우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":29,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28237": [
-      {"id":"PRJ-28237-0065","name":"인천부평(도시재생뉴딜) A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":350,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28237-0065","name":"인천부평(도시재생뉴딜) A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":350,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28237-0068","name":"인천부평 A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-19"},"units":350,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28245": [
       {"id":"PRJ-28245-0052","name":"조달청)인천계양 A-10BL 아파트 건설공사 4공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-08-19"},"dateAlt":{"source":"LH","planned":"2028-09-30"},"units":778,"pks":[],"pnus":["2824511000104480001"],"bundles":["incheon-gyeyang/techno-A10"]},
-      {"id":"PRJ-28245-0053","name":"인천계양 A6","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":663,"pks":[],"pnus":["2824510900101840001"],"bundles":["incheon-gyeyang/techno-A6"]},
-      {"id":"PRJ-28245-0054","name":"인천계양 A17","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-07-26"},"units":463,"pks":[],"pnus":["2824510900102770001"],"bundles":["incheon-gyeyang/techno-A17"]},
+      {"id":"PRJ-28245-0053","name":"인천계양 A6","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-03-22"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":663,"pks":[],"pnus":["2824510900101840001"],"bundles":["incheon-gyeyang/techno-A6"]},
+      {"id":"PRJ-28245-0054","name":"인천계양 A17","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-07-26"},"units":463,"pks":[],"pnus":["2824510900102770001"],"bundles":["incheon-gyeyang/techno-A17"]},
       {"id":"PRJ-28245-0055","name":"인천계양(공공주택) A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":null,"dateAlt":{"source":"LH","planned":"2026-10-31"},"units":747,"pks":[],"pnus":["2824511000104130003"],"bundles":["incheon-gyeyang/techno-A2"]},
-      {"id":"PRJ-28245-0056","name":"인천계양 A9","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-28"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":475,"pks":[],"pnus":["2824511000102030001"],"bundles":["incheon-gyeyang/techno-A9"]},
-      {"id":"PRJ-28245-0057","name":"인천계양(공공주택) A3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":null,"dateAlt":{"source":"LH","planned":"2026-10-31"},"units":538,"pks":[],"pnus":["2824511000104090003"],"bundles":["incheon-gyeyang/techno-A3"]}
+      {"id":"PRJ-28245-0056","name":"인천계양 A9","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-28"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":475,"pks":[],"pnus":["2824511000102030001"],"bundles":["incheon-gyeyang/techno-A9"]},
+      {"id":"PRJ-28245-0057","name":"인천계양(공공주택) A3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":null,"dateAlt":{"source":"LH","planned":"2026-10-31"},"units":538,"pks":[],"pnus":["2824511000104090003"],"bundles":["incheon-gyeyang/techno-A3"]},
+      {"id":"PRJ-28245-0058","name":"인천계양 A16","issued":true,"stage":"03","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":434,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28245-0059","name":"인천계양 A18","issued":true,"stage":"02","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":782,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28275": [
       {"id":"PRJ-28275-0034","name":"인천서구(거북이기지) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-09"},"dateAlt":{"source":"LH","planned":"2027-03-31"},"units":58,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28275-0035","name":"청라동 92-29","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":110,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28275-0036","name":"인천가정2 B2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-28"},"dateAlt":{"source":"LH","planned":"2028-03-30"},"units":308,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28275-0036","name":"인천가정2 B2","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-28"},"dateAlt":{"source":"LH","planned":"2028-03-30"},"units":308,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28275-0037","name":"인천서구(석남어울림) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-09"},"dateAlt":{"source":"LH","planned":"2027-03-31"},"units":110,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28275-0038","name":"인천검암","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28275-0038","name":"인천검암","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28275-0043","name":"검암 주택건설사업(S3BL)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":749,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28275-0044","name":"검암 주택건설사업(S2BL)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1032,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28275-0045","name":"검암 주택건설사업(B1BL)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":441,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28290": [
-      {"id":"PRJ-28290-0054","name":"인천검단 AA19BL 민간참여 공공주택건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"units":1323,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28290-0055","name":"인천검단 AA19","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2027-11"},"units":991,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28290-0055","name":"인천검단 AA19","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"dateAlt":{"source":"LH","planned":"2027-09-30"},"units":1323,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28290-0056","name":"인천검단 35","issued":true,"stage":"04","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-02-18","months":19},"next":null,"units":964,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28290-0057","name":"인천검단 AA-21BL 아파트 건설공사 7공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-07","months":2},"next":null,"dateAlt":{"source":"LH","planned":"2026-12-31"},"units":1224,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28290-0058","name":"인천검단 AA13-1","issued":true,"stage":"04","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-02-18","months":19},"next":null,"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":702,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28290-0057","name":"인천검단 AA-21BL 아파트 건설공사 7공구","issued":true,"stage":"05","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-07","months":2},"next":null,"dateAlt":{"source":"LH","planned":"2026-12-31"},"units":1224,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28290-0058","name":"인천검단 AA13-1","issued":true,"stage":"04","cls":"delay","why":null,"overdue":{"eventType":"COMPLETION","planned":"2025-02-18","months":19},"next":null,"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":702,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28290-0063","name":"검단 공공임대 주택건설사업(AA7BL)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1006,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28290-0064","name":"인천검단 AA13-1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-30"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":702,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28290-0065","name":"인천검단 AA13-2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-30"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":964,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28290-0066","name":"인천검단 AA31","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2026"},"units":766,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28290-0067","name":"검단 주택건설사업(AA10-1BL)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41110": [
       {"id":"PRJ-41110-0001","name":"舊 경인지방통계청 수원사무소","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":88,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41110-0002","name":"수원우편집중국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-04"},"units":936,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41110-0003","name":"국토지리정보원","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2027-12"},"units":240,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41110-0003","name":"국토지리정보원","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2027-12"},"units":240,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41110-0004","name":"수원당수2 B1","issued":true,"stage":"02","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":705,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41110-0005","name":"수원당수 C5","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":490,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41110-0006","name":"수원당수2 B5","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":364,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41110-0007","name":"수원당수2 B7","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":880,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41110-0008","name":"수원당수2 A1","issued":true,"stage":"02","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":693,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41110-0009","name":"수원당수2 A3","issued":true,"stage":"03","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":911,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41113": [
       {"id":"PRJ-41113-0032","name":"수원당수 B3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":394,"pks":[],"pnus":[],"bundles":[]},
@@ -243,7 +357,8 @@
     "41190": [
       {"id":"PRJ-41190-0003","name":"부천우편집중국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":860,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41190-0004","name":"중동역 서측","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41190-0005","name":"중동역 동측","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41190-0005","name":"중동역 동측","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41190-0006","name":"부천대장 A9","issued":true,"stage":"02","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":574,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41192": [
       {"id":"PRJ-41192-0060","name":"부천종합운동장 역세권 A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-25"},"units":550,"pks":[],"pnus":[],"bundles":[]},
@@ -287,7 +402,8 @@
       {"id":"PRJ-41220-0188","name":"평택고덕 A-31BL 민간참여 공공주택건설사업","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-12-31"},"units":690,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41270": [
-      {"id":"PRJ-41270-0001","name":"안산신길2 A1,A3","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":357,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41270-0001","name":"안산신길2 A1,A3","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":357,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41270-0002","name":"안산장상 A10","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":320,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41273": [
       {"id":"PRJ-41273-0023","name":"안산신길2 B1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2029-02-28"},"units":387,"pks":[],"pnus":[],"bundles":[]},
@@ -301,7 +417,8 @@
       {"id":"PRJ-41281-0092","name":"고양창릉 S-03","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-10-31"},"units":1282,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41281-0093","name":"고양시 소재 구 국방대학교","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2570,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41281-0094","name":"고양창릉 S-5BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-11-14"},"units":759,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41281-0095","name":"고양창릉 S-01","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-04-08"},"dateAlt":{"source":"LH","planned":"2029-02-28"},"units":494,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41281-0095","name":"고양창릉 S-01","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-04-08"},"dateAlt":{"source":"LH","planned":"2029-02-28"},"units":494,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41281-0101","name":"고양창릉 B1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1594,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41285": [
       {"id":"PRJ-41285-0048","name":"고양장항 S-1BL 아파트 건설공사 5공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-12-18"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":869,"pks":[],"pnus":[],"bundles":[]},
@@ -318,7 +435,8 @@
       {"id":"PRJ-41310-0044","name":"구리갈매역세권 A-3","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":287,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41310-0045","name":"조달청)구리갈매역세권 A-2BL 아파트 건설공사 3공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-03"},"dateAlt":{"source":"LH","planned":"2029-01-31"},"units":362,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41310-0046","name":"구리갈매역세권 A-1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"dateAlt":{"source":"LH","planned":"2027-10-31"},"units":1791,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41310-0047","name":"조달청)구리갈매역세권 A-4BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-14"},"dateAlt":{"source":"LH","planned":"2028-08-31"},"units":561,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41310-0047","name":"조달청)구리갈매역세권 A-4BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-14"},"dateAlt":{"source":"LH","planned":"2028-08-31"},"units":561,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41310-0053","name":"구리갈매역세권 A-5","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-12-10"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":566,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41360": [
       {"id":"PRJ-41360-0188","name":"조달청)남양주진접2 A-1BL 아파트 건설공사 5공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-03-23"},"dateAlt":{"source":"LH","planned":"2028-02-29"},"units":920,"pks":[],"pnus":[],"bundles":[]},
@@ -340,11 +458,14 @@
       {"id":"PRJ-41360-0204","name":"조달청)남양주왕숙 A-2BL 아파트 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-14"},"units":608,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0205","name":"남양주왕숙 B-1BL 아파트 건설공사 6공구 (","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-10"},"units":560,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41360-0206","name":"조달청)남양주왕숙 A-6BL 아파트 건설공사 8공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-22"},"units":954,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41360-0207","name":"남양주왕숙 A-25BL 아파트 건설공사","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-29"},"dateAlt":{"source":"LH","planned":"2028-10-31"},"units":1298,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41360-0207","name":"남양주왕숙 A-25BL 아파트 건설공사","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-29"},"dateAlt":{"source":"LH","planned":"2028-10-31"},"units":1298,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0232","name":"남양주왕숙2 A7","issued":true,"stage":"02","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":553,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41360-0233","name":"남양주왕숙2 A6","issued":true,"stage":"02","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":510,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41370": [
       {"id":"PRJ-41370-0046","name":"오산세교2 A-12BL 민간참여 공공주택건설사업","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-08-29"},"dateAlt":{"source":"LH","planned":"2027-09-30"},"units":433,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41370-0047","name":"오산세교2 A11","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-14"},"dateAlt":{"source":"LH","planned":"2028-03-31"},"units":399,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41370-0047","name":"오산세교2 A11","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-14"},"dateAlt":{"source":"LH","planned":"2028-03-31"},"units":399,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41370-0050","name":"오산오산 1","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2026"},"units":366,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41390": [
       {"id":"PRJ-41390-0084","name":"조달청)시흥하중 A-4BL 공동주택 건설공사 2공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-04-09"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":584,"pks":[],"pnus":[],"bundles":[]},
@@ -396,7 +517,9 @@
     ],
     "41630": [
       {"id":"PRJ-41630-0098","name":"조달청)양주옥정 A-22BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-16"},"units":1126,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41630-0099","name":"양주회천 A26","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-06-05"},"dateAlt":{"source":"LH","planned":"2029-12-31"},"units":792,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41630-0099","name":"양주회천 A26","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-06-05"},"dateAlt":{"source":"LH","planned":"2029-12-31"},"units":792,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41630-0104","name":"양주회천 A4","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2026"},"units":536,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41630-0105","name":"양주회천 A23","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2026"},"units":636,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41830": [
       {"id":"PRJ-41830-0020","name":"조달청)양평공흥(고령자) 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-23"},"units":150,"pks":[],"pnus":[],"bundles":[]}

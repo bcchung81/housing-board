@@ -41,8 +41,9 @@ test('data/board/home-sources.json: 실행 합계·원천 수·연결 수가 서
   assert.equal(hs.runs.total, hs.runs.success + hs.runs.failed + hs.runs.interrupted);
   assert.equal(hs.sources.reduce((n, s) => n + s.runs, 0), hs.runs.total);
   assert.equal(hs.sources.reduce((n, s) => n + s.failed, 0), hs.runs.failed);
-  assert.equal(hs.sources.length, 62);
-  assert.deepEqual(hs.sources.filter((s) => !s.ok).map((s) => s.id), ['ih_supply']);
+  /* 2026-10-20 판: HOME 원천 62→76(새 원천 14 — 이름은 HOME 등록부 커밋 2038810), 마지막 실행 실패에 건축HUB 일반 건축인허가가 더해졌다 */
+  assert.equal(hs.sources.length, 76);
+  assert.deepEqual(hs.sources.filter((s) => !s.ok).map((s) => s.id), ['building_general_permit', 'ih_supply']);
   /* 이름·기관은 HOME 원천 등록부(sources.py SOURCES) 그대로 — 62곳 모두 이름이 있다(id 를 이름으로 쓴 원천 없음, 2026-10-14 판의 새 원천 2곳은 덤프 안내서 설명으로) */
   assert.ok(hs.sources.every((s) => s.name !== s.id && s.org !== 'HOME'), '등록부에 없는 원천');
   const ih = hs.sources.find((s) => s.id === 'ih_supply');
@@ -52,7 +53,7 @@ test('data/board/home-sources.json: 실행 합계·원천 수·연결 수가 서
     assert.equal(l.confirmed + l.review + l.other, rows.length);
     assert.equal(l.confirmed, rows.filter((x) => x.review_status === 'CONFIRMED').length);
   }
-  assert.deepEqual(hs.links.map((l) => [l.type, l.review, l.confirmed]), [['POLICY_PROGRAM', 13, 25], ['PROGRAM_PROJECT', 98, 174]]);
+  assert.deepEqual(hs.links.map((l) => [l.type, l.review, l.confirmed]), [['POLICY_PROGRAM', 13, 31], ['PROGRAM_PROJECT', 98, 200]]);   // 2026-10-20 판: 확정 25→31 · 174→200
 });
 
 test('statusRows: 실패 원천이 맨 위, 그 뒤 우리 원천 + HOME 원천 · 실패 원천은 마지막 정상 없음', () => {
@@ -62,9 +63,9 @@ test('statusRows: 실패 원천이 맨 위, 그 뒤 우리 원천 + HOME 원천 
   const ih = rows.find((r) => r.id === 'ih_supply');
   assert.deepEqual([ih.ok, ih.lastOk], [false, null]);
   assert.match(ih.note, /정상 수집 없음/);
-  assert.equal(rows.filter((r) => !r.ok).length, 1);
-  assert.equal(rows[0].id, 'ih_supply', '실패 원천이 맨 위');
-  assert.equal(rows[1].owner, '우리', '그 뒤는 우리 원천부터');
+  assert.equal(rows.filter((r) => !r.ok).length, 2);   // 2026-10-20 판: ih_supply + building_general_permit
+  assert.deepEqual(rows.slice(0, 2).map((r) => r.id).sort(), ['building_general_permit', 'ih_supply'], '실패 원천이 맨 위');
+  assert.equal(rows[2].owner, '우리', '그 뒤는 우리 원천부터');
   assert.equal(rows.find((r) => r.id === 'molit-permit-monthly').lastOk, '2026.10.03');
 });
 

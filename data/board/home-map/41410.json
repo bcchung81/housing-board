@@ -4,7 +4,7 @@
   "name": "경기도 군포시",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261014T102506Z",
+  "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41410-0042","name":"군포대야미 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-12-15"},"dateAlt":{"source":"LH","planned":"2028-09-29"},"units":378,"pks":[],"pnus":[],"bundles":[],"label":"군포대야미 A1","agency":"lh","moveIn":"2029-12","completion":"2028-12-15","noticeUnits":377,"bjd":"4141010600","loc":{"by":"block","at":[126.899977,37.326978],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},
     {"id":"PRJ-41410-0043","name":"군포대야미 A-2BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-27"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":1511,"pks":[],"pnus":[],"bundles":[],"label":"군포대야미 A2","agency":"lh","moveIn":"2029-08","completion":"2029-01-27","noticeUnits":1003,"bjd":"4141010800","loc":{"by":"block","at":[126.908715,37.329814],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}}

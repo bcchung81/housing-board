@@ -22,10 +22,12 @@
 | 덤프 도구 | `/opt/homebrew/opt/libpq/bin/pg_restore`(18.x, `brew libpq`). Docker와 로컬 DB 서버는 필요 없다 |
 | 실행 환경 | node(저장소 `npm ci` 상태), python3 |
 | 비밀값 | `.env.local`: `SUPABASE_DB_URL`·`SUPABASE_SECRET_KEY`·`NEXT_PUBLIC_SUPABASE_URL`·`BOARD_REVALIDATE_URL`(**운영 주소**)·`REVALIDATE_SECRET`·`VERCEL_TOKEN`·`VERCEL_ORG_ID`·`VERCEL_PROJECT_ID`. 값은 절대 출력하지 않는다 |
-| Supabase | 서울 프로젝트 `hpxjledpmrbhgenhdvyp`. 마이그레이션 `20261014100000_ledger_refine.sql`까지 적용돼 있어 이번에는 마이그레이션이 필요 없다 |
-| 지난 판(비교 기준) | `schemas/ledger-2026-10/raw/home/20261013T140241Z/` (원본 gz는 로컬과 Storage에만 있고, 저장소에는 manifest만 있다) |
+| Supabase | 서울 프로젝트 `hpxjledpmrbhgenhdvyp`. 2026-10-20 판에서 `20261020100000_ledger_prune_stale.sql`까지 적용했다. 새 마이그레이션 파일이 없으면 이번에는 마이그레이션이 필요 없다(`supabase migration list --db-url …`로 원격 = 로컬 확인) |
+| 지난 판(비교 기준) | 로컬 옛 판 폴더는 2026-10-20 에 지웠다. 지난 판은 Storage `ledger-raw/2026-10/home/<판>/` 에만 있다. 비교가 필요하면 Storage 에서 내려받는다 |
 
 ## 2. 기준선(2026-10-13 판) — 새 판과 비교할 숫자
+
+새 판(2026-10-20) 수치는 10절 실행 기록을 본다.
 
 | 항목 | 지난 판 값 | 어디서 보나 |
 |---|---|---|
@@ -91,7 +93,7 @@ cp.execFileSync('node',['tools/ledger/convert.js',...a],{stdio:'inherit'});
   - `ids.conflicts` > 0인 경우
   - `groups`가 지난 판보다 크게(±20% 넘게) 바뀌었는데 이유를 모르는 경우
   - `sggUnresolved`가 크게 는 경우
-  - 비수도권 행이 바뀐 경우: `git diff --stat schemas/ledger-2026-10/tables`만으로는 판단할 수 없다. ⑦의 `ledger-home` 리허설 시험 ②가 이것을 잡는다.
+  - 원장에 수도권 밖 행이 생긴 경우: `git diff --stat schemas/ledger-2026-10/tables`만으로는 판단할 수 없다. ⑦의 `ledger-home` 리허설 시험 ②가 이것을 잡는다.
 
 ### ④ 발급 → ③ 다시
 
@@ -122,7 +124,7 @@ node tools/ledger/policy-progress.js --month 2026-10  # data/board/policy-progre
 | `tests/js/policy-progress.test.cjs` | 월말 목표 점(9,355·10,285…), 확인(7,606 등), samePeriod 9,355/6,680/2,675/28.6 | ⑤ 결과 파일 값. 단 `homeRule`은 HOME 화면 값과 대조한 뒤 고친다 |
 | `tests/js/pipeline.test.cjs` 40~49줄 + `lib/board/pipeline.ts` 46·49줄 문구 | 살아 있는 레지스트리 275·HOME 259·70개 시군구·대체/숨김 수 | `registry/projects.json`에서 다시 세고, 문구의 숫자와 날짜도 함께 |
 | `tests/js/ledger-board.test.cjs` | 보드 판정 수치 일부 | 실패 메시지의 새 값을 원장으로 확인한 뒤 |
-| (fixture라 고칠 필요 없음) `home-map.test.cjs`·`monthly.test.cjs`의 `20261013T140241Z` | — | — |
+| (고칠 필요 없음) `home-map.test.cjs`·`monthly.test.cjs`·`home-lite.test.cjs`의 판 이름 | 시험 안의 자체 고정 자료(2026-10-20에 옛 판 경로를 걷어 냄) | — |
 
 - 고정값을 바꿀 때는 **왜 바뀌었는지**(재매칭으로 연결 증가 등)를 커밋 메시지에 남긴다. 이유를 모르면 고치지 말고 멈춘다.
 
@@ -135,7 +137,7 @@ npx tsc --noEmit
 npm run build            # npx next build 만 돌리면 prebuild(scripts/build.js)가 빠져 지도 시험이 깨진다
 ```
 
-- `ledger-home` 리허설 시험(같은 판 두 번 바이트 동일, 비수도권 불변, 전국 = 시도 합, 같은 블록 두 사업 0, 연결만 바뀐 판에서 사업 id 불변)이 모두 통과해야 한다.
+- `ledger-home` 리허설 시험(같은 판 두 번 바이트 동일, 원장에 수도권 밖 행 0, 수도권 합 = 세 시도 합, 같은 블록 두 사업 0, 연결만 바뀐 판에서 사업 id 불변)이 모두 통과해야 한다.
 
 ### ⑧ 백업
 
@@ -166,6 +168,7 @@ node tools/ledger/supabase-verify.js --month 2026-10        # 마지막 줄 '모
 
 - **`BOARD_REVALIDATE_URL=`(빈 값)을 꼭 붙인다.** `.env.local` 값이 운영 주소라서, 그대로 두면 적재가 끝나는 즉시 운영 화면 캐시가 비워진다. 그러면 새 데이터가 아직 배포되지 않은 코드로 보인다(10-14에 실제로 겪음).
 - 출력의 `고아 정리`에 나오는 사업 삭제 수는 이번 판에서 빠진 HOME 사업 수와 맞아야 한다.
+- 같은 줄 아래의 `지역 지움 · 통계 지움 · 공고 지움`은 이번 판에 없는 `areas`·`stat_facts`·`notices` 행을 지운 수다(2026-10-20 `publish_run` 변경). 다른 행이 가리켜 남긴 수(`남김`)는 0이어야 한다.
 - verify에서 확인할 것:
   - anon 공개 범위가 board·map·screens만 200인지
   - 고아 0인지
@@ -215,10 +218,10 @@ curl -s https://housing-board.vercel.app/ | grep -oE 'board-source" content="[^"
 | 바뀐 것 | 정상으로 볼 범위 | 멈추고 확인 |
 |---|---|---|
 | links | 정책–프로그램·프로그램–사업 수 변화, `CONFIRMED` 증가(재매칭의 목적) | 연결 수가 크게 줄었거나 `mapping.noProject`가 크게 늚 |
-| 사업 수(수도권) | HOME 사업 추가·삭제만큼 | 이유 없는 ±20% 넘는 변화, 비수도권 변화 |
+| 사업 수(수도권) | HOME 사업 추가·삭제만큼 | 이유 없는 ±20% 넘는 변화, 수도권 밖 행 발생 |
 | 사업 id | 새 사업만 새 id, 기존 사업은 같은 id | `ids.conflicts` > 0, 기존 PRJ id가 사라짐(대체 기록 없이) |
 | 9·7 진행값 | 공고·연결이 바뀐 만큼 | `homeRule`이 HOME 화면과 다름 |
-| 종합상황판 | 수도권 판정 호수 변화 | 전국 ≠ 시도 합(시험이 잡음) |
+| 종합상황판 | 수도권 판정 호수 변화 | 수도권 합 ≠ 세 시도 합(시험이 잡음) |
 
 ## 5. 함정 (지난 이관에서 실제로 겪거나 확인한 것)
 
@@ -230,7 +233,7 @@ curl -s https://housing-board.vercel.app/ | grep -oE 'board-source" content="[^"
 6. **서버 끄기**: `pkill -f next-server`처럼 한꺼번에 끄지 않는다. 다른 세션의 개발 서버(8000)까지 꺼진다. 자기가 띄운 PID만 끈다.
 7. **빌드 명령**: `npx next build`만 돌리면 prebuild가 빠진다. 반드시 `npm run build`로 한다.
 8. **다른 세션 파일**: 커밋할 때 다른 세션의 미추적·수정 파일을 섞지 않는다(⑪ 목록).
-9. **원장에 남는 행**: `programs`·`policies`·`notices`·`areas`는 Supabase에서 덮어쓰기만 하고 지우지 않는다. 빠진 프로그램 id가 DB에 남지만 공개 뷰와 내보내기에는 보이지 않으므로 정상이다.
+9. **원장에 남는 행**: `programs`·`policies`·`sources`는 Supabase에서 덮어쓰기만 하고 지우지 않는다. 빠진 프로그램 id가 DB에 남지만 공개 뷰와 내보내기에는 보이지 않으므로 정상이다. `areas`·`stat_facts`·`notices`는 2026-10-20부터 발행 때 이번 판에 없는 행을 지운다(`20261020100000_ledger_prune_stale.sql`). 그래서 수도권 밖 행이 DB에 남지 않는다.
 
 ## 6. 되돌리기
 
@@ -249,7 +252,7 @@ curl -s https://housing-board.vercel.app/ | grep -oE 'board-source" content="[^"
 
 - **계획·결정 문서**: `docs/product/데이터-정제-계획.md`(6절 결정, 8절 진행), `HOME-데이터-이관-계획.md`(덤프 측정), `지도-개선-계획.md`
 - **도구**: `tools/ledger/home-dump.py`, `home-source.js`(`replaceSido`·`inventory`·`issueHome`), `convert.js`, `scripts/issue-projects.js`, `board.js`, `home-map.js`, `policy-progress.js`, `raw-store.js`, `supabase-load.js`, `supabase-verify.js`
-- **마이그레이션**: `supabase/migrations/20261014100000_ledger_refine.sql`(고아 정리 `retired_run_id`, `policy_targets`·`area_facts`, 공고 GH, 식별자 HOME)
+- **마이그레이션**: `supabase/migrations/20261014100000_ledger_refine.sql`(고아 정리 `retired_run_id`, `policy_targets`·`area_facts`, 공고 GH, 식별자 HOME), `20261020100000_ledger_prune_stale.sql`(이번 판에 없는 지역·통계·공고 정리, `orphan_counts` stale 세 값)
 - **HOME 소스(읽기 전용)**: `github.com/acesharp81/minslab` `PoC/10-home` 커밋 21c60b1. 운영 화면은 https://www.minslab.kr/poc/home/
 
 ## 9. 실제 수행 기록 — 2026-10-14 판(20261014T102506Z)
@@ -266,3 +269,18 @@ curl -s https://housing-board.vercel.app/ | grep -oE 'board-source" content="[^"
   - 덤프에 담당자 실명과 입력 사유가 있었다. 매핑 근거 문구로 새어 나가지 않게 `home-source.js`에서 지웠고, 산출물 실명 검사 결과는 0건이다.
 - **새 생성기**: `region-supply.js`·`requirements.js`·`projects-index.js`(+ `area-facts.js`·`home-sources.js`)는 HOME 원본이 필요하다. 원장이 바뀌면 board → home-map → policy-progress → projects-index → region-supply → requirements 순서로 다시 돌린다. monthly.js에는 policy-progress·projects-index까지만 들어 있다.
 - **미리보기 배포**: Supabase 환경변수가 없어 JSON 대체로 동작한다(`board-source=json`). 운영 출처 확인은 운영 주소에서 한다.
+
+## 10. 실제 수행 기록 — 2026-10-20 판(20261019T212247Z)
+
+- **덤프**: `~/Downloads/HOME_DB_20261020_062247`(스냅샷 2026-10-20 06:22 KST, 1.04 GB, `home_revision` 3,810,231행, 소스 커밋 31b4806). 표·열은 그대로라 추출 kind 는 바꾸지 않았다. 새 kind 41종(register·permit·general_permit 등 대형 원천)은 연결에 쓰이지 않아 범위 밖으로 뒀다.
+- **반영 순서**: worktree(`housing-board-home1020`, 브랜치 `home-1020`)에서 ②~⑦ → ⑨ 원본 Storage(38개, 9.6 MB) → ⑧ 백업 → 마이그레이션 `20261020100000_ledger_prune_stale.sql` 적용(`supabase db push --db-url`) → 적재 run 33(`BOARD_REVALIDATE_URL=` 빈 값) → verify 모두 통과 → 커밋 → 미리보기·운영 배포 → 푸시.
+- **사용자 결정(2026-10-20)**: 수도권만 남긴다(areas·stat_facts 의 수도권 밖·전국 '00' 행도 제거). 옛 판 원본 폴더(10-13·10-14)는 저장소에서 지우고 Storage 에만 둔다. 같은 현장으로 합쳐진 인천검단 AA19 는 블록 키를 가진 0055 를 대표로 두고 0054 를 대체한다. 원천 사업후보(PRO)가 둘인 HOME 사업은 둘 다 쓴다. 공개 범위 미상 사업은 HOME 처럼 표시한다. 인천부평 A(0068)·(도시재생뉴딜) A(0065) 중복 의심은 HOME 대로 둔다.
+- **새 판에서 처음 생긴 일**:
+  - 키 검사 오탐 840건: 토지이음 첨부(`FileDownload.do?file=`)의 날짜 폴더 경로였다. `home-dump.py` 가 `/YYYYMMDD/…` 경로만 키가 아닌 것으로 보게 좁혔다.
+  - `ids.conflicts` 1건: HOME 이 블록 오기(A13-1→AA19)를 고쳐 지난 판의 두 사업이 한 묶음이 됐다. 대표는 '묶음 블록 키를 이미 가진 기존 id → 없으면 앞 번호' 규칙으로 고르고, 나머지 기존 id 는 숨기지 않고 `HOME_SAME_SITE` 로 대체한다.
+  - HPR 하나에 PRO 가 둘인 사업 7곳: 모두 묶음에 넣고 같은 HPR 은 한 묶음으로 합친다. 같은 원천의 같은 종류 예정일이 둘이면 종합상황판도 지도처럼 이른 날짜를 쓴다(`board.js`).
+  - `home_project` 311→2,011: 늘어난 1,700곳(정비사업 목록·일반 인허가 등)은 대부분 PRO 가 없어 원장 사업이 되지 않는다. PRO 가 새로 생긴 130곳이 묶음 증가의 원인이다.
+  - 새 프로그램 5개의 /citizen 짧은 이름을 `build_data.py`·`public-labels.ts` 에 넣었다.
+- **수치(지난 판 → 새 판)**: 원장 사업 262 → 383(대체 10 → 11, 숨김 71), 연결 310 → 342, areas 20,562 → 3,001, stat_facts 16,320 → 2,880, 지역지표 18,264 → 19,331, 검토 필요 15 → 110(공개 범위 미상 13 → 106), 종합상황판 판정 169건·168,152호 → 188건·179,428호, 전체 262사업·227,976호 → 383사업·274,296호. 9·7 같은 기간·HOME 방식 값(8,049 / 4,732 / 8,742)은 그대로이고 HOME 운영 API 와 같다.
+- **적재(run 33)**: 사업 고아 0, 지역 지움 17,561 · 통계 지움 13,440 · 공고 지움 7,487(지난 판 잔여) · 남김 0. verify: 수도권 밖 행 0, 시군구 없는 공고 8,689(실패 아님).
+- **남은 일**: 인천부평 0068·0065 중복 의심과 공개 범위 미상 106곳(상당수 재건축·가로주택 조합)은 HOME 담당자에게 확인을 요청한다. 위치 없는 사업 127곳. 종합상황판 기준일(referenceDate)은 2026-10-13 그대로다.

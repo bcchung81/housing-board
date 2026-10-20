@@ -38,7 +38,7 @@ function liteFixture() {
     { name: '남의 지구', lon: 127.6, lat: 37.1, rings: [[[127.6, 37.1], [127.61, 37.1], [127.61, 37.11], [127.6, 37.1]]], ids: ['PRJ-11110-0001'] }];
   const blocks = [{ label: '고양창릉 A4', at: [126.8, 37.6] }, { label: '고양창릉 S2', at: [126.82, 37.61] }, { label: '밖 A1', at: [128, 36] }];
   const inside = (p) => p[0] > 126.7 && p[0] < 127 && p[1] > 37.5 && p[1] < 37.7;
-  return { doc, opts: { features, districts, blocks, inside, basis: '20261014', edition: '20261014T102506Z' } };
+  return { doc, opts: { features, districts, blocks, inside, basis: '20261014', edition: '20261019T212247Z' } };
 }
 
 test('경량 번들 생성기: 위치 있는 사업 둘레 300 m 건물 + 블록 사업이 든 작은 지구 안 건물(중심점 순·겹치면 하나), 시군구 지구·블록, 같은 입력 → 같은 바이트', () => {

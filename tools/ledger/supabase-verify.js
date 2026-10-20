@@ -1,7 +1,9 @@
 'use strict';
 /* Supabase 에 실린 한 달 판을 파일과 대조한다 — 설계: docs/product/Supabase-원장-설계.md 6절 6단계.
    secret 키: ledger_admin.export_table 로 16표 + 새 표 2개(policy_targets·area_facts, 파일이 없으면 0행)를 받아 파일과 행마다 깊은 같음(load_seq 순, 키 순서는 보지 않음) → validate.js 오류 0
-     → 고아 0(ledger_admin.orphan_counts: 현재 판이 아닌 projects·complexes 는 지워졌거나 표시됨, 마이그레이션 *_ledger_refine.sql).
+     → 고아 0(ledger_admin.orphan_counts: 현재 판이 아닌 projects·complexes 는 지워졌거나 표시됨, 마이그레이션 *_ledger_refine.sql;
+       현재 판이 아닌 areas·stat_facts·notices 0, *_ledger_prune_stale.sql).
+     → 수도권 밖 행 0(2026-10-20 결정: 원장은 서울·인천·경기만 — 현재 판 areas·stat_facts·projects·notices·area_facts, 시군구 없는 공고는 넘김).
      → 저장한 보드(api.board) = boardFromLedger(DB 표) = data/board/ledger-board.json, 달은 열림.
      → 저장한 지도 색인(api.map, 그 달 모든 시군구) = mapIndexFromLedger(DB 표) = data/board/ledger-map.json.
      → 저장한 화면 표시값(api.screens, 가장 최근 달 = 그 달, 4행) = 저장소 파일 넷(SCREEN_FILES).
@@ -14,6 +16,7 @@ const { isDeepStrictEqual } = require('node:util');
 const { boardFromLedger, mapIndexFromLedger, loadHistory, loadLhBlocks, MAP_OUT } = require('./board');
 const { validate } = require('./validate');
 const { readEnv, readTables, client, SCREEN_FILES } = require('./supabase-load');
+const { CAPITAL_SIDO } = require('../../lib/scope');
 
 const ROOT = path.join(__dirname, '..', '..');
 const PAGE = 5000;
@@ -22,6 +25,20 @@ const VIEWS = ['board', 'map', 'screens', 'areas', 'agencies', 'sources', 'proje
   'stat_facts', 'policies', 'programs', 'links', 'notices', 'notice_links', 'source_freshness', 'policy_targets', 'area_facts'];
 /* 파일이 없어도 왕복하는 표(마이그레이션 *_ledger_refine.sql) — 파일이 없으면 DB 도 0행이어야 한다 */
 const NEW_TABLES = ['policy_targets', 'area_facts'];
+/* 발행 뒤 0 이어야 하는 orphan_counts 값(현재 판 아님·표시 없음). 지역·통계·공고는 *_ledger_prune_stale.sql 부터 있다 */
+const STALE_KEYS = ['projects_stale', 'complexes_stale', 'areas_stale', 'stat_facts_stale', 'notices_stale'];
+/* 수도권 검사 열: 앞 두 자리가 CAPITAL_SIDO 가 아니면 밖(전국 '00' 도 밖). 값이 없는 행(시군구 없는 공고)은 세지 않는다 */
+const CAPITAL_COLS = { areas: 'area_code', stat_facts: 'sido_code', projects: 'sgg_code', notices: 'sgg_code', area_facts: 'area_code' };
+
+/* orphan_counts → 모두 0 이면 null, 아니면 어긋남 문장(키가 없으면 마이그레이션 미적용) */
+function staleProblem(orphans) {
+  if (STALE_KEYS.every((k) => orphans?.[k] === 0)) return null;
+  return `고아(현재 판 아님·표시 없음): ${STALE_KEYS.map((k) => `${k} ${orphans?.[k] ?? '없음(*_ledger_prune_stale.sql 미적용?)'}`).join(' · ')}`;
+}
+
+/* 표 행 { 표: [행] } → { 표: 수도권 밖 행 수 } */
+const outsideCapital = (tables) => Object.fromEntries(Object.entries(CAPITAL_COLS).map(([t, col]) =>
+  [t, (tables[t] ?? []).filter((r) => r[col] != null && !CAPITAL_SIDO.includes(String(r[col]).slice(0, 2))).length]));
 
 async function exportAll(api, tbl, month) {
   const rows = [];
@@ -51,11 +68,16 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
   const errors = validate(db);
   check(errors.length === 0, `validate(DB 표) 오류 ${errors.length}건: ${errors.slice(0, 3).join(' / ')}`);
   log(`validate(DB 표): 오류 ${errors.length}`);
+  const outside = outsideCapital(db);
+  check(Object.values(outside).every((n) => n === 0), `수도권 밖 행(현재 판): ${Object.entries(outside).filter(([, n]) => n).map(([t, n]) => `${t} ${n}`).join(' · ')}`);
+  log(`수도권 밖 행(현재 판): ${Object.entries(outside).map(([t, n]) => `${t} ${n}`).join(' · ')} · 시군구 없는 공고 ${(db.notices ?? []).filter((r) => r.sgg_code == null).length}`);
 
-  /* 1' 고아 0: 현재 판이 아닌 projects·complexes 는 지워졌거나 retired_run_id 로 표시돼 있어야 한다(표시된 행은 닫힌 달 events 가 가리키는 것) */
+  /* 1' 고아 0: 현재 판이 아닌 projects·complexes 는 지워졌거나 retired_run_id 로 표시돼 있어야 한다(표시된 행은 닫힌 달 events 가 가리키는 것).
+     현재 판이 아닌 areas·stat_facts·notices 는 없어야 한다(있으면 publish_run 이 참조 때문에 남긴 것 — 적재 출력의 '남김'과 대조) */
   const orphans = await api.rpc('orphan_counts', {});
-  check(orphans.projects_stale === 0 && orphans.complexes_stale === 0, `고아(현재 판 아님·표시 없음): 사업 ${orphans.projects_stale} · 단지 ${orphans.complexes_stale}`);
-  log(`고아: 사업 ${orphans.projects_stale} · 단지 ${orphans.complexes_stale} · 표시(닫힌 달 참조) 사업 ${orphans.projects_retired} · 단지 ${orphans.complexes_retired}`);
+  const stale = staleProblem(orphans);
+  check(!stale, stale);
+  log(`고아: 사업 ${orphans.projects_stale} · 단지 ${orphans.complexes_stale} · 지역 ${orphans.areas_stale} · 통계 ${orphans.stat_facts_stale} · 공고 ${orphans.notices_stale} · 표시(닫힌 달 참조) 사업 ${orphans.projects_retired} · 단지 ${orphans.complexes_retired}`);
 
   /* 2 anon 읽기: api.board·api.map·api.screens 만 읽히고 나머지 뷰는 거부(401·403·404) */
   const anon = async (p, init = {}) => fetch(`${url}/rest/v1/${p}`, { ...init, headers: { apikey: pub, 'Accept-Profile': 'api', ...(init.headers ?? {}) } });
@@ -129,7 +151,7 @@ async function verify({ month, root = ROOT, env = readEnv(root), fetch = globalT
   return { problems, counts, exported: Object.fromEntries(Object.entries(db).map(([k, v]) => [k, v.length])) };
 }
 
-module.exports = { verify, exportAll, VIEWS, PUBLIC_VIEWS };
+module.exports = { verify, exportAll, staleProblem, outsideCapital, VIEWS, PUBLIC_VIEWS, STALE_KEYS, CAPITAL_COLS };
 
 if (require.main === module) {
   const i = process.argv.indexOf('--month');

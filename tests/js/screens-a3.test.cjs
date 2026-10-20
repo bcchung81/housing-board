@@ -62,7 +62,7 @@ test('H8 정책 목표 대비: 기본 접힘(머리에 핵심 한 줄) · 인쇄
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
   assert.deepEqual(lines.map(V.compareHead), ['9·7 · 목표 있는 4단계 중 2단계 미달(①계획·④모집)'], '4차(A4): 머리 줄은 비율 숫자 없이 단계 이름만(r4-screens 1: 부족 → 미달)');
   const cells = lines[0].cells;
-  assert.equal(V.rateOf(cells[1]).word, '달성 230.7%', '② 인허가 3,560 / 1,543 — 2026-10-16 목표 대비 달성률(옛 \'초과 130.7%\', r2-screens 3)');
+  assert.equal(V.rateOf(cells[1]).word, '달성 170.8%', '② 인허가 6,249 / 3,658(2026-10-20 HOME 판 — 10-19 판 3,560 / 1,543 = 230.7%) — 2026-10-16 목표 대비 달성률(옛 \'초과 130.7%\', r2-screens 3)');
   assert.equal(V.rateOf(cells[4]).word, '달성 100.0%', '⑤ 준공 381 / 381');
   const sum = read('components/projects/Summary.tsx');
   assert.match(sum, /<details data-fold open=\{open\}/);
@@ -145,7 +145,9 @@ test("H9 회복·문구: 부산은 '자료 없음(서울·인천·경기만)', �
   assert.match(page, /prioAll\.length > 10 \? `점검 필요 \$\{fmt\(prioN\)\}건 중 상위 10` : `점검 필요 \$\{fmt\(prioN\)\}건 전부`/);
   assert.doesNotMatch(page, /우선 점검 사업 · 상위 10/);
   const all = V.priorityOf(V.scopeOf(rows, { metro: true }), Infinity);
-  assert.ok(all.length <= 10 && all.length > 0, '수도권은 10줄 이하 — 제목은 전부');
+  /* 2026-10-20 HOME 판: 수도권 점검 필요 4 → 12건(주의 10·지연 2)이라 10줄을 넘는다 — 인쇄 제목은 '점검 필요 12건 중 상위 10' */
+  assert.ok(all.length > 10, '수도권은 10줄 넘음 — 제목은 상위 10');
+  assert.equal(all.length, 12);
 });
 
 test('접근성: 본문 바로가기(첫 Tab), 인쇄 전용 표·정의는 화면에서 display:none(보조기기에도 숨김)', () => {

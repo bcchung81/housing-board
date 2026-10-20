@@ -8,7 +8,7 @@
     "policy_dir": "docs/speech/research/01.정책"
   },
   "home": {
-    "dump_dir": "schemas/ledger-2026-10/raw/home/20261014T102506Z",
+    "dump_dir": "schemas/ledger-2026-10/raw/home/20261019T212247Z",
     "tables": ["project", "stage_evidence", "collection_link", "document_evidence", "evidence_bridge", "notice",
                "execution_schedule", "home_identity_alias", "lh_completion_plan", "policy", "home_program_mapping",
                "policy_delivery_plan"],

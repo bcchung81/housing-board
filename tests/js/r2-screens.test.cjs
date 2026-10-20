@@ -61,12 +61,13 @@ test('2 상태 문구: 정상 · 예정일 지남(1개월 미만) — 경과 0�
 test('3 용어: 목표를 넘으면 \'달성 n%\'(②인허가 3,560/1,543 = 달성 231%) · ①계획 = ②인허가 확인은 HOME 원천 값 · \'판정 밖\' → \'일정 정보 없음\'', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
   const permit = cells.find((c) => c.key === 'APPROVAL');
-  assert.equal(V.rateOf(permit).word, '달성 230.7%');   // 소수 한 자리(r3-screens 3)
-  assert.deepEqual([V.rateOf(permit).value, V.rateOf(permit).unit], ['230.7', '% 달성']);
+  assert.equal(V.rateOf(permit).word, '달성 170.8%');   // 소수 한 자리(r3-screens 3) · 2026-10-20 HOME 판: ②인허가 6,249/3,658(10-19 판 3,560/1,543 = 230.7%)
+  assert.deepEqual([V.rateOf(permit).value, V.rateOf(permit).unit], ['170.8', '% 달성']);
   const plan = cells.find((c) => c.key === 'BUSINESS');
-  assert.equal(V.rateOf(plan).word, '달성 24.2%');   // r4-screens 1: 모든 칸 달성률
+  assert.equal(V.rateOf(plan).word, '달성 53.1%');   // r4-screens 1: 모든 칸 달성률 · 2026-10-20 HOME 판 ①사업화 7,808/14,694
   for (const c of [plan, permit]) assert.match(V.stageCellTip(c, '', cells), /HOME\(정책 진행 자료\) 원천 값 그대로/);
-  assert.match(V.stageCellTip(permit, '', cells), /①계획 확인과 같은 값/);
+  /* 2026-10-20 HOME 판: ①사업화 7,808 · ②인허가 6,249 로 확인 값이 달라져 '①계획 확인과 같은 값' 꼬리가 붙지 않는다(같으면 붙는 규칙은 그대로) */
+  assert.doesNotMatch(V.stageCellTip(permit, '', cells), /①계획 확인과 같은 값/);
   assert.ok(!read('components/projects/Summary.tsx').includes("'초과'"));
   const judged = V.judgeOutText(ledgerJudged(BOARD));
   // 2026-10-19 수도권 한정: LH 후보·건축HUB 후보가 0건이라 ledgerJudged 문구에 '일정 정보 없음' 꼬리가 없다 → 치환 규칙은 옛 문구 '판정 밖'으로 확인

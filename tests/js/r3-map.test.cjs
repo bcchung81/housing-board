@@ -36,7 +36,8 @@ test('1(a) 근사 불가 확인: 검단구 지연 2건(인천검단 35·AA13-1)�
   const hm = JSON.parse(read('public/assets/home-map/28290.json'));
   for (const id of ['PRJ-28290-0056', 'PRJ-28290-0058']) {
     const p = hm.projects.find((x) => x.id === id);
-    assert.equal(p.cls, 'delay', id); assert.equal(p.loc, null, id); assert.equal(p.bjd, null, id);
+    /* 2026-10-20 HOME 판: AA13-1(0058)은 새 LH 준공예정 별칭(LH 블록 매핑)으로 법정동 2829010400 이 생겼다 — 위치(loc)는 여전히 없다 */
+    assert.equal(p.cls, 'delay', id); assert.equal(p.loc, null, id); assert.equal(p.bjd, { 'PRJ-28290-0056': null, 'PRJ-28290-0058': '2829010400' }[id], id);
     assert.deepEqual([p.bundles, p.pnus, p.pks], [[], [], []], id);
   }
   const man = JSON.parse(read('public/assets/home-lite/manifest.json'))['28290'];

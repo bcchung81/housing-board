@@ -4,7 +4,7 @@
   "name": "서울특별시 용산구",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261014T102506Z",
+  "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-11170-0043","name":"강변강서","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"강변강서","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1117012900","loc":{"by":"address","at":[126.959281,37.523512],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
     {"id":"PRJ-11170-0044","name":"효창공원앞역 북측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":4040,"pks":[],"pnus":[],"bundles":[],"label":"효창공원앞역 북측","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1117011900","loc":{"by":"name","at":[126.961339,37.539289],"basis":"NAME_SEARCH","status":"REVIEW","match":"효창공원앞역"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"],"short":["8·13"]}},

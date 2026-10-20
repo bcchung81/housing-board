@@ -62,6 +62,20 @@ class KeyScanTest(unittest.TestCase):
         for t in (utf8, euckr):
             self.assertEqual(hd.key_scan(t)['url_query_long_token'], 0)
 
+    def test_dated_file_path_is_not_key(self):
+        # 토지이음 고시 첨부 내려받기 — file= 값은 퍼센트 인코딩한 '/YYYYMMDD/<영문>/<영문>/<영문>' 공개 경로(2026-10-20 판 840건 오탐)
+        t = ('https://www.eum.go.kr/web/FileDownload.do?gosiId=1&file='
+             + '%2F20251231%2Fabcdefghi%2Fabcdefgh%2Fabcdefghijk')
+        self.assertEqual(hd.key_scan(t)['url_query_long_token'], 0)
+
+    def test_encoded_keys_still_caught(self):
+        b64 = 'https://x/y?k=%2FAbCdEf0123456789%2BAbCdEf0123456789%2FAbCd%3D%3D'  # '/'로 시작하는 base64 키
+        noslash = 'https://x/y?k=' + 'AbCd%2B' * 8  # 퍼센트 인코딩 키, 경로 아님
+        path_like = 'https://x/y?k=%2Fabcdefghijklmnop%2Fqrstuvwxyz0123456789ABCD'  # 날짜 폴더 없는 '/' 값
+        plain = 'https://x/y?k=' + 'a1B2' * 10
+        for t in (b64, noslash, path_like, plain):
+            self.assertEqual(hd.key_scan(t)['url_query_long_token'], 1, t)
+
 
 if __name__ == '__main__':
     unittest.main()

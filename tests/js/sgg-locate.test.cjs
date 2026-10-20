@@ -12,8 +12,12 @@ const ROOT = path.join(__dirname, '..', '..');
 const FILE = path.join(ROOT, 'assets/geo/korea-sgg.json');
 const text = fs.readFileSync(FILE, 'utf8');
 const data = JSON.parse(text);
-/* 2026-10-19 수도권 한정: data.json sgg 는 수도권만(원장 사업이 수도권 HOME 만)이라, 코드·이름은 원장 지역 표(법정동코드 시군구 — schemas/ledger-2026-10/tables/areas.json)와 맞춘다 */
-const ours = new Map(JSON.parse(fs.readFileSync(path.join(ROOT, 'schemas/ledger-2026-10/tables/areas.json'), 'utf8')).rows.filter((a) => a.level === 'SGG').map((a) => [a.area_code, a.area_name]));
+/* 2026-10-19 수도권 한정: data.json sgg 는 수도권만(원장 사업이 수도권 HOME 만)이라, 코드·이름은 법정동코드 시군구와 맞춘다.
+   2026-10-20 원장 지역 표(tables/areas.json)도 수도권만이 되어, 그 표를 만드는 원본(raw/legal-dong 의 가장 늦은 CSV — convert.js 지역의 바탕)에서 직접 읽는다 */
+const { parseLegalDong } = require('../../tools/ledger/legal-dong.js');
+const DONG_DIR = path.join(ROOT, 'schemas/ledger-2026-10/raw/legal-dong');
+const DONG = fs.readdirSync(DONG_DIR).filter((f) => f.endsWith('.csv')).sort().pop();
+const ours = new Map(parseLegalDong(fs.readFileSync(path.join(DONG_DIR, DONG)), DONG).rows.filter((a) => a.level === 'SGG').map((a) => [a.area_code, a.area_name]));
 
 test('알려진 청사 좌표 → 시군구 코드(data.json sgg 와 같은 코드)', () => {
   const cases = [
@@ -37,7 +41,7 @@ test('알려진 청사 좌표 → 시군구 코드(data.json sgg 와 같은 코�
   ];
   for (const [name, lon, lat, code] of cases) {
     assert.strictEqual(locate(data, lon, lat), code, name);
-    assert.ok(ours.has(code), `${name}: ${code} 가 원장 지역 표에 있다`);
+    assert.ok(ours.has(code), `${name}: ${code} 가 법정동코드 시군구에 있다`);
   }
 });
 

@@ -101,11 +101,17 @@ KEY_NAMES = r'(?:service_?key|api_?key|auth_?key|crtfc_?key|confm_?key|cert_?key
 KV_RE = re.compile(r'(?i)' + KEY_NAMES + r'(?:=|%3d)[^&\s"\\]+')
 URLQ_RE = re.compile(r'(?i)https?://[^\s"\\]*[?&][^\s"\\]*?=([A-Za-z0-9%+/_\-]{32,})')
 HANGUL_RE = re.compile(r'[\uac00-\ud7a3]')
+# 퍼센트 인코딩을 풀면 '/YYYYMMDD/<이름>/…' 인 공개 파일 경로(토지이음 FileDownload.do 의 file=). 날짜 폴더로 시작해야만 빼서
+# '/'·'+'·'=' 가 섞인 base64 키(%2F…%3D)는 그대로 잡힌다
+FILE_PATH_RE = re.compile(r'^/(?:19|20)\d{6}(?:/[A-Za-z0-9_.\-]{1,64})+$')
 
 
 def _is_token(v):
     # 퍼센트 인코딩된 한글(사업지구명 등)은 키가 아니다. UTF-8 로 못 읽는 퍼센트 글(EUC-KR 지구명 — 토지이음 고시 주소의 zonenm)도 키가 아니다
-    return not (('%' in v) and (HANGUL_RE.search(unquote(v)) or '\ufffd' in unquote(v)))
+    if '%' not in v:
+        return True
+    d = unquote(v)
+    return not (HANGUL_RE.search(d) or '\ufffd' in d or FILE_PATH_RE.match(d))
 
 
 def key_scan(text):

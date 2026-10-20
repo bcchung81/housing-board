@@ -2,6 +2,8 @@
 // 9·7 정책 단계별 목표·확인(tools/ledger/policy-progress.js): HOME 운영 화면 계산 재현.
 // 고정값 = HOME 운영 API(2026-10-14 20:45 KST GET /poc/home/api/policy-delivery?compact=true)의 yearly_comparisons.policy.metrics — 덤프 판(2026-10-14T10:25:06Z)으로 다시 계산한 6단계 목표·확인 점과 숫자가 같았다.
 // 2026-10-14 판부터 담당자 입력(계획물량·단계 측정값·승인 일정)이 들어와 공급 목표·확인이 바뀌었다(2026-10-13 판: 목표 9,355 · 확인 7,606 · 같은 기간 확인 6,680).
+// 2026-10-20 판(20261019T212247Z, 담당자 일정 execution_schedule 1,800건): HOME 운영 API(2026-10-20 09:30 KST GET, as_of 2026-10-20)와 6단계 목표·확인 점·연도 쌍이 모두 같았다.
+//   공급(분양·모집) 2026 값은 10-14 판과 같고(8,049 대 8,742), 연결 사업 197→228 로 사업화·인허가·준공·입주 목표와 2031년 공급 목표 끝점이 늘었다.
 // HOME 원본(jsonl.gz)은 저장소에 없다(gitignore, Storage) — 없으면 원본으로 다시 계산하는 시험은 건너뛴다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -20,11 +22,11 @@ const SKIP = !HAVE && 'HOME 원본(jsonl.gz) 없음 — Storage 에서 받거나
 const supply = saved.policies[0].stages.SUPPLY;
 
 test('HOME 화면 공급(분양·모집) 값 재현: 목표 점·확인 점·연도 쌍이 HOME 운영 API 와 같다', () => {
-  assert.equal(saved.asOf, '2026-10-14');
+  assert.equal(saved.asOf, '2026-10-20');   // 2026-10-20 판 덤프 시각(KST)
   assert.deepEqual(supply.targetPoints.slice(0, 9).map((p) => [p.date, p.units, p.annual_units]), [
     ['2026-02-28', 206, 206], ['2026-05-29', 1139, 933], ['2026-06-30', 3506, 2367], ['2026-07-31', 4640, 1134], ['2026-08-31', 7082, 2442],
     ['2026-09-30', 8049, 967], ['2026-10-31', 8979, 930], ['2026-11-30', 9673, 694], ['2026-12-31', 10676, 1003]]);
-  assert.deepEqual([supply.targetPoints.length, supply.targetPoints.at(-1).date, supply.targetPoints.at(-1).units], [15, '2031-11-16', 66934], '승인 일정(담당자 산정)은 2031년까지');
+  assert.deepEqual([supply.targetPoints.length, supply.targetPoints.at(-1).date, supply.targetPoints.at(-1).units], [22, '2031-11-16', 84398], '승인 일정(담당자 산정)은 2031년까지');
   assert.deepEqual(supply.actualPoints.map((p) => [p.date, p.units, p.confirmed_units, p.policy_confirmed_units, p.review_units]), [
     ['2026-02-27', 381, 381, 381, 0], ['2026-05-28', 899, 899, 899, 0], ['2026-05-29', 1832, 1832, 1832, 0], ['2026-06-30', 4199, 4199, 4199, 0],
     ['2026-07-31', 4739, 4739, 4739, 0], ['2026-08-10', 5333, 5333, 5333, 0], ['2026-08-31', 7775, 7775, 7775, 0], ['2026-09-30', 8742, 8742, 8742, 0]], '담당자 측정값이 확인 필요 연결을 대신한다');
@@ -42,10 +44,10 @@ test('같은 기간 비교(우리 기본): 2026-01~09 목표 8,049 대 확인 4,
   assert.deepEqual(supply.monthly.find((m) => m.month === '2026-09'), { month: '2026-09', target: 8049, actual: 8742, targetYtd: 8049, actualYtd: 8742 }, '월말 시계열은 HOME 과 같다(추정 포함)');
 });
 
-test('추정 분리: 공급 측정값 125건 중 담당자 추정(OFFICER_CURRENT_ESTIMATE) 70건 · 확인 ≤ 추정 포함, 추정 입력이 없는 단계(착공 통계·준공)는 같다', { skip: SKIP }, () => {
+test('추정 분리: 공급 측정값 156건 중 담당자 추정(OFFICER_CURRENT_ESTIMATE) 101건(2026-10-20 판, 10-14 판 125·70) · 확인 ≤ 추정 포함, 추정 입력이 없는 단계(착공 통계·준공)는 같다', { skip: SKIP }, () => {
   const svc = PP.homeService(H.readHome(HOME_DIR), saved.asOf);
   const sup = [...svc.profiles.values()].map((p) => p.progress?.SUPPLY).filter(Boolean);
-  assert.deepEqual([sup.length, sup.filter((v) => PP.ESTIMATE_RULES.has(v.input_rule)).length], [125, 70]);
+  assert.deepEqual([sup.length, sup.filter((v) => PP.ESTIMATE_RULES.has(v.input_rule)).length], [156, 101]);
   const b = PP.buildCohorts(svc, saved.asOf, PP.POLICY_ID);
   const est = b.cohorts.flatMap((c) => c.events).filter((e) => e.estimate);
   assert.ok(est.length > 0 && est.every((e) => e.origin === 'MANUAL'), '추정 표지는 담당자 측정값에만');
@@ -72,15 +74,16 @@ test('다른 단계 고정값(덤프 판 = HOME 운영 API): 착공은 원문 �
   assert.deepEqual(Object.keys(st), ['CONSTRUCTION', 'SUPPLY', 'BUSINESS', 'APPROVAL', 'COMPLETION', 'MOVE_IN']);
   const y26 = (k) => st[k].samePeriod.find((y) => y.year === 2026);
   assert.deepEqual([y26('CONSTRUCTION').target, y26('CONSTRUCTION').actual, y26('CONSTRUCTION').status], [null, 86739, 'NOT_DUE']);
-  assert.deepEqual([y26('BUSINESS').target, y26('BUSINESS').actual, y26('BUSINESS').actualWithEstimates, y26('BUSINESS').status], [14694, 3560, 5789, 'GAP']);
-  assert.deepEqual([y26('APPROVAL').target, y26('APPROVAL').actual, y26('APPROVAL').actualWithEstimates, y26('APPROVAL').status, y26('COMPLETION').actual, y26('COMPLETION').status], [1543, 3560, 5789, 'REACHED', 381, 'REACHED']);
+  /* 2026-10-20 판(HOME 운영 API 와 같음): 사업화 확인 3,560→7,808(추정 포함 5,789→10,037), 인허가 목표 1,543→3,658·확인 3,560→6,249(추정 포함 8,478) */
+  assert.deepEqual([y26('BUSINESS').target, y26('BUSINESS').actual, y26('BUSINESS').actualWithEstimates, y26('BUSINESS').status], [14694, 7808, 10037, 'GAP']);
+  assert.deepEqual([y26('APPROVAL').target, y26('APPROVAL').actual, y26('APPROVAL').actualWithEstimates, y26('APPROVAL').status, y26('COMPLETION').actual, y26('COMPLETION').status], [3658, 6249, 8478, 'REACHED', 381, 'REACHED']);
   assert.deepEqual([y26('MOVE_IN').target, y26('MOVE_IN').actual, y26('MOVE_IN').status], [null, null, 'NOT_DUE']);
   assert.deepEqual(st.CONSTRUCTION.targetPoints.map((p) => p.units), [269000, 515000, 765000, 1014000, 1349000]);
-  assert.deepEqual(st.APPROVAL.annual.find((a) => a.year === 2026), { year: 2026, target_units: 2913, target_cumulative_units: 2913, management_cumulative_units: null, actual_units: 5789, actual_cumulative_units: 16731, actual_through: '2026-09-01', actual_status: 'PARTIAL' });
-  assert.deepEqual(st.COMPLETION.annual.find((a) => a.year === 2029).target_cumulative_units, 17386);
-  assert.deepEqual(st.MOVE_IN.annual.find((a) => a.year === 2031).target_cumulative_units, 19460);
+  assert.deepEqual(st.APPROVAL.annual.find((a) => a.year === 2026), { year: 2026, target_units: 9456, target_cumulative_units: 9456, management_cumulative_units: null, actual_units: 8478, actual_cumulative_units: 27119, actual_through: '2026-09-01', actual_status: 'PARTIAL' });
+  assert.deepEqual(st.COMPLETION.annual.find((a) => a.year === 2029).target_cumulative_units, 21605);   // 2026-10-20 판(10-14 판 17,386)
+  assert.deepEqual(st.MOVE_IN.annual.find((a) => a.year === 2031).target_cumulative_units, 27410);   // 2026-10-20 판(10-14 판 19,460)
   const b = saved.policies[0].basis;
-  assert.deepEqual([b.linkedProjects, b.duplicateExcluded, b.missingQuantity, b.prePolicyStart, b.cohorts, b.cohortUnits], [197, 57, 0, 94, 46, 67279], '담당자 계획물량 입력으로 물량 미확보 0, 코호트 물량 54,914 → 67,279');
+  assert.deepEqual([b.linkedProjects, b.duplicateExcluded, b.missingQuantity, b.prePolicyStart, b.cohorts, b.cohortUnits], [228, 57, 0, 95, 76, 91452], '2026-10-20 판: 연결 사업 197→228, 코호트 46→76·물량 67,279→91,452(10-14 판: 담당자 계획물량 입력으로 물량 미확보 0)');
 });
 
 test('HOME 원본으로 다시 계산: 저장된 파일과 바이트 같고, 같은 판 두 번도 같다', { skip: SKIP }, () => {

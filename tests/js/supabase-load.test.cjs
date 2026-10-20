@@ -188,6 +188,21 @@ test('화면 행 수가 4가 아니면 commit 하지 않는다', async () => {
   assert.ok(!kinds.includes('commit'));
 });
 
+test('고아 정리 출력: 지역·통계·공고 지운 수·남긴 수(*_ledger_prune_stale.sql)는 publish_run 이 돌려줄 때만 찍는다', async () => {
+  const withOrphans = (orphans) => async (url) => {
+    const db = await fakeDb().connect(url);
+    return { ...db, query: async (sql, params) => sql.includes('ledger_admin.publish_run') ? { rows: [{ v: { ...L.expectedCounts(tables, {}), orphans } }] } : db.query(sql, params) };
+  };
+  const old = { projects_deleted: 0, projects_retired: 0, complexes_deleted: 0, complexes_retired: 0 };
+  const logs = [];
+  await L.load({ month: MONTH, skipRaw: true, env: ENV, fetch: fakeFetch().fetch, connect: withOrphans({ ...old, stat_facts_deleted: 13440, notices_deleted: 7487, notices_kept: 0, areas_deleted: 17561, areas_kept: 0 }), log: (m) => logs.push(m) });
+  assert.ok(logs.includes('지역·통계·공고 정리(이번 판에 없는 행): 지역 지움 17561 · 남김(참조) 0 · 통계 지움 13440 · 공고 지움 7487 · 남김(연결) 0'), logs.join('\n'));
+  const before = [];
+  await L.load({ month: MONTH, skipRaw: true, env: ENV, fetch: fakeFetch().fetch, connect: withOrphans(old), log: (m) => before.push(m) });
+  assert.ok(before.some((m) => m.startsWith('고아 정리(이번 판에 없는 행): 사업 지움 0')));
+  assert.ok(!before.some((m) => m.startsWith('지역·통계·공고 정리')), '마이그레이션 전 publish_run 은 키가 없다');
+});
+
 test('readScreens: 키 넷 = 저장소 파일 그대로, 모양이 다르면(배열 빠짐) 호출 전에 멈춘다', async () => {
   assert.deepEqual(L.readScreens(ROOT), screenFiles());
   assert.deepEqual(Object.fromEntries(Object.entries(L.SCREEN_FILES).map(([k, v]) => [k, v.file])), SCREENS);

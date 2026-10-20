@@ -22,9 +22,9 @@ const sidoName = (c) => ({ 11: '서울', 28: '인천', 41: '경기' }[c] ?? c);
 test('대표 숫자 = 정책 화면과 같은 함수 값(수도권 준공 예정 24곳·13,372호)', () => {
   const all = R.aheadAll(calendar, 'metro', sidoName);
   const list = all.filter((e) => R.parseKinds(undefined).includes(e.type));
-  assert.equal(list.length, 24);
-  assert.equal(list.reduce((s, e) => s + e.units, 0), 13372);
-  assert.equal(P.hoText(13372), '1만 3,372호');
+  assert.equal(list.length, 25);   // 2026-10-20 HOME 판: 24곳·13,372호 → 25곳·14,570호
+  assert.equal(list.reduce((s, e) => s + e.units, 0), 14570);
+  assert.equal(P.hoText(14570), '1만 4,570호');
   // 페이지는 같은 함수를 직접 쓴다(새 계산 없음)
   for (const f of ['aheadAll', 'pickMonth', 'pastDue', 'parseKinds', 'regionYears', 'metroYears']) assert.match(PAGE, new RegExp(`\\b${f}\\b`), f);
 });

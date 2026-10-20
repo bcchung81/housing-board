@@ -17,7 +17,7 @@
 | 항목 | 통째 복원 | 선별 이관 |
 |---|---|---|
 | 크기 | 약 4~5GB (압축을 푼 데이터 3.53GB + 인덱스, 추정). 지금 우리 DB는 69MB | 37MB (UTF-8로 바꾸면 더 작아짐) |
-| 내용 | 91%가 건축물대장·인허가 원천(register·permit 계열 2.96GB). 우리는 이 자료를 건축HUB로 전국을 따로 수집하고 있다 | 정책·프로그램·연결·사업·일정·공정률·공고·지역 지표만 |
+| 내용 | 91%가 건축물대장·인허가 원천(register·permit 계열 2.96GB). 우리는 이 자료를 건축HUB로 따로 수집하고 있다(2026-10-20 이후 원장은 수도권만) | 정책·프로그램·연결·사업·일정·공정률·공고·지역 지표만 |
 | 노출 | 덤프 표가 `public`에 생긴다. `public`은 PostgREST 노출 대상(`pgrst.db_schemas`)이라 API로 열릴 위험이 있다 | 비공개 `ledger`에만 들어가고 화면 값만 공개한다(기존 Q4 결정) |
 | 확장 | PostGIS 3.5.2·tiger·topology 정의(우리 쪽 설치 가능 판은 3.3.7) | 필요 없음. 공개 표에 PostGIS 열이 없고, 경계는 payload 안의 GeoJSON 글자다 |
 | 요금제 | 무료(500MB)라면 불가. 요금제는 확인하지 못했다 | 무료 한도 안에 든다 |
@@ -57,7 +57,7 @@
 | project_report 1,199 | `events(PROGRESS, ACTUAL, progress_pct)` | 공정률 이력 |
 | lh_notice·notice·gh_notice | `notices` + `notice_links` | 우리 공고와 공고번호로 중복을 걸러 없는 것만 넣는다 |
 | area_stat 2,602, unsold 1,798 | **새** `ledger.area_facts` | 지역·지표·기간·값·단위 |
-| statistic 5,442 | 적재하지 않음 | 우리 `stat_facts`(전국 직접 수집)와 **대조하는 시험**으로만 쓴다 |
+| statistic 5,442 | 적재하지 않음 | 우리 `stat_facts`(직접 수집, 2026-10-20 이후 수도권만 남김)와 **대조하는 시험**으로만 쓴다 |
 | block_location·project_location | `project_locations` | 좌표 근거는 `REVIEW_REQUIRED` |
 | home_batch·home_coverage | `sources` + 데이터 원본 화면 스냅샷 | 원천 상태와 확보 격자 |
 

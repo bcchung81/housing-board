@@ -80,7 +80,7 @@ test('2 정책 전체 카드 빈자리 없음: 요약은 두 카드를 위아래
 
 test('3 숫자 형식: 비율·공정률은 소수 한 자리, 날짜는 점', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
-  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? V.rateOf(c).word : null)), ['달성 24.2%', '달성 230.7%', null, '달성 58.8%', '달성 100.0%', null]);
+  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? V.rateOf(c).word : null)), ['달성 53.1%', '달성 170.8%', null, '달성 58.8%', '달성 100.0%', null]);   // 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
   assert.equal(V.pct1(93.12), '93.1');
   assert.equal(V.pct1(33), '33.0');
   /* 서랍 공정률·타임라인 */
@@ -115,7 +115,7 @@ test('4 용어: 공식 01~06 번호 없음 · 실데이터 없음 · HOME 은 �
 test('5 서랍 원천 날짜 다름은 일 단위(LH 2026.10.31 · 2028.12.31), 목록 칸은 그대로 달', () => {
   const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
   const alts = rows.filter((r) => r.dateAlt);
-  assert.equal(alts.length, 71);
+  assert.equal(alts.length, 76);   // 2026-10-20 HOME 판 71→76
   for (const r of alts) assert.match(V.dateAltOf(r, true).text, /\d{4}\.\d{2}\.\d{2}\)$/, r.id);
   assert.equal(V.dateAltOf(byId['PRJ-28290-0058'], true).text, '원천 날짜 다름(LH 2028.12.31)');
   assert.equal(V.dateAltOf(byId['PRJ-28290-0058']).text, '원천 날짜 다름(LH 2028.12)', '목록 칸(좁은 열)은 달');
@@ -125,9 +125,10 @@ test('5 서랍 원천 날짜 다름은 일 단위(LH 2026.10.31 · 2028.12.31), 
 test('6 9·7 ①계획 = ②인허가 3,560 · ⑤준공 381/381 은 숫자 그대로, ⓘ 에 원천 값 그대로(검증 대기)', () => {
   const q0 = V.questionsOf(rows, {}, ctx)[0];
   const st = q0.stages;
-  assert.deepEqual([st[0].actual, st[1].actual, st[4].actual, st[4].target], [3560, 3560, 381, 381], '숫자는 바꾸지 않는다');
+  // 2026-10-20 HOME 판(20261019T212247Z, HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249 — ①·② 확인 값이 달라져 '같은 확인 값' 문구는 빠진다
+  assert.deepEqual([st[0].actual, st[1].actual, st[4].actual, st[4].target], [7808, 6249, 381, 381], '숫자는 바꾸지 않는다');
   assert.match(q0.note, /원천 값 그대로\(검증 대기\)/);
-  assert.match(q0.note, /①계획·②인허가 3,560호/);
+  assert.doesNotMatch(q0.note, /①계획·②인허가/);
   assert.match(q0.note, /⑤준공 381\/381/);
   /* ⓘ 둘째 문단으로 그린다 */
   assert.match(read('components/projects/Summary.tsx'), /\{x\.note \? <p>\{x\.note\}<\/p> : null\}/);

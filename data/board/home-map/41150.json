@@ -4,7 +4,7 @@
   "name": "경기도 의정부시",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261014T102506Z",
+  "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41150-0096","name":"의정부우정 A2","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-05-15"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":463,"pks":[],"pnus":[],"bundles":[],"label":"의정부우정 A2","agency":"lh","moveIn":"2029-05","completion":"2028-05-15","noticeUnits":463,"bjd":"4115011100","loc":{"by":"block","at":[127.031681,37.762086],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},
     {"id":"PRJ-41150-0097","name":"의정부법조타운 S1","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"units":0,"pks":[],"pnus":[],"bundles":[],"label":"의정부법조타운 S1","agency":"lh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"block","at":[127.098228,37.726988],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},

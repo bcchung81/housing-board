@@ -37,8 +37,8 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
   }
   const q0 = V.questionsOf(rows, {}, ctx)[0];
   const words = q0.stages.map((c) => (c.target != null && c.actual != null ? `${c.actual}/${c.target} ${V.rateOf(c).word}` : c.target != null ? '실적 없음' : '목표 없음'));
-  assert.deepEqual(words, ['3560/14694 달성 24.2%', '3560/1543 달성 230.7%', '목표 없음', '4732/8049 달성 58.8%', '381/381 달성 100.0%', '목표 없음']);
-  assert.match(q0.tip, /담당자 추정 포함\(확인과 따로\): ①계획 5,789호/, '추정 포함은 title 에만');
+  assert.deepEqual(words, ['7808/14694 달성 53.1%', '6249/3658 달성 170.8%', '목표 없음', '4732/8049 달성 58.8%', '381/381 달성 100.0%', '목표 없음']);   // 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
+  assert.match(q0.tip, /담당자 추정 포함\(확인과 따로\): ①계획 10,037호/, '추정 포함은 title 에만');   // 2026-10-20 HOME 판 5,789→10,037
   assert.match(q0.help, /단계마다/); assert.match(q0.help, /'목표 없음'/);
   /* 목표가 없는 렌즈(1·29)는 단계 줄 없이 범위 줄 안 */
   const q129 = V.questionsOf(rows, { policy: IDX.policies.find((p) => p.key === '129') }, ctx)[0];
@@ -105,7 +105,7 @@ test("4 지연 세 번 표시: 목록·인쇄의 현재 예정은 '경과' 꼬�
   /* 경과 개월은 번호 있는 사업(지연 열 판정 색)과 후보(지연 열 옅게, D3) 모두 같은 계산 overdueMonthsOf */
   const late = rows.filter((r) => V.overdueMonthsOf(r) !== null);
   // 2026-10-19 수도권 한정: 경과 계산 사업 > 300 → 4 (후보 313 이 비수도권이라 빠지고 주의 2·지연 2 만 남음)
-  assert.equal(late.length, 4);
+  assert.equal(late.length, 12);   // 2026-10-20 HOME 판: 주의 10·지연 2(새 사업 착공 예정 경과 8)
   for (const r of late) {
     const c = L.nextCell(r);
     assert.equal(c.tag, V.dateAltOf(r)?.text, r.id); assert.equal(c.muted, true); assert.match(c.title, /경과 \d+개월/);   // 꼬리표는 원천 날짜 다름(D2)만

@@ -24,11 +24,11 @@ const ctx = { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, 
 test('1 목표 대비는 달성률 하나: ① 달성 24.2%(3,560/14,694) · ② 달성 230.7%(3,560/1,543) · ④ 달성 58.8% · ⑤ 달성 100.0%', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
   const pair = cells.filter((c) => c.target != null && c.actual != null);
-  assert.deepEqual(pair.map((c) => `${c.actual}/${c.target} ${V.rateOf(c).word}`), ['3560/14694 달성 24.2%', '3560/1543 달성 230.7%', '4732/8049 달성 58.8%', '381/381 달성 100.0%']);
+  assert.deepEqual(pair.map((c) => `${c.actual}/${c.target} ${V.rateOf(c).word}`), ['7808/14694 달성 53.1%', '6249/3658 달성 170.8%', '4732/8049 달성 58.8%', '381/381 달성 100.0%']);   // 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
   for (const c of pair) assert.equal(V.rateOf(c).unit, '% 달성', c.key);
   /* 핵심 질문 첫 칸(9·7) 값도 달성률 */
   const q0 = V.questionsOf(rows, {}, ctx)[0];
-  assert.deepEqual([q0.value, q0.unit], ['24.2', '% 달성']);
+  assert.deepEqual([q0.value, q0.unit], ['53.1', '% 달성']);   // 2026-10-20 HOME 판
   /* '부족'은 보이는 글·title·ⓘ 어디에도 쓰지 않는다(요약·인쇄 보기 모두 Summary.tsx·page.tsx 가 그린다) */
   for (const f of ['components/projects/Summary.tsx', 'app/(dashboard)/projects/page.tsx']) assert.doesNotMatch(code(read(f)), /부족/, f);
   for (const c of cells) assert.doesNotMatch(V.stageCellTip(c, '9·7', cells), /부족/, c.key);
@@ -39,8 +39,8 @@ test('1 목표 대비는 달성률 하나: ① 달성 24.2%(3,560/14,694) · ②
 
 test('1b 막대는 100% 기준선(목표)을 보인다: 미달은 오른쪽 끝, 초과는 목표 자리(② 1,543/3,560 = 43.3%)', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
-  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? Math.round(c.mark * 10) / 10 : null)), [100, 43.3, null, 100, 100, null]);
-  assert.deepEqual(cells.map((c) => Math.round(c.fill * 10) / 10), [24.2, 100, 0, 58.8, 100, 0], '확인 막대(초과는 끝까지)');
+  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? Math.round(c.mark * 10) / 10 : null)), [100, 58.5, null, 100, 100, null]);   // 2026-10-20 HOME 판: ② 3,658/6,249 = 58.5%(10-19 판 1,543/3,560 = 43.3%)
+  assert.deepEqual(cells.map((c) => Math.round(c.fill * 10) / 10), [53.1, 100, 0, 58.8, 100, 0], '확인 막대(초과는 끝까지)');
   const sum = read('components/projects/Summary.tsx');
   const mini = sum.slice(sum.indexOf('function MiniBar'), sum.indexOf('function StageRates'));
   const cell = sum.slice(sum.indexOf('function TargetCell'), sum.indexOf('export function PolicyCompare'));

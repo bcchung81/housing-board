@@ -4,7 +4,7 @@
   "name": "경기도 성남시",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261014T102506Z",
+  "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41130-0001","name":"성남세관","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":76,"pks":[],"pnus":[],"bundles":[],"label":"성남세관","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[127.142975,37.409045],"basis":"NAME_SEARCH","status":"REVIEW","match":"성남세관"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}},
     {"id":"PRJ-41130-0002","name":"성남금광2","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"성남금광2","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.108362,37.404093],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["주택 신속공급 방안 (8·13)"],"short":["8·13"]}}

@@ -51,10 +51,11 @@ test("2 판정 비율 모수: '판정 169건 · 168,152호 · 전체의 73.8%'(�
   const SJ = JS[BOARD.now];
   const rib = S.ribbonOf(T, BOARD.stageUnits, S.delaysOf(JS), S.scopeChangeOf(JS));
   // 2026-10-19 수도권 한정: 리본 총량 1,424,872호 → 227,976호(수도권 HOME), 판정 비율 11.8% → 73.8%(판정 호수 168,152는 그대로)
-  assert.equal(rib.total[BOARD.now], 227976);
+  assert.equal(rib.total[BOARD.now], 274296);   // 2026-10-20 HOME 판 227,976→274,296호
   assert.equal(rib.total[BOARD.now], BOARD.scope.units, '리본 총량 = 원장 전체 호수');
-  assert.equal(D.judgeBase(SJ, rib.total[BOARD.now]), '판정 169건 · 168,152호 · 전체의 73.8%');
-  assert.equal(D.judgeBase(BOARD.judgment, BOARD.scope.units), '판정 169건 · 168,152호 · 전체의 73.8%');
+  // 2026-10-20 HOME 판: 판정 169건·168,152호(전체 227,976호의 73.8%) → 188건·179,428호(274,296호의 65.4%)
+  assert.equal(D.judgeBase(SJ, rib.total[BOARD.now]), '판정 188건 · 179,428호 · 전체의 65.4%');
+  assert.equal(D.judgeBase(BOARD.judgment, BOARD.scope.units), '판정 188건 · 179,428호 · 전체의 65.4%');
   const snap = panel('p-snap');
   assert.match(snap, /data-slot="judge-base"[^>]*>\{judgeBase\(SJ, jTot\)\}</, '판정 막대 아래 모수 줄');
   assert.match(board, /jTot = rib\.total\[judged \? jm : NOW\]/);

@@ -60,7 +60,7 @@ test('3 지연 기준 하나: 시도 타일 지연율 = 지연 호수 ÷ 판정 
   const ok = C.okUnitsBySido(V.rowsOf(MAP.bySgg, IDX.projects, IDX.sgg));
   assert.equal(Object.values(ok).reduce((a, b) => a + b, 0), BOARD.judgment.ok.units, '시도별 정상 호수 합 = 판정 정상 호수');
   const inc = BOARD.regions.find((r) => r.code === '28');
-  assert.equal((inc.delayUnits / (ok['28'] + inc.cautionUnits + inc.delayUnits) * 100).toFixed(1), '11.6', '인천 지연율(호수) 1,666 ÷ 14,310');
+  assert.equal((inc.delayUnits / (ok['28'] + inc.cautionUnits + inc.delayUnits) * 100).toFixed(1), '8.5', '인천 지연율(호수) 1,666 ÷ 19,536');   // 2026-10-20 HOME 판: 인천 판정 호수 14,310 → 19,536
   assert.match(home, /regionOkUnits: okUnitsBySido\(\(await getProjectsIndex\(\)\)\.rows\)/);
   const reg = panel('p-region');
   assert.match(reg, />지연율 · 호수 기준</);
@@ -73,9 +73,9 @@ test('3 지연 기준 하나: 시도 타일 지연율 = 지연 호수 ÷ 판정 
 
 test("4 진척 관리 숫자 링크 = 원장 지금 ③착공 단계 사업 목록 — 건수(71건)가 카드 숫자와 다른 것은 숫자 링크 title·(i)에(2026-10-18 링크 글자 '원장 194건 ›'를 없앰)", () => {
   // 2026-10-19 수도권 한정: 원장 지금 ③착공 사업 194건(전국) → 71건(수도권), 범위 글 '(전국)' → '(수도권)'
-  assert.equal(BOARD.stageProjects[BOARD.now][2], 71);
+  assert.equal(BOARD.stageProjects[BOARD.now][2], 150);   // 2026-10-20 HOME 판: 지금 ③착공 사업 71 → 150
   assert.equal(DIR[0].list.text, undefined);
-  assert.match(DIR[0].list.title, /원장 사업\(수도권\) 71건 — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록\(건수가 다름\)/);
+  assert.match(DIR[0].list.title, /원장 사업\(수도권\) 150건 — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록\(건수가 다름\)/);
   assert.match(board, /<Link href=\{l\.href\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\}/, '읽기 이름에 보이는 숫자가 들어간다');
   assert.match(board, /<p className="text-muted-foreground">\{x\.list\.title\}<\/p>/, '(i) 에도 목록 설명');
 });

@@ -146,7 +146,7 @@ test('리본 차트 기하(원장): 좌표 상수는 시안과 같고, 층 두�
   G.x.forEach(([v, x]) => near(R.X(v), x, `X(${v})`));
   assert.ok(S.textBox(S.staticTexts(R).now).y >= S.BOT + 7, '기준 글자 상자가 플롯(BOT)·1월 눈금(7) 안으로 들어가지 않는다');
   R.total.forEach((t, m) => assert.equal(t, L.stageUnits[m].reduce((a, b) => a + b, 0), `총량 ${m}`));
-  assert.equal(R.step, 50000); assert.equal(R.ymax, 250000, '세로 축척은 가장 큰 총량을 눈금 간격 단위로 올린 값(2026-10-19 수도권 한정: 총량 227,976호 — 전엔 약 141만 → 간격 50만·ymax 150만)');
+  assert.equal(R.step, 100000); assert.equal(R.ymax, 300000, '세로 축척은 가장 큰 총량을 눈금 간격 단위로 올린 값(2026-10-20 HOME 판: 총량 274,296호 → 간격 10만·ymax 30만 · 2026-10-19 수도권 한정: 총량 227,976호 → 간격 5만·ymax 25만 — 전엔 약 141만 → 간격 50만·ymax 150만)');
   assert.ok(R.ymax >= Math.max(...R.total) && R.ymax - Math.max(...R.total) < R.step);
   near(R.s2, S.PH / R.ymax, 's2');
   assert.equal(R.geo.length, 4 * (T.last + 1) + 1, '0.25개월 간격');
@@ -207,7 +207,7 @@ test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹
   assert.deepEqual(Object.keys(o).sort(), ['statics', 'total', 'years'], '병목 핀 없음');
   assert.equal(ST.now.t, '기준 2026.10');
   for (const g of [R, grow]) assert.ok(S.ribbonLabels(g, T.now).statics.every((t) => !/붉은 띠|총량 매달/.test(t.t)), '차트 안 설명 글자 없음');
-  assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '5만', '10만', '15만', '20만', '25만']);   // 2026-10-19 수도권 한정: 총량 22.8만 → 5만 간격 눈금(전엔 50만 간격 0~150만)
+  assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '10만', '20만', '30만']);   // 2026-10-20 HOME 판: 총량 27.4만 → 10만 간격 · 2026-10-19 수도권 한정: 총량 22.8만 → 5만 간격 눈금(전엔 50만 간격 0~150만)
    assert.equal(S.axisUnit(R), '호');
   const big = S.ribbonOf(T, L.stageUnits.map((r) => r.map((v) => v * 50)), DL);   // 2026-10-19 수도권 한정: 총량 22.8만이라 ×8 → ×50(1,140만). ymax 1,000만 이상: '만' 을 빼 눈금이 왼쪽 여백에 들어가고 단위는 머리 글자로
   assert.ok(big.ymax >= 10000000); assert.ok(S.staticTexts(big).ticks.every((t) => !t.t.includes('만'))); assert.equal(S.axisUnit(big), '만 호');

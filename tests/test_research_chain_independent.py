@@ -57,11 +57,11 @@ def test_ledger_row_rechecked_against_raw_record_and_home_rows_excluded():
     subj = R.subject_id('PRO_a')
     X.idents[subj] = [
         {'local_project_id': subj, 'id_type': 'HUB_HS_PK', 'id_value': 'P1', 'source_ref': 'hub-bulk-hs-2026-08'},
-        {'local_project_id': subj, 'id_type': 'HUB_HS_PK', 'id_value': 'P2', 'source_ref': 'home-dump-20261014T102506Z'},
+        {'local_project_id': subj, 'id_type': 'HUB_HS_PK', 'id_value': 'P2', 'source_ref': 'home-dump-20261019T212247Z'},
         {'local_project_id': subj, 'id_type': 'KAPT_CODE', 'id_value': 'K1', 'source_ref': 'datagokr-15106861'}]
     X.events[subj] = [{'local_project_id': subj, 'source_ref': 'hub-bulk-hs-2026-08', 'event_type': 'PERMIT',
                        'event_date': '2021-12-30'}]
-    X.nlinks[subj] = [{'local_project_id': subj, 'notice_id': 'N1', 'source_ref': 'home-dump-20261014T102506Z-notice'}]
+    X.nlinks[subj] = [{'local_project_id': subj, 'notice_id': 'N1', 'source_ref': 'home-dump-20261019T212247Z-notice'}]
     k = {'block': None}
     recs, notes, unrouted = ind.from_ledger(R, X, 'PRO_a', k)
     assert [r['rid'] for r in recs] == [('hub', 'P1')]  # HOME 유래(P2)·HOME 공고 연결은 쓰지 않음

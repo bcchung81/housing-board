@@ -33,7 +33,7 @@ test('#1 실제 레지스트리: 계획(01·02) 단계는 143건이다', () => {
   const rows = Array.isArray(reg) ? reg : reg.projects;
   const list = Array.isArray(rows) ? rows : Object.values(rows);
   const n = list.filter((p) => ['01', '02'].includes(p.stageCode)).length;
-  if (list.some((p) => p.stageCode)) assert.equal(n, 143);
+  if (list.some((p) => p.stageCode)) assert.equal(n, 178);   // 2026-10-20 HOME 판: 143 → 178(새 HOME 사업 중 계획 단계)
 });
 
 test('#2 추가 확보 필요: 원장에서 쓰는 6건은 수집·연결됨(수집일 포함), 나머지 11건이 확보 필요', () => {

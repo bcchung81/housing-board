@@ -6,7 +6,8 @@
    ② board.js 로 그 달 보드 계산 → data/board/ledger-board.json 과 같아야 한다(기준일은 그 파일의 referenceDate)
    ③ ledger_admin.begin_run → run_id(닫힌 달이면 DB 가 거부). 이것만 먼저 커밋한다(실행 기록)
    ④~⑤' 한 트랜잭션: stage_rows 에 묶음(약 1 MB) INSERT(보드 JSON 은 tbl 'board') → ledger_admin.publish_run(표별 행 수가 기대와 다르면 거부. 이번 판에 없는 projects·complexes 는 지우고,
-      닫힌 달 events 가 가리키면 retired_run_id 로 표시해 남긴다 — 마이그레이션 *_ledger_refine.sql)
+      닫힌 달 events 가 가리키면 retired_run_id 로 표시해 남긴다 — 마이그레이션 *_ledger_refine.sql. 이번 판에 없는 stat_facts·notices·areas 도 지우고,
+      아직 가리키는 행이 있으면 남겨 센다 — *_ledger_prune_stale.sql)
       → ledger_admin.publish_map(지도 색인 data/board/ledger-map.json = mapIndexFromLedger(표), ②에서 대조, 마이그레이션 *_map_snapshots.sql)
       → ledger_admin.publish_screens(화면 파일 넷 SCREEN_FILES 를 그대로, ②에서 모양만 확인, 마이그레이션 *_screen_snapshots.sql).
       어디서든 실패하면 되돌려 발행되지 않는다(실행은 'staged' 로 남고 다음 begin_run 이 failed 로 돌린다)
@@ -296,6 +297,7 @@ async function load({ month, dryRun = false, skipRaw = false, root = ROOT, board
   const { orphans, ...tableCounts } = published;
   log(`${month} 판 발행: run ${runId} · ${Object.entries(tableCounts).map(([k, v]) => `${k} ${v}`).join(' · ')} · 지도 시군구 ${mapRows} · 화면 ${screenRows}`);
   if (orphans) log(`고아 정리(이번 판에 없는 행): 사업 지움 ${orphans.projects_deleted} · 표시 ${orphans.projects_retired} · 단지 지움 ${orphans.complexes_deleted} · 표시 ${orphans.complexes_retired}`);
+  if (orphans && 'areas_deleted' in orphans) log(`지역·통계·공고 정리(이번 판에 없는 행): 지역 지움 ${orphans.areas_deleted} · 남김(참조) ${orphans.areas_kept} · 통계 지움 ${orphans.stat_facts_deleted} · 공고 지움 ${orphans.notices_deleted} · 남김(연결) ${orphans.notices_kept}`);
   log(`원본 ${files.length}개(${files.reduce((s, f) => s + f.bytes, 0).toLocaleString()} B) · 시간(ms) ${Object.entries(result.timings).map(([k, v]) => `${k} ${v}`).join(' · ')}`);
   await revalidateBoard(env, log);
   return result;

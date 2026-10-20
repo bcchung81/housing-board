@@ -209,7 +209,7 @@ def test_normalization_rules():
     assert common.verdict_from([('a', True, 1, 1), ('b', False, 1, 2)])[0] == '불일치'
 
 
-HAVE_INPUTS = os.path.exists(os.path.join(ROOT, 'schemas/ledger-2026-10/raw/home/20261014T102506Z/project.jsonl.gz'))
+HAVE_INPUTS = os.path.exists(os.path.join(ROOT, 'schemas/ledger-2026-10/raw/home/20261019T212247Z/project.jsonl.gz'))
 
 
 @pytest.mark.skipif(not HAVE_INPUTS, reason='HOME 덤프·raw 원천이 저장소에 없음')

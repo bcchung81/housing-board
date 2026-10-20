@@ -1,11 +1,12 @@
 {
 "schema": "home-registry-match/1",
-"edition": "20261014T102506Z",
-"at": "2026-10-19",
+"edition": "20261019T212247Z",
+"at": "2026-10-20",
 "superseded": [
 {"from":"PRJ-11350-0097","name":"[(105228)서울공릉(복합개발)]위례A2-7BL아파트건설공사9공구및서울공릉아파트건설공사1공구","into":"PRJ-11350-0096","rule":"HOME_SAME_SITE","key":"HPR:HPR_ac4452d5a3119683ef276aa5 PRO:PRO_6b007623f2703880246788d3"},
 {"from":"PRJ-11560-0146","name":"[(105229)서울대방(복합개발)]서울대방아파트건설공사1공구및동작구수방사아파트건설공사1공구","into":"PRJ-11560-0143","rule":"HOME_SAME_SITE","key":"HPR:HPR_803eee707326eb19d83f9c7b PRO:PRO_cd30a85198ac80fedcab7136"},
 {"from":"PRJ-28237-0064","name":"인천부평 행복주택 및 도시재생뉴딜 혁신센터 건설공사","into":"PRJ-28237-0065","rule":"HOME_SAME_SITE","key":"HPR:HPR_8d735a3a96b7f96b288ec30d PRO:PRO_0e5b836fdd9670216e60ee53"},
+{"from":"PRJ-28290-0054","name":"인천검단 AA19BL 민간참여 공공주택건설사업","into":"PRJ-28290-0055","rule":"HOME_SAME_SITE","key":"HPR:HPR_13c5b094ab67c88d5143f074 PRO:PRO_38a37a66ed2666efe40ae527"},
 {"from":"PRJ-41430-0044","name":"의왕초평 A4BL 민간참여 공공주택 건설사업","into":"PRJ-41430-0048","rule":"HOME_SAME_SITE","key":"HPR:HPR_3cae35e350c53ae0708abf41 PRO:PRO_0d475dbdf35690c529f845be"},
 {"from":"PRJ-28245-0001","name":"인천계양 테크노밸리 A6 블록","into":"PRJ-28245-0053","rule":"LH_BLOCK","key":"BLK:28245|인천계양|A6"},
 {"from":"PRJ-28245-0002","name":"인천계양 테크노밸리 A17 블록","into":"PRJ-28245-0054","rule":"NAME_BLOCK","key":"BLK:28245|인천계양|A17"},

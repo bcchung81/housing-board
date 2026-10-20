@@ -18,20 +18,20 @@ const files = () => fs.readdirSync(DIR).filter((f) => /^\d{5}\.json$/.test(f)).s
 const load = (sgg) => JSON.parse(fs.readFileSync(path.join(DIR, `${sgg}.json`), 'utf8'));
 
 /* ---------- 생성기(순수 함수) ---------- */
-const P = (id, sgg, extra = {}) => ({ local_project_id: id, project_name: `사업 ${id}`, sgg_code: sgg, agency_id: 'lh', stage_code: '04', issued_at: '2026-10-14', superseded_by: null, source_ref: 'home-dump-20261013T140241Z', ...extra });
-const EV = (id, type, dateType, date, extra = {}) => ({ local_project_id: id, event_type: type, date_type: dateType, plan_basis: dateType === 'PLANNED' ? 'CURRENT' : null, event_date: date, event_month: null, event_year: null, source_ref: 'home-dump-20261013T140241Z', event_detail: null, ...extra });
+const P = (id, sgg, extra = {}) => ({ local_project_id: id, project_name: `사업 ${id}`, sgg_code: sgg, agency_id: 'lh', stage_code: '04', issued_at: '2026-10-14', superseded_by: null, source_ref: 'home-dump-20261019T212247Z', ...extra });
+const EV = (id, type, dateType, date, extra = {}) => ({ local_project_id: id, event_type: type, date_type: dateType, plan_basis: dateType === 'PLANNED' ? 'CURRENT' : null, event_date: date, event_month: null, event_year: null, source_ref: 'home-dump-20261019T212247Z', event_detail: null, ...extra });
 function fixture() {
   const tables = {
     projects: [P('PRJ-41281-0001', '41281'), P('PRJ-41281-0002', '41281', { stage_code: '02' }), P('PRJ-41281-0003', '41281'), P('PRJ-26350-0001', '26350', { source_ref: 'hub-hs-basis' })],
     events: [
       EV('PRJ-41281-0001', 'COMPLETION', 'PLANNED', '2027-11-14'),
-      EV('PRJ-41281-0001', 'COMPLETION', 'PLANNED', '2027-12-31', { source_ref: 'home-dump-20261013T140241Z-lh-plan' }),   // 순위가 낮은 원천(board.js 와 같은 순위)
+      EV('PRJ-41281-0001', 'COMPLETION', 'PLANNED', '2027-12-31', { source_ref: 'home-dump-20261019T212247Z-lh-plan' }),   // 순위가 낮은 원천(board.js 와 같은 순위)
       EV('PRJ-41281-0001', 'MOVE_IN', 'PLANNED', null, { event_month: '2028-01' }),
-      EV('PRJ-41281-0001', 'SUPPLY_NOTICE', 'ACTUAL', '2025-04-30', { source_ref: 'home-dump-20261013T140241Z-notice', event_detail: '공고 APPLYHOME 2025000160-2025000160 고양창릉 A4블록 392세대 · 연결 확인 필요' }),
-      EV('PRJ-41281-0001', 'SUPPLY_NOTICE', 'ACTUAL', '2025-04-30', { source_ref: 'home-dump-20261013T140241Z-notice', event_detail: '공고 APPLYHOME 2025000160-2025000160 고양창릉 A4블록 392세대 · 같은 공고 다시' }),
-      EV('PRJ-41281-0001', 'SUPPLY_NOTICE', 'ACTUAL', '2025-09-30', { source_ref: 'home-dump-20261013T140241Z-notice', event_detail: '공고 APPLYHOME 2025000500-2025000500 고양창릉 A4블록 211세대' }),
+      EV('PRJ-41281-0001', 'SUPPLY_NOTICE', 'ACTUAL', '2025-04-30', { source_ref: 'home-dump-20261019T212247Z-notice', event_detail: '공고 APPLYHOME 2025000160-2025000160 고양창릉 A4블록 392세대 · 연결 확인 필요' }),
+      EV('PRJ-41281-0001', 'SUPPLY_NOTICE', 'ACTUAL', '2025-04-30', { source_ref: 'home-dump-20261019T212247Z-notice', event_detail: '공고 APPLYHOME 2025000160-2025000160 고양창릉 A4블록 392세대 · 같은 공고 다시' }),
+      EV('PRJ-41281-0001', 'SUPPLY_NOTICE', 'ACTUAL', '2025-09-30', { source_ref: 'home-dump-20261019T212247Z-notice', event_detail: '공고 APPLYHOME 2025000500-2025000500 고양창릉 A4블록 211세대' }),
     ],
-    units: [{ local_project_id: 'PRJ-41281-0001', quantity_type: 'PROJECT_PLAN', unit_scope: 'TOTAL', unit_count: 900, source_ref: 'home-dump-20261013T140241Z' }],
+    units: [{ local_project_id: 'PRJ-41281-0001', quantity_type: 'PROJECT_PLAN', unit_scope: 'TOTAL', unit_count: 900, source_ref: 'home-dump-20261019T212247Z' }],
     sources: [], areas: [], agencies: [],
     identifiers: [], project_locations: [{ local_project_id: 'PRJ-41281-0001', bjd_code: '4128111300', pnu: null }],
     links: [
@@ -52,7 +52,7 @@ function fixture() {
   };
   return { tables, homeIds, kinds };
 }
-const gen = ({ tables, homeIds, kinds }) => H.homeMapFromLedger(tables, { referenceDate: '2026-10-13', observedMonth: '2026-10', edition: '20261013T140241Z', locations: H.homeLocations(kinds, homeIds), homeIds });
+const gen = ({ tables, homeIds, kinds }) => H.homeMapFromLedger(tables, { referenceDate: '2026-10-13', observedMonth: '2026-10', edition: '20261019T212247Z', locations: H.homeLocations(kinds, homeIds), homeIds });
 
 test('home-map 생성기: 같은 입력 → 같은 바이트, 수도권 시군구만', () => {
   const a = gen(fixture()), b = gen(fixture());

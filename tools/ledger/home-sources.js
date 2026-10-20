@@ -42,6 +42,12 @@ const NAMES = {
   vworld_district: ["VWorld 공공주택지구 공동주택용지", "국토교통부 VWorld"], vworld_municipality: ["VWorld 서울·경기 시군구 경계", "국토교통부 VWorld"],
   /* 2026-10-14 판에 새로 생긴 원천 — 등록부 소스가 아직 공개되지 않아 덤프의 APPLICATION_README 설명으로 적었다 */
   area_national_benchmarks: ["입지 지표 전국 평균 비교(인구·가구 전국 원천)", "국가데이터처 KOSIS·SGIS"], kosis_living: ["KOSIS 생활 통계(소득·인구이동·거주기간·주거형태)·PIR", "국가데이터처 KOSIS / 국가지표체계"],
+  /* 2026-10-20 판(20261019T212247Z)에 새로 생긴 원천 14곳 — HOME 등록부(10-home/backend/sources.py, 커밋 2038810: 덤프 직후 커밋, 덤프 판 31b4806 은 미커밋 수정 상태)의 이름·기관 */
+  building_general_permit: ["건축HUB 일반 건축인허가", "국토교통부"], eum_housing_notices: ["수도권 주택·정비·택지 고시 목록·변경 이력", "국토교통부 토지이음·고시기관"], ih_housing_inventory: ["iH 공개 임대단지 명부·상세", "인천도시공사"],
+  ih_notice: ["iH 공식 주택 사업·분양·임대 모집공고", "인천도시공사"], lh_department_plans: ["LH 부서별 연간 업무계획 · 원문·표", "한국토지주택공사"], lh_happy_plan_file: ["LH 행복주택 공급계획 공개파일", "한국토지주택공사"],
+  lh_policy_followup: ["LH 9·7 후속 민간참여 공모 · 블록별 착공계획", "한국토지주택공사"], molit_monthly_release: ["국토부 월별 주택통계 공식 PDF · 인허가 보완", "국토교통부 / e-나라지표"], reb_apartment_price: ["한국부동산원 수도권 아파트 매매가격지수", "한국부동산원 R-ONE"],
+  reb_movein_plan_file: ["한국부동산원 입주예정물량", "한국부동산원"], sh_contract_file: ["SH 공사계약 공개파일", "서울주택도시개발공사"], sh_happy_plan_file: ["SH 행복주택·리츠 공급계획", "서울주택도시개발공사"],
+  sh_jeonse_plan_file: ["SH 장기전세주택 공급계획", "서울주택도시개발공사"], sh_national_plan_file: ["SH 국민임대주택 공급계획", "서울주택도시개발공사"],
 };
 /* HOME source_id → 원장 원천(source_ref 꼬리). 이어지는 것만: 원장 쪽 건수·기준일을 곁붙인다 */
 const LEDGER_TAIL = {

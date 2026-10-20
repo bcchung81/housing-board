@@ -75,13 +75,14 @@ test('2 앞으로 12개월 대표 = 준공 예정: 지역 공급 기본(준공�
   const q5 = (f) => num(V.questionsOf(rows, f, qctx).find((x) => x.q === '앞으로 얼마나 공급되는가').value);
   /* 지도 개요와 맞출 규칙: region-calendar.json 의 COMPLETION 항목(서울·인천·경기)의 units 합 */
   const mapRule = sum(['11', '28', '41'].flatMap((c) => CAL.sido[c] ?? []).filter((e) => e.type === 'COMPLETION'), (e) => e.units);
-  assert.equal(completion('metro'), 13372, '수도권 대표(준공 예정)');
-  assert.equal(q5({ metro: true }), 13372, '사업 화면 수도권');
-  assert.equal(mapRule, 13372, '지도 개요 규칙');
+  assert.equal(completion('metro'), 14570, '수도권 대표(준공 예정)');
+  assert.equal(q5({ metro: true }), 14570, '사업 화면 수도권');
+  assert.equal(mapRule, 14570, '지도 개요 규칙');
+  // 2026-10-20 HOME 판: 앞으로 12개월 준공 예정 13,372호(24곳) → 14,570호(25곳)
   // 2026-10-19 수도권 한정: 전국 214,975호 → 수도권과 같은 13,372호 (캘린더·원장이 수도권뿐이라 '전국'(필터 없음)도 같은 값)
-  assert.equal(completion(''), 13372);
-  assert.equal(q5({}), 13372);
-  assert.equal(sum(BOARD.upcoming, (m) => m.units), 13372, '종합상황판(수도권)');
+  assert.equal(completion(''), 14570);
+  assert.equal(q5({}), 14570);
+  assert.equal(sum(BOARD.upcoming, (m) => m.units), 14570, '종합상황판(수도권)');
   const region = read('app/(dashboard)/region/page.tsx');
   assert.match(region, /isDefaultKinds\(kinds\) \? AHEAD_COMPLETION/, '기본 제목 = 앞으로 12개월 · 준공 예정');
   assert.match(region, /if \(!isDefaultKinds\(ks\)\) s\.set\('kind'/, '주소는 기본(준공)과 다를 때만');
@@ -146,7 +147,7 @@ test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본
 test('불변식: 지연 2건 · 후보 0건 · 앞으로 12개월 수도권 13,372호', () => {
   const j = BOARD.judgment, c = j.candidate;
   assert.equal(j.delay.projects, 2);
-  // 2026-10-19 수도권 한정: 후보 1,839 → 0, 앞으로 12개월 214,975 → 13,372호
+  // 2026-10-19 수도권 한정: 후보 1,839 → 0, 앞으로 12개월 214,975 → 13,372호 → 2026-10-20 HOME 판 14,570호
   assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 0);
-  assert.equal(sum(BOARD.upcoming, (m) => m.units), 13372);
+  assert.equal(sum(BOARD.upcoming, (m) => m.units), 14570);
 });

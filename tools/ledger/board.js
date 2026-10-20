@@ -101,9 +101,10 @@ function projectStates(tables, referenceDate) {
   const projects = tables.projects.filter((p) => !p.superseded_by).map((p) => {
     const evs = eventsOf.get(p.local_project_id) ?? [];
     const actual = evs.filter((e) => e.date_type === 'ACTUAL');
-    /* 종류마다 현재 예정 하나: 종류별 순위(SOURCE_RANK), 그다음 원천 순위가 가장 높은 것 */
+    /* 종류마다 현재 예정 하나: 종류별 순위(SOURCE_RANK), 그다음 원천 순위가 가장 높은 것, 같은 원천에 예정이 여럿이면 이른 것(지도 정적 자료 home-map.js currentPlan 과 같은 규칙 —
+       2026-10-20: 한 HOME 사업이 원천 사업후보를 여럿 가지면 같은 원천의 예정이 둘 생긴다) */
     const plan = {};
-    for (const e of evs.filter((x) => x.date_type === 'PLANNED' && x.plan_basis === 'CURRENT').sort((a, b) => rankOf(a) - rankOf(b) || bySource(a.source_ref, b.source_ref))) plan[e.event_type] ??= e;
+    for (const e of evs.filter((x) => x.date_type === 'PLANNED' && x.plan_basis === 'CURRENT').sort((a, b) => rankOf(a) - rankOf(b) || bySource(a.source_ref, b.source_ref) || (a.source_ref === b.source_ref ? (plannedText(a) < plannedText(b) ? -1 : plannedText(a) > plannedText(b) ? 1 : 0) : 0))) plan[e.event_type] ??= e;
     const bulk = p.source_ref.startsWith(BULK_PREFIX), home = isHome(p.source_ref);
     return { p, issued: !!p.issued_at, bulk, home, judgeable: !!p.issued_at || bulk || home, units: unitsOfProject(p.local_project_id), actual, actualTypes: new Set(actual.map((e) => e.event_type)), plan, base: BOARD_OF_STAGE[p.stage_code] };
   });

@@ -36,7 +36,7 @@ test('1 지연 헤드라인: 카드 = 지연 2건 · 주의 2(후보 0이라 쌍
   assert.deepEqual([late.pre, late.big, late.u], ['지연', '2', '건']);
   assert.equal(late.pair, undefined, '후보 계산 쌍 없음');
   assert.equal(late.m, '지연 2건');
-  assert.equal(late.sub, '주의 2', '작은 보조 값(주의)');
+  assert.equal(late.sub, '주의 10', '작은 보조 값(주의)');   // 2026-10-20 HOME 판: 주의 2→10
   assert.equal(c.delay.projects, 0);
   /* 목록: 지연 = 지연(장기 포함) 2건. 후보 목록(?status=review-late·review)은 0건 */
   assert.equal(late.list.href, '/projects?sido=all&status=late');
@@ -87,7 +87,7 @@ test('4 구가 있는 시 → 지도 ?sido=41&pick=<시 코드>(구 코드·구 
   assert.equal(mapHref({ project: 'PRJ-41281-0088', sgg: '41280' }), '/map?project=PRJ-41281-0088', '사업이 먼저');
   /* 고양시 범위: 사업 10건 · 10,330호(구 합침) — 지역 공급·사업 화면 모두 mapScopeHref 로 이 주소 */
   const g = listOf('/projects?sgg=41280');
-  assert.deepEqual([g.n, g.units], [10, 10330]);
+  assert.deepEqual([g.n, g.units], [11, 11924]);   // 2026-10-20 HOME 판(고양 10건·10,330호 → 11건·11,924호)
   assert.match(read('app/(dashboard)/region/page.tsx'), /const scopeMap = sgg \? mapScopeHref\(\{ sgg \}\)/);
   assert.match(read('app/(dashboard)/projects/page.tsx'), /const scopeMap = f\.sgg \|\| f\.sido \? mapScopeHref\(\{ sgg: f\.sgg, sido: f\.sido \}\)/);
 });
@@ -159,7 +159,8 @@ test('9 착공 카드(통계누리) → ③착공 목록(원장): 목록 머리�
   assert.match(p, /\{f\.stage === 2 \? <InfoTip label="착공 목록 범위"[^>]*><p data-slot="start-basis">목록은 사업 원장 기준\(통계누리 착공 통계와 범위 다름\)/, '2026-10-18 서술형 정리: 보이는 글 대신 ⓘ');
   const l = listOf(D[0].list.href);
   // 2026-10-19 수도권 한정: ③착공 목록 194건·107,554호 → 71건·48,320호 (= BOARD.stageUnits 지금 ③ 48,320, 후보 제외)
-  assert.deepEqual([l.n, l.units], [71, 48320], '목록 71건 · 48,320호(원장)');
+  // 2026-10-20 HOME 판: 71건·48,320호 → 150건·70,761호(새 사업 중 착공 단계 79건 — 단계 올리기 CONSTRUCTION_START 79)
+  assert.deepEqual([l.n, l.units], [150, 70761], '목록 150건 · 70,761호(원장)');
 });
 
 test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227,976호', () => {
@@ -169,5 +170,5 @@ test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227
   const c = BOARD.judgment.candidate;
   assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 0);
   const metro = listOf('/projects?sido=metro');
-  assert.deepEqual([metro.n, metro.units], [262, 227976]);
+  assert.deepEqual([metro.n, metro.units], [383, 274296]);   // 2026-10-20 HOME 판
 });

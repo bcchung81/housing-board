@@ -4,7 +4,7 @@
   "name": "경기도 성남시 분당구",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-13",
-  "edition": "20261014T102506Z",
+  "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41135-0125","name":"성남낙생 A1","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-31"},"dateAlt":{"source":"LH","planned":"2029-01-30"},"units":1400,"pks":[],"pnus":[],"bundles":[],"label":"성남낙생 A1","agency":"lh","moveIn":"2029-02","completion":"2029-01-31","noticeUnits":933,"bjd":"4113511300","loc":{"by":"block","at":[127.081819,37.357054],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}}
   ]

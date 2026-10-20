@@ -76,6 +76,7 @@ test('③ 강서구(11500) 표: 호수 큰 순 · 다음 일정 · 들어올 때
     ['화곡역 동측', '2,335호', '착공 2030 예정', '연도 미정', '', '미정'],
     ['강서 군부대 터', '918호', '미정', '연도 미정', 'none:일정 미정', '미정'],
     ['강서구 이전부지', '558호', '미정', '연도 미정', 'none:일정 미정', '미정'],
+    ['등촌1구역주택재건축정비사업조합', '543호', '미정', '연도 미정', 'none:일정 미정', '미정'],   // 2026-10-20 HOME 판 새 사업(정비사업 목록)
     ['마곡지구 17단지', '381호', '미정', '연도 미정', 'none:일정 미정', 'SH'],   // 모집 공고 예정 2026-02 는 지난 계획이라 쓰지 않는다
     ['SBA 글로벌마케팅센터', '116호', '착공 2029.10 예정', '연도 미정', '', '미정'],
     ['강서염창(가로주택) 01', '14호', '입주 2027.02 예정', '입주 2027년 2월', 'none:일정 미정', 'LH'],   // 모집 공고 예정 2026-09 는 지남
@@ -148,7 +149,8 @@ const HM = {};
 for (const f of fs.readdirSync(path.join(ROOT, 'data', 'board', 'home-map'))) for (const q of JSON.parse(fs.readFileSync(path.join(ROOT, 'data', 'board', 'home-map', f), 'utf8')).projects) HM[q.id] = q;
 const SHORT = { '공공주택 건설': '공공주택 건설', '도심 공공주택 복합사업': '도심 복합사업', '노후청사·공공부지': '노후청사·공공부지', '공공택지·공공분양': '공공택지 분양', '3기 신도시': '3기 신도시', '건설형 공공임대': '공공임대 건설', '노후 공공임대 재건축': '노후 임대 재건축',
   '공공시설·유휴부지 개발': '공공시설·유휴부지 개발', '군 유휴부지': '군 유휴부지', '도심 내 유휴부지 활용 공급': '도심 유휴부지 활용', '철도부지 복합개발': '철도부지 복합개발', '공공시설 이전': '공공시설 이전', '서울 남부권 공공택지 공급 조기화': '남부권 공공택지 공급',
-  '신규 공공주택지구': '신규 주택지구', '우수입지 공공택지 분양': '우수입지 택지 분양', '유휴부지·노후청사 복합개발': '유휴·청사 복합개발', '공공택지 공급 조기화': '공공택지 공급' };
+  '신규 공공주택지구': '신규 주택지구', '우수입지 공공택지 분양': '우수입지 택지 분양', '유휴부지·노후청사 복합개발': '유휴·청사 복합개발', '공공택지 공급 조기화': '공공택지 공급',
+  'LH 직접시행 전환·토지이용 효율화': 'LH 직접시행 전환', 'iH 공공분양': 'iH 공공분양', 'iH 통합공공임대': 'iH 통합공공임대', 'iH 공공분양, 공공임대(6년 분양전환)': 'iH 분양·임대', 'iH 주택건설 후보': 'iH 주택건설 후보' };   // 2026-10-20 HOME 판 새 프로그램 5개(17 → 22종)
 const rowById = (id) => { const [, c, n] = /^PRJ-(\d+)-(\w+)$/.exec(id); return pjRow(rowOf(c, D.prj[c].find((q) => q[0] === n)), false, {}); };
 const sub = (h, re) => (h.match(re) || [])[1];
 const monthsBefore = (d, n) => { const t = new Date(d + 'T00:00:00Z'); t.setUTCMonth(t.getUTCMonth() - n); return t.toISOString().slice(0, 10); };
@@ -165,7 +167,7 @@ test('⑦-1 공정률: 최근 값 · 3개월 전(그날 이전 마지막 값) �
     { const band = sub(h, /<span class="pj-band" aria-hidden="true">(.*?)<\/span>/); assert.equal((band.match(/<i/g) || []).length, 6, '띠 6칸'); assert.ok(/class="on"/.test(band) && !/[■□●]/.test(h), '채운 칸 있음 · 글자 기호 없음'); }
     n++; if (old) withDiff++;
   }
-  assert.ok(n === 108 && withDiff >= 50, `${n}/${withDiff}`);
+  assert.ok(n === 113 && withDiff >= 50, `${n}/${withDiff}`);   // 2026-10-20 HOME 판: 공정률 자료가 있는 사업 108 → 113
   const none = Object.keys(HM).find((id) => !PD[id]?.progress?.length && D.prj[id.split('-')[1]]?.some((q) => q[0] === id.split('-')[2]));
   assert.doesNotMatch(rowById(none), /공사 \d+%/, '공정률 자료가 없으면 공사 % 없음');
   console.log(`  공정률 ${n}건(3개월 차이 ${withDiff}건) 같음`);
@@ -188,9 +190,9 @@ test('⑦-2 사업 유형: 칩 = 짧은 이름, title = 원래 이름(projects-i
   console.log(`  유형 ${ty} · 법정동 ${dg} · 공고 ${nt} · 다른 기관 예정일 ${alt} 같음`);
 });
 
-test('⑦-2b 이름 칸: .nm 은 사업명만 · 시도 보기의 시군구는 보조 글(.pj-dg)로 · title 순서 사업명 → 시군구 동 · 유형 17종 전부 화면 이름 대응', () => {
-  assert.equal(Object.keys(SHORT).length, 17); assert.equal(new Set(Object.values(SHORT)).size, 17);
-  assert.deepEqual([...PI.programs.map((x) => x.name)].sort(), Object.keys(SHORT).sort(), 'projects-index 프로그램 17종 = 화면 이름 표');
+test('⑦-2b 이름 칸: .nm 은 사업명만 · 시도 보기의 시군구는 보조 글(.pj-dg)로 · title 순서 사업명 → 시군구 동 · 유형 22종 전부 화면 이름 대응', () => {
+  assert.equal(Object.keys(SHORT).length, 22); assert.equal(new Set(Object.values(SHORT)).size, 22);   // 2026-10-20 HOME 판: 17 → 22종
+  assert.deepEqual([...PI.programs.map((x) => x.name)].sort(), Object.keys(SHORT).sort(), 'projects-index 프로그램 22종 = 화면 이름 표');
   let n = 0;
   for (const [c, rows] of Object.entries(D.prj)) for (const q of rows.slice(0, 3)) {
     const id = `PRJ-${c}-${q[0]}`, x = rowOf(c, q), h = pjRow(x, true, {}), nm = sub(h, /<span class="nm">([^<]*)(?:<|$)/);

@@ -289,10 +289,10 @@ test('같은 숫자(개요 ↔ 상세 머리 줄 ↔ 사업 화면): 수도권 �
     assert.deepEqual([t.u, t.n], [p.reduce((s, r) => s + (r.units > 0 ? r.units : 0), 0), p.length], `${c}: 상세 머리 줄 = 사업 화면 진행`);
     assert.deepEqual(t.st.map((s) => s.n), v.st, `${c}: 단계 칸 건수 = 개요 단계별 수`);
   }
-  /* 고양시 덕양구: 진행 8건 8,516호 중 ①계획 1건 2,570호(구 국방대학교)는 위치 미확보라 지도 표시 7건 */
+  /* 고양시 덕양구: 진행 9건 10,110호 중 ①계획 2건 4,164호는 위치 미확보라 지도 표시 7건(2026-10-20 HOME 판 — 10-19 판: 8건 8,516호 중 ①계획 1건 2,570호(구 국방대학교)) */
   const gy = JSON.parse(read('data/board/home-map/41281.json')), t = R.homeTally([gy], R.homeToProjects([gy]).unlocated.map((r) => r.id));
-  assert.deepEqual([t.u, t.n, t.lostN, t.lostU, t.st[0].u], [8516, 8, 1, 2570, 2570]);
-  assert.equal(DOC.units.find((u) => u.code === '41280').gu.find((g) => g.code === '41281').v.u, 8516);
+  assert.deepEqual([t.u, t.n, t.lostN, t.lostU, t.st[0].u], [10110, 9, 2, 4164, 4164]);
+  assert.equal(DOC.units.find((u) => u.code === '41280').gu.find((g) => g.code === '41281').v.u, 10110);
 });
 
 test('상세 머리 줄 연결: 수도권은 합계(#hudSum)·6단계 칸을 원장 기준(REGION.home.tally)으로 적고, 지도에 그리지 못한 진행 사업은 둘째 줄 \'지도 표시 n건(위치 미확보 m건 · k호)\'', () => {

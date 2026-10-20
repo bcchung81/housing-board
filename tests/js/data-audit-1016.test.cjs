@@ -53,11 +53,11 @@ test('대조: 지연 확정·후보 계산·병목·12개월 준공·단계 호�
   const up = sum(BOARD.upcoming, (m) => m.units), upN = sum(BOARD.upcoming, (m) => m.projects);
   assert.equal(num(all['앞으로 얼마나 공급되는가'].value), up);
   assert.deepEqual([regionAhead('/region?sido=all').n, regionAhead('/region?sido=all').units], [upN, up]);
-  /* 수도권 = 사업 화면 기본 = 지역 공급 기본 = 지도 개요 합계(13,372호 · 24건) */
+  /* 수도권 = 사업 화면 기본 = 지역 공급 기본 = 지도 개요 합계(14,570호 · 25건 — 2026-10-20 HOME 판, 10-19 판 13,372호 · 24건) */
   const ov = O.metroOverview(RMAP, { rows, calendar: CAL, sggNames: IDX.sgg, referenceDate: IDX.referenceDate });
-  assert.equal(num(metro['앞으로 얼마나 공급되는가'].value), 13372);
-  assert.deepEqual([regionAhead('/region').n, regionAhead('/region').units], [24, 13372]);
-  assert.deepEqual([ov.total.an, ov.total.a], [24, 13372]);
+  assert.equal(num(metro['앞으로 얼마나 공급되는가'].value), 14570);
+  assert.deepEqual([regionAhead('/region').n, regionAhead('/region').units], [25, 14570]);
+  assert.deepEqual([ov.total.an, ov.total.a], [25, 14570]);
   assert.equal(ov.total.d, listOf('/projects?status=late&sido=metro').length, '지도 개요 지연 = 사업 화면 수도권 지연(장기 포함)');
   /* 지금 단계별 호수·건수: 리본 기준 달 = 목록 행의 현재 단계 합 */
   for (let i = 0; i < 6; i++) {
@@ -204,8 +204,8 @@ test('후속 3: 단계별 연계 ⑤ — 앞으로 12개월 · 준공 예정(HOM
   const o = done.outcomes.find((x) => x.name === V.AHEAD_COMPLETION);
   assert.ok(o, '이름 = 종합상황판 카드 이름');
   // 2026-10-19 수도권 한정: 앞으로 12개월 준공 예정 214,975호·414건 → 13,372호·24건(원장 upcoming 합 — 수도권 HOME 뿐)
-  assert.deepEqual([ahead.units, ahead.projects], [13372, 24]);
-  assert.deepEqual(o.lines, ['13,372호 · 24건', 'HOME · LH · 건축HUB 후보']);
+  assert.deepEqual([ahead.units, ahead.projects], [14570, 25]);   // 2026-10-20 HOME 판 13,372호·24건 → 14,570호·25건
+  assert.deepEqual(o.lines, ['14,570호 · 25건', 'HOME · LH · 건축HUB 후보']);
   assert.deepEqual(done.outcomes.find((x) => x.name.startsWith('⑤ 준공 층')).lines, ['실적 = 통계누리', '예정 = 원장 현재 예정']);
   assert.ok(!done.outcomes.some((x) => x.lines.some((l) => /LH만|갱신 필요/.test(l)) || x.name === '향후 12개월 공급 예정'), '옛 기준 설명 없음');
   /* 원천 구성: 12개월 준공 예정 사업은 HOME(수도권 발급)·LH 후보·건축HUB 후보에서 온다 */

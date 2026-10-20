@@ -151,13 +151,13 @@ test('합계: 수도권 262곳·22만 7,976호 = /citizen 공급 예정 호수 =
   const all = listOf({});
   const metro = ['11', '28', '41'].reduce((s, sd) => { const x = citizenSum(sd); return { n: s.n + x.n, u: s.u + x.u }; }, { n: 0, u: 0 });
   assert.deepEqual({ n: all.length, u: all.reduce((s, x) => s + x.units, 0) }, metro);
-  assert.deepEqual(metro, { n: 262, u: 227976 }, '제안서 1.5 실측 값(원장 2026-10-13)');
+  assert.deepEqual(metro, { n: 383, u: 274296 }, '원장 2026-10 HOME 판 20261019T212247Z 실측 값(제안서 1.5 의 2026-10-13 값 262곳·227,976호)');
   const policy = V.applyFilters(rows, V.parseFilters({}, { policies: [], programs: [], sidoOk: () => true })).filter((r) => r.board <= 3);
   assert.equal(policy.length, metro.n); assert.equal(policy.reduce((s, r) => s + r.units, 0), metro.u);
   if (DJ) { const b = Object.entries(DJ.prj).filter(([c]) => P.METRO.includes(c.slice(0, 2))).flatMap(([, L]) => L).filter((p) => T.OF_STAGE[p[2]] <= 3); assert.deepEqual({ n: b.length, u: b.reduce((s, p) => s + p[3], 0) }, metro, '빌드된 /citizen 자료와도 같다'); }
   for (const sd of ['11', '28', '41']) { const L = listOf({ sido: sd }); assert.deepEqual({ n: L.length, u: L.reduce((s, x) => s + x.units, 0) }, citizenSum(sd), sd); }
   const gy = listOf({ sgg: '28245' });
-  assert.deepEqual({ n: gy.length, u: gy.reduce((s, x) => s + x.units, 0) }, { n: 6, u: 3664 }, '인천 계양구(제안서 4.4)');
+  assert.deepEqual({ n: gy.length, u: gy.reduce((s, x) => s + x.units, 0) }, { n: 8, u: 4880 }, '인천 계양구(제안서 4.4 의 6곳·3,664호 → 2026-10-20 HOME 판 8곳·4,880호)');
   /* 묶음 합 = 목록 합 */
   const g = P.byYear(all, '2026-10-19');
   assert.equal(g.reduce((s, x) => s + x.items.length, 0), all.length);

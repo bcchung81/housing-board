@@ -189,12 +189,12 @@ test('raw-store: pull 은 그 달 → 앞 달 경로에서 찾아 sha256 을 맞
 test('raw-store: HOME 덤프 판(raw/home/<덤프시각>)은 <달>/home/<덤프시각>/<파일>.gz 로 올라가고, pull 이 없는·다른 파일만 sha256 을 맞춰 받는다', async () => {
   const f = fixture();
   const store = new Map(), api = { download: async (k) => store.get(k) ?? null, upload: async (k, d) => { store.set(k, d); } };
-  const hd = path.join(f.base, 'raw/home/20261013T140241Z'), body = zlib.gzipSync(Buffer.from('{"a":1}\n'));
+  const hd = path.join(f.base, 'raw/home/20261019T212247Z'), body = zlib.gzipSync(Buffer.from('{"a":1}\n'));
   fs.mkdirSync(hd, { recursive: true });
   write(path.join(hd, 'manifest.json'), { snapshot_at: '2026-10-13T14:02:41Z', files: { 'gh_notice.jsonl.gz': { sha256: crypto.createHash('sha256').update(body).digest('hex'), rows: 1 } } });
   fs.writeFileSync(path.join(hd, 'gh_notice.jsonl.gz'), body);
-  const keys = await RS.push({ root: f.root, month: '2026-10', api, ignored: ['raw/home/20261013T140241Z/gh_notice.jsonl.gz'], log: () => {} });
-  assert.deepEqual(keys, ['2026-10/home/20261013T140241Z/gh_notice.jsonl.gz.gz']);
+  const keys = await RS.push({ root: f.root, month: '2026-10', api, ignored: ['raw/home/20261019T212247Z/gh_notice.jsonl.gz'], log: () => {} });
+  assert.deepEqual(keys, ['2026-10/home/20261019T212247Z/gh_notice.jsonl.gz.gz']);
   assert.equal(await RS.pullHome({ root: f.root, month: '2026-10', api, log: () => {} }), 0, '이미 있으면 받지 않는다');
   fs.rmSync(path.join(hd, 'gh_notice.jsonl.gz'));
   assert.equal(await RS.pullHome({ root: f.root, month: '2026-10', api, log: () => {} }), 1);
@@ -238,7 +238,7 @@ test('--refresh unchanged: 판 목록·내려받기 없이 기준일 = 오늘 �
 
 test('HOME 판이 있으면 보드 다음에 policy-progress → projects-index(같은 --month), 다른 단계 순서는 그대로', async () => {
   const f = refreshFixture();
-  write(path.join(f.base, 'raw/home/20261013T140241Z/manifest.json'), { files: {} });
+  write(path.join(f.base, 'raw/home/20261019T212247Z/manifest.json'), { files: {} });
   await M.refresh({ ...f.opts, now: KST('2026-10-12', 6) });
   assert.deepEqual(f.calls.map((c) => c.split(' ')[0]), ['hub-bulk.js', 'hub-api-refresh.js', 'snapshot.js', 'collect-national.js', 'convert.js', 'trend.js', 'board.js', 'policy-progress.js', 'projects-index.js']);
   assert.deepEqual(f.calls.slice(-2), ['policy-progress.js --month 2026-10', 'projects-index.js --month 2026-10']);
@@ -318,9 +318,9 @@ test('convert 인자: 그 달 폴더에 단계별 원천 중간 스냅샷(snapsh
   assert.equal(a[a.length - 2], '--out', '--out 은 끝');
   assert.ok(!a.includes('--home'), 'HOME 판이 없으면 넘기지 않는다');
   write(path.join(dir, 'raw/home/20261001T000000Z/manifest.json'), { files: {} });
-  write(path.join(dir, 'raw/home/20261013T140241Z/manifest.json'), { files: {} });
+  write(path.join(dir, 'raw/home/20261019T212247Z/manifest.json'), { files: {} });
   const h = args();
-  assert.deepEqual([h[h.indexOf('--home') + 1], h[h.indexOf('--home-ids') + 1]], ['schemas/ledger-2026-11/raw/home/20261013T140241Z', 'schemas/ledger-2026-11/mappings/home-ids.json'], 'HOME 판(가장 늦은 덤프 시각)과 id 매핑');
+  assert.deepEqual([h[h.indexOf('--home') + 1], h[h.indexOf('--home-ids') + 1]], ['schemas/ledger-2026-11/raw/home/20261019T212247Z', 'schemas/ledger-2026-11/mappings/home-ids.json'], 'HOME 판(가장 늦은 덤프 시각)과 id 매핑');
   assert.equal(h[h.length - 2], '--out');
   assert.ok(M.STATIC.includes('raw/home'), '새 달에 HOME 판을 가져간다');
   fs.rmSync(root, { recursive: true, force: true });
