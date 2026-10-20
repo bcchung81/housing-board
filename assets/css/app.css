@@ -793,7 +793,7 @@ html[data-map-mode="overview"] .skip-detail,html:not([data-map-mode="overview"])
 .mapwrap:focus,.ov-mapwrap:focus{outline:none}
 html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minmax(0,1fr);flex:1;min-height:0;min-width:0;position:relative}
 .ov button{font:inherit;color:inherit}
-.ov :focus-visible,.ov-menu :focus-visible,.crumbs a:focus-visible{outline:2px solid var(--acc);outline-offset:2px}
+.ov :focus-visible,.ov-menu :focus-visible{outline:2px solid var(--acc);outline-offset:2px}
 .ov-panel{position:relative;display:flex;flex-direction:column;gap:14px;min-height:0;overflow:hidden;padding:16px 18px 20px;background:var(--bg);border-right:1px solid var(--line);word-break:keep-all}   /* 세로 스크롤 없음(2026-10-18 사용자 피드백): 순위 막대 목록이 남은 높이만 쓰고 넘친 줄은 '전체 n ›' 목록(#ovSheet)으로 */
 .ov-handle{display:none}
 .ov-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:2px 10px}
@@ -950,14 +950,6 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
   #ovLegendTop:not(:empty){display:grid}   /* 같은 모양의 범례를 지도 위 띠로(눈금 두 줄·'높이' 자리는 늘 있어 지표를 바꿔도 높이가 같다) */
   .ov-stage{inset:auto 8px calc(44% + 8px) 8px}
 }
-/* 상세 지도 위 경로(수도권 › 시도 › 시군구, region.js mountCrumbs): 있으면 머리 줄의 '공급 지도' 자리에 */
-.crumbs{display:flex;align-items:center;gap:6px;min-width:0;font-size:var(--text-base);line-height:1.3;white-space:nowrap}
-.crumbs[hidden]{display:none}
-.crumbs a{color:var(--mute);text-decoration:none;text-underline-offset:3px}
-.crumbs a:hover{color:var(--ink);text-decoration:underline}
-.crumbs [aria-current]{font-weight:700;color:var(--ink);overflow:hidden;text-overflow:ellipsis}
-.crumbs .cr-sep{color:var(--mute)}
-.brand-t:has(>.crumbs:not([hidden]))>b{display:none}
 
 /* 위치 미확보 묶음(2026-10-15 평가 A7 P1): 지도 위 점선 테두리 표지(시군구 대표점) + 머리 줄 단추 → 같은 목록 창(#lostPop). 판정 글자색은 카드와 같은 값(4.5:1) */
 .lostpin,.lostpop{--bad:var(--map-bad-ink);--ok:var(--map-ok-ink);--warn:var(--map-warn-ink)}

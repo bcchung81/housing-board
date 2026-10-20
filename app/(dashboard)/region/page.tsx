@@ -92,7 +92,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
 
   return (
     <Page>
-      <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '지역 공급' }]} title="지역 공급"
+      <PageHead title="지역 공급"
         tip="앞으로 12개월 예정(원장 현재 예정) → 지난 공급 실적(통계누리) → 동네 여건(서울·인천·경기) 순">
         <span className="ml-auto text-sm whitespace-nowrap text-muted-foreground tabular-nums mobile:text-sm"
           title={`앞으로 12개월(${ymDot(calendar.from)} ~ ${ymDot(calendar.to)}) · 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')} · 통계누리 실적 ${ymDot(last)}까지`}>

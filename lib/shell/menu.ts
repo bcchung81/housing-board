@@ -42,7 +42,7 @@ export function peerHref(pathname: string, search: string, next: 'public' | 'adm
 /* /citizen 이 저장한 내 동네(localStorage 'myArea': 시군구 5자리 또는 시도 2자리) → mapHref 에 넘길 범위. 그 밖의 값은 범위 없음(= '/map') */
 export const myAreaScope = (raw: string | null | undefined): { sgg?: string; sido?: string } => (/^\d{5}$/.test(raw ?? '') ? { sgg: raw as string } : /^\d{2}$/.test(raw ?? '') ? { sido: raw as string } : {});
 
-/* 첫 경로 마디 → 강조할 메뉴. 월 상세·기관 상세(/agency/{기관})는 종합상황판 위젯에서 내려가므로 종합상황판을 강조한다(빵부스러기도 '종합상황판 › 기관') */
+/* 첫 경로 마디 → 강조할 메뉴. 월 상세·기관 상세(/agency/{기관})는 종합상황판 위젯에서 내려가므로 종합상황판을 강조한다 */
 const PARENT: Record<string, MenuId> = {
   '': 'home', month: 'home', map: 'map', projects: 'projects', region: 'region', agency: 'home', sources: 'sources',
 };

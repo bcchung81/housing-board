@@ -161,12 +161,20 @@ test('접근성: 본문 바로가기(첫 Tab), 인쇄 전용 표·정의는 화�
   assert.match(read('components/projects/Summary.tsx'), /<div aria-hidden="true" className="mt-4 hidden [^"]*print:block/);
 });
 
-test('/agency/lh: 위 메뉴·경로 표시는 종합상황판 아래, LH 준공 예정 표는 이번 달부터', () => {
+test('/agency/lh: 위 메뉴는 종합상황판 아래, LH 준공 예정 표는 이번 달부터', () => {
   assert.equal(activeMenuId('/agency/lh'), 'home');
   assert.equal(DETAILS.agency.list, '/');
   const s = read('app/(dashboard)/agency/[id]/page.tsx');
-  assert.match(s, /const crumbs = \[\{ label: '종합상황판', href: '\/' \}, \{ label: a\.name \}\];/);
+  assert.doesNotMatch(s, /crumbs/);
   assert.match(s, /const blocks = lh\.blocks\.filter\(\(b\) => b\.date\.slice\(0, 7\) >= observedMonth\)/);
   assert.match(s, /rows=\{blocks\.map\(/);
   assert.doesNotMatch(s, /lh\.blocks\.map\(\(b, k\)/);
+});
+
+test('대시보드 화면에 빵부스러기(현재 위치)가 없다 — 머리글 첫 줄은 제목 h1', () => {
+  const walk = (d) => fs.readdirSync(path.join(ROOT, d), { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(`${d}/${e.name}`) : /\.tsx$/.test(e.name) ? [`${d}/${e.name}`] : []));
+  for (const f of [...walk('app'), ...walk('components')]) {
+    const s = read(f);
+    assert.ok(!s.includes('aria-label="현재 위치"') && !/Crumbs|crumbs=/.test(s), f);
+  }
 });

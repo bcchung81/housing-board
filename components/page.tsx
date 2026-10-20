@@ -1,9 +1,8 @@
 /* 대시보드 화면의 틀. 콘텐츠 상자는 종합상황판·상단 메뉴 바와 같은 1440px 선(px-7)이고, 블록 사이는 같은 간격(gap-3.5)이다.
    1600px 이상 화면에서는 1760px 까지 넓힌다(2026-10-16 2차 평가: 1920 에서 좌우 268px 씩 비었다 — 종합상황판·상단 메뉴 바는 각자 맞춘다).
-   머리글은 빵부스러기 → 제목 h1(설명은 title) + 같은 줄 오른쪽 기준 한 줄. 카드 머리 줄은 제목 h2(덧말은 title) + 오른쪽 범례·조용한 링크(종합상황판 규칙). */
+   머리글은 제목 h1(설명은 title) + 같은 줄 오른쪽 기준 한 줄. 카드 머리 줄은 제목 h2(덧말은 title) + 오른쪽 범례·조용한 링크(종합상황판 규칙). */
 import { Fragment, type ComponentProps, type ReactNode } from 'react';
 import { cn } from 'cn';
-import Crumbs, { type Crumb } from './Crumbs';
 import PanelLink from './board/PanelLink';
 import { phead, phgroup, ptitle } from './board/styles';
 import InfoTip from './ui/info-tip';
@@ -18,11 +17,10 @@ export const sub = 'text-sm text-muted-foreground';
 export const na = 'text-muted-foreground';
 
 /* 머리글. 아래 간격은 종합상황판(머리글 pb-3 → 첫 카드)과 같은 12px 이 되게 틀의 gap 에서 2px 를 뺀다 */
-export function PageHead({ crumbs, title, tip, meta, metaTip, children }: { crumbs?: Crumb[]; title: ReactNode; tip?: string; meta?: ReactNode; metaTip?: string; children?: ReactNode }) {
+export function PageHead({ title, tip, meta, metaTip, children }: { title: ReactNode; tip?: string; meta?: ReactNode; metaTip?: string; children?: ReactNode }) {
   return (
     <header className="-mb-0.5 pt-4">
-      {crumbs ? <Crumbs items={crumbs} /> : null}
-      <div className={cn('flex flex-wrap items-baseline gap-x-3 gap-y-1', crumbs && 'mt-1')}>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
         <h1 className="m-0 min-w-0 text-h1 font-bold text-foreground [overflow-wrap:anywhere]" title={tip}>{title}</h1>
         {children}
         {meta ? <span className={cn(sub, 'ml-auto whitespace-nowrap tabular-nums mobile:text-sm')} title={metaTip}>{meta}</span> : null}

@@ -74,7 +74,7 @@ export default async function MonthPage({ params }: Props) {
   const lhDate = <> · 파일 기준 {dotDates(lh.sourceAsOf)}{lhStaleTag}</>;
   return (
     <Page>
-      <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: monthLabel(ym) }]} title={monthLabel(ym)}
+      <PageHead title={monthLabel(ym)}
         meta={actual ? `실적${isProvisional(molit, ym) ? ' · 잠정' : ''} · 자료 기준 ${ymDot(last)}` : `예정 · 원장 기준 ${dotDates(calendar.referenceDate)}`}
         metaTip={actual ? `통계누리 실적이 있는 달${isProvisional(molit, ym) ? ' · 통계누리가 잠정치로 낸 달입니다. 확정치는 2027년 9월 공표 예정' : ''} · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}` : '실적 자료가 없는 달 — 준공 예정만'}
         tip={actual ? `${area}·시도별 인허가·착공·모집·준공 호수와 시행주체별 호수${due.length ? ', 원장 준공 예정 사업' : ''}${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. ${due.length ? '원장 준공 예정 사업' : ''}${due.length && blocks.length ? '과 ' : ''}${blocks.length ? 'LH 준공 예정 블록' : ''}만 있습니다.`}>

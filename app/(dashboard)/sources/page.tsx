@@ -339,7 +339,7 @@ export default async function SourcesPage() {
 
   return (
     <Page>
-      <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '데이터 원본' }]} title="데이터 원본"
+      <PageHead title="데이터 원본"
         tip="① 요구사항 충족 → ② 수집 상태 → ③ 연도 확보 → ④ 연결 · 맨 아래 원천 카탈로그(단계별 데이터 연계·원천별 수집 건수·기준일)">
         <ReqTags screen="sources" />
         <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums mobile:text-sm"

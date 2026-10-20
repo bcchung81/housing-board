@@ -43,7 +43,6 @@ export default async function AgencyDetail({ params }: Props) {
   const { lh, molit, sources } = await getBoardData();   // molit: 시도 짧은 이름(GH 표의 시군구 칸)
   const a = DETAILS.agency.id.test(id) ? AGENCIES.find((x) => x.id === id) : undefined;
   if (!a) notFound();
-  const crumbs = [{ label: '종합상황판', href: '/' }, { label: a.name }];
 
   if (!a.actor) {   // gh · sh · ih · mnd: 화면에 쓸 데이터가 아직 없다. 받은 파일이 있으면 카탈로그를 보인다.
     const group = a.id === 'sh' ? '서울주택도시공사' : a.id === 'mnd' ? '국방부' : null;
@@ -55,7 +54,7 @@ export default async function AgencyDetail({ params }: Props) {
     const ghGrid = dropBlank(LIST_COLS, ghGridRows);
     return (
       <Page>
-        <PageHead crumbs={crumbs} title={a.name} tip={`${a.summary}.`}><Badge title={`${a.summary}.`}>준비 중</Badge></PageHead>
+        <PageHead title={a.name} tip={`${a.summary}.`}><Badge title={`${a.summary}.`}>준비 중</Badge></PageHead>
         <FactNote className="ui-inset" tip={{ label: '판정하지 않는 까닭', children: <><p>기관별 신호(정상·주의·지연)는 일정(당초·변경·현재 예정)이 없어 판정하지 않습니다.</p>{a.id === 'mnd' ? <p>군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.</p> : null}</> }}>일정이 없어 기관 신호를 판정하지 않습니다.</FactNote>
         {ghRows.length ? (
           <Card render={<section aria-label={`${a.name} 사업`} />}>
@@ -97,7 +96,7 @@ export default async function AgencyDetail({ params }: Props) {
   };
   return (
     <Page>
-      <PageHead crumbs={crumbs} title={a.name} tip={`통계누리 시행주체 '${a.actor}'의 ${area} 월별 호수${a.id === 'lh' ? '와 LH 준공 예정 블록' : ''}.`}
+      <PageHead title={a.name} tip={`통계누리 시행주체 '${a.actor}'의 ${area} 월별 호수${a.id === 'lh' ? '와 LH 준공 예정 블록' : ''}.`}
         meta={`실적 ${ymDot(last)}`} metaTip={`통계누리 주택건설실적통계 · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}${a.id === 'lh' ? ` · LH 준공예정 파일 기준일 ${dotDates(lh.sourceAsOf)}` : ''}`} />
       <StageKpis when={monthLabel(last)} notes={{ 3: '모집은 시행주체 구분이 없음' }} cells={Object.fromEntries(KS.map(([k]) => [k, { value: fmt(seriesOf(molit, k, NATION).actors![a.actor!][i]), sub: <>{ytdSpan(year, Number(last.slice(5)))} {fmt(ytd(molit, k, NATION, last, a.actor!))}호{prov ? <Prov /> : null}</> }]))} />
       <Card render={<section aria-label="월별 실적" />}>

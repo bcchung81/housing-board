@@ -215,7 +215,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
     <Page>
       {list.length ? <SkipToList /> : null}
       <div className="contents print:hidden">
-        <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: '사업' }]} title="사업"
+        <PageHead title="사업"
           tip="사업 원장의 사업을 정책·프로그램과 지역·상태·기관으로 거른다(처음은 수도권) · 행을 누르면 오른쪽에 사업 상세 · 보고서 인쇄 = 월간 진척 보고(2026.08.14 지시)">
           <span className={cn(sub, 'ml-auto whitespace-nowrap tabular-nums mobile:text-sm')} title={`사업 원장 ${ymText(idx.observedMonth)} · 기준일 ${ref}(대체·숨김 사업 제외) · 판정: 현재 예정일 경과 1~6개월 주의, 6개월 이상 지연, ${LONG_DELAY_MONTHS}개월 이상 장기 지연`}>자료 기준 {ref}</span>
           <Link href={listHref(f, { print: '1' })} className={cn(BTN, 'self-center')} title="핵심 질문·단계별 진행·정책 목표 대비·점검 필요 사업·기준일·출처만 담은 월간 보고 보기(인쇄 미리보기)">

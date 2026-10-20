@@ -905,26 +905,6 @@
     const notes = [resolved ? noticeText(warns) : '', baseNote].filter(Boolean).join(' · ');
     applyTexts(doc, r); mountSelector(doc, r, win); mountBanner(doc, r, hm && !r.slug && !hm.failed && hm.total ? noticeText(warns) : notes, bannerBrief(r, warns), baseNote);   // 목록 띠(원장 사업이 있을 때)는 위치 안내만, 그 밖은 전체 문장
     mountLocNote(doc, capital && hit && hit.approx ? { name: hit.name, approx: true } : lost ? { id: lost.id, name: lost.name } : null);
-    mountCrumbs(win, doc, r, resolved);
-  }
-  /* 상세 지도 위 경로(수도권 › 시도 › 시군구): 수도권 시군구일 때만. 앞 둘은 수도권 개요로 가는 링크(/map · /map?sido=NN), 마지막은 지금 지역(링크 없음) */
-  function crumbsOf(sgg, name) {
-    if (!isHomeSgg(sgg)) return null;
-    const sido = String(sgg).slice(0, 2), here = name ? sggShort(name) : '';
-    return [{ label: '수도권', href: '/map' }, { label: SIDO_SHORT[sido], href: `/map?sido=${sido}` }, ...(here ? [{ label: here }] : [])];
-  }
-  function crumbsHtml(list) {
-    return (list || []).map((c, i) => `${i ? '<span class="cr-sep" aria-hidden="true">›</span>' : ''}${c.href ? `<a href="${escapeHtml(c.href)}">${escapeHtml(c.label)}</a>` : `<span aria-current="page">${escapeHtml(c.label)}</span>`}`).join('');
-  }
-  /* 시군구: 코드로 열었으면 그 시군구, 지역 번들(계양)이면 번들의 시군구. 이름은 수도권 표(HOME_LITE) → 시군구로 연 해석 이름 순 */
-  function mountCrumbs(win, doc, r, resolved) {
-    const el = doc && doc.getElementById && doc.getElementById('mapCrumbs');
-    if (!el) return;
-    const sgg = resolved && resolved.sgg ? String(resolved.sgg) : ((r && r.sggs) || []).find(isHomeSgg) || '';
-    const lite = win && win.HOME_LITE && win.HOME_LITE[sgg];
-    const list = crumbsOf(sgg, (lite && lite.name) || (resolved && resolved.type === 'sgg' ? resolved.name : '') || '');
-    el.innerHTML = list ? crumbsHtml(list) : '';
-    el.hidden = !list;
   }
   /* 지도 가로 화소(사이드바를 뺀 대강의 값) — 첫 시점 계산용. 901px 이상은 지도 카드 틀(app.css: min(폭,1440 · 1600px 이상 1760) − 56) 안이다 */
   const mapPx = (win) => { const w = Number(win && win.innerWidth) || 1200; return Math.max(360, w > 900 ? Math.min(w, w >= 1600 ? 1760 : 1440) - 56 - 400 : w); };
@@ -932,5 +912,5 @@
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { REFORMED, fatalModel, fatalHtml, HOME_SIDO, isHomeSgg, crumbsOf, crumbsHtml, mountCrumbs, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, liteRing, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, statusReason, lostSummary, lostAnchor, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
+  return { REFORMED, fatalModel, fatalHtml, HOME_SIDO, isHomeSgg, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, liteRing, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, statusReason, lostSummary, lostAnchor, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
 });

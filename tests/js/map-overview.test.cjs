@@ -230,20 +230,10 @@ test('화면 연결: 레이아웃 첫 스크립트 → 개요/상세 CSS 분기,
   for (const w of ['HOME', '번들', '원장 관측']) { assert.ok(!src.includes(w), `overview.js: ${w}`); assert.ok(!page.slice(page.indexOf('function OverviewMarkup')).replace(/\{\/\*[\s\S]*?\*\/\}/g, '').includes(w), `개요 마크업: ${w}`); }
 });
 
-test('상세 지도 위 경로: 수도권 › 시도 › 시군구, 앞 둘은 /map · /map?sido= 링크', () => {
-  assert.deepEqual(R.crumbsOf('41281', '경기도 고양시 덕양구'), [{ label: '수도권', href: '/map' }, { label: '경기', href: '/map?sido=41' }, { label: '고양시 덕양구' }]);
-  assert.deepEqual(R.crumbsOf('28245', '인천광역시 계양구').map((c) => c.label), ['수도권', '인천', '계양구']);
-  assert.equal(R.crumbsOf('26110', '부산광역시 중구'), null, '수도권 밖은 경로 없음');
-  assert.equal(R.crumbsHtml(R.crumbsOf('11110', '서울특별시 종로구')), '<a href="/map">수도권</a><span class="cr-sep" aria-hidden="true">›</span><a href="/map?sido=11">서울</a><span class="cr-sep" aria-hidden="true">›</span><span aria-current="page">종로구</span>');
-  const el = { hidden: true, innerHTML: '' }, doc = { getElementById: (id) => (id === 'mapCrumbs' ? el : null) };
-  R.mountCrumbs({ HOME_LITE: { 41281: { name: '경기도 고양시 덕양구', n: 8 } } }, doc, {}, { sgg: '41281', type: 'sgg', name: '경기도 고양시 덕양구' });
-  assert.equal(el.hidden, false);
-  assert.match(el.innerHTML, /고양시 덕양구<\/span>$/);
-  R.mountCrumbs({}, doc, { sggs: ['28245'] }, null);   // 지역 번들(?region=incheon-gyeyang)
-  assert.match(el.innerHTML, /\/map\?sido=28/);
-  R.mountCrumbs({}, doc, { sggs: [] }, { sgg: '26110', type: 'sgg', name: '부산광역시 중구' });
-  assert.equal(el.hidden, true);
-  assert.match(read('index.html'), /<div class="brand-t"><nav class="crumbs" id="mapCrumbs" aria-label="지도 위치" hidden><\/nav><b>공급 지도<\/b>/);
+test('지도 상세 머리 줄에 빵부스러기(지도 위치)가 없다', () => {
+  assert.equal(typeof R.crumbsOf, 'undefined');
+  assert.equal(typeof R.mountCrumbs, 'undefined');
+  assert.ok(!read('index.html').includes('mapCrumbs'));
 });
 
 test('같은 구현: /map 개요와 /citizen 은 같은 3D 모듈(진짜 3D assets/js/map3d-gl.js · SVG 대체 assets/js/map3d.js · assets/css/map3d.css)로 그린다 — 개요는 MapLibre 를 직접 만지지 않고(MapGL 만), 지표 전환은 칠하기만', () => {
