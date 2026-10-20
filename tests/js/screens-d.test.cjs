@@ -36,7 +36,7 @@ test('1 지연 헤드라인: 카드 = 지연 2건 · 주의 2(후보 0이라 쌍
   assert.deepEqual([late.pre, late.big, late.u], ['지연', '2', '건']);
   assert.equal(late.pair, undefined, '후보 계산 쌍 없음');
   assert.equal(late.m, '지연 2건');
-  assert.equal(late.sub, '주의 10', '작은 보조 값(주의)');   // 2026-10-20 HOME 판: 주의 2→10
+  assert.equal(late.sub, '주의 11', '작은 보조 값(주의)');   // 2026-10-20 HOME 판: 주의 2→10 → 기준일 10-20 주의 11(성남금토 A2)
   assert.equal(c.delay.projects, 0);
   /* 목록: 지연 = 지연(장기 포함) 2건. 후보 목록(?status=review-late·review)은 0건 */
   assert.equal(late.list.href, '/projects?sido=all&status=late');
@@ -143,7 +143,7 @@ test('7 서랍: 제목 = 지도와 같은 짧은 이름(home-map label), 원장 
   assert.match(d, /\{d\.label && d\.label !== r\.name \? <span data-slot="drawer-full"[^>]*>\{r\.name\}<\/span> : null\}/);
   assert.match(d, /사업 원장\(HOME\) \$\{edition\[1\]\}\.\$\{edition\[2\]\}\.\$\{edition\[3\]\} 받음/);   // HOME 이 무엇인지 붙여서(r3-screens 4)
   assert.doesNotMatch(d, /` · 자료 기준 \$\{edition/, '서랍의 HOME 받은 날을 \'자료 기준\'이라 부르지 않는다(화면의 자료 기준 = 원장 기준일)');
-  assert.equal(IDX.referenceDate, '2026-10-13');
+  assert.equal(IDX.referenceDate, '2026-10-20');   // 2026-10-20 사용자 결정: 기준일을 오늘로(manifest reference_date)
 });
 
 test('8 월별 실적 차트: Tab 은 차트에 한 번(마지막 달), 안에서 ←→·Home·End 로 옮긴다(링크·주소는 그대로)', () => {
@@ -163,7 +163,9 @@ test('9 착공 카드(통계누리) → ③착공 목록(원장): 목록 머리�
   const l = listOf(D[0].list.href);
   // 2026-10-19 수도권 한정: ③착공 목록 194건·107,554호 → 71건·48,320호 (= BOARD.stageUnits 지금 ③ 48,320, 후보 제외)
   // 2026-10-20 HOME 판: 71건·48,320호 → 150건·70,761호(새 사업 중 착공 단계 79건 — 단계 올리기 CONSTRUCTION_START 79)
-  assert.deepEqual([l.n, l.units], [150, 70761], '목록 150건 · 70,761호(원장)');
+  // 2026-10-20 같은 현장 병합 6쌍: ③ 인천 대체 3곳(2,016호) 빠지고 평택고덕은 대체 3 ↔ 대표 3(2,122호)이 맞바뀌어 147건·68,745호
+  // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): ③ 민간 79곳(22,329호) 빠져 68건·46,416호
+  assert.deepEqual([l.n, l.units], [68, 46416], '목록 68건 · 46,416호(원장)');
 });
 
 test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227,976호', () => {
@@ -173,5 +175,5 @@ test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227
   const c = BOARD.judgment.candidate;
   assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 0);
   const metro = listOf('/projects?sido=metro');
-  assert.deepEqual([metro.n, metro.units], [383, 274296]);   // 2026-10-20 HOME 판
+  assert.deepEqual([metro.n, metro.units], [285, 242279]);   // 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
 });

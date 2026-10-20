@@ -3,11 +3,10 @@
   "sgg": "11230",
   "name": "서울특별시 동대문구",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-11230-0098","name":"용두1-6","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":977,"pks":[],"pnus":[],"bundles":[],"label":"용두1-6","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1123010200","loc":{"by":"address","at":[127.040446,37.578455],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
-    {"id":"PRJ-11230-0099","name":"동대문구 일원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1500,"pks":[],"pnus":[],"bundles":[],"label":"동대문구 일원","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.051858,37.583815],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}},
-    {"id":"PRJ-11230-0100","name":"제기1주택재건축정비구역(지정개발자방식)","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"제기1주택재건축정비구역(지정개발…","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1123010300","loc":null,"policy":null}
+    {"id":"PRJ-11230-0099","name":"동대문구 일원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1500,"pks":[],"pnus":[],"bundles":[],"label":"동대문구 일원","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.051858,37.583815],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}}
   ]
 }

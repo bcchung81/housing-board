@@ -3,7 +3,7 @@
   "sgg": "41196",
   "name": "경기도 부천시 오정구",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41196-0098","name":"부천대장 A5","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-10-31"},"dateAlt":{"source":"LH","planned":"2027-11-30"},"units":314,"pks":[],"pnus":[],"bundles":[],"label":"부천대장 A5","agency":"lh","moveIn":"2027-11","completion":"2027-10-31","noticeUnits":null,"bjd":"4119610600","loc":{"by":"block","at":[126.791348,37.536458],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},

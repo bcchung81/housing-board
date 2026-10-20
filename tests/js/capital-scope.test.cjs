@@ -100,7 +100,7 @@ test('(4) buildings·terrain: 수도권 밖 칸·타일은 403, 안은 403 아�
 });
 
 test('(5) bus: 비수도권 slug 는 403, 수도권 slug 는 통과, NON_CAPITAL_LIVE=1 이면 통과', async () => {
-  const mk = (env) => busApi.createHandler({ ...deps(env), readLiveRoutes: () => null });
+  const mk = (env) => busApi.createHandler({ ...deps(env), readLiveRoutes: () => null, readRegionSidos: (slug) => (slug === 'jeonnam-naju' ? ['12'] : ['28']) });   // 가짜 수도권 밖 번들(옛 나주 번들은 제거됨)
   const r = await call(mk(KEYS), '/api/bus?region=jeonnam-naju');
   denied({ status: r.status, json: { code: r.json.error, title: r.json.title, detail: r.json.detail } });
   assert.equal((await call(mk(KEYS), '/api/bus?region=incheon-gyeyang')).status, 404);          // 수도권: 범위 검사를 지나 no-live-routes

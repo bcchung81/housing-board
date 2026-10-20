@@ -32,7 +32,7 @@ type CandJudged = { ok: Judged; caution: Judged; delay: Judged };
 export type LedgerBoard = {
   schema: string; observedMonth: string; referenceDate: string;
   judge: { cautionMonths: number; delayMonths: number; rule?: string };
-  scope: { projects: number; issued: number; candidates: number; judged: number; candidateJudged?: number; units: number; coverage?: string; bySource?: { issued: number; lhCandidates: number; hubBulkCandidates: number; home?: number } };
+  scope: { projects: number; issued: number; candidates: number; judged: number; candidateJudged?: number; units: number; coverage?: string; bySource?: { issued: number; lhCandidates: number; hubBulkCandidates: number; home?: number }; renewal?: { projects: number; units: number } };
   months: string[]; now: number; stageUnits: number[][]; stageProjects: number[][];
   actualThrough?: string; actualIndex?: number; actualSource?: string | null;   // 실제 날짜가 있는 마지막 달(호수가 가장 많은 원천의 자료 달). 그 뒤 달은 예정으로 다시 만든 값. 없으면(옛 집계) 기준 달까지 실제
   /* ok·caution·delay = 판정(사업 번호가 있는 사업만), candidate = 번호가 없는 후보의 같은 계산(확인 필요, 2026-10-15 결정 D3 — 없으면 옛 집계: 후보 포함 판정) */

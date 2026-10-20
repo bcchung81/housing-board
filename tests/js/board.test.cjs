@@ -132,7 +132,7 @@ test('단계·기관 경로 규칙: 6단계 코드는 옛 단계 상세 넘김(n
   assert.deepEqual(STAGES.map((s) => s.code), ['01', '02', '03', '04', '05', '06']);
   const stageId = new RegExp(`^${/source: '\/stage\/:id\(([^)]+)\)'/.exec(fs.readFileSync(path.join(__dirname, '..', '..', 'next.config.ts'), 'utf8'))[1]}$`);
   for (const s of STAGES) assert.match(s.code, stageId);
-  assert.deepEqual(AGENCIES.map((a) => a.id), ['lh', 'local', 'gh', 'sh', 'mnd']);
+  assert.deepEqual(AGENCIES.map((a) => a.id), ['lh', 'local', 'gh', 'sh', 'ih', 'mnd']);   // 2026-10-20 iH(인천도시공사) 추가
   for (const a of AGENCIES) assert.match(a.id, DETAILS.agency.id);
   assert.deepEqual(AGENCIES.filter((a) => a.ready).map((a) => a.actor), ['LH', '지자체']);   // 화면에 쓸 데이터가 있는 기관은 통계누리 시행주체와 이어진다
   for (const a of AGENCIES.filter((x) => x.ready)) assert.ok(C.ACTORS.includes(a.actor));

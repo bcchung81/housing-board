@@ -14,7 +14,7 @@ const { addStage, isStageSource } = require('./stage-link');
 const HOME = require('./home-source');
 
 const ROOT = path.join(__dirname, '..', '..');
-const SLUGS = ['incheon-gyeyang', 'gwangju-gwangsan', 'jeonnam-naju'];
+const SLUGS = ['incheon-gyeyang'];
 const LH_SOURCE = 'datagokr-15141761';
 const LEGAL_DONG_SOURCE = 'datagokr-15123287';
 const MYHOME_SOURCE = 'myhome-hwspr02', LH_NOTICE_SOURCE = 'datagokr-15058530', MOVE_IN_SOURCE = 'datagokr-15111714';
@@ -91,7 +91,7 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
 
   /* 지역 번들 단지: 레지스트리의 bundle 참조로 사업에 붙는다 */
   const projectOfComplex = new Map(registry.projects.filter((p) => !homeReg.has(p.id)).flatMap((p) => p.refs.filter((r) => r.system === 'bundle').map((r) => [`${r.key}/${r.value}`, p.id])));   // HOME 발급 사업이 넘겨받은 번들 참조는 빼고(옛 사업의 단지로 둔다)
-  const complexOfProject = new Map();
+  const complexOfProject = new Map(), bundleSlugs = new Set(bundles.map((b) => b.slug));
   for (const { slug, region, projects } of bundles) {
     const src = `bundle-${slug}`;
     const label = Object.fromEntries((region.sources || []).map((s) => [s.id, s.label || '']));
@@ -136,7 +136,8 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
     });
     if (!sggNames[p.sgg]) addArea(p.sgg, 'SGG', null, 'housing-wave-registry');
     for (const r of p.refs) {
-      if (r.system === 'bundle') t.identifiers.push({ local_project_id: p.id, id_type: 'BUNDLE_ID', id_value: `${r.key}/${r.value}`, id_issuer: 'HOUSING_WAVE', as_of: r.asOf ?? null, source_ref: `bundle-${r.key}`, match_status: 'CONFIRMED', match_rule: null });
+      /* 싣지 않은 번들(2026-10-20 수도권 밖 번들 광산·나주 제거 — 레지스트리의 숨긴 사업에 참조가 남는다)은 원천을 레지스트리로 */
+      if (r.system === 'bundle') t.identifiers.push({ local_project_id: p.id, id_type: 'BUNDLE_ID', id_value: `${r.key}/${r.value}`, id_issuer: 'HOUSING_WAVE', as_of: r.asOf ?? null, source_ref: bundleSlugs.has(r.key) ? `bundle-${r.key}` : 'housing-wave-registry', match_status: 'CONFIRMED', match_rule: null });
       else t.identifiers.push({ local_project_id: p.id, id_type: r.system === 'hub-ap-basis' ? 'HUB_AP_PK' : r.system === 'manual' ? 'MANUAL' : 'HUB_HS_PK', id_value: String(r.value), id_issuer: r.system === 'manual' ? 'HOUSING_WAVE' : '국토교통부', as_of: r.asOf ?? null, source_ref: r.system === 'manual' ? 'housing-wave-registry' : 'hub-hs-basis', match_status: 'CONFIRMED', match_rule: null });
     }
     const pnus = p.pnus || [], withPnu = new Set(pnus.map((x) => x.slice(0, 10)));

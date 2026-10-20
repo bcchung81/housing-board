@@ -5,7 +5,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { boardFromLedger, mapIndexFromLedger, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, loadLhBlocks, OUT } = require('../../tools/ledger/board');
+const { boardFromLedger, mapIndexFromLedger, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, loadLhBlocks, OUT, isShown, isRenewal } = require('../../tools/ledger/board');
 const { lastDay } = require('../../tools/ledger/paths');
 
 const L = require('../../data/board/ledger-board.json');
@@ -15,7 +15,8 @@ const board = boardFromLedger(tables, { referenceDate: REF, observedMonth: MONTH
 const sum = (a) => a.reduce((s, v) => s + v, 0);
 const BULK = `hub-bulk-hs-${EDITION}`;
 /* 대체된 사업(superseded_by — 수도권 레지스트리 사업이 HOME 사업으로 넘어간 것, 2026-10-14)은 집계·지도에서 빠진다. 수도권(11·28·41)은 HOME 덤프 사업(source_ref home-dump-<덤프시각>) */
-const live = tables.projects.filter((p) => !p.superseded_by), N = live.length;
+/* 2026-10-20 공공 분류 안2: 민간 정비(PRIVATE_RENEWAL)·일반 민간(PRIVATE)도 집계·지도에서 빠진다(isShown — 공공 공급만) */
+const live = tables.projects.filter(isShown), N = live.length;
 const isHome = (p) => p.source_ref.startsWith('home-dump-');
 /* 예정일 경과 쌍·계양 A2 다음 일정을 센 기준일(2026-10-10). 열린 달 주 1회 갱신(monthly.js --refresh)으로 저장된 보드의 기준일은 날마다 바뀌므로 이 둘은 이 기준일로 다시 계산해 본다 */
 const REF0 = '2026-10-10', board0 = boardFromLedger(tables, { referenceDate: REF0, observedMonth: MONTH });   // 수도권 HOME 262(2026-10-19 수도권 한정 — 전엔 발급 16 + LH 후보 122 + 건축HUB 대용량 후보 1,917 + HOME)
@@ -45,9 +46,9 @@ test('판정 = 정상 · 주의 · 지연(발급 사업 + 수도권 HOME 사업 
   const c = j.candidate;
   assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, board.scope.candidateJudged, '확인 필요(후보) = 번호가 없는 후보의 같은 계산');
   // 2026-10-19 수도권 한정: 번호 없는 후보(건축HUB 대용량)가 없어 판정 + 확인 필요 = 판정(전엔 D3 이전 판정 1,607 · 86 · 315)
-  assert.deepEqual([j.ok.projects + c.ok.projects, j.caution.projects + c.caution.projects, j.delay.projects + c.delay.projects], [176, 10, 2], '판정 + 확인 필요 = 판정(후보 0)');   // 2026-10-20 HOME 판: 165·2·2 → 176·10·2(새 사업 122)
+  assert.deepEqual([j.ok.projects + c.ok.projects, j.caution.projects + c.caution.projects, j.delay.projects + c.delay.projects], [172, 11, 2], '판정 + 확인 필요 = 판정(후보 0)');   // 2026-10-20 HOME 판: 165·2·2 → 176·10·2(새 사업 122) → 같은 현장 병합(정상 −6 · 평택고덕 대표 +3)·기준일 10-20(성남금토 A2 정상→주의) 172·11·2
   assert.equal(sum(board.regions.map((r) => r.candidate.judged)), board.scope.candidateJudged);
-  assert.deepEqual(board.scope, { projects: N, issued: issuedN, candidates: N - issuedN, judged: L.scope.judged, candidateJudged: L.scope.candidateJudged, units: board.scope.units, coverage: 'CAPITAL', bySource: { issued: of((p) => p.issued_at && !isHome(p)), lhCandidates: lhN, hubBulkCandidates: bulkN, home: homeN }, sido: new Set(live.map((p) => p.sgg_code.slice(0, 2))).size, withEvents: L.scope.withEvents });
+  assert.deepEqual(board.scope, { projects: N, issued: issuedN, candidates: N - issuedN, judged: L.scope.judged, candidateJudged: L.scope.candidateJudged, units: board.scope.units, coverage: 'CAPITAL', bySource: { issued: of((p) => p.issued_at && !isHome(p)), lhCandidates: lhN, hubBulkCandidates: bulkN, home: homeN }, sido: new Set(live.map((p) => p.sgg_code.slice(0, 2))).size, withEvents: L.scope.withEvents, renewal: { projects: tables.projects.filter(isRenewal).length, units: L.scope.renewal.units } });   // 2026-10-20 공공 분류 안2: 민간 정비는 집계 밖 건수·호수만
   assert.equal(board.scope.bySource.issued + lhN + bulkN + homeN, N, '발급 + LH 후보 + 건축HUB 대용량 후보 + 수도권 HOME');
   assert.ok(homeN > 0 && live.filter((p) => ['11', '28', '41'].includes(p.sgg_code.slice(0, 2))).every(isHome), '수도권 사업은 모두 HOME');
   assert.equal(board.scope.units, L.scope.units);
@@ -72,7 +73,9 @@ test('예정일 경과 목록은 수집 계획 3절의 정의와 같다: 발급 
   const bulk = new Set(live.filter((p) => p.source_ref === BULK).map((p) => p.local_project_id));
   const home = new Set(live.filter(isHome).map((p) => p.local_project_id));
   const homePlan = new Map();
-  for (const e of tables.events.filter((x) => home.has(x.local_project_id) && x.date_type === 'PLANNED' && x.plan_basis === 'CURRENT').sort((a, b) => Number(/-lh-plan$/.test(a.source_ref)) - Number(/-lh-plan$/.test(b.source_ref)))) {
+  // 같은 원천에 예정이 둘이면 이른 것(board.js — 2026-10-20 같은 현장 병합으로 한 사업에 HOME 원천 준공 예정이 둘: 인천검단 AA13-1·AA13-2 공사 계약 2025-02-18 · LH 공사진행현황 2027-10-30)
+  const day = (e) => e.event_date ?? e.event_month ?? String(e.event_year);
+  for (const e of tables.events.filter((x) => home.has(x.local_project_id) && x.date_type === 'PLANNED' && x.plan_basis === 'CURRENT').sort((a, b) => Number(/-lh-plan$/.test(a.source_ref)) - Number(/-lh-plan$/.test(b.source_ref)) || (a.source_ref === b.source_ref ? day(a).localeCompare(day(b)) : 0))) {
     const k = `${e.local_project_id}|${e.event_type}`;
     if (!homePlan.has(k)) homePlan.set(k, e);
   }
@@ -197,7 +200,7 @@ test('기관 미상 줄: id unknown, 건축HUB(수도권 교체 뒤 0) · 건축
   const c = (f) => noAgency.filter(f).length, bundleN = c((p) => p.source_ref.startsWith('bundle-')), priv = c((p) => p.public_scope === 'PRIVATE_ON_PUBLIC_LAND');
   const parts = [c((p) => p.source_ref === 'hub-hs-basis') ? `건축HUB ${n((p) => p.source_ref === 'hub-hs-basis')}건` : '', c((p) => p.source_ref === BULK) ? `건축HUB 전국 후보 ${n((p) => p.source_ref === BULK)}건` : '', c(isHome) ? `수도권 HOME ${n(isHome)}건` : '', bundleN ? `지역 번들 ${bundleN}건${priv ? `(공공택지 민간 ${priv})` : ''}` : ''].filter(Boolean);
   assert.equal(u.note, `시행 기관 미연결: ${parts.join(' · ')}`);
-  assert.equal(u.note, '시행 기관 미연결: 수도권 HOME 204건');   // 2026-10-20 HOME 판: 시행기관을 못 정한 HOME 사업 105→204(새 사업 중 조합·정비사업 등 시행 미상)
+  assert.equal(u.note, '시행 기관 미연결: 수도권 HOME 105건');   // 2026-10-20 공공 분류 안2: 기관 미상 중 민간 정비 39·일반 민간 53 빠짐 197 → 105(공공 시행 제도·공공택지·공공부지 — 시행기관 미정) · 2026-10-20 HOME 판: 시행기관을 못 정한 HOME 사업 105→204(새 사업 중 조합·정비사업 등 시행 미상) → iH 추가로 원천 시행 '인천도시공사' 7건이 iH 로 197
   const lhRows = live.filter((p) => p.agency_id === 'lh');
   assert.equal(board.agencies.find((a) => a.id === 'lh').projects, lhRows.length, 'LH 후보 · 번들 LH · 공고로 채운 후보(2026-10 첫 판 273 + 11 + 3)');
   assert.ok(lhRows.filter((p) => p.source_ref === 'datagokr-15141761').length === board.judgment.excluded.projects);

@@ -3,7 +3,7 @@
   "sgg": "28245",
   "name": "인천광역시 계양구",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-28245-0052","name":"조달청)인천계양 A-10BL 아파트 건설공사 4공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-08-19"},"dateAlt":{"source":"LH","planned":"2028-09-30"},"units":778,"pks":[],"pnus":["2824511000104480001"],"bundles":["incheon-gyeyang/techno-A10"],"label":"인천계양 A10","agency":"lh","moveIn":null,"completion":"2028-08-19","noticeUnits":null,"bjd":"2824511000","loc":{"by":"block","at":[126.761627,37.553059],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},

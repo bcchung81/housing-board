@@ -41,14 +41,15 @@ test("'지금' 문구의 수치는 저장소 자료와 같다: 살아 있는 레
   // 2026-10-19 수도권 한정: 광산 4·나주 12 발급 사업을 숨겨(issue-projects --home) 살아 있는 사업 278 → 262, 시군구 70 → 68, 숨김 55 → 71, 번들 단지 참조 22 → 6(계양만)
   const live = registry.filter((p) => !p.supersededBy && !p.hiddenAt);
   // 2026-10-20 HOME 판: 새 발급 122 · 같은 블록 대체 1(0054→0055) → 살아 있는 사업 262 → 383, 시군구 68 → 69(연수구), 대체 10 → 11
-  assert.equal(live.length, 383);
+  // 2026-10-20 같은 현장 병합(사용자 결정): 인천검단 2쌍·인천부평 1쌍·평택고덕 3쌍을 대표로 대체 → 살아 있는 사업 383 → 377, 대체 11 → 17(HOME 같은 현장 5 → 11)
+  assert.equal(live.length, 377);
   assert.equal(new Set(live.map((p) => p.sgg)).size, 69);
-  assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'home')).length, 383);
-  assert.deepEqual([registry.filter((p) => p.supersededBy).length, registry.filter((p) => p.hiddenAt).length], [11, 71]);
+  assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'home')).length, 377);
+  assert.deepEqual([registry.filter((p) => p.supersededBy).length, registry.filter((p) => p.hiddenAt).length], [17, 71]);
   assert.equal(registry.filter((p) => p.schedule).length, 0);
   assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'bundle')).length, 6);
   const ledger = P.STEPS.find((s) => s.id === 'ledger').now;
-  assert.match(ledger, /383건\(69개 시군구/); assert.match(ledger, /0건/);
+  assert.match(ledger, /377건\(69개 시군구/); assert.match(ledger, /0건/);
   const routes = [];
   const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'route.ts' && !p.includes('/revalidate/') && !p.includes('/v1/ledger/') && !p.includes('/v1/geo/') && !p.includes('/v1/project/')) routes.push(p); } };   // ledger 는 원천이 아니라 보관한 원장(api.map)을, geo 는 요청 헤더만, project(사업 창 내용, 2026-10-19)는 빌드 자료만 읽는다
   walk(path.join(ROOT, 'app/api'));

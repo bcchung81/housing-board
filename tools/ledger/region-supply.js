@@ -14,6 +14,7 @@ const path = require('node:path');
 const zlib = require('node:zlib');
 const P = require('./paths');
 const { latestHomeDir } = require('./home-source');
+const { isShown } = require('./board');
 
 const OUT = { calendar: 'data/board/region-calendar.json', map: 'data/board/region-map.json', annual: 'data/board/region-annual.json' };
 const KINDS = ['SUPPLY_NOTICE', 'COMPLETION', 'MOVE_IN'];
@@ -41,7 +42,7 @@ function buildCalendar(tables, mapRows, from) {
   const evBy = new Map();
   for (const e of tables.events) { if (!evBy.has(e.local_project_id)) evBy.set(e.local_project_id, []); evBy.get(e.local_project_id).push(e); }
   const calendar = {};
-  const live = tables.projects.filter((p) => !p.superseded_by).sort((a, b) => (a.local_project_id < b.local_project_id ? -1 : 1));
+  const live = tables.projects.filter(isShown).sort((a, b) => (a.local_project_id < b.local_project_id ? -1 : 1));   // 공공 공급 사업만(board.js isShown, 2026-10-20 안2)
   for (const p of live) {
     const id = p.local_project_id, evs = evBy.get(id) ?? [];
     const actual = new Set(evs.filter((e) => e.date_type === 'ACTUAL').map((e) => e.event_type));

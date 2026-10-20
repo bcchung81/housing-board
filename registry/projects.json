@@ -6986,8 +6986,8 @@
     "provider": "HOME PoC(팀 공유 덤프)",
     "dataset": "HOME 사업(home_project) 덤프 20261019T212247Z"
    },
-   "asOf": "2026-07-01",
-   "name": "인천부평(도시재생뉴딜) A",
+   "asOf": "2026-09-30",
+   "name": "인천부평 A",
    "bjdCodes": [
     "2823710100"
    ],
@@ -7017,6 +7017,16 @@
      "system": "home",
      "key": "LH",
      "value": "LH__bd86f9a59897091748f36fa0"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4caad5072da7d1b3b1b6d9e2"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_4b859c7f4b18222558932b97"
     }
    ],
    "issuedAt": "2026-10-14",
@@ -7047,7 +7057,8 @@
     }
    ],
    "issuedAt": "2026-10-20",
-   "units": 350
+   "units": 350,
+   "supersededBy": "PRJ-28237-0065"
   },
   {
    "id": "PRJ-28245-0001",
@@ -7900,8 +7911,10 @@
     "dataset": "HOME 사업(home_project) 덤프 20261019T212247Z"
    },
    "asOf": "2026-07-01",
-   "name": "인천검단 35",
-   "bjdCodes": [],
+   "name": "인천검단 AA13-2",
+   "bjdCodes": [
+    "2829010400"
+   ],
    "pnus": [],
    "refs": [
     {
@@ -7913,6 +7926,21 @@
      "system": "home",
      "key": "PRO",
      "value": "PRO_510814bb61b898c4c4787405"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_11f28cf2cb401188ae11ce41"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_6cd92fc3a8e9e13eb4faddfd"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__4229476b02ebafd9de850b57"
     }
    ],
    "issuedAt": "2026-10-14",
@@ -7981,6 +8009,16 @@
      "system": "home",
      "key": "LH",
      "value": "LH__2d4d8b792b2923ad1d042998"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_1e2795a8609c51bbc605bc65"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_42f49eac956e19c57750cff4"
     }
    ],
    "issuedAt": "2026-10-14",
@@ -8038,7 +8076,8 @@
     }
    ],
    "issuedAt": "2026-10-20",
-   "units": 702
+   "units": 702,
+   "supersededBy": "PRJ-28290-0058"
   },
   {
    "id": "PRJ-28290-0065",
@@ -8072,7 +8111,8 @@
     }
    ],
    "issuedAt": "2026-10-20",
-   "units": 964
+   "units": 964,
+   "supersededBy": "PRJ-28290-0056"
   },
   {
    "id": "PRJ-28290-0066",
@@ -9820,12 +9860,12 @@
   {
    "id": "PRJ-41220-0176",
    "sgg": "41220",
-   "stageCode": "02",
+   "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
     "dataset": "HOME 사업(home_project) 덤프 20261019T212247Z"
    },
-   "asOf": "2026-01-01",
+   "asOf": "2026-07-01",
    "name": "평택고덕 A35",
    "bjdCodes": [],
    "pnus": [],
@@ -9839,6 +9879,21 @@
      "system": "home",
      "key": "PRO",
      "value": "PRO_1eb195e8ab43ebb1a9bee921"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_4316d8979ef6b6ee657bcef1"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_5ff66dc50d3ad524d26511b6"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__e4805a216447f2274de92fe6"
     }
    ],
    "issuedAt": "2026-10-14",
@@ -9938,17 +9993,18 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 753
+   "units": 753,
+   "supersededBy": "PRJ-41220-0176"
   },
   {
    "id": "PRJ-41220-0180",
    "sgg": "41220",
-   "stageCode": "02",
+   "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
     "dataset": "HOME 사업(home_project) 덤프 20261019T212247Z"
    },
-   "asOf": "2026-01-01",
+   "asOf": "2026-07-01",
    "name": "평택고덕 A34",
    "bjdCodes": [],
    "pnus": [],
@@ -9962,6 +10018,21 @@
      "system": "home",
      "key": "PRO",
      "value": "PRO_62fe58b54a39d604d6cf3e87"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_2d87e32ff13df2fc99ca7b39"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_94becbf0cbd773bbf5ab565c"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__0c499800ae5c5f2ac5f493ca"
     }
    ],
    "issuedAt": "2026-10-14",
@@ -10044,12 +10115,12 @@
   {
    "id": "PRJ-41220-0183",
    "sgg": "41220",
-   "stageCode": "02",
+   "stageCode": "04",
    "source": {
     "provider": "HOME PoC(팀 공유 덤프)",
     "dataset": "HOME 사업(home_project) 덤프 20261019T212247Z"
    },
-   "asOf": "2026-01-01",
+   "asOf": "2026-07-01",
    "name": "평택고덕 A31",
    "bjdCodes": [],
    "pnus": [],
@@ -10063,6 +10134,21 @@
      "system": "home",
      "key": "PRO",
      "value": "PRO_89b769c87e8d8ee8f6a837bf"
+    },
+    {
+     "system": "home",
+     "key": "HPR",
+     "value": "HPR_c49d14300ba8deef7581f286"
+    },
+    {
+     "system": "home",
+     "key": "PRO",
+     "value": "PRO_f579d71a70d2f60499abdb0b"
+    },
+    {
+     "system": "home",
+     "key": "LH",
+     "value": "LH__857b4589fda8304b0e4b41fd"
     }
    ],
    "issuedAt": "2026-10-14",
@@ -10098,7 +10184,8 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 679
+   "units": 679,
+   "supersededBy": "PRJ-41220-0180"
   },
   {
    "id": "PRJ-41220-0185",
@@ -10233,7 +10320,8 @@
     }
    ],
    "issuedAt": "2026-10-14",
-   "units": 690
+   "units": 690,
+   "supersededBy": "PRJ-41220-0183"
   },
   {
    "id": "PRJ-41270-0001",

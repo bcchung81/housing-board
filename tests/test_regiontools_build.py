@@ -274,26 +274,6 @@ class BuildingCap(unittest.TestCase):
 class RegionConfigFiles(unittest.TestCase):
     """지역 설정은 tools/regiontools/regions/<slug>.json(지역마다 한 파일). 옛 REGIONS 사전과 같은 값이어야 한다."""
 
-    def test_existing_two_regions_keep_their_old_settings(self):
-        (g,) = BR.load_region("gwangju-gwangsan")
-        self.assertEqual((g.zone_id, g.zone_type, g.sigungu, g.bjdongs, g.search_bbox, g.zone_centroid_bbox, g.zone_short),
-                         ("sunwoon2", "공공주택지구", "12330", ["10600", "10700", "10800"], (126.770, 35.135, 126.800, 35.162),
-                          None, "광주선운2"))
-        self.assertEqual(g.jibun_slug, {"10600": "unsu", "10700": "seonam", "10800": "sochon"})
-        self.assertEqual(g.name_reject, r"선운(?!2)")
-        self.assertTrue(g.zone_match("광주선운2 공공주택지구"))
-        self.assertFalse(g.zone_match("광주선운 택지"))
-        self.assertTrue(g.myhome_filter({"signguNm": " 광산구 "}))
-        self.assertFalse(g.myhome_filter({"signguNm": "나주시", "hsmpNm": "빛가람"}))
-        (n,) = BR.load_region("jeonnam-naju")
-        self.assertEqual((n.zone_id, n.zone_type, n.bjdongs, n.zone_centroid_bbox), ("bitgaram", "혁신도시", ["13400"],
-                                                                                   (126.76, 35.00, 126.82, 35.05)))
-        self.assertTrue(n.zone_match(" 광주 전남 공동혁신도시 개발사업 "))
-        self.assertFalse(n.zone_match("광주 전남 공동혁신도시 개발사업 2단계"))
-        self.assertTrue(n.myhome_filter({"signguNm": "", "pblancNm": "나주 빛가람 행복주택"}))
-        self.assertFalse(n.myhome_filter({"signguNm": "광산구", "hsmpNm": "선운"}))
-        self.assertEqual(n.label_strip[0], "광주전남공동혁신도시")
-
     def test_every_config_file_loads_with_unique_zone_ids_and_known_zone_types(self):
         slugs = BR.region_slugs()
         self.assertIn("gyeonggi-namyangju", slugs)
@@ -321,13 +301,13 @@ class RegionConfigFiles(unittest.TestCase):
         import tempfile
         from pathlib import Path
         with tempfile.TemporaryDirectory() as t:
-            base = json.loads((BR.CONFIG_DIR / "gwangju-gwangsan.json").read_text(encoding="utf-8"))
+            base = json.loads((BR.CONFIG_DIR / "gyeonggi-guri.json").read_text(encoding="utf-8"))
             for bad in ({"zones": []}, {"bjdongs": []}, {"slug": "other"},
                         {"zones": [dict(base["zones"][0], type="신도시아님")]},
                         {"zones": [base["zones"][0], base["zones"][0]]}):
-                (Path(t) / "gwangju-gwangsan.json").write_text(json.dumps(dict(base, **bad), ensure_ascii=False), encoding="utf-8")
+                (Path(t) / "gyeonggi-guri.json").write_text(json.dumps(dict(base, **bad), ensure_ascii=False), encoding="utf-8")
                 with self.assertRaises((ValueError, KeyError)):
-                    BR.load_region("gwangju-gwangsan", Path(t))
+                    BR.load_region("gyeonggi-guri", Path(t))
 
 
 class MultiZone(unittest.TestCase):

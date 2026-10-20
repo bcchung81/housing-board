@@ -138,7 +138,7 @@ export default async function CitizenProjectsPage({ searchParams }: Props) {
       {asked ? null : <MyAreaFirst stage={stage} />}
       <PageHead title="사업 찾기"
         meta={<span className="inline-flex items-center gap-x-1">{refText(idx.referenceDate)}
-          <InfoTip label="자료 기준"><p>국토교통부·LH·SH·GH 공공 자료를 모은 수도권(서울·인천·경기) 공공 주택 사업이에요</p><p>예정일은 사업 시행자 계획이라 바뀔 수 있어요</p><p>출처: 국토교통부 건축HUB · LH · 청약홈</p></InfoTip></span>} />
+          <InfoTip label="자료 기준"><p>국토교통부·LH·SH·GH·iH 공공 자료를 모은 수도권(서울·인천·경기) 공공 주택 사업이에요</p><p>예정일은 사업 시행자 계획이라 바뀔 수 있어요</p><p>출처: 국토교통부 건축HUB · LH · 청약홈</p></InfoTip></span>} />
       <FindFilters sido={cur.sido ?? f.sgg!.slice(0, 2)} sgg={f.sgg ? { code: f.sgg, label: sggShort(f.sgg) } : null} sggItems={sggItems} stage={stage} q={text} />
       <Card render={<section aria-labelledby="find-list" />}>
         <PanelHead id="find-list" title="사업 목록"

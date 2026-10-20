@@ -3,16 +3,12 @@
   "sgg": "11590",
   "name": "서울특별시 동작구",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-11590-0067","name":"흑석2","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1055,"pks":[],"pnus":[],"bundles":[],"label":"흑석2","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1159010500","loc":{"by":"address","at":[126.962142,37.507602],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
     {"id":"PRJ-11590-0068","name":"동작우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":30,"pks":[],"pnus":[],"bundles":[],"label":"동작우체국","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[126.924376,37.498052],"basis":"NAME_SEARCH","status":"REVIEW","match":"동작우체국"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}},
     {"id":"PRJ-11590-0069","name":"본동","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1046,"pks":[],"pnus":[],"bundles":[],"label":"본동","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1159010400","loc":{"by":"address","at":[126.955117,37.512648],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
-    {"id":"PRJ-11590-0070","name":"수방사군부지 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-30"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":556,"pks":[],"pnus":[],"bundles":[],"label":"수방사군부지 1","agency":"lh","moveIn":null,"completion":"2028-09-30","noticeUnits":null,"bjd":"1159010100","loc":{"by":"address","at":[126.948,37.514891],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null},
-    {"id":"PRJ-11590-0073","name":"흑석9재정비촉진구역 주택재개발정비사업","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1470,"pks":[],"pnus":[],"bundles":[],"label":"흑석9재정비촉진구역 주택재개발정…","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1159010500","loc":null,"policy":null},
-    {"id":"PRJ-11590-0074","name":"동작1 주택재건축 조합","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[],"label":"동작1 주택재건축 조합","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1159010600","loc":null,"policy":null},
-    {"id":"PRJ-11590-0075","name":"노량진2재정비촉진구역 조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":404,"pks":[],"pnus":[],"bundles":[],"label":"노량진2재정비촉진구역 조합","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1159010100","loc":null,"policy":null},
-    {"id":"PRJ-11590-0076","name":"노량진6재정비촉진구역 조합","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1499,"pks":[],"pnus":[],"bundles":[],"label":"노량진6재정비촉진구역 조합","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1159010100","loc":null,"policy":null}
+    {"id":"PRJ-11590-0070","name":"수방사군부지 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-09-30"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":556,"pks":[],"pnus":[],"bundles":[],"label":"수방사군부지 1","agency":"lh","moveIn":null,"completion":"2028-09-30","noticeUnits":null,"bjd":"1159010100","loc":{"by":"address","at":[126.948,37.514891],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null}
   ]
 }

@@ -49,11 +49,11 @@ test('지금 가진 자료 전체가 새 표로 옮겨지고 검증(스키마·�
   assert.deepEqual(validate(tables), []);
 });
 
-test('화면이 쓰는 숫자가 그대로 나온다: 사업 77건, 단지 22곳, 통계 칸, 원천 19 + 원장 원천 3', () => {
+test('화면이 쓰는 숫자가 그대로 나온다: 사업 77건, 단지 6곳(2026-10-20 수도권 밖 번들 광산·나주 제거 — 계양만), 통계 칸, 원천 19 + 원장 원천 3', () => {
   assert.deepEqual(tables.projects.map((p) => p.local_project_id), input.registry.projects.filter((p) => !isHomeEntry(p)).map((p) => p.id));
   assert.ok(tables.projects.every((p) => !p.superseded_by), 'HOME 판이 없으면 HOME 사업으로의 대체를 잇지 않는다(옛 수도권 사업이 그대로)');
   assert.ok(tables.projects.every((p) => p.issued_at), '레지스트리 사업은 모두 발급된 사업');
-  assert.equal(tables.complexes.length, 22);
+  assert.equal(tables.complexes.length, 6);   // 계양 번들 단지 6(광산·나주 16 제거)
   assert.ok(tables.complexes.every((c) => c.local_project_id), '번들 단지는 모두 사업에 붙어 있다');
   const last = input.molit.months.at(-1);
   for (const metric of ['permit', 'start', 'sale', 'complete']) {
@@ -66,15 +66,16 @@ test('화면이 쓰는 숫자가 그대로 나온다: 사업 77건, 단지 22곳
 });
 
 test('공공 여부 근거가 없는 건축HUB 사업과 시군구를 못 찾은 LH 블록은 검토 목록으로 간다', () => {
-  const hub = input.registry.projects.filter((p) => p.refs.every((r) => r.system !== 'bundle' && r.system !== 'home'));
+  /* 싣지 않은 번들(광산·나주 제거, 2026-10-20)의 숨긴 사업은 번들 단지가 없어 건축HUB 사업처럼 공공 여부 검토로 간다 */
+  const slugs = new Set(input.bundles.map((b) => b.slug));
+  const hub = input.registry.projects.filter((p) => p.refs.every((r) => !(r.system === 'bundle' && slugs.has(r.key)) && r.system !== 'home'));
   const groups = new Set(input.lh.blocks.map((b) => `${b.district}|${b.block}`));
   assert.deepEqual(by(tables.review_required, (r) => r.review_type), { PUBLIC_SCOPE_UNKNOWN: hub.length, SGG_UNRESOLVED: groups.size });
   assert.ok(tables.projects.filter((p) => p.project_unit === 'PROJECT').every((p) => p.public_scope === 'UNKNOWN'));
 });
 
 test('번들 이벤트: 구조물 관측은 옮기지 않고, 입주 시기는 월·날짜 모두 받으며, 공정 기록이 있으면 착공은 실제다', () => {
-  const kinds = new Set(input.bundles.flatMap((b) => b.projects.flatMap((p) => (p.events || []).map((e) => e.type))));
-  assert.ok(kinds.has('structure_observed'), '원천에는 구조물 관측이 있다');
+  /* 구조물 관측(structure_observed)은 광산·나주 번들에만 있었다(2026-10-20 제거) — 지금 원천에 없어 이 확인은 뺐다(옮기지 않는 규칙 convert.js BUNDLE_EVENT 는 그대로) */
   const moveIns = input.bundles.flatMap((b) => b.projects.filter((p) => p.moveIn));
   assert.equal(tables.events.filter((e) => e.event_type === 'MOVE_IN').length, moveIns.length);
   assert.ok(tables.events.some((e) => e.event_type === 'MOVE_IN' && e.event_date === '2028-09-30'), '계양 A10 은 날짜(준공예정을 옮긴 값)');

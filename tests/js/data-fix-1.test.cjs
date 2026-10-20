@@ -33,7 +33,7 @@ test('#1 실제 레지스트리: 계획(01·02) 단계는 143건이다', () => {
   const rows = Array.isArray(reg) ? reg : reg.projects;
   const list = Array.isArray(rows) ? rows : Object.values(rows);
   const n = list.filter((p) => ['01', '02'].includes(p.stageCode)).length;
-  if (list.some((p) => p.stageCode)) assert.equal(n, 178);   // 2026-10-20 HOME 판: 143 → 178(새 HOME 사업 중 계획 단계)
+  if (list.some((p) => p.stageCode)) assert.equal(n, 175);   // 2026-10-20 HOME 판: 143 → 178(새 HOME 사업 중 계획 단계) → 2026-10-20 같은 현장 병합 6쌍 175(평택고덕 대표 3곳이 공사 계약 행을 넘겨받아 02→04)
 });
 
 test('#2 추가 확보 필요: 원장에서 쓰는 6건은 수집·연결됨(수집일 포함), 나머지 11건이 확보 필요', () => {
@@ -100,11 +100,12 @@ test('#15 하이픈 날짜는 점 표기, 월 제목 "2026년 10월"은 읽기 �
   assert.equal(require('../../lib/board/calc.ts').monthLabel('2026-10'), '2026년 10월');
 });
 
-test('#12 /agency/gh: 원장 GH 사업 4건을 보이고 사업 화면 기관 칩으로 잇는다', () => {
+test('#12 /agency/gh·ih: 원장 GH 사업 4건·iH 사업 7건(2026-10-20 iH 추가)을 보이고 사업 화면 기관 칩으로 잇는다', () => {
   const ag = read('app/(dashboard)/agency/[id]/page.tsx');
-  assert.match(ag, /r\.agency === 'gh'/);
-  assert.match(ag, /\/projects\?sido=all&agency=gh/);
+  assert.match(ag, /a\.id === 'gh' \|\| a\.id === 'ih'[^\n]*r\.agency === a\.id/);
+  assert.match(ag, /\/projects\?sido=all&agency=\$\{a\.id\}/);
   assert.equal(Object.values(json('data/board/projects-index.json').projects).filter((p) => p.agency === 'gh').length, 4);
+  assert.equal(Object.values(json('data/board/projects-index.json').projects).filter((p) => p.agency === 'ih').length, 7);
 });
 
 test('#20·#29 LH 준공 예정: 표 머리에 파일 기준일, 지난 달에는 파일상 예정 표기', () => {

@@ -12,6 +12,7 @@ const path = require('node:path');
 const zlib = require('node:zlib');
 const P = require('./paths');
 const { latestHomeDir } = require('./home-source');
+const { isShown } = require('./board');
 
 const OUT = 'data/board/requirements.json';
 
@@ -39,7 +40,7 @@ const F_LINK = {
 };
 const PP_STAGES = ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'COMPLETION', 'MOVE_IN'];
 const PRECISE = new Set(['block', 'address', 'district']);
-const AGENCY = new Set(['lh', 'sh', 'gh']);
+const AGENCY = new Set(['lh', 'sh', 'gh', 'ih']);
 const LONG_DELAY_MONTHS = 12;
 const statusOf = (r) => (r.cls === 'delay' ? (r.overdue && r.overdue.months >= LONG_DELAY_MONTHS ? 'long' : 'delay') : r.cls ?? 'none');
 const pct = (a, b) => (b ? Math.round(a / b * 1000) / 10 : null);
@@ -50,7 +51,7 @@ const directivesOf = (md) => [...md.matchAll(/^\| (2026\.\d\d\.\d\d) \| ([^|]+) 
 
 /* x: { projects, events, links, identifiers(원장 표 행), ledgerMap, pIndex, pDetail, pp, homeSources, homeLoc(id → loc), schedule(execution_schedule payload), cases(execution_case 행 수), sidoTotal } */
 function measure(x) {
-  const homeP = x.projects.filter((p) => p.source_ref.startsWith('home-dump-') && !p.superseded_by);
+  const homeP = x.projects.filter((p) => p.source_ref.startsWith('home-dump-') && isShown(p));   // 공공 공급 사업만(board.js isShown, 2026-10-20 안2)
   const ids = new Set(homeP.map((p) => p.local_project_id));
   const mapRow = Object.fromEntries(Object.values(x.ledgerMap.bySgg).flat().map((r) => [r.id, r]));
   const evBy = new Map();
@@ -98,7 +99,7 @@ function judge(m) {
     'F-05': { verdict: pct(m.anyPlan, N) >= 95 ? 'met' : m.anyPlan > 0 ? 'part' : 'none', metric: `예정 일정 1개 이상 ${Math.round(pct(m.anyPlan, N))}%`, tip: `날짜가 있는 단계 예정이 하나라도 있는 사업 ${m.anyPlan}/${N} · 연도별 실적은 서울·인천·경기 2018~ · 규칙: 95% 이상 충족, 0 초과 부분` },
     'F-06': { verdict: m.baselineProjects + m.ledgerBaseline > 0 ? 'part' : 'none', metric: `기준선 사업 ${m.baselineProjects}/${N}`, tip: `담당자가 채택한 일정 기준선(HOME 일정 입력 ${f(m.baselineRows)}건)이 있는 사업 ${m.baselineProjects}/${N} · 원장의 당초 예정 ${m.ledgerBaseline}건 · 지연 판정은 아직 현재 예정일 경과 기준(당초 대비 아님) · 규칙: 기준선이 있으면 부분, 없으면 없음` },
     'F-07': { verdict: m.causes > 0 ? 'part' : 'none', metric: `원인·조치 기록 ${m.causes}건`, tip: `병목 원인·담당기관·조치계획 기록(HOME execution_case) ${m.causes}건 · 규칙: 기록이 있으면 부분, 없으면 없음` },
-    'F-08': { verdict: m.agencyTargets > 0 ? 'met' : m.agencyKnown > 0 ? 'part' : 'none', metric: `기관 식별 ${Math.round(pct(m.agencyKnown, N))}%`, tip: `LH·SH·GH 로 시행 기관을 아는 사업 ${m.agencyKnown}/${N} · 기관별 배정 목표 ${m.agencyTargets}건 · 규칙: 배정 목표가 있으면 충족, 기관만 알면 부분` },
+    'F-08': { verdict: m.agencyTargets > 0 ? 'met' : m.agencyKnown > 0 ? 'part' : 'none', metric: `기관 식별 ${Math.round(pct(m.agencyKnown, N))}%`, tip: `LH·SH·GH·iH 로 시행 기관을 아는 사업 ${m.agencyKnown}/${N} · 기관별 배정 목표 ${m.agencyTargets}건 · 규칙: 배정 목표가 있으면 충족, 기관만 알면 부분` },
     'F-09': { verdict: pct(m.supplyOrMoveInPlan, N) >= 80 ? 'met' : m.supplyOrMoveInPlan > 0 ? 'part' : 'none', metric: `모집·입주 예정 ${Math.round(pct(m.supplyOrMoveInPlan, N))}%`, tip: `모집 또는 입주 예정일이 있는 사업 ${m.supplyOrMoveInPlan}/${N} · 규칙: 80% 이상 충족, 0 초과 부분` },
     'F-10': { verdict: m.sourced === N ? 'met' : m.sourced > 0 ? 'part' : 'none', metric: `원천·기준일 ${m.sourced}/${N}`, tip: `원천 참조와 기준일이 있는 사업 · 수집 실패 원천 ${m.failedSources}곳(마지막 정상 값 사용) · 규칙: 모든 사업이면 충족` },
     'F-11': { verdict: m.pairCells > 0 ? 'part' : 'none', metric: `목표·실적 같은 칸 ${m.pairCells}/6`, tip: `정상·주의·지연 판정 사업 ${m.judged}/${N} · 목표·실적 비교는 9·7 단계 ${m.pairCells}칸 · 규칙: 목표·실적 칸이 있으면 부분` },

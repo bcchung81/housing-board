@@ -1,63 +1,27 @@
 'use strict';
-// 월 판정 이력(tools/ledger/trend.js → data/board/judgment-history.json): 과거 판 소급 파이프라인이 지금 파이프라인과 같은지(항등),
-// 판 고르기(내용이 같은 판 건너뛰기), 시간 되감기, 이력 파일 모양, boardFromLedger 의 trend. 네트워크를 쓰지 않는다. 원본 zip 이 없으면 건너뛴다.
+// 월 판정 이력(tools/ledger/trend.js → data/board/judgment-history.json): 소급 행이 지금 원장과 같은 모집단(발급된 수도권 HOME 사업)을 되감아 만든 것인지,
+// 판 목록(내용이 같은 판 건너뛰기 — --close 가 판 sha 를 적는다), 시간 되감기, 이력 파일 모양, boardFromLedger 의 trend. 네트워크를 쓰지 않는다. 원본 zip 이 없으면 건너뛴다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const H = require('../../tools/ledger/hub-bulk');
 const T = require('../../tools/ledger/trend');
-const { readHubBulk, convert, raiseStages, isStageSource } = require('../../tools/ledger/convert');
-const { boardFromLedger, loadTables, loadHistory, addMonths } = require('../../tools/ledger/board');
+const { boardFromLedger, loadTables, loadHistory, lastDay } = require('../../tools/ledger/board');
 const P = require('../../tools/ledger/paths');
 
 const ROOT = path.join(__dirname, '..', '..');
 const L = require('../../data/board/ledger-board.json');
-/* 지금 원장(가장 늦은 달 폴더)의 판·기준일·관측 달 — 2026-10 첫 판은 2026-08 판 · 2026-10-10 · 2026-10 */
-const BASE = path.dirname(path.dirname(H.RAW)), ED = H.DATA_MONTH, REF = P.referenceDateOf(BASE), MONTH = L.observedMonth;
+/* 지금 원장(가장 늦은 달 폴더)의 판·관측 달 */
+const BASE = path.dirname(path.dirname(H.RAW)), ED = H.DATA_MONTH, MONTH = L.observedMonth;
 const rawZips = Object.values(JSON.parse(fs.readFileSync(path.join(H.RAW, 'manifest.json'), 'utf8')).files).map((f) => path.join(H.RAW, f.zip));
 const HIST_DIR = path.join(BASE, 'raw/hub-bulk-history');
 const noRaw = !rawZips.every((f) => fs.existsSync(f)) && `${ED} 원본 zip 이 없다`;
 
-test('V1 항등: 지금 판을 소급 경로(기본개요 + 그 판 정적 속성)로 읽어 지금 기준일·API 스냅샷 이벤트로 돌리면 기준 표·판정과 같고, 판 기본개요로 만든 레지스트리 이벤트(V2)도 같다', { skip: noRaw }, async () => {
-  const { editions } = await T.editionsOf(path.join(ROOT, 'no-such-dir'));
-  const ed = editions.find((e) => e.month === ED);
-  const ctx = T.loadContext(), a = H.permitFloor(REF);
-  assert.ok(JSON.parse(fs.readFileSync(H.OUT_MANIFEST, 'utf8')).rules.active.includes(`사업승인일 ≥ ${a}(`), '기준일의 승인 하한은 중간 스냅샷의 규칙과 같다(2026-10-10 → 2021-10-01)');
-  const p = await T.readBasic(ed, [a], T.registryPks(ctx.base.registry));
-  await T.attachStatic2608([p.recs[a]]);
-  const records = T.sortedRecords(p.recs[a]);
-  assert.deepEqual(records, readHubBulk(H.OUT).records, '중간 스냅샷과 같은 기록');
-  const tables = T.tablesFor(ctx, { ed, records, reg: p.reg, month: MONTH, hubEvents: ctx.apiEvents });
-  /* 열린 달 API 덮어쓰기(hub-api-refresh.js) 뒤면 저장된 표는 hub-refresh.json 으로 만들었다(그 재현은 ledger-2026-10.test.cjs). 그때는 지금 파이프라인을 중간 스냅샷으로 다시 돌린 표와 견준다.
-     소급 경로는 단계별 원천(convert --stage)을 쓰지 않으므로(미래 자료가 과거 판정에 새지 않게) 저장된 표에서 stage 원천의 행(isStageSource)을 빼고 견준다 — stage 는 행을 더하기만 한다 */
-  const refreshed = fs.existsSync(path.join(BASE, 'snapshot/hub-refresh.json'));
-  const all = fs.readdirSync(path.join(BASE, 'tables')).map((f) => f.slice(0, -5));
-  const rows = (t) => JSON.parse(fs.readFileSync(path.join(BASE, `tables/${t}.json`), 'utf8')).rows;
-  const stored = Object.fromEntries(all.map((t) => [t, rows(t).filter((r) => !isStageSource(r.source_ref ?? ''))]));
-  if (!refreshed) {   // 단계 올리기(convert.js raiseStages)는 원천을 가리지 않아 저장된 사업 단계에 stage 이벤트로만 올라간 것이 섞인다 — 소급 표의 사업을 stage 이벤트로 다시 올려 견주고, 나머지는 소급 표 단계로 본다
-    const lifted = { projects: tables.projects, events: rows('events').filter((e) => isStageSource(e.source_ref)) };
-    raiseStages(lifted, MONTH, {});
-    assert.deepEqual(lifted.projects, stored.projects, 'projects(stage 이벤트로만 올라간 단계 제외)');
-    stored.projects = tables.projects;
-  }
-  const saved = refreshed ? convert({ ...ctx.base, observedMonth: MONTH, hubBulk: readHubBulk(H.OUT), hubEvents: ctx.apiEvents, report: {} }) : stored;
-  for (const t of all) assert.deepEqual(tables[t], saved[t], t);
-  const opts = { referenceDate: REF, observedMonth: MONTH };
-  const judgment = boardFromLedger(saved, opts).judgment;
-  assert.deepEqual(boardFromLedger(tables, opts).judgment, judgment);
-  const fromBulk = T.tablesFor(ctx, { ed, records, reg: p.reg, month: MONTH });
-  assert.deepEqual(fromBulk.events.filter((e) => e.source_ref === 'hub-hs-basis'), ctx.apiEvents, '판 기본개요 → eventsFromHub = API 스냅샷');
-  assert.deepEqual(boardFromLedger(fromBulk, opts).judgment, judgment);
-});
-
-test('판 고르기: 데이터 월이 D 이하인 가장 늦은 판, 기본개요 내용이 앞 판과 같은 판(2025-10 = 2025-09)은 건너뛴다', { skip: (noRaw || !fs.existsSync(path.join(HIST_DIR, 'basic-2025-10.zip'))) && '과거 판이 없다' }, async () => {
+test('판 목록: 기본개요 내용이 앞 판과 같은 판(2025-10 = 2025-09)은 건너뛰고, 지금 판은 raw/hub-bulk 의 zip 3개', { skip: (noRaw || !fs.existsSync(path.join(HIST_DIR, 'basic-2025-10.zip'))) && '과거 판이 없다' }, async () => {
   const { editions, skipped } = await T.editionsOf();
   assert.deepEqual(skipped, [{ month: '2025-10', sameAs: '2025-09' }]);
-  assert.equal(T.pickEdition(editions, '2025-10').month, '2025-09');
-  assert.equal(T.pickEdition(editions, addMonths(ED, 1)).month, ED, '판이 아직 없는 달은 그 앞 판(2026-09 → 2026-08)');
-  assert.equal(T.pickEdition(editions, ED).files.length, 3, '지금 판은 raw/hub-bulk 의 zip 3개');
-  assert.equal(T.pickEdition(editions, '2024-12'), null);
+  assert.equal(editions.find((e) => e.month === ED).files.length, 3);
 });
 
 test('시간 되감기: 기준일 뒤 실제 이벤트는 빠지고, 근거가 기준일 뒤 실제뿐인 단계는 준공 → 04 · 착공 → 03 으로 낮추며, 대용량 후보·근거 없는 단계는 그대로', () => {
@@ -75,23 +39,23 @@ test('시간 되감기: 기준일 뒤 실제 이벤트는 빠지고, 근거가 �
   assert.equal(r.projects[1], t.projects[1], '바뀌지 않은 사업은 그대로');
 });
 
-test('이력 파일: 2025-01~2026-09 소급 행(한 줄에 하나), 판은 editions 에 있고, 행의 단계 합 = 호수, 보드의 trend = 이력 + 이번 달 OBSERVED 행', () => {
+test('이력 파일: 2025-01~관측 달 앞 달 소급 행(한 줄에 하나), 판은 editions 에 있고, 행의 단계 합 = 호수, 보드의 trend = 이력 + 이번 달 OBSERVED 행', () => {
   const file = path.join(ROOT, 'data/board/judgment-history.json'), text = fs.readFileSync(file, 'utf8'), h = JSON.parse(text);
   assert.equal(h.schema, 'judgment-history/1');
+  assert.equal(h.rule, T.RULE);
   const months = h.rows.map((r) => r.month);
   assert.deepEqual(months, [...months].sort());
   for (const r of h.rows) {
     assert.ok(text.includes(`\n${JSON.stringify(r)}`), `${r.month} 한 줄`);
     assert.ok(h.editions[r.edition], `${r.month} 판 ${r.edition}`);
-    assert.ok(r.edition <= r.month);
     assert.equal(r.delayByStage.reduce((a, b) => a + b, 0), r.delay.units, `${r.month} 지연`);
     assert.equal(r.cautionByStage.reduce((a, b) => a + b, 0), r.caution.units, `${r.month} 주의`);
     assert.equal(r.ok.projects + r.caution.projects + r.delay.projects, r.judged, `${r.month} 판정 수`);
   }
-  assert.deepEqual(h.rows.filter((r) => r.basis === 'BACKFILL').map((r) => r.month)[0], '2025-01');
-  assert.ok(h.rows.filter((r) => r.basis === 'BACKFILL').every((r) => !('addedSources' in r)), '소급 행은 단계별 원천을 쓰지 않아 원천 추가 표지가 없다');
-  const back = h.rows.find((r) => r.month === '2025-10');
-  if (back) assert.equal(back.edition, '2025-09', '2025-10 은 2025-09 판');
+  const back = h.rows.filter((r) => r.basis === 'BACKFILL');
+  assert.equal(back[0].month, '2025-01');
+  assert.equal(back.length + 1, L.months.indexOf(MONTH) + 1, '2025-01 … 관측 달 앞 달이 모두 있다');
+  assert.ok(back.every((r) => !('addedSources' in r)), '소급 행은 단계별 원천을 쓰지 않아 원천 추가 표지가 없다');
   assert.deepEqual(L.trend.slice(0, -1), loadHistory().filter((r) => r.month < L.observedMonth));
   const own = L.trend[L.trend.length - 1];
   assert.deepEqual([own.month, own.basis, own.edition, own.referenceDate], [L.observedMonth, 'OBSERVED', ED, L.referenceDate]);
@@ -100,13 +64,30 @@ test('이력 파일: 2025-01~2026-09 소급 행(한 줄에 하나), 판은 editi
   assert.deepEqual([own.ok, own.caution, own.delay, own.delayByStage, own.cautionByStage, own.judged], [L.judgment.ok, L.judgment.caution, L.judgment.delay, L.delayByStage, L.cautionByStage, L.scope.judged]);
 });
 
-test('소급 범위·뜻: HOME 판이 있는 달 폴더면 원장과 같은 수도권(11·28·41)으로 소급하고(2026-10-19 결정), 소급 행은 번호 없는 대용량 후보도 판정에 넣는다(candidate 칸 없음 = 화면의 후보 포함 소급)', () => {
-  const ctx = T.loadContext();
-  assert.deepEqual(ctx.base.sidos, ['11', '28', '41']);
-  const t = { projects: [{ local_project_id: 'A', issued_at: null, source_ref: 'hub-bulk-hs-2026-08' }, { local_project_id: 'B', issued_at: null, source_ref: 'datagokr-15141761' }, { local_project_id: 'C', issued_at: '2026-10-14', source_ref: 'home-dump-x' }] };
-  assert.deepEqual(T.withCandidates(t).projects.map((p) => p.issued_at), ['BACKFILL', null, '2026-10-14'], '대용량 후보만 판정에 넣는다(LH 후보는 예전처럼 판정 밖)');
+test('소급 모집단(2026-10-20 사용자 결정): 지금 원장과 같은 사업(발급된 수도권 HOME)만 — 후보 0(candidate 칸 = 화면의 기준 변경 없음), 판정 합 ≤ 원장 호수, 단계별 지연·주의 ≤ 그 달 리본 층', () => {
   const h = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/board/judgment-history.json'), 'utf8'));
-  assert.ok(h.rows.filter((r) => r.basis === 'BACKFILL').every((r) => !('candidate' in r)), '소급 행에는 candidate 칸이 없다');
+  const total = (i) => L.stageUnits[i].reduce((a, b) => a + b, 0);
+  for (const r of h.rows.filter((x) => x.basis === 'BACKFILL')) {
+    const i = L.months.indexOf(r.month);
+    assert.ok(i >= 0 && i < L.now, r.month);
+    assert.ok(r.candidate, `${r.month} candidate 칸`);
+    assert.deepEqual([r.candidate.ok.projects, r.candidate.caution.projects, r.candidate.delay.projects], [0, 0, 0], `${r.month} 후보 0`);
+    assert.equal(total(i), L.scope.units, `${r.month} 리본 총량 = 원장 호수`);
+    assert.ok(r.ok.units + r.caution.units + r.delay.units <= total(i), `${r.month} 판정 합 ≤ 원장 호수`);
+    assert.ok(r.judged <= L.scope.issued, `${r.month} 판정 건수 ≤ 발급 사업`);
+    for (let s = 0; s < 6; s++) assert.ok(r.delayByStage[s] + r.cautionByStage[s] <= L.stageUnits[i][s], `${r.month} 단계 ${s} 지연+주의 ${r.delayByStage[s] + r.cautionByStage[s]} ≤ 층 ${L.stageUnits[i][s]}`);
+    assert.equal(r.referenceDate, lastDay(r.month));
+  }
+});
+
+test('소급 다시 계산: 저장된 원장 표를 그 달 말로 되감아 boardFromLedger(stagesAt = 지금 보드의 그 달 칸)를 돌린 행 = 이력 행', () => {
+  const tables = loadTables(path.join(BASE, 'tables')), h = JSON.parse(fs.readFileSync(path.join(ROOT, 'data/board/judgment-history.json'), 'utf8'));
+  const { months, stagesOf } = boardFromLedger(tables, { referenceDate: P.referenceDateOf(BASE), observedMonth: MONTH });
+  for (const r of h.rows.filter((x) => x.basis === 'BACKFILL')) {
+    const i = months.indexOf(r.month), ref = lastDay(r.month);
+    const b = boardFromLedger(T.rewind(tables, ref), { referenceDate: ref, observedMonth: r.month, stagesAt: new Map([...stagesOf].map(([id, s]) => [id, s[i]])) });
+    assert.deepEqual({ ...b.trend[b.trend.length - 1], basis: 'BACKFILL' }, r, r.month);
+  }
 });
 
 test('boardFromLedger: 이력 중 관측 달과 그 뒤 행은 버리고 이번 달 판정 행을 붙인다, 이력이 없으면 trend 는 한 행', () => {

@@ -18,7 +18,7 @@ export type MapRow = {
   dateAlt?: { source: string; planned: string };
   /* 건축HUB 관리번호(공개 범위 미결 — 화면에는 값 없이 '건축HUB 인허가에서 온 사업'인지만 쓴다) */
   pks?: string[];
-  /* 지도 번들 단지 id('지역slug/단지id' — 계양·광산·나주 번들의 블록·동 윤곽과 이어진 사업). 있으면 지도에 그 단지로 그린다(mapLocOf) */
+  /* 지도 번들 단지 id('지역slug/단지id' — 계양 번들의 블록·동 윤곽과 이어진 사업). 있으면 지도에 그 단지로 그린다(mapLocOf) */
   bundles?: string[];
 };
 /* projects-index.json 의 사업별 덧붙임(tools/ledger/projects-index.js): reached = 원천 실제 기록이 있는 리본 칸(1~5), completion = 준공 현재 예정 달(준공 실제 없을 때) */
@@ -91,9 +91,9 @@ export function sggOfAddress(address: string, sido: string, sggNames: Record<str
   return best ? best[0] : null;
 }
 
-/* 기관: 원장 agency_id → 칩·열 이름. LH·SH·GH 밖(지자체·국방부·미연결)은 '기관 미상'(종합상황판 기관별 진행의 '기관 미상'과 같은 범주·같은 이름) */
-export const AGENCY_NAME: Record<string, string> = { lh: 'LH', sh: 'SH', gh: 'GH', etc: '기관 미상' };
-export const AGENCY_TIP: Record<string, string> = { lh: '한국토지주택공사', sh: '서울주택도시공사', gh: '경기주택도시공사', etc: '시행 기관 미확인(원천에 기관 없음) 또는 LH·SH·GH 밖' };
+/* 기관: 원장 agency_id → 칩·열 이름. LH·SH·GH·iH 밖(지자체·국방부·미연결)은 '기관 미상'(종합상황판 기관별 진행의 '기관 미상'과 같은 범주·같은 이름) */
+export const AGENCY_NAME: Record<string, string> = { lh: 'LH', sh: 'SH', gh: 'GH', ih: 'iH', etc: '기관 미상' };
+export const AGENCY_TIP: Record<string, string> = { lh: '한국토지주택공사', sh: '서울주택도시공사', gh: '경기주택도시공사', ih: '인천도시공사', etc: '시행 기관 미확인(원천에 기관 없음) 또는 LH·SH·GH·iH 밖' };
 export const agencyKey = (id: string | null) => (id && id in AGENCY_NAME && id !== 'etc' ? id : 'etc');
 
 /* 날짜 글자: 'YYYY-MM-DD'·'YYYY-MM' → 'YYYY.MM', 'YYYY' 는 그대로 */
@@ -125,7 +125,8 @@ export function rowsOf(bySgg: Record<string, MapRow[]>, extra: Record<string, In
 /* metro = 수도권(서울·인천·경기). 지역 거르기가 하나도 없으면 전국 */
 /* gu = 구가 있는 경기 시의 시 코드(41110·41280 …)로 거를 때 그 시의 구 코드들(지도 개요의 면과 같다 — parseFilters ctx.guOf 로 metro-overview guOf 를 받는다). 있으면 시 코드 + 구 코드 사업을 합친다 */
 /* from = 'map': 지도 카드의 '사업 정보 보기'(/projects?id=<id>&from=map&sgg=<시군구>)로 왔다 — 서랍 뒤 목록은 그 시군구, 서랍 머리에 '지도로 돌아가기'. 주소(listHref)에는 다시 적지 않는다(서랍을 닫으면 그 시군구 목록에 남는다) */
-export type Filters = { policy?: Policy; program?: Program; sido?: string; sgg?: string; gu?: string[]; metro?: boolean; stage?: number; status?: StatusFilter; agency?: string; from?: 'map' };
+/* renewal = ?scope=renewal: 공공 공급 밖으로 따로 센 민간 정비(정책 귀속 검토) 사업 목록(2026-10-20 공공 분류 안2 — 화면 집계에는 넣지 않는다, getProjectsIndex renewalRows) */
+export type Filters = { policy?: Policy; program?: Program; sido?: string; sgg?: string; gu?: string[]; metro?: boolean; stage?: number; status?: StatusFilter; agency?: string; from?: 'map'; renewal?: boolean };
 /* 종합상황판·옛 주소가 거는 거르기(?stage·?status·?agency). 지역 없이 이것만 오면 전국(종합상황판 숫자가 전국이라) — 그 밖에 지역이 없으면 기본 범위 수도권 */
 const LEGACY_KEYS = ['stage', 'status', 'agency'] as const;
 type Query = Record<string, string | string[] | undefined>;
@@ -151,6 +152,7 @@ export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Prog
   if (status && (status in STATUS_NAME || status === 'check' || status === 'late' || status === 'review-late')) f.status = status as StatusFilter;
   const agency = one(q.agency);
   if (agency && agency in AGENCY_NAME) f.agency = agency;
+  if (one(q.scope) === 'renewal') f.renewal = true;
   return f;
 }
 export const inLens = (r: ProjectRow, f: Filters) => (f.policy ? r.policies.includes(f.policy.key) : f.program ? r.programs.includes(f.program.name) : true);
@@ -172,9 +174,9 @@ export const listOrder = (rows: ProjectRow[]) => [...rows].sort((a, b) => Number
 
 /* 거르기 주소: 열쇠 순서를 고정한다. patch 의 undefined 는 그 거르기를 푼다. 렌즈(policy·program)는 하나, 시도를 고르면 시군구가 풀리고 시군구를 고르면 시도가 풀린다.
    지역 sido: 'NN' · 'metro'(수도권) · 'all'(전국). 지역이 비면 기본 수도권 — 'metro' 는 ?stage·?status·?agency 가 함께 있을 때만 적는다(없으면 기본과 같아 뺀다) */
-const KEYS = ['policy', 'program', 'sido', 'sgg', 'stage', 'status', 'agency', 'id', 'cand', 'print'] as const;
+const KEYS = ['scope', 'policy', 'program', 'sido', 'sgg', 'stage', 'status', 'agency', 'id', 'cand', 'print'] as const;
 type Plain = Partial<Record<(typeof KEYS)[number], string>>;
-export const plainOf = (f: Filters): Plain => ({ policy: f.policy?.key, program: f.program?.name, sido: f.sgg ? undefined : f.sido ?? (f.metro ? 'metro' : 'all'), sgg: f.sgg, stage: f.stage === undefined ? undefined : String(f.stage), status: f.status, agency: f.agency });
+export const plainOf = (f: Filters): Plain => ({ scope: f.renewal ? 'renewal' : undefined, policy: f.policy?.key, program: f.program?.name, sido: f.sgg ? undefined : f.sido ?? (f.metro ? 'metro' : 'all'), sgg: f.sgg, stage: f.stage === undefined ? undefined : String(f.stage), status: f.status, agency: f.agency });
 export function listHref(f: Filters, patch: Plain = {}) {
   const v: Plain = { ...plainOf(f), ...patch };
   if ('policy' in patch && patch.policy) v.program = undefined;

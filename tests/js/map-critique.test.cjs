@@ -378,7 +378,7 @@ test('A7-1 지연 지표: 개요는 지연만 빨강(bad) 명도 5단계(라이�
 
 test('A7-1 위치 미확보 묶음: 시군구 경계 안 점선 표지(건수·지연)와 목록(키보드·aria-expanded·Esc 로 닫고 초점 돌려줌), 머리 줄 단추도 같은 목록', () => {
   const g = R.homeToProjects([JSON.parse(read('data/board/home-map/28290.json'))]), y = R.homeToProjects([JSON.parse(read('data/board/home-map/11170.json'))]);
-  assert.deepEqual(R.lostSummary(g.unlocated), { n: 8, delay: 2, text: '위치 미확보 8건 · 지연 2' }, '검단구: 지연 2건 모두 위치 미확보');   // 2026-10-20 HOME 판: 검단구 위치 미확보 3→8건(새 사업)
+  assert.deepEqual(R.lostSummary(g.unlocated), { n: 6, delay: 2, text: '위치 미확보 6건 · 지연 2' }, '검단구: 지연 2건 모두 위치 미확보');   // 2026-10-20 HOME 판: 검단구 위치 미확보 3→8건(새 사업) → 2026-10-20 같은 현장 병합 6쌍: 위치 없던 대체 2곳(0064·0065) 빠짐 6
   assert.deepEqual(R.lostSummary(y.unlocated), { n: 4, delay: 0, text: '위치 미확보 4건' }, '용산구');
   assert.deepEqual(R.lostAnchor(y.unlocated, null, [0, 0]), [126.980323, 37.531042], '대표점(loc.at)이 있으면 그 점');
   const sq = { type: 'Polygon', coordinates: [[[126.6, 37.5], [126.7, 37.5], [126.7, 37.6], [126.6, 37.6], [126.6, 37.5]]] };

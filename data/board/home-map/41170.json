@@ -3,7 +3,7 @@
   "sgg": "41170",
   "name": "경기도 안양시",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41170-0001","name":"서안양우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2028-06"},"units":200,"pks":[],"pnus":[],"bundles":[],"label":"서안양우체국","agency":"gh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[126.924998,37.393728],"basis":"NAME_SEARCH","status":"REVIEW","match":"서안양우체국"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}}

@@ -3,7 +3,7 @@
   "sgg": "41281",
   "name": "경기도 고양시 덕양구",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41281-0088","name":"고양창릉 A-4BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-11-14"},"units":900,"pks":[],"pnus":[],"bundles":[],"label":"고양창릉 A4","agency":"lh","moveIn":"2028-01","completion":"2027-11-14","noticeUnits":603,"bjd":"4128111300","loc":{"by":"block","at":[126.870871,37.622237],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},

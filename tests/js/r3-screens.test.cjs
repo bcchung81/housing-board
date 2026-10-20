@@ -115,7 +115,7 @@ test('4 용어: 공식 01~06 번호 없음 · 실데이터 없음 · HOME 은 �
 test('5 서랍 원천 날짜 다름은 일 단위(LH 2026.10.31 · 2028.12.31), 목록 칸은 그대로 달', () => {
   const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
   const alts = rows.filter((r) => r.dateAlt);
-  assert.equal(alts.length, 76);   // 2026-10-20 HOME 판 71→76
+  assert.equal(alts.length, 75);   // 2026-10-20 HOME 판 71→76 → 2026-10-20 같은 현장 병합 6쌍 75
   for (const r of alts) assert.match(V.dateAltOf(r, true).text, /\d{4}\.\d{2}\.\d{2}\)$/, r.id);
   assert.equal(V.dateAltOf(byId['PRJ-28290-0058'], true).text, '원천 날짜 다름(LH 2028.12.31)');
   assert.equal(V.dateAltOf(byId['PRJ-28290-0058']).text, '원천 날짜 다름(LH 2028.12)', '목록 칸(좁은 열)은 달');

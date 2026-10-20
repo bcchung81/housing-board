@@ -28,7 +28,7 @@ test('참조 값은 숫자 변환 흔적이 없다(22자리 관리번호가 부�
 
 test('번들 단지는 모두 사업 id 를 받았고 위치(필지·법정동)가 연결돼 있다(--link-pnu) — 수도권 HOME 사업으로 대체된 단지는 새 사업이 번들 참조·필지를 넘겨받는다(2026-10-14)', () => {
   const index = P.indexRegistry(REAL), regions = JSON.parse(fs.readFileSync(path.join(ROOT, 'regions', 'index.json'), 'utf8')).regions;
-  assert.ok(regions.length >= 3);
+  assert.ok(regions.length >= 1);   // 2026-10-20 수도권 밖 번들(광산·나주) 제거 — 계양만
   for (const r of regions) {
     const dir = path.join(ROOT, 'regions', r.slug), region = JSON.parse(fs.readFileSync(path.join(dir, 'region.json'), 'utf8')), projects = JSON.parse(fs.readFileSync(path.join(dir, 'projects.json'), 'utf8')).projects;
     for (const bp of projects) {

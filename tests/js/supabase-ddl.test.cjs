@@ -103,6 +103,11 @@ for (const f of fs.readdirSync(MIG_DIR).filter((x) => /^\d{14}_\w+\.sql$/.test(x
 }
 const domains = {};  // name → check expr
 for (const m of CODE.matchAll(/create domain ledger\.(\w+)\s+as\s+\w+\s+check\s*\(/gi)) domains[m[1]] = inner(CODE, m.index + m[0].length - 1).trim();
+/* 뒤 마이그레이션의 도메인 값 목록 바꾸기(alter domain ledger.<도메인> add constraint <이름> check (…)) — 앞 규칙은 같은 파일의 do 블록이 이름을 찾아 지운다(*_agency_ih.sql) */
+for (const f of fs.readdirSync(MIG_DIR).filter((x) => /^\d{14}_\w+\.sql$/.test(x) && x > migFile).sort()) {
+  const sql = fs.readFileSync(path.join(MIG_DIR, f), 'utf8').replace(/--[^\n]*/g, '');
+  for (const m of sql.matchAll(/alter domain ledger\.(\w+)\s+add constraint \w+\s+check\s*\(/gi)) { domains[m[1]] = inner(sql, m.index + m[0].length - 1).trim(); altered.push(`${f}:domain:${m[1]}`); }
+}
 
 // 스키마 열 → { enum, pattern } (anyOf 의 null 아닌 쪽, $ref 는 common 에서 푼다)
 function resolve(p) {
@@ -153,6 +158,24 @@ test('뒤 마이그레이션의 값 목록 넓히기: review_required.review_typ
   const dup = '20261011200000_review_duplicate_candidate.sql';
   assert.deepEqual(altered.filter((a) => a.startsWith(dup)), [`${dup}:drop:review_required_review_type_check`, `${dup}:add:review_required_review_type_check`]);
   assert.ok(inList(tables.review_required.columns.review_type.checks[0], 'review_type').includes('DUPLICATE_CANDIDATE'));
+});
+
+test('공개 범위 민간 정비·일반 민간(*_public_scope_private.sql, 2026-10-20 공공 분류 안2): projects.public_scope CHECK 를 지우고 PRIVATE_RENEWAL·PRIVATE 를 더해 다시 건다', () => {
+  const f = fs.readdirSync(MIG_DIR).find((x) => /^\d{14}_public_scope_private\.sql$/.test(x));
+  assert.ok(f, 'supabase/migrations/<14자리>_public_scope_private.sql');
+  assert.deepEqual(altered.filter((a) => a.startsWith(f)), [`${f}:drop:projects_public_scope_check`, `${f}:add:projects_public_scope_check`]);
+  assert.deepEqual(sorted(inList(tables.projects.columns.public_scope.checks[0], 'public_scope')), ['PRIVATE', 'PRIVATE_ON_PUBLIC_LAND', 'PRIVATE_RENEWAL', 'PUBLIC', 'UNKNOWN']);
+  assert.doesNotMatch(fs.readFileSync(path.join(MIG_DIR, f), 'utf8').replace(/--[^\n]*/g, ''), /\bgrant\b/i, '권한은 바꾸지 않는다');
+});
+
+test('기관 iH(*_agency_ih.sql, 2026-10-20): 도메인 agency_id 의 앞 CHECK 를 이름으로 찾아 지우고 ih 를 더한 목록으로 다시 건다', () => {
+  const f = fs.readdirSync(MIG_DIR).find((x) => /^\d{14}_agency_ih\.sql$/.test(x));
+  assert.ok(f, 'supabase/migrations/<14자리>_agency_ih.sql');
+  assert.deepEqual(altered.filter((a) => a.startsWith(f)), [`${f}:domain:agency_id`]);
+  assert.deepEqual(sorted(inList(domains.agency_id, 'value')), ['gh', 'ih', 'lh', 'local', 'mnd', 'sh']);
+  const sql = fs.readFileSync(path.join(MIG_DIR, f), 'utf8').replace(/--[^\n]*/g, '');
+  assert.match(sql, /contypid = 'ledger\.agency_id'::regtype[\s\S]*execute format\('alter domain ledger\.agency_id drop constraint %I', c\)/);
+  assert.doesNotMatch(sql, /\bgrant\b/i, '권한은 바꾸지 않는다');
 });
 
 test('단계별 원천(*_stage_sources.sql): id_type·id_issuer·notice_system·date_type 넓히기, identifiers.match_rule 더하기, plan_basis 규칙은 PLANNED 기준, api.identifiers 끝에 match_rule', () => {

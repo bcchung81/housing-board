@@ -3,7 +3,7 @@
   "sgg": "41360",
   "name": "경기도 남양주시",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41360-0188","name":"조달청)남양주진접2 A-1BL 아파트 건설공사 5공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-03-23"},"dateAlt":{"source":"LH","planned":"2028-02-29"},"units":920,"pks":[],"pnus":[],"bundles":[],"label":"남양주진접2 A1","agency":"lh","moveIn":"2028-07","completion":"2028-03-23","noticeUnits":920,"bjd":"4136025300","loc":{"by":"district","at":[127.177076,37.700686],"basis":"DISTRICT_REPRESENTATIVE_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},

@@ -25,6 +25,6 @@ test('핸들러와 lib 는 __dirname 으로 데이터 경로를 만들지 않는
 test('기본 데이터 경로는 루트 기준이다: 레지스트리·지역 번들·로컬 캐시', () => {
   assert.equal(path.relative(ROOT, require('../../lib/registry.js').DEFAULT_FILE), path.join('registry', 'projects.json'));
   const cov = require('../../lib/coverage.js').readCoverage();
-  assert.ok(JSON.stringify(cov).includes('12330'), '기본 경로로 읽은 지역 번들 표에 광산구(12330)가 있어야 한다');
+  assert.ok(JSON.stringify(cov).includes('28245'), '기본 경로로 읽은 지역 번들 표에 계양구(28245)가 있어야 한다');
   assert.equal(path.relative(ROOT, require('../../lib/cache.js').defaultDir({})), '.cache');
 });

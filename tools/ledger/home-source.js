@@ -27,7 +27,32 @@ const LH_SOURCES = new Set(['lh_sale', 'lh_rent', 'lh_construction', 'lh_history
 const PLAN_SOURCES = new Set(['lh_sale', 'lh_rent']);
 const WORK_SOURCES = new Set(['lh_construction', 'lh_progress']);
 const SIDO_NAME = { 11: '서울특별시', 28: '인천광역시', 41: '경기도' };
-const AGENCY = [[/^(LH|한국토지주택공사)$/, 'lh'], [/^(SH|서울주택도시공사)$/, 'sh'], [/^(GH|경기주택도시공사)$/, 'gh']];
+const AGENCY = [[/^(LH|한국토지주택공사)$/, 'lh'], [/^(SH|서울주택도시공사)$/, 'sh'], [/^(GH|경기주택도시공사)$/, 'gh'], [/^(iH|IH|인천도시공사)$/, 'ih']];
+/* iH 프로그램(2026-10-20 사용자 결정): HOME 프로그램 표(home_program_mapping)에서 이름이 'iH ' 로 시작하는 프로그램. 시행 값으로 기관을 못 정한 사업후보(PRO)가
+   사업 연결(home_mapping, 해제 RELEASED 제외)로 이 프로그램 id 에 이어져 있으면 시행 기관을 iH 로 본다 */
+const IH_PROGRAM = /^iH\s/;
+/* 공공 공급 분류(2026-10-20 사용자 결정 '안2'): 위 계층부터 먼저 걸린 것 하나. 시행 값·원천 출처 코드·HOME 프로그램 id 로만 판정한다(이름 글자로 정하지 않는다).
+   A 공공 시행: 시행 값이 LH·SH·GH·iH 정식명(AGENCY, iH 프로그램 연결 포함)이거나 원천 사업후보의 출처가 기관 원천(AGENCY_SOURCES)
+   B·C1·C2·D·E: 원천 사업후보의 사업 연결(home_mapping, 해제 RELEASED 제외)이 가리키는 프로그램 id(아래 표, 2026-10-20 판 home_program_mapping)
+   PUBLIC(공공 공급) = A·B·C1·C2, PRIVATE_RENEWAL(민간 정비, 정책 귀속 검토) = D, PRIVATE(일반 민간·소규모) = E. 아무 데도 걸리지 않으면 F → UNKNOWN(검토 목록 PUBLIC_SCOPE_UNKNOWN —
+   이관 때 0이어야 한다, 생기면 표에 넣을지 확인). 화면은 PUBLIC 만 센다(tools/ledger/board.js isShown) */
+const AGENCY_SOURCES = new Set(['lh_construction', 'lh_sale', 'lh_rent', 'lh_progress', 'lh_policy_followup', 'sh_inventory', 'gh_supply_plan', 'ih_notice']);   // lh_incheon_* 는 src() 가 lh_* 로 푼다
+const PUBLIC_TIER = [
+  /* B 공공 시행 제도: 도심 공공주택 복합사업(두 id)·공공재개발·공공재건축·노후 공공임대 재건축 */
+  ['B', 'PUBLIC', ['PRG_1391a48ea998e31820ad2643', 'PRG_7fd0420ba721f1a0ca43fbe7', 'PRG_3bf413f44de7e85afab8e73b', 'PRG_b0b25eb2f3016d6f2aae4721', 'PRG_42bf35c3ba4f105407591e17']],
+  /* C1 공공택지·공공주택지구: 3기 신도시(두 id)·공공택지·공공분양·공공택지 공급 조기화·서울 남부권 공공택지·우수입지 공공택지·신규 공공주택지구·공공주택 건설(두 id)·건설형 공공임대·
+     LH 직접시행 전환·토지임대부·공공주택 후보 */
+  ['C1', 'PUBLIC', ['PRG_61f7be0b56b1d84e8da213f4', 'PRG_2b40669c4106039664ef8d2c', 'PRG_8908e168dded9d621c66758a', 'PRG_a72072dcef61a29049aa821d', 'PRG_f67c1e2ab36bb44b998fc642',
+    'PRG_217c28576c2d937e0d847368', 'PRG_26d7dda70b1701ba93aa6814', 'PRG_1c5b82d3c0550e744941eb29', 'PRG_c310a281175c3454239974cf', 'PRG_1bb8c2898f442905b7224bac', 'PRG_b488dd0ae4b24ee985d94c17',
+    'PRG_ebcb517f90886388a9700386', 'PRG_020e0b071c49f1252a842091']],
+  /* C2 공공부지 복합개발: 노후청사·공공부지·공공시설·유휴부지·군 유휴부지·도심 유휴부지·철도부지·공공시설 이전·유휴부지·노후청사 복합개발·노후 공공청사 재정비 */
+  ['C2', 'PUBLIC', ['PRG_a4071e86e506c72b351eae33', 'PRG_d0d269cc3b61b66be396ce0d', 'PRG_03e17b0b6b3b75cc8cde3d06', 'PRG_720280e5e23a0e3a2adb6303', 'PRG_a9056ec884d9e417900fd2cd',
+    'PRG_86dfda4ba2c6f923c54dba2a', 'PRG_79cf11d1011b096101f74acd', 'PRG_d12abb17a52637b66bd63dcd']],
+  /* D 민간 정비(정책 귀속 검토): 재개발·재건축 · 정책 귀속 검토, 소규모 주택정비 · 정책 귀속 검토, 민간정비 후보 */
+  ['D', 'PRIVATE_RENEWAL', ['PRG_f358f8983021da8851aa55dd', 'PRG_35d7bf2e216cd9cde77230a7', 'PRG_954aabe957c71fc89c798f3f']],
+  /* E 일반 민간·소규모: 일반 주택 건설 · 정책 미귀속, 지역주택조합 · 정책 미귀속 */
+  ['E', 'PRIVATE', ['PRG_850428d06724b45fbfe62cdf', 'PRG_40e262c9423ccc9119fea017']],
+].map(([tier, scope, ids]) => ({ tier, scope, ids: new Set(ids) }));
 const KEY_ORDER = ['HPR', 'PRO', 'LH', 'BLK'];
 const status = (s) => (s === 'CONFIRMED' ? 'CONFIRMED' : 'REVIEW_REQUIRED');
 const skipPolicy = (id) => !id || id === 'UNASSIGNED' || /^MON_/.test(id);
@@ -147,6 +172,29 @@ function siteKey(p) {
   const b = m ? `${m[1].toUpperCase()}${m[2]}` : String(block ?? '').replace(/\s+/g, '').toUpperCase();
   const t = term.replace(/\s+/g, '').replace(/(?:공공주택지구|택지개발사업|택지개발지구|지구)+$/, '');
   return t && b ? `${p.region}|${t}|${b}` : null;
+}
+/* 같은 현장 키(2026-10-20 사용자 결정 — 서로 다른 원천 행으로 따로 발급된 같은 현장을 합칠 때, buildHome 의 같은 현장 병합):
+   ① 시도|지구|블록 — siteKey 와 같되 블록의 하위 번호를 살리고('AA13-1' ≠ 'AA13-2', siteKey 는 둘 다 'AA13'), 지구의 '국제화계획'을 뺀다('평택고덕국제화계획' = '평택고덕').
+   ② LH 블록 코드 LHC:<지구 코드>|<블록 코드> — LH 공사진행현황 행의 원천 개체 번호('100585|35')와, 건설공사 계약 행의 숫자 블록('35') + 계약 이름의 지구 코드('[(100585)…').
+   돌려주는 것: 키 배열(없으면 빈 배열). source = 별칭을 푼 원천 id */
+function siteKeys(p, source) {
+  const out = [];
+  const noParen = (s) => String(s ?? '').replace(/\([^)]*(?:\)|$)/g, ' ').trim();
+  let term = noParen(p.district), block = p.block;
+  if (!term) { const w = noParen(p.name).split(/\s+/); if (w.length >= 2) { block = w.pop(); term = w.join(''); } else term = ''; }
+  if (!(p.warnings ?? []).includes('MULTI_SITE_CONTRACT')) {
+    const hits = new Set([...String(p.name ?? '').toUpperCase().matchAll(/(?<![A-Z0-9])([A-Z]{1,3})\s*-?\s*0*(\d+)(?:-(\d+))?(?:BL|블록)?(?![0-9])/g)].map((m) => `${m[1]}${m[2]}${m[3] ? `-${m[3]}` : ''}`));
+    if (hits.size === 1) block = [...hits][0];
+  }
+  const m = /^([A-Za-z]{0,3})\s*-?\s*0*(\d+)(?:-(\d+))?(?:BL)?$/i.exec(String(block ?? '').trim());
+  const b = m ? `${m[1].toUpperCase()}${m[2]}${m[3] ? `-${m[3]}` : ''}` : String(block ?? '').replace(/\s+/g, '').toUpperCase();
+  const t = term.replace(/\s+/g, '').replaceAll('국제화계획', '').replace(/(?:공공주택지구|택지개발사업|택지개발지구|지구)+$/, '');
+  if (t && b) out.push(`${p.region}|${t}|${b}`);
+  const code = /^(\d+)\|(\d+)$/.exec(String(p.source_object_id ?? ''));
+  if (WORK_SOURCES.has(source) && code) out.push(`LHC:${code[1]}|${+code[2]}`);
+  const zone = /^\s*\[\((\d+)\)/.exec(p.name ?? '');
+  if (source === 'lh_construction' && zone && /^\d+$/.test(String(p.block ?? '').trim())) out.push(`LHC:${zone[1]}|${+p.block}`);
+  return out;
 }
 /* 공사 계약 코드형 이름('[(105228)서울공릉(복합개발)]…') */
 const CODE_NAME = /^\s*\[\(\d+\)/;
@@ -371,6 +419,29 @@ function buildHome(home, { areaRows, lhSgg = [], homeIds = {} }) {
     absorbedInto.set(g, h);
   }
   out.splice(0, out.length, ...out.filter((g) => !absorbedInto.has(g)));
+  /* 같은 현장 병합(2026-10-20 사용자 결정): 같은 시군구의 두 묶음에 계획 호수(양수)가 같고 같은 현장 키(siteKeys)를 가진 행이 하나라도 있으면 한 묶음으로 합친다
+     (대표 행이 될 수 없는 행만 있는 묶음도 — 공사 계약 행으로 먼저 발급된 사업이 있다). 합친 묶음의 기존 id 가 둘이면 assignHomeIds 가 대표(블록 키를 가진 기존 id,
+     없으면 앞 번호)를 고르고 나머지는 대체(HOME_SAME_SITE)한다. 앞 묶음으로 합친다(시군구·원천 사업후보 순) */
+  const unitsOf = (m) => (Number.isInteger(m.p.planned_units) && m.p.planned_units > 0 ? m.p.planned_units : null);
+  const sggOf = new Map(out.flatMap((g) => g.members.map((m) => [m, g.sgg])));
+  const siteOf = (m) => (unitsOf(m) ? siteKeys(m.p, src(m.p.source_id)).map((k) => `${sggOf.get(m)}|${unitsOf(m)}|${k}`) : []);
+  const firstPro = (g) => g.members.map((m) => m.pro).sort(byStr)[0];
+  const ordered = [...out].sort((a, b) => byStr(a.sgg, b.sgg) || byStr(firstPro(a), firstPro(b)));
+  const owner = new Map(), mergedInto = new Map();
+  const rootOf = (g) => { while (mergedInto.has(g)) g = mergedInto.get(g); return g; };
+  report.sameSite = [];
+  for (const g of ordered) for (const m of g.members) for (const k of siteOf(m)) {
+    const h = owner.has(k) ? rootOf(owner.get(k)) : null, r = rootOf(g);
+    if (!h) { owner.set(k, r); continue; }
+    if (h === r) continue;
+    h.members.push(...r.members);
+    h.members.sort((a, b) => byStr(a.pro, b.pro));   // 묶음 안은 원천 사업후보 순(대표 행·이름이 합치는 순서나 발급 전후와 상관없게)
+    if (r.absorbed) h.absorbed = [...(h.absorbed ?? []), ...r.absorbed];
+    h.bjds = [...new Set([...h.bjds, ...r.bjds])].sort();
+    mergedInto.set(r, h);
+    report.sameSite.push({ sgg: h.sgg, key: k.split('|').slice(2).join('|'), units: unitsOf(m), into: firstPro(h), from: firstPro(r) });
+  }
+  out.splice(0, out.length, ...out.filter((g) => !mergedInto.has(g)));
   report.inventory = { dropped: members.filter((m) => inventoryDropped(rowOf(m))).length, absorbed: absorbedInto.size, lone: out.filter(lone).length, ambiguous: 0 };
   for (const g of [...out, ...unresolved]) {
     for (const m of g.members) m.dropped = inventoryDropped(rowOf(m));
@@ -467,6 +538,14 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
   const { kinds: K, refs, asOf, idx, edition } = build, R = { ...build.report };
   const t = { projects: [], identifiers: [], project_locations: [], events: [], units: [], notices: [], notice_links: [], review_required: [], policies: [], programs: [], links: [], policy_targets: [], area_facts: [], sources: [] };
   const regById = new Map(registry.projects.map((p) => [p.id, p]));
+  /* 사업후보(PRO) → 이어진 iH 프로그램(IH_PROGRAM, 'iH 공공분양(PRG_…)' 글) — 시행 값이 없을 때 기관 판정에 쓴다 */
+  const ihPrograms = new Map(K.home_program_mapping.filter((r) => IH_PROGRAM.test(r.name ?? '')).map((r) => [r.id, `${r.name}(${r.id})`]));
+  const ihProgramOf = new Map([...K.home_mapping].sort((a, b) => byStr(a.id, b.id)).filter((r) => r.status !== 'RELEASED' && ihPrograms.has(r.program_id)).map((r) => [r.project_id, ihPrograms.get(r.program_id)]).reverse());
+  /* 사업후보(PRO) → 이어진 프로그램 id(해제 RELEASED 제외) — 공공 공급 분류(PUBLIC_TIER)에 쓴다 */
+  const programName = new Map(K.home_program_mapping.map((r) => [r.id, r.name]));
+  const programsOf = new Map();
+  for (const r of K.home_mapping) if (r.status !== 'RELEASED') (programsOf.get(r.project_id) || programsOf.set(r.project_id, new Set()).get(r.project_id)).add(r.program_id);
+  R.publicTier = { A: 0, B: 0, C1: 0, C2: 0, D: 0, E: 0, F: 0 };
   const pidOfPro = new Map(), pidOfHpr = new Map();
   for (const g of build.groups) for (const m of g.members) { pidOfPro.set(m.pro, ids.get(g)); pidOfHpr.set(m.hpr, ids.get(g)); }
   const dumpNotice = new Map(K.notice.map((r) => [r.entity_id, r.payload]));
@@ -493,19 +572,26 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
     const pid = ids.get(g), main = g.main.p, ps = g.members.map((m) => m.p);
     const stage = ps.map((p) => STAGE[p.stage] ?? '02').sort().pop();
     projectStage.set(pid, stage);
-    const agencies = [...new Set(ps.map((p) => agencyOf(p.developer)).filter(Boolean))];
+    const agencyOfMember = (m) => agencyOf(m.p.developer) ?? (ihProgramOf.has(m.pro) ? 'ih' : null);
+    const agencies = [...new Set(g.members.map(agencyOfMember).filter(Boolean))];
     const agency = agencies.length === 1 ? agencies[0] : null;
-    const program = ps.map((p) => p.program).find((x) => /공공/.test(x ?? ''));
-    const scope = agency ? 'PUBLIC' : program ? 'PUBLIC' : 'UNKNOWN';
+    /* 공공 공급 분류(PUBLIC_TIER): A 는 기관이 하나로 정해지지 않아도(둘 이상) 공공 시행. 프로그램 계층은 묶음의 모든 사업후보가 이어진 프로그램 중 가장 위 계층, 그 계층 안 id 순 첫 프로그램을 근거로 */
+    const publicLed = agencies.length > 0 || g.members.some((m) => AGENCY_SOURCES.has(src(m.p.source_id)));
+    const progIds = [...new Set(g.members.flatMap((m) => [...(programsOf.get(m.pro) ?? [])]))].sort(byStr);
+    const hit = publicLed ? null : PUBLIC_TIER.find((x) => progIds.some((id) => x.ids.has(id)));
+    const tier = publicLed ? 'A' : hit?.tier ?? 'F';
+    const program = hit ? programName.get(progIds.find((id) => hit.ids.has(id))) : null;
+    const scope = publicLed ? 'PUBLIC' : hit?.scope ?? 'UNKNOWN';
+    R.publicTier[tier]++;
     const block = g.members.find((m) => m.key)?.key.block ?? main.block;
     t.projects.push({
       local_project_id: pid, project_name: projectName(main, g.lone) ?? trim(g.main.hprName, 200), project_unit: g.members.some((m) => m.key) ? 'BLOCK' : /^\d+$/.test(String(block ?? '').trim()) ? 'AREA_UNKNOWN' : 'PROJECT',
       sgg_code: g.sgg, agency_id: agency, public_scope: scope,
-      public_basis: agency ? `HOME 원천 시행: ${ps.map((p) => p.developer).find((d) => agencyOf(d) === agency)}` : program ? `HOME 프로그램: ${program}` : null,
+      public_basis: agency ? (ps.map((p) => p.developer).find((d) => agencyOf(d) === agency) ? `HOME 원천 시행: ${ps.map((p) => p.developer).find((d) => agencyOf(d) === agency)}` : `HOME 프로그램 연결: ${ihProgramOf.get(g.members.find((m) => agencyOfMember(m) === agency).pro)}`) : publicLed ? `HOME 원천 시행: ${[...new Set(ps.map((p) => p.developer).filter(Boolean))].join(' · ') || '-'} · 출처 ${[...new Set(ps.map((p) => src(p.source_id)))].join(' · ')}` : program ? `HOME 프로그램: ${program}` : null,
       stage_code: stage, as_of: ps.map((p) => p.base_date).filter((d) => /^\d{4}-\d{2}-\d{2}$/.test(d ?? '') && d <= asOf).sort().pop() ?? asOf,
       issued_at: regById.get(pid)?.issuedAt ?? null, superseded_by: null, source_ref: refs.main,
     });
-    if (scope === 'UNKNOWN') t.review_required.push({ review_type: 'PUBLIC_SCOPE_UNKNOWN', local_project_id: pid, source_ref: refs.main, record_key: [...new Set(g.members.map((m) => m.hpr))].join(','), record_name: trim(main.name, 200), detail: `시행 ${ps.map((p) => p.developer).join(' · ')} · 프로그램 ${ps.map((p) => p.program ?? '-').join(' · ')}`, reason: 'HOME 원천에 시행기관이 없고 프로그램 이름으로도 공공 여부를 정하지 못했다' });
+    if (scope === 'UNKNOWN') t.review_required.push({ review_type: 'PUBLIC_SCOPE_UNKNOWN', local_project_id: pid, source_ref: refs.main, record_key: [...new Set(g.members.map((m) => m.hpr))].join(','), record_name: trim(main.name, 200), detail: `시행 ${ps.map((p) => p.developer).join(' · ')} · 프로그램 ${progIds.map((id) => `${programName.get(id) ?? '-'}(${id})`).join(' · ') || '-'}`, reason: 'HOME 원천에 공공 시행기관이 없고 이어진 프로그램이 공공 공급 분류 표(PUBLIC_TIER)에 없다' });
 
     /* 식별자: HPR·PRO(HOME), LH 준공예정 별칭(HOME LH_ + AREA_BLOCK 지구|블록), LH 공사현황 지구·블록 코드, 대체된 레지스트리 사업의 번들 단지 */
     const ident = (id_type, id_value, id_issuer, source_ref, match_status, match_rule) => t.identifiers.push({ local_project_id: pid, id_type, id_value, id_issuer, as_of: asOf, source_ref, match_status, match_rule });
@@ -930,4 +1016,4 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
   return { registry: reg, ...out };
 }
 
-module.exports = { programKey, officerTerms, scrubKinds, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, keepSido, issueHome, serialOf };
+module.exports = { PUBLIC_TIER, AGENCY_SOURCES, programKey, officerTerms, scrubKinds, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, siteKeys, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, keepSido, issueHome, serialOf };

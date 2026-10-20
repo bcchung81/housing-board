@@ -43,7 +43,7 @@ export const STEPS: Step[] = [
     now: '인허가 사업은 필지에, 지도 번들 단지는 윤곽 중심에 있는 필지에 붙였다(22곳 모두 연결). 공고·청약홈 자료는 필지 정보가 없어 아직 못 붙인다.', next: '공고와 사업을 짝짓는 연결표를 만들고, 연결된 비율을 잰다', status: 'part',
     code: ['scripts/issue-projects.js', 'lib/projects.js'] },
   { id: 'ledger', no: '5', name: '사업 원장·일정 기록', does: '사업마다 내부 번호·원천 쪽 번호(외부 참조키)·위치·단계·호수를 적고, 예정일을 달마다 저장해 이력으로 쌓는다.', inputs: '사업 id 가 붙은 사건 · 기관 입력', outputs: '사업 원장 + 월별 일정 이력',
-    now: '사업 레지스트리(사업 번호 목록) 383건(69개 시군구 — 모두 수도권 HOME 덤프, 옛 수도권 발급 61건은 대체 6·숨김 55, HOME 중복 5건은 대표 사업으로 대체, 수도권 밖 16건은 숨김). 일정(당초·변경·현재)이 있는 사업은 0건이다.', next: '기존 77건부터 달마다 일정을 기록하고, 이어서 전국 주택 인허가로 사업 번호를 발급', status: 'part',
+    now: '사업 레지스트리(사업 번호 목록) 377건(69개 시군구 — 모두 수도권 HOME 덤프, 옛 수도권 발급 61건은 대체 6·숨김 55, HOME 같은 현장 11건은 대표 사업으로 대체, 수도권 밖 16건은 숨김). 일정(당초·변경·현재)이 있는 사업은 0건이다.', next: '기존 77건부터 달마다 일정을 기록하고, 이어서 전국 주택 인허가로 사업 번호를 발급', status: 'part',
     code: ['registry/projects.json', 'lib/registry.js'] },
   { id: 'judge', no: '6', name: '판정', does: '사업의 6단계, 당초·변경·현재 일정, 정상·주의·지연 신호, 30일 넘게 갱신이 없는지를 계산한다.', inputs: '사업 원장 + 일정 이력', outputs: '단계 · 신호 · 지연 개월',
     now: '6단계는 278건 모두 있다. 인허가 예정일이 지났는데 기록이 없으면 그 사실만 덧붙인다. 신호(정상·주의·지연)와 지연 개월은 아직 없다.', next: '일정 기록 2회차부터 일정 변경을 알아채고, 기관 입력으로 당초 일정을 받는다', status: 'part',
@@ -211,7 +211,5 @@ export const PLACE: Record<string, { link: LinkId; item: string | null }> = {
   'datagokr-3045249': { link: 'keyless', item: null },
   'hub-hs-basis': { link: 'bjd', item: 'hub-hs' },
   'bundle-incheon-gyeyang': { link: 'pnu', item: 'ledger' },
-  'bundle-gwangju-gwangsan': { link: 'pnu', item: 'ledger' },
-  'bundle-jeonnam-naju': { link: 'pnu', item: 'ledger' },
 };
 export const linkName = (id: LinkId) => (id === 'keyless' ? KEYLESS.name : CHAIN.find((c) => c.id === id)?.name ?? id);

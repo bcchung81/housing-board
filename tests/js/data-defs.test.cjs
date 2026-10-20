@@ -36,13 +36,13 @@ const sum = (xs) => xs.reduce((s, x) => s + x, 0);
 /* ---------- D3 ---------- */
 test('D3: 지연 건수는 번호 있는 사업만(2건), 후보는 확인 필요로 따로(수도권 한정으로 0건) — 예전 전국 315건 = 2 + 313', () => {
   const j = BOARD.judgment, c = j.candidate;
-  assert.deepEqual([j.ok.projects, j.caution.projects, j.delay.projects], [176, 10, 2]);   // 2026-10-20 HOME 판: 새 사업 122 → 판정 169→188(정상 165→176·주의 2→10·지연 2 그대로)
+  assert.deepEqual([j.ok.projects, j.caution.projects, j.delay.projects], [172, 11, 2]);   // 2026-10-20 HOME 판: 새 사업 122 → 판정 169→188(정상 165→176·주의 2→10·지연 2 그대로) → 같은 현장 병합(정상 −6, 평택고덕 대표 3곳 판정 +3)·기준일 10-20(성남금토 A2 정상→주의) 185(172·11·2)
   // 2026-10-19 수도권 한정: 번호 없는 후보(건축HUB 대용량·LH 준공예정)가 원장에서 빠져 후보 계산 1442·84·313 → 0·0·0, 후보 판정 1,839 → 0. 그래서 지연 합 = 2, 주의 합 = 2, 정상 합 = 165
   assert.deepEqual([c.ok.projects, c.caution.projects, c.delay.projects], [0, 0, 0]);
   assert.equal(j.delay.projects + c.delay.projects, 2);
-  assert.equal(j.caution.projects + c.caution.projects, 10);   // 2026-10-20 HOME 판: 주의 2→10
-  assert.equal(j.ok.projects + c.ok.projects, 176);
-  assert.equal(BOARD.scope.judged, 188);
+  assert.equal(j.caution.projects + c.caution.projects, 11);   // 2026-10-20 HOME 판: 주의 2→10 → 기준일 10-20 성남금토 A2 주의 11
+  assert.equal(j.ok.projects + c.ok.projects, 172);   // 같은 현장 병합(정상 대체 6 빠짐 · 평택고덕 대표 3 정상)·성남금토 A2 주의
+  assert.equal(BOARD.scope.judged, 185);   // 2026-10-20 같은 현장 병합: 188 − 대체 6 + 평택고덕 대표 3
   assert.equal(BOARD.scope.candidateJudged, 0);
   /* 행에서 다시 센 값 = 집계 */
   assert.equal(rows.filter((r) => r.issued && r.cls === 'delay').length, j.delay.projects);
@@ -91,7 +91,7 @@ test('D3: 종합상황판 지연 = 사업 화면 지연, 시도 타일 지연율
     assert.equal(r.delay, xs.filter((x) => x.issued && x.cls === 'delay').length, r.code);
     assert.equal(r.candidate.judged, xs.filter((x) => !x.issued && x.cls).length, r.code);
   }
-  assert.deepEqual(BOARD.regions.filter((r) => r.judged).map((r) => [r.code, r.delay, r.judged]), [['11', 0, 45], ['28', 2, 28], ['41', 0, 115]]);   // 2026-10-20 HOME 판: 인천 판정 19→28·경기 105→115
+  assert.deepEqual(BOARD.regions.filter((r) => r.judged).map((r) => [r.code, r.delay, r.judged]), [['11', 0, 45], ['28', 2, 25], ['41', 0, 115]]);   // 2026-10-20 HOME 판: 인천 판정 19→28·경기 105→115 → 2026-10-20 같은 현장 병합 6쌍: 인천 대체 3곳 빠짐 25, 경기 대체 3 빠지고 대표 3 판정 115
   const board = read('components/board/Board.tsx');
   assert.match(board, /data-slot="board-cand"/, '선택 시점 판정 카드에 확인 필요(후보) 줄');
   assert.match(board, /status=review/, '후보 목록 링크');
@@ -109,8 +109,8 @@ test('D4: 이 단계까지 온 사업은 현재 단계 기준 누적 — ①계�
     for (const c of p.open) assert.equal(c.now, scope.filter((r) => r.board === c.i).length);
   }
   const metro = V.pipelineOf(V.applyFilters(rows, pf({}), 'stage'));
-  assert.deepEqual([metro.open[0].n, metro.total, metro.open[0].units], [383, 383, 274296]);   // 2026-10-20 HOME 판: 262→383사업·227,976→274,296호
-  assert.deepEqual(metro.open.map((c) => [c.i, c.n, c.now]), [[0, 383, 178], [1, 205, 14], [2, 191, 150], [3, 41, 41]]);   // 2026-10-20 HOME 판(10-19 판: [0,262,143],[1,119,12],[2,107,71],[3,36,36])
+  assert.deepEqual([metro.open[0].n, metro.total, metro.open[0].units], [285, 285, 242279]);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) 377·270,158 → 285·242,279 · 2026-10-20 HOME 판: 262→383사업·227,976→274,296호 → 2026-10-20 같은 현장 병합 6쌍(−6사업·−4,138호)
+  assert.deepEqual(metro.open.map((c) => [c.i, c.n, c.now]), [[0, 285, 162], [1, 123, 14], [2, 109, 68], [3, 41, 41]]);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): ①계획 −13(민간 정비 11·일반 민간 2), ③착공 −79(민간 정비 28·일반 민간 51) · 2026-10-20 같은 현장 병합 6쌍: ③착공 대체 6 빠짐, 평택고덕 대표 3곳 ①→③   // 2026-10-20 HOME 판(10-19 판: [0,262,143],[1,119,12],[2,107,71],[3,36,36])
 });
 
 /* ---------- D2 ---------- */
@@ -118,7 +118,7 @@ test('D2: 원천 날짜 다름 — HOME 준공 예정과 LH 준공 예정 파일
   const want = { 'PRJ-28290-0058': '2028-12-31', 'PRJ-28290-0057': '2026-12-31', 'PRJ-41500-0072': '2026-12-31', 'PRJ-41131-0050': '2026-12-31', 'PRJ-28245-0055': '2026-10-31', 'PRJ-28245-0057': '2026-10-31' };
   for (const [id, lh] of Object.entries(want)) assert.deepEqual(byId[id].dateAlt, { source: 'LH', planned: lh }, id);
   const flagged = rows.filter((r) => r.dateAlt);
-  assert.equal(flagged.length, 76);   // 2026-10-20 HOME 판: HOME·LH 준공 예정이 다른 사업 71→76(새 사업 · 원천 사업후보 둘인 사업)
+  assert.equal(flagged.length, 75);   // 2026-10-20 HOME 판: HOME·LH 준공 예정이 다른 사업 71→76(새 사업 · 원천 사업후보 둘인 사업) → 2026-10-20 같은 현장 병합 6쌍 75(인천검단 대체 2곳 빠지고 0056 이 LH 날짜를 넘겨받음)
   assert.ok(flagged.every((r) => V.isMetro(r.sgg) && r.issued && !r.done), 'HOME 사업 중 준공 실제가 없는 사업만');
   assert.ok(flagged.every((r) => LH.blocks.some((b) => b.date === r.dateAlt.planned)), 'LH 날짜는 파일에 있는 값');
   /* 판정은 HOME 날짜: 인천검단 AA13-1 은 HOME 2025.02.18 로 장기 지연 그대로 */
@@ -150,13 +150,13 @@ test('D2: 표지는 목록 현재 예정 칸·서랍·간단 보기·CSV 비고 
   const csv = S.toCsv(cols, L.csvRows(grid)).split('\r\n').filter(Boolean);
   const line = csv.find((l) => l.startsWith('PRJ-28290-0058,'));
   assert.match(line, /원천 날짜 다름\(LH 2028\.12\) — HOME 2025\.02\.18 · LH 준공 예정 파일 2028\.12\.31 · 판정은 HOME 날짜로/);
-  assert.equal(csv.filter((l) => l.includes('원천 날짜 다름(')).length, 76);   // 2026-10-20 HOME 판 71→76
+  assert.equal(csv.filter((l) => l.includes('원천 날짜 다름(')).length, 75);   // 2026-10-20 HOME 판 71→76 → 2026-10-20 같은 현장 병합 6쌍 75
 });
 
 test('D2 지도 계약: 원장 행(ledger-map·home-map)의 dateAlt = { source: \'LH\', planned: \'YYYY-MM-DD\' } 이름 그대로', () => {
   const homeRows = fs.readdirSync(path.join(ROOT, 'data/board/home-map')).filter((f) => /^\d{5}\.json$/.test(f)).flatMap((f) => JSON.parse(read(`data/board/home-map/${f}`)).projects);
   const withAlt = homeRows.filter((r) => r.dateAlt);
-  assert.equal(withAlt.length, 76);   // 2026-10-20 HOME 판 71→76
+  assert.equal(withAlt.length, 75);   // 2026-10-20 HOME 판 71→76 → 2026-10-20 같은 현장 병합 6쌍 75
   for (const r of withAlt) {
     assert.deepEqual(Object.keys(r.dateAlt), ['source', 'planned']);
     assert.equal(r.dateAlt.source, 'LH');
@@ -174,7 +174,7 @@ test('불변식: CSV = 목록(행·순서), 9·7 숫자, 수도권 227,976호·2
   const s97 = PP.policies.find((p) => p.policyId === 'POL_2025_0907').stages.SUPPLY.samePeriod.find((y) => y.year === 2026);
   assert.deepEqual([s97.target, s97.actual, s97.actualWithEstimates], [8049, 4732, 8742]);
   const metro = V.summaryOf(V.applyFilters(rows, pf({})));
-  assert.deepEqual([metro.n, metro.units], [383, 274296]);   // 2026-10-20 HOME 판
+  assert.deepEqual([metro.n, metro.units], [285, 242279]);   // 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
   // 2026-10-19 수도권 한정: 향후 12개월 준공 예정 214,975호(414곳) → 13,372호(24곳)
   assert.equal(sum(BOARD.upcoming.map((u) => u.units)), 14570);   // 2026-10-20 HOME 판: 13,372호(24곳) → 14,570호(25곳)
   assert.equal(Q({ sido: 'all' })['앞으로 얼마나 공급되는가'].value, '14,570');

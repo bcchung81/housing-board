@@ -247,9 +247,10 @@ test('단계별 원천은 행을 더하기만 한다: stage 원천 행을 빼면
 
 test('단계별 원천의 효과(2026-10): 준공 실제 사업 672 → 743(건축물대장 +71: 필지 45 · 블록 26) · 착공 실제 737 → 799 · 모집공고 사업 110 → 1,041 · 입주예정 사업 376 → 1,143 · 착공 추정 588(청약홈 475 · HUG 113)', () => {
   const projectsOf = (f) => new Set(pre.events.filter(f).map((e) => e.local_project_id)).size;
-  assert.equal(projectsOf((e) => e.event_type === 'COMPLETION' && e.date_type === 'ACTUAL'), 743, '측정 기대 약 751 — 블록 표제부 묶음(세대 합)이 스냅샷에 없어 블록 후보가 조금 적다');
-  assert.equal(projectsOf((e) => e.event_type === 'CONSTRUCTION_START' && e.date_type === 'ACTUAL'), 799);
-  assert.equal(projectsOf((e) => e.event_type === 'SUPPLY_NOTICE'), 1041, '청약홈 A1~A4 · HUG H1 · LH L1 연결의 최초 모집공고');
+  assert.equal(projectsOf((e) => e.event_type === 'COMPLETION' && e.date_type === 'ACTUAL'), 732, '측정 기대 약 751 — 블록 표제부 묶음(세대 합)이 스냅샷에 없어 블록 후보가 조금 적다 · 2026-10-20 광산·나주 번들 제거로 번들 준공 실제 11곳 빠짐 743 → 732');
+  /* 2026-10-20 광산·나주 번들 제거(pre = 전국 원천 규칙 표 — 두 번들 사업이 번들 단지·필지 없이 남는다): 착공 실제 799 → 788 · 모집공고 1,041 → 1,037 · 대장 필지 736 → 727 · 단지 키 사업 456 → 446 */
+  assert.equal(projectsOf((e) => e.event_type === 'CONSTRUCTION_START' && e.date_type === 'ACTUAL'), 788);
+  assert.equal(projectsOf((e) => e.event_type === 'SUPPLY_NOTICE'), 1037, '청약홈 A1~A4 · HUG H1 · LH L1 연결의 최초 모집공고');
   assert.equal(projectsOf((e) => e.event_type === 'MOVE_IN' && e.date_type === 'PLANNED'), 1143, '청약홈 입주예정월 · LH 공고 상세 입주예정월');
   const est = pre.events.filter((e) => e.date_type === 'ESTIMATED');
   assert.ok(est.every((e) => e.event_type === 'CONSTRUCTION_START' && e.plan_basis === null && e.review_status === 'REVIEW_REQUIRED'));
@@ -258,8 +259,8 @@ test('단계별 원천의 효과(2026-10): 준공 실제 사업 672 → 743(건�
   assert.ok(est.every((e) => !actualStart.has(e.local_project_id)), '착공 실제가 있는 사업에는 추정이 없다');
   const count = (rows, f) => rows.reduce((o, r) => { const k = f(r); o[k] = (o[k] ?? 0) + 1; return o; }, {});
   assert.deepEqual(count(pre.identifiers.filter((i) => i.match_rule), (i) => `${i.id_type} ${i.match_rule}`), {
-    'HUB_HS_PK LH_BLOCK_DISTRICT': 101, 'BLDRGST_PK K2_BLD_PARCEL': 736, 'BLDRGST_PK K3_BLD_BLOCK': 56, 'REB_COMPLEX_ID K4_REB_PNU': 219, 'KAPT_CODE K6_KAPT_PNU': 370, 'MYHOME_HSMP_SN K4_MYHOME_PNU': 104 });
-  assert.equal(new Set(pre.identifiers.filter((i) => ['REB_COMPLEX_ID', 'KAPT_CODE', 'MYHOME_HSMP_SN'].includes(i.id_type)).map((i) => i.local_project_id)).size, 456, '필지가 있는 준공 사업 673 중 단지 키가 하나 이상(측정 기대 약 473)');
+    'HUB_HS_PK LH_BLOCK_DISTRICT': 101, 'BLDRGST_PK K2_BLD_PARCEL': 727, 'BLDRGST_PK K3_BLD_BLOCK': 56, 'REB_COMPLEX_ID K4_REB_PNU': 210, 'KAPT_CODE K6_KAPT_PNU': 368, 'MYHOME_HSMP_SN K4_MYHOME_PNU': 102 });
+  assert.equal(new Set(pre.identifiers.filter((i) => ['REB_COMPLEX_ID', 'KAPT_CODE', 'MYHOME_HSMP_SN'].includes(i.id_type)).map((i) => i.local_project_id)).size, 446, '필지가 있는 준공 사업 673 중 단지 키가 하나 이상(측정 기대 약 473)');
   const rule = (l) => /^([A-Z0-9_]+): /.exec(l.evidence)[1];
   const stageLinks = pre.notice_links.filter((l) => isStageSource(l.source_ref));
   assert.deepEqual(Object.fromEntries(Object.entries(count(stageLinks, rule)).sort()), { A1_PNU: 1370, A2_BLOCK_DISTRICT: 355, A3_NAME_HH: 110, A4_NAME_CONTAIN_HH: 18, H1_NAME_HH: 235, L1_DETAIL_PNU: 51 });

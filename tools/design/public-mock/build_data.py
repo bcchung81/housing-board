@@ -58,7 +58,7 @@ for code, L in lm['bySgg'].items():
     if m: jd[code] = m
 # 사업 카드 자료(project-detail): 사업 id → [시행 기관 이름, [모집 공고·착공·준공·입주 각 [날짜, 실제 1 / 예정 0] 또는 None]]. 실제가 있으면 실제
 pd = json.load(open(R + 'data/board/project-detail.json'))
-AG = {'lh': 'LH', 'gh': 'GH', 'sh': 'SH', 'local': '지자체', 'mnd': '국방부'}
+AG = {'lh': 'LH', 'gh': 'GH', 'sh': 'SH', 'ih': 'iH', 'local': '지자체', 'mnd': '국방부'}
 det = {}
 for pid, x in pd['projects'].items():
     st = x.get('stages') or {}

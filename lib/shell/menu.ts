@@ -61,6 +61,6 @@ export const SECTIONS: Record<string, { label: string; note: string; soon?: bool
    사업 상세는 화면이 아니라 사업 목록의 서랍(/projects?id=)이고, 옛 주소 /project/{id} 는 넘긴다 */
 export const DETAILS: Record<string, { label: string; id: RegExp; list: string; idLabel: string }> = {
   project: { label: '사업 상세', id: /^PRJ-\d{5}-\d{4}$/, list: '/projects', idLabel: '사업 id' },
-  agency: { label: '기관 상세', id: /^(lh|gh|sh|local|mnd)$/, list: '/', idLabel: '기관' },
+  agency: { label: '기관 상세', id: /^(lh|gh|sh|ih|local|mnd)$/, list: '/', idLabel: '기관' },
   month: { label: '월 상세', id: /^\d{4}-(0[1-9]|1[0-2])$/, list: '/', idLabel: '연-월' },
 };

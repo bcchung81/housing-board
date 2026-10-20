@@ -23,8 +23,8 @@ export function stepsOf(stages: Partial<Record<string, { plan?: string; actual?:
 export const nxOf = (next: { eventType: string; planned: string } | null | undefined): Nx =>
   ({ k: next ? (NEXT_EVENT as readonly string[]).indexOf(next.eventType) : -1, d: next?.planned || '' });
 /* 시행 기관 짧은 이름(build_data.py AG) */
-export const AGENCY_SHORT: Record<string, string> = { lh: 'LH', gh: 'GH', sh: 'SH', local: '지자체', mnd: '국방부' };
-export const AGENCY_FULL: Record<string, string> = { LH: '한국토지주택공사', SH: '서울주택도시공사', GH: '경기주택도시공사' };
+export const AGENCY_SHORT: Record<string, string> = { lh: 'LH', gh: 'GH', sh: 'SH', ih: 'iH', local: '지자체', mnd: '국방부' };
+export const AGENCY_FULL: Record<string, string> = { LH: '한국토지주택공사', SH: '서울주택도시공사', GH: '경기주택도시공사', iH: '인천도시공사' };
 /* 사업 유형 짧은 이름(build_data.py PG_SHORT — /citizen 사업 카드 유형 칩과 같은 표, 원래 이름은 title) */
 export const PG_SHORT: Record<string, string> = {
   '공공주택 건설': '공공주택 건설', '도심 공공주택 복합사업': '도심 복합사업', '노후청사·공공부지': '노후청사·공공부지', '공공택지·공공분양': '공공택지 분양', '3기 신도시': '3기 신도시', '건설형 공공임대': '공공임대 건설',
@@ -164,7 +164,7 @@ export function sourceName(provider: string): string | null {
   if (/청약홈/.test(provider)) return '청약홈(한국부동산원)';
   if (/한국부동산원/.test(provider)) return '한국부동산원';
   if (/한국토지주택공사/.test(provider)) return 'LH(한국토지주택공사)';
-  if (/HOME/.test(provider)) return '국토교통부·LH·SH·GH 공공 자료';
+  if (/HOME/.test(provider)) return '국토교통부·LH·SH·GH·iH 공공 자료';
   return null;
 }
 /* 날짜 '2026년 10월 13일 기준' */

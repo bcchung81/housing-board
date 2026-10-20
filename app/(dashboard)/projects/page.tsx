@@ -20,6 +20,7 @@ import { sidoName } from '@/lib/board/calc';
 import { getBoardData } from '@/lib/board/data';
 import { getPolicyProgress, getProjectDrawer, getProjectsIndex } from '@/lib/board/projects-index';
 import { projectWindow } from '@/lib/board/project-window';
+import { RENEWAL_NAME } from '@/lib/board/directives';
 import {
   AGENCY_NAME, AGENCY_TIP, BOARD_CIR, BOARD_COLOR, BOARD_NAMES, CAND_NAME, DATE_ALT, DELAY_GROUP, LONG_DELAY_MONTHS, REVIEW_LATE, NONE_NAME, PAST_DUE, PLAN_COL, STATUS_NAME, STATUS_ORDER, STATUS_RANGE, STATUS_TIP,
   applyFilters, candidateOf, isMetro, mapLocOf, compareLines, editionText, listHref, listOrder, parseFilters, pipelineOf, policyLabel, priorityOf, questionsOf, scopeOf, summaryOf, ymText,
@@ -32,14 +33,14 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 const one = (v: string | string[] | undefined) => (typeof v === 'string' ? v : undefined);
 
 /* 거르기: 정책 ?policy=97|129|813 또는 ?program=이름(하나만) · 지역 ?sido=NN|metro|all·?sgg=NNNNN(지역이 없으면 기본 수도권, ?stage·?status·?agency 만 온 종합상황판 링크는 전국)
-   · 단계 ?stage=0~5(리본 칸, 옛 01~06 도 받는다) · 상태 ?status=ok|caution|delay|long|none|check · 기관 ?agency=lh|sh|gh|etc. 사업 창 ?id=PRJ-…(상세) · ?cand=<원장 id>(간단 보기 — 후보 사업) · 월간 보고 보기 ?print=1. 맞지 않는 값은 거르지 않는다.
+   · 단계 ?stage=0~5(리본 칸, 옛 01~06 도 받는다) · 상태 ?status=ok|caution|delay|long|none|check · 기관 ?agency=lh|sh|gh|etc · 민간 정비 ?scope=renewal(공공 공급 밖으로 따로 센 사업 목록 — 2026-10-20 안2). 사업 창 ?id=PRJ-…(상세) · ?cand=<원장 id>(간단 보기 — 후보 사업) · 월간 보고 보기 ?print=1. 맞지 않는 값은 거르지 않는다.
    같은 거르기의 CSV 는 /projects/csv?…(route.ts — 열·값은 lib/board/projects-list.ts 하나). */
 async function load(searchParams: Props['searchParams']) {
   const [q, { molit }, idx] = await Promise.all([searchParams, getBoardData(), getProjectsIndex()]);
   const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c), guOf });
   const lens = f.policy ? policyLabel(f.policy) : f.program?.name;
   const region = f.sgg ? sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2))) : f.sido ? sidoName(molit, f.sido) ?? f.sido : '수도권';   // 원장이 수도권만이라 ?sido=all 도 수도권(2026-10-19 결정)
-  const tail = [f.stage !== undefined && `${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`, f.status && (f.status === 'check' ? '점검 필요' : f.status === 'late' ? DELAY_GROUP : f.status === 'review-late' ? REVIEW_LATE : STATUS_NAME[f.status]), f.agency && AGENCY_NAME[f.agency]];
+  const tail = [f.renewal && RENEWAL_NAME, f.stage !== undefined && `${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`, f.status && (f.status === 'check' ? '점검 필요' : f.status === 'late' ? DELAY_GROUP : f.status === 'review-late' ? REVIEW_LATE : STATUS_NAME[f.status]), f.agency && AGENCY_NAME[f.agency]];
   const label = [lens, region, ...tail].filter(Boolean).join(' · ');
   /* 목록 범위 칩: 지역은 원장 칩이 보이므로 뺀 나머지 거르기 */
   const listLabel = [lens, ...tail].filter(Boolean).join(' · ');
@@ -83,7 +84,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const { f, idx, molit, label, listLabel, lens, region, search, id, cand: candId, print } = await load(searchParams);
   /* 첫 창(?id= 상세 — 없으면 ?cand= 간단 보기): 창 props 는 projectWindow 결과만(허용 목록 — RSC 페이로드에 공개된다). 인쇄 보기에는 만들지 않는다 */
   const [pp, win] = await Promise.all([getPolicyProgress(), print ? null : (async () => (id ? await projectWindow(id, 'admin') : null) ?? (candId ? await projectWindow(candId, 'admin', { cand: true }) : null))()]);
-  const rows = idx.rows;
+  const rows = f.renewal ? idx.renewalRows : idx.rows;
   const scope = scopeOf(rows, f);
   const list = listOrder(applyFilters(rows, f));
   const s = summaryOf(list);
@@ -192,7 +193,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
   /* 목록: 열·칸은 lib/board/projects-list.ts(CSV 내려받기와 같은 열) */
   /* 위치 미확보: 지도와 같은 판정(mapLocOf — 번들 블록·동 윤곽이나 지도에 그리는 위치가 없음)인 수도권 사업, 상세 서랍과 같은 값 — 목록 지도 열 표지(지도 열은 수도권 사업만) */
   const noLoc = new Set((await Promise.all(list.filter((r) => r.issued && isMetro(r.sgg)).map(async (r) => { const d = await getProjectDrawer(r.id); return d?.kind === 'detail' && !mapLocOf(d.row, d.detail.loc) ? r.id : null; }))).filter((x): x is string => !!x));
-  const gridRows: Row[] = listRows(list, f, sel, (c) => sidoName(molit, c), (id) => noLoc.has(id));
+  /* 민간 정비 목록(?scope=renewal)은 사업 상세·지도 자료가 없는 사업이라(공공 공급 밖) 행 링크·지도 열 없이 */
+  const gridRows: Row[] = listRows(list, f, sel, (c) => sidoName(molit, c), (id) => noLoc.has(id)).map((x) => (f.renewal ? { ...x, href: undefined, c: { ...x.c, name: list.find((r) => r.id === x.id)?.name, map: null } } : x));
   const grid = dropBlank(LIST_COLS, gridRows);
   /* 시군구 칸은 한 줄(지역 이름이 둘로 접히지 않게 말줄임 열의 두 줄 상자를 쓰지 않는다 — 칸 폭은 글자에 맞는다) */
   const listCols = grid.cols.map((c) => (c.key === 'sgg' ? { key: c.key, label: c.label, kind: c.kind } : c));
@@ -258,6 +260,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
         <ChipSep />
         <ChipGroup label="기관" bare>
           <ChipMenu label="기관" on={!!f.agency} items={[{ href: at({ agency: undefined }), label: '전체', on: false }, ...Object.entries(AGENCY_NAME).map(([k, n]) => ({ href: at({ agency: k }), label: n, on: f.agency === k, title: AGENCY_TIP[k] }))]} />
+          {idx.renewalRows.length ? <Chip href={at({ scope: f.renewal ? undefined : 'renewal' })} on={!!f.renewal} title={`공공 공급 밖으로 따로 센 민간 재개발·재건축·소규모 정비 사업 ${fmt(idx.renewalRows.length)}건 — 종합상황판·지도·지역 공급 집계에는 넣지 않음`}>{RENEWAL_NAME}</Chip> : null}
         </ChipGroup>
         {reset ? <><ChipSep /><Chip href="/projects" title="모든 거르기를 풀고 처음 화면(수도권 · 점검 필요 순)으로">모두 풀기</Chip></> : null}
       </ChipBar>

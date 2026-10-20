@@ -52,6 +52,11 @@ const rankOf = (e) => { const i = SOURCE_RANK[e.event_type]?.findIndex((x) => (t
 const UNKNOWN_AGENCY = '기관 미상';
 /* 예정일 경과 목록은 경과가 큰 것부터 이만큼만 싣는다(전국이면 1만 건 가까이라 화면 자료가 1 MB 를 넘는다). 전체 수는 overdueTotal */
 const OVERDUE_LIMIT = 200;
+/* 화면 모집단(2026-10-20 사용자 결정 '공공 분류 안2' — tools/ledger/home-source.js PUBLIC_TIER): 민간 정비(PRIVATE_RENEWAL, 정책 귀속 검토)와 일반 민간(PRIVATE) 사업은
+   원장 표에는 남기고 화면 집계·목록(종합상황판·지도 색인·사업·지역 공급·이력)에서는 뺀다. 민간 정비는 종합상황판 scope.renewal(건수·호수)과 사업 화면 거르기로만 따로 보인다 */
+const PRIVATE_SCOPES = new Set(['PRIVATE_RENEWAL', 'PRIVATE']);
+const isShown = (p) => !p.superseded_by && !PRIVATE_SCOPES.has(p.public_scope);
+const isRenewal = (p) => !p.superseded_by && p.public_scope === 'PRIVATE_RENEWAL';
 
 const pad2 = (n) => String(n).padStart(2, '0');
 const addMonths = (ym, n) => { const [y, m] = ym.split('-').map(Number), k = y * 12 + (m - 1) + n; return `${Math.floor(k / 12)}-${pad2(k % 12 + 1)}`; };
@@ -70,9 +75,9 @@ function elapsedMonths(end, ref) {
 const classify = (months, judge = JUDGE) => (months >= judge.delayMonths ? 'delay' : months >= judge.cautionMonths ? 'caution' : 'ok');
 
 /* 사업별 상태(한 번만 계산해 보드 집계 boardFromLedger 와 지도 색인 mapIndexFromLedger 가 같이 쓴다 — 판정 규칙은 여기 한 벌뿐이다).
-   다른 사업으로 대체된 사업(superseded_by — 수도권 레지스트리 사업이 HOME 사업으로 넘어간 것)은 집계·지도에서 뺀다(새 사업이 대신 센다).
+   다른 사업으로 대체된 사업(superseded_by — 수도권 레지스트리 사업이 HOME 사업으로 넘어간 것)은 집계·지도에서 뺀다(새 사업이 대신 센다). 민간 사업도 뺀다(isShown — pick 으로 바꾼다).
    사업마다 { p, issued, bulk, home, judgeable, units, actual, actualTypes, plan(종류마다 현재 예정 하나), base(보드 칸), cls(판정, 대상 아니면 null), overdue(예정일 경과 쌍) } */
-function projectStates(tables, referenceDate) {
+function projectStates(tables, referenceDate, { pick = isShown } = {}) {
   /* 원천 순위: data_as_of 가 둘 다 있으면 최근 것, 아니면 bundle-* > hub-hs-basis > LH 준공예정 */
   const asOf = new Map(tables.sources.map((s) => [s.source_ref, s.data_as_of]));
   const order = (ref) => (ref.startsWith('bundle-') ? 0 : ref === 'hub-hs-basis' ? 1 : ref === LH_SOURCE ? 2 : 3);
@@ -98,7 +103,7 @@ function projectStates(tables, referenceDate) {
     return (total.length ? total : ofSrc).reduce((s, r) => s + r.unit_count, 0);
   };
 
-  const projects = tables.projects.filter((p) => !p.superseded_by).map((p) => {
+  const projects = tables.projects.filter(pick).map((p) => {
     const evs = eventsOf.get(p.local_project_id) ?? [];
     const actual = evs.filter((e) => e.date_type === 'ACTUAL');
     /* 종류마다 현재 예정 하나: 종류별 순위(SOURCE_RANK), 그다음 원천 순위가 가장 높은 것, 같은 원천에 예정이 여럿이면 이른 것(지도 정적 자료 home-map.js currentPlan 과 같은 규칙 —
@@ -132,12 +137,15 @@ function projectStates(tables, referenceDate) {
   return { projects, asOf };
 }
 
-/* tables: { projects, events, units, sources, areas, agencies } 의 행 배열, history: 판정 이력 행(달 순) */
-function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth = '2026-10', history = [] } = {}) {
+/* tables: { projects, events, units, sources, areas, agencies } 의 행 배열, history: 판정 이력 행(달 순).
+   stagesAt: 사업 id → 보드 단계 칸(주면 이번 달 단계별 지연·주의 호수를 그 칸으로 나눈다 — trend.js 소급이 지금 보드 리본의 그 달 층에 맞출 때).
+   결과의 stagesOf(열거되지 않는 칸): 사업 id → 달마다 보드 단계 칸(리본 층과 같은 값) */
+function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth = '2026-10', history = [], stagesAt = null } = {}) {
   const months = Array.from({ length: LAST + 1 }, (_, i) => addMonths(FIRST_MONTH, i));
   const now = months.indexOf(observedMonth);
   if (now < 0) throw new Error(`observedMonth ${observedMonth} 가 보드 시점(${FIRST_MONTH}~${months[LAST]}) 밖이다`);
   const { projects, asOf } = projectStates(tables, referenceDate);
+  const renewal = projectStates(tables, referenceDate, { pick: isRenewal }).projects;
 
   /* 실제 날짜가 어디까지인가(actualThrough): 실제 기록이 있는 사업의 호수를 원천별로 더해(사업마다 원천 하나에 한 번), 호수가 가장 많은 원천의 자료 달(data_as_of 의 달).
      자료 달이 없거나 관측 달보다 늦으면 관측 달. 그 뒤 달은 실제가 아니라 예정으로 다시 만든다(stageAt) */
@@ -179,7 +187,7 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
   const bucket = (c) => bucketOf(judged, c);
   const candBucket = () => ({ ok: bucketOf(candJudged, 'ok'), caution: bucketOf(candJudged, 'caution'), delay: bucketOf(candJudged, 'delay') });
   const lhAsOf = asOf.get(LH_SOURCE);
-  const byStageNow = (c) => { const v = [0, 0, 0, 0, 0, 0]; for (const x of judged) if (x.cls === c) v[x.stages[now]] += x.units; return v; };
+  const byStageNow = (c) => { const v = [0, 0, 0, 0, 0, 0]; for (const x of judged) if (x.cls === c) v[stagesAt?.get(x.p.local_project_id) ?? x.stages[now]] += x.units; return v; };
   const counts = (xs) => { const ys = xs.filter((x) => x.issued); return { ok: ys.filter((x) => x.cls === 'ok').length, caution: ys.filter((x) => x.cls === 'caution').length, delay: ys.filter((x) => x.cls === 'delay').length }; };
 
   /* 시도: 원장에 사업이 있는 시도만(2026-10-19 — 원장이 수도권 HOME 만이면 서울·인천·경기 3곳) */
@@ -233,7 +241,7 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
   const addedSources = STAGE_NAMES.filter((n) => usedNames.has(n) && !seen.has(n));
   const own = { month: observedMonth, referenceDate, edition, basis: 'OBSERVED', ok: judgment.ok, caution: judgment.caution, delay: judgment.delay, candidate: candBucket(), delayByStage, cautionByStage, judged: judged.length, excludedStartOverdue: { projects: xs.projects, pairs: xs.pairs, units: xs.units }, ...(addedSources.length ? { addedSources } : {}) };
 
-  return {
+  const out = {
     schema: 'ledger-board/1', observedMonth, referenceDate, source: tablesOf(observedMonth),
     judge: { ...JUDGE, dataAsOf, rule: `발급 사업(건축HUB 스냅샷)은 착공·준공 예정 경과를 판정하고, 건축HUB 대용량 후보는 사용검사(준공) 예정 경과만 계산한다(착공 실제일 기록이 약 7% 뿐이라 착공 예정 경과는 자료 누락이 많다). 판정 건수는 사업 번호가 있는 사업만 세고, 번호가 없는 후보는 같은 계산을 '확인 필요(후보)'로 따로 센다. LH 후보는 판정하지 않는다.${homeProjects ? ' 수도권(서울·인천·경기) 사업은 HOME 덤프가 정본이고 착공·준공 예정 경과를 판정한다.' : ''}` },
     scope: {
@@ -245,12 +253,16 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
       sido: new Set(projects.map((x) => x.p.sgg_code.slice(0, 2))).size,
       /* ④모집·⑥입주 일정이 있는 사업 수(공고 = 실제 SUPPLY_NOTICE, 입주 = 현재 예정 MOVE_IN) */
       withEvents: { supplyNotice: projects.filter((x) => x.actualTypes.has('SUPPLY_NOTICE')).length, moveIn: projects.filter((x) => x.plan.MOVE_IN).length },
+      /* 민간 정비(정책 귀속 검토, PRIVATE_RENEWAL): 위 집계 밖 — 건수·호수만(보드와 같은 물량 규칙), 없으면 칸이 없다 */
+      ...(renewal.length ? { renewal: { projects: renewal.length, units: sum(renewal) } } : {}),
     },
     months, now, actualThrough, actualIndex: at, actualSource, stageUnits, stageProjects,
     judgment, delayByStage, cautionByStage,
     regions, agencies, upcoming, overdue: overdue.slice(0, OVERDUE_LIMIT), overdueTotal: overdue.length,
     trend: [...history.filter((r) => r.month < observedMonth), own],
   };
+  Object.defineProperty(out, 'stagesOf', { value: new Map(projects.map((x) => [x.p.local_project_id, x.stages])), enumerable: false });
+  return out;
 }
 
 /* 지도 색인: 시군구마다 사업 행(id 순). 판정(cls)·경과는 projectStates 그대로라 보드 판정 합계와 같다.
@@ -260,8 +272,8 @@ function boardFromLedger(tables, { referenceDate = '2026-10-10', observedMonth =
    next = 기준일 당일·이후에 끝나는 현재 예정 중 가장 이른 것 { eventType, planned }. 실제 기록이 있는 종류와, 판정처럼 사업 단계가 이미 이른 착공·준공은 뺀다.
    dateAlt = 원천 날짜 다름 표지 { source: 'LH', planned } (지도 계약 — 지도 카드·사업 화면이 같은 필드를 읽는다, 2026-10-15 사용자 결정 D2): lhBlocks(data/board/lh-completion.json 의 blocks)를 주면
      HOME 사업의 준공 현재 예정(HOME 원천, 준공 실제 없음)과 같은 사업의 LH 준공 예정 파일 날짜가 다를 때만 붙인다. 판정은 HOME 날짜 그대로다. 대조는 dateAltOf */
-function mapIndexFromLedger(tables, { referenceDate = '2026-10-10', observedMonth = '2026-10', lhBlocks = null } = {}) {
-  const { projects } = projectStates(tables, referenceDate);
+function mapIndexFromLedger(tables, { referenceDate = '2026-10-10', observedMonth = '2026-10', lhBlocks = null, pick = isShown } = {}) {
+  const { projects } = projectStates(tables, referenceDate, { pick });
   const alt = lhBlocks ? dateAltOf(projects, lhBlocks) : new Map();
   const listOf = (rows, pick) => { const m = new Map(); for (const r of rows) { const v = pick(r); if (v == null) continue; if (!m.has(r.local_project_id)) m.set(r.local_project_id, new Set()); m.get(r.local_project_id).add(v); } return m; };
   const pks = listOf(tables.identifiers, (r) => (r.id_type === 'HUB_HS_PK' ? r.id_value : null));
@@ -345,7 +357,7 @@ const loadHistory = (root = ROOT) => { const f = path.join(root, HISTORY); retur
 const LH_BLOCKS = 'data/board/lh-completion.json';
 const loadLhBlocks = (root = ROOT) => { const f = path.join(root, LH_BLOCKS); return fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')).blocks : null; };
 
-module.exports = { boardFromLedger, mapIndexFromLedger, projectStates, dateAltOf, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, loadLhBlocks, endOf, lastDay, addMonths, OUT, HISTORY };
+module.exports = { isShown, isRenewal, PRIVATE_SCOPES, boardFromLedger, mapIndexFromLedger, projectStates, dateAltOf, renderMap, MAP_OUT, elapsedMonths, classify, render, loadTables, loadHistory, loadLhBlocks, endOf, lastDay, addMonths, OUT, HISTORY };
 
 if (require.main === module) {
   const i = process.argv.indexOf('--month'), month = i > 0 ? process.argv[i + 1] : P.latestMonth();

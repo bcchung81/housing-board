@@ -147,7 +147,7 @@ for (let i = 0; i < C.states.length; i++) {
 if (C.map) {
   for (const w of [1440, 390]) {
     await setView(w);
-    await nav(C.base + "/map?region=jeonnam-naju&selftest=1");
+    await nav(C.base + "/map?region=incheon-gyeyang&selftest=1");
     await page.waitForFunction(() => window.__mapStatus && window.__mapStatus.loaded, undefined, { timeout: 60000 }).catch(() => {});
     await settle();
     /* 지도 화면의 상단 메뉴 바(48px)만 비교한다. 그 아래는 지도 캔버스라 타일·글자가 늦게 올라와 찍을 때마다 다르다 */

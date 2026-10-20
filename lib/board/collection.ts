@@ -18,8 +18,6 @@ export const COLLECTION: Record<string, { name: string; method: string; cycle: s
   'datagokr-3045249': { name: 'SH 공사계약 정보', method: '공공데이터포털 CSV', cycle: '수동 / 원천 분기', unit: '행' },
   'hub-hs-basis': { name: '건축HUB 주택인허가 · 기본개요', method: '공공 API · 법정동 조회', cycle: '수동 / 정기 수집 미구현', unit: '원천 기록' },
   'bundle-incheon-gyeyang': { name: '인천 계양구 사업 지도 자료', method: '원천 가공 → 지역 JSON', cycle: '수동 / 자료 보완 시', unit: '연결 단지' },
-  'bundle-gwangju-gwangsan': { name: '광주 광산구 사업 지도 자료', method: '원천 가공 → 지역 JSON', cycle: '수동 / 자료 보완 시', unit: '연결 단지' },
-  'bundle-jeonnam-naju': { name: '전남 나주시 사업 지도 자료', method: '원천 가공 → 지역 JSON', cycle: '수동 / 자료 보완 시', unit: '연결 단지' },
 };
 
 /* 현재 동작은 코드·보관 파일로 확인. ITEMS.cycle은 목표 주기여서 현재 열에 쓰지 않는다. */

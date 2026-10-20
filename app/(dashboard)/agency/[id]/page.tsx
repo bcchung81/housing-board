@@ -45,23 +45,23 @@ export default async function AgencyDetail({ params }: Props) {
   if (!a) notFound();
   const crumbs = [{ label: '종합상황판', href: '/' }, { label: a.name }];
 
-  if (!a.actor) {   // gh · sh · mnd: 화면에 쓸 데이터가 아직 없다. 받은 파일이 있으면 카탈로그를 보인다.
+  if (!a.actor) {   // gh · sh · ih · mnd: 화면에 쓸 데이터가 아직 없다. 받은 파일이 있으면 카탈로그를 보인다.
     const group = a.id === 'sh' ? '서울주택도시공사' : a.id === 'mnd' ? '국방부' : null;
     const files = group ? sources.items.filter((s) => s.group === group) : [];
-    const ghRows = a.id === 'gh' ? listOrder((await getProjectsIndex()).rows.filter((r) => r.agency === 'gh')) : [];   // 원장의 GH 사업(종합상황판 기관 칩의 GH 와 같은 기준) · 사업 목록과 같은 순서
-    /* 표는 사업 목록과 같은 열·칸(①~⑥ 단계 색 알약·상태·현재 예정) — 행을 누르면 사업 화면 서랍(/projects?sido=all&agency=gh&id=…) */
+    const ghRows = a.id === 'gh' || a.id === 'ih' ? listOrder((await getProjectsIndex()).rows.filter((r) => r.agency === a.id)) : [];   // 원장의 GH·iH 사업(종합상황판 기관 칩과 같은 기준) · 사업 목록과 같은 순서
+    /* 표는 사업 목록과 같은 열·칸(①~⑥ 단계 색 알약·상태·현재 예정) — 행을 누르면 사업 화면 서랍(/projects?sido=all&agency=<기관>&id=…) */
     /* 상태 칸은 '일정 정보 없음': 머리 경고문대로 이 화면은 기관 신호(정상·주의·지연)를 판정하지 않는다(사업 화면의 판정은 서랍·사업 화면에서) — 2026-10-15 평가, 2026-10-16 '판정 밖'에서 바꿈 */
-    const ghGridRows = listRows(ghRows, { agency: 'gh' }, null, (c) => sidoName(molit, c)).map((row) => ({ ...row, c: { ...row.c, status: { text: '일정 정보 없음', muted: true, title: '기관별 신호는 일정(당초·변경·현재 예정)이 없어 이 화면에서 판정하지 않음 — 사업 판정은 행을 눌러 사업 상세에서' } } }));
+    const ghGridRows = listRows(ghRows, { agency: a.id }, null, (c) => sidoName(molit, c)).map((row) => ({ ...row, c: { ...row.c, status: { text: '일정 정보 없음', muted: true, title: '기관별 신호는 일정(당초·변경·현재 예정)이 없어 이 화면에서 판정하지 않음 — 사업 판정은 행을 눌러 사업 상세에서' } } }));
     const ghGrid = dropBlank(LIST_COLS, ghGridRows);
     return (
       <Page>
         <PageHead crumbs={crumbs} title={a.name} tip={`${a.summary}.`}><Badge title={`${a.summary}.`}>준비 중</Badge></PageHead>
         <FactNote className="ui-inset" tip={{ label: '판정하지 않는 까닭', children: <><p>기관별 신호(정상·주의·지연)는 일정(당초·변경·현재 예정)이 없어 판정하지 않습니다.</p>{a.id === 'mnd' ? <p>군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.</p> : null}</> }}>일정이 없어 기관 신호를 판정하지 않습니다.</FactNote>
         {ghRows.length ? (
-          <Card render={<section aria-label="GH 사업" />}>
-            <PanelHead title="GH 사업" tip={`사업 원장에서 기관이 GH 인 사업 · 사업 화면의 기관 칩 GH 와 같은 목록·같은 열 · 행을 누르면 사업 상세${ghGrid.note}`}><PanelLink href="/projects?sido=all&agency=gh" full="사업 화면에서 GH 사업 목록 보기">사업 화면에서 보기</PanelLink></PanelHead>
+          <Card render={<section aria-label={`${a.name} 사업`} />}>
+            <PanelHead title={`${a.name} 사업`} tip={`사업 원장에서 기관이 ${a.name} 인 사업 · 사업 화면의 기관 칩 ${a.name} 와 같은 목록·같은 열 · 행을 누르면 사업 상세${ghGrid.note}`}><PanelLink href={`/projects?sido=all&agency=${a.id}`} full={`사업 화면에서 ${a.name} 사업 목록 보기`}>사업 화면에서 보기</PanelLink></PanelHead>
             <MetricRow className="mb-2" label="계획" value={fmt(ghRows.reduce((n, r) => n + r.units, 0))} unit="호" items={[`${fmt(ghRows.length)}건`]} />
-            <DataGrid label="GH 사업" cols={ghGrid.cols} rows={ghGridRows} maxHeight={640} quietCount />
+            <DataGrid label={`${a.name} 사업`} cols={ghGrid.cols} rows={ghGridRows} maxHeight={640} quietCount />
           </Card>
         ) : null}
         {files.length ? (

@@ -33,7 +33,7 @@ import type { Source } from '@/lib/board/types';
 import { GRID_DENSE, dotDates, type Col, type Detail, type Row } from '@/lib/grid/spec';
 
 export const metadata: Metadata = { title: '데이터 원본' };
-/* 지역 지도 번들: 공개 지역만(광산·나주는 preview — 2026-10-19 결정: 화면은 수도권만, scripts/build.js·lib/coverage.js 와 같은 규칙) */
+/* 지역 지도 번들: 공개 지역만(scripts/build.js·lib/coverage.js 와 같은 규칙) */
 const REGIONS = regionIndex.regions.filter((r) => r.visibility === 'public');
 
 /* 기타 탭 표의 표지 뜻: 머리 줄 범례 칩(뜻은 title) */

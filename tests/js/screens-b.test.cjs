@@ -189,7 +189,7 @@ test('5 CSV: 현재 예정 칸은 날짜·사건만, 예정일 지남·실제·�
   assert.equal(cell('PRJ-41131-0048', 'note'), '예정일 지남');
   const csv = S.toCsv(cols, out);
   assert.doesNotMatch(csv, /(준공|착공|모집|입주|인허가) \(/, '현재 예정 칸에 괄호 꼬리표 없음');
-  assert.equal(csv.split('\r\n').filter((l) => l.includes('원천 날짜 다름(')).length, 76, '원천 날짜 다름은 비고에 그대로 76건');   // 2026-10-20 HOME 판 71→76
+  assert.equal(csv.split('\r\n').filter((l) => l.includes('원천 날짜 다름(')).length, 75, '원천 날짜 다름은 비고에 그대로 75건');   // 2026-10-20 HOME 판 71→76 → 2026-10-20 같은 현장 병합 6쌍 75
   /* 화면 표 칸은 그대로(꼬리표) */
   assert.equal(L.nextCell(byId['PRJ-28290-0058']).tag, '원천 날짜 다름(LH 2028.12)');
 });

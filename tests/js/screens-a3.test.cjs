@@ -147,7 +147,7 @@ test("H9 회복·문구: 부산은 '자료 없음(서울·인천·경기만)', �
   const all = V.priorityOf(V.scopeOf(rows, { metro: true }), Infinity);
   /* 2026-10-20 HOME 판: 수도권 점검 필요 4 → 12건(주의 10·지연 2)이라 10줄을 넘는다 — 인쇄 제목은 '점검 필요 12건 중 상위 10' */
   assert.ok(all.length > 10, '수도권은 10줄 넘음 — 제목은 상위 10');
-  assert.equal(all.length, 12);
+  assert.equal(all.length, 13);   // 기준일 2026-10-20: 성남금토 A2 주의 → 주의 11·지연 2
 });
 
 test('접근성: 본문 바로가기(첫 Tab), 인쇄 전용 표·정의는 화면에서 display:none(보조기기에도 숨김)', () => {

@@ -82,8 +82,11 @@
           "enum": [
             "PUBLIC",
             "PRIVATE_ON_PUBLIC_LAND",
-            "UNKNOWN"
-          ]
+            "UNKNOWN",
+            "PRIVATE_RENEWAL",
+            "PRIVATE"
+          ],
+          "description": "PUBLIC 공공 공급 · PRIVATE_ON_PUBLIC_LAND 공공택지 민간 · UNKNOWN 판단 불가 · PRIVATE_RENEWAL 민간 정비(정책 귀속 검토) · PRIVATE 일반 민간·소규모(2026-10-20 공공 분류 안2 — 화면은 PUBLIC 만 센다, tools/ledger/home-source.js PUBLIC_TIER)"
         },
         "public_basis": {
           "anyOf": [

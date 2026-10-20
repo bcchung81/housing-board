@@ -3,7 +3,7 @@
   "sgg": "41210",
   "name": "경기도 광명시",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41210-0070","name":"광명세무서","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":238,"pks":[],"pnus":[],"bundles":[],"label":"광명세무서","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[126.866855,37.476731],"basis":"NAME_SEARCH","status":"REVIEW","match":"광명세무서"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}},

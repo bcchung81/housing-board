@@ -95,7 +95,7 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   const b = L.scope.bySource;
   // 2026-10-19 수도권 한정: 범위 '수도권', 0건 원천(발급·LH 후보·건축HUB 후보)은 적지 않아 HOME 한 곳만 남는다
   assert.deepEqual([L.scope.coverage, b.issued, b.lhCandidates, b.hubBulkCandidates], ['CAPITAL', 0, 0, 0]);
-  assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 수도권 · 사업 ${S.f(L.scope.projects)}건\\(수도권 HOME ${S.f(b.home)}\\)$`));
+  assert.match(dir[1].basis, new RegExp(`^원장 ${L.observedMonth.replace('-', '.')} 기준 · 수도권 · 사업 ${S.f(L.scope.projects)}건\\(수도권 HOME ${S.f(b.home)}\\) · 별도 민간 정비\\(정책 귀속 검토\\) ${S.f(L.scope.renewal.projects)}건·${S.f(L.scope.renewal.units)}호\\(집계 밖\\)$`));   // 2026-10-20 공공 분류 안2: 민간 정비는 집계 밖으로 따로 한 줄
   /* D3(2026-10-15): 판정은 사업 번호가 있는 사업만, 후보는 '확인 필요(후보)'로 따로 — 카드 title 에 후보 계산 결과 */
   const c = L.judgment.candidate;
   // 2026-10-19 수도권 한정: 후보 0건이라 후보·LH·착공 예정 경과 문장이 모두 빠지고 '판정 n건(…) 중 지연·주의' 만 남는다
@@ -146,7 +146,7 @@ test('리본 차트 기하(원장): 좌표 상수는 시안과 같고, 층 두�
   G.x.forEach(([v, x]) => near(R.X(v), x, `X(${v})`));
   assert.ok(S.textBox(S.staticTexts(R).now).y >= S.BOT + 7, '기준 글자 상자가 플롯(BOT)·1월 눈금(7) 안으로 들어가지 않는다');
   R.total.forEach((t, m) => assert.equal(t, L.stageUnits[m].reduce((a, b) => a + b, 0), `총량 ${m}`));
-  assert.equal(R.step, 100000); assert.equal(R.ymax, 300000, '세로 축척은 가장 큰 총량을 눈금 간격 단위로 올린 값(2026-10-20 HOME 판: 총량 274,296호 → 간격 10만·ymax 30만 · 2026-10-19 수도권 한정: 총량 227,976호 → 간격 5만·ymax 25만 — 전엔 약 141만 → 간격 50만·ymax 150만)');
+  assert.equal(R.step, 50000); assert.equal(R.ymax, 250000, '세로 축척은 가장 큰 총량을 눈금 간격 단위로 올린 값(2026-10-20 공공 분류 안2: 공공 공급 242,279호 → 간격 5만·ymax 25만 · 2026-10-20 HOME 판: 총량 274,296호 → 간격 10만·ymax 30만 · 2026-10-19 수도권 한정: 총량 227,976호 → 간격 5만·ymax 25만 — 전엔 약 141만 → 간격 50만·ymax 150만)');
   assert.ok(R.ymax >= Math.max(...R.total) && R.ymax - Math.max(...R.total) < R.step);
   near(R.s2, S.PH / R.ymax, 's2');
   assert.equal(R.geo.length, 4 * (T.last + 1) + 1, '0.25개월 간격');
@@ -182,7 +182,10 @@ test('리본 지연 띠·병목: 달마다 그 달(판정 달)의 delayByStage, 
 });
 
 test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹치지 않고 viewBox(960×400) 안에 있다(원장 = 총량 매달 같음, 총량이 해마다 다른 경우도)', () => {
-  const SF = S.scopeChangeOf(J);   // 판정 기준 변경 달(2026.10) — 아래 줄 꼬리표도 겹침 검사에 든다
+  /* 2026-10-20 사용자 결정: 소급 이력이 지금 원장과 같은 모집단(candidate 칸 있음)이라 지금 자료는 판정 기준 변경 달이 없다(-1).
+     옛 소급 이력(candidate 칸 없음 — 후보 포함)이 있을 때의 꼬리표도 겹침 검사에 넣으려고 그 모양을 만들어 본다 */
+  assert.equal(S.scopeChangeOf(J), -1);
+  const SF = S.scopeChangeOf(J.map((r, m) => (r && m < T.now ? (({ candidate: _c, ...x }) => x)(r) : r)));
   assert.equal(L.months[SF], '2026-10');
   const R = S.ribbonOf(T, L.stageUnits, DL, SF);
   // 총량이 해마다 다른 경우: 수도권 원장(총량 약 22.8만 — 2026-10-19 수도권 한정 전 141만)에서 0.5배 → 1.5배
@@ -207,7 +210,7 @@ test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹
   assert.deepEqual(Object.keys(o).sort(), ['statics', 'total', 'years'], '병목 핀 없음');
   assert.equal(ST.now.t, '기준 2026.10');
   for (const g of [R, grow]) assert.ok(S.ribbonLabels(g, T.now).statics.every((t) => !/붉은 띠|총량 매달/.test(t.t)), '차트 안 설명 글자 없음');
-  assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '10만', '20만', '30만']);   // 2026-10-20 HOME 판: 총량 27.4만 → 10만 간격 · 2026-10-19 수도권 한정: 총량 22.8만 → 5만 간격 눈금(전엔 50만 간격 0~150만)
+  assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '5만', '10만', '15만', '20만', '25만']);   // 2026-10-20 공공 분류 안2: 공공 공급 24.2만 → 5만 간격 · 2026-10-20 HOME 판: 총량 27.4만 → 10만 간격 · 2026-10-19 수도권 한정: 총량 22.8만 → 5만 간격 눈금(전엔 50만 간격 0~150만)
    assert.equal(S.axisUnit(R), '호');
   const big = S.ribbonOf(T, L.stageUnits.map((r) => r.map((v) => v * 50)), DL);   // 2026-10-19 수도권 한정: 총량 22.8만이라 ×8 → ×50(1,140만). ymax 1,000만 이상: '만' 을 빼 눈금이 왼쪽 여백에 들어가고 단위는 머리 글자로
   assert.ok(big.ymax >= 10000000); assert.ok(S.staticTexts(big).ticks.every((t) => !t.t.includes('만'))); assert.equal(S.axisUnit(big), '만 호');

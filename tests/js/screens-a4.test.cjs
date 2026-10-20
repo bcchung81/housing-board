@@ -105,7 +105,7 @@ test("4 지연 세 번 표시: 목록·인쇄의 현재 예정은 '경과' 꼬�
   /* 경과 개월은 번호 있는 사업(지연 열 판정 색)과 후보(지연 열 옅게, D3) 모두 같은 계산 overdueMonthsOf */
   const late = rows.filter((r) => V.overdueMonthsOf(r) !== null);
   // 2026-10-19 수도권 한정: 경과 계산 사업 > 300 → 4 (후보 313 이 비수도권이라 빠지고 주의 2·지연 2 만 남음)
-  assert.equal(late.length, 12);   // 2026-10-20 HOME 판: 주의 10·지연 2(새 사업 착공 예정 경과 8)
+  assert.equal(late.length, 13);   // 2026-10-20 HOME 판: 주의 10·지연 2(새 사업 착공 예정 경과 8) → 기준일 10-20 주의 11(성남금토 A2)
   for (const r of late) {
     const c = L.nextCell(r);
     assert.equal(c.tag, V.dateAltOf(r)?.text, r.id); assert.equal(c.muted, true); assert.match(c.title, /경과 \d+개월/);   // 꼬리표는 원천 날짜 다름(D2)만

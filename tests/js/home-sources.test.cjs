@@ -59,7 +59,7 @@ test('data/board/home-sources.json: 실행 합계·원천 수·연결 수가 서
 test('statusRows: 실패 원천이 맨 위, 그 뒤 우리 원천 + HOME 원천 · 실패 원천은 마지막 정상 없음', () => {
   const rows = L.statusRows(hs, sources.items);
   assert.equal(rows.length, sources.items.length + hs.sources.length);
-  assert.equal(rows.filter((r) => r.owner === '우리').length, 19);
+  assert.equal(rows.filter((r) => r.owner === '우리').length, 17);
   const ih = rows.find((r) => r.id === 'ih_supply');
   assert.deepEqual([ih.ok, ih.lastOk], [false, null]);
   assert.match(ih.note, /정상 수집 없음/);

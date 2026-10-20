@@ -34,13 +34,13 @@ test('두 파일은 지금 원장 표에서 다시 만든 것과 바이트가 �
 
 test('목록 행 = 원장의 살아 있는 사업 전부(대체 10·숨김 71 제외), 발급 262 · 후보 0 — 모두 수도권', () => {
   // 2026-10-19 수도권 한정: 목록 2,317 → 262 (비수도권 후보 2,039 제거·광산 4·나주 12 숨김 → 발급 278 → 262, 숨김 55 → 71, 대체 10 그대로)
-  assert.equal(rows.length, 383);   // 2026-10-20 HOME 판: 살아 있는 사업 262→383
+  assert.equal(rows.length, 285);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) 377 → 285 · 2026-10-20 HOME 판: 살아 있는 사업 262→383 → 2026-10-20 같은 현장 병합 6쌍 377
   assert.ok(rows.every((r) => ['11', '28', '41'].includes(r.sgg.slice(0, 2))), '원장 사업은 모두 서울·인천·경기');
   assert.equal(new Set(rows.map((r) => r.id)).size, rows.length);
   const gone = new Set(REG.filter((p) => p.supersededBy || p.hiddenAt).map((p) => p.id));
-  assert.equal(gone.size, 82);   // 2026-10-20 HOME 판: 대체 10→11(0054→0055) · 숨김 71
+  assert.equal(gone.size, 88);   // 2026-10-20 HOME 판: 대체 10→11(0054→0055) · 숨김 71 → 2026-10-20 같은 현장 병합 6쌍 대체 17
   assert.ok(rows.every((r) => !gone.has(r.id)), '대체·숨김 사업은 목록에 없다');
-  assert.equal(rows.filter((r) => r.issued).length, 383);
+  assert.equal(rows.filter((r) => r.issued).length, 285);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
   assert.equal(rows.filter((r) => !r.issued).length, 0, '번호 없는 후보 0');
   const live = new Set(REG.filter((p) => !p.supersededBy && !p.hiddenAt).map((p) => p.id));
   assert.ok(rows.filter((r) => r.issued).every((r) => live.has(r.id)), '발급 행 = 살아 있는 레지스트리 사업');
@@ -49,12 +49,12 @@ test('목록 행 = 원장의 살아 있는 사업 전부(대체 10·숨김 71 �
 
 test('렌즈: 9·7 141건 · 1·29 47건 · 8·13 51건(모두 서울·인천·경기), 프로그램 렌즈는 프로그램 목록의 사업 수와 같다', () => {
   const n = (f) => V.applyFilters(rows, f).length;
-  assert.deepEqual(IDX.policies.map((p) => [p.key, n({ policy: p })]), [['97', 166], ['129', 47], ['813', 51]]);   // 2026-10-20 HOME 판: 9·7 연결 사업 141→166
+  assert.deepEqual(IDX.policies.map((p) => [p.key, n({ policy: p })]), [['97', 163], ['129', 47], ['813', 51]]);   // 2026-10-20 HOME 판: 9·7 연결 사업 141→166 → 2026-10-20 같은 현장 병합 6쌍: 9·7 에 이어진 평택고덕 공사 계약 3곳이 대표(이미 9·7)로 합쳐져 163
   for (const p of IDX.policies) assert.ok(V.applyFilters(rows, { policy: p }).every((r) => r.policies.includes(p.key) && ['11', '28', '41'].includes(r.sgg.slice(0, 2))), p.key);
   for (const g of IDX.programs) assert.equal(n({ program: g }), g.projects, g.name);
-  assert.equal(rows.filter((r) => r.policies.length).length, 264, '정책에 연결된 사업');   // 2026-10-20 HOME 판 239→264
+  assert.equal(rows.filter((r) => r.policies.length).length, 261, '정책에 연결된 사업');   // 2026-10-20 HOME 판 239→264 → 2026-10-20 같은 현장 병합 6쌍: 정책 연결된 평택고덕 공사 계약 3곳이 대표로 합쳐져 261
   const s = V.summaryOf(V.applyFilters(rows, { policy: pol('97') }));
-  assert.deepEqual([s.n, s.units, s.notice, s.review, s.confirmed], [166, 145630, 22342, 0, 166], '2026-10-20 판: 9·7 사업 141→166 모두 확정 · 2026-10-14 판: 재매칭으로 9·7 사업 연결이 모두 확정(2026-10-13 판 검토 137 · 확정 1)');
+  assert.deepEqual([s.n, s.units, s.notice, s.review, s.confirmed], [163, 143508, 22342, 0, 163], '2026-10-20 판: 9·7 사업 141→166 모두 확정 → 같은 현장 병합 163(평택고덕 공사 계약 3곳 2,122호 대표로) · 2026-10-14 판: 재매칭으로 9·7 사업 연결이 모두 확정(2026-10-13 판 검토 137 · 확정 1)');
   /* 렌즈 + 지역 + 단계 + 상태가 함께 걸린다 */
   const f = { policy: pol('97'), sido: '41', stage: '04', status: 'ok' };
   assert.ok(V.applyFilters(rows, f).every((r) => r.policies.includes('97') && r.sgg.startsWith('41') && r.stage === '04' && r.cls === 'ok'));
@@ -80,24 +80,25 @@ test('거르기 읽기·주소: 맞지 않는 값은 거르지 않고, 렌즈는
   /* 기관·상태·단계가 함께 걸린다 */
   const g = { agency: 'lh', status: 'check', stage: 2 };
   assert.ok(V.applyFilters(rows, g).every((r) => r.agency === 'lh' && ['caution', 'delay'].includes(r.cls) && r.board === 2));
-  assert.deepEqual(['lh', 'sh', 'gh', 'etc'].map((a) => V.applyFilters(rows, { agency: a }).length), [151, 24, 4, 204], '기타 = 기관 미연결(지자체·국방부 포함) — 2026-10-19 수도권 한정: 269·2020 → 129·105 (비수도권 후보 제거, 합 262) → 2026-10-20 HOME 판 151·204(합 383)');
+  assert.deepEqual(['lh', 'sh', 'gh', 'ih', 'etc'].map((a) => V.applyFilters(rows, { agency: a }).length), [145, 24, 4, 7, 105], '기타 = 기관 미연결(지자체·국방부 포함) — 2026-10-20 공공 분류 안2: 민간 정비·일반 민간 92곳 빠짐 197 → 105(시행기관 미정 공공 사업) · 2026-10-19 수도권 한정: 269·2020 → 129·105 (비수도권 후보 제거, 합 262) → 2026-10-20 HOME 판 151·204(합 383) → 같은 현장 병합(LH −6)·iH 추가(원천 시행 인천도시공사 7, 기타에서 옮김) 145·7·197(합 377)');
 });
 
 test('상태: 지연 중 경과 12개월 이상은 장기 지연, 점검 필요 = 번호 있는 사업의 주의·지연·장기 지연(지연 개월 큰 순), 번호 없는 후보는 확인 필요(D3)', () => {
   const n = (s) => rows.filter((r) => V.statusOf(r) === s).length;
-  assert.deepEqual(['ok', 'caution', 'delay', 'long', 'review', 'none'].map(n), [176, 10, 0, 2, 0, 195]);   // 2026-10-20 HOME 판: 정상 176·주의 10·판정 없음 195(새 사업 122) · 2026-10-19 수도권 한정: 확인 필요 1,839 → 0, 판정 없음 309 → 93 (후보 제거·숨긴 광산·나주 발급 16 제외)
+  assert.deepEqual(['ok', 'caution', 'delay', 'long', 'review', 'none'].map(n), [172, 11, 0, 2, 0, 100]);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) — 판정 없음만 −92 · 2026-10-20 같은 현장 병합 6쌍·기준일 10-20(성남금토 A2 주의)   // 2026-10-20 HOME 판: 정상 176·주의 10·판정 없음 195(새 사업 122) · 2026-10-19 수도권 한정: 확인 필요 1,839 → 0, 판정 없음 309 → 93 (후보 제거·숨긴 광산·나주 발급 16 제외)
   assert.equal(n('delay') + n('long'), BOARD.judgment.delay.projects, '지연 + 장기 지연 = 보드 판정 지연');
   assert.equal(n('caution'), BOARD.judgment.caution.projects);
   assert.equal(n('review'), BOARD.scope.candidateJudged, '확인 필요 = 보드의 후보 계산 건수(둘 다 0)');
   const chk = V.listOrder(V.applyFilters(rows, { status: 'check' }), { status: 'check' });
-  assert.equal(chk.length, 12);   // 2026-10-20 HOME 판: 주의 10 + 지연 2(주의 2→10 — 새 사업 착공 예정 경과 8)
+  assert.equal(chk.length, 13);   // 2026-10-20 HOME 판: 주의 10 + 지연 2(주의 2→10 — 새 사업 착공 예정 경과 8) → 기준일 10-20 주의 11(성남금토 A2)
   /* 번호가 있는 사업 먼저, 후보 사업은 뒤(2026-10-15 결정) — 그 안에서 지연 개월 큰 순 */
   const sameGroup = (a, b) => !!a.issued === !!b.issued;
   assert.ok(chk.every((r, i) => i === 0 || (!!chk[i - 1].issued >= !!r.issued && (!sameGroup(chk[i - 1], r) || V.lateOf(chk[i - 1]) >= V.lateOf(r)))), '번호 있는 사업 먼저 · 지연 개월 큰 순');
   const top = V.priorityOf(rows);
   /* 2026-10-20 HOME 판: 착공 예정 3개월 경과 주의 8건이 들어와 상위 10에서 인천검단 AA-21(2개월)·이천장호원 B2(1개월)가 밀려났다 */
-  assert.deepEqual(top.map(V.lateOf), [19, 19, 3, 3, 3, 3, 3, 3, 3, 3], '월간 보고 우선 점검 = 번호 있는 사업의 주의·지연만(D3 — 후보는 확인 필요로 따로)');
-  assert.deepEqual(top.map((r) => r.name), ['인천검단 35', '인천검단 AA13-1', '수원당수2 A3', '인천계양 A18', '수원당수2 B1', '수원당수2 A1', '부천대장 A9', '남양주왕숙2 A7', '남양주왕숙2 A6', '인천계양 A16']);
+  /* 기준일 2026-10-20: 인천검단 두 곳 경과 19 → 20개월, 0056 은 같은 현장 병합으로 이름 '인천검단 35' → 'AA13-2'(대표 행 = LH 공사진행현황) */
+  assert.deepEqual(top.map(V.lateOf), [20, 20, 3, 3, 3, 3, 3, 3, 3, 3], '월간 보고 우선 점검 = 번호 있는 사업의 주의·지연만(D3 — 후보는 확인 필요로 따로)');
+  assert.deepEqual(top.map((r) => r.name), ['인천검단 AA13-2', '인천검단 AA13-1', '수원당수2 A3', '인천계양 A18', '수원당수2 B1', '수원당수2 A1', '부천대장 A9', '남양주왕숙2 A7', '남양주왕숙2 A6', '인천계양 A16']);
   assert.equal(new Set(top.map((r) => `${r.sgg}|${r.name}`)).size, top.length);
   const all = V.listOrder(V.applyFilters(rows, {}));
   assert.ok(all.every((r, i) => i === 0 || (!!all[i - 1].issued >= !!r.issued && (!sameGroup(all[i - 1], r) || (V.overdueMonthsOf(all[i - 1]) ?? -1) >= (V.overdueMonthsOf(r) ?? -1)))), '목록 기본 순서 = 번호 있는 사업 먼저, 그 안에서 예정일 경과 개월 큰 순(후보끼리도 같은 계산 순, 경과 없는 사업은 뒤)');
@@ -112,7 +113,7 @@ test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → �
   assert.match(a.tip, /담당자 추정 포함\(확인과 따로\): ①계획 10,037호/, '추정 포함은 title 에만');   // 2026-10-20 HOME 판 5,789→10,037
   assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['③ 착공', '병목 · 지연(장기 포함) 1,666호', '/projects?sido=all&stage=2&status=late']);
   assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['2', '지연 6~12개월 0 · 장기 12개월+ 2', '/projects?sido=all&status=late'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로. 2026-10-19 수도권 한정: 후보 0이라 확인 필요(후보) 꼬리 없음');
-  assert.deepEqual([q['어디를 먼저 챙기는가'].value, q['어디를 먼저 챙기는가'].sub, q['어디를 먼저 챙기는가'].href], ['경기', '지연·주의 4,566호', '/projects?sido=41']);   // 2026-10-20 HOME 판: 경기 새 사업 착공 예정 경과 주의(수원당수2·부천대장·남양주왕숙2)
+  assert.deepEqual([q['어디를 먼저 챙기는가'].value, q['어디를 먼저 챙기는가'].sub, q['어디를 먼저 챙기는가'].href], ['경기', '지연·주의 5,004호', '/projects?sido=41']);   // 기준일 10-20: 성남금토 A2 438호 주의 +438   // 2026-10-20 HOME 판: 경기 새 사업 착공 예정 경과 주의(수원당수2·부천대장·남양주왕숙2)
   const up = BOARD.upcoming.reduce((s, x) => ({ units: s.units + x.units, projects: s.projects + x.projects }), { units: 0, projects: 0 });
   assert.deepEqual([q['앞으로 얼마나 공급되는가'].value, q['앞으로 얼마나 공급되는가'].sub, q['앞으로 얼마나 공급되는가'].href], [up.units.toLocaleString('en-US'), `앞으로 12개월 · 준공 예정 · ${up.projects}건`, '/region?sido=all']);
   assert.equal(up.units, 14570);   // 2026-10-20 HOME 판: 13,372호(24건) → 14,570호(25건) · 2026-10-19 수도권 한정: 앞으로 12개월 214,975 → 13,372호 (24건)
@@ -120,7 +121,7 @@ test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → �
 
 test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·주의 2) · 인천 2,890호 · 13,372호 24건 / 1·29 는 목표가 없어 정상 비율 / 시도를 고르면 시군구', () => {
   const q = Q({ policy: pol('97') });
-  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['53.1', '①계획 확인 7,808 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['경기', '지연·주의 4,566호'], ['14,570', '앞으로 12개월 · 준공 예정 · 25건']]);   // 2026-10-20 HOME 판: 사업화 확인 7,808, 지연·주의 1위 인천 → 경기(새 착공 경과 주의), 12개월 준공 14,570호 25건
+  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['53.1', '①계획 확인 7,808 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['경기', '지연·주의 5,004호'], ['14,570', '앞으로 12개월 · 준공 예정 · 25건']]);   // 2026-10-20 HOME 판: 사업화 확인 7,808, 지연·주의 1위 인천 → 경기(새 착공 경과 주의), 12개월 준공 14,570호 25건
   assert.equal(q['9·7 대책 목표 대비'].href, undefined, '이미 9·7 렌즈');
   const q129 = Q({ policy: pol('129') });
   assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100.0', '% 정상', '판정 38건 · 판정 없음 9']);
@@ -135,12 +136,12 @@ test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·
 test('단계 파이프라인: 이 단계까지 온 사업(현재 단계 기준 누적, D4 — ①계획 = 전체)이 있는 칸만 열고 나머지는 접은 한 칸 — 전체 ⑥만, 9·7 ⑤⑥, 1·29 ②~⑥', () => {
   const p = (f) => V.pipelineOf(V.applyFilters(rows, f, 'stage'));
   const all = p({});
-  assert.deepEqual(all.open.map((c) => [c.i, c.n]), [[0, 383], [1, 205], [2, 191], [3, 41]]);   // 2026-10-20 HOME 판: 262·119·107·36 → 383·205·191·41 · 2026-10-19 수도권 한정: 2,317·2,174·938·744·382 → 262·119·107·36, ⑤ 준공 칸은 이 단계까지 온 사업이 없어 접힘
+  assert.deepEqual(all.open.map((c) => [c.i, c.n]), [[0, 285], [1, 123], [2, 109], [3, 41]]);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): ②까지 온 사업 −79(③착공 민간 정비 28·일반 민간 51) · 2026-10-20 같은 현장 병합 6쌍: ③ 대체 6 빠지고 평택고덕 대표 3곳 ①→③   // 2026-10-20 HOME 판: 262·119·107·36 → 383·205·191·41 · 2026-10-19 수도권 한정: 2,317·2,174·938·744·382 → 262·119·107·36, ⑤ 준공 칸은 이 단계까지 온 사업이 없어 접힘
   assert.deepEqual(all.shut, [4, 5]);
-  assert.equal(all.total, 383);
+  assert.equal(all.total, 285);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
   assert.equal(all.open[0].units, rows.reduce((s, r) => s + r.units, 0), '①은 범위 전체');
   const p97 = p({ policy: pol('97') });
-  assert.deepEqual([p97.open.map((c) => [c.i, c.n, c.units]), p97.shut, p97.total], [[[0, 166, 145630], [1, 109, 74974], [2, 105, 71930], [3, 40, 27601]], [4, 5], 166]);   // 2026-10-20 HOME 판
+  assert.deepEqual([p97.open.map((c) => [c.i, c.n, c.units]), p97.shut, p97.total], [[[0, 163, 143508], [1, 109, 74974], [2, 105, 71930], [3, 40, 27601]], [4, 5], 163]);   // 2026-10-20 HOME 판 → 같은 현장 병합: 평택고덕 공사 계약 3곳(③)이 대표(①→③)로 합쳐져 ① 166 → 163, ②③ 그대로
   assert.deepEqual(p({ policy: pol('129') }).shut, [1, 2, 3, 4, 5]);
   assert.ok(rows.every((r) => r.reached.every((i) => i >= 1 && i <= 5)), 'reached 는 리본 칸 1~5');
 });
@@ -169,7 +170,7 @@ test('9·7 목표 대비 = policy-progress samePeriod(2026-01~09), 확인과 담
 
 test('목표 대비 줄: 렌즈 전체 = 목표가 배정된 정책(9·7)만 · ⑥ 목표 미배정 한 번 · 9·7 렌즈도 같은 한 줄 · 1·29 렌즈는 없음', () => {
   const all = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
-  assert.deepEqual(all.map((l) => [l.policy.key, l.n, l.units, l.none, l.review, l.confirmed]), [['97', 166, 145630, [5], 0, 166]]);   // 2026-10-20 HOME 판: 9·7 연결 사업 141→166
+  assert.deepEqual(all.map((l) => [l.policy.key, l.n, l.units, l.none, l.review, l.confirmed]), [['97', 163, 143508, [5], 0, 163]]);   // 2026-10-20 HOME 판: 9·7 연결 사업 141→166 → 2026-10-20 같은 현장 병합 6쌍 163·143,508호(평택고덕 공사 계약 3곳 2,122호 빠짐)
   assert.deepEqual(V.compareLines(PP, IDX.policies, rows, ['97']).map((l) => l.policy.key), ['97']);
   assert.deepEqual(V.compareLines(PP, IDX.policies, rows, ['129']), []);
 });

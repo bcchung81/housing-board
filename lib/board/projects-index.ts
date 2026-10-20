@@ -15,14 +15,17 @@ import { drawerTarget, rowsOf, type IndexExtra, type MapRow, type Policy, type P
 import type { RegistryProject } from './types';
 import { AGENCY_SHORT, stepsOf, type Steps } from './public-labels';
 
-type IndexDoc = { observedMonth: string; referenceDate: string; policies: Policy[]; programs: Program[]; sgg: Record<string, string | null>; projects: Record<string, IndexExtra> };
+/* renewal: 민간 정비(정책 귀속 검토) — 공공 공급 밖으로 따로 센 사업(tools/ledger/projects-index.js, 2026-10-20 안2). 사업 화면 ?scope=renewal 목록만 쓴다 */
+type IndexDoc = { observedMonth: string; referenceDate: string; policies: Policy[]; programs: Program[]; sgg: Record<string, string | null>; projects: Record<string, IndexExtra>;
+  renewal?: { sgg: Record<string, string | null>; bySgg: Record<string, MapRow[]>; projects: Record<string, IndexExtra> } };
 type MapDoc = { observedMonth: string; referenceDate: string; bySgg: Record<string, MapRow[]> };
 export type SourceRef = { provider: string; dataset: string; asOf: string | null; collectedAt: string | null; url: string | null };
 type DetailDoc = { observedMonth: string; referenceDate: string; agencies: Record<string, string>; sources: Record<string, SourceRef>; projects: Record<string, ProjectDetail> };
 
 export const getProjectsIndex = cache(async () => {
   const map = mapJson as unknown as MapDoc, idx = indexJson as unknown as IndexDoc;
-  return { rows: rowsOf(map.bySgg, idx.projects, idx.sgg), policies: idx.policies, programs: idx.programs, sggNames: idx.sgg, referenceDate: map.referenceDate, observedMonth: map.observedMonth };
+  const rn = idx.renewal;
+  return { rows: rowsOf(map.bySgg, idx.projects, idx.sgg), renewalRows: rn ? rowsOf(rn.bySgg, rn.projects, rn.sgg) : [], policies: idx.policies, programs: idx.programs, sggNames: idx.sgg, referenceDate: map.referenceDate, observedMonth: map.observedMonth };
 });
 
 export const getPolicyProgress = cache(async () => progressJson as unknown as PolicyProgress);

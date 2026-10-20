@@ -3,7 +3,7 @@
   "sgg": "41430",
   "name": "경기도 의왕시",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41430-0045","name":"의왕월암 A3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-11"},"dateAlt":{"source":"LH","planned":"2028-04-28"},"units":642,"pks":[],"pnus":[],"bundles":[],"label":"의왕월암 A3","agency":"lh","moveIn":"2028-04","completion":"2028-01-26","noticeUnits":null,"bjd":"4143011000","loc":{"by":"district","at":[126.964344,37.312223],"basis":"DISTRICT_REPRESENTATIVE_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},

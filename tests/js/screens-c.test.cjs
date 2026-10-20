@@ -30,10 +30,14 @@ const board = read('components/board/Board.tsx');
 const num = (s) => Number(String(s).replace(/,/g, ''));
 const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
 
-test('1 리본: 2026.10 판정 기준 변경 — 구분선·꼬리표, 그 앞 지연 띠는 빗금(후보 포함), 범례·aria·추이 카드가 같은 말', () => {
-  const T = S.timelineOf(BOARD), J = S.judgmentsOf(BOARD), SF = S.scopeChangeOf(J);
+test('1 리본: 판정 기준 변경 — 구분선·꼬리표, 그 앞 지연 띠는 빗금(후보 포함), 범례·aria·추이 카드가 같은 말(옛 소급 이력일 때). 지금 자료는 변경 없음', () => {
+  /* 2026-10-20 사용자 결정: 소급 이력(2025-01~2026-09)을 지금 원장과 같은 모집단으로 다시 계산했다 — candidate 칸이 있어 변경 달이 없고(-1) 화면에 꼬리표·빗금이 없다 */
+  assert.equal(S.scopeChangeOf(S.judgmentsOf(BOARD)), -1, '지금 자료: 판정 기준 변경 없음');
+  assert.ok(BOARD.trend.every((r) => r.candidate), '소급 행도 candidate 칸(후보 0)');
+  /* 옛 소급 이력(candidate 칸 없음 = 후보 포함)일 때의 그리기: 그 모양을 만들어 본다 */
+  const OLD = { ...BOARD, trend: BOARD.trend.map((r) => (r.basis === 'BACKFILL' ? (({ candidate: _c, ...x }) => x)(r) : r)) };
+  const T = S.timelineOf(OLD), J = S.judgmentsOf(OLD), SF = S.scopeChangeOf(J);
   assert.equal(BOARD.months[SF], '2026-10', '변경 달 = candidate 가 처음 있는 판정 달');
-  assert.ok(J[SF - 1].delay.units > 10000 && J[SF].delay.units === 1666, '2026.09 수만 호 → 2026.10 1,666호(다시 계산하지 않는다)');
   // 2026-10-19 수도권 한정: 2026-10 행의 addedSources(원천 추가) 5건은 모두 비수도권 사업 몫이라 사라졌다 → 변경 표지는 판정 기준 변경 하나뿐
   assert.equal(BOARD.trend.find((r) => r.month === '2026-10').addedSources, undefined, '같은 달에 원천 추가 없음');
   assert.equal(S.scopeChangeOf(S.judgmentsOf({ ...BOARD, trend: [] })), -1, '소급 이력이 없으면 변경 없음');
@@ -127,9 +131,9 @@ test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본
   assert.doesNotMatch(board, /\{rate === null \? '—'/);
   /* /agency/gh: 사업 목록과 같은 열·칸(①~⑥ 알약), 행 → 서랍 */
   const ag = read('app/(dashboard)/agency/[id]/page.tsx');
-  assert.match(ag, /listRows\(ghRows, \{ agency: 'gh' \}/);
+  assert.match(ag, /listRows\(ghRows, \{ agency: a\.id \}/);   // 2026-10-20: GH 표를 iH 도 같이 쓴다(기관 id 로)
   assert.match(ag, /dropBlank\(LIST_COLS, ghGridRows\)/);
-  assert.match(ag, /<PanelLink href="\/projects\?sido=all&agency=gh"/, '기본 파란 밑줄 링크 대신 패널 링크');
+  assert.match(ag, /<PanelLink href=\{`\/projects\?sido=all&agency=\$\{a\.id\}`\}/, '기본 파란 밑줄 링크 대신 패널 링크');
   const gh = rows.filter((r) => r.agency === 'gh'), gr = PL.listRows(gh, { agency: 'gh' }, null, () => undefined);
   assert.equal(gr.length, 4);
   for (const r of gr.filter((x) => IDX.projects[x.id])) { assert.match(r.href, /^\/projects\?sido=all&agency=gh&id=PRJ-/); assert.ok(r.c.stage.pill, '단계 색 알약'); assert.match(r.c.stage.text, /^[①-⑥] /); }

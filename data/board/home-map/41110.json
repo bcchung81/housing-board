@@ -3,7 +3,7 @@
   "sgg": "41110",
   "name": "경기도 수원시",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41110-0001","name":"舊 경인지방통계청 수원사무소","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":88,"pks":[],"pnus":[],"bundles":[],"label":"舊 경인지방통계청 수원사무소","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.065311,37.287794],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}},

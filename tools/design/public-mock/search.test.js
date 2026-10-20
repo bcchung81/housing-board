@@ -284,7 +284,7 @@ t('r9-2 사업 링크는 사업 카드(옆 시트)를 연다 — 다음 준공 �
   assert.strictEqual((tpl.match(/data-go="\/citizen\/projects\?id=\$\{id\}">자세히 보기<\/a>/g) || []).length, 1, '시트 안 하나 = 사업 찾기 상세 (2026-10-19: 지도 위 사업 카드를 지워 2 → 1)');
   assert(!tpl.includes('자세히 보기(정책담당자 화면)') && tpl.includes('id="pc-back"'));
   const pd = JSON.parse(fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'data', 'board', 'project-detail.json'), 'utf8')).projects;
-  const AG = { lh: 'LH', gh: 'GH', sh: 'SH', local: '지자체', mnd: '국방부' }, K = ['SUPPLY_NOTICE', 'CONSTRUCTION_START', 'COMPLETION', 'MOVE_IN'];
+  const AG = { lh: 'LH', gh: 'GH', sh: 'SH', ih: 'iH', local: '지자체', mnd: '국방부' }, K = ['SUPPLY_NOTICE', 'CONSTRUCTION_START', 'COMPLETION', 'MOVE_IN'];
   let n = 0;
   for (const [id, x] of Object.entries(pd)) { const d = ctx.D.det[id], st = x.stages || {}; const want = K.map((k) => (st[k]?.actual ? [st[k].actual, 1] : st[k]?.plan ? [st[k].plan, 0] : null));
     if (!x.agency && !want.some(Boolean)) { assert(!d, id); continue; } n++; assert.deepStrictEqual(JSON.parse(JSON.stringify(d)), [AG[x.agency] || '', want], id); }
@@ -391,10 +391,10 @@ t("r10-8 같은 목록 안 이름 겹침: 고양창릉(4블록) 두 곳은 'A-4'
   const D = ctx.D, rows = Object.entries(D.prj).filter(([c]) => c.startsWith('4128')).flatMap(([c, rs]) => rs.map((p) => ({ id: `PRJ-${c}-${p[0]}`, name: p[1] })));
   const m = ctx.distinctNames(rows), v = Object.values(m);
   assert(v.includes('고양창릉(4블록) A-4') && v.includes('고양창릉(4블록) S-04'), v.filter((x) => x.includes('창릉')).join(','));
-  for (const pre of ['4136', '41', '11', '28']) { const L = Object.entries(D.prj).filter(([c]) => c.startsWith(pre)).flatMap(([c, rs]) => rs.filter((p) => ctx.OF_STAGE[p[2]] <= 3).map((p) => ({ id: `PRJ-${c}-${p[0]}`, name: p[1] }))).filter((x) => x.id !== 'PRJ-28290-0064');
+  for (const pre of ['4136', '41', '11', '28']) { const L = Object.entries(D.prj).filter(([c]) => c.startsWith(pre)).flatMap(([c, rs]) => rs.filter((p) => ctx.OF_STAGE[p[2]] <= 3).map((p) => ({ id: `PRJ-${c}-${p[0]}`, name: p[1] })));
     const vv = Object.values(ctx.distinctNames(L)).filter((x) => !x.startsWith('이름 미정')); assert.strictEqual(new Set(vv).size, vv.length, pre + ' 겹침 ' + vv.filter((x, i) => vv.indexOf(x) !== i).slice(0, 3)); }
   assert.strictEqual(ctx.distinctNames([{ id: 'a', name: '과천지식정보타운 S-12' }]).a, '과천지식정보타운(12블록)');
-  assert.strictEqual(ctx.D.prj['28290'].filter((p) => p[1] === '인천검단 AA13-1').map((p) => p[0]).join(), '0058,0064', '2026-10-20 HOME 판: 같은 이름·702호 두 사업은 HOME 이 따로 둔 중복 의심(HOME 대로 두고 보고만) — 이 둘만 겹침 허용');
+  assert.strictEqual(ctx.D.prj['28290'].filter((p) => p[1] === '인천검단 AA13-1').map((p) => p[0]).join(), '0058', '2026-10-20 사용자 결정: 같은 현장(같은 이름·702호) 두 사업을 합쳤다(0064 → 0058 대체) — 겹침 허용 예외 없음');
 });
 t("r10-9 수도권 밖 IP(2026-10-19 수도권 한정): /api/v1/geo 의 수도권 시도는 그대로, 수도권 밖(광주 29·전남 46·제주 49·부산 26 …)·모르는 코드는 null → 추천 없이 기본 경기(41) 보기 + 시도 고르기", () => {
   for (const c of ['11', '28', '41']) assert.strictEqual(ctx.geoSido(c, S), c);

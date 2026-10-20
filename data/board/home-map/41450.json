@@ -3,7 +3,7 @@
   "sgg": "41450",
   "name": "경기도 하남시",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41450-0073","name":"하남 신장테니스장 부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":300,"pks":[],"pnus":[],"bundles":[],"label":"하남 신장테니스장 부지","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.21133,37.530325],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}},

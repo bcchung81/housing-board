@@ -134,9 +134,9 @@ test('지오메트리 단순화: 링을 600점 이하로 줄이고 닫으며 소
   assert.deepEqual(R.bboxOf(SQUARE(126.7, 37.5)), [126.7, 37.5, 126.71, 37.51]);
 });
 
-test('readCoverage: 실제 regions/ 에서 계양·광산구·나주 시군구 코드를 읽는다', () => {
+test('readCoverage: 실제 regions/ 에서 계양 시군구 코드를 읽는다(수도권 밖 번들은 제거됨)', () => {
   const cov = R.readCoverage();
-  assert.equal(cov['28245'].slug, 'incheon-gyeyang'); assert.equal(cov['12330'].slug, 'gwangju-gwangsan'); assert.equal(cov['12170'].slug, 'jeonnam-naju');
+  assert.equal(cov['28245'].slug, 'incheon-gyeyang'); assert.equal(cov['12330'], undefined); assert.equal(cov['12170'], undefined);
   assert.deepEqual(R.readCoverage('/nonexistent/path'), {});
 });
 

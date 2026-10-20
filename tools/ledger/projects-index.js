@@ -3,6 +3,8 @@
    - data/board/projects-index.json: 목록에 더하는 것만 — 정책·프로그램 목록, 시군구 이름, 사업별 공고 확인 호수·프로그램·정책·연결 상태,
      시행 기관(agency), 원천 실제 기록이 있는 단계(reached — 리본 칸 1~5, 단계 파이프라인), 준공 현재 예정 달(completion — 준공 실제가 없을 때, 보드의 향후 12개월 준공과 같은 규칙).
      사업 행(이름·단계·판정·다음 일정·호수)은 지도 색인 data/board/ledger-map.json 그대로 쓴다(판정 규칙 한 벌 — tools/ledger/board.js).
+     목록·집계는 공공 공급 사업만(board.js isShown, 2026-10-20 안2). 민간 정비(정책 귀속 검토, PRIVATE_RENEWAL)는 renewal 칸에 따로 — 지도 색인과 같은 모양의 행(bySgg)·더하는 것(projects)·
+     시군구 이름(sgg). 사업 화면 거르기 ?scope=renewal 만 읽는다(종합상황판·지도·지역 공급 집계에는 넣지 않는다).
    - data/board/project-detail.json: 발급 사업(살아 있는 레지스트리 사업)마다 개요·단계별 현재 예정/실제/추정·예정일 경과·공정률 이력·근거 원천,
      수도권 HOME 사업은 지도 위치의 종류(loc — data/board/home-map/<시군구>.json 의 loc.by·basis, tools/ledger/home-map.js 가 만든 것).
      events 표(4 MB)를 사업별로 미리 묶은 것이다. 현재 예정과 경과는 board.js projectStates 그대로(목록의 다음 일정·상태와 같은 값).
@@ -13,7 +15,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const P = require('./paths');
-const { projectStates, loadTables, endOf } = require('./board');
+const { projectStates, mapIndexFromLedger, loadTables, endOf, isShown, isRenewal } = require('./board');
 const { noticeUnitsOf } = require('./home-map');
 
 const INDEX_OUT = 'data/board/projects-index.json';
@@ -47,7 +49,7 @@ function linksOf(tables) {
 
 /* tables: board.js NEEDED + links·programs·policies. 돌려주는 것: projects-index/1 */
 function projectsIndexFromLedger(tables, { referenceDate, observedMonth }) {
-  const live = tables.projects.filter((p) => !p.superseded_by);
+  const live = tables.projects.filter(isShown);
   const { out: links, prgPol, progName } = linksOf(tables);
   const notice = noticeUnitsOf(tables);
   const areaName = new Map(tables.areas.filter((a) => a.level === 'SGG').map((a) => [a.area_code, a.area_name]));
@@ -62,22 +64,29 @@ function projectsIndexFromLedger(tables, { referenceDate, observedMonth }) {
   }
   for (const [prg, pols] of prgPol) { const x = progs.get(progName.get(prg)); if (x) for (const pol of pols) x.policies.add(policyKey(pol)); }
   const programs = [...progs.values()].sort((a, b) => b.projects - a.projects || byStr(a.name, b.name)).map((x) => ({ name: x.name, policies: [...x.policies].sort(), projects: x.projects }));
-  const sgg = {};
-  for (const code of [...new Set(live.map((p) => p.sgg_code))].sort()) sgg[code] = areaName.get(code) ?? null;
-  const states = new Map(projectStates(tables, referenceDate).projects.map((x) => [x.p.local_project_id, x]));
-  const projects = {};
-  for (const p of [...live].sort((a, b) => byStr(a.local_project_id, b.local_project_id))) {
-    const id = p.local_project_id, l = links.get(id), n = notice(id), s = states.get(id), x = {};
-    if (n != null) x.notice = n;
-    if (l) { x.programs = [...l.programs].sort(); x.policies = [...l.policies].sort(); x.link = l.confirmed ? 'CONFIRMED' : 'REVIEW_REQUIRED'; }
-    if (p.agency_id) x.agency = p.agency_id;
-    const reached = STAGE_EVENTS.filter((t) => s.actualTypes.has(t)).map((t) => BOARD_OF_EVENT[t]);
-    if (reached.length) x.reached = reached;
-    const cp = s.plan.COMPLETION;
-    if (cp && !s.actualTypes.has('COMPLETION')) x.completion = endOf(cp).slice(0, 7);
-    if (Object.keys(x).length) projects[id] = x;
-  }
-  return { schema: 'projects-index/1', observedMonth, referenceDate, policies, programs, sgg, projects };
+  const sggOf = (ps) => { const o = {}; for (const code of [...new Set(ps.map((p) => p.sgg_code))].sort()) o[code] = areaName.get(code) ?? null; return o; };
+  const sgg = sggOf(live);
+  /* 사업 → 더하는 것(공고 확인 호수·프로그램·정책·연결·기관·확인 단계·준공 예정). pick = 그 사업들의 상태를 계산할 모집단(board.js projectStates) */
+  const extrasOf = (ps, pick) => {
+    const states = new Map(projectStates(tables, referenceDate, { pick }).projects.map((x) => [x.p.local_project_id, x]));
+    const projects = {};
+    for (const p of [...ps].sort((a, b) => byStr(a.local_project_id, b.local_project_id))) {
+      const id = p.local_project_id, l = links.get(id), n = notice(id), s = states.get(id), x = {};
+      if (n != null) x.notice = n;
+      if (l) { x.programs = [...l.programs].sort(); x.policies = [...l.policies].sort(); x.link = l.confirmed ? 'CONFIRMED' : 'REVIEW_REQUIRED'; }
+      if (p.agency_id) x.agency = p.agency_id;
+      const reached = STAGE_EVENTS.filter((t) => s.actualTypes.has(t)).map((t) => BOARD_OF_EVENT[t]);
+      if (reached.length) x.reached = reached;
+      const cp = s.plan.COMPLETION;
+      if (cp && !s.actualTypes.has('COMPLETION')) x.completion = endOf(cp).slice(0, 7);
+      if (Object.keys(x).length) projects[id] = x;
+    }
+    return projects;
+  };
+  const projects = extrasOf(live, isShown);
+  const rest = tables.projects.filter(isRenewal);
+  const renewal = rest.length ? { sgg: sggOf(rest), bySgg: mapIndexFromLedger(tables, { referenceDate, observedMonth, pick: isRenewal }).bySgg, projects: extrasOf(rest, isRenewal) } : null;
+  return { schema: 'projects-index/1', observedMonth, referenceDate, policies, programs, sgg, projects, ...(renewal ? { renewal } : {}) };
 }
 
 /* 발급 사업(issued_at 있고 대체되지 않음)마다 상세. 돌려주는 것: project-detail/1 */

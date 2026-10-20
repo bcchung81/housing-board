@@ -30,6 +30,9 @@ const f = (n: number) => n.toLocaleString('en-US');
 export const nation = (L: LedgerBoard) => (L.scope.coverage === 'NATIONWIDE' ? '전국' : L.scope.coverage === 'CAPITAL' ? '수도권' : '전국 아님');
 /* 0건인 원천은 적지 않는다 */
 export const ledgerMix = (L: LedgerBoard) => { const b = L.scope.bySource; return b ? [b.issued ? `발급 ${f(b.issued)}` : '', b.lhCandidates ? `LH 후보 ${f(b.lhCandidates)}` : '', b.hubBulkCandidates ? `건축HUB 후보 ${f(b.hubBulkCandidates)}` : '', b.home ? `수도권 HOME ${f(b.home)}` : ''].filter(Boolean).join(' · ') : `발급 ${f(L.scope.issued)} · 후보 ${f(L.scope.candidates)}`; };
+/* 공공 공급 밖으로 따로 센 민간 정비(2026-10-20 공공 분류 안2 — board.js scope.renewal): 카드 근거 끝에 한 줄, 없으면 빈 글 */
+export const RENEWAL_NAME = '민간 정비(정책 귀속 검토)';
+export const renewalText = (L: LedgerBoard) => (L.scope.renewal?.projects ? ` · 별도 ${RENEWAL_NAME} ${f(L.scope.renewal.projects)}건·${f(L.scope.renewal.units)}호(집계 밖)` : '');
 /* 번호가 없는 후보의 같은 계산 건수(없거나 0이면 0 — 후보 줄·쌍 숫자를 보이지 않는다) */
 export const candCount = (c?: { ok: { projects: number }; caution: { projects: number }; delay: { projects: number } } | null) => (c ? c.ok.projects + c.caution.projects + c.delay.projects : 0);
 export const ledgerJudged = (L: LedgerBoard) => {
@@ -64,7 +67,7 @@ export function makeDirectives({ sourceCount, stageNames: K, ledger: L, start, b
       sub: yoyText ?? undefined,
       basis: `통계누리 ${STAT_SCOPE} 착공 ${span} 누계${yoyText ? ` · 전년 같은 기간 대비 ${yoyText}` : '와 전년 같은 기간 대비'}(보고자료와 같은 계산). 계획(목표) 물량 원천이 없어 계획 대비 달성률은 내지 못합니다.`,
       p: ['p-chart'], list: { href: '/projects?sido=all&stage=2', title: `목록: 지금 ③${K[2]} 단계인 원장 사업(${nation(L)})${startNow === undefined ? '' : ` ${f(startNow)}건`} — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록(건수가 다름)` } },
-    { date: '08.19', t: '사업장별 현황판', ...val(undefined, f(L.scope.projects), '건'), basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})`,
+    { date: '08.19', t: '사업장별 현황판', ...val(undefined, f(L.scope.projects), '건'), basis: `${L_(L)} · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)})${renewalText(L)}`,
       p: ['p-region'], list: { href: '/projects?sido=all', title: `목록: 원장 사업 전체(${nation(L)}) ${f(L.scope.projects)}건 — 카드 숫자와 같음` } },
     { date: '09.03', t: '범부처 통합·병목', ...(neck ? val(`병목 ${K[neck.i]}`, f(neck.units), '호') : val('병목', '없음', '')), basis: `${L_(L)} · 병목 = 지연 호수(경과 6개월 이상 사업의 계획 호수)가 가장 큰 단계 — 사업 화면 '어디서 막혀 있는가'와 같은 계산(판정한 사업 ${L.scope.judged}건 기준)`,
       p: ['p-trend', 'p-agency'], list: neck ? { href: `/projects?sido=all&stage=${neck.i}&status=late`, title: `목록: 병목 단계(${K[neck.i]})의 지연(장기 포함) 사업 — 목록 머리의 계획 호수 = 카드 숫자` } : { href: '/projects?sido=all&status=late', title: '목록: 지연(장기 포함) 사업(병목 없음)' } },

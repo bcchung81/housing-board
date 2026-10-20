@@ -36,7 +36,7 @@ const LM = JSON.parse(read('data/board/ledger-map.json'));
 const PD = JSON.parse(read('data/board/project-detail.json')).projects;
 const IDX = JSON.parse(read('data/board/projects-index.json'));
 const NEXTE = ['SUPPLY_NOTICE', 'CONSTRUCTION_START', 'COMPLETION', 'MOVE_IN'];
-const AG = { lh: 'LH', gh: 'GH', sh: 'SH', local: '지자체', mnd: '국방부' };
+const AG = { lh: 'LH', gh: 'GH', sh: 'SH', ih: 'iH', local: '지자체', mnd: '국방부' };   // build_data.py AG 와 같다(2026-10-20 iH 추가)
 const D = { prj: {}, det: {}, jd: {}, sgg: Object.entries(IDX.sgg).sort().map(([k, v]) => [k, v, 0]) };
 for (const [c, L] of Object.entries(LM.bySgg)) {
   D.prj[c] = L.map((p) => [p.id.split('-')[2], p.name, Number(p.stage), p.units || 0, p.next ? NEXTE.indexOf(p.next.eventType) : -1, (p.next || {}).planned || '', ...(p.pnus && p.pnus.length ? [p.pnus] : [])]);
@@ -167,7 +167,7 @@ test('합계: 수도권 262곳·22만 7,976호 = /citizen 공급 예정 호수 =
   const all = listOf({});
   const metro = ['11', '28', '41'].reduce((s, sd) => { const x = citizenSum(sd); return { n: s.n + x.n, u: s.u + x.u }; }, { n: 0, u: 0 });
   assert.deepEqual({ n: all.length, u: all.reduce((s, x) => s + x.units, 0) }, metro);
-  assert.deepEqual(metro, { n: 383, u: 274296 }, '원장 2026-10 HOME 판 20261019T212247Z 실측 값(제안서 1.5 의 2026-10-13 값 262곳·227,976호)');
+  assert.deepEqual(metro, { n: 285, u: 242279 }, '원장 2026-10 HOME 판 20261019T212247Z 실측 값(제안서 1.5 의 2026-10-13 값 262곳·227,976호) — 2026-10-20 같은 현장 병합 6쌍 뒤 383곳·274,296호 → 377곳·270,158호 → 공공 분류 안2(공공 공급만) 285곳·242,279호');
   const policy = V.applyFilters(rows, V.parseFilters({}, { policies: [], programs: [], sidoOk: () => true })).filter((r) => r.board <= 3);
   assert.equal(policy.length, metro.n); assert.equal(policy.reduce((s, r) => s + r.units, 0), metro.u);
   if (DJ) { const b = Object.entries(DJ.prj).filter(([c]) => P.METRO.includes(c.slice(0, 2))).flatMap(([, L]) => L).filter((p) => T.OF_STAGE[p[2]] <= 3); assert.deepEqual({ n: b.length, u: b.reduce((s, p) => s + p[3], 0) }, metro, '빌드된 /citizen 자료와도 같다'); }

@@ -10,8 +10,9 @@ import { toCsv } from '@/lib/grid/spec';
 
 export async function GET(req: Request) {
   const q = Object.fromEntries(new URL(req.url).searchParams);
-  const [{ molit }, idx] = await Promise.all([getBoardData(), getProjectsIndex()]);
-  const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c), guOf });
+  const [{ molit }, all] = await Promise.all([getBoardData(), getProjectsIndex()]);
+  const f = parseFilters(q, { policies: all.policies, programs: all.programs, sidoOk: (c) => !!sidoName(molit, c), guOf });
+  const idx = f.renewal ? { ...all, rows: all.renewalRows } : all;   // ?scope=renewal = 민간 정비 목록(사업 화면과 같은 행)
   const rows = listRows(listOrder(applyFilters(idx.rows, f)), f, null, (c) => sidoName(molit, c));
   const body = toCsv(csvCols(dropBlank(LIST_COLS, rows).cols), csvRows(rows));
   const name = `사업목록_${idx.referenceDate.replace(/-/g, '')}.csv`;

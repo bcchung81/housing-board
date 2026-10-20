@@ -3,7 +3,7 @@
   "sgg": "11710",
   "name": "서울특별시 송파구",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-11710-0085","name":"송파우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":51,"pks":[],"pnus":[],"bundles":[],"label":"송파우체국","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[127.128043,37.502552],"basis":"NAME_SEARCH","status":"REVIEW","match":"송파우체국"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}},

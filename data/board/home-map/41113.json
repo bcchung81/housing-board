@@ -3,7 +3,7 @@
   "sgg": "41113",
   "name": "경기도 수원시 권선구",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-13",
+  "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
   "projects": [
     {"id":"PRJ-41113-0032","name":"수원당수 B3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":394,"pks":[],"pnus":[],"bundles":[],"label":"수원당수 B3","agency":"lh","moveIn":null,"completion":"2028-10-24","noticeUnits":null,"bjd":"4111314100","loc":{"by":"district","at":[126.944595,37.286231],"basis":"DISTRICT_REPRESENTATIVE_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}},
