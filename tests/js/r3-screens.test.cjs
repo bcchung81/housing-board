@@ -44,7 +44,7 @@ test('1 정의는 (i) 팝오버로: 단계별 진행 누적 · 정책 목표 대
   assert.match(dt, /<dt>공정률<\/dt>/, '서랍 공정률 ⓘ');
   assert.match(dt, /당초 일정 없음/);
   /* 서랍 안 ⓘ 를 Esc 로 닫을 때 서랍까지 닫히지 않는다 */
-  assert.match(read('components/projects/Drawer.tsx'), /\[data-popup-open\]/);
+  assert.match(read('components/windows/WindowHost.tsx'), /\[data-popup-open\]/);
   /* 지역 공급: 종류 칩·달별 막대 */
   const reg = tips(read('app/(dashboard)/region/page.tsx')).join('');
   assert.match(reg, /<dt>달별 막대<\/dt>/);

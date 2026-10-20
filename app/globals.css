@@ -151,6 +151,10 @@
   /* 면·떠 있는 상자의 그림자. 라이트는 남색 그림자를 옅게, 다크는 카드 위쪽 1px 하이라이트와 짙은 그림자 */
   --shadow-card: 0 1px 2px rgb(15 23 42 / 6%), 0 1px 3px rgb(15 23 42 / 4%);
   --shadow-pop: 0 8px 22px rgb(15 23 42 / 14%);
+  /* 떠 있는 창(모달리스 팝업)이 열렸을 때 뒤 화면을 약간 흐리게 하는 막(2026-10-20 사용자 지시): 색 + 흐림. 클릭은 막지 않는다(pointer-events:none — 모달리스 유지).
+     대시보드·지도 창(components/windows)과 /citizen 팝업이 같이 쓴다. 웜 글자색 바탕이라 웜 범위에서도 그대로 */
+  --win-scrim: rgb(44 36 26 / 16%);
+  --win-blur: 2px;
   --shadow-hud: 0 4px 14px rgb(15 23 42 / 8%);   /* HUD 판: 떠 있는 그림자를 약하게 */
   /* 카드 호버: 누를 수 있는 카드(떠오름)·누를 수 없는 카드(테두리·그림자만) */
   --shadow-hover: 0 10px 24px rgb(15 23 42 / 12%), 0 2px 6px rgb(15 23 42 / 8%);
@@ -262,6 +266,8 @@
   --inset-bg: var(--card);
   --shadow-card: inset 0 1px 0 rgb(255 255 255 / 4%);
   --shadow-pop: 0 8px 22px rgb(0 0 0 / 45%);
+  --win-scrim: rgb(0 0 0 / 40%);
+  --win-blur: 2px;
   --shadow-hud: 0 6px 18px rgb(0 0 0 / 30%);
   --shadow-hover: 0 12px 28px rgb(0 0 0 / 50%), inset 0 1px 0 rgb(255 255 255 / 7%);
   --shadow-hover-soft: 0 6px 18px rgb(0 0 0 / 38%), inset 0 1px 0 rgb(255 255 255 / 5%);
@@ -396,15 +402,26 @@
   --map-tl-hover: #fff;
   --map-wave: #D65535;
   --map-compass-s: #5566BE;
-  /* 수도권 지도 면(/map 개요·/citizen 같은 값, 2026-10-18 배색 안 2): 연두→남보라 다색 명도 5단계(짙을수록 많음) + 값 0 중립(1단계와 밝기 차를 두려고 옅게), 경계선·마우스 올림 선, 단계별 라벨 글자(4.5:1 이상인 쪽) */
+  /* 수도권 지도 면(/map 개요·/citizen 같은 값, 2026-10-18 배색 안 2): 청록→남색 다색 명도 5단계(짙을수록 많음) + 값 0 중립(1단계와 밝기 차를 두려고 옅게), 경계선·마우스 올림 선, 단계별 라벨 글자(4.5:1 이상인 쪽) */
   --map-ov-0: #EEF1F4;
-  --map-ov-1: #D5E88A;
-  --map-ov-2: #63D18F;
-  --map-ov-3: #0D9FA6;
-  --map-ov-4: #0168B4;
-  --map-ov-5: #3A2F8E;
+  --map-ov-1: #C9E7E1;
+  --map-ov-2: #84CBC3;
+  --map-ov-3: #2E9AA0;
+  --map-ov-4: #1D6A93;
+  --map-ov-5: #1F3B66;
   --map-ov-line: #FFFFFF;
   --map-ov-hl: #0B1A33;
+  /* 시군구 경계(2026-10-19 사용자 피드백 '지역구별 경계를 명확하게 구분' → 같은 날 '흰색이니 촌스럽네'): 3D 솟은 면 윗면 안쪽 띠(map3d-gl.js gl-rim) 한쪽 폭 px(다크도 같은 값)·
+     띠 색 = 그 면 지금 색을 --map-shade 쪽으로 --map-edge-mix 만큼(SVG 면 테두리 map3d.css .f 도 같은 섞음, 굵기는 .75 그대로). 라이트 22%: 각 램프 1단계 대비 1.54 이상 · 5단계 1.22 이하 */
+  --map-edge-w: 1px;
+  --map-edge-mix: 22%;
+  /* 시도 경계선(/citizen 지도, 2026-10-19): 보는 시도에 닿은 선 진하게(맥락 회색 위 9:1) · 나머지 옅게, 굵기(px — map3d.css .sdl·map3d-gl.js 가 읽는다) */
+  --map-sido-line: #172B4D;
+  --map-sido-line-weak: #8792A3;
+  --map-sido-w: 2px;
+  --map-sido-w-weak: 1.25px;
+  /* 범례 구간 강조(/citizen 지도, 2026-10-19): 고른 구간 밖 면은 면 색을 카드색에 이만큼만 남긴다(map3d.css .fg.dim · map3d-gl.js readColors 가 읽는다) */
+  --map-dim-mix: 35%;
   --map-ov-ink-0: #172B4D;
   --map-ov-ink-1: #0B1A33;
   --map-ov-ink-2: #0B1A33;
@@ -511,13 +528,17 @@
   --map-spin-head: #fff;
   --map-cmd-tier: #fff;
   --map-ov-0: #262626;
-  --map-ov-1: #E9F098;
-  --map-ov-2: #75DF8F;
-  --map-ov-3: #0AB8B9;
-  --map-ov-4: #0375C9;
-  --map-ov-5: #4D42C1;
+  --map-ov-1: #BFE5DE;
+  --map-ov-2: #6FCDC2;
+  --map-ov-3: #1FA6AA;
+  --map-ov-4: #2378B6;
+  --map-ov-5: #4053A8;
   --map-ov-line: #7A7A7A;
+  --map-edge-mix: 18%;   /* 그늘이 검정이라 덜 섞는다: 1단계 대비 1.50 이상 · 5단계 1.33 이하(라이트 22% 와 비슷한 대비) */
   --map-ov-hl: #FFFFFF;
+  --map-sido-line: #E8EDFF;
+  --map-sido-line-weak: #8C8C8C;
+  --map-dim-mix: 45%;   /* 어두운 카드 위는 한 단계 더 남겨야 맥락 회색과 갈린다 */
   --map-ov-ink-0: #E8EDFF;
   --map-ov-ink-1: #0B1A33;
   --map-ov-ink-2: #0B1A33;
@@ -726,6 +747,9 @@
   --btn-sec-hover: 5%;
   --tabs-pad: 3px;
   --tabs-radius: calc(var(--radius-tile) - var(--tabs-pad));
+  /* 한 줄 조작 높이(2026-10-19, /citizen 위쪽 줄): 검색 입력·탭 목록·단추를 한 높이 40 으로 맞춘다(줄이 --btn-h 를 이 값으로 덮는다, 누름 칸 44 는 화면의 ::before). 검색 입력 돋보기 왼쪽 여백 12 */
+  --ctl-h: 40px;
+  --search-icon-x: 12px;
   /* 떠 있는 HUD 판(.ui-hud, 2026-10-18 사용자 피드백 '배경은 투명하게'): 카드 색 18% 유리 + 흐림 6px·채도 1.1 + 테두리 38%.
      글자 대비는 판이 지도 면 밖(카드 위)에 놓이고 지도 면에는 테두리·여백만 걸칠 때의 값이다(흐림 번짐 포함 최악 5.4:1). 판을 지도 면 위에 통째로 띄우면 --hud-alpha 80% 이상이어야 4.5:1 */
   --hud-alpha: 18%;
@@ -774,8 +798,8 @@ html[data-elev="raised"] {
   --page-bg: #F4F5F7;
   --card: #FFFFFF;
   --inset-bg: #FFFFFF;
-  --shadow-card: 0 1px 2px rgb(15 23 42 / 6%), 0 4px 12px rgb(15 23 42 / 6%);
-  --shadow-hover: 0 2px 4px rgb(15 23 42 / 8%), 0 10px 24px rgb(15 23 42 / 12%);
+  --shadow-card: 0 1px 2px rgb(44 36 26 / 6%), 0 4px 12px rgb(44 36 26 / 6%);   /* 그림자 색 = 웜 중립(2026-10-19, 옛 남색 대체 — 모양은 그대로) */
+  --shadow-hover: 0 2px 4px rgb(44 36 26 / 8%), 0 10px 24px rgb(44 36 26 / 12%);
 }
 html.dark[data-elev="raised"] {
   --page-bg: #111111;
@@ -785,41 +809,278 @@ html.dark[data-elev="raised"] {
   --shadow-hover: inset 0 1px 0 rgb(255 255 255 / 9%), 0 12px 28px rgb(0 0 0 / 50%);
 }
 
-/* 일반사용자 화면 /citizen 배색 안 2 '색 카드'(2026-10-18 사용자 확정): 이 화면만 주색을 코발트로 덮고 산호 강조(--cz-*)를 더한다(지도 램프 --map-ov-* 는 2026-10-18 부터 위 :root·.dark 기본값을 /map 개요와 함께 쓴다). 정책 화면·/map 주색은 위 :root·.dark 값 그대로. 규칙: DESIGN.md */
+/* 비지도 화면 배색 '웜 뉴트럴 + 딥 잉크 + 클레이'(2026-10-19 — /citizen 에서 시작해 지도 밖 모든 화면으로 넓혔다): <html data-design="warm"> 이 붙은 문서
+   (대시보드 루트 레이아웃 app/(dashboard)/layout.tsx · 정적 /citizen 템플릿 · 2026-10-19 부터 지도 app/(map)/layout.tsx 도)만 바탕·카드·글자·면·선·주색·반경을 덮는다. 지도 전용 리터럴(--map-*)의 중립 역할은 내보내기 구간 뒤 html[data-map-shell][data-design="warm"] 블록이 덮는다.
+   위 raised 블록보다 뒤라 같은 토큰을 이기고, 아래 /citizen 전용 블록(data-page="citizen")은 더 뒤라 그 화면만의 토큰을 더한다. 의미색(--st-*·--ok·--warn·--bad·--actor-*·--region-*·--chart-*·--map-*)은 덮지 않는다. 규칙: DESIGN.md */
+html[data-design="warm"] {
+  --page-bg: #F4F3EF;
+  --background: #FCFCFA;
+  --card: #FCFCFA;
+  --popover: #FCFCFA;
+  --inset-bg: #FCFCFA;
+  --border: #DEDED6;
+  --foreground: #252C38;
+  --secondary-foreground: #252C38;
+  --muted-foreground: #6B635A;
+  --muted: #EAE8E1;
+  --secondary: #EEECE6;
+  --accent: #F1EEE8;
+  --pn2: #F1EEE8;
+  --line2: #CBC6BC;
+  --input: #CBC6BC;
+  --ink2: #434A55;
+  --mute: #716A60;
+  --chartbg: #F8F7F3;
+  --radius-tile: 8px;   /* 단추·탭·입력·안쪽 카드는 카드(14)보다 작은 8 — 웜 범위(비지도 화면 + 2026-10-19 지도) */
+  --primary: #A64B35;
+  --ring: #A64B35;
+  /* 기본값이 남색 리터럴인 중립 글자 토큰: 웜 글자를 따른다(var() 는 html 에서 풀려 다크에서는 아래 다크 블록의 --foreground 를 받는다) */
+  --card-foreground: var(--foreground);
+  --popover-foreground: var(--foreground);
+  --accent-foreground: var(--foreground);
+  /* 종합상황판 리본(components/board/ribbon.ts PAL): 기준선·선택 시점·가리킴·고른 해 글자 = 본문 글자, 축·안 고른 해 글자 = --mute, 고른 해 괄호·기준 막대 = 주색,
+     옅은 선(0 선·해 구분·안 고른 해 괄호) = 웜 글자색 반투명(SVG 속성이라 color-mix 대신 rgba), 남색 유리 위 밝은 강조 = 다크 주색(두 테마 같은 값 — :root 와 같은 규칙) */
+  --rb-ink: var(--foreground);
+  --rb-cur: var(--foreground);
+  --rb-hover: var(--foreground);
+  --rb-yr-on: var(--foreground);
+  --rb-axis: var(--mute);
+  --rb-yr-off: var(--mute);
+  --rb-acc: var(--primary);
+  --rb-mid: rgba(37, 44, 56, .22);
+  --rb-sep: rgba(37, 44, 56, .16);
+  --rb-dim: rgba(37, 44, 56, .35);
+  --rb-hud-acc: #E38A6E;
+}
+html.dark[data-design="warm"] {
+  --page-bg: #141311;   /* 2026-10-19 다크도 웜 뉴트럴(2026-10-17 중립 검정 대체 — 같은 날 /map 다크도) */
+  --background: #1D1C19;
+  --card: #1D1C19;
+  --popover: #1D1C19;
+  --inset-bg: #262420;
+  --border: #3A3731;
+  --foreground: #F2EFE8;
+  --secondary-foreground: #F2EFE8;
+  --muted-foreground: #B8B0A4;
+  --muted: #2A2824;
+  --secondary: #2E2C27;
+  --accent: #2A2824;
+  --pn2: #2A2824;
+  --line2: #5E5950;
+  --input: #5E5950;
+  --ink2: #D6D0C6;
+  --mute: #A89F92;
+  --chartbg: #171614;
+  --primary: #E38A6E;
+  --primary-foreground: #111111;
+  --ring: #E38A6E;
+  --rb-mid: rgba(242, 239, 232, .2);
+  --rb-sep: rgba(242, 239, 232, .16);
+  --rb-dim: rgba(242, 239, 232, .35);
+  --rb-hatch: var(--card);   /* 예정 층 빗금·층 경계: 옛 다크 카드·차트 바탕(#111·#0F0F0F) 대신 웜 면 */
+  --rb-seam: var(--chartbg);
+}
+/* 웜 범위 라이트 전용(2026-10-19): ① 웜 면(--muted·--accent 등) 위에서 모자라던 의미색 4개를 같은 색상각·채도로 명도만 내린 값(글자 4.5:1, --st-priv 는 --chartbg 위 3:1) — :root·.dark 값은 그대로(2026-10-19 부터 웜 범위인 /map 에도 걸린다).
+   위 warm 블록 아래 별도 블록인 이유: 그 블록은 의미색을 덮지 않는다는 시험이 있고, :not(.dark) 라 다크(통과)는 건드리지 않는다. ② 리본 툴팁 판(--rb-hud) 남색 → 딥 잉크 #252C38 72% (66% 는 흰 바탕 위 4.72 라 5.5 약속을 못 지켜 올렸다. 뒤가 가장 밝아도 흰 글자 5.5:1 이상 약속은 그대로) */
+html[data-design="warm"]:not(.dark) {
+  --st-permit-ink: #24736D;
+  --ok: #20755B;
+  --bad: #BB384E;
+  --st-priv: #8390A2;
+  --rb-hud: rgb(37 44 56 / 72%);
+}
+/* 웜 범위 라이트 그림자(2026-10-19): 남색 rgb(15 23 42) → 웜 중립 rgb(44 36 26), 오프셋·흐림·투명도 그대로. 입체 단계 raised(/citizen)는 위 raised 블록이 두 겹 모양과 같은 웜 색을 직접 가지므로 제외 */
+html[data-design="warm"]:not(.dark):not([data-elev="raised"]) {
+  --shadow-card: 0 1px 2px rgb(44 36 26 / 6%), 0 1px 3px rgb(44 36 26 / 4%);
+  --shadow-pop: 0 8px 22px rgb(44 36 26 / 14%);
+  --shadow-hud: 0 4px 14px rgb(44 36 26 / 8%);
+  --shadow-hover: 0 10px 24px rgb(44 36 26 / 12%), 0 2px 6px rgb(44 36 26 / 8%);
+  --shadow-hover-soft: 0 4px 14px rgb(44 36 26 / 8%);
+}
+/* 인쇄(2026-10-19): 대시보드는 인쇄 직전 다크를 푼다(app/(dashboard)/layout.tsx PRINT_LIGHT). 종이에는 바탕·카드·안쪽 면을 흰색으로, 그림자 없이 */
+@media print {
+  html[data-design="warm"] {
+    --page-bg: #FFFFFF;
+    --background: #FFFFFF;
+    --card: #FFFFFF;
+    --popover: #FFFFFF;
+    --inset-bg: #FFFFFF;
+    --shadow-card: none;
+    --shadow-pop: none;
+  }
+  html[data-design="warm"]:not(.dark):not([data-elev="raised"]) {   /* 위 라이트 그림자 블록이 특이도가 높아 따로 한 번 더 */
+    --shadow-card: none;
+    --shadow-pop: none;
+  }
+}
+
+/* 일반사용자 화면 /citizen 전용(2026-10-19): 공통 웜 배색은 위 data-design="warm" 블록이 맡고, 여기에는 이 화면만의 토큰(요약 카드 딥 잉크 --cz-summary-*, 지금 신청 살구색 --cz-apply-*,
+   청약 단지 표·순위 줄 치수, 지도 고른 지역 색)만 둔다(지도 램프 --map-ov-* 는 위 :root·.dark 기본값을 /map 개요와 함께 쓴다 — 여기에 두지 않는다). 위 warm 블록보다 뒤라 이긴다. 규칙: DESIGN.md */
 html[data-page="citizen"] {
-  --primary: #1F53B8;
-  --ring: #1F53B8;
-  --cz-accent: #B6351B;
+  --cz-accent: #A64B35;
+  --cz-apply-bg: #F4E7DE;   /* 지금 신청 카드(.ap-card) 살구색 면·테두리 */
+  --cz-apply-line: #E8D3C5;
   --cz-accent-on: #FFFFFF;
-  --cz-summary-bg: #0E5E66;
+  --cz-summary-bg: #252C38;   /* 2026-10-19 딥 잉크 단색 · 그라데이션 규칙은 그대로: 시작 색 → 끝 색(--cz-summary-bg-2) 135°, 단색이면 끝 색 = 시작 색 */
+  --cz-summary-bg-2: #252C38;
   --cz-badge-ink: #FFFFFF;
   --cz-summary-fg: #FFFFFF;
-  --cz-summary-muted: #CFE7E8;
-  --cz-summary-num: #FFC2A6;
+  --cz-summary-muted: #DFE1EC;
+  --cz-summary-num: #FFF8ED;
   --cz-summary-plan: #89C3FE;
   --cz-summary-build: #FEAC5F;
   --cz-summary-sale: #C4D2E5;
-  --cz-summary-line: #5A979C;
-  --cz-summary-panel: #1A6F77;
+  --cz-summary-line: #7D8189;
+  --cz-summary-panel: #333A45;
+  --cz-dim-op: .45;   /* 지도 레일(2026-10-19): 범례 구간을 고르면 그 구간 밖 순위 줄·범례 칸·지도 라벨을 이만큼 흐린다 */
+  /* 청약 단지 표(2026-10-20 한 줄): 구분 칩 · 이름 · 위치 · 세대 · 특별공급 · 주택형 · 일정 · 입주 · 시공·시행, 줄 높이 = 한 줄 누름 칸 44. 일정 칸 앞 단계 칩 자리 --pj-st-w('접수 예정' 칩 폭) */
+  --pj-cols: 80px minmax(0, 1fr) minmax(88px, .25fr) 88px 120px 88px 216px 72px minmax(112px, .4fr);
+  --pj-row-h: 44px;
+  --pj-st-w: 80px;
+  /* /citizen 상위 지역 비교: 56px 행 · 4px 공통색 막대, 선택 지역만 선택 색. */
+  --rank-row-h: 56px;
+  --rank-bar-h: 4px;
+  /* 지도 고른 지역(2026-10-19 사용자 피드백 '선택 지역구가 기존 색상과 같아 구분이 안 된다'): 램프 밖 색상각의 선택 색(기본·해·모집 끝남 램프 = 브랜드 클레이, 짓는 중 램프 = 아래 덮기의 딥 잉크)
+     · 바닥 윤곽(진한 쪽) · 그 위 라벨 글자(4.5:1). map3d-gl.js readColors 가 읽는다(없는 화면 — /map — 은 예전 6% 밝힘) */
+  --cz-map-sel: #C75036;
+  --cz-map-sel-line: #7E2D1C;
+  --cz-map-sel-ink: #FFFFFF;
 }
 html.dark[data-page="citizen"] {
-  --primary: #8BB4FE;
-  --ring: #8BB4FE;
-  --cz-accent: #FD8965;
+  --cz-accent: #E38A6E;
   --cz-accent-on: var(--card);
-  --cz-summary-bg: #0B4D54;
+  --cz-summary-bg: #2A313E;   /* 2026-10-19 딥 잉크 단색(다크) */
+  --cz-summary-bg-2: #2A313E;
+  --cz-apply-bg: #33261F;
+  --cz-apply-line: #4A3A33;
+  --cz-summary-muted: #E0E1EB;
+  --cz-summary-line: #848994;
+  --cz-summary-panel: #3E4657;
   --cz-badge-ink: #111111;
+  --cz-map-sel: #ED9275;
+  --cz-map-sel-line: #FFD9CB;
+  --cz-map-sel-ink: #111111;
 }
+/* 짓는 중 램프(주황)에서는 클레이가 램프와 겹쳐 선택 색을 딥 잉크로 바꾼다 */
+html[data-page="citizen"] #mapc[data-ramp="build"] { --cz-map-sel: #252C38; --cz-map-sel-line: #0E1218; --cz-map-sel-ink: #FFFFFF; }
+html.dark[data-page="citizen"] #mapc[data-ramp="build"] { --cz-map-sel: #F2EEE6; --cz-map-sel-line: #FFFFFF; --cz-map-sel-ink: #111111; }
 
-html[data-page="citizen"] .smry { --sf: var(--cz-summary-bg); background: var(--cz-summary-bg); border-color: var(--cz-summary-bg); color: var(--cz-summary-fg); --foreground: var(--cz-summary-fg); --muted-foreground: var(--cz-summary-muted); --primary: var(--cz-summary-num); --primary-foreground: var(--cz-summary-bg); --cz-accent: var(--cz-summary-num); --st-plan-ink: var(--cz-summary-plan); --st-build-ink: var(--cz-summary-build); --st-sale-ink: var(--cz-summary-sale); --line2: var(--cz-summary-line); --border: var(--cz-summary-line); --pn2: var(--cz-summary-panel); --ring: var(--cz-summary-fg); }   /* 요약 카드: 짙은 청록 채움 + 흰 글자, 안쪽 토큰만 덮는다(템플릿 <style> 은 토큰을 정의하지 않는다) */
-html[data-page="citizen"] #tband { --primary: var(--cz-accent); --primary-foreground: var(--cz-accent-on); }   /* 시간 띠: 고른 단추는 부품(.ui-btn aria-pressed)이 주색으로 그린다 — 주색만 산호로 갈아 끼운다 */
-html[data-page="citizen"] #fbar [data-fst="0"][aria-pressed="true"] { color: var(--st-plan-ink); }   /* 상단 단계 필터: 고른 단계 탭은 글자색만 단계 글자색(배경은 탭 부품 그대로) */
-html[data-page="citizen"] #fbar [data-fst="1"][aria-pressed="true"] { color: var(--st-build-ink); }
-html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var(--st-sale-ink); }
+html[data-page="citizen"] .smry { --sf: var(--cz-summary-bg); background: linear-gradient(135deg, var(--cz-summary-bg), var(--cz-summary-bg-2)); border-color: var(--cz-summary-bg); color: var(--cz-summary-fg); --foreground: var(--cz-summary-fg); --muted-foreground: var(--cz-summary-muted); --primary: var(--cz-summary-num); --primary-foreground: var(--cz-summary-bg); --cz-accent: var(--cz-summary-num); --st-plan-ink: var(--cz-summary-plan); --st-build-ink: var(--cz-summary-build); --st-sale-ink: var(--cz-summary-sale); --line2: var(--cz-summary-line); --border: var(--cz-summary-line); --pn2: var(--cz-summary-panel); --ring: var(--cz-summary-fg); }   /* 요약 카드: 먹색 그라데이션 채움 + 흰 글자(2026-10-19 사용자 선택 먹색 — 대비는 밝은 끝 기준 4.5), 안쪽 토큰만 덮는다(--sf = 시작 색: 단계 줄 틴트가 섞는 바탕. 템플릿 <style> 은 토큰을 정의하지 않는다) */
+html[data-page="citizen"] .ap-card { background: var(--cz-apply-bg); border-color: var(--cz-apply-line); }   /* 지금 신청 카드: 살구색 면(2026-10-19, 옛 '기본 카드' 대체) */
+html[data-page="citizen"] #tband .tchips .ui-btn-outline, html.dark[data-page="citizen"] #tband .tchips .ui-btn-outline { border-color: transparent; background: transparent; color: var(--muted-foreground); }   /* 시간 띠 해 칸(2026-10-19): '선택 탭' 모양 — 안 고른 칸 투명, 가리키면 --muted 면 */
+html[data-page="citizen"] #tband .tchips .ui-btn-outline:hover, html.dark[data-page="citizen"] #tband .tchips .ui-btn-outline:hover { background: var(--muted); color: var(--foreground); }
+html[data-page="citizen"] #tband .tchips .ui-btn-outline[aria-pressed="true"], html[data-page="citizen"] #tband .tchips .ui-btn-outline[aria-pressed="true"]:hover, html.dark[data-page="citizen"] #tband .tchips .ui-btn-outline[aria-pressed="true"], html.dark[data-page="citizen"] #tband .tchips .ui-btn-outline[aria-pressed="true"]:hover { border-color: var(--foreground); background: var(--foreground); color: var(--card); }   /* 고른 해 = 잉크 채움 */
+html[data-page="citizen"] .band { --btn-h: var(--ctl-h); }   /* 위쪽 줄(검색 · 보는 곳 · 거르기): 검색 입력·탭·단추가 모두 한 높이 40 */
+html[data-page="citizen"] #fbar [data-fst="0"] { --tab-c: var(--st-plan-ink); }   /* 상단 단계 필터: 고른 단계 탭의 색(글자·옅은 면·1px 테두리·배지 채움)은 단계 글자색(테두리형 탭 부품 .ui-tabs-outline 의 --tab-c) */
+html[data-page="citizen"] #fbar [data-fst="1"] { --tab-c: var(--st-build-ink); }
+html[data-page="citizen"] #fbar [data-fst="2"] { --tab-c: var(--st-sale-ink); }
 
 /* 부품 클래스(순수 CSS, 토큰 var() 만): 앱의 shadcn Card(components/ui/card.tsx)와 정적 /citizen 이 같은 모양을 쓴다.
    components 레이어라 Tailwind 유틸리티(utilities 레이어)가 늘 이긴다 — 화면에서 여백·배치만 덧붙인다. 규칙: DESIGN.md */
 /* @export end */
+
+/* 지도 전용 웜 덮기(2026-10-19 사용자 지시 '지도 화면의 배경색상도 같이' — 핸드오프의 '지도 제외' 결정 대체): /map 의 <html data-map-shell data-design="warm"> 에만 붙는다.
+   위 웜 범위가 머리 줄·패널·글자·선·주색·반경을 맡고, 여기서는 지도 전용 리터럴(--map-*) 중 중립 면·글자·선·그늘 역할만 웜 값으로 바꾼다(남색 기운 → 웜 뉴트럴, 오프셋·투명도·흐림은 그대로).
+   data-map-shell 이 없는 /citizen 내장 지도는 :root·.dark 값 그대로이고, 내보내기 구간 밖이라 /citizen 빌드에도 들어가지 않는다.
+   자료를 뜻하는 색(--map-ov-*·--st-*·판정·시설·교통·기반시설·건물 색 단계·정보 없음·--map-sel)과 개요 판 토큰(--map-shade·--map-ctx·--map-sido-*, /citizen 무대와 같은 값)은 덮지 않는다.
+   라이트 블록은 다크에도 걸리므로 여기 적은 이름은 아래 다크 블록이 모두 다시 정한다. 대비: tests/js/glass.test.cjs. 규칙: DESIGN.md Colors '지도 색' */
+html[data-map-shell][data-design="warm"] {
+  --mute: var(--map-mute);   /* app.css :root 의 지도 보조 글자 별칭(--mute → --map-mute)을 웜 범위의 --mute 가 덮지 않게(특이도) */
+  --map-mute: #5C554C;
+  --map-cmd-sub: #5C554C;
+  --map-pop-mute: #4A443C;
+  --map-dis: #5C554C;
+  --map-cmd-tier: var(--foreground);
+  --map-glass-tag: rgba(252,252,250,.96);
+  --map-glass-tag-hover: rgba(241,238,232,.98);
+  --map-glass-sum: rgba(252,252,250,.96);
+  --map-glass-card: rgba(252,252,250,.97);
+  --map-glass-hud: rgba(252,252,250,.92);   /* 옛 흰 .9 와 같은 대비(뒤가 검정일 때 주의 글자 #7F6300 4.64:1)가 나게 한 단계 올림 */
+  --map-glass-note: rgba(252,252,250,.62);
+  --map-glass-pop: rgba(252,252,250,.78);
+  --map-glass-cmd-active: rgba(252,252,250,.98);
+  --map-glass-cmd-idle: rgba(252,252,250,.96);
+  --map-glass-cmd-off: rgba(244,243,239,.96);
+  --map-glass-label: rgba(252,252,250,.97);
+  --map-fatal-bg: rgba(252,252,250,.96);
+  --map-hud-shadow: 0 8px 22px rgba(44,36,26,.14);
+  --map-tag-shadow: 0 4px 12px rgba(44,36,26,.12);
+  --map-sheet-shadow: 0 -4px 18px rgba(44,36,26,.14);
+  --map-stuck-shadow: 0 7px 8px -7px rgba(44,36,26,.18);
+  --map-card-hover-shadow: 0 6px 16px rgba(44,36,26,.12);
+  --map-chip-priv-bg: #F1EEE8;
+  --map-bars-bg: #CBC6BC;
+  --map-bars-on-line: rgba(242,239,232,.8);
+  --map-cmd-hover: #F1EEE8;
+  --map-spin-track: #CBC6BC;
+  --map-spin-head: var(--primary);
+  --map-bg: #F4F3EF;
+  --map-sky: #EAE8E1;
+  --map-horizon: #F4F3EF;
+  --map-mask: #FCFCFA;
+  --map-dong-shadow: #3E372E;
+  --map-hill-shadow: #847A6D;
+  --map-hill-accent: #D6D0C6;
+  --map-district: #6E6254;
+}
+html.dark[data-map-shell][data-design="warm"] {
+  --map-mute: #B8B0A4;
+  --map-cmd-sub: #D6D0C6;
+  --map-pop-mute: #C9C1B5;
+  --map-dis: #8A8275;
+  --map-cmd-tier: #FFFFFF;
+  --map-glass-tag: rgba(29,28,25,.92);
+  --map-glass-tag-hover: rgba(42,40,36,.96);
+  --map-glass-sum: rgba(20,19,17,.92);
+  --map-glass-card: rgba(29,28,25,.94);
+  --map-glass-hud: rgba(29,28,25,.87);
+  --map-glass-note: rgba(20,19,17,.66);
+  --map-glass-pop: rgba(29,28,25,.78);
+  --map-glass-cmd-active: rgba(20,19,17,.94);
+  --map-glass-cmd-idle: rgba(20,19,17,.78);
+  --map-glass-cmd-off: rgba(20,19,17,.62);
+  --map-glass-label: rgba(29,28,25,.9);
+  --map-fatal-bg: rgba(29,28,25,.96);
+  --map-hud-shadow: 0 10px 26px rgba(0,0,0,.42);
+  --map-tag-shadow: 0 6px 16px rgba(0,0,0,.4);
+  --map-sheet-shadow: 0 -4px 18px rgba(0,0,0,.5);
+  --map-stuck-shadow: 0 7px 8px -7px rgba(0,0,0,.7);
+  --map-card-hover-shadow: 0 6px 16px rgba(0,0,0,.38);
+  --map-chip-priv-bg: #2E2C27;
+  --map-bars-bg: #5E5950;
+  --map-bars-on-line: rgba(242,239,232,.8);
+  --map-cmd-hover: rgba(242,239,232,.14);
+  --map-spin-track: rgba(242,239,232,.35);
+  --map-spin-head: #FFFFFF;
+  --map-bg: #1D1C19;   /* 다크 지도 바탕·하늘 = 웜 다크 --background(후광과 같은 값, 옛 #111 과 같은 규칙) */
+  --map-sky: #1D1C19;
+  --map-horizon: #262420;
+  --map-mask: #000000;
+  --map-dong-shadow: #000000;
+  --map-hill-shadow: #000000;
+  --map-hill-hi: #4D4840;
+  --map-hill-accent: #1F1D1A;
+  --map-district: #D0C6B6;
+}
+/* backdrop-filter 를 못 쓰는 브라우저: 위 :root·.dark 대체 값과 같은 투명도에 웜 색 */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  html[data-map-shell][data-design="warm"] {
+    --map-glass-hud: rgba(252,252,250,.98);
+    --map-glass-pop: rgba(252,252,250,.98);
+    --map-glass-note: rgba(252,252,250,.96);
+  }
+  html.dark[data-map-shell][data-design="warm"] {
+    --map-glass-tag: rgba(29,28,25,.97);
+    --map-glass-sum: rgba(20,19,17,.97);
+    --map-glass-card: rgba(29,28,25,.98);
+    --map-glass-hud: rgba(29,28,25,.98);
+    --map-glass-pop: rgba(29,28,25,.98);
+    --map-glass-note: rgba(20,19,17,.96);
+    --map-glass-cmd-active: rgba(20,19,17,.97);
+    --map-glass-cmd-idle: rgba(20,19,17,.96);
+    --map-glass-cmd-off: rgba(20,19,17,.96);
+  }
+}
 
 @theme inline {
   --color-background: var(--background);
@@ -1093,6 +1354,17 @@ html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var
   .ui-btn-outline[aria-pressed="true"] {
     border-color: var(--primary);
   }
+  /* 텍스트 링크 단추(2026-10-19, /citizen 공고 더 보기): 바탕·테두리 없는 주색 글자, 좌우 여백 최소, 가리키면 밑줄 */
+  .ui-btn-link, .ui-btn-link:hover {
+    border-color: transparent;
+    background: transparent;
+    color: var(--primary);
+    padding-inline: var(--btn-gap-sm);
+  }
+  .ui-btn-link:hover {
+    text-decoration: underline;
+    text-underline-offset: var(--tabs-pad);
+  }
   .ui-btn-sm {
     height: var(--btn-h-sm);
     gap: var(--btn-gap-sm);
@@ -1136,7 +1408,8 @@ html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var
     color: var(--muted-foreground);
     padding: var(--tabs-pad);
   }
-  .ui-tabs > button {
+  .ui-tabs > :is(button, a) {
+    text-decoration: none;
     display: inline-flex;
     flex: none;
     align-items: center;
@@ -1156,21 +1429,21 @@ html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var
     cursor: pointer;
     transition: background-color .15s, border-color .15s, color .15s;
   }
-  .ui-tabs > button:hover {
+  .ui-tabs > :is(button, a):hover {
     color: var(--foreground);
   }
-  .ui-tabs > button[aria-pressed="true"] {
+  .ui-tabs > :is(button, a):is([aria-pressed="true"], [aria-current="true"]) {
     background: var(--card);
     color: var(--foreground);
     font-weight: 700;
     box-shadow: var(--shadow-card);
   }
-  .dark .ui-tabs > button[aria-pressed="true"] {
+  .dark .ui-tabs > :is(button, a):is([aria-pressed="true"], [aria-current="true"]) {
     border-color: var(--input);
     background: color-mix(in oklab, var(--input) var(--btn-wash), transparent);
     box-shadow: none;
   }
-  .ui-tabs > button:focus-visible {
+  .ui-tabs > :is(button, a):focus-visible {
     outline: var(--border-w-on) solid var(--ring);
     outline-offset: var(--border-w-on);
   }
@@ -1185,6 +1458,141 @@ html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var
     line-height: var(--lh-body);
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+  }
+  /* 테두리형 탭 목록(2026-10-19, /citizen 위쪽 줄 — class="ui-tabs ui-tabs-outline"): 입체 화면 바탕(--page-bg)이 --muted 와 거의 같아 틀이 묻히지 않게
+     틀 = 카드 면 + 테두리(--border-w) + 카드 그림자(검색 입력 .ui-search 와 같은 면). 고른 탭 = 그 탭 색 --tab-c(기본 주색, 화면이 단계 글자색으로 덮는다)의 옅은 면 + 같은 색 테두리 + 글자 700,
+     배지는 --tab-c 채움 + 카드색 글자(--tab-c 는 카드 위 글자색이라 둘 다 4.5:1 이상). 가리키면 --muted 면 */
+  .ui-tabs-outline {
+    --tab-c: var(--primary);
+    border: var(--border-w) solid var(--border);
+    background: var(--card);
+    box-shadow: var(--shadow-card);
+  }
+  .ui-tabs-outline > :is(button, a):hover {
+    background: var(--muted);
+  }
+  .ui-tabs-outline > :is(button, a):is([aria-pressed="true"], [aria-current="true"]), .dark .ui-tabs-outline > :is(button, a):is([aria-pressed="true"], [aria-current="true"]) {
+    border-color: var(--tab-c);
+    background: color-mix(in oklab, var(--tab-c) var(--tint-mix), var(--card));
+    color: var(--tab-c);
+    box-shadow: none;
+  }
+  .ui-tabs-outline > :is(button, a):is([aria-pressed="true"], [aria-current="true"]) .n {
+    background: var(--tab-c);
+    color: var(--card);
+  }
+  /* 채움 탭 목록(2026-10-19, /citizen 시도 고르기 — class="ui-tabs ui-tabs-seg"): 틀 = --muted 면(테두리·그림자 없음), 고른 탭 = --foreground 면 + --card 글자 700 */
+  .ui-tabs-seg {
+    border: 0;
+    background: var(--muted);
+    box-shadow: none;
+  }
+  .ui-tabs-seg > :is(button, a) {
+    background: transparent;
+    color: var(--muted-foreground);
+  }
+  .ui-tabs-seg > :is(button, a):hover {
+    background: transparent;
+    color: var(--foreground);
+  }
+  .ui-tabs-seg > :is(button, a):is([aria-pressed="true"], [aria-current="true"]), .dark .ui-tabs-seg > :is(button, a):is([aria-pressed="true"], [aria-current="true"]) {
+    border-color: transparent;
+    background: var(--foreground);
+    color: var(--card);
+    font-weight: 700;
+    box-shadow: none;
+  }
+  .ui-tabs-seg > :is(button, a):is([aria-pressed="true"], [aria-current="true"]) .n {
+    background: color-mix(in oklab, var(--card) var(--tint-mix-on), transparent);
+    color: inherit;
+  }
+  /* 밑줄 탭 목록(2026-10-19, /citizen 단계 고르기 — class="ui-tabs ui-tabs-line"): 틀 바탕 없음·반경 0, 탭 아래 밑줄. 고른 탭 = 글자 --foreground 700 + 밑줄 --tab-c(기본 --foreground, 화면이 단계색으로 덮는다) */
+  .ui-tabs-line {
+    --tab-c: var(--foreground);
+    gap: var(--btn-gap-sm);
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+  }
+  .ui-tabs-line > :is(button, a) {
+    border: 0;
+    border-bottom: var(--border-w-on) solid transparent;
+    border-radius: 0;
+    background: transparent;
+    color: var(--muted-foreground);
+  }
+  .ui-tabs-line > :is(button, a):hover {
+    background: transparent;
+    border-bottom-color: var(--border);
+    color: var(--foreground);
+  }
+  .ui-tabs-line > :is(button, a):is([aria-pressed="true"], [aria-current="true"]), .dark .ui-tabs-line > :is(button, a):is([aria-pressed="true"], [aria-current="true"]) {
+    border-bottom-color: var(--tab-c);
+    background: transparent;
+    color: var(--foreground);
+    font-weight: 700;
+    box-shadow: none;
+  }
+  .ui-tabs-line .n {
+    background: transparent;
+    color: inherit;
+  }
+  .ui-tabs-line > :is(button, a):is([aria-pressed="true"], [aria-current="true"]) .n {
+    color: var(--tab-c);
+  }
+  /* 검색 입력(2026-10-19, /citizen 위쪽 줄): 틀(.ui-search) 안에 돋보기 svg · input · 지우기 단추(화면이 오른쪽에 둔다).
+     면 = 카드 + --border 테두리 + 카드 그림자(테두리형 탭과 같은 면), 가리키면 테두리 --line2, 초점 = 테두리 --ring + --border-w-on 굵기 --ring 외곽선(테두리와 겹친다) + 떠 있는 그림자 --shadow-pop, 돋보기는 초점 때 주색.
+     높이 --btn-h(줄이 --ctl-h 로 덮는다), 글자 --fs-body, 자리표시 글 --muted-foreground(4.5:1), 오른쪽 여백 = 단추 한 칸(지우기 자리), 넘치면 말줄임 */
+  .ui-search {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+  }
+  .ui-search > svg {
+    position: absolute;
+    left: var(--search-icon-x);
+    width: var(--btn-icon);
+    height: var(--btn-icon);
+    color: var(--muted-foreground);
+    pointer-events: none;
+    transition: color .15s;
+  }
+  .ui-search:focus-within > svg {
+    color: var(--primary);
+  }
+  .ui-search > input {
+    flex: auto;
+    min-width: 0;
+    height: var(--btn-h);
+    border: var(--border-w) solid var(--border);
+    border-radius: var(--radius-tile);
+    background: var(--card);
+    color: var(--foreground);
+    padding: 0 var(--btn-h) 0 calc(var(--search-icon-x) + var(--btn-icon) + var(--pad-chip-x));
+    font: inherit;
+    font-size: var(--fs-body);
+    line-height: var(--lh-sub);
+    text-overflow: ellipsis;
+    box-shadow: var(--shadow-card);
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color .15s, box-shadow .15s;
+  }
+  .ui-search > input::placeholder {
+    color: var(--muted-foreground);
+  }
+  .ui-search > input::-webkit-search-cancel-button {
+    display: none;
+  }
+  .ui-search > input:hover {
+    border-color: var(--line2);
+  }
+  .ui-search > input:focus-visible {
+    border-color: var(--ring);
+    outline: var(--border-w-on) solid var(--ring);
+    outline-offset: calc(var(--border-w) - var(--border-w-on));
+    box-shadow: var(--shadow-pop);
   }
   /* 카드 머리(2026-10-18): 제목 줄. 장식 아이콘 배지는 두지 않는다(2026-10-18 사용자 결정 '기호 + 장식 아이콘' 빼기).
      머리 줄 개수 단추('일정 4 ›')는 단추 부품 .ui-btn.ui-btn-secondary.ui-btn-sm(내용 아이콘 + 글자 + 꺾쇠). 눈썹 글·그라데이션 글자·색 왼쪽 테두리는 쓰지 않는다 */
@@ -1279,7 +1687,8 @@ html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var
   --dir-pad-y: var(--pad-tile-y);        /* 지시 카드 여백 12/16(타일과 같다) */
   --dir-pad-x: var(--pad-tile-x);
   --dir-pad-x-tight: 12px;               /* 1280~1365px 6열: 16 이면 두 숫자 카드의 값 줄이 넘친다(tests/js/board-dir-fit) */
-  --dir-gap: 4px;                        /* 지시 이름 줄과 값 줄 사이 */
+  --dir-gap: 4px;
+  --dir-min-h: 112px;                     /* 제목·숫자·설명 3단 카드 */
   --dir-info-dy: -3px;                   /* (i) 단추(28) 가운데 = 지시 이름 줄(20) 가운데 */
   --num-underline-offset: 3px;           /* 숫자 링크 점선 밑줄 */
   --lift-y: -2px;                        /* 누를 수 있는 카드 가리킴 떠오름(card-lift 와 같다) */
@@ -1312,6 +1721,7 @@ html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var
     flex-direction: column;
     justify-content: space-between;
     gap: var(--dir-gap);
+    min-height: var(--dir-min-h);
     min-width: 0;
     border: var(--border-w) solid transparent;
     border-radius: var(--radius-card);
@@ -1324,10 +1734,16 @@ html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var
   .ui-dir-sub { color: var(--dir-sub); }
   .ui-dir-num {
     color: var(--dir-num);
-    text-decoration: underline dotted var(--muted-foreground) var(--border-w);
+    text-decoration: underline solid transparent var(--border-w);
     text-underline-offset: var(--num-underline-offset);
     transition: color var(--dur-fast) ease, text-decoration-color var(--dur-fast) ease;
   }
+  .ui-dir-values { display: flex; align-items: stretch; gap: var(--pad-tile-x); min-width: 0; }
+  .ui-dir-stat { display: flex; flex-direction: column; align-items: flex-start; gap: var(--btn-gap-sm); min-width: 0; }
+  .ui-dir-num { display: inline-flex; align-items: baseline; gap: var(--btn-gap-sm); white-space: nowrap; }
+  .ui-dir-stat[data-tone="bad"] { --dir-num: var(--bad); }
+  .ui-dir-stat[data-tone="warn"] { --dir-num: var(--warn); }
+  .ui-dir-sub { align-self: flex-end; margin-left: auto; padding-bottom: var(--border-w); white-space: nowrap; }
   .ui-dir-info {
     position: absolute;
     top: calc(var(--dir-pad-y) + var(--dir-info-dy));
@@ -1343,6 +1759,7 @@ html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var
 
   /* 지시 카드: 칸(.ui-dir-cell)이 통째로 떠올라 단추 면·숫자 층·(i)가 함께 움직인다(숫자 링크를 가리켜도 카드가 가라앉지 않는다) */
   .ui-dir-face {
+    min-height: var(--dir-min-h);
     background-color: var(--card);
     color: var(--card-foreground);
     border-color: var(--border);
@@ -1350,7 +1767,7 @@ html[data-page="citizen"] #fbar [data-fst="2"][aria-pressed="true"] { color: var
     transition: box-shadow var(--dur-lift) ease, border-color var(--dur-lift) ease, background-color var(--dur-lift) ease;
   }
   .ui-dir-face[aria-pressed="true"] ~ .ui-dir-layer { --dir-num: var(--primary); }
-  .ui-dir-link:hover .ui-dir-num { color: var(--primary); text-decoration-color: var(--primary); text-decoration-style: solid; }
+  .ui-dir-link:is(:hover, :focus-visible) .ui-dir-num { text-decoration-color: currentColor; }
   .ui-dir-cell { transition: translate var(--dur-lift) var(--ease-out); }
   @media (hover: hover) {
     .ui-dir-cell:hover { translate: 0 var(--lift-y); }

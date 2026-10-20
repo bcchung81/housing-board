@@ -42,7 +42,7 @@ export const GU_CITIES = Object.keys(METRO_AREAS).filter((c) => guOf(c).length);
    개요 /map?sido=41&pick=<시> 로 바꿔(replace) 그 시의 구 메뉴를 연다. 지표(?metric=)는 넘긴다. 시 단위 코드에만 적힌 사업(구 미정)을 여는 ?gu=none 은 그대로 상세.
    전역 이름을 남기지 않게 함수로 감싼다(전역 var 가 생기면 같은 이름을 최상위 const 로 쓰는 app.js 가 SyntaxError 로 통째로 멈춘다) */
 export const MAP_MODE_INIT = "(function(){try{var q=new URLSearchParams(location.search),c=q.get('sgg'),m=q.get('metric'),d=document.documentElement;"
-  + `if(c&&${JSON.stringify(GU_CITIES)}.indexOf(c)>=0&&q.get('gu')!=='none'&&!['project','pnu','bjd','code','region'].some(function(k){return q.has(k)})){d.setAttribute('data-map-mode','overview');location.replace('/map?sido='+c.slice(0,2)+'&pick='+c+(m?'&metric='+encodeURIComponent(m):''));return}`
+  + `if(c&&${JSON.stringify(GU_CITIES)}.indexOf(c)>=0&&q.get('gu')!=='none'&&!['project','pnu','bjd','code','region'].some(function(k){return q.has(k)})){d.setAttribute('data-map-mode','overview');location.replace('/map?sido='+c.slice(0,2)+'&pick='+c+(m?'&metric='+encodeURIComponent(m):'')+(q.get('id')?'&id='+encodeURIComponent(q.get('id')):q.get('cand')?'&cand='+encodeURIComponent(q.get('cand')):''));return}`
   + "d.setAttribute('data-map-mode',['project','pnu','bjd','sgg','code','region'].some(function(k){return q.has(k)})?'detail':'overview')}catch(e){}})()";
 
 /* 값 한 묶음: u = 진행 사업 호수, q = 진행 사업 중 호수 미확인 건수, n = 진행 사업 수, d = 지연 사업 수(장기 포함), a = 앞으로 12개월 준공 호, an = 그 예정 수, mi = 같은 기간 입주 호, mn = 그 예정 수,

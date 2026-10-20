@@ -3,7 +3,7 @@
    상태는 색만으로 알리지 않고 글자도 둔다. 시안: docs/design/home-concept/sources.html */
 import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
-import { PanelHead } from '@/components/page';
+import { MetricRow, PanelHead } from '@/components/page';
 import { Card } from '@/components/ui/card';
 import InfoTip from '@/components/ui/info-tip';
 import ScopeChip from '@/components/ui/scope-chip';
@@ -60,6 +60,7 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
   const all = statusRows(hs, items);
   const issues = all.filter((r) => !r.ok || r.warn), okRows = all.filter((r) => r.ok && !r.warn);
   const nFail = all.filter((r) => !r.ok).length, nWarn = all.filter((r) => r.warn).length;
+  const failNames = all.filter((r) => !r.ok).map((r) => r.name);
   const rows = issues.map(issueRow);
   /* 모든 행이 같은 표지인 열(예: 구분 모두 HOME · 원천 기준일 없음)은 접는다 */
   const text = (v: Row['c'][string]) => (v === null || v === undefined ? null : typeof v === 'object' ? (v.na !== undefined ? null : v.text ?? null) : String(v));
@@ -75,7 +76,7 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
 
   return (
     <Card render={<section aria-label="수집 상태" />}>
-      <PanelHead title={<>수집 상태<span className="ml-2 text-sm font-normal text-muted-foreground tabular-nums" title={`우리 원천 ${items.length}곳(원천 카탈로그) · 정책 진행 자료(HOME) 원천 ${hs.sources.length}곳(덤프 수집 실행 ${fmt(hs.runs.total)}회 중 실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted})`}>{all.length}곳(우리가 모은 원천 {items.length} + 정책 진행 자료 {hs.sources.length}) · 실패 {nFail} · 경고 {nWarn}</span></>}
+      <PanelHead title="수집 상태"
         scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 우리가 모은 원천 카탈로그 전체(전국·지역 원천)와 정책 진행 자료(HOME)의 원천 전체" />}>
         <LegendList>
           {nFail ? <li className={KEY}><i className={`${dot} rounded-full bg-bad`} aria-hidden="true" />실패</li> : null}
@@ -89,6 +90,12 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
           </dl>
         </InfoTip>
       </PanelHead>
+      <div title={`우리 원천 ${items.length}곳(원천 카탈로그) · 정책 진행 자료(HOME) 원천 ${hs.sources.length}곳(덤프 수집 실행 ${fmt(hs.runs.total)}회 중 실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted})`}>
+        <MetricRow label="원천" value={all.length} unit="곳"
+          items={[`우리가 모은 원천 ${items.length} + 정책 진행 자료 ${hs.sources.length}`,
+            <span key="f" className={nFail ? 'text-bad' : undefined}>실패 {nFail}{failNames.length ? ` (${failNames.join(' · ')})` : ''}</span>,
+            <span key="w" className={nWarn ? 'text-warn' : undefined}>경고 {nWarn}</span>]} />
+      </div>
       {rows.length ? (
         <>
           {folded.length ? <p className="m-0 text-sm text-muted-foreground">{folded.join(' · ')}</p> : null}

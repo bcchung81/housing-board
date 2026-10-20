@@ -66,12 +66,13 @@ test('② 가장 많은 단계 줄(1급): 최댓값 줄 하나만 .top, 같으�
   assert.ok(CSS.includes('.sm-r.top .sm-sv { font-weight: 700; }') && /\.sm-b > i \{[^}]*background: var\(--c-ink\); \}/.test(CSS) && !CSS.includes('.sm-r.top .sm-b > i') && /\.sm-b \{[^}]*height: 10px;/.test(CSS), '모든 단계 줄 막대는 진한 단계색(--c-ink) 100%·높이 10px(바탕 대비 3:1 이상), 가장 많은 줄은 숫자만 굵게');
 });
 
-test('③ 다음 준공 D-day: 날짜까지면 D-n(오늘 D-day, 지나면 없음), 달까지만이면 칩 대신 \'10월\', 30일 안이면 주색 채운 칩', () => {
+test('③ 다음 준공 날짜 칩: 날짜까지면 \'n일 뒤\'(오늘 \'오늘\', 지나면 없음 — 일반사용자 화면은 \'D-\' 를 쓰지 않는다, 2026-10-19), 달까지만이면 칩 대신 \'10월\', 30일 안이면 주색 채운 칩', () => {
   const T = '2026-10-18', d = (w) => plain(ctx.nxDday(w, T));
-  assert.deepEqual(d('2026-10-31'), { t: 'D-13', n: 13, chip: true, soon: true });
-  assert.deepEqual(d('2026-10-18'), { t: 'D-day', n: 0, chip: true, soon: true });
-  assert.equal(d('2026-11-17').soon, true, '30일째까지 강조'); assert.equal(d('2026-11-18').soon, false, '31일째부터 옅은 칩'); assert.equal(d('2026-11-18').t, 'D-31');
-  assert.equal(d('2027-02-01').t, 'D-106');
+  assert.deepEqual(d('2026-10-31'), { t: '13일 뒤', n: 13, chip: true, soon: true });
+  assert.deepEqual(d('2026-10-18'), { t: '오늘', n: 0, chip: true, soon: true });
+  assert.equal(d('2026-11-17').soon, true, '30일째까지 강조'); assert.equal(d('2026-11-18').soon, false, '31일째부터 옅은 칩'); assert.equal(d('2026-11-18').t, '31일 뒤');
+  assert.equal(d('2027-02-01').t, '106일 뒤');
+  assert.doesNotMatch(fnBody('nxDday'), /D-/, "'D-' 표기 없음");
   assert.equal(ctx.nxDday('2026-10-17', T), null, '지난 날은 칩 없음'); assert.equal(ctx.nxDday('', T), null);
   assert.deepEqual(d('2026-10'), { t: '10월', n: null, chip: false, soon: false }, '달까지만이면 칩 대신 글');
   assert.equal(d('2027-03').t, '2027년 3월'); assert.equal(d('2027').t, '2027년');

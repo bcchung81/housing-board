@@ -31,14 +31,16 @@ function rules(src) {
   return out;
 }
 
-/* <html> 에 붙는 규칙인지, 특이도는 얼마인지. 지도(/map)의 html 은 늘 data-map-shell 이 있다 */
+/* <html> 에 붙는 규칙인지, 특이도는 얼마인지. 지도(/map)의 html 은 늘 data-map-shell + data-design="warm"(2026-10-19)이고 data-elev·data-page 는 없다.
+   opt.citizen: /citizen 문서(data-design="warm" + data-page="citizen" + data-elev="raised", data-map-shell 없음)로 푼다 — /citizen 내장 지도 값이 그대로인지 보는 시험용 */
 function htmlRule(sel, o) {
   const parts = sel.split(',').map((s) => s.trim());
   let best = null;
   for (const s of parts) {
     if (!/^(:root|html|\.dark)/.test(s) || /\s/.test(s)) continue;
     let ok = true;
-    const want = { '.dark': o.theme === 'dark', ':not(.dark)': o.theme !== 'dark', '[data-ov-metric="d"]': o.metric === 'd', '[data-map-shell]': true, ":root": true, 'html': true, "[data-aud='public']": o.aud === 'public' };
+    const want = { '.dark': o.theme === 'dark', ':not(.dark)': o.theme !== 'dark', '[data-ov-metric="d"]': o.metric === 'd', '[data-map-shell]': !o.citizen, '[data-design="warm"]': true,
+      '[data-page="citizen"]': !!o.citizen, '[data-elev="raised"]': !!o.citizen, ':not([data-elev="raised"])': !o.citizen, ":root": true, 'html': true, "[data-aud='public']": o.aud === 'public' };
     const toks = s.match(/:not\([^)]*\)|\[[^\]]+\]|\.[\w-]+|:root|^html/g) || [];
     if (toks.join('') !== s) continue;   // 모르는 꼴(자손·다른 속성)은 html 규칙으로 보지 않는다
     for (const t of toks) if (!(t in want) || !want[t]) ok = false;

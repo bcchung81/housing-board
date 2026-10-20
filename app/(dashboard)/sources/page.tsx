@@ -2,7 +2,7 @@ import { readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { Fragment } from 'react';
 import type { Metadata } from 'next';
-import { Dl, Page, PageHead, PanelHead } from '@/components/page';
+import { Dl, Page, PageHead, PanelHead, SubTitle } from '@/components/page';
 import { legend } from '@/components/board/styles';
 import Fold from '@/components/sources/Fold';
 import HashOpen from '@/components/sources/HashOpen';
@@ -36,7 +36,6 @@ export const metadata: Metadata = { title: '데이터 원본' };
 /* 지역 지도 번들: 공개 지역만(광산·나주는 preview — 2026-10-19 결정: 화면은 수도권만, scripts/build.js·lib/coverage.js 와 같은 규칙) */
 const REGIONS = regionIndex.regions.filter((r) => r.visibility === 'public');
 
-const H3 = 'mt-5 mb-1 text-base font-normal';   // 기타 탭 안의 구역 제목
 /* 기타 탭 표의 표지 뜻: 머리 줄 범례 칩(뜻은 title) */
 const MARKS: [string, string][] = [['✓ 사용', '사용'], ['△ 일부 지역·가공본', '일부 지역·가공본'], ['미연결', '필요하나 연결 안 됨'], ['SAMPLE', '시안 고정값'], ['보관', '파일로 받아 둠'], ['실시간', '화면 조회 때 요청']];
 
@@ -152,10 +151,12 @@ const plain = (t: string) => showOrg(dotDates(t));
 function SourceDetail({ s }: { s: Source }) {
   return (
     <section id={s.id} aria-label={s.dataset} className="scroll-mt-20 border-b border-border py-3 last:border-b-0">
-      <h3 className="m-0 text-sm">{s.dataset}</h3>
+      <h3 className="ui-h3">{s.dataset}</h3>
       <p className="mt-1 mb-1.5 text-sm text-muted-foreground">{plain(s.description)}</p>
       <Dl className="text-sm">
         <dt>기관</dt><dd>{plain(s.provider)}</dd>
+        <dt>원천 기준일</dt><dd>{s.sourceAsOf ? dotDates(s.sourceAsOf) : '확인하지 못함'}</dd>
+        <dt>수집일</dt><dd>{s.collectedAt ? dotDates(s.collectedAt.slice(0, 10)) : '기록 없음'}</dd>
         <dt>조회 조건</dt><dd>{Object.entries(s.query).map(([k, v]) => `${k}: ${Array.isArray(v) ? v.join(', ') : String(v)}`).join(' · ')}</dd>
         <dt>활용 화면</dt><dd>{s.usedBy.length ? s.usedBy.join(' · ') : '화면 미연결'}</dd>
         <dt>이용허락</dt><dd>{s.license ?? '확인하지 못함'}</dd>
@@ -363,27 +364,28 @@ export default async function SourcesPage() {
           </InfoTip>
         </p>
         <section aria-labelledby="h-screen" className={GRID_DENSE}>
-          <h3 id="h-screen" className={H3}>화면별 요약</h3>
+          <SubTitle id="h-screen">화면별 요약</SubTitle>
           <DataGrid label="화면별 데이터 사용과 부족한 자료" cols={SCREEN_COLS} rows={screenRows} sortable={false} />
         </section>
         <section id="board-data" aria-labelledby="h-board" className={`scroll-mt-20 ${GRID_DENSE}`}>
-          <h3 id="h-board" className={H3}>종합상황판 · 위젯별 데이터</h3>
+          <SubTitle id="h-board">종합상황판 · 위젯별 데이터</SubTitle>
           <DataGrid label="종합상황판 위젯별 데이터" cols={BOARD_COLS} rows={withDetail(boardRows)} sortable={false} />
         </section>
         <section id="map-data" aria-labelledby="h-map" className={`scroll-mt-20 ${GRID_DENSE}`}>
-          <h3 id="h-map" className={H3}>지도 · 데이터별 사용</h3>
+          <SubTitle id="h-map">지도 · 데이터별 사용</SubTitle>
           <DataGrid label="지도 데이터별 사용과 수집 현황" cols={MAP_COLS} rows={withDetail(mapRows)} />
         </section>
         <section id="acquire" aria-labelledby="h-acquire" className={`scroll-mt-20 ${GRID_DENSE}`}>
-          <div className="mt-5 mb-1 flex items-center gap-1">
-            <h3 id="h-acquire" className="m-0 text-base font-normal" title={`조사 ${dotDates(ACQUIRE_ASOF)} · 조사 목록 ${ACQUIRE.length}건 중 수집·연결됨 ${ACQUIRE.length - acqOpen.length}건은 뺌`}>추가 확보 필요 · API {acqApi.length}건 · 파일 {acqFile.length}건</h3>
+          <div className="mt-5 mb-1 flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+            <SubTitle id="h-acquire" className="m-0" title={`조사 ${dotDates(ACQUIRE_ASOF)} · 조사 목록 ${ACQUIRE.length}건 중 수집·연결됨 ${ACQUIRE.length - acqOpen.length}건은 뺌`}>추가 확보 필요</SubTitle>
+            <span className="text-sm text-muted-foreground tabular-nums">API {acqApi.length}건 · 파일 {acqFile.length}건</span>
             <InfoTip label="추가 확보 필요"><p>{dotDates(ACQUIRE_ASOF)} 조사 목록 {ACQUIRE.length}건 중 이미 수집·연결된 {ACQUIRE.length - acqOpen.length}건을 뺀 수입니다. 상태 = 신청·받기 조건·파일 수집 여부.</p></InfoTip>
           </div>
           <DataGrid label="추가 확보 필요 건수" cols={ACQ_SUM_COLS} rows={acqSumRows} sortable={false} />
           <DataGrid label="추가 확보 필요 API·파일" cols={ACQ_COLS} rows={acqRows} />
         </section>
         <section id="catalog" aria-labelledby="h-catalog" className={`scroll-mt-20 ${GRID_DENSE}`}>
-          <h3 id="h-catalog" className={H3}>보관 원천 · 기준일·데이터량</h3>
+          <SubTitle id="h-catalog">보관 원천 · 기준일·데이터량</SubTitle>
           <Fold plain title="보관 데이터셋 목록" meta={`${items.length}건 · 수집일 · 실측 용량 · 부족한 자료`}>
             <DataGrid label="원천 카탈로그 요약" cols={CATALOG_COLS} rows={catalogRows} />
             <Fold plain title="원천 조회 조건·이용허락" meta={`${items.length}건`}>

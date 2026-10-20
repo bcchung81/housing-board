@@ -25,7 +25,7 @@ function srcOf(text, name) {
   assert.ok(i >= 0, name);
   return text.slice(i, text.indexOf('\n', i));
 }
-const NAMES = ['PLACEHOLDER', 'shortName', 'noticeName', 'blockOf', 'fullDate', 'inDate', 'inYear', 'inLabel', 'dayKey', 'inCmp', 'periodEnd', 'prjMarks', 'nextStep', 'prjJudge', 'distinctNames', 'bigNum'];
+const NAMES = ['PLACEHOLDER', 'shortName', 'noticeName', 'blockOf', 'fullDate', 'inDate', 'inYear', 'inLabel', 'dayKey', 'inCmp', 'periodEnd', 'prjMarks', 'nextStep', 'prjJudge', 'lateShort', 'distinctNames', 'bigNum'];
 const T = {};
 vm.createContext(T);
 vm.runInContext([srcOf(SEARCH, 'OF_STAGE'), ...NAMES.map((n) => srcOf(TPL, n)), `Object.assign(this, { OF_STAGE, ${NAMES.join(', ')} });`].join('\n'), T);
@@ -135,6 +135,22 @@ test('예정 대비(안 A): prjJudge 는 템플릿과 글자까지 같다 — �
   assert.equal(P.factOf({ k: 'ok', t: '' }, false), '');
 });
 
+/* 2026-10-19 사용자 피드백('상태에 해당 셀을 넘치는 부분은 용어를 수정해서 셀 안에'): /citizen 사업 표 상태 칸은 짧은 말, 긴 문장(prjJudge)은 title — 두 쪽 같은 결과 */
+test('상태 칸 짧은 말: lateShort 는 템플릿과 글자까지 같다 — 주의/지연 \'{고비} n개월 지남\', 그 밖 빈칸, 긴 문장보다 짧다', () => {
+  let n = 0;
+  for (const { c, r, p } of ALL) {
+    const a = P.lateShort(r), b = T.lateShort(D, c, p), j = P.prjJudge(r);
+    assert.equal(a, b, r.id);
+    if (j.k === 'caution' || j.k === 'delay') {
+      assert.match(a, /^(?:(모집 공고|착공|준공|입주|허가) )?(\d+개월|예정일) 지남$/, r.id); assert.ok(a.length < j.t.length, `${r.id} ${a}`); assert.doesNotMatch(a, /늦어짐|지연|D-/); n++;
+      if (j.m) assert.ok(j.t.includes(`${j.m}개월`) && a.includes(`${j.m}개월`), '같은 개월 수');
+    } else assert.equal(a, '', r.id);
+  }
+  assert.ok(n > 0, String(n));
+  const r = LM.bySgg['28290'].find((x) => x.id === 'PRJ-28290-0056');
+  assert.equal(P.lateShort(r), `준공 ${r.overdue.months}개월 지남`);
+});
+
 /* 화면과 같은 순서로 목록을 만든다(page.tsx 의 load·CitizenProjectsPage 와 같은 함수 사슬) */
 const rows = V.rowsOf(LM.bySgg, IDX.projects, IDX.sgg);
 const parse = (q) => V.parseFilters(q, { policies: [], programs: [], sidoOk: (c) => P.METRO.includes(c), guOf });
@@ -231,13 +247,13 @@ test("화면 파일의 한글 문구: 정책·내부 말(원장·판정·지연�
   assert.doesNotMatch(page, /Download|Printer|ChipBar|Questions|Pipeline|PolicyCompare|statusCell|lateCell|DrawerHead/, '정책 화면 블록·조작 없음');
 });
 
-test('재사용: 목록 행·거르기·서랍은 정책 화면과 같은 함수(getProjectsIndex·getProjectDrawer·parseFilters·applyFilters·pastDueOf·Drawer), 내 동네는 menu.ts 를 읽기만', () => {
+test('재사용: 목록 행·거르기·사업 창은 정책 화면과 같은 함수(getProjectsIndex·getProjectDrawer·parseFilters·applyFilters·pastDueOf·projectWindow·WindowSeed), 내 동네는 menu.ts 를 읽기만', () => {
   const page = read(FILES[0]);
-  for (const s of ['getProjectsIndex()', 'getProjectDrawer(id)', 'getPublicDetails()', 'parseFilters(', 'applyFilters(idx.rows, f)', 'pastDueOf(r)', "from '@/components/projects/Drawer'", 'publicItems(', 'byYear(items, today)']) assert.ok(page.includes(s), s);
+  for (const s of ['getProjectsIndex()', 'getProjectDrawer(id)', 'getPublicDetails()', 'parseFilters(', 'applyFilters(idx.rows, f)', 'pastDueOf(r)', "projectWindow(id, 'public', { today })", "from '@/components/windows/WindowSeed'", '<WindowSeed win={sel} path="/citizen/projects"', 'publicItems(', 'byYear(items, today)']) assert.ok(page.includes(s), s);
   const my = read('components/citizen/MyAreaFirst.tsx');
   assert.match(my, /myAreaScope\(raw\)/); assert.match(my, /localStorage\.getItem\('myArea'\)/); assert.doesNotMatch(my, /localStorage\.setItem/);
-  assert.match(read('components/citizen/FindFilters.tsx'), /className="ui-tabs" role="group" aria-label="지역"/);
-  assert.match(read('components/citizen/FindFilters.tsx'), /className="ui-tabs" role="group" aria-label="단계"/);
+  assert.match(read('components/citizen/FindFilters.tsx'), /className="ui-tabs ui-tabs-seg" role="group" aria-label="지역"/);
+  assert.match(read('components/citizen/FindFilters.tsx'), /className="ui-tabs ui-tabs-line" role="group" aria-label="단계"/);
   const steps = read('components/citizen/PublicSteps.tsx');
   assert.match(steps, /LADDER\.map/); assert.match(steps, /stepState\(i, current\)/);
 });

@@ -79,7 +79,7 @@ test('다크 지도: 기존 건물(기반시설) 면은 네이비 바탕 3:1 이
   const stage = Object.entries(D.color).filter(([k]) => k !== 'priv').map(([, v]) => v);
   const dimmest = Math.min(...stage.map(lum));
   for (const c of fac) {
-    assert.ok(ratio(c, '#111111') >= 3, `${c} 대비 ${ratio(c, '#111111').toFixed(2)}`);
+    assert.ok(ratio(c, D.bg) >= 3, `${c} 대비 ${ratio(c, D.bg).toFixed(2)}`);   // 지도 다크 바탕(2026-10-19 웜 #1D1C19)
     assert.ok(lum(c) < dimmest, `${c} 가 사업 표지 색보다 밝다`);
   }
 });
@@ -128,7 +128,7 @@ test('다크 지도: 기존 건물 파랑 단계는 지붕(밝게 섞은 윗면)
   const roof = (h) => '#' + [1, 3, 5].map((i) => Math.round(parseInt(h.slice(i, i + 2), 16) * 0.74 + 255 * 0.26).toString(16).padStart(2, '0')).join('');   // paintBuildings: 지붕 = 흰색 26% 섞음
   const stage = Object.entries(D.color).filter(([k]) => k !== 'priv').map(([, v]) => v);
   assert.ok(lum(roof(ramp[4])) < Math.min(...stage.map(lum)), '가장 밝은 파랑 지붕이 단계 색보다 밝다');
-  assert.ok(ratio(roof(ramp[4]), '#111111') >= 3, `지붕 대비 ${ratio(roof(ramp[4]), '#111111').toFixed(2)}`);
+  assert.ok(ratio(roof(ramp[4]), D.bg) >= 3, `지붕 대비 ${ratio(roof(ramp[4]), D.bg).toFixed(2)}`);
   assert.ok(lum(ramp[4]) <= lum('#394C96') + 1e-9 && lum(ramp[3]) <= lum('#2E3F82') + 1e-9, '위 두 단은 3차 값(#33468D·#4155A3)보다 한 단계 낮다');
   assert.match(mapCss('dark'), /\.sw\.ramp\{background:linear-gradient\(90deg,#17204D,#394C96\)\}/);   // 범례 견본도 같이
 });
@@ -150,8 +150,8 @@ test('사업 카드(2026-10-15): 화면 용어(상태·공정률·호·점 날�
   assert.match(css, /\.pc-note summary\{[^}]*-webkit-line-clamp:2/);
   /* 반투명 유리: backdrop-filter 와, 못 쓰는 브라우저용 @supports 대체(두 테마) */
   assert.match(css, /(?:^|\n)\.maplibregl-popup-content\{[^}]*background:var\(--glass-pop\);-webkit-backdrop-filter:var\(--glass-pop-blur\);backdrop-filter:var\(--glass-pop-blur\)/);
-  assert.equal(mapVars({ theme: 'dark', fallback: true })['--glass-pop'], 'rgba(17,17,17,.98)');   // 대체값은 app/globals.css 의 @supports not 안
-  assert.equal(mapVars({ theme: 'light', fallback: true })['--glass-hud'], 'rgba(255,255,255,.98)');
+  assert.equal(mapVars({ theme: 'dark', fallback: true })['--glass-pop'], 'rgba(29,28,25,.98)');   // 대체값은 app/globals.css 의 @supports not 안(지도는 웜 덮기 블록의 대체값, 2026-10-19)
+  assert.equal(mapVars({ theme: 'light', fallback: true })['--glass-hud'], 'rgba(252,252,250,.98)');
   /* 접힘을 펴면 자리를 다시 맞춘다 */
   assert.match(app, /popup\.getElement\(\)\.addEventListener\('toggle', \(\) => \{ if \(popup !== own\) return; popup\.setOffset\(\[0, 0\]\); fitCard\(\); \}, true\)/);
 });

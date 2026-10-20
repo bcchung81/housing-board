@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 /* 전국 표본 점검: 지역 이름을 /api/v1/codes/search 로 코드로 바꾼 뒤 resolve → buildings → permits → infra 를 차례로 불러
    "번들 없이도 지도가 끝까지 열리는가"를 지역마다 표로 보여 준다(경계 윤곽·건물·인허가·기반시설·응답 시간).
-   사용: node scripts/smoke.js [기본주소] [표본파일|지역이름...]   (기본주소 기본값 https://housing-board.vercel.app, 표본 기본값 tests/smoke/regions.json)
+   사용: node scripts/smoke.js [기본주소] [표본파일|지역이름...]   (기본주소 기본값 https://the-housing.vercel.app, 표본 기본값 tests/smoke/regions.json)
    예:   node scripts/smoke.js http://localhost:8000
-         node scripts/smoke.js https://housing-board.vercel.app "하남시 감일동" "장위동 68-37"
+         node scripts/smoke.js https://the-housing.vercel.app "하남시 감일동" "장위동 68-37"
    호출 사이에 간격(SMOKE_GAP_MS, 기본 900)을 둔다: 행정표준코드·건물대장 API 는 초당 한도가 있어 몰아 부르면 막힌다(키 풀이 하루 소진으로 기록하던 결함의 원인).
    종료 코드: 하나라도 '열리지 않음'(해석 실패·경계 없음)이면 1. 인허가 0건·정류소 없음(서울)은 정상이다.
    시험: tests/js/smoke.test.cjs(판정 함수) */
@@ -41,7 +41,7 @@ function judge(r) {
 }
 
 async function main() {
-  const base = (process.argv[2] || 'https://housing-board.vercel.app').replace(/\/$/, '');
+  const base = (process.argv[2] || 'https://the-housing.vercel.app').replace(/\/$/, '');
   const rest = process.argv.slice(3);
   const list = rest.length ? rest.map((q) => ({ q })) : JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'tests', 'smoke', 'regions.json'), 'utf8')).regions;
   const call = async (url) => {

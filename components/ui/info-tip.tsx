@@ -14,7 +14,7 @@ export default function InfoTip({ label, text, children, className }: { label: s
         <Info className="size-4 flex-none" aria-hidden="true" />{text ? <span>{text}</span> : null}
       </Popover.Trigger>
       <Popover.Portal>
-        <Popover.Positioner sideOffset={6} align="start" collisionPadding={12} className="z-50">
+        <Popover.Positioner sideOffset={6} align="start" collisionPadding={12} className="z-70">
           <Popover.Popup className="max-w-[min(420px,calc(100vw-24px))] rounded-tile border border-border bg-popover px-tile-x py-tile-y text-sm leading-body text-popover-foreground shadow-pop outline-none transition-[opacity,translate] duration-150 ease-out data-[ending-style]:translate-y-[-2px] data-[ending-style]:opacity-0 data-[starting-style]:translate-y-[-2px] data-[starting-style]:opacity-0 motion-reduce:transition-none">
             <Popover.Title className="m-0 mb-1.5 text-sm font-bold">{label}</Popover.Title>
             <div className="[&_dd]:m-0 [&_dd]:mb-1.5 [&_dd]:text-muted-foreground [&_dl]:m-0 [&_dt]:font-bold [&_p]:m-0 [&_p+p]:mt-1.5">{children}</div>

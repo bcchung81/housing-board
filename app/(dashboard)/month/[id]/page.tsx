@@ -4,11 +4,11 @@ import Link from 'next/link';
 import { ChevronLeft } from 'lucide-react';
 import PanelLink from '@/components/board/PanelLink';
 import { ACTOR_COLOR } from '@/components/charts/palette';
-import { Dash, Page, PageHead, PanelHead, SrcLink, sub } from '@/components/page';
+import { Dash, FactNote, MetricRow, Page, PageHead, PanelHead, SrcLink } from '@/components/page';
 import StageKpis from '@/components/StageKpis';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { DataGrid } from '@/components/ui/data-grid';
+import ScopeChip from '@/components/ui/scope-chip';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, sidoName, lhOfMonth, lhUnits, staleText, ymDot } from '@/lib/board/calc';
 import { getBoardData } from '@/lib/board/data';
 import { getProjectsIndex } from '@/lib/board/projects-index';
@@ -70,13 +70,15 @@ export default async function MonthPage({ params }: Props) {
   const nation = table.find((r) => r.code === NATION), area = sidoName(molit, NATION) ?? '전국';   // 범위 이름(통계누리 합계 자리 — 수도권, lib/board/data.ts)
   const i = molit.months.indexOf(ym);
   const lhStale = staleText(lh.sourceAsOf, calendar.referenceDate);   // LH 파일 낡음 표지(원장 기준일과의 차이 — 기관 화면과 같은 기준)
+  const lhStaleTag = lhStale ? <span className="ml-1.5 text-warn" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 원장 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</span> : null;
+  const lhDate = <> · 파일 기준 {dotDates(lh.sourceAsOf)}{lhStaleTag}</>;
   return (
     <Page>
       <PageHead crumbs={[{ label: '종합상황판', href: '/' }, { label: monthLabel(ym) }]} title={monthLabel(ym)}
+        meta={actual ? `실적${isProvisional(molit, ym) ? ' · 잠정' : ''} · 자료 기준 ${ymDot(last)}` : `예정 · 원장 기준 ${dotDates(calendar.referenceDate)}`}
+        metaTip={actual ? `통계누리 실적이 있는 달${isProvisional(molit, ym) ? ' · 통계누리가 잠정치로 낸 달입니다. 확정치는 2027년 9월 공표 예정' : ''} · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}` : '실적 자료가 없는 달 — 준공 예정만'}
         tip={actual ? `${area}·시도별 인허가·착공·모집·준공 호수와 시행주체별 호수${due.length ? ', 원장 준공 예정 사업' : ''}${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. ${due.length ? '원장 준공 예정 사업' : ''}${due.length && blocks.length ? '과 ' : ''}${blocks.length ? 'LH 준공 예정 블록' : ''}만 있습니다.`}>
-        {actual ? <Badge variant="ok" title="통계누리 실적이 있는 달">실적</Badge> : <Badge title="실적 자료가 없는 달 — 준공 예정만">예정</Badge>}
-        {actual && isProvisional(molit, ym) ? <Badge variant="warn" title="통계누리가 잠정치로 낸 달입니다. 확정치는 2027년 9월 공표 예정">잠정</Badge> : null}
-        <nav aria-label="이웃 달" className="ml-auto flex gap-4">
+        <nav aria-label="이웃 달" className="flex gap-4">
           {nb.prev ? <Link href={`/month/${nb.prev}`} title={`이전 달 ${monthLabel(nb.prev)}`} className="inline-flex items-center gap-px rounded-chip text-sm text-muted-foreground no-underline underline-offset-[3px] tabular-nums transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><ChevronLeft className="size-3.5" aria-hidden="true" />{ymDot(nb.prev)}</Link> : null}
           {nb.next ? <PanelLink href={`/month/${nb.next}`} full={`다음 달 ${monthLabel(nb.next)}`}>{ymDot(nb.next)}</PanelLink> : null}
         </nav>
@@ -105,22 +107,26 @@ export default async function MonthPage({ params }: Props) {
 
       {due.length ? (
         <Card render={<section aria-label="준공 예정 사업" />}>
-          <PanelHead title="준공 예정 사업" tip={`사업 원장 ${ymDot(calendar.observedMonth)} · 준공 실제가 없는 사업의 준공 현재 예정(사업당 하나) · ${area} · 종합상황판 '앞으로 12개월'·지역 공급의 준공 예정과 같은 자료·같은 값 · 날짜는 HOME 정본, LH 파일 날짜가 다르면 '원천 날짜 다름' · 예정일 지남 = 원장 기준일(${dotDates(calendar.referenceDate)})보다 앞섰는데 실제 기록 없음(합계에 포함)`}>
-            <span className={`${sub} tabular-nums`}>{fmt(due.length)}건 · {fmt(dueUnits)}호 · 원장 {dotDates(calendar.referenceDate)}</span>
+          <PanelHead title="준공 예정 사업" tip={`사업 원장 ${ymDot(calendar.observedMonth)} · 준공 실제가 없는 사업의 준공 현재 예정(사업당 하나) · ${area} · 종합상황판 '앞으로 12개월'·지역 공급의 준공 예정과 같은 자료·같은 값 · 날짜는 HOME 정본, LH 파일 날짜가 다르면 '원천 날짜 다름' · 예정일 지남 = 원장 기준일(${dotDates(calendar.referenceDate)})보다 앞섰는데 실제 기록 없음(합계에 포함)`}
+            scope={<ScopeChip scope={area} source="사업 원장" title={`준공 예정 사업의 범위: 사업 원장 ${ymDot(calendar.observedMonth)} · ${area}`} />}>
             <PanelLink href={`/region?sido=all&m=${ym}`} full={`지역 공급에서 ${monthLabel(ym)} 준공 예정 보기(${area})`}>지역 공급</PanelLink>
           </PanelHead>
+          <MetricRow className="mb-2" label="준공 예정" value={fmt(dueUnits)} unit="호" items={[`${fmt(due.length)}건`, `원장 ${dotDates(calendar.referenceDate)}`]} />
           <DataGrid label={`${monthLabel(ym)} 준공 예정 사업`} cols={DUE_COLS} rows={dueRows} quietCount />
         </Card>
       ) : null}
 
       <Card render={<section aria-label="LH 준공 예정" />}>
-        <PanelHead title="LH 준공 예정" tip={`LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)}${lhStale ? `(원장 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')})` : ''}. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.${due.length ? ' · 날짜는 파일 값 그대로(위 준공 예정 사업은 HOME 날짜 — 다르면 원천 날짜 다름 표지)' : ''}`}>
-          <span className={`${sub} tabular-nums`}>{blockTotal}블록 · {fmt(lhUnits(blocks))}호{past && blocks.length ? <span title="파일상 예정일 — 실제 준공 여부 미확인"> · 예정(미확인)</span> : null} · 파일 기준 {dotDates(lh.sourceAsOf)}{lhStale ? <Badge variant="warn" className="ml-1.5" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 원장 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</Badge> : null}</span>
+        <PanelHead title="LH 준공 예정" scope={<ScopeChip scope="LH 준공예정 파일" title={`LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)} — 사업 원장과 다른 원천`} />} tip={`LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)}${lhStale ? `(원장 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')})` : ''}. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.${due.length ? ' · 날짜는 파일 값 그대로(위 준공 예정 사업은 HOME 날짜 — 다르면 원천 날짜 다름 표지)' : ''}`}>
           {actual ? null : <SrcLink />}
         </PanelHead>
         {blocks.length > 0 ? (
-          <DataGrid label={`${monthLabel(ym)} LH 준공 예정 블록`} cols={LH_COLS} rows={blocks.map((b, k) => ({ id: String(k), c: { district: b.district, block: b.block, type: b.type, units: b.units, date: dayText(b.date), location: b.location } }))} />
-        ) : <p className={`${sub} m-0`}>이 달에 준공 예정인 LH 블록이 파일에 없습니다.</p>}
+          <>
+            <MetricRow className="mb-2" label="준공 예정" value={fmt(lhUnits(blocks))} unit="호"
+              items={[`${blockTotal}블록`, past ? <span key="p" title="파일상 예정일 — 실제 준공 여부 미확인">예정(미확인)</span> : null, <span key="d">파일 기준 {dotDates(lh.sourceAsOf)}{lhStaleTag}</span>]} />
+            <DataGrid label={`${monthLabel(ym)} LH 준공 예정 블록`} cols={LH_COLS} rows={blocks.map((b, k) => ({ id: String(k), c: { district: b.district, block: b.block, type: b.type, units: b.units, date: dayText(b.date), location: b.location } }))} />
+          </>
+        ) : <FactNote>이 달에 준공 예정인 LH 블록이 파일에 없습니다.{lhDate}</FactNote>}
       </Card>
     </Page>
   );

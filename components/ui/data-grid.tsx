@@ -10,6 +10,7 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { cn } from 'cn';
 import { Swatch } from '@/components/charts/Legend';
 import { Prov } from '@/components/ui';
+import { useOpenIds } from '@/components/windows/WindowHost';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './table';
 import { compare, display, dotDates, filterRows, groupStarts, headerRows, sortValue, splitPinned, wants, type Cell, type Col, type Row } from '@/lib/grid/spec';
 
@@ -19,7 +20,8 @@ import { compare, display, dotDates, filterRows, groupStarts, headerRows, sortVa
    - 줄무늬, 글자 열은 왼쪽·숫자 열은 오른쪽 정렬, 묶음(머리글 2단)이 바뀌는 곳에 세로 구분선, 없는 값은 흐린 –.
    - 30행을 넘는 표는 검색 칸과 건수를, 120행을 넘는 표는 보이는 행만 그린다(LH 준공 예정 351행: DOM 행 351 → 수십).
    - 행에 detail(실제 레코드 예시)이 있으면 첫 칸에 ▸ 가 붙고, 행을 누르면(또는 ▸ 단추) 바로 아래에 예시 표가 열린다. 칸 안의 링크를 누르면 펼치지 않고 그 링크로 간다.
-   - 행에 href 가 있으면 행을 눌러 그 주소로 간다(스크롤 유지, 사업 목록 → 상세 서랍). 키보드는 칸 안의 링크로 간다. sel 인 행은 선택 바탕.
+   - 행에 href 가 있으면 행을 눌러 그 주소로 간다(스크롤 유지 — 행 안의 같은 주소 링크를 대신 눌러, 사업 목록이면 창 관리자가 가로채 사업 창을 연다). 키보드는 칸 안의 링크로 간다.
+     sel 인 행은 선택 바탕 — 창 관리자(components/windows) 장착 뒤에는 href 가 있는 행은 창에 열린 사업이면 선택(서버가 다시 그리지 않아도 창을 따른다).
    서버 화면은 직렬화되는 열·행(lib/grid/spec.ts 의 Col·Row)만 넘긴다. 시험: tests/js/grid.test.cjs */
 
 const features = tableFeatures({
@@ -74,6 +76,8 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
   const [open, setOpen] = React.useState<ReadonlySet<string>>(new Set());
   const uid = React.useId();
   const router = useRouter();
+  const openIds = useOpenIds();
+  const selOf = (r: Row) => (openIds && r.href ? openIds.has(r.id) : !!r.sel);
   /* 행을 눌러 서랍을 여는 동안(서버가 그린다) 그 행에 진행 표지 */
   const [going, startGoing] = React.useTransition();
   const [goingId, setGoingId] = React.useState<string | null>(null);
@@ -121,9 +125,14 @@ export function DataGrid({ cols, rows, label, sortable = true, maxHeight, quietC
     <TableRow key={r.id} total={pinned} data-index={measure ? i : undefined} ref={measure ? v.measureElement : undefined}
       aria-rowindex={want.virtual ? (pinned ? undefined : lead + i + 1) : undefined}
       onClick={expandable && r.detail ? (e) => { if (!(e.target as HTMLElement).closest('a, button, input')) toggle(r.id); }
-        : r.href ? (e) => { if (!(e.target as HTMLElement).closest('a, button, input')) { setGoingId(r.id); startGoing(() => router.push(r.href!, { scroll: false })); } } : undefined}
-      data-sel={r.sel ? '' : undefined} aria-busy={going && goingId === r.id ? true : undefined}
-      className={cn(!pinned && (r.sel ? 'bg-accent' : i % 2 ? zebra : 'bg-card'), r.muted && 'text-muted-foreground', ((expandable && r.detail) || r.href) && 'cursor-pointer', going && goingId === r.id && 'cursor-progress animate-pulse motion-reduce:animate-none')}>
+        : r.href ? (e) => {
+          if ((e.target as HTMLElement).closest('a, button, input')) return;
+          const a = [...e.currentTarget.querySelectorAll('a')].find((x) => x.getAttribute('href') === r.href);
+          if (a) { a.click(); return; }   // 링크를 누른 것과 같게(사업 창 가로채기 포함)
+          setGoingId(r.id); startGoing(() => router.push(r.href!, { scroll: false }));
+        } : undefined}
+      data-sel={selOf(r) ? '' : undefined} aria-busy={going && goingId === r.id ? true : undefined}
+      className={cn(!pinned && (selOf(r) ? 'bg-accent' : i % 2 ? zebra : 'bg-card'), r.muted && 'text-muted-foreground', ((expandable && r.detail) || r.href) && 'cursor-pointer', going && goingId === r.id && 'cursor-progress animate-pulse motion-reduce:animate-none')}>
       {r.note !== undefined ? (
         <>
           <TableCell className={stickyCell}><CellView v={r.c[first]} col={cols[0]} /></TableCell>

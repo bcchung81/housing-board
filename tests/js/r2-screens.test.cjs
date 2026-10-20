@@ -42,8 +42,9 @@ test('1 위치 확보 판정 = 지도 기준: 계양 A2(번들 블록·동)는 �
     }
   }
   assert.ok(n > 200, `수도권 상세 사업 ${n}건 대조`);
-  /* 서랍·목록이 같은 함수를 쓴다(상세 loc 만 보지 않는다) */
-  assert.match(read('components/projects/ProjectDetail.tsx'), /mapLocOf\(r, x\.loc\)/);
+  /* 창·목록이 같은 함수를 쓴다(상세 loc 만 보지 않는다) — 창은 서버(projectWindow)가 mapLocOf 로 계산해 싣고(번들 단지 값은 싣지 않음) 창은 그 값을 쓴다 */
+  assert.match(read('lib/board/project-window.ts'), /mapLoc: mapLocOf\(r, d\.detail\.loc\)/);
+  assert.match(read('components/projects/ProjectDetail.tsx'), /const ml = d\.mapLoc;/);
   assert.match(read('app/(dashboard)/projects/page.tsx'), /mapLocOf\(/);
   /* 공정률 정본은 원장(서랍) 값 */
   assert.deepEqual(DET.projects[A2.id].progress.at(-1), ['2026-07-01', 93.12]);
@@ -82,8 +83,10 @@ test('4 서랍 단계 칸: 누르면 목록으로 넘어가지 않고 정의를 
   assert.ok(!/<Link href=\{href\(i\)\}/.test(s), '칸마다 목록 링크가 없다');
   assert.match(s, /같은 단계 사업 목록/);
   assert.match(s, /QUESTION\[current\]/, '지금 단계 정의를 보이는 글로');
-  const p = read('app/(dashboard)/projects/page.tsx');
-  assert.match(p, /listHref\(f, \{ stage: String\(i\) \}\)/, '목록 주소는 지금 거르기(f)를 유지');
+  /* 2026-10-19 창: 지금 사업 화면이면 지금 쿼리(거르기)를 두고 stage 만 바꾼다(창 주소 id·cand·인쇄는 뺀다) */
+  assert.match(read('components/windows/parts.tsx'), /const stageHref = \(i: number\) => sameStageHref\(loc\.pathname, loc\.search, '\/projects', String\(i\)\);/, '목록 주소는 지금 거르기를 유지');
+  const N = require('../../components/windows/nav.ts');
+  assert.equal(N.sameStageHref('/projects', '?sido=11&status=check&id=PRJ-1&print=1', '/projects', '2'), '/projects?sido=11&status=check&stage=2');
 });
 
 test('5 넘침·말줄임: 사업·시군구 칸은 두 줄 후 말줄임(최소 폭이 글자 길이로 늘지 않음) · 지역 공급 목록 줄바꿈 · 데이터 원본 원천명 줄바꿈', () => {

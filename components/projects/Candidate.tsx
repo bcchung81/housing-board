@@ -1,18 +1,16 @@
 /* 간단 보기 서랍(/projects?cand=<원장 id>): 상세 자료(일정·공정률·근거)가 없는 사업 — 대부분 사업 번호가 아직 없는 후보 사업 — 을 목록 색인 자료만으로 보인다.
-   요청 때 서버가 그린다(정적 페이지를 만들지 않는다). 이름·시군구·단계·호수·예정·판정·출처 + 안내 한 줄.
+   자료는 lib/board/project-window.ts(후보 출처 이름·시군구 표기는 서버가 계산), 창 관리자(components/windows)가 클라이언트에서 그린다(2026-10-19 서랍 → 모달리스 창). 이름·시군구·단계·호수·예정·판정·출처 + 안내 한 줄.
    후보 사업의 예정은 원천(건축HUB·LH 파일)에 적힌 값이라 '원천 예정(확인 필요)'로 이름을 붙이고, 안내 글도 예정 유무에 맞춘다(일정 없음 ↔ 예정 표시 모순을 없앤다).
    후보 사업의 원장 id 는 다음 원장에서 바뀔 수 있어 상세(?id=)와 주소를 나눈다. 건축HUB 관리번호는 공개 범위 미결이라 보이지 않는다.
    판정 칸: 후보는 목록 상태 칸과 같은 말 '확인 필요'(판정에 넣지 않음, D3)와 같은 계산의 결과·경과 개월. 원천 날짜 다름(D2)은 예정 칸 꼬리표. */
 import Link from 'next/link';
 import StageSteps from './StageSteps';
 import { Card } from '@/components/ui/card';
-import InfoTip from '@/components/ui/info-tip';
-import { PanelHead } from '@/components/page';
+import { FactNote, PanelHead } from '@/components/page';
 import { mapHref, mapScopeHref } from '@/lib/board/map-href';
 import { BOARD_CIR, BOARD_NAMES, CAND_NAME, CAND_PLAN, PAST_DUE_UNDER, PLAN_COL, STATUS_NAME, calcOf, isMetro, nextOf, overdueMonthsOf, pastDueOf, statusLabel, statusOf, statusTip, type ProjectRow } from '@/lib/board/projects-view';
 
 const fmt = (n: number) => n.toLocaleString('en-US');
-const NOTE = 'm-0 flex items-center gap-1 ui-inset text-base text-muted-foreground';
 const FACTS = 'm-0 grid grid-cols-[repeat(auto-fit,minmax(min(180px,100%),1fr))] gap-x-10 gap-y-3 text-base leading-body [&_dd]:m-0 [&_dt]:text-sm [&_dt]:text-muted-foreground';
 
 export const CandidateHead = ({ row }: { row: ProjectRow }) => (
@@ -28,7 +26,7 @@ export default function Candidate({ row: r, sggName, sources, stageHref }: { row
     : '사업 번호가 아직 없는 후보 사업입니다 · 예정일 자료가 없습니다';
   return (
     <>
-      <div role="note" className={NOTE}>{note}<InfoTip label="간단 보기"><p>{noteTip}</p></InfoTip></div>
+      <div role="note"><FactNote className="ui-inset" tip={{ label: '간단 보기', children: <p>{noteTip}</p> }}>{note}</FactNote></div>
       <Card render={<section aria-label="단계" />}>
         <StageSteps current={r.board} reached={r.reached} listHref={stageHref(r.board)} />
       </Card>

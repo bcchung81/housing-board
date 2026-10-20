@@ -1,5 +1,5 @@
 /* 3D 단계 구분도(assets/js/map3d.js)의 모양 하나 — /citizen 은 build.js 가 template <style> 의 자리표시(__MAP3D_CSS__)에, /map 수도권 개요는 지도 레이아웃이 <link> 로 넣는다.
-   색·글자·두께는 globals 토큰만(--map-ov-0~5 면 단계 · --map-ov-ink-N 라벨 글자 · --map-ov-line 경계 · --map-shade 그늘(띄운 고른 곳의 옆면·그림자 포함) · --map-ctx 맥락 시도). 점선·빗금 없음 */
+   색·글자·두께는 globals 토큰만(--map-ov-0~5 면 단계 · --map-ov-ink-N 라벨 글자 · --map-ov-line 경계(시군구 면 테두리는 면 색을 --map-shade 쪽으로 --map-edge-mix — GL 경계 띠와 같은 색, 2026-10-19) · --map-shade 그늘(띄운 고른 곳의 옆면·그림자 포함) · --map-ctx 맥락 시도). 점선·빗금 없음 */
 /* 면 색 단계(cN): /map 개요(assets/js/overview.js classOf)와 같은 --map-ov-0(값 없음) ~ 5 */
 .map .c0 { --c: var(--map-ov-0); } .map .c1 { --c: var(--map-ov-1); } .map .c2 { --c: var(--map-ov-2); } .map .c3 { --c: var(--map-ov-3); } .map .c4 { --c: var(--map-ov-4); } .map .c5 { --c: var(--map-ov-5); }
 svg.map { display: block; overflow: hidden; }
@@ -8,11 +8,22 @@ svg.map { display: block; overflow: hidden; }
 .dark .map .shd { fill: color-mix(in srgb, var(--map-shade) 55%, transparent); }
 .map .slab { fill: color-mix(in srgb, var(--map-ov-0) 62%, var(--map-shade)); }
 .map .ctx { fill: var(--map-ctx); stroke: var(--card); stroke-width: .75; }
+/* 보는 시도 밖 면(2026-10-19 사용자 결정 — /citizen, map3d.js draw o.scope): 맥락 시도 면과 같은 회색(--map-ctx)·평평, 경계는 카드색. 고른 곳·가리킨 곳 효과 없음 */
+.map .out { --c: var(--map-ctx); }
+.map .f.out { stroke: var(--card); }
+/* 이웃 1단계 밖 면(2026-10-19 — map3d.js draw o.hide): 그리지 않는다(카드 바탕이 보인다) */
+.map .fg.hid { display: none; }
+/* 범례 구간 강조(2026-10-19 — /citizen, map3d.js paintFaces p.band): 고른 구간 밖 면 묶음은 면 색을 카드색 쪽으로 흐린다(옆벽은 --c 를 따라 함께). 보는 시도 밖 면(.out)에는 붙지 않는다 */
+.map .fg.dim > .c0 { --c: color-mix(in oklab, var(--map-ov-0) var(--map-dim-mix), var(--card)); } .map .fg.dim > .c1 { --c: color-mix(in oklab, var(--map-ov-1) var(--map-dim-mix), var(--card)); } .map .fg.dim > .c2 { --c: color-mix(in oklab, var(--map-ov-2) var(--map-dim-mix), var(--card)); }
+.map .fg.dim > .c3 { --c: color-mix(in oklab, var(--map-ov-3) var(--map-dim-mix), var(--card)); } .map .fg.dim > .c4 { --c: color-mix(in oklab, var(--map-ov-4) var(--map-dim-mix), var(--card)); } .map .fg.dim > .c5 { --c: color-mix(in oklab, var(--map-ov-5) var(--map-dim-mix), var(--card)); }
+/* 시도 경계선(.sdl): 보는 시도에 닿은 선(.on) 진하게 · 나머지 옅게. 낮은 쪽 면 윗면 높이에 그려 그 뒤에 그리는 솟은 면이 앞을 가린다. 바깥 해안선에는 없다 */
+.map .sdl { fill: none; stroke: var(--map-sido-line-weak); stroke-width: var(--map-sido-w-weak); stroke-linejoin: round; stroke-linecap: round; pointer-events: none; }
+.map .sdl.on { stroke: var(--map-sido-line); stroke-width: var(--map-sido-w); }
 /* 바다 쪽 둘레: 판 두께 아래 1px 씩 2겹 아주 옅은 판(필터 없음) */
 .map .sea { fill: color-mix(in srgb, var(--map-shade) 6%, transparent); }
 .dark .map .sea { fill: color-mix(in srgb, var(--map-shade) 40%, transparent); }
 .map { shape-rendering: geometricPrecision; }
-.map .f { fill: var(--c); stroke: var(--map-ov-line); stroke-width: .75; stroke-linejoin: round; stroke-linecap: round; cursor: pointer; transition: filter .12s, fill .12s; }
+.map .f { fill: var(--c); stroke: color-mix(in srgb, var(--c), var(--map-shade) var(--map-edge-mix)); stroke-width: .75; stroke-linejoin: round; stroke-linecap: round; cursor: pointer; transition: filter .12s, fill .12s; }
 /* 옆벽: 면 색을 그늘(--map-shade)과 섞은 값(빛은 위 왼쪽 하나). 판 바깥 둘레선 1.25px */
 .map .w { stroke: none; cursor: pointer; }
 .map .w { fill: color-mix(in srgb, var(--c) 78%, var(--map-shade)); }

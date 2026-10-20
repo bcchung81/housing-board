@@ -2,7 +2,7 @@
    여섯 칸의 정의는 title 만이 아니라 줄 아래 ⓘ(키보드로 열림)에도.
    '지금' 한 칸만 단계색으로 채우고(+ '지금' 꼬리표), 지난 단계는 옅은 체크, 앞 단계는 빈 칸(projects-view stepState). 실제 기록 여부는 title 에.
    칸은 링크가 아니다(2026-10-16 2차 평가: 칸을 누르면 서랍이 닫히고 목록으로 넘어갔다) — 칸마다 정의는 title, 지금 단계의 정의는 줄 아래 보이는 글로.
-   목록 이동은 따로 '같은 단계 사업 목록' 링크 하나(listHref — 화면이 지금 거르기를 유지한 목록 주소를 준다). */
+   창 몸통이 @container 라 680px 이하(창 폭 ≈ 720)면 6칸 → 3칸. 목록 이동은 따로 '같은 단계 사업 목록' 링크 하나(listHref — 화면이 지금 거르기를 유지한 목록 주소를 준다). */
 import { Fragment } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
@@ -24,7 +24,7 @@ export const QUESTION = [
 export default function StageSteps({ current, reached, listHref }: { current: number; reached: number[]; listHref: string }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <ol className="m-0 grid list-none grid-cols-6 gap-1.5 p-0 mobile:grid-cols-3" aria-label="공급 6단계">
+      <ol className="m-0 grid list-none grid-cols-6 gap-1.5 p-0 mobile:grid-cols-3 @max-[680px]:grid-cols-3" aria-label="공급 6단계">
         {BOARD_NAMES.map((name, i) => {
           const st = stepState(i, current), on = st === 'now';
           const c = BOARD_COLOR[i];

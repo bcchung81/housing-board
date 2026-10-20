@@ -58,10 +58,10 @@ test('상세 카드(--glass-hud)는 기존 카드보다 옅고, 안내 띠(--gla
   assert.match(css, /(?:^|\n)\.maplibregl-popup-content\{[^}]*background:var\(--glass-pop\)/);
 });
 
-test('지도 배경은 저장된 테마(html.dark)를 따른다: 다크는 midnight·dark·검정 바탕, 라이트는 V-World 백지도·liberty', () => {
+test('지도 배경은 저장된 테마(html.dark)를 따른다: 다크는 midnight·dark·웜 다크 바탕, 라이트는 V-World 백지도·liberty', () => {
   assert.match(app, /window\.VWORLD_LAYER \|\| 'midnight'/);
   const D = mapTheme('dark'), L = mapTheme('light');
-  assert.equal(D.ofm, 'dark'); assert.equal(D.bg.toUpperCase(), '#111111');
+  assert.equal(D.ofm, 'dark'); assert.equal(D.bg.toUpperCase(), '#1D1C19');   // 다크 바탕 = 웜 다크 --background(2026-10-19)
   assert.match(app, /let LIGHT_MAP = SHELL && !document\.documentElement\.classList\.contains\('dark'\);/);
   assert.match(app, /THEME = buildTheme\(LIGHT_MAP, tokOf\(getComputedStyle\(document\.documentElement\)\)\);/);
   assert.match(app, /const TH = \(\) => THEME;/);
@@ -105,7 +105,7 @@ test('backdrop-filter 를 못 쓰는 브라우저용 @supports not 대체가 거
 
 test('상태 칩과 막대 같은 작은 색 요소는 불투명을 유지한다', () => {
   assert.match(css, /\.pc-chip\.sale\{background:var\(--sale\)/);
-  assert.match(mapCss('dark'), /\.pc-chip\.priv\{background:#2E2E2E/);
+  assert.match(mapCss('dark'), /\.pc-chip\.priv\{background:#2E2C27/);   // 웜 다크 --secondary 값(2026-10-19 지도 웜 덮기)
   assert.doesNotMatch(css, /\.pc-chip[^{]*\{[^}]*rgba\(/);
 });
 

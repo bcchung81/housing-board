@@ -1,11 +1,12 @@
 /* 대시보드 화면의 틀. 콘텐츠 상자는 종합상황판·상단 메뉴 바와 같은 1440px 선(px-7)이고, 블록 사이는 같은 간격(gap-3.5)이다.
    1600px 이상 화면에서는 1760px 까지 넓힌다(2026-10-16 2차 평가: 1920 에서 좌우 268px 씩 비었다 — 종합상황판·상단 메뉴 바는 각자 맞춘다).
    머리글은 빵부스러기 → 제목 h1(설명은 title) + 같은 줄 오른쪽 기준 한 줄. 카드 머리 줄은 제목 h2(덧말은 title) + 오른쪽 범례·조용한 링크(종합상황판 규칙). */
-import type { ComponentProps, ReactNode } from 'react';
+import { Fragment, type ComponentProps, type ReactNode } from 'react';
 import { cn } from 'cn';
 import Crumbs, { type Crumb } from './Crumbs';
 import PanelLink from './board/PanelLink';
 import { phead, phgroup, ptitle } from './board/styles';
+import InfoTip from './ui/info-tip';
 
 export const Page = ({ children }: { children: ReactNode }) => (
   <div className="mx-auto flex max-w-[1440px] min-[1600px]:max-w-[1760px] flex-col gap-3.5 px-7 pb-9 mobile:px-3 mobile:pb-6">{children}</div>
@@ -40,6 +41,30 @@ export function PanelHead({ title, tip, id, scope, children, className }: { titl
     </div>
   );
 }
+/* 카드 대표값 줄(2026-10-19, DESIGN.md Components): 카드 제목 아래 한 줄 — [지표 이름 14 보조색] [값 24/700 + 단위 14(값과 줄바꿈 안 됨)] [보조 건수·기간 14 보조색, ' · ' 구분].
+   제목 문자열에 숫자를 붙이지 않고 이 줄로 나눈다. 빈 보조 항목은 생략한다 */
+export function MetricRow({ label, value, unit, items, className }: { label?: ReactNode; value: ReactNode; unit?: ReactNode; items?: ReactNode[]; className?: string }) {
+  const rest = (items ?? []).filter((x) => x !== null && x !== undefined && x !== false && x !== '');
+  return (
+    <div className={cn('flex flex-wrap items-baseline gap-x-2 gap-y-1', className)}>
+      {label ? <span className={sub}>{label}</span> : null}
+      <span className="whitespace-nowrap text-foreground"><span className="text-xl font-bold tabular-nums">{value}</span>{unit ? <span className="ml-0.5 text-sm">{unit}</span> : null}</span>
+      {rest.length ? <span className={cn(sub, 'tabular-nums')}>{rest.map((x, i) => <Fragment key={i}>{i ? ' · ' : null}{x}</Fragment>)}</span> : null}
+    </div>
+  );
+}
+
+/* 사실 안내 한 문장(2026-10-19, DESIGN.md Components): 일정 경과·원천 차이·자료 부족. 본문 크기, 면 투명(안쪽 면이 필요하면 className 에 ui-inset), 장식 아이콘·색 띠·배지 없음.
+   색은 글자에만: 중립(기본) = 본문색 · 주의 = --warn · 오류 = --bad. 일반 지연 사실은 중립. 정의·근거는 tip 의 (i) 설명 */
+const FACT_TONE = { neutral: 'text-foreground', warn: 'text-warn', error: 'text-bad' } as const;
+export function FactNote({ children, tone = 'neutral', tip, className }: { children: ReactNode; tone?: keyof typeof FACT_TONE; tip?: { label: string; children: ReactNode }; className?: string }) {
+  return (
+    <p role="note" className={cn('m-0 text-(length:--fs-body) leading-body', FACT_TONE[tone], className)}>
+      {children}{tip ? <InfoTip label={tip.label} className="ml-1 align-middle">{tip.children}</InfoTip> : null}
+    </p>
+  );
+}
+
 /* 표·그래프 아래 출처 문장 대신 카드 머리 줄 오른쪽의 조용한 링크(한 화면에 하나) */
 export const SrcLink = ({ href = '/sources' }: { href?: string }) => <PanelLink href={href} full="데이터 원본">데이터 원본</PanelLink>;
 /* 카드 안 소제목: h3 역할(16/700, globals 의 .ui-h3) */

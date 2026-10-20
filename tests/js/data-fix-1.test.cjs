@@ -64,7 +64,7 @@ test('#10·#8·#30 /sources 이름표: 사업 레지스트리(번호 발급)·�
   const page = read('app/(dashboard)/sources/page.tsx');
   assert.match(page, /name: i\.id === 'ledger' \? '사업 레지스트리\(번호 발급\)'/);
   assert.match(read('lib/board/collection.ts'), /amount: '사업 레지스트리\(번호 발급\)'/);
-  assert.match(read('components/sources/Collect.tsx'), /\(우리가 모은 원천 \{items\.length\} \+ 정책 진행 자료 \{hs\.sources\.length\}\)/);
+  assert.match(read('components/sources/Collect.tsx'), /우리가 모은 원천 \$\{items\.length\} \+ 정책 진행 자료 \$\{hs\.sources\.length\}/);
   assert.match(page, /개 시도 모두/);
   assert.doesNotMatch(page, /`판정은 \$\{judgedSido\}만/);
   /* D3(2026-10-15): 판정은 사업 번호가 있는 사업만 — 번호 있는 사업이 판정된 시도는 수도권 3곳, 나머지는 후보(확인 필요)만 있다 */
@@ -108,7 +108,7 @@ test('#12 /agency/gh: 원장 GH 사업 4건을 보이고 사업 화면 기관 �
 });
 
 test('#20·#29 LH 준공 예정: 표 머리에 파일 기준일, 지난 달에는 파일상 예정 표기', () => {
-  assert.match(read('app/(dashboard)/agency/[id]/page.tsx'), /· 파일 기준 \{dotDates\(lh\.sourceAsOf\)\}/);
+  assert.match(read('app/(dashboard)/agency/[id]/page.tsx'), /파일 기준 \{dotDates\(lh\.sourceAsOf\)\}/);
   const mo = read('app/(dashboard)/month/[id]/page.tsx');
   assert.match(mo, /파일상 예정일 — 실제 준공 여부 미확인[^]*예정\(미확인\)/);
   assert.match(mo, /const idx = await getProjectsIndex\(\);\n  const past = ym < idx\.observedMonth;/);

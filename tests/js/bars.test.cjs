@@ -15,7 +15,7 @@ test('대시보드 막대: 상태 비율 막대·기관별 막대(bar3)·12개�
   assert.match(read('components/board/styles.ts'), /export const bar3 = "flex gap-px overflow-hidden rounded-full";/);
   const fm = /<svg id="fmonths"[\s\S]*?<\/svg>/.exec(board)[0];
   assert.doesNotMatch(fm, /\brx=/, '12개월 막대·선택 테두리');
-  const rg = /<span className="flex h-2 gap-px[^>]*>/.exec(board)[0];
+  const rg = /<span className="ui-region-bar"[^>]*>/.exec(board)[0];
   assert.doesNotMatch(rg, /rounded/, '시도 타일 3색 막대');
 });
 
@@ -30,11 +30,11 @@ test('지도 막대: 상태 막대(.sbar)·공정 막대(.mini·.pg .bar2·.hudt
 
 test('카드 윤곽 통일(2026-10-18): 판정 3칸·추이 두 숫자·시도 타일은 안쪽 카드(ui-inset), 안쪽 카드 안에 카드 없음(2단까지), 막대 틀은 둥글게', () => {
   const board = read('components/board/Board.tsx');
-  assert.match(board, /<div key=\{name\} className="ui-inset">/, '판정 지연·주의·정상 3칸');
+  assert.match(board, /<div key=\{name\} className="ui-snap-stat">/, '판정 지연·주의·정상 3칸');
   assert.match(board, /<span key=\{name\} className="ui-inset flex items-baseline[^"]*">/, '추이 지연·주의 두 숫자');
-  assert.match(board, /data-slot="board-region" className=\{cn\(btn, '[^']*\bui-inset ui-region'\)\}/, '시도 타일(면 = 지연율 의미색 부품 ui-region, 2026-10-19 임의값 bg-[var(--rc)] 대체)');
+  assert.match(board, /data-slot="board-region" className=\{cn\(btn, '[^']*\bui-inset ui-region ui-region-row'\)\}/, '시도 타일(면 = 지연율 의미색 부품 ui-region, 2026-10-19 임의값 bg-[var(--rc)] 대체)');
   assert.doesNotMatch(board, /data-slot="board-region" className=\{cn\(btn, '[^']*ui-tile-compact/, '시도 타일은 카드 안이라 compact 가 아니다');
-  const cell = board.slice(board.indexOf('className="ui-inset">'), board.indexOf("{judged ? `${f(np)}건`"));
+  const cell = board.slice(board.indexOf('className="ui-snap-stat">'), board.indexOf("{/* 지연 두 숫자"));
   assert.doesNotMatch(cell.slice('className="ui-inset">'.length), /<Card\b|ui-(tile|inset|card)/, '안쪽 카드 안에 또 카드 금지');
   assert.match(read('components/board/styles.ts'), /export const bar3 = "[^"]*\brounded-full\b/);
 });

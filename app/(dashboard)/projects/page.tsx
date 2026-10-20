@@ -1,11 +1,9 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { Download, Printer } from 'lucide-react';
-import { Page, PageHead, PanelHead, SrcLink, sub } from '@/components/page';
-import Drawer from '@/components/projects/Drawer';
+import { MetricRow, Page, PageHead, PanelHead, SrcLink, sub } from '@/components/page';
 import PrintButton from '@/components/projects/PrintButton';
-import Candidate, { CandidateHead } from '@/components/projects/Candidate';
-import ProjectDetail, { DrawerHead } from '@/components/projects/ProjectDetail';
+import WindowSeed from '@/components/windows/WindowSeed';
 import { Pipeline, PolicyCompare, PrintDefs, Questions, ReadHelp } from '@/components/projects/Summary';
 import { LIST_COLS, NO_LOC, SGG_MAP, dropBlank, lateCell, listRows, nextCell, sggLabel, stagePill, statusCell, agencyCell, unitsCell } from '@/lib/board/projects-list';
 import InfoTip from '@/components/ui/info-tip';
@@ -14,13 +12,14 @@ import ScopeChip from '@/components/ui/scope-chip';
 import SkipToList from '@/components/projects/SkipToList';
 import { Card } from '@/components/ui/card';
 import { Chip, ChipBar, ChipGroup, ChipMenu, ChipSep, ClearChip } from '@/components/ui/chips';
-import { mapHref, mapScopeHref } from '@/lib/board/map-href';
+import { mapScopeHref } from '@/lib/board/map-href';
 import { METRO_AREAS, SIDO_FULL, guOf } from '@/lib/board/metro-overview';
 import MapLink from '@/components/board/MapLink';
 import { DataGrid } from '@/components/ui/data-grid';
 import { sidoName } from '@/lib/board/calc';
 import { getBoardData } from '@/lib/board/data';
 import { getPolicyProgress, getProjectDrawer, getProjectsIndex } from '@/lib/board/projects-index';
+import { projectWindow } from '@/lib/board/project-window';
 import {
   AGENCY_NAME, AGENCY_TIP, BOARD_CIR, BOARD_COLOR, BOARD_NAMES, CAND_NAME, DATE_ALT, DELAY_GROUP, LONG_DELAY_MONTHS, REVIEW_LATE, NONE_NAME, PAST_DUE, PLAN_COL, STATUS_NAME, STATUS_ORDER, STATUS_RANGE, STATUS_TIP,
   applyFilters, candidateOf, isMetro, mapLocOf, compareLines, editionText, listHref, listOrder, parseFilters, pipelineOf, policyLabel, priorityOf, questionsOf, scopeOf, summaryOf, ymText,
@@ -33,7 +32,7 @@ type Props = { searchParams: Promise<Record<string, string | string[] | undefine
 const one = (v: string | string[] | undefined) => (typeof v === 'string' ? v : undefined);
 
 /* 거르기: 정책 ?policy=97|129|813 또는 ?program=이름(하나만) · 지역 ?sido=NN|metro|all·?sgg=NNNNN(지역이 없으면 기본 수도권, ?stage·?status·?agency 만 온 종합상황판 링크는 전국)
-   · 단계 ?stage=0~5(리본 칸, 옛 01~06 도 받는다) · 상태 ?status=ok|caution|delay|long|none|check · 기관 ?agency=lh|sh|gh|etc. 서랍 ?id=PRJ-…(상세) · ?cand=<원장 id>(간단 보기 — 후보 사업) · 월간 보고 보기 ?print=1. 맞지 않는 값은 거르지 않는다.
+   · 단계 ?stage=0~5(리본 칸, 옛 01~06 도 받는다) · 상태 ?status=ok|caution|delay|long|none|check · 기관 ?agency=lh|sh|gh|etc. 사업 창 ?id=PRJ-…(상세) · ?cand=<원장 id>(간단 보기 — 후보 사업) · 월간 보고 보기 ?print=1. 맞지 않는 값은 거르지 않는다.
    같은 거르기의 CSV 는 /projects/csv?…(route.ts — 열·값은 lib/board/projects-list.ts 하나). */
 async function load(searchParams: Props['searchParams']) {
   const [q, { molit }, idx] = await Promise.all([searchParams, getBoardData(), getProjectsIndex()]);
@@ -42,9 +41,11 @@ async function load(searchParams: Props['searchParams']) {
   const region = f.sgg ? sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2))) : f.sido ? sidoName(molit, f.sido) ?? f.sido : '수도권';   // 원장이 수도권만이라 ?sido=all 도 수도권(2026-10-19 결정)
   const tail = [f.stage !== undefined && `${BOARD_CIR[f.stage]} ${BOARD_NAMES[f.stage]}`, f.status && (f.status === 'check' ? '점검 필요' : f.status === 'late' ? DELAY_GROUP : f.status === 'review-late' ? REVIEW_LATE : STATUS_NAME[f.status]), f.agency && AGENCY_NAME[f.agency]];
   const label = [lens, region, ...tail].filter(Boolean).join(' · ');
-  /* 목록 제목: 지역은 머리의 범위 칩이 보이므로 뺀다 */
+  /* 목록 범위 칩: 지역은 원장 칩이 보이므로 뺀 나머지 거르기 */
   const listLabel = [lens, ...tail].filter(Boolean).join(' · ');
-  return { f, idx, molit, label, listLabel, lens, region, id: one(q.id) ?? null, cand: one(q.cand) ?? null, print: one(q.print) === '1' };
+  /* 받은 쿼리 글자(첫 창의 '같은 단계' 링크가 지금 거르기를 지키게 — WindowSeed) */
+  const search = new URLSearchParams(Object.entries(q).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : []))).toString();
+  return { f, idx, molit, label, listLabel, lens, region, search, id: one(q.id) ?? null, cand: one(q.cand) ?? null, print: one(q.print) === '1' };
 }
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
   const { label, id, cand, idx, print } = await load(searchParams);
@@ -74,14 +75,14 @@ const SwatchDot = ({ color }: { color: string }) => <i className="block size-2.5
 const BTN = 'btn-reset inline-flex h-8 items-center gap-1.5 rounded-tile border border-line2 bg-card px-3 text-sm font-bold whitespace-nowrap text-foreground no-underline hover:bg-pn2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
 /* 사업(목록·상세 서랍·월간 보고). 2026-10-14 시안(docs/design/home-concept/projects.html) — 칩 한 줄 → 요약(핵심 질문 5 · 단계 파이프라인 · 목표 대비 · 읽는 법) → 목록.
-   목록은 사업 원장의 살아 있는 사업(대체·숨김 제외) 중 지역 범위 — 처음 열면 수도권(서울·인천·경기, 원장 전체 — 2026-10-19 결정으로 전국 칩 없음). 기본 순서는 점검 필요 순(지연 개월 큰 순). 행을 누르면 오른쪽 서랍에 사업 상세(?id=, 발급 사업),
+   목록은 사업 원장의 살아 있는 사업(대체·숨김 제외) 중 지역 범위 — 처음 열면 수도권(서울·인천·경기, 원장 전체 — 2026-10-19 결정으로 전국 칩 없음). 기본 순서는 점검 필요 순(지연 개월 큰 순). 행을 누르면 그 자리에 떠 있는 사업 창(?id=, 발급 사업 — 2026-10-19 서랍 대체),
    번호 발급 전 사업(후보)은 간단 보기(?cand= — id 가 다음 원장에서 바뀔 수 있어 주소를 나눈다).
    요약 범위: 핵심 질문·파이프라인은 정책·지역·기관 거르기를 따르고, 단계·상태 거르기는 목록에만(요약 머리에 표지). 정책별 목표 대비와 핵심 질문 ①은 HOME 정책 진행 자료의 정책 전체 값(표지).
    보고서 인쇄(?print=1 · @media print): 핵심 질문·단계별 진행·정책 목표 대비(펼침)·점검 필요 사업(10줄 넘으면 상위 10)·기준일·출처만(8.14 지시 '매월 진척상황 보고'). 옛 /reports·/project/:id 는 next.config.ts 가 넘긴다. */
 export default async function ProjectsPage({ searchParams }: Props) {
-  const { f, idx, molit, label, listLabel, lens, region, id, cand: candId, print } = await load(searchParams);
-  const [pp, drawer] = await Promise.all([getPolicyProgress(), id && !print ? getProjectDrawer(id) : null]);
-  const cand = !drawer && !print ? candidateOf(idx.rows, candId) : null;
+  const { f, idx, molit, label, listLabel, lens, region, search, id, cand: candId, print } = await load(searchParams);
+  /* 첫 창(?id= 상세 — 없으면 ?cand= 간단 보기): 창 props 는 projectWindow 결과만(허용 목록 — RSC 페이로드에 공개된다). 인쇄 보기에는 만들지 않는다 */
+  const [pp, win] = await Promise.all([getPolicyProgress(), print ? null : (async () => (id ? await projectWindow(id, 'admin') : null) ?? (candId ? await projectWindow(candId, 'admin', { cand: true }) : null))()]);
   const rows = idx.rows;
   const scope = scopeOf(rows, f);
   const list = listOrder(applyFilters(rows, f));
@@ -90,9 +91,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
   const sidoOf = (r: ProjectRow) => r.sgg.slice(0, 2);
   const sidos = [...new Set(rows.map(sidoOf))].filter((c) => sidoName(molit, c)).sort();
   const ref = idx.referenceDate.replace(/-/g, '.');
-  const sel = drawer ? (drawer.kind === 'detail' ? drawer.row.id : drawer.project.id) : cand ? cand.row.id : null;
-  /* 서랍 '같은 단계 사업 목록' 링크: 지금 거르기를 유지한 채 그 단계(서랍은 닫는다 — 단계 칸 자체는 링크가 아니다) */
-  const stageHref = (i: number) => listHref(f, { stage: String(i) });
+  /* 첫 그림의 선택 행(창 관리자 장착 뒤에는 열린 창을 따른다 — components/ui/data-grid.tsx useOpenIds) */
+  const sel = win ? win.canonical : null;
 
   /* 요약: 핵심 질문·파이프라인(렌즈·지역·기관 범위 — 단계·상태 거르기는 목록에만) · 목표 대비(렌즈 '전체'면 목표 있는 정책 모두, 정책 렌즈면 그 정책 — HOME 정책 진행, 정책 전체) */
   const questions = questionsOf(rows, f, { pp, policies: idx.policies, observedMonth: idx.observedMonth, sidoName: (c) => sidoName(molit, c) ?? c, sggName: (c) => sggLabel(idx.sggNames[c] ?? c, undefined, true) });
@@ -223,7 +223,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
       </div>
       {reportHead}
 
-      <ChipBar className="print:hidden min-[901px]:max-[1439px]:gap-x-2">
+      <ChipBar className="print:hidden min-[901px]:max-[1439px]:gap-x-2 [--btn-h:var(--ctl-h)] [&_summary]:min-h-(--ctl-h) [&_[role=group]:not(.ui-tabs)>a]:min-h-(--ctl-h)">
         <ChipGroup label="정책" bare>
           <Chip href={at({ policy: undefined, program: undefined })} on={!lens}>전체</Chip>
           {idx.policies.map((p) => <Chip key={p.key} href={at({ policy: p.key })} on={f.policy?.key === p.key} title={`${p.name} · ${p.announced.replace(/-/g, '.')} 발표 · ${p.scope}`}>{policyLabel(p)}</Chip>)}
@@ -231,9 +231,18 @@ export default async function ProjectsPage({ searchParams }: Props) {
         </ChipGroup>
         <ChipSep />
         <ChipGroup label="지역" bare>
-          <Chip href={at({ sido: 'metro' })} on={!!f.metro} title="서울·인천·경기(처음 열 때 범위)">수도권</Chip>
-          <ChipMenu label="시도" on={!!(f.sido || f.sgg)} cols={2}
-            items={sidos.map((c) => ({ href: at({ sido: c }), label: sidoName(molit, c)!, on: (f.sido ?? f.sgg?.slice(0, 2)) === c }))} />
+          {sidos.length <= 4 ? (
+            <div className="ui-tabs ui-tabs-seg" role="group" aria-label="지역">
+              <Link href={at({ sido: 'metro' })} scroll={false} aria-current={f.metro ? 'true' : undefined} title="서울·인천·경기(처음 열 때 범위)">수도권</Link>
+              {sidos.map((c) => <Link key={c} href={at({ sido: c })} scroll={false} aria-current={(f.sido ?? f.sgg?.slice(0, 2)) === c ? 'true' : undefined}>{sidoName(molit, c)}</Link>)}
+            </div>
+          ) : (
+            <>
+              <Chip href={at({ sido: 'metro' })} on={!!f.metro} title="서울·인천·경기(처음 열 때 범위)">수도권</Chip>
+              <ChipMenu label="시도" on={!!(f.sido || f.sgg)} cols={2}
+                items={sidos.map((c) => ({ href: at({ sido: c }), label: sidoName(molit, c)!, on: (f.sido ?? f.sgg?.slice(0, 2)) === c }))} />
+            </>
+          )}
           {f.sgg ? <ClearChip href={at({ sgg: undefined })} title="시군구 거르기 풀기(수도권으로)">{sggLabel(sggFullName(f.sgg, idx.sggNames), sidoName(molit, f.sgg.slice(0, 2)))}</ClearChip> : null}
         </ChipGroup>
         <ChipSep />
@@ -257,8 +266,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
       {report}
 
       <Card render={<section id="projects-list" aria-label="사업 목록" />} className="scroll-mt-4 print:hidden">
-        <PanelHead title={<>{listLabel ? `사업 목록 · ${listLabel}` : '사업 목록'}<span className="ml-2 font-sans text-sm font-normal text-muted-foreground tabular-nums" title={`사업마다 원장의 첫 물량 합 · 호수 미확인 ${fmt(s.noUnits)}건은 0`}>{fmt(s.n)}건 · 계획 {fmt(s.units)}호</span></>}
-          scope={<ScopeChip scope={region} source="사업 원장" title={`사업 목록의 범위: 사업 원장 · ${label}(위 거르기에 따라 바뀜)`} />}
+        <PanelHead title="사업 목록"
+          scope={<><ScopeChip scope={region} source="사업 원장" title={`사업 목록의 범위: 사업 원장 · ${label}(위 거르기에 따라 바뀜)`} />{listLabel ? <ScopeChip scope={listLabel} title="목록에 적용 중인 정책·상태·기관 거르기" /> : null}</>}
           tip={`기본 순서 = 점검 필요 순(지연 개월 큰 순)${grid.note}`}>
           <InfoTip label="목록 읽는 법">
             <dl>
@@ -278,6 +287,7 @@ export default async function ProjectsPage({ searchParams }: Props) {
           {mapLink}
           <SrcLink />
         </PanelHead>
+        <div title={`사업마다 원장의 첫 물량 합 · 호수 미확인 ${fmt(s.noUnits)}건은 0`}><MetricRow label="계획" value={fmt(s.units)} unit="호" items={[`${fmt(s.n)}건`]} className="mb-2" /></div>
         {list.length ? (
           <>
             <p className={cn(sub, 'm-0 mb-1')} title={`행을 누르면 사업 상세${list.length > issued ? ` · ${CAND_NAME}은 간단 보기(번호가 있는 사업 뒤)` : ''}`}>점검 필요 순{list.length > issued ? ` · ${CAND_NAME} ${fmt(list.length - issued)}건 뒤쪽` : ''}
@@ -294,16 +304,8 @@ export default async function ProjectsPage({ searchParams }: Props) {
         )}
       </Card>
 
-      {cand ? (
-        <Drawer id={cand.row.id} canonical={null} closeHref={listHref(f)} title={cand.row.name} head={<CandidateHead row={cand.row} />}>
-          <Candidate row={cand.row} sggName={sggLabel(cand.row.sggName, sidoName(molit, sidoOf(cand.row)))} sources={cand.sources} stageHref={stageHref} />
-        </Drawer>
-      ) : (
-        <Drawer id={drawer ? id : null} canonical={sel} closeHref={listHref(f)} title={drawer ? (drawer.kind === 'detail' ? drawer.label ?? drawer.row.name : drawer.project.name) : null} head={drawer ? <DrawerHead d={drawer} /> : null}
-          back={f.from === 'map' && sel ? { href: mapHref({ project: sel }), label: '지도로 돌아가기', title: '지도에서 이 사업 위치로 돌아가기' } : null}>
-          {drawer ? <ProjectDetail d={drawer} stageHref={stageHref} /> : null}
-        </Drawer>
-      )}
+      {/* 사업 창: 행을 누르면 그 자리에 떠 있는 창(창 관리자 components/windows — 링크 가로채기). 주소로 연 첫 창은 서버가 만든 props 로 깜박임 없이 */}
+      <WindowSeed win={win} path="/projects" search={search} fromMap={f.from === 'map'} />
     </Page>
   );
 }

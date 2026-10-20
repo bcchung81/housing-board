@@ -49,7 +49,7 @@ test('리본 SVG 는 연출 단계별로 묶여 있다: 축·층·기준일·연
 });
 
 test('조용한 등장: 종합상황판의 다른 그래프와 개별 화면 그래프·계단식 6단계', () => {
-  for (const c of ["'ui-dir-face ui-pick q-rise relative", 'q-grow-x flex h-3.5', "'q-rise ui-press flex flex-col", '<g className="q-sweep">', 'className="q-grow-y"', "cn(bar3, 'q-grow-x h-3"]) assert.ok(board.includes(c), c);
+  for (const c of ["'ui-dir-face ui-pick q-rise relative", 'q-grow-x flex h-3.5', "'q-rise ui-press min-w-0", '<g className="q-sweep">', 'className="q-grow-y"', "cn(bar3, 'q-grow-x h-3"]) assert.ok(board.includes(c), c);
   assert.match(read('components/charts/MonthLines.tsx'), /<g className="q-sweep">/);
 });
 
@@ -69,7 +69,7 @@ test('카드 호버: 누를 수 있는 카드는 떠오름(card-lift), 누를 �
   /* 2026-10-18 2라운드: 카드 모양은 부품 클래스(ui-card·ui-tile), 누를 수 없는 카드 변형은 모두 card-soft. 임시 별칭 panel·board·kpi 는 2.5 에서 지웠다. 쓰이지 않던 링크 카드(link)·원천 카드(source) 변형은 지웠다 */
   for (const v of ['section: "ui-card card-soft', 'tile: "ui-tile card-soft']) assert.ok(card.includes(v), v);
   /* 2026-10-19 종합상황판: 지시 카드는 칸째 떠오르는 .ui-dir-cell + 면 .ui-dir-face, 시도 타일은 .ui-press, 연결 패널은 .ui-linked(고리 없음) — 고른 것에 바깥 고리(0 0 0 1px)를 더하지 않는다 */
-  for (const c of ["'ui-dir-face ui-pick q-rise relative", "className=\"ui-dir-cell relative min-w-0\"", "'q-rise ui-press flex flex-col justify-between", "on && 'ui-linked'"]) assert.ok(board.includes(c), c);
+  for (const c of ["'ui-dir-face ui-pick q-rise relative", "className=\"ui-dir-cell relative min-w-0\"", "'q-rise ui-press min-w-0", "on && 'ui-linked'"]) assert.ok(board.includes(c), c);
   assert.match(css, /@media \(hover: hover\) \{\n    \.ui-dir-cell:hover \{ translate: 0 var\(--lift-y\); \}/);
   assert.match(css, /\.ui-dir-cell:has\(> \.ui-dir-face:active\) \{ translate: none; transition-duration: var\(--dur-press\); \}/);
   assert.match(css, /\.ui-press:active \{ transform: none; box-shadow: var\(--shadow-card\); transition-duration: var\(--dur-press\); \}/);
@@ -90,7 +90,7 @@ test('지도 패널 카드도 같은 결로 떠오른다(머리 줄 점검 단�
   assert.doesNotMatch(map, /\.isum:hover\{transform:translateY/);
   const { mapVars } = require('./map-tokens.cjs');   // 그림자 값은 app/globals.css 의 --map-card-hover-shadow(2026-10-18)
   assert.equal(mapVars({ theme: 'dark' })['--card-hover-shadow'], '0 6px 16px rgba(0,0,0,.38)');
-  assert.equal(mapVars({ theme: 'light' })['--card-hover-shadow'], '0 6px 16px rgba(15,23,42,.12)');
+  assert.equal(mapVars({ theme: 'light' })['--card-hover-shadow'], '0 6px 16px rgba(44,36,26,.12)');   // 웜 중립 그림자(2026-10-19 지도 웜 덮기)
 });
 
 /* ---------- 시점 조작 줄 제거(2026-10-10, 디자인 피드백) ---------- */

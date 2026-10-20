@@ -81,7 +81,7 @@ const contrastOnNavy = (h) => (lum(h) + 0.05) / (lum(DARK.bg) + 0.05);   // 지�
 const FAC = DARK.fac;
 
 test('강조색은 상태색·점검 보라와 색상각이 18° 이상 떨어지고, 이름표 글자는 네이비 바탕에서 4.5:1 이상이다', () => {
-  assert.equal(DARK.bg.toUpperCase(), '#111111');
+  assert.equal(DARK.bg.toUpperCase(), '#1D1C19');   // 지도 다크 바탕 = 웜 다크 --background(2026-10-19 지도 웜 덮기)
   const status = Object.entries(DARK.color).filter(([k]) => k !== 'plan' && k !== 'priv');   // 회색 계열은 색상각이 뜻이 없다
   status.push(['edu(신설 학교)', DARK.infra.edu]);
   for (const [k, v] of Object.entries(FAC)) {

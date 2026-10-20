@@ -38,22 +38,27 @@ test('다크 바탕·표면 토큰은 /citizen 야간판과 같은 중립 검정
   assert.match(dark, /color-scheme: dark/);
 });
 
-test('바탕 통일: 앱·지도·/citizen 의 라이트 바탕은 #FFFFFF, 다크 바탕은 #111111 로 같다', () => {
+test('바탕 통일: 앱·지도·/citizen 이 같은 웜 바탕이다(카드·패널 면 #FCFCFA / #1D1C19, 2026-10-19 지도도 웜 — 기본값 :root·.dark 는 #FFFFFF / #111111 그대로)', () => {
   const fs2 = require('node:fs'), path2 = require('node:path');
   const root = path2.join(__dirname, '..', '..');
   const read2 = (f) => fs2.readFileSync(path2.join(root, f), 'utf8');
   const mapCss = read2('assets/css/app.css'), mapJs = read2('assets/js/app.js'), tpl = read2('tools/design/public-mock/template.html');
-  const L = '#FFFFFF', D = '#111111';
-  assert.equal(token(block(':root'), 'background'), L);
-  assert.equal(token(block('.dark'), 'background'), D);
-  // 지도: --bg · --pn · --ov-bg 의 다크·라이트 값(app.css 는 globals 토큰을 가리키고, 값은 globals 에서 찾는다 — tests/js/map-tokens.cjs)
+  assert.equal(token(block(':root'), 'background'), '#FFFFFF');
+  assert.equal(token(block('.dark'), 'background'), '#111111');
+  const L = '#FCFCFA', D = '#1D1C19';   // 웜 범위 --background·--card(대시보드·/citizen·지도 모두 <html data-design="warm">)
+  for (const n of ['background', 'card']) { assert.equal(token(block('html[data-design="warm"]'), n), L, `웜 라이트 --${n}`); assert.equal(token(block('html.dark[data-design="warm"]'), n), D, `웜 다크 --${n}`); }
+  // 지도: --bg · --pn · --ov-bg 의 다크·라이트 값(app.css 는 globals 토큰을 가리키고, 값은 globals 에서 찾는다 — tests/js/map-tokens.cjs) = /citizen 의 카드(지도 무대) 면
   const { mapVars } = require('./map-tokens.cjs'), MD = mapVars({ theme: 'dark' }), ML = mapVars({ theme: 'light' });
+  const CD = mapVars({ theme: 'dark', citizen: true }), CL = mapVars({ theme: 'light', citizen: true });
   for (const n of ['--bg', '--pn', '--ov-bg']) { assert.equal(MD[n].toUpperCase(), D, `지도 다크 ${n}`); assert.equal(ML[n].toUpperCase(), L, `지도 라이트 ${n}`); }
+  for (const n of ['--background', '--card']) { assert.equal(CD[n].toUpperCase(), D, `/citizen 다크 ${n}`); assert.equal(CL[n].toUpperCase(), L, `/citizen 라이트 ${n}`); }
+  assert.equal(ML['--page-bg'].toUpperCase(), CL['--page-bg'].toUpperCase(), '지도·/citizen 바탕(--page-bg) 같음');
   assert.match(mapCss, /html\[data-map-shell\]:not\(\.dark\)\{color-scheme:light\}/);
-  // 지도 칠하기 색(app.js buildTheme, 2026-10-18 토큰에서 읽는다): 다크 스타일 바탕·후광·하늘 = 다크 바탕
+  // 지도 칠하기 색(app.js buildTheme, 2026-10-18 토큰에서 읽는다): 다크 스타일 바탕·후광·하늘 = 다크 바탕(웜)
   const MT = require('./map-js-theme.cjs').mapTheme('dark');
   assert.match(mapJs, /bg: tok\('--map-bg'\), text: tok\('--foreground'\), sub: tok\('--map-mute'\), halo: tok\('--background'\)/);
   assert.deepEqual([MT.ofm, MT.bg, MT.halo, MT.sky[0]].map((v) => v.toUpperCase()), ['DARK', D, D, D], '지도 다크 스타일 바탕');
+  assert.equal(require('./map-js-theme.cjs').mapTheme('light').bg.toUpperCase(), ML['--page-bg'].toUpperCase(), '지도 라이트 칠하기 바탕 = 웜 --page-bg');
   // /citizen(2026-10-18 화면 통일 ⓓ): 템플릿은 토큰을 정의하지 않고, 빌드한 두 판(운영·데모)이 globals 내보내기 층을 그대로 담는다 — 바탕·표면·머리 줄이 앱과 같은 값
   const tplCss = tpl.slice(tpl.indexOf('<style>'), tpl.indexOf('</style>')).replace(/\/\*[\s\S]*?\*\//g, '');
   assert.doesNotMatch(tplCss, /--(background|card|popover|muted|border|line2|pn2|page-bg):/, '템플릿 토큰 정의 없음');
@@ -79,8 +84,7 @@ test('라이트가 기본(:root)이고 같은 이름의 토큰을 모두 갖는�
 });
 
 /* ---------- 배색(DESIGN.md Colors): 색은 의미 이름 한 곳에서, 글자 4.5:1 · 차트 면 3:1 ---------- */
-const lum = (hex) => { const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4)); return 0.2126 * r + 0.7152 * g + 0.0722 * b; };
-const ratio = (a, b) => { const [x, y] = [lum(a), lum(b)].sort((p, q) => q - p); return (x + 0.05) / (y + 0.05); };
+const { lum, ratio } = require('./contrast.cjs');
 /* OKLCH 색상각(°): 색이 같은 계열인지 본다 */
 const hue = (hex) => {
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255).map((v) => (v <= 0.04045 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4));
@@ -155,7 +159,7 @@ test('두 루트 레이아웃이 globals.css 를 가져온다: 대시보드는 �
   assert.doesNotMatch(ti, /getItem\('theme'\)==='dark'/);
   assert.match(dash, /import \{ (AUDIENCE_INIT, )?THEME_INIT \} from/);
   assert.doesNotMatch(dash, /className="dark"/, '다크는 클래스 고정이 아니라 첫 그림 전 스크립트로 정한다');
-  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" data-map-shell="" suppressHydrationWarning>/);
+  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" data-map-shell="" data-design="warm" suppressHydrationWarning>/);
   assert.match(read('components/TopNav.tsx'), /localStorage\.setItem\('theme'/);
 });
 

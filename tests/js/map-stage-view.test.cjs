@@ -127,9 +127,9 @@ test('6단계 띠 = 범례: 누르면 그 단계만, 같은 칸을 다시 누르
 const fitSrc = block(/function fitCard\(\) \{[\s\S]*?\n\}\n/);
 const consts = block(/const CARD_AVOID = [^\n]*\nconst CARD_NOTES = [^\n]*\nconst CARD_MIN_H = [^\n]*\n/);
 assert.match(consts, /const CARD_NOTES = \['#locNote', '#pvBanner'\];/);
-const mkFit = Function('popup', 'map', '$', 'cardAvoid', 'innerWidth', `${consts}${fitSrc}; return fitCard;`);
+const mkFit = Function('popup', 'map', '$', 'cardAvoid', 'innerWidth', 'document', `${consts}${fitSrc}; return fitCard;`);
 /* 지도 상자 1280×600(1280×720 화면에서 머리 줄을 뺀 높이 근사), 왼쪽 위 도구 줄, 오른쪽 위 시점 묶음, 아래 입력줄·범례 띠 */
-function run({ anchor, ax, ay, w = 276, h = 520, chrome = 12, avoid = null, boxes = {} }) {
+function run({ anchor, ax, ay, w = 276, h = 520, chrome = 12, avoid = null, boxes = {}, wins = [] }) {
   const M = { left: 0, top: 120, right: 1280, bottom: 720, width: 1280, height: 600 };
   const R = (l, t, r, b) => ({ left: l, top: t, right: r, bottom: b, width: r - l, height: b - t });
   const B = Object.assign({ '.rctl': R(1220, 132, 1268, 330), '.topbar': R(12, 132, 260, 170), '#cmd': R(360, 600, 920, 650), '#botbar': R(0, 680, 1280, 720) }, boxes);
@@ -144,7 +144,8 @@ function run({ anchor, ax, ay, w = 276, h = 520, chrome = 12, avoid = null, boxe
   const popup = { getElement: () => ({ querySelector: () => pc, getBoundingClientRect: cur }), setOffset: (o) => { off = o; } };
   const map = { getContainer: () => ({ getBoundingClientRect: () => M }) };
   const $ = (s) => (B[s] ? { hidden: false, offsetParent: {}, getBoundingClientRect: () => B[s] } : null);
-  mkFit(popup, map, $, avoid, 1280)();
+  const document = { querySelectorAll: (s) => (s === 'section[data-window]' ? wins.map((q) => ({ getBoundingClientRect: () => q })) : []) };   // 떠 있는 사업 창(section[data-window])
+  mkFit(popup, map, $, avoid, 1280, document)();
   const r = cur();
   return { M, B, left: r.left + off[0], right: r.right + off[0], top: r.top + off[1], bottom: r.bottom + off[1], maxH: pc.style.maxHeight };
 }
@@ -174,4 +175,12 @@ test('카드는 지도 위쪽 안내 띠(#locNote) 밑으로 들어가지 않는
   assert.match(css, /\.pc\{[^}]*word-break:keep-all;overflow-wrap:anywhere;/, '띄어 쓰지 않은 긴 이름도 카드 폭 안에서 줄을 바꾼다');
   assert.match(css, /\.pc-h \.pc-t\{[^}]*-webkit-line-clamp:2/, '사업 이름 두 줄 말줄임(원문은 title)');
   assert.match(app, /<b class="pc-t" title="\$\{esc\(\[nm, about\]/);
+});
+
+test('카드는 떠 있는 사업 창(section[data-window]) 옆으로 가로로 비켜 선다', () => {
+  const none = run({ anchor: 'left', ax: 900, ay: 400, h: 300 });
+  const win = { left: 860, top: 140, right: 1220, bottom: 660, width: 360, height: 520 };
+  const r = run({ anchor: 'left', ax: 900, ay: 400, h: 300, wins: [win] });
+  assert.ok(none.right > win.left, '창이 없으면 그 자리에 선다(대조)');
+  assert.ok(r.right <= win.left - 8 + 0.5, `창 왼쪽 ${r.right}`);
 });

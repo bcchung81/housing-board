@@ -28,7 +28,7 @@ const num = (t) => Number(String(t).replace(/,/g, ''));
 const SCREENS = [
   'app/(dashboard)/projects/page.tsx', 'app/(dashboard)/region/page.tsx', 'app/(dashboard)/month/[id]/page.tsx', 'app/(dashboard)/agency/[id]/page.tsx',
   'components/projects/Summary.tsx', 'components/projects/ProjectDetail.tsx', 'components/projects/StageSteps.tsx', 'components/projects/StageTimeline.tsx',
-  'components/projects/Drawer.tsx', 'components/projects/Candidate.tsx', 'components/region/Ahead.tsx', 'components/region/Annual.tsx', 'components/region/Cond.tsx',
+  'components/windows/FloatingWindow.tsx', 'components/windows/WindowHost.tsx', 'components/projects/Candidate.tsx', 'components/region/Ahead.tsx', 'components/region/Annual.tsx', 'components/region/Cond.tsx',
   'components/board/Board.tsx', 'components/board/RealPanels.tsx', 'components/StageKpis.tsx',
 ];
 const NAMES = /미분양|통계누리 분양 실적|청약홈 분양정보|분양임대|주택분양/g;
@@ -169,7 +169,8 @@ test("후보 사업도 행을 누르면 간단 보기 서랍(?cand=<원장 id>) 
   assert.equal(V.listHref({}, { cand: cand.id }), `/projects?sido=all&cand=${cand.id}`);
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(read('lib/board/projects-list.ts'), /const href = r\.issued \? listHref\(f, \{ id: r\.id \}\) : listHref\(f, \{ cand: r\.id \}\);/, '모든 행이 눌린다');
-  assert.match(page, /<Candidate row=\{cand\.row\}/);
+  assert.match(read('components/windows/parts.tsx'), /<Candidate row=\{d\.row\} sggName=\{d\.sggName\} sources=\{d\.sources\}/);
+  assert.match(page, /projectWindow\(candId, 'admin', \{ cand: true \}\)/);
   const comp = read('components/projects/Candidate.tsx');
   assert.doesNotMatch(comp, /상세 일정 없음/, "'일정 없음'과 예정 표시가 함께 나오지 않는다");
   assert.match(comp, /: next \? '사업 번호가 아직 없는 후보 사업입니다 · 예정일은 원천 자료에 적힌 값이라 확인이 필요합니다'/);
@@ -181,14 +182,14 @@ test("후보 사업도 행을 누르면 간단 보기 서랍(?cand=<원장 id>) 
   assert.match(ahead, /\{' '\}<span[^>]*>\{W\.cand\}<\/span>/, "이름과 '(후보)' 사이에 글자 띄어쓰기");
 });
 
-test('서랍: 목록 링크는 스크롤 유지(scroll=false), 머리는 두 열 격자(× 오른쪽 고정), 단계 칸은 지금 거르기 유지', () => {
+test('사업 창: 목록 링크는 스크롤 유지(scroll=false), 머리는 두 열 격자(× 오른쪽 고정), 단계 칸은 지금 거르기 유지', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(read('lib/board/projects-list.ts'), /name: r\.issued \? \{ text: r\.name, href, stay: true \}/);
   assert.match(read('components/ui/data-grid.tsx'), /<Link href=\{o\.href\} scroll=\{o\.stay \? false : undefined\}/);
-  const drawer = read('components/projects/Drawer.tsx');
-  assert.match(drawer, /grid grid-cols-\[minmax\(0,1fr\)_auto\] items-start/);
-  assert.match(drawer, /a\[href\$="=\$\{n\.last\}"\]/, '닫으면 ?id=·?cand= 행 링크로 초점');
-  assert.match(page, /const stageHref = \(i: number\) => listHref\(f, \{ stage: String\(i\) \}\);/);
+  assert.match(read('components/windows/FloatingWindow.tsx'), /grid cursor-move touch-none grid-cols-\[minmax\(0,1fr\)_auto\] items-start/);
+  assert.match(read('components/windows/WindowHost.tsx'), /a\[href\$="=\$\{CSS\.escape\(id\)\}"\]/, '닫으면 ?id=·?cand= 행 링크로 초점');
+  assert.match(read('components/windows/parts.tsx'), /const stageHref = \(i: number\) => sameStageHref\(loc\.pathname, loc\.search, '\/projects', String\(i\)\);/);
+  assert.doesNotMatch(page, /stageHref/, '같은 단계 링크는 창이 지금 주소로 만든다');
   assert.match(read('components/projects/ProjectDetail.tsx'), /<StageSteps current=\{r\.board\} reached=\{r\.reached\} listHref=\{stageHref\(r\.board\)\} \/>/);
   assert.equal(V.listHref({ sido: '26', status: 'check' }, { stage: '2' }), '/projects?sido=26&stage=2&status=check');
 });

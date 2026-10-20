@@ -45,8 +45,8 @@ test('1 지연 헤드라인: 카드 = 지연 2건 · 주의 2(후보 0이라 쌍
   assert.equal(listOf('/projects?sido=all&status=review').l.length, 0, '확인 필요(후보) 전체 목록 0건');
   assert.match(late.list.title, /지연\(장기 포함\) 사업\(수도권\) 2건/);
   /* 화면: 두 숫자는 같은 글자 크기 한 벌(dirVals 의 one — 6장 공통 규격, 2026-10-18), 겹친 층의 링크는 단추 밖(형제) */
-  assert.match(board, /function dirVals\(x: Directive, link: boolean\)/);
-  assert.equal((board.slice(board.indexOf('function dirVals'), board.indexOf('/* 줄1: 지시 이름')).match(/text-md @min-\[180px\]:text-lg/g) || []).length, 1, '두 숫자가 같은 크기 클래스 하나를 쓴다');
+  assert.match(board, /function dirVals\(x: Directive, link: boolean, open:/);
+  assert.equal((board.slice(board.indexOf('function dirVals'), board.indexOf('/* 줄1: 지시 이름')).match(/ui-dir-num ui-kpi leading-title/g) || []).length, 1, '두 숫자가 같은 크기 클래스 하나를 쓴다');
   assert.ok(board.indexOf('data-slot="board-dir-value"') > board.indexOf('</button>', board.indexOf('data-slot="board-dir"')), '링크 층은 단추 밖');
   assert.match(board, /<div data-slot="board-dir-value" className=\{cn\(dirFrame, 'ui-dir-layer pointer-events-none absolute inset-0/);
   /* 해당 패널(선택 시점 판정): 작은 회색 후보 줄 대신 지연 확정 · 후보 계산 두 숫자(같은 크기, 각 목록) */
@@ -135,7 +135,10 @@ test('7 서랍: 제목 = 지도와 같은 짧은 이름(home-map label), 원장 
   const ix = read('lib/board/projects-index.ts');
   assert.match(ix, /label: await mapLabelOf\(sgg, id\) \};/);
   assert.match(ix, /import\(`\.\.\/\.\.\/data\/board\/home-map\/\$\{sgg\}\.json`\)/);
-  assert.match(read('app/(dashboard)/projects/page.tsx'), /title=\{drawer \? \(drawer\.kind === 'detail' \? drawer\.label \?\? drawer\.row\.name : drawer\.project\.name\) : null\}/);
+  /* 창 제목(projectWindow — 2026-10-19 서랍 → 창): 사업 상세는 지도 이름표, 없으면 원장 이름 · 목록에서 뺀 사업은 그 이름 */
+  const pw = read('lib/board/project-window.ts');
+  assert.match(pw, /title: d\.label \?\? r\.name/);
+  assert.match(pw, /kind: 'hidden', view, asked, canonical: p\.id, title: p\.name/);
   const d = read('components/projects/ProjectDetail.tsx');
   assert.match(d, /\{d\.label && d\.label !== r\.name \? <span data-slot="drawer-full"[^>]*>\{r\.name\}<\/span> : null\}/);
   assert.match(d, /사업 원장\(HOME\) \$\{edition\[1\]\}\.\$\{edition\[2\]\}\.\$\{edition\[3\]\} 받음/);   // HOME 이 무엇인지 붙여서(r3-screens 4)

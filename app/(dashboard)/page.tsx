@@ -2,6 +2,8 @@ import Board, { type BoardReal } from '@/components/board/Board';
 import RealPanels from '@/components/board/RealPanels';
 import { NATION, lastMonth, nextYm, okUnitsBySido, ytd } from '@/lib/board/calc';
 import { getBoardData } from '@/lib/board/data';
+import * as View from '@/lib/board/projects-view';
+import { boardLists } from '@/lib/board/board-lists';
 import { getProjectsIndex } from '@/lib/board/projects-index';
 import { monthIds } from '@/lib/board/month-ahead';
 import type { CalendarDoc } from '@/lib/board/region';
@@ -14,6 +16,7 @@ const calendar = calendarJson as unknown as CalendarDoc;
 export default async function Home() {
   const { lh, molit, sources, ledger, ledgerOrigin, ledgerMonth } = await getBoardData();
   const last = lastMonth(molit);
+  const idx = await getProjectsIndex();
   const real: BoardReal = {
     sourceCount: sources.items.length,
     validMonths: monthIds(molit.months, lh.blocks, calendar),
@@ -21,6 +24,7 @@ export default async function Home() {
     ledgerOrigin,
     ledgerMonth,
     sido: Object.fromEntries(molit.sido.map((s) => [s.code, s.name])),
+    lists: boardLists(View, idx.rows, (c) => molit.sido.find((s) => s.code === c)?.name),
     lhAsOf: lh.sourceAsOf,
     regionOkUnits: okUnitsBySido((await getProjectsIndex()).rows),
     actualMonth: last,

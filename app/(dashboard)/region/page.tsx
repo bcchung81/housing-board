@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { Page, PageHead, PanelHead, sub } from '@/components/page';
+import { MetricRow, Page, PageHead, PanelHead, sub } from '@/components/page';
 import PanelLink from '@/components/board/PanelLink';
 import MapLink from '@/components/board/MapLink';
 import { Card } from '@/components/ui/card';
-import { Chip, ChipBar, ChipGroup, ChipSep } from '@/components/ui/chips';
+import { Chip, ChipBar, ChipGroup } from '@/components/ui/chips';
 import InfoTip from '@/components/ui/info-tip';
 import Ahead from '@/components/region/Ahead';
 import Annual, { parseMetric } from '@/components/region/Annual';
@@ -76,6 +76,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
   const m = pickMonth(months, list, q.m);
   const units = list.reduce((s, e) => s + e.units, 0);
   /* 예정일 지남(기준일보다 앞선 예정): 표지만 달고 합계에는 그대로 둔다(title 에 적는다) */
+  const aheadLabel = (isDefaultKinds(kinds) ? AHEAD_COMPLETION : kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`).replace(/^앞으로 12개월 · /, '');
   const past = list.filter((e) => pastDue(e, calendar.referenceDate));
   const view = viewOf(regionMap, sido);
   const nowM = calendar.referenceDate.slice(0, 7);
@@ -99,14 +100,11 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
         </span>
       </PageHead>
 
-      <ChipBar label="지역">
-        <ChipGroup label="범위" className="[&>span:first-child]:sr-only">
-          <Chip href={href({ sido: 'metro' })} on={sido === 'metro'} title="서울·인천·경기(처음 열 때 범위)">수도권</Chip>
-        </ChipGroup>
-        <ChipSep />
-        <ChipGroup label="시도" className="[&>span:first-child]:sr-only">
-          {ORDER.map((c) => <Chip key={c} href={href({ sido: c })} on={c === sido}>{sidoName(c)}</Chip>)}
-        </ChipGroup>
+      <ChipBar label="지역" className="[--btn-h:var(--ctl-h)]">
+        <div className="ui-tabs ui-tabs-seg" role="group" aria-label="지역">
+          <Link href={href({ sido: 'metro' })} aria-current={sido === 'metro' ? 'true' : undefined} title="서울·인천·경기(처음 열 때 범위)">수도권</Link>
+          {ORDER.map((c) => <Link key={c} href={href({ sido: c })} aria-current={c === sido ? 'true' : undefined}>{sidoName(c)}</Link>)}
+        </div>
         <span className={`${sub} ml-auto whitespace-nowrap tabular-nums`}>
           {scopeMap ? <><MapLink href={scopeMap} full={`${scopeName} 지도에서 보기`} />{' · '}</> : null}
           <Link href={listHref(pf)} className={LINKA} title={`${scopeName} 사업 목록(사업 화면)`}>{scopeName} 사업 {fmt(inScope)}건</Link>
@@ -116,7 +114,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
       </ChipBar>
 
       <Card render={<section aria-label="앞으로 12개월" />}>
-        <PanelHead id="ahead-title" title={<>{isDefaultKinds(kinds) ? AHEAD_COMPLETION : kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`}<span className="ml-2 text-sm font-normal text-muted-foreground" title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>{ymDot(months[0])} ~ {ymDot(months[11])} · {fmt(list.length)}건 · {fmt(units)}호</span></>} tip={AHEAD_TIP}
+        <PanelHead id="ahead-title" title="앞으로 12개월" tip={AHEAD_TIP}
           scope={<ScopeChip scope={scopeName} source="사업 원장" title={sgg ? `${name} 중 ${sggName}만(구가 있는 시는 구를 합침) — 달별 막대·목록·합계·종류 칩 건수가 이 범위 · ×를 누르면 ${name}(으)로` : `사업 원장 현재 예정 · ${name}`} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} />}>
           <InfoTip label="앞으로 12개월 읽는 법">
             <dl>
@@ -141,6 +139,9 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
             })}
           </ChipGroup>
         </PanelHead>
+        <div title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>
+          <MetricRow label={aheadLabel} value={fmt(units)} unit="호" items={[`${fmt(list.length)}건`, `${ymDot(months[0])} ~ ${ymDot(months[11])}`]} className="mb-3" />
+        </div>
         {list.length || sgg ? (
           <Ahead key={`${sido}|${kinds.join(',')}|${sgg ?? ''}`} sido={sido} regionName={scopeName} months={months} nowM={nowM} refDate={calendar.referenceDate} list={list} initialM={m} initialSgg={sgg}
             map={view ? { view, sgg: regionMap.sgg, districts: regionMap.districts } : null} />

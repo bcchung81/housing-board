@@ -1,19 +1,21 @@
-/* 사업 상세 서랍의 내용(서버가 그린다 — 자료는 lib/board/projects-index.ts getProjectDrawer). 시안: docs/design/home-concept/assets/app.js renderDetail.
+/* 사업 창의 내용(2026-10-19 서랍 → 모달리스 창: 창 관리자 components/windows 가 클라이언트에서 그린다 — 자료는 lib/board/project-window.ts projectWindow, 허용 목록이라 법정동 코드는 싣지 않는다). 시안: docs/design/home-concept/assets/app.js renderDetail.
    머리(이름·프로그램·정책(연결 상태는 title)·id) → 단계 줄(①~⑥, 목록과 같은 번호·색) → 핵심 수치(계획·공고 확인·공정률, 있는 것만) → 단계 타임라인(상태·'당초 일정 없음' 한 번) → 개요(지도에서 보기 · 위치 종류) → 근거(접힘).
    숨김 사업(대응 사업 없음)은 한 줄 안내와 개요만. 대체된 옛 id 는 대표 사업을 그리고 맨 위에 한 줄 안내. 건축HUB 관리번호는 공개 범위가 미결(기획서 Q4)이라 보이지 않는다. */
 import Link from 'next/link';
 import { ChevronRight } from 'lucide-react';
 import PanelLink from '@/components/board/PanelLink';
-import { Dl, PanelHead } from '@/components/page';
+import { Dl, FactNote, PanelHead } from '@/components/page';
+import { SwatchMark } from '@/components/ui/chips';
+import { STATUS_SW } from '@/lib/board/projects-list';
 import { Kpi } from '@/components/ui';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import StageSteps from './StageSteps';
 import StageTimeline, { TimelineLegend } from './StageTimeline';
 import { mapHref } from '@/lib/board/map-href';
-import type { Drawer } from '@/lib/board/projects-index';
+import type { AdminDetailWin, HiddenWin } from '@/lib/board/project-window';
 import InfoTip from '@/components/ui/info-tip';
-import { AGENCY_NAME, AGENCY_TIP, EVENT_NAME, PAST_DUE_UNDER, agencyKey, dateAltOf, dayText, hiddenNote, LOST_INPUT, lostGuide, mapLocOf, pastDueOf, pct1, policyLabel, statusLabel, statusTip, timelineOf } from '@/lib/board/projects-view';
+import { AGENCY_NAME, AGENCY_TIP, EVENT_NAME, PAST_DUE_UNDER, agencyKey, dateAltOf, dayText, hiddenNote, LOST_INPUT, lostGuide, pastDueOf, pct1, policyLabel, statusLabel, statusOf, statusTip, timelineOf } from '@/lib/board/projects-view';
 
 const SCOPE: Record<string, string> = { PUBLIC: '공공', PRIVATE_ON_PUBLIC_LAND: '공공택지 민간', UNKNOWN: '미확인' };
 const UNIT: Record<string, string> = { BLOCK: '블록', PROJECT: '사업', AREA_UNKNOWN: '구역 미상' };
@@ -22,9 +24,7 @@ const LOC: Record<string, string> = { bundle: 'LH 블록·동 윤곽(지도 자�
 const LOC_SHORT: Record<string, string> = { bundle: '블록', block: '블록', address: '근사', district: '지구', name: '근사' };
 const NO_LOC_TIP = (by: string | undefined) => `지도에 그릴 위치가 없음(${by ? `${LOC[by] ?? by}뿐` : '좌표 없음'}) — 지도에서는 시군구로 열리고 '위치 미확보' 묶음에 들어감`;
 const fmt = (n: number) => n.toLocaleString('en-US');
-const NOTE = 'm-0 ui-inset text-base text-muted-foreground';
 const FACTS = 'm-0 grid grid-cols-[repeat(auto-fit,minmax(min(180px,100%),1fr))] gap-x-10 gap-y-3 text-base leading-body [&_dd]:m-0 [&_dt]:text-sm [&_dt]:text-muted-foreground';
-const MARK = 'inline-block rounded-chip bg-muted px-2 py-0.5 text-sm leading-none whitespace-nowrap text-muted-foreground';
 const None = ({ children, tip }: { children: string; tip?: string }) => <span className="text-sm whitespace-nowrap text-muted-foreground" title={tip}>{children}</span>;
 /* 지도로 가는 링크는 <a>(지도는 루트 레이아웃이 달라 새 문서로 연다) — 모양은 PanelLink */
 const MapLink = ({ href, full, children }: { href: string; full: string; children: string }) => (
@@ -34,7 +34,7 @@ const MapLink = ({ href, full, children }: { href: string; full: string; childre
 );
 
 /* 머리 줄의 배지(프로그램·정책 연결)와 id */
-export function DrawerHead({ d }: { d: Drawer }) {
+export function DrawerHead({ d }: { d: AdminDetailWin | HiddenWin }) {
   if (d.kind === 'hidden') return <code className="ml-auto text-sm text-muted-foreground" title="사업 id">{d.project.id}</code>;
   const r = d.row, pol = d.policies.filter((x) => r.policies.includes(x.key)), fixed = r.link === 'CONFIRMED';
   return (
@@ -51,12 +51,12 @@ export function DrawerHead({ d }: { d: Drawer }) {
 }
 
 /* stageHref: 단계 줄 칸의 주소(목록 화면의 지금 거르기를 유지 — 화면이 만든다) */
-export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: (i: number) => string }) {
+export default function ProjectDetail({ d, stageHref }: { d: AdminDetailWin | HiddenWin; stageHref: (i: number) => string }) {
   if (d.kind === 'hidden') {
     const p = d.project, h = hiddenNote(p.hiddenAt!, p.hiddenReason);
     return (
       <>
-        <p role="note" aria-label="목록에서 뺀 사업" className={NOTE} title={h.title}>{h.text}</p>
+        <div role="note" aria-label="목록에서 뺀 사업" title={h.title}><FactNote className="ui-inset" tip={{ label: '목록에서 뺀 사유', children: <p>{h.title}</p> }}>{h.text}</FactNote></div>
         <Card render={<section aria-label="개요" />}>
           <PanelHead title="개요" />
           <dl className={FACTS}><div><dt>시군구</dt><dd>{d.sggName}</dd></div></dl>
@@ -70,15 +70,15 @@ export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: 
   const pol = d.policies.filter((p) => r.policies.includes(p.key));
   const ag = agencyKey(r.agency);
   const edition = x.refs.map((ref) => /^home-dump-(\d{4})(\d{2})(\d{2})/.exec(ref)).find(Boolean);
-  const ml = mapLocOf(r, x.loc);   // 지도에 그리는 위치(지도와 같은 판정) — null 이면 위치 미확보
+  const ml = d.mapLoc;   // 지도에 그리는 위치(지도와 같은 판정 mapLocOf — 서버가 계산해 싣는다, 번들 단지 값은 싣지 않음) — null 이면 위치 미확보
   const loc = ml ? LOC_SHORT[ml] : '미확보';
   const alt = dateAltOf(r, true);   // 원천 날짜 다름(D2): 판정은 원장 날짜, 표지만 — 서랍은 LH 날짜를 일까지(같은 달이어도 무엇이 다른지 보이게)
   return (
     <>
-      {d.from ? <p role="note" className={NOTE} title={`옛 사업 id ${d.from.id}(${d.from.name})는 이 사업으로 합쳤습니다`}>옛 id {d.from.id} 합쳐짐</p> : null}
+      {d.from ? <div role="note" title={`옛 사업 id ${d.from.id}(${d.from.name})는 이 사업으로 합쳤습니다`}><FactNote className="ui-inset" tip={{ label: '합쳐진 옛 id', children: <p>옛 사업 id {d.from.id}({d.from.name})는 이 사업으로 합쳤습니다</p> }}>옛 id {d.from.id} 합쳐짐</FactNote></div> : null}
       <Card render={<section aria-label="단계와 핵심 수치" />} className="flex flex-col gap-3">
         <StageSteps current={r.board} reached={r.reached} listHref={stageHref(r.board)} />
-        <section aria-label="핵심 수치" className="relative grid grid-cols-3 gap-2.5 mobile:grid-cols-1">
+        <section aria-label="핵심 수치" className="relative grid grid-cols-3 gap-2.5 mobile:grid-cols-1 @max-[560px]:grid-cols-1">
           <Kpi variant="inset" label="계획" value={r.units > 0 ? fmt(r.units) : '—'} unit={r.units > 0 ? '호' : ''} sub={r.units > 0 ? undefined : '호수 미확인'} tip="사업 계획 호수(원장의 첫 물량 — 공공 공급계획 → 인허가 → 공고 → 사업계획)" />
           {r.notice != null ? <Kpi variant="inset" label="공고 확인" value={fmt(r.notice)} tone="var(--st-sale)" sub={r.units > 0 ? `계획의 ${pct1(r.notice / r.units * 100)}%` : undefined} tip="모집공고에서 확인한 호수(공고 확인 ≠ 준공)" /> : null}
           {last ? <Kpi variant="inset" label="공정률" value={pct1(last[1])} unit="%" tone="var(--st-build)" sub={`보고 ${dayText(last[0])}`} tip="LH 공사진행 보고의 마지막 값" /> : null}
@@ -95,7 +95,7 @@ export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: 
       </Card>
 
       <Card render={<section aria-label="단계 타임라인" />}>
-        <PanelHead title={<>단계 타임라인<span className="ml-2 text-sm font-normal text-muted-foreground"><span title={statusTip(r)}>{statusLabel(r)}</span>{pastDueOf(r) ? <> · <span className={MARK} title={`${EVENT_NAME[r.overdue!.eventType]} 현재 예정일 ${dayText(r.overdue!.planned)}이 기준일보다 앞섰지만 실제 기록이 없음 — 1개월 미만이라 상태는 그대로`}>{PAST_DUE_UNDER}</span></> : null}{alt ? <> · <span className={MARK} title={alt.title}>{alt.text}</span></> : null} · <span className={MARK} title="최초 약속 일정(당초)이 사업 원장(HOME 포함)에 없어 당초 줄을 그리지 않음 — 지연은 현재 예정일 경과로만 판정">당초 일정 없음</span></span></>}
+        <PanelHead title="단계 타임라인"
           tip="단계마다 두 줄: 현재 = 원장의 현재 예정 하나 · 실제 = 원천에서 확인한 날짜 · 지연 = 현재 예정일 경과 개월(당초 대비가 아님) · 기록이 하나도 없는 단계는 줄을 그리지 않음 · 오른쪽 열은 지연 개월">
           <TimelineLegend t={tl} />
           <InfoTip label="상태·일정 읽는 법">
@@ -108,6 +108,12 @@ export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: 
             </dl>
           </InfoTip>
         </PanelHead>
+        <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+          <span className="inline-flex items-center gap-1.5 font-bold text-foreground" title={statusTip(r)}><SwatchMark {...STATUS_SW[statusOf(r)]} />{statusLabel(r)}</span>
+          <span className="ml-auto text-muted-foreground" title="최초 약속 일정(당초)이 사업 원장(HOME 포함)에 없어 당초 줄을 그리지 않음 — 지연은 현재 예정일 경과로만 판정">당초 일정 없음</span>
+        </div>
+        {pastDueOf(r) ? <FactNote className="mb-2" tip={{ label: PAST_DUE_UNDER, children: <p>현재 예정일 {dayText(r.overdue!.planned)}이 기준일보다 앞섰지만 실제 기록이 없음 — 1개월 미만이라 상태는 그대로</p> }}>{PAST_DUE_UNDER} · {EVENT_NAME[r.overdue!.eventType]} 현재 예정일 {dayText(r.overdue!.planned)}</FactNote> : null}
+        {alt ? <FactNote className="mb-2" tip={{ label: alt.text, children: <p>{alt.title.replace(/^준공 예정이 원천마다 다름 — /, '준공 예정: ').replace(/HOME/g, '사업 원장')}</p> }}>{alt.text}</FactNote> : null}
         <StageTimeline t={tl} />
       </Card>
 
@@ -118,7 +124,7 @@ export default function ProjectDetail({ d, stageHref }: { d: Drawer; stageHref: 
         </PanelHead>
         <dl className={FACTS}>
           <div><dt>시군구</dt><dd><Link href={`/projects?sgg=${r.sgg}`} title="이 시군구로 거른 사업 목록">{r.sggName}</Link></dd></div>
-          <div><dt>위치</dt><dd>{ml ? <span title={ml === 'bundle' ? '지도 자료의 LH 블록·동 윤곽과 이어진 사업' : x.loc?.basis ?? undefined}>{LOC[ml]}</span> : <None tip={NO_LOC_TIP(x.loc?.by)}>위치 미확보</None>}{ml ? null : <span className="mt-0.5 flex items-center gap-0.5 text-sm text-muted-foreground"><span>위치 입력 필요</span><InfoTip label="위치 입력 안내"><dl><dt>안내</dt><dd>{lostGuide(r.stage, x.loc?.by === 'area')}</dd><dt>필수</dt><dd>{LOST_INPUT.required}</dd><dt>선택</dt><dd>{LOST_INPUT.optional}</dd><dt>확인</dt><dd>{LOST_INPUT.check}</dd></dl><p>{LOST_INPUT.note}</p></InfoTip></span>}{x.bjd.length ? <span className="text-muted-foreground tabular-nums" title="법정동 코드"> · {x.bjd.join(', ')}</span> : null}</dd></div>
+          <div><dt>위치</dt><dd>{ml ? <span title={ml === 'bundle' ? '지도 자료의 LH 블록·동 윤곽과 이어진 사업' : x.loc?.basis ?? undefined}>{LOC[ml]}</span> : <None tip={NO_LOC_TIP(x.loc?.by)}>위치 미확보</None>}{ml ? null : <span className="mt-0.5 flex items-center gap-0.5 text-sm text-muted-foreground"><span>위치 입력 필요</span><InfoTip label="위치 입력 안내"><dl><dt>안내</dt><dd>{lostGuide(r.stage, x.loc?.by === 'area')}</dd><dt>필수</dt><dd>{LOST_INPUT.required}</dd><dt>선택</dt><dd>{LOST_INPUT.optional}</dd><dt>확인</dt><dd>{LOST_INPUT.check}</dd></dl><p>{LOST_INPUT.note}</p></InfoTip></span>}</dd></div>
           <div><dt>시행</dt><dd title={AGENCY_TIP[ag]}>{r.agency ? d.agencies[r.agency] ?? AGENCY_NAME[ag] : <None tip={AGENCY_TIP.etc}>미확인</None>}</dd></div>
           <div><dt>구분</dt><dd title={x.basis ?? undefined}>{SCOPE[x.scope] ?? x.scope} · {UNIT[x.unit] ?? x.unit}</dd></div>
           <div><dt>정책 연결</dt><dd>{pol.length ? pol.map((p, i) => <span key={p.key} title={`정책 연결: ${r.link === 'CONFIRMED' ? '담당자가 확정함' : '담당자가 아직 확정하지 않은 제안'}`}>{i ? ' · ' : ''}{policyLabel(p)}</span>) : <None>연결 없음</None>}</dd></div>

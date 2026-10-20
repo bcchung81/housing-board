@@ -25,11 +25,11 @@ test('1 시도 3곳: 서울·인천·경기 한 줄(열 = 시도 수) + 아래 �
   assert.equal(BOARD.regions.length, 3);
   assert.deepEqual(BOARD.regions.map((r) => r.code), ['11', '28', '41']);
   const reg = panel('p-region');
-  assert.match(reg, />시도 \{L\.regions\.length\}곳<\/h2>/, "제목 '시도 3곳'");
+  assert.match(reg, />시도별 지연 현황<\/h2>/, "제목 '시도 3곳'");
   assert.match(reg, /\{L\.regions\.map\(\(r, ri\) =>/, '시도 모두 타일');
   assert.match(board, /const geo = L\.regions\.length > 4;/, '4곳 이하면 지리 격자 끔');
-  assert.match(reg, /geo \? 'grid-cols-4' : 'grid-rows-\[minmax\(68px,1fr\)_auto\]'/, '한 줄이면 4열 격자 대신 행 하나 + 아래 요약 줄');
-  assert.match(reg, /gridTemplateColumns: `repeat\(\$\{L\.regions\.length\}, minmax\(0, 1fr\)\)`/, '열 = 시도 수');
+  assert.match(reg, /geo \? 'grid-cols-4' : 'ui-region-list'/, '한 줄이면 4열 격자 대신 행 하나 + 아래 요약 줄');
+  assert.match(reg, /gridTemplateRows: `repeat\(\$\{L\.regions\.length\}, minmax\(0, 1fr\)\) auto`/, '열 = 시도 수');
   assert.match(reg, /pos && geo \? \{ gridArea: `\$\{pos\[0\]\} \/ \$\{pos\[1\]\}` \} : \{\}/, '지리 자리(REGION_POS)는 격자일 때만');
   assert.match(reg, /geo \? '\[grid-area:5\/2\/6\/5\]' : 'col-span-full'/, '선택 시도 요약은 한 줄이면 아래 전체 폭');
   assert.match(reg, /\['--rc' as string\]: none \? 'var\(--card\)' : RCOL\[rcls\(rate\)\]/, '판정 대상 없는 칸은 흰(카드) 바탕');
@@ -38,7 +38,7 @@ test('1 시도 3곳: 서울·인천·경기 한 줄(열 = 시도 수) + 아래 �
   for (const s of ['region-fold', 'board-region-rest', 'foldOpen', 'restRegions', 'judgedRegions']) assert.doesNotMatch(board, new RegExp(s), s);
   /* 3차 유지: 호수 기준 지연율 · 타일 아래 '지연 n호 · n건' · 범례 · (i) */
   assert.match(reg, /rate = tu \? r\.delayUnits \/ tu \* 100 : 0/);
-  assert.match(reg, /(?:지연 <\/span>)?\{f\(r\.delayUnits\)\}호(?:<span className="@max-\[105px\]:hidden">)? · \{f\(r\.delay\)\}건/);
+  assert.match(reg, /\{f\(r\.delayUnits\)\}<small[^>]*>호<\/small>[\s\S]*?지연 \{f\(r\.delay\)\}건/);
   assert.match(reg, />지연율 · 호수 기준</);
   assert.match(reg, /<\/h2>\s*<InfoTip label="시도 지연율 기준"/);
   assert.doesNotMatch(code(reg), /아래 한 줄 묶음/, '(i) 설명도 타일에 맞춘다');
@@ -57,7 +57,7 @@ test("2 판정 비율 모수: '판정 169건 · 168,152호 · 전체의 73.8%'(�
   assert.equal(D.judgeBase(SJ, rib.total[BOARD.now]), '판정 188건 · 179,428호 · 전체의 65.4%');
   assert.equal(D.judgeBase(BOARD.judgment, BOARD.scope.units), '판정 188건 · 179,428호 · 전체의 65.4%');
   const snap = panel('p-snap');
-  assert.match(snap, /data-slot="judge-base"[^>]*>\{judgeBase\(SJ, jTot\)\}</, '판정 막대 아래 모수 줄');
+  assert.match(snap, /data-slot="judge-base"[\s\S]*?판정 대상 \{f\(SJ\.ok\.projects \+ SJ\.caution\.projects \+ SJ\.delay\.projects\)\}건/, '판정 막대 아래 모수 줄');
   assert.match(board, /jTot = rib\.total\[judged \? jm : NOW\]/);
   assert.match(snap, /전체의 % = 원장 전체 \{f\(jTot\)\}호/, '(i): 무엇의 % 인지');
 });
@@ -75,7 +75,7 @@ test('3 범위 칩: 종합상황판 패널 머리마다(선택 시점 카드 포
 test("4 지시 카드 두 줄 고정(2026-10-18 통일 규격): 줄1 = 지시 이름(길면 말줄임, 꼬리 없음), 줄2 = 값 — 단추와 겹친 층이 같은 두 줄 틀, 카드는 내용만큼 자란다", () => {
   assert.match(board, /const dirTitle = /);
   assert.doesNotMatch(board, /data-slot="dir-tag"/, "원천 꼬리('통계누리')는 줄1에 없다 — (i) 기준에");
-  assert.match(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, dirFrame, '[^']*\bmin-h-16 /, '카드 높이 64px 이상');
+  assert.match(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, dirFrame, '[^']*\bh-full /, '카드 높이 64px 이상');
   assert.doesNotMatch(board, /data-slot="board-dir"[^>]*className=\{cn\(btn, dirFrame, '[^']* h-16 /, '고정 높이 h-16 없음');
   const dirs = board.slice(board.indexOf('id="board-dirs"'), board.indexOf('</section>', board.indexOf('id="board-dirs"')));
   assert.equal((dirs.match(/\{dirTitle\(x(, true)?\)\}/g) || []).length, 2, '단추와 겹친 층이 같은 제목 틀');

@@ -242,12 +242,12 @@ test('시도 3칸 한 줄: 원장 시도는 서울·인천·경기 3곳, 4곳 �
   for (const [r, c] of Object.values(S.REGION_POS)) { assert.ok(r >= 1 && r <= 5 && c >= 1 && c <= 4); assert.ok(!(r === 5 && c >= 2), '요약 칸 자리'); assert.notEqual(`${r}/${c}`, '4/4'); }
   const region = panel(board, 'p-region');
   assert.match(board, /const geo = L\.regions\.length > 4;/, '시도가 4곳 이하면 지리 격자를 쓰지 않는다');
-  assert.match(region, /geo \? 'grid-cols-4' : 'grid-rows-\[minmax\(68px,1fr\)_auto\]'/);
-  assert.match(region, /gridTemplateColumns: `repeat\(\$\{L\.regions\.length\}, minmax\(0, 1fr\)\)`/, '열 = 시도 수');
+  assert.match(region, /geo \? 'grid-cols-4' : 'ui-region-list'/);
+  assert.match(region, /gridTemplateRows: `repeat\(\$\{L\.regions\.length\}, minmax\(0, 1fr\)\) auto`/, '열 = 시도 수');
   assert.match(region, /geo \? '\[grid-area:5\/2\/6\/5\]' : 'col-span-full'/, '요약 칸: 격자면 5줄 2~4열, 한 줄이면 아래 전체 폭');
   assert.match(region, /pos && geo \? \{ gridArea: /, '한 줄일 땐 자리를 주지 않는다');
   assert.equal((region.match(/<PanelLink/g) || []).length, 1, '이동 링크는 한 곳(요약 칸)');
-  assert.doesNotMatch(region.slice(0, region.indexOf('auto-rows')), /<PanelLink/, '제목 줄에는 링크가 없다');
+  assert.doesNotMatch(region.slice(0, region.indexOf('ui-region-comparison')), /<PanelLink/, '제목 줄에는 링크가 없다');
   assert.doesNotMatch(region, /text-bad">\{r\.delay\}/, '타일 안 세 숫자 칸 없음');
 });
 
@@ -387,7 +387,7 @@ test('종합상황판은 실데이터를 data/board 에서만 읽는다: 월별 
 
 test('카드의 이동 링크는 아래 줄이 아니라 제목 줄 오른쪽(pacts)에 조용한 글자 링크로 있다(2026-10-10 사용자 지시, 2026-10-12 시안 정리)', () => {
   const head = (src) => src.slice(0, src.search(/<\/div>/));   // 패널의 첫 줄(제목 줄)
-  for (const id of ['p-snap', 'p-fut', 'p-agency']) assert.match(head(panel(board, id)), /className=\{pacts\}>(\{bk >= 0 \? )?<PanelLink/, id);
+  for (const id of ['p-snap', 'p-fut', 'p-agency']) assert.match(head(panel(board, id)), /className=\{pacts\}>(\{(?:bk >= 0|monthLink) \? )?<PanelLink/, id);
   assert.match(head(panel(realRow, 'p-actual')), /className=\{pacts\}><PanelLink/, 'p-actual');
   assert.doesNotMatch(board + realRow, /plink/, '카드 아래 링크 줄(plink)은 없다');
   const link = fs.readFileSync(path.join(__dirname, '../../components/board/PanelLink.tsx'), 'utf8');

@@ -66,7 +66,7 @@ test('3 지연 기준 하나: 시도 타일 지연율 = 지연 호수 ÷ 판정 
   assert.match(reg, />지연율 · 호수 기준</);
   assert.doesNotMatch(code(board), /건수 기준/);
   assert.match(board, /rate = tu \? r\.delayUnits \/ tu \* 100 : 0/);
-  assert.match(reg, /(?:지연 <\/span>)?\{f\(r\.delayUnits\)\}호(?:<span className="@max-\[105px\]:hidden">)? · \{f\(r\.delay\)\}건/, "타일 아래 '지연 1,666호 · 2건'");
+  assert.match(reg, /\{f\(r\.delayUnits\)\}<small[^>]*>호<\/small>[\s\S]*?지연 \{f\(r\.delay\)\}건/, "타일 아래 '지연 1,666호 · 2건'");
   assert.match(reg, /\[\[r\.delayUnits, 'bg-bad'\], \[r\.cautionUnits, 'bg-warn'\], \[ok, 'bg-ok'\]\]/, '막대도 호수');
   assert.match(board, /data-slot="basis-tag"[^>]*title="[^"]*시도 타일도 호수 기준[^"]*"/);
 });
@@ -76,7 +76,7 @@ test("4 진척 관리 숫자 링크 = 원장 지금 ③착공 단계 사업 목�
   assert.equal(BOARD.stageProjects[BOARD.now][2], 150);   // 2026-10-20 HOME 판: 지금 ③착공 사업 71 → 150
   assert.equal(DIR[0].list.text, undefined);
   assert.match(DIR[0].list.title, /원장 사업\(수도권\) 150건 — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록\(건수가 다름\)/);
-  assert.match(board, /<Link href=\{l\.href\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\}/, '읽기 이름에 보이는 숫자가 들어간다');
+  assert.match(board, /<Link href=\{l\.href\} onClick=\{open\(l\.href\)\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\}/, '읽기 이름에 보이는 숫자가 들어간다');
   assert.match(board, /<p className="text-muted-foreground">\{x\.list\.title\}<\/p>/, '(i) 에도 목록 설명');
 });
 
@@ -93,9 +93,10 @@ test("6 LH 준공 예정 파일 낡음 표지: 원장 기준일과의 차이('8�
   assert.equal(C.staleText('2026-01-27', '2026-02-27'), '1개월 전 자료');
   assert.equal(C.staleText(LH.sourceAsOf, BOARD.referenceDate), '8개월 전 자료');
   assert.match(agency, /const lhStale = staleText\(lh\.sourceAsOf, observedRef\)/);
-  assert.match(agency, /파일 기준 \{dotDates\(lh\.sourceAsOf\)\}\{lhStale \? <Badge variant="warn"[^>]*>\{lhStale\}<\/Badge> : null\}/);
+  assert.match(agency, /파일 기준 \{dotDates\(lh\.sourceAsOf\)\}\{lhStale \? <span className="ml-1\.5 text-warn"[^>]*>\{lhStale\}<\/span> : null\}/);
   assert.match(month, /const lhStale = staleText\(lh\.sourceAsOf, calendar\.referenceDate\)/);
-  assert.match(month, /파일 기준 \{dotDates\(lh\.sourceAsOf\)\}\{lhStale \? <Badge variant="warn"[^>]*>\{lhStale\}<\/Badge> : null\}/);
+  assert.match(month, /파일 기준 \{dotDates\(lh\.sourceAsOf\)\}\{lhStaleTag\}/);
+  assert.match(month, /const lhStaleTag = lhStale \? <span className="ml-1\.5 text-warn"[^>]*>\{lhStale\}<\/span> : null/);
   assert.match(board, /staleText\(real\.lhAsOf, L\.referenceDate\)/, '종합상황판 (i) 도 같은 기준');
   assert.doesNotMatch(board + home, /lhAgeMonths/);
 });

@@ -220,8 +220,66 @@ for pid in lid:
     while v and v[-1] is None: v.pop()
     if v: ex[pid] = v
 
-out = {'meta': meta, 'sgg': sggs, 'prj': prj, 'cal': cal, 'neigh': neigh, 'nb': nb, 'map': mapdoc, 'hh': hh, 'det': det, 'jd': jd, 'notices': notices, 'pt': pt, 'pg': pg, 'ex': ex}
+# 청약 단지 카드(ah, 2026-10-19 사용자 결정): 청약홈 APT 분양 공고(공공·민영). 원장 notices 의 APPLYHOME 행(시군구 코드 + notice_id = 관리번호-공고번호)으로
+# raw Detail·Mdl 을 코드로만 잇는다(이름·제목으로 잇지 않는다). 공고일이 수집 기준일 2년 안. 단위 = 지도 면(경기는 시, 그 밖은 시군구 — 화면 unitKey 와 같은 규칙).
+# 줄: [단지명, 세대, 구분(0 공공분양 · 1 민영), 법정동, 입주 예정 연월, 전용 최소, 최대, 시공·시행, 공고일, 접수 시작(특별공급 먼저), 접수 마감, 발표, 계약 시작, 계약 끝, 원문, 규제 비트, 특별공급 세대(주택형 줄 없으면 null), 유형별 세대 9칸(신혼부부·생애최초·다자녀·노부모·기관추천·청년·신생아·이전기관·기타, 모두 0 이면 [])]
+# (정렬용 관리번호는 18번째 칸으로 두었다가 화면으로 보낼 때 자른다 — r[:18])
+# 단계는 화면이 오늘 날짜로 계산한다. 크기를 줄이려고 빌드한 날에 끝나지 않은 줄 전부 + 끝난 줄은 공고 최근 5개만 둔다(끝난 줄은 다시 진행 중이 되지 않는다)
+AH = 'schemas/ledger-2026-10/raw/applyhome/'
+ahm = json.load(open(R + AH + 'manifest.json'))
+ah_ref = ahm['fetched_at'][:10]
+ah_from = '%04d%s' % (int(ah_ref[:4]) - 2, ah_ref[4:])
+ah_sgg = {r['notice_id']: r for r in json.load(open(R + 'schemas/ledger-2026-10/tables/notices.json'))['rows'] if r['notice_system'] == 'APPLYHOME' and r.get('sgg_code')}
+AH_SP = ['NWWDS_HSHLDCO', 'LFE_FRST_HSHLDCO', 'MNYCH_HSHLDCO', 'OLD_PARNTS_SUPORT_HSHLDCO', 'INSTT_RECOMEND_HSHLDCO', 'YGMN_HSHLDCO', 'NWBB_HSHLDCO', 'TRANSR_INSTT_ENFSN_HSHLDCO', 'ETC_HSHLDCO']
+ah_mdl = collections.defaultdict(list)
+for m in json.load(open(R + AH + 'getAPTLttotPblancMdl.json'))['rows']: ah_mdl[(m['HOUSE_MANAGE_NO'], m['PBLANC_NO'])].append(m)
+BJD_IN = collections.defaultdict(set)
+for k, v in BJD.items(): BJD_IN[k[:5]].add(v)
+def ah_co(s):   # '(주)'·'㈜'·'주식회사' 떼기, 여럿이면 ', '
+    return ', '.join(x for x in (re.sub(r'\s+', ' ', re.sub(r'\(\s*주\s*\)|㈜|주식회사', ' ', p)).strip() for p in (s or '').split(',')) if x)
+def ah_ag(s):   # 공공 사업주체 약칭
+    out = []
+    for p in ah_co(s).split(', '):
+        q = p.replace(' ', '')
+        out.append('LH' if '한국토지주택공사' in q else 'SH' if q.startswith('서울주택도시') else 'GH' if q.startswith('경기주택도시공사') else 'iH' if q.startswith('인천도시공사') else p)
+    return ', '.join(x for i, x in enumerate(out) if x and x not in out[:i])
+def ah_dong(n, d):   # 법정동: 공고 PNU 앞 10자리 → areas BJD, 없으면 주소 낱말 가운데 그 시군구의 법정동 이름(코드표로 확인한 것만)
+    b = BJD.get((n.get('pnu') or '')[:10])
+    if b: return b
+    names = BJD_IN[n['sgg_code']]
+    for w in re.split(r'[\s(),]+', d.get('HSSPLY_ADRES') or ''):
+        if w in names: return w
+    return ''
+AH_URL = 'https://www.applyhome.co.kr/ai/aia/selectAPTLttotPblancDetail.do?'   # 원문 주소(PBLANC_URL)의 같은 앞부분은 한 번만(화면이 다시 붙인다)
+AH_FLAGS = ['PARCPRC_ULS_AT', 'SPECLT_RDN_EARTH_AT', 'PUBLIC_HOUSE_EARTH_AT', 'IMPRMN_BSNS_AT', 'LRSCL_BLDLND_AT']   # 비트 1 분양가상한제 · 2 투기과열지구 · 4 공공주택지구 · 8 정비사업 · 16 대규모택지
+def ah_live(r, t):   # 화면 ahStep 과 같은 규칙: 끝나지 않았으면 True
+    s, e, w, c2 = r[9], r[10], r[11], r[13]
+    return bool((s and t < s) or (e and t <= e) or (w and t < w) or (c2 and t <= c2))
+ah_u = collections.defaultdict(list)
+for d in json.load(open(R + AH + 'getAPTLttotPblancDetail.json'))['rows']:
+    n = ah_sgg.get(d['HOUSE_MANAGE_NO'] + '-' + d['PBLANC_NO'])
+    if not n or (d.get('RCRIT_PBLANC_DE') or '') < ah_from: continue
+    c = n['sgg_code']; unit = c[:4] + '0' if c.startswith('41') else c
+    ar = [int(float(m.group())) for m in (re.match(r'\d+(\.\d+)?', x['HOUSE_TY'] or '') for x in ah_mdl[(d['HOUSE_MANAGE_NO'], d['PBLANC_NO'])]) if m and float(m.group()) > 0]
+    pub = d['HOUSE_DTL_SECD_NM'] == '국민'
+    mdl = ah_mdl[(d['HOUSE_MANAGE_NO'], d['PBLANC_NO'])]
+    sp = sum(int(x.get('SPSPLY_HSHLDCO') or 0) for x in mdl) if mdl else None   # 주택형 줄이 없으면 모름(null)
+    spk = [sum(int(x.get(k) or 0) for x in mdl) for k in AH_SP]
+    ah_u[unit].append([d['HOUSE_NM'], d['TOT_SUPLY_HSHLDCO'] or 0, 0 if pub else 1, ah_dong(n, d), d.get('MVN_PREARNGE_YM') or '', min(ar) if ar else 0, max(ar) if ar else 0,
+                       ah_ag(d['BSNS_MBY_NM']) if pub else ah_co(d['CNSTRCT_ENTRPS_NM']), d['RCRIT_PBLANC_DE'], d.get('SPSPLY_RCEPT_BGNDE') or d.get('RCEPT_BGNDE') or '', d.get('RCEPT_ENDDE') or '',
+                       d.get('PRZWNER_PRESNATN_DE') or '', d.get('CNTRCT_CNCLS_BGNDE') or '', d.get('CNTRCT_CNCLS_ENDDE') or '', d['PBLANC_URL'].removeprefix(AH_URL), sum(1 << i for i, k in enumerate(AH_FLAGS) if d.get(k) == 'Y'),
+                       sp, spk if any(spk) else [], d['HOUSE_MANAGE_NO']])
+ah_all = sum(len(v) for v in ah_u.values())
+for unit, L in ah_u.items():
+    L.sort(key=lambda r: (r[8], r[18]), reverse=True)   # 공고 최근 순(같은 날이면 관리번호 큰 순)
+    ended = [r for r in L if not ah_live(r, meta['today'])][:5]
+    ah_u[unit] = [r[:18] for r in L if ah_live(r, meta['today']) or r in ended]
+assert set(ah_u) <= {u[0] for u in units}, set(ah_u) - {u[0] for u in units}
+ah = {'ref': ah_ref, 'from': ah_from, 'url': AH_URL, 'u': dict(sorted(ah_u.items()))}
+
+out = {'meta': meta, 'sgg': sggs, 'prj': prj, 'cal': cal, 'neigh': neigh, 'nb': nb, 'map': mapdoc, 'hh': hh, 'det': det, 'jd': jd, 'notices': notices, 'pt': pt, 'pg': pg, 'ex': ex, 'ah': ah}
 json.dump(out, open(sys.argv[1], 'w'), ensure_ascii=False, separators=(',', ':'))
 print('zero', zero); print('neigh', {k: [(c, sgg[c], len(lm['bySgg'][c])) for c in v] for k, v in neigh.items()})
 print('adj 41280', [AREAS[c] for c in adj['41280']], 'none', [c for c, v in adj.items() if not v])
 print('sgg', len(sggs), 'prj', sum(len(v) for v in prj.values()), 'cal', len(cal), 'det', len(det), 'jd', sum(len(v) for v in jd.values()), 'notices', len(notices), 'nb 41450', nb['41450'], 'pt', len(pt), 'exact', sum(v[2] for v in pt.values()), 'ex', len(ex), 'ex유형', sum(1 for v in ex.values() if v[0] is not None), 'ex동', sum(1 for v in ex.values() if len(v)>1 and v[1]), 'ex공고', sum(1 for v in ex.values() if len(v)>2 and v[2]), 'ex기관', sum(1 for v in ex.values() if len(v)>3 and v[3]), 'ex공정', sum(1 for v in ex.values() if len(v)>4 and v[4]))
+print('ah', ah_all, 'kept', sum(len(v) for v in ah['u'].values()), 'units', len(ah['u']), 'empty', [u[0] + ' ' + u[2] for u in units if u[0] not in ah['u']], '동 없음', sum(1 for v in ah['u'].values() for r in v if not r[3]))

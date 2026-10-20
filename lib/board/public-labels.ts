@@ -119,6 +119,14 @@ export function prjJudge(r: { issued: boolean; cls: Cls | null; overdue: { event
   const ev = r.overdue ? EV_NAME[r.overdue.eventType] : '';
   return { k: JD[r.cls] === 1 ? 'caution' : 'delay', t: `${ev ? ev + ' ' : ''}예정일이 ${m ? `${m}개월 ` : ''}지났어요`, m };
 }
+/* 좁은 칸용 짧은 말(2026-10-19 사용자 피드백 '셀을 넘치는 부분은 용어를 수정해서 셀 안에' — /citizen 사업 표 상태 칸): 주의·지연 → '준공 2개월 지남'
+   (개월이 없으면 '준공 예정일 지남'), 그 밖은 ''. 긴 문장(prjJudge)은 title·읽기 이름에 그대로. 템플릿 lateShort 와 같은 결과(tests/js/public-projects.test.cjs) */
+export function lateShort(r: { issued: boolean; cls: Cls | null; overdue: { eventType: string; months: number } | null }): string {
+  const j = prjJudge(r);
+  if (j.k !== 'caution' && j.k !== 'delay') return '';
+  const ev = r.overdue ? EV_NAME[r.overdue.eventType] : '';
+  return `${ev ? ev + ' ' : ''}${j.m ? `${j.m}개월` : '예정일'} 지남`;
+}
 /* 1개월이 안 되게 예정일이 지난 사업(projects-view pastDueOf): 판정은 정상 그대로, 글자만 */
 export const PAST_DUE_PUBLIC = '예정일 지남 · 기록 확인 중';
 export const PAST_DUE_TIP = '사업 시행자가 알린 예정일이 지났는데 마쳤다는 기록이 아직 없어요. 일정이 바뀌었거나 기록이 늦게 올라올 수 있어요';

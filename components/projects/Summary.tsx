@@ -79,7 +79,7 @@ export function Questions({ list }: { list: Question[] }) {
               <span className="line-clamp-2 [word-break:keep-all]" title={x.q}>{x.q}</span>{/* 말줄임 대신 두 줄까지(2026-10-16 4차 평가) */}
             </span>
             {x.stages ? <StageRates cells={x.stages} /> : <>
-            <b className={cn('text-2xl leading-title font-bold whitespace-nowrap tabular-nums', x.tone === 'bad' && 'text-bad', x.muted && 'text-muted-foreground')} style={x.ink ? { color: x.ink } : undefined}>
+            <b className={cn('text-xl leading-title font-bold whitespace-nowrap tabular-nums', x.tone === 'bad' && 'text-bad', x.muted && 'text-muted-foreground')} style={x.ink ? { color: x.ink } : undefined}>
               {x.value}{x.unit ? <small className="ml-[3px] font-sans text-sm font-normal text-muted-foreground">{x.unit}</small> : null}
             </b>
             <span data-slot="q-sub" className="text-sm text-pretty text-muted-foreground tabular-nums" title={x.sub}>{x.sub}</span>{/* 줄바꿈 허용(말줄임 없음 — 1280·인쇄에서 '확인 필요(후보) 313'이 잘렸다) */}

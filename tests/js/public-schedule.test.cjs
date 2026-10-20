@@ -79,7 +79,6 @@ test('지난 몇 년: 착공·준공 둘, 민간 포함 범위 이름, 순위 �
   const byCode = Object.fromEntries(R.METRO.map((c) => [c, R.regionYears(molit, annual, 'complete', c).years]));
   const r = P.yearRank(byCode, '41');
   assert.deepEqual(r, { year: 2025, rank: 1, of: 3, value: 82390 });
-  assert.equal(P.rankText('준공', r), '2025년 준공 수도권 3곳 중 1위 · 8만 2,390호');
   const metro = R.metroYears(molit, annual, 'complete').find((y) => y.year === 2025);
   assert.equal(metro.value, 143542);
 });
@@ -120,7 +119,6 @@ test('시도 순위: 수도권 3시도 안에서 오류 없이 계산되고, 자
     for (const c of R.METRO) {
       const r = P.yearRank(by, c);
       assert.ok(r && r.of === 3 && r.rank >= 1 && r.rank <= 3, `${metric} ${c}`);
-      assert.match(P.rankText('준공', r), /^\d{4}년 준공 수도권 3곳 중 [123]위 · /);
     }
   }
   assert.doesNotMatch(PAGE, /\bORDER\b/);

@@ -49,7 +49,7 @@ test('1 범위 칩: 공용 컴포넌트(범위 + 출처, 풀기 ×) — 사업 �
   const board = read('components/board/Board.tsx');
   // 2026-10-19 수도권 한정: 범위 칩 = nation(수도권) — '전국'이면 전국, 아니면 '일부 지역' 분기 대신 '전국 아님'만 '일부 지역'
   assert.match(board, /const ledgerChip = <ScopeChip scope=\{nation === '전국 아님' \? '일부 지역' : nation\} source="사업 원장"/);
-  for (const t of ['월별 공급 파동', '시도 \\{L\\.regions\\.length\\}곳', '지연·주의 추이', '\\{AHEAD_COMPLETION\\}', '기관별 진행']) assert.match(board, new RegExp(`>${t}</h2>\\n\\s*<InfoTip [\\s\\S]*?</InfoTip>\\n\\s*\\{ledgerChip\\}`), t);   // 제목 바로 옆 (i)(2026-10-16 3차)
+  for (const t of ['월별 공급 파동', '시도별 지연 현황', '지연·주의 추이', '\\{AHEAD_COMPLETION\\}', '기관별 진행']) assert.match(board, new RegExp(`>${t}</h2>\\n\\s*<InfoTip [\\s\\S]*?</InfoTip>\\n\\s*\\{ledgerChip\\}`), t);   // 제목 바로 옆 (i)(2026-10-16 3차)
   assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope=\{area\} source="통계누리"/);   // 2026-10-19 수도권 한정: 범위 이름 = 통계누리 합계 자리 이름(수도권)
   const region = read('app/(dashboard)/region/page.tsx');
   assert.match(region, /scope=\{<ScopeChip scope=\{scopeName\} source="사업 원장"[^\n]*clearHref=\{sgg \? href\(\{ sgg: null, m: null \}\) : undefined\}/, '앞으로 12개월: 시군구 칩 + ×');
@@ -111,10 +111,10 @@ test('2 지시 카드 목록 ›: 목록 머리 건수(·계획 호수) = 카드
   assert.equal(String(listOf(q['어떤 사업이 늦어지는가'].href).n), q['어떤 사업이 늦어지는가'].value);
   assert.equal(listOf(q['어디서 막혀 있는가'].href).units, b.units);
   const board = read('components/board/Board.tsx');
-  assert.match(board, /<Link href=\{l\.href\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\} data-slot="board-dir-list"/, '숫자 자체가 목록 링크(2026-10-18)');
+  assert.match(board, /<Link href=\{l\.href\} onClick=\{open\(l\.href\)\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\} data-slot="board-dir-list"/, '숫자 자체가 목록 링크(2026-10-18)');
   const btn = board.slice(board.indexOf('data-slot="board-dir" title='), board.indexOf('</button>', board.indexOf('data-slot="board-dir" title=')));
-  assert.match(btn, /\{dirVals\(x, false\)\}/, '단추 안 값 줄은 링크 없이 자리만');
-  assert.ok(board.indexOf('{dirVals(x, true)}') > board.indexOf('</button>', board.indexOf('data-slot="board-dir" title=')), '링크는 단추 밖(겹친 층) — 단추 안에 링크를 넣지 않는다');
+  assert.match(btn, /\{dirVals\(x, false, open\)\}/, '단추 안 값 줄은 링크 없이 자리만');
+  assert.ok(board.indexOf('{dirVals(x, true, open)}') > board.indexOf('</button>', board.indexOf('data-slot="board-dir" title=')), '링크는 단추 밖(겹친 층) — 단추 안에 링크를 넣지 않는다');
   assert.match(board, /<PanelLink href=\{`\/projects\?sido=all&stage=\$\{bk\}&status=late`\}/);
   assert.match(board, /<PanelLink href="\/projects\?sido=all&status=review-late"/);   // 후보 계산 313 = 그 목록(data-audit-1016 후속 1)
   /* 사업 화면 상태 메뉴·목록 이름에도 '지연(장기 포함)' */

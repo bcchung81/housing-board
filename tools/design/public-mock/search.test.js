@@ -2,7 +2,7 @@
 const fs = require('fs'), assert = require('assert'), vm = require('vm');
 const h = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'docs', 'design', '대국민-모드-시안.html'), 'utf8');
 const code = [...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((c) => c.includes('function makeSearch'));
-const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.stageSums = stageSums; this.yearSums = yearSums; this.unitCodes = unitCodes; this.modeOf = modeOf; this.modeValues = modeValues; this.yearRange = yearRange; this.modeView = modeView; this.headParts = headParts; this.pressMode = pressMode; this.sameMode = sameMode; this.MODE_ALL = MODE_ALL; this.STAGE3 = STAGE3; this.classesOf = classesOf; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome; this.ro = ro; this.daysBetween = daysBetween; this.ddayText = ddayText; this.inYear = inYear; this.yearBucket = yearBucket; this.noticeName = noticeName; this.fullDate = fullDate; this.blockOf = blockOf; this.inLabel = inLabel; this.distinctNames = distinctNames; this.geoSido = geoSido; this.searchProjects = searchProjects; this.sp = sp; this.addrArea = addrArea; this.inDate = inDate; this.inCmp = inCmp; this.dayKey = dayKey; this.noticeList = noticeList; this.noticeStatus = noticeStatus; this.noticePeriod = noticePeriod; this.noticePrice = noticePrice; this.noticeTargets = noticeTargets; this.noticeTitle = noticeTitle; this.noticeType = noticeType; this.widen = widen; this.pnuIndex = pnuIndex; this.neun = neun; this.safeUrl = safeUrl; this.fillNear = fillNear; this.ptXY = ptXY; this.bigNum = bigNum;', ctx);
+const ctx = {}; vm.createContext(ctx); vm.runInContext(code + '\nthis.makeSearch = makeSearch; this.D = D; this.sumOf = sumOf; this.decidePick = decidePick; this.labelNum = labelNum; this.placeLabels = placeLabels; this.faceLabelOpts = faceLabelOpts; this.shortNames = shortNames; this.shortName = shortName; this.groupByMonth = groupByMonth; this.groupByArea = groupByArea; this.KIND_CHIP = KIND_CHIP; this.mapHref = mapHref; this.mapScopeHref = mapScopeHref; this.geomFor = geomFor; this.inRing = inRing; this.faceH = faceH; this.ringArea = ringArea; this.unitsFor = unitsFor; this.rankTop = rankTop; this.stageSums = stageSums; this.yearSums = yearSums; this.unitCodes = unitCodes; this.modeOf = modeOf; this.modeValues = modeValues; this.yearRange = yearRange; this.modeView = modeView; this.headParts = headParts; this.pressMode = pressMode; this.sameMode = sameMode; this.MODE_ALL = MODE_ALL; this.STAGE3 = STAGE3; this.classesOf = classesOf; this.OF_STAGE = OF_STAGE; this.stepOpt = stepOpt; this.eul = eul; this.undoHome = undoHome; this.ro = ro; this.daysBetween = daysBetween; this.ddayText = ddayText; this.inYear = inYear; this.yearBucket = yearBucket; this.noticeName = noticeName; this.fullDate = fullDate; this.blockOf = blockOf; this.inLabel = inLabel; this.distinctNames = distinctNames; this.geoSido = geoSido; this.searchProjects = searchProjects; this.sp = sp; this.addrArea = addrArea; this.inDate = inDate; this.inCmp = inCmp; this.dayKey = dayKey; this.noticeList = noticeList; this.noticeStatus = noticeStatus; this.noticePeriod = noticePeriod; this.noticePrice = noticePrice; this.noticeTargets = noticeTargets; this.noticeTitle = noticeTitle; this.noticeType = noticeType; this.widen = widen; this.pnuIndex = pnuIndex; this.neun = neun; this.safeUrl = safeUrl; this.fillNear = fillNear; this.ptXY = Map3D.ptXY; this.bigNum = bigNum;', ctx);
 const S = ctx.makeSearch(ctx.D);
 const labels = (r) => r.regions.items.map((x) => x.label);
 /* 3D 지도 공용 모듈(/map 수도권 개요와 같은 구현): 스크립트·모양은 assets/js/map3d.js·assets/css/map3d.css 에 있고 build.js 가 끼워 넣는다.
@@ -109,7 +109,7 @@ t('선택 안정(G16): 지도 기하(geomFor)는 무대 크기·휴대폰 여부
   assert(Math.min(...xs) < 30 || Math.max(...xs) > 730 || Math.max(...ys) > 400, '본토 판이 무대를 가득 쓴다(섬 칸 여백 없음)');
   /* 보는 곳이 강화·옹진(판에 면 없음)이어도 깨지지 않는다: 면·점·핀·솟음 시작점은 면이 없으면 건너뛴다(인천 시도 보기와 같은 지도) */
   const T0 = fs.readFileSync(require('path').join(__dirname, 'template.html'), 'utf8'), body = (nm) => { const i = T0.indexOf(`function ${nm}(`); return T0.slice(i, T0.indexOf('\n}\n', i)); };
-  assert(body('paintPts').includes("f = key ? VIEW.G.F.find((x) => x.x.key === key) : null") && body('paintPts').includes('const L = f ?'), '사업 점: 면이 없으면 0곳');
+  assert(!/function (mcXY|openPrjOnMap|openMapCard)\(|\.mapcard/.test(T0), '지도 위 사업 카드는 2026-10-19 청약 단지 카드로 바뀌며 지웠다(사업 점도 같은 날 지움)');
   assert(body('drawOverlay').includes("f = hk && VIEW.G.F.find((x) => x.x.key === hk && !x.inset)") && body('drawOverlay').includes('else if (f)'), '핀: 면이 없으면 없음');
   assert(body('paintSelection').includes("if (document.getElementById('f-' + S.mapAt))"), '키보드 위치: 면이 있을 때만');
   for (const sd of ['11', '28', '41']) assert(ic.own.some((o) => o.code.startsWith(sd)), sd + ' 면이 판에 있다');
@@ -166,7 +166,7 @@ t('쉬운 말(G14): 국민 영역 템플릿 문자열(ⓘ 툴팁·담당자 9구
   const strs = [...js.matchAll(/'(?:[^'\\\n]|\\.)*'|"(?:[^"\\\n]|\\.)*"|`(?:[^`\\]|\\.)*`/g)].map((m) => m[0]);
   const text = htmlPart.replace(/<[^>]+>/g, ' ') + '\n' + strs.join('\n');
   const BAN = ['①', '②', '③', '④', 'BL', '원장', '완공 연도 나옴', '아직 모름', '나머지', '단계 구분도', '제곱근'];
-  const re = (w) => new RegExp(/^[A-Z]/.test(w) ? `(?<![A-Za-z_$])${w}(?![A-Za-z])` : w);   // 'BL' 은 낱말로만(코드 이름 YBL 은 아님). 'D-' 는 2026-10-18 통합 요약 표(사용자 승인)의 다음 준공 D-day 칩 'D-13' 으로 풀었다
+  const re = (w) => new RegExp(/^[A-Z]/.test(w) ? `(?<![A-Za-z_$])${w}(?![A-Za-z])` : w);   // 'BL' 은 낱말로만(코드 이름 YBL 은 아님). 다음 준공 칩은 2026-10-19 'D-13' → '13일 뒤'(일반사용자 화면 'D-' 금지)
   const hit = BAN.filter((w) => re(w).test(text)).map((w) => w + ': ' + text.split('\n').find((l) => re(w).test(l)).trim().slice(0, 80));
   assert.strictEqual(hit.length, 0, hit.join(' | '));
 });
@@ -278,10 +278,10 @@ t('r9-1 검색 줄(599 이하): [내 동네로]·[지도] 단추는 이름 아�
 });
 t('r9-2 사업 링크는 사업 카드(옆 시트)를 연다 — 다음 준공 줄은 사업 찾기 상세, 시트 안 자세히 보기도 사업 찾기 상세(정책담당자 화면 이동 없음), 카드 자료 = project-detail(실제가 있으면 실제)', () => {
   const tpl = fs.readFileSync(require('path').join(__dirname, 'template.html'), 'utf8');
-  for (const c of ['ev', 'srow']) assert(new RegExp(`<a class="${c}" \\$\\{PRJA\\(`).test(tpl), c);
+  for (const c of ['srow']) assert(new RegExp(`<a class="${c}" \\$\\{PRJA\\(`).test(tpl), c);   // 2026-10-19 아래 줄 표 줄(.ev)은 청약 단지(청약홈 원문)라 사업 시트를 열지 않는다
   assert(tpl.includes('<a class="nx" href="/citizen/projects?id=${nx.id}" data-go="/citizen/projects?id=${nx.id}" data-k="${nx.k}"'), '다음 준공 줄 = 사업 찾기 상세(2026-10-19 D3)');
   assert.strictEqual((tpl.match(/data-go="\/projects\?id=/g) || []).length, 0, '정책담당자 화면(/projects?id=) 직접 이동 없음');
-  assert.strictEqual((tpl.match(/data-go="\/citizen\/projects\?id=\$\{id\}">자세히 보기<\/a>/g) || []).length, 2, '시트 안 하나 + 지도 위 카드(mapCardHtml) 하나 = 모두 사업 찾기 상세 (2026-10-19: 지도에서 연 사업은 카드가 생겨 1 → 2)');
+  assert.strictEqual((tpl.match(/data-go="\/citizen\/projects\?id=\$\{id\}">자세히 보기<\/a>/g) || []).length, 1, '시트 안 하나 = 사업 찾기 상세 (2026-10-19: 지도 위 사업 카드를 지워 2 → 1)');
   assert(!tpl.includes('자세히 보기(정책담당자 화면)') && tpl.includes('id="pc-back"'));
   const pd = JSON.parse(fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'data', 'board', 'project-detail.json'), 'utf8')).projects;
   const AG = { lh: 'LH', gh: 'GH', sh: 'SH', local: '지자체', mnd: '국방부' }, K = ['SUPPLY_NOTICE', 'CONSTRUCTION_START', 'COMPLETION', 'MOVE_IN'];
@@ -346,12 +346,14 @@ t('r15·10-18 고른 곳·가리킨 곳 = 띄운 면(그림만 transform, 기하
   assert(/\.map \.lift \.up-shd \{ fill: color-mix\(in srgb, var\(--map-shade\)/.test(M3CSS) && /\.map \.lift :is\(\.up-side, \.up-w\) \{ fill: color-mix\(in srgb, var\(--c\) \d+%, var\(--map-shade\)\); \}/.test(M3CSS), '바닥 그림자·옆면 = 그늘 섞기');
   { const i = M3.indexOf('  function paintFaces('), b = M3.slice(i, M3.indexOf('\n  }\n', i)); assert(!/setAttribute\('(transform|d)', [^)]*h\b|data-h|faceH|geom\(/.test(b) && b.includes("if (lv === 'on') g.appendChild(el('path', 'up-shd', d));"), '사본은 원래 d 그대로(높이 값·경계 불변), 그림자는 고른 곳만'); }
   assert(CSS.includes('.map .kb-halo { stroke: var(--card); stroke-width: 4.5; }') && CSS.includes('.map .kb { stroke: var(--ring); stroke-width: 2; }'), '키보드 초점 고리 유지');
-  for (const k of ['ring-halo', 'lb-hi', 'class="pill"', '.lb-g .pill', 'lb-g.sel .pill', '.lb-g.hov', '.dim']) assert(!(TPL + M3 + M3CSS).includes(k), '남은 강조형 ' + k);
-  assert(CSS.includes('.map .lb-g.sel .lb.nm { font-weight: 700; }') && !/\.lb-g\.sel[^{]*\{[^}]*(fill|stroke):/.test(CSS), '고른 곳은 이름만 굵게(바탕·색 바꿈 없음)');
+  for (const k of ['ring-halo', 'lb-hi', 'class="pill"', '.lb-g .pill', 'lb-g.sel .pill', '.lb-g.hov']) assert(!(TPL + M3 + M3CSS).includes(k), '남은 강조형 ' + k);
+  assert(M3.includes("g.classList.toggle('dim', !!band && !band.has(k)") && (M3CSS.match(/\.dim\b/g) || []).length === 6, '흐림(.dim)은 범례 구간을 고를 때만(2026-10-19 사용자 결정 — 고른 곳·가리킨 곳 강조에는 쓰지 않는다)');
+  assert(CSS.includes('.map .lb-g.sel .lb.nm { font-weight: 700; }') && (CSS.match(/\.lb-g\.sel[^{]*\{[^}]*(fill|stroke):/g) || []).map((m) => m.split(' {')[0]).join() === '.lb-g.sel:not(.pl) .lb', '고른 곳은 이름 굵게 + 선택 색 위 라벨 글자(2026-10-19 사용자 피드백 — 면 위 라벨만, 바탕 판 없음)');
+  assert(CSS.includes('.map .lift .on .up .up-top { fill: var(--cz-map-sel); stroke: var(--cz-map-sel-line); stroke-width: 1.5; }'), 'SVG 대체: 고른 곳 띄운 윗면 = 선택 색 · 윤곽 1.5(≤1.5)');
   const body = (nm) => { const i = TPL.indexOf(`function ${nm}(`); return TPL.slice(i, TPL.indexOf('\n}\n', i)); };
-  const ov = body('drawOverlay'); assert(/g\.innerHTML = pin \? PINP\(pin\[0\], pin\[1\]\) : '';/.test(ov) && !/rect|textW|hoverKey/.test(ov), '덮는 층은 내 동네 핀 하나뿐');
+  const ov = body('drawOverlay'); assert(/g\.innerHTML = pin \? PINP\(pin\[0\], pin\[1\]\) : '';/.test(ov) && !/rect|textW/.test(ov) && !/hoverKey[^;]*(innerHTML|append|createElement)/.test(ov), '덮는 층은 내 동네 핀 하나뿐(가리킨 면은 라벨 클래스만 — 2026-10-19 .hv)');
   const m3body = (nm) => { const i = M3.indexOf(`  function ${nm}(`); assert(i >= 0, nm); return M3.slice(i, M3.indexOf('\n  }\n', i)); };
-  assert(body('paintRings').includes('Map3D.paintFaces(svg, { sel: VIEW.viewKey, hover: VIEW.hoverKey,') && m3body('paintFaces').includes("if (p.hover) doc.getElementById('f-' + p.hover)?.classList.add('hl');"), '순위 줄에서 가리켜도 면 효과(공용 모듈 칠하기, /map 개요와 같은 구현)');
+  assert(body('paintRings').includes('Map3D.paintFaces(svg, { sel: VIEW.viewKey, hover: VIEW.hoverKey,') && m3body('paintFaces').includes("if (hf && !hf.classList.contains('out')) hf.classList.add('hl');"), '순위 줄에서 가리켜도 면 효과(공용 모듈 칠하기, /map 개요와 같은 구현)');
   assert(!/innerHTML|drawMap|drawBaseLabels/.test(body('paintRings')) && !/innerHTML|draw\(|labels\(/.test(m3body('paintFaces')), '칠하기는 svg·라벨을 다시 만들지 않음(G16)');
 });
 const TPL = fs.readFileSync(require('path').join(__dirname, 'template.html'), 'utf8');
@@ -369,7 +371,7 @@ t("r10-4 사업 줄 '들어와요' 대신 일정 이름: 고양창릉 A-4 → '�
   for (const [c, rows] of Object.entries(D.prj)) for (const p of rows) { const y = ctx.inYear(D, c, p), l = ctx.inLabel(D, c, p); if (!y) assert.strictEqual(l, '연도 미정'); else { assert(/^(입주|준공) \d{4}년/.test(l), l); assert.strictEqual(l.slice(3, 7), y, c + p[0]); } n++; }
   const g = Object.entries(D.prj).flatMap(([c, rows]) => rows.filter((p) => p[1] === '고양창릉 A-4BL 아파트 건설공사 1공구').map((p) => ctx.inLabel(D, c, p)));
   assert.deepStrictEqual(g, ['입주 2028년 1월']);
-  assert(!/`\$\{x\.yt\} 들어와요`/.test(TPL) && TPL.includes('<span class="when" title="${esc(x.il)}">${x.il}</span>'));
+  assert(!/`\$\{x\.yt\} 들어와요`/.test(TPL) && TPL.includes('const sub = ev ? NEXT[x.k] : x.il'), '시트 사업 줄 = 들어올 때 말(아래 줄 사업 표는 2026-10-19 청약 단지 카드로 바뀜)');
   assert(TPL.includes('입주 예정 해가 있으면 입주 해, 없으면 준공 해'), 'ⓘ 입주 기준');
   console.log(`  ${n}건 들어올 때 말 = 들어올 해`);
 });
@@ -377,10 +379,11 @@ t('r10-5 시트 사업 줄 상태 글자(색 점만이 아님): 호수 아래 �
   assert(TPL.includes('<span class="stt"><span class="sr">, </span>${st}</span>'));
   assert(/st = ev \? '' : STATUS\[stOf\(x\.b\)\]\[0\]/.test(TPL));
 });
-t('r10-6 보기 바뀜 알림: role=status·aria-live=polite 영역이 문서(시트 밖)와 시트 안에 늘 있고, 고르기마다 "○○ 보는 중 · 앞으로 n호"', () => {
+t('r10-6 보기 바뀜 알림: role=status·aria-live=polite 영역이 문서에 늘 하나 있고(2026-10-20 팝업은 모달리스라 팝업 안 영역 없음), 고르기마다 "○○ 보는 중 · 앞으로 n호"', () => {
   assert(/<div class="sr" role="status" aria-live="polite" aria-atomic="true" id="live"><\/div>/.test(TPL));
-  assert(/<aside class="sheet"[\s\S]*?id="sheet-live"[\s\S]*?<\/aside>/.test(TPL), '시트 안 영역');
-  assert(!TPL.includes("$('#live').textContent ="), '알림은 say() 하나로');
+  assert(!TPL.includes('id="sheet-live"'), '팝업 안 영역 없음(바깥 영역이 늘 읽힌다)');
+  assert.strictEqual(TPL.split("$('#live').textContent =").length, 2, '알림은 say() 하나로');
+  assert(TPL.includes("function say(msg) { $('#live').textContent = msg; }"));
   assert(TPL.includes("`${nameOf(vr)} 보는 중 · ${amtOf(vr)}`"));
   assert.strictEqual(ctx.sp('1만'), ' '); assert.strictEqual(ctx.sp('9,660'), '');
 });
@@ -388,9 +391,10 @@ t("r10-8 같은 목록 안 이름 겹침: 고양창릉(4블록) 두 곳은 'A-4'
   const D = ctx.D, rows = Object.entries(D.prj).filter(([c]) => c.startsWith('4128')).flatMap(([c, rs]) => rs.map((p) => ({ id: `PRJ-${c}-${p[0]}`, name: p[1] })));
   const m = ctx.distinctNames(rows), v = Object.values(m);
   assert(v.includes('고양창릉(4블록) A-4') && v.includes('고양창릉(4블록) S-04'), v.filter((x) => x.includes('창릉')).join(','));
-  for (const pre of ['4136', '41', '11', '28']) { const L = Object.entries(D.prj).filter(([c]) => c.startsWith(pre)).flatMap(([c, rs]) => rs.filter((p) => ctx.OF_STAGE[p[2]] <= 3).map((p) => ({ id: `PRJ-${c}-${p[0]}`, name: p[1] })));
+  for (const pre of ['4136', '41', '11', '28']) { const L = Object.entries(D.prj).filter(([c]) => c.startsWith(pre)).flatMap(([c, rs]) => rs.filter((p) => ctx.OF_STAGE[p[2]] <= 3).map((p) => ({ id: `PRJ-${c}-${p[0]}`, name: p[1] }))).filter((x) => x.id !== 'PRJ-28290-0064');
     const vv = Object.values(ctx.distinctNames(L)).filter((x) => !x.startsWith('이름 미정')); assert.strictEqual(new Set(vv).size, vv.length, pre + ' 겹침 ' + vv.filter((x, i) => vv.indexOf(x) !== i).slice(0, 3)); }
   assert.strictEqual(ctx.distinctNames([{ id: 'a', name: '과천지식정보타운 S-12' }]).a, '과천지식정보타운(12블록)');
+  assert.strictEqual(ctx.D.prj['28290'].filter((p) => p[1] === '인천검단 AA13-1').map((p) => p[0]).join(), '0058,0064', '2026-10-20 HOME 판: 같은 이름·702호 두 사업은 HOME 이 따로 둔 중복 의심(HOME 대로 두고 보고만) — 이 둘만 겹침 허용');
 });
 t("r10-9 수도권 밖 IP(2026-10-19 수도권 한정): /api/v1/geo 의 수도권 시도는 그대로, 수도권 밖(광주 29·전남 46·제주 49·부산 26 …)·모르는 코드는 null → 추천 없이 기본 경기(41) 보기 + 시도 고르기", () => {
   for (const c of ['11', '28', '41']) assert.strictEqual(ctx.geoSido(c, S), c);
@@ -409,12 +413,8 @@ t("r10-10 숫자와 '호'(316호·1.6만 호), 큰 지도 링크는 지도 아�
   assert(pubCss.every((l) => /^\.mnav a|^\.dir \.t/.test(l)), pubCss.join('\n'));
 });
 t('r10-7 지도 옆 순위: 내 동네 핀은 이름 칸 밖(순위 숫자 아래)', () => {
-  assert(TPL.includes("x.key === homeKey && cap && i < 3 ? `<span class=\"me\" aria-hidden=\"true\">${ico('pin')}</span>` : ''"));
+  assert(TPL.includes("x.key === homeKey && cap ? `<span class=\"me\" aria-hidden=\"true\">${ico('pin')}</span>` : ''"), '2026-10-19 모든 줄에 막대 — 핀은 늘 번호 아래');
   assert(/\.rank \.rk > \.me \{ grid-column: 1; grid-row: 2;/.test(TPL));
-});
-t("r10-3 '사업' 칸 = 호수 큰 순(같으면 들어올 해 빠른 순), 2026-10-18 부터 PJ_MAX(8)줄까지 그리고 칸 높이에 맞게 접는다(fitPj) — r13 '다가오는 일정' 칸이 없어 겹침 빼기(dedupPj)도 없다", () => {
-  assert(TPL.includes("const big = prj.slice().sort((a, b) => b.u - a.u || (a.y || '9999').localeCompare(b.y || '9999')).slice(0, PJ_MAX);") && TPL.includes('const PJ_MAX = 8;'));
-  assert(!/function dedupPj\(\)/.test(TPL) && !/function fitEv\(\)/.test(TPL) && !TPL.includes('id="c-ev"'));
 });
 t("r10b 메뉴: 일반사용자 관점 = 종합상황판·지도·사업 찾기·공급 일정, 정책담당자 관점 5개 — 항목·순서·이름·경로 = lib/shell/menu.ts MENU(가로 메뉴·펼침 메뉴 같은 규칙)", () => {
   const navs = [...TPL.matchAll(/<ul class="menu">([\s\S]*?)<\/ul>|<nav class="mnav"[^>]*><ul>([\s\S]*?)<\/ul>/g)].map((m) => m[1] || m[2]);
@@ -478,20 +478,20 @@ t("r11-2 사업 시트 순서 = 줄에 보이는 날짜(입주 → 준공 → �
 t("r13 '다가오는 일정' 칸(#c-ev)은 없애고 '언제 들어오나' 칸 오른쪽 '다가오는 준공·입주' + 일정 전체 시트(처음부터 전부)로 흡수", () => {
   assert(!TPL.includes('id="c-ev"') && !TPL.includes('그다음 일정'));
   // r17 신문 1면: 아래 단의 '다가오는 준공·입주' 목록은 빼고, 가장 가까운 준공·입주는 헤드라인 단 '다음 준공' 줄, 일정 전체는 '일정 n ›' 시트(모든 폭)
-  assert(!TPL.includes('<h3>다가오는 준공·입주</h3>') && TPL.includes('findBtn(prj.length, r, f)') && !/countBtn\('(ev|yr|tl)'/.test(TPL), '2026-10-18 아래 줄 = 사업 카드 한 장: 개수 단추는 사업 시트 하나(옛 일정·해별 단추 없음)');
+  assert(!TPL.includes('<h3>다가오는 준공·입주</h3>') && !TPL.includes('findBtn') && !/countBtn\('(ev|yr|tl)'/.test(TPL), '2026-10-19 아래 줄 = 청약 단지 카드 한 장: 머리 개수 단추 없음(옛 일정·해별·사업 단추 없음)');
   assert(TPL.includes("const nx = eventsOf(r.codes).filter((e) => e.k >= 2)") && TPL.includes('<span class="k">다음 ${NEXT[nx.k]}</span>'), '다음 준공·입주 줄');
 });
 t("r11-5 [다른 동네]·[바꾸기]: 빈 입력 대신 목록을 바로 펼친다 — 안내 '초성(ㄱㅇ)이나 동 이름으로도 찾아요', 수도권 많은 곳 8 + 시도 3, aria-expanded=true", () => {
   assert(TPL.includes("if (t.dataset.act === 'pick') { S.q = ''; input.value = ''; S.sidos = false; S.pickAll = true; S.open = true;"));
   const br = TPL.slice(TPL.indexOf('if (S.open && !q && S.pickAll)'), TPL.indexOf('if (S.open && !q && S.sidos)'));
   assert(!br.includes('초성(ㄱㅇ)이나 동 이름으로도 찾아요') && br.includes("$('#ac-note').innerHTML = '';") && TPL.includes('<span class="sr" id="q-help">초성(ㄱㅇ)이나 영문 자판(rPdid)으로 쳐도 찾습니다.') && br.includes("input.setAttribute('aria-expanded', 'true')") && br.includes('regionOpt(x, opts'), '2026-10-18 서술형 정리: 보이는 안내 줄 없음, 화면 읽기 설명은 유지');
-  assert(TPL.includes('placeholder="동네·사업·주소 · 초성(ㄱㅇ) 가능"'), '2.5: 안내 줄 대신 입력칸 placeholder 로 초성 검색을 알린다');
+  assert(TPL.includes('placeholder="동네, 사업, 주소 검색"') && !/placeholder="[^"]*초성/.test(TPL) && TPL.includes('<span class="k-cho"><kbd>ㄱㅇ</kbd> 초성 검색</span>') && TPL.includes('.keys > :not(.k-cho) { display: none; }'), '2026-10-19 자리표시 글은 짧게, 초성 안내는 자동완성 판 키 안내 줄(모든 폭)·화면 읽기 설명(q-help)으로');
   const D = ctx.D, top = ['11', '28', '41'].flatMap((sd) => ctx.unitsFor(D, S, sd)).filter((x) => x.u > 0 && S.regionOf[x.key]).sort((a, b) => b.u - a.u).slice(0, 8);
   assert.strictEqual(top.length, 8); assert.strictEqual(S.regions.filter((x) => x.kind === 'sido').length, 3);   // 2026-10-19 수도권 한정: 시도 16 → 3(서울·인천·경기)
   console.log('  많은 곳 8:', top.map((x) => S.regionOf[x.key].label).join(' · '));
 });
 t("r11-6 범례 '620호 미만'(~ 없음), 지역 줄은 늘 [내 동네로](시도 포함), 같은 이름 시군구는 시도 짧은 이름('부산 북구 보는 중'), ⓘ 16px·제곱근 없음·①② 는 정책담당자 줄에만, 메뉴 Esc", () => {
-  assert(TPL.includes('`${fmt(C.br[0])} 미만`') && !TPL.includes('`~${fmt(C.br[0])}'));   // r16 세로 범례: 맨 아래 칸의 읽는 이름
+  assert(TPL.includes('`${fmt(C.br[0])}호 미만`') && !TPL.includes('`~${fmt(C.br[0])}'));   // r16 세로 범례: 맨 아래 칸의 읽는 이름
   assert(!/if \(x\.kind !== 'sgg'\)/.test(TPL.slice(TPL.indexOf('function regionOpt'), TPL.indexOf('function renderAC'))), '시도 줄도 내 동네로');
   assert.strictEqual(DUP.regionOf['26320'].label, '부산 북구'); assert.strictEqual(DUP.regionOf['27230'].label, '대구 북구'); assert.strictEqual(S.regionOf['26320'], undefined); assert.strictEqual(S.regionOf['41360'].label, '남양주시');   // 2026-10-19 수도권 한정: 같은 이름 규칙은 표본 색인(DUP), 실제 색인에 부산 없음 assert.strictEqual(S.regionOf['41281']?.label ?? '고양시 덕양구', '고양시 덕양구');
   assert(TPL.includes('const nameOf = (r) => r.label;') && TPL.includes('${esc(nameOf(v))}</b> 보는 중'));
@@ -637,10 +637,10 @@ t('r14 굵기는 400·700 두 가지만(500·600·800 0)', () => {
   assert(w.length > 20 && w.every((x) => x === '400' || x === '700'), [...new Set(w)].join());
   assert(!/font-(weight|bold)[^;]*\b(500|600|800|900|bold|bolder)\b/.test(TPL.replace(/<style>[\s\S]*<\/style>/, '')), 'JS 안 굵기');
 });
-t("r14 서비스 이름 'The주택'(2026-10-18 결정 — '주택공급'·'주택파동' 로고 글자 0): 로고 글자·이름표·운영판 제목·og, 로고 글자 --fs-logo 700 (앱 TopNav 와 같은 토큰)", () => {
+t("r14 서비스 이름 '더주택'(2026-10-18 결정 — '주택공급'·'주택파동' 로고 글자 0): 로고 글자·이름표·운영판 제목·og, 로고 글자 --fs-logo 700 (앱 TopNav 와 같은 토큰)", () => {
   for (const x of [TPL, h, OPSH, fs.readFileSync(require('path').join(__dirname, 'build.js'), 'utf8')]) assert(!x.includes('주택파동'));
-  assert(TPL.includes('aria-label="The주택 종합상황판 처음으로"') && TPL.includes('<svg class="lk-full" viewBox="0 0 250 64" aria-hidden="true">') && TPL.includes('<svg class="lk-mark" viewBox="4 4 64 60" aria-hidden="true">') && !TPL.includes('class="logo-the"') && !TPL.includes('<span>주택공급</span>'), '로고 = 원본 lockup 벡터 한 벌(글자·굵기 규칙 없음), 이름은 링크 aria-label');
-  assert(OPSH.includes('<title>The주택 — 내 동네 공공 주택 공급</title>') && OPSH.includes('content="The주택 — 내 동네 공공 주택 공급"'));
+  assert(TPL.includes('aria-label="더주택 종합상황판 처음으로"') && TPL.includes('<svg class="lk-full" viewBox="0 0 202 64" aria-hidden="true">') && TPL.includes('<svg class="lk-mark" viewBox="4 4 64 60" aria-hidden="true">') && !TPL.includes('class="logo-the"') && !TPL.includes('<span>주택공급</span>'), '로고 = 원본 lockup 벡터 한 벌(글자·굵기 규칙 없음), 이름은 링크 aria-label');
+  assert(OPSH.includes('<title>더주택 — 내 동네 공공 주택 공급</title>') && OPSH.includes('content="더주택 — 내 동네 공공 주택 공급"'));
   assert(/\.logo \.lk-full \{ height: var\(--logo-h\); width: auto; \}/.test(CSS) && /\.logo \.lk-mark \{ display: none; width: var\(--logo-mark\); height: var\(--logo-mark\); \}/.test(CSS) && !/--fs-logo/.test(CSS), '앱 TopNav 와 같은 --logo-h · --logo-mark 토큰');
 });
 t("r14 '지금 신청' 채우기: 넓은 화면에서 내 동네 3건 미만이면 이웃 → 같은 시도로 3건까지('근처에서' 아래), 내 동네와 같은 공고 빼기, 휴대폰은 1건 + 'n건 더'", () => {
@@ -672,21 +672,19 @@ t('r14 사업 점 투영: 알려진 사업(남양주 PRJ-41360-0188, 정확)이 
   }
   console.log(`  정확 점 ${inn}/${n} 자기 면 안`); assert(n >= 100 && inn / n >= .95);
 });
-t('r14 점 층 갱신은 지도 svg 를 다시 만들지 않는다(G16): paintPts·maskPts 는 점 층(.pts-g·.pts-top)만 쓰고, 지도 svg innerHTML 은 drawMap 한 곳뿐', () => {
+t('2026-10-19 사업 위치 점 지움(사용자 결정): 점 층(svg.pts·.pts-g·.pts-top)·점 함수(paintPts·maskPts·ptsOf)·점 CSS·점 범례(.lg-pts) 0, 내 동네 핀은 남김, 지도 svg innerHTML 은 공용 모듈 draw 한 곳뿐(G16)', () => {
   const body = (nm) => { const i = TPL.indexOf(`function ${nm}(`); return TPL.slice(i, TPL.indexOf('\n}\n', i)); };
-  for (const nm of ['paintPts', 'maskPts']) { const b = body(nm); assert(!/drawMap|renderMapCard|svg\.innerHTML|svg\.map'\)\.innerHTML|\.lbls'\)\.innerHTML/.test(b), nm); }
-  assert(/g\.innerHTML = L\.map/.test(body('paintPts')) && body('maskPts').includes("const dst = top.querySelector('.' + k); dst.innerHTML = '';") && body('maskPts').includes('dst.append(c)'), '점 층 안(.pts-top)만 쓴다');
+  for (const k of ['svg.pts', 'pts-g', 'pts-top', 'paintPts', 'maskPts', 'ptsOf', 'lg-pts', 'lg-pt', 'ptsw', 'pt-hit', '--pt-ink']) assert(!TPL.includes(k), '점 잔재 ' + k);
+  for (const f of ['map3d-gl.js', 'map3d.js']) assert(!/사업 점/.test(fs.readFileSync(require('path').join(ROOT, 'assets', 'js', f), 'utf8')), f + ' 설명에 사업 점 없음');
   { const i = M3.indexOf('  function draw('), d = M3.slice(i, M3.indexOf('\n  }\n', i)); assert.strictEqual((TPL.match(/svg\.innerHTML = /g) || []).length, 0); assert.strictEqual((M3.match(/svg\.innerHTML = /g) || []).length, 1); assert(d.includes('svg.innerHTML = '), '지도 svg innerHTML 은 공용 모듈 draw 한 곳뿐'); assert.strictEqual((TPL.match(/Map3D\.draw\(/g) || []).length, 1); assert(body('drawMap').includes('Map3D.draw('), '그리기를 부르는 곳은 drawMap 하나'); }
-  assert(/drawOverlay\(\);\n  paintPts\(\);\n\}/.test(body('paintSelection') + '\n}'), 'paintSelection 끝에 점 층');
-  assert(TPL.includes('<svg class="pts" aria-hidden="false"><g class="pts-g" role="group" data-rove></g><g class="map pts-top" aria-hidden="true">'), '점 위에 라벨 글자 복제(점이 라벨 글자를 덮지 않음)');
-  assert(/\.pts \.ap \.pt-d \{ fill: none; stroke: var\(--pt-ink\); stroke-width: 1\.5; \}/.test(CSS) && /\.pts-g\.inv \{ --pt-ink: var\(--map-ov-ink-5\); --pt-halo: var\(--map-ov-ink-0\); \}/.test(CSS) && !/\.pts[^{]*\{[^}]*dasharray/.test(CSS), '대략 = 속이 빈 실선 고리');
+  assert(/drawOverlay\(\);\n\}/.test(body('paintSelection') + '\n}'), 'paintSelection 끝 = 덮개(점 층·지도 위 사업 카드 없음 — 카드는 2026-10-19 청약 단지 카드로 바뀌며 지웠다)');
+  assert(TPL.includes('PINP(pin[0], pin[1])') && body('drawOverlay').includes('const hk = VIEW.homeKey'), '내 동네 핀은 그대로');
 });
 t('진짜 3D(GL) 경로도 G16·G15: 고르기·가리키기는 feature-state 만(paintRings → select·hover), 이름표는 같은 마크업(덮개 svg)·같은 반드시 규칙, 사업 점은 같은 점 층에 윗면 높이로, 높이·색은 SVG 판과 같은 값(VIEW.mvals·VIEW.umax·VIEW.all 색 단계) — 위 SVG 단언은 대체 경로(WebGL 없음)에 그대로', () => {
   const body = (nm) => { const i = TPL.indexOf(`function ${nm}(`); return TPL.slice(i, TPL.indexOf('\n}\n', i)); };
   const GLM = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'assets', 'js', 'map3d-gl.js'), 'utf8');
   assert(body('paintRings').includes('GLS.map.select(VIEW.viewKey); GLS.map.hover(VIEW.hoverKey);') && !/setFilter|setData|labels\(/.test(GLM.slice(GLM.indexOf('function select('), GLM.indexOf('function setColors('))), '고르기·가리키기 = feature-state 만');
   assert(body('drawBaseLabels').includes('GLS.map.labels(g, VIEW.units, { homeKey: VIEW.homeKey, viewKey: VIEW.viewKey,') && GLM.includes("(!opt.strict && !!x.u && ri < 5) || x.key === opt.homeKey || x.key === opt.viewKey"), '이름표 = 상위 5·내 동네·보는 곳 반드시');
-  assert(body('paintPts').includes('GLS.map.project(MapGL.toLngLat(x.p), key)') && /g\.innerHTML = L\.map/.test(body('paintPts')), '사업 점 = 같은 점 층, 윗면 높이 투영');
   assert(body('glDraw').includes('GLS.map.setValues(VIEW.mvals, glCls(), { umax: VIEW.umax, duration: 0 });') && TPL.includes('const glCls = () => Object.fromEntries(VIEW.all.map((x) => [x.key, x.c || 0]));'), '높이·색 = 판 하나의 값·배율');
   assert(GLM.includes("return [c, u > 0 ? hmin + (hmax - hmin) * Math.pow(Math.min(1, u / umax), .75) : 0];"), '높이 척도 = faceH(지수 0.75, 0호 0)');
 });
@@ -721,31 +719,36 @@ t('r16-2 범례(2026-10-18 레일): 많은 곳 순위 아래, /map 개요 범례
   const fmtT = (v) => Number(v).toLocaleString('en-US'), labelNumT = (v) => (v / 1e4).toFixed(1) + '만';
   const L = new Function('fmt', 'esc', 'modeName', 'TIP_MAP', 'labelNum', srcOf('function legendHtml(', '\n}\n') + '\n}\nreturn legendHtml;')(fmtT, escT, modeNameT, '<b>i</b>', labelNumT);
   const C4 = { br: [1300, 3200, 4900], lv: (r) => [0, 1, 2, 4, 5][r] }, legend = L(C4, ctx.MODE_ALL);
-  assert.deepStrictEqual([...legend.matchAll(/<i class="lg-sw (c\d)" title/g)].map((m) => m[1]), ['c0', 'c1', 'c2', 'c4', 'c5'], '가로 계단 막대: 0 → 옅은 → 진한(4구간 = 1·2·4·5), 같은 폭 칸');
-  assert.deepStrictEqual([...legend.matchAll(/<i class="lg-sw c\d" title="([^"]+)"/g)].map((m) => m[1]), ['사업 없음', '1,300호 미만', '1,300~3,199호', '3,200~4,899호', '4,900호 이상'], '칸 title = 정확한 범위');
-  assert.deepStrictEqual([...legend.matchAll(/<span class="lg-tk[^"]*" style="[^"]*">([^<]+)<\/span>/g)].map((m) => m[1]), ['없음', '1,300', '3,200', '4,900'], '눈금 글자 = 없음 + 경계값(C.br)만');
-  assert(!/\d~\d/.test(legend.replace(/title="[^"]*"/g, '').replace(/<ul class="sr">[\s\S]*?<\/ul>/, '')), "보이는 눈금에 '~n−1' 꼴 없음");
-  assert.deepStrictEqual([...legend.matchAll(/<li>([^<]+)<\/li>/g)].map((m) => m[1]), ['사업 없음', '1,300 미만', '1,300~3,199', '3,200~4,899', '4,900 이상'], '화면 읽기용 목록 = 구간 전체 글');
+  assert.deepStrictEqual([...legend.matchAll(/<button type="button" class="lg-sw (c\d)" data-lv="(\d)"/g)].map((m) => m[1] + m[2]), ['c00', 'c11', 'c22', 'c44', 'c55'], '가로 계단 막대: 0 → 옅은 → 진한(4구간 = 1·2·4·5), 같은 폭 칸 = 구간 단추(data-lv = 색 단계, 2026-10-19)');
+  assert.deepStrictEqual([...legend.matchAll(/class="lg-sw c\d"[^>]* title="([^"]+)" aria-label="([^"]+)"/g)].map((m) => m[1] === m[2] && m[1]), ['사업 없음', '1,300호 미만', '1,300~3,199호', '3,200~4,899호', '4,900호 이상'], '칸 title = 단추 이름 = 정확한 범위(화면 읽기용 목록 대신)');
+  assert.deepStrictEqual([...legend.matchAll(/aria-pressed="false" tabindex="(-?\d)"/g)].map((m) => +m[1]), [0, -1, -1, -1, -1], '한 번의 Tab(움직이는 tabindex) · 처음엔 모두 안 눌림'); assert(legend.includes('<div class="lg-bar" data-rove>'), '화살표로 옮김(data-rove — 그라데이션 조각 단추도 같은 묶음 안)');
+  /* 2026-10-19 사용자 피드백 '색상 그라데이션으로 표기': 계단 칸 → [사업 없음 견본] + 연속 그라데이션 막대. 색 멈춤 = 구간 가운데에 그 구간의 면 색 단계(var(--map-ov-n) — 램프 덮기·다크를 따른다), 구간 단추 = 같은 폭 조각(--i 번째) */
+  assert(legend.includes('<span class="lg-grad" style="--m:4;--lg-stops:var(--map-ov-1) 0%, var(--map-ov-1) 12.50%, var(--map-ov-2) 37.50%, var(--map-ov-4) 62.50%, var(--map-ov-5) 87.50%, var(--map-ov-5) 100%">') && !/#[0-9A-Fa-f]{6}/.test(legend), '그라데이션 색 = 구간 가운데 그 구간 색 단계(1·2·4·5), 값은 토큰(hex 없음)');
+  assert.deepStrictEqual([...legend.matchAll(/data-lv="(\d)"[^>]*?(?: style="--i:(\d)")?><\/button>/g)].map((m) => m[2] ?? '-'), ['-', '0', '1', '2', '3'], '사업 없음 견본은 그라데이션 밖, 구간 조각은 0부터 차례');
+  assert(legend.indexOf('data-lv="0"') < legend.indexOf('class="lg-grad"'), "'사업 없음' 견본은 그라데이션 왼쪽에 떨어져");
+  assert(L({ br: [], lv: () => 3 }, ctx.MODE_ALL).includes('--m:1;--lg-stops:var(--map-ov-3) 0%, var(--map-ov-3) 50.00%, var(--map-ov-3) 100%'), '구간이 하나면 한 색(멈춤 2개 이상 — 그라데이션이 깨지지 않는다)');
+  assert.deepStrictEqual([...legend.matchAll(/<span class="lg-tk[^"]*"(?: style="[^"]*")?>([^<]+)<\/span>/g)].map((m) => m[1]), ['없음', '1,300', '3,200', '4,900'], '눈금 글자 = 없음 + 경계값(C.br)만');
+  assert(legend.includes('<span class="lg-tk0">없음</span><span class="lg-tks"><span class="lg-tk" style="--x:25.00%">1,300</span><span class="lg-tk" style="--x:50.00%">3,200</span><span class="lg-tk" style="--x:75.00%">4,900</span></span>'), '눈금 = 그라데이션 막대 안 구간 경계 자리(2026-10-19), 없음은 견본 아래');
+  assert(!/\d~\d/.test(legend.replace(/(title|aria-label)="[^"]*"/g, '')), "보이는 눈금에 '~n−1' 꼴 없음");
   assert(L({ br: [12000, 20000, 33000], lv: C4.lv }, ctx.MODE_ALL).includes('>1.2만<') && !legend.includes('stag'), '1만 이상 눈금은 약식(labelNum)');
   assert(!/l2/.test(legend) && /class="lg-tk l2"/.test(L({ br: [10000, 20000, 30000, 40000], lv: (r) => r }, ctx.MODE_ALL)), '눈금이 겹칠 만큼 넓으면 한 칸 건너 둘째 줄(.l2), 좁으면 한 줄');
-  const order = ['class="lg-h"', 'class="lg-bar"', 'class="lg-ticks"', 'class="lg-pts"'].map((x) => legend.indexOf(x)); assert(order[0] > 0 && order.every((v, i) => !i || order[i - 1] < v), '제목(모드 이름 ⓘ) → 막대 → 눈금 → 사업 위치 점');
+  const order = ['class="lg-h"', 'class="lg-bar"', 'class="lg-ticks"'].map((x) => legend.indexOf(x)); assert(order[0] > 0 && order.every((v, i) => !i || order[i - 1] < v) && !legend.includes('lg-pt'), '제목(모드 이름 ⓘ) → 막대 → 눈금(사업 위치 점 범례는 2026-10-19 지웠다)');
   assert(legend.startsWith('<div class="lgv" role="group" aria-label="바닥 색 구간(공급 예정 호수), 단위 호"><h3 class="lg-h"><span class="lg-t">공급 예정 호수</span><b>i</b></h3>') && !/ui-hud|ui-inset|ui-card/.test(legend), "범례 머리 = 모드 이름 + ⓘ 만('호 호' 없음, 단위는 aria-label), 판 없음");
-  assert(L(C4, { k: 'y', i: 2 }).includes('<span class="lg-t">2028년 공급 호수</span>') && L(C4, { k: 's', i: 1 }).includes('aria-label="바닥 색 구간(짓는 중 호), 단위 호"') && L(C4, { k: 'y', i: 2 }).includes('<li>없음</li>'), '모드 제목 · 0 칸 이름');
-  assert((legend.match(/class="lg-pt"/g) || []).length === 2 && legend.includes('사업 위치') && legend.includes('대략') && legend.includes('<p class="lg-pts" hidden>'), '점 범례는 사업 점이 그려질 때만(hidden → display:none)');
-  assert(L({ br: [], lv: () => 3 }, ctx.MODE_ALL).includes('title="1호 이상"') && L({ br: [], lv: () => 3 }, ctx.MODE_ALL).includes('<li>1 이상</li>'), '구간이 하나여도 깨지지 않는다');
-  const hd = new Function('esc', 'YBL', 'STAGE3', srcOf('const modeShort = ', '\nconst zeroWord') + '\nreturn rankHead;')(escT, ['2026년(올해)', '2027년', '2028년'], ctx.STAGE3);
-  assert.strictEqual(hd(ctx.MODE_ALL), '많은 곳 · 전체 <span>호</span>'); assert.strictEqual(hd({ k: 'y', i: 2 }), '많은 곳 · 2028년 <span>호</span>'); assert.strictEqual(hd({ k: 'y', i: 0 }), '많은 곳 · 2026년 <span>호</span>'); assert.strictEqual(hd({ k: 's', i: 1 }), '많은 곳 · 짓는 중 <span>호</span>', '순위 머리가 모드를 따른다');
-  assert(TPL.includes("$('#mapc .rank h3')") && TPL.includes('rh.innerHTML = rankHead(curMode())'), '모드가 바뀌면(미리보기 포함) 순위 머리도 갱신');
-  assert(TPL.includes("${tband}<div class=\"rail\">${list('rank', `<h3 class=\"ui-card-head\">${rankHead(MODE_ALL)}</h3>`)}${legendHtml(VIEW.C, MODE_ALL)}</div>") && TPL.includes("$('#mapc').innerHTML = `<div class=\"mapc-b${cap ? '' : ' nomap'}\">${bodyH}</div>`;"), '레일: 많은 곳 → 눈금 범례(시도 전체는 요약 표 이름 줄의 시도 단추, 2026-10-18)');
-  assert(!/\.rail > \.sido-link|\.lg-list|lg-tight|rk-tight|\.lg-u\b|\.sido-link|lg-sido/.test(CSS) && CSS.includes('.mapc-b.rk5 .rank ol > li.m5 { display: none; }') && CSS.includes('.mapc-b.rk3 .rank ol > li.mx { display: none; }') && CSS.includes('.lg-pts[hidden] { display: none; }'), '시도 전체·점 범례는 숨길 때 자리 없음(display), 순위 줄이기 7 → 5 → 3');
-  assert(TPL.includes("p.hidden = !L.length") && TPL.includes("b.classList.add('rk5')") && TPL.includes("b.classList.add('rk3')") && TPL.includes('probe'), '줄 수는 점 범례·보는 곳 줄이 있는 경우 기준(fitLegend 가 잠깐 펼쳐 잰다)');
+  assert(L(C4, { k: 'y', i: 2 }).includes('<span class="lg-t">2028년 공급 호수</span>') && L(C4, { k: 's', i: 1 }).includes('aria-label="바닥 색 구간(짓는 중 호), 단위 호"') && L(C4, { k: 'y', i: 2 }).includes('aria-label="없음"'), '모드 제목 · 0 칸 이름');
+  assert(L({ br: [], lv: () => 3 }, ctx.MODE_ALL).includes('title="1호 이상"') && !L({ br: [], lv: () => 3 }, ctx.MODE_ALL).includes('<li>'), '구간이 하나여도 깨지지 않는다');
+  const hd = new Function('esc', 'YBL', 'STAGE3', 'areaOf', 'VIEW', srcOf('const modeShort = ', '\nconst zeroWord') + '\nreturn rankHead;')(escT, ['2026년(올해)', '2027년', '2028년'], ctx.STAGE3, () => ({ label: '서울' }), { sd: '11' });
+  assert.strictEqual(hd(ctx.MODE_ALL), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 전체 기간</span><span>단위: 호</span></p>'); assert.strictEqual(hd({ k: 'y', i: 2 }), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 2028년</span><span>단위: 호</span></p>'); assert.strictEqual(hd({ k: 'y', i: 0 }), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 2026년</span><span>단위: 호</span></p>'); assert.strictEqual(hd({ k: 's', i: 1 }), '<h3>공급 예정 상위 지역</h3><p class="rank-context"><span>서울 · 짓는 중</span><span>단위: 호</span></p>', '순위 머리가 모드를 따른다');
+  assert(TPL.includes("$('#mapc .rank-head')") && TPL.includes('rh.innerHTML = rankHead(curMode())'), '모드가 바뀌면(미리보기 포함) 순위 머리도 갱신');
+  assert(TPL.includes("${tband}${legendHtml(VIEW.C, MODE_ALL)}<div class=\"rail\">${list('rank', `<div class=\"rank-head\">${rankHead(MODE_ALL)}</div>`)}</div>") && TPL.includes("$('#mapc').innerHTML = `<div class=\"mapc-b${cap ? '' : ' nomap'}\">${bodyH}</div>`;"), '레일: 많은 곳 → 눈금 범례(시도 전체는 요약 표 이름 줄의 시도 단추, 2026-10-18)');
+  assert(!/\.rail > \.sido-link|\.lg-list|lg-tight|rk-tight|\.lg-u\b|\.sido-link|lg-sido/.test(CSS) && CSS.includes('.mapc-b.rk5 .rank ol > li.m5 { display: none; }') && CSS.includes('.mapc-b.rk3 .rank ol > li.mx { display: none; }'), '시도 전체는 숨길 때 자리 없음(display), 순위 줄이기 7 → 5 → 3');
+  assert(TPL.includes("b.classList.add('rk5')") && TPL.includes("b.classList.add('rk3')") && TPL.includes('probe'), '줄 수는 보는 곳 줄이 있는 경우 기준(fitLegend 가 잠깐 붙여 잰다)');
   assert(TPL.includes("<ol aria-label=\"공급 예정 호수가 많은 시군구\" data-rove>${rankHtml(units, cap, viewKey, homeKey)}</ol>${tail}</div>"));
   assert(!TPL.includes('mapc-h') && !TPL.includes('id="sband"') && TPL.includes('<span class="tctl">${play}${rot}${bm ? `<span class="tmap">${bm}</span>` : \'\'}</span>'), '2026-10-18 머리 띠·6단계 띠 없음 — 큰 지도는 시간 띠 오른쪽 단추 묶음 끝');
   assert(/\.lg-sw \{ flex: none; width: 16px; height: 11px; border: var\(--border-w\) solid var\(--map-ov-line\); border-radius: var\(--radius-chip\); background: var\(--c\); \}/.test(CSS), '견본 = /map .ov-sw(16×11, 반경 4, 면 경계선 색)');
   const appCss = fs.readFileSync(require('path').join(ROOT, 'assets', 'css', 'app.css'), 'utf8'); assert(/\.ov-sw\{flex:none;width:16px;height:11px;border-radius:var\(--radius-chip\);border:1px solid var\(--ov-line\)\}/.test(appCss), '/map 견본 모양 그대로인지');
   const mob = CSS.slice(CSS.indexOf('@media (max-width: 599px) {\n  .logo .lk-full'));
   assert(mob.includes('.lg-ticks { height: var(--lh1); }') && mob.includes('.lg-tk.l2 { top: 0; }'), '휴대폰: 막대 가로 전체 폭, 눈금 한 줄');
-  assert(TPL.includes("$('#mapc .mapc-b ol[data-rove]').innerHTML = rankHtml(") && TPL.includes('drawMap(true); fitBars(); fitLegend();'), '고를 때는 순위 줄만 바꾸고 범례는 그대로');
+  assert(TPL.includes("setRank($('#mapc .mapc-b ol[data-rove]'), rankHtml(") && TPL.includes('drawMap(true); fitBars(); fitLegend();'), '고를 때는 순위 줄만 바꾸고 범례는 그대로');
 });
 t("r16-3 큰 지도(#big-map) = 지도 아이콘 단추: 보이는 글자 0, aria-label·title '○○ 큰 지도에서 보기', 누름 칸 44 · 보이는 칸 36, 고르면 이름도 바뀐다", () => {
   const areas = { 41: { label: '경기도' }, 41360: { label: '남양주시' } };
@@ -774,7 +777,7 @@ t("r16-4 테두리 알약형 보조 단추 0: '전체 20'·'일정 전체 19'·'
   assert(!/\.cell-h \.all svg\.i \{ display: none; \}/.test(CSS) && !/\.pub :is\([^)]*\.(all|ext)[,)]/.test(CSS), '휴대폰도 꺾쇠 보임 · 14px 를 16px 로 덮지 않음');
   assert(!TPL.includes('class="ext big-map"') && !TPL.includes('큰 지도에서 보기${ico(\'map\')}</a>') && TPL.includes('${mh ? mapBtn(mh, sn) : \'\'}'), '사업 카드의 큰 지도도 아이콘 단추');
   for (const k of ['data-act="yes"', 'id="gps"']) assert(TPL.includes(k), k);
-  assert(TPL.includes('class="ui-btn" data-act="yes"') && TPL.includes('class="ui-btn ui-btn-outline gps" id="gps"') && /--btn-h: 36px;/.test(require(require('path').join(ROOT, 'scripts', 'globals-export.js')).extractExport(fs.readFileSync(require('path').join(ROOT, 'app', 'globals.css'), 'utf8'))) && !/btn-pri|btn-out\b|class="btn[ "]/.test(TPL), '주 동작 단추 = 앱 단추(.ui-btn 채움 · .ui-btn-outline), 보이는 36');
+  assert(TPL.includes('class="ui-btn" data-act="yes"') && TPL.includes('class="ui-btn ui-btn-ghost gps" id="gps"') && /--btn-h: 36px;/.test(require(require('path').join(ROOT, 'scripts', 'globals-export.js')).extractExport(fs.readFileSync(require('path').join(ROOT, 'app', 'globals.css'), 'utf8'))) && !/btn-pri|btn-out\b|class="btn[ "]/.test(TPL), '주 동작 단추 = 앱 단추(.ui-btn 채움 · [현 위치] .ui-btn-ghost 텍스트 단추 · [다른 동네] secondary), 보이는 36');
 });
 /* ---------- 화면 통일(2026-10-18 사용자 결정 '모든 화면 한 모양', 정본 = 정책 화면): 신문판(r17)을 거두고 app/globals.css 토큰·부품만 쓴다. 기능은 그대로 ---------- */
 const TPLCSS = noCmt(CSS);
@@ -793,21 +796,6 @@ t('통일-2 한 문장 제목 = .ui-h1(30, 900 이하 24) · 숫자만 주색 ·
   const bigNum = new Function(srcOf('const bigNum = ', '\n') + '\nreturn bigNum;')();
   assert.strictEqual(bigNum(16388), '1만 6,388'); assert.strictEqual(bigNum(20000), '2만'); assert.strictEqual(bigNum(7417), '7,417'); assert.strictEqual(bigNum(99896), '9만 9,896');
 });
-t('통일-3·2026-10-18 아래 줄 = 사업 카드 한 장(사업 일정·언제 들어오나 카드 없음): 표 열 = 이름 · 호 · 진행 · 다음 일정 · 들어올 때 · 상태 · 시행 · 상태 칩 색은 의미 토큰 · 좁은 칸 두 줄 · 글자 14px 이상 · 옛 막대·일정표 없음', () => {
-  assert(TPL.includes('<div class="pj-th" aria-hidden="true"><span>이름</span><span class="u">호</span><span>진행</span><span>다음 일정</span><span>들어올 때</span><span>상태</span><span>시행</span></div>'), '열 머리');
-  assert(/#c-pj \{ container: pj \/ inline-size; --pj-cols: minmax\(0, 1\.3fr\) 72px minmax\(224px, 1fr\) minmax\(144px, \.7fr\) minmax\(108px, \.5fr\) minmax\(108px, \.5fr\) 44px 44px; \}/.test(CSS) && /\.pj-th, \.pjs \{ grid-template-columns: var\(--pj-cols\);/.test(CSS), '넓은 화면 7열 + 큰 지도 열: 머리 줄과 목록이 한 트랙');
-  assert(/\.pjs > li \{ grid-column: 1 \/ -1; display: grid; grid-template-columns: subgrid;/.test(CSS) && /\.pjs \.ev \{ grid-column: 1 \/ -2; grid-template-columns: subgrid; grid-template-areas: 'nm u st nx when jd ag';/.test(CSS) && /\.pjs \.mapi \{ grid-column: -2;/.test(CSS), '줄·줄 링크는 subgrid — 열 x 가 줄마다 같다');
-  assert(/#c-pj \.pjs \{ grid-template-columns: max-content minmax\(0, 1fr\) max-content 44px; \}/.test(CSS) && /#c-pj \.pjs \.ev \{ grid-template-areas: 'nm nm u' 'st nx jd';/.test(CSS) && /@container pj \(max-width: 1099px\)/.test(CSS) && /@container pj \(max-width: 599px\) \{[^}]*\}\s*#c-pj \.pjs \.ev \{ grid-template-areas: 'nm nm u' 'st st st' 'nx nx jd';/.test(CSS), '좁은 칸 두 줄(이름 · 호 / 진행 · 다음 일정 · 상태), 휴대폰 세 줄, 열 폭은 줄 전체가 같이');
-  assert(/\.pj-jd \.ui-chip\.ok \{ --c: var\(--ok\); \}/.test(CSS) && /\.pj-jd \.ui-chip\.caution \{ --c: var\(--warn\); \}/.test(CSS) && /\.pj-jd \.ui-chip\.delay \{ --c: var\(--bad\);/.test(CSS) && /\.pj-jd \.ui-chip:is\(\.ok, \.caution, \.delay\) \{ border-color: var\(--c\); background: color-mix\(in oklab, var\(--c\) var\(--tint-mix\), var\(--card\)\); color: color-mix\(in oklab, var\(--c\) 85%, var\(--foreground\)\); \}/.test(CSS), '상태 칩 색 = 의미 토큰(--ok·--warn·--bad)을 --c 로 받아 테두리·틴트·글자');
-  const pjCss = TPLCSS.split('\n').filter((l) => /^\s*(\.pj|#c-pj|\.pjs)/.test(l)).join('\n');
-  assert([...pjCss.matchAll(/font-size: ([^;]+);/g)].every((m) => /^var\(--fs-(meta|body)\)$/.test(m[1])) && !/gradient|dash|hatch/.test(pjCss), '글자 14·16(토큰) · 그라데이션·점선 없음');
-  assert(/--pj-band-w: \d+px;/.test(GLOBALS) && /--pj-band-h: \d+px;/.test(GLOBALS) && /--pj-band-gap: \d+px;/.test(GLOBALS), '띠 칸 크기 토큰은 globals');
-  assert(/\.pj-band \{ display: inline-grid; grid-template-columns: repeat\(6, var\(--pj-band-w\)\); gap: var\(--pj-band-gap\);/.test(CSS) && /\.pj-band i \{ height: var\(--pj-band-h\); border-radius: var\(--radius-chip\); background: var\(--line2\); \}/.test(CSS) && /\.pj-band i\.on \{ background: var\(--c\); \}/.test(CSS), '띠 = CSS 칸 6개, 남은 칸 --line2, 채운 칸 --c');
-  assert(TPL.includes("const BAND = ['plan', 'permit', 'build', 'sale', 'soon', 'move'];") && TPL.includes('<span class="pj-band" aria-hidden="true">') && TPL.includes('style="--c:var(--st-${n})"') && TPL.includes('i <= x.b'), '6칸 = 계획·인허가·착공·모집·준공·입주 단계색, 지금 단계까지 채움, aria-hidden');
-  assert(TPL.includes('${ex.pc != null ? ` · 공사 ${ex.pc}%` : \'\'}') && TPL.includes("STATUS[stOf(x.b)][0] + (ex.pc != null ? ` · 공사 ${ex.pc}%` : '')"), '공정률이 있으면 · 공사 n% (화면·읽기 이름)');
-  { const m = TPL.match(/const BAND =[\s\S]*?const pjRow[\s\S]*?\n\};/)[0]; assert(!/[■□●○①②③④⑤⑥▮▯]/.test(m) && !/[■□●○①②③④⑤⑥▮▯]/.test(TPLCSS.split('\n').filter((l) => /pj-band|pj-sn/.test(l)).join('')), '띠에 글자 기호 없음'); }
-  assert(!TPL.includes('id="c-yr"') && !/\b(yrsChart|yearsOf|withYearGlide|paintYearChart|renderTl|tlHtml|paintYears)\b|class="(yrs|yrc|ysp|yb|tk|one)"|(?<!\w)\.(yrs|yrc|ysp|ysw|yb|tl-[a-z]+|one)\b/.test(TPL), '옛 막대·일정표·한 줄 요약 없음');
-});
 t('통일-4 머리 줄 = 앱 TopNav(64px · 900 이하 48px · 로고 lockup --logo-h · 메뉴 --fs-nav · 보기 대상·테마 스위치) — 색은 앱과 같은 토큰을 그대로 쓴다(값 복사·덮어쓰기 없음) · 보조 줄(오늘 · 자료 기준 · 공고 기준) 한 줄', () => {
   assert(/\.top-in \{[^}]*height: 64px;/.test(CSS) && /\.top-in \{ height: 48px;/.test(CSS)); 
   assert(/\.logo \.lk-mark \{ display: none; width: var\(--logo-mark\);/.test(CSS) && /\.menu a \{[^}]*font-size: var\(--fs-nav\);/.test(CSS) && !/\.menu a \{[^}]*font-size: var\(--text-/.test(CSS) && !/\.menu a \{ padding: 0 1?2?8?px; font-size/.test(CSS), '머리 줄 글자·로고 그림은 globals 토큰(--logo-h · --logo-mark · --fs-nav), 값 복사 없음');
@@ -815,7 +803,7 @@ t('통일-4 머리 줄 = 앱 TopNav(64px · 900 이하 48px · 로고 lockup --l
   assert(!/\.top \{[^}]*--[\w-]+:/.test(CSS) && !/\.dark \.top \{/.test(CSS), '머리 줄 토큰 덮어쓰기 없음');
   assert(/\.top \{[^}]*background: var\(--card\);[^}]*border-bottom: var\(--border-w\) solid var\(--border\); box-shadow: var\(--shadow-card\);/.test(CSS), '앱 TopNav: bg-card · border-b · shadow-card');
   assert(/\.logo \.ink \{ fill: var\(--logo-ink\); \}/.test(CSS) && /\.logo \.wave \{ fill: var\(--logo-wave\); \}/.test(CSS) && TPL.includes('<path class="wave" fill-rule="evenodd" d="M29.4 28.7 48.2 21.1V51.4'), '로고 = fill-logo-ink(집·주택) · fill-logo-wave(문·The), 열린 문 심벌');
-  assert((TPL.match(/aria-label="The주택 종합상황판 처음으로"/g) || []).length === 1 && (TPL.match(/viewBox="0 0 250 64"/g) || []).length === 1, '서비스 이름(로고)은 머리 줄에만');
+  assert((TPL.match(/aria-label="더주택 종합상황판 처음으로"/g) || []).length === 1 && (TPL.match(/viewBox="0 0 202 64"/g) || []).length === 1, '서비스 이름(로고)은 머리 줄에만');
   assert(!TPL.includes('id="dl"') && !TPL.includes('dl-today') && !/\.dl[ {>]/.test(CSS) && !TPL.includes("grid-template-areas: 'q loc';") && TPL.includes('grid-template-rows: auto clamp(460px, calc(100vh - 152px), 760px) 268px auto;') && !TPL.includes('calc(100vh - 200px)'), '날짜 줄 제거(2026-10-18) + 필터를 검색 줄로 합침(2026-10-19): 띠 하나(행 4: 띠 · 위 줄 · 아래 줄 · 출처), 위 줄 높이 100vh−152');
   assert(/id="tip-src" popover>.*자료 기준 \/\*LEDGER_DOT\*\/<span id="dl-nt"><\/span>/.test(TPL.replace(/\n/g, ' ')), '자료 기준·공고 기준은 출처 ⓘ 안에 한 번');
   assert(!/border(?:-(?:top|bottom|left|right))?(?:-width)?:\s*[2-9]px/.test(TPLCSS) && !/border-(?:top|bottom)[^;]*var\(--foreground\)/.test(TPLCSS), '6/3px 괘선·검은 괘선 없음');
@@ -830,7 +818,9 @@ t('통일-5 금지 목록: 국민 영역 4칸 = 구역 카드(.ui-card) · 안�
   assert(!/class="[^"]*\bui-inset\b[^"]*"[^>]*>(?:(?!<\/li>|<\/div>|<\/a>)[\s\S])*class="[^"]*\b(?:ui-inset|ui-card|ui-tile)\b/.test(js), '안쪽 카드 안에 카드가 또 없다(3단 금지)');
   assert(!/\.ui-inset[^{,]*\s\.ui-inset\b/.test(TPLCSS) && !/\.ntc\s[^{]*\.ui-inset/.test(TPLCSS), 'CSS 에도 안쪽 카드 속 안쪽 카드 없음');
   assert(!/border-(?:left|right)(?:-width)?:\s*(?:[2-9]|\d{2,})px/.test(TPLCSS) && !/border-(?:left|right):\s*var\(--border-w-on\)/.test(TPLCSS) && !/\.ne::before/.test(TPLCSS), '색 막대 강조');
-  assert(!/linear-gradient|radial-gradient/.test(TPLCSS), '그라데이션');
+  /* 2026-10-19 사용자 피드백('색상 그라데이션으로 표기'·순위 막대 다듬기): 자료 표현(범례 램프 조각 · 순위 값 막대)만 그라데이션 허용 — 장식 그라데이션은 여전히 금지 */
+  const gradOk = /^(?:\.lg-grad > \.lg-sw|\.rank \.rk \.bar i|\.rank \.rk:is\(:hover, \.hl\) \.bar i) \{/;
+  assert.deepStrictEqual(TPLCSS.split('\n').filter((l) => /linear-gradient|radial-gradient/.test(l) && !gradOk.test(l)), [], '그라데이션(자료 표현 밖)');
   const bad = [...TPLCSS.matchAll(/(?<![\w-])(font-size|border(?:-[a-z]+)*-radius)\s*:\s*([^;}]+)/g)].filter((m) => /\d(?:\.\d+)?(px|r?em|%)/.test(m[2].replace(/var\([^)]*\)/g, '')));
   assert.deepStrictEqual(bad.map((m) => m[0]), [], 'var() 만');
   assert(TPL.includes('<span class="ui-chip ui-chip-primary guess-tag">') && TPL.includes('<span class="ui-chip pchip">') && TPL.includes('<span class="ui-chip prep-chip">') && TPL.includes('class="ui-tile dir"') && TPL.includes('class="ui-card blk"'));
@@ -852,7 +842,7 @@ t('r18-1 카드 머리 공용 부품(globals 내보내기 층): .ui-card-head(�
   assert(/\.cell-h, \.ap-h \{ flex-wrap: wrap; row-gap: 0; \}/.test(CSS), '390 에서 머리 줄 단추가 줄에 안 들어가면 다음 줄로(칸 밖으로 나가지 않는다)');
   { const m = h.match(/<symbol id="i-map" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" data-lucide="map">([\s\S]*?)<\/symbol>/); assert(m && /^(<(path|rect|circle|line|polyline)[^>]*\/>)+$/.test(m[1]), 'i-map = lucide map'); }
   assert(!/srcOf|badgeIcon/.test(srcOf('function renderSum()', '\n}\n')), '요약 카드 제목(h1)에는 배지 없음');
-  assert(!/class="all"|ui-count/.test(TPL) && (TPL.match(/class="ui-btn ui-btn-secondary ui-btn-sm all[" ]/g) || []).length === 4 && TPL.includes('class="ui-btn ui-btn-ghost ui-btn-sm sm-sd"'), 'r19 머리 줄 개수 단추 = .ui-btn.ui-btn-secondary.ui-btn-sm · 시도 전체 = 요약 표 이름 줄의 ghost · sm 시도 단추(2026-10-18)');
+  assert(!/class="all"|ui-count/.test(TPL) && (TPL.match(/class="ui-btn ui-btn-secondary ui-btn-sm all[" ]/g) || []).length === 1 && (TPL.match(/class="ui-btn ui-btn-link ui-btn-sm all[" ]/g) || []).length === 2 && TPL.includes('class="ui-btn ui-btn-ghost ui-btn-sm sm-sd"'), 'r19 머리 줄 개수 단추 = .ui-btn.ui-btn-secondary.ui-btn-sm · 시도 전체 = 요약 표 이름 줄의 ghost · sm 시도 단추(2026-10-18)');
   assert(!/background-clip:\s*text|-webkit-text-fill-color/.test(TPLCSS + GXR), '그라데이션 글자 없음');
 });
 t('r18-2 요약 카드 색감: 상태별 3칸 = 단계색 점 + 옅은 틴트 + 단계 글자색 숫자(준비 중 ①② --st-plan · 짓는 중 ③ --st-build · 모집 끝남 ④ --st-sale), 다음 준공 = 준공색 띠(입주는 입주색, 아이콘 없음), 공고 상태 칸 = 접수 중 --ok · 마감 임박 --warn · 접수 예정 --primary, 글자 대비 4.5:1(라이트·다크 계산)', () => {
@@ -861,11 +851,11 @@ t('r18-2 요약 카드 색감: 상태별 3칸 = 단계색 점 + 옅은 틴트 + 
   assert(TPL.includes('<button type="button" class="sm-r s${i}${i === top ? \' top\' : \'\'}${u ? \'\' : \' z\'}" data-st="${i}" data-v="${u}" aria-pressed="false" aria-label="${lb}, 지도에서 보기" title="${lb}"><span class="sm-sn">${STAGE3[i]}</span><span class="sm-b" aria-hidden="true"><i style="flex-grow:${(t.u ? u / t.u : 0).toFixed(4)}"></i></span><b class="sm-sv">${bigNum(u)}</b></button>'));
   assert(/\.sm-r \{ --c: var\(--st-plan\); --c-ink: var\(--st-plan-ink\);[^}]*grid-template-columns: subgrid;/.test(CSS) && /\.sm-r\.s1 \{ --c: var\(--st-build\); --c-ink: var\(--st-build-ink\); \}/.test(CSS) && /\.sm-r\.s2 \{ --c: var\(--st-sale\); --c-ink: var\(--st-sale-ink\); \}/.test(CSS) && /\.sm-b > i \{[^}]*background: var\(--c-ink\); \}/.test(CSS) && CSS.includes('.sm-r.top .sm-sv { font-weight: 700; }') && /\.sm-r\[aria-pressed="true"\] \{ background: color-mix\(in oklab, var\(--c\) var\(--tint-mix-on\), var\(--sf\)\); \}/.test(CSS) && /\.sm-st \{[^}]*grid-auto-rows: 44px;/.test(CSS), '단계 줄 색 · 1급 가장 많은 줄 · 2급 고정 줄 · 누름 44');
   assert(TPL.includes('<a class="nx" href="/citizen/projects?id=${nx.id}" data-go="/citizen/projects?id=${nx.id}" data-k="${nx.k}"') && TPL.includes(`"><span class="k">다음 \${NEXT[nx.k]}</span>`) && /\.nx \{[^}]*grid-template-areas: 'k d \. dd' 'nm nm nm u';/.test(CSS) && !/\.nx \{[^}]*border(-bottom)?:/.test(CSS) && CSS.includes('.nx .sm-dd.on { border-color: var(--primary); background: var(--primary); color: var(--primary-foreground); font-weight: 700; }'), '다음 준공 줄(요약 표 안, 테두리·면 없음) · 30일 안 D-day 칩 = 주색 채움');
-  assert(/\.smry \{ --sf: var\(--card\);/.test(CSS) && !/\.smry \{[^}]*(?:margin: calc|border-color:|background: color-mix)/.test(CSS) && /html\[data-page="citizen"\] \.smry \{ --sf: var\(--cz-summary-bg\); background: var\(--cz-summary-bg\); border-color: var\(--cz-summary-bg\); color: var\(--cz-summary-fg\);/.test(GXR), '요약 = 별개 카드(.ui-card) + 짙은 청록 채움·흰 글자(2026-10-18 안 2 — 값은 globals 범위 블록 --cz-summary-*, 템플릿은 틴트를 더하지 않는다), 카드 가장자리까지 붙은 구역 아님');
+  assert(/\.smry \{ --sf: var\(--card\);/.test(CSS) && !/\.smry \{[^}]*(?:margin: calc|border-color:|background: color-mix)/.test(CSS) && /html\[data-page="citizen"\] \.smry \{ --sf: var\(--cz-summary-bg\); background: linear-gradient\(135deg, var\(--cz-summary-bg\), var\(--cz-summary-bg-2\)\); border-color: var\(--cz-summary-bg\); color: var\(--cz-summary-fg\);/.test(GXR), '요약 = 별개 카드(.ui-card) + 짙은 클레이 그라데이션 채움·흰 글자(2026-10-19 사용자 선택 B 클레이 그라데이션 — 2026-10-18 안 2 — 값은 globals 범위 블록 --cz-summary-*, 템플릿은 틴트를 더하지 않는다), 카드 가장자리까지 붙은 구역 아님');
   const ntRow = new Function('noticeTargets', 'noticePrice', 'noticeType', 'noticeTitle', 'noticeStatus', 'noticePeriod', 'esc', 'safeUrl', 'ico', 'TODAY', 'noticeSpan', srcOf('function ntRow', '\nconst SKEL') + '\nreturn ntRow;')(ctx.noticeTargets, ctx.noticePrice, ctx.noticeType, ctx.noticeTitle, ctx.noticeStatus, ctx.noticePeriod, escT, ctx.safeUrl, icoT, '2026-10-17', ctx.noticeSpan);
   const st = (from, to) => (ntRow({ id: 'x', kind: 'sale', title: 'A', applyFrom: from, applyTo: to, url: 'https://x.kr/' }, '').match(/<span class="(nt-st[^"]*)"/) || [])[1];
   assert.deepStrictEqual([st('2026-10-10', '2026-10-27'), st('2026-10-10', '2026-10-19'), st('2026-10-20', '2026-10-27')], ['nt-st', 'nt-st soon', 'nt-st pre']);
-  assert(/\.nt-when \{ --c: var\(--ok\);[^}]*background: color-mix\(in oklab, var\(--c\) var\(--tint-mix-on\), var\(--inset-bg\)\); \}/.test(CSS) && CSS.includes('.nt-when:has(> .nt-st.soon) { --c: var(--warn); }') && CSS.includes('.nt-when:has(> .nt-st.pre) { --c: var(--primary); }') && CSS.includes('.nt-st, .nt-big { color: color-mix(in oklab, var(--c) 70%, var(--foreground)); }'));
+  assert(/\.nt-when \{ --c: var\(--primary\);[^}]*background: color-mix\(in oklab, var\(--c\) var\(--tint-mix-on\), var\(--inset-bg\)\); \}/.test(CSS) && CSS.includes('.nt-when:has(> .nt-st.soon) { --c: var(--primary); }') && CSS.includes('.nt-when:has(> .nt-st.pre) { --c: var(--foreground); }') && CSS.includes('.nt-st, .nt-big { color: color-mix(in oklab, var(--c) 70%, var(--foreground)); }'));
   /* 대비: globals 값으로 oklab 섞기를 그대로 계산한다(/citizen 은 html[data-elev=raised]) */
   const blk = (sel) => { const i = GXR.indexOf(`\n${sel} {`); return GXR.slice(i, GXR.indexOf('}', i)); };
   const val = (bs, n) => { for (const b of bs) { const m = b.match(new RegExp(`--${n}: (#[0-9A-Fa-f]{6}|\\d+%);`)); if (m) return m[1]; } throw new Error(n); };
@@ -880,10 +870,14 @@ t('r18-2 요약 카드 색감: 상태별 3칸 = 단계색 점 + 옅은 틴트 + 
   for (const [nm, bs] of [['라이트', [blk('html[data-elev="raised"]'), blk(':root')]], ['다크', [blk('html.dark[data-elev="raised"]'), blk('.dark'), blk(':root')]]]) {
     const v = (n) => val(bs, n), P = parseFloat(v('tint-mix')) / 100, card = v('card'), inset = v('inset-bg'), fg = v('foreground'), mf = v('muted-foreground');
     const chk = (what, txt, bg, min = 4.5) => { const c = cr(txt, bg); out.push(`${nm} ${what} ${c.toFixed(2)}`); assert(c >= min, `${nm} ${what} ${c.toFixed(2)}`); };
-    /* 2026-10-18 요약 카드 = 짙은 청록 채움(--cz-summary-bg) + 흰 글자: 본문·보조·큰 숫자(산호 옅은 색)·단계 막대(3:1)·단계 줄 가리킴(--tint-mix)·고정(--tint-mix-on) 위 본문 */
-    const cz = (n) => val(nm === '다크' ? [blk('html.dark[data-page="citizen"]'), blk('html[data-page="citizen"]')] : [blk('html[data-page="citizen"]')], n), sm = cz('cz-summary-bg');
-    chk('요약 본문', cz('cz-summary-fg'), sm); chk('요약 보조', cz('cz-summary-muted'), sm); chk('요약 큰 숫자', cz('cz-summary-num'), sm);
-    for (const k of ['plan', 'build', 'sale']) { chk(`요약 막대 ${k}`, cz(`cz-summary-${k}`), sm, 3); chk(`단계 줄 ${k} 가리킴`, cz('cz-summary-fg'), hx(mix(v(`st-${k}`), P, sm))); chk(`단계 줄 ${k} 고정`, cz('cz-summary-fg'), hx(mix(v(`st-${k}`), parseFloat(v('tint-mix-on')) / 100, sm))); }
+    /* 요약 카드 = 짙은 채움 + 흰 글자: 본문·보조·큰 숫자(산호 옅은 색)·단계 막대(3:1)·단계 줄 가리킴(--tint-mix)·고정(--tint-mix-on) 위 본문.
+       2026-10-19 사용자 선택 먹색 그라데이션(시안 D — 옛 B 클레이 대체, --cz-summary-bg → --cz-summary-bg-2): 흰 글자에 불리한 밝은 끝(bg-2)까지 두 끝 모두 잰다. 요약 안 D-day 칩 = 시작 색 글자(--primary-foreground) / 큰 숫자 색 바탕 */
+    const cz = (n) => val(nm === '다크' ? [blk('html.dark[data-page="citizen"]'), blk('html[data-page="citizen"]')] : [blk('html[data-page="citizen"]')], n);
+    for (const [e, sm] of [['', cz('cz-summary-bg')], [' 밝은 끝', cz('cz-summary-bg-2')]]) {
+      chk('요약 본문' + e, cz('cz-summary-fg'), sm); chk('요약 보조' + e, cz('cz-summary-muted'), sm); chk('요약 큰 숫자' + e, cz('cz-summary-num'), sm);
+      for (const k of ['plan', 'build', 'sale']) { chk(`요약 막대 ${k}${e}`, cz(`cz-summary-${k}`), sm, 3); chk(`단계 줄 ${k} 가리킴${e}`, cz('cz-summary-fg'), hx(mix(v(`st-${k}`), P, sm))); chk(`단계 줄 ${k} 고정${e}`, cz('cz-summary-fg'), hx(mix(v(`st-${k}`), parseFloat(v('tint-mix-on')) / 100, sm))); }
+    }
+    chk('요약 D-day 칩', cz('cz-summary-bg'), cz('cz-summary-num'));
     chk('D-day 칩(30일 안)', v('primary-foreground'), v('primary'));
     for (const k of ['ok', 'warn', 'primary']) { const bg = mix(v(k), P, inset); chk(`공고 ${k} 상태`, hx(mix(v(k), 0.85, fg)), bg); chk(`공고 ${k} 보조`, mf, bg); }
     chk('개수 단추(secondary)', v('secondary-foreground'), v('secondary'));
@@ -901,21 +895,33 @@ const tok = (n) => [...GXR.matchAll(new RegExp(`--${n}: ([^;]+);`, 'g'))].map((m
 t('r19-1·레일(2026-10-18 nested-cards 정리): globals .ui-hud 부품은 그대로 두되 /citizen 지도 카드는 판을 쓰지 않는다 — 많은 곳·범례는 오른쪽 레일(1px 구분선만, 테두리·바탕·반경·흐림 없음), 무대를 덮지 않고, 휴대폰은 무대·시간 띠 아래', () => {
   const hud = GXR.match(/\n  \.ui-hud \{([^}]*)\}/)[1];
   for (const d of ['border: var(--border-w) solid color-mix(in oklab, var(--border) var(--hud-line-mix), transparent);', 'border-radius: var(--radius-tile);', 'background: var(--hud-bg);', 'backdrop-filter: var(--hud-backdrop);', '-webkit-backdrop-filter: var(--hud-backdrop);', 'padding: var(--pad-compact-y) var(--pad-compact-x);', 'box-shadow: var(--shadow-hud);']) assert(hud.includes(d), d);
-  assert(/--hud-alpha: 18%;/.test(GXR) && /--hud-line-mix: 38%;/.test(GXR) && /--hud-backdrop: blur\(6px\) saturate\(1\.1\);/.test(GXR) && /--hud-bg: color-mix\(in oklab, var\(--card\) var\(--hud-alpha\), transparent\);/.test(GXR) && tok('shadow-hud').length === 2, '유리 18% · 흐림 6px · 테두리 38% · 테마별 약한 그림자');
+  assert(/--hud-alpha: 18%;/.test(GXR) && /--hud-line-mix: 38%;/.test(GXR) && /--hud-backdrop: blur\(6px\) saturate\(1\.1\);/.test(GXR) && /--hud-bg: color-mix\(in oklab, var\(--card\) var\(--hud-alpha\), transparent\);/.test(GXR) && tok('shadow-hud').length === 3, '유리 18% · 흐림 6px · 테두리 38% · 테마별 약한 그림자(:root·.dark + 웜 라이트 덮기 = 3)');
   assert(/@supports not \(\(backdrop-filter: blur\(1px\)\) or \(-webkit-backdrop-filter: blur\(1px\)\)\) \{\n  html:root \{\n    --hud-alpha: 96%;/.test(GXR), '흐림을 못 쓰는 브라우저는 96%(html:root 가 뒤의 :root 18% 보다 앞섬)');
   /* 레일: 무대 열 | 레일(212 · 1199 이하 216 · 태블릿 230), 레일은 왼쪽 1px 구분선 + 여백만 */
-  assert(CSS.includes(".mapc-b { display: grid; grid-template-columns: minmax(0, 1fr) 240px; grid-template-rows: minmax(0, 1fr) auto; grid-template-areas: 'stage rail' 'tband rail';") && CSS.includes('.stage { position: relative; min-width: 0; min-height: 0; }'), '무대 열 · 레일 열');
+  assert(CSS.includes(".mapc-b { display: grid; grid-template-columns: minmax(0, 1fr) 240px; grid-template-rows: minmax(0, 1fr) auto auto; grid-template-areas: 'stage rail' 'tband rail' 'legend rail';") && CSS.includes('.stage { position: relative; min-width: 0; min-height: 0; }'), '무대 열 · 레일 열');
   const rail = CSS.match(/\n\.rail \{([^}]*)\}/)[1];
   assert(rail.includes('border-left: var(--border-w) solid var(--border);') && !/background|border-radius|box-shadow|backdrop|border:/.test(rail), '레일 = 1px 구분선만');
   assert(!/hud-col|ui-hud/.test(TPL.replace(/\/\*[\s\S]*?\*\//g, '').replace('mapcard ui-hud in', '')) && !/margin-left: calc\(-1 \*/.test(CSS), '판·겹침 없음');
   const mob = CSS.slice(CSS.indexOf('@media (max-width: 599px) {\n  .logo .lk-full'));
-  assert(mob.includes("grid-template-areas: 'stage' 'tband' 'rail';") && mob.includes('.rail { padding: var(--s3) 0 0; border-left: 0; border-top: var(--border-w) solid var(--border); }'), '휴대폰: 무대 → 시간 띠 → 레일(위 구분선)');
+  assert(mob.includes("grid-template-areas: 'stage' 'tband' 'legend' 'rail';") && mob.includes('.rail { padding: var(--s3) 0 0; border-left: 0; border-top: var(--border-w) solid var(--border); }'), '휴대폰: 무대 → 시간 띠 → 레일(위 구분선)');
   /* 순위 줄: 1~3위 원 배지 · 줄마다 지도 단계 색 막대 · 누름·가리킴·키보드는 그대로(.rk · data-src="rank" · data-rove) */
   const rk = srcOf('function rankHtml(', '\n/* lib/board/map-href.ts');
   assert(rk.includes(`<span class="no\${i < 3 ? ' top' : ''}" aria-hidden="true">\${i + 1}</span>`) && rk.includes(`<span class="bar" aria-hidden="true"><i class="c\${x.c || 0}" style="width:\${(x.u / umax * 100).toFixed(1)}%"></i></span>`) && rk.includes('class="rk" data-area="${x.key}" data-src="rank" tabindex="-1"'));
-  assert(/\.rank \.rk \.no\.top \{[^}]*border-radius: var\(--radius-full\); background: color-mix\(in oklab, var\(--primary\) var\(--tint-mix\), var\(--card\)\); color: var\(--primary\);/.test(CSS) && CSS.includes('.rank .rk .bar i { border-radius: var(--radius-full); background: var(--c); }'), '번호 배지 · 막대 = 그 시군구 면 색(--c)');
-  assert(TPL.includes("document.addEventListener('mouseover', (e) => { const t = e.target.closest?.('.map [data-area], .rk');") && TPL.includes("$('#mapc .mapc-b ol[data-rove]').innerHTML = rankHtml("), '가리킴·고르기 동작 그대로');
-  assert(TPL.includes('.lg-bar > .lg-sw { width: auto; height: var(--s3); border-radius: 0; }') && TPL.includes('.lg-bar > .lg-sw:first-child { margin-right: var(--s1); border-radius: var(--radius-chip); }'), '눈금 막대 칸 = 같은 폭 계단, 사업 없음 칸은 --s1 떨어짐(점선·빗금 없음)');
+  assert(/\.rank \.rk \.no\.top \{[^}]*color: var\(--muted-foreground\); font-weight: 400;/.test(CSS) && CSS.includes('.rank .rk .bar { grid-column: 2 / 4; grid-row: 2; height: var(--rank-bar-h); background: none; pointer-events: none; }') && !/\.rank \.rk \.bar \{[^}]*position: absolute/.test(CSS) && !/\.rank \.rk > :not\(\.bar\)/.test(CSS), '번호 배지 · 띠 = 2행(이름 열부터 값 열 끝까지), 줄 바탕에 깔린 absolute 막대 없음(2026-10-19 사용자 선택 \'줄 아래 띠\')');
+  /* 2026-10-19 사용자 피드백 '범례처럼 동일한 색상으로 개별적으로' + 선택 '줄 아래 띠': 띠 = 그 줄 면 색 --c 단색(카드색과 섞지 않음·그라데이션 없음), 끝 = 범례 막대와 같은 --radius-full, 가리킴에도 색 그대로 */
+  { const iR = CSS.match(/\.rank \.rk \.bar i \{[^}]*\}/g) || [];
+    assert(iR.length === 1 && iR[0] === '.rank .rk .bar i { display: block; height: 100%; border-radius: var(--radius-full); background: var(--map-ov-4); }', '순위 띠: 단색 var(--c) · 알약 끝');
+    assert(!/\.rank \.rk[^{]*\.bar[^{]*\{[^}]*(gradient|color-mix|box-shadow)/.test(CSS) && !CSS.includes('.rank .rk:is(:hover, .hl) .bar i'), '순위 띠: 그라데이션·color-mix·끝선 없음, 가리킴에도 띠 색은 그대로');
+    const rr = CSS.match(/\n\.rank \.rk \{([^}]*)\}/)[1];
+    assert(rr.includes('row-gap: var(--s2);') && rr.includes('min-height: var(--rank-row-h);') && CSS.includes('.rk-ph { display: block; height: var(--rank-row-h); }'), '줄 = 두 행(글 · 띠) 사이 --s1, 줄 높이·자리 표시 줄 높이 = --rank-row-h 한 토큰');
+    assert(/--rank-row-h: (4[4-9]|5\d)px;/.test(GXR) && /--rank-bar-h: [4-8]px;/.test(GXR) && tok('rank-row-h').length === 1 && tok('rank-bar-h').length === 1, '값 = globals citizen 토큰(줄 44 이상 · 띠 4~8px, 라이트·다크 한 번)');
+    assert(!/rank-bar-(inset|mix)/.test(GXR + CSS + TPL), '옛 토큰(--rank-bar-inset·-mix-0·-mix·-mix-on) 없음');
+  }
+  assert(TPL.includes("document.addEventListener('mouseover', (e) => { const t = e.target.closest?.('.map [data-area], .rk');") && TPL.includes("setRank($('#mapc .mapc-b ol[data-rove]'), rankHtml("), '가리킴·고르기 동작 그대로');
+  /* 2026-10-19 사용자 피드백 '색상 그라데이션으로 표기': 계단 칸 → [없음 견본] 틈 [연속 그라데이션(둥근 끝)], 조각마다 전체 그라데이션의 제 몫 */
+  assert(TPL.includes('.lg-bar, .lg-ticks { display: grid; grid-template-columns: var(--s4) minmax(0, 1fr); column-gap: var(--s2); }') && TPL.includes('.lg-grad > .lg-sw { flex: 1 1 0; width: auto; min-width: 0; height: 100%; border: 0; border-radius: 0; background: linear-gradient(90deg, var(--lg-stops)) calc(var(--i) / max(var(--m) - 1, 1) * 100%) 0 / calc(var(--m) * 100%) 100% no-repeat; }')
+    && TPL.includes('.lg-grad > .lg-sw:first-child { border-radius: var(--radius-full) 0 0 var(--radius-full); }') && TPL.includes('.lg-grad > .lg-sw:last-child { border-radius: 0 var(--radius-full) var(--radius-full) 0; }') && !TPL.includes('repeat(var(--n)'), '범례 = 없음 견본 + 떨어진 연속 그라데이션 막대(계단 칸 없음)');
+  assert(/\.lg-tk::before \{ content: ''; position: absolute; left: 50%; top: calc\(var\(--s2\) \* -1\); width: var\(--border-w\); height: var\(--s1\);/.test(TPL), '구간 경계 = 얇은 눈금선 + 숫자');
   /* 레일 글자는 카드 면 위(지도 면 위가 아니다): 본문·보조 글 대비 4.5:1(라이트·다크·입체 다크) */
   const [fgL, fgD] = tok('foreground'), [mfL, mfD] = tok('muted-foreground'), out = [];
   for (const [nm, card, fg, mf] of [['라이트', '#FFFFFF', fgL, mfL], ['다크', '#111111', fgD, mfD], ['입체 다크', '#1A1A1B', fgD, mfD]]) { const a = cr3(hx3(fg), hx3(card)), b = cr3(hx3(mf), hx3(card)); out.push(`${nm} 글자 ${a.toFixed(2)} · 보조 ${b.toFixed(2)}`); assert(a >= 4.5 && b >= 4.5, nm); }
@@ -930,7 +936,7 @@ t('r19-2 단추 = shadcn 4.21.4 base-nova Button 부품(globals): 기본(주색)
   assert(/\.ui-btn-outline:hover, \.ui-btn-ghost:hover, \.ui-btn-outline\[aria-expanded="true"\], \.ui-btn-ghost\[aria-expanded="true"\] \{\s*background-color: var\(--muted\);/.test(GXR) && /\.dark \.ui-btn-outline \{\s*border-color: var\(--input\);\s*background: color-mix\(in oklab, var\(--input\) var\(--btn-wash\), transparent\);/.test(GXR), 'outline·ghost 가리킴 · 다크 outline');
   assert(/\.ui-btn\[aria-pressed="true"\], \.ui-btn\[aria-pressed="true"\]:hover \{\s*background-color: color-mix\(in oklab, var\(--primary\) var\(--tint-mix\), var\(--card\)\);\s*color: var\(--primary\);/.test(GXR) && /\.ui-btn:focus-visible \{\s*outline: var\(--border-w-on\) solid var\(--ring\);/.test(GXR) && /\.ui-btn:disabled \{\s*pointer-events: none;\s*opacity: var\(--disabled-opacity\);/.test(GXR) && /\.ui-btn:has\(> \[data-icon="inline-start"\]\) \{\s*padding-left: var\(--btn-pad-icon\);/.test(GXR), '고름 · 초점 · 꺼짐 · 아이콘 쪽 여백');
   /* 화면: 모든 단추가 부품 */
-  const btns = [...TPL.matchAll(/<button\b[^>]*>/g)].map((m) => m[0]).filter((x) => !/ data-s="/.test(x) && !/class="(sw|rk|sm-r|tk)[ "]/.test(x) && !/ data-(vsido|fst)="/.test(x));   // 스위치·순위 줄·요약 표 단계 줄·사업 일정표 해 눈금(자료 표지, 2026-10-18)·상단 필터 탭(.ui-tabs 부품, 2026-10-19)은 단추 부품이 아니다
+  const btns = [...TPL.matchAll(/<button\b[^>]*>/g)].map((m) => m[0]).filter((x) => !/ data-s="/.test(x) && !/class="(sw|rk|sm-r|tk|lg-sw)[ "]/.test(x) && !/ data-(vsido|fst)="/.test(x));   // 스위치·순위 줄·요약 표 단계 줄·사업 일정표 해 눈금(자료 표지, 2026-10-18)·상단 필터 탭(.ui-tabs 부품, 2026-10-19)은 단추 부품이 아니다
   assert(btns.length >= 30 && btns.every((x) => /class="ui-btn[ "]/.test(x)), btns.filter((x) => !/class="ui-btn[ "]/.test(x)).join(' | '));
   assert(!/class="[^"]*(?<![\w-])(btn|btn-txt|icon-btn|ui-count)(?![\w-])/.test(TPL), '옛 단추 클래스 없음');
   /* 화면 CSS 에 단추 모양 규칙 없음: 단추 갈고리를 마지막으로 고르는 규칙은 자리(위치·여백·표시)·누름 칸(::before)만 */
@@ -947,14 +953,14 @@ t('r19-2 단추 = shadcn 4.21.4 base-nova Button 부품(globals): 기본(주색)
   assert.deepStrictEqual(bad, [], '개별 단추 모양 규칙(ⓘ 보조 글 색만 예외)');
   /* 주요 단추: 변형 · 뜻 아이콘(lucide) + 글자 그대로 */
   for (const k of [
-    `<button type="button" class="ui-btn" data-act="yes">\${bico('check')}맞아요</button><button type="button" class="ui-btn ui-btn-outline" data-act="pick">\${bico('map')}다른 동네</button>`,
-    `<button type="button" class="ui-btn ui-btn-outline gps" id="gps" aria-describedby="gps-note"\${busy ? ' disabled aria-busy="true"' : ''}>\${bico(busy ? 'run' : 'gps', 'inline-start', busy ? 'spin' : '')}`,
+    `<button type="button" class="ui-btn" data-act="yes">\${bico('check')}맞아요</button><button type="button" class="ui-btn ui-btn-secondary" data-act="pick">\${bico('map')}다른 동네</button>`,
+    `<button type="button" class="ui-btn ui-btn-ghost gps" id="gps" aria-describedby="gps-note"\${busy ? ' disabled aria-busy="true"' : ''}>\${bico(busy ? 'run' : 'gps', 'inline-start', busy ? 'spin' : '')}`,
     `<button type="button" class="ui-btn ui-btn-ghost" data-act="sidos" aria-controls="ac-list">\${bico('map')}다른 시도</button>`,
     `<button type="button" class="ui-btn ui-btn-ghost" data-act="pick">\${bico('search')}검색으로 고르기</button>`,
-    `<button type="button" class="ui-btn ui-btn-ghost" data-act="pick">바꾸기</button>`,
+    `<button type="button" class="ui-btn ui-btn-ghost" data-act="pick">\${bico('map')}다른 동네</button>`,
     `<button type="button" class="ui-btn ui-btn-ghost ui-btn-sm" id="undo">\${bico('undo')}되돌리기</button>`,
     `<button type="button" class="ui-btn ui-btn-ghost pc-back" id="pc-back">\${bico('left')}목록</button>`,
-    `<button type="button" class="ui-btn ui-btn-ghost ui-btn-icon" id="burger"`, `<button type="button" class="ui-btn ui-btn-ghost ui-btn-icon" id="sheet-x"`, `<button type="button" class="ui-btn ui-btn-ghost ui-btn-icon clear" id="clear"`,
+    `<button type="button" class="ui-btn ui-btn-ghost ui-btn-icon" id="burger"`, `<button type="button" class="ui-btn ui-btn-ghost ui-btn-icon" id="sheet-x"`, `<button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm clear" id="clear"`,
     `class="ui-btn ui-btn-ghost ui-btn-sm to-admin" id="to-admin">전체 통계<span class="opt-t"> 보기(정책담당자 화면)</span><svg class="i" data-icon="inline-end" aria-hidden="true"><use href="#i-arrow"/></svg></button>`,
     `<button type="button" class="ui-btn ui-btn-outline chip2" data-chip=`, `<div class="seg" role="group" aria-label="묶는 방법"><button type="button" class="ui-btn ui-btn-outline" data-mode="time"`,
     "const bico = (id, at = 'inline-start', cls = '') => `<svg class=\"i${cls ? ' ' + cls : ''}\" data-icon=\"${at}\" aria-hidden=\"true\"><use href=\"#i-${id}\"/></svg>`;",
@@ -993,65 +999,299 @@ t('2026-10-19 필터를 검색 줄로: .band 한 줄(검색 · 보는 곳 · 시
   const band = TPL.slice(TPL.indexOf('<div class="band">'), TPL.indexOf('<div class="top-row">'));
   assert(band.indexOf('id="loc"') > 0 && band.indexOf('id="loc"') < band.indexOf('id="fbar"') && band.indexOf('role="search"') < band.indexOf('id="loc"'), '마크업 순서: 검색 → 보는 곳 → 필터');
   assert(TPL.indexOf('<div class="fbar" id="fbar">') > TPL.indexOf('<div class="band">') && TPL.indexOf('<div class="fbar" id="fbar">') < TPL.indexOf('<div class="top-row">') && band.includes('</div>\n    </div>\n'), '#fbar 는 .band 안(띠 닫기 전)');
-  assert(TPL.includes('.band { display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2) var(--s4); }') && TPL.includes('.band > .sbox { order: 1; flex: 1 1 240px; min-width: 240px; }'), '검색은 남는 폭을 채우되 최소 폭 240');
-  assert(TPL.includes('.band > .loc, .band > .fbar { display: contents; }') && TPL.includes('.band .loc-m { order: 2; flex: 0 1 auto; }') && TPL.includes('.band .ui-tabs { order: 3; max-width: 100%; }') && TPL.includes('.band .gps { order: 4; margin-left: auto; }'), '읽기 흐름: 검색 · 보는 곳 · 시도 탭 · 단계 탭 … 현 위치(맨 끝)');
+  /* 2026-10-19 세 묶음: [검색] [보는 곳 + 현 위치 …… 거르기] — 검색 칸 상한 = .top-row 왼쪽 열(세로선 맞춤), 모자라면 검색이 먼저 240 까지 줄고 그다음 오른쪽 묶음이 다음 줄 */
+  assert(band.indexOf('<div class="band-r">') < band.indexOf('id="loc"') && band.indexOf('role="search"') < band.indexOf('<div class="band-r">'), '오른쪽 묶음(.band-r) = 보는 곳 + 거르기');
+  assert(TPL.includes('.band { display: flex; flex-wrap: wrap; align-items: flex-start; gap: var(--s2) var(--s4); }') && TPL.includes('.band > .sbox { flex: 1000 1 240px; min-width: 240px; max-width: clamp(320px, 24vw, 400px); }') && /\.top-row \{[^}]*grid-template-columns: clamp\(320px, 24vw, 400px\) minmax\(0, 1fr\);/.test(TPL), '검색 칸 상한 = 요약 카드 열(같은 clamp), 최소 240');
+  assert(TPL.includes('  .band > .sbox { max-width: clamp(300px, 28vw, 360px); }') && TPL.includes('  .top-row { grid-template-columns: clamp(300px, 28vw, 360px) minmax(0, 1fr); }'), '1199 이하도 같은 열');
+  assert(TPL.includes('.band-r { flex: 1 0 auto; max-width: 100%; min-width: 0; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--s2) var(--s5); }'), '오른쪽 묶음: 보는 곳 왼쪽 · 거르기 오른쪽, 모자라면 거르기가 아래 줄');
+  assert(TPL.includes('  .band > .sbox { flex-basis: 100%; max-width: none; }'), '899 이하: 검색 한 줄');
   const m = TPL.slice(TPL.indexOf('/* 띠(2026-10-19): 검색 한 줄'));
-  assert(m.includes('.band > .sbox { flex-basis: 100%; }') && m.includes('.band > .loc { display: flex; order: 2; flex: 1 1 100%; }') && m.includes('.band > .fbar { display: flex; flex-wrap: wrap; order: 3; flex: 1 1 100%; gap: var(--s2); }') && /\.band \.ui-tabs \{ order: 0; flex-wrap: wrap; height: auto; min-height: var\(--btn-h\); \}/.test(m), '599 이하: 검색 한 줄 → 보는 곳 → 탭 줄, 탭은 틀 안에서 줄바꿈(스크롤 없음)');
-  assert(!/\n\.fbar \{/.test(TPL.slice(0, TPL.indexOf('</style>'))) && /#q \{[^}]*text-overflow: ellipsis/.test(TPL), '옛 .fbar 줄 규칙 없음 · 좁은 검색창 안내 글은 말줄임');
+  assert(m.includes('.band-r > .loc { flex: 1 1 100%; }') && m.includes('.loc .gps { margin-left: auto; }') && m.includes('.fbar { flex: 1 1 100%; gap: var(--s2); }') && m.includes('.fbar .ui-tabs { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); width: 100%; }') && m.includes('.fbar .ui-tabs:last-child { grid-auto-flow: row; grid-template-columns: repeat(2, minmax(0, 1fr)); height: auto; }'), '599 이하: 검색 → 보는 곳 → 시도 탭(3칸) → 단계 탭(2 × 2), 가로 넘침 없음');
+  assert(TPL.includes('<div class="ui-search" id="sfield">') && !/\.sfield\b|#q \{|#q:focus/.test(TPLCSS) && TPL.includes('.ui-search.has .clear { display: flex; }'), '검색 입력은 부품 .ui-search(화면에 모양 규칙 없음), 지우기는 입력이 있을 때만');
+  { const GX = require(require('path').join(ROOT, 'scripts', 'globals-export.js')).extractExport(fs.readFileSync(require('path').join(ROOT, 'app', 'globals.css'), 'utf8'));
+    assert(/--ctl-h: 40px;/.test(GX) && GX.includes('html[data-page="citizen"] .band { --btn-h: var(--ctl-h); }'), '한 줄 조작 높이 40(검색·탭·단추)');
+    const se = GX.slice(GX.indexOf('  .ui-search {'), GX.indexOf('  /* 카드 머리(2026-10-18)'));
+    assert(/\.ui-search > input \{[^}]*height: var\(--btn-h\);[^}]*background: var\(--card\);[^}]*text-overflow: ellipsis;/.test(se) && /\.ui-search > input:focus-visible \{\s*border-color: var\(--ring\);\s*outline: var\(--border-w-on\) solid var\(--ring\);/.test(se) && /\.ui-search:focus-within > svg \{\s*color: var\(--primary\);/.test(se) && !/box-shadow:\s*0 0 /.test(se) && !/#[0-9a-fA-F]{3,8}\b|rgb\(|\d+px/.test(se), '검색 입력 부품: 높이 토큰 · 카드 면 · 초점 = 주색 테두리 + 2px 외곽선 · 돋보기 주색 · 0 오프셋 후광 없음 · 리터럴 0'); }
 });
 t('2026-10-19 상단 필터 = 시도(서울·경기·인천) + 단계(전체·준비 중·짓는 중·모집 끝남): 부품 단추만, 모드·사업 표와 동기, 중복 칩 없음', () => {
   const fb = TPL.slice(TPL.indexOf('<div class="fbar" id="fbar">'), TPL.indexOf('<div class="top-row">'));
   assert(fb.indexOf('시도로 보기') < fb.indexOf('단계로 보기'));
   assert.deepStrictEqual([...fb.matchAll(/data-vsido="(\d+)"[^>]*>([^<]+)</g)].map((m) => m[1] + m[2]), ['11서울', '41경기', '28인천'], '서울·경기·인천 순서');
   assert.deepStrictEqual([...fb.matchAll(/data-fst="(\w+)"[^>]*>([^<]+)</g)].map((m) => m[1] + m[2]), ['all전체', '0준비 중', '1짓는 중', '2모집 끝남']);
-  assert.strictEqual((fb.match(/class="ui-tabs" role="group"/g) || []).length, 2, '탭 목록 부품 둘(시도 · 단계)');
+  assert.strictEqual((fb.match(/class="ui-tabs ui-tabs-seg" role="group" aria-label="시도로 보기"/g) || []).length, 1, '시도 = 채움 탭(2026-10-19)');
+  assert.strictEqual((fb.match(/class="ui-tabs ui-tabs-line" role="group" aria-label="단계로 보기"/g) || []).length, 1, '단계 = 밑줄 탭(2026-10-19)');
   assert(!/ui-btn/.test(fb) && !/role="tab"/.test(fb), '단추 부품·role=tab 없음(거르기라 group + aria-pressed)');
   assert.strictEqual((fb.match(/<span class="n"><\/span>/g) || []).length, 4, '배지는 단계 탭 4개에만(시도 탭 없음)');
   assert(fb.match(/role="group" aria-label="단계로 보기"/) && fb.match(/role="group" aria-label="시도로 보기"/));
   assert(!/<style[^>]*>[\s\S]*#fbar[^{]*\{[^}]*(#[0-9a-fA-F]{3,6}|rgb)/.test(TPL), '템플릿 #fbar 규칙에 색 리터럴 없음');
   const GCSS = fs.readFileSync(require('path').join(ROOT, 'app', 'globals.css'), 'utf8');
-  for (const [i, k] of [['0', 'plan'], ['1', 'build'], ['2', 'sale']]) assert(GCSS.includes(`html[data-page="citizen"] #fbar [data-fst="${i}"][aria-pressed="true"] { color: var(--st-${k}-ink); }`), `단계색 ${k}(글자색만)`);
+  for (const [i, k] of [['0', 'plan'], ['1', 'build'], ['2', 'sale']]) assert(GCSS.includes(`html[data-page="citizen"] #fbar [data-fst="${i}"] { --tab-c: var(--st-${k}-ink); }`), `단계색 ${k}(고른 탭 글자·옅은 면·테두리·배지)`);
+  { const ol = GCSS.slice(GCSS.indexOf('  .ui-tabs-outline {'), GCSS.indexOf('  /* 검색 입력(2026-10-19'));
+    assert(/\.ui-tabs-outline \{\s*--tab-c: var\(--primary\);\s*border: var\(--border-w\) solid var\(--border\);\s*background: var\(--card\);/.test(ol) && /\[aria-current="true"\]\), \.dark \.ui-tabs-outline > :is\(button, a\):is\(\[aria-pressed="true"\], \[aria-current="true"\]\) \{\s*border-color: var\(--tab-c\);\s*background: color-mix\(in oklab, var\(--tab-c\) var\(--tint-mix\), var\(--card\)\);\s*color: var\(--tab-c\);/.test(ol) && /\[aria-current="true"\]\) \.n \{\s*background: var\(--tab-c\);\s*color: var\(--card\);/.test(ol), '테두리형 탭: 카드 면 틀 · 고른 탭 = 그 색 옅은 면 + 1px + 글자 · 배지 채움'); }
   assert(!/#fbar \[data-fst="\d"\] \{ --primary/.test(GCSS), '옛 --primary 덮어쓰기 없음');
   { const GX = require(require('path').join(ROOT, 'scripts', 'globals-export.js')).extractExport(GCSS), tabs = GX.slice(GX.indexOf('  .ui-tabs {'), GX.indexOf('  /* 카드 머리(2026-10-18)'));
     assert(tabs.length > 500 && !/#[0-9a-fA-F]{3,8}\b|rgb\(|\d+px/.test(tabs), '.ui-tabs 는 토큰(var)만 · 리터럴 0');
-    assert(/\.ui-tabs \{[^}]*background: var\(--muted\);[^}]*padding: var\(--tabs-pad\)/.test(tabs) && /\[aria-pressed="true"\] \{\s*background: var\(--card\);[^}]*font-weight: 700;[^}]*box-shadow: var\(--shadow-card\)/.test(tabs) && /\.dark \.ui-tabs > button\[aria-pressed="true"\] \{\s*border-color: var\(--input\)/.test(tabs) && /\.ui-tabs \.n \{[^}]*font-size: var\(--fs-caption\);[^}]*font-weight: 700/.test(tabs) && /--tabs-pad: 3px;/.test(GX), '틀 · 고른 탭 · 다크 · 배지'); }
-  assert(TPL.includes("n.textContent = String(cnt[n.parentNode.dataset.fst])") && TPL.includes('all.forEach((x) => { cnt[stOf(x.b)]++; })') && TPL.includes('projectsOf(cellScope().r.codes)'), '배지 건수 = 사업 표 거르기와 같은 계산(projectsOf · stOf · cellScope)');
+    assert(/\.ui-tabs \{[^}]*background: var\(--muted\);[^}]*padding: var\(--tabs-pad\)/.test(tabs) && /\[aria-current="true"\]\) \{\s*background: var\(--card\);[^}]*font-weight: 700;[^}]*box-shadow: var\(--shadow-card\)/.test(tabs) && /\.dark \.ui-tabs > :is\(button, a\):is\(\[aria-pressed="true"\], \[aria-current="true"\]\) \{\s*border-color: var\(--input\)/.test(tabs) && /\.ui-tabs \.n \{[^}]*font-size: var\(--fs-caption\);[^}]*font-weight: 700/.test(tabs) && /--tabs-pad: 3px;/.test(GX), '틀 · 고른 탭 · 다크 · 배지'); }
+  assert(TPL.includes("n.textContent = String(cnt[n.parentNode.dataset.fst])") && TPL.includes('all.forEach((x) => { cnt[stOf(x.b)]++; })') && TPL.includes('projectsOf(cellScope().r.codes)'), '배지 건수 = 보는 지역의 단계별 사업 건수(projectsOf · stOf · cellScope)');
   /* 동기: 모드가 바뀔 때마다(applyMode 두 길)·보는 곳이 바뀔 때마다(renderAll) 한 함수가 칠하고, 해 모드면 단계 단추는 모두 풀린다 */
   assert(TPL.includes("renderHead(); paintBand(); paintTband(); paintFbar(); return; }") && TPL.includes('paintBand(); paintTband(); paintFbar();   // 요약 표') && TPL.includes('renderCells(); paintFbar(); fitApply();'));
   assert(TPL.includes("b.dataset.fst === 'all' ? m.k === 'all' : m.k === 's' && +b.dataset.fst === m.i") && TPL.includes("String(b.dataset.vsido === sd)"));
   assert(TPL.includes("setMode(b.dataset.fst === 'all' ? MODE_ALL : pressMode(VIEW.mode, 's', +b.dataset.fst))"), '누르면 기존 setMode → applyMode 경로');
-  /* 사업 표 거르기: stOf 규칙 그대로, 개수 단추도 거른 수 */
-  assert(TPL.includes('all.filter((x) => stOf(x.b) === f)') && TPL.includes('findBtn(prj.length, r, f)') && TPL.includes('${STATUS[f][0]} 사업이 없어요'));
+  /* 2026-10-19 아래 줄이 청약 단지 카드로 바뀌어 단계 거르기는 지도·순위·배지만(카드는 거르지 않는다 — 청약 단지-7) */
+  assert(!TPL.includes('all.filter((x) => stOf(x.b) === f)') && !TPL.includes('사업이 없어요`'));
   assert(!TPL.includes('sido-pick'), '안내 줄의 시도 칩은 필터 줄과 겹쳐 없앤다');
 });
-t('지도에서 연 사업 = 지도 위 카드(#sheet 안 씀) · 핵심 필드 · 사업 찾기/공급 일정/큰 지도 링크 · Esc·바깥·닫기 · 기호 0 (2026-10-19)', () => {
-  const GXR = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'app', 'globals.css'), 'utf8');
-  const fn = (name) => { const i = TPL.indexOf(`function ${name}(`); assert(i > 0, name); return TPL.slice(i, TPL.indexOf('\n}\n', i)); };
-  /* 지도 점(svg.pts)을 누르면 카드, 표·목록·검색은 옛 시트 — 지도 경로를 시트로 고정하던 옛 단언(r9-2 의 시트 하나)은 위에서 2 로 고쳤다 */
-  assert(TPL.includes("if (!(t.closest('svg.pts') && openMapCard(t.dataset.prj))) openProject(t.dataset.prj, t);"), '지도 점만 카드, 나머지는 시트');
-  const open = fn('openMapCard'), card = fn('mapCardHtml');
-  assert(!/#sheet|showSheet|openProject|SH\./.test(open + card), '카드는 #sheet 를 쓰지 않는다');
-  assert(open.includes("setAttribute('role', 'dialog')") && open.includes("'aria-labelledby', 'mc-h'") && open.includes("'aria-modal', 'false'") && card.includes('id="mc-h"'), '비모달 dialog + 이름표');
-  assert(open.includes("el.querySelector('a[href]').focus"), '열면 첫 링크로 초점');
-  /* 핵심 필드 있음 / 시행 기관·일정 4줄·근거 없음 */
-  for (const k of ['progHtml(x, ex)', '다음 일정 <b>', '들어올 때 <b>', 'fmt(x.u)', 'area.sub']) assert(card.includes(k), k);
-  assert(!/det\[0\]|시행|cardSteps|pc-tl|청약홈|EXT\(|NT\(/.test(card), '시행 기관·일정 4줄·공고는 카드에서 뺀다');
-  assert(card.includes('/citizen/projects?id=${id}') && card.includes('/citizen/schedule?sido=${sido}&amp;sgg=${unitKey(c)}') && card.includes("mapHref({ project: id })"), '자세히 보기 · 공급 일정 · 큰 지도');
-  assert(/ui-btn ui-btn-sm/.test(card) && /ui-btn ui-btn-outline ui-btn-sm/.test(card) && card.includes('id="mc-x"') && card.includes('aria-label="닫기"'), 'globals 단추 부품만');
-  assert(TPL.includes("e.key === 'Escape' && MC.el?.isConnected") && TPL.includes("e.target.closest('#mapcard, svg.pts .pt')") && fn('closeMapCard').includes("$('#mapbox')"), 'Esc · 바깥 누름 · 초점 복귀');
-  /* 위치: 점 곁 · 뒤집기 · 무대 안(레일 안 가림) · 점이 사라지면 닫기 · 움직이는 동안 숨김 */
-  const pl = fn('placeMapCard');
-  assert(pl.includes("pt.dataset.xy") && pl.includes('tries') && pl.includes('W - w - m') && pl.includes('closeMapCard(false)'), '점 곁 · 뒤집기 · 경계 · 사라지면 닫기');
-  assert(fn('paintPts').includes('placeMapCard();') && /\.stage\.glmv \.mapcard/.test(TPL), '지도가 가라앉으면 다시 붙이고 움직이는 동안 숨긴다');
-  assert(TPL.includes("st.append(el)") && TPL.includes('id="mstage"'), '카드는 무대 안(오른쪽 레일은 별도 칸)');
-  /* 모양: 토큰만 · 움직임 줄이기 */
-  assert(/--mapcard-w: \d+px;/.test(GXR) && /--mapcard-alpha: 9\d%;/.test(GXR), '토큰은 globals');
-  const mc = TPLCSS.match(/\.mapcard \{[^}]*\}/)[0];
-  assert(!/#[0-9a-f]{3,8}\b|rgb\(/i.test(mc) && mc.includes('var(--mapcard-w)') && mc.includes('--shadow-pop'), '값 하드코딩 없음');
-  assert(/@media \(prefers-reduced-motion: no-preference\) \{ \.mapcard\.in \{ animation/.test(TPLCSS), '등장 효과는 움직임 줄이기가 아닐 때만');
-  /* 기호 0: 카드 마크업의 보이는 글에 이모지·원 숫자·화살표·도형·꺾쇠 없음 */
-  const vis = card.replace(/<[^>]*>/g, ' ');
-  assert(!/[\u2460-\u24FF\u2190-\u21FF\u25A0-\u25FF\u2022\u203A\u2039\u{1F300}-\u{1FAFF}]/u.test(vis), '보이는 글에 기호 없음');
+/* ---------- 2026-10-19 청약 단지 카드(#c-pj, 옛 '사업' 표 자리 — 사용자 Q&A 결정) ----------
+   원본 구간(AH_KIND ~ yrHead)과 renderCells 를 실제 자료(D.ah)로 돌리고, 원천(원장 notices APPLYHOME · raw Detail · Mdl)은 시험이 따로 읽어 대조한다. 화면 사진은 찍지 않는다 */
+const escA = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmtA = (n) => n.toLocaleString('ko-KR');
+const MAPOF_A = Object.fromEntries(ctx.D.map.units.map((u) => [u[0], { code: u[0], s: u[1], n: u[2] }]));
+const ahKit = (D, today) => new Function('D', 'TODAY', 'MAPOF', 'esc', 'fmt', srcOf('const AH_KIND = ', 'const yrHead = ') + '\nreturn { ahStep, ahRows, ahRow, AH_MAX, AH_NEAR };')(D, today, MAPOF_A, escA, fmtA);
+const AHK = ahKit(ctx.D, '2026-10-19');
+const fnA = (name) => { const i = TPL.indexOf(`function ${name}(`); assert(i > 0, name); return TPL.slice(i, TPL.indexOf('\n}\n', i)) + '\n}'; };
+const unitKeyA = (c) => (c.startsWith('41') ? c.slice(0, 4) + '0' : S.regionOf[c]?.parent || c);
+/* renderCells 를 그대로 돌려 카드 마크업을 받는다(DOM 은 작은 대역) */
+const ahCard = (code, today = '2026-10-19', D = ctx.D) => {
+  const k = ahKit(D, today); let html = '';
+  new Function('areaOf', 'viewCode', 'sidoOf', 'D', 'MAPU', 'unitKey', 'ahRows', 'ahRow', 'AH_MAX', 'AH_NEAR', 'TODAY', 'swapHtml', '$', 'fitPj', 'bigNum', 'window', fnA('renderCells') + '\nreturn renderCells;')(
+    (c) => S.regionOf[c], () => code, (r) => (r.kind === 'sido' ? r.code : r.code.slice(0, 2)), D, D.map.units.map(([c, s, n]) => ({ code: c, s, n })), unitKeyA,
+    k.ahRows, (o, w) => k.ahRow(o, w, today), k.AH_MAX, k.AH_NEAR, today, (el, h) => { html = h; }, (q) => (q === '#c-pj' ? {} : null), () => {}, (n) => String(n), {})();
+  return html;
+};
+const ahCells = (h) => [...h.matchAll(/<li><a class="ev" href="([^"]*)" target="_blank" rel="noopener" title="([^"]*)" aria-label="([^"]*)">([\s\S]*?)<\/a><\/li>/g)].map((m) => {
+  const g = (re) => (m[4].match(re) || [])[1];
+  return { href: m[1].replace(/&amp;/g, '&'), title: m[2], aria: m[3], kind: g(/<span class="ui-chip pj-ty">([^<]*)</), nm: g(/<span class="nm">([^<]*)</), dg: g(/<span class="pj-dg">([^<]*)</) || '', u: g(/<span class="u(?: tbd)?">([^<]*)</),
+    st: g(/<span class="pj-st"><span class="ui-chip[^"]*">([^<]*)</) || '', stc: g(/<span class="pj-st"><span class="(ui-chip[^"]*)"/) || '', nx: g(/<span class="pj-nxt">([^<]*)</), nxc: g(/<span class="(pj-nx(?: tbd)?)"/),
+    sp: g(/<span class="pj-sp(?: tbd)?">([^<]*)</), spc: g(/<span class="(pj-sp(?: tbd)?)"/), pc: g(/<span class="pj-pc">([^<]*)</) || '',
+    mv: g(/<span class="when(?: tbd)?">([^<]*)</), ar: g(/<span class="pj-ar(?: tbd)?">([^<]*)</), ag: g(/<span class="pj-ag(?: tbd)?">([^<]*)</), vis: m[4].replace(/<[^>]*>/g, ' ') };
 });
-const N = 98; console.log(`${pass}/${N} 통과`);
+/* 원천에서 따로 만든 기대값: notices(APPLYHOME, 시군구 코드) → Detail(관리번호-공고번호) → Mdl, 공고일 ≥ 수집 기준일 2년 전 */
+const AHRAW = (() => {
+  const rd = (p) => JSON.parse(fs.readFileSync(require('path').join(ROOT, 'schemas', 'ledger-2026-10', p), 'utf8'));
+  const man = rd('raw/applyhome/manifest.json'), ref = man.fetched_at.slice(0, 10), from = `${+ref.slice(0, 4) - 2}${ref.slice(4)}`;
+  const nt = new Map(rd('tables/notices.json').rows.filter((n) => n.notice_system === 'APPLYHOME' && n.sgg_code).map((n) => [n.notice_id, n]));
+  const mdl = new Map(); for (const m of rd('raw/applyhome/getAPTLttotPblancMdl.json').rows) { const k = m.HOUSE_MANAGE_NO + '-' + m.PBLANC_NO; (mdl.get(k) || mdl.set(k, []).get(k)).push(m); }
+  const by = {};
+  for (const d of rd('raw/applyhome/getAPTLttotPblancDetail.json').rows) {
+    const id = d.HOUSE_MANAGE_NO + '-' + d.PBLANC_NO, n = nt.get(id); if (!n || !(d.RCRIT_PBLANC_DE >= from)) continue;
+    const u = n.sgg_code.startsWith('41') ? n.sgg_code.slice(0, 4) + '0' : n.sgg_code;
+    (by[u] = by[u] || []).push({ d, n, mdl: mdl.get(id) || [] });
+  }
+  return { ref, from, by };
+})();
+const ahWant = (r, today) => {   // 시험 쪽 단계 계산(원천 칸 이름 그대로)
+  const d = r.d, s = d.SPSPLY_RCEPT_BGNDE || d.RCEPT_BGNDE, md = (v) => v.slice(5).replace('-', '.');
+  if (s && today < s) return ['접수 예정', `접수 ${md(s)}`]; if (d.RCEPT_ENDDE && today <= d.RCEPT_ENDDE) return ['접수 중', `마감 ${md(d.RCEPT_ENDDE)}`];
+  if (d.PRZWNER_PRESNATN_DE && today < d.PRZWNER_PRESNATN_DE) return ['발표 대기', `발표 ${md(d.PRZWNER_PRESNATN_DE)}`];
+  if (d.CNTRCT_CNCLS_ENDDE && today <= d.CNTRCT_CNCLS_ENDDE) return [today < d.CNTRCT_CNCLS_BGNDE ? '계약 전' : '계약 중', `계약 ${md(d.CNTRCT_CNCLS_BGNDE)}~${md(d.CNTRCT_CNCLS_ENDDE)}`];
+  return ['끝남', `${d.RCRIT_PBLANC_DE.slice(0, 4)}.${d.RCRIT_PBLANC_DE.slice(5, 7)} 공고`];
+};
+const ahSorted = (list, today) => list.map((r, i) => ({ r, i, live: ahWant(r, today)[0] !== '끝남' })).sort((a, b) => b.live - a.live || b.r.d.RCRIT_PBLANC_DE.localeCompare(a.r.d.RCRIT_PBLANC_DE) || b.r.d.HOUSE_MANAGE_NO.localeCompare(a.r.d.HOUSE_MANAGE_NO)).map((x) => x.r);
+
+t('청약 단지-1 카드 머리 = 제목 \'청약 단지\' + (i) 하나(사업 n개 링크 단추 없음) · 열 머리 9칸(2026-10-20 한 줄) = 구분 · 이름 · 위치 · 세대 · 특별공급 · 주택형 · 일정 · 입주 · 시공·시행 · ⓘ = 원천기관 · 수집 기준일 · 원문 안내', () => {
+  const h = ahCard('11650'), head = h.slice(0, h.indexOf('</div>'));
+  assert(head.includes('<h2 id="c-pj-h">청약 단지</h2>') && head.includes('popovertarget="tip-pj"') && !/<a |class="[^"]*\ball\b/.test(head), '머리 링크·개수 단추 없음');
+  assert.deepStrictEqual([...h.match(/<div class="pj-th" aria-hidden="true">([\s\S]*?)<\/div>/)[1].matchAll(/<span[^>]*>([^<]*)<\/span>/g)].map((m) => m[1]), ['구분', '이름', '위치', '세대', '특별공급', '주택형', '일정', '입주', '시공·시행']);
+  assert(!/findBtn|findHref|FIND_STAGE|PJ_MAX|pjRow|progHtml|pjEx|stepText/.test(TPL), '옛 사업 표 함수·머리 링크 없음');
+  const tip = TPL.match(/<div class="tip" id="tip-pj" popover>([\s\S]*?)<\/div>/)[1];
+  assert(tip.includes('<b>청약 단지</b>') && tip.includes('한국부동산원 청약홈 분양정보') && tip.includes('공공데이터포털') && tip.includes('수집 /*AH_REF*/') && tip.includes('줄을 누르면 청약홈 원문') && tip.includes('특별공급 비율은 전체 세대 대비예요'), tip);
+  assert(tip.replace(/<[^>]*>/g, '').length < 140, '문구 최소: ⓘ 짧게');
+  assert(fs.readFileSync(require('path').join(__dirname, 'build.js'), 'utf8').includes("'/*AH_REF*/': dot(D.ah.ref)") && h.length && ctx.D.ah.ref === AHRAW.ref && ctx.D.ah.from === AHRAW.from, '기준일 = 청약홈 manifest 수집일, 범위 = 2년');
+  const built = fs.readFileSync(require('path').join(ROOT, 'docs', 'design', '대국민-모드-시안.html'), 'utf8');
+  assert(built.includes(`수집 ${AHRAW.ref.replace(/-/g, '.')}</p>`), '빌드에 기준일이 들어간다');
+});
+t('청약 단지-2 청약 단계 = 오늘 날짜로(경계 날짜): 접수 예정 → 접수 중(시작·마감 당일 포함) → 발표 대기 → 계약 전(발표 당일) → 계약 중(계약 첫날·끝날) → 끝남, 특별공급 접수 시작이 먼저', () => {
+  const x = ['단지', 100, 1, '', '202911', 59, 84, 'X', '2026-10-08', '2026-10-19', '2026-10-21', '2026-10-27', '2026-11-09', '2026-11-15', 'a', 0, 50, []];
+  const st = (t) => { const s = AHK.ahStep(x, t); return `${s.k}|${s.t}|${s.nx}`; };
+  assert.deepStrictEqual(['2026-10-18', '2026-10-19', '2026-10-21', '2026-10-22', '2026-10-26', '2026-10-27', '2026-11-08', '2026-11-09', '2026-11-15', '2026-11-16'].map(st), [
+    '0|접수 예정|접수 10.19', '1|접수 중|마감 10.21', '1|접수 중|마감 10.21', '2|발표 대기|발표 10.27', '2|발표 대기|발표 10.27', '3|계약 전|계약 11.09~11.15', '3|계약 전|계약 11.09~11.15', '3|계약 중|계약 11.09~11.15', '3|계약 중|계약 11.09~11.15', '4|끝남|2026.10 공고']);
+  /* 원천 전부(최근 2년 344건)와 시험 쪽 계산이 같다 — 오늘 · 한 달 전 · 한 달 뒤 */
+  let n = 0;
+  for (const today of ['2026-09-19', '2026-10-19', '2026-11-19']) for (const [u, L] of Object.entries(AHRAW.by)) {
+    const rows = ctx.D.ah.u[u] || [];
+    for (const x of rows) { const r = L.find((q) => q.d.HOUSE_NM === x[0] && q.d.RCRIT_PBLANC_DE === x[8] && x[14] && q.d.PBLANC_URL.endsWith(x[14])); assert(r, u + x[0]); const s = AHK.ahStep(x, today); assert.deepStrictEqual([s.t, s.nx], ahWant(r, today), u + ' ' + x[0] + ' ' + today); n++; }
+  }
+  assert(n > 300, n); console.log(`  단계 계산 ${n}건 = 원천 날짜`);
+  assert(TPL.includes("D.meta.today = localDay(new Date());") && fnA('renderCells').includes('ahRows(D, keys, TODAY)'), '오늘 = 브라우저 날짜(TODAY)');
+});
+t('청약 단지-3 줄 = 원천 그대로: 이름(원래 이름, 넘치면 말줄임) · 세대(TOT_SUPLY_HSHLDCO) · 입주(MVN_PREARNGE_YM) · 주택형(Mdl 전용 범위) · 시공(민영)/시행 약칭(공공) · 원문 새 탭 — 서초·계양·수원', () => {
+  const short = (s) => (s || '').split(',').map((p) => p.replace(/\(\s*주\s*\)|㈜|주식회사/g, ' ').replace(/\s+/g, ' ').trim()).filter(Boolean);
+  const ag = (p) => (/한국토지주택공사/.test(p.replace(/ /g, '')) ? 'LH' : /^서울주택도시/.test(p) ? 'SH' : /^경기주택도시공사/.test(p) ? 'GH' : /^인천도시공사/.test(p) ? 'iH' : p);
+  for (const code of ['11650', '28245', '41110']) {
+    const got = ahCells(ahCard(code)), want = ahSorted(AHRAW.by[code] || [], '2026-10-19').slice(0, 5);
+    assert.strictEqual(got.length, Math.min(5, want.length), code);
+    got.forEach((g, i) => {
+      const { d, mdl } = want[i], ar = mdl.map((m) => Math.floor(parseFloat(m.HOUSE_TY))).filter((v) => v > 0), pub = d.HOUSE_DTL_SECD_NM === '국민';
+      const co = pub ? [...new Set(short(d.BSNS_MBY_NM).map(ag))].join(', ') : short(d.CNSTRCT_ENTRPS_NM).join(', ');
+      assert.deepStrictEqual([g.kind, g.nm, g.u, g.mv, g.ar, g.ag, g.href], [pub ? '공공분양' : '민영', escA(d.HOUSE_NM), `${fmtA(d.TOT_SUPLY_HSHLDCO)}세대`, `${d.MVN_PREARNGE_YM.slice(0, 4)}.${d.MVN_PREARNGE_YM.slice(4)}`,
+        Math.min(...ar) === Math.max(...ar) ? `${Math.min(...ar)}㎡` : `${Math.min(...ar)}~${Math.max(...ar)}㎡`, escA(co), d.PBLANC_URL], `${code} ${i}`);
+      assert.deepStrictEqual([g.st || '끝남', g.nx], ahWant(want[i], '2026-10-19'));
+      assert(g.title.startsWith(escA(d.HOUSE_NM) + ' · ') && g.title.includes(`공고 ${d.RCRIT_PBLANC_DE.replace(/-/g, '.')}`) && g.title === g.aria, 'title·aria-label = 원래 이름 · 공고일');
+    });
+    console.log(`  ${code} ${S.regionOf[code].label}: ` + got.map((g) => `${g.nm.slice(0, 20)} | ${g.u} | ${g.st} | ${g.nx} | ${g.mv} | ${g.ar} | ${g.ag}`).join('\n    '));
+  }
+  assert(/\.ev \.nm \{[^}]*overflow: hidden; text-overflow: ellipsis; white-space: nowrap; \}/.test(CSS) && /\.pjs \.ev \.nm \{ grid-area: nm; font-weight: 700; \}/.test(CSS), '이름은 원래 이름 그대로 · 칸을 넘치면 말줄임');
+  assert(!/\(주\)|주식회사|㈜/.test(JSON.stringify(ctx.D.ah)), "'(주)'·'주식회사' 없음");
+  const pub = Object.values(ctx.D.ah.u).flat().filter((x) => x[2] === 0).map((x) => x[7]);
+  assert(pub.length > 20 && pub.filter((a) => /^(LH|SH|GH|iH)(,|$)/.test(a)).length / pub.length > .8 && !pub.some((a) => /한국토지주택공사|서울주택도시|경기주택도시공사|인천도시공사/.test(a)), '공공 = 사업주체 약칭 LH·SH·GH·iH');
+});
+t('청약 단지-4 정렬 = 끝나지 않은 단계 먼저, 그다음 공고일 최근 순 · 최대 5줄 · 공고일 2년 안 · 경쟁률·분양가 없음 · 규제는 title·aria-label 에만', () => {
+  const F = { ah: { url: 'u?', u: { A: [
+    ['끝남 새것', 10, 1, '', '', 0, 0, '', '2026-09-01', '2026-09-10', '2026-09-11', '2026-09-18', '2026-09-28', '2026-09-30', 'a', 1, null, []],
+    ['진행 옛것', 10, 1, '', '', 0, 0, '', '2026-08-01', '2026-10-01', '2026-10-02', '2026-10-10', '2026-11-01', '2026-11-30', 'b', 0, 0, []],
+    ['끝남 옛것', 10, 1, '', '', 0, 0, '', '2025-01-01', '2025-01-10', '2025-01-11', '2025-01-18', '2025-01-28', '2025-01-30', 'c', 0, 0, []]] } } };
+  assert.deepStrictEqual(AHK.ahRows(F, ['A'], '2026-10-19').map((o) => o.x[0]), ['진행 옛것', '끝남 새것', '끝남 옛것']);
+  assert.deepStrictEqual(AHK.ahRows(F, ['A'], '2026-12-01').map((o) => o.x[0]), ['끝남 새것', '진행 옛것', '끝남 옛것'], '모두 끝나면 공고 최근 순');
+  /* 실제 자료: 모든 면에서 카드 줄 수 = min(5, 원천 건수), 순서 = 시험 쪽 정렬 */
+  let big = 0;
+  for (const u of ctx.D.map.units.map((x) => x[0])) {
+    const L = AHRAW.by[u] || []; if (!L.length) continue;
+    const got = ahCells(ahCard(u)).map((g) => g.href), want = ahSorted(L, '2026-10-19').slice(0, 5).map((r) => r.d.PBLANC_URL);
+    assert.deepStrictEqual(got, want, u); if (L.length > 5) big++;
+  }
+  assert(big >= 10, `5줄보다 많은 면 ${big}`);
+  assert.strictEqual(AHK.AH_MAX, 5); assert(TPL.includes('const AH_MAX = 5, AH_NEAR = 3;'));
+  for (const x of Object.values(ctx.D.ah.u).flat()) { assert(x[8] >= ctx.D.ah.from, x[0]); assert.strictEqual(x.length, 18, '줄 = 18칸(16 특공 · 17 유형별, 관리번호는 화면으로 보내지 않는다)'); }
+  const src = srcOf('const AH_KIND = ', 'const yrHead = ') + fnA('renderCells'), bd = fs.readFileSync(require('path').join(__dirname, 'build_data.py'), 'utf8');
+  assert(!/경쟁률|분양가(?!상한제)|LTTOT_TOP_AMOUNT|SUPLY_AR|만원/.test(src + bd.slice(bd.indexOf('# 청약 단지 카드'), bd.indexOf("ah = {'ref'"))), '경쟁률·분양가 없음');
+  const fl = Object.entries(ctx.D.ah.u).flatMap(([u, L]) => L.filter((x) => x[15] & 1).map((x) => [u, x]))[0];
+  const row = AHK.ahRow({ k: fl[0], x: fl[1] }, false), c = ahCells(`${row}`)[0];
+  assert(c.title.includes('분양가상한제') && c.aria.includes('분양가상한제') && !c.vis.includes('분양가상한제'), '규제 표시는 title·aria-label 에만');
+});
+t('청약 단지-5 빈 시군구 = \'최근 2년 청약 없음\' 한 줄 + 맞닿은 면(D.nb)의 최근 단지 3줄(같은 정렬, 줄마다 시군구 이름) · 이웃에도 없으면 그 한 줄만', () => {
+  const empty = ctx.D.map.units.map((u) => u[0]).filter((u) => !(AHRAW.by[u] || []).length);
+  assert.deepStrictEqual(empty, ctx.D.map.units.map((u) => u[0]).filter((u) => !ctx.D.ah.u[u]), '빈 면 = 자료에 없는 면');
+  for (const u of empty) {
+    const h = ahCard(u), got = ahCells(h), nb = [...(ctx.D.nb[u] || [])];   // vm 쪽 배열을 이쪽 배열로(deepStrictEqual 은 원형까지 본다)
+    assert(h.includes('<p class="none">최근 2년 청약 없음</p>'), u);
+    const want = ahSorted(nb.flatMap((k) => (AHRAW.by[k] || []).map((r) => Object.assign({ k }, r))), '2026-10-19').slice(0, 3);
+    assert.deepStrictEqual(got.map((g) => g.href), want.map((r) => r.d.PBLANC_URL), u);
+    got.forEach((g, i) => assert(g.dg.startsWith(MAPOF_A[want[i].k].n), `${u} ${g.dg}`));
+    if (!want.length) assert(!h.includes('<ul'), u + ' 이웃에도 없으면 한 줄만');
+  }
+  { const F = { ...ctx.D, nb: { ...ctx.D.nb, [empty[0]]: [] } }; const h = ahCard(empty[0], '2026-10-19', F); assert(h.includes('최근 2년 청약 없음') && !h.includes('<ul') && !h.includes('pj-th'), '이웃 없음 = 한 줄만'); }
+  console.log(`  최근 2년 0건 ${empty.length}곳: ${empty.map((u) => MAPOF_A[u].n).join(' · ')}`);
+});
+t('청약 단지-6 시군구 묶음 = 지도 면 단위(unitKey): 수원시(41110)는 4개 구 공고를 합치고 구 코드로 봐도 같은 카드 · 시도 보기는 그 시도 면 전부(줄마다 시군구 이름)', () => {
+  const sw = AHRAW.by['41110'], gus = new Set(sw.map((r) => r.n.sgg_code));
+  assert(gus.size >= 2 && [...gus].every((c) => c.startsWith('4111') && c !== '41110'), [...gus].join());
+  assert.strictEqual(ahCard('41113'), ahCard('41110'), '권선구 코드(색인에 있는 구)로 봐도 수원시 카드');
+  assert(fnA('renderCells').includes('[unitKey(r.code)]') && fnA('renderCells').includes('MAPU.filter((u) => u.s === r.code)'), '단위 = unitKey(원장 사업을 면에 붙이는 규칙과 같다)');
+  const bd = fs.readFileSync(require('path').join(__dirname, 'build_data.py'), 'utf8'); assert(bd.includes("unit = c[:4] + '0' if c.startswith('41') else c"), '자료도 같은 규칙');
+  for (const sd of ['11', '28', '41']) {
+    const got = ahCells(ahCard(sd)), keys = [...ctx.D.map.units.filter((u) => u[1] === sd).map((u) => u[0])];
+    const want = ahSorted(keys.flatMap((k) => (AHRAW.by[k] || []).map((r) => Object.assign({ k }, r))), '2026-10-19').slice(0, 5);
+    assert.deepStrictEqual(got.map((g) => g.href), want.map((r) => r.d.PBLANC_URL), sd);
+    got.forEach((g, i) => assert(g.dg.startsWith(MAPOF_A[want[i].k].n), `${sd} ${g.dg}`));
+  }
+  assert(ahCells(ahCard('11650')).every((g) => !g.dg.includes('서초구')), '시군구 보기는 시군구 이름 없이 동만');
+});
+t('청약 단지-7 줄 누름 = 청약홈 원문 새 탭(target=_blank rel=noopener) · 지도 아이콘 칸·지도 위 카드·사업 시트·가리킴 강조 연결 없음 · 단계 필터는 이 카드를 거르지 않는다', () => {
+  for (const g of ahCells(ahCard('41'))) assert(/^https:\/\/www\.applyhome\.co\.kr\/ai\/aia\/selectAPTLttotPblancDetail\.do\?houseManageNo=\d+&pblancNo=\d+$/.test(g.href), g.href);
+  const src = srcOf('const AH_KIND = ', 'const yrHead = ') + fnA('renderCells');
+  assert(!/mapi|mapBtn|data-prj|PRJA|data-unit|data-go|openPrjOnMap|hlUnit/.test(src), '이 카드에 지도·사업 시트 연결 없음');
+  assert(!/function (hlRow|openPrjOnMap|openMapCard|mapCardHtml|placeMapCard|closeMapCard|mcWant|mcXY)\(|#c-pj \.ev|\.mapcard|\bMC\b/.test(TPL), '지도 위 사업 카드·줄 가리킴 강조는 지웠다');
+  assert(TPL.includes("if (t.dataset.prj) { e.preventDefault(); openProject(t.dataset.prj, t); return; }"), '다른 목록·검색의 사업은 옆 시트 그대로');
+  assert(!/stFil|cellF|projectsOf|STATUS\[f\]/.test(fnA('renderCells')) && !/renderCells|cellF/.test(fnA('paintFbar')) && !/\bcellF\b/.test(TPL), '단계 필터는 이 카드를 거르지 않는다(지도·순위·배지는 그대로)');
+  assert(TPL.includes("renderLoc(); renderSum(); renderMapCard(); renderCells(); paintFbar();"), '보는 곳이 바뀌면 다시 그린다');
+});
+t('청약 단지-8 화면 규칙: 9칸 격자 하나(머리·줄 subgrid, 넓은 칸 한 줄 — 2026-10-20) · 좁은 칸(안쪽 1200 미만) 두 줄 · 진행 중 단계 칩은 일정 칸 앞(진행 중 줄만) · 의미색(접수 중 --ok · 그 밖 --primary), 끝남은 기본 칩 · 글자 14·16 토큰 · 기호 없음', () => {
+  assert(/#c-pj \{ container: pj \/ inline-size; \}/.test(CSS) && /\.pj-th, \.pjs \{ grid-template-columns: var\(--pj-cols\);/.test(CSS), '7열은 globals 토큰 한 트랙');
+  assert(/\.pjs > li \{ grid-column: 1 \/ -1; display: grid; grid-template-columns: subgrid;/.test(CSS) && /\.pjs \.ev \{ grid-column: 1 \/ -1; grid-template-columns: subgrid; grid-template-areas: 'ty nm dg u sp ar nx when ag';/.test(CSS) && /\.pjs \.ev \.nmw \{ display: contents; \}/.test(CSS));
+  assert(/@container pj \(max-width: 1199px\) \{\n  #c-pj \.pj-th \{ display: none; \}\n  #c-pj \.pjs \{ grid-template-columns: max-content minmax\(0, 1fr\) max-content; \}[^\n]*\n  #c-pj \.pjs \.ev \{ grid-template-areas: 'nm nm u' 'sp nx when';/.test(CSS) && /#c-pj \.pjs \.ev :is\(\.pj-ar, \.pj-ag\) \{ display: none; \}/.test(CSS), '좁은 칸 두 줄');
+  assert(/\.pj-st \.ui-chip\.on \{ --c: var\(--primary\); border-color: var\(--c\); background: color-mix\(in oklab, var\(--c\) var\(--tint-mix\), var\(--card\)\); color: color-mix\(in oklab, var\(--c\) 85%, var\(--foreground\)\); font-weight: 700; \}/.test(CSS) && /\.pj-st \.ui-chip\.on\.open \{ --c: var\(--ok\); \}/.test(CSS), '진행 중 칩 = 의미 토큰');
+  const cls = Object.fromEntries(['2026-10-18', '2026-10-19', '2026-10-22', '2026-11-16'].map((t) => { const x = ['a', 1, 1, '', '', 0, 0, '', '2026-10-08', '2026-10-19', '2026-10-21', '2026-10-27', '2026-11-09', '2026-11-15', 'q', 0, 10, []]; const c = ahCells(AHK.ahRow({ k: '11650', x }, false, t))[0]; return [c.st || '끝남', `${c.stc}|${c.nxc}`]; }));
+  assert.deepStrictEqual(cls, { '접수 예정': 'ui-chip on|pj-nx', '접수 중': 'ui-chip on open|pj-nx', '발표 대기': 'ui-chip on|pj-nx', '끝남': '|pj-nx tbd' }, '진행 중 줄만 일정 칸에 단계 칩 · 끝남 = 칩 없이 옅은 공고 연월');
+  const pjCss = TPLCSS.split('\n').filter((l) => /^\s*(\.pj|#c-pj|\.pjs)/.test(l)).join('\n');
+  assert([...pjCss.matchAll(/font-size: ([^;]+);/g)].every((m) => /^var\(--fs-(meta|body)\)$/.test(m[1])) && !/gradient|dash|hatch|#[0-9a-f]{3,8}\b|rgb\(/i.test(pjCss), '글자 14·16(토큰) · 색 리터럴·그라데이션 없음');
+  assert(!/pj-band|pj-sn|pj-jd|pj-nt|mapcard|mc-/.test(TPLCSS), '옛 진행 띠·상태 칩·공고 물량·지도 위 카드 CSS 없음');
+  const vis = ahCells(ahCard('41')).map((g) => g.vis).join(' ');
+  assert(!/[①-⓿←-⇿■-◿•›‹\u{1F300}-\u{1FAFF}]/u.test(vis), '보이는 글에 기호 없음');
+  assert(!TPL.includes('id="c-yr"') && !/\b(yrsChart|yearsOf|withYearGlide|paintYearChart|renderTl|tlHtml|paintYears)\b/.test(TPL), '옛 막대·일정표 없음');
+});
+t('청약 단지-9 특별공급 칸(사용자 피드백 \'청약 단계가 전부 끝남\' → 특별공급 세대): build_data 줄 16 특공 · 17 유형별 · 자르기 18 · 칸 글(세대·비율·없음·미정) · title 유형별 내역(0 유형 빠짐)', () => {
+  const bd = fs.readFileSync(require('path').join(__dirname, 'build_data.py'), 'utf8');
+  assert(bd.includes("sp, spk if any(spk) else [], d['HOUSE_MANAGE_NO']]") && bd.includes('(r[8], r[18])') && bd.includes('[r[:18] for r in L'), '줄 형식: 16 특공 · 17 유형별 · 18 관리번호(정렬용, 자름)');
+  assert(bd.includes('if mdl else None'), '주택형 줄이 없으면 특공 = null');
+  const K = ['NWWDS_HSHLDCO', 'LFE_FRST_HSHLDCO', 'MNYCH_HSHLDCO', 'OLD_PARNTS_SUPORT_HSHLDCO', 'INSTT_RECOMEND_HSHLDCO', 'YGMN_HSHLDCO', 'NWBB_HSHLDCO', 'TRANSR_INSTT_ENFSN_HSHLDCO', 'ETC_HSHLDCO'];
+  let pos = 0, zero = 0, nul = 0, withKinds = 0;
+  for (const [u, rows] of Object.entries(ctx.D.ah.u)) for (const x of rows) {
+    const r = AHRAW.by[u].find((q) => q.d.HOUSE_NM === x[0] && q.d.RCRIT_PBLANC_DE === x[8] && q.d.PBLANC_URL.endsWith(x[14]));
+    const sum = (k) => r.mdl.reduce((a, m) => a + (+m[k] || 0), 0), kinds = K.map(sum);
+    assert.strictEqual(x[16], r.mdl.length ? sum('SPSPLY_HSHLDCO') : null, u + x[0]);
+    assert.deepStrictEqual([...x[17]], kinds.some(Boolean) ? kinds : [], u + x[0]);
+    if (x[16] == null) nul++; else if (x[16] === 0) zero++; else pos++; if (x[17].length) withKinds++;
+  }
+  console.log(`  특별공급 양수 ${pos} · 0 ${zero} · null ${nul} (유형별 있음 ${withKinds})`); assert(pos > 100);
+  const row = (sp, kinds, tot = 1300, t = '2026-10-19') => AHK.ahRow({ k: '11650', x: ['단지', tot, 1, '', '', 0, 0, '', '2026-10-08', '2026-10-19', '2026-10-21', '2026-10-27', '2026-11-09', '2026-11-15', 'q', 0, sp, kinds] }, false, t);
+  let c = ahCells(row(685, [200, 150, 0, 0, 0, 0, 0, 0, 335]))[0];
+  assert.deepStrictEqual([c.sp, c.pc, c.spc], ['685세대', '53%', 'pj-sp'], '685세대 + 옅은 53%(같은 줄, 간격은 CSS)');
+  assert(c.title.includes('특별공급 685세대(신혼부부 200 · 생애최초 150 · 기타 335)') && !c.title.includes('다자녀') && c.title === c.aria, c.title);
+  const nk = ahCells(row(685, []))[0]; assert(nk.title.includes('특별공급 685세대 ·') && !nk.title.includes('685세대('), '유형별이 비면 괄호 없이');
+  c = ahCells(row(0, []))[0]; assert.deepStrictEqual([c.sp, c.spc], ['없음', 'pj-sp tbd'], '0 = 옅은 없음'); assert(c.title.includes('특별공급 없음'));
+  c = ahCells(row(null, []))[0]; assert.deepStrictEqual([c.sp, c.spc], ['미정', 'pj-sp tbd'], 'null = 옅은 미정'); assert(!c.title.includes('특별공급'));
+  c = ahCells(row(50, [], 0))[0]; assert.deepStrictEqual([c.sp, c.pc], ['50세대', ''], '전체 세대 0 이면 비율 생략'); assert(!/pj-pc/.test(row(50, [], 0)));
+  assert.strictEqual(ahCells(row(1, [], 3))[0].pc, '33%', '반올림 정수');
+  const live = row(10, []), done = row(10, [], 100, '2026-12-01');
+  assert(/<span class="pj-nx"><span class="pj-st"><span class="ui-chip on open">접수 중<\/span><\/span><span class="pj-nxt">마감 10\.21<\/span><\/span>/.test(live), live);
+  assert(/<span class="pj-nx tbd"><span class="pj-nxt">2026\.10 공고<\/span><\/span>/.test(done) && !/pj-st/.test(done), done);
+  assert(live.indexOf('pj-sp') < live.indexOf('pj-nx') && live.indexOf('pj-nx') < live.indexOf('class="when'), '칸 순서: 세대 · 특별공급 · 일정 · 입주');
+  assert(!/청약 단계/.test(fnA('renderCells')) && TPL.includes('<span class="pj-sp">특별공급</span><span class="pj-ar">주택형</span>'), "열 머리에 '청약 단계' 없음");
+});
+/* 2026-10-19 사용자 결정('서울 선택 시 서울특별시에 해당하지 않는 부분은 회색으로 경계를 나눠'): 시도를 보면 그 시도 밖 면은 맥락 회색·평평, 시도 경계선, 라벨·사업 점·핀은 그 시도만 */
+t('10-19 서울 보기 = 서울 밖 면 out(맥락 회색·평평, 면 효과 없음)·시도 경계선 레이어(서울에 닿은 선 진하게)·라벨은 서울만, 수도권 전체 보기는 모두 칠함', () => {
+  const D = ctx.D, M = ctx.Map3D, GL = ctx.MapGL, TPL = fs.readFileSync(require('path').join(__dirname, 'template.html'), 'utf8'), CSS = tplStyle(TPL);
+  const body = (nm) => { const i = TPL.indexOf(`function ${nm}(`); return TPL.slice(i, TPL.indexOf('\n}\n', i)); };
+  const g = ctx.geomFor(D, S, 760, 430, false), all = ['11', '28', '41'].flatMap((sd) => ctx.unitsFor(D, S, sd)), vals = Object.fromEntries(all.map((x) => [x.key, x.u]));
+  /* SVG 대체(공용 Map3D): 서울 밖 면은 높이 0(평평) — 값이 있어도 */
+  const G = { Hmax: 32, st: { gv: g, o: { scope: '11' }, hs: g.own.map(() => 0), umax: 0 } }, P = M.heightPlan(G, vals);
+  g.own.forEach((q, i) => { if (!q.code.startsWith('11')) assert.strictEqual(P.h1[i], 0, q.code + ' 서울 밖 = 평평'); else if (vals[q.code] > 0) assert(P.h1[i] > 0, q.code + ' 서울 면은 솟는다'); });
+  const us = all.map((x) => ({ ...x, c: 1 })), F = (scope) => M.faces(g, { units: us, ...(scope === undefined ? {} : { scope }) }, { hs: P.h1 });
+  const f11 = F('11'), f0 = F(null), fx = F(undefined);
+  assert(f11.some((f) => f.sdlOn) && !f11.some((f) => f.sdl), '서울에 닿은 선(진하게)만 — 인천-경기 선은 그리지 않는다(2026-10-19 이웃 1단계)');
+  assert(!f0.some((f) => f.sdlOn) && f0.some((f) => f.sdl), '수도권 전체 보기: 경계선은 모두 옅게');
+  assert(!fx.some((f) => 'sdl' in f || 'sdlOn' in f), 'scope 를 주지 않으면(/map 개요) 경계선 없음 — 예전 그대로');
+  assert(CSS.includes('.map .out { --c: var(--map-ctx); }') && CSS.includes('.map .sdl.on { stroke: var(--map-sido-line); stroke-width: var(--map-sido-w); }'), '맥락 회색·경계선 = 토큰');
+  assert(M3.includes("if (!f || f.classList.contains('out')) continue;"), '밖 면은 띄우지 않는다');
+  /* 진짜 3D(공용 MapGL): 경계선 층 = 고른 곳 윤곽 위 · 솟은 면 아래, 밖 면 식 */
+  const lines = GL.sidoLines(D.map.units.map(([code, s, n, d, , , lx, ly]) => ({ code, s, n, d, lx, ly })));
+  assert.strictEqual(lines.features.map((f) => f.properties.id).join(), '1128,1141,2841', '서울-인천·서울-경기·인천-경기');
+  const cols = { face: Array(6).fill([1, 2, 3, 1]), lift: Array(6).fill([4, 5, 6, 1]), ce: Array(6).fill([7, 8, 9, 1]), line: [255, 255, 255, 1], sea: [0, 0, 0, .06], ctx: [9, 9, 9, 1] };
+  const st = GL.styleOf(GL.toGeoJSON(D.map.units.map(([code, s, n, d, , , lx, ly]) => ({ code, s, n, d, lx, ly }))), cols, null, { lines }), ids = st.layers.map((l) => l.id);
+  assert.strictEqual(ids.slice(-4).join(), 'gl-hl,gl-sido,gl-ext,gl-rim', '맨 위 = 시군구 경계 띠(2026-10-19)'); assert(/"feature-state","out"/.test(JSON.stringify(st.layers.find((l) => l.id === 'gl-flat').paint)));
+  /* 화면 연결: 보는 시도 = camSido(고른 곳이 없으면 null) — 시도 탭·검색·순위·면 누름·내 동네는 모두 pick → renderMapCard 로 */
+  assert(body('glDraw').includes('GLS.map.setScope(camSido());') && body('glDraw').indexOf('setScope(') < body('glDraw').indexOf('GLS.map.setValues('), 'GL: 높이보다 먼저 보는 시도');
+  assert(body('renderMapCard').includes('GLS.map.setScope(camSido()); GLS.map.flyTo(camSido());') && body('renderMapCard').includes("VIEW.scope !== camSido()) drawMap('view');"), '같은 시도 안에서 수도권 → 시도로 바뀔 때도');
+  assert(body('glMount').includes('scope: camSido()') && body('drawMap').includes('scope: VIEW.scope'));
+  /* 라벨·순위 = 보는 시도 면만(서울 밖 라벨 없음), 사업 점 = 보는 시군구, 핀 = 같은 시도의 내 동네 */
+  assert(ctx.unitsFor(D, S, '11').every((x) => x.key.startsWith('11')), '서울 보기 라벨 후보 = 서울 면');
+  assert(body('drawBaseLabels').includes('GLS.map.labels(g, VIEW.units,') && TPL.includes("homeKey = hr && hr.kind === 'sgg' && sidoOf(hr) === sd ? unitKey(hr.code) : null"));
+});
+t('2026-10-19 지도 레일: 범례 구간 단추(aria-pressed 고정·다시 누르면 풀림·가리킴/초점 미리보기) → 지도(GL feature-state · SVG .fg.dim)·순위 줄·라벨 함께, 순위 ↔ 지도 양방향(가리킨 면 라벨 진하게 · 목록 칸 안에서만 그 줄로), 모든 줄 막대 · 보는 곳 줄 표시 · 구분선', () => {
+  const fn = (name) => { const i = TPL.indexOf(`function ${name}(`); assert(i > 0, name); return TPL.slice(i, TPL.indexOf('\n}\n', i)); };
+  /* 고정·풀기: 누른 칸 = 고정(미리보기도), 같은 칸을 다시 누르면 둘 다 풀림, 다른 칸이면 옮김 */
+  const click = TPL.match(/document\.addEventListener\('click', \(e\) => \{ const b = e\.target\.closest\?\.\('#mapc \.lg-sw'\);[^\n]*/)[0];
+  assert(click.includes('const lv = +b.dataset.lv, on = VIEW.bandFix !== lv; setBand(on ? lv : null, on ? lv : null);'));
+  const V = { bandFix: null, bandPv: null }, press = (lv) => { const on = V.bandFix !== lv; V.bandFix = on ? lv : null; V.bandPv = on ? lv : null; };
+  press(3); assert.deepStrictEqual([V.bandFix, V.bandPv], [3, 3]); press(5); assert.strictEqual(V.bandFix, 5); press(5); assert.deepStrictEqual([V.bandFix, V.bandPv], [null, null], '다시 누르면 풀림');
+  const ui = fn('paintBandUi');
+  assert(ui.includes("b.setAttribute('aria-pressed', String(+b.dataset.lv === VIEW.bandFix))") && ui.includes("b.classList.toggle('on', +b.dataset.lv === lv)") && ui.includes("li.classList.toggle('dim', lv != null && !!b && +b.dataset.c !== lv)"), 'aria-pressed = 고정 · 진한 칸 = 미리보기 또는 고정 · 순위 줄 흐림 = 색 단계가 다른 줄');
+  assert(TPL.includes("document.addEventListener('mouseover', bandOn); document.addEventListener('focusin', bandOn);") && TPL.includes("document.addEventListener('mouseout', bandOff); document.addEventListener('focusout', bandOff);"), '가리킴·키보드 초점 = 미리보기');
+  assert(fn('setBand').includes('paintBandUi(); paintRings(); drawOverlay();') && fn('paintRings').includes('GLS.map.setBand(bandKeys())') && fn('paintRings').includes('band: bandKeys()'), '지도는 칠하기만(GL feature-state · SVG paintFaces band)');
+  assert(TPL.includes('const bandKeys = () => { const lv = bandLv(); return lv == null ? null : VIEW.all.filter((x) => (x.c || 0) === lv).map((x) => x.key); };'), '구간 = 같은 색 단계 면');
+  assert(fn('paintLegend').includes('VIEW.bandFix != null && !nl.querySelector(`.lg-sw[data-lv="${VIEW.bandFix}"]`)) VIEW.bandFix = null;'), '모드가 바뀌어 그 색 단계가 없으면 풀림');
+  assert(fn('drawOverlay').includes("l.classList.toggle('hv', k === VIEW.hoverKey); l.classList.toggle('dim', !!band && !band.has(k) && k !== VIEW.hoverKey);") && CSS.includes('.map .lb-g.hv .lb.nm { font-weight: 700; }') && CSS.includes('.map .lbls .lb-g.dim { opacity: var(--cz-dim-op); }'), '라벨: 가리킴 진하게 · 구간 밖 흐리게');
+  /* 순위 ↔ 지도: 줄 가리킴·초점 → hlUnit(면 hv), 면 가리킴 → hlUnit(key, true) → 목록 칸 안 스크롤(페이지는 그대로), 줄임 설정이면 바로 */
+  assert(TPL.includes("const t = e.target.closest?.('.map [data-area], .rk'); if (t) hlUnit(t.dataset.area, !t.classList.contains('rk'));") && fn('glHover').includes('true);') && (fn('mapKey').match(/hlUnit\(r\.key, true\)/g) || []).length === 2, '면에서 가리킴만 줄로 민다');
+  const rv = fn('revealRow'); assert(rv.includes("ol.scrollTo({ top:") && rv.includes("behavior: fxOff(window) ? 'auto' : 'smooth'") && !rv.includes('scrollIntoView') && rv.includes('if (r.top >= a.top && r.bottom <= a.bottom) return false;'), '목록 칸 안에서만, 보이면 그대로');
+  /* 디자인: 모든 줄 막대 · 보는 곳 줄 = 옅은 주색 면 + '보는 곳'(색 왼쪽 테두리 없음) · 구분선 · 토큰만 */
+  const rk = srcOf('function rankHtml(', '\n/* lib/board/map-href.ts');
+  assert(!rk.includes("!cap || i < 3 ?") && rk.includes(`\${vw && cap ? '<span class="vw">보는 곳</span>' : ''}`) && rk.includes('data-c="${x.c || 0}" data-u="${x.u}"'), '막대 전체 · 보는 곳 표시 · 색 단계·값');
+  assert(CSS.includes('.rank li.view > .rk { background: color-mix(in oklab, var(--primary) var(--tint-mix), var(--card)); }') && !/\.rank li\.view[^{]*\{[^}]*border-left/.test(CSS) && CSS.includes('.mapc-b > .lgv { padding-top: var(--s3); border-top: var(--border-w) solid var(--border);'), '보는 곳 면 · 왼쪽 테두리 없음 · 순위/범례 구분선');
+  assert(/\.rank \.rk \{[^}]*min-height: 44px|\.rk \{ position: relative;[^}]*min-height: 44px/.test(CSS) && CSS.includes('.rank .rk .v { margin-left: var(--s1); text-align: right; }'), '줄 높이 44 · 숫자 오른쪽');
+  assert(/\.lg-bar \.lg-sw::before \{ content: ''; position: absolute; inset: calc\(var\(--s3\) \* -1\) 0 calc\(var\(--s5\) \* -1\); \}/.test(CSS) && CSS.includes('@media (prefers-reduced-motion: no-preference) { .lgv[data-band] .lg-bar .lg-sw.on { transform: translateY(-2px); } }'), '범례 칸 누름 칸 48 · 떠오름은 움직임 줄이기가 아닐 때만');
+  assert(CSS.includes('.lgv[data-band] .lg-bar .lg-sw:not(.on) { opacity: var(--cz-dim-op); }') && CSS.includes('.lgv[data-band] .lg-grad > .lg-sw.on { z-index: 1; box-shadow: var(--shadow-hud); }'), '2026-10-19 그라데이션 범례: 고른 구간 조각만 떠 보이고(그림자) 나머지 조각은 옅게 덮인다');
+  assert(/--cz-dim-op: \.\d+;/.test(GXR) && /--map-dim-mix: \d+%;/.test(GXR), '흐림 값 = globals 토큰');
+});
+const N = 106; console.log(`${pass}/${N} 통과`);
 process.exit(pass === N ? 0 : 1);

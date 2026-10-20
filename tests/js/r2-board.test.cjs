@@ -43,7 +43,7 @@ test('1 월 상세 = 원장 그 달 준공 예정: 2026.10 수도권 4건 1,806�
   /* 화면: 원장 목록 표(DataGrid) + 머리에 건수·호수, 종합상황판 앞으로 12개월 카드에 같은 달 링크(숫자 = 월 상세 합계) */
   assert.match(month, /monthDue\(calendar, ym\)/);
   assert.match(month, /<DataGrid label=\{`\$\{monthLabel\(ym\)\} 준공 예정 사업`\}/);
-  assert.match(month, /\{fmt\(due\.length\)\}건 · \{fmt\(dueUnits\)\}호/);
+  assert.match(month, /value=\{fmt\(dueUnits\)\} unit=\"호\"[^]*\$\{fmt\(due\.length\)\}건/);
   assert.match(month, /dateAltOf\(r\)/, '원천 날짜 다름 표지');
   assert.match(month, /monthIds\(molit\.months, lh\.blocks, calendar\)/, '열리는 달 = 실적 + LH + 원장 준공 예정');
   assert.match(read('app/(dashboard)/page.tsx'), /validMonths: monthIds\(molit\.months, lh\.blocks, calendar\)/, '종합상황판 월 링크도 같은 목록');

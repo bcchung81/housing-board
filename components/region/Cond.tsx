@@ -16,9 +16,9 @@ function Fact({ label, value, unit, sub, tip }: { label: string; value: string; 
   return (
     <Card variant="inset" className="@container flex flex-col gap-1.5" title={tip}>
       {/* 칸 이름은 말줄임 없이 두 줄까지(2026-10-16 4차 평가 — 1280·1440 좁은 칸) */}
-      <span className="flex min-w-0 items-start gap-1.5 text-sm text-muted-foreground"><i className="mt-[6px] block size-[9px] flex-none rounded-chip bg-line2" aria-hidden="true" /><span className="line-clamp-2 [word-break:keep-all]">{label}</span></span>
+      <span className="flex min-w-0 items-start text-sm text-muted-foreground"><span className="line-clamp-2 [word-break:keep-all]">{label}</span></span>
       <span className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1.5">
-        <b className="text-sm leading-title @min-[160px]:text-xl @min-[200px]:text-2xl font-bold whitespace-nowrap tabular-nums">{value}<small className="ml-[3px] font-sans text-sm font-normal text-muted-foreground">{unit}</small></b>
+        <b className="text-lg leading-title font-bold whitespace-nowrap tabular-nums">{value}<small className="ml-[3px] font-sans text-sm font-normal text-muted-foreground">{unit}</small></b>
         {sub ? <span className="text-sm text-muted-foreground tabular-nums">{sub}</span> : null}
       </span>
     </Card>

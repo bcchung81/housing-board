@@ -100,8 +100,10 @@ test('3 지도 → 서랍: ?from=map&sgg= 는 그 시군구 목록 위에 서랍
   assert.equal(V.parseFilters({ id, from: 'map' }, fctx).sgg, '41281', 'sgg 가 없으면 사업 id 의 시군구');
   assert.equal(V.parseFilters({ id, sgg: '41281' }, fctx).from, undefined);
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /back=\{f\.from === 'map' && sel \? \{ href: mapHref\(\{ project: sel \}\), label: '지도로 돌아가기'/);
-  assert.match(read('components/projects/Drawer.tsx'), /<a href=\{back\.href\} data-slot="drawer-back"[\s\S]*?\{back\.label\}<ChevronRight/);
+  /* 2026-10-19 창: ?from=map 으로 연 첫 창(사업 상세·목록에서 뺀 사업)만 머리에 '지도로 돌아가기' */
+  assert.match(page, /fromMap=\{f\.from === 'map'\}/);
+  assert.match(read('components/windows/WindowHost.tsx'), /fromMap && d\.view === 'admin' && d\.kind !== 'candidate' \? \{ href: mapHref\(\{ project: d\.canonical \}\), label: '지도로 돌아가기'/);
+  assert.match(read('components/windows/FloatingWindow.tsx'), /<a href=\{back\.href\} data-slot="drawer-back"[\s\S]*?\{back\.label\}<ChevronRight/);
 });
 
 test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본', () => {

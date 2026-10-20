@@ -1,21 +1,23 @@
 import type { Metadata } from 'next';
 import type { ReactNode } from 'react';
 import TopNav from '@/components/TopNav';
+import WindowHost from '@/components/windows/WindowHost';
 import { AUDIENCE_INIT, THEME_INIT } from '@/lib/shell/theme';
 import { MAP_MODE_INIT } from '@/lib/board/metro-overview';
 import '@/assets/fonts/noto-sans-kr/noto-sans-kr.css';   // 본문 글꼴 Noto Sans KR(저장소 안 로컬 파일, 외부 글꼴 요청 없음)
 import '@/app/globals.css';
 
 export const metadata: Metadata = {
-  title: 'The주택 지도',
+  title: '더주택 지도',
   description: '공공주택 공급 현황을 V-World 공식 건물 위에 3차원으로 보여 주는 지도',
 };
 
 /* 루트 레이아웃 ②(상단 메뉴 바 + 지도, 대시보드와 저장된 테마 공유). 지도 앱(assets/js/app.js)은 마운트·해제 개념이 없는 스크립트라서
-   대시보드와 루트 레이아웃을 나눠, 들어올 때 새 문서가 열리게 했다. 스타일은 기존 app.css 를 그대로 쓴다. */
+   대시보드와 루트 레이아웃을 나눠, 들어올 때 새 문서가 열리게 했다. 스타일은 기존 app.css 를 그대로 쓴다.
+   배색은 비지도 화면과 같은 웜 범위(data-design="warm", 2026-10-19 사용자 지시로 '지도 제외' 결정 대체) + 지도 전용 웜 덮기(globals html[data-map-shell][data-design="warm"]). */
 export default function MapLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="ko" data-map-shell="" suppressHydrationWarning>
+    <html lang="ko" data-map-shell="" data-design="warm" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
         {/* 보기 대상(html[data-aud]) — 머리 줄 스위치가 첫 그림부터 저장된 관점을 보인다. 지도 주소는 넘김 조건('/')에 걸리지 않는다 */}
@@ -32,6 +34,8 @@ export default function MapLayout({ children }: { children: ReactNode }) {
         <link rel="stylesheet" href="/assets/css/map3d.css" />
       </head>
       <body className={`font-sans [font-synthesis:none]`}>
+        {/* 사업 창 관리자(components/windows): 지도의 사업 링크(/projects?id=…)를 페이지 이동 대신 지도 위 창으로 연다. 창은 body 직계 fixed z-60 이라 흐린 막(z-50)·상단 메뉴(z-40)·지도 HUD·시트(z < 60) 위(막이 상단 메뉴·지도를 흐리게 덮는다) */}
+        <WindowHost>
         <div className="shell-map flex h-screen flex-col overflow-hidden">
           {/* 지도로 바로가기: 첫 Tab 에서만 보이는 링크(메뉴·순위 목록을 건너뛴다). 개요·상세 중 보이는 지도 쪽 하나만 남긴다(app.css .skip-*) */}
           <a href="#ovMapWrap" className="skip-ov sr-only rounded-tile bg-primary px-4 py-2 text-base font-bold text-primary-foreground no-underline focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 focus:outline-2 focus:outline-offset-2 focus:outline-primary print:hidden">지도로 바로가기</a>
@@ -39,6 +43,7 @@ export default function MapLayout({ children }: { children: ReactNode }) {
           <TopNav compact />
           {children}
         </div>
+        </WindowHost>
       </body>
     </html>
   );

@@ -147,9 +147,9 @@ test('5 대비: 빨간 글자는 카드·얼룩 행·강조 면 위 4.5:1, 흐�
   assert.match(col, /<span aria-hidden="true" className=\{`block h-\[18px\][^>]*\n?[^>]*\/>\n\s*<span className="sr-only">\{MARK\[c\]\}<\/span>/);
 });
 
-test('6 서랍: Esc 로 닫을 때 돌아갈 행이 없으면 본문(main)으로 초점', () => {
-  const d = read('components/projects/Drawer.tsx');
-  assert.match(d, /\(row \?\? document\.getElementById\('main'\)\)\?\.focus\(\{ preventScroll: true \}\);/);
+test('6 사업 창: Esc 로 닫을 때 연 요소·돌아갈 행이 없으면 본문(main)으로 초점', () => {
+  const d = read('components/windows/WindowHost.tsx');
+  assert.match(d, /\(\(w\.opener\?\.isConnected \? w\.opener : null\) \?\? row \?\? document\.getElementById\('main'\)\)\?\.focus\(\{ preventScroll: true \}\);/);
   assert.match(read('app/(dashboard)/layout.tsx'), /<main id="main" tabIndex=\{-1\}/);
 });
 

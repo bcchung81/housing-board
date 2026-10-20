@@ -4,11 +4,9 @@ import StageLegend from '@/components/charts/StageLegend';
 import MonthLines from '@/components/charts/MonthLines';
 import { ProvKey } from '@/components/charts/Legend';
 import { METRIC_COLOR } from '@/components/charts/palette';
-import { Page, PageHead, PanelHead, SrcLink, sub } from '@/components/page';
+import { FactNote, MetricRow, Page, PageHead, PanelHead, SrcLink } from '@/components/page';
 import PanelLink from '@/components/board/PanelLink';
 import StageKpis from '@/components/StageKpis';
-import { Alert } from '@/components/ui/alert';
-import InfoTip from '@/components/ui/info-tip';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import { DataGrid } from '@/components/ui/data-grid';
@@ -58,16 +56,18 @@ export default async function AgencyDetail({ params }: Props) {
     return (
       <Page>
         <PageHead crumbs={crumbs} title={a.name} tip={`${a.summary}.`}><Badge title={`${a.summary}.`}>준비 중</Badge></PageHead>
-        <Alert><b>일정이 없어 기관 신호를 판정하지 않습니다.</b><InfoTip label="판정하지 않는 까닭" className="ml-1 align-middle"><p>기관별 신호(정상·주의·지연)는 일정(당초·변경·현재 예정)이 없어 판정하지 않습니다.</p>{a.id === 'mnd' ? <p>군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.</p> : null}</InfoTip></Alert>
+        <FactNote className="ui-inset" tip={{ label: '판정하지 않는 까닭', children: <><p>기관별 신호(정상·주의·지연)는 일정(당초·변경·현재 예정)이 없어 판정하지 않습니다.</p>{a.id === 'mnd' ? <p>군인 특별공급(국방부)은 수작업 입력 대기 상태입니다.</p> : null}</> }}>일정이 없어 기관 신호를 판정하지 않습니다.</FactNote>
         {ghRows.length ? (
           <Card render={<section aria-label="GH 사업" />}>
-            <PanelHead title="GH 사업" tip={`사업 원장에서 기관이 GH 인 사업 · 사업 화면의 기관 칩 GH 와 같은 목록·같은 열 · 행을 누르면 사업 상세${ghGrid.note}`}><span className={`${sub} tabular-nums`}>{ghRows.length}건 · 계획 {fmt(ghRows.reduce((n, r) => n + r.units, 0))}호</span><PanelLink href="/projects?sido=all&agency=gh" full="사업 화면에서 GH 사업 목록 보기">사업 화면에서 보기</PanelLink></PanelHead>
+            <PanelHead title="GH 사업" tip={`사업 원장에서 기관이 GH 인 사업 · 사업 화면의 기관 칩 GH 와 같은 목록·같은 열 · 행을 누르면 사업 상세${ghGrid.note}`}><PanelLink href="/projects?sido=all&agency=gh" full="사업 화면에서 GH 사업 목록 보기">사업 화면에서 보기</PanelLink></PanelHead>
+            <MetricRow className="mb-2" label="계획" value={fmt(ghRows.reduce((n, r) => n + r.units, 0))} unit="호" items={[`${fmt(ghRows.length)}건`]} />
             <DataGrid label="GH 사업" cols={ghGrid.cols} rows={ghGridRows} maxHeight={640} quietCount />
           </Card>
         ) : null}
         {files.length ? (
           <Card render={<section aria-label="받은 원천 파일" />}>
-            <PanelHead title="받은 원천 파일" tip="아직 화면에서 쓰지 않음"><span className={sub}>{files.length}종</span><SrcLink /></PanelHead>
+            <PanelHead title="받은 원천 파일" tip="아직 화면에서 쓰지 않음"><SrcLink /></PanelHead>
+            <MetricRow className="mb-2" label="원천" value={files.length} unit="종" />
             <DataGrid label={`${a.name} 받은 원천 파일`} cols={[{ key: 'dataset', label: '데이터셋', kind: 'text', wrap: true }, { key: 'count', label: '건수' }, { key: 'asOf', label: '원천 기준일', kind: 'text' }]}
               rows={files.map((s) => ({ id: s.id, c: { dataset: { text: s.dataset, href: `/sources#${s.id}` }, count: s.count, asOf: s.sourceAsOf ? dotDates(s.sourceAsOf) : { na: '확인하지 못함' } } }))} />
           </Card>
@@ -116,8 +116,9 @@ export default async function AgencyDetail({ params }: Props) {
       {a.id === 'lh' ? (
         <Card render={<section aria-label="LH 준공 예정" />}>
           <PanelHead title="LH 준공 예정" tip={`이번 달(${ymDot(observedMonth)})부터 · 준공예정일 순 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)}. 예정일은 그 시점의 계획입니다.${past ? ` · 예정일이 이번 달 전인 ${past}행은 뺌` : ''} · 지도 열은 수도권 블록만(사업이 있으면 그 사업, 없으면 시군구)`}>
-            <span className={`${sub} tabular-nums`}>{ymDot(observedMonth)}부터 · {fmt(blockTotal)}블록 · {fmt(blocks.reduce((s, b) => s + b.units, 0))}호 · 파일 기준 {dotDates(lh.sourceAsOf)}{lhStale ? <Badge variant="warn" className="ml-1.5" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 원장 기준일 ${dotDates(observedRef)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</Badge> : null}</span>
           </PanelHead>
+          <MetricRow className="mb-2" label="준공 예정" value={fmt(blocks.reduce((s, b) => s + b.units, 0))} unit="호"
+            items={[`${ymDot(observedMonth)}부터`, `${fmt(blockTotal)}블록`, <span key="d">파일 기준 {dotDates(lh.sourceAsOf)}{lhStale ? <span className="ml-1.5 text-warn" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 원장 기준일 ${dotDates(observedRef)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</span> : null}</span>]} />
           <DataGrid label="LH 준공 예정 연도별" cols={YEAR_COLS} rows={byYear.map((r) => ({ id: r.y, c: { y: r.y, n: blockCount(r.blocks), units: r.blocks.reduce((s, b) => s + b.units, 0) } }))} />
           <DataGrid label="LH 준공 예정 블록" cols={BLOCK_COLS} maxHeight={520}
             rows={blocks.map((b, k) => ({ id: String(k), c: { date: { text: dayText(b.date), sort: b.date, href: `/month/${b.date.slice(0, 7)}` }, district: b.district, block: b.block, type: b.type, units: b.units, location: b.location, map: blockMap(b) } }))} />

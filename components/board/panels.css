@@ -1,0 +1,26 @@
+/* 종합상황판: 판정 요약과 단계 표, 시도별 비교 행 */
+@layer components {
+  .ui-snap-stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: var(--pad-tile-y); padding-block: var(--pad-tile-y); border-block: var(--border-w) solid var(--border); }
+  .ui-snap-stat { min-width: 0; padding-inline: var(--head-gap); }
+  .ui-snap-stat:first-child { padding-left: 0; }
+  .ui-snap-stat + .ui-snap-stat { border-left: var(--border-w) solid var(--border); }
+  .ui-snap-value { display: flex; align-items: baseline; gap: var(--btn-gap-sm); margin-block: var(--btn-gap-sm); font-size: var(--fs-h2); line-height: var(--lh-title); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ui-snap-stage-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--head-gap); margin-top: var(--pad-tile-x); }
+  .ui-snap-stage-head h3 { margin: 0; margin-right: auto; }
+  .ui-region-legend { flex-basis: 100%; flex-wrap: wrap; gap: var(--head-gap); }
+  .ui-region-comparison { display: grid; flex: 1; gap: var(--head-gap); min-height: 0; margin-top: var(--pad-tile-y); }
+  .ui-region-list { grid-template-columns: minmax(0, 1fr); }
+  .ui-region-row { display: grid; grid-template-columns: minmax(calc(calc(var(--pad-tile-y) * 2) * 2), .6fr) minmax(calc(calc(var(--pad-tile-y) * 2) * 4), 1fr) minmax(0, 1.4fr) minmax(calc(calc(var(--pad-tile-y) * 2) * 4), 1fr); align-items: center; column-gap: var(--pad-tile-x); min-height: calc(var(--pad-tile-x) * 4); }
+  .ui-region-rate, .ui-region-volume { display: flex; flex-direction: column; gap: var(--btn-gap-sm); min-width: 0; }
+  .ui-region-rate .ui-kpi { display: flex; align-items: baseline; gap: var(--btn-gap-sm); }
+  .ui-region-volume { align-items: flex-end; }
+  .ui-region-bar { display: flex; gap: var(--border-w); height: var(--head-gap); min-width: 0; overflow: hidden; border-radius: var(--radius-full); background: var(--pn2); }
+  .ui-region-bar > span { display: block; min-width: 0; height: 100%; }
+  .ui-region-summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--head-gap) var(--pad-tile-y); min-width: 0; padding-top: var(--pad-tile-y); border-top: var(--border-w) solid var(--border); }
+  @media (max-width: 520px) {
+    .ui-region-row { grid-template-columns: minmax(calc(calc(var(--pad-tile-y) * 2) * 2), .6fr) minmax(calc(calc(var(--pad-tile-y) * 2) * 3), 1fr) minmax(calc(calc(var(--pad-tile-y) * 2) * 3), 1fr); gap: var(--head-gap); }
+    .ui-region-bar { display: none; }
+    .ui-region-summary > span { flex-wrap: wrap; }
+    .ui-snap-value { font-size: var(--fs-h3); }
+  }
+}

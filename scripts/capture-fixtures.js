@@ -6,7 +6,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const BASE = (process.argv[2] || 'https://housing-board.vercel.app').replace(/\/$/, '');
+const BASE = (process.argv[2] || 'https://the-housing.vercel.app').replace(/\/$/, '');
 const OUT = path.join(__dirname, '..', 'tests', 'fixtures', 'api');
 const q = encodeURIComponent;
 const head = (n) => (b) => { b.features = b.features.slice(0, n); return b; };

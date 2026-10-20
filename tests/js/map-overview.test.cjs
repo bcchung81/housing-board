@@ -384,7 +384,7 @@ test('수도권 보기: 쿼리 없는 /map 은 수도권 본토 무대(섬 강�
   /* 기본 보기 = 수도권 전체, 누르면(면·Enter) 그 시도 보기로 확대. 이름표는 겹치면 숨김(strict) 그대로 */
   assert.equal(J.modeOf('').sido, '');
   assert.match(ov, /M3\.geom\(base, \{ \.\.\.sc, \.\.\.\(S\.sido \? \{\} : nationOpt\(nat\)\), W, H, narrow,/);
-  assert.match(ov, /if \(u\) \{ hideTip\(\); if \(!S\.sido\) \{ setSido\(u\.s, true\); return; \}/);
+  assert.match(ov, /if \(u\) \{ hideTip\(\); if \(u\.s !== S\.sido\) \{ setSido\(u\.s, true\); return; \}/, '수도권 보기·보는 시도 밖 회색 면 누름 → 그 시도로');
   assert.match(ov, /if \(r\.enter && !S\.sido\) \{ const u = byCode\.get\(r\.key\); if \(u\) setSido\(u\.s, true\); return; \}/);
   assert.match(ov, /\$\('ovCards'\)\.addEventListener\('click', \(e\) => \{ const b = e\.target\.closest\('button\[data-s\]'\); if \(b\) setSido\(S\.sido === b\.dataset\.s \? '' : b\.dataset\.s, true\); \}\);/, '시도 카드도 확대(다시 누르면 수도권 전체)');
   /* 맥락 시도 이름(옅게, 그 시도 면 안) — 수도권 보기에서만 */
@@ -393,6 +393,21 @@ test('수도권 보기: 쿼리 없는 /map 은 수도권 본토 무대(섬 강�
   /* 페이지가 전국 자료를 붙인다 */
   const page = read('app/(map)/map/page.tsx');
   assert.match(page, /import koreaSidoJson from '@\/data\/board\/korea-sido\.json';/); assert.match(page, /return withNation\(metroOverview\(map, \{ rows/);
+});
+
+test('시도 보기 SVG 판(2026-10-19 — /citizen 과 같은 보는 시도 모드): 판 = 본토 65면, 무대 맞춤 = 그 시도 면 상자(그 시도 면은 무대 안·한쪽 85% 이상), 이웃 너머 면은 hide', () => {
+  const base = M3.prep(J.seedOf(DOC.units)), uOf = Object.fromEntries(DOC.units.map((u) => [u.code, u.v ? u.v.u : 0]));
+  assert.deepEqual(J.svgScopeOf(DOC.units, ''), J.scopeOf(DOC.units, '', null), '수도권 전체는 예전 범위');
+  for (const sd of ['11', '28', '41']) {
+    const sc = J.svgScopeOf(DOC.units, sd), W = 1056, H = 811, g = M3.geom(base, { ...sc, W, H, narrow: false, uOf });
+    assert.equal(g.own.length, 65, sd); assert.equal(g.inset, null, sd + ' 섬 삽입 없음');
+    const bb = [Infinity, Infinity, -Infinity, -Infinity];
+    for (const o of g.own) if (o.code.startsWith(sd)) for (const r of o.rings) for (const [x, y] of r.pts) { bb[0] = Math.min(bb[0], x); bb[1] = Math.min(bb[1], y); bb[2] = Math.max(bb[2], x); bb[3] = Math.max(bb[3], y); }
+    assert.ok(bb[0] >= -1 && bb[1] >= -1 && bb[2] <= W + 1 && bb[3] <= H + 1, `${sd} 시도 면이 무대 안`);
+    assert.ok((bb[2] - bb[0]) / W >= .85 || (bb[3] - bb[1]) / H >= .85, `${sd} 시도 모양에 맞춤: ${((bb[2] - bb[0]) / W).toFixed(2)} × ${((bb[3] - bb[1]) / H).toFixed(2)}`);
+  }
+  const hide = M3.nearOf(base, '11', { omit: J.ISLES }).hide;
+  assert.ok(hide.includes('41110') && !hide.includes('41280'), '서울 보기: 수원 숨김 · 고양(이웃) 남김');
 });
 
 test('순위 막대 목록: 줄 = 순위·이름·막대(값 비례, 지도 면과 같은 단계 색)·값, 패널 남은 높이에 들어가는 줄만(ResizeObserver → rowsFit, 넘친 줄 hidden), 나머지는 \'전체 n ›\' 목록(그 안만 스크롤) — 누름·가리킴·키보드는 두 목록 같게', () => {
@@ -412,6 +427,16 @@ test('순위 막대 목록: 줄 = 순위·이름·막대(값 비례, 지도 면�
   assert.match(css, /\.ov-panel\[data-sheet="full"\]\{height:86%\}/, '휴대폰 시트를 펴도 스크롤 없이 줄이 는다');
   assert.match(page, /<button type="button" className="ov-all" id="ovAll" aria-haspopup="dialog" aria-expanded="false" aria-controls="ovSheet" \/>/);
   assert.match(page, /<div className="ov-sheet" id="ovSheet" role="dialog" aria-labelledby="ovSheetH" hidden>/);
+  /* '전체 n' 팝업(2026-10-20): 넓은 화면은 가운데 fixed 모달리스 팝업 + 흐린 막(클릭 통과·토큰), 좁은 화면은 패널 안 판. z 막 < 팝업 < 구 메뉴 */
+  const sheetCss = css.match(/\.ov-sheet\{[^}]*\}/)[0], scrimCss = css.match(/\.ov-scrim\{[^}]*\}/)[0], menuCss = css.match(/\.ov-menu\{[^}]*\}/)[0];
+  assert.match(sheetCss, /position:fixed/); assert.match(sheetCss, /left:50%;top:50%;transform:translate\(-50%,-50%\)/); assert.match(sheetCss, /width:min\(480px,calc\(100vw - 32px\)\)/); assert.match(sheetCss, /max-height:calc\(100dvh - 96px\)/);
+  assert.match(scrimCss, /pointer-events:none/); assert.match(scrimCss, /background:var\(--win-scrim\)/); assert.match(scrimCss, /backdrop-filter:blur\(var\(--win-blur\)\)/);
+  assert.match(css, /prefers-reduced-motion:reduce\)\{[^}]*\.ov-scrim\{transition:none/);
+  const zOf = (r) => +r.match(/z-index:(\d+)/)[1];
+  assert.ok(zOf(scrimCss) < zOf(sheetCss) && zOf(sheetCss) < zOf(menuCss), '막 < 팝업 < 구 메뉴');
+  assert.match(page, /<div className="ov-scrim" id="ovScrim" aria-hidden="true" \/>/);
+  assert.match(ov, /scrimEl\.classList\.toggle\('on', on\)/); assert.match(ov, /e\.key === 'Escape' && !S\.menu\) \{ e\.preventDefault\(\); openSheet\(false\)/);
+  assert.doesNotMatch(page, /id="ovSheet"[^>]*aria-modal="true"/);
   /* 같은 동작: 누름 → choose(구 메뉴·상세), 가리킴·초점 → 면 효과, 키보드 로빙, Esc 로 닫고 여는 단추로 */
   assert.match(ov, /for \(const L of LISTS\) L\.addEventListener\('click', \(e\) => \{/);
   assert.match(ov, /L\.addEventListener\('mouseover', \(e\) => \{ const b = e\.target\.closest\('button\[data-c\]'\); if \(b\) hover\(b\.dataset\.c\); \}\);/);
@@ -419,4 +444,38 @@ test('순위 막대 목록: 줄 = 순위·이름·막대(값 비례, 지도 면�
   assert.match(ov, /if \(e\.key === 'Escape' && !S\.menu\) \{ e\.preventDefault\(\); openSheet\(false\); \}/);
   /* 문구는 숫자·짧은 이름표만, 색·크기는 토큰만 */
   for (const r of [/\.ov-rbar\{[^}]*\}/, /\.ov-all\{[^}]*\}/, /\.ov-sheet\{[^}]*\}/]) assert.doesNotMatch(css.match(r)[0], /#[0-9a-fA-F]{3,6}\b|rgb\(|font-size:\d|border-radius:\d/);
+});
+
+test('범례(2026-10-19 \'종합상황판의 범례처럼 하단에\'): 패널 순위 목록 뒤 가로 그라데이션 막대, 지도 위 떠 있는 상자 없음, 좁은 화면은 위 띠에 같은 모양', () => {
+  const ov = read('assets/js/overview.js'), css = read('assets/css/app.css'), page = read('app/(map)/map/page.tsx');
+  /* 마크업 자리: 패널 안 순위 목록(.ov-ranks) 다음 · 시트(#ovSheet) 앞, 지도 칸에는 위 띠뿐(.ov-legend 상자 없음) */
+  const a = page.indexOf('className="ov-ranks"'), b = page.indexOf('id="ovLegend"'), c = page.indexOf('id="ovSheet"'), d = page.indexOf('id="ovLegendTop"');
+  assert.ok(a > 0 && a < b && b < c, '범례는 순위 목록 뒤 · 시트 앞');
+  assert.ok(d > page.indexOf('id="ovMapWrap"'), '좁은 화면 띠는 지도 칸 안');
+  assert.doesNotMatch(page, /className="ov-legend"|ovLegendT"|ovLegendH"/, '떠 있는 옛 범례 상자 없음');
+  assert.doesNotMatch(css, /\.ov-legend\b/, '옛 .ov-legend 상자 CSS 없음');
+  assert.match(page, /id="ovLegend" role="img"/); assert.match(page, /id="ovLegendTop" role="img"/);
+  assert.match(css, /@media \(max-width:768px\)\{[\s\S]*#ovLegend\{display:none\}[\s\S]*#ovLegendTop:not\(:empty\)\{display:grid\}/, '좁은 화면은 패널 범례를 감추고 위 띠를 보인다');
+  assert.match(css, /#ovLegendTop\{display:none\}/, '넓은 화면은 위 띠를 감춘다');
+  /* 색은 --ov-N 계열만, 글자 크기·반경은 토큰 */
+  const lg = css.slice(css.indexOf('.ov-lgv{'), css.indexOf('.ov-lh{'));
+  assert.ok(!/#[0-9a-f]{3,8}\b|rgba?\(/i.test(lg), '색 리터럴 없음');
+  assert.ok(/--ov-0/.test(lg) && /var\(--lg-stops\)/.test(lg));
+  /* 마크업 내용: 그라데이션 멈춤 = 구간 수, 눈금 = 구간 경계(다음 구간의 아래 끝), 높이 줄 유지 */
+  const ups = [620, 1500, 3000, 5000, 23592], hasH = J.legendHtml(ups, '공급 예정 호수(호)', '높이: 진행 호수', 300);
+  const stops = (hasH.match(/--lg-stops:([^"]*)"/) || [])[1].split(', ');
+  assert.equal(stops.length, ups.length + 2, '양 끝 + 구간 가운데 5개');
+  assert.ok(stops.every((s) => /^var\(--ov-[1-5]\) [\d.]+%$/.test(s)), '--ov-N 색만');
+  assert.deepEqual(stops.map((s) => s.match(/--ov-(\d)/)[1]), ['1', '1', '2', '3', '4', '5', '5']);
+  assert.deepEqual([...hasH.matchAll(/class="ov-lg-tk(?: l2)?" style="--x:([\d.]+)%">([^<]*)</g)].map((m) => m[2]), ['621', '1,501', '3,001', '5,001']);
+  assert.match(hasH, /없음<\/span>/); assert.match(hasH, /공급 예정 호수\(호\)<\/h3>/);
+  assert.match(hasH, /<small class="ov-lh" style="visibility:">높이: 진행 호수<\/small>/);
+  assert.match(J.legendHtml(ups, 'x', '', 300), /visibility:hidden">높이<\/small>/, '진행 호수 지표면 높이 줄은 자리만');
+  assert.match(J.legendHtml([30000, 50000], 'x', '', 300), /--x:50\.00%">3만</, '1만 이상은 짧은 표기');
+  assert.match(J.legendHtml(ups, 'x', '', 120), /ov-lg-tk l2/, '좁아서 겹치면 한 칸 건너 둘째 줄');
+  /* 스크립트: 두 곳에 같은 마크업, 범례를 그린 뒤 순위 줄 수를 잰다, 지도가 비켜 갈 것 없음 */
+  assert.match(ov, /\[\$\('ovLegend'\), \$\('ovLegendTop'\)\]\.forEach\(\(el\) => \{ el\.innerHTML = lgHtml;/);
+  assert.ok(ov.indexOf("el.innerHTML = lgHtml") < ov.indexOf('fitRanks();   // 범례가'), '범례 → fitRanks 순서');
+  assert.match(ov, /legendBox = \$\('ovLegendTop'\)/);
+  assert.match(ov, /const left = \(\) => 12;/); assert.match(ov, /left: 0 \}\)/);
 });

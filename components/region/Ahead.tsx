@@ -308,26 +308,27 @@ export default function Ahead({ words, sido, regionName, months, nowM, refDate, 
     <div className="mt-4" onMouseOver={rowIn} onFocus={rowIn} onMouseLeave={() => setHot(null)}
       onBlur={(ev) => { if (!ev.currentTarget.contains(ev.relatedTarget as Node)) setHot(null); }}>
       <div className="mb-1 flex flex-wrap items-baseline gap-x-3">
-        <h3 className="m-0 text-base font-bold">{monthLabel(m)}</h3>
+        <h3 className="ui-h3">{monthLabel(m)}</h3>
         <span className={cn('text-muted-foreground tabular-nums', W.large ? 'text-base' : 'text-sm')}>{xs.length}{W.count} · {fmt(sum(xs, (e) => e.units))}호</span>
       </div>
-      <ol className="m-0 list-none columns-2 gap-x-8 p-0 narrow:columns-1 min-[1600px]:columns-3" aria-label={`${monthLabel(m)} 예정 사업`}>
+      {/* 일반사용자 판은 한 단(이름 칸을 넓게, 2026-10-19 수도권 긴 이름 7줄 깨짐), 정책 판은 다단 */}
+      <ol className={cn('m-0 list-none p-0', !W.large && 'columns-2 gap-x-8 narrow:columns-1 min-[1600px]:columns-3')} aria-label={`${monthLabel(m)} 예정 사업`}>
         {shown.map((e) => {
           /* 상세가 있는 사업은 상세 서랍(?id=), 후보 사업은 간단 보기(?cand=) — 일반사용자 판은 사업 찾기 ?id= / 이름 검색 ?q= — 막다른 행이 없다. 서랍 뒤 목록은 그 사업이 든 범위(projectHref) */
           const href = projectHref(e, sido);
           const to = W.hrefBase ? (e.drawer ? findHref({ id: e.id }) : findHref({ q: e.name })) : href;   // 일반사용자 판은 사업 찾기로
           return (
-            <li key={e.k} data-row={e.k} data-hl={e.k === hotKey ? '' : undefined} className={cn('flex break-inside-avoid items-center gap-x-3 phone:flex-wrap phone:gap-y-0.5 border-b border-border px-1 py-1.5 leading-body data-[hl]:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)]', W.large ? 'text-base' : 'text-sm')}>
+            <li key={e.k} data-row={e.k} data-hl={e.k === hotKey ? '' : undefined} className={cn('flex break-inside-avoid items-center gap-x-3 phone:flex-wrap phone:gap-y-0.5 border-b border-border px-1 py-1.5 leading-body data-[hl]:bg-[color-mix(in_srgb,var(--primary)_9%,transparent)]', W.large ? 'min-h-14 text-base' : 'text-sm')}>
               <KindChip t={e.type} name={W.kind[e.type]} tip={W.kindTip?.[e.type] ?? aheadKindTip(e.type)} />
-              {/* 사업명·시군구는 두 줄까지 줄바꿈 후 말줄임(2026-10-16 2차 평가: 한 줄 말줄임이 373→183px 로 잘랐다) */}
-              <span className="line-clamp-2 min-w-0 flex-1 phone:basis-[calc(100%-60px)] font-bold [overflow-wrap:break-word] [word-break:keep-all]" title={e.name}>
+              {/* 사업명·시군구는 정책 판은 두 줄까지 줄바꿈 후 말줄임(2026-10-16 2차 평가: 한 줄 말줄임이 373→183px 로 잘랐다), 일반사용자 판(W.large)은 자르지 않는다 */}
+              <span className={cn('min-w-0 flex-1 phone:basis-[calc(100%-60px)] font-bold [overflow-wrap:break-word] [word-break:keep-all]', !W.large && 'line-clamp-2')} title={e.name}>
                 <Link href={to} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link>
                 {e.drawer ? null : <>{' '}<span className="ml-1 text-sm font-normal text-muted-foreground" title={W.candTip}>{W.cand}</span></>}
                 {past(e) ? <>{' '}<span data-slot="past-due" className="ml-1 inline-block rounded-chip border border-line2 px-1 text-sm leading-sub font-normal whitespace-nowrap text-muted-foreground" title={PAST_TIP}>{W.past}</span></> : null}
               </span>
-              <span className={cn('flex-none whitespace-nowrap text-muted-foreground tabular-nums', W.large ? 'w-[88px]' : 'w-[80px]')}>{dayText(e)}</span>
-              <span className="line-clamp-2 w-[112px] flex-none text-muted-foreground [word-break:keep-all]" title={e.sgg}>{e.place}</span>
-              <span className={cn('flex-none text-right whitespace-nowrap tabular-nums', W.large ? 'w-[84px]' : 'w-[68px]')}>{e.units ? `${fmt(e.units)}호` : <span className="text-sm text-muted-foreground" title={W.unitsUnknownLong}>{W.unitsUnknown}</span>}</span>
+              <span className={cn('flex-none whitespace-nowrap text-muted-foreground tabular-nums', W.large ? 'w-[88px]' : 'w-[80px]', 'phone:w-auto')}>{dayText(e)}</span>
+              <span className={cn(W.large ? 'w-40' : 'w-[112px]', 'flex-none phone:w-auto phone:min-w-0 phone:flex-1 text-muted-foreground [word-break:keep-all]', !W.large && 'line-clamp-2')} title={e.sgg}>{e.place}</span>
+              <span className={cn('flex-none text-right whitespace-nowrap tabular-nums phone:ml-auto', W.large ? 'w-[84px]' : 'w-[68px]')}>{e.units ? `${fmt(e.units)}호` : <span className="text-sm text-muted-foreground" title={W.unitsUnknownLong}>{W.unitsUnknown}</span>}</span>
               <span className="w-5 flex-none">{onMap(e) ? <a href={mapHref({ project: e.id })} title={`${e.name} — 지도에서 보기`} aria-label={`${e.name} 지도에서 보기`} className="flex rounded-chip text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"><MapPin className="size-4" aria-hidden="true" /></a> : null}</span>
               <span className="w-4 flex-none"><Link href={to} tabIndex={-1} aria-hidden="true" className="flex text-muted-foreground hover:text-primary"><ChevronRight className="size-4" /></Link></span>
             </li>

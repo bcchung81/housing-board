@@ -84,6 +84,21 @@
     }));
     return (base.arcs = { reg, rings });
   }
+  /* 보는 시도 둘레(순수, 2026-10-19 사용자 피드백 '서울을 볼 때 지역 경계 1레벨까지만 — 카드 외곽이 회색으로 차지 않게'): base = prep 결과, sd = 시도 두 자리, o.omit = 판에서 뺀 코드(섬).
+     near = 보는 시도 면과 공유 호(맞댄 변 — 꼭짓점 둘 이상)를 가진 다른 시도 면(1단계 이웃 — 맥락 회색으로 남긴다), hide = 그 밖의 다른 시도 면(그리지 않는다 — 카드 바탕이 보인다).
+     keep = 이웃이 아니어도 라벨 점에서 8방향 반직선이 모두 보는 시도·이웃 면에 닿는 면(경기를 볼 때 서울 안쪽 구처럼 둘러싸인 면 — 구멍이 나지 않게 맥락 회색). sd 가 없으면 모두 빈 목록. 코드는 정렬 */
+  const RAY8 = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  function nearOf(base, sd, o = {}) {
+    const om = new Set(o.omit || []), us = base.all.filter((u) => !om.has(u.code)), sOf = new Map(us.map((u) => [u.code, u.s]));
+    if (!sd || !us.some((u) => u.s === sd)) return { near: [], keep: [], hide: [] };
+    const touch = new Set();
+    for (const a of arcsOf(base).reg.values()) { const w = a.owners.filter((c) => sOf.has(c)); if (w.some((c) => sOf.get(c) === sd)) for (const c of w) if (sOf.get(c) !== sd) touch.add(c); }
+    const segs = us.filter((u) => u.s === sd || touch.has(u.code)).flatMap((u) => u.R.flatMap((r) => r.map((p, i) => [p, r[(i + 1) % r.length]])));
+    /* 반직선 p + t·d(t > 0)가 변 a–b 와 만나는가 */
+    const hits = (p, d) => segs.some(([a, b]) => { const ex = b[0] - a[0], ey = b[1] - a[1], den = d[0] * ey - d[1] * ex; if (!den) return false; const qx = a[0] - p[0], qy = a[1] - p[1], t = (qx * ey - qy * ex) / den, s = (qx * d[1] - qy * d[0]) / den; return t > 0 && s >= 0 && s <= 1; });
+    const rest = us.filter((u) => u.s !== sd && !touch.has(u.code)), keep = rest.filter((u) => RAY8.every((d) => hits([u.lx, u.ly], d))).map((u) => u.code);
+    return { near: [...touch].sort(), keep: keep.sort(), hide: rest.map((u) => u.code).filter((c) => !keep.includes(c)).sort() };
+  }
   /* 화면 좌표 다듬기: Visvalingam(삼각형 넓이 eps px² 이하 꼭짓점 제거, 호 끝점 고정) → Chaikin 2회(열린 호는 끝점 고정) */
   function simplifyVW(p, closed, eps) {
     const pts = p.slice(), ar = (a, b, c) => Math.abs((b[0] - a[0]) * (c[1] - a[1]) - (c[0] - a[0]) * (b[1] - a[1])) / 2, minN = closed ? 4 : 2;
@@ -210,7 +225,7 @@
     const ctx = g.ctx.map((c) => ({ ...c, rings: c.rings.map((r) => r.map(T)), l: T(c.l) }));
     return { ...g, k: V.k, V, own, ctx };
   }
-  /* 사업 점 화면 좌표: region-map 자체 투영 [x, y] → 판 좌표(geom 의 P, 돌린 보기면 viewPt) − 그 면 윗면 높이 h. 섬 삽입 지도는 그 칸 변환(tf, 평평·돌리지 않음) */
+  /* 사업 위치 화면 좌표(/citizen 지도 위 사업 카드 자리): region-map 자체 투영 [x, y] → 판 좌표(geom 의 P, 돌린 보기면 viewPt) − 그 면 윗면 높이 h. 섬 삽입 지도는 그 칸 변환(tf, 평평·돌리지 않음) */
   const ptXY = (g, f, p) => {
     const k0 = g.V ? g.V.k0 : g.k;
     if (f.tf) return [f.tf[0] + p[0] * f.tf[2], f.tf[1] + p[1] * k0 * f.tf[2]];
@@ -233,13 +248,17 @@
            선택: view(보기 상태, 없으면 기본) · shade(true 면 옆벽을 방향별 명암 .w.l1~l3 으로 나눈다) · umax(높이 배율 고정) }. 반환 G(라벨·칠하기·키보드·reproject·animateHeights 가 쓴다) */
   const f1 = (v) => Math.round(v * 10) / 10;
   const dOf = (R, dy = 0) => R.map((r) => `M${r.map(([x, y]) => `${x} ${f1(y + dy)}`).join('L')}Z`).join('');
+  /* 보는 시도(draw o.scope, 선택 — 2026-10-19 사용자 결정, /citizen): 시도 두 자리면 그 시도 밖 면(코드 앞 두 자리가 다른 면)은 맥락 회색·평평(.out), null 이면 없음.
+     키를 주면(null 포함) 시도 경계선(.sdl — 보는 시도에 닿은 선 .on, 시도를 보면 그 선만)도 그린다. 주지 않으면 예전과 같다.
+     o.hide(코드 목록, 선택 — Map3D.nearOf 의 hide, 2026-10-19): 이웃 1단계 밖 면 묶음은 .hid(map3d.css 가 숨긴다)·판 그늘에서 빼고 키보드 이동도 건너뛴다 */
+  const outOf = (o) => (c) => !!(o && o.scope) && String(c).slice(0, 2) !== o.scope;
   /* 면 그림(순수): 투영한 기하 gv(geom 또는 project 결과)와 면마다 높이 hs(gv.own 순서)·값 us → 그리는 순서로 놓은 면 목록 */
   function faces(gv, o, st) {
-    const T = gv.T, kk = gv.k, byKey = Object.fromEntries(o.units.map((x) => [x.key, x]));
+    const T = gv.T, kk = gv.k, byKey = Object.fromEntries(o.units.map((x) => [x.key, x])), sdOn = o.scope !== undefined, sd = (c) => String(c).slice(0, 2);
     const hs = st.hs, us = st.us || gv.own.map((q) => q.u), hOf = Object.fromEntries(gv.own.map((q, i) => [q.code, hs[i]]));
     return gv.own.map((q, i) => {
       const h = hs[i], x = byKey[q.code] || { key: q.code, name: o.nameOf ? o.nameOf(q.code) : '', u: 0, c: 0 };
-      let wall = '', outl = '';
+      let wall = '', outl = '', sdl = '', sdlOn = '';
       const wt = o.shade ? ['', '', '', ''] : null;   // 명암 단계별 옆벽(1~3)
       /* 섬 고리: 화면 넓이 12px² 미만은 그리지 않고, 12~36px² 는 벽 없이 윗면만 옅게. 가장 큰 고리는 늘 면 */
       const ar = q.rings.map((r) => Math.abs(ringArea(r.pts))), big = Math.max(...ar);
@@ -249,6 +268,11 @@
         for (const pc of r.pieces) {
           const hn = pc.nb ? hOf[pc.nb] : -T;
           if (!pc.nb) outl += `M${pc.pts.map(([px, py]) => `${px} ${f1(py - h)}`).join('L')}`;
+          /* 시도 경계선: 시도가 다른 이웃과 닿은 조각을 낮은 쪽 면(같으면 코드가 작은 쪽)의 윗면 높이에 — 그 뒤에 그리는 솟은 면이 앞을 가린다 */
+          if (sdOn && pc.nb && sd(pc.nb) !== sd(q.code) && (h < hn || (h === hn && q.code < pc.nb))) {
+            const d = `M${pc.pts.map(([px, py]) => `${px} ${f1(py - h)}`).join('L')}`;
+            if (!o.scope) sdl += d; else if (sd(q.code) === o.scope || sd(pc.nb) === o.scope) sdlOn += d;   // 시도를 보면 그 시도에 닿은 선만(2026-10-19 — 이웃 1단계)
+          }
           if (hn >= h) continue;
           for (let j = 0; j + 1 < pc.pts.length; j++) {
             const a = pc.pts[j], b = pc.pts[j + 1], dx = b[0] - a[0], dy = b[1] - a[1], len = Math.hypot(dx, dy) || 1;
@@ -262,7 +286,7 @@
       }
       const R = main.map((r) => r.pts.map(([px, py]) => [px, f1(py - h)]));
       const south = Math.max(...main.flatMap((r) => r.pts.map((p) => p[1])));
-      return { x, u: us[i], h, R, G: main.map((r) => r.pts), d: dOf(R), isle: isle.length ? dOf(isle.map((r) => r.pts.map(([px, py]) => [px, f1(py - h)]))) : '', wall, outl, south, bx: q.lp[0], by: f1(q.lp[1] - h), area: Math.abs(main.reduce((a, r) => a + ringArea(r.pts), 0)), ...(wt ? { walls: wt } : {}) };
+      return { x, u: us[i], h, R, G: main.map((r) => r.pts), d: dOf(R), isle: isle.length ? dOf(isle.map((r) => r.pts.map(([px, py]) => [px, f1(py - h)]))) : '', wall, outl, ...(sdOn ? { sdl, sdlOn } : {}), south, bx: q.lp[0], by: f1(q.lp[1] - h), area: Math.abs(main.reduce((a, r) => a + ringArea(r.pts), 0)), ...(wt ? { walls: wt } : {}) };
     }).sort((a, b) => a.h - b.h || a.south - b.south);
   }
   /* 옆벽 경로 문자열: 명암을 켜면 단계마다 하나(.w.lN), 끄면 하나(.w) */
@@ -280,7 +304,7 @@
   function draw(svg, g0, o) {
     const g = project(g0, o.view), { W, H, narrow, T } = g;   // g = 그 보기로 투영한 기하(기본 보기면 g0 그대로)
     /* 높이(배율 하나)와 그 높이의 면 그림 */
-    const us = g.own.map((q) => q.u), hsOf = (Hmax) => (o.umax ? faceH(us, 4, Hmax, o.umax) : faceH(g.own.map((q) => q.u), 4, Hmax));   // 배율 고정(o.umax)이 없으면 예전 그대로
+    const out = outOf(o), us = g.own.map((q) => (out(q.code) ? 0 : q.u)), hsOf = (Hmax) => (o.umax ? faceH(us, 4, Hmax, o.umax) : o.scope ? faceH(us, 4, Hmax) : faceH(g.own.map((q) => q.u), 4, Hmax));   // 배율 고정(o.umax)이 없으면 예전 그대로 · 보는 시도 밖 면은 0(평평)
     const make = (Hmax) => faces(g, o, { hs: hsOf(Hmax), us });
     /* 윗면 보이는 비율(화면 그림으로 잰다): 칠하는 순서대로 벽은 0, 윗면은 번호로 칠해 마지막에 남은 화소 / 윗면 넓이 */
     /* 화소 세기: 가장자리 번짐 화소(불투명도 < 255)는 양쪽 모두 빼고 센다 — 판은 바닥에서 서로 겹치지 않아 한 번에 '혼자 넓이'를 잰다 */
@@ -299,13 +323,15 @@
     F.forEach((f, i) => { f.vis = V.r[i]; });
     const byKey = Object.fromEntries(o.units.map((x) => [x.key, x]));
     const FI = g.inset ? g.inset.units.map((q) => { const x = byKey[q.code] || { key: q.code, name: q.name, u: 0, c: 0 }; return { x, h: 0, R: q.R, d: dOf(q.R), bx: q.b[0], by: q.b[1], inset: true, tf: q.tf }; }) : [];
-    const face = (f) => `<path id="f-${f.x.key}" class="f c${f.x.c}" d="${f.d}" data-area="${f.x.key}" role="option" aria-selected="false" aria-label="${esc(o.aria(f.x))}"/>`;
-    const grp = (f) => `<g class="fg" data-area="${f.x.key}" data-u="${f.u}" data-h="${f.h.toFixed(2)}" data-vis="${f.vis.toFixed(3)}">${wallsOf(f).map(([t, d]) => `<path class="w c${f.x.c}${t}" d="${d}" data-area="${f.x.key}" aria-hidden="true"/>`).join('')}${face(f)}${f.isle ? `<path class="isle c${f.x.c}" d="${f.isle}" aria-hidden="true"/>` : ''}${f.outl ? `<path class="ol" d="${f.outl}" aria-hidden="true"/>` : ''}</g>`;
+    const oc = (f) => (out(f.x.key) ? ' out' : ''), hid = new Set(o.hide || []);
+    F.forEach((f) => { if (hid.has(f.x.key)) f.hid = true; });
+    const face = (f) => `<path id="f-${f.x.key}" class="f c${f.x.c}${oc(f)}" d="${f.d}" data-area="${f.x.key}" role="option" aria-selected="false" aria-label="${esc(o.aria(f.x))}"/>`;
+    const grp = (f) => `<g class="fg${f.hid ? ' hid' : ''}" data-area="${f.x.key}" data-u="${f.u}" data-h="${f.h.toFixed(2)}" data-vis="${f.vis.toFixed(3)}">${wallsOf(f).map(([t, d]) => `<path class="w c${f.x.c}${t}${oc(f)}" d="${d}" data-area="${f.x.key}" aria-hidden="true"/>`).join('')}${face(f)}${f.isle ? `<path class="isle c${f.x.c}${oc(f)}" d="${f.isle}" aria-hidden="true"/>` : ''}${f.outl ? `<path class="ol" d="${f.outl}" aria-hidden="true"/>` : ''}${f.sdl ? `<path class="sdl" d="${f.sdl}" aria-hidden="true"/>` : ''}${f.sdlOn ? `<path class="sdl on" d="${f.sdlOn}" aria-hidden="true"/>` : ''}</g>`;
     const ins = g.inset ? `<g class="inset"><rect class="inset-bg" x="${g.inset.x}" y="${g.inset.y}" width="${g.inset.w}" height="${g.inset.h}" rx="8" aria-hidden="true"/><text class="inset-t" x="${g.inset.x + 8}" y="${g.inset.y + 14}" aria-hidden="true">섬 지역</text>${FI.map(face).join('')}${g.inset.units.map((q) => `<text class="inset-n" x="${q.t[0]}" y="${q.t[1]}" aria-hidden="true">${esc(q.name)}</text>`).join('')}</g>` : '';
     svg.setAttribute('width', W); svg.setAttribute('height', H); svg.setAttribute('viewBox', `0 0 ${W} ${H}`); svg.setAttribute('preserveAspectRatio', 'xMinYMin meet');
     svg.dataset.hmax = Hmax; svg.dataset.k = g.k;
     if (g.V) svg.dataset.bearing = g.V.bearing;
-    const seaD = (dy) => dOf(F.flatMap((f) => f.G), dy);
+    const seaD = (dy) => dOf(F.filter((f) => !f.hid).flatMap((f) => f.G), dy);
     svg.innerHTML = `<path class="sea" d="${seaD(T + 2)}" aria-hidden="true"/><path class="sea" d="${seaD(T + 1)}" aria-hidden="true"/>${g.ctx.map((c) => `<path class="ctx" d="${dOf(c.rings, T)}" aria-hidden="true"/>`).join('')}
     <g class="faces" role="presentation">${F.map(grp).join('')}${ins}</g>
     <g class="lift" aria-hidden="true"></g>
@@ -331,16 +357,18 @@
     const wkey = (f) => (f.walls ? f.walls.join('\n') : f.wall);
     for (const f of F) {
       const el = els.get(f.x.key), p = old.get(f.x.key); if (!el) continue;
-      f.vis = p && p.vis != null ? p.vis : 1;
+      f.vis = p && p.vis != null ? p.vis : 1; if (p && p.hid) f.hid = true;
       const top = el.querySelector(':scope > .f');
       if (!p || p.d !== f.d) top.setAttribute('d', f.d);
       if (!p || wkey(p) !== wkey(f)) {
         const want = wallsOf(f), have = [...el.querySelectorAll(':scope > .w')];
-        want.forEach(([t, d], i) => { const w = have[i] || mk('', top, el, f.x.key); w.setAttribute('class', `w c${f.x.c}${t}`); w.setAttribute('d', d); });
+        want.forEach(([t, d], i) => { const w = have[i] || mk('', top, el, f.x.key); w.setAttribute('class', `w c${f.x.c}${t}${top.classList.contains('out') ? ' out' : ''}`); w.setAttribute('d', d); });
         have.slice(want.length).forEach((w) => w.remove());
       }
       if (!p || p.isle !== f.isle) one(el, '.isle', `isle c${f.x.c}`, f.isle, top.nextSibling);
       if (!p || p.outl !== f.outl) one(el, '.ol', 'ol', f.outl, null);
+      if (!p || p.sdl !== f.sdl) one(el, '.sdl:not(.on)', 'sdl', f.sdl, null);
+      if (!p || p.sdlOn !== f.sdlOn) one(el, '.sdl.on', 'sdl on', f.sdlOn, null);
       if (!p || p.h !== f.h) el.dataset.h = f.h.toFixed(2);
       if (!p || p.u !== f.u) el.dataset.u = f.u;
     }
@@ -348,7 +376,7 @@
     const now = [...els.keys()];
     if (F.some((f, i) => now[i] !== f.x.key)) for (const f of F) { const el = els.get(f.x.key); if (el) box.insertBefore(el, ins); }
     if (moved) {
-      const sp = sea ? svg.querySelectorAll(':scope > .sea') : [], seaD = (dy) => dOf(F.flatMap((f) => f.G), dy);
+      const sp = sea ? svg.querySelectorAll(':scope > .sea') : [], seaD = (dy) => dOf(F.filter((f) => !f.hid).flatMap((f) => f.G), dy);
       if (sp[0]) sp[0].setAttribute('d', seaD(T + 2));
       if (sp[1]) sp[1].setAttribute('d', seaD(T + 1));
       svg.querySelectorAll(':scope > .ctx').forEach((el, i) => { if (gv.ctx[i]) el.setAttribute('d', dOf(gv.ctx[i].rings, T)); });
@@ -377,9 +405,9 @@
      opt = { umax(높이 배율 고정 — 없으면 그린 때 고정한 값, 그것도 없으면 next 최댓값), Hmax(없으면 G.Hmax), from({ 코드: 값 } — 없으면 지금 높이에서),
              duration(ms, 기본 700), stagger: { origin(코드 또는 화면 [x, y]), msPerPx(그 점에서 라벨 점까지 1px 마다 늦춤) } } */
   function heightPlan(G, next, opt = {}) {
-    const st = G.st, own = st.gv.own, Hmax = opt.Hmax || G.Hmax, us = own.map((q) => next[q.code] || 0);
+    const st = G.st, own = st.gv.own, Hmax = opt.Hmax || G.Hmax, out = outOf(st.o), us = own.map((q) => (out(q.code) ? 0 : next[q.code] || 0));   // 보는 시도 밖 면은 늘 평평
     const umax = opt.umax || st.umax || Math.max(1, ...us), h1 = faceH(us, 4, Hmax, umax);
-    const h0 = opt.from ? faceH(own.map((q) => opt.from[q.code] || 0), 4, Hmax, umax) : st.hs.slice();
+    const h0 = opt.from ? faceH(own.map((q) => (out(q.code) ? 0 : opt.from[q.code] || 0)), 4, Hmax, umax) : st.hs.slice();
     const sg = opt.stagger, at = sg && (Array.isArray(sg.origin) ? sg.origin : (own.find((q) => q.code === sg.origin) || {}).lp);
     const delay = own.map((q) => (at && sg.msPerPx ? Math.hypot(q.lp[0] - at[0], q.lp[1] - at[1]) * sg.msPerPx : 0));
     const dur = opt.duration == null ? 700 : Math.max(0, opt.duration);
@@ -526,7 +554,8 @@
      고른 곳·가리킨 곳·키보드 위치는 그림만 띄운다(2026-10-18 사용자 피드백 '검은 굵은 경계선 대신 입체로'): 기하(면 높이 값·경계·라벨 자리)는 그대로(G16).
      .lift 층(면 묶음 위, 라벨 아래)에 그 면의 사본을 놓는다 — 바닥 그림자(고른 곳만) · 원래 자리의 옆면 색 판 · 들어 올린 옆벽 + 윗면(그 면 단계 계열 1.25px 윤곽).
      띄우는 높이·색·짧은 ease-out 전이는 map3d.css(.lift .on 5px · .hv 2px, 줄이기 동작이면 0·전이 없음). 그 면의 이름표도 같은 만큼 올린다(.lb-g.up-on·up-hv). 키보드 초점 고리는 그대로 둔다.
-     p = { sel: 고른 곳, hover: 가리킨 곳, kb: 키보드 위치 } (코드 또는 null) */
+     p = { sel: 고른 곳, hover: 가리킨 곳, kb: 키보드 위치 } (코드 또는 null), 선택 band: 범례 구간 면 코드 목록(2026-10-19 /citizen — 그 면은 가리킨 곳처럼 2px 띄우고,
+     나머지 면 묶음은 흐리게 .fg.dim · 보는 시도 밖 면·고른 곳·가리킨 곳은 흐리지 않는다). 주지 않으면 예전 그대로 */
   function paintFaces(svg, p) {
     const doc = svg.ownerDocument, NS = 'http://www.w3.org/2000/svg', dOfKey = (k) => (k ? doc.getElementById('f-' + k)?.getAttribute('d') || '' : '');
     svg.querySelectorAll('.f[aria-selected="true"]').forEach((f) => f.setAttribute('aria-selected', 'false'));
@@ -534,12 +563,14 @@
     if (sf) sf.setAttribute('aria-selected', 'true');
     for (const c of ['.kb-halo', '.kb']) svg.querySelector(c).setAttribute('d', p.kb && p.kb !== p.sel ? dOfKey(p.kb) : '');
     svg.querySelectorAll('.f.hl').forEach((f) => f.classList.remove('hl'));
-    if (p.hover) doc.getElementById('f-' + p.hover)?.classList.add('hl');   // 순위 줄·옆벽에서 가리켜도 면 효과
+    const hf = p.hover ? doc.getElementById('f-' + p.hover) : null; if (hf && !hf.classList.contains('out')) hf.classList.add('hl');   // 순위 줄·옆벽에서 가리켜도 면 효과(보는 시도 밖 면은 없음)
     const el = (tag, cls, d) => { const e = doc.createElementNS(NS, tag); e.setAttribute('class', cls); if (d) e.setAttribute('d', d); return e; };
-    const ups = [...new Set([p.hover, p.kb].filter((k) => k && k !== p.sel))].map((k) => [k, 'hv']).concat(p.sel ? [[p.sel, 'on']] : []);   // 고른 곳을 맨 나중(맨 위)에
+    const band = p.band ? new Set(p.band) : null;
+    svg.querySelectorAll('.faces > .fg').forEach((g) => { const k = g.dataset.area, f = g.querySelector(':scope > .f'); g.classList.toggle('dim', !!band && !band.has(k) && k !== p.hover && k !== p.sel && !(f && f.classList.contains('out'))); });
+    const ups = [...new Set([p.hover, p.kb, ...(band || [])].filter((k) => k && k !== p.sel))].map((k) => [k, 'hv']).concat(p.sel ? [[p.sel, 'on']] : []);   // 고른 곳을 맨 나중(맨 위)에
     const lift = svg.querySelector('.lift'), kids = [];
     for (const [k, lv] of ups) {
-      const f = doc.getElementById('f-' + k); if (!f) continue;
+      const f = doc.getElementById('f-' + k); if (!f || f.classList.contains('out')) continue;   // 보는 시도 밖 면은 띄우지 않는다
       const d = f.getAttribute('d'), c = (f.getAttribute('class').match(/\bc\d\b/) || ['c0'])[0], ws = f.parentNode.querySelectorAll(':scope > .w'), g = el('g', `${lv} ${c}`), up = el('g', 'up');
       if (lv === 'on') g.appendChild(el('path', 'up-shd', d));
       g.appendChild(el('path', 'up-side', d));
@@ -559,14 +590,14 @@
     if (dir) {
       let best = Infinity;
       for (const f of F) {
-        if (f === cur) continue;
+        if (f === cur || f.hid) continue;   // 그리지 않는 면(.hid)은 건너뛴다
         const dx = f.bx - cur.bx, dy = (f.by - cur.by) / G.k, along = dx * dir[0] + dy * dir[1], perp = Math.abs(dx * dir[1] - dy * dir[0]);
         if (along <= 0 || perp > along) continue;
         const sc = Math.hypot(dx, dy); if (sc < best) { best = sc; next = f; }
       }
       if (!next) next = cur;
     } else if (key === 'Home' || key === 'End') {
-      const ord = F.slice().sort((a, b) => (Math.round(a.by / 40) - Math.round(b.by / 40)) || a.bx - b.bx);
+      const ord = F.filter((f) => !f.hid).sort((a, b) => (Math.round(a.by / 40) - Math.round(b.by / 40)) || a.bx - b.bx);
       next = key === 'Home' ? ord[0] : ord[ord.length - 1];
     } else if (key === 'Enter' || key === ' ') return { key: cur.x.key, enter: true };
     return next ? { key: next.x.key } : null;
@@ -616,6 +647,6 @@
     return () => { for (const [t, f, op] of L) stage.removeEventListener(t, f, op); if (raf) win.cancelAnimationFrame(raf); stage.classList.remove('orbiting'); };
   }
 
-  return { labelNum, esc, SIDO_SHORT, shortNames, faceH, ringsOf, inRing, ringArea, prep, bboxOf, arcsOf, simplifyVW, chaikin, labelPoint, geom, ptXY, textW, draw, recolor, faceClassAt, labels, paintFaces, keyMove,
+  return { labelNum, esc, SIDO_SHORT, shortNames, faceH, ringsOf, inRing, ringArea, prep, bboxOf, arcsOf, nearOf, simplifyVW, chaikin, labelPoint, geom, ptXY, textW, draw, recolor, faceClassAt, labels, paintFaces, keyMove,
     VIEW_LIM, ORBIT, viewOf, viewPt, unviewPt, project, wallTier, faces, reproject, easeOutExpo, reducedMotion, heightPlan, heightsAt, animateHeights, orbitStep, attachOrbit };
 });

@@ -102,9 +102,9 @@ test('지도 라벨: HTML 라벨 토큰과 maplibre text-size = 8단계 토큰(1
   for (const m of appJs.matchAll(/font-size="([\d.]+)"/g)) assert.ok(+m[1] >= 14, `svg font-size ${m[1]}`);
 });
 
-test('서비스 이름: 화면에 보이는 index.html 의 이름은 The주택', () => {
+test('서비스 이름: 화면에 보이는 index.html 의 이름은 더주택', () => {
   assert.ok(!/주택파동/.test(html));
-  assert.match(html, /<title>The주택 지도<\/title>/);
+  assert.match(html, /<title>더주택 지도<\/title>/);
 });
 
 test('지도 기본 배경(OpenFreeMap) 지명·도로명·교통 POI 라벨도 8단계 크기(14px 이상)에 붙인다(방패 아이콘 글자 제외)', () => {

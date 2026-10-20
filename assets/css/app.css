@@ -803,10 +803,11 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .ov-back{flex:none;padding:2px 0;border:0;background:none;font:inherit;font-size:var(--text-sm);color:var(--mute);text-decoration:underline;text-underline-offset:3px;cursor:pointer}   /* ?sido= 로 연 개요에서 수도권 전체로(2026-10-15 평가 P2) */
 .ov-back:hover{color:var(--ink)}
 .ov-back[hidden]{display:none}
-.ov-metrics{display:flex;flex-wrap:wrap;gap:6px}
-.ov-metrics button{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-height:36px;padding:4px 6px;border:var(--border-w) solid var(--line);border-radius:var(--radius-tile);background:transparent;font-size:var(--text-sm);line-height:1.3;color:var(--mute);cursor:pointer;transition:background .15s,color .15s}
-.ov-metrics button:hover{background:var(--pn2);color:var(--ink)}
-.ov-metrics button[aria-checked="true"]{background:var(--acc);border-color:var(--acc);color:var(--acc-ink);font-weight:700}
+/* 지표 고르기 = 밑줄 탭(globals .ui-tabs.ui-tabs-line, 2026-10-19 핸드오프 7절 '지표 한 개'). 라디오 의미·키보드(role=radio·aria-checked)는 그대로라 고른 탭 모양을 aria-checked 에 잇고,
+   위 .ov button(font·color inherit, 레이어 밖)이 부품 값을 덮지 않게 글자 크기·가리킴만 다시 적는다 */
+.ov-metrics>button{font-size:var(--fs-meta)}
+.ov-metrics>button:hover{color:var(--foreground)}
+.ov-metrics>button[aria-checked="true"]{border-bottom-color:var(--tab-c);color:var(--foreground);font-weight:700}
 .ov-total{display:flex;flex-direction:column;gap:2px}
 .ov-q{display:flex;align-items:center;gap:4px}
 .ov-q h3{margin:0;font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;line-height:var(--lh-sub);color:var(--ink2)}
@@ -826,7 +827,7 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .ov-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .ov-card{display:flex;flex-direction:column;align-items:stretch;gap:3px;min-width:0;container-type:inline-size;padding:var(--pad-compact-y) var(--pad-compact-x);border:var(--border-w) solid var(--line);border-radius:var(--radius-tile);background:var(--pn);text-align:left;cursor:pointer;transition:background .15s,border-color .15s}
 .ov-card:hover{background:var(--pn2);border-color:var(--line2)}
-.ov-card[aria-pressed="true"]{background:var(--pn2);border-color:var(--acc);box-shadow:inset 0 0 0 1px var(--acc)}
+.ov-card[aria-pressed="true"]{background:var(--pn2);border-color:var(--acc)}   /* 고른 것 = 1px 주색 경계(2px 는 키보드 초점만 — 2026-10-19) */
 .ov-cn{font-size:var(--text-sm);font-weight:700;color:var(--ink2)}
 .ov-cv{font-family:var(--font-sans);font-weight:700;font-size:var(--text-md);letter-spacing:-.03em;line-height:1.15;font-variant-numeric:tabular-nums;white-space:nowrap}
 /* 숫자는 자르지 않는다: 칸(내용 폭)이 좁으면 글자 단계를 내린다. '112,116호' 폭 ≈ 3.6em+단위 15px → 18px 80 · 16px 73 · 14px 65 · 12px 63 */
@@ -863,10 +864,13 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .ov-rank .ov-zeros>.ov-zbtn:focus-visible{outline:2px solid currentColor;outline-offset:-2px}
 .ov-zlist{list-style:none;margin:0;padding:0}
 .ov-rank .ov-zeros{margin-top:6px;border-top:1px solid var(--line)}
-/* '전체 n' 목록: 패널을 덮는 판(그 안만 스크롤), 머리 = 제목 + 닫기 */
-.ov-sheet{position:absolute;inset:0;z-index:7;display:flex;flex-direction:column;gap:8px;padding:16px 10px 12px 18px;background:var(--bg);box-shadow:var(--shadow-pop)}
+/* '전체 n' 목록: 화면 가운데 모달리스 팝업(넓은 화면, 2026-10-20 사용자 지시 — 우측 판 대신). 뒤는 흐린 막(#ovScrim, 클릭 통과)만, 닫기는 Esc·✕. z: 막 50(상단 메뉴 40 위) < 팝업 55 < 구 고르기 메뉴 60. 좁은 화면은 아래 미디어 쿼리에서 패널 안을 덮는 판으로 */
+.ov-scrim{position:fixed;inset:0;z-index:50;background:var(--win-scrim);-webkit-backdrop-filter:blur(var(--win-blur));backdrop-filter:blur(var(--win-blur));opacity:0;visibility:hidden;pointer-events:none;transition:opacity .15s ease,visibility .15s}
+.ov-scrim.on{opacity:1;visibility:visible}
+.ov-sheet{position:fixed;z-index:55;left:50%;top:50%;transform:translate(-50%,-50%);width:min(480px,calc(100vw - 32px));max-height:calc(100dvh - 96px);display:flex;flex-direction:column;gap:8px;padding:16px 10px 12px 18px;border-radius:var(--radius-card);background:var(--bg);box-shadow:var(--shadow-pop)}
 .ov-sheet[hidden]{display:none}
 .ov-sh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:8px}
+.ov-sh .ov-hn{margin-right:auto;font-size:var(--fs-meta);color:var(--mute);font-variant-numeric:tabular-nums;white-space:nowrap}   /* 제목 옆 보조 건수(14/400) */
 .ov-sh .ov-mx{display:grid;place-items:center;width:32px;height:32px;padding:0;border:0;border-radius:var(--radius-tile);background:transparent;color:var(--mute);cursor:pointer}
 .ov-sh .ov-mx:hover{background:var(--pn2);color:var(--ink)}
 .ov-sheet .ov-rank{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:8px;scrollbar-width:thin;scrollbar-color:var(--line2) transparent}
@@ -888,10 +892,24 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .ov-ts{color:var(--ink2);font-variant-numeric:tabular-nums}
 .ov-th{color:var(--mute);font-size:var(--text-sm)}
 .ov-tip .ov-band{margin:2px 0}
-.ov-legend{position:absolute;left:12px;bottom:12px;z-index:3;width:168px;padding:var(--pad-compact-y) var(--pad-tile-x);border:var(--border-w) solid var(--hud-line);border-radius:var(--radius-tile);background:var(--glass-hud);box-shadow:var(--tag-shadow);font-size:var(--fs-legend)}
-.ov-legend b{display:block;margin-bottom:4px;font-size:var(--fs-legend)}
-.ov-legend ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px;font-variant-numeric:tabular-nums}
-.ov-legend li{display:flex;align-items:center;gap:7px;white-space:nowrap}
+/* 범례(2026-10-19 사용자 피드백 '종합상황판의 범례처럼 하단에'): /citizen 범례와 같은 모양 — 머리 줄 → [없음 견본 | 연속 그라데이션 막대] → 경계 눈금. 넓은 화면은 패널 맨 아래(#ovLegend), 좁은 화면은 지도 위 띠(#ovLegendTop)만 보인다.
+   색 멈춤 = 구간 가운데에 그 구간의 면 색 단계(--lg-stops, overview.js 가 var(--ov-N) 로 만든다 — 지연 지표의 빨강 램프가 그대로 따른다). 눈금은 두 줄 자리를 늘 예약 */
+.ov-lgv{flex:none;display:grid;gap:8px;font-size:var(--fs-legend);line-height:var(--lh-sub);font-variant-numeric:tabular-nums}
+.ov-lgv:empty{display:none}
+.ov-lg-h{margin:0;padding:0 0 4px;font-family:var(--font-sans);font-size:var(--fs-h3);font-weight:700;line-height:var(--lh-sub);color:var(--ink2);border-bottom:var(--border-w) solid var(--line)}
+.ov-lg-bar,.ov-lg-ticks{display:grid;grid-template-columns:16px minmax(0,1fr);column-gap:8px}
+.ov-lg-sw,.ov-lg-grad{display:block;height:12px}
+.ov-lg-sw{background:var(--ov-0);box-shadow:inset 0 0 0 var(--border-w) var(--line)}
+.ov-lg-grad{border-radius:var(--radius-full);background:linear-gradient(90deg,var(--lg-stops))}
+.ov-lg-ticks{--lh1:calc(var(--fs-legend) * var(--lh-sub));height:calc(var(--lh1) * 2);margin-top:2px}
+.ov-lg-tk0{justify-self:center;white-space:nowrap}
+.ov-lg-tks{position:relative;min-width:0}
+.ov-lg-tk{position:absolute;top:0;left:var(--x);transform:translateX(-50%);white-space:nowrap;line-height:var(--lh-sub)}
+.ov-lg-tk.l2{top:var(--lh1)}
+.ov-lg-tk::before{content:"";position:absolute;left:50%;top:-6px;width:var(--border-w);height:4px;background:var(--mute)}
+.ov-lg-tk.l2::before{top:calc(-6px - var(--lh1))}
+#ovLegendTop{position:absolute;top:10px;left:10px;right:10px;z-index:3;padding:var(--pad-compact-y) var(--pad-compact-x);border:var(--border-w) solid var(--hud-line);border-radius:var(--radius-tile);background:var(--glass-hud);box-shadow:var(--tag-shadow)}
+#ovLegendTop{display:none}
 .ov-lh{display:block;margin-top:4px;font-size:var(--fs-legend);color:var(--mute)}   /* 색 지표가 진행 호수가 아닐 때 '높이: …'(자리는 늘 둔다) */
 .ov-sw{flex:none;width:16px;height:11px;border-radius:var(--radius-chip);border:1px solid var(--ov-line)}
 .ov-sw.c0{background:var(--ov-0)}.ov-sw.c1{background:var(--ov-1)}.ov-sw.c2{background:var(--ov-2)}.ov-sw.c3{background:var(--ov-3)}.ov-sw.c4{background:var(--ov-4)}.ov-sw.c5{background:var(--ov-5)}
@@ -914,22 +932,22 @@ html[data-map-mode="overview"] .ov{display:grid;grid-template-columns:360px minm
 .ov.picking .map .lbls{opacity:.35}
 .ov.picking .map .faces>.fg:not(:has(.f[aria-selected="true"])){opacity:.4}   /* 구 메뉴가 열린 동안 고른 시만 또렷하게(고른 시는 솟지 않고 면 효과) */
 .ov.picking .ov-tip{display:none}
-@media (prefers-reduced-motion:reduce){.ov-metrics button,.ov-card{transition:none}}
+@media (prefers-reduced-motion:reduce){.ov-metrics button,.ov-card,.ov-scrim{transition:none}}
 /* 좁은 화면(≤768): 지도가 화면 전체, 패널은 아래 시트(처음엔 합계·지표·시도 카드까지, 손잡이로 펼치면 시군구 목록) */
 @media (max-width:768px){
   html[data-map-mode="overview"] .ov{display:block}
   .ov-mapwrap{position:absolute;inset:0}
   .ov-panel{position:absolute;left:0;right:0;bottom:0;z-index:6;height:44%;padding:22px 14px 14px;gap:10px;border-right:0;border-top:1px solid var(--line);border-radius:var(--radius-card) var(--radius-card) 0 0;box-shadow:var(--sheet-shadow);overflow:hidden}
   .ov-panel[data-sheet="full"]{height:86%}   /* 펴도 스크롤하지 않고 순위 막대 줄이 늘어난다 */
-  .ov-sheet{padding:22px 6px 12px 14px;border-radius:var(--radius-card) var(--radius-card) 0 0}
+  .ov-scrim{display:none}   /* 좁은 화면은 팝업 대신 패널 안을 덮는 판이라 막 없음 */
+  .ov-sheet{position:absolute;inset:0;z-index:7;transform:none;width:auto;max-height:none;padding:22px 6px 12px 14px;border-radius:var(--radius-card) var(--radius-card) 0 0}
   .ov-handle{display:block;position:absolute;left:50%;top:0;width:64px;height:22px;transform:translateX(-50%);padding:0;border:0;background:transparent;cursor:pointer}
   .ov-handle::before{content:"";position:absolute;left:16px;right:16px;top:8px;height:4px;border-radius:var(--radius-chip);background:var(--line2)}
   .ov-head h2{font-size:var(--fs-h2)}
   .ov-big{font-size:var(--text-2xl)}
   .ov-cv{font-size:var(--text-md)}
-  .ov-legend{top:10px;bottom:auto;left:10px;right:10px;width:auto;padding:6px 9px;font-size:var(--fs-legend)}
-  .ov-legend b{font-size:var(--fs-legend)}
-  .ov-legend ul{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(1lh,auto));gap:2px 10px}   /* 칸이 3개 이하여도 두 줄 높이(지표를 바꿔도 지도 무대가 그대로) */
+  #ovLegend{display:none}
+  #ovLegendTop:not(:empty){display:grid}   /* 같은 모양의 범례를 지도 위 띠로(눈금 두 줄·'높이' 자리는 늘 있어 지표를 바꿔도 높이가 같다) */
   .ov-stage{inset:auto 8px calc(44% + 8px) 8px}
 }
 /* 상세 지도 위 경로(수도권 › 시도 › 시군구, region.js mountCrumbs): 있으면 머리 줄의 '공급 지도' 자리에 */

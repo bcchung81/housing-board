@@ -485,7 +485,7 @@ export type LaneMark = { at: number; tag: string; title: string; late?: Cls };
 export type LaneBar = { from: number; to: number; title: string };
 export type Lane = { board: number; plan?: LaneMark; planBar?: LaneBar; actual?: LaneMark; actualBar?: LaneBar; missing?: string; late?: { months: number; cls: Cls } };
 export type Timeline = { years: number[]; today: number; todayText: string; lanes: Lane[]; progress: { at: number; pct: number; text: string }[]; used: { plan: boolean; actual: boolean; late: boolean; missing: boolean } };
-export function timelineOf(d: ProjectDetail, referenceDate: string): Timeline {
+export function timelineOf(d: Pick<ProjectDetail, 'stages' | 'progress'>, referenceDate: string): Timeline {
   const T = monthNo(referenceDate);
   const dates: number[] = [T];
   for (const t of STAGE_EVENTS) { const s = d.stages[t]; if (s) for (const v of [s.plan, s.actual]) if (v) dates.push(monthNo(v)); }

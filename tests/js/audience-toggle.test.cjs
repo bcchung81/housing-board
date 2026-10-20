@@ -60,7 +60,7 @@ test("TopNav: 로고·'종합상황판' 은 관점 첫 화면(일반사용자 /c
   const nav = read('components/TopNav.tsx');
   assert.match(nav, /const homeOf = \(a: Audience \| null\) => \(a === 'public' \? '\/citizen' : '\/'\);/);
   assert.match(nav, /const href = m\.id === 'home' \? home : m\.id === 'map' \? mapTo : m\.href;/);
-  assert.match(nav, /href=\{home\} aria-label="The주택 종합상황판 처음으로"/);
+  assert.match(nav, /href=\{home\} aria-label="더주택 종합상황판 처음으로"/);
   assert.match(nav, /setAud\(next\)/, '수화 뒤 경로 규칙으로 맞춘다');
   assert.match(nav, /localStorage\.setItem\('audience', next\)/);
   assert.match(nav, /document\.documentElement\.dataset\.aud = next;/);

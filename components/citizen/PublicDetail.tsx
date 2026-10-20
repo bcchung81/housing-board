@@ -1,13 +1,14 @@
-/* 사업 찾기 상세(서랍 안, 서버가 그린다 — 자료는 lib/board/projects-index.ts getProjectDrawer·getPublicDetails). 제안서 4.1·4.4.
+/* 사업 찾기 상세(사업 창 안 — 2026-10-19 서랍 → 모달리스 창: 창 관리자 components/windows 가 클라이언트에서 그린다, 자료는 lib/board/project-window.ts projectWindow). 제안서 4.1·4.4.
    예정 대비 한 줄(안 A — 사실만, 중립 색) → 6칸 사다리 + 호수·공고 나간 호수·공사 n% → 일정 4줄(착공·모집 공고·준공·입주, 실제/예정) + 청약홈 → 연결 링크 · 출처(i).
    정책 서랍의 판정·타임라인·개요·근거 접힘·사업 id 는 두지 않는다. */
+import { useId } from 'react';
 import Link from 'next/link';
 import { ChevronRight, ExternalLink } from 'lucide-react';
-import { PanelHead } from '@/components/page';
+import { FactNote, PanelHead } from '@/components/page';
 import { Card } from '@/components/ui/card';
 import InfoTip from '@/components/ui/info-tip';
 import PublicSteps from './PublicSteps';
-import type { Drawer } from '@/lib/board/projects-index';
+import type { PublicWin } from '@/lib/board/project-window';
 import { NEXT, PAST_DUE_PUBLIC, PAST_DUE_TIP, factLine, fullDate, ho, noticeName, nxOf, periodEnd, prjJudge, sourceName, type Steps } from '@/lib/board/public-labels';
 
 /* 일정 4줄의 차례(제안서 4.4): 착공 · 모집 공고 · 준공 · 입주 — NEXT 번호 */
@@ -16,13 +17,15 @@ const LINK = 'group/action inline-flex items-center gap-px rounded-chip text-met
 const Chev = () => <ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />;
 
 type Extra = { steps: Steps; agency: string; progress1: number | null; progressAt: string | null };
-type Props = { d: Extract<Drawer, { kind: 'detail' }>; x: Extra | undefined; today: string; pastDue: boolean; links: { map: string | null; schedule: string; sameStage: string | null } };
+type Props = { d: Pick<PublicWin, 'row' | 'detail' | 'sources' | 'referenceDate'>; x: Extra | undefined; today: string; pastDue: boolean; links: { map: string | null; schedule: string; sameStage: string | null } };
 
 export default function PublicDetail({ d, x, today, pastDue, links }: Props) {
   const r = d.row, steps = x?.steps ?? [null, null, null, null], nx = nxOf(r.next);
+  const sid = useId();   // 창마다 고유한 일정 제목 id(옛 고정 id pd-sched)
   const fact = factLine(prjJudge(r), r.overdue);
   /* 일정 칸: 상세 자료(실제 > 예정), 없으면 원장 다음 고비 */
   const rows = ORDER.map((k) => ({ k, v: steps[k] ?? (nx.k === k && nx.d ? ([nx.d, 0] as [string, 0]) : null) }));
+  const noSchedule = rows.every((w) => !w.v);
   const noticeStep = rows.find((w) => w.k === 0)?.v;
   const alt = r.dateAlt ? `${r.dateAlt.source} 자료에는 준공 ${fullDate(r.dateAlt.planned)} 예정` : null;
   const src = x?.agency || '시행 기관';
@@ -37,10 +40,7 @@ export default function PublicDetail({ d, x, today, pastDue, links }: Props) {
   return (
     <>
       {fact || pastDue ? (
-        <p role="note" className="m-0 ui-inset flex flex-wrap items-center gap-x-1 text-base">
-          <span>{fact ?? PAST_DUE_PUBLIC}</span>
-          <InfoTip label="예정일"><p>{PAST_DUE_TIP}</p><p>{`${fullDate(d.referenceDate)} 기준`}</p>{alt ? <p>{alt}</p> : null}</InfoTip>
-        </p>
+        <FactNote className="ui-inset" tip={{ label: '예정일', children: <><p>{PAST_DUE_TIP}</p><p>{`${fullDate(d.referenceDate)} 기준`}</p>{alt ? <p>{alt}</p> : null}</> }}>{fact ?? PAST_DUE_PUBLIC}</FactNote>
       ) : null}
       {alt ? <p className="m-0 text-meta text-muted-foreground">{alt}</p> : null}
 
@@ -57,16 +57,19 @@ export default function PublicDetail({ d, x, today, pastDue, links }: Props) {
         </p>
       </Card>
 
-      <Card render={<section aria-labelledby="pd-sched" />}>
-        <PanelHead id="pd-sched" title="일정" scope={<InfoTip label="일정"><p>예정일은 사업 시행자 계획이라 바뀔 수 있어요</p><p>실제 = 마친 날 · 예정 = 계획한 날</p></InfoTip>} />
-        <dl className="m-0 grid grid-cols-[max-content_minmax(0,1fr)] gap-x-6 gap-y-2 text-base [&_dd]:m-0 [&_dt]:text-muted-foreground">
-          {rows.map(({ k, v }) => (
-            <div key={k} className="contents">
-              <dt>{NEXT[k]}</dt>
-              <dd className="tabular-nums">{v ? fullDate(v[0]) : '미정'}{v ? <span className="ml-2 text-meta text-muted-foreground">{v[1] ? '실제' : periodEnd(v[0]) < today ? '예정 · 지남' : '예정'}</span> : null}</dd>
-            </div>
-          ))}
-        </dl>
+      <Card render={<section aria-labelledby={sid} />}>
+        <PanelHead id={sid} title="일정" scope={<InfoTip label="일정"><p>예정일은 사업 시행자 계획이라 바뀔 수 있어요</p><p>실제 = 마친 날 · 예정 = 계획한 날</p></InfoTip>} />
+        {noSchedule ? <FactNote>이 사업은 아직 일정 자료가 없어요</FactNote> : (
+          <dl className="m-0 grid grid-cols-[max-content_max-content_minmax(0,1fr)] gap-x-6 gap-y-2 text-base [&_dd]:m-0 [&_dt]:text-muted-foreground">
+            {rows.map(({ k, v }) => (
+              <div key={k} className="contents">
+                <dt>{NEXT[k]}</dt>
+                <dd className="tabular-nums">{v ? fullDate(v[0]) : '미정'}</dd>
+                <dd className="text-muted-foreground">{v ? (v[1] ? '실제' : periodEnd(v[0]) < today ? '예정 · 지남' : '예정') : ''}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
         {noticeStep ? (
           <p className="mt-3 mb-0 flex flex-wrap items-center gap-x-2 text-meta text-muted-foreground">
             <a href="https://www.applyhome.co.kr/" target="_blank" rel="noopener noreferrer" className={LINK} title={`청약홈이 새 창으로 열려요. 공고 이름 '${noticeName(r.name)}'(으)로 찾아 보세요`}>
@@ -87,8 +90,19 @@ export default function PublicDetail({ d, x, today, pastDue, links }: Props) {
             <p>{`${fullDate(d.referenceDate)} 기준`}</p>
           </InfoTip>
         </span>
-        <Link href={`/projects?id=${encodeURIComponent(r.id)}`} className={`${LINK} ml-auto`}>정책담당자 화면에서 보기<Chev /></Link>
+        <Link href={`/projects?id=${encodeURIComponent(r.id)}`} data-window="off" className={`${LINK} ml-auto`}>정책담당자 화면에서 보기<Chev /></Link>
       </nav>
     </>
+  );
+}
+
+/* 사업 창 머리 부속(제목 옆): 지역(시도 · 시군구) · 시행 기관 · 유형 칩 — 서버(projectWindow)가 만든 글자만 받는다 */
+export function PublicHead({ head }: { head: PublicWin['head'] }) {
+  return (
+    <span className="flex basis-full flex-wrap items-center gap-x-3 gap-y-1 text-body text-muted-foreground">
+      <span>{head.area}</span>
+      {head.agency ? <span>{`시행 ${head.agency}`}</span> : null}
+      {head.program ? <span className="ui-chip" title={head.program.name}>{head.program.short}</span> : null}
+    </span>
   );
 }

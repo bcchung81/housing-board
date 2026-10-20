@@ -1,6 +1,7 @@
 /* 연도별 막대(서버가 SVG 로 그린다). 완결 연도는 진한 막대, 부분 연도(2021 은 9~12월·올해는 1~N월)는 옅은 점선 막대 + 기간 꼬리표.
    전년 대비 꼬리표는 두 해 모두 12/12개월인 완결 연도에만 붙는다(lib/board/annual.ts yoy). 세로축은 MonthLines 와 같은 틀(HTML 눈금).
    키보드: 막대마다 Tab 으로 초점이 가고(읽기 이름 = 연도·호수·전년 대비), 초점 막대는 테두리로 보인다. 누를 동작이 없어 Enter 는 쓰지 않는다. */
+import { cn } from 'cn';
 import { spanLabel, yoy, type YearVal } from '@/lib/board/annual';
 
 const H = 260;
@@ -15,7 +16,7 @@ export default function YearBars({ series, color, label, yoy: showYoy = true }: 
   const ticks = Array.from({ length: k + 1 }, (_, i) => top - i * step);   // 위에서 아래로
   const part = `color-mix(in srgb, ${color} 34%, var(--chartbg))`;
   return (
-    <div data-slot="chart-frame" className="relative mt-3 pt-6 pr-5 pb-10 pl-18">
+    <div data-slot="chart-frame" className="@container relative mt-3 pt-6 pr-5 pb-10 pl-18">
       <div aria-hidden="true" className="pointer-events-none absolute top-6 bottom-10 left-0 w-[64px] text-sm leading-none text-mute">
         {ticks.map((v, i) => <span key={i} data-slot="chart-axis" className="absolute right-0 -translate-y-1/2 whitespace-nowrap tabular-nums" style={{ top: `${i / k * 100}%` }}>{man(v)}</span>)}
       </div>
@@ -41,7 +42,7 @@ export default function YearBars({ series, color, label, yoy: showYoy = true }: 
         })}
       </div>
       <div aria-hidden="true" className="pointer-events-none absolute right-5 bottom-3 left-[72px] h-4 text-sm leading-none text-mute">
-        {series.map((y, i) => <span key={y.year} data-slot="chart-axis" className="absolute -translate-x-1/2 whitespace-nowrap tabular-nums" style={{ left: `${(i + 0.5) / n * 100}%` }}>{y.year}</span>)}
+        {series.map((y, i) => <span key={y.year} data-slot="chart-axis" className={cn('absolute -translate-x-1/2 whitespace-nowrap tabular-nums', i % 2 === 1 && '@max-[30rem]:invisible')} style={{ left: `${(i + 0.5) / n * 100}%` }}>{y.year}</span>)}
       </div>
     </div>
   );

@@ -1,0 +1,2093 @@
+{
+  "date": "2026-10-19",
+  "baseUrl": "http://127.0.0.1:8000",
+  "method": "Browser DOM and computed styles plus source inspection; screenshot capture timed out; not pixel visual QA.",
+  "screens": [
+    {
+      "path": "/citizen",
+      "url": "http://127.0.0.1:8000/citizen",
+      "title": "더주택 — 내 동네 공공 주택 공급",
+      "html": "dark",
+      "attributes": {
+        "page": "citizen",
+        "aud": "public",
+        "elev": "raised"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#141311",
+        "--card": "#1D1C19",
+        "--foreground": "#F2EFE8",
+        "--primary": "#E38A6E",
+        "--radius-tile": "8px",
+        "--fs-body": "16px"
+      },
+      "headings": [
+        {
+          "text": "남양주시 공급 예정 호수 1만 6,388호",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 321,
+          "height": 44
+        },
+        {
+          "text": "지금 신청",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 79,
+          "height": 26
+        },
+        {
+          "text": "공급 예정 호수",
+          "font": "14px",
+          "weight": "700",
+          "line": "18.2px",
+          "color": "rgb(242, 239, 232)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 115,
+          "height": 18
+        },
+        {
+          "text": "공급 예정 상위 지역",
+          "font": "16px",
+          "weight": "700",
+          "line": "20.8px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 223,
+          "height": 21
+        },
+        {
+          "text": "청약 단지",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 79,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "경기도남양주시31곳 중 2위남양주시 공급 예정 호수 1만 6,388호준비 중5,077짓는 중6,314모집 끝남4,997다음 준공2027.9.27D-343남양주왕숙(1블록)629호",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(255, 255, 255)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 363,
+          "height": 328
+        },
+        {
+          "text": "지금 신청경기도 12건남양주시는 지금 접수 중인 공고가 없어요근처에서접수 예정 · 8일 뒤, 접수 예정8일뒤\n    포천시·10.27(화)~10.29(목)\n    청년 매입임대주택 선착순 (김포시, 포천시)\n    매입임대청년(공고 원문, 새 창)접수 중 · 4일 남음, 접수 중4일남음",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(51, 38, 31)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 363,
+          "height": 342
+        },
+        {
+          "text": "전체2027202820292030공급 예정 호수없음9002,4004,300공급 예정 상위 지역경기도 · 전체 기간단위: 호\n    1과천시23,592\n    2남양주시보는 곳16,388\n    3평택시10,609\n    4고양시10,330\n    5부천시7,417\n    6성남시3,88",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(29, 28, 25)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1013,
+          "height": 686
+        },
+        {
+          "text": "청약 단지\n    이름세대특별공급주택형일정입주시공·시행민영오남역 서희스타힐스 여의재 3단지 (조합원 취소분)양지리133세대64세대 48%59~84㎡계약 중계약 10.17~10.192029.01서희건설공공분양남양주진접2지구 A-4블록 신혼희망타운(공공분양) 잔여세대 추가입주자모집공고진접읍",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(29, 28, 25)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1392,
+          "height": 268
+        }
+      ],
+      "paragraphs": [
+        {
+          "text": "남양주시는 지금 접수 중인 공고가 없어요",
+          "font": "16px",
+          "weight": "400",
+          "line": "20.8px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "10px 0px",
+          "width": 321,
+          "height": 41
+        },
+        {
+          "text": "근처에서",
+          "font": "14px",
+          "weight": "700",
+          "line": "18.2px",
+          "color": "rgb(184, 176, 164)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 321,
+          "height": 36
+        },
+        {
+          "text": "경기도 · 전체 기간단위: 호",
+          "font": "14px",
+          "weight": "400",
+          "line": "18.2px",
+          "color": "rgb(184, 176, 164)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 223,
+          "height": 18
+        },
+        {
+          "text": "출처 건축HUB · LH · 청약홈\n      전체 통계 보기(정책담당자 화면)",
+          "font": "14px",
+          "weight": "400",
+          "line": "22.4px",
+          "color": "rgb(184, 176, 164)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1392,
+          "height": 36
+        }
+      ]
+    },
+    {
+      "path": "/citizen/projects?sido=metro",
+      "url": "http://127.0.0.1:8000/citizen/projects?sido=metro",
+      "title": "수도권 사업 찾기 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "public"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "16px"
+      },
+      "headings": [
+        {
+          "text": "사업 찾기",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 119,
+          "height": 36
+        },
+        {
+          "text": "수도권 · 사업 262곳 · 22만 7,976호",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 315,
+          "height": 26
+        },
+        {
+          "text": "2026년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2027년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2028년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2029년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2030년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2031년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2032년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2033년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "연도 미정",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 71,
+          "height": 23
+        }
+      ],
+      "cards": [
+        {
+          "text": "수도권 · 사업 262곳 · 22만 7,976호지도에서 보기이름호지금다음 일정들어올 때예정 대비시행2026년 들어와요9곳 · 5,632호인천검단 35인천 검단구964호짓는 중 · 공사 33%다음 일정착공 2020년 12월 31일 완료들어올 때준공 2025년 2월 18일준공 예정일이 19",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 15178
+        }
+      ],
+      "paragraphs": []
+    },
+    {
+      "path": "/citizen/projects?sido=metro&id=PRJ-28290-0056",
+      "url": "http://127.0.0.1:8000/citizen/projects?sido=metro&id=PRJ-28290-0056",
+      "title": "인천검단 35 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "public"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "16px"
+      },
+      "headings": [
+        {
+          "text": "사업 찾기",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 119,
+          "height": 36
+        },
+        {
+          "text": "수도권 · 사업 262곳 · 22만 7,976호",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 315,
+          "height": 26
+        },
+        {
+          "text": "2026년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2027년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2028년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2029년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2030년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2031년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2032년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "2033년 들어와요",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 130,
+          "height": 23
+        },
+        {
+          "text": "연도 미정",
+          "font": "18px",
+          "weight": "700",
+          "line": "23.4px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 71,
+          "height": 23
+        },
+        {
+          "text": "인천검단 35",
+          "font": "20px",
+          "weight": "700",
+          "line": "24px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 103,
+          "height": 24
+        },
+        {
+          "text": "일정",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 37,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "수도권 · 사업 262곳 · 22만 7,976호지도에서 보기이름호지금다음 일정들어올 때예정 대비시행2026년 들어와요9곳 · 5,632호인천검단 35인천 검단구964호짓는 중 · 공사 33%다음 일정착공 2020년 12월 31일 완료들어올 때준공 2025년 2월 18일준공 예정일이 19",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 15178
+        },
+        {
+          "text": "지난 단계 계획지난 단계 허가착공지금모집 공고준공입주착공 — 공사를 시작했고 짓고 있어요964호공사 33.0%",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 866,
+          "height": 180
+        },
+        {
+          "text": "일정착공2020년 12월 31일실제모집 공고미정준공2025년 2월 18일예정 · 지남입주미정",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 866,
+          "height": 220
+        }
+      ],
+      "paragraphs": [
+        {
+          "text": "준공 예정일(2025년 2월 18일)이 19개월 지났어요",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "10px",
+          "padding": "8px 10px",
+          "width": 866,
+          "height": 46
+        },
+        {
+          "text": "착공 — 공사를 시작했고 짓고 있어요",
+          "font": "14px",
+          "weight": "400",
+          "line": "22.4px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 824,
+          "height": 28
+        },
+        {
+          "text": "964호공사 33.0%",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 824,
+          "height": 28
+        }
+      ]
+    },
+    {
+      "path": "/citizen/schedule?sido=metro",
+      "url": "http://127.0.0.1:8000/citizen/schedule?sido=41&sgg=41360",
+      "title": "공급 일정 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "public"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "16px"
+      },
+      "headings": [
+        {
+          "text": "공급 일정",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 119,
+          "height": 36
+        },
+        {
+          "text": "앞으로 12개월 · 준공 예정1곳 · 629호",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 333,
+          "height": 26
+        },
+        {
+          "text": "2027년 9월",
+          "font": "16px",
+          "weight": "700",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 81,
+          "height": 26
+        },
+        {
+          "text": "지난 몇 년 · 해마다 준공된 주택",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 265,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "앞으로 12개월 · 준공 예정1곳 · 629호남양주시· 공공 사업종류모집 공고1곳준공1곳입주0곳1,000500010월이번 달11월12월1월20272월3월4월5월6월7월8월629호1곳9월2027년 9월1곳 · 629호준공남양주왕숙(1블록)9월 27일남양주시629호",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 545
+        },
+        {
+          "text": "지난 몇 년 · 해마다 준공된 주택경기· 모든 주택(민간 포함)시도 전체 값지표착공준공2025년 준공 수도권 3곳 중 1위 · 8만 2,390호25만20만15만10만5만02018 — 229,349호2019 — 174,839호2020 — 150,355호2021 — 140,180호2022 ",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 481
+        }
+      ],
+      "paragraphs": [
+        {
+          "text": "2025년 준공 수도권 3곳 중 1위 · 8만 2,390호",
+          "font": "16px",
+          "weight": "700",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 26
+        },
+        {
+          "text": "2026년은 8월까지(잠정)",
+          "font": "16px",
+          "weight": "400",
+          "line": "25.6px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 26
+        }
+      ]
+    },
+    {
+      "path": "/",
+      "url": "http://127.0.0.1:8000/",
+      "title": "더주택 종합상황판",
+      "html": "dark",
+      "attributes": {
+        "aud": "admin"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "14px"
+      },
+      "headings": [
+        {
+          "text": "주택공급 종합상황판",
+          "font": "28px",
+          "weight": "700",
+          "line": "42px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1,
+          "height": 1
+        },
+        {
+          "text": "월별 공급 파동",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 122,
+          "height": 26
+        },
+        {
+          "text": "공급 판정",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 79,
+          "height": 26
+        },
+        {
+          "text": "전체 사업 · 단계별 호수",
+          "font": "16px",
+          "weight": "700",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 159,
+          "height": 26
+        },
+        {
+          "text": "월별 실적 흐름",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 122,
+          "height": 26
+        },
+        {
+          "text": "시도별 지연 현황",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 140,
+          "height": 26
+        },
+        {
+          "text": "지연·주의 추이",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 128,
+          "height": 26
+        },
+        {
+          "text": "앞으로 12개월 · 준공 예정",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 222,
+          "height": 26
+        },
+        {
+          "text": "기관별 진행",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 98,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "월별 공급 파동수도권· 사업 원장계획인허가착공모집준공입주지연지연 · 후보 포함기준 2026.10판정 기준 변경 · 2026.10부터 번호 있는 사업만05만10만15만20만25만2025년2026년2027년2028년227,976호",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 959,
+          "height": 535
+        },
+        {
+          "text": "공급 판정수도권· 사업 원장2026.10현재호수 기준판정 대상 169건 · 168,152호전체 공급 호수의 73.8%지연1,666호1.0% · 2건주의1,844호1.1% · 2건정상164,642호97.9% · 165건전체 사업 · 단계별 호수단위: 호병목 보기현재 단계호수 · 지금지연①",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 474,
+          "height": 535
+        },
+        {
+          "text": "월별 실적 흐름수도권· 통계누리인허가착공모집준공지역별8월20만15만10만5만02021.09 — 인허가 알 수 없음 · 착공 24,422호 · 모집 16,522호 · 준공 10,070호2021.10 — 인허가 22,276호 · 착공 24,551호 · 모집 7,127호 · 준공 17,364",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 717,
+          "height": 409
+        },
+        {
+          "text": "시도별 지연 현황수도권· 사업 원장지연율 · 호수 기준030%+서울0.0%지연율0호지연 0건인천11.6%지연율1,666호지연 2건경기0.0%지연율0호지연 0건서울지연0건주의0건정상45건서울 실적지도",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 717,
+          "height": 409
+        },
+        {
+          "text": "지연·주의 추이수도권· 사업 원장지연1,666비교 불가주의1,844비교 불가2026.10 판정이전 기준 · 후보 포함 · 지연 108,293판정 기준 변경 · 2026.10부터 번호 있는 사업만(그 앞 달은 후보 포함 소급 판정) — 이전 달과 비교 불가기준 변경2025.012026.1",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 474,
+          "height": 331
+        },
+        {
+          "text": "앞으로 12개월 · 준공 예정수도권· 사업 원장LH 상세13,372호24건10월 1,806호2026.10 준공 예정 1,806호 · 4건2026.11 준공 예정 0호 · 0건2026.12 준공 예정 612호 · 1건2027.01 준공 예정 0호 · 0건2027.02 준공 예정 726호 ",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 474,
+          "height": 331
+        },
+        {
+          "text": "기관별 진행수도권· 사업 원장정상주의지연확인 필요일정 정보 없음기관별 사업지연 · 수도권 지연 중 몫LH92,746호1,666호몫 100.0%GH1,296호0호몫 0.0%SH15,393호0호몫 0.0%기관 미상118,541호0호몫 0.0%사업 없음: 지자체 · 국방부",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 474,
+          "height": 331
+        }
+      ],
+      "paragraphs": []
+    },
+    {
+      "path": "/projects",
+      "url": "http://127.0.0.1:8000/projects",
+      "title": "수도권 사업 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "admin"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "14px"
+      },
+      "headings": [
+        {
+          "text": "사업",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 55,
+          "height": 36
+        },
+        {
+          "text": "단계별 진행",
+          "font": "16px",
+          "weight": "700",
+          "line": "20.8px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 78,
+          "height": 21
+        },
+        {
+          "text": "사업 목록262건 · 계획 227,976호",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 231,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "정책 전체· 정책 진행 자료2026.01~2026.09 · 확인 / 목표9·7 대책 목표 대비①계획달성 24.2%3,560 / 14,694②인허가달성 230.7%3,560 / 1,543③착공목표 없음④모집달성 58.8%4,732 / 8,049⑤준공달성 100.0%381 / 381⑥입주목",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 187
+        },
+        {
+          "text": "수도권· 사업 원장단계·상태 거르기는 목록에만읽는 법어디서 막혀 있는가③ 착공병목 · 지연(장기 포함) 1,666호어떤 사업이 늦어지는가2건지연 6~12개월 0 · 장기 12개월+ 2어디를 먼저 챙기는가인천지연·주의 2,890호앞으로 얼마나 공급되는가13,372호앞으로 12개월 · 준공",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 384
+        },
+        {
+          "text": "사업 목록262건 · 계획 227,976호수도권· 사업 원장CSV 내려받기이 범위 지도에서데이터 원본점검 필요 순사업시군구기관단계계획 호수공고 확인현재 예정지연(개월)상태지도인천검단 35인천 검단구LH③ 착공964–2025.02 준공+19장기 지연위치 미확보인천검단 AA13-1인천 검단",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 811
+        }
+      ],
+      "paragraphs": [
+        {
+          "text": "점검 필요 순",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 21
+        }
+      ]
+    },
+    {
+      "path": "/projects?id=PRJ-28290-0056",
+      "url": "http://127.0.0.1:8000/projects?id=PRJ-28290-0056",
+      "title": "인천검단 35 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "admin"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "14px"
+      },
+      "headings": [
+        {
+          "text": "사업",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 55,
+          "height": 36
+        },
+        {
+          "text": "단계별 진행",
+          "font": "16px",
+          "weight": "700",
+          "line": "20.8px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 78,
+          "height": 21
+        },
+        {
+          "text": "사업 목록262건 · 계획 227,976호",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 231,
+          "height": 26
+        },
+        {
+          "text": "인천검단 35",
+          "font": "20px",
+          "weight": "700",
+          "line": "24px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 103,
+          "height": 24
+        },
+        {
+          "text": "단계 타임라인장기 지연 · 당초 일정 없음",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 296,
+          "height": 26
+        },
+        {
+          "text": "개요",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 37,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "정책 전체· 정책 진행 자료2026.01~2026.09 · 확인 / 목표9·7 대책 목표 대비①계획달성 24.2%3,560 / 14,694②인허가달성 230.7%3,560 / 1,543③착공목표 없음④모집달성 58.8%4,732 / 8,049⑤준공달성 100.0%381 / 381⑥입주목",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 187
+        },
+        {
+          "text": "수도권· 사업 원장단계·상태 거르기는 목록에만읽는 법어디서 막혀 있는가③ 착공병목 · 지연(장기 포함) 1,666호어떤 사업이 늦어지는가2건지연 6~12개월 0 · 장기 12개월+ 2어디를 먼저 챙기는가인천지연·주의 2,890호앞으로 얼마나 공급되는가13,372호앞으로 12개월 · 준공",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 384
+        },
+        {
+          "text": "사업 목록262건 · 계획 227,976호수도권· 사업 원장CSV 내려받기이 범위 지도에서데이터 원본점검 필요 순사업시군구기관단계계획 호수공고 확인현재 예정지연(개월)상태지도인천검단 35인천 검단구LH③ 착공964–2025.02 준공+19장기 지연위치 미확보인천검단 AA13-1인천 검단",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 811
+        },
+        {
+          "text": "지난 단계 ① 계획지난 단계 ② 인허가③ 착공지금④ 모집⑤ 준공⑥ 입주③ 착공 — 착공했고 현재 얼마나 진행됐는가같은 단계 사업 목록 ›계획964호공정률33.0%보고 2026.07.01",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 851,
+          "height": 260
+        },
+        {
+          "text": "단계 타임라인장기 지연 · 당초 일정 없음현재 예정실제지연미확보오늘공정률오늘 2026.10예정 경과③ 착공현재–실제2020.12⑤ 준공현재2025.02 +19개월+19개월실제공정률33.0%2020202120222023202420252026",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 851,
+          "height": 314
+        },
+        {
+          "text": "개요지도에서 보기 · 미확보지역 공급시군구인천광역시 검단구위치위치 미확보위치 입력 필요시행LH구분공공 · 구역 미상정책 연결9·7 대책",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 851,
+          "height": 226
+        },
+        {
+          "text": "근거출처 1곳 · 사업 원장(HOME) 2026.10.14 받음출처HOME PoC(국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료) · HOME 사업(home_project·project·식별 별칭·위치) — 수도권 사업 원장의 정본 · 기준 2026.10.14 · 수집 2026.",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 851,
+          "height": 68
+        }
+      ],
+      "paragraphs": [
+        {
+          "text": "점검 필요 순",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 21
+        },
+        {
+          "text": "③ 착공 — 착공했고 현재 얼마나 진행됐는가같은 단계 사업 목록 ›",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 809,
+          "height": 28
+        }
+      ]
+    },
+    {
+      "path": "/projects?print=1",
+      "url": "http://127.0.0.1:8000/projects?print=1",
+      "title": "월간 주택공급 보고 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "admin"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "14px"
+      },
+      "headings": [
+        {
+          "text": "월간 주택공급 보고",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 238,
+          "height": 36
+        },
+        {
+          "text": "단계별 진행",
+          "font": "16px",
+          "weight": "700",
+          "line": "20.8px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 78,
+          "height": 21
+        },
+        {
+          "text": "점검 필요 4건 전부",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 157,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "정책 전체· 정책 진행 자료2026.01~2026.09 · 확인 / 목표9·7 대책 목표 대비①계획달성 24.2%3,560 / 14,694②인허가달성 230.7%3,560 / 1,543③착공목표 없음④모집달성 58.8%4,732 / 8,049⑤준공달성 100.0%381 / 381⑥입주목",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 187
+        },
+        {
+          "text": "수도권· 사업 원장단계·상태 거르기는 목록에만읽는 법어디서 막혀 있는가③ 착공병목 · 지연(장기 포함) 1,666호어떤 사업이 늦어지는가2건지연 6~12개월 0 · 장기 12개월+ 2어디를 먼저 챙기는가인천지연·주의 2,890호앞으로 얼마나 공급되는가13,372호앞으로 12개월 · 준공",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 632
+        },
+        {
+          "text": "점검 필요 4건 전부수도권· 사업 원장사업시군구기관단계계획 호수현재 예정지연(개월)상태인천검단 35인천 검단구LH③ 착공9642025.02 준공+19장기 지연인천검단 AA13-1인천 검단구LH③ 착공7022025.02 준공원천 날짜 다름(LH 2028.12)+19장기 지연인천검단 AA-",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 305
+        }
+      ],
+      "paragraphs": [
+        {
+          "text": "범위 수도권(262건) · 자료 기준: 사업 원장 2026.10.13 · 정책 진행 자료 2026.10.14 · 정책 목표·확인 2026.09까지 · 출처: 사업 원장(건축HUB·LH·마이홈·청약홈·통계누리), 정책 진행 자료 · 판정: 현재 예정일 경과 1~6개월 주의, 6개월 이상 ",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1384,
+          "height": 42
+        }
+      ]
+    },
+    {
+      "path": "/region",
+      "url": "http://127.0.0.1:8000/region",
+      "title": "지역 공급 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "admin"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "14px"
+      },
+      "headings": [
+        {
+          "text": "지역 공급",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 119,
+          "height": 36
+        },
+        {
+          "text": "앞으로 12개월 · 준공 예정2026.10 ~ 2027.09 · 24건 · 13,372호",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 461,
+          "height": 26
+        },
+        {
+          "text": "2026.10",
+          "font": "16px",
+          "weight": "700",
+          "line": "25.6px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 62,
+          "height": 26
+        },
+        {
+          "text": "지난 공급 실적 · 연도별 준공",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 241,
+          "height": 26
+        },
+        {
+          "text": "시도별 · 연도별 준공",
+          "font": "16px",
+          "weight": "700",
+          "line": "20.8px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 21
+        },
+        {
+          "text": "동네 여건",
+          "font": "16px",
+          "weight": "700",
+          "line": "20.8px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 63,
+          "height": 21
+        }
+      ],
+      "cards": [
+        {
+          "text": "앞으로 12개월 · 준공 예정2026.10 ~ 2027.09 · 24건 · 13,372호수도권· 사업 원장종류모집 예정20건 · 11,574호준공 예정24건 · 13,372호입주 예정7건 · 2,548호1만5,00001,806호4건10월이번 달없음11월612호1건12월없음1월202772",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 609
+        },
+        {
+          "text": "지난 공급 실적 · 연도별 준공수도권· 통계누리지표인허가착공모집준공완결 연도2026 1~8월데이터 원본40만30만20만10만02018 — 323,497호2019 — 264,082호2020 — 240,325호2021 — 233,355호2022 — 228,233호2023 — 242,493호",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 682
+        }
+      ],
+      "paragraphs": []
+    },
+    {
+      "path": "/sources",
+      "url": "http://127.0.0.1:8000/sources",
+      "title": "데이터 원본 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "admin"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "14px"
+      },
+      "headings": [
+        {
+          "text": "데이터 원본",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 146,
+          "height": 36
+        },
+        {
+          "text": "요구사항 충족",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 116,
+          "height": 26
+        },
+        {
+          "text": "수집 상태81곳(우리가 모은 원천 19 + 정책 진행 자료 62) · 실패 1 · 경고 2",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 468,
+          "height": 26
+        },
+        {
+          "text": "연도 확보",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 79,
+          "height": 26
+        },
+        {
+          "text": "연결",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 37,
+          "height": 26
+        },
+        {
+          "text": "단계별 데이터 연계",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 158,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "요구사항 충족수도권· 정책 진행 자료충족 1 · 부분 9 · 없음 2요구사항우선순위지시판정근거 지표화면주택공급 현황 통합 조회 F-01우선순위필수지시08.21 · 09.03판정부분근거 지표정책 연결 시도 3/16화면사업 · 지역 공급주택공급 목표 대비 이행실적 관리 F-02우선순위필수지",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 647
+        },
+        {
+          "text": "수집 상태81곳(우리가 모은 원천 19 + 정책 진행 자료 62) · 실패 1 · 경고 2원천 전체실패경고정상구분 모두 정책 진행 자료 · 원천 기준일 없음원천기관상태수집 실행마지막 정상 수집건수iH 인천도시공사 임대주택 재고·​계약·​공가 참조인천도시공사실패2회 · 실패 2없음–건축H",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 643
+        },
+        {
+          "text": "연도 확보원천 전체확보부분미확보201820192020202120222023202420252026통계누리 주택건설실적(월)미확보미확보미확보부분확보확보확보확보부분마이홈포털 공공주택 모집공고미확보미확보미확보미확보미확보미확보확보확보부분분양임대공고문 조회미확보미확보미확보미확보미확보미확보확보확보부",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 560
+        },
+        {
+          "text": "연결정책 전체· 사업 원장담당자 확인담당자 확인 전정책–프로그램담당자 확인 전 13 · 확인 25프로그램–사업담당자 확인 전 98 · 확인 174",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 162
+        }
+      ],
+      "paragraphs": [
+        {
+          "text": "구분 모두 정책 진행 자료 · 원천 기준일 없음",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 21
+        },
+        {
+          "text": "정상 78곳 · 기관 30",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 21
+        },
+        {
+          "text": "2018~2026 빈틈 없음 3곳 · HUG 분양이력정보 · GH 주택 공고·과거 목록 · KOSIS 시군구별 반기 고용·취업자",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 21
+        },
+        {
+          "text": "2026 자료만 3곳 · KOSIS 수도권 시군구 연령별 주민등록인구 · KOSIS 시도별 장래가구추계 · LH 공공주택 블록별 준공예정",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 21
+        }
+      ]
+    },
+    {
+      "path": "/month/2026-08",
+      "url": "http://127.0.0.1:8000/month/2026-08",
+      "title": "2026년 8월 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "admin"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "14px"
+      },
+      "headings": [
+        {
+          "text": "2026년 8월",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 152,
+          "height": 36
+        },
+        {
+          "text": "시도별",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 55,
+          "height": 26
+        },
+        {
+          "text": "시행주체별",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 92,
+          "height": 26
+        },
+        {
+          "text": "LH 준공 예정",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 112,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "시도별데이터 원본시도② 인허가③ 착공④ 모집⑤ 준공수도권15,4708,84514,5878,871서울11,3061,1721,4734,714인천8643,6054,372190경기3,3004,0688,7423,967",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 305
+        },
+        {
+          "text": "시행주체별시행주체② 인허가③ 착공⑤ 준공지자체124410LH1,3000227주택업체982650민간14,0608,1398,644총계15,4708,8458,871",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 347
+        },
+        {
+          "text": "LH 준공 예정0블록 · 0호 · 파일 기준 2026.01.278개월 전 자료이 달에 준공 예정인 LH 블록이 파일에 없습니다.",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 115
+        }
+      ],
+      "paragraphs": [
+        {
+          "text": "이 달에 준공 예정인 LH 블록이 파일에 없습니다.",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(179, 179, 179)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 1342,
+          "height": 21
+        }
+      ]
+    },
+    {
+      "path": "/agency/lh",
+      "url": "http://127.0.0.1:8000/agency/lh",
+      "title": "LH · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "admin"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1501
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "14px"
+      },
+      "headings": [
+        {
+          "text": "LH",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 40,
+          "height": 36
+        },
+        {
+          "text": "월별 실적",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 79,
+          "height": 26
+        },
+        {
+          "text": "최근 12개월",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 103,
+          "height": 26
+        },
+        {
+          "text": "LH 준공 예정",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 112,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "월별 실적인허가착공준공잠정데이터 원본100,00075,00050,00025,00002021.09 — 인허가 알 수 없음 · 착공 0호 · 준공 49호2021.10 — 인허가 0호 · 착공 94호 · 준공 648호2021.11 — 인허가 822호 · 착공 0호 · 준공 0호2021.12 ",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 394
+        },
+        {
+          "text": "최근 12개월월② 인허가③ 착공⑤ 준공2026.081,30002272026.07001,8442026.062837,85702026.057001,8742026.048171,28202026.0301,0243202026.021,67808462026.01006422025.1251,53822,02",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 641
+        },
+        {
+          "text": "LH 준공 예정2026.10부터 · 143블록 · 89,714호 · 파일 기준 2026.01.278개월 전 자료연도블록호수2026116,54220274529,03720286842,96620291810,27720301892188건준공예정일사업지구블록공급유형호수위치지도2026.10.31인천",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 923
+        }
+      ],
+      "paragraphs": []
+    },
+    {
+      "path": "/agency/mnd",
+      "url": "http://127.0.0.1:8000/agency/mnd",
+      "title": "국방부 · 더주택",
+      "html": "dark",
+      "attributes": {
+        "aud": "admin"
+      },
+      "viewport": {
+        "width": 1512,
+        "height": 838,
+        "scrollWidth": 1512
+      },
+      "tokens": {
+        "--page-bg": "#111",
+        "--card": "#111",
+        "--foreground": "#f2f2f2",
+        "--primary": "#9dbce9",
+        "--radius-tile": "10px",
+        "--fs-body": "14px"
+      },
+      "headings": [
+        {
+          "text": "국방부",
+          "font": "30px",
+          "weight": "700",
+          "line": "36px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 83,
+          "height": 36
+        },
+        {
+          "text": "받은 원천 파일",
+          "font": "20px",
+          "weight": "700",
+          "line": "26px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgba(0, 0, 0, 0)",
+          "radius": "0px",
+          "padding": "0px",
+          "width": 122,
+          "height": 26
+        }
+      ],
+      "cards": [
+        {
+          "text": "받은 원천 파일1종데이터 원본데이터셋건수원천 기준일15061908 군 특별공급 주택 공고 상세 현황5,743확인하지 못함",
+          "font": "14px",
+          "weight": "400",
+          "line": "21px",
+          "color": "rgb(242, 242, 242)",
+          "bg": "rgb(17, 17, 17)",
+          "radius": "14px",
+          "padding": "20px",
+          "width": 1384,
+          "height": 179
+        }
+      ],
+      "paragraphs": []
+    }
+  ],
+  "additionalVariants": [
+    {
+      "path": "/citizen",
+      "url": "http://127.0.0.1:8000/citizen",
+      "title": "더주택 — 내 동네 공공 주택 공급",
+      "headings": [
+        "남양주시\n공급 예정 호수\n1만 6,388호",
+        "지금 신청",
+        "공급 예정 호수",
+        "공급 예정 상위 지역",
+        "청약 단지"
+      ]
+    },
+    {
+      "path": "/citizen/projects?sido=metro",
+      "url": "http://127.0.0.1:8000/citizen/projects?sido=metro",
+      "title": "수도권 사업 찾기 · 더주택",
+      "headings": [
+        "사업 찾기",
+        "수도권 · 사업 262곳 · 22만 7,976호",
+        "2026년 들어와요",
+        "2027년 들어와요",
+        "2028년 들어와요",
+        "2029년 들어와요",
+        "2030년 들어와요",
+        "2031년 들어와요",
+        "2032년 들어와요",
+        "2033년 들어와요",
+        "연도 미정"
+      ]
+    },
+    {
+      "path": "/citizen/schedule?sido=metro",
+      "url": "http://127.0.0.1:8000/citizen/schedule?sido=41&sgg=41360",
+      "title": "공급 일정 · 더주택",
+      "headings": [
+        "공급 일정",
+        "앞으로 12개월 · 준공 예정1곳 · 629호",
+        "2027년 9월",
+        "지난 몇 년 · 해마다 준공된 주택"
+      ]
+    },
+    {
+      "path": "/agency/gh",
+      "url": "http://127.0.0.1:8000/agency/gh",
+      "title": "GH · 더주택",
+      "headings": [
+        "GH",
+        "GH 사업"
+      ]
+    },
+    {
+      "path": "/agency/sh",
+      "url": "http://127.0.0.1:8000/agency/sh",
+      "title": "SH · 더주택",
+      "headings": [
+        "SH",
+        "받은 원천 파일"
+      ]
+    },
+    {
+      "path": "/agency/local",
+      "url": "http://127.0.0.1:8000/agency/local",
+      "title": "지자체 · 더주택",
+      "headings": [
+        "지자체",
+        "월별 실적",
+        "최근 12개월"
+      ]
+    },
+    {
+      "path": "/month/2027-09",
+      "url": "http://127.0.0.1:8000/month/2027-09",
+      "title": "2027년 9월 · 더주택",
+      "headings": [
+        "2027년 9월",
+        "준공 예정 사업",
+        "LH 준공 예정"
+      ]
+    }
+  ]
+}

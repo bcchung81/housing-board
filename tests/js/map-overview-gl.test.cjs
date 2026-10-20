@@ -42,19 +42,19 @@ function fakePage(search, o = {}) {
   const els = {}, $ = (id) => (els[id] = els[id] || fakeEl());
   $('ov').dataset.gl = o.glSrc === undefined ? '/assets/js/map3d-gl.js' : o.glSrc;
   $('ov').dataset.maplibre = J.MAPLIBRE;
-  $('ovLegend').parentNode = fakeEl();
+  $('ovLegend'); $('ovLegendTop');
   const svg = fakeEl('svg'); $('ovStage').querySelector = (q) => (q === 'svg.map' ? svg : null);
   svg.querySelector = (q) => (q === '.lbls' ? (svg.lbls = svg.lbls || fakeEl('g')) : null);
   const html = fakeEl('html'); html.setAttribute('data-aud', 'admin');
   const head = fakeEl('head');
   const doc = { getElementById: $, documentElement: html, head, activeElement: null, createElement: (t) => fakeEl(t), addEventListener() {} };
   const calls = [], log = (k, ...a) => calls.push([k, ...a]);
-  const Map3D = { prep: (x) => x, geom: () => ({}), draw: () => { log('svg-draw'); return { F: [] }; }, labels: () => log('svg-labels'), recolor: () => log('svg-recolor'), paintFaces() {}, keyMove: () => null };
+  const Map3D = { prep: (x) => x, geom: (b, opt) => { log('svg-geom', opt); return {}; }, draw: (sv, g, opt) => { log('svg-draw', opt); return { F: [] }; }, nearOf: (b, sd, opt) => { log('nearOf', sd, opt); return { near: [], keep: [], hide: ['h-' + sd] }; }, labels: () => log('svg-labels'), recolor: () => log('svg-recolor'), paintFaces() {}, keyMove: () => null };
   let handlers = {};
   const glMap = {
-    ready: false, el: null, map: { on() {} },
+    ready: false, el: null, map: { on() {}, getLayer: (id) => ['gl-ctx', 'gl-ctx-line', 'gl-sido'].includes(id), setLayoutProperty: (id, k, v) => log('layout', id, v) },
     on(t, f) { (handlers[t] = handlers[t] || []).push(f); return this; },
-    setSize: () => false, setValues: (v, c, opt) => log('setValues', opt), setClasses: (c) => log('setClasses', c), setColors: () => log('setColors'),
+    setSize: () => false, setScope: (sd) => log('setScope', sd), setValues: (v, c, opt) => log('setValues', opt), setClasses: (c) => log('setClasses', c), setColors: () => log('setColors'),
     flyTo(t, opt) { log('flyTo', t, opt && opt.duration); const moved = t !== this.target; this.target = t; return moved; },
     select: (c) => log('select', c), hover() {}, overlay: () => log('overlay'), labels: (g, us, opt) => log('labels', us.length, opt.strict), faces: () => [], destroy: () => log('destroy'),
   };
@@ -162,8 +162,8 @@ test('⑤ 스타일 외부 요청 0: 맥락 층을 더해도 타일·글꼴·스
   const st = GLM.styleOf(GLM.toGeoJSON(J.seedOf(DOC.units)), cols, GLM.ctxGeoJSON(J.glCtxOf(DOC.nation.sido))), js = JSON.stringify(st);
   for (const k of ['glyphs', 'sprite', 'tiles', 'url']) assert.ok(!js.includes(`"${k}"`), k);
   assert.ok(!/https?:/.test(js), '주소 없음');
-  assert.deepEqual(Object.keys(st.sources), ['sgg', 'ctx']); assert.equal(st.sources.ctx.type, 'geojson');
-  assert.deepEqual(st.layers.map((l) => `${l.id}:${l.type}`), ['gl-bg:background', 'gl-ctx:fill', 'gl-ctx-line:line', 'gl-sea:fill', 'gl-flat:fill', 'gl-line:line', 'gl-hl:line', 'gl-ext:fill-extrusion']);
+  assert.deepEqual(Object.keys(st.sources), ['sgg', 'ctx', 'rim']); assert.equal(st.sources.ctx.type, 'geojson');
+  assert.deepEqual(st.layers.map((l) => `${l.id}:${l.type}`), ['gl-bg:background', 'gl-ctx:fill', 'gl-ctx-line:line', 'gl-sea:fill', 'gl-flat:fill', 'gl-line:line', 'gl-hl:line', 'gl-ext:fill-extrusion', 'gl-rim:fill-extrusion']);
   assert.ok(!st.layers.some((l) => l.source === 'ctx' && l.type === 'fill-extrusion'), '맥락 면은 솟지 않는다');
   /* maplibre 는 상세 지도와 같은 로컬 주소(다시 받지 않게 — 같은 주소 = 브라우저 캐시) */
   assert.equal(J.MAPLIBRE, '/assets/vendor/maplibre-gl/5.24.0/maplibre-gl.js');
@@ -177,12 +177,48 @@ test('⑤ 스타일 외부 요청 0: 맥락 층을 더해도 타일·글꼴·스
 test('⑥ 공용 모듈 확장은 하위 호환: 맥락을 주지 않으면 예전 층·소스 그대로(/citizen), 색 읽기에 맥락 색이 더해지고 setColors 는 맥락 층이 있을 때만 칠한다', () => {
   const cols = { face: Array(6).fill([1, 2, 3, 1]), lift: Array(6).fill([4, 5, 6, 1]), ce: Array(6).fill([7, 8, 9, 1]), line: [255, 255, 255, 1], sea: [0, 0, 0, .06] };
   const st = GLM.styleOf(GLM.toGeoJSON(J.seedOf(DOC.units)), cols);
-  assert.deepEqual(Object.keys(st.sources), ['sgg']);
-  assert.deepEqual(st.layers.map((l) => l.id), ['gl-bg', 'gl-sea', 'gl-flat', 'gl-line', 'gl-hl', 'gl-ext']);
+  assert.deepEqual(Object.keys(st.sources), ['sgg', 'rim']);
+  assert.deepEqual(st.layers.map((l) => l.id), ['gl-bg', 'gl-sea', 'gl-flat', 'gl-line', 'gl-hl', 'gl-ext', 'gl-rim']);
   assert.equal(GLM.ctxGeoJSON([]), null); assert.equal(GLM.ctxGeoJSON(undefined), null);
   const src = read('assets/js/map3d-gl.js');
   assert.match(src, /ctx: v\('--map-ctx'\), ctxLine: v\('--card'\)/, '맥락 색 = map3d.css .ctx 와 같은 토큰');
   assert.match(src, /if \(map\.getLayer\('gl-ctx'\)\)/);
   assert.match(src, /function setClasses\(cls\) \{ for \(const c of codes\) fs\(c, \{ c: \(cls && cls\[c\]\) \|\| 0 \}\); \}/, '색 단계만 = feature-state c');
   assert.doesNotMatch(read('tools/design/public-mock/template.html'), /MapGL\.mount\([^\n]*ctx:|\.setClasses\(/, '/citizen 은 확장을 쓰지 않는다(그대로)');
+});
+
+test('⑦ 보는 시도 모드(2026-10-19 사용자 피드백 \'일반사용자 종합상황판과 동일하게 서울 선택 시 지도 모양\'): mount 에 scope, 시도 보기 = setScope(시도)·수도권 밖 맥락 면 숨김·시도 경계선, 수도권 전체 = setScope(null)·맥락 면 그대로·경계선 없음, SVG 대체 = draw scope·hide + 그 시도 맞춤', async () => {
+  const lay = (P) => Object.fromEntries(P.of('layout').map((c) => [c[1], c[2]]));
+  const P = fakePage('?sido=11');
+  J.mount(P.win, P.doc); await tick(); await tick(); P.ready(); await tick();
+  const opt = P.of('mount')[0][1];
+  assert.equal(opt.scope, '11', '처음부터 서울 보는 시도 모드'); assert.equal(opt.ctx.length, 13, '맥락 면 자료는 붙이고 층만 숨긴다'); assert.equal(typeof opt.padding, 'function');
+  assert.deepEqual(P.of('setScope').at(-1), ['setScope', '11']);
+  assert.deepEqual(lay(P), { 'gl-ctx': 'none', 'gl-ctx-line': 'none', 'gl-sido': 'visible' }, '시도 보기: 수도권 밖 맥락 면 숨김 · 시도 경계선 보임');
+  const seq = P.calls.map((c) => c[0]).filter((k) => k === 'setScope' || k === 'flyTo');
+  assert.equal(seq[0], 'setScope', '범위(밖 면 회색·숨김)를 먼저 정하고 날기');
+  clickCard(P, '11');
+  assert.deepEqual(P.of('setScope').at(-1), ['setScope', null], '풀면 범위도 푼다'); assert.deepEqual(P.of('flyTo').at(-1).slice(1), [null, undefined]);
+  assert.deepEqual(lay(P), { 'gl-ctx': 'visible', 'gl-ctx-line': 'visible', 'gl-sido': 'none' }, '수도권 전체: 예전 /map 그대로(맥락 면 있음 · 시도 경계선 없음)');
+  clickCard(P, '28'); assert.deepEqual(P.of('setScope').at(-1), ['setScope', '28']); assert.equal(lay(P)['gl-ctx'], 'none');
+  /* 회색 이웃 면 누름(인천 보기에서 서울 강서구) → 그 시도로(/map 지금 동작 유지) */
+  P.handlers().pick[0]('11500', { originalEvent: { clientX: 10, clientY: 10 } });
+  assert.deepEqual(P.of('setScope').at(-1), ['setScope', '11']); assert.deepEqual(P.of('flyTo').at(-1).slice(1), ['11', undefined]);
+  /* 수도권 전체로 연 첫 화면: scope 키는 주되 null(보는 시도 모드 켬 · 시도 없음) */
+  const Q = fakePage('');
+  J.mount(Q.win, Q.doc); await tick(); await tick(); Q.ready(); await tick();
+  assert.ok('scope' in Q.of('mount')[0][1]); assert.equal(Q.of('mount')[0][1].scope, null);
+  assert.deepEqual(Q.of('setScope').at(-1), ['setScope', null]); assert.deepEqual(lay(Q), { 'gl-ctx': 'visible', 'gl-ctx-line': 'visible', 'gl-sido': 'none' });
+  /* SVG 대체(?gl=0): 시도 보기 = 본토 판 65면(섬 삽입 없음) + 그 시도 맞춤 상자 + draw scope·hide(Map3D.nearOf, 섬 omit) · 맥락 면 없음 */
+  const S = fakePage('?sido=11&gl=0');
+  J.mount(S.win, S.doc); await tick(); await tick();
+  assert.equal(S.of('mount').length, 0);
+  const d = S.of('svg-draw').at(-1)[1], g = S.of('svg-geom').at(-1)[1];
+  assert.equal(d.scope, '11'); assert.deepEqual(d.hide, ['h-11']); assert.deepEqual(S.of('nearOf')[0].slice(1), ['11', { omit: J.ISLES }]);
+  assert.equal(g.own.length, 65); assert.deepEqual(g.isles, []); assert.ok(!('ctxBase' in g), '시도 보기 SVG 도 수도권 밖 맥락 면 없음'); assert.ok(!('insetTop' in g));
+  assert.deepEqual(g.fit, J.ringsBox(DOC.units.filter((u) => u.s === '11').flatMap((u) => J.pathRings(u.d))), '무대 맞춤 = 서울 면 상자');
+  const T = fakePage('?gl=0');
+  J.mount(T.win, T.doc); await tick(); await tick();
+  const d0 = T.of('svg-draw').at(-1)[1], g0 = T.of('svg-geom').at(-1)[1];
+  assert.ok(!('scope' in d0) && !('hide' in d0), '수도권 전체 SVG 는 예전 그대로'); assert.ok('ctxBase' in g0); assert.ok(!('fit' in g0)); assert.equal(T.of('nearOf').length, 0);
 });

@@ -54,11 +54,11 @@ test('(c) 굵기는 400·700 두 가지: font-medium·font-semibold 등 중간 �
 test('(d) 보이는 서비스 이름은 \'주택공급\': 옛 이름은 app·components 에 남지 않는다(자료 값을 바꿔 보이는 한 줄만 legacy-name 표시로 예외)', () => {
   const old = SRC.flatMap((f) => read(f).split('\n').map((l, i) => (l.includes('주택파동') && !/legacy-name/.test(l) ? `${f}:${i + 1}` : null)).filter(Boolean));
   assert.deepEqual(old, []);
-  assert.match(read('app/(dashboard)/layout.tsx'), /title: \{ default: 'The주택 종합상황판', template: '%s · The주택' \}/);
-  assert.match(read('app/(map)/layout.tsx'), /title: 'The주택 지도'/);
+  assert.match(read('app/(dashboard)/layout.tsx'), /title: \{ default: '더주택 종합상황판', template: '%s · 더주택' \}/);
+  assert.match(read('app/(map)/layout.tsx'), /title: '더주택 지도'/);
   const nav = read('components/TopNav.tsx');
-  assert.match(nav, /aria-label="The주택 종합상황판 처음으로"/, '보이는 로고 글자가 접근 이름에 든다');
-  assert.match(nav, /viewBox="0 0 250 64" aria-hidden="true"/, '로고 = 원본 lockup 벡터 한 벌(2026-10-19: 열린 문 심벌 + The + 주택 윤곽선), 이름은 링크 aria-label');
+  assert.match(nav, /aria-label="더주택 종합상황판 처음으로"/, '보이는 로고 글자가 접근 이름에 든다');
+  assert.match(nav, /viewBox="0 0 202 64" aria-hidden="true"/, '로고 = 원본 lockup 벡터 한 벌(2026-10-19: 열린 문 심벌 + 더 + 주택 윤곽선), 이름은 링크 aria-label');
 });
 
 test('(e) 레이아웃 둘은 로컬 Noto Sans KR 을 싣고 Do Hyeon·외부 글꼴 주소는 없다', () => {
@@ -95,7 +95,7 @@ test('(h) 위계는 크기·굵기로만: 제목(h1·h2·h3)은 700, 로고 글�
   const tw = read('app/globals.css');
   assert.match(tw, /h1, h2, h3 \{\n    font-weight: 700;\n  \}/);
   const nav = read('components/TopNav.tsx');
-  assert.match(nav, /<svg className="block h-\(--logo-h\) w-auto shrink-0 max-\[599px\]:hidden" viewBox="0 0 250 64" aria-hidden="true">/, '로고 = 원본 lockup 벡터(글자 span 없음, 2026-10-19)');
+  assert.match(nav, /<svg className="block h-\(--logo-h\) w-auto shrink-0 max-\[599px\]:hidden" viewBox="0 0 202 64" aria-hidden="true">/, '로고 = 원본 lockup 벡터(글자 span 없음, 2026-10-19)');
   assert.doesNotMatch(nav, /--fs-logo|<span[^>]*>주택<\/span>/);
   assert.match(nav, /<header className="[^"]*font-normal /);
   /* 메뉴·모바일 펼침·좁은 화면 어디에도 별도 글꼴이 없다 */

@@ -55,7 +55,7 @@ test('2 범위 칩: 사업·지역 공급·데이터 원본 패널 머리마다 
   assert.match(page, /<ScopeChip scope=\{region\} source="사업 원장"/, '원장 요약(기존)');
   assert.match(page, /<ScopeChip scope="정책 전체" source="정책 진행 자료"/, '정책 목표 대비(기존)');
   const list = page.slice(page.indexOf('<Card render={<section id="projects-list"'));
-  assert.match(list.slice(0, list.indexOf('<InfoTip')), /scope=\{<ScopeChip scope=\{region\} source="사업 원장"/, '사업 목록 머리');
+  assert.match(list.slice(0, list.indexOf('<InfoTip')), /scope=\{(<>)?<ScopeChip scope=\{region\} source="사업 원장"/, '사업 목록 머리');
   const prio = page.slice(page.indexOf('aria-label="우선 점검 사업"'));
   assert.match(prio.slice(0, prio.indexOf('</Card>')), /scope=\{<ScopeChip scope=\{region\} source="사업 원장"/, '인쇄 보기 우선 점검 사업 머리');
   /* 지역 공급(기존 세 패널) */
@@ -65,7 +65,7 @@ test('2 범위 칩: 사업·지역 공급·데이터 원본 패널 머리마다 
   /* 데이터 원본: 요구사항(수도권 정책 진행 자료 사업 기준) · 수집 상태·연도 확보(원천 전체) · 연결(정책 전체) · 단계별 데이터 연계(원천 전체) */
   assert.match(read('components/sources/Requirements.tsx'), /scope=\{<ScopeChip scope="수도권" source="정책 진행 자료"/);
   const col = read('components/sources/Collect.tsx');
-  for (const [name, re] of [['수집 상태', /<PanelHead title=\{<>수집 상태[\s\S]*?scope=\{<ScopeChip scope="원천 전체"/], ['연도 확보', /<PanelHead title="연도 확보"[^\n]*\n?\s*scope=\{<ScopeChip scope="원천 전체"/], ['연결', /<PanelHead title="연결"[^\n]*\n?\s*scope=\{<ScopeChip scope="정책 전체" source="사업 원장"/]]) assert.match(col, re, name);
+  for (const [name, re] of [['수집 상태', /<PanelHead title=(?:\{<>|")수집 상태[\s\S]*?scope=\{<ScopeChip scope="원천 전체"/], ['연도 확보', /<PanelHead title="연도 확보"[^\n]*\n?\s*scope=\{<ScopeChip scope="원천 전체"/], ['연결', /<PanelHead title="연결"[^\n]*\n?\s*scope=\{<ScopeChip scope="정책 전체" source="사업 원장"/]]) assert.match(col, re, name);
   assert.match(read('app/(dashboard)/sources/page.tsx'), /<PanelHead id="h-stage" title="단계별 데이터 연계" scope=\{<ScopeChip scope="원천 전체"/);
   /* 공개 props 는 그대로(종합상황판이 가져다 씀) */
   assert.match(read('components/ui/scope-chip.tsx'), /export default function ScopeChip\(\{ scope, source, title, clearHref, note, className \}: \{ scope: string; source\?: ScopeSource; title\?: string; clearHref\?: string; note\?: \{ text: string; title: string \}; className\?: string \}\)/);

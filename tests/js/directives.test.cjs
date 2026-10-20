@@ -79,11 +79,11 @@ test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림�
   assert.match(b, /text-sm leading-5', hide && 'invisible'\)\} aria-hidden=\{hide \|\| undefined\}>\{x\.t\}<\/span>/, '윗줄은 지시 주제 이름뿐(꼬리 없음)');
   assert.doesNotMatch(b, /\{x\.date\} · \{x\.t\}<\/span>|x\.sub\.note|data-slot="dir-tag"/, '날짜 접두·꼬리 작은 줄은 화면에 없다');
   assert.match(b, /data-slot="board-dir" title=\{`\$\{x\.date\} 지시 · \$\{x\.t\}\\n\$\{x\.basis\}`\}/, '날짜·지시 이름·기준은 hover title');
-  assert.match(b, /\{pre \? <span className="ui-dir-label text-sm">\{pre\}<\/span> : null\}/, '아랫줄 = 앞말 14/400');
-  assert.match(b, /text-md @min-\[180px\]:text-lg[^>]*>\{big\}<span className="text-sm font-normal">\{u\}<\/span>/, '+ 큰 숫자 20(좁으면 18) + 단위 14');
+  assert.match(b, /<span className="ui-dir-label text-sm">\{pre \|\| '전체 사업'\}<\/span>/, '아랫줄 = 앞말 14/400');
+  assert.match(b, /ui-dir-num ui-kpi leading-title[^>]*>\{big\}<span className="text-sm font-normal">\{u\}<\/span>/, '+ 큰 숫자 20(좁으면 18) + 단위 14');
   assert.doesNotMatch(b, /<Real title=\{x\.basis\}/, '카드에 실데이터 표지를 달지 않는다');
   assert.doesNotMatch(b, /DIR_TL|top-\[83\.5px\]/);
-  assert.match(b, /data-slot="board-dir"[^>]*className=\{cn\(btn, dirFrame, '[^']*\bmin-h-16 /, '카드 높이 64px 이상(내용만큼 자람)');
+  assert.match(b, /data-slot="board-dir"[^>]*className=\{cn\(btn, dirFrame, '[^']*\bh-full /, '카드 높이 64px 이상(내용만큼 자람)');
   assert.match(b, /const dirFrame = 'ui-dir @container';/, '틀은 globals 부품 .ui-dir(제목 위·값 아래, 여백 12/16, 바깥 카드 반경 — 2026-10-19)');
   assert.doesNotMatch(read('app/globals.css'), /\[data-slot="board-dir"\] \{ padding/, '데스크톱 덧댄 위아래 여백 없음');
 });

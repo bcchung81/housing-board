@@ -1,0 +1,66 @@
+{
+  "server": "@modelcontextprotocol/server-sequential-thinking",
+  "tool": "sequentialthinking",
+  "calls": [
+    {
+      "checkpoint": 1,
+      "result": {
+        "thoughtNumber": 1,
+        "totalThoughts": 6,
+        "nextThoughtNeeded": true,
+        "branches": [],
+        "thoughtHistoryLength": 1
+      }
+    },
+    {
+      "checkpoint": 2,
+      "result": {
+        "thoughtNumber": 2,
+        "totalThoughts": 6,
+        "nextThoughtNeeded": true,
+        "branches": [],
+        "thoughtHistoryLength": 2
+      }
+    },
+    {
+      "checkpoint": 3,
+      "result": {
+        "thoughtNumber": 3,
+        "totalThoughts": 6,
+        "nextThoughtNeeded": true,
+        "branches": [],
+        "thoughtHistoryLength": 3
+      }
+    },
+    {
+      "checkpoint": 4,
+      "result": {
+        "thoughtNumber": 4,
+        "totalThoughts": 6,
+        "nextThoughtNeeded": true,
+        "branches": [],
+        "thoughtHistoryLength": 4
+      }
+    },
+    {
+      "checkpoint": 5,
+      "result": {
+        "thoughtNumber": 5,
+        "totalThoughts": 6,
+        "nextThoughtNeeded": true,
+        "branches": [],
+        "thoughtHistoryLength": 5
+      }
+    },
+    {
+      "checkpoint": 6,
+      "result": {
+        "thoughtNumber": 6,
+        "totalThoughts": 6,
+        "nextThoughtNeeded": false,
+        "branches": [],
+        "thoughtHistoryLength": 6
+      }
+    }
+  ]
+}

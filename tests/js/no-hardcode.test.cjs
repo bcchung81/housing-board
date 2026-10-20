@@ -252,7 +252,7 @@ test('shadcn Card 변형: 구역(section, 기본)·타일(tile)·촘촘(compact)
   assert.match(inset, /border-radius: var\(--radius-tile\);/);
   assert.match(inset, /background: var\(--inset-bg\);/);
   assert.doesNotMatch(inset, /box-shadow/);
-  assert.doesNotMatch(EXPORT, /border-radius:\s*0\b/);
+  assert.doesNotMatch(EXPORT.replace(/\.ui-tabs-line[^{}]*\{[^}]*\}/g, ''), /border-radius:\s*0\b/);   // 밑줄 탭(.ui-tabs-line, 2026-10-19)은 카드 모양 상자가 아니라 반경 0
   assert.doesNotMatch(read('components/ui/card.tsx'), /rounded-none|rounded-\[0/);
   assert.doesNotMatch(card, /\b(link|source): "/);
   assert.match(card, /data-slot="card-title" className=\{cn\("ui-h2"/);

@@ -77,8 +77,8 @@ test('지도 섬이 스크립트를 불러오는 순서는 index.html 의 기존
 });
 
 test('지도는 루트 레이아웃이 따로이고(들어갈 때·나올 때 새 문서), 지도로 가는 링크는 <Link> 가 아니라 <a> 다', () => {
-  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" data-map-shell="" suppressHydrationWarning>/);   // 지도도 저장된 테마를 첫 화면 전에 복원한다
-  assert.match(read('app/(dashboard)/layout.tsx'), /<html lang="ko" suppressHydrationWarning>/);   // 라이트가 기본, 저장된 테마가 다크일 때만 그리기 전에 class=dark
+  assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" data-map-shell="" data-design="warm" suppressHydrationWarning>/);   // 지도도 저장된 테마를 첫 화면 전에 복원한다
+  assert.match(read('app/(dashboard)/layout.tsx'), /<html lang="ko" data-design="warm" suppressHydrationWarning>/);   // 비지도 웜 배색 범위(2026-10-19). 라이트가 기본, 저장된 테마가 다크일 때만 그리기 전에 class=dark
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/layout.tsx')), '최상위 layout.tsx 가 있으면 두 레이아웃이 하나로 합쳐진다');
   const nav = read('components/TopNav.tsx');
   assert.match(nav, /compact \|\| m\.id === 'map' \|\| href === '\/citizen'\s*\?\s*<a href=\{href\}/);   // 일반사용자의 '종합상황판'(/citizen)도 정적 문서라 <a>
@@ -117,7 +117,7 @@ test('옛 지도 주소(/?region=…)는 쿼리를 그대로 두고 /map 으로 
   assert.match(proxy, /matcher: '\/'/);
 });
 
-test('지도 머리 줄: compact 도 1600px 이상 1760px 선이고 .mhead 도 같은 선, 탭 제목은 The주택', () => {
+test('지도 머리 줄: compact 도 1600px 이상 1760px 선이고 .mhead 도 같은 선, 탭 제목은 더주택', () => {
   const fs = require('node:fs');
   const nav = fs.readFileSync('components/TopNav.tsx', 'utf8');
   assert.ok(!/!compact\s*&&\s*'min-\[1600px\]/.test(nav), 'compact 가 1760 선에서 빠져 있다');
@@ -126,6 +126,6 @@ test('지도 머리 줄: compact 도 1600px 이상 1760px 선이고 .mhead 도 �
   assert.match(css, /@media \(min-width:1600px\)\{\.shell-map \.mhead\{padding-left:calc\(max\(0px,50vw - 880px\) \+ 28px\)/);
   // TopNav 요소(header·nav·ul·li·a·button·svg·input)를 바꾸는 전역 요소 선택자가 없다
   assert.ok(!/(^|\n)(header|nav|ul|li|a|button|svg|input)\s*[,{]/.test(css));
-  assert.match(fs.readFileSync('app/(map)/layout.tsx', 'utf8'), /title: 'The주택 지도'/);
-  assert.match(fs.readFileSync('app/(dashboard)/layout.tsx', 'utf8'), /template: '%s · The주택'/);
+  assert.match(fs.readFileSync('app/(map)/layout.tsx', 'utf8'), /title: '더주택 지도'/);
+  assert.match(fs.readFileSync('app/(dashboard)/layout.tsx', 'utf8'), /template: '%s · 더주택'/);
 });

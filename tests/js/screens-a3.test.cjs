@@ -70,7 +70,7 @@ test('H8 정책 목표 대비: 기본 접힘(머리에 핵심 한 줄) · 인쇄
   assert.match(sum, /<b className=\{short \? 'text-bad' : c\.actual > c\.target \? 'text-ok' : 'text-foreground'\}>\{rateOf\(c\)\.word\}<\/b>/, 'r4-screens 1: 모든 칸 달성률');
   assert.match(read('app/(dashboard)/projects/page.tsx'), /<PolicyCompare lines=\{cmpLines\} title=\{.+ : '다른 정책 목표 대비'\} open=\{print\}/);
   /* 칩 메뉴 Esc 가 접힘 영역을 메뉴로 알고 닫지 않게 */
-  assert.match(read('components/projects/Drawer.tsx'), /details\[open\]:not\(\[data-fold\]\)/);
+  assert.match(read('components/windows/WindowHost.tsx'), /details\[open\]:not\(\[data-fold\]\)/);
   const ctx = { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, sidoName: (c) => c, sggName: (c) => c };
   const q = V.questionsOf(rows, { metro: true }, ctx);
   assert.equal(q[0].q, '9·7 대책 목표 대비', '범위(전국)는 정책 목표 카드 머리의 범위 칩(screens-b)');

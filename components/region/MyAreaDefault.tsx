@@ -1,5 +1,5 @@
 'use client';
-/* 공급 일정의 첫 지역 = 내 동네: 주소에 지역(?sido=·?sgg=)이 없을 때만, /citizen 이 저장한 localStorage 'myArea'(시군구 5자리·시도 2자리)를 읽어
+/* 공급 일정의 첫 지역 = 내 동네: 주소에 지역(?sido=·?sgg=)이 없을 때만(판정은 페이지가 한다 — 있으면 그리지 않는다), /citizen 이 저장한 localStorage 'myArea'(시군구 5자리·시도 2자리)를 읽어
    수도권 안이면 그 시도(·시군구)로 한 번 옮긴다(lib/shell/menu.ts myAreaScope 로 읽음). 저장소를 못 쓰거나 수도권 밖이면 그대로 수도권. 화면에 아무것도 그리지 않는다.
    sggOf: 시군구 코드(면 코드·구 코드) → 거를 수 있는 면 코드. 서버가 만들어 넘긴다. */
 import * as React from 'react';

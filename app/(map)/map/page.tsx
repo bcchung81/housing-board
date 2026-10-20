@@ -101,7 +101,7 @@ function OverviewMarkup() {
       <aside className="ov-panel" id="ovPanel" aria-label="수도권 개요" data-sheet="peek">
         <button type="button" className="ov-handle" id="ovHandle" aria-expanded="false" aria-controls="ovPanel" aria-label="개요 패널 펼치기" />
         <header className="ov-head"><h2 id="ovTitle"><span className="ov-aud-admin">수도권 공급 개요</span><span className="ov-aud-public">수도권 공급 예정 호수</span></h2><button type="button" className="ov-back" id="ovBack" hidden>수도권 전체</button><span className="ov-asof" id="ovAsOf" /></header>
-        <div className="ov-metrics" id="ovMetrics" role="radiogroup" aria-label="지도 색 기준" />
+        <div className="ov-metrics ui-tabs ui-tabs-line" id="ovMetrics" role="radiogroup" aria-label="지도 색 기준" />
         <section className="ov-total" aria-labelledby="ovTotalQ">
           <div className="ov-q"><h3 id="ovTotalQ"><span className="ov-aud-admin">수도권 진행 사업 호수</span><span className="ov-aud-public">수도권 공급 예정 호수</span></h3><button type="button" className="ov-i" id="ovDefBtn" aria-expanded="false" aria-controls="ovDef" /></div>
           <p className="ov-def" id="ovDef" hidden />
@@ -115,8 +115,10 @@ function OverviewMarkup() {
           <div className="ov-rh"><h3 id="ovRankH">시군구</h3><button type="button" className="ov-all" id="ovAll" aria-haspopup="dialog" aria-expanded="false" aria-controls="ovSheet" /></div>
           <ol className="ov-rank" id="ovRank" />
         </section>
+        {/* 범례(넓은 화면): /citizen 범례와 같은 가로 그라데이션 막대, 패널 맨 아래 — 내용은 overview.js(legendHtml)가 채운다. 좁은 화면은 패널이 아래 시트라 지도 위 띠(#ovLegendTop)가 같은 모양을 보인다 */}
+        <div className="ov-lgv" id="ovLegend" role="img" />
         <div className="ov-sheet" id="ovSheet" role="dialog" aria-labelledby="ovSheetH" hidden>
-          <div className="ov-sh"><h3 id="ovSheetH">시군구</h3><button type="button" className="ov-mx" id="ovSheetX" aria-label="닫기">✕</button></div>
+          <div className="ov-sh"><h3 id="ovSheetH">시군구</h3><span className="ov-hn" id="ovSheetN" /><button type="button" className="ov-mx" id="ovSheetX" aria-label="닫기">✕</button></div>
           <ol className="ov-rank" id="ovRankAll" />
         </div>
       </aside>
@@ -124,10 +126,12 @@ function OverviewMarkup() {
         {/* 3D 지도 무대(진짜 3D 는 캔버스 칸 + 이 svg 가 라벨 덮개, SVG 판은 assets/js/map3d.js 가 svg 를 채운다 — /citizen 과 같은 구현). 탭 정지점은 지도 하나, 화살표로 옮기고 Enter 로 고른다 */}
         <div className="ov-map" id="ovMap"><div className="ov-stage" id="ovStage" tabIndex={0} role="listbox" aria-label="수도권 시군구 지도"><svg className="map" role="presentation" /></div></div>
         <div className="ov-tip" id="ovTip" hidden />
-        <div className="ov-legend"><b id="ovLegendT" /><ul id="ovLegend" /><small className="ov-lh" id="ovLegendH" /></div>
+        <div className="ov-lgv" id="ovLegendTop" role="img" />
         <p className="ov-empty" id="ovEmpty" role="status" hidden />
         <p className="ov-going" id="ovGoing" role="status" hidden />
       </section>
+      {/* '전체 n' 팝업 뒤 흐린 막(클릭 통과, 넓은 화면만 보임) */}
+      <div className="ov-scrim" id="ovScrim" aria-hidden="true" />
       <div className="ov-menu" id="ovMenu" role="dialog" hidden />
     </div>
   );

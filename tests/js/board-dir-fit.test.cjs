@@ -23,7 +23,7 @@ test('틀(2026-10-19 globals 부품 .ui-dir): 바깥 카드(반경 14 · 카드 
   assert.match(css, /@media \(min-width: 1280px\) and \(max-width: 1365px\) \{\n  :root \{ --dir-pad-x: var\(--dir-pad-x-tight\); \}/, '1280~1365px 6열은 좌우 12');
   assert.match(css, /@media \(max-width: 520px\) \{\n  :root \{ --dir-pad-y: var\(--pad-compact-y\); --dir-pad-x: var\(--pad-compact-x\); \}/, '520px 이하는 촘촘 8/10');
   assert.match(rule('.ui-dir-face'), /background-color: var\(--card\);\s*color: var\(--card-foreground\);\s*border-color: var\(--border\);\s*box-shadow: var\(--shadow-card\);/);
-  assert.match(cls, /^ui-dir-face ui-pick q-rise relative min-h-16 h-full w-full min-w-0$/);
+  assert.match(cls, /^ui-dir-face ui-pick q-rise relative h-full w-full min-w-0$/);
   assert.doesNotMatch(cls + frame, /ui-tile-compact|rounded-tile/, '촘촘 타일(반경 10 · 그림자 없음)이 아니다');
   assert.doesNotMatch(cls, /\boverflow-hidden\b|(^| )h-20 |\bmax-h-/, '자르지 않고 고정·최대 높이 없음');
   assert.match(layer, /cn\(dirFrame, 'ui-dir-layer pointer-events-none absolute inset-0 z-\[1\]'\)/, '겹친 층 = 같은 틀(투명 테두리 자리 포함), 누름은 단추로 흘려보낸다');
@@ -49,24 +49,18 @@ test('줄1: 지시 이름 14/400 muted · 길면 말줄임(70% 제한 없음) ·
   assert.match(board, /<InfoTip label=\{`\$\{x\.t\} 기준`\} className="h-7 px-0\.5">\n\s*<p>\{x\.basis\}<\/p><p className="text-muted-foreground">\{x\.list\.title\}<\/p>\{x\.pair \? <p className="text-muted-foreground">\{x\.pair\.list\.title\}<\/p> : null\}/, '(i) = 기준 + 숫자 링크가 여는 목록');
 });
 
-test('줄2: 앞말 14/400 muted + 큰 숫자 20/700(내용 폭 180px 미만 18) + 단위 14/400 + 보조 값 14 muted(220px 미만 숨김, 색 없음) — 색 위계는 토큰(--dir-label·--dir-num·--dir-sub)', () => {
-  assert.match(vals, /\{pre \? <span className="ui-dir-label text-sm">\{pre\}<\/span> : null\}/);
-  assert.match(vals, /<span data-big className=\{cn\(disp, 'ui-dir-num text-md @min-\[180px\]:text-lg leading-title'\)\}>\{big\}<span className="text-sm font-normal">\{u\}<\/span><\/span>/);
-  assert.match(vals, /data-slot="dir-sub" className="ui-dir-sub hidden text-sm tabular-nums @min-\[220px\]:inline">\{x\.sub\}<\/span>/);
-  assert.doesNotMatch(vals, /text-ok|text-bad|text-warn|font-bold text-ink2|text-xs|text-muted-foreground|text-foreground/, '앞말 굵게·12px·상태색 없음, 색은 부품 토큰');
-  assert.match(rule('.ui-dir'), /--dir-label: var\(--muted-foreground\);\s*--dir-num: var\(--foreground\);\s*--dir-sub: var\(--muted-foreground\);/);
-  assert.match(board, /const dirRow = 'flex min-w-0 flex-wrap items-baseline gap-x-2 leading-title whitespace-nowrap';/, '두 숫자 사이 간격 8');
-  assert.match(btn, /<span className=\{cn\(dirRow, 'invisible'\)\} aria-hidden="true">\{dirVals\(x, false\)\}<\/span>/, '단추 안 값 줄은 자리만');
-});
-
-test('링크: 숫자 자체가 목록 링크(점선 밑줄 → 가리키면 주색 실선) — 링크 글자·자리표 없음, href·title 은 지시 값 그대로', () => {
-  assert.match(vals, /\{link \? <Link href=\{l\.href\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\} data-slot="board-dir-list" className=\{cn\(dirNum, 'pointer-events-auto'\)\}>\{num\}<\/Link> : num\}/);
-  assert.match(board, /const dirNum = 'ui-dir-link rounded-chip';/);
-  assert.match(rule('.ui-dir-num'), /color: var\(--dir-num\);\s*text-decoration: underline dotted var\(--muted-foreground\) var\(--border-w\);\s*text-underline-offset: var\(--num-underline-offset\);/);
-  assert.match(css, /\.ui-dir-link:hover \.ui-dir-num \{ color: var\(--primary\); text-decoration-color: var\(--primary\); text-decoration-style: solid; \}/);
-  assert.match(vals, /\{one\(x\.pre, x\.big, x\.u, x\.list, 'a'\)\}\n\s*\{x\.pair \? one\(x\.pair\.pre, x\.pair\.big, x\.pair\.u, x\.pair\.list, 'b'\) : null\}/, '두 숫자 카드는 숫자마다 자기 목록');
-  assert.match(layer, /<span className=\{dirRow\}>\{dirVals\(x, true\)\}<\/span>/, '6장 모두 겹친 층의 숫자가 링크');
-  assert.doesNotMatch(board, /dir-list-gap|dirListText|\{x\.list\.text|'목록'|board-dir-pair/);
+test('숫자는 30px, 설명은 아래 줄, 변화율은 폭에 관계없이 표시하고 지연·주의는 각각 목록으로 연결한다', () => {
+  assert.match(vals, /ui-dir-num ui-kpi leading-title/);
+  assert.match(vals, /className="ui-dir-label text-sm">\{pre \|\| '전체 사업'\}/);
+  assert.match(vals, /data-slot="dir-sub" className="ui-dir-sub text-sm tabular-nums"/);
+  assert.doesNotMatch(vals, /hidden|@min-/);
+  assert.match(vals, /status=caution/);
+  assert.match(vals, /pair \? one\(pair\.pre, pair\.big, pair\.u, pair\.list, 'b'\)/);
+  assert.match(vals, /<Link href=\{l\.href\} onClick=\{open\(l\.href\)\} title=\{l\.title\}/);
+  assert.match(rule('.ui-dir-num'), /text-decoration: underline solid transparent/);
+  assert.match(css, /\.ui-dir-link:is\(:hover, :focus-visible\) \.ui-dir-num \{ text-decoration-color: currentColor; \}/);
+  assert.match(btn, /aria-hidden="true">\{dirVals\(x, false, open\)\}/);
+  assert.match(layer, /\{dirVals\(x, true, open\)\}/);
 });
 
 test('열: 1280px 이상 6열 · 901~1279px 3열(2줄 띠) · 900px 이하 2열, 간격 12 하나(901px 이상은 패널 줄과 같은 세로선)', () => {
@@ -76,15 +70,19 @@ test('열: 1280px 이상 6열 · 901~1279px 3열(2줄 띠) · 900px 이하 2열,
 /* 글자 폭: 번들 Noto Sans KR(assets/fonts/noto-sans-kr)의 글자 너비(em) — 한글 0.92, 숫자 400 0.555 / 700 0.59, 쉼표·마침표 0.278 / 0.325, % 0.921 / 0.963, 공백 0.224 */
 const ADV = { 400: { d: 0.555, p: 0.278, pct: 0.921, sp: 0.224 }, 700: { d: 0.59, p: 0.325, pct: 0.963, sp: 0.227 } };
 const tw = (t, px, wt = 400) => [...t].reduce((w, c) => w + px * (/[가-힣]/.test(c) ? 0.92 : /[0-9+−]/.test(c) ? ADV[wt].d : /[,.]/.test(c) ? ADV[wt].p : c === '%' ? ADV[wt].pct : c === ' ' ? ADV[wt].sp : 0.6), 0);
-const one = (pre, big, u, px) => (pre ? tw(pre, 14) + 4 : 0) + tw(big, px, 700) + tw(u, 14);
-const rowW = (d, px, sub) => one(d.pre, d.big, d.u, px) + (d.pair ? 8 + one(d.pair.pre, d.pair.big, d.pair.u, px) : 0) + (sub && d.sub ? 8 + tw(d.sub, 14) : 0);
+const one = (pre, big, u, px) => tw(big, px, 700) + 4 + tw(u, 14);
+const rowW = (d, px) => {
+  const caution = d.pre === '지연' && d.sub?.match(/^주의 ([\d,]+)$/);
+  const pair = d.pair || (caution ? { big: caution[1], u: '건' } : null);
+  return one(d.pre, d.big, d.u, px) + (pair ? 16 + one(pair.pre, pair.big, pair.u, px) : 0);
+};
 /* 카드 내용 폭 = (본문 − 간격 12) ÷ 열 − 좌우 여백 × 2 − 테두리 2. 좌우 여백 = --dir-pad-x: 16(1280~1365px 6열 12 · 520px 이하 10). 본문 = 창 − 스크롤바 − 좌우 56(900px 이하 24), 1760px 상한 */
 const padX = (vw) => (vw <= 520 ? 10 : vw >= 1280 && vw <= 1365 ? 12 : 16);
 const inner = (vw, sb) => { const cols = vw >= 1280 ? 6 : vw >= 901 ? 3 : 2, gap = 12, body = Math.min(vw - sb, 1760) - (vw <= 900 ? 24 : 56); return (body - gap * (cols - 1)) / cols - padX(vw) * 2 - 2; };
 /* 두 줄 높이 = 위아래 여백 + 지시 이름 줄 20 + 사이 4 + 값 줄(숫자 크기 × 1.2) + 테두리 2 */
-const cardH = (vw, px) => (vw <= 520 ? 8 : 12) * 2 + 20 + 4 + px * 1.2 + 2;
+const cardH = (vw, px) => Math.max(112, (vw <= 520 ? 8 : 12) * 2 + 20 + 4 + px * 1.2 + 4 + 21 + 2);
 
-test('값 줄은 1280px 이상·901~1279px·900px 에서 한 줄(카드 두 줄 높이) — 숫자·보조 값 크기 단계가 폭에 맞는다(스크롤바 0·17px 모두)', () => {
+test('숫자와 단위는 30px 기준으로 6열·3열·2열에 들어간다(스크롤바 0·17px 모두)', () => {
   const { makeDirectives } = require('../../lib/board/directives.ts');
   const S = require('../../lib/board/sample.ts'), C = require('../../lib/board/calc.ts');
   const L = require('../../data/board/ledger-board.json'), molit = require('../../data/board/molit.json');
@@ -92,8 +90,8 @@ test('값 줄은 1280px 이상·901~1279px·900px 에서 한 줄(카드 두 줄 
   const start = { year: last.slice(0, 4), upto: Number(last.slice(5)), cum: C.ytd(molit, 'start', C.NATION, last), cumLy: C.ytd(molit, 'start', C.NATION, C.nextYm(last, -12)) };
   const dir = makeDirectives({ sourceCount: 19, stageNames: S.K, ledger: L, start, bottleneck: require('../../lib/board/projects-view.ts').bottleneckOf });
   for (const vw of [1280, 1300, 1365, 1366, 1440, 1600, 1920, 2117, 1101, 1279, 901, 900]) for (const sb of [0, 17]) {
-    const w = inner(vw, sb), px = w >= 180 ? 20 : 18, sub = w >= 220;
-    assert.ok(cardH(vw, px) <= 74, `${vw}px 카드 높이 ${cardH(vw, px)}px — 두 줄(74 이하)`);
+    const w = inner(vw, sb), px = 30, sub = true;
+    assert.ok(cardH(vw, px) <= 112, `${vw}px 카드 높이 ${cardH(vw, px)}px — 세 단(112 이하)`);
     for (const d of dir) {
       assert.ok(rowW(d, px, sub) <= w, `${vw}px(스크롤바 ${sb}) ${d.t}: 값 줄 ${rowW(d, px, sub).toFixed(1)}px > 내용 폭 ${w.toFixed(1)}px`);
       assert.ok(tw(d.t, 14) + 28 <= w, `${vw}px ${d.t}: 제목이 말줄임 없이 들어간다`);

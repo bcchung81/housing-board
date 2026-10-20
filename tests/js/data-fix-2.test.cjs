@@ -165,7 +165,7 @@ test("#18 기관 이름: 사업 화면 '기타' → 종합상황판과 같은 '�
 
 test('#19 지역 공급 합계는 정확한 호수(축 눈금만 근삿값), 달 막대 근삿값은 title 에 정확한 값', () => {
   const page = read('app/(dashboard)/region/page.tsx');
-  assert.match(page, /\{fmt\(list\.length\)\}건 · \{fmt\(units\)\}호/);
+  assert.match(page, /value=\{fmt\(units\)\} unit="호" items=\{\[`\$\{fmt\(list\.length\)\}건`/);
   assert.doesNotMatch(page, /man\(/);
   const ahead = read('components/region/Ahead.tsx');
   assert.match(ahead, /title=\{`\$\{monthLabel\(x\)\} \$\{xs\.length\}\$\{W\.count\} \$\{fmt\(tot\[i\]\)\}호/);

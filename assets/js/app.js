@@ -1042,7 +1042,7 @@ function cardBackTo(id) {
   return shown(tag) ? tag : shown(row) ? row : map.getCanvas();
 }
 document.addEventListener('keydown', (e) => {
-  if (e.key !== 'Escape' || !popup || e.defaultPrevented || !$('#optPanel').hidden || !$('#vMenu').hidden || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+  if (e.key !== 'Escape' || !popup || e.defaultPrevented || document.querySelector('section[data-window]') || !$('#optPanel').hidden || !$('#vMenu').hidden || /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
   const go = cardGo;
   popup.remove(); popup = null; cardGo = null;
   if (new URL(location.href).searchParams.has('block')) syncUrl(null);   // Esc 로 닫으면 주소의 ?block= 도 지운다
@@ -1070,6 +1070,11 @@ function fitCard() {
   let r = el.getBoundingClientRect(), dx = 0;
   const rc = box($('.rctl')), av = cardAvoid;
   if (rc && r.right > rc.left - 8 && r.left < rc.right + 8 && r.top < rc.bottom + 8 && r.bottom > rc.top - 8) dx = rc.left - 8 - r.right;
+  /* 떠 있는 사업 창(section[data-window], 최대 3개 — components/windows)도 시점 묶음처럼 가로로 비켜 선다(키 큰 창 옆을 위·아래로 밀면 자리가 없다) */
+  for (const w of document.querySelectorAll('section[data-window]')) {
+    const q = w.getBoundingClientRect();
+    if (q.width > 2 && r.right + dx > q.left - 8 && r.left + dx < q.right + 8 && r.top < q.bottom + 8 && r.bottom > q.top - 8) dx = q.left - 8 - r.right;
+  }
   if (av && av.anchor === 'left') dx = Math.max(dx, av.x1 - r.left);   // 옆에 붙은 카드는 비켜 서다가 대상 위로 넘어가지 않는다
   dx = Math.min(Math.max(dx, m.left + 8 - r.left), m.right - 8 - r.right);   // 가로도 늘 지도 상자 안(2026-10-15 요구 4: 위·아래에 붙은 카드는 대상 가운데에 서서 대상이 화면 가장자리에 걸치면 밖으로 나갔다)
   const L = r.left + dx, R = r.right + dx;
@@ -1979,7 +1984,7 @@ function buildNext() {
   $('#h-next').parentElement.hidden = !rows.length;
   $('#nextList').innerHTML = rows.map((g) => {
     const n = days(g.d), ids = g.bs.map((b) => b.id), units = g.bs.reduce((a, b) => a + b.units, 0);
-    const dn = !g.exact ? (n < 30 ? '이번 달' : `${Math.round(n / 30.4)}개월 뒤`) : n === 0 ? 'D-day' : n <= 120 ? `D-${n}` : `${Math.round(n / 30.4)}개월 뒤`;
+    const dn = !g.exact ? (n < 30 ? '이번 달' : `${Math.round(n / 30.4)}개월 뒤`) : n === 0 ? '오늘' : n <= 120 ? `${n}일 뒤` : `${Math.round(n / 30.4)}개월 뒤`;
     const when = g.exact ? `${g.d.getFullYear()}.${String(g.d.getMonth() + 1).padStart(2, '0')}.${String(g.d.getDate()).padStart(2, '0')}` : `${g.d.getFullYear()}.${String(g.d.getMonth() + 1).padStart(2, '0')} 예정`;
     return `<li><button type="button" class="nx" data-ids="${idsAttr(ids)}" aria-label="${esc(ids.join('·'))} ${g.kind} ${when}, ${dn}, 누르면 지도에서 보기"><span class="dn${g.kind === '입주 시작' ? ' move' : ''}">${dn}</span><span><b>${esc(ids.join('·'))} ${g.kind}</b><span class="s">${when} · ${fmt(units)}호</span></span></button></li>`;
   }).join('');
@@ -2250,7 +2255,8 @@ function scheduleHud() { if (revealed && !hudRaf) hudRaf = requestAnimationFrame
   if (window.ResizeObserver) new ResizeObserver(set).observe(bb);
   set();
 })();
-const HUD_EXCL = '.topbar, .rctl, .maplibregl-ctrl-bottom-right, #botbar, #cmd:not([hidden]), #optPanel:not([hidden]), #vMenu:not([hidden]), #panelToggle, .lostpin, #lostPop:not([hidden]), #goNote:not([hidden]), #dynHint:not([hidden]), #locNote:not([hidden]), #pvBanner:not([hidden])';
+const HUD_EXCL = '.topbar, .rctl, .maplibregl-ctrl-bottom-right, #botbar, #cmd:not([hidden]), #optPanel:not([hidden]), #vMenu:not([hidden]), #panelToggle, .lostpin, #lostPop:not([hidden]), #goNote:not([hidden]), #dynHint:not([hidden]), #locNote:not([hidden]), #pvBanner:not([hidden]), section[data-window]';   // 끝의 section[data-window] = 떠 있는 사업 창(components/windows)
+new MutationObserver(scheduleHud).observe(document.body, { childList: true });   // 사업 창이 열리거나 닫히면(body 직계 section[data-window]) 꼬리표 자리를 다시 잡는다
 function renderHud() {
   hudRaf = 0;
   const hud = $('#hud'), on = (hudOn || cardsOn) && HAS_PR && BLOCKS.length && map.getZoom() < HUD_MAXZ;

@@ -220,30 +220,35 @@ test('서랍이 열 것(?id=): 발급 사업 → 그 사업, 대체된 옛 id �
   for (const x of ['PRJ-0000-0001', 'x', '']) assert.equal(V.drawerTarget(x, REG, has), null, x);
 });
 
-test('화면 적용: 목록은 발급 사업을 상세 서랍(?id=), 번호 발급 전 사업을 간단 보기(?cand=)로 열고, 서랍은 그 사업 자료만 서버에서 그린다. 인쇄 보기는 요약·우선 점검·출처만', () => {
+test('화면 적용: 목록은 발급 사업을 상세 창(?id=), 번호 발급 전 사업을 간단 보기(?cand=)로 열고, 창은 그 사업 자료만 서버(projectWindow)에서 받는다. 인쇄 보기는 요약·우선 점검·출처만', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
   const lst = read('lib/board/projects-list.ts');
   assert.match(lst, /const href = r\.issued \? listHref\(f, \{ id: r\.id \}\) : listHref\(f, \{ cand: r\.id \}\);/);
-  assert.match(lst, /id: r\.id, href, sel: r\.id === sel,/, '행을 누르면 서랍, 열린 사업은 선택 표시');
+  assert.match(lst, /id: r\.id, href, sel: r\.id === sel,/, '행을 누르면 사업 창, 열린 사업은 선택 표시');
   assert.match(page, /const gridRows: Row\[\] = listRows\(list, f, sel,/, '화면 표와 CSV 가 같은 행');
   assert.match(page, /getProjectDrawer\(id\)/);
-  assert.match(page, /<Drawer id=\{drawer \? id : null\} canonical=\{sel\} closeHref=\{listHref\(f\)\}/);
+  /* 2026-10-19 서랍 → 모달리스 창: 첫 창은 projectWindow(허용 목록) 결과만 창 관리자에 넘긴다(?id= 상세, 없으면 ?cand= 간단 보기, 인쇄 보기에는 만들지 않음) */
+  assert.match(page, /print \? null : \(async \(\) => \(id \? await projectWindow\(id, 'admin'\) : null\) \?\? \(candId \? await projectWindow\(candId, 'admin', \{ cand: true \}\) : null\)\)\(\)/);
+  assert.match(page, /<WindowSeed win=\{win\} path="\/projects" search=\{search\} fromMap=\{f\.from === 'map'\} \/>/);
+  assert.match(page, /const sel = win \? win\.canonical : null;/);
   assert.doesNotMatch(page, /<ReqTags/, '요구사항 칩은 데이터 원본에만');
   assert.match(page, /href=\{listHref\(f, \{ print: '1' \}\)\}/, '보고서 인쇄는 지금 거르기를 지킨 인쇄 보기');
   const printBranch = page.slice(page.indexOf('if (print) {'), page.indexOf('/* 목록:'));
   for (const x of ['{reportHead}', '{summary}', '{report}', '<PrintButton']) assert.ok(printBranch.includes(x), x);
-  for (const x of ['<DataGrid label="사업 목록"', '<Drawer', '<ChipBar']) assert.ok(!printBranch.includes(x), `인쇄 보기에 ${x} 없음`);
+  for (const x of ['<DataGrid label="사업 목록"', '<WindowSeed', '<ChipBar']) assert.ok(!printBranch.includes(x), `인쇄 보기에 ${x} 없음`);
   assert.match(page, /print:hidden/, '@media print 도 같은 보고 보기');
   assert.doesNotMatch(page, /SAMPLE/);
-  const drawer = read('components/projects/Drawer.tsx');
-  assert.match(drawer, /e\.key !== 'Escape'/); assert.match(drawer, /window\.history\.go\(-n\.depth\)/); assert.match(drawer, /router\.replace\(closeHref, \{ scroll: false \}\)/);
-  assert.match(drawer, /w-\[min\(60vw,980px\)\]/, '오른쪽 약 60% 폭');
+  /* 창 관리자: Esc 하나 · 마지막 창 닫기 = 쌓은 기록만큼 뒤로(back) 아니면 id 를 뺀 주소(replace) — 규칙은 nav.ts navStep(tests/js/windows.test.cjs) · 창 폭 기본 560(400 ~ 화면 60%) */
+  const host = read('components/windows/WindowHost.tsx'), win = read('components/windows/FloatingWindow.tsx');
+  assert.match(host, /e\.key !== 'Escape'/); assert.match(host, /window\.history\.back\(\)/); assert.match(host, /window\.history\.replaceState\(null, '', url\)/);
+  assert.match(win, /w-\(--win-w\) max-w-\[60vw\] min-w-\[400px\]/, '기본 560 · 최소 400 · 최대 화면 60%');
+  assert.match(read('components/windows/nav.ts'), /export const WIN_W = 800;[\s\S]*export const WIN_W_MIN = 400;[\s\S]*export const WIN_W_MAX = 0\.6;/);
   const det = read('components/projects/ProjectDetail.tsx');
   assert.match(det, /<StageSteps current=\{r\.board\} reached=\{r\.reached\}/, '서랍의 단계 줄도 목록과 같은 리본 칸 번호');
   assert.match(det, />당초 일정 없음</, "타임라인 머리에 '당초 일정 없음' 한 번");
   assert.match(det, /hiddenNote\(p\.hiddenAt!, p\.hiddenReason\)/);
   /* 화면은 자료를 lib/board/projects-index.ts 한 곳에서만 읽고, 옛 상세·보고자료 화면은 없다 */
-  for (const f of ['app/(dashboard)/projects/page.tsx', 'components/projects/ProjectDetail.tsx', 'components/projects/Summary.tsx']) assert.doesNotMatch(read(f), /data\/board\/(ledger-map|projects-index|project-detail|policy-progress)\.json/, f);
+  for (const f of ['app/(dashboard)/projects/page.tsx', 'components/projects/ProjectDetail.tsx', 'components/projects/Summary.tsx', 'lib/board/project-window.ts', 'components/windows/WindowHost.tsx', 'components/windows/parts.tsx', 'app/api/v1/project/[id]/route.ts']) assert.doesNotMatch(read(f), /data\/board\/(ledger-map|projects-index|project-detail|policy-progress)\.json/, f);
   for (const f of ['app/(dashboard)/project', 'app/(dashboard)/reports']) assert.ok(!fs.existsSync(path.join(ROOT, f)), f);
 });
 

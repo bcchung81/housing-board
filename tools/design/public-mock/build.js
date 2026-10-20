@@ -62,13 +62,14 @@ for (const mode of ['demo', 'ops']) {
     '/*LEDGER_DOT*/': dot(D.meta.ledgerRef), '/*LEDGER_REF*/': dot(D.meta.ledgerRef),
     '/*CAL_RANGE*/': `${dot(D.meta.calFrom)}~${dot(D.meta.calTo)}`, '/*CAL_REF*/': dot(D.meta.calRef),
     '/*SAMPLE_REF*/': dot(D.meta.sampleRef),
+    '/*AH_REF*/': dot(D.ah.ref),   // 청약 단지 카드 ⓘ 의 수집 기준일(청약홈 manifest)
   };
   for (const [k, v] of Object.entries(rep)) { if (!h.includes(k)) throw new Error('missing ' + k); h = h.split(k).join(v); }
   if (mode === 'ops') {
     /* 운영판: 제목·설명·og·파비콘(로고 그림), 글꼴(Noto Sans KR css)은 앱 자산 절대 경로 */
-    h = h.replace(/<title>[^<]*<\/title>/, `<title>The주택 — 내 동네 공공 주택 공급</title>
+    h = h.replace(/<title>[^<]*<\/title>/, `<title>더주택 — 내 동네 공공 주택 공급</title>
 <meta name="description" content="내 동네에 앞으로 들어올 공공 주택이 얼마나, 언제 들어오는지 한 화면에서 봅니다. 모집 공고·착공·준공 일정과 시군구별 지도를 함께 보여 줍니다.">
-<meta property="og:type" content="website"><meta property="og:title" content="The주택 — 내 동네 공공 주택 공급"><meta property="og:description" content="내 동네에 앞으로 들어올 공공 주택과 다가오는 모집 공고·준공 일정"><meta property="og:locale" content="ko_KR">
+<meta property="og:type" content="website"><meta property="og:title" content="더주택 — 내 동네 공공 주택 공급"><meta property="og:description" content="내 동네에 앞으로 들어올 공공 주택과 다가오는 모집 공고·준공 일정"><meta property="og:locale" content="ko_KR">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${LOGO.replace(/"/g, "'")}">`);
     h = h.split('href="../../assets/fonts/').join('href="/assets/fonts/');   // Noto Sans KR(앱과 같은 로컬 파일)
     if (h.includes('../../assets/')) throw new Error('relative asset path left in ops build');

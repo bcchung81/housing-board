@@ -13,8 +13,8 @@ const TPL = fs.readFileSync(path.join(ROOT, 'tools', 'design', 'public-mock', 't
 const BUILT = fs.readFileSync(path.join(ROOT, 'docs', 'design', '대국민-모드-시안.html'), 'utf8');
 const code = [...BUILT.matchAll(/<script>([\s\S]*?)<\/script>/g)].map((m) => m[1]).find((c) => c.includes('function makeSearch'));
 const ctx = {}; vm.createContext(ctx);
-vm.runInContext(code + '\nObject.assign(this, { noticeSpan, takeRise, swapNum, playGrow, growList, swapHtml, sheetMorph, FX, fxOff });', ctx);
-const { noticeSpan, takeRise, swapNum, playGrow, growList, swapHtml, sheetMorph, FX, fxOff } = ctx;
+vm.runInContext(code + '\nObject.assign(this, { noticeSpan, takeRise, swapNum, playGrow, growList, swapHtml, sheetMorph, FX, fxOff, countUp, playRank });', ctx);
+const { noticeSpan, takeRise, swapNum, playGrow, growList, swapHtml, sheetMorph, FX, fxOff, countUp, playRank } = ctx;
 const plain = (v) => JSON.parse(JSON.stringify(v));
 const win = (reduce) => ({ matchMedia: () => ({ matches: reduce }), setTimeout: (f) => { f(); return 0; }, getComputedStyle: (e) => ({ flexGrow: e.grow }) });
 const fnBody = (name) => { const i = TPL.indexOf(`function ${name}(`); assert.ok(i >= 0, name); return TPL.slice(i, TPL.indexOf('\n}\n', i)); };
@@ -89,8 +89,8 @@ test('③ 줄임 설정이면 연출 함수가 곧바로 끝 상태: 아무것�
   assert.match(fnBody('turnTo'), /Map3D\.reducedMotion\(window\)\) \{ endView\(target\); return; \}/);
 });
 
-test('③ 줄임 설정 CSS: 맥동·시트 펼침·sheet-in·전환(transition)·View Transition 이 모두 꺼진다 + 라벨 띄우기 전이도 꺼짐', () => {
-  const m = TPL.match(/@media \(prefers-reduced-motion: reduce\) \{ \.spin, \.sheet, \.nt-span::after \{ animation: none; \} \* \{ transition-duration: 0s !important; \} (::view-transition-group\(\*\)[^}]*)\} \}/);
+test('③ 줄임 설정 CSS: 맥동·팝업 펼침·sheet-in·흐린 막 나타남(2026-10-20)·전환(transition)·View Transition 이 모두 꺼진다 + 라벨 띄우기 전이도 꺼짐', () => {
+  const m = TPL.match(/@media \(prefers-reduced-motion: reduce\) \{ \.spin, \.sheet, \.sheet-bg, \.nt-span::after \{ animation: none; \} \* \{ transition-duration: 0s !important; \} (::view-transition-group\(\*\)[^}]*)\} \}/);
   assert.ok(m, '줄임 설정 규칙'); assert.match(m[1], /animation: none !important/);
   const M3CSS = fs.readFileSync(path.join(ROOT, 'assets', 'css', 'map3d.css'), 'utf8');
   assert.match(M3CSS, /prefers-reduced-motion: reduce\) \{ \.map \.lift :is\(\.up, \.up-shd\), \.map \.lbls \.lb-g \{ transition: none; \} \}/);
@@ -135,12 +135,40 @@ test('⑤ 화면 연결: 제목 숫자·6단계 띠·사업/지금 신청 칸·�
   assert.match(fnBody('paintBand'), /playGrow\(cols, old, pa \? FX\.glideHover : FX\.glide, window\)/, '요약 표 단계 막대가 새 비율로 미끄러진다');
   assert.match(fnBody('paintBand'), /if \(!first\) el\.querySelectorAll\('\.sm-r'\)\.forEach\(\(b, i\) => \{ if \(b\.dataset\.v !== oldV\[i\]\) sweep\(b, window\); \}\);/, '값이 바뀐 단계 줄만 훑음(첫 그리기 제외)');
   assert.match(fnBody('renderHead'), /if \(moved\) sweep\(h, window\);/); assert.match(fnBody('renderHead'), /if \(!first\) sweep\(nn, window\);/);
-  assert.match(fnBody('renderCells'), /'\.pj-th, \.evs, \.none', window\);[^\n]*\n  fitPj\(\);/, '사업 표: 바뀐 내용만 150ms 교차 페이드, 그 뒤 칸 높이에 맞게 접기');
+  assert.match(fnBody('renderCells'), /'\.pj-th, \.evs, \.none', window\);[^\n]*\n  fitPj\(\);/, '청약 단지 표(2026-10-19): 바뀐 내용만 150ms 교차 페이드, 그 뒤 칸 높이에 맞게 접기');
   assert.match(fnBody('renderCells'), /swapHtml\(\$\('#c-pj'\)/); assert.match(fnBody('paintApply'), /swapHtml\(el, /);
   assert.match(fnBody('showSheet'), /sheetMorph\(document, window, from, \$\('#sheet'\)/);
   assert.match(TPL, /\.sum-h \.n-ghost \{ position: absolute;/); assert.match(TPL, /::view-transition-group\(sheet-x\)/);
   assert.match(TPL, /\.sum-h \.nw \{ position: relative;/);
   /* 넣지 않는 것: 숫자 굴림·입자·패럴랙스·스크롤 연출·소리 */
-  assert.doesNotMatch(TPL, /count-?up|parallax|IntersectionObserver|new Audio|AudioContext|particles/i);
+  /* 2026-10-19 사용자 결정: 순위 줄 숫자만 짧게 센다(countUp 300ms — 다시 그릴 때만, 줄임 설정이면 없음). 그 밖 숫자 굴림 장치는 여전히 없다 */
+  assert.doesNotMatch(TPL.replace(/\bcountUp\(/g, ''), /count-?up|parallax|IntersectionObserver|new Audio|AudioContext|particles/i);
   assert.equal((TPL.match(/startRise\(\)/g) || []).length >= 2, true);
+});
+
+test('⑥ 2026-10-19 순위 줄 바꾸기 움직임: 같은 시군구 줄은 옛 자리에서 미끄러지고(FLIP translateY) · 막대는 옛 길이에서(scaleX) · 숫자는 옛 값에서 짧게 센다 · 새 줄은 옅게 나타남 · 줄임 설정이면 아무것도 움직이지 않는다', () => {
+  /* 숫자 세기: 줄임 설정 = 하지 않음(글 그대로), 켜짐 = 옛 값에서 시작해 rAF 마다 새 값 쪽으로, 끝은 새 값(fmt) */
+  const el = { textContent: '9', isConnected: true };
+  assert.equal(countUp(el, 100, 2000, 300, win(true)), false); assert.equal(el.textContent, '9', '줄임 설정이면 그대로');
+  let now = 0; const q = []; const W = { matchMedia: () => ({ matches: false }), performance: { now: () => now }, requestAnimationFrame: (f) => q.push(f) };
+  assert.equal(countUp(el, 100, 2000, 300, W), true); assert.equal(el.textContent, '100', '옛 값에서 시작');
+  now = 150; q.shift()(150); const mid = +el.textContent.replace(/,/g, ''); assert.ok(mid > 100 && mid < 2000, '가운데 값 ' + mid);
+  now = 400; q.shift()(400); assert.equal(el.textContent, '2,000', '끝은 새 값(같은 폭 숫자 글)'); assert.equal(q.length, 0, '끝나면 멈춤');
+  const gone = { textContent: '', isConnected: true }; countUp(gone, 1, 9, 300, W); gone.isConnected = false; q.shift()(100); assert.equal(q.length, 0, '다시 그려 빠진 요소는 멈춤');
+  assert.equal(FX.rank >= 300 && FX.rank <= 400, true, '줄 이동 300~400ms'); assert.equal(FX.count, 300);
+  /* FLIP: 옛 자리·길이·값 → 새 줄 */
+  const anims = [];
+  const mk = (area, y, w, u) => { const li = { animate: (k, o) => anims.push([area, 'li', k, o]) }, bi = { getBoundingClientRect: () => ({ width: w }), animate: (k, o) => anims.push([area, 'bar', k, o]) };
+    return { offsetParent: {}, dataset: { area, u: String(u) }, parentNode: li, getBoundingClientRect: () => ({ top: y }), querySelector: (s) => (s === '.bar i' ? bi : { textContent: '', isConnected: true }) }; };
+  const ol = { querySelectorAll: () => [mk('a', 0, 100, 500), mk('b', 44, 50, 300), mk('n', 88, 20, 10)] };
+  playRank(ol, new Map([['a', { y: 44, w: 50, u: 300 }], ['b', { y: 0, w: 100, u: 500 }]]), W);
+  const of = (a, t) => anims.filter((x) => x[0] === a && x[1] === t);
+  assert.equal(of('a', 'li')[0][2][0].transform, 'translateY(44.0px)'); assert.equal(of('b', 'li')[0][2][0].transform, 'translateY(-44.0px)', '자리 바꿈 = 옛 자리에서 0 으로');
+  assert.equal(of('a', 'bar')[0][2][0].transform, 'scaleX(0.500)'); assert.equal(of('b', 'bar')[0][2][0].transform, 'scaleX(2.000)', '막대 = 옛 길이 비율에서(transform 만)');
+  assert.deepEqual(plain(of('n', 'li')[0][2]), [{ opacity: 0 }, { opacity: 1 }], '새로 든 줄 = 옅게 나타남'); assert.equal(of('n', 'bar').length, 0);
+  assert.ok(anims.every((x) => x[3].duration === FX.rank), '같은 길이');
+  /* 화면 연결: 다시 그릴 때만(paintRank·같은 시도 고르기), 줄임 설정이면 옛 자리를 재지 않는다 */
+  assert.match(fnBody('setRank'), /const old = fxOff\(window\) \|\| !ol\.animate \? null :/); assert.match(fnBody('setRank'), /if \(old && old\.size\) playRank\(ol, old, window\);/);
+  assert.match(fnBody('paintRank'), /setRank\(ol, rankHtml\(/); assert.match(fnBody('renderMapCard'), /setRank\(\$\('#mapc \.mapc-b ol\[data-rove\]'\), rankHtml\(/);
+  assert.doesNotMatch(fnBody('startPlay'), /setRank|paintRank|requestAnimationFrame/, '재생은 해가 바뀔 때 applyMode 한 번(프레임마다 다시 그리지 않음)');
 });

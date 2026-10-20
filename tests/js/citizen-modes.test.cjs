@@ -100,7 +100,7 @@ test('④ 모드별 색 구간 = 높이 값: 면 값 하나(vals)로 색 단계(
   assert.match(am, /Map3D\.recolor\(svg, VIEW\.G\);/);
   assert.match(am, /Map3D\.animateHeights\(svg, VIEW\.G, md\.vals, \{ umax: md\.umax, duration: 700,/);
   assert.match(fnBody('drawMap'), /own: g\.own\.map\(\(q\) => \(\{ \.\.\.q, u: VIEW\.mvals\[q\.code\] \|\| 0 \}\)\)/);
-  assert.match(fnBody('drawMap'), /view: VIEW\.view \|\| undefined, shade: true, umax: VIEW\.umax \}/);
+  assert.match(fnBody('drawMap'), /view: VIEW\.view \|\| undefined, shade: true, umax: VIEW\.umax, scope: VIEW\.scope, hide: hideOf\(VIEW\.scope\) \}/);   // 2026-10-19: 보는 시도 밖 면 = 맥락 회색(scope), 이웃 1단계 밖은 그리지 않음(hide)
   assert.match(fnBody('paintLegend'), /legendHtml\(VIEW\.C, m\)/);
   assert.match(TPL, /const modeName = \(m\) => \(m\.k === 'y' \? `\$\{YBL\[m\.i\]\} 공급 호수` : m\.k === 's' \? `\$\{STAGE3\[m\.i\]\} 호` : '공급 예정 호수'\);/, '범례 제목 = 모드 이름');
   /* 제목도 모드를 따른다 */
@@ -122,13 +122,15 @@ test('④-2 수도권 한 판(2026-10-18): 서울·인천·경기 어느 시도�
     assert.deepEqual(md[0], md[1], `${JSON.stringify(m)} 서울 = 인천`); assert.deepEqual(md[0], md[2], `${JSON.stringify(m)} 서울 = 경기`);
     for (const sd of ['11', '28', '41']) assert.deepEqual(Object.fromEntries(Object.entries(md[0].vals).filter(([k]) => k.startsWith(sd))), plain(ctx.modeValues(D, IX, sd, m)), `${sd} ${JSON.stringify(m)} 값은 그 시도 값 그대로`);
   }
-  /* 서울을 볼 때 경기·인천 면도 값이 있으면 색 단계 1 이상 */
+  /* 서울을 볼 때 경기·인천 면도 값이 있으면 색 단계 1 이상(값·구간 표본은 판 하나 그대로).
+     2026-10-19 사용자 결정('서울 선택 시 서울 밖은 회색으로 경계를 나눠'): 시도를 보고 있으면 그 시도 밖 면은 화면에서 맥락 회색·평평으로 그린다 —
+     색 단계 자체는 그대로 두고 그리기만 scope(drawMap → Map3D.draw o.scope · GL setScope)가 덮는다. 수도권 전체 보기(camSido null)는 모두 칠한다 */
   const md = ctx.modeView(D, IX, ctx.mapScope('11'), { k: 'all' }, [], keys), lit = allOf('11').filter((x) => x.u > 0);
   for (const x of lit) assert.ok(md.C.cls(md.vals[x.key]) > 0, `${x.key} 색 단계`);
   assert.ok(lit.some((x) => x.key.startsWith('41')) && lit.some((x) => x.key.startsWith('28')), '경기·인천 면 값이 있다');
   /* 화면 연결: 기하는 시도를 받지 않고, 면 그림은 판의 모든 면(VIEW.all)·시도와 관계없는 높이 하한, 라벨·순위는 보는 시도 면(VIEW.units) */
   const dm = fnBody('drawMap');
-  assert.match(dm, /VIEW\.g = geomFor\(D, IX, W, H, narrow\);/); assert.doesNotMatch(dm, /VIEW\.sd/, 'drawMap 은 보는 시도에 기대지 않는다');
+  assert.match(dm, /VIEW\.g = geomFor\(D, IX, W, H, narrow\);/); assert.match(dm, /VIEW\.scope = camSido\(\);/, '보는 시도 = 카메라와 같은 camSido(고른 곳이 없으면 null = 모두 칠함)'); assert.doesNotMatch(dm, /VIEW\.sd/, 'drawMap 은 보는 시도에 기대지 않는다');
   assert.match(dm, /Map3D\.draw\(st\.querySelector\('svg\.map'\), gm, \{ units: VIEW\.all, nameOf: [^,]+, hFloor: 6, aria/);
   assert.match(fnBody('drawBaseLabels'), /Map3D\.labels\(g, VIEW\.G, VIEW\.units, \{ homeKey: VIEW\.homeKey \}\)/);
   assert.match(fnBody('modeData'), /modeView\(D, IX, mapScope\(VIEW\.sd\), m, VIEW\.yrs, VIEW\.all\.map\(\(x\) => x\.key\)\)/);
@@ -158,7 +160,7 @@ test('⑤ 배치: 1440 에서 지도 카드 약 74%(72~75%), 마크업·휴대�
   assert.match(fnBody('tbandHtml'), /const bm = bigMap\(VIEW\.sd, VIEW\.viewKey\);[\s\S]*<span class="tctl">\$\{play\}\$\{rot\}\$\{bm \? `<span class="tmap">\$\{bm\}<\/span>` : ''\}<\/span>/, '큰 지도 = 시간 띠 오른쪽 단추 묶음(보는 곳 기준 주소)');
   /* 미리보기는 옅게(.pv) — 큰 숫자·요약 구역 */
   assert.match(CSS, /\.sum-h\.pv, \.sum-h\.pv \.n \{ color: var\(--muted-foreground\); \}/); assert.match(CSS, /\.smry\.pv /); assert.doesNotMatch(TPL, /#c-yr|\.tlw/, '아래 줄 해 막대·일정표 없음(사업 카드 한 장)');
-  assert.match(TPL, /if \(f && VIEW\?\.cap && !busyStage\(\)\) \{[^}]*pvT = setTimeout\(\(\) => setPv\(k\), 200\);/, '면에 200ms 머물면 미리보기');
+  assert.match(TPL, /if \(f && VIEW\?\.cap && !busyStage\(\) && !f\.classList\.contains\('out'\)\) \{[^}]*pvT = setTimeout\(\(\) => setPv\(k\), 200\);/, '면에 200ms 머물면 미리보기(보는 시도 밖 회색 면은 없음, 2026-10-19)');
 });
 
 test('⑥ 돌려 보기 연결: shade · attachOrbit(끄는 동안 투영만, 놓으면 그 보기로 다시 그림) · 단추 15° · 원래 방향(돌렸을 때만) · 고르기는 click · 아이콘은 lucide 대응표', () => {
