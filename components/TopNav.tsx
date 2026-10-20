@@ -87,7 +87,7 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
 
   return (
     <header className="sticky top-0 z-40 shrink-0 overflow-x-clip border-b border-border bg-card font-normal text-card-foreground shadow-card print:hidden">
-      {/* 1600px 이상 대시보드는 본문 틀(components/page.tsx)과 같이 1760px 선. 지도(compact)도 같은 선이다(app.css .shell-map .mhead 가 같은 1440/1760px 선에 맞춘다) */}
+      {/* 1600px 이상 대시보드는 본문 틀(components/page.tsx)과 같이 1760px 선. 지도(compact)도 같은 선이다(app.css 의 지도 카드 틀 @media (min-width:901px) 이 지도 콘텐츠를 같은 1440/1760px 선에 맞춘다) */}
       <div className={cn('ml-[max(0px,50vw_-_720px)] flex h-16 w-[min(1440px,100vw)] items-center gap-2 px-7 mobile:ml-0 mobile:h-12 mobile:w-auto mobile:px-3 min-[1600px]:ml-[max(0px,50vw_-_880px)] min-[1600px]:w-[min(1760px,100vw)]')}>
         <a className="mr-3 flex h-full shrink-0 items-center no-underline focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary" href={home} aria-label="더주택 종합상황판 처음으로">
           <svg className="block h-(--logo-h) w-auto shrink-0 max-[599px]:hidden" viewBox="0 0 202 64" aria-hidden="true">

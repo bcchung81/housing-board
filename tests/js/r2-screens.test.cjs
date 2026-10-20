@@ -140,7 +140,24 @@ test('후속 1 상단 메뉴 바: 대시보드는 1600px 이상에서 본문 틀
   /* 1760 = 880 × 2, 본문 틀과 같은 값 */
   assert.match(read('components/page.tsx'), /min-\[1600px\]:max-w-\[1760px\]/);
   assert.match(read('app/(map)/layout.tsx'), /<TopNav compact \/>/);
-  assert.match(read('assets/css/app.css'), /\.shell-map \.mhead\{padding-left:calc\(max\(0px,50vw - 720px\) \+ 28px\)/, '지도 머리 줄 1600px 아래는 1440px 선');
+  const css = read('assets/css/app.css');
+  assert.doesNotMatch(css, /\.shell-map \.mhead\{padding-left:calc\(/, '머리 줄 calc 여백은 카드 틀로 대체됐다(2026-10-20)');
+  assert.match(css, /@media \(max-width:900px\)\{\.shell-map \.mhead\{padding-left:28px;padding-right:28px\}\}/, '900px 이하 머리 줄 좌우 28px 는 예전 calc 결과 그대로');
+});
+
+test('지도 카드 틀(2026-10-20): 901px 이상 .app·개요 .ov 는 1440 선(1600px 이상 1760) − 56 너비의 대시보드 카드, 위아래 16px', () => {
+  const css = read('assets/css/app.css');
+  const sel = '\\.shell-map \\.app,html\\[data-map-mode="overview"\\] \\.shell-map \\.ov';
+  const card = new RegExp('@media \\(min-width:901px\\)\\{\\n  html\\[data-map-shell\\] \\.shell-map\\{background:var\\(--page-bg\\)\\}\\n  ' + sel + '\\{([^}]*)\\}').exec(css);
+  assert.ok(card, '901px 이상 카드 틀 블록(바탕 --page-bg + 카드 규칙)');
+  const body = card[1];
+  assert.match(body, /width:calc\(min\(1440px,100%\) - 56px\)/);
+  assert.match(body, /margin:16px auto/);
+  assert.match(body, /border:var\(--border-w\) solid var\(--border\)/);
+  assert.match(body, /border-radius:var\(--radius-card\)/);
+  assert.match(body, /box-shadow:var\(--shadow-card\)/);
+  assert.match(body, /overflow:hidden/);
+  assert.match(css, /@media \(min-width:1600px\)\{\.shell-map \.app,html\[data-map-mode="overview"\] \.shell-map \.ov\{width:calc\(min\(1760px,100%\) - 56px\)\}\}/, '1600px 이상은 1760 선');
 });
 
 test('후속 2 후보 사업 지도 열: 수도권은 시군구 지도(구가 있는 시는 pick)·이름 \'시군구 지도\', 수도권 밖은 숨김, 번호 있는 사업은 사업 위치', () => {

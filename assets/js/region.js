@@ -926,8 +926,8 @@
     el.innerHTML = list ? crumbsHtml(list) : '';
     el.hidden = !list;
   }
-  /* 지도 가로 화소(사이드바를 뺀 대강의 값) — 첫 시점 계산용 */
-  const mapPx = (win) => { const w = Number(win && win.innerWidth) || 1200; return Math.max(360, w > 900 ? w - 400 : w); };
+  /* 지도 가로 화소(사이드바를 뺀 대강의 값) — 첫 시점 계산용. 901px 이상은 지도 카드 틀(app.css: min(폭,1440 · 1600px 이상 1760) − 56) 안이다 */
+  const mapPx = (win) => { const w = Number(win && win.innerWidth) || 1200; return Math.max(360, w > 900 ? Math.min(w, w >= 1600 ? 1760 : 1440) - 56 - 400 : w); };
   async function getIndex(win) {
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }

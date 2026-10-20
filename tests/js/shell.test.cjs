@@ -117,13 +117,13 @@ test('옛 지도 주소(/?region=…)는 쿼리를 그대로 두고 /map 으로 
   assert.match(proxy, /matcher: '\/'/);
 });
 
-test('지도 머리 줄: compact 도 1600px 이상 1760px 선이고 .mhead 도 같은 선, 탭 제목은 더주택', () => {
+test('지도 머리 줄: compact 도 1600px 이상 1760px 선이고 지도 카드 틀도 같은 선, 탭 제목은 더주택', () => {
   const fs = require('node:fs');
   const nav = fs.readFileSync('components/TopNav.tsx', 'utf8');
   assert.ok(!/!compact\s*&&\s*'min-\[1600px\]/.test(nav), 'compact 가 1760 선에서 빠져 있다');
   assert.match(nav, /mobile:px-3 min-\[1600px\]:ml-\[max\(0px,50vw_-_880px\)\] min-\[1600px\]:w-\[min\(1760px,100vw\)\]/);
   const css = fs.readFileSync('assets/css/app.css', 'utf8');
-  assert.match(css, /@media \(min-width:1600px\)\{\.shell-map \.mhead\{padding-left:calc\(max\(0px,50vw - 880px\) \+ 28px\)/);
+  assert.match(css, /@media \(min-width:1600px\)\{\.shell-map \.app,html\[data-map-mode="overview"\] \.shell-map \.ov\{width:calc\(min\(1760px,100%\) - 56px\)\}\}/);   // 머리 줄은 지도 카드(1760 선) 안
   // TopNav 요소(header·nav·ul·li·a·button·svg·input)를 바꾸는 전역 요소 선택자가 없다
   assert.ok(!/(^|\n)(header|nav|ul|li|a|button|svg|input)\s*[,{]/.test(css));
   assert.match(fs.readFileSync('app/(map)/layout.tsx', 'utf8'), /title: '더주택 지도'/);
