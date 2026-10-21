@@ -154,6 +154,21 @@ export type StageGroup = keyof typeof STAGE_GROUPS;
 export const STAGE_GROUP_NAME: Record<StageGroup, string> = { plan: '계획', permit: '인허가', build: '착공', sale: '모집' };
 export const groupOfBoard = (b: number): StageGroup | null => (b === 0 ? 'plan' : b === 1 ? 'permit' : b === 2 ? 'build' : b === 3 ? 'sale' : null);
 
+/* ---------- HOME PoC 행(2026-10-21 사용자 결정 — 사업 찾기의 모집단·값 = HOME PoC '정책 전체', 이름은 일반사용자 이름 그대로) ---------- */
+/* PoC 6칸(lib/board/projects-view HOME_NAMES 정책·사업화·인허가·건설·공급·입주 — homeRowsOf 의 board) → 일반사용자 6칸(STAGE_NAME):
+   정책·사업화 → 계획, 인허가 → 인허가, 건설(PoC 는 준공을 건설에 넣는다) → 착공, 공급 → 모집, 입주 → 입주. 준공 칸으로 가는 PoC 칸은 없다 */
+export const PUBLIC_OF_HOME = [0, 0, 1, 2, 3, 5] as const;
+/* PoC 판정(lib/board/projects-view homeRowsOf 의 cls — 도래 목표 대비 측정 부족률 2% 이상 지연, 0~2% 주의) 사실 문장(안 A — 사실만, 2026-10-19):
+   정상·판정 미확보 → 빈칸, 주의·지연이고 우리 원장에 지난 예정일이 있으면 '준공 예정일이 n개월 지났어요', 없으면 PoC 부족 호수로 '예정보다 n호가 아직 확인되지 않았어요' */
+export function homeFact(cls: Cls | null, gap: number | null, overdue: { eventType: string; months: number } | null): string {
+  if (cls !== 'caution' && cls !== 'delay') return '';
+  if (overdue) return `${EV_NAME[overdue.eventType] ? EV_NAME[overdue.eventType] + ' ' : ''}예정일이 ${overdue.months ? `${overdue.months}개월 ` : ''}지났어요`;
+  return gap ? `예정보다 ${Math.round(gap).toLocaleString('ko-KR')}호가 아직 확인되지 않았어요` : '예정보다 늦어지고 있어요';
+}
+/* 겹쳐서 합계에서 뺀 PoC 행(물량 집계 대상 아님 — 같은 블록의 다른 자료와 같은 사업)의 호수 칸 글자·설명 */
+export const DUP_TEXT = '합계에서 뺌';
+export const DUP_TIP = '같은 사업이 다른 자료에도 있어 호수는 한 번만 세요';
+
 /* ---------- 숫자 ---------- */
 /* 큰 합계 '22만 7,976호'(템플릿 bigNum + 단위) · 비교 숫자 '1,285호' */
 export const bigNum = (u: number) => (u >= 1e4 ? `${Math.floor(u / 1e4)}만${u % 1e4 ? ` ${(u % 1e4).toLocaleString('ko-KR')}` : ''}` : u.toLocaleString('ko-KR'));
@@ -180,11 +195,15 @@ export type PublicIn = {
   id: string; name: string; sgg: string; area: string; units: number; board: number; issued: boolean; cls: Cls | null;
   overdue: { eventType: string; planned: string; months: number } | null; next: { eventType: string; planned: string } | null;
   pastDue: boolean; steps: Steps; agency: string; progress: number | null;
+  fact?: string;   // 있으면 예정 대비 글자를 이것으로(HOME PoC 판정 — homeFact)
+  dup?: boolean;   // 겹쳐서 합계에서 뺀 행(DUP_TEXT)
+  link?: string | null;   // 사업 창 id(HOME PoC 행이면 우리 원장 사업 id, 없으면 null — 창 없음). 없으면 id
 };
 export type PublicItem = {
   id: string; name: string; sub: string; full: string; sgg: string; area: string; units: number; board: number;
   stage: string; pct: number | null; nextText: string; inText: string; inDay: string; year: string; fact: string; judge: Judge['k']; agency: string;
   when: string;   // 원장 다음 고비 날짜(순서의 둘째 열쇠)
+  dup: boolean; link: string | null;
 };
 /* 목록 줄: 이름(distinctNames) · 지금(단계 + 공사 n%) · 다음 일정 · 들어올 때 · 예정 대비 · 시행. 순서 = inCmp(들어올 날 가까운 순) */
 export function publicItems(xs: PublicIn[], today: string, sggName: (code: string) => string): PublicItem[] {
@@ -194,7 +213,7 @@ export function publicItems(xs: PublicIn[], today: string, sggName: (code: strin
     return {
       id: x.id, name: nm[x.id], sub: nm.sub?.[x.id] ?? '', full: x.name, sgg: x.sgg, area: x.area, units: x.units, board: x.board,
       stage: STAGE_NAME[x.board] ?? '', pct: x.progress, nextText: stepText(nextStep(prjMarks(x.steps, nx, today))), inText: inLabel(x.steps, nx), inDay: day, year: day.slice(0, 4),
-      fact: factOf(j, x.pastDue), judge: j.k, agency: x.agency, when: nx.d,
+      fact: x.fact ?? factOf(j, x.pastDue), judge: j.k, agency: x.agency, when: nx.d, dup: !!x.dup, link: x.link === undefined ? x.id : x.link,
     };
   }).sort((a, b) => inCmp({ d: a.inDay, when: a.when, u: a.units }, { d: b.inDay, when: b.when, u: b.units }));
 }

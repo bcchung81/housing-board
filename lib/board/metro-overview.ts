@@ -1,10 +1,10 @@
-/* 지도 첫 화면 '수도권 개요'(/map, /map?sido=11|28|41)의 값(순수 함수 — 파일을 읽지 않는다. Node 시험이 그대로 부른다: tests/js/map-overview.test.cjs).
+/* 지도 첫 화면 '수도권 개요'(/map, /map?sido=11|28|41)의 값(순수 함수 — 파일을 읽지 않는다. Node 시험이 그대로 부른다: tests/js/map-overview.test.cjs · map-golden.test.cjs).
    - 면: data/board/region-map.json 의 시군구 67곳(서울 25 · 인천 11 · 경기 31 — 경기는 시 단위). 경로(투영 정수)는 그대로 넘기고 지도 쪽(assets/js/overview.js)이 경위도 GeoJSON 으로 되돌린다.
-   - 값: 사업 화면(/projects)과 같은 목록 행(getProjectsIndex → rowsOf)과 지역 공급(/region)과 같은 앞으로 12개월 예정(region-calendar.json)에서 센다(지역 공급은 모집·준공·입주, 개요는 준공이 대표이고 입주는 마우스 올림 분해로만).
-     진행 사업 호수 = 현재 단계가 ①계획~④모집(리본 칸 0~3)인 사업의 계획 호수 합(호수 미확인은 건수로 따로)
-     지연 사업 = 사업 화면의 '지연(장기 포함)' = 판정 지연(현재 예정일 경과 6개월 이상, 12개월 이상 장기 지연 포함) — 번호 있는 사업만(후보는 세지 않음)
-     앞으로 12개월 준공 = 지역 공급의 '앞으로 12개월'에서 준공(COMPLETION) 예정만(사업당 하나 — 사업·지역 공급 화면의 대표 '준공 예정'과 같은 정의, 2026-10-15 결정)
-     앞으로 12개월 입주 = 같은 기간 입주(MOVE_IN) 예정(분해용 — 준공과 더하지 않는다)
+   - 값(2026-10-21 HOME PoC #overview 와 같은 규칙 — homeOverview): tools/ledger/map-overview.js 가 공통 사업 자료(home-projects.json, PoC 원천 행 PRO_ 단위)로 센
+     data/board/map-overview.json 을 면·구·시도로 접는다. 범위 둘을 함께 싣고(p97 = 9·7 포트폴리오 230행 · all = 정책 전체 443행) 지도 쪽이 고른다
+     (정책담당자 기본 9·7, ?policy=all 이면 정책 전체, 일반사용자 관점은 정책 전체). 값 뜻은 map-overview.js 머리 주석.
+     PoC 시군구 미연결 행은 시군구 면에는 없고 시도·수도권 합계에만 든다(PoC 와 같다).
+   - 옛 원장 규칙(metroOverview·valuesBySgg — 사업 화면 목록 행 ①~④ 진행 호수·예정일 경과 지연·12개월 준공)은 지도가 더 쓰지 않는다. 공유 시험(data-audit-1016)이 부르므로 남겨 둔다.
    - 코드: 원장 시군구 코드 → 면. 서울·인천은 코드 그대로, 경기는 시 단위로 접는다(앞 4자리 + '0': 41281 고양시 덕양구 → 41280 고양시). */
 import type { ProjectRow } from './projects-view';
 import type { CalendarDoc, RegionMapDoc } from './region';
@@ -39,26 +39,84 @@ export const GU_CITIES = Object.keys(METRO_AREAS).filter((c) => guOf(c).length);
 /* 지도 화면 모드를 첫 그림 전에 정한다(지도 레이아웃 <head>): 상세 매개변수(?project·pnu·bjd·sgg·code·region)가 하나라도 있으면 'detail', 아니면 'overview'.
    CSS(app.css)가 이 값으로 상세 마크업과 개요 마크업 중 하나만 보이고, 지도 섬(MapIsland)이 그 모드의 스크립트만 부른다. assets/js/overview.js modeOf 와 같은 규칙(시험으로 확인).
    구가 있는 경기 시(guOf — 수원·성남·안양·부천·안산·고양·용인·화성)를 ?sgg= 로 열면(2026-10-15 평가 P1: 고양시 41280 이 '0호' 빈 지도) 상세를 열지 않고
-   개요 /map?sido=41&pick=<시> 로 바꿔(replace) 그 시의 구 메뉴를 연다. 지표(?metric=)는 넘긴다. 시 단위 코드에만 적힌 사업(구 미정)을 여는 ?gu=none 은 그대로 상세.
+   개요 /map?sido=41&pick=<시> 로 바꿔(replace) 그 시의 구 메뉴를 연다. 지표(?metric=)·범위(?policy=all)는 넘긴다. 시 단위 코드에만 적힌 사업(구 미정)을 여는 ?gu=none 은 그대로 상세.
    전역 이름을 남기지 않게 함수로 감싼다(전역 var 가 생기면 같은 이름을 최상위 const 로 쓰는 app.js 가 SyntaxError 로 통째로 멈춘다) */
 export const MAP_MODE_INIT = "(function(){try{var q=new URLSearchParams(location.search),c=q.get('sgg'),m=q.get('metric'),d=document.documentElement;"
-  + `if(c&&${JSON.stringify(GU_CITIES)}.indexOf(c)>=0&&q.get('gu')!=='none'&&!['project','pnu','bjd','code','region'].some(function(k){return q.has(k)})){d.setAttribute('data-map-mode','overview');location.replace('/map?sido='+c.slice(0,2)+'&pick='+c+(m?'&metric='+encodeURIComponent(m):'')+(q.get('id')?'&id='+encodeURIComponent(q.get('id')):q.get('cand')?'&cand='+encodeURIComponent(q.get('cand')):''));return}`
+  + `if(c&&${JSON.stringify(GU_CITIES)}.indexOf(c)>=0&&q.get('gu')!=='none'&&!['project','pnu','bjd','code','region'].some(function(k){return q.has(k)})){d.setAttribute('data-map-mode','overview');location.replace('/map?sido='+c.slice(0,2)+'&pick='+c+(m?'&metric='+encodeURIComponent(m):'')+(q.get('policy')==='all'?'&policy=all':'')+(q.get('id')?'&id='+encodeURIComponent(q.get('id')):q.get('cand')?'&cand='+encodeURIComponent(q.get('cand')):''));return}`
   + "d.setAttribute('data-map-mode',['project','pnu','bjd','sgg','code','region'].some(function(k){return q.has(k)})?'detail':'overview')}catch(e){}})()";
 
-/* 값 한 묶음: u = 진행 사업 호수, q = 진행 사업 중 호수 미확인 건수, n = 진행 사업 수, d = 지연 사업 수(장기 포함), a = 앞으로 12개월 준공 호, an = 그 예정 수, mi = 같은 기간 입주 호, mn = 그 예정 수,
-   st = 현재 단계(①~⑥)별 사업 수 */
-export type OvVals = { u: number; q: number; n: number; d: number; a: number; an: number; mi: number; mn: number; st: number[] };
-export type OvGu = { code: string; name: string; v: OvVals | null };
-export type OvUnit = { code: string; s: string; name: string; d: string; v: OvVals | null; gu: OvGu[] };
+/* HOME 규칙 값 한 묶음(tools/ledger/map-overview.js 와 같은 모양): n 원천 행 · c 물량 집계 대상 · x 집계 제외(중복·모호) · q 집계 대상 중 물량 없음 · u 집계 호수
+   · d 지연 사업(부족률 2% 이상) · w 주의 · a 향후 12개월 공급 예정 호수 · an 그 사업 수 · st 단계 물량[정책·사업화·인허가·건설·공급·입주·미확인] · f '!' 지연 표시 글(없으면 '') */
+export type OvVals = { n: number; c: number; x: number; q: number; u: number; d: number; w: number; a: number; an: number; st: number[]; f: string };
+export type OvScope = 'p97' | 'all';
+export const OV_SCOPES: OvScope[] = ['p97', 'all'];
+export type OvPair = Record<OvScope, OvVals>;
+/* vs = 범위별 값. v 는 지도 쪽이 고른 범위의 값을 넣는다(서버는 비워 둔다) */
+export type OvGu = { code: string; name: string; vs: OvPair | null; v?: OvVals | null };
+export type OvUnit = { code: string; s: string; name: string; d: string; vs: OvPair | null; v?: OvVals | null; gu: OvGu[] };
 export type OverviewDoc = {
-  schema: 'metro-overview/1'; ok: boolean; referenceDate: string | null; months: [string, string] | null;
-  total: OvVals | null; sido: { code: string; name: string; v: OvVals | null }[]; units: OvUnit[]; view: Record<string, [number, number, number, number]>;
+  schema: 'metro-overview/2'; ok: boolean; referenceDate: string | null;
+  totals: OvPair | null; total?: OvVals | null; sido: { code: string; name: string; vs: OvPair | null; v?: OvVals | null }[]; units: OvUnit[]; view: Record<string, [number, number, number, number]>;
+  /* 범위별 PoC 셈 보조: 시군구 미연결 행 수 · 행이 있는 PoC 시군구 수 */
+  meta: Record<OvScope, { unlinked: number; municipalities: number }> | null;
   /* 전국 보기 맥락 면(지도 페이지가 data/board/korea-sido.json 에서 붙인다 — 같은 투영 정수, 시도 16곳). 없으면 지도는 수도권만 */
   nation?: { view: [number, number, number, number]; sido: { s: string; n: string; d: string; l: [number, number] }[] };
 };
+/* data/board/map-overview.json 모양 */
+type RawVals = Omit<OvVals, 'f'>;
+export type MapOverviewJson = {
+  asOf: string;
+  scopes: Record<OvScope, { total: RawVals; sido: Record<string, RawVals>; bySgg: Record<string, RawVals>; unlinked: number; municipalities: number; flags: { sido: Record<string, string>; sgg: Record<string, string> } }>;
+};
 
-const zero = (): OvVals => ({ u: 0, q: 0, n: 0, d: 0, a: 0, an: 0, mi: 0, mn: 0, st: [0, 0, 0, 0, 0, 0] });
-function add(t: OvVals, x: OvVals) {
+const unitName = (s: string, n: string) => `${SIDO_FULL[s]} ${n}`;
+
+const zeroH = (): OvVals => ({ n: 0, c: 0, x: 0, q: 0, u: 0, d: 0, w: 0, a: 0, an: 0, st: [0, 0, 0, 0, 0, 0, 0], f: '' });
+function addH(t: OvVals, x: RawVals) {
+  t.n += x.n; t.c += x.c; t.x += x.x; t.q += x.q; t.u += x.u; t.d += x.d; t.w += x.w; t.a += x.a; t.an += x.an;
+  x.st.forEach((v, i) => { t.st[i] += v; });
+}
+const withF = (x: RawVals | undefined, f?: string): OvVals => { const v = zeroH(); if (x) addH(v, x); v.f = f || ''; return v; };
+
+/* 개요 자료 하나(HOME 규칙). data 가 null 이면(자료를 읽지 못함) 경계만 */
+export function homeOverview(map: RegionMapDoc, data: MapOverviewJson | null): OverviewDoc {
+  const codeOf = new Map(Object.entries(METRO_AREAS).map(([c, n]) => [`${c.slice(0, 2)}|${n}`, c]));
+  const pair = (f: (s: OvScope) => OvVals): OvPair => ({ p97: f('p97'), all: f('all') });
+  const sumOf = (s: OvScope, pick: (k: string) => boolean, flag?: string): OvVals => {
+    const v = zeroH();
+    for (const [k, x] of Object.entries(data!.scopes[s].bySgg)) if (pick(k)) addH(v, x);
+    v.f = flag || '';
+    return v;
+  };
+  const units: OvUnit[] = map.sgg.filter((g) => (OV_SIDO as readonly string[]).includes(g.s)).map((g) => {
+    const code = codeOf.get(`${g.s}|${g.n}`);
+    if (!code) throw new Error(`개요 면 코드를 찾지 못했습니다: ${unitName(g.s, g.n)}`);
+    const gu: OvGu[] = guOf(code).map((c) => ({ code: c, name: METRO_AREAS[c], vs: data ? pair((s) => withF(data.scopes[s].bySgg[c])) : null }));
+    /* 시 단위로만 적힌 행(구 미정)이 있으면 구 메뉴 맨 끝에 시 자체를 둔다 */
+    if (data && gu.length && OV_SCOPES.some((s) => data.scopes[s].bySgg[code]?.n)) gu.push({ code, name: `${g.n}(구 미정)`, vs: pair((s) => withF(data.scopes[s].bySgg[code])) });
+    const vs = data ? pair((s) => sumOf(s, (k) => unitOf(k) === code, data.scopes[s].flags.sgg[code])) : null;
+    return { code, s: g.s, name: g.n, d: g.d, vs, gu };
+  });
+  const sido = OV_SIDO.map((s) => ({ code: s, name: SIDO_SHORT[s], vs: data ? pair((k) => withF(data.scopes[k].sido[s], data.scopes[k].flags.sido[s])) : null }));
+  return {
+    schema: 'metro-overview/2', ok: !!data, referenceDate: data ? data.asOf : null,
+    totals: data ? pair((s) => withF(data.scopes[s].total)) : null, sido, units, view: map.view,
+    meta: data ? { p97: { unlinked: data.scopes.p97.unlinked, municipalities: data.scopes.p97.municipalities }, all: { unlinked: data.scopes.all.unlinked, municipalities: data.scopes.all.municipalities } } : null,
+  };
+}
+
+/* ---------- 옛 원장 규칙(지도는 쓰지 않는다 — 공유 시험 data-audit-1016 만 부른다) ----------
+   값 한 묶음: u = 진행 사업 호수, q = 진행 사업 중 호수 미확인 건수, n = 진행 사업 수, d = 지연 사업 수(장기 포함), a = 앞으로 12개월 준공 호, an = 그 예정 수, mi = 같은 기간 입주 호, mn = 그 예정 수,
+   st = 현재 단계(①~⑥)별 사업 수 */
+export type LedgerOvVals = { u: number; q: number; n: number; d: number; a: number; an: number; mi: number; mn: number; st: number[] };
+type LedgerOvUnit = { code: string; s: string; name: string; d: string; v: LedgerOvVals | null; gu: { code: string; name: string; v: LedgerOvVals | null }[] };
+export type LedgerOverviewDoc = {
+  schema: 'metro-overview/1'; ok: boolean; referenceDate: string | null; months: [string, string] | null;
+  total: LedgerOvVals | null; sido: { code: string; name: string; v: LedgerOvVals | null }[]; units: LedgerOvUnit[]; view: Record<string, [number, number, number, number]>;
+};
+
+const zero = (): LedgerOvVals => ({ u: 0, q: 0, n: 0, d: 0, a: 0, an: 0, mi: 0, mn: 0, st: [0, 0, 0, 0, 0, 0] });
+function add(t: LedgerOvVals, x: LedgerOvVals) {
   t.u += x.u; t.q += x.q; t.n += x.n; t.d += x.d; t.a += x.a; t.an += x.an; t.mi += x.mi; t.mn += x.mn;
   x.st.forEach((v, i) => { t.st[i] += v; });
 }
@@ -66,8 +124,8 @@ function add(t: OvVals, x: OvVals) {
 export const inProgress = (r: { board: number }) => r.board <= 3;
 
 /* 원장 시군구 코드별 값(접기 전). 사업 화면 행(rows)과 지역 공급 예정(calendar)을 받는다 */
-export function valuesBySgg(rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | 'cls' | 'issued'>[], calendar: Pick<CalendarDoc, 'sido'>, sggNames: Record<string, string | null>): Map<string, OvVals> {
-  const out = new Map<string, OvVals>(), at = (c: string) => { let v = out.get(c); if (!v) out.set(c, (v = zero())); return v; };
+export function valuesBySgg(rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | 'cls' | 'issued'>[], calendar: Pick<CalendarDoc, 'sido'>, sggNames: Record<string, string | null>): Map<string, LedgerOvVals> {
+  const out = new Map<string, LedgerOvVals>(), at = (c: string) => { let v = out.get(c); if (!v) out.set(c, (v = zero())); return v; };
   for (const r of rows) {
     if (!unitOf(r.sgg)) continue;
     const v = at(r.sgg);
@@ -87,17 +145,15 @@ export function valuesBySgg(rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | '
   return out;
 }
 
-const unitName = (s: string, n: string) => `${SIDO_FULL[s]} ${n}`;
-
-/* 개요 자료 하나. data 가 null 이면(원장을 읽지 못함) 경계만 */
-export function metroOverview(map: RegionMapDoc, data: { rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | 'cls' | 'issued'>[]; calendar: CalendarDoc; sggNames: Record<string, string | null>; referenceDate: string } | null): OverviewDoc {
+/* 옛 개요 자료 하나. data 가 null 이면(원장을 읽지 못함) 경계만 */
+export function metroOverview(map: RegionMapDoc, data: { rows: Pick<ProjectRow, 'sgg' | 'board' | 'units' | 'cls' | 'issued'>[]; calendar: CalendarDoc; sggNames: Record<string, string | null>; referenceDate: string } | null): LedgerOverviewDoc {
   const codeOf = new Map(Object.entries(METRO_AREAS).map(([c, n]) => [`${c.slice(0, 2)}|${n}`, c]));
   const by = data ? valuesBySgg(data.rows, data.calendar, data.sggNames) : null;
-  const units: OvUnit[] = map.sgg.filter((g) => (OV_SIDO as readonly string[]).includes(g.s)).map((g) => {
+  const units: LedgerOvUnit[] = map.sgg.filter((g) => (OV_SIDO as readonly string[]).includes(g.s)).map((g) => {
     const code = codeOf.get(`${g.s}|${g.n}`);
     if (!code) throw new Error(`개요 면 코드를 찾지 못했습니다: ${unitName(g.s, g.n)}`);
-    const gu: OvGu[] = guOf(code).map((c) => ({ code: c, name: METRO_AREAS[c], v: by ? by.get(c) ?? zero() : null }));
-    let v: OvVals | null = null;
+    const gu: LedgerOvUnit['gu'] = guOf(code).map((c) => ({ code: c, name: METRO_AREAS[c], v: by ? by.get(c) ?? zero() : null }));
+    let v: LedgerOvVals | null = null;
     if (by) {
       v = zero();
       for (const [c, x] of by) if (unitOf(c) === code) add(v, x);
@@ -113,7 +169,7 @@ export function metroOverview(map: RegionMapDoc, data: { rows: Pick<ProjectRow, 
     for (const u of units) if (u.s === s && u.v) add(v, u.v);
     return { code: s, name: SIDO_SHORT[s], v };
   });
-  let total: OvVals | null = null;
+  let total: LedgerOvVals | null = null;
   if (by) { total = zero(); for (const s of sido) add(total, s.v!); }
   const months = data && data.calendar.months?.length ? [data.calendar.months[0], data.calendar.months[data.calendar.months.length - 1]] as [string, string] : null;
   return { schema: 'metro-overview/1', ok: !!by, referenceDate: data ? data.referenceDate : null, months, total, sido, units, view: map.view };

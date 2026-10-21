@@ -53,6 +53,9 @@ schemas/*/raw/hub-bulk-history/*.zip
 # HOME PoC 덤프(tools/ledger/home-dump.py)에서 뽑은 jsonl.gz. 원본은 Storage ledger-raw 에만 두고 저장소에는 manifest.json 만
 schemas/*/raw/home/*/*.jsonl.gz
 
+# HOME PoC 공개 API 스냅샷(덤프로 재현할 수 없는 값만 — tools/ledger/home-projects.js·home-sources.js --fetch-poc). 압축 원본은 git 무시, 같은 폴더 manifest.json(주소·받은 시각·sha256·행 수)만 커밋
+schemas/*/raw/home-api/*/*.json.gz
+
 # 열린 달 매일 갱신의 건축HUB OpenAPI 원본(법정동별 응답, tools/ledger/hub-api-refresh.js). 기획서 결정 4 "원천 응답 재배포 안 함" — Storage ledger-raw 에만(raw-store.js push --only raw/hub-refresh)
 schemas/*/raw/hub-refresh/
 

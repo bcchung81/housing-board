@@ -45,7 +45,16 @@ test('실제 원장: 지연 확정·후보 계산 건수는 원장 집계(judgme
   assert.equal(L[BL.LIST_REVIEW].rows.length, J.candidate.delay.projects);
   assert.equal(L[BL.LIST_CAUTION].rows.length, J.caution.projects);
   assert.equal([0, 1, 2, 3, 4, 5].reduce((a, i) => a + L[BL.listStage(i)].rows.length, 0), J.delay.projects);
-  assert.match(read('app/(dashboard)/page.tsx'), /lists: boardLists\(View, idx\.rows/);
+  /* 2026-10-21 종합상황판 = HOME 규칙(home-board.json): 페이지는 HOME 원천 행으로 목록을 계산하고, 목록 건수 = 카드 숫자(지연·주의·연결 사업), 단계별 지연 합 = 지연 */
+  const HB = require('../../data/board/home-board.json'), HP = require('../../data/board/home-projects.json');
+  const H = BL.boardLists(V, V.homeRowsOf(HP.rows, HP.residuals), () => undefined);
+  assert.equal(H[BL.LIST_LATE].rows.length, HB.judgment.delay.projects);
+  assert.equal(H[BL.LIST_CAUTION].rows.length, HB.judgment.caution.projects);
+  assert.equal(H[BL.LIST_ALL].rows.length, HB.scope.projects);
+  assert.equal(HB.judgment.candidate, undefined, 'HOME 집계에는 후보(번호 없는 사업)가 없다');
+  assert.equal(H[BL.LIST_REVIEW].rows.length, 0);
+  assert.equal([0, 1, 2, 3, 4, 5].reduce((a, i) => a + H[BL.listStage(i)].rows.length, 0), HB.judgment.delay.projects);
+  assert.match(read('app/(dashboard)/page.tsx'), /lists: boardLists\(View, idx\.homeRows/);
 });
 
 test('상황판: 목록이 있는 링크만 창으로 열고(일반 클릭), href 는 그대로 둔다', () => {

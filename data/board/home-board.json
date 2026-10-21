@@ -1,0 +1,2409 @@
+{
+ "schema": "home-board/1",
+ "observedMonth": "2026-10",
+ "referenceDate": "2026-10-20",
+ "source": null,
+ "stageNames": [
+  "정책",
+  "사업화",
+  "인허가",
+  "건설",
+  "공급",
+  "입주"
+ ],
+ "judge": {
+  "cautionMonths": 0,
+  "delayMonths": 0,
+  "rule": "HOME 부족률 — 도래 목표 대비 측정 부족률 2% 이상 지연, 0% 초과~2% 미만 주의, 측정 없으면 판정 미확보(0호로 보지 않음)"
+ },
+ "scope": {
+  "projects": 175,
+  "issued": 175,
+  "candidates": 0,
+  "judged": 140,
+  "units": 151271,
+  "coverage": "CAPITAL",
+  "bySource": {
+   "issued": 0,
+   "lhCandidates": 0,
+   "hubBulkCandidates": 0,
+   "home": 175
+  }
+ },
+ "months": [
+  "2025-01",
+  "2025-02",
+  "2025-03",
+  "2025-04",
+  "2025-05",
+  "2025-06",
+  "2025-07",
+  "2025-08",
+  "2025-09",
+  "2025-10",
+  "2025-11",
+  "2025-12",
+  "2026-01",
+  "2026-02",
+  "2026-03",
+  "2026-04",
+  "2026-05",
+  "2026-06",
+  "2026-07",
+  "2026-08",
+  "2026-09",
+  "2026-10",
+  "2026-11",
+  "2026-12",
+  "2027-01",
+  "2027-02",
+  "2027-03",
+  "2027-04",
+  "2027-05",
+  "2027-06",
+  "2027-07",
+  "2027-08",
+  "2027-09",
+  "2027-10",
+  "2027-11",
+  "2027-12",
+  "2028-01",
+  "2028-02",
+  "2028-03",
+  "2028-04",
+  "2028-05",
+  "2028-06",
+  "2028-07",
+  "2028-08",
+  "2028-09",
+  "2028-10"
+ ],
+ "now": 21,
+ "actualThrough": "2026-10",
+ "actualIndex": 21,
+ "actualSource": "HOME",
+ "stageUnits": [
+  [
+   99614,
+   4730,
+   17429,
+   22242,
+   7256,
+   0
+  ],
+  [
+   95003,
+   6160,
+   18765,
+   23927,
+   7416,
+   0
+  ],
+  [
+   94465,
+   6160,
+   17554,
+   23567,
+   9525,
+   0
+  ],
+  [
+   93285,
+   6160,
+   17554,
+   23882,
+   10390,
+   0
+  ],
+  [
+   90459,
+   6160,
+   18503,
+   24379,
+   11770,
+   0
+  ],
+  [
+   82394,
+   3944,
+   20079,
+   27653,
+   17201,
+   0
+  ],
+  [
+   81405,
+   2514,
+   20790,
+   24759,
+   21803,
+   0
+  ],
+  [
+   81405,
+   2514,
+   20790,
+   24221,
+   22341,
+   0
+  ],
+  [
+   78117,
+   2514,
+   20033,
+   27141,
+   23466,
+   0
+  ],
+  [
+   77175,
+   2514,
+   20975,
+   27025,
+   23582,
+   0
+  ],
+  [
+   75373,
+   4029,
+   21262,
+   24434,
+   26173,
+   0
+  ],
+  [
+   68182,
+   4029,
+   18654,
+   27958,
+   32448,
+   0
+  ],
+  [
+   67882,
+   4029,
+   18954,
+   27958,
+   32448,
+   0
+  ],
+  [
+   66953,
+   4029,
+   18012,
+   29448,
+   32829,
+   0
+  ],
+  [
+   65225,
+   4029,
+   16151,
+   31071,
+   34795,
+   0
+  ],
+  [
+   65225,
+   2514,
+   16384,
+   28706,
+   38442,
+   0
+  ],
+  [
+   64707,
+   2514,
+   16384,
+   24030,
+   43636,
+   0
+  ],
+  [
+   64097,
+   2514,
+   16624,
+   19317,
+   48719,
+   0
+  ],
+  [
+   59275,
+   6162,
+   17258,
+   19317,
+   49259,
+   0
+  ],
+  [
+   58018,
+   6162,
+   14080,
+   15797,
+   57214,
+   0
+  ],
+  [
+   57053,
+   6162,
+   13970,
+   15891,
+   58195,
+   0
+  ],
+  [
+   57053,
+   6162,
+   11025,
+   18836,
+   58195,
+   0
+  ],
+  [
+   11852,
+   51363,
+   8057,
+   11875,
+   66053,
+   2071
+  ],
+  [
+   11852,
+   46015,
+   830,
+   22569,
+   66160,
+   3845
+  ],
+  [
+   11852,
+   46015,
+   770,
+   21834,
+   66136,
+   4664
+  ],
+  [
+   11852,
+   46015,
+   770,
+   21834,
+   66122,
+   4678
+  ],
+  [
+   11852,
+   46015,
+   770,
+   21834,
+   65723,
+   5077
+  ],
+  [
+   11852,
+   46015,
+   660,
+   21944,
+   65311,
+   5489
+  ],
+  [
+   11852,
+   46015,
+   660,
+   21944,
+   63712,
+   7088
+  ],
+  [
+   11852,
+   44401,
+   0,
+   23155,
+   63321,
+   8542
+  ],
+  [
+   11852,
+   42679,
+   0,
+   20734,
+   67464,
+   8542
+  ],
+  [
+   11852,
+   41785,
+   0,
+   21628,
+   66353,
+   9653
+  ],
+  [
+   11852,
+   41785,
+   0,
+   21028,
+   66892,
+   9714
+  ],
+  [
+   11852,
+   41785,
+   0,
+   21028,
+   66539,
+   10067
+  ],
+  [
+   11852,
+   41785,
+   0,
+   15388,
+   67236,
+   15010
+  ],
+  [
+   11852,
+   12780,
+   29005,
+   10881,
+   71030,
+   15723
+  ],
+  [
+   11852,
+   12780,
+   28704,
+   11182,
+   67113,
+   19640
+  ],
+  [
+   11852,
+   12780,
+   28704,
+   11182,
+   66763,
+   19990
+  ],
+  [
+   11852,
+   12780,
+   28704,
+   11182,
+   64855,
+   21898
+  ],
+  [
+   11852,
+   12780,
+   28704,
+   11182,
+   63219,
+   23534
+  ],
+  [
+   11852,
+   12780,
+   27189,
+   9051,
+   66054,
+   24345
+  ],
+  [
+   11852,
+   12780,
+   27189,
+   9051,
+   64929,
+   25470
+  ],
+  [
+   11852,
+   12780,
+   27189,
+   9051,
+   61381,
+   29018
+  ],
+  [
+   11852,
+   12780,
+   27189,
+   9051,
+   60144,
+   30255
+  ],
+  [
+   11852,
+   12780,
+   27189,
+   9051,
+   58029,
+   32370
+  ],
+  [
+   11852,
+   12780,
+   27189,
+   9051,
+   57485,
+   32914
+  ]
+ ],
+ "stageProjects": [
+  [
+   96,
+   5,
+   24,
+   39,
+   11,
+   0
+  ],
+  [
+   92,
+   6,
+   25,
+   40,
+   12,
+   0
+  ],
+  [
+   91,
+   6,
+   22,
+   41,
+   15,
+   0
+  ],
+  [
+   89,
+   6,
+   22,
+   41,
+   17,
+   0
+  ],
+  [
+   84,
+   6,
+   25,
+   40,
+   20,
+   0
+  ],
+  [
+   72,
+   3,
+   27,
+   44,
+   29,
+   0
+  ],
+  [
+   70,
+   2,
+   27,
+   40,
+   36,
+   0
+  ],
+  [
+   70,
+   2,
+   27,
+   39,
+   37,
+   0
+  ],
+  [
+   65,
+   2,
+   25,
+   43,
+   40,
+   0
+  ],
+  [
+   64,
+   2,
+   26,
+   42,
+   41,
+   0
+  ],
+  [
+   62,
+   3,
+   27,
+   39,
+   44,
+   0
+  ],
+  [
+   50,
+   3,
+   23,
+   46,
+   53,
+   0
+  ],
+  [
+   49,
+   3,
+   24,
+   46,
+   53,
+   0
+  ],
+  [
+   47,
+   3,
+   23,
+   48,
+   54,
+   0
+  ],
+  [
+   45,
+   3,
+   21,
+   49,
+   57,
+   0
+  ],
+  [
+   45,
+   2,
+   21,
+   43,
+   64,
+   0
+  ],
+  [
+   44,
+   2,
+   21,
+   36,
+   72,
+   0
+  ],
+  [
+   42,
+   2,
+   21,
+   31,
+   79,
+   0
+  ],
+  [
+   35,
+   7,
+   21,
+   31,
+   81,
+   0
+  ],
+  [
+   33,
+   7,
+   20,
+   22,
+   93,
+   0
+  ],
+  [
+   32,
+   7,
+   19,
+   20,
+   97,
+   0
+  ],
+  [
+   32,
+   7,
+   17,
+   22,
+   97,
+   0
+  ],
+  [
+   6,
+   24,
+   12,
+   18,
+   111,
+   4
+  ],
+  [
+   0,
+   16,
+   6,
+   29,
+   118,
+   6
+  ],
+  [
+   0,
+   16,
+   6,
+   28,
+   118,
+   7
+  ],
+  [
+   0,
+   16,
+   6,
+   28,
+   117,
+   8
+  ],
+  [
+   0,
+   16,
+   6,
+   28,
+   116,
+   9
+  ],
+  [
+   0,
+   16,
+   6,
+   28,
+   115,
+   10
+  ],
+  [
+   0,
+   16,
+   6,
+   28,
+   112,
+   13
+  ],
+  [
+   0,
+   16,
+   3,
+   29,
+   111,
+   16
+  ],
+  [
+   0,
+   16,
+   3,
+   27,
+   113,
+   16
+  ],
+  [
+   0,
+   16,
+   3,
+   27,
+   111,
+   18
+  ],
+  [
+   0,
+   16,
+   3,
+   26,
+   111,
+   19
+  ],
+  [
+   0,
+   16,
+   3,
+   26,
+   109,
+   21
+  ],
+  [
+   0,
+   16,
+   3,
+   22,
+   104,
+   30
+  ],
+  [
+   0,
+   13,
+   6,
+   14,
+   110,
+   32
+  ],
+  [
+   0,
+   13,
+   6,
+   14,
+   103,
+   39
+  ],
+  [
+   0,
+   13,
+   6,
+   14,
+   102,
+   40
+  ],
+  [
+   0,
+   13,
+   6,
+   14,
+   96,
+   46
+  ],
+  [
+   0,
+   13,
+   6,
+   14,
+   91,
+   51
+  ],
+  [
+   0,
+   13,
+   6,
+   10,
+   93,
+   53
+  ],
+  [
+   0,
+   13,
+   6,
+   10,
+   91,
+   55
+  ],
+  [
+   0,
+   13,
+   6,
+   10,
+   85,
+   61
+  ],
+  [
+   0,
+   13,
+   6,
+   10,
+   83,
+   63
+  ],
+  [
+   0,
+   13,
+   6,
+   10,
+   79,
+   67
+  ],
+  [
+   0,
+   13,
+   6,
+   10,
+   78,
+   68
+  ]
+ ],
+ "judgment": {
+  "ok": {
+   "projects": 136,
+   "units": 90231
+  },
+  "caution": {
+   "projects": 0,
+   "units": 0
+  },
+  "delay": {
+   "projects": 4,
+   "units": 1360
+  },
+  "excluded": {
+   "projects": 35,
+   "units": 59680,
+   "reason": "판정 미확보 — 기준일까지 도래한 일정이 없거나 같은 단계 측정이 없음"
+  }
+ },
+ "delayByStage": [
+  0,
+  45201,
+  0,
+  1988,
+  0,
+  0
+ ],
+ "cautionByStage": [
+  0,
+  0,
+  0,
+  874,
+  573,
+  0
+ ],
+ "regions": [
+  {
+   "code": "11",
+   "name": "서울특별시",
+   "projects": 27,
+   "units": 47615,
+   "judged": 16,
+   "ok": 13,
+   "caution": 0,
+   "delay": 3,
+   "delayUnits": 1133,
+   "cautionUnits": 0,
+   "okUnits": 9746,
+   "supplyReached": 2089,
+   "homeDelay": "사업화 36,736호 부족 (77.2%) · 준공 14호 부족 (3.5%)"
+  },
+  {
+   "code": "28",
+   "name": "인천광역시",
+   "projects": 29,
+   "units": 20251,
+   "judged": 21,
+   "ok": 21,
+   "caution": 0,
+   "delay": 0,
+   "delayUnits": 0,
+   "cautionUnits": 0,
+   "okUnits": 17002,
+   "supplyReached": 6353,
+   "homeDelay": "건설 1,106호 부족 (11.8%)"
+  },
+  {
+   "code": "41",
+   "name": "경기도",
+   "projects": 119,
+   "units": 83405,
+   "judged": 103,
+   "ok": 102,
+   "caution": 0,
+   "delay": 1,
+   "delayUnits": 227,
+   "cautionUnits": 0,
+   "okUnits": 63483,
+   "supplyReached": 49753,
+   "homeDelay": "사업화 8,197호 부족 (11.1%) · 건설 2,834호 부족 (4.5%) · 준공 1,974호 부족 (81.8%)"
+  }
+ ],
+ "agencies": [
+  {
+   "id": "lh",
+   "name": "LH",
+   "projects": 142,
+   "units": 93648,
+   "ok": 115,
+   "caution": 0,
+   "delay": 4,
+   "okUnits": 69057,
+   "cautionUnits": 0,
+   "delayUnits": 1360,
+   "excludedUnits": 23231,
+   "candidateUnits": 0,
+   "note": null,
+   "delayedSharePct": 1.5
+  },
+  {
+   "id": "unknown",
+   "name": "기관 미상",
+   "projects": 14,
+   "units": 40549,
+   "ok": 2,
+   "caution": 0,
+   "delay": 0,
+   "okUnits": 4100,
+   "cautionUnits": 0,
+   "delayUnits": 0,
+   "excludedUnits": 36449,
+   "candidateUnits": 0,
+   "note": null,
+   "delayedSharePct": 0
+  },
+  {
+   "id": "src-2",
+   "name": "인천도시공사",
+   "projects": 7,
+   "units": 6629,
+   "ok": 7,
+   "caution": 0,
+   "delay": 0,
+   "okUnits": 6629,
+   "cautionUnits": 0,
+   "delayUnits": 0,
+   "excludedUnits": 0,
+   "candidateUnits": 0,
+   "note": null,
+   "delayedSharePct": 0
+  },
+  {
+   "id": "sh",
+   "name": "SH",
+   "projects": 7,
+   "units": 3488,
+   "ok": 7,
+   "caution": 0,
+   "delay": 0,
+   "okUnits": 3488,
+   "cautionUnits": 0,
+   "delayUnits": 0,
+   "excludedUnits": 0,
+   "candidateUnits": 0,
+   "note": null,
+   "delayedSharePct": 0
+  },
+  {
+   "id": "src-4",
+   "name": "4)공공(LH,SH,GH)",
+   "projects": 1,
+   "units": 3178,
+   "ok": 1,
+   "caution": 0,
+   "delay": 0,
+   "okUnits": 3178,
+   "cautionUnits": 0,
+   "delayUnits": 0,
+   "excludedUnits": 0,
+   "candidateUnits": 0,
+   "note": null,
+   "delayedSharePct": 0
+  },
+  {
+   "id": "src-5",
+   "name": "1)조합",
+   "projects": 2,
+   "units": 2945,
+   "ok": 2,
+   "caution": 0,
+   "delay": 0,
+   "okUnits": 2945,
+   "cautionUnits": 0,
+   "delayUnits": 0,
+   "excludedUnits": 0,
+   "candidateUnits": 0,
+   "note": null,
+   "delayedSharePct": 0
+  },
+  {
+   "id": "gh",
+   "name": "GH",
+   "projects": 2,
+   "units": 834,
+   "ok": 2,
+   "caution": 0,
+   "delay": 0,
+   "okUnits": 834,
+   "cautionUnits": 0,
+   "delayUnits": 0,
+   "excludedUnits": 0,
+   "candidateUnits": 0,
+   "note": null,
+   "delayedSharePct": 0
+  }
+ ],
+ "upcoming": [
+  {
+   "ym": "2026-10",
+   "units": 3883,
+   "projects": 7
+  },
+  {
+   "ym": "2026-11",
+   "units": 5473,
+   "projects": 9
+  },
+  {
+   "ym": "2026-12",
+   "units": 1881,
+   "projects": 9
+  },
+  {
+   "ym": "2027-01",
+   "units": 795,
+   "projects": 1
+  },
+  {
+   "ym": "2027-02",
+   "units": 0,
+   "projects": 0
+  },
+  {
+   "ym": "2027-03",
+   "units": 0,
+   "projects": 0
+  },
+  {
+   "ym": "2027-04",
+   "units": 0,
+   "projects": 0
+  },
+  {
+   "ym": "2027-05",
+   "units": 0,
+   "projects": 0
+  },
+  {
+   "ym": "2027-06",
+   "units": 1063,
+   "projects": 2
+  },
+  {
+   "ym": "2027-07",
+   "units": 4143,
+   "projects": 2
+  },
+  {
+   "ym": "2027-08",
+   "units": 0,
+   "projects": 0
+  },
+  {
+   "ym": "2027-09",
+   "units": 600,
+   "projects": 1
+  }
+ ],
+ "overdue": [],
+ "overdueTotal": 0,
+ "trend": [
+  {
+   "month": "2025-01",
+   "referenceDate": "2025-01-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 75,
+    "units": 50093
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 3,
+    "units": 1133
+   },
+   "delayByStage": [
+    0,
+    36813,
+    22852,
+    713,
+    467,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "judged": 78,
+   "max": {
+    "d": 36813,
+    "w": 0
+   }
+  },
+  {
+   "month": "2025-02",
+   "referenceDate": "2025-02-28",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 79,
+    "units": 54704
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 3,
+    "units": 1133
+   },
+   "delayByStage": [
+    0,
+    66867,
+    22122,
+    0,
+    307,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    53,
+    0,
+    0
+   ],
+   "judged": 82,
+   "max": {
+    "d": 66867,
+    "w": 53
+   }
+  },
+  {
+   "month": "2025-03",
+   "referenceDate": "2025-03-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 80,
+    "units": 55242
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 3,
+    "units": 1133
+   },
+   "delayByStage": [
+    0,
+    66329,
+    21584,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    367,
+    0,
+    0
+   ],
+   "judged": 83,
+   "max": {
+    "d": 66329,
+    "w": 367
+   }
+  },
+  {
+   "month": "2025-04",
+   "referenceDate": "2025-04-30",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 82,
+    "units": 56422
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 3,
+    "units": 1133
+   },
+   "delayByStage": [
+    0,
+    65149,
+    20514,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    367,
+    0,
+    0
+   ],
+   "judged": 85,
+   "max": {
+    "d": 65149,
+    "w": 367
+   }
+  },
+  {
+   "month": "2025-05",
+   "referenceDate": "2025-05-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 87,
+    "units": 59248
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 3,
+    "units": 1133
+   },
+   "delayByStage": [
+    0,
+    62323,
+    18835,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    367,
+    0,
+    0
+   ],
+   "judged": 90,
+   "max": {
+    "d": 62323,
+    "w": 367
+   }
+  },
+  {
+   "month": "2025-06",
+   "referenceDate": "2025-06-30",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 99,
+    "units": 67313
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 3,
+    "units": 1133
+   },
+   "delayByStage": [
+    0,
+    54258,
+    12674,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    367,
+    0,
+    0
+   ],
+   "judged": 102,
+   "max": {
+    "d": 54258,
+    "w": 367
+   }
+  },
+  {
+   "month": "2025-07",
+   "referenceDate": "2025-07-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 101,
+    "units": 68302
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 3,
+    "units": 1133
+   },
+   "delayByStage": [
+    0,
+    53269,
+    12400,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    367,
+    0,
+    0
+   ],
+   "judged": 104,
+   "max": {
+    "d": 53269,
+    "w": 367
+   }
+  },
+  {
+   "month": "2025-08",
+   "referenceDate": "2025-08-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 101,
+    "units": 68302
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 3,
+    "units": 1133
+   },
+   "delayByStage": [
+    0,
+    53269,
+    13294,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    367,
+    0,
+    0
+   ],
+   "judged": 104,
+   "max": {
+    "d": 53269,
+    "w": 367
+   }
+  },
+  {
+   "month": "2025-09",
+   "referenceDate": "2025-09-30",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 106,
+    "units": 71590
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 3,
+    "units": 1133
+   },
+   "delayByStage": [
+    0,
+    50056,
+    10918,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    367,
+    0,
+    0
+   ],
+   "judged": 109,
+   "max": {
+    "d": 50056,
+    "w": 367
+   }
+  },
+  {
+   "month": "2025-10",
+   "referenceDate": "2025-10-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 106,
+    "units": 72305
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    49114,
+    10918,
+    1309,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "judged": 110,
+   "max": {
+    "d": 49114,
+    "w": 0
+   }
+  },
+  {
+   "month": "2025-11",
+   "referenceDate": "2025-11-30",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 108,
+    "units": 74107
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    48827,
+    10631,
+    1309,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    213,
+    0
+   ],
+   "judged": 112,
+   "max": {
+    "d": 48827,
+    "w": 213
+   }
+  },
+  {
+   "month": "2025-12",
+   "referenceDate": "2025-12-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 120,
+    "units": 81298
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    41636,
+    4394,
+    1309,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "judged": 124,
+   "max": {
+    "d": 41636,
+    "w": 0
+   }
+  },
+  {
+   "month": "2026-01",
+   "referenceDate": "2026-01-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 124,
+    "units": 82844
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    41336,
+    4889,
+    1309,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "judged": 128,
+   "max": {
+    "d": 41336,
+    "w": 0
+   }
+  },
+  {
+   "month": "2026-02",
+   "referenceDate": "2026-02-28",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 127,
+    "units": 84553
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    55101,
+    3960,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    649,
+    0,
+    0
+   ],
+   "judged": 131,
+   "max": {
+    "d": 55101,
+    "w": 649
+   }
+  },
+  {
+   "month": "2026-03",
+   "referenceDate": "2026-03-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 129,
+    "units": 86281
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    53373,
+    3165,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    649,
+    0,
+    0
+   ],
+   "judged": 133,
+   "max": {
+    "d": 53373,
+    "w": 649
+   }
+  },
+  {
+   "month": "2026-04",
+   "referenceDate": "2026-04-30",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 130,
+    "units": 86799
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    53373,
+    3165,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    649,
+    0,
+    0
+   ],
+   "judged": 134,
+   "max": {
+    "d": 53373,
+    "w": 649
+   }
+  },
+  {
+   "month": "2026-05",
+   "referenceDate": "2026-05-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 130,
+    "units": 86799
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    52855,
+    2647,
+    0,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    131,
+    2,
+    0
+   ],
+   "judged": 134,
+   "max": {
+    "d": 52855,
+    "w": 131
+   }
+  },
+  {
+   "month": "2026-06",
+   "referenceDate": "2026-06-30",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 132,
+    "units": 87409
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    52245,
+    2346,
+    5232,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "judged": 136,
+   "max": {
+    "d": 52245,
+    "w": 0
+   }
+  },
+  {
+   "month": "2026-07",
+   "referenceDate": "2026-07-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 133,
+    "units": 88009
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    47423,
+    1772,
+    5172,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    581,
+    0
+   ],
+   "judged": 137,
+   "max": {
+    "d": 47423,
+    "w": 581
+   }
+  },
+  {
+   "month": "2026-08",
+   "referenceDate": "2026-08-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 135,
+    "units": 89266
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    46166,
+    0,
+    3929,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    515,
+    0,
+    573,
+    0
+   ],
+   "judged": 139,
+   "max": {
+    "d": 46166,
+    "w": 573
+   }
+  },
+  {
+   "month": "2026-09",
+   "referenceDate": "2026-09-30",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 136,
+    "units": 90231
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    45201,
+    0,
+    3819,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    573,
+    0
+   ],
+   "judged": 140,
+   "max": {
+    "d": 45201,
+    "w": 573
+   }
+  },
+  {
+   "month": "2026-10",
+   "referenceDate": "2026-10-20",
+   "edition": null,
+   "basis": "OBSERVED",
+   "ok": {
+    "projects": 136,
+    "units": 90231
+   },
+   "caution": {
+    "projects": 0,
+    "units": 0
+   },
+   "delay": {
+    "projects": 4,
+    "units": 1360
+   },
+   "delayByStage": [
+    0,
+    45201,
+    0,
+    1988,
+    0,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    874,
+    573,
+    0
+   ],
+   "judged": 140,
+   "max": {
+    "d": 45201,
+    "w": 874
+   }
+  }
+ ],
+ "home": {
+  "policyId": "POL_2025_0907",
+  "targetUnits": 1350000,
+  "cards": {
+   "POLICY": {
+    "target": 1350000
+   },
+   "BUSINESS": {
+    "current": 94218,
+    "measured_on": "2026-10-16",
+    "year_end_expected": 139419,
+    "plan_date": "2026-02-17",
+    "remainder": 45201
+   },
+   "APPROVAL": {
+    "current": 88056,
+    "measured_on": "2026-10-16",
+    "year_end_expected": 93404,
+    "plan_date": "2026-12-31",
+    "remainder": 5348
+   },
+   "CONSTRUCTION": {
+    "current": 77031,
+    "measured_on": "2026-10-16",
+    "year_end_expected": 92574,
+    "plan_date": "2026-12-31",
+    "remainder": 15543
+   },
+   "SUPPLY": {
+    "current": 58195,
+    "measured_on": "2026-09-30",
+    "year_end_expected": 70005,
+    "plan_date": "2026-12-31",
+    "remainder": 11810
+   },
+   "MOVE_IN": {
+    "current": null,
+    "measured_on": null,
+    "year_end_expected": 3845,
+    "plan_date": "2026-12-31",
+    "remainder": null
+   }
+  },
+  "callouts": [
+   {
+    "stage": "BUSINESS",
+    "status": "DELAYED",
+    "gap": 45201,
+    "rate": "32.4%",
+    "due_date": "2026-02-17",
+    "due_units": 139419,
+    "actual_date": "2026-10-16",
+    "actual_units": 94218
+   },
+   {
+    "stage": "CONSTRUCTION",
+    "status": "WARNING",
+    "gap": 874,
+    "rate": "1.1%",
+    "due_date": "2026-09-01",
+    "due_units": 77905,
+    "actual_date": "2026-10-16",
+    "actual_units": 77031
+   },
+   {
+    "stage": "SUPPLY",
+    "status": "WARNING",
+    "gap": 573,
+    "rate": "1.0%",
+    "due_date": "2026-09-30",
+    "due_units": 58768,
+    "actual_date": "2026-09-30",
+    "actual_units": 58195
+   }
+  ],
+  "axisMax": 200000,
+  "stageChecks": {
+   "BUSINESS": {
+    "status": "DELAYED",
+    "due": {
+     "date": "2026-02-17",
+     "units": 139419
+    },
+    "actual": {
+     "date": "2026-10-16",
+     "units": 94218,
+     "manual": 88439,
+     "inferred": 88439
+    },
+    "gap": 45201,
+    "rate": 32.4,
+    "rateText": "32.4%",
+    "next": null,
+    "yearEnd": {
+     "date": "2026-02-17",
+     "units": 139419
+    }
+   },
+   "APPROVAL": {
+    "status": "REACHED",
+    "due": {
+     "date": "2026-07-20",
+     "units": 87606
+    },
+    "actual": {
+     "date": "2026-10-16",
+     "units": 88056,
+     "manual": 85917,
+     "inferred": 80716
+    },
+    "gap": 0,
+    "rate": 0,
+    "rateText": "0.0%",
+    "next": {
+     "date": "2026-12-27",
+     "units": 90120
+    },
+    "yearEnd": {
+     "date": "2026-12-31",
+     "units": 93404
+    }
+   },
+   "CONSTRUCTION": {
+    "status": "WARNING",
+    "due": {
+     "date": "2026-09-01",
+     "units": 77905
+    },
+    "actual": {
+     "date": "2026-10-16",
+     "units": 77031,
+     "manual": 73473,
+     "inferred": 73473
+    },
+    "gap": 874,
+    "rate": 1.1,
+    "rateText": "1.1%",
+    "next": {
+     "date": "2026-10-31",
+     "units": 79135
+    },
+    "yearEnd": {
+     "date": "2026-12-31",
+     "units": 92574
+    }
+   },
+   "SUPPLY": {
+    "status": "WARNING",
+    "due": {
+     "date": "2026-09-30",
+     "units": 58768
+    },
+    "actual": {
+     "date": "2026-09-30",
+     "units": 58195,
+     "manual": 52814,
+     "inferred": 52433
+    },
+    "gap": 573,
+    "rate": 1,
+    "rateText": "1.0%",
+    "next": {
+     "date": "2026-10-31",
+     "units": 62651
+    },
+    "yearEnd": {
+     "date": "2026-12-31",
+     "units": 70005
+    }
+   },
+   "COMPLETION": {
+    "status": "DELAYED",
+    "due": {
+     "date": "2026-10-05",
+     "units": 5489
+    },
+    "actual": {
+     "date": "2026-09-16",
+     "units": 3501,
+     "manual": 3501,
+     "inferred": 3120
+    },
+    "gap": 1988,
+    "rate": 36.2,
+    "rateText": "36.2%",
+    "next": {
+     "date": "2026-10-31",
+     "units": 5783
+    },
+    "yearEnd": null
+   },
+   "MOVE_IN": {
+    "status": "NOT_DUE",
+    "due": null,
+    "actual": null,
+    "gap": null,
+    "rate": null,
+    "rateText": "미확보",
+    "next": {
+     "date": "2026-10-31",
+     "units": 1451
+    },
+    "yearEnd": {
+     "date": "2026-12-31",
+     "units": 3845
+    }
+   }
+  },
+  "delayMax": 45201,
+  "warningMax": 874,
+  "stageGaps": [
+   {
+    "stage": "BUSINESS",
+    "label": "사업화",
+    "status": "DELAYED",
+    "gap": 45201,
+    "rate": "32.4%"
+   },
+   {
+    "stage": "CONSTRUCTION",
+    "label": "건설",
+    "status": "WARNING",
+    "gap": 874,
+    "rate": "1.1%"
+   },
+   {
+    "stage": "SUPPLY",
+    "label": "공급",
+    "status": "WARNING",
+    "gap": 573,
+    "rate": "1.0%"
+   },
+   {
+    "stage": "COMPLETION",
+    "label": "준공",
+    "status": "DELAYED",
+    "gap": 1988,
+    "rate": "36.2%"
+   }
+  ],
+  "bottleneck": {
+   "stage": "BUSINESS",
+   "label": "사업화",
+   "status": "DELAYED",
+   "gap": 45201,
+   "rate": "32.4%"
+  },
+  "supplyUpcoming": {
+   "total": 17838,
+   "projects": 31,
+   "from": "2026-10",
+   "to": "2027-09"
+  },
+  "monthly": [
+   {
+    "month": "2024-11",
+    "APPROVAL": 1006,
+    "CONSTRUCTION": 945,
+    "SUPPLY": 726,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2024-12",
+    "APPROVAL": 14730,
+    "CONSTRUCTION": 14718,
+    "SUPPLY": 446,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-01",
+    "APPROVAL": 227,
+    "CONSTRUCTION": 314,
+    "SUPPLY": 2089,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-02",
+    "APPROVAL": 4296,
+    "CONSTRUCTION": 1845,
+    "SUPPLY": 160,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-03",
+    "APPROVAL": 538,
+    "CONSTRUCTION": 1749,
+    "SUPPLY": 2109,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-04",
+    "APPROVAL": 1180,
+    "CONSTRUCTION": 1180,
+    "SUPPLY": 865,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-05",
+    "APPROVAL": 2826,
+    "CONSTRUCTION": 1877,
+    "SUPPLY": 1380,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-06",
+    "APPROVAL": 10281,
+    "CONSTRUCTION": 8705,
+    "SUPPLY": 5431,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-07",
+    "APPROVAL": 2419,
+    "CONSTRUCTION": 1708,
+    "SUPPLY": 4602,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-08",
+    "APPROVAL": 0,
+    "CONSTRUCTION": 0,
+    "SUPPLY": 538,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-09",
+    "APPROVAL": 3288,
+    "CONSTRUCTION": 4045,
+    "SUPPLY": 1125,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-10",
+    "APPROVAL": 942,
+    "CONSTRUCTION": 0,
+    "SUPPLY": 116,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-11",
+    "APPROVAL": 287,
+    "CONSTRUCTION": 0,
+    "SUPPLY": 2591,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2025-12",
+    "APPROVAL": 6697,
+    "CONSTRUCTION": 9799,
+    "SUPPLY": 6275,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2026-01",
+    "APPROVAL": 794,
+    "CONSTRUCTION": 0,
+    "SUPPLY": 0,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2026-02",
+    "APPROVAL": 929,
+    "CONSTRUCTION": 1490,
+    "SUPPLY": 381,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2026-03",
+    "APPROVAL": 1728,
+    "CONSTRUCTION": 3589,
+    "SUPPLY": 1966,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2026-04",
+    "APPROVAL": 1515,
+    "CONSTRUCTION": 1282,
+    "SUPPLY": 3647,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2026-05",
+    "APPROVAL": 0,
+    "CONSTRUCTION": 0,
+    "SUPPLY": 5194,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2026-06",
+    "APPROVAL": 610,
+    "CONSTRUCTION": 309,
+    "SUPPLY": 5083,
+    "COMPLETION": 1458
+   },
+   {
+    "month": "2026-07",
+    "APPROVAL": 1174,
+    "CONSTRUCTION": 861,
+    "SUPPLY": 540,
+    "COMPLETION": 381
+   },
+   {
+    "month": "2026-08",
+    "APPROVAL": 1257,
+    "CONSTRUCTION": 3841,
+    "SUPPLY": 7955,
+    "COMPLETION": 1224
+   },
+   {
+    "month": "2026-09",
+    "APPROVAL": 1344,
+    "CONSTRUCTION": 965,
+    "SUPPLY": 981,
+    "COMPLETION": 438
+   },
+   {
+    "month": "2026-10",
+    "APPROVAL": 0,
+    "CONSTRUCTION": 2945,
+    "SUPPLY": 0,
+    "COMPLETION": 0
+   }
+  ],
+  "projectStatus": {
+   "NORMAL": {
+    "projects": 136,
+    "units": 90231
+   },
+   "UNKNOWN": {
+    "projects": 35,
+    "units": 59680
+   },
+   "DELAYED": {
+    "projects": 4,
+    "units": 1360
+   }
+  },
+  "stageExclusive": {
+   "POLICY": 57053,
+   "UNKNOWN": 0,
+   "MOVE_IN": 0,
+   "SUPPLY": 58195,
+   "CONSTRUCTION": 18836,
+   "APPROVAL": 11025,
+   "BUSINESS": 6162
+  },
+  "mapSupply": {
+   "서울특별시": {
+    "supplyReached": 2089,
+    "delayed": true,
+    "delayNote": "사업화 36,736호 부족 (77.2%) · 준공 14호 부족 (3.5%)"
+   },
+   "경기도": {
+    "supplyReached": 49753,
+    "delayed": true,
+    "delayNote": "사업화 8,197호 부족 (11.1%) · 건설 2,834호 부족 (4.5%) · 준공 1,974호 부족 (81.8%)"
+   },
+   "인천광역시": {
+    "supplyReached": 6353,
+    "delayed": true,
+    "delayNote": "건설 1,106호 부족 (11.8%)"
+   }
+  }
+ }
+}

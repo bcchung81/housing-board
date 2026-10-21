@@ -30,10 +30,22 @@ const sido = (c) => MOLIT.sido.find((x) => x.code === c)?.name;
 
 test("H4 날짜 열: 목록·인쇄·간단 보기가 같은 이름 '현재 예정', 지난 예정은 빨강 대신 '경과 n개월' 꼬리표, 끝난 사업은 '실제'", () => {
   assert.equal(L.LIST_COLS.find((c) => c.key === 'next').label, '현재 예정');
+  /* 2026-10-21 사업 화면 = HOME 원천 행(지연 = 부족률 2%): 날짜 열 대신 부족 호수 — 목록·인쇄가 같은 열 이름·같은 칸 함수 */
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /\{ key: 'ev', label: PLAN_COL, kind: 'text' \}/, '인쇄 표도 같은 열 이름');
-  assert.match(page, /ev: nextCell\(r\)/, '인쇄 표도 같은 값');
+  const label = (k) => L.HOME_LIST_COLS.find((c) => c.key === k).label;
+  assert.deepEqual(['stage', 'units', 'gap', 'status'].map(label), ['단계', '계획 호수', '부족 호수', '상태']);
+  assert.match(page, /\{ key: 'stage', label: '단계', kind: 'text' \},\s*\{ key: 'units', label: '계획 호수' \}, \{ key: 'gap', label: '부족 호수' \}, \{ key: 'status', label: '상태', kind: 'text' \}\]/, '인쇄 표도 같은 열 이름');
+  assert.match(page, /stage: homeStagePill\(r\), units: unitsCell\(r\), gap: gapCell\(r\), status: homeStatusCell\(r\)/, '인쇄 표도 같은 값');
+  assert.match(read('lib/board/projects-list.ts'), /stage: homeStagePill\(r\), units: unitsCell\(r\), counted: countedCell\(r, chartOf\), gap: gapCell\(r\), upcoming: upcomingCell\(r\),\s*status: homeStatusCell\(r\)/, '목록 칸 함수');
   assert.doesNotMatch(page, /'지난 예정'|'다음 일정'/);
+  /* 부족 호수 칸: 판정 부족량이 있는 행만, 지연은 빨강·굵게 · 주의는 주의색 */
+  const HP = require('../../data/board/home-projects.json');
+  for (const r of V.homeRowsOf(HP.rows, HP.residuals)) {
+    const g = L.gapCell(r);
+    if (!r.home.gap) { assert.equal(g, null, r.id); continue; }
+    assert.equal(g.tone, r.cls === 'delay' ? 'bad' : 'warn', r.id);
+    assert.equal(!!g.strong, r.cls === 'delay', r.id);
+  }
   for (const r of rows) {
     const n = V.nextOf(r);
     if (!n) continue;
@@ -60,7 +72,7 @@ test("H1 서랍 단계 줄: '지금' 한 칸만 채우고 지난 단계는 옅�
 
 test('H8 정책 목표 대비: 기본 접힘(머리에 핵심 한 줄) · 인쇄 보기는 펼침 · 첫 질문 칸은 이름에 범위 · 목표를 넘으면 초과', () => {
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
-  assert.deepEqual(lines.map(V.compareHead), ['9·7 · 목표 있는 4단계 중 2단계 미달(①계획·④모집)'], '4차(A4): 머리 줄은 비율 숫자 없이 단계 이름만(r4-screens 1: 부족 → 미달)');
+  assert.deepEqual(lines.map(V.compareHead), ['9·7 · 목표 있는 4단계 중 2단계 미달(사업화·공급)'], '4차(A4): 머리 줄은 비율 숫자 없이 단계 이름만(r4-screens 1: 부족 → 미달)');
   const cells = lines[0].cells;
   assert.equal(V.rateOf(cells[1]).word, '달성 170.8%', '② 인허가 6,249 / 3,658(2026-10-20 HOME 판 — 10-19 판 3,560 / 1,543 = 230.7%) — 2026-10-16 목표 대비 달성률(옛 \'초과 130.7%\', r2-screens 3)');
   assert.equal(V.rateOf(cells[4]).word, '달성 100.0%', '⑤ 준공 381 / 381');
@@ -108,7 +120,7 @@ test('H7 CSV: 지금 거르기의 목록과 같은 열(지도 표지 제외)·�
   const t = G.toCsv([{ key: 'a', label: '이름', kind: 'text' }, { key: 'b', label: '호수' }], [{ id: '1', c: { a: { text: 'A, "B"', tag: '경과 3개월' }, b: { na: '미확인' } } }]);
   assert.equal(t, '﻿이름,호수\r\n"A, ""B"" (경과 3개월)",미확인\r\n');
   const route = read('app/(dashboard)/projects/csv/route.ts');
-  assert.match(route, /parseFilters\(q, /); assert.match(route, /listOrder\(applyFilters\(idx\.rows, f\)\)/);
+  assert.match(route, /parseFilters\(q, /); assert.match(route, /homeListOrder\(applyFilters\(idx\.rows, f\)\)/, '2026-10-21: CSV 행 = HOME 원천 행');
   assert.match(route, /'Content-Type': 'text\/csv; charset=utf-8'/); assert.match(route, /filename\*=UTF-8''/);
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /const csvHref = listHref\(f\)\.replace\(\/\^\\\/projects\/, '\/projects\/csv'\);/);
@@ -141,9 +153,17 @@ test("H9 회복·문구: 부산은 '자료 없음(서울·인천·경기만)', �
   assert.match(region, /동네 여건<\/h3>[\s\S]*\$\{name\} 자료 없음\(서울·인천·경기만\)/);
   assert.match(region, /sido && sido !== 'metro' \?/);
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /const prioAll = priorityOf\(scope, Infinity\), top = prioAll\.slice\(0, 10\);/);
-  assert.match(page, /prioAll\.length > 10 \? `점검 필요 \$\{fmt\(prioN\)\}건 중 상위 10` : `점검 필요 \$\{fmt\(prioN\)\}건 전부`/);
+  /* 2026-10-21 사업 화면 = HOME 원천 행: 점검 필요 = 지연·주의(부족률) 행, 부족 호수 큰 순 */
+  assert.match(page, /const prioAll = homePriorityOf\(scope\), top = prioAll\.slice\(0, 10\);/);
+  assert.match(page, /prioAll\.length > 10 \? `점검 필요 \$\{fmt\(prioAll\.length\)\}건 중 상위 10` : `점검 필요 \$\{fmt\(prioAll\.length\)\}건 전부`/);
   assert.doesNotMatch(page, /우선 점검 사업 · 상위 10/);
+  const HP = require('../../data/board/home-projects.json'), home = V.homeRowsOf(HP.rows, HP.residuals);
+  const hctx = { policies: IDX.policies, programs: V.homeProgramsOf(home), sidoOk: () => true, home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
+  const hp = V.homePriorityOf(V.scopeOf(home, V.parseFilters({}, hctx)));
+  assert.ok(hp.every((r) => r.cls === 'delay' || r.cls === 'caution') && hp.every((r, i) => i === 0 || r.cls !== 'delay' || hp[i - 1].cls === 'delay'), '지연 먼저');
+  /* 기준일 2026-10-20 9·7 기본 범위: 지연 4·주의 0 → 10줄 이하라 제목은 '점검 필요 4건 전부' */
+  assert.equal(hp.length, 4);
+  assert.ok(hp.length <= 10);
   const all = V.priorityOf(V.scopeOf(rows, { metro: true }), Infinity);
   /* 2026-10-20 HOME 판: 수도권 점검 필요 4 → 12건(주의 10·지연 2)이라 10줄을 넘는다 — 인쇄 제목은 '점검 필요 12건 중 상위 10' */
   assert.ok(all.length > 10, '수도권은 10줄 넘음 — 제목은 상위 10');

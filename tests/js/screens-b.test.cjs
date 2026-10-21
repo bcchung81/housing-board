@@ -45,14 +45,15 @@ test('1 범위 칩: 공용 컴포넌트(범위 + 출처, 풀기 ×) — 사업 �
   assert.match(chip, /aria-label=\{`\$\{scope\} 거르기 풀기`\}/);
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /<ScopeChip scope="정책 전체" source="정책 진행 자료"/, '정책 목표 카드: 정책 전체 · 정책 진행 자료(data-audit-1016 결함 1)');
-  assert.match(page, /<ScopeChip scope=\{region\} source="사업 원장"/, '원장 요약: 거르기 범위(수도권·전국·시도·시군구) · 사업 원장');
+  assert.match(page, /<ScopeChip scope=\{region\} source="정책 진행 자료"/, '요약: 거르기 범위(수도권·시도·시군구) · 정책 진행 자료(2026-10-21 사업 화면 = HOME 원천 행)');
   const board = read('components/board/Board.tsx');
   // 2026-10-19 수도권 한정: 범위 칩 = nation(수도권) — '전국'이면 전국, 아니면 '일부 지역' 분기 대신 '전국 아님'만 '일부 지역'
-  assert.match(board, /const ledgerChip = <ScopeChip scope=\{nation === '전국 아님' \? '일부 지역' : nation\} source="사업 원장"/);
-  for (const t of ['월별 공급 파동', '시도별 지연 현황', '지연·주의 추이', '\\{AHEAD_COMPLETION\\}', '기관별 진행']) assert.match(board, new RegExp(`>${t}</h2>\\n\\s*<InfoTip [\\s\\S]*?</InfoTip>\\n\\s*\\{ledgerChip\\}`), t);   // 제목 바로 옆 (i)(2026-10-16 3차)
-  assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope=\{area\} source="통계누리"/);   // 2026-10-19 수도권 한정: 범위 이름 = 통계누리 합계 자리 이름(수도권)
+  assert.match(board, /const ledgerChip = <ScopeChip scope=\{nation === '전국 아님' \? '일부 지역' : nation\} source=\{H \? '정책 진행 자료' : '사업 원장'\}/);   // 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — H 면 '정책 진행 자료'
+  for (const t of ['월별 공급 파동', '시도별 지연 현황', '지연·주의 추이', '\\{H \\? AHEAD_SUPPLY : AHEAD_COMPLETION\\}', '기관별 진행']) assert.match(board, new RegExp(`>${t}</h2>\\n\\s*<InfoTip [\\s\\S]*?</InfoTip>\\n\\s*\\{ledgerChip\\}`), t);   // 제목 바로 옆 (i)(2026-10-16 3차)
+  assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope=\{area\} source="통계누리"/);
+  assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope="수도권" source="정책 진행 자료"/, '2026-10-21 결정: HOME 과 같은 조건·같은 표기 — HomeActual 칩');   // 2026-10-19 수도권 한정: 범위 이름 = 통계누리 합계 자리 이름(수도권)
   const region = read('app/(dashboard)/region/page.tsx');
-  assert.match(region, /scope=\{<ScopeChip scope=\{scopeName\} source="사업 원장"[^\n]*clearHref=\{sgg \? href\(\{ sgg: null, m: null \}\) : undefined\}/, '앞으로 12개월: 시군구 칩 + ×');
+  assert.match(region, /scope=\{<ScopeChip scope=\{`\$\{HOME_POLICY\[policy\]\} · \$\{scopeName\}`\} source="정책 진행 자료"[^\n]*clearHref=\{sgg \? href\(\{ sgg: null, m: null \}\) : undefined\}/, '앞으로 12개월(2026-10-21 HOME 공급 예정): 정책·시군구 칩 + ×');
   assert.match(read('components/region/Annual.tsx'), /<ScopeChip scope=\{rname\} source="통계누리"/);
   assert.match(read('components/region/Cond.tsx'), /<ScopeChip scope=\{name\} source="KOSIS·SGIS"/);
   assert.doesNotMatch(read('components/projects/Summary.tsx'), /<Badge/, "옛 'Badge 범위' 표기(정책 전체 · 호 / 사업 원장 · …)는 범위 칩으로");
@@ -60,7 +61,7 @@ test('1 범위 칩: 공용 컴포넌트(범위 + 출처, 풀기 ×) — 사업 �
 
 test('1 정책 목표 대비는 별도 카드, 9·7 행은 한 번만(왼쪽 ①~⑥ 표 유지 · 접힘에는 다른 정책 줄만)', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /const cmpLines = whole\?\.stages \? lines\.filter\(\(l\) => l\.policy\.key !== \(f\.policy \? f\.policy\.key : '97'\)\) : lines;/);
+  assert.match(page, /const cmpLines = whole\?\.stages \? lines\.filter\(\(l\) => l\.policy\.key !== \(f\.policy && f\.policy\.key !== '97' \? f\.policy\.key : '97'\)\) : lines;/);
   const pc = page.slice(page.indexOf('const policyCard'), page.indexOf('const ledgerCard'));
   assert.match(pc, /<Card render=\{<section aria-label="정책 목표 대비" \/>\}/);
   assert.match(pc, /<PolicyCompare lines=\{cmpLines\}/);
@@ -117,10 +118,11 @@ test('2 지시 카드 목록 ›: 목록 머리 건수(·계획 호수) = 카드
   assert.ok(board.indexOf('{dirVals(x, true, open)}') > board.indexOf('</button>', board.indexOf('data-slot="board-dir" title=')), '링크는 단추 밖(겹친 층) — 단추 안에 링크를 넣지 않는다');
   assert.match(board, /<PanelLink href=\{`\/projects\?sido=all&stage=\$\{bk\}&status=late`\}/);
   assert.match(board, /<PanelLink href="\/projects\?sido=all&status=review-late"/);   // 후보 계산 313 = 그 목록(data-audit-1016 후속 1)
-  /* 사업 화면 상태 메뉴·목록 이름에도 '지연(장기 포함)' */
+  /* 사업 화면(2026-10-21 HOME 원천 행): 종합상황판 지연 링크(?status=late)는 HOME 판정 '지연' 칩을 켜고 목록 이름도 '지연'(종합상황판 HOME 카드 '지연 n건'과 같은 이름) */
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /\{ href: at\(\{ status: 'late' \}\), label: DELAY_GROUP, on: f\.status === 'late'/);
-  assert.match(page, /f\.status === 'late' \? DELAY_GROUP/);
+  assert.match(page, /HOME_STATUS_ORDER\.map\(\(k\) => \(\{ href: at\(\{ status: k \}\), label: HOME_STATUS_NAME\[k\]!, on: f\.status === k \|\| \(k === 'delay' && f\.status === 'late'\)/);
+  assert.match(page, /f\.status === 'late' \? HOME_STATUS_NAME\.delay/);
+  assert.equal(V.HOME_STATUS_NAME.delay, '지연');
 });
 
 test('3 지시 카드 자동 넘김 없음(2026-10-17 사용자 지시): 단추·타이머·진행 띠·멈춤 처리 코드 0, 카드를 누르면 고르고 첫 카드가 기본', () => {
@@ -168,7 +170,7 @@ test('4 지역 공급 시군구 거르기: 고양시(41280) = 덕양·일산동�
   assert.ok(metro.filter((e) => R.inSgg(e, '41270', T)).length >= 2, '안산: 시 코드 + 구 코드 사업');
   const page = read('app/(dashboard)/region/page.tsx');
   assert.match(page, /const sgg = parseSgg\(regionMap, sido, SGG_TABLE, q\.sgg\);/, '서버 렌더에서 ?sgg= 를 읽는다');
-  assert.match(page, /const all = aheadAll\(calendar, sido, sidoName\)\.filter\(\(e\) => !sgg \|\| inSgg\(e, sgg, SGG_TABLE\)\);/, '달별 막대·목록·합계·종류 칩이 같은 거른 목록');
+  assert.match(page, /const inArea = \(pl: HomePolicy\) => aheadAll\(calendar\.home\[pl\], sido, sidoName\)\.filter\(\(e\) => !sgg \|\| inSgg\(e, sgg, SGG_TABLE\)\);/, '달별 막대·목록·합계·정책 칩이 같은 거른 목록(2026-10-21 HOME 공급 예정)');
   assert.match(page, /const pf: Filters = sgg \? \{ sgg, gu: guOf\(sgg\) \}/, '사업 화면 연결도 그 시군구');
   assert.match(page, /\{list\.length \|\| sgg \? \(/, '고른 시군구에 예정이 없어도 지도는 남는다(다른 면을 고를 수 있게)');
   assert.match(read('components/region/Annual.tsx'), /note=\{sggName \? \{ text: '시도 단위 자료'/);

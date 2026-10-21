@@ -64,7 +64,7 @@ test('#10·#8·#30 /sources 이름표: 사업 레지스트리(번호 발급)·�
   const page = read('app/(dashboard)/sources/page.tsx');
   assert.match(page, /name: i\.id === 'ledger' \? '사업 레지스트리\(번호 발급\)'/);
   assert.match(read('lib/board/collection.ts'), /amount: '사업 레지스트리\(번호 발급\)'/);
-  assert.match(read('components/sources/Collect.tsx'), /우리가 모은 원천 \$\{items\.length\} \+ 정책 진행 자료 \$\{hs\.sources\.length\}/);
+  assert.match(read('components/sources/Collect.tsx'), /<MetricRow label="수집 출처" value=\{hs\.poc\.withData\}[\s\S]*?우리 보관 원천 \$\{items\.length\}/);   // PoC 헤드라인 '수집 출처 75'(정상 레코드가 있는 곳) + 우리 보관 원천은 카탈로그
   assert.match(page, /개 시도 모두/);
   assert.doesNotMatch(page, /`판정은 \$\{judgedSido\}만/);
   /* D3(2026-10-15): 판정은 사업 번호가 있는 사업만 — 번호 있는 사업이 판정된 시도는 수도권 3곳, 나머지는 후보(확인 필요)만 있다 */
@@ -100,12 +100,14 @@ test('#15 하이픈 날짜는 점 표기, 월 제목 "2026년 10월"은 읽기 �
   assert.equal(require('../../lib/board/calc.ts').monthLabel('2026-10'), '2026년 10월');
 });
 
-test('#12 /agency/gh·ih: 원장 GH 사업 4건·iH 사업 7건(2026-10-20 iH 추가)을 보이고 사업 화면 기관 칩으로 잇는다', () => {
+/* 2026-10-21 결정(HOME 과 같은 조건): 기관 화면 사업 = HOME 기관 묶음(PoC agencyName — 9·7 집계 행 중 그 기관), 판정 = HOME 사업 판정. 정답 대조는 region-golden */
+test('#12 /agency/gh·sh·ih: HOME 기관 묶음(GH 2건 · SH 7건 · iH = 원천 인천도시공사 7건)을 보이고 원장에 있는 사업은 사업 화면 서랍으로 잇는다', () => {
   const ag = read('app/(dashboard)/agency/[id]/page.tsx');
-  assert.match(ag, /a\.id === 'gh' \|\| a\.id === 'ih'[^\n]*r\.agency === a\.id/);
-  assert.match(ag, /\/projects\?sido=all&agency=\$\{a\.id\}/);
-  assert.equal(Object.values(json('data/board/projects-index.json').projects).filter((p) => p.agency === 'gh').length, 4);
-  assert.equal(Object.values(json('data/board/projects-index.json').projects).filter((p) => p.agency === 'ih').length, 7);
+  assert.match(ag, /const line = HOME_AGENCY\[a\.id\] \? agencyLine\(homeRows, HOME_AGENCY\[a\.id\]\) : null;/);
+  assert.match(ag, /href: `\/projects\?sido=all&id=\$\{r\.ourId\}`/);
+  const HA = require('../../lib/board/home-agency.ts'), hp = json('data/board/home-projects.json');
+  assert.deepEqual(['gh', 'sh', 'ih'].map((k) => HA.agencyLine(hp.rows, HA.HOME_AGENCY[k]).count), [2, 7, 7]);
+  assert.equal(HA.HOME_AGENCY.ih, '인천도시공사');
 });
 
 test('#20·#29 LH 준공 예정: 표 머리에 파일 기준일, 지난 달에는 파일상 예정 표기', () => {

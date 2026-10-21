@@ -5,7 +5,9 @@
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
+  "poc": {"p97":{"n":0,"c":0,"x":0,"q":0,"u":0,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,0,0,0]},"all":{"n":1,"c":1,"x":0,"q":0,"u":180,"d":0,"w":0,"a":0,"an":0,"st":[180,0,0,0,0,0,0]}},
+  "noPrj": [],
   "projects": [
-    {"id":"PRJ-11110-0021","name":"신문로2-12","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":180,"pks":[],"pnus":[],"bundles":[],"label":"신문로2-12","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1111012000","loc":{"by":"address","at":[126.975521,37.569696],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null}
+    {"id":"PRJ-11110-0021","name":"신문로2-12","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":180,"pks":[],"pnus":[],"bundles":[],"label":"신문로2-12","agency":"sh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":"1111012000","loc":{"by":"address","at":[126.975521,37.569696],"basis":"APPROXIMATE_ADDRESS","status":"REVIEW"},"policy":null,"poc":{"n":1,"n97":0,"u":180,"u97":null,"j":"UNKNOWN"}}
   ]
 }

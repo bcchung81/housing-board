@@ -11,20 +11,19 @@ const ROOT = path.join(__dirname, '..', '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 const O = require('../../lib/board/metro-overview.ts');
 const V = require('../../lib/board/projects-view.ts');
-const RG = require('../../lib/board/region.ts');
 const J = require('../../assets/js/overview.js');
 const M3 = require('../../assets/js/map3d.js');   // 3D 단계 구분도 공용 모듈(/citizen 과 같은 구현)
 const R = require('../../assets/js/region.js');
 const MAP = require('../../data/board/ledger-map.json');
-const IDX = require('../../data/board/projects-index.json');
-const CAL = require('../../data/board/region-calendar.json');
 const RM = require('../../data/board/region-map.json');
-const PP = require('../../data/board/policy-progress.json');
 const AREAS = require('../../schemas/ledger-2026-10/tables/areas.json').rows;
 
-const rows = V.rowsOf(MAP.bySgg, IDX.projects, IDX.sgg);
-const DOC = O.metroOverview(RM, { rows, sggNames: IDX.sgg, calendar: CAL, referenceDate: MAP.referenceDate });
-const KEYS = ['u', 'q', 'n', 'd', 'a', 'an', 'mi', 'mn'];
+const MOV = require('../../data/board/map-overview.json');
+const HP = require('../../data/board/home-projects.json');
+const MO = require('../../tools/ledger/map-overview.js');
+/* 개요 값(2026-10-21 HOME PoC #overview 규칙): 화면 기본 범위 9·7(p97) 으로 고른 문서 */
+const DOC = J.scopeVals(O.homeOverview(RM, MOV), 'p97');
+const KEYS = ['n', 'c', 'x', 'q', 'u', 'd', 'w', 'a', 'an'];
 
 test('경계: region-map 시군구 67곳(서울 25 · 인천 11 · 경기 31)이 모두 유효한 고리이고, 3D 판(Map3D.geom)이 범위마다 면을 빠짐없이 그린다 — 수도권 보기 판은 섬(강화·옹진)을 뺀 본토 65면(섬 삽입 지도 없음), 시도는 그 시도 면(경기는 서울이 맥락 면, 인천은 섬 삽입 지도 2)', () => {
   assert.equal(DOC.units.length, 67);
@@ -76,52 +75,45 @@ test('코드: 개요 면 67곳의 코드는 행정표준 시군구 코드표(are
   for (const c of Object.keys(MAP.bySgg).filter((c) => V.isMetro(c))) assert.ok(units.has(O.unitOf(c)), `${c} → 개요 면`);
 });
 
-test('합: 시군구 값의 합 = 시도 합 = 수도권 합(지표 모두), 구 메뉴 값의 합 = 그 시 값', () => {
-  for (const k of KEYS) {
-    const bySido = Object.fromEntries(DOC.sido.map((s) => [s.code, s.v[k]]));
-    for (const s of DOC.sido) assert.equal(DOC.units.filter((u) => u.s === s.code).reduce((t, u) => t + u.v[k], 0), bySido[s.code], `${s.name} ${k}`);
-    assert.equal(DOC.sido.reduce((t, s) => t + s.v[k], 0), DOC.total[k], `수도권 ${k}`);
+test('합: 시군구 값의 합 + 시군구 미연결 행 = 시도 합, 시도 합 = 수도권 합(지표 모두), 구 메뉴 값의 합 = 그 시 값, 단계 물량 합 = 계획 호수(두 범위)', () => {
+  for (const k of ['p97', 'all']) {
+    const D = J.scopeVals(O.homeOverview(RM, MOV), k), rs = HP.rows.filter((r) => MO.inScope(r, k));
+    for (const s of D.sido) {
+      const un = MO.valsOf(rs.filter((r) => !r.sgg && r.region === O.SIDO_FULL[s.code]), k);
+      for (const f of KEYS) assert.equal(D.units.filter((u) => u.s === s.code).reduce((t, u) => t + u.v[f], 0) + un[f], s.v[f], `${k} ${s.name} ${f}`);
+    }
+    for (const f of KEYS) assert.equal(D.sido.reduce((t, s) => t + s.v[f], 0), D.total[f], `${k} 수도권 ${f}`);
+    for (let i = 0; i < 7; i++) assert.equal(D.sido.reduce((t, s) => t + s.v.st[i], 0), D.total.st[i]);
+    for (const u of D.units.filter((x) => x.gu.length)) for (const f of KEYS) assert.equal(u.gu.reduce((t, g) => t + g.v[f], 0), u.v[f], `${k} ${u.name} 구 합 ${f}`);
+    for (const x of [D.total, ...D.sido.map((s) => s.v), ...D.units.map((u) => u.v)]) assert.equal(x.st.reduce((a, b) => a + b, 0), x.u, '단계 물량 합 = 계획 호수');
   }
-  for (let i = 0; i < 6; i++) assert.equal(DOC.units.reduce((t, u) => t + u.v.st[i], 0), DOC.total.st[i]);
-  for (const u of DOC.units.filter((x) => x.gu.length)) for (const k of KEYS) assert.equal(u.gu.reduce((t, g) => t + g.v[k], 0), u.v[k], `${u.name} 구 합 ${k}`);
-  assert.equal(DOC.total.st.reduce((a, b) => a + b, 0), rows.filter((r) => V.isMetro(r.sgg)).length, '단계 띠 = 수도권 사업 전부');
 });
 
-test('같은 숫자: 진행 사업 호수·지연 건수는 사업 화면 수도권 범위(applyFilters metro), 12개월 준공은 지역 공급 수도권의 준공(COMPLETION) 예정과 같고 입주는 따로 센다(2026-10-15 결정: 대표는 준공)', () => {
-  const metro = V.applyFilters(rows, { metro: true });
-  const prog = metro.filter((r) => r.board <= 3);
-  assert.equal(DOC.total.u, prog.reduce((s, r) => s + (r.units > 0 ? r.units : 0), 0));
-  assert.equal(DOC.total.q, prog.filter((r) => !(r.units > 0)).length);
-  assert.equal(DOC.total.n, prog.length);
-  const late = metro.filter((r) => ['delay', 'long'].includes(V.statusOf(r))).length;
-  assert.equal(DOC.total.d, late);
-  /* 사업 화면 핵심 질문 '어떤 사업이 늦어지는가'(수도권 기본 범위)의 값과도 같다 */
-  const ctx = { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, sidoName: (c) => c, sggName: (c) => c };
-  assert.equal(V.questionsOf(rows, { metro: true }, ctx).find((q) => q.q === '어떤 사업이 늦어지는가').value, String(late));
-  const ahead = RG.aheadAll(CAL, 'metro', (c) => c).filter((e) => e.type === 'COMPLETION'), movein = RG.aheadAll(CAL, 'metro', (c) => c).filter((e) => e.type === 'MOVE_IN');
-  assert.equal(DOC.total.a, ahead.reduce((s, e) => s + e.units, 0));
-  assert.equal(DOC.total.an, ahead.length);
-  assert.equal(DOC.total.mi, movein.reduce((s, e) => s + e.units, 0));
-  assert.equal(DOC.total.mn, movein.length);
-  /* 시도별로도 같다 */
-  for (const s of DOC.sido) {
-    const sc = V.applyFilters(rows, { sido: s.code });
-    assert.equal(s.v.u, sc.filter((r) => r.board <= 3).reduce((t, r) => t + r.units, 0), `${s.name} 진행 호수`);
-    assert.equal(s.v.d, sc.filter((r) => r.cls === 'delay').length, `${s.name} 지연`);
-    assert.equal(s.v.a, RG.aheadAll(CAL, s.code, (c) => c).filter((e) => e.type === 'COMPLETION').reduce((t, e) => t + e.units, 0), `${s.name} 12개월 준공`);
+test('같은 숫자: 개요 합계·시도 = 공통 사업 자료(home-projects views — PoC #overview 와 같은 셈), 지연 = 종합상황판 시도별 지연, 12개월 공급 = 종합상황판', () => {
+  for (const k of ['p97', 'all']) {
+    const D = J.scopeVals(O.homeOverview(RM, MOV), k), w = HP.views[k];
+    assert.deepEqual([D.total.n, D.total.c, D.total.x, D.total.q, D.total.u], [w.rows, w.chart, w.excluded, w.missing, w.units], `${k} 합계`);
+    assert.deepEqual(D.sido.map((s) => [s.v.n, s.v.u]), ['11', '28', '41'].map((c) => { const g = w.regions.find((x) => x.name === O.SIDO_FULL[c]); return [g.rows, g.units]; }), `${k} 시도`);
+    assert.equal(D.total.d, w.judge.DELAYED.rows, `${k} 지연`);
+    assert.deepEqual([D.total.a, D.total.an], [w.upcoming.units, w.upcoming.projects], `${k} 12개월 공급`);
+    assert.equal(D.meta[k].unlinked, w.unlinked);
+    assert.equal(D.meta[k].municipalities, w.municipalities.length);
   }
-  /* 기준일·기간 */
-  assert.equal(DOC.referenceDate, MAP.referenceDate);
-  assert.deepEqual(DOC.months, [CAL.months[0], CAL.months[CAL.months.length - 1]]);
+  /* 종합상황판(/, home-board.json — 같은 판정 규칙): 시도별 지연 사업 수가 같다 */
+  const HB = require('../../data/board/home-board.json');
+  for (const s of DOC.sido) assert.equal(s.v.d, HB.regions.find((r) => r.code === s.code).delay, `${s.name} 지연 = 종합상황판`);
+  /* 12개월 공급: 종합상황판도 덤프 뒤 생긴 행(PoC 스냅샷)을 같이 센다(2026-10-21 W3-H — 같은 원천 행 집합) */
+  assert.deepEqual([DOC.total.a, DOC.total.an], [HB.home.supplyUpcoming.total, HB.home.supplyUpcoming.projects]);
+  assert.equal(DOC.referenceDate, HP.asOf);
 });
 
 test('원장을 읽지 못하면 경계만(값 없음, ok=false)', () => {
-  const d = O.metroOverview(RM, null);
+  const d = J.scopeVals(O.homeOverview(RM, null), 'p97');
   assert.equal(d.ok, false);
   assert.equal(d.total, null);
   assert.equal(d.units.length, 67);
-  assert.ok(d.units.every((u) => u.v === null && u.d));
-  assert.match(read('app/(map)/map/page.tsx'), /catch \{\s*return withNation\(metroOverview\(map, null\)\);/);
+  assert.ok(d.units.every((u) => u.v === null && u.vs === null && u.d));
+  assert.match(read('app/(map)/map/page.tsx'), /return withNation\(homeOverview\(map, data && data\.scopes \? data : null\)\);/);
   assert.match(read('app/(map)/map/page.tsx'), />수치를 불러오지 못했습니다\. 경계만 보여 줍니다\.</);
 });
 
@@ -212,12 +204,12 @@ test('화면 연결: 레이아웃 첫 스크립트 → 개요/상세 CSS 분기,
   assert.match(layout, /<script dangerouslySetInnerHTML=\{\{ __html: MAP_MODE_INIT \}\} \/>/);
   assert.ok(layout.indexOf('THEME_INIT }}') < layout.indexOf('MAP_MODE_INIT }}'));
   assert.match(page, /<OverviewMarkup \/>/);
-  assert.match(page, /<MapIsland \{\.\.\.props\} overview=\{await overviewDoc\(\)\} overviewSrc=\{props\.assets\[OVERVIEW_JS\] \|\| OVERVIEW_JS\} map3dSrc=\{props\.assets\[MAP3D_JS\] \|\| MAP3D_JS\} \/>/);
+  assert.match(page, /<MapIsland \{\.\.\.props\} overview=\{overviewDoc\(\)\} overviewSrc=\{props\.assets\[OVERVIEW_JS\] \|\| OVERVIEW_JS\} map3dSrc=\{props\.assets\[MAP3D_JS\] \|\| MAP3D_JS\} \/>/);
   assert.match(page, /const OVERVIEW_JS = '\/assets\/js\/overview\.js';/);
   assert.match(page, /const MAP3D_JS = '\/assets\/js\/map3d\.js';/);
   assert.match(page, /<div className="ov-stage" id="ovStage" tabIndex=\{0\} role="listbox" aria-label="수도권 시군구 지도"><svg className="map" role="presentation" \/><\/div>/, '3D 지도 무대(탭 정지점 하나)');
   assert.match(layout, /<link rel="stylesheet" href="\/assets\/css\/map3d\.css" \/>/, '3D 지도 모양(/citizen 과 같은 파일)');
-  assert.match(page, /getProjectsIndex\(\)/, '사업 화면과 같은 읽기');
+  assert.match(page, /import mapOverviewJson from '@\/data\/board\/map-overview\.json';/, '개요 값 = map-overview.json(HOME 규칙)');
   assert.match(island, /if \(document\.documentElement\.getAttribute\('data-map-mode'\) === 'overview' && overviewSrc && map3dSrc\) \{/);
   const ov = island.slice(island.indexOf("=== 'overview'"), island.indexOf('return;\n    }'));
   assert.match(ov, /const m3 = load\(map3dSrc\), ov = load\(overviewSrc\);/, '3D 공용 모듈 → 개요 모듈 순서');
@@ -267,32 +259,46 @@ test('같은 구현: /map 개요와 /citizen 은 같은 3D 모듈(진짜 3D asse
   assert.match(m3src, /V\.min < \.55 \|\| V\.avg < \.8/); assert.match(m3src, /Math\.ceil\(g\.Hmax0 \* \.6\)/); assert.match(m3src, /faceH\(g\.own\.map\(\(q\) => q\.u\), 4, Hmax\)/);
 });
 
-test('같은 숫자(개요 ↔ 상세 머리 줄 ↔ 사업 화면): 수도권 시군구마다 상세 지도가 원장 파일로 센 진행(①~④) 호수·건수·호수 미확인이 개요 값, /projects?sgg= 진행 행과 같다', () => {
-  const by = O.valuesBySgg(rows, CAL, IDX.sgg);
-  const codes = Object.keys(MAP.bySgg).filter((c) => O.unitOf(c));
-  assert.ok(codes.length >= 60);
-  for (const c of codes) {
-    const doc = JSON.parse(read(`data/board/home-map/${c}.json`));
-    const t = R.homeTally([doc], R.homeToProjects([doc]).unlocated.map((r) => r.id)), v = by.get(c);
-    assert.deepEqual([t.u, t.n, t.q], [v.u, v.n, v.q], `${c}: 상세 머리 줄 = 개요`);
-    const p = V.applyFilters(rows, { sgg: c }).filter((r) => r.board <= 3);
-    assert.deepEqual([t.u, t.n], [p.reduce((s, r) => s + (r.units > 0 ? r.units : 0), 0), p.length], `${c}: 상세 머리 줄 = 사업 화면 진행`);
-    assert.deepEqual(t.st.map((s) => s.n), v.st, `${c}: 단계 칸 건수 = 개요 단계별 수`);
+test('같은 숫자(개요 ↔ 상세 머리 줄): 상세 지도 시군구 파일의 PoC 값(원천 행 — 원장 시군구 기준)을 면으로 모으면 개요 값(PoC 시군구 기준)과 같고, 다른 곳은 두 시군구가 다른 행으로만 설명된다', () => {
+  const MAPS = require('../../tools/ledger/home-map.js');
+  const files = fs.readdirSync(path.join(ROOT, 'data/board/home-map')).filter((f) => /^\d{5}\.json$/.test(f)).map((f) => JSON.parse(read(`data/board/home-map/${f}`)));
+  assert.ok(files.length >= 60 && files.every((d) => d.poc && d.poc.p97 && d.poc.all && Array.isArray(d.noPrj)));
+  for (const k of ['p97', 'all']) {
+    const D = J.scopeVals(O.homeOverview(RM, MOV), k), byFace = new Map();
+    for (const d of files) { const t = R.homePoc([d], R.homeToProjects([d]).unlocated.map((r) => r.id), k), f = O.unitOf(d.sgg); const a = byFace.get(f) || { n: 0, u: 0 }; a.n += t.n; a.u += t.u; byFace.set(f, a); }
+    /* 두 시군구(상세 = 원장 시군구, 개요 = PoC 시군구)가 다른 행 */
+    const moved = HP.rows.filter((r) => MO.inScope(r, k) && O.unitOf(MAPS.sggOfRow(r) || '') !== (MO.keyOf(r) ? O.unitOf(MO.keyOf(r)) : null));
+    for (const u of D.units) {
+      const a = byFace.get(u.code) || { n: 0, u: 0 }, why = moved.filter((r) => [O.unitOf(MAPS.sggOfRow(r) || ''), MO.keyOf(r) && O.unitOf(MO.keyOf(r))].includes(u.code));
+      if (a.n !== u.v.n || a.u !== u.v.u) assert.ok(why.length, `${k} ${u.name}: 상세 ${a.n}건 ${a.u}호 ≠ 개요 ${u.v.n}건 ${u.v.u}호 — 설명 행 없음`);
+    }
+    assert.ok(moved.length <= 12, `${k}: 두 시군구가 다른 행 ${moved.length}건(시군구 미연결·인천 개편 경계)`);
   }
-  /* 고양시 덕양구: 진행 9건 10,110호 중 ①계획 2건 4,164호는 위치 미확보라 지도 표시 7건(2026-10-20 HOME 판 — 10-19 판: 8건 8,516호 중 ①계획 1건 2,570호(구 국방대학교)) */
-  const gy = JSON.parse(read('data/board/home-map/41281.json')), t = R.homeTally([gy], R.homeToProjects([gy]).unlocated.map((r) => r.id));
-  assert.deepEqual([t.u, t.n, t.lostN, t.lostU, t.st[0].u], [10110, 9, 2, 4164, 4164]);
-  assert.equal(DOC.units.find((u) => u.code === '41280').gu.find((g) => g.code === '41281').v.u, 10110);
+  /* 사업 카드: 원장 사업마다 이어진 원천 행 수·집계 호수(점 하나에 여러 행) */
+  const gy = JSON.parse(read('data/board/home-map/28290.json'));
+  const p55 = gy.projects.find((p) => p.id === 'PRJ-28290-0055');
+  assert.deepEqual(p55.poc, { n: 3, n97: 3, u: 1323, u97: 1323, j: 'NORMAL' }, '검단 AA19: 원천 3행 = 점 하나, 계획 1,323호(중복 행 제외)');
 });
 
-test('상세 머리 줄 연결: 수도권은 합계(#hudSum)·6단계 칸을 원장 기준(REGION.home.tally)으로 적고, 지도에 그리지 못한 진행 사업은 둘째 줄 \'지도 표시 n건(위치 미확보 m건 · k호)\'', () => {
+test('상세 머리 줄 연결: 수도권은 합계(#hudSum)·지연 칩·카드를 PoC 값(REGION.home.poc — 원천 행, 개요와 같은 범위)으로, 6단계 칸은 지도 점 범례(원장 단계, REGION.home.tally), 위치 미확보 = 원장 사업 없는 행 + 그리지 못한 사업의 행', () => {
   const app = read('assets/js/app.js'), reg = read('assets/js/region.js');
   assert.match(reg, /tally: homeTally\(raw\.home, home\.unlocated\.map\(\(r\) => r\.id\)\)/);
+  assert.match(reg, /homePoc\(raw\.home, home\.unlocated\.map\(\(r\) => r\.id\), 'p97'\)/);
   assert.match(app, /const HOME_T = REG\.home && !REG\.home\.failed && REG\.home\.tally/);
+  assert.match(app, /const HOME_P = REG\.home && !REG\.home\.failed && REG\.home\.poc/);
+  assert.match(app, /const pocScope = \(\) => \(document\.documentElement\.getAttribute\('data-aud'\) !== 'admin' \|\| q\.get\('policy'\) === 'all' \? 'all' : 'p97'\)/);
   assert.match(app, /let SUM_TOTAL = HOME_T \? homeSumTotal\(HOME_T\) : null/);
-  assert.match(app, /if \(!HOME_T\) SUM_TOTAL = /);
+  assert.match(app, /if \(HOME_P\) \{ const k = pocScope\(\); return pocSumTotal\(HOME_P\[k\], k\); \}/);
+  assert.match(app, /const lateN = \(\) => \(HOME_P \? HOME_P\[pocScope\(\)\]\.d/);
   assert.match(app, /const h = HOME_T && HOME_T\.st\[i\]/);
-  assert.match(app, /지도 표시 \$\{t\.n - t\.lostN\}건\(\$\{lost\}\)/);
+  assert.match(app, /지도 표시 \$\{P\.n - P\.lostN\}건\(\$\{lost\}\)/);
+  assert.match(app, /같은 위치의 원천 행 여러 건이 한 점입니다/, '점 수 ≠ 건수 까닭');
+  /* region.js homePoc: 위치 미확보 = noPrj + 그리지 못한 사업의 행(범위별) */
+  const doc = { sgg: '99999', poc: { p97: { n: 3, c: 3, x: 0, q: 0, u: 300, d: 1, w: 0, a: 0, an: 0, st: [300, 0, 0, 0, 0, 0, 0] }, all: { n: 5, c: 4, x: 1, q: 0, u: 500, d: 1, w: 0, a: 0, an: 0, st: [500, 0, 0, 0, 0, 0, 0] } },
+    noPrj: [{ id: 'PRO_a', name: 'A', u: 100, j: null, p97: true }, { id: 'PRO_b', name: 'B', u: null, j: null, p97: false }],
+    projects: [{ id: 'PRJ-1', poc: { n: 2, n97: 1, u: 200, u97: 120, j: 'DELAYED' } }, { id: 'PRJ-2', poc: { n: 1, n97: 1, u: 100, u97: 100, j: null } }] };
+  assert.deepEqual(['p97', 'all'].map((k) => { const t = R.homePoc([doc], ['PRJ-1'], k); return [t.n, t.u, t.d, t.lostN, t.lostU, t.noPrj.length]; }), [[3, 300, 1, 2, 220, 1], [5, 500, 1, 4, 300, 2]]);
+  assert.equal(R.homePoc([{ sgg: '1', projects: [] }], [], 'p97'), null, 'PoC 값 없는 옛 파일이면 null(옛 머리 줄)');
 });
 
 /* ---------- 2026-10-18 사용자 피드백: 전국 시도 경계(수도권 보기의 맥락 면) · 순위 막대 목록(패널 세로 스크롤 없음). 같은 날 사용자 지시로 첫 화면 범위는 전국 → 수도권 전체 ---------- */
@@ -382,7 +388,7 @@ test('수도권 보기: 쿼리 없는 /map 은 수도권 본토 무대(섬 강�
   assert.match(read('assets/css/map3d.css'), /\.map \.lbls \.lb-ctx\.far \{ fill: color-mix\(in srgb, var\(--foreground\) \d+%, var\(--map-ctx\)\); \}/);
   /* 페이지가 전국 자료를 붙인다 */
   const page = read('app/(map)/map/page.tsx');
-  assert.match(page, /import koreaSidoJson from '@\/data\/board\/korea-sido\.json';/); assert.match(page, /return withNation\(metroOverview\(map, \{ rows/);
+  assert.match(page, /import koreaSidoJson from '@\/data\/board\/korea-sido\.json';/); assert.match(page, /return withNation\(homeOverview\(map, /);
 });
 
 test('시도 보기 SVG 판(2026-10-19 — /citizen 과 같은 보는 시도 모드): 판 = 본토 65면, 무대 맞춤 = 그 시도 면 상자(그 시도 면은 무대 안·한쪽 85% 이상), 이웃 너머 면은 hide', () => {

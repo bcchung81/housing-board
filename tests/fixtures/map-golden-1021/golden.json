@@ -1,0 +1,391 @@
+{
+ "_meta": {
+  "as_of": "2026-10-20",
+  "made_from": [
+   ".cache/home-parity/golden/golden-projects.json (S2-extract.js — PoC /map/dashboard 9·7·정책 전체)",
+   ".cache/home-parity/golden/deliv-2026-10-20.json (PoC /policy-delivery/view portfolio_comparisons → home-view.js mapDelay = 정책 지도 !)",
+   ".cache/home-parity/golden/golden-policy.json (PoC 정책 화면 project_status·upcoming_12m)"
+  ],
+  "note": "PoC 공개 API 응답에서 수치만 옮김(담당자 이름·사유 글 없음)"
+ },
+ "overview_97": {
+  "summary.project_count": 230,
+  "summary.target_units": 151271,
+  "summary.target_counted_projects": 175,
+  "summary.target_excluded_projects": 55,
+  "summary.target_missing_projects": 0,
+  "municipalities.with_projects": 44,
+  "municipalities.target_sum": 149520,
+  "municipality_unlinked_ids": 4,
+  "blocks.status": {
+   "판정미확보": 134,
+   "정상": 19,
+   "주의": 3,
+   "지연": 2
+  },
+  "regions": [
+   {
+    "name": "서울특별시",
+    "project_count": 29,
+    "target_units": 47615,
+    "stage": {
+     "POLICY": 36736,
+     "BUSINESS": 0,
+     "APPROVAL": 1707,
+     "CONSTRUCTION": 7486,
+     "SUPPLY": 1686,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    },
+    "current_notice_units": 1686
+   },
+   {
+    "name": "인천광역시",
+    "project_count": 42,
+    "target_units": 20251,
+    "stage": {
+     "POLICY": 563,
+     "BUSINESS": 3,
+     "APPROVAL": 3497,
+     "CONSTRUCTION": 4412,
+     "SUPPLY": 5135,
+     "MOVE_IN": 0,
+     "UNKNOWN": 6641
+    },
+    "current_notice_units": 5135
+   },
+   {
+    "name": "경기도",
+    "project_count": 159,
+    "target_units": 83405,
+    "stage": {
+     "POLICY": 10563,
+     "BUSINESS": 3648,
+     "APPROVAL": 605,
+     "CONSTRUCTION": 36812,
+     "SUPPLY": 25683,
+     "MOVE_IN": 0,
+     "UNKNOWN": 6094
+    },
+    "current_notice_units": 24377
+   }
+  ],
+  "municipalities": [
+   {
+    "region": "서울특별시",
+    "name": "서초구",
+    "project_count": 2,
+    "target_units": 20700
+   },
+   {
+    "region": "경기도",
+    "name": "과천시",
+    "project_count": 6,
+    "target_units": 13106
+   },
+   {
+    "region": "경기도",
+    "name": "남양주시",
+    "project_count": 24,
+    "target_units": 12866
+   },
+   {
+    "region": "경기도",
+    "name": "평택시",
+    "project_count": 16,
+    "target_units": 10257
+   },
+   {
+    "region": "경기도",
+    "name": "고양시",
+    "project_count": 14,
+    "target_units": 9354
+   },
+   {
+    "region": "경기도",
+    "name": "부천시",
+    "project_count": 21,
+    "target_units": 7206
+   },
+   {
+    "region": "서울특별시",
+    "name": "노원구",
+    "project_count": 7,
+    "target_units": 6601
+   },
+   {
+    "region": "인천광역시",
+    "name": "검단구",
+    "project_count": 9,
+    "target_units": 5777
+   },
+   {
+    "region": "경기도",
+    "name": "수원시",
+    "project_count": 11,
+    "target_units": 5510
+   },
+   {
+    "region": "서울특별시",
+    "name": "강서구",
+    "project_count": 4,
+    "target_units": 4249
+   },
+   {
+    "region": "인천광역시",
+    "name": "미추홀구",
+    "project_count": 2,
+    "target_units": 3935
+   },
+   {
+    "region": "서울특별시",
+    "name": "강남구",
+    "project_count": 1,
+    "target_units": 3899
+   },
+   {
+    "region": "인천광역시",
+    "name": "서해구",
+    "project_count": 11,
+    "target_units": 3371
+   },
+   {
+    "region": "인천광역시",
+    "name": "계양구",
+    "project_count": 10,
+    "target_units": 3283
+   },
+   {
+    "region": "경기도",
+    "name": "시흥시",
+    "project_count": 10,
+    "target_units": 3277
+   },
+   {
+    "region": "경기도",
+    "name": "양주시",
+    "project_count": 5,
+    "target_units": 3090
+   },
+   {
+    "region": "서울특별시",
+    "name": "강북구",
+    "project_count": 1,
+    "target_units": 3048
+   },
+   {
+    "region": "경기도",
+    "name": "성남시",
+    "project_count": 8,
+    "target_units": 2576
+   },
+   {
+    "region": "경기도",
+    "name": "의정부시",
+    "project_count": 7,
+    "target_units": 2539
+   },
+   {
+    "region": "서울특별시",
+    "name": "도봉구",
+    "project_count": 2,
+    "target_units": 2363
+   },
+   {
+    "region": "서울특별시",
+    "name": "동작구",
+    "project_count": 2,
+    "target_units": 2071
+   },
+   {
+    "region": "경기도",
+    "name": "화성시",
+    "project_count": 4,
+    "target_units": 2023
+   },
+   {
+    "region": "인천광역시",
+    "name": "영종구",
+    "project_count": 5,
+    "target_units": 1998
+   },
+   {
+    "region": "경기도",
+    "name": "군포시",
+    "project_count": 3,
+    "target_units": 1889
+   },
+   {
+    "region": "경기도",
+    "name": "구리시",
+    "project_count": 5,
+    "target_units": 1819
+   },
+   {
+    "region": "인천광역시",
+    "name": "연수구",
+    "project_count": 1,
+    "target_units": 1508
+   },
+   {
+    "region": "서울특별시",
+    "name": "관악구",
+    "project_count": 1,
+    "target_units": 1430
+   },
+   {
+    "region": "서울특별시",
+    "name": "강동구",
+    "project_count": 1,
+    "target_units": 1305
+   },
+   {
+    "region": "경기도",
+    "name": "오산시",
+    "project_count": 4,
+    "target_units": 1198
+   },
+   {
+    "region": "경기도",
+    "name": "하남시",
+    "project_count": 1,
+    "target_units": 1115
+   },
+   {
+    "region": "서울특별시",
+    "name": "송파구",
+    "project_count": 1,
+    "target_units": 1000
+   },
+   {
+    "region": "경기도",
+    "name": "의왕시",
+    "project_count": 8,
+    "target_units": 987
+   },
+   {
+    "region": "경기도",
+    "name": "안산시",
+    "project_count": 4,
+    "target_units": 958
+   },
+   {
+    "region": "경기도",
+    "name": "이천시",
+    "project_count": 1,
+    "target_units": 620
+   },
+   {
+    "region": "경기도",
+    "name": "파주시",
+    "project_count": 1,
+    "target_units": 612
+   },
+   {
+    "region": "서울특별시",
+    "name": "금천구",
+    "project_count": 2,
+    "target_units": 583
+   },
+   {
+    "region": "경기도",
+    "name": "김포시",
+    "project_count": 1,
+    "target_units": 350
+   },
+   {
+    "region": "인천광역시",
+    "name": "부평구",
+    "project_count": 2,
+    "target_units": 350
+   },
+   {
+    "region": "서울특별시",
+    "name": "영등포구",
+    "project_count": 3,
+    "target_units": 344
+   },
+   {
+    "region": "경기도",
+    "name": "광주시",
+    "project_count": 1,
+    "target_units": 316
+   },
+   {
+    "region": "인천광역시",
+    "name": "남동구",
+    "project_count": 1,
+    "target_units": 29
+   },
+   {
+    "region": "서울특별시",
+    "name": "마포구",
+    "project_count": 1,
+    "target_units": 8
+   },
+   {
+    "region": "경기도",
+    "name": "양평군",
+    "project_count": 1,
+    "target_units": null
+   },
+   {
+    "region": "인천광역시",
+    "name": "제물포구",
+    "project_count": 1,
+    "target_units": null
+   }
+  ],
+  "stage": {
+   "POLICY": 47862,
+   "BUSINESS": 3651,
+   "APPROVAL": 5809,
+   "CONSTRUCTION": 48710,
+   "SUPPLY": 32504,
+   "MOVE_IN": 0,
+   "UNKNOWN": 12735
+  },
+  "summary.current_notice_units": 31198
+ },
+ "overview_all": {
+  "summary.project_count": 443,
+  "summary.target_units": 289336,
+  "summary.target_counted_projects": 346,
+  "summary.target_excluded_projects": 56,
+  "summary.target_missing_projects": 41,
+  "stage": {
+   "POLICY": 47862,
+   "BUSINESS": 9015,
+   "APPROVAL": 6396,
+   "CONSTRUCTION": 91669,
+   "SUPPLY": 32504,
+   "MOVE_IN": 0,
+   "UNKNOWN": 101890
+  }
+ },
+ "delay_marks": {
+  "region": {
+   "서울특별시": "준공 14호 부족 (3.5%)",
+   "경기도": "준공 1,974호 부족 (81.8%)"
+  },
+  "city": {
+   "MUN_85e6b63a55911fd9a4c5b514": "공급 111호 부족 (4.3%) · 준공 227호 부족 (34.1%)",
+   "MUN_914b0bee38455661c89c23f4": "건설 2,309호 부족 (61.1%)",
+   "MUN_b398e41301a76d180e54bdb7": "공급 1,380호 부족 (13.5%)",
+   "MUN_b28b41f00ecd8358ec7a8c47": "공급 291호 부족 (82.2%)",
+   "MUN_381faea948131e59cf5c6de4": "공급 281호 부족 (81.7%)",
+   "MUN_cceb2314ee13de9dcceca549": "공급 293호 부족 (52.7%)"
+  }
+ },
+ "policy_97": {
+  "project_status": {
+   "DELAYED": 4,
+   "WARNING": 2,
+   "NORMAL": 169
+  },
+  "upcoming_12m": {
+   "total": 17488,
+   "projects": 30
+  }
+ }
+}

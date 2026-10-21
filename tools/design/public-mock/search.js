@@ -61,11 +61,12 @@ function makeSearch(D) {
   for (const [code, full] of D.sgg) sidoFull[code.slice(0, 2)] = full.split(' ')[0];
   const dupCount = {};
   for (const [, full] of D.sgg) dupCount[shortOf(full)] = (dupCount[shortOf(full)] || 0) + 1;
-  /* 검색 숫자도 상황판과 같은 정의(리본 ①~④ = 원장 단계 01~05, sumOf)로 센다 */
+  /* 검색 숫자도 요약 표와 같은 정의(sumOf — HOME PoC 수치 D.hp 가 있으면 PoC 원천 행·집계 호수)로 센다 */
   const stat = (codes) => { const t = sumOf(D, codes); return { projects: t.n, units: t.u }; };
   const regions = [];
   for (const [sd, full] of Object.entries(sidoFull)) {
-    const codes = D.sgg.filter(([c]) => c.startsWith(sd)).map(([c]) => c);
+    /* 시군구 미연결 PoC 행(D.hp 의 시도 코드 칸)은 시도 합계에만 든다 */
+    const codes = D.sgg.filter(([c]) => c.startsWith(sd)).map(([c]) => c).concat(D.hp?.c?.[sd] ? [sd] : []);
     regions.push({ kind: 'sido', code: sd, label: full, sub: '시도', short: SIDO_SHORT[sd], codes, ...stat(codes), preps: [prep(full), prep(SIDO_SHORT[sd], false)] });
   }
   for (const [code, full, zero] of D.sgg) {
@@ -89,7 +90,7 @@ function makeSearch(D) {
       regions.push(c);
     }
     c.city = true;
-    if (!c.codes.includes(cc) && D.prj[cc]) c.codes.push(cc);
+    if (!c.codes.includes(cc) && (D.prj[cc] || D.hp?.c?.[cc])) c.codes.push(cc);
     c.codes.push(code);
     Object.assign(c, stat(c.codes), { zero: false });
     byCode[code].parent = cc;
@@ -143,10 +144,15 @@ function makeSearch(D) {
   }
   return { search, regions, regionOf, projects, stat, SIDO_SHORT };
 }
-/* 공급 예정 호수(진행 사업 호수): 리본 칸 ①~④(원장 단계 01~05). lib/board/metro-overview.ts 의 u 와 같은 정의 */
+/* 공급 예정 호수: D.hp(HOME PoC 수치, build_data.py — 2026-10-21 결정)가 있으면 PoC 원천 행(PRO_) 단위 — n = 행 수(해제 뺀 정책 전체, 민간 정비·민간 포함),
+   u = 집계 호수 중 단계 앞 넷(계획~모집 = PoC 집계 호수 − 입주), st = 앞 넷 칸. 없으면(옛 자료) 원장 리본 칸 ①~④(원장 단계 01~05, lib/board/metro-overview.ts 의 u) */
 const OF_STAGE = { 1: 0, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4, 7: 5 };   // 리본 칸 0 계획 · 1 인허가 · 2 착공 · 3 모집 · 4 준공 · 5 입주(7 = 실제 입주일이 있는 사업, build_data.py)
 function sumOf(D, codes) {
   const st = [0, 0, 0, 0]; let u = 0, n = 0;
+  if (D.hp) {
+    for (const c of codes) { const v = D.hp.c[c]; if (!v) continue; n += v[0]; u += v[1]; for (let i = 0; i < 4; i++) st[i] += v[3][i]; }
+    return { u, n, st };
+  }
   for (const c of codes) for (const p of D.prj[c] || []) { const b = OF_STAGE[p[2]]; if (b > 3) continue; st[b] += p[3]; u += p[3]; n++; }
   return { u, n, st };
 }

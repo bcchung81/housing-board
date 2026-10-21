@@ -54,7 +54,7 @@ test('#3·D1 현재 예정: 경과 1개월 미만으로 지난 예정은 그 날
   assert.match(V.nextOf(byId['PRJ-28290-0058']).tag, /^경과 \d+개월$/, '간단 보기의 지연 꼬리표는 그대로');
   assert.match(read('components/projects/ProjectDetail.tsx'), /pastDueOf\(r\) \?[\s\S]*\{PAST_DUE_UNDER\}/, '서랍 머리에도 표지(2026-10-16: \'예정일 지남(1개월 미만)\' — r2-screens 2)');
   assert.match(read('components/projects/Candidate.tsx'), /next = nextOf\(r\)/, '간단 보기는 nextOf 그대로');
-  assert.match(read('app/(dashboard)/projects/page.tsx'), /ev: nextCell\(r\)/, '인쇄 표도 nextCell');
+  assert.doesNotMatch(read('app/(dashboard)/projects/page.tsx'), /nextCell/, '2026-10-21 사업 화면은 HOME 원천 행 — 현재 예정 칸·인쇄 표 nextCell 이 없다(원장 판 nextCell 은 위에서 확인)');
 });
 
 test('#21 상태 이름: 판정 없음을 준공 완료 · 판정 일정 없음 · 일정 없음으로 나누고 범주·건수는 그대로', () => {
@@ -75,7 +75,7 @@ test('#21 상태 이름: 판정 없음을 준공 완료 · 판정 일정 없음 
   assert.equal(V.STATUS_NAME.none, '판정 없음');
   assert.equal(V.STATUS_RANGE.none, '판정 없음', '칩 이름(묶음)');
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /<dt>상태<\/dt><dd>[\s\S]*NONE_NAME\.done[\s\S]*NONE_NAME\.plan[\s\S]*NONE_NAME\.none/, '목록 읽는 법 ⓘ 에 상태 정의');
+  assert.match(page, /<dt>상태 · 부족 호수<\/dt><dd>\{JUDGE_DEF\}/, '2026-10-21 목록 읽는 법 ⓘ 에 PoC 상태 정의(준공 완료·판정 일정 없음 이름은 원장 판 statusLabel 이 그대로)');   assert.doesNotMatch(page, /NONE_NAME/);
   /* D3(2026-10-15): 번호가 없는 후보는 확인 필요 — 2026-10-19 수도권 한정: 후보 1,839건(옛 정상 1,442 · 주의 84 · 지연 96 · 장기 217)이 원장에서 빠져 review 0 */
   const st = {}; for (const r of rows) st[V.statusOf(r)] = (st[V.statusOf(r)] ?? 0) + 1;
   assert.deepEqual(st, { none: 100, ok: 172, long: 2, caution: 11 }, '상태 건수(review 없음)');   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)(판정 없음만 −92) · 2026-10-20 HOME 판 → 같은 현장 병합·기준일 10-20
@@ -95,8 +95,8 @@ test('#25 시 단위 코드: 구가 있는 경기 시는 구 사업을 합치고
   assert.equal(V.applyFilters(rows, pf({ sgg: '41281' })).length, 9);   // 2026-10-20 HOME 판 8→9
   assert.equal(pf({ sgg: '41150' }).gu, undefined, '구 없는 시는 그대로');
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /parseFilters\(q, \{[^}]*guOf \}\)/);
-  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /parseFilters\(q, \{[^}]*guOf \}\)/, 'CSV 도 같은 거르기');
+  assert.match(page, /parseFilters\(q, \{[^\n]*guOf, home: \{ agencies: idx\.agencies\.map\(\(a\) => a\.name\) \} \}\)/);
+  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /parseFilters\(q, \{[^\n]*guOf, home: \{ agencies: idx\.agencies\.map\(\(a\) => a\.name\) \} \}\)/, 'CSV 도 같은 거르기');
   assert.match(page, /function sggFullName[\s\S]*\$\{METRO_AREAS\[code\]\}\(\$\{gu\.map/, "이름 '고양시(덕양구·일산동구·일산서구)'");
   assert.deepEqual(M.guOf('41280').map((c) => M.METRO_AREAS[c].slice(M.METRO_AREAS['41280'].length).trim()), ['덕양구', '일산동구', '일산서구']);
 });
@@ -119,12 +119,14 @@ test('#27 위치 미확보: 서랍과 같은 상세 자료에 좌표가 없는 �
   assert.equal(rows.every((r) => V.isMetro(r.sgg)), true);
   assert.equal(L.mapCell({ ...check[0], sgg: '26110' }, true), null, '수도권 밖은 빈칸');
   /* 2026-10-16 2차 평가: 판정은 지도와 같은 기준(mapLocOf — 번들 블록·동과 이어진 계양 A2 등은 확보) — r2-screens 1 */
-  assert.match(read('app/(dashboard)/projects/page.tsx'), /getProjectDrawer\(r\.id\)[\s\S]*!mapLocOf\(d\.row, d\.detail\.loc\)/, '서랍과 같은 원천(getProjectDrawer)·같은 판정');
+  assert.match(read('app/(dashboard)/projects/page.tsx'), /getProjectDrawer\(oid\)[\s\S]*!mapLocOf\(d\.row, d\.detail\.loc\)/, '서랍과 같은 원천(getProjectDrawer)·같은 판정 — 원천 행의 ourId 로');
 });
 
 test('#15 날짜 점 표기: 종합상황판·사업·지역 공급 title 의 하이픈 날짜', () => {
   const board = read('components/board/Board.tsx');
-  assert.match(board, /const scope = `원장 \$\{ymDot\(L\.observedMonth\)\} 기준/);
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — scope 는 H 갈래(기준일 dotDates)와 옛 원장 갈래(ymDot) 모두 점 표기 */
+  assert.match(board, /기준일 \$\{dotDates\(L\.referenceDate\)\}/);
+  assert.match(board, /: `원장 \$\{ymDot\(L\.observedMonth\)\} 기준/);
   assert.match(board, /판정 기준일 \$\{dotDates\(SJ\.referenceDate\)\}/);
   assert.match(board, /파일 기준일\(\{dotDates\(real\.lhAsOf\)\}\)/);   // (i) 팝오버 글(2026-10-16 3차)
   assert.doesNotMatch(board, /2026-07부터/);
@@ -132,9 +134,11 @@ test('#15 날짜 점 표기: 종합상황판·사업·지역 공급 title 의 �
   for (const d of L_.slice(1)) assert.doesNotMatch(d.basis, /\b20\d\d-\d\d\b/, `${d.t} 카드 title`);
   assert.match(L_[3].basis, /향후 12개월\(2026\.10~2027\.09\)/);
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /title=\{`사업 원장 \$\{ymText\(idx\.observedMonth\)\} · 기준일 \$\{ref\}/);
+  /* 2026-10-21 사업 화면 = HOME 원천 행: 머리 기준일 title 도 점 표기(ref = 기준일의 하이픈을 점으로) */
+  assert.match(page, /const ref = idx\.referenceDate\.replace\(\/-\/g, '\.'\);/);
+  assert.match(page, /title=\{`정책 진행 자료\(HOME\) 기준일 \$\{ref\}/);
   const region = read('app/(dashboard)/region/page.tsx');
-  assert.match(region, /원장 기준일 \$\{calendar\.referenceDate\.replace\(\/-\/g, '\.'\)\} · 통계누리 실적 \$\{ymDot\(last\)\}까지/);
+  assert.match(region, /정책 진행 자료 기준일 \$\{calendar\.home\.asOf\.replace\(\/-\/g, '\.'\)\} · 통계누리 실적 \$\{ymDot\(last\)\}까지/);   // 2026-10-21: 앞으로 12개월 = HOME 공급 예정
   /* 지역 공급 예정 목록도 점 표기 하나(2026-10-16 2차 평가 — '10월 11일'·'10월 중'·'2026년 10월' 대신 2026.10.11·2026.10, r2-screens 8) */
   assert.match(read('components/region/Ahead.tsx'), /const dayText = \(e: Pick<AheadEntry, 'day' \| 'ym'>\) => \(W\.date === 'ko' \? koDay\(e\) : aheadDay\(e\)\);/);
   assert.equal(S.dotDates('2026-10-13'), '2026.10.13');
@@ -167,7 +171,7 @@ test("#18 기관 이름: 사업 화면 '기타' → 종합상황판과 같은 '�
 
 test('#19 지역 공급 합계는 정확한 호수(축 눈금만 근삿값), 달 막대 근삿값은 title 에 정확한 값', () => {
   const page = read('app/(dashboard)/region/page.tsx');
-  assert.match(page, /value=\{fmt\(units\)\} unit="호" items=\{\[`\$\{fmt\(list\.length\)\}건`/);
+  assert.match(page, /value=\{fmt\(units\)\} unit="호" items=\{\[`\$\{fmt\(nProjects\)\}건`/);   // 2026-10-21: 건 = 증가분이 있는 HOME 원천 사업 행(HOME '사업 n개')
   assert.doesNotMatch(page, /man\(/);
   const ahead = read('components/region/Ahead.tsx');
   assert.match(ahead, /title=\{`\$\{monthLabel\(x\)\} \$\{xs\.length\}\$\{W\.count\} \$\{fmt\(tot\[i\]\)\}호/);
@@ -193,8 +197,10 @@ test('#28 원천이 추가된 달은 추이 증감 대신 비교 불가', () => 
 test('#12 앞으로 12개월 이름에 범위', () => {
   assert.equal(V.AHEAD_COMPLETION, '앞으로 12개월 · 준공 예정');
   assert.equal(V.AHEAD_ALL, '앞으로 12개월 · 모집·준공·입주 예정');
-  assert.match(read('components/board/Board.tsx'), />\{AHEAD_COMPLETION\}<\/h2>/);
-  assert.match(read('app/(dashboard)/region/page.tsx'), /`앞으로 12개월 · \$\{kinds\.map/);
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 종합상황판은 H 면 AHEAD_SUPPLY(공급 예정), 아니면 AHEAD_COMPLETION */
+  assert.match(read('components/board/Board.tsx'), />\{H \? AHEAD_SUPPLY : AHEAD_COMPLETION\}<\/h2>/);
+  /* 2026-10-21 결정: 지역 공급 앞으로 12개월 = HOME 공급 예정 하나(종류 칩 대신 정책 칩) — 대표값 이름 '공급 예정', 정의는 (i) 의 AHEAD_SUPPLY */
+  assert.match(read('app/(dashboard)/region/page.tsx'), /<dt>\{AHEAD_SUPPLY\}<\/dt>[\s\S]*<MetricRow label="공급 예정"/);
 });
 
 test('D1 지역 공급: 기준일보다 앞선 예정은 표지만, 합계에는 그대로', () => {
@@ -213,7 +219,8 @@ test('D1 지역 공급: 기준일보다 앞선 예정은 표지만, 합계에는
   const page = read('app/(dashboard)/region/page.tsx');
   assert.match(page, /refDate=\{calendar\.referenceDate\}/);
   assert.match(page, /const units = list\.reduce\(\(s, e\) => s \+ e\.units, 0\);/, '합계는 그대로');
-  assert.match(page, /이 합계에 들어 있음/);
+  /* 2026-10-21: 지역 공급은 HOME 공급 예정(달 단위 일정, 기준일 뒤 기한만)이라 예정일 지남 항목이 없다 — 표지는 원장 예정을 쓰는 일반사용자 공급 일정(Ahead)에 남는다 */
+  assert.ok(Object.values(calendar.home.p97.sido).flat().every((e) => !R.pastDue(e, ref)));
 });
 
 test('불변식: 지연 2건(D3 — 번호 있는 사업만, 수도권 한정으로 후보 0) = 사업 지연(장기 포함) · 9·7 8,049·4,732·8,742 · 수도권 227,976호·262건 · CSV = 목록', () => {

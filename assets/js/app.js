@@ -144,11 +144,14 @@ function tagState(b) {
 }
 /* 수도권 원장 사업(b.home): 계획·공고 확인 호수와 정책 연결. 정책은 사업 화면과 같은 짧은 이름('9·7 대책')만 보이고, 연결 상태(연결 확정·확정 전)·정식 이름·위치 근거는 title */
 const policyTxt = (p) => `${(p.short || []).map((x) => `${x} 대책`).join(', ') || p.names.join(', ') || '정책'}`;
+/* HOME PoC 규칙(2026-10-21): 카드의 건수·호수는 이 사업에 이어진 원천 행(PRO_) — '원천 n건 · 계획 n호'(집계 호수, 같은 블록 중복 행 제외) */
+const pocNums = (p) => `원천 ${p.n}건 · ${p.u != null ? `계획 ${fmt(p.u)}호` : '물량 없음'}`;
 function homeParts(b) {
   const h = b.home; if (!h) return null;
-  const nums = [h.units != null ? `계획 ${fmt(h.units)}호` : '', h.noticeUnits != null ? `공고 확인 ${fmt(h.noticeUnits)}호` : ''].filter(Boolean).join(' · ');
+  const nums = [h.poc ? pocNums(h.poc) : h.units != null ? `계획 ${fmt(h.units)}호` : '', h.noticeUnits != null ? `공고 확인 ${fmt(h.noticeUnits)}호` : ''].filter(Boolean).join(' · ');
   const pol = h.policy ? policyTxt(h.policy) : '';
   const title = [h.loc ? `위치: ${h.loc.text}(${h.loc.status === 'CONFIRMED' ? '확인' : '검토 중'}, 사업 경계 아님)` : '위치: 미확보',
+    h.poc ? `원천 행 ${h.poc.n}건(9·7 ${h.poc.n97}건)이 이 사업 한 점에 모여 있습니다 · 계획 호수는 같은 블록 중복 행을 뺀 집계` : '',
     h.policy ? `정책: ${h.policy.names.join(', ') || '이름 미상'} · ${h.policy.status === 'CONFIRMED' ? '연결 확정' : '확정 전(검토 필요)'}` : '', h.noticeUnits != null ? '공고 확인: 연결된 모집공고의 호수(준공 아님)' : ''].filter(Boolean).join('\n');
   return { nums, pol, title };
 }
@@ -157,7 +160,9 @@ function homeParts(b) {
 const projHref = (id) => { const sgg = (RES && RES.sgg) || (/^PRJ-(\d{5})-/.exec(id) || [])[1] || ''; return `/projects?id=${encodeURIComponent(id)}&from=map${sgg ? `&sgg=${sgg}` : ''}`; };
 const APPROX_TXT = (window.RegionLoader && window.RegionLoader.APPROX_TITLE) || '근사 위치 — 사업 이름으로 찾은 위치라 확인이 필요합니다';
 const homeLine = (b) => { const x = homeParts(b); return x && (x.nums || x.pol) ? `<span class="bld hm" title="${esc(x.title)}">${esc([x.nums, x.pol].filter(Boolean).join(' · '))}</span>` : ''; };
-const jdMark = (b) => {   // 접힌 단지 카드: 원장 주의·지연만. 원장 판정이 없는 인허가 사업은 예정일이 지났는데 기록이 없으면 '예정 경과'(근거는 title)
+const POC_J = { DELAYED: 'delay', WARNING: 'caution' };
+const jdMark = (b) => {   // 접힌 단지 카드: 주의·지연만. 수도권 원장 사업은 HOME PoC 판정(부족률 2% 이상 지연, 0~2% 주의), 그 밖은 원장 판정. 원장 판정이 없는 인허가 사업은 예정일이 지났는데 기록이 없으면 '예정 경과'(근거는 title)
+  if (b.home && b.home.poc) { const k = POC_J[b.home.poc.j]; return k ? ` <em class="jd ${k} ov-aud-admin" title="도래 단계 목표 대비 실제 부족률 ${k === 'delay' ? '2% 이상' : '0~2%'}(수도권 개요와 같은 기준)">${k === 'delay' ? '지연' : '주의'}</em>` : ''; }
   const c = b.ledger && b.ledger.cls, o = !c && b.overdue;
   if (c === 'caution' || c === 'delay') return ` <em class="jd ${c} ov-aud-admin">${c === 'delay' ? '지연' : '주의'}</em>`;
   return o ? ` <em class="jd caution ov-aud-admin" title="${esc(`${o.kind} 예정 ${dotDate(o.plannedAt)}, ${o.months}개월 지났으나 ${o.kind} 기록 없음`)}">예정 경과</em>` : '';
@@ -1503,7 +1508,19 @@ function setLegend() {
 /* 수도권(사업 원장, region.js homeTally): 머리 줄 합계와 6단계 칸은 수도권 개요(/map)·사업 화면(/projects?sgg=)과 같은 원장 기준 —
    진행(①계획~④모집) 사업의 계획 호수·건수이고, 위치 미확보로 지도에 그리지 못한 사업도 센다. 그리지 못한 진행 사업이 있으면 그 차이를 둘째 줄에 적는다 */
 const HOME_T = REG.home && !REG.home.failed && REG.home.tally ? REG.home.tally : null;
+/* HOME PoC 규칙 머리 줄(2026-10-21 — 수도권 개요와 같은 원천 행 PRO_ 단위·같은 범위): 정책담당자 기본 9·7, ?policy=all 이면 정책 전체, 일반사용자 관점은 정책 전체.
+   점·카드는 원장 사업 단위라 같은 위치의 원천 행 여러 건이 한 점에 모인다(점 수 ≠ 건수). 위치 미확보 = 원장 사업이 없는 행 + 지도에 그리지 못한 사업의 행 */
+const HOME_P = REG.home && !REG.home.failed && REG.home.poc ? REG.home.poc : null;
+const pocScope = () => (document.documentElement.getAttribute('data-aud') !== 'admin' || q.get('policy') === 'all' ? 'all' : 'p97');
+const POC_SCOPE_NAME = { p97: '9·7 연결', all: '정책 전체' };
+const POC_STAGES = ['정책', '사업화', '인허가', '건설', '공급', '입주', '미확인'];   // PoC 정책 화면 단계 이름(건설은 준공 포함)
+function pocSumTotal(P, scope) {
+  const lost = P.lostN ? `위치 미확보 ${P.lostN}건${P.lostU ? ` · ${fmt(P.lostU)}호` : ''}` : '';
+  return { main: fmt(P.u), n: P.n, unk: P.q, unkName: '물량 없음', pre: `${POC_SCOPE_NAME[scope]} 원천 `, prog: false, map: lost ? `지도 표시 ${P.n - P.lostN}건(${lost})` : '', mapHead: `지도 표시 ${P.n - P.lostN}건`, lost,
+    sub: `${POC_SCOPE_NAME[scope]} 원천 행 ${P.n}건 중 ${P.c - P.q}건 집계${P.x ? `(같은 블록 중복·모호 ${P.x}건 제외)` : ''}의 계획 호수, 수도권 개요와 같은 기준. 단계 물량 ${POC_STAGES.map((n, i) => (P.st[i] ? `${n} ${fmt(P.st[i])}호` : '')).filter(Boolean).join(' · ') || '없음'}. 지도 점은 원장 사업 단위라 같은 위치의 원천 행 여러 건이 한 점입니다${lost ? `. ${lost}은 목록에만` : ''}` };
+}
 function homeSumTotal(t) {
+  if (HOME_P) { const k = pocScope(); return pocSumTotal(HOME_P[k], k); }
   const lost = t.lostN ? `위치 미확보 ${t.lostN}건${t.lostU ? ` · ${fmt(t.lostU)}호` : ''}` : '';
   return { main: fmt(t.u), n: t.n, unk: t.q, prog: true, map: lost ? `지도 표시 ${t.n - t.lostN}건(${lost})` : '', mapHead: `지도 표시 ${t.n - t.lostN}건`, lost,
     sub: `사업 원장의 진행(①계획~④모집) 사업 ${t.n}건의 계획 호수${t.q ? `(호수 미확인 ${t.q}건 제외)` : ''}, 수도권 개요·사업 화면과 같은 기준${lost ? `. 지도 표시 ${t.n - t.lostN}건, 위치가 없어 목록에만 있는 사업 ${lost.replace('위치 미확보 ', '')}` : ''}` };
@@ -1517,7 +1534,7 @@ const CUR_LOST = RES && RES.lost ? LOST.find((x) => x.id === RES.lost.id) || nul
 const lostLate = (i) => LOST.filter((x) => x.cls === 'delay' && (BOARD_OF_STAGE[x.stage] ?? 0) === i).length;
 /* 개요에서 지연 지표를 고르고 들어왔는가(?metric=d, 화면 쪽 계약의 'late' 도) — 머리 줄 '지연 n' 칩·빨강 묶음 표지·목록 펼침 */
 const LATE = ['d', 'late'].includes(q.get('metric'));
-const lateN = () => BLOCKS.filter((b) => b.ledger && b.ledger.cls === 'delay').length + LOST.filter((x) => x.cls === 'delay').length;
+const lateN = () => (HOME_P ? HOME_P[pocScope()].d : BLOCKS.filter((b) => b.ledger && b.ledger.cls === 'delay').length + LOST.filter((x) => x.cls === 'delay').length);
 /* 지도 안전 영역(화면 좌표): 지도 상자에서 왼쪽 위 도구 줄(.topbar) 아래, 오른쪽 시점 묶음(.rctl) 왼쪽, 주소 입력줄(#cmd)·범례 띠(#botbar)·좁은 화면의 아래 시트 위. 8px 띄운다 */
 function safeRect() {
   const m = map.getContainer().getBoundingClientRect(), box = (sel) => { const e = $(sel); return e && !e.hidden && e.offsetParent ? e.getBoundingClientRect() : null; };
@@ -1547,7 +1564,7 @@ if (BLOCKS.length) {
   /* 수도권(원장): 합계는 머리 줄과 같은 값(원장 진행 사업), 지도에 그린 사업(전 단계)의 몫은 보조 줄. 아래 막대·범례는 지도에 그린 사업 기준 */
   const mapPart = `지도 표시 ${BLOCKS.length}건 · ${fmt(total)}호${unk ? `(호수 미확인 ${unk}건 제외)` : ''}`;
   $('#sumTotal').innerHTML = HOME_T
-    ? `<span class="cnt">${mapPart}${REG.home.unlocated.length ? ` · 위치 미확보 ${REG.home.unlocated.length}건` : ''}</span>`
+    ? `<span class="cnt">${mapPart}${HOME_P ? (HOME_P[pocScope()].lostN ? ` · 위치 미확보 원천 ${HOME_P[pocScope()].lostN}건` : '') : REG.home.unlocated.length ? ` · 위치 미확보 ${REG.home.unlocated.length}건` : ''}</span>`
     : `<span class="big">${fmt(total)}</span><span class="unit">호</span> <span class="cnt">사업 ${BLOCKS.length}건${unk ? `, 호수 미확인 ${unk}건 제외` : ''}</span>`;
   $('#sumBar').innerHTML = grp.map((g) => `<i style="width:${total ? 100 * by[g.key] / total : 0}%;background:${g.key === 'plan' || g.key === 'permit' ? `repeating-linear-gradient(90deg,var(--${g.key}) 0 4px,var(--bg) 4px 7px)` : COLOR[g.key]}" title="${g.label} ${gTxt(g)}"></i>`).join('');
   $('#sumBar').setAttribute('aria-label', grp.map((g) => `${g.label} ${gTxt(g)}`).join(', '));
@@ -1875,6 +1892,7 @@ function soloShown(shown, sts, all) {
    6단계 띠(#stageF)는 두 관점 모두 보이고, 블록이 없을 때만 숨긴다 */
 function syncAud() {
   $('#stageF').hidden = !BLOCKS.length && !(HOME_T && HOME_T.st.some((x) => x.n));
+  if (HOME_T) SUM_TOTAL = homeSumTotal(HOME_T);   // 관점이 바뀌면 범위(9·7 ↔ 정책 전체)도 바뀐다
 }
 if (window.MutationObserver) new MutationObserver(() => { syncAud(); for (const k in hudSz) delete hudSz[k]; scheduleHud(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-aud'] });   // 꼬리표 폭이 바뀐다(판정 글자)
 function syncChips() {
@@ -2351,8 +2369,8 @@ function syncHudSum() {
   $('#hudSum').classList.toggle('solo', !side);   // 점검 자료가 없는 지역은 합계 열만
   /* 문장(공급 예정 사업 n건, 호수 미확인 m건 제외)은 title 과 화면 낭독기용. 미확인은 값의 성격 표지라 짧게 남긴다 */
   /* 개요에서 지연 지표로 들어왔으면 그 맥락을 칩 하나로(2026-10-15 평가 P1): '지연 n'(빨강), 없으면 '지연 없음'(무채색) */
-  const ln = LATE ? lateN() : 0, late = LATE ? `<span class="hs-late${ln ? '' : ' none'}" title="수도권 개요에서 고른 지표: 지연 사업(예정일을 6개월 넘게 넘김, 위치 미확보 포함)">${ln ? `지연 ${ln}` : '지연 없음'}</span>` : '';
-  $('#hudSum').innerHTML = `<div class="hs-a">${late}<div class="hs-total" title="${esc(tot.sub)}"><span class="sr">${esc(tot.sub)}</span><span aria-hidden="true"><b>${esc(tot.main)}</b><small>호</small><span class="hs-n">· ${tot.prog ? '진행 ' : ''}${tot.n}건${tot.unk ? ` · 미확인 ${tot.unk}건` : ''}</span></span>${tot.map ? `<span class="hs-map">${tot.lost && LOST.length ? `<span aria-hidden="true">${esc(tot.mapHead)} · </span><button type="button" class="hs-lost" aria-expanded="${!$('#lostPop').hidden}" aria-controls="lostPop" title="위치가 없어 지도에 그리지 못한 사업 목록 열기">${esc(tot.lost)}</button>` : `<span aria-hidden="true">${esc(tot.map)}</span>`}</span>` : ''}</div></div>`
+  const ln = LATE ? lateN() : 0, late = LATE ? `<span class="hs-late${ln ? '' : ' none'}" title="${HOME_P ? '수도권 개요에서 고른 지표: 지연 사업(도래 단계 목표 대비 실제 부족률 2% 이상, 위치 미확보 포함)' : '수도권 개요에서 고른 지표: 지연 사업(예정일을 6개월 넘게 넘김, 위치 미확보 포함)'}">${ln ? `지연 ${ln}` : '지연 없음'}</span>` : '';
+  $('#hudSum').innerHTML = `<div class="hs-a">${late}<div class="hs-total" title="${esc(tot.sub)}"><span class="sr">${esc(tot.sub)}</span><span aria-hidden="true"><b>${esc(tot.main)}</b><small>호</small><span class="hs-n">· ${tot.prog ? '진행 ' : tot.pre || ''}${tot.n}건${tot.unk ? ` · ${tot.unkName || '미확인'} ${tot.unk}건` : ''}</span></span>${tot.map ? `<span class="hs-map">${tot.lost && (LOST.length || (HOME_P && HOME_P[pocScope()].noPrj.length)) ? `<span aria-hidden="true">${esc(tot.mapHead)} · </span><button type="button" class="hs-lost" aria-expanded="${!$('#lostPop').hidden}" aria-controls="lostPop" title="위치가 없어 지도에 그리지 못한 사업 목록 열기">${esc(tot.lost)}</button>` : `<span aria-hidden="true">${esc(tot.map)}</span>`}</span>` : ''}</div></div>`
     + (side ? `<div class="hs-b">${side}</div>` : '');
 }
 function setCollapsed(on, { quiet = false } = {}) {
@@ -2386,11 +2404,13 @@ function lostGuide() {
   const tip = ['필수: 대표 지번 주소 또는 좌표(경위도, WGS84) 중 하나 + 근거(출처 URL·문서명)', '선택: 지구명·블록명, 사업 구역 경계 파일(GeoJSON·SHP), 건축허가 관리번호', '확인: 주소 검색 결과가 1곳이고 시군구가 사업과 같아야 합니다', '담당자 입력 화면은 준비 중'].join('\n');
   return `<p class="lp-guide ov-aud-admin" title="${esc(tip)}">${esc(line)} <span class="lp-i" aria-hidden="true">ⓘ</span><span class="sr">${esc(tip.replace(/\n/g, '. '))}</span></p>`;
 }
+/* 원장 사업이 없는 원천 행(HOME PoC 행만 있음 — 덤프 뒤 신규·변환 제외 등): 위치 미확보 목록 끝에 이름만(사업 정보 없음) */
+const noPrjRows = () => (HOME_P ? HOME_P[pocScope()].noPrj.map((x) => `<li><span class="lp-n"><b title="${esc(`${x.name} — 원천 행만 있고 사업 원장에 없어 지도에 그리지 못합니다`)}">${esc(x.name)}</b>${POC_J[x.j] ? ` <b class="jd ${POC_J[x.j]} ov-aud-admin">${POC_J[x.j] === 'delay' ? '지연' : '주의'}</b>` : ''}</span></li>`).join('') : '');
 function lostListHtml() {
   const sm = window.RegionLoader.lostSummary(LOST);
   return `<div class="lp-h"><b id="lostPopH" title="사업 원장에는 있으나 지도에 표시할 위치가 없거나 시군구 대표점뿐인 사업입니다">${esc(sm.text)}</b><button type="button" class="lp-x" aria-label="목록 닫기" title="닫기 (Esc)">×</button></div>`
     + lostGuide()
-    + `<ul>${ledgerRows(LOST)}</ul>`;
+    + `<ul>${ledgerRows(LOST)}${noPrjRows()}</ul>`;
 }
 function placeLost() {
   const pop = $('#lostPop'); if (pop.hidden || !lostOpener || !lostOpener.isConnected) return;

@@ -108,9 +108,9 @@ test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → �
   const q = Q({});
   assert.deepEqual(Object.keys(q), ['9·7 대책 목표 대비', '어디서 막혀 있는가', '어떤 사업이 늦어지는가', '어디를 먼저 챙기는가', '앞으로 얼마나 공급되는가'], '첫 칸 범위(전국 · 정책 진행 자료)는 정책 목표 카드 머리의 범위 칩에');
   const a = q['9·7 대책 목표 대비'];
-  assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['53.1', '% 달성', '①계획 확인 7,808 / 목표 14,694', 'bad', '/projects?policy=97&sido=all']);   // 2026-10-20 HOME 판(운영 API 와 같음): 사업화 확인 3,560→7,808
+  assert.deepEqual([a.value, a.unit, a.sub, a.tone, a.href], ['53.1', '% 달성', '사업화 확인 7,808 / 목표 14,694', 'bad', '/projects?policy=97&sido=all']);   // 2026-10-20 HOME 판(운영 API 와 같음): 사업화 확인 3,560→7,808
   for (const x of Object.values(q)) assert.ok(x.help && !/policy-progress|samePeriod|HOME|원장/.test(x.help), `ⓘ 정의는 쉬운 말: ${x.q}`);
-  assert.match(a.tip, /담당자 추정 포함\(확인과 따로\): ①계획 10,037호/, '추정 포함은 title 에만');   // 2026-10-20 HOME 판 5,789→10,037
+  assert.match(a.tip, /담당자 추정 포함\(확인과 따로\): 사업화 10,037호/, '추정 포함은 title 에만');   // 2026-10-20 HOME 판 5,789→10,037
   assert.deepEqual([q['어디서 막혀 있는가'].value, q['어디서 막혀 있는가'].sub, q['어디서 막혀 있는가'].href], ['③ 착공', '병목 · 지연(장기 포함) 1,666호', '/projects?sido=all&stage=2&status=late']);
   assert.deepEqual([q['어떤 사업이 늦어지는가'].value, q['어떤 사업이 늦어지는가'].sub, q['어떤 사업이 늦어지는가'].href], ['2', '지연 6~12개월 0 · 장기 12개월+ 2', '/projects?sido=all&status=late'], '보조 줄 = 머리 숫자의 구성(지연 + 장기), 주의는 따로. 2026-10-19 수도권 한정: 후보 0이라 확인 필요(후보) 꼬리 없음');
   assert.deepEqual([q['어디를 먼저 챙기는가'].value, q['어디를 먼저 챙기는가'].sub, q['어디를 먼저 챙기는가'].href], ['경기', '지연·주의 5,004호', '/projects?sido=41']);   // 기준일 10-20: 성남금토 A2 438호 주의 +438   // 2026-10-20 HOME 판: 경기 새 사업 착공 예정 경과 주의(수원당수2·부천대장·남양주왕숙2)
@@ -121,7 +121,7 @@ test('핵심 질문 5(전체): 9·7 ①계획 확인 3,560 / 목표 14,694 → �
 
 test('핵심 질문 5(9·7 렌즈): ③착공 3,510호 · 지연 2건(장기 2·주의 2) · 인천 2,890호 · 13,372호 24건 / 1·29 는 목표가 없어 정상 비율 / 시도를 고르면 시군구', () => {
   const q = Q({ policy: pol('97') });
-  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['53.1', '①계획 확인 7,808 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['경기', '지연·주의 5,004호'], ['14,570', '앞으로 12개월 · 준공 예정 · 25건']]);   // 2026-10-20 HOME 판: 사업화 확인 7,808, 지연·주의 1위 인천 → 경기(새 착공 경과 주의), 12개월 준공 14,570호 25건
+  assert.deepEqual(Object.values(q).map((x) => [x.value, x.sub]), [['53.1', '사업화 확인 7,808 / 목표 14,694'], ['③ 착공', '병목 · 지연(장기 포함) 1,666호'], ['2', '지연 6~12개월 0 · 장기 12개월+ 2'], ['경기', '지연·주의 5,004호'], ['14,570', '앞으로 12개월 · 준공 예정 · 25건']]);   // 2026-10-20 HOME 판: 사업화 확인 7,808, 지연·주의 1위 인천 → 경기(새 착공 경과 주의), 12개월 준공 14,570호 25건
   assert.equal(q['9·7 대책 목표 대비'].href, undefined, '이미 9·7 렌즈');
   const q129 = Q({ policy: pol('129') });
   assert.deepEqual([q129['계획대로 가고 있는가'].value, q129['계획대로 가고 있는가'].unit, q129['계획대로 가고 있는가'].sub], ['100.0', '% 정상', '판정 38건 · 판정 없음 9']);
@@ -224,10 +224,12 @@ test('서랍이 열 것(?id=): 발급 사업 → 그 사업, 대체된 옛 id �
 test('화면 적용: 목록은 발급 사업을 상세 창(?id=), 번호 발급 전 사업을 간단 보기(?cand=)로 열고, 창은 그 사업 자료만 서버(projectWindow)에서 받는다. 인쇄 보기는 요약·우선 점검·출처만', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
   const lst = read('lib/board/projects-list.ts');
-  assert.match(lst, /const href = r\.issued \? listHref\(f, \{ id: r\.id \}\) : listHref\(f, \{ cand: r\.id \}\);/);
+  assert.match(lst, /const href = r\.issued \? listHref\(f, \{ id: r\.id \}\) : listHref\(f, \{ cand: r\.id \}\);/, '원장 판 listRows 는 그대로');
   assert.match(lst, /id: r\.id, href, sel: r\.id === sel,/, '행을 누르면 사업 창, 열린 사업은 선택 표시');
-  assert.match(page, /const gridRows: Row\[\] = listRows\(list, f, sel,/, '화면 표와 CSV 가 같은 행');
-  assert.match(page, /getProjectDrawer\(id\)/);
+  /* 2026-10-21: 사업 화면 목록 = HOME 원천 행(PRO_ — 모두 ?id=, 후보 ?cand= 행은 목록에 없다) */
+  assert.match(lst, /export function homeListRows[\s\S]*const href = listHref\(f, \{ id: r\.id \}\);/);
+  assert.match(page, /const gridRows: Row\[\] = homeListRows\(list, f, sel,/, '화면 표와 CSV 가 같은 행');
+  assert.match(page, /getProjectDrawer\(/);
   /* 2026-10-19 서랍 → 모달리스 창: 첫 창은 projectWindow(허용 목록) 결과만 창 관리자에 넘긴다(?id= 상세, 없으면 ?cand= 간단 보기, 인쇄 보기에는 만들지 않음) */
   assert.match(page, /print \? null : \(async \(\) => \(id \? await projectWindow\(id, 'admin'\) : null\) \?\? \(candId \? await projectWindow\(candId, 'admin', \{ cand: true \}\) : null\)\)\(\)/);
   assert.match(page, /<WindowSeed win=\{win\} path="\/projects" search=\{search\} fromMap=\{f\.from === 'map'\} \/>/);
@@ -245,7 +247,7 @@ test('화면 적용: 목록은 발급 사업을 상세 창(?id=), 번호 발급 
   assert.match(win, /w-\(--win-w\) max-w-\[60vw\] min-w-\[400px\]/, '기본 560 · 최소 400 · 최대 화면 60%');
   assert.match(read('components/windows/nav.ts'), /export const WIN_W = 800;[\s\S]*export const WIN_W_MIN = 400;[\s\S]*export const WIN_W_MAX = 0\.6;/);
   const det = read('components/projects/ProjectDetail.tsx');
-  assert.match(det, /<StageSteps current=\{r\.board\} reached=\{r\.reached\}/, '서랍의 단계 줄도 목록과 같은 리본 칸 번호');
+  assert.match(det, /<StageSteps home(?:=\{home\})? current=\{r\.board\} reached=\{r\.reached\}/, '서랍의 단계 줄도 목록과 같은 리본 칸 번호');
   assert.match(det, />당초 일정 없음</, "타임라인 머리에 '당초 일정 없음' 한 번");
   assert.match(det, /hiddenNote\(p\.hiddenAt!, p\.hiddenReason\)/);
   /* 화면은 자료를 lib/board/projects-index.ts 한 곳에서만 읽고, 옛 상세·보고자료 화면은 없다 */

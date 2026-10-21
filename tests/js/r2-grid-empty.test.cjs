@@ -21,13 +21,13 @@ test('자체 빈 상태 화면(/projects)은 그대로 — 0건 분기는 DataGr
   assert.match(read('app/(dashboard)/projects/page.tsx'), /이 조건의 사업이 없습니다/);
 });
 
-test("'예정일 지남(1개월 미만)' 문구는 projects-view 한 곳, month-ahead 는 가져다 쓴다(region.ts 는 꼬리 없는 '예정일 지남'만), assets/js/region.js 는 같은 글자", () => {
+test("'예정일 지남(1개월 미만)' 문구는 projects-view 한 곳(month-ahead 는 2026-10-21 공급 예정 전환으로 쓰지 않음, region.ts 는 꼬리 없는 '예정일 지남'만), assets/js/region.js 는 같은 글자", () => {
   const V = require('../../lib/board/projects-view.ts');
   const MA = require('../../lib/board/month-ahead.ts');
   const R = require('../../lib/board/region.ts');
   assert.equal(V.PAST_DUE_UNDER, '예정일 지남(1개월 미만)');
   assert.equal(R.PAST_DUE, V.PAST_DUE);
-  assert.equal(MA.dueStatus('정상', true), `정상 · ${V.PAST_DUE_UNDER}`);
+  assert.equal(MA.dueStatus, undefined);
   assert.doesNotMatch(read('lib/board/month-ahead.ts'), /= '예정일 지남/);
   const js = read('assets/js/region.js');
   assert.ok(js.includes(`\`${V.PAST_DUE}(\${`) && js.includes("'1개월 미만'"), 'region.js 조립 글자가 상수와 같다');

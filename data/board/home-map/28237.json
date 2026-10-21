@@ -5,7 +5,9 @@
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
+  "poc": {"p97":{"n":2,"c":1,"x":1,"q":0,"u":350,"d":0,"w":0,"a":350,"an":1,"st":[0,0,0,350,0,0,0]},"all":{"n":3,"c":1,"x":2,"q":0,"u":350,"d":0,"w":0,"a":350,"an":1,"st":[0,0,0,350,0,0,0]}},
+  "noPrj": [],
   "projects": [
-    {"id":"PRJ-28237-0065","name":"인천부평 A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":350,"pks":[],"pnus":[],"bundles":[],"label":"인천부평 A","agency":"lh","moveIn":"2028-02","completion":"2027-10-19","noticeUnits":null,"bjd":"2823710100","loc":{"by":"area","at":[126.716926,37.4943],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]}}
+    {"id":"PRJ-28237-0065","name":"인천부평 A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":350,"pks":[],"pnus":[],"bundles":[],"label":"인천부평 A","agency":"lh","moveIn":"2028-02","completion":"2027-10-19","noticeUnits":null,"bjd":"2823710100","loc":{"by":"area","at":[126.716926,37.4943],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":3,"n97":2,"u":350,"u97":350,"j":"NORMAL"}}
   ]
 }

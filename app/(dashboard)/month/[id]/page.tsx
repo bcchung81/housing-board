@@ -12,24 +12,27 @@ import ScopeChip from '@/components/ui/scope-chip';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, sidoName, lhOfMonth, lhUnits, staleText, ymDot } from '@/lib/board/calc';
 import { getBoardData } from '@/lib/board/data';
 import { getProjectsIndex } from '@/lib/board/projects-index';
-import { dateAltOf, dayText, isMetro, statusLabel } from '@/lib/board/projects-view';
+import { AHEAD_SUPPLY, dayText, isMetro } from '@/lib/board/projects-view';
 import { mapCell, sggLabel } from '@/lib/board/projects-list';
-import { pastDue, projectHref, type CalendarDoc } from '@/lib/board/region';
-import { dueStatus, monthDue, monthIds } from '@/lib/board/month-ahead';
+import { HOME_POLICY, offLedger, projectHref, type CalendarDoc } from '@/lib/board/region';
+import { monthIds, monthSupply } from '@/lib/board/month-ahead';
+import { JUDGE_NAME, type HomeRow } from '@/lib/board/home-agency';
 import { metricBoardLabel } from '@/lib/board/stages';
 import { DETAILS } from '@/lib/shell/menu';
 import { dotDates, type Col } from '@/lib/grid/spec';
 import calendarJson from '@/data/board/region-calendar.json';
+import homeProjectsJson from '@/data/board/home-projects.json';
 
 const ACT_KS = ['permit', 'start', 'complete'] as const;
 const LH_COLS: Col[] = [{ key: 'district', label: '사업지구', kind: 'text', wrap: true }, { key: 'block', label: '블록', kind: 'text' }, { key: 'type', label: '공급유형', kind: 'text' }, { key: 'units', label: '호수' }, { key: 'date', label: '준공예정일', kind: 'text' }, { key: 'location', label: '위치', kind: 'text', wrap: true }];
-/* 원장 그 달 준공 예정 표: 예정일(HOME 정본 — LH 파일 날짜가 다르면 꼬리표) · 사업(상세 서랍) · 시군구 · 호수 · 상태 · 지도(수도권) */
-const DUE_COLS: Col[] = [{ key: 'day', label: '준공 예정일', kind: 'text' }, { key: 'name', label: '사업', kind: 'text', wrap: true }, { key: 'sgg', label: '시군구', kind: 'text' }, { key: 'units', label: '호수' }, { key: 'status', label: '상태', kind: 'text' }, { key: 'map', label: '지도', kind: 'text', sort: false }];
+/* 그 달 공급 예정 표(HOME 원천 사업 행): 사업(상세 서랍 — 원장에 없는 행은 글자만) · 시군구 · 공급 예정 호수(그 달 증가분) · 판정(HOME 사업 판정) · 지도(수도권) */
+const DUE_COLS: Col[] = [{ key: 'name', label: '사업', kind: 'text', wrap: true }, { key: 'sgg', label: '시군구', kind: 'text' }, { key: 'units', label: '호수' }, { key: 'status', label: '판정', kind: 'text' }, { key: 'map', label: '지도', kind: 'text', sort: false }];
 const calendar = calendarJson as unknown as CalendarDoc;
+const homeRows = new Map((homeProjectsJson as unknown as { rows: HomeRow[] }).rows.map((r) => [r.id, r]));
 type Props = { params: Promise<{ id: string }> };
 
-/* 월 상세: 그 달의 인허가·착공·모집·준공(시도별·시행주체별, 통계누리 실적), 원장 준공 예정(종합상황판 '앞으로 12개월'·지역 공급과 같은 자료)과 LH 준공 예정 블록.
-   실적이 있는 달, 원장 준공 예정이 있는 달, LH 예정 달만 열린다(monthIds — 종합상황판의 월 링크도 같은 목록). */
+/* 월 상세: 그 달의 인허가·착공·모집·준공(시도별·시행주체별, 통계누리 실적), 9·7 공급 예정(종합상황판 '향후 12개월 공급 예정'·지역 공급과 같은 자료 — HOME 원천 사업 행)과 LH 준공 예정 블록.
+   실적이 있는 달, 9·7 공급 예정이 있는 달, LH 예정 달만 열린다(monthIds — 종합상황판의 월 링크도 같은 목록). */
 export const generateStaticParams = async () => {
   const { molit, lh } = await getBoardData();
   return monthIds(molit.months, lh.blocks, calendar).map((id) => ({ id }));
@@ -50,17 +53,16 @@ export default async function MonthPage({ params }: Props) {
   const blockTotal = new Set(blocks.map((b) => `${b.district}|${b.block}`)).size;   // 파일 한 행은 블록×공급유형 — 고유 블록으로 센다
   const idx = await getProjectsIndex();
   const past = ym < idx.observedMonth;   // 지난 달의 예정은 실제로 준공했는지 모른다
-  /* 원장 그 달 준공 예정(원장 범위 — 수도권): 종합상황판 '앞으로 12개월' 그 달 막대·지역 공급 준공 예정과 같은 건수·호수 */
-  const due = monthDue(calendar, ym), dueUnits = due.reduce((n, e) => n + e.units, 0);
+  /* 9·7 그 달 공급 예정(HOME 원천 사업 행 — 수도권): 종합상황판 '향후 12개월 공급 예정' 그 달 막대·지역 공급 앞으로 12개월과 같은 모집단·같은 식 */
+  const due = monthSupply(calendar, ym), dueUnits = due.reduce((n, e) => n + e.units, 0);
   const byId = new Map(idx.rows.map((r) => [r.id, r]));
   const sidoShort = (c: string) => molit.sido.find((x) => x.code === c)?.name;
   const dueRows = due.map((e) => {
-    const r = byId.get(e.id), alt = r ? dateAltOf(r) : null, href = projectHref(e, '');
-    const status = r ? dueStatus(statusLabel(r), pastDue(e, calendar.referenceDate)) : null;
-    return { id: e.id, c: {
-      day: { text: e.day ? dayText(e.day) : ymDot(e.ym), sort: e.day ?? `${e.ym}-99`, ...(alt ? { tag: alt.text, title: alt.title } : {}) },
-      name: { text: e.name, href }, sgg: sggLabel(e.sgg, sidoShort(e.sd)), units: e.units,
-      status: status ? { text: status, ...(status !== statusLabel(r!) ? { title: `준공 예정일 ${dayText(e.day!)}이 원장 기준일(${dotDates(calendar.referenceDate)})보다 앞섰는데 실제 기록이 아직 없음 — 경과 1개월 미만이라 상태는 그대로` } : {}) } : null,
+    const r = offLedger(e) ? undefined : byId.get(e.id), j = homeRows.get(e.pro!)?.judge;
+    return { id: e.pro!, c: {
+      name: offLedger(e) ? { text: e.name, title: '정책 진행 자료(HOME)에만 있는 사업 — 덤프 뒤 신규이거나 원장 변환 제외라 사업 화면에 없음' } : { text: e.name, href: projectHref(e, '') },
+      sgg: sggLabel(e.sgg, sidoShort(e.sd)), units: e.units,
+      status: j ? { text: JUDGE_NAME[j.status], ...(j.gap ? { title: `부족 ${fmt(j.gap)}호` } : {}) } : null,
       map: r && isMetro(r.sgg) ? mapCell(r) : null,
     } };
   });
@@ -76,8 +78,8 @@ export default async function MonthPage({ params }: Props) {
     <Page>
       <PageHead title={monthLabel(ym)}
         meta={actual ? `실적${isProvisional(molit, ym) ? ' · 잠정' : ''} · 자료 기준 ${ymDot(last)}` : `예정 · 원장 기준 ${dotDates(calendar.referenceDate)}`}
-        metaTip={actual ? `통계누리 실적이 있는 달${isProvisional(molit, ym) ? ' · 통계누리가 잠정치로 낸 달입니다. 확정치는 2027년 9월 공표 예정' : ''} · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}` : '실적 자료가 없는 달 — 준공 예정만'}
-        tip={actual ? `${area}·시도별 인허가·착공·모집·준공 호수와 시행주체별 호수${due.length ? ', 원장 준공 예정 사업' : ''}${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. ${due.length ? '원장 준공 예정 사업' : ''}${due.length && blocks.length ? '과 ' : ''}${blocks.length ? 'LH 준공 예정 블록' : ''}만 있습니다.`}>
+        metaTip={actual ? `통계누리 실적이 있는 달${isProvisional(molit, ym) ? ' · 통계누리가 잠정치로 낸 달입니다. 확정치는 2027년 9월 공표 예정' : ''} · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}` : '실적 자료가 없는 달 — 공급 예정·LH 준공 예정만'}
+        tip={actual ? `${area}·시도별 인허가·착공·모집·준공 호수와 시행주체별 호수${due.length ? ', 9·7 공급 예정 사업' : ''}${blocks.length ? ', 그 달에 준공 예정이던 LH 블록' : ''}.` : `실적 자료가 없는 달(자료는 ${ymDot(molit.months[0])}~${ymDot(last)})입니다. ${due.length ? '9·7 공급 예정 사업' : ''}${due.length && blocks.length ? '과 ' : ''}${blocks.length ? 'LH 준공 예정 블록' : ''}만 있습니다.`}>
         <nav aria-label="이웃 달" className="flex gap-4">
           {nb.prev ? <Link href={`/month/${nb.prev}`} title={`이전 달 ${monthLabel(nb.prev)}`} className="inline-flex items-center gap-px rounded-chip text-sm text-muted-foreground no-underline underline-offset-[3px] tabular-nums transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"><ChevronLeft className="size-3.5" aria-hidden="true" />{ymDot(nb.prev)}</Link> : null}
           {nb.next ? <PanelLink href={`/month/${nb.next}`} full={`다음 달 ${monthLabel(nb.next)}`}>{ymDot(nb.next)}</PanelLink> : null}
@@ -106,13 +108,13 @@ export default async function MonthPage({ params }: Props) {
       ) : null}
 
       {due.length ? (
-        <Card render={<section aria-label="준공 예정 사업" />}>
-          <PanelHead title="준공 예정 사업" tip={`사업 원장 ${ymDot(calendar.observedMonth)} · 준공 실제가 없는 사업의 준공 현재 예정(사업당 하나) · ${area} · 종합상황판 '앞으로 12개월'·지역 공급의 준공 예정과 같은 자료·같은 값 · 날짜는 HOME 정본, LH 파일 날짜가 다르면 '원천 날짜 다름' · 예정일 지남 = 원장 기준일(${dotDates(calendar.referenceDate)})보다 앞섰는데 실제 기록 없음(합계에 포함)`}
-            scope={<ScopeChip scope={area} source="사업 원장" title={`준공 예정 사업의 범위: 사업 원장 ${ymDot(calendar.observedMonth)} · ${area}`} />}>
-            <PanelLink href={`/region?sido=all&m=${ym}`} full={`지역 공급에서 ${monthLabel(ym)} 준공 예정 보기(${area})`}>지역 공급</PanelLink>
+        <Card render={<section aria-label="공급 예정 사업" />}>
+          <PanelHead title="공급 예정 사업" tip={`${AHEAD_SUPPLY}의 이 달 몫(HOME 정책 추진현황과 같은 계산) · 사업마다 공급(본 모집) 일정의 누적 목표 증가분에서 이미 측정된 공급 물량을 뺀 값 · 지난 기한의 미달량은 넘기지 않음 · 사업 = 정책 진행 자료(HOME) 원천 사업 행 · 판정 = HOME 사업 판정(도래 목표 대비 부족률 2% 이상 지연, 0~2% 주의) · 종합상황판·지역 공급과 같은 값`}
+            scope={<ScopeChip scope={`${HOME_POLICY.p97} · ${area}`} source="정책 진행 자료" title={`공급 예정 사업의 범위: 9·7 정책 승인 연결 사업 · ${area} · 기준일 ${dotDates(calendar.home.asOf)}`} />}>
+            <PanelLink href={`/region?m=${ym}`} full={`지역 공급에서 ${monthLabel(ym)} 공급 예정 보기(${area})`}>지역 공급</PanelLink>
           </PanelHead>
-          <MetricRow className="mb-2" label="준공 예정" value={fmt(dueUnits)} unit="호" items={[`${fmt(due.length)}건`, `원장 ${dotDates(calendar.referenceDate)}`]} />
-          <DataGrid label={`${monthLabel(ym)} 준공 예정 사업`} cols={DUE_COLS} rows={dueRows} quietCount />
+          <MetricRow className="mb-2" label="공급 예정" value={fmt(dueUnits)} unit="호" items={[`${fmt(due.length)}건`, `기준일 ${dotDates(calendar.home.asOf)}`]} />
+          <DataGrid label={`${monthLabel(ym)} 공급 예정 사업`} cols={DUE_COLS} rows={dueRows} quietCount />
         </Card>
       ) : null}
 

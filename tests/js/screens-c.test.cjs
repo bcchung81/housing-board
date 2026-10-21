@@ -87,11 +87,13 @@ test('2 앞으로 12개월 대표 = 준공 예정: 지역 공급 기본(준공�
   assert.equal(completion(''), 14570);
   assert.equal(q5({}), 14570);
   assert.equal(sum(BOARD.upcoming, (m) => m.units), 14570, '종합상황판(수도권)');
+  /* 2026-10-21 결정(HOME 과 같은 조건): 지역 공급 앞으로 12개월 = HOME 공급 예정 하나 — 종류 칩 대신 정책 칩(9·7 기본·정책 전체) */
   const region = read('app/(dashboard)/region/page.tsx');
-  assert.match(region, /isDefaultKinds\(kinds\) \? AHEAD_COMPLETION/, '기본 제목 = 앞으로 12개월 · 준공 예정');
-  assert.match(region, /if \(!isDefaultKinds\(ks\)\) s\.set\('kind'/, '주소는 기본(준공)과 다를 때만');
-  assert.match(region, /\{fmt\(xs\.length\)\}건 · \{fmt\(xs\.reduce\(\(s, e\) => s \+ e\.units, 0\)\)\}호/, '모집·입주는 칩의 건수·호수로 분해');
-  assert.match(board, />\{AHEAD_COMPLETION\}<\/h2>/);
+  assert.match(region, /<MetricRow label="공급 예정"/, '대표 = 공급 예정');
+  assert.match(region, /if \(pl !== 'p97'\) s\.set\('policy', pl\)/, '주소는 기본(9·7)과 다를 때만');
+  assert.match(region, /\{fmt\(n\)\}건 · \{fmt\(u\)\}호/, '정책 칩에 건수·호수');
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 종합상황판만 H 면 AHEAD_SUPPLY(공급 예정, 집계 upcoming 은 home-board 값). 위 14,570 은 원장 집계(다른 화면) 확인 */
+  assert.match(board, />\{H \? AHEAD_SUPPLY : AHEAD_COMPLETION\}<\/h2>/);
   assert.equal(V.AHEAD_COMPLETION, '앞으로 12개월 · 준공 예정');
 });
 
@@ -129,11 +131,9 @@ test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본
   assert.equal(BOARD.regions.filter((r) => !r.judged).length, 0);
   assert.match(board, /data-slot="region-none"[^>]*>판정 대상 없음\{r\.candidate\?\.judged \? <> · 확인 필요 \{f\(r\.candidate\.judged\)\}건<\/> : null\}/);
   assert.doesNotMatch(board, /\{rate === null \? '—'/);
-  /* /agency/gh: 사업 목록과 같은 열·칸(①~⑥ 알약), 행 → 서랍 */
+  /* /agency/gh·sh·ih(2026-10-21 HOME 기관 묶음): 원천 사업 행 표(사업·시군구·호수·판정·부족 호수), 원장에 있는 사업은 행 → 서랍. 사업 목록 listRows 의 GH 행(아래)은 사업 화면 기관 칩 그대로 */
   const ag = read('app/(dashboard)/agency/[id]/page.tsx');
-  assert.match(ag, /listRows\(ghRows, \{ agency: a\.id \}/);   // 2026-10-20: GH 표를 iH 도 같이 쓴다(기관 id 로)
-  assert.match(ag, /dropBlank\(LIST_COLS, ghGridRows\)/);
-  assert.match(ag, /<PanelLink href=\{`\/projects\?sido=all&agency=\$\{a\.id\}`\}/, '기본 파란 밑줄 링크 대신 패널 링크');
+  assert.match(ag, /<DataGrid label=\{`\$\{a\.name\} 사업`\} cols=\{HOME_COLS\} rows=\{lineRows\}/);
   const gh = rows.filter((r) => r.agency === 'gh'), gr = PL.listRows(gh, { agency: 'gh' }, null, () => undefined);
   assert.equal(gr.length, 4);
   for (const r of gr.filter((x) => IDX.projects[x.id])) { assert.match(r.href, /^\/projects\?sido=all&agency=gh&id=PRJ-/); assert.ok(r.c.stage.pill, '단계 색 알약'); assert.match(r.c.stage.text, /^[①-⑥] /); }

@@ -29,8 +29,21 @@ export type RegistryProject = {
 /* data/board/ledger-board.json(tools/ledger/board.js 가 사업 원장 표에서 만든다). 시점 0 = months[0], 단계 6칸 = ①계획 … ⑥입주 */
 type Judged = { projects: number; units: number };
 type CandJudged = { ok: Judged; caution: Judged; delay: Judged };
+/* HOME 규칙 집계(data/board/home-board.json, tools/ledger/home-board.js — 2026-10-21 결정: 종합상황판은 HOME 정책 추진현황과 같은 조건·같은 표기)의 추가 값 */
+export type HomeExtra = {
+  policyId: string; targetUnits: number;
+  cards: Record<string, { target?: number; current?: number | null; measured_on?: string | null; year_end_expected?: number | null; plan_date?: string | null; remainder?: number | null }>;
+  delayMax: number; warningMax: number; axisMax: number;
+  stageGaps: { stage: string; label: string; status: string; gap: number; rate: string }[];
+  bottleneck: { stage: string; label: string; status: string; gap: number; rate: string } | null;
+  supplyUpcoming: { total: number; projects: number; from: string; to: string };
+  monthly: { month: string; APPROVAL: number | null; CONSTRUCTION: number | null; SUPPLY: number | null; COMPLETION: number | null }[];
+  mapSupply: Record<string, { supplyReached: number; delayed: boolean; delayNote: string }>;
+};
 export type LedgerBoard = {
   schema: string; observedMonth: string; referenceDate: string;
+  stageNames?: string[];                                                    // 리본 6칸 이름(HOME 집계: 정책·사업화·인허가·건설·공급·입주). 없으면 sample.ts K
+  home?: HomeExtra;
   judge: { cautionMonths: number; delayMonths: number; rule?: string };
   scope: { projects: number; issued: number; candidates: number; judged: number; candidateJudged?: number; units: number; coverage?: string; bySource?: { issued: number; lhCandidates: number; hubBulkCandidates: number; home?: number }; renewal?: { projects: number; units: number } };
   months: string[]; now: number; stageUnits: number[][]; stageProjects: number[][];
@@ -38,10 +51,10 @@ export type LedgerBoard = {
   /* ok·caution·delay = 판정(사업 번호가 있는 사업만), candidate = 번호가 없는 후보의 같은 계산(확인 필요, 2026-10-15 결정 D3 — 없으면 옛 집계: 후보 포함 판정) */
   judgment: { ok: Judged; caution: Judged; delay: Judged; candidate?: CandJudged & { reason: string }; excluded: Judged & { reason: string }; excludedStartOverdue?: Judged & { pairs: number; reason: string } };
   delayByStage: number[]; cautionByStage: number[];
-  regions: { code: string; name: string; projects: number; units: number; judged: number; ok: number; caution: number; delay: number; delayUnits: number; cautionUnits: number; candidate?: { judged: number; ok: number; caution: number; delay: number } }[];
-  agencies: { id: string; name: string; projects: number; units: number; ok: number; caution: number; delay: number; okUnits: number; cautionUnits: number; delayUnits: number; excludedUnits: number; candidateUnits?: number; note: string | null }[];
+  regions: { code: string; name: string; projects: number; units: number; judged: number; ok: number; caution: number; delay: number; delayUnits: number; cautionUnits: number; okUnits?: number; homeDelay?: string | null; candidate?: { judged: number; ok: number; caution: number; delay: number } }[];
+  agencies: { id: string; name: string; projects: number; units: number; ok: number; caution: number; delay: number; okUnits: number; cautionUnits: number; delayUnits: number; excludedUnits: number; candidateUnits?: number; note: string | null; delayedSharePct?: number }[];
   upcoming: { ym: string; units: number; projects: number }[];
   overdue: { id: string; name: string; sgg: string; eventType: string; planned: string; months: number; class: string }[];
   /* 월 판정 이력(data/board/judgment-history.json, tools/ledger/trend.js) 중 기준 달 앞 행 + 이번 달 행. 없으면(옛 집계) 기준 달만 판정 */
-  trend?: { month: string; referenceDate: string; edition: string | null; basis: 'BACKFILL' | 'OBSERVED'; ok: Judged; caution: Judged; delay: Judged; candidate?: CandJudged; delayByStage: number[]; cautionByStage: number[]; judged: number; addedSources?: string[]; excludedStartOverdue?: Judged & { pairs: number } }[];
+  trend?: { month: string; referenceDate: string; edition: string | null; basis: 'BACKFILL' | 'OBSERVED'; ok: Judged; caution: Judged; delay: Judged; candidate?: CandJudged; delayByStage: number[]; cautionByStage: number[]; judged: number; addedSources?: string[]; excludedStartOverdue?: Judged & { pairs: number }; max?: { d: number; w: number } }[];
 };

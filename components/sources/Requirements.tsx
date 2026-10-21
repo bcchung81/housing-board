@@ -32,16 +32,16 @@ const Mark = ({ v }: { v: Verdict }) => (
 export default function Requirements({ doc }: { doc: RequirementsDoc }) {
   const n = countVerdicts(doc);
   /* 범위 칩 title: 근거 지표의 모수(requirements.json measures — 타입은 lib/board/requirements.ts 밖이라 여기서 좁힌다) */
-  const m = (doc as RequirementsDoc & { measures?: { base: number; ledgerProjects: number } }).measures;
+  const m = (doc as RequirementsDoc & { measures?: { base: number } }).measures;
   return (
     <Card render={<section aria-label="요구사항 충족" />}>
       <PanelHead title="요구사항 충족"
-        scope={<ScopeChip scope="수도권" source="정책 진행 자료" title={`판정 근거 지표는 정책 진행 자료(HOME)의 수도권 사업${m ? ` ${m.base}건` : ''} 기준(정책·프로그램 연결이 수도권 사업뿐) · 원장 사업 수(F-01)도 수도권${m ? ` ${m.ledgerProjects.toLocaleString('en-US')}건` : ''}`} />}
-        tip="기능 요구 12가지(F-01~F-12) · 판정은 실제 자료로 센 근거 지표와 규칙(tools/ledger/requirements.js)으로 냄 — 충족·부분·없음 · 근거 지표에 마우스를 올리면 계산과 규칙 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행">
+        scope={<ScopeChip scope="9·7 정책" source="정책 진행 자료" title={`판정 근거 지표는 정책 진행 자료(HOME)의 9·7 정책 사업${m ? ` ${m.base}건` : ''}(승인 연결 사업 전체) 기준 · 5단계 칸은 사업 × 5 · 값은 정책 진행 자료가 내는 요구사항 충족 지표(추정 포함이 기본, 추정 제외는 보조)`} />}
+        tip="기능 요구 12가지(F-01~F-12) · 판정은 근거 지표(추정 포함 기본 · 추정 제외 보조)와 규칙(tools/ledger/requirements.js)으로 냄 — 충족·부분·없음 · 근거 지표에 마우스를 올리면 지표 정의와 규칙 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행">
         <span className="text-sm text-muted-foreground tabular-nums">충족 <b className="text-foreground">{n.met}</b> · 부분 <b className="text-foreground">{n.part}</b> · 없음 <b className="text-foreground">{n.none}</b></span>
         <InfoTip label="요구사항 충족 읽는 법">
           <dl>
-            <dt>판정</dt><dd>충족 · 부분 · 없음 — 실제 자료로 센 근거 지표와 정해 둔 규칙으로 냄(근거 지표에 마우스를 올리면 계산)</dd>
+            <dt>판정</dt><dd>충족 · 부분 · 없음 — 근거 지표와 정해 둔 규칙으로 냄(추정 포함 95% 이상 충족) · 추정 포함 = 지구·시군구 근사나 담당자 평균 기간 같은 추정까지 센 값, 추정 제외 = 확인된 값만</dd>
             <dt>지시</dt><dd>이 요구사항과 관련된 지시 날짜(월.일)</dd>
             <dt>화면</dt><dd>이 요구사항에 답하는 화면 · 다른 화면의 요구사항 꼬리표를 누르면 이 표의 그 행으로 옴</dd>
           </dl>

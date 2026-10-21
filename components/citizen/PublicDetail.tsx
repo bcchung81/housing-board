@@ -9,20 +9,23 @@ import { Card } from '@/components/ui/card';
 import InfoTip from '@/components/ui/info-tip';
 import PublicSteps from './PublicSteps';
 import type { PublicWin } from '@/lib/board/project-window';
-import { NEXT, NOTICE_SITE, PAST_DUE_PUBLIC, PAST_DUE_TIP, factLine, fullDate, ho, noticeName, nxOf, periodEnd, prjJudge, sourceName, type Steps } from '@/lib/board/public-labels';
+import { NEXT, NOTICE_SITE, PAST_DUE_PUBLIC, PAST_DUE_TIP, factLine, fullDate, ho, homeFact, noticeName, nxOf, periodEnd, prjJudge, sourceName, type Steps } from '@/lib/board/public-labels';
 
 /* 일정 4줄의 차례(제안서 4.4): 착공 · 모집 공고 · 준공 · 입주 — NEXT 번호 */
 const ORDER = [1, 0, 2, 3];
 const LINK = 'group/action inline-flex items-center gap-px rounded-chip text-meta whitespace-nowrap text-muted-foreground no-underline underline-offset-4 hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 const Chev = () => <ChevronRight className="size-3.5 shrink-0" aria-hidden="true" />;
 
+/* PoC 판정 문장(예정 호수 대비)의 쉬운 말 설명 */
+const HOME_FACT_TIP = '시행 기관이 알린 일정만큼 공사·모집 기록이 아직 확인되지 않았어요. 기록이 늦게 올라올 수도 있어요';
 type Extra = { steps: Steps; agency: string; progress1: number | null; progressAt: string | null };
-type Props = { d: Pick<PublicWin, 'row' | 'detail' | 'sources' | 'referenceDate'>; x: Extra | undefined; today: string; pastDue: boolean; links: { map: string | null; schedule: string; sameStage: string | null } };
+type Props = { d: Pick<PublicWin, 'row' | 'detail' | 'sources' | 'referenceDate'> & Partial<Pick<PublicWin, 'home'>>; x: Extra | undefined; today: string; pastDue: boolean; links: { map: string | null; schedule: string; sameStage: string | null } };
 
 export default function PublicDetail({ d, x, today, pastDue, links }: Props) {
   const r = d.row, steps = x?.steps ?? [null, null, null, null], nx = nxOf(r.next);
   const sid = useId();   // 창마다 고유한 일정 제목 id(옛 고정 id pd-sched)
-  const fact = factLine(prjJudge(r), r.overdue);
+  /* 예정 대비: HOME 원천 행이 있으면 PoC 사업 판정(부족률 2% — 사업 찾기 목록 줄과 같은 homeFact), 없으면 원장 예정일 경과(옛 판정) */
+  const fact = d.home ? homeFact(d.home.cls, d.home.gap, d.home.cls ? r.overdue : null) || null : factLine(prjJudge(r), r.overdue);
   /* 일정 칸: 상세 자료(실제 > 예정), 없으면 원장 다음 고비 */
   const rows = ORDER.map((k) => ({ k, v: steps[k] ?? (nx.k === k && nx.d ? ([nx.d, 0] as [string, 0]) : null) }));
   const noSchedule = rows.every((w) => !w.v);
@@ -41,7 +44,7 @@ export default function PublicDetail({ d, x, today, pastDue, links }: Props) {
   return (
     <>
       {fact || pastDue ? (
-        <FactNote className="ui-inset" tip={{ label: '예정일', children: <><p>{PAST_DUE_TIP}</p><p>{`${fullDate(d.referenceDate)} 기준`}</p>{alt ? <p>{alt}</p> : null}</> }}>{fact ?? PAST_DUE_PUBLIC}</FactNote>
+        <FactNote className="ui-inset" tip={{ label: '예정일', children: <><p>{d.home && !(d.home.cls && r.overdue) ? HOME_FACT_TIP : PAST_DUE_TIP}</p><p>{`${fullDate(d.referenceDate)} 기준`}</p>{alt ? <p>{alt}</p> : null}</> }}>{fact ?? PAST_DUE_PUBLIC}</FactNote>
       ) : null}
       {alt ? <p className="m-0 text-meta text-muted-foreground">{alt}</p> : null}
 

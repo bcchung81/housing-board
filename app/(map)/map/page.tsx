@@ -2,13 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { preload } from 'react-dom';
 import MapIsland from '@/components/MapIsland';
-import calendarJson from '@/data/board/region-calendar.json';
 import detailJson from '@/data/board/project-detail.json';
 import koreaSidoJson from '@/data/board/korea-sido.json';
+import mapOverviewJson from '@/data/board/map-overview.json';
 import regionMapJson from '@/data/board/region-map.json';
-import { metroOverview, type OverviewDoc } from '@/lib/board/metro-overview';
-import { getProjectsIndex } from '@/lib/board/projects-index';
-import type { CalendarDoc, RegionMapDoc } from '@/lib/board/region';
+import { homeOverview, type MapOverviewJson, type OverviewDoc } from '@/lib/board/metro-overview';
+import type { RegionMapDoc } from '@/lib/board/region';
 
 /* 지도 섬: 기존 지도 앱의 마크업(index.html 의 body)을 그대로 넣고, 스크립트는 MapIsland 가 기존 순서대로 불러온다.
    app.js·시험은 건드리지 않는다. 마크업의 정본은 지금 루트 index.html 이다.
@@ -74,16 +73,11 @@ function regionPreloads(): string[] {
   } catch { return []; }
 }
 
-/* 수도권 개요(쿼리 없는 /map · ?sido=)의 시군구별 값. 사업 화면(/projects)·지역 공급(/region)과 같은 자료(저장소 JSON — 그 화면들처럼 배포 때 갱신)와 같은 계산.
-   원장을 읽지 못하면 경계만(ok: false — 화면이 '수치를 불러오지 못했습니다'를 띄운다) */
-async function overviewDoc(): Promise<OverviewDoc> {
-  const map = regionMapJson as unknown as RegionMapDoc;
-  try {
-    const { rows, sggNames, referenceDate } = await getProjectsIndex();
-    return withNation(metroOverview(map, { rows, sggNames, calendar: calendarJson as unknown as CalendarDoc, referenceDate }));
-  } catch {
-    return withNation(metroOverview(map, null));
-  }
+/* 수도권 개요(쿼리 없는 /map · ?sido=)의 시군구별 값: HOME PoC #overview 규칙(tools/ledger/map-overview.js 가 공통 사업 자료로 센 data/board/map-overview.json — 9·7·정책 전체 두 범위).
+   자료가 비어 있으면 경계만(ok: false — 화면이 '수치를 불러오지 못했습니다'를 띄운다) */
+function overviewDoc(): OverviewDoc {
+  const map = regionMapJson as unknown as RegionMapDoc, data = mapOverviewJson as unknown as MapOverviewJson;
+  return withNation(homeOverview(map, data && data.scopes ? data : null));
 }
 /* 전국 보기 맥락 면: 전국 시도 외곽(tools/ledger/korea-sido.js — V-World 행정구역 시도, 공공누리 제1유형)의 보기 상자와 시도 면만 넘긴다 */
 const withNation = (doc: OverviewDoc): OverviewDoc => ({ ...doc, nation: { view: koreaSidoJson.view as [number, number, number, number], sido: koreaSidoJson.sido.map((x) => ({ s: x.s, n: x.n, d: x.d, l: x.l as [number, number] })) } });
@@ -103,7 +97,7 @@ function OverviewMarkup() {
         <header className="ov-head"><h2 id="ovTitle"><span className="ov-aud-admin">수도권 공급 개요</span><span className="ov-aud-public">수도권 공급 예정 호수</span></h2><button type="button" className="ov-back" id="ovBack" hidden>수도권 전체</button><span className="ov-asof" id="ovAsOf" /></header>
         <div className="ov-metrics ui-tabs ui-tabs-line" id="ovMetrics" role="radiogroup" aria-label="지도 색 기준" />
         <section className="ov-total" aria-labelledby="ovTotalQ">
-          <div className="ov-q"><h3 id="ovTotalQ"><span className="ov-aud-admin">수도권 진행 사업 호수</span><span className="ov-aud-public">수도권 공급 예정 호수</span></h3><button type="button" className="ov-i" id="ovDefBtn" aria-expanded="false" aria-controls="ovDef" /></div>
+          <div className="ov-q"><h3 id="ovTotalQ"><span className="ov-aud-admin">수도권 계획 호수</span><span className="ov-aud-public">수도권 공급 예정 호수</span></h3><button type="button" className="ov-i" id="ovDefBtn" aria-expanded="false" aria-controls="ovDef" /></div>
           <p className="ov-def" id="ovDef" hidden />
           <div className="ov-num" id="ovTotal" />
           <p className="ov-sub" id="ovTotalSub" />
@@ -137,10 +131,10 @@ function OverviewMarkup() {
   );
 }
 
-/* 지도 섬 + 개요 값: 개요 값은 사업 화면과 같은 읽기(getProjectsIndex)를 기다려 넘긴다. 개요 모듈 주소도 여기서 정한다(해시 이름 표 → 없으면 옛 이름).
+/* 지도 섬 + 개요 값(map-overview.json). 개요 모듈 주소도 여기서 정한다(해시 이름 표 → 없으면 옛 이름).
    상세 지도의 스크립트 순서는 지도 섬이 index.html 로더와 같게 가진다(개요 모듈은 Next 지도에만 있다) */
-async function Island(props: { assets: Record<string, string>; homeMap: Record<string, string>; homeLite: Record<string, { name: string; n: number; h?: string }>; homeProgress: Record<string, [string, number]>; homeDates: Record<string, { s?: string; e?: string; done?: true }> }) {
-  return <MapIsland {...props} overview={await overviewDoc()} overviewSrc={props.assets[OVERVIEW_JS] || OVERVIEW_JS} map3dSrc={props.assets[MAP3D_JS] || MAP3D_JS} />;
+function Island(props: { assets: Record<string, string>; homeMap: Record<string, string>; homeLite: Record<string, { name: string; n: number; h?: string }>; homeProgress: Record<string, [string, number]>; homeDates: Record<string, { s?: string; e?: string; done?: true }> }) {
+  return <MapIsland {...props} overview={overviewDoc()} overviewSrc={props.assets[OVERVIEW_JS] || OVERVIEW_JS} map3dSrc={props.assets[MAP3D_JS] || MAP3D_JS} />;
 }
 const OVERVIEW_JS = '/assets/js/overview.js';
 const MAP3D_JS = '/assets/js/map3d.js';   // 개요 3D 지도 공용 모듈(/citizen 과 같은 구현) — 개요 모듈보다 먼저 실행한다

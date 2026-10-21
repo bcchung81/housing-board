@@ -82,7 +82,7 @@ test('4 서랍 단계 칸: 누르면 목록으로 넘어가지 않고 정의를 
   const s = read('components/projects/StageSteps.tsx');
   assert.ok(!/<Link href=\{href\(i\)\}/.test(s), '칸마다 목록 링크가 없다');
   assert.match(s, /같은 단계 사업 목록/);
-  assert.match(s, /QUESTION\[current\]/, '지금 단계 정의를 보이는 글로');
+  assert.match(s, /QS\[current\]/, '지금 단계 정의를 보이는 글로');
   /* 2026-10-19 창: 지금 사업 화면이면 지금 쿼리(거르기)를 두고 stage 만 바꾼다(창 주소 id·cand·인쇄는 뺀다) */
   assert.match(read('components/windows/parts.tsx'), /const stageHref = \(i: number\) => sameStageHref\(loc\.pathname, loc\.search, '\/projects', String\(i\)\);/, '목록 주소는 지금 거르기를 유지');
   const N = require('../../components/windows/nav.ts');
@@ -130,7 +130,9 @@ test('9 입주 표기: 지역 공급 종류 칩은 \'입주 예정\'이고 정�
   assert.equal(R.AHEAD_KIND.MOVE_IN, '입주 예정');
   assert.match(R.aheadKindTip('MOVE_IN'), /앞으로 12개월 입주 예정/);
   assert.match(R.aheadKindTip('MOVE_IN'), /⑥입주/);
-  assert.match(read('app/(dashboard)/region/page.tsx'), /AHEAD_KIND\[t\]/);
+  /* 2026-10-21 결정(HOME 과 같은 조건): 지역 공급 앞으로 12개월 = HOME 공급 예정 하나 — 종류 칩 대신 정책 칩(9·7 기본·정책 전체) */
+  assert.doesNotMatch(read('app/(dashboard)/region/page.tsx'), /AHEAD_KIND\[t\]/);
+  assert.match(read('app/(dashboard)/region/page.tsx'), /<ChipGroup label="정책">/);
 });
 
 test('후속 1 상단 메뉴 바: 대시보드는 1600px 이상에서 본문 틀과 같은 1760px 선, 지도(compact)도 같은 선(2026-10-18 통일)', () => {

@@ -5,7 +5,9 @@
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
+  "poc": {"p97":{"n":0,"c":0,"x":0,"q":0,"u":0,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,0,0,0]},"all":{"n":1,"c":1,"x":0,"q":1,"u":0,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,0,0,0]}},
+  "noPrj": [],
   "projects": [
-    {"id":"PRJ-41133-0025","name":"성남 여수2","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":0,"pks":[],"pnus":[],"bundles":[],"label":"성남 여수2","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.108362,37.404093],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}}
+    {"id":"PRJ-41133-0025","name":"성남 여수2","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":0,"pks":[],"pnus":[],"bundles":[],"label":"성남 여수2","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.108362,37.404093],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]},"poc":{"n":1,"n97":0,"u":null,"u97":null,"j":null}}
   ]
 }

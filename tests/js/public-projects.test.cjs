@@ -248,9 +248,10 @@ test("화면 파일의 한글 문구: 정책·내부 말(원장·판정·지연�
   assert.doesNotMatch(page, /Download|Printer|ChipBar|Questions|Pipeline|PolicyCompare|statusCell|lateCell|DrawerHead/, '정책 화면 블록·조작 없음');
 });
 
-test('재사용: 목록 행·거르기·사업 창은 정책 화면과 같은 함수(getProjectsIndex·getProjectDrawer·parseFilters·applyFilters·pastDueOf·projectWindow·WindowSeed), 내 동네는 menu.ts 를 읽기만', () => {
+test('재사용: 목록 행·거르기·사업 창은 정책 화면과 같은 함수(homeRowsOf·getProjectsIndex·getProjectDrawer·parseFilters·applyFilters·projectWindow·WindowSeed), 내 동네는 menu.ts 를 읽기만', () => {
   const page = read(FILES[0]);
-  for (const s of ['getProjectsIndex()', 'getProjectDrawer(id)', 'getPublicDetails()', 'parseFilters(', 'applyFilters(idx.rows, f)', 'pastDueOf(r)', "projectWindow(id, 'public', { today })", "from '@/components/windows/WindowSeed'", '<WindowSeed win={sel} path="/citizen/projects"', 'publicItems(', 'byYear(items, today)']) assert.ok(page.includes(s), s);
+  /* 2026-10-21 HOME PoC: 목록 줄 = HOME 원천 행(homeRowsOf — 정책 /projects 와 같은 함수), 다음 일정·사업 창은 같은 현장 원장 사업(idx.rows·renewalRows·getPublicDetails) */
+  for (const s of ['getProjectsIndex()', 'getProjectDrawer(id)', 'getPublicDetails()', 'parseFilters(', 'homeRowsOf(HOME.rows)', 'applyFilters(home, f)', '[...idx.rows, ...idx.renewalRows]', 'homeFact(r.cls, h.gap, o?.overdue ?? null)', "projectWindow(id, 'public', { today })", "from '@/components/windows/WindowSeed'", '<WindowSeed win={sel} path="/citizen/projects"', 'publicItems(', 'byYear(items, today)']) assert.ok(page.includes(s), s);
   const my = read('components/citizen/MyAreaFirst.tsx');
   assert.match(my, /myAreaScope\(raw\)/); assert.match(my, /localStorage\.getItem\('myArea'\)/); assert.doesNotMatch(my, /localStorage\.setItem/);
   assert.match(read('components/citizen/FindFilters.tsx'), /className="ui-tabs ui-tabs-seg" role="group" aria-label="지역"/);

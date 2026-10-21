@@ -33,11 +33,13 @@ test('1 정의는 (i) 팝오버로: 단계별 진행 누적 · 정책 목표 대
   assert.match(cmp, /lg\.map\(\(x\) => <Fragment key=\{x\.label\}><dt>\{x\.label\}<\/dt><dd>\{x\.tip\}<\/dd><\/Fragment>\)/, '정책 목표 대비 ⓘ: 보이는 범례(확인·담당자 추정 포함·목표·실적 없음·목표 미달)의 뜻');
   const page = read('app/(dashboard)/projects/page.tsx');
   const list = tips(page.slice(page.indexOf('<InfoTip label="목록 읽는 법">'))).join('');
-  assert.match(list, /<dt>계획 호수<\/dt>/, '목록 ⓘ: 머리의 계획 호수 합');
+  /* 2026-10-21 HOME 원천 행: 머리 숫자 = 집계 호수(계획 호수와 함께 정의) */
+  assert.match(list, /<dt>계획 호수 · 집계 호수<\/dt><dd>계획 호수 = [^<]*집계 호수 = /, '목록 ⓘ: 머리의 집계 호수 합');
   /* 서랍: 단계 칸 정의 · 상태(판정 규칙) · 공정률 */
   const steps = read('components/projects/StageSteps.tsx');
   assert.match(steps, /import InfoTip from '@\/components\/ui\/info-tip'/);
-  assert.match(tips(steps).join(''), /QUESTION\.map/, '서랍 단계 ⓘ: 여섯 단계 정의');
+  assert.match(steps, /const NAMES = home \? HOME_NAMES : BOARD_NAMES, QS = home \? HOME_QUESTION : QUESTION;/, '창 단계: HOME 원천 행은 정책 화면 PoC 이름·질문');
+  assert.match(tips(steps).join(''), /QS\.map/, '서랍 단계 ⓘ: 여섯 단계 정의');
   const det = read('components/projects/ProjectDetail.tsx');
   const dt = tips(det).join('');
   assert.match(dt, /statusTip\(r\)/, '서랍 상태 ⓘ: 판정 규칙');
@@ -48,7 +50,7 @@ test('1 정의는 (i) 팝오버로: 단계별 진행 누적 · 정책 목표 대
   /* 지역 공급: 종류 칩·달별 막대 */
   const reg = tips(read('app/(dashboard)/region/page.tsx')).join('');
   assert.match(reg, /<dt>달별 막대<\/dt>/);
-  assert.match(reg, /aheadKindTip|AHEAD_KIND\.COMPLETION|AHEAD_COMPLETION/);
+  assert.match(reg, /<dt>\{AHEAD_SUPPLY\}<\/dt>/);   // 2026-10-21: 대표 정의 = HOME 향후 12개월 공급 예정
   /* 데이터 원본: 표 머리마다 */
   assert.ok(tips(read('components/sources/Requirements.tsx')).length >= 1, '요구사항 충족 ⓘ');
   assert.ok(tips(read('components/sources/Collect.tsx')).length >= 3, '수집 상태·연도 확보·연결 ⓘ');
@@ -119,17 +121,17 @@ test('5 서랍 원천 날짜 다름은 일 단위(LH 2026.10.31 · 2028.12.31), 
   for (const r of alts) assert.match(V.dateAltOf(r, true).text, /\d{4}\.\d{2}\.\d{2}\)$/, r.id);
   assert.equal(V.dateAltOf(byId['PRJ-28290-0058'], true).text, '원천 날짜 다름(LH 2028.12.31)');
   assert.equal(V.dateAltOf(byId['PRJ-28290-0058']).text, '원천 날짜 다름(LH 2028.12)', '목록 칸(좁은 열)은 달');
-  assert.match(read('components/projects/ProjectDetail.tsx'), /const alt = dateAltOf\(r, true\)/);
+  assert.match(read('components/projects/ProjectDetail.tsx'), /const alt = r\.home \? null : dateAltOf\(r, true\)/);
 });
 
-test('6 9·7 ①계획 = ②인허가 3,560 · ⑤준공 381/381 은 숫자 그대로, ⓘ 에 원천 값 그대로(검증 대기)', () => {
+test('6 9·7 준공 381/381 은 숫자 그대로, ⓘ 에 원천 값 그대로(검증 대기)', () => {
   const q0 = V.questionsOf(rows, {}, ctx)[0];
   const st = q0.stages;
   // 2026-10-20 HOME 판(20261019T212247Z, HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249 — ①·② 확인 값이 달라져 '같은 확인 값' 문구는 빠진다
   assert.deepEqual([st[0].actual, st[1].actual, st[4].actual, st[4].target], [7808, 6249, 381, 381], '숫자는 바꾸지 않는다');
   assert.match(q0.note, /원천 값 그대로\(검증 대기\)/);
   assert.doesNotMatch(q0.note, /①계획·②인허가/);
-  assert.match(q0.note, /⑤준공 381\/381/);
+  assert.match(q0.note, /준공 381\/381/);
   /* ⓘ 둘째 문단으로 그린다 */
   assert.match(read('components/projects/Summary.tsx'), /\{x\.note \? <p>\{x\.note\}<\/p> : null\}/);
 });

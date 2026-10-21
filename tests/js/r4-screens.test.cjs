@@ -30,11 +30,12 @@ test('1 목표 대비는 달성률 하나: ① 달성 24.2%(3,560/14,694) · ②
   const q0 = V.questionsOf(rows, {}, ctx)[0];
   assert.deepEqual([q0.value, q0.unit], ['53.1', '% 달성']);   // 2026-10-20 HOME 판
   /* '부족'은 보이는 글·title·ⓘ 어디에도 쓰지 않는다(요약·인쇄 보기 모두 Summary.tsx·page.tsx 가 그린다) */
-  for (const f of ['components/projects/Summary.tsx', 'app/(dashboard)/projects/page.tsx']) assert.doesNotMatch(code(read(f)), /부족/, f);
+  /* 2026-10-21: 사업 화면 목록·창은 PoC 사업 판정이라 '부족 호수' 열이 생겼다(page.tsx·projects-list.ts) — 목표 대비 요약(Summary.tsx)은 달성률만 */
+  assert.doesNotMatch(code(read('components/projects/Summary.tsx')), /부족/, 'Summary.tsx');
   for (const c of cells) assert.doesNotMatch(V.stageCellTip(c, '9·7', cells), /부족/, c.key);
   for (const t of [q0.help, q0.tip, q0.note ?? '', q0.sub]) assert.doesNotMatch(t, /부족/);
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
-  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 2단계 미달(①계획·④모집)');
+  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 2단계 미달(사업화·공급)');
 });
 
 test('1b 막대는 100% 기준선(목표)을 보인다: 미달은 오른쪽 끝, 초과는 목표 자리(② 1,543/3,560 = 43.3%)', () => {
@@ -52,20 +53,22 @@ test('1b 막대는 100% 기준선(목표)을 보인다: 미달은 오른쪽 끝,
 
 test('2 범위 칩: 사업·지역 공급·데이터 원본 패널 머리마다 ScopeChip(범위가 바뀌면 칩도)', () => {
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /<ScopeChip scope=\{region\} source="사업 원장"/, '원장 요약(기존)');
+  /* 2026-10-21 사업 화면 = HOME 원천 행: 요약·목록·인쇄 머리의 범위 칩 출처는 정책 진행 자료(거르기 범위 region 은 그대로) */
+  assert.match(page, /<ScopeChip scope=\{region\} source="정책 진행 자료" title=\{`핵심 질문·단계별 진행의 범위/, '요약');
+  assert.doesNotMatch(page, /source="사업 원장"/);
   assert.match(page, /<ScopeChip scope="정책 전체" source="정책 진행 자료"/, '정책 목표 대비(기존)');
   const list = page.slice(page.indexOf('<Card render={<section id="projects-list"'));
-  assert.match(list.slice(0, list.indexOf('<InfoTip')), /scope=\{(<>)?<ScopeChip scope=\{region\} source="사업 원장"/, '사업 목록 머리');
+  assert.match(list.slice(0, list.indexOf('<InfoTip')), /scope=\{(<>)?<ScopeChip scope=\{region\} source="정책 진행 자료"/, '사업 목록 머리');
   const prio = page.slice(page.indexOf('aria-label="우선 점검 사업"'));
-  assert.match(prio.slice(0, prio.indexOf('</Card>')), /scope=\{<ScopeChip scope=\{region\} source="사업 원장"/, '인쇄 보기 우선 점검 사업 머리');
+  assert.match(prio.slice(0, prio.indexOf('</Card>')), /scope=\{<ScopeChip scope=\{region\} source="정책 진행 자료"/, '인쇄 보기 우선 점검 사업 머리');
   /* 지역 공급(기존 세 패널) */
-  assert.match(read('app/(dashboard)/region/page.tsx'), /scope=\{<ScopeChip scope=\{scopeName\}/);
+  assert.match(read('app/(dashboard)/region/page.tsx'), /scope=\{<ScopeChip scope=\{`\$\{HOME_POLICY\[policy\]\} · \$\{scopeName\}`\} source="정책 진행 자료"/);   // 2026-10-21: 정책 칩이 바뀌면 칩도
   assert.match(read('components/region/Annual.tsx'), /scope=\{<ScopeChip scope=\{rname\}/);
   assert.match(read('components/region/Cond.tsx'), /scope=\{<ScopeChip scope=\{name\}/);
   /* 데이터 원본: 요구사항(수도권 정책 진행 자료 사업 기준) · 수집 상태·연도 확보(원천 전체) · 연결(정책 전체) · 단계별 데이터 연계(원천 전체) */
-  assert.match(read('components/sources/Requirements.tsx'), /scope=\{<ScopeChip scope="수도권" source="정책 진행 자료"/);
+  assert.match(read('components/sources/Requirements.tsx'), /scope=\{<ScopeChip scope="9·7 정책" source="정책 진행 자료"/);
   const col = read('components/sources/Collect.tsx');
-  for (const [name, re] of [['수집 상태', /<PanelHead title=(?:\{<>|")수집 상태[\s\S]*?scope=\{<ScopeChip scope="원천 전체"/], ['연도 확보', /<PanelHead title="연도 확보"[^\n]*\n?\s*scope=\{<ScopeChip scope="원천 전체"/], ['연결', /<PanelHead title="연결"[^\n]*\n?\s*scope=\{<ScopeChip scope="정책 전체" source="사업 원장"/]]) assert.match(col, re, name);
+  for (const [name, re] of [['수집 상태', /<PanelHead title=(?:\{<>|")수집 상태[\s\S]*?scope=\{<ScopeChip scope="원천 전체"/], ['연도 확보', /<PanelHead title="연도 확보"[^\n]*\n?\s*scope=\{<ScopeChip scope="원천 전체"/], ['연결', /<PanelHead title="연결"[^\n]*\n?\s*scope=\{<ScopeChip scope="정책 전체" source="정책 진행 자료"/]]) assert.match(col, re, name);
   assert.match(read('app/(dashboard)/sources/page.tsx'), /<PanelHead id="h-stage" title="단계별 데이터 연계" scope=\{<ScopeChip scope="원천 전체"/);
   /* 공개 props 는 그대로(종합상황판이 가져다 씀) */
   assert.match(read('components/ui/scope-chip.tsx'), /export default function ScopeChip\(\{ scope, source, title, clearHref, note, className \}: \{ scope: string; source\?: ScopeSource; title\?: string; clearHref\?: string; note\?: \{ text: string; title: string \}; className\?: string \}\)/);
@@ -80,14 +83,14 @@ test('3 제목 말줄임 없음: 핵심 질문 칸 제목 · 동네 여건 칸 �
   assert.doesNotMatch(cond, /truncate/);
 });
 
-test("4 '후보 계산' 정의 한 줄: 목록 머리 ⓘ · 상태 칩 ⓘ", () => {
+test("4 판정 정의 한 줄(2026-10-21: '후보 계산'은 사업 화면에서 없어짐): 목록 머리 ⓘ · 상태 칩 ⓘ", () => {
   const page = read('app/(dashboard)/projects/page.tsx');
-  const LINE = '사업 번호가 아직 없는 후보 사업을 같은 규칙으로 계산한 값';
-  assert.ok(page.includes(`const REVIEW_LATE_DEF = '${LINE}';`), '정의 한 줄(두 ⓘ 가 같은 글)');
+  assert.doesNotMatch(page, /REVIEW_LATE|후보 계산/, '사업 화면은 HOME 원천 행 — 후보 계산 상태·정의가 없다');
+  assert.match(page, /const JUDGE_DEF = '기준일까지 도래한 단계 목표 대비 측정/, '정의 한 줄(두 ⓘ 가 같은 글)');
   const list = tips(page.slice(page.indexOf('<InfoTip label="목록 읽는 법">'))).join('');
-  assert.match(list, /<dt>\{REVIEW_LATE\}<\/dt><dd>\{REVIEW_LATE_DEF\}/, '목록 머리 ⓘ');
+  assert.match(list, /<dt>상태 · 부족 호수<\/dt><dd>\{JUDGE_DEF\}/, '목록 머리 ⓘ');
   const bar = page.slice(page.indexOf('<ChipGroup label="상태" bare>'), page.indexOf('<ChipGroup label="기관" bare>'));
-  assert.ok(tips(bar).some((t) => t.includes('{REVIEW_LATE_DEF}')), '상태 칩 ⓘ');
+  assert.ok(tips(bar).some((t) => t.includes('{JUDGE_DEF}')), '상태 칩 ⓘ');
 });
 
 test('카드 안의 카드(2026-10-18): 핵심 질문 칸·정책 줄은 inset, 서랍 구역은 구역 카드(row 아님)+안쪽 inset, 막대 틀은 둥글게', () => {

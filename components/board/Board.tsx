@@ -9,11 +9,11 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEventH
 import Link from 'next/link';
 import './panels.css';
 import {
-  C, CIR, K, PX0, RCOL, REGION_POS, RLAB, VW,
+  C, CIR, K as K0, PX0, RCOL, REGION_POS, RLAB, VW,
   SCOPE_TAG, addedMarks, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, scopeChangeOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '@/lib/board/sample';
 import { CAND_TEXT, candCount, candText, judgeBase, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf, type Directive } from '@/lib/board/directives';
-import { AHEAD_COMPLETION, AGENCY_NAME, bottleneckOf } from '@/lib/board/projects-view';
+import { AHEAD_COMPLETION, AHEAD_SUPPLY, AGENCY_NAME, bottleneckOf } from '@/lib/board/projects-view';
 import { dotDates } from '@/lib/grid/spec';
 import { staleText } from '@/lib/board/calc';
 import type { LedgerBoard } from '@/lib/board/types';
@@ -68,7 +68,7 @@ function dirVals(x: Directive, link: boolean, open: (href: string) => MouseEvent
   const one = (pre: string | undefined, big: string, u: string, l: { href: string; title: string }, k: string) => {
     const num = <span data-big className={cn(disp, 'ui-dir-num ui-kpi leading-title')}>{big}<span className="text-sm font-normal">{u}</span></span>;
     return (
-      <span key={k} className="ui-dir-stat" data-tone={pre === '지연' ? 'bad' : pre === '주의' ? 'warn' : undefined}>
+      <span key={k} className="ui-dir-stat" data-tone={pre?.startsWith('지연') ? 'bad' : pre?.startsWith('주의') ? 'warn' : undefined}>
         {link ? <Link href={l.href} onClick={open(l.href)} title={l.title} aria-label={`${x.t} ${pre ? pre + ' ' : ''}${big}${u} 목록`} data-slot="board-dir-list" className={cn(dirNum, 'pointer-events-auto')}>{num}</Link> : num}
         <span className="ui-dir-label text-sm">{pre || '전체 사업'}</span>
       </span>
@@ -89,7 +89,9 @@ const dirTitle = (x: Directive, hide = false) => (
 const dirFrame = 'ui-dir @container';
 
 export default function Board({ real, middle }: { real: BoardReal; middle: ReactNode }) {
-  const L = real.ledger;
+  const L = real.ledger, H = L.home;
+  /* HOME 집계(2026-10-21 결정)면 리본 6칸 이름이 HOME 단계(정책·사업화·인허가·건설·공급·입주) */
+  const K = L.stageNames ?? K0;
   /* 미리 계산한 목록이 있는 링크만 목록 창으로 연다 — 일반 클릭만 가로채고(보조 키·가운데 단추는 href 로 이동), 목록이 없는 링크는 undefined(페이지 이동) */
   const win = useWindows();
   const open = (href: string): MouseEventHandler<HTMLAnchorElement> | undefined => {
@@ -169,10 +171,11 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const jTot = rib.total[judged ? jm : NOW];   // 판정 비율의 모수 '전체' = 판정 달의 리본 총량(원장 전체 호수)
   /* 원장 범위: 카드 제목의 title 에 보인다(일부가 전국처럼 보이지 않게) */
   const nation = nationOf(L), whole = nation === '전국 아님' ? '원장 전체' : nation;   // whole = 기관별 진행 '전국 지연 중 몫'의 전체
-  const scope = `원장 ${ymDot(L.observedMonth)} 기준 · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)}) · ${nation} · ${real.ledgerOrigin === 'supabase' ? `출처 Supabase(api.board, ${ymDot(real.ledgerMonth)})` : '출처 JSON 대체'}`;
-  const basisLine = `원장 ${ymDot(L.observedMonth)} 기준 · ${nation}`;   // 카드 제목 title 의 짧은 범위(긴 범위·규칙은 제목 옆 (i) 팝오버)
+  const scope = H ? `HOME 정책 추진현황 규칙(9·7) · 기준일 ${dotDates(L.referenceDate)} · 승인 연결 사업 ${f(L.scope.projects)}개(과거 착공 포함 · 입력·추정 포함) · ${nation}`
+    : `원장 ${ymDot(L.observedMonth)} 기준 · 사업 ${f(L.scope.projects)}건(${ledgerMix(L)}) · ${nation} · ${real.ledgerOrigin === 'supabase' ? `출처 Supabase(api.board, ${ymDot(real.ledgerMonth)})` : '출처 JSON 대체'}`;
+  const basisLine = H ? `HOME 9·7 연결 사업 · 기준일 ${dotDates(L.referenceDate)} · ${nation}` : `원장 ${ymDot(L.observedMonth)} 기준 · ${nation}`;   // 카드 제목 title 의 짧은 범위(긴 범위·규칙은 제목 옆 (i) 팝오버)
   /* 범위 칩(숫자 묶음 머리): 원장 위젯은 '전국 · 사업 원장', 월별 실적 흐름은 '전국 · 통계누리'(RealPanels) */
-  const ledgerChip = <ScopeChip scope={nation === '전국 아님' ? '일부 지역' : nation} source="사업 원장" title={`사업 원장 집계 — ${scope}`} />;
+  const ledgerChip = <ScopeChip scope={nation === '전국 아님' ? '일부 지역' : nation} source={H ? '정책 진행 자료' : '사업 원장'} title={`${H ? 'HOME 정책 추진현황 규칙 집계' : '사업 원장 집계'} — ${scope}`} />;
   /* 지연·주의 추이: 판정이 있는 달(0 … NOW)의 호수. 세로 맨 위(tmax)는 이력 최댓값에 맞춘다(눈금선 3개 = 4등분).
      2026-10-16 평가(고정 높이 168px·오른쪽 이름표 칸 120px 이라 카드 아래·오른쪽이 비었다): 위 줄 = 선택 달 값(큰 숫자), 아래 = 이력 선이 카드의 남는 높이를 채운다.
      선은 viewBox 560×100(세로는 % 그대로, preserveAspectRatio none), 점·표지는 같은 좌표를 퍼센트로 얹은 HTML. 판정 기준 변경 달(SF) 앞은 후보 포함 소급이라 빗금 띠 + 점선, 그 뒤는 실선·점(둘을 잇지 않는다) */
@@ -251,8 +254,8 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={phead}>
               <h2 className={ptitle} title={`${basisLine} · 달 말 단계별 호수(세로축 ${axisUnit(rib)}) · 붉은 띠 = 지연 호수`}>월별 공급 파동</h2>
               <InfoTip label="월별 공급 파동 읽는 법" className={pinfo}>
-                <p>달 말에 각 단계에 있는 사업의 호수를 쌓았습니다(세로축 {axisUnit(rib)}). {ml(T, T.actual)}까지 실제 날짜, 그 뒤는 현재 예정(빗금){flatTotal(rib) ? ` · 총량은 매달 ${f(rib.total[0])}호(같은 사업이 단계만 옮겨 감)` : ''}.</p>
-                <p>붉은 띠 = 단계별 지연 호수({ml(T, T.judged[0])} 판정부터){scopeFrom !== undefined ? ` · ${SCOPE_TAG(ml(T, scopeFrom))} — 그 앞 빗금 띠는 후보 포함` : ''}. 달에 마우스를 올리면 병목, 누르면 그 달을 고릅니다.</p>
+                <p>{H ? <>달 말 단계별 누적 측정량(후속 단계 포함, 입력·추정 포함)의 차분 — 그 단계에 머문 호수를 쌓았습니다(세로축 {axisUnit(rib)}). 정책 = 아직 사업화 측정이 없는 연결 사업 물량, 건설은 준공 포함.</> : <>달 말에 각 단계에 있는 사업의 호수를 쌓았습니다(세로축 {axisUnit(rib)}).</>} {ml(T, T.actual)}까지 실제 날짜, 그 뒤는 현재 예정(빗금){flatTotal(rib) ? ` · 총량은 매달 ${f(rib.total[0])}호(같은 사업이 단계만 옮겨 감)` : ''}.</p>
+                <p>붉은 띠 = 단계별 지연 호수{H ? '(도래 목표 대비 누적 측정 부족량, 부족률 2% 이상)' : ''}({ml(T, T.judged[0])} 판정부터){scopeFrom !== undefined ? ` · ${SCOPE_TAG(ml(T, scopeFrom))} — 그 앞 빗금 띠는 후보 포함` : ''}. 달에 마우스를 올리면 병목, 누르면 그 달을 고릅니다.</p>
                 <p className="text-muted-foreground">{scope}</p>
               </InfoTip>
               {ledgerChip}
@@ -301,8 +304,9 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={phead}>
               <h2 className={ptitle} title={`${basisLine} · 판정 기준일 ${dotDates(SJ.referenceDate)} · 호수 기준`}>공급 판정</h2>
               <InfoTip label="판정·병목 기준" className={pinfo}>
-                <p>막대·비율 = 판정 사업의 계획 호수 중 지연·주의·정상 비율(호수 기준 — 시도 타일도 같은 기준). 지연 = 현재 예정일 경과 {L.judge.delayMonths}개월 이상, 주의 = {L.judge.cautionMonths}~{L.judge.delayMonths}개월.</p>
-                <p>병목 = 지연 호수가 가장 큰 단계. 단계 호수 = 그 달 말 그 단계에 있는 사업의 호수, 증감 = 선택 달 − 기준 달({ml(T, NOW)}). 판정은 선택 달 이하의 가장 늦은 판정 달(판정 기준일 {dotDates(SJ.referenceDate)}).</p>
+                {H ? <p>막대·비율 = 판정 사업의 계획 호수 중 지연·주의·목표 달성 비율(호수 기준 — 시도 타일·기관별도 같은 기준). 사업마다 기준일까지 도래한 단계 일정 호수 대비 같은 단계 실제(입력·추정 포함) 부족률 2% 이상 = 지연, 0% 초과~2% 미만 = 주의, 가장 나쁜 단계로 한 번(HOME 기관별 진행현황과 같은 판정). 측정 없는 단계는 판정 미확보.</p>
+                : <p>막대·비율 = 판정 사업의 계획 호수 중 지연·주의·정상 비율(호수 기준 — 시도 타일도 같은 기준). 지연 = 현재 예정일 경과 {L.judge.delayMonths}개월 이상, 주의 = {L.judge.cautionMonths}~{L.judge.delayMonths}개월.</p>}
+                <p>{H ? '단계 지연 = 집계 단계 판정(단계별 도래 목표 대비 누적 측정 부족량 — 준공은 건설 칸). 병목 = 그 값이 가장 큰 단계.' : '병목 = 지연 호수가 가장 큰 단계.'} 단계 호수 = 그 달 말 그 단계에 있는 사업의 호수, 증감 = 선택 달 − 기준 달({ml(T, NOW)}). 판정은 선택 달 이하의 가장 늦은 판정 달(판정 기준일 {dotDates(SJ.referenceDate)}).</p>
                 <p>모수 = 판정 사업의 건수·호수(사업 번호가 있는 사업). 전체의 % = 원장 전체 {f(jTot)}호(리본 총량, 사업 {f(L.scope.projects)}건) 중 판정 호수의 비율 — 나머지는 {CAND_TEXT}·{NONE_TEXT}.</p>
                 <p className="text-muted-foreground">{ledgerJudged(L)}</p>
               </InfoTip>
@@ -379,12 +383,12 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             </div>
             <div className={cn('ui-region-comparison', geo ? 'grid-cols-4' : 'ui-region-list')} style={geo ? undefined : { gridTemplateRows: `repeat(${L.regions.length}, minmax(0, 1fr)) auto` }}>
               {L.regions.map((r, ri) => {
-                const n = sidoName(r.code), pos = REGION_POS[r.code], none = !r.judged, ok = real.regionOkUnits[r.code] ?? 0, tu = ok + r.cautionUnits + r.delayUnits, rate = tu ? r.delayUnits / tu * 100 : 0;   // 지연율 = 지연 호수 ÷ 판정 호수(선택 시점 판정 막대와 같은 호수 기준) · none = 판정 대상(번호 있는 사업) 없음
+                const n = sidoName(r.code), pos = REGION_POS[r.code], none = !r.judged, ok = r.okUnits ?? real.regionOkUnits[r.code] ?? 0, tu = ok + r.cautionUnits + r.delayUnits, rate = tu ? r.delayUnits / tu * 100 : 0;   // 지연율 = 지연 호수 ÷ 판정 호수(선택 시점 판정 막대와 같은 호수 기준) · none = 판정 대상(번호 있는 사업) 없음
                 return (
                   <button key={r.code} type="button" data-slot="board-region" className={cn(btn, 'q-rise ui-press min-w-0 @container ui-inset ui-region ui-region-row')} aria-pressed={r.code === region} onClick={() => setRegion(r.code)} style={{ ['--rc' as string]: none ? 'var(--card)' : RCOL[rcls(rate)], ['--i' as string]: ri * 0.5, ...(pos && geo ? { gridArea: `${pos[0]} / ${pos[1]}` } : {}) }}
                     title={none
                       ? `${n} · 사업 ${f(r.projects)}건 · 판정 대상 없음(번호 있는 사업 없음)` + (r.candidate?.judged ? ` · ${CAND_TEXT} ${f(r.candidate.judged)}건(계산하면 지연 ${f(r.candidate.delay)} · 주의 ${f(r.candidate.caution)} · 정상 ${f(r.candidate.ok)} — 판정에 넣지 않음)` : '') + (r.code === '12' ? ' · 2026.07부터 광주·전남은 전남광주로 집계됩니다' : '')
-                      : `${n} · 판정 ${f(r.judged)}건 ${f(tu)}호 · 지연율 ${rate.toFixed(1)}%(호수 기준) · 지연 ${f(r.delayUnits)}호(${r.delay}건) · 주의 ${f(r.cautionUnits)}호(${r.caution}건) · 정상 ${f(ok)}호(${r.ok}건)` + (r.candidate?.judged ? ` · ${CAND_TEXT} ${f(r.candidate.judged)}건(계산하면 지연 ${f(r.candidate.delay)} · 주의 ${f(r.candidate.caution)} · 정상 ${f(r.candidate.ok)} — 판정에 넣지 않음)` : '')}
+                      : `${n} · 판정 ${f(r.judged)}건 ${f(tu)}호 · 지연율 ${rate.toFixed(1)}%(호수 기준) · 지연 ${f(r.delayUnits)}호(${r.delay}건) · 주의 ${f(r.cautionUnits)}호(${r.caution}건) · 정상 ${f(ok)}호(${r.ok}건)` + (r.candidate?.judged ? ` · ${CAND_TEXT} ${f(r.candidate.judged)}건(계산하면 지연 ${f(r.candidate.delay)} · 주의 ${f(r.candidate.caution)} · 정상 ${f(r.candidate.ok)} — 판정에 넣지 않음)` : '') + (H ? ` · HOME 시도 집계 판정: ${r.homeDelay ? `지연 — ${r.homeDelay}` : '지연 단계 없음'}` : '')}
                     aria-label={(none ? `${n} 판정 대상 없음(번호 있는 사업 없음), 사업 ${f(r.projects)}건` : `${n} 지연율 ${rate.toFixed(1)}%(호수 기준), 지연 ${f(r.delayUnits)}호 ${r.delay}건, 주의 ${f(r.cautionUnits)}호, 정상 ${f(ok)}호, 판정 ${f(r.judged)}건`) + (r.candidate?.judged ? ` ${CAND_TEXT} ${f(r.candidate.judged)}건` : '')}>
                     <span className="text-base leading-sub font-bold text-foreground">{n}</span>
                     {none ? <span className="ui-region-rate text-muted-foreground">—</span> : <span className="ui-region-rate"><b className="ui-kpi">{rate.toFixed(1)}<small className="text-sm font-normal">%</small></b><span className="text-sm text-muted-foreground">지연율</span></span>}
@@ -413,16 +417,16 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         <div className={cn(grid6, 'grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] min-[1280px]:[&>*]:col-span-2')}>
           <Card variant="section" className={cn(panel, linked(cur.p.includes('p-trend')))} render={<section id="p-trend" aria-label="지연·주의 추이" />}>
             <div className={phead}>
-              <h2 className={ptitle} title="지연·주의 사업의 계획 호수(단위 호 — 위 숫자·선 모두) · 2025.01~2026.09 소급 판정, 2026.10부터 월 관측">지연·주의 추이</h2>
+              <h2 className={ptitle} title={H ? '달 말 단계별 도래 목표 대비 누적 측정 부족량 중 지연(2% 이상)·주의(2% 미만) 최대(단위 호 — 위 숫자·선 모두) — 단계 간 합산 없음(HOME 지연·주의 추이와 같은 값)' : '지연·주의 사업의 계획 호수(단위 호 — 위 숫자·선 모두) · 2025.01~2026.09 소급 판정, 2026.10부터 월 관측'}>지연·주의 추이</h2>
               <InfoTip label="지연·주의 추이 읽는 법" className={pinfo}>
-                <p>지연·주의 사업의 계획 호수(호). 2025.01~2026.09 는 건축HUB 과거 판으로 소급 판정, 2026.10부터 월 관측입니다.</p>
+                {H ? <p>상단 누적 그래프와 같은 범위의 목표·측정값으로 달 말을 재구성합니다. 부족률 2% 이상은 지연, 0% 초과~2% 미만은 주의 — 선과 숫자는 상태별 단계 최대 부족량(호)이며 단계 간 물량을 합산하지 않습니다. 기준일 단계 갭: {H.stageGaps.map((g) => `${g.label} ${g.status === 'DELAYED' ? '지연' : '주의'} ${f(g.gap)}호 · ${g.rate}`).join(', ') || '없음'}.</p> : <p>지연·주의 사업의 계획 호수(호). 2025.01~2026.09 는 건축HUB 과거 판으로 소급 판정, 2026.10부터 월 관측입니다.</p>}
                 <p>위 숫자 = 선택 달 값과 전월 대비 증감. 원천이 추가된 달은 판정 대상이 바뀌어 '비교 불가'{scopeFrom !== undefined ? ` · ${SCOPE_TAG(ml(T, scopeFrom))} — 그 앞 소급 판정은 후보 포함(리본의 구분선과 같은 달)` : ''}.</p>
               </InfoTip>
               {ledgerChip}
             </div>
             {/* 선택 달 값(큰 숫자): 판정 달의 지연·주의 호수와 전월 대비(원천 추가·판정 기준 변경 달은 '비교 불가') */}
             <div data-slot="trend-now" className="mt-3 flex flex-wrap items-baseline gap-2 tabular-nums">
-              {([['지연', 'text-bad', tsel?.d, tsel?.dd], ['주의', 'text-warn', tsel?.w, tsel?.dw]] as const).map(([name, tone, val, dv]) => (
+              {([[H ? '지연 최대' : '지연', 'text-bad', tsel?.d, tsel?.dd], [H ? '주의 최대' : '주의', 'text-warn', tsel?.w, tsel?.dw]] as const).map(([name, tone, val, dv]) => (
                 <span key={name} className="ui-inset flex items-baseline gap-1.5 whitespace-nowrap">
                   <span className={cn('text-sm font-bold', tone)}>{name}</span>
                   <b className={cn(disp, 'text-xl leading-title text-foreground')}>{val === undefined ? '—' : f(val)}</b>
@@ -456,22 +460,23 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={cn(sub, 'mt-0.5 flex justify-between')}><span>{ml(T, 0)}</span><span>{ml(T, NOW)}</span></div>
           </Card>
 
-          <Card variant="section" className={cn(panel, linked(cur.p.includes('p-fut')))} render={<section id="p-fut" aria-label={AHEAD_COMPLETION} />}>
+          <Card variant="section" className={cn(panel, linked(cur.p.includes('p-fut')))} render={<section id="p-fut" aria-label={H ? AHEAD_SUPPLY : AHEAD_COMPLETION} />}>
             <div className={phead}>
-              <h2 className={ptitle} title={`${basisLine} · 준공 실제 기록이 없는 사업의 현재 예정 준공 달 · 월별 호수`}>{AHEAD_COMPLETION}</h2>
-              <InfoTip label="준공 예정 기준" className={pinfo}>
-                <p>준공 실제 기록이 없는 사업의 현재 예정 준공 달(같은 사업은 한 번), 월별 호수. 사업 화면의 '{AHEAD_COMPLETION}'·지역 공급의 준공 칩과 같은 범위·같은 값입니다.</p>
-                <p>LH 후보의 예정일은 LH 파일 기준일({dotDates(real.lhAsOf)}) 값{lhStale ? ` — ${lhStale}(원장 기준일 ${dotDates(L.referenceDate)} 기준)` : ''}. 막대를 누르면 그 달을 고르고, 지난 준공 실적은 월 상세·지역별 화면에서 봅니다.</p>
+              <h2 className={ptitle} title={`${basisLine} · ${H ? `기준일 이후 ${ymDot(up[up.length - 1].ym)} 말까지 누적 공급 목표 증가분에서 이미 측정된 물량 제외` : '준공 실제 기록이 없는 사업의 현재 예정 준공 달'} · 월별 호수`}>{H ? AHEAD_SUPPLY : AHEAD_COMPLETION}</h2>
+              <InfoTip label={H ? '공급 예정 기준' : '준공 예정 기준'} className={pinfo}>
+                {H ? <p>기준일 이후부터 {ymDot(up[up.length - 1].ym)} 말까지 · 사업마다 공급(본 모집) 일정의 누적 목표 증가분에서 이미 측정된 공급 물량을 뺀 값(HOME 향후 12개월 공급 예정과 같은 계산). 지난 기한의 미달량은 미래 예정에 재배분하지 않습니다.</p> : null}
+                <p hidden={!!H}>준공 실제 기록이 없는 사업의 현재 예정 준공 달(같은 사업은 한 번), 월별 호수. 사업 화면의 '{AHEAD_COMPLETION}'·지역 공급의 준공 칩과 같은 범위·같은 값입니다.</p>
+                <p hidden={!!H}>LH 후보의 예정일은 LH 파일 기준일({dotDates(real.lhAsOf)}) 값{lhStale ? ` — ${lhStale}(원장 기준일 ${dotDates(L.referenceDate)} 기준)` : ''}. 막대를 누르면 그 달을 고르고, 지난 준공 실적은 월 상세·지역별 화면에서 봅니다.</p>
                 <p className="text-muted-foreground">{scope}</p>
               </InfoTip>
               {ledgerChip}
               <span className={pacts}><PanelLink href="/agency/lh" full="LH 준공 예정 상세">LH 상세</PanelLink></span>
             </div>
             <div className="mt-3 flex items-baseline gap-2"><b className={cn(disp, 'text-xl leading-title')}>{f(upSum)}<small className="text-sm font-normal">호</small></b><span className="text-sm text-muted-foreground">{f(upProj)}건</span>
-              {valid.has(fu.ym) ? <span data-slot="fut-month" className="ml-auto tabular-nums"><PanelLink href={`/month/${fu.ym}`} full={`${ymDot(fu.ym)} 준공 예정 ${f(fu.projects)}건 ${f(fu.units)}호 — 월 상세(같은 합계)`}>{Number(fu.ym.slice(5))}월 {f(fu.units)}호</PanelLink></span> : null}</div>
+              {!H && valid.has(fu.ym) ? <span data-slot="fut-month" className="ml-auto tabular-nums"><PanelLink href={`/month/${fu.ym}`} full={`${ymDot(fu.ym)} 준공 예정 ${f(fu.projects)}건 ${f(fu.units)}호 — 월 상세(같은 합계)`}>{Number(fu.ym.slice(5))}월 {f(fu.units)}호</PanelLink></span> : null}</div>
             <div className="relative mt-2 min-h-[118px] flex-[1_1_118px]">
-              <svg id="fmonths" className="absolute inset-0 size-full [&_rect]:cursor-pointer" viewBox="0 0 240 100" preserveAspectRatio="none" role="img" aria-label={`${ymDot(up[0].ym)}부터 ${ymDot(up[up.length - 1].ym)}까지 월별 준공 예정 호수, 합 ${f(upSum)}호(원장 사업 ${f(L.scope.projects)}건, ${nation})`}>
-                {up.map((m, i) => { const h = m.units / maxUp * UPH; return <rect key={m.ym} x={i * 20 + 1.5} y={(100 - h).toFixed(1)} width="17" height={Math.max(h, 0.4).toFixed(1)} fill="var(--st-soon)" className="q-grow-y" style={{ ['--i' as string]: i }} onClick={() => goto(NOW + i)}><title>{`${m.ym.replace('-', '.')} 준공 예정 ${f(m.units)}호 · ${m.projects}건`}</title></rect>; })}
+              <svg id="fmonths" className="absolute inset-0 size-full [&_rect]:cursor-pointer" viewBox="0 0 240 100" preserveAspectRatio="none" role="img" aria-label={`${ymDot(up[0].ym)}부터 ${ymDot(up[up.length - 1].ym)}까지 월별 ${H ? '공급' : '준공'} 예정 호수, 합 ${f(upSum)}호(원장 사업 ${f(L.scope.projects)}건, ${nation})`}>
+                {up.map((m, i) => { const h = m.units / maxUp * UPH; return <rect key={m.ym} x={i * 20 + 1.5} y={(100 - h).toFixed(1)} width="17" height={Math.max(h, 0.4).toFixed(1)} fill={H ? 'var(--st-sale)' : 'var(--st-soon)'} className="q-grow-y" style={{ ['--i' as string]: i }} onClick={() => goto(NOW + i)}><title>{`${m.ym.replace('-', '.')} ${H ? '공급' : '준공'} 예정 ${f(m.units)}호 · ${m.projects}건`}</title></rect>; })}
                 {hasFut ? <rect x={fi * 20 + 0.5} y={(100 - up[fi].units / maxUp * UPH - 1).toFixed(1)} width="19" height={(up[fi].units / maxUp * UPH + 1).toFixed(1)} fill="none" stroke="var(--foreground)" strokeWidth="2" style={{ vectorEffect: 'non-scaling-stroke' }} pointerEvents="none" /> : null}
               </svg>
               {hasFut ? <span className="pointer-events-none absolute -translate-x-1/2 text-xs leading-4 font-bold whitespace-nowrap text-foreground tabular-nums" style={{ left: `clamp(20px, ${((fi * 20 + 10) / 240 * 100).toFixed(2)}%, calc(100% - 20px))`, bottom: `calc(${(up[fi].units / maxUp * UPH).toFixed(1)}% + 5px)` }}>{f(up[fi].units)}</span> : null}
@@ -484,7 +489,8 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               <h2 className={ptitle} title={`${basisLine} · 기관별 정상·주의·지연 호수 · 오른쪽 = 지연 호수와 ${whole} 지연 중 몫`}>기관별 진행</h2>
               <InfoTip label="기관별 진행 기준" className={pinfo}>
                 <p>막대 = 기관 사업 호수의 정상·주의·지연(사업 번호가 있는 사업의 판정) · {CAND_TEXT}(빗금) · {NONE_TEXT}.</p>
-                <p>오른쪽 = 지연 호수와 {whole} 지연 중 몫({whole} 지연 {f(J.delay.units)}호 중 그 기관 몫 — LH 100.0% = 지연이 모두 LH 사업). {NONE_TIP}.</p>
+                {H ? <p>시행기관(원천 글자 — LH·GH·SH 만 묶음)별 사업 계획량을 지연(2% 이상) → 주의(2% 미만) → 목표 달성 순으로 사업당 한 번 집계합니다. 판정 미확보는 일정 정보 없음. 오른쪽 = 지연 호수와 기관 안 지연 사업 물량 비중(HOME 기관별 진행현황과 같은 값).</p> : null}
+                <p hidden={!!H}>오른쪽 = 지연 호수와 {whole} 지연 중 몫({whole} 지연 {f(J.delay.units)}호 중 그 기관 몫 — LH 100.0% = 지연이 모두 LH 사업). {NONE_TIP}.</p>
                 <p className="text-muted-foreground">{scope}</p>
               </InfoTip>
               {ledgerChip}
@@ -495,7 +501,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             </div>
             <div className={ags}>
               {/* 열 머리: 오른쪽 % 가 무엇의 비율인지(전국 지연 중 몫 = 전국 지연 호수 중 그 기관 몫, 2026-10-16 4차) */}
-              <div data-slot="agency-head" className={cn(ag, '-mb-3 text-sm text-muted-foreground narrow:-mb-1 mobile:-mb-1')} aria-hidden="true"><span /><span className="narrow:hidden" /><span className="text-right" title={`지연 호수 · ${whole} 지연 중 몫 = ${whole} 지연 ${f(J.delay.units)}호 중 그 기관 몫`}>지연 · {whole} 지연 중 몫</span></div>
+              <div data-slot="agency-head" className={cn(ag, '-mb-3 text-sm text-muted-foreground narrow:-mb-1 mobile:-mb-1')} aria-hidden="true"><span /><span className="narrow:hidden" /><span className="text-right" title={H ? '지연 호수 · 지연 사업 물량 비중 = 기관 사업 호수 중 지연 사업 호수' : `지연 호수 · ${whole} 지연 중 몫 = ${whole} 지연 ${f(J.delay.units)}호 중 그 기관 몫`}>{H ? '지연 · 지연 사업 물량 비중' : <>지연 · {whole} 지연 중 몫</>}</span></div>
               {L.agencies.filter((a) => a.projects).map((a, ai) => {
                 const out = a.units - a.okUnits - a.cautionUnits - a.delayUnits, cand = a.candidateUnits ?? 0, none = out - cand, pw = (n: number) => `${(n / a.units * 100).toFixed(1)}%`;   // out = 판정하지 않은 호수 = 확인 필요(후보) + 일정 정보 없음(none)
                 return (
@@ -504,7 +510,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                     <div className={cn(bar3, 'q-grow-x h-3 narrow:col-span-full narrow:row-start-2 mobile:col-span-full mobile:row-start-2')} style={{ ['--i' as string]: ai }} role="img" aria-label={`${a.name} ${f(a.units)}호: 정상 ${f(a.okUnits)} 주의 ${f(a.cautionUnits)} 지연 ${f(a.delayUnits)} ${CAND_TEXT} ${f(cand)} ${NONE_TEXT} ${f(none)}`}>
                       <span className="block bg-ok" style={{ width: pw(a.okUnits) }} /><span className="block bg-warn" style={{ width: pw(a.cautionUnits) }} /><span className="block bg-bad" style={{ width: pw(a.delayUnits) }} /><span className={cn('block', candHatch)} style={{ width: pw(cand) }} /><span className="block bg-[var(--out)]" style={{ width: pw(none) }} />
                     </div>
-                    <div className={agVal} title={`지연 ${f(a.delayUnits)}호 — ${whole} 지연 ${f(J.delay.units)}호 중 ${a.name} 몫`}><b className={cn(disp, 'text-bad')}>{f(a.delayUnits)}<small className="text-sm">호</small></b><span className="text-sm text-muted-foreground">몫 {(J.delay.units ? a.delayUnits / J.delay.units * 100 : 0).toFixed(1)}%</span></div>
+                    <div className={agVal} title={`지연 ${f(a.delayUnits)}호 — ${whole} 지연 ${f(J.delay.units)}호 중 ${a.name} 몫`}><b className={cn(disp, 'text-bad')}>{f(a.delayUnits)}<small className="text-sm">호</small></b><span className="text-sm text-muted-foreground">{H ? `비중 ${(a.delayedSharePct ?? 0).toFixed(1)}%` : `몫 ${(J.delay.units ? a.delayUnits / J.delay.units * 100 : 0).toFixed(1)}%`}</span></div>
                   </div>
                 );
               })}

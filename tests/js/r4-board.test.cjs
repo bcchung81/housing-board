@@ -68,8 +68,11 @@ test('3 범위 칩: 종합상황판 패널 머리마다(선택 시점 카드 포
   for (const id of ['p-chart', 'p-snap', 'p-region', 'p-trend', 'p-fut', 'p-agency']) assert.match(headOf(id), /<\/InfoTip>\s*\{ledgerChip\}/, id);
   // 2026-10-19 수도권 한정: 칩 글 '전국' → 수도권(원장 칩 = nation(L), 통계누리 칩 = 합계 자리 이름 area)
   assert.equal(D.nation(BOARD), '수도권');
-  assert.match(board, /ledgerChip = <ScopeChip scope=\{nation === '전국 아님' \? '일부 지역' : nation\} source="사업 원장"/);
-  assert.match(headOf('p-actual', real), /<ScopeChip scope=\{area\} source="통계누리"/);
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 칩 출처는 H ? '정책 진행 자료'(HOME 집계) : '사업 원장' */
+  assert.match(board, /ledgerChip = <ScopeChip scope=\{nation === '전국 아님' \? '일부 지역' : nation\} source=\{H \? '정책 진행 자료' : '사업 원장'\}/);
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — p-actual 칩은 HomeActual 이 '수도권 · 정책 진행 자료', 옛 갈래는 '수도권 · 통계누리' */
+  assert.match(headOf('p-actual', real), /<ScopeChip scope="수도권" source="정책 진행 자료"/);
+  assert.match(real, /<ScopeChip scope=\{area\} source="통계누리"/);
   assert.match(real, /area = sidoName\(molit, NATION\) \?\? '전국'/, 'area = 합계 자리 이름(수도권)');
   assert.match(board, /import ScopeChip from '@\/components\/ui\/scope-chip';/);
 });
@@ -86,12 +89,13 @@ test("4 지시 카드 두 줄 고정(2026-10-18 통일 규격): 줄1 = 지시 �
   assert.match(DIR[0].basis, /^통계누리 /, '원천은 (i) 기준 첫머리');
 });
 
-test("5 기관별 진행 % = '수도권 지연 중 몫'(whole = 범위 이름, 열 머리·값·title)", () => {
+test("5 기관별 진행 % = 옛 갈래 '수도권 지연 중 몫'(whole = 범위 이름, 열 머리·값·title) · 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — H 갈래는 '지연 사업 물량 비중'(기관 안 delayedSharePct)", () => {
   const ag = panel('p-agency');
   assert.match(ag, /data-slot="agency-head"[^\n]*>지연 · \{whole\} 지연 중 몫</, '열 머리');
   // 2026-10-19 수도권 한정: whole 은 '전국'만 따로 두지 않고 nation(수도권) 그대로, '전국 아님'만 '원장 전체'
   assert.match(board, /whole = nation === '전국 아님' \? '원장 전체' : nation/);
-  assert.match(ag, />몫 \{\(J\.delay\.units \? a\.delayUnits \/ J\.delay\.units \* 100 : 0\)\.toFixed\(1\)\}%</, "값 '몫 100.0%'");
+  assert.match(ag, /\{H \? `비중 \$\{\(a\.delayedSharePct \?\? 0\)\.toFixed\(1\)\}%` : `몫 \$\{\(J\.delay\.units \? a\.delayUnits \/ J\.delay\.units \* 100 : 0\)\.toFixed\(1\)\}%`\}/, "값 '몫 100.0%'(옛) · '비중 N%'(HOME)");
+  assert.match(ag, /\{H \? '지연 · 지연 사업 물량 비중' :/, 'HOME 열 머리');
   assert.match(ag, /title=\{`[^`]*\$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호 중 \$\{a\.name\} 몫/, 'title');
   assert.doesNotMatch(code(board), /지연 중 비중/);
   const lh = BOARD.agencies.find((a) => a.id === 'lh');

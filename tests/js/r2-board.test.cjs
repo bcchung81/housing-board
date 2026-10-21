@@ -27,25 +27,19 @@ const board = read('components/board/Board.tsx'), month = read('app/(dashboard)/
 const panel = (id) => board.slice(board.indexOf(`id="${id}"`), board.indexOf('</Card>', board.indexOf(`id="${id}"`)));
 const sum = (xs) => xs.reduce((s, e) => s + e.units, 0);
 
-test('1 월 상세 = 원장 그 달 준공 예정: 2026.10 수도권 4건 1,806호(종합상황판 앞으로 12개월 막대·지역 공급과 같은 값 — 원장이 수도권뿐), 날짜는 HOME', () => {
-  const oct = MA.monthDue(CAL, '2026-10');
-  // 2026-10-19 수도권 한정: 원장 사업이 수도권뿐이라 월 상세 2026.10 = 18건 8,807호 → 4건 1,806호(전엔 수도권 밖 14건 포함)
-  assert.equal(oct.length, 4); assert.equal(sum(oct), 1806);
-  assert.deepEqual([oct.length, sum(oct)], [BOARD.upcoming[0].projects, BOARD.upcoming[0].units], '종합상황판 앞으로 12개월 첫 달과 같다');
-  for (const u of BOARD.upcoming) { const m = MA.monthDue(CAL, u.ym); assert.deepEqual([m.length, sum(m)], [u.projects, u.units], u.ym); }
-  const metro = oct.filter((e) => R.METRO.includes(e.sd));
-  assert.deepEqual([metro.length, sum(metro)], [oct.length, sum(oct)], '지역 공급(수도권) 10월 = 월 상세 전체 — 수도권 밖 예정 없음');
-  assert.ok(metro.some((e) => /성남신촌/.test(e.name) && e.units === 227) && metro.some((e) => /서울공릉/.test(e.name) && e.units === 294));
-  const a2 = oct.find((e) => e.id === 'PRJ-28245-0055');
-  assert.equal(V.dayText(a2.day), '2026.10.11', 'HOME 정본 날짜');
-  assert.equal(V.dateAltOf(byId.get(a2.id)).text, '원천 날짜 다름(LH 2026.10.31)', 'LH 파일 날짜는 표지로');
-  assert.ok(oct.every((e, i) => i === 0 || (oct[i - 1].day ?? '') <= (e.day ?? '')), '예정일 순');
-  /* 화면: 원장 목록 표(DataGrid) + 머리에 건수·호수, 종합상황판 앞으로 12개월 카드에 같은 달 링크(숫자 = 월 상세 합계) */
-  assert.match(month, /monthDue\(calendar, ym\)/);
-  assert.match(month, /<DataGrid label=\{`\$\{monthLabel\(ym\)\} 준공 예정 사업`\}/);
+/* 2026-10-21 결정(HOME 과 같은 조건): 월 상세 = 9·7 그 달 공급 예정(HOME 향후 12개월 공급 예정의 그 달 몫, 원천 사업 행 단위) — 정답 대조는 region-golden */
+test('1 월 상세 = 9·7 그 달 공급 예정: 달마다 건수·호수가 지역 공급 9·7(수도권)·region-calendar home.p97.months 와 같다', () => {
+  for (const u of CAL.home.p97.months) {
+    const m = MA.monthSupply(CAL, u.ym);
+    assert.deepEqual([new Set(m.map((e) => e.pro)).size, sum(m)], [u.projects, u.units], u.ym);
+    assert.equal(sum(R.aheadAll(CAL.home.p97, 'metro', (c) => c).filter((e) => e.ym === u.ym)), sum(m), `${u.ym} 지역 공급(수도권) = 월 상세`);
+  }
+  assert.ok(MA.monthSupply(CAL, '2026-10').some((e) => /과천지식정보타운 S-12/.test(e.name) && e.units === 1424));
+  /* 화면: 공급 예정 표(DataGrid) + 머리에 건수·호수, 종합상황판 앞으로 12개월 카드에 같은 달 링크 */
+  assert.match(month, /monthSupply\(calendar, ym\)/);
+  assert.match(month, /<DataGrid label=\{`\$\{monthLabel\(ym\)\} 공급 예정 사업`\}/);
   assert.match(month, /value=\{fmt\(dueUnits\)\} unit=\"호\"[^]*\$\{fmt\(due\.length\)\}건/);
-  assert.match(month, /dateAltOf\(r\)/, '원천 날짜 다름 표지');
-  assert.match(month, /monthIds\(molit\.months, lh\.blocks, calendar\)/, '열리는 달 = 실적 + LH + 원장 준공 예정');
+  assert.match(month, /monthIds\(molit\.months, lh\.blocks, calendar\)/, '열리는 달 = 실적 + LH + 9·7 공급 예정');
   assert.match(read('app/(dashboard)/page.tsx'), /validMonths: monthIds\(molit\.months, lh\.blocks, calendar\)/, '종합상황판 월 링크도 같은 목록');
   const fut = panel('p-fut');
   assert.match(board, /const fu = up\[hasFut \? fi : 0\]/, '고른 달(앞으로 12개월 안) 또는 첫 달');
@@ -55,12 +49,9 @@ test('1 월 상세 = 원장 그 달 준공 예정: 2026.10 수도권 4건 1,806�
   assert.ok(MA.monthIds(MOLIT.months, LH.blocks, CAL).includes('2027-09'), '앞으로 12개월 끝 달까지 월 상세가 열린다');
 });
 
-test("2 예정일 지남 문구: '정상 · 예정일 지남(1개월 미만)' — '경과 0개월'은 쓰지 않는다", () => {
-  assert.equal(MA.dueStatus('정상', true), '정상 · 예정일 지남(1개월 미만)');
-  assert.equal(MA.dueStatus('정상', false), '정상');
-  const a2 = MA.monthDue(CAL, '2026-10').find((e) => e.id === 'PRJ-28245-0055');
-  assert.equal(MA.dueStatus(V.statusLabel(byId.get(a2.id)), R.pastDue(a2, CAL.referenceDate)), '정상 · 예정일 지남(1개월 미만)', '계양 A2(10.11, 기준일 10.13)');
-  assert.match(month, /dueStatus\(V?\.?statusLabel\(r\), pastDue\(e, calendar\.referenceDate\)\)/);
+test("2 '경과 0개월'은 쓰지 않는다 · 월 상세 판정 칸 = HOME 사업 판정", () => {
+  /* 2026-10-21: 월 상세 공급 예정 표의 상태 칸은 HOME 사업 판정 — 옛 '예정일 지남(1개월 미만)' 꼬리는 원장 준공 예정 표와 함께 빠졌다(문구는 projects-view 에 남음) */
+  assert.match(month, /status: j \? \{ text: JUDGE_NAME\[j\.status\]/);
   for (const [f, s] of [['Board', board], ['month', month], ['agency', agency], ['month-ahead', read('lib/board/month-ahead.ts')]]) assert.doesNotMatch(code(s), /경과 0개월|경과 \$\{[^}]*\.months\}개월/, f);   // 규칙 설명('경과 6개월 이상')은 괜찮다
 });
 
@@ -75,7 +66,7 @@ test("4 용어: '판정 밖' → '일정 정보 없음'(종합상황판·기관 
     assert.doesNotMatch(code(s), /판정 밖/, f);
   }
   assert.match(code(board), /일정 정보 없음/);
-  assert.match(agency, /status: \{ text: '일정 정보 없음', muted: true,/);
+  assert.match(agency, /status: JUDGE_NAME\[r\.judge\?\.status \?\? 'UNKNOWN'\]/, '2026-10-21: 기관 화면 상태 = HOME 사업 판정(판정 미확보 포함)');
   const ag = panel('p-agency');
   assert.match(ag, /width: pw\(cand\)/, '확인 필요(후보) 조각');
   assert.match(ag, /width: pw\(none\)/, '일정 정보 없음 조각');

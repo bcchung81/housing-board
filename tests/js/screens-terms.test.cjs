@@ -31,10 +31,11 @@ const SCREENS = [
   'components/windows/FloatingWindow.tsx', 'components/windows/WindowHost.tsx', 'components/projects/Candidate.tsx', 'components/region/Ahead.tsx', 'components/region/Annual.tsx', 'components/region/Cond.tsx',
   'components/board/Board.tsx', 'components/board/RealPanels.tsx', 'components/StageKpis.tsx',
 ];
-const NAMES = /미분양|통계누리 분양 실적|청약홈 분양정보|분양임대|주택분양/g;
+/* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 종합상황판 월별 실적 흐름 범례 '분양·모집'은 HOME 표기 그대로 허용 */
+const NAMES = /미분양|통계누리 분양 실적|청약홈 분양정보|분양임대|주택분양|분양·모집/g;
 const visible = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(NAMES, '');
 
-test("용어표: 화면 글자에 '공식 0'·'세대'·'분양'이 없다(단계는 ①~⑥ 리본 이름, 단위는 호 — 원천 이름은 예외)", () => {
+test("용어표: 화면 글자에 '공식 0'·'세대'·'분양'이 없다(단계는 ①~⑥ 리본 이름, 단위는 호 — 원천 이름·HOME 표기 '분양·모집'은 예외)", () => {
   for (const f of SCREENS) {
     const s = visible(read(f));
     for (const bad of ['공식 0', '세대', '분양']) assert.ok(!s.includes(bad), `${f}: '${bad}'`);
@@ -55,7 +56,8 @@ const TERMS = [
   ['곳(사업 수)', '건'],
 ];
 test(`용어표: ${TERMS.map(([a, b]) => `${a} → ${b}`).join(' · ')}`, () => {
-  const all = SCREENS.map((f) => visible(read(f))).join('\n');
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 종합상황판(Board·RealPanels)에 한해 '입력·추정 포함' 허용(10-14 '확인·추정 분리'를 뒤집음) */
+  const all = SCREENS.map((f) => /components\/board\/(Board|RealPanels)\.tsx$/.test(f) ? visible(read(f)).replace(/입력·추정 포함/g, '') : visible(read(f))).join('\n');
   assert.doesNotMatch(all, /도달/);
   assert.doesNotMatch(all, /발급 전 후보|번호 발급 전|거쳐 간|목표 미배정/);
   assert.doesNotMatch(all, /'다음 일정'|'지난 예정'|>다음 일정<|>단계 파이프라인<|>HOME 정책 진행|'정책별 목표 대비'/);
@@ -101,16 +103,16 @@ test('파이프라인 불변식: 칸마다 지금 이 단계 ≤ 거쳐 간 사�
   assert.ok(all.now <= all.n);
   /* 요약 범위: 단계별 진행은 상태·단계 거르기를 따르지 않는다(목록에만) */
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /const pipe = pipelineOf\(scope\);/);
+  assert.match(page, /const pipe = homePipelineOf\(scope, chartOf\);/);
   assert.match(page, /단계·상태 거르기는 목록에만/);
   /* 범위가 다른 블록은 카드를 나누고 머리에 범위 칩: 정책 목표 대비(정책 전체 · 정책 진행 자료), 원장 요약(거르기 범위 · 사업 원장) — screens-b */
   assert.match(page, /<ScopeChip scope="정책 전체" source="정책 진행 자료"/);
-  assert.match(page, /<ScopeChip scope=\{region\} source="사업 원장"/);
+  assert.match(page, /<ScopeChip scope=\{region\} source="정책 진행 자료"/);   // 2026-10-21: 사업 화면 요약은 HOME 원천 행
   const q1 = V.questionsOf(rows, { metro: true }, ctx)[0];
   assert.equal(q1.q, '9·7 대책 목표 대비');
 });
 
-test("앞으로 12개월: 같은 범위(원장 관측 달부터 12개월) — 사업 '준공 예정' = 지역 공급 '준공' 칩 = 종합상황판 준공 예정, 이름은 종류로 구분", () => {
+test("앞으로 12개월: 같은 범위(원장 관측 달부터 12개월) — 사업 '준공 예정' = 지역 공급 '준공' 칩, 이름은 종류로 구분 (2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 종합상황판만 H 면 AHEAD_SUPPLY '공급 예정')", () => {
   const months = V.aheadMonths(IDX.observedMonth);
   assert.deepEqual(months, calendar.months, '사업과 지역 공급의 12개월이 같은 달');
   assert.deepEqual(BOARD.upcoming.map((u) => u.ym), months, '종합상황판도 같은 달');
@@ -123,9 +125,11 @@ test("앞으로 12개월: 같은 범위(원장 관측 달부터 12개월) — �
   assert.equal(num(Q({})['앞으로 얼마나 공급되는가'].value), BOARD.upcoming.reduce((s, u) => s + u.units, 0));
   assert.equal(V.AHEAD_COMPLETION, '앞으로 12개월 · 준공 예정');
   assert.equal(V.AHEAD_ALL, '앞으로 12개월 · 모집·준공·입주 예정');
-  assert.match(read('components/board/Board.tsx'), />\{AHEAD_COMPLETION\}<\/h2>/);
-  assert.match(read('app/(dashboard)/region/page.tsx'), /isDefaultKinds\(kinds\) \? AHEAD_COMPLETION : kinds\.length === CAL_KINDS\.length \? AHEAD_ALL/);   // 기본 대표 = 준공(2026-10-15 결정)
-  for (const f of SCREENS) assert.doesNotMatch(visible(read(f)), /향후 12개월|>앞으로 12개월</, f);
+  assert.match(read('components/board/Board.tsx'), />\{H \? AHEAD_SUPPLY : AHEAD_COMPLETION\}<\/h2>/);
+  /* 2026-10-21 결정(HOME 과 같은 조건): 지역 공급 앞으로 12개월 = HOME 공급 예정 하나(대표 '공급 예정', 정의는 (i) 의 AHEAD_SUPPLY) — 옛 '기본 대표 = 준공'(2026-10-15)을 대체 */
+  assert.match(read('app/(dashboard)/region/page.tsx'), /<dt>\{AHEAD_SUPPLY\}<\/dt>[\s\S]*<MetricRow label="공급 예정"/);
+  /* 2026-10-21 결정: 종합상황판 (i) 팝오버가 HOME 이름 'HOME 향후 12개월 공급 예정'을 그대로 인용하는 것은 허용 */
+  for (const f of SCREENS) assert.doesNotMatch(visible(read(f)).replace(/HOME 향후 12개월 공급 예정/g, ''), /향후 12개월|>앞으로 12개월</, f);
 });
 
 test('요구사항 칩(ReqTags)은 데이터 원본(/sources)에만', () => {
@@ -141,9 +145,11 @@ test('보이는 도움말: 핵심 정의는 눌러서 여는 ⓘ(Base UI Popover
   assert.match(tip, /<Popover\.Trigger aria-label=\{`\$\{label\} 설명`\}/);
   assert.match(tip, /focus-visible:outline-2/);
   const sum = read('components/projects/Summary.tsx'), page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(sum, /export const ReadHelp = \(\) => <InfoTip label="읽는 법"/);
+  /* 2026-10-21 사업 화면 = HOME 원천 행: 읽는 법·인쇄 정의는 HOME 정의(home) — 같은 Defs 하나를 ⓘ 와 인쇄에 */
+  assert.match(sum, /export const ReadHelp = \(\{ home = false \}: \{ home\?: boolean \}\) => <InfoTip label="읽는 법" text="읽는 법"><Defs home=\{home\} \/><\/InfoTip>;/);
+  assert.match(sum, /export const PrintDefs = \(\{ home = false \}: \{ home\?: boolean \}\) => <div aria-hidden="true" className="[^"]*print:block[^"]*" data-print-defs><Defs home=\{home\} \/><\/div>;/);
   assert.doesNotMatch(sum, /export function ReadGuide/, '읽는 법 두 줄을 화면에 늘어놓지 않는다');
-  assert.match(page, /<ReadHelp \/>/); assert.match(page, /<PrintDefs \/>/);
+  assert.match(page, /<ReadHelp home \/>/); assert.match(page, /<PrintDefs home \/>/);
   assert.match(page, /<InfoTip label="목록 읽는 법">/);
   assert.match(read('app/(dashboard)/region/page.tsx'), /<InfoTip label="앞으로 12개월 읽는 법">/);
 });
@@ -190,7 +196,11 @@ test('사업 창: 목록 링크는 스크롤 유지(scroll=false), 머리는 두
   assert.match(read('components/windows/WindowHost.tsx'), /a\[href\$="=\$\{CSS\.escape\(id\)\}"\]/, '닫으면 ?id=·?cand= 행 링크로 초점');
   assert.match(read('components/windows/parts.tsx'), /const stageHref = \(i: number\) => sameStageHref\(loc\.pathname, loc\.search, '\/projects', String\(i\)\);/);
   assert.doesNotMatch(page, /stageHref/, '같은 단계 링크는 창이 지금 주소로 만든다');
-  assert.match(read('components/projects/ProjectDetail.tsx'), /<StageSteps current=\{r\.board\} reached=\{r\.reached\} listHref=\{stageHref\(r\.board\)\} \/>/);
+  /* 2026-10-21: HOME 원천 행 창(원장 사업 있음·없음)도 같은 단계 링크 — 칸 이름만 HOME */
+  const det = read('components/projects/ProjectDetail.tsx');
+  assert.match(det, /<StageSteps home=\{home\} current=\{r\.board\} reached=\{r\.reached\} listHref=\{stageHref\(r\.board\)\} \/>/);
+  assert.match(det, /<StageSteps home current=\{r\.board\} reached=\{r\.reached\} listHref=\{stageHref\(r\.board\)\} \/>/);
+  assert.match(read('lib/board/projects-list.ts'), /name: \{ text: r\.name, href, stay: true/, 'HOME 목록 행 링크도 스크롤 유지');
   assert.equal(V.listHref({ sido: '26', status: 'check' }, { stage: '2' }), '/projects?sido=26&stage=2&status=check');
 });
 

@@ -24,6 +24,7 @@ node search.test.js               # 검색·카드·라벨 시험
 - 사업 위치 점(r14): `data.json` 의 `pt`(사업 id → [x, y, 정확 1/근사 0], `data/board/home-map/*.json` 의 loc 을 region-map 자체 투영으로) — 보는 시군구 사업만 지도 위 별도 층(`svg.pts`)에 칠한다(정확 = 채운 점, 근사 = 속이 빈 고리). 고를 때 지도 svg 는 그대로 두고 점 층만 바꾼다. 라벨 상자 밑의 점은 가린다.
 - 오늘 날짜는 브라우저의 실제 날짜다(`meta.today` 는 빌드한 날, 화면이 덮어쓴다).
 - `data.json` 의 `hh` 는 통계청 장래가구추계(`data/board/area-facts.json`)의 올해 → 내년 가구 증가(시도 단위, 서울·인천·경기)다.
+- HOME PoC 수치(2026-10-21 사용자 결정): 큰 숫자·시도·지도 면·순위·단계 6줄·해 모드·사업 수·단계 탭 개수는 `data.json` 의 `hp`(build_data.py — `data/board/home-projects.json` 의 정책 전체 행 443 · 집계 289,336호, 단계는 `raw/home-api/<기준일>/projects-map-dashboard.json.gz` 의 PoC 단계 분포를 블록 → 시군구 → 시도로 나눠 담음)에서 낸다. 단계 이름은 우리 이름 그대로(계획 = 정책·사업화·단계 미확인 · 착공 = 건설(준공 포함) · 모집 = 공급 · 준공 0), 해 칸 = PoC 향후 12개월 공급(모집·분양) 예정. 사업 카드·다음 준공·청약 단지·공고는 원장 그대로. 빌드에 위 스냅샷이 있어야 한다(`node tools/ledger/home-projects.js --fetch-poc`). 시험: `tests/js/citizen-golden.test.cjs`.
 - `data.json` 은 생성물이라 커밋하지 않는다.
 
 - 두 판(build.js): 데모판은 시안 상태 막대·흉내 동작(IP 추천·현 위치·주소 묶음)과 이동 주소 출력. 운영판은 실제 이동(location.assign), 머리 메뉴 실제 경로, `/api/v1/geo` 시도 추천(실패면 시도 고르기 칩), [현 위치]는 브라우저 안 경계 판정(좌표를 보내지 않음: 수도권은 region-map, 그 밖은 `assets/geo/korea-sgg.json` 을 누를 때만 받아 `SggLocate`(`assets/js/sgg-locate.js`, build.js 가 끼워 넣음)로 판정 · 못 찾으면 둘레 150m 8방위 다수결 · 사업 없는 시군구는 경계 자료 이름으로 0 항목을 만들어 '아직 예정된 공공주택이 없어요' · 실패 문구 '위치로 시군구를 찾지 못했어요' / '경계 자료를 불러오지 못했어요' · 출처 ⓘ에 경계 출처·기준일), 주소 검색은 `/api/v1/codes/search`. 운영판도 `?demo=1` 이면 상태 막대를 보인다.

@@ -1,4 +1,5 @@
 # 시안에 넣을 색인·자료를 저장소 JSON 에서 뽑는다(읽기만). 출력: data.json
+# 화면 수치(큰 숫자·시도·지도 면·순위·단계 6줄·해 모드·사업 수)는 HOME PoC '정책 전체' 값 — 끝의 hp 묶음 주석(단계 대응표·미확인 처리)을 본다(2026-10-21)
 import json, re, sys, collections, datetime
 import os
 R = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..')) + '/'
@@ -284,9 +285,85 @@ for unit, L in ah_u.items():
 assert set(ah_u) <= {u[0] for u in units}, set(ah_u) - {u[0] for u in units}
 ah = {'ref': ah_ref, 'from': ah_from, 'url': AH_URL, 'u': dict(sorted(ah_u.items()))}
 
-out = {'meta': meta, 'sgg': sggs, 'prj': prj, 'cal': cal, 'neigh': neigh, 'nb': nb, 'map': mapdoc, 'hh': hh, 'det': det, 'jd': jd, 'notices': notices, 'pt': pt, 'pg': pg, 'ex': ex, 'ah': ah}
+# HOME PoC 수치(hp, 2026-10-21 결정 — 큰 숫자·시도·지도 면·순위·단계 6줄·해 모드·사업 수·단계 탭 개수를 PoC '정책 전체'와 같게).
+# 모집단 = data/board/home-projects.json 의 통계 포함 행(PRO_ 원천 행, 해제 뺀 443 — 민간 정비·민간 포함), 호수 = 집계 호수(units.counted, 집계 346행 289,336호).
+# 단계 = PoC /map/dashboard 정책 전체 응답(raw/home-api/<기준일>/projects-map-dashboard.json.gz, home-projects.js 가 받아 둔 스냅샷)의 stage_distribution.parts
+# — 서버 계산이라 행마다 값이 없어 블록(blocks) → 시군구(municipalities) → 시도(groups.region) 순으로 내려 나눈다: 블록 값은 그 블록 집계 행에, 시군구에서 블록 합을 뺀 나머지는
+# 블록 없는 집계 행에, 시도에서 시군구 합을 뺀 나머지는 시군구 미연결 행에 나눠 담는다(한 묶음 안 여러 행은 호수 큰 순으로 단계 순서대로 채운다 — 묶음 합은 PoC 와 정확히 같고,
+# 행 하나의 단계 나눔은 근사). PoC 7칸 → 일반사용자 6칸(이름은 우리 이름 유지): 계획 = 정책 + 사업화 + 단계 미확인 · 인허가 = 인허가 · 착공 = 건설(PoC 는 준공을 건설에 넣는다)
+# · 모집 = 공급 · 준공 = 0(PoC 칸 없음) · 입주 = 입주. 큰 숫자 = 앞 넷 합(= PoC 집계 호수 − 입주, 지금 PoC 입주 0 이라 289,336).
+# 해 = PoC '향후 12개월 공급(모집·분양) 예정'(행의 upcoming — /·/region 과 같은 값)의 달이 든 해, 그 밖 호수는 연도 미정.
+# 코드 = 원장 시군구 코드(D.sgg 열쇠): PoC 시군구 코드가 하나면 그것, 구가 있는 경기 시면 우리 원장 시군구(loc.ourSgg)가 그 안이면 그것·아니면 시 코드. 시군구 미연결 행은 시도 코드('11'·'28'·'41').
+# 줄: 코드 → [행 수, 공급 예정 호수, 해 7칸(yearBucket 과 같은 칸), 단계 6칸, 단계 탭 개수 6칸(행마다 나눈 몫이 가장 큰 단계 — 같으면 뒤 단계, 호수 없는 행은 계획)]
+import gzip
+hpj = json.load(open(R + 'data/board/home-projects.json'))
+dash = json.load(gzip.open(R + f"schemas/ledger-2026-10/raw/home-api/{hpj['asOf']}/projects-map-dashboard.json.gz"))
+HP_ORDER = ['MOVE_IN', 'SUPPLY', 'CONSTRUCTION', 'APPROVAL', 'BUSINESS', 'POLICY', 'UNKNOWN']   # 채우는 순서(뒤 단계부터)
+HP_SIX = {'POLICY': 0, 'BUSINESS': 0, 'UNKNOWN': 0, 'APPROVAL': 1, 'CONSTRUCTION': 2, 'SUPPLY': 3, 'MOVE_IN': 5}
+SD_OF = {v: k for k, v in SDN.items()}
+hp_rows = [r for r in hpj['rows'] if r['stats']]
+cnt_of = {r['id']: (r['units']['counted'] or 0) if r['chart']['all'] else 0 for r in hp_rows}
+codes_known = {s[0] for s in sggs}
+def hp_code(r):
+    if not r['sgg']: return SD_OF[r['region']]
+    cs = r['sgg']['codes']
+    if len(cs) == 1: c = cs[0]
+    else:
+        o = (r.get('loc') or {}).get('ourSgg')
+        c = o if o in cs else cs[0][:4] + '0'
+    assert c in codes_known, (r['id'], c)
+    return c
+alloc = {r['id']: dict.fromkeys(HP_ORDER, 0) for r in hp_rows}
+def fill(parts, ids):
+    left = {k: parts.get(k) or 0 for k in HP_ORDER}
+    assert all(v >= 0 for v in left.values()) and sum(left.values()) == sum(cnt_of[i] for i in ids), (parts, ids)
+    for i in sorted(ids, key=lambda i: (-cnt_of[i], i)):
+        cap = cnt_of[i]
+        for k in HP_ORDER:
+            t = min(cap, left[k]); alloc[i][k] += t; left[k] -= t; cap -= t
+def minus(a, b): return {k: (a.get(k) or 0) - (b.get(k) or 0) for k in HP_ORDER}
+def plus(a, b): return {k: (a.get(k) or 0) + (b.get(k) or 0) for k in HP_ORDER}
+in_block = set()
+muni_blocks = collections.defaultdict(dict)
+by_id = {r['id']: r for r in hp_rows}
+for b in dash['blocks']:
+    ids = [i for i in b.get('chart_target_ids') or [] if cnt_of.get(i)]
+    if not ids: continue
+    fill(b['stage_distribution']['parts'], ids); in_block.update(ids)
+    m = {(by_id[i]['sgg'] or {}).get('id') for i in ids}; assert len(m) == 1, b['id']
+    mid = m.pop(); muni_blocks[mid] = plus(muni_blocks[mid], b['stage_distribution']['parts'])
+muni_sum = collections.defaultdict(dict)
+for mu in dash['municipalities']:
+    ids = [r['id'] for r in hp_rows if (r['sgg'] or {}).get('id') == mu['id'] and cnt_of[r['id']] and r['id'] not in in_block]
+    fill(minus(mu['stage_distribution']['parts'], muni_blocks[mu['id']]), ids)
+    muni_sum[mu['region']] = plus(muni_sum[mu['region']], mu['stage_distribution']['parts'])
+for g in dash['groups']['region']:
+    ids = [r['id'] for r in hp_rows if not r['sgg'] and r['region'] == g['name'] and cnt_of[r['id']]]
+    fill(minus(g['stage_distribution']['parts'], muni_sum[g['name']]), ids)
+assert {k: sum(a[k] for a in alloc.values()) for k in HP_ORDER} == {k: dash['summary']['stage_distribution']['parts'][k] for k in HP_ORDER}
+Y0 = int(meta['today'][:4])
+hp_c = {}
+for r in hp_rows:
+    a, cu = alloc[r['id']], cnt_of[r['id']]
+    S = [0] * 6
+    for k, v in a.items(): S[HP_SIX[k]] += v
+    T = [0] * 6
+    T[max(range(6), key=lambda i: (S[i], i)) if cu else 0] += 1
+    su = cu - S[5]; Y = [0] * 7; left = su
+    for ym, u in r.get('upcoming') or []:
+        t = min(left, u); y = int(ym[:4]); Y[0 if y <= Y0 else 5 if y >= Y0 + 5 else y - Y0] += t; left -= t
+    Y[6] += left
+    v = hp_c.setdefault(hp_code(r), [0, 0, [0] * 7, [0] * 6, [0] * 6])
+    v[0] += 1 if not T[5] else 0; v[1] += su
+    for i in range(7): v[2][i] += Y[i]
+    for i in range(6): v[3][i] += S[i]; v[4][i] += T[i]
+hp = {'ref': hpj['asOf'], 'c': dict(sorted(hp_c.items()))}
+sggs = [[c, n, 0 if c in hp_c else z] for c, n, z in sggs]   # PoC 행이 있으면 '사업 없음' 아님
+
+out = {'meta': meta, 'sgg': sggs, 'prj': prj, 'cal': cal, 'neigh': neigh, 'nb': nb, 'map': mapdoc, 'hh': hh, 'det': det, 'jd': jd, 'notices': notices, 'pt': pt, 'pg': pg, 'ex': ex, 'ah': ah, 'hp': hp}
 json.dump(out, open(sys.argv[1], 'w'), ensure_ascii=False, separators=(',', ':'))
 print('zero', zero); print('neigh', {k: [(c, sgg[c], len(lm['bySgg'][c])) for c in v] for k, v in neigh.items()})
 print('adj 41280', [AREAS[c] for c in adj['41280']], 'none', [c for c, v in adj.items() if not v])
 print('sgg', len(sggs), 'prj', sum(len(v) for v in prj.values()), 'cal', len(cal), 'det', len(det), 'jd', sum(len(v) for v in jd.values()), 'notices', len(notices), 'nb 41450', nb['41450'], 'pt', len(pt), 'exact', sum(v[2] for v in pt.values()), 'ex', len(ex), 'ex유형', sum(1 for v in ex.values() if v[0] is not None), 'ex동', sum(1 for v in ex.values() if len(v)>1 and v[1]), 'ex공고', sum(1 for v in ex.values() if len(v)>2 and v[2]), 'ex기관', sum(1 for v in ex.values() if len(v)>3 and v[3]), 'ex공정', sum(1 for v in ex.values() if len(v)>4 and v[4]))
 print('ah', ah_all, 'kept', sum(len(v) for v in ah['u'].values()), 'units', len(ah['u']), 'empty', [u[0] + ' ' + u[2] for u in units if u[0] not in ah['u']], '동 없음', sum(1 for v in ah['u'].values() for r in v if not r[3]))
+print('hp', 'rows', sum(v[0] for v in hp['c'].values()), 'units', sum(v[1] for v in hp['c'].values()), 'stage', [sum(v[3][i] for v in hp['c'].values()) for i in range(6)], 'year', [sum(v[2][i] for v in hp['c'].values()) for i in range(7)], 'tabs', [sum(v[4][i] for v in hp['c'].values()) for i in range(6)])

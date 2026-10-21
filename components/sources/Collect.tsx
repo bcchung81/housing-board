@@ -1,5 +1,5 @@
-/* 데이터 원본 ② 수집 상태 · ③ 연도 확보 · ④ 연결. 값은 lib/board/home-sources.ts 가 data/board/home-sources.json(HOME 수집 실행·확보 기록·원장 links 요약)과 원천 카탈로그에서 만든다.
-   ② 실패·경고 원천만 표로 펼치고 정상 원천은 기관별로 접는다. ③ 빈틈 없는 원천과 올해 자료만 있는 원천은 한 줄로 접는다. 모든 행이 같은 표지인 열은 그리지 않고 한 번만 말한다.
+/* 데이터 원본 ② 수집 상태 · ③ 연도 확보 · ④ 연결. 값은 lib/board/home-sources.ts 가 data/board/home-sources.json(HOME 수집 실행·정책–프로그램·프로그램–사업 연결은 덤프, 건수·기준일·조회 범위·연도 확보는 PoC 스냅샷)과 원천 카탈로그에서 만든다.
+   ② 실패·경고 원천만 표로 펼치고 정상 원천은 기관별로 접는다. ③ 빈틈 없는 줄은 한 줄로 접는다. 모든 행이 같은 표지인 열은 그리지 않고 한 번만 말한다.
    상태는 색만으로 알리지 않고 글자도 둔다. 시안: docs/design/home-concept/sources.html */
 import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
@@ -10,14 +10,12 @@ import ScopeChip from '@/components/ui/scope-chip';
 import { DataGrid } from '@/components/ui/data-grid';
 import { HATCH } from '@/components/ui/chips';
 import { GRID_DENSE, dotDates, type Col, type Row } from '@/lib/grid/spec';
-import { GRID_YEARS, LINK_NAME, coverageRows, statusRows, uniformColumns, type CoverageRow, type HomeSources, type StatusRow } from '@/lib/board/home-sources';
-import { annualSeries } from '@/lib/board/annual';
+import { GRID_YEARS, LINK_NAME, coverageRows, statusRows, uniformColumns, type CoverageRow, type GridState, type HomeSources, type StatusRow } from '@/lib/board/home-sources';
 import { fmt } from '@/lib/board/calc';
-import type { Molit, Source } from '@/lib/board/types';
+import type { Source } from '@/lib/board/types';
 
 const KEY = 'flex items-center gap-1 whitespace-nowrap';
 const dot = 'block size-[9px] flex-none';
-const PART = 'color-mix(in srgb, var(--primary) 26%, var(--card))';
 /* 원천 이름 HOME 은 보이는 글 대신 title 에 — 보이는 이름은 '정책 진행 자료'(우리 = 파일로 받아 둔 원천 카탈로그) */
 const HOME_TIP = 'HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료';
 const OWNER = { 우리: '우리', HOME: '정책 진행 자료' } as const;
@@ -48,8 +46,8 @@ function issueRow(r: StatusRow): Row {
   return {
     id: `${r.owner}-${r.id}`,
     c: {
-      name: { text: dotBreak(r.name), title: r.note }, owner: { text: OWNER[r.owner], title: r.owner === 'HOME' ? HOME_TIP : '파일로 받아 둔 원천 카탈로그' }, org: dotBreak(showOrg(r.org)),
-      st: r.ok ? { text: '경고', swatch: 'var(--warn)', tone: 'warn', title: '마지막 수집이 일부만(부분 수집)', sort: 1 }
+      name: { text: dotBreak(r.name), title: r.note }, owner: { text: OWNER[r.owner], title: HOME_TIP }, org: dotBreak(showOrg(r.org)),
+      st: r.ok ? { text: '경고', swatch: 'var(--warn)', tone: 'warn', title: '마지막 수집은 정상이지만 조회 범위가 일부', sort: 1 }
         : { text: '실패', swatch: 'var(--bad)', tone: 'bad', title: `마지막 실행 ${r.lastRun ?? ''} 실패${r.lastOk ? ' — 마지막 정상 값을 씀' : ' — 정상 수집 없음'}`, sort: 0 },
       runs: r.runs, last: r.lastOk ?? { na: '없음' }, asOf: r.asOf, n: r.count,
     },
@@ -57,7 +55,7 @@ function issueRow(r: StatusRow): Row {
 }
 
 export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
-  const all = statusRows(hs, items);
+  const all = statusRows(hs);
   const issues = all.filter((r) => !r.ok || r.warn), okRows = all.filter((r) => r.ok && !r.warn);
   const nFail = all.filter((r) => !r.ok).length, nWarn = all.filter((r) => r.warn).length;
   const failNames = all.filter((r) => !r.ok).map((r) => r.name);
@@ -77,7 +75,7 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
   return (
     <Card render={<section aria-label="수집 상태" />}>
       <PanelHead title="수집 상태"
-        scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 우리가 모은 원천 카탈로그 전체(전국·지역 원천)와 정책 진행 자료(HOME)의 원천 전체" />}>
+        scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 정책 진행 자료(HOME)의 원천 전체 · 우리가 파일로 받아 둔 원천은 아래 원천 카탈로그" />}>
         <LegendList>
           {nFail ? <li className={KEY}><i className={`${dot} rounded-full bg-bad`} aria-hidden="true" />실패</li> : null}
           {nWarn ? <li className={KEY}><i className={`${dot} rounded-full bg-warn`} aria-hidden="true" />경고</li> : null}
@@ -85,14 +83,14 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
         </LegendList>
         <InfoTip label="수집 상태 읽는 법">
           <dl>
-            <dt>실패 · 경고</dt><dd>실패 = 마지막 실행이 실패해 마지막 정상 값을 씀 · 경고 = 마지막 수집이 일부만 됨 · 둘만 표로 펼치고 정상 원천은 기관별로 접음</dd>
-            <dt>우리 · {OWNER.HOME}</dt><dd>우리 = 파일로 받아 둔 원천 카탈로그 · {OWNER.HOME} = HOME(국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료)의 수집 실행 결과</dd>
+            <dt>실패 · 경고</dt><dd>실패 = 마지막 실행이 실패해 마지막 정상 값을 씀 · 경고 = 마지막 수집은 정상이지만 조회 범위가 일부 · 둘만 표로 펼치고 정상 원천은 기관별로 접음</dd>
+            <dt>{OWNER.HOME}</dt><dd>HOME(국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료)의 수집 출처 · 수집 출처 = 정상으로 저장된 레코드가 있는 출처 · 건수 = 원천별 정상 레코드 수 · 원천 기준일은 원천이 밝힌 곳만 · 건수·기준일·조회 범위는 {hs.poc.fetchedAt.slice(0, 10).replace(/-/g, '.')} 받아 둔 PoC 값(덤프에 없음), 수집 실행은 덤프</dd>
           </dl>
         </InfoTip>
       </PanelHead>
-      <div title={`우리 원천 ${items.length}곳(원천 카탈로그) · 정책 진행 자료(HOME) 원천 ${hs.sources.length}곳(덤프 수집 실행 ${fmt(hs.runs.total)}회 중 실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted})`}>
-        <MetricRow label="원천" value={all.length} unit="곳"
-          items={[`우리가 모은 원천 ${items.length} + 정책 진행 자료 ${hs.sources.length}`,
+      <div title={`정책 진행 자료(HOME) 등록 원천 ${hs.sources.length}곳 중 정상 레코드가 있는 ${hs.poc.withData}곳(덤프 수집 실행 ${fmt(hs.runs.total)}회 중 실패 ${hs.runs.failed}·중단 ${hs.runs.interrupted}) · 우리가 파일로 받아 둔 원천 ${items.length}곳은 원천 카탈로그`}>
+        <MetricRow label="수집 출처" value={hs.poc.withData} unit="곳"
+          items={[`등록 ${hs.sources.length} · 기관 ${hs.poc.orgs} · 우리 보관 원천 ${items.length}은 아래 카탈로그`,
             <span key="f" className={nFail ? 'text-bad' : undefined}>실패 {nFail}{failNames.length ? ` (${failNames.join(' · ')})` : ''}</span>,
             <span key="w" className={nWarn ? 'text-warn' : undefined}>경고 {nWarn}</span>]} />
       </div>
@@ -128,29 +126,31 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
   );
 }
 
-const MARK = { full: '확보', part: '부분', none: '미확보' } as const;
-export function Coverage({ hs, molit }: { hs: HomeSources; molit: Molit }) {
-  const cover = coverageRows(hs, annualSeries(molit, 'complete', '00'));
-  const now = GRID_YEARS.length - 1;
-  /* 빈틈 없는 원천(올해는 진행 중이라 부분도 확보로 셈)과 올해 자료만 있는 원천은 한 줄로 접는다 */
-  const isFull = (r: CoverageRow) => r.cells.every((c, i) => c === 'full' || (i === now && c === 'part'));
-  const onlyNow = (r: CoverageRow) => r.cells.every((c, i) => (i === now ? c !== 'none' : c === 'none'));
-  const rest = cover.filter((r) => !isFull(r) && !onlyNow(r));
+const MARK: Record<GridState, string> = { full: '확보', none: '미확보', nosrc: '원본 행 없음', unpub: '원천 미공표' };
+/* 칸 모양: 확보 = 꽉 찬 색 · 미확보 = 빗금 · 원본 행 없음 = 옅은 면 · 원천 미공표 = 빈 테두리 */
+const CELL_CLS: Record<GridState, string> = { full: '', none: `border border-line2 ${HATCH}`, nosrc: 'border border-line2 bg-pn2', unpub: 'border border-line2' };
+export function Coverage({ hs }: { hs: HomeSources }) {
+  const cover = coverageRows(hs);
+  /* 빈틈 없는 원천(모든 연도 확보)은 한 줄로 접는다 */
+  const isFull = (r: CoverageRow) => r.cells.every((c) => c === 'full');
+  const rest = cover.filter((r) => !isFull(r));
   const fold = (rs: CoverageRow[], label: string, tip: string) => (rs.length ? (
-    <p className="m-0 mt-2 text-sm text-muted-foreground" title={tip}><b className="font-bold text-foreground">{label} {rs.length}곳</b> · {rs.map((r, i) => <span key={r.id} title={r.owner}>{i ? ' · ' : ''}{dotWrap(r.name)}</span>)}</p>
+    <p className="m-0 mt-2 text-sm text-muted-foreground" title={tip}><b className="font-bold text-foreground">{label} {rs.length}줄</b> · {rs.map((r, i) => <span key={r.id} title={r.owner}>{i ? ' · ' : ''}{dotWrap(r.name)}</span>)}</p>
   ) : null);
   return (
     <Card render={<section aria-label="연도 확보" />}>
-      <PanelHead title="연도 확보" scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 원천마다 그 원천이 다루는 범위 전체(통계누리는 전국 월 자료)" />}>
+      <PanelHead title="연도 확보" scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 원천마다 그 원천이 다루는 범위 전체(서울·경기 시도별 줄)" />}>
         <LegendList>
           <li className={KEY}><i className={`${dot} rounded-chip bg-primary`} aria-hidden="true" />확보</li>
-          <li className={KEY}><i className={`${dot} rounded-chip`} style={{ background: PART }} aria-hidden="true" />부분</li>
-          <li className={KEY}><i className={`${dot} rounded-chip border border-line2 ${HATCH}`} aria-hidden="true" />미확보</li>
+          <li className={KEY}><i className={`${dot} rounded-chip ${CELL_CLS.none}`} aria-hidden="true" />미확보</li>
+          <li className={KEY}><i className={`${dot} rounded-chip ${CELL_CLS.nosrc}`} aria-hidden="true" />원본 행 없음</li>
+          <li className={KEY}><i className={`${dot} rounded-chip ${CELL_CLS.unpub}`} aria-hidden="true" />원천 미공표</li>
         </LegendList>
         <InfoTip label="연도 확보 읽는 법">
           <dl>
-            <dt>확보 · 부분 · 미확보</dt><dd>원천마다 {GRID_YEARS[0]}~{GRID_YEARS[now]}년 자료가 있는지 · 부분 = 일부 월·범위만({GRID_YEARS[now]}년은 진행 중인 해)</dd>
-            <dt>세는 법</dt><dd>통계누리는 월 자료로 셈 · 나머지는 원장의 사건일·공고일·지표 기간과 {OWNER.HOME}의 확보 기록 · 빈틈 없는 원천과 올해 자료만 있는 원천은 한 줄로 접음</dd>
+            <dt>확보 · 미확보</dt><dd>원천 × 시도마다 {GRID_YEARS[0]}~{GRID_YEARS[GRID_YEARS.length - 1]}년 자료가 저장돼 있는지(저장된 원천 증거가 있으면 확보)</dd>
+            <dt>원본 행 없음 · 원천 미공표</dt><dd>원본에 그 해의 행이 없거나, 확인한 공식 원천이 아직 그 해를 공표하지 않음 · 미확보와 따로 셈</dd>
+            <dt>세는 법</dt><dd>{OWNER.HOME}의 자료연도별 확보 {hs.grid.length}줄 × {GRID_YEARS.length}해 · {hs.poc.fetchedAt.slice(0, 10).replace(/-/g, '.')} 받아 둔 값 · 빈틈 없는 줄은 한 줄로 접음</dd>
           </dl>
         </InfoTip>
       </PanelHead>
@@ -163,12 +163,12 @@ export function Coverage({ hs, molit }: { hs: HomeSources; molit: Molit }) {
             </div>
             {rest.map((r) => (
               <div key={r.id} role="row" className="contents">
-                <span role="rowheader" className={`${WRAP} leading-sub`} title={`${r.name} · ${r.owner}`}>{r.owner === 'HOME' ? <span className="mr-1 text-sm text-muted-foreground" title={HOME_TIP}>{OWNER.HOME}</span> : null}{dotWrap(r.name)}</span>
+                <span role="rowheader" className={`${WRAP} leading-sub`} title={`${r.name} · ${r.owner}`}>{dotWrap(r.name)}</span>
                 {r.cells.map((c, i) => (
                   <span key={i} role="cell" title={`${r.name} · ${GRID_YEARS[i]} · ${MARK[c]}`} className="block">
                     {/* 색 칸은 그림만, 읽는 글자는 칠한 칸 밖 sr-only(칠한 바탕 위 숨긴 글자가 대비 검사에 걸리지 않게) */}
-                    <span aria-hidden="true" className={`block h-[18px] rounded-chip ${c === 'none' ? `border border-line2 ${HATCH}` : ''}`}
-                      style={c === 'full' ? { background: 'var(--primary)' } : c === 'part' ? { background: PART } : undefined} />
+                    <span aria-hidden="true" className={`block h-[18px] rounded-chip ${CELL_CLS[c]}`}
+                      style={c === 'full' ? { background: 'var(--primary)' } : undefined} />
                     <span className="sr-only">{MARK[c]}</span>
                   </span>
                 ))}
@@ -177,8 +177,7 @@ export function Coverage({ hs, molit }: { hs: HomeSources; molit: Molit }) {
           </div>
         </div>
       ) : null}
-      {fold(cover.filter(isFull), `${GRID_YEARS[0]}~${GRID_YEARS[now]} 빈틈 없음`, `모든 연도 확보(${GRID_YEARS[now]}은 진행 중이라 부분 포함)`)}
-      {fold(cover.filter(onlyNow), `${GRID_YEARS[now]} 자료만`, `과거 연도 없이 지금 판(${GRID_YEARS[now]})만 있는 원천 — 예정·현황 스냅샷`)}
+      {fold(cover.filter(isFull), `${GRID_YEARS[0]}~${GRID_YEARS[GRID_YEARS.length - 1]} 빈틈 없음`, '모든 연도 확보')}
     </Card>
   );
 }
@@ -186,13 +185,13 @@ export function Coverage({ hs, molit }: { hs: HomeSources; molit: Molit }) {
 export function Links({ hs }: { hs: HomeSources }) {
   return (
     <Card render={<section aria-label="연결" />}>
-      <PanelHead title="연결" scope={<ScopeChip scope="정책 전체" source="사업 원장" title="정책 진행 자료(HOME)의 정책 전체 — 정책·프로그램에 연결된 사업은 수도권 사업뿐 · 지역 거르기 없음" />}>
+      <PanelHead title="연결" scope={<ScopeChip scope="정책 전체" source="정책 진행 자료" title="정책 진행 자료(HOME)의 정책 전체 — 정책 미지정 사업까지 모두 · 지역 거르기 없음" />}>
         <LegendList>
           <li className={KEY}><i className={`${dot} rounded-chip bg-primary`} aria-hidden="true" />담당자 확인</li>
           <li className={KEY}><i className={`${dot} rounded-chip`} style={{ background: 'color-mix(in srgb, var(--primary) 30%, var(--card))' }} aria-hidden="true" />담당자 확인 전</li>
         </LegendList>
         <InfoTip label="연결 읽는 법">
-          <p>정책–프로그램, 프로그램–사업 연결(사업 원장) 수입니다. 담당자 확인 전 = 자동으로 제안했고 담당자가 아직 확인하지 않은 연결 · 해제된 연결은 뺌.</p>
+          <p>정책–프로그램, 프로그램–사업 연결(정책 진행 자료, 정책 미지정 사업 포함) 수입니다. 담당자 확인 전 = 자동으로 제안했고 담당자가 아직 확인하지 않은 연결 · 해제된 연결은 뺌.</p>
         </InfoTip>
       </PanelHead>
       <div className="mt-3 grid grid-cols-2 gap-3 narrow:grid-cols-1">

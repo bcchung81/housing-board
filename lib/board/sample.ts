@@ -15,7 +15,7 @@ export function timelineOf(L: { months: string[]; now: number; actualThrough?: s
 type Judged = { projects: number; units: number };
 /* ok·caution·delay = 판정(사업 번호가 있는 사업만), candidate = 번호가 없는 후보의 같은 계산(확인 필요). candidate 가 없는 행(2026-09 까지의 소급 이력·옛 집계)은 후보 포함 판정 */
 type CandJudged = { ok: Judged; caution: Judged; delay: Judged };
-export type JudgeRow = { month: string; referenceDate: string; ok: Judged; caution: Judged; delay: Judged; candidate?: CandJudged; delayByStage: number[]; cautionByStage: number[]; judged: number; addedSources?: string[] };
+export type JudgeRow = { month: string; referenceDate: string; ok: Judged; caution: Judged; delay: Judged; candidate?: CandJudged; delayByStage: number[]; cautionByStage: number[]; judged: number; addedSources?: string[]; max?: { d: number; w: number } };
 type JudgeSource = { months: string[]; now: number; referenceDate: string; judgment: { ok: Judged; caution: Judged; delay: Judged; candidate?: CandJudged }; delayByStage: number[]; cautionByStage: number[]; scope: { judged: number }; trend?: JudgeRow[] };
 /* 달(시점 번호)마다 판정 행, 판정 없는 달은 null */
 export function judgmentsOf(L: JudgeSource): (JudgeRow | null)[] {
@@ -52,7 +52,8 @@ export const delayAt = (T: Timeline, delays: (number[] | null)[], m: number) => 
 
 /* ── 지연·주의 추이 카드 ── */
 /* 0 … NOW 달마다 지연·주의 호수(판정 없는 달 null) */
-export const trendOf = (T: Timeline, J: (JudgeRow | null)[]) => J.slice(0, T.now + 1).map((r) => (r ? { d: r.delay.units, w: r.caution.units } : null));
+/* HOME 집계(max 가 있는 행)는 단계 집계 판정의 지연·주의 최대 부족량(HOME '지연·주의 추이'와 같은 값), 원장 집계는 지연·주의 사업 호수 */
+export const trendOf = (T: Timeline, J: (JudgeRow | null)[]) => J.slice(0, T.now + 1).map((r) => (r ? (r.max ? { d: r.max.d, w: r.max.w } : { d: r.delay.units, w: r.caution.units }) : null));
 /* 세로 맨 위: 최댓값 이상인 가장 작은 1·1.2·1.5·2·2.5·3·4·5·6·8 × 10^n(눈금 글자가 없어 선이 카드 높이를 고르게 쓰게 한다). 눈금선 3개는 4등분 */
 /* 원천이 새로 들어간 달(addedSources 가 있는 판정 행) — 추이 그래프의 표지. 이전 달과 직접 비교되지 않는다 */
 /* 판정 기준 변경 달: candidate(번호 없는 후보를 따로 셈)가 있는 첫 판정 달 — 그 앞 판정 달(소급 이력)은 후보 포함이라 값이 이어지지 않는다(2026.09 수만 호 → 2026.10 번호 있는 사업만).

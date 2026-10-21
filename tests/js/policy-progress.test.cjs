@@ -4,6 +4,8 @@
 // 2026-10-14 판부터 담당자 입력(계획물량·단계 측정값·승인 일정)이 들어와 공급 목표·확인이 바뀌었다(2026-10-13 판: 목표 9,355 · 확인 7,606 · 같은 기간 확인 6,680).
 // 2026-10-20 판(20261019T212247Z, 담당자 일정 execution_schedule 1,800건): HOME 운영 API(2026-10-20 09:30 KST GET, as_of 2026-10-20)와 6단계 목표·확인 점·연도 쌍이 모두 같았다.
 //   공급(분양·모집) 2026 값은 10-14 판과 같고(8,049 대 8,742), 연결 사업 197→228 로 사업화·인허가·준공·입주 목표와 2031년 공급 목표 끝점이 늘었다.
+// 2026-10-21 HOME 2038810 이식: 6단계 목표·확인 점·연도 쌍은 그대로였고(코호트가 바뀐 광교 A17 은 기간 안 점이 없다), basis 의 연결 사업·코호트 수만 바뀌었다.
+//   PoC(as_of 10-20) 공급 2026 연간 목표 10,684 대 우리 10,676 의 8호 = 덤프 뒤 매핑된 연남동 공공임대주택 코호트(8호) — 덤프로는 맞출 수 없다.
 // HOME 원본(jsonl.gz)은 저장소에 없다(gitignore, Storage) — 없으면 원본으로 다시 계산하는 시험은 건너뛴다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -83,7 +85,10 @@ test('다른 단계 고정값(덤프 판 = HOME 운영 API): 착공은 원문 �
   assert.deepEqual(st.COMPLETION.annual.find((a) => a.year === 2029).target_cumulative_units, 21605);   // 2026-10-20 판(10-14 판 17,386)
   assert.deepEqual(st.MOVE_IN.annual.find((a) => a.year === 2031).target_cumulative_units, 27410);   // 2026-10-20 판(10-14 판 19,460)
   const b = saved.policies[0].basis;
-  assert.deepEqual([b.linkedProjects, b.duplicateExcluded, b.missingQuantity, b.prePolicyStart, b.cohorts, b.cohortUnits], [228, 57, 0, 95, 76, 91452], '2026-10-20 판: 연결 사업 197→228, 코호트 46→76·물량 67,279→91,452(10-14 판: 담당자 계획물량 입력으로 물량 미확보 0)');
+  /* HOME 2038810 이식(2026-10-21): 원천 목록 참조 사업(source_reference_id)은 사업 매핑이 확정되지 않았으면 프로그램이 정책을 줘도 미배정 — 광교 A17BL(600호)이 빠져 228→227·76→75·91,452→90,852.
+     PoC(as_of 10-20) 관리 230·코호트 76·90,860 에서 덤프 뒤 매핑 3곳(독산동·방화차고지·연남동 8호 코호트)을 빼면 227·75·90,852 로 같다(21c60b1 이식 값 228·76·91,452 보다 가깝다) */
+  /* 2026-10-21 2038810 inventory 이식: 인천검단 AA19 두 임대 유형(국민임대 991·영구임대 332, 정책기간 전 착공)이 중복 제외 → 포트폴리오로 — 중복 57→55·과거 착공 95→97, 코호트는 그대로 */
+  assert.deepEqual([b.linkedProjects, b.duplicateExcluded, b.missingQuantity, b.prePolicyStart, b.cohorts, b.cohortUnits], [227, 55, 0, 97, 75, 90852], '2026-10-20 판(10-14 판: 담당자 계획물량 입력으로 물량 미확보 0)');
 });
 
 test('HOME 원본으로 다시 계산: 저장된 파일과 바이트 같고, 같은 판 두 번도 같다', { skip: SKIP }, () => {

@@ -525,7 +525,8 @@
   const AGENCY_TEXT = { lh: 'LH', sh: 'SH', gh: 'GH' };
   const homeInfo = (r) => ({ units: finite(r.units) && r.units > 0 ? r.units : null, noticeUnits: finite(r.noticeUnits) ? r.noticeUnits : null,
     loc: r.loc && HOME_LOC_TEXT[r.loc.by] ? Object.assign({ by: r.loc.by, text: HOME_LOC_TEXT[r.loc.by], status: r.loc.status || 'REVIEW' }, r.loc.by === 'name' && r.loc.match ? { match: String(r.loc.match) } : {}) : null,
-    policy: r.policy && r.policy.status ? { status: r.policy.status, names: Array.isArray(r.policy.names) ? r.policy.names.map(String) : [], short: Array.isArray(r.policy.short) ? r.policy.short.map(String) : [] } : null });
+    policy: r.policy && r.policy.status ? { status: r.policy.status, names: Array.isArray(r.policy.names) ? r.policy.names.map(String) : [], short: Array.isArray(r.policy.short) ? r.policy.short.map(String) : [] } : null,
+    poc: r.poc && finite(r.poc.n) ? { n: r.poc.n, n97: r.poc.n97 || 0, u: finite(r.poc.u) ? r.poc.u : null, u97: finite(r.poc.u97) ? r.poc.u97 : null, j: r.poc.j || null } : null });
   /* 점 둘레 정팔각형(경도·위도) */
   function ring8(c, rM) {
     const dl = rM / 111320, dn = rM / (111320 * Math.cos(c[1] * Math.PI / 180)), out = [];
@@ -586,6 +587,29 @@
     }
     const prog = st.slice(0, 4).reduce((t, s) => { for (const k of Object.keys(t)) t[k] += s[k]; return t; }, { n: 0, u: 0, q: 0, lostN: 0, lostU: 0 });
     return Object.assign(prog, { st });
+  }
+  /* HOME PoC 규칙 머리 줄 값(2026-10-21 — 수도권 개요와 같은 원천 행 PRO_ 단위, tools/ledger/home-map.js 의 시군구 파일 poc·noPrj·사업 poc).
+     scope = 'p97'(9·7) | 'all'(정책 전체). 시군구 파일 여럿이면 더한다. 위치 미확보 = 원장 사업이 없는 행(noPrj) + 지도에 그리지 못한 사업(lostIds)에 이어진 행.
+     PoC 값이 없는 파일(옛 자료)뿐이면 null */
+  function homePoc(docs, lostIds, scope) {
+    const ok = (docs || []).filter((d) => d && d.poc && d.poc[scope]);
+    if (!ok.length) return null;
+    const lost = new Set(lostIds || []), seen = new Set();
+    const t = { n: 0, c: 0, x: 0, q: 0, u: 0, d: 0, w: 0, a: 0, an: 0, st: [0, 0, 0, 0, 0, 0, 0], lostN: 0, lostU: 0, noPrj: [] };
+    for (const d of ok) {
+      const v = d.poc[scope];
+      for (const k of ['n', 'c', 'x', 'q', 'u', 'd', 'w', 'a', 'an']) t[k] += finite(v[k]) ? v[k] : 0;
+      (v.st || []).forEach((x, i) => { if (i < 7 && finite(x)) t.st[i] += x; });
+      for (const r of d.noPrj || []) if (r && (scope === 'all' || r.p97)) { t.noPrj.push(r); t.lostN += 1; t.lostU += finite(r.u) ? r.u : 0; }
+      for (const p of d.projects || []) {
+        if (!p || !p.poc || seen.has(p.id) || !lost.has(p.id)) continue;
+        seen.add(p.id);
+        t.lostN += scope === 'all' ? p.poc.n : p.poc.n97 || 0;
+        const u = scope === 'all' ? p.poc.u : p.poc.u97;
+        t.lostU += finite(u) ? u : 0;
+      }
+    }
+    return t;
   }
   /* 원장 행을 단지에 붙인다: b.ledger(attachLedger) + b.home + 상태를 원장 단계로(6절 결정 4: 번들 단지도 사업 표시는 원장 기준, 04 안의 '준공 임박'은 남긴다) */
   function applyHome(blocks, docs, slug) {
@@ -665,7 +689,8 @@
       regions: (index && index.regions) || [],
       resolveBlock: (param) => (param ? byKey.get(String(param)) || null : null),
       home: home ? { total: (raw.home || []).reduce((s, d) => s + ((d && d.projects) || []).length, 0), drawn: blocks.filter((b) => b.home).length, blocks: blocks.filter((b) => b.home && b.outlineTier === 'official').length, unlocated: home.unlocated, failed: !!raw.homeFailed,
-        tally: homeTally(raw.home, home.unlocated.map((r) => r.id)) } : null,
+        tally: homeTally(raw.home, home.unlocated.map((r) => r.id)),
+        poc: ((p97, all) => (p97 && all ? { p97, all } : null))(homePoc(raw.home, home.unlocated.map((r) => r.id), 'p97'), homePoc(raw.home, home.unlocated.map((r) => r.id), 'all')) } : null,
     };
   }
 
@@ -912,5 +937,5 @@
     try { return await (await win.fetch('regions/index.json')).json(); } catch (e) { return { regions: [] }; }
   }
 
-  return { REFORMED, fatalModel, fatalHtml, HOME_SIDO, isHomeSgg, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, liteRing, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, statusReason, lostSummary, lostAnchor, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
+  return { REFORMED, fatalModel, fatalHtml, HOME_SIDO, isHomeSgg, homeMapUrl, fetchHomeMap, homeLiteUrl, fetchHomeLite, liteFeatures, liteRing, homeSelectorGroups, homeView, APPROX_TITLE, homeToProjects, applyHome, homeTally, homePoc, STATUS_RANK, escapeHtml, pickRegion, selectorModel, regionUrl, codeQuery, resolveUrl, withRegion, codeUrl, resolvedStart, resolvedShape, resolveCode, noticeText, zoomForBbox, emptyBundle, dynParam, permitsToProjects, fetchPermits, fetchInfra, fetchLedger, ledgerIndex, matchLedger, attachLedger, ledgerTexts, statusReason, lostSummary, lostAnchor, settleOf, ledgerSggs, fetchNotices, noticeRows, moveInText, outlineText, adaptDongs, adaptProject, orderBlocks, buildTexts, adaptBundle, loadRegion, applyTexts, mountSelector, mountBanner, bannerBrief, locNoteHtml, boot };
 });

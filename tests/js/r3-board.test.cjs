@@ -50,7 +50,9 @@ test("2 기간·단위: 진척 관리 '착공 누계'(기간 2026년 1~8월은 (
   assert.match(DIR[0].basis, /^통계누리 수도권 착공 2026년 1~8월 누계/);   // 2026-10-19 수도권 한정: 통계누리 범위 '전국' → '수도권'(합계 자리 = 서울+인천+경기)
   assert.equal(C.ytdSpan('2026', 8), '2026.01~08 누계');
   assert.doesNotMatch(board, /x\.tag|x\.note/, '줄1 꼬리 없음');
-  assert.match(panel('p-actual', real), /<h2 className=\{ptitle\} title=\{`[^`]*단위 호\(세로축 20만 = 20만 호\)/);
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — p-actual 은 HOME 9·7 사건(HomeActual, '단위 호')이 기본, 옛 통계누리 갈래는 '단위 호(세로축 20만 = 20만 호)' */
+  assert.match(panel('p-actual', real), /<h2 className=\{ptitle\} title=\{`HOME 9·7[^`]*단위 호/);
+  assert.match(real, /<h2 className=\{ptitle\} title=\{`[^`]*단위 호\(세로축 20만 = 20만 호\)/);
   assert.doesNotMatch(real, /data-slot="actual-unit"/, "보이는 '단위 호' 글자 없음");
   assert.match(agency, /sub: <>\{ytdSpan\(year, Number\(last\.slice\(5\)\)\)\} \{fmt\(ytd\(molit, k, NATION, last, a\.actor!\)\)\}호/);
   assert.doesNotMatch(code(agency), /\{year\}년 누계/);
@@ -61,7 +63,8 @@ test('3 지연 기준 하나: 시도 타일 지연율 = 지연 호수 ÷ 판정 
   assert.equal(Object.values(ok).reduce((a, b) => a + b, 0), BOARD.judgment.ok.units, '시도별 정상 호수 합 = 판정 정상 호수');
   const inc = BOARD.regions.find((r) => r.code === '28');
   assert.equal((inc.delayUnits / (ok['28'] + inc.cautionUnits + inc.delayUnits) * 100).toFixed(1), '9.5', '인천 지연율(호수) 1,666 ÷ 17,520');   // 2026-10-20 HOME 판: 인천 판정 호수 14,310 → 19,536 → 2026-10-20 같은 현장 병합 6쌍: 인천 대체 3곳(702·964·350호) 빠짐 17,520
-  assert.match(home, /regionOkUnits: okUnitsBySido\(\(await getProjectsIndex\(\)\)\.rows\)/);
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 종합상황판 시도 타일 분모는 home-board regions 의 okUnits(okUnitsBySido 는 다른 화면 몫) */
+  assert.match(home, /regionOkUnits: Object\.fromEntries\(homeBoard\.regions\.map\(\(r\) => \[r\.code, r\.okUnits \?\? 0\]\)\)/);
   const reg = panel('p-region');
   assert.match(reg, />지연율 · 호수 기준</);
   assert.doesNotMatch(code(board), /건수 기준/);

@@ -55,7 +55,7 @@ test('사업 카드 제목은 꼬리표·목록과 같은 짧은 이름(b.id, 20
 test("단위: 단계 줄·요약은 사업 수 '건'·호수 '호'(단지 아님), 후보는 '후보 사업'", () => {
   const code = noComments(app);
   assert.match(code, /<span class="sf-n">\$\{bs\.length\}건<\/span>/);
-  assert.match(code, /<span class="hs-n">· \$\{tot\.prog \? '진행 ' : ''\}\$\{tot\.n\}건/);   // 수도권은 '진행 n건'(원장 ①~④, 수도권 개요와 같은 기준)
+  assert.match(code, /<span class="hs-n">· \$\{tot\.prog \? '진행 ' : tot\.pre \|\| ''\}\$\{tot\.n\}건/);   // 수도권은 '9·7 연결 원천 n건'(2026-10-21 HOME PoC 규칙 — 수도권 개요와 같은 원천 행)
   assert.match(code, /<span class="sf-n">\$\{h\.n\}건<\/span>/);
   assert.doesNotMatch(code, /\}단지<|개 단지|단지 없음|번호 발급 전<\/small>/);
   assert.match(code, /<small>후보 사업<\/small>/);
@@ -223,9 +223,9 @@ test('계양 번들: 카드·꼬리표·패널 호수는 원장 계획 호수(A3
   assert.ok(r.home.tally.u > 0);
 });
 
-test('개요 12개월 지표 설명은 준공 기준(사업·지역 공급 화면의 준공 예정과 같은 정의), 입주는 따로 보인다고 적는다', () => {
+test('개요 12개월 지표 설명은 공급(입주자 모집·분양) 예정 기준(2026-10-21 HOME PoC 규칙 — 종합상황판 향후 12개월 공급 예정과 같은 정의)', () => {
   const ov = fs.readFileSync(path.join(__dirname, '../../assets/js/overview.js'), 'utf8');
-  assert.match(ov, /준공\(공사 완료\) 예정인 사업의 호수입니다\. 사업 화면·지역 공급 화면의 준공 예정과 같은 기준입니다\./);
+  assert.match(ov, /기준 달부터 12개월 안의 공급\(입주자 모집·분양\) 예정 호수입니다\. 종합상황판의 향후 12개월 공급 예정과 같은 기준입니다\./);
   assert.doesNotMatch(ov, /준공·입주/);
 });
 
@@ -453,13 +453,10 @@ test('A7-7 이름 통일: 카드 제목·꼬리표·사이드바 목록은 같�
   assert.equal(s3.label, '고양창릉 S3'); assert.equal(s3.name, '고양창릉 S-03');   // 꼬리표·목록·카드 제목 = '고양창릉 S3', 원장 이름 '고양창릉 S-03' 은 부제·title
 });
 
-test('A7-8 개요 12개월: 대표는 준공(COMPLETION)만, 입주는 마우스 올림 분해(더하지 않음)', () => {
-  const O = require('../../lib/board/metro-overview.ts');
-  assert.equal(OV.METRICS.find((m) => m.id === 'a').name, '앞으로 12개월 준공');
-  const cal = { sido: { '11': [{ type: 'COMPLETION', sgg: '서울특별시 종로구', units: 100 }, { type: 'MOVE_IN', sgg: '서울특별시 종로구', units: 50 }, { type: 'SUPPLY_NOTICE', sgg: '서울특별시 종로구', units: 30 }] } };
-  const v = O.valuesBySgg([], cal, { 11110: '서울특별시 종로구' }).get('11110');
-  assert.deepEqual([v.a, v.an, v.mi, v.mn], [100, 1, 50, 1]);
-  assert.match(ovjs, /12개월'\} 준공 \$\{fmt\(v\.a\)\}호\(\$\{fmt\(v\.an\)\}건\) · 입주 \$\{fmt\(v\.mi \|\| 0\)\}호/);
+test('A7-8 개요 12개월(2026-10-21 HOME PoC 규칙): 향후 12개월 공급(모집·분양) 예정 — 마우스 올림은 호수(건수)', () => {
+  assert.equal(OV.METRICS.find((m) => m.id === 'a').name, '향후 12개월 공급 예정');
+  assert.match(ovjs, /'12개월 공급'\} \$\{fmt\(v\.a\)\}호\(\$\{fmt\(v\.an\)\}건\)/);
+  assert.doesNotMatch(ovjs, /v\.mi\b|v\.mn\b/, '입주 분해는 없다(PoC 12개월은 공급만)');
 });
 
 /* ---- 8차 독립 평가(2026-10-15, 배포 전 마지막) 지도 결함 1~9 ---- */
@@ -594,7 +591,7 @@ test('A8-9 안내 띠: 위치 미확보가 0건이면 그 문장이 없고, 펼�
   R.mountBanner(doc, { slug: 'incheon-gyeyang', home: { total: 6, failed: false }, visibility: 'public' }, '');
   assert.equal(el.innerHTML, '<details class="pv-d"><summary class="pv-s" title="설명 문장"><span class="ov-aud-admin">사업 원장</span><span class="ov-aud-public">사업</span> 4건 · 지도 4건</summary><ul class="pv-list" id="pvList" aria-label="사업 원장 목록"></ul></details>', '번들 지역(계양)은 목록 띠를 만들지 않는다(안내가 없으면 그대로)');
   assert.match(app8, /\$\('#pvList'\)\.innerHTML = ledgerRows\(BLOCKS\.filter\(\(b\) => b\.home\)\.map\(/);
-  assert.match(app8, /<ul>\$\{ledgerRows\(LOST\)\}<\/ul>/, '위치 미확보 목록과 같은 줄 함수');
+  assert.match(app8, /<ul>\$\{ledgerRows\(LOST\)\}\$\{noPrjRows\(\)\}<\/ul>/, '위치 미확보 목록과 같은 줄 함수(+ 원장 사업 없는 원천 행)');
 });
 
 test('지역 선택기: 뒤로 가기(bfcache)로 돌아오면 고른 값이 지금 지역으로 되돌아온다, 새로 열면 그대로', () => {
@@ -622,6 +619,6 @@ test('지도 수도권 개요: 뒤로 가기 복원 처리기가 여는 중 잠�
   assert.match(h[1], /S\.pick = null; paintFaces\(\);/);
   const go = src.slice(src.indexOf('function go(u, href, label)'), src.indexOf("win.addEventListener('pageshow'"));
   assert.match(go, /S\.pick = u\.code; paintFaces\(\);/, '여는 곳은 고른 곳 면 효과');
-  assert.match(go, /win\.setTimeout\(\(\) => win\.location\.assign\(href\), 40\);/);
+  assert.match(go, /win\.setTimeout\(\(\) => win\.location\.assign\(keepPolicy\(href, win\.location\.search\)\), 40\);/);
   assert.doesNotMatch(src, /fitBounds|jumpTo|S\.cam\b|maplibregl/, 'MapLibre 카메라 없음');
 });

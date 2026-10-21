@@ -28,6 +28,8 @@ export type Program = { name: string; policies: string[]; projects: number };
 export type ProjectRow = Omit<MapRow, 'name'> & {
   name: string; sgg: string; sggName: string; notice: number | null; programs: string[]; policies: string[]; link: LinkStatus | null;
   agency: string | null; reached: number[]; completion: string | null; board: number;
+  /* HOME 원천 행(사업 화면 /projects — homeRowsOf)만: PoC 값. 있으면 id 는 PRO_, board 는 HOME 6칸(HOME_NAMES), cls 는 PoC 사업 판정, agency 는 PoC 기관 이름 */
+  home?: HomeExtra;
 };
 
 /* 공식 6단계 → 종합상황판 리본 칸(①계획 ②인허가 ③착공 ④모집 ⑤준공 ⑥입주)의 색. 01·02 는 ①, 06 은 ⑤(준공 = 사용검사, tools/ledger/board.js BOARD_OF_STAGE) */
@@ -66,8 +68,12 @@ export const NONE_NAME: Record<NoneKind, string> = { done: '준공 완료', plan
 export const NONE_TIP: Record<NoneKind, string> = { done: '준공 실제가 있어 판정하지 않음(이미 공사를 마친 사업)', plan: '현재 예정(입주·모집)은 있으나 판정 대상 일정(착공·준공)이 없음', none: '판정할 현재 예정일이 없음' };
 export const noneKind = (r: { done?: string; next: unknown; why: string | null }): NoneKind => (r.done ? 'done' : r.next && r.why !== 'LH 후보' ? 'plan' : 'none');
 type Labeled = Judgeable & { issued: boolean; done?: string; next: unknown; why: string | null };
-export const statusLabel = (r: Labeled) => { const s = statusOf(r); return s === 'none' ? NONE_NAME[noneKind(r)] : STATUS_NAME[s]; };
-export const statusTip = (r: Labeled) => { const s = statusOf(r); return s === 'none' ? NONE_TIP[noneKind(r)] : s === 'review' ? `${STATUS_TIP.review} · 계산하면 ${STATUS_NAME[calcOf(r)]}` : STATUS_TIP[s]; };
+export const statusLabel = (r: Labeled & { home?: HomeExtra }) => { const s = statusOf(r); return r.home ? HOME_STATUS_NAME[s] ?? STATUS_NAME[s] : s === 'none' ? NONE_NAME[noneKind(r)] : STATUS_NAME[s]; };
+export const statusTip = (r: Labeled & { home?: HomeExtra }) => {
+  const s = statusOf(r);
+  if (r.home) return `${HOME_STATUS_TIP[s] ?? STATUS_TIP[s]}${r.home.gap ? ` · 부족 ${Math.round(r.home.gap).toLocaleString('en-US')}호` : ''}`;
+  return s === 'none' ? NONE_TIP[noneKind(r)] : s === 'review' ? `${STATUS_TIP.review} · 계산하면 ${STATUS_NAME[calcOf(r)]}` : STATUS_TIP[s];
+};
 /* 점검 필요 = 번호가 있는 사업 중 주의·지연(장기 포함). 후보는 '확인 필요'로 따로 */
 export const isCheck = (r: ProjectRow) => r.issued && (r.cls === 'caution' || r.cls === 'delay');
 /* '판정 밖'은 화면에 쓰지 않는다 — 판정할 예정일이 없는 묶음의 이름은 '일정 정보 없음'(2026-10-16 2차 평가). 원장 집계 글자(lib/board/directives ledgerJudged)를 화면에 낼 때 바꾼다 */
@@ -126,18 +132,20 @@ export function rowsOf(bySgg: Record<string, MapRow[]>, extra: Record<string, In
 /* gu = 구가 있는 경기 시의 시 코드(41110·41280 …)로 거를 때 그 시의 구 코드들(지도 개요의 면과 같다 — parseFilters ctx.guOf 로 metro-overview guOf 를 받는다). 있으면 시 코드 + 구 코드 사업을 합친다 */
 /* from = 'map': 지도 카드의 '사업 정보 보기'(/projects?id=<id>&from=map&sgg=<시군구>)로 왔다 — 서랍 뒤 목록은 그 시군구, 서랍 머리에 '지도로 돌아가기'. 주소(listHref)에는 다시 적지 않는다(서랍을 닫으면 그 시군구 목록에 남는다) */
 /* renewal = ?scope=renewal: 공공 공급 밖으로 따로 센 민간 정비(정책 귀속 검토) 사업 목록(2026-10-20 공공 분류 안2 — 화면 집계에는 넣지 않는다, getProjectsIndex renewalRows) */
-export type Filters = { policy?: Policy; program?: Program; sido?: string; sgg?: string; gu?: string[]; metro?: boolean; stage?: number; status?: StatusFilter; agency?: string; from?: 'map'; renewal?: boolean };
+/* home = HOME 원천 행 목록(사업 화면 /projects — 2026-10-21 PoC 규칙): 정책을 고르지 않으면 9·7(PoC 기본), ?policy=all = 전 정책, 기관은 PoC 기관 이름(?agency=이름, 옛 열쇠 lh·sh·gh·ih·etc 도 받는다) */
+export type Filters = { policy?: Policy; program?: Program; sido?: string; sgg?: string; gu?: string[]; metro?: boolean; stage?: number; status?: StatusFilter; agency?: string; from?: 'map'; renewal?: boolean; home?: boolean };
 /* 종합상황판·옛 주소가 거는 거르기(?stage·?status·?agency). 지역 없이 이것만 오면 전국(종합상황판 숫자가 전국이라) — 그 밖에 지역이 없으면 기본 범위 수도권 */
 const LEGACY_KEYS = ['stage', 'status', 'agency'] as const;
 type Query = Record<string, string | string[] | undefined>;
 const one = (v: string | string[] | undefined) => (typeof v === 'string' ? v : undefined);
 /* 맞지 않는 값은 거르지 않는다. 렌즈는 하나: 정책이 있으면 프로그램은 무시. 단계는 리본 칸 0~5, 옛 주소의 공식 단계 01~06(/stage/NN·종합상황판·계단)은 그 칸으로.
    지역: ?sgg=NNNNN > ?sido=NN > ?sido=all(전국) > ?sido=metro(수도권). 지역이 없으면 기본 수도권 — 단 ?stage·?status·?agency 만 온 주소(종합상황판 링크)는 전국 */
-export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Program[]; sidoOk: (code: string) => boolean; guOf?: (sgg: string) => string[] }): Filters {
-  const f: Filters = {};
+export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Program[]; sidoOk: (code: string) => boolean; guOf?: (sgg: string) => string[]; home?: { agencies: string[] } }): Filters {
+  const f: Filters = ctx.home ? { home: true } : {};
   const policy = ctx.policies.find((p) => p.key === one(q.policy));
   if (policy) f.policy = policy;
   else { const program = ctx.programs.find((p) => p.name === one(q.program)); if (program) f.program = program; }
+  if (ctx.home && !f.policy && !f.program && one(q.policy) !== 'all') f.policy = ctx.policies.find((p) => p.key === HOME_DEFAULT_POLICY);
   const from = one(q.from) === 'map' ? 'map' : undefined;
   if (from) f.from = from;
   /* 지도에서 왔는데 ?sgg 가 없으면 사업 id 의 시군구(PRJ-41281-…)로 */
@@ -151,13 +159,14 @@ export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Prog
   const status = one(q.status);
   if (status && (status in STATUS_NAME || status === 'check' || status === 'late' || status === 'review-late')) f.status = status as StatusFilter;
   const agency = one(q.agency);
-  if (agency && agency in AGENCY_NAME) f.agency = agency;
-  if (one(q.scope) === 'renewal') f.renewal = true;
+  if (ctx.home) { const name = agency && (HOME_AGENCY_OF_KEY[agency] ?? agency); if (name && ctx.home.agencies.includes(name)) f.agency = name; }
+  else if (agency && agency in AGENCY_NAME) f.agency = agency;
+  if (!ctx.home && one(q.scope) === 'renewal') f.renewal = true;
   return f;
 }
 export const inLens = (r: ProjectRow, f: Filters) => (f.policy ? r.policies.includes(f.policy.key) : f.program ? r.programs.includes(f.program.name) : true);
 export const inRegion = (r: ProjectRow, f: Filters) => (f.sgg ? r.sgg === f.sgg || !!f.gu?.includes(r.sgg) : f.sido ? r.sgg.startsWith(f.sido) : f.metro ? isMetro(r.sgg) : true);
-export const inAgency = (r: ProjectRow, f: Filters) => !f.agency || agencyKey(r.agency) === f.agency;
+export const inAgency = (r: ProjectRow, f: Filters) => !f.agency || (f.home ? r.agency === f.agency : agencyKey(r.agency) === f.agency);
 /* 지연(장기 포함) = 번호가 있는 사업 중 경과 6개월 이상 — 원장 집계 judgment.delay·delayByStage 와 같은 범위 */
 export const isLate = (r: ProjectRow) => r.issued && r.cls === 'delay';
 export const isReviewLate = (r: ProjectRow) => !r.issued && r.cls === 'delay';
@@ -176,7 +185,9 @@ export const listOrder = (rows: ProjectRow[]) => [...rows].sort((a, b) => Number
    지역 sido: 'NN' · 'metro'(수도권) · 'all'(전국). 지역이 비면 기본 수도권 — 'metro' 는 ?stage·?status·?agency 가 함께 있을 때만 적는다(없으면 기본과 같아 뺀다) */
 const KEYS = ['scope', 'policy', 'program', 'sido', 'sgg', 'stage', 'status', 'agency', 'id', 'cand', 'print'] as const;
 type Plain = Partial<Record<(typeof KEYS)[number], string>>;
-export const plainOf = (f: Filters): Plain => ({ scope: f.renewal ? 'renewal' : undefined, policy: f.policy?.key, program: f.program?.name, sido: f.sgg ? undefined : f.sido ?? (f.metro ? 'metro' : 'all'), sgg: f.sgg, stage: f.stage === undefined ? undefined : String(f.stage), status: f.status, agency: f.agency });
+/* HOME 목록은 9·7 이 기본이라 주소에 적지 않고, 전 정책(정책·프로그램 없음)을 policy=all 로 적는다 */
+const policyPlain = (f: Filters) => (!f.home ? f.policy?.key : f.policy ? (f.policy.key === HOME_DEFAULT_POLICY ? undefined : f.policy.key) : f.program ? undefined : 'all');
+export const plainOf = (f: Filters): Plain => ({ scope: f.renewal ? 'renewal' : undefined, policy: policyPlain(f), program: f.program?.name, sido: f.sgg ? undefined : f.sido ?? (f.metro ? 'metro' : 'all'), sgg: f.sgg, stage: f.stage === undefined ? undefined : String(f.stage), status: f.status, agency: f.agency });
 export function listHref(f: Filters, patch: Plain = {}) {
   const v: Plain = { ...plainOf(f), ...patch };
   if ('policy' in patch && patch.policy) v.program = undefined;
@@ -233,11 +244,18 @@ export type SamePeriod = { year: number; from: string; through: string; target: 
 export type PolicyProgress = {
   schema: string; asOf: string; referenceMonthEnd: string; source: { edition: string; rule: string };
   policies: { policyId: string; name: string; periodStart: string; periodEnd: string; targetUnits: number; basis: Record<string, unknown> & { rule: string; linkedProjects: number };
-    stages: Record<string, { label: string; targetBasis: string; actualBasis: string; samePeriod: SamePeriod[]; targetPoints?: { date: string; units: number }[] }> }[];
+    stages: Record<string, { label: string; targetBasis: string; actualBasis: string; samePeriod: SamePeriod[]; targetPoints?: { date: string; units: number }[]; home?: HomeCheck }> }[];
   notes: string[];
 };
+/* HOME 정책 추진현황의 단계 판정(data/board/home-board.json home.stageChecks — 2026-10-21 결정: HOME 과 같은 조건): 도래 목표(기준일까지 마지막 단계 목표 누적) 대 최근 누적 측정(후속 단계 포함·입력·추정 포함),
+   부족률 2% 이상 DELAYED · 0~2% WARNING · 도달 REACHED · 목표 기한 전 NOT_DUE · 측정 없음 NO_ACTUAL. 있으면 정책 목표 대비 칸이 samePeriod 대신 이것을 쓴다 */
+export type HomeCheck = { status: string; due: { date: string; units: number } | null; actual: { date: string; units: number; manual: number | null; inferred: number | null } | null;
+  gap: number | null; rate: number | null; rateText: string; next: { date: string; units: number } | null; yearEnd: { date: string; units: number } | null };
 /* HOME 의 6단계 → 리본 칸: 사업화 ①계획 · 인허가 ② · 착공 ③ · 공급(분양·모집) ④ · 준공 ⑤ · 입주 예정 ⑥ */
 export const PP_STAGES = ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'COMPLETION', 'MOVE_IN'] as const;
+/* 정책 목표 대비 칸의 보이는 이름·색 칸: 정책 화면 PoC 단계 이름(PP_NAME — 사업화·인허가·건설·공급·준공·입주), 색은 HOME 6칸(HOME_SLOT — 준공은 건설 칸) */
+export const ppText = (c: { key: string; board: number }) => PP_NAME[c.key] ?? BOARD_NAMES[c.board];
+export const ppSlot = (key: string) => HOME_SLOT[key] ?? 0;
 /* state: short 목표 미달 · met 목표 이상 · noTarget 목표 없음(확인 값만) · noActual 확인 미확보(목표만) · none 둘 다 없음.
    withEst = 추정 포함 확인(없으면 확인과 같다), fill·estFill = 막대 폭(%), mark = 목표(100% 기준선)의 막대 안 자리(%) — 막대 폭은 max(목표, 확인)이라
    미달은 기준선이 오른쪽 끝(100), 초과는 확인이 끝까지 차고 기준선이 목표 자리(② 1,543/3,560 → 43.3, 2026-10-16 4차 평가), yearEnd = 같은 기간 목표가 없고 다음 목표 점이 연말인 착공(9·7 원문 연도별 목표) */
@@ -250,6 +268,7 @@ export function policyStageCells(pp: PolicyProgress, policyId: string): StageCel
   const year = Number(pp.referenceMonthEnd.slice(0, 4));
   return PP_STAGES.map((key, board) => {
     const st = pol.stages[key];
+    if (st?.home) return homeCell(st, key, board, pp.asOf);
     const s = st?.samePeriod.find((y) => y.year === year);
     const target = s?.target ?? null, actual = s?.actual ?? null, withEst = s?.actualWithEstimates ?? actual;
     const state = target != null && actual != null ? (s!.status === 'GAP' ? 'short' : 'met') : target == null && actual != null ? 'noTarget' : target != null ? 'noActual' : 'none';
@@ -264,6 +283,20 @@ export function policyStageCells(pp: PolicyProgress, policyId: string): StageCel
     };
   });
 }
+/* HOME 판정 칸: 목표 = 도래 목표(없으면 다음 목표를 연말 자리로), 확인 = 추정 포함 = HOME 현재 누적 측정량 */
+function homeCell(st: PolicyProgress['policies'][number]['stages'][string], key: string, board: number, asOf: string): StageCell {
+  const h = st.home!, target = h.due?.units ?? null, actual = h.actual?.units ?? null;
+  const short = h.status === 'DELAYED' || h.status === 'WARNING';
+  const state = target != null && actual != null ? (short ? 'short' : 'met') : target == null && actual != null ? 'noTarget' : target != null ? 'noActual' : 'none';
+  return {
+    board, key, label: st.label, target, actual, withEst: actual, review: null, gap: h.gap, shortfallPct: h.rate, status: h.status, state,
+    from: h.due?.date ?? asOf, through: asOf, actualThrough: h.actual?.date ?? null,
+    fill: target && actual != null ? Math.min(100, actual / target * 100) : 0, estFill: target && actual != null ? Math.min(100, actual / target * 100) : 0,
+    mark: target && actual != null ? 100 * target / Math.max(target, actual) : 100,
+    targetBasis: 'HOME 도래 목표(기준일까지 마지막 단계 목표 누적 · 연결 사업 일정 · 담당자 입력 우선)', actualBasis: 'HOME 누적 측정(후속 단계 포함 · 입력·추정 포함)',
+    yearEnd: target == null && h.next ? { date: h.next.date, units: h.next.units } : h.yearEnd,
+  };
+}
 export const hasTarget = (c: StageCell | undefined) => !!c && (c.target != null || !!c.yearEnd);
 /* 추정이 섞여 확인과 다른 칸 */
 export const hasEstimate = (c: StageCell) => c.withEst != null && c.actual != null && c.withEst > c.actual;
@@ -275,10 +308,10 @@ export function rateOf(c: StageCell): { value: string; unit: string; word: strin
 /* 칸 설명(title): 확인·추정 포함/목표·달성률·기간·확인 필요 연결. 확인 값은 HOME 원천 값 그대로 — cells(같은 정책의 여섯 칸)를 주면 같은 확인 값인 다른 단계를 적는다(①계획 = ②인허가 3,560: 원천이 같은 값을 줌) */
 export function stageCellTip(c: StageCell, polName = '', cells: StageCell[] = []) {
   const span = `${ymText(c.from)}~${ymText(c.through)}`;
-  const head = `${polName ? `${polName} ` : ''}${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — 정책 진행 자료(HOME) 단계 '${c.label}' · ${span}`;
+  const head = `${polName ? `${polName} ` : ''}${ppText(c)} — 정책 진행 자료(HOME) 단계 '${c.label}' · ${span}`;
   if (c.state === 'none' && !c.yearEnd) return `${head} · 목표 없음 · 확인 미확보`;
   const est = hasEstimate(c) ? ` · 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호)` : '';
-  const twin = c.actual != null ? cells.filter((o) => o.board !== c.board && o.actual === c.actual).map((o) => `${BOARD_CIR[o.board]}${BOARD_NAMES[o.board]}`) : [];
+  const twin = c.actual != null ? cells.filter((o) => o.board !== c.board && o.actual === c.actual).map((o) => `${ppText(o)}`) : [];
   const act = c.actual != null ? `확인 ${fmt(c.actual)}호(HOME(정책 진행 자료) 원천 값 그대로${twin.length ? ` · ${twin.join('·')} 확인과 같은 값` : ''})${c.actualThrough && c.actualThrough !== c.through ? `(${ymText(c.actualThrough)}까지)` : ''}${c.review ? ` — 확인 필요 연결 ${fmt(c.review)}호 포함` : ''}${est}` : `확인 미확보(${c.actualBasis})`;
   const tgt = c.target != null ? `목표 ${fmt(c.target)}호` : c.yearEnd ? `같은 기간 목표 없음 · 연말 목표 ${dayText(c.yearEnd.date)} ${fmt(c.yearEnd.units)}호` : '목표 없음';
   const rate = c.target != null && c.actual != null ? ` · ${rateOf(c).word}${c.state === 'short' && c.gap != null ? `(목표까지 ${fmt(c.gap)}호)` : ''}` : '';
@@ -290,7 +323,7 @@ export type CompareLine = { policy: Policy; cells: StageCell[]; none: number[]; 
 export function compareHead(l: CompareLine) {
   const tgt = l.cells.filter((c) => c.target != null), short = tgt.filter((c) => c.state === 'short');
   if (!tgt.length) return `${l.policy.short} 목표만 있음`;
-  return short.length ? `${l.policy.short} · 목표 있는 ${tgt.length}단계 중 ${short.length}단계 미달(${short.map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]}`).join('·')})` : `${l.policy.short} · 목표 있는 ${tgt.length}단계 모두 달성`;
+  return short.length ? `${l.policy.short} · 목표 있는 ${tgt.length}단계 중 ${short.length}단계 미달(${short.map((c) => `${ppText(c)}`).join('·')})` : `${l.policy.short} · 목표 있는 ${tgt.length}단계 모두 달성`;
 }
 export function compareLines(pp: PolicyProgress, policies: Policy[], rows: ProjectRow[], keys: string[]): CompareLine[] {
   return policies.filter((p) => keys.includes(p.key)).flatMap((policy) => {
@@ -304,6 +337,8 @@ export function compareLines(pp: PolicyProgress, policies: Policy[], rows: Proje
 /* '앞으로 12개월'의 두 이름: 준공만(사업 핵심 질문·종합상황판) · 모집·준공·입주(지역 공급). 범위는 둘 다 원장 관측 달부터 12개월 */
 export const AHEAD_COMPLETION = '앞으로 12개월 · 준공 예정';
 export const AHEAD_ALL = '앞으로 12개월 · 모집·준공·입주 예정';
+/* HOME 정책 추진현황의 이름(종합상황판 HOME 집계 — 공급(본 모집·분양) 일정 증가분, 2026-10-21 결정) */
+export const AHEAD_SUPPLY = '향후 12개월 공급 예정';
 export const aheadMonths = (observedMonth: string) => Array.from({ length: 12 }, (_, i) => addMonths(observedMonth, i));
 
 /* ---------- 핵심 질문 5(시안 app.js questions): 렌즈·지역·기관 범위로 다시 센다(상태·단계 칩과 상관없음) ---------- */
@@ -317,8 +352,8 @@ export function sourceNote(cells: StageCell[]): string {
   const odd: string[] = [];
   const by = new Map<number, StageCell[]>();
   for (const c of cells) if (c.actual != null) by.set(c.actual, [...(by.get(c.actual) ?? []), c]);
-  for (const [v, cs] of by) if (cs.length > 1) odd.push(`${cs.map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]}`).join('·')} ${fmt(v)}호`);
-  for (const c of cells) if (c.actual != null && c.target != null && c.actual === c.target) odd.push(`${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.actual)}/${fmt(c.target)}`);
+  for (const [v, cs] of by) if (cs.length > 1) odd.push(`${cs.map((c) => `${ppText(c)}`).join('·')} ${fmt(v)}호`);
+  for (const c of cells) if (c.actual != null && c.target != null && c.actual === c.target) odd.push(`${ppText(c)} ${fmt(c.actual)}/${fmt(c.target)}`);
   return `확인 값은 정책 진행 자료(HOME)의 원천 값 그대로(검증 대기)입니다.${odd.length ? ` ${odd.join(', ')}도 원천이 준 숫자 그대로입니다.` : ''}`;
 }
 export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Question[] {
@@ -332,8 +367,8 @@ export function questionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Q
     const short = pair.state === 'short', i = pair.board, r = rateOf(pair);
     Q.push({ q: `${policyLabel(pol)} 목표 대비`, href: !f.policy ? listHref(f, { policy: pk! }) : undefined, tone: short ? 'bad' : undefined,
       value: r.value, unit: r.unit, stages: cells!,
-      sub: `${BOARD_CIR[i]}${BOARD_NAMES[i]} 확인 ${fmt(pair.actual!)} / 목표 ${fmt(pair.target!)}`,
-      tip: `${pol.name} 단계별 목표 대비 확인(${ymText(pair.from)}~${ymText(pair.through)}) · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 달성률은 확인으로만 계산 · 확인 값은 HOME(정책 진행 자료) 원천 값 그대로${cells!.some(hasEstimate) ? ` · 담당자 추정 포함(확인과 따로): ${cells!.filter(hasEstimate).map((c) => `${BOARD_CIR[c.board]}${BOARD_NAMES[c.board]} ${fmt(c.withEst!)}호`).join(' · ')}` : ''} · 누르면 이 정책의 사업`,
+      sub: `${ppText(pair)} 확인 ${fmt(pair.actual!)} / 목표 ${fmt(pair.target!)}`,
+      tip: `${pol.name} 단계별 목표 대비 확인(${ymText(pair.from)}~${ymText(pair.through)}) · 정책 전체 범위(위 지역·기관 거르기와 상관없음) · 달성률은 확인으로만 계산 · 확인 값은 HOME(정책 진행 자료) 원천 값 그대로${cells!.some(hasEstimate) ? ` · 담당자 추정 포함(확인과 따로): ${cells!.filter(hasEstimate).map((c) => `${ppText(c)} ${fmt(c.withEst!)}호`).join(' · ')}` : ''} · 누르면 이 정책의 사업`,
       help: `${policyLabel(pol)}이 올해 1월부터 단계마다 세운 목표 집 수(호)와 실제 기록으로 확인한 집 수입니다. 달성 % = 확인 ÷ 목표(100%가 목표), 목표를 정하지 않은 단계는 '목표 없음'. 정책 전체 숫자라 지역·기관 거르기와 상관없습니다.`,
       note: sourceNote(cells!) });
   } else {
@@ -559,4 +594,141 @@ export function hiddenNote(at: string, reason: string | undefined) {
     .replace(/\s*—\s*[^—()]*\d+절[^()—]*/g, '')
     .replace(/\(\s*\)/g, '').trim();
   return { text: `${at.replace(/-/g, '.')}부터 목록에서 뺀 사업입니다 · 대신할 사업 없음`, title: why };
+}
+
+/* ---------- HOME 원천 행(사업 화면 /projects — 2026-10-21 사용자 결정: 셈 단위·범위·값 = HOME PoC) ----------
+   사업 = HOME 원천 사업후보 행(PRO_) 하나(data/board/home-projects.json rows — tools/ledger/home-projects.js 머리 주석). 해제(통계 밖) 행은 뺀다.
+   기본 범위 = 9·7 포트폴리오(확정 연결 230행, 물량 집계 175행), 전 정책은 ?policy=all(443행, 집계 346행). 같은 현장으로 합친 원장 사업 수는 보조 표기(ourId 수).
+   단계 = PoC 누적 도달(reached — 그 단계 또는 뒤 단계 실제 사건 최대 호수, 입력·추정 포함)이 있는 가장 뒤 칸, 칸 이름은 정책 화면 PoC 이름(HOME_NAMES — 건설은 준공 포함).
+   상태 = PoC 사업 판정(도래 목표 대비 측정 부족률 2% 이상 지연, 0~2% 주의), 기관 = PoC 기관 이름(agencyName), 12개월 = 향후 12개월 공급(모집·분양) 예정 증가분 */
+export const HOME_NAMES = ['정책', '사업화', '인허가', '건설', '공급', '입주'] as const;
+export const HOME_DEFAULT_POLICY = '97';
+/* HOME 단계 → 6칸(준공은 건설 칸 — 종합상황판 home-board.js SLOT 과 같다) */
+export const HOME_SLOT: Record<string, number> = { BUSINESS: 1, APPROVAL: 2, CONSTRUCTION: 3, COMPLETION: 3, SUPPLY: 4, MOVE_IN: 5 };
+/* 정책 목표 대비 칸(PP_STAGES)의 이름: 정책 화면 PoC 단계 이름(준공은 건설 끝) */
+export const PP_NAME: Record<string, string> = { BUSINESS: '사업화', APPROVAL: '인허가', CONSTRUCTION: '건설', SUPPLY: '공급', COMPLETION: '준공', MOVE_IN: '입주' };
+export const HOME_STATUS_NAME: Partial<Record<Status, string>> = { ok: '정상', caution: '주의', delay: '지연', none: '판정 미확보' };
+export const HOME_STATUS_TIP: Partial<Record<Status, string>> = {
+  ok: '기준일까지 도래한 단계 목표를 측정량(담당자 입력 포함)이 채움', caution: '도래 목표 대비 측정 부족률 0% 초과~2% 미만', delay: '도래 목표 대비 측정 부족률 2% 이상',
+  none: '판정 미확보 — 기준일까지 도래한 목표가 없거나 같은 단계 측정이 없음(물량 집계에서 뺀 중복 행은 판정하지 않음)',
+};
+export const HOME_STATUS_ORDER: Status[] = ['ok', 'caution', 'delay', 'none'];
+/* 옛 기관 열쇠(?agency=lh …) → PoC 기관 이름 */
+export const HOME_AGENCY_OF_KEY: Record<string, string> = { lh: 'LH', sh: 'SH', gh: 'GH', ih: '인천도시공사', etc: '기관 미상' };
+export const HOME_UNIT = 'HOME 원천 행';
+
+export type HomeDocRow = {
+  id: string; ourId: string | null; name: string; region: string; sgg: { id: string; name: string; codes: string[] } | null;
+  policy: { id: string | null; status: string; programId: string | null; program: string | null }; stats: boolean; p97: boolean; chart: { p97: boolean; all: boolean };
+  units: { planned: number | null; counted: number | null }; reached: Record<string, number> | null; judge: { status: string; gap: number | null } | null;
+  upcoming: [string, number][] | null; agency: string | null; progress: { pct: number; date: string | null } | null; loc: { ourSgg: string | null; block: string | null; district: string | null }; from: string;
+};
+export type HomeResidual = { id: string; field: string; dump: unknown; poc: unknown; use: string; why: string };
+/* counted = 집계 호수(물량 집계 대상 행의 대표 호수, 아니면 null) · reached = 단계별 누적 도달 · upcoming = 향후 12개월 공급 예정 호수 · ourId = 우리 원장 사업(같은 현장 병합) ·
+   board = 종합상황판 모집단(home-board.json — 9·7 포트폴리오: 덤프 집계 대상 + 덤프 뒤 생긴 집계 행(PoC 스냅샷), home-projects views.p97 과 같은 행) · snapshot = 덤프에 없어 PoC 스냅샷에서 온 행 */
+export type HomeExtra = { counted: number | null; chart: { p97: boolean; all: boolean }; p97: boolean; judge: string | null; gap: number | null; reached: Record<string, number> | null;
+  upcoming: number; ourId: string | null; board: boolean; snapshot: boolean; policyStatus: string; progress: { pct: number; date: string | null } | null };
+
+const SIDO_CODE: Record<string, string> = { 서울특별시: '11', 인천광역시: '28', 경기도: '41' };
+const HOME_CLS: Record<string, Cls> = { NORMAL: 'ok', WARNING: 'caution', DELAYED: 'delay' };
+const polKey = (id: string) => { const m = /^POL_\d{4}_(\d{2})(\d{2})$/.exec(id); return m ? `${+m[1]}${+m[2]}` : null; };
+/* 그 칸의 누적 도달 호수(건설 칸 = 건설·준공 중 큰 값) */
+export const slotUnits = (reached: Record<string, number> | null, i: number) => (reached ? Math.max(0, ...Object.entries(reached).filter(([k]) => HOME_SLOT[k] === i).map(([, v]) => v)) : 0);
+
+export function homeRowsOf(rows: HomeDocRow[], residuals: HomeResidual[] = []): ProjectRow[] {
+  const dumpChart = new Map(residuals.filter((x) => x.field === 'chart.p97').map((x) => [x.id, !!x.dump]));
+  return rows.filter((r) => r.stats).map((r) => {
+    const sd = SIDO_CODE[r.region] ?? '';
+    const sgg = r.sgg ? (r.loc.ourSgg && r.sgg.codes.includes(r.loc.ourSgg) ? r.loc.ourSgg : r.sgg.codes[0] ?? `${sd}000`) : `${sd}000`;
+    const reached = r.reached ? HOME_NAMES.map((_, i) => i).filter((i) => i > 0 && slotUnits(r.reached, i) > 0) : [];
+    const key = r.policy.id ? polKey(r.policy.id) : null;
+    const planned = r.units.planned ?? 0;
+    return {
+      id: r.id, name: r.name, issued: true, stage: `0${(reached.at(-1) ?? 0) + 1}`, cls: (r.judge && HOME_CLS[r.judge.status]) || null, why: null, overdue: null, next: null, units: planned,
+      sgg, sggName: r.sgg ? `${r.region} ${r.sgg.name}` : `${r.region} 시군구 미연결`, notice: null, programs: r.policy.program ? [r.policy.program] : [], policies: key ? [key] : [],
+      link: r.policy.status === 'CONFIRMED' ? 'CONFIRMED' : 'REVIEW_REQUIRED', agency: r.agency ?? '기관 미상', reached, completion: null, board: reached.at(-1) ?? 0,
+      home: { counted: r.units.counted, chart: r.chart, p97: r.p97, judge: r.judge?.status ?? null, gap: r.judge?.gap ?? null, reached: r.reached, upcoming: (r.upcoming ?? []).reduce((s, x) => s + x[1], 0),
+        ourId: r.ourId, board: r.p97 && (dumpChart.get(r.id) ?? r.chart.p97), snapshot: r.from === 'snapshot', policyStatus: r.policy.status, progress: r.progress },
+    };
+  });
+}
+/* 프로그램 메뉴(PoC 프로그램 이름 하나 = 하나, 행 많은 순) */
+export function homeProgramsOf(rows: ProjectRow[]): Program[] {
+  const m = new Map<string, { policies: Set<string>; projects: number }>();
+  for (const r of rows) for (const name of r.programs) { const x = m.get(name) ?? { policies: new Set<string>(), projects: 0 }; x.projects++; for (const p of r.policies) x.policies.add(p); m.set(name, x); }
+  return [...m].map(([name, x]) => ({ name, policies: [...x.policies].sort(), projects: x.projects })).sort((a, b) => b.projects - a.projects || a.name.localeCompare(b.name, 'ko'));
+}
+/* 기관 메뉴(PoC 기관 이름, 행 많은 순) */
+export const homeAgenciesOf = (rows: ProjectRow[]) => [...rows.reduce((m, r) => m.set(r.agency ?? '기관 미상', (m.get(r.agency ?? '기관 미상') ?? 0) + 1), new Map<string, number>())].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'ko')).map(([name, n]) => ({ name, n }));
+/* 물량 집계 기준: 9·7 렌즈(9·7 대책 또는 9·7 프로그램)는 9·7 집계 대상(chart.p97), 그 밖은 정책 전체 집계 대상(chart.all) — PoC /map/dashboard 의 두 응답 */
+export const homeChartOf = (f: Filters) => {
+  const p97 = f.policy?.key === HOME_DEFAULT_POLICY || (!!f.program && f.program.policies.includes(HOME_DEFAULT_POLICY));
+  return (r: ProjectRow) => !!r.home && (p97 ? r.home.chart.p97 : r.home.chart.all);
+};
+/* 요약: 원천 행 수 · 집계 행 · 중복/모호 제외 · 물량 없음 · 집계 호수 · 같은 현장 병합 원장 사업 수(보조) · 원장 미연결 행 */
+export function homeSummaryOf(rows: ProjectRow[], chartOf: (r: ProjectRow) => boolean) {
+  const ch = rows.filter(chartOf), counted = ch.filter((r) => (r.home?.counted ?? 0) > 0);
+  return {
+    n: rows.length, chart: ch.length, counted: counted.length, excluded: rows.length - ch.length, missing: ch.length - counted.length, units: counted.reduce((s, r) => s + r.home!.counted!, 0),
+    sites: new Set(rows.map((r) => r.home?.ourId).filter(Boolean)).size, unlinked: rows.filter((r) => !r.home?.ourId).length,
+    delay: rows.filter((r) => r.cls === 'delay').length, caution: rows.filter((r) => r.cls === 'caution').length,
+  };
+}
+/* 단계별 진행(HOME): n·now = 그 칸까지 온 행·지금 그 칸인 행(목록 거르기와 같은 board), 호수 = 집계 행의 누적 도달 합(①정책 = 집계 호수) — PoC 정책 화면 지도 값(사업화·인허가·건설·공급 도달) */
+export function homePipelineOf(rows: ProjectRow[], chartOf: (r: ProjectRow) => boolean) {
+  const ch = rows.filter(chartOf);
+  const cells: PipeCell[] = HOME_NAMES.map((_, i) => {
+    const hit = rows.filter((r) => r.board >= i);
+    return { i, n: hit.length, units: ch.reduce((s, r) => s + (i === 0 ? r.home!.counted ?? 0 : slotUnits(r.home!.reached, i)), 0), share: rows.length ? hit.length / rows.length * 100 : 0, now: rows.filter((r) => r.board === i).length };
+  });
+  const open = (c: PipeCell) => c.n > 0 || c.now > 0;
+  return { total: rows.length, open: cells.filter(open), shut: cells.filter((c) => !open(c)).map((c) => c.i) };
+}
+/* 목록 순서(HOME): 지연 → 주의 → 정상 → 판정 미확보, 그 안에서 부족 호수 큰 순, 같으면 계획 호수 큰 순 */
+const HOME_RANK: Record<string, number> = { delay: 0, caution: 1, ok: 2 };
+export const homeListOrder = (rows: ProjectRow[]) => [...rows].sort((a, b) => (HOME_RANK[a.cls ?? ''] ?? 3) - (HOME_RANK[b.cls ?? ''] ?? 3) || (b.home?.gap ?? 0) - (a.home?.gap ?? 0) || b.units - a.units || a.name.localeCompare(b.name, 'ko'));
+/* 우선 점검(월간 보고): 지연·주의 행, 부족 호수 큰 순 */
+export const homePriorityOf = (rows: ProjectRow[]) => homeListOrder(rows.filter((r) => r.cls === 'delay' || r.cls === 'caution'));
+
+/* 핵심 질문(HOME): ① 정책 목표 대비(정책 전체 — questionsOf 와 같은 칸) ② 어디서 막혀(지연 행 집계 호수가 가장 큰 칸) ③ 어떤 사업(지연 행 수 · 주의 따로) ④ 어디 먼저(지연·주의 집계 호수가 가장 큰 시도·시군구) ⑤ 향후 12개월 공급 예정 */
+export function homeQuestionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Question[] {
+  const scope = scopeOf(rows, f), chartOf = homeChartOf(f), ch = scope.filter(chartOf), Q: Question[] = [];
+  const first = questionsOf([], { ...f, home: undefined, program: undefined, policy: f.policy?.key === HOME_DEFAULT_POLICY || !f.policy ? undefined : f.policy }, ctx)[0];
+  if (first?.stages) Q.push({ ...first, href: f.policy?.key === HOME_DEFAULT_POLICY ? undefined : first.href && listHref(f, { policy: HOME_DEFAULT_POLICY }) });
+  const units = (r: ProjectRow) => r.home?.counted ?? 0;
+  const byStage = [0, 0, 0, 0, 0, 0];
+  for (const r of ch) if (r.cls === 'delay') byStage[r.board] += units(r);
+  const neck = bottleneckOf(byStage);
+  Q.push({ q: '어디서 막혀 있는가', href: neck ? listHref(f, { stage: String(neck.i), status: 'late' }) : undefined, ink: neck ? BOARD_INK[neck.i] : undefined, muted: !neck,
+    value: neck ? `${BOARD_CIR[neck.i]} ${HOME_NAMES[neck.i]}` : '없음', unit: '', sub: neck ? `병목 · 지연 ${fmt(neck.units)}호` : '지연 사업 없음',
+    tip: `병목 = 지연(부족률 2% 이상) 사업의 집계 호수가 가장 큰 단계 · ${byStage.map((v, i) => `${BOARD_CIR[i]} ${fmt(v)}`).join(' · ')}`,
+    help: '단계 목표보다 2% 넘게 모자란 사업이 가장 많이(호수 기준) 멈춰 있는 단계입니다.' });
+  const nd = scope.filter((r) => r.cls === 'delay').length, nc = scope.filter((r) => r.cls === 'caution').length;
+  Q.push({ q: '어떤 사업이 늦어지는가', href: nd ? listHref(f, { status: 'late' }) : nc ? listHref(f, { status: 'caution' }) : undefined, value: fmt(nd), unit: '건', sub: `지연 ${fmt(nd)} · 주의 ${fmt(nc)}`,
+    tip: `지연 = 도래 목표 대비 측정 부족률 2% 이상 · 주의 = 0% 초과~2% 미만(따로 셈) · 누르면 지연 목록(건수 = 이 숫자)`,
+    help: '기준일까지 와야 할 단계 목표보다 실제(담당자 입력 포함)가 2% 넘게 모자란 사업 수입니다. 2%보다 적게 모자라면 주의로 따로 셉니다.' });
+  const bySgg = !!(f.sido || f.sgg), acc = new Map<string, number>();
+  for (const r of ch) if (r.cls === 'delay' || r.cls === 'caution') { const k = bySgg ? r.sgg : r.sgg.slice(0, 2); acc.set(k, (acc.get(k) ?? 0) + units(r)); }
+  const top = [...acc].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  Q.push({ q: '어디를 먼저 챙기는가', muted: !top, value: top ? (bySgg ? ctx.sggName(top[0]) : ctx.sidoName(top[0])) : '없음', unit: '',
+    href: top ? (bySgg ? (top[0] !== f.sgg ? listHref(f, { sgg: top[0] }) : undefined) : listHref(f, { sido: top[0] })) : undefined,
+    sub: top ? `지연·주의 ${fmt(top[1])}호` : '지연·주의 사업 없음', tip: `지연·주의 사업 집계 호수가 가장 큰 ${bySgg ? '시군구' : '시도'}`,
+    help: `단계 목표보다 모자란 사업의 호수가 가장 많은 ${bySgg ? '시군구' : '시도'}입니다.` });
+  const up = ch.filter((r) => (r.home?.upcoming ?? 0) > 0);
+  const sido = f.sgg ? f.sgg.slice(0, 2) : f.sido ?? (f.metro ? '' : 'all');
+  Q.push({ q: '앞으로 얼마나 공급되는가', href: `/region${sido ? `?sido=${sido}` : ''}`, value: fmt(up.reduce((s, r) => s + r.home!.upcoming, 0)), unit: '호', sub: `${AHEAD_SUPPLY} · ${fmt(up.length)}건`,
+    tip: `${AHEAD_SUPPLY} = 이 범위 집계 행의 공급(본 모집·분양) 일정 중 ${ymText(ctx.observedMonth)}부터 12개월 안의 증가분(이미 측정된 공급 제외) · 누르면 지역 공급`,
+    help: `${ymText(ctx.observedMonth)}부터 12개월 안에 모집·분양으로 공급될 예정인 집 수입니다. 이미 공급된 물량은 뺍니다.` });
+  return Q;
+}
+
+/* 일반사용자 사업 창(project-window PublicWin.home): 원장 사업(ourId)에 합쳐진 HOME 원천 행들의 판정: 지연 > 주의 > 정상 > 판정 미확보 중 가장 나쁜 것, 부족 호수 = 그 판정인 행들의 부족 호수 합. 원천 행이 없으면 null */
+const JUDGE_RANK: Record<string, number> = { delay: 3, caution: 2, ok: 1 };
+export type PublicJudge = { cls: Cls | null; gap: number | null };
+export function homeJudgeOf(rows: ProjectRow[], ourId: string): PublicJudge | null {
+  const hs = rows.filter((x) => x.home?.ourId === ourId);
+  if (!hs.length) return null;
+  const top = hs.reduce<Cls | null>((b, x) => ((JUDGE_RANK[x.cls ?? ''] ?? 0) > (JUDGE_RANK[b ?? ''] ?? 0) ? x.cls : b), null);
+  const gap = top ? hs.filter((x) => x.cls === top).reduce((n, x) => n + (x.home!.gap ?? 0), 0) : 0;
+  return { cls: top, gap: gap || null };
 }

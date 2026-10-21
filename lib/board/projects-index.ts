@@ -3,15 +3,18 @@
    - getProjectsIndex: 사업 목록(지도 색인 ledger-map.json 의 행 + projects-index.json 의 공고 확인·프로그램·정책 연결·기관·확인 단계·준공 예정 + 시군구 이름). /projects.
    - getProjectDrawer: 상세 서랍(/projects?id=) 하나 — 발급 사업의 일정·공정률·근거(project-detail.json, tools/ledger/projects-index.js). 대체된 옛 id 는 대표 사업으로, 숨김 사업은 안내만.
    - getPolicyProgress: 9·7 정책 단계별 목표·확인(policy-progress.json, tools/ledger/policy-progress.js). /projects.
+   - getHomeProjects: 사업 화면 목록 = HOME 원천 행(PRO_ — data/board/home-projects.json, tools/ledger/home-projects.js, 2026-10-21 PoC 규칙 — projects-view homeRowsOf). /projects · 종합상황판 목록 창.
    서랍은 ?id= 인 사업 것만 꺼낸다(상세 자료 전체를 화면에 넘기지 않는다). 요청마다 한 번만 만든다(cache). */
 import { cache } from 'react';
 import mapJson from '../../data/board/ledger-map.json';
 import indexJson from '../../data/board/projects-index.json';
 import detailJson from '../../data/board/project-detail.json';
 import progressJson from '../../data/board/policy-progress.json';
+import homeBoardJson from '../../data/board/home-board.json';
+import homeProjectsJson from '../../data/board/home-projects.json';
 import { DETAILS } from '../shell/menu';
 import { SGG, getBoardData } from './data';
-import { drawerTarget, rowsOf, type IndexExtra, type MapRow, type Policy, type PolicyProgress, type ProjectDetail, type ProjectRow, type Program } from './projects-view';
+import { drawerTarget, homeAgenciesOf, homeProgramsOf, homeRowsOf, rowsOf, type HomeDocRow, type HomeResidual, type IndexExtra, type MapRow, type Policy, type HomeCheck, type PolicyProgress, type ProjectDetail, type ProjectRow, type Program } from './projects-view';
 import type { RegistryProject } from './types';
 import { AGENCY_SHORT, stepsOf, type Steps } from './public-labels';
 
@@ -25,10 +28,25 @@ type DetailDoc = { observedMonth: string; referenceDate: string; agencies: Recor
 export const getProjectsIndex = cache(async () => {
   const map = mapJson as unknown as MapDoc, idx = indexJson as unknown as IndexDoc;
   const rn = idx.renewal;
-  return { rows: rowsOf(map.bySgg, idx.projects, idx.sgg), renewalRows: rn ? rowsOf(rn.bySgg, rn.projects, rn.sgg) : [], policies: idx.policies, programs: idx.programs, sggNames: idx.sgg, referenceDate: map.referenceDate, observedMonth: map.observedMonth };
+  /* homeRows = HOME 원천 행(getHomeProjects) — 종합상황판 목록 창(lib/board/board-lists.ts)이 카드 숫자와 같은 모집단으로 쓴다 */
+  return { rows: rowsOf(map.bySgg, idx.projects, idx.sgg), renewalRows: rn ? rowsOf(rn.bySgg, rn.projects, rn.sgg) : [], policies: idx.policies, programs: idx.programs, sggNames: idx.sgg, referenceDate: map.referenceDate, observedMonth: map.observedMonth,
+    homeRows: (await getHomeProjects()).rows };
 });
 
-export const getPolicyProgress = cache(async () => progressJson as unknown as PolicyProgress);
+/* HOME 원천 행 목록: 정책·시군구 이름은 사업 색인 것(정책 열쇠 97·129·813), 프로그램·기관 메뉴는 행에서. 기준일 = HOME 덤프 기준일 */
+type HomeDoc = { asOf: string; rows: HomeDocRow[]; residuals: HomeResidual[] };
+export const getHomeProjects = cache(async () => {
+  const doc = homeProjectsJson as unknown as HomeDoc, idx = indexJson as unknown as IndexDoc;
+  const rows = homeRowsOf(doc.rows, doc.residuals);
+  return { rows, policies: idx.policies, programs: homeProgramsOf(rows), agencies: homeAgenciesOf(rows), sggNames: idx.sgg, referenceDate: doc.asOf, observedMonth: doc.asOf.slice(0, 7) };
+});
+
+/* 9·7 단계 칸은 HOME 정책 추진현황 판정(home-board.json home.stageChecks, 2026-10-21 결정)을 단계마다 home 으로 붙여 쓴다 */
+export const getPolicyProgress = cache(async () => {
+  const pp = progressJson as unknown as PolicyProgress, checks = (homeBoardJson as unknown as { home?: { policyId: string; stageChecks?: Record<string, HomeCheck> } }).home;
+  if (!checks?.stageChecks) return pp;
+  return { ...pp, policies: pp.policies.map((p) => (p.policyId !== checks.policyId ? p : { ...p, stages: Object.fromEntries(Object.entries(p.stages).map(([k, st]) => [k, checks.stageChecks![k] ? { ...st, home: checks.stageChecks![k] } : st])) })) };
+});
 
 /* 일반사용자 사업 찾기(/citizen/projects) 목록 칸: 사업 id → 네 고비(모집 공고·착공·준공·입주, 실제 > 예정) · 시행 기관 짧은 이름 · 마지막 공정률(%).
    /citizen 빌드(tools/design/public-mock/build_data.py 의 det·ex)와 같은 규칙 — public-labels stepsOf·AGENCY_SHORT */

@@ -13,36 +13,43 @@ import { mapScopeHref } from '@/lib/board/map-href';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '@/lib/board/metro-overview';
 import { getProjectDrawer, getProjectsIndex, getPublicDetails } from '@/lib/board/projects-index';
 import { projectWindow } from '@/lib/board/project-window';
-import { applyFilters, isMetro, parseFilters, pastDueOf } from '@/lib/board/projects-view';
+import { applyFilters, homeRowsOf, isMetro, parseFilters, type HomeDocRow, type HomeResidual } from '@/lib/board/projects-view';
+import homeJson from '@/data/board/home-projects.json';
 import {
-  AGENCY_FULL, METRO, STAGE_GROUPS, bigNum, byYear, findHref, ho, inSupply, nameMatch, publicItems, refText, shortName,
+  AGENCY_FULL, DUP_TEXT, DUP_TIP, METRO, PUBLIC_OF_HOME, STAGE_GROUPS, bigNum, byYear, findHref, ho, homeFact, nameMatch, publicItems, refText, shortName,
   type FindQuery, type PublicItem, type StageGroup,
 } from '@/lib/board/public-labels';
 
-/* 일반사용자 '사업 찾기'(2026-10-19, 제안서 scratchpad/public-menus/proposal.md 4절). 정책 /projects 와 같은 목록 행(getProjectsIndex → rowsOf)·같은 거르기(parseFilters·applyFilters)이고
-   이름·열·거르기만 다르다: 수도권(서울·인천·경기)의 공급 예정 사업(①~④ — /citizen 공급 예정 호수와 같은 범위)만, 들어올 해별 묶음, 묶음 안은 들어올 때 가까운 순(/citizen 시트 inCmp).
+/* 일반사용자 '사업 찾기'(2026-10-19, 제안서 scratchpad/public-menus/proposal.md 4절). 정책 /projects 와 같은 거르기(parseFilters·applyFilters)이고 이름·열·거르기만 다르다.
+   2026-10-21 HOME PoC 수치 일치(사용자 결정): 목록 줄 = HOME 원천 사업 행(PRO_ — data/board/home-projects.json, 정책 /projects 와 같은 homeRowsOf) 중 수도권 '정책 전체'(해제 뺀 443행,
+   민간 정비·민간 포함 — /citizen 공급 예정 호수와 같은 범위), 호수 = 집계 호수(겹쳐서 뺀 행은 DUP_TEXT), 단계 = PoC 누적 도달 칸 → 일반사용자 이름(PUBLIC_OF_HOME),
+   예정 대비 = PoC 판정(homeFact), 시행 = PoC 기관 이름, 공사 % = PoC 공정률. 다음 일정·들어올 때·사업 창은 같은 현장 원장 사업(ourId)의 값(없으면 미정·창 없음).
+   들어올 해별 묶음, 묶음 안은 들어올 때 가까운 순(/citizen 시트 inCmp).
    주소: ?sido=metro|11|28|41 · ?sgg=시군구 · ?stage=prep|build|sale · ?q=이름 · ?id=사업(사업 창 — 2026-10-19 서랍 대체, 한 번에 1개). 주소에 지역이 없으면 내 동네(localStorage myArea)로 한 번 옮긴다.
    지연은 안 A — 사실 문장만(중립 색, 건수·'늦어지는 사업만' 거르기 없음). 정책 목표 대비·병목·핵심 질문·누적 진행·정책/기관/상태 칩·CSV·인쇄·사업 id·근거 접힘은 두지 않는다. */
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 const one = (v: string | string[] | undefined) => (typeof v === 'string' ? v : undefined);
 const STAGES = Object.keys(STAGE_GROUPS) as StageGroup[];
+const HOME = homeJson as unknown as { asOf: string; rows: HomeDocRow[]; residuals: HomeResidual[] };
 /* 오늘(한국 시각) — 다음 일정에서 지난 예정을 빼는 기준(/citizen 은 브라우저 날짜) */
 const todayKst = () => new Date(Date.now() + 9 * 3600e3).toISOString().slice(0, 10);
 
 async function load(searchParams: Props['searchParams']) {
   const [q, idx] = await Promise.all([searchParams, getProjectsIndex()]);
+  const home = homeRowsOf(HOME.rows).filter((r) => isMetro(r.sgg));
   const f = parseFilters({ sido: one(q.sido), sgg: one(q.sgg) }, { policies: [], programs: [], sidoOk: (c) => METRO.includes(c), guOf });
   const stage = STAGES.find((s) => s === one(q.stage));
   const text = (one(q.q) ?? '').trim().slice(0, 40);
   const id = one(q.id) ?? null;
   const asked = ['sido', 'sgg', 'id', 'q'].some((k) => one(q[k]) !== undefined);
-  /* 시도를 뗀 시군구 이름: 원장 이름('인천광역시 계양구' → '계양구'), 구가 있는 경기 시 코드는 지도 코드표('고양시') */
-  const sggShort = (c: string) => { const n = idx.sggNames[c]; return n ? n.slice(n.indexOf(' ') + 1) : METRO_AREAS[c] ?? c; };
+  /* 시도를 뗀 시군구 이름: 원장 이름('인천광역시 계양구' → '계양구'), 구가 있는 경기 시 코드는 지도 코드표('고양시'), 그 밖은 HOME 행의 시군구 이름(시군구 미연결은 '시군구 미정') */
+  const homeSgg = new Map(home.map((r) => [r.sgg, r.sggName]));
+  const sggShort = (c: string) => { const n = idx.sggNames[c] ?? homeSgg.get(c); return c.endsWith('000') ? '시군구 미정' : n ? n.slice(n.indexOf(' ') + 1) : METRO_AREAS[c] ?? c; };
   const region = f.sgg ? `${SIDO_SHORT[f.sgg.slice(0, 2)]} ${sggShort(f.sgg)}` : f.sido ? SIDO_SHORT[f.sido] : '수도권';
   const cur: FindQuery = f.sgg ? { sgg: f.sgg } : { sido: f.sido ?? 'metro' };
   /* 받은 쿼리 글자(첫 창의 '같은 단계' 링크가 지금 거르기를 지키게 — WindowSeed) */
   const search = new URLSearchParams(Object.entries(q).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : []))).toString();
-  return { f, idx, stage, text, id, asked, sggShort, region, cur, search };
+  return { f, idx, home, stage, text, id, asked, sggShort, region, cur, search };
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -81,14 +88,16 @@ const Tag = ({ children }: { children: string }) => <span className="mr-2 hidden
 /* 날짜 안에서는 줄을 바꾸지 않음(2026-10-19 1280 폭에서 '2025년 2월 / 18일' 처럼 끊김): 날짜 사이 공백만 줄바꿈 없는 공백으로 */
 const keepDate = (s: string) => s.replace(/\d{4}년(?: \d{1,2}월)?(?: \d{1,2}일)?/g, (m) => m.replace(/ /g, '\u00a0'));
 
-function Row({ x, href, on, withArea }: { x: PublicItem; href: string; on: boolean; withArea: boolean }) {
+function Row({ x, href, on, withArea }: { x: PublicItem; href: string | null; on: boolean; withArea: boolean }) {
   const tip = [x.full !== x.name ? x.full : '', x.agency ? `시행 ${AGENCY_FULL[x.agency] ?? x.agency}` : ''].filter(Boolean).join('\n');
   return (
     <div role="row" className={`${COLS} relative min-h-14 items-center border-b border-border py-2.5 text-body text-foreground last:border-b-0 odd:bg-[color-mix(in_srgb,var(--pn2)_45%,var(--card))] hover:bg-pn2 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:outline-primary has-[a[aria-current]]:bg-accent! has-[a[aria-current]]:outline has-[a[aria-current]]:outline-1 has-[a[aria-current]]:-outline-offset-1 has-[a[aria-current]]:outline-primary
       mobile:mt-2 mobile:gap-y-1.5 mobile:rounded-tile mobile:border mobile:border-border mobile:bg-card mobile:odd:bg-card mobile:px-tile-x mobile:py-tile-y mobile:last:border-b mobile:hover:bg-pn2`}>
       <span role="cell" className={`${CELL} flex flex-col items-start gap-y-1 mobile:flex-row mobile:flex-wrap mobile:items-baseline mobile:gap-x-2`}>
-        <RowLink pid={x.id} on={on} href={href} scroll={false} title={tip || undefined}
-          className="font-bold text-foreground no-underline [overflow-wrap:anywhere] after:absolute after:inset-0 hover:underline focus-visible:outline-none">{x.name}</RowLink>
+        {href && x.link ? (
+          <RowLink pid={x.link} on={on} href={href} scroll={false} title={tip || undefined}
+            className="font-bold text-foreground no-underline [overflow-wrap:anywhere] after:absolute after:inset-0 hover:underline focus-visible:outline-none">{x.name}</RowLink>
+        ) : <span className="font-bold text-foreground [overflow-wrap:anywhere]" title={tip || undefined}>{x.name}</span>}
         {withArea || x.sub ? (
           <span className="flex flex-wrap items-baseline gap-x-2 mobile:contents">
             {withArea ? <span className="ui-chip">{x.area}</span> : null}
@@ -96,7 +105,7 @@ function Row({ x, href, on, withArea }: { x: PublicItem; href: string; on: boole
           </span>
         ) : null}
       </span>
-      <span role="cell" className={`${CELL} self-center text-right tabular-nums mobile:self-start`}>{x.units ? ho(x.units) : <span className="text-muted-foreground">호수 미정</span>}</span>
+      <span role="cell" className={`${CELL} self-center text-right tabular-nums mobile:self-start`}>{x.units ? ho(x.units) : x.dup ? <span className="text-muted-foreground" title={DUP_TIP}>{DUP_TEXT}</span> : <span className="text-muted-foreground">호수 미정</span>}</span>
       <span role="cell" className={`${CELL} mobile:col-span-2`}><Progress x={x} /></span>
       <span role="cell" className={`${CELL} tabular-nums mobile:col-span-2 ${x.nextText === '미정' ? 'text-muted-foreground' : ''}`}><Tag>다음 일정</Tag>{keepDate(x.nextText)}</span>
       <span role="cell" className={`${CELL} tabular-nums mobile:col-span-2 ${x.inDay ? '' : 'text-muted-foreground'}`}><Tag>들어올 때</Tag>{keepDate(x.inText)}</span>
@@ -107,28 +116,31 @@ function Row({ x, href, on, withArea }: { x: PublicItem; href: string; on: boole
 }
 
 export default async function CitizenProjectsPage({ searchParams }: Props) {
-  const { f, idx, stage, text, id, asked, sggShort, region, cur, search } = await load(searchParams);
+  const { f, idx, home, stage, text, id, asked, sggShort, region, cur, search } = await load(searchParams);
   const today = todayKst();
   /* 첫 창(?id=): 창 props 는 projectWindow 결과만(수도권 발급 사업 — 허용 목록, RSC 페이로드에 공개된다) */
   const [details, win] = await Promise.all([getPublicDetails(), id ? projectWindow(id, 'public', { today }) : null]);
-  /* 범위: 정책 화면과 같은 지역 거르기(수도권 밖 시도는 parseFilters 가 받지 않는다) → 공급 예정(①~④) → 단계 묶음 */
-  const scope = applyFilters(idx.rows, f).filter((r) => isMetro(r.sgg) && inSupply(r.board));
-  const staged = stage ? scope.filter((r) => (STAGE_GROUPS[stage] as readonly number[]).includes(r.board)) : scope;
+  /* 범위: 정책 화면과 같은 지역 거르기(수도권 밖 시도는 parseFilters 가 받지 않는다) → HOME PoC 행(정책 전체) → 단계 묶음(일반사용자 칸) */
+  const ours = new Map([...idx.rows, ...idx.renewalRows].map((r) => [r.id, r]));
+  const scope = applyFilters(home, f);
+  const pb = (r: (typeof home)[number]) => PUBLIC_OF_HOME[r.board] ?? 0;
+  const staged = stage ? scope.filter((r) => (STAGE_GROUPS[stage] as readonly number[]).includes(pb(r))) : scope;
   const area = (c: string) => (f.metro ? `${SIDO_SHORT[c.slice(0, 2)]} ${sggShort(c)}` : sggShort(c));
   const all = publicItems(staged.map((r) => {
-    const x = details[r.id];
-    return { id: r.id, name: r.name, sgg: r.sgg, area: area(r.sgg), units: r.units, board: r.board, issued: r.issued, cls: r.cls, overdue: r.overdue, next: r.next,
-      pastDue: pastDueOf(r), steps: x?.steps ?? [null, null, null, null], agency: x?.agency ?? '', progress: x?.progress ?? null };
+    const h = r.home!, o = h.ourId ? ours.get(h.ourId) : undefined, x = h.ourId ? details[h.ourId] : undefined;
+    return { id: r.id, name: r.name, sgg: r.sgg, area: area(r.sgg), units: h.counted ?? 0, board: pb(r), issued: true, cls: r.cls, overdue: o?.overdue ?? null, next: o?.next ?? null,
+      pastDue: false, steps: x?.steps ?? [null, null, null, null], agency: r.agency === '기관 미상' ? '' : r.agency ?? '', progress: h.progress ? Math.round(h.progress.pct) : null,
+      fact: homeFact(r.cls, h.gap, o?.overdue ?? null), dup: !h.chart.all && (r.units ?? 0) > 0, link: h.ourId && details[h.ourId] ? h.ourId : null };
   }), today, sggShort);
   const items = text ? all.filter((x) => nameMatch(text, [x.name, x.full])) : all;
   const groups = byYear(items, today);
   const units = items.reduce((s, x) => s + x.units, 0);
   const at = (p: FindQuery) => findHref({ ...cur, stage, q: text || undefined, ...p });
   /* 창 제목 = 목록에 보이는 이름(같은 이름 사업을 가른 이름), 목록에 없으면 짧은 이름 */
-  const sel = win ? { ...win, title: all.find((x) => x.id === win.canonical)?.name ?? win.title } : null;
-  /* 시군구 메뉴: 고른 시도의 공급 예정 사업이 있는 시군구 */
+  const sel = win ? { ...win, title: all.find((x) => x.link === win.canonical)?.name ?? win.title } : null;
+  /* 시군구 메뉴: 고른 시도의 HOME 행이 있는 시군구(시군구 미연결 행은 시도 전체에서만) */
   const sd = f.sgg ? f.sgg.slice(0, 2) : f.sido;
-  const sggItems = sd ? [...new Set(idx.rows.filter((r) => r.sgg.startsWith(sd) && inSupply(r.board)).map((r) => r.sgg))].map((code) => ({ code, label: sggShort(code) })).sort((a, b) => a.label.localeCompare(b.label, 'ko')) : [];
+  const sggItems = sd ? [...new Set(home.filter((r) => r.sgg.startsWith(sd) && !r.sgg.endsWith('000')).map((r) => r.sgg))].map((code) => ({ code, label: sggShort(code) })).sort((a, b) => a.label.localeCompare(b.label, 'ko')) : [];
   const mapTo = mapScopeHref({ sgg: f.sgg ?? null, sido: f.sido ?? null });
   const empty = [stage && { href: at({ stage: undefined }), label: '단계 전체로' }, text && { href: at({ q: undefined }), label: '이름 검색 지우기' },
     f.sgg ? { href: at({ sgg: undefined, sido: f.sgg.slice(0, 2) }), label: `${SIDO_SHORT[f.sgg.slice(0, 2)]} 전체로` } : f.sido ? { href: at({ sido: 'metro' }), label: '수도권 전체로' } : null].filter(Boolean) as { href: string; label: string }[];
@@ -138,11 +150,11 @@ export default async function CitizenProjectsPage({ searchParams }: Props) {
       {asked ? null : <MyAreaFirst stage={stage} />}
       <PageHead title="사업 찾기"
         meta={<span className="inline-flex items-center gap-x-1">{refText(idx.referenceDate)}
-          <InfoTip label="자료 기준"><p>국토교통부·LH·SH·GH·iH 공공 자료를 모은 수도권(서울·인천·경기) 공공 주택 사업이에요</p><p>예정일은 사업 시행자 계획이라 바뀔 수 있어요</p><p>출처: 국토교통부 건축HUB · LH · 청약홈</p></InfoTip></span>} />
+          <InfoTip label="자료 기준"><p>국토교통부·LH·SH·GH·iH 공공 자료를 모은 수도권(서울·인천·경기) 주택 공급 정책 사업이에요</p><p>예정일은 사업 시행자 계획이라 바뀔 수 있어요</p><p>출처: 국토교통부 건축HUB · LH · 청약홈</p></InfoTip></span>} />
       <FindFilters sido={cur.sido ?? f.sgg!.slice(0, 2)} sgg={f.sgg ? { code: f.sgg, label: sggShort(f.sgg) } : null} sggItems={sggItems} stage={stage} q={text} />
       <Card render={<section aria-labelledby="find-list" />}>
         <PanelHead id="find-list" title="사업 목록"
-          scope={<><ScopeChip scope={region} source="공공 사업" title={`${region}의 공공 사업`} /><InfoTip label="사업 수"><p>지금 짓기 전이거나 짓는 중이거나 모집 공고까지 나간 공공 주택 사업이에요(종합상황판의 공급 예정 호수와 같은 범위)</p><p>들어올 해별로 묶고, 들어올 때가 가까운 순이에요</p></InfoTip></>}>
+          scope={<><ScopeChip scope={region} title={`${region}의 주택 공급 정책 사업(공공·조합·민간)`} /><InfoTip label="사업 수"><p>주택 공급 정책에 연결된 수도권 사업이에요. 공공 사업과 함께 재개발·재건축 조합 사업과 민간 사업도 들어 있어요(종합상황판의 공급 예정 호수와 같은 범위)</p><p>같은 사업이 여러 자료에 겹쳐 있으면 한 줄씩 보이고 호수는 한 번만 세요</p><p>들어올 해별로 묶고, 들어올 때가 가까운 순이에요</p></InfoTip></>}>
           {mapTo ? <a href={mapTo} className={LINK}>지도에서 보기<ChevronRight className="size-3.5 shrink-0" aria-hidden="true" /></a> : null}
         </PanelHead>
         <MetricRow className="mb-2" value={bigNum(units)} unit="호" items={[`${items.length.toLocaleString('ko-KR')}곳`]} />
@@ -159,7 +171,7 @@ export default async function CitizenProjectsPage({ searchParams }: Props) {
                     <span className="text-meta text-muted-foreground tabular-nums">{`${g.items.length}곳 · ${ho(g.units)}`}</span>
                   </div>
                 </div>
-                {g.items.map((x) => <Row key={x.id} x={x} href={at({ id: x.id })} on={x.id === sel?.canonical} withArea={!f.sgg} />)}
+                {g.items.map((x) => <Row key={x.id} x={x} href={x.link ? at({ id: x.link }) : null} on={!!x.link && x.link === sel?.canonical} withArea={!f.sgg} />)}
               </section>
             ))}
           </div>

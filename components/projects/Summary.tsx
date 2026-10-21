@@ -17,7 +17,7 @@ import { HATCH } from '@/components/ui/chips';
 import InfoTip from '@/components/ui/info-tip';
 import LinkPending from '@/components/ui/link-pending';
 import { ChevronRight } from 'lucide-react';
-import { AHEAD_COMPLETION, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, DELAY_GROUP, compareHead, hasEstimate, hasTarget, pct1, policyLabel, rateOf, stageCellTip, ymText, type CompareLine, type PipeCell, type Question, type StageCell } from '@/lib/board/projects-view';
+import { AHEAD_COMPLETION, AHEAD_SUPPLY, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, DELAY_GROUP, HOME_NAMES, PP_NAME, PP_STAGES, compareHead, ppSlot, ppText, hasEstimate, hasTarget, pct1, policyLabel, rateOf, stageCellTip, ymText, type CompareLine, type PipeCell, type Question, type StageCell } from '@/lib/board/projects-view';
 
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 const man = (v: number) => (v === 0 ? '0' : v >= 10000 ? `${+(v / 10000).toFixed(1)}만` : fmt(v));
@@ -32,7 +32,7 @@ const TargetLine = ({ at }: { at: number }) => <span data-slot="target-line" cla
 
 /* 첫 칸의 단계 칸 미니 막대: 확인/목표(단계색 실색) 뒤에 담당자 추정 포함(옅은 점선) · 목표 = 100% 기준선 · 목표 미달은 빨간 테두리 · 목표만 있고 실적 없음은 빗금 · 목표 없음은 점선 한 줄 */
 function MiniBar({ c }: { c: StageCell }) {
-  const color = BOARD_COLOR[c.board];
+  const color = BOARD_COLOR[ppSlot(c.key)];
   if (c.target == null) return <span className="my-[2px] block h-[2px] border-t border-dashed border-line2" aria-hidden="true" />;
   if (c.actual == null) return <span className={cn('block h-[6px] rounded-full', HATCH)} style={{ backgroundColor: light(color, 30) }} aria-hidden="true" />;
   return (
@@ -55,7 +55,7 @@ function StageRates({ cells }: { cells: StageCell[] }) {
         return (
           <span key={c.key} title={stageCellTip(c, '', cells)} className={cn('flex min-w-0 flex-col gap-1', !both && 'text-muted-foreground')}>
             <span className="flex items-baseline justify-between gap-2">
-              <span style={both ? { color: BOARD_INK[c.board] } : undefined}>{BOARD_CIR[c.board]}{BOARD_NAMES[c.board]}</span>
+              <span style={both ? { color: BOARD_INK[ppSlot(c.key)] } : undefined}>{ppText(c)}</span>
               <span className={cn(short ? 'font-bold text-bad' : both && c.actual! > c.target! ? 'text-ok' : undefined)}>{both ? rateOf(c).word : ''}</span>
             </span>
             <MiniBar c={c} />
@@ -97,34 +97,41 @@ export function Questions({ list }: { list: Question[] }) {
   );
 }
 
-export function Pipeline({ open, total, on, href, badges }: { open: PipeCell[]; total: number; on?: number; href: (i: number) => string; badges?: ReactNode }) {
+/* home = HOME 원천 행(사업 화면 — 2026-10-21): 칸 이름은 정책 화면 PoC 이름(HOME_NAMES), 큰 숫자는 집계 행의 이 단계까지 온 호수(①정책 = 집계 호수) */
+export function Pipeline({ open, total, on, href, badges, home = false }: { open: PipeCell[]; total: number; on?: number; href: (i: number) => string; badges?: ReactNode; home?: boolean }) {
+  const NAMES = home ? HOME_NAMES : BOARD_NAMES;
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h3 className="ui-h3" title="큰 숫자·막대 = 이 단계까지 온 사업(지금 이 단계이거나 그 뒤 단계에 있는 사업 — ①계획은 전체)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에">단계별 진행</h3>
+        <h3 className="ui-h3" title={home ? '큰 숫자·막대 = 이 단계까지 온 호수(집계 행의 누적 — 그 단계 또는 뒤 단계 실제 기록의 최대 호수, 담당자 입력 포함 · ①정책은 집계 호수 전체)와 이 단계까지 온 행 · 지금 이 단계 = 실제 기록이 있는 가장 뒤 단계가 이 칸인 행 · 칸을 누르면 그 행만 목록에' : '큰 숫자·막대 = 이 단계까지 온 사업(지금 이 단계이거나 그 뒤 단계에 있는 사업 — ①계획은 전체)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에'}>단계별 진행</h3>
         <InfoTip label="단계별 진행">
-          <p>사업이 계획부터 입주까지 여섯 단계 중 어디까지 왔는지 셉니다.</p>
-          <p>큰 숫자는 이 단계까지 온 사업의 집 수(호)입니다. 지금 착공 단계인 사업은 계획·인허가에도 셉니다. &apos;지금 이 단계&apos;는 지금 바로 그 단계에 있는 사업 수입니다. 칸을 누르면 그 사업만 아래 목록에 남습니다.</p>
-          <p>&apos;누적&apos;이라 지금 그 단계인 호수만 세는 종합상황판 단계표와 다릅니다(종합상황판 착공은 통계누리 누계). &apos;사업 없음&apos; 칸은 이 단계까지 온 사업이 없다는 뜻입니다(⑥입주는 원천에 입주 실적이 없음).</p>
+          {home ? <>
+            <p>사업이 정책부터 입주까지 여섯 단계 중 어디까지 왔는지 셉니다(정책 진행 자료와 같은 단계 — 건설은 준공 포함).</p>
+            <p>큰 숫자는 이 단계까지 온 집 수(호)입니다. 사업마다 그 단계나 뒤 단계의 실제 기록(담당자 입력 포함) 중 가장 큰 호수를 더합니다(중복·모호 행은 빼고). &apos;지금 이 단계&apos;는 실제 기록이 있는 가장 뒤 단계가 이 칸인 사업 수입니다. 칸을 누르면 그 사업만 아래 목록에 남습니다.</p>
+          </> : <>
+            <p>사업이 계획부터 입주까지 여섯 단계 중 어디까지 왔는지 셉니다.</p>
+            <p>큰 숫자는 이 단계까지 온 사업의 집 수(호)입니다. 지금 착공 단계인 사업은 계획·인허가에도 셉니다. &apos;지금 이 단계&apos;는 지금 바로 그 단계에 있는 사업 수입니다. 칸을 누르면 그 사업만 아래 목록에 남습니다.</p>
+            <p>&apos;누적&apos;이라 지금 그 단계인 호수만 세는 종합상황판 단계표와 다릅니다(종합상황판 착공은 통계누리 누계). &apos;사업 없음&apos; 칸은 이 단계까지 온 사업이 없다는 뜻입니다(⑥입주는 원천에 입주 실적이 없음).</p>
+          </>}
         </InfoTip>
         {badges}
       </div>
       <ol className="m-0 mt-3 grid list-none gap-2 p-0 narrow:grid-cols-3! mobile:grid-cols-2! phone:grid-cols-2!" style={{ gridTemplateColumns: 'repeat(6,minmax(0,1fr))' }} aria-label="단계별 진행">
-        {BOARD_NAMES.map((_, i) => {
+        {NAMES.map((_, i) => {
           const c = open.find((x) => x.i === i);
           if (!c) return (
             <li key={i} className="min-w-0">
               <div className="ui-inset flex h-full min-h-[80px] flex-col justify-center gap-0.5"
-                title={`${BOARD_CIR[i]} ${BOARD_NAMES[i]} — 이 단계까지 온 사업이 없음${i === 5 ? ' · 입주 실적은 원천에서 집계하지 않음(실제 시작일만)' : ''}`}>
-                <span className="text-sm text-muted-foreground">{BOARD_CIR[i]} {BOARD_NAMES[i]}</span>
+                title={`${BOARD_CIR[i]} ${NAMES[i]} — 이 단계까지 온 사업이 없음${i === 5 && !home ? ' · 입주 실적은 원천에서 집계하지 않음(실제 시작일만)' : ''}`}>
+                <span className="text-sm text-muted-foreground">{BOARD_CIR[i]} {NAMES[i]}</span>
                 <span className="text-sm text-muted-foreground">사업 없음</span>
               </div>
             </li>
           );
-          const tip = `${BOARD_CIR[c.i]} ${BOARD_NAMES[c.i]} — 이 단계까지 온 사업 ${fmt(c.n)}건(${pct1(c.share)}% · 지금 이 단계이거나 그 뒤 단계인 사업) · 계획 호수 ${fmt(c.units)}호 · 지금 이 단계 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만 목록에' : ''}`;
+          const tip = `${BOARD_CIR[c.i]} ${NAMES[c.i]} — 이 단계까지 온 사업 ${fmt(c.n)}건(${pct1(c.share)}% · 지금 이 단계이거나 그 뒤 단계인 사업) · ${home ? (c.i ? '이 단계까지 온 호수' : '집계 호수') : '계획 호수'} ${fmt(c.units)}호 · 지금 이 단계 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만 목록에' : ''}`;
           const body = (
             <>
-              <span className="flex items-center gap-1.5 text-sm whitespace-nowrap" style={{ color: BOARD_INK[c.i] }}><i className="block size-[9px] flex-none rounded-chip" style={{ background: BOARD_COLOR[c.i] }} aria-hidden="true" />{BOARD_CIR[c.i]} {BOARD_NAMES[c.i]}</span>
+              <span className="flex items-center gap-1.5 text-sm whitespace-nowrap" style={{ color: BOARD_INK[c.i] }}><i className="block size-[9px] flex-none rounded-chip" style={{ background: BOARD_COLOR[c.i] }} aria-hidden="true" />{BOARD_CIR[c.i]} {NAMES[c.i]}</span>
               <span className="flex flex-col">
                 <b className="text-xl leading-title font-bold tabular-nums">{fmt(c.units)}<small className="ml-[3px] font-sans text-sm whitespace-nowrap text-muted-foreground">호</small><small data-slot="stage-def" className="ml-1.5 font-sans text-sm font-normal whitespace-nowrap text-muted-foreground" title="이 단계까지 온 누적(지금 이 단계이거나 그 뒤 단계) — 종합상황판 단계표는 지금 그 단계인 호수, 지시 카드 착공은 통계누리 누계">누적</small></b>
                 <span className="text-sm text-muted-foreground tabular-nums">이 단계까지 온 사업 {fmt(c.n)} / {fmt(total)}</span>
@@ -152,7 +159,7 @@ export function Pipeline({ open, total, on, href, badges }: { open: PipeCell[]; 
 
 /* 목표 칸 하나: 목표·확인(+추정 포함) 막대 · 실적 없음 · 연말 목표만 */
 function TargetCell({ c, pol }: { c: StageCell; pol: string }) {
-  const color = BOARD_COLOR[c.board], tip = c.target != null ? `${pol} ${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — ${ymText(c.from)}~${ymText(c.through)} · 확인 ${c.actual != null ? `${fmt(c.actual)}호` : '없음'}${c.review ? `(확정 전 연결 ${fmt(c.review)}호 포함)` : ''}${hasEstimate(c) ? ` · 담당자 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호 — 확인과 구분)` : ''} / 목표 ${fmt(c.target)}호${c.actual != null ? ` · ${rateOf(c).word}(확인 기준)${c.state === 'short' ? ` · 목표까지 ${fmt(c.gap ?? 0)}호` : ''}` : ''} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}` : '';
+  const color = BOARD_COLOR[ppSlot(c.key)], tip = c.target != null ? `${pol} ${ppText(c)} — ${ymText(c.from)}~${ymText(c.through)} · 확인 ${c.actual != null ? `${fmt(c.actual)}호` : '없음'}${c.review ? `(확정 전 연결 ${fmt(c.review)}호 포함)` : ''}${hasEstimate(c) ? ` · 담당자 추정 포함 ${fmt(c.withEst!)}호(담당자 추정 입력 ${fmt(c.withEst! - c.actual!)}호 — 확인과 구분)` : ''} / 목표 ${fmt(c.target)}호${c.actual != null ? ` · ${rateOf(c).word}(확인 기준)${c.state === 'short' ? ` · 목표까지 ${fmt(c.gap ?? 0)}호` : ''}` : ''} · 목표: ${c.targetBasis} · 확인: ${c.actualBasis}` : '';
   if (c.target != null && c.actual != null) {
     const short = c.state === 'short', est = hasEstimate(c);
     return (
@@ -180,7 +187,7 @@ function TargetCell({ c, pol }: { c: StageCell; pol: string }) {
   }
   const ye = c.yearEnd!;
   return (
-    <div className="flex flex-col gap-1" title={`${pol} ${BOARD_CIR[c.board]} ${BOARD_NAMES[c.board]} — 같은 기간(${ymText(c.from)}~${ymText(c.through)}) 목표 없음 · 연말 목표 ${ye.date.replace(/-/g, '.')} ${fmt(ye.units)}호(${c.targetBasis})${c.actual != null ? ` · 확인 ${fmt(c.actual)}호(${c.actualBasis})` : ''}`}>
+    <div className="flex flex-col gap-1" title={`${pol} ${ppText(c)} — 같은 기간(${ymText(c.from)}~${ymText(c.through)}) 목표 없음 · 연말 목표 ${ye.date.replace(/-/g, '.')} ${fmt(ye.units)}호(${c.targetBasis})${c.actual != null ? ` · 확인 ${fmt(c.actual)}호(${c.actualBasis})` : ''}`}>
       <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums">연말 목표 <b className="text-sm text-foreground">{man(ye.units)}</b></span>
       {c.actual != null ? <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums">확인 {man(c.actual)}</span> : null}
     </div>
@@ -221,11 +228,11 @@ export function PolicyCompare({ lines, title, href, open = false }: { lines: Com
             </Link>
             {l.cells.filter(hasTarget).map((c) => (
               <div key={c.key} className="flex min-w-[150px] flex-col gap-1">
-                <span className="flex items-center gap-1.5 text-sm whitespace-nowrap" style={{ color: BOARD_INK[c.board] }} title={`정책 진행 자료(HOME)의 단계 이름 '${c.label}'`}><i className="block size-[9px] flex-none rounded-chip" style={{ background: BOARD_COLOR[c.board] }} aria-hidden="true" />{BOARD_CIR[c.board]} {BOARD_NAMES[c.board]}</span>
+                <span className="flex items-center gap-1.5 text-sm whitespace-nowrap" style={{ color: BOARD_INK[ppSlot(c.key)] }} title={`정책 진행 자료(HOME)의 단계 이름 '${c.label}'`}><i className="block size-[9px] flex-none rounded-chip" style={{ background: BOARD_COLOR[ppSlot(c.key)] }} aria-hidden="true" />{ppText(c)}</span>
                 <TargetCell c={c} pol={l.policy.short} />
               </div>
             ))}
-            {l.none.length ? <span className="ml-auto text-sm text-muted-foreground" title={`${l.none.map((i) => `${BOARD_CIR[i]} ${BOARD_NAMES[i]}`).join(' · ')} — 같은 기간 단계 목표가 배정되지 않음`}>{l.none.map((i) => BOARD_CIR[i]).join('')} 목표 없음</span> : null}
+            {l.none.length ? <span className="ml-auto text-sm text-muted-foreground" title={`${l.none.map((i) => PP_NAME[PP_STAGES[i]]).join(' · ')} — 같은 기간 단계 목표가 배정되지 않음`}>{l.none.map((i) => PP_NAME[PP_STAGES[i]]).join('·')} 목표 없음</span> : null}
           </Card>
         ))}
       </details>
@@ -241,7 +248,16 @@ export function PolicyCompare({ lines, title, href, open = false }: { lines: Com
 }
 
 /* 읽는 법: 핵심 정의를 눌러서 여는 ⓘ 하나로(문구 최소화). 인쇄에는 같은 정의를 펼친 목록으로 싣는다(print 만) */
-function Defs() {
+function Defs({ home = false }: { home?: boolean }) {
+  if (home) return (
+    <dl>
+      <dt>사업 · 집계</dt><dd>사업 = 정책 진행 자료의 원천 사업 한 줄 · 같은 블록의 중복·모호한 줄은 호수 집계에서 뺌(목록에는 남음) · 같은 현장을 합친 사업 원장 사업 수는 보조로</dd>
+      <dt>지연 · 주의</dt><dd>기준일까지 와야 할 단계 목표보다 실제(담당자 입력 포함)가 2% 넘게 모자라면 지연, 2%보다 적게 모자라면 주의 · 목표나 측정이 없으면 판정 미확보</dd>
+      <dt>이 단계까지 온 호수 · 지금 이 단계</dt><dd>이 단계까지 온 호수 = 그 단계나 뒤 단계의 실제 기록이 있는 호수 · 지금 이 단계 = 실제 기록이 있는 가장 뒤 단계가 그 칸인 사업(칸을 누르면 목록이 그 사업만)</dd>
+      <dt>병목</dt><dd>지연 사업의 집 수가 가장 많이 몰린 단계</dd>
+      <dt>{AHEAD_SUPPLY}</dt><dd>자료 기준 달부터 12개월 안에 분양·모집으로 공급될 예정인 집 수(이미 공급된 물량은 뺌)</dd>
+    </dl>
+  );
   return (
     <dl>
       <dt>{DELAY_GROUP}</dt><dd>지금 잡혀 있는 예정일을 6개월 넘게 넘긴 사업 — 6~12개월은 지연, 12개월이 넘으면 장기(1~6개월 넘긴 주의는 따로 셈) · 사업 번호가 없는 후보는 &apos;확인 필요&apos;로 따로 셈</dd>
@@ -252,5 +268,5 @@ function Defs() {
     </dl>
   );
 }
-export const ReadHelp = () => <InfoTip label="읽는 법" text="읽는 법"><Defs /></InfoTip>;
-export const PrintDefs = () => <div aria-hidden="true" className="mt-4 hidden border-t border-border pt-3 text-sm print:block [&_dd]:m-0 [&_dd]:mb-1 [&_dl]:m-0 [&_dt]:font-bold" data-print-defs><Defs /></div>;
+export const ReadHelp = ({ home = false }: { home?: boolean }) => <InfoTip label="읽는 법" text="읽는 법"><Defs home={home} /></InfoTip>;
+export const PrintDefs = ({ home = false }: { home?: boolean }) => <div aria-hidden="true" className="mt-4 hidden border-t border-border pt-3 text-sm print:block [&_dd]:m-0 [&_dd]:mb-1 [&_dl]:m-0 [&_dt]:font-bold" data-print-defs><Defs home={home} /></div>;

@@ -108,12 +108,24 @@ test('9·7 정책 진행값 불변(HOME 원본에서 따로 계산 — 공공 �
   assert.deepEqual([s97.target, s97.actual, s97.actualWithEstimates], [8049, 4732, 8742]);
 });
 
-test('사업 화면 거르기 ?scope=renewal: 주소 열쇠 scope, 다른 거르기와 함께 쓴다', async () => {
+test('사업 화면 민간 정비: 2026-10-21 PoC 규칙으로 HOME 원천 행 전 정책 목록에 함께 든다(?scope=renewal 따로 보기는 HOME 목록에서 받지 않는다)', async () => {
   const src = fs.readFileSync(path.join(ROOT, 'lib/board/projects-view.ts'), 'utf8');
-  assert.match(src, /if \(one\(q\.scope\) === 'renewal'\) f\.renewal = true;/);
+  assert.match(src, /if \(!ctx\.home && one\(q\.scope\) === 'renewal'\) f\.renewal = true;/);
   assert.match(src, /const KEYS = \['scope', /);
   const page = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/projects/page.tsx'), 'utf8');
-  assert.match(page, /const rows = f\.renewal \? idx\.renewalRows : idx\.rows;/);
+  assert.match(page, /const rows = idx\.rows;/);
+  assert.doesNotMatch(page, /renewalRows|scope: 'renewal'/);
+  /* 실제 자료: 민간 정비(D 계층 프로그램) 원천 행이 전 정책 목록에 모두 있고, 옛 주소 ?scope=renewal 은 거르지 않는다(같은 목록·주소에서 빠짐) */
+  const V = require('../../lib/board/projects-view.ts'), HP = require('../../data/board/home-projects.json'), IDX = require('../../data/board/projects-index.json');
+  const home = V.homeRowsOf(HP.rows, HP.residuals), ctx = { policies: IDX.policies, programs: V.homeProgramsOf(home), sidoOk: () => true, home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
+  const D = H.PUBLIC_TIER.find((x) => x.scope === 'PRIVATE_RENEWAL').ids, renewal = HP.rows.filter((r) => r.stats && D.has(r.policy.programId));
+  assert.ok(renewal.length > 0);
+  const all = V.parseFilters({ policy: 'all' }, ctx), ids = new Set(V.applyFilters(home, all).map((r) => r.id));
+  assert.ok(renewal.every((r) => ids.has(r.id)), '민간 정비 원천 행은 전 정책 목록에');
+  const old = V.parseFilters({ policy: 'all', scope: 'renewal' }, ctx);
+  assert.equal(old.renewal, undefined);
+  assert.equal(V.listHref(old), '/projects?policy=all');
+  assert.equal(V.applyFilters(home, old).length, ids.size);
   const dir = fs.readFileSync(path.join(ROOT, 'lib/board/directives.ts'), 'utf8');
   assert.match(dir, /RENEWAL_NAME = '민간 정비\(정책 귀속 검토\)'/);
 });

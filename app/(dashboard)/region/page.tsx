@@ -19,9 +19,10 @@ import { getBoardData } from '@/lib/board/data';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '@/lib/board/metro-overview';
 import { mapScopeHref } from '@/lib/board/map-href';
 import ScopeChip from '@/components/ui/scope-chip';
-import { AHEAD_KIND, CAL_KINDS, CAL_TYPE, METRO, PAST_DUE, aheadAll, aheadKindTip, inSgg, isDefaultKinds, pastDue, parseKinds, parseSgg, pickMonth, toggleKind, viewOf, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
+import { HOME_POLICY, METRO, aheadAll, inSgg, parsePolicy, parseSgg, pickMonth, viewOf, type AnnualDoc, type CalendarDoc, type HomePolicy, type RegionMapDoc } from '@/lib/board/region';
+import { POLICY_WORDS, type AheadWords } from '@/lib/board/public-schedule';
 import { getProjectsIndex } from '@/lib/board/projects-index';
-import { AHEAD_ALL, AHEAD_COMPLETION, CAND_NAME, applyFilters, listHref, type Filters } from '@/lib/board/projects-view';
+import { AHEAD_SUPPLY, CAND_NAME, applyFilters, listHref, type Filters } from '@/lib/board/projects-view';
 import type { Metric } from '@/lib/board/types';
 
 export const metadata: Metadata = { title: '지역 공급' };
@@ -33,12 +34,14 @@ const facts = areaFactsJson as AreaFactsDoc;
 /* 시도 칩: 서울·인천·경기(2026-10-19 결정 — 화면은 수도권만, 전국 칩 없음) */
 const ORDER = METRO;
 const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
-const AHEAD_TIP = '대표 = 준공 예정(사업 화면·종합상황판·지도 개요와 같은 값) · 모집·입주는 종류 칩으로 더해 봄 · 사업 원장의 현재 예정(모집공고·준공·입주) · 종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌 · 막대 한 조각 = 사업 하나(높이 = 호수) · 지도 원 넓이 = 호수(지도는 서울·인천·경기만) · 예정일은 계획이라 바뀔 수 있고 청약 자격은 모집공고에서 확인';
+const AHEAD_TIP = `${AHEAD_SUPPLY}(HOME 정책 추진현황과 같은 계산·같은 값 — 종합상황판·월 상세와 같음) · 사업마다 공급(본 모집) 일정의 누적 목표 증가분에서 이미 측정된 공급 물량을 뺀 값 · 지난 기한의 미달량은 넘기지 않음 · 사업 = 정책 진행 자료(HOME) 원천 사업 행 · 기본 9·7 정책, 정책 칩으로 정책 전체 · 막대 한 조각 = 사업 하나(높이 = 호수) · 지도 원 넓이 = 호수(지도는 서울·인천·경기만) · 일정은 계획이라 바뀔 수 있고 청약 자격은 모집공고에서 확인`;
+/* 달 목록·막대의 종류 이름: 정책 화면 HOME 단계 이름 '공급'(공급 예정 하나뿐) */
+const WORDS: AheadWords = { ...POLICY_WORDS, kind: { ...POLICY_WORDS.kind, SUPPLY_NOTICE: '공급' }, kindTip: { SUPPLY_NOTICE: '공급(본 모집) 예정 증가분', COMPLETION: '', MOVE_IN: '' } };
 const LINKA = 'text-foreground underline-offset-[3px] hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
-type Q = { sido?: string; m?: string; kind?: string; metric?: string; sgg?: string };
+type Q = { sido?: string; m?: string; policy?: string; metric?: string; sgg?: string };
 
-/* 지역 공급(옛 우리 동네 + 공급 실적): 지역 칩 → ① 앞으로 12개월 → ② 지난 공급 실적 → ③ 동네 여건(서울·인천·경기만). 선택은 모두 주소(?sido=&m=&kind=&metric=&sgg=)에 남는다(sgg = 지도에서 고른 시군구 — 칩을 누르면 풀린다).
+/* 지역 공급(옛 우리 동네 + 공급 실적): 지역 칩 → ① 앞으로 12개월(HOME 향후 12개월 공급 예정) → ② 지난 공급 실적 → ③ 동네 여건(서울·인천·경기만). 선택은 모두 주소(?sido=&m=&policy=&metric=&sgg=)에 남는다(sgg = 지도에서 고른 시군구 — 칩을 누르면 풀린다).
    지역: 처음 열면 수도권(서울·인천·경기 — ?sido 없음, 옛 ?sido=all 도 수도권), ?sido=NN 시도 하나. 머리 줄에 같은 범위의 사업 화면(점검 필요) 연결.
    시안: docs/design/home-concept/region.html. 9.4 국민 예측가능성 지시(F-09)·연도별 실적(F-05)·전국↔시도(F-01) */
 export default async function RegionPage({ searchParams }: { searchParams: Promise<Q> }) {
@@ -49,35 +52,33 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
   /* 지역: 'metro'(기본 — 옛 ?sido=all·수도권 밖 코드도) · 'NN'(서울·인천·경기) */
   const sido = q.sido && ORDER.includes(q.sido) ? q.sido : 'metro';
   const metric = parseMetric(q.metric);
-  const kinds = parseKinds(q.kind);
+  const policy = parsePolicy(q.policy);
   const name = sido === 'metro' ? '수도권' : sidoName(sido);
   /* 시군구 거르기(?sgg=<지도 면 코드>, 서버가 거른다): 앞으로 12개월(달별 막대·고른 달 목록·합계·종류 칩 건수)과 사업 화면 연결이 그 시군구만. 구가 있는 시는 구를 합친다.
      지난 공급 실적·동네 여건은 시도 단위 자료뿐이라 그대로(머리에 '시도 단위 자료' 표지) */
   const sgg = parseSgg(regionMap, sido, SGG_TABLE, q.sgg);
   const sggName = sgg ? METRO_AREAS[sgg] : null;
 
-  const href = (p: { sido?: string; kinds?: CalKind[]; metric?: Metric; m?: string | null; sgg?: string | null }) => {
+  const href = (p: { sido?: string; policy?: HomePolicy; metric?: Metric; m?: string | null; sgg?: string | null }) => {
     const s = new URLSearchParams();
-    const sd = p.sido ?? sido, ks = p.kinds ?? kinds, mt = p.metric ?? metric, m = p.m === undefined ? q.m : p.m;
+    const sd = p.sido ?? sido, pl = p.policy ?? policy, mt = p.metric ?? metric, m = p.m === undefined ? q.m : p.m;
     const sg = p.sgg !== undefined ? p.sgg : p.sido !== undefined ? null : sgg;   // 시도를 바꾸면 시군구는 풀린다
     if (sd !== 'metro') s.set('sido', sd || 'all');
     if (sg) s.set('sgg', sg);
     if (m) s.set('m', m);
-    if (!isDefaultKinds(ks)) s.set('kind', ks.join(','));   // 기본(준공만)과 다를 때만
+    if (pl !== 'p97') s.set('policy', pl);   // 기본(9·7)과 다를 때만
     if (mt !== 'complete') s.set('metric', mt);
     const t = s.toString();
     return t ? `/region?${t}` : '/region';
   };
 
-  /* ① 앞으로 12개월 */
-  const all = aheadAll(calendar, sido, sidoName).filter((e) => !sgg || inSgg(e, sgg, SGG_TABLE));
-  const list = all.filter((e) => kinds.includes(e.type));
+  /* ① 앞으로 12개월 = HOME 향후 12개월 공급 예정(PoC 원천 사업 행, 기본 9·7 · ?policy=all 정책 전체). 일정이 달 단위라 '예정일 지남'은 없다(기준일 뒤 기한만 셈) */
+  const inArea = (pl: HomePolicy) => aheadAll(calendar.home[pl], sido, sidoName).filter((e) => !sgg || inSgg(e, sgg, SGG_TABLE));
+  const list = inArea(policy);
   const months = calendar.months;
   const m = pickMonth(months, list, q.m);
   const units = list.reduce((s, e) => s + e.units, 0);
-  /* 예정일 지남(기준일보다 앞선 예정): 표지만 달고 합계에는 그대로 둔다(title 에 적는다) */
-  const aheadLabel = (isDefaultKinds(kinds) ? AHEAD_COMPLETION : kinds.length === CAL_KINDS.length ? AHEAD_ALL : `앞으로 12개월 · ${kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정`).replace(/^앞으로 12개월 · /, '');
-  const past = list.filter((e) => pastDue(e, calendar.referenceDate));
+  const nProjects = new Set(list.map((e) => e.pro)).size;   // 사업 수 = 증가분이 있는 원천 사업 행(HOME '사업 n개'와 같음 — 한 사업이 여러 달이면 한 번)
   const view = viewOf(regionMap, sido);
   const nowM = calendar.referenceDate.slice(0, 7);
   const last = lastMonth(molit);
@@ -93,9 +94,9 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
   return (
     <Page>
       <PageHead title="지역 공급"
-        tip="앞으로 12개월 예정(원장 현재 예정) → 지난 공급 실적(통계누리) → 동네 여건(서울·인천·경기) 순">
+        tip="앞으로 12개월 공급 예정(정책 진행 자료) → 지난 공급 실적(통계누리) → 동네 여건(서울·인천·경기) 순">
         <span className="ml-auto text-sm whitespace-nowrap text-muted-foreground tabular-nums mobile:text-sm"
-          title={`앞으로 12개월(${ymDot(calendar.from)} ~ ${ymDot(calendar.to)}) · 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')} · 통계누리 실적 ${ymDot(last)}까지`}>
+          title={`앞으로 12개월(${ymDot(calendar.from)} ~ ${ymDot(calendar.to)}) · 정책 진행 자료 기준일 ${calendar.home.asOf.replace(/-/g, '.')} · 통계누리 실적 ${ymDot(last)}까지`}>
           예정 {ymDot(calendar.from)}~{ymDot(calendar.to)} · 실적 {ymDot(last)}
         </span>
       </PageHead>
@@ -115,37 +116,34 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
 
       <Card render={<section aria-label="앞으로 12개월" />}>
         <PanelHead id="ahead-title" title="앞으로 12개월" tip={AHEAD_TIP}
-          scope={<ScopeChip scope={scopeName} source="사업 원장" title={sgg ? `${name} 중 ${sggName}만(구가 있는 시는 구를 합침) — 달별 막대·목록·합계·종류 칩 건수가 이 범위 · ×를 누르면 ${name}(으)로` : `사업 원장 현재 예정 · ${name}`} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} />}>
+          scope={<ScopeChip scope={`${HOME_POLICY[policy]} · ${scopeName}`} source="정책 진행 자료" title={sgg ? `${name} 중 ${sggName}만(구가 있는 시는 구를 합침) — 달별 막대·목록·합계가 이 범위 · ×를 누르면 ${name}(으)로` : `정책 진행 자료(HOME) · ${HOME_POLICY[policy]} · ${name} · 기준일 ${calendar.home.asOf.replace(/-/g, '.')}`} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} />}>
           <InfoTip label="앞으로 12개월 읽는 법">
             <dl>
-              <dt>{AHEAD_COMPLETION}</dt><dd>대표 숫자 — 준공 현재 예정이 {ymDot(months[0])}~{ymDot(months[11])}인 사업(이미 준공 실제가 있으면 뺌) · 사업 화면·종합상황판·지도 개요와 같은 값</dd>
-              <dt>{AHEAD_KIND.SUPPLY_NOTICE} · {AHEAD_KIND.MOVE_IN} 칩</dt><dd>같은 기간 모집공고·입주 예정을 더해 봄(종류마다 사업당 하나 · 이미 실제 기록이 있는 종류는 뺌) · 앞으로 12개월 입주 예정은 종합상황판 &apos;⑥입주&apos;(지금 입주 단계인 사업)와 다름</dd>
-              <dt>달별 막대</dt><dd>막대 한 조각 = 사업 하나(높이 = 호수) · 위 숫자 = 그 달 호수, 아래 = 건수 · 고른 칩의 종류만 쌓음</dd>
-              <dt>{PAST_DUE}</dt><dd>예정 날짜가 원장 기준일보다 앞섰는데 실제 기록이 아직 없는 항목 — 표지만 달고 건수·호수 합계에는 넣음</dd>
-              <dt>(후보) {CAND_NAME}</dt><dd>사업 번호가 아직 없는 사업 — 누르면 간단 보기</dd>
+              <dt>{AHEAD_SUPPLY}</dt><dd>기준일 뒤 {ymDot(months[0])}~{ymDot(months[11])} 말까지 · 사업마다 공급(본 모집) 일정의 누적 목표 증가분에서 이미 측정된 공급 물량을 뺀 값(HOME 정책 추진현황과 같은 계산) · 지난 기한의 미달량은 넘기지 않음 · 종합상황판·월 상세와 같은 값</dd>
+              <dt>정책 칩</dt><dd>{HOME_POLICY.p97} = 9·7 정책 승인 연결 사업(HOME 정책 화면 기본) · {HOME_POLICY.all} = 모든 정책(해제 뺌)</dd>
+              <dt>달별 막대</dt><dd>막대 한 조각 = 사업 하나(높이 = 호수) · 위 숫자 = 그 달 호수, 아래 = 건수</dd>
+              <dt>사업</dt><dd>정책 진행 자료(HOME) 원천 사업 행 하나 = 하나(같은 현장 병합 전)</dd>
+              <dt>(후보) {CAND_NAME}</dt><dd>사업 번호가 아직 없는 사업 — 누르면 간단 보기 · (원장 밖) = HOME 에만 있는 사업(덤프 뒤 신규·변환 제외)</dd>
               <dt>키보드</dt><dd>달 막대는 ←→ 로 옮기고, 지도 원은 Tab 으로 들어가 ←→ 로 옮긴 뒤 Enter 로 그 사업을 고릅니다</dd>
               <dt>예정일</dt><dd>계획이라 바뀔 수 있고, 청약 자격은 모집공고에서 확인</dd>
             </dl>
           </InfoTip>
-          <ChipGroup label="종류">
-            {CAL_KINDS.map((t) => {
-              const xs = all.filter((e) => e.type === t), next = toggleKind(kinds, t);
+          <ChipGroup label="정책">
+            {(['p97', 'all'] as const).map((pl) => {
+              const xs = inArea(pl), n = new Set(xs.map((e) => e.pro)).size, u = xs.reduce((s, e) => s + e.units, 0);
               return (
-                <Chip key={t} href={href({ kinds: next ?? kinds })} on={kinds.includes(t)} swatch={{ kind: 'fill', color: CAL_TYPE[t].color }}
-                  title={`${scopeName} · ${aheadKindTip(t)} · ${xs.length}건 · ${fmt(xs.reduce((s, e) => s + e.units, 0))}호${xs.some((e) => !e.units) ? ` · 호수 미확인 ${xs.filter((e) => !e.units).length}` : ''}`}>
-                  {AHEAD_KIND[t]}<span className="text-muted-foreground tabular-nums">{fmt(xs.length)}건 · {fmt(xs.reduce((s, e) => s + e.units, 0))}호</span>
+                <Chip key={pl} href={href({ policy: pl, m: null })} on={pl === policy} title={`${scopeName} · ${HOME_POLICY[pl]} · ${AHEAD_SUPPLY} ${fmt(n)}건 · ${fmt(u)}호`}>
+                  {HOME_POLICY[pl]}<span className="text-muted-foreground tabular-nums">{fmt(n)}건 · {fmt(u)}호</span>
                 </Chip>
               );
             })}
           </ChipGroup>
         </PanelHead>
-        <div title={past.length ? `${PAST_DUE} ${past.length}건(${fmt(past.reduce((s, e) => s + e.units, 0))}호 — 예정 날짜가 원장 기준일 ${calendar.referenceDate.replace(/-/g, '.')}보다 앞서고 실제 기록이 아직 없음)도 이 합계에 들어 있음` : undefined}>
-          <MetricRow label={aheadLabel} value={fmt(units)} unit="호" items={[`${fmt(list.length)}건`, `${ymDot(months[0])} ~ ${ymDot(months[11])}`]} className="mb-3" />
-        </div>
+        <MetricRow label="공급 예정" value={fmt(units)} unit="호" items={[`${fmt(nProjects)}건`, `${ymDot(months[0])} ~ ${ymDot(months[11])}`]} className="mb-3" />
         {list.length || sgg ? (
-          <Ahead key={`${sido}|${kinds.join(',')}|${sgg ?? ''}`} sido={sido} regionName={scopeName} months={months} nowM={nowM} refDate={calendar.referenceDate} list={list} initialM={m} initialSgg={sgg}
+          <Ahead key={`${sido}|${policy}|${sgg ?? ''}`} words={WORDS} sido={sido} regionName={scopeName} months={months} nowM={nowM} refDate={calendar.referenceDate} list={list} initialM={m} initialSgg={sgg}
             map={view ? { view, sgg: regionMap.sgg, districts: regionMap.districts } : null} />
-        ) : <p className="m-0 text-sm text-muted-foreground">{name} · 12개월 안 {kinds.map((k) => CAL_TYPE[k].name).join('·')} 예정 없음</p>}
+        ) : <p className="m-0 text-sm text-muted-foreground">{name} · 12개월 안 공급 예정 없음</p>}
       </Card>
 
       <Annual molit={molit} annual={annual} sido={sido} metric={metric} order={ORDER} sidoName={sidoName} href={(p) => href({ ...p, m: null })} sggName={sggName} />

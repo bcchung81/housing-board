@@ -5,7 +5,9 @@
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
   "edition": "20261019T212247Z",
+  "poc": {"p97":{"n":1,"c":1,"x":0,"q":0,"u":1430,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,1430,0,0,0]},"all":{"n":2,"c":2,"x":0,"q":0,"u":1455,"d":0,"w":0,"a":0,"an":0,"st":[25,0,0,1430,0,0,0]}},
+  "noPrj": [{"id":"PRO_8afa3f6b5386e8b6e5f1eda2","name":"신림2재정비촉진","u":1430,"j":"NORMAL","p97":true}],
   "projects": [
-    {"id":"PRJ-11620-0056","name":"관악세무서","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":25,"pks":[],"pnus":[],"bundles":[],"label":"관악세무서","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[126.92433,37.479336],"basis":"NAME_SEARCH","status":"REVIEW","match":"관악세무서"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]}}
+    {"id":"PRJ-11620-0056","name":"관악세무서","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":25,"pks":[],"pnus":[],"bundles":[],"label":"관악세무서","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[126.92433,37.479336],"basis":"NAME_SEARCH","status":"REVIEW","match":"관악세무서"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]},"poc":{"n":1,"n97":0,"u":25,"u97":null,"j":"UNKNOWN"}}
   ]
 }

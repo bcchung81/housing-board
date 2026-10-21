@@ -143,7 +143,7 @@ test('D2: 표지는 목록 현재 예정 칸·서랍·간단 보기·CSV 비고 
   assert.match(V.dateAltOf(byId['PRJ-41290-0031']).text, /^원천 날짜 다름\(LH 준공 2027\.08\)$/, '보이는 예정이 준공이 아니면 LH 준공');
   assert.equal(V.nextOf(r).alt.text, '원천 날짜 다름(LH 2028.12)', '간단 보기(nextOf.alt)');
   assert.match(read('components/projects/Candidate.tsx'), /next\.alt \?/);
-  assert.match(read('components/projects/ProjectDetail.tsx'), /const alt = dateAltOf\(r, true\)[\s\S]*\{alt\.text\}/, '서랍 타임라인 머리');
+  assert.match(read('components/projects/ProjectDetail.tsx'), /const alt = r\.home \? null : dateAltOf\(r, true\)[\s\S]*\{alt\.text\}/, '서랍 타임라인 머리');
   const f = pf({ sido: 'all' }), list = V.listOrder(V.applyFilters(rows, f)), grid = L.listRows(list, f, null, sido);
   const cols = L.csvCols(L.dropBlank(L.LIST_COLS, grid).cols);
   assert.equal(cols[cols.length - 1].label, '비고');

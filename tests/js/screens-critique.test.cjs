@@ -31,7 +31,11 @@ const num = (t) => Number(t.replace(/,/g, ''));
 
 test('단계 번호는 한 체계(①~⑥ 리본 칸): 서랍 단계 줄·목록 알약·타임라인·지역 공급 종류가 같은 이름이고, 공식 01~06 은 보조 표기뿐', () => {
   const steps = read('components/projects/StageSteps.tsx'), det = read('components/projects/ProjectDetail.tsx'), tl = read('components/projects/StageTimeline.tsx');
-  assert.match(steps, /BOARD_NAMES\.map/);
+  /* 2026-10-21: 사업 화면 HOME 원천 행의 창은 정책 화면 PoC 이름(정책·사업화·인허가·건설·공급·입주), 번호·색은 같은 ①~⑥ 칸 — 목록 알약과 같은 글자 */
+  assert.match(steps, /const NAMES = home \? HOME_NAMES : BOARD_NAMES/);
+  assert.match(steps, /\{NAMES\.map\(\(name, i\) =>/);
+  assert.match(read('lib/board/projects-list.ts'), /export const homeStagePill = \(r: ProjectRow\): Cell => \(\{ text: `\$\{BOARD_CIR\[r\.board\]\} \$\{HOME_NAMES\[r\.board\]\}`/, '목록 알약 = 창 단계 이름');
+  assert.match(steps, /\{BOARD_CIR\[i\]\} \{NAMES\[i\]\}/);
   assert.doesNotMatch(det + steps, /STAGES\.map|s\.code\}/, '서랍에 공식 번호를 머리 글자로 그리지 않는다');
   assert.match(tl, /\{BOARD_CIR\[l\.board\]\} \{BOARD_NAMES\[l\.board\]\}/);
   assert.deepEqual(['SUPPLY_NOTICE', 'COMPLETION', 'MOVE_IN'].map((k) => R.CAL_TYPE[k].name), V.BOARD_NAMES.slice(3), '지역 공급 종류 = ④⑤⑥ 이름');
@@ -86,7 +90,15 @@ test('기본 범위·기본 정렬: 쿼리 없이 열면 수도권, 명시적 ?s
   const list = V.listOrder(metro);
   assert.ok(list.every((r, i) => i === 0 || (V.lateOf(list[i - 1]) ?? -1) >= (V.lateOf(r) ?? -1)), '지연 개월 큰 순');
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /const list = listOrder\(applyFilters\(rows, f\)\);/, '상태와 상관없이 기본 순서 = 점검 필요 순');
+  /* 2026-10-21 사업 화면 = HOME 원천 행: 기본 = 9·7 · 수도권, 순서 = 지연 → 주의 → 정상 → 판정 미확보(그 안에서 부족 호수 큰 순) */
+  assert.match(page, /const list = homeListOrder\(applyFilters\(rows, f\)\);/, '상태와 상관없이 기본 순서 = 점검 필요 순');
+  const HP = require('../../data/board/home-projects.json'), home = V.homeRowsOf(HP.rows, HP.residuals);
+  const hctx = { ...fctx, programs: V.homeProgramsOf(home), home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
+  const hf = V.parseFilters({}, hctx);
+  assert.deepEqual([hf.home, hf.metro, hf.policy?.key], [true, true, '97']);
+  const RANK = { delay: 0, caution: 1, ok: 2 }, rank = (r) => RANK[r.cls] ?? 3;
+  const hl = V.homeListOrder(V.applyFilters(home, V.parseFilters({ policy: 'all' }, hctx)));
+  assert.ok(hl.every((r, i) => i === 0 || rank(hl[i - 1]) < rank(r) || (rank(hl[i - 1]) === rank(r) && (hl[i - 1].home.gap ?? 0) >= (r.home.gap ?? 0))), '지연 → 주의 → 정상, 그 안에서 부족 호수 큰 순');
   /* 지역 공급도 처음은 수도권 */
   const region = read('app/(dashboard)/region/page.tsx');
   // 2026-10-19 수도권 한정: ?sido=all(전국)이 없어졌다 — 목록에 없는 값(옛 all·수도권 밖 코드)은 모두 'metro'
@@ -124,12 +136,19 @@ test('빈 결과 회복: 거르기 풀기·수도권 전체 보기 등 건수가
   assert.match(page, /이 조건의 사업이 없습니다/);
   for (const t of ['상태·단계 거르기 풀기', '수도권 전체 보기', '정책·기관 거르기 풀기', '모두 풀기']) assert.ok(page.includes(t), t);
   assert.match(page, /\.filter\(\(a\) => a\.n > 0\)/);
-  assert.match(page, /\$\{CAND_NAME\} \$\{fmt\(list\.length - issued\)\}건 뒤쪽/);
-  assert.match(page, /\$\{CAND_NAME\}은 간단 보기\(번호가 있는 사업 뒤\)/, '풀어 쓴 안내는 목록 머리 줄 title');
+  /* 2026-10-21 사업 화면 = HOME 원천 행(후보 없음): 목록 머리 줄은 순서와 지연·주의 건수, 풀어 쓴 안내(사업 창)는 title */
+  assert.match(page, /title="행을 누르면 사업 창[^"]*">지연 → 주의 → 정상 순 · 지연 \{fmt\(s\.delay\)\} · 주의 \{fmt\(s\.caution\)\}/, '풀어 쓴 안내는 목록 머리 줄 title');
+  assert.doesNotMatch(page, /CAND_NAME/);
   /* 실제 자료: 수도권 + 장기 지연 + ⑤준공 은 비고, 상태·단계를 풀면 사업이 있다 */
   const f = { metro: true, status: 'long', stage: 4 };
   assert.equal(V.applyFilters(rows, f).length, 0);
   assert.ok(V.applyFilters(rows, { metro: true }).length > 0);
+  /* HOME 원천 행: 9·7 · 수도권 + 주의 는 비고(기준일 2026-10-20 주의 0), 상태를 풀면 사업이 있다 */
+  const HP = require('../../data/board/home-projects.json'), home = V.homeRowsOf(HP.rows, HP.residuals);
+  const hctx = { ...fctx, programs: V.homeProgramsOf(home), home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
+  const hf = V.parseFilters({ status: 'caution' }, hctx);
+  assert.equal(V.applyFilters(home, hf).length, 0);
+  assert.ok(V.applyFilters(home, { ...hf, status: undefined }).length > 0);
   assert.match(read('components/region/Ahead.tsx'), /\(후보\) = 사업 번호가 아직 없는 후보 사업 · 누르면 간단 보기/);
 });
 
@@ -141,11 +160,14 @@ test('지도 연결점: 화면은 지도 주소를 mapHref 한 곳으로 만들�
     assert.doesNotMatch(s, /`\/map\?(project|sgg)=/, `${f}: 지도 주소를 직접 쓰지 않는다`);
   }
   const det = read('components/projects/ProjectDetail.tsx');
-  assert.match(det, /<MapLink href=\{mapHref\(\{ project: r\.id \}\)\}/);
+  /* 2026-10-21: HOME 원천 행 창의 지도 링크는 같은 현장 원장 사업 id(지도 자료의 id) — 없으면 그 행 id */
+  assert.match(det, /const mapId = d\.ledger\?\.id \?\? r\.id/);
+  assert.match(det, /<MapLink href=\{mapHref\(\{ project: mapId \}\)\}/);
   assert.match(det, /지도에서 보기 · \$\{loc\}/, '위치 종류(블록·지번·지구·근사·미확보)를 짧게');
   assert.doesNotMatch(det, />기반시설 점검</);
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(read('lib/board/projects-list.ts'), /if \(!isMetro\(r\.sgg\)\) return null;[\s\S]*return noLoc[\s\S]*\{ text: '지도', href: mapHref\(\{ project: r\.id \}\), doc: true, icon: 'map'/, '목록 행 지도 표지는 수도권 사업만');
+  assert.match(read('lib/board/projects-list.ts'), /export const homeMapCell = [\s\S]*?if \(!isMetro\(r\.sgg\)\) return null;[\s\S]*?mapScopeHref\(\{ sgg: r\.sgg \}\)[\s\S]*?doc: true[\s\S]*?return noLoc[\s\S]*?\{ text: '지도', href: mapHref\(\{ project: our \}\), doc: true, icon: 'map'/, 'HOME 목록 행 지도 표지도 수도권만 · map-href · 문서 이동');
   assert.match(page, /import \{ mapScopeHref \} from '@\/lib\/board\/map-href'/);
   /* mapHref = 사업 창의 '지도로 돌아가기'(from=map) — 창 관리자(2026-10-19) */
   const host = read('components/windows/WindowHost.tsx');
@@ -177,11 +199,17 @@ test('언어: 판 번호·HOME 덤프·렌즈·검토 중·기준선 없음 대�
 test('읽는 법(ⓘ 하나의 정의들)과 진행 표지: 지연 구간 · 확인과 담당자 추정 · 이 단계까지 온 사업과 지금 · 병목 · 앞으로 12개월, 칩·서랍 이동 중에는 가벼운 표지', () => {
   const sum = read('components/projects/Summary.tsx');
   for (const t of ['<dt>{DELAY_GROUP}</dt>', '<dt>확인 · 담당자 추정 포함</dt>', '<dt>이 단계까지 온 사업 · 지금 이 단계</dt>', '<dt>병목</dt>', '<dt>{AHEAD_COMPLETION}</dt>']) assert.ok(sum.includes(t), t);
-  assert.match(read('app/(dashboard)/projects/page.tsx'), /<ReadHelp \/>/);
+  /* 2026-10-21 사업 화면 = HOME 원천 행: 읽는 법은 HOME 정의(지연·주의 = 부족률 · 이 단계까지 온 호수 · 병목 · 향후 12개월 공급 예정) */
+  assert.match(read('app/(dashboard)/projects/page.tsx'), /<ReadHelp home \/>/);
+  for (const t of ['<dt>지연 · 주의</dt>', '<dt>이 단계까지 온 호수 · 지금 이 단계</dt>', '<dt>병목</dt>', '<dt>{AHEAD_SUPPLY}</dt>']) assert.ok(sum.slice(sum.indexOf('if (home) return')).includes(t), t);
   assert.match(sum, /지금 이 단계 <b>\{fmt\(c\.now\)\}<\/b>/, '파이프라인 칸 안에 지금 건수');
   assert.match(sum, /이 단계까지 온 사업 \{fmt\(c\.n\)\}/);
   const p = V.pipelineOf(V.applyFilters(rows, {}, 'stage'));
   assert.ok(p.open.every((c) => c.now === rows.filter((r) => r.board === c.i).length), '지금 = 칸을 누르면 거르는 건수');
+  const HP = require('../../data/board/home-projects.json'), home = V.homeRowsOf(HP.rows, HP.residuals);
+  const hctx = { ...fctx, programs: V.homeProgramsOf(home), home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
+  const hp = V.homePipelineOf(home, () => true);
+  assert.ok(hp.open.length && hp.open.every((c) => c.now === V.applyFilters(home, { stage: c.i }).length), 'HOME: 지금 = 칸을 누르면 거르는 건수');
   assert.match(read('components/ui/link-pending.tsx'), /useLinkStatus/);
   assert.match(read('components/ui/chips.tsx'), /<LinkPending \/>/);
   assert.match(read('components/ui/data-grid.tsx'), /startGoing\(\(\) => router\.push/);

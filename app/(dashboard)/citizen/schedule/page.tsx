@@ -20,9 +20,9 @@ import { fmt, lastMonth } from '@/lib/board/calc';
 import { getBoardData } from '@/lib/board/data';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '@/lib/board/metro-overview';
 import { mapScopeHref } from '@/lib/board/map-href';
-import { getProjectsIndex } from '@/lib/board/projects-index';
-import { applyFilters, listHref, type Filters } from '@/lib/board/projects-view';
-import { CAL_KINDS, METRO, aheadAll, inSgg, isDefaultKinds, parseKinds, parseSgg, pastDue, pickMonth, metroYears, regionYears, sggUnits, toggleKind, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
+import homeJson from '@/data/board/home-projects.json';
+import { applyFilters, homeRowsOf, isMetro, listHref, type Filters, type HomeDocRow } from '@/lib/board/projects-view';
+import { CAL_KINDS, METRO, aheadAll, inSgg, parseKinds, parseSgg, pastDue, pickMonth, metroYears, regionYears, sggUnits, toggleKind, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
 import { PUBLIC_METRICS, PUBLIC_METRIC_NAME, PUBLIC_WORDS, hoText, koMonth, parsePublicMetric, parsePublicSido, yearRank, type PublicMetric } from '@/lib/board/public-schedule';
 import { distinctNames } from '@/lib/board/public-labels';
 import type { YearVal } from '@/lib/board/annual';
@@ -34,6 +34,11 @@ const regionMap = mapJson as unknown as RegionMapDoc;
 const annual = annualJson as unknown as AnnualDoc;
 const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
 const W = PUBLIC_WORDS;
+const HOME_ROWS = homeRowsOf((homeJson as unknown as { rows: HomeDocRow[] }).rows).filter((r) => isMetro(r.sgg));
+/* 2026-10-21 HOME PoC: 기본 종류 = 모집 공고(PoC '향후 12개월 공급(모집·분양) 예정' — region-calendar.json home.all, 정책 전체·원천 행 단위).
+   준공·입주는 PoC 에 같은 값이 없어 사업 원장 예정(region-calendar.json sido)을 그대로 더해 볼 수 있게 둔다 */
+const KIND_HOME: CalKind[] = ['SUPPLY_NOTICE'];
+const isHomeDefault = (ks: CalKind[]) => ks.length === 1 && ks[0] === 'SUPPLY_NOTICE';
 const BASE = '/citizen/schedule';
 /* 시군구 메뉴를 시도 채움 탭(.ui-tabs-seg)과 같은 높이 --ctl-h · 반경 tile 로, 안 고른 메뉴는 탭 틀과 같은 --muted 면으로(사업 찾기 FindFilters 와 같은 값) */
 const MENU = '[&_summary]:h-(--ctl-h) [&_summary]:rounded-tile [&_summary]:px-3';
@@ -62,7 +67,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
   const short = Object.fromEntries(molit.sido.map((s) => [s.code, s.name]));
   const sidoName = (c: string) => short[c] ?? c;
   const sido = parsePublicSido(q.sido);
-  const kinds = parseKinds(q.kind);
+  const kinds = q.kind ? parseKinds(q.kind) : [...KIND_HOME];
   const metric = parsePublicMetric(q.metric);
   const name = sido === 'metro' ? '수도권' : sidoName(sido);
   const sgg = parseSgg(regionMap, sido, SGG_TABLE, q.sgg);
@@ -77,13 +82,14 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
     s.set('sido', sd);   // 수도권도 적어 둔다 — 주소에 지역이 없을 때만 내 동네로 옮기기 때문
     if (sg) s.set('sgg', sg);
     if (m) s.set('m', m);
-    if (!isDefaultKinds(ks)) s.set('kind', ks.join(','));
+    if (!isHomeDefault(ks)) s.set('kind', ks.join(','));
     if (mt !== 'complete') s.set('metric', mt);
     return `${BASE}?${s.toString()}`;
   };
 
-  /* ① 앞으로 12개월 — 정책 /region 과 같은 함수·같은 범위(수도권 = 서울·인천·경기만 들어 있다) */
-  const all = easyNames(aheadAll(calendar, sido, sidoName)).filter((e) => !sgg || inSgg(e, sgg, SGG_TABLE));
+  /* ① 앞으로 12개월 — 정책 /region 과 같은 함수(aheadAll). 모집 공고 = HOME PoC 정책 전체 공급 예정(home.all), 준공·입주 = 사업 원장 예정(sido). 수도권 = 서울·인천·경기만 들어 있다 */
+  const cal = { sido: Object.fromEntries(METRO.map((c) => [c, [...(calendar.home.all.sido[c] ?? []), ...(calendar.sido[c] ?? []).filter((e) => e.type !== 'SUPPLY_NOTICE')]])) };
+  const all = easyNames(aheadAll(cal, sido, sidoName)).filter((e) => !sgg || inSgg(e, sgg, SGG_TABLE));
   const list = all.filter((e) => kinds.includes(e.type));
   const months = calendar.months;
   const m = pickMonth(months, list, q.m);
@@ -92,10 +98,9 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
   const nowM = calendar.referenceDate.slice(0, 7);
   const last = lastMonth(molit);
 
-  /* 사업 찾기·지도 연결 */
-  const { rows } = await getProjectsIndex();
+  /* 사업 찾기·지도 연결: 사업 수 = 사업 찾기 목록과 같은 HOME PoC 행(정책 전체) */
   const pf: Filters = sgg ? { sgg, gu: guOf(sgg) } : sido === 'metro' ? { metro: true } : { sido };
-  const inScope = applyFilters(rows, pf).length;
+  const inScope = applyFilters(HOME_ROWS, pf).length;
   const scopeMap = sgg ? mapScopeHref({ sgg }) : sido === 'metro' ? mapScopeHref() : mapScopeHref({ sido });
   const findHref = listHref(pf).replace(/^\/projects/, '/citizen/projects');
 
@@ -151,11 +156,11 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
         <PanelHead id="ahead-title"
           title="앞으로 12개월"
           scope={<>
-            <ScopeChip scope={scopeName} source="공공 사업" clearHref={sgg ? href({ sgg: null, m: null }) : undefined} title={`${scopeName}의 공공 사업`} />
+            <ScopeChip scope={scopeName} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} title={`${scopeName}의 주택 공급 정책 사업(공공·조합·민간)`} />
             <InfoTip label="앞으로 12개월 읽는 법">
               <dl>
-                <dt>준공 예정</dt><dd>공사를 마칠 예정인 달이 앞으로 12개월 안인 사업이에요. 정책 담당자 화면과 같은 숫자예요</dd>
-                <dt>모집 공고·입주</dt><dd>같은 기간의 청약 모집 공고와 입주 예정을 더해 볼 수 있어요</dd>
+                <dt>모집 공고 예정</dt><dd>주택 공급 정책에 연결된 사업 가운데 앞으로 12개월 안에 모집·분양이 예정된 호수예요. 정책 담당자 화면의 '향후 12개월 공급 예정'과 같은 숫자예요</dd>
+                <dt>준공·입주</dt><dd>공공 사업 일정에 있는 같은 기간의 준공·입주 예정을 더해 볼 수 있어요</dd>
                 <dt>막대</dt><dd>막대 한 조각이 사업 하나, 높이는 호수예요. 위 숫자는 그 달 호수, 아래는 사업 수예요</dd>
                 <dt>예정일 지남</dt><dd>예정한 날짜가 지났는데 아직 기록이 없는 사업이에요. 합계에는 들어 있어요</dd>
               </dl>
@@ -170,7 +175,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
           </ChipGroup>
         </PanelHead>
         {list.length ? (
-          <MetricRow className="mb-3" label={isDefaultKinds(kinds) ? '준공 예정' : `${kinds.map((k) => W.kind[k]).join('·')} 예정`} {...splitHo(hoText(total))}
+          <MetricRow className="mb-3" label={isHomeDefault(kinds) ? '모집 공고 예정' : `${kinds.map((k) => W.kind[k]).join('·')} 예정`} {...splitHo(hoText(total))}
             items={[<span key="n" title={pastN ? `${W.past} ${pastN}${W.count}도 이 합계에 들어 있어요` : undefined}>{`${fmt(list.length)}${W.count}`}</span>]} />
         ) : null}
         {list.length ? (

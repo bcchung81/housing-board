@@ -1,18 +1,19 @@
 'use strict';
 /* '데이터 원본' 요구사항 충족 격자와 화면 머리의 요구사항 꼬리표(components/ReqTags.tsx)가 읽는 data/board/requirements.json 을 만든다.
    요구사항 F-01~F-12(HOME 기능 요구: 제목·우선순위·세부 항목·판단 기준)마다 관련 지시 날짜, 답하는 화면(새 구조: 사업 projects · 지역 공급 region · 데이터 원본 sources),
-   실제 자료로 센 근거 지표와 판정(충족 met · 부분 part · 없음 none)을 적는다. 규칙은 승인된 시안(docs/design/home-concept/build-data.mjs JUDGE)과 같고 F 마다 하나다.
-   입력: schemas/ledger-<달>/tables(projects·events·links·identifiers), data/board(ledger-map·projects-index·project-detail·policy-progress·molit·home-sources·home-map),
-         docs/주택파동_정책근거_및_요구사항_매트릭스.md(지시 표), 그 달의 가장 늦은 HOME 판 원본(execution_schedule·execution_case — 담당자 기준선·원인 기록은 건수만 센다).
-   공개 저장소라 담당자 이름·입력 사유 원문은 산출물에 넣지 않는다(건수만). 출력은 결정적이다(정렬, 현재 시각 없음).
-   순서: 사업 화면 자료(projects-index.js 등)·policy-progress.js·home-sources.js 뒤에 돌린다.
+   근거 지표와 판정(충족 met · 부분 part · 없음 none)을 적는다.
+   근거 지표는 HOME PoC 와 같게(2026-10-21 결정): 모수는 9·7 정책 사업 230(PoC 정책 화면 기준), 값은 PoC '요구사항 충족' API 응답(추정 포함 기본 · 추정 제외 보조)이다.
+   서버 쪽 셈(추정 포함 셀·기준선 등)은 덤프로 다시 만들 수 없어 home-sources.js --fetch-poc 가 받아 둔 스냅샷(raw/home-api/<기준일>/sources-requirements.json.gz)을 읽는다.
+   F-01(지도 위치 근거 사업)·F-08(승인 기관 배정 목표 사업)은 PoC 정의로 바꿨다(시도 수·시행 기관 식별 → 사업 단위).
+   판정 규칙은 F 마다 같다: 추정 포함 비율이 95% 이상이면 충족, 0 초과면 부분, 산정 불가(분모 0)이거나 0 이면 없음.
+   입력: 스냅샷, docs/주택파동_정책근거_및_요구사항_매트릭스.md(지시 표), 그 달의 가장 늦은 HOME 판 이름(edition).
+   공개 저장소라 담당자 이름·입력 사유 원문은 산출물에 넣지 않는다. 출력은 결정적이다(정렬, 현재 시각 없음).
    실행: node tools/ledger/requirements.js [--month YYYY-MM] */
 const fs = require('node:fs');
 const path = require('node:path');
-const zlib = require('node:zlib');
 const P = require('./paths');
 const { latestHomeDir } = require('./home-source');
-const { isShown } = require('./board');
+const { readPoc } = require('./home-sources');
 
 const OUT = 'data/board/requirements.json';
 
@@ -38,106 +39,49 @@ const F_LINK = {
   'F-07': [['09.03', '08.29'], ['projects']], 'F-08': [['08.21', '08.29'], ['projects']], 'F-09': [['09.04'], ['region']],
   'F-10': [['09.30'], ['sources']], 'F-11': [['08.14', '09.03'], ['projects']], 'F-12': [['09.04', '09.30'], []],
 };
-const PP_STAGES = ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'COMPLETION', 'MOVE_IN'];
-const PRECISE = new Set(['block', 'address', 'district']);
-const AGENCY = new Set(['lh', 'sh', 'gh', 'ih']);
-const LONG_DELAY_MONTHS = 12;
-const statusOf = (r) => (r.cls === 'delay' ? (r.overdue && r.overdue.months >= LONG_DELAY_MONTHS ? 'long' : 'delay') : r.cls ?? 'none');
-const pct = (a, b) => (b ? Math.round(a / b * 1000) / 10 : null);
-const f = (n) => n.toLocaleString('en-US');
-
 /* 지시 표: '| 2026.08.14 | 행사 | 핵심 | 필요 |' 줄 */
 const directivesOf = (md) => [...md.matchAll(/^\| (2026\.\d\d\.\d\d) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$/gm)].map((m) => ({ date: m[1].slice(5), full: m[1], event: m[2].trim(), need: m[4].trim() }));
 
-/* x: { projects, events, links, identifiers(원장 표 행), ledgerMap, pIndex, pDetail, pp, homeSources, homeLoc(id → loc), schedule(execution_schedule payload), cases(execution_case 행 수), sidoTotal } */
-function measure(x) {
-  const homeP = x.projects.filter((p) => p.source_ref.startsWith('home-dump-') && isShown(p));   // 공공 공급 사업만(board.js isShown, 2026-10-20 안2)
-  const ids = new Set(homeP.map((p) => p.local_project_id));
-  const mapRow = Object.fromEntries(Object.values(x.ledgerMap.bySgg).flat().map((r) => [r.id, r]));
-  const evBy = new Map();
-  for (const e of x.events) { if (!evBy.has(e.local_project_id)) evBy.set(e.local_project_id, []); evBy.get(e.local_project_id).push(e); }
-  const hasEv = (id, type, dt) => (evBy.get(id) ?? []).some((e) => (!type || e.event_type === type) && (!dt || e.date_type === dt));
-  const projects = homeP.map((p) => {
-    const id = p.local_project_id, r = mapRow[id] ?? {}, ix = x.pIndex.projects[id] ?? {}, d = x.pDetail.projects[id];
-    return {
-      sido: p.sgg_code.slice(0, 2), units: r.units ?? 0, status: statusOf(r), policies: ix.policies ?? [], agency: d?.agency ?? p.agency_id ?? null, loc: x.homeLoc[id]?.by ?? null,
-      sourced: !!d && d.refs.length > 0 && !!d.asOf,
-      reached: [hasEv(id, 'PERMIT', 'ACTUAL'), hasEv(id, 'CONSTRUCTION_START', 'ACTUAL'), hasEv(id, 'SUPPLY_NOTICE', 'ACTUAL'), hasEv(id, 'COMPLETION', 'ACTUAL'), hasEv(id, 'MOVE_IN', 'ACTUAL')],
-      anyPlan: hasEv(id, null, 'PLANNED'),
-      supplyOrMoveInPlan: hasEv(id, 'SUPPLY_NOTICE', 'PLANNED') || hasEv(id, 'MOVE_IN', 'PLANNED'),
-    };
-  });
-  const N = projects.length, cnt = (fn) => projects.filter(fn).length;
-  /* 담당자 기준선: HOME execution_schedule 의 채택 기준선(baseline) → HOME 사업 id(PRO_) → 원장 사업(identifiers id_type HOME) */
-  const homeToLocal = new Map(x.identifiers.filter((r) => r.id_type === 'HOME' && ids.has(r.local_project_id)).map((r) => [r.id_value, r.local_project_id]));
-  const based = x.schedule.filter((s) => s.baseline && s.origin === 'MANUAL');
-  const baselineProjects = new Set(based.map((s) => homeToLocal.get(s.project_id)).filter(Boolean));
-  const ledgerBaseline = x.events.filter((e) => ids.has(e.local_project_id) && e.date_type === 'PLANNED' && e.plan_basis && e.plan_basis !== 'CURRENT').length;
-  const refYear = Number(x.pp.referenceMonthEnd.slice(0, 4));
-  const pp97 = x.pp.policies.find((p) => p.policyId === 'POL_2025_0907');
-  const pairCells = pp97 ? PP_STAGES.filter((k) => { const s = pp97.stages[k]?.samePeriod.find((y) => y.year === refYear); return s && s.target != null && s.actual != null; }).length : 0;
-  return {
-    base: N, refYear, refMonth: x.pp.referenceMonthEnd.slice(5, 7), pairCells,
-    plan: cnt((p) => p.units > 0), anyPlan: cnt((p) => p.anyPlan), supplyOrMoveInPlan: cnt((p) => p.supplyOrMoveInPlan),
-    stageCells: projects.reduce((s, p) => s + p.reached.filter(Boolean).length, 0), stageCellsTotal: N * 5,
-    locPrecise: cnt((p) => PRECISE.has(p.loc)), agencyKnown: cnt((p) => AGENCY.has(p.agency)), sourced: cnt((p) => p.sourced), judged: cnt((p) => p.status !== 'none'),
-    baselineRows: based.length, baselineProjects: baselineProjects.size, ledgerBaseline,
-    causes: x.cases, scenarios: 0, agencyTargets: 0,
-    policySidos: new Set(projects.filter((p) => p.policies.length).map((p) => p.sido)).size, sidoTotal: x.sidoTotal,
-    ledgerProjects: Object.values(x.ledgerMap.bySgg).flat().length, failedSources: x.homeSources.sources.filter((s) => !s.ok).length,
-  };
+/* 근거 지표에 보이는 짧은 이름(PoC 지표 이름은 길어 툴팁에 둔다) */
+const SHORT = {
+  'F-01': '위치 근거 사업', 'F-02': '목표·실적 칸', 'F-03': '실적 근거 칸', 'F-04': '이름·지역·계획량 사업', 'F-05': '날짜 있는 계획 사업', 'F-06': '기준선 칸',
+  'F-07': '병목 기록', 'F-08': '기관 배정 목표 사업', 'F-09': '공급·입주 예정 사업', 'F-10': '원천·기준일 사업', 'F-11': '목표·실적 칸', 'F-12': '시나리오',
+};
+const ratio = (m) => (m.total ? `${m.count}/${m.total} ${m.percent}%` : '산정 불가');
+
+/* poc: sources-requirements 응답. 판정: met 충족 · part 부분 · none 없음. 근거 지표(metric)는 화면에 보이는 짧은 값, tip 은 PoC 지표 이름·주석·규칙(제목 툴팁) */
+function judge(poc) {
+  return Object.fromEntries(Object.entries(poc.metrics).map(([id, m]) => {
+    const w = m.with_estimates, x = m.without_estimates;
+    const verdict = w.percent >= 95 ? 'met' : w.percent > 0 ? 'part' : 'none';
+    return [id, {
+      verdict, metric: `${SHORT[id]} ${ratio(w)} · 추정 제외 ${ratio(x)}`,
+      tip: `${m.label} — 추정 포함(기본) ${ratio(w)} · 추정 제외 ${ratio(x)} · 추정으로 추가 ${m.estimate_added_count} · 모수는 9·7 정책 사업 ${poc.project_count}건(5단계 칸은 ${poc.project_count * 5}) · ${m.note} · 규칙: 추정 포함 95% 이상 충족, 0 초과 부분, 산정 불가·0 없음`,
+      poc: { label: m.label, count: w.count, total: w.total, percent: w.percent, exCount: x.count, exTotal: x.total, exPercent: x.percent, added: m.estimate_added_count },
+    }];
+  }));
 }
 
-/* 판정: met 충족 · part 부분 · none 없음. 근거 지표(metric)는 화면에 보이는 짧은 값, tip 은 계산·규칙(제목 툴팁) */
-function judge(m) {
-  const N = m.base;
-  return {
-    'F-01': { verdict: m.policySidos >= m.sidoTotal ? 'met' : m.ledgerProjects > 0 ? 'part' : 'none', metric: `정책 연결 시도 ${m.policySidos}/${m.sidoTotal}`, tip: `원장 사업 ${f(m.ledgerProjects)}건과 정책·프로그램 연결은 수도권(서울·인천·경기) HOME 사업만(2026-10-19 결정) · 규칙: 정책 연결이 모든 시도면 충족, 일부 시도면 부분` },
-    'F-02': { verdict: m.pairCells === 6 ? 'met' : m.pairCells > 0 ? 'part' : 'none', metric: `목표·실적 같은 칸 ${m.pairCells}/6`, tip: `9·7 단계 6칸 중 같은 기간(${m.refYear}.01~${m.refMonth}) 목표와 확인이 둘 다 있는 칸 · 1·29·8·13 은 단계 목표 없음 · 규칙: 6칸 모두면 충족, 1칸 이상 부분` },
-    'F-03': { verdict: pct(m.stageCells, m.stageCellsTotal) >= 80 ? 'met' : m.stageCells > 0 ? 'part' : 'none', metric: `단계 실적 근거 ${pct(m.stageCells, m.stageCellsTotal)}%`, tip: `사업 ${N} × 단계 5(②인허가~⑥입주) 중 원천 실제 기록이 있는 칸 ${f(m.stageCells)}/${f(m.stageCellsTotal)} · 규칙: 80% 이상 충족, 0 초과 부분` },
-    'F-04': { verdict: pct(m.plan, N) >= 95 ? 'met' : pct(m.plan, N) >= 50 ? 'part' : 'none', metric: `계획 호수 ${Math.round(pct(m.plan, N))}%`, tip: `사업명·지역은 ${N}건 모두, 계획 호수는 ${m.plan}/${N} · 정밀 위치 ${m.locPrecise}건 · 규칙: 95% 이상 충족, 50% 이상 부분` },
-    'F-05': { verdict: pct(m.anyPlan, N) >= 95 ? 'met' : m.anyPlan > 0 ? 'part' : 'none', metric: `예정 일정 1개 이상 ${Math.round(pct(m.anyPlan, N))}%`, tip: `날짜가 있는 단계 예정이 하나라도 있는 사업 ${m.anyPlan}/${N} · 연도별 실적은 서울·인천·경기 2018~ · 규칙: 95% 이상 충족, 0 초과 부분` },
-    'F-06': { verdict: m.baselineProjects + m.ledgerBaseline > 0 ? 'part' : 'none', metric: `기준선 사업 ${m.baselineProjects}/${N}`, tip: `담당자가 채택한 일정 기준선(HOME 일정 입력 ${f(m.baselineRows)}건)이 있는 사업 ${m.baselineProjects}/${N} · 원장의 당초 예정 ${m.ledgerBaseline}건 · 지연 판정은 아직 현재 예정일 경과 기준(당초 대비 아님) · 규칙: 기준선이 있으면 부분, 없으면 없음` },
-    'F-07': { verdict: m.causes > 0 ? 'part' : 'none', metric: `원인·조치 기록 ${m.causes}건`, tip: `병목 원인·담당기관·조치계획 기록(HOME execution_case) ${m.causes}건 · 규칙: 기록이 있으면 부분, 없으면 없음` },
-    'F-08': { verdict: m.agencyTargets > 0 ? 'met' : m.agencyKnown > 0 ? 'part' : 'none', metric: `기관 식별 ${Math.round(pct(m.agencyKnown, N))}%`, tip: `LH·SH·GH·iH 로 시행 기관을 아는 사업 ${m.agencyKnown}/${N} · 기관별 배정 목표 ${m.agencyTargets}건 · 규칙: 배정 목표가 있으면 충족, 기관만 알면 부분` },
-    'F-09': { verdict: pct(m.supplyOrMoveInPlan, N) >= 80 ? 'met' : m.supplyOrMoveInPlan > 0 ? 'part' : 'none', metric: `모집·입주 예정 ${Math.round(pct(m.supplyOrMoveInPlan, N))}%`, tip: `모집 또는 입주 예정일이 있는 사업 ${m.supplyOrMoveInPlan}/${N} · 규칙: 80% 이상 충족, 0 초과 부분` },
-    'F-10': { verdict: m.sourced === N ? 'met' : m.sourced > 0 ? 'part' : 'none', metric: `원천·기준일 ${m.sourced}/${N}`, tip: `원천 참조와 기준일이 있는 사업 · 수집 실패 원천 ${m.failedSources}곳(마지막 정상 값 사용) · 규칙: 모든 사업이면 충족` },
-    'F-11': { verdict: m.pairCells > 0 ? 'part' : 'none', metric: `목표·실적 같은 칸 ${m.pairCells}/6`, tip: `정상·주의·지연 판정 사업 ${m.judged}/${N} · 목표·실적 비교는 9·7 단계 ${m.pairCells}칸 · 규칙: 목표·실적 칸이 있으면 부분` },
-    'F-12': { verdict: m.scenarios > 0 ? 'part' : 'none', metric: `시나리오 ${m.scenarios}건`, tip: '일정 이동 시나리오·기준선 저장 없음 · 규칙: 저장한 시나리오가 있으면 부분' },
-  };
-}
-
-function buildRequirements(x, { md, month, referenceDate, edition }) {
-  const m = measure(x), J = judge(m);
+function buildRequirements({ poc, md, month, referenceDate, edition }) {
+  const J = judge(poc);
   const used = new Set(Object.values(F_LINK).flatMap(([d]) => d));
   return {
-    schema: 'requirements/1', observedMonth: month, referenceDate, edition,
+    schema: 'requirements/2', observedMonth: month, referenceDate, edition,
     screens: { projects: { name: '사업', href: '/projects' }, region: { name: '지역 공급', href: '/region' }, sources: { name: '데이터 원본', href: '/sources' } },
     directives: directivesOf(md).filter((d) => used.has(d.date)),
     items: REQUIREMENTS.map((r) => ({ ...r, dates: F_LINK[r.id][0], screens: F_LINK[r.id][1], ...J[r.id] })),
-    measures: m,
+    measures: { base: poc.project_count, policyId: poc.policy_id },
   };
 }
 
-const readGz = (file) => zlib.gunzipSync(fs.readFileSync(file)).toString('utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
 function build({ month, root = P.ROOT } = {}) {
   month ??= P.latestMonth(root);
-  const dir = P.ledgerDir(month, root), tdir = path.join(dir, 'tables');
-  const table = (t) => JSON.parse(fs.readFileSync(path.join(tdir, `${t}.json`), 'utf8')).rows;
-  const board = (file) => JSON.parse(fs.readFileSync(path.join(root, 'data/board', file), 'utf8'));
+  const dir = P.ledgerDir(month, root);
   const homeDir = latestHomeDir(dir);
-  const sched = path.join(homeDir ?? `${dir}/raw/home`, 'execution_schedule.jsonl.gz');
-  if (!fs.existsSync(sched)) throw new Error(`HOME 판 원본이 없다: ${sched} — raw-store.js 로 받아 온 뒤 다시 실행`);
-  const caseFile = path.join(homeDir, 'execution_case.jsonl.gz');
-  const hmDir = path.join(root, 'data/board/home-map');
-  const homeLoc = Object.fromEntries(fs.readdirSync(hmDir).filter((x) => /^\d{5}\.json$/.test(x)).sort().flatMap((x) => JSON.parse(fs.readFileSync(path.join(hmDir, x), 'utf8')).projects.filter((p) => p.loc).map((p) => [p.id, p.loc])));
-  const x = {
-    projects: table('projects'), events: table('events'), links: table('links'), identifiers: table('identifiers'),
-    ledgerMap: board('ledger-map.json'), pIndex: board('projects-index.json'), pDetail: board('project-detail.json'), pp: board('policy-progress.json'), homeSources: board('home-sources.json'),
-    homeLoc, schedule: readGz(sched).map((r) => r.payload), cases: fs.existsSync(caseFile) ? readGz(caseFile).length : 0, sidoTotal: board('molit.json').sido.length - 1,
-  };
+  const referenceDate = P.referenceDateOf(dir), pocDir = path.join(dir, 'raw', 'home-api', referenceDate);
+  if (!fs.existsSync(path.join(pocDir, 'manifest.json'))) throw new Error(`PoC 스냅샷이 없다: ${pocDir} — node tools/ledger/home-sources.js --fetch-poc`);
   const md = fs.readFileSync(path.join(root, 'docs/주택파동_정책근거_및_요구사항_매트릭스.md'), 'utf8');
-  return buildRequirements(x, { md, month, referenceDate: P.referenceDateOf(dir), edition: path.basename(homeDir) });
+  return buildRequirements({ poc: readPoc(pocDir).requirements, md, month, referenceDate, edition: path.basename(homeDir) });
 }
 
 if (require.main === module) {
@@ -145,8 +89,8 @@ if (require.main === module) {
   const doc = build({ month: i > 0 ? process.argv[i + 1] : undefined });
   fs.writeFileSync(path.join(P.ROOT, OUT), JSON.stringify(doc) + '\n');
   const n = (v) => doc.items.filter((r) => r.verdict === v).length;
-  console.log(`${OUT}: 충족 ${n('met')} · 부분 ${n('part')} · 없음 ${n('none')} (HOME 사업 ${doc.measures.base}, 판 ${doc.edition})`);
+  console.log(`${OUT}: 충족 ${n('met')} · 부분 ${n('part')} · 없음 ${n('none')} (9·7 사업 ${doc.measures.base}, 판 ${doc.edition})`);
   for (const r of doc.items) console.log(`  ${r.id} ${r.verdict.padEnd(4)} ${r.metric}`);
 }
 
-module.exports = { REQUIREMENTS, F_LINK, OUT, directivesOf, measure, judge, buildRequirements, build };
+module.exports = { REQUIREMENTS, F_LINK, OUT, directivesOf, judge, buildRequirements, build };

@@ -151,7 +151,8 @@ test('결함 4: 데이터 원본 — 원장 사업 수 쉼표 · 12개월 위젯
 test('결함 5: 종합상황판 지연·주의 추이·기관별 진행 숫자에 단위(호)가 보인다', () => {
   const board = read('components/board/Board.tsx');
   const panel = (id) => board.slice(board.indexOf(`id="${id}"`), board.indexOf('</Card>', board.indexOf(`id="${id}"`)));
-  assert.match(panel('p-trend'), /<h2 className=\{ptitle\} title="[^"]*단위 호[^"]*">지연·주의 추이<\/h2>/, '추이 단위는 제목 title(2026-10-18 — 보이는 \'단위 호\' 글자는 다른 패널처럼 title 로)');
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 추이 제목 title 은 H ? HOME 문구 : 옛 문구 두 갈래, 둘 다 '단위 호' */
+  assert.match(panel('p-trend'), /<h2 className=\{ptitle\} title=\{H \? '[^']*단위 호[^']*' : '[^']*단위 호[^']*'\}>지연·주의 추이<\/h2>/, '추이 단위는 제목 title(2026-10-18 — 보이는 \'단위 호\' 글자는 다른 패널처럼 title 로)');
   assert.doesNotMatch(panel('p-trend'), /data-slot="trend-unit"/);
   assert.match(panel('p-agency'), /\{f\(a\.delayUnits\)\}<small[^>]*>호<\/small><\/b>/, '기관 지연 호수');
 });
@@ -173,13 +174,25 @@ test('후속 1: 후보 계산 숫자 → ?status=review-late 목록·CSV 건수�
   /* 사업 화면: 목록 머리 이름 · 상태 메뉴 칩 · CSV(같은 parseFilters·applyFilters) */
   assert.equal(V.REVIEW_LATE, '후보 · 지연 계산');
   assert.equal(V.listHref(V.parseFilters({ sido: 'all', status: 'review-late' }, fctx)), '/projects?sido=all&status=review-late', '주소가 그대로 돌아온다');
+  /* 사업 화면(2026-10-21 HOME 원천 행 — 후보 없음, r4-screens 4): 후보 이름·칩이 없고 상태 메뉴는 HOME 판정 칩뿐, CSV 는 화면과 같은 거르기·순서.
+     종합상황판도 후보 집계가 있을 때만 후보 계산 링크를 건다(HOME 집계에는 없음) */
   const page = read('app/(dashboard)/projects/page.tsx');
-  assert.match(page, /f\.status === 'review-late' \? REVIEW_LATE/, '목록 머리 이름');
-  assert.match(page, /\{ href: at\(\{ status: 'review-late' \}\), label: REVIEW_LATE, on: f\.status === 'review-late'/, '상태 메뉴 칩');
-  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /listRows\(listOrder\(applyFilters\(idx\.rows, f\)\)/, 'CSV 도 같은 거르기');
-  /* 사업 화면 핵심 질문: 번호 있는 지연이 없고 후보 지연만 있으면 그 목록으로 */
+  assert.doesNotMatch(page, /REVIEW_LATE/, '목록 머리 이름·메뉴에 후보 없음');
+  assert.match(board, /\{judged && SJ\.candidate && candCount\(SJ\.candidate\) \? \(/, '후보 집계가 없으면 후보 계산 링크 없음');
+  assert.match(page, /\.\.\.HOME_STATUS_ORDER\.map\(\(k\) => \(\{ href: at\(\{ status: k \}\), label: HOME_STATUS_NAME\[k\]!, on: f\.status === k/, '상태 메뉴 칩 = HOME 판정');
+  assert.doesNotMatch(page, /at\(\{ status: 'review-late' \}\)/, '후보가 없어 후보 칩 없음');
+  assert.match(page, /const list = homeListOrder\(applyFilters\(rows, f\)\);/);
+  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /const list = homeListOrder\(applyFilters\(idx\.rows, f\)\);/, 'CSV 도 같은 거르기');
+  /* HOME 원천 행: 후보 계산 목록 0건 = 종합상황판 HOME 집계의 후보 계산(없음) */
+  const HP = require('../../data/board/home-projects.json'), HB = require('../../data/board/home-board.json');
+  const home = V.homeRowsOf(HP.rows, HP.residuals), hctx = { ...fctx, home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
+  assert.ok(home.every((r) => r.issued), 'HOME 원천 행은 모두 번호 있음(후보 없음)');
+  assert.equal(V.applyFilters(home, V.parseFilters({ sido: 'all', status: 'review-late' }, hctx)).length, HB.judgment.candidate?.delay.projects ?? 0);
+  /* 사업 화면 핵심 질문: 후보 목록으로 보내지 않는다(원장·HOME 둘 다) */
   const q = Q({ sido: '28' })['어떤 사업이 늦어지는가'];
   assert.ok(q && !/review-late/.test(q.href), '후보 지연이 없으면 후보 목록으로 보내지 않는다');
+  const hq = V.homeQuestionsOf(home, V.parseFilters({ sido: '28' }, hctx), qctx).find((x) => x.q === '어떤 사업이 늦어지는가');
+  assert.ok(hq && !/review-late/.test(hq.href ?? ''), 'HOME 질문도 후보 목록으로 보내지 않는다');
 });
 
 /* ---------- 후속 2: 지도 개요의 지연 수 d 는 번호 있는 사업만(사업 화면 '지연(장기 포함)'과 같은 정의) ---------- */

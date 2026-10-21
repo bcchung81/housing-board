@@ -43,12 +43,12 @@ const { applyhomeUrl, noticeUrl } = loadTs('lib/board/public-labels.ts', {});
 const URL_RE = /^https:\/\/www\.applyhome\.co\.kr\/ai\/aia\/selectAPTLttotPblancDetail\.do\?houseManageNo=\d+&pblancNo=\d+$/;
 const SITE_RE = /^https:\/\/(apply\.lh\.or\.kr|www\.applyhome\.co\.kr|apply\.gh\.or\.kr)\//;
 
-test('자료: 공고 줄 사업 60곳(확정만 3 · 검토 섞임 57 — D7 근거 연결 공고가 더해짐, evidence-bridge.test.cjs), 유형 55곳, 공고는 공고일 순·같은 공고 번호 한 번', () => {
+test('자료: 공고 줄 사업 60곳(확정만 3 · 검토 섞임 57 — D7 근거 연결 공고가 더해짐, evidence-bridge.test.cjs), 유형 62곳(2026-10-21 같은 호수 대표 행 규칙으로 +7), 공고는 공고일 순·같은 공고 번호 한 번', () => {
   const withN = P.filter(([, x]) => x.notices);
   assert.equal(withN.length, 60);
   assert.equal(withN.filter(([, x]) => x.notices.every((n) => n.review === 'CONFIRMED')).length, 3);
   assert.equal(withN.filter(([, x]) => x.notices.some((n) => n.review === 'REVIEW_REQUIRED')).length, 57);
-  assert.equal(P.filter(([, x]) => x.types).length, 55);
+  assert.equal(P.filter(([, x]) => x.types).length, 62);   // 2026-10-21: 같은 호수면 HOME inventory 대표 행(공급계획)의 유형 — +7(PRJ-28155-0036·28275-0036·41113-0034·41150-0096·41220-0181·41220-0185·41290-0031)
   for (const [, x] of withN) {
     for (const n of x.notices) assert.deepEqual(Object.keys(n), ['system', 'id', 'title', 'date', 'review', ...(n.url ? ['url'] : [])]);
     assert.equal(new Set(x.notices.map((n) => `${n.system}|${n.id}`)).size, x.notices.length);

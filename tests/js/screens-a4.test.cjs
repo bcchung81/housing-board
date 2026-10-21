@@ -38,7 +38,7 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
   const q0 = V.questionsOf(rows, {}, ctx)[0];
   const words = q0.stages.map((c) => (c.target != null && c.actual != null ? `${c.actual}/${c.target} ${V.rateOf(c).word}` : c.target != null ? '실적 없음' : '목표 없음'));
   assert.deepEqual(words, ['7808/14694 달성 53.1%', '6249/3658 달성 170.8%', '목표 없음', '4732/8049 달성 58.8%', '381/381 달성 100.0%', '목표 없음']);   // 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
-  assert.match(q0.tip, /담당자 추정 포함\(확인과 따로\): ①계획 10,037호/, '추정 포함은 title 에만');   // 2026-10-20 HOME 판 5,789→10,037
+  assert.match(q0.tip, /담당자 추정 포함\(확인과 따로\): 사업화 10,037호/, '추정 포함은 title 에만');   // 2026-10-20 HOME 판 5,789→10,037
   assert.match(q0.help, /단계마다/); assert.match(q0.help, /'목표 없음'/);
   /* 목표가 없는 렌즈(1·29)는 단계 줄 없이 범위 줄 안 */
   const q129 = V.questionsOf(rows, { policy: IDX.policies.find((p) => p.key === '129') }, ctx)[0];
@@ -47,7 +47,7 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
   const sum = read('components/projects/Summary.tsx');
   assert.match(sum, /\{x\.stages \? <StageRates cells=\{x\.stages\} \/> : <>/);
   assert.match(sum, /\{cells\.map\(\(c\) => \{/);
-  assert.match(sum, /style=\{both \? \{ color: BOARD_INK\[c\.board\] \} : undefined\}>\{BOARD_CIR\[c\.board\]\}\{BOARD_NAMES\[c\.board\]\}/, '기존 ①~⑥ 번호·단계 글자색');
+  assert.match(sum, /style=\{both \? \{ color: BOARD_INK\[ppSlot\(c\.key\)\] \} : undefined\}>\{ppText\(c\)\}/, '2026-10-21: 정책 화면 PoC 단계 이름(원 숫자 없음) · 단계 글자색은 HOME 6칸');
   assert.match(sum, /: <span>목표 없음<\/span>\}/);
   assert.match(sum, /!both && 'text-muted-foreground'/, '목표 없음은 옅게');
   assert.match(sum, /whitespace-nowrap tabular-nums/, '줄바꿈 없음');
@@ -63,13 +63,17 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
 test('A 접힌 정책 목표 대비 머리 줄: 이름표 없는 부족률 숫자 없이 단계 이름', () => {
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
   for (const l of lines) assert.doesNotMatch(V.compareHead(l), /\d%/, l.policy.key);
-  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 2단계 미달(①계획·④모집)');
+  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 2단계 미달(사업화·공급)');
 });
 
 test('2 보이는 글의 내부 용어: HOME·번들·확정 전/확정은 title 로, ⓘ 정의는 쉬운 말', () => {
   const page = code(read('app/(dashboard)/projects/page.tsx'));
   assert.doesNotMatch(page, /HOME 자료 \{|, HOME 자료,/, '인쇄 꼬리말');
-  assert.match(page, /<span title=\{HOME_TIP\}>정책 진행 자료<\/span> \{editionText\(pp\.source\.edition\)\}/);
+  /* 2026-10-21 사업 화면 = HOME 원천 행: 인쇄 꼬리말의 자료 기준 = 정책 진행 자료 기준일(HOME 은 title), 셈 단위의 보이는 이름도 HOME 없이 */
+  assert.match(page, /자료 기준: <span title=\{HOME_TIP\}>정책 진행 자료<\/span> \{ref\}/);
+  assert.match(page, /const UNIT_TEXT = '원천 행';/);
+  assert.match(page, /셈 단위: \{UNIT_TEXT\}/);
+  assert.doesNotMatch(page, /\{HOME_UNIT\}|\$\{HOME_UNIT\}/, "보이는 글·ⓘ 에 'HOME 원천 행'을 쓰지 않는다");
   assert.doesNotMatch(code(read('components/region/Annual.tsx')), /년은 HOME 통계/);
   /* 데이터 원본: 보이는 문자열 값(따옴표·템플릿)에 '번들' 없음 */
   const strs = (s) => [...code(s).matchAll(/'([^'\n]*)'|`([^`]*)`/g)].map((m) => m[1] ?? m[2]);
@@ -83,9 +87,17 @@ test('2 보이는 글의 내부 용어: HOME·번들·확정 전/확정은 title
   assert.match(col, /\{OWNER\.HOME\}/); assert.doesNotMatch(col, />HOME</);
   /* ⓘ 정의: 전문용어 없이 */
   const sum = read('components/projects/Summary.tsx');
-  const defs = sum.slice(sum.indexOf('function Defs()'), sum.indexOf('export const ReadHelp'));
+  const defs = sum.slice(sum.indexOf('function Defs('), sum.indexOf('export const ReadHelp'));
+  assert.ok(defs.length > 0);
   assert.doesNotMatch(defs, /원장 관측 달|현재 예정 달|준공 실제|경과 6개월/);
+  const homeDefs = defs.slice(defs.indexOf('if (home) return'), defs.indexOf('\n  return ('));
+  assert.ok(homeDefs.includes('<dl>'), 'HOME 원천 행 정의');
+  assert.doesNotMatch(homeDefs, /HOME|덤프/, 'HOME 원천 행 정의도 쉬운 말');
   for (const f of [{}, { metro: true }]) for (const x of V.questionsOf(rows, f, ctx)) assert.doesNotMatch(x.help, /원장|관측|현재 예정 달|HOME/, x.q);
+  /* HOME 원천 행 핵심 질문의 ⓘ 도 같은 규칙 */
+  const HP = require('../../data/board/home-projects.json'), home = V.homeRowsOf(HP.rows, HP.residuals);
+  const hctx = { policies: IDX.policies, programs: V.homeProgramsOf(home), sidoOk: () => true, home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
+  for (const q of [{}, { policy: 'all' }]) for (const x of V.homeQuestionsOf(home, V.parseFilters(q, hctx), ctx)) assert.doesNotMatch(x.help, /원장|관측|현재 예정 달|HOME/, x.q);
   const list = page.slice(page.indexOf('<InfoTip label="목록 읽는 법">'), page.indexOf('</InfoTip>', page.indexOf('<InfoTip label="목록 읽는 법">')));
   assert.doesNotMatch(list, /경과 개월|≠/);
 });
@@ -113,7 +125,7 @@ test("4 지연 세 번 표시: 목록·인쇄의 현재 예정은 '경과' 꼬�
   }
   const done = rows.find((r) => r.done && V.lateOf(r) === null && !r.next);
   if (done) assert.equal(L.nextCell(done).tag, '실제');
-  assert.match(read('app/(dashboard)/projects/page.tsx'), /ev: nextCell\(r\), late: lateCell\(r\)/, '인쇄 표에도 지연 열이 있어 같은 칸');
+  assert.doesNotMatch(read('app/(dashboard)/projects/page.tsx'), /nextCell|lateCell/, '2026-10-21: 사업 화면(목록·인쇄)에는 현재 예정·지연(개월) 열이 없다(원장 판 nextCell·lateCell 은 위에서 확인)');
   assert.match(read('components/projects/Candidate.tsx'), /next = nextOf\(r\)/);
 });
 
@@ -165,7 +177,7 @@ test('7 CSV: 첫 열 사업 id(화면 표는 그대로), 수식 주입 방어(�
   assert.ok(lines[0].startsWith('사업 id,사업,'));
   assert.ok(lines[1].startsWith(`${list[0].id},`));
   assert.ok(lines.slice(1, -1).every((l, i) => l.startsWith(`${list[i].id},`)), 'id 순서 = 화면 기본 순서');
-  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /toCsv\(csvCols\(dropBlank\(LIST_COLS, rows\)\.cols\), csvRows\(rows\)\)/);
+  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /toCsv\(homeCsvCols\(dropBlank\(HOME_LIST_COLS, rows\)\.cols\), homeCsvRows\(rows, list\)\)/, '2026-10-21: 사업 화면 CSV = HOME 원천 행(첫 열 원천 행 id)');
   const one = (v) => G.toCsv([{ key: 'a', label: 'a', kind: 'text' }], [{ id: '1', c: { a: v } }]).slice(1).split('\r\n')[1];
   assert.equal(one('=SUM(A1)'), "'=SUM(A1)");
   assert.equal(one('@cmd'), "'@cmd");
@@ -207,5 +219,5 @@ test('B 기본 정렬: 번호 있는 사업 먼저, 후보 사업은 모두 뒤(
   // 2026-10-19 수도권 한정: 확인 필요(후보) 313 → 0 (후보가 모두 비수도권이었음)
   assert.equal(rows.filter((r) => V.statusOf(r) === 'review' && r.cls === 'delay').length, 0, '확인 필요(후보) 0');
   /* 열 머리 정렬은 그리드가 따로(listOrder 는 기본 순서만) · CSV 는 같은 순서 */
-  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /listOrder\(applyFilters\(idx\.rows, f\)\)/);
+  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /homeListOrder\(applyFilters\(idx\.rows, f\)\)/);
 });

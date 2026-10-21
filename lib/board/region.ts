@@ -24,8 +24,18 @@ export const ymDotted = (ym: string) => ym.slice(0, 7).replace('-', '.');
 export type LocKind = 'block' | 'address' | 'district' | 'area' | 'name' | 'rep';
 export const LOC_NAME: Record<LocKind, string> = { block: 'LH 블록 대표점', address: '주소 근사점', district: '지구 대표점', area: '근사 위치(시군구·동)', name: '근사 위치(이름 검색)', rep: '대표 위치(시군구 중심)' };
 
-export type CalEntry = { ym: string; day: string | null; type: CalKind; id: string; drawer: boolean; name: string; units: number; sgg: string; loc?: LocKind; pt?: [number, number] };
-export type CalendarDoc = { schema: string; observedMonth: string; referenceDate: string; edition: string; from: string; to: string; months: string[]; kinds: CalKind[]; sido: Record<string, CalEntry[]> };
+/* pro = HOME 원천 사업 행 id(PRO_ — home 묶음의 항목만). id = 우리 원장 사업 id, 원장에 없는 행(덤프 뒤 신규·변환 제외)은 PRO_ id 그대로 */
+export type CalEntry = { ym: string; day: string | null; type: CalKind; id: string; pro?: string; drawer: boolean; name: string; units: number; sgg: string; loc?: LocKind; pt?: [number, number] };
+/* HOME '향후 12개월 공급 예정'(PoC 원천 행 단위, tools/ledger/region-supply.js buildHomeCalendar): p97 = 9·7 포트폴리오(기본) · all = 정책 전체 */
+export type HomePolicy = 'p97' | 'all';
+export type HomeAhead = { sido: Record<string, CalEntry[]>; months: { ym: string; units: number; projects: number }[]; total: number; projects: number; ids: string[] };
+export type CalendarDoc = { schema: string; observedMonth: string; referenceDate: string; edition: string; from: string; to: string; months: string[]; kinds: CalKind[]; sido: Record<string, CalEntry[]>;
+  home: { asOf: string } & Record<HomePolicy, HomeAhead> };
+/* 정책 거르기(?policy=all): 기본 = 9·7(HOME 정책 화면 기본 범위), all = 정책 전체(해제 뺌) */
+export const HOME_POLICY: Record<HomePolicy, string> = { p97: '9·7', all: '정책 전체' };
+export const parsePolicy = (v?: string): HomePolicy => (v === 'all' ? 'all' : 'p97');
+/* HOME 행(PRO_ id)이 우리 원장에 없으면 사업 화면 연결이 없다 */
+export const offLedger = (e: Pick<CalEntry, 'id'>) => e.id.startsWith('PRO_');
 export type RegionMapDoc = { schema: string; view: Record<string, [number, number, number, number]>; sgg: { s: string; n: string; d: string }[]; districts: { n: string; d: string }[] };
 export type AnnualDoc = { schema: string; edition: string; months: string[]; series: Record<'start' | 'sale' | 'complete', Record<string, (number | null)[]>>; permitYearly: Record<string, Record<string, number>>; sourceAsOf: string | null };
 
@@ -34,7 +44,7 @@ export type AnnualDoc = { schema: string; edition: string; months: string[]; ser
 export const PAST_DUE = '예정일 지남';
 export const pastDue = (e: Pick<CalEntry, 'day'>, referenceDate: string) => !!e.day && e.day < referenceDate;
 
-/* 화면에 넘기는 예정 하나: k = 사업|종류(한 사업이 준공·입주 둘 다 있을 수 있다), sd = 시도, place = 표에 쓰는 짧은 시군구 이름 */
+/* 화면에 넘기는 예정 하나: k = 사업|종류(한 사업이 준공·입주 둘 다 있을 수 있다 — HOME 항목은 PRO_|종류|달: 한 행이 여러 달에 공급 예정일 수 있다), sd = 시도, place = 표에 쓰는 짧은 시군구 이름 */
 export type AheadEntry = CalEntry & { k: string; sd: string; place: string };
 
 /* '경기도 수원시 권선구' → 전국 보기 '경기 수원시 권선구', 시도 보기 '수원시 권선구' */
@@ -52,9 +62,9 @@ export const scopeCodes = (doc: { sido: Record<string, unknown> }, sido: string)
 export const inScope = (sido: string, code: string) => (sido === 'metro' ? METRO.includes(code) : sido ? code === sido : true);
 
 /* 지역 범위의 예정 전체(종류 거르기 전). 시도 하나일 때만 시도 이름을 뺀다 */
-export function aheadAll(doc: CalendarDoc, sido: string, sidoName: (code: string) => string): AheadEntry[] {
+export function aheadAll(doc: Pick<CalendarDoc, 'sido'>, sido: string, sidoName: (code: string) => string): AheadEntry[] {
   const one = !!sido && sido !== 'metro';
-  return scopeCodes(doc, sido).flatMap((sd) => (doc.sido[sd] ?? []).map((e) => ({ ...e, k: `${e.id}|${e.type}`, sd, place: placeLabel(e.sgg, sidoName(sd), one) }))).sort(byDay);
+  return scopeCodes(doc, sido).flatMap((sd) => (doc.sido[sd] ?? []).map((e) => ({ ...e, k: e.pro ? `${e.pro}|${e.type}|${e.ym}` : `${e.id}|${e.type}`, sd, place: placeLabel(e.sgg, sidoName(sd), one) }))).sort(byDay);
 }
 /* 예정 항목 → 사업 화면: 상세가 있는 사업은 상세 서랍(?id=), 후보 사업은 간단 보기(?cand=). 서랍 뒤·닫은 뒤 목록이 그 사업을 담도록 범위를 붙인다 —
    수도권 보기는 사업 화면 기본(수도권) 그대로, 전국·시도 보기는 그 사업의 시도(?sido=NN). 열쇠 순서는 사업 화면 listHref 와 같다(sido 다음 id·cand) */

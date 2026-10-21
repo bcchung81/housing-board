@@ -2,12 +2,14 @@
    상세 API(app/api/v1/project/[id]/route.ts)가 같이 쓴다 — 서버 컴포넌트가 클라이언트 부품에 넘기는 props 도 RSC 페이로드로 공개되므로 둘 다 이 결과만 싣는다.
    허용 목록: 건축HUB 관리번호(pks — 공개 범위 미결, projects-view MapRow)·번들 단지(bundles)·법정동(bjd)·필지(pnus)는 싣지 않는다.
    화면 계산에 필요한 파생값(지도 위치 판정 mapLocOf · 후보 출처 이름 · 시군구 표기)은 여기서 계산해 싣고, 출처는 그 사업 refs 가 가리키는 것만, 기관 이름·정책도 그 사업 것만.
-   지금 보는 화면의 거르기에 따라 달라지는 링크(같은 단계 사업)는 클라이언트(components/windows)가 만든다. 함수는 싣지 않는다(직렬화되는 값만). */
+   지금 보는 화면의 거르기에 따라 달라지는 링크(같은 단계 사업)는 클라이언트(components/windows)가 만든다. 함수는 싣지 않는다(직렬화되는 값만).
+   HOME 원천 행(?id=PRO_…, 2026-10-21 — 사업 화면 목록의 행): 머리·단계·상태·기관·호수는 PoC 값(row.home), 우리 원장 사업(같은 현장 병합 — ourId)이 있으면 그 상세(일정·공정률·공고·근거)를 붙인다(ledger).
+   붙인 상세의 단계별 '예정일 경과' 표지(옛 판정)는 PoC 판정과 섞이지 않게 뺀다. 원장 사업이 없으면 kind 'home'(머리·단계·개요만). */
 import { getBoardData } from './data';
 import { sidoName } from './calc';
-import { getProjectDrawer, getProjectsIndex, getPublicDetails, type SourceRef } from './projects-index';
+import { getHomeProjects, getProjectDrawer, getProjectsIndex, getPublicDetails, type SourceRef } from './projects-index';
 import { sggLabel } from './projects-list';
-import { candidateOf, isMetro, mapLocOf, pastDueOf, type MapLoc, type Policy, type ProjectDetail, type ProjectRow } from './projects-view';
+import { candidateOf, homeJudgeOf, isMetro, mapLocOf, pastDueOf, type MapLoc, type Policy, type ProjectDetail, type ProjectRow, type PublicJudge } from './projects-view';
 import { mapHref } from './map-href';
 import { METRO_AREAS, SIDO_SHORT, unitOf } from './metro-overview';
 import { PG_SHORT, groupOfBoard, noticeUrl, shortName, type StageGroup, type Steps } from './public-labels';
@@ -20,18 +22,24 @@ type WinNotices = { notices?: WinNotice[]; noticesMore?: number };
 export type WinDetail = Omit<ProjectDetail, 'bjd' | 'notices'> & WinNotices;
 type Base = { asked: string; canonical: string; title: string; dataAsOf: string };
 /* 정책담당자: 발급 사업 상세(ProjectDetail + DrawerHead) · 목록에서 뺀 사업(안내) · 번호 없는 후보 간단 보기(Candidate + CandidateHead) */
+/* ledger = HOME 원천 행 창에 붙인 우리 원장 사업(id·이름·그 사업에 합쳐진 원천 행 수) — 원장 사업 창이면 없음 */
+export type LedgerLink = { id: string; name: string; rows: number };
 export type AdminDetailWin = Base & { kind: 'detail'; view: 'admin'; row: WinRow; detail: WinDetail; sources: Record<string, SourceRef>; agencies: Record<string, string>; referenceDate: string; policies: Policy[];
-  from: { id: string; name: string } | null; label: string | null; mapLoc: MapLoc | null };
+  from: { id: string; name: string } | null; label: string | null; mapLoc: MapLoc | null; ledger?: LedgerLink };
+/* HOME 원천 행인데 우리 원장 사업이 없음(덤프 뒤 생긴 행·변환 제외) — 머리·단계·개요만 */
+export type HomeWin = Base & { kind: 'home'; view: 'admin'; row: WinRow; policies: Policy[]; referenceDate: string };
 export type HiddenWin = Base & { kind: 'hidden'; view: 'admin'; project: { id: string; name: string; hiddenAt: string; hiddenReason?: string }; sggName: string };
 export type CandidateWin = Base & { kind: 'candidate'; view: 'admin'; row: WinRow; sggName: string; sources: string[] };
 /* 일반사용자: 사업 찾기 상세(PublicDetail + 머리 — 지역·시행·유형). today 는 페이지가 넣을 때만(없으면 클라이언트가 오늘 날짜) */
 export type PublicExtra = { steps: Steps; agency: string; progress: number | null; progressAt: string | null; progress1: number | null };
-export type PublicWin = Base & { kind: 'detail'; view: 'public'; row: WinRow; detail: { refs: string[] } & WinNotices; sources: Record<string, SourceRef>; referenceDate: string; extra: PublicExtra | null; pastDue: boolean;
+/* home = 이 원장 사업에 합쳐진 HOME 원천 행들의 PoC 사업 판정(2026-10-21 — 가장 나쁜 판정 하나와 그 판정 행들의 부족 호수 합, 원천 행이 없으면 null). 있으면 예정 대비 문장은 이것으로(public-labels homeFact),
+   옛 원장 '예정일 지남'(pastDue)은 쓰지 않는다 — 사업 찾기 목록 줄과 같은 규칙 */
+export type PublicWin = Base & { kind: 'detail'; view: 'public'; row: WinRow; detail: { refs: string[] } & WinNotices; sources: Record<string, SourceRef>; referenceDate: string; extra: PublicExtra | null; pastDue: boolean; home: PublicJudge | null;
   head: { area: string; agency: string; program: { name: string; short: string } | null; types?: { name: string; raw: string[] }[] }; links: { map: string; schedule: string }; sameStage: StageGroup | null; today?: string };
-export type ProjectWindow = AdminDetailWin | HiddenWin | CandidateWin | PublicWin;
+export type ProjectWindow = AdminDetailWin | HiddenWin | CandidateWin | HomeWin | PublicWin;
 
 /* 허용 목록: 이름을 적은 칸만 옮긴다(원장 행 JSON 에는 타입에 없는 칸 — 필지 pnus 등 — 도 있어 빼기 대신 고르기) */
-const ROW_KEYS = ['id', 'name', 'issued', 'stage', 'cls', 'why', 'overdue', 'next', 'done', 'units', 'dateAlt', 'sgg', 'sggName', 'notice', 'programs', 'policies', 'link', 'agency', 'reached', 'completion', 'board'] as const satisfies readonly (keyof WinRow)[];
+const ROW_KEYS = ['id', 'name', 'issued', 'stage', 'cls', 'why', 'overdue', 'next', 'done', 'units', 'dateAlt', 'sgg', 'sggName', 'notice', 'programs', 'policies', 'link', 'agency', 'reached', 'completion', 'board', 'home'] as const satisfies readonly (keyof WinRow)[];
 const DETAIL_KEYS = ['unit', 'agency', 'scope', 'basis', 'asOf', 'issuedAt', 'source', 'stages', 'progress', 'refs', 'loc', 'types'] as const satisfies readonly (keyof WinDetail)[];
 const only = <T extends object>(o: T, keys: readonly (keyof T)[]) => Object.fromEntries(keys.filter((k) => o[k] !== undefined).map((k) => [k, o[k]]));
 const rowOf = (r: ProjectRow) => only(r, ROW_KEYS) as WinRow;
@@ -49,6 +57,7 @@ const pick = (all: Record<string, SourceRef>, refs: string[]) => Object.fromEntr
    일반사용자 제목은 짧은 이름(shortName) — 사업 찾기 첫 창은 페이지가 목록에 보이는 이름으로 바꿔 넣는다.
    없는 사업·관점에 맞지 않는 사업(일반사용자는 수도권 발급 사업만 — 지금 /citizen/projects 의 sel 조건)은 null */
 export async function projectWindow(asked: string, view: 'admin' | 'public', opts: { cand?: boolean; today?: string } = {}): Promise<ProjectWindow | null> {
+  if (/^PRO_/.test(asked)) return view === 'admin' && !opts.cand ? homeWindow(asked) : null;
   const idx = await getProjectsIndex();
   const dataAsOf = idx.referenceDate;
   if (view === 'admin' && opts.cand) {
@@ -70,11 +79,25 @@ export async function projectWindow(asked: string, view: 'admin' | 'public', opt
       from: d.from, label: d.label, mapLoc: mapLocOf(r, d.detail.loc) };
   }
   if (d.kind !== 'detail' || !isMetro(d.row.sgg)) return null;
-  const r = d.row, sd = r.sgg.slice(0, 2), x = (await getPublicDetails())[r.id] ?? null;
+  const r = d.row, sd = r.sgg.slice(0, 2), x = (await getPublicDetails())[r.id] ?? null, home = homeJudgeOf((await getHomeProjects()).rows, r.id);
   /* 시도를 뗀 시군구 이름: 원장 이름('인천광역시 계양구' → '계양구'), 구가 있는 경기 시 코드는 지도 코드표(/citizen/projects sggShort 와 같다) */
   const n = idx.sggNames[r.sgg], sggShort = n ? n.slice(n.indexOf(' ') + 1) : METRO_AREAS[r.sgg] ?? r.sgg;
   return { kind: 'detail', view, asked, canonical: r.id, title: shortName(r.name), dataAsOf, row: rowOf(r), detail: { refs: d.detail.refs, ...noticesOf(d.detail) }, sources: pick(d.sources, d.detail.refs),
-    referenceDate: d.referenceDate, extra: x, pastDue: pastDueOf(r),
+    referenceDate: d.referenceDate, extra: x, pastDue: home ? false : pastDueOf(r), home,
     head: { area: `${SIDO_SHORT[sd]} ${sggShort}`, agency: x?.agency ?? '', program: r.programs[0] ? { name: r.programs[0], short: PG_SHORT[r.programs[0]] ?? r.programs[0] } : null, ...(d.detail.types ? { types: d.detail.types } : {}) },
     links: { map: mapHref({ project: r.id }), schedule: `/citizen/schedule?sido=${sd}&sgg=${unitOf(r.sgg) ?? r.sgg}` }, sameStage: groupOfBoard(r.board), ...(opts.today ? { today: opts.today } : {}) };
+}
+
+/* HOME 원천 행 창(정책담당자만): 행 = PoC 값, 우리 원장 사업이 있으면 그 상세를 붙인다(옛 '예정일 경과' 표지는 뺀다) */
+async function homeWindow(asked: string): Promise<AdminDetailWin | HomeWin | null> {
+  const h = await getHomeProjects();
+  const r = h.rows.find((x) => x.id === asked);
+  if (!r) return null;
+  const base = { view: 'admin' as const, asked, canonical: r.id, title: r.name, dataAsOf: h.referenceDate, row: rowOf(r) };
+  const ourId = r.home?.ourId, d = ourId ? await getProjectDrawer(ourId) : null;
+  if (!d || d.kind !== 'detail') return { ...base, kind: 'home', policies: h.policies.filter((p) => r.policies.includes(p.key)), referenceDate: h.referenceDate };
+  const x = detailOf(d.detail);
+  const stages = Object.fromEntries(Object.entries(x.stages).map(([k, st]) => { const { late: _late, ...rest } = st ?? {}; return [k, rest]; }));
+  return { ...base, kind: 'detail', detail: { ...x, stages }, sources: pick(d.sources, d.detail.refs), agencies: {}, referenceDate: d.referenceDate, policies: h.policies.filter((p) => r.policies.includes(p.key)),
+    from: null, label: d.label, mapLoc: mapLocOf(d.row, d.detail.loc), ledger: { id: d.row.id, name: d.row.name, rows: h.rows.filter((y) => y.home?.ourId === ourId).length } };
 }

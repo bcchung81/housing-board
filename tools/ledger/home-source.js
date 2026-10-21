@@ -73,7 +73,7 @@ function readHome(dir) {
     if (f.sha256 && crypto.createHash('sha256').update(buf).digest('hex') !== f.sha256) throw new Error(`${dir}/${file} 의 sha256 이 manifest 와 다르다`);
     kinds[file.replace(/\.jsonl\.gz$/, '')] = zlib.gunzipSync(buf).toString('utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
   }
-  return { edition: path.basename(dir), snapshotAt: manifest.snapshot_at, manifest, kinds };
+  return { edition: path.basename(dir), dir, snapshotAt: manifest.snapshot_at, manifest, kinds };
 }
 /* 그 달 폴더의 가장 늦은 HOME 판(raw/home/<덤프시각>, manifest.json 이 있는 것), 없으면 null */
 /* 프로그램 이름 정규화 키: 공백을 빼고 가운뎃점 꼴(・ㆍ‧∙•)을 '·' 로 — '도심 공공주택 복합사업' = '도심공공주택 복합사업' */
@@ -120,12 +120,17 @@ function districtTerm(row) {
   v = v.split(/\s*[A-Za-z]{1,3}\s*-?\s*\d|\s+주복\d|\s+0\d/)[0];
   return v.trim() || null;
 }
-/* (시도 이름, 정규화 지구, 블록) 또는 null */
+/* (시도 이름, 정규화 지구, 블록) 또는 null. HOME 2038810 backend/supply_dashboard.py 25~42행: 블록 칸(없으면 이름의 블록)이 블록 꼴이 아니면
+   이름에 'XXnBL'·'XXn블록' 표기가 한 가지뿐일 때 그 블록(공사 계약의 현장 코드 '04'·'A13-1' 이 제목의 주택 블록과 다를 때 — 원천 칸은 고치지 않는다) */
 function blockKey(row) {
   const term = districtTerm(row);
   let block = row.block;
   if (!block) { const m = /\s+([A-Za-z]{1,3})\s*-?\s*(\d+)(?:BL)?(?:\s|\(|$)/i.exec(row.name ?? ''); block = m ? m[1] + m[2] : null; }
-  const m = /^([A-Za-z]{1,3})\s*-?\s*0*(\d+)(?:BL)?$/i.exec(block ?? '');
+  let m = /^([A-Za-z]{1,3})\s*-?\s*0*(\d+)(?:BL)?$/i.exec(block ?? '');
+  if (!m) {
+    const explicit = new Set([...String(row.name ?? '').matchAll(/([A-Za-z]{1,3})[-－]?(\d+)(?:BL|블록)/gi)].map((x) => `${x[1]}\u0000${x[2]}`));
+    if (explicit.size === 1) { const [p, n] = [...explicit][0].split('\u0000'); m = /^([A-Za-z]{1,3})(\d+)$/.exec(p + n); }
+  }
   if (!term || !m) return null;
   const t = term.replace(/\s+/g, '').replaceAll('국제화계획', '').replace(/(?:공공주택지구|택지개발사업|택지개발지구|지구)+$/, '');
   return t ? { region: row.region, term: t, block: `${m[1].toUpperCase()}${+m[2]}` } : null;
@@ -136,7 +141,9 @@ const keyText = (k) => `${k.region}|${k.term}|${k.block}`;
 /* 대표가 될 수 없는 행: 복수 현장 계약(MULTI_SITE_CONTRACT), 블록 키 없는 건설공사 계약. rows 의 source_id 는 별칭을 푼 값(lh_incheon_* → lh_*) */
 const inventoryDropped = (row) => (row.warnings || []).includes('MULTI_SITE_CONTRACT') || (row.source_id === 'lh_construction' && blockKey(row) === null);
 /* 지구·블록 중복 제외 → { chosen, excluded }(id). 같은 블록(blockKey)에 공급계획(lh_sale·lh_rent)이 하나면 그것, 계획 없이 한 행이면 그 행이 대표.
-   계획이 둘 이상이거나 계획 없이 여러 행이면 묶음째 뺀다. 대표의 계획 호수가 없고 같은 블록 원천의 양수 호수가 한 값이면 그 값(SAME_BLOCK_SOURCE) */
+   계획이 둘 이상이고 임대 유형(tenure)이 서로 다른 국민임대·영구임대·행복주택·통합공공임대면 겹치지 않는 공급계획이라 모두 대표(HOME 2038810 supply_dashboard.py 65~71행),
+   그 밖에 계획이 둘 이상이거나 계획 없이 여러 행이면 묶음째 뺀다. 대표의 계획 호수가 없고 같은 블록 원천의 양수 호수가 한 값이면 그 값(SAME_BLOCK_SOURCE) */
+const RENTAL_TENURES = new Set(['국민임대', '영구임대', '행복주택', '통합공공임대']);
 function inventory(rows) {
   const grouped = new Map(), excluded = [];
   for (const row of rows) {
@@ -149,6 +156,11 @@ function inventory(rows) {
   const chosen = [];
   for (const group of grouped.values()) {
     const plans = group.filter((r) => PLAN_SOURCES.has(r.source_id));
+    if (plans.length > 1 && new Set(plans.map((r) => r.tenure)).size === plans.length && plans.every((r) => RENTAL_TENURES.has(r.tenure))) {
+      chosen.push(...plans);
+      excluded.push(...group.filter((r) => !plans.includes(r)).map((r) => r.id));
+      continue;
+    }
     if (plans.length > 1 || (!plans.length && group.length > 1)) { excluded.push(...group.map((r) => r.id)); continue; }
     let winner = plans.length ? plans[0] : group[0];
     if (winner.planned_units == null) {
@@ -463,6 +475,21 @@ function buildHome(home, { areaRows, lhSgg = [], homeIds = {} }) {
   for (const g of out) report.bySggMethod[g.sggMethod] = (report.bySggMethod[g.sggMethod] ?? 0) + 1;
   return { edition, asOf, refs, groups: out, unresolved, kinds: K, idx, home, report };
 }
+
+/* 원천 사업후보(PRO) → 시군구 코드: 원장 변환(buildHome)의 묶음 시군구 그대로(시군구 미정 묶음은 빠진다). 입력은 convert 와 같은 그 달 폴더의 법정동 표(raw/legal-dong — 조회일의 행정구역)·
+   LH 블록 시군구 매핑(mappings/lh-block-sgg.json)·id 매핑(mappings/home-ids.json). 그 달 폴더에 둘 중 하나라도 없으면 null.
+   쓰는 곳: policy-progress.js homeService 가 인천 행의 시군구 이름을 행정구역 개편(2026-07-01, 서구 → 서해구·검단구, 중구·동구 → 제물포구·영종구) 뒤 이름으로 채운다 —
+   HOME PoC 운영 판의 규칙 INCHON_DATED_ADMINISTRATIVE_NAME('원천의 명시 시군구 또는 식별된 지구·동과 조회일의 행정구역 대조', /mappings 응답의 municipality_provenance,
+   2038810 원본에 없음)을 대신한다. 차이: HOME 은 규칙 표를 공개하지 않았고, 우리는 원장과 같은 후보 순위(LH 블록 매핑 → 블록 위치점 지구 코드 → 주소 → 시군구 이름 → 지구 → 이름의 시군구·동)로 정한다 */
+function sggByPro(home, monthDir) {
+  const dongDir = path.join(monthDir, 'raw/legal-dong'), lhFile = path.join(monthDir, 'mappings/lh-block-sgg.json'), idsFile = path.join(monthDir, 'mappings/home-ids.json');
+  const dong = fs.existsSync(dongDir) ? fs.readdirSync(dongDir).filter((f) => f.endsWith('.csv')).sort().pop() : null;
+  if (!dong || !fs.existsSync(lhFile)) return null;
+  const legal = require('./legal-dong').parseLegalDong(fs.readFileSync(path.join(dongDir, dong)), dong);
+  const read = (f) => JSON.parse(fs.readFileSync(f, 'utf8'));
+  const b = buildHome(home, { areaRows: legal.rows, lhSgg: read(lhFile), homeIds: fs.existsSync(idsFile) ? read(idsFile) : {} });
+  return new Map(b.groups.flatMap((g) => g.members.map((m) => [m.pro, g.sgg])));
+}
 /* 묶음의 id 키(종류 순 HPR·PRO·LH·BLK, 종류 안은 원천 사업후보 순). BLK 는 시군구가 정해진 묶음만 */
 function groupKeys(g) {
   const keys = [];
@@ -656,7 +683,7 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
 
     /* 호수: 묶음의 계획 호수 중 가장 큰 값 하나(겹치는 행을 더하지 않는다). 대표가 될 수 없는 행(복수 현장 계약·블록 키 없는 계약)의 호수는 다른 행에 호수가 없을 때만 */
     const hasUnits = (m) => Number.isInteger(m.p.planned_units) && m.p.planned_units >= 0, all = g.members.filter(hasUnits), pool = all.filter((m) => !m.dropped);
-    const withUnits = (pool.length ? pool : all).sort((a, b) => b.p.planned_units - a.p.planned_units || byStr(a.pro, b.pro));
+    const withUnits = (pool.length ? pool : all).sort((a, b) => b.p.planned_units - a.p.planned_units || (b === g.main) - (a === g.main) || byStr(a.pro, b.pro));   // 같은 호수면 대표 행(HOME inventory 대표 — 공급계획)
     if (withUnits.length) {
       const u = withUnits[0].p, differs = new Set(all.map((m) => m.p.planned_units)).size > 1;
       t.units.push({ local_project_id: pid, complex_id: null, quantity_type: 'PROJECT_PLAN', housing_type: u.tenure && !/확인/.test(u.tenure) ? u.tenure : null, unit_count: u.planned_units, reference_period: null, unit_scope: 'TOTAL', source_ref: refs.main,
@@ -1112,4 +1139,4 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
   return { registry: reg, ...out };
 }
 
-module.exports = { PUBLIC_TIER, AGENCY_SOURCES, programKey, officerTerms, scrubKinds, bridgeAdopted, noticeKeyOfUrl, moveInDocOf, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, siteKeys, CODE_NAME, addressArea, buildHome, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, keepSido, issueHome, serialOf };
+module.exports = { PUBLIC_TIER, AGENCY_SOURCES, programKey, officerTerms, scrubKinds, bridgeAdopted, noticeKeyOfUrl, moveInDocOf, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, siteKeys, CODE_NAME, addressArea, buildHome, sggByPro, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, keepSido, issueHome, serialOf };

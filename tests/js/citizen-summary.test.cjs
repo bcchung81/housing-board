@@ -162,7 +162,7 @@ test('⑦ 강조 금지 목록(색 왼쪽/오른쪽 테두리 2px 이상 · 0 �
 
 test('⑥ 준공·입주 줄(2026-10-20): 구분선 아래·큰 숫자 밖, 값은 지은 호수, 색은 --st-soon·--st-move, 단계 탭 7개·모드 6개', () => {
   const D2 = JSON.parse(JSON.stringify(D)), c0 = IX.regionOf['41360'].codes[0];
-  D2.prj[c0].push(['T1', '시험 준공', 6, 100, -1, ''], ['T2', '시험 입주', 7, 40, -1, '']);
+  D2.hp.c[c0][3][4] += 100; D2.hp.c[c0][3][5] += 40;   // 2026-10-21 HOME PoC 칸(D.hp 단계 6칸) — 옛 원장 줄 D.prj 끼워 넣기 대체
   const band2 = make('bandHtml', { sum: (cs) => ctx.sumOf(D2, cs), D: D2, areaOf: (c) => IX.regionOf[c], unitKey, bico: () => '', esc, nameOf: (r) => r.label, fmt, stageSums: ctx.stageSums, topStage: ctx.topStage, STAGE6: ctx.STAGE6, STAGE_Q: ctx.STAGE_Q, SUPPLY_N: ctx.SUPPLY_N, bigNum: ctx.bigNum });
   const r = IX.regionOf['41360'], b = band2(r, false), R = rows(b);
   assert.deepEqual(R.slice(4).map((x) => x.v), [ctx.stageSums(D, r.codes)[4] + 100, ctx.stageSums(D, r.codes)[5] + 40], '준공·입주 줄 = 이미 지은 호수');

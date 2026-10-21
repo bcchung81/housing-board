@@ -17,7 +17,8 @@ const { MENU } = require('../../lib/shell/menu.ts');
 test('앞으로를 세는 기준 달은 종합상황판의 향후 12개월(원장 upcoming)과 같은 원장 관측 달이다(월 갱신을 따라간다)', () => {
   assert.match(fs.readFileSync(path.join(__dirname, '../../lib/board/data.ts'), 'utf8'), /AHEAD_FROM: l\.board\.observedMonth/);
   assert.equal(require('../../data/board/ledger-board.json').upcoming[0].ym, AHEAD);
-  assert.match(read('app/(dashboard)/page.tsx'), /^    ledger,$/m);
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 종합상황판 page.tsx 는 home-board 를 ledger 로 준다(월 갱신은 tools/ledger/home-board.js 가 따라간다) */
+  assert.match(read('app/(dashboard)/page.tsx'), /^    ledger: homeBoard,$/m);
 });
 
 test('우리 동네 달력(lhCalendar): 시도별 달력을 모두 더하면 전국 LH 준공 예정(lhByMonth)과 같고, 달 안은 날짜 순이다', () => {
@@ -37,11 +38,11 @@ test('우리 동네 달력(lhCalendar): 시도별 달력을 모두 더하면 전
 test('월간 보고(8.14 정례 보고): 사업 화면의 인쇄 보기(?print=1·@media print)가 핵심 질문·단계별 진행·정책 목표 대비(펼침)·점검 필요 사업(10줄 넘으면 상위 10)·기준일·출처를 담는다(2026-10-14 보고자료 메뉴를 사업 화면으로 합침)', () => {
   const s = read('app/(dashboard)/projects/page.tsx');
   assert.match(s, /<h1 [^>]*>월간 주택공급 보고<\/h1>/);
-  assert.match(s, /점검 필요 \$\{fmt\(prioN\)\}건 전부/, "10줄 이하면 '점검 필요 n건 전부'(넘으면 상위 10)");
-  assert.match(s, /const prioAll = priorityOf\(scope, Infinity\), top = prioAll\.slice\(0, 10\);/);
-  assert.match(s, /자료 기준: 사업 원장 \{ref\}/);
+  assert.match(s, /점검 필요 \$\{fmt\(prioAll\.length\)\}건 전부/, "10줄 이하면 '점검 필요 n건 전부'(넘으면 상위 10)");   // 2026-10-21 HOME 행: 건수는 prioAll.length
+  assert.match(s, /const prioAll = homePriorityOf\(scope\), top = prioAll\.slice\(0, 10\);/);
+  assert.match(s, /자료 기준: <span title=\{HOME_TIP\}>정책 진행 자료<\/span> \{ref\}/);
   assert.doesNotMatch(s, /HOME 덤프 \{pp\.source\.edition\}/, "판 번호(20261014T102506Z)를 화면에 내지 않는다");
-  assert.match(s, /출처: 사업 원장/);
+  assert.match(s, /기준일·출처/, '인쇄 보기 머리 주석·title 에 기준일·출처');
   assert.ok(!fs.existsSync(path.join(ROOT, 'app/(dashboard)/reports')), '옛 보고자료 화면은 없다(/reports → /projects?print=1)');
   // 이번 달 증감은 전월·전년 같은 달과 비교한다
   const last = C.lastMonth(molit);
@@ -51,7 +52,7 @@ test('월간 보고(8.14 정례 보고): 사업 화면의 인쇄 보기(?print=1
 
 test('지역 공급(9.4 국민 예측가능성): 시도를 고르면 앞으로 12개월 모집·준공·입주 예정과 고른 달 목록을 보이고, 자격 판단은 하지 않는다', () => {
   const page = read('app/(dashboard)/region/page.tsx'), ahead = read('components/region/Ahead.tsx');
-  assert.match(page, /aheadAll\(calendar, sido, sidoName\)/);
+  assert.match(page, /aheadAll\(calendar\.home\[pl\], sido, sidoName\)/);   // 2026-10-21: HOME 공급 예정(정책 칩)
   assert.match(page, /청약 자격은 모집공고에서 확인/);
   assert.match(ahead, /role="radiogroup" aria-label="달 고르기"/, '달은 키보드로 고른다(←→)');
   assert.match(ahead, /const href = projectHref\(e, sido\);/, '사업은 사업 화면 서랍으로 연다(범위 붙임 — data-audit-1016 결함 3)');
@@ -61,9 +62,9 @@ test('지역 공급(9.4 국민 예측가능성): 시도를 고르면 앞으로 1
 
 test('사업 상세(9.30 쉬운 설명): 서랍의 지금 단계는 6단계 스텝(현재 표시·칸 title 의 질문)이 보이고 문장으로 되풀이하지 않으며, 그 시도의 지역 공급으로 이어 준다', () => {
   const s = read('components/projects/ProjectDetail.tsx');
-  assert.match(s, /<StageSteps current=\{r\.board\}/);
+  assert.match(s, /<StageSteps home(?:=\{home\})? current=\{r\.board\}/);
   assert.doesNotMatch(s, /단계입니다 — /, '그림이 보여 주는 지금·다음 단계를 문장으로 다시 쓰지 않는다(2026-10-13 화면 규칙)');
-  assert.match(read('components/projects/StageSteps.tsx'), /title=\{`\$\{BOARD_CIR\[i\]\} \$\{name\} — \$\{QUESTION\[i\]\}/, '단계마다 답할 질문은 칸의 title');
+  assert.match(read('components/projects/StageSteps.tsx'), /title=\{`\$\{BOARD_CIR\[i\]\} \$\{name\} — \$\{QS\[i\]\}/, '단계마다 답할 질문은 칸의 title');
   assert.match(s, /href=\{`\/region\?sido=\$\{r\.sgg\.slice\(0, 2\)\}`\}/);
 });
 
@@ -104,7 +105,8 @@ test('종합상황판 리본 그라데이션·12개월 막대 단색: 층마다 
   assert.doesNotMatch(r + b, /stop-color="color-mix|stopColor=\{`color-mix/, 'color-mix 를 stop-color 속성에 넣지 않는다');
   assert.match(r, /fill="url\(#rbg\$\{k\}\)"/);
   assert.match(r, /stroke="\$\{PAL\.seam\}" stroke-width="0\.9"/);
-  assert.match(b, /fill="var\(--st-soon\)"/, '12개월 막대는 시안처럼 단색(그라데이션 없음)');
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 12개월 막대는 H(공급 예정)면 --st-sale, 아니면 --st-soon, 둘 다 단색 */
+  assert.match(b, /fill=\{H \? 'var\(--st-sale\)' : 'var\(--st-soon\)'\}/, '12개월 막대는 시안처럼 단색(그라데이션 없음)');
   for (const sel of ['\n:root {', '\n.dark {']) { const i = tw.indexOf(sel), blk = tw.slice(i, tw.indexOf('\n}\n', i)); assert.match(blk, /--rb-hi: #/); assert.match(blk, /--rb-lo: #/); }
 });
 

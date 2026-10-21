@@ -304,9 +304,13 @@ test('SAMPLE 표지는 없다(지연·주의 추이도 월 판정 이력), 원�
     assert.doesNotMatch(p, /ptSmall/, `${id}: 제목 옆 설명 글자 없음(title 로)`);
   }
   assert.doesNotMatch(board + realRow, /<Real\b|실데이터<|scopeShort/, '실데이터 표지·보이는 범위 글자 없음');
-  assert.match(board, /const scope = `원장 \$\{ymDot\(L\.observedMonth\)\} 기준 · 사업 \$\{f\(L\.scope\.projects\)\}건\(\$\{ledgerMix\(L\)\}\) · \$\{nation\} · \$\{real\.ledgerOrigin === 'supabase' \? `출처 Supabase\(api\.board, \$\{ymDot\(real\.ledgerMonth\)\}\)` : '출처 JSON 대체'\}`;/);
-  assert.match(panel(board, 'p-trend'), /title="지연·주의 사업의 계획 호수\(단위 호 — 위 숫자·선 모두\) · 2025\.01~2026\.09 소급 판정, 2026\.10부터 월 관측"/, '단위 호는 보이는 글자가 아니라 제목 title(2026-10-18)');
-  assert.match(panel(realRow, 'p-actual'), /<h2 className=\{ptitle\} title=\{`국토교통 통계누리/, 'p-actual: 출처는 제목 title');
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 종합상황판은 const H = L.home 이면 HOME 범위 문구, 없으면 옛 원장 문구(두 갈래) */
+  assert.match(board, /const scope = H \? `HOME 정책 추진현황 규칙\(9·7\) · 기준일 \$\{dotDates\(L\.referenceDate\)\} · 승인 연결 사업 \$\{f\(L\.scope\.projects\)\}개\(과거 착공 포함 · 입력·추정 포함\) · \$\{nation\}`\s*: `원장 \$\{ymDot\(L\.observedMonth\)\} 기준 · 사업 \$\{f\(L\.scope\.projects\)\}건\(\$\{ledgerMix\(L\)\}\) · \$\{nation\} · \$\{real\.ledgerOrigin === 'supabase' \? `출처 Supabase\(api\.board, \$\{ymDot\(real\.ledgerMonth\)\}\)` : '출처 JSON 대체'\}`;/);
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 추이 제목 title 은 H 갈래(HOME 단계 최대 부족량)와 옛 갈래 모두 '단위 호' */
+  assert.match(panel(board, 'p-trend'), /title=\{H \? '[^']*단위 호 — 위 숫자·선 모두[^']*' : '지연·주의 사업의 계획 호수\(단위 호 — 위 숫자·선 모두\) · 2025\.01~2026\.09 소급 판정, 2026\.10부터 월 관측'\}/, '단위 호는 보이는 글자가 아니라 제목 title(2026-10-18)');
+  /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — p-actual 은 HOME 9·7 사건(HomeActual)이 기본, 집계에 home 이 없으면 통계누리(옛) */
+  assert.match(panel(realRow, 'p-actual'), /<h2 className=\{ptitle\} title=\{`HOME 9·7 승인 연결 사업/, 'p-actual(HomeActual): 출처는 제목 title');
+  assert.match(realRow, /<h2 className=\{ptitle\} title=\{`국토교통 통계누리/, 'p-actual(옛 갈래): 출처는 제목 title');
   assert.doesNotMatch(board, /\b(AG|REG|dStage|vals|txSnap)\b/, '시안 SAMPLE 계산(기관·시도·단계 호수)을 쓰지 않는다');
 });
 
@@ -362,12 +366,12 @@ test('시도 카드는 월별 실적 흐름(middle)과 같은 줄에 있고, 시
   assert.doesNotMatch(realRow, /id="p-actors"/);
 });
 
-test('향후 12개월 패널은 원장의 준공 예정(upcoming, 2026-10부터 12개월)만 그리고, 시안의 SAMPLE 계열(착공·모집·입주 예정)을 쓰지 않는다', () => {
+test('향후 12개월 패널(2026-10-21 결정: HOME 과 같은 조건·같은 표기 — H 면 공급 예정·var(--st-sale), 아니면 준공 예정·var(--st-soon))은 집계의 upcoming 12개월만 그리고, 시안의 SAMPLE 계열(착공·모집·입주 예정)을 쓰지 않는다', () => {
   const fut = panel(board, 'p-fut');
   assert.match(board, /const up = L\.upcoming,/);
   assert.match(fut, /\{up\.map\(\(m, i\) =>/);
   assert.match(fut, /onClick=\{\(\) => goto\(NOW \+ i\)\}/, '막대를 누르면 그 달 선택');
-  assert.match(fut, /fill="var\(--st-soon\)"/, '단색'); assert.doesNotMatch(fut, /linearGradient|Reserve|futRead/, '그라데이션·아래 문장 없음');
+  assert.match(fut, /fill=\{H \? 'var\(--st-sale\)' : 'var\(--st-soon\)'\}/, '단색(HOME 은 공급 예정 색)'); assert.doesNotMatch(fut, /linearGradient|Reserve|futRead/, '그라데이션·아래 문장 없음');
   assert.match(board, /upSum = up\.reduce\(\(n, m\) => n \+ m\.units, 0\), upProj = up\.reduce\(\(n, m\) => n \+ m\.projects, 0\)/, '12개월 합');
   assert.ok(L.upcoming.reduce((n, m) => n + m.units, 0) > 0);
   assert.match(fut, /\{f\(upSum\)\}<small[^>]*>호<\/small>[\s\S]*\{f\(upProj\)\}건/, '큰 숫자 한 줄');
@@ -379,10 +383,11 @@ test('향후 12개월 패널은 원장의 준공 예정(upcoming, 2026-10부터 
   assert.doesNotMatch(board, /\bFS\b/, 'sample.ts 에서 FS(향후 12개월 SAMPLE)를 가져오지 않는다');
 });
 
-test('종합상황판은 실데이터를 data/board 에서만 읽는다: 월별 실적(molit), 원장 집계(ledger), 원천 수(sources)', () => {
+test('종합상황판은 실데이터를 data/board 에서만 읽는다: 월별 실적(molit), 집계(2026-10-21 결정: HOME 과 같은 조건 — home-board.json 을 ledger 로), 원천 수(sources)', () => {
   const page = fs.readFileSync(path.join(__dirname, '../../app/(dashboard)/page.tsx'), 'utf8');
   assert.match(fs.readFileSync(path.join(__dirname, '../../lib/board/ledger-source.ts'), 'utf8'), /import ledgerBundled from '\.\.\/\.\.\/data\/board\/ledger-board\.json';/);
-  assert.match(page, /^    ledger,$/m);
+  assert.match(page, /import homeBoardJson from '@\/data\/board\/home-board\.json';/);
+  assert.match(page, /^    ledger: homeBoard,$/m);
   assert.match(page, /sido: Object\.fromEntries\(molit\.sido\.map/);
   assert.match(page, /sourceCount: sources\.items\.length/);
   assert.match(realRow, /seriesOf\(molit/);

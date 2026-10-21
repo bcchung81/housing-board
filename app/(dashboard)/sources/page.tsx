@@ -27,7 +27,7 @@ import { cacheRecords, csvDetail, detailOf, readJson } from '@/lib/board/samples
 import { ACQUIRE, ACQUIRE_ASOF, GAPS, type AcquireStatus } from '@/lib/board/acquire';
 import { stageLinks } from '@/lib/board/stage-links';
 import { AHEAD_COMPLETION, judgeOutText } from '@/lib/board/projects-view';
-import type { HomeSources } from '@/lib/board/home-sources';
+import { kstDate, kstEdition, type HomeSources } from '@/lib/board/home-sources';
 import regionIndex from '@/regions/index.json';
 import type { Source } from '@/lib/board/types';
 import { GRID_DENSE, dotDates, type Col, type Detail, type Row } from '@/lib/grid/spec';
@@ -171,7 +171,7 @@ export default async function SourcesPage() {
   const got = items.flatMap((s) => (s.collectedAt ? [s.collectedAt.slice(0, 10)] : [])).sort();   // 카탈로그의 수집일(가장 이른·늦은 날)
   const bundles = bundleCounts();
   const req = requirementsJson as unknown as RequirementsDoc, hs = homeSources as HomeSources;
-  const editionDay = `${req.edition.slice(0, 4)}.${req.edition.slice(4, 6)}.${req.edition.slice(6, 8)}`;   // 덤프 시각 '20261014T102506Z'(UTC) — 한국 날짜도 같은 날
+  const editionDay = kstEdition(req.edition)!;   // 덤프 시각 '20261019T212247Z'(UTC) → 한국 날짜(10-20)
   const regions = REGIONS.length;
   const nameOf = (id: string) => ITEMS.find((i) => i.id === id)!.name;
   const missing = (screen: 'board' | 'map') => ITEMS.filter((i) => SCREEN_USAGE[i.id][screen].startsWith('필요')).map((i) => i.name);
@@ -343,13 +343,13 @@ export default async function SourcesPage() {
         tip="① 요구사항 충족 → ② 수집 상태 → ③ 연도 확보 → ④ 연결 · 맨 아래 원천 카탈로그(단계별 데이터 연계·원천별 수집 건수·기준일)">
         <ReqTags screen="sources" />
         <span className="text-sm whitespace-nowrap text-muted-foreground tabular-nums mobile:text-sm"
-          title={`정책 진행 자료(HOME) ${req.edition.slice(0, 4)}.${req.edition.slice(4, 6)}.${req.edition.slice(6, 8)} 수집 · 사업 원장 기준일 ${dotDates(req.referenceDate)} · 원천 카탈로그 ${items.length}건의 수집일 ${dotDates(got[0])} ~ ${dotDates(got[got.length - 1])} · 추가 확보 필요 조사 ${dotDates(ACQUIRE_ASOF)}`}>
+          title={`정책 진행 자료(HOME) ${editionDay} 수집(수집 실행·연결) · 원천 건수·기준일·연도 확보·요구사항 ${kstDate(hs.poc.fetchedAt)} 받아 둔 PoC 값(집계 ${hs.poc.generatedAt.slice(0, 16).replace('T', ' ')}) · 사업 원장 기준일 ${dotDates(req.referenceDate)} · 원천 카탈로그 ${items.length}건의 수집일 ${dotDates(got[0])} ~ ${dotDates(got[got.length - 1])} · 추가 확보 필요 조사 ${dotDates(ACQUIRE_ASOF)}`}>
           수집 {editionDay} · 원장 {req.referenceDate.replace(/-/g, '.')}
         </span>
       </PageHead>
       <Requirements doc={req} />
       <Collect hs={hs} items={items} />
-      <Coverage hs={hs} molit={molit} />
+      <Coverage hs={hs} />
       <Links hs={hs} />
       <Fold title="원천 카탈로그" meta={`단계별 데이터 연계 · 화면별 사용 · 추가 확보 필요 ${acqOpen.length}건 · 보관 데이터셋 ${items.length}건`} className="mt-0">
       <section id="stage-links" aria-labelledby="h-stage" className="scroll-mt-20">

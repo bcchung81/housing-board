@@ -14,6 +14,10 @@
        area     시군구 대표점(project_location APPROXIMATE_AREA) — 지도는 그리지 않고 목록에만 둔다
      법정동 대표점은 원본에 좌표가 없어 쓰지 못한다(bjd 코드만 싣는다). 모두 근거 상태 REVIEW(경계·건물 아님).
    - 정책 연결: links PROGRAM_PROJECT(프로그램 → 사업)와 POLICY_PROGRAM(정책 → 프로그램). 하나라도 CONFIRMED 면 CONFIRMED, 아니면 REVIEW_REQUIRED, 연결이 없으면 null.
+   - HOME PoC 규칙 값(2026-10-21 — 머리 줄·지연 칩·카드의 건수·호수·판정·단계 물량은 원천 행 PRO_ 단위, 수도권 개요와 같은 값): 공통 사업 자료 home-projects.json(읽기만)의 행을
+     우리 원장 사업(ourId)에 잇는다. 점·카드 단위는 원장 사업 그대로(위치는 원장 지도 자료 loc), 사업마다 poc{ n 원천 행 · n97 그중 9·7 · u·u97 집계 호수(물량 없으면 null) · j 판정 }.
+     시군구 파일마다 poc{ p97|all: 값 묶음(tools/ledger/map-overview.js valsOf — n·c·x·q·u·d·w·a·an·st) } 와 noPrj[](이 시군구 행 가운데 원장 사업이 이 파일에 없는 것 —
+     지도에 그릴 수 없어 '위치 미확보'로 센다: { id(PRO_), name, u, j, p97 }). 행의 시군구 = 원장 시군구(loc.ourSgg), 없으면 PoC 시군구 코드가 하나일 때 그 코드.
    순수 함수 homeMapFromLedger 는 파일을 읽거나 쓰지 않는다. 같은 입력 → 같은 바이트(행은 id 순, 좌표는 소수 6자리).
    실행: node tools/ledger/home-map.js [--month YYYY-MM]  → schemas/ledger-<달>/tables + 그 달의 가장 늦은 HOME 판(raw/home/<덤프시각>, 원본 jsonl.gz 필요)
      + mappings/home-ids.json(·home-geocode.json, 없으면 이름 검색 위치 없이) 을 읽어 data/board/home-map/ 을 통째로 다시 쓴다(사업이 없어진 시군구 파일은 지운다). 시험: tests/js/home-map.test.cjs */
@@ -23,6 +27,7 @@ const path = require('node:path');
 const P = require('./paths');
 const { mapIndexFromLedger, loadTables, loadLhBlocks } = require('./board');
 const { readHome, latestHomeDir, homeAvailable, blockKey } = require('./home-source');
+const MO = require('./map-overview');
 
 const HOME_SIDO = ['11', '28', '41'];
 const OUT_DIR = 'data/board/home-map';
@@ -140,24 +145,53 @@ function withNameSearch(loc, g) {
   if (!g || (loc && loc.by !== 'area')) return loc ?? null;
   return { by: 'name', at: [r6(g.at[0]), r6(g.at[1])], basis: 'NAME_SEARCH', status: 'REVIEW', match: String(g.match ?? '') };
 }
-function homeMapFromLedger(tables, { referenceDate, observedMonth, edition = null, locations = new Map(), homeIds = {}, geocode = new Map(), names = new Map(), lhBlocks = null } = {}) {
+/* PoC 판정 하나(사업에 이어진 행들): 지연 > 주의 > 목표 도달 > 판정 미확보. 물량 있는 집계 행의 판정만 본다(map-overview.js valsOf 와 같다) */
+const J_ORDER = ['DELAYED', 'WARNING', 'NORMAL', 'UNKNOWN'];
+function pocOf(rows) {
+  const counted = (scope) => rows.filter((r) => MO.inScope(r, scope) && r.chart[scope] && r.units.counted > 0);
+  const sumU = (xs) => (xs.length ? xs.reduce((s, r) => s + r.units.counted, 0) : null);
+  const js = counted('all').filter((r) => r.reached).map((r) => r.judge.status);
+  return { n: rows.filter((r) => r.stats).length, n97: rows.filter((r) => MO.inScope(r, 'p97')).length, u: sumU(counted('all')), u97: sumU(counted('p97')), j: J_ORDER.find((x) => js.includes(x)) ?? null };
+}
+/* 행 → 상세 지도 시군구(원장 시군구, 없으면 PoC 시군구 코드가 하나일 때) */
+const sggOfRow = (r) => (r.loc && r.loc.ourSgg) || (r.sgg && r.sgg.codes.length === 1 ? r.sgg.codes[0] : null);
+
+function homeMapFromLedger(tables, { referenceDate, observedMonth, edition = null, locations = new Map(), homeIds = {}, geocode = new Map(), names = new Map(), lhBlocks = null, homeProjects = null } = {}) {
   const index = mapIndexFromLedger(tables, { referenceDate, observedMonth, lhBlocks });
   const project = new Map(tables.projects.map((p) => [p.local_project_id, p]));
   const bjds = new Map();
   for (const l of [...tables.project_locations].sort((a, b) => byStr(a.bjd_code ?? '', b.bjd_code ?? ''))) if (l.bjd_code && !bjds.has(l.local_project_id)) bjds.set(l.local_project_id, l.bjd_code);
   const labels = labelsOf(homeIds), notice = noticeUnitsOf(tables), policy = policyOf(tables);
   const moveIn = currentPlan(tables, 'MOVE_IN'), completion = currentPlan(tables, 'COMPLETION');
+  /* HOME PoC 행: 원장 사업별·시군구별 */
+  const hpRows = homeProjects ? homeProjects.rows.filter((r) => r.stats) : [];
+  const rowsOfPrj = new Map(), rowsOfSgg = new Map();
+  for (const r of hpRows) {
+    if (r.ourId) (rowsOfPrj.get(r.ourId) || rowsOfPrj.set(r.ourId, []).get(r.ourId)).push(r);
+    const g = sggOfRow(r);
+    if (g) (rowsOfSgg.get(g) || rowsOfSgg.set(g, []).get(g)).push(r);
+  }
   const out = {};
-  for (const sgg of Object.keys(index.bySgg).filter(isHomeSgg).sort()) {
-    const projects = index.bySgg[sgg].map((r) => {
+  for (const sgg of [...new Set([...Object.keys(index.bySgg), ...rowsOfSgg.keys()])].filter(isHomeSgg).sort()) {
+    const projects = (index.bySgg[sgg] ?? []).map((r) => {
       const p = project.get(r.id);
       return {
         ...r, label: labels.get(r.id) ?? shortName(r.name), agency: p?.agency_id ?? null,
         moveIn: moveIn.get(r.id) ?? null, completion: completion.get(r.id) ?? null, noticeUnits: notice(r.id),
         bjd: bjds.get(r.id) ?? null, loc: withNameSearch(locations.get(r.id), (r.bundles ?? []).length ? null : geocode.get(r.id)), policy: policy(r.id),
+        ...(homeProjects ? { poc: rowsOfPrj.has(r.id) ? pocOf(rowsOfPrj.get(r.id)) : null } : {}),
       };
     });
-    out[sgg] = { schema: SCHEMA, sgg, ...(names.has(sgg) ? { name: names.get(sgg) } : {}), observedMonth: index.observedMonth, referenceDate: index.referenceDate, edition, projects };
+    if (!projects.length && !homeProjects) continue;
+    let poc = {};
+    if (homeProjects) {
+      const rs = rowsOfSgg.get(sgg) ?? [], inFile = new Set(projects.map((x) => x.id));
+      poc = {
+        poc: Object.fromEntries(['p97', 'all'].map((k) => [k, MO.valsOf(rs.filter((r) => MO.inScope(r, k)), k)])),
+        noPrj: rs.filter((r) => !(r.ourId && inFile.has(r.ourId))).map((r) => ({ id: r.id, name: r.name, u: r.chart.all && r.units.counted > 0 ? r.units.counted : null, j: r.reached && r.chart.all && r.units.counted > 0 ? r.judge.status : null, p97: r.p97 })),
+      };
+    }
+    out[sgg] = { schema: SCHEMA, sgg, ...(names.has(sgg) ? { name: names.get(sgg) } : {}), observedMonth: index.observedMonth, referenceDate: index.referenceDate, edition, ...poc, projects };
   }
   return out;
 }
@@ -168,7 +202,7 @@ function renderHomeMap(doc) {
   return `{\n${head.join('\n')}\n  "projects": [\n${doc.projects.map((r) => `    ${JSON.stringify(r)}`).join(',\n')}\n  ]\n}\n`;
 }
 
-module.exports = { HOME_SIDO, OUT_DIR, SCHEMA, isHomeSgg, homeLocations, homeMapFromLedger, renderHomeMap, noticeUnitsOf };
+module.exports = { HOME_SIDO, OUT_DIR, SCHEMA, isHomeSgg, homeLocations, homeMapFromLedger, renderHomeMap, noticeUnitsOf, pocOf, sggOfRow };
 
 if (require.main === module) {
   const i = process.argv.indexOf('--month'), month = i > 0 ? process.argv[i + 1] : P.latestMonth();
@@ -180,7 +214,9 @@ if (require.main === module) {
   const homeIds = JSON.parse(fs.readFileSync(path.join(dir, 'mappings/home-ids.json'), 'utf8'));
   const geocode = require('./home-geocode').adoptedOf(path.join(dir, 'mappings/home-geocode.json'));
   const names = new Map(tables.areas.filter((a) => a.level === 'SGG').map((a) => [a.area_code, a.area_name]));
-  const docs = homeMapFromLedger(tables, { referenceDate: P.referenceDateOf(dir), observedMonth: month, edition: home.edition, locations: homeLocations(home.kinds, homeIds), homeIds, geocode, names, lhBlocks: loadLhBlocks() });
+  const hpFile = path.join(P.ROOT, 'data/board/home-projects.json');   // HOME PoC 규칙 값(tools/ledger/home-projects.js 가 먼저) — 없으면 PoC 값 없이
+  const homeProjects = fs.existsSync(hpFile) ? JSON.parse(fs.readFileSync(hpFile, 'utf8')) : null;
+  const docs = homeMapFromLedger(tables, { referenceDate: P.referenceDateOf(dir), observedMonth: month, edition: home.edition, locations: homeLocations(home.kinds, homeIds), homeIds, geocode, names, lhBlocks: loadLhBlocks(), homeProjects });
   const out = path.join(P.ROOT, OUT_DIR);
   fs.mkdirSync(out, { recursive: true });
   for (const f of fs.readdirSync(out)) if (/^\d{5}\.json$/.test(f) && !docs[f.slice(0, 5)]) fs.rmSync(path.join(out, f));

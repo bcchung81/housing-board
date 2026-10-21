@@ -47,9 +47,10 @@ t('보기와 내 동네 분리: 면·순위·카드·이웃·검색은 저장하
 t('숫자 정의 하나(v7): 요약 합계 = 지도 면 합 = 많은 곳 순위 숫자 — 경기·서울·인천', () => {
   const D = ctx.D;
   for (const sd of ['41', '11', '28']) {   // 2026-10-19 수도권 한정: 부산(26)은 색인에 없다
-    const units = ctx.unitsFor(D, S, sd), big = ctx.sumOf(D, S.regionOf[sd].codes);
-    assert.strictEqual(units.reduce((a, x) => a + x.u, 0), big.u, sd + ' 면 합');
-    assert.strictEqual(units.reduce((a, x) => a + x.n, 0), big.n, sd + ' 사업 수 합');
+    /* 2026-10-21 HOME PoC: 시군구 미연결 PoC 행(D.hp 시도 코드 칸 — PoC municipality_unlinked_ids)은 시도 합계에만 들고 면에는 없다 */
+    const units = ctx.unitsFor(D, S, sd), big = ctx.sumOf(D, S.regionOf[sd].codes), off = ctx.sumOf(D, [sd]);
+    assert.strictEqual(units.reduce((a, x) => a + x.u, 0) + off.u, big.u, sd + ' 면 합 + 시군구 미연결');
+    assert.strictEqual(units.reduce((a, x) => a + x.n, 0) + off.n, big.n, sd + ' 사업 수 합 + 시군구 미연결');
     const rk = ctx.rankTop(units, null, sd === '26' ? 8 : 5);
     assert.deepStrictEqual(rk.map((x) => x.u), units.filter((x) => x.u > 0).slice(0, rk.length).map((x) => x.u), sd + ' 순위 = 호수 내림차순');
     for (const x of units) { const r = S.regionOf[x.key]; if (r) assert.strictEqual(r.units, x.u, sd + ' 검색 숫자 ' + x.name); }
@@ -63,8 +64,8 @@ t('6단계 줄(2026-10-20 공식 이름): 계획 + 인허가 + 착공 + 모집 �
   const D = ctx.D;
   for (const r of S.regions) { const c = ctx.stageSums(D, r.codes); assert.strictEqual(c[0] + c[1] + c[2] + c[3], r.units, r.label); assert.strictEqual(c.length, 6); }
   assert.deepStrictEqual([...ctx.STAGE6], ['계획', '인허가', '착공', '모집', '준공', '입주'], '단계 이름 6개·순서(원 숫자·옛 3단계 이름 없음)'); assert.strictEqual(ctx.SUPPLY_N, 4);
-  /* 준공·입주 줄은 큰 숫자 밖: 준공(6)·입주(7) 사업을 끼워 넣으면 해당 칸만 늘고 큰 숫자(sumOf)는 그대로 */
-  const D2 = JSON.parse(JSON.stringify(D)), c0 = S.regionOf['41360'].codes[0]; D2.prj[c0].push(['T1', '시험 준공', 6, 100, -1, ''], ['T2', '시험 입주', 7, 40, -1, '']);
+  /* 준공·입주 줄은 큰 숫자 밖: 준공·입주 호수를 더하면 해당 칸만 늘고 큰 숫자(sumOf)는 그대로(2026-10-21 HOME PoC 칸 D.hp — 옛 원장 줄 D.prj 끼워 넣기 대체) */
+  const D2 = JSON.parse(JSON.stringify(D)), c0 = S.regionOf['41360'].codes[0]; D2.hp.c[c0][3][4] += 100; D2.hp.c[c0][3][5] += 40;
   const a0 = ctx.stageSums(D, S.regionOf['41360'].codes), a1 = ctx.stageSums(D2, S.regionOf['41360'].codes);
   assert.strictEqual(a1[4] - a0[4], 100); assert.strictEqual(a1[5] - a0[5], 40); assert.strictEqual(ctx.sumOf(D2, S.regionOf['41360'].codes).u, ctx.sumOf(D, S.regionOf['41360'].codes).u, '큰 숫자는 준공·입주를 세지 않는다');
   const c = ctx.stageSums(D, S.regionOf['41360'].codes); console.log('  남양주시 띠:', c.join(' · '));
@@ -211,8 +212,8 @@ t("사업 이름 풀어 쓰기: 'A-17'·'S1'·'B3'·'C2' → '(n블록)', '주�
   assert.strictEqual(ctx.shortName('조달청) 화성동탄 B3 아파트 건설공사 1공구'), '화성동탄(3블록)');
 });
 t('큰 지도 주소: lib/board/map-href.ts 와 같은 결과(사업 > 시군구 > 시도 > 첫 화면, 구가 있는 경기 시는 ?sido=41&pick=, 수도권 밖 연결점은 null)', () => {
-  const src = fs.readFileSync(require('path').join(__dirname, '..', '..', '..', 'lib', 'board', 'map-href.ts'), 'utf8').replace(/export /g, '').replace(/\(o: \{[^}]*\} = \{\}\): string( \| null)? =>/g, '(o = {}) =>');
-  const ref = {}; vm.createContext(ref); vm.runInContext(src + '\nthis.mapHref = mapHref; this.mapScopeHref = mapScopeHref;', ref);
+  /* Node 24 는 .ts 를 바로 읽는다(타입 지우기) — 2026-10-21 map-href.ts 에 policy 인자가 생겨 글자 바꾸기로 타입을 지우던 옛 방식 대체. /citizen 은 policy 없이 부른다 */
+  const ref = require(require('path').join(__dirname, '..', '..', '..', 'lib', 'board', 'map-href.ts'));
   const S1 = [{}, { project: 'PRJ-41360-0001' }, { sgg: '41360' }, { sgg: '41280' }, { sgg: '41110' }, { sgg: '11650' }, { sgg: '28245' }, { sido: '41' }, { sido: '11' }, { sido: '26' }, { sgg: '26110' }];
   for (const o of S1) { assert.strictEqual(ctx.mapHref(o), ref.mapHref(o), JSON.stringify(o)); assert.strictEqual(ctx.mapScopeHref(o), ref.mapScopeHref(o), 'scope ' + JSON.stringify(o)); }
   assert.strictEqual(ctx.mapScopeHref({ sgg: '41280' }), '/map?sido=41&pick=41280'); assert.strictEqual(ctx.mapScopeHref({ sgg: '41360' }), '/map?sgg=41360');
@@ -246,7 +247,7 @@ t('카드·칸 제목(header-unify-spec 4절): 지도 카드·칸 제목은 Noto
   assert(/\.lg-h \{[^}]*font-size: var\(--fs-h3\); line-height: var\(--lh-sub\);/.test(h) && /\.hb-t \{[^}]*font-size: var\(--fs-h3\); line-height: var\(--lh-sub\);/.test(h)); assert(!/\.(lg-h|hb-t) \{[^}]*font-family: var\(--font-sans\)/.test(h));   // 2026-10-18 지도 카드 제목 = 머리 띠 h1, 레일 범례 제목 h3
   assert(/\.cell-h h2 \{[^}]*font-size: var\(--fs-h2\);/.test(h));
   assert(/^\s*h1, h2, h3, h4 \{ font-weight: 700;/m.test(h));
-  assert(h.includes('정책담당자 화면의 계획~모집 단계와 같은 숫자예요'));
+  assert(h.includes("정책담당자 화면의 '정책 전체' 사업과 같은 숫자예요"));   // 2026-10-21 HOME PoC 정책 전체
 });
 t('.sr 규칙은 한 번만 정의되고 li 에 class="sr" 를 쓰지 않는다(시트 줄은 sli)', () => {
   assert.strictEqual((h.match(/^\.sr \{/gm) || []).length, 1);
@@ -303,10 +304,10 @@ t("r9-3 들어올 해 = 입주 → 준공 → 원장 다음 일정(준공·입�
   assert.strictEqual(ctx.inYear(D, ...row('PRJ-41290-0032')), '2029', '입주 2029-02 가 준공 2027-12 보다 먼저');
   const out = {};
   for (const sd of ['41', '11', '28']) {
-    let has = 0, tbd = 0; const Y = [0, 0, 0, 0, 0, 0, 0];
-    for (const c of S.regionOf[sd].codes) for (const p of D.prj[c] || []) { if (ctx.OF_STAGE[p[2]] > 3) continue; const b = ctx.yearBucket(D, c, p); Y[b] += p[3]; if (ctx.inYear(D, c, p)) has += p[3]; else tbd += p[3]; }
-    assert.strictEqual(Y.slice(0, 6).reduce((a, b) => a + b, 0), has, sd); assert.strictEqual(Y[6], tbd, sd);
-    assert.strictEqual(has + tbd, ctx.sumOf(D, S.regionOf[sd].codes).u, sd + ' 합 = 큰 숫자');
+    /* 2026-10-21 HOME PoC: 지도 해 칸(yearSums)은 PoC '향후 12개월 공급(모집·분양) 예정'의 해(D.hp) — 사업 카드 들어올 해(inYear)와 따로. 해 칸 합 + 연도 미정 = 큰 숫자 */
+    const Y = ctx.yearSums(D, S.regionOf[sd].codes), has = Y.slice(0, 6).reduce((a, b) => a + b, 0);
+    assert.strictEqual(has + Y[6], ctx.sumOf(D, S.regionOf[sd].codes).u, sd + ' 합 = 큰 숫자');
+    assert(Y.slice(2, 6).every((v) => v === 0), sd + ' 12개월 창이라 올해·내년만');
     out[sd] = has;
   }
   console.log('  정해짐(호):', JSON.stringify(out));
@@ -377,7 +378,7 @@ t("r10-4 사업 줄 '들어와요' 대신 일정 이름: 고양창릉 A-4 → '�
   const g = Object.entries(D.prj).flatMap(([c, rows]) => rows.filter((p) => p[1] === '고양창릉 A-4BL 아파트 건설공사 1공구').map((p) => ctx.inLabel(D, c, p)));
   assert.deepStrictEqual(g, ['입주 2028년 1월']);
   assert(!/`\$\{x\.yt\} 들어와요`/.test(TPL) && TPL.includes('const sub = ev ? NEXT[x.k] : x.il'), '시트 사업 줄 = 들어올 때 말(아래 줄 사업 표는 2026-10-19 청약 단지 카드로 바뀜)');
-  assert(TPL.includes('입주 예정 해가 있으면 입주 해, 없으면 준공 해'), 'ⓘ 입주 기준');
+  assert(TPL.includes('지도의 해 칸은 앞으로 12개월 안에 모집·분양이 예정된 호수가 든 해예요'), 'ⓘ 해 칸 = PoC 12개월 공급 예정(2026-10-21 — 사업 줄 들어올 때 말은 그대로)');
   console.log(`  ${n}건 들어올 때 말 = 들어올 해`);
 });
 t('r10-5 시트 사업 줄 상태 글자(색 점만이 아님): 호수 아래 상태 + 접근 이름에 포함', () => {
@@ -851,7 +852,7 @@ t('r18-1 카드 머리 공용 부품(globals 내보내기 층): .ui-card-head(�
   assert(!/background-clip:\s*text|-webkit-text-fill-color/.test(TPLCSS + GXR), '그라데이션 글자 없음');
 });
 t('r18-2 요약 카드 색감: 단계 6줄 = 단계색 점 + 옅은 틴트 + 단계 글자색 숫자(계획 --st-plan · 인허가 --st-permit · 착공 --st-build · 모집 --st-sale · 준공 --st-soon · 입주 --st-move), 다음 준공 = 준공색 띠(입주는 입주색, 아이콘 없음), 공고 상태 칸 = 접수 중 --ok · 마감 임박 --warn · 접수 예정 --primary, 글자 대비 4.5:1(라이트·다크 계산)', () => {
-  assert(TPL.includes("const STATUS = [['계획', '', 'plan'], ['인허가', '', 'permit'], ['착공', '', 'build'], ['모집', '', 'sale'], ['준공', '', 'soon'], ['입주', '', 'move']]") && TPL.includes('계획·인허가·착공·모집 네 단계를 더해요') && TPL.includes('이미 지은 준공·입주 호수는 이 숫자에 넣지 않고'), '단어 ↔ 단계(tip-head 정의)');
+  assert(TPL.includes("const STATUS = [['계획', '', 'plan'], ['인허가', '', 'permit'], ['착공', '', 'build'], ['모집', '', 'sale'], ['준공', '', 'soon'], ['입주', '', 'move']]") && TPL.includes('계획·인허가·착공·모집 네 단계를 더하고') && TPL.includes('입주 호수는 이 숫자에 넣지 않고') && TPL.includes('어느 단계인지 아직 확인하지 못한 호수도 여기에 넣어요') && TPL.includes('공사를 마친 호수도 여기에 함께 세서 준공 줄은 비어 있어요'), '단어 ↔ 단계(tip-head 정의 — 2026-10-21 HOME PoC 칸 대응: 미확인 → 계획, 준공 → 착공)');
   /* 2026-10-18 통합 요약 표(10-20 6줄): 단계 줄 = 이름 | 단계색 막대(폭 = 비율) | 호수. 가장 많은 단계 줄(.top)만 막대가 제 단계색·숫자 굵게, 나머지 막대는 단계색을 옅게 섞는다. 고정된 줄 = 단계색 틴트(--tint-mix-on) + 굵게 */
   assert(TPL.includes('<button type="button" class="sm-r s${i}${i === top ? \' top\' : \'\'}${u ? \'\' : \' z\'}" data-st="${i}" data-v="${u}" aria-pressed="false" aria-label="${lb}, 지도에서 보기" title="${tt}"><span class="sm-sn">${STAGE6[i]}</span><span class="sm-b" aria-hidden="true"><i style="flex-grow:${(t.u ? Math.min(1, u / t.u) : 0).toFixed(4)}"></i></span><b class="sm-sv">${bigNum(u)}</b></button>'));
   assert(/\.sm-r \{ --c: var\(--st-plan\); --c-ink: var\(--st-plan-ink\);[^}]*grid-template-columns: subgrid;/.test(CSS) && ['permit', 'build', 'sale', 'soon', 'move'].every((k, j) => CSS.includes(`.sm-r.s${j + 1} { --c: var(--st-${k}); --c-ink: var(--st-${k}-ink); }`)) && /\.sm-b > i \{[^}]*background: var\(--c-ink\); \}/.test(CSS) && CSS.includes('.sm-r.top .sm-sv { font-weight: 700; }') && /\.sm-r\[aria-pressed="true"\] \{ background: color-mix\(in oklab, var\(--c\) var\(--tint-mix-on\), var\(--sf\)\); \}/.test(CSS) && /\.sm-st \{[^}]*grid-auto-rows: 44px;/.test(CSS), '단계 줄 색 · 1급 가장 많은 줄 · 2급 고정 줄 · 누름 44');
@@ -1037,7 +1038,7 @@ t('2026-10-19 상단 필터 = 시도(서울·경기·인천) + 단계(전체·�
   { const GX = require(require('path').join(ROOT, 'scripts', 'globals-export.js')).extractExport(GCSS), tabs = GX.slice(GX.indexOf('  .ui-tabs {'), GX.indexOf('  /* 카드 머리(2026-10-18)'));
     assert(tabs.length > 500 && !/#[0-9a-fA-F]{3,8}\b|rgb\(|\d+px/.test(tabs), '.ui-tabs 는 토큰(var)만 · 리터럴 0');
     assert(/\.ui-tabs \{[^}]*background: var\(--muted\);[^}]*padding: var\(--tabs-pad\)/.test(tabs) && /\[aria-current="true"\]\) \{\s*background: var\(--card\);[^}]*font-weight: 700;[^}]*box-shadow: var\(--shadow-card\)/.test(tabs) && /\.dark \.ui-tabs > :is\(button, a\):is\(\[aria-pressed="true"\], \[aria-current="true"\]\) \{\s*border-color: var\(--input\)/.test(tabs) && /\.ui-tabs \.n \{[^}]*font-size: var\(--fs-caption\);[^}]*font-weight: 700/.test(tabs) && /--tabs-pad: 3px;/.test(GX), '틀 · 고른 탭 · 다크 · 배지'); }
-  assert(TPL.includes("n.textContent = String(cnt[n.parentNode.dataset.fst])") && TPL.includes('cnt[OF_STAGE[p[2]]]++; cnt.all++;') && TPL.includes('for (const c of cellScope().r.codes) for (const p of D.prj[c] || [])'), '배지 건수 = 보는 지역의 6단계별 사업 건수(OF_STAGE · cellScope, 전체 = 여섯 합)');
+  assert(TPL.includes("n.textContent = String(cnt[n.parentNode.dataset.fst])") && TPL.includes('if (D.hp) { const v = D.hp.c[c]; if (v) v[4].forEach((n, i) => { cnt[i] += n; cnt.all += n; }); continue; }') && TPL.includes('for (const c of cellScope().r.codes) {'), '배지 건수 = 보는 지역의 6단계별 사업 건수(cellScope, 전체 = 여섯 합 — 2026-10-21 HOME PoC 원천 행 수 D.hp)');
   /* 동기: 모드가 바뀔 때마다(applyMode 두 길)·보는 곳이 바뀔 때마다(renderAll) 한 함수가 칠하고, 해 모드면 단계 단추는 모두 풀린다 */
   assert(TPL.includes("renderHead(); paintBand(); paintTband(); paintFbar(); return; }") && TPL.includes('paintBand(); paintTband(); paintFbar();   // 요약 표') && TPL.includes('renderCells(); paintFbar(); fitApply();'));
   assert(TPL.includes("b.dataset.fst === 'all' ? m.k === 'all' : m.k === 's' && +b.dataset.fst === m.i") && TPL.includes("String(b.dataset.vsido === sd)"));

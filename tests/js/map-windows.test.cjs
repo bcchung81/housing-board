@@ -48,7 +48,7 @@ test("지도에서 연 창(경로 /map)에는 '지도로 돌아가기'가 없다
 test('주소: 지도 syncUrl 은 자기 키만 쓰고(id·cand 보존), 개요 replaceState 도 id·cand 를 잇는다', () => {
   const sync = app.slice(app.indexOf('function syncUrl'), app.indexOf('function focusBlock'));
   assert.ok(sync.includes('new URL(location.href)') && !/searchParams\.(delete|set)\('(id|cand)'/.test(sync));
-  assert.equal((ov.match(/keepWin\(sidoHref\(/g) || []).length, 2);
+  assert.equal((ov.match(/keepWin\(keepPolicy\(sidoHref\(/g) || []).length, 2);   // ?policy=all(정책 전체 범위)도 잇는다
   const keep = /const keepWin = [^\n]*/.exec(ov)[0];
   const f = vm.runInNewContext(`(${keep.replace('const keepWin = ', '').replace(/;$/, '')})`, { URLSearchParams, encodeURIComponent });
   assert.equal(f('/map?sido=41', '?sido=11&id=PRJ-1'), '/map?sido=41&id=PRJ-1');

@@ -333,7 +333,8 @@ test('중복 사업 정리(2026-10-13 덤프): 대표가 될 수 없는 행만 �
     const pro = refs.find((r) => r.key === 'PRO').value, hpr = refs.find((r) => r.key === 'HPR').value;
     assert.ok(saved.identifiers.some((i) => i.local_project_id === into && i.id_type === 'HOME' && i.id_value === pro), `${into} 에 ${pro} 별칭`);
     /* 2026-10-20 같은 현장 병합: 인천부평 0065 묶음에 0068(LH 공사진행현황)까지 합쳐져 0064 의 공사 계약 행이 묶음 첫 행(원천 사업후보 순)이 됐다 — 첫 행의 HPR 별칭은 규칙 칸이 비어 있다 */
-    const rule = from === 'PRJ-28237-0064' ? null : 'SAME_SITE_UNITS';
+    /* 2026-10-21 HOME 2038810 block_key 이식: 의왕초평 A4BL 공사 계약 행(이름의 'A4BL')이 블록 키로 0048 묶음에 들어가 묶음 첫 행이 됐다 — 같은 현장 흡수(SAME_SITE_UNITS)가 아니다 */
+    const rule = ['PRJ-28237-0064', 'PRJ-41430-0044'].includes(from) ? null : 'SAME_SITE_UNITS';
     assert.ok(saved.identifiers.some((i) => i.local_project_id === into && i.id_value === hpr && i.match_rule === rule), `${into} 에 ${hpr}(${rule})`);
     assert.ok(!saved.identifiers.some((i) => i.local_project_id === from) && !saved.events.some((e) => e.local_project_id === from) && !saved.units.some((u) => u.local_project_id === from), `${from} 에는 사업 행만 남는다`);
   }

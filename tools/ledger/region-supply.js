@@ -1,10 +1,14 @@
 'use strict';
 /* '지역 공급'(/region) 화면 자료 세 파일을 만든다. 화면은 이 작은 파일만 읽는다(원장 표·HOME 원본을 서버 번들에 싣지 않는다).
-     data/board/region-calendar.json  앞으로 12개월 모집·준공·입주 예정(원장 전국, 사업마다 종류당 현재 예정 하나), 위치(점)와 위치 근거.
+     data/board/region-calendar.json  sido = 앞으로 12개월 모집·준공·입주 예정(원장 전국, 사업마다 종류당 현재 예정 하나 — /citizen/schedule 이 쓴다), 위치(점)와 위치 근거.
                                       drawer = 사업 화면 서랍(/projects?id=)이 여는 사업(사업 id 가 있는 수도권 HOME 사업)
+                                      home{p97, all} = HOME '향후 12개월 공급 예정'(2026-10-21 결정 — /region·/month 가 쓴다, S1 2.4 식은 tools/ledger/home-view.js statistics):
+                                        PoC 원천 사업 행(PRO_) 단위, p97 = 9·7 포트폴리오(기본) · all = 정책 전체(해제 뺌). 값은 data/board/home-projects.json 행의 upcoming(그대로 옮김).
+                                        sido(시도 → 예정 목록, 사업·달마다 하나, type SUPPLY_NOTICE = 공급(모집·분양), pro = PRO_ id, id = 우리 원장 사업 id 없으면 PRO_ id) ·
+                                        months[{ ym, units, projects }] · total · projects(증가분 > 0 인 사업 수) · ids(그 PRO_ id 목록)
      data/board/region-map.json       서울 25·경기 31·인천 11 시군구 경계 + 공공주택지구(공동주택용지) 경계를 줄인 SVG 경로, 시도별 보기 상자
      data/board/region-annual.json    서울·인천·경기 HOME 통계(통계누리 시도 자료)의 월 실적·연 인허가 — 화면은 2018~2021 을 통계누리(molit.json) 앞에 잇는다
-   입력: schemas/ledger-<달>/tables(projects·events·sources·areas), data/board/ledger-map.json·home-map/*.json,
+   입력: schemas/ledger-<달>/tables(projects·events·sources·areas), data/board/ledger-map.json·home-map/*.json·home-projects.json(tools/ledger/home-projects.js 를 먼저 돌린다),
          그 달의 가장 늦은 HOME 판 원본(raw/home/<덤프시각>/municipality·policy_municipality·district·statistic.jsonl.gz — gitignore, 없으면 멈춘다).
    계산은 승인된 시안(docs/design/home-concept/build-data.mjs 의 calendar·areaMap·annual.metro)과 같다. 출력은 결정적이다(정렬, 현재 시각 없음).
    HOME 원본의 담당자 이름·입력 사유 칸은 읽지 않는다(경계·통계·지구 이름만).
@@ -62,6 +66,30 @@ function buildCalendar(tables, mapRows, from) {
   const sorted = {};
   for (const s of Object.keys(calendar).sort()) sorted[s] = calendar[s].sort((a, b) => (a.day ?? `${a.ym}-99`).localeCompare(b.day ?? `${b.ym}-99`) || a.name.localeCompare(b.name, 'ko') || a.type.localeCompare(b.type) || a.id.localeCompare(b.id));
   return { months, sido: sorted };
+}
+
+/* ---------- HOME 향후 12개월 공급 예정(PoC 원천 행 단위) ----------
+   home: home-projects.json · months: 12개월 · sggName: 원장 시군구 코드 → 이름 · issued: 상세 서랍이 열리는 원장 사업 id 집합.
+   범위 p97 = 9·7 포트폴리오 행, all = 통계 포함(해제 아님) 행. 행의 upcoming(달·증가분)을 사업·달마다 한 항목으로 옮긴다(0호 증가분은 사업 수에 넣지 않는다 — PoC 와 같게 뺀다) */
+function buildHomeCalendar(home, months, sggName, issued) {
+  const scopes = { p97: (r) => r.p97, all: (r) => r.stats };
+  const out = {};
+  for (const [k, inScope] of Object.entries(scopes)) {
+    const sido = {}, byM = Object.fromEntries(months.map((m) => [m, { ym: m, units: 0, projects: new Set() }]));
+    for (const r of home.rows.filter(inScope)) for (const [ym, units] of r.upcoming ?? []) {
+      if (!byM[ym] || !(units > 0)) continue;
+      byM[ym].units += units; byM[ym].projects.add(r.id);
+      const s = METRO[r.region];
+      if (!s) continue;
+      const code = r.loc?.ourSgg ?? r.sgg?.codes?.[0] ?? null;
+      (sido[s] ??= []).push({ ym, day: null, type: 'SUPPLY_NOTICE', id: r.ourId ?? r.id, pro: r.id, drawer: !!r.ourId && issued.has(r.ourId), name: r.name, units, sgg: sggName[code] ?? `${r.region}${r.sgg ? ` ${r.sgg.name}` : ''}`, code });
+    }
+    for (const s of Object.keys(sido)) sido[s].sort((a, b) => a.ym.localeCompare(b.ym) || a.name.localeCompare(b.name, 'ko') || a.pro.localeCompare(b.pro));
+    const ids = [...new Set(Object.values(byM).flatMap((m) => [...m.projects]))].sort();
+    const ms = months.map((m) => ({ ym: m, units: byM[m].units, projects: byM[m].projects.size }));
+    out[k] = { sido: Object.fromEntries(Object.keys(sido).sort().map((s) => [s, sido[s]])), months: ms, total: ms.reduce((t, m) => t + m.units, 0), projects: ids.length, ids };
+  }
+  return out;
 }
 
 /* ---------- 지도: 위도 37.5° 보정 등장방형 하나(1000 = 위도 1°), 세 시도가 같은 좌표를 쓰고 시도마다 보기 상자만 다르다 ---------- */
@@ -227,7 +255,7 @@ function placeCalendar(calendar, loc, geo) {
     const l = loc[e.id];
     if (l?.at && LOC_KIND.has(l.by)) { e.loc = l.by; e.pt = proj(l.at).map(Math.round); count[e.loc === 'area' ? 'area' : 'point']++; continue; }
     /* 원장 코드가 옛 시 단위(예: 안산 41270)이면 앞 4자리로 구 단위 코드에 맞춘다 */
-    const g = geo.find((x) => x.codes.includes(e.code)) ?? (e.code.endsWith('0') ? geo.find((x) => x.codes.some((c) => c.slice(0, 4) === e.code.slice(0, 4))) : null);
+    const g = geo.find((x) => x.codes.includes(e.code)) ?? (e.code?.endsWith('0') ? geo.find((x) => x.codes.some((c) => c.slice(0, 4) === e.code.slice(0, 4))) : null);
     if (g) { e.loc = 'rep'; e.pt = g.c; count.rep++; } else count.none++;
   }
   for (const list of Object.values(calendar.sido)) for (const e of list) delete e.code;
@@ -268,12 +296,17 @@ function build({ month, root = P.ROOT } = {}) {
   const hmDir = path.join(root, 'data/board/home-map');
   const loc = Object.fromEntries(fs.readdirSync(hmDir).filter((f) => /^\d{5}\.json$/.test(f)).sort().flatMap((f) => JSON.parse(fs.readFileSync(path.join(hmDir, f), 'utf8')).projects.filter((p) => p.loc).map((p) => [p.id, p.loc])));
 
-  const cal = buildCalendar({ projects: read('projects'), events: read('events'), sources: read('sources'), areas: read('areas') }, mapRows, month);
+  const tables = { projects: read('projects'), events: read('events'), sources: read('sources'), areas: read('areas') };
+  const cal = buildCalendar(tables, mapRows, month);
   const { geo, doc: map } = buildMap([...muni, ...pmuni].map((r) => r.payload), district.map((r) => r.payload));
   const placed = placeCalendar(cal, loc, geo);
+  const homeProjects = JSON.parse(fs.readFileSync(path.join(root, 'data/board/home-projects.json'), 'utf8'));
+  const issued = new Set(tables.projects.filter((p) => !!p.issued_at && p.source_ref.startsWith('home-dump-')).map((p) => p.local_project_id));
+  const home = buildHomeCalendar(homeProjects, cal.months, Object.fromEntries(tables.areas.filter((a) => a.level === 'SGG').map((a) => [a.area_code, a.area_name])), issued);
+  for (const h of Object.values(home)) placeCalendar(h, loc, geo);
   const annual = buildAnnual(statistic.map((r) => ({ ...r.payload, source_id: r.source_id })));
   return {
-    calendar: { schema: 'region-calendar/1', observedMonth: month, referenceDate, edition, from: cal.months[0], to: cal.months[11], months: cal.months, kinds: KINDS, sido: cal.sido },
+    calendar: { schema: 'region-calendar/1', observedMonth: month, referenceDate, edition, from: cal.months[0], to: cal.months[11], months: cal.months, kinds: KINDS, sido: cal.sido, home: { asOf: homeProjects.asOf, ...home } },
     map: { ...map, edition },
     annual: { schema: 'region-annual/1', edition, note: '서울·인천·경기 시도 전체 공식 통계(통계누리) — HOME 덤프 statistic(molit_statistics·incheon_statistics). 인허가는 연 단위만', ...annual },
     placed,
@@ -286,8 +319,9 @@ if (require.main === module) {
   for (const k of ['calendar', 'map', 'annual']) fs.writeFileSync(path.join(P.ROOT, OUT[k]), JSON.stringify(out[k]) + '\n');
   const n = Object.values(out.calendar.sido).reduce((s, l) => s + l.length, 0);
   console.log(`${OUT.calendar}: ${out.calendar.from}~${out.calendar.to} 예정 ${n}곳(시도 ${Object.keys(out.calendar.sido).length}) · 위치 점 ${out.placed.point} · 근사 ${out.placed.area} · 대표 ${out.placed.rep} · 없음 ${out.placed.none}`);
+  for (const k of ['p97', 'all']) console.log(`  HOME 공급 예정 ${k}: ${out.calendar.home[k].total}호 · ${out.calendar.home[k].projects}사업`);
   console.log(`${OUT.map}: ${Math.round(JSON.stringify(out.map).length / 1024)} KB · 시군구 ${out.map.sgg.length} · 지구 ${out.map.districts.length}`);
   console.log(`${OUT.annual}: ${out.annual.months[0]}~${out.annual.months[out.annual.months.length - 1]} (판 ${out.annual.edition})`);
 }
 
-module.exports = { KINDS, METRO, addM, monthOf, buildCalendar, buildMap, placeCalendar, buildAnnual, pathOf, proj, dp, sggPaths, build, OUT };
+module.exports = { KINDS, METRO, addM, monthOf, buildCalendar, buildHomeCalendar, buildMap, placeCalendar, buildAnnual, pathOf, proj, dp, sggPaths, build, OUT };

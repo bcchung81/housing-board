@@ -27,6 +27,7 @@ const pp = require('../../data/board/policy-progress.json');
 const OUTS = ['data/board/region-calendar.json', 'data/board/region-map.json', 'data/board/region-annual.json', 'data/board/requirements.json'];
 const homeDir = H.latestHomeDir(P.ledgerDir(P.latestMonth()));
 const raw = !!homeDir && H.homeAvailable(homeDir);
+const pocSnap = fs.existsSync(path.join(P.ledgerDir(P.latestMonth()), 'raw', 'home-api', P.referenceDateOf(P.ledgerDir(P.latestMonth())), 'sources-requirements.json.gz'));   // PoC 스냅샷 압축 원본(git 무시)
 
 /* ---------- 생성기 결정성 ---------- */
 test('buildCalendar: 입력 행 순서가 달라도 같은 결과(정렬), 종류마다 현재 예정 하나·실제가 있는 종류는 뺀다·12개월 밖은 뺀다', () => {
@@ -67,12 +68,12 @@ test('buildMap: 결정적이고 경계 경로는 줄인 상대 좌표, 시도 �
   assert.match(a.doc.sgg[0].d, /^M-?\d+ -?\d+l(-?\d+ -?\d+ ?)+z$/);
 });
 
-test('커밋된 지역 공급·요구사항 자료는 원본으로 다시 만든 것과 바이트까지 같다', { skip: !raw && 'HOME 판 원본(jsonl.gz) 없음' }, () => {
+test('커밋된 지역 공급·요구사항 자료는 원본으로 다시 만든 것과 바이트까지 같다', { skip: (!raw && 'HOME 판 원본(jsonl.gz) 없음') || (!pocSnap && 'PoC 스냅샷(raw/home-api) 없음') }, () => {
   const out = RS.build();
   assert.equal(read(OUTS[0]), JSON.stringify(out.calendar) + '\n');
   assert.equal(read(OUTS[1]), JSON.stringify(out.map) + '\n');
   assert.equal(read(OUTS[2]), JSON.stringify(out.annual) + '\n');
-  assert.equal(read(OUTS[3]), JSON.stringify(RQ.build()) + '\n');
+  assert.equal(read(OUTS[3]), JSON.stringify(RQ.build()) + '\n');   // 요구사항은 PoC 스냅샷(raw/home-api, 압축 원본은 git 무시)도 있어야 다시 만들 수 있다
 });
 
 /* ---------- 시군구 경계: 이웃끼리 같은 선(겹침·틈 없음), 남이 안 덮는 구멍은 메운다 ---------- */
@@ -226,17 +227,14 @@ test('동네 여건은 서울·인천·경기만 그리고, 다른 시도·전�
 });
 
 /* ---------- 요구사항 판정 ---------- */
-const M0 = { base: 100, refYear: 2026, refMonth: '09', pairCells: 0, plan: 0, anyPlan: 0, supplyOrMoveInPlan: 0, stageCells: 0, stageCellsTotal: 500, locPrecise: 0, agencyKnown: 0, sourced: 0, judged: 0, baselineRows: 0, baselineProjects: 0, ledgerBaseline: 0, causes: 0, scenarios: 0, agencyTargets: 0, policySidos: 0, sidoTotal: 16, ledgerProjects: 0, failedSources: 0 };
-test('judge: 규칙 경계(충족·부분·없음)', () => {
-  const v = (patch) => Object.fromEntries(Object.entries(RQ.judge({ ...M0, ...patch })).map(([k, x]) => [k, x.verdict]));
-  assert.ok(Object.values(v({})).every((x) => x === 'none'), '아무것도 없으면 모두 없음');
-  assert.equal(v({ pairCells: 6 })['F-02'], 'met'); assert.equal(v({ pairCells: 4 })['F-02'], 'part');
-  assert.equal(v({ stageCells: 400 })['F-03'], 'met'); assert.equal(v({ stageCells: 399 })['F-03'], 'part');
-  assert.equal(v({ plan: 95 })['F-04'], 'met'); assert.equal(v({ plan: 50 })['F-04'], 'part'); assert.equal(v({ plan: 49 })['F-04'], 'none');
-  assert.equal(v({ baselineProjects: 1 })['F-06'], 'part', '담당자 기준선이 있으면 부분');
-  assert.equal(v({ supplyOrMoveInPlan: 80 })['F-09'], 'met');
-  assert.equal(v({ sourced: 100 })['F-10'], 'met'); assert.equal(v({ sourced: 99 })['F-10'], 'part');
-  assert.equal(v({ policySidos: 16, ledgerProjects: 1 })['F-01'], 'met'); assert.equal(v({ policySidos: 3, ledgerProjects: 1 })['F-01'], 'part');
+/* PoC 요구사항 응답 모양의 지표 하나: 추정 포함 w, 추정 제외 x (count/total) */
+const pm = (w, x, total) => ({ label: 'L', note: 'N', estimate_added_count: w - x, with_estimates: { count: w, total, percent: total ? Math.round(w / total * 1000) / 10 : null }, without_estimates: { count: x, total, percent: total ? Math.round(x / total * 1000) / 10 : null } });
+test('judge: PoC 지표의 추정 포함 비율로 — 95% 이상 충족 · 0 초과 부분 · 0 또는 산정 불가 없음 (추정 제외는 보조로 적기만)', () => {
+  const v = (w, total = 100) => RQ.judge({ project_count: 100, metrics: { 'F-01': pm(w, 0, total) } })['F-01'];
+  assert.equal(v(95).verdict, 'met'); assert.equal(v(94).verdict, 'part'); assert.equal(v(1).verdict, 'part');
+  assert.equal(v(0).verdict, 'none', '0 이면 없음'); assert.equal(v(0, 0).verdict, 'none', '분모 0(산정 불가)도 없음');
+  assert.match(v(0, 0).metric, /산정 불가 · 추정 제외 산정 불가$/);
+  assert.match(v(66, 100).metric, /66\/100 66% · 추정 제외 0\/100 0%$/, '추정 포함이 앞, 추정 제외가 뒤');
 });
 
 test('requirements.json: F-01~F-12, 화면은 새 구조(사업·지역 공급·데이터 원본), 9·7 같은 칸 수는 policy-progress 와 같다', () => {
@@ -247,10 +245,8 @@ test('requirements.json: F-01~F-12, 화면은 새 구조(사업·지역 공급·
     assert.ok(r.screens.every((s) => ['projects', 'region', 'sources'].includes(s)), r.id);
     for (const d of r.dates) assert.ok(reqs.directives.some((x) => x.date === d), `${r.id} 지시 ${d}`);
   }
-  const p = pp.policies.find((x) => x.policyId === 'POL_2025_0907'), y = Number(pp.referenceMonthEnd.slice(0, 4));
-  const pairs = Object.values(p.stages).filter((st) => { const s = st.samePeriod.find((q) => q.year === y); return s && s.target != null && s.actual != null; }).length;
-  assert.equal(reqs.measures.pairCells, pairs);
-  assert.equal(reqs.items.find((r) => r.id === 'F-06').verdict, reqs.measures.baselineProjects > 0 ? 'part' : 'none');
+  assert.equal(reqs.measures.base, 230, '모수는 PoC 9·7 정책 사업 230');
+  for (const r of reqs.items) assert.equal(r.verdict, r.poc.percent >= 95 ? 'met' : r.poc.percent > 0 ? 'part' : 'none', r.id);
   assert.deepEqual(Q.reqsFor(reqs, 'region').map((r) => r.id), ['F-01', 'F-05', 'F-09']);
   assert.deepEqual(Q.reqsFor(reqs, 'sources').map((r) => r.id), ['F-10']);
   assert.match(Q.tagTitle(reqs, reqs.items[1]), /^F-02 .+\(필수\) · 지시 2026\.08\.14 .+ · 판정 /);

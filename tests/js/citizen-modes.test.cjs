@@ -29,9 +29,9 @@ test('① 해별 지도 값 = 언제 들어오나 막대 값: 보는 시군구(�
       const map = ctx.modeValues(D, IX, sd, { k: 'y', i });
       for (const x of units) { const bars = ctx.yearSums(D, IX.regionOf[x.key].codes); assert.equal(map[x.key] || 0, bars[i], `${sd} ${x.name} 칸 ${i}`); n++; }
     }
-    /* 시도 전체를 볼 때(막대 = 시도 합): 지도 면 값의 합 = 시도 막대 */
-    const sdBars = ctx.yearSums(D, IX.regionOf[sd].codes);
-    for (let i = 0; i < 7; i++) assert.equal(Object.values(ctx.modeValues(D, IX, sd, { k: 'y', i })).reduce((a, b) => a + b, 0), sdBars[i], `${sd} 합 칸 ${i}`);
+    /* 시도 전체를 볼 때(막대 = 시도 합): 지도 면 값의 합 + 시군구 미연결 PoC 행(D.hp 시도 코드 칸, 2026-10-21) = 시도 막대 */
+    const sdBars = ctx.yearSums(D, IX.regionOf[sd].codes), off = ctx.yearSums(D, [sd]);
+    for (let i = 0; i < 7; i++) assert.equal(Object.values(ctx.modeValues(D, IX, sd, { k: 'y', i })).reduce((a, b) => a + b, 0) + off[i], sdBars[i], `${sd} 합 칸 ${i}`);
   }
   /* 화면 연결: 해 띠(setYrs)·지도(modeOf)가 모두 yearSums·yearRange 를 쓴다(2026-10-18 아래 줄의 해 막대·일정표는 없앴다) */
   assert.match(fnBody('setYrs'), /VIEW\.Ysc = yearSums\(D, r\.codes\); VIEW\.yrs = yearRange\(VIEW\.Ysc\);/);
@@ -45,9 +45,9 @@ test('① 해별 지도 값 = 언제 들어오나 막대 값: 보는 시군구(�
 test('② 요약 표 단계 6줄 앞 4줄 합 = 큰 숫자(sumOf): 모든 시도·시군구, 줄은 계획 · 인허가 · 착공 · 모집 | 준공 · 입주(공식 단계 이름, 2026-10-20)', () => {
   for (const r of IX.regions) { const s = ctx.stageSums(D, r.codes); assert.equal(s.length, 6); assert.equal(s[0] + s[1] + s[2] + s[3], ctx.sumOf(D, r.codes).u, r.label); }
   assert.deepEqual(plain(ctx.STAGE6), ['계획', '인허가', '착공', '모집', '준공', '입주']); assert.equal(ctx.SUPPLY_N, 4);
-  /* 단계 모드 지도 값의 합 = 시도 띠 칸 */
+  /* 단계 모드 지도 값의 합 + 시군구 미연결 PoC 행(D.hp 시도 코드 칸, 2026-10-21) = 시도 띠 칸 */
   /* 2026-10-19 수도권 한정: 부산(26)은 색인에 없어 시도 셋만 */
-  for (const sd of ['41', '11', '28']) for (let i = 0; i < 6; i++) assert.equal(Object.values(ctx.modeValues(D, IX, sd, { k: 's', i })).reduce((a, b) => a + b, 0), ctx.stageSums(D, IX.regionOf[sd].codes)[i], `${sd} 단계 ${i}`);
+  for (const sd of ['41', '11', '28']) for (let i = 0; i < 6; i++) assert.equal(Object.values(ctx.modeValues(D, IX, sd, { k: 's', i })).reduce((a, b) => a + b, 0) + ctx.stageSums(D, [sd])[i], ctx.stageSums(D, IX.regionOf[sd].codes)[i], `${sd} 단계 ${i}`);
   /* 화면 연결: 단계 줄 = stageSums, 큰 숫자 = sum(r.codes)(전체 모드) — 같은 보는 곳 r */
   assert.match(fnBody('bandHtml'), /const t = sum\(r\.codes\);[\s\S]*const S6 = stageSums\(D, r\.codes\), top = topStage\(S6\);[\s\S]*S6\.map\(\(u, i\) =>/);
   assert.match(fnBody('headHtml'), /const t = sum\(r\.codes\), name = nameOf\(r\);[\s\S]*const u = m\.k === 'all' \? t\.u : modeOf\(D, r\.codes, m\)/);

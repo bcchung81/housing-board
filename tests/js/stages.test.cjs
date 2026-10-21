@@ -24,7 +24,7 @@ test('공식 6단계: 이름·질문·공개 범위가 발표자료 SHEET 03 과
 test('사업 상세(서랍)·목록·타임라인은 같은 리본 칸 번호(①~⑥ 이름·단계색)를 쓰고, 공식 01~06 은 서랍 칸의 title 에만 있다. 단계 거르기는 파이프라인 칸으로 고르고 칩 줄에는 고른 단계만(풀기). 옛 Stepper·StageLadder 는 없다', () => {
   const det = read('components/projects/ProjectDetail.tsx');
   /* 2026-10-16 2차 평가: 칸은 링크가 아니고, 같은 단계 목록은 따로 링크 하나(지금 거르기 유지 — r2-screens 4) */
-  assert.match(det, /<StageSteps current=\{r\.board\} reached=\{r\.reached\} listHref=\{stageHref\(r\.board\)\} \/>/, '지금 단계 = 목록의 단계 알약과 같은 리본 칸(목록 주소는 지금 거르기를 지킨다)');
+  assert.match(det, /<StageSteps home(?:=\{home\})? current=\{r\.board\} reached=\{r\.reached\} listHref=\{stageHref\(r\.board\)\} \/>/, '지금 단계 = 목록의 단계 알약과 같은 리본 칸(목록 주소는 지금 거르기를 지킨다)');
   for (const f of ['components/projects/ProjectDetail.tsx', 'app/(dashboard)/projects/page.tsx']) assert.doesNotMatch(read(f), /Stepper|StageLadder/, f);
   for (const f of ['components/ui/stepper.tsx', 'components/StageLadder.tsx']) assert.ok(!fs.existsSync(path.join(ROOT, f)), `쓰는 곳이 없는 ${f} 는 지운다`);
   const steps = read('components/projects/StageSteps.tsx');
@@ -32,7 +32,7 @@ test('사업 상세(서랍)·목록·타임라인은 같은 리본 칸 번호(�
   assert.doesNotMatch(steps, /공식 단계|BOARD_OFFICIAL/, '공식 01~06 은 ①~⑥ 과 어긋나 title 에도 쓰지 않는다(2026-10-16 3차 평가 — r3-screens 4)');
   assert.doesNotMatch(steps, /BOARD_OFFICIAL_SHORT/);
   assert.match(steps, /aria-current=\{on \? 'step' : undefined\}/);
-  assert.match(steps, /\$\{QUESTION\[i\]\}/, '단계마다 답할 질문은 칸의 title');
+  assert.match(steps, /\$\{QS\[i\]\}/, '단계마다 답할 질문은 칸의 title');
   const list = read('app/(dashboard)/projects/page.tsx');
   assert.match(list, /href=\{\(i\) => at\(\{ stage: f\.stage === i \? undefined : String\(i\) \}\)\}/, '파이프라인 칸이 단계 거르기(다른 거르기 유지, 다시 누르면 풀림)');
   assert.doesNotMatch(list, /BOARD_NAMES\.map\(\(n, i\) => <Chip/, '칩 줄에 단계 칩 6개를 두지 않는다');

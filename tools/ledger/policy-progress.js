@@ -1,21 +1,27 @@
 'use strict';
 /* 정책 단계별 목표·확인 누적(9·7 주택공급 확대방안): HOME 덤프 판(raw/home/<덤프시각>)으로 HOME 운영 화면의 계산을 그대로 다시 한다. 오프라인·결정적(같은 판 → 같은 바이트).
    실행: node tools/ledger/policy-progress.js [--month YYYY-MM | --home <판 폴더>] [--out <파일>](기본 data/board/policy-progress.json)
-   옮긴 계산(HOME PoC 10-home backend, 커밋 21c60b1 — 읽기만 했다)
+   옮긴 계산(HOME PoC 10-home backend — 읽기만 했다. 2026-10-21 커밋 2038810(2026-10-19 21:53 UTC, PoC 운영 판) 기준으로 갱신, 처음 이식은 21c60b1)
    - policy_delivery.build_delivery: 정책에 이어진 사업(service.projects(policy_id)) → 지구·블록 중복 제외(supply_dashboard.inventory) → 같은 블록 원천을 한 묶음으로
-     사건(착공 실적·단계 근거 stage_evidence·교차 원천 evidence_bridge·본 모집공고 linked_notices·공정률 100%)과 일정(roadmap.source_events·evidence_bridge 계획·입주계획)을 모은다.
+     사건(착공 실적·단계 근거 stage_evidence·교차 원천 evidence_bridge·본 모집공고 linked_notices + 저장된 본 모집 사실 supply_notices·공정률 100%)과
+     일정(roadmap.source_events·evidence_bridge 계획·입주계획·승인 일정)을 모은다. 이것이 '포트폴리오'(portfolio_cohorts, 과거 착공 포함)이고,
      계획물량이 있고 정책기간 전 착공이 아닌 묶음만 '코호트'.
-   - policy_delivery_comparison.comparison_index 의 정책 전체 범위: 단계별 목표 점(_schedule_targets — 코호트마다 가장 늦은 원천 하나, 같은 (날짜·호수) 한 번, 사업 물량 상한, 정책 시작일 이후)과
-     확인 점(_events — 사업별 최대 도달량의 누적, 확인 필요(REVIEW) 연결 포함). 착공은 9·7 원문 연도별 목표와 지역 착공 통계(_official_targets·_regional_actual).
-   - 담당자 입력(2026-10-14 판부터, 덤프 시점 HOME 코드는 미커밋이라 21c60b1 규칙 + 운영 화면 140개 묶음·6단계 점 대조로 맞췄다):
-     project_profile.overrides(계획물량·공정률)가 원천값을 덮고, progress(단계 측정값)는 MANUAL 실제 사건 — 측정값이 있는 단계는 그 묶음의 원천·연결 사건을 뺀다.
-     execution_schedule(승인 일정) → 사업·단계 관리 목표(schedule_goals): 그 단계의 원천 일정을 빼고, 관리 목표가 있으면 목표 점은 그것만 쓴다(_schedule_targets).
-     delivery_setting 은 아직 들어온 판이 없어 옮기지 않았다(있으면 멈춘다). 착공 연도 표의 정책 관리목표(policy_profile, 원문과 같은 값)도 옮기지 않았다.
+   - policy_delivery_comparison.comparison_index: 단계별 목표 점(_schedule_targets — 코호트마다 가장 늦은 원천 하나, 같은 (날짜·호수) 한 번, 사업 물량 상한)과
+     확인 점(_events — 사업별 최대 도달량의 누적, 확인 필요(REVIEW) 연결 포함). 정책 전체 착공은 9·7 원문 연도별 목표와 지역 착공 통계(_official_targets·_regional_actual).
+     포트폴리오 범위(portfolio_comparisons)의 tracking = 1900-01-01 부터 목표 점 + 후속 단계까지 누적한 확인 점(trackingOf·portfolioComparisons).
+   - 담당자 입력: project_profile.overrides(계획물량·공정률)가 원천값을 덮고(공정률 입력은 MANUAL, 추정(inferred) 100% 는 준공으로 보지 않는다),
+     progress(단계 측정값, 날짜·호수 둘 다 있는 것)는 그 묶음의 같은 단계 사건을 모두 대신한다(project_profile.progress_events).
+     execution_schedule(승인 일정) → 사업·단계 관리 목표(delivery_operations.schedule_goals): 그 단계의 원천 일정을 빼고, 관리 목표가 있으면 목표 점은 그것만 쓴다.
+     delivery_setting 은 아직 들어온 판이 없어 옮기지 않았다(있으면 멈춘다). policy_profile(착공 연간 목표 입력)·program_profile 은 덤프에 없어 옮기지 않았다.
+   - 2038810 supply_dashboard.block_key(이름의 블록 표기 하나로 키 보충)·inventory(서로 다른 임대 유형 공급계획을 따로 남김)는 원장 변환과 한 벌인
+     home-source.js 의 blockKey·inventory 에 옮겼다(2026-10-21 — 인천검단 AA19 두 유형·의왕초평 A4 계약).
+   - 인천 시군구: PoC 운영 판은 2038810 에 없는 행정구역 개편 귀속(INCHON_DATED_ADMINISTRATIVE_NAME)을 쓴다 — homeService 가 원장 시군구 규칙(home-source.js sggByPro)으로 대신한다.
    - 기준일(as_of) = 덤프 시각의 한국 날짜(HOME 은 기준일 다음 날 0시(한국) 전에 기록된 판을 읽는다 — 덤프 뒤 기록이 없으니 덤프의 현재 판과 같다).
    두 가지 비교
    - homeRule: HOME 화면(policy-stage-flow.js comparisonStatus)과 같다 — 기준일까지 도래한 마지막 목표 누적(정책 시작일부터) 대 기준일까지 마지막 확인 누적(처음부터). 기간이 섞인다.
    - samePeriod(우리 기본, 2026-10-14 결정): 같은 해 1월 1일 ~ 기준 달(기준일 이전에 끝난 마지막 달의 말일) 목표 증가분 대 확인 증가분. 지난 해는 1~12월.
-   시험: tests/js/policy-progress.test.cjs */
+   화면 생성기용: trackingOf(사업 목록, 지표, 기준일) · portfolioComparisons(포트폴리오, 기준일) · homeView(판) — HOME /policy-delivery/view 의 포트폴리오 부분과 같은 모양.
+   시험: tests/js/policy-progress.test.cjs, tests/js/home-portfolio.test.cjs(PoC 응답 tracking 과 완전 일치·덤프 포트폴리오 대조) */
 const fs = require('node:fs');
 const path = require('node:path');
 const P = require('./paths');
@@ -30,6 +36,8 @@ const ALIASES = { lh_incheon_sale: 'lh_sale', lh_incheon_rent: 'lh_rent', lh_inc
 /* 담당자 추정 입력(project_profile.progress 의 input_rule): '기한이 지난 단계에서 담당자가 고른 현재값 — 원천 실적 확인과 구분'. HOME 화면(homeRule·actualPoints)은 그대로 섞고,
    우리 같은 기간 비교(samePeriod)는 확인(actual = 이 입력을 뺀 사건)과 추정 포함(actualWithEstimates)을 나눠 낸다(2026-10-14 결정: 확인과 추정을 섞지 않는다) */
 const ESTIMATE_RULES = new Set(['OFFICER_CURRENT_ESTIMATE']);
+/* HOME policy_delivery_comparison.METRICS(2038810) — portfolio_comparisons 의 지표 이름 */
+const HOME_METRICS = { CONSTRUCTION: '착공(건설)', SUPPLY: '공급(분양·모집)', BUSINESS: '사업화', APPROVAL: '인허가', COMPLETION: '준공', MOVE_IN: '입주' };
 const ROADMAP_STAGES = { PLANNING: '계획', APPROVAL: '인허가', CONSTRUCTION: '착공', SUPPLY: '공급', COMPLETION: '준공', MOVE_IN: '입주 시작' };
 
 const byStr = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
@@ -47,6 +55,7 @@ function schedulePeriod(value, year = null) {
   const raw = String(value || '').trim();
   if (!raw || /미정|미확정|추후|이후|이전|미수립/.test(raw)) return null;
   let text = raw.replace(/\s+/g, '').replaceAll('예정', '').replaceAll('목표', '').replace(/^[()]+|[()]+$/g, '');
+  text = text.replace(/중\(최초\)?$/, '');   // GH 공고 차수 꼬리(2038810)
   text = text.replace(/^[‘’'](\d{2})(?=년|[./-])/, '20$1');
   let m = /^(20\d{2})[-./](\d{1,2})(?:[-./](\d{1,2}))?\.?$/.exec(text) || /^(20\d{2})년(\d{1,2})월(?:(\d{1,2})일)?$/.exec(text);
   if (m) {
@@ -112,11 +121,14 @@ function sourceEvents(row) {
     if (!row.start_actual_date) add('CONSTRUCTION', row.start_plan_date, row.planned_units ?? null, '원천 계약 착공 예정일');
     add('COMPLETION', row.completion_plan_date, row.planned_units ?? null, '공사 계약 준공예정 · 입주일 아님');
   }
+  if (row.source_id === 'lh_policy_followup') add('CONSTRUCTION', row.start_plan_month, row.planned_units ?? null, 'LH 정책 후속 개별 공모 착공 목표월');
+  if (row.start_plan_year && !row.start_actual_date && !row.start_plan_date) add('CONSTRUCTION', `${row.start_plan_year}년`, row.planned_units ?? null, row.schedule_basis || '공식 착공 예정연도 · 연말 표기');
   if (row.source_id === 'policy_129') add('CONSTRUCTION', row.start_plan_month, row.planned_units ?? null, '1·29 공식 별첨 착공 예정월 · 준공·공급월 아님');
   for (const [field, stage] of [['source_supply_label', 'SUPPLY'], ['source_move_in_label', 'MOVE_IN']]) {
     if (schedulePeriod(row[field])) {
       events = events.filter((e) => e.stage !== stage);
       add(stage, row[field], row.planned_units ?? null, '원천 예정 범위 · 마지막 달 기준 집계');
+      if (stage === 'MOVE_IN' && row.move_in_evidence_url) for (const e of events) if (e.stage === 'MOVE_IN') e.evidence_url = row.move_in_evidence_url;
     }
   }
   const noticeMonth = scheduleMonth(row.notice_move_in_month);
@@ -174,10 +186,12 @@ const asOfOf = (snapshotAt) => new Date(Date.parse(snapshotAt) + 9 * 3600 * 1000
 
 function homeService(home, asOf) {
   const K = home.kinds;
-  /* service.rows: 기준일 다음 날 0시(한국) 전 기록·현재 판 = 덤프의 현재 판(home-dump.py 가 superseded 없는 것만 뽑는다), payload.base_date > 기준일은 뺀다 */
+  /* service.rows: 기준일 다음 날 0시(한국) 전 기록·현재 판 = 덤프의 현재 판(home-dump.py 가 superseded 없는 것만 뽑는다), payload.base_date > 기준일은 뺀다.
+     순서: 덤프는 개체 id 순이고 HOME 은 DB 순(ORDER BY 없음)이다 — 기록 시각 순으로 맞춘다(같은 물량·날짜 공고 중 HOME 이 고른 것이 가장 먼저 기록된 것이었다: 하남교산 A-2BL) */
   const rows = (kind) => {
     if (!K[kind]) throw new Error(`HOME 판에 ${kind} 가 없다(tools/ledger/home-dump.py 로 다시 뽑는다)`);
-    return K[kind].filter((r) => (r.payload.base_date ?? '9999') <= asOf).map((r) => ({ ...r.payload, id: r.entity_id, source_id: r.source_id, revision_no: r.revision_no }));
+    return K[kind].filter((r) => (r.payload.base_date ?? '9999') <= asOf).map((r, i) => [r, i]).sort(([a, i], [b, j]) => byStr(a.recorded_at ?? '', b.recorded_at ?? '') || i - j)
+      .map(([r]) => ({ ...r.payload, id: r.entity_id, source_id: r.source_id, revision_no: r.revision_no }));
   };
   /* 담당자 입력 오버레이(project_profile — 2026-10-14 판부터): 사업 id → { overrides(계획물량·공정률 등 { value }), progress(단계 → 측정값) }. 이 kind 가 없는 옛 판은 입력이 없던 판이다 */
   const profiles = new Map();
@@ -187,37 +201,149 @@ function homeService(home, asOf) {
   }
   const cutoffMs = Date.parse(`${asOf}T00:00:00+09:00`) + 86400000;
   const pgTime = (s) => Date.parse(String(s).replace(' ', 'T').replace(/([+-]\d{2})$/, '$1:00'));
-  /* service.projects(policy_id): 사업 매핑(home_mapping) → 프로그램(home_program_mapping, 기준일 전 생성)의 정책. 기준일 뒤 감사 기록이 없으니 되감기는 없다 */
-  function projects(policyId) {
+  /* service.projects(2038810): 사업 매핑(home_mapping) → 프로그램(home_program_mapping, 기준일 전 생성)의 정책(program_hierarchy.effective_mapping). 기준일 뒤 감사 기록이 없으니 되감기는 없다.
+     원천 목록에서 만든 참조 사업(source_reference_id·policy_candidate_only)은 사업 매핑이 확정되지 않았고 정책이 없으면 프로그램이 정책을 줘도 미배정이다.
+     위치(project_location)는 시군구가 비었거나 '확인'이 든 사업에 시군구를 채운다. 담당자 입력(project_profile.overrides)은 manual_fields 로 남기고 값을 덮는다(project_profile.overlay).
+     인천 행의 시군구는 행정구역 개편 뒤 이름(인천 정책 시군구 경계 policy_municipality 의 이름)으로 덮는다 — HOME PoC 운영 판 INCHON_DATED_ADMINISTRATIVE_NAME 대신
+     원장 변환과 같은 시군구 규칙(home-source.js sggByPro — 덤프 + 그 달 폴더의 법정동 표·LH 블록 시군구 매핑)의 코드를 경계 행정 코드로 잇는다(2026-10-21 결정).
+     원장 규칙으로 못 정한 행(인천서구 SGG_UNRESOLVED)과 판 폴더를 모르는 판(home.dir 없음)은 원천 값 그대로 */
+  let all = null;
+  function allProjects() {
+    if (all) return all;
+    const dated = new Map();
+    const sgg = home.dir ? HOME.sggByPro(home, path.resolve(home.dir, '..', '..', '..')) : null;
+    if (sgg) {
+      const nameOf = new Map(rows('policy_municipality').filter((a) => (a.admin_codes ?? []).length === 1).map((a) => [a.admin_codes[0], a.name]));
+      for (const [pro, code] of sgg) if (nameOf.has(code)) dated.set(pro, nameOf.get(code));
+    }
     const after = (K.home_audit || []).filter((a) => pgTime(a.recorded_at) >= cutoffMs);
     if (after.length) throw new Error(`기준일 뒤 감사 기록 ${after.length}건 — 되감기는 옮기지 않았다`);
     const mappings = new Map((K.home_mapping || []).map((m) => [m.project_id, m]));
     const programs = new Map((K.home_program_mapping || []).filter((p) => pgTime(p.created_at) < cutoffMs).map((p) => [p.id, p]));
+    const locations = new Map((K.project_location ? rows('project_location') : []).filter((r) => r.status !== 'RELEASED').map((r) => [r.project_id, r]));
     const latest = new Map();
     for (const r of rows('project_report')) {
       if (r.source_id !== 'lh_progress' || r.progress_pct == null) continue;
       const pid = r.current_project_id;
       if (pid && (!latest.has(pid) || r.report_date > latest.get(pid).report_date)) latest.set(pid, r);
     }
-    const out = [];
+    all = [];
     for (const row of rows('project')) {
       const m = mappings.get(row.id);
-      let mapping = m ? { status: m.status, policy_id: m.policy_id, program_id: m.program_id } : { status: 'REVIEW', policy_id: row.proposed_policy ?? null, program_id: null };
+      const direct = m ? { status: m.status, policy_id: m.policy_id, program_id: m.program_id } : { status: 'REVIEW', policy_id: row.proposed_policy ?? null, program_id: null };
+      let mapping = { ...direct };
       const program = programs.get(mapping.program_id);
       if (program) mapping = { ...mapping, program_id: program.id, program_name: program.name, policy_id: program.status !== 'RELEASED' ? program.policy_id : 'UNASSIGNED', policy_status: program.status };
-      else if (mapping.program_id === 'UNASSIGNED') mapping = { ...mapping, policy_id: 'UNASSIGNED' };
+      else if (mapping.program_id === 'UNASSIGNED') mapping = { ...mapping, policy_id: 'UNASSIGNED', program_name: '프로그램 미연계' };
+      if ((row.source_reference_id || row.policy_candidate_only) && direct.status !== 'CONFIRMED' && [null, undefined, 'UNASSIGNED'].includes(direct.policy_id)) mapping = { ...mapping, policy_id: 'UNASSIGNED', policy_status: 'REVIEW', reference_policy_pending: true };
+      const p = { ...row, warnings: [...(row.warnings || [])], mapping, ...(program ? { program: program.name } : {}) };
+      const location = locations.get(row.id);
+      if (location && !(p.longitude != null && p.latitude != null) && (!p.municipality || String(p.municipality).includes('확인'))) p.municipality = location.municipality ?? null;
+      if (p.region === '인천광역시' && dated.has(row.id)) p.municipality = dated.get(row.id);
       const report = latest.get(row.id);
-      const p = { ...row, warnings: [...(row.warnings || [])], mapping };
       if (report && (row.progress_pct == null || report.report_date > (row.progress_date ?? row.base_date))) Object.assign(p, { progress_pct: report.progress_pct, progress_date: report.report_date, progress_evidence_url: report.evidence_url });
-      for (const [k, v] of Object.entries(profiles.get(row.id)?.overrides ?? {})) if (v && v.value !== undefined) p[k] = v.value;   // 담당자 입력값이 원천값을 덮는다
-      if (mapping.policy_id === policyId) out.push(p);
+      const overrides = profiles.get(row.id)?.overrides ?? {};
+      p.manual_fields = overrides;
+      for (const [k, v] of Object.entries(overrides)) if (v && v.value !== undefined) p[k] = v.value;   // 담당자 입력값이 원천값을 덮는다
+      all.push(p);
     }
-    return out.sort((a, b) => cmpTuple([a.region, a.name], [b.region, b.name]));
+    all.sort((a, b) => cmpTuple([a.region, a.name], [b.region, b.name]));
+    return all;
   }
-  return { rows, projects, profiles };
+  const projects = (policyId) => allProjects().filter((p) => p.mapping.policy_id === policyId);
+  return { rows, projects, allProjects, profiles };
 }
 
 /* ---------- 코호트(policy_delivery.build_delivery 의 사업 묶음) ---------- */
+const get = (o, k, d) => (o && Object.hasOwn(o, k) ? o[k] : d);   // 파이썬 dict.get(k, d) — 값이 null 이어도 그대로
+/* evidence_bridge.by_project: 사업 id → 교차 원천 연결(원천 id 는 근거 원천 → 원 개체의 원천 → 연결 행의 원천) */
+function bridgesByProject(svc) {
+  const origins = new Map(['project', 'lh_completion_plan', 'document_evidence'].flatMap((k) => svc.rows(k).map((r) => [r.id, r.source_id])));
+  const out = new Map();
+  for (const r of svc.rows('evidence_bridge')) {
+    const b = { ...r, source_id: r.evidence_source_id || (origins.has(r.source_entity_id) ? origins.get(r.source_entity_id) : r.source_id) };
+    if (!out.has(b.project_id)) out.set(b.project_id, []);
+    out.get(b.project_id).push(b);
+  }
+  return out;
+}
+/* evidence_bridge.supply_notices(2038810): 저장된 본 모집 공급 사실(전체 범위·본 차수) → 사업 id → 공고(물량 최대·같으면 늦은 날). 한 공고가 두 사업에 걸리면 뺀다 */
+function supplyNotices(byProject, asOf) {
+  const results = new Map(), owners = new Map();
+  for (const [pid, list] of byProject) {
+    const choices = [];
+    for (const b of list) {
+      if (!['REVIEW', 'CONFIRMED'].includes(b.status) || get(b, 'source_notice_round', 'MAIN') !== 'MAIN') continue;
+      for (const f of b.facts || []) {
+        if (f.stage !== 'SUPPLY' || f.kind !== 'ACTUAL' || f.scope_partial || get(f, 'notice_round', 'MAIN') !== 'MAIN') continue;
+        if (!f.date || f.date > asOf || !f.units) continue;
+        if (!owners.has(b.source_entity_id)) owners.set(b.source_entity_id, new Set());
+        owners.get(b.source_entity_id).add(pid);
+        choices.push({ id: b.source_entity_id, name: b.source_name, units: f.units, source_date: f.date, source_id: b.source_id, evidence_url: b.evidence_url ?? null, review_status: b.status });
+      }
+    }
+    if (choices.length) results.set(pid, maxBy(choices, (n) => [n.units, n.source_date]));
+  }
+  return new Map([...results].filter(([, n]) => owners.get(n.id).size === 1));
+}
+/* project_profile.progress_events: 담당자 단계 측정값(날짜·호수 둘 다 있는 것) → 사업 id → 실제 사건. 담당자 이름·사유 글은 싣지 않는다 */
+function progressEvents(svc) {
+  const out = new Map();
+  for (const r of svc.profiles.values()) for (const [stage, v] of Object.entries(r.progress ?? {})) {
+    if (!v.event_date || v.units == null) continue;
+    if (!out.has(r.project_id)) out.set(r.project_id, []);
+    out.get(r.project_id).push({ origin: v.origin ?? 'MANUAL', input_rule: v.input_rule ?? null, inferred: v.inferred ?? false, changed_at: v.changed_at ?? null, event_date: v.event_date, units: v.units,
+      ...(v.evidence_url ? { evidence_url: v.evidence_url } : {}), project_id: r.project_id, stage, status: 'ACTUAL', review_status: 'CONFIRMED', ...(ESTIMATE_RULES.has(v.input_rule) ? { estimate: true } : {}) });
+  }
+  return out;
+}
+/* supply_geography.municipal_membership(2038810) → Map(사업 id → 시군구 경계 id). rows = 공급현황의 사업 행(연결 해제 뺀 전체), boundaries = municipality + policy_municipality,
+   districts = 지구 행과 그 소속 사업. ① 원천 시군구 이름(경기는 '시' 뗀 이름도)·인천은 사업명·지구·주소의 '인천 ○○구' ② 같은 블록 사업의 ① ③ 소속 지구 이름이 경계의 지구 목록에 하나.
+   공급현황의 '대표 위치' 묶음(사업 좌표만 있는 사업 이름)은 ③에 넣지 않았다(사업 이름이 지구 목록에 들 일이 드물다) */
+function municipalMembership(rows, boundaries, districts) {
+  const explicit = (row) => {
+    let matches = boundaries.filter((a) => a.region === row.region && row.municipality != null && (row.municipality === a.name || (a.region === '경기도' && row.municipality === a.name.slice(0, -1)))).map((a) => a.id);
+    if (!matches.length && row.region === '인천광역시') {
+      const text = ['name', 'district', 'address'].map((k) => String(row[k] || '')).join(' ');
+      matches = boundaries.filter((a) => a.region === row.region && new RegExp(`인천(?:광역시)?\\s*${escRe(a.name.replace(/구$/, '').replace(/군$/, ''))}(?:구|군)?(?=\\s|[\\[\\]()A-Z0-9]|$)`).test(text)).map((a) => a.id);
+    }
+    return matches.length === 1 ? matches[0] : null;
+  };
+  const resolved = new Map(), own = new Map(rows.map((r) => [r.id, explicit(r)])), keys = new Map(rows.map((r) => { const k = blockKey(r); return [r.id, k ? keyStr(k) : null]; }));
+  for (const row of rows) if (own.get(row.id)) resolved.set(row.id, own.get(row.id));
+  for (const row of rows) {
+    if (resolved.has(row.id)) continue;
+    const key = keys.get(row.id);
+    const peers = new Set(key ? rows.filter((q) => keys.get(q.id) === key && own.get(q.id)).map((q) => own.get(q.id)) : []);
+    if (peers.size === 1) { resolved.set(row.id, [...peers][0]); continue; }
+    const names = new Set(districts.filter((d) => d.project_ids.includes(row.id)).map((d) => d.name));
+    const areas = new Set(boundaries.filter((a) => a.region === row.region && (a.district_names || []).some((n) => names.has(n))).map((a) => a.id));
+    if (areas.size === 1) resolved.set(row.id, [...areas][0]);
+  }
+  return resolved;
+}
+/* 포트폴리오 사업의 시군구(build_delivery city_of·인천 정책 시군구 경계) → (사업 행) → { municipality, municipality_id } */
+function municipalities(svc) {
+  const extra = svc.rows('policy_municipality');
+  const boundaries = [...new Map([...svc.rows('municipality'), ...extra].map((a) => [a.id, a])).values()];
+  const rows = svc.allProjects().filter((p) => p.mapping.status !== 'RELEASED').map((r) => ({ ...r, source_id: ALIASES[r.source_id] ?? r.source_id }));
+  const ids = new Set(rows.map((r) => r.id));
+  const districts = svc.rows('district').map((d) => ({ name: d.name, project_ids: (d.project_ids || []).filter((id) => ids.has(id)) })).filter((d) => d.project_ids.length);
+  const cityOf = municipalMembership(rows, boundaries, districts);
+  const names = new Map([...extra, ...boundaries].map((a) => [a.id, a.name]));
+  return (row) => {
+    let id = cityOf.get(row.id) ?? null, name = id != null && names.has(id) ? names.get(id) : (row.municipality ?? null);
+    /* build_delivery 의 인천 이름 추정(지구·사업명에 경계 이름이 들면 그 경계)은 소속이 안 정해졌을 때만 — 2038810 은 늘 덮지만 PoC 운영 판 정책 묶음은
+       명시 시군구를 앞세운다(제물포 도심공공복합 = 미추홀구, portfolio_cohorts 2026-10-20) */
+    if (row.region === '인천광역시' && id == null) {
+      const district = row.district || row.name;
+      const inferred = extra.find((p) => { const n = p.name.replaceAll('인천광역시 ', ''); return district.includes(n.endsWith('구') ? n.slice(0, -1) : n); });
+      if (inferred) { id = inferred.id; name = inferred.name; }
+    }
+    return { municipality: name, municipality_id: id };
+  };
+}
+
 function buildCohorts(svc, asOf, policyId) {
   const plan = svc.rows('policy_delivery_plan').find((r) => r.policy_id === policyId);
   if (!plan) throw new Error(`${policyId} 원문 목표표(policy_delivery_plan)가 판에 없다`);
@@ -227,16 +353,19 @@ function buildCohorts(svc, asOf, policyId) {
   const allByKey = new Map();
   const groupKey = (row) => { const k = blockKey(row); return k ? `K${keyStr(k)}` : `I${row.id}`; };
   for (const row of rows) { const k = groupKey(row); if (!allByKey.has(k)) allByKey.set(k, []); allByKey.get(k).push(row); }
+  const bridges = bridgesByProject(svc);
   const notices = linkedNotices(chosen, svc.rows('notice'), asOf);
+  const eligible = new Map(chosen.map((r) => [r.id, r]));
+  for (const [pid, n] of supplyNotices(bridges, asOf)) if (eligible.has(pid) && n.units <= (eligible.get(pid).planned_units || 0)) notices.set(pid, n);
   /* 담당자 설정(delivery_setting) — 아직 들어온 판이 없어 옮기지 않았다(있으면 멈춘다) */
   const setting = svc.rows('delivery_setting').find((r) => r.policy_id === policyId) ?? { targets: [], events: [] };
   if ((setting.targets || []).length || (setting.events || []).length) throw new Error('담당자 목표·사건(delivery_setting)이 있는 판 — 아직 옮기지 않았다');
-  /* delivery_operations.schedule_goals: 승인 일정(execution_schedule) → 사업·단계 관리 목표(managed_schedule) */
+  /* delivery_operations.schedule_goals: 승인 일정(execution_schedule) → 사업·단계 관리 목표(managed_schedule). 근거 글(사유)은 싣지 않는다 */
   const managed = new Map();
   for (const r of svc.rows('execution_schedule')) {
     if (r.status === 'RELEASED' || r.units == null) continue;
     if (!managed.has(r.project_id)) managed.set(r.project_id, []);
-    managed.get(r.project_id).push({ stage: r.stage, due_date: r.due_date, units: r.units, origin: r.status === 'REVIEW' ? 'SOURCE_REVIEW' : 'MANUAL', precision: 'DAY', managed_schedule: true });
+    managed.get(r.project_id).push({ scope_kind: 'project', scope_id: r.project_id, stage: r.stage, due_date: r.due_date, units: r.units, origin: r.status === 'REVIEW' ? 'SOURCE_REVIEW' : 'MANUAL', evidence_url: r.evidence_url ?? null, precision: 'DAY', managed_schedule: true });
   }
   /* stage_evidence.linked_events */
   const stageLinks = new Map();
@@ -246,35 +375,36 @@ function buildCohorts(svc, asOf, policyId) {
     const effective = s.event_date || s.observed_on;
     if (!effective || effective > asOf) continue;
     if (!stageLinks.has(r.project_id)) stageLinks.set(r.project_id, []);
-    stageLinks.get(r.project_id).push({ stage: r.stage, event_date: effective, units: s.units ?? null, status: s.event_date && !['PREREQUISITE', 'STAGE_INFERENCE'].includes(s.method) ? 'ACTUAL' : 'STATE', review_status: r.status, origin: 'LINKED_EVIDENCE', source_id: s.source_id ?? null });
-  }
-  /* evidence_bridge.by_project */
-  const origins = new Map(['project', 'lh_completion_plan', 'document_evidence'].flatMap((k) => svc.rows(k).map((r) => [r.id, r.source_id])));
-  const bridges = new Map();
-  for (const r of svc.rows('evidence_bridge')) {
-    const b = { ...r, source_id: r.evidence_source_id || (origins.has(r.source_entity_id) ? origins.get(r.source_entity_id) : r.source_id) };
-    if (!bridges.has(b.project_id)) bridges.set(b.project_id, []);
-    bridges.get(b.project_id).push(b);
+    stageLinks.get(r.project_id).push({ stage: r.stage, event_date: effective, source_event_date: s.event_date ?? null, date_basis: s.event_date ? 'EVENT' : 'OBSERVED_BY', units: s.units ?? null,
+      status: s.event_date && !['PREREQUISITE', 'STAGE_INFERENCE'].includes(s.method) ? 'ACTUAL' : 'STATE', review_status: r.status, origin: 'LINKED_EVIDENCE', method: s.method ?? null, evidence_url: s.evidence_url ?? null, source_id: s.source_id ?? null });
   }
   const occupancy = occupancySchedules(rows, svc.rows('lh_movein_plan'));
+  const manualProgress = progressEvents(svc);
+  const cityOf = municipalities(svc);
 
+  const selectedIds = new Set(chosen.map((r) => r.id));
   const portfolio = [], cohorts = [], historical = [], missing = [];
   for (const row of chosen) {
-    const group = allByKey.get(groupKey(row));
+    let group = allByKey.get(groupKey(row));
+    /* 한 블록의 서로 다른 임대 유형은 따로 센다 — 묶음에 대표가 둘 이상이면 자기 행만(2038810) */
+    if (group.filter((m) => selectedIds.has(m.id)).length > 1) group = group.filter((m) => m.id === row.id);
     const plannedCap = row.planned_units ?? null;
     let cap = plannedCap;
     if (cap == null || cap <= 0) {
       missing.push(row.id); cap = notices.get(row.id)?.units;
       if (!cap) continue;
     }
-    const events = [], progress = [];
-    let schedules = [];
+    let events = [], schedules = [];
+    const progress = [];
     for (const member of group) {
-      if (member.start_actual_date) events.push({ stage: 'CONSTRUCTION', event_date: member.start_actual_date, units: cap, origin: 'SOURCE', source_id: member.origin_source_id });
+      if (member.start_actual_date) events.push({ stage: 'CONSTRUCTION', event_date: member.start_actual_date, units: cap, evidence_url: member.evidence_url ?? null, origin: 'SOURCE', source_id: member.origin_source_id });
       for (const e of sourceEvents(member)) {
-        schedules.push({ stage: e.stage, due_date: e.due_date || `${e.month}-01`, precision: e.precision, units: e.units, origin: 'SOURCE', source_id: member.origin_source_id, source_object_id: member.id, source_base_date: member.base_date });
+        schedules.push({ stage: e.stage, due_date: e.due_date || `${e.month}-01`, precision: e.precision, units: e.units, evidence_url: e.evidence_url, origin: 'SOURCE', basis: e.basis, source_id: member.origin_source_id, source_object_id: member.id, source_base_date: member.base_date });
       }
-      if (member.progress_pct != null) progress.push({ pct: member.progress_pct, as_of_date: member.progress_date || member.base_date });
+      if (member.progress_pct != null) {
+        const override = get(member.manual_fields ?? {}, 'progress_pct', {});
+        progress.push({ pct: member.progress_pct, as_of_date: member.progress_date || member.base_date, evidence_url: member.evidence_url ?? null, inferred: !!override?.inferred, origin: override && Object.keys(override).length ? 'MANUAL' : 'SOURCE' });
+      }
       events.push(...(stageLinks.get(member.id) || []));
       for (const bridge of bridges.get(member.id) || []) {
         if (!['REVIEW', 'CONFIRMED'].includes(bridge.status)) continue;
@@ -284,10 +414,13 @@ function buildCohorts(svc, asOf, policyId) {
           if (!EVENT_STAGES.has(stage)) continue;
           const when = fact.date || fact.date_label;
           if (fact.kind === 'ACTUAL' && when && when.length === 10 && when <= asOf) {
-            events.push({ stage, event_date: when, units: fact.units ?? null, status: 'ACTUAL', review_status: bridge.status, origin: 'LINKED_EVIDENCE', source_id: bridge.source_id });
+            const dateBasis = get(fact, 'date_basis', 'EVENT');
+            events.push({ stage, event_date: when, units: fact.units ?? null, status: 'ACTUAL', review_status: bridge.status, origin: 'LINKED_EVIDENCE', source_id: bridge.source_id, evidence_url: bridge.evidence_url ?? null,
+              date_basis: dateBasis, source_event_date: dateBasis === 'EVENT' ? when : fact.source_event_date ?? null, observed_on: fact.observed_on ?? null, method: fact.method ?? null });
           } else if (fact.kind === 'PLAN') {
             const period = schedulePeriod(when);
-            if (period) schedules.push({ stage, due_date: period.due_date, precision: period.precision, units: fact.units || cap, origin: 'SOURCE', source_id: bridge.source_id, source_object_id: bridge.source_entity_id, review_status: bridge.status });
+            if (period) schedules.push({ stage, due_date: period.due_date, precision: period.precision, source_date_label: period.original, date_conversion: period.conversion, units: fact.units || cap, origin: 'SOURCE',
+              source_id: bridge.source_id, source_object_id: bridge.source_entity_id, review_status: bridge.status, evidence_url: bridge.evidence_url ?? null });
           }
         }
       }
@@ -296,27 +429,29 @@ function buildCohorts(svc, asOf, policyId) {
       const goals = managed.get(member.id) || [], managedStages = new Set(goals.map((g) => g.stage));
       schedules = schedules.filter((s) => !(s.source_object_id === member.id && managedStages.has(s.stage)));
       schedules.push(...goals);
-      /* 담당자 단계 측정값(project_profile.progress) → 실제 사건 */
-      for (const [stage, v] of Object.entries(svc.profiles.get(member.id)?.progress ?? {})) {
-        if (v.event_date) events.push({ stage, event_date: v.event_date, units: v.units ?? null, status: 'ACTUAL', review_status: 'CONFIRMED', origin: 'MANUAL', project_id: member.id, ...(ESTIMATE_RULES.has(v.input_rule) ? { estimate: true } : {}) });
-      }
     }
-    const starts = events.filter((e) => e.stage === 'CONSTRUCTION' && (e.status ?? 'ACTUAL') === 'ACTUAL').map((e) => e.event_date);
+    /* 담당자 단계 측정값이 있는 단계는 그 묶음의 다른 사건을 모두 빼고 측정값만(build_delivery overrides — 착공 판정 전과 공고·공정률 사건을 더한 뒤 두 번) */
+    const overrides = group.flatMap((m) => manualProgress.get(m.id) || []);
+    const applyOverrides = () => { if (overrides.length) { const st = new Set(overrides.map((e) => e.stage)); events = events.filter((e) => !st.has(e.stage)).concat(overrides); } };
+    applyOverrides();
+    const starts = events.filter((e) => e.stage === 'CONSTRUCTION' && get(e, 'status', 'ACTUAL') === 'ACTUAL').map((e) => e.event_date);
     const firstStart = starts.length ? starts.slice().sort(byStr)[0] : null;
     const beforePeriod = !!(firstStart && firstStart < plan.period_start);
     if (beforePeriod) historical.push(row.id);
     const notice = notices.get(row.id);
-    if (notice) events.push({ stage: 'SUPPLY', event_date: notice.source_date, units: notice.units, origin: 'SOURCE', source_id: notice.source_id, notice_id: notice.id });
+    if (notice) events.push({ stage: 'SUPPLY', event_date: notice.source_date, units: notice.units, evidence_url: notice.evidence_url ?? null, origin: 'SOURCE', source_id: notice.source_id });
     if (notice && notice.move_in_plan_month) {
       const month = notice.move_in_plan_month.replaceAll('-', '');
-      if (/^\d{6}$/.test(month)) schedules.push({ stage: 'MOVE_IN', due_date: `${month.slice(0, 4)}-${month.slice(4)}-01`, precision: 'MONTH', units: notice.units, origin: 'SOURCE', source_id: notice.source_id, source_object_id: notice.id, source_base_date: notice.source_date });
+      if (/^\d{6}$/.test(month)) schedules.push({ stage: 'MOVE_IN', due_date: `${month.slice(0, 4)}-${month.slice(4)}-01`, precision: 'MONTH', units: notice.units, origin: 'SOURCE', source_id: notice.source_id, source_object_id: notice.id, source_base_date: notice.source_date,
+        basis: '본 모집공고 입주 예정 물량 · 실입주 아님', evidence_url: notice.evidence_url ?? null });
     }
     const p = progress.length ? maxBy(progress, (x) => [x.as_of_date]) : null;
-    if (p && p.pct === 100) events.push({ stage: 'COMPLETION', event_date: p.as_of_date, units: cap, origin: 'SOURCE' });
-    /* 담당자 측정값이 있는 단계는 그 묶음의 원천·연결 사건을 빼고 측정값만 쓴다(덤프 시점 HOME 운영 화면 140개 묶음 사건과 대조해 맞춘 규칙) */
-    const measured = new Set(events.filter((e) => e.origin === 'MANUAL').map((e) => e.stage));
-    const kept = events.filter((e) => e.origin === 'MANUAL' || !measured.has(e.stage));
-    const c = { id: row.id, source_ids: group.map((m) => m.id), name: row.name, region: row.region, units: cap, planned_units: plannedCap, mapping_status: row.mapping.status, events: kept, schedules };
+    if (p && p.pct === 100 && !p.inferred) events.push({ stage: 'COMPLETION', event_date: p.as_of_date, units: cap, evidence_url: p.evidence_url, origin: p.origin });
+    applyOverrides();
+    const c = { id: row.id, source_ids: group.map((m) => m.id), name: row.name, units: cap, planned_units: plannedCap, quantity_basis: plannedCap ? 'PLAN' : 'NOTICE_ONLY', region: row.region, ...cityOf(row),
+      program_id: row.mapping.program_id ?? null, program: row.mapping.program_name || row.program || null, block: row.block ?? null, developer: group.find((m) => m.developer)?.developer ?? null,
+      events, schedules, progress: p, mapping_status: row.mapping.status,
+      eligibility_status: beforePeriod ? 'PRE_POLICY_START' : starts.length ? 'START_IN_POLICY_PERIOD' : 'PERIOD_MEMBERSHIP_REVIEW', evidence_url: row.evidence_url ?? null };
     portfolio.push(c);
     if (!beforePeriod && plannedCap) cohorts.push(c);
   }
@@ -347,7 +482,7 @@ function occupancySchedules(projects, moveInPlans) {
     for (const when of [...dims.keys()].sort(byStr)) {
       const units = Math.min(remaining, dims.get(when).reduce((a, b) => a + b, 0)); remaining -= units;
       if (units <= 0) continue;
-      schedules.push({ stage: 'MOVE_IN', due_date: `${when}-01`, units, precision: 'MONTH', origin: 'SOURCE', source_id: p.source_id, source_object_id: p.id, source_base_date: p.base_date });
+      schedules.push({ stage: 'MOVE_IN', due_date: `${when}-01`, units, precision: 'MONTH', origin: 'SOURCE', source_id: p.source_id, source_object_id: p.id, source_base_date: p.base_date, basis: '원천 면적·유형별 입주 예정 물량 · 실입주 아님', evidence_url: p.evidence_url ?? null });
     }
     result.set(p.id, schedules);
   }
@@ -361,7 +496,7 @@ function occupancySchedules(projects, moveInPlans) {
       for (const month of [...byMonth.keys()].sort(byStr)) {
         const list = byMonth.get(month), units = Math.min(remaining, list.reduce((a, r) => a + r.units, 0)); remaining -= units;
         if (units <= 0) continue;
-        schedules.push({ stage: 'MOVE_IN', due_date: `${month}-01`, units, precision: 'MONTH', origin: 'SOURCE', source_id: list[0].source_id, source_object_id: `occupancy:${s}`, source_base_date: version, review_status: 'REVIEW' });
+        schedules.push({ stage: 'MOVE_IN', due_date: `${month}-01`, units, precision: 'MONTH', origin: 'SOURCE', source_id: list[0].source_id, source_object_id: `occupancy:${s}`, source_base_date: version, basis: 'LH 공식 연간 입주계획 · 동일 지구·블록 연결 검토 · 실입주 아님', evidence_url: list[0].evidence_url ?? null, review_status: 'REVIEW' });
       }
       if (!result.has(p.id)) result.set(p.id, []);
       result.get(p.id).push(...schedules);
@@ -371,16 +506,16 @@ function occupancySchedules(projects, moveInPlans) {
 }
 
 /* ---------- 목표·확인 점(policy_delivery_comparison) ---------- */
-/* _schedule_targets: 코호트마다 가장 늦은 원천 일정 하나, 같은 (날짜·호수) 한 번, 사업 물량 상한 → 날짜별 누적 */
-function scheduleTargets(cohorts, metric, periodStart) {
-  const inc = new Map(), used = new Set();
+/* _schedule_targets: 코호트마다 가장 늦은 원천 일정 하나(관리 목표가 있으면 그것만), 같은 (날짜·호수) 한 번, 사업 물량 상한 → 날짜 → [{ id, units, s }] (날짜 순) */
+function scheduleIncrements(cohorts, metric, periodStart) {
+  const inc = new Map();
   for (const c of cohorts) {
-    let source = c.schedules.filter((s) => s.stage === metric && (s.origin === 'SOURCE' || s.managed_schedule) && s.units != null && s.due_date >= periodStart);
+    let source = c.schedules.filter((s) => s.stage === metric && (get(s, 'origin', null) === 'SOURCE' || s.managed_schedule) && s.units != null && s.due_date >= periodStart);
     const managedOnly = source.filter((s) => s.managed_schedule);
     if (managedOnly.length) source = managedOnly;   // 관리 목표가 있으면 그것만
     if (!source.length) continue;
     const latest = maxBy(source, (s) => [s.source_base_date || '', s.source_object_id || '']);
-    source = source.filter((s) => s.source_object_id === latest.source_object_id);
+    source = source.filter((s) => get(s, 'source_object_id', null) === get(latest, 'source_object_id', null));
     const unique = new Map();
     for (const s of source) unique.set(`${s.due_date}\u0000${s.units}`, s);
     let remaining = c.units;
@@ -388,41 +523,98 @@ function scheduleTargets(cohorts, metric, periodStart) {
       const amount = Math.min(remaining, s.units);
       if (amount <= 0) continue;
       if (!inc.has(s.due_date)) inc.set(s.due_date, []);
-      inc.get(s.due_date).push({ id: c.id, units: amount });
-      used.add(c.id);
+      inc.get(s.due_date).push({ id: c.id, units: amount, s });
       remaining -= amount;
     }
   }
+  return [...inc.keys()].sort(byStr).map((date) => [date, inc.get(date)]);
+}
+const urlsOf = (xs) => [...new Set(xs.map((x) => x.evidence_url).filter(Boolean))].sort(byStr);
+/* HOME _schedule_targets 점 그대로(date·units 누적·annual_units·origin·precision·evidence_urls·basis) */
+function homeScheduleTargets(cohorts, metric, periodStart) {
   let cum = 0;
-  const points = [...inc.keys()].sort(byStr).map((date) => {
-    const units = inc.get(date).reduce((a, x) => a + x.units, 0);
+  return scheduleIncrements(cohorts, metric, periodStart).map(([date, xs]) => {
+    const units = xs.reduce((a, x) => a + x.units, 0);
     cum += units;
-    return { date, units: cum, annual_units: units, cohorts: inc.get(date).length };
+    return { date, units: cum, annual_units: units, origin: xs.some((x) => x.s.managed_schedule) ? 'MANUAL' : 'SOURCE', precision: 'DAY', evidence_urls: urlsOf(xs.map((x) => x.s)), basis: '연결 사업 목표 일정 · 담당자 입력 우선 · 중복 제외' };
+  });
+}
+/* 우리 문서용: { points: [{ date, units, annual_units, cohorts }], cohorts } */
+function scheduleTargets(cohorts, metric, periodStart) {
+  const used = new Set();
+  let cum = 0;
+  const points = scheduleIncrements(cohorts, metric, periodStart).map(([date, xs]) => {
+    const units = xs.reduce((a, x) => a + x.units, 0);
+    cum += units;
+    for (const x of xs) used.add(x.id);
+    return { date, units: cum, annual_units: units, cohorts: xs.length };
   });
   return { points, cohorts: used.size };
 }
-/* _events: 단계 실적 사건 → 날짜별 누적(사업별 최대 도달량, 확인 필요 연결 포함). estimates: false 면 담당자 추정 입력(estimate)을 뺀다 */
-function stageEvents(cohorts, metric, asOf, { estimates = true } = {}) {
+/* _events: 단계 실적 사건 → 날짜별 누적(사업별 최대 도달량, 확인 필요 연결 포함). cumulative 면 후속 단계 사건도 그 단계 도달로 본다(tracking).
+   keep(e) 로 사건을 거른다(우리 확인 = 담당자 추정 입력 뺌). HOME 점 그대로(…·manual_units·inferred_units·evidence_urls) */
+const LATER = { BUSINESS: ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'COMPLETION', 'SUPPLY', 'MOVE_IN'], APPROVAL: ['APPROVAL', 'CONSTRUCTION', 'COMPLETION', 'SUPPLY', 'MOVE_IN'],
+  CONSTRUCTION: ['CONSTRUCTION', 'COMPLETION', 'SUPPLY', 'MOVE_IN'], COMPLETION: ['COMPLETION', 'MOVE_IN'], SUPPLY: ['SUPPLY', 'MOVE_IN'], MOVE_IN: ['MOVE_IN'] };
+function homeEvents(cohorts, metric, asOf, { cumulative = false, keep = () => true } = {}) {
+  const accepted = new Set(cumulative ? LATER[metric] ?? [metric] : [metric]);
   const byDate = new Map();
   for (const c of cohorts) for (const e of c.events) {
-    if (e.stage === metric && (e.status ?? 'ACTUAL') === 'ACTUAL' && e.event_date <= asOf && (estimates || !e.estimate)) {
+    if (accepted.has(e.stage) && get(e, 'status', 'ACTUAL') === 'ACTUAL' && e.event_date <= asOf && keep(e)) {
       if (!byDate.has(e.event_date)) byDate.set(e.event_date, []);
       byDate.get(e.event_date).push([c, e]);
     }
   }
-  const counts = new Map(), confirmed = new Map(), attributed = new Map();
+  const counts = new Map(), confirmed = new Map(), attributed = new Map(), manual = new Map(), inferred = new Map();
   const bump = (m, id, v) => m.set(id, Math.max(m.get(id) ?? 0, v));
   const sum = (m) => [...m.values()].reduce((a, b) => a + b, 0);
   const points = [...byDate.keys()].sort(byStr).map((date) => {
-    for (const [c, e] of byDate.get(date)) {
+    const list = byDate.get(date);
+    for (const [c, e] of list) {
       const v = Math.min(c.units, e.units == null ? c.units : e.units);
       bump(counts, c.id, v);
+      if (e.origin === 'MANUAL') bump(manual, c.id, v);
+      if (e.inferred) bump(inferred, c.id, v);
       if (e.review_status !== 'REVIEW') bump(confirmed, c.id, v);
       if (e.review_status !== 'REVIEW' && c.mapping_status === 'CONFIRMED') bump(attributed, c.id, v);
     }
-    return { date, units: sum(counts), confirmed_units: sum(confirmed), policy_confirmed_units: sum(attributed), review_units: sum(counts) - sum(confirmed) };
+    return { date, units: sum(counts), confirmed_units: sum(confirmed), policy_confirmed_units: sum(attributed), review_units: sum(counts) - sum(confirmed), origin: 'SOURCE_OR_MANUAL',
+      manual_units: sum(manual), inferred_units: sum(inferred), evidence_urls: urlsOf(list.map(([, e]) => e)) };
   });
   return { points, cohorts: counts.size };
+}
+/* 우리 문서용(같은 단계만): estimates: false 면 담당자 추정 입력(estimate)을 뺀다 → { points: [{ date, units, confirmed_units, policy_confirmed_units, review_units }], cohorts } */
+function stageEvents(cohorts, metric, asOf, { estimates = true } = {}) {
+  const r = homeEvents(cohorts, metric, asOf, { keep: (e) => estimates || !e.estimate });
+  return { points: r.points.map(({ date, units, confirmed_units, policy_confirmed_units, review_units }) => ({ date, units, confirmed_units, policy_confirmed_units, review_units })), cohorts: r.cohorts };
+}
+/* comparison_index 의 tracking(2038810): 선택 범위 사업의 1900-01-01 부터 목표 점 + 후속 단계까지 누적한 확인 점(담당자 입력·추정 포함) */
+function trackingOf(cohorts, metric, asOf) {
+  return { target_points: homeScheduleTargets(cohorts, metric, '1900-01-01'), actual_points: homeEvents(cohorts, metric, asOf, { cumulative: true }).points,
+    project_count: cohorts.length, basis: '선택 범위 사업 현재+후속 단계 누적 · 담당자 입력·추정 포함 · 원천 중복 제외' };
+}
+/* portfolio_comparisons(build_delivery 의 comparison_index(포트폴리오, 정책 시작 1900-01-01)) 중 tracking: 범위 키 → { name, kind, metrics: { 지표: { label, tracking } } }.
+   범위 = policy · region:<시도> · city:<시군구 id> · program:<프로그램 id>(·|region:<시도>·|city:<id>). 사업 범위(project:)는 옮기지 않았다.
+   programs = { 프로그램 id: 이름 }(HOME plan.program_profiles — 덤프에 없다): 주면 사업이 없는 프로그램도 빈 범위로 넣고 이름을 그것으로 쓴다 */
+function portfolioComparisons(portfolio, asOf, { programs = {} } = {}) {
+  const scopes = new Map([['policy', { name: '수도권 전체', kind: 'policy', cohorts: portfolio }]]);
+  for (const region of REGIONS) scopes.set(`region:${region}`, { name: region, kind: 'region', cohorts: portfolio.filter((c) => c.region === region) });
+  for (const c of portfolio) if (c.municipality_id) {
+    const k = `city:${c.municipality_id}`;
+    if (!scopes.has(k)) scopes.set(k, { name: c.municipality || c.municipality_id, kind: 'city', cohorts: [] });
+    scopes.get(k).cohorts.push(c);
+  }
+  for (const pid of [...new Set([...portfolio.map((c) => c.program_id).filter(Boolean), ...Object.keys(programs)])]) {
+    const members = portfolio.filter((c) => c.program_id === pid), key = `program:${pid}`;
+    scopes.set(key, { name: programs[pid] || (members.length ? members[0].program : pid) || pid, kind: 'program', cohorts: members });
+    for (const region of new Set(members.map((c) => c.region))) scopes.set(`${key}|region:${region}`, { name: region, kind: 'program_region', cohorts: members.filter((c) => c.region === region) });
+    for (const city of new Set(members.map((c) => c.municipality_id).filter(Boolean))) {
+      const local = members.filter((c) => c.municipality_id === city);
+      scopes.set(`${key}|city:${city}`, { name: local[0].municipality || city, kind: 'program_city', cohorts: local });
+    }
+  }
+  const out = {};
+  for (const [key, sc] of scopes) out[key] = { name: sc.name, kind: sc.kind, metrics: Object.fromEntries(Object.keys(HOME_METRICS).map((m) => [m, { label: HOME_METRICS[m], tracking: trackingOf(sc.cohorts, m, asOf) }])) };
+  return out;
 }
 /* _official_targets(정책 전체): 9·7 원문 연도별 착공 목표 → 연말 누적 */
 function officialTargets(plan) {
@@ -541,14 +733,14 @@ function policyProgress(home, { policyId = POLICY_ID } = {}) {
   for (const metric of Object.keys(METRICS)) {
     const macro = metric === 'CONSTRUCTION';
     const t = macro ? { points: officialTargets(b.plan), cohorts: null } : scheduleTargets(b.cohorts, metric, periodStart);
-    const a = macro ? { points: regionalActual(statistics, asOf, periodStart), cohorts: null } : metric === 'MOVE_IN' ? { points: [], cohorts: 0 } : stageEvents(b.cohorts, metric, asOf);
-    const confirmed = macro || metric === 'MOVE_IN' ? a : stageEvents(b.cohorts, metric, asOf, { estimates: false });   // 확인 = 담당자 추정 입력을 뺀 사건
+    const a = macro ? { points: regionalActual(statistics, asOf, periodStart), cohorts: null } : stageEvents(b.cohorts, metric, asOf);   // 입주도 실제 시작 사건을 센다(2038810)
+    const confirmed = macro ? a : stageEvents(b.cohorts, metric, asOf, { estimates: false });   // 확인 = 담당자 추정 입력을 뺀 사건
     const last = a.points[a.points.length - 1];
     stages[metric] = {
       label: METRICS[metric],
       targetBasis: macro ? '9·7 원문 연도별 착공 목표' : '연결 사업 원천의 동일 단계 예정 물량',
-      actualBasis: macro ? '동일 범위 공식 지역 착공 통계(서울·경기·인천 합)' : metric === 'MOVE_IN' ? '입주 실적은 집계하지 않음(실제 시작일만 관리)' : '동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분',
-      evidence: { targetCohorts: t.cohorts, actualCohorts: a.cohorts, reviewIncluded: !macro && metric !== 'MOVE_IN', reviewUnits: last?.review_units ?? null, confirmedUnits: last?.confirmed_units ?? null, policyConfirmedUnits: last?.policy_confirmed_units ?? null },
+      actualBasis: macro ? '동일 범위 공식 지역 착공 통계(서울·경기·인천 합)' : '동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분',
+      evidence: { targetCohorts: t.cohorts, actualCohorts: a.cohorts, reviewIncluded: !macro, reviewUnits: last?.review_units ?? null, confirmedUnits: last?.confirmed_units ?? null, policyConfirmedUnits: last?.policy_confirmed_units ?? null },
       homeRule: homeRule(t.points, a.points, asOf),
       samePeriod: samePeriod(t.points, confirmed.points, cutoff, firstYear, a.points),
       monthly: monthlySeries(t.points, a.points, periodStart, cutoff),
@@ -560,7 +752,7 @@ function policyProgress(home, { policyId = POLICY_ID } = {}) {
   return {
     schema: 'policy-progress/1',
     source: { system: 'home', edition: home.edition, snapshotAt: home.snapshotAt, sourceCommit: home.manifest.source_commit ?? null,
-      rule: 'HOME 10-home backend policy_delivery.build_delivery + policy_delivery_comparison.comparison_index(정책 전체 범위), web policy-stage-flow.js comparisonStatus' },
+      rule: 'HOME 10-home backend(커밋 2038810) policy_delivery.build_delivery + policy_delivery_comparison.comparison_index(정책 전체 범위), web policy-stage-flow.js comparisonStatus' },
     asOf, referenceMonthEnd: cutoff,
     policies: [{
       policyId, name: '주택공급 확대방안 (9·7)', periodStart, periodEnd: b.plan.period_end ?? null, targetUnits: b.plan.target_units,
@@ -575,11 +767,27 @@ function policyProgress(home, { policyId = POLICY_ID } = {}) {
     notes: [
       'homeRule 은 HOME 화면과 같다(목표 누적은 정책 시작일부터, 확인 누적은 처음부터라 기간이 섞인다). 우리 화면은 samePeriod(같은 해 1월~기준 달)를 쓴다.',
       '착공은 정책 전체 범위에서 원문 연도별 목표(연말 점)와 지역 착공 통계를 쓴다 — 연말 목표를 달로 나누지 않는다.',
-      '입주는 예정 물량만 있고 실적은 집계하지 않는다(HOME 과 같다).',
+      '입주는 실제 시작 사건(담당자 측정값 등)만 센다 — 입주 물량 통계가 아니다(HOME 2038810 과 같다).',
       'HOME 의 이 계산은 9·7(POL_2025_0907) 전용이다 — 1·29·8·13 은 같은 코드 경로가 없다.',
       `samePeriod.actual 은 확인(담당자 추정 입력 ${[...ESTIMATE_RULES].join('·')} 을 뺀 사건), actualWithEstimates 는 추정 포함(= HOME actualPoints)이다. gap·status 는 확인으로만 낸다.`,
     ],
   };
+}
+
+/* 화면 생성기용: HOME /policy-delivery/view 응답 중 포트폴리오 부분과 같은 모양 — { policy_id, name, as_of_date, target_units, plan, stages, cohorts, portfolio_cohorts, portfolio_comparisons }.
+   home 을 주지 않으면 최신 달 폴더의 HOME 판을 읽는다. portfolio_comparisons 는 tracking 만 담는다(portfolioComparisons) */
+function homeView(home = null, { policyId = POLICY_ID } = {}) {
+  if (!home) {
+    const dir = HOME.latestHomeDir(P.ledgerDir(P.latestMonth()));
+    if (!dir || !HOME.homeAvailable(dir)) throw new Error('HOME 판(raw/home/<덤프시각>)의 원본(jsonl.gz)이 없다');
+    home = HOME.readHome(dir);
+  }
+  const asOf = asOfOf(home.snapshotAt);
+  const b = buildCohorts(homeService(home, asOf), asOf, policyId);
+  return { policy_id: policyId, name: '주택공급 확대방안 (9·7)', as_of_date: asOf, target_units: b.plan.target_units,
+    plan: { policy_id: policyId, period_start: b.plan.period_start, period_end: b.plan.period_end ?? null, target_units: b.plan.target_units, annual: b.plan.annual },
+    stages: { POLICY: '정책', BUSINESS: '사업화', APPROVAL: '인허가', CONSTRUCTION: '건설', SUPPLY: '공급', MOVE_IN: '입주' },
+    cohorts: b.cohorts, portfolio_cohorts: b.portfolio, portfolio_comparisons: portfolioComparisons(b.portfolio, asOf) };
 }
 
 function render(doc) { return `${JSON.stringify(doc, null, 1)}\n`; }
@@ -594,7 +802,8 @@ function parseArgs(argv) {
   return o;
 }
 
-module.exports = { ESTIMATE_RULES, policyProgress, render, schedulePeriod, sourceEvents, blockKey, inventory, linkedNotices, scheduleTargets, stageEvents, homeRule, samePeriod, asOfOf, buildCohorts, homeService, POLICY_ID };
+module.exports = { ESTIMATE_RULES, policyProgress, render, schedulePeriod, sourceEvents, blockKey, inventory, linkedNotices, scheduleTargets, stageEvents, homeRule, samePeriod, asOfOf, buildCohorts, homeService, POLICY_ID,
+  trackingOf, portfolioComparisons, homeView, homeScheduleTargets, homeEvents };
 
 if (require.main === module) {
   try {

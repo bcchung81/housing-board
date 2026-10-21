@@ -9,7 +9,7 @@ import { Check } from 'lucide-react';
 import { cn } from 'cn';
 import InfoTip from '@/components/ui/info-tip';
 import { Card } from '@/components/ui/card';
-import { BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, stepState } from '@/lib/board/projects-view';
+import { BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, HOME_NAMES, stepState } from '@/lib/board/projects-view';
 
 /* 칸마다 답할 질문(발표자료 6단계 질문을 리본 칸에 맞춤): ③착공은 공사 진행, ⑤준공은 공사의 끝(사용검사) — ⑤에 ③의 질문을 베끼지 않는다 */
 export const QUESTION = [
@@ -20,19 +20,30 @@ export const QUESTION = [
   '공사를 마치고 사용검사를 받았는가',
   '언제 국민이 실제로 들어가는가',
 ] as const;
+/* HOME 6칸(정책 화면 PoC 이름 — 사업 화면 원천 행 창)의 질문 */
+export const HOME_QUESTION = [
+  '정부가 무엇을 얼마나, 어디에 누가 추진하는가',
+  '어느 위치에 누가 몇 호를 추진할 것인가',
+  '실제로 사업할 수 있는 단계까지 왔는가',
+  '착공했고 공사를 마쳤는가(준공 포함)',
+  '언제, 누구에게, 몇 호를 분양·모집하는가',
+  '언제 국민이 실제로 들어가는가',
+] as const;
 
-export default function StageSteps({ current, reached, listHref }: { current: number; reached: number[]; listHref: string }) {
+/* home = HOME 원천 행(사업 화면 목록의 행): 칸 이름은 정책 화면 PoC 이름, '실제 기록' = 그 단계까지 온 기록 */
+export default function StageSteps({ current, reached, listHref, home = false }: { current: number; reached: number[]; listHref: string; home?: boolean }) {
+  const NAMES = home ? HOME_NAMES : BOARD_NAMES, QS = home ? HOME_QUESTION : QUESTION;
   return (
     <div className="flex flex-col gap-1.5">
       <ol className="m-0 grid list-none grid-cols-6 gap-1.5 p-0 mobile:grid-cols-3 @max-[680px]:grid-cols-3" aria-label="공급 6단계">
-        {BOARD_NAMES.map((name, i) => {
+        {NAMES.map((name, i) => {
           const st = stepState(i, current), on = st === 'now';
           const c = BOARD_COLOR[i];
           const rec = i === 0 || reached.includes(i) ? '실제 기록 있음' : '실제 기록 없음';
           return (
             <li key={name} className="min-w-0">
               <Card variant="inset" aria-current={on ? 'step' : undefined} data-step={st}
-                title={`${BOARD_CIR[i]} ${name} — ${QUESTION[i]}${on ? ' · 이 사업의 지금 단계' : st === 'past' ? ` · 지난 단계(${rec})` : ' · 아직 오지 않은 단계'}`}
+                title={`${BOARD_CIR[i]} ${name} — ${QS[i]}${on ? ' · 이 사업의 지금 단계' : st === 'past' ? ` · 지난 단계(${rec})` : ' · 아직 오지 않은 단계'}`}
                 className={cn('flex h-full min-h-[64px] flex-col items-center justify-center gap-0.5 text-center',
                   on ? 'font-bold text-foreground' : 'text-muted-foreground')}
                 style={on ? { background: `color-mix(in srgb,${c} 26%,var(--card))` } : undefined}>
@@ -46,14 +57,14 @@ export default function StageSteps({ current, reached, listHref }: { current: nu
         })}
       </ol>
       <p className="m-0 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm text-muted-foreground">
-        <span data-slot="stage-def" className="inline-flex flex-wrap items-center gap-x-1"><span><b className="font-bold" style={{ color: BOARD_INK[current] }}>{BOARD_CIR[current]} {BOARD_NAMES[current]}</b> — {QUESTION[current]}</span>
+        <span data-slot="stage-def" className="inline-flex flex-wrap items-center gap-x-1"><span><b className="font-bold" style={{ color: BOARD_INK[current] }}>{BOARD_CIR[current]} {NAMES[current]}</b> — {QS[current]}</span>
           <InfoTip label="여섯 단계">
-            <dl>{QUESTION.map((q, i) => <Fragment key={i}><dt>{BOARD_CIR[i]} {BOARD_NAMES[i]}</dt><dd>{q}{i === current ? ' · 지금' : stepState(i, current) === 'past' ? ` · 지난 단계(${i === 0 || reached.includes(i) ? '실제 기록 있음' : '실제 기록 없음'})` : ''}</dd></Fragment>)}</dl>
+            <dl>{QS.map((q, i) => <Fragment key={i}><dt>{BOARD_CIR[i]} {NAMES[i]}</dt><dd>{q}{i === current ? ' · 지금' : stepState(i, current) === 'past' ? ` · 지난 단계(${i === 0 || reached.includes(i) ? '실제 기록 있음' : '실제 기록 없음'})` : ''}</dd></Fragment>)}</dl>
             <p>&apos;지금&apos; = 이 사업의 지금 단계 · 체크 = 지난 단계</p>
           </InfoTip>
         </span>
         <Link href={listHref} scroll={false} className="ml-auto whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] hover:text-primary hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-          title={`지금 목록의 범위(지역·정책·기관 거르기)를 그대로 두고 ${BOARD_CIR[current]} ${BOARD_NAMES[current]} 단계인 사업만 — 서랍은 닫힘`}>같은 단계 사업 목록 ›</Link>
+          title={`지금 목록의 범위(지역·정책·기관 거르기)를 그대로 두고 ${BOARD_CIR[current]} ${NAMES[current]} 단계인 사업만 — 서랍은 닫힘`}>같은 단계 사업 목록 ›</Link>
       </p>
     </div>
   );

@@ -1,5 +1,5 @@
 'use client';
-/* 사업 창 내용(제목 · 머리 부속 · 본문)을 관점·종류에 맞는 부품으로: 정책담당자 = ProjectDetail(+DrawerHead) · Candidate(+CandidateHead), 일반사용자 = PublicDetail(+PublicHead).
+/* 사업 창 내용(제목 · 머리 부속 · 본문)을 관점·종류에 맞는 부품으로: 정책담당자 = ProjectDetail(+DrawerHead — 원장 사업·숨김·HOME 원천 행) · Candidate(+CandidateHead), 일반사용자 = PublicDetail(+PublicHead).
    자료는 projectWindow(서버) 결과뿐이고, 지금 보는 화면의 거르기에 따라 달라지는 '같은 단계' 링크만 여기서 만든다(nav.ts sameStageHref). 2026-10-19 */
 import ProjectDetail, { DrawerHead } from '@/components/projects/ProjectDetail';
 import Candidate, { CandidateHead } from '@/components/projects/Candidate';

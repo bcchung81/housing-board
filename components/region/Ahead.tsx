@@ -12,7 +12,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, MapPin } from 'lucide-react';
 import { cn } from 'cn';
-import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, aheadDay, aheadKindTip, dotFocus, inScope, pastDue, projectHref, sggUnits, ymDotted, type AheadEntry, type CalKind } from '@/lib/board/region';
+import { CAL_KINDS, CAL_TYPE, LOC_NAME, METRO, aheadDay, aheadKindTip, dotFocus, inScope, offLedger, pastDue, projectHref, sggUnits, ymDotted, type AheadEntry, type CalKind } from '@/lib/board/region';
 import { mapHref } from '@/lib/board/map-href';
 import { findHref } from '@/lib/board/public-labels';
 import { POLICY_WORDS, koDay, koMonth, type AheadWords } from '@/lib/board/public-schedule';
@@ -38,7 +38,8 @@ const sum = <T,>(a: T[], f: (x: T) => number) => a.reduce((s, x) => s + f(x), 0)
 /* 날짜는 점 표기 하나(2026.10 · 2026.10.11 — lib/board/region aheadDay). 막대 아래 축 눈금만 달 이름('10월') */
 const light = (c: string, p: number) => `color-mix(in srgb,${c} ${p}%,var(--card))`;
 const hollow = (e: AheadEntry) => e.loc === 'rep' || e.loc === 'area' || e.loc === 'name';
-const onMap = (e: AheadEntry) => METRO.includes(e.sd);
+const onMap = (e: AheadEntry) => METRO.includes(e.sd) && !offLedger(e);   // 원장에 없는 HOME 행(PRO_)은 지도·사업 화면에 없다
+const OFF_TAG = '(원장 밖)', OFF_TIP = '정책 진행 자료(HOME)에만 있는 사업 — 덤프 뒤 신규이거나 원장 변환 제외라 사업 화면·지도에 없음';
 const HATCH_SW = '[background:repeating-linear-gradient(45deg,color-mix(in_srgb,var(--muted-foreground)_45%,transparent)_0_1.5px,transparent_1.5px_3.5px)]';
 const LINK = 'group/action inline-flex flex-none cursor-pointer items-center gap-px rounded-chip border-0 bg-transparent p-0 text-sm leading-body whitespace-nowrap text-muted-foreground no-underline underline-offset-[3px] transition-colors hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
@@ -322,20 +323,22 @@ export default function Ahead({ words, sido, regionName, months, nowM, refDate, 
               <KindChip t={e.type} name={W.kind[e.type]} tip={W.kindTip?.[e.type] ?? aheadKindTip(e.type)} />
               {/* 사업명·시군구는 정책 판은 두 줄까지 줄바꿈 후 말줄임(2026-10-16 2차 평가: 한 줄 말줄임이 373→183px 로 잘랐다), 일반사용자 판(W.large)은 자르지 않는다 */}
               <span className={cn('min-w-0 flex-1 phone:basis-[calc(100%-60px)] font-bold [overflow-wrap:break-word] [word-break:keep-all]', !W.large && 'line-clamp-2')} title={e.name}>
-                <Link href={to} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link>
-                {e.drawer ? null : <>{' '}<span className="ml-1 text-sm font-normal text-muted-foreground" title={W.candTip}>{W.cand}</span></>}
+                {offLedger(e) ? <span className="text-foreground">{e.name}</span> : <Link href={to} className="text-foreground no-underline underline-offset-[3px] hover:underline focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary">{e.name}</Link>}
+                {e.drawer || offLedger(e) ? null : <>{' '}<span className="ml-1 text-sm font-normal text-muted-foreground" title={W.candTip}>{W.cand}</span></>}
+                {offLedger(e) ? <>{' '}<span className="ml-1 text-sm font-normal text-muted-foreground" title={OFF_TIP}>{OFF_TAG}</span></> : null}
                 {past(e) ? <>{' '}<span data-slot="past-due" className="ml-1 inline-block rounded-chip border border-line2 px-1 text-sm leading-sub font-normal whitespace-nowrap text-muted-foreground" title={PAST_TIP}>{W.past}</span></> : null}
               </span>
               <span className={cn('flex-none whitespace-nowrap text-muted-foreground tabular-nums', W.large ? 'w-[88px]' : 'w-[80px]', 'phone:w-auto')}>{dayText(e)}</span>
               <span className={cn(W.large ? 'w-40' : 'w-[112px]', 'flex-none phone:w-auto phone:min-w-0 phone:flex-1 text-muted-foreground [word-break:keep-all]', !W.large && 'line-clamp-2')} title={e.sgg}>{e.place}</span>
               <span className={cn('flex-none text-right whitespace-nowrap tabular-nums phone:ml-auto', W.large ? 'w-[84px]' : 'w-[68px]')}>{e.units ? `${fmt(e.units)}호` : <span className="text-sm text-muted-foreground" title={W.unitsUnknownLong}>{W.unitsUnknown}</span>}</span>
               <span className="w-5 flex-none">{onMap(e) ? <a href={mapHref({ project: e.id })} title={`${e.name} — 지도에서 보기`} aria-label={`${e.name} 지도에서 보기`} className="flex rounded-chip text-muted-foreground hover:text-primary focus-visible:outline-2 focus-visible:outline-primary"><MapPin className="size-4" aria-hidden="true" /></a> : null}</span>
-              <span className="w-4 flex-none"><Link href={to} tabIndex={-1} aria-hidden="true" className="flex text-muted-foreground hover:text-primary"><ChevronRight className="size-4" /></Link></span>
+              <span className="w-4 flex-none">{offLedger(e) ? null : <Link href={to} tabIndex={-1} aria-hidden="true" className="flex text-muted-foreground hover:text-primary"><ChevronRight className="size-4" /></Link>}</span>
             </li>
           );
         })}
       </ol>
-      {xs.some((e) => !e.drawer) ? <InfoTip label={`${W.cand} 표시`}>{words ? <p>{W.cand} = {W.candTip}</p> : <p>(후보) = 사업 번호가 아직 없는 후보 사업 · 누르면 간단 보기</p>}</InfoTip> : null}
+      {xs.some(offLedger) ? <InfoTip label={`${OFF_TAG} 표시`}><p>{OFF_TAG} = {OFF_TIP}</p></InfoTip> : null}
+      {xs.some((e) => !e.drawer && !offLedger(e)) ? <InfoTip label={`${W.cand} 표시`}>{words ? <p>{W.cand} = {W.candTip}</p> : <p>(후보) = 사업 번호가 아직 없는 후보 사업 · 누르면 간단 보기</p>}</InfoTip> : null}
       {xs.length > shown.length ? <button type="button" onClick={() => setMore(true)} className={cn('btn-reset mt-2', LINK)}>더 보기 · 외 {xs.length - shown.length}{W.count} {fmt(sum(xs.slice(LIST_N), (e) => e.units))}호</button> : null}
     </div>
   );

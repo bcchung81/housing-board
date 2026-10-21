@@ -2,7 +2,9 @@
    데이터 원본의 '요구사항 충족' 격자와 화면 머리의 요구사항 꼬리표(components/ReqTags.tsx)가 쓴다. */
 export type Screen = 'projects' | 'region' | 'sources';
 export type Verdict = 'met' | 'part' | 'none';
-export type Requirement = { id: string; title: string; short: string; priority: string; criterion: string; items: string[]; dates: string[]; screens: Screen[]; verdict: Verdict; metric: string; tip: string };
+export type Requirement = { id: string; title: string; short: string; priority: string; criterion: string; items: string[]; dates: string[]; screens: Screen[]; verdict: Verdict; metric: string; tip: string; poc: PocMetric };
+/* 근거 지표의 PoC 값: 추정 포함(count/total/percent) · 추정 제외(ex*) · 추정으로 더해진 수(added). 분모 0 이면 percent 는 null */
+export type PocMetric = { label: string; count: number; total: number; percent: number | null; exCount: number; exTotal: number; exPercent: number | null; added: number };
 export type Directive = { date: string; full: string; event: string; need: string };
 export type RequirementsDoc = { schema: string; observedMonth: string; referenceDate: string; edition: string; screens: Record<Screen, { name: string; href: string }>; directives: Directive[]; items: Requirement[] };
 
