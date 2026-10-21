@@ -78,8 +78,8 @@ test('연결: 정적 제목은 CSS 로 관점별, 정책담당자 문구 유지,
 test('일반사용자 부제 사업 수(2026-10-21 W5-MP2): 9·7 175곳 · 정책 전체 346곳, 정책담당자는 원천 230건·443건 + 집계 175·346', () => {
   const O = require('../../lib/board/metro-overview.ts'), RM = require('../../data/board/region-map.json'), MOV = require('../../data/board/map-overview.json');
   const D = (k) => J.scopeVals(O.homeOverview(RM, MOV), k).total;
-  assert.equal(J.totalSubOf('u', D('p97'), true), '사업 175곳');
-  assert.equal(J.totalSubOf('u', D('all'), true), '사업 346곳');
-  assert.match(J.totalSubOf('u', D('p97'), false), /^원천 230건 · 175건 집계/);
-  assert.match(J.totalSubOf('u', D('all'), false), /^원천 443건 · 346건 집계/);
+  assert.equal(J.totalSubOf('u', D('p97'), true), '사업 177곳');   // 2026-10-22 새 덤프(20261021T212310Z): 9·7 집계 행 175 → 177
+  assert.equal(J.totalSubOf('u', D('all'), true), '사업 347곳');   // 2026-10-22 새 덤프(20261021T212310Z): 정책 전체 집계 행 346 → 347(부천역곡 A1)
+  assert.match(J.totalSubOf('u', D('p97'), false), /^원천 232건 · 177건 집계/);   // 2026-10-22 새 덤프(20261021T212310Z): 9·7 +2행(부천역곡 A1·인천송림4 1), 정책 전체 +1행(부천역곡 A1)
+  assert.match(J.totalSubOf('u', D('all'), false), /^원천 444건 · 347건 집계/);
 });

@@ -41,11 +41,12 @@ test('bridgeAdopted: HOME 이 채택한(CONFIRMED) 연결만 — 검토 전 후�
   for (const p of [{ status: 'REVIEW' }, { status: 'RELEASED' }, { status: 'CONFIRMED', inferred: true }, {}]) assert.equal(H.bridgeAdopted(p), false, JSON.stringify(p));
 });
 
-test('D9: 공고문 입주 예정 12건(LH 9 · GH 1 · SH 1 · 지자체 1) · 화면 사업 12곳(입주 일정이 없던 곳을 채움 11 · 연도만 있던 곳을 달로 1), 달 이상 · CONFIRMED · 한 사업 한 달', () => {
-  assert.equal(lhDoc.length, 12);
-  assert.deepEqual(lhDoc.reduce((o, e) => { const k = /-(\w+)-doc$/.exec(e.source_ref)[1]; return { ...o, [k]: (o[k] ?? 0) + 1 }; }, {}), { lh: 9, gh: 1, sh: 1, local: 1 });
+test('D9: 공고문 입주 예정 14건(LH 10 · GH 1 · SH 1 · 지자체 2) · 화면 사업 14곳(입주 일정이 없던 곳을 채움 13 · 연도만 있던 곳을 달로 1), 달 이상 · CONFIRMED · 한 사업 한 달', () => {
+  /* 2026-10-22 새 덤프(20261021T212310Z): 문서 근거(document_evidence 1,088 → 2,065) 채택 +2 — 계양 A3(PRJ-28245-0057) LH 공고문 2026-12 · PRJ-41196-0101 지자체 공고문 2029-06 */
+  assert.equal(lhDoc.length, 14);
+  assert.deepEqual(lhDoc.reduce((o, e) => { const k = /-(\w+)-doc$/.exec(e.source_ref)[1]; return { ...o, [k]: (o[k] ?? 0) + 1 }; }, {}), { lh: 10, gh: 1, sh: 1, local: 2 });
   const ids = [...new Set(lhDoc.map((e) => e.local_project_id))].sort();
-  assert.deepEqual(ids, ['PRJ-11740-0102', 'PRJ-28155-0037', 'PRJ-41131-0048', 'PRJ-41220-0183', 'PRJ-41281-0095', 'PRJ-41360-0194', 'PRJ-41360-0195', 'PRJ-41360-0196', 'PRJ-41360-0197', 'PRJ-41360-0205', 'PRJ-41450-0074', 'PRJ-41500-0072']);
+  assert.deepEqual(ids, ['PRJ-11740-0102', 'PRJ-28155-0037', 'PRJ-28245-0057', 'PRJ-41131-0048', 'PRJ-41196-0101', 'PRJ-41220-0183', 'PRJ-41281-0095', 'PRJ-41360-0194', 'PRJ-41360-0195', 'PRJ-41360-0196', 'PRJ-41360-0197', 'PRJ-41360-0205', 'PRJ-41450-0074', 'PRJ-41500-0072']);
   /* 연도만 있던 곳(다산지금 A3, HOME 원천 공급계획 2027)은 달(GH 공고문 2027-05)이 현재 예정 */
   assert.equal(PD['PRJ-41360-0195'].stages.MOVE_IN.plan, '2027-05');
   assert.ok(EVENTS.some((e) => e.local_project_id === 'PRJ-41360-0195' && e.event_type === 'MOVE_IN' && e.event_year === '2027'));
@@ -81,8 +82,8 @@ test('D9 원본 대조: 근거는 공고문 주소 · 채택된 연결 · 연도
 });
 
 test('D7: 근거 연결 공고 연결 126쌍(LH 122 · GH 4) 모두 REVIEW_REQUIRED, 주소의 공고 번호 = 연결 공고 번호(코드만), 겹치는 쌍 없음', () => {
-  assert.equal(bridge.length, 128);   // 2026-10-21 새 덤프(20261020T142230Z): 근거 연결 661 → 708, LH 공고 2쌍 +2(인천부평 A·계양 A3)
-  assert.deepEqual(bridge.reduce((o, l) => ({ ...o, [l.notice_system]: (o[l.notice_system] ?? 0) + 1 }), {}), { LH: 124, GH: 4 });
+  assert.equal(bridge.length, 135);   // 2026-10-22 새 덤프(20261021T212310Z): 근거 연결 708 → 806, 채택된 LH 공고 연결 +7 · 2026-10-21 새 덤프(20261020T142230Z): 근거 연결 661 → 708, LH 공고 2쌍 +2(인천부평 A·계양 A3)
+  assert.deepEqual(bridge.reduce((o, l) => ({ ...o, [l.notice_system]: (o[l.notice_system] ?? 0) + 1 }), {}), { LH: 131, GH: 4 });
   const notices = new Map(rows('notices').map((n) => [`${n.notice_system}|${n.notice_id}`, n]));
   for (const l of bridge) {
     assert.equal(l.review_status, 'REVIEW_REQUIRED');
@@ -102,8 +103,8 @@ test('D7: 근거 연결 공고 연결 126쌍(LH 122 · GH 4) 모두 REVIEW_REQUI
 
 test('D7 화면: 공고 줄 사업 41 → 60곳(근거 연결로만 새로 생긴 19곳), 근거 연결 공고는 모두 검토 표지·원문 주소', () => {
   const withN = Object.values(PD).filter((x) => x.notices);
-  assert.equal(withN.length, 62);   // 2026-10-21 새 덤프(20261020T142230Z): +2(인천부평 A·계양 A3 근거 연결 공고)
-  assert.equal(withN.filter((x) => x.notices.every((n) => n.system !== 'APPLYHOME')).length, 21);
+  assert.equal(withN.length, 68);   // 2026-10-22 새 덤프: +6(새 근거 연결 공고 7쌍 중 공고 줄이 없던 사업 6곳) · 2026-10-21 새 덤프(20261020T142230Z): +2(인천부평 A·계양 A3 근거 연결 공고)
+  assert.equal(withN.filter((x) => x.notices.every((n) => n.system !== 'APPLYHOME')).length, 27);   // 2026-10-22 새 덤프 +6(10-21 판 21)
   for (const n of withN.flatMap((x) => x.notices).filter((n) => n.system !== 'APPLYHOME')) {
     assert.equal(n.review, 'REVIEW_REQUIRED');
     assert.match(n.url, /^https:\/\/(apply\.lh\.or\.kr|apply\.gh\.or\.kr)\//);

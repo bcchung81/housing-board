@@ -65,7 +65,7 @@ test('3 용어: 목표를 넘으면 \'달성 n%\'(②인허가 3,560/1,543 = 달
   assert.equal(V.rateOf(permit).word, '달성 124.1%');   // 2026-10-21 새 덤프: ②인허가 10,403/8,386 · 소수 한 자리(r3-screens 3) · 2026-10-20 HOME 판: ②인허가 6,249/3,658(10-19 판 3,560/1,543 = 230.7%)
   assert.deepEqual([V.rateOf(permit).value, V.rateOf(permit).unit], ['124.1', '% 달성']);
   const plan = cells.find((c) => c.key === 'BUSINESS');
-  assert.equal(V.rateOf(plan).word, '달성 128.3%');   // 2026-10-21 새 덤프 ①사업화 18,854/14,694 · r4-screens 1: 모든 칸 달성률 · 2026-10-20 HOME 판 ①사업화 7,808/14,694
+  assert.equal(V.rateOf(plan).word, '달성 129.9%');   // 2026-10-22 새 덤프(20261021T212310Z): ①사업화 18,074/13,914 · 2026-10-21 새 덤프 ①사업화 18,854/14,694 · r4-screens 1: 모든 칸 달성률 · 2026-10-20 HOME 판 ①사업화 7,808/14,694
   for (const c of [plan, permit]) assert.match(V.stageCellTip(c, '', cells), /HOME\(정책 진행 자료\) 원천 값 그대로/);
   /* 2026-10-20 HOME 판: ①사업화 7,808 · ②인허가 6,249 로 확인 값이 달라져 '①계획 확인과 같은 값' 꼬리가 붙지 않는다(같으면 붙는 규칙은 그대로) */
   assert.doesNotMatch(V.stageCellTip(permit, '', cells), /①계획 확인과 같은 값/);

@@ -64,13 +64,13 @@ test('data/board/home-sources.json: 실행 합계·원천 수·연결 수가 서
   assert.equal(hs.poc.registered, 76);
   assert.equal(hs.poc.withData, hs.sources.filter((s) => s.records > 0).length);
   assert.equal(hs.poc.withData, 75);
-  assert.deepEqual(hs.sources.filter((s) => !s.ok).map((s) => s.id), ['building_general_permit', 'ih_supply']);
+  assert.deepEqual(hs.sources.filter((s) => !s.ok).map((s) => s.id), ['ih_supply']);   // 2026-10-22 새 덤프(20261021T212310Z): 건축HUB 일반 인허가(building_general_permit)의 마지막 수집 실행이 성공(10-21 판 덤프에서는 실패 — 덤프 뒤 성공)
   /* 이름·기관은 PoC 출처 목록 그대로 — 보이는 글에 HOME 낱말이 없다 */
   assert.ok(hs.sources.every((s) => s.name && s.org && !/HOME/.test(s.name + s.org)));
   assert.equal(hs.poc.orgs, new Set(hs.sources.map((s) => s.org)).size);
   assert.equal(hs.grid.length, 26);
   assert.ok(hs.grid.every((g) => Object.keys(g.years).length === L.GRID_YEARS.length && Object.values(g.years).every((v) => ['full', 'none', 'nosrc', 'unpub'].includes(v))));
-  assert.deepEqual(hs.links.map((l) => [l.type, l.review, l.confirmed, l.released]), [['POLICY_PROGRAM', 10, 33, 2], ['PROGRAM_PROJECT', 160, 283, 8]]);   // 2026-10-21 새 덤프: 확정 사업 연결 280 → 283(독산동·연남동·방화차고지 — PoC /mappings CONFIRMED 283 과 같음)
+  assert.deepEqual(hs.links.map((l) => [l.type, l.review, l.confirmed, l.released]), [['POLICY_PROGRAM', 10, 33, 2], ['PROGRAM_PROJECT', 159, 285, 8]]);   // 2026-10-22 새 덤프(20261021T212310Z): home_mapping 451 → 452 — 부천역곡 A1 새 확정 +1 · 인천송림4 1 검토 → 확정(검토 160 → 159, 확정 283 → 285) · 2026-10-21 새 덤프: 확정 사업 연결 280 → 283(독산동·연남동·방화차고지 — PoC /mappings CONFIRMED 283 과 같음)
 });
 
 test('담당자 이름·입력 사유 글이 요약 파일에 없다', () => {
@@ -83,8 +83,8 @@ test('statusRows: 실패 원천이 맨 위, 그 뒤 HOME 원천만 · 경고 = �
   const ih = rows.find((r) => r.id === 'ih_supply');
   assert.deepEqual([ih.ok, ih.lastOk, ih.count], [false, null, 0]);
   assert.match(ih.note, /정상 수집 없음/);
-  assert.equal(rows.filter((r) => !r.ok).length, 2);
-  assert.deepEqual(rows.slice(0, 2).map((r) => r.id).sort(), ['building_general_permit', 'ih_supply'], '실패 원천이 맨 위');
+  assert.equal(rows.filter((r) => !r.ok).length, 1);   // 2026-10-22 새 덤프(20261021T212310Z): 건축HUB 일반 인허가(building_general_permit)의 마지막 수집 실행이 성공(10-21 판 덤프에서는 실패 — 덤프 뒤 성공)
+  assert.deepEqual(rows.slice(0, 1).map((r) => r.id).sort(), ['ih_supply'], '실패 원천이 맨 위');
   assert.deepEqual(rows.filter((r) => r.warn).map((r) => r.id), hs.sources.filter((s) => s.ok && s.query === 'PARTIAL').map((s) => s.id));
   assert.equal(rows.reduce((n, r) => n + r.count, 0), hs.sources.reduce((n, s) => n + s.records, 0));
   assert.equal(rows.filter((r) => r.asOf).length, 19, '원천 기준일은 원천이 밝힌 19곳');

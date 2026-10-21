@@ -21,7 +21,7 @@ const src = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
 test('① 원장 표: 사업은 모두 수도권(살아 있는 383 = HOME — 2026-10-20 판: 새 HOME 사업 122), 딸린 행은 수도권 사업 몫, 사업 없는 검토 행은 HOME 원천, 수도권 밖 시군구 공고 없음', () => {
   const projects = rows('projects'), live = projects.filter((p) => !p.superseded_by);
   assert.ok(projects.every((p) => isCap(p.sgg_code)));
-  assert.equal(live.length, 380);   // 2026-10-21 새 덤프(20261020T142230Z): 새 발급 3(독산동·연남동·방화차고지) 377 → 380 · 2026-10-20 HOME 판: 262 + 새 발급 122 − 같은 현장 대체 1(0054→0055) = 383 → 같은 현장 병합 6쌍(사용자 결정) 뒤 377
+  assert.equal(live.length, 381);   // 2026-10-22 새 덤프(20261021T212310Z): 새 발급 1(부천역곡 A1 PRJ-41192-0067) 380 → 381 · 2026-10-21 새 덤프(20261020T142230Z): 새 발급 3(독산동·연남동·방화차고지) 377 → 380 · 2026-10-20 HOME 판: 262 + 새 발급 122 − 같은 현장 대체 1(0054→0055) = 383 → 같은 현장 병합 6쌍(사용자 결정) 뒤 377
   assert.ok(live.every((p) => p.source_ref.startsWith(H.HOME_PREFIX)), '살아 있는 사업은 모두 HOME');
   const ids = new Set(projects.map((p) => p.local_project_id));
   for (const t of ['identifiers', 'project_locations', 'complexes', 'events', 'units', 'notice_links']) assert.ok(rows(t).every((r) => ids.has(r.local_project_id)), t);
@@ -32,7 +32,7 @@ test('① 원장 표: 사업은 모두 수도권(살아 있는 383 = HOME — 20
 test('① 레지스트리: 살아 있는 사업은 모두 수도권 HOME, 수도권 밖 발급 사업(광산 4·나주 12)은 숨김(id 는 남는다)', () => {
   const reg = json('registry/projects.json').projects;
   const live = reg.filter((p) => !p.supersededBy && !p.hiddenAt);
-  assert.ok(live.length === 380 && live.every((p) => isCap(p.sgg) && p.refs.some((r) => r.system === H.HOME_SYSTEM)));
+  assert.ok(live.length === 381 && live.every((p) => isCap(p.sgg) && p.refs.some((r) => r.system === H.HOME_SYSTEM)));
   const out = reg.filter((p) => !isCap(p.sgg));
   assert.deepEqual([out.length, [...new Set(out.map((p) => p.sgg))].sort()], [16, ['12170', '12330']]);
   assert.ok(out.every((p) => p.hiddenAt && /^수도권만 제공/.test(p.hiddenReason)));
@@ -41,7 +41,7 @@ test('① 레지스트리: 살아 있는 사업은 모두 수도권 HOME, 수도
 test('① 화면 자료: 종합상황판 범위 CAPITAL·시도 3곳, 지도 색인·사업 색인·상세·지역 공급 달력은 수도권만', () => {
   const L = json('data/board/ledger-board.json');
   assert.deepEqual([L.scope.coverage, L.scope.sido, L.regions.map((r) => r.code)], ['CAPITAL', 3, CAP]);
-  assert.deepEqual([L.scope.projects, L.scope.units, L.scope.candidates], [288, 242382, 0]);   // 2026-10-21 새 덤프: 공공 공급 새 사업 3(독산동 20·연남동 8·방화차고지 75호) 285·242,279 → 288·242,382 · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·27,251호, 일반 민간 53·628호 뺌) 377·270,158 → 285·242,279 · 2026-10-20 HOME 판: 사업 262→383, 호수 227,976→274,296 → 2026-10-20 같은 현장 병합 6쌍(사업 −6·−4,138호) 377·270,158
+  assert.deepEqual([L.scope.projects, L.scope.units, L.scope.candidates], [289, 243542, 0]);   // 2026-10-22 새 덤프: 공공 공급 새 사업 1(부천역곡 A1 1,160호) 288·242,382 → 289·243,542 · 2026-10-21 새 덤프: 공공 공급 새 사업 3(독산동 20·연남동 8·방화차고지 75호) 285·242,279 → 288·242,382 · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·27,251호, 일반 민간 53·628호 뺌) 377·270,158 → 285·242,279 · 2026-10-20 HOME 판: 사업 262→383, 호수 227,976→274,296 → 2026-10-20 같은 현장 병합 6쌍(사업 −6·−4,138호) 377·270,158
   assert.ok(Object.keys(json('data/board/ledger-map.json').bySgg).every(isCap));
   const idx = json('data/board/projects-index.json');
   assert.ok(Object.keys(idx.projects).every((id) => isCap(id.slice(4, 9))) && Object.keys(idx.sgg).every(isCap));
@@ -113,7 +113,7 @@ test("④ 범위 글자 '수도권': 원장 범위(nation)·지시 카드에 '�
   assert.ok(!text.includes('전국'), text.match(/.{20}전국.{20}/)?.[0]);
   assert.ok(text.includes('통계누리 수도권 착공'));
   assert.equal(cards.find((c) => c.t === '일정 지연 관리').pair, undefined, '후보가 0이면 쌍 숫자 없음');
-  assert.equal(D.ledgerMix(L), '수도권 HOME 288');   // 2026-10-21 새 덤프: 새 사업 3 ·  2026-10-20 공공 분류 안2: 공공 공급만 377 → 285 · 2026-10-20 같은 현장 병합 6쌍(사업 −6·−4,138호)
+  assert.equal(D.ledgerMix(L), '수도권 HOME 289');   // 2026-10-22 새 덤프: 새 사업 1 · 2026-10-21 새 덤프: 새 사업 3 ·  2026-10-20 공공 분류 안2: 공공 공급만 377 → 285 · 2026-10-20 같은 현장 병합 6쌍(사업 −6·−4,138호)
   const region = src('app/(dashboard)/region/page.tsx'), projects = src('app/(dashboard)/projects/page.tsx');
   assert.match(region, /const ORDER = METRO;/);
   assert.ok(!/>전국<\/Chip>/.test(region) && !/>전국<\/Chip>/.test(projects), '전국 칩 없음');

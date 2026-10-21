@@ -30,38 +30,38 @@
     },
     "sources-list.json.gz": {
       "url": "https://www.minslab.kr/poc/home/api/sources?compact=true",
-      "fetched_at": "2026-10-21T02:28:48.375Z",
-      "sha256": "48ff8aefcff800582fa27e769b6d5257fb8579771564de1cb5853db7019ce37a",
+      "fetched_at": "2026-10-21T22:58:29.772Z",
+      "sha256": "2a6b69a180ad60281c7ef96d401ec7617cea8985d8326cfaac49d8ba78eca5b9",
       "rows": 76,
-      "bytes": 13317
+      "bytes": 13262
     },
     "sources-mappings.json.gz": {
       "url": "https://www.minslab.kr/poc/home/api/mappings?as_of_date=2026-10-20&compact=true",
-      "fetched_at": "2026-10-21T02:28:53.155Z",
-      "sha256": "9e5a4a68a8923a7893c04e7ac7cd32bc4744258f7cfd8dd03fd281dc2c4e39aa",
+      "fetched_at": "2026-10-21T22:58:47.479Z",
+      "sha256": "9c55a9ff4853466505eac1d68a87e5a4f1b420bd8fa640bad4c4621b6676012b",
       "rows": 451,
-      "bytes": 162542
+      "bytes": 162635
     },
     "sources-requirements.json.gz": {
       "url": "https://www.minslab.kr/poc/home/api/requirements-status?as_of_date=2026-10-20",
-      "fetched_at": "2026-10-21T02:28:57.346Z",
-      "sha256": "26efee5009334e2dfffd1aa27b9b923220c5657b52dec3cd85920495689e82ec",
+      "fetched_at": "2026-10-21T22:58:53.087Z",
+      "sha256": "26ab82ebab161fb2b2338127f286d69a40029b26d32bd21251149943232a429e",
       "rows": 12,
-      "bytes": 1896
+      "bytes": 1905
     },
     "sources-summary.json.gz": {
       "url": "https://www.minslab.kr/poc/home/api/source-summary",
-      "fetched_at": "2026-10-21T02:28:49.920Z",
-      "sha256": "d573b095403694849d51507dcff58c8503ea8a4afa79856eddb71f32416458cc",
+      "fetched_at": "2026-10-21T22:58:31.318Z",
+      "sha256": "48968cf4bc537ee2f5d2e8ed3b6ed3b5366d0c858e6eb211dc5a78eff7304e81",
       "rows": 9,
-      "bytes": 7646
+      "bytes": 7670
     },
     "sources-validation.json.gz": {
       "url": "https://www.minslab.kr/poc/home/api/validation?as_of_date=2026-10-20",
-      "fetched_at": "2026-10-21T02:28:51.478Z",
-      "sha256": "ffa071804475dc4190ba6ebf4cb26d3031b4468d714960a8cdb60f9f4ac3f0cd",
+      "fetched_at": "2026-10-21T22:58:45.157Z",
+      "sha256": "30ee4754d445380e8ae80ecb9995e9eadf02e8df2a85ac1b4f8b58b9d498d204",
       "rows": 26,
-      "bytes": 28149
+      "bytes": 28195
     }
   }
 }

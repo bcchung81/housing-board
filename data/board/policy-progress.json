@@ -2,12 +2,12 @@
  "schema": "policy-progress/1",
  "source": {
   "system": "home",
-  "edition": "20261020T142230Z",
-  "snapshotAt": "2026-10-20T14:22:30.512261+00:00",
-  "sourceCommit": "2038810d23b0eb79a52083a7260f497255f0502f",
+  "edition": "20261021T212310Z",
+  "snapshotAt": "2026-10-21T21:23:10.582610+00:00",
+  "sourceCommit": null,
   "rule": "HOME 10-home backend(커밋 2038810) policy_delivery.build_delivery + policy_delivery_comparison.comparison_index(정책 전체 범위), web policy-stage-flow.js comparisonStatus"
  },
- "asOf": "2026-10-20",
+ "asOf": "2026-10-22",
  "referenceMonthEnd": "2026-09-30",
  "policies": [
   {
@@ -17,15 +17,15 @@
    "periodEnd": "2030-12-31",
    "targetUnits": 1350000,
    "basis": {
-    "linkedProjects": 230,
-    "afterDedup": 175,
+    "linkedProjects": 232,
+    "afterDedup": 177,
     "duplicateExcluded": 55,
     "missingQuantity": 0,
-    "portfolio": 175,
-    "prePolicyStart": 99,
+    "portfolio": 177,
+    "prePolicyStart": 101,
     "cohorts": 76,
-    "cohortUnits": 90860,
-    "linkedNotices": 8,
+    "cohortUnits": 91240,
+    "linkedNotices": 11,
     "mappingReviewIncluded": true,
     "rule": "사업 원장(정책 매핑) → 지구·블록 중복 제외(여러 원천이 같은 블록이면 LH 공급계획 하나, 계획이 둘 이상이거나 계획 없이 여러 개면 모두 제외) → 계획물량 있고 정책기간 전 착공이 아닌 묶음"
    },
@@ -361,7 +361,7 @@
      "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
      "actualBasis": "동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분",
      "evidence": {
-      "targetCohorts": 67,
+      "targetCohorts": 66,
       "actualCohorts": 15,
       "reviewIncluded": true,
       "reviewUnits": 0,
@@ -389,12 +389,12 @@
        "from": "2026-01-01",
        "through": "2026-09-30",
        "target": 8049,
-       "actual": 4732,
+       "actual": 4963,
        "actualWithEstimates": 8742,
-       "actualThrough": "2026-08-10",
+       "actualThrough": "2026-09-30",
        "actualReviewUnits": 0,
-       "gap": 3317,
-       "shortfallPct": 41.2,
+       "gap": 3086,
+       "shortfallPct": 38.3,
        "status": "GAP"
       }
      ],
@@ -495,44 +495,44 @@
        "annual_units": 967
       },
       {
+       "date": "2026-10-30",
+       "units": 8649,
+       "annual_units": 600
+      },
+      {
        "date": "2026-10-31",
-       "units": 8979,
+       "units": 9579,
        "annual_units": 930
       },
       {
        "date": "2026-11-30",
-       "units": 9673,
+       "units": 10273,
        "annual_units": 694
       },
       {
        "date": "2026-12-31",
-       "units": 10684,
+       "units": 11284,
        "annual_units": 1011
       },
       {
        "date": "2027-01-15",
-       "units": 11479,
+       "units": 12079,
        "annual_units": 795
       },
       {
        "date": "2027-06-30",
-       "units": 12542,
+       "units": 13142,
        "annual_units": 1063
       },
       {
        "date": "2027-07-01",
-       "units": 15720,
+       "units": 16320,
        "annual_units": 3178
       },
       {
        "date": "2027-07-18",
-       "units": 16685,
-       "annual_units": 965
-      },
-      {
-       "date": "2027-09-16",
        "units": 17285,
-       "annual_units": 600
+       "annual_units": 965
       },
       {
        "date": "2027-11-16",
@@ -571,8 +571,8 @@
       },
       {
        "date": "2031-11-16",
-       "units": 84406,
-       "annual_units": 14694
+       "units": 83626,
+       "annual_units": 13914
       }
      ],
      "actualPoints": [
@@ -598,10 +598,24 @@
        "review_units": 0
       },
       {
+       "date": "2026-06-29",
+       "units": 1893,
+       "confirmed_units": 1893,
+       "policy_confirmed_units": 1893,
+       "review_units": 0
+      },
+      {
        "date": "2026-06-30",
        "units": 4199,
        "confirmed_units": 4199,
        "policy_confirmed_units": 4199,
+       "review_units": 0
+      },
+      {
+       "date": "2026-07-29",
+       "units": 4259,
+       "confirmed_units": 4259,
+       "policy_confirmed_units": 4259,
        "review_units": 0
       },
       {
@@ -686,8 +700,8 @@
       },
       {
        "year": 2026,
-       "target_units": 10684,
-       "target_cumulative_units": 10684,
+       "target_units": 11284,
+       "target_cumulative_units": 11284,
        "management_cumulative_units": null,
        "actual_units": 8742,
        "actual_cumulative_units": 8742,
@@ -696,7 +710,7 @@
       },
       {
        "year": 2027,
-       "target_units": 16748,
+       "target_units": 16148,
        "target_cumulative_units": 27432,
        "management_cumulative_units": null,
        "actual_units": null,
@@ -736,8 +750,8 @@
       },
       {
        "year": 2031,
-       "target_units": 14694,
-       "target_cumulative_units": 84406,
+       "target_units": 13914,
+       "target_cumulative_units": 83626,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -751,23 +765,23 @@
      "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
      "actualBasis": "동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분",
      "evidence": {
-      "targetCohorts": 14,
-      "actualCohorts": 76,
+      "targetCohorts": 13,
+      "actualCohorts": 75,
       "reviewIncluded": true,
       "reviewUnits": 0,
-      "confirmedUnits": 90687,
-      "policyConfirmedUnits": 90687
+      "confirmedUnits": 89907,
+      "policyConfirmedUnits": 89907
      },
      "homeRule": {
       "target": {
        "date": "2026-02-17",
-       "units": 14694
+       "units": 13914
       },
       "actual": {
        "date": "2026-09-01",
-       "units": 90687,
+       "units": 89907,
        "reviewUnits": 0,
-       "confirmedUnits": 90687
+       "confirmedUnits": 89907
       },
       "status": "REACHED",
       "gap": 0,
@@ -778,9 +792,9 @@
        "year": 2026,
        "from": "2026-01-01",
        "through": "2026-09-30",
-       "target": 14694,
-       "actual": 18854,
-       "actualWithEstimates": 21083,
+       "target": 13914,
+       "actual": 18074,
+       "actualWithEstimates": 20303,
        "actualThrough": "2026-08-10",
        "actualReviewUnits": 0,
        "gap": 0,
@@ -798,70 +812,70 @@
       },
       {
        "month": "2026-02",
-       "target": 14694,
-       "actual": 85527,
-       "targetYtd": 14694,
-       "actualYtd": 15923
+       "target": 13914,
+       "actual": 84747,
+       "targetYtd": 13914,
+       "actualYtd": 15143
       },
       {
        "month": "2026-03",
-       "target": 14694,
-       "actual": 87255,
-       "targetYtd": 14694,
-       "actualYtd": 17651
+       "target": 13914,
+       "actual": 86475,
+       "targetYtd": 13914,
+       "actualYtd": 16871
       },
       {
        "month": "2026-04",
-       "target": 14694,
-       "actual": 87255,
-       "targetYtd": 14694,
-       "actualYtd": 17651
+       "target": 13914,
+       "actual": 86475,
+       "targetYtd": 13914,
+       "actualYtd": 16871
       },
       {
        "month": "2026-05",
-       "target": 14694,
-       "actual": 87255,
-       "targetYtd": 14694,
-       "actualYtd": 17651
+       "target": 13914,
+       "actual": 86475,
+       "targetYtd": 13914,
+       "actualYtd": 16871
       },
       {
        "month": "2026-06",
-       "target": 14694,
-       "actual": 87865,
-       "targetYtd": 14694,
-       "actualYtd": 18261
+       "target": 13914,
+       "actual": 87085,
+       "targetYtd": 13914,
+       "actualYtd": 17481
       },
       {
        "month": "2026-07",
-       "target": 14694,
-       "actual": 88465,
-       "targetYtd": 14694,
-       "actualYtd": 18861
+       "target": 13914,
+       "actual": 87685,
+       "targetYtd": 13914,
+       "actualYtd": 18081
       },
       {
        "month": "2026-08",
-       "target": 14694,
-       "actual": 89722,
-       "targetYtd": 14694,
-       "actualYtd": 20118
+       "target": 13914,
+       "actual": 88942,
+       "targetYtd": 13914,
+       "actualYtd": 19338
       },
       {
        "month": "2026-09",
-       "target": 14694,
-       "actual": 90687,
-       "targetYtd": 14694,
-       "actualYtd": 21083
+       "target": 13914,
+       "actual": 89907,
+       "targetYtd": 13914,
+       "actualYtd": 20303
       }
      ],
      "targetPoints": [
       {
        "date": "2026-02-12",
-       "units": 10795,
-       "annual_units": 10795
+       "units": 10015,
+       "annual_units": 10015
       },
       {
        "date": "2026-02-17",
-       "units": 14694,
+       "units": 13914,
        "annual_units": 3899
       }
      ],
@@ -1043,79 +1057,79 @@
       },
       {
        "date": "2026-02-12",
-       "units": 81247,
-       "confirmed_units": 81247,
-       "policy_confirmed_units": 81247,
+       "units": 80467,
+       "confirmed_units": 80467,
+       "policy_confirmed_units": 80467,
        "review_units": 0
       },
       {
        "date": "2026-02-17",
-       "units": 85146,
-       "confirmed_units": 85146,
-       "policy_confirmed_units": 85146,
+       "units": 84366,
+       "confirmed_units": 84366,
+       "policy_confirmed_units": 84366,
        "review_units": 0
       },
       {
        "date": "2026-02-27",
-       "units": 85527,
-       "confirmed_units": 85527,
-       "policy_confirmed_units": 85527,
+       "units": 84747,
+       "confirmed_units": 84747,
+       "policy_confirmed_units": 84747,
        "review_units": 0
       },
       {
        "date": "2026-03-01",
-       "units": 86322,
-       "confirmed_units": 86322,
-       "policy_confirmed_units": 86322,
+       "units": 85542,
+       "confirmed_units": 85542,
+       "policy_confirmed_units": 85542,
        "review_units": 0
       },
       {
        "date": "2026-03-31",
-       "units": 87255,
-       "confirmed_units": 87255,
-       "policy_confirmed_units": 87255,
+       "units": 86475,
+       "confirmed_units": 86475,
+       "policy_confirmed_units": 86475,
        "review_units": 0
       },
       {
        "date": "2026-06-01",
-       "units": 87564,
-       "confirmed_units": 87564,
-       "policy_confirmed_units": 87564,
+       "units": 86784,
+       "confirmed_units": 86784,
+       "policy_confirmed_units": 86784,
        "review_units": 0
       },
       {
        "date": "2026-06-29",
-       "units": 87865,
-       "confirmed_units": 87865,
-       "policy_confirmed_units": 87865,
+       "units": 87085,
+       "confirmed_units": 87085,
+       "policy_confirmed_units": 87085,
        "review_units": 0
       },
       {
        "date": "2026-07-20",
-       "units": 88465,
-       "confirmed_units": 88465,
-       "policy_confirmed_units": 88465,
+       "units": 87685,
+       "confirmed_units": 87685,
+       "policy_confirmed_units": 87685,
        "review_units": 0
       },
       {
        "date": "2026-08-10",
-       "units": 89059,
-       "confirmed_units": 89059,
-       "policy_confirmed_units": 89059,
+       "units": 88279,
+       "confirmed_units": 88279,
+       "policy_confirmed_units": 88279,
        "review_units": 0
       },
       {
        "date": "2026-08-29",
-       "units": 89722,
-       "confirmed_units": 89722,
-       "policy_confirmed_units": 89722,
+       "units": 88942,
+       "confirmed_units": 88942,
+       "policy_confirmed_units": 88942,
        "review_units": 0
       },
       {
        "date": "2026-09-01",
-       "units": 90687,
-       "confirmed_units": 90687,
-       "policy_confirmed_units": 90687,
+       "units": 89907,
+       "confirmed_units": 89907,
+       "policy_confirmed_units": 89907,
        "review_units": 0
       }
      ],
@@ -1172,18 +1186,18 @@
       },
       {
        "year": 2026,
-       "target_units": 14694,
-       "target_cumulative_units": 14694,
+       "target_units": 13914,
+       "target_cumulative_units": 13914,
        "management_cumulative_units": null,
-       "actual_units": 21083,
-       "actual_cumulative_units": 90687,
+       "actual_units": 20303,
+       "actual_cumulative_units": 89907,
        "actual_through": "2026-09-01",
        "actual_status": "PARTIAL"
       },
       {
        "year": 2027,
        "target_units": null,
-       "target_cumulative_units": 14694,
+       "target_cumulative_units": 13914,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -1193,7 +1207,7 @@
       {
        "year": 2028,
        "target_units": null,
-       "target_cumulative_units": 14694,
+       "target_cumulative_units": 13914,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -1203,7 +1217,7 @@
       {
        "year": 2029,
        "target_units": null,
-       "target_cumulative_units": 14694,
+       "target_cumulative_units": 13914,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -1213,7 +1227,7 @@
       {
        "year": 2030,
        "target_units": null,
-       "target_cumulative_units": 14694,
+       "target_cumulative_units": 13914,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -1223,7 +1237,7 @@
       {
        "year": 2031,
        "target_units": null,
-       "target_cumulative_units": 14694,
+       "target_cumulative_units": 13914,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -1237,10 +1251,10 @@
      "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
      "actualBasis": "동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분",
      "evidence": {
-      "targetCohorts": 34,
-      "actualCohorts": 54,
+      "targetCohorts": 33,
+      "actualCohorts": 55,
       "reviewIncluded": true,
-      "reviewUnits": 8,
+      "reviewUnits": 1168,
       "confirmedUnits": 36952,
       "policyConfirmedUnits": 36952
      },
@@ -1251,8 +1265,8 @@
       },
       "actual": {
        "date": "2026-09-01",
-       "units": 36960,
-       "reviewUnits": 8,
+       "units": 38120,
+       "reviewUnits": 1168,
        "confirmedUnits": 36952
       },
       "status": "REACHED",
@@ -1278,63 +1292,63 @@
       {
        "month": "2026-01",
        "target": 301,
-       "actual": 24628,
+       "actual": 25788,
        "targetYtd": 301,
        "actualYtd": 300
       },
       {
        "month": "2026-02",
        "target": 301,
-       "actual": 25557,
+       "actual": 26717,
        "targetYtd": 301,
        "actualYtd": 1229
       },
       {
        "month": "2026-03",
        "target": 1234,
-       "actual": 27285,
+       "actual": 28445,
        "targetYtd": 1234,
        "actualYtd": 2957
       },
       {
        "month": "2026-04",
        "target": 2749,
-       "actual": 28800,
+       "actual": 29960,
        "targetYtd": 2749,
        "actualYtd": 4472
       },
       {
        "month": "2026-05",
        "target": 2749,
-       "actual": 28800,
+       "actual": 29960,
        "targetYtd": 2749,
        "actualYtd": 4472
       },
       {
        "month": "2026-06",
        "target": 7786,
-       "actual": 34138,
+       "actual": 35298,
        "targetYtd": 7786,
        "actualYtd": 9810
       },
       {
        "month": "2026-07",
        "target": 8386,
-       "actual": 34738,
+       "actual": 35898,
        "targetYtd": 8386,
        "actualYtd": 10410
       },
       {
        "month": "2026-08",
        "target": 8386,
-       "actual": 35995,
+       "actual": 37155,
        "targetYtd": 8386,
        "actualYtd": 11667
       },
       {
        "month": "2026-09",
        "target": 8386,
-       "actual": 36960,
+       "actual": 38120,
        "targetYtd": 8386,
        "actualYtd": 12632
       }
@@ -1387,12 +1401,12 @@
       },
       {
        "date": "2028-12-26",
-       "units": 58214,
-       "annual_units": 10795
+       "units": 57434,
+       "annual_units": 10015
       },
       {
        "date": "2028-12-31",
-       "units": 62113,
+       "units": 61333,
        "annual_units": 3899
       }
      ],
@@ -1517,88 +1531,95 @@
        "review_units": 8
       },
       {
+       "date": "2025-12-30",
+       "units": 25488,
+       "confirmed_units": 24320,
+       "policy_confirmed_units": 24320,
+       "review_units": 1168
+      },
+      {
        "date": "2026-01-29",
-       "units": 24628,
+       "units": 25788,
        "confirmed_units": 24620,
        "policy_confirmed_units": 24620,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-02-01",
-       "units": 25176,
+       "units": 26336,
        "confirmed_units": 25168,
        "policy_confirmed_units": 25168,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-02-27",
-       "units": 25557,
+       "units": 26717,
        "confirmed_units": 25549,
        "policy_confirmed_units": 25549,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-03-01",
-       "units": 26352,
+       "units": 27512,
        "confirmed_units": 26344,
        "policy_confirmed_units": 26344,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-03-31",
-       "units": 27285,
+       "units": 28445,
        "confirmed_units": 27277,
        "policy_confirmed_units": 27277,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-04-30",
-       "units": 28800,
+       "units": 29960,
        "confirmed_units": 28792,
        "policy_confirmed_units": 28792,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-06-29",
-       "units": 29101,
+       "units": 30261,
        "confirmed_units": 29093,
        "policy_confirmed_units": 29093,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-06-30",
-       "units": 34138,
+       "units": 35298,
        "confirmed_units": 34130,
        "policy_confirmed_units": 34130,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-07-20",
-       "units": 34738,
+       "units": 35898,
        "confirmed_units": 34730,
        "policy_confirmed_units": 34730,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-08-10",
-       "units": 35332,
+       "units": 36492,
        "confirmed_units": 35324,
        "policy_confirmed_units": 35324,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-08-29",
-       "units": 35995,
+       "units": 37155,
        "confirmed_units": 35987,
        "policy_confirmed_units": 35987,
-       "review_units": 8
+       "review_units": 1168
       },
       {
        "date": "2026-09-01",
-       "units": 36960,
+       "units": 38120,
        "confirmed_units": 36952,
        "policy_confirmed_units": 36952,
-       "review_units": 8
+       "review_units": 1168
       }
      ],
      "annual": [
@@ -1647,9 +1668,9 @@
        "target_units": null,
        "target_cumulative_units": null,
        "management_cumulative_units": null,
-       "actual_units": 7216,
-       "actual_cumulative_units": 24328,
-       "actual_through": "2025-11-29",
+       "actual_units": 8376,
+       "actual_cumulative_units": 25488,
+       "actual_through": "2025-12-30",
        "actual_status": "PARTIAL"
       },
       {
@@ -1658,7 +1679,7 @@
        "target_cumulative_units": 14184,
        "management_cumulative_units": null,
        "actual_units": 12632,
-       "actual_cumulative_units": 36960,
+       "actual_cumulative_units": 38120,
        "actual_through": "2026-09-01",
        "actual_status": "PARTIAL"
       },
@@ -1674,8 +1695,8 @@
       },
       {
        "year": 2028,
-       "target_units": 14694,
-       "target_cumulative_units": 62113,
+       "target_units": 13914,
+       "target_cumulative_units": 61333,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -1685,7 +1706,7 @@
       {
        "year": 2029,
        "target_units": null,
-       "target_cumulative_units": 62113,
+       "target_cumulative_units": 61333,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -1695,7 +1716,7 @@
       {
        "year": 2030,
        "target_units": null,
-       "target_cumulative_units": 62113,
+       "target_cumulative_units": 61333,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -1705,7 +1726,7 @@
       {
        "year": 2031,
        "target_units": null,
-       "target_cumulative_units": 62113,
+       "target_cumulative_units": 61333,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,
@@ -1719,7 +1740,7 @@
      "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
      "actualBasis": "동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분",
      "evidence": {
-      "targetCohorts": 56,
+      "targetCohorts": 55,
       "actualCohorts": 1,
       "reviewIncluded": true,
       "reviewUnits": 0,
@@ -2028,13 +2049,8 @@
        "annual_units": 700
       },
       {
-       "date": "2034-05-02",
-       "units": 78173,
-       "annual_units": 780
-      },
-      {
        "date": "2035-04-10",
-       "units": 79173,
+       "units": 78393,
        "annual_units": 1000
       }
      ],
@@ -2165,7 +2181,7 @@
      "targetBasis": "연결 사업 원천의 동일 단계 예정 물량",
      "actualBasis": "동일 범위 단계 도달량 · 확인 필요 연결 포함 · 관측일 기준 추정은 사건일과 구분",
      "evidence": {
-      "targetCohorts": 56,
+      "targetCohorts": 55,
       "actualCohorts": 0,
       "reviewIncluded": true,
       "reviewUnits": null,
@@ -2346,19 +2362,24 @@
        "annual_units": 510
       },
       {
+       "date": "2029-09-30",
+       "units": 8069,
+       "annual_units": 600
+      },
+      {
        "date": "2029-10-31",
-       "units": 8735,
+       "units": 9335,
        "annual_units": 1266
       },
       {
        "date": "2029-11-30",
-       "units": 9044,
+       "units": 9644,
        "annual_units": 309
       },
       {
        "date": "2029-12-31",
        "units": 11784,
-       "annual_units": 2740
+       "annual_units": 2140
       },
       {
        "date": "2030-02-28",
@@ -2407,18 +2428,13 @@
       },
       {
        "date": "2031-12-31",
-       "units": 27410,
-       "annual_units": 1370
+       "units": 28416,
+       "annual_units": 2376
       },
       {
        "date": "2032-05-18",
-       "units": 27439,
-       "annual_units": 29
-      },
-      {
-       "date": "2032-07-02",
        "units": 28445,
-       "annual_units": 1006
+       "annual_units": 29
       },
       {
        "date": "2032-12-31",
@@ -2471,13 +2487,8 @@
        "annual_units": 700
       },
       {
-       "date": "2034-11-02",
-       "units": 78173,
-       "annual_units": 780
-      },
-      {
        "date": "2035-10-11",
-       "units": 79173,
+       "units": 78393,
        "annual_units": 1000
       }
      ],
@@ -2585,8 +2596,8 @@
       },
       {
        "year": 2031,
-       "target_units": 5211,
-       "target_cumulative_units": 27410,
+       "target_units": 6217,
+       "target_cumulative_units": 28416,
        "management_cumulative_units": null,
        "actual_units": null,
        "actual_cumulative_units": null,

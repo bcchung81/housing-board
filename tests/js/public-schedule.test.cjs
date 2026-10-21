@@ -21,9 +21,10 @@ const sidoName = (c) => ({ 11: '서울', 28: '인천', 41: '경기' }[c] ?? c);
 
 test('대표 숫자 = 정책 화면과 같은 함수 값(2026-10-21 W6 수도권 모집 공고 예정 30곳·17,488호 = HOME 9·7 12개월 공급 예정 — 옛 원장 준공 25곳·입주 11곳 대체)', () => {
   const list = R.aheadAll({ sido: Object.fromEntries(R.METRO.map((c) => [c, calendar.home.p97.sido[c] ?? []])) }, 'metro', sidoName);
-  assert.equal(list.length, 30);
-  assert.equal(list.reduce((s, e) => s + e.units, 0), 17488);
-  assert.equal(P.hoText(17488), '1만 7,488호');
+  // 2026-10-22 새 덤프(20261021T212310Z): 9·7 12개월 공급 예정 31곳·18,214호(광교 A17BL 600호 2027-09 → 2026-10, 병점복합타운 주복1 726호 2026-11 새 일정 — HOME 담당자 입력, 10-21 판 30곳·17,488호)
+  assert.equal(list.length, 31);
+  assert.equal(list.reduce((s, e) => s + e.units, 0), 18214);
+  assert.equal(P.hoText(18214), '1만 8,214호');
   // 페이지는 같은 함수를 직접 쓴다(새 계산 없음)
   for (const f of ['aheadAll', 'pickMonth', 'pastDue', 'regionYears', 'metroYears']) assert.match(PAGE, new RegExp(`\\b${f}\\b`), f);
 });

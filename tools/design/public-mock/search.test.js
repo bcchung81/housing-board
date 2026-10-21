@@ -1315,19 +1315,20 @@ t('2026-10-19 지도 레일: 범례 구간 단추(aria-pressed 고정·다시 �
   assert(CSS.includes('.lgv[data-band] .lg-bar .lg-sw:not(.on) { opacity: var(--cz-dim-op); }') && CSS.includes('.lgv[data-band] .lg-grad > .lg-sw.on { z-index: 1; box-shadow: var(--shadow-hud); }'), '2026-10-19 그라데이션 범례: 고른 구간 조각만 떠 보이고(그림자) 나머지 조각은 옅게 덮인다');
   assert(/--cz-dim-op: \.\d+;/.test(GXR) && /--map-dim-mix: \d+%;/.test(GXR), '흐림 값 = globals 토큰');
 });
-/* 2026-10-21 W6 사용자 지시 '기본은 수도권 전체(서울·경기·인천) · 9·7 · HOME': 저장값 없을 때 첫 화면 = 수도권 전체(151,271호 · 175곳 = HOME 9·7 집계 행), 내 동네가 있어도 처음 보기는 수도권 전체 */
-t('W6 첫 화면 범위 = 수도권 전체 — 큰 숫자 151,271호 · 175곳(views.p97 집계), 내 동네는 단추, IP 는 제안만', () => {
+/* 2026-10-21 W6 사용자 지시 '기본은 수도권 전체(서울·경기·인천) · 9·7 · HOME': 저장값 없을 때 첫 화면 = 수도권 전체(HOME 9·7 집계 행), 내 동네가 있어도 처음 보기는 수도권 전체.
+   2026-10-22 새 덤프(20261021T212310Z) = PoC as_of 10-22: 153,575호 · 177곳(10-21 판 151,271호 · 175곳) */
+t('W6 첫 화면 범위 = 수도권 전체 — 큰 숫자 153,575호 · 177곳(views.p97 집계), 내 동네는 단추, IP 는 제안만', () => {
   const IX = ctx.addCapital(ctx.makeSearch(ctx.D), ctx.D), HP = require('../../../data/board/home-projects.json').views.p97;
   const st = ctx.startState(null, IX), code = ctx.viewOf(st), r = IX.regionOf[code];
   assert.strictEqual(code, ctx.ALL); assert.strictEqual(r.label, '수도권 전체'); assert.strictEqual(r.kind, 'sido');
   const t0 = ctx.sumOf(ctx.D, r.codes);
-  assert.strictEqual(t0.u, 151271); assert.strictEqual(t0.n, 175);
+  assert.strictEqual(t0.u, 153575); assert.strictEqual(t0.n, 177);
   assert.strictEqual(t0.u, HP.units, 'home-projects views.p97 units'); assert.strictEqual(t0.n, HP.chart, 'home-projects views.p97 chart(집계 행)');
   assert.strictEqual(t0.u, ['11', '28', '41'].reduce((a, sd) => a + ctx.sumOf(ctx.D, IX.regionOf[sd].codes).u, 0), '세 시도 합');
-  assert.strictEqual(JSON.stringify(ctx.stageSums(ctx.D, r.codes)), '[64248,5809,48710,32504,0,0]', '단계 6줄(우리 이름) = W5-C 수도권 값');
+  assert.strictEqual(JSON.stringify(ctx.stageSums(ctx.D, r.codes)), '[63468,5809,51362,32936,0,0]', '단계 6줄(우리 이름) = PoC 9·7 /map/dashboard 단계 분포(계획 = 정책·사업화·단계 미확인 47,862+3,651+11,955) — 10-21 판 [64248,5809,48710,32504,0,0]');
   /* 지도 면·순위 = 세 시도 면 한 순위(면 합 + 시군구 미연결 = 큰 숫자) */
   const units = ctx.unitsFor(ctx.D, IX, ctx.ALL), off = ['11', '28', '41'].reduce((a, sd) => a + ctx.sumOf(ctx.D, [sd]).u, 0);
-  assert.strictEqual(units.reduce((a, x) => a + x.u, 0) + off, 151271); assert.strictEqual(units.map((x) => x.u).join(), [...units.map((x) => x.u)].sort((a, b) => b - a).join(), '호수 내림차순');
+  assert.strictEqual(units.reduce((a, x) => a + x.u, 0) + off, 153575); assert.strictEqual(units.map((x) => x.u).join(), [...units.map((x) => x.u)].sort((a, b) => b - a).join(), '호수 내림차순');
   assert.deepStrictEqual(ctx.mapScopeHref({ sido: ctx.ALL }), '/map', '큰 지도 = /map 수도권 개요');
   /* 저장된 내 동네(시군구·시도)가 있어도 처음 보기는 수도권 전체, 내 동네는 home 으로 남는다. 옛·이상한 값은 무시 */
   for (const saved of ['41360', '11', '28245']) { const s0 = ctx.startState(saved, IX); assert.strictEqual(s0.home, saved); assert.strictEqual(ctx.viewOf(s0), ctx.ALL, saved); }

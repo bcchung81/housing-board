@@ -35,12 +35,12 @@ const SIX = (p) => [p.POLICY + p.BUSINESS + p.UNKNOWN, p.APPROVAL, p.CONSTRUCTIO
 const EXPLAINED = {};
 const metro = (f) => METRO.reduce((a, sd) => { const v = f(sd); return Array.isArray(v) ? (a || v.map(() => 0)).map((x, i) => x + v[i]) : (a || 0) + v; }, null);
 
-test('C01 큰 숫자 공급 예정 호수(수도권) = PoC 9·7 집계 호수 − 입주(지금 PoC 입주 0 → 151,271) · 사업 수 = PoC 집계 행 175', { skip }, () => {
+test('C01 큰 숫자 공급 예정 호수(수도권) = PoC 9·7 집계 호수 − 입주(지금 PoC 입주 0 → 153,575) · 사업 수 = PoC 집계 행 177', { skip }, () => {
   const u = metro((sd) => ctx.sumOf(D, IX.regionOf[sd].codes).u), n = metro((sd) => ctx.sumOf(D, IX.regionOf[sd].codes).n);
   assert.equal(u, golden['summary.target_units'] - golden['summary.stage_distribution'].parts.MOVE_IN);
-  assert.equal(u, 151271);
+  assert.equal(u, 153575);   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): +2,304(부천역곡 A1 1,160 · 인천송림4 1 1,198 · 병점복합타운 주복1 780 → 726) — 10-21 판 151,271
   assert.equal(n, golden['summary.target_counted_projects']);
-  assert.equal(n, 175);
+  assert.equal(n, 177);   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): +2(10-21 판 175)
   /* 9·7 포트폴리오 230행 = 집계 175 + 중복·모호 제외 55(물량 없음 0) — 자료 층 home-projects views.p97 과 같다 */
   assert.equal(home.views.p97.rows, golden['summary.project_count']); assert.equal(home.views.p97.counted, golden['summary.target_counted_projects']);
   assert.equal(home.views.p97.excluded, golden['summary.target_excluded_projects']); assert.equal(home.views.p97.missing, golden['summary.target_missing_projects']);
@@ -143,10 +143,10 @@ test('CS /citizen/schedule 사업 수 = 사업 찾기와 같은 PoC 9·7 집계 
   /* 일정 종류의 수 = HOME 9·7 모집단에서 센 값: 수도권 모집 공고 30곳 17,488호 = home-projects views.p97.upcoming(12개월 공급 예정 사업 수·호수) */
   const R = require('../../lib/board/region.ts'), cal = require('../../data/board/region-calendar.json');
   const list = R.aheadAll({ sido: Object.fromEntries(R.METRO.map((c) => [c, cal.home.p97.sido[c] ?? []])) }, 'metro', (c) => c);
-  assert.equal(list.length, 30); assert.equal(list.reduce((s, e) => s + e.units, 0), 17488);
+  assert.equal(list.length, 31); assert.equal(list.reduce((s, e) => s + e.units, 0), 18214);   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): 광교 A17BL 600호 2027-09 → 2026-10 · 병점복합타운 주복1 726호 2026-11 새 일정(10-21 판 30곳·17,488호)
   assert.ok(list.every((e) => e.type === 'SUPPLY_NOTICE'));
   const up = home.views.p97.upcoming;
   assert.equal(list.length, up.projects, 'views.p97.upcoming 사업 수'); assert.equal(list.reduce((s, e) => s + e.units, 0), up.units, 'views.p97.upcoming 호수');
   assert.doesNotMatch(src, /calendar\.home\.all/);
-  assert.equal(p97Rows().filter((r) => r.home.chart.p97).length, 175);
+  assert.equal(p97Rows().filter((r) => r.home.chart.p97).length, 177);   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): +2(10-21 판 175)
 });

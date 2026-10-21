@@ -75,7 +75,7 @@ test('/sources 화면별 위젯 데이터: 종합상황판 줄 = home-board 값(
   const page = read('app/(dashboard)/sources/page.tsx');
   assert.match(page, /import homeBoardJson from '@\/data\/board\/home-board\.json'/);
   assert.doesNotMatch(page, /ledger-board\.json|\bledger\.(scope|regions|upcoming|agencies|overdue|months|observedMonth)|ledgerRow\(|ledgerJudged|nationOf/, '옛 원장 집계로 설명하지 않는다');
-  assert.equal(HB.scope.projects, 175);
+  assert.equal(HB.scope.projects, 177);   // 2026-10-22 새 덤프(20261021T212310Z): 부천역곡 A1·인천송림4 1 이 9·7 포트폴리오에 들어옴(10-21 판 175)
   if (gp) assert.equal(HB.scope.projects, Number(gp['policy.linked_projects']), 'PoC 연결 사업(물량 집계) 175 = 첫 줄 수집 건수');
   assert.match(page, /homeRow\('ribbon', '월별 공급 파동', tipped\(`수도권 9·7\(사업 \$\{fmt\(homeBoard\.scope\.projects\)\}건\)`/);
   assert.match(page, /count: first \? held\(homeBoard\.scope\.projects, '사업'\)/);
@@ -101,7 +101,7 @@ test('/region 머리 숫자 = home-projects views.p97(사업 화면 기본과 �
   const metro = head({ metro: true });
   const judge = HP.views.p97.judge;
   assert.deepEqual([metro.n, metro.check, metro.href], [HP.views.p97.rows, (judge.DELAYED?.rows ?? 0) + (judge.WARNING?.rows ?? 0), '/projects'], '수도권 9·7 = 230건 · 점검 필요 = 지연+주의');
-  assert.deepEqual([metro.n, metro.check], [230, 4]);
+  assert.deepEqual([metro.n, metro.check], [232, 8]);   // 2026-10-22: 점검 필요 = 지연 6 · 주의 2(= PoC) · 9·7 원천 행 +2(10-21 판 230)
   for (const h of [metro, head({ sido: '11' }), head({ sido: '28' }), head({ sido: '41' }), head({ metro: true }, 'all'), head({ sido: '41' }, 'all')]) {
     assert.equal(opened(h.href), h.n, h.href);
     assert.equal(opened(h.checkHref), h.check, h.checkHref);
@@ -113,7 +113,7 @@ test('/region 머리 숫자 = home-projects views.p97(사업 화면 기본과 �
   assert.equal(head({ metro: true }, 'all').n, HP.views.all.rows, '정책 칩이 정책 전체면 443행');
   if (gp) {
     assert.equal(metro.n, Number(gp['policy.management_projects']), 'PoC 관리 사업 230');
-    /* 점검 필요: PoC 지연 4·주의 2 ↔ 우리 4 — 남는 2행은 덤프 뒤 담당자 측정(home-projects residuals judge, PoC WARNING) */
+    /* 점검 필요: PoC 지연 6·주의 2 = 우리 8 — 판정 잔차(home-projects residuals judge)가 있으면 그만큼만 다르다(2026-10-22 잔차 0) */
     const late = HP.residuals.filter((x) => x.field === 'judge' && ['DELAYED', 'WARNING'].includes(x.poc?.status) && !['DELAYED', 'WARNING'].includes(x.dump?.status));
     assert.equal(metro.check + late.length, Number(gp['policy.project_status.DELAYED.projects']) + Number(gp['policy.project_status.WARNING.projects']), late.map((x) => x.id).join(' '));
   }

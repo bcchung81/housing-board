@@ -25,20 +25,20 @@ const faceOfRow = (r) => (MO.keyOf(r) ? O.unitOf(MO.keyOf(r)) : null);
 const faceByName = new Map(D97.units.map((u) => [`${O.SIDO_FULL[u.s]}|${u.name}`, u]));
 const note = (t, lines) => t.diagnostic(`${lines.length}건\n${lines.join('\n')}`);
 
-test('9·7 기본(PoC #overview 기본): 원천 230행 · 집계 175 · 중복·모호 제외 55 · 물량 없음 0 · 151,271호 · 시군구 44곳 · 시군구 미연결 4행(시군구 합 149,520)', () => {
+test('9·7 기본(PoC #overview 기본): 원천 232행 · 집계 177 · 중복·모호 제외 55 · 물량 없음 0 · 153,575호 · 시군구 44곳 · 시군구 미연결 4행(시군구 합 151,878)', () => {
   const o = G.overview_97, t = D97.total;
   assert.deepEqual([t.n, t.c - t.q, t.x, t.q, t.u], [o['summary.project_count'], o['summary.target_counted_projects'], o['summary.target_excluded_projects'], o['summary.target_missing_projects'], o['summary.target_units']]);
-  assert.deepEqual([t.n, t.c - t.q, t.u], [230, 175, 151271]);
+  assert.deepEqual([t.n, t.c - t.q, t.u], [232, 177, 153575]);   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): +2행 부천역곡 A1 1,160 · 인천송림4 1 1,198, 병점복합타운 주복1 780 → 726(10-21 판 230·175·151,271)
   assert.equal(D97.meta.p97.municipalities, o['municipalities.with_projects']);
   assert.equal(D97.meta.p97.unlinked, o.municipality_unlinked_ids);
   assert.equal(D97.units.reduce((s, u) => s + u.v.u, 0), o['municipalities.target_sum']);
   assert.equal(D97.units.filter((u) => u.v.n > 0).length, 44);
 });
 
-test('정책 전체(?policy=all · 일반사용자 관점): 원천 443행 · 집계 346 · 제외 56 · 물량 없음 41 · 289,336호', () => {
+test('정책 전체(?policy=all · 일반사용자 관점): 원천 444행 · 집계 347 · 제외 56 · 물량 없음 41 · 290,357호', () => {
   const o = G.overview_all, t = DALL.total;
   assert.deepEqual([t.n, t.c - t.q, t.x, t.q, t.u], [o['summary.project_count'], o['summary.target_counted_projects'], o['summary.target_excluded_projects'], o['summary.target_missing_projects'], o['summary.target_units']]);
-  assert.deepEqual([t.n, t.u], [443, 289336]);
+  assert.deepEqual([t.n, t.u], [444, 290357]);   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): +1행 부천역곡 A1 · 연남동 167 → 82 · 병점 780 → 726(10-21 판 443·289,336)
 });
 
 test('시도 카드(9·7): 행 수·계획 호수 = PoC groups.region(서울 29·47,615 · 인천 42·20,251 · 경기 159·83,405)', () => {
@@ -88,11 +88,13 @@ test("'!' 지연 표시(9·7): 시군구·시도 묶음의 단계 목표 대비 
   note(t, lines);
 });
 
-test('지연·주의 사업 수(9·7): 지연 4 = PoC 정책 화면, 주의 0 vs PoC 2 는 덤프 뒤 담당자 입력 변경 2행', (t) => {
+/* 2026-10-22 새 덤프: 성남금토 A4·A2 도 같은 까닭(같은 블록 원천 행 측정값)으로 PoC 지연 — 지연 4 vs PoC 6 도 잔차로 설명한다 */
+test('지연·주의 사업 수(9·7): 지연 4 vs PoC 6 · 주의 0 vs PoC 2 는 같은 블록 원천 행 측정값이 덤프 묶음에만 있는 4행(home-projects residuals judge)', (t) => {
   const st = G.policy_97.project_status;
-  assert.equal(D97.total.d, st.DELAYED);
-  const moved = HP.residuals.filter((x) => x.field === 'judge' && rowOf.get(x.id).p97 && (x.poc.status === 'WARNING') !== (x.dump.status === 'WARNING'));
-  assert.equal(D97.total.w + moved.filter((x) => x.poc.status === 'WARNING').length - moved.filter((x) => x.dump.status === 'WARNING').length, st.WARNING);
+  const moved = HP.residuals.filter((x) => x.field === 'judge' && rowOf.get(x.id).p97 && x.poc.status !== x.dump.status);
+  const adj = (k) => moved.filter((x) => x.poc.status === k).length - moved.filter((x) => x.dump.status === k).length;
+  assert.equal(D97.total.d + adj('DELAYED'), st.DELAYED);
+  assert.equal(D97.total.w + adj('WARNING'), st.WARNING);
   note(t, moved.map((x) => `${x.id} 판정 덤프 ${x.dump.status} · PoC ${x.poc.status} — ${x.why}`));
 });
 
@@ -139,6 +141,7 @@ test('상세 지도 6단계 칩 = PoC 단계 이름(정책·사업화·인허가
       for (const id of b.chart_target_ids || []) if (st.has(id) && rowOf.get(id).units.counted > 0) assert.equal(st.get(id).s, nz[0][0], `${b.id} ${id}`);
     }
   }
-  /* 9·7 칩: 정책 14 · 사업화 5 · 인허가 6 · 건설 92 · 공급 80 · 입주 0 · 미확인 32(229행) */
-  assert.deepEqual(MO.PARTS.map((_, i) => files.reduce((a, d) => a + d.poc.p97.k[i], 0)), [14, 5, 6, 92, 80, 0, 32]);
+  /* 9·7 칩: 정책 14 · 사업화 5 · 인허가 6 · 건설 92 · 공급 83 · 입주 0 · 미확인 31(231행) — 2026-10-22 새 덤프(PoC as_of 10-22 서버 단계 분포): 새 2행(부천역곡 A1·인천송림4 1) 건설, 병점복합타운 주복1 미확인 → 건설,
+     강서염창·서울대방·서울공릉 건설 → 공급(공급 측정값 추정 → 원천 확인) · 10-21 판 14·5·6·92·80·0·32(229행) */
+  assert.deepEqual(MO.PARTS.map((_, i) => files.reduce((a, d) => a + d.poc.p97.k[i], 0)), [14, 5, 6, 92, 83, 0, 31]);
 });

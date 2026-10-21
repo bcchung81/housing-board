@@ -1,6 +1,6 @@
 {
 "schema": "home-registry-match/1",
-"edition": "20261020T142230Z",
+"edition": "20261021T212310Z",
 "at": "2026-10-21",
 "superseded": [
 {"from":"PRJ-11350-0097","name":"[(105228)서울공릉(복합개발)]위례A2-7BL아파트건설공사9공구및서울공릉아파트건설공사1공구","into":"PRJ-11350-0096","rule":"HOME_SAME_SITE","key":"HPR:HPR_ac4452d5a3119683ef276aa5 PRO:PRO_6b007623f2703880246788d3"},

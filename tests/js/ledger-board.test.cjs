@@ -185,9 +185,10 @@ test('NOW 뒤의 달은 기준일 뒤 현재 예정을 쓴다: 계양 A2·A3(HOM
     const keep = (r) => r.local_project_id === id;
     return boardFromLedger({ ...tables, projects: tables.projects.filter(keep), events: tables.events.filter(keep), units: tables.units.filter(keep) });
   };
-  for (const id of [A2, A3]) {
+  /* 2026-10-22 새 덤프: 계양 A3 에 LH 공고문 입주 예정 2026-12(HOME 근거 연결 — 공고문 panId 0000060743, 실제 입주 아님)가 더해져 2026-12 는 ⑥입주 */
+  for (const [id, want] of [[A2, [2, 2, 4, 4]], [A3, [2, 2, 4, 5]]]) {
     const b = only(id), at = (ym) => b.stageProjects[b.months.indexOf(ym)].indexOf(1);
-    assert.deepEqual([at('2026-09'), at('2026-10'), at('2026-11'), at('2026-12')], [2, 2, 4, 4], id);
+    assert.deepEqual([at('2026-09'), at('2026-10'), at('2026-11'), at('2026-12')], want, id);
   }
 });
 

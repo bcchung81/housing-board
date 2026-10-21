@@ -118,23 +118,26 @@ function districtTerm(row) {
   if (!LH_SOURCES.has(src(row.source_id))) return null;
   let v = row.district || row.name || '';
   v = v.replace(/\([^)]*(?:\)|$)/g, '');
-  v = v.split(/\s*[A-Za-z]{1,3}\s*-?\s*\d|\s+주복\d|\s+0\d/)[0];
+  v = v.split(/\s*[A-Za-z]{1,3}\s*-?\s*\d|\s+[A-Za-z]{1,3}$|\s+주복\d|\s+0\d/)[0];
   return v.trim() || null;
 }
 /* (시도 이름, 정규화 지구, 블록) 또는 null. HOME 2038810 backend/supply_dashboard.py 25~42행: 블록 칸(없으면 이름의 블록)이 블록 꼴이 아니면
-   이름에 'XXnBL'·'XXn블록' 표기가 한 가지뿐일 때 그 블록(공사 계약의 현장 코드 '04'·'A13-1' 이 제목의 주택 블록과 다를 때 — 원천 칸은 고치지 않는다) */
+   이름에 'XXnBL'·'XXn블록' 표기가 한 가지뿐일 때 그 블록(공사 계약의 현장 코드 '04'·'A13-1' 이 제목의 주택 블록과 다를 때 — 원천 칸은 고치지 않는다).
+   숫자 없는 영문 블록(2026-10-22 HOME PoC 운영 판 역추적): 블록 칸이 영문뿐('A')이거나 블록 칸이 없고 이름 끝 낱말이 영문뿐('인천부평(도시재생뉴딜) A')이면 그 글자가 블록이다
+   — 지구 이름에서도 그 끝 낱말을 뗀다. PoC portfolio_cohorts 가 인천부평 A 공급계획 행과 공사 계약 행(지구 '인천부평(도시재생뉴딜)'·블록 'A')을 한 묶음 원천으로 두고,
+   /map/dashboard 가 같은 블록 공사 진행 행(인천부평 A)을 집계에서 뺀다(실제 기여 원천 221). 숫자 블록만 있는 칸('1')은 그대로 키가 없다(서울공릉 1 등은 PoC 도 따로) */
 function blockKey(row) {
   const term = districtTerm(row);
   let block = row.block;
-  if (!block) { const m = /\s+([A-Za-z]{1,3})\s*-?\s*(\d+)(?:BL)?(?:\s|\(|$)/i.exec(row.name ?? ''); block = m ? m[1] + m[2] : null; }
-  let m = /^([A-Za-z]{1,3})\s*-?\s*0*(\d+)(?:BL)?$/i.exec(block ?? '');
+  if (!block) { const m = /\s+([A-Za-z]{1,3})\s*-?\s*(\d+)(?:BL)?(?:\s|\(|$)/i.exec(row.name ?? '') || /\s+([A-Za-z]{1,3})()$/.exec(row.name ?? ''); block = m ? m[1] + m[2] : null; }
+  let m = /^([A-Za-z]{1,3})\s*-?\s*0*(\d+)(?:BL)?$/i.exec(block ?? '') || /^([A-Za-z]{1,3})()$/.exec(block ?? '');
   if (!m) {
     const explicit = new Set([...String(row.name ?? '').matchAll(/([A-Za-z]{1,3})[-－]?(\d+)(?:BL|블록)/gi)].map((x) => `${x[1]}\u0000${x[2]}`));
     if (explicit.size === 1) { const [p, n] = [...explicit][0].split('\u0000'); m = /^([A-Za-z]{1,3})(\d+)$/.exec(p + n); }
   }
   if (!term || !m) return null;
   const t = term.replace(/\s+/g, '').replaceAll('국제화계획', '').replace(/(?:공공주택지구|택지개발사업|택지개발지구|지구)+$/, '');
-  return t ? { region: row.region, term: t, block: `${m[1].toUpperCase()}${+m[2]}` } : null;
+  return t ? { region: row.region, term: t, block: `${m[1].toUpperCase()}${m[2] === '' ? '' : +m[2]}` } : null;
 }
 const keyText = (k) => `${k.region}|${k.term}|${k.block}`;
 /* 블록 키 없는 LH 행의 (시도 이름, 정규화 지구) 또는 null — 지구 이름 → 시군구 규칙(buildHome 의 DISTRICT_*)에만 쓴다. 지구는 blockKey 와 같게 괄호를 떼고,
@@ -294,7 +297,8 @@ function pickSgg(cands, sido, idx) {
 
 /* ---------- 덤프 → 사업 묶음 ---------- */
 /* 담당자 실명·입력 사유는 공개 표에 넣지 않는다 — 2026-10-14 판부터 HOME 덤프에 담당자 입력 이력(actor·reason)이 들어 있다.
-   판에 적힌 actor·reason·change_reason 값을 모아, 글에서 ' · ' 로 나뉜 그 조각을 빼고 남은 이름은 지운다(같은 판 → 같은 결과) */
+   판에 적힌 actor·reason·change_reason 값을 모아, 글에서 ' · ' 로 나뉜 그 조각을 빼고 남은 이름은 지운다(같은 판 → 같은 결과).
+   이름을 지운 자리에 남는 머리 쌍점('담당자 대행: 인천계양 A16…' → ': 인천계양 A16…')은 조각 앞에서 함께 떼고, 비게 된 조각은 뺀다(2026-10-22) */
 function officerTerms(K) {
   const names = new Set(), reasons = new Set();
   const walk = (o) => {
@@ -312,8 +316,9 @@ function officerTerms(K) {
 }
 function scrubText(s, { names, reasons }) {
   let out = s.split(' · ').filter((seg) => !names.includes(seg.trim()) && !reasons.has(seg.trim())).join(' · ');
-  for (const n of names) out = out.split(n).join('');
-  return out;
+  let cut = false;
+  for (const n of names) if (out.includes(n)) { out = out.split(n).join(''); cut = true; }
+  return cut ? out.split(' · ').map((seg) => seg.replace(/^\s*[:：]\s*/, '')).filter((seg) => seg.trim()).join(' · ') : out;
 }
 function scrubKinds(K) {
   const terms = officerTerms(K);

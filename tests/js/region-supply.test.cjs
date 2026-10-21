@@ -245,7 +245,7 @@ test('requirements.json: F-01~F-12, 화면은 새 구조(사업·지역 공급·
     assert.ok(r.screens.every((s) => ['projects', 'region', 'sources'].includes(s)), r.id);
     for (const d of r.dates) assert.ok(reqs.directives.some((x) => x.date === d), `${r.id} 지시 ${d}`);
   }
-  assert.equal(reqs.measures.base, 230, '모수는 PoC 9·7 정책 사업 230');
+  assert.equal(reqs.measures.base, 232, '모수는 PoC 9·7 정책 사업 232');   // 2026-10-22 재이관: PoC 요구사항 스냅샷(raw/home-api/2026-10-20 sources-requirements, 10-22 다시 받음) 9·7 사업 +2(부천역곡 A1·인천송림4 1) — 10-21 판 230
   for (const r of reqs.items) assert.equal(r.verdict, r.poc.percent >= 95 ? 'met' : r.poc.percent > 0 ? 'part' : 'none', r.id);
   assert.deepEqual(Q.reqsFor(reqs, 'region').map((r) => r.id), ['F-01', 'F-05', 'F-09']);
   assert.deepEqual(Q.reqsFor(reqs, 'sources').map((r) => r.id), ['F-10']);

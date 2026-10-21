@@ -167,7 +167,7 @@ test('합계: 수도권 262곳·22만 7,976호 = /citizen 공급 예정 호수 =
   const all = listOf({});
   const metro = ['11', '28', '41'].reduce((s, sd) => { const x = citizenSum(sd); return { n: s.n + x.n, u: s.u + x.u }; }, { n: 0, u: 0 });
   assert.deepEqual({ n: all.length, u: all.reduce((s, x) => s + x.units, 0) }, metro);
-  assert.deepEqual(metro, { n: 288, u: 242382 }, '원장 2026-10 HOME 판 20261020T142230Z 실측 값 — 새 덤프 새 사업 3(독산동·연남동·방화차고지 103호)으로 285곳·242,279호 → 288곳·242,382호(옛 판 20261019T212247Z: 제안서 1.5 의 2026-10-13 값 262곳·227,976호) — 2026-10-20 같은 현장 병합 6쌍 뒤 383곳·274,296호 → 377곳·270,158호 → 공공 분류 안2(공공 공급만) 285곳·242,279호');
+  assert.deepEqual(metro, { n: 289, u: 243542 }, '원장 2026-10 HOME 판 20261021T212310Z 실측 값 — 2026-10-22 새 덤프 새 사업 1(부천역곡 A1 1,160호)로 288곳·242,382호 → 289곳·243,542호 · 20261020T142230Z: 새 덤프 새 사업 3(독산동·연남동·방화차고지 103호)으로 285곳·242,279호 → 288곳·242,382호(옛 판 20261019T212247Z: 제안서 1.5 의 2026-10-13 값 262곳·227,976호) — 2026-10-20 같은 현장 병합 6쌍 뒤 383곳·274,296호 → 377곳·270,158호 → 공공 분류 안2(공공 공급만) 285곳·242,279호');
   const policy = V.applyFilters(rows, V.parseFilters({}, { policies: [], programs: [], sidoOk: () => true })).filter((r) => r.board <= 3);
   assert.equal(policy.length, metro.n); assert.equal(policy.reduce((s, r) => s + r.units, 0), metro.u);
   if (DJ) { const b = Object.entries(DJ.prj).filter(([c]) => P.METRO.includes(c.slice(0, 2))).flatMap(([, L]) => L).filter((p) => T.OF_STAGE[p[2]] <= 3); assert.deepEqual({ n: b.length, u: b.reduce((s, p) => s + p[3], 0) }, metro, '빌드된 /citizen 자료와도 같다'); }

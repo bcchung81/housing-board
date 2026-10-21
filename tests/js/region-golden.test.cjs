@@ -33,7 +33,7 @@ const res = (field) => HP.residuals.filter((r) => r.field === field);
 
 test('12개월: 지역 공급 9·7 = PoC 향후 12개월 공급 예정 — 월별·합·사업 수, 남는 차이는 덤프 뒤 변경 사업(PRO_ id)뿐', { skip }, () => {
   const g = { total: gp['policy.statistics.upcoming_12m.total'], projects: gp['policy.statistics.upcoming_12m.projects'], months: gp['policy.statistics.upcoming_12m.months'] };
-  assert.deepEqual([g.total, g.projects], [17488, 30], '정답(9·7 기본 17,488호·30사업)');
+  assert.deepEqual([g.total, g.projects], [18214, 31], '정답(9·7 기본 18,214호·31사업)');   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): 광교 A17BL 600호 2027-09 → 2026-10 · 병점복합타운 주복1 726호 2026-11(10-21 판 17,488·30)
   const h = CAL.home.p97;
   assert.deepEqual(h.months.map((m) => m.ym), g.months.map((m) => m.month), '같은 12개월(기준 달 2026-10 ~ 2027-09)');
   /* 잔차: 덤프 값을 PoC 값으로 바꾸면 정답과 바이트까지 같아야 한다 */
@@ -41,7 +41,7 @@ test('12개월: 지역 공급 9·7 = PoC 향후 12개월 공급 예정 — 월�
   assert.ok(rs.every((r) => /^PRO_[0-9a-f]{24}$/.test(r.id) && AFTER_DUMP.test(r.why) && r.use === 'dump'), '잔차는 PRO_ id · 덤프 뒤 변경 · 값은 덤프');
   /* 2026-10-21 새 덤프(20261020T142230Z): 10-20 판 잔차 1사업(인천부평 도시재생뉴딜 A PRO_9a256c5d211050be9f0814ff — 덤프 350호, PoC 0)이 새 판에서 같아져 잔차 없음 */
   assert.deepEqual(rs.map((r) => r.id), [], '2026-10-21 새 덤프: 12개월 공급 잔차 0');
-  assert.deepEqual([h.total, h.projects], [17488, 30], '덤프 값 = 정답');
+  assert.deepEqual([h.total, h.projects], [18214, 31], '덤프 값 = 정답');   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22)(10-21 판 17,488·30)
   const adj = Object.fromEntries(h.months.map((m) => [m.ym, m.units]));
   for (const r of rs) { for (const [ym, u] of r.dump) adj[ym] -= u; for (const [ym, u] of r.poc) adj[ym] += u; }
   assert.deepEqual(g.months.map((m) => [m.month, adj[m.month]]), g.months.map((m) => [m.month, m.units]), '월별(잔차 바꾼 뒤)');
@@ -82,7 +82,7 @@ test('기관 줄: 기관 화면 = PoC 기관별 진행현황 7줄 — 호수·�
   const status = new Map(HP.rows.map((r) => [r.id, r.judge?.status ?? 'UNKNOWN']));
   const rs = res('judge');
   assert.ok(rs.every((r) => /^PRO_/.test(r.id) && (AFTER_DUMP.test(r.why) || r.why === SIBLING) && r.use === 'dump' && r.dump.status === status.get(r.id)));
-  assert.deepEqual(rs.map((r) => r.id).sort(), ['PRO_60b4a8833ed549023a6ef1a5', 'PRO_d86ce8966f5ed10d5ef2d175'], '2026-10-21 새 덤프: 판정 잔차는 부천대장 A5·A6(같은 블록 계약 행 측정값)뿐');
+  assert.deepEqual(rs.map((r) => r.id), [], '2026-10-22: 판정 잔차 없음(부천대장 A5·A6 · 성남금토 A4·A2 — 대표 행 확인 완료 측정값 규칙으로 PoC 와 같아짐)');
   const fix = new Map(rs.map((r) => [r.id, r.poc.status]));
   for (const a of g) {
     const l = HA.agencyLine(HP.rows, a.name);
@@ -91,7 +91,9 @@ test('기관 줄: 기관 화면 = PoC 기관별 진행현황 7줄 — 호수·�
     for (const r of l.rows) units[fix.get(r.id) ?? status.get(r.id)] += r.units.counted ?? 0;
     assert.deepEqual(units, { DELAYED: a.DELAYED, WARNING: a.WARNING, NORMAL: a.NORMAL, UNKNOWN: a.UNKNOWN }, `${a.name} 판정별 호수(잔차 바꾼 뒤)`);
     assert.equal(Math.round(units.DELAYED / l.total * 1000) / 10, a.delayed_share_pct, `${a.name} 지연 사업 물량 비중(잔차 바꾼 뒤)`);
-    assert.equal(l.delayedSharePct, a.delayed_share_pct, `${a.name} 지연 사업 물량 비중(화면 값 — 지연 호수는 잔차 없음)`);
+    /* 화면 값(덤프 판정) — 잔차가 있으면 PoC 값은 위(잔차 바꾼 뒤)와 같다 */
+    assert.equal(l.delayedSharePct, Math.round(l.units.DELAYED / l.total * 1000) / 10, `${a.name} 지연 사업 물량 비중(화면 값 — 덤프 판정)`);
+    if (!rs.some((r) => l.rows.some((x) => x.id === r.id) && (r.dump.status === 'DELAYED') !== (r.poc.status === 'DELAYED'))) assert.equal(l.delayedSharePct, a.delayed_share_pct, `${a.name} 지연 잔차가 없는 기관은 화면 값 = PoC`);
   }
   /* 화면이 있는 기관: LH·GH·SH·iH(= 원천 '인천도시공사') */
   assert.deepEqual(HA.HOME_AGENCY, { lh: 'LH', gh: 'GH', sh: 'SH', ih: '인천도시공사' });

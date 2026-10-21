@@ -143,10 +143,10 @@ test('빈 결과 회복: 거르기 풀기·수도권 전체 보기 등 건수가
   const f = { metro: true, status: 'long', stage: 4 };
   assert.equal(V.applyFilters(rows, f).length, 0);
   assert.ok(V.applyFilters(rows, { metro: true }).length > 0);
-  /* HOME 원천 행: 9·7 · 수도권 + 주의 는 비고(기준일 2026-10-20 주의 0), 상태를 풀면 사업이 있다 */
+  /* HOME 원천 행: 9·7 · 서울 + 주의 는 비고(기준일 2026-10-22 주의 2곳은 모두 경기 — 부천대장 A5·A6), 상태를 풀면 사업이 있다 */
   const HP = require('../../data/board/home-projects.json'), home = V.homeRowsOf(HP.rows, HP.residuals);
   const hctx = { ...fctx, programs: V.homeProgramsOf(home), home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
-  const hf = V.parseFilters({ status: 'caution' }, hctx);
+  const hf = V.parseFilters({ status: 'caution', sido: '11' }, hctx);
   assert.equal(V.applyFilters(home, hf).length, 0);
   assert.ok(V.applyFilters(home, { ...hf, status: undefined }).length > 0);
   assert.match(read('components/region/Ahead.tsx'), /\(후보\) = 사업 번호가 아직 없는 후보 사업 · 누르면 간단 보기/);

@@ -1,5 +1,5 @@
 'use strict';
-// /sources 의 숫자 요소를 HOME PoC 정답(.cache/home-parity/golden/golden-sources.json, 기준일 2026-10-20)과 대조한다.
+// /sources 의 숫자 요소를 HOME PoC 정답(.cache/home-parity/golden/golden-sources.json, 기준일 2026-10-22 — 원장 기준일)과 대조한다.
 // 다른 값은 tests/fixtures/sources-1021/explained.json 에 까닭이 적힌 것뿐이어야 한다 — 설명 못 하는 차이는 0.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -37,7 +37,7 @@ test('1-A 헤드라인: 수집 출처 75(데이터 있는 곳) · 등록 76 · �
 });
 
 test('1-A 머리 칩: 덤프 판 날짜는 한국 날짜(10-20)로 읽는다', { skip }, () => {
-  assert.equal(L.kstEdition(golden.meta.ourDumpEdition), '2026.10.20');
+  assert.equal(L.kstEdition(golden.meta.ourDumpEdition), '2026.10.22');   // 2026-10-22 새 덤프(20261021T212310Z — UTC 21:23 = 한국 10-22)
 });
 
 test('1-B 원천별 건수(record_count): 정답과 같고, 다른 원천은 explained.recordCount 에 까닭이 있는 것뿐 · 합계도 맞는다', { skip }, () => {
@@ -79,24 +79,26 @@ test('1-D 연도 확보 격자: 26줄 · 234칸 중 확보 175, 해마다 칸 �
   });
 });
 
-test('1-E 연결: 정책–프로그램은 정답과 같고, 프로그램–사업 확정 283 = 정답 283(2026-10-21 새 덤프 — 10-20 판 280 은 덤프 뒤 신규 3곳)', { skip }, () => {
+test('1-E 연결: 정책–프로그램·프로그램–사업(확정·검토·해제)이 정답과 같다 — 다르면 explained.links 에 사업 id·까닭이 있는 것뿐(2026-10-22 기준일 10-22: 확정 285 = 285, 10-21 판 283 = 283)', { skip }, () => {
   const [pp, pj] = hs.links;
   assert.deepEqual([pp.confirmed, pp.review], [golden.poc.mappings.programStatus.CONFIRMED, golden.poc.mappings.programStatus.REVIEW]);
   const g = golden.poc.mappings.counts, e = ex.links.PROGRAM_PROJECT;
   assert.deepEqual([pj.review, pj.released], [g.REVIEW, g.RELEASED]);
+  const mp = gz('sources-mappings.json.gz');
+  if (mp) assert.equal(mp.items.filter((x) => x.mapping.status === 'CONFIRMED').length, g.CONFIRMED, '스냅샷 = 정답');
+  if (!e) { assert.equal(pj.confirmed, g.CONFIRMED, '차이가 없으면 explained.links 도 비어 있다'); return; }
   assert.equal(e.confirmed.golden, g.CONFIRMED);
   assert.equal(pj.confirmed, e.confirmed.ours);
-  assert.equal(g.CONFIRMED - pj.confirmed, e.projectIds.length);
+  /* 덤프가 많으면(ours > golden) projectIds 는 덤프에만 있는 확정 사업, 정답이 많으면 덤프 뒤 확정된 사업 */
+  assert.equal(Math.abs(g.CONFIRMED - pj.confirmed), e.projectIds.length);
   assert.ok(e.reason);
-  const mp = gz('sources-mappings.json.gz');
-  if (mp) {   // 스냅샷에서는 이 3곳이 확정 연결이다
+  if (mp) {   // 정답이 많으면 스냅샷에서 확정 연결, 덤프가 많으면 스냅샷에 없는 사업
     const st = Object.fromEntries(mp.items.map((x) => [x.id, x.mapping.status]));
-    assert.ok(e.projectIds.every((id) => st[id] === 'CONFIRMED'));
-    assert.equal(mp.items.filter((x) => x.mapping.status === 'CONFIRMED').length, g.CONFIRMED);
+    assert.ok(e.projectIds.every((id) => (g.CONFIRMED > pj.confirmed ? st[id] === 'CONFIRMED' : !(id in st))));
   }
 });
 
-test('1-F 요구사항: 모수 9·7 사업 230 · F-01~F-12 추정 포함/제외 값이 정답과 같다', { skip }, () => {
+test('1-F 요구사항: 모수 9·7 사업 232 · F-01~F-12 추정 포함/제외 값이 정답과 같다', { skip }, () => {
   assert.equal(reqs.measures.base, golden.poc.requirements.projectCount);
   assert.deepEqual(reqs.items.map((r) => r.id), Object.keys(golden.poc.requirements.metrics));
   for (const r of reqs.items) {

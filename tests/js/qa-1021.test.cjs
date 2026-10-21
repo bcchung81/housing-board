@@ -26,7 +26,7 @@ const CIRCLED = /[①②③④⑤⑥]/;
 
 test('#1 /projects 집계 건수 = 물량 있는 집계 행(지도와 같은 문구) — 전 정책 346건 · 물량 없음 41건', () => {
   const f = V.parseFilters({ policy: 'all' }, hctx), scope = V.scopeOf(rows, f), s = V.homeSummaryOf(scope, V.homeChartOf(f));
-  assert.deepEqual([s.n, s.counted, s.excluded, s.missing], [443, 346, 56, 41]);
+  assert.deepEqual([s.n, s.counted, s.excluded, s.missing], [444, 347, 56, 41]);   // 2026-10-22 새 덤프(20261021T212310Z): 정책 전체 +1행(부천역곡 A1, 10-21 판 443·346)
   const page = code(read('app/(dashboard)/projects/page.tsx'));
   assert.match(page, /`집계 \$\{fmt\(s\.counted\)\}건 · 중복·모호 제외 \$\{fmt\(s\.excluded\)\}\$\{s\.missing \? ` · 물량 없음 \$\{fmt\(s\.missing\)\}건` : ''\}`/);
   assert.doesNotMatch(page, /집계 \$\{fmt\(s\.chart\)\}건/);

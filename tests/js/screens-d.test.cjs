@@ -143,7 +143,7 @@ test('7 서랍: 제목 = 지도와 같은 짧은 이름(home-map label), 원장 
   assert.match(d, /\{d\.label && d\.label !== r\.name \? <span data-slot="drawer-full"[^>]*>\{r\.name\}<\/span> : null\}/);
   assert.match(d, /사업 원장\(HOME\) \$\{edition\[1\]\}\.\$\{edition\[2\]\}\.\$\{edition\[3\]\} 받음/);   // HOME 이 무엇인지 붙여서(r3-screens 4)
   assert.doesNotMatch(d, /` · 자료 기준 \$\{edition/, '서랍의 HOME 받은 날을 \'자료 기준\'이라 부르지 않는다(화면의 자료 기준 = 원장 기준일)');
-  assert.equal(IDX.referenceDate, '2026-10-20');   // 2026-10-20 사용자 결정: 기준일을 오늘로(manifest reference_date)
+  assert.equal(IDX.referenceDate, '2026-10-22');   // 2026-10-22: 원장 기준일 = HOME 덤프·PoC 화면 기준일(manifest reference_date) · 2026-10-20 사용자 결정: 기준일을 오늘로
 });
 
 test('8 월별 실적 차트: Tab 은 차트에 한 번(마지막 달), 안에서 ←→·Home·End 로 옮긴다(링크·주소는 그대로)', () => {
@@ -171,14 +171,15 @@ test('9 착공 카드(통계누리) → ③착공 목록(원장): 목록 머리�
   const hf = V.parseFilters(Object.fromEntries(new URL(HD[3].list.href, 'http://x').searchParams), hctx), hl = V.applyFilters(home, hf);
   // 기준일 2026-10-20: 9·7 원천 행 중 지금 ④건설인 행 22건 · 집계 호수 17,865호(HOME 원천 행)
   // 2026-10-21 새 덤프(20261020T142230Z): 덤프 뒤였던 담당자 단계 측정값이 판에 들어와 ④건설 도달 행이 늘었다 → 26건 · 20,368호
-  assert.deepEqual([hl.length, V.homeSummaryOf(hl, V.homeChartOf(hf)).units], [26, 20368], '목록 26건 · 20,368호(정책 진행 자료 원천 행)');
+  // 2026-10-22 새 덤프(20261021T212310Z): ④건설 +3행 +3,084호 — 부천역곡 A1 1,160(새 사업, HOME 단계 착공) · 인천송림4 1 1,198(9·7 확정, 2024-07 착공) · 병점복합타운 주복1 726(착공 2025-12-31 담당자 입력)
+  assert.deepEqual([hl.length, V.homeSummaryOf(hl, V.homeChartOf(hf)).units], [29, 23452], '목록 29건 · 23,452호(정책 진행 자료 원천 행)');
   const l = listOf(D[0].list.href);
   // 2026-10-19 수도권 한정: ③착공 목록 194건·107,554호 → 71건·48,320호 (= BOARD.stageUnits 지금 ③ 48,320, 후보 제외)
   // 2026-10-20 HOME 판: 71건·48,320호 → 150건·70,761호(새 사업 중 착공 단계 79건 — 단계 올리기 CONSTRUCTION_START 79)
   // 2026-10-20 같은 현장 병합 6쌍: ③ 인천 대체 3곳(2,016호) 빠지고 평택고덕은 대체 3 ↔ 대표 3(2,122호)이 맞바뀌어 147건·68,745호
   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): ③ 민간 79곳(22,329호) 빠져 68건·46,416호
   // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 독산동(20호)·방화차고지(75호) ③착공 +2건·+95호
-  assert.deepEqual([l.n, l.units], [70, 46511], '목록 70건 · 46,511호(원장)');
+  assert.deepEqual([l.n, l.units], [71, 47671], '목록 71건 · 47,671호(원장)');   // 2026-10-22 새 덤프(20261021T212310Z): ③착공 새 사업 1(부천역곡 A1 1,160호)
 });
 
 test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227,976호', () => {
@@ -188,5 +189,5 @@ test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227
   const c = BOARD.judgment.candidate;
   assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 0);
   const metro = listOf('/projects?sido=metro');
-  assert.deepEqual([metro.n, metro.units], [288, 242382]);   // 2026-10-21 새 덤프: 새 사업 3 · 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
+  assert.deepEqual([metro.n, metro.units], [289, 243542]);   // 2026-10-22 새 덤프(20261021T212310Z): 새 사업 1(부천역곡 A1 1,160호) · 2026-10-21 새 덤프: 새 사업 3 · 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
 });

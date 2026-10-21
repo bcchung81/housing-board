@@ -64,11 +64,11 @@ test('시도: 사업 판정 호수와 HOME 시도 집계 지연 문구, 월별 �
 });
 
 /* 2026-10-21 W3-H: 덤프로 만든 '/' 자료(data/board/home-board.json)는 home-projects.json views.p97 과 같은 원천 행 집합(덤프 우선 + 덤프 뒤 신규 행만 PoC 스냅샷)을 쓴다 */
-test("'/' 자료 = home-projects views.p97·region-calendar home.p97: 연결 175곳 · 카드 도달 · 판정 · 12개월 공급(월별) · 시도 · 기관", () => {
+test("'/' 자료 = home-projects views.p97·region-calendar home.p97: 연결 177곳 · 카드 도달 · 판정 · 12개월 공급(월별) · 시도 · 기관", () => {
   const HB = require('../../data/board/home-board.json'), HP = require('../../data/board/home-projects.json'), RC = require('../../data/board/region-calendar.json');
   const v = HP.views.p97, rc = RC.home.p97, rs = HP.rows.filter((r) => r.stats && r.p97 && r.chart.p97);
   assert.deepEqual([HB.scope.projects, HB.scope.units], [v.chart, v.units]);
-  assert.deepEqual([HB.scope.projects, HB.scope.units, HB.home.supplyUpcoming.total, HB.home.supplyUpcoming.projects], [175, 151271, 17488, 30]);   // 2026-10-21 새 덤프: 12개월 공급 = PoC 17,488·30(10-20 판 17,838·31 — 인천부평 도시재생뉴딜 A 350호 덤프 뒤 변경 해소)
+  assert.deepEqual([HB.scope.projects, HB.scope.units, HB.home.supplyUpcoming.total, HB.home.supplyUpcoming.projects], [177, 153575, 18214, 31]);   // 2026-10-22 새 덤프(20261021T212310Z): 연결 +2(부천역곡 A1 1,160·인천송림4 1 1,198) · 12개월 공급 +726(광교 A17BL 600호 2027-09 → 2026-10, 병점복합타운 주복1 726호 2026-11 새 일정 — HOME 담당자 입력) = PoC(as_of 10-22) 18,214·31 · 2026-10-21 새 덤프: 12개월 공급 = PoC 17,488·30(10-20 판 17,838·31 — 인천부평 도시재생뉴딜 A 350호 덤프 뒤 변경 해소)
   for (const k of ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY']) assert.equal(HB.home.cards[k].current, v.reached[k], k);
   const J = HB.judgment;
   for (const k of ['NORMAL', 'WARNING', 'DELAYED', 'UNKNOWN']) {

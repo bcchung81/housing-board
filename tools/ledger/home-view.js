@@ -102,12 +102,14 @@ function comparisonStatus(m, stage) {
   return { difference: due && actual ? due.units - actual.units : null, stage, label: stage === 'MOVE_IN' ? '입주' : c.label || m.stages?.[stage] || stage, status, due, actual, gap: assessment.gap, confirmedUnits, next: targets.find(t => t.date > m.asOf), rate: assessment.rate, assessment, stale: !!(due && actual && actual.date < due.date) };
 }
 
-// summaryValues (단계 카드: 현재 누적 측정량·12월 말 예상량)
+// summaryValues (단계 카드: 현재 누적 측정량·12월 말 예상량) — 2026-10-22 판(policy-stage-flow.js?v=20261022-cumulative-forecast):
+// 예상량 = 응답 tracking.forecast_points(사업별 max(현재 누적 도달, 연말까지 누적 계획)의 합)의 연말까지 마지막 점, 없는 옛 응답은 계획 누계(goalSeries)
 function summaryValues(m) {
   const yearEnd = String(m.year || m.asOf.slice(0, 4)) + '-12-31';
   return Object.fromEntries(Object.entries(m.stages).filter(([k]) => k !== 'POLICY').map(([k, label]) => {
-    const actual = measuredAt(m, k, m.asOf), expected = goalSeries(m, k).filter(p => p.date <= yearEnd).at(-1);
-    return [k, { label, as_of_date: m.asOf, measurement_date: actual?.date || null, current_units: actual?.units ?? null, year_end: yearEnd, expected_units: expected?.units ?? null, plan_date: expected?.date || null, basis: '12월 31일까지 저장된 계획 누계' }];
+    const actual = measuredAt(m, k, m.asOf), series = m.comparisons?.[k]?.forecast_points;
+    const expected = (series ?? goalSeries(m, k)).filter(p => p.date <= yearEnd).at(-1);
+    return [k, { label, as_of_date: m.asOf, measurement_date: actual?.date || null, current_units: actual?.units ?? null, year_end: yearEnd, expected_units: expected?.units ?? null, plan_date: expected?.date || null, remaining_plan_units: expected?.remaining_plan_units ?? null, basis: series ? '사업별 현재 누적 도달량 + 연말까지 미도달 계획량 · 중복 제외' : '12월 31일까지 저장된 계획 누계' }];
   }));
 }
 

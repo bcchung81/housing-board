@@ -3,8 +3,10 @@
 // (a) 계산 층: PoC 응답(as_of 2026-10-20)의 portfolio_cohorts 를 넣으면 PoC 의 tracking 점과 완전히 같다(정책 전체·시도 3·시군구 42·프로그램 31 + 프로그램×시도 29·×시군구 96, 지표 6).
 //     고정값 tests/fixtures/home-1020/portfolio-view.json = PoC GET /policy-delivery/view?as_of_date=2026-10-20&group=policy&scope=policy(+ 프로그램 화면 30개)에서
 //     tracking·대조에 쓰는 칸만 잘라 넣은 것(담당자 이름·사유·배치 id·근거 글 칸은 뺐다). 점 목록은 {cols, rows}, evidence_urls 는 urls 번호로 접었다 — 여기서 다시 편다.
-// (b) 덤프로 만든 포트폴리오(HOME 덤프가 있을 때만 — 2026-10-21 부터 20261020T142230Z): PoC 와 같은 사업·같은 칸. 남는 차이는 아래 허용 목록(사업 id·까닭)뿐이어야 한다.
+// (b) 덤프로 만든 포트폴리오(HOME 덤프가 있을 때만 — 2026-10-22 부터 20261021T212310Z): PoC 와 같은 사업·같은 칸. 남는 차이는 아래 허용 목록(사업 id·까닭)뿐이어야 한다.
+//     고정값 tests/fixtures/home-1022/portfolio-cohorts.json = PoC GET /policy-delivery/view?as_of_date=2026-10-22 의 portfolio_cohorts 를 (a) 고정값과 같은 칸으로 자른 것(덤프와 같은 기준일 — 2026-10-22 재이관).
 //     덤프 뒤 변경 판정: PoC 사건에 changed_at > 덤프 시각(2026-10-19T21:22:47Z)이 있는 사업은 사건·일정 대조에서 뺀다(담당자 입력 74건 등). 일정에는 changed_at 이 없어 일정 차이는 근거를 보고 허용 목록에 적었다.
+// (a′) 연말 예상(tracking.forecast_points — 2026-10-22 HOME 운영 판): 고정값 tests/fixtures/home-1022/forecast-policy.json = 같은 PoC 응답의 forecast_points 숫자(정책 범위 전체 점 + 47 범위 연말 점).
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -14,6 +16,8 @@ const H = require('../../tools/ledger/home-source');
 const P = require('../../tools/ledger/paths');
 
 const FIX = path.join(__dirname, '..', 'fixtures', 'home-1020', 'portfolio-view.json');
+const FIX_B = path.join(__dirname, '..', 'fixtures', 'home-1022', 'portfolio-cohorts.json');   // (b) 덤프 대조용 — 덤프 판과 같은 기준일의 PoC 포트폴리오
+const pocB = JSON.parse(fs.readFileSync(FIX_B, 'utf8'));
 const poc = JSON.parse(fs.readFileSync(FIX, 'utf8'));
 const unpack = ({ cols, rows }) => rows.map((r) => Object.fromEntries(cols.map((c, i) => [c, c === 'evidence_urls' ? r[i].map((k) => poc.urls[k]) : r[i]])));
 const expected = Object.fromEntries(Object.entries(poc.expected).map(([k, v]) => [k, { ...v,
@@ -30,7 +34,7 @@ test('(a) PoC 포트폴리오 → 범위별 tracking 이 PoC portfolio_compariso
   for (const [k, v] of Object.entries(expected)) {
     assert.deepEqual([mine[k].name, mine[k].kind], [v.name, v.kind], k);
     assert.deepEqual(Object.keys(mine[k].metrics), METRICS, k);
-    for (const m of METRICS) { assert.deepStrictEqual(mine[k].metrics[m].tracking, v.metrics[m], `${k} ${m}`); n++; }
+    for (const m of METRICS) { const { forecast_points, ...t } = mine[k].metrics[m].tracking; assert.deepStrictEqual(t, v.metrics[m], `${k} ${m}`); n++; }   // 10-20 응답에는 forecast_points 가 없었다((a′))
   }
   assert.equal(n, 1212);
   /* 정책 전체 공급: 누적 58,541호(2026-10-19) — 담당자 입력 53,160 · 추정 50,587 포함 */
@@ -49,36 +53,65 @@ test('(a) tracking 규칙: 후속 단계 사건도 그 단계 도달 · 목표�
   assert.deepEqual(PP.stageEvents([c], 'APPROVAL', '2026-10-20').points, [], '우리 문서용(같은 단계만)은 후속 단계를 세지 않는다');
 });
 
+/* (a′) 연말 예상: PoC(as_of 2026-10-22) 포트폴리오 → forecast_points 가 PoC 와 같다. 날짜 = 목표 점·확인 점 날짜, 값 = 사업별 max(그 날까지 누적 도달, 그 날까지 누적 목표)의 합 */
+const FC = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'fixtures', 'home-1022', 'forecast-policy.json'), 'utf8'));
+const fcRows = (pts) => pts.map((p) => [p.date, p.units, p.observed_units, p.remaining_plan_units]);
+test('(a′) 연말 예상(forecast_points): PoC 2026-10-22 포트폴리오 → 정책 범위 6 지표 모든 점 · 47 범위 연말 점이 PoC 와 같다 — 착공 연말 예상 99,885호', () => {
+  assert.equal(FC.as_of_date, pocB.as_of_date);
+  const mine = PP.portfolioComparisons(pocB.portfolio_cohorts, pocB.as_of_date);
+  for (const m of METRICS) {
+    assert.deepEqual(fcRows(mine.policy.metrics[m].tracking.forecast_points), FC.policy[m], m);
+    assert.ok(mine.policy.metrics[m].tracking.forecast_points.every((p) => p.basis === FC.basis));
+  }
+  assert.deepEqual(Object.keys(mine).filter((k) => !k.startsWith('program:')).sort(), Object.keys(FC.yearEnd).filter((k) => !k.startsWith('program:')).sort(), '정책·시도·시군구 범위');
+  for (const [k, ms] of Object.entries(FC.yearEnd)) for (const [m, want] of Object.entries(ms)) {
+    const got = (mine[k]?.metrics[m].tracking.forecast_points ?? []).filter((p) => p.date <= '2026-12-31').at(-1);
+    assert.deepEqual(got ? fcRows([got])[0] : null, want, `${k} ${m}`);
+  }
+  assert.deepEqual(FC.policy.CONSTRUCTION.filter((p) => p[0] <= '2026-12-31').at(-1), ['2026-12-31', 99885, 82968, 16917], '덤프 안내(SCHEMA_AND_DATA_CHANGES 6절) 연말 예상 99,885 · 현재 누적 착공 82,968');
+  /* 단계 카드(home-view summaryValues — PoC policy-stage-flow.js 2026-10-22 판): 연말 예상 = forecast_points 의 연말까지 마지막 점 */
+  const HV = require('../../tools/ledger/home-view');
+  const cards = HV.policyScreen({ as_of_date: pocB.as_of_date, target_units: 1350000, plan: { period_start: '2026-01-01', period_end: '2030-12-31' }, stages: { POLICY: '정책', BUSINESS: '사업화', APPROVAL: '인허가', CONSTRUCTION: '건설', SUPPLY: '공급', MOVE_IN: '입주' },
+    portfolio_cohorts: pocB.portfolio_cohorts, portfolio_comparisons: mine }).stage_cards;
+  assert.deepEqual(['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'MOVE_IN'].map((k) => [cards[k].current, cards[k].year_end_expected]),
+    [[153402, 153402], [100973, 106771], [82968, 99885], [58125, 73114], [null, 3845]]);
+});
+test('(a′) 연말 예상 규칙: 이미 도달한 사업은 계획보다 도달, 미도달 사업은 연말까지 계획 — 같은 사업의 실적·계획을 두 번 세지 않는다', () => {
+  const c = (id, units, events, schedules) => ({ id, units, mapping_status: 'CONFIRMED', events, schedules });
+  const sch = (due, units) => ({ stage: 'CONSTRUCTION', due_date: due, units, origin: 'SOURCE', source_object_id: 's' });
+  const a = c('a', 100, [{ stage: 'CONSTRUCTION', event_date: '2026-03-01', units: 100 }], [sch('2026-06-30', 100)]);   // 이미 착공 — 계획과 겹침
+  const b = c('b', 50, [], [sch('2026-11-30', 50)]);                                                                      // 아직 — 연말 전 계획
+  const d = c('d', 80, [{ stage: 'SUPPLY', event_date: '2026-05-01', units: 30 }], [sch('2027-03-31', 80)]);             // 후속 단계 30 도달, 계획은 내년
+  const t = PP.trackingOf([a, b, d], 'CONSTRUCTION', '2026-10-22');
+  assert.deepEqual(fcRows(t.forecast_points), [['2026-03-01', 100, 100, 0], ['2026-05-01', 130, 130, 0], ['2026-06-30', 130, 130, 0], ['2026-11-30', 180, 130, 50], ['2027-03-31', 230, 130, 100]]);
+  assert.deepEqual(t.forecast_points.map((p) => p.date), [...new Set([...t.target_points, ...t.actual_points].map((p) => p.date))].sort());
+});
+
 /* ---------- (b) 덤프로 만든 포트폴리오 ---------- */
 const HOME_DIR = H.latestHomeDir(P.ledgerDir('2026-10')), HAVE = !!HOME_DIR && H.homeAvailable(HOME_DIR);
 const SKIP = !HAVE && 'HOME 원본(jsonl.gz) 없음 — Storage 에서 받거나 tools/ledger/home-dump.py';
 /* PoC 에만 있는 사업 — 2026-10-21 새 덤프(20261020T142230Z, 2026-10-20 23:22 KST)에 덤프 뒤 9·7 매핑 3곳(독산동·방화차고지·연남동)이 들어와 없다 */
 const ONLY_POC = {};
-/* 2026-10-21 새 덤프: PoC 사건 changed_at 이 덤프 시각 뒤인 사업이 없어 175곳 모두 견준다. 남는 차이(사업 id·까닭) */
-const SIBLING = '같은 블록 계약 행(부천대장 A-5BL 및 A-6BL 묶음 계약 PRO_4ce4…·PRO_b880…)의 담당자 공급 추정(2025-09-20 952·688호, 10-14 입력)이 덤프 묶음에는 있고 PoC 묶음에는 없다 — HOME 2038810 공개 코드(build_delivery overrides)는 묶음 행 전체의 측정값을 쓴다: 덤프 뒤 변경 또는 미커밋 서버 규칙(덤프 HOME source_worktree_dirty)';
-const BUPYEONG = "인천부평(도시재생뉴딜) A — PoC 는 계약 행 PRO_0e5b…(지구 '인천부평(도시재생뉴딜)'·블록 'A')를 같은 묶음 원천으로 넣고 그 승인 일정·공고문 입주 일정을 쓴다. 블록 칸 'A'(숫자 없음)는 2038810 block_key 로 키가 없어 덤프 계산은 따로 둔다 — 미공개 서버 규칙(인천부평 A PRO_4b85… 집계 제외와 같은 원인, home-projects.json residuals)";
-const EVENT_DIFF = {
-  PRO_60b4a8833ed549023a6ef1a5: `부천대장 A5 — ${SIBLING}`,
-  PRO_d86ce8966f5ed10d5ef2d175: `부천대장 A6 — ${SIBLING}`,
-  PRO_9a256c5d211050be9f0814ff: BUPYEONG,
-};
+/* 2026-10-22: 남는 차이(사업 id·까닭) 없음. 10-21·22 판에 있던 차이 — 부천대장 A5·A6·성남금토 A4·A2(같은 블록 계약 행의 담당자 공급 추정이 덤프 묶음에만)·
+   인천부평(도시재생뉴딜) A(계약 행 PRO_0e5b…(블록 'A')가 PoC 묶음 원천)·관리 일정 precision 13곳 — 은 역추적한 규칙으로 PoC 와 같아졌다:
+   ① 대표 행에 담당자 확인 완료 측정값(OFFICER_VERIFIED_SOURCE)이 있는 단계는 묶음 다른 원천 행의 측정값을 쓰지 않는다(policy-progress.js buildCohorts)
+   ② 숫자 없는 영문 블록('A')도 블록 키(home-source.js blockKey) ③ 관리 일정 precision = execution_schedule.date_precision → source_precision → DAY */
+const EVENT_DIFF = {};
 /* 2026-10-21 W5 'HOME 기준': reference_only PLAN 사실을 일정에서 빼(policy-progress.js) 고양창릉 S-6BL 3공구(DOC_be739…)·연남동(DOC_2587…) 일정 차이가 없어졌다 */
-const SCHEDULE_DIFF = {
-  PRO_9a256c5d211050be9f0814ff: BUPYEONG,
-};
+const SCHEDULE_DIFF = {};
 const REF_ONLY_DOCS = ['DOC_be739d9e407cfc85f2bc7848', 'DOC_2587e87ac1f72a71cd250383'];
 /* 시군구: PoC 운영 판의 인천 행정구역 개편 표시(INCHON_DATED_ADMINISTRATIVE_NAME)를 policy-progress.js homeService 가 원장 시군구 규칙(home-source.js sggByPro)으로 대신한다.
    2026-10-21 W4: 인천서구 2곳(석남어울림·거북이기지)도 지구 이름 규칙으로 서해구가 되어 칸이 모두 같다 */
 
-test('(b) 덤프 포트폴리오 = PoC 포트폴리오(덤프 뒤 변경·인천서구 시군구 미정만 다르다)', { skip: SKIP }, () => {
+test('(b) 덤프 포트폴리오 = PoC 포트폴리오(사업 177·칸·사건·일정·실제 기여 원천 221·범위별 목표·확인·연말 예상 점이 모두 같다 — 2026-10-22)', { skip: SKIP }, () => {
   const home = H.readHome(HOME_DIR), dump = home.snapshotAt.slice(0, 19);
   const v = PP.homeView(home);
-  assert.equal(v.as_of_date, poc.as_of_date);
-  const T = new Map(poc.portfolio_cohorts.map((c) => [c.id, c])), O = new Map(v.portfolio_cohorts.map((c) => [c.id, c]));
-  assert.equal(v.portfolio_cohorts.length, 175, 'PoC 175 와 같다(2026-10-21 새 덤프 — 10-20 판 172 = 175 − 덤프 뒤 매핑 3)');
+  assert.equal(v.as_of_date, pocB.as_of_date);
+  const T = new Map(pocB.portfolio_cohorts.map((c) => [c.id, c])), O = new Map(v.portfolio_cohorts.map((c) => [c.id, c]));
+  assert.equal(v.portfolio_cohorts.length, 177, 'PoC 177 과 같다(2026-10-22 새 덤프 — 부천역곡 A1·인천송림4 1 +2, 10-21 판 175)');
   assert.deepEqual([...T.keys()].filter((id) => !O.has(id)).sort(), Object.keys(ONLY_POC).sort());
   assert.deepEqual([...O.keys()].filter((id) => !T.has(id)), [], '우리에만 있는 사업 없음(광교 A17 은 참조 사업 매핑 규칙으로 빠진다)');
-  assert.deepEqual([v.cohorts.length, v.cohorts.reduce((a, c) => a + c.units, 0)], [76, 90860], 'PoC 코호트 76·90,860호와 같다(2026-10-21 새 덤프 — 연남동 8호 코호트가 들어옴)');
+  assert.deepEqual([v.cohorts.length, v.cohorts.reduce((a, c) => a + c.units, 0)], [76, 91240], '코호트 76·91,240호(2026-10-22 새 덤프 — 부천역곡 A1 +1,160 · 병점복합타운 주복1 착공 2025-12-31 로 정책기간 전 −780, 10-21 판 76·90,860)');
   const post = (t) => t.events.some((e) => e.changed_at && e.changed_at.slice(0, 19) > dump);
   const ek = (e) => [e.stage, e.event_date, e.units, e.origin, e.status ?? '-', e.review_status ?? '-', e.inferred ?? '-', e.input_rule ?? '-', e.evidence_url ?? '-', e.source_id ?? '-'].join('|');
   const sk = (s) => [s.stage, s.due_date, s.units, s.origin, s.precision, !!s.managed_schedule, s.source_object_id ?? '-', s.source_base_date ?? '-', s.evidence_url ?? '-'].join('|');
@@ -95,13 +128,17 @@ test('(b) 덤프 포트폴리오 = PoC 포트폴리오(덤프 뒤 변경·인천
     if (!same(c.events, t.events, ek)) evDiff.push(c.id);
     if (!same(c.schedules, t.schedules, sk)) scDiff.push(c.id);
   }
-  assert.equal(compared, 175, '공통 175 − 덤프 뒤 변경 0(2026-10-21 새 덤프)');
+  assert.equal(compared, 177, '공통 177 − 덤프 뒤 변경 0(2026-10-22 새 덤프)');
   assert.deepEqual(evDiff.sort(), Object.keys(EVENT_DIFF).sort());
   assert.deepEqual(scDiff.sort(), Object.keys(SCHEDULE_DIFF).sort());
   assert.ok(v.portfolio_cohorts.every((c) => c.schedules.every((s) => !REF_ONLY_DOCS.includes(s.source_object_id))), 'reference_only 근거 연결 사실은 일정이 아니다');
   for (const k of Object.keys(fieldDiff)) fieldDiff[k].sort();
-  assert.deepEqual(fieldDiff, { source_ids: ['PRO_9a256c5d211050be9f0814ff'] }, '인천부평(도시재생뉴딜) A 묶음 원천(BUPYEONG) 밖은 칸이 모두 같다 — 인천서구 시군구도 같아졌다(2026-10-21 W4)');
+  assert.deepEqual(fieldDiff, {}, '칸이 모두 같다 — 인천부평(도시재생뉴딜) A 묶음 원천도 같아졌다(2026-10-22, 실제 기여 원천 221)');
+  assert.equal(new Set(v.portfolio_cohorts.flatMap((c) => c.source_ids)).size, 221, 'HOME 실제 기여 원천 221(덤프 안내 6절)');
+  /* 범위별 tracking(목표·확인·연말 예상 점)도 PoC 포트폴리오로 만든 것과 같다(PoC 포트폴리오 → PoC tracking 은 (a)·(a′)) */
+  const fromPoc = PP.portfolioComparisons(pocB.portfolio_cohorts, pocB.as_of_date), pts = (t) => ['target_points', 'actual_points', 'forecast_points'].map((f) => t[f].map(({ evidence_urls, ...p }) => p));
+  for (const [k, sc] of Object.entries(fromPoc)) for (const m of METRICS) assert.deepEqual(pts(v.portfolio_comparisons[k].metrics[m].tracking), pts(sc.metrics[m].tracking), `${k} ${m}`);
   /* 담당자 이름은 고정값에 없다 */
-  const text = fs.readFileSync(FIX, 'utf8');
+  const text = fs.readFileSync(FIX, 'utf8') + fs.readFileSync(FIX_B, 'utf8');
   for (const n of H.officerTerms(home.kinds).names) assert.ok(!text.includes(n), '고정값에 담당자 이름');
 });

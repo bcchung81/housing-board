@@ -1,7 +1,7 @@
 {
   "schema": "ledger-map/1",
   "observedMonth": "2026-10",
-  "referenceDate": "2026-10-20",
+  "referenceDate": "2026-10-22",
   "bySgg": {
     "11110": [
       {"id":"PRJ-11110-0021","name":"신문로2-12","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":180,"pks":[],"pnus":[],"bundles":[]}
@@ -186,7 +186,7 @@
       {"id":"PRJ-28200-0066","name":"남인천 우체국","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":29,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28237": [
-      {"id":"PRJ-28237-0065","name":"인천부평 A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":350,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-28237-0065","name":"인천부평(도시재생뉴딜) A","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":350,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28245": [
       {"id":"PRJ-28245-0052","name":"조달청)인천계양 A-10BL 아파트 건설공사 4공구","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-08-19"},"dateAlt":{"source":"LH","planned":"2028-09-30"},"units":778,"pks":[],"pnus":["2824511000104480001"],"bundles":["incheon-gyeyang/techno-A10"]},
@@ -194,7 +194,7 @@
       {"id":"PRJ-28245-0054","name":"인천계양 A17","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-07-26"},"units":463,"pks":[],"pnus":["2824510900102770001"],"bundles":["incheon-gyeyang/techno-A17"]},
       {"id":"PRJ-28245-0055","name":"인천계양(공공주택) A2","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":null,"dateAlt":{"source":"LH","planned":"2026-10-31"},"units":747,"pks":[],"pnus":["2824511000104130003"],"bundles":["incheon-gyeyang/techno-A2"]},
       {"id":"PRJ-28245-0056","name":"인천계양 A9","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-06-28"},"dateAlt":{"source":"LH","planned":"2028-12-31"},"units":475,"pks":[],"pnus":["2824511000102030001"],"bundles":["incheon-gyeyang/techno-A9"]},
-      {"id":"PRJ-28245-0057","name":"인천계양(공공주택) A3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":null,"dateAlt":{"source":"LH","planned":"2026-10-31"},"units":538,"pks":[],"pnus":["2824511000104090003"],"bundles":["incheon-gyeyang/techno-A3"]},
+      {"id":"PRJ-28245-0057","name":"인천계양(공공주택) A3","issued":true,"stage":"04","cls":"ok","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-10-11","months":0},"next":{"eventType":"MOVE_IN","planned":"2026-12"},"dateAlt":{"source":"LH","planned":"2026-10-31"},"units":538,"pks":[],"pnus":["2824511000104090003"],"bundles":["incheon-gyeyang/techno-A3"]},
       {"id":"PRJ-28245-0058","name":"인천계양 A16","issued":true,"stage":"03","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":434,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28245-0059","name":"인천계양 A18","issued":true,"stage":"02","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":782,"pks":[],"pnus":[],"bundles":[]}
     ],
@@ -273,7 +273,8 @@
       {"id":"PRJ-41192-0061","name":"부천종합운동장 역세권 A1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-10-25"},"dateAlt":{"source":"LH","planned":"2028-03-31"},"units":293,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41192-0062","name":"부천역곡 A2","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2029-01-31"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":1464,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-41192-0063","name":"원미공원","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-41192-0064","name":"원미사거리 북측","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41192-0064","name":"원미사거리 북측","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-41192-0067","name":"부천역곡 A1","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1160,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41194": [
       {"id":"PRJ-41194-0061","name":"부천괴안 A-1BL 아파트 건설공사 2공구 (","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-04-30"},"dateAlt":{"source":"LH","planned":"2027-12-31"},"units":499,"pks":[],"pnus":[],"bundles":[]}
@@ -404,7 +405,7 @@
       {"id":"PRJ-41480-0112","name":"파주운정3 A20BL 아파트 건설공사 13공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2026-12-25"},"dateAlt":{"source":"LH","planned":"2027-06-30"},"units":612,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41500": [
-      {"id":"PRJ-41500-0072","name":"이천장호원 B2BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-22","months":1},"next":{"eventType":"MOVE_IN","planned":"2026-11"},"dateAlt":{"source":"LH","planned":"2026-12-31"},"units":620,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-41500-0072","name":"이천장호원 B2BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-22","months":2},"next":{"eventType":"MOVE_IN","planned":"2026-11"},"dateAlt":{"source":"LH","planned":"2026-12-31"},"units":620,"pks":[],"pnus":[],"bundles":[]}
     ],
     "41570": [
       {"id":"PRJ-41570-0073","name":"조달청)김포고촌2 A1BL 아파트 건설공사 1공구","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-06-29"},"dateAlt":{"source":"LH","planned":"2027-07-31"},"units":350,"pks":[],"pnus":[],"bundles":[]}

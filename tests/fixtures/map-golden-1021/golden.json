@@ -1,28 +1,28 @@
 {
  "_meta": {
-  "as_of": "2026-10-20",
+  "as_of": "2026-10-22",
   "made_from": [
    ".cache/home-parity/golden/golden-projects.json (S2-extract.js — PoC /map/dashboard 9·7·정책 전체)",
-   ".cache/home-parity/golden/deliv-2026-10-20.json (PoC /policy-delivery/view portfolio_comparisons → home-view.js mapDelay = 정책 지도 !)",
+   ".cache/home-parity/golden/deliv-2026-10-22.json (PoC /policy-delivery/view portfolio_comparisons → home-view.js mapDelay = 정책 지도 !)",
    ".cache/home-parity/golden/golden-policy.json (PoC 정책 화면 project_status·upcoming_12m)",
-   ".cache/home-parity/golden/S2-raw-map-dashboard{-js,}.json (PoC /map/dashboard 9·7·정책 전체 — 시군구·시도 stage_distribution.parts, 2026-10-21 W5-MP 추가. raw/home-api/2026-10-20 스냅샷과 같은 값)"
+   ".cache/home-parity/golden/S2-raw-map-dashboard{-js,}.json (PoC /map/dashboard 9·7·정책 전체 — 시군구·시도 stage_distribution.parts, 2026-10-21 W5-MP 추가. raw/home-api/2026-10-22 스냅샷과 같은 값)"
   ],
   "note": "PoC 공개 API 응답에서 수치만 옮김(담당자 이름·사유 글 없음)"
  },
  "overview_97": {
-  "summary.project_count": 230,
-  "summary.target_units": 151271,
-  "summary.target_counted_projects": 175,
+  "summary.project_count": 232,
+  "summary.target_units": 153575,
+  "summary.target_counted_projects": 177,
   "summary.target_excluded_projects": 55,
   "summary.target_missing_projects": 0,
   "municipalities.with_projects": 44,
-  "municipalities.target_sum": 149520,
+  "municipalities.target_sum": 151878,
   "municipality_unlinked_ids": 4,
   "blocks.status": {
-   "판정미확보": 134,
-   "정상": 19,
+   "판정미확보": 132,
+   "정상": 21,
    "주의": 3,
-   "지연": 2
+   "지연": 3
   },
   "regions": [
    {
@@ -33,42 +33,42 @@
      "POLICY": 36736,
      "BUSINESS": 0,
      "APPROVAL": 1707,
-     "CONSTRUCTION": 7486,
-     "SUPPLY": 1686,
+     "CONSTRUCTION": 7351,
+     "SUPPLY": 1821,
      "MOVE_IN": 0,
      "UNKNOWN": 0
     },
-    "current_notice_units": 1686
+    "current_notice_units": 1821
    },
    {
     "name": "인천광역시",
-    "project_count": 42,
-    "target_units": 20251,
+    "project_count": 43,
+    "target_units": 21449,
     "stage": {
      "POLICY": 563,
      "BUSINESS": 3,
      "APPROVAL": 3497,
-     "CONSTRUCTION": 4412,
-     "SUPPLY": 5135,
+     "CONSTRUCTION": 5500,
+     "SUPPLY": 5245,
      "MOVE_IN": 0,
      "UNKNOWN": 6641
     },
-    "current_notice_units": 5135
+    "current_notice_units": 5245
    },
    {
     "name": "경기도",
-    "project_count": 159,
-    "target_units": 83405,
+    "project_count": 160,
+    "target_units": 84511,
     "stage": {
      "POLICY": 10563,
      "BUSINESS": 3648,
      "APPROVAL": 605,
-     "CONSTRUCTION": 36812,
-     "SUPPLY": 25683,
+     "CONSTRUCTION": 38511,
+     "SUPPLY": 25870,
      "MOVE_IN": 0,
-     "UNKNOWN": 6094
+     "UNKNOWN": 5314
     },
-    "current_notice_units": 24377
+    "current_notice_units": 24564
    }
   ],
   "municipalities": [
@@ -150,13 +150,13 @@
    {
     "region": "경기도",
     "name": "부천시",
-    "project_count": 21,
-    "target_units": 7206,
+    "project_count": 22,
+    "target_units": 8366,
     "stage": {
      "POLICY": 563,
      "BUSINESS": 0,
      "APPROVAL": 0,
-     "CONSTRUCTION": 4265,
+     "CONSTRUCTION": 5425,
      "SUPPLY": 2378,
      "MOVE_IN": 0,
      "UNKNOWN": 0
@@ -171,8 +171,8 @@
      "POLICY": 1370,
      "BUSINESS": 0,
      "APPROVAL": 1699,
-     "CONSTRUCTION": 3532,
-     "SUPPLY": 0,
+     "CONSTRUCTION": 3472,
+     "SUPPLY": 60,
      "MOVE_IN": 0,
      "UNKNOWN": 0
     }
@@ -261,8 +261,8 @@
      "POLICY": 563,
      "BUSINESS": 0,
      "APPROVAL": 0,
-     "CONSTRUCTION": 168,
-     "SUPPLY": 308,
+     "CONSTRUCTION": 58,
+     "SUPPLY": 418,
      "MOVE_IN": 0,
      "UNKNOWN": 2332
     }
@@ -336,8 +336,8 @@
      "POLICY": 0,
      "BUSINESS": 0,
      "APPROVAL": 0,
-     "CONSTRUCTION": 714,
-     "SUPPLY": 1862,
+     "CONSTRUCTION": 527,
+     "SUPPLY": 2049,
      "MOVE_IN": 0,
      "UNKNOWN": 0
     }
@@ -651,8 +651,8 @@
      "POLICY": 0,
      "BUSINESS": 0,
      "APPROVAL": 0,
-     "CONSTRUCTION": 344,
-     "SUPPLY": 0,
+     "CONSTRUCTION": 283,
+     "SUPPLY": 61,
      "MOVE_IN": 0,
      "UNKNOWN": 0
     }
@@ -720,13 +720,13 @@
    {
     "region": "인천광역시",
     "name": "제물포구",
-    "project_count": 1,
-    "target_units": null,
+    "project_count": 2,
+    "target_units": 1198,
     "stage": {
      "POLICY": 0,
      "BUSINESS": 0,
      "APPROVAL": 0,
-     "CONSTRUCTION": 0,
+     "CONSTRUCTION": 1198,
      "SUPPLY": 0,
      "MOVE_IN": 0,
      "UNKNOWN": 0
@@ -737,41 +737,41 @@
    "POLICY": 47862,
    "BUSINESS": 3651,
    "APPROVAL": 5809,
-   "CONSTRUCTION": 48710,
-   "SUPPLY": 32504,
+   "CONSTRUCTION": 51362,
+   "SUPPLY": 32936,
    "MOVE_IN": 0,
-   "UNKNOWN": 12735
+   "UNKNOWN": 11955
   },
-  "summary.current_notice_units": 31198
+  "summary.current_notice_units": 31630
  },
  "overview_all": {
-  "summary.project_count": 443,
-  "summary.target_units": 289336,
-  "summary.target_counted_projects": 346,
+  "summary.project_count": 444,
+  "summary.target_units": 290357,
+  "summary.target_counted_projects": 347,
   "summary.target_excluded_projects": 56,
   "summary.target_missing_projects": 41,
   "stage": {
    "POLICY": 47862,
    "BUSINESS": 9015,
-   "APPROVAL": 6396,
-   "CONSTRUCTION": 91669,
-   "SUPPLY": 32504,
+   "APPROVAL": 6478,
+   "CONSTRUCTION": 91457,
+   "SUPPLY": 34602,
    "MOVE_IN": 0,
-   "UNKNOWN": 101890
+   "UNKNOWN": 100943
   },
   "regions": [
    {
     "name": "서울특별시",
     "project_count": 210,
-    "target_units": 160621,
+    "target_units": 160536,
     "stage": {
      "POLICY": 36736,
      "BUSINESS": 5364,
-     "APPROVAL": 2294,
-     "CONSTRUCTION": 47413,
-     "SUPPLY": 1686,
+     "APPROVAL": 2376,
+     "CONSTRUCTION": 47278,
+     "SUPPLY": 1821,
      "MOVE_IN": 0,
-     "UNKNOWN": 67128
+     "UNKNOWN": 66961
     }
    },
    {
@@ -782,24 +782,24 @@
      "POLICY": 563,
      "BUSINESS": 3,
      "APPROVAL": 3497,
-     "CONSTRUCTION": 7444,
-     "SUPPLY": 5135,
+     "CONSTRUCTION": 5668,
+     "SUPPLY": 6911,
      "MOVE_IN": 0,
      "UNKNOWN": 6641
     }
    },
    {
     "name": "경기도",
-    "project_count": 185,
-    "target_units": 105432,
+    "project_count": 186,
+    "target_units": 106538,
     "stage": {
      "POLICY": 10563,
      "BUSINESS": 3648,
      "APPROVAL": 605,
-     "CONSTRUCTION": 36812,
-     "SUPPLY": 25683,
+     "CONSTRUCTION": 38511,
+     "SUPPLY": 25870,
      "MOVE_IN": 0,
-     "UNKNOWN": 28121
+     "UNKNOWN": 27341
     }
    }
   ],
@@ -873,8 +873,8 @@
      "POLICY": 1370,
      "BUSINESS": 0,
      "APPROVAL": 1699,
-     "CONSTRUCTION": 3693,
-     "SUPPLY": 0,
+     "CONSTRUCTION": 3633,
+     "SUPPLY": 60,
      "MOVE_IN": 0,
      "UNKNOWN": 6800
     }
@@ -987,13 +987,13 @@
    {
     "region": "경기도",
     "name": "부천시",
-    "project_count": 26,
-    "target_units": 8066,
+    "project_count": 27,
+    "target_units": 9226,
     "stage": {
      "POLICY": 563,
      "BUSINESS": 0,
      "APPROVAL": 0,
-     "CONSTRUCTION": 4265,
+     "CONSTRUCTION": 5425,
      "SUPPLY": 2378,
      "MOVE_IN": 0,
      "UNKNOWN": 860
@@ -1023,8 +1023,8 @@
      "POLICY": 0,
      "BUSINESS": 0,
      "APPROVAL": 0,
-     "CONSTRUCTION": 3124,
-     "SUPPLY": 2547,
+     "CONSTRUCTION": 1458,
+     "SUPPLY": 4213,
      "MOVE_IN": 0,
      "UNKNOWN": 1772
     }
@@ -1113,8 +1113,8 @@
      "POLICY": 0,
      "BUSINESS": 556,
      "APPROVAL": 587,
-     "CONSTRUCTION": 894,
-     "SUPPLY": 0,
+     "CONSTRUCTION": 833,
+     "SUPPLY": 61,
      "MOVE_IN": 0,
      "UNKNOWN": 1696
     }
@@ -1143,8 +1143,8 @@
      "POLICY": 563,
      "BUSINESS": 0,
      "APPROVAL": 0,
-     "CONSTRUCTION": 336,
-     "SUPPLY": 308,
+     "CONSTRUCTION": 226,
+     "SUPPLY": 418,
      "MOVE_IN": 0,
      "UNKNOWN": 2332
     }
@@ -1198,15 +1198,15 @@
     "region": "서울특별시",
     "name": "마포구",
     "project_count": 7,
-    "target_units": 2943,
+    "target_units": 2858,
     "stage": {
      "POLICY": 0,
      "BUSINESS": 0,
-     "APPROVAL": 8,
+     "APPROVAL": 90,
      "CONSTRUCTION": 1340,
      "SUPPLY": 0,
      "MOVE_IN": 0,
-     "UNKNOWN": 1595
+     "UNKNOWN": 1428
     }
    },
    {
@@ -1248,8 +1248,8 @@
      "POLICY": 0,
      "BUSINESS": 0,
      "APPROVAL": 0,
-     "CONSTRUCTION": 714,
-     "SUPPLY": 1862,
+     "CONSTRUCTION": 527,
+     "SUPPLY": 2049,
      "MOVE_IN": 0,
      "UNKNOWN": 76
     }
@@ -1694,10 +1694,10 @@
  "delay_marks": {
   "region": {
    "서울특별시": "준공 14호 부족 (3.5%)",
-   "경기도": "준공 1,974호 부족 (81.8%)"
+   "경기도": "공급 1,393호 부족 (2.7%) · 준공 1,974호 부족 (81.8%)"
   },
   "city": {
-   "MUN_85e6b63a55911fd9a4c5b514": "공급 111호 부족 (4.3%) · 준공 227호 부족 (34.1%)",
+   "MUN_85e6b63a55911fd9a4c5b514": "공급 527호 부족 (20.5%) · 준공 227호 부족 (34.1%)",
    "MUN_914b0bee38455661c89c23f4": "건설 2,309호 부족 (61.1%)",
    "MUN_b398e41301a76d180e54bdb7": "공급 1,380호 부족 (13.5%)",
    "MUN_b28b41f00ecd8358ec7a8c47": "공급 291호 부족 (82.2%)",
@@ -1707,13 +1707,14 @@
  },
  "policy_97": {
   "project_status": {
-   "DELAYED": 4,
+   "DELAYED": 6,
    "WARNING": 2,
-   "NORMAL": 169
+   "NORMAL": 168,
+   "UNKNOWN": 1
   },
   "upcoming_12m": {
-   "total": 17488,
-   "projects": 30
+   "total": 18214,
+   "projects": 31
   }
  }
 }

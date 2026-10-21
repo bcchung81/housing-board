@@ -496,5 +496,5 @@ test('상세 지도 범위(2026-10-21 W5-MP2): 9·7(기본)이면 9·7 원천 �
   const files = fs.readdirSync(path.join(ROOT, 'data/board/home-map')).filter((f) => /^\d{5}\.json$/.test(f)).map((f) => JSON.parse(read(`data/board/home-map/${f}`)));
   let all = 0, p97 = 0, lostAll = 0, lost97 = 0;
   for (const d of files) { const h = R.homeToProjects([d]); for (const p of h.projects) { all++; if (p.home.poc && p.home.poc.n97 > 0) p97++; } for (const x of h.unlocated) { lostAll++; if (x.pst && x.pst.p97 != null) lost97++; } }
-  assert.deepEqual([all, p97, lostAll, lost97], [176, 110, 112, 63]);
+  assert.deepEqual([all, p97, lostAll, lost97], [176, 110, 113, 64]);   // 2026-10-22 새 덤프(20261021T212310Z): 위치 미확보 +1(부천역곡 A1 — HOME 위치 행 없음, 9·7)
 });

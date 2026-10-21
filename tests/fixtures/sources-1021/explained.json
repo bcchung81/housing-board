@@ -1,21 +1,9 @@
 {
   "schema": "sources-explained/1",
-  "note": "/sources 의 숫자를 PoC 정답(.cache/home-parity/golden/golden-sources.json, PoC 2026-10-21 11:28 KST)과 대조해 남는 차이와 까닭. 여기 없는 차이는 0 이어야 한다(tests/js/sources-golden.test.cjs). 2026-10-21 새 덤프(20261020T142230Z, 2026-10-20 23:22 KST) 재이관으로 옛 차이(건축HUB 일반 인허가 건수·이음 공고 상태·프로그램–사업 확정 3곳)는 사라졌다.",
-  "snapshot": "schemas/ledger-2026-10/raw/home-api/2026-10-20 (PoC 응답을 2026-10-21 11:28 KST 에 받음, 정답과 같은 때)",
+  "note": "/sources 의 숫자를 PoC 정답(.cache/home-parity/golden/golden-sources.json, PoC 2026-10-22 08:24 KST, as_of 2026-10-22 = 원장 기준일)과 대조해 남는 차이와 까닭. 여기 없는 차이는 0 이어야 한다(tests/js/sources-golden.test.cjs). 2026-10-22 기준일 10-22 전환: 정답·스냅샷을 as_of 2026-10-22 로 다시 받아 프로그램–사업 확정 연결 차이(부천역곡 A1 — 덤프에만 있던 확정 사업)가 사라졌다. 2026-10-22 새 덤프(20261021T212310Z, 2026-10-22 06:23 KST) 재이관: 건축HUB 일반 인허가 실패(덤프 뒤 성공)는 새 덤프에 성공 실행이 들어와 사라졌다. 2026-10-21 새 덤프(20261020T142230Z) 재이관으로 옛 차이(건축HUB 일반 인허가 건수·이음 공고 상태·프로그램–사업 확정 3곳)는 사라졌다.",
+  "snapshot": "schemas/ledger-2026-10/raw/home-api/2026-10-22 (as_of 2026-10-22 — 원장 기준일. PoC 응답을 2026-10-22 08:2x KST 에 받음, 정답과 같은 때 — 수집 실행 상태·마지막 성공 시각·건수가 정답 스냅샷과 같다)",
   "recordCount": {},
   "status": {},
-  "failed": {
-    "building_general_permit": {
-      "golden": "SUCCESS",
-      "ours": "FAILED",
-      "reason": "덤프 뒤 PoC 변경: 덤프(2026-10-20 23:22 KST)의 마지막 수집 실행(2026-10-20 22:29 KST)은 실패였고, PoC 는 덤프 뒤 2026-10-21 11:23 KST 에 성공했다. 화면의 실패 수는 덤프의 마지막 수집 실행에서 센다."
-    }
-  },
-  "links": {
-    "PROGRAM_PROJECT": {
-      "confirmed": { "golden": 283, "ours": 283 },
-      "projectIds": [],
-      "reason": "새 덤프에 9·7 정책(건설형 공공임대) 확정 연결 서울 사업 3곳(독산동·연남동·방화차고지)이 들어와 정답과 같다(10-20 06:22 판에서는 덤프 뒤 변경으로 280)."
-    }
-  }
+  "failed": {},
+  "links": {}
 }

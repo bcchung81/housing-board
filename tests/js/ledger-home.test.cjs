@@ -163,7 +163,8 @@ test('④ 수도권 사업 수 = HOME 사업 중 시군구가 정해진 것(같�
      PRO 가 있는 HPR 436(원천 사업후보 행 443 — 둘인 HPR 7) → 블록 병합·같은 현장·같은 HPR 합침 행 56 → 시군구 미정 4 → 사업 383(10-14 판: 311 → 47 → 2 → 262) */
   /* 2026-10-21 새 덤프(20261020T142230Z): HPR 2,014(+3 독산동·연남동·방화차고지 — 새 사업) · 시군구 미정 4행(인천서구 석남어울림·거북이기지의 공급계획·공사 진행)이 지구 이름 규칙(districtOnlyKey)으로 서해구가 되어
      같은 현장 병합으로 기존 PRJ-28275-0037·0034 에 합쳐짐(합침 행 62 → 66, 미정 4 → 0) → 사업 377 → 380 */
-  assert.deepEqual([home.kinds.home_project.length, build.report.noAnchor, build.groups.length, members - build.groups.length, unresolved], [2014, 1575, 380, 66, 0], '2026-10-21 새 덤프 · 인천서구 4행 편입(10-20 판: 2,011 · 1,575 · 377 · 62 · 4)');
+  /* 2026-10-22 새 덤프(20261021T212310Z): HPR 4,186(+2,172 — 건축 일반 인허가 후보 GEN_ 681 → 2,852, 원천 사업후보 연결 없음 = 원장 사업 아님) · PRO 가 있는 HPR +1(부천역곡 A1 — 새 사업) → 사업 380 → 381 */
+  assert.deepEqual([home.kinds.home_project.length, build.report.noAnchor, build.groups.length, members - build.groups.length, unresolved], [4186, 3746, 381, 66, 0], '2026-10-22 새 덤프 · 부천역곡 A1 새 사업(10-21 판: 2,014 · 1,575 · 380 · 66 · 0)');
   /* 인천서구 4행 = LH 지구 '인천서구(석남어울림)'·'인천서구(거북이기지)'(괄호 뗀 지구 '인천서구' → lh-block-sgg 의 두 지구 모두 서해구 28275, HOME PoC /mappings 도 넷 다 서해구).
      공사 진행 행의 LH 지구 코드(105409|01·105410|01)가 기존 사업의 공사 계약 '[(105409)인천서구(석남어울림)]…'·'[(105410)인천서구(거북이기지)]…' 와 같고 계획 호수도 같다(110·58) */
   const into = { PRO_1c2a1be12daff06cef52f8c6: 'PRJ-28275-0037', PRO_4e534476d1d747285e612f85: 'PRJ-28275-0037', PRO_85998117430f9302232be12d: 'PRJ-28275-0034', PRO_a9e2bffb100945377e90ef33: 'PRJ-28275-0034' };
@@ -268,7 +269,7 @@ test('연결: 정책–프로그램·프로그램–사업, REVIEW → REVIEW_RE
   assert.ok(saved.links.every((l) => !/UNASSIGNED|MON_/.test(`${l.from_local_id} ${l.to_local_id}`)));
   assert.deepEqual([...new Set(saved.links.map((l) => l.link_type))].sort(), ['POLICY_PROGRAM', 'PROGRAM_PROJECT']);
   assert.equal(new Set(saved.links.map((l) => `${l.link_type}|${l.from_local_id}|${l.to_local_id}`)).size, saved.links.length, '연결은 한 번씩');
-  assert.equal(pp.filter((l) => l.review_status === 'CONFIRMED').length, 205, '2026-10-21 새 덤프: home_mapping CONFIRMED 283건 → 사업 묶음당 한 행 205(새 사업 3 + 인천서구 공급계획 행이 합쳐진 0037·0034 의 건설형 공공임대 연결 2) · 2026-10-20 판 200(2026-10-14 판 174, 2026-10-13 판 1)');
+  assert.equal(pp.filter((l) => l.review_status === 'CONFIRMED').length, 206, '2026-10-22 새 덤프: home_mapping CONFIRMED 285건 → 206(부천역곡 A1 새 연결 +1 · 인천송림4 확정 연결은 같은 사업 PRJ-28125-0027·같은 프로그램의 기존 확정 연결과 한 행) · 2026-10-21 새 덤프: home_mapping CONFIRMED 283건 → 사업 묶음당 한 행 205(새 사업 3 + 인천서구 공급계획 행이 합쳐진 0037·0034 의 건설형 공공임대 연결 2) · 2026-10-20 판 200(2026-10-14 판 174, 2026-10-13 판 1)');
 });
 
 test('지역 지표(area_facts): 원천 묶음마다 원천 행 하나, 지역 코드는 원장 지역, 미분양은 전체·준공 후', () => {

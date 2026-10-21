@@ -161,8 +161,8 @@ test("H9 회복·문구: 부산은 '자료 없음(서울·인천·경기만)', �
   const hctx = { policies: IDX.policies, programs: V.homeProgramsOf(home), sidoOk: () => true, home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
   const hp = V.homePriorityOf(V.scopeOf(home, V.parseFilters({}, hctx)));
   assert.ok(hp.every((r) => r.cls === 'delay' || r.cls === 'caution') && hp.every((r, i) => i === 0 || r.cls !== 'delay' || hp[i - 1].cls === 'delay'), '지연 먼저');
-  /* 기준일 2026-10-20 9·7 기본 범위: 지연 4·주의 0 → 10줄 이하라 제목은 '점검 필요 4건 전부' */
-  assert.equal(hp.length, 4);
+  /* 기준일 2026-10-22 9·7 기본 범위: 지연 6·주의 2(= PoC 사업 판정) → 10줄 이하라 제목은 '점검 필요 8건 전부' (10-20: 지연 4·주의 0) */
+  assert.equal(hp.length, 8);
   assert.ok(hp.length <= 10);
   const all = V.priorityOf(V.scopeOf(rows, { metro: true }), Infinity);
   /* 2026-10-20 HOME 판: 수도권 점검 필요 4 → 12건(주의 10·지연 2)이라 10줄을 넘는다 — 인쇄 제목은 '점검 필요 12건 중 상위 10' */

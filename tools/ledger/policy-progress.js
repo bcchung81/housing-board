@@ -16,6 +16,9 @@
    - 2038810 supply_dashboard.block_key(이름의 블록 표기 하나로 키 보충)·inventory(서로 다른 임대 유형 공급계획을 따로 남김)는 원장 변환과 한 벌인
      home-source.js 의 blockKey·inventory 에 옮겼다(2026-10-21 — 인천검단 AA19 두 유형·의왕초평 A4 계약).
    - 인천 시군구: PoC 운영 판은 2038810 에 없는 행정구역 개편 귀속(INCHON_DATED_ADMINISTRATIVE_NAME)을 쓴다 — homeService 가 원장 시군구 규칙(home-source.js sggByPro)으로 대신한다.
+   - 2026-10-22 HOME 운영 판(소스 미공개 — PoC as_of 10-22 응답과 덤프 20261021T212310Z 를 행 단위로 맞대어 역추적, 사업 177·사건·일정·범위별 점 282 계열이 같다):
+     tracking.forecast_points(연말 예상 — forecastPoints), 대표 행 담당자 확인 완료 측정값(OFFICER_VERIFIED_SOURCE)이 있는 단계는 묶음 다른 원천 행 측정값을 쓰지 않음,
+     관리 일정 precision(date_precision → source_precision → DAY), 숫자 없는 영문 블록 키(home-source.js blockKey — 인천부평 A).
    - 기준일(as_of) = 덤프 시각의 한국 날짜(HOME 은 기준일 다음 날 0시(한국) 전에 기록된 판을 읽는다 — 덤프 뒤 기록이 없으니 덤프의 현재 판과 같다).
    두 가지 비교
    - homeRule: HOME 화면(policy-stage-flow.js comparisonStatus)과 같다 — 기준일까지 도래한 마지막 목표 누적(정책 시작일부터) 대 기준일까지 마지막 확인 누적(처음부터). 기간이 섞인다.
@@ -36,6 +39,8 @@ const ALIASES = { lh_incheon_sale: 'lh_sale', lh_incheon_rent: 'lh_rent', lh_inc
 /* 담당자 추정 입력(project_profile.progress 의 input_rule): '기한이 지난 단계에서 담당자가 고른 현재값 — 원천 실적 확인과 구분'. HOME 화면(homeRule·actualPoints)은 그대로 섞고,
    우리 같은 기간 비교(samePeriod)는 확인(actual = 이 입력을 뺀 사건)과 추정 포함(actualWithEstimates)을 나눠 낸다(2026-10-14 결정: 확인과 추정을 섞지 않는다) */
 const ESTIMATE_RULES = new Set(['OFFICER_CURRENT_ESTIMATE']);
+/* 담당자 확인 완료 측정값(원문 확인 — 대표 행에 있으면 그 단계는 같은 묶음 다른 원천 행의 측정값을 대신한다, buildCohorts) */
+const VERIFIED_RULE = 'OFFICER_VERIFIED_SOURCE';
 /* HOME policy_delivery_comparison.METRICS(2038810) — portfolio_comparisons 의 지표 이름 */
 const HOME_METRICS = { CONSTRUCTION: '착공(건설)', SUPPLY: '공급(분양·모집)', BUSINESS: '사업화', APPROVAL: '인허가', COMPLETION: '준공', MOVE_IN: '입주' };
 const ROADMAP_STAGES = { PLANNING: '계획', APPROVAL: '인허가', CONSTRUCTION: '착공', SUPPLY: '공급', COMPLETION: '준공', MOVE_IN: '입주 시작' };
@@ -153,8 +158,8 @@ function linkedNotices(rows, notices, asOf) {
   for (const row of rows) {
     const key = blockKey(row);
     if (!key) continue;
-    const b = /^([A-Z]+)(\d+)$/.exec(key[2]);
-    candidates.push([row, new RegExp(`${escRe(key[1])}(?:공공주택지구|택지개발지구|지구)?${escRe(b[1])}-?0*${b[2]}(?:BL|블록)?(?![A-Z0-9])`)]);
+    const b = /^([A-Z]+)(\d*)$/.exec(key[2]);   // 숫자 없는 영문 블록('A' — home-source.js blockKey)은 글자만
+    candidates.push([row, new RegExp(`${escRe(key[1])}(?:공공주택지구|택지개발지구|지구)?${escRe(b[1])}${b[2] ? `-?0*${b[2]}` : ''}(?:BL|블록)?(?![A-Z0-9])`)]);
   }
   const sorted = notices.slice().sort((a, b) => cmpTuple([a.source_date || '', a.id], [b.source_date || '', b.id]));
   for (const n of sorted) {
@@ -365,7 +370,8 @@ function buildCohorts(svc, asOf, policyId) {
   for (const r of svc.rows('execution_schedule')) {
     if (r.status === 'RELEASED' || r.units == null) continue;
     if (!managed.has(r.project_id)) managed.set(r.project_id, []);
-    managed.get(r.project_id).push({ scope_kind: 'project', scope_id: r.project_id, stage: r.stage, due_date: r.due_date, units: r.units, origin: r.status === 'REVIEW' ? 'SOURCE_REVIEW' : 'MANUAL', evidence_url: r.evidence_url ?? null, precision: 'DAY', managed_schedule: true });
+    /* precision: 일정 입력의 날짜 정밀도(date_precision, 없으면 원천 정밀도 source_precision, 둘 다 없으면 DAY) — 2026-10-22 PoC 운영 판(목표·도달 계산에는 쓰지 않는다) */
+    managed.get(r.project_id).push({ scope_kind: 'project', scope_id: r.project_id, stage: r.stage, due_date: r.due_date, units: r.units, origin: r.status === 'REVIEW' ? 'SOURCE_REVIEW' : 'MANUAL', evidence_url: r.evidence_url ?? null, precision: r.date_precision || r.source_precision || 'DAY', managed_schedule: true });
   }
   /* stage_evidence.linked_events */
   const stageLinks = new Map();
@@ -430,8 +436,11 @@ function buildCohorts(svc, asOf, policyId) {
       schedules = schedules.filter((s) => !(s.source_object_id === member.id && managedStages.has(s.stage)));
       schedules.push(...goals);
     }
-    /* 담당자 단계 측정값이 있는 단계는 그 묶음의 다른 사건을 모두 빼고 측정값만(build_delivery overrides — 착공 판정 전과 공고·공정률 사건을 더한 뒤 두 번) */
-    const overrides = group.flatMap((m) => manualProgress.get(m.id) || []);
+    /* 담당자 단계 측정값이 있는 단계는 그 묶음의 다른 사건을 모두 빼고 측정값만(build_delivery overrides — 착공 판정 전과 공고·공정률 사건을 더한 뒤 두 번).
+       대표 행에 담당자 확인 완료 측정값(input_rule OFFICER_VERIFIED_SOURCE — 공식·비공식 원문 확인)이 있는 단계는 묶음의 다른 원천 행 측정값을 쓰지 않는다
+       (2026-10-22 PoC 운영 판 역추적: 부천대장 A5·A6·성남금토 A4·A2 의 계약 행 공급 추정, 인천부평 A 의 계약 행 공급 확인이 PoC 묶음에서 빠지고 다른 단계 측정값은 남는다) */
+    const verified = new Set((manualProgress.get(row.id) || []).filter((e) => e.input_rule === VERIFIED_RULE).map((e) => e.stage));
+    const overrides = group.flatMap((m) => (manualProgress.get(m.id) || []).filter((e) => m.id === row.id || !verified.has(e.stage)));
     const applyOverrides = () => { if (overrides.length) { const st = new Set(overrides.map((e) => e.stage)); events = events.filter((e) => !st.has(e.stage)).concat(overrides); } };
     applyOverrides();
     const starts = events.filter((e) => e.stage === 'CONSTRUCTION' && get(e, 'status', 'ACTUAL') === 'ACTUAL').map((e) => e.event_date);
@@ -587,9 +596,30 @@ function stageEvents(cohorts, metric, asOf, { estimates = true } = {}) {
   const r = homeEvents(cohorts, metric, asOf, { keep: (e) => estimates || !e.estimate });
   return { points: r.points.map(({ date, units, confirmed_units, policy_confirmed_units, review_units }) => ({ date, units, confirmed_units, policy_confirmed_units, review_units })), cohorts: r.cohorts };
 }
-/* comparison_index 의 tracking(2038810): 선택 범위 사업의 1900-01-01 부터 목표 점 + 후속 단계까지 누적한 확인 점(담당자 입력·추정 포함) */
+/* tracking.forecast_points(2026-10-22 HOME 운영 판 — 덤프 안내 SCHEMA_AND_DATA_CHANGES 3절 '연말 예상은 사업·단계별 현재 누적 도달량과 연말까지 저장된 누적 계획량 중 큰 값을 고른 뒤 합산'):
+   목표 점·확인 점 날짜마다 사업별 max(그 날까지 누적 도달(후속 단계 포함, 기준일까지), 그 날까지 누적 목표(목표 점과 같은 일정·사업 물량 상한))의 합.
+   observed_units = 도달 합, remaining_plan_units = 합 − 도달 합. PoC 응답(as_of 2026-10-22) 47 범위 × 6 지표 282 계열과 같다(tests/js/home-portfolio.test.cjs (a′)·(b), policy-golden.test.cjs) */
+const FORECAST_BASIS = '사업별 누적 도달량 + 기한 내 미도달 계획량 · 중복 제외';
+function forecastPoints(cohorts, metric, asOf, targets, actuals) {
+  const accepted = new Set(LATER[metric] ?? [metric]);
+  const dates = [...new Set([...targets.map((p) => p.date), ...actuals.map((p) => p.date)])].sort(byStr);
+  const incs = scheduleIncrements(cohorts, metric, '1900-01-01');   // [날짜, [{ id, units }]] 날짜 순
+  const events = cohorts.flatMap((c) => c.events.filter((e) => accepted.has(e.stage) && get(e, 'status', 'ACTUAL') === 'ACTUAL' && e.event_date <= asOf)
+    .map((e) => ({ id: c.id, date: e.event_date, v: Math.min(c.units, e.units == null ? c.units : e.units) }))).sort((a, b) => byStr(a.date, b.date));
+  const plan = new Map(), reach = new Map();
+  let i = 0, j = 0;
+  return dates.map((date) => {
+    for (; i < incs.length && incs[i][0] <= date; i++) for (const x of incs[i][1]) plan.set(x.id, (plan.get(x.id) ?? 0) + x.units);
+    for (; j < events.length && events[j].date <= date; j++) reach.set(events[j].id, Math.max(reach.get(events[j].id) ?? 0, events[j].v));
+    let units = 0, observed = 0;
+    for (const id of new Set([...plan.keys(), ...reach.keys()])) { const r = reach.get(id) ?? 0; units += Math.max(r, plan.get(id) ?? 0); observed += r; }
+    return { date, units, observed_units: observed, remaining_plan_units: units - observed, basis: FORECAST_BASIS };
+  });
+}
+/* comparison_index 의 tracking(2038810): 선택 범위 사업의 1900-01-01 부터 목표 점 + 후속 단계까지 누적한 확인 점(담당자 입력·추정 포함) + 연말 예상 점(forecastPoints) */
 function trackingOf(cohorts, metric, asOf) {
-  return { target_points: homeScheduleTargets(cohorts, metric, '1900-01-01'), actual_points: homeEvents(cohorts, metric, asOf, { cumulative: true }).points,
+  const target_points = homeScheduleTargets(cohorts, metric, '1900-01-01'), actual_points = homeEvents(cohorts, metric, asOf, { cumulative: true }).points;
+  return { target_points, actual_points, forecast_points: forecastPoints(cohorts, metric, asOf, target_points, actual_points),
     project_count: cohorts.length, basis: '선택 범위 사업 현재+후속 단계 누적 · 담당자 입력·추정 포함 · 원천 중복 제외' };
 }
 /* portfolio_comparisons(build_delivery 의 comparison_index(포트폴리오, 정책 시작 1900-01-01)) 중 tracking: 범위 키 → { name, kind, metrics: { 지표: { label, tracking } } }.
@@ -803,7 +833,7 @@ function parseArgs(argv) {
 }
 
 module.exports = { ESTIMATE_RULES, policyProgress, render, schedulePeriod, sourceEvents, blockKey, inventory, linkedNotices, scheduleTargets, stageEvents, homeRule, samePeriod, asOfOf, buildCohorts, homeService, POLICY_ID,
-  trackingOf, portfolioComparisons, homeView, homeScheduleTargets, homeEvents };
+  trackingOf, forecastPoints, portfolioComparisons, homeView, homeScheduleTargets, homeEvents, VERIFIED_RULE };
 
 if (require.main === module) {
   try {

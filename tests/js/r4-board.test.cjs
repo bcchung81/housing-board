@@ -51,13 +51,13 @@ test("2 판정 비율 모수: '판정 169건 · 168,152호 · 전체의 73.8%'(�
   const SJ = JS[BOARD.now];
   const rib = S.ribbonOf(T, BOARD.stageUnits, S.delaysOf(JS), S.scopeChangeOf(JS));
   // 2026-10-19 수도권 한정: 리본 총량 1,424,872호 → 227,976호(수도권 HOME), 판정 비율 11.8% → 73.8%(판정 호수 168,152는 그대로)
-  assert.equal(rib.total[BOARD.now], 242382);   // 2026-10-21 새 덤프: 새 사업 3(103호) · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) 270,158 → 242,279호 · 2026-10-20 HOME 판 227,976→274,296호 → 2026-10-20 같은 현장 병합 6쌍 270,158호
+  assert.equal(rib.total[BOARD.now], 243542);   // 2026-10-22 새 덤프(20261021T212310Z): 새 사업 1(부천역곡 A1 1,160호) · 2026-10-21 새 덤프: 새 사업 3(103호) · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) 270,158 → 242,279호 · 2026-10-20 HOME 판 227,976→274,296호 → 2026-10-20 같은 현장 병합 6쌍 270,158호
   assert.equal(rib.total[BOARD.now], BOARD.scope.units, '리본 총량 = 원장 전체 호수');
   // 2026-10-20 HOME 판: 판정 169건·168,152호(전체 227,976호의 73.8%) → 188건·179,428호(274,296호의 65.4%)
   // 2026-10-20 같은 현장 병합 6쌍·기준일 10-20 → 185건·177,412호(270,158호의 65.7%)
   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) → 판정은 그대로 185건·177,412호, 전체 242,279호의 73.2%
-  assert.equal(D.judgeBase(SJ, rib.total[BOARD.now]), '판정 185건 · 177,412호 · 전체의 73.2%');
-  assert.equal(D.judgeBase(BOARD.judgment, BOARD.scope.units), '판정 185건 · 177,412호 · 전체의 73.2%');
+  assert.equal(D.judgeBase(SJ, rib.total[BOARD.now]), '판정 185건 · 177,412호 · 전체의 72.8%');   // 2026-10-22 새 덤프(20261021T212310Z): 모수 243,542호(새 사업 부천역곡 A1 판정 없음 +1,160) → 73.2% → 72.8%
+  assert.equal(D.judgeBase(BOARD.judgment, BOARD.scope.units), '판정 185건 · 177,412호 · 전체의 72.8%');
   const snap = panel('p-snap');
   assert.match(snap, /data-slot="judge-base"[\s\S]*?판정 대상 \{f\(SJ\.ok\.projects \+ SJ\.caution\.projects \+ SJ\.delay\.projects\)\}건/, '판정 막대 아래 모수 줄');
   assert.match(board, /jTot = rib\.total\[judged \? jm : NOW\]/);
