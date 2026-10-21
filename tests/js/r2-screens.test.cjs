@@ -74,7 +74,7 @@ test('3 용어: 목표를 넘으면 \'달성 n%\'(②인허가 3,560/1,543 = 달
   // 2026-10-19 수도권 한정: LH 후보·건축HUB 후보가 0건이라 ledgerJudged 문구에 '일정 정보 없음' 꼬리가 없다 → 치환 규칙은 옛 문구 '판정 밖'으로 확인
   assert.ok(!judged.includes('판정 밖') && !judged.includes('일정 정보 없음'), judged);
   assert.equal(V.judgeOutText('판정 밖: LH 후보 1건'), '일정 정보 없음: LH 후보 1건');
-  assert.match(read('app/(dashboard)/sources/page.tsx'), /judgeOutText\(ledgerJudged\(ledger\)\)/);
+  assert.match(read('app/(dashboard)/sources/page.tsx'), /homeRow\('snap', '선택 시점 판정'/, '2026-10-21 W6: 데이터 원본 판정 줄 = 종합상황판이 쓰는 home-board 판정(옛 원장 ledgerJudged 아님)');
   for (const f of ['app/(dashboard)/sources/page.tsx', 'app/(dashboard)/projects/page.tsx', 'app/(dashboard)/region/page.tsx', 'components/projects/Summary.tsx', 'components/projects/ProjectDetail.tsx']) assert.ok(!read(f).includes("'판정 밖'"), f);
 });
 

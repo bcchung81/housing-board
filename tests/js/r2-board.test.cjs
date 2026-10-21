@@ -40,7 +40,8 @@ test('1 월 상세 = 9·7 그 달 공급 예정: 달마다 건수·호수가 지
   assert.match(month, /<DataGrid label=\{`\$\{monthLabel\(ym\)\} 공급 예정 사업`\}/);
   assert.match(month, /value=\{fmt\(dueUnits\)\} unit=\"호\"[^]*\$\{fmt\(due\.length\)\}건/);
   assert.match(month, /monthIds\(molit\.months, lh\.blocks, calendar\)/, '열리는 달 = 실적 + LH + 9·7 공급 예정');
-  assert.match(read('app/(dashboard)/page.tsx'), /validMonths: monthIds\(molit\.months, lh\.blocks, calendar\)/, '종합상황판 월 링크도 같은 목록');
+  assert.match(month, /homeLh as lh/, '월 상세의 LH 준공 예정 = 정책 진행 자료(2026-10-21 W6)');
+  assert.match(read('app/(dashboard)/page.tsx'), /validMonths: monthIds\(molit\.months, homeLh\.blocks, calendar\)/, '종합상황판 월 링크도 같은 목록');
   const fut = panel('p-fut');
   assert.match(board, /const fu = up\[hasFut \? fi : 0\]/, '고른 달(앞으로 12개월 안) 또는 첫 달');
   assert.match(fut, /data-slot="fut-month"/);

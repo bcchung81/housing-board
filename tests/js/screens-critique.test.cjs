@@ -31,11 +31,11 @@ const num = (t) => Number(t.replace(/,/g, ''));
 
 test('단계 번호는 한 체계(①~⑥ 리본 칸): 서랍 단계 줄·목록 알약·타임라인·지역 공급 종류가 같은 이름이고, 공식 01~06 은 보조 표기뿐', () => {
   const steps = read('components/projects/StageSteps.tsx'), det = read('components/projects/ProjectDetail.tsx'), tl = read('components/projects/StageTimeline.tsx');
-  /* 2026-10-21: 사업 화면 HOME 원천 행의 창은 정책 화면 PoC 이름(정책·사업화·인허가·건설·공급·입주), 번호·색은 같은 ①~⑥ 칸 — 목록 알약과 같은 글자 */
+  /* 2026-10-21: 사업 화면 HOME 원천 행의 창은 정책 화면 PoC 이름(정책·사업화·인허가·건설·공급·입주), 색은 같은 ①~⑥ 칸 — 목록 알약과 같은 글자(같은 날 점검 #12: /projects 는 원 숫자 없음, 원 숫자는 종합상황판만) */
   assert.match(steps, /const NAMES = home \? HOME_NAMES : BOARD_NAMES/);
   assert.match(steps, /\{NAMES\.map\(\(name, i\) =>/);
-  assert.match(read('lib/board/projects-list.ts'), /export const homeStagePill = \(r: ProjectRow\): Cell => \(\{ text: `\$\{BOARD_CIR\[r\.board\]\} \$\{HOME_NAMES\[r\.board\]\}`/, '목록 알약 = 창 단계 이름');
-  assert.match(steps, /\{BOARD_CIR\[i\]\} \{NAMES\[i\]\}/);
+  assert.match(read('lib/board/projects-list.ts'), /export const homeStagePill = \(r: ProjectRow\): Cell => \(\{ text: HOME_NAMES\[r\.board\],/, '목록 알약 = 창 단계 이름(원 숫자 없음)');
+  assert.match(steps, /const label = \(i: number\) => \(home \? NAMES\[i\] : `\$\{BOARD_CIR\[i\]\} \$\{NAMES\[i\]\}`\)/);
   assert.doesNotMatch(det + steps, /STAGES\.map|s\.code\}/, '서랍에 공식 번호를 머리 글자로 그리지 않는다');
   assert.match(tl, /\{BOARD_CIR\[l\.board\]\} \{BOARD_NAMES\[l\.board\]\}/);
   assert.deepEqual(['SUPPLY_NOTICE', 'COMPLETION', 'MOVE_IN'].map((k) => R.CAL_TYPE[k].name), V.BOARD_NAMES.slice(3), '지역 공급 종류 = ④⑤⑥ 이름');
@@ -91,7 +91,7 @@ test('기본 범위·기본 정렬: 쿼리 없이 열면 수도권, 명시적 ?s
   assert.ok(list.every((r, i) => i === 0 || (V.lateOf(list[i - 1]) ?? -1) >= (V.lateOf(r) ?? -1)), '지연 개월 큰 순');
   const page = read('app/(dashboard)/projects/page.tsx');
   /* 2026-10-21 사업 화면 = HOME 원천 행: 기본 = 9·7 · 수도권, 순서 = 지연 → 주의 → 정상 → 판정 미확보(그 안에서 부족 호수 큰 순) */
-  assert.match(page, /const list = homeListOrder\(applyFilters\(rows, f\)\);/, '상태와 상관없이 기본 순서 = 점검 필요 순');
+  assert.match(page, /const list = homeOrderOf\(applyFilters\(rows, f\), f\)/, '상태와 상관없이 기본 순서 = 점검 필요 순(단계 부족 목록만 부족 큰 순)');
   const HP = require('../../data/board/home-projects.json'), home = V.homeRowsOf(HP.rows, HP.residuals);
   const hctx = { ...fctx, programs: V.homeProgramsOf(home), home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
   const hf = V.parseFilters({}, hctx);

@@ -19,14 +19,13 @@ const WORDS = noComments(read('lib/board/public-schedule.ts'));
 const AHEAD = read('components/region/Ahead.tsx');
 const sidoName = (c) => ({ 11: '서울', 28: '인천', 41: '경기' }[c] ?? c);
 
-test('대표 숫자 = 정책 화면과 같은 함수 값(수도권 준공 예정 24곳·13,372호)', () => {
-  const all = R.aheadAll(calendar, 'metro', sidoName);
-  const list = all.filter((e) => R.parseKinds(undefined).includes(e.type));
-  assert.equal(list.length, 25);   // 2026-10-20 HOME 판: 24곳·13,372호 → 25곳·14,570호
-  assert.equal(list.reduce((s, e) => s + e.units, 0), 14570);
-  assert.equal(P.hoText(14570), '1만 4,570호');
+test('대표 숫자 = 정책 화면과 같은 함수 값(2026-10-21 W6 수도권 모집 공고 예정 30곳·17,488호 = HOME 9·7 12개월 공급 예정 — 옛 원장 준공 25곳·입주 11곳 대체)', () => {
+  const list = R.aheadAll({ sido: Object.fromEntries(R.METRO.map((c) => [c, calendar.home.p97.sido[c] ?? []])) }, 'metro', sidoName);
+  assert.equal(list.length, 30);
+  assert.equal(list.reduce((s, e) => s + e.units, 0), 17488);
+  assert.equal(P.hoText(17488), '1만 7,488호');
   // 페이지는 같은 함수를 직접 쓴다(새 계산 없음)
-  for (const f of ['aheadAll', 'pickMonth', 'pastDue', 'parseKinds', 'regionYears', 'metroYears']) assert.match(PAGE, new RegExp(`\\b${f}\\b`), f);
+  for (const f of ['aheadAll', 'pickMonth', 'pastDue', 'regionYears', 'metroYears']) assert.match(PAGE, new RegExp(`\\b${f}\\b`), f);
 });
 
 test('수도권만: 서울·인천·경기 밖은 범위에 들어오지 않는다', () => {
@@ -91,8 +90,10 @@ test('하드코딩 없음: 화면에 색 리터럴·임의값 클래스가 없�
   assert.doesNotMatch(PAGE, /#[0-9a-fA-F]{3,8}\b|rgba?\(|\b(?:p|m|w|h|gap|rounded|leading|tracking)-\[/);
 });
 
-test('내 동네: lib/shell/menu.ts 의 myAreaScope 를 읽기만 한다', () => {
-  const c = read('components/region/MyAreaDefault.tsx');
+test('내 동네: 자동 이동 없이 수도권 전체일 때 [내 동네] 단추(2026-10-21 W6), lib/shell/menu.ts 의 myAreaScope 를 읽기만 한다', () => {
+  assert.doesNotMatch(PAGE, /MyAreaDefault/); assert.match(PAGE, /\{sido === 'metro' && !sgg \? <MyAreaFirst to="schedule" sggOf=\{sggOf\} \/> : null\}/);
+  const c = read('components/citizen/MyAreaFirst.tsx');
+  assert.doesNotMatch(c, /router\.replace|useRouter/, '자동 이동 없음');
   assert.match(c, /myAreaScope/);
   assert.match(c, /localStorage\.getItem\('myArea'\)/);
   assert.doesNotMatch(c, /localStorage\.setItem/);

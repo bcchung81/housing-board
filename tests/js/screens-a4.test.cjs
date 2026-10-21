@@ -219,5 +219,5 @@ test('B 기본 정렬: 번호 있는 사업 먼저, 후보 사업은 모두 뒤(
   // 2026-10-19 수도권 한정: 확인 필요(후보) 313 → 0 (후보가 모두 비수도권이었음)
   assert.equal(rows.filter((r) => V.statusOf(r) === 'review' && r.cls === 'delay').length, 0, '확인 필요(후보) 0');
   /* 열 머리 정렬은 그리드가 따로(listOrder 는 기본 순서만) · CSV 는 같은 순서 */
-  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /homeListOrder\(applyFilters\(idx\.rows, f\)\)/);
+  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /homeOrderOf\(applyFilters\(idx\.rows, f\), f\)/);
 });

@@ -25,7 +25,7 @@ test('#1·#9 단계 연계 ①계획: 레지스트리 계획 단계 건수와 �
   const src = read('lib/board/stage-links.ts');
   assert.ok(!src.includes('전국 아님'), '고정 글자 없음');
   const page = read('app/(dashboard)/sources/page.tsx');
-  assert.match(page, /ledgerNote: `원장 \$\{ledger\.observedMonth\.replace\('-', '\.'\)\} · \$\{nationOf\(ledger\)\}`/);
+  assert.match(page, /ledgerNote: `정책 진행 자료 \$\{homeBoard\.observedMonth\.replace\('-', '\.'\)\} · 수도권 9·7`/, '2026-10-21 W6: 종합상황판 집계 = home-board');
 });
 
 test('#1 실제 레지스트리: 계획(01·02) 단계는 143건이다', () => {
@@ -82,7 +82,7 @@ test('#14 블록 수는 고유 블록(사업지구+블록), 파일 행은 행이
   assert.equal(uniq(bs('2026-10')), 2);
   assert.equal(bs('2026-10').length, 3);
   assert.equal(uniq(bs('2026-08')), 1);
-  assert.match(read('app/(dashboard)/month/[id]/page.tsx'), /blockTotal\}블록/);
+  assert.match(read('app/(dashboard)/month/[id]/page.tsx'), /blockTotal\)\}블록 · \$\{fmt\(blocks\.length\)\}줄/, '블록 수 · 파일 줄 수(2026-10-21 점검 #16 — 두 단위를 함께)');
   const ag = read('app/(dashboard)/agency/[id]/page.tsx');
   assert.match(ag, /fmt\(blockTotal\)\}블록/);
   assert.doesNotMatch(ag, /blocks\.length\)\}건/);

@@ -6,11 +6,11 @@ import { FactNote, MetricRow, Page, PageHead, PanelHead } from '@/components/pag
 import PanelLink from '@/components/board/PanelLink';
 import MapLink from '@/components/board/MapLink';
 import { Card } from '@/components/ui/card';
-import { Chip, ChipBar, ChipGroup, ChipMenu } from '@/components/ui/chips';
+import { ChipBar, ChipMenu } from '@/components/ui/chips';
 import InfoTip from '@/components/ui/info-tip';
 import ScopeChip from '@/components/ui/scope-chip';
 import Ahead from '@/components/region/Ahead';
-import MyAreaDefault from '@/components/region/MyAreaDefault';
+import MyAreaFirst from '@/components/citizen/MyAreaFirst';
 import YearBars from '@/components/charts/YearBars';
 import { METRIC_COLOR } from '@/components/charts/palette';
 import calendarJson from '@/data/board/region-calendar.json';
@@ -22,7 +22,7 @@ import { METRO_AREAS, SIDO_SHORT, guOf } from '@/lib/board/metro-overview';
 import { mapScopeHref } from '@/lib/board/map-href';
 import homeJson from '@/data/board/home-projects.json';
 import { applyFilters, homeRowsOf, isMetro, listHref, type Filters, type HomeDocRow } from '@/lib/board/projects-view';
-import { CAL_KINDS, METRO, aheadAll, inSgg, parseKinds, parseSgg, pastDue, pickMonth, metroYears, regionYears, sggUnits, toggleKind, type AnnualDoc, type CalKind, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
+import { METRO, aheadAll, inSgg, parseSgg, pastDue, pickMonth, metroYears, regionYears, sggUnits, type AnnualDoc, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
 import { PUBLIC_METRICS, PUBLIC_METRIC_NAME, PUBLIC_WORDS, hoText, koMonth, parsePublicMetric, parsePublicSido, yearRank, type PublicMetric } from '@/lib/board/public-schedule';
 import { distinctNames } from '@/lib/board/public-labels';
 import type { YearVal } from '@/lib/board/annual';
@@ -36,10 +36,9 @@ const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
 const W = PUBLIC_WORDS;
 /* 사업 찾기와 같은 줄: 수도권 9·7 포트폴리오의 물량 집계 행(175 — 겹친·모호 행은 세지 않는다) */
 const HOME_ROWS = homeRowsOf((homeJson as unknown as { rows: HomeDocRow[] }).rows).filter((r) => isMetro(r.sgg) && r.home!.p97 && r.home!.chart.p97);
-/* 2026-10-21 HOME PoC(일반사용자까지 9·7 기본): 기본 종류 = 모집 공고(PoC '향후 12개월 공급(모집·분양) 예정' — region-calendar.json home.p97, 9·7 포트폴리오·원천 행 단위).
-   준공·입주는 PoC 에 같은 값이 없어 사업 원장 예정(region-calendar.json sido)을 그대로 더해 볼 수 있게 둔다 */
-const KIND_HOME: CalKind[] = ['SUPPLY_NOTICE'];
-const isHomeDefault = (ks: CalKind[]) => ks.length === 1 && ks[0] === 'SUPPLY_NOTICE';
+/* 2026-10-21 HOME PoC(일반사용자까지 9·7 기본): 일정 = 모집 공고 하나(PoC '향후 12개월 공급(모집·분양) 예정' — region-calendar.json home.p97, 9·7 포트폴리오·원천 행 단위).
+   2026-10-21 W6(기본 = 수도권 전체 · 9·7 · HOME): 옛 준공·입주 종류(사업 원장 예정 region-calendar.json sido — 수도권 준공 25곳·입주 11곳)는 뺐다.
+   HOME 덤프에는 사업별 준공·입주 예정 일정(policy-progress 묶음 schedules)이 있지만 화면 자료(home-projects·region-calendar home)로 나오지 않아 이 화면에서 셀 수 없다 */
 const BASE = '/citizen/schedule';
 /* 시군구 메뉴를 시도 채움 탭(.ui-tabs-seg)과 같은 높이 --ctl-h · 반경 tile 로, 안 고른 메뉴는 탭 틀과 같은 --muted 면으로(사업 찾기 FindFilters 와 같은 값) */
 const MENU = '[&_summary]:h-(--ctl-h) [&_summary]:rounded-tile [&_summary]:px-3';
@@ -57,18 +56,16 @@ const CHIPS = ['11', '41', '28'];
 /* 지난 몇 년 지표 탭: 고른 탭 밑줄·글자색 = 착공 짓는 중 · 준공 준공 임박 단계 글자색 */
 const METRIC_INK: Record<string, string> = { start: '[--tab-c:var(--st-build-ink)]', complete: '[--tab-c:var(--st-soon-ink)]' };
 
-type Q = { sido?: string; sgg?: string; m?: string; kind?: string; metric?: string };
+type Q = { sido?: string; sgg?: string; m?: string; metric?: string };
 
 /* 일반사용자 공급 일정(옛 정책 화면 /region 의 국민판, 수도권만): 지역 칩 → ① 앞으로 12개월(달 막대 + 고른 달 목록) → ② 지난 몇 년(해마다 착공·준공, 민간 포함).
    숫자는 정책 화면과 같은 함수(aheadAll·pickMonth·regionYears·metroYears)에서 나온다 — 말·열·거르기만 다르다. 제안서 5절. */
 export default async function SchedulePage({ searchParams }: { searchParams: Promise<Q> }) {
   const q = await searchParams;
-  const asked = q.sido !== undefined || q.sgg !== undefined;   // 주소에 지역이 있으면 내 동네로 옮기지 않는다(사업 찾기 MyAreaFirst 와 같은 쪽 판정)
   const { molit } = await getBoardData();
   const short = Object.fromEntries(molit.sido.map((s) => [s.code, s.name]));
   const sidoName = (c: string) => short[c] ?? c;
   const sido = parsePublicSido(q.sido);
-  const kinds = q.kind ? parseKinds(q.kind) : [...KIND_HOME];
   const metric = parsePublicMetric(q.metric);
   const name = sido === 'metro' ? '수도권' : sidoName(sido);
   const sgg = parseSgg(regionMap, sido, SGG_TABLE, q.sgg);
@@ -76,22 +73,20 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
   const scopeName = sggName ?? name;
   const units = sggUnits(regionMap, sido, SGG_TABLE);
 
-  const href = (p: { sido?: string; kinds?: CalKind[]; metric?: PublicMetric; m?: string | null; sgg?: string | null }) => {
+  const href = (p: { sido?: string; metric?: PublicMetric; m?: string | null; sgg?: string | null }) => {
     const s = new URLSearchParams();
-    const sd = p.sido ?? sido, ks = p.kinds ?? kinds, mt = p.metric ?? metric, m = p.m === undefined ? q.m : p.m;
+    const sd = p.sido ?? sido, mt = p.metric ?? metric, m = p.m === undefined ? q.m : p.m;
     const sg = p.sgg !== undefined ? p.sgg : p.sido !== undefined ? null : sgg;   // 시도를 바꾸면 시군구는 풀린다
-    s.set('sido', sd);   // 수도권도 적어 둔다 — 주소에 지역이 없을 때만 내 동네로 옮기기 때문
+    s.set('sido', sd);
     if (sg) s.set('sgg', sg);
     if (m) s.set('m', m);
-    if (!isHomeDefault(ks)) s.set('kind', ks.join(','));
     if (mt !== 'complete') s.set('metric', mt);
     return `${BASE}?${s.toString()}`;
   };
 
-  /* ① 앞으로 12개월 — 정책 /region 과 같은 함수(aheadAll). 모집 공고 = HOME PoC 9·7 공급 예정(home.p97), 준공·입주 = 사업 원장 예정(sido). 수도권 = 서울·인천·경기만 들어 있다 */
-  const cal = { sido: Object.fromEntries(METRO.map((c) => [c, [...(calendar.home.p97.sido[c] ?? []), ...(calendar.sido[c] ?? []).filter((e) => e.type !== 'SUPPLY_NOTICE')]])) };
-  const all = easyNames(aheadAll(cal, sido, sidoName)).filter((e) => !sgg || inSgg(e, sgg, SGG_TABLE));
-  const list = all.filter((e) => kinds.includes(e.type));
+  /* ① 앞으로 12개월 — 정책 /region 과 같은 함수(aheadAll). 모집 공고 = HOME PoC 9·7 공급 예정(home.p97)만. 수도권 = 서울·인천·경기만 들어 있다 */
+  const cal = { sido: Object.fromEntries(METRO.map((c) => [c, calendar.home.p97.sido[c] ?? []])) };
+  const list = easyNames(aheadAll(cal, sido, sidoName)).filter((e) => !sgg || inSgg(e, sgg, SGG_TABLE));
   const months = calendar.months;
   const m = pickMonth(months, list, q.m);
   const total = list.reduce((s, e) => s + e.units, 0);
@@ -105,7 +100,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
   const scopeMap = sgg ? mapScopeHref({ sgg }) : sido === 'metro' ? mapScopeHref() : mapScopeHref({ sido });
   const findHref = listHref(pf).replace(/^\/projects/, '/citizen/projects');
 
-  /* 내 동네로 옮기기에 쓰는 표: 시군구·구 코드 → 거를 수 있는 면 코드 */
+  /* [내 동네] 단추에 쓰는 표: 시군구·구 코드 → 거를 수 있는 면 코드 */
   const sggOf: Record<string, string> = {};
   for (const u of sggUnits(regionMap, 'metro', SGG_TABLE)) if (u.code) { sggOf[u.code] = u.code; for (const g of u.gu) sggOf[g.code] = u.code; }
 
@@ -125,7 +120,6 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
 
   return (
     <Page>
-      {asked ? null : <MyAreaDefault metro={METRO} sggOf={sggOf} base={BASE} />}
       <PageHead title="공급 일정">
         <span className="ml-auto flex items-center gap-1 text-sm whitespace-nowrap text-muted-foreground tabular-nums">
           {koMonth(calendar.from)} ~ {koMonth(calendar.to)} 예정 · 실적은 {koMonth(last)}까지
@@ -143,8 +137,9 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
           <Link href={href({ sido: 'metro' })} scroll={false} aria-current={sido === 'metro' ? 'true' : undefined} title="서울·경기·인천 전체">수도권</Link>
           {CHIPS.map((c) => <Link key={c} href={href({ sido: c })} scroll={false} aria-current={c === sido ? 'true' : undefined}>{sidoName(c)}</Link>)}
         </div>
+        {sido === 'metro' && !sgg ? <MyAreaFirst to="schedule" sggOf={sggOf} /> : null}
         <div className={cn(MENU, !sgg && MENU_OFF)}>
-          <ChipMenu label="시군구" fixed on={!!sgg} cols={2} title="시군구로 좁혀 보기"
+          <ChipMenu label="시군구" fixed right on={!!sgg} cols={2} title="시군구로 좁혀 보기"
             items={[{ href: href({ sgg: null }), label: `${name} 전체`, on: !sgg }, ...units.filter((u) => u.code).map((u) => ({ href: href({ sgg: u.code }), label: sido === 'metro' ? u.label : u.n, on: u.code === sgg }))]} />
         </div>
         <span className="ml-auto flex items-center gap-x-3 text-sm whitespace-nowrap text-muted-foreground tabular-nums">
@@ -161,31 +156,21 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
             <InfoTip label="앞으로 12개월 읽는 법">
               <dl>
                 <dt>모집 공고 예정</dt><dd>9·7 주택 공급 확대 방안에 연결된 사업 가운데 앞으로 12개월 안에 모집·분양이 예정된 호수예요. 정책 담당자 화면의 '향후 12개월 공급 예정'과 같은 숫자예요</dd>
-                <dt>준공·입주</dt><dd>공공 사업 일정에 있는 같은 기간의 준공·입주 예정을 더해 볼 수 있어요</dd>
                 <dt>막대</dt><dd>막대 한 조각이 사업 하나, 높이는 호수예요. 위 숫자는 그 달 호수, 아래는 사업 수예요</dd>
                 <dt>예정일 지남</dt><dd>예정한 날짜가 지났는데 아직 기록이 없는 사업이에요. 합계에는 들어 있어요</dd>
               </dl>
             </InfoTip>
-          </>}>
-          <ChipGroup label="종류" className="[&_a:not([aria-current])]:border-line2">
-            {CAL_KINDS.map((t) => {
-              const xs = all.filter((e) => e.type === t), next = toggleKind(kinds, t);
-              return <Chip key={t} href={href({ kinds: next ?? kinds })} on={kinds.includes(t)} swatch={{ kind: 'fill', color: `var(--st-${t === 'SUPPLY_NOTICE' ? 'sale' : t === 'COMPLETION' ? 'soon' : 'move'})` }}
-                title={`${scopeName} · ${W.kindTip?.[t]} · ${xs.length}${W.count} · ${hoText(xs.reduce((s, e) => s + e.units, 0))}`}>{W.kind[t]}<span className="text-muted-foreground tabular-nums">{fmt(xs.length)}{W.count}</span></Chip>;
-            })}
-          </ChipGroup>
-        </PanelHead>
+          </>} />
         {list.length ? (
-          <MetricRow className="mb-3" label={isHomeDefault(kinds) ? '모집 공고 예정' : `${kinds.map((k) => W.kind[k]).join('·')} 예정`} {...splitHo(hoText(total))}
+          <MetricRow className="mb-3" label="모집 공고 예정" {...splitHo(hoText(total))}
             items={[<span key="n" title={pastN ? `${W.past} ${pastN}${W.count}도 이 합계에 들어 있어요` : undefined}>{`${fmt(list.length)}${W.count}`}</span>]} />
         ) : null}
         {list.length ? (
-          <Ahead key={`${sido}|${kinds.join(',')}|${sgg ?? ''}`} words={W} sido={sido} regionName={scopeName} months={months} nowM={nowM} refDate={calendar.referenceDate} list={list} initialM={m} initialSgg={sgg} map={null} />
+          <Ahead key={`${sido}|${sgg ?? ''}`} words={W} sido={sido} regionName={scopeName} months={months} nowM={nowM} refDate={calendar.referenceDate} list={list} initialM={m} initialSgg={sgg} map={null} />
         ) : (
           <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-            <FactNote>앞으로 12개월 안에 {kinds.map((k) => W.kind[k]).join('·')} 예정인 공공 사업이 없어요</FactNote>
+            <FactNote>앞으로 12개월 안에 모집 공고 예정인 공공 사업이 없어요</FactNote>
             {sgg ? <Link href={href({ sgg: null, m: null })} scroll={false} className={LINK}>{`${name} 전체 보기`}<ChevronRight className="size-3.5 shrink-0" aria-hidden="true" /></Link> : null}
-            {kinds.length < CAL_KINDS.length ? <Link href={href({ kinds: [...CAL_KINDS], m: null })} scroll={false} className={LINK}>모든 종류 보기<ChevronRight className="size-3.5 shrink-0" aria-hidden="true" /></Link> : null}
             {sido !== 'metro' ? <Link href={href({ sido: 'metro', m: null })} scroll={false} className={LINK}>수도권 전체 보기<ChevronRight className="size-3.5 shrink-0" aria-hidden="true" /></Link> : null}
           </div>
         )}

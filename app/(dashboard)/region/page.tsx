@@ -21,8 +21,8 @@ import { mapScopeHref } from '@/lib/board/map-href';
 import ScopeChip from '@/components/ui/scope-chip';
 import { HOME_POLICY, METRO, aheadAll, inSgg, parsePolicy, parseSgg, pickMonth, viewOf, type AnnualDoc, type CalendarDoc, type HomePolicy, type RegionMapDoc } from '@/lib/board/region';
 import { POLICY_WORDS, type AheadWords } from '@/lib/board/public-schedule';
-import { getProjectsIndex } from '@/lib/board/projects-index';
-import { AHEAD_SUPPLY, CAND_NAME, applyFilters, listHref, type Filters } from '@/lib/board/projects-view';
+import { getHomeProjects } from '@/lib/board/projects-index';
+import { AHEAD_SUPPLY, CAND_NAME, HOME_DEFAULT_POLICY, applyFilters, listHref, type Filters } from '@/lib/board/projects-view';
 import type { Metric } from '@/lib/board/types';
 
 export const metadata: Metadata = { title: '지역 공급' };
@@ -42,7 +42,7 @@ const LINKA = 'text-foreground underline-offset-[3px] hover:text-primary hover:u
 type Q = { sido?: string; m?: string; policy?: string; metric?: string; sgg?: string };
 
 /* 지역 공급(옛 우리 동네 + 공급 실적): 지역 칩 → ① 앞으로 12개월(HOME 향후 12개월 공급 예정) → ② 지난 공급 실적 → ③ 동네 여건(서울·인천·경기만). 선택은 모두 주소(?sido=&m=&policy=&metric=&sgg=)에 남는다(sgg = 지도에서 고른 시군구 — 칩을 누르면 풀린다).
-   지역: 처음 열면 수도권(서울·인천·경기 — ?sido 없음, 옛 ?sido=all 도 수도권), ?sido=NN 시도 하나. 머리 줄에 같은 범위의 사업 화면(점검 필요) 연결.
+   지역: 처음 열면 수도권(서울·인천·경기 — ?sido 없음, 옛 ?sido=all 도 수도권), ?sido=NN 시도 하나. 머리 줄에 같은 범위·같은 정책의 사업 화면(원천 행 · 점검 필요) 연결.
    시안: docs/design/home-concept/region.html. 9.4 국민 예측가능성 지시(F-09)·연도별 실적(F-05)·전국↔시도(F-01) */
 export default async function RegionPage({ searchParams }: { searchParams: Promise<Q> }) {
   const q = await searchParams;
@@ -83,9 +83,9 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
   const nowM = calendar.referenceDate.slice(0, 7);
   const last = lastMonth(molit);
 
-  /* 같은 범위의 사업 화면 연결: 점검 필요(주의·지연·장기 지연) 건수 */
-  const { rows } = await getProjectsIndex();
-  const pf: Filters = sgg ? { sgg, gu: guOf(sgg) } : sido === 'metro' ? { metro: true } : sido ? { sido } : {};
+  /* 같은 범위의 사업 화면 연결(2026-10-21 W6): 사업 화면과 같은 HOME 원천 행·같은 정책(9·7 기본, 정책 칩이 정책 전체면 전 정책) — 건수 = 그 링크로 열리는 목록 건수, 점검 필요 = 지연·주의(부족률 2%) */
+  const hp = await getHomeProjects(), rows = hp.rows;
+  const pf: Filters = { home: true, ...(policy === 'p97' ? { policy: hp.policies.find((p) => p.key === HOME_DEFAULT_POLICY) } : {}), ...(sgg ? { sgg, gu: guOf(sgg) } : sido === 'metro' ? { metro: true } : { sido }) };
   const scopeName = sggName ?? name;
   /* 지도 연결: 시군구 = ?sgg=, 수도권 = 지도 첫 화면, 시도 하나 = ?sido=, 전국·수도권 밖 = 없음 */
   const scopeMap = sgg ? mapScopeHref({ sgg }) : sido === 'metro' ? mapScopeHref() : sido ? mapScopeHref({ sido }) : null;
@@ -108,9 +108,9 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
         </div>
         <span className={`${sub} ml-auto whitespace-nowrap tabular-nums`}>
           {scopeMap ? <><MapLink href={scopeMap} full={`${scopeName} 지도에서 보기`} />{' · '}</> : null}
-          <Link href={listHref(pf)} className={LINKA} title={`${scopeName} 사업 목록(사업 화면)`}>{scopeName} 사업 {fmt(inScope)}건</Link>
+          <Link href={listHref(pf)} className={LINKA} title={`${scopeName} · ${HOME_POLICY[policy]} 사업 목록(사업 화면 — 정책 진행 자료 원천 행)`}>{scopeName} 사업 {fmt(inScope)}건</Link>
           {' · '}
-          {check ? <Link href={listHref(pf, { status: 'check' })} className={LINKA} title="주의·지연·장기 지연 사업을 지연 개월 큰 순으로">점검 필요 <b className="text-bad">{fmt(check)}</b> ›</Link> : '점검 필요 0'}
+          {check ? <Link href={listHref(pf, { status: 'check' })} className={LINKA} title="지연·주의 사업(도래 목표 대비 부족률 — 부족 호수 큰 순)">점검 필요 <b className="text-bad">{fmt(check)}</b> ›</Link> : '점검 필요 0'}
         </span>
       </ChipBar>
 

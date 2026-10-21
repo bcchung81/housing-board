@@ -18,6 +18,7 @@ const HP_REASON = require('../../tools/ledger/home-projects').REASON;
 const HB = require('../../data/board/home-board.json');
 const IDX = require('../../data/board/projects-index.json');
 const gold = (f) => JSON.parse(fs.readFileSync(path.join(GOLD, f), 'utf8'));
+const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const has = fs.existsSync(path.join(GOLD, 'golden-projects.json')) && fs.existsSync(path.join(GOLD, 'golden-policy.json'));
 const opt = { skip: has ? false : '정답 파일(.cache/home-parity/golden) 없음' };
 
@@ -131,6 +132,30 @@ test("'/' 카드 목록 창 건수 = 카드 숫자(home-board.json): 연결 사�
   assert.equal(rows.filter((r) => r.home.board).reduce((s, r) => s + r.home.counted, 0), HB.scope.units, '카드 모집단 호수');
   /* 행은 사업 화면 HOME 창(?id=PRO_)으로 */
   assert.ok(L[BL.LIST_LATE].rows.every((r) => /[?&]id=PRO_/.test(r.href)));
+});
+
+/* 2026-10-21 사용자 결정: 병목·일정 지연 카드의 목록 = 그 단계 목표보다 측정이 모자란 사업(home-board.json home.stageShort) — 부족 합 − 다른 사업 초과 = 카드 숫자 */
+test("'/' 병목·일정 지연 목록 창: 단계 부족 사업 부족 합 − 초과 = 단계 부족량(병목 1,988 · 주의 최대 223), 행은 카드 모집단 · 부족 큰 순", () => {
+  const SS = HB.home.stageShort, R = V.homeRowsOf(HP.rows, HP.residuals, SS), L = BL.boardLists(V, R, () => undefined, SS);
+  assert.deepEqual(Object.keys(SS).sort(), HB.home.stageGaps.map((g) => g.stage).sort(), '부족량이 있는 단계마다');
+  for (const g of HB.home.stageGaps) {
+    const s = SS[g.stage], l = L[V.shortHref(g.stage)], sum = s.rows.reduce((n, r) => n + r.short, 0);
+    assert.equal(sum - s.over, g.gap, `${g.stage}: 부족 합 − 초과 = 카드`);
+    assert.equal(l.rows.length, s.rows.length, `${g.stage}: 창 건수 = 부족 사업 수(모두 카드 모집단)`);
+    assert.deepEqual(l.rows.map((r) => /id=(PRO_\w+)/.exec(r.href)[1]), s.rows.map((r) => r.id), `${g.stage}: 부족 큰 순`);
+    assert.match(l.title, new RegExp(`^${V.shortName(g.stage)} ${s.rows.length}건 · ${sum.toLocaleString('en-US')}호`));
+  }
+  assert.equal(HB.home.bottleneck.gap, SS[HB.home.bottleneck.stage].rows.reduce((n, r) => n + r.short, 0) - SS[HB.home.bottleneck.stage].over, '병목 = 카드 숫자');
+  /* 사업 화면도 같은 주소로 같은 행 */
+  const f = V.parseFilters({ sido: 'all', status: `short-${HB.home.bottleneck.stage}` }, { policies: [], programs: [], sidoOk: () => true, home: { agencies: [] } });
+  assert.deepEqual(V.homeOrderOf(V.applyFilters(R, f), f).map((r) => r.id), SS[HB.home.bottleneck.stage].rows.map((r) => r.id));
+  assert.equal(V.parseFilters({ status: 'short-NOPE' }, { policies: [], programs: [], sidoOk: () => true }).status, undefined, '모르는 단계는 거르지 않음');
+  /* 링크: '병목 보기'·병목 카드·일정 지연 카드가 이 주소 */
+  assert.match(read('components/board/Board.tsx'), /H\?\.bottleneck \? <PanelLink href=\{shortHref\(H\.bottleneck\.stage\)\} onClick=\{open\(shortHref\(H\.bottleneck\.stage\)\)\}/);
+  const dir = read('lib/board/directives.ts');
+  assert.match(dir, /list: shortList\(neck, H, '병목 단계'\)/); assert.match(dir, /list: shortList\(top\('DELAYED'\), H, /); assert.match(dir, /list: shortList\(top\('WARNING'\), H, /);
+  assert.match(dir, /href: `\/projects\?sido=all&status=short-\$\{g\.stage\}`/, 'directives 는 다른 .ts 를 가져오지 않아 같은 글자로');
+  assert.match(read('app/(dashboard)/page.tsx'), /boardLists\(View, idx\.homeRows, .*, homeBoard\.home\?\.stageShort\)/);
 });
 
 /* 2026-10-21 2038810 inventory 이식으로 인천검단 AA19 두 임대 유형이 덤프 묶음이 되어 '/' 카드 170 → 172, W3-H 로 덤프 뒤 신규 3행(PoC 스냅샷)도 같이 세어 175 — 차 0 */

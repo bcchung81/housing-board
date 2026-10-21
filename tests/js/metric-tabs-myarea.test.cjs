@@ -25,8 +25,8 @@ test('지표 탭 색: 지표 → 6단계 글자색 토큰, 색 리터럴 없음'
   }
 });
 
-test('공급 일정: 주소에 지역(?sido·?sgg)이 있으면 내 동네로 옮기지 않는다', () => {
-  assert.match(SCHEDULE, /const asked = q\.sido !== undefined \|\| q\.sgg !== undefined/);
-  assert.match(SCHEDULE, /\{asked \? null : <MyAreaDefault /);
-  assert.doesNotMatch(SCHEDULE, /^\s*<MyAreaDefault /m);
+test('공급 일정: 내 동네로 자동 이동하지 않는다 — 수도권 전체일 때만 [내 동네] 단추(2026-10-21 W6 기본 = 수도권 전체)', () => {
+  assert.doesNotMatch(SCHEDULE, /MyAreaDefault/);
+  assert.match(SCHEDULE, /\{sido === 'metro' && !sgg \? <MyAreaFirst to="schedule" sggOf=\{sggOf\} \/> : null\}/);
+  assert.doesNotMatch(SCHEDULE, /^\s*<MyAreaFirst /m);
 });

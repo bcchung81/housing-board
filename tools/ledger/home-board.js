@@ -71,6 +71,20 @@ function judgeOf(rows, day) {
   return out;
 }
 const pu = (x) => ({ projects: x.projects, units: x.units });
+/* 단계 부족 사업(2026-10-21 사용자 결정 — 종합상황판 병목·일정 지연 카드의 목록 창): 단계 집계 판정에 부족량이 있는 단계마다, 기준일까지 도래한 그 단계 목표(사업 일정 최대)보다 측정이 모자란 사업과 부족 호수.
+   단계 부족량 = 사업 부족 합 − 다른 사업의 초과 합(over) — 초과가 없으면 사업 부족 합이 카드 숫자와 같다. 사업 판정(statusAt)은 측정이 없는 단계를 판정하지 않아 '정상'인 사업도 들어간다 */
+function stageShort(rows, gaps, asOf) {
+  return Object.fromEntries(gaps.map((g) => {
+    let over = 0;
+    const list = [];
+    for (const c of rows) {
+      const goals = (c.schedules || []).filter((s) => s.stage === g.stage && s.units != null && s.due_date && s.due_date <= asOf);
+      const due = goals.length ? Math.min(HV.capacity(c), Math.max(...goals.map((s) => s.units))) : 0, got = HV.measured(c, g.stage, asOf) ?? 0;
+      if (due > got) list.push({ id: c.id, short: due - got }); else over += got - due;
+    }
+    return [g.stage, { rows: list.sort((a, b) => b.short - a.short || a.id.localeCompare(b.id)), over }];
+  }));
+}
 
 function homeBoard(view, { months } = {}) {
   const asOf = view.as_of_date, nowYm = asOf.slice(0, 7), year = Number(asOf.slice(0, 4));
@@ -148,6 +162,7 @@ function homeBoard(view, { months } = {}) {
           yearEnd: card?.year_end_expected != null ? { date: card.plan_date, units: card.year_end_expected } : null }];
       })),
       delayMax: latest.DELAYED ?? 0, warningMax: latest.WARNING ?? 0, stageGaps: gaps, bottleneck: neck,
+      stageShort: stageShort(rows, gaps, asOf),
       supplyUpcoming: { total: st.total, projects: st.projects, from: st.upcoming[0].month, to: st.upcoming.at(-1).month },
       monthly: st.monthly, projectStatus: screen.project_status, stageExclusive: screen.stage_exclusive, mapSupply: Object.fromEntries(Object.entries(screen.map_supply).map(([k, v]) => [k, { supplyReached: v.supply_reached, delayed: v.delayed, delayNote: v.delay_note }])),
     },

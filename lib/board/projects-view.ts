@@ -8,7 +8,8 @@ export type Cls = 'ok' | 'caution' | 'delay';
 export type Status = Cls | 'long' | 'review' | 'none';
 /* 상태 거르기: 상태 하나 또는 '점검 필요'(주의·지연·장기 지연, 지연 개월 큰 순) 또는 '지연(장기 포함)'(late — 종합상황판 지연·병목 카드의 숫자와 같은 범위) */
 /* 'review-late' = 후보 중 같은 계산으로 지연(장기 포함)인 사업 — 종합상황판 '후보 계산 313건'이 여는 목록(누른 숫자 = 목록 건수, 2026-10-16) */
-export type StatusFilter = Status | 'check' | 'late' | 'review-late';
+/* 'short-<HOME 단계>' = HOME 원천 행 중 그 단계 목표보다 측정이 모자란 사업(2026-10-21 — 종합상황판 병목·일정 지연 카드 목록, home-board.json home.stageShort) */
+export type StatusFilter = Status | 'check' | 'late' | 'review-late' | `short-${string}`;
 export type LinkStatus = 'CONFIRMED' | 'REVIEW_REQUIRED';
 /* 지도 색인 행(data/board/ledger-map.json · tools/ledger/board.js mapIndexFromLedger) */
 export type MapRow = {
@@ -157,7 +158,7 @@ export function parseFilters(q: Query, ctx: { policies: Policy[]; programs: Prog
   if (stage && /^[0-5]$/.test(stage)) f.stage = Number(stage);
   else if (stage && /^0[1-6]$/.test(stage)) f.stage = BOARD_OF_STAGE[stage];
   const status = one(q.status);
-  if (status && (status in STATUS_NAME || status === 'check' || status === 'late' || status === 'review-late')) f.status = status as StatusFilter;
+  if (status && (status in STATUS_NAME || status === 'check' || status === 'late' || status === 'review-late' || shortStageOf(status))) f.status = status as StatusFilter;
   const agency = one(q.agency);
   if (ctx.home) { const name = agency && (HOME_AGENCY_OF_KEY[agency] ?? agency); if (name && ctx.home.agencies.includes(name)) f.agency = name; }
   else if (agency && agency in AGENCY_NAME) f.agency = agency;
@@ -170,7 +171,10 @@ export const inAgency = (r: ProjectRow, f: Filters) => !f.agency || (f.home ? r.
 /* 지연(장기 포함) = 번호가 있는 사업 중 경과 6개월 이상 — 원장 집계 judgment.delay·delayByStage 와 같은 범위 */
 export const isLate = (r: ProjectRow) => r.issued && r.cls === 'delay';
 export const isReviewLate = (r: ProjectRow) => !r.issued && r.cls === 'delay';
-export const statusOk = (r: ProjectRow, st: StatusFilter | undefined) => !st || (st === 'check' ? isCheck(r) : st === 'late' ? isLate(r) : st === 'review-late' ? isReviewLate(r) : statusOf(r) === st);
+export const statusOk = (r: ProjectRow, st: StatusFilter | undefined) => {
+  const k = st && shortStageOf(st);
+  return !st || (k ? (r.home?.short?.[k] ?? 0) > 0 : st === 'check' ? isCheck(r) : st === 'late' ? isLate(r) : st === 'review-late' ? isReviewLate(r) : statusOf(r) === st);
+};
 /* 범위 = 렌즈 × 지역 × 기관(핵심 질문은 상태·단계 칩과 상관없이 이 범위로 센다) */
 export const scopeOf = (rows: ProjectRow[], f: Filters) => rows.filter((r) => inLens(r, f) && inRegion(r, f) && inAgency(r, f));
 /* skip: 그 거르기만 빼고 */
@@ -622,12 +626,18 @@ export type HomeDocRow = {
   policy: { id: string | null; status: string; programId: string | null; program: string | null }; stats: boolean; p97: boolean; chart: { p97: boolean; all: boolean };
   units: { planned: number | null; counted: number | null }; reached: Record<string, number> | null; judge: { status: string; gap: number | null } | null;
   upcoming: [string, number][] | null; agency: string | null; progress: { pct: number; date: string | null } | null; loc: { ourSgg: string | null; block: string | null; district: string | null }; from: string;
+  goal?: Record<string, number> | null;
 };
 export type HomeResidual = { id: string; field: string; dump: unknown; poc: unknown; use: string; why: string };
 /* counted = 집계 호수(물량 집계 대상 행의 대표 호수, 아니면 null) · reached = 단계별 누적 도달 · upcoming = 향후 12개월 공급 예정 호수 · ourId = 우리 원장 사업(같은 현장 병합) ·
    board = 종합상황판 모집단(home-board.json — 9·7 포트폴리오: 덤프 집계 대상 + 덤프 뒤 생긴 집계 행(PoC 스냅샷), home-projects views.p97 과 같은 행) · snapshot = 덤프에 없어 PoC 스냅샷에서 온 행 */
 export type HomeExtra = { counted: number | null; chart: { p97: boolean; all: boolean }; p97: boolean; judge: string | null; gap: number | null; reached: Record<string, number> | null;
-  upcoming: number; ourId: string | null; board: boolean; snapshot: boolean; policyStatus: string; progress: { pct: number; date: string | null } | null };
+  upcoming: number; ourId: string | null; board: boolean; snapshot: boolean; policyStatus: string; progress: { pct: number; date: string | null } | null; short?: Record<string, number>; goal?: Record<string, number> };
+/* 단계 부족 사업(home-board.json home.stageShort): 단계마다 그 단계 목표보다 측정이 모자란 사업·부족 호수, over = 다른 사업의 초과 합(단계 부족량 = 부족 합 − over) */
+export type StageShort = Record<string, { rows: { id: string; short: number }[]; over: number }>;
+export const shortStageOf = (st: string) => { const k = /^short-([A-Z_]+)$/.exec(st)?.[1]; return k && (PP_STAGES as readonly string[]).includes(k) ? k : null; };
+export const shortHref = (stage: string) => `/projects?sido=all&status=short-${stage}`;
+export const shortName = (stage: string) => `${PP_NAME[stage] ?? stage} 부족`;
 
 const SIDO_CODE: Record<string, string> = { 서울특별시: '11', 인천광역시: '28', 경기도: '41' };
 const HOME_CLS: Record<string, Cls> = { NORMAL: 'ok', WARNING: 'caution', DELAYED: 'delay' };
@@ -635,20 +645,25 @@ const polKey = (id: string) => { const m = /^POL_\d{4}_(\d{2})(\d{2})$/.exec(id)
 /* 그 칸의 누적 도달 호수(건설 칸 = 건설·준공 중 큰 값) */
 export const slotUnits = (reached: Record<string, number> | null, i: number) => (reached ? Math.max(0, ...Object.entries(reached).filter(([k]) => HOME_SLOT[k] === i).map(([, v]) => v)) : 0);
 
-export function homeRowsOf(rows: HomeDocRow[], residuals: HomeResidual[] = []): ProjectRow[] {
+export function homeRowsOf(rows: HomeDocRow[], residuals: HomeResidual[] = [], stageShort: StageShort = {}): ProjectRow[] {
   const dumpChart = new Map(residuals.filter((x) => x.field === 'chart.p97').map((x) => [x.id, !!x.dump]));
+  const short = new Map<string, Record<string, number>>();
+  for (const [k, v] of Object.entries(stageShort)) for (const x of v.rows) short.set(x.id, { ...short.get(x.id), [k]: x.short });
   return rows.filter((r) => r.stats).map((r) => {
     const sd = SIDO_CODE[r.region] ?? '';
     const sgg = r.sgg ? (r.loc.ourSgg && r.sgg.codes.includes(r.loc.ourSgg) ? r.loc.ourSgg : r.sgg.codes[0] ?? `${sd}000`) : `${sd}000`;
     const reached = r.reached ? HOME_NAMES.map((_, i) => i).filter((i) => i > 0 && slotUnits(r.reached, i) > 0) : [];
     const key = r.policy.id ? polKey(r.policy.id) : null;
     const planned = r.units.planned ?? 0;
+    /* 단계 부족(그 단계 목표보다 도달이 모자란 호수): 행의 goal − reached(입주 제외 — homeStageGapsOf 와 같은 셈), 종합상황판 stageShort 가 있으면 그 값 */
+    const own = Object.entries(r.goal ?? {}).filter(([k]) => k !== 'MOVE_IN').map(([k, d]) => [k, d - (r.reached?.[k] ?? 0)] as const).filter(([, v]) => v > 0);
+    const sh = own.length || short.has(r.id) ? { ...Object.fromEntries(own), ...short.get(r.id) } : null;
     return {
       id: r.id, name: r.name, issued: true, stage: `0${(reached.at(-1) ?? 0) + 1}`, cls: (r.judge && HOME_CLS[r.judge.status]) || null, why: null, overdue: null, next: null, units: planned,
       sgg, sggName: r.sgg ? `${r.region} ${r.sgg.name}` : `${r.region} 시군구 미연결`, notice: null, programs: r.policy.program ? [r.policy.program] : [], policies: key ? [key] : [],
       link: r.policy.status === 'CONFIRMED' ? 'CONFIRMED' : 'REVIEW_REQUIRED', agency: r.agency ?? '기관 미상', reached, completion: null, board: reached.at(-1) ?? 0,
       home: { counted: r.units.counted, chart: r.chart, p97: r.p97, judge: r.judge?.status ?? null, gap: r.judge?.gap ?? null, reached: r.reached, upcoming: (r.upcoming ?? []).reduce((s, x) => s + x[1], 0),
-        ourId: r.ourId, board: r.p97 && (dumpChart.get(r.id) ?? r.chart.p97), snapshot: r.from === 'snapshot', policyStatus: r.policy.status, progress: r.progress },
+        ourId: r.ourId, board: r.p97 && (dumpChart.get(r.id) ?? r.chart.p97), snapshot: r.from === 'snapshot', policyStatus: r.policy.status, progress: r.progress, ...(sh ? { short: sh } : {}), ...(r.goal ? { goal: r.goal } : {}) },
     };
   });
 }
@@ -687,22 +702,41 @@ export function homePipelineOf(rows: ProjectRow[], chartOf: (r: ProjectRow) => b
 /* 목록 순서(HOME): 지연 → 주의 → 정상 → 판정 미확보, 그 안에서 부족 호수 큰 순, 같으면 계획 호수 큰 순 */
 const HOME_RANK: Record<string, number> = { delay: 0, caution: 1, ok: 2 };
 export const homeListOrder = (rows: ProjectRow[]) => [...rows].sort((a, b) => (HOME_RANK[a.cls ?? ''] ?? 3) - (HOME_RANK[b.cls ?? ''] ?? 3) || (b.home?.gap ?? 0) - (a.home?.gap ?? 0) || b.units - a.units || a.name.localeCompare(b.name, 'ko'));
+/* 단계 부족 목록(status=short-…): 그 단계 부족 호수 큰 순, 같으면 id 순(home-board.js stageShort 와 같은 순서) */
+export const homeShortOrder = (rows: ProjectRow[], stage: string) => [...rows].sort((a, b) => (b.home?.short?.[stage] ?? 0) - (a.home?.short?.[stage] ?? 0) || a.id.localeCompare(b.id));
+/* 사업 화면·CSV·목록 창의 순서: 단계 부족 목록이면 부족 큰 순, 아니면 HOME 목록 순서 */
+export const homeOrderOf = (rows: ProjectRow[], f: Filters) => { const k = f.status ? shortStageOf(f.status) : null; return k ? homeShortOrder(rows, k) : homeListOrder(rows); };
 /* 우선 점검(월간 보고): 지연·주의 행, 부족 호수 큰 순 */
 export const homePriorityOf = (rows: ProjectRow[]) => homeListOrder(rows.filter((r) => r.cls === 'delay' || r.cls === 'caution'));
 
-/* 핵심 질문(HOME): ① 정책 목표 대비(정책 전체 — questionsOf 와 같은 칸) ② 어디서 막혀(지연 행 집계 호수가 가장 큰 칸) ③ 어떤 사업(지연 행 수 · 주의 따로) ④ 어디 먼저(지연·주의 집계 호수가 가장 큰 시도·시군구) ⑤ 향후 12개월 공급 예정 */
+/* 단계 부족량(종합상황판 병목·일정 지연과 같은 셈 — HOME 집계 판정 comparisonStatus): 행 묶음의 단계마다 기준일까지 도래한 목표 합(goal)과 누적 도달 합(reached)을 견줘
+   부족량 = max(0, Σ목표 − Σ도달), 부족률 = 부족량 ÷ Σ목표, 2% 이상 지연·그 밑 주의. 도달 기록이 없는 단계는 판정하지 않고, 입주는 HOME 집계가 판정하지 않아 뺀다.
+   병목 = 지연 단계 먼저, 그 안에서 부족량 큰 단계(home-board.js neck). 9·7 기본 묶음이면 home-board.json home.stageGaps·bottleneck 과 같다 */
+export type StageGap = { stage: string; label: string; status: 'DELAYED' | 'WARNING'; gap: number; rate: string };
+export function homeStageGapsOf(rows: ProjectRow[]) {
+  const due: Record<string, number> = {}, gaps: StageGap[] = [];
+  for (const k of PP_STAGES.filter((x) => x !== 'MOVE_IN')) {
+    const d = rows.reduce((n, r) => n + (r.home?.goal?.[k] ?? 0), 0), got = rows.reduce((n, r) => n + (r.home?.reached?.[k] ?? 0), 0);
+    due[k] = d;
+    if (!(d > 0) || !(got > 0) || got >= d) continue;
+    const gap = d - got, rate = 100 * gap / d;
+    gaps.push({ stage: k, label: PP_NAME[k], status: gap * 100 >= d * 2 ? 'DELAYED' : 'WARNING', gap, rate: rate > 0 && rate < 0.05 ? '0.1% 미만' : rate < 2 && rate >= 1.95 ? '2% 미만' : `${rate.toFixed(1)}%` });
+  }
+  const neck = [...gaps].sort((a, b) => (a.status === b.status ? b.gap - a.gap : a.status === 'DELAYED' ? -1 : 1))[0] ?? null;
+  return { due, gaps, neck };
+}
+
+/* 핵심 질문(HOME): ① 정책 목표 대비(정책 전체 — questionsOf 와 같은 칸) ② 어디서 막혀(단계 부족량이 가장 큰 단계 — 종합상황판 병목과 같은 셈) ③ 어떤 사업(지연 행 수 · 주의 따로) ④ 어디 먼저(지연·주의 집계 호수가 가장 큰 시도·시군구) ⑤ 향후 12개월 공급 예정 */
 export function homeQuestionsOf(rows: ProjectRow[], f: Filters, ctx: QuestionCtx): Question[] {
   const scope = scopeOf(rows, f), chartOf = homeChartOf(f), ch = scope.filter(chartOf), Q: Question[] = [];
   const first = questionsOf([], { ...f, home: undefined, program: undefined, policy: f.policy?.key === HOME_DEFAULT_POLICY || !f.policy ? undefined : f.policy }, ctx)[0];
   if (first?.stages) Q.push({ ...first, href: f.policy?.key === HOME_DEFAULT_POLICY ? undefined : first.href && listHref(f, { policy: HOME_DEFAULT_POLICY }) });
   const units = (r: ProjectRow) => r.home?.counted ?? 0;
-  const byStage = [0, 0, 0, 0, 0, 0];
-  for (const r of ch) if (r.cls === 'delay') byStage[r.board] += units(r);
-  const neck = bottleneckOf(byStage);
-  Q.push({ q: '어디서 막혀 있는가', href: neck ? listHref(f, { stage: String(neck.i), status: 'late' }) : undefined, ink: neck ? BOARD_INK[neck.i] : undefined, muted: !neck,
-    value: neck ? `${BOARD_CIR[neck.i]} ${HOME_NAMES[neck.i]}` : '없음', unit: '', sub: neck ? `병목 · 지연 ${fmt(neck.units)}호` : '지연 사업 없음',
-    tip: `병목 = 지연(부족률 2% 이상) 사업의 집계 호수가 가장 큰 단계 · ${byStage.map((v, i) => `${BOARD_CIR[i]} ${fmt(v)}`).join(' · ')}`,
-    help: '단계 목표보다 2% 넘게 모자란 사업이 가장 많이(호수 기준) 멈춰 있는 단계입니다.' });
+  const { gaps, neck } = homeStageGapsOf(ch), slot = neck ? HOME_SLOT[neck.stage] : -1, word = (g: StageGap) => (g.status === 'DELAYED' ? '지연' : '주의');
+  Q.push({ q: '어디서 막혀 있는가', href: neck ? listHref(f, { status: `short-${neck.stage}` }) : undefined, ink: neck ? BOARD_INK[slot] : undefined, muted: !neck,
+    value: neck ? HOME_NAMES[slot] : '없음', unit: '', sub: neck ? `병목 · ${word(neck)} ${fmt(neck.gap)}호` : '부족한 단계 없음',
+    tip: `병목 = 단계별 도래 목표 대비 누적 부족량이 가장 큰 단계(지연 먼저 — 종합상황판 병목과 같은 셈) · ${gaps.length ? gaps.map((g) => `${g.label} ${word(g)} ${fmt(g.gap)}(${g.rate})`).join(' · ') : '부족한 단계 없음'} · 누르면 그 단계 목표보다 모자란 사업`,
+    help: '이 사업들을 합쳐 보면, 기준일까지 와야 할 단계 목표보다 실제(담당자 입력 포함)가 가장 많이 모자란 단계입니다.' });
   const nd = scope.filter((r) => r.cls === 'delay').length, nc = scope.filter((r) => r.cls === 'caution').length;
   Q.push({ q: '어떤 사업이 늦어지는가', href: nd ? listHref(f, { status: 'late' }) : nc ? listHref(f, { status: 'caution' }) : undefined, value: fmt(nd), unit: '건', sub: `지연 ${fmt(nd)} · 주의 ${fmt(nc)}`,
     tip: `지연 = 도래 목표 대비 측정 부족률 2% 이상 · 주의 = 0% 초과~2% 미만(따로 셈) · 누르면 지연 목록(건수 = 이 숫자)`,
@@ -732,3 +766,6 @@ export function homeJudgeOf(rows: ProjectRow[], ourId: string): PublicJudge | nu
   const gap = top ? hs.filter((x) => x.cls === top).reduce((n, x) => n + (x.home!.gap ?? 0), 0) : 0;
   return { cls: top, gap: gap || null };
 }
+/* 정책담당자 원장 사업 창(project-window AdminDetailWin.judge): 같은 판정의 이름·설명(사업 화면 HOME 행 statusLabel·statusTip 과 같은 글자) */
+export const judgeName = (j: PublicJudge) => HOME_STATUS_NAME[j.cls ?? 'none']!;
+export const judgeTip = (j: PublicJudge) => `${HOME_STATUS_TIP[j.cls ?? 'none']} · 같은 현장 원천 행 중 가장 나쁜 판정${j.gap ? ` · 부족 ${Math.round(j.gap).toLocaleString('en-US')}호` : ''}`;

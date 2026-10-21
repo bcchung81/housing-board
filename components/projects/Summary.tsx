@@ -100,10 +100,11 @@ export function Questions({ list }: { list: Question[] }) {
 /* home = HOME 원천 행(사업 화면 — 2026-10-21): 칸 이름은 정책 화면 PoC 이름(HOME_NAMES), 큰 숫자는 집계 행의 이 단계까지 온 호수(①정책 = 집계 호수) */
 export function Pipeline({ open, total, on, href, badges, home = false }: { open: PipeCell[]; total: number; on?: number; href: (i: number) => string; badges?: ReactNode; home?: boolean }) {
   const NAMES = home ? HOME_NAMES : BOARD_NAMES;
+  const stageName = (i: number) => (home ? NAMES[i] : `${BOARD_CIR[i]} ${NAMES[i]}`);   // /projects(HOME)는 원 숫자 없음 — 원 숫자는 종합상황판만
   return (
     <div>
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <h3 className="ui-h3" title={home ? '큰 숫자·막대 = 이 단계까지 온 호수(집계 행의 누적 — 그 단계 또는 뒤 단계 실제 기록의 최대 호수, 담당자 입력 포함 · ①정책은 집계 호수 전체)와 이 단계까지 온 행 · 지금 이 단계 = 실제 기록이 있는 가장 뒤 단계가 이 칸인 행 · 칸을 누르면 그 행만 목록에' : '큰 숫자·막대 = 이 단계까지 온 사업(지금 이 단계이거나 그 뒤 단계에 있는 사업 — ①계획은 전체)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에'}>단계별 진행</h3>
+        <h3 className="ui-h3" title={home ? '큰 숫자·막대 = 이 단계까지 온 호수(집계 행의 누적 — 그 단계 또는 뒤 단계 실제 기록의 최대 호수, 담당자 입력 포함 · 정책은 집계 호수 전체)와 이 단계까지 온 행 · 지금 이 단계 = 실제 기록이 있는 가장 뒤 단계가 이 칸인 행 · 칸을 누르면 그 행만 목록에' : '큰 숫자·막대 = 이 단계까지 온 사업(지금 이 단계이거나 그 뒤 단계에 있는 사업 — ①계획은 전체)의 계획 호수·비율 · 지금 이 단계 = 현재 그 단계인 사업 · 칸을 누르면 지금 그 단계인 사업만 목록에'}>단계별 진행</h3>
         <InfoTip label="단계별 진행">
           {home ? <>
             <p>사업이 정책부터 입주까지 여섯 단계 중 어디까지 왔는지 셉니다(정책 진행 자료와 같은 단계 — 건설은 준공 포함).</p>
@@ -122,16 +123,16 @@ export function Pipeline({ open, total, on, href, badges, home = false }: { open
           if (!c) return (
             <li key={i} className="min-w-0">
               <div className="ui-inset flex h-full min-h-[80px] flex-col justify-center gap-0.5"
-                title={`${BOARD_CIR[i]} ${NAMES[i]} — 이 단계까지 온 사업이 없음${i === 5 && !home ? ' · 입주 실적은 원천에서 집계하지 않음(실제 시작일만)' : ''}`}>
-                <span className="text-sm text-muted-foreground">{BOARD_CIR[i]} {NAMES[i]}</span>
+                title={`${stageName(i)} — 이 단계까지 온 사업이 없음${i === 5 && !home ? ' · 입주 실적은 원천에서 집계하지 않음(실제 시작일만)' : ''}`}>
+                <span className="text-sm text-muted-foreground">{stageName(i)}</span>
                 <span className="text-sm text-muted-foreground">사업 없음</span>
               </div>
             </li>
           );
-          const tip = `${BOARD_CIR[c.i]} ${NAMES[c.i]} — 이 단계까지 온 사업 ${fmt(c.n)}건(${pct1(c.share)}% · 지금 이 단계이거나 그 뒤 단계인 사업) · ${home ? (c.i ? '이 단계까지 온 호수' : '집계 호수') : '계획 호수'} ${fmt(c.units)}호 · 지금 이 단계 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만 목록에' : ''}`;
+          const tip = `${stageName(c.i)} — 이 단계까지 온 사업 ${fmt(c.n)}건(${pct1(c.share)}% · 지금 이 단계이거나 그 뒤 단계인 사업) · ${home ? (c.i ? '이 단계까지 온 호수' : '집계 호수') : '계획 호수'} ${fmt(c.units)}호 · 지금 이 단계 ${fmt(c.now)}건${c.now ? ' — 누르면 그 사업만 목록에' : ''}`;
           const body = (
             <>
-              <span className="flex items-center gap-1.5 text-sm whitespace-nowrap" style={{ color: BOARD_INK[c.i] }}><i className="block size-[9px] flex-none rounded-chip" style={{ background: BOARD_COLOR[c.i] }} aria-hidden="true" />{BOARD_CIR[c.i]} {NAMES[c.i]}</span>
+              <span className="flex items-center gap-1.5 text-sm whitespace-nowrap" style={{ color: BOARD_INK[c.i] }}><i className="block size-[9px] flex-none rounded-chip" style={{ background: BOARD_COLOR[c.i] }} aria-hidden="true" />{stageName(c.i)}</span>
               <span className="flex flex-col">
                 <b className="text-xl leading-title font-bold tabular-nums">{fmt(c.units)}<small className="ml-[3px] font-sans text-sm whitespace-nowrap text-muted-foreground">호</small><small data-slot="stage-def" className="ml-1.5 font-sans text-sm font-normal whitespace-nowrap text-muted-foreground" title="이 단계까지 온 누적(지금 이 단계이거나 그 뒤 단계) — 종합상황판 단계표는 지금 그 단계인 호수, 지시 카드 착공은 통계누리 누계">누적</small></b>
                 <span className="text-sm text-muted-foreground tabular-nums">이 단계까지 온 사업 {fmt(c.n)} / {fmt(total)}</span>

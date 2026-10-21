@@ -1,5 +1,5 @@
 /* 데이터 원본 ② 수집 상태 · ③ 연도 확보 · ④ 연결. 값은 lib/board/home-sources.ts 가 data/board/home-sources.json(HOME 수집 실행·정책–프로그램·프로그램–사업 연결은 덤프, 건수·기준일·조회 범위·연도 확보는 PoC 스냅샷)과 원천 카탈로그에서 만든다.
-   ② 실패·경고 원천만 표로 펼치고 정상 원천은 기관별로 접는다. ③ 빈틈 없는 줄은 한 줄로 접는다. 모든 행이 같은 표지인 열은 그리지 않고 한 번만 말한다.
+   ② 실패·조회 범위 일부 원천만 표로 펼치고 정상 원천은 기관별로 접는다. ③ 빈틈 없는 줄은 한 줄로 접는다. 모든 행이 같은 표지인 열은 그리지 않고 한 번만 말한다.
    상태는 색만으로 알리지 않고 글자도 둔다. 시안: docs/design/home-concept/sources.html */
 import type { ReactNode } from 'react';
 import { ChevronRight } from 'lucide-react';
@@ -47,7 +47,7 @@ function issueRow(r: StatusRow): Row {
     id: `${r.owner}-${r.id}`,
     c: {
       name: { text: dotBreak(r.name), title: r.note }, owner: { text: OWNER[r.owner], title: HOME_TIP }, org: dotBreak(showOrg(r.org)),
-      st: r.ok ? { text: '경고', swatch: 'var(--warn)', tone: 'warn', title: '마지막 수집은 정상이지만 조회 범위가 일부', sort: 1 }
+      st: r.ok ? { text: '조회 범위 일부', swatch: 'var(--warn)', tone: 'warn', title: '마지막 수집은 정상이지만 조회 범위가 일부', sort: 1 }
         : { text: '실패', swatch: 'var(--bad)', tone: 'bad', title: `마지막 실행 ${r.lastRun ?? ''} 실패${r.lastOk ? ' — 마지막 정상 값을 씀' : ' — 정상 수집 없음'}`, sort: 0 },
       runs: r.runs, last: r.lastOk ?? { na: '없음' }, asOf: r.asOf, n: r.count,
     },
@@ -78,12 +78,12 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
         scope={<ScopeChip scope="원천 전체" title="지역 거르기 없음 — 정책 진행 자료(HOME)의 원천 전체 · 우리가 파일로 받아 둔 원천은 아래 원천 카탈로그" />}>
         <LegendList>
           {nFail ? <li className={KEY}><i className={`${dot} rounded-full bg-bad`} aria-hidden="true" />실패</li> : null}
-          {nWarn ? <li className={KEY}><i className={`${dot} rounded-full bg-warn`} aria-hidden="true" />경고</li> : null}
+          {nWarn ? <li className={KEY}><i className={`${dot} rounded-full bg-warn`} aria-hidden="true" />조회 범위 일부</li> : null}
           <li className={KEY}><i className={`${dot} rounded-full bg-ok`} aria-hidden="true" />정상</li>
         </LegendList>
         <InfoTip label="수집 상태 읽는 법">
           <dl>
-            <dt>실패 · 경고</dt><dd>실패 = 마지막 실행이 실패해 마지막 정상 값을 씀 · 경고 = 마지막 수집은 정상이지만 조회 범위가 일부 · 둘만 표로 펼치고 정상 원천은 기관별로 접음</dd>
+            <dt>실패 · 조회 범위 일부</dt><dd>실패 = 마지막 실행이 실패해 마지막 정상 값을 씀 · 조회 범위 일부 = 마지막 수집은 정상이지만 조회 범위가 일부 · 둘만 표로 펼치고 정상 원천은 기관별로 접음</dd>
             <dt>{OWNER.HOME}</dt><dd>HOME(국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료)의 수집 출처 · 수집 출처 = 정상으로 저장된 레코드가 있는 출처 · 건수 = 원천별 정상 레코드 수 · 원천 기준일은 원천이 밝힌 곳만 · 건수·기준일·조회 범위는 {hs.poc.fetchedAt.slice(0, 10).replace(/-/g, '.')} 받아 둔 PoC 값(덤프에 없음), 수집 실행은 덤프</dd>
           </dl>
         </InfoTip>
@@ -92,12 +92,12 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
         <MetricRow label="수집 출처" value={hs.poc.withData} unit="곳"
           items={[`등록 ${hs.sources.length} · 기관 ${hs.poc.orgs} · 우리 보관 원천 ${items.length}은 아래 카탈로그`,
             <span key="f" className={nFail ? 'text-bad' : undefined}>실패 {nFail}{failNames.length ? ` (${failNames.join(' · ')})` : ''}</span>,
-            <span key="w" className={nWarn ? 'text-warn' : undefined}>경고 {nWarn}</span>]} />
+            <span key="w" className={nWarn ? 'text-warn' : undefined}>조회 범위 일부 {nWarn}</span>]} />
       </div>
       {rows.length ? (
         <>
           {folded.length ? <p className="m-0 text-sm text-muted-foreground">{folded.join(' · ')}</p> : null}
-          <div className={`${GRID_DENSE} ${NOWRAP}`}><DataGrid label="실패·경고 원천" cols={cols} rows={rows} sortable={false} /></div>
+          <div className={`${GRID_DENSE} ${NOWRAP}`}><DataGrid label="실패·조회 범위 일부 원천" cols={cols} rows={rows} sortable={false} /></div>
         </>
       ) : null}
       <div className={rows.length ? 'mt-4' : undefined}>

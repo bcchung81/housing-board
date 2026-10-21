@@ -9,7 +9,7 @@ import { getBoardData } from './data';
 import { sidoName } from './calc';
 import { getHomeProjects, getProjectDrawer, getProjectsIndex, getPublicDetails, type SourceRef } from './projects-index';
 import { sggLabel } from './projects-list';
-import { candidateOf, homeJudgeOf, isMetro, mapLocOf, pastDueOf, type MapLoc, type Policy, type ProjectDetail, type ProjectRow, type PublicJudge } from './projects-view';
+import { candidateOf, homeJudgeOf, isMetro, mapLocOf, pastDueOf, type Cls, type MapLoc, type Policy, type ProjectDetail, type ProjectRow, type PublicJudge } from './projects-view';
 import { mapHref } from './map-href';
 import { METRO_AREAS, SIDO_SHORT, unitOf } from './metro-overview';
 import { PG_SHORT, groupOfBoard, noticeUrl, shortName, type StageGroup, type Steps } from './public-labels';
@@ -24,8 +24,11 @@ type Base = { asked: string; canonical: string; title: string; dataAsOf: string 
 /* 정책담당자: 발급 사업 상세(ProjectDetail + DrawerHead) · 목록에서 뺀 사업(안내) · 번호 없는 후보 간단 보기(Candidate + CandidateHead) */
 /* ledger = HOME 원천 행 창에 붙인 우리 원장 사업(id·이름·그 사업에 합쳐진 원천 행 수) — 원장 사업 창이면 없음 */
 export type LedgerLink = { id: string; name: string; rows: number };
+/* judge = 원장 사업 창(?id=PRJ-…)에 합쳐진 HOME 원천 행들의 PoC 판정(2026-10-21 — 일반사용자 창 home 과 같은 규칙) + 그 행들(id·이름·판정·부족 호수). 있으면 상태는 이것, 옛 '예정일 경과' 표지는 뺀다 */
+export type JudgeRow = { id: string; name: string; cls: Cls | null; gap: number | null };
+export type AdminJudge = PublicJudge & { rows: JudgeRow[] };
 export type AdminDetailWin = Base & { kind: 'detail'; view: 'admin'; row: WinRow; detail: WinDetail; sources: Record<string, SourceRef>; agencies: Record<string, string>; referenceDate: string; policies: Policy[];
-  from: { id: string; name: string } | null; label: string | null; mapLoc: MapLoc | null; ledger?: LedgerLink };
+  from: { id: string; name: string } | null; label: string | null; mapLoc: MapLoc | null; ledger?: LedgerLink; judge?: AdminJudge };
 /* HOME 원천 행인데 우리 원장 사업이 없음(덤프 뒤 생긴 행·변환 제외) — 머리·단계·개요만 */
 export type HomeWin = Base & { kind: 'home'; view: 'admin'; row: WinRow; policies: Policy[]; referenceDate: string };
 export type HiddenWin = Base & { kind: 'hidden'; view: 'admin'; project: { id: string; name: string; hiddenAt: string; hiddenReason?: string }; sggName: string };
@@ -51,6 +54,8 @@ const noticesOf = (x: ProjectDetail): WinNotices => {
   return { notices, ...(all.length > NOTICE_SHOW ? { noticesMore: all.length - NOTICE_SHOW } : {}) };
 };
 const detailOf = (x: ProjectDetail) => ({ ...only(x, DETAIL_KEYS), ...noticesOf(x) }) as WinDetail;
+/* PoC 판정을 쓰는 창: 단계별 '예정일 경과' 표지(옛 판정)를 뺀다 */
+const noLate = (x: WinDetail): WinDetail => ({ ...x, stages: Object.fromEntries(Object.entries(x.stages).map(([k, st]) => { const { late: _late, ...rest } = st ?? {}; return [k, rest]; })) as WinDetail['stages'] });
 const pick = (all: Record<string, SourceRef>, refs: string[]) => Object.fromEntries(refs.filter((k) => all[k]).map((k) => [k, all[k]]));
 
 /* asked = 주소의 id(옛 id 면 canonical 이 대표 사업 id), view = 관점. opts.cand = 후보 간단 보기(?cand=, 정책담당자만) · opts.today = 일반사용자 페이지 첫 창의 오늘(한국 시각).
@@ -73,10 +78,11 @@ export async function projectWindow(asked: string, view: 'admin' | 'public', opt
       const p = d.project;
       return { kind: 'hidden', view, asked, canonical: p.id, title: p.name, dataAsOf, project: { id: p.id, name: p.name, hiddenAt: p.hiddenAt!, ...(p.hiddenReason ? { hiddenReason: p.hiddenReason } : {}) }, sggName: d.sggName };
     }
-    const r = d.row;
-    return { kind: 'detail', view, asked, canonical: r.id, title: d.label ?? r.name, dataAsOf, row: rowOf(r), detail: detailOf(d.detail), sources: pick(d.sources, d.detail.refs),
+    const r = d.row, hs = (await getHomeProjects()).rows.filter((y) => y.home?.ourId === r.id), j = homeJudgeOf(hs, r.id);
+    return { kind: 'detail', view, asked, canonical: r.id, title: d.label ?? r.name, dataAsOf, row: rowOf(r), detail: j ? noLate(detailOf(d.detail)) : detailOf(d.detail), sources: pick(d.sources, d.detail.refs),
       agencies: r.agency && d.agencies[r.agency] ? { [r.agency]: d.agencies[r.agency] } : {}, referenceDate: d.referenceDate, policies: d.policies.filter((p) => r.policies.includes(p.key)),
-      from: d.from, label: d.label, mapLoc: mapLocOf(r, d.detail.loc) };
+      from: d.from, label: d.label, mapLoc: mapLocOf(r, d.detail.loc),
+      ...(j ? { judge: { ...j, rows: hs.map((y) => ({ id: y.id, name: y.name, cls: y.cls, gap: y.home!.gap ?? null })) } } : {}) };
   }
   if (d.kind !== 'detail' || !isMetro(d.row.sgg)) return null;
   const r = d.row, sd = r.sgg.slice(0, 2), x = (await getPublicDetails())[r.id] ?? null, home = homeJudgeOf((await getHomeProjects()).rows, r.id);
@@ -96,8 +102,6 @@ async function homeWindow(asked: string): Promise<AdminDetailWin | HomeWin | nul
   const base = { view: 'admin' as const, asked, canonical: r.id, title: r.name, dataAsOf: h.referenceDate, row: rowOf(r) };
   const ourId = r.home?.ourId, d = ourId ? await getProjectDrawer(ourId) : null;
   if (!d || d.kind !== 'detail') return { ...base, kind: 'home', policies: h.policies.filter((p) => r.policies.includes(p.key)), referenceDate: h.referenceDate };
-  const x = detailOf(d.detail);
-  const stages = Object.fromEntries(Object.entries(x.stages).map(([k, st]) => { const { late: _late, ...rest } = st ?? {}; return [k, rest]; }));
-  return { ...base, kind: 'detail', detail: { ...x, stages }, sources: pick(d.sources, d.detail.refs), agencies: {}, referenceDate: d.referenceDate, policies: h.policies.filter((p) => r.policies.includes(p.key)),
+  return { ...base, kind: 'detail', detail: noLate(detailOf(d.detail)), sources: pick(d.sources, d.detail.refs), agencies: {}, referenceDate: d.referenceDate, policies: h.policies.filter((p) => r.policies.includes(p.key)),
     from: null, label: d.label, mapLoc: mapLocOf(d.row, d.detail.loc), ledger: { id: d.row.id, name: d.row.name, rows: h.rows.filter((y) => y.home?.ourId === ourId).length } };
 }

@@ -15,6 +15,7 @@ import { Prov } from '@/components/ui';
 import { NATION, fmt, isProvisional, lastMonth, monthLabel, seriesOf, staleText, ymDot, ytd, ytdSpan } from '@/lib/board/calc';
 import { AGENCIES } from '@/lib/board/agencies';
 import { getBoardData } from '@/lib/board/data';
+import { HOME_LH_TIP, LH_ROWS_TIP, homeLh as lh, lhLoc, type HomeLhBlock } from '@/lib/board/home-lh-plan';
 import { mapHref } from '@/lib/board/map-href';
 import { getProjectsIndex } from '@/lib/board/projects-index';
 import { dayText, isMetro, sggOfAddress } from '@/lib/board/projects-view';
@@ -52,7 +53,7 @@ const blockCount = (bs: { district: string; block: string }[]) => new Set(bs.map
 
 export default async function AgencyDetail({ params }: Props) {
   const { id } = await params;
-  const { lh, molit, sources } = await getBoardData();   // molit: 시도 짧은 이름(GH 표의 시군구 칸)
+  const { molit, sources } = await getBoardData();   // molit: 시도 짧은 이름(GH 표의 시군구 칸)
   const a = DETAILS.agency.id.test(id) ? AGENCIES.find((x) => x.id === id) : undefined;
   if (!a) notFound();
 
@@ -95,27 +96,27 @@ export default async function AgencyDetail({ params }: Props) {
   const last = lastMonth(molit), year = last.slice(0, 4), area = sidoName(molit, NATION) ?? '전국';   // 범위 이름(통계누리 합계 자리 — 수도권, lib/board/data.ts)
   const lines = KS.map(([k, l]) => ({ key: k, label: l, color: METRIC_COLOR[k], values: seriesOf(molit, k, NATION).actors![a.actor] }));
   const i = molit.months.indexOf(last);
-  /* LH 준공 예정은 이번 달(원장 관측 달)부터 — 지난 예정일 블록은 표에서 뺀다(개수는 title 에) */
-  const { observedMonth, referenceDate: observedRef } = await getProjectsIndex();
-  const lhStale = staleText(lh.sourceAsOf, observedRef);   // LH 파일 낡음 표지(원장 기준일과의 차이)
+  /* LH 준공 예정(정책 진행 자료 — 9·7 연결 블록)은 이번 달(기준일 달)부터 — 지난 예정일 블록은 표에서 뺀다(개수는 title 에) */
+  const observedRef = lh.asOf, observedMonth = observedRef.slice(0, 7);
+  const lhStale = staleText(lh.sourceAsOf, observedRef);   // LH 파일 낡음 표지(정책 진행 자료 기준일과의 차이)
   const blocks = lh.blocks.filter((b) => b.date.slice(0, 7) >= observedMonth), past = lh.blocks.length - blocks.length;
   const byYear = [...new Set(blocks.map((b) => b.date.slice(0, 4)))].map((y) => ({ y, blocks: blocks.filter((b) => b.date.startsWith(y)) }));
   const blockTotal = blockCount(blocks);
   const recent = molit.months.slice(-12).reverse();
   const prov = isProvisional(molit, last);
-  /* 블록 → 지도(수도권만): 원장에 같은 이름('지구 블록')의 사업이 있으면 그 사업, 없으면 주소의 시군구 */
-  const idx = a.id === 'lh' ? await getProjectsIndex() : null;   // 블록 → 지도(아래)
+  /* 블록 → 지도(수도권만): 이어진 9·7 원천 행의 우리 원장 사업(ourId)이 있으면 그 사업, 없으면 주소의 시군구 */
+  const idx = a.id === 'lh' ? await getProjectsIndex() : null;   // 블록 → 지도(아래 — 원장 사업 id·시군구 이름)
   const lhLine = a.id === 'lh' ? agencyLine(homeRows, HOME_AGENCY.lh) : null;   // HOME 기관 줄(종합상황판 기관별 진행 LH 와 같은 값)
-  const byName = new Map((idx?.rows ?? []).filter((r) => isMetro(r.sgg)).map((r) => [`${r.sgg.slice(0, 2)}|${r.name}`, r.id]));
-  const blockMap = (b: (typeof lh.blocks)[number]) => {
+  const ours = new Set((idx?.rows ?? []).filter((r) => isMetro(r.sgg)).map((r) => r.id));
+  const blockMap = (b: HomeLhBlock) => {
     if (!idx || !isMetro(b.sido)) return null;
-    const project = byName.get(`${b.sido}|${b.district} ${b.block}`), sgg = project ? null : sggOfAddress(b.location, b.sido, idx.sggNames);
+    const project = b.ourId && ours.has(b.ourId) ? b.ourId : undefined, sgg = project ? null : sggOfAddress(b.location, b.sido, idx.sggNames);
     return project || sgg ? { text: project ? '지도에서 이 블록 보기' : '지도에서 이 시군구 보기', href: mapHref({ project, sgg }), doc: true, icon: 'map' as const, title: project ? '지도에서 이 사업 위치 보기' : '사업 번호가 없어 지도에서 이 블록의 시군구를 보기' } : null;
   };
   return (
     <Page>
       <PageHead title={a.name} tip={`통계누리 시행주체 '${a.actor}'의 ${area} 월별 호수${a.id === 'lh' ? '와 LH 준공 예정 블록' : ''}.`}
-        meta={`실적 ${ymDot(last)}`} metaTip={`통계누리 주택건설실적통계 · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}${a.id === 'lh' ? ` · LH 준공예정 파일 기준일 ${dotDates(lh.sourceAsOf)}` : ''}`} />
+        meta={`실적 ${ymDot(last)}`} metaTip={`통계누리 주택건설실적통계 · 자료 기간 ${ymDot(molit.months[0])} ~ ${ymDot(last)}${a.id === 'lh' ? ` · LH 준공 예정(정책 진행 자료) 파일 기준일 ${dotDates(lh.sourceAsOf)}` : ''}`} />
       {lhLine ? (
         <div className="flex flex-wrap items-baseline gap-x-2" title={LINE_TIP}>
           <MetricRow label={`${HOME_POLICY.p97} 사업 호수`} value={fmt(lhLine.total)} unit="호" items={lineItems(lhLine)} />
@@ -138,13 +139,14 @@ export default async function AgencyDetail({ params }: Props) {
       </Card>
       {a.id === 'lh' ? (
         <Card render={<section aria-label="LH 준공 예정" />}>
-          <PanelHead title="LH 준공 예정" tip={`이번 달(${ymDot(observedMonth)})부터 · 준공예정일 순 · LH 공공주택 준공예정현황(15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)}. 예정일은 그 시점의 계획입니다.${past ? ` · 예정일이 이번 달 전인 ${past}행은 뺌` : ''} · 지도 열은 수도권 블록만(사업이 있으면 그 사업, 없으면 시군구)`}>
+          <PanelHead title="LH 준공 예정" tip={`이번 달(${ymDot(observedMonth)})부터 · 준공예정일 순 · ${HOME_LH_TIP} · LH 파일 기준일 ${dotDates(lh.sourceAsOf)}. 예정일은 그 시점의 계획입니다.${past ? ` · 예정일이 이번 달 전인 ${past}행은 뺌` : ''} · 지도 열은 수도권 블록만(사업이 있으면 그 사업, 없으면 시군구)`}
+            scope={<ScopeChip scope="LH 준공 예정" source="정책 진행 자료" title={`${HOME_LH_TIP} · 정책 진행 자료 기준일 ${dotDates(lh.asOf)}`} />}>
           </PanelHead>
           <MetricRow className="mb-2" label="준공 예정" value={fmt(blocks.reduce((s, b) => s + b.units, 0))} unit="호"
-            items={[`${ymDot(observedMonth)}부터`, `${fmt(blockTotal)}블록`, <span key="d">파일 기준 {dotDates(lh.sourceAsOf)}{lhStale ? <span className="ml-1.5 text-warn" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 원장 기준일 ${dotDates(observedRef)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</span> : null}</span>]} />
+            items={[`${ymDot(observedMonth)}부터`, <span key="b" title={LH_ROWS_TIP}>{`${fmt(blockTotal)}블록 · ${fmt(blocks.length)}줄`}</span>, <span key="d">파일 기준 {dotDates(lh.sourceAsOf)}{lhStale ? <span className="ml-1.5 text-warn" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 정책 진행 자료 기준일 ${dotDates(observedRef)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</span> : null}</span>]} />
           <DataGrid label="LH 준공 예정 연도별" cols={YEAR_COLS} rows={byYear.map((r) => ({ id: r.y, c: { y: r.y, n: blockCount(r.blocks), units: r.blocks.reduce((s, b) => s + b.units, 0) } }))} />
           <DataGrid label="LH 준공 예정 블록" cols={BLOCK_COLS} maxHeight={520}
-            rows={blocks.map((b, k) => ({ id: String(k), c: { date: { text: dayText(b.date), sort: b.date, href: `/month/${b.date.slice(0, 7)}` }, district: b.district, block: b.block, type: b.type, units: b.units, location: b.location, map: blockMap(b) } }))} />
+            rows={blocks.map((b, k) => ({ id: String(k), c: { date: { text: dayText(b.date), sort: b.date, href: `/month/${b.date.slice(0, 7)}` }, district: b.district, block: b.block, type: b.type, units: b.units, location: lhLoc(b.location), map: blockMap(b) } }))} />
         </Card>
       ) : null}
     </Page>

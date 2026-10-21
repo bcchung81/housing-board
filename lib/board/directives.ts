@@ -93,11 +93,19 @@ function lateCard(L: LedgerBoard): Directive {
 }
 
 /* HOME 집계(home-board.json, 2026-10-21 결정: HOME 정책 추진현황과 같은 조건·같은 표기). 진척 관리는 같은 통계누리 착공 누계(HOME '수도권 누적 착공 · 공식 지역 통계'와 같은 값)에 목표 대비 비율,
-   사업장 = 승인 연결 사업, 병목 = 지연 단계 중 부족량이 가장 큰 단계, 예측 = 향후 12개월 공급 예정, 일정 지연 = 지연 최대·주의 최대(단계 최대 부족량) */
+   사업장 = 승인 연결 사업, 병목 = 지연 단계 중 부족량이 가장 큰 단계, 예측 = 향후 12개월 공급 예정, 일정 지연 = 지연 최대·주의 최대(단계 최대 부족량).
+   병목·일정 지연 목록 = 그 단계 목표보다 측정이 모자란 사업(?status=short-<단계> — home-board.json home.stageShort, 2026-10-21 사용자 결정): 부족 합 − 다른 사업 초과 = 카드 숫자 */
+const shortList = (g: { stage: string; label: string } | null | undefined, H: NonNullable<LedgerBoard['home']>, what: string) => {
+  const s = g && H.stageShort?.[g.stage];
+  if (!g || !s) return null;
+  const sum = s.rows.reduce((n, r) => n + r.short, 0);
+  return { href: `/projects?sido=all&status=short-${g.stage}`, title: `목록: ${what}(${g.label}) 목표보다 측정이 모자란 사업 ${s.rows.length}건 — 부족 합 ${f(sum)}호${s.over ? ` − 다른 사업 초과 ${f(s.over)}호` : ''} = 카드 숫자` };
+};
 function homeDirectives({ sourceCount, ledger: L, start }: DirectiveInput): Directive[] {
   const H = L.home!, span = `${start.year}년 1~${start.upto}월`, B = `HOME 9·7 정책 추진현황 규칙 · 기준일 ${L.referenceDate.replaceAll('-', '.')} · ${nation(L)}`;
   const pctTarget = start.cum !== null && H.targetUnits ? `목표 대비 ${(start.cum / H.targetUnits * 100).toFixed(2)}%` : undefined;
   const neck = H.bottleneck, up = H.supplyUpcoming;
+  const top = (st: string) => [...H.stageGaps].filter((g) => g.status === st).sort((a, b) => b.gap - a.gap)[0];
   return [
     { date: '08.14', t: '진척 관리', ...val('착공 누계', start.cum === null ? '–' : f(start.cum), start.cum === null ? '' : '호'), sub: pctTarget,
       basis: `통계누리 ${STAT_SCOPE} 착공 ${span} 누계 — HOME '수도권 누적 착공 · 공식 지역 통계'와 같은 값${pctTarget ? ` · 전체 목표 ${f(H.targetUnits)}호 대비 ${pctTarget.slice(6)}` : ''}. 사업별 식별 물량(착공 카드 ${f(H.cards.CONSTRUCTION?.current ?? 0)}호)과 별도입니다.`,
@@ -106,14 +114,14 @@ function homeDirectives({ sourceCount, ledger: L, start }: DirectiveInput): Dire
       p: ['p-region'], list: { href: '/projects?sido=all', title: `목록: 사업 목록(원장 기준 — HOME 연결 사업 ${f(L.scope.projects)}개와 모집단이 다름)` } },
     { date: '09.03', t: '범부처 통합·병목', ...(neck ? val(`${neck.label} ${neck.status === 'DELAYED' ? '지연' : '주의'}`, f(neck.gap), '호') : val('병목', '없음', '')), sub: neck?.rate,
       basis: `${B} · 병목 = 기준일 도래 목표 대비 누적 측정 부족량이 가장 큰 단계(지연 우선 · 단계 간 합산 없음)${H.stageGaps.length ? ` · ${H.stageGaps.map((g) => `${g.label} ${f(g.gap)}호 ${g.rate}`).join(', ')}` : ''}`,
-      p: ['p-trend', 'p-agency'], list: { href: '/projects?sido=all&status=late', title: '목록: 지연 사업(원장 기준 — HOME 단계 부족량과 정의가 다름)' } },
+      p: ['p-trend', 'p-agency'], list: shortList(neck, H, '병목 단계') ?? { href: '/projects?sido=all&status=late', title: '목록: 지연 사업(병목 없음)' } },
     { date: '09.04', t: '예측가능성', ...val('공급 예정', f(up.total), '호'), sub: `${f(up.projects)}개 사업`,
       basis: `${B} · 향후 12개월(${ymDot(up.from)}~${ymDot(up.to)}) 공급 예정 — 누적 공급 목표 증가분에서 이미 측정된 물량 제외`,
       p: ['p-fut'], list: { href: '/region?sido=all&kind=SUPPLY_NOTICE', title: '목록: 지역 공급의 모집 예정(원장 기준 — HOME 공급 예정과 정의가 다름)' } },
     { date: '09.18', t: '일정 지연 관리', ...val('지연 최대', f(H.delayMax), '호'), m: `지연 최대 ${f(H.delayMax)}호 · 주의 최대 ${f(H.warningMax)}호`,
       basis: `${B} · 부족률 2% 이상 지연, 0% 초과~2% 미만 주의 · 상태별 단계 최대 부족량(단계 간 합산 없음) · 사업 판정 지연 ${f(L.judgment.delay.projects)}개·주의 ${f(L.judgment.caution.projects)}개`, p: ['p-trend'],
-      list: { href: '/projects?sido=all&status=late', title: '목록: 지연 사업(원장 기준 — HOME 정의와 다름)' },
-      pair: { pre: '주의 최대', big: f(H.warningMax), u: '호', list: { href: '/projects?sido=all&status=caution', title: '목록: 주의 사업(원장 기준 — HOME 정의와 다름)' } } },
+      list: shortList(top('DELAYED'), H, '지연 최대 단계') ?? { href: '/projects?sido=all&status=late', title: '목록: 지연 사업(지연 단계 없음)' },
+      pair: { pre: '주의 최대', big: f(H.warningMax), u: '호', list: shortList(top('WARNING'), H, '주의 최대 단계') ?? { href: '/projects?sido=all&status=caution', title: '목록: 주의 사업(주의 단계 없음)' } } },
     { date: '09.30', t: '국민 공개·공식 원천', ...val('원천', f(sourceCount), '곳'), basis: '데이터 원본 화면의 원천 카탈로그에 등록된 원천 수',
       p: ['p-actual'], list: { href: '/sources', title: '목록: 데이터 원본(원천 카탈로그) — 사업이 아니라 원천 목록' } },
   ];

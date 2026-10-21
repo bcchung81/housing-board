@@ -255,6 +255,30 @@ test('projectWindow 일반사용자: 수도권 발급 사업만(목록에서 뺀
   assert.match(api, /s-maxage=86400/);
 });
 
+test('projectWindow 원장 사업(PRJ-) 판정: 합쳐진 HOME 원천 행이 있으면 PoC 판정(judge — 일반사용자 창 home 과 같음)·단계 예정일 경과 표지 없음, 없으면 옛 판정 그대로', async () => {
+  const I = loadTs('lib/board/projects-index.ts', { 'lib/board/data.ts': { getBoardData: async () => ({ allProjects: REG, molit: MOLIT }), SGG: {} } });
+  const rows = (await I.getHomeProjects()).rows, ids = [...new Set(rows.map((r) => r.home.ourId).filter(Boolean))];
+  const late = ids.find((id) => rows.some((r) => r.home.ourId === id && r.cls === 'delay'));
+  assert.ok(late, '지연 판정 원천 행이 붙은 원장 사업이 있다');
+  let judged = 0;
+  for (const id of [late, ...ids.slice(0, 20)]) {
+    const a = await W.projectWindow(id, 'admin');
+    if (!a || a.kind !== 'detail') continue;
+    const hs = rows.filter((r) => r.home.ourId === a.canonical);
+    if (!hs.length) { assert.equal(a.judge, undefined, id); continue; }
+    assert.deepEqual(a.judge.rows.map((r) => r.id).sort(), hs.map((r) => r.id).sort(), id); judged++;
+    assert.ok(Object.values(a.detail.stages).every((st) => !st || !('late' in st)), `${id}: 예정일 경과 표지 없음`);
+    const u = await W.projectWindow(id, 'public');
+    if (u) assert.deepEqual({ cls: a.judge.cls, gap: a.judge.gap }, u.home, `${id}: 일반사용자 창과 같은 판정`);
+  }
+  assert.ok(judged >= 15, `판정 창 ${judged}개`);
+  assert.equal((await W.projectWindow(late, 'admin')).judge.cls, 'delay');
+  const none = REG.find((p) => !p.hiddenAt && !p.supersededBy && DET.projects[p.id] && !ids.includes(p.id));
+  if (none) assert.equal((await W.projectWindow(none.id, 'admin')).judge, undefined, '원천 행이 없으면 judge 없음(옛 판정)');
+  const pd = read('components/projects/ProjectDetail.tsx');
+  assert.match(pd, /sName = j \? judgeName\(j\) : statusLabel\(r\)/); assert.match(pd, /pd = !j && pastDueOf\(r\)/);
+});
+
 test('흐린 배경 막: 창이 있으면 한 장 · 클릭을 막지 않음 · 토큰 · 쌓임 순서 상단 메뉴(40) < 막(50) < 창(60) < ⓘ 팝오버(70)', () => {
   const host = read('components/windows/WindowHost.tsx'), fw = read('components/windows/FloatingWindow.tsx');
   assert.match(host, /\{wins\.length \? <Scrim \/> : null\}/);

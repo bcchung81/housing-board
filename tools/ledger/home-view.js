@@ -316,5 +316,5 @@ function programScreen(view, program, { asOf, year } = {}) {
 module.exports = {
   assessGap, formatGapRate, comparisonStatus, summaryValues, trackingPoints, monthlyPoints, referenceAxis,
   goalSeries, goalAt, targetAt, measuredAt, delayAt, mapDelay, statusAt, agencyName, statistics,
-  stageDistribution, reached, stateAt, withTracking, policyScreen, programScreen,
+  stageDistribution, reached, stateAt, withTracking, policyScreen, programScreen, capacity, measured,
 };

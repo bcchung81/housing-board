@@ -22,7 +22,8 @@
        · reached{ BUSINESS·APPROVAL·CONSTRUCTION·COMPLETION·SUPPLY·MOVE_IN }(그 단계 또는 뒤 단계 실제 사건 최대 호수, 사업 호수로 자름 — S1 2.1 reached, 입력·추정 포함)
        · judge{ status(DELAYED 지연·WARNING 주의·NORMAL 목표 도달·UNKNOWN 판정 미확보), gap(부족 호수) }(S1 2.3 statusAt) · upcoming[[월, 호수]](기준 달부터 12개월 공급(모집·분양) 예정 증가분 — S1 2.4)
        · agency(PoC agencyName — S1 2.5) · progress{ pct, date }(공정률) · loc{ ourSgg(우리 원장 시군구 코드 — ledger-map.json bySgg 키), block(시도|지구|블록), district }
-       · from('dump' | 'snapshot' — 행 자체가 스냅샷에서 온 것). reached·judge·upcoming 은 묶음(코호트)이 있는 행만(없으면 null)
+       · goal{ 단계: 기준일까지 도래한 목표 호수 }(0 인 단계 뺌 — 행 묶음의 단계 부족량 = max(0, Σgoal − Σreached), 종합상황판 병목과 같은 셈)
+       · from('dump' | 'snapshot' — 행 자체가 스냅샷에서 온 것). reached·judge·upcoming·goal 은 묶음(코호트)이 있는 행만(없으면 null)
    - views.p97·views.all: rows(행 수) · chart(집계 대상 행) · counted(물량 있는 집계 행) · excluded(중복·모호 제외) · missing(물량 없음) · units(집계 호수 합)
        · regions[](시도: rows·units) · municipalities[](시군구: id·name·region·codes·rows·units — 행이 있는 곳만) · unlinked(시군구 미연결 행 수)
        · stages(PoC /map/dashboard 단계 분포 — 스냅샷) · future[](연말 누적 공급(모집·분양) 예정: 집계 행의 원천 공급 일정 중 기준 달 뒤 ~ 그해 말, 덤프)
@@ -121,13 +122,24 @@ function ledgerIds(monthDir) {
   return ids;
 }
 
-/* 묶음(코호트) 하나의 S1 값: 단계 도달·판정·12개월 공급 증가분 */
+/* 묶음(코호트) 하나의 S1 값: 단계 도달·판정·12개월 공급 증가분 · 단계 목표·측정(goal — 종합상황판 병목과 같은 셈, home-board.js stageShort) */
 function cohortValues(c, asOf) {
   const data = { as_of_date: asOf };
   const reached = Object.fromEntries(STAGES.map((k) => [k, HV.reached(data, [c], k, asOf)]));
   const j = HV.statusAt(c, asOf);
   const st = HV.statistics([c], asOf, +asOf.slice(0, 4));
-  return { reached, judge: { status: j.status, gap: j.units }, upcoming: st.upcoming.filter((r) => r.units > 0).map((r) => [r.month, r.units]) };
+  return { reached, judge: { status: j.status, gap: j.units }, upcoming: st.upcoming.filter((r) => r.units > 0).map((r) => [r.month, r.units]), goal: goalOf(c, asOf) };
+}
+/* 단계마다 기준일까지 도래한 목표(사업 일정 최대, 사업 호수로 자름) — 0 인 단계는 뺀다.
+   행 묶음의 단계 부족량 = max(0, Σ목표 − Σ누적 도달 reached)(포트폴리오 전체면 home-board.json home.stageChecks 의 due·actual·gap 과 같다) */
+function goalOf(c, asOf) {
+  const out = {};
+  for (const k of STAGES) {
+    const goals = (c.schedules || []).filter((s) => s.stage === k && s.units != null && s.due_date && s.due_date <= asOf);
+    const due = goals.length ? Math.min(HV.capacity(c), Math.max(...goals.map((s) => s.units))) : 0;
+    if (due) out[k] = due;
+  }
+  return out;
 }
 
 /* 덤프 뒤 생긴 9·7 집계 행(덤프에 없고 PoC 9·7 지도 집계 대상·9·7 확정 연결)의 PoC 정책 묶음 — build 가 그 행에 쓰는 것과 같은 스냅샷 근거.
@@ -215,7 +227,7 @@ function build(home, poc, ledger) {
     /* 단계 도달·판정·12개월 공급·기관: 덤프 묶음(덤프 뒤 생긴 행은 PoC 정책 묶음). 9·7 묶음은 PoC 정책 응답과 견줘 다른 칸을 남긴다 */
     const pc = pocCohorts.get(id);
     const c = d ? cohorts.get(id) : pc ?? null;
-    const v = c ? cohortValues(c, asOf) : { reached: null, judge: null, upcoming: null };
+    const v = c ? cohortValues(c, asOf) : { reached: null, judge: null, upcoming: null, goal: null };
     const agency = c || d ? HV.agencyName(c?.developer ?? d?.developer) : null;
     if (d && pc) {
       /* 덤프 묶음에만 있는 담당자 측정값이 이 행이 아닌 같은 블록 원천 행의 것인지(2026-10-21 새 덤프: 부천대장 A5·A6 의 A-5·A-6 묶음 계약 행 공급 추정) */

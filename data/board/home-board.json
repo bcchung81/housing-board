@@ -2155,6 +2155,66 @@
    "gap": 1988,
    "rate": "36.2%"
   },
+  "stageShort": {
+   "SUPPLY": {
+    "rows": [
+     {
+      "id": "PRO_89b769c87e8d8ee8f6a837bf",
+      "short": 690
+     },
+     {
+      "id": "PRO_f579d71a70d2f60499abdb0b",
+      "short": 690
+     },
+     {
+      "id": "PRO_e8e64858eea849421f7245dd",
+      "short": 293
+     },
+     {
+      "id": "PRO_2c8c2fda28fd878a7a9a94bd",
+      "short": 291
+     },
+     {
+      "id": "PRO_9e2cfb55c9d254091d3fb30d",
+      "short": 281
+     },
+     {
+      "id": "PRO_3e4fe820f1cb21379bbbe611",
+      "short": 111
+     }
+    ],
+    "over": 2133
+   },
+   "COMPLETION": {
+    "rows": [
+     {
+      "id": "PRO_afa121ebed699e8aab86cd60",
+      "short": 620
+     },
+     {
+      "id": "PRO_7af1f4c60e23bd2da29910fc",
+      "short": 412
+     },
+     {
+      "id": "PRO_693fd7d6c158c2da26abe2c0",
+      "short": 399
+     },
+     {
+      "id": "PRO_e57577ac296a4798617e617b",
+      "short": 316
+     },
+     {
+      "id": "PRO_3e4fe820f1cb21379bbbe611",
+      "short": 227
+     },
+     {
+      "id": "PRO_10812cb53671cfc2fe139728",
+      "short": 14
+     }
+    ],
+    "over": 0
+   }
+  },
   "supplyUpcoming": {
    "total": 17488,
    "projects": 30,

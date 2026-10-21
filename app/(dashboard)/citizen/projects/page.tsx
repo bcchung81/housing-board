@@ -6,7 +6,6 @@ import { Card } from '@/components/ui/card';
 import InfoTip from '@/components/ui/info-tip';
 import ScopeChip from '@/components/ui/scope-chip';
 import FindFilters from '@/components/citizen/FindFilters';
-import MyAreaFirst from '@/components/citizen/MyAreaFirst';
 import RowLink from '@/components/windows/RowLink';
 import WindowSeed from '@/components/windows/WindowSeed';
 import { mapScopeHref } from '@/lib/board/map-href';
@@ -25,9 +24,9 @@ import {
    수도권 9·7 포트폴리오의 물량 집계 행(175행 151,271호 — /citizen 공급 예정 호수와 같은 범위, 정책 /projects 230행 중 같은 블록에 겹친·모호 55행은 줄로 보이지 않는다).
    이름 검색은 겹친 행 이름도 받아 그 대표 줄(같은 블록 또는 같은 현장 원장 사업의 집계 행)로 잇고, 대표 줄이 없는 겹친 행은 검색할 때만 그 줄 그대로(DUP_TEXT) 보인다.
    호수 = 집계 호수, 단계 = PoC 누적 도달 칸 → 일반사용자 이름(PUBLIC_OF_HOME),
-   예정 대비 = PoC 판정(homeFact), 시행 = PoC 기관 이름, 공사 % = PoC 공정률. 다음 일정·들어올 때·사업 창은 같은 현장 원장 사업(ourId)의 값(없으면 미정·창 없음).
+   예정 대비 = PoC 판정(homeFact — 2026-10-21 W6 원장 예정일 문장 없음), 시행 = PoC 기관 이름, 공사 % = PoC 공정률. 다음 일정·들어올 때·사업 창은 같은 현장 원장 사업(ourId)의 값(없으면 미정·창 없음).
    들어올 해별 묶음, 묶음 안은 들어올 때 가까운 순(/citizen 시트 inCmp).
-   주소: ?sido=metro|11|28|41 · ?sgg=시군구 · ?stage=prep|build|sale · ?q=이름 · ?id=사업(사업 창 — 2026-10-19 서랍 대체, 한 번에 1개). 주소에 지역이 없으면 내 동네(localStorage myArea)로 한 번 옮긴다.
+   주소: ?sido=metro|11|28|41 · ?sgg=시군구 · ?stage=prep|build|sale · ?q=이름 · ?id=사업(사업 창 — 2026-10-19 서랍 대체, 한 번에 1개). 첫 범위는 늘 수도권 전체(2026-10-21 W6), 저장된 내 동네(localStorage myArea)는 수도권 전체일 때 거르기 줄의 [내 동네] 단추(MyAreaFirst)로 한 번 눌러 간다.
    지연은 안 A — 사실 문장만(중립 색, 건수·'늦어지는 사업만' 거르기 없음). 정책 목표 대비·병목·핵심 질문·누적 진행·정책/기관/상태 칩·CSV·인쇄·사업 id·근거 접힘은 두지 않는다. */
 type Props = { searchParams: Promise<Record<string, string | string[] | undefined>> };
 const one = (v: string | string[] | undefined) => (typeof v === 'string' ? v : undefined);
@@ -44,7 +43,6 @@ async function load(searchParams: Props['searchParams']) {
   const stage = STAGES.find((s) => s === one(q.stage));
   const text = (one(q.q) ?? '').trim().slice(0, 40);
   const id = one(q.id) ?? null;
-  const asked = ['sido', 'sgg', 'id', 'q'].some((k) => one(q[k]) !== undefined);
   /* 시도를 뗀 시군구 이름: 원장 이름('인천광역시 계양구' → '계양구'), 구가 있는 경기 시 코드는 지도 코드표('고양시'), 그 밖은 HOME 행의 시군구 이름(시군구 미연결은 '시군구 미정') */
   const homeSgg = new Map(home.map((r) => [r.sgg, r.sggName]));
   const sggShort = (c: string) => { const n = idx.sggNames[c] ?? homeSgg.get(c); return c.endsWith('000') ? '시군구 미정' : n ? n.slice(n.indexOf(' ') + 1) : METRO_AREAS[c] ?? c; };
@@ -52,7 +50,7 @@ async function load(searchParams: Props['searchParams']) {
   const cur: FindQuery = f.sgg ? { sgg: f.sgg } : { sido: f.sido ?? 'metro' };
   /* 받은 쿼리 글자(첫 창의 '같은 단계' 링크가 지금 거르기를 지키게 — WindowSeed) */
   const search = new URLSearchParams(Object.entries(q).flatMap(([k, v]) => (typeof v === 'string' ? [[k, v]] : []))).toString();
-  return { f, idx, home, stage, text, id, asked, sggShort, region, cur, search };
+  return { f, idx, home, stage, text, id, sggShort, region, cur, search };
 }
 
 export async function generateMetadata({ searchParams }: Props): Promise<Metadata> {
@@ -119,7 +117,7 @@ function Row({ x, href, on, withArea }: { x: PublicItem; href: string | null; on
 }
 
 export default async function CitizenProjectsPage({ searchParams }: Props) {
-  const { f, idx, home, stage, text, id, asked, sggShort, region, cur, search } = await load(searchParams);
+  const { f, idx, home, stage, text, id, sggShort, region, cur, search } = await load(searchParams);
   const today = todayKst();
   /* 첫 창(?id=): 창 props 는 projectWindow 결과만(수도권 발급 사업 — 허용 목록, RSC 페이로드에 공개된다) */
   const [details, win] = await Promise.all([getPublicDetails(), id ? projectWindow(id, 'public', { today }) : null]);
@@ -134,7 +132,7 @@ export default async function CitizenProjectsPage({ searchParams }: Props) {
     const h = r.home!, o = h.ourId ? ours.get(h.ourId) : undefined, x = h.ourId ? details[h.ourId] : undefined;
     return { id: r.id, name: r.name, sgg: r.sgg, area: area(r.sgg), units: h.counted ?? 0, board: pb(r), issued: true, cls: r.cls, overdue: o?.overdue ?? null, next: o?.next ?? null,
       pastDue: false, steps: x?.steps ?? [null, null, null, null], agency: r.agency === '기관 미상' ? '' : r.agency ?? '', progress: h.progress ? Math.round(h.progress.pct) : null,
-      fact: homeFact(r.cls, h.gap, o?.overdue ?? null), dup: !h.chart.p97 && (r.units ?? 0) > 0, link: h.ourId && details[h.ourId] ? h.ourId : null };
+      fact: homeFact(r.cls, h.gap), dup: !h.chart.p97 && (r.units ?? 0) > 0, link: h.ourId && details[h.ourId] ? h.ourId : null };
   }), today, sggShort);
   const items = text ? all.filter((x) => nameMatch(text, [x.name, x.full, ...(also.get(x.id) ?? [])])) : all;
   const groups = byYear(items, today);
@@ -151,11 +149,10 @@ export default async function CitizenProjectsPage({ searchParams }: Props) {
 
   return (
     <Page>
-      {asked ? null : <MyAreaFirst stage={stage} />}
       <PageHead title="사업 찾기"
         meta={<span className="inline-flex items-center gap-x-1">{refText(idx.referenceDate)}
           <InfoTip label="자료 기준"><p>국토교통부·LH·SH·GH·iH 공공 자료를 모은 수도권(서울·인천·경기) 주택 공급 정책 사업이에요</p><p>예정일은 사업 시행자 계획이라 바뀔 수 있어요</p><p>출처: 국토교통부 건축HUB · LH · 청약홈</p></InfoTip></span>} />
-      <FindFilters sido={cur.sido ?? f.sgg!.slice(0, 2)} sgg={f.sgg ? { code: f.sgg, label: sggShort(f.sgg) } : null} sggItems={sggItems} stage={stage} q={text} />
+      <FindFilters sido={cur.sido ?? f.sgg!.slice(0, 2)} sgg={f.sgg ? { code: f.sgg, label: sggShort(f.sgg) } : null} sggItems={sggItems} stage={stage} q={text} myArea={!f.sgg && !f.sido} />
       <Card render={<section aria-labelledby="find-list" />}>
         <PanelHead id="find-list" title="사업 목록"
           scope={<><ScopeChip scope={region} title={`${region}의 9·7 주택 공급 확대 방안 사업`} /><InfoTip label="사업 수"><p>9·7 주택 공급 확대 방안에 연결된 수도권 사업이에요(종합상황판의 공급 예정 호수와 같은 범위)</p><p>같은 단지 자료가 여러 개면 한 번만 세요</p><p>들어올 해별로 묶고, 들어올 때가 가까운 순이에요</p></InfoTip></>}>

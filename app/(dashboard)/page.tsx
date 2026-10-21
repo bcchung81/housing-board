@@ -6,6 +6,7 @@ import * as View from '@/lib/board/projects-view';
 import { boardLists } from '@/lib/board/board-lists';
 import { getProjectsIndex } from '@/lib/board/projects-index';
 import { monthIds } from '@/lib/board/month-ahead';
+import { homeLh } from '@/lib/board/home-lh-plan';
 import type { CalendarDoc } from '@/lib/board/region';
 import calendarJson from '@/data/board/region-calendar.json';
 import homeBoardJson from '@/data/board/home-board.json';
@@ -16,20 +17,20 @@ const calendar = calendarJson as unknown as CalendarDoc;
 const homeBoard = homeBoardJson as unknown as LedgerBoard;
 
 /* 종합상황판(L0, 시안 이식). 2026-10-21부터 원장 위젯(월별 공급 파동·판정·시도·추이·12개월·기관)과 월별 실적 흐름은 HOME 규칙 집계(home-board.json). 이전 설명: 실데이터는 '실데이터' 표지가 붙은 위젯 — 월별 실적(통계누리), 사업 원장 집계(월별 공급 파동·선택 시점 판정·시도·
-   기관별 진행·향후 12개월, 원장 2026-10 기준 · 전국 아님), 원천 수(카탈로그). 총리 지시 6건(통계누리 착공 누계·원장 집계·원천 수)도 실데이터, 지연·주의 추이는 월 판정 이력(trend). 월 상세로 가는 링크는 열리는 달(실적 + LH 예정 달 + 원장 준공 예정 달 — monthIds)만 만든다. */
+   기관별 진행·향후 12개월, 원장 2026-10 기준 · 전국 아님), 원천 수(카탈로그). 총리 지시 6건(통계누리 착공 누계·원장 집계·원천 수)도 실데이터, 지연·주의 추이는 월 판정 이력(trend). 월 상세로 가는 링크는 열리는 달(실적 + LH 준공 예정 달(정책 진행 자료 9·7 연결 블록) + 9·7 공급 예정 달 — monthIds)만 만든다. */
 export default async function Home() {
-  const { lh, molit, sources } = await getBoardData();
+  const { molit, sources } = await getBoardData();
   const last = lastMonth(molit);
   const idx = await getProjectsIndex();
   const real: BoardReal = {
     sourceCount: sources.items.length,
-    validMonths: monthIds(molit.months, lh.blocks, calendar),
+    validMonths: monthIds(molit.months, homeLh.blocks, calendar),   // LH 준공 예정 달 = 정책 진행 자료 9·7 연결 블록(2026-10-21 W6)
     ledger: homeBoard,
     ledgerOrigin: 'json',
     ledgerMonth: homeBoard.observedMonth,
     sido: Object.fromEntries(molit.sido.map((s) => [s.code, s.name])),
-    lists: boardLists(View, idx.homeRows, (c) => molit.sido.find((s) => s.code === c)?.name),
-    lhAsOf: lh.sourceAsOf,
+    lists: boardLists(View, idx.homeRows, (c) => molit.sido.find((s) => s.code === c)?.name, homeBoard.home?.stageShort),
+    lhAsOf: homeLh.sourceAsOf,
     regionOkUnits: Object.fromEntries(homeBoard.regions.map((r) => [r.code, r.okUnits ?? 0])),
     actualMonth: last,
     start: { year: last.slice(0, 4), upto: Number(last.slice(5)), cum: ytd(molit, 'start', NATION, last), cumLy: ytd(molit, 'start', NATION, nextYm(last, -12)) },

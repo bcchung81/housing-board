@@ -221,7 +221,7 @@ export default function StageLinks({ stages, extra, status }: { stages: StageLin
           </div>
         ) : null}
       </div>
-      {s ? <div role="tabpanel" id={`stage-panel-${s.id}`} aria-labelledby={`stage-tab-${s.id}`} className="mt-3 grid gap-3">
+      {s ? <div role="tabpanel" id={`stage-panel-${s.id}`} aria-labelledby={`stage-tab-${s.id}`} className="mt-3 grid grid-cols-[minmax(0,1fr)] gap-3">
         {/* 도식은 본문 폭에 맞춰 줄어든다(화면을 넘치지 않음). 휴대폰 폭에서만 읽히게 상자 안에서 옆으로 민다 */}
         <div className="relative overflow-x-auto px-2 py-1">
           <Diagram s={s} />

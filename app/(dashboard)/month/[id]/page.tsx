@@ -11,6 +11,7 @@ import { DataGrid } from '@/components/ui/data-grid';
 import ScopeChip from '@/components/ui/scope-chip';
 import { ACTORS, METRICS, NATION, fmt, isProvisional, lastMonth, monthLabel, monthTable, neighborMonths, seriesOf, sidoName, lhOfMonth, lhUnits, staleText, ymDot } from '@/lib/board/calc';
 import { getBoardData } from '@/lib/board/data';
+import { HOME_LH_TIP, LH_ROWS_TIP, homeLh as lh, lhLoc } from '@/lib/board/home-lh-plan';
 import { getProjectsIndex } from '@/lib/board/projects-index';
 import { AHEAD_SUPPLY, dayText, isMetro } from '@/lib/board/projects-view';
 import { mapCell, sggLabel } from '@/lib/board/projects-list';
@@ -31,10 +32,10 @@ const calendar = calendarJson as unknown as CalendarDoc;
 const homeRows = new Map((homeProjectsJson as unknown as { rows: HomeRow[] }).rows.map((r) => [r.id, r]));
 type Props = { params: Promise<{ id: string }> };
 
-/* 월 상세: 그 달의 인허가·착공·모집·준공(시도별·시행주체별, 통계누리 실적), 9·7 공급 예정(종합상황판 '향후 12개월 공급 예정'·지역 공급과 같은 자료 — HOME 원천 사업 행)과 LH 준공 예정 블록.
+/* 월 상세: 그 달의 인허가·착공·모집·준공(시도별·시행주체별, 통계누리 실적), 9·7 공급 예정(종합상황판 '향후 12개월 공급 예정'·지역 공급과 같은 자료 — HOME 원천 사업 행)과 LH 준공 예정 블록(정책 진행 자료 — 9·7 연결 블록, lib/board/home-lh-plan).
    실적이 있는 달, 9·7 공급 예정이 있는 달, LH 예정 달만 열린다(monthIds — 종합상황판의 월 링크도 같은 목록). */
 export const generateStaticParams = async () => {
-  const { molit, lh } = await getBoardData();
+  const { molit } = await getBoardData();
   return monthIds(molit.months, lh.blocks, calendar).map((id) => ({ id }));
 };
 
@@ -45,7 +46,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function MonthPage({ params }: Props) {
   const { id: ym } = await params;
-  const { molit, lh } = await getBoardData();
+  const { molit } = await getBoardData();
   const allMonths = monthIds(molit.months, lh.blocks, calendar);
   if (!DETAILS.month.id.test(ym) || !allMonths.includes(ym)) notFound();
   const actual = molit.months.includes(ym);
@@ -71,8 +72,8 @@ export default async function MonthPage({ params }: Props) {
   const table = actual ? monthTable(molit, ym) : [];
   const nation = table.find((r) => r.code === NATION), area = sidoName(molit, NATION) ?? '전국';   // 범위 이름(통계누리 합계 자리 — 수도권, lib/board/data.ts)
   const i = molit.months.indexOf(ym);
-  const lhStale = staleText(lh.sourceAsOf, calendar.referenceDate);   // LH 파일 낡음 표지(원장 기준일과의 차이 — 기관 화면과 같은 기준)
-  const lhStaleTag = lhStale ? <span className="ml-1.5 text-warn" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 원장 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</span> : null;
+  const lhStale = staleText(lh.sourceAsOf, calendar.referenceDate);   // LH 파일 낡음 표지(정책 진행 자료 기준일과의 차이 — 기관 화면과 같은 기준)
+  const lhStaleTag = lhStale ? <span className="ml-1.5 text-warn" title={`LH 파일 기준일 ${dotDates(lh.sourceAsOf)} — 정책 진행 자료 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')}`}>{lhStale}</span> : null;
   const lhDate = <> · 파일 기준 {dotDates(lh.sourceAsOf)}{lhStaleTag}</>;
   return (
     <Page>
@@ -119,16 +120,16 @@ export default async function MonthPage({ params }: Props) {
       ) : null}
 
       <Card render={<section aria-label="LH 준공 예정" />}>
-        <PanelHead title="LH 준공 예정" scope={<ScopeChip scope="LH 준공예정 파일" title={`LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)} — 사업 원장과 다른 원천`} />} tip={`LH 공공주택 준공예정현황(공공데이터포털 15141761) · 파일 기준일 ${dotDates(lh.sourceAsOf)}${lhStale ? `(원장 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')})` : ''}. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.${due.length ? ' · 날짜는 파일 값 그대로(위 준공 예정 사업은 HOME 날짜 — 다르면 원천 날짜 다름 표지)' : ''}`}>
+        <PanelHead title="LH 준공 예정" scope={<ScopeChip scope="LH 준공 예정" source="정책 진행 자료" title={`${HOME_LH_TIP} · 정책 진행 자료 기준일 ${dotDates(lh.asOf)} · LH 파일 기준일 ${dotDates(lh.sourceAsOf)}`} />} tip={`${HOME_LH_TIP} · LH 파일 기준일 ${dotDates(lh.sourceAsOf)}${lhStale ? `(정책 진행 자료 기준일 ${dotDates(calendar.referenceDate)}보다 ${lhStale.replace(' 자료', '')})` : ''}. 예정일은 그 시점의 계획이며 이후 바뀌었을 수 있습니다.${due.length ? ' · 날짜는 파일 값 그대로(위 공급 예정 사업은 공급 일정 — 준공 예정과 다른 단계)' : ''}`}>
           {actual ? null : <SrcLink />}
         </PanelHead>
         {blocks.length > 0 ? (
           <>
             <MetricRow className="mb-2" label="준공 예정" value={fmt(lhUnits(blocks))} unit="호"
-              items={[`${blockTotal}블록`, past ? <span key="p" title="파일상 예정일 — 실제 준공 여부 미확인">예정(미확인)</span> : null, <span key="d">파일 기준 {dotDates(lh.sourceAsOf)}{lhStaleTag}</span>]} />
-            <DataGrid label={`${monthLabel(ym)} LH 준공 예정 블록`} cols={LH_COLS} rows={blocks.map((b, k) => ({ id: String(k), c: { district: b.district, block: b.block, type: b.type, units: b.units, date: dayText(b.date), location: b.location } }))} />
+              items={[<span key="b" title={LH_ROWS_TIP}>{`${fmt(blockTotal)}블록 · ${fmt(blocks.length)}줄`}</span>, past ? <span key="p" title="파일상 예정일 — 실제 준공 여부 미확인">예정(미확인)</span> : null, <span key="d">파일 기준 {dotDates(lh.sourceAsOf)}{lhStaleTag}</span>]} />
+            <DataGrid label={`${monthLabel(ym)} LH 준공 예정 블록`} cols={LH_COLS} rows={blocks.map((b, k) => ({ id: String(k), c: { district: b.district, block: b.block, type: b.type, units: b.units, date: dayText(b.date), location: lhLoc(b.location) } }))} />
           </>
-        ) : <FactNote>이 달에 준공 예정인 LH 블록이 파일에 없습니다.{lhDate}</FactNote>}
+        ) : <FactNote>이 달에 준공 예정인 9·7 연결 LH 블록이 없습니다.{lhDate}</FactNote>}
       </Card>
     </Page>
   );

@@ -141,10 +141,11 @@ test('결함 3: 지역 공급 → 사업 서랍 링크는 그 사업이 들어 �
 /* ---------- 결함 4: 데이터 원본 표의 원장 사업 수가 천 단위 쉼표 없이('사업 2317건'), 위젯 이름이 종합상황판과 다름('향후 12개월 공급 예정') ---------- */
 test('결함 4: 데이터 원본 — 원장 사업 수 쉼표 · 12개월 위젯 이름 = 종합상황판 카드 이름', () => {
   const page = read('app/(dashboard)/sources/page.tsx');
-  assert.doesNotMatch(page, /\(사업 \$\{ledger\.scope\.projects\}건/);
-  assert.match(page, /\(사업 \$\{fmt\(ledger\.scope\.projects\)\}건/);
-  assert.match(page, /ledgerRow\('future', AHEAD_COMPLETION,/);
-  assert.doesNotMatch(page, /'향후 12개월 공급 예정'/);
+  /* 2026-10-21 W6: 종합상황판 줄은 '/' 가 쓰는 정책 진행 자료 집계(home-board.json) — 12개월 위젯 이름도 종합상황판 카드와 같은 AHEAD_SUPPLY */
+  assert.doesNotMatch(page, /\(사업 \$\{homeBoard\.scope\.projects\}건/);
+  assert.match(page, /\(사업 \$\{fmt\(homeBoard\.scope\.projects\)\}건/);
+  assert.match(page, /homeRow\('future', AHEAD_SUPPLY,/);
+  assert.doesNotMatch(page, /'향후 12개월 공급 예정'/, '글자 대신 상수');
 });
 
 /* ---------- 결함 5: 종합상황판 '지연·주의 추이'·'기관별 진행'의 숫자에 단위가 없었다(제목 title 에만 '호') ---------- */
@@ -181,8 +182,8 @@ test('후속 1: 후보 계산 숫자 → ?status=review-late 목록·CSV 건수�
   assert.match(board, /\{judged && SJ\.candidate && candCount\(SJ\.candidate\) \? \(/, '후보 집계가 없으면 후보 계산 링크 없음');
   assert.match(page, /\.\.\.HOME_STATUS_ORDER\.map\(\(k\) => \(\{ href: at\(\{ status: k \}\), label: HOME_STATUS_NAME\[k\]!, on: f\.status === k/, '상태 메뉴 칩 = HOME 판정');
   assert.doesNotMatch(page, /at\(\{ status: 'review-late' \}\)/, '후보가 없어 후보 칩 없음');
-  assert.match(page, /const list = homeListOrder\(applyFilters\(rows, f\)\);/);
-  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /const list = homeListOrder\(applyFilters\(idx\.rows, f\)\);/, 'CSV 도 같은 거르기');
+  assert.match(page, /const list = homeOrderOf\(applyFilters\(rows, f\), f\)/);
+  assert.match(read('app/(dashboard)/projects/csv/route.ts'), /const list = homeOrderOf\(applyFilters\(idx\.rows, f\), f\);/, 'CSV 도 같은 거르기');
   /* HOME 원천 행: 후보 계산 목록 0건 = 종합상황판 HOME 집계의 후보 계산(없음) */
   const HP = require('../../data/board/home-projects.json'), HB = require('../../data/board/home-board.json');
   const home = V.homeRowsOf(HP.rows, HP.residuals), hctx = { ...fctx, home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
@@ -206,24 +207,22 @@ test('후속 2: 지도 개요 지연 수 = 번호 있는 사업의 지연만(후
 });
 
 /* ---------- 후속 3: 데이터 원본 단계별 연계의 12개월 설명을 지금 집계 기준으로(옛 'LH 351블록 · 예정 = LH만') ---------- */
-test('후속 3: 단계별 연계 ⑤ — 앞으로 12개월 · 준공 예정(HOME·LH·건축HUB 후보), 숫자는 원장 upcoming', () => {
+test('후속 3: 단계별 연계 ⑤ — 앞으로 12개월 · 준공 예정, 숫자는 정책 진행 자료 LH 준공 예정(9·7 연결 — 2026-10-21 W6, 옛 원장 upcoming)', () => {
   const { stageLinks } = require('../../lib/board/stage-links.ts');
   const { ACQUIRE } = require('../../lib/board/acquire.ts');
   const zero = new Proxy({}, { get: () => 0 });
-  const ahead = { units: sum(BOARD.upcoming, (m) => m.units), projects: sum(BOARD.upcoming, (m) => m.projects) };
+  const LHP = require('../../data/board/home-lh-plan.json'), from = LHP.asOf.slice(0, 7), to = V.aheadMonths(from)[11];
+  const lhAhead = LHP.blocks.filter((b) => b.date.slice(0, 7) >= from && b.date.slice(0, 7) <= to);
+  const ahead = { units: sum(lhAhead, (b) => b.units), projects: lhAhead.length };
   const st = stageLinks({ regions: 3, sgg: 5, registryTotal: 1, registryRefs: 1, registry: {}, bundle: {}, molit: { permit: 1, start: 1, sale: 1, complete: 1, annual: 1 }, months: '2021-09~2026-08',
     lhBlocks: 351, lhAsOf: '2026-01-27', ledgerNote: '원장 2026.10 · 수도권', ahead, catalog: zero, hubBasis: 0, permits: 0, permitsStarted: 0, permitsCompleted: 0, plat: 0, ledger: 0, lhNotices: 0, myhome: 0, myhomePnu: 0, stan: 0 }, ACQUIRE);
   const done = st.find((s) => s.name === '준공');
   const o = done.outcomes.find((x) => x.name === V.AHEAD_COMPLETION);
   assert.ok(o, '이름 = 종합상황판 카드 이름');
-  // 2026-10-19 수도권 한정: 앞으로 12개월 준공 예정 214,975호·414건 → 13,372호·24건(원장 upcoming 합 — 수도권 HOME 뿐)
-  assert.deepEqual([ahead.units, ahead.projects], [14570, 25]);   // 2026-10-20 HOME 판 13,372호·24건 → 14,570호·25건
-  assert.deepEqual(o.lines, ['14,570호 · 25건', 'HOME · LH · 건축HUB 후보']);
-  assert.deepEqual(done.outcomes.find((x) => x.name.startsWith('⑤ 준공 층')).lines, ['실적 = 통계누리', '예정 = 원장 현재 예정']);
-  assert.ok(!done.outcomes.some((x) => x.lines.some((l) => /LH만|갱신 필요/.test(l)) || x.name === '향후 12개월 공급 예정'), '옛 기준 설명 없음');
-  /* 원천 구성: 12개월 준공 예정 사업은 HOME(수도권 발급)·LH 후보·건축HUB 후보에서 온다 */
-  const months = V.aheadMonths(IDX.observedMonth), up = rows.filter((r) => r.completion && months.includes(r.completion));
-  assert.equal(up.length, ahead.projects);
-  assert.ok(up.every((r) => (r.issued && V.isMetro(r.sgg)) || r.why === 'LH 후보' || r.pks?.length), '세 원천 밖 사업 없음');
-  assert.match(read('app/(dashboard)/sources/page.tsx'), /ahead: \{ units: ledger\.upcoming\.reduce/);
+  // 옛 원장 upcoming(준공 현재 예정 14,570호·25건) → 정책 진행 자료 LH 준공 예정 9·7 연결 행 중 2026-10~2027-09
+  assert.deepEqual([ahead.units, ahead.projects], [7944, 12]);
+  assert.deepEqual(o.lines, ['7,944호 · 12행', '정책 진행 자료 · LH 준공 예정(9·7 연결)']);
+  assert.deepEqual(done.outcomes.find((x) => x.name.startsWith('⑤ 준공 층')).lines, ['실적 = 통계누리', '예정 = LH 준공 예정(정책 진행 자료)']);
+  assert.ok(!done.outcomes.some((x) => x.lines.some((l) => /LH만|갱신 필요|원장/.test(l)) || x.name === '향후 12개월 공급 예정'), '옛 기준 설명 없음');
+  assert.match(read('app/(dashboard)/sources/page.tsx'), /ahead: \{ units: lhAhead\.reduce/);
 });

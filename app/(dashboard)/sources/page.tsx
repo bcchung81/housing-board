@@ -11,14 +11,15 @@ import ReqTags from '@/components/ReqTags';
 import Requirements from '@/components/sources/Requirements';
 import { Collect, Coverage, Links, showOrg } from '@/components/sources/Collect';
 import homeSources from '@/data/board/home-sources.json';
+import homeBoardJson from '@/data/board/home-board.json';
 import requirementsJson from '@/data/board/requirements.json';
 import type { RequirementsDoc } from '@/lib/board/requirements';
 import { DataGrid } from '@/components/ui/data-grid';
 import InfoTip from '@/components/ui/info-tip';
 import ScopeChip from '@/components/ui/scope-chip';
-import { fmt } from '@/lib/board/calc';
+import { fmt, nextYm } from '@/lib/board/calc';
 import { getBoardData } from '@/lib/board/data';
-import { ledgerJudged, ledgerMix, nation as nationOf } from '@/lib/board/directives';
+import { homeLh } from '@/lib/board/home-lh-plan';
 import { CIR, K } from '@/lib/board/sample';
 import { ITEMS, MODE_LABEL } from '@/lib/board/pipeline';
 import { COLLECTION, OPERATIONS, bytesLabel } from '@/lib/board/collection';
@@ -26,13 +27,16 @@ import { SCREEN_USAGE, sourceGap, sourceUsage } from '@/lib/board/screen-usage';
 import { cacheRecords, csvDetail, detailOf, readJson } from '@/lib/board/samples';
 import { ACQUIRE, ACQUIRE_ASOF, GAPS, type AcquireStatus } from '@/lib/board/acquire';
 import { stageLinks } from '@/lib/board/stage-links';
-import { AHEAD_COMPLETION, judgeOutText } from '@/lib/board/projects-view';
+import { AHEAD_SUPPLY } from '@/lib/board/projects-view';
 import { kstDate, kstEdition, type HomeSources } from '@/lib/board/home-sources';
 import regionIndex from '@/regions/index.json';
-import type { Source } from '@/lib/board/types';
+import type { LedgerBoard, Source } from '@/lib/board/types';
 import { GRID_DENSE, dotDates, type Col, type Detail, type Row } from '@/lib/grid/spec';
 
 export const metadata: Metadata = { title: '데이터 원본' };
+/* 종합상황판 위젯이 실제로 쓰는 집계(app/(dashboard)/page.tsx 와 같은 파일 — 정책 진행 자료 9·7, tools/ledger/home-board.js) */
+const homeBoard = homeBoardJson as unknown as LedgerBoard;
+const JUDGE_ROW = { delay: '지연', caution: '주의', ok: '정상', excluded: '판정 미확보' } as const;
 /* 지역 지도 번들: 공개 지역만(scripts/build.js·lib/coverage.js 와 같은 규칙) */
 const REGIONS = regionIndex.regions.filter((r) => r.visibility === 'public');
 
@@ -166,7 +170,7 @@ function SourceDetail({ s }: { s: Source }) {
 }
 
 export default async function SourcesPage() {
-  const { ledger, molit, projects, lh, sources } = await getBoardData();
+  const { molit, projects, lh, sources } = await getBoardData();
   const items = sources.items;
   const got = items.flatMap((s) => (s.collectedAt ? [s.collectedAt.slice(0, 10)] : [])).sort();   // 카탈로그의 수집일(가장 이른·늦은 날)
   const bundles = bundleCounts();
@@ -184,24 +188,25 @@ export default async function SourcesPage() {
     return resp ? { text: `캐시 ${fmt(rec)}건 · 응답 ${fmt(resp)}`, sort: rec } : { na: '캐시 없음' };
   };
 
-  /* 종합상황판: 화면 위젯 순서. 모두 실제 자료 = 월별 실적·원장 집계 6개(원장 2026-10 기준, 지연·주의 추이는 월 판정 이력) + 원천 수 */
+  /* 종합상황판: 화면 위젯 순서. 모두 실제 자료 = 월별 실적(통계누리) + 정책 진행 자료 집계 6개('/' 가 쓰는 data/board/home-board.json — 수도권 9·7, 2026-10-21 W6) + 원천 수 */
   const molitUsed = items.filter((s) => s.id.startsWith('molit-') && s.usedBy.includes('/'));
   const molitRows = molitUsed.reduce((n, s) => n + s.count, 0);
-  /* 원장 집계 위젯 5개는 같은 원장을 쓰므로 수집 건수는 첫 행에만 센다(합계에 겹쳐 세지 않게) */
-  const judgedSido = ledger.regions.filter((r) => r.judged).map((r) => molit.sido.find((x) => x.code === r.code)?.name ?? r.code).join('·');
-  const judgedText = ledger.regions.every((r) => r.judged) ? `${ledger.regions.length}개 시도 모두` : `${judgedSido}만`;   // 종합상황판(Board.tsx)과 같은 문구
+  /* 정책 진행 자료 집계 위젯은 같은 집계를 쓰므로 수집 건수는 첫 행에만 센다(합계에 겹쳐 세지 않게) */
+  const judgedSido = homeBoard.regions.filter((r) => r.judged).map((r) => molit.sido.find((x) => x.code === r.code)?.name ?? r.code).join('·');
+  const judgedText = homeBoard.regions.every((r) => r.judged) ? `${homeBoard.regions.length}개 시도 모두` : `${judgedSido}만`;   // 종합상황판(Board.tsx)과 같은 문구
+  const hj = homeBoard.judgment, aheadUnits = homeBoard.upcoming.reduce((n, m) => n + m.units, 0), trendFrom = homeBoard.trend?.[0]?.month ?? homeBoard.observedMonth;
   /* 칸에는 짧은 말만, 파일 경로·규칙은 칸 title(툴팁) */
   const tipped = (text: string, title: string) => ({ text, title });
-  const ledgerRow = (id: string, widget: string, gap: Row['c'][string], first = false): Row => ({ id, c: { widget, kind: REAL, data: tipped(`원장 ${ledger.observedMonth} 기준`, `원장 ${ledger.observedMonth} 기준 표 · data/board/ledger-board.json`), method: tipped('원장 집계', 'tools/ledger → ledger-board.json'), cycle: '수동 갱신', count: first ? held(ledger.scope.projects, '사업') : { na: '위 원장과 같음' }, asOf: ledger.observedMonth, gap } });
+  const homeRow = (id: string, widget: string, gap: Row['c'][string], first = false): Row => ({ id, c: { widget, kind: REAL, data: tipped(`정책 진행 자료 ${dotDates(homeBoard.referenceDate)} 기준`, `9·7 정책 승인 연결 사업 집계(수도권) · data/board/home-board.json`), method: tipped('정책 진행 자료 집계', 'tools/ledger/home-board.js → home-board.json'), cycle: '수동 갱신', count: first ? held(homeBoard.scope.projects, '사업') : { na: '위 정책 진행 자료와 같음' }, asOf: homeBoard.referenceDate, gap } });
   const boardRows: Row[] = [
-    { id: 'directives', c: { widget: '총리 지시 6건', kind: REAL, data: '통계누리 착공 누계 · 사업 원장 집계 · 원천 카탈로그', method: tipped('통계누리·원장·카탈로그', '통계누리 수집 + 원장 집계(tools/ledger/board.js) + sources.json'), cycle: '수동 갱신', count: held(items.length, '데이터셋'), asOf: null, gap: `필요: ${nameOf('ledger')} · ${nameOf('agency-input')} · ${nameOf('schedule')}` } },
-    ledgerRow('ribbon', '월별 공급 파동', tipped(`${nationOf(ledger)}(사업 ${fmt(ledger.scope.projects)}건)`, `${nationOf(ledger)}(사업 ${fmt(ledger.scope.projects)}건 · ${ledgerMix(ledger).replace('수도권 HOME', '수도권 정책 진행 자료')}) · 지연 띠는 ${ledger.trend?.[0]?.month ?? ledger.observedMonth} 판정부터`), true),
-    ledgerRow('snap', '선택 시점 판정', `${judgeOutText(ledgerJudged(ledger))} · 지난 달은 월 판정 이력`),
-    ledgerRow('region', `시도 ${ledger.regions.length}곳`, `판정은 ${judgedText} · ${nationOf(ledger)} 사업 중`),
+    { id: 'directives', c: { widget: '총리 지시 6건', kind: REAL, data: '통계누리 착공 누계 · 정책 진행 자료 집계 · 원천 카탈로그', method: tipped('통계누리·정책 진행 자료·카탈로그', '통계누리 수집 + 정책 진행 자료 집계(tools/ledger/home-board.js) + sources.json'), cycle: '수동 갱신', count: held(items.length, '데이터셋'), asOf: null, gap: `필요: ${nameOf('ledger')} · ${nameOf('agency-input')} · ${nameOf('schedule')}` } },
+    homeRow('ribbon', '월별 공급 파동', tipped(`수도권 9·7(사업 ${fmt(homeBoard.scope.projects)}건)`, `수도권 9·7 정책 승인 연결 사업 중 물량 집계 대상 ${fmt(homeBoard.scope.projects)}건 · ${fmt(homeBoard.scope.units)}호 · 단계(${(homeBoard.stageNames ?? K).join('·')})는 그 단계까지 온 누적 도달`), true),
+    homeRow('snap', '선택 시점 판정', tipped(`판정 ${fmt(homeBoard.scope.judged)}건 · 지연 ${fmt(hj.delay.projects)} · 주의 ${fmt(hj.caution.projects)}`, `${homeBoard.judge.rule} · 지난 달은 달 말 재구성`)),
+    homeRow('region', `시도 ${homeBoard.regions.length}곳`, `판정은 ${judgedText} · 수도권 9·7 사업 중`),
     { id: 'actual', c: { widget: '월별 실적 흐름', kind: REAL, data: tipped(`${nameOf('molit')} ${molitUsed.length}표 · ${molit.months[0]}~${molit.months[molit.months.length - 1]}`, `${nameOf('molit')} 중 ${molitUsed.length}표(인허가·착공·준공·분양)`), method: COLLECTION[molitUsed[0].id].method, cycle: COLLECTION[molitUsed[0].id].cycle, count: held(molitRows, '행'), asOf: molitUsed[0].sourceAsOf, gap: SCREEN_USAGE.molit.gap } },
-    ledgerRow('trend', '지연·주의 추이', tipped(`월 판정 이력 · ${ledger.trend?.[0]?.month ?? ledger.observedMonth}~ 소급`, `월 판정 이력(data/board/judgment-history.json): ${ledger.trend?.[0]?.month ?? ledger.observedMonth}~ 건축HUB 과거 판 소급 · ${ledger.observedMonth}부터 월 관측`)),
-    ledgerRow('future', AHEAD_COMPLETION, tipped('준공만(착공·모집·입주 예정 없음)', `LH 후보 예정일은 파일 기준일 ${lh.sourceAsOf} 값`)),
-    ledgerRow('agency', '기관별 진행', `기관 미상 ${ledger.agencies.find((a) => a.id === 'unknown')?.projects ?? 0}건 · ${nameOf('agency-input')} 없음`),
+    homeRow('trend', '지연·주의 추이', tipped(`달 말 재구성 · ${trendFrom}~`, `정책 진행 자료의 단계 목표·측정으로 달 말 부족량을 재구성(data/board/home-board.json trend) · ${trendFrom}~${homeBoard.observedMonth}`)),
+    homeRow('future', AHEAD_SUPPLY, tipped(`${fmt(aheadUnits)}호 · 공급(모집·분양) 예정`, '기준일 뒤 12개월 · 사업마다 공급(본 모집) 일정의 누적 목표 증가분에서 이미 측정된 공급을 뺀 값(HOME 향후 12개월 공급 예정과 같은 계산)')),
+    homeRow('agency', '기관별 진행', `기관 미상 ${homeBoard.agencies.find((a) => a.id === 'unknown')?.projects ?? 0}건 · 기관 = 원천 시행기관 글자(LH·GH·SH 묶음)`),
   ];
 
   /* 지도: 지도에서 쓰는 운영 자료 + 지역 번들·건물대장. 보관 → 실시간 → 미연결 순. 캐시 키 앞부분은 handlers/** 의 cache.wrap 키 */
@@ -248,7 +253,7 @@ export default async function SourcesPage() {
   const boardMissing = missing('board'), mapMissing = missing('map');
   const boardReal = countBy(boardRows, 'kind', REAL), mapUsed = mapRows.length - countBy(mapRows, 'mode', '미연결');
   const screenRows: Row[] = [
-    { id: 'board', c: { screen: { text: '종합상황판', href: '/' }, count: total(boardRows), total: boardRows.length, real: boardReal, sample: boardRows.length - boardReal, store: boardRows.filter((r) => r.c.method).length, live: 0, none: boardMissing.length, scope: '전국 · 시도 · 월', gap: boardMissing.join(' · ') } },
+    { id: 'board', c: { screen: { text: '종합상황판', href: '/' }, count: total(boardRows), total: boardRows.length, real: boardReal, sample: boardRows.length - boardReal, store: boardRows.filter((r) => r.c.method).length, live: 0, none: boardMissing.length, scope: '수도권 9·7 · 시도 · 월', gap: boardMissing.join(' · ') } },
     { id: 'map', c: { screen: { text: '지도', href: '/map' }, count: total(mapRows), total: mapUsed, real: mapUsed, sample: 0, store: countBy(mapRows, 'mode', '보관'), live: countBy(mapRows, 'mode', '실시간'), none: mapMissing.length, scope: `지도 자료 ${regions}개 지역 · 조회 전국`, gap: tipped(`${mapMissing.join(' · ')} · 점검 ${bundles.infraRegions}개 지역`, `${mapMissing.join(' · ')} · 시설 점검 ${bundles.infraRegions}개 지역 · 공고↔사업 연결`) } },
   ];
 
@@ -261,11 +266,11 @@ export default async function SourcesPage() {
   const DETAIL: Record<string, Detail | undefined> = {
     directives: detailOf(items.map((x) => ({ id: x.id, dataset: x.dataset, provider: x.provider, count: x.count, sourceAsOf: x.sourceAsOf, collectedAt: x.collectedAt?.slice(0, 10) })), 'data/board/sources.json'),
     actual: detailOf(molitRecs, 'data/board/molit.json · 수도권'),
-    ribbon: detailOf(ledger.months.map((ym, i) => ({ 월: ym, ...Object.fromEntries(K.map((k, j) => [`${CIR[j]} ${k}`, ledger.stageUnits[i][j]])) })), 'data/board/ledger-board.json · stageUnits'),
-    snap: detailOf(ledger.overdue as unknown as Rec[], 'data/board/ledger-board.json · overdue'),
-    region: detailOf(ledger.regions as unknown as Rec[], 'data/board/ledger-board.json · regions'),
-    future: detailOf(ledger.upcoming as unknown as Rec[], 'data/board/ledger-board.json · upcoming'),
-    agency: detailOf(ledger.agencies as unknown as Rec[], 'data/board/ledger-board.json · agencies'),
+    ribbon: detailOf(homeBoard.months.map((ym, i) => ({ 월: ym, ...Object.fromEntries((homeBoard.stageNames ?? K).map((k, j) => [`${CIR[j]} ${k}`, homeBoard.stageUnits[i][j]])) })), 'data/board/home-board.json · stageUnits'),
+    snap: detailOf((['delay', 'caution', 'ok', 'excluded'] as const).map((k) => ({ 판정: JUDGE_ROW[k], 사업: hj[k].projects, 호수: hj[k].units })), 'data/board/home-board.json · judgment'),
+    region: detailOf(homeBoard.regions as unknown as Rec[], 'data/board/home-board.json · regions'),
+    future: detailOf(homeBoard.upcoming as unknown as Rec[], 'data/board/home-board.json · upcoming'),
+    agency: detailOf(homeBoard.agencies as unknown as Rec[], 'data/board/home-board.json · agencies'),
     'map-projects': detailOf(bundles.rec.projects, 'regions/*/projects.json', { keys: ['region', 'name', 'kind', 'status', 'units', 'dongCount', 'moveIn', 'builder'] }),
     'map-buildings': detailOf(bundles.rec.buildings, 'regions/*/buildings.json', { total: bundles.buildings }),
     'map-context': detailOf(bundles.rec.context, 'regions/*/context.json', { keys: ['region', 'kind', 'name', 'lon', 'lat'] }),
@@ -324,17 +329,19 @@ export default async function SourcesPage() {
   const countOf = (list: string[]) => list.reduce<Record<string, number>>((m, k) => ({ ...m, [k]: (m[k] ?? 0) + 1 }), {});
   const has = (api: string, k: string) => (cache[api] ?? []).filter((r) => r[k]).length;
   const count = (id: string) => items.find((x) => x.id === id)?.count ?? 0;
+  /* 단계 연계 ⑤ 앞으로 12개월 준공 예정 = 정책 진행 자료 LH 준공 예정(9·7 연결) 중 기준 달부터 12개월(월 상세·기관 LH 와 같은 자료) */
+  const lhAhead = homeLh.blocks.filter((b) => b.date.slice(0, 7) >= homeLh.asOf.slice(0, 7) && b.date.slice(0, 7) <= nextYm(homeLh.asOf.slice(0, 7), 11));
   const stages = stageLinks({
     regions, sgg: new Set(reg.map((p) => p.sgg)).size, registryTotal: reg.length, registryRefs: reg.filter((p) => p.refs.some((r) => r.system === 'hub-hs-basis')).length,
     registry: countOf(reg.map((p) => p.stageCode)), bundle: countOf(bundles.rec.projects.map((p) => String(p.status))),
     molit: { permit: count('molit-permit-monthly'), start: count('molit-start-monthly'), sale: count('molit-sale-apt'), complete: count('molit-complete-monthly'), annual: count('molit-permit-annual') },
     months: `${molit.months[0]}~${molit.months[molit.months.length - 1]}`,
-    lhBlocks: lh.count, lhAsOf: lh.sourceAsOf,
+    lhBlocks: homeLh.count, lhAsOf: homeLh.sourceAsOf,
     catalog: Object.fromEntries(items.map((x) => [x.id, x.count])),
     hubBasis, permits: cache.permits?.length ?? 0, permitsStarted: has('permits', 'startedAt'), permitsCompleted: has('permits', 'completedAt'),
     plat: cache.plat?.length ?? 0, ledger: cache.ledger?.length ?? 0, lhNotices: cache.lh?.length ?? 0, myhome: cache.myhome?.length ?? 0, myhomePnu: has('myhome', 'pnu'), stan: cache.stan?.length ?? 0,
-    ledgerNote: `원장 ${ledger.observedMonth.replace('-', '.')} · ${nationOf(ledger)}`,
-    ahead: { units: ledger.upcoming.reduce((s, m) => s + m.units, 0), projects: ledger.upcoming.reduce((s, m) => s + m.projects, 0) },
+    ledgerNote: `정책 진행 자료 ${homeBoard.observedMonth.replace('-', '.')} · 수도권 9·7`,
+    ahead: { units: lhAhead.reduce((s, b) => s + b.units, 0), projects: lhAhead.length },
   }, ACQUIRE);
 
   return (

@@ -13,7 +13,8 @@ import {
   SCOPE_TAG, addedMarks, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, scopeChangeOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '@/lib/board/sample';
 import { CAND_TEXT, candCount, candText, judgeBase, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf, type Directive } from '@/lib/board/directives';
-import { AHEAD_COMPLETION, AHEAD_SUPPLY, AGENCY_NAME, bottleneckOf } from '@/lib/board/projects-view';
+import { AHEAD_COMPLETION, AHEAD_SUPPLY, AGENCY_NAME, bottleneckOf, shortHref } from '@/lib/board/projects-view';
+import { agencyShow } from '@/lib/board/home-agency';
 import { dotDates } from '@/lib/grid/spec';
 import { staleText } from '@/lib/board/calc';
 import type { LedgerBoard } from '@/lib/board/types';
@@ -27,6 +28,7 @@ import InfoTip from '@/components/ui/info-tip';
 import OneLine from '@/components/ui/one-line';
 import { Card } from '@/components/ui/card';
 import { CUR, HOVER, RIBBON, chartStatic, ribbonDynamic } from './ribbon';
+import SupplyWaveChart from './SupplyWaveChart';
 import { Key } from './tags';
 import PanelLink from './PanelLink';
 import MapLink from './MapLink';
@@ -57,6 +59,7 @@ const hoverBg = 'not-aria-pressed:hover:bg-pn2';
 /* 툴팁 안의 한 줄(.tip .tr): 왼쪽 이름(작은 색 사각형 포함)과 오른쪽 값 */
 const tipRow = 'flex items-center justify-between gap-1.5';
 const tipRowKey = 'flex items-center gap-1.5';
+const tipCols = 'grid grid-cols-2 gap-x-4';
 
 /* 지시 카드: 제목 / 숫자 / 지표 설명. 단추와 숫자 링크 층은 같은 틀을 써서 기준선을 맞춘다.
    지연·주의는 같은 크기로 나란히, 보조 변화율은 설명 줄 오른쪽에 항상 보인다. */
@@ -219,6 +222,24 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
     const vv = L.stageUnits[m], dd = delayAt(T, DL, m), b = bottleneckOf(dd)?.i ?? 0, tj = judgedAt(T, m);
     return { m, vv, dd, b, tj: tj >= 0 ? JS[tj] : null };
   }
+  /* 툴팁 내용: 2D 리본과 3D(SupplyWaveChart)가 같이 쓴다 */
+  function tipBody(m: number) {
+    const t = tipOf(m);
+    return (
+      <>
+        <div className="mb-1 flex items-center gap-2"><b className={cn(disp, 'text-base')}>{ml(T, t.m)}</b><Badge variant="solid" className={planned(t.m) ? 'bg-primary text-primary-foreground' : 'bg-foreground text-background'}>{kind(T, t.m)}</Badge></div>
+        <div className={cn(sub, 'mb-[3px]')}>총량 {f(rib.total[t.m])}호</div>
+        {/* 6단계는 두 열·세 줄(정책·사업화 / 인허가·건설 / 공급·입주), 지연·주의도 한 줄에 둘 — 툴팁이 판을 가리지 않게 낮게(2026-10-21 사용자 결정) */}
+        <div className={tipCols}>{K.map((k, i) => <div key={k} className={tipRow}><span className={tipRowKey}><i className="block size-2.5 rounded-chip" style={{ background: C[i] }} />{CIR[i]} {k}</span><b className={disp}>{f(t.vv[i])}</b></div>)}</div>
+        <div className="mt-[3px] border-t border-border pt-0.5">
+          {t.tj ? <>
+            <div className={tipCols}><div className={tipRow}><span className={cn(tipRowKey, 'text-bad')}>지연{SF >= 0 && t.m < SF ? ' · 후보 포함' : ''}</span><b className={disp}>{f(t.tj.delay.units)}</b></div><div className={tipRow}><span className={cn(tipRowKey, 'text-warn')}>주의</span><b className={disp}>{f(t.tj.caution.units)}</b></div></div>
+            <div className={tipRow}><span className={cn(tipRowKey, 'text-primary')}>병목 · {K[t.b]}</span><b className={disp}>{f(t.dd[t.b])}</b></div>
+          </> : <div className={cn(tipRow, 'text-muted-foreground')}>판정은 {ml(T, T.judged[0])}부터</div>}
+        </div>
+      </>
+    );
+  }
 
   return (
     <div className="ui-focus-scope motion-reduce:[&_*]:animate-none! motion-reduce:[&_*]:transition-none!">
@@ -267,6 +288,10 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             </div>
             {/* 좁은 화면에서만 가로로 민다. 세로는 숨긴다: overflow-x 가 auto 면 세로도 auto 가 되어, 툴팁·소수점 높이로 1px 만 넘쳐도 세로 스크롤바가 생기고 그 폭만큼 차트가 다시 줄어 그림이 흔들렸다.
                 최소 폭 620px 와 오른쪽 칸 clamp(340px,30vw,400px): 1101~1280px 화면(스크롤바 포함)에서 왼쪽 칸이 760px 보다 좁아 가로 스크롤이 생기던 것을 없앤다(2026-10-15) */}
+            {/* 3D(three·R3F, 지연 로딩)를 그릴 수 있으면 3D, 아니면(WebGL 없음·움직임 줄이기·900px 이하·서버 렌더) 아래 2D 블록 그대로 */}
+            <SupplyWaveChart T={T} su={L.stageUnits} delays={DL} cursor={cursor} onPick={goto} hl={hl} tip={tipBody}
+              label={`${ymKo(0)}부터 ${ymKo(LAST)}까지 단계별 호수와 지연 띠를 쌓은 3D 월별 공급 파동(${nation}). 왼쪽·오른쪽 화살표로 달 고르기, Shift와 화살표로 한 해씩 옮기기, 누르면 그 달을 고릅니다.`}
+              fallback={
             <div className="mt-3 overflow-x-auto overflow-y-hidden">
             <div className="relative min-w-[620px] cursor-pointer [touch-action:pan-y] mobile:min-w-0" ref={wrapRef} data-intro={intro || undefined}
               onPointerMove={(e) => { const m = monthAt(e.clientX); if (m < 0) setTip(null); else { const wr = wrapRef.current!.getBoundingClientRect(); setTip({ m, x: e.clientX - wr.left, y: e.clientY - wr.top }); } }}
@@ -282,29 +307,18 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               </svg>
               {/* 툴팁도 리본을 가리지 않는 HUD 유리: dark 범위로 감싸 안의 글자·상태색이 어두운 유리용(다크 토큰) 값을 쓰고, 다크 바탕 88% + 흐림으로 뒤 리본이 번져 보인다 */}
               <div data-slot="board-tip" className="dark pointer-events-none absolute z-[3] min-w-[168px] rounded-tile border border-[var(--rb-hud-line)] bg-[color-mix(in_srgb,var(--popover)_88%,transparent)] px-compact-x py-compact-y text-sm leading-body text-foreground shadow-pop backdrop-blur-[6px]" ref={tipRef} hidden={!tip}>
-                {tipView ? (
-                  <>
-                    <div className="mb-1 flex items-center gap-2"><b className={cn(disp, 'text-base')}>{ml(T, tipView.m)}</b><Badge variant="solid" className={planned(tipView.m) ? 'bg-primary text-primary-foreground' : 'bg-foreground text-background'}>{kind(T, tipView.m)}</Badge></div>
-                    <div className={cn(sub, 'mb-[3px]')}>총량 {f(rib.total[tipView.m])}호</div>
-                    {K.map((k, i) => <div key={k} className={tipRow}><span className={tipRowKey}><i className="block size-2.5 rounded-chip" style={{ background: C[i] }} />{CIR[i]} {k}</span><b className={disp}>{f(tipView.vv[i])}</b></div>)}
-                    <div className="mt-[3px] border-t border-border pt-0.5">
-                      {tipView.tj ? <>
-                        <div className={tipRow}><span className={cn(tipRowKey, 'text-bad')}>지연{SF >= 0 && tipView.m < SF ? ' · 후보 포함' : ''}</span><b className={disp}>{f(tipView.tj.delay.units)}</b></div><div className={tipRow}><span className={cn(tipRowKey, 'text-warn')}>주의</span><b className={disp}>{f(tipView.tj.caution.units)}</b></div>
-                        <div className={tipRow}><span className={cn(tipRowKey, 'text-primary')}>병목 · {K[tipView.b]}</span><b className={disp}>{f(tipView.dd[tipView.b])}</b></div>
-                      </> : <div className={cn(tipRow, 'text-muted-foreground')}>판정은 {ml(T, T.judged[0])}부터</div>}
-                    </div>
-                  </>
-                ) : null}
+                {tipView ? tipBody(tipView.m) : null}
               </div>
             </div>
             </div>
+              } />
           </Card>
 
           <Card variant="section" className={cn(panel, '@container min-[1280px]:col-span-2')} render={<section id="p-snap" aria-label="선택 시점의 판정과 단계별 호수" />}>
             <div className={phead}>
               <h2 className={ptitle} title={`${basisLine} · 판정 기준일 ${dotDates(SJ.referenceDate)} · 호수 기준`}>공급 판정</h2>
               <InfoTip label="판정·병목 기준" className={pinfo}>
-                {H ? <p>막대·비율 = 판정 사업의 계획 호수 중 지연·주의·목표 달성 비율(호수 기준 — 시도 타일·기관별도 같은 기준). 사업마다 기준일까지 도래한 단계 일정 호수 대비 같은 단계 실제(입력·추정 포함) 부족률 2% 이상 = 지연, 0% 초과~2% 미만 = 주의, 가장 나쁜 단계로 한 번(HOME 기관별 진행현황과 같은 판정). 측정 없는 단계는 판정 미확보.</p>
+                {H ? <p>막대·비율 = 판정 사업의 계획 호수 중 지연·주의·정상 비율(호수 기준 — 시도 타일·기관별도 같은 기준). 사업마다 기준일까지 도래한 단계 일정 호수 대비 같은 단계 실제(입력·추정 포함) 부족률 2% 이상 = 지연, 0% 초과~2% 미만 = 주의, 가장 나쁜 단계로 한 번(HOME 기관별 진행현황과 같은 판정). 측정 없는 단계는 판정 미확보.</p>
                 : <p>막대·비율 = 판정 사업의 계획 호수 중 지연·주의·정상 비율(호수 기준 — 시도 타일도 같은 기준). 지연 = 현재 예정일 경과 {L.judge.delayMonths}개월 이상, 주의 = {L.judge.cautionMonths}~{L.judge.delayMonths}개월.</p>}
                 <p>{H ? '단계 지연 = 집계 단계 판정(단계별 도래 목표 대비 누적 측정 부족량 — 준공은 건설 칸). 병목 = 그 값이 가장 큰 단계.' : '병목 = 지연 호수가 가장 큰 단계.'} 단계 호수 = 그 달 말 그 단계에 있는 사업의 호수, 증감 = 선택 달 − 기준 달({ml(T, NOW)}). 판정은 선택 달 이하의 가장 늦은 판정 달(판정 기준일 {dotDates(SJ.referenceDate)}).</p>
                 <p>모수 = 판정 사업의 건수·호수(사업 번호가 있는 사업). 전체의 % = 원장 전체 {f(jTot)}호(리본 총량, 사업 {f(L.scope.projects)}건) 중 판정 호수의 비율 — 나머지는 {CAND_TEXT}·{NONE_TEXT}.</p>
@@ -346,7 +360,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 </div>
               ) : null}
             </div>
-            <div className="ui-snap-stage-head"><h3 className="text-base font-bold">전체 사업 · 단계별 호수</h3><span className="text-sm text-muted-foreground">단위: 호</span>{bk >= 0 ? <PanelLink href={`/projects?sido=all&stage=${bk}&status=late`} onClick={open(`/projects?sido=all&stage=${bk}&status=late`)} full={`병목 단계(${CIR[bk]} ${K[bk]})의 지연 사업 · 지금 기준`}>병목 보기</PanelLink> : null}</div>
+            <div className="ui-snap-stage-head"><h3 className="text-base font-bold">전체 사업 · 단계별 호수</h3><span className="text-sm text-muted-foreground">단위: 호</span>{H?.bottleneck ? <PanelLink href={shortHref(H.bottleneck.stage)} onClick={open(shortHref(H.bottleneck.stage))} full={`병목 단계(${H.bottleneck.label})의 목표보다 측정이 모자란 사업 · 지금 기준`}>병목 보기</PanelLink> : !H && bk >= 0 ? <PanelLink href={`/projects?sido=all&stage=${bk}&status=late`} onClick={open(`/projects?sido=all&stage=${bk}&status=late`)} full={`병목 단계(${CIR[bk]} ${K[bk]})의 지연 사업 · 지금 기준`}>병목 보기</PanelLink> : null}</div>
             {/* 증감 칸은 선택 달이 기준 달이 아닐 때만(기준 달이면 3칸) */}
             <div className={cn('mt-2 grid flex-auto grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-x-3', showDlt ? 'grid-cols-[minmax(0,1fr)_max-content_max-content_max-content] phone:grid-cols-[minmax(0,1fr)_max-content_max-content]' : 'grid-cols-[minmax(0,1fr)_max-content_max-content]')} aria-label={showDlt ? '단계별 호수, 기준 달 대비 증감, 지연 호수' : '단계별 호수, 지연 호수'}>
               <div className="col-span-full grid grid-cols-subgrid items-center px-1.5 pb-0.5 text-sm text-muted-foreground">
@@ -489,7 +503,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               <h2 className={ptitle} title={`${basisLine} · 기관별 정상·주의·지연 호수 · 오른쪽 = 지연 호수와 ${whole} 지연 중 몫`}>기관별 진행</h2>
               <InfoTip label="기관별 진행 기준" className={pinfo}>
                 <p>막대 = 기관 사업 호수의 정상·주의·지연(사업 번호가 있는 사업의 판정) · {CAND_TEXT}(빗금) · {NONE_TEXT}.</p>
-                {H ? <p>시행기관(원천 글자 — LH·GH·SH 만 묶음)별 사업 계획량을 지연(2% 이상) → 주의(2% 미만) → 목표 달성 순으로 사업당 한 번 집계합니다. 판정 미확보는 일정 정보 없음. 오른쪽 = 지연 호수와 기관 안 지연 사업 물량 비중(HOME 기관별 진행현황과 같은 값).</p> : null}
+                {H ? <p>시행기관(원천 글자 — LH·GH·SH 만 묶음)별 사업 계획량을 지연(2% 이상) → 주의(2% 미만) → 정상 순으로 사업당 한 번 집계합니다. 판정 미확보는 일정 정보 없음. 오른쪽 = 지연 호수와 기관 안 지연 사업 물량 비중(HOME 기관별 진행현황과 같은 값).</p> : null}
                 <p hidden={!!H}>오른쪽 = 지연 호수와 {whole} 지연 중 몫({whole} 지연 {f(J.delay.units)}호 중 그 기관 몫 — LH 100.0% = 지연이 모두 LH 사업). {NONE_TIP}.</p>
                 <p className="text-muted-foreground">{scope}</p>
               </InfoTip>
@@ -506,7 +520,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 const out = a.units - a.okUnits - a.cautionUnits - a.delayUnits, cand = a.candidateUnits ?? 0, none = out - cand, pw = (n: number) => `${(n / a.units * 100).toFixed(1)}%`;   // out = 판정하지 않은 호수 = 확인 필요(후보) + 일정 정보 없음(none)
                 return (
                   <div key={a.id} className={ag} title={`${a.name} ${f(a.units)}호 — 정상 ${f(a.okUnits)} · 주의 ${f(a.cautionUnits)} · 지연 ${f(a.delayUnits)} · ${CAND_TEXT} ${f(cand)} · ${NONE_TEXT} ${f(none)}호${a.excludedUnits ? `(판정 제외 ${f(a.excludedUnits)}호 포함)` : ''}. ${a.id === 'unknown' ? `사업 ${f(a.projects)}건 — ` : ''}${dotDates(a.note ?? '')}`}>
-                    <div className={agName}><OneLine className="min-w-0 font-bold">{a.id === 'unknown' ? AGENCY_NAME.etc : a.name}</OneLine><span className="text-sm font-normal text-muted-foreground">{f(a.units)}호</span></div>
+                    <div className={agName}><OneLine className="min-w-0 font-bold">{a.id === 'unknown' ? AGENCY_NAME.etc : agencyShow(a.name)}</OneLine><span className="text-sm font-normal text-muted-foreground">{f(a.units)}호</span></div>
                     <div className={cn(bar3, 'q-grow-x h-3 narrow:col-span-full narrow:row-start-2 mobile:col-span-full mobile:row-start-2')} style={{ ['--i' as string]: ai }} role="img" aria-label={`${a.name} ${f(a.units)}호: 정상 ${f(a.okUnits)} 주의 ${f(a.cautionUnits)} 지연 ${f(a.delayUnits)} ${CAND_TEXT} ${f(cand)} ${NONE_TEXT} ${f(none)}`}>
                       <span className="block bg-ok" style={{ width: pw(a.okUnits) }} /><span className="block bg-warn" style={{ width: pw(a.cautionUnits) }} /><span className="block bg-bad" style={{ width: pw(a.delayUnits) }} /><span className={cn('block', candHatch)} style={{ width: pw(cand) }} /><span className="block bg-[var(--out)]" style={{ width: pw(none) }} />
                     </div>

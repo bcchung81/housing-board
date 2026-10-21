@@ -160,6 +160,7 @@ html:not([data-aud="admin"]) .aud-l.l-pub, html[data-aud="admin"] .aud-l.l-adm {
 .ac-note b { color: var(--foreground); }
 .ac-h { display: flex; align-items: baseline; gap: 6px; padding: 10px 10px 4px; font-size: var(--fs-body); font-weight: 700; color: var(--muted-foreground); border-bottom: var(--border-w) solid var(--border); }
 .ac-h .n { font-weight: 400; font-variant-numeric: tabular-nums; }
+.ui-tabs .n { font-size: var(--fs-meta); }   /* 탭 칸 수: 공용 부품은 12px(--fs-caption) — /citizen 은 12px 금지라 14 */
 .ac-h .end { margin-left: auto; font-weight: 400; }
 .opt { display: grid; grid-template-columns: 20px minmax(64px, 1fr) auto; align-items: center; gap: 0 10px; min-height: 48px; padding: 6px 10px; border-radius: var(--radius-chip); cursor: pointer; }
 .opt:hover { background: var(--pn2); }
@@ -301,7 +302,7 @@ kbd { font-family: inherit; font-size: var(--fs-meta); border: var(--border-w) s
 .smry.pv :is(.sm-nm, .sm-r, .nx) { color: var(--muted-foreground); }
 .smry.pv .sm-sd { color: var(--muted-foreground); }
 .smry.pv .sm-b > i { opacity: .5; }
-/* 다음 준공·입주 줄(두 줄, 누르면 사업 카드): [다음 준공 · 날짜 · D-day 칩] / [시군구 · 사업 이름(말줄임) · 호수]. 날짜가 달까지만이면 칩 대신 '10월'.
+/* 다음 모집 공고 줄(두 줄, 누르면 사업 카드 — 2026-10-21 W6 옛 다음 준공·입주 줄 자리, HOME 9·7 12개월 공급 예정): [다음 모집 공고 · 날짜 · D-day 칩] / [시군구 · 사업 이름(말줄임) · 호수]. 날짜가 달까지만이면 칩 대신 '10월'.
    30일 안이면 칩을 주색으로 채운다(그 밖엔 옅은 칩) */
 .nx { position: relative; display: grid; grid-template-columns: auto auto minmax(0, 1fr) auto; grid-template-areas: 'k d . dd' 'nm nm nm u'; align-items: center; column-gap: var(--s2); min-width: 0; margin: 0 calc(var(--s2) * -1); padding: var(--s1) var(--s2); border-radius: var(--radius-tile); font-size: var(--fs-body); line-height: var(--lh-sub); color: var(--foreground); text-decoration: none; }
 .nx:hover { background: var(--pn2); }
@@ -603,6 +604,12 @@ svg.glov :is(.lbls .lb-g, [data-follow]) { transition: none; }
   #c-pj .pjs .ev .pj-sp { text-align: left; }
   #c-pj .pjs .ev .pj-nx { display: flex; gap: var(--s2); }
 }
+/* 카드 안쪽 600 미만(휴대폰): 위치는 이름 아래 줄(390 에서 거의 다 잘리던 것), 단계 칩은 줄지 않는다 */
+@container pj (max-width: 599px) {
+  #c-pj .pjs .ev .nmw { flex-wrap: wrap; row-gap: 0; }
+  #c-pj .pjs .ev .nmw .pj-dg { flex: 1 0 100%; }
+  #c-pj .pjs .ev .pj-st { flex: none; }
+}
 
 /* 출처 한 줄(보조 글) + 전체 통계(정책담당자 화면) */
 .src { display: flex; flex-wrap: wrap; align-items: center; gap: 0 8px; min-height: 36px; margin: 0; font-size: var(--fs-meta); color: var(--muted-foreground); }
@@ -795,7 +802,6 @@ body:has(#sheet:not([hidden])) .ac { z-index: 82; }   /* 팝업이 열린 채 �
   .sum { position: relative; }
   /* 첫 방문 안내 줄: 한 줄에 들어가게 '맞아요?'·'추천' 꼬리표를 뺀다(단추가 같은 뜻) */
   .loc .here .q, .loc .guess-tag { display: none; }
-  .loc .hint.vh { display: none; }
   .src .opt-t { display: none; }
   /* 어르신: 국민 영역 글자 하한은 본문 크기 */
   .pub .opt .sub { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
@@ -877,7 +883,7 @@ body:has(#sheet:not([hidden])) .ac { z-index: 82; }   /* 팝업이 열린 채 �
       <div class="band-r">
       <div class="loc" id="loc"></div>
       <div class="fbar" id="fbar">
-        <div class="ui-tabs ui-tabs-seg" role="group" aria-label="시도로 보기"><button type="button" data-vsido="11" aria-pressed="false">서울</button><button type="button" data-vsido="41" aria-pressed="false">경기</button><button type="button" data-vsido="28" aria-pressed="false">인천</button></div>
+        <div class="ui-tabs ui-tabs-seg" role="group" aria-label="시도로 보기"><button type="button" data-vsido="00" aria-pressed="true" title="서울·인천·경기 전체">수도권</button><button type="button" data-vsido="11" aria-pressed="false">서울</button><button type="button" data-vsido="41" aria-pressed="false">경기</button><button type="button" data-vsido="28" aria-pressed="false">인천</button></div>
         <div class="ui-tabs ui-tabs-line" role="group" aria-label="단계로 보기"><button type="button" data-fst="all" aria-pressed="true">전체<span class="n"></span></button><button type="button" data-fst="0" aria-pressed="false">계획<span class="n"></span></button><button type="button" data-fst="1" aria-pressed="false">인허가<span class="n"></span></button><button type="button" data-fst="2" aria-pressed="false">착공<span class="n"></span></button><button type="button" data-fst="3" aria-pressed="false">모집<span class="n"></span></button><button type="button" data-fst="4" aria-pressed="false">준공<span class="n"></span></button><button type="button" data-fst="5" aria-pressed="false">입주<span class="n"></span></button></div>
       </div>
       </div>
@@ -1169,9 +1175,11 @@ function shortName(n) {
 /* 화면 → 큰 지도(/map) 주소: lib/board/map-href.ts 를 그대로 옮긴 것(시험이 같은 결과인지 확인). 사업 > 시군구 > 시도 > 첫 화면.
    구가 있는 경기 시는 ?sido=41&pick=시 코드, 수도권 밖 지역 연결점은 null(숨긴다) */
 const METRO_SIDO = ['11', '28', '41'];
+/* 2026-10-21 W6 기본 범위 '수도권 전체'(서울·인천·경기 합)의 가상 지역 코드 — 색인 regionOf 에만 더하고(addCapital) 검색 결과(regions)에는 넣지 않는다. 큰 지도는 /map(수도권 개요) */
+const ALL = '00';
 const GU_CITY = ['41110', '41130', '41170', '41190', '41270', '41280', '41460', '41590'];
 const mapHref = (o = {}) => o.project ? `/map?project=${encodeURIComponent(o.project)}` : o.sgg ? (GU_CITY.includes(o.sgg) ? `/map?sido=41&pick=${o.sgg}` : `/map?sgg=${encodeURIComponent(o.sgg)}`) : o.sido && METRO_SIDO.includes(o.sido) ? `/map?sido=${o.sido}` : '/map';
-const mapScopeHref = (o = {}) => { if (o.sgg) return METRO_SIDO.includes(o.sgg.slice(0, 2)) ? mapHref({ sgg: o.sgg }) : null; if (o.sido) return METRO_SIDO.includes(o.sido) ? mapHref({ sido: o.sido }) : null; return mapHref(); };
+const mapScopeHref = (o = {}) => { if (o.sgg) return METRO_SIDO.includes(o.sgg.slice(0, 2)) ? mapHref({ sgg: o.sgg }) : null; if (o.sido) return o.sido === ALL || METRO_SIDO.includes(o.sido) ? mapHref({ sido: o.sido }) : null; return mapHref(); };
 /* 들어올 해(r9): 입주(실제·예정) 해 → 없으면 준공(실제·예정) 해(사업 카드 자료 D.det) → 없으면 원장 다음 일정이 준공·입주일 때 그 해 → 없으면 ''(연도 미정).
    c = 원장 시군구 코드, p = 원장 줄 [번호, 이름, 단계, 호수, 다음 일정 종류, 예정일] */
 function inYear(D, c, p) { return inDate(D, c, p).slice(0, 4); }
@@ -1230,8 +1238,21 @@ function distinctNames(items, D) {
   Object.defineProperty(out, 'sub', { value: sub, enumerable: false });
   return out;
 }
-/* r10 IP 시도(lib/board/ip-sido 의 행정 표준 코드) → 색인 시도. 2026-10-19 수도권 한정: 색인은 서울·인천·경기뿐이라 수도권 밖·모르는 코드는 null(추천 없이 기본 보기 S.guess 경기 41 + 시도 고르기) */
-const geoSido = (code, IX) => (code && IX.regionOf[code]?.kind === 'sido' ? code : null);
+/* r10 IP 시도(lib/board/ip-sido 의 행정 표준 코드) → 색인 시도. 2026-10-19 수도권 한정: 색인은 서울·인천·경기뿐이라 수도권 밖·모르는 코드는 null(추천 없음).
+   2026-10-21 W6: IP 시도는 첫 화면을 바꾸지 않는다 — 위쪽 줄의 '내 동네 맞아요?' 제안(S.guess)으로만 쓴다 */
+const geoSido = (code, IX) => (code && code !== ALL && IX.regionOf[code]?.kind === 'sido' ? code : null);
+/* W6(2026-10-21 사용자 지시 '기본은 수도권 전체 · 9·7 · HOME'): 색인에 '수도권 전체' 항목(코드 ALL, 시도처럼 다룸 — codes = 세 시도 codes 합, 시군구 미연결 시도 칸 포함)을 더한다 */
+function addCapital(IX, D) {
+  const codes = CAPITAL.flatMap((sd) => IX.regionOf[sd]?.codes || []), t = sumOf(D, codes);
+  IX.regionOf[ALL] = { kind: 'sido', code: ALL, label: '수도권 전체', sub: '서울·인천·경기', short: '수도권', all: true, codes, projects: t.n, units: t.u };
+  return IX;
+}
+/* 처음 볼 곳 = 늘 수도권 전체(W6). 저장된 내 동네(localStorage myArea)가 있으면 home 으로 두고 보기만 수도권 전체 — 내 동네는 위쪽 줄 단추로 한 번 눌러 간다.
+   보는 곳 = view → home → 수도권 전체(viewOf) */
+const startState = (saved, IX) => (saved && saved !== ALL && IX.regionOf[saved] ? { home: saved, view: ALL } : { home: null, view: null });
+const viewOf = (s) => s.view || s.home || ALL;
+/* 수도권 전체 보기면 세 시도, 시도 하나면 그 시도 — 면 묶음(sd 는 시도 코드 또는 ALL) */
+const inSd = (s, sd) => (sd === ALL ? CAPITAL.includes(s) : s === sd);
 /* r10 검색 '사업 n개 모두 보기' 시트: 검색 결과 사업 전부(자동완성과 같은 순서·같은 건수) */
 const searchProjects = (IX, q) => IX.search(q, { projectMax: Infinity }).projects.items;
 /* r10 숫자와 '호': '316호'·'9,660호'은 붙이고 만 단위('1.6만 호')만 띄운다 */
@@ -1255,6 +1276,7 @@ function groupByArea(evs, areaKey) {
 /* 지도 면 단위 합계(공급 예정 호수, sumOf 와 같은 정의 — D.hp 면 PoC 원천 행·집계 호수, 시군구 미연결 행(시도 코드 칸)은 면에 넣지 않는다). 경기는 시 단위로 접고(metro-overview unitOf),
    그 밖은 구가 있는 시면 시로 묶는다. 수도권은 지도 면 목록, 그 밖은 색인 시군구. 호수 내림차순 */
 function unitsFor(D, IX, sd) {
+  if (sd === ALL) return CAPITAL.flatMap((s) => unitsFor(D, IX, s)).sort((a, b) => b.u - a.u || b.n - a.n || a.name.localeCompare(b.name, 'ko'));   // W6 수도권 전체 = 세 시도 면을 한 순위로
   const key = (c) => (c.startsWith('41') ? c.slice(0, 4) + '0' : IX.regionOf[c]?.parent || c);
   const P = {};
   if (D.hp) for (const [c, v] of Object.entries(D.hp.c)) {
@@ -1395,7 +1417,7 @@ function nxDday(w, today) {
 const ISLES = { '28': ['28710', '28720'] };
 /* 수도권 세 시도: 지도 판은 서울·인천·경기를 합친 한 판이다(2026-10-18 — 서울·인천만 크게 맞추지 않는다). 수도권 밖은 경계 준비 중(막대 순위) */
 const CAPITAL = ['11', '28', '41'];
-const mapScope = (sd) => (CAPITAL.includes(sd) ? CAPITAL : [sd]);
+const mapScope = (sd) => (CAPITAL.includes(sd) || sd === ALL ? CAPITAL : [sd]);
 /* 3D 판 기하(v7d 면 돌출) = Map3D.geom: 무대 크기(W·H)·휴대폰 여부에만 의존한다 — 보는 시도·보는 곳·내 동네는 받지 않는다(고를 때·시도를 바꿀 때 그림이 움직이지 않게).
    판 면 = 섬(ISLES)을 뺀 수도권 세 시도 본토 면 — 범위·배율도 본토 판 상자로, 섬 삽입 지도는 없다. 높이 값 = 공급 예정 호수(unitsFor). 판 밖 맥락 시도는 없다.
    보는 곳이 강화·옹진이면 판에 그 면이 없어 고른 면 효과·핀·지도 위 사업 카드가 없다(인천 시도 보기와 같은 지도 — 순위 줄·요약 표가 그 군을 받는다) */
@@ -1411,7 +1433,7 @@ function geomFor(D, IX, W, H, narrow) {
 <script>
 const $ = (s) => document.querySelector(s);
 const html = document.documentElement;
-const IX = makeSearch(D);
+const IX = addCapital(makeSearch(D), D);
 const fmt = (n) => n.toLocaleString('ko-KR');
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 const ico = (id, cls = '') => `<svg class="i ${cls}" aria-hidden="true"><use href="#i-${id}"/></svg>`;
@@ -1439,7 +1461,7 @@ const in12 = (e) => whenKey(e.when) <= LIMIT12;
 /* ---------- 상태: 내 동네(home, 저장)와 보기(view, 저장 안 함)를 나눈다 ---------- */
 /* 판: 'demo'(시안 — 상태 막대·흉내 동작) 또는 'ops'(운영 — 실제 이동·IP 추천 API·현 위치·주소 검색 API). build.js 가 바꿔 넣는다. 운영판도 ?demo=1 이면 상태 막대를 보인다 */
 const MODE = '/*__MODE__*/', OPS = MODE === 'ops', DEMO_ON = !OPS || new URLSearchParams(location.search).has('demo');
-const S = { home: null, view: null, loc: 'guess', guess: '41', guessKnown: !OPS, q: '', open: false, active: -1, limit: false, opts: [], addr: 'wait', mapAt: null };
+const S = { home: null, view: null, loc: 'guess', guess: null, guessKnown: !OPS, q: '', open: false, active: -1, limit: false, opts: [], addr: 'wait', mapAt: null };
 const store = {
   get: (k) => { try { return localStorage.getItem(k); } catch (_) { return null; } },
   set: (k, v) => { try { localStorage.setItem(k, v); } catch (_) {} },
@@ -1449,7 +1471,7 @@ const sidoOf = (r) => r.kind === 'sido' ? r.code : r.code.slice(0, 2);
 /* r11 이름: 같은 이름 시군구가 여러 시도에 있으면 시도 짧은 이름을 붙인 색인 이름('부산 북구 보는 중'). 한 시도 안 목록의 지역 머리말(nameIn)은 시도를 뗀 이름 */
 const nameOf = (r) => r.label;
 const nameIn = (r) => r.kind === 'sido' ? r.label : r.sub.slice(r.sub.indexOf(' ') + 1);
-const viewCode = () => S.view || S.home || S.guess;
+const viewCode = () => viewOf(S);   // W6: 고른 곳이 없으면 수도권 전체(IP 추천 시도 S.guess 는 보기를 바꾸지 않는다)
 
 /* ---------- 값: 공급 예정 호수(리본 칸 ①~④ — sumOf, 검색과 같은 정의) ---------- */
 const MAPU = D.map.units.map(([code, s, n, d, cx, cy, lx, ly, lr]) => ({ code, s, n, d, cx, cy, lx, ly, lr }));
@@ -1457,7 +1479,8 @@ const MAPOF = Object.fromEntries(MAPU.map((u) => [u.code, u]));
 /* 원장 시군구 → 면: 경기는 시 단위로 접는다(metro-overview unitOf). 그 밖의 시도는 구가 있는 시면 시로 */
 const unitKey = (c) => (c.startsWith('41') ? c.slice(0, 4) + '0' : IX.regionOf[c]?.parent || c);
 const sum = (codes) => sumOf(D, codes);
-/* 앞으로 일정: 원장 next(사업마다 다음 일정 하나) + 지역 공급 달력(날짜가 더 자세하면 그쪽). 오늘 이후만 */
+/* 앞으로 일정: 원장 next(사업마다 다음 일정 하나) + 지역 공급 달력(D.cal — 2026-10-21 W6 HOME 9·7 '향후 12개월 공급(모집·분양) 예정', 날짜가 더 자세하면 그쪽). 오늘 이후만.
+   요약 '다음 모집 공고' 줄·지금 신청의 모집 예정은 HOME 9·7 달력만(homeEvents) 본다 — 원장 next 는 사업 카드 일정 칸에만 */
 function eventsOf(codes) {
   const set = new Set(codes), by = new Map();
   const add = (e) => { const k = e.id + '|' + e.k, o = by.get(k); if (!o || e.when.length > o.when.length) by.set(k, e); };
@@ -1465,6 +1488,7 @@ function eventsOf(codes) {
   for (const e of D.cal) if (e[0] && set.has(e[0])) add({ id: e[6], k: CALK[e[3]], when: e[2] || e[1], name: e[4] || '', u: e[5], sgg: e[0] });
   return [...by.values()].filter((e) => whenKey(e.when) >= TODAY);
 }
+const homeEvents = (codes) => { const set = new Set(codes); return D.cal.filter((e) => e[0] && set.has(e[0])).map((e) => ({ id: e[6], k: CALK[e[3]], when: e[2] || e[1], name: e[4] || '', u: e[5], sgg: e[0] })).filter((e) => whenKey(e.when) >= TODAY); };
 /* 가까운 일정 순서: 12개월 안 모집 공고가 먼저(신청 기회), 그다음 날짜순, 같으면 호수 큰 순 */
 const upcoming = (codes) => eventsOf(codes).sort((a, b) => (a.k === 0 && in12(a) ? 0 : 1) - (b.k === 0 && in12(b) ? 0 : 1) || whenKey(a.when).localeCompare(whenKey(b.when)) || b.u - a.u);
 
@@ -1498,14 +1522,14 @@ function renderLoc() {
   let mid;
   if (busy) mid = `<span class="st">좌표는 이 기기 안에서만 씁니다</span>`;
   else if (S.loc === 'nogeo' || S.loc === 'nofile' || S.loc === 'outside') mid = `<span class="st warn">${ico('warn')}${S.loc === 'nofile' ? '경계 자료를 불러오지 못했어요' : S.loc === 'outside' ? '수도권만 볼 수 있어요' : '위치로 시군구를 찾지 못했어요'}</span><button type="button" class="ui-btn ui-btn-ghost" data-act="pick">${bico('search')}검색으로 고르기</button>`;
-  else if (!h && !v && !S.guessKnown) mid = `<span class="here">${ico('pin')}시도를 골라 주세요</span><button type="button" class="ui-btn ui-btn-ghost" data-act="sidos" aria-controls="ac-list">${bico('map')}다른 시도</button>`;
   else if (S.loc === 'denied') mid = `<span class="st warn">${ico('warn')}위치 권한 꺼짐</span><button type="button" class="ui-btn ui-btn-ghost" data-act="pick">${bico('search')}검색으로 고르기</button><span class="st"><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" popovertarget="tip-gps" aria-label="위치 권한 다시 켜는 법"><svg class="i"><use href="#i-info"/></svg></button></span>`;
-  else if (v) mid = `<span class="here viewing">${ico('eye')}<b>${esc(nameOf(v))}</b> 보는 중</span>${h ? `<span class="hint vh" title="내 동네 ${esc(nameOf(h))}">· 내 동네 ${esc(nameOf(h))}</span>` : ''}`;
+  else if (v && (h || !v.all)) mid = `<span class="here viewing">${ico('eye')}<b>${esc(nameOf(v))}</b> 보는 중</span>${h ? `<button type="button" class="ui-btn ui-btn-ghost vh" data-area="${h.code}" data-src="near" title="내 동네 ${esc(nameOf(h))} 보기">${bico('pin')}내 동네 ${esc(nameOf(h))}</button>` : ''}`;   // W6: 내 동네는 한 번 눌러 가는 단추(처음 보기는 수도권 전체)
   else if (h && h.kind === 'sido') mid = `<span class="here" title="내 동네 · ${CAPITAL.includes(h.code) ? '지도' : '목록'}에서 시군구를 고르세요">${ico('pin')}${esc(h.label)}</span><button type="button" class="ui-btn ui-btn-ghost" data-act="pick">${bico('map')}다른 동네</button>`;   // 2026-10-19 위쪽 줄 정리: 안내 문장은 title 로, [바꾸기] → 같은 일(동네 목록 펼치기)을 하는 [다른 동네]
   else if (h) mid = `<span class="here">${ico('pin')}<span class="hint">내 동네</span>${esc(nameOf(h))}</span><button type="button" class="ui-btn ui-btn-ghost" data-act="pick">${bico('map')}다른 동네</button>`;
-  else mid = `<span class="here" title="접속 위치(IP)로 짐작한 시도">${ico('pin')}${esc(areaOf(S.guess).label)}<span class="q"> 맞아요?</span></span><span class="ui-chip ui-chip-primary guess-tag">추천</span><button type="button" class="ui-btn" data-act="yes">${bico('check')}맞아요</button><button type="button" class="ui-btn ui-btn-secondary" data-act="pick">${bico('map')}다른 동네</button>`;
+  else if (S.guess && S.guessKnown) mid = `<span class="here" title="지금은 수도권 전체를 보여 줘요 · 접속 위치(IP)로 짐작한 시도">${ico('pin')}${esc(areaOf(S.guess).label)}<span class="q"> 내 동네 맞아요?</span></span><span class="ui-chip ui-chip-primary guess-tag">추천</span><button type="button" class="ui-btn" data-act="yes">${bico('check')}맞아요</button><button type="button" class="ui-btn ui-btn-secondary" data-act="pick">${bico('map')}다른 동네</button>`;   // W6: IP 추천은 내 동네 제안만(보기는 수도권 전체 그대로)
+  else mid = `<span class="here" title="서울·인천·경기를 합친 숫자예요">${ico('pin')}수도권 전체</span><button type="button" class="ui-btn ui-btn-ghost" data-act="pick">${bico('map')}내 동네 고르기</button>`;
   $('#loc').innerHTML = `<div class="loc-m">${mid}</div>${gps}`;
-  $('#loc').classList.toggle('oneline', !busy && S.loc !== 'denied' && !!(v || h));
+  $('#loc').classList.toggle('oneline', !busy && S.loc !== 'denied' && !!((v && (h || !v.all)) || h));
 }
 
 /* ---------- ① 요약 카드 ---------- */
@@ -1541,6 +1565,7 @@ function paintDateline(asOf) { const el = $('#dl-nt'); if (el && asOf) el.textCo
 paintDateline(OPS ? null : TODAY);
 function ntFetch(q) {
   if (NTC.has(q)) return NTC.get(q);
+  if (q === `sido=${ALL}`) { const pr = Promise.all(CAPITAL.map((s) => ntFetch(`sido=${s}`))).then((L) => ({ ok: L.every((x) => x.ok), items: L.flatMap((x) => x.items) })); NTC.set(q, pr); return pr; }   // W6 수도권 전체 = 세 시도 공고 합(API 는 시도·시군구 하나만 받는다)
   const [k, v] = q.split('=');
   const keep = (items) => items.map((n) => { const x = { ...n, sgg: n.sgg || (k === 'sgg' ? v : (n.pnu || '').slice(0, 5)) || '' }; NTALL.set(x.id, x); return x; });
   const pr = OPS ? fetch(`/api/v1/notices?${q}`).then((r) => (r.ok ? r.json() : Promise.reject(r.status))).then((j) => { if (j.asOf) paintDateline(j.asOf); return { ok: true, items: keep(j.items || []) }; }).catch(() => ({ ok: false, items: [] }))
@@ -1599,7 +1624,7 @@ function paintApply() {
     else {
       const w = widen(null, st.near, st.sido);
       if (w.items.length) body += `<p class="ap-sub">근처에서</p><ul class="nts">${w.items.slice(0, Math.min(2, max)).map((n) => ntRow(n, areaLabel(n))).join('')}</ul>`;
-      else { const pl = upcoming(r.codes).find((e) => e.k === 0) || upcoming(sido.codes).find((e) => e.k === 0), pa = pl && (areaOf(unitKey(pl.sgg)) || areaOf(pl.sgg));
+      else { const soon = (cs) => homeEvents(cs).sort((a, b) => whenKey(a.when).localeCompare(whenKey(b.when)) || b.u - a.u)[0], pl = soon(r.codes) || soon(sido.codes), pa = pl && (areaOf(unitKey(pl.sgg)) || areaOf(pl.sgg));
         if (pl) body += `<p class="ap-plan"><span class="ui-chip pchip">모집 예정(계획)</span><b>${whenText(pl.when)}</b><a ${PRJA(pl.id)} title="${esc(pl.name)}">${pa && pa.code !== r.code ? esc(nameIn(pa)) + ' · ' : ''}${esc(shortName(pl.name))}</a></p>`; }
       if (st.sido?.length && r.kind !== 'sido') more = `<button type="button" class="ui-btn ui-btn-link ui-btn-sm all" data-nt="sido" aria-haspopup="dialog" aria-label="${esc(sido.label)} 모집 공고 ${fmt(st.sido.length)}건 모두 보기"><span>${esc(sido.label)} ${fmt(st.sido.length)}건</span>${bico('chev', 'inline-end')}</button>`;
     }
@@ -1648,9 +1673,9 @@ const mapBtn = (href, label, cls = '') => (href ? `<a class="mapi ${cls}" href="
 const bigLabel = (sd, viewKey) => { const a = viewKey && areaOf(viewKey); return a ? nameOf(a) : areaOf(sd).label; };
 const bigMap = (sd, viewKey) => mapBtn(scopeHref(sd, viewKey), bigLabel(sd, viewKey), 'big-map').replace('<a class=', '<a id="big-map" class=');
 function renderMapCard() {
-  const vr = areaOf(viewCode()), sd = sidoOf(vr), cap = CAPITAL.includes(sd);
+  const vr = areaOf(viewCode()), sd = sidoOf(vr), cap = CAPITAL.includes(sd) || sd === ALL;   // W6 수도권 전체 = 세 시도 판 그대로
   const viewKey = vr.kind === 'sgg' ? unitKey(vr.code) : null;
-  const hr = S.home ? areaOf(S.home) : null, homeKey = hr && hr.kind === 'sgg' && sidoOf(hr) === sd ? unitKey(hr.code) : null;
+  const hr = S.home ? areaOf(S.home) : null, homeKey = hr && hr.kind === 'sgg' && inSd(sidoOf(hr), sd) ? unitKey(hr.code) : null;
   /* 같은 시도: 순위 목록·큰 지도 주소·칠하기 + 요약 표만(해 띠 범위가 바뀌면 시간 띠, 해 모드면 그 해 구간도) */
   if (VIEW && VIEW.sd === sd && $('#mapc .mapc-b')) {
     const homeMoved = VIEW.homeKey !== homeKey, yrs0 = VIEW.yrs.join();
@@ -1671,7 +1696,7 @@ function renderMapCard() {
   }
   stopPlay(); if (VIEW?.detach) VIEW.detach(); if (VIEW?.anim) VIEW.anim.cancel();
   /* units = 보는 시도 면(순위·라벨), all = 판의 모든 면(색·높이 — 수도권이면 세 시도, 같은 객체를 나눠 쓴다) */
-  const units = unitsFor(D, IX, sd), all = mapScope(sd).flatMap((s) => (s === sd ? units : unitsFor(D, IX, s)));
+  const units = unitsFor(D, IX, sd), all = sd === ALL ? units : mapScope(sd).flatMap((s) => (s === sd ? units : unitsFor(D, IX, s)));
   /* 새 시도: 모드는 전체, 보기(돌린 각도)는 처음으로 */
   VIEW = { cap, sd, units, all, viewKey, homeKey, hoverKey: null, G: null, g: null, mode: MODE_ALL, pmode: null, applied: MODE_ALL, view: null, mc: new Map(), yrs: [], Ysc: [], playT: 0, bandFix: null, bandPv: null };
   setYrs();
@@ -1874,12 +1899,13 @@ function headHtml(r, m) {
   const u = m.k === 'all' ? t.u : modeOf(D, r.codes, m), [a, n, b] = headParts(m, u, YBL), k = m.k === 'y' ? a.replace(YBL[m.i], `<b>${YBL[m.i]}</b>`) : esc(a);   // 해 모드면 해가 드러나게
   return `<h1 class="ui-h1 sum-h" id="sum-h"><span class="sr">${esc(name)} </span><span class="sm-k">${k}</span> <span class="nw"><span class="n" title="${fmt(u)}호">${n}</span>${b}</span></h1>`;
 }
-/* 다음 준공·입주 줄(원장 다음 일정·지역 공급 달력, 오늘 이후 가장 가까운 것): 날짜 · D-day 칩(30일 안이면 주색 채움, 달까지만이면 칩 대신 '10월') / 시군구·사업 이름 · 호수 */
+/* 다음 모집 공고 줄(2026-10-21 W6 — 옛 '다음 준공·입주'(원장 일정)를 HOME 9·7 '향후 12개월 공급(모집·분양) 예정'(homeEvents, 큰 숫자와 같은 범위)으로, 오늘 이후 가장 가까운 것):
+   날짜 · D-day 칩(30일 안이면 주색 채움, 달까지만이면 칩 대신 '10월') / 시군구·사업 이름 · 호수. HOME 에는 준공·입주 예정 일정이 화면 자료로 없다 */
 const mdText = (w) => `${w.slice(0, 4) === TODAY.slice(0, 4) ? '' : w.slice(0, 4) + '.'}${+w.slice(5, 7)}.${+w.slice(8, 10)}`;
 function nxHtml(r) {
   const isS = r.kind === 'sido';
-  const nx = eventsOf(r.codes).filter((e) => e.k >= 2).sort((a, b) => whenKey(a.when).localeCompare(whenKey(b.when)) || b.u - a.u)[0];
-  if (!nx) return '<p class="nx none">다음 준공·입주 일정이 아직 없어요</p>';
+  const nx = homeEvents(r.codes).sort((a, b) => whenKey(a.when).localeCompare(whenKey(b.when)) || b.u - a.u)[0];
+  if (!nx) return '<p class="nx none">앞으로 12개월 안에 모집 공고 예정이 없어요</p>';
   const nxw = isS ? areaOf(unitKey(nx.sgg)) || areaOf(nx.sgg) : null, nxn = `${nxw ? nameIn(nxw) + ' · ' : ''}${shortName(nx.name)}`, dd = nxDday(nx.when, TODAY);
   const tag = !dd ? '' : dd.chip ? `<span class="ui-chip sm-dd${dd.soon ? ' on' : ''}">${dd.t}</span>` : `<span class="dm">${esc(dd.t)}</span>`;
   return `<a class="nx" href="/citizen/projects?id=${nx.id}" data-go="/citizen/projects?id=${nx.id}" data-k="${nx.k}" title="다음 ${NEXT[nx.k]} ${esc(whenText(nx.when))}${dd?.chip ? ` (${dd.t})` : ''} · ${esc(nxn)}${nx.u ? ` · ${fmt(nx.u)}호` : ''}"><span class="k">다음 ${NEXT[nx.k]}</span>${nx.when.length >= 10 ? `<b class="d">${mdText(nx.when)}</b>` : ''}${tag}<span class="nm">${esc(nxn)}</span>${nx.u ? `<span class="u">${fmt(nx.u)}호</span>` : ''}</a>`;
@@ -2267,9 +2293,10 @@ function fitPj() {
 function renderCells() {
   const r = areaOf(viewCode()), isS = r.kind === 'sido';
   /* 가구 증가(통계청 장래가구추계, 시도 단위)는 제목 ⓘ 안 한 줄 */
-  const hh = D.hh[sidoOf(r)], th = $('#tip-head-hh'); if (th) th.textContent = hh ? `가구 수: ${areaOf(sidoOf(r)).label} 가구는 해마다 약 +${bigNum(hh[0])} 늘어요(통계청 장래가구추계, 시도 단위). 이 화면의 호수는 공공 사업만이라 둘을 바로 비교하지는 않아요.` : '';
+  /* 수도권 전체 = 세 시도 합(셋이 모두 있을 때만) */
+  const hhL = CAPITAL.map((c) => D.hh[c]).filter(Boolean), hh = r.all ? (hhL.length === CAPITAL.length ? [hhL.reduce((a, x) => a + x[0], 0)] : null) : D.hh[sidoOf(r)], th = $('#tip-head-hh'); if (th) th.textContent = hh ? `가구 수: ${areaOf(sidoOf(r)).label} 가구는 해마다 약 +${bigNum(hh[0])} 늘어요(통계청 장래가구추계, 시도 단위). 이 화면의 호수는 공공 사업만이라 둘을 바로 비교하지는 않아요.` : '';
   /* 청약 단지: 보는 면(시도면 그 시도 면 전부), 없으면 맞닿은 면 */
-  const keys = isS ? MAPU.filter((u) => u.s === r.code).map((u) => u.code) : [unitKey(r.code)];
+  const keys = isS ? MAPU.filter((u) => inSd(u.s, r.code)).map((u) => u.code) : [unitKey(r.code)];
   const own = ahRows(D, keys, TODAY).slice(0, AH_MAX), near = own.length || isS ? [] : ahRows(D, D.nb[keys[0]] || [], TODAY).slice(0, AH_NEAR);
   const rows = own.length ? own.map((o) => ahRow(o, isS)) : near.map((o) => ahRow(o, true));
   swapHtml($('#c-pj'), `<div class="cell-h ui-card-head"><h2 id="c-pj-h">청약 단지</h2><button type="button" class="ui-btn ui-btn-ghost ui-btn-icon ui-btn-sm tip-btn" popovertarget="tip-pj" aria-label="청약 단지 표의 뜻과 출처"><svg class="i"><use href="#i-info"/></svg></button></div>
@@ -2332,7 +2359,7 @@ function renderSheet() {
   if (SH.kind === 'q') return renderSearchSheet();
   if (SH.kind === 'nt') return renderNtSheet();
   const { r } = cellScope(), isS = r.kind === 'sido', sd = sidoOf(r);
-  const hr = S.home ? areaOf(S.home) : null, homeKey = hr && hr.kind === 'sgg' && sidoOf(hr) === sd ? unitKey(hr.code) : null;
+  const hr = S.home ? areaOf(S.home) : null, homeKey = hr && hr.kind === 'sgg' && inSd(sidoOf(hr), sd) ? unitKey(hr.code) : null;
   let items = sheetItems();
   if (SH.mine && homeKey) items = items.filter((x) => unitKey(x.sgg) === homeKey);
   const chips = CHIPS[SH.kind === 'ev' ? 'ev' : 'pj'], cnt = (c) => items.filter((x) => x.chip === c).length;
@@ -2796,7 +2823,7 @@ Promise.all(['400 14px', '700 14px', '700 16px'].map((f) => document.fonts.load(
 /* ---------- 시안 상태 ---------- */
 const DEMO = {
   first: () => { S.home = null; S.loc = 'guess'; S.guess = '41'; },
-  ipout: () => { S.home = null; S.loc = 'guess'; S.guess = geoSido('29', IX) || '41'; S.guessKnown = false; },   // 광주 IP: /api/v1/geo → { sido: '29' } — 2026-10-19 수도권 한정: 추천 없이 기본 경기 보기 + 시도 고르기
+  ipout: () => { S.home = null; S.loc = 'guess'; S.guess = geoSido('29', IX); S.guessKnown = false; },   // 광주 IP: /api/v1/geo → { sido: '29' } — 2026-10-19 수도권 한정: 추천 없음, 2026-10-21 W6 보기는 늘 수도권 전체
   yes: () => { S.home = '41'; S.loc = 'set'; },
   cho: () => { DEMO.back(); return () => typed('ㄱㅇ'); },
   en: () => { DEMO.back(); return () => typed('rPdid'); },
@@ -2823,7 +2850,7 @@ function demo(s) {
 }
 document.querySelectorAll('.demo button[data-s]').forEach((b) => b.addEventListener('click', () => demo(b.dataset.s)));
 
-/* 처음: 주소의 ?s= 가 있으면 그 상태, 없으면 기억한 동네(재방문) 또는 IP 추천(첫 방문). ?v= 는 시군구 코드(그곳을 본다) */
+/* 처음: 주소의 ?s= 가 있으면 그 상태, 없으면 수도권 전체(2026-10-21 W6 — 재방문이면 위쪽 줄 [내 동네] 단추, 첫 방문이면 IP 추천 제안). ?v= 는 시군구 코드(그곳을 본다) */
 if (OPS) {
   /* 운영판: 상태 막대·이동 주소 출력은 ?demo=1 일 때만. 머리 메뉴는 앱 실제 경로. 이 페이지는 늘 일반사용자 모드(정책담당자는 '/') */
   if (!DEMO_ON) { $('#demo')?.remove(); $('#tip-demo')?.remove(); }
@@ -2832,19 +2859,19 @@ if (OPS) {
   document.querySelectorAll('.menu a, .mnav a').forEach((a, i) => { a.href = routes[i % 7]; });
   $('.logo').href = '/citizen';   // 로고·'종합상황판' = 관점 첫 화면(일반사용자 /citizen)
   html.dataset.aud = 'public';
-  /* 첫 방문 IP 시도 추천: /api/v1/geo → { sido }. 없거나 실패면 시도 고르기 칩 */
+  /* 첫 방문 IP 시도 추천: /api/v1/geo → { sido }. 2026-10-21 W6: 보기(수도권 전체)는 그대로, 위쪽 줄에 '내 동네 맞아요?' 제안만. 없거나 실패면 [내 동네 고르기] */
   S.guessKnown = false;
   fetch('/api/v1/geo').then((r) => (r.ok ? r.json() : null)).catch(() => null).then((j) => {
-    const sd = j && j.sido ? geoSido(String(j.sido), IX) : null;   // 2026-10-19 수도권 한정: 수도권 밖(광주 29 등)은 null → 기본 경기(41) 보기 + 시도 고르기
-    if (sd) { S.guess = sd; S.guessKnown = true; if (!S.home && !S.view) renderAll(); else renderLoc(); }
+    const sd = j && j.sido ? geoSido(String(j.sido), IX) : null;   // 2026-10-19 수도권 한정: 수도권 밖(광주 29 등)은 null → 추천 없음
+    if (sd) { S.guess = sd; S.guessKnown = true; renderLoc(); }
   });
 }
 setAud(html.dataset.aud, { save: false });
 const start = new URLSearchParams(location.search).get('s'), v0 = new URLSearchParams(location.search).get('v');
 if (DEMO_ON && start && DEMO[start]) { demo(start); if (v0 && areaOf(v0)) pick('search', v0); }
 else {
-  const saved = store.get('myArea');
-  if (saved && areaOf(saved)) { S.home = saved; S.loc = 'set'; }   // 2026-10-19 수도권 한정: 색인(수도권)에 없는 옛 내 동네는 무시하고 기본 보기
+  const st0 = startState(store.get('myArea'), IX);   // 2026-10-19 수도권 한정: 색인(수도권)에 없는 옛 내 동네는 무시. 2026-10-21 W6: 내 동네가 있어도 처음 보기는 수도권 전체(위쪽 줄 [내 동네] 단추)
+  if (st0.home) { S.home = st0.home; S.view = st0.view; S.loc = 'set'; }
   renderAll(); renderAC();
   if (v0 && areaOf(v0)) pick('search', v0);
   document.querySelectorAll('.demo button[data-s]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.s === (S.home ? '' : 'first'))));

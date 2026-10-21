@@ -64,7 +64,7 @@ test('사업 상세(9.30 쉬운 설명): 서랍의 지금 단계는 6단계 스�
   const s = read('components/projects/ProjectDetail.tsx');
   assert.match(s, /<StageSteps home(?:=\{home\})? current=\{r\.board\}/);
   assert.doesNotMatch(s, /단계입니다 — /, '그림이 보여 주는 지금·다음 단계를 문장으로 다시 쓰지 않는다(2026-10-13 화면 규칙)');
-  assert.match(read('components/projects/StageSteps.tsx'), /title=\{`\$\{BOARD_CIR\[i\]\} \$\{name\} — \$\{QS\[i\]\}/, '단계마다 답할 질문은 칸의 title');
+  assert.match(read('components/projects/StageSteps.tsx'), /title=\{`\$\{label\(i\)\} — \$\{QS\[i\]\}/, '단계마다 답할 질문은 칸의 title(이름 = label — HOME 이면 원 숫자 없음, 2026-10-21 점검 #12)');
   assert.match(s, /href=\{`\/region\?sido=\$\{r\.sgg\.slice\(0, 2\)\}`\}/);
 });
 

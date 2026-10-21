@@ -134,7 +134,7 @@ test('④-2 수도권 한 판(2026-10-18): 서울·인천·경기 어느 시도�
   assert.match(dm, /Map3D\.draw\(st\.querySelector\('svg\.map'\), gm, \{ units: VIEW\.all, nameOf: [^,]+, hFloor: 6, aria/);
   assert.match(fnBody('drawBaseLabels'), /Map3D\.labels\(g, VIEW\.G, VIEW\.units, \{ homeKey: VIEW\.homeKey \}\)/);
   assert.match(fnBody('modeData'), /modeView\(D, IX, mapScope\(VIEW\.sd\), m, VIEW\.yrs, VIEW\.all\.map\(\(x\) => x\.key\)\)/);
-  assert.match(fnBody('renderMapCard'), /const units = unitsFor\(D, IX, sd\), all = mapScope\(sd\)\.flatMap\(\(s\) => \(s === sd \? units : unitsFor\(D, IX, s\)\)\);[\s\S]*all\.forEach\(\(x\) => \{ x\.c = md\.C\.cls\(x\.u\); \}\);/, 'all 은 units 와 같은 객체를 나눠 쓴다(모드가 바뀌면 함께 갱신)');
+  assert.match(fnBody('renderMapCard'), /const units = unitsFor\(D, IX, sd\), all = sd === ALL \? units : mapScope\(sd\)\.flatMap\(\(s\) => \(s === sd \? units : unitsFor\(D, IX, s\)\)\);[\s\S]*all\.forEach\(\(x\) => \{ x\.c = md\.C\.cls\(x\.u\); \}\);/, 'all 은 units 와 같은 객체를 나눠 쓴다(모드가 바뀌면 함께 갱신 — 2026-10-21 W6 수도권 전체 보기면 units 가 곧 세 시도 판)');
 });
 
 test('⑤ 배치: 1440 에서 지도 카드 약 74%(72~75%), 마크업·휴대폰 순서 = 왼쪽 카드(요약 표) → 지도 카드(G5), 1440×906 지도 카드 끝 ≤ 906 · 무대 높이 ≥ 640, 레일 = 1px 구분선만, 지도 카드 = 무대 + 시간 띠만(머리 띠·6단계 띠 없음)', () => {

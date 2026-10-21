@@ -121,21 +121,32 @@ test('CP03 이름 검색: 겹친 55행 이름은 대표 집계 줄(같은 블록
 
 test('CP08·C10 예정 대비 = PoC 판정(지연·주의만 사실 문장) — 대상 = PoC 9·7 집계 행 중 지연·주의', { skip }, () => {
   const rows = p97Rows().filter((r) => r.home.chart.p97);
-  const late = rows.filter((r) => PL.homeFact(r.cls, r.home.gap, null)).map((r) => r.id).sort();
+  const late = rows.filter((r) => PL.homeFact(r.cls, r.home.gap)).map((r) => r.id).sort();
   assert.deepEqual(late, home.rows.filter((r) => r.stats && r.p97 && r.chart.p97 && ['DELAYED', 'WARNING'].includes(r.judge?.status)).map((r) => r.id).sort());
   assert.equal(late.length, (home.views.p97.judge.DELAYED?.rows ?? 0) + (home.views.p97.judge.WARNING?.rows ?? 0));
-  assert.equal(PL.homeFact('delay', 291, null), '예정보다 291호가 아직 확인되지 않았어요');
-  assert.equal(PL.homeFact('delay', 291, { eventType: 'COMPLETION', months: 3 }), '준공 예정일이 3개월 지났어요');
-  assert.equal(PL.homeFact('ok', 0, { eventType: 'COMPLETION', months: 3 }), '', '우리 원장이 주의여도 PoC 정상이면 빈칸');
+  assert.equal(PL.homeFact('delay', 291), '예정보다 291호가 아직 확인되지 않았어요');
+  assert.equal(PL.homeFact('ok', 0), '', 'PoC 정상이면 빈칸');
+  /* 2026-10-21 W6: 옛 원장 판정(예정일 경과) 문장은 일반사용자 화면에 없다 — 목록 줄·사업 창 모두 PoC 판정만 */
+  assert.equal(PL.homeFact.length, 2);
+  const page = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/citizen/projects/page.tsx'), 'utf8'), det = fs.readFileSync(path.join(ROOT, 'components/citizen/PublicDetail.tsx'), 'utf8');
+  assert.match(page, /fact: homeFact\(r\.cls, h\.gap\),/); assert.doesNotMatch(page, /homeFact\([^)]*overdue/);
+  assert.match(det, /const fact = d\.home \? homeFact\(d\.home\.cls, d\.home\.gap\) \|\| null : null;/); assert.doesNotMatch(det, /prjJudge|factLine|PAST_DUE/);
   console.log(`  PoC 지연·주의 ${late.length}행: ${late.join(' · ')}`);
 });
 
-test('CS /citizen/schedule 사업 수 = 사업 찾기와 같은 PoC 9·7 집계 행(175), 기본 종류 = 모집 공고(PoC 9·7 공급 예정)', () => {
+test('CS /citizen/schedule 사업 수 = 사업 찾기와 같은 PoC 9·7 집계 행(175), 일정 = 모집 공고 하나(PoC 9·7 공급 예정 — W6 옛 원장 준공·입주 종류 뺌)', () => {
   const src = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/citizen/schedule/page.tsx'), 'utf8');
   assert.match(src, /\.filter\(\(r\) => isMetro\(r\.sgg\) && r\.home!\.p97 && r\.home!\.chart\.p97\);/);
   assert.match(src, /const inScope = applyFilters\(HOME_ROWS, pf\)\.length;/);
-  assert.match(src, /const kinds = q\.kind \? parseKinds\(q\.kind\) : \[\.\.\.KIND_HOME\];/);
-  assert.match(src, /calendar\.home\.p97\.sido\[c\]/);
+  assert.match(src, /const cal = \{ sido: Object\.fromEntries\(METRO\.map\(\(c\) => \[c, calendar\.home\.p97\.sido\[c\] \?\? \[\]\]\)\) \};/);
+  assert.doesNotMatch(src, /calendar\.sido\b|parseKinds|CAL_KINDS|COMPLETION|MOVE_IN|<ChipGroup label="종류"/, '옛 원장 일정 종류 없음');
+  /* 일정 종류의 수 = HOME 9·7 모집단에서 센 값: 수도권 모집 공고 30곳 17,488호 = home-projects views.p97.upcoming(12개월 공급 예정 사업 수·호수) */
+  const R = require('../../lib/board/region.ts'), cal = require('../../data/board/region-calendar.json');
+  const list = R.aheadAll({ sido: Object.fromEntries(R.METRO.map((c) => [c, cal.home.p97.sido[c] ?? []])) }, 'metro', (c) => c);
+  assert.equal(list.length, 30); assert.equal(list.reduce((s, e) => s + e.units, 0), 17488);
+  assert.ok(list.every((e) => e.type === 'SUPPLY_NOTICE'));
+  const up = home.views.p97.upcoming;
+  assert.equal(list.length, up.projects, 'views.p97.upcoming 사업 수'); assert.equal(list.reduce((s, e) => s + e.units, 0), up.units, 'views.p97.upcoming 호수');
   assert.doesNotMatch(src, /calendar\.home\.all/);
   assert.equal(p97Rows().filter((r) => r.home.chart.p97).length, 175);
 });

@@ -42,7 +42,7 @@ test('1 정의는 (i) 팝오버로: 단계별 진행 누적 · 정책 목표 대
   assert.match(tips(steps).join(''), /QS\.map/, '서랍 단계 ⓘ: 여섯 단계 정의');
   const det = read('components/projects/ProjectDetail.tsx');
   const dt = tips(det).join('');
-  assert.match(dt, /statusTip\(r\)/, '서랍 상태 ⓘ: 판정 규칙');
+  assert.match(dt, /<dd>\{sTip\}<\/dd>/, '서랍 상태 ⓘ: 판정 규칙'); assert.match(det, /sTip = j \? judgeTip\(j\) : statusTip\(r\)/, '원장 사업 창: 원천 행이 있으면 PoC 판정 설명');
   assert.match(dt, /<dt>공정률<\/dt>/, '서랍 공정률 ⓘ');
   assert.match(dt, /당초 일정 없음/);
   /* 서랍 안 ⓘ 를 Esc 로 닫을 때 서랍까지 닫히지 않는다 */
@@ -121,7 +121,7 @@ test('5 서랍 원천 날짜 다름은 일 단위(LH 2026.10.31 · 2028.12.31), 
   for (const r of alts) assert.match(V.dateAltOf(r, true).text, /\d{4}\.\d{2}\.\d{2}\)$/, r.id);
   assert.equal(V.dateAltOf(byId['PRJ-28290-0058'], true).text, '원천 날짜 다름(LH 2028.12.31)');
   assert.equal(V.dateAltOf(byId['PRJ-28290-0058']).text, '원천 날짜 다름(LH 2028.12)', '목록 칸(좁은 열)은 달');
-  assert.match(read('components/projects/ProjectDetail.tsx'), /const alt = r\.home \? null : dateAltOf\(r, true\)/);
+  assert.match(read('components/projects/ProjectDetail.tsx'), /const alt = r\.home \|\| d\.judge \? null : dateAltOf\(r, true\)/);
 });
 
 test('6 9·7 준공 381/381 은 숫자 그대로, ⓘ 에 원천 값 그대로(검증 대기)', () => {

@@ -10,7 +10,7 @@ const byName = (a: CalEntry, b: CalEntry) => a.name.localeCompare(b.name, 'ko') 
 export const monthSupply = (cal: Pick<CalendarDoc, 'home'>, ym: string, policy: HomePolicy = 'p97'): MonthDue[] =>
   Object.entries(cal.home[policy].sido).flatMap(([sd, es]) => es.filter((e) => e.ym === ym).map((e) => ({ ...e, sd }))).sort(byName);
 
-/* 월 상세가 열리는 달: 통계누리 실적 달 + LH 준공 예정 파일의 달 + 9·7 공급 예정이 있는 달(종합상황판의 월 링크도 같은 목록) */
+/* 월 상세가 열리는 달: 통계누리 실적 달 + LH 준공 예정 달(정책 진행 자료 9·7 연결 블록 — lib/board/home-lh-plan) + 9·7 공급 예정이 있는 달(종합상황판의 월 링크도 같은 목록) */
 export function monthIds(molitMonths: string[], lhBlocks: { date: string }[], cal: Pick<CalendarDoc, 'home'>): string[] {
   const due = cal.home.p97.months.filter((m) => m.units > 0).map((m) => m.ym);
   return [...new Set([...molitMonths, ...lhBlocks.map((b) => b.date.slice(0, 7)), ...due])].sort();

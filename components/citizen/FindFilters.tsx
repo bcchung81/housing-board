@@ -1,12 +1,13 @@
 'use client';
 /* 사업 찾기(/citizen/projects) 거르기 한 줄: 이름 검색(.ui-search) · 지역 탭(수도권·서울·경기·인천 + 시군구 메뉴·풀기) · 단계 탭(전체·계획·인허가·착공·모집).
    지역 = 채움 탭 .ui-tabs-seg, 단계 = 밑줄 탭 .ui-tabs-line(고른 단계는 단계 글자색 --tab-c, /citizen 과 같음) — 눌림 단추, role=group — 누르면 주소(?sido·?sgg·?stage·?q)를 바꾼다. 검색은 스크립트가 없어도 GET 폼으로 동작한다.
-   지역을 고르면 늘 주소에 적는다(수도권도 ?sido=metro) — 주소에 지역이 없을 때만 내 동네로 한 번 옮긴다(MyAreaFirst). */
+   지역을 고르면 늘 주소에 적는다(수도권도 ?sido=metro). 수도권 전체를 볼 때(myArea)는 지역 탭 옆에 저장된 내 동네로 가는 단추(MyAreaFirst — 2026-10-21 W6, 자동 이동 없음). */
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Search } from 'lucide-react';
 import { cn } from 'cn';
 import { ChipMenu, ClearChip } from '@/components/ui/chips';
+import MyAreaFirst from './MyAreaFirst';
 import { FIND_BASE, STAGE_GROUP_NAME, findHref, type FindQuery, type StageGroup } from '@/lib/board/public-labels';
 
 const SIDO_TABS: [string, string][] = [['metro', '수도권'], ['11', '서울'], ['41', '경기'], ['28', '인천']];
@@ -19,9 +20,9 @@ const MENU_OFF = '[&_summary]:border-transparent [&_summary]:bg-muted [&_summary
 /* 단계 탭 색: 단계 글자색 --st-*-ink(전체는 기본 --foreground) */
 const STAGE_INK: Record<string, string> = { plan: '[--tab-c:var(--st-plan-ink)]', permit: '[--tab-c:var(--st-permit-ink)]', build: '[--tab-c:var(--st-build-ink)]', sale: '[--tab-c:var(--st-sale-ink)]' };
 
-type Props = { sido: string; sgg: { code: string; label: string } | null; sggItems: { code: string; label: string }[]; stage?: StageGroup; q: string };
+type Props = { sido: string; sgg: { code: string; label: string } | null; sggItems: { code: string; label: string }[]; stage?: StageGroup; q: string; myArea?: boolean };
 
-export default function FindFilters({ sido, sgg, sggItems, stage, q }: Props) {
+export default function FindFilters({ sido, sgg, sggItems, stage, q, myArea }: Props) {
   const router = useRouter();
   const [text, setText] = React.useState(q);
   React.useEffect(() => setText(q), [q]);
@@ -53,6 +54,7 @@ export default function FindFilters({ sido, sgg, sggItems, stage, q }: Props) {
             </div>
             {sgg ? <div className={MENU}><ClearChip href={findHref({ sido: sgg.code.slice(0, 2), stage, q: q || undefined })} title={`${sgg.label} 풀고 시도 전체 보기`}>{sgg.label}</ClearChip></div> : null}
             {sggItems.length ? <div className={cn(MENU, !sgg && MENU_OFF)}><ChipMenu label="시군구" on={!!sgg} title="시군구 고르기" fixed items={sggItems.map((x) => ({ href: findHref({ sgg: x.code, stage, q: q || undefined }), label: x.label, on: sgg?.code === x.code }))} cols={2} /></div> : null}
+            {myArea ? <MyAreaFirst to="find" stage={stage} /> : null}
           </div>
           <div className="ui-tabs ui-tabs-line" role="group" aria-label="단계">
             {STAGES.map((s) => <button key={s || 'all'} type="button" className={cn(HIT, STAGE_INK[s])} aria-pressed={(stage ?? '') === s} onClick={() => go({ ...cur, stage: s || undefined })}>{s ? STAGE_GROUP_NAME[s] : '전체'}</button>)}

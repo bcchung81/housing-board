@@ -14,7 +14,7 @@ import homeBoardJson from '../../data/board/home-board.json';
 import homeProjectsJson from '../../data/board/home-projects.json';
 import { DETAILS } from '../shell/menu';
 import { SGG, getBoardData } from './data';
-import { drawerTarget, homeAgenciesOf, homeProgramsOf, homeRowsOf, rowsOf, type HomeDocRow, type HomeResidual, type IndexExtra, type MapRow, type Policy, type HomeCheck, type PolicyProgress, type ProjectDetail, type ProjectRow, type Program } from './projects-view';
+import { drawerTarget, homeAgenciesOf, homeProgramsOf, homeRowsOf, rowsOf, type HomeDocRow, type HomeResidual, type IndexExtra, type MapRow, type Policy, type HomeCheck, type PolicyProgress, type ProjectDetail, type ProjectRow, type Program, type StageShort } from './projects-view';
 import type { RegistryProject } from './types';
 import { AGENCY_SHORT, stepsOf, type Steps } from './public-labels';
 
@@ -33,11 +33,12 @@ export const getProjectsIndex = cache(async () => {
     homeRows: (await getHomeProjects()).rows };
 });
 
-/* HOME 원천 행 목록: 정책·시군구 이름은 사업 색인 것(정책 열쇠 97·129·813), 프로그램·기관 메뉴는 행에서. 기준일 = HOME 덤프 기준일 */
+/* HOME 원천 행 목록: 정책·시군구 이름은 사업 색인 것(정책 열쇠 97·129·813), 프로그램·기관 메뉴는 행에서. 기준일 = HOME 덤프 기준일.
+   단계 부족(row.home.short) = 행 goal − reached(종합상황판 home-board.json home.stageShort 와 같은 값 — 병목·일정 지연 카드의 목록 창 ?status=short-…) */
 type HomeDoc = { asOf: string; rows: HomeDocRow[]; residuals: HomeResidual[] };
 export const getHomeProjects = cache(async () => {
   const doc = homeProjectsJson as unknown as HomeDoc, idx = indexJson as unknown as IndexDoc;
-  const rows = homeRowsOf(doc.rows, doc.residuals);
+  const rows = homeRowsOf(doc.rows, doc.residuals, (homeBoardJson as unknown as { home?: { stageShort?: StageShort } }).home?.stageShort);
   return { rows, policies: idx.policies, programs: homeProgramsOf(rows), agencies: homeAgenciesOf(rows), sggNames: idx.sgg, referenceDate: doc.asOf, observedMonth: doc.asOf.slice(0, 7) };
 });
 

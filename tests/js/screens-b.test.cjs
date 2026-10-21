@@ -171,7 +171,7 @@ test('4 지역 공급 시군구 거르기: 고양시(41280) = 덕양·일산동�
   const page = read('app/(dashboard)/region/page.tsx');
   assert.match(page, /const sgg = parseSgg\(regionMap, sido, SGG_TABLE, q\.sgg\);/, '서버 렌더에서 ?sgg= 를 읽는다');
   assert.match(page, /const inArea = \(pl: HomePolicy\) => aheadAll\(calendar\.home\[pl\], sido, sidoName\)\.filter\(\(e\) => !sgg \|\| inSgg\(e, sgg, SGG_TABLE\)\);/, '달별 막대·목록·합계·정책 칩이 같은 거른 목록(2026-10-21 HOME 공급 예정)');
-  assert.match(page, /const pf: Filters = sgg \? \{ sgg, gu: guOf\(sgg\) \}/, '사업 화면 연결도 그 시군구');
+  assert.match(page, /\.\.\.\(sgg \? \{ sgg, gu: guOf\(sgg\) \}/, '사업 화면 연결도 그 시군구');
   assert.match(page, /\{list\.length \|\| sgg \? \(/, '고른 시군구에 예정이 없어도 지도는 남는다(다른 면을 고를 수 있게)');
   assert.match(read('components/region/Annual.tsx'), /note=\{sggName \? \{ text: '시도 단위 자료'/);
   assert.match(read('components/region/Cond.tsx'), /note=\{sggName \? \{ text: '시도 단위 자료'/);

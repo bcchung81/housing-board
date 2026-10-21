@@ -2,6 +2,7 @@
    칸 모양은 lib/grid/spec.ts 의 Cell(직렬화되는 값만). */
 import type { Cell, CellObj, Col, Row } from '../grid/spec';
 import { mapHref, mapScopeHref } from './map-href';
+import { agencyShow } from './home-agency';
 import {
   AGENCY_NAME, AHEAD_SUPPLY, BOARD_CIR, BOARD_COLOR, BOARD_INK, BOARD_NAMES, CAND_NAME, DATE_ALT, EVENT_NAME, HOME_NAMES, PLAN_COL, STATUS_NAME,
   agencyKey, dateAltOf, isMetro, listHref, lostGuide, nextOf, overdueMonthsOf, statusLabel, statusOf, statusTip, ymText, type Filters, type ProjectRow, type Status,
@@ -102,8 +103,8 @@ export const csvRows = (rows: Row[]): Row[] => rows.map((r) => {
 export const HOME_LIST_COLS: Col[] = [{ key: 'name', label: '사업', kind: 'text', clip: 'clamp(160px, 100vw - 1120px, 480px)' }, { key: 'sgg', label: '시군구', kind: 'text', clip: 'clamp(104px, 100vw - 1180px, 240px)' }, { key: 'agency', label: '기관', kind: 'text' },
   { key: 'stage', label: '단계', kind: 'text' }, { key: 'units', label: '계획 호수' }, { key: 'counted', label: '집계 호수' }, { key: 'gap', label: '부족 호수' }, { key: 'upcoming', label: '12개월 공급' }, { key: 'status', label: '상태', kind: 'text' },
   { key: 'map', label: '지도', kind: 'text', sort: false }];
-export const homeStagePill = (r: ProjectRow): Cell => ({ text: `${BOARD_CIR[r.board]} ${HOME_NAMES[r.board]}`, sort: r.board, pill: { color: BOARD_COLOR[r.board], ink: BOARD_INK[r.board] } });
-export const homeAgencyCell = (r: ProjectRow): Cell => (!r.agency || r.agency === AGENCY_NAME.etc ? { text: AGENCY_NAME.etc, muted: true } : r.agency);
+export const homeStagePill = (r: ProjectRow): Cell => ({ text: HOME_NAMES[r.board], sort: r.board, pill: { color: BOARD_COLOR[r.board], ink: BOARD_INK[r.board] } });
+export const homeAgencyCell = (r: ProjectRow): Cell => (!r.agency || r.agency === AGENCY_NAME.etc ? { text: AGENCY_NAME.etc, muted: true } : agencyShow(r.agency) === r.agency ? r.agency : { text: agencyShow(r.agency), title: r.agency });
 const COUNT_OUT = '제외';
 export const countedCell = (r: ProjectRow, chartOf: (r: ProjectRow) => boolean): Cell => (chartOf(r) ? (r.home!.counted ?? 0) > 0 ? r.home!.counted! : { na: '물량 없음' } : { text: COUNT_OUT, muted: true, sort: -1, title: '같은 블록의 다른 원천 행과 겹치거나(공사 계약 행 등) 모호해 호수 집계에서 뺀 행 — 목록에는 남김' });
 export const gapCell = (r: ProjectRow): Cell => (r.home?.gap ? { text: Math.round(r.home.gap).toLocaleString('en-US'), sort: r.home.gap, tone: r.cls === 'delay' ? 'bad' : 'warn', strong: r.cls === 'delay', title: '기준일까지 도래한 단계 목표 대비 측정(담당자 입력 포함) 부족 호수' } : null);

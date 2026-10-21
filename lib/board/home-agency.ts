@@ -9,6 +9,8 @@ export type HomeRow = {
   judge: { status: Judge; gap: number } | null; agency: string; loc: { ourSgg: string | null } | null;
 };
 export const JUDGE_NAME: Record<Judge, string> = { DELAYED: '지연', WARNING: '주의', NORMAL: '정상', UNKNOWN: '판정 미확보' };
+/* 기관 원천 글자의 보이는 꼴(2026-10-21 사용자 결정): 번호 머리('4)')를 떼고 쉼표는 가운뎃점 — '4)공공(LH,SH,GH)' → '공공(LH·SH·GH)'. 묶음·거르기 값은 원천 글자 그대로, 원문은 title */
+export const agencyShow = (name: string) => name.replace(/^\d+\)\s*/, '').replace(/\s*,\s*/g, '·');
 /* 우리 기관 화면 id → PoC 기관 이름 */
 export const HOME_AGENCY: Record<string, string> = { lh: 'LH', gh: 'GH', sh: 'SH', ih: '인천도시공사' };
 

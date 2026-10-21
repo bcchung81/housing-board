@@ -120,7 +120,7 @@ test('H7 CSV: 지금 거르기의 목록과 같은 열(지도 표지 제외)·�
   const t = G.toCsv([{ key: 'a', label: '이름', kind: 'text' }, { key: 'b', label: '호수' }], [{ id: '1', c: { a: { text: 'A, "B"', tag: '경과 3개월' }, b: { na: '미확인' } } }]);
   assert.equal(t, '﻿이름,호수\r\n"A, ""B"" (경과 3개월)",미확인\r\n');
   const route = read('app/(dashboard)/projects/csv/route.ts');
-  assert.match(route, /parseFilters\(q, /); assert.match(route, /homeListOrder\(applyFilters\(idx\.rows, f\)\)/, '2026-10-21: CSV 행 = HOME 원천 행');
+  assert.match(route, /parseFilters\(q, /); assert.match(route, /homeOrderOf\(applyFilters\(idx\.rows, f\), f\)/, '2026-10-21: CSV 행 = HOME 원천 행');
   assert.match(route, /'Content-Type': 'text\/csv; charset=utf-8'/); assert.match(route, /filename\*=UTF-8''/);
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /const csvHref = listHref\(f\)\.replace\(\/\^\\\/projects\/, '\/projects\/csv'\);/);

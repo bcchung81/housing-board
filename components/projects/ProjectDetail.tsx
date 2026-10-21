@@ -18,7 +18,7 @@ import { mapHref } from '@/lib/board/map-href';
 import { NOTICE_SITE } from '@/lib/board/public-labels';
 import type { AdminDetailWin, HiddenWin, HomeWin } from '@/lib/board/project-window';
 import InfoTip from '@/components/ui/info-tip';
-import { AGENCY_NAME, AGENCY_TIP, AHEAD_SUPPLY, EVENT_NAME, HOME_UNIT, PAST_DUE_UNDER, agencyKey, dateAltOf, dayText, hiddenNote, LOST_INPUT, lostGuide, pastDueOf, pct1, policyLabel, statusLabel, statusOf, statusTip, timelineOf } from '@/lib/board/projects-view';
+import { AGENCY_NAME, AGENCY_TIP, AHEAD_SUPPLY, EVENT_NAME, HOME_UNIT, PAST_DUE_UNDER, agencyKey, dateAltOf, dayText, hiddenNote, LOST_INPUT, lostGuide, judgeName, judgeTip, pastDueOf, pct1, policyLabel, statusLabel, statusOf, statusTip, timelineOf } from '@/lib/board/projects-view';
 
 const SCOPE: Record<string, string> = { PUBLIC: '공공', PRIVATE_ON_PUBLIC_LAND: '공공택지 민간', UNKNOWN: '미확인' };
 const UNIT: Record<string, string> = { BLOCK: '블록', PROJECT: '사업', AREA_UNKNOWN: '구역 미상' };
@@ -27,6 +27,7 @@ const LOC: Record<string, string> = { bundle: 'LH 블록·동 윤곽(지도 자�
 const LOC_SHORT: Record<string, string> = { bundle: '블록', block: '블록', address: '근사', district: '지구', name: '근사' };
 const NO_LOC_TIP = (by: string | undefined) => `지도에 그릴 위치가 없음(${by ? `${LOC[by] ?? by}뿐` : '좌표 없음'}) — 지도에서는 시군구로 열리고 '위치 미확보' 묶음에 들어감`;
 const fmt = (n: number) => n.toLocaleString('en-US');
+const JUDGE_SHOW = 3;   // 개요의 원천 행 판정 링크 수
 const FACTS = 'm-0 grid grid-cols-[repeat(auto-fit,minmax(min(180px,100%),1fr))] gap-x-10 gap-y-3 text-base leading-body [&_dd]:m-0 [&_dt]:text-sm [&_dt]:text-muted-foreground';
 const None = ({ children, tip }: { children: string; tip?: string }) => <span className="text-sm whitespace-nowrap text-muted-foreground" title={tip}>{children}</span>;
 /* 지도로 가는 링크는 <a>(지도는 루트 레이아웃이 달라 새 문서로 연다) — 모양은 PanelLink */
@@ -122,8 +123,10 @@ export default function ProjectDetail({ d, stageHref }: { d: AdminDetailWin | Hi
   const edition = x.refs.map((ref) => /^home-dump-(\d{4})(\d{2})(\d{2})/.exec(ref)).find(Boolean);
   const ml = d.mapLoc;   // 지도에 그리는 위치(지도와 같은 판정 mapLocOf — 서버가 계산해 싣는다, 번들 단지 값은 싣지 않음) — null 이면 위치 미확보
   const loc = ml ? LOC_SHORT[ml] : '미확보';
-  const alt = r.home ? null : dateAltOf(r, true);   // 원천 날짜 다름(D2): 판정은 원장 날짜, 표지만 — 서랍은 LH 날짜를 일까지(같은 달이어도 무엇이 다른지 보이게)
+  const alt = r.home || d.judge ? null : dateAltOf(r, true);   // 원천 날짜 다름(D2): 판정은 원장 날짜, 표지만 — 서랍은 LH 날짜를 일까지(같은 달이어도 무엇이 다른지 보이게)
   const mapId = d.ledger?.id ?? r.id, home = !!r.home;
+  /* 원장 사업 창에 HOME 원천 행이 합쳐져 있으면 상태는 그 PoC 판정(d.judge), 옛 '예정일 경과' 표지는 그리지 않는다 */
+  const j = d.judge, poc = home || !!j, sName = j ? judgeName(j) : statusLabel(r), sTip = j ? judgeTip(j) : statusTip(r), sKey = j ? j.cls ?? 'none' : statusOf(r), pd = !j && pastDueOf(r);
   return (
     <>
       {d.from ? <div role="note" title={`옛 사업 id ${d.from.id}(${d.from.name})는 이 사업으로 합쳤습니다`}><FactNote className="ui-inset" tip={{ label: '합쳐진 옛 id', children: <p>옛 사업 id {d.from.id}({d.from.name})는 이 사업으로 합쳤습니다</p> }}>옛 id {d.from.id} 합쳐짐</FactNote></div> : null}
@@ -147,23 +150,23 @@ export default function ProjectDetail({ d, stageHref }: { d: AdminDetailWin | Hi
 
       <Card render={<section aria-label="단계 타임라인" />}>
         <PanelHead title="단계 타임라인"
-          tip={home ? `사업 원장 ${mapId}(같은 현장 원천 ${d.ledger?.rows ?? 1}행)의 일정 — 단계마다 두 줄: 현재 = 원장의 현재 예정 하나 · 실제 = 원천에서 확인한 날짜 · 상태는 정책 진행 자료 판정(부족률)이라 예정일 경과 표지는 그리지 않음` : '단계마다 두 줄: 현재 = 원장의 현재 예정 하나 · 실제 = 원천에서 확인한 날짜 · 지연 = 현재 예정일 경과 개월(당초 대비가 아님) · 기록이 하나도 없는 단계는 줄을 그리지 않음 · 오른쪽 열은 지연 개월'}>
+          tip={poc ? `사업 원장 ${mapId}(같은 현장 원천 ${d.ledger?.rows ?? j?.rows.length ?? 1}행)의 일정 — 단계마다 두 줄: 현재 = 원장의 현재 예정 하나 · 실제 = 원천에서 확인한 날짜 · 상태는 정책 진행 자료 판정(부족률)이라 예정일 경과 표지는 그리지 않음` : '단계마다 두 줄: 현재 = 원장의 현재 예정 하나 · 실제 = 원천에서 확인한 날짜 · 지연 = 현재 예정일 경과 개월(당초 대비가 아님) · 기록이 하나도 없는 단계는 줄을 그리지 않음 · 오른쪽 열은 지연 개월'}>
           <TimelineLegend t={tl} />
           <InfoTip label="상태·일정 읽는 법">
             <dl>
-              <dt>{statusLabel(r)}</dt><dd>{statusTip(r)}</dd>
-              {pastDueOf(r) ? <><dt>{PAST_DUE_UNDER}</dt><dd>현재 예정일 {dayText(r.overdue!.planned)}이 기준일보다 앞섰지만 실제 기록이 없음 — 1개월 미만이라 상태는 그대로</dd></> : null}
+              <dt>{sName}</dt><dd>{sTip}</dd>
+              {pd ? <><dt>{PAST_DUE_UNDER}</dt><dd>현재 예정일 {dayText(r.overdue!.planned)}이 기준일보다 앞섰지만 실제 기록이 없음 — 1개월 미만이라 상태는 그대로</dd></> : null}
               {alt ? <><dt>{alt.text}</dt><dd>{alt.title.replace(/^준공 예정이 원천마다 다름 — /, '준공 예정: ').replace(/HOME/g, '사업 원장')}</dd></> : null}
-              <dt>당초 일정 없음</dt><dd>최초 약속 일정이 원장에 없어 당초 줄을 그리지 않음{home ? '' : ' — 지연은 현재 예정일이 지난 개월로만 판정'}</dd>
+              <dt>당초 일정 없음</dt><dd>최초 약속 일정이 원장에 없어 당초 줄을 그리지 않음{poc ? '' : ' — 지연은 현재 예정일이 지난 개월로만 판정'}</dd>
               <dt>현재 · 실제</dt><dd>단계마다 두 줄: 현재 = 원장의 현재 예정 하나, 실제 = 원천에서 확인한 날짜 · 오른쪽 열은 예정이 지난 개월</dd>
             </dl>
           </InfoTip>
         </PanelHead>
         <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
-          <span className="inline-flex items-center gap-1.5 font-bold text-foreground" title={statusTip(r)}><SwatchMark {...STATUS_SW[statusOf(r)]} />{statusLabel(r)}</span>
-          <span className="ml-auto text-muted-foreground" title={home ? '최초 약속 일정(당초)이 사업 원장에 없어 당초 줄을 그리지 않음 — 상태는 정책 진행 자료의 단계 목표 대비 판정' : '최초 약속 일정(당초)이 사업 원장(HOME 포함)에 없어 당초 줄을 그리지 않음 — 지연은 현재 예정일 경과로만 판정'}>당초 일정 없음</span>
+          <span className="inline-flex items-center gap-1.5 font-bold text-foreground" title={sTip}><SwatchMark {...STATUS_SW[sKey]} />{sName}</span>
+          <span className="ml-auto text-muted-foreground" title={poc ? '최초 약속 일정(당초)이 사업 원장에 없어 당초 줄을 그리지 않음 — 상태는 정책 진행 자료의 단계 목표 대비 판정' : '최초 약속 일정(당초)이 사업 원장(HOME 포함)에 없어 당초 줄을 그리지 않음 — 지연은 현재 예정일 경과로만 판정'}>당초 일정 없음</span>
         </div>
-        {pastDueOf(r) ? <FactNote className="mb-2" tip={{ label: PAST_DUE_UNDER, children: <p>현재 예정일 {dayText(r.overdue!.planned)}이 기준일보다 앞섰지만 실제 기록이 없음 — 1개월 미만이라 상태는 그대로</p> }}>{PAST_DUE_UNDER} · {EVENT_NAME[r.overdue!.eventType]} 현재 예정일 {dayText(r.overdue!.planned)}</FactNote> : null}
+        {pd ? <FactNote className="mb-2" tip={{ label: PAST_DUE_UNDER, children: <p>현재 예정일 {dayText(r.overdue!.planned)}이 기준일보다 앞섰지만 실제 기록이 없음 — 1개월 미만이라 상태는 그대로</p> }}>{PAST_DUE_UNDER} · {EVENT_NAME[r.overdue!.eventType]} 현재 예정일 {dayText(r.overdue!.planned)}</FactNote> : null}
         {alt ? <FactNote className="mb-2" tip={{ label: alt.text, children: <p>{alt.title.replace(/^준공 예정이 원천마다 다름 — /, '준공 예정: ').replace(/HOME/g, '사업 원장')}</p> }}>{alt.text}</FactNote> : null}
         <StageTimeline t={tl} />
       </Card>
@@ -177,6 +180,7 @@ export default function ProjectDetail({ d, stageHref }: { d: AdminDetailWin | Hi
           <div><dt>시군구</dt><dd><Link href={`/projects?sgg=${r.sgg}`} title="이 시군구로 거른 사업 목록">{r.sggName}</Link></dd></div>
           <div><dt>위치</dt><dd>{ml ? <span title={ml === 'bundle' ? '지도 자료의 LH 블록·동 윤곽과 이어진 사업' : x.loc?.basis ?? undefined}>{LOC[ml]}</span> : <None tip={NO_LOC_TIP(x.loc?.by)}>위치 미확보</None>}{ml ? null : <span className="mt-0.5 flex items-center gap-0.5 text-sm text-muted-foreground"><span>위치 입력 필요</span><InfoTip label="위치 입력 안내"><dl><dt>안내</dt><dd>{lostGuide(r.stage, x.loc?.by === 'area')}</dd><dt>필수</dt><dd>{LOST_INPUT.required}</dd><dt>선택</dt><dd>{LOST_INPUT.optional}</dd><dt>확인</dt><dd>{LOST_INPUT.check}</dd></dl><p>{LOST_INPUT.note}</p></InfoTip></span>}</dd></div>
           <div><dt>시행</dt><dd title={home ? '정책 진행 자료의 기관 이름' : AGENCY_TIP[ag]}>{home ? r.agency : r.agency ? d.agencies[r.agency] ?? AGENCY_NAME[ag] : <None tip={AGENCY_TIP.etc}>미확인</None>}</dd></div>
+          {j ? <div><dt>정책 진행 자료</dt><dd title={`이 사업에 합쳐진 정책 진행 자료 원천 행 ${j.rows.length}개 — 상태는 그중 가장 나쁜 판정`}>{j.rows.slice(0, JUDGE_SHOW).map((y, i) => <span key={y.id}>{i ? ' · ' : ''}<Link href={`/projects?id=${y.id}`} title={`${y.name} · ${judgeName(y)}${y.gap ? ` · 부족 ${fmt(Math.round(y.gap))}호` : ''}`}>{judgeName(y)}</Link></span>)}{j.rows.length > JUDGE_SHOW ? <span className="text-sm text-muted-foreground">{` 외 ${j.rows.length - JUDGE_SHOW}행`}</span> : null}</dd></div> : null}
           {d.ledger ? <div><dt>사업 원장</dt><dd title={`같은 현장을 합친 사업 원장 사업 — 이 사업에 합쳐진 원천 행 ${d.ledger.rows}개 · 일정·공정률·공고·근거는 이 사업 것`}><code className="text-sm">{d.ledger.id}</code>{d.ledger.rows > 1 ? <span className="text-sm text-muted-foreground"> · 원천 {d.ledger.rows}행 합침</span> : null}</dd></div> : null}
           <div><dt>구분</dt><dd title={x.basis ?? undefined}>{SCOPE[x.scope] ?? x.scope} · {UNIT[x.unit] ?? x.unit}</dd></div>
           <div><dt>정책 연결</dt><dd>{pol.length ? pol.map((p, i) => <span key={p.key} title={`정책 연결: ${r.link === 'CONFIRMED' ? '담당자가 확정함' : '담당자가 아직 확정하지 않은 제안'}`}>{i ? ' · ' : ''}{policyLabel(p)}</span>) : <None>연결 없음</None>}</dd></div>

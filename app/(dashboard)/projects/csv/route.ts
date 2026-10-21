@@ -5,14 +5,14 @@ import { getBoardData } from '@/lib/board/data';
 import { getHomeProjects } from '@/lib/board/projects-index';
 import { guOf } from '@/lib/board/metro-overview';
 import { HOME_LIST_COLS, dropBlank, homeCsvCols, homeCsvRows, homeListRows } from '@/lib/board/projects-list';
-import { applyFilters, homeChartOf, homeListOrder, parseFilters } from '@/lib/board/projects-view';
+import { applyFilters, homeChartOf, homeOrderOf, parseFilters } from '@/lib/board/projects-view';
 import { toCsv } from '@/lib/grid/spec';
 
 export async function GET(req: Request) {
   const q = Object.fromEntries(new URL(req.url).searchParams);
   const [{ molit }, idx] = await Promise.all([getBoardData(), getHomeProjects()]);
   const f = parseFilters(q, { policies: idx.policies, programs: idx.programs, sidoOk: (c) => !!sidoName(molit, c), guOf, home: { agencies: idx.agencies.map((a) => a.name) } });
-  const list = homeListOrder(applyFilters(idx.rows, f));
+  const list = homeOrderOf(applyFilters(idx.rows, f), f);
   const rows = homeListRows(list, f, null, (c) => sidoName(molit, c), homeChartOf(f));
   const body = toCsv(homeCsvCols(dropBlank(HOME_LIST_COLS, rows).cols), homeCsvRows(rows, list));
   const name = `사업목록_${idx.referenceDate.replace(/-/g, '')}.csv`;

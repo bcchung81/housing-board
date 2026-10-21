@@ -36,6 +36,7 @@ export type HomeExtra = {
   delayMax: number; warningMax: number; axisMax: number;
   stageGaps: { stage: string; label: string; status: string; gap: number; rate: string }[];
   bottleneck: { stage: string; label: string; status: string; gap: number; rate: string } | null;
+  stageShort?: Record<string, { rows: { id: string; short: number }[]; over: number }>;   // 단계 부족 사업(단계 부족량 = 부족 합 − over) — 병목·일정 지연 카드의 목록 창
   supplyUpcoming: { total: number; projects: number; from: string; to: string };
   monthly: { month: string; APPROVAL: number | null; CONSTRUCTION: number | null; SUPPLY: number | null; COMPLETION: number | null }[];
   mapSupply: Record<string, { supplyReached: number; delayed: boolean; delayNote: string }>;

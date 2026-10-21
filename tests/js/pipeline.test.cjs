@@ -142,7 +142,8 @@ test('화면 사용 판정은 모든 운영 자료를 포함하고, 사용 근�
     assert.ok(usage.board && usage.map && usage.gap && usage.evidence.length, id);
     for (const file of usage.evidence) assert.ok(fs.existsSync(path.join(ROOT, file)), `${id}: ${file}`);
   }
-  assert.match(SCREEN_USAGE.ledger.board, /^△ 원장 2026-10/, '종합상황판은 원장 2026-10 범위만 쓴다(전국 아님)');
+  assert.match(SCREEN_USAGE.ledger.board, /^△ 원장 2026-10 사업 번호[^]*숫자는 정책 진행 자료 9·7$/, '2026-10-21 W6: 종합상황판 숫자는 정책 진행 자료(home-board), 원장은 사업 번호 연결만');
+  assert.match(SCREEN_USAGE['lh-completion'].board, /^△ 정책 진행 자료 경유 9·7 연결 블록/, 'LH 준공 예정은 HOME 덤프 경유(lib/board/home-lh-plan)');
   assert.match(SCREEN_USAGE.ledger.map, /✓/);
   assert.match(SCREEN_USAGE['hub-ap'].map, /△/);
   assert.match(SCREEN_USAGE.schedule.gap, /이력 없음/);

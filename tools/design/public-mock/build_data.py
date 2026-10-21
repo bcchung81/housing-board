@@ -72,11 +72,17 @@ for code, rows in prj.items():
         s = (det.get(f'PRJ-{code}-{row[0]}') or [None, []])[1]
         if len(s) > 3 and s[3] and s[3][1]: row[2] = 7
         elif len(s) > 2 and s[2] and s[2][1]: row[2] = max(row[2], 6)
+# 지역 공급 달력(2026-10-21 W6 — 옛 원장 예정 rc['sido'](모집·준공·입주) 대신 HOME 9·7 '향후 12개월 공급(모집·분양) 예정' rc['home']['p97'], 큰 숫자와 같은 범위).
+# HOME 에는 준공·입주 예정 일정이 화면 자료로 없어 모집 공고 종류만 들어온다. 시군구 미연결 행(sgg = 시도 이름)은 시도 코드 칸(시도·수도권 합계에만)
 TYPES = rc['kinds']
+SD_OF_NAME = {v: k for k, v in SDN.items()}
 cal = []
-for sd, L in rc['sido'].items():
+for sd, L in rc['home']['p97']['sido'].items():
     for e in L:
-        cal.append([code_of_name.get(e['sgg']) if e['sgg'] not in names_in_idx else [k for k, v in sgg.items() if v == e['sgg']][0], e['ym'], e['day'] or 0, TYPES.index(e['type']), e['name'], e['units'] or 0, e['id']])
+        c = SD_OF_NAME.get(e['sgg']) or (code_of_name.get(e['sgg']) if e['sgg'] not in names_in_idx else [k for k, v in sgg.items() if v == e['sgg']][0])
+        assert c and c.startswith(sd), e['sgg']
+        cal.append([c, e['ym'], e['day'] or 0, TYPES.index(e['type']), e['name'], e['units'] or 0, e['id']])
+assert len(cal) == rc['home']['p97']['projects'] and sum(e[5] for e in cal) == rc['home']['p97']['total'], 'HOME 9·7 12개월 공급 예정 합'
 sggs = [[k, v, 0] for k, v in sorted(sgg.items())] + [[k, v, 1] for k, v in sorted(zero.items())]
 meta = {'ledgerRef': lm['referenceDate'], 'ledgerMonth': lm['observedMonth'], 'calRef': rc['referenceDate'], 'calFrom': rc['from'], 'calTo': rc['to'],
         'idxRef': pi['referenceDate'], 'today': datetime.date.today().isoformat()}   # 빌드한 날(가구 증가 해 계산용). 화면의 '오늘'은 브라우저의 실제 날짜

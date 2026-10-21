@@ -175,12 +175,14 @@ test('합계: 수도권 262곳·22만 7,976호 = /citizen 공급 예정 호수 =
   const gy = listOf({ sgg: '28245' });
   assert.deepEqual({ n: gy.length, u: gy.reduce((s, x) => s + x.units, 0) }, { n: 8, u: 4880 }, '인천 계양구(제안서 4.4 의 6곳·3,664호 → 2026-10-20 HOME 판 8곳·4,880호)');
   /* 묶음 합 = 목록 합 */
-  const g = P.byYear(all, '2026-10-19');
+  const g = P.byYear(all, '2026-10-19'), DONE = P.DONE_YEAR, PAST = P.PAST_YEAR;
   assert.equal(g.reduce((s, x) => s + x.items.length, 0), all.length);
   assert.equal(g.reduce((s, x) => s + x.units, 0), metro.u);
   assert.equal(g[g.length - 1].label, '연도 미정');
   assert.ok(g.every((x, i) => !i || !x.year || !g[i - 1].year || g[i - 1].year < x.year), '해 순서');
-  assert.ok(g.every((x) => !x.year || x.year >= '2026'), '지난 해는 올해 묶음에(/citizen yearBucket 칸 0)');
+  /* 2026-10-21 사용자 결정(점검 #15 '들어올 해 유지, 지난 것 분리'): 들어올 날이 지난 사업은 해 묶음 밖(실제 = 이미 들어왔어요 · 예정 = 들어올 예정일이 지났어요) — 실자료 대조는 qa-1021 #15 */
+  assert.ok(g.every((x) => [DONE, PAST, ''].includes(x.year) || x.year >= '2026'), '해 묶음은 올해부터');
+  assert.ok(g.every((x) => x.year !== DONE || x.items.every((y) => y.inDone)));
 });
 
 test('수도권만: 수도권 밖 시도·시군구 주소는 수도권으로, 목록에 수도권 밖 사업 없음', () => {
@@ -210,7 +212,7 @@ const BANNED = [/[①②③④⑤⑥]/, /\bBL\b|\dBL/, /D-\d|D-day/, /원장/, /
 const words = (L) => L.flatMap((x) => [x.name, x.sub, x.area, x.stage, x.nextText, x.inText, x.fact, x.agency]);
 
 test("보이는 값(수도권 목록 전부·묶음 머리·사다리·문구)에 정책·내부 말이 없고 단위는 '호'", () => {
-  const all = listOf({}), texts = [...words(all), ...P.byYear(all, '2026-10-19').map((g) => g.label), ...P.LADDER, ...P.LADDER_Q, ...Object.values(P.STAGE_GROUP_NAME), P.PAST_DUE_PUBLIC, P.PAST_DUE_TIP,
+  const all = listOf({}), texts = [...words(all), ...P.byYear(all, '2026-10-19').map((g) => g.label), ...P.LADDER, ...P.LADDER_Q, ...Object.values(P.STAGE_GROUP_NAME), P.PAST_DUE_PUBLIC,
     ...Object.values(PD).flatMap((x) => (x.refs || []).map((ref) => P.sourceName(JSON.parse(read('data/board/project-detail.json')).sources[ref]?.provider || '') || ''))];
   for (const t of texts) for (const re of BANNED) assert.doesNotMatch(t, re, `${re} — ${t}`);
   for (const t of texts) assert.doesNotMatch(t, /\d\s*집/, t);
@@ -251,7 +253,7 @@ test("화면 파일의 한글 문구: 정책·내부 말(원장·판정·지연�
 test('재사용: 목록 행·거르기·사업 창은 정책 화면과 같은 함수(homeRowsOf·getProjectsIndex·getProjectDrawer·parseFilters·applyFilters·projectWindow·WindowSeed), 내 동네는 menu.ts 를 읽기만', () => {
   const page = read(FILES[0]);
   /* 2026-10-21 HOME PoC: 목록 줄 = HOME 원천 행(homeRowsOf — 정책 /projects 와 같은 함수), 다음 일정·사업 창은 같은 현장 원장 사업(idx.rows·renewalRows·getPublicDetails) */
-  for (const s of ['getProjectsIndex()', 'getProjectDrawer(id)', 'getPublicDetails()', 'parseFilters(', 'homeRowsOf(HOME.rows)', 'applyFilters(home.filter((r) => r.home!.chart.p97 || (text && orphan.has(r.id))), f)', '[...idx.rows, ...idx.renewalRows]', 'homeFact(r.cls, h.gap, o?.overdue ?? null)', "projectWindow(id, 'public', { today })", "from '@/components/windows/WindowSeed'", '<WindowSeed win={sel} path="/citizen/projects"', 'publicItems(', 'byYear(items, today)']) assert.ok(page.includes(s), s);
+  for (const s of ['getProjectsIndex()', 'getProjectDrawer(id)', 'getPublicDetails()', 'parseFilters(', 'homeRowsOf(HOME.rows)', 'applyFilters(home.filter((r) => r.home!.chart.p97 || (text && orphan.has(r.id))), f)', '[...idx.rows, ...idx.renewalRows]', 'homeFact(r.cls, h.gap)', "projectWindow(id, 'public', { today })", "from '@/components/windows/WindowSeed'", '<WindowSeed win={sel} path="/citizen/projects"', 'publicItems(', 'byYear(items, today)']) assert.ok(page.includes(s), s);
   const my = read('components/citizen/MyAreaFirst.tsx');
   assert.match(my, /myAreaScope\(raw\)/); assert.match(my, /localStorage\.getItem\('myArea'\)/); assert.doesNotMatch(my, /localStorage\.setItem/);
   assert.match(read('components/citizen/FindFilters.tsx'), /className="ui-tabs ui-tabs-seg" role="group" aria-label="지역"/);

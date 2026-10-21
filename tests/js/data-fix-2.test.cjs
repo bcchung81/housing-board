@@ -52,7 +52,7 @@ test('#3·D1 현재 예정: 경과 1개월 미만으로 지난 예정은 그 날
   }
   assert.equal(L.nextCell(byId['PRJ-28290-0058']).tag, '원천 날짜 다름(LH 2028.12)', '지연 행(지연 열이 있는 목록)은 경과 꼬리표 없이 옅게 — 원천 날짜 다름만');
   assert.match(V.nextOf(byId['PRJ-28290-0058']).tag, /^경과 \d+개월$/, '간단 보기의 지연 꼬리표는 그대로');
-  assert.match(read('components/projects/ProjectDetail.tsx'), /pastDueOf\(r\) \?[\s\S]*\{PAST_DUE_UNDER\}/, '서랍 머리에도 표지(2026-10-16: \'예정일 지남(1개월 미만)\' — r2-screens 2)');
+  assert.match(read('components/projects/ProjectDetail.tsx'), /pd = !j && pastDueOf\(r\)[\s\S]*pd \?[\s\S]*\{PAST_DUE_UNDER\}/, '서랍 머리에도 표지(2026-10-16: \'예정일 지남(1개월 미만)\' — r2-screens 2)');
   assert.match(read('components/projects/Candidate.tsx'), /next = nextOf\(r\)/, '간단 보기는 nextOf 그대로');
   assert.doesNotMatch(read('app/(dashboard)/projects/page.tsx'), /nextCell/, '2026-10-21 사업 화면은 HOME 원천 행 — 현재 예정 칸·인쇄 표 nextCell 이 없다(원장 판 nextCell 은 위에서 확인)');
 });

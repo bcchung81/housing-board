@@ -28,7 +28,8 @@ test('사업 상세(서랍)·목록·타임라인은 같은 리본 칸 번호(�
   for (const f of ['components/projects/ProjectDetail.tsx', 'app/(dashboard)/projects/page.tsx']) assert.doesNotMatch(read(f), /Stepper|StageLadder/, f);
   for (const f of ['components/ui/stepper.tsx', 'components/StageLadder.tsx']) assert.ok(!fs.existsSync(path.join(ROOT, f)), `쓰는 곳이 없는 ${f} 는 지운다`);
   const steps = read('components/projects/StageSteps.tsx');
-  assert.match(steps, /\{BOARD_CIR\[i\]\} \{name\}\n\s*<\/b>/, '칸 이름은 ①~⑥');
+  assert.match(steps, /\{label\(i\)\}\n\s*<\/b>/, '칸 이름 = label(i) — 원장 창은 ①~⑥, HOME 원천 행 창은 원 숫자 없음(2026-10-21 점검 #12)');
+  assert.match(steps, /const label = \(i: number\) => \(home \? NAMES\[i\] : `\$\{BOARD_CIR\[i\]\} \$\{NAMES\[i\]\}`\)/);
   assert.doesNotMatch(steps, /공식 단계|BOARD_OFFICIAL/, '공식 01~06 은 ①~⑥ 과 어긋나 title 에도 쓰지 않는다(2026-10-16 3차 평가 — r3-screens 4)');
   assert.doesNotMatch(steps, /BOARD_OFFICIAL_SHORT/);
   assert.match(steps, /aria-current=\{on \? 'step' : undefined\}/);

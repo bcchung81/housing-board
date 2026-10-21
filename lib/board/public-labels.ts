@@ -78,6 +78,8 @@ export const fullDate = (w: string | null | undefined) => (!w ? '미정' : w.len
 /* 들어올 날: 입주 → 준공 → 원장 다음 고비가 준공·입주일 때 그 날, 없으면 '' */
 export const inDate = (s: Steps, nx: Nx): string => (s[3] && s[3][0]) || (s[2] && s[2][0]) || ((nx.k === 2 || nx.k === 3) && nx.d) || '';
 export const inYear = (s: Steps, nx: Nx) => inDate(s, nx).slice(0, 4);
+/* 들어올 날이 실제 기록인가: 입주 고비가 있으면 입주, 없으면 준공 고비의 실제 표시(inDate 와 같은 차례) */
+export const inReal = (s: Steps) => { const st = s[3] && s[3][0] ? s[3] : s[2] && s[2][0] ? s[2] : null; return !!st && st[1] === 1; };
 export function inLabel(s: Steps, nx: Nx): string {
   if (s[3] && s[3][0]) return '입주 ' + fullDate(s[3][0]);
   if (s[2] && s[2][0]) return '준공 ' + fullDate(s[2][0]);
@@ -129,7 +131,6 @@ export function lateShort(r: { issued: boolean; cls: Cls | null; overdue: { even
 }
 /* 1개월이 안 되게 예정일이 지난 사업(projects-view pastDueOf): 판정은 정상 그대로, 글자만 */
 export const PAST_DUE_PUBLIC = '예정일 지남 · 기록 확인 중';
-export const PAST_DUE_TIP = '사업 시행자가 알린 예정일이 지났는데 마쳤다는 기록이 아직 없어요. 일정이 바뀌었거나 기록이 늦게 올라올 수 있어요';
 /* 목록 '예정 대비' 칸: 판정 글자, 정상인데 예정일이 막 지났으면 PAST_DUE_PUBLIC */
 export const factOf = (j: Judge, pastDue: boolean) => (j.k === 'ok' && pastDue ? PAST_DUE_PUBLIC : j.t);
 /* 상세 머리 한 줄(안 A): '준공 예정일(2025년 2월 18일)이 19개월 지났어요' */
@@ -159,10 +160,9 @@ export const groupOfBoard = (b: number): StageGroup | null => (b === 0 ? 'plan' 
    정책·사업화 → 계획, 인허가 → 인허가, 건설(PoC 는 준공을 건설에 넣는다) → 착공, 공급 → 모집, 입주 → 입주. 준공 칸으로 가는 PoC 칸은 없다 */
 export const PUBLIC_OF_HOME = [0, 0, 1, 2, 3, 5] as const;
 /* PoC 판정(lib/board/projects-view homeRowsOf 의 cls — 도래 목표 대비 측정 부족률 2% 이상 지연, 0~2% 주의) 사실 문장(안 A — 사실만, 2026-10-19):
-   정상·판정 미확보 → 빈칸, 주의·지연이고 우리 원장에 지난 예정일이 있으면 '준공 예정일이 n개월 지났어요', 없으면 PoC 부족 호수로 '예정보다 n호가 아직 확인되지 않았어요' */
-export function homeFact(cls: Cls | null, gap: number | null, overdue: { eventType: string; months: number } | null): string {
+   정상·판정 미확보 → 빈칸, 주의·지연이면 PoC 부족 호수로 '예정보다 n호가 아직 확인되지 않았어요'(2026-10-21 W6 — 옛 '우리 원장 지난 예정일' 문장은 쓰지 않는다) */
+export function homeFact(cls: Cls | null, gap: number | null): string {
   if (cls !== 'caution' && cls !== 'delay') return '';
-  if (overdue) return `${EV_NAME[overdue.eventType] ? EV_NAME[overdue.eventType] + ' ' : ''}예정일이 ${overdue.months ? `${overdue.months}개월 ` : ''}지났어요`;
   return gap ? `예정보다 ${Math.round(gap).toLocaleString('ko-KR')}호가 아직 확인되지 않았어요` : '예정보다 늦어지고 있어요';
 }
 /* 겹쳐서 합계에서 뺀 PoC 행(9·7 물량 집계 대상 아님 — 같은 블록의 다른 자료와 같은 사업, 사업 찾기에서는 대표 줄이 없을 때 이름 검색으로만 보인다)의 호수 칸 글자·설명 */
@@ -216,6 +216,7 @@ export type PublicItem = {
   id: string; name: string; sub: string; full: string; sgg: string; area: string; units: number; board: number;
   stage: string; pct: number | null; nextText: string; inText: string; inDay: string; year: string; fact: string; judge: Judge['k']; agency: string;
   when: string;   // 원장 다음 고비 날짜(순서의 둘째 열쇠)
+  inDone: boolean;   // 들어올 날이 실제 기록(입주, 없으면 준공) — 이미 들어온 사업
   dup: boolean; link: string | null;
 };
 /* 목록 줄: 이름(distinctNames) · 지금(단계 + 공사 n%) · 다음 일정 · 들어올 때 · 예정 대비 · 시행. 순서 = inCmp(들어올 날 가까운 순) */
@@ -225,18 +226,23 @@ export function publicItems(xs: PublicIn[], today: string, sggName: (code: strin
     const nx = nxOf(x.next), j = prjJudge(x), day = inDate(x.steps, nx);
     return {
       id: x.id, name: nm[x.id], sub: nm.sub?.[x.id] ?? '', full: x.name, sgg: x.sgg, area: x.area, units: x.units, board: x.board,
-      stage: STAGE_NAME[x.board] ?? '', pct: x.progress, nextText: stepText(nextStep(prjMarks(x.steps, nx, today))), inText: inLabel(x.steps, nx), inDay: day, year: day.slice(0, 4),
+      stage: STAGE_NAME[x.board] ?? '', pct: x.progress, nextText: stepText(nextStep(prjMarks(x.steps, nx, today))), inText: inLabel(x.steps, nx), inDay: day, year: day.slice(0, 4), inDone: inReal(x.steps),
       fact: x.fact ?? factOf(j, x.pastDue), judge: j.k, agency: x.agency, when: nx.d, dup: !!x.dup, link: x.link === undefined ? x.id : x.link,
     };
   }).sort((a, b) => inCmp({ d: a.inDay, when: a.when, u: a.units }, { d: b.inDay, when: b.when, u: b.units }));
 }
-/* 들어올 해 묶음: 지난 해는 올해에 넣고(/citizen yearBucket 칸 0 과 같음) 앞으로의 해는 해마다, 연도 미정은 맨 뒤 */
+/* 들어올 해 묶음(2026-10-21 사용자 결정 '들어올 해 유지, 지난 것 분리' — 옛: 지난 해 들어올 날이 올해 묶음에 섞임): 들어올 날이 오늘 전이면 따로 —
+   실제 기록이면 '이미 들어왔어요', 예정만 있으면 '들어올 예정일이 지났어요'(입주·준공 기록 없음). 그 밖은 해마다, 순서 = 해 → 예정일 지남 → 이미 들어옴 → 연도 미정 */
 export type YearGroup = { year: string; label: string; items: PublicItem[]; units: number };
+export const DONE_YEAR = 'done', PAST_YEAR = 'past';
+const YEAR_NAME: Record<string, string> = { [DONE_YEAR]: '이미 들어왔어요', [PAST_YEAR]: '들어올 예정일이 지났어요', '': '연도 미정' };
+const YEAR_RANK: Record<string, string> = { [PAST_YEAR]: '9997', [DONE_YEAR]: '9998', '': '9999' };
 export function byYear(items: PublicItem[], today: string): YearGroup[] {
-  const y0 = today.slice(0, 4), m = new Map<string, PublicItem[]>();
-  for (const x of items) { const y = !x.year ? '' : x.year < y0 ? y0 : x.year; (m.get(y) || m.set(y, []).get(y)!).push(x); }
-  return [...m.entries()].sort((a, b) => (a[0] || '9999').localeCompare(b[0] || '9999'))
-    .map(([year, L]) => ({ year, label: year ? `${year}년 들어와요` : '연도 미정', items: L, units: L.reduce((s, x) => s + x.units, 0) }));
+  const m = new Map<string, PublicItem[]>();
+  for (const x of items) { const y = x.inDay && periodEnd(x.inDay) < today ? (x.inDone ? DONE_YEAR : PAST_YEAR) : x.year; (m.get(y) || m.set(y, []).get(y)!).push(x); }
+  const rank = (y: string) => YEAR_RANK[y] ?? y;
+  return [...m.entries()].sort((a, b) => rank(a[0]).localeCompare(rank(b[0])))
+    .map(([year, L]) => ({ year, label: YEAR_NAME[year] ?? `${year}년 들어와요`, items: L, units: L.reduce((s, x) => s + x.units, 0) }));
 }
 /* 이름 검색: 띄어쓰기·대소문자 무시, 초성만 쓰면 초성으로(예 'ㄱㅇ' → 계양) */
 const CHO = 'ㄱㄲㄴㄷㄸㄹㅁㅂㅃㅅㅆㅇㅈㅉㅊㅋㅌㅍㅎ';
