@@ -51,8 +51,8 @@ test('1 지연 헤드라인: 카드 = 지연 2건 · 주의 2(후보 0이라 쌍
   assert.match(board, /<div data-slot="board-dir-value" className=\{cn\(dirFrame, 'ui-dir-layer pointer-events-none absolute inset-0/);
   /* 해당 패널(선택 시점 판정): 작은 회색 후보 줄 대신 지연 확정 · 후보 계산 두 숫자(같은 크기, 각 목록) */
   const cand = board.slice(board.indexOf('data-slot="board-cand"'), board.indexOf('</div>', board.indexOf('data-slot="board-cand"')));
-  assert.match(cand, /<PanelLink href="\/projects\?sido=all&status=late"[^>]*>확정 <b className=\{cn\(disp, 'text-lg leading-none text-bad'\)\}>\{f\(SJ\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
-  assert.match(cand, /<PanelLink href="\/projects\?sido=all&status=review-late"[^>]*>후보 계산 <b className=\{cn\(disp, 'text-lg leading-none text-foreground'\)\}>\{f\(SJ\.candidate\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
+  assert.match(cand, /<PanelLink href=\{at\('\/projects\?sido=all&status=late'\)\}[^>]*>확정 <b className=\{cn\(disp, 'text-lg leading-none text-bad'\)\}>\{f\(SJ\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
+  assert.match(cand, /<PanelLink href=\{at\('\/projects\?sido=all&status=review-late'\)\}[^>]*>후보 계산 <b className=\{cn\(disp, 'text-lg leading-none text-foreground'\)\}>\{f\(SJ\.candidate\.delay\.projects\)\}<\/b>건<\/PanelLink>/);
   assert.doesNotMatch(cand, /candText\(SJ\.candidate\)\}<\/span>|후보 목록/, '옛 작은 회색 보조 줄 없음');
 });
 

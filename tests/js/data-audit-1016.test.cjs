@@ -171,7 +171,7 @@ test('후속 1: 후보 계산 숫자 → ?status=review-late 목록·CSV 건수�
   assert.equal(listOf('/projects?sido=all&status=review').length, c.ok.projects + c.caution.projects + c.delay.projects, '확인 필요(후보) 전체도 0');
   /* 종합상황판 선택 시점 카드의 링크도 같은 주소 */
   const board = read('components/board/Board.tsx');
-  assert.match(board, /<PanelLink href="\/projects\?sido=all&status=review-late"[^>]*>후보 계산 <b/);
+  assert.match(board, /<PanelLink href=\{at\('\/projects\?sido=all&status=review-late'\)\}[^>]*>후보 계산 <b/);   // 2026-10-21 지역 탭(atSido)
   /* 사업 화면: 목록 머리 이름 · 상태 메뉴 칩 · CSV(같은 parseFilters·applyFilters) */
   assert.equal(V.REVIEW_LATE, '후보 · 지연 계산');
   assert.equal(V.listHref(V.parseFilters({ sido: 'all', status: 'review-late' }, fctx)), '/projects?sido=all&status=review-late', '주소가 그대로 돌아온다');

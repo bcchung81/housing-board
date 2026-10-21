@@ -19,7 +19,7 @@ const IDX = require('../../data/board/projects-index.json');
 const BOARD = require('../../data/board/ledger-board.json');
 const LH = require('../../data/board/lh-completion.json');
 
-const board = read('components/board/Board.tsx'), real = read('components/board/RealPanels.tsx'), home = read('app/(dashboard)/page.tsx');
+const board = read('components/board/Board.tsx'), real = read('components/board/RealPanels.tsx'), home = read('app/(dashboard)/page.tsx'), homeAct = read('components/board/HomeActual.tsx');
 const month = read('app/(dashboard)/month/[id]/page.tsx'), agency = read('app/(dashboard)/agency/[id]/page.tsx'), kpis = read('components/StageKpis.tsx');
 const panel = (id, s = board) => s.slice(s.indexOf(`id="${id}"`), s.indexOf('</Card>', s.indexOf(`id="${id}"`)));
 const head = (id, s = board) => { const p = panel(id, s); return p.slice(0, p.indexOf('</h2>') + 400); };
@@ -51,7 +51,7 @@ test("2 기간·단위: 진척 관리 '착공 누계'(기간 2026년 1~8월은 (
   assert.equal(C.ytdSpan('2026', 8), '2026.01~08 누계');
   assert.doesNotMatch(board, /x\.tag|x\.note/, '줄1 꼬리 없음');
   /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — p-actual 은 HOME 9·7 사건(HomeActual, '단위 호')이 기본, 옛 통계누리 갈래는 '단위 호(세로축 20만 = 20만 호)' */
-  assert.match(panel('p-actual', real), /<h2 className=\{ptitle\} title=\{`HOME 9·7[^`]*단위 호/);
+  assert.match(panel('p-actual', homeAct), /<h2 className=\{ptitle\} title=\{`HOME 9·7[^`]*단위 호/);   // 2026-10-21 지역 탭: HomeActual 파일
   assert.match(real, /<h2 className=\{ptitle\} title=\{`[^`]*단위 호\(세로축 20만 = 20만 호\)/);
   assert.doesNotMatch(real, /data-slot="actual-unit"/, "보이는 '단위 호' 글자 없음");
   assert.match(agency, /sub: <>\{ytdSpan\(year, Number\(last\.slice\(5\)\)\)\} \{fmt\(ytd\(molit, k, NATION, last, a\.actor!\)\)\}호/);

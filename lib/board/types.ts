@@ -31,7 +31,7 @@ type Judged = { projects: number; units: number };
 type CandJudged = { ok: Judged; caution: Judged; delay: Judged };
 /* HOME 규칙 집계(data/board/home-board.json, tools/ledger/home-board.js — 2026-10-21 결정: 종합상황판은 HOME 정책 추진현황과 같은 조건·같은 표기)의 추가 값 */
 export type HomeExtra = {
-  policyId: string; targetUnits: number;
+  policyId: string; targetUnits: number | null;   // 시도 묶음 = HOME 지역 배분 목표(plan.region_allocations, 없으면 null)
   cards: Record<string, { target?: number; current?: number | null; measured_on?: string | null; year_end_expected?: number | null; plan_date?: string | null; remainder?: number | null }>;
   delayMax: number; warningMax: number; axisMax: number;
   stageGaps: { stage: string; label: string; status: string; gap: number; rate: string }[];
@@ -46,7 +46,7 @@ export type LedgerBoard = {
   stageNames?: string[];                                                    // 리본 6칸 이름(HOME 집계: 정책·사업화·인허가·건설·공급·입주). 없으면 sample.ts K
   home?: HomeExtra;
   judge: { cautionMonths: number; delayMonths: number; rule?: string };
-  scope: { projects: number; issued: number; candidates: number; judged: number; candidateJudged?: number; units: number; coverage?: string; bySource?: { issued: number; lhCandidates: number; hubBulkCandidates: number; home?: number }; renewal?: { projects: number; units: number } };
+  scope: { projects: number; issued: number; candidates: number; judged: number; candidateJudged?: number; units: number; coverage?: string; areaName?: string; bySource?: { issued: number; lhCandidates: number; hubBulkCandidates: number; home?: number }; renewal?: { projects: number; units: number } };
   months: string[]; now: number; stageUnits: number[][]; stageProjects: number[][];
   actualThrough?: string; actualIndex?: number; actualSource?: string | null;   // 실제 날짜가 있는 마지막 달(호수가 가장 많은 원천의 자료 달). 그 뒤 달은 예정으로 다시 만든 값. 없으면(옛 집계) 기준 달까지 실제
   /* ok·caution·delay = 판정(사업 번호가 있는 사업만), candidate = 번호가 없는 후보의 같은 계산(확인 필요, 2026-10-15 결정 D3 — 없으면 옛 집계: 후보 포함 판정) */
@@ -58,4 +58,6 @@ export type LedgerBoard = {
   overdue: { id: string; name: string; sgg: string; eventType: string; planned: string; months: number; class: string }[];
   /* 월 판정 이력(data/board/judgment-history.json, tools/ledger/trend.js) 중 기준 달 앞 행 + 이번 달 행. 없으면(옛 집계) 기준 달만 판정 */
   trend?: { month: string; referenceDate: string; edition: string | null; basis: 'BACKFILL' | 'OBSERVED'; ok: Judged; caution: Judged; delay: Judged; candidate?: CandJudged; delayByStage: number[]; cautionByStage: number[]; judged: number; addedSources?: string[]; excludedStartOverdue?: Judged & { pairs: number }; max?: { d: number; w: number } }[];
+  /* 시도별 HOME 집계(2026-10-21 사용자 결정 — 종합상황판 지역 탭 수도권 전체·서울·경기·인천, home-board.js homeBoards): 같은 계산을 HOME 지역 범위로. 시도 타일(regions)은 전체 집계 것만 */
+  byRegion?: Record<string, Omit<LedgerBoard, 'regions' | 'byRegion'>>;
 };

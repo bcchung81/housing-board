@@ -1,5 +1,5 @@
 import PanelLink from './PanelLink';
-/* 종합상황판의 실데이터 위젯: 월별 실적 흐름(통계누리 합계 자리 '00' — 화면 범위 수도권이면 서울+인천+경기 합, lib/board/data.ts). 서버 컴포넌트가 data/board 의 값을 읽어 그린다. Board 가 시도 카드와 같은 줄에 둔다. */
+/* 종합상황판의 실데이터 위젯(HOME 집계가 없을 때 — 있으면 Board 가 지역 탭 값으로 HomeActual 을 그린다, 2026-10-21): 월별 실적 흐름(통계누리 합계 자리 '00' — 화면 범위 수도권이면 서울+인천+경기 합, lib/board/data.ts). 서버 컴포넌트가 data/board 의 값을 읽어 그린다. Board 가 시도 카드와 같은 줄에 둔다. */
 import { cn } from 'cn';
 import { Card } from '@/components/ui/card';
 import ScopeChip from '@/components/ui/scope-chip';
@@ -11,8 +11,6 @@ import { METRIC_LABEL } from '@/lib/board/stages';
 import { CIR, K } from '@/lib/board/sample';
 import { Key } from './tags';
 import { getBoardData } from '@/lib/board/data';
-import homeBoardJson from '@/data/board/home-board.json';
-import type { LedgerBoard } from '@/lib/board/types';
 import { legend, pacts, panel, phead, phgroup, pinfo, ptitle } from './styles';
 
 /* 통계누리 '분양' 실적(입주자 모집 승인 기준)은 리본 ④와 같은 말 '모집'으로 부른다 */
@@ -21,35 +19,7 @@ const LABEL = { permit: '인허가', start: '착공', complete: '준공', sale: 
 const ON_BOARD = { permit: 1, start: 2, sale: 3, complete: 4 } as const;
 const LEGEND_TITLE = K.map((s, i) => { const k = METRICS.find((m) => ON_BOARD[m] === i); return `${CIR[i]}${s}${k ? (METRIC_LABEL[k] !== s ? `(${METRIC_LABEL[k]})` : '') : ' 자료 없음'}`; }).join(' · ');
 
-/* HOME 규칙 집계(2026-10-21 결정)의 월별 실적 흐름: 9·7 승인 연결 사업 사건(입력·추정 포함)의 단계별 누적 측정 월 증가분, 최근 24개월(HOME '월별 실적 흐름'과 같은 값) */
-const HOME_LINES = [['APPROVAL', '인허가', 'permit'], ['CONSTRUCTION', '착공', 'start'], ['SUPPLY', '분양·모집', 'sale'], ['COMPLETION', '준공', 'complete']] as const;
-function HomeActual({ monthly, refDate }: { monthly: NonNullable<LedgerBoard['home']>['monthly']; refDate: string }) {
-  const months = monthly.map((r) => r.month), first = months[0], last = months[months.length - 1];
-  const lines = HOME_LINES.map(([k, label, color]) => ({ key: k, label, color: METRIC_COLOR[color], values: monthly.map((r) => r[k]) }));
-  return (
-    <Card variant="section" className={panel} render={<section id="p-actual" aria-label="월별 실적 흐름" />}>
-      <div className={phead}>
-        <h2 className={ptitle} title={`HOME 9·7 승인 연결 사업 · 단계별 누적 측정값의 월 증가분(입력·추정 포함) · 단위 호 · ${ymDot(first)} ~ ${ymDot(last)}`}>월별 실적 흐름</h2>
-        <InfoTip label="월별 실적 흐름 기준" className={pinfo}>
-          <p>최근 24개월 단계별 누적 측정값의 월 증가분 · 입력·추정 포함(HOME 정책 추진현황 '월별 실적 흐름'과 같은 값). 0은 등록된 증가분 없음입니다.</p>
-          <p>{ymDot(first)} ~ {ymDot(last)}(기준일 {refDate.replaceAll('-', '.')}) · 통계누리 주택건설실적과 다른 출처입니다.</p>
-        </InfoTip>
-        <ScopeChip scope="수도권" source="정책 진행 자료" title="HOME 9·7 승인 연결 사업의 단계 사건 월 증가분" />
-        <div className={phgroup}>
-          <ul className={cn(legend, 'm-0 list-none p-0')} aria-label="범례 · 실적 지표">{HOME_LINES.map(([k, label, color]) => <li key={k}><Key line sw={METRIC_COLOR[color]}>{label}</Key></li>)}</ul>
-          <span className={pacts}><PanelLink href="/projects?policy=97" full="9·7 연결 사업 목록">9·7 사업</PanelLink></span>
-        </div>
-      </div>
-      <div className="mt-3 flex flex-1 flex-col">
-        <MonthLines months={months} lines={lines} provisional={[]} href={(ym) => `/month/${ym}`} label={`HOME 9·7 연결 사업 월별 인허가·착공·분양·모집·준공 증가분(호), ${ymDot(first)}부터 ${ymDot(last)}까지`} board />
-      </div>
-    </Card>
-  );
-}
-
 export default async function RealPanels() {
-  const hb = homeBoardJson as unknown as LedgerBoard;
-  if (hb.home?.monthly?.length) return <HomeActual monthly={hb.home.monthly} refDate={hb.referenceDate} />;
   const { molit } = await getBoardData();
   const last = lastMonth(molit), area = sidoName(molit, NATION) ?? '전국';   // 범위 이름(합계 자리의 이름 — 수도권)
   const lines = METRICS.map((k) => ({ key: k, label: LABEL[k], color: METRIC_COLOR[k], values: seriesOf(molit, k, NATION).total }));

@@ -10,9 +10,15 @@ export function isTrackingOnly(searchParams: URLSearchParams): boolean {
   return keys.length > 0 && keys.every((k) => k.startsWith('utm_') || TRACKING_KEYS.has(k));
 }
 
+/* 종합상황판 지역 탭(2026-10-21 사용자 결정 — `/?area=11`: 수도권 전체·서울·경기·인천)은 '/' 화면의 쿼리라 지도로 넘기지 않는다(옛 지도 쿼리에 area 는 없다) */
+export function isBoardOnly(searchParams: URLSearchParams): boolean {
+  const keys = [...searchParams.keys()];
+  return keys.includes('area') && keys.every((k) => k === 'area' || k.startsWith('utm_') || TRACKING_KEYS.has(k));
+}
+
 export function proxy(request: NextRequest) {
   const { search, searchParams } = request.nextUrl;
-  if (search && !isTrackingOnly(searchParams)) return NextResponse.redirect(new URL('/map' + search, request.url));
+  if (search && !isTrackingOnly(searchParams) && !isBoardOnly(searchParams)) return NextResponse.redirect(new URL('/map' + search, request.url));
   return NextResponse.next();
 }
 

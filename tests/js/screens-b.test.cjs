@@ -51,7 +51,7 @@ test('1 범위 칩: 공용 컴포넌트(범위 + 출처, 풀기 ×) — 사업 �
   assert.match(board, /const ledgerChip = <ScopeChip scope=\{nation === '전국 아님' \? '일부 지역' : nation\} source=\{H \? '정책 진행 자료' : '사업 원장'\}/);   // 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — H 면 '정책 진행 자료'
   for (const t of ['월별 공급 파동', '시도별 지연 현황', '지연·주의 추이', '\\{H \\? AHEAD_SUPPLY : AHEAD_COMPLETION\\}', '기관별 진행']) assert.match(board, new RegExp(`>${t}</h2>\\n\\s*<InfoTip [\\s\\S]*?</InfoTip>\\n\\s*\\{ledgerChip\\}`), t);   // 제목 바로 옆 (i)(2026-10-16 3차)
   assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope=\{area\} source="통계누리"/);
-  assert.match(read('components/board/RealPanels.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope="수도권" source="정책 진행 자료"/, '2026-10-21 결정: HOME 과 같은 조건·같은 표기 — HomeActual 칩');   // 2026-10-19 수도권 한정: 범위 이름 = 통계누리 합계 자리 이름(수도권)
+  assert.match(read('components/board/HomeActual.tsx'), />월별 실적 흐름<\/h2>\n\s*<InfoTip [\s\S]*?<\/InfoTip>\n\s*<ScopeChip scope=\{scope\} source="정책 진행 자료"/, '2026-10-21 결정: HOME 과 같은 조건·같은 표기 — HomeActual 칩');   // 2026-10-19 수도권 한정: 범위 이름 = 통계누리 합계 자리 이름(수도권)
   const region = read('app/(dashboard)/region/page.tsx');
   assert.match(region, /scope=\{<ScopeChip scope=\{`\$\{HOME_POLICY\[policy\]\} · \$\{scopeName\}`\} source="정책 진행 자료"[^\n]*clearHref=\{sgg \? href\(\{ sgg: null, m: null \}\) : undefined\}/, '앞으로 12개월(2026-10-21 HOME 공급 예정): 정책·시군구 칩 + ×');
   assert.match(read('components/region/Annual.tsx'), /<ScopeChip scope=\{rname\} source="통계누리"/);
@@ -116,8 +116,8 @@ test('2 지시 카드 목록 ›: 목록 머리 건수(·계획 호수) = 카드
   const btn = board.slice(board.indexOf('data-slot="board-dir" title='), board.indexOf('</button>', board.indexOf('data-slot="board-dir" title=')));
   assert.match(btn, /\{dirVals\(x, false, open\)\}/, '단추 안 값 줄은 링크 없이 자리만');
   assert.ok(board.indexOf('{dirVals(x, true, open)}') > board.indexOf('</button>', board.indexOf('data-slot="board-dir" title=')), '링크는 단추 밖(겹친 층) — 단추 안에 링크를 넣지 않는다');
-  assert.match(board, /<PanelLink href=\{`\/projects\?sido=all&stage=\$\{bk\}&status=late`\}/);
-  assert.match(board, /<PanelLink href="\/projects\?sido=all&status=review-late"/);   // 후보 계산 313 = 그 목록(data-audit-1016 후속 1)
+  assert.match(board, /<PanelLink href=\{at\(`\/projects\?sido=all&stage=\$\{bk\}&status=late`\)\}/);   // 2026-10-21 지역 탭(atSido)
+  assert.match(board, /<PanelLink href=\{at\('\/projects\?sido=all&status=review-late'\)\}/);   // 후보 계산 313 = 그 목록(data-audit-1016 후속 1)
   /* 사업 화면(2026-10-21 HOME 원천 행): 종합상황판 지연 링크(?status=late)는 HOME 판정 '지연' 칩을 켜고 목록 이름도 '지연'(종합상황판 HOME 카드 '지연 n건'과 같은 이름) */
   const page = read('app/(dashboard)/projects/page.tsx');
   assert.match(page, /HOME_STATUS_ORDER\.map\(\(k\) => \(\{ href: at\(\{ status: k \}\), label: HOME_STATUS_NAME\[k\]!, on: f\.status === k \|\| \(k === 'delay' && f\.status === 'late'\)/);

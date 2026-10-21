@@ -12,7 +12,7 @@ import {
   C, CIR, K as K0, PX0, RCOL, REGION_POS, RLAB, VW,
   SCOPE_TAG, addedMarks, axisUnit, delayAt, delaysOf, f, flatTotal, judgedAt, judgmentsOf, kind, ml, rcls, ribbonOf, scopeChangeOf, sg, timelineOf, trendAt, trendMax, trendOf,
 } from '@/lib/board/sample';
-import { CAND_TEXT, candCount, candText, judgeBase, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf, type Directive } from '@/lib/board/directives';
+import { CAND_TEXT, atSido, candCount, candText, judgeBase, ledgerJudged, ledgerMix, makeDirectives, nation as nationOf, type Directive } from '@/lib/board/directives';
 import { AHEAD_COMPLETION, AHEAD_SUPPLY, AGENCY_NAME, bottleneckOf, shortHref } from '@/lib/board/projects-view';
 import { agencyShow } from '@/lib/board/home-agency';
 import { dotDates } from '@/lib/grid/spec';
@@ -29,6 +29,7 @@ import OneLine from '@/components/ui/one-line';
 import { Card } from '@/components/ui/card';
 import { CUR, HOVER, RIBBON, chartStatic, ribbonDynamic } from './ribbon';
 import SupplyWaveChart from './SupplyWaveChart';
+import HomeActual from './HomeActual';
 import { Key } from './tags';
 import PanelLink from './PanelLink';
 import MapLink from './MapLink';
@@ -38,7 +39,7 @@ import { ag, agName, agVal, ags, bar3, btn, disp, grid6, jtag, legend, pacts, pa
 export type BoardReal = {
   sourceCount: number;                                              // 원천 카탈로그의 원천 수
   validMonths: string[];                                            // /month/{ym} 이 열리는 달
-  ledger: LedgerBoard;                                              // 사업 원장 집계(원장 2026-10 기준)
+  ledger: LedgerBoard;                                              // 사업 원장 집계(원장 2026-10 기준) — HOME 집계면 byRegion 에 시도별 묶음(지역 탭)
   ledgerOrigin: 'supabase' | 'json';                                // 집계를 읽어 온 곳(Supabase api.board 또는 JSON 대체)
   ledgerMonth: string;                                              // 읽은 집계의 월(YYYY-MM)
   lists: Record<string, BoardList>;                                 // 목록 창으로 여는 링크(href → 같은 거르기의 사업 목록 — lib/board/board-lists.ts)
@@ -90,9 +91,24 @@ const dirTitle = (x: Directive, hide = false) => (
 /* 단추와 겹친 층은 globals 부품 .ui-dir의 같은 여백·세로 배치를 쓴다.
    면·가리킴·누름·고른 것은 .ui-dir-face 와 .ui-pick, 칸 전체 떠오름은 .ui-dir-cell(2026-10-19) */
 const dirFrame = 'ui-dir @container';
+/* 지역 탭 순서(2026-10-21 사용자 결정 '수도권 전체/서울/경기/인천') — 시도 묶음(byRegion)이 있는 것만 */
+const AREAS = ['all', '11', '41', '28'];
 
 export default function Board({ real, middle }: { real: BoardReal; middle: ReactNode }) {
-  const L = real.ledger, H = L.home;
+  /* 지역 탭(2026-10-21 사용자 결정): 'all' 수도권 전체 · 시도 코드. 카드 6장과 아래 패널은 고른 묶음(L), 시도 타일은 늘 전체 묶음의 시도(L0.regions)이고 누르면 같은 선택이 된다.
+     주소 ?area= 에 남긴다(서버 렌더는 수도권 전체 — 주소에 시도가 있으면 붙은 뒤 바꾼다. '/?sido=' 는 옛 지도 주소라 proxy.ts 가 지도로 넘긴다) */
+  const L0 = real.ledger;
+  const [area, setArea] = useState('all');
+  useEffect(() => { const s = new URLSearchParams(window.location.search).get('area'); if (s && L0.byRegion?.[s]) setArea(s); }, [L0]);
+  const pickArea = (code: string) => {
+    setArea(code);
+    const u = new URL(window.location.href);
+    if (code === 'all') u.searchParams.delete('area'); else u.searchParams.set('area', code);
+    window.history.replaceState(window.history.state, '', u);
+  };
+  const L: LedgerBoard = useMemo(() => { const b = area !== 'all' ? L0.byRegion?.[area] : undefined; return b ? { ...b, regions: L0.regions } : L0; }, [L0, area]);
+  const H = L.home;
+  const at = (href: string) => atSido(href, area);
   /* HOME 집계(2026-10-21 결정)면 리본 6칸 이름이 HOME 단계(정책·사업화·인허가·건설·공급·입주) */
   const K = L.stageNames ?? K0;
   /* 미리 계산한 목록이 있는 링크만 목록 창으로 연다 — 일반 클릭만 가로채고(보조 키·가운데 단추는 href 로 이동), 목록이 없는 링크는 undefined(페이지 이동) */
@@ -111,7 +127,6 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const [focus, setFocus] = useState(1);
   const [cursor, setCursor] = useState(NOW);
   const [hl, setHl] = useState(-1);
-  const [region, setRegion] = useState('11');   // 시도 코드
   const [tip, setTip] = useState<{ m: number; x: number; y: number } | null>(null);
   /* 리본 첫 화면 연출 단계(app/globals.css 의 [data-intro]): sweep 쓸기 → landed 기준 달(NOW) 표시 → '' 끝. 서버 렌더부터 sweep 이라 첫 화면부터 쓸린다.
      기준 시점은 처음부터 기준 달(NOW) — 지난 달을 훑는 연출을 하지 않아 숫자가 바뀌지 않는다(2026-10-15 평가: 2026.07 값을 먼저 보였다가 바뀌어 회의실에서 혼란) */
@@ -120,7 +135,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const wrapRef = useRef<HTMLDivElement>(null);
   const tipRef = useRef<HTMLDivElement>(null);
 
-  const DIR = useMemo(() => makeDirectives({ sourceCount: real.sourceCount, stageNames: K, ledger: real.ledger, start: real.start, bottleneck: bottleneckOf }), [real.sourceCount, real.ledger, real.start]);
+  const DIR = useMemo(() => makeDirectives({ sourceCount: real.sourceCount, stageNames: K, ledger: L, start: real.start, bottleneck: bottleneckOf, sido: area }), [real.sourceCount, L, real.start, area]);
   const valid = useMemo(() => new Set(real.validMonths), [real.validMonths]);
   /* 달마다 판정(판정 없는 달 null)과 단계별 지연 호수 */
   const JS = useMemo(() => judgmentsOf(L), [L]), DL = useMemo(() => delaysOf(JS), [JS]), TR = useMemo(() => trendOf(T, JS), [T, JS]);
@@ -202,8 +217,10 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const maxUp = Math.max(1, ...up.map((m) => m.units)), upSum = up.reduce((n, m) => n + m.units, 0), upProj = up.reduce((n, m) => n + m.projects, 0), UPH = 82;   // UPH = 막대 최대 높이(viewBox 100 중, 위 18은 선택 값 자리)
   const cur = DIR[focus - 1];
   const sidoName = (code: string) => real.sido[code] ?? code;
-  const curReg = L.regions.find((r) => r.code === region)!;
-  const curRegMap = mapScopeHref({ sido: curReg.code });   // 수도권 시도만 지도 연결(그 밖은 null)
+  const curReg = L.regions.find((r) => r.code === area);   // 지역 탭이 수도권 전체면 없음 — 시도 요약 칸은 수도권 합
+  const curRegMap = mapScopeHref({ sido: curReg?.code });   // 수도권 시도만 지도 연결(그 밖은 null), 전체면 수도권 지도
+  const sumReg = curReg ?? { code: 'all', delay: L.judgment.delay.projects, caution: L.judgment.caution.projects, ok: L.judgment.ok.projects, candidate: undefined };
+  const sumName = curReg ? sidoName(curReg.code) : `${nation} 전체`;
   /* 시도 타일: 전국 16칸 지리 격자(2026-10-16 4차 사용자 지시 — 2차의 '판정 시도만 크게 + 나머지 한 줄 묶음'을 되돌림). 판정 대상이 없는 칸은 흰 바탕 + 짧은 표기.
      원장이 수도권만(2026-10-19 결정 — 서울·인천·경기 3칸)이면 지리 격자 대신 한 줄 + 아래 요약 칸(geo false) */
   const geo = L.regions.length > 4;
@@ -245,7 +262,13 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
     <div className="ui-focus-scope motion-reduce:[&_*]:animate-none! motion-reduce:[&_*]:transition-none!">
       <div className="board-desktop mx-auto max-w-[1760px] px-7 pb-9 mobile:px-3 mobile:pb-6 mobile:[&_[data-slot=card]]:px-3.5 mobile:[&_[data-slot=card]]:pt-3.5 mobile:[&_[data-slot=card]]:pb-4">
         <h1 className="sr-only">주택공급 종합상황판</h1>
-        <div className="h-4" aria-hidden="true" />
+        {L0.byRegion ? (
+          <div className="flex pt-4 pb-3">
+            <div data-slot="board-area" className="ui-tabs ui-tabs-seg" role="group" aria-label="지역">
+              {AREAS.filter((c) => c === 'all' || L0.byRegion?.[c]).map((c) => <button key={c} type="button" aria-pressed={c === area} onClick={() => pickArea(c)}>{c === 'all' ? `${nationOf(L0)} 전체` : sidoName(c)}</button>)}
+            </div>
+          </div>
+        ) : <div className="h-4" aria-hidden="true" />}
         <section id="board-dirs" aria-label="총리 지시 6건">
           <div className="grid grid-cols-2 gap-3 min-[901px]:grid-cols-3 min-[1280px]:grid-cols-6">
             {DIR.map((x, i) => (
@@ -354,13 +377,13 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {judged && SJ.candidate && candCount(SJ.candidate) ? (
                 <div data-slot="board-cand" className="mt-2 flex flex-wrap items-baseline gap-x-3 gap-y-0.5 text-sm text-muted-foreground tabular-nums" title={`사업 번호가 없는 후보(건축HUB 원천 예정일 기준) ${f(SJ.candidate.ok.projects + SJ.candidate.caution.projects + SJ.candidate.delay.projects)}건은 같은 판정 계산을 하되 지연·주의·정상에 넣지 않고 따로 셉니다 — 이미 준공했는데 대장과 연결되지 않았을 수 있습니다 · ${candText(SJ.candidate)}건`}>
                   <b className="font-bold text-foreground">지연</b>
-                  <PanelLink href="/projects?sido=all&status=late" onClick={open('/projects?sido=all&status=late')} full={`지연 확정 — 지연(장기 포함) 사업 목록(${nation} · 지금 기준) · 사업 번호가 있는 사업`}>확정 <b className={cn(disp, 'text-lg leading-none text-bad')}>{f(SJ.delay.projects)}</b>건</PanelLink>
+                  <PanelLink href={at('/projects?sido=all&status=late')} onClick={open(at('/projects?sido=all&status=late'))} full={`지연 확정 — 지연(장기 포함) 사업 목록(${nation} · 지금 기준) · 사업 번호가 있는 사업`}>확정 <b className={cn(disp, 'text-lg leading-none text-bad')}>{f(SJ.delay.projects)}</b>건</PanelLink>
                   <span aria-hidden="true">·</span>
-                  <PanelLink href="/projects?sido=all&status=review-late" onClick={open('/projects?sido=all&status=review-late')} full={`후보 계산 — 번호 없는 후보 중 같은 규칙으로 계산하면 지연인 사업 ${f(SJ.candidate.delay.projects)}건 목록(${nation} · 지금 기준)`}>후보 계산 <b className={cn(disp, 'text-lg leading-none text-foreground')}>{f(SJ.candidate.delay.projects)}</b>건</PanelLink>
+                  <PanelLink href={at('/projects?sido=all&status=review-late')} onClick={open(at('/projects?sido=all&status=review-late'))} full={`후보 계산 — 번호 없는 후보 중 같은 규칙으로 계산하면 지연인 사업 ${f(SJ.candidate.delay.projects)}건 목록(${nation} · 지금 기준)`}>후보 계산 <b className={cn(disp, 'text-lg leading-none text-foreground')}>{f(SJ.candidate.delay.projects)}</b>건</PanelLink>
                 </div>
               ) : null}
             </div>
-            <div className="ui-snap-stage-head"><h3 className="text-base font-bold">전체 사업 · 단계별 호수</h3><span className="text-sm text-muted-foreground">단위: 호</span>{H?.bottleneck ? <PanelLink href={shortHref(H.bottleneck.stage)} onClick={open(shortHref(H.bottleneck.stage))} full={`병목 단계(${H.bottleneck.label})의 목표보다 측정이 모자란 사업 · 지금 기준`}>병목 보기</PanelLink> : !H && bk >= 0 ? <PanelLink href={`/projects?sido=all&stage=${bk}&status=late`} onClick={open(`/projects?sido=all&stage=${bk}&status=late`)} full={`병목 단계(${CIR[bk]} ${K[bk]})의 지연 사업 · 지금 기준`}>병목 보기</PanelLink> : null}</div>
+            <div className="ui-snap-stage-head"><h3 className="text-base font-bold">전체 사업 · 단계별 호수</h3><span className="text-sm text-muted-foreground">단위: 호</span>{H?.bottleneck ? <PanelLink href={at(shortHref(H.bottleneck.stage))} onClick={open(at(shortHref(H.bottleneck.stage)))} full={`병목 단계(${H.bottleneck.label})의 목표보다 측정이 모자란 사업 · 지금 기준`}>병목 보기</PanelLink> : !H && bk >= 0 ? <PanelLink href={at(`/projects?sido=all&stage=${bk}&status=late`)} onClick={open(at(`/projects?sido=all&stage=${bk}&status=late`))} full={`병목 단계(${CIR[bk]} ${K[bk]})의 지연 사업 · 지금 기준`}>병목 보기</PanelLink> : null}</div>
             {/* 증감 칸은 선택 달이 기준 달이 아닐 때만(기준 달이면 3칸) */}
             <div className={cn('mt-2 grid flex-auto grid-rows-[auto_repeat(6,minmax(0,1fr))] gap-x-3', showDlt ? 'grid-cols-[minmax(0,1fr)_max-content_max-content_max-content] phone:grid-cols-[minmax(0,1fr)_max-content_max-content]' : 'grid-cols-[minmax(0,1fr)_max-content_max-content]')} aria-label={showDlt ? '단계별 호수, 기준 달 대비 증감, 지연 호수' : '단계별 호수, 지연 호수'}>
               <div className="col-span-full grid grid-cols-subgrid items-center px-1.5 pb-0.5 text-sm text-muted-foreground">
@@ -382,7 +405,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         </div>
 
         <div className={cn(row2, cur.p.includes('p-actual') && linkedActual)}>
-          {middle}
+          {H?.monthly?.length ? <HomeActual monthly={H.monthly} refDate={L.referenceDate} scope={nation} sido={area} /> : middle}
 
           <Card variant="section" className={cn(panel, linked(cur.p.includes('p-region')))} render={<section id="p-region" aria-label={`시도 ${L.regions.length}곳`} />}>
             <div className={phead}>
@@ -399,7 +422,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {L.regions.map((r, ri) => {
                 const n = sidoName(r.code), pos = REGION_POS[r.code], none = !r.judged, ok = r.okUnits ?? real.regionOkUnits[r.code] ?? 0, tu = ok + r.cautionUnits + r.delayUnits, rate = tu ? r.delayUnits / tu * 100 : 0;   // 지연율 = 지연 호수 ÷ 판정 호수(선택 시점 판정 막대와 같은 호수 기준) · none = 판정 대상(번호 있는 사업) 없음
                 return (
-                  <button key={r.code} type="button" data-slot="board-region" className={cn(btn, 'q-rise ui-press min-w-0 @container ui-inset ui-region ui-region-row')} aria-pressed={r.code === region} onClick={() => setRegion(r.code)} style={{ ['--rc' as string]: none ? 'var(--card)' : RCOL[rcls(rate)], ['--i' as string]: ri * 0.5, ...(pos && geo ? { gridArea: `${pos[0]} / ${pos[1]}` } : {}) }}
+                  <button key={r.code} type="button" data-slot="board-region" className={cn(btn, 'q-rise ui-press min-w-0 @container ui-inset ui-region ui-region-row')} aria-pressed={r.code === area} onClick={() => pickArea(r.code === area ? 'all' : r.code)} style={{ ['--rc' as string]: none ? 'var(--card)' : RCOL[rcls(rate)], ['--i' as string]: ri * 0.5, ...(pos && geo ? { gridArea: `${pos[0]} / ${pos[1]}` } : {}) }}
                     title={none
                       ? `${n} · 사업 ${f(r.projects)}건 · 판정 대상 없음(번호 있는 사업 없음)` + (r.candidate?.judged ? ` · ${CAND_TEXT} ${f(r.candidate.judged)}건(계산하면 지연 ${f(r.candidate.delay)} · 주의 ${f(r.candidate.caution)} · 정상 ${f(r.candidate.ok)} — 판정에 넣지 않음)` : '') + (r.code === '12' ? ' · 2026.07부터 광주·전남은 전남광주로 집계됩니다' : '')
                       : `${n} · 판정 ${f(r.judged)}건 ${f(tu)}호 · 지연율 ${rate.toFixed(1)}%(호수 기준) · 지연 ${f(r.delayUnits)}호(${r.delay}건) · 주의 ${f(r.cautionUnits)}호(${r.caution}건) · 정상 ${f(ok)}호(${r.ok}건)` + (r.candidate?.judged ? ` · ${CAND_TEXT} ${f(r.candidate.judged)}건(계산하면 지연 ${f(r.candidate.delay)} · 주의 ${f(r.candidate.caution)} · 정상 ${f(r.candidate.ok)} — 판정에 넣지 않음)` : '') + (H ? ` · HOME 시도 집계 판정: ${r.homeDelay ? `지연 — ${r.homeDelay}` : '지연 단계 없음'}` : '')}
@@ -420,9 +443,9 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
                 );
               })}
               <div data-slot="board-region-sum" aria-live="polite" className={cn('ui-region-summary', geo ? '[grid-area:5/2/6/5]' : 'col-span-full')}>
-                <b className="text-base">{sidoName(curReg.code)}</b>
-                <span className="flex gap-2.5 text-sm whitespace-nowrap text-muted-foreground tabular-nums mobile:gap-1.5"><span>지연<strong className="ml-[3px] text-bad">{f(curReg.delay)}</strong>건</span><span>주의<strong className="ml-[3px] text-warn">{f(curReg.caution)}</strong>건</span><span>정상<strong className="ml-[3px] text-ok">{f(curReg.ok)}</strong>건</span>{curReg.candidate?.judged ? <span title={`사업 번호가 없는 후보 — 같은 계산을 하되 판정에 넣지 않음 · 계산하면 지연 ${f(curReg.candidate.delay)} · 주의 ${f(curReg.candidate.caution)} · 정상 ${f(curReg.candidate.ok)}`}>· 확인 필요<strong className="ml-[3px] text-foreground">{f(curReg.candidate.judged)}</strong></span> : null}</span>
-                <span className={cn(pacts, 'mobile:ml-0')}><PanelLink href={`/region?sido=${curReg.code}`} full={`${sidoName(curReg.code)} 실적 상세`}>{sidoName(curReg.code)} 실적</PanelLink>{curRegMap ? <MapLink href={curRegMap} full={`${sidoName(curReg.code)} 지도에서 보기`} /> : null}</span>
+                <b className="text-base">{sumName}</b>
+                <span className="flex gap-2.5 text-sm whitespace-nowrap text-muted-foreground tabular-nums mobile:gap-1.5"><span>지연<strong className="ml-[3px] text-bad">{f(sumReg.delay)}</strong>건</span><span>주의<strong className="ml-[3px] text-warn">{f(sumReg.caution)}</strong>건</span><span>정상<strong className="ml-[3px] text-ok">{f(sumReg.ok)}</strong>건</span>{sumReg.candidate?.judged ? <span title={`사업 번호가 없는 후보 — 같은 계산을 하되 판정에 넣지 않음 · 계산하면 지연 ${f(sumReg.candidate.delay)} · 주의 ${f(sumReg.candidate.caution)} · 정상 ${f(sumReg.candidate.ok)}`}>· 확인 필요<strong className="ml-[3px] text-foreground">{f(sumReg.candidate.judged)}</strong></span> : null}</span>
+                <span className={cn(pacts, 'mobile:ml-0')}><PanelLink href={`/region?sido=${sumReg.code}`} full={`${sumName} 실적 상세`}>{curReg ? sidoName(curReg.code) : nation} 실적</PanelLink>{curRegMap ? <MapLink href={curRegMap} full={`${sumName} 지도에서 보기`} /> : null}</span>
               </div>
             </div>
           </Card>
@@ -510,7 +533,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
               {ledgerChip}
               <div className={phgroup}>
                 <span className={legend} title={`막대 색: 정상 · 주의 · 지연 · 확인 필요(후보, 빗금) · ${NONE_TEXT} 호수 — ${NONE_TIP}`}>{[['bg-ok', '정상'], ['bg-warn', '주의'], ['bg-bad', '지연'], [candHatch, '확인 필요'], ['bg-[var(--out)] inset-ring-1 inset-ring-(--out-line)', NONE_TEXT]].map(([c, n]) => <Key key={n} className={c}>{n}</Key>)}</span>
-                <span className={pacts}><PanelLink href="/projects?sido=all" full={`사업 목록(${nation}) — 기관 메뉴로 거르기`}>기관별 사업</PanelLink></span>
+                <span className={pacts}><PanelLink href={at('/projects?sido=all')} full={`사업 목록(${nation}) — 기관 메뉴로 거르기`}>기관별 사업</PanelLink></span>
               </div>
             </div>
             <div className={ags}>

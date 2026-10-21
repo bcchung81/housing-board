@@ -54,7 +54,7 @@ test('실제 원장: 지연 확정·후보 계산 건수는 원장 집계(judgme
   assert.equal(HB.judgment.candidate, undefined, 'HOME 집계에는 후보(번호 없는 사업)가 없다');
   assert.equal(H[BL.LIST_REVIEW].rows.length, 0);
   assert.equal([0, 1, 2, 3, 4, 5].reduce((a, i) => a + H[BL.listStage(i)].rows.length, 0), HB.judgment.delay.projects);
-  assert.match(read('app/(dashboard)/page.tsx'), /lists: boardLists\(View, idx\.homeRows/);
+  assert.match(read('app/(dashboard)/page.tsx'), /lists: Object\.assign\(boardLists\(View, idx\.homeRows/);
 });
 
 test('상황판: 목록이 있는 링크만 창으로 열고(일반 클릭), href 는 그대로 둔다', () => {
@@ -63,11 +63,11 @@ test('상황판: 목록이 있는 링크만 창으로 열고(일반 클릭), hre
   assert.match(src, /if \(e\.defaultPrevented \|\| e\.button !== 0 \|\| e\.metaKey \|\| e\.ctrlKey \|\| e\.shiftKey \|\| e\.altKey\) return;/);
   assert.match(src, /if \(!l \|\| !win\) return undefined;/);   // 목록이 없으면 페이지 이동
   assert.match(src, /<Link href=\{l\.href\} onClick=\{open\(l\.href\)\}/);
-  assert.match(src, /<PanelLink href="\/projects\?sido=all&status=late" onClick=\{open\(/);
-  assert.match(src, /<PanelLink href="\/projects\?sido=all&status=review-late" onClick=\{open\(/);
-  assert.match(src, /<PanelLink href=\{`\/projects\?sido=all&stage=\$\{bk\}&status=late`\} onClick=\{open\(/);
+  assert.match(src, /<PanelLink href=\{at\('\/projects\?sido=all&status=late'\)\} onClick=\{open\(at\(/);   // 2026-10-21 지역 탭: 주소의 시도는 고른 지역(atSido)
+  assert.match(src, /<PanelLink href=\{at\('\/projects\?sido=all&status=review-late'\)\} onClick=\{open\(at\(/);
+  assert.match(src, /<PanelLink href=\{at\(`\/projects\?sido=all&stage=\$\{bk\}&status=late`\)\} onClick=\{open\(at\(/);
   // 그 밖의 링크(전체 262건·착공·지역·소스)는 onClick 이 없다
-  assert.doesNotMatch(src, /<PanelLink href="\/projects\?sido=all" [^>]*onClick/);
+  assert.doesNotMatch(src, /<PanelLink href=\{at\('\/projects\?sido=all'\)\} [^>]*onClick/);
   assert.doesNotMatch(src, /<PanelLink href="\/agency[^>]*onClick/);
   assert.match(read('components/board/PanelLink.tsx'), /onClick=\{onClick\}/);
 });

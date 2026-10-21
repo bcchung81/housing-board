@@ -20,9 +20,12 @@ export const listStage = (i: number) => `/projects?sido=all&stage=${i}&status=la
 const shortSgg = (name: string, sido?: string) => { const t = name.split(' '); return t.length < 2 ? name : sido ? `${sido} ${t.slice(1).join(' ')}` : name; };
 const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
 
-export function boardLists(V: ViewFns, rows: View.ProjectRow[], sido: (code: string) => string | undefined, stageShort: View.StageShort = {}): Record<string, BoardList> {
+/* area = 지역 탭(2026-10-21 사용자 결정, 'all' = 수도권 전체 · 시도 코드): 주소의 'sido=all' 을 그 시도로 바꿔(directives.ts atSido 와 같은 치환) 같은 거르기로 그 시도 사업만 — stageShort 는 그 시도 집계 것 */
+export function boardLists(V: ViewFns, rows: View.ProjectRow[], sido: (code: string) => string | undefined, stageShort: View.StageShort = {}, area = 'all'): Record<string, BoardList> {
   const home = rows.some((r) => r.home), pop = home ? rows.filter((r) => r.home!.board) : rows;
-  const make = (href: string, title: (n: number, list: View.ProjectRow[]) => string): [string, BoardList] => {
+  const at = (href: string) => (area === 'all' ? href : href.replace('sido=all', `sido=${area}`));
+  const make = (raw: string, title: (n: number, list: View.ProjectRow[]) => string): [string, BoardList] => {
+    const href = at(raw);
     const q = Object.fromEntries(new URL(href, 'http://x').searchParams);
     const f = V.parseFilters(q, { policies: [], programs: [], sidoOk: () => true });
     const k = f.status && V.shortStageOf(f.status), hit = V.applyFilters(pop, f), list = home ? V.homeOrderOf(hit, f) : V.listOrder(hit);

@@ -22,6 +22,7 @@ export default async function Home() {
   const { molit, sources } = await getBoardData();
   const last = lastMonth(molit);
   const idx = await getProjectsIndex();
+  const sidoOf = (c: string) => molit.sido.find((s) => s.code === c)?.name;
   const real: BoardReal = {
     sourceCount: sources.items.length,
     validMonths: monthIds(molit.months, homeLh.blocks, calendar),   // LH 준공 예정 달 = 정책 진행 자료 9·7 연결 블록(2026-10-21 W6)
@@ -29,11 +30,14 @@ export default async function Home() {
     ledgerOrigin: 'json',
     ledgerMonth: homeBoard.observedMonth,
     sido: Object.fromEntries(molit.sido.map((s) => [s.code, s.name])),
-    lists: boardLists(View, idx.homeRows, (c) => molit.sido.find((s) => s.code === c)?.name, homeBoard.home?.stageShort),
+    /* 지역 탭(2026-10-21 사용자 결정): 수도권 전체 + 시도별(그 시도 집계의 단계 부족) 목록을 같이 넘긴다 — 주소의 sido 가 열쇠라 겹치지 않는다 */
+    lists: Object.assign(boardLists(View, idx.homeRows, sidoOf, homeBoard.home?.stageShort),
+      ...Object.entries(homeBoard.byRegion ?? {}).map(([code, b]) => boardLists(View, idx.homeRows, sidoOf, b.home?.stageShort, code))),
     lhAsOf: homeLh.sourceAsOf,
     regionOkUnits: Object.fromEntries(homeBoard.regions.map((r) => [r.code, r.okUnits ?? 0])),
     actualMonth: last,
     start: { year: last.slice(0, 4), upto: Number(last.slice(5)), cum: ytd(molit, 'start', NATION, last), cumLy: ytd(molit, 'start', NATION, nextYm(last, -12)) },
   };
-  return <Board real={real} middle={<RealPanels />} />;
+  /* HOME 집계면 월별 실적 흐름은 Board 가 지역 탭 값으로 그린다(HomeActual) — 통계누리 판(RealPanels)은 HOME 집계가 없을 때만 */
+  return <Board real={real} middle={homeBoard.home ? null : <RealPanels />} />;
 }

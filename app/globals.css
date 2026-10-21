@@ -1747,6 +1747,10 @@ html.dark[data-map-shell][data-design="warm"] {
   .ui-dir-stat[data-tone="bad"] { --dir-num: var(--bad); }
   .ui-dir-stat[data-tone="warn"] { --dir-num: var(--warn); }
   .ui-dir-sub { align-self: flex-end; margin-left: auto; padding-bottom: var(--border-w); white-space: nowrap; }
+  /* 지연·주의 두 숫자 카드(일정 지연 관리): 카드 안쪽 폭이 모자라면 두 숫자를 같은 크기로 30 → 24 → 20(2026-10-21 사용자 결정 — 지역 탭 '경기' 1,974·1,197 이
+     6열 1440~1600px·휴대폰 카드 밖으로 나감). 경계 = 네 자리 두 숫자(+ 단위·간격)가 들어가는 안쪽 폭 211 · 179px, 컨테이너 = .ui-dir(@container) */
+  @container (max-width: 210px) { .ui-dir-values:has(> .ui-dir-stat + .ui-dir-stat) .ui-dir-num { font-size: var(--text-xl); } }
+  @container (max-width: 178px) { .ui-dir-values:has(> .ui-dir-stat + .ui-dir-stat) .ui-dir-num { font-size: var(--text-lg); } }
   .ui-dir-info {
     position: absolute;
     top: calc(var(--dir-pad-y) + var(--dir-info-dy));

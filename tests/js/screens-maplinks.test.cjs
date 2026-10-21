@@ -42,7 +42,7 @@ test('공통 연결점: <a> + 핀 아이콘 + 글자, hover·초점 모양, aria
 
 test('종합상황판: 시도 타일 선택 줄에 \'{시도} 실적\' 옆 지도 버튼(?sido=, 수도권 시도만)', () => {
   const s = read('components/board/Board.tsx');
-  assert.match(s, /const curRegMap = mapScopeHref\(\{ sido: curReg\.code \}\)/);
+  assert.match(s, /const curRegMap = mapScopeHref\(\{ sido: curReg\?\.code \}\)/);   // 2026-10-21 지역 탭: 수도권 전체면 시도 없음(수도권 지도)
   assert.match(s, /실적<\/PanelLink>\{curRegMap \? <MapLink href=\{curRegMap\} /);
   assert.doesNotMatch(s, /`\/map\?/);
   assert.equal(mapScopeHref({ sido: '11' }), '/map?sido=11');

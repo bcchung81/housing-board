@@ -785,7 +785,7 @@ function homeView(home = null, { policyId = POLICY_ID } = {}) {
   const asOf = asOfOf(home.snapshotAt);
   const b = buildCohorts(homeService(home, asOf), asOf, policyId);
   return { policy_id: policyId, name: '주택공급 확대방안 (9·7)', as_of_date: asOf, target_units: b.plan.target_units,
-    plan: { policy_id: policyId, period_start: b.plan.period_start, period_end: b.plan.period_end ?? null, target_units: b.plan.target_units, annual: b.plan.annual },
+    plan: { policy_id: policyId, period_start: b.plan.period_start, period_end: b.plan.period_end ?? null, target_units: b.plan.target_units, annual: b.plan.annual, region_allocations: b.plan.region_allocations ?? null },
     stages: { POLICY: '정책', BUSINESS: '사업화', APPROVAL: '인허가', CONSTRUCTION: '건설', SUPPLY: '공급', MOVE_IN: '입주' },
     cohorts: b.cohorts, portfolio_cohorts: b.portfolio, portfolio_comparisons: portfolioComparisons(b.portfolio, asOf) };
 }

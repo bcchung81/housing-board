@@ -9,6 +9,7 @@
    입력은 HOME /policy-delivery/view 응답 모양(view: as_of_date·target_units·stages·plan·portfolio_cohorts·portfolio_comparisons). 덤프에서는 policy-progress.js 가 같은 모양을 만든다.
    덤프에서 만들 때는 home-projects.js 와 같은 원천 행 집합을 쓴다(덤프 우선 + 빈 것만 스냅샷, 2026-10-21): 덤프 뒤 생긴 9·7 집계 행의 PoC 정책 묶음(home-projects.js lateCohorts —
    raw/home-api/<기준일> 스냅샷)을 포트폴리오에 더하고(withLate) 그 범위로 portfolio_comparisons 를 다시 만든다. 덤프에 있는 행은 덤프 값 그대로(덤프 뒤 입력 차는 바꾸지 않는다).
+   시도별(byRegion 11·41·28)은 같은 계산을 HOME 지역 범위(regionView)로 한 번 더 — 종합상황판 지역 탭이 고른 묶음을 그린다.
    실행: node tools/ledger/home-board.js [--view <응답 JSON>] [--out <파일>](기본: HOME 덤프 + 스냅샷 → data/board/home-board.json) */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -169,6 +170,23 @@ function homeBoard(view, { months } = {}) {
   };
 }
 
+/* 지역 범위(2026-10-21 사용자 결정 — 종합상황판 수도권 전체·서울·경기·인천): HOME 9·7 화면의 지역 선택과 같은 범위 — 그 시도 사업만,
+   비교 묶음 = portfolio_comparisons['region:<시도>'](HOME scopeKey), 정책 목표 = plan.region_allocations[시도](HOME policyTarget, 없으면 null) */
+function regionView(view, name) {
+  return { ...view, portfolio_cohorts: view.portfolio_cohorts.filter((c) => c.region === name),
+    portfolio_comparisons: { ...view.portfolio_comparisons, policy: view.portfolio_comparisons[`region:${name}`] }, target_units: view.plan?.region_allocations?.[name] ?? null };
+}
+const AREA_NAME = { 11: '서울', 28: '인천', 41: '경기' };
+/* 수도권 전체 집계 + 시도별 집계(byRegion — 시도 타일 regions 는 전체 집계 것만 쓰므로 시도 묶음에서는 뺀다) */
+function homeBoards(view) {
+  const all = homeBoard(view);
+  const byRegion = Object.fromEntries(SIDO.map(([code, name]) => {
+    const { regions, source, ...b } = homeBoard(regionView(view, name));
+    return [code, { ...b, scope: { ...b.scope, areaName: AREA_NAME[code] } }];
+  }));
+  return { ...all, byRegion };
+}
+
 /* 덤프 포트폴리오 + 덤프 뒤 생긴 행의 PoC 묶음(이미 있는 id 는 덤프 그대로) → 같은 범위의 portfolio_comparisons */
 function withLate(view, late) {
   const have = new Set(view.portfolio_cohorts.map((c) => c.id));
@@ -193,11 +211,11 @@ if (require.main === module) {
     if (opt('--view')) view = JSON.parse(fs.readFileSync(path.resolve(opt('--view')), 'utf8'));
     else view = dumpView();
     const out = path.resolve(opt('--out') ?? path.join(ROOT, OUT));
-    const doc = homeBoard(view);
+    const doc = homeBoards(view);
     fs.writeFileSync(out, render(doc));
     const h = doc.home;
     console.log(`${path.relative(ROOT, out)}: 기준일 ${doc.referenceDate} · 연결 사업 ${doc.scope.projects} · 카드 사업화 ${h.cards.BUSINESS.current} 착공 ${h.cards.CONSTRUCTION.current} 공급 ${h.cards.SUPPLY.current} · 지연 최대 ${h.delayMax} 주의 최대 ${h.warningMax} · 12개월 공급 ${h.supplyUpcoming.total}/${h.supplyUpcoming.projects}`);
   } catch (e) { console.error(`오류: ${e.message}`); process.exit(1); }
 }
 
-module.exports = { homeBoard, withLate, dumpView, STAGE_NAMES, render };
+module.exports = { homeBoard, homeBoards, regionView, withLate, dumpView, STAGE_NAMES, render };

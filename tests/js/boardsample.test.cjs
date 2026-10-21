@@ -287,6 +287,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const board = fs.readFileSync(path.join(__dirname, '../../components/board/Board.tsx'), 'utf8');
 const realRow = fs.readFileSync(path.join(__dirname, '../../components/board/RealPanels.tsx'), 'utf8');
+const homeAct = fs.readFileSync(path.join(__dirname, '../../components/board/HomeActual.tsx'), 'utf8');   // 2026-10-21 지역 탭: HOME 월별 실적 흐름은 Board 가 그린다(RealPanels 에서 옮김)
 
 function panel(src, id) {
   const i = src.indexOf(`id="${id}"`);
@@ -309,7 +310,7 @@ test('SAMPLE 표지는 없다(지연·주의 추이도 월 판정 이력), 원�
   /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 추이 제목 title 은 H 갈래(HOME 단계 최대 부족량)와 옛 갈래 모두 '단위 호' */
   assert.match(panel(board, 'p-trend'), /title=\{H \? '[^']*단위 호 — 위 숫자·선 모두[^']*' : '지연·주의 사업의 계획 호수\(단위 호 — 위 숫자·선 모두\) · 2025\.01~2026\.09 소급 판정, 2026\.10부터 월 관측'\}/, '단위 호는 보이는 글자가 아니라 제목 title(2026-10-18)');
   /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — p-actual 은 HOME 9·7 사건(HomeActual)이 기본, 집계에 home 이 없으면 통계누리(옛) */
-  assert.match(panel(realRow, 'p-actual'), /<h2 className=\{ptitle\} title=\{`HOME 9·7 승인 연결 사업/, 'p-actual(HomeActual): 출처는 제목 title');
+  assert.match(panel(homeAct, 'p-actual'), /<h2 className=\{ptitle\} title=\{`HOME 9·7 승인 연결 사업/, 'p-actual(HomeActual): 출처는 제목 title');
   assert.match(realRow, /<h2 className=\{ptitle\} title=\{`국토교통 통계누리/, 'p-actual(옛 갈래): 출처는 제목 title');
   assert.doesNotMatch(board, /\b(AG|REG|dStage|vals|txSnap)\b/, '시안 SAMPLE 계산(기관·시도·단계 호수)을 쓰지 않는다');
 });
@@ -318,7 +319,7 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   const snap = panel(board, 'p-snap');
   assert.match(board, /const T = useMemo\(\(\) => timelineOf\(L\), \[L\]\), NOW = T\.now, LAST = T\.last;/, '시점은 원장 집계에서');
   assert.match(board, /const v = L\.stageUnits\[cursor\], nv = L\.stageUnits\[NOW\], jm = judgedAt\(T, cursor\), judged = jm >= 0, SJ = JS\[judged \? jm : NOW\]!, ds = delayAt\(T, DL, cursor\), bk = bottleneckOf\(SJ\.delayByStage\)\?\.i \?\? -1;/, '선택 달의 판정 = 그 판정 달의 이력 행 · 병목은 사업 화면과 같은 bottleneckOf');
-  assert.match(board, /<PanelLink href=\{`\/projects\?sido=all&stage=\$\{bk\}&status=late`\}/, '병목 단계 링크는 리본 칸 번호(옛 0${bk + 1} 은 공식 단계로 읽혀 한 칸 앞 단계로 갔다) · 병목과 같은 범위(지연, 장기 포함)');
+  assert.match(board, /<PanelLink href=\{at\(`\/projects\?sido=all&stage=\$\{bk\}&status=late`\)\}/, '병목 단계 링크는 리본 칸 번호(옛 0${bk + 1} 은 공식 단계로 읽혀 한 칸 앞 단계로 갔다) · 병목과 같은 범위(지연, 장기 포함)');
   assert.match(board, /const JS = useMemo\(\(\) => judgmentsOf\(L\), \[L\]\), DL = useMemo\(\(\) => delaysOf\(JS\), \[JS\]\)/);
   assert.match(board, /ribbonOf\(T, L\.stageUnits, DL, SF\)/, '리본 지연 띠도 달마다 판정(SF = 판정 기준 변경 달 — 그 앞 띠는 흐리게)');
   assert.match(board, /showDlt = cursor !== NOW;/);
@@ -340,7 +341,7 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(region, /rate = tu \? r\.delayUnits \/ tu \* 100 : 0/, '지연율은 호수 기준(2026-10-16 3차, 판정 막대와 같은 기준)');
   assert.match(region, /\['--rc' as string\]: none \? 'var\(--card\)' : RCOL\[rcls\(rate\)\]/);
   assert.match(region, /판정 대상 없음/);
-  assert.match(region, /href=\{`\/region\?sido=\$\{curReg\.code\}`\}/, '시도 실적은 지역 공급(옛 /area/NN 넘김 대신 바로)');
+  assert.match(region, /href=\{`\/region\?sido=\$\{sumReg\.code\}`\}/, '시도 실적은 지역 공급(옛 /area/NN 넘김 대신 바로) — 2026-10-21 지역 탭: 수도권 전체면 sido=all');
   const agency = panel(board, 'p-agency');
   assert.match(agency, /\{L\.agencies\.filter\(\(a\) => a\.projects\)\.map\(/, '사업 있는 기관만 행으로');
   assert.match(agency, /사업 없음: \{emptyAgencies\.map\(\(a\) => a\.name\)\.join\(' · '\)\}/, '사업 없는 기관은 마지막 한 줄로 묶는다');
@@ -357,7 +358,7 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
 });
 
 test('시도 카드는 월별 실적 흐름(middle)과 같은 줄에 있고, 시행주체별 진행 현황·데이터 흐름 카드는 없다', () => {
-  assert.match(board, /<div className=\{cn\(row2, cur\.p\.includes\('p-actual'\) && linkedActual\)\}>\s*\{middle\}\s*<Card variant="section"[^>]*id="p-region"/);
+  assert.match(board, /<div className=\{cn\(row2, cur\.p\.includes\('p-actual'\) && linkedActual\)\}>\s*\{H\?\.monthly\?\.length \? <HomeActual [^\n]*: middle\}\s*<Card variant="section"[^>]*id="p-region"/);   // 2026-10-21 지역 탭: HOME 집계면 HomeActual(고른 지역 값)
   /* 1280px 이상은 6열 기본 격자의 3 + 3(2026-10-18 — 시도 칸 약 600px 에서도 지리 격자 4열 타일 약 135px) */
   const styles = fs.readFileSync(path.join(__dirname, '../../components/board/styles.ts'), 'utf8');
   assert.match(styles, /export const row2 = `\$\{grid6\} grid-cols-1 min-\[1280px\]:\[&>\*\]:col-span-3`;/);

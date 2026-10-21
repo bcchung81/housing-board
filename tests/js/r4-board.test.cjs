@@ -16,7 +16,7 @@ const D = require('../../lib/board/directives.ts');
 const S = require('../../lib/board/sample.ts');
 const BOARD = require('../../data/board/ledger-board.json');
 
-const board = read('components/board/Board.tsx'), real = read('components/board/RealPanels.tsx');
+const board = read('components/board/Board.tsx'), real = read('components/board/RealPanels.tsx'), homeAct = read('components/board/HomeActual.tsx');
 const panel = (id, s = board) => s.slice(s.indexOf(`id="${id}"`), s.indexOf('</Card>', s.indexOf(`id="${id}"`)));
 const headOf = (id, s = board) => { const p = panel(id, s); return p.slice(0, p.indexOf('</div>')); };   // 패널 첫 줄(제목 줄)
 
@@ -71,7 +71,7 @@ test('3 범위 칩: 종합상황판 패널 머리마다(선택 시점 카드 포
   /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 칩 출처는 H ? '정책 진행 자료'(HOME 집계) : '사업 원장' */
   assert.match(board, /ledgerChip = <ScopeChip scope=\{nation === '전국 아님' \? '일부 지역' : nation\} source=\{H \? '정책 진행 자료' : '사업 원장'\}/);
   /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — p-actual 칩은 HomeActual 이 '수도권 · 정책 진행 자료', 옛 갈래는 '수도권 · 통계누리' */
-  assert.match(headOf('p-actual', real), /<ScopeChip scope="수도권" source="정책 진행 자료"/);
+  assert.match(headOf('p-actual', homeAct), /<ScopeChip scope=\{scope\} source="정책 진행 자료"/);   // 2026-10-21 지역 탭: 범위 = 고른 지역(Board 가 nation 을 넘김)
   assert.match(real, /<ScopeChip scope=\{area\} source="통계누리"/);
   assert.match(real, /area = sidoName\(molit, NATION\) \?\? '전국'/, 'area = 합계 자리 이름(수도권)');
   assert.match(board, /import ScopeChip from '@\/components\/ui\/scope-chip';/);
