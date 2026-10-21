@@ -150,11 +150,8 @@ test("'/' 병목·일정 지연 목록 창: 단계 부족 사업 부족 합 − 
   const f = V.parseFilters({ sido: 'all', status: `short-${HB.home.bottleneck.stage}` }, { policies: [], programs: [], sidoOk: () => true, home: { agencies: [] } });
   assert.deepEqual(V.homeOrderOf(V.applyFilters(R, f), f).map((r) => r.id), SS[HB.home.bottleneck.stage].rows.map((r) => r.id));
   assert.equal(V.parseFilters({ status: 'short-NOPE' }, { policies: [], programs: [], sidoOk: () => true }).status, undefined, '모르는 단계는 거르지 않음');
-  /* 링크: '병목 보기'·병목 카드·일정 지연 카드가 이 주소 */
+  /* 링크: '병목 보기'가 이 주소(2026-10-21 위 줄이 6단계 카드로 바뀌어 병목·일정 지연 카드는 빠짐) */
   assert.match(read('components/board/Board.tsx'), /H\?\.bottleneck \? <PanelLink href=\{at\(shortHref\(H\.bottleneck\.stage\)\)\} onClick=\{open\(at\(shortHref\(H\.bottleneck\.stage\)\)\)\}/);
-  const dir = read('lib/board/directives.ts');
-  assert.match(dir, /list: shortList\(neck, H, '병목 단계', sido\)/); assert.match(dir, /list: shortList\(top\('DELAYED'\), H, /); assert.match(dir, /list: shortList\(top\('WARNING'\), H, /);
-  assert.match(dir, /href: atSido\(`\/projects\?sido=all&status=short-\$\{g\.stage\}`, sido\)/, 'directives 는 다른 .ts 를 가져오지 않아 같은 글자로');
   assert.match(read('app/(dashboard)/page.tsx'), /boardLists\(View, idx\.homeRows, .*, homeBoard\.home\?\.stageShort\)/);
 });
 

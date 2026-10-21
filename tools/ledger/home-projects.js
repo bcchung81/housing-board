@@ -8,7 +8,7 @@
      단계 도달·사업 판정·12개월 공급 증가분·기관 묶음은 tools/ledger/home-view.js(PoC 프런트 계산 이식)를 require 해서 그대로 쓴다(두 파일은 고치지 않는다).
      정책 전체 범위는 buildCohorts 에 '해제 뺀 모든 사업'을 넘겨 만든다(9·7 범위로 만든 묶음과 사업마다 사건·일정이 같다 — 시험으로 확인).
    - PoC 공개 API 스냅샷(덤프로 재현할 수 없는 값만): raw/home-api/<기준일>/projects-map-dashboard{,-97}.json.gz(/map/dashboard 정책 전체·9·7)·
-     projects-policy-delivery-97.json.gz(/policy-delivery/view 의 portfolio_cohorts 만)(--fetch-poc 로 받는다. 압축 원본은 git 무시,
+     projects-policy-delivery-97.json.gz(/policy-delivery/view 의 portfolio_cohorts 만)·policy-plan-97.json.gz(같은 응답의 plan 지역 배분 목표만 — 종합상황판용)(--fetch-poc 로 받는다. 압축 원본은 git 무시,
      같은 폴더 manifest.json 에 주소·받은 시각·sha256·행 수 — 다른 도구(home-sources.js)와 나눠 쓰므로 내 항목만 더한다). 받을 때 담당자 이름·사유 칸(basis·reason·actor 등)은 지운다.
      스냅샷에서 가져오는 값: ① 덤프 뒤 생긴 사업 행(덤프에 없음) ② 덤프 이식 규칙이 PoC 서버와 다른 행의 집계 대상 여부·시군구 소속 ③ /map/dashboard 의 단계 분포(서버 계산 — 규칙 미공개)
      ④ 덤프 뒤 생긴 행의 사건·일정(PoC 정책 묶음) — ①② 는 사업마다 residuals 에 PRO_ id·덤프 값·PoC 값·이유로 남긴다.
@@ -48,7 +48,10 @@ const POC_FILES = {
   'projects-map-dashboard.json.gz': ['map/dashboard?as_of_date=AS_OF&compact=true', (r) => r, (r) => r.items.length],
   'projects-map-dashboard-97.json.gz': [`map/dashboard?as_of_date=AS_OF&policy_id=${P97}&horizon=10&measure=SUPPLY&schedule_status=all&compact=true`, (r) => r, (r) => r.items.length],
   'projects-policy-delivery-97.json.gz': ['policy-delivery/view?as_of_date=AS_OF&group=policy&scope=policy', (r) => ({ as_of_date: r.as_of_date, portfolio_cohorts: r.portfolio_cohorts }), (r) => r.portfolio_cohorts.length],
+  /* 같은 정책 응답의 지역 배분 목표(2026-10-21 — 덤프 policy_delivery_plan.region_allocations 에 경기·인천이 null, PoC 는 담당자 입력 값): 종합상황판(home-board.js)이 덤프에 없는 지역만 채운다 */
+  'policy-plan-97.json.gz': ['policy-delivery/view?as_of_date=AS_OF&group=policy&scope=policy', (r) => ({ as_of_date: r.as_of_date, region_allocations: r.plan?.region_allocations ?? null, joint_region_units: r.plan?.joint_region_units ?? null }), (r) => Object.keys(r.region_allocations ?? {}).length],
 };
+const POC_PLAN = 'policy-plan-97.json.gz';
 const SCRUB = new Set(['actor', 'actor_basis', 'reason', 'change_reason', 'basis', 'mapping_basis', 'note']);
 const scrub = (v) => (Array.isArray(v) ? v.map(scrub) : v && typeof v === 'object' ? Object.fromEntries(Object.entries(v).filter(([k]) => !SCRUB.has(k)).map(([k, x]) => [k, scrub(x)])) : v);
 const STAGES = ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'COMPLETION', 'SUPPLY', 'MOVE_IN'];
@@ -78,10 +81,10 @@ function writeManifest(dir, entries) {
 }
 
 /* PoC 공개 API 에서 POC_FILES 를 받아 압축 JSON 으로 둔다. 503(잠시 연결 불가)이면 몇 초 뒤 다시, 호출 사이 1.5초 */
-async function fetchPoc(dir, asOf) {
+async function fetchPoc(dir, asOf, names = Object.keys(POC_FILES)) {   // names: 받을 파일만(기본 전부 — 이미 받은 스냅샷을 다시 받지 않을 때)
   fs.mkdirSync(dir, { recursive: true });
   const entries = {};
-  for (const [name, [rel, keep, rows]] of Object.entries(POC_FILES)) {
+  for (const [name, [rel, keep, rows]] of Object.entries(POC_FILES).filter(([n]) => names.includes(n))) {
     const url = `${POC_API}/${rel.replace('AS_OF', asOf)}`;
     let res = null;
     for (let i = 0; i < 6 && !(res && res.ok); i++) { if (i) await new Promise((r) => setTimeout(r, 4000)); res = await fetch(url, { signal: AbortSignal.timeout(180000) }).catch(() => null); }
@@ -97,11 +100,12 @@ async function fetchPoc(dir, asOf) {
   writeManifest(dir, entries);
 }
 
-function readPoc(dir) {
+/* names 기본 = 지역 배분 목표(POC_PLAN) 뺀 사업 대조 스냅샷 — 사업 보기 출처(source.snapshots)는 그대로, 종합상황판은 [POC_PLAN] 을 따로 읽는다 */
+function readPoc(dir, names = Object.keys(POC_FILES).filter((n) => n !== POC_PLAN)) {
   const f = path.join(dir, 'manifest.json');
   const m = fs.existsSync(f) ? JSON.parse(fs.readFileSync(f, 'utf8')) : { files: {} };
   const out = { meta: {} };
-  for (const name of Object.keys(POC_FILES)) {
+  for (const name of names) {
     const e = m.files?.[name], file = path.join(dir, name);
     if (!e || !fs.existsSync(file)) throw new Error(`PoC 스냅샷이 없다: ${path.relative(P.ROOT, file)} — --fetch-poc 로 받는다`);
     const buf = fs.readFileSync(file);
@@ -303,7 +307,7 @@ function parseArgs(argv) {
   return o;
 }
 
-module.exports = { build, render, readPoc, fetchPoc, ledgerIds, lateCohorts, scrub, POC_FILES, REASON };
+module.exports = { build, render, readPoc, fetchPoc, ledgerIds, lateCohorts, scrub, POC_FILES, POC_PLAN, REASON };
 
 if (require.main === module) {
   (async () => {

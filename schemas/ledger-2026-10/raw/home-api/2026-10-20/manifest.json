@@ -1,5 +1,12 @@
 {
   "files": {
+    "policy-plan-97.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/policy-delivery/view?as_of_date=2026-10-20&group=policy&scope=policy",
+      "fetched_at": "2026-10-21T10:41:06.283Z",
+      "sha256": "0ade2e652b1f35c2def51918fb2cd336bf9db660e072160d36d8ea03b341c129",
+      "rows": 3,
+      "bytes": 158
+    },
     "projects-map-dashboard-97.json.gz": {
       "url": "https://www.minslab.kr/poc/home/api/map/dashboard?as_of_date=2026-10-20&policy_id=POL_2025_0907&horizon=10&measure=SUPPLY&schedule_status=all&compact=true",
       "fetched_at": "2026-10-21T02:29:37.966Z",

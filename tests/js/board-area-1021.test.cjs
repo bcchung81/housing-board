@@ -1,5 +1,5 @@
 'use strict';
-/* 2026-10-21 사용자 결정: 종합상황판 상위 6개 카드 = HOME 기준 값(진척 관리 = HOME 착공(건설) 카드 현재 누적 측정량 + 아래 줄 '연말 계획까지 n호', 원천 카드는 그대로·지역 무관),
+/* 2026-10-21 사용자 결정: 종합상황판 상위 6개 카드 = HOME 기준 값(같은 날 HOME 6단계 카드로 — 건설 = HOME 착공(건설) 카드 현재 누적 측정량 + 아래 줄 '연말 계획까지 n호'),
    지역 탭 수도권 전체·서울·경기·인천(카드 위 · 시도 타일 연동 · 주소 ?area= — '/?sido=' 는 옛 지도 주소라 지도로 넘어간다)으로 카드와 아래 패널이 그 지역 HOME 집계(home-board.json byRegion)를 그린다 */
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -48,30 +48,27 @@ test('HOME 지역 범위(regionView): 응답의 region:<시도> 비교 묶음 ·
   assert.equal(all.byRegion['41'].home.delayMax, 1974);
 });
 
-test('진척 관리 = HOME 착공(건설) 카드(현재 누적 측정 + 연말 문구) — 통계누리 착공 누계(86,739)는 (i) 설명에만', () => {
-  const [all] = dirOf(HB, 'all');
-  assert.deepEqual([all.t, all.big, all.u, all.pre, all.sub], ['진척 관리', '79,884', '호', '연말 계획까지 12,690호', undefined], '아래 줄 = HOME 문구만(보조 값 없음 — 6열 카드 폭)');
-  assert.equal(all.m, '착공(건설) 누적 79,884호 · 연말 계획까지 12,690호', '숫자 이름은 읽기 이름에');
-  assert.match(all.basis, /HOME 착공\(건설\) 카드 — 현재 누적 측정량/);
-  assert.match(all.basis, /통계누리 착공 통계\(민간 포함 모든 주택 · 수도권 2026년 1~8월 86,739호\)와 범위가 다릅니다/);
-  const [seoul] = dirOf(regionOf('11'), '11');
+/* 같은 날 사용자 지시로 위 줄이 HOME 6단계 카드(정책~입주)가 됨 — 진척 관리 카드의 값·문구는 건설 카드로(tests/js/board-stage-cards-1021.test.cjs 가 6장 전부) */
+test('건설 카드 = HOME 착공(건설) 카드(현재 누적 측정 + 연말 문구) — 통계누리 착공 누계(86,739)는 (i) 설명에만', () => {
+  const c = dirOf(HB, 'all')[3];
+  assert.deepEqual([c.t, c.big, c.u, c.pre, c.sub], ['건설', '79,884', '호', '연말 계획까지 12,690호', undefined], '아래 줄 = HOME 문구만(보조 값 없음 — 6열 카드 폭)');
+  assert.equal(c.m, '착공(건설) 현재 누적 79,884호 · 연말 계획까지 12,690호', '숫자 이름은 읽기 이름에');
+  assert.match(c.basis, /HOME 착공\(건설\) 카드 — 현재 누적 측정량/);
+  assert.match(c.basis, /통계누리 착공 통계\(민간 포함 모든 주택 · 수도권 2026년 1~8월 86,739호\)와 범위가 다릅니다/);
+  const seoul = dirOf(regionOf('11'), '11')[3];
   assert.deepEqual([seoul.big, seoul.pre], [HB.byRegion['11'].home.cards.CONSTRUCTION.current.toLocaleString('en-US'), `연말 계획 대비 ${(-HB.byRegion['11'].home.cards.CONSTRUCTION.remainder).toLocaleString('en-US')}호 초과`]);
   assert.doesNotMatch(seoul.basis, /86,739/, '시도면 수도권 통계누리 숫자를 적지 않는다');
 });
 
-test('카드 6장: 시도를 고르면 그 시도 값과 그 시도 목록 주소, 원천 카드만 지역과 무관', () => {
+test('카드 6장: 시도를 고르면 그 시도 값과 그 시도 목록 주소', () => {
   const all = dirOf(HB, 'all');
   for (const c of CODES) {
     const L = regionOf(c), d = dirOf(L, c), H = L.home;
     assert.equal(D.nation(L), L.scope.areaName);
-    assert.deepEqual(d.map((x) => x.t), all.map((x) => x.t), '지시 6건 틀 그대로');
-    assert.equal(d[1].big, L.scope.projects.toLocaleString('en-US'));
-    assert.equal(d[3].big, H.supplyUpcoming.total.toLocaleString('en-US'));
-    assert.deepEqual([d[4].big, d[4].pair.big], [H.delayMax, H.warningMax].map((n) => n.toLocaleString('en-US')));
-    assert.equal(d[2].big, H.bottleneck ? H.bottleneck.gap.toLocaleString('en-US') : '없음');
-    for (const x of d.slice(0, 5)) for (const l of [x.list, x.pair?.list].filter(Boolean)) assert.match(l.href, new RegExp(`sido=${c}(&|$)`), `${x.t} 목록 주소`);
-    assert.deepEqual([d[5].big, d[5].list.href], [all[5].big, '/sources']);
-    assert.match(d[5].basis, /HOME 값이 아니며 지역을 바꿔도 같음/);
+    assert.deepEqual(d.map((x) => x.t), all.map((x) => x.t), '6단계 틀 그대로');
+    assert.equal(d[1].big, H.cards.BUSINESS.current.toLocaleString('en-US'));
+    assert.equal(d[4].big, H.cards.SUPPLY.current.toLocaleString('en-US'));
+    for (const x of d) assert.match(x.list.href, new RegExp(`sido=${c}(&|$)`), `${x.t} 목록 주소`);
   }
   assert.equal(D.atSido('/projects?sido=all&status=late', 'all'), '/projects?sido=all&status=late');
   assert.equal(D.atSido('/projects?sido=all&status=late', '41'), '/projects?sido=41&status=late');

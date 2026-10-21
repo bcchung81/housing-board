@@ -6546,10 +6546,11 @@
    ],
    "home": {
     "policyId": "POL_2025_0907",
-    "targetUnits": null,
+    "targetUnits": 216000,
     "cards": {
      "POLICY": {
-      "target": null
+      "target": 216000,
+      "from": "poc"
      },
      "BUSINESS": {
       "current": 20248,
@@ -8771,10 +8772,11 @@
    ],
    "home": {
     "policyId": "POL_2025_0907",
-    "targetUnits": null,
+    "targetUnits": 800000,
     "cards": {
      "POLICY": {
-      "target": null
+      "target": 800000,
+      "from": "poc"
      },
      "BUSINESS": {
       "current": 83235,

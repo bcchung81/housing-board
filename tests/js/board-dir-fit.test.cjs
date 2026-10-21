@@ -99,3 +99,21 @@ test('숫자와 단위는 30px 기준으로 6열·3열·2열에 들어간다(스
   }
   assert.ok(inner(1440, 0) >= 180 && inner(1440, 17) >= 180, '1440px 에서 숫자 20px');
 });
+
+/* 2026-10-21 HOME 6단계 카드(정책~입주, 수도권·서울·경기·인천): 같은 폭에 값 줄·제목, 아래 줄(연말 문구)도 한 줄 */
+test('HOME 6단계 카드: 숫자·단위와 아래 줄 문구가 6열·3열·2열 한 줄에 들어간다', () => {
+  const { makeDirectives } = require('../../lib/board/directives.ts');
+  const HB = require('../../data/board/home-board.json');
+  const start = { year: '2026', upto: 8, cum: 86739, cumLy: 85424 };
+  const dirs = [['all', HB], ...Object.entries(HB.byRegion).map(([c, b]) => [c, { ...b, regions: HB.regions }])]
+    .flatMap(([sido, L]) => makeDirectives({ sourceCount: 19, stageNames: HB.stageNames, ledger: L, start, bottleneck: require('../../lib/board/projects-view.ts').bottleneckOf, sido }));
+  assert.equal(dirs.length, 24);
+  for (const vw of [1280, 1300, 1365, 1366, 1440, 1600, 1920, 2117, 1101, 1279, 901, 900]) for (const sb of [0, 17]) {
+    const w = inner(vw, sb);
+    for (const d of dirs) {
+      assert.ok(rowW(d, 30) <= w, `${vw}px(스크롤바 ${sb}) ${d.t}: 값 줄 ${rowW(d, 30).toFixed(1)}px > 내용 폭 ${w.toFixed(1)}px`);
+      assert.ok(tw(d.t, 14) + 28 <= w, `${vw}px ${d.t}: 제목`);
+      assert.ok(tw(d.pre, 14) <= w, `${vw}px(스크롤바 ${sb}) ${d.t}: 아래 줄 '${d.pre}' ${tw(d.pre, 14).toFixed(1)}px > ${w.toFixed(1)}px`);
+    }
+  }
+});

@@ -1,11 +1,11 @@
-/* 종합상황판의 총리 지시 6건 카드. 지시 날짜·제목·연결 패널(p)은 고정이고, 카드의 값은 모두 자료에서 센다:
+/* 종합상황판 맨 위 카드 6장 — HOME 집계면 정책 진행현황 6단계 카드(homeDirectives), 옛 원장 집계면 총리 지시 6건 카드. 지시 날짜·제목·연결 패널(p)은 고정이고, 카드의 값은 모두 자료에서 센다:
    통계누리 수도권 착공 누계(보고자료와 같은 ytd), 사업 원장 집계(ledger-board.json), 원천 카탈로그 건수. */
 import type { LedgerBoard } from './types';
 
 /* 카드 아랫줄 = 앞말(pre) + 큰 숫자(big) + 단위(u) + 보조 값(sub — 색 없는 증감). m 은 그 셋을 이은 한 줄(읽기용 이름). 날짜·지시 이름·기준(basis)은 카드 title·(i).
    2026-10-18 지시 카드 통일 규격: 두 줄 고정(지시 이름 / 값), 꼬리·링크 글자 없음 — 숫자 자체가 목록 링크(list) */
 export type Directive = {
-  date: string; t: string; m: string;
+  date?: string; t: string; m: string;                    // date: 총리 지시 날짜(HOME 6단계 카드는 없음)
   pre?: string; big: string; u: string;
   sub?: string;                                           // 값 오른쪽의 보조 값(증감 '+10.8%' — 색·화살표 없음, 좁은 카드에서는 숨기고 basis 에 같은 값)
   basis: string;                                          // 카드 title·(i): 값의 기준(기간·범위)과 못 내는 값
@@ -96,41 +96,29 @@ function lateCard(L: LedgerBoard): Directive {
     pair: { pre: '후보 계산', big: cn, u: '건', list: { href: '/projects?sido=all&status=review-late', title: `목록: 후보 · 지연 계산(${nation(L)}) ${cn}건 — 카드 숫자와 같음 · ${CAND_TEXT} ${f(c.ok.projects + c.caution.projects + c.delay.projects)}건 중 같은 규칙으로 계산하면 지연 · 사업 번호가 없어 지연 확정에 넣지 않음` } } };
 }
 
-/* HOME 집계(home-board.json, 2026-10-21 결정: HOME 정책 추진현황과 같은 조건·같은 표기). 진척 관리 = HOME 착공(건설) 카드의 현재 누적 측정량(큰 숫자) + 카드 문구 '연말 계획까지 n호'(아래 줄, 같은 날 사용자 결정 — 옛 통계누리 착공 누계·전체 목표 대비 비율 대체),
-   사업장 = 승인 연결 사업, 병목 = 지연 단계 중 부족량이 가장 큰 단계, 예측 = 향후 12개월 공급 예정, 일정 지연 = 지연 최대·주의 최대(단계 최대 부족량).
-   병목·일정 지연 목록 = 그 단계 목표보다 측정이 모자란 사업(?status=short-<단계> — home-board.json home.stageShort, 2026-10-21 사용자 결정): 부족 합 − 다른 사업 초과 = 카드 숫자 */
-const shortList = (g: { stage: string; label: string } | null | undefined, H: NonNullable<LedgerBoard['home']>, what: string, sido: string) => {
-  const s = g && H.stageShort?.[g.stage];
-  if (!g || !s) return null;
-  const sum = s.rows.reduce((n, r) => n + r.short, 0);
-  return { href: atSido(`/projects?sido=all&status=short-${g.stage}`, sido), title: `목록: ${what}(${g.label}) 목표보다 측정이 모자란 사업 ${s.rows.length}건 — 부족 합 ${f(sum)}호${s.over ? ` − 다른 사업 초과 ${f(s.over)}호` : ''} = 카드 숫자` };
-};
-/* HOME 착공(건설) 카드의 연말 문구(HOME policy-stage-flow.js summaryTable — 남은 호수 = 12월 말 누적 예상 − 현재 누적 측정). 진척 관리 카드의 아래 줄 */
+/* HOME 집계(home-board.json, 2026-10-21 사용자 지시 '상단의 6개 카드를 정책/사업화/인허가/건설/공급/입주 6단계 기준으로 PoC 를 참고해서'): HOME 정책 추진현황 '정책 진행현황' 카드 6장(home.cards).
+   정책 = 전체 목표(시도 묶음은 지역 배분 목표 — 덤프에 없어 PoC 스냅샷으로 채운 값은 from 'poc'), 사업화~공급 = 현재 누적 측정량 + 연말 문구, 입주 = 현재 누적(미측정) + 12월 말 예상.
+   숫자 목록 = 지금 그 단계인 사업(stage = HOME 단계 칸 0~5), 정책은 연결 사업 전체. 지시 날짜 없음 — 병목·예측·일정 지연·원천은 아래 패널·'병목 보기'에 남는다 */
+/* HOME 카드 문구(HOME policy-stage-flow.js summaryTable — 남은 호수 = 12월 말 누적 예상 − 현재 누적 측정) */
 const remainText = (rem: number | null | undefined) => (rem == null ? undefined : rem > 0 ? `연말 계획까지 ${f(rem)}호` : rem < 0 ? `연말 계획 대비 ${f(-rem)}호 초과` : '연말 계획과 일치');
-function homeDirectives({ sourceCount, ledger: L, start, sido = 'all' }: DirectiveInput): Directive[] {
+const STAGE_KEYS = ['POLICY', 'BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'MOVE_IN'];
+const POC_FROM = 'PoC 공개 화면 값(담당자 입력 — 덤프에 없음)';
+function homeDirectives({ stageNames: K, ledger: L, start, sido = 'all' }: DirectiveInput): Directive[] {
   const H = L.home!, span = `${start.year}년 1~${start.upto}월`, B = `HOME 9·7 정책 추진현황 규칙 · 기준일 ${L.referenceDate.replaceAll('-', '.')} · ${nation(L)}`;
-  const at = (href: string) => atSido(href, sido), c = H.cards.CONSTRUCTION, now = c?.current ?? null;
-  const neck = H.bottleneck, up = H.supplyUpcoming;
-  const top = (st: string) => [...H.stageGaps].filter((g) => g.status === st).sort((a, b) => b.gap - a.gap)[0];
-  return [
-    /* 아래 줄(앞말 자리) = HOME 카드 문구만(같은 날 사용자 결정 — 6열 카드 안쪽 171~188px 에 '착공(건설) 누적' 앞말과 문구가 함께 들어가지 않는다). 숫자 이름은 읽기 이름·(i) */
-    { date: '08.14', t: '진척 관리', ...val(remainText(c?.remainder) ?? '착공(건설) 누적', now === null ? '–' : f(now), now === null ? '' : '호'),
-      m: `착공(건설) 누적 ${now === null ? '–' : `${f(now)}호`}${remainText(c?.remainder) ? ` · ${remainText(c?.remainder)}` : ''}`,
-      basis: `${B} · HOME 착공(건설) 카드 — 현재 누적 측정량(${c?.measured_on ? `${c.measured_on.replaceAll('-', '.')} 측정 · ` : ''}후속 단계 포함 · 입력·추정 포함)${c?.year_end_expected != null ? ` · 12월 말 누적 예상량 ${f(c.year_end_expected)}호(계획 기준)` : ''}. 통계누리 착공 통계(민간 포함 모든 주택${sido === 'all' && start.cum !== null ? ` · ${STAT_SCOPE} ${span} ${f(start.cum)}호` : ''})와 범위가 다릅니다.`,
-      p: ['p-chart'], list: { href: at('/projects?sido=all&stage=3'), title: `목록: 건설(착공·준공) 단계 사업(${nation(L)}) — 카드 숫자는 단계 누적 측정량이라 목록 건수·호수와 다름` } },
-    { date: '08.19', t: '사업장별 현황판', ...val('연결 사업', f(L.scope.projects), '개'), basis: `${B} · 승인 연결 사업 ${f(L.scope.projects)}개(과거 착공 포함 · 원천 중복 제외 · ${f(L.scope.units)}호)`,
-      p: ['p-region'], list: { href: at('/projects?sido=all'), title: `목록: 사업 목록(원장 기준 — HOME 연결 사업 ${f(L.scope.projects)}개와 모집단이 다름)` } },
-    { date: '09.03', t: '범부처 통합·병목', ...(neck ? val(`${neck.label} ${neck.status === 'DELAYED' ? '지연' : '주의'}`, f(neck.gap), '호') : val('병목', '없음', '')), sub: neck?.rate,
-      basis: `${B} · 병목 = 기준일 도래 목표 대비 누적 측정 부족량이 가장 큰 단계(지연 우선 · 단계 간 합산 없음)${H.stageGaps.length ? ` · ${H.stageGaps.map((g) => `${g.label} ${f(g.gap)}호 ${g.rate}`).join(', ')}` : ''}`,
-      p: ['p-trend', 'p-agency'], list: shortList(neck, H, '병목 단계', sido) ?? { href: at('/projects?sido=all&status=late'), title: '목록: 지연 사업(병목 없음)' } },
-    { date: '09.04', t: '예측가능성', ...val('공급 예정', f(up.total), '호'), sub: `${f(up.projects)}개 사업`,
-      basis: `${B} · 향후 12개월(${ymDot(up.from)}~${ymDot(up.to)}) 공급 예정 — 누적 공급 목표 증가분에서 이미 측정된 물량 제외`,
-      p: ['p-fut'], list: { href: at('/region?sido=all&kind=SUPPLY_NOTICE'), title: '목록: 지역 공급의 모집 예정(원장 기준 — HOME 공급 예정과 정의가 다름)' } },
-    { date: '09.18', t: '일정 지연 관리', ...val('지연 최대', f(H.delayMax), '호'), m: `지연 최대 ${f(H.delayMax)}호 · 주의 최대 ${f(H.warningMax)}호`,
-      basis: `${B} · 부족률 2% 이상 지연, 0% 초과~2% 미만 주의 · 상태별 단계 최대 부족량(단계 간 합산 없음) · 사업 판정 지연 ${f(L.judgment.delay.projects)}개·주의 ${f(L.judgment.caution.projects)}개`, p: ['p-trend'],
-      list: shortList(top('DELAYED'), H, '지연 최대 단계', sido) ?? { href: at('/projects?sido=all&status=late'), title: '목록: 지연 사업(지연 단계 없음)' },
-      pair: { pre: '주의 최대', big: f(H.warningMax), u: '호', list: shortList(top('WARNING'), H, '주의 최대 단계', sido) ?? { href: at('/projects?sido=all&status=caution'), title: '목록: 주의 사업(주의 단계 없음)' } } },
-    { date: '09.30', t: '국민 공개·공식 원천', ...val('원천', f(sourceCount), '곳'), basis: '데이터 원본 화면의 원천 카탈로그에 등록된 원천 수 — HOME 값이 아니며 지역을 바꿔도 같음',
-      p: ['p-actual'], list: { href: '/sources', title: '목록: 데이터 원본(원천 카탈로그) — 사업이 아니라 원천 목록' } },
-  ];
+  const at = (href: string) => atSido(href, sido), dot = (d?: string | null) => (d ? d.replaceAll('-', '.') : '');
+  return STAGE_KEYS.map((k, i) => {
+    const c = H.cards[k] ?? {}, t = K[i], name = k === 'CONSTRUCTION' ? '착공(건설)' : t;
+    if (k === 'POLICY') {
+      const v = c.target ?? null, goal = sido === 'all' ? '전체 목표' : '지역 배분 목표';
+      return { t, ...val('전체 목표', v === null ? '미확보' : f(v), v === null ? '' : '호'), m: `${t} 전체 목표 ${v === null ? '미확보' : `${f(v)}호`}`,
+        basis: `${B} · HOME 정책 카드 — ${goal}${v === null ? ' 미확보' : `(입력 목표 · 그래프 배경 기준)`}${c.from === 'poc' ? ` · ${POC_FROM}` : ''}`,
+        p: ['p-chart'], list: { href: at('/projects?sido=all'), title: `목록: 연결 사업 ${f(L.scope.projects)}개(${nation(L)}) — 카드 숫자는 정책 목표라 목록 호수와 다름` } };
+    }
+    const now = c.current ?? null, big = now === null ? '미측정' : f(now), u = now === null ? '' : '호', ye = c.year_end_expected ?? null;
+    const pre = k === 'MOVE_IN' ? (ye === null ? '연말 계획 미확보' : `12월 말 예상 ${f(ye)}호`) : remainText(c.remainder) ?? '현재 누적';
+    return { t, ...val(pre, big, u), m: `${name} 현재 누적 ${big}${u}${pre === '현재 누적' ? '' : ` · ${pre}`}`,
+      basis: `${B} · HOME ${name} 카드 — 현재 누적 측정량 ${now === null ? '미측정' : `${f(now)}호`}(${c.measured_on ? `측정일 ${dot(c.measured_on)} · ` : ''}후속 단계 포함 · 입력·추정 포함) · 12월 말 누적 예상량 ${ye === null ? '계획 미확보' : `${f(ye)}호(${c.plan_date ? `계획일 ${dot(c.plan_date)} · ` : ''}계획 기준)`}`
+        + (k === 'CONSTRUCTION' ? `. 통계누리 착공 통계(민간 포함 모든 주택${sido === 'all' && start.cum !== null ? ` · ${STAT_SCOPE} ${span} ${f(start.cum)}호` : ''})와 범위가 다릅니다.` : ''),
+      p: ['p-chart'], list: { href: at(`/projects?sido=all&stage=${i}`), title: `목록: 지금 ${t} 단계인 사업(${nation(L)}) — 카드 숫자는 후속 단계를 포함한 누적 측정량이라 목록 건수·호수와 다름` } };
+  });
 }

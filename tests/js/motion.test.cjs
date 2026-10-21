@@ -99,6 +99,6 @@ test('월별 공급 파동 카드에 시점 조작 줄(재생·시간 막대·�
   assert.doesNotMatch(css, /\.tl-range/, '슬라이더 모양 CSS 도 남지 않는다');
   assert.match(board, /onClick=\{\(e\) => \{ const m = monthAt\(e\.clientX\); if \(m >= 0\) goto\(m\); \}\}/, '차트 클릭으로 시점 선택');
   assert.match(board, /aria-label=\{`[^`]*차트를 누르면 그 달을 고릅니다\.`\}/);
-  assert.match(board, /onClick=\{\(\) => pick\(i\)\}/, '지시 카드를 누르면 그 카드를 고른다');
+  assert.match(board, /onClick=\{\(\) => \(H \? pickStage\(i\) : pick\(i\)\)\}/, '지시 카드를 누르면 그 카드를 고른다(HOME 6단계 카드는 차트 단계 강조 — 2026-10-21)');
   assert.match(board, /const pick = \(i: number\) => \{\n    setFocus\(i \+ 1\);\n    document\.getElementById\(DIR\[i\]\.p\[0\]\)\?\.scrollIntoView\(\{ block: 'nearest', behavior: window\.matchMedia\('\(prefers-reduced-motion: reduce\)'\)\.matches \? 'auto' : 'smooth' \}\);/, '연결 패널이 화면 밖이면 가장 가까운 끝까지 내린다(움직임 줄이기면 바로)');
 });

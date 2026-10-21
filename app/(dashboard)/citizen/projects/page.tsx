@@ -63,17 +63,21 @@ export async function generateMetadata({ searchParams }: Props): Promise<Metadat
 /* 표(2026-10-19 사용자 피드백 '카드 안 데이터 구분·grid·연도/사업 구분'): 열 정의 하나(COLS)를 머리 줄·모든 줄이 함께 써서 열 너비가 같다.
    칸 사이 옅은 세로선(--border)·줄 구분선·번갈아 바탕(components/ui/data-grid.tsx 와 같은 불투명 줄무늬 — 묶음의 첫 줄은 해 머리라 odd = 둘째·넷째 사업), 줄 높이 44 이상. 열 머리는 메뉴 바(64, 900px 이하 48) 아래에, 해 묶음 머리는 열 머리 아래에 붙는다.
    접근성: role=table/rowgroup/row/columnheader/cell — 줄 전체를 덮는 링크는 이름 칸의 사업 이름(after 로 줄을 덮음)이라 링크·표 의미가 함께 산다.
-   900px 이하: 열 머리는 화면 읽기에만, 사업마다 테두리 칸(이름·지역 + 호 / 진행 / 다음 일정 / 들어올 때 / 예정 대비) */
-const COLS = 'grid grid-cols-[minmax(0,2.2fr)_6.5em_minmax(9.5em,1.5fr)_minmax(0,1.8fr)_minmax(0,1.4fr)_minmax(0,1.8fr)_4.5em] mobile:grid-cols-[minmax(0,1fr)_auto]';
+   900px 이하: 열 머리는 화면 읽기에만, 사업마다 테두리 칸(이름·지역 + 호 / 진행 / 다음 일정 / 들어올 때 / 예정 대비)
+   2026-10-21 사용자 지시 '2줄 줄바꿈으로 표기 되지 않도록 리스트 row를 수정해': 900px 초과는 모든 칸을 한 줄로(넘치는 글만 말줄임 + title 에 전체 글). 열 너비(em)는 실제 자료(175곳)의 가장 긴 글 폭(번들 글꼴 어림)에 맞춘 값 —
+   1697px 화면(안쪽 1590px)에서 지금 96+264·다음 일정 216·들어올 때 192·시행 120 이 늘 들어가고, 남는 폭을 이름(2fr)과 예정 대비(1.7fr)가 나눈다. 1280px 에서는 이름·예정 대비의 긴 글만 말줄임 */
+const COLS = 'grid grid-cols-[minmax(12em,2fr)_minmax(0,6em)_minmax(0,16.5em)_minmax(0,13.5em)_minmax(0,12em)_minmax(0,1.7fr)_minmax(0,7.5em)] mobile:grid-cols-[minmax(0,1fr)_auto]';
 /* 칸: 좌우 12 + 첫 칸을 뺀 칸 왼쪽 세로선. 900px 이하는 세로선·좌우 여백 없음(칸 안 여백이 대신) */
 const CELL = 'min-w-0 px-3 [&:not(:first-child)]:border-l [&:not(:first-child)]:border-border mobile:px-0 mobile:border-l-0!';
+/* 한 칸 한 줄: 데스크톱은 줄바꿈 없이 넘치면 말줄임, 900px 이하는 지금 모양(줄바꿈) 그대로 */
+const ONE = 'truncate mobile:overflow-visible mobile:whitespace-normal mobile:text-clip';
 const LINK = 'group/action inline-flex items-center gap-px rounded-chip text-meta whitespace-nowrap text-muted-foreground no-underline underline-offset-4 hover:text-primary hover:underline focus-visible:text-primary focus-visible:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 /* 진행 띠(/citizen 사업 표 progHtml 과 같은 6칸): 채운 칸(지나온 단계 + 지금) = 칸마다 자기 단계색, 남은 칸 = --line2. 단계 이름은 그 단계 글자색(준비 중 = 계획) */
 const BAND = ['plan', 'permit', 'build', 'sale', 'soon', 'move'] as const;
 const INK = ['plan', 'plan', 'build', 'sale', 'soon', 'move'] as const;
 function Progress({ x }: { x: PublicItem }) {
   return (
-    <span className="flex flex-col items-start gap-y-1 mobile:flex-row mobile:flex-wrap mobile:items-center mobile:gap-x-2">
+    <span className="flex items-center gap-x-2 gap-y-1 mobile:flex-wrap">
       <span className="inline-grid flex-none grid-cols-[repeat(6,var(--pj-band-w))] gap-(--pj-band-gap)" aria-hidden="true">
         {BAND.map((n, i) => <span key={n} className="block h-(--pj-band-h) rounded-chip bg-line2" style={i <= x.board ? { background: `var(--st-${n})` } : undefined} />)}
       </span>
@@ -90,28 +94,28 @@ const Tag = ({ children }: { children: string }) => <span className="mr-2 hidden
 const keepDate = (s: string) => s.replace(/\d{4}년(?: \d{1,2}월)?(?: \d{1,2}일)?/g, (m) => m.replace(/ /g, '\u00a0'));
 
 function Row({ x, href, on, withArea }: { x: PublicItem; href: string | null; on: boolean; withArea: boolean }) {
-  const tip = [x.full !== x.name ? x.full : '', x.agency ? `시행 ${AGENCY_FULL[x.agency] ?? x.agency}` : ''].filter(Boolean).join('\n');
+  const tip = [x.name, x.full !== x.name ? x.full : '', x.agency ? `시행 ${AGENCY_FULL[x.agency] ?? x.agency}` : ''].filter(Boolean).join('\n');
   return (
     <div role="row" className={`${COLS} relative min-h-14 items-center border-b border-border py-2.5 text-body text-foreground last:border-b-0 odd:bg-[color-mix(in_srgb,var(--pn2)_45%,var(--card))] hover:bg-pn2 has-[a:focus-visible]:outline-2 has-[a:focus-visible]:-outline-offset-2 has-[a:focus-visible]:outline-primary has-[a[aria-current]]:bg-accent! has-[a[aria-current]]:outline has-[a[aria-current]]:outline-1 has-[a[aria-current]]:-outline-offset-1 has-[a[aria-current]]:outline-primary
       mobile:mt-2 mobile:gap-y-1.5 mobile:rounded-tile mobile:border mobile:border-border mobile:bg-card mobile:odd:bg-card mobile:px-tile-x mobile:py-tile-y mobile:last:border-b mobile:hover:bg-pn2`}>
-      <span role="cell" className={`${CELL} flex flex-col items-start gap-y-1 mobile:flex-row mobile:flex-wrap mobile:items-baseline mobile:gap-x-2`}>
+      <span role="cell" className={`${CELL} flex items-baseline gap-x-2 gap-y-1 mobile:flex-wrap`}>
         {href && x.link ? (
-          <RowLink pid={x.link} on={on} href={href} scroll={false} title={tip || undefined}
-            className="font-bold text-foreground no-underline [overflow-wrap:anywhere] after:absolute after:inset-0 hover:underline focus-visible:outline-none">{x.name}</RowLink>
-        ) : <span className="font-bold text-foreground [overflow-wrap:anywhere]" title={tip || undefined}>{x.name}</span>}
+          <RowLink pid={x.link} on={on} href={href} scroll={false} title={tip}
+            className={`${ONE} min-w-20 mobile:min-w-0 font-bold text-foreground no-underline [overflow-wrap:anywhere] after:absolute after:inset-0 hover:underline focus-visible:outline-none`}>{x.name}</RowLink>
+        ) : <span className={`${ONE} min-w-20 mobile:min-w-0 font-bold text-foreground [overflow-wrap:anywhere]`} title={tip}>{x.name}</span>}
         {withArea || x.sub ? (
-          <span className="flex flex-wrap items-baseline gap-x-2 mobile:contents">
-            {withArea ? <span className="ui-chip">{x.area}</span> : null}
-            {x.sub ? <span className="text-meta text-muted-foreground">{x.sub}</span> : null}
-          </span>
+          <>
+            {withArea ? <span className="ui-chip block min-w-0 truncate mobile:overflow-visible mobile:text-clip">{x.area}</span> : null}
+            {x.sub ? <span className="shrink-0 whitespace-nowrap text-meta text-muted-foreground">{x.sub}</span> : null}
+          </>
         ) : null}
       </span>
       <span role="cell" className={`${CELL} self-center text-right tabular-nums mobile:self-start`}>{x.units ? ho(x.units) : x.dup ? <span className="text-muted-foreground" title={DUP_TIP}>{DUP_TEXT}</span> : <span className="text-muted-foreground">호수 미정</span>}</span>
       <span role="cell" className={`${CELL} mobile:col-span-2`}><Progress x={x} /></span>
-      <span role="cell" className={`${CELL} tabular-nums mobile:col-span-2 ${x.nextText === '미정' ? 'text-muted-foreground' : ''}`}><Tag>다음 일정</Tag>{keepDate(x.nextText)}</span>
-      <span role="cell" className={`${CELL} tabular-nums mobile:col-span-2 ${x.inDay ? '' : 'text-muted-foreground'}`}><Tag>들어올 때</Tag>{keepDate(x.inText)}</span>
-      <span role="cell" className={`${CELL} text-muted-foreground mobile:col-span-2 ${x.fact ? '' : 'mobile:hidden'}`}>{x.fact}</span>
-      <span role="cell" className={`${CELL} mobile:hidden`}>{x.agency || <span className="text-muted-foreground">미정</span>}</span>
+      <span role="cell" className={`${CELL} tabular-nums mobile:col-span-2 ${ONE} ${x.nextText === '미정' ? 'text-muted-foreground' : ''}`} title={x.nextText}><Tag>다음 일정</Tag>{keepDate(x.nextText)}</span>
+      <span role="cell" className={`${CELL} tabular-nums mobile:col-span-2 ${ONE} ${x.inDay ? '' : 'text-muted-foreground'}`} title={x.inText}><Tag>들어올 때</Tag>{keepDate(x.inText)}</span>
+      <span role="cell" className={`${CELL} text-muted-foreground mobile:col-span-2 ${ONE} ${x.fact ? '' : 'mobile:hidden'}`} title={x.fact || undefined}>{x.fact}</span>
+      <span role="cell" className={`${CELL} ${ONE} mobile:hidden`} title={x.agency || undefined}>{x.agency || <span className="text-muted-foreground">미정</span>}</span>
     </div>
   );
 }

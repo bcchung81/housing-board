@@ -79,7 +79,7 @@ test('종합상황판의 총리 지시 줄은 원래 카드 그대로다(그림�
   assert.match(b, /<div className="grid grid-cols-2 gap-3 min-\[901px\]:grid-cols-3 min-\[1280px\]:grid-cols-6">/, '1280px 이상 6열 · 901~1279px 3열 · 900px 이하 2열(간격 12 하나, 2026-10-19)');
   assert.match(b, /text-sm leading-5', hide && 'invisible'\)\} aria-hidden=\{hide \|\| undefined\}>\{x\.t\}<\/span>/, '윗줄은 지시 주제 이름뿐(꼬리 없음)');
   assert.doesNotMatch(b, /\{x\.date\} · \{x\.t\}<\/span>|x\.sub\.note|data-slot="dir-tag"/, '날짜 접두·꼬리 작은 줄은 화면에 없다');
-  assert.match(b, /data-slot="board-dir" title=\{`\$\{x\.date\} 지시 · \$\{x\.t\}\\n\$\{x\.basis\}`\}/, '날짜·지시 이름·기준은 hover title');
+  assert.match(b, /data-slot="board-dir" title=\{`\$\{x\.date \? `\$\{x\.date\} 지시 · ` : ''\}\$\{x\.t\}\\n\$\{x\.basis\}`\}/, '날짜·지시 이름·기준은 hover title(HOME 6단계 카드는 날짜 없음 — 2026-10-21)');
   assert.match(b, /<span className="ui-dir-label text-sm">\{pre \|\| '전체 사업'\}<\/span>/, '아랫줄 = 앞말 14/400');
   assert.match(b, /ui-dir-num ui-kpi leading-title[^>]*>\{big\}<span className="text-sm font-normal">\{u\}<\/span>/, '+ 큰 숫자 20(좁으면 18) + 단위 14');
   assert.doesNotMatch(b, /<Real title=\{x\.basis\}/, '카드에 실데이터 표지를 달지 않는다');

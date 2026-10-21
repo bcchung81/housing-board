@@ -158,17 +158,17 @@ test('8 월별 실적 차트: Tab 은 차트에 한 번(마지막 달), 안에�
 
 test('9 착공 카드(통계누리) → ③착공 목록(원장): 목록 머리에 범위 차이를 보이는 글로', () => {
   assert.equal(D[0].list.href, '/projects?sido=all&stage=2');
-  /* 2026-10-21 종합상황판·사업 화면 = HOME 규칙: 진척 관리(착공) 카드 목록은 HOME 6칸 ④건설(착공·준공 — stage=3), 사업 화면 목록 머리에 범위 차이 ⓘ */
+  /* 2026-10-21 종합상황판·사업 화면 = HOME 규칙: 건설(착공) 카드 목록은 HOME 6칸 ④건설(착공·준공 — stage=3), 사업 화면 목록 머리에 범위 차이 ⓘ(같은 날 6단계 카드로 바뀌어 진척 관리 → 건설 카드) */
   const HB = require('../../data/board/home-board.json');
   const HD = makeDirectives({ sourceCount: 19, stageNames: [...V.HOME_NAMES], ledger: HB, start: { year: '2026', upto: 8, cum: 156396, cumLy: 141000 }, bottleneck: V.bottleneckOf });
-  assert.equal(HD[0].t, '진척 관리');
-  assert.equal(HD[0].list.href, '/projects?sido=all&stage=3');
+  assert.equal(HD[3].t, '건설');
+  assert.equal(HD[3].list.href, '/projects?sido=all&stage=3');
   assert.equal(V.HOME_NAMES[3], '건설');
   const p = read('app/(dashboard)/projects/page.tsx');
   assert.match(p, /\{f\.stage === 3 \? <InfoTip label="착공 목록 범위"[^>]*><p data-slot="start-basis">목록은 정책 진행 자료 원천 행 기준\(통계누리 착공 통계와 범위 다름\)/, '2026-10-18 서술형 정리: 보이는 글 대신 ⓘ');
   const HP = require('../../data/board/home-projects.json'), home = V.homeRowsOf(HP.rows, HP.residuals);
   const hctx = { ...fctx, programs: V.homeProgramsOf(home), home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
-  const hf = V.parseFilters(Object.fromEntries(new URL(HD[0].list.href, 'http://x').searchParams), hctx), hl = V.applyFilters(home, hf);
+  const hf = V.parseFilters(Object.fromEntries(new URL(HD[3].list.href, 'http://x').searchParams), hctx), hl = V.applyFilters(home, hf);
   // 기준일 2026-10-20: 9·7 원천 행 중 지금 ④건설인 행 22건 · 집계 호수 17,865호(HOME 원천 행)
   // 2026-10-21 새 덤프(20261020T142230Z): 덤프 뒤였던 담당자 단계 측정값이 판에 들어와 ④건설 도달 행이 늘었다 → 26건 · 20,368호
   assert.deepEqual([hl.length, V.homeSummaryOf(hl, V.homeChartOf(hf)).units], [26, 20368], '목록 26건 · 20,368호(정책 진행 자료 원천 행)');

@@ -343,22 +343,22 @@ test('원장 패널은 원장 집계 값을 그린다: 판정·제외·단계 �
   assert.match(region, /판정 대상 없음/);
   assert.match(region, /href=\{`\/region\?sido=\$\{sumReg\.code\}`\}/, '시도 실적은 지역 공급(옛 /area/NN 넘김 대신 바로) — 2026-10-21 지역 탭: 수도권 전체면 sido=all');
   const agency = panel(board, 'p-agency');
-  assert.match(agency, /\{L\.agencies\.filter\(\(a\) => a\.projects\)\.map\(/, '사업 있는 기관만 행으로');
+  assert.match(agency, /L\.agencies\.filter\(\(a\) => a\.projects\)/, '사업 있는 기관만 행으로');
   assert.match(agency, /사업 없음: \{emptyAgencies\.map\(\(a\) => a\.name\)\.join\(' · '\)\}/, '사업 없는 기관은 마지막 한 줄로 묶는다');
-  assert.match(agency, /<div key=\{a\.id\} className=\{ag\}/, '기관 행은 같은 세 칸(subgrid)');
+  assert.match(agency, /<div key=\{a\.key\} className=\{ag\}/, '기관 행은 같은 세 칸(subgrid)');
   assert.doesNotMatch(agency, /agName\}>[^\n]*판정 제외/, '이름 칸에 판정 제외를 넣지 않는다');
   assert.match(agency.slice(0, agency.indexOf('className={ags}')), /\['bg-\[var\(--out\)\] inset-ring-1 inset-ring-\(--out-line\)', NONE_TEXT\]/, "막대 범례는 제목 줄에, '일정 정보 없음' 견본은 --out 채움 + --out-line 1px 선(2026-10-16 '판정 밖'에서 바꿈)");
   assert.match(agency, /<span className="block bg-\[var\(--out\)\]" style=\{\{ width: pw\(none\) \}\} \/>/, '일정 정보 없음 막대 조각 = --out(확인 필요 후보는 빗금 조각으로 따로)');
   assert.match(agency, /\$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호/, "전국 지연 중 몫(2026-10-16 4차 r4-board 5)");
   assert.match(board, /NONE_TIP = `\$\{NONE_TEXT\} = 판정할 현재 예정일이 없는 사업\(준공 완료 포함\)과 LH 후보\(\$\{dotDates\(outNote \?\? ''\)\}\)`/, '일정 정보 없음의 사유(LH 후보)는 제목·범례 title 에');
-  assert.match(agency, /판정 제외 \$\{f\(a\.excludedUnits\)\}호 포함/, '판정 제외는 행 title 에');
-  assert.match(agency, /\$\{CAND_TEXT\} \$\{f\(cand\)\} · \$\{NONE_TEXT\} \$\{f\(none\)\}호/, '확인 필요(후보) 호수도 행 title 에(막대에서는 빗금 조각, D3)');
-  assert.match(agency, /pw\(a\.okUnits\)[\s\S]*pw\(a\.cautionUnits\)[\s\S]*pw\(a\.delayUnits\)/, '막대는 호수');
+  assert.match(agency, /판정 제외 \$\{f\(a\.excluded\)\}호 포함/, '판정 제외는 행 title 에');
+  assert.match(agency, /\$\{CAND_TEXT\} \$\{f\(a\.cand\)\} · \$\{NONE_TEXT\} \$\{f\(none\)\}호/, '확인 필요(후보) 호수도 행 title 에(막대에서는 빗금 조각, D3)');
+  assert.match(agency, /pw\(a\.ok\)[\s\S]*pw\(a\.caution\)[\s\S]*pw\(a\.delay\)/, '막대는 호수');
   assert.match(agency, /\(J\.delay\.units \? a\.delayUnits \/ J\.delay\.units \* 100 : 0\)\.toFixed\(1\)/, '지연 비중은 전체 지연 호수 중 비중');
 });
 
 test('시도 카드는 월별 실적 흐름(middle)과 같은 줄에 있고, 시행주체별 진행 현황·데이터 흐름 카드는 없다', () => {
-  assert.match(board, /<div className=\{cn\(row2, cur\.p\.includes\('p-actual'\) && linkedActual\)\}>\s*\{H\?\.monthly\?\.length \? <HomeActual [^\n]*: middle\}\s*<Card variant="section"[^>]*id="p-region"/);   // 2026-10-21 지역 탭: HOME 집계면 HomeActual(고른 지역 값)
+  assert.match(board, /<div className=\{cn\(row2, lk\('p-actual'\) && linkedActual\)\}>\s*\{H\?\.monthly\?\.length \? <HomeActual [^\n]*: middle\}\s*<Card variant="section"[^>]*id="p-region"/);   // 2026-10-21 지역 탭: HOME 집계면 HomeActual(고른 지역 값)
   /* 1280px 이상은 6열 기본 격자의 3 + 3(2026-10-18 — 시도 칸 약 600px 에서도 지리 격자 4열 타일 약 135px) */
   const styles = fs.readFileSync(path.join(__dirname, '../../components/board/styles.ts'), 'utf8');
   assert.match(styles, /export const row2 = `\$\{grid6\} grid-cols-1 min-\[1280px\]:\[&>\*\]:col-span-3`;/);

@@ -155,7 +155,7 @@ test('결함 5: 종합상황판 지연·주의 추이·기관별 진행 숫자�
   /* 2026-10-21 결정: HOME 과 같은 조건·같은 표기 — 추이 제목 title 은 H ? HOME 문구 : 옛 문구 두 갈래, 둘 다 '단위 호' */
   assert.match(panel('p-trend'), /<h2 className=\{ptitle\} title=\{H \? '[^']*단위 호[^']*' : '[^']*단위 호[^']*'\}>지연·주의 추이<\/h2>/, '추이 단위는 제목 title(2026-10-18 — 보이는 \'단위 호\' 글자는 다른 패널처럼 title 로)');
   assert.doesNotMatch(panel('p-trend'), /data-slot="trend-unit"/);
-  assert.match(panel('p-agency'), /\{f\(a\.delayUnits\)\}<small[^>]*>호<\/small><\/b>/, '기관 지연 호수');
+  assert.match(panel('p-agency'), /\{f\(a\.delay\)\}<small[^>]*>호<\/small><\/b>/, '기관 지연 호수');
 });
 
 /* ---------- 후속 1: '후보 계산 313건'을 누르면 313건 목록(누른 숫자 = 목록 건수) — 새 거르기 ?status=review-late. 확인 필요(후보) 전체(?status=review, 1,839건)는 그대로 ---------- */

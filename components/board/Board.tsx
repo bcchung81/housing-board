@@ -2,7 +2,7 @@
 /* 종합상황판(/) — 시안 이식. 시안의 동작(지시 6건 순환·월별 리본 차트·재생·시점 이동·범례 강조·시도)을 그대로 두고,
    월별 공급 파동·선택 시점 판정·시도·기관별 진행·향후 12개월은 사업 원장 집계(data/board/ledger-board.json — 원장 2026-10 기준)를 그린다.
    지연·주의 추이·선택 달 판정·리본의 지연 띠는 집계의 월 판정 이력(trend: 2025.01~2026.09 지금 원장을 되감은 소급(같은 모집단), 2026.10부터 월 관측)을 쓴다 — trend 가 없는 옛 집계는 기준 달만 판정.
-   총리 지시 6건 카드는 실데이터(lib/board/directives.ts).
+   총리 지시 6건 카드는 실데이터(lib/board/directives.ts — HOME 집계면 정책 진행현황 6단계 카드, 누르면 차트 단계 강조).
    카드에는 숫자·단위·짧은 이름만 보이고, 기준·범위·규칙 설명은 카드 제목 옆 (i) 팝오버(키보드·터치로 열림)에 둔다 — 제목 title 은 두세 줄 요약(2026-10-11 사용자 지시: 서술 최소화, 2026-10-16 3차 평가: title 에만 있던 정의).
    실데이터 위젯(월별 실적 흐름)은 서버 컴포넌트(RealPanels)를 middle 로 받아 시도 카드와 같은 줄에 둔다. */
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type MouseEventHandler, type ReactNode } from 'react';
@@ -163,6 +163,11 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
     setFocus(i + 1);
     document.getElementById(DIR[i].p[0])?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
   };
+  /* HOME 6단계 카드 누름(2026-10-21): 월별 공급 파동의 단계 강조(범례 단추와 같은 hl — 다시 누르면 전체)로 하고 차트로 내린다 */
+  const pickStage = (i: number) => {
+    setHl(hl === i ? -1 : i);
+    document.getElementById('p-chart')?.scrollIntoView({ block: 'nearest', behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
+  };
   const monthAt = (clientX: number) => {
     const r = svgRef.current!.getBoundingClientRect();
     const m = Math.floor(((clientX - r.left) * (VW / r.width) - PX0) / rib.pitch);
@@ -216,6 +221,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
   const fu = up[hasFut ? fi : 0];   // 월 상세 링크 달: 고른 달이 앞으로 12개월 안이면 그 달, 아니면 첫 달(링크 숫자 = 월 상세 '준공 예정 사업' 합계)
   const maxUp = Math.max(1, ...up.map((m) => m.units)), upSum = up.reduce((n, m) => n + m.units, 0), upProj = up.reduce((n, m) => n + m.projects, 0), UPH = 82;   // UPH = 막대 최대 높이(viewBox 100 중, 위 18은 선택 값 자리)
   const cur = DIR[focus - 1];
+  const lk = (id: string) => (H ? hl >= 0 && id === 'p-chart' : cur.p.includes(id));   // 연결 패널 표시: HOME 은 단계 강조 중인 차트만, 옛 원장은 고른 지시 카드의 패널
   const sidoName = (code: string) => real.sido[code] ?? code;
   const curReg = L.regions.find((r) => r.code === area);   // 지역 탭이 수도권 전체면 없음 — 시도 요약 칸은 수도권 합
   const curRegMap = mapScopeHref({ sido: curReg?.code });   // 수도권 시도만 지도 연결(그 밖은 null), 전체면 수도권 지도
@@ -269,12 +275,12 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             </div>
           </div>
         ) : <div className="h-4" aria-hidden="true" />}
-        <section id="board-dirs" aria-label="총리 지시 6건">
+        <section id="board-dirs" aria-label={H ? '정책 진행현황 6단계' : '총리 지시 6건'}>
           <div className="grid grid-cols-2 gap-3 min-[901px]:grid-cols-3 min-[1280px]:grid-cols-6">
             {DIR.map((x, i) => (
               <div key={i} className="ui-dir-cell relative min-w-0">
-                <button type="button" data-slot="board-dir" title={`${x.date} 지시 · ${x.t}\n${x.basis}`} style={{ ['--i' as string]: i }} className={cn(btn, dirFrame, 'ui-dir-face ui-pick q-rise relative h-full w-full min-w-0')} aria-pressed={i === focus - 1} onClick={() => pick(i)}
-                  aria-label={`${x.date} 지시 ${x.t}: ${x.m}${x.sub ? `, ${x.sub}` : ''}`}>
+                <button type="button" data-slot="board-dir" title={`${x.date ? `${x.date} 지시 · ` : ''}${x.t}\n${x.basis}`} style={{ ['--i' as string]: i }} className={cn(btn, dirFrame, 'ui-dir-face ui-pick q-rise relative h-full w-full min-w-0')} aria-pressed={H ? hl === i : i === focus - 1} onClick={() => (H ? pickStage(i) : pick(i))}
+                  aria-label={`${x.date ? `${x.date} 지시 ` : ''}${x.t}: ${x.m}${x.sub ? `, ${x.sub}` : ''}`}>
                   {dirTitle(x)}
                   <span className={cn(dirRow, 'invisible')} aria-hidden="true">{dirVals(x, false, open)}</span>
                 </button>
@@ -294,7 +300,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         </section>
 
         <div className={cn(grid6, 'grid-cols-[minmax(0,1fr)_clamp(340px,30vw,400px)] narrow:grid-cols-1')}>
-          <Card variant="section" className={cn(panel, 'min-[1280px]:col-span-4', linked(cur.p.includes('p-chart')))} render={<section id="p-chart" aria-label="월별 공급 파동" />}>
+          <Card variant="section" className={cn(panel, 'min-[1280px]:col-span-4', linked(lk('p-chart')))} render={<section id="p-chart" aria-label="월별 공급 파동" />}>
             <div className={phead}>
               <h2 className={ptitle} title={`${basisLine} · 달 말 단계별 호수(세로축 ${axisUnit(rib)}) · 붉은 띠 = 지연 호수`}>월별 공급 파동</h2>
               <InfoTip label="월별 공급 파동 읽는 법" className={pinfo}>
@@ -404,10 +410,10 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
           </Card>
         </div>
 
-        <div className={cn(row2, cur.p.includes('p-actual') && linkedActual)}>
+        <div className={cn(row2, lk('p-actual') && linkedActual)}>
           {H?.monthly?.length ? <HomeActual monthly={H.monthly} refDate={L.referenceDate} scope={nation} sido={area} /> : middle}
 
-          <Card variant="section" className={cn(panel, linked(cur.p.includes('p-region')))} render={<section id="p-region" aria-label={`시도 ${L.regions.length}곳`} />}>
+          <Card variant="section" className={cn(panel, linked(lk('p-region')))} render={<section id="p-region" aria-label={`시도 ${L.regions.length}곳`} />}>
             <div className={phead}>
               <h2 className={ptitle} title={`${basisLine} · 지연율 = 지연 호수 ÷ 판정 호수(호수 기준) · 판정은 ${judgedText}`}>시도별 지연 현황</h2>
               <InfoTip label="시도 지연율 기준" className={pinfo}>
@@ -452,7 +458,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
         </div>
 
         <div className={cn(grid6, 'grid-cols-[repeat(auto-fit,minmax(min(300px,100%),1fr))] min-[1280px]:[&>*]:col-span-2')}>
-          <Card variant="section" className={cn(panel, linked(cur.p.includes('p-trend')))} render={<section id="p-trend" aria-label="지연·주의 추이" />}>
+          <Card variant="section" className={cn(panel, linked(lk('p-trend')))} render={<section id="p-trend" aria-label="지연·주의 추이" />}>
             <div className={phead}>
               <h2 className={ptitle} title={H ? '달 말 단계별 도래 목표 대비 누적 측정 부족량 중 지연(2% 이상)·주의(2% 미만) 최대(단위 호 — 위 숫자·선 모두) — 단계 간 합산 없음(HOME 지연·주의 추이와 같은 값)' : '지연·주의 사업의 계획 호수(단위 호 — 위 숫자·선 모두) · 2025.01~2026.09 소급 판정, 2026.10부터 월 관측'}>지연·주의 추이</h2>
               <InfoTip label="지연·주의 추이 읽는 법" className={pinfo}>
@@ -497,7 +503,7 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={cn(sub, 'mt-0.5 flex justify-between')}><span>{ml(T, 0)}</span><span>{ml(T, NOW)}</span></div>
           </Card>
 
-          <Card variant="section" className={cn(panel, linked(cur.p.includes('p-fut')))} render={<section id="p-fut" aria-label={H ? AHEAD_SUPPLY : AHEAD_COMPLETION} />}>
+          <Card variant="section" className={cn(panel, linked(lk('p-fut')))} render={<section id="p-fut" aria-label={H ? AHEAD_SUPPLY : AHEAD_COMPLETION} />}>
             <div className={phead}>
               <h2 className={ptitle} title={`${basisLine} · ${H ? `기준일 이후 ${ymDot(up[up.length - 1].ym)} 말까지 누적 공급 목표 증가분에서 이미 측정된 물량 제외` : '준공 실제 기록이 없는 사업의 현재 예정 준공 달'} · 월별 호수`}>{H ? AHEAD_SUPPLY : AHEAD_COMPLETION}</h2>
               <InfoTip label={H ? '공급 예정 기준' : '준공 예정 기준'} className={pinfo}>
@@ -521,12 +527,12 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={cn(sub, 'mt-0.5 flex justify-between')}><span>{ymDot(up[0].ym)}</span><span>{ymDot(up[(up.length - 1) >> 1].ym)}</span><span>{ymDot(up[up.length - 1].ym)}</span></div>
           </Card>
 
-          <Card variant="section" className={cn(panel, linked(cur.p.includes('p-agency')))} render={<section id="p-agency" aria-label="기관별 진행" />}>
+          <Card variant="section" className={cn(panel, linked(lk('p-agency')))} render={<section id="p-agency" aria-label="기관별 진행" />}>
             <div className={phead}>
               <h2 className={ptitle} title={`${basisLine} · 기관별 정상·주의·지연 호수 · 오른쪽 = 지연 호수와 ${whole} 지연 중 몫`}>기관별 진행</h2>
               <InfoTip label="기관별 진행 기준" className={pinfo}>
                 <p>막대 = 기관 사업 호수의 정상·주의·지연(사업 번호가 있는 사업의 판정) · {CAND_TEXT}(빗금) · {NONE_TEXT}.</p>
-                {H ? <p>시행기관(원천 글자 — LH·GH·SH 만 묶음)별 사업 계획량을 지연(2% 이상) → 주의(2% 미만) → 정상 순으로 사업당 한 번 집계합니다. 판정 미확보는 일정 정보 없음. 오른쪽 = 지연 호수와 기관 안 지연 사업 물량 비중(HOME 기관별 진행현황과 같은 값).</p> : null}
+                {H ? <p>시행기관(원천 글자 — LH·GH·SH 만 묶음)별 사업 계획량을 지연(2% 이상) → 주의(2% 미만) → 정상 순으로 사업당 한 번 집계합니다. 판정 미확보는 일정 정보 없음. 오른쪽 = 지연 호수와 기관 안 지연 사업 물량 비중(HOME 기관별 진행현황과 같은 값). 지연이 없는 기관(기관 미상 포함)은 한 줄로 묶습니다(2곳 이상일 때).</p> : null}
                 <p hidden={!!H}>오른쪽 = 지연 호수와 {whole} 지연 중 몫({whole} 지연 {f(J.delay.units)}호 중 그 기관 몫 — LH 100.0% = 지연이 모두 LH 사업). {NONE_TIP}.</p>
                 <p className="text-muted-foreground">{scope}</p>
               </InfoTip>
@@ -539,18 +545,32 @@ export default function Board({ real, middle }: { real: BoardReal; middle: React
             <div className={ags}>
               {/* 열 머리: 오른쪽 % 가 무엇의 비율인지(전국 지연 중 몫 = 전국 지연 호수 중 그 기관 몫, 2026-10-16 4차) */}
               <div data-slot="agency-head" className={cn(ag, '-mb-3 text-sm text-muted-foreground narrow:-mb-1 mobile:-mb-1')} aria-hidden="true"><span /><span className="narrow:hidden" /><span className="text-right" title={H ? '지연 호수 · 지연 사업 물량 비중 = 기관 사업 호수 중 지연 사업 호수' : `지연 호수 · ${whole} 지연 중 몫 = ${whole} 지연 ${f(J.delay.units)}호 중 그 기관 몫`}>{H ? '지연 · 지연 사업 물량 비중' : <>지연 · {whole} 지연 중 몫</>}</span></div>
-              {L.agencies.filter((a) => a.projects).map((a, ai) => {
-                const out = a.units - a.okUnits - a.cautionUnits - a.delayUnits, cand = a.candidateUnits ?? 0, none = out - cand, pw = (n: number) => `${(n / a.units * 100).toFixed(1)}%`;   // out = 판정하지 않은 호수 = 확인 필요(후보) + 일정 정보 없음(none)
-                return (
-                  <div key={a.id} className={ag} title={`${a.name} ${f(a.units)}호 — 정상 ${f(a.okUnits)} · 주의 ${f(a.cautionUnits)} · 지연 ${f(a.delayUnits)} · ${CAND_TEXT} ${f(cand)} · ${NONE_TEXT} ${f(none)}호${a.excludedUnits ? `(판정 제외 ${f(a.excludedUnits)}호 포함)` : ''}. ${a.id === 'unknown' ? `사업 ${f(a.projects)}건 — ` : ''}${dotDates(a.note ?? '')}`}>
-                    <div className={agName}><OneLine className="min-w-0 font-bold">{a.id === 'unknown' ? AGENCY_NAME.etc : agencyShow(a.name)}</OneLine><span className="text-sm font-normal text-muted-foreground">{f(a.units)}호</span></div>
-                    <div className={cn(bar3, 'q-grow-x h-3 narrow:col-span-full narrow:row-start-2 mobile:col-span-full mobile:row-start-2')} style={{ ['--i' as string]: ai }} role="img" aria-label={`${a.name} ${f(a.units)}호: 정상 ${f(a.okUnits)} 주의 ${f(a.cautionUnits)} 지연 ${f(a.delayUnits)} ${CAND_TEXT} ${f(cand)} ${NONE_TEXT} ${f(none)}`}>
-                      <span className="block bg-ok" style={{ width: pw(a.okUnits) }} /><span className="block bg-warn" style={{ width: pw(a.cautionUnits) }} /><span className="block bg-bad" style={{ width: pw(a.delayUnits) }} /><span className={cn('block', candHatch)} style={{ width: pw(cand) }} /><span className="block bg-[var(--out)]" style={{ width: pw(none) }} />
+              {(() => {
+                // 기관 줄 자료: 한 기관 = 한 줄. HOME 집계는 지연 0호 기관(기관 미상 포함)이 2곳 이상이면 맨 아래 한 줄로 묶는다(2026-10-21)
+                type AgRow = { key: string; name: string; show: string; note: string; units: number; ok: number; caution: number; delay: number; excluded: number; pct: string; delayTitle: string };
+                const mk = (a: typeof L.agencies[number]): AgRow => ({ key: a.id, name: a.name, show: a.id === 'unknown' ? AGENCY_NAME.etc : agencyShow(a.name), note: `${a.id === 'unknown' ? `사업 ${f(a.projects)}건 — ` : ''}${dotDates(a.note ?? '')}`, units: a.units, ok: a.okUnits, caution: a.cautionUnits, delay: a.delayUnits, excluded: a.excludedUnits ?? 0, pct: H ? `비중 ${(a.delayedSharePct ?? 0).toFixed(1)}%` : `몫 ${(J.delay.units ? a.delayUnits / J.delay.units * 100 : 0).toFixed(1)}%`, delayTitle: `지연 ${f(a.delayUnits)}호 — ${whole} 지연 ${f(J.delay.units)}호 중 ${a.name} 몫` });
+                const all = L.agencies.filter((a) => a.projects), zero = H ? all.filter((a) => !a.delayUnits) : [];
+                const cands = (as: typeof all) => as.reduce((n, a) => n + (a.candidateUnits ?? 0), 0);
+                const rows: (AgRow & { cand: number })[] = (zero.length >= 2 ? all.filter((a) => !zero.includes(a)) : all).map((a) => ({ ...mk(a), cand: a.candidateUnits ?? 0 }));
+                if (zero.length >= 2) {
+                  const sum = (k: 'units' | 'okUnits' | 'cautionUnits' | 'delayUnits' | 'excludedUnits') => zero.reduce((n, a) => n + (a[k] ?? 0), 0);
+                  const name = zero.some((a) => a.id === 'unknown') ? '기관 미상·지연 없음' : '지연 없음', units = sum('units'), list = zero.map((a) => `${a.id === 'unknown' ? AGENCY_NAME.etc : agencyShow(a.name)} ${f(a.units)}호`).join(' · ');
+                  rows.push({ key: 'grouped', name: `${name} ${f(units)}호(${zero.length}곳: ${list})`, show: name, note: '', units, ok: sum('okUnits'), caution: sum('cautionUnits'), delay: sum('delayUnits'), excluded: sum('excludedUnits'), pct: `비중 ${(units ? sum('delayUnits') / units * 100 : 0).toFixed(1)}%`, delayTitle: `지연 ${f(sum('delayUnits'))}호 — 지연 없는 기관 묶음`, cand: cands(zero) });
+                }
+                return rows.map((a, ai) => {
+                  const out = a.units - a.ok - a.caution - a.delay, none = out - a.cand, pw = (n: number) => `${(n / a.units * 100).toFixed(1)}%`;   // out = 판정하지 않은 호수 = 확인 필요(후보) + 일정 정보 없음(none)
+                  const head = a.key === 'grouped' ? a.name : `${a.name} ${f(a.units)}호`;
+                  return (
+                    <div key={a.key} className={ag} title={`${head} — 정상 ${f(a.ok)} · 주의 ${f(a.caution)} · 지연 ${f(a.delay)} · ${CAND_TEXT} ${f(a.cand)} · ${NONE_TEXT} ${f(none)}호${a.excluded ? `(판정 제외 ${f(a.excluded)}호 포함)` : ''}.${a.note ? ` ${a.note}` : ''}`}>
+                      <div className={agName}><OneLine className="min-w-0 font-bold">{a.show}</OneLine><span className="text-sm font-normal text-muted-foreground">{f(a.units)}호</span></div>
+                      <div className={cn(bar3, 'q-grow-x h-3 narrow:col-span-full narrow:row-start-2 mobile:col-span-full mobile:row-start-2')} style={{ ['--i' as string]: ai }} role="img" aria-label={`${head}: 정상 ${f(a.ok)} 주의 ${f(a.caution)} 지연 ${f(a.delay)} ${CAND_TEXT} ${f(a.cand)} ${NONE_TEXT} ${f(none)}`}>
+                        <span className="block bg-ok" style={{ width: pw(a.ok) }} /><span className="block bg-warn" style={{ width: pw(a.caution) }} /><span className="block bg-bad" style={{ width: pw(a.delay) }} /><span className={cn('block', candHatch)} style={{ width: pw(a.cand) }} /><span className="block bg-[var(--out)]" style={{ width: pw(none) }} />
+                      </div>
+                      <div className={agVal} title={a.delayTitle}><b className={cn(disp, 'text-bad')}>{f(a.delay)}<small className="text-sm">호</small></b><span className="text-sm text-muted-foreground">{a.pct}</span></div>
                     </div>
-                    <div className={agVal} title={`지연 ${f(a.delayUnits)}호 — ${whole} 지연 ${f(J.delay.units)}호 중 ${a.name} 몫`}><b className={cn(disp, 'text-bad')}>{f(a.delayUnits)}<small className="text-sm">호</small></b><span className="text-sm text-muted-foreground">{H ? `비중 ${(a.delayedSharePct ?? 0).toFixed(1)}%` : `몫 ${(J.delay.units ? a.delayUnits / J.delay.units * 100 : 0).toFixed(1)}%`}</span></div>
-                  </div>
-                );
-              })}
+                  );
+                });
+              })()}
             </div>
             {emptyAgencies.length ? <div className="min-w-0 text-sm text-muted-foreground" title="원장에 사업이 없는 기관">사업 없음: {emptyAgencies.map((a) => a.name).join(' · ')}</div> : null}
           </Card>

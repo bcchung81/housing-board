@@ -32,7 +32,7 @@ type CandJudged = { ok: Judged; caution: Judged; delay: Judged };
 /* HOME 규칙 집계(data/board/home-board.json, tools/ledger/home-board.js — 2026-10-21 결정: 종합상황판은 HOME 정책 추진현황과 같은 조건·같은 표기)의 추가 값 */
 export type HomeExtra = {
   policyId: string; targetUnits: number | null;   // 시도 묶음 = HOME 지역 배분 목표(plan.region_allocations, 없으면 null)
-  cards: Record<string, { target?: number; current?: number | null; measured_on?: string | null; year_end_expected?: number | null; plan_date?: string | null; remainder?: number | null }>;
+  cards: Record<string, { target?: number | null; from?: 'poc'; current?: number | null; measured_on?: string | null; year_end_expected?: number | null; plan_date?: string | null; remainder?: number | null }>;   // POLICY.from 'poc' = 덤프에 없어 PoC 스냅샷으로 채운 지역 배분 목표(home-board.js withPlan)
   delayMax: number; warningMax: number; axisMax: number;
   stageGaps: { stage: string; label: string; status: string; gap: number; rate: string }[];
   bottleneck: { stage: string; label: string; status: string; gap: number; rate: string } | null;

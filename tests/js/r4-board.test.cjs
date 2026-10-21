@@ -94,9 +94,9 @@ test("5 기관별 진행 % = 옛 갈래 '수도권 지연 중 몫'(whole = 범�
   assert.match(ag, /data-slot="agency-head"[^\n]*>지연 · \{whole\} 지연 중 몫</, '열 머리');
   // 2026-10-19 수도권 한정: whole 은 '전국'만 따로 두지 않고 nation(수도권) 그대로, '전국 아님'만 '원장 전체'
   assert.match(board, /whole = nation === '전국 아님' \? '원장 전체' : nation/);
-  assert.match(ag, /\{H \? `비중 \$\{\(a\.delayedSharePct \?\? 0\)\.toFixed\(1\)\}%` : `몫 \$\{\(J\.delay\.units \? a\.delayUnits \/ J\.delay\.units \* 100 : 0\)\.toFixed\(1\)\}%`\}/, "값 '몫 100.0%'(옛) · '비중 N%'(HOME)");
+  assert.match(ag, /pct: H \? `비중 \$\{\(a\.delayedSharePct \?\? 0\)\.toFixed\(1\)\}%` : `몫 \$\{\(J\.delay\.units \? a\.delayUnits \/ J\.delay\.units \* 100 : 0\)\.toFixed\(1\)\}%`/, "값 '몫 100.0%'(옛) · '비중 N%'(HOME)");
   assert.match(ag, /\{H \? '지연 · 지연 사업 물량 비중' :/, 'HOME 열 머리');
-  assert.match(ag, /title=\{`[^`]*\$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호 중 \$\{a\.name\} 몫/, 'title');
+  assert.match(ag, /delayTitle: `지연 \$\{f\(a\.delayUnits\)\}호 — \$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호 중 \$\{a\.name\} 몫/, 'title');
   assert.doesNotMatch(code(board), /지연 중 비중/);
   const lh = BOARD.agencies.find((a) => a.id === 'lh');
   assert.equal((lh.delayUnits / BOARD.judgment.delay.units * 100).toFixed(1), '100.0');

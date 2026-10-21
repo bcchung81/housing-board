@@ -130,9 +130,9 @@ test('3 지시 카드 자동 넘김 없음(2026-10-17 사용자 지시): 단추�
   assert.doesNotMatch(board, /dir-pause|setTour|\btour\b|setHold|\bhold\b|setTick|\btick\b|setInterval|자동 넘김|7초|Pause|Play\b/);
   assert.doesNotMatch(board, /h-\[3px\] w-0 bg-primary/, '진행 띠 없음');
   assert.match(board, /const \[focus, setFocus\] = useState\(1\);/);
-  assert.match(board, /onClick=\{\(\) => pick\(i\)\}/);
+  assert.match(board, /onClick=\{\(\) => \(H \? pickStage\(i\) : pick\(i\)\)\}/);
   assert.match(board, /const pick = \(i: number\) => \{\n    setFocus\(i \+ 1\);/);
-  assert.match(board, /<section id="board-dirs" aria-label="총리 지시 6건">/);
+  assert.match(board, /<section id="board-dirs" aria-label=\{H \? '정책 진행현황 6단계' : '총리 지시 6건'\}>/);
 });
 
 test('3b 종합상황판 맨 위 줄 없음: h1 은 sr-only, 원장·실적 날짜는 지시 카드 묶음 바로 아래 오른쪽 끝 14px 한 줄', () => {

@@ -59,7 +59,7 @@ test("2 '경과 0개월'은 쓰지 않는다 · 월 상세 판정 칸 = HOME 사
 test('3 기관별 진행의 % = 범위(whole) 지연 중 몫(열 머리·title — 2026-10-16 4차 r4-board 5 에서 \'지연 중 비중\'을 바꿈)', () => {
   const ag = panel('p-agency');
   assert.match(ag, /data-slot="agency-head"[\s\S]*?\{whole\} 지연 중 몫/, '열 머리');
-  assert.match(ag, /title=\{`[^`]*\$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호 중 \$\{a\.name\} 몫`\}/, '값 title');
+  assert.match(ag, /delayTitle: `지연 \$\{f\(a\.delayUnits\)\}호 — \$\{whole\} 지연 \$\{f\(J\.delay\.units\)\}호 중 \$\{a\.name\} 몫`/, '값 title');
 });
 
 test("4 용어: '판정 밖' → '일정 정보 없음'(종합상황판·기관 화면·지시 카드 설명), 후보는 '확인 필요(후보)' 조각으로 따로", () => {
@@ -69,9 +69,9 @@ test("4 용어: '판정 밖' → '일정 정보 없음'(종합상황판·기관 
   assert.match(code(board), /일정 정보 없음/);
   assert.match(agency, /status: JUDGE_NAME\[r\.judge\?\.status \?\? 'UNKNOWN'\]/, '2026-10-21: 기관 화면 상태 = HOME 사업 판정(판정 미확보 포함)');
   const ag = panel('p-agency');
-  assert.match(ag, /width: pw\(cand\)/, '확인 필요(후보) 조각');
+  assert.match(ag, /width: pw\(a\.cand\)/, '확인 필요(후보) 조각');
   assert.match(ag, /width: pw\(none\)/, '일정 정보 없음 조각');
-  assert.match(board, /cand = a\.candidateUnits \?\? 0, none = out - cand/);
+  assert.match(board, /none = out - a\.cand/);
 });
 
 test('5 시도 타일: 시도는 서울·인천·경기 3곳뿐이고 모두 판정 대상이 있다 — 묶음 없이 모두 타일(r4-board 1)', () => {

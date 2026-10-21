@@ -182,6 +182,7 @@ function homeBoards(view) {
   const all = homeBoard(view);
   const byRegion = Object.fromEntries(SIDO.map(([code, name]) => {
     const { regions, source, ...b } = homeBoard(regionView(view, name));
+    if (view.plan?.allocationFrom?.[name]) b.home.cards.POLICY.from = view.plan.allocationFrom[name];   // 덤프에 없어 PoC 스냅샷으로 채운 지역 목표(dumpView) — 화면 (i) 출처
     return [code, { ...b, scope: { ...b.scope, areaName: AREA_NAME[code] } }];
   }));
   return { ...all, byRegion };
@@ -193,13 +194,18 @@ function withLate(view, late) {
   const portfolio = [...view.portfolio_cohorts, ...late.filter((c) => !have.has(c.id))];
   return { ...view, portfolio_cohorts: portfolio, portfolio_comparisons: PP.portfolioComparisons(portfolio, view.as_of_date) };
 }
+/* 덤프 지역 배분 목표가 null 인 시도만 PoC 스냅샷(policy-plan-97 — 담당자 입력, 2026-10-14 경기·인천)으로 채우고 allocationFrom 에 'poc' 를 남긴다(덤프 우선 + 빈 것만 스냅샷) */
+function withPlan(view, snap) {
+  const own = view.plan?.region_allocations ?? {}, add = Object.entries(snap?.region_allocations ?? {}).filter(([k, v]) => own[k] == null && Number.isInteger(v));
+  return add.length ? { ...view, plan: { ...view.plan, region_allocations: { ...own, ...Object.fromEntries(add) }, allocationFrom: Object.fromEntries(add.map(([k]) => [k, 'poc'])) } } : view;
+}
 /* HOME 덤프(최신 달 폴더의 최신 판) + 같은 기준일 PoC 스냅샷 → view */
 function dumpView() {
   const HOME = require('./home-source'), HP = require('./home-projects'), P = require('./paths');
   const monthDir = P.ledgerDir(P.latestMonth()), dir = HOME.latestHomeDir(monthDir);
   if (!dir || !HOME.homeAvailable(dir)) throw new Error('HOME 판(raw/home/<덤프시각>)의 원본(jsonl.gz)이 없다');
-  const home = HOME.readHome(dir), asOf = PP.asOfOf(home.snapshotAt);
-  return withLate(PP.homeView(home), HP.lateCohorts(home, HP.readPoc(path.join(monthDir, 'raw', 'home-api', asOf))));
+  const home = HOME.readHome(dir), asOf = PP.asOfOf(home.snapshotAt), pocDir = path.join(monthDir, 'raw', 'home-api', asOf);
+  return withPlan(withLate(PP.homeView(home), HP.lateCohorts(home, HP.readPoc(pocDir))), HP.readPoc(pocDir, [HP.POC_PLAN])[HP.POC_PLAN]);
 }
 
 const render = (v) => JSON.stringify(v, null, 1) + '\n';
