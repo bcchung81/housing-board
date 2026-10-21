@@ -28,6 +28,7 @@ const MA = require('../../lib/board/month-ahead.ts');
 const HA = require('../../lib/board/home-agency.ts');
 
 const AFTER_DUMP = /^덤프 뒤 HOME/;   // home-projects.js REASON — 덤프 뒤 담당자 입력·근거 변경(다음 덤프 재이관에서 같아진다)
+const SIBLING = require('../../tools/ledger/home-projects').REASON.sibling;   // 같은 블록 계약 행 담당자 측정값(2026-10-21 새 덤프 — 부천대장 A5·A6)
 const res = (field) => HP.residuals.filter((r) => r.field === field);
 
 test('12개월: 지역 공급 9·7 = PoC 향후 12개월 공급 예정 — 월별·합·사업 수, 남는 차이는 덤프 뒤 변경 사업(PRO_ id)뿐', { skip }, () => {
@@ -37,8 +38,10 @@ test('12개월: 지역 공급 9·7 = PoC 향후 12개월 공급 예정 — 월�
   assert.deepEqual(h.months.map((m) => m.ym), g.months.map((m) => m.month), '같은 12개월(기준 달 2026-10 ~ 2027-09)');
   /* 잔차: 덤프 값을 PoC 값으로 바꾸면 정답과 바이트까지 같아야 한다 */
   const rs = res('upcoming');
-  assert.ok(rs.length && rs.every((r) => /^PRO_[0-9a-f]{24}$/.test(r.id) && AFTER_DUMP.test(r.why) && r.use === 'dump'), '잔차는 PRO_ id · 덤프 뒤 변경 · 값은 덤프');
-  assert.deepEqual(rs.map((r) => r.id), ['PRO_9a256c5d211050be9f0814ff'], '2026-10-20 판 잔차 1사업(인천부평 도시재생뉴딜 A — 덤프 350호, PoC 0)');
+  assert.ok(rs.every((r) => /^PRO_[0-9a-f]{24}$/.test(r.id) && AFTER_DUMP.test(r.why) && r.use === 'dump'), '잔차는 PRO_ id · 덤프 뒤 변경 · 값은 덤프');
+  /* 2026-10-21 새 덤프(20261020T142230Z): 10-20 판 잔차 1사업(인천부평 도시재생뉴딜 A PRO_9a256c5d211050be9f0814ff — 덤프 350호, PoC 0)이 새 판에서 같아져 잔차 없음 */
+  assert.deepEqual(rs.map((r) => r.id), [], '2026-10-21 새 덤프: 12개월 공급 잔차 0');
+  assert.deepEqual([h.total, h.projects], [17488, 30], '덤프 값 = 정답');
   const adj = Object.fromEntries(h.months.map((m) => [m.ym, m.units]));
   for (const r of rs) { for (const [ym, u] of r.dump) adj[ym] -= u; for (const [ym, u] of r.poc) adj[ym] += u; }
   assert.deepEqual(g.months.map((m) => [m.month, adj[m.month]]), g.months.map((m) => [m.month, m.units]), '월별(잔차 바꾼 뒤)');
@@ -78,7 +81,8 @@ test('기관 줄: 기관 화면 = PoC 기관별 진행현황 7줄 — 호수·�
   assert.deepEqual(g.map((a) => a.name), ['LH', '기관 미상', '인천도시공사', 'SH', '4)공공(LH,SH,GH)', '1)조합', 'GH']);
   const status = new Map(HP.rows.map((r) => [r.id, r.judge?.status ?? 'UNKNOWN']));
   const rs = res('judge');
-  assert.ok(rs.every((r) => /^PRO_/.test(r.id) && AFTER_DUMP.test(r.why) && r.use === 'dump' && r.dump.status === status.get(r.id)));
+  assert.ok(rs.every((r) => /^PRO_/.test(r.id) && (AFTER_DUMP.test(r.why) || r.why === SIBLING) && r.use === 'dump' && r.dump.status === status.get(r.id)));
+  assert.deepEqual(rs.map((r) => r.id).sort(), ['PRO_60b4a8833ed549023a6ef1a5', 'PRO_d86ce8966f5ed10d5ef2d175'], '2026-10-21 새 덤프: 판정 잔차는 부천대장 A5·A6(같은 블록 계약 행 측정값)뿐');
   const fix = new Map(rs.map((r) => [r.id, r.poc.status]));
   for (const a of g) {
     const l = HA.agencyLine(HP.rows, a.name);

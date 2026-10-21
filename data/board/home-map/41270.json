@@ -4,11 +4,11 @@
   "name": "경기도 안산시",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
-  "edition": "20261019T212247Z",
-  "poc": {"p97":{"n":2,"c":2,"x":0,"q":0,"u":677,"d":0,"w":0,"a":357,"an":1,"st":[357,320,0,0,0,0,0]},"all":{"n":2,"c":2,"x":0,"q":0,"u":677,"d":0,"w":0,"a":357,"an":1,"st":[357,320,0,0,0,0,0]}},
+  "edition": "20261020T142230Z",
+  "poc": {"p97":{"n":2,"c":2,"x":0,"q":0,"u":677,"d":0,"w":0,"a":357,"an":1,"st":[0,320,0,0,0,0,357],"k":[0,1,0,0,0,0,1],"ku":[0,320,0,0,0,0,357]},"all":{"n":2,"c":2,"x":0,"q":0,"u":677,"d":0,"w":0,"a":357,"an":1,"st":[0,320,0,0,0,0,357],"k":[0,1,0,0,0,0,1],"ku":[0,320,0,0,0,0,357]}},
   "noPrj": [],
   "projects": [
-    {"id":"PRJ-41270-0001","name":"안산신길2 A1,A3","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":357,"pks":[],"pnus":[],"bundles":[],"label":"안산신길2 A1,A3","agency":"lh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":1,"n97":1,"u":357,"u97":357,"j":"NORMAL"}},
-    {"id":"PRJ-41270-0002","name":"안산장상 A10","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":320,"pks":[],"pnus":[],"bundles":[],"label":"안산장상 A10","agency":"lh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":1,"n97":1,"u":320,"u97":320,"j":"UNKNOWN"}}
+    {"id":"PRJ-41270-0001","name":"안산신길2 A1,A3","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"units":357,"pks":[],"pnus":[],"bundles":[],"label":"안산신길2 A1,A3","agency":"lh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":1,"n97":1,"u":357,"u97":357,"j":"NORMAL","s":6,"s97":6,"rs":[[6,6,357,357,"NORMAL"]]}},
+    {"id":"PRJ-41270-0002","name":"안산장상 A10","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":320,"pks":[],"pnus":[],"bundles":[],"label":"안산장상 A10","agency":"lh","moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[126.80287,37.322843],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":1,"n97":1,"u":320,"u97":320,"j":"NORMAL","s":1,"s97":1,"rs":[[1,1,320,320,"NORMAL"]]}}
   ]
 }

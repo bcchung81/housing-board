@@ -24,24 +24,24 @@ const ctx = { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, 
 test('1 목표 대비는 달성률 하나: ① 달성 24.2%(3,560/14,694) · ② 달성 230.7%(3,560/1,543) · ④ 달성 58.8% · ⑤ 달성 100.0%', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
   const pair = cells.filter((c) => c.target != null && c.actual != null);
-  assert.deepEqual(pair.map((c) => `${c.actual}/${c.target} ${V.rateOf(c).word}`), ['7808/14694 달성 53.1%', '6249/3658 달성 170.8%', '4732/8049 달성 58.8%', '381/381 달성 100.0%']);   // 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
+  assert.deepEqual(pair.map((c) => `${c.actual}/${c.target} ${V.rateOf(c).word}`), ['18854/14694 달성 128.3%', '10403/8386 달성 124.1%', '4732/8049 달성 58.8%', '381/381 달성 100.0%']);   // 2026-10-21 새 덤프(20261020T142230Z, PoC 운영 값과 같음): 9·7 ①사업화 확인 7,808→18,854(목표 14,694 넘음) · ②인허가 목표 3,658→8,386·확인 6,249→10,403 — 덤프 뒤였던 담당자 단계 측정값·승인 일정이 새 판에 들어옴 · 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
   for (const c of pair) assert.equal(V.rateOf(c).unit, '% 달성', c.key);
   /* 핵심 질문 첫 칸(9·7) 값도 달성률 */
   const q0 = V.questionsOf(rows, {}, ctx)[0];
-  assert.deepEqual([q0.value, q0.unit], ['53.1', '% 달성']);   // 2026-10-20 HOME 판
+  assert.deepEqual([q0.value, q0.unit], ['128.3', '% 달성']);   // 2026-10-21 새 덤프 · 2026-10-20 HOME 판
   /* '부족'은 보이는 글·title·ⓘ 어디에도 쓰지 않는다(요약·인쇄 보기 모두 Summary.tsx·page.tsx 가 그린다) */
   /* 2026-10-21: 사업 화면 목록·창은 PoC 사업 판정이라 '부족 호수' 열이 생겼다(page.tsx·projects-list.ts) — 목표 대비 요약(Summary.tsx)은 달성률만 */
   assert.doesNotMatch(code(read('components/projects/Summary.tsx')), /부족/, 'Summary.tsx');
   for (const c of cells) assert.doesNotMatch(V.stageCellTip(c, '9·7', cells), /부족/, c.key);
   for (const t of [q0.help, q0.tip, q0.note ?? '', q0.sub]) assert.doesNotMatch(t, /부족/);
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
-  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 2단계 미달(사업화·공급)');
+  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 1단계 미달(공급)');   // 2026-10-21 새 덤프: 사업화 달성
 });
 
 test('1b 막대는 100% 기준선(목표)을 보인다: 미달은 오른쪽 끝, 초과는 목표 자리(② 1,543/3,560 = 43.3%)', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
-  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? Math.round(c.mark * 10) / 10 : null)), [100, 58.5, null, 100, 100, null]);   // 2026-10-20 HOME 판: ② 3,658/6,249 = 58.5%(10-19 판 1,543/3,560 = 43.3%)
-  assert.deepEqual(cells.map((c) => Math.round(c.fill * 10) / 10), [53.1, 100, 0, 58.8, 100, 0], '확인 막대(초과는 끝까지)');
+  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? Math.round(c.mark * 10) / 10 : null)), [77.9, 80.6, null, 100, 100, null]);   // 2026-10-21 새 덤프: ① 14,694/18,854 = 77.9% · ② 8,386/10,403 = 80.6% · 2026-10-20 HOME 판: ② 3,658/6,249 = 58.5%(10-19 판 1,543/3,560 = 43.3%)
+  assert.deepEqual(cells.map((c) => Math.round(c.fill * 10) / 10), [100, 100, 0, 58.8, 100, 0], '확인 막대(초과는 끝까지)');   // 2026-10-21 새 덤프: ①사업화 확인이 목표를 넘어 끝까지
   const sum = read('components/projects/Summary.tsx');
   const mini = sum.slice(sum.indexOf('function MiniBar'), sum.indexOf('function StageRates'));
   const cell = sum.slice(sum.indexOf('function TargetCell'), sum.indexOf('export function PolicyCompare'));

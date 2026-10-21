@@ -14,6 +14,7 @@ const GOLD = path.join(ROOT, '.cache/home-parity/golden');
 const V = require('../../lib/board/projects-view.ts');
 const BL = require('../../lib/board/board-lists.ts');
 const HP = require('../../data/board/home-projects.json');
+const HP_REASON = require('../../tools/ledger/home-projects').REASON;
 const HB = require('../../data/board/home-board.json');
 const IDX = require('../../data/board/projects-index.json');
 const gold = (f) => JSON.parse(fs.readFileSync(path.join(GOLD, f), 'utf8'));
@@ -38,8 +39,8 @@ test('기본 = 9·7 포트폴리오: 원천 행 230 · 집계 175 · 중복/모�
   assert.equal(P97.s.excluded, g['summary.target_excluded_projects']);
   assert.equal(P97.s.missing, g['summary.target_missing_projects']);
   assert.equal(P97.s.units, g['summary.target_units']);
-  /* 같은 현장 병합 사업 수(보조 표기): 원장 사업 170곳 · 원장에 없는 원천 행 9(덤프 뒤 신규 3 · SOURCE_ANCHOR 없음 4 · 시군구 미정 2 — S2 2절) */
-  assert.deepEqual([P97.s.sites, P97.s.unlinked], [170, 9]);
+  /* 같은 현장 병합 사업 수(보조 표기): 원장 사업 173곳 · 원장에 없는 원천 행 4(SOURCE_ANCHOR 없음 4) — 2026-10-21 새 덤프(20261020T142230Z): 덤프 뒤 신규 3이 새 사업(+3), 인천서구 시군구 미정 2행이 서해구 기존 사업(0037·0034)에 편입(10-20 판: 170 · 9) */
+  assert.deepEqual([P97.s.sites, P97.s.unlinked], [173, 4]);
 });
 
 test('기본 시도별: 원천 행 수 · 집계 호수가 PoC groups.region(9·7)과 같다', opt, () => {
@@ -58,7 +59,7 @@ test('기본 기관별: PoC 기관 이름 7줄의 집계 행 수 · 집계 호�
   assert.equal(pocOf('agency').size, 0, '기관 잔차 없음');
 });
 
-test('기본 상태별: PoC 사업 판정과 다른 37행은 모두 덤프 뒤 HOME 담당자 입력 변경(PRO_ id·이유) — 잔차를 적용하면 PoC project_status 와 같다', opt, () => {
+test('기본 상태별: PoC 사업 판정과 다른 2행(부천대장 A5·A6 — 같은 블록 계약 행 담당자 측정값, 2026-10-21 새 덤프로 덤프 뒤 입력 37행 해소) — 잔차를 적용하면 PoC project_status 와 같다', opt, () => {
   const g = gold('golden-policy.json'), res = pocOf('judge');
   const ours = {}, poc = {};
   for (const r of P97.chart) {
@@ -66,15 +67,15 @@ test('기본 상태별: PoC 사업 판정과 다른 37행은 모두 덤프 뒤 H
     const s = res.get(r.id)?.poc.status ?? r.home.judge;
     poc[s] = (poc[s] ?? 0) + 1;
   }
-  assert.deepEqual(ours, { NORMAL: 136, UNKNOWN: 35, DELAYED: 4 }, '화면(덤프 값)');
+  assert.deepEqual(ours, { NORMAL: 171, DELAYED: 4 }, '화면(덤프 값) — 2026-10-21 새 덤프(20261020T142230Z): 판정 미확보 35 → 0');
   assert.deepEqual(poc, Object.fromEntries(['NORMAL', 'DELAYED', 'WARNING'].map((k) => [k, g[`policy.project_status.${k}.projects`]])), '잔차 적용 = PoC');
-  assert.equal(res.size, 37);
-  assert.ok(explained([...res.values()]) && [...res.values()].every((r) => r.why.startsWith('덤프 뒤 HOME 담당자 입력')));
+  assert.deepEqual([...res.keys()].sort(), ['PRO_60b4a8833ed549023a6ef1a5', 'PRO_d86ce8966f5ed10d5ef2d175']);
+  assert.ok(explained([...res.values()]) && [...res.values()].every((r) => r.why === HP_REASON.sibling));
   /* 화면 상태 칩: 지연 4 · 주의 0 = 종합상황판 사업 판정 */
   assert.deepEqual([P97.s.delay, P97.s.caution], [HB.judgment.delay.projects, HB.judgment.caution.projects]);
 });
 
-test('기본 단계별: 단계별 진행 ②사업화~⑤공급 누적 도달 호수 = PoC 정책 화면 지도 값(시도별 business·approval·construction·supply_reached) — 남는 차는 덤프 뒤 입력 40행', opt, () => {
+test('기본 단계별: 단계별 진행 ②사업화~⑤공급 누적 도달 호수 = PoC 정책 화면 지도 값(시도별 business·approval·construction·supply_reached) — 남는 차는 부천대장 A5·A6 공급 2호씩(2026-10-21 새 덤프, 10-20 판 덤프 뒤 입력 40행)', opt, () => {
   const g = gold('golden-policy.json'), res = pocOf('reached');
   const KEYS = [[1, 'BUSINESS', 'business_reached'], [2, 'APPROVAL', 'approval_reached'], [3, 'CONSTRUCTION', 'construction_reached'], [4, 'SUPPLY', 'supply_reached']];
   for (const [i, key, gk] of KEYS) {
@@ -85,16 +86,16 @@ test('기본 단계별: 단계별 진행 ②사업화~⑤공급 누적 도달 �
     assert.equal(cell.units, P97.chart.reduce((s, r) => s + V.slotUnits(r.home.reached, i), 0), `${V.HOME_NAMES[i]}: 화면 칸 = 덤프 값`);
   }
   assert.equal(P97.pipe.open[0].units, 151271, '①정책 = 집계 호수');
-  assert.equal(res.size, 40);
-  assert.ok(explained([...res.values()]));
+  assert.deepEqual([...res.keys()].sort(), ['PRO_60b4a8833ed549023a6ef1a5', 'PRO_d86ce8966f5ed10d5ef2d175']);
+  assert.ok(explained([...res.values()]) && [...res.values()].every((r) => r.why === HP_REASON.sibling));
 });
 
-test('기본 향후 12개월 공급 예정: 덤프 17,838호 · 31건 — PoC 17,488 · 30 과의 차 350호 1건은 덤프 뒤 입력(PRO_9a256c5d211050be9f0814ff)', opt, () => {
+test('기본 향후 12개월 공급 예정: 덤프 17,488호 · 30건 = PoC(2026-10-21 새 덤프 — 10-20 판 17,838 · 31 의 차 350호 1건 덤프 뒤 입력 PRO_9a256c5d211050be9f0814ff 해소)', opt, () => {
   const g = gold('golden-policy.json'), res = pocOf('upcoming');
   const sumOf = (r) => (res.has(r.id) ? res.get(r.id).poc.reduce((s, x) => s + x[1], 0) : r.home.upcoming);
-  assert.deepEqual([P97.chart.reduce((s, r) => s + r.home.upcoming, 0), P97.chart.filter((r) => r.home.upcoming > 0).length], [17838, 31]);
+  assert.deepEqual([P97.chart.reduce((s, r) => s + r.home.upcoming, 0), P97.chart.filter((r) => r.home.upcoming > 0).length], [17488, 30]);
   assert.deepEqual([P97.chart.reduce((s, r) => s + sumOf(r), 0), P97.chart.filter((r) => sumOf(r) > 0).length], [g['policy.statistics.upcoming_12m.total'], g['policy.statistics.upcoming_12m.projects']]);
-  assert.deepEqual([...res.keys()], ['PRO_9a256c5d211050be9f0814ff']);
+  assert.deepEqual([...res.keys()], []);
 });
 
 test('전 정책(?policy=all): 원천 행 443 · 집계 346 · 제외 56 · 물량 없음 41 · 289,336호 · 시도별(PoC /map/dashboard 정책 전체)', opt, () => {
@@ -108,8 +109,8 @@ test('전 정책(?policy=all): 원천 행 443 · 집계 346 · 제외 56 · 물�
   }
   /* 정책별 원천 행 = PoC groups.policy(9·7 230 · 1·29 47 · 8·13 67) */
   for (const p of g['groups.policy'].filter((x) => /^POL_/.test(x.id))) assert.equal(view({ policy: IDX.policies.find((y) => y.id === p.id).key }).s.n, p.project_count, p.name);
-  /* 같은 현장 병합 원장 사업 377곳(원장 살아 있는 사업 전부 — S2 2절) */
-  assert.equal(ALL.s.sites, 377);
+  /* 같은 현장 병합 원장 사업 380곳(원장 살아 있는 사업 전부 — S2 2절, 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3) */
+  assert.equal(ALL.s.sites, 380);
 });
 
 test('전 정책의 판정·도달·기관은 home-projects.json views.all(덤프 값)과 같다 — PoC 정답은 9·7 포트폴리오만 공개(정책 전체 판정·기관 화면 없음)', () => {
@@ -138,7 +139,7 @@ test("'/' 카드 175개 = /projects 기본 집계 175행: 같은 원천 행 집�
   assert.equal(rows.filter((r) => r.home.board && !P97.chartOf(r)).length, 0, '카드 모집단은 모두 /projects 기본 집계 행');
   assert.equal(rows.filter((r) => r.home.board).length, HB.scope.projects);
   const late = rows.filter((r) => r.home.board && r.home.snapshot).map((r) => r.id).sort();
-  assert.deepEqual(late, ['PRO_18141914462204e2be0e5796', 'PRO_b8e9b07eb43ee60a807ec231', 'PRO_e925e787e29c13e42deafcda']);
+  assert.deepEqual(late, [], '2026-10-21 새 덤프(20261020T142230Z): 덤프 뒤 신규 3행(독산동·연남동·방화차고지)이 판에 들어와 스냅샷 행 없음');
   for (const id of late) { const why = HP.residuals.filter((x) => x.id === id && x.field === 'row'); assert.ok(why.length && explained(why), id); }
 });
 

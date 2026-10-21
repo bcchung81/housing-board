@@ -3,7 +3,7 @@
 // (a) 계산 층: PoC 응답(as_of 2026-10-20)의 portfolio_cohorts 를 넣으면 PoC 의 tracking 점과 완전히 같다(정책 전체·시도 3·시군구 42·프로그램 31 + 프로그램×시도 29·×시군구 96, 지표 6).
 //     고정값 tests/fixtures/home-1020/portfolio-view.json = PoC GET /policy-delivery/view?as_of_date=2026-10-20&group=policy&scope=policy(+ 프로그램 화면 30개)에서
 //     tracking·대조에 쓰는 칸만 잘라 넣은 것(담당자 이름·사유·배치 id·근거 글 칸은 뺐다). 점 목록은 {cols, rows}, evidence_urls 는 urls 번호로 접었다 — 여기서 다시 편다.
-// (b) 덤프로 만든 포트폴리오(HOME 덤프 20261019T212247Z 가 있을 때만): PoC 와 같은 사업·같은 칸. 남는 차이는 아래 허용 목록(사업 id·까닭)뿐이어야 한다.
+// (b) 덤프로 만든 포트폴리오(HOME 덤프가 있을 때만 — 2026-10-21 부터 20261020T142230Z): PoC 와 같은 사업·같은 칸. 남는 차이는 아래 허용 목록(사업 id·까닭)뿐이어야 한다.
 //     덤프 뒤 변경 판정: PoC 사건에 changed_at > 덤프 시각(2026-10-19T21:22:47Z)이 있는 사업은 사건·일정 대조에서 뺀다(담당자 입력 74건 등). 일정에는 changed_at 이 없어 일정 차이는 근거를 보고 허용 목록에 적었다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -52,41 +52,33 @@ test('(a) tracking 규칙: 후속 단계 사건도 그 단계 도달 · 목표�
 /* ---------- (b) 덤프로 만든 포트폴리오 ---------- */
 const HOME_DIR = H.latestHomeDir(P.ledgerDir('2026-10')), HAVE = !!HOME_DIR && H.homeAvailable(HOME_DIR);
 const SKIP = !HAVE && 'HOME 원본(jsonl.gz) 없음 — Storage 에서 받거나 tools/ledger/home-dump.py';
-/* PoC 에만 있는 사업 */
-const ONLY_POC = {
-  PRO_18141914462204e2be0e5796: '독산동 산업문화어울림센터 — 덤프 뒤 9·7 매핑',
-  PRO_e925e787e29c13e42deafcda: '방화차고지 공공주택 건설사업 — 덤프 뒤 9·7 매핑',
-  PRO_b8e9b07eb43ee60a807ec231: '연남동 공공임대주택(8호, 코호트) — 덤프 뒤 9·7 매핑',
-};
-/* 덤프 뒤 변경이 없는(PoC 사건 changed_at ≤ 덤프 시각) 공통 사업 중 사건이 다른 곳 */
+/* PoC 에만 있는 사업 — 2026-10-21 새 덤프(20261020T142230Z, 2026-10-20 23:22 KST)에 덤프 뒤 9·7 매핑 3곳(독산동·방화차고지·연남동)이 들어와 없다 */
+const ONLY_POC = {};
+/* 2026-10-21 새 덤프: PoC 사건 changed_at 이 덤프 시각 뒤인 사업이 없어 175곳 모두 견준다. 남는 차이(사업 id·까닭) */
+const SIBLING = '같은 블록 계약 행(부천대장 A-5BL 및 A-6BL 묶음 계약 PRO_4ce4…·PRO_b880…)의 담당자 공급 추정(2025-09-20 952·688호, 10-14 입력)이 덤프 묶음에는 있고 PoC 묶음에는 없다 — HOME 2038810 공개 코드(build_delivery overrides)는 묶음 행 전체의 측정값을 쓴다: 덤프 뒤 변경 또는 미커밋 서버 규칙(덤프 HOME source_worktree_dirty)';
+const BUPYEONG = "인천부평(도시재생뉴딜) A — PoC 는 계약 행 PRO_0e5b…(지구 '인천부평(도시재생뉴딜)'·블록 'A')를 같은 묶음 원천으로 넣고 그 승인 일정·공고문 입주 일정을 쓴다. 블록 칸 'A'(숫자 없음)는 2038810 block_key 로 키가 없어 덤프 계산은 따로 둔다 — 미공개 서버 규칙(인천부평 A PRO_4b85… 집계 제외와 같은 원인, home-projects.json residuals)";
 const EVENT_DIFF = {
-  PRO_afa121ebed699e8aab86cd60: '이천장호원 B2BL — 예비입주자 공고 300호 연결(2026-08-13)이 PoC 에 없다: 덤프 뒤 교차 원천 연결 갱신(PoC 일정 근거 DOC_fcaaadc… 가 덤프에 없다)',
-  PRO_8afa3f6b5386e8b6e5f1eda2: '신림2재정비촉진 — PoC 착공 연결 2026-05-06(관악구·external_officer)이 덤프에 없다(덤프 뒤 연결 추가)',
-  PRO_af0e615a920526eee9302fe0: '흑석11재정비촉진 — PoC 착공 연결 2026-02-06·2026-09-07 이 덤프에 없다(덤프 뒤 연결 추가, 관측일 2026-10-20)',
+  PRO_60b4a8833ed549023a6ef1a5: `부천대장 A5 — ${SIBLING}`,
+  PRO_d86ce8966f5ed10d5ef2d175: `부천대장 A6 — ${SIBLING}`,
+  PRO_9a256c5d211050be9f0814ff: BUPYEONG,
 };
-/* 같은 조건에서 일정이 다른 곳 — PoC 일정 근거(DOC_…)가 덤프에 없거나 담당자 일정이 덤프 뒤 바뀌었다(의왕초평 A4 는 2038810 block_key 이식으로 같아졌다, 2026-10-21) */
+/* 2026-10-21 W5 'HOME 기준': reference_only PLAN 사실을 일정에서 빼(policy-progress.js) 고양창릉 S-6BL 3공구(DOC_be739…)·연남동(DOC_2587…) 일정 차이가 없어졌다 */
 const SCHEDULE_DIFF = {
-  PRO_4d29636ffa571ff2fdf7c72e: '고양창릉 S-03 — 입주 예정 근거 DOC_476a… 덤프에 없음(덤프 뒤 연결)',
-  PRO_0a79310e612f5bc1215fcad3: '고양창릉 S-04 — DOC_d87e… 덤프에 없음',
-  PRO_cd0ad7de7ca676c6f3981f1f: '고양창릉 S-5BL — DOC_d42c… 덤프에 없음',
-  PRO_3e4fe820f1cb21379bbbe611: '성남신촌 A-1BL — DOC_3838… 덤프에 없음',
-  PRO_9f9031c8f3a9ef0626b95757: '안산신길2 B1 — DOC_3969… 덤프에 없음',
-  PRO_afa121ebed699e8aab86cd60: '이천장호원 B2BL — DOC_be08…·DOC_fcaa… 덤프에 없음',
-  PRO_76abe08cb7c430960fb40f03: '인천검단 AA-21BL — 담당자 입주 일정 2026-10-31 → 2026-10-30(덤프 뒤 변경), 근거 DOC_f0fc…·DOC_f437… 덤프에 없음',
+  PRO_9a256c5d211050be9f0814ff: BUPYEONG,
 };
-/* 시군구: PoC 운영 판은 2038810 원본에 없는 municipality_provenance(인천 행정구역 개편 표시 INCHON_DATED_ADMINISTRATIVE_NAME: 서구 → 서해구 등)를 쓴다 — /projects/<id> 응답에서 확인.
-   2026-10-21 부터 policy-progress.js homeService 가 원장 시군구 규칙(home-source.js sggByPro)으로 대신해 9곳이 같아졌고, 남은 2곳은 원장도 시군구를 못 정한 인천서구 묶음(SGG_UNRESOLVED) */
-const INCHEON_DISPLAY = ['PRO_85998117430f9302232be12d', 'PRO_1c2a1be12daff06cef52f8c6'];
+const REF_ONLY_DOCS = ['DOC_be739d9e407cfc85f2bc7848', 'DOC_2587e87ac1f72a71cd250383'];
+/* 시군구: PoC 운영 판의 인천 행정구역 개편 표시(INCHON_DATED_ADMINISTRATIVE_NAME)를 policy-progress.js homeService 가 원장 시군구 규칙(home-source.js sggByPro)으로 대신한다.
+   2026-10-21 W4: 인천서구 2곳(석남어울림·거북이기지)도 지구 이름 규칙으로 서해구가 되어 칸이 모두 같다 */
 
 test('(b) 덤프 포트폴리오 = PoC 포트폴리오(덤프 뒤 변경·인천서구 시군구 미정만 다르다)', { skip: SKIP }, () => {
   const home = H.readHome(HOME_DIR), dump = home.snapshotAt.slice(0, 19);
   const v = PP.homeView(home);
   assert.equal(v.as_of_date, poc.as_of_date);
   const T = new Map(poc.portfolio_cohorts.map((c) => [c.id, c])), O = new Map(v.portfolio_cohorts.map((c) => [c.id, c]));
-  assert.equal(v.portfolio_cohorts.length, 172, 'PoC 175 − ONLY_POC 3(인천검단 AA19 두 임대 유형은 2038810 inventory 이식으로 같아졌다, 2026-10-21)');
+  assert.equal(v.portfolio_cohorts.length, 175, 'PoC 175 와 같다(2026-10-21 새 덤프 — 10-20 판 172 = 175 − 덤프 뒤 매핑 3)');
   assert.deepEqual([...T.keys()].filter((id) => !O.has(id)).sort(), Object.keys(ONLY_POC).sort());
   assert.deepEqual([...O.keys()].filter((id) => !T.has(id)), [], '우리에만 있는 사업 없음(광교 A17 은 참조 사업 매핑 규칙으로 빠진다)');
-  assert.deepEqual([v.cohorts.length, v.cohorts.reduce((a, c) => a + c.units, 0)], [75, 90852], 'PoC 코호트 76·90,860호 − 연남동 8호');
+  assert.deepEqual([v.cohorts.length, v.cohorts.reduce((a, c) => a + c.units, 0)], [76, 90860], 'PoC 코호트 76·90,860호와 같다(2026-10-21 새 덤프 — 연남동 8호 코호트가 들어옴)');
   const post = (t) => t.events.some((e) => e.changed_at && e.changed_at.slice(0, 19) > dump);
   const ek = (e) => [e.stage, e.event_date, e.units, e.origin, e.status ?? '-', e.review_status ?? '-', e.inferred ?? '-', e.input_rule ?? '-', e.evidence_url ?? '-', e.source_id ?? '-'].join('|');
   const sk = (s) => [s.stage, s.due_date, s.units, s.origin, s.precision, !!s.managed_schedule, s.source_object_id ?? '-', s.source_base_date ?? '-', s.evidence_url ?? '-'].join('|');
@@ -103,11 +95,12 @@ test('(b) 덤프 포트폴리오 = PoC 포트폴리오(덤프 뒤 변경·인천
     if (!same(c.events, t.events, ek)) evDiff.push(c.id);
     if (!same(c.schedules, t.schedules, sk)) scDiff.push(c.id);
   }
-  assert.equal(compared, 125, '공통 172 − 덤프 뒤 변경 47');
+  assert.equal(compared, 175, '공통 175 − 덤프 뒤 변경 0(2026-10-21 새 덤프)');
   assert.deepEqual(evDiff.sort(), Object.keys(EVENT_DIFF).sort());
   assert.deepEqual(scDiff.sort(), Object.keys(SCHEDULE_DIFF).sort());
+  assert.ok(v.portfolio_cohorts.every((c) => c.schedules.every((s) => !REF_ONLY_DOCS.includes(s.source_object_id))), 'reference_only 근거 연결 사실은 일정이 아니다');
   for (const k of Object.keys(fieldDiff)) fieldDiff[k].sort();
-  assert.deepEqual(fieldDiff, { municipality: INCHEON_DISPLAY.slice().sort(), municipality_id: INCHEON_DISPLAY.slice().sort() }, '인천서구 시군구 미정 2곳 밖은 칸이 모두 같다(의왕초평 A4 묶음은 2038810 block_key 이식으로 같아졌다)');
+  assert.deepEqual(fieldDiff, { source_ids: ['PRO_9a256c5d211050be9f0814ff'] }, '인천부평(도시재생뉴딜) A 묶음 원천(BUPYEONG) 밖은 칸이 모두 같다 — 인천서구 시군구도 같아졌다(2026-10-21 W4)');
   /* 담당자 이름은 고정값에 없다 */
   const text = fs.readFileSync(FIX, 'utf8');
   for (const n of H.officerTerms(home.kinds).names) assert.ok(!text.includes(n), '고정값에 담당자 이름');

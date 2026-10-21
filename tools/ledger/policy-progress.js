@@ -417,7 +417,7 @@ function buildCohorts(svc, asOf, policyId) {
             const dateBasis = get(fact, 'date_basis', 'EVENT');
             events.push({ stage, event_date: when, units: fact.units ?? null, status: 'ACTUAL', review_status: bridge.status, origin: 'LINKED_EVIDENCE', source_id: bridge.source_id, evidence_url: bridge.evidence_url ?? null,
               date_basis: dateBasis, source_event_date: dateBasis === 'EVENT' ? when : fact.source_event_date ?? null, observed_on: fact.observed_on ?? null, method: fact.method ?? null });
-          } else if (fact.kind === 'PLAN') {
+          } else if (fact.kind === 'PLAN' && !fact.reference_only) {   /* reference_only(당시 계획 — 최신 목표 아님)는 일정으로 쓰지 않는다(2026-10-21 W5 'HOME 기준': 덤프의 reference_only PLAN 3건이 모두 PoC 묶음에 없고, HOME project_profile.target_default 도 거른다 — 2038810 policy_delivery 에는 없는 처리) */
             const period = schedulePeriod(when);
             if (period) schedules.push({ stage, due_date: period.due_date, precision: period.precision, source_date_label: period.original, date_conversion: period.conversion, units: fact.units || cap, origin: 'SOURCE',
               source_id: bridge.source_id, source_object_id: bridge.source_entity_id, review_status: bridge.status, evidence_url: bridge.evidence_url ?? null });

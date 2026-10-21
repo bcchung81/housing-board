@@ -200,7 +200,7 @@ test('기관 미상 줄: id unknown, 건축HUB(수도권 교체 뒤 0) · 건축
   const c = (f) => noAgency.filter(f).length, bundleN = c((p) => p.source_ref.startsWith('bundle-')), priv = c((p) => p.public_scope === 'PRIVATE_ON_PUBLIC_LAND');
   const parts = [c((p) => p.source_ref === 'hub-hs-basis') ? `건축HUB ${n((p) => p.source_ref === 'hub-hs-basis')}건` : '', c((p) => p.source_ref === BULK) ? `건축HUB 전국 후보 ${n((p) => p.source_ref === BULK)}건` : '', c(isHome) ? `수도권 HOME ${n(isHome)}건` : '', bundleN ? `지역 번들 ${bundleN}건${priv ? `(공공택지 민간 ${priv})` : ''}` : ''].filter(Boolean);
   assert.equal(u.note, `시행 기관 미연결: ${parts.join(' · ')}`);
-  assert.equal(u.note, '시행 기관 미연결: 수도권 HOME 105건');   // 2026-10-20 공공 분류 안2: 기관 미상 중 민간 정비 39·일반 민간 53 빠짐 197 → 105(공공 시행 제도·공공택지·공공부지 — 시행기관 미정) · 2026-10-20 HOME 판: 시행기관을 못 정한 HOME 사업 105→204(새 사업 중 조합·정비사업 등 시행 미상) → iH 추가로 원천 시행 '인천도시공사' 7건이 iH 로 197
+  assert.equal(u.note, '시행 기관 미연결: 수도권 HOME 105건');   // 2026-10-21 W5 'HOME 기준': SH 규칙을 PoC agencyName 처럼 넓혀 연남동 공공임대주택('서울주택도시개발공사(SH)')이 SH 로 — 새 덤프 직후 106 → 105 · 2026-10-20 공공 분류 안2: 기관 미상 중 민간 정비 39·일반 민간 53 빠짐 197 → 105(공공 시행 제도·공공택지·공공부지 — 시행기관 미정) · 2026-10-20 HOME 판: 시행기관을 못 정한 HOME 사업 105→204(새 사업 중 조합·정비사업 등 시행 미상) → iH 추가로 원천 시행 '인천도시공사' 7건이 iH 로 197
   const lhRows = live.filter((p) => p.agency_id === 'lh');
   assert.equal(board.agencies.find((a) => a.id === 'lh').projects, lhRows.length, 'LH 후보 · 번들 LH · 공고로 채운 후보(2026-10 첫 판 273 + 11 + 3)');
   assert.ok(lhRows.filter((p) => p.source_ref === 'datagokr-15141761').length === board.judgment.excluded.projects);

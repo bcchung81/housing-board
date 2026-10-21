@@ -37,8 +37,8 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
   }
   const q0 = V.questionsOf(rows, {}, ctx)[0];
   const words = q0.stages.map((c) => (c.target != null && c.actual != null ? `${c.actual}/${c.target} ${V.rateOf(c).word}` : c.target != null ? '실적 없음' : '목표 없음'));
-  assert.deepEqual(words, ['7808/14694 달성 53.1%', '6249/3658 달성 170.8%', '목표 없음', '4732/8049 달성 58.8%', '381/381 달성 100.0%', '목표 없음']);   // 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
-  assert.match(q0.tip, /담당자 추정 포함\(확인과 따로\): 사업화 10,037호/, '추정 포함은 title 에만');   // 2026-10-20 HOME 판 5,789→10,037
+  assert.deepEqual(words, ['18854/14694 달성 128.3%', '10403/8386 달성 124.1%', '목표 없음', '4732/8049 달성 58.8%', '381/381 달성 100.0%', '목표 없음']);   // 2026-10-21 새 덤프(20261020T142230Z, PoC 운영 값과 같음): 9·7 ①사업화 확인 7,808→18,854(목표 14,694 넘음) · ②인허가 목표 3,658→8,386·확인 6,249→10,403 — 덤프 뒤였던 담당자 단계 측정값·승인 일정이 새 판에 들어옴 · 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
+  assert.match(q0.tip, /담당자 추정 포함\(확인과 따로\): 사업화 21,083호/, '추정 포함은 title 에만');   // 2026-10-20 HOME 판 5,789→10,037
   assert.match(q0.help, /단계마다/); assert.match(q0.help, /'목표 없음'/);
   /* 목표가 없는 렌즈(1·29)는 단계 줄 없이 범위 줄 안 */
   const q129 = V.questionsOf(rows, { policy: IDX.policies.find((p) => p.key === '129') }, ctx)[0];
@@ -63,7 +63,7 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
 test('A 접힌 정책 목표 대비 머리 줄: 이름표 없는 부족률 숫자 없이 단계 이름', () => {
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
   for (const l of lines) assert.doesNotMatch(V.compareHead(l), /\d%/, l.policy.key);
-  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 2단계 미달(사업화·공급)');
+  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 1단계 미달(공급)');   // 2026-10-21 새 덤프: 사업화 달성
 });
 
 test('2 보이는 글의 내부 용어: HOME·번들·확정 전/확정은 title 로, ⓘ 정의는 쉬운 말', () => {

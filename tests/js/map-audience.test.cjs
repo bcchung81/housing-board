@@ -19,10 +19,11 @@ test('지표: 정책담당자는 METRICS 그대로(지연 포함 — 2026-10-21 
   assert.equal(J.metricsFor(false), J.METRICS);
   assert.deepEqual(J.METRICS.map((m) => [m.id, m.name, m.short]), [['u', '계획 호수', '계획 호수'], ['d', '지연 사업', '지연'], ['a', '향후 12개월 공급 예정', '12개월 공급']]);
 });
-test('범위: 정책담당자 기본 9·7, ?policy=all 이면 정책 전체, 일반사용자는 정책 전체 — 개요에서 여는 주소에 policy=all 을 잇는다', () => {
+test('범위: 두 관점 모두 기본 9·7(2026-10-21 W4 결정 ⑤ — 일반사용자도 9·7), ?policy=all 이면 정책 전체 — 개요에서 여는 주소에 policy=all 을 잇는다', () => {
   assert.equal(J.policyOf('', false), 'p97');
   assert.equal(J.policyOf('?sido=11&policy=all', false), 'all');
-  assert.equal(J.policyOf('', true), 'all');
+  assert.equal(J.policyOf('', true), 'p97', '일반사용자 관점 기본 9·7');
+  assert.equal(J.policyOf('?policy=all', true), 'all');
   assert.equal(J.keepPolicy('/map?sgg=11650', '?policy=all'), '/map?sgg=11650&policy=all');
   assert.equal(J.keepPolicy('/map', '?policy=all'), '/map?policy=all');
   assert.equal(J.keepPolicy('/map?sgg=11650', '?sido=11'), '/map?sgg=11650', '기본 9·7 은 붙이지 않는다');
@@ -41,14 +42,16 @@ test('제목·부제', () => {
   assert.equal(J.titleOf('수도권', true), '수도권 공급 예정 호수');
   assert.equal(J.titleOf('경기도', false), '경기도 공급 개요');
   const v = { n: 12, c: 10, x: 2, q: 3, w: 1, an: 4, st: [1, 2] };
-  assert.equal(J.totalSubOf('u', v, true), '사업 12곳');
+  assert.equal(J.totalSubOf('u', v, true), '사업 7곳', '일반사용자 사업 수 = 집계 행 c − q(2026-10-21 W5-MP2 — /citizen 과 같은 셈)');
   assert.equal(J.totalSubOf('u', v, false), '원천 12건 · 7건 집계 · 중복·모호 2건 제외 · 물량 없음 3건');
   assert.equal(J.totalSubOf('d', v, false), '원천 12건 중 · 주의 1건');
   assert.equal(J.totalSubOf('a', v, true), '공급 예정 4건');
 });
 test('정의 문구: 일반사용자는 정책 용어(원천 행·종합상황판) 없음, 정책담당자는 범위 이름과 같은 기준', () => {
   assert.ok(!/사업 화면|호수 미확인|원천|종합상황판/.test(J.defOf('u', {}, true) + J.defOf('a', {}, true)));
-  assert.match(J.defOf('u', {}, false, 'p97'), /^9·7 연결 사업\(원천 행\)의 계획 호수 합입니다\..*종합상황판과 같은 기준입니다\.$/);
+  assert.match(J.defOf('u', {}, false, 'p97'), /^9·7 연결 사업\(원천 행\)의 계획 호수 합입니다\..*종합상황판과 같은 기준입니다\. 막대 띠는 단계별 물량입니다 — 정책 진행 자료의 지도 단계 분포/);
+  assert.match(J.defOf('u', {}, true, 'p97'), /^9·7 주택공급 확대방안에 연결된 수도권 사업의 계획 호수/, '일반사용자도 9·7 범위 설명');
+  assert.match(J.defOf('u', {}, true, 'all'), /^주택 공급 정책에 연결된 수도권 사업/);
   assert.match(J.defOf('u', {}, false, 'all'), /^정책 전체 사업/);
   assert.match(J.defOf('d', {}, false), /2% 이상/);
   assert.equal(J.defOf('d', {}, false), J.defOf('d', {}));
@@ -70,4 +73,13 @@ test('연결: 정적 제목은 CSS 로 관점별, 정책담당자 문구 유지,
   assert.match(nav, /setMapTo\(next === 'public' \? mapHref\(myAreaScope\(area\)\) : '\/map'\)/);
   assert.match(read('assets/js/overview.js'), /attributeFilter: \['data-aud'\]/);
   assert.equal(read('assets/js/overview.js'), read('public/assets/js/overview.js'));
+});
+
+test('일반사용자 부제 사업 수(2026-10-21 W5-MP2): 9·7 175곳 · 정책 전체 346곳, 정책담당자는 원천 230건·443건 + 집계 175·346', () => {
+  const O = require('../../lib/board/metro-overview.ts'), RM = require('../../data/board/region-map.json'), MOV = require('../../data/board/map-overview.json');
+  const D = (k) => J.scopeVals(O.homeOverview(RM, MOV), k).total;
+  assert.equal(J.totalSubOf('u', D('p97'), true), '사업 175곳');
+  assert.equal(J.totalSubOf('u', D('all'), true), '사업 346곳');
+  assert.match(J.totalSubOf('u', D('p97'), false), /^원천 230건 · 175건 집계/);
+  assert.match(J.totalSubOf('u', D('all'), false), /^원천 443건 · 346건 집계/);
 });

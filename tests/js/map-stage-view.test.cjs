@@ -58,11 +58,11 @@ test('불투명도 식: 고른 상태는 단계색 채움(멀리 .6 → 가까�
   const d = ops(['분양중'], false), l = ops(['분양중'], true);
   const a = d.areaOp();
   assert.deepEqual(a.slice(0, 3), ['interpolate', ['linear'], ['zoom']]);
-  assert.deepEqual(a[4][1], ['in', ['get', 'status'], ['literal', ['분양중']]]);
+  assert.deepEqual(a[4][1], ['in', ['get', 'fk'], ['literal', ['분양중']]]);   // 거르기 열쇠 fk = 지도 상태(수도권 PoC 는 단계 'P0'~'P6' — fkOf)
   assert.equal(a[4][2][1], 0.6); assert.equal(a[6][2][1], 0.4); assert.equal(a[4][3], d.AREA_FAINT);
   assert.equal(l.areaOp()[4][2][1], 0.45);
   assert.deepEqual(a[4][2][2], ['case', ['==', ['get', 'settle'], 'settled'], 0.45, 1]);
-  assert.deepEqual(d.lineOp(), ['case', ['in', ['get', 'status'], ['literal', ['분양중']]], ['case', ['==', ['get', 'settle'], 'settled'], 0.45, 1], d.LINE_FAINT]);
+  assert.deepEqual(d.lineOp(), ['case', ['in', ['get', 'fk'], ['literal', ['분양중']]], ['case', ['==', ['get', 'settle'], 'settled'], 0.45, 1], d.LINE_FAINT]);
   assert.ok(d.AREA_FAINT > 0 && d.AREA_FAINT < 0.15 && d.LINE_FAINT > 0 && d.LINE_FAINT < 0.5);
   assert.equal(d.privOp()[3], d.AREA_FAINT);
 });
@@ -98,7 +98,11 @@ test('색 종류는 현재 단계(stageNow): 구역 속성 kind·꼬리표 sn/sc
   assert.match(block(/function renderHud\(\) \{[\s\S]*?\n\}\n/), /k = el\.dataset\.k \|\| kindOf\(b\), col = T\.color\[k\]/);
   /* 띠 색 = 구역 색: 띠 칸 색(stageColor)과 구역 색(kindExpr)이 같은 COLOR 를 같은 종류로 읽는다 */
   assert.match(app, /const stageColor = \(i\) => COLOR\[STAGE_KIND\[i\]\];/);
-  assert.match(app, /function kindExpr\(colors\) \{ return \['match', \['get', 'kind'\], 'sale', colors\.sale, 'build', colors\.build, 'near', colors\.near, 'soon', colors\.soon, 'permit', colors\.permit, 'priv', colors\.priv, colors\.plan\]; \}/);
+  assert.match(app, /function kindExpr\(colors\) \{ return \['match', \['get', 'kind'\], 'sale', colors\.sale, 'build', colors\.build, 'near', colors\.near, 'soon', colors\.soon, 'move', colors\.move, 'permit', colors\.permit, 'priv', colors\.priv, colors\.plan\]; \}/);
+  /* 수도권 PoC 단계(2026-10-21 W4 결정 ④): 칸 i 의 색 종류 = ①~⑥ 과 같은 자리(STAGE_KIND), 미확인은 회색(priv) — 띠 칸 색(POC7[i][3])과 구역 색이 같은 COLOR 를 읽는다 */
+  assert.match(app, /const POC_KIND = \['plan', 'permit', 'build', 'sale', 'soon', 'move', 'priv'\];/);
+  assert.match(app, /\.map\(\(\[n, d\], i\) => \['', n, \[`P\$\{i\}`\], COLOR\[POC_KIND\[i\]\], d\]\);/);
+  assert.match(app, /const kindOf = \(b\) => \(b\.priv \? 'priv' : b\.pst != null \? POC_KIND\[b\.pst\] : KIND\[b\.status\]\);/);
   /* COLOR 는 테마 색표의 color 와 같은 한 객체(readTheme 이 값을 채우고 THEME.color 로 건다) */
   assert.match(app, /Object\.assign\(COLOR, THEME\.color\); THEME\.color = COLOR;/);
 });

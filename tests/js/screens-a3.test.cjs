@@ -72,9 +72,9 @@ test("H1 서랍 단계 줄: '지금' 한 칸만 채우고 지난 단계는 옅�
 
 test('H8 정책 목표 대비: 기본 접힘(머리에 핵심 한 줄) · 인쇄 보기는 펼침 · 첫 질문 칸은 이름에 범위 · 목표를 넘으면 초과', () => {
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
-  assert.deepEqual(lines.map(V.compareHead), ['9·7 · 목표 있는 4단계 중 2단계 미달(사업화·공급)'], '4차(A4): 머리 줄은 비율 숫자 없이 단계 이름만(r4-screens 1: 부족 → 미달)');
+  assert.deepEqual(lines.map(V.compareHead), ['9·7 · 목표 있는 4단계 중 1단계 미달(공급)'], '2026-10-21 새 덤프(20261020T142230Z, PoC 운영 값과 같음): 9·7 ①사업화 확인 7,808→18,854(목표 14,694 넘음) · ②인허가 목표 3,658→8,386·확인 6,249→10,403 — 덤프 뒤였던 담당자 단계 측정값·승인 일정이 새 판에 들어옴 — 사업화 달성으로 미달은 공급 하나 · 4차(A4): 머리 줄은 비율 숫자 없이 단계 이름만(r4-screens 1: 부족 → 미달)');
   const cells = lines[0].cells;
-  assert.equal(V.rateOf(cells[1]).word, '달성 170.8%', '② 인허가 6,249 / 3,658(2026-10-20 HOME 판 — 10-19 판 3,560 / 1,543 = 230.7%) — 2026-10-16 목표 대비 달성률(옛 \'초과 130.7%\', r2-screens 3)');
+  assert.equal(V.rateOf(cells[1]).word, '달성 124.1%', '② 인허가 10,403 / 8,386(2026-10-21 새 덤프) · 6,249 / 3,658 = 170.8%(2026-10-20 HOME 판 — 10-19 판 3,560 / 1,543 = 230.7%) — 2026-10-16 목표 대비 달성률(옛 \'초과 130.7%\', r2-screens 3)');
   assert.equal(V.rateOf(cells[4]).word, '달성 100.0%', '⑤ 준공 381 / 381');
   const sum = read('components/projects/Summary.tsx');
   assert.match(sum, /<details data-fold open=\{open\}/);

@@ -92,7 +92,8 @@
     ],
     "11440": [
       {"id":"PRJ-11440-0071","name":"아현동 699번지 일대","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11440-0072","name":"망원체육공원 인근","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":940,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11440-0072","name":"망원체육공원 인근","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":940,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11440-0079","name":"연남동 공공임대주택","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":8,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11470": [
       {"id":"PRJ-11470-0087","name":"염창역 남측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":4222,"pks":[],"pnus":[],"bundles":[]},
@@ -107,7 +108,8 @@
       {"id":"PRJ-11500-0104","name":"강서 군부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":918,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11500-0105","name":"강서 국회대로 인근","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11500-0106","name":"마곡지구 17단지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":381,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11500-0107","name":"화곡역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":2335,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11500-0107","name":"화곡역 동측","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030"},"units":2335,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11500-0111","name":"방화차고지 공공주택 건설사업","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":75,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11530": [
       {"id":"PRJ-11530-0094","name":"서울시 구로구 구로동 87-1","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":40,"pks":[],"pnus":[],"bundles":[]},
@@ -118,7 +120,8 @@
       {"id":"PRJ-11545-0043","name":"서울세관 구로지원센터","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2029-10"},"units":437,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11545-0044","name":"금천구청역 유휴부지","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-11545-0045","name":"남부여성발전센터(양육친화주택)","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2027-11"},"units":200,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-11545-0046","name":"금천 공군부대","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2900,"pks":[],"pnus":[],"bundles":[]}
+      {"id":"PRJ-11545-0046","name":"금천 공군부대","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":2900,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-11545-0048","name":"독산동 산업문화어울림센터","issued":true,"stage":"04","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":20,"pks":[],"pnus":[],"bundles":[]}
     ],
     "11560": [
       {"id":"PRJ-11560-0137","name":"신길2구역","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
@@ -196,10 +199,10 @@
       {"id":"PRJ-28245-0059","name":"인천계양 A18","issued":true,"stage":"02","cls":"caution","why":null,"overdue":{"eventType":"CONSTRUCTION_START","planned":"2026-06","months":3},"next":null,"units":782,"pks":[],"pnus":[],"bundles":[]}
     ],
     "28275": [
-      {"id":"PRJ-28275-0034","name":"인천서구(거북이기지) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-09"},"dateAlt":{"source":"LH","planned":"2027-03-31"},"units":58,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28275-0034","name":"인천서구(거북이기지) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-12"},"dateAlt":{"source":"LH","planned":"2027-03-31"},"units":58,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28275-0035","name":"청라동 92-29","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":110,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28275-0036","name":"인천가정2 B2","issued":true,"stage":"05","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2028-01-28"},"dateAlt":{"source":"LH","planned":"2028-03-30"},"units":308,"pks":[],"pnus":[],"bundles":[]},
-      {"id":"PRJ-28275-0037","name":"인천서구(석남어울림) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-09"},"dateAlt":{"source":"LH","planned":"2027-03-31"},"units":110,"pks":[],"pnus":[],"bundles":[]},
+      {"id":"PRJ-28275-0037","name":"인천서구(석남어울림) 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-08-22"},"dateAlt":{"source":"LH","planned":"2027-03-31"},"units":110,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28275-0038","name":"인천검암","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":0,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28275-0043","name":"검암 주택건설사업(S3BL)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":749,"pks":[],"pnus":[],"bundles":[]},
       {"id":"PRJ-28275-0044","name":"검암 주택건설사업(S2BL)","issued":true,"stage":"02","cls":null,"why":"예정 없음","overdue":null,"next":null,"units":1032,"pks":[],"pnus":[],"bundles":[]},

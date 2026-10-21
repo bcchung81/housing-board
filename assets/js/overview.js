@@ -1,6 +1,6 @@
 /* 지도 첫 화면 '수도권 개요'(/map · /map?sido=11|28|41). 상세 지도(app.js·지역 자료·지형·3D 건물·MapLibre)를 부르지 않는 가벼운 모듈이다.
    자료는 지도 페이지가 서버에서 센 window.OVERVIEW(lib/board/metro-overview.ts homeOverview — HOME PoC #overview 규칙, 원천 행 PRO_ 단위)이고, 여기서는 범위를 골라 그리기만 한다.
-   - 범위: 값마다 9·7(p97)·정책 전체(all) 두 벌(vs)이 온다. 정책담당자 관점 기본 9·7, 주소 ?policy=all 이면 정책 전체, 일반사용자 관점은 정책 전체(policyOf).
+   - 범위: 값마다 9·7(p97)·정책 전체(all) 두 벌(vs)이 온다. 두 관점(정책담당자·일반사용자) 모두 기본 9·7, 주소 ?policy=all 이면 정책 전체(policyOf — 2026-10-21 W4 결정 ⑤, 전환 탭 없음).
      지금 범위는 머리 줄 기준일 글자에 붙여 보인다. 개요에서 여는 주소(시도·상세)에는 ?policy=all 을 이어 붙인다(keepPolicy).
    - 면: 시군구 경로(region-map 투영 정수)를 /citizen 과 같은 진짜 3D(MapLibre GL fill-extrusion — 공용 모듈 assets/js/map3d-gl.js · MapGL, 바탕 지도 없이 시군구 면만)로 그리고,
      주소 ?gl=0 · WebGL 없음 · 불러오기 실패면 SVG 흉내 3D(공용 모듈 assets/js/map3d.js · 모양 assets/css/map3d.css)로 대체한다(면 높이 = 계획 호수, 색 = 지표 단계).
@@ -35,8 +35,8 @@
   /* 상세 지도 주소에 지금 지표를 붙인다(기본 '계획 호수'는 붙이지 않는다) — 상세가 지연 맥락(머리 줄 '지연 n' 칩·빨강 묶음 표지)을 이어 받는다 */
   const withMetric = (href, metric) => (metric && metric !== 'u' ? `${href}&metric=${metric}` : href);
   const sidoHref = (sido) => (sido ? `/map?sido=${sido}` : '/map');
-  /* 범위(2026-10-21 HOME PoC 와 같은 규칙): 일반사용자 관점 = 정책 전체, 정책담당자 = 주소 ?policy=all 이면 정책 전체, 아니면 9·7 */
-  const policyOf = (search, pub) => (pub || new URLSearchParams(search || '').get('policy') === 'all' ? 'all' : 'p97');
+  /* 범위(2026-10-21 HOME PoC 와 같은 규칙, W4 결정 ⑤ 일반사용자도 9·7 기본): 주소 ?policy=all 이면 정책 전체, 아니면 9·7 — 관점과 상관없다(pub 인자는 옛 호출 모양을 위해 받기만) */
+  const policyOf = (search, pub) => (new URLSearchParams(search || '').get('policy') === 'all' ? 'all' : 'p97');
   const SCOPE_NAME = { p97: '9·7 연결', all: '정책 전체' };
   /* 개요에서 여는 주소에 ?policy=all 을 잇는다(기본 9·7 은 붙이지 않는다) */
   /* 범위 k 의 값을 면·구·시도·합계의 v 로(서버 자료 vs·totals 에서 고른다) */
@@ -136,17 +136,19 @@
   const PUBLIC_NAMES = { u: { name: '공급 예정 호수', short: '공급 예정 호수' }, a: { name: '1년 안 모집', short: '1년 안 모집' } };
   const metricsFor = (pub) => (pub ? METRICS.filter((m) => PUBLIC_NAMES[m.id]).map((m) => ({ ...m, ...PUBLIC_NAMES[m.id] })) : METRICS);
   const titleOf = (name, pub) => `${name} ${pub ? '공급 예정 호수' : '공급 개요'}`;
-  /* 합계 아래 한 줄(PoC 셈 단위 = 원천 행): 계획 호수는 '원천 n건 · m건 집계 · 중복·모호 k건 제외 · 물량 없음 j건' */
-  const totalSubOf = (metric, v, pub) => metric === 'u' ? (pub ? `사업 ${fmt(v.n)}곳` : `원천 ${fmt(v.n)}건 · ${fmt(v.c - v.q)}건 집계${v.x ? ` · 중복·모호 ${fmt(v.x)}건 제외` : ''}${v.q ? ` · 물량 없음 ${fmt(v.q)}건` : ''}`)
+  /* 합계 아래 한 줄(PoC 셈 단위 = 원천 행): 계획 호수는 '원천 n건 · m건 집계 · 중복·모호 k건 제외 · 물량 없음 j건'.
+     일반사용자는 '사업 m곳'(집계 행 c − q — /citizen 큰 숫자·사업 수와 같은 셈, 2026-10-21 W5-MP2 결정: 9·7 175곳 · 정책 전체 346곳) */
+  const totalSubOf = (metric, v, pub) => metric === 'u' ? (pub ? `사업 ${fmt(v.c - v.q)}곳` : `원천 ${fmt(v.n)}건 · ${fmt(v.c - v.q)}건 집계${v.x ? ` · 중복·모호 ${fmt(v.x)}건 제외` : ''}${v.q ? ` · 물량 없음 ${fmt(v.q)}건` : ''}`)
     : metric === 'd' ? `원천 ${fmt(v.n)}건 중${v.w ? ` · 주의 ${fmt(v.w)}건` : ''}` : `공급 예정 ${fmt(v.an)}건`;
   const valOf = (v, m) => (v ? v[m] || 0 : 0);
   const fmt = (n) => Math.round(n).toLocaleString('en-US');
   const ymDot = (ym) => (ym ? `${ym.slice(0, 4)}.${ym.slice(5, 7)}` : '');
   const dayDot = (d) => (d ? d.slice(0, 10).replace(/-/g, '.') : '');
   function defOf(metric, doc, pub, scope) {
-    if (pub && metric === 'u') return '계획·검토 중인 공공주택 사업의 계획 호수를 더한 값입니다. 같은 단지가 여러 자료에 있으면 한 번만 셉니다.';
+    const band = pub ? ' 막대 띠는 단계별 물량입니다(주택 공급 정책 자료의 지도 단계).' : ' 막대 띠는 단계별 물량입니다 — 정책 진행 자료의 지도 단계 분포(정책·사업화·인허가·건설(준공 포함)·공급·입주·미확인, 계산된 값 그대로). 구가 있는 시의 구별 띠는 시 값을 사업에 나눠 담은 근사입니다.';
+    if (pub && metric === 'u') return `${scope === 'all' ? '주택 공급 정책에 연결된 수도권 사업(공공·조합·민간)' : '9·7 주택공급 확대방안에 연결된 수도권 사업'}의 계획 호수를 더한 값입니다. 같은 단지가 여러 자료에 있으면 한 번만 셉니다.${band}`;
     if (pub) return '앞으로 12개월 안에 입주자 모집(분양) 예정인 호수입니다.';
-    if (metric === 'u') return `${SCOPE_NAME[scope] || ''} 사업(원천 행)의 계획 호수 합입니다. 같은 블록의 중복·모호한 행(LH 공사 계약 등)은 빼고 셉니다. 시군구가 정해지지 않은 사업은 시도·수도권 합계에만 듭니다. 종합상황판과 같은 기준입니다.`;
+    if (metric === 'u') return `${SCOPE_NAME[scope] || ''} 사업(원천 행)의 계획 호수 합입니다. 같은 블록의 중복·모호한 행(LH 공사 계약 등)은 빼고 셉니다. 시군구가 정해지지 않은 사업은 시도·수도권 합계에만 듭니다. 종합상황판과 같은 기준입니다.${band}`;
     if (metric === 'd') return '기준일까지 도래한 단계 목표보다 실제(입력·추정 포함)가 2% 이상 모자란 사업 수입니다(0~2% 는 주의). 이름 앞 ! 는 그 지역 9·7 사업을 모은 단계 목표 대비 부족률이 2% 이상인 단계가 있다는 표시입니다.';
     return '기준 달부터 12개월 안의 공급(입주자 모집·분양) 예정 호수입니다. 종합상황판의 향후 12개월 공급 예정과 같은 기준입니다.';
   }
@@ -223,7 +225,7 @@
   }
 
   const SIDO_SHORT = { 11: '서울', 28: '인천', 41: '경기' };
-  /* 단계 물량 띠(PoC 정책 화면 단계 이름 — 건설은 준공 포함, 단계 도달이 없는 집계 사업은 미확인) */
+  /* 단계 물량 띠(PoC 정책 화면 단계 이름 — 건설은 준공 포함): 값 = HOME 지도 단계 분포(tools/ledger/map-overview.js pocStages — 합계·시도·시군구는 PoC 스냅샷 값 그대로) */
   const STAGES = ['정책', '사업화', '인허가', '건설', '공급', '입주', '미확인'];
   const ST_VAR = ['--st-plan', '--st-permit', '--st-build', '--st-sale', '--st-soon', '--st-move', '--map-ov-0'];
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -523,7 +525,7 @@
       const m = ms().find((x) => x.id === S.metric), v = u.v, pub = isPub();
       tip.innerHTML = `<b>${lateMark(v, pub)}${esc(`${SIDO_SHORT[u.s]} ${u.name}`)}</b>`
         + (D.ok && v ? `<span class="ov-tv">${esc(m.name)} <strong>${fmt(valOf(v, S.metric))}${m.unit}</strong></span>`
-          + `<span class="ov-ts">${pub ? `사업 ${fmt(v.n)}곳 · 공급 예정 ${fmt(v.u)}호` : `원천 ${fmt(v.n)}건 · ${fmt(v.c - v.q)}건 집계 · 계획 ${fmt(v.u)}호`}</span>${bandHtml(v.st)}`
+          + `<span class="ov-ts">${pub ? `사업 ${fmt(v.c - v.q)}곳 · 공급 예정 ${fmt(v.u)}호` : `원천 ${fmt(v.n)}건 · ${fmt(v.c - v.q)}건 집계 · 계획 ${fmt(v.u)}호`}</span>${bandHtml(v.st)}`
           + `<span class="ov-ts">${pub ? '' : `지연 ${fmt(v.d)}건${v.w ? ` · 주의 ${fmt(v.w)}건` : ''} · `}${pub ? '1년 안 모집' : '12개월 공급'} ${fmt(v.a)}호(${fmt(v.an)}건)</span>`
           + (!pub && v.f ? `<span class="ov-ts">지연 단계: ${esc(v.f)}</span>` : '') : '<span class="ov-ts">수치 없음</span>')
         + `<span class="ov-th">${!S.sido || u.s !== S.sido ? `누르면 ${SIDO_SHORT[u.s]} 지도로` : u.gu && u.gu.length ? '누르면 구를 고릅니다' : '누르면 상세 지도로'}</span>`;
@@ -645,7 +647,7 @@
     /* 웹 글꼴이 늦게 오면 이름표 폭이 달라지므로 다시 놓는다 */
     if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(() => placeLabels());
     /* 관점 스위치로 html[data-aud] 가 바뀌면 탭·문구를 새 관점으로 다시 그린다(일반사용자에게 지연은 없다) */
-    /* 범위도 관점을 따른다(일반사용자 = 정책 전체): 바뀌면 면 높이(계획 호수)를 새 범위로 — 진짜 3D 는 값만, SVG 판은 기하를 다시 */
+    /* 범위는 관점과 상관없다(두 관점 모두 9·7 기본 — useScope 는 바뀌지 않으면 false). 바뀌면 면 높이(계획 호수)를 새 범위로 — 진짜 3D 는 값만, SVG 판은 기하를 다시 */
     if (win.MutationObserver) new win.MutationObserver(() => {
       if (isPub() && S.metric === 'd') S.metric = 'u';
       const moved = useScope();

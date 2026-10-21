@@ -4,10 +4,10 @@
   "name": "경기도 광주시",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
-  "edition": "20261019T212247Z",
-  "poc": {"p97":{"n":1,"c":1,"x":0,"q":0,"u":316,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,316,0,0]},"all":{"n":1,"c":1,"x":0,"q":0,"u":316,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,316,0,0]}},
+  "edition": "20261020T142230Z",
+  "poc": {"p97":{"n":1,"c":1,"x":0,"q":0,"u":316,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,316,0,0],"k":[0,0,0,0,1,0,0],"ku":[0,0,0,0,316,0,0]},"all":{"n":1,"c":1,"x":0,"q":0,"u":316,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,316,0,0],"k":[0,0,0,0,1,0,0],"ku":[0,0,0,0,316,0,0]}},
   "noPrj": [],
   "projects": [
-    {"id":"PRJ-41610-0038","name":"광주역세권","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2026"},"units":316,"pks":[],"pnus":[],"bundles":[],"label":"광주역세권","agency":"gh","moveIn":"2026","completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.291872,37.400593],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":null,"poc":{"n":1,"n97":1,"u":316,"u97":316,"j":"NORMAL"}}
+    {"id":"PRJ-41610-0038","name":"광주역세권","issued":true,"stage":"03","cls":null,"why":"예정 없음","overdue":null,"next":{"eventType":"MOVE_IN","planned":"2026"},"units":316,"pks":[],"pnus":[],"bundles":[],"label":"광주역세권","agency":"gh","moveIn":"2026","completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"area","at":[127.291872,37.400593],"basis":"APPROXIMATE_AREA","status":"REVIEW"},"policy":null,"poc":{"n":1,"n97":1,"u":316,"u97":316,"j":"NORMAL","s":4,"s97":4,"rs":[[4,4,316,316,"NORMAL"]]}}
   ]
 }

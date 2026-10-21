@@ -21,6 +21,7 @@ const AREAS = require('../../schemas/ledger-2026-10/tables/areas.json').rows;
 const MOV = require('../../data/board/map-overview.json');
 const HP = require('../../data/board/home-projects.json');
 const MO = require('../../tools/ledger/map-overview.js');
+const DASH = MO.readDash(HP);   // PoC 지도 스냅샷(단계 분포 — 2026-10-21 W4 결정 ④)
 /* 개요 값(2026-10-21 HOME PoC #overview 규칙): 화면 기본 범위 9·7(p97) 으로 고른 문서 */
 const DOC = J.scopeVals(O.homeOverview(RM, MOV), 'p97');
 const KEYS = ['n', 'c', 'x', 'q', 'u', 'd', 'w', 'a', 'an'];
@@ -79,7 +80,7 @@ test('합: 시군구 값의 합 + 시군구 미연결 행 = 시도 합, 시도 �
   for (const k of ['p97', 'all']) {
     const D = J.scopeVals(O.homeOverview(RM, MOV), k), rs = HP.rows.filter((r) => MO.inScope(r, k));
     for (const s of D.sido) {
-      const un = MO.valsOf(rs.filter((r) => !r.sgg && r.region === O.SIDO_FULL[s.code]), k);
+      const un = MO.valsOf(rs.filter((r) => !r.sgg && r.region === O.SIDO_FULL[s.code]), k, MO.pocStages(HP, DASH[k], k));
       for (const f of KEYS) assert.equal(D.units.filter((u) => u.s === s.code).reduce((t, u) => t + u.v[f], 0) + un[f], s.v[f], `${k} ${s.name} ${f}`);
     }
     for (const f of KEYS) assert.equal(D.sido.reduce((t, s) => t + s.v[f], 0), D.total[f], `${k} 수도권 ${f}`);
@@ -277,27 +278,32 @@ test('같은 숫자(개요 ↔ 상세 머리 줄): 상세 지도 시군구 파�
   /* 사업 카드: 원장 사업마다 이어진 원천 행 수·집계 호수(점 하나에 여러 행) */
   const gy = JSON.parse(read('data/board/home-map/28290.json'));
   const p55 = gy.projects.find((p) => p.id === 'PRJ-28290-0055');
-  assert.deepEqual(p55.poc, { n: 3, n97: 3, u: 1323, u97: 1323, j: 'NORMAL' }, '검단 AA19: 원천 3행 = 점 하나, 계획 1,323호(중복 행 제외)');
+  assert.deepEqual(p55.poc, { n: 3, n97: 3, u: 1323, u97: 1323, j: 'NORMAL', s: 4, s97: 4, rs: [[4, 4, null, null, null], [4, 4, 332, 332, 'NORMAL'], [4, 4, 991, 991, 'NORMAL']] },
+    '검단 AA19: 원천 3행 = 점 하나, 계획 1,323호(중복 행 제외), PoC 단계 공급(행마다 [단계, 9·7 단계, 집계 호수, 9·7 집계 호수, 판정])');
 });
 
-test('상세 머리 줄 연결: 수도권은 합계(#hudSum)·지연 칩·카드를 PoC 값(REGION.home.poc — 원천 행, 개요와 같은 범위)으로, 6단계 칸은 지도 점 범례(원장 단계, REGION.home.tally), 위치 미확보 = 원장 사업 없는 행 + 그리지 못한 사업의 행', () => {
+test('상세 머리 줄 연결: 수도권은 합계(#hudSum)·지연 칩·카드를 PoC 값(REGION.home.poc — 원천 행, 개요와 같은 범위)으로, 6단계 칸도 PoC 단계별 원천 행(2026-10-21 W4 결정 ④), 위치 미확보 = 원장 사업 없는 행 + 그리지 못한 사업의 행', () => {
   const app = read('assets/js/app.js'), reg = read('assets/js/region.js');
   assert.match(reg, /tally: homeTally\(raw\.home, home\.unlocated\.map\(\(r\) => r\.id\)\)/);
   assert.match(reg, /homePoc\(raw\.home, home\.unlocated\.map\(\(r\) => r\.id\), 'p97'\)/);
   assert.match(app, /const HOME_T = REG\.home && !REG\.home\.failed && REG\.home\.tally/);
   assert.match(app, /const HOME_P = REG\.home && !REG\.home\.failed && REG\.home\.poc/);
-  assert.match(app, /const pocScope = \(\) => \(document\.documentElement\.getAttribute\('data-aud'\) !== 'admin' \|\| q\.get\('policy'\) === 'all' \? 'all' : 'p97'\)/);
+  assert.match(app, /const POC_SCOPE = q\.get\('policy'\) === 'all' \? 'all' : 'p97';/, '두 관점 모두 9·7 기본(W4 결정 ⑤)');
+  assert.match(app, /const pocScope = \(\) => POC_SCOPE;/);
   assert.match(app, /let SUM_TOTAL = HOME_T \? homeSumTotal\(HOME_T\) : null/);
   assert.match(app, /if \(HOME_P\) \{ const k = pocScope\(\); return pocSumTotal\(HOME_P\[k\], k\); \}/);
   assert.match(app, /const lateN = \(\) => \(HOME_P \? HOME_P\[pocScope\(\)\]\.d/);
-  assert.match(app, /const h = HOME_T && HOME_T\.st\[i\]/);
+  assert.match(app, /const h = PP \? pocChip\(i\) : HOME_T && HOME_T\.st\[i\]/, 'PoC 자료가 있으면 칸 = PoC 단계별 원천 행, 없으면 옛 원장 단계');
   assert.match(app, /지도 표시 \$\{P\.n - P\.lostN\}건\(\$\{lost\}\)/);
-  assert.match(app, /같은 위치의 원천 행 여러 건이 한 점입니다/, '점 수 ≠ 건수 까닭');
+  assert.match(app, /같은 위치의 원천 행 여러 건이 한 점이고 점 색은 그 행들의 가장 뒤 단계입니다/, '점 수 ≠ 건수 까닭·점 색 규칙');
   /* region.js homePoc: 위치 미확보 = noPrj + 그리지 못한 사업의 행(범위별) */
   const doc = { sgg: '99999', poc: { p97: { n: 3, c: 3, x: 0, q: 0, u: 300, d: 1, w: 0, a: 0, an: 0, st: [300, 0, 0, 0, 0, 0, 0] }, all: { n: 5, c: 4, x: 1, q: 0, u: 500, d: 1, w: 0, a: 0, an: 0, st: [500, 0, 0, 0, 0, 0, 0] } },
-    noPrj: [{ id: 'PRO_a', name: 'A', u: 100, j: null, p97: true }, { id: 'PRO_b', name: 'B', u: null, j: null, p97: false }],
-    projects: [{ id: 'PRJ-1', poc: { n: 2, n97: 1, u: 200, u97: 120, j: 'DELAYED' } }, { id: 'PRJ-2', poc: { n: 1, n97: 1, u: 100, u97: 100, j: null } }] };
+    noPrj: [{ id: 'PRO_a', name: 'A', u: 100, j: null, p97: true, s: 3, s97: 3 }, { id: 'PRO_b', name: 'B', u: null, j: null, p97: false, s: 6, s97: null }],
+    projects: [{ id: 'PRJ-1', poc: { n: 2, n97: 1, u: 200, u97: 120, j: 'DELAYED', rs: [[4, 4, 120, 120, 'DELAYED'], [0, null, 80, null, 'NORMAL']] } }, { id: 'PRJ-2', poc: { n: 1, n97: 1, u: 100, u97: 100, j: null, rs: [[3, 3, 100, 100, null]] } }] };
   assert.deepEqual(['p97', 'all'].map((k) => { const t = R.homePoc([doc], ['PRJ-1'], k); return [t.n, t.u, t.d, t.lostN, t.lostU, t.noPrj.length]; }), [[3, 300, 1, 2, 220, 1], [5, 500, 1, 4, 300, 2]]);
+  /* 6단계 칸의 지도 밖 몫(PoC 단계별): lk 행 수 · lu 호수 · ld 지연 행 */
+  assert.deepEqual(['p97', 'all'].map((k) => { const t = R.homePoc([doc], ['PRJ-1'], k); return [t.lk, t.lu, t.ld]; }),
+    [[[0, 0, 0, 1, 1, 0, 0], [0, 0, 0, 100, 120, 0, 0], [0, 0, 0, 0, 1, 0, 0]], [[1, 0, 0, 1, 1, 0, 1], [80, 0, 0, 100, 120, 0, 0], [0, 0, 0, 0, 1, 0, 0]]]);
   assert.equal(R.homePoc([{ sgg: '1', projects: [] }], [], 'p97'), null, 'PoC 값 없는 옛 파일이면 null(옛 머리 줄)');
 });
 
@@ -474,4 +480,21 @@ test('범례(2026-10-19 \'종합상황판의 범례처럼 하단에\'): 패널 �
   assert.ok(ov.indexOf("el.innerHTML = lgHtml") < ov.indexOf('fitRanks();   // 범례가'), '범례 → fitRanks 순서');
   assert.match(ov, /legendBox = \$\('ovLegendTop'\)/);
   assert.match(ov, /const left = \(\) => 12;/); assert.match(ov, /left: 0 \}\)/);
+});
+
+test('상세 지도 범위(2026-10-21 W5-MP2): 9·7(기본)이면 9·7 원천 행이 없는 점·위치 미확보 사업은 빼고(직접 연 사업은 남기고 머리 줄 \'9·7 밖\'), ?policy=all 이면 모두(정책 없는 점은 미확인)', () => {
+  const app = read('assets/js/app.js');
+  assert.match(app, /const SCOPE97 = Q0\.get\('policy'\) !== 'all' && !!\(REG\.home && !REG\.home\.failed && REG\.home\.poc\);/);
+  assert.match(app, /const OPENED = new Set\(\[window\.RESOLVED && window\.RESOLVED\.projectId, Q0\.get\('id'\), Q0\.get\('block'\)\]\.filter\(Boolean\)\);/);
+  assert.match(app, /const in97 = \(b\) => !!\(b\.home && b\.home\.poc && b\.home\.poc\.n97 > 0\);/);
+  assert.match(app, /const BLOCKS = PR_ALL\.filter\(\(b\) => !SCOPE97 \|\| in97\(b\) \|\| OPENED\.has\(pidOf\(b\)\)\);/);
+  assert.match(app, /const LOST = \([^\n]*\)\.filter\(\(x\) => !SCOPE97 \|\| in97Lost\(x\) \|\| OPENED\.has\(x\.id\)\);/);
+  assert.match(app, /const u = LOST;/, '목록의 위치 미확보도 같은 집합');
+  assert.match(app, /9·7 밖: \$\{names\.join\(', '\)\}/); assert.match(app, /9·7 주택공급 대책에 들지 않은 사업입니다/, '일반사용자는 쉬운 말');
+  assert.match(app, /const pstOf = \(p\) => \(p \? \(POC_SCOPE === 'p97' && p\.s97 != null \? p\.s97 : p\.s \?\? 6\) : 6\);/, '정책 없는 점 = 미확인');
+  /* 실제 자료: 그리는 점 정책 전체 176 → 9·7 110, 위치 미확보 112 → 63(같은 규칙을 시군구 파일에 돌린 값) */
+  const files = fs.readdirSync(path.join(ROOT, 'data/board/home-map')).filter((f) => /^\d{5}\.json$/.test(f)).map((f) => JSON.parse(read(`data/board/home-map/${f}`)));
+  let all = 0, p97 = 0, lostAll = 0, lost97 = 0;
+  for (const d of files) { const h = R.homeToProjects([d]); for (const p of h.projects) { all++; if (p.home.poc && p.home.poc.n97 > 0) p97++; } for (const x of h.unlocated) { lostAll++; if (x.pst && x.pst.p97 != null) lost97++; } }
+  assert.deepEqual([all, p97, lostAll, lost97], [176, 110, 112, 63]);
 });

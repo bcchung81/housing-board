@@ -60,6 +60,7 @@ const REASON = {
   mapping: '덤프 뒤 HOME 정책·프로그램 매핑 변경(정책 연결·해제는 PoC 스냅샷)',
   input: '덤프 뒤 HOME 담당자 입력·근거 변경(PoC 사건·일정의 changed_at 이 덤프 시각 뒤) — 다음 덤프 재이관에서 같아진다(값은 덤프)',
   cohort: '같은 사업의 PoC 정책 묶음(portfolio_cohorts)과 덤프 묶음의 사건·일정이 다름 — 원인 미확인(값은 덤프)',
+  sibling: '같은 블록의 다른 원천 행(복수 현장 계약 등)에 붙은 담당자 측정값이 덤프 묶음에는 있고 PoC 정책 묶음에는 없음 — HOME 2038810 공개 코드(policy_delivery build_delivery 의 overrides)는 묶음 행 전체의 측정값을 쓰므로 덤프 뒤 담당자 입력 변경 또는 미커밋 서버 규칙(값은 덤프)',
   units: '덤프 뒤 HOME 계획 물량 변경 또는 대표 행 호수 보충 규칙 차이(물량은 PoC 스냅샷)',
 };
 
@@ -217,7 +218,10 @@ function build(home, poc, ledger) {
     const v = c ? cohortValues(c, asOf) : { reached: null, judge: null, upcoming: null };
     const agency = c || d ? HV.agencyName(c?.developer ?? d?.developer) : null;
     if (d && pc) {
-      const pv = cohortValues(pc, asOf), why = lateInput(pc) ? REASON.input : REASON.cohort;
+      /* 덤프 묶음에만 있는 담당자 측정값이 이 행이 아닌 같은 블록 원천 행의 것인지(2026-10-21 새 덤프: 부천대장 A5·A6 의 A-5·A-6 묶음 계약 행 공급 추정) */
+      const inPoc = new Set(pc.events.map((e) => `${e.stage}|${e.event_date}|${e.units}`));
+      const sibling = c.events.some((e) => e.origin === 'MANUAL' && e.project_id && e.project_id !== id && !inPoc.has(`${e.stage}|${e.event_date}|${e.units}`));
+      const pv = cohortValues(pc, asOf), why = lateInput(pc) ? REASON.input : sibling ? REASON.sibling : REASON.cohort;
       for (const k of ['reached', 'judge', 'upcoming']) diff(k, v[k], pv[k], why, 'dump');
       diff('agency', agency, HV.agencyName(pc.developer), why, 'dump');
     }

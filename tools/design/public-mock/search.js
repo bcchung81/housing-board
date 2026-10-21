@@ -144,7 +144,7 @@ function makeSearch(D) {
   }
   return { search, regions, regionOf, projects, stat, SIDO_SHORT };
 }
-/* 공급 예정 호수: D.hp(HOME PoC 수치, build_data.py — 2026-10-21 결정)가 있으면 PoC 원천 행(PRO_) 단위 — n = 행 수(해제 뺀 정책 전체, 민간 정비·민간 포함),
+/* 공급 예정 호수: D.hp(HOME PoC 수치, build_data.py — 2026-10-21 결정)가 있으면 PoC 원천 행(PRO_) 단위 — n = 집계 행 수(9·7 포트폴리오 중 물량 집계 행 — 같은 블록에 겹친·모호 행은 세지 않는다),
    u = 집계 호수 중 단계 앞 넷(계획~모집 = PoC 집계 호수 − 입주), st = 앞 넷 칸. 없으면(옛 자료) 원장 리본 칸 ①~④(원장 단계 01~05, lib/board/metro-overview.ts 의 u) */
 const OF_STAGE = { 1: 0, 2: 0, 3: 1, 4: 2, 5: 3, 6: 4, 7: 5 };   // 리본 칸 0 계획 · 1 인허가 · 2 착공 · 3 모집 · 4 준공 · 5 입주(7 = 실제 입주일이 있는 사업, build_data.py)
 function sumOf(D, codes) {

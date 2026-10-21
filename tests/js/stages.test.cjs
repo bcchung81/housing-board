@@ -105,7 +105,7 @@ test('지도 범례·옵션 창의 단지 상태는 6단계 순서이고 리본 
   assert.match(app, /BY_STAGE\.forEach\(\(st\) => \{[^]*?if \(!present\.has\(st\)\) return;\n\s+if \(st !== '입주 단계'\) return stg\(`<i class="sw \$\{KIND\[st\]\}"><\/i>`, stLabel\(st\), NOTE\[st\] \|\| '', stTitle\(st\)\);/);   // 정책담당자 요약 줄 칩 없음(머리 줄 띠가 단계 범례), 일반사용자는 띠가 없어 요약 칩(r3-map 5)
   assert.match(app, /stg\('<i class="sw soon"><\/i>', '⑤준공 · 입주 진행'/);    // ⑤준공(사용검사)은 경과 표지로 둘로 나눈다(2026-10-14)
   assert.match(app, /'⑤준공 · 입주 완료'/);
-  assert.match(app, /const present = BY_STAGE\.filter\(\(st\) => ALL_ST\.has\(st\)\);/);
+  assert.match(app, /const present = \(POC_ON \? POC7\.map\(\(s\) => s\[2\]\[0\]\) : BY_STAGE\)\.filter\(\(st\) => ALL_ST\.has\(st\)\);/);   // 수도권 PoC 자료가 있으면 PoC 단계(2026-10-21 W4 결정 ④)
   assert.match(app, /\$\{stLabel\(st\)\}<\/label>/);
   assert.doesNotMatch(app, /stageOfSt/);
   const stLabel = new Function('STAGES6', 'STATUS_TXT', `return ${/const stLabel = (\(st\) => \{.*?\});/.exec(app)[1]}`)(

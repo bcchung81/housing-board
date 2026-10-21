@@ -1,5 +1,5 @@
 {"schema_version":"ledger/1","table":"policies","rows":[
-{"local_policy_id":"POL_2025_0907","policy_name":"주택공급 확대방안 (9·7)","announcement_date":"2025-09-07","scope_region":"수도권 (인천 포함)","source_ref":"home-dump-20261019T212247Z-policy","review_status":"REVIEW_REQUIRED"},
-{"local_policy_id":"POL_2026_0129","policy_name":"도심 주택공급 확대 및 신속화 방안 (1·29)","announcement_date":"2026-01-29","scope_region":"수도권 (인천 포함)","source_ref":"home-dump-20261019T212247Z-policy","review_status":"REVIEW_REQUIRED"},
-{"local_policy_id":"POL_2026_0813","policy_name":"주택 신속공급 방안 (8·13)","announcement_date":"2026-08-13","scope_region":"수도권 순증 23만호+α","source_ref":"home-dump-20261019T212247Z-policy","review_status":"REVIEW_REQUIRED"}
+{"local_policy_id":"POL_2025_0907","policy_name":"주택공급 확대방안 (9·7)","announcement_date":"2025-09-07","scope_region":"수도권 (인천 포함)","source_ref":"home-dump-20261020T142230Z-policy","review_status":"REVIEW_REQUIRED"},
+{"local_policy_id":"POL_2026_0129","policy_name":"도심 주택공급 확대 및 신속화 방안 (1·29)","announcement_date":"2026-01-29","scope_region":"수도권 (인천 포함)","source_ref":"home-dump-20261020T142230Z-policy","review_status":"REVIEW_REQUIRED"},
+{"local_policy_id":"POL_2026_0813","policy_name":"주택 신속공급 방안 (8·13)","announcement_date":"2026-08-13","scope_region":"수도권 순증 23만호+α","source_ref":"home-dump-20261020T142230Z-policy","review_status":"REVIEW_REQUIRED"}
 ]}

@@ -1,5 +1,5 @@
-/* 루트 레이아웃이 달라도 테마를 첫 화면을 그리기 전에 복원한다. 다크가 기본: 저장값이 'light' 일 때만 라이트(없음·'dark'·저장소 예외는 다크, 2026-10-18). */
-export const THEME_INIT = "try{if(localStorage.getItem('theme')!=='light')document.documentElement.classList.add('dark')}catch(e){document.documentElement.classList.add('dark')}";
+/* 루트 레이아웃이 달라도 테마를 첫 화면을 그리기 전에 복원한다. 라이트가 기본: 저장값이 'dark' 일 때만 다크(없음·'light'·저장소 예외는 라이트, 시스템 다크 설정은 따르지 않는다, 2026-10-21). */
+export const THEME_INIT = "try{if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')}catch(e){}";
 
 /* 보기 대상(관점): 저장값 audience 가 'admin' 이면 정책담당자, 없거나 그 밖이면 일반사용자. 첫 그림 전에 <html data-aud="public|admin"> 을 정해
    머리 줄 스위치·글자 강조를 CSS 로 그린다(깜빡임 없음). 표시 관점은 경로 규칙: /map 은 두 관점이 같이 쓰므로 저장값을 따르고,

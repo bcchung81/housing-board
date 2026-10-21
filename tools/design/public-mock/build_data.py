@@ -1,5 +1,5 @@
 # 시안에 넣을 색인·자료를 저장소 JSON 에서 뽑는다(읽기만). 출력: data.json
-# 화면 수치(큰 숫자·시도·지도 면·순위·단계 6줄·해 모드·사업 수)는 HOME PoC '정책 전체' 값 — 끝의 hp 묶음 주석(단계 대응표·미확인 처리)을 본다(2026-10-21)
+# 화면 수치(큰 숫자·시도·지도 면·순위·단계 6줄·해 모드·사업 수)는 HOME PoC 9·7 기본(#overview) 값 — 끝의 hp 묶음 주석(단계 대응표·미확인 처리)을 본다(2026-10-21)
 import json, re, sys, collections, datetime
 import os
 R = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', '..')) + '/'
@@ -285,24 +285,25 @@ for unit, L in ah_u.items():
 assert set(ah_u) <= {u[0] for u in units}, set(ah_u) - {u[0] for u in units}
 ah = {'ref': ah_ref, 'from': ah_from, 'url': AH_URL, 'u': dict(sorted(ah_u.items()))}
 
-# HOME PoC 수치(hp, 2026-10-21 결정 — 큰 숫자·시도·지도 면·순위·단계 6줄·해 모드·사업 수·단계 탭 개수를 PoC '정책 전체'와 같게).
-# 모집단 = data/board/home-projects.json 의 통계 포함 행(PRO_ 원천 행, 해제 뺀 443 — 민간 정비·민간 포함), 호수 = 집계 호수(units.counted, 집계 346행 289,336호).
-# 단계 = PoC /map/dashboard 정책 전체 응답(raw/home-api/<기준일>/projects-map-dashboard.json.gz, home-projects.js 가 받아 둔 스냅샷)의 stage_distribution.parts
+# HOME PoC 수치(hp, 2026-10-21 결정 — 큰 숫자·시도·지도 면·순위·단계 6줄·해 모드·사업 수·단계 탭 개수를 PoC 9·7 기본(#overview, '일반사용자까지 9·7 기본')과 같게. 전환 탭 없음).
+# 모집단 = data/board/home-projects.json 의 9·7 포트폴리오 행(통계 포함 · p97 — PRO_ 원천 행 230, views.p97), 호수 = 9·7 집계 호수(chart.p97 행의 units.counted, 집계 175행 151,271호).
+# 단계 = PoC /map/dashboard 9·7 응답(raw/home-api/<기준일>/projects-map-dashboard-97.json.gz, home-projects.js 가 받아 둔 스냅샷)의 stage_distribution.parts
 # — 서버 계산이라 행마다 값이 없어 블록(blocks) → 시군구(municipalities) → 시도(groups.region) 순으로 내려 나눈다: 블록 값은 그 블록 집계 행에, 시군구에서 블록 합을 뺀 나머지는
 # 블록 없는 집계 행에, 시도에서 시군구 합을 뺀 나머지는 시군구 미연결 행에 나눠 담는다(한 묶음 안 여러 행은 호수 큰 순으로 단계 순서대로 채운다 — 묶음 합은 PoC 와 정확히 같고,
 # 행 하나의 단계 나눔은 근사). PoC 7칸 → 일반사용자 6칸(이름은 우리 이름 유지): 계획 = 정책 + 사업화 + 단계 미확인 · 인허가 = 인허가 · 착공 = 건설(PoC 는 준공을 건설에 넣는다)
-# · 모집 = 공급 · 준공 = 0(PoC 칸 없음) · 입주 = 입주. 큰 숫자 = 앞 넷 합(= PoC 집계 호수 − 입주, 지금 PoC 입주 0 이라 289,336).
+# · 모집 = 공급 · 준공 = 0(PoC 칸 없음) · 입주 = 입주. 큰 숫자 = 앞 넷 합(= PoC 집계 호수 − 입주, 지금 PoC 입주 0 이라 151,271).
 # 해 = PoC '향후 12개월 공급(모집·분양) 예정'(행의 upcoming — /·/region 과 같은 값)의 달이 든 해, 그 밖 호수는 연도 미정.
 # 코드 = 원장 시군구 코드(D.sgg 열쇠): PoC 시군구 코드가 하나면 그것, 구가 있는 경기 시면 우리 원장 시군구(loc.ourSgg)가 그 안이면 그것·아니면 시 코드. 시군구 미연결 행은 시도 코드('11'·'28'·'41').
-# 줄: 코드 → [행 수, 공급 예정 호수, 해 7칸(yearBucket 과 같은 칸), 단계 6칸, 단계 탭 개수 6칸(행마다 나눈 몫이 가장 큰 단계 — 같으면 뒤 단계, 호수 없는 행은 계획)]
+# 줄: 코드 → [집계 행 수(사업 수 — 정책 화면 '집계 175'와 같은 셈), 공급 예정 호수, 해 7칸(yearBucket 과 같은 칸), 단계 6칸, 단계 탭 개수 6칸(집계 행마다 나눈 몫이 가장 큰 단계 — 같으면 뒤 단계, 호수 없는 행은 계획)]
 import gzip
 hpj = json.load(open(R + 'data/board/home-projects.json'))
-dash = json.load(gzip.open(R + f"schemas/ledger-2026-10/raw/home-api/{hpj['asOf']}/projects-map-dashboard.json.gz"))
+dash = json.load(gzip.open(R + f"schemas/ledger-2026-10/raw/home-api/{hpj['asOf']}/projects-map-dashboard-97.json.gz"))
 HP_ORDER = ['MOVE_IN', 'SUPPLY', 'CONSTRUCTION', 'APPROVAL', 'BUSINESS', 'POLICY', 'UNKNOWN']   # 채우는 순서(뒤 단계부터)
 HP_SIX = {'POLICY': 0, 'BUSINESS': 0, 'UNKNOWN': 0, 'APPROVAL': 1, 'CONSTRUCTION': 2, 'SUPPLY': 3, 'MOVE_IN': 5}
 SD_OF = {v: k for k, v in SDN.items()}
-hp_rows = [r for r in hpj['rows'] if r['stats']]
-cnt_of = {r['id']: (r['units']['counted'] or 0) if r['chart']['all'] else 0 for r in hp_rows}
+hp_rows = [r for r in hpj['rows'] if r['stats'] and r['p97']]
+cnt_of = {r['id']: (r['units']['counted'] or 0) if r['chart']['p97'] else 0 for r in hp_rows}
+assert (len(hp_rows), sum(cnt_of.values())) == (hpj['views']['p97']['rows'], hpj['views']['p97']['units']) == (dash['summary']['project_count'], dash['summary']['target_units'])
 codes_known = {s[0] for s in sggs}
 def hp_code(r):
     if not r['sgg']: return SD_OF[r['region']]
@@ -348,13 +349,13 @@ for r in hp_rows:
     S = [0] * 6
     for k, v in a.items(): S[HP_SIX[k]] += v
     T = [0] * 6
-    T[max(range(6), key=lambda i: (S[i], i)) if cu else 0] += 1
+    if r['chart']['p97']: T[max(range(6), key=lambda i: (S[i], i)) if cu else 0] += 1   # 사업 수·탭 = 집계 행만(겹친·모호 55행은 세지 않는다)
     su = cu - S[5]; Y = [0] * 7; left = su
     for ym, u in r.get('upcoming') or []:
         t = min(left, u); y = int(ym[:4]); Y[0 if y <= Y0 else 5 if y >= Y0 + 5 else y - Y0] += t; left -= t
     Y[6] += left
     v = hp_c.setdefault(hp_code(r), [0, 0, [0] * 7, [0] * 6, [0] * 6])
-    v[0] += 1 if not T[5] else 0; v[1] += su
+    v[0] += 1 if r['chart']['p97'] and not T[5] else 0; v[1] += su
     for i in range(7): v[2][i] += Y[i]
     for i in range(6): v[3][i] += S[i]; v[4][i] += T[i]
 hp = {'ref': hpj['asOf'], 'c': dict(sorted(hp_c.items()))}

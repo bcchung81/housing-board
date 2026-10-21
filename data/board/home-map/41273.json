@@ -4,11 +4,11 @@
   "name": "경기도 안산시 단원구",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
-  "edition": "20261019T212247Z",
-  "poc": {"p97":{"n":3,"c":2,"x":1,"q":0,"u":638,"d":0,"w":0,"a":638,"an":2,"st":[0,0,256,382,0,0,0]},"all":{"n":3,"c":2,"x":1,"q":0,"u":638,"d":0,"w":0,"a":638,"an":2,"st":[0,0,256,382,0,0,0]}},
+  "edition": "20261020T142230Z",
+  "poc": {"p97":{"n":3,"c":2,"x":1,"q":0,"u":638,"d":0,"w":0,"a":638,"an":2,"st":[0,0,251,387,0,0,0],"k":[0,0,1,2,0,0,0],"ku":[0,0,251,387,0,0,0]},"all":{"n":3,"c":2,"x":1,"q":0,"u":638,"d":0,"w":0,"a":638,"an":2,"st":[0,0,251,387,0,0,0],"k":[0,0,1,2,0,0,0],"ku":[0,0,251,387,0,0,0]}},
   "noPrj": [],
   "projects": [
-    {"id":"PRJ-41273-0023","name":"안산신길2 B1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2029-02-28"},"units":387,"pks":[],"pnus":[],"bundles":[],"label":"안산신길2 B1","agency":"lh","moveIn":null,"completion":"2028-10-25","noticeUnits":null,"bjd":"4127310300","loc":{"by":"block","at":[126.776388,37.341316],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":2,"n97":2,"u":387,"u97":387,"j":"NORMAL"}},
-    {"id":"PRJ-41273-0024","name":"안산신길2 A6","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":251,"pks":[],"pnus":[],"bundles":[],"label":"안산신길2 A6","agency":"lh","moveIn":null,"completion":"2029-02-28","noticeUnits":null,"bjd":"4127310300","loc":{"by":"block","at":[126.771816,37.338033],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":1,"n97":1,"u":251,"u97":251,"j":"NORMAL"}}
+    {"id":"PRJ-41273-0023","name":"안산신길2 B1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"dateAlt":{"source":"LH","planned":"2029-02-28"},"units":387,"pks":[],"pnus":[],"bundles":[],"label":"안산신길2 B1","agency":"lh","moveIn":null,"completion":"2028-10-25","noticeUnits":null,"bjd":"4127310300","loc":{"by":"block","at":[126.776388,37.341316],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":2,"n97":2,"u":387,"u97":387,"j":"NORMAL","s":3,"s97":3,"rs":[[3,3,null,null,null],[3,3,387,387,"NORMAL"]]}},
+    {"id":"PRJ-41273-0024","name":"안산신길2 A6","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"SUPPLY_NOTICE","planned":"2026-10"},"units":251,"pks":[],"pnus":[],"bundles":[],"label":"안산신길2 A6","agency":"lh","moveIn":null,"completion":"2029-02-28","noticeUnits":null,"bjd":"4127310300","loc":{"by":"block","at":[126.771816,37.338033],"basis":"LH_PUBLIC_BLOCK_LABEL_POINT","status":"REVIEW"},"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":1,"n97":1,"u":251,"u97":251,"j":"NORMAL","s":2,"s97":2,"rs":[[2,2,251,251,"NORMAL"]]}}
   ]
 }

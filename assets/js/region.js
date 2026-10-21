@@ -526,7 +526,9 @@
   const homeInfo = (r) => ({ units: finite(r.units) && r.units > 0 ? r.units : null, noticeUnits: finite(r.noticeUnits) ? r.noticeUnits : null,
     loc: r.loc && HOME_LOC_TEXT[r.loc.by] ? Object.assign({ by: r.loc.by, text: HOME_LOC_TEXT[r.loc.by], status: r.loc.status || 'REVIEW' }, r.loc.by === 'name' && r.loc.match ? { match: String(r.loc.match) } : {}) : null,
     policy: r.policy && r.policy.status ? { status: r.policy.status, names: Array.isArray(r.policy.names) ? r.policy.names.map(String) : [], short: Array.isArray(r.policy.short) ? r.policy.short.map(String) : [] } : null,
-    poc: r.poc && finite(r.poc.n) ? { n: r.poc.n, n97: r.poc.n97 || 0, u: finite(r.poc.u) ? r.poc.u : null, u97: finite(r.poc.u97) ? r.poc.u97 : null, j: r.poc.j || null } : null });
+    poc: r.poc && finite(r.poc.n) ? { n: r.poc.n, n97: r.poc.n97 || 0, u: finite(r.poc.u) ? r.poc.u : null, u97: finite(r.poc.u97) ? r.poc.u97 : null, j: r.poc.j || null, s: pocSt(r.poc.s), s97: pocSt(r.poc.s97) } : null });
+  /* PoC 단계 번호(0 정책 ~ 5 입주, 6 미확인 — tools/ledger/home-map.js), 아니면 null */
+  function pocSt(v) { return Number.isInteger(v) && v >= 0 && v <= 6 ? v : null; }
   /* 점 둘레 정팔각형(경도·위도) */
   function ring8(c, rM) {
     const dl = rM / 111320, dn = rM / (111320 * Math.cos(c[1] * Math.PI / 180)), out = [];
@@ -569,7 +571,7 @@
       });
     });
     projects.sort((a, b) => (a.projectId < b.projectId ? -1 : a.projectId > b.projectId ? 1 : 0));
-    return { projects, unlocated: unlocated.map((r) => ({ id: r.id, name: String(r.name || r.id), label: String(r.label || r.name || r.id), cls: r.cls || null, at: r.loc && Array.isArray(r.loc.at) && r.loc.at.length === 2 && r.loc.at.every(finite) ? r.loc.at.slice() : null, stage: /^0[1-6]$/.test(r.stage || '') ? r.stage : null, units: finite(r.units) && r.units > 0 ? r.units : null, loc: r.loc && HOME_LOC_TEXT[r.loc.by] ? HOME_LOC_TEXT[r.loc.by] : '' })), total: rows.length };
+    return { projects, unlocated: unlocated.map((r) => ({ id: r.id, name: String(r.name || r.id), label: String(r.label || r.name || r.id), cls: r.cls || null, at: r.loc && Array.isArray(r.loc.at) && r.loc.at.length === 2 && r.loc.at.every(finite) ? r.loc.at.slice() : null, stage: /^0[1-6]$/.test(r.stage || '') ? r.stage : null, units: finite(r.units) && r.units > 0 ? r.units : null, loc: r.loc && HOME_LOC_TEXT[r.loc.by] ? HOME_LOC_TEXT[r.loc.by] : '', ...(r.poc ? { pst: { all: pocSt(r.poc.s), p97: pocSt(r.poc.s97) } } : {}) })), total: rows.length };
   }
   /* 원장 행 → 단계 칸(①~⑥)별 합계와 진행(①계획~④모집) 합계. 수도권 개요(lib/board/metro-overview.ts valuesBySgg)·사업 화면과 같은 정의:
      칸 = 원장 단계(01·02 → ①, 03 → ②, 04 → ③, 05 → ④, 06 → ⑤, 모르면 ①), 호수 = 계획 호수(없으면 호수 미확인 q 로 센다). 위치 미확보로 지도에 그리지 못한 사업도 센다(lost*).
@@ -590,23 +592,27 @@
   }
   /* HOME PoC 규칙 머리 줄 값(2026-10-21 — 수도권 개요와 같은 원천 행 PRO_ 단위, tools/ledger/home-map.js 의 시군구 파일 poc·noPrj·사업 poc).
      scope = 'p97'(9·7) | 'all'(정책 전체). 시군구 파일 여럿이면 더한다. 위치 미확보 = 원장 사업이 없는 행(noPrj) + 지도에 그리지 못한 사업(lostIds)에 이어진 행.
+     6단계 칩(PoC 단계 0~6): k·ku = 단계별 원천 행 수·집계 호수, lk·lu·ld = 그중 위치 미확보 행 수·호수·지연(판정 DELAYED) 행 수(행 단계는 파일 noPrj s·s97, 사업 poc.rs).
      PoC 값이 없는 파일(옛 자료)뿐이면 null */
   function homePoc(docs, lostIds, scope) {
     const ok = (docs || []).filter((d) => d && d.poc && d.poc[scope]);
     if (!ok.length) return null;
     const lost = new Set(lostIds || []), seen = new Set();
-    const t = { n: 0, c: 0, x: 0, q: 0, u: 0, d: 0, w: 0, a: 0, an: 0, st: [0, 0, 0, 0, 0, 0, 0], lostN: 0, lostU: 0, noPrj: [] };
+    const z7 = () => [0, 0, 0, 0, 0, 0, 0];
+    const t = { n: 0, c: 0, x: 0, q: 0, u: 0, d: 0, w: 0, a: 0, an: 0, st: z7(), k: z7(), ku: z7(), lk: z7(), lu: z7(), ld: z7(), lostN: 0, lostU: 0, noPrj: [] };
+    const lostRow = (s, u, j) => { const i = pocSt(s) ?? 6; t.lk[i] += 1; t.lu[i] += finite(u) ? u : 0; if (j === 'DELAYED') t.ld[i] += 1; };
     for (const d of ok) {
       const v = d.poc[scope];
       for (const k of ['n', 'c', 'x', 'q', 'u', 'd', 'w', 'a', 'an']) t[k] += finite(v[k]) ? v[k] : 0;
-      (v.st || []).forEach((x, i) => { if (i < 7 && finite(x)) t.st[i] += x; });
-      for (const r of d.noPrj || []) if (r && (scope === 'all' || r.p97)) { t.noPrj.push(r); t.lostN += 1; t.lostU += finite(r.u) ? r.u : 0; }
+      for (const k of ['st', 'k', 'ku']) (v[k] || []).forEach((x, i) => { if (i < 7 && finite(x)) t[k][i] += x; });
+      for (const r of d.noPrj || []) if (r && (scope === 'all' || r.p97)) { t.noPrj.push(r); t.lostN += 1; t.lostU += finite(r.u) ? r.u : 0; lostRow(scope === 'all' ? r.s : r.s97, r.u, r.j); }
       for (const p of d.projects || []) {
         if (!p || !p.poc || seen.has(p.id) || !lost.has(p.id)) continue;
         seen.add(p.id);
         t.lostN += scope === 'all' ? p.poc.n : p.poc.n97 || 0;
         const u = scope === 'all' ? p.poc.u : p.poc.u97;
         t.lostU += finite(u) ? u : 0;
+        for (const x of Array.isArray(p.poc.rs) ? p.poc.rs : []) if (Array.isArray(x) && (scope === 'all' || x[1] != null)) lostRow(scope === 'all' ? x[0] : x[1], scope === 'all' ? x[2] : x[3], x[4]);
       }
     }
     return t;

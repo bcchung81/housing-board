@@ -68,7 +68,7 @@ test("'/' 자료 = home-projects views.p97·region-calendar home.p97: 연결 175
   const HB = require('../../data/board/home-board.json'), HP = require('../../data/board/home-projects.json'), RC = require('../../data/board/region-calendar.json');
   const v = HP.views.p97, rc = RC.home.p97, rs = HP.rows.filter((r) => r.stats && r.p97 && r.chart.p97);
   assert.deepEqual([HB.scope.projects, HB.scope.units], [v.chart, v.units]);
-  assert.deepEqual([HB.scope.projects, HB.scope.units, HB.home.supplyUpcoming.total, HB.home.supplyUpcoming.projects], [175, 151271, 17838, 31]);
+  assert.deepEqual([HB.scope.projects, HB.scope.units, HB.home.supplyUpcoming.total, HB.home.supplyUpcoming.projects], [175, 151271, 17488, 30]);   // 2026-10-21 새 덤프: 12개월 공급 = PoC 17,488·30(10-20 판 17,838·31 — 인천부평 도시재생뉴딜 A 350호 덤프 뒤 변경 해소)
   for (const k of ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY']) assert.equal(HB.home.cards[k].current, v.reached[k], k);
   const J = HB.judgment;
   for (const k of ['NORMAL', 'WARNING', 'DELAYED', 'UNKNOWN']) {

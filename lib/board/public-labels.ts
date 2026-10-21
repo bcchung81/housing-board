@@ -4,7 +4,7 @@
    두 쪽이 같은 입력에 같은 결과인지는 tests/js/public-projects.test.cjs 가 템플릿 함수를 떼어 실제 원장 전체로 잠근다.
    다른 점(시험에서 예외로 적음): prjJudge 의 글자만 안 A(사실만, 2026-10-19 사용자 결정) — 정상은 빈칸, 주의·지연은 '준공 예정일이 19개월 지났어요'(템플릿 'n개월 늦어짐'). 종류(k)·개월(m)은 같다.
    제안서: scratchpad/public-menus/proposal.md 4·6·8.2절. */
-import type { Cls } from './projects-view';
+import type { Cls, ProjectRow } from './projects-view';
 
 /* 고비 넷(템플릿 NEXT): 0 모집 공고 · 1 착공 · 2 준공 · 3 입주 — 원장 next.eventType·상세 stages 열쇠와 같은 차례 */
 export const NEXT = ['모집 공고', '착공', '준공', '입주'] as const;
@@ -154,7 +154,7 @@ export type StageGroup = keyof typeof STAGE_GROUPS;
 export const STAGE_GROUP_NAME: Record<StageGroup, string> = { plan: '계획', permit: '인허가', build: '착공', sale: '모집' };
 export const groupOfBoard = (b: number): StageGroup | null => (b === 0 ? 'plan' : b === 1 ? 'permit' : b === 2 ? 'build' : b === 3 ? 'sale' : null);
 
-/* ---------- HOME PoC 행(2026-10-21 사용자 결정 — 사업 찾기의 모집단·값 = HOME PoC '정책 전체', 이름은 일반사용자 이름 그대로) ---------- */
+/* ---------- HOME PoC 행(2026-10-21 사용자 결정 — 사업 찾기의 모집단·값 = HOME PoC 9·7 기본(집계 행), 이름은 일반사용자 이름 그대로) ---------- */
 /* PoC 6칸(lib/board/projects-view HOME_NAMES 정책·사업화·인허가·건설·공급·입주 — homeRowsOf 의 board) → 일반사용자 6칸(STAGE_NAME):
    정책·사업화 → 계획, 인허가 → 인허가, 건설(PoC 는 준공을 건설에 넣는다) → 착공, 공급 → 모집, 입주 → 입주. 준공 칸으로 가는 PoC 칸은 없다 */
 export const PUBLIC_OF_HOME = [0, 0, 1, 2, 3, 5] as const;
@@ -165,9 +165,22 @@ export function homeFact(cls: Cls | null, gap: number | null, overdue: { eventTy
   if (overdue) return `${EV_NAME[overdue.eventType] ? EV_NAME[overdue.eventType] + ' ' : ''}예정일이 ${overdue.months ? `${overdue.months}개월 ` : ''}지났어요`;
   return gap ? `예정보다 ${Math.round(gap).toLocaleString('ko-KR')}호가 아직 확인되지 않았어요` : '예정보다 늦어지고 있어요';
 }
-/* 겹쳐서 합계에서 뺀 PoC 행(물량 집계 대상 아님 — 같은 블록의 다른 자료와 같은 사업)의 호수 칸 글자·설명 */
+/* 겹쳐서 합계에서 뺀 PoC 행(9·7 물량 집계 대상 아님 — 같은 블록의 다른 자료와 같은 사업, 사업 찾기에서는 대표 줄이 없을 때 이름 검색으로만 보인다)의 호수 칸 글자·설명 */
 export const DUP_TEXT = '합계에서 뺌';
 export const DUP_TIP = '같은 사업이 다른 자료에도 있어 호수는 한 번만 세요';
+/* 사업 찾기 이름 검색: 9·7 물량 집계에서 뺀 겹친·모호 행(chart.p97 아님) → 대표 집계 행(같은 블록 blockOf 또는 같은 현장 원장 사업 ourId).
+   also = 대표 행 id → 겹친 행 이름들(이름 검색이 대표 줄에 걸리게), orphan = 대표 집계 행이 없는 겹친 행(PoC 9·7 에서 그 블록 전체가 집계 밖 — 이름 검색일 때만 그 줄 그대로) */
+export function dupAliases(rows: Pick<ProjectRow, 'id' | 'name' | 'home'>[], blockOf: (id: string) => string | null) {
+  const ch = rows.filter((r) => r.home!.chart.p97), also = new Map<string, string[]>(), orphan = new Set<string>();
+  for (const r of rows) {
+    if (r.home!.chart.p97) continue;
+    const b = blockOf(r.id), o = r.home!.ourId;
+    const reps = ch.filter((c) => (b && blockOf(c.id) === b) || (o && c.home!.ourId === o));
+    if (!reps.length) orphan.add(r.id);
+    for (const c of reps) also.set(c.id, [...(also.get(c.id) ?? []), r.name]);
+  }
+  return { also, orphan };
+}
 
 /* ---------- 숫자 ---------- */
 /* 큰 합계 '22만 7,976호'(템플릿 bigNum + 단위) · 비교 숫자 '1,285호' */

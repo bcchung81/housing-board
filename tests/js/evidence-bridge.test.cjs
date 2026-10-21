@@ -81,8 +81,8 @@ test('D9 원본 대조: 근거는 공고문 주소 · 채택된 연결 · 연도
 });
 
 test('D7: 근거 연결 공고 연결 126쌍(LH 122 · GH 4) 모두 REVIEW_REQUIRED, 주소의 공고 번호 = 연결 공고 번호(코드만), 겹치는 쌍 없음', () => {
-  assert.equal(bridge.length, 126);
-  assert.deepEqual(bridge.reduce((o, l) => ({ ...o, [l.notice_system]: (o[l.notice_system] ?? 0) + 1 }), {}), { LH: 122, GH: 4 });
+  assert.equal(bridge.length, 128);   // 2026-10-21 새 덤프(20261020T142230Z): 근거 연결 661 → 708, LH 공고 2쌍 +2(인천부평 A·계양 A3)
+  assert.deepEqual(bridge.reduce((o, l) => ({ ...o, [l.notice_system]: (o[l.notice_system] ?? 0) + 1 }), {}), { LH: 124, GH: 4 });
   const notices = new Map(rows('notices').map((n) => [`${n.notice_system}|${n.notice_id}`, n]));
   for (const l of bridge) {
     assert.equal(l.review_status, 'REVIEW_REQUIRED');
@@ -102,8 +102,8 @@ test('D7: 근거 연결 공고 연결 126쌍(LH 122 · GH 4) 모두 REVIEW_REQUI
 
 test('D7 화면: 공고 줄 사업 41 → 60곳(근거 연결로만 새로 생긴 19곳), 근거 연결 공고는 모두 검토 표지·원문 주소', () => {
   const withN = Object.values(PD).filter((x) => x.notices);
-  assert.equal(withN.length, 60);
-  assert.equal(withN.filter((x) => x.notices.every((n) => n.system !== 'APPLYHOME')).length, 19);
+  assert.equal(withN.length, 62);   // 2026-10-21 새 덤프(20261020T142230Z): +2(인천부평 A·계양 A3 근거 연결 공고)
+  assert.equal(withN.filter((x) => x.notices.every((n) => n.system !== 'APPLYHOME')).length, 21);
   for (const n of withN.flatMap((x) => x.notices).filter((n) => n.system !== 'APPLYHOME')) {
     assert.equal(n.review, 'REVIEW_REQUIRED');
     assert.match(n.url, /^https:\/\/(apply\.lh\.or\.kr|apply\.gh\.or\.kr)\//);
@@ -115,7 +115,7 @@ test('D7 은 연결만: 공고 확인 호수 합(41곳 22,952호)·모집공고 
   assert.deepEqual([v.length, v.reduce((s, x) => s + x.notice, 0)], [41, 22952]);
   const units = rows('units'), notice = noticeUnitsOf({ units, events: EVENTS }), ids = rows('projects').map((p) => p.local_project_id);
   assert.equal(ids.reduce((s, id) => s + (notice(id) ?? 0), 0), 22952);
-  assert.equal(EVENTS.filter((e) => e.event_type === 'SUPPLY_NOTICE').length, 124);
+  assert.equal(EVENTS.filter((e) => e.event_type === 'SUPPLY_NOTICE').length, 126);   // 2026-10-21 새 덤프(20261020T142230Z): 인천서구 공급계획 행이 합쳐진 PRJ-28275-0034·0037 의 모집 예정(PLANNED) +2 — 근거 연결 사건은 여전히 0
   assert.equal(EVENTS.filter((e) => BRIDGE.test(e.source_ref)).length, 0);
   const j = json('data/board/ledger-board.json').judgment;
   assert.deepEqual([j.ok.projects, j.caution.projects, j.delay.projects], [172, 11, 2]);

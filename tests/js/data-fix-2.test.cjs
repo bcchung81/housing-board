@@ -61,13 +61,13 @@ test('#21 상태 이름: 판정 없음을 준공 완료 · 판정 일정 없음 
   const none = rows.filter((r) => V.statusOf(r) === 'none');
   // 2026-10-19 수도권 한정: 판정 없음 309 → 93(판정 일정 없음 14 → 13 전부 수도권, 준공 완료 73 → 0 — 건축HUB 후보가 빠져 HOME 행엔 준공 완료 표시가 없다, 일정 없음 80)
   // 2026-10-20 HOME 판: 판정 없음 93 → 195(새 사업 122 중 일정 없는 것 — 일정 없음 80 → 183, 판정 일정 없음 13 → 12)
-  assert.equal(none.length, 100);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) — 둘 다 판정 일정이 없던 사업이라 판정 없음만 192 → 100 · 2026-10-20 같은 현장 병합 6쌍: 평택고덕 대표 3곳이 공사 계약 일정을 넘겨받아 판정 대상(정상)이 됨 195 → 192
+  assert.equal(none.length, 103);   // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3(판정 일정 없음) 100 → 103 · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) — 둘 다 판정 일정이 없던 사업이라 판정 없음만 192 → 100 · 2026-10-20 같은 현장 병합 6쌍: 평택고덕 대표 3곳이 공사 계약 일정을 넘겨받아 판정 대상(정상)이 됨 195 → 192
   const by = (k) => none.filter((r) => V.noneKind(r) === k);
   assert.equal(by('plan').length, 13);   // 2026-10-20 D9 SH 공고문 입주 예정: 고덕강일 3단지(PRJ-11740-0102)가 다음 일정이 생겨 일정 없음 → 판정 일정 없음(12 → 13)
   assert.ok(by('plan').some((r) => r.id === 'PRJ-11740-0102'));
   assert.equal(by('plan').filter((r) => V.isMetro(r.sgg)).length, 13);
   assert.equal(by('done').length, 0);
-  assert.equal(by('none').length, 87);   // D9: 88 → 87(위 고덕강일 3단지)   // 2026-10-20 공공 분류 안2: 빠진 민간 92곳은 모두 일정 없음 180 → 88 · 2026-10-20 같은 현장 병합 6쌍: 일정 없던 평택고덕 대표 3곳이 판정 대상이 됨 183 → 180
+  assert.equal(by('none').length, 90);   // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3(일정 없음) 87 → 90 · D9: 88 → 87(위 고덕강일 3단지)   // 2026-10-20 공공 분류 안2: 빠진 민간 92곳은 모두 일정 없음 180 → 88 · 2026-10-20 같은 현장 병합 6쌍: 일정 없던 평택고덕 대표 3곳이 판정 대상이 됨 183 → 180
   assert.ok(by('done').every((r) => r.done));
   const doneRow = { ...none[0], done: '2026-01', next: null };   // 준공 완료 이름은 합성 행으로 확인(원장엔 해당 행이 없다)
   assert.deepEqual([V.statusLabel(doneRow), V.statusLabel(by('plan')[0]), V.statusLabel(by('none')[0])], ['준공 완료', '판정 일정 없음', '일정 없음']);
@@ -78,9 +78,9 @@ test('#21 상태 이름: 판정 없음을 준공 완료 · 판정 일정 없음 
   assert.match(page, /<dt>상태 · 부족 호수<\/dt><dd>\{JUDGE_DEF\}/, '2026-10-21 목록 읽는 법 ⓘ 에 PoC 상태 정의(준공 완료·판정 일정 없음 이름은 원장 판 statusLabel 이 그대로)');   assert.doesNotMatch(page, /NONE_NAME/);
   /* D3(2026-10-15): 번호가 없는 후보는 확인 필요 — 2026-10-19 수도권 한정: 후보 1,839건(옛 정상 1,442 · 주의 84 · 지연 96 · 장기 217)이 원장에서 빠져 review 0 */
   const st = {}; for (const r of rows) st[V.statusOf(r)] = (st[V.statusOf(r)] ?? 0) + 1;
-  assert.deepEqual(st, { none: 100, ok: 172, long: 2, caution: 11 }, '상태 건수(review 없음)');   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)(판정 없음만 −92) · 2026-10-20 HOME 판 → 같은 현장 병합·기준일 10-20
+  assert.deepEqual(st, { none: 103, ok: 172, long: 2, caution: 11 }, '상태 건수(review 없음)');   // 2026-10-21 새 덤프: 새 사업 3 판정 없음 · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)(판정 없음만 −92) · 2026-10-20 HOME 판 → 같은 현장 병합·기준일 10-20
   const calc = {}; for (const r of rows) calc[V.calcOf(r)] = (calc[V.calcOf(r)] ?? 0) + 1;
-  assert.deepEqual(calc, { none: 100, ok: 172, long: 2, caution: 11 }, '같은 계산(번호와 상관없이) — 후보가 없어 상태와 같다');   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
+  assert.deepEqual(calc, { none: 103, ok: 172, long: 2, caution: 11 }, '같은 계산(번호와 상관없이) — 후보가 없어 상태와 같다');   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
 });
 
 test('#25 시 단위 코드: 구가 있는 경기 시는 구 사업을 합치고, 지도 개요와 같은 건수', () => {
@@ -104,11 +104,11 @@ test('#25 시 단위 코드: 구가 있는 경기 시는 구 사업을 합치고
 test('#27 위치 미확보: 서랍과 같은 상세 자료에 좌표가 없는 수도권 사업은 지도 열에 표지(링크는 유지)', () => {
   const metro = rows.filter((r) => V.isMetro(r.sgg));
   const noLoc = metro.filter((r) => DET.projects[r.id] && !DET.projects[r.id].loc);
-  assert.equal(noLoc.length, 47);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): 위치 없던 민간 사업 77곳 빠짐(home-map 위치 none 47) 124 → 47 · 2026-10-20 HOME 판: 위치 미확보 26 → 127(새 사업 다수가 위치 원천 없음 — home-map 위치 none 127) → 2026-10-20 같은 현장 병합 6쌍: 위치 없던 대체 3곳(인천검단 0064·0065, 인천부평 0068) 빠짐 124
+  assert.equal(noLoc.length, 30);   // 2026-10-21 새 덤프(20261020T142230Z): HOME 위치 행(project_location) 194 → 310 으로 위치 미확보이던 20곳이 지구 근사 위치를 얻고(−20), 위치 없는 새 사업 3(독산동·연남동·방화차고지) +3 → 47 → 30 · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): 위치 없던 민간 사업 77곳 빠짐(home-map 위치 none 47) 124 → 47 · 2026-10-20 HOME 판: 위치 미확보 26 → 127(새 사업 다수가 위치 원천 없음 — home-map 위치 none 127) → 2026-10-20 같은 현장 병합 6쌍: 위치 없던 대체 3곳(인천검단 0064·0065, 인천부평 0068) 빠짐 124
   const check = metro.filter(V.isCheck);
   assert.equal(check.length, 13);   // 2026-10-20 HOME 판: 주의 10 + 지연 2 → 기준일 10-20 주의 11(성남금토 A2) + 지연 2
-  /* 기준일 10-20 에 주의가 된 성남금토 A2 는 LH 블록 라벨점 위치가 있다 — 나머지 12건은 위치 미확보 */
-  assert.deepEqual(check.filter((r) => DET.projects[r.id].loc).map((r) => r.id), ['PRJ-41131-0050'], '수도권 점검 필요 13건 중 위치 있는 것은 성남금토 A2 하나');
+  /* 기준일 10-20 에 주의가 된 성남금토 A2 는 LH 블록 라벨점 위치가 있다. 2026-10-21 새 덤프: HOME 위치 행이 늘어(194 → 310) 8건이 지구 근사 위치를 얻었다 — 나머지 4건은 위치 미확보 */
+  assert.deepEqual(check.filter((r) => DET.projects[r.id].loc).map((r) => r.id), ['PRJ-28245-0058', 'PRJ-28245-0059', 'PRJ-41110-0009', 'PRJ-41110-0008', 'PRJ-41110-0004', 'PRJ-41131-0050', 'PRJ-41190-0006', 'PRJ-41360-0233', 'PRJ-41360-0232'], '수도권 점검 필요 13건 중 위치 있는 것 9건(성남금토 A2 + 새 덤프 지구 근사 8)');
   const c = L.mapCell(check.find((r) => !DET.projects[r.id].loc), true);
   assert.equal(c.text, L.NO_LOC);
   assert.equal(c.text, '위치 미확보');
@@ -147,7 +147,7 @@ test('#15 날짜 점 표기: 종합상황판·사업·지역 공급 title 의 �
 test('#16 단위 건: 종합상황판 카드·향후 12개월', () => {
   const d = makeDirectives({ sourceCount: 1, stageNames: ['a', 'b', 'c', 'd', 'e', 'f'], ledger: BOARD, start: { year: '2026', upto: 8, cum: 1, cumLy: 1 }, bottleneck: () => null });
   // 2026-10-19 수도권 한정: 사업 2,317건 → 262건, 후보 계산 313건이 빠져 지연 카드는 쌍 숫자 없이 '지연 2건'(옛 315건 = 2 + 후보 313)
-  assert.equal(d[1].m, '285건');   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) · 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍
+  assert.equal(d[1].m, '288건');   // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3 · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) · 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍
   assert.equal(d[4].m, '지연 2건', 'D3: 사업 번호가 있는 사업만, 후보 0이면 쌍 숫자 없음');
   assert.ok(d.every((x) => !/사업$/.test(x.u)));
   const board = read('components/board/Board.tsx');
@@ -176,7 +176,7 @@ test('#19 지역 공급 합계는 정확한 호수(축 눈금만 근삿값), 달
   const ahead = read('components/region/Ahead.tsx');
   assert.match(ahead, /title=\{`\$\{monthLabel\(x\)\} \$\{xs\.length\}\$\{W\.count\} \$\{fmt\(tot\[i\]\)\}호/);
   const metro = R.aheadAll(calendar, 'metro', sido);
-  assert.equal(metro.reduce((s, e) => s + e.units, 0), 31362, '수도권 12개월 예정 합(정확한 값)');   // 2026-10-20 HOME 판 27,494 → 28,692 → D9 LH 공고문 입주 예정 2곳(성남신촌 A-1 227 · 이천장호원 B2 620) 29,539 → GH·SH 공고문 2곳(다산지금 A3 518 · 고덕강일 3단지 1,305) 31,362
+  assert.equal(metro.reduce((s, e) => s + e.units, 0), 31420, '수도권 12개월 예정 합(정확한 값)');   // 2026-10-21 새 덤프(20261020T142230Z): 인천서구 공급계획 행이 합쳐진 PRJ-28275-0034 거북이기지 모집 예정 2026-12 58호 +58 (0037 석남어울림 준공 예정은 공사 진행 원천의 이른 날 2027-09 → 2027-08, 호수 같음) ·  2026-10-20 HOME 판 27,494 → 28,692 → D9 LH 공고문 입주 예정 2곳(성남신촌 A-1 227 · 이천장호원 B2 620) 29,539 → GH·SH 공고문 2곳(다산지금 A3 518 · 고덕강일 3단지 1,305) 31,362
 });
 
 test('#24 지연율 기준 표기: 시도 타일·선택 시점 막대 모두 호수 기준(2026-10-16 3차 — 한 화면 한 기준)', () => {
@@ -233,11 +233,11 @@ test('불변식: 지연 2건(D3 — 번호 있는 사업만, 수도권 한정으
   const s97 = PP.policies.find((p) => p.policyId.includes('97') || p.name.includes('9·7')).stages.SUPPLY.samePeriod.find((y) => y.year === 2026);
   assert.deepEqual([s97.target, s97.actual, s97.actualWithEstimates], [8049, 4732, 8742]);
   const metro = V.summaryOf(V.applyFilters(rows, pf({})));
-  assert.deepEqual([metro.n, metro.units], [285, 242279]);   // 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
+  assert.deepEqual([metro.n, metro.units], [288, 242382]);   // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3(103호) · 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
   const f = pf({ sido: 'all' }), list = V.listOrder(V.applyFilters(rows, f));
   const grid = L.listRows(list, f, null, sido);
   const csv = S.toCsv(L.csvCols(L.dropBlank(L.LIST_COLS, grid).cols), L.csvRows(grid)).split('\r\n').filter(Boolean);
   assert.equal(csv.length - 1, grid.length);
-  assert.equal(grid.length, 285);   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) · 2026-10-20 HOME 판 262→383 → 2026-10-20 같은 현장 병합 6쌍 377 · 2026-10-19 수도권 한정: 목록 2,317행 → 262행
+  assert.equal(grid.length, 288);   // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3 · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) · 2026-10-20 HOME 판 262→383 → 2026-10-20 같은 현장 병합 6쌍 377 · 2026-10-19 수도권 한정: 목록 2,317행 → 262행
   assert.deepEqual(csv.slice(1).map((l) => l.split(',')[0]), list.map((r) => r.id), 'CSV 순서 = 목록 순서');
 });

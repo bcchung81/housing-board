@@ -2,7 +2,7 @@
    - 면: data/board/region-map.json 의 시군구 67곳(서울 25 · 인천 11 · 경기 31 — 경기는 시 단위). 경로(투영 정수)는 그대로 넘기고 지도 쪽(assets/js/overview.js)이 경위도 GeoJSON 으로 되돌린다.
    - 값(2026-10-21 HOME PoC #overview 와 같은 규칙 — homeOverview): tools/ledger/map-overview.js 가 공통 사업 자료(home-projects.json, PoC 원천 행 PRO_ 단위)로 센
      data/board/map-overview.json 을 면·구·시도로 접는다. 범위 둘을 함께 싣고(p97 = 9·7 포트폴리오 230행 · all = 정책 전체 443행) 지도 쪽이 고른다
-     (정책담당자 기본 9·7, ?policy=all 이면 정책 전체, 일반사용자 관점은 정책 전체). 값 뜻은 map-overview.js 머리 주석.
+     (두 관점 모두 기본 9·7 — 2026-10-21 W4 결정 ⑤, ?policy=all 이면 정책 전체). 값 뜻은 map-overview.js 머리 주석.
      PoC 시군구 미연결 행은 시군구 면에는 없고 시도·수도권 합계에만 든다(PoC 와 같다).
    - 옛 원장 규칙(metroOverview·valuesBySgg — 사업 화면 목록 행 ①~④ 진행 호수·예정일 경과 지연·12개월 준공)은 지도가 더 쓰지 않는다. 공유 시험(data-audit-1016)이 부르므로 남겨 둔다.
    - 코드: 원장 시군구 코드 → 면. 서울·인천은 코드 그대로, 경기는 시 단위로 접는다(앞 4자리 + '0': 41281 고양시 덕양구 → 41280 고양시). */

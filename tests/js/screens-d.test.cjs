@@ -170,13 +170,15 @@ test('9 착공 카드(통계누리) → ③착공 목록(원장): 목록 머리�
   const hctx = { ...fctx, programs: V.homeProgramsOf(home), home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
   const hf = V.parseFilters(Object.fromEntries(new URL(HD[0].list.href, 'http://x').searchParams), hctx), hl = V.applyFilters(home, hf);
   // 기준일 2026-10-20: 9·7 원천 행 중 지금 ④건설인 행 22건 · 집계 호수 17,865호(HOME 원천 행)
-  assert.deepEqual([hl.length, V.homeSummaryOf(hl, V.homeChartOf(hf)).units], [22, 17865], '목록 22건 · 17,865호(정책 진행 자료 원천 행)');
+  // 2026-10-21 새 덤프(20261020T142230Z): 덤프 뒤였던 담당자 단계 측정값이 판에 들어와 ④건설 도달 행이 늘었다 → 26건 · 20,368호
+  assert.deepEqual([hl.length, V.homeSummaryOf(hl, V.homeChartOf(hf)).units], [26, 20368], '목록 26건 · 20,368호(정책 진행 자료 원천 행)');
   const l = listOf(D[0].list.href);
   // 2026-10-19 수도권 한정: ③착공 목록 194건·107,554호 → 71건·48,320호 (= BOARD.stageUnits 지금 ③ 48,320, 후보 제외)
   // 2026-10-20 HOME 판: 71건·48,320호 → 150건·70,761호(새 사업 중 착공 단계 79건 — 단계 올리기 CONSTRUCTION_START 79)
   // 2026-10-20 같은 현장 병합 6쌍: ③ 인천 대체 3곳(2,016호) 빠지고 평택고덕은 대체 3 ↔ 대표 3(2,122호)이 맞바뀌어 147건·68,745호
   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): ③ 민간 79곳(22,329호) 빠져 68건·46,416호
-  assert.deepEqual([l.n, l.units], [68, 46416], '목록 68건 · 46,416호(원장)');
+  // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 독산동(20호)·방화차고지(75호) ③착공 +2건·+95호
+  assert.deepEqual([l.n, l.units], [70, 46511], '목록 70건 · 46,511호(원장)');
 });
 
 test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227,976호', () => {
@@ -186,5 +188,5 @@ test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227
   const c = BOARD.judgment.candidate;
   assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 0);
   const metro = listOf('/projects?sido=metro');
-  assert.deepEqual([metro.n, metro.units], [285, 242279]);   // 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
+  assert.deepEqual([metro.n, metro.units], [288, 242382]);   // 2026-10-21 새 덤프: 새 사업 3 · 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
 });

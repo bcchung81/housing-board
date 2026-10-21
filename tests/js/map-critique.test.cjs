@@ -55,7 +55,8 @@ test('사업 카드 제목은 꼬리표·목록과 같은 짧은 이름(b.id, 20
 test("단위: 단계 줄·요약은 사업 수 '건'·호수 '호'(단지 아님), 후보는 '후보 사업'", () => {
   const code = noComments(app);
   assert.match(code, /<span class="sf-n">\$\{bs\.length\}건<\/span>/);
-  assert.match(code, /<span class="hs-n">· \$\{tot\.prog \? '진행 ' : tot\.pre \|\| ''\}\$\{tot\.n\}건/);   // 수도권은 '9·7 연결 원천 n건'(2026-10-21 HOME PoC 규칙 — 수도권 개요와 같은 원천 행)
+  assert.match(code, /<span class="hs-n">· \$\{tot\.prog \? '진행 ' : tot\.pre \|\| ''\}\$\{tot\.n\}\$\{tot\.unit \|\| '건'\}/);   // 수도권은 '9·7 연결 원천 n건'(2026-10-21 HOME PoC 규칙 — 수도권 개요와 같은 원천 행), 일반사용자는 '사업 n곳'(W5-MP2)
+  assert.match(code, /n: pub \? P\.c - P\.q : P\.n, unit: pub \? '곳' : '건', unk: pub \? 0 : P\.q,/, '일반사용자 사업 수 = 집계 행(c − q), 물량 없음 칸 없음');
   assert.match(code, /<span class="sf-n">\$\{h\.n\}건<\/span>/);
   assert.doesNotMatch(code, /\}단지<|개 단지|단지 없음|번호 발급 전<\/small>/);
   assert.match(code, /<small>후보 사업<\/small>/);
@@ -406,10 +407,10 @@ test('A7-2·A8-5 카드 상태: 판정 칩 하나 + 이유 한 줄(경과·예�
   const fn = noComments(/function blockPopup\([\s\S]*?\n\}\n/.exec(app)[0]);
   assert.match(fn, /\['상태', `<span class="pc-chip jd-c \$\{lg\.cls\}"[\s\S]*?>\$\{esc\(lt\.cls\)\}<\/span>\$\{why \|\| alt \? `<span class="pc-why">\$\{esc\(why\)\}/);
   assert.match(fn, /const why = lt && lt\.cls \? \[statusReason\(lt\), b\.status === '준공 임박' && !lt\.pastDue \? '준공 임박' : ''\]/);
-  assert.match(fn, /const headTxt = lt && lt\.cls && b\.status === '준공 임박' \? STATUS_TXT\['건설 단계'\]/, "상태 칸이 있으면 머리 칩은 '착공'(준공 임박은 이유 줄로)");
+  assert.match(fn, /const headTxt = b\.pst != null \? stTxt\(b\) : lt && lt\.cls && b\.status === '준공 임박' \? STATUS_TXT\['건설 단계'\]/, "상태 칸이 있으면 머리 칩은 '착공'(준공 임박은 이유 줄로), 수도권 PoC 단계가 있으면 그 단계 이름(2026-10-21 W4 결정 ④)");
   assert.doesNotMatch(fn, /statusLine/);
   assert.doesNotMatch(fn, /jd caution"[^>]*>예정일 지남/, "'예정일 지남' 경고색 표지는 따로 없다");
-  assert.match(fn, /chipHtml\(KIND\[b\.status\], headTxt\)/);
+  assert.match(fn, /chipHtml\(b\.pst != null \? kindOf\(b\) : KIND\[b\.status\], headTxt\)/);
   assert.match(app, /const altMark = \(a, home\) => `<b class="jd alt ov-aud-admin"/);   // 원천 날짜 다름은 정책담당자 관점에만(2026-10-18)
   assert.match(css, /\.jd\.alt\{color:var\(--mute\)/);
 });

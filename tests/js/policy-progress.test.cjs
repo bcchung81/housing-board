@@ -6,6 +6,10 @@
 //   공급(분양·모집) 2026 값은 10-14 판과 같고(8,049 대 8,742), 연결 사업 197→228 로 사업화·인허가·준공·입주 목표와 2031년 공급 목표 끝점이 늘었다.
 // 2026-10-21 HOME 2038810 이식: 6단계 목표·확인 점·연도 쌍은 그대로였고(코호트가 바뀐 광교 A17 은 기간 안 점이 없다), basis 의 연결 사업·코호트 수만 바뀌었다.
 //   PoC(as_of 10-20) 공급 2026 연간 목표 10,684 대 우리 10,676 의 8호 = 덤프 뒤 매핑된 연남동 공공임대주택 코호트(8호) — 덤프로는 맞출 수 없다.
+// 2026-10-21 새 덤프(20261020T142230Z, 2026-10-20 23:22 KST, HOME 2038810): 덤프 뒤였던 담당자 입력·매핑(독산동·방화차고지·연남동)이 판에 들어와 PoC(as_of 10-20, 2026-10-21 11:27 KST 받은 /policy-delivery/view)와
+//   6단계 목표·확인 점이 모두 같다. 연남동 공공임대주택(PRO_b8e9b07eb43ee60a807ec231) 근거 연결 사실(SH 2025-11 업무보고, reference_only — '당시 계획')의 2026-10 준공 8호는
+//   2026-10-21 W5 사용자 결정 'HOME 기준'으로 일정에서 뺀다(policy-progress.js — 덤프의 reference_only PLAN 3건이 모두 PoC 에 없고 HOME project_profile.target_default 도 거른다.
+//   2038810 policy_delivery 에는 없는 처리) → 준공 목표 누적도 PoC 와 같다.
 // HOME 원본(jsonl.gz)은 저장소에 없다(gitignore, Storage) — 없으면 원본으로 다시 계산하는 시험은 건너뛴다.
 const test = require('node:test');
 const assert = require('node:assert/strict');
@@ -27,14 +31,14 @@ test('HOME 화면 공급(분양·모집) 값 재현: 목표 점·확인 점·연
   assert.equal(saved.asOf, '2026-10-20');   // 2026-10-20 판 덤프 시각(KST)
   assert.deepEqual(supply.targetPoints.slice(0, 9).map((p) => [p.date, p.units, p.annual_units]), [
     ['2026-02-28', 206, 206], ['2026-05-29', 1139, 933], ['2026-06-30', 3506, 2367], ['2026-07-31', 4640, 1134], ['2026-08-31', 7082, 2442],
-    ['2026-09-30', 8049, 967], ['2026-10-31', 8979, 930], ['2026-11-30', 9673, 694], ['2026-12-31', 10676, 1003]]);
-  assert.deepEqual([supply.targetPoints.length, supply.targetPoints.at(-1).date, supply.targetPoints.at(-1).units], [22, '2031-11-16', 84398], '승인 일정(담당자 산정)은 2031년까지');
+    ['2026-09-30', 8049, 967], ['2026-10-31', 8979, 930], ['2026-11-30', 9673, 694], ['2026-12-31', 10684, 1011]]);   // 2026-10-21 새 덤프: 연남동 8호 코호트(2026년4분기 공급)가 들어와 PoC 10,684 와 같다
+  assert.deepEqual([supply.targetPoints.length, supply.targetPoints.at(-1).date, supply.targetPoints.at(-1).units], [22, '2031-11-16', 84406], '승인 일정(담당자 산정)은 2031년까지');   // 2026-10-21 새 덤프 +8(연남동)
   assert.deepEqual(supply.actualPoints.map((p) => [p.date, p.units, p.confirmed_units, p.policy_confirmed_units, p.review_units]), [
     ['2026-02-27', 381, 381, 381, 0], ['2026-05-28', 899, 899, 899, 0], ['2026-05-29', 1832, 1832, 1832, 0], ['2026-06-30', 4199, 4199, 4199, 0],
     ['2026-07-31', 4739, 4739, 4739, 0], ['2026-08-10', 5333, 5333, 5333, 0], ['2026-08-31', 7775, 7775, 7775, 0], ['2026-09-30', 8742, 8742, 8742, 0]], '담당자 측정값이 확인 필요 연결을 대신한다');
   const y = (n) => supply.annual.find((a) => a.year === n);
   assert.deepEqual(y(2025), { year: 2025, target_units: null, target_cumulative_units: null, management_cumulative_units: null, actual_units: null, actual_cumulative_units: null, actual_through: null, actual_status: 'NOT_ACQUIRED' });
-  assert.deepEqual(y(2026), { year: 2026, target_units: 10676, target_cumulative_units: 10676, management_cumulative_units: null, actual_units: 8742, actual_cumulative_units: 8742, actual_through: '2026-09-30', actual_status: 'PARTIAL' });
+  assert.deepEqual(y(2026), { year: 2026, target_units: 10684, target_cumulative_units: 10684, management_cumulative_units: null, actual_units: 8742, actual_cumulative_units: 8742, actual_through: '2026-09-30', actual_status: 'PARTIAL' });
   assert.deepEqual(supply.homeRule, { target: { date: '2026-09-30', units: 8049 }, actual: { date: '2026-09-30', units: 8742, reviewUnits: 0, confirmedUnits: 8742 }, status: 'REACHED', gap: 0, shortfallPct: 0 });
 });
 
@@ -46,10 +50,10 @@ test('같은 기간 비교(우리 기본): 2026-01~09 목표 8,049 대 확인 4,
   assert.deepEqual(supply.monthly.find((m) => m.month === '2026-09'), { month: '2026-09', target: 8049, actual: 8742, targetYtd: 8049, actualYtd: 8742 }, '월말 시계열은 HOME 과 같다(추정 포함)');
 });
 
-test('추정 분리: 공급 측정값 156건 중 담당자 추정(OFFICER_CURRENT_ESTIMATE) 101건(2026-10-20 판, 10-14 판 125·70) · 확인 ≤ 추정 포함, 추정 입력이 없는 단계(착공 통계·준공)는 같다', { skip: SKIP }, () => {
+test('추정 분리: 공급 측정값 158건 중 담당자 추정(OFFICER_CURRENT_ESTIMATE) 98건(2026-10-21 새 덤프, 10-20 판 156·101, 10-14 판 125·70) · 확인 ≤ 추정 포함, 추정 입력이 없는 단계(착공 통계·준공)는 같다', { skip: SKIP }, () => {
   const svc = PP.homeService(H.readHome(HOME_DIR), saved.asOf);
   const sup = [...svc.profiles.values()].map((p) => p.progress?.SUPPLY).filter(Boolean);
-  assert.deepEqual([sup.length, sup.filter((v) => PP.ESTIMATE_RULES.has(v.input_rule)).length], [156, 101]);
+  assert.deepEqual([sup.length, sup.filter((v) => PP.ESTIMATE_RULES.has(v.input_rule)).length], [158, 98]);   // 2026-10-21 새 덤프: 담당자 측정값 입력 변경(project_profile 300 → 322)
   const b = PP.buildCohorts(svc, saved.asOf, PP.POLICY_ID);
   const est = b.cohorts.flatMap((c) => c.events).filter((e) => e.estimate);
   assert.ok(est.length > 0 && est.every((e) => e.origin === 'MANUAL'), '추정 표지는 담당자 측정값에만');
@@ -77,18 +81,20 @@ test('다른 단계 고정값(덤프 판 = HOME 운영 API): 착공은 원문 �
   const y26 = (k) => st[k].samePeriod.find((y) => y.year === 2026);
   assert.deepEqual([y26('CONSTRUCTION').target, y26('CONSTRUCTION').actual, y26('CONSTRUCTION').status], [null, 86739, 'NOT_DUE']);
   /* 2026-10-20 판(HOME 운영 API 와 같음): 사업화 확인 3,560→7,808(추정 포함 5,789→10,037), 인허가 목표 1,543→3,658·확인 3,560→6,249(추정 포함 8,478) */
-  assert.deepEqual([y26('BUSINESS').target, y26('BUSINESS').actual, y26('BUSINESS').actualWithEstimates, y26('BUSINESS').status], [14694, 7808, 10037, 'GAP']);
-  assert.deepEqual([y26('APPROVAL').target, y26('APPROVAL').actual, y26('APPROVAL').actualWithEstimates, y26('APPROVAL').status, y26('COMPLETION').actual, y26('COMPLETION').status], [3658, 6249, 8478, 'REACHED', 381, 'REACHED']);
+  /* 2026-10-21 새 덤프(PoC 운영 값과 같음): 사업화 확인 7,808→18,854(추정 포함 10,037→21,083, 목표 도달), 인허가 목표 3,658→8,386·확인 6,249→10,403(추정 포함 8,478→12,632) */
+  assert.deepEqual([y26('BUSINESS').target, y26('BUSINESS').actual, y26('BUSINESS').actualWithEstimates, y26('BUSINESS').status], [14694, 18854, 21083, 'REACHED']);
+  assert.deepEqual([y26('APPROVAL').target, y26('APPROVAL').actual, y26('APPROVAL').actualWithEstimates, y26('APPROVAL').status, y26('COMPLETION').actual, y26('COMPLETION').status], [8386, 10403, 12632, 'REACHED', 381, 'REACHED']);
   assert.deepEqual([y26('MOVE_IN').target, y26('MOVE_IN').actual, y26('MOVE_IN').status], [null, null, 'NOT_DUE']);
   assert.deepEqual(st.CONSTRUCTION.targetPoints.map((p) => p.units), [269000, 515000, 765000, 1014000, 1349000]);
-  assert.deepEqual(st.APPROVAL.annual.find((a) => a.year === 2026), { year: 2026, target_units: 9456, target_cumulative_units: 9456, management_cumulative_units: null, actual_units: 8478, actual_cumulative_units: 27119, actual_through: '2026-09-01', actual_status: 'PARTIAL' });
-  assert.deepEqual(st.COMPLETION.annual.find((a) => a.year === 2029).target_cumulative_units, 21605);   // 2026-10-20 판(10-14 판 17,386)
+  assert.deepEqual(st.APPROVAL.annual.find((a) => a.year === 2026), { year: 2026, target_units: 14184, target_cumulative_units: 14184, management_cumulative_units: null, actual_units: 12632, actual_cumulative_units: 36960, actual_through: '2026-09-01', actual_status: 'PARTIAL' });   // 2026-10-21 새 덤프
+  assert.deepEqual(st.COMPLETION.annual.find((a) => a.year === 2029).target_cumulative_units, 21605);   // 2026-10-21 W5 reference_only 제외로 PoC 21,605 와 같다(W4 새 덤프 직후 21,613 = 연남동 8호) · 2026-10-20 판 21,605(10-14 판 17,386)
   assert.deepEqual(st.MOVE_IN.annual.find((a) => a.year === 2031).target_cumulative_units, 27410);   // 2026-10-20 판(10-14 판 19,460)
   const b = saved.policies[0].basis;
   /* HOME 2038810 이식(2026-10-21): 원천 목록 참조 사업(source_reference_id)은 사업 매핑이 확정되지 않았으면 프로그램이 정책을 줘도 미배정 — 광교 A17BL(600호)이 빠져 228→227·76→75·91,452→90,852.
      PoC(as_of 10-20) 관리 230·코호트 76·90,860 에서 덤프 뒤 매핑 3곳(독산동·방화차고지·연남동 8호 코호트)을 빼면 227·75·90,852 로 같다(21c60b1 이식 값 228·76·91,452 보다 가깝다) */
   /* 2026-10-21 2038810 inventory 이식: 인천검단 AA19 두 임대 유형(국민임대 991·영구임대 332, 정책기간 전 착공)이 중복 제외 → 포트폴리오로 — 중복 57→55·과거 착공 95→97, 코호트는 그대로 */
-  assert.deepEqual([b.linkedProjects, b.duplicateExcluded, b.missingQuantity, b.prePolicyStart, b.cohorts, b.cohortUnits], [227, 55, 0, 97, 75, 90852], '2026-10-20 판(10-14 판: 담당자 계획물량 입력으로 물량 미확보 0)');
+  /* 2026-10-21 새 덤프: 덤프 뒤 매핑 3곳(독산동·방화차고지·연남동 8호 코호트)이 판에 들어와 PoC(as_of 10-20) 관리 230·코호트 76·90,860 과 같다 */
+  assert.deepEqual([b.linkedProjects, b.duplicateExcluded, b.missingQuantity, b.prePolicyStart, b.cohorts, b.cohortUnits], [230, 55, 0, 99, 76, 90860], '2026-10-21 새 덤프(10-20 판 227·55·0·97·75·90,852, 10-14 판: 담당자 계획물량 입력으로 물량 미확보 0)');
 });
 
 test('HOME 원본으로 다시 계산: 저장된 파일과 바이트 같고, 같은 판 두 번도 같다', { skip: SKIP }, () => {

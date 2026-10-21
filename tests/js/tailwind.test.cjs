@@ -151,12 +151,12 @@ test('색 이름이 아니라 의미 이름을 쓴다: 옛 계열색(--s-blue…
   for (const [, get] of THEMES) { const b = get(); assert.match(b, /--shadow-card:/); assert.match(b, /--shadow-pop:/); }
 });
 
-test('두 루트 레이아웃이 globals.css 를 가져온다: 대시보드는 다크 기본(저장된 라이트만 그리기 전에 푼다), 지도도 저장된 테마를 적용', () => {
+test('두 루트 레이아웃이 globals.css 를 가져온다: 대시보드는 라이트 기본(저장된 다크만 그리기 전에 켠다), 지도도 저장된 테마를 적용', () => {
   for (const f of ['app/(dashboard)/layout.tsx', 'app/(map)/layout.tsx']) assert.match(read(f), /import '@\/app\/globals\.css';/, f);
   const dash = read('app/(dashboard)/layout.tsx');
   const ti = read('lib/shell/theme.ts');
-  assert.match(ti, /localStorage\.getItem\('theme'\)!=='light'\)document\.documentElement\.classList\.add\('dark'\)\}catch\(e\)\{document\.documentElement\.classList\.add\('dark'\)\}/, '라이트 저장값이 아니면 다크(저장소 예외도)');
-  assert.doesNotMatch(ti, /getItem\('theme'\)==='dark'/);
+  assert.match(ti, /localStorage\.getItem\('theme'\)==='dark'\)document\.documentElement\.classList\.add\('dark'\)\}catch\(e\)\{\}/, '다크 저장값일 때만 다크(저장소 예외는 라이트)');
+  assert.doesNotMatch(ti, /getItem\('theme'\)!=='light'/);
   assert.match(dash, /import \{ (AUDIENCE_INIT, )?THEME_INIT \} from/);
   assert.doesNotMatch(dash, /className="dark"/, '다크는 클래스 고정이 아니라 첫 그림 전 스크립트로 정한다');
   assert.match(read('app/(map)/layout.tsx'), /<html lang="ko" data-map-shell="" data-design="warm" suppressHydrationWarning>/);

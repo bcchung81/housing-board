@@ -51,7 +51,7 @@ test('1(b) ?project= 로 연 위치 미확보 사업: 목록(#lostPop)을 저절
   assert.match(app, /const CUR_LOST = RES && RES\.lost \? LOST\.find\(\(x\) => x\.id === RES\.lost\.id\) \|\| null : null;/);
   /* 목록 줄: 연 사업은 class="cur" aria-current="true" */
   const rows = grab(/const LIST_RANK = [^\n]*\nconst ledgerRows = [\s\S]*?\.join\(''\);\n/);
-  const run = (cur) => Function('esc', 'fmt', 'CLS_WORD', 'stageOfCode', 'stName', 'projHref', 'CUR_LOST', `${rows}; return ledgerRows;`)(esc, String, { delay: '지연' }, () => null, () => '', (id) => `/projects?id=${id}`, cur);
+  const run = (cur) => Function('esc', 'fmt', 'CLS_WORD', 'lostStage', 'projHref', 'CUR_LOST', `${rows}; return ledgerRows;`)(esc, String, { delay: '지연' }, () => '', (id) => `/projects?id=${id}`, cur);   // 단계 이름 = lostStage(수도권 PoC 단계 또는 원장 단계 — 2026-10-21 W4 결정 ④)
   const xs = [{ id: 'PRJ-28290-0056', name: '인천검단 35', cls: 'delay', stage: '04', units: 964 }, { id: 'PRJ-28290-0058', name: '인천검단 AA13-1', cls: 'delay', stage: '04', units: 702 }];
   const html = run({ id: 'PRJ-28290-0058' })(xs);
   assert.equal((html.match(/aria-current="true"/g) || []).length, 1);
@@ -73,7 +73,7 @@ test("1(b) 6단계 띠: 위치 미확보 몫에 지연이 있으면 '지연 n' �
   const lostLate = f([{ cls: 'delay', stage: '04' }, { cls: 'caution', stage: '04' }, { cls: 'delay', stage: '04' }, { cls: 'delay', stage: null }], B);
   assert.deepEqual([0, 1, 2, 3].map(lostLate), [1, 0, 2, 0]);
   const wt = grab(/\(function wireTop\(\) \{[\s\S]*?\n\}\)\(\);/);
-  assert.match(wt, /const ld = h\.lostN \? lostLate\(i\) : 0;/);
+  assert.match(wt, /const ld = h\.lostN \? \(PP \? h\.ld : lostLate\(i\)\) : 0;/);   // 수도권 PoC 칸은 region.js homePoc 의 단계별 지연 행 수(ld)
   assert.match(wt, /\$\{lostTxt\}\$\{ld \? ` <b class="sf-late">지연 \$\{ld\}<\/b>` : ''\}<\/span>/);
   const { mapCss } = require('./map-tokens.cjs');   // 색 값은 app/globals.css 의 --map-bad-ink(라이트·다크), app.css 는 가리키기만 한다
   assert.match(mapCss('dark'), /\.sf-late\{display:inline-block;[^}]*color:#FFAFBF[^}]*\}/);

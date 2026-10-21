@@ -70,7 +70,7 @@ test('data/board/home-sources.json: 실행 합계·원천 수·연결 수가 서
   assert.equal(hs.poc.orgs, new Set(hs.sources.map((s) => s.org)).size);
   assert.equal(hs.grid.length, 26);
   assert.ok(hs.grid.every((g) => Object.keys(g.years).length === L.GRID_YEARS.length && Object.values(g.years).every((v) => ['full', 'none', 'nosrc', 'unpub'].includes(v))));
-  assert.deepEqual(hs.links.map((l) => [l.type, l.review, l.confirmed, l.released]), [['POLICY_PROGRAM', 10, 33, 2], ['PROGRAM_PROJECT', 160, 280, 8]]);
+  assert.deepEqual(hs.links.map((l) => [l.type, l.review, l.confirmed, l.released]), [['POLICY_PROGRAM', 10, 33, 2], ['PROGRAM_PROJECT', 160, 283, 8]]);   // 2026-10-21 새 덤프: 확정 사업 연결 280 → 283(독산동·연남동·방화차고지 — PoC /mappings CONFIRMED 283 과 같음)
 });
 
 test('담당자 이름·입력 사유 글이 요약 파일에 없다', () => {

@@ -4,10 +4,10 @@
   "name": "인천광역시 제물포구",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
-  "edition": "20261019T212247Z",
-  "poc": {"p97":{"n":1,"c":0,"x":1,"q":0,"u":0,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,0,0,0]},"all":{"n":2,"c":1,"x":1,"q":0,"u":1198,"d":0,"w":0,"a":0,"an":0,"st":[1198,0,0,0,0,0,0]}},
+  "edition": "20261020T142230Z",
+  "poc": {"p97":{"n":1,"c":0,"x":1,"q":0,"u":0,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,0,0,0],"k":[0,0,0,0,0,0,1],"ku":[0,0,0,0,0,0,0]},"all":{"n":2,"c":1,"x":1,"q":0,"u":1198,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,1198,0,0,0],"k":[0,0,0,1,0,0,1],"ku":[0,0,0,1198,0,0,0]}},
   "noPrj": [],
   "projects": [
-    {"id":"PRJ-28125-0027","name":"인천송림4 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-30"},"units":1198,"pks":[],"pnus":[],"bundles":[],"label":"인천송림4 1","agency":"lh","moveIn":null,"completion":"2027-09-30","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":2,"n97":1,"u":1198,"u97":null,"j":"UNKNOWN"}}
+    {"id":"PRJ-28125-0027","name":"인천송림4 1","issued":true,"stage":"04","cls":"ok","why":null,"overdue":null,"next":{"eventType":"COMPLETION","planned":"2027-09-30"},"units":1198,"pks":[],"pnus":[],"bundles":[],"label":"인천송림4 1","agency":"lh","moveIn":null,"completion":"2027-09-30","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":2,"n97":1,"u":1198,"u97":null,"j":"UNKNOWN","s":3,"s97":6,"rs":[[6,6,null,null,null],[3,null,1198,null,"UNKNOWN"]]}}
   ]
 }

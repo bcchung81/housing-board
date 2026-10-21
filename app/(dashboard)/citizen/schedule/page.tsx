@@ -34,8 +34,9 @@ const regionMap = mapJson as unknown as RegionMapDoc;
 const annual = annualJson as unknown as AnnualDoc;
 const SGG_TABLE = { areas: METRO_AREAS, sidoShort: SIDO_SHORT, guOf };
 const W = PUBLIC_WORDS;
-const HOME_ROWS = homeRowsOf((homeJson as unknown as { rows: HomeDocRow[] }).rows).filter((r) => isMetro(r.sgg));
-/* 2026-10-21 HOME PoC: 기본 종류 = 모집 공고(PoC '향후 12개월 공급(모집·분양) 예정' — region-calendar.json home.all, 정책 전체·원천 행 단위).
+/* 사업 찾기와 같은 줄: 수도권 9·7 포트폴리오의 물량 집계 행(175 — 겹친·모호 행은 세지 않는다) */
+const HOME_ROWS = homeRowsOf((homeJson as unknown as { rows: HomeDocRow[] }).rows).filter((r) => isMetro(r.sgg) && r.home!.p97 && r.home!.chart.p97);
+/* 2026-10-21 HOME PoC(일반사용자까지 9·7 기본): 기본 종류 = 모집 공고(PoC '향후 12개월 공급(모집·분양) 예정' — region-calendar.json home.p97, 9·7 포트폴리오·원천 행 단위).
    준공·입주는 PoC 에 같은 값이 없어 사업 원장 예정(region-calendar.json sido)을 그대로 더해 볼 수 있게 둔다 */
 const KIND_HOME: CalKind[] = ['SUPPLY_NOTICE'];
 const isHomeDefault = (ks: CalKind[]) => ks.length === 1 && ks[0] === 'SUPPLY_NOTICE';
@@ -87,8 +88,8 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
     return `${BASE}?${s.toString()}`;
   };
 
-  /* ① 앞으로 12개월 — 정책 /region 과 같은 함수(aheadAll). 모집 공고 = HOME PoC 정책 전체 공급 예정(home.all), 준공·입주 = 사업 원장 예정(sido). 수도권 = 서울·인천·경기만 들어 있다 */
-  const cal = { sido: Object.fromEntries(METRO.map((c) => [c, [...(calendar.home.all.sido[c] ?? []), ...(calendar.sido[c] ?? []).filter((e) => e.type !== 'SUPPLY_NOTICE')]])) };
+  /* ① 앞으로 12개월 — 정책 /region 과 같은 함수(aheadAll). 모집 공고 = HOME PoC 9·7 공급 예정(home.p97), 준공·입주 = 사업 원장 예정(sido). 수도권 = 서울·인천·경기만 들어 있다 */
+  const cal = { sido: Object.fromEntries(METRO.map((c) => [c, [...(calendar.home.p97.sido[c] ?? []), ...(calendar.sido[c] ?? []).filter((e) => e.type !== 'SUPPLY_NOTICE')]])) };
   const all = easyNames(aheadAll(cal, sido, sidoName)).filter((e) => !sgg || inSgg(e, sgg, SGG_TABLE));
   const list = all.filter((e) => kinds.includes(e.type));
   const months = calendar.months;
@@ -98,7 +99,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
   const nowM = calendar.referenceDate.slice(0, 7);
   const last = lastMonth(molit);
 
-  /* 사업 찾기·지도 연결: 사업 수 = 사업 찾기 목록과 같은 HOME PoC 행(정책 전체) */
+  /* 사업 찾기·지도 연결: 사업 수 = 사업 찾기 목록과 같은 HOME PoC 행(9·7 집계 행) */
   const pf: Filters = sgg ? { sgg, gu: guOf(sgg) } : sido === 'metro' ? { metro: true } : { sido };
   const inScope = applyFilters(HOME_ROWS, pf).length;
   const scopeMap = sgg ? mapScopeHref({ sgg }) : sido === 'metro' ? mapScopeHref() : mapScopeHref({ sido });
@@ -156,10 +157,10 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
         <PanelHead id="ahead-title"
           title="앞으로 12개월"
           scope={<>
-            <ScopeChip scope={scopeName} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} title={`${scopeName}의 주택 공급 정책 사업(공공·조합·민간)`} />
+            <ScopeChip scope={scopeName} clearHref={sgg ? href({ sgg: null, m: null }) : undefined} title={`${scopeName}의 9·7 주택 공급 확대 방안 사업`} />
             <InfoTip label="앞으로 12개월 읽는 법">
               <dl>
-                <dt>모집 공고 예정</dt><dd>주택 공급 정책에 연결된 사업 가운데 앞으로 12개월 안에 모집·분양이 예정된 호수예요. 정책 담당자 화면의 '향후 12개월 공급 예정'과 같은 숫자예요</dd>
+                <dt>모집 공고 예정</dt><dd>9·7 주택 공급 확대 방안에 연결된 사업 가운데 앞으로 12개월 안에 모집·분양이 예정된 호수예요. 정책 담당자 화면의 '향후 12개월 공급 예정'과 같은 숫자예요</dd>
                 <dt>준공·입주</dt><dd>공공 사업 일정에 있는 같은 기간의 준공·입주 예정을 더해 볼 수 있어요</dd>
                 <dt>막대</dt><dd>막대 한 조각이 사업 하나, 높이는 호수예요. 위 숫자는 그 달 호수, 아래는 사업 수예요</dd>
                 <dt>예정일 지남</dt><dd>예정한 날짜가 지났는데 아직 기록이 없는 사업이에요. 합계에는 들어 있어요</dd>

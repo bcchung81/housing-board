@@ -4,10 +4,10 @@
   "name": "경기도 이천시",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
-  "edition": "20261019T212247Z",
-  "poc": {"p97":{"n":1,"c":1,"x":0,"q":0,"u":620,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,620,0,0]},"all":{"n":1,"c":1,"x":0,"q":0,"u":620,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,620,0,0]}},
+  "edition": "20261020T142230Z",
+  "poc": {"p97":{"n":1,"c":1,"x":0,"q":0,"u":620,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,620,0,0],"k":[0,0,0,0,1,0,0],"ku":[0,0,0,0,620,0,0]},"all":{"n":1,"c":1,"x":0,"q":0,"u":620,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,620,0,0],"k":[0,0,0,0,1,0,0],"ku":[0,0,0,0,620,0,0]}},
   "noPrj": [],
   "projects": [
-    {"id":"PRJ-41500-0072","name":"이천장호원 B2BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-22","months":1},"next":{"eventType":"MOVE_IN","planned":"2026-11"},"dateAlt":{"source":"LH","planned":"2026-12-31"},"units":620,"pks":[],"pnus":[],"bundles":[],"label":"이천장호원 B2","agency":"lh","moveIn":"2026-11","completion":"2026-08-22","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":1,"n97":1,"u":620,"u97":620,"j":"NORMAL"}}
+    {"id":"PRJ-41500-0072","name":"이천장호원 B2BL 아파트 건설공사 1공구","issued":true,"stage":"04","cls":"caution","why":null,"overdue":{"eventType":"COMPLETION","planned":"2026-08-22","months":1},"next":{"eventType":"MOVE_IN","planned":"2026-11"},"dateAlt":{"source":"LH","planned":"2026-12-31"},"units":620,"pks":[],"pnus":[],"bundles":[],"label":"이천장호원 B2","agency":"lh","moveIn":"2026-11","completion":"2026-08-22","noticeUnits":null,"bjd":null,"loc":null,"policy":{"status":"CONFIRMED","names":["주택공급 확대방안 (9·7)"],"short":["9·7"]},"poc":{"n":1,"n97":1,"u":620,"u97":620,"j":"NORMAL","s":4,"s97":4,"rs":[[4,4,620,620,"NORMAL"]]}}
   ]
 }

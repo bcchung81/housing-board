@@ -29,7 +29,9 @@ test('1-A 헤드라인: 수집 출처 75(데이터 있는 곳) · 등록 76 · �
   assert.equal(hs.poc.withData, golden.poc.sources.withData);
   assert.equal(hs.poc.registered, golden.poc.sources.registered);
   assert.equal(hs.poc.orgs, golden.poc.sources.orgCount);
-  assert.deepEqual(L.statusRows(hs).filter((r) => !r.ok).map((r) => r.id).sort(), [...golden.poc.sources.failedIds].sort());
+  /* 실패 원천 = 정답의 실패 + explained.failed(덤프의 마지막 수집 실행이 실패인데 PoC 는 덤프 뒤 성공한 것) − 정답 실패 중 덤프에선 성공인 것(없음) */
+  assert.ok(Object.values(ex.failed).every((v) => v.reason && v.golden === 'SUCCESS' && v.ours === 'FAILED'));
+  assert.deepEqual(L.statusRows(hs).filter((r) => !r.ok).map((r) => r.id).sort(), [...golden.poc.sources.failedIds, ...Object.keys(ex.failed)].sort());
   assert.equal(L.statusRows(hs).length, golden.poc.sources.registered, '수집 상태 표에는 우리 보관 원천이 섞이지 않는다');
   assert.equal(sourcesJson.items.length, golden.ours.catalog.n, '1-L 우리 보관 원천 17곳은 그대로(PoC 비교 대상이 아니라 카탈로그)');
 });
@@ -77,7 +79,7 @@ test('1-D 연도 확보 격자: 26줄 · 234칸 중 확보 175, 해마다 칸 �
   });
 });
 
-test('1-E 연결: 정책–프로그램은 정답과 같고, 프로그램–사업 확정 280은 정답 283 − 덤프 뒤 신규 3곳(PRO_ id)으로 설명된다', { skip }, () => {
+test('1-E 연결: 정책–프로그램은 정답과 같고, 프로그램–사업 확정 283 = 정답 283(2026-10-21 새 덤프 — 10-20 판 280 은 덤프 뒤 신규 3곳)', { skip }, () => {
   const [pp, pj] = hs.links;
   assert.deepEqual([pp.confirmed, pp.review], [golden.poc.mappings.programStatus.CONFIRMED, golden.poc.mappings.programStatus.REVIEW]);
   const g = golden.poc.mappings.counts, e = ex.links.PROGRAM_PROJECT;
@@ -89,7 +91,7 @@ test('1-E 연결: 정책–프로그램은 정답과 같고, 프로그램–사�
   const mp = gz('sources-mappings.json.gz');
   if (mp) {   // 스냅샷에서는 이 3곳이 확정 연결이다
     const st = Object.fromEntries(mp.items.map((x) => [x.id, x.mapping.status]));
-    assert.deepEqual(e.projectIds.map((id) => st[id]), ['CONFIRMED', 'CONFIRMED', 'CONFIRMED']);
+    assert.ok(e.projectIds.every((id) => st[id] === 'CONFIRMED'));
     assert.equal(mp.items.filter((x) => x.mapping.status === 'CONFIRMED').length, g.CONFIRMED);
   }
 });

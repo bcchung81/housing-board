@@ -1,7 +1,7 @@
 {
 "schema": "home-registry-match/1",
-"edition": "20261019T212247Z",
-"at": "2026-10-20",
+"edition": "20261020T142230Z",
+"at": "2026-10-21",
 "superseded": [
 {"from":"PRJ-11350-0097","name":"[(105228)서울공릉(복합개발)]위례A2-7BL아파트건설공사9공구및서울공릉아파트건설공사1공구","into":"PRJ-11350-0096","rule":"HOME_SAME_SITE","key":"HPR:HPR_ac4452d5a3119683ef276aa5 PRO:PRO_6b007623f2703880246788d3"},
 {"from":"PRJ-11560-0146","name":"[(105229)서울대방(복합개발)]서울대방아파트건설공사1공구및동작구수방사아파트건설공사1공구","into":"PRJ-11560-0143","rule":"HOME_SAME_SITE","key":"HPR:HPR_803eee707326eb19d83f9c7b PRO:PRO_cd30a85198ac80fedcab7136"},

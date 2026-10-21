@@ -4,10 +4,10 @@
   "name": "경기도 용인시 기흥구",
   "observedMonth": "2026-10",
   "referenceDate": "2026-10-20",
-  "edition": "20261019T212247Z",
-  "poc": {"p97":{"n":0,"c":0,"x":0,"q":0,"u":0,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,0,0,0]},"all":{"n":1,"c":1,"x":0,"q":0,"u":40,"d":0,"w":0,"a":0,"an":0,"st":[40,0,0,0,0,0,0]}},
+  "edition": "20261020T142230Z",
+  "poc": {"p97":{"n":0,"c":0,"x":0,"q":0,"u":0,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,0,0,0],"k":[0,0,0,0,0,0,0],"ku":[0,0,0,0,0,0,0]},"all":{"n":1,"c":1,"x":0,"q":0,"u":40,"d":0,"w":0,"a":0,"an":0,"st":[0,0,0,0,0,0,40],"k":[0,0,0,0,0,0,1],"ku":[0,0,0,0,0,0,40]}},
   "noPrj": [],
   "projects": [
-    {"id":"PRJ-41463-0089","name":"기흥구 신갈동 17-27","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":40,"pks":[],"pnus":[],"bundles":[],"label":"기흥구 신갈동 17-27","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[127.106493,37.276758],"basis":"NAME_SEARCH","status":"REVIEW","match":"경기도 용인시 기흥구 신갈동 17-27"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]},"poc":{"n":1,"n97":0,"u":40,"u97":null,"j":"UNKNOWN"}}
+    {"id":"PRJ-41463-0089","name":"기흥구 신갈동 17-27","issued":true,"stage":"02","cls":"ok","why":null,"overdue":null,"next":{"eventType":"CONSTRUCTION_START","planned":"2030-12"},"units":40,"pks":[],"pnus":[],"bundles":[],"label":"기흥구 신갈동 17-27","agency":null,"moveIn":null,"completion":null,"noticeUnits":null,"bjd":null,"loc":{"by":"name","at":[127.106493,37.276758],"basis":"NAME_SEARCH","status":"REVIEW","match":"경기도 용인시 기흥구 신갈동 17-27"},"policy":{"status":"REVIEW_REQUIRED","names":["도심 주택공급 확대 및 신속화 방안 (1·29)"],"short":["1·29"]},"poc":{"n":1,"n97":0,"u":40,"u97":null,"j":"UNKNOWN","s":6,"s97":null,"rs":[[6,null,40,null,"UNKNOWN"]]}}
   ]
 }

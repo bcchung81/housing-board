@@ -4,7 +4,8 @@
   "made_from": [
    ".cache/home-parity/golden/golden-projects.json (S2-extract.js — PoC /map/dashboard 9·7·정책 전체)",
    ".cache/home-parity/golden/deliv-2026-10-20.json (PoC /policy-delivery/view portfolio_comparisons → home-view.js mapDelay = 정책 지도 !)",
-   ".cache/home-parity/golden/golden-policy.json (PoC 정책 화면 project_status·upcoming_12m)"
+   ".cache/home-parity/golden/golden-policy.json (PoC 정책 화면 project_status·upcoming_12m)",
+   ".cache/home-parity/golden/S2-raw-map-dashboard{-js,}.json (PoC /map/dashboard 9·7·정책 전체 — 시군구·시도 stage_distribution.parts, 2026-10-21 W5-MP 추가. raw/home-api/2026-10-20 스냅샷과 같은 값)"
   ],
   "note": "PoC 공개 API 응답에서 수치만 옮김(담당자 이름·사유 글 없음)"
  },
@@ -75,265 +76,661 @@
     "region": "서울특별시",
     "name": "서초구",
     "project_count": 2,
-    "target_units": 20700
+    "target_units": 20700,
+    "stage": {
+     "POLICY": 20700,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "과천시",
     "project_count": 6,
-    "target_units": 13106
+    "target_units": 13106,
+    "stage": {
+     "POLICY": 10000,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 2986,
+     "SUPPLY": 120,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "남양주시",
     "project_count": 24,
-    "target_units": 12866
+    "target_units": 12866,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 6149,
+     "SUPPLY": 6717,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "평택시",
     "project_count": 16,
-    "target_units": 10257
+    "target_units": 10257,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 10257,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "고양시",
     "project_count": 14,
-    "target_units": 9354
+    "target_units": 9354,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 1594,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 2299,
+     "SUPPLY": 5461,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "부천시",
     "project_count": 21,
-    "target_units": 7206
+    "target_units": 7206,
+    "stage": {
+     "POLICY": 563,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 4265,
+     "SUPPLY": 2378,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "서울특별시",
     "name": "노원구",
     "project_count": 7,
-    "target_units": 6601
+    "target_units": 6601,
+    "stage": {
+     "POLICY": 1370,
+     "BUSINESS": 0,
+     "APPROVAL": 1699,
+     "CONSTRUCTION": 3532,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "인천광역시",
     "name": "검단구",
     "project_count": 9,
-    "target_units": 5777
+    "target_units": 5777,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1458,
+     "SUPPLY": 2547,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1772
+    }
    },
    {
     "region": "경기도",
     "name": "수원시",
     "project_count": 11,
-    "target_units": 5510
+    "target_units": 5510,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 1734,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1325,
+     "SUPPLY": 142,
+     "MOVE_IN": 0,
+     "UNKNOWN": 2309
+    }
    },
    {
     "region": "서울특별시",
     "name": "강서구",
     "project_count": 4,
-    "target_units": 4249
+    "target_units": 4249,
+    "stage": {
+     "POLICY": 3793,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 75,
+     "SUPPLY": 381,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "인천광역시",
     "name": "미추홀구",
     "project_count": 2,
-    "target_units": 3935
+    "target_units": 3935,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 3,
+     "APPROVAL": 3497,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 435
+    }
    },
    {
     "region": "서울특별시",
     "name": "강남구",
     "project_count": 1,
-    "target_units": 3899
+    "target_units": 3899,
+    "stage": {
+     "POLICY": 3899,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "인천광역시",
     "name": "서해구",
     "project_count": 11,
-    "target_units": 3371
+    "target_units": 3371,
+    "stage": {
+     "POLICY": 563,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 168,
+     "SUPPLY": 308,
+     "MOVE_IN": 0,
+     "UNKNOWN": 2332
+    }
    },
    {
     "region": "인천광역시",
     "name": "계양구",
     "project_count": 10,
-    "target_units": 3283
+    "target_units": 3283,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1994,
+     "SUPPLY": 1289,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "시흥시",
     "project_count": 10,
-    "target_units": 3277
+    "target_units": 3277,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1687,
+     "SUPPLY": 1080,
+     "MOVE_IN": 0,
+     "UNKNOWN": 510
+    }
    },
    {
     "region": "경기도",
     "name": "양주시",
     "project_count": 5,
-    "target_units": 3090
+    "target_units": 3090,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1126,
+     "SUPPLY": 792,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1172
+    }
    },
    {
     "region": "서울특별시",
     "name": "강북구",
     "project_count": 1,
-    "target_units": 3048
+    "target_units": 3048,
+    "stage": {
+     "POLICY": 3048,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "성남시",
     "project_count": 8,
-    "target_units": 2576
+    "target_units": 2576,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 714,
+     "SUPPLY": 1862,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "의정부시",
     "project_count": 7,
-    "target_units": 2539
+    "target_units": 2539,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 354,
+     "CONSTRUCTION": 1184,
+     "SUPPLY": 1001,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "서울특별시",
     "name": "도봉구",
     "project_count": 2,
-    "target_units": 2363
+    "target_units": 2363,
+    "stage": {
+     "POLICY": 2363,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "서울특별시",
     "name": "동작구",
     "project_count": 2,
-    "target_units": 2071
+    "target_units": 2071,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 2071,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "화성시",
     "project_count": 4,
-    "target_units": 2023
+    "target_units": 2023,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 940,
+     "SUPPLY": 1083,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "인천광역시",
     "name": "영종구",
     "project_count": 5,
-    "target_units": 1998
+    "target_units": 1998,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 792,
+     "SUPPLY": 641,
+     "MOVE_IN": 0,
+     "UNKNOWN": 565
+    }
    },
    {
     "region": "경기도",
     "name": "군포시",
     "project_count": 3,
-    "target_units": 1889
+    "target_units": 1889,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 509,
+     "SUPPLY": 1380,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "구리시",
     "project_count": 5,
-    "target_units": 1819
+    "target_units": 1819,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1510,
+     "SUPPLY": 309,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "인천광역시",
     "name": "연수구",
     "project_count": 1,
-    "target_units": 1508
+    "target_units": 1508,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1508
+    }
    },
    {
     "region": "서울특별시",
     "name": "관악구",
     "project_count": 1,
-    "target_units": 1430
+    "target_units": 1430,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1430,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "서울특별시",
     "name": "강동구",
     "project_count": 1,
-    "target_units": 1305
+    "target_units": 1305,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 1305,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "오산시",
     "project_count": 4,
-    "target_units": 1198
+    "target_units": 1198,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 399,
+     "SUPPLY": 433,
+     "MOVE_IN": 0,
+     "UNKNOWN": 366
+    }
    },
    {
     "region": "경기도",
     "name": "하남시",
     "project_count": 1,
-    "target_units": 1115
+    "target_units": 1115,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 1115,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "서울특별시",
     "name": "송파구",
     "project_count": 1,
-    "target_units": 1000
+    "target_units": 1000,
+    "stage": {
+     "POLICY": 1000,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "의왕시",
     "project_count": 8,
-    "target_units": 987
+    "target_units": 987,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 987,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "안산시",
     "project_count": 4,
-    "target_units": 958
+    "target_units": 958,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 320,
+     "APPROVAL": 251,
+     "CONSTRUCTION": 387,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "이천시",
     "project_count": 1,
-    "target_units": 620
+    "target_units": 620,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 620,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "파주시",
     "project_count": 1,
-    "target_units": 612
+    "target_units": 612,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 612,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "서울특별시",
     "name": "금천구",
     "project_count": 2,
-    "target_units": 583
+    "target_units": 583,
+    "stage": {
+     "POLICY": 563,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 20,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "김포시",
     "project_count": 1,
-    "target_units": 350
+    "target_units": 350,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 88,
+     "SUPPLY": 262,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "인천광역시",
     "name": "부평구",
     "project_count": 2,
-    "target_units": 350
+    "target_units": 350,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 350,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "서울특별시",
     "name": "영등포구",
     "project_count": 3,
-    "target_units": 344
+    "target_units": 344,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 344,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "광주시",
     "project_count": 1,
-    "target_units": 316
+    "target_units": 316,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 316,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "인천광역시",
     "name": "남동구",
     "project_count": 1,
-    "target_units": 29
+    "target_units": 29,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 29
+    }
    },
    {
     "region": "서울특별시",
     "name": "마포구",
     "project_count": 1,
-    "target_units": 8
+    "target_units": 8,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 8,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "경기도",
     "name": "양평군",
     "project_count": 1,
-    "target_units": null
+    "target_units": null,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    },
    {
     "region": "인천광역시",
     "name": "제물포구",
     "project_count": 1,
-    "target_units": null
+    "target_units": null,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
    }
   ],
   "stage": {
@@ -361,7 +758,938 @@
    "SUPPLY": 32504,
    "MOVE_IN": 0,
    "UNKNOWN": 101890
-  }
+  },
+  "regions": [
+   {
+    "name": "서울특별시",
+    "project_count": 210,
+    "target_units": 160621,
+    "stage": {
+     "POLICY": 36736,
+     "BUSINESS": 5364,
+     "APPROVAL": 2294,
+     "CONSTRUCTION": 47413,
+     "SUPPLY": 1686,
+     "MOVE_IN": 0,
+     "UNKNOWN": 67128
+    }
+   },
+   {
+    "name": "인천광역시",
+    "project_count": 48,
+    "target_units": 23283,
+    "stage": {
+     "POLICY": 563,
+     "BUSINESS": 3,
+     "APPROVAL": 3497,
+     "CONSTRUCTION": 7444,
+     "SUPPLY": 5135,
+     "MOVE_IN": 0,
+     "UNKNOWN": 6641
+    }
+   },
+   {
+    "name": "경기도",
+    "project_count": 185,
+    "target_units": 105432,
+    "stage": {
+     "POLICY": 10563,
+     "BUSINESS": 3648,
+     "APPROVAL": 605,
+     "CONSTRUCTION": 36812,
+     "SUPPLY": 25683,
+     "MOVE_IN": 0,
+     "UNKNOWN": 28121
+    }
+   }
+  ],
+  "municipalities": [
+   {
+    "region": "서울특별시",
+    "name": "서초구",
+    "project_count": 7,
+    "target_units": 30692,
+    "stage": {
+     "POLICY": 20700,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 9074,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 918
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "과천시",
+    "project_count": 7,
+    "target_units": 22906,
+    "stage": {
+     "POLICY": 10000,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 2986,
+     "SUPPLY": 120,
+     "MOVE_IN": 0,
+     "UNKNOWN": 9800
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "용산구",
+    "project_count": 9,
+    "target_units": 17541,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 17541
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "남양주시",
+    "project_count": 25,
+    "target_units": 17046,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 6149,
+     "SUPPLY": 6717,
+     "MOVE_IN": 0,
+     "UNKNOWN": 4180
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "노원구",
+    "project_count": 10,
+    "target_units": 13562,
+    "stage": {
+     "POLICY": 1370,
+     "BUSINESS": 0,
+     "APPROVAL": 1699,
+     "CONSTRUCTION": 3693,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 6800
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "은평구",
+    "project_count": 15,
+    "target_units": 11938,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 7001,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 4937
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "고양시",
+    "project_count": 15,
+    "target_units": 11924,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 1594,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 2299,
+     "SUPPLY": 5461,
+     "MOVE_IN": 0,
+     "UNKNOWN": 2570
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "강남구",
+    "project_count": 5,
+    "target_units": 11787,
+    "stage": {
+     "POLICY": 3899,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 7010,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 878
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "평택시",
+    "project_count": 17,
+    "target_units": 10609,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 10257,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 352
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "성북구",
+    "project_count": 8,
+    "target_units": 8741,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 2846,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 5140,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 755
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "양천구",
+    "project_count": 3,
+    "target_units": 8431,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 8431
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "강서구",
+    "project_count": 9,
+    "target_units": 8161,
+    "stage": {
+     "POLICY": 3793,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 618,
+     "SUPPLY": 381,
+     "MOVE_IN": 0,
+     "UNKNOWN": 3369
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "부천시",
+    "project_count": 26,
+    "target_units": 8066,
+    "stage": {
+     "POLICY": 563,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 4265,
+     "SUPPLY": 2378,
+     "MOVE_IN": 0,
+     "UNKNOWN": 860
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "동작구",
+    "project_count": 9,
+    "target_units": 7941,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 5810,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 2131
+    }
+   },
+   {
+    "region": "인천광역시",
+    "name": "검단구",
+    "project_count": 11,
+    "target_units": 7443,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 3124,
+     "SUPPLY": 2547,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1772
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "수원시",
+    "project_count": 15,
+    "target_units": 6803,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 1734,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1325,
+     "SUPPLY": 142,
+     "MOVE_IN": 0,
+     "UNKNOWN": 3602
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "강북구",
+    "project_count": 12,
+    "target_units": 6025,
+    "stage": {
+     "POLICY": 3048,
+     "BUSINESS": 688,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1206,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1083
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "서대문구",
+    "project_count": 10,
+    "target_units": 5480,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 297,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1210,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 3973
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "금천구",
+    "project_count": 6,
+    "target_units": 4339,
+    "stage": {
+     "POLICY": 563,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 239,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 3537
+    }
+   },
+   {
+    "region": "인천광역시",
+    "name": "미추홀구",
+    "project_count": 2,
+    "target_units": 3935,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 3,
+     "APPROVAL": 3497,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 435
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "영등포구",
+    "project_count": 13,
+    "target_units": 3733,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 556,
+     "APPROVAL": 587,
+     "CONSTRUCTION": 894,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1696
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "도봉구",
+    "project_count": 8,
+    "target_units": 3574,
+    "stage": {
+     "POLICY": 2363,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1211
+    }
+   },
+   {
+    "region": "인천광역시",
+    "name": "서해구",
+    "project_count": 13,
+    "target_units": 3539,
+    "stage": {
+     "POLICY": 563,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 336,
+     "SUPPLY": 308,
+     "MOVE_IN": 0,
+     "UNKNOWN": 2332
+    }
+   },
+   {
+    "region": "인천광역시",
+    "name": "계양구",
+    "project_count": 10,
+    "target_units": 3283,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1994,
+     "SUPPLY": 1289,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "시흥시",
+    "project_count": 11,
+    "target_units": 3277,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1687,
+     "SUPPLY": 1080,
+     "MOVE_IN": 0,
+     "UNKNOWN": 510
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "양주시",
+    "project_count": 5,
+    "target_units": 3090,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1126,
+     "SUPPLY": 792,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1172
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "마포구",
+    "project_count": 7,
+    "target_units": 2943,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 8,
+     "CONSTRUCTION": 1340,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1595
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "동대문구",
+    "project_count": 3,
+    "target_units": 2828,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 977,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 351,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1500
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "의정부시",
+    "project_count": 8,
+    "target_units": 2801,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 354,
+     "CONSTRUCTION": 1184,
+     "SUPPLY": 1001,
+     "MOVE_IN": 0,
+     "UNKNOWN": 262
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "성남시",
+    "project_count": 12,
+    "target_units": 2652,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 714,
+     "SUPPLY": 1862,
+     "MOVE_IN": 0,
+     "UNKNOWN": 76
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "광진구",
+    "project_count": 46,
+    "target_units": 2512,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 595,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1917
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "송파구",
+    "project_count": 5,
+    "target_units": 2446,
+    "stage": {
+     "POLICY": 1000,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1446
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "구리시",
+    "project_count": 6,
+    "target_units": 2385,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1510,
+     "SUPPLY": 309,
+     "MOVE_IN": 0,
+     "UNKNOWN": 566
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "구로구",
+    "project_count": 5,
+    "target_units": 2176,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1278,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 898
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "화성시",
+    "project_count": 4,
+    "target_units": 2023,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 940,
+     "SUPPLY": 1083,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "인천광역시",
+    "name": "영종구",
+    "project_count": 5,
+    "target_units": 1998,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 792,
+     "SUPPLY": 641,
+     "MOVE_IN": 0,
+     "UNKNOWN": 565
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "군포시",
+    "project_count": 3,
+    "target_units": 1889,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 509,
+     "SUPPLY": 1380,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "광명시",
+    "project_count": 3,
+    "target_units": 1528,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1528
+    }
+   },
+   {
+    "region": "인천광역시",
+    "name": "연수구",
+    "project_count": 1,
+    "target_units": 1508,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1508
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "강동구",
+    "project_count": 3,
+    "target_units": 1472,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 1305,
+     "MOVE_IN": 0,
+     "UNKNOWN": 167
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "관악구",
+    "project_count": 2,
+    "target_units": 1455,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1430,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 25
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "하남시",
+    "project_count": 2,
+    "target_units": 1415,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 1115,
+     "MOVE_IN": 0,
+     "UNKNOWN": 300
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "성동구",
+    "project_count": 4,
+    "target_units": 1317,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 293,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 1024
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "오산시",
+    "project_count": 4,
+    "target_units": 1198,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 399,
+     "SUPPLY": 433,
+     "MOVE_IN": 0,
+     "UNKNOWN": 366
+    }
+   },
+   {
+    "region": "인천광역시",
+    "name": "제물포구",
+    "project_count": 2,
+    "target_units": 1198,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 1198,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "의왕시",
+    "project_count": 8,
+    "target_units": 987,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 987,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "안산시",
+    "project_count": 4,
+    "target_units": 958,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 320,
+     "APPROVAL": 251,
+     "CONSTRUCTION": 387,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "중랑구",
+    "project_count": 7,
+    "target_units": 929,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 217,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 712
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "이천시",
+    "project_count": 1,
+    "target_units": 620,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 620,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "파주시",
+    "project_count": 1,
+    "target_units": 612,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 612,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "중구",
+    "project_count": 2,
+    "target_units": 404,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 404
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "김포시",
+    "project_count": 1,
+    "target_units": 350,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 88,
+     "SUPPLY": 262,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "인천광역시",
+    "name": "부평구",
+    "project_count": 3,
+    "target_units": 350,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 350,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "광주시",
+    "project_count": 1,
+    "target_units": 316,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 316,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "안양시",
+    "project_count": 1,
+    "target_units": 200,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 200
+    }
+   },
+   {
+    "region": "서울특별시",
+    "name": "종로구",
+    "project_count": 1,
+    "target_units": 180,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 180
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "용인시",
+    "project_count": 1,
+    "target_units": 40,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 40
+    }
+   },
+   {
+    "region": "인천광역시",
+    "name": "남동구",
+    "project_count": 1,
+    "target_units": 29,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 29
+    }
+   },
+   {
+    "region": "경기도",
+    "name": "양평군",
+    "project_count": 1,
+    "target_units": null,
+    "stage": {
+     "POLICY": 0,
+     "BUSINESS": 0,
+     "APPROVAL": 0,
+     "CONSTRUCTION": 0,
+     "SUPPLY": 0,
+     "MOVE_IN": 0,
+     "UNKNOWN": 0
+    }
+   }
+  ]
  },
  "delay_marks": {
   "region": {

@@ -247,7 +247,7 @@ t('카드·칸 제목(header-unify-spec 4절): 지도 카드·칸 제목은 Noto
   assert(/\.lg-h \{[^}]*font-size: var\(--fs-h3\); line-height: var\(--lh-sub\);/.test(h) && /\.hb-t \{[^}]*font-size: var\(--fs-h3\); line-height: var\(--lh-sub\);/.test(h)); assert(!/\.(lg-h|hb-t) \{[^}]*font-family: var\(--font-sans\)/.test(h));   // 2026-10-18 지도 카드 제목 = 머리 띠 h1, 레일 범례 제목 h3
   assert(/\.cell-h h2 \{[^}]*font-size: var\(--fs-h2\);/.test(h));
   assert(/^\s*h1, h2, h3, h4 \{ font-weight: 700;/m.test(h));
-  assert(h.includes("정책담당자 화면의 '정책 전체' 사업과 같은 숫자예요"));   // 2026-10-21 HOME PoC 정책 전체
+  assert(h.includes('정책담당자 화면의 9·7 대책 숫자와 같아요'));   // 2026-10-21 HOME PoC 9·7 기본(일반사용자까지)
 });
 t('.sr 규칙은 한 번만 정의되고 li 에 class="sr" 를 쓰지 않는다(시트 줄은 sli)', () => {
   assert.strictEqual((h.match(/^\.sr \{/gm) || []).length, 1);
@@ -805,7 +805,7 @@ t('통일-2 한 문장 제목 = .ui-h1(30, 900 이하 24) · 숫자만 주색 ·
 t('통일-4 머리 줄 = 앱 TopNav(64px · 900 이하 48px · 로고 lockup --logo-h · 메뉴 --fs-nav · 보기 대상·테마 스위치) — 색은 앱과 같은 토큰을 그대로 쓴다(값 복사·덮어쓰기 없음) · 보조 줄(오늘 · 자료 기준 · 공고 기준) 한 줄', () => {
   assert(/\.top-in \{[^}]*height: 64px;/.test(CSS) && /\.top-in \{ height: 48px;/.test(CSS)); 
   assert(/\.logo \.lk-mark \{ display: none; width: var\(--logo-mark\);/.test(CSS) && /\.menu a \{[^}]*font-size: var\(--fs-nav\);/.test(CSS) && !/\.menu a \{[^}]*font-size: var\(--text-/.test(CSS) && !/\.menu a \{ padding: 0 1?2?8?px; font-size/.test(CSS), '머리 줄 글자·로고 그림은 globals 토큰(--logo-h · --logo-mark · --fs-nav), 값 복사 없음');
-  { const h = require('fs').readFileSync(__dirname + '/template.html', 'utf8'); assert(h.includes("localStorage.getItem('theme') !== 'light') h.classList.add('dark')") && !h.includes("getItem('theme') === 'dark'"), '다크 기본: 라이트 저장값이 아니면 다크'); }
+  { const h = require('fs').readFileSync(__dirname + '/template.html', 'utf8'); assert(h.includes("localStorage.getItem('theme') === 'dark') h.classList.add('dark')") && !h.includes("getItem('theme') !== 'light'"), '라이트 기본: 다크 저장값일 때만 다크'); }
   assert(!/\.top \{[^}]*--[\w-]+:/.test(CSS) && !/\.dark \.top \{/.test(CSS), '머리 줄 토큰 덮어쓰기 없음');
   assert(/\.top \{[^}]*background: var\(--card\);[^}]*border-bottom: var\(--border-w\) solid var\(--border\); box-shadow: var\(--shadow-card\);/.test(CSS), '앱 TopNav: bg-card · border-b · shadow-card');
   assert(/\.logo \.ink \{ fill: var\(--logo-ink\); \}/.test(CSS) && /\.logo \.wave \{ fill: var\(--logo-wave\); \}/.test(CSS) && TPL.includes('<path class="wave" fill-rule="evenodd" d="M29.4 28.7 48.2 21.1V51.4'), '로고 = fill-logo-ink(집·주택) · fill-logo-wave(문·The), 열린 문 심벌');

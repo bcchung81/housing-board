@@ -104,14 +104,41 @@ test('향후 12개월 공급 예정(9·7): 우리 17,838호(31건) − 덤프 �
   note(t, moved.map((x) => `${x.id} ${rowOf.get(x.id).name}: 덤프 ${sum(x.dump)}호 · PoC ${sum(x.poc)}호 — ${x.why}`));
 });
 
-test('단계 물량 띠: 행마다 단계 도달(덤프, 입력·추정 포함)을 뒤 단계부터 배정 — 합 = 계획 호수, 누적 = 공통 자료 reached. PoC 지도 서버 분포와의 차이는 공급 칸 기준(LH 본 모집공고 확인량)이 다른 규칙 차이', (t) => {
-  const st = D97.total.st, w = HP.views.p97.reached;
-  assert.equal(st.reduce((a, b) => a + b, 0), D97.total.u);
-  const cum = (i) => st.slice(i, 6).reduce((a, b) => a + b, 0);
-  assert.deepEqual([cum(1), cum(2), cum(3), cum(4), cum(5)], [w.BUSINESS, w.APPROVAL, w.CONSTRUCTION, w.SUPPLY, w.MOVE_IN]);
-  /* PoC #overview 단계 분포의 공급 칸은 그 지역 '현재 공급량'(본 모집공고 확인)과 같다(서울·인천) — 우리 공급 칸은 공급 단계 실제 기록이라 다르다 */
-  for (const r of G.overview_97.regions.filter((x) => x.name !== '경기도')) assert.equal(r.stage.SUPPLY, r.current_notice_units, `${r.name}: PoC 공급 칸 = 공고 확인량`);
-  const names = ['POLICY', 'BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'MOVE_IN', 'UNKNOWN'];
-  note(t, [`9·7 우리 ${names.map((k, i) => `${k} ${st[i]}`).join(' · ')}`, `9·7 PoC  ${names.map((k) => `${k} ${G.overview_97.stage[k]}`).join(' · ')}`,
-    ...G.overview_97.regions.map((r) => { const s = D97.sido.find((x) => x.code === SIDO[r.name]).v.st; return `${r.name} 우리 ${s.join('/')} · PoC ${names.map((k) => r.stage[k]).join('/')}`; })]);
+test('단계 물량 띠 = PoC 지도 서버 단계 분포(2026-10-21 W4 결정 ④): 합계·시도·시군구 면마다 7칸(정책·사업화·인허가·건설·공급·입주·미확인)이 정답과 같다 — 두 범위, 잔차 0', () => {
+  const names = ['POLICY', 'BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'MOVE_IN', 'UNKNOWN'], arr = (o) => names.map((k) => o[k]);
+  for (const [D, o] of [[D97, G.overview_97], [DALL, G.overview_all]]) {
+    assert.deepEqual(D.total.st, arr(o.stage), '합계');
+    assert.equal(D.total.st.reduce((a, b) => a + b, 0), D.total.u, '단계 합 = 계획 호수');
+    for (const r of o.regions) assert.deepEqual(D.sido.find((x) => x.code === SIDO[r.name]).v.st, arr(r.stage), r.name);
+    const byName = new Map(D.units.map((u) => [`${O.SIDO_FULL[u.s]}|${u.name}`, u]));
+    for (const m of o.municipalities) assert.deepEqual(byName.get(`${m.region}|${m.name}`).v.st, arr(m.stage), `${m.region} ${m.name}`);
+    assert.equal(o.municipalities.length, D.units.filter((u) => u.v.n > 0).length);
+  }
+});
+
+test('상세 지도 6단계 칩 = PoC 단계 이름(정책·사업화·인허가·건설·공급·입주 + 미확인)·개수 = 단계별 원천 행 수(행 단계 = map-overview.js pocStages), 칩 합 = 머리 줄 원천 n건', () => {
+  const APP = require('node:fs').readFileSync(require('node:path').join(__dirname, '../../assets/js/app.js'), 'utf8');
+  assert.match(APP, /const POC7 = \[\['정책', [^\]]+\], \['사업화', [^\]]+\], \['인허가', [^\]]+\], \['건설', [^\]]+\], \['공급', [^\]]+\], \['입주', [^\]]+\], \['미확인', [^\]]+\]\]/);
+  const HM = require('../../tools/ledger/home-map.js');
+  const files = require('node:fs').readdirSync(require('node:path').join(__dirname, '../../data/board/home-map')).filter((f) => /^\d{5}\.json$/.test(f)).map((f) => require(`../../data/board/home-map/${f}`)).filter((d) => d.poc);
+  const dash = MO.readDash(HP);
+  for (const scope of ['p97', 'all']) {
+    const st = MO.pocStages(HP, dash[scope], scope), rows = HP.rows.filter((r) => MO.inScope(r, scope) && HM.sggOfRow(r));
+    const want = MO.PARTS.map(() => 0), wantU = MO.PARTS.map(() => 0);
+    for (const r of rows) { const s = st.get(r.id).s; want[s] += 1; wantU[s] += r.chart[scope] && r.units.counted > 0 ? r.units.counted : 0; }
+    const k = MO.PARTS.map((_, i) => files.reduce((a, d) => a + d.poc[scope].k[i], 0)), ku = MO.PARTS.map((_, i) => files.reduce((a, d) => a + d.poc[scope].ku[i], 0));
+    assert.deepEqual(k, want, `${scope} 칩 개수`);
+    assert.deepEqual(ku, wantU, `${scope} 칩 호수`);
+    for (const d of files) assert.equal(d.poc[scope].k.reduce((a, b) => a + b, 0), d.poc[scope].n, `${d.sgg} 칩 합 = 머리 줄 원천 n건`);
+    /* 시군구 파일에 없는 행 = 원장 시군구도 없고 PoC 시군구 코드가 여럿인 행(상세 지도 어느 시군구에도 속하지 않음) */
+    assert.equal(HP.rows.filter((r) => MO.inScope(r, scope) && !HM.sggOfRow(r)).length, 1);
+    /* 행 단계 = 나눈 몫이 가장 큰 단계: 정답 블록 하나에 단계가 하나뿐이면 그 블록 집계 행은 모두 그 단계 */
+    for (const b of dash[scope].blocks) {
+      const nz = MO.PARTS.map((p, i) => [i, b.stage_distribution.parts[p] || 0]).filter((x) => x[1] > 0);
+      if (nz.length !== 1) continue;
+      for (const id of b.chart_target_ids || []) if (st.has(id) && rowOf.get(id).units.counted > 0) assert.equal(st.get(id).s, nz[0][0], `${b.id} ${id}`);
+    }
+  }
+  /* 9·7 칩: 정책 14 · 사업화 5 · 인허가 6 · 건설 92 · 공급 80 · 입주 0 · 미확인 32(229행) */
+  assert.deepEqual(MO.PARTS.map((_, i) => files.reduce((a, d) => a + d.poc.p97.k[i], 0)), [14, 5, 6, 92, 80, 0, 32]);
 });

@@ -82,7 +82,7 @@ test('2 정책 전체 카드 빈자리 없음: 요약은 두 카드를 위아래
 
 test('3 숫자 형식: 비율·공정률은 소수 한 자리, 날짜는 점', () => {
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
-  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? V.rateOf(c).word : null)), ['달성 53.1%', '달성 170.8%', null, '달성 58.8%', '달성 100.0%', null]);   // 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
+  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? V.rateOf(c).word : null)), ['달성 128.3%', '달성 124.1%', null, '달성 58.8%', '달성 100.0%', null]);   // 2026-10-21 새 덤프(20261020T142230Z, PoC 운영 값과 같음): 9·7 ①사업화 확인 7,808→18,854(목표 14,694 넘음) · ②인허가 목표 3,658→8,386·확인 6,249→10,403 — 덤프 뒤였던 담당자 단계 측정값·승인 일정이 새 판에 들어옴 · 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
   assert.equal(V.pct1(93.12), '93.1');
   assert.equal(V.pct1(33), '33.0');
   /* 서랍 공정률·타임라인 */
@@ -128,7 +128,7 @@ test('6 9·7 준공 381/381 은 숫자 그대로, ⓘ 에 원천 값 그대로(�
   const q0 = V.questionsOf(rows, {}, ctx)[0];
   const st = q0.stages;
   // 2026-10-20 HOME 판(20261019T212247Z, HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249 — ①·② 확인 값이 달라져 '같은 확인 값' 문구는 빠진다
-  assert.deepEqual([st[0].actual, st[1].actual, st[4].actual, st[4].target], [7808, 6249, 381, 381], '숫자는 바꾸지 않는다');
+  assert.deepEqual([st[0].actual, st[1].actual, st[4].actual, st[4].target], [18854, 10403, 381, 381], '숫자는 바꾸지 않는다');   // 2026-10-21 새 덤프 값
   assert.match(q0.note, /원천 값 그대로\(검증 대기\)/);
   assert.doesNotMatch(q0.note, /①계획·②인허가/);
   assert.match(q0.note, /준공 381\/381/);

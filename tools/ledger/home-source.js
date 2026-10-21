@@ -30,7 +30,8 @@ const LH_SOURCES = new Set(['lh_sale', 'lh_rent', 'lh_construction', 'lh_history
 const PLAN_SOURCES = new Set(['lh_sale', 'lh_rent']);
 const WORK_SOURCES = new Set(['lh_construction', 'lh_progress']);
 const SIDO_NAME = { 11: '서울특별시', 28: '인천광역시', 41: '경기도' };
-const AGENCY = [[/^(LH|한국토지주택공사)$/, 'lh'], [/^(SH|서울주택도시공사)$/, 'sh'], [/^(GH|경기주택도시공사)$/, 'gh'], [/^(iH|IH|인천도시공사)$/, 'ih']];
+/* SH 는 HOME PoC agencyName(home-view.js)과 같은 식 — '서울주택도시공사'·'서울주택도시개발공사(SH)'·'SH'(2026-10-21 W5 사용자 결정 'HOME 기준': 연남동 공공임대주택). '4)공공(LH,SH,GH)' 는 걸리지 않는다 */
+const AGENCY = [[/^(LH|한국토지주택공사)$/, 'lh'], [/서울주택도시|^SH$/, 'sh'], [/^(GH|경기주택도시공사)$/, 'gh'], [/^(iH|IH|인천도시공사)$/, 'ih']];
 /* iH 프로그램(2026-10-20 사용자 결정): HOME 프로그램 표(home_program_mapping)에서 이름이 'iH ' 로 시작하는 프로그램. 시행 값으로 기관을 못 정한 사업후보(PRO)가
    사업 연결(home_mapping, 해제 RELEASED 제외)로 이 프로그램 id 에 이어져 있으면 시행 기관을 iH 로 본다 */
 const IH_PROGRAM = /^iH\s/;
@@ -136,6 +137,14 @@ function blockKey(row) {
   return t ? { region: row.region, term: t, block: `${m[1].toUpperCase()}${+m[2]}` } : null;
 }
 const keyText = (k) => `${k.region}|${k.term}|${k.block}`;
+/* 블록 키 없는 LH 행의 (시도 이름, 정규화 지구) 또는 null — 지구 이름 → 시군구 규칙(buildHome 의 DISTRICT_*)에만 쓴다. 지구는 blockKey 와 같게 괄호를 떼고,
+   블록 칸이 숫자뿐이라 이름 끝에 남은 숫자 블록(' 1')도 뗀다. 2026-10-21 W4: 인천서구(석남어울림) 1·인천서구(거북이기지) 1 의 공급계획·공사 진행 4행 —
+   덤프에는 구가 없고('지역 상세 확인 필요'·'구 확인 필요'), HOME PoC(/mappings 2026-10-20, 규칙 INCHON_DATED_ADMINISTRATIVE_NAME)는 넷 다 서해구로 정한다 */
+function districtOnlyKey(row) {
+  const term = districtTerm(row)?.replace(/\s+\d+$/, '');
+  const t = term?.replace(/\s+/g, '').replaceAll('국제화계획', '').replace(/(?:공공주택지구|택지개발사업|택지개발지구|지구)+$/, '');
+  return t && row.region ? { region: row.region, term: t } : null;
+}
 
 /* ---------- 대표 고르기(HOME supply_dashboard.inventory — policy-progress.js 도 이것을 쓴다) ---------- */
 /* 대표가 될 수 없는 행: 복수 현장 계약(MULTI_SITE_CONTRACT), 블록 키 없는 건설공사 계약. rows 의 source_id 는 별칭을 푼 값(lh_incheon_* → lh_*) */
@@ -392,14 +401,20 @@ function buildHome(home, { areaRows, lhSgg = [], homeIds = {} }) {
       if (at) { cands.push({ code: at.sgg, method: 'ADDRESS' }); if (at.bjd) bjds.add(at.bjd); }
     }
     for (const m of g.members) for (const muni of [m.p.municipality, location.get(m.pro)?.municipality]) { const c = muniSgg(m.p.region, muni, idx); if (c) cands.push({ code: c, method: 'MUNICIPALITY' }); }
-    for (const m of g.members) if (m.key) {
+    const byTerm = (k) => {
       for (const [map, method] of [[zoneByTerm, 'DISTRICT_ZONECODE'], [lhByTerm, 'DISTRICT_LH'], [muniByDistrict, 'DISTRICT_MUNICIPALITY']]) {
-        const set = map.get(`${m.key.region}|${m.key.term}`);
+        const set = map.get(`${k.region}|${k.term}`);
         if (set?.size === 1) cands.push({ code: [...set][0], method });
       }
-    }
+    };
+    for (const m of g.members) if (m.key) byTerm(m.key);
     for (const m of g.members) for (const c of nameSgg(m.p, idx)) cands.push(c);
-    const pick = sido ? pickSgg(cands, sido, idx) : null;
+    let pick = sido ? pickSgg(cands, sido, idx) : null;
+    /* 위 후보로 못 정한 묶음만: 블록 키 없는 LH 행의 지구 이름(districtOnlyKey) — 정해진 묶음의 시군구·방법은 그대로 둔다 */
+    if (!pick && sido) {
+      for (const m of g.members) if (!m.key) { const k = districtOnlyKey(m.p); if (k) byTerm(k); }
+      pick = pickSgg(cands, sido, idx);
+    }
     if (!pick) { unresolved.push({ ...g, sido }); continue; }
     g.sgg = pick.code; g.sggMethod = pick.method; g.sggConflict = pick.conflict;
     /* 시 단위 코드인데 법정동이 모두 한 구에 있으면 그 구로 좁힌다 */

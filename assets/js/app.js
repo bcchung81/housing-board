@@ -35,7 +35,17 @@ function floorsToHeight(f) {
   const k = f <= 5 ? '공동주택_1-5' : f <= 10 ? '공동주택_6-10' : f <= 15 ? '공동주택_11-15' : f <= 20 ? '공동주택_16-20' : '공동주택_21+';
   return Math.round(f * (FACTOR[k] || 2.85) * 10) / 10;
 }
-const BLOCKS = HAS_PR ? PR.blocks.slice() : [];             // 순서는 어댑터가 정한다(region.projectOrder → 상태 → 세대수 → 이름)
+/* 지도 범위(2026-10-21 W5-MP2 결정): 수도권 HOME PoC 자료가 있고 9·7 범위(기본, ?policy=all 아님)면 9·7 원천 행이 하나도 이어지지 않은 점(원장 사업)은 그리지 않는다 —
+   목록·검색·거르기·칩이 모두 BLOCKS 를 따르므로 같은 집합. ?policy=all 이면 모두 그리고, 어느 정책에도 이어지지 않은 점은 '미확인'(POC_KIND 6).
+   예외: ?project= 로 연 사업(RESOLVED.projectId)·사업 창 주소(?id=)·?block= 의 사업은 범위 밖이어도 그리고 머리 줄에 '9·7 밖' 한 줄(OUT_OPEN) */
+const Q0 = new URLSearchParams(location.search);
+const SCOPE97 = Q0.get('policy') !== 'all' && !!(REG.home && !REG.home.failed && REG.home.poc);
+const OPENED = new Set([window.RESOLVED && window.RESOLVED.projectId, Q0.get('id'), Q0.get('block')].filter(Boolean));   // ?block= 도 사업 id 로 직접 연 것
+const pidOf = (b) => b.projectId || (b.ledger && b.ledger.id) || null;
+const in97 = (b) => !!(b.home && b.home.poc && b.home.poc.n97 > 0);
+const PR_ALL = HAS_PR ? PR.blocks.slice() : [];
+const BLOCKS = PR_ALL.filter((b) => !SCOPE97 || in97(b) || OPENED.has(pidOf(b)));   // 순서는 어댑터가 정한다(region.projectOrder → 상태 → 세대수 → 이름)
+const OUT_OPEN = SCOPE97 ? BLOCKS.filter((b) => !in97(b)) : [];   // 범위 밖이지만 직접 연 사업
 const HAS_PRIV = BLOCKS.some((b) => b.priv);                  // 공공택지 위 민간 단지가 있는 지역인가
 /* 입주 경과 표지(assets/js/settle.js, 지도 개선 계획 2절): 06 입주 단지에 moving 입주 진행 · settled 입주 완료(흐리게) · existing 기존 단지(기본 숨김, 옵션 '기존 단지'로 켬).
    단계(status)는 그대로 두고 표시만 바꾼다. 원장이 늦게 붙으면(refreshLedger) 다시 센다 */
@@ -44,10 +54,11 @@ settleAll();
 /* 화면에 적는 상태 이름: 종합상황판·사업 화면과 같은 낱말(①계획 ②인허가 ③착공 ④모집 ⑤준공 ⑥입주). 지도 상태(status)는 자료 열쇠라 그대로 두고 글자만 바꾼다.
    사용검사를 마친 단지(입주 단계 = 원장 06 = ⑤준공)는 입주 경과 표지(입주 진행·입주 완료·기존 단지)로 적는다(날짜 없으면 입주 진행) */
 const STATUS_TXT = { '사업화': '계획', '계획': '인허가', '건설 단계': '착공', '준공 임박': '준공 임박', '분양중': '모집 중', '입주 단계': '준공' };
-const stTxt = (b) => (window.Settle && (b.settle || b.status === '입주 단계') ? window.Settle.LABEL[b.settle || 'moving'] : (b.status === '준공 임박' && window.RegionLoader && b.ledger && window.RegionLoader.ledgerTexts(b.ledger).pastDue ? '예정일 지남' : STATUS_TXT[b.status] || b.status));
+const stTxt = (b) => (b.pst != null ? POC7[b.pst][1] : window.Settle && (b.settle || b.status === '입주 단계') ? window.Settle.LABEL[b.settle || 'moving'] : (b.status === '준공 임박' && window.RegionLoader && b.ledger && window.RegionLoader.ledgerTexts(b.ledger).pastDue ? '예정일 지남' : STATUS_TXT[b.status] || b.status));
 const hasEx = () => BLOCKS.some((b) => b.settle === 'existing');
 const KIND = { '분양중': 'sale', '건설 단계': 'build', '준공 임박': 'near', '입주 단계': 'soon', '계획': 'permit', '사업화': 'plan' };   // 종류 = 화면 6단계 색 이름(plan ① permit ② build ③ sale ④ soon ⑤ move ⑥). 준공 임박(near)은 ③ 안의 상태라 ③ 색 + 점무늬, 입주 단계(soon)는 ⑤준공
-const kindOf = (b) => (b.priv ? 'priv' : KIND[b.status]);    // 색·무늬를 정하는 종류. 민간 단지는 상태와 상관없이 회색(priv)
+const kindOf = (b) => (b.priv ? 'priv' : b.pst != null ? POC_KIND[b.pst] : KIND[b.status]);    // 색·무늬를 정하는 종류. 민간 단지는 상태와 상관없이 회색(priv), 수도권 PoC 단계(b.pst)가 있으면 그 단계 색
+const fkOf = (b) => (b.pst != null ? `P${b.pst}` : b.status);   // 거르기 열쇠(SHOWN·지도 속성 fk): PoC 단계가 있으면 'P0'~'P6', 아니면 지도 상태
 const STATUS_ORDER = ['분양중', '건설 단계', '준공 임박', '입주 단계', '계획'];
 const unitsTxt = (b) => (b.unitsKnown === false ? '호수 미확인' : `${fmt(b.units)}호`);
 const dongN = (b) => b.dongCount || (b.dongs ? b.dongs.length : 0);
@@ -120,16 +131,24 @@ const BOARD_OF_STAGE = { '01': 0, '02': 0, '03': 1, '04': 2, '05': 3, '06': 4 };
 const stageOfCode = (code) => STAGES6[BOARD_OF_STAGE[code]] || null;   // 원장 단계 코드 → 칸
 const stName = (s) => `${s[0]}${s[1]}`;   // '③착공'
 /* 단지 상태 → 범례·옵션 창 이름('③착공', '④모집 중'). 준공 임박은 ③ 안의 상태라 번호 없이 */
-const stLabel = (st) => { const s = STAGES6.find((x) => x[2].includes(st)); return st === '준공 임박' || !s ? STATUS_TXT[st] || st : `${s[0]}${STATUS_TXT[st]}`; };
-const stTitle = (st) => { const s = STAGES6.find((x) => x[2].includes(st)); return s ? `${stName(s)} — ${s[4]}` : ''; };
+const stLabel = (st) => { if (/^P[0-6]$/.test(st)) return pocRow(st)[1]; const s = STAGES6.find((x) => x[2].includes(st)); return st === '준공 임박' || !s ? STATUS_TXT[st] || st : `${s[0]}${STATUS_TXT[st]}`; };
+const stTitle = (st) => { const s = /^P[0-6]$/.test(st) ? pocRow(st) : STAGES6.find((x) => x[2].includes(st)); return s ? `${stName(s)} — ${s[4]}` : ''; };
 const PLAN_KIND = ['in', ['get', 'kind'], ['literal', ['plan', 'permit']]];   // 점선 윤곽으로 그리는 종류(①계획·②인허가)
 const PLAN_ST = ['계획', '사업화'];   // 계획 색 면(blk-plan)으로 그리는 상태
 const BY_STAGE = STAGES6.flatMap((s) => s[2]);   // 계획 · 건설 단계 · 준공 임박 · 분양중 · 입주 단계
+/* HOME PoC 단계 [번호(없음), 이름, 거르기 열쇠, 색, 정의] — 2026-10-21 W4 결정 ④: 수도권 상세 지도(HOME PoC 자료가 있을 때 — POC_ON)의 6단계 칩·점 색·거르기는 PoC(HOME) 단계
+   정책·사업화·인허가·건설(준공 포함)·공급·입주(종합상황판·사업 화면과 같은 이름) + 단계 미확인(그런 행이 있을 때만 칩). 칸 색은 ①~⑥ 과 같은 자리의 --st-*, 미확인은 회색(priv 종류).
+   점의 단계 b.pst = 그 범위 원천 행 단계 가운데 가장 뒤(tools/ledger/home-map.js 머리 주석), 칩 건수 = PoC 단계별 원천 행 수(점 수 아님) */
+const POC_KIND = ['plan', 'permit', 'build', 'sale', 'soon', 'move', 'priv'];
+const POC7 = [['정책', '정책 발표·계획(사업화 전)'], ['사업화', '지구 지정·사업 승인 등 사업화'], ['인허가', '사업계획 승인·건축 허가'], ['건설', '착공~준공 공사 기간(준공 포함)'], ['공급', '입주자 모집·분양 공고'], ['입주', '입주 시작'], ['미확인', '단계 미확인 — 정책 진행 자료의 지도 단계 분포에서 단계를 정하지 못한 물량']]
+  .map(([n, d], i) => ['', n, [`P${i}`], COLOR[POC_KIND[i]], d]);
+const pocRow = (fk) => POC7[Number(String(fk).slice(1))];   // 'P3' → 건설 칸
 /* 사업 원장(기획서 M7·M8): region.js 가 지도와 따로 받아 단지에 b.ledger 를 붙인다. 원장 단계가 있으면 6단계 위치는 원장 기준(지도 상태와 다르면 title 에 적는다) */
 const LT = (b) => (b.ledger && window.RegionLoader ? window.RegionLoader.ledgerTexts(b.ledger) : null);
 const CLS_WORD = { ok: '정상', caution: '주의', delay: '지연' };   // 원장 판정 글자(카드 칩·꼬리표 점·사업 원장 목록)
 const statusReason = (t) => (window.RegionLoader ? window.RegionLoader.statusReason(t) : '');
 function stageNow(b) {
+  if (b.pst != null) return { now: POC7[b.pst], k: kindOf(b), title: `단계: ${POC_SCOPE_NAME[POC_SCOPE]} 원천 행 ${(b.home && b.home.poc && (POC_SCOPE === 'p97' && b.home.poc.s97 != null ? b.home.poc.n97 : b.home.poc.n)) || 0}건 가운데 가장 뒤 단계(정책 진행 자료의 지도 단계 분포 기준)` };
   const own = STAGES6.find((x) => x[2].includes(b.status)), l = b.ledger && b.ledger.stage ? stageOfCode(b.ledger.stage) : null;
   if (!l) return { now: own, k: kindOf(b), title: '' };
   const byLedger = b.statusBy === 'ledger';   // 수도권: 지도 상태를 원장 단계로 정했다(01 은 '사업화' 상태) — 다르다고 적지 않는다
@@ -215,6 +234,13 @@ const STATIC_N = HAS_GY ? GY.features.length : 0;   // 번들에 든 건물 수(
 /* ---------- 지도 ---------- */
 const KEY = String(window.VWORLD_KEY || '').trim();
 const q = new URLSearchParams(location.search);
+/* 수도권 HOME PoC 자료(region.js homePoc)가 있으면 상세 지도 단계는 PoC 단계(POC7). 범위 = 정책담당자·일반사용자 모두 9·7, ?policy=all 이면 정책 전체(2026-10-21 W4 결정 ⑤, 전환 탭 없음).
+   점(원장 사업)의 단계: 그 범위 원천 행이 있으면 그 단계, 9·7 범위인데 9·7 행이 없는 점은 정책 전체 범위 단계, PoC 행이 없는 점은 미확인 */
+const POC_ON = !!(REG.home && !REG.home.failed && REG.home.poc);
+const POC_SCOPE = q.get('policy') === 'all' ? 'all' : 'p97';
+const POC_SCOPE_NAME = { p97: '9·7 연결', all: '정책 전체' };
+const pstOf = (p) => (p ? (POC_SCOPE === 'p97' && p.s97 != null ? p.s97 : p.s ?? 6) : 6);
+if (POC_ON) BLOCKS.forEach((b) => { b.pst = pstOf(b.home && b.home.poc); });
 /* 배경은 OpenFreeMap 벡터가 기본이다(2026-10-17): 2배 화면에서 배경 선명도가 V-World 래스터의 5.8~10배였고(실측), 지명 벡터 타일을 이미 받고 있어 비용도 적다.
    ?base=vworld 면 V-World 래스터(키 필요) — 비교·되돌림용. 그 경로의 WMTS·라이트 보정·실패 전환 코드는 그대로 둔다 */
 let usingVworld = !!KEY && q.get('base') === 'vworld';
@@ -304,7 +330,7 @@ map.on('render', function readyToReveal() {
 });
 setTimeout(() => reveal('timeout'), REVEAL_MAX_MS);
 let popup = null, selId = null, selDong = null, vwFail = 0, DONG_FEATS = [];
-const SHOWN = new Set(BLOCKS.map((b) => b.status));          // 지도에 보이는 상태
+const SHOWN = new Set(BLOCKS.map(fkOf));          // 지도에 보이는 상태(거르기 열쇠 fkOf — 수도권 PoC 는 단계)
 let viewMode = window.GY_INFRA ? 'infra' : 'floors';   // 기반시설 보기로 연다(점검 자료가 없는 지역은 층수 높이). 층수·공정율·입주 시기 보기 전환은 없앴다(2026-10-10 사용자 결정)
 let privOn = q.get('priv') !== '0';                            // 공공택지 민간 단지: 기본 켬
 let exOn = q.get('ex') === '1';                                // 기존 단지(06 입주 중 준공 24개월 넘음): 기본 숨김, 주소 ex=1 이면 보임
@@ -407,7 +433,7 @@ function groundOf(b) {
 function blockProps(b) {
   const g = groundOf(b), fr = floorsRange(b), sig = infraOn && window.GY_INFRA, sn = stageNow(b);
   /* kind = 현재 단계의 색 종류(stageNow: 원장 단계가 있으면 원장 기준) — 구역 면·윤곽·점·꼬리표가 머리 줄 6단계 띠와 같은 색. sn·sc = 꼬리표 맨 앞 단계 번호·이름과 그 색 */
-  return { id: b.id, status: b.status, settle: b.settle || '', kind: sn.k, sn: sn.now ? `${sn.now[0]}${sn.now[1]} ` : '', sc: COLOR[sn.k] || TH().text, priv: !!b.priv, approx: !!b.approx, pt: b.outlineTier === 'point', units: b.units, short: b.id, l2: `${stTxt(b)} · ${unitsTxt(b)}`, cls: (b.ledger && b.ledger.cls) || '',
+  return { id: b.id, status: b.status, fk: fkOf(b), settle: b.settle || '', kind: sn.k, sn: sn.now ? `${sn.now[0]}${sn.now[1]} ` : '', sc: COLOR[sn.k] || TH().text, priv: !!b.priv, approx: !!b.approx, pt: b.outlineTier === 'point', units: b.units, short: b.id, l2: `${stTxt(b)} · ${unitsTxt(b)}`, cls: (b.ledger && b.ledger.cls) || '',
     lc: `${b.id} · ${stTxt(b)}`,
     /* 지면 라벨(요약): 세대수 / 층수 / 교통(가까운 역) / 신호(주의만·전부) */
     gu: unitsTxt(b), gf: fr ? `${fr[0] === fr[1] ? fr[0] : fr[0] + '~' + fr[1]}층` : '층수 미확인',
@@ -448,10 +474,10 @@ function dongsGeoJSON() {
     b.dongs.forEach((d) => {
       const t = r && r[1] > r[0] ? (d.floors - r[0]) / (r[1] - r[0]) : 1;
       const color = b.settle === 'settled' ? mixHex(mixTone(kind, t, tone), TH().bg, 0.5) : mixTone(kind, t, tone);   // 입주 완료는 바탕 쪽으로 흐리게
-      d.poly.forEach((ring) => feats.push({ type: 'Feature', properties: { key: `${b.id}-${d.no}`, block: b.id, no: d.no, floors: d.floors, h: d.h != null ? d.h : floorsToHeight(d.floors), hEst: d.h != null ? 0 : 1, tier: d.tier, color, status: b.status, settle: b.settle || '', priv: !!b.priv },
+      d.poly.forEach((ring) => feats.push({ type: 'Feature', properties: { key: `${b.id}-${d.no}`, block: b.id, no: d.no, floors: d.floors, h: d.h != null ? d.h : floorsToHeight(d.floors), hEst: d.h != null ? 0 : 1, tier: d.tier, color, status: b.status, fk: fkOf(b), settle: b.settle || '', priv: !!b.priv },
         geometry: { type: 'Polygon', coordinates: [[...ring, ring[0]]] } }));
       const big = d.poly.reduce((m, ring) => (ringArea(ring) > ringArea(m) ? ring : m), d.poly[0]);
-      labels.push({ type: 'Feature', properties: { text: `${d.no}동 ${d.floors}층`, no: d.no, block: b.id, status: b.status, settle: b.settle || '', priv: !!b.priv }, geometry: { type: 'Point', coordinates: centroid(big) } });
+      labels.push({ type: 'Feature', properties: { text: `${d.no}동 ${d.floors}층`, no: d.no, block: b.id, status: b.status, fk: fkOf(b), settle: b.settle || '', priv: !!b.priv }, geometry: { type: 'Point', coordinates: centroid(big) } });
     });
   });
   return [{ type: 'FeatureCollection', features: feats }, { type: 'FeatureCollection', features: labels }];
@@ -469,7 +495,7 @@ function shadowGeoJSON(feats) {
     const ring = f.geometry.coordinates[0], lat = ring[0][1], L = f.properties.h * 0.6, k = Math.SQRT1_2;
     const dx = L * k / (111320 * Math.cos(lat * Math.PI / 180)), dy = -L * k / 111320;
     const h = hull(ring.concat(ring.map((p) => [p[0] + dx, p[1] + dy]))); h.push(h[0]);
-    return { type: 'Feature', properties: { status: f.properties.status, settle: f.properties.settle || '', priv: f.properties.priv, fc: f.properties.fc || '' }, geometry: { type: 'Polygon', coordinates: [h] } };
+    return { type: 'Feature', properties: { status: f.properties.status, fk: f.properties.fk, settle: f.properties.settle || '', priv: f.properties.priv, fc: f.properties.fc || '' }, geometry: { type: 'Polygon', coordinates: [h] } };
   }) };
 }
 /* 지구 밖을 살짝 어둡게 하는 마스크: 넓은 사각형에서 지구 경계를 구멍으로 뺀다. */
@@ -657,7 +683,7 @@ const BLK_FILLS = ['blk-sale', 'blk-build', 'blk-soon', 'blk-move', 'blk-plan', 
    띠(#stageF)·옵션에서 고르지 않은 상태의 구역은 지우지 않고 흐리게 남긴다(다른 사업이 어디 있는지는 보이게) */
 const AREA_OP = { dark: [0.6, 0.4], light: [0.45, 0.3] }, AREA_FAINT = 0.08, LINE_FAINT = 0.3;
 const SETTLED_DIM = ['case', ['==', ['get', 'settle'], 'settled'], 0.45, 1];   // 입주 완료(06 입주, 준공 7~24개월)는 흐리게. 표지는 06 단지에만 붙는다
-const shownExpr = () => ['in', ['get', 'status'], ['literal', [...SHOWN]]];
+const shownExpr = () => ['in', ['get', 'fk'], ['literal', [...SHOWN]]];
 function areaOp() {
   const [a, b] = AREA_OP[LIGHT_MAP ? 'light' : 'dark'], on = shownExpr();
   return ['interpolate', ['linear'], ['zoom'], 15.5, ['case', on, ['*', a, SETTLED_DIM], AREA_FAINT], 17, ['case', on, ['*', b, SETTLED_DIM], AREA_FAINT]];
@@ -675,7 +701,7 @@ const JUDGED = ['match', ['get', 'cls'], ['caution', 'delay'], true, false];
 function judgeExpr(other) {
   return ['match', ['get', 'cls'], 'delay', TH().bad, 'caution', TH().warn, other];
 }
-function kindExpr(colors) { return ['match', ['get', 'kind'], 'sale', colors.sale, 'build', colors.build, 'near', colors.near, 'soon', colors.soon, 'permit', colors.permit, 'priv', colors.priv, colors.plan]; }
+function kindExpr(colors) { return ['match', ['get', 'kind'], 'sale', colors.sale, 'build', colors.build, 'near', colors.near, 'soon', colors.soon, 'move', colors.move, 'permit', colors.permit, 'priv', colors.priv, colors.plan]; }
 function setupCustom() {
   const T = TH(), layers = map.getStyle().layers, firstSymbol = (layers.find((l) => l.type === 'symbol') || {}).id;
   const add = (l) => { if (!map.getLayer(l.id)) map.addLayer(l, firstSymbol); };
@@ -705,7 +731,7 @@ function setupCustom() {
       if (MASK_ON) src('district-mask', { type: 'geojson', data: maskGeoJSON() });
     }
     if (PR.otherBlocks && PR.otherBlocks.length) src('other-blocks', { type: 'geojson', data: { type: 'FeatureCollection', features: PR.otherBlocks.map((r) => ({ type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[...r, r[0]]] } })) } });
-    for (const k of ['sale', 'build', 'near', 'soon', 'priv', 'plan', 'permit']) { if (!map.hasImage('bd-' + k)) { const b = badgeImage(k); map.addImage('bd-' + k, b.data, b.opts); } if (!map.hasImage('gl-' + k)) { const g = groundImage(k); map.addImage('gl-' + k, g.data, g.opts); } }
+    for (const k of ['sale', 'build', 'near', 'soon', 'move', 'priv', 'plan', 'permit']) { if (!map.hasImage('bd-' + k)) { const b = badgeImage(k); map.addImage('bd-' + k, b.data, b.opts); } if (!map.hasImage('gl-' + k)) { const g = groundImage(k); map.addImage('gl-' + k, g.data, g.opts); } }
   }
   if (HAS_GY) for (let k = 1; k <= 4; k++) if (!map.hasImage('fac-' + k)) { const im = facadeImage(T.ramp[k]); map.addImage('fac-' + k, im.data, im.opts); }   // 벽면 무늬(12·25·45·70 m 구간). 테마를 바꾸면 setStyle 로 그림이 사라져 다시 만든다
   if (HAS_INFRA) for (const k of INFRA_ICONS) if (!map.hasImage('ic-' + k)) { const im = infraIcon(k); map.addImage('ic-' + k, im.data, im.opts); }
@@ -834,7 +860,7 @@ function setupCustom() {
     const fontLayer = layers.find((l) => l.type === 'symbol' && l.layout && l.layout['text-font']);
     const font = fontLayer ? fontLayer.layout['text-font'] : ['Noto Sans Regular'];
     const sym = (l) => { if (!map.getLayer(l.id)) map.addLayer({ ...l, layout: { 'text-font': font, ...l.layout } }); };
-    const badgeIcon = ['match', ['get', 'kind'], 'sale', 'gl-sale', 'build', 'gl-build', 'near', 'gl-near', 'soon', 'gl-soon', 'permit', 'gl-permit', 'priv', 'gl-priv', 'gl-plan'];
+    const badgeIcon = ['match', ['get', 'kind'], 'sale', 'gl-sale', 'build', 'gl-build', 'near', 'gl-near', 'soon', 'gl-soon', 'move', 'gl-move', 'permit', 'gl-permit', 'priv', 'gl-priv', 'gl-plan'];
     sym({ id: 'blk-label-lo', type: 'symbol', source: 'block-pts', maxzoom: 14.3,
       layout: { 'text-field': ['get', 'short'], 'text-size': TXT.sm, 'text-allow-overlap': false, 'text-variable-anchor': ['top', 'bottom', 'left', 'right'], 'text-radial-offset': 1.1, 'symbol-sort-key': ['-', 0, ['get', 'units']] },
       paint: { 'text-color': T.text, 'text-halo-color': T.halo, 'text-halo-width': 2 } });
@@ -1135,7 +1161,7 @@ function dongPopup(p, clickX) {
   const rank = same === 1 && p.floors === r[1] ? `${n}개동 중 가장 높은 동` : same === 1 && p.floors === r[0] ? `${n}개동 중 가장 낮은 동` : r[0] === r[1] ? `${n}개동 모두 ${p.floors}층` : `${n}개동 중 ${same}개동이 ${p.floors}층`;
   const dnote = p.tier === 'schematic' ? '동 위치·높이는 근사값(10~20 m)이며, 층수는 공급 자료 기준입니다.' : '동 윤곽은 실제 건물 자료입니다. 층수·높이는 자료 기준입니다.';
   showCard(`<div class="pc">
-    <div class="pc-h"><b title="${esc(dnote)}">${esc(p.no)}동</b><span class="pc-sub">${esc(b.id)}</span>${chipHtml(KIND[b.status], stTxt(b))}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
+    <div class="pc-h"><b title="${esc(dnote)}">${esc(p.no)}동</b><span class="pc-sub">${esc(b.id)}</span>${chipHtml(b.pst != null ? kindOf(b) : KIND[b.status], stTxt(b))}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}</div>
     <div class="pc-big"><strong>${p.floors}층</strong><span>높이 약 ${Math.round(p.h)} m${p.hEst ? ' (추정)' : ''}</span></div>
     ${dongBars(b, p.no)}<div class="pc-cap">${rank}</div>
     ${dlHtml([progOf(b) ? ['단지 공정률', progCell(progOf(b))] : null, dueCell(b)])}</div>`,
@@ -1169,19 +1195,19 @@ function blockPopup(b, clickX, lead) {
   const nm = projName(b), sub = [nm !== b.id ? nm : '', b.kind.replace('(공공분양)', '')].filter(Boolean).join(' · ');   // 제목은 꼬리표·목록과 같은 짧은 이름(b.id), 원장 사업 이름은 부제와 title(2026-10-15 이름 통일)
   /* 상태는 '상태' 칸의 칩 하나 + 이유 한 줄(2026-10-15 평가 A8). 머리 칩은 단계 이름만: 준공 임박은 ③착공 안의 상태라 상태 칸이 있으면 머리는 '착공', 이유 줄에 '준공 임박' */
   const why = lt && lt.cls ? [statusReason(lt), b.status === '준공 임박' && !lt.pastDue ? '준공 임박' : ''].filter(Boolean).join(' · ') : '';
-  const headTxt = lt && lt.cls && b.status === '준공 임박' ? STATUS_TXT['건설 단계'] : stTxt(b) === '예정일 지남' ? STATUS_TXT[b.status] || b.status : stTxt(b);
+  const headTxt = b.pst != null ? stTxt(b) : lt && lt.cls && b.status === '준공 임박' ? STATUS_TXT['건설 단계'] : stTxt(b) === '예정일 지남' ? STATUS_TXT[b.status] || b.status : stTxt(b);
   /* 높이를 줄인 구조(2026-10-15, 1280×800 에서도 카드 안 스크롤 없음): 머리(제목·상태)·'사업 정보 보기' 링크 고정(2026-10-16 3차 평가: 1280 에서 맨 아래 링크가 스크롤 밑에 가렸다) → 호수·사업 id 한 줄 → 설명 2줄(눌러 펼침) →
      핵심 항목 2열 격자(단계·상태·예정·호수·정책·공정률·층수·입주·공사) → 경고 → '주변·시공'(시공·교통·학교·통학구역·신설 학교, 기본 접힘). 창이 더 낮으면 머리 아래만 스크롤 */
   const near = [b.builder ? ['시공', esc(b.builder) + (b.contractM ? ` <small>${fmt(Math.round(b.contractM / 100))}억원</small>` : '')] : null,
     nr && nr.st ? ['교통', `${esc(nr.st.name)} <small>${IL.shortDist(nr.st.d)}</small>`] : null, ...schoolRows,
     sr ? ['신설 학교', `${esc(IL.shortName(sr.ref.school.name))} <small>${esc(IL.fmtYm(sr.ref.school.openYm))} 개교 · ${IL.shortDist(sr.ref.d)}</small>`] : null].filter(Boolean);
   showCard(`<div class="pc pc-split">
-    <div class="pc-h"><b class="pc-t" title="${esc([nm, about].filter(Boolean).join('\n'))}">${linkId ? `<a href="${esc(projHref(linkId))}" style="color:inherit">${esc(b.id)}</a>` : esc(b.id)}</b>${sub ? `<span class="pc-sub">${esc(sub)}</span>` : ''}${chipHtml(KIND[b.status], headTxt)}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}${b.approx ? `<span class="pc-chip none" title="${esc(APPROX_TXT)}">근사 위치</span>` : ''}</div>
+    <div class="pc-h"><b class="pc-t" title="${esc([nm, about].filter(Boolean).join('\n'))}">${linkId ? `<a href="${esc(projHref(linkId))}" style="color:inherit">${esc(b.id)}</a>` : esc(b.id)}</b>${sub ? `<span class="pc-sub">${esc(sub)}</span>` : ''}${chipHtml(b.pst != null ? kindOf(b) : KIND[b.status], headTxt)}${b.priv ? chipHtml('priv', '공공택지 민간') : ''}${b.approx ? `<span class="pc-chip none" title="${esc(APPROX_TXT)}">근사 위치</span>` : ''}</div>
     ${linkId ? `<a class="pc-open" href="${esc(projHref(linkId))}">사업 정보 보기 ›</a>` : ''}
     <div class="pc-body">
     <div class="pc-big"><strong>${unitsTxt(b)}</strong>${b.bundleUnits ? `<small title="3D 상세 자료는 일부 호수(분양분 등)만 담고 있어 원장 계획 호수와 다릅니다">상세 자료 ${fmt(b.bundleUnits)}호</small>` : ''}${pidRow ? `<span class="pc-idl"><span class="sr">${pidRow[0]} </span>${pidRow[1]}</span>` : ''}</div>
     ${b.note ? `<details class="pc-note"><summary title="눌러서 설명 전체 보기">${esc(noteTxt(b.note))}</summary></details>` : ''}
-    ${gridHtml([lg && lg.stage ? ['단계', `<span class="stg6"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => `<i class="${x === sn.now ? `on ${sn.k}` : ''}"></i>`).join('')}</span><span title="${esc(sn.now[4])}">${stName(sn.now)}</span>`] : null,
+    ${gridHtml([lg && lg.stage ? ['단계', `<span class="stg6"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${(b.pst != null ? POC7.slice(0, 6) : STAGES6).map((x) => `<i class="${x === sn.now ? `on ${sn.k}` : ''}"></i>`).join('')}</span><span title="${esc(sn.now[4])}">${stName(sn.now)}</span>`] : null,
       /* 상태: 판정 칩 하나 + 이유 한 줄(경과·예정일 지남·준공 임박), 원천 날짜 다름은 이유 줄 뒤 작은 무채색 표지. 이유가 있으면 두 칸 폭 */
       lt && lt.cls ? ['상태', `<span class="pc-chip jd-c ${lg.cls}"${lt.pastDue ? ' title="예정일이 자료 기준일보다 앞서지만 실적 기록이 아직 없습니다. 상태는 그대로입니다"' : lt.lateTitle ? ` title="${esc(dotDate(lt.lateTitle))}"` : ''}>${esc(lt.cls)}</span>${why || alt ? `<span class="pc-why">${esc(why)}${alt ? `${why ? ' ' : ''}${am}` : ''}</span>` : ''}`, !!(why || alt), 'ov-aud-admin'] : null,   // 원장 판정 칸은 정책담당자 관점에만
       cur ? ['현재 예정', `${esc(cur)}${alt && !lt.cls ? ` ${am}` : ''}${dd.mark}`, (!!alt && !lt.cls) || !!dd.mark] : alt && !(lt && lt.cls) ? ['현재 예정', `<span class="pc-none">—</span> ${am}`, true] : null,
@@ -1260,8 +1286,8 @@ function busPopup(p, clickX) {
     [ptRing([bus.lon, bus.lat])], 0, clickX);
 }
 const exOut = () => (exOn ? [] : [['!=', ['get', 'settle'], 'existing']]);   // 기존 단지(준공 24개월 넘음)는 옵션을 켜야 보인다
-function statusFilter() { const f = ['all', ['in', ['get', 'status'], ['literal', [...SHOWN]]], ...exOut()]; return privOn ? f : ['all', f, ['!=', ['get', 'priv'], true]]; }
-const blockVisible = (b) => SHOWN.has(b.status) && (privOn || !b.priv) && (exOn || b.settle !== 'existing');   // 지금 지도에 보이는 단지인가(상태 선택 + 민간 스위치 + 기존 단지)
+function statusFilter() { const f = ['all', ['in', ['get', 'fk'], ['literal', [...SHOWN]]], ...exOut()]; return privOn ? f : ['all', f, ['!=', ['get', 'priv'], true]]; }
+const blockVisible = (b) => SHOWN.has(fkOf(b)) && (privOn || !b.priv) && (exOn || b.settle !== 'existing');   // 지금 지도에 보이는 단지인가(상태 선택 + 민간 스위치 + 기존 단지)
 function dongFilter() { return selDong == null ? statusFilter() : ['all', statusFilter(), ['!=', ['get', 'key'], selDong]]; }
 const vis = (id, on) => { if (map.getLayer(id)) map.setLayoutProperty(id, 'visibility', on ? 'visible' : 'none'); };
 function applySel() {   // 고른 건물: TH().sel(Okabe-Ito 노랑, 상태색 어디와도 겹치지 않음) + 바닥 윤곽선
@@ -1459,7 +1485,8 @@ function setLegend() {
   const stg = (sw, t, n, tip) => { rows.push([sw, t, n, '']); if (tip) tips.set(t, tip); };
   const NOTE = { '준공 임박': '<small>③착공 · 공정률 90% 이상, 입주 3개월 안</small>' };
   /* 단계색 견본은 머리 줄 6단계 띠(= 지도 범례)가 맡는다: 요약 줄(#legendSum)에는 넣지 않고 '자세히' 목록에만(2026-10-16 3차 평가: 범례 체계 하나로). 요약 줄은 비단계 표지만 */
-  BY_STAGE.forEach((st) => {   // 6단계 순서(①~⑥). ⑤준공(사용검사)은 입주 경과 표지로 나눈다(입주 진행 · 입주 완료, 기존 단지는 옵션을 켰을 때만)
+  if (POC_ON) POC7.forEach((s, i) => { if (BLOCKS.some((b) => !b.priv && b.pst === i)) stg(`<i class="sw ${POC_KIND[i]}"></i>`, s[1], '', stTitle(s[2][0])); });   // 수도권 PoC 단계(점 색)
+  else BY_STAGE.forEach((st) => {   // 6단계 순서(①~⑥). ⑤준공(사용검사)은 입주 경과 표지로 나눈다(입주 진행 · 입주 완료, 기존 단지는 옵션을 켰을 때만)
     if (!present.has(st)) return;
     if (st !== '입주 단계') return stg(`<i class="sw ${KIND[st]}"></i>`, stLabel(st), NOTE[st] || '', stTitle(st));
     const ss = new Set(BLOCKS.filter((b) => !b.priv && b.status === st).map((b) => b.settle || 'moving'));
@@ -1508,16 +1535,28 @@ function setLegend() {
 /* 수도권(사업 원장, region.js homeTally): 머리 줄 합계와 6단계 칸은 수도권 개요(/map)·사업 화면(/projects?sgg=)과 같은 원장 기준 —
    진행(①계획~④모집) 사업의 계획 호수·건수이고, 위치 미확보로 지도에 그리지 못한 사업도 센다. 그리지 못한 진행 사업이 있으면 그 차이를 둘째 줄에 적는다 */
 const HOME_T = REG.home && !REG.home.failed && REG.home.tally ? REG.home.tally : null;
-/* HOME PoC 규칙 머리 줄(2026-10-21 — 수도권 개요와 같은 원천 행 PRO_ 단위·같은 범위): 정책담당자 기본 9·7, ?policy=all 이면 정책 전체, 일반사용자 관점은 정책 전체.
+/* HOME PoC 규칙 머리 줄(2026-10-21 — 수도권 개요와 같은 원천 행 PRO_ 단위·같은 범위): 두 관점 모두 기본 9·7, ?policy=all 이면 정책 전체(POC_SCOPE).
    점·카드는 원장 사업 단위라 같은 위치의 원천 행 여러 건이 한 점에 모인다(점 수 ≠ 건수). 위치 미확보 = 원장 사업이 없는 행 + 지도에 그리지 못한 사업의 행 */
 const HOME_P = REG.home && !REG.home.failed && REG.home.poc ? REG.home.poc : null;
-const pocScope = () => (document.documentElement.getAttribute('data-aud') !== 'admin' || q.get('policy') === 'all' ? 'all' : 'p97');
-const POC_SCOPE_NAME = { p97: '9·7 연결', all: '정책 전체' };
+const pocScope = () => POC_SCOPE;
 const POC_STAGES = ['정책', '사업화', '인허가', '건설', '공급', '입주', '미확인'];   // PoC 정책 화면 단계 이름(건설은 준공 포함)
+/* 위치 미확보 사업(원장에는 있으나 지도에 그릴 위치가 없음): 지도 위 점선 묶음 표지와 머리 줄 단추가 같은 목록(#lostPop)을 연다.
+   9·7 범위면 9·7 원천 행이 없는 사업은 뺀다(점과 같은 규칙 — 직접 연 사업은 남기고 OUT_LOST 로 머리 줄에 적는다) */
+const in97Lost = (x) => !!(x.pst && x.pst.p97 != null);
+const LOST = (REG.home && !REG.home.failed && Array.isArray(REG.home.unlocated) ? REG.home.unlocated : []).filter((x) => !SCOPE97 || in97Lost(x) || OPENED.has(x.id));
+const OUT_LOST = SCOPE97 ? LOST.filter((x) => !in97Lost(x)) : [];
+/* 일반사용자 관점(2026-10-21 W5-MP2 결정): 사업 수 = 집계 행(c − q — /citizen 큰 숫자·사업 수와 같은 셈) '사업 n곳', 정책담당자는 원천 행 'n건'(물량 없음 따로) */
+const isPubAud = () => document.documentElement.getAttribute('data-aud') !== 'admin';
 function pocSumTotal(P, scope) {
-  const lost = P.lostN ? `위치 미확보 ${P.lostN}건${P.lostU ? ` · ${fmt(P.lostU)}호` : ''}` : '';
-  return { main: fmt(P.u), n: P.n, unk: P.q, unkName: '물량 없음', pre: `${POC_SCOPE_NAME[scope]} 원천 `, prog: false, map: lost ? `지도 표시 ${P.n - P.lostN}건(${lost})` : '', mapHead: `지도 표시 ${P.n - P.lostN}건`, lost,
-    sub: `${POC_SCOPE_NAME[scope]} 원천 행 ${P.n}건 중 ${P.c - P.q}건 집계${P.x ? `(같은 블록 중복·모호 ${P.x}건 제외)` : ''}의 계획 호수, 수도권 개요와 같은 기준. 단계 물량 ${POC_STAGES.map((n, i) => (P.st[i] ? `${n} ${fmt(P.st[i])}호` : '')).filter(Boolean).join(' · ') || '없음'}. 지도 점은 원장 사업 단위라 같은 위치의 원천 행 여러 건이 한 점입니다${lost ? `. ${lost}은 목록에만` : ''}` };
+  const lost = P.lostN ? `위치 미확보 ${P.lostN}건${P.lostU ? ` · ${fmt(P.lostU)}호` : ''}` : '', pub = isPubAud();
+  return { main: fmt(P.u), n: pub ? P.c - P.q : P.n, unit: pub ? '곳' : '건', unk: pub ? 0 : P.q, unkName: '물량 없음', pre: pub ? '사업 ' : `${POC_SCOPE_NAME[scope]} 원천 `, prog: false, out: outText(pub), map: lost ? `지도 표시 ${P.n - P.lostN}건(${lost})` : '', mapHead: `지도 표시 ${P.n - P.lostN}건`, lost,
+    sub: pub ? `${scope === 'all' ? '주택 공급 정책에 연결된' : '9·7 주택공급 확대방안에 연결된'} 사업 ${P.c - P.q}곳의 계획 호수입니다. 같은 단지가 여러 자료에 있으면 한 번만 셉니다${lost ? `. ${lost}은 목록에만` : ''}` : `${POC_SCOPE_NAME[scope]} 원천 행 ${P.n}건 중 ${P.c - P.q}건 집계${P.x ? `(같은 블록 중복·모호 ${P.x}건 제외)` : ''}의 계획 호수, 수도권 개요와 같은 기준. 단계 물량(정책 진행 자료의 지도 단계 분포) ${POC_STAGES.map((n, i) => (P.st[i] ? `${n} ${fmt(P.st[i])}호` : '')).filter(Boolean).join(' · ') || '없음'}. 6단계 칸은 원천 행을 단계별로 센 것(행 단계 = 그 분포에서 몫이 가장 큰 단계), 지도 점은 원장 사업 단위라 같은 위치의 원천 행 여러 건이 한 점이고 점 색은 그 행들의 가장 뒤 단계입니다${lost ? `. ${lost}은 목록에만` : ''}` };
+}
+/* 범위 밖이지만 직접 연 사업(OUT_OPEN·위치 미확보 OUT_LOST)의 머리 줄 한 줄 */
+function outText(pub) {
+  const names = [...OUT_OPEN.map((b) => b.name || b.id), ...OUT_LOST.map((x) => x.name)];
+  if (!names.length) return '';
+  return pub ? `${names.join(', ')}: 9·7 주택공급 대책에 들지 않은 사업입니다(직접 고른 사업이라 함께 보여 줍니다)` : `9·7 밖: ${names.join(', ')} — 9·7 연결 원천 행이 없지만 직접 연 사업이라 함께 표시`;
 }
 function homeSumTotal(t) {
   if (HOME_P) { const k = pocScope(); return pocSumTotal(HOME_P[k], k); }
@@ -1526,11 +1565,11 @@ function homeSumTotal(t) {
     sub: `사업 원장의 진행(①계획~④모집) 사업 ${t.n}건의 계획 호수${t.q ? `(호수 미확인 ${t.q}건 제외)` : ''}, 수도권 개요·사업 화면과 같은 기준${lost ? `. 지도 표시 ${t.n - t.lostN}건, 위치가 없어 목록에만 있는 사업 ${lost.replace('위치 미확보 ', '')}` : ''}` };
 }
 let SUM_TOTAL = HOME_T ? homeSumTotal(HOME_T) : null;
-/* 위치 미확보 사업(원장에는 있으나 지도에 그릴 위치가 없음): 지도 위 점선 묶음 표지와 머리 줄 단추가 같은 목록(#lostPop)을 연다 */
-const LOST = REG.home && !REG.home.failed && Array.isArray(REG.home.unlocated) ? REG.home.unlocated : [];
 /* ?project= 로 연 사업이 위치 미확보면(검단구 지연 2건 — 지구 경계·대표점 자료가 없어 근사 표지도 못 한다) 목록을 저절로 열고 그 줄을 강조·초점(2026-10-16 3차 평가 P1) */
 const CUR_LOST = RES && RES.lost ? LOST.find((x) => x.id === RES.lost.id) || null : null;
 /* 6단계 띠 칸 i 의 위치 미확보 몫 중 지연 건수(칸 = 원장 단계, 모르면 ① — homeTally 와 같은 규칙) */
+/* 위치 미확보 사업의 단계 이름: PoC 자료가 있으면 PoC 단계(점과 같은 규칙), 아니면 원장 단계 */
+const lostStage = (x) => (POC_ON ? (x.pst ? POC7[POC_SCOPE === 'p97' && x.pst.p97 != null ? x.pst.p97 : x.pst.all ?? 6][1] : '') : x.stage && stageOfCode(x.stage) ? stName(stageOfCode(x.stage)) : '');
 const lostLate = (i) => LOST.filter((x) => x.cls === 'delay' && (BOARD_OF_STAGE[x.stage] ?? 0) === i).length;
 /* 개요에서 지연 지표를 고르고 들어왔는가(?metric=d, 화면 쪽 계약의 'late' 도) — 머리 줄 '지연 n' 칩·빨강 묶음 표지·목록 펼침 */
 const LATE = ['d', 'late'].includes(q.get('metric'));
@@ -1549,16 +1588,16 @@ function safeRect() {
 /* ?project= 로 연 사업이 위치 미확보면 목록 맨 위에 한 줄 */
 const lostHtml = () => (RES && RES.lost ? `<li class="empty" id="lostNote">${esc(RES.lost.name)}: 위치 미확보 — 지도에 표시할 위치가 없어 시군구 전체를 보여 줍니다</li>` : '');
 function unlocatedHtml() {
-  const u = REG.home && Array.isArray(REG.home.unlocated) ? REG.home.unlocated : [];
+  const u = LOST;   // 범위(9·7) 규칙을 거친 위치 미확보 사업
   if (!u.length) return '';
   const cur = RES && RES.lost ? RES.lost.id : null;   // ?project= 로 연 위치 없는 사업은 강조한다
-  return `<li class="nearby"><b title="사업 원장에는 있으나 위치가 시군구 대표점뿐이거나 없어 지도에 그리지 않은 사업">위치 미확보 ${u.length}건</b><span class="nb-list">${u.map((x) => `<a href="${esc(projHref(x.id))}"${x.id === cur ? ' aria-current="true" style="font-weight:700;outline:2px solid currentColor;outline-offset:1px"' : ''} title="${esc([x.name, x.id, x.stage && stageOfCode(x.stage) ? stName(stageOfCode(x.stage)) : '', x.units ? `${fmt(x.units)}호` : '', x.loc ? `위치: ${x.loc}` : '위치 없음'].filter(Boolean).join(' · '))}">${esc(x.label || x.name)}</a>`).join('')}</span></li>`;
+  return `<li class="nearby"><b title="사업 원장에는 있으나 위치가 시군구 대표점뿐이거나 없어 지도에 그리지 않은 사업">위치 미확보 ${u.length}건</b><span class="nb-list">${u.map((x) => `<a href="${esc(projHref(x.id))}"${x.id === cur ? ' aria-current="true" style="font-weight:700;outline:2px solid currentColor;outline-offset:1px"' : ''} title="${esc([x.name, x.id, lostStage(x), x.units ? `${fmt(x.units)}호` : '', x.loc ? `위치: ${x.loc}` : '위치 없음'].filter(Boolean).join(' · '))}">${esc(x.label || x.name)}</a>`).join('')}</span></li>`;
 }
 if (BLOCKS.length) {
   /* 합계 */
   const by = {}; BLOCKS.forEach((b) => { const k = kindOf(b); by[k] = (by[k] || 0) + b.units; });
   const total = BLOCKS.reduce((a, b) => a + b.units, 0), unk = BLOCKS.filter((b) => b.unitsKnown === false).length;
-  const grp = [...STATUS_ORDER.map((st) => ({ key: KIND[st], label: stLabel(st) })), { key: 'priv', label: '공공택지 민간' }].filter((g) => g.key in by);
+  const grp = (POC_ON ? POC7.map((s, i) => ({ key: POC_KIND[i], label: s[1] })) : [...STATUS_ORDER.map((st) => ({ key: KIND[st], label: stLabel(st) })), { key: 'priv', label: '공공택지 민간' }]).filter((g) => g.key in by);
   const known = new Set(BLOCKS.filter((b) => b.unitsKnown !== false).map(kindOf));   // 호수를 아는 단지가 하나도 없는 묶음은 0 대신 '호수 미확인'
   const gTxt = (g) => (known.has(g.key) ? fmt(by[g.key]) + '호' : '호수 미확인');
   /* 수도권(원장): 합계는 머리 줄과 같은 값(원장 진행 사업), 지도에 그린 사업(전 단계)의 몫은 보조 줄. 아래 막대·범례는 지도에 그린 사업 기준 */
@@ -1586,7 +1625,7 @@ if (BLOCKS.length) {
   /* 펼친 단지 카드의 6단계 띠(원장 단계가 있으면 원장 기준) + 원장 판정·다음 일정 한 줄 */
   function stageInner(b) {
     const dates = stageDates(b), sn = stageNow(b), t = LT(b);
-    const strip = `<span class="stage" aria-hidden="true"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${STAGES6.map((x) => { const on = x === sn.now; return `<span class="${on ? `now ${sn.k}` : ''}" title="${esc(x[4])}">${x[1]}<small>${dates[x[1]] || (on ? '현재' : '')}</small></span>`; }).join('')}</span>`;
+    const strip = `<span class="stage" aria-hidden="true"${sn.title ? ` title="${esc(sn.title)}"` : ''}>${(b.pst != null ? POC7.slice(0, 6) : STAGES6).map((x) => { const on = x === sn.now; return `<span class="${on ? `now ${sn.k}` : ''}" title="${esc(x[4])}">${x[1]}<small>${dates[x[1] === '건설' ? '준공' : x[1]] || (on ? '현재' : '')}</small></span>`; }).join('')}</span>`;
     const jd = t && t.cls ? `<b class="jd ${b.ledger.cls} ov-aud-admin"${t.lateTitle ? ` title="${esc(dotDate(t.lateTitle))}"` : ''}>${t.cls}${t.late ? ` · ${esc(t.late)}` : ''}</b>` : '', nx = t && t.next ? `현재 예정 ${esc(t.next)}` : '';
     const body = jd && nx ? `${jd}<span class="ov-aud-admin"> · </span>${nx}` : jd || nx;   // 판정은 정책담당자 관점에만(일반사용자는 다음 일정만)
     return strip + (body ? `<span class="ldg" title="${esc(t.basis)}">${body}</span>` : '');
@@ -1679,7 +1718,7 @@ function focusBlock(id, { toggle = true, tour = false, scroll = true, from = nul
   const was = btn && btn.getAttribute('aria-expanded') === 'true';
   document.querySelectorAll('#projList .card').forEach((c) => c.setAttribute('aria-expanded', c === btn && !(toggle && was) ? 'true' : 'false'));
   if (scroll && btn && btn.getAttribute('aria-expanded') === 'true') btn.scrollIntoView({ block: 'nearest', behavior: reduceMotion ? 'auto' : 'smooth' });   // 사이드바에서 펼친 카드가 보이게
-  if (!SHOWN.has(b.status)) { SHOWN.add(b.status); syncChips(); applyFilters(); }
+  if (!SHOWN.has(fkOf(b))) { SHOWN.add(fkOf(b)); syncChips(); applyFilters(); }
   if (b.priv && !privOn) { privOn = true; syncChips(); applyFilters(); }
   if (b.settle === 'existing' && !exOn) { exOn = true; syncChips(); applyFilters(); setLegend(); }
   if (innerWidth <= 900) setSheet('peek');
@@ -1881,7 +1920,7 @@ vMenu.addEventListener('keydown', (e) => {
 document.addEventListener('pointerdown', (e) => { if (!vMenu.hidden && !vMenu.contains(e.target) && !vBtn.contains(e.target)) closeViewMenu(false); });
 
 /* 옵션 창: 자주 바꾸지 않는 설정을 모았다. 기본은 모두 켬이고, 꺼 둔 설정이 있으면 버튼에 개수를 보인다. */
-const ALL_ST = new Set(BLOCKS.map((b) => b.status));
+const ALL_ST = new Set(BLOCKS.map(fkOf));
 const optCount = () => (SHOWN.size < ALL_ST.size ? 1 : 0) + (hasEx() && exOn ? 1 : 0) + (HAS_CTX && !ctxOn ? 1 : 0) + (HAS_CTX && ctxOn && !ringOn ? 1 : 0) + (!hudOn ? 1 : 0) + (!cardsOn ? 1 : 0) + (HAS_PRIV && !privOn ? 1 : 0) + (HAS_INFRA && !infraOn ? 1 : 0) + (HAS_INFRA && !zoneOn ? 1 : 0) + (HAS_BUS && !busOn ? 1 : 0);
 /* 머리 줄 6단계 띠 한 칸(그 단계의 상태들 sts)을 눌렀을 때 새 SHOWN: 이미 그 단계만 보이면 전체(all), 아니면 그 단계만 */
 function soloShown(shown, sts, all) {
@@ -1891,8 +1930,8 @@ function soloShown(shown, sts, all) {
 /* 관점(html[data-aud], 머리 줄 스위치가 바꾼다): 원장 판정(정상·주의·지연·예정 경과)·원천 값·날짜 다름은 class="ov-aud-admin"(지도 페이지의 관점 CSS, app/(map)/map/page.tsx)이라 CSS 가 따른다.
    6단계 띠(#stageF)는 두 관점 모두 보이고, 블록이 없을 때만 숨긴다 */
 function syncAud() {
-  $('#stageF').hidden = !BLOCKS.length && !(HOME_T && HOME_T.st.some((x) => x.n));
-  if (HOME_T) SUM_TOTAL = homeSumTotal(HOME_T);   // 관점이 바뀌면 범위(9·7 ↔ 정책 전체)도 바뀐다
+  $('#stageF').hidden = !BLOCKS.length && !(HOME_P ? HOME_P[POC_SCOPE].n : HOME_T && HOME_T.st.some((x) => x.n));
+  if (HOME_T) SUM_TOTAL = homeSumTotal(HOME_T);
 }
 if (window.MutationObserver) new MutationObserver(() => { syncAud(); for (const k in hudSz) delete hudSz[k]; scheduleHud(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-aud'] });   // 꼬리표 폭이 바뀐다(판정 글자)
 function syncChips() {
@@ -1916,28 +1955,31 @@ function positionOpt() {
   $('#optPanel').style.setProperty('--oy', (b.bottom - w.top + 6) + 'px');
 }
 (function wireTop() {
-  const present = BY_STAGE.filter((st) => ALL_ST.has(st));
-  $('#optStatus').innerHTML = present.map((st) => `<label><input type="checkbox" data-status="${st}" checked><i class="sw ${KIND[st]}"></i>${stLabel(st)}</label>`).join('');
+  const present = (POC_ON ? POC7.map((s) => s[2][0]) : BY_STAGE).filter((st) => ALL_ST.has(st));
+  $('#optStatus').innerHTML = present.map((st) => `<label><input type="checkbox" data-status="${st}" checked><i class="sw ${/^P[0-6]$/.test(st) ? POC_KIND[Number(st.slice(1))] : KIND[st]}"></i>${stLabel(st)}</label>`).join('');
   if (!HAS_CTX) { $('#lblCtx').hidden = true; $('#lblRing').hidden = true; }
   /* 머리 줄의 6단계 필터: 옵션의 '보일 단지 상태'와 같은 SHOWN 을 바꾼다. 단지가 없는 단계는 눌리지 않게 흐리게 둔다 */
   const SOLO_TIP = ' · 누르면 이 단계 구역만 강조, 다시 누르면 전체';
   syncAud();
-  $('#stageF').innerHTML = STAGES6.map(([no, name, sts, col, official], i) => {
-    const live = sts.filter((st) => ALL_ST.has(st)), bs = BLOCKS.filter((b) => live.includes(b.status)), units = bs.reduce((a, b) => a + b.units, 0);
-    /* 수도권: 칸의 건수·호수는 원장 기준(머리 줄 합계·수도권 개요와 같은 수). 누르면 지도에 그린 그 단계 사업을 숨기고 보인다 — 그린 사업이 없으면 눌리지 않는다 */
-    const h = HOME_T && HOME_T.st[i];
+  /* 수도권 PoC(POC_ON): 칸 = PoC 단계(정책~입주, 미확인 행이 있으면 미확인 칸), 건수·호수 = 그 단계 원천 행 수·집계 호수(region.js homePoc k·ku, 지도 밖 몫 lk·lu·ld) */
+  const PP = POC_ON && HOME_P ? HOME_P[POC_SCOPE] : null;
+  const pocChip = (i) => ({ n: PP.k[i], u: PP.ku[i], q: PP.ku[i] ? 0 : PP.k[i], lostN: PP.lk[i], lostU: PP.lu[i], ld: PP.ld[i] });
+  $('#stageF').innerHTML = (PP ? POC7.filter((_, i) => i < 6 || PP.k[6]) : STAGES6).map(([no, name, sts, col, official], i) => {
+    const live = sts.filter((st) => ALL_ST.has(st)), bs = BLOCKS.filter((b) => live.includes(fkOf(b))), units = bs.reduce((a, b) => a + b.units, 0);
+    /* 수도권: 칸의 건수·호수는 원장 기준(머리 줄 합계·수도권 개요와 같은 수 — PoC 자료가 있으면 원천 행 기준). 누르면 지도에 그린 그 단계 사업을 숨기고 보인다 — 그린 사업이 없으면 눌리지 않는다 */
+    const h = PP ? pocChip(i) : HOME_T && HOME_T.st[i], unit = PP ? '원천 행' : '사업 원장', none = PP ? '물량 없음' : '호수 미확인';
     if (h && h.n) {
       /* 지도 밖(위치 미확보) 몫: 칸 안에 '지도 밖 n호'(호수를 모르면 n건)를 작게. 누르면 위치 미확보 목록(#lostPop) — 그린 사업이 없는 칸은 칸 전체가 목록 단추(2026-10-15 2차 평가: 덕양 ①계획 2,570호가 눌리지 않는 빈 칸이었다) */
       const lostTxt = h.lostN ? `지도 밖 ${h.lostU ? `${fmt(h.lostU)}호` : `${h.lostN}건`}` : '';
       const mapTxt = h.lostN ? ` · 지도 표시 ${h.n - h.lostN}건 · 위치 미확보 ${h.lostN}건${h.lostU ? `(${fmt(h.lostU)}호)` : ''}은 목록에만` : '';
-      const ld = h.lostN ? lostLate(i) : 0;   // 그중 지연(빨강 '지연 n', 2026-10-16 3차 평가 P1: 지연 확정 사업이 모두 위치 미확보라 지도에서 찾을 수 없었다)
+      const ld = h.lostN ? (PP ? h.ld : lostLate(i)) : 0;   // 그중 지연(빨강 '지연 n', 2026-10-16 3차 평가 P1: 지연 확정 사업이 모두 위치 미확보라 지도에서 찾을 수 없었다)
       const lost = lostTxt ? `<span class="sf-lost" title="${esc(`위치 미확보 ${h.lostN}건${h.lostU ? `(${fmt(h.lostU)}호)` : ''}${ld ? `, 지연 ${ld}건` : ''} — 지도에 없습니다. 누르면 위치 미확보 사업 목록`)}">${lostTxt}${ld ? ` <b class="sf-late">지연 ${ld}</b>` : ''}</span>` : '';
-      const v = h.n > h.q ? `<b class="sf-v">${fmt(h.u)}<small>호</small>${lost}</b>` : `<b class="sf-v none sm" title="이 단계 사업의 호수가 원장에 없습니다">호수 미확인${lost}</b>`;
-      const tip = `${official} · 사업 원장 ${h.n}건${h.q ? `(호수 미확인 ${h.q}건)` : ''}${mapTxt}${bs.length ? SOLO_TIP : h.lostN ? ' · 누르면 위치 미확보 사업 목록' : ''}`;
+      const v = h.n > h.q ? `<b class="sf-v">${fmt(h.u)}<small>호</small>${lost}</b>` : `<b class="sf-v none sm" title="${PP ? '이 단계 원천 행의 집계 호수가 없습니다(같은 블록 중복 제외·물량 없음)' : '이 단계 사업의 호수가 원장에 없습니다'}">${none}${lost}</b>`;
+      const tip = `${official} · ${unit} ${h.n}건${h.q ? `(${none} ${h.q}건)` : ''}${PP && bs.length ? ` · 지도 점 ${bs.length}곳(점 색 = 그 점 원천 행의 가장 뒤 단계)` : ''}${mapTxt}${bs.length ? SOLO_TIP : h.lostN ? ' · 누르면 위치 미확보 사업 목록' : ''}`;
       if (!bs.length && h.lostN) return `<button type="button" class="sf lostonly" data-status="" data-lost="1" data-name="${no}${name}" style="--c:${col}" aria-expanded="false" aria-controls="lostPop" title="${esc(tip)}" aria-label="${esc(`${no}${name} ${h.n}건, 모두 지도 밖(위치 미확보)${ld ? `, 지연 ${ld}건` : ''}. 누르면 위치 미확보 사업 목록`)}"><span class="sf-h"><i class="sf-sw"></i>${no}${name}<span class="sf-n">${h.n}건</span></span>${v}</button>`;
       return `<button type="button" class="sf" data-status="${bs.length ? live.join('|') : ''}" data-name="${no}${name}" style="--c:${col}" aria-pressed="${bs.length ? 'true' : 'false'}"${bs.length ? '' : ' disabled'} title="${esc(tip)}"><span class="sf-h"><i class="sf-sw"></i>${no}${name}<span class="sf-n">${h.n}건</span></span>${v}</button>`;
     }
-    if (HOME_T) return `<button type="button" class="sf empty" data-status="" data-name="${no}${name}" style="--c:${col}" aria-pressed="false" disabled title="${official} · 이 단계의 원장 사업이 없습니다" aria-label="${no}${name}, 사업 없음"><span class="sf-h"><i class="sf-sw"></i>${no}${name}</span><b class="sf-v none">—</b></button>`;
+    if (HOME_T || PP) return `<button type="button" class="sf empty" data-status="" data-name="${no}${name}" style="--c:${col}" aria-pressed="false" disabled title="${official} · 이 단계의 ${PP ? '원천 행이' : '원장 사업이'} 없습니다" aria-label="${no}${name}, 사업 없음"><span class="sf-h"><i class="sf-sw"></i>${no}${name}</span><b class="sf-v none">—</b></button>`;
     if (!bs.length) return `<button type="button" class="sf empty" data-status="" data-name="${no}${name}" style="--c:${col}" aria-pressed="false" disabled title="${official} · 이 단계의 사업이 없습니다" aria-label="${no}${name}, 사업 없음"><span class="sf-h"><i class="sf-sw"></i>${no}${name}</span><b class="sf-v none">—</b></button>`;   // 빈 단계는 이름 + '—'(이유는 title)
     return `<button type="button" class="sf" data-status="${live.join('|')}" data-name="${no}${name}" style="--c:${col}" aria-pressed="true" title="${official}${SOLO_TIP}"><span class="sf-h"><i class="sf-sw"></i>${no}${name}<span class="sf-n">${bs.length}건</span></span>${bs.some((b) => b.unitsKnown !== false) ? `<b class="sf-v">${fmt(units)}<small>호</small></b>` : '<b class="sf-v none sm" title="이 단계 사업의 호수가 원장에 없습니다">호수 미확인</b>'}</button>`;   // 호수를 아는 단지가 없으면 0호 대신
   }).join('');
@@ -2370,7 +2412,7 @@ function syncHudSum() {
   /* 문장(공급 예정 사업 n건, 호수 미확인 m건 제외)은 title 과 화면 낭독기용. 미확인은 값의 성격 표지라 짧게 남긴다 */
   /* 개요에서 지연 지표로 들어왔으면 그 맥락을 칩 하나로(2026-10-15 평가 P1): '지연 n'(빨강), 없으면 '지연 없음'(무채색) */
   const ln = LATE ? lateN() : 0, late = LATE ? `<span class="hs-late${ln ? '' : ' none'}" title="${HOME_P ? '수도권 개요에서 고른 지표: 지연 사업(도래 단계 목표 대비 실제 부족률 2% 이상, 위치 미확보 포함)' : '수도권 개요에서 고른 지표: 지연 사업(예정일을 6개월 넘게 넘김, 위치 미확보 포함)'}">${ln ? `지연 ${ln}` : '지연 없음'}</span>` : '';
-  $('#hudSum').innerHTML = `<div class="hs-a">${late}<div class="hs-total" title="${esc(tot.sub)}"><span class="sr">${esc(tot.sub)}</span><span aria-hidden="true"><b>${esc(tot.main)}</b><small>호</small><span class="hs-n">· ${tot.prog ? '진행 ' : tot.pre || ''}${tot.n}건${tot.unk ? ` · ${tot.unkName || '미확인'} ${tot.unk}건` : ''}</span></span>${tot.map ? `<span class="hs-map">${tot.lost && (LOST.length || (HOME_P && HOME_P[pocScope()].noPrj.length)) ? `<span aria-hidden="true">${esc(tot.mapHead)} · </span><button type="button" class="hs-lost" aria-expanded="${!$('#lostPop').hidden}" aria-controls="lostPop" title="위치가 없어 지도에 그리지 못한 사업 목록 열기">${esc(tot.lost)}</button>` : `<span aria-hidden="true">${esc(tot.map)}</span>`}</span>` : ''}</div></div>`
+  $('#hudSum').innerHTML = `<div class="hs-a">${late}<div class="hs-total" title="${esc(tot.sub)}"><span class="sr">${esc(tot.sub)}</span><span aria-hidden="true"><b>${esc(tot.main)}</b><small>호</small><span class="hs-n">· ${tot.prog ? '진행 ' : tot.pre || ''}${tot.n}${tot.unit || '건'}${tot.unk ? ` · ${tot.unkName || '미확인'} ${tot.unk}건` : ''}</span></span>${tot.map ? `<span class="hs-map">${tot.lost && (LOST.length || (HOME_P && HOME_P[pocScope()].noPrj.length)) ? `<span aria-hidden="true">${esc(tot.mapHead)} · </span><button type="button" class="hs-lost" aria-expanded="${!$('#lostPop').hidden}" aria-controls="lostPop" title="위치가 없어 지도에 그리지 못한 사업 목록 열기">${esc(tot.lost)}</button>` : `<span aria-hidden="true">${esc(tot.map)}</span>`}</span>` : ''}${tot.out ? `<span class="hs-map hs-out">${esc(tot.out)}</span>` : ''}</div></div>`
     + (side ? `<div class="hs-b">${side}</div>` : '');
 }
 function setCollapsed(on, { quiet = false } = {}) {
@@ -2391,7 +2433,7 @@ const lostTriggers = () => [...document.querySelectorAll('.lostpin, .hs-lost, #s
 /* 사업 원장 목록 한 줄(위치 미확보 목록·안내 띠 '사업 원장 n건' 목록이 같은 형식): 짧은 이름 · 판정 / 단계 · 호수 · 위치 근거 / 사업 정보 링크. 지연·주의 먼저 */
 const LIST_RANK = { delay: 0, caution: 1 };
 const ledgerRows = (xs) => xs.slice().sort((a, c) => (LIST_RANK[a.cls] ?? 2) - (LIST_RANK[c.cls] ?? 2) || String(a.id).localeCompare(String(c.id))).map((x) => `<li${CUR_LOST && x.id === CUR_LOST.id ? ' class="cur" aria-current="true"' : ''}><span class="lp-n"><b title="${esc(x.name)}">${esc(x.label || x.name)}</b>${x.cls ? ` <b class="jd ${esc(x.cls)} ov-aud-admin">${esc(CLS_WORD[x.cls] || x.cls)}</b>` : ''}</span>`
-  + `<small>${esc([x.stage && stageOfCode(x.stage) ? stName(stageOfCode(x.stage)) : '', x.units ? `${fmt(x.units)}호` : '호수 미확인', x.loc || '위치 없음', x.mark || ''].filter(Boolean).join(' · '))}</small>`
+  + `<small>${esc([lostStage(x), x.units ? `${fmt(x.units)}호` : '호수 미확인', x.loc || '위치 없음', x.mark || ''].filter(Boolean).join(' · '))}</small>`
   + `<a href="${esc(projHref(x.id))}">사업 정보 보기 ›</a></li>`).join('');
 /* 위치 미확보 안내(lib/board/projects-view.ts LOST_GUIDE 와 같은 문구): 시군구 대표점뿐(rep) > 계획 단계 원장 01~03(plan) > 건설 이후(build) */
 const LOST_GUIDE = { rep: '시군구 대표점에 임시로 표시 중 · 대표 지번 주소를 입력하면 정확한 위치로 표시됩니다', plan: '대표 지번 주소나 좌표를 입력하면 지도에 표시됩니다', build: '건축허가 정보와 연결되면 지도에 표시됩니다 · 대표 지번 주소를 입력해도 됩니다' };
@@ -2490,6 +2532,7 @@ if (document.documentElement.hasAttribute('data-map-shell')) {
     TONE = TH().tone;
     const newColor = { ...COLOR };
     STAGES6.forEach((stage, i) => { stage[3] = stageColor(i); });
+    POC7.forEach((stage, i) => { stage[3] = COLOR[POC_KIND[i]]; });
     // 이미 열린 카드의 클릭 핸들러와 펼침 상태를 보존하면서 인라인 상태색을 바꾼다.
     const replacement = new Map(Object.keys(oldColor).map((kind) => [oldColor[kind].toLowerCase(), newColor[kind]]));
     document.querySelectorAll('.app [style], .maplibregl-popup [style]').forEach((element) => {

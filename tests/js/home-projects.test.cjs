@@ -97,7 +97,7 @@ test('(b) 덤프·스냅샷으로 다시 만들면 같은 바이트, 9·7 범위
     assert.deepEqual(r.judge, { status: HV.statusAt(c, view.as_of_date).status, gap: HV.statusAt(c, view.as_of_date).units }, c.id);
     n++;
   }
-  assert.equal(n, 172);   // 2038810 inventory 이식으로 인천검단 AA19 두 임대 유형이 따로 묶음(2026-10-21, 170 → 172)
+  assert.equal(n, 175);   // 2026-10-21 새 덤프(20261020T142230Z): 덤프 뒤였던 독산동·방화차고지·연남동이 판에 들어와 PoC 9·7 포트폴리오 175 와 같다 · 2038810 inventory 이식으로 인천검단 AA19 두 임대 유형이 따로 묶음(2026-10-21, 170 → 172)
 });
 
 /* 정답 CSV(따옴표 칸 포함) → 행 객체 */
@@ -152,18 +152,17 @@ test('(c) 정답 대조: 사업 행 451개 분류가 같고, 덤프와 다른 �
       [r.name, r.region, r.policy.status, r.policy.id ?? '', r.stats, r.p97, r.chart.p97, r.units.planned, r.ourId ?? ''],
       [c.poc_name, c.poc_region, c.poc_mapping_status, c.poc_policy, c.poc_in_map_443 === 'Y', c.poc_in_projects_workspace === 'Y', c.poc_in_97_target_175 === 'Y', num(c.poc_planned_units), c.our_final_id], c.poc_id);
     if (r.chart.all) assert.equal(r.units.counted, num(c.poc_map_target_units), c.poc_id);
-    assert.equal(r.from === 'snapshot', c.status === '덤프뒤신규', c.poc_id);
+    /* 2026-10-21 새 덤프: 정답 CSV 가 '덤프뒤신규'로 적은 3행(독산동·연남동·방화차고지 — 10-20 06:22 판 기준)도 새 판에 있어 스냅샷 행은 없다 */
+    assert.equal(r.from, 'dump', c.poc_id);
   }
   /* 덤프 계산과 PoC 가 다른 분류 칸(사업 id·까닭) — 이 밖의 차이는 0 이어야 한다 */
   const got = doc.residuals.filter((x) => x.use === 'poc').map((x) => `${x.field} ${x.id}`).sort();
   const want = [
-    ...csv.filter((c) => c.status === '덤프뒤신규').map((c) => `row ${c.poc_id}`),
     /* 인천부평 A: 2038810 inventory·block_key 이식(2026-10-21) 뒤에도 덤프로는 단독 대표(블록 칸 'A' — 블록 키 없음)인데 PoC 운영 판은 집계에서 뺀다 — 덤프 뒤 변경 또는 미공개 서버 규칙.
        인천검단 AA19 두 임대 유형(PRO_3cb5…·PRO_8ccb…)은 이식으로 PoC 와 같아졌다 */
     'chart.all PRO_4b859c7f4b18222558932b97',
     /* 인천 시군구 귀속(행정구역 개편): policy-progress.js homeService 가 원장 시군구 규칙(home-source.js sggByPro)으로 PoC 운영 규칙 INCHON_DATED_ADMINISTRATIVE_NAME 을 대신해
-       23행 중 19행이 같아졌다. 남은 4행 = 원장도 시군구를 못 정한 인천서구 묶음(SGG_UNRESOLVED — 지구 '인천서구' 만으로는 서해구·검단구를 못 가른다) */
-    ...['1c2a1be12daff06cef52f8c6', '4e534476d1d747285e612f85', '85998117430f9302232be12d', 'a9e2bffb100945377e90ef33'].map((h) => `sgg PRO_${h}`),
+       23행 중 19행이 같아졌고, 2026-10-21 W4 인천서구 4행(지구 이름 규칙 districtOnlyKey → 서해구)으로 23행 모두 같다 */
   ].sort();
   assert.deepEqual(got, want);
   for (const x of doc.residuals.filter((y) => y.field === 'sgg')) assert.equal(byId.get(x.id).region, '인천광역시', x.id);
@@ -187,9 +186,12 @@ test('(c) 정답 대조: 9·7 묶음의 단계 도달·판정·12개월 공급·
       else if (x) { assert.deepEqual(x.poc, pv[k], `${c.id} ${k}`); differs = true; }
       else assert.deepEqual(r[k], pv[k], `${c.id} ${k}: 잔차 없이 다름`);
     }
-    if (differs) assert.ok(late.has(c.id), `${c.id}: 덤프 뒤 입력 없이 다름`);
+    /* 2026-10-21 새 덤프: 남은 차이는 같은 블록 계약 행의 담당자 측정값(REASON.sibling)뿐 — 부천대장 A5·A6(A-5·A-6 묶음 계약 PRO_4ce4…·PRO_b880… 의 공급 추정 952·688호가 PoC 묶음에 없다) */
+    const sib = [...res.values()].some((x) => x.id === c.id && x.why === HP.REASON.sibling);
+    if (differs) assert.ok(late.has(c.id) || sib, `${c.id}: 덤프 뒤 입력·같은 블록 측정값 없이 다름`);
     else same++;
   }
   assert.equal(view.portfolio_cohorts.length, 175);
   assert.equal(same, 175 - new Set([...res.values()].map((x) => x.id)).size);
+  assert.deepEqual([...new Set([...res.values()].map((x) => x.id))].sort(), ['PRO_60b4a8833ed549023a6ef1a5', 'PRO_d86ce8966f5ed10d5ef2d175'], '덤프 값을 쓰는 잔차 사업(2026-10-21 새 덤프: 덤프 뒤 입력 잔차 78칸 해소)');
 });

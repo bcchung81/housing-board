@@ -33,8 +33,8 @@ test('분류 표: 계층 순서 B·C1·C2·D·E, 프로그램 id 는 한 계층�
 });
 
 test('원장: 살아 있는 사업 = 공공 공급 285 · 민간 정비 39 · 일반 민간 53, 판단 불가(F → UNKNOWN)·공공택지 민간 0, 검토 목록 공개 범위 미상 0', () => {
-  assert.deepEqual(['PUBLIC', 'PRIVATE_RENEWAL', 'PRIVATE', 'UNKNOWN', 'PRIVATE_ON_PUBLIC_LAND'].map((s) => byScope(s).length), [285, 39, 53, 0, 0]);
-  assert.equal(live.length, 377);
+  assert.deepEqual(['PUBLIC', 'PRIVATE_RENEWAL', 'PRIVATE', 'UNKNOWN', 'PRIVATE_ON_PUBLIC_LAND'].map((s) => byScope(s).length), [288, 39, 53, 0, 0]);   // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3(독산동·방화차고지 A 공공 시행 SH, 연남동 C1 프로그램 건설형 공공임대) 285 → 288
+  assert.equal(live.length, 380);   // 2026-10-21 새 덤프: 새 사업 3
   assert.equal(table('review_required').filter((r) => r.review_type === 'PUBLIC_SCOPE_UNKNOWN').length, 0, 'F 0건');
   /* 기관이 있으면 공공 시행(A) — 기관 있는 민간 사업은 없다 */
   assert.ok(live.filter((p) => p.agency_id).every((p) => p.public_scope === 'PUBLIC'));
@@ -69,8 +69,8 @@ test('HOME 원본으로 다시 나눈 계층 = 원장 공개 범위 — A 180 ·
     tiers[t.tier] = (tiers[t.tier] ?? 0) + 1;
     units[t.tier] = (units[t.tier] ?? 0) + unitsOf.get(p.local_project_id);
   }
-  assert.deepEqual(tiers, { A: 180, B: 52, C1: 5, C2: 48, D: 39, E: 53 }, 'F 없음');
-  assert.deepEqual(units, { A: 123738, B: 33199, C1: 30000, C2: 55342, D: 27251, E: 628 });
+  assert.deepEqual(tiers, { A: 183, B: 52, C1: 5, C2: 48, D: 39, E: 53 }, 'F 없음');   // 2026-10-21 새 덤프(20261020T142230Z): A +3(독산동·방화차고지·연남동, 시행 SH — 연남동은 W5 SH 규칙으로 C1 → A)
+  assert.deepEqual(units, { A: 123841, B: 33199, C1: 30000, C2: 55342, D: 27251, E: 628 });   // 2026-10-21 새 덤프: A +103(독산동 20·방화차고지 75·연남동 8)
 });
 
 test('화면 합계 = 공공 공급 합: 종합상황판·지도 색인·사업 색인·상세·지역 공급·지도 정적 자료·경량 번들·/citizen 에 민간 사업이 없고, 민간 정비는 따로', () => {
@@ -79,7 +79,7 @@ test('화면 합계 = 공공 공급 합: 종합상황판·지도 색인·사업 
   assert.equal(pub.size, byScope('PUBLIC').length);
   const L = board('ledger-board.json');
   assert.deepEqual([L.scope.projects, L.scope.units], [pub.size, sum([...pub].map((id) => unitsOf.get(id)))]);
-  assert.deepEqual([L.scope.projects, L.scope.units], [285, 242279]);
+  assert.deepEqual([L.scope.projects, L.scope.units], [288, 242382]);   // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3(103호)
   assert.deepEqual(L.scope.renewal, { projects: renewal.length, units: sum(renewal.map((id) => unitsOf.get(id))) });
   assert.deepEqual(L.scope.renewal, { projects: 39, units: 27251 });
   assert.equal(sum(L.regions.map((r) => r.projects)), pub.size, '시도 합');

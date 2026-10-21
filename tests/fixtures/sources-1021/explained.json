@@ -1,31 +1,21 @@
 {
   "schema": "sources-explained/1",
-  "note": "/sources 의 숫자를 PoC 정답(.cache/home-parity/golden/golden-sources.json, PoC 2026-10-21 08:38 KST)과 대조해 남는 차이와 까닭. 여기 없는 차이는 0 이어야 한다(tests/js/sources-golden.test.cjs).",
-  "snapshot": "schemas/ledger-2026-10/raw/home-api/2026-10-20 (PoC 응답을 2026-10-21 09:28 KST 에 받음, 정답보다 약 50분 뒤)",
-  "recordCount": {
+  "note": "/sources 의 숫자를 PoC 정답(.cache/home-parity/golden/golden-sources.json, PoC 2026-10-21 11:28 KST)과 대조해 남는 차이와 까닭. 여기 없는 차이는 0 이어야 한다(tests/js/sources-golden.test.cjs). 2026-10-21 새 덤프(20261020T142230Z, 2026-10-20 23:22 KST) 재이관으로 옛 차이(건축HUB 일반 인허가 건수·이음 공고 상태·프로그램–사업 확정 3곳)는 사라졌다.",
+  "snapshot": "schemas/ledger-2026-10/raw/home-api/2026-10-20 (PoC 응답을 2026-10-21 11:28 KST 에 받음, 정답과 같은 때)",
+  "recordCount": {},
+  "status": {},
+  "failed": {
     "building_general_permit": {
-      "golden": 850687,
-      "ours": 886726,
-      "reason": "덤프 뒤 PoC 변경: 정답을 받은 뒤에도 PoC 가 이 원천을 계속 수집했다(스냅샷 시점에는 PoC 상태도 실패 → 성공). 합계 차이 36,039 는 이 한 곳뿐."
-    }
-  },
-  "status": {
-    "eum_housing_notices": {
       "golden": "SUCCESS",
-      "snapshot": "RUNNING",
-      "reason": "덤프 뒤 PoC 변경: 스냅샷을 받는 순간 PoC 가 이 원천을 수집 중이었다. 화면 상태는 덤프의 마지막 수집 실행 기준(성공)이다."
-    },
-    "building_general_permit": {
-      "golden": "FAILED",
-      "snapshot": "SUCCESS",
-      "reason": "덤프 뒤 PoC 변경(위와 같음). 화면의 실패 2는 덤프의 마지막 수집 실행(2026-10-20 06:08 KST)에서 센 값이라 정답과 같다."
+      "ours": "FAILED",
+      "reason": "덤프 뒤 PoC 변경: 덤프(2026-10-20 23:22 KST)의 마지막 수집 실행(2026-10-20 22:29 KST)은 실패였고, PoC 는 덤프 뒤 2026-10-21 11:23 KST 에 성공했다. 화면의 실패 수는 덤프의 마지막 수집 실행에서 센다."
     }
   },
   "links": {
     "PROGRAM_PROJECT": {
-      "confirmed": { "golden": 283, "ours": 280 },
-      "projectIds": ["PRO_18141914462204e2be0e5796", "PRO_b8e9b07eb43ee60a807ec231", "PRO_e925e787e29c13e42deafcda"],
-      "reason": "덤프 뒤 PoC 변경: 9·7 정책(건설형 공공임대)에 새로 확정 연결된 서울 사업 3곳이 덤프(2026-10-20 06:22 KST)에 없다. 상태는 PoC 에서 모두 CONFIRMED."
+      "confirmed": { "golden": 283, "ours": 283 },
+      "projectIds": [],
+      "reason": "새 덤프에 9·7 정책(건설형 공공임대) 확정 연결 서울 사업 3곳(독산동·연남동·방화차고지)이 들어와 정답과 같다(10-20 06:22 판에서는 덤프 뒤 변경으로 280)."
     }
   }
 }
