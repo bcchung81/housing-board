@@ -249,10 +249,23 @@ test('GENERATORS: trend.js(--close 없음) → board.js 맨 앞(소급 행을 �
 
 test('notIgnored: git check-ignore 로 무시되는 파일(data.json)만 뺀다 · 빈 목록이면 git 을 부르지 않는다', () => {
   const calls = [];
-  const runner = (cmd, args, o) => { calls.push([cmd, args, o]); return { code: 0, stdout: 'tools/design/public-mock/data.json\n', stderr: '' }; };
+  const runner = (cmd, args, o) => { calls.push([cmd, args, o]); return { code: 0, stdout: 'tools/design/public-mock/data.json\0', stderr: '' }; };
   assert.deepEqual(A.notIgnored(['tools/design/public-mock/data.json', 'app/x.tsx'], runner, '/c'), ['app/x.tsx']);
-  assert.deepEqual(calls[0].slice(0, 2), ['git', ['check-ignore', '--stdin']]);
+  assert.deepEqual(calls[0].slice(0, 2), ['git', ['check-ignore', '-z', '--stdin']]);
+  assert.equal(calls[0][2].input, 'tools/design/public-mock/data.json\0app/x.tsx\0');
   assert.equal(calls[0][2].cwd, '/c');
   assert.deepEqual(A.notIgnored([], runner, '/c'), []);
   assert.equal(calls.length, 1);
+});
+
+test('ignoredSet: 실제 git 에서 한글 이름 무시 파일도 원래 이름으로 걸러진다(2026-11-10 커밋 단계 멈춤 재발 방지)', () => {
+  const { spawnSync } = require('node:child_process');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'ignored-'));
+  spawnSync('git', ['init', '-q'], { cwd: dir });
+  fs.writeFileSync(path.join(dir, '.gitignore'), '*.zip\n');
+  const real = (cmd, args, o) => { const r = spawnSync(cmd, args, { cwd: o.cwd, input: o.input, encoding: 'utf8' }); return { code: r.status, stdout: r.stdout, stderr: r.stderr }; };
+  const list = ['raw/hub-bulk-bld/건축물대장_표제부_2026-08.zip', 'raw/hub-bulk-bld/manifest.json', 'a b/c.zip'];
+  assert.deepEqual([...A.ignoredSet(list, real, dir)].sort(), ['a b/c.zip', 'raw/hub-bulk-bld/건축물대장_표제부_2026-08.zip']);
+  assert.deepEqual(A.notIgnored(list, real, dir), ['raw/hub-bulk-bld/manifest.json']);
+  fs.rmSync(dir, { recursive: true, force: true });
 });

@@ -191,10 +191,16 @@ function goldenYearCoverage(pfiles, gin, pkg) {
   fs.copyFileSync(path.join(pkg, 'api/sources-year-coverage.json'), path.join(gin, 'S3-year-coverage.json'));
   return 'golden-in/S3-year-coverage.json ← api/sources-year-coverage.json';
 }
+/* git 이 무시하는 파일 집합. -z(NUL 구분): 줄 단위 출력은 한글 등 비ASCII 경로를 따옴표·8진수로 감싸 원래 이름과 맞지 않는다
+   (2026-11-10 실제 반영에서 raw/hub-bulk-bld/건축물대장_표제부_2026-08.zip 을 못 걸러 git add 가 멈췄다) */
+function ignoredSet(list, runner, cwd) {
+  if (!list.length) return new Set();
+  return new Set(runner('git', ['check-ignore', '-z', '--stdin'], { cwd, input: `${list.join('\0')}\0` }).stdout.split('\0').filter(Boolean));
+}
 /* git 이 무시하는 파일(예: tools/design/public-mock/data.json)은 반영 경로 밖 변경 검사에서 뺀다 */
 function notIgnored(list, runner, cwd) {
   if (!list.length) return list;
-  const ig = new Set(runner('git', ['check-ignore', '--stdin'], { cwd, input: list.join('\n') }).stdout.split('\n').filter(Boolean));
+  const ig = ignoredSet(list, runner, cwd);
   return list.filter((f) => !ig.has(f));
 }
 const inPaths = (f, paths) => paths.some((p) => f === p || f.startsWith(`${p}/`));
@@ -240,7 +246,7 @@ function realSteps(ctx, runner) {
   const must = (r, what) => { if (r.code !== 0) throw new Error(`${what} 실패(종료 ${r.code}): ${mask(r.stderr || r.stdout).trim().split('\n').slice(-3).join(' / ')}`); return r; };
   const commitFiles = () => {
     const all = [...ctx.files.changed, ...ctx.files.deleted];
-    const ignored = new Set(at('git', ['check-ignore', '--stdin'], { input: all.join('\n') }).stdout.split('\n').filter(Boolean));
+    const ignored = ignoredSet(all, runner, ctx.root);
     return all.filter((f) => !ignored.has(f));
   };
   return [
@@ -548,4 +554,4 @@ if (require.main === module) {
   process.exit(code);
 }
 
-module.exports = { parsePgTime, kstDate, kstMonth, editionOf, decideMonth, parseConvertReport, stopReasons, parseTestCounts, envKeysOf, preflight, realSteps, runSteps, applyPaths, mask, metricDiff, parseArgs, rollbackText, SGG_UNRESOLVED_ALLOW, GROUPS_RATIO, GENERATORS, CITIZEN_BUILD, CITIZEN_DIR, goldenYearCoverage, notIgnored };
+module.exports = { ignoredSet, parsePgTime, kstDate, kstMonth, editionOf, decideMonth, parseConvertReport, stopReasons, parseTestCounts, envKeysOf, preflight, realSteps, runSteps, applyPaths, mask, metricDiff, parseArgs, rollbackText, SGG_UNRESOLVED_ALLOW, GROUPS_RATIO, GENERATORS, CITIZEN_BUILD, CITIZEN_DIR, goldenYearCoverage, notIgnored };
