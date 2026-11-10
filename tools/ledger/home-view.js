@@ -2,6 +2,7 @@
 // HOME PoC(https://www.minslab.kr/poc/home/) 정책·프로그램 추진현황 화면의 프런트 계산을 그대로 옮긴 모듈.
 // 식·순서·반올림·날짜 비교(문자열 비교, Date.parse)는 원본 그대로이고, render·SVG·DOM 부분은 옮기지 않았다.
 // 원본: js_policy-stage-flow.js · js_policy-decision.js · js_policy-region-map.js · js_policy-907.js
+//       (2026-10-22 22:35 판: policy-stage-flow.js?v=20261022-render-cache-v17 · policy-907.js?v=20261022-visible-axis-v14 — 단계 카드 예상량·Y축·말풍선이 '머문 단계' 계산으로 바뀌었다)
 // 정답 대조: .cache/home-parity/golden/S1-extract.js (같은 입력 → golden-policy.json), 시험 tests/js/home-view.test.cjs
 
 // ---- js_policy-stage-flow.js (PolicyStageFlow) ----
@@ -34,7 +35,7 @@ const targetAt = (m, stage, when) => goalSeries(m, stage).filter(p => p.date <= 
 // trackingPoints
 function trackingPoints(m, sampleDates = null) {
   const dates = new Set(sampleDates || [m.start + '-01-01', m.end + '-12-31', m.asOf]);
-  if (!sampleDates) for (const c of Object.values(m.comparisons || {})) for (const p of [...(c.target_points || []), ...(c.actual_points || [])]) dates.add(p.date);
+  if (!sampleDates) for (const c of Object.values(m.comparisons || {})) for (const p of [...(c.target_points || []), ...(c.actual_points || []), ...(c.forecast_points || [])]) dates.add(p.date);
   return [...dates].filter(d => d >= m.start + '-01-01' && d <= m.end + '-12-31').sort().map(date => {
     let reached = 0; const totals = { POLICY: 0, UNKNOWN: 0 }, cumulative = {};
     for (const k of order.filter(k => k !== 'POLICY')) {
@@ -73,11 +74,98 @@ function referenceAxis({ points = [], comparisons = {}, asOf, fullMax = 1 }) {
     values.push(observed.filter(p => p.date < start).at(-1)?.units || 0, ...observed.filter(p => p.date >= start && p.date <= end).map(p => p.units));
   }
   const peak = Math.max(0, ...values.filter(Number.isFinite));
-  if (!peak) return { max: Math.max(1, fullMax), focused: false, start, end };
-  const raw = peak * 1.12 / 4, power = 10 ** Math.floor(Math.log10(raw));
-  const step = Math.max(1, [1, 2, 2.5, 5, 10].map(n => n * power).find(n => n >= raw));
-  return { max: Math.ceil(step) * 4, focused: true, start, end, peak };
+  const business = targetAt({ comparisons }, 'BUSINESS', asOf) ?? goalSeries({ comparisons }, 'BUSINESS').find(p => p.date > asOf)?.units ?? 0;
+  if (!peak && !business) return { max: Math.max(1, fullMax), focused: false, start, end };
+  const layout = { comparisons, asOf, tracking: true };
+  const extent = Math.max(...[start, asOf, end].map(day => stackExtent(layout, day)));
+  return { max: axisMaximum(business, Math.max(peak, extent)), focused: true, start, end, peak, business };
 }
+
+// axisMaximum
+function axisMaximum(business, extent = 0) {
+  const desired = Math.max((business || extent) / .7, extent / 0.95, 1);
+  const unit = 4 * 10 ** Math.max(0, Math.floor(Math.log10(desired)) - 3);
+  return Math.ceil(desired / unit) * unit;
+}
+
+// windowAxis (표시 구간 누적 최대값 × 1.3 — 화면 첫 그리기는 전체 구간, 스크롤하면 보이는 구간으로 다시 잰다)
+function windowAxis(m, start, end) {
+  const dates = new Set([start, end]);
+  if (m.asOf >= start && m.asOf <= end) dates.add(m.asOf);
+  for (const c of Object.values(m.comparisons || {})) for (const p of [...(c.target_points || []), ...(c.management_points || []), ...(c.actual_points || [])]) if (p.date >= start && p.date <= end) dates.add(p.date);
+  const peak = Math.max(0, ...[...dates].map(day => stackExtent(m, day)));
+  const desired = Math.max(1, peak * 1.3), unit = 4 * 10 ** Math.max(0, Math.floor(Math.log10(desired)) - 3);
+  return { max: Math.ceil(desired / unit) * unit, peak, start, end };
+}
+
+// ---- 머문 단계(누적 − 다음 단계 누적) 계산 — 2026-10-22 22:35 판 ----
+const stackOrder = ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'MOVE_IN', 'POLICY'];
+const stagesInOrder = stackOrder.filter(k => k !== 'POLICY');
+const cutoffDate = m => m.asOf;
+
+// retained: 누적 이정표 → 단계에 머문 물량(다음 단계 누적을 뺀다, 다음 값이 없으면 남은 값을 그대로 둔다)
+function retained(values) {
+  return Object.fromEntries(stagesInOrder.map((stage, i) => {
+    const cumulative = values[stage] ?? null, next = values[stagesInOrder[i + 1]] ?? null;
+    const raw = cumulative == null ? null : cumulative - (next ?? 0);
+    return [stage, { cumulative, units: raw == null ? null : Math.max(0, raw), raw, nextMissing: i < stagesInOrder.length - 1 && next == null }];
+  }));
+}
+
+// projectedStages: 오늘 단계별 max(실적 머문 물량, 목표 머문 물량)에서 시작해 오늘 뒤 목표 증가분의 단계 이동을 더한다
+function projectedStages(m, when) {
+  const today = m.dataAsOf || m.asOf, source = { ...m, asOf: today }, date = when < today ? today : when;
+  const actual = retained(Object.fromEntries(stagesInOrder.map(k => [k, measuredAt(source, k, today)?.units ?? null])));
+  const targets = retained(Object.fromEntries(stagesInOrder.map(k => [k, targetAt(m, k, today)])));
+  const increases = Object.fromEntries(stagesInOrder.map(k => [k, Math.max(0, (targetAt(m, k, date) ?? 0) - (targetAt(m, k, today) ?? 0))]));
+  const values = Object.fromEntries(stagesInOrder.map((k, i) => {
+    const a = actual[k].units, t = targets[k].units, initial = a == null && t == null ? null : Math.max(a ?? 0, t ?? 0);
+    const change = increases[k] - (increases[stagesInOrder[i + 1]] ?? 0), raw = initial == null && !change ? null : (initial ?? 0) + change;
+    return [k, { initial, raw, units: raw == null ? null : Math.max(0, raw), nextMissing: actual[k].nextMissing }];
+  }));
+  let cumulative = null, baseline = null;
+  for (const k of stagesInOrder.slice().reverse()) {
+    const v = values[k];
+    cumulative = v.units == null && cumulative == null ? null : (v.units ?? 0) + (cumulative ?? 0);
+    baseline = v.initial == null && baseline == null ? null : (v.initial ?? 0) + (baseline ?? 0);
+    Object.assign(v, { cumulative, base_cumulative: baseline, increment_units: increases[k] });
+  }
+  return values;
+}
+
+// projectedValue
+function projectedValue(m, stage, when) {
+  const p = projectedStages(m, when)[stage];
+  return { units: p.cumulative, base_units: p.base_cumulative, increment_units: p.increment_units, date: when };
+}
+
+// stageLayout(calculateStageLayout): 아래부터 단계 실적 머문 물량, 그 위에 양수 목표 부족분
+function stageLayout(m, when, projected = false) {
+  const future = projected || when > cutoffDate(m);
+  const actual = future ? projectedStages(m, when) : retained(Object.fromEntries(stagesInOrder.map(k => [k, measuredAt(m, k, when)?.units ?? null])));
+  const target = retained(Object.fromEntries(stagesInOrder.map(k => [k, targetAt(m, k, when)])));
+  let base = 0;
+  return Object.fromEntries(stagesInOrder.map(k => {
+    const a = actual[k], t = target[k], lo = base;
+    const gap = a.units == null || t.units == null ? null : Math.max(0, t.units - a.units);
+    base += (a.units ?? 0) + (future ? 0 : gap ?? 0);
+    return [k, { actual: { ...a, lo, hi: a.units == null ? null : lo + a.units }, target: { ...t, lo: lo + (a.units ?? 0), hi: t.units == null ? null : base }, gap, future }];
+  }));
+}
+
+// stackExtent
+function stackExtent(m, when) {
+  return Math.max(0, ...Object.values(stageLayout(m, when)).flatMap(b => [b.actual.hi ?? b.actual.lo, b.target.hi ?? b.target.lo]));
+}
+
+// shortageRate: 부족분 / (부족분 + 그 단계 누적 달성분)
+function shortageRate(gap, cumulative) {
+  if (!Number.isFinite(gap) || gap < 0 || !Number.isFinite(cumulative) || cumulative < 0) return null;
+  return gap + cumulative > 0 ? 100 * gap / (gap + cumulative) : 0;
+}
+
+// quarterEnd (단계 카드 보조 기준일 기본값 — 기준일이 든 분기의 말일)
+function quarterEnd(day) { const [y, month] = day.split('-').map(Number); return new Date(Date.UTC(y, Math.ceil(month / 3) * 3, 0)).toISOString().slice(0, 10); }
 
 // formatGapRate
 function formatGapRate(rate) { return rate == null ? '미확보' : rate > 0 && rate < .05 ? '0.1% 미만' : rate < 2 && rate >= 1.95 ? '2% 미만' : rate.toFixed(1) + '%'; }
@@ -102,14 +190,16 @@ function comparisonStatus(m, stage) {
   return { difference: due && actual ? due.units - actual.units : null, stage, label: stage === 'MOVE_IN' ? '입주' : c.label || m.stages?.[stage] || stage, status, due, actual, gap: assessment.gap, confirmedUnits, next: targets.find(t => t.date > m.asOf), rate: assessment.rate, assessment, stale: !!(due && actual && actual.date < due.date) };
 }
 
-// summaryValues (단계 카드: 현재 누적 측정량·12월 말 예상량) — 2026-10-22 판(policy-stage-flow.js?v=20261022-cumulative-forecast):
-// 예상량 = 응답 tracking.forecast_points(사업별 max(현재 누적 도달, 연말까지 누적 계획)의 합)의 연말까지 마지막 점, 없는 옛 응답은 계획 누계(goalSeries)
+// summaryValues (단계 카드: 현재 누적 측정량·보조 기준일 값) — 2026-10-22 22:35 판(policy-stage-flow.js?v=20261022-render-cache-v17):
+// 보조 기준일(comparisonDate, 화면 기본 = 기준일이 든 분기 말일 — 10월이면 12-31)이 자료 기준일 뒤면 예상 누적량 = projectedValue(단계별 max(현재 실적 머문 물량, 목표 머문 물량) + 그날까지 목표 증가분의 단계 이동, 위 단계부터 누적),
+// 앞이면 그날까지 누적 측정량. (옛 판: tracking.forecast_points 의 연말 점)
 function summaryValues(m) {
-  const yearEnd = String(m.year || m.asOf.slice(0, 4)) + '-12-31';
+  const yearEnd = m.comparisonDate || String(m.year || m.asOf.slice(0, 4)) + '-12-31', dataDate = m.dataAsOf || m.asOf;
   return Object.fromEntries(Object.entries(m.stages).filter(([k]) => k !== 'POLICY').map(([k, label]) => {
-    const actual = measuredAt(m, k, m.asOf), series = m.comparisons?.[k]?.forecast_points;
-    const expected = (series ?? goalSeries(m, k)).filter(p => p.date <= yearEnd).at(-1);
-    return [k, { label, as_of_date: m.asOf, measurement_date: actual?.date || null, current_units: actual?.units ?? null, year_end: yearEnd, expected_units: expected?.units ?? null, plan_date: expected?.date || null, remaining_plan_units: expected?.remaining_plan_units ?? null, basis: series ? '사업별 현재 누적 도달량 + 연말까지 미도달 계획량 · 중복 제외' : '12월 31일까지 저장된 계획 누계' }];
+    const actual = measuredAt(m, k, m.asOf);
+    const comparisonKind = yearEnd <= dataDate ? 'MEASUREMENT' : 'FORECAST';
+    const expected = comparisonKind === 'MEASUREMENT' ? measuredAt({ ...m, asOf: dataDate }, k, yearEnd) : projectedValue({ ...m, dataAsOf: dataDate }, k, yearEnd);
+    return [k, { label, comparison_kind: comparisonKind, comparison_date: yearEnd, as_of_date: m.asOf, measurement_date: actual?.date || null, current_units: actual?.units ?? null, year_end: yearEnd, expected_units: expected?.units ?? null, plan_date: expected?.date || null, remaining_plan_units: expected?.increment_units ?? null, basis: comparisonKind === 'MEASUREMENT' ? '보조 기준일까지 누적 측정량' : '단계별 max(현재 실적 물량, 목표 물량)에서 출발하여 이후 예정일별 단계 이동 반영' }];
   }));
 }
 
@@ -226,7 +316,7 @@ const plain = v => JSON.parse(JSON.stringify(v));
 const YEAR = 2026;
 
 function axisOf(data, rows, comparisons, year, { policyScope, programProfile }) {
-  const dates = rows.flatMap(c => [...c.events.map(e => e.event_date), ...c.schedules.map(s => s.due_date)])
+  const dates = [data.as_of_date, quarterEnd(data.as_of_date), ...rows.flatMap(c => [...c.events.map(e => e.event_date), ...c.schedules.map(s => s.due_date)])]
     .concat(Object.values(comparisons).flatMap(c => [...(c.target_points || []), ...(c.management_points || []), ...(c.actual_points || [])].map(p => p.date))).filter(Boolean);
   if (policyScope) dates.push(data.plan.period_start, data.plan.period_end);
   else if (programProfile) dates.push(programProfile.period_start, programProfile.period_end);
@@ -236,7 +326,9 @@ function axisOf(data, rows, comparisons, year, { policyScope, programProfile }) 
 }
 
 function stageCards(data, comparisons, policyTarget, asOf, year) {
-  const s = plain(summaryValues({ year, asOf, comparisons, stages: data.stages }));
+  /* 화면 기본: 보조 기준일 = 기준일이 든 분기 말일(기준일보다 앞이면 기준일), 자료 기준일 = 응답 as_of_date */
+  const aux = quarterEnd(asOf) < asOf ? asOf : quarterEnd(asOf);
+  const s = plain(summaryValues({ year, asOf, dataAsOf: data.as_of_date, comparisonDate: aux, comparisons, stages: data.stages }));
   const out = { POLICY: { target: policyTarget } };
   for (const [k, v] of Object.entries(s)) {
     const remainder = v.current_units != null && v.expected_units != null ? v.expected_units - v.current_units : null;
@@ -245,9 +337,11 @@ function stageCards(data, comparisons, policyTarget, asOf, year) {
   return out;
 }
 
+/* 그래프 말풍선(2026-10-22 22:35 판 renderChart gapChecks): 기준일 머문 단계 배치의 양수 목표 부족분, 부족률 = 부족분 / (부족분 + 그 단계 누적), 판정 = assessGap(목표 머문 물량, 실적 머문 물량) */
 function calloutsOf(data, comparisons, asOf) {
-  return ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'MOVE_IN'].map(k => comparisonStatus({ comparisons, asOf, stages: data.stages }, k))
-    .filter(c => c.gap > 0).map(c => ({ stage: c.stage, status: c.status, gap: c.gap, rate: formatGapRate(c.rate), due_date: c.due.date, due_units: c.due.units, actual_date: c.actual?.date, actual_units: c.actual?.units }));
+  const m = { comparisons, asOf, stages: data.stages, tracking: true }, layout = stageLayout(m, asOf);
+  return stagesInOrder.map(k => { const b = layout[k], c = comparisonStatus(m, k), assessment = assessGap(b.target.units, b.actual.units); return { ...c, gap: b.gap, rate: shortageRate(b.gap, b.actual.cumulative), assessment, status: assessment.status }; })
+    .filter(c => c.gap > 0).map(c => ({ stage: c.stage, status: c.status, gap: c.gap, rate: formatGapRate(c.rate), due_date: c.due?.date ?? null, due_units: c.due?.units ?? null, actual_date: c.actual?.date, actual_units: c.actual?.units }));
 }
 
 function statisticsOf(rows, metrics, asOf, year) {
@@ -284,10 +378,10 @@ function policyScreen(view, { asOf, year } = {}) {
   const data = asOf === view.as_of_date ? view : { ...view, as_of_date: asOf };
   const rows = data.portfolio_cohorts, metrics = data.portfolio_comparisons.policy.metrics, comparisons = withTracking(metrics);
   const { start, end, points } = axisOf(data, rows, comparisons, year, { policyScope: true });
-  const axis = referenceAxis({ points, comparisons, asOf, fullMax: data.target_units });
+  const axis = windowAxis({ comparisons, asOf: data.as_of_date, tracking: true }, points[0]?.date || data.as_of_date, points.at(-1)?.date || data.as_of_date);   // 화면 첫 그리기(전체 구간)
   return {
     stage_cards: stageCards(data, comparisons, data.target_units, asOf, year),
-    axis: { start_year: start, end_year: end, y_max: axis.max, focused: axis.focused, full_max: data.target_units },
+    axis: { start_year: start, end_year: end, y_max: axis.max, full_max: data.target_units },
     callouts: calloutsOf(data, comparisons, asOf),
     map_supply: regionMap(data, rows, data.portfolio_comparisons, asOf),
     statistics: statisticsOf(rows, metrics, asOf, year),
@@ -319,4 +413,5 @@ module.exports = {
   assessGap, formatGapRate, comparisonStatus, summaryValues, trackingPoints, monthlyPoints, referenceAxis,
   goalSeries, goalAt, targetAt, measuredAt, delayAt, mapDelay, statusAt, agencyName, statistics,
   stageDistribution, reached, stateAt, withTracking, policyScreen, programScreen, capacity, measured,
+  retained, projectedStages, projectedValue, stageLayout, stackExtent, shortageRate, quarterEnd, axisMaximum, windowAxis,
 };

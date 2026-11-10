@@ -15,19 +15,24 @@ const ROOT = path.join(__dirname, '..', '..');
 const OUT = path.join(ROOT, 'data/board/home-projects.json');
 const text = fs.readFileSync(OUT, 'utf8');
 const doc = JSON.parse(text);
-const GOLD = path.join(ROOT, '.cache/home-parity/golden');
-const MONTH = P.ledgerDir('2026-10');
+const GOLD = require('./home-era.cjs').GOLDEN_DIR;   // HOME_GOLDEN_DIR(기본 .cache/home-parity/golden)
+const PP = require('../../tools/ledger/policy-progress');
+const MONTH = P.ledgerDir(P.latestMonth());   // 판 무관(2026-11-10 P2): 가장 늦은 달의 가장 늦은 HOME 판 — 생성기(home-projects.js)와 같은 고르기
 const homeDir = H.latestHomeDir(MONTH);
-const pocDir = path.join(MONTH, 'raw/home-api/2026-10-22');   // 2026-10-22 새 덤프(20261021T212310Z): 기준일 = 덤프 시각의 한국 날짜(10-21 판까지 2026-10-20)
+const homeManifest = homeDir ? JSON.parse(fs.readFileSync(path.join(homeDir, 'manifest.json'), 'utf8')) : null;
+const asOf = homeManifest && PP.asOfOf(homeManifest.snapshot_at);   // 기준일 = 덤프 시각의 한국 날짜
+const pocDir = path.join(MONTH, 'raw/home-api', String(asOf));
 const haveInputs = !!homeDir && H.homeAvailable(homeDir) && Object.keys(HP.POC_FILES).every((f) => fs.existsSync(path.join(pocDir, f)));
 const haveGold = fs.existsSync(path.join(GOLD, 'golden-projects.json')) && fs.existsSync(path.join(GOLD, 'S2-project-map.csv'));
 const byId = new Map(doc.rows.map((r) => [r.id, r]));
 const STATS = ['DELAYED', 'WARNING', 'NORMAL', 'UNKNOWN'];
 
-test('(a) 출력 모양: 452행(PRO_ 순)·필드·묶음 합', () => {
+test('(a) 출력 모양: 행 = HOME 판의 원천 사업후보(PRO_ 순)·필드·묶음 합', () => {
   assert.equal(doc.schema, 'home-projects/1');
-  assert.equal(doc.asOf, '2026-10-22');
-  assert.equal(doc.rows.length, 452);   // 2026-10-22 새 덤프: 새 원천 사업후보 1(부천역곡 A1)
+  /* 판 무관: 출력은 원장 최신 HOME 판으로 만든 것 — 판 이름·기준일·행 수 = 그 판 manifest(커밋돼 있다)의 snapshot_at·project 행 수 */
+  assert.equal(doc.source.dump.edition, path.basename(homeDir));
+  assert.equal(doc.asOf, asOf);
+  assert.equal(doc.rows.length, homeManifest.files['project.jsonl.gz'].rows);
   assert.deepEqual(doc.rows.map((r) => r.id), doc.rows.map((r) => r.id).slice().sort());
   for (const r of doc.rows) {
     assert.match(r.id, /^PRO_[0-9a-f]{24}$/);
@@ -83,10 +88,10 @@ test('(a) 잔차: 칸·이유가 정해진 것뿐이고 출력 값은 use 쪽(�
 });
 
 test('(b) 덤프·스냅샷으로 다시 만들면 같은 바이트, 9·7 범위 묶음과 사업별 값이 같다', { skip: !haveInputs && 'HOME 덤프 원본 또는 PoC 스냅샷이 없다' }, () => {
-  const PP = require('../../tools/ledger/policy-progress');
   const HV = require('../../tools/ledger/home-view');
   const home = H.readHome(homeDir);
-  const fresh = HP.render(HP.build(home, HP.readPoc(pocDir), HP.ledgerIds(MONTH)));
+  const poc = HP.readPoc(pocDir);
+  const fresh = HP.render(HP.build(home, poc, HP.ledgerIds(MONTH)));
   assert.equal(fresh, text, 'data/board/home-projects.json 을 node tools/ledger/home-projects.js 로 다시 만든다');
   /* 9·7 범위(homeView — policy-progress.js 그대로)의 묶음으로 센 값 = 정책 전체 범위 묶음으로 센 값 */
   const view = PP.homeView(home);
@@ -97,7 +102,10 @@ test('(b) 덤프·스냅샷으로 다시 만들면 같은 바이트, 9·7 범위
     assert.deepEqual(r.judge, { status: HV.statusAt(c, view.as_of_date).status, gap: HV.statusAt(c, view.as_of_date).units }, c.id);
     n++;
   }
-  assert.equal(n, 177);   // 2026-10-22 새 덤프: 부천역곡 A1(새 사업)·인천송림4 1(검토 → 9·7 확정)이 들어와 PoC(as_of 10-22) 9·7 포트폴리오 177 과 같다 · 2026-10-21 새 덤프(20261020T142230Z): 덤프 뒤였던 독산동·방화차고지·연남동이 판에 들어와 PoC 9·7 포트폴리오 175 와 같다 · 2038810 inventory 이식으로 인천검단 AA19 두 임대 유형이 따로 묶음(2026-10-21, 170 → 172)
+  /* 판 무관: 우리 9·7 묶음(덤프 계산) = 같은 기준일 HOME 정책 응답 스냅샷의 9·7 포트폴리오(사업 id 까지) — 판 숫자(10-22 판 177) 대신.
+     내력: 2026-10-22 부천역곡 A1·인천송림4 1 이 들어와 177 · 10-21 독산동·방화차고지·연남동 175 · 인천검단 AA19 두 임대 유형 따로 묶음 170 → 172 */
+  assert.deepEqual(view.portfolio_cohorts.map((c) => c.id).sort(), poc['projects-policy-delivery-97.json.gz'].portfolio_cohorts.map((c) => c.id).sort());
+  assert.equal(n, poc['projects-policy-delivery-97.json.gz'].portfolio_cohorts.length);
 });
 
 /* 정답 CSV(따옴표 칸 포함) → 행 객체 */
@@ -123,27 +131,37 @@ test('(c) 정답 대조: 9·7 기본 232/177/153,575·시도·시군구 44곳·�
   assert.deepEqual(v.future.map((f) => [f.units, f.events]), g['summary.future.source_units'].map((u, i) => [u, g['summary.future.source_events'][i]]));
 });
 
-test('(c) 정답 대조: 정책 전체 444/347/290,357·시도·단계 분포', { skip: !haveGold && '.cache/home-parity/golden 이 없다' }, () => {
+test('(c) 정답 대조: 정책 전체 원천 행·집계·제외·물량 없음·호수·시도·단계 분포 = PoC', { skip: !haveGold && '.cache/home-parity/golden 이 없다' }, () => {
   const g = JSON.parse(fs.readFileSync(path.join(GOLD, 'golden-projects.json'), 'utf8')).poc_overview_all;
   const v = doc.views.all;
   assert.deepEqual([v.rows, v.counted, v.excluded, v.missing, v.units], [g['summary.project_count'], g['summary.target_counted_projects'], g['summary.target_excluded_projects'], g['summary.target_missing_projects'], g['summary.target_units']]);
-  assert.deepEqual([v.rows, v.counted, v.units], [444, 347, 290357]);   // 2026-10-22 새 덤프: 부천역곡 A1 +1행 1,160 · 연남동 계획 167 → 82 · 병점복합타운 주복1 780 → 726(HOME 물량 변경) → +1,021(10-21 판 443·346·289,336)
+  /* 판 숫자([444, 347, 290357]) 대신: 묶음 값 = 사업 행에서 다시 센 값(통계 행 · 지도 집계 행 중 물량 있는 행 · 집계 밖 · 물량 없음 · 집계 호수) */
+  const st = doc.rows.filter((r) => r.stats), ch = st.filter((r) => r.chart.all);
+  assert.deepEqual([v.rows, v.counted, v.excluded, v.missing, v.units], [st.length, ch.filter((r) => r.units.counted > 0).length, st.length - ch.length, ch.filter((r) => !(r.units.counted > 0)).length, ch.reduce((s, r) => s + (r.units.counted ?? 0), 0)]);
   const sd = g['summary.stage_distribution'];
   assert.deepEqual(v.stages, { parts: sd.parts, cumulative: sd.cumulative, advanced: sd.advanced_units, total: sd.total_units });
   /* 정책별 행·호수(PoC groups.policy — UNMAPPED = 정책 미귀속, MON_* = 감시 목록(프로그램 이름)) */
   const group = { UNMAPPED: (r) => r.policy.id === 'UNASSIGNED', MON_THIRD_NEW_TOWN: (r) => r.policy.program === '3기 신도시', MON_URBAN_COMPLEX: (r) => r.policy.program === '도심 공공주택 복합사업' };
+  /* 감시 목록(MON_*)은 PoC 지도 행의 program 으로 묶는다. 정책 미연계(UNASSIGNED) 행은 PoC 가 덤프에 없는 원천 프로그램 이름을 붙인다
+     (2026-11-10 판 부천대장 A9 lh_progress 574호 = '3기 신도시', 구리갈매·인천검단·인천계양 5행 = '공공주택 건설' — 덤프 home_mapping 은 '프로그램 미연계').
+     그 행은 감시 목록 셈에서 PoC 쪽을 빼고 맞추되, 우리 쪽에서는 정책 미귀속(UNMAPPED)에 있어야 한다 — 이 밖의 차이는 0 */
+  const raw = path.join(GOLD, 'S2-raw-map-dashboard.json');
+  const rawDoc = fs.existsSync(raw) ? JSON.parse(fs.readFileSync(raw, 'utf8')) : null;
+  const unassignedNamed = new Map((rawDoc?.items ?? []).filter((i) => i.mapping?.program_id === 'UNASSIGNED' && i.program !== i.mapping.program_name).map((i) => [i.id, i]));
+  for (const id of unassignedNamed.keys()) assert.equal(byId.get(id)?.policy.id, 'UNASSIGNED', id);
   for (const p of g['groups.policy']) {
     const rs = doc.rows.filter((r) => r.stats && (group[p.id] ?? ((x) => x.policy.id === p.id))(r));
-    assert.deepEqual([rs.length, rs.reduce((s, r) => s + (r.units.counted ?? 0), 0)], [p.project_count, p.target_units ?? 0], p.id);
+    const homeProgram = { MON_THIRD_NEW_TOWN: '3기 신도시', MON_URBAN_COMPLEX: '도심 공공주택 복합사업' }[p.id];
+    const off = homeProgram ? [...unassignedNamed.values()].filter((i) => i.program === homeProgram).map((i) => byId.get(i.id)).filter((r) => r.stats) : [];
+    assert.deepEqual([rs.length + off.length, rs.reduce((s, r) => s + (r.units.counted ?? 0), 0) + off.reduce((s, r) => s + (r.units.counted ?? 0), 0)], [p.project_count, p.target_units ?? 0], p.id);
   }
   /* 시도: PoC 원본 응답의 groups.region */
-  const raw = path.join(GOLD, 'S2-raw-map-dashboard.json');
-  if (fs.existsSync(raw)) assert.deepEqual(v.regions.map((r) => [r.name, r.rows, r.units]), JSON.parse(fs.readFileSync(raw, 'utf8')).groups.region.map((r) => [r.name, r.project_count, r.target_units]).sort((a, b) => ['서울특별시', '인천광역시', '경기도'].indexOf(a[0]) - ['서울특별시', '인천광역시', '경기도'].indexOf(b[0])));
+  if (rawDoc) assert.deepEqual(v.regions.map((r) => [r.name, r.rows, r.units]), rawDoc.groups.region.map((r) => [r.name, r.project_count, r.target_units]).sort((a, b) => ['서울특별시', '인천광역시', '경기도'].indexOf(a[0]) - ['서울특별시', '인천광역시', '경기도'].indexOf(b[0])));
 });
 
-test('(c) 정답 대조: 사업 행 452개 분류가 같고, 덤프와 다른 칸은 residuals 의 정해진 목록뿐', { skip: !haveGold && '.cache/home-parity/golden 이 없다' }, () => {
+test('(c) 정답 대조: 사업 행 전부 분류가 같고, 덤프와 다른 칸은 residuals 의 정해진 목록뿐', { skip: !haveGold && '.cache/home-parity/golden 이 없다' }, () => {
   const csv = readCsv(path.join(GOLD, 'S2-project-map.csv'));
-  assert.equal(csv.length, 452);
+  assert.equal(csv.length, doc.rows.length);   // 판 무관: PoC 사업 표 행 = 우리 행(= 판의 원천 사업후보, (a)) — 10-22 판 452 · 11-10 판 455
   const num = (s) => (s === '' ? null : Number(s));
   for (const c of csv) {
     const r = byId.get(c.poc_id);
@@ -166,9 +184,11 @@ test('(c) 정답 대조: 사업 행 452개 분류가 같고, 덤프와 다른 �
   for (const x of doc.residuals.filter((y) => y.field === 'sgg')) assert.equal(byId.get(x.id).region, '인천광역시', x.id);
 });
 
-test('(c) 정답 대조: 9·7 묶음의 단계 도달·판정·12개월 공급·기관 — PoC 정책 응답과 다른 사업은 모두 덤프 뒤 담당자 입력이 있는 사업', { skip: !(haveGold && fs.existsSync(path.join(GOLD, 'deliv-2026-10-22.json'))) && '.cache/home-parity/golden 이 없다' }, () => {
+/* PoC 9·7 정책 응답(/policy-delivery/view scope=policy, 우리 기준일 판): deliv-<기준일>.json(home-parity 정답) 또는 S1-view-policy.json(home-apply 정답) */
+const delivFile = [`deliv-${doc.asOf}.json`, 'S1-view-policy.json'].map((f) => path.join(GOLD, f)).find((f) => fs.existsSync(f) && JSON.parse(fs.readFileSync(f, 'utf8')).as_of_date === doc.asOf);
+test('(c) 정답 대조: 9·7 묶음의 단계 도달·판정·12개월 공급·기관 — PoC 정책 응답과 다른 사업은 모두 덤프 뒤 담당자 입력이 있는 사업', { skip: !(haveGold && delivFile) && `정답 폴더에 기준일 ${doc.asOf} 의 PoC 정책 응답이 없다` }, () => {
   const HV = require('../../tools/ledger/home-view');
-  const view = JSON.parse(fs.readFileSync(path.join(GOLD, 'deliv-2026-10-22.json'), 'utf8'));
+  const view = JSON.parse(fs.readFileSync(delivFile, 'utf8'));
   const dumpAt = Date.parse(doc.source.dump.snapshotAt);
   const late = new Set(view.portfolio_cohorts.filter((c) => [...c.events, ...c.schedules].some((e) => e.changed_at && Date.parse(e.changed_at) > dumpAt)).map((c) => c.id));
   const res = new Map(doc.residuals.filter((x) => x.use === 'dump').map((x) => [`${x.id} ${x.field}`, x]));
@@ -187,8 +207,9 @@ test('(c) 정답 대조: 9·7 묶음의 단계 도달·판정·12개월 공급·
     if (differs) assert.ok(late.has(c.id), `${c.id}: 덤프 뒤 입력 없이 다름`);
     else same++;
   }
-  assert.equal(view.portfolio_cohorts.length, 177);
-  assert.equal(same, 177 - new Set([...res.values()].map((x) => x.id)).size);
+  /* 판 무관: PoC 9·7 포트폴리오 = 우리 9·7 묶음 행(단계 도달 값이 있는 9·7 행 — 10-22 판 177) */
+  assert.deepEqual(view.portfolio_cohorts.map((c) => c.id).sort(), doc.rows.filter((r) => r.p97 && r.reached).map((r) => r.id).sort());
+  assert.equal(same, view.portfolio_cohorts.length - new Set([...res.values()].map((x) => x.id)).size);
   /* 2026-10-22: 같은 블록 원천 행 측정값 4사업(부천대장 A5·A6 · 성남금토 A4·A2)은 '대표 행 담당자 확인 완료 측정값이 있는 단계는 묶음 다른 행 측정값을 쓰지 않는다'
      규칙(policy-progress.js buildCohorts)으로 PoC 와 같아졌다 — 덤프 값을 쓰는 잔차 사업이 없다 */
   assert.deepEqual([...new Set([...res.values()].map((x) => x.id))], [], '덤프 값을 쓰는 잔차 사업 없음');

@@ -1,6 +1,8 @@
 'use strict';
 /* HOME PoC 정책·프로그램 추진현황 계산 이식(tools/ledger/home-view.js) 시험.
-   입력: tests/fixtures/home-view-1020 (PoC 2026-10-20 응답을 필요한 필드만 자른 것), 기대값: PoC 프런트 JS 를 vm 으로 돌린 golden. */
+   입력: tests/fixtures/home-view-1020 (PoC 2026-10-20 응답을 필요한 필드만 자른 것), 기대값: PoC 프런트 JS 를 vm 으로 돌린 golden.
+   2026-10-22 22:35 판 프런트 JS(policy-stage-flow.js?v=20261022-render-cache-v17)로 단계 카드·Y축·말풍선 기대값을 다시 계산했다(입력은 그대로):
+   카드 예상량 = 보조 기준일(분기 말) 머문 단계 계산(projectedValue), Y축 = 표시 구간 누적 최대 × 1.3(windowAxis), 말풍선 = 머문 단계 목표 부족분(gapChecks). */
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const path = require('node:path');
@@ -29,9 +31,9 @@ test('정책 화면: golden 의 정책 키(지표 176개 중 정책분)가 모�
 
 test('단계 카드', () => {
   const c = policy.stage_cards;
-  assert.deepEqual([c.BUSINESS.current, c.BUSINESS.year_end_expected], [151098, 151098]);
-  assert.deepEqual([c.APPROVAL.current, c.APPROVAL.year_end_expected], [97889, 103169]);
-  assert.deepEqual([c.CONSTRUCTION.current, c.CONSTRUCTION.year_end_expected], [79884, 92574]);
+  assert.deepEqual([c.BUSINESS.current, c.BUSINESS.year_end_expected], [151098, 153304]);
+  assert.deepEqual([c.APPROVAL.current, c.APPROVAL.year_end_expected], [97889, 105375]);
+  assert.deepEqual([c.CONSTRUCTION.current, c.CONSTRUCTION.year_end_expected], [79884, 94780]);
   assert.deepEqual([c.SUPPLY.current, c.SUPPLY.year_end_expected], [58541, 70005]);
   assert.deepEqual([c.MOVE_IN.current, c.MOVE_IN.year_end_expected], [null, 3845]);
 });
@@ -40,11 +42,13 @@ test('말풍선·지도·Y축', () => {
   const s = policy.callouts.find((c) => c.stage === 'SUPPLY');
   assert.equal(s.gap, 227); assert.equal(s.rate, '0.4%'); assert.equal(s.due_date, '2026-09-30'); assert.equal(s.due_units, 58768);
   assert.equal(s.status, 'WARNING');
+  /* 22:35 판: 머문 단계 부족분 — 사업화 518(주의) · 인허가 1,461(부족률 = 부족 / (부족 + 그 단계 누적) 1.5%, 판정 = 머문 물량 대비 2% 이상 지연) */
+  assert.deepEqual(policy.callouts.map((c) => [c.stage, c.status, c.gap, c.rate]), [['BUSINESS', 'WARNING', 518, '0.3%'], ['APPROVAL', 'DELAYED', 1461, '1.5%'], ['SUPPLY', 'WARNING', 227, '0.4%']]);
   const m = policy.map_supply;
   assert.deepEqual([m['경기도'].supply_reached, m['서울특별시'].supply_reached, m['인천광역시'].supply_reached], [49749, 2089, 6703]);
   assert.match(m['경기도'].delay_note, /준공 1,974호 부족 \(81\.8%\)/);
   assert.match(m['서울특별시'].delay_note, /준공 14호 부족 \(3\.5%\)/);
-  assert.equal(policy.axis.y_max, 200000);
+  assert.equal(policy.axis.y_max, 202000);
 });
 
 test('추진현황 통계', () => {

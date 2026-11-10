@@ -73,20 +73,23 @@ test('2 ③착공 세 숫자에 보이는 정의 꼬리: 종합상황판 단계�
   assert.ok(pipe.units > now3, `누적 ${pipe.units} > 지금 ${now3}`);
 });
 
-test('2 앞으로 12개월 대표 = 준공 예정: 지역 공급 기본(준공만)·사업 화면·종합상황판·지도 계산 규칙이 같은 값(수도권 13,372호)', () => {
+test('2 앞으로 12개월 대표 = 준공 예정: 지역 공급 기본(준공만)·사업 화면·종합상황판·지도 계산 규칙이 같은 값(사업 행에서 다시 센 준공 예정 — 첫 판 수도권 13,372호)', () => {
   assert.deepEqual(R.parseKinds(undefined), ['COMPLETION']);
   const completion = (sido) => sum(R.aheadAll(CAL, sido, (c) => c).filter((e) => R.parseKinds(undefined).includes(e.type)), (e) => e.units);
   const q5 = (f) => num(V.questionsOf(rows, f, qctx).find((x) => x.q === '앞으로 얼마나 공급되는가').value);
   /* 지도 개요와 맞출 규칙: region-calendar.json 의 COMPLETION 항목(서울·인천·경기)의 units 합 */
   const mapRule = sum(['11', '28', '41'].flatMap((c) => CAL.sido[c] ?? []).filter((e) => e.type === 'COMPLETION'), (e) => e.units);
-  assert.equal(completion('metro'), 14570, '수도권 대표(준공 예정)');
-  assert.equal(q5({ metro: true }), 14570, '사업 화면 수도권');
-  assert.equal(mapRule, 14570, '지도 개요 규칙');
+  /* 판 숫자(10-22 판 14,570호 — 첫 판 13,372호) 대신: 사업 행에서 다시 센 준공 예정(준공 예정 달이 관측 달부터 12개월 안)의 호수 합 */
+  const soonUnits = sum(rows.filter((r) => r.completion && V.aheadMonths(BOARD.observedMonth).includes(r.completion)), (r) => r.units);
+  assert.ok(soonUnits > 0);
+  assert.equal(completion('metro'), soonUnits, '수도권 대표(준공 예정)');
+  assert.equal(q5({ metro: true }), soonUnits, '사업 화면 수도권');
+  assert.equal(mapRule, soonUnits, '지도 개요 규칙');
   // 2026-10-20 HOME 판: 앞으로 12개월 준공 예정 13,372호(24곳) → 14,570호(25곳)
   // 2026-10-19 수도권 한정: 전국 214,975호 → 수도권과 같은 13,372호 (캘린더·원장이 수도권뿐이라 '전국'(필터 없음)도 같은 값)
-  assert.equal(completion(''), 14570);
-  assert.equal(q5({}), 14570);
-  assert.equal(sum(BOARD.upcoming, (m) => m.units), 14570, '종합상황판(수도권)');
+  assert.equal(completion(''), soonUnits);
+  assert.equal(q5({}), soonUnits);
+  assert.equal(sum(BOARD.upcoming, (m) => m.units), soonUnits, '종합상황판(수도권)');
   /* 2026-10-21 결정(HOME 과 같은 조건): 지역 공급 앞으로 12개월 = HOME 공급 예정 하나 — 종류 칩 대신 정책 칩(9·7 기본·정책 전체) */
   const region = read('app/(dashboard)/region/page.tsx');
   assert.match(region, /<MetricRow label="공급 예정"/, '대표 = 공급 예정');
@@ -150,10 +153,12 @@ test('4 제목 단계·select·시도 타일·GH 표·인쇄 표지·1280 리본
   }
 });
 
-test('불변식: 지연 2건 · 후보 0건 · 앞으로 12개월 수도권 13,372호', () => {
+test('불변식: 지연 건수 = 사업 행 지연 · 후보 0건 · 앞으로 12개월 수도권 = 사업 행 준공 예정(10-22 판 지연 2건 · 14,570호)', () => {
   const j = BOARD.judgment, c = j.candidate;
-  assert.equal(j.delay.projects, 2);
+  assert.equal(j.delay.projects, rows.filter((r) => r.issued && r.cls === 'delay').length);
   // 2026-10-19 수도권 한정: 후보 1,839 → 0, 앞으로 12개월 214,975 → 13,372호 → 2026-10-20 HOME 판 14,570호
   assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 0);
-  assert.equal(sum(BOARD.upcoming, (m) => m.units), 14570);
+  const ahead = V.aheadMonths(BOARD.observedMonth);
+  assert.deepEqual(BOARD.upcoming.map((m) => m.ym), ahead, '관측 달부터 12개월');
+  assert.equal(sum(BOARD.upcoming, (m) => m.units), sum(rows.filter((r) => r.completion && ahead.includes(r.completion)), (r) => r.units));
 });

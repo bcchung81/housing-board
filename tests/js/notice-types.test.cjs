@@ -43,12 +43,24 @@ const { applyhomeUrl, noticeUrl } = loadTs('lib/board/public-labels.ts', {});
 const URL_RE = /^https:\/\/www\.applyhome\.co\.kr\/ai\/aia\/selectAPTLttotPblancDetail\.do\?houseManageNo=\d+&pblancNo=\d+$/;
 const SITE_RE = /^https:\/\/(apply\.lh\.or\.kr|www\.applyhome\.co\.kr|apply\.gh\.or\.kr)\//;
 
-test('자료: 공고 줄 사업 60곳(확정만 3 · 검토 섞임 57 — D7 근거 연결 공고가 더해짐, evidence-bridge.test.cjs), 유형 62곳(2026-10-21 같은 호수 대표 행 규칙으로 +7), 공고는 공고일 순·같은 공고 번호 한 번', () => {
+test('자료: 공고 줄 사업·확정만·검토 섞임 = 원장 공고 연결(notice_links — D7 근거 연결 공고 포함, evidence-bridge.test.cjs)에서 다시 센 수, 유형 있는 사업 = 원장 호수 표의 공급 유형이 있는 사업, 공고는 공고일 순·같은 공고 번호 한 번', () => {
   const withN = P.filter(([, x]) => x.notices);
-  assert.equal(withN.length, 68);   // 2026-10-22 새 덤프(20261021T212310Z): 근거 연결(evidence_bridge 708 → 806)로 LH 공고 7쌍 +6곳(evidence-bridge.test.cjs D7) · 2026-10-21 새 덤프(20261020T142230Z): 근거 연결(evidence_bridge 661 → 708)로 LH 공고 2쌍(인천부평 A PRJ-28237-0065·계양 A3 PRJ-28245-0057, 둘 다 검토) +2
-  assert.equal(withN.filter(([, x]) => x.notices.every((n) => n.review === 'CONFIRMED')).length, 2);   // 2026-10-22 새 덤프: PRJ-41131-0046 에 근거 연결 공고(LH 0000061125, 검토)가 더해져 확정만 3 → 2
-  assert.equal(withN.filter(([, x]) => x.notices.some((n) => n.review === 'REVIEW_REQUIRED')).length, 66);   // 2026-10-22 새 덤프 +7(10-21 판 59)
-  assert.equal(P.filter(([, x]) => x.types).length, 69);   // 2026-10-22 숫자 없는 영문 블록 규칙(home-source.js blockKey): 인천부평(도시재생뉴딜) A(PRJ-28237-0065)가 블록 묶음이 되어 대표 공급계획 행의 유형(행복주택) +1 · 2026-10-22 새 덤프: 새 사업 1(부천역곡 A1 통합공공임대) +1 · 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3(독산동·방화차고지 건설형 공공임대, 연남동 공공임대)·인천서구 공급계획 행이 합쳐진 2곳(PRJ-28275-0034·0037 행복주택) +5 · 2026-10-21: 같은 호수면 HOME inventory 대표 행(공급계획)의 유형 — +7(PRJ-28155-0036·28275-0036·41113-0034·41150-0096·41220-0181·41220-0185·41290-0031)
+  /* 판 숫자(68 · 확정만 2 · 검토 섞임 66 · 유형 69) 대신 원장 표에서 다시 센 값. 같은 (사업, 공고)는 한 줄 — 연결 하나라도 확정이면 확정 */
+  const table = (t) => JSON.parse(fs.readFileSync(path.join(require('../../tools/ledger/paths').ledgerDir(require('../../tools/ledger/paths').latestMonth()), 'tables', `${t}.json`), 'utf8')).rows;
+  const pairs = new Map();
+  for (const l of table('notice_links')) {
+    if (!DET.projects[l.local_project_id]) continue;
+    const k = `${l.local_project_id}|${l.notice_system}|${l.notice_id}`;
+    pairs.set(k, pairs.get(k) === 'CONFIRMED' ? 'CONFIRMED' : l.review_status);
+  }
+  const byProject = new Map();
+  for (const [k, st] of pairs) { const id = k.split('|')[0]; (byProject.get(id) || byProject.set(id, []).get(id)).push(st); }
+  assert.ok(byProject.size > 0, '공고 연결이 있다(빈 목록으로 통과하지 않게)');
+  assert.equal(withN.length, byProject.size);
+  assert.equal(withN.filter(([, x]) => x.notices.every((n) => n.review === 'CONFIRMED')).length, [...byProject.values()].filter((v) => v.every((st) => st === 'CONFIRMED')).length);
+  assert.equal(withN.filter(([, x]) => x.notices.some((n) => n.review === 'REVIEW_REQUIRED')).length, [...byProject.values()].filter((v) => v.some((st) => st === 'REVIEW_REQUIRED')).length);
+  const typed = new Set(table('units').filter((u) => u.housing_type && String(u.housing_type).trim()).map((u) => u.local_project_id));
+  assert.equal(P.filter(([, x]) => x.types).length, P.filter(([id]) => typed.has(id)).length);
   for (const [, x] of withN) {
     for (const n of x.notices) assert.deepEqual(Object.keys(n), ['system', 'id', 'title', 'date', 'review', ...(n.url ? ['url'] : [])]);
     assert.equal(new Set(x.notices.map((n) => `${n.system}|${n.id}`)).size, x.notices.length);

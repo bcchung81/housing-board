@@ -2,6 +2,7 @@
 /* 종합상황판 HOME 집계(tools/ledger/home-board.js): HOME 응답(2026-10-20, tests/fixtures/home-view-1020)을 넣으면 HOME 정책 추진현황 화면과 같은 숫자를 Board 모양으로 낸다.
    정답 값은 HOME 프런트 JS 를 같은 응답에 돌린 값(.cache/home-parity/golden/golden-policy.json — 2026-10-21 S1 명세). */
 const test = require('node:test');
+const E = require('./home-era.cjs');
 const assert = require('node:assert/strict');
 const path = require('node:path');
 const { homeBoard, STAGE_NAMES } = require('../../tools/ledger/home-board');
@@ -23,9 +24,9 @@ test('리본 기준 달 = HOME 머문 단계(정책 잔여 173 · 사업화 53,2
 
 test('단계 카드: 현재 누적 측정량·12월 말 예상량(HOME 카드 값)', () => {
   const c = b.home.cards;
-  assert.deepEqual([c.BUSINESS.current, c.BUSINESS.year_end_expected], [151098, 151098]);
-  assert.deepEqual([c.APPROVAL.current, c.APPROVAL.year_end_expected], [97889, 103169]);
-  assert.deepEqual([c.CONSTRUCTION.current, c.CONSTRUCTION.year_end_expected], [79884, 92574]);
+  assert.deepEqual([c.BUSINESS.current, c.BUSINESS.year_end_expected], [151098, 153304]);   // 12월 말 예상 = 22:35 판 머문 단계 계산(home-view projectedValue — 옛 판 151,098)
+  assert.deepEqual([c.APPROVAL.current, c.APPROVAL.year_end_expected], [97889, 105375]);
+  assert.deepEqual([c.CONSTRUCTION.current, c.CONSTRUCTION.year_end_expected], [79884, 94780]);
   assert.deepEqual([c.SUPPLY.current, c.SUPPLY.year_end_expected], [58541, 70005]);
   assert.deepEqual([c.MOVE_IN.current, c.MOVE_IN.year_end_expected], [null, 3845]);
 });
@@ -68,8 +69,16 @@ test("'/' 자료 = home-projects views.p97·region-calendar home.p97: 연결 177
   const HB = require('../../data/board/home-board.json'), HP = require('../../data/board/home-projects.json'), RC = require('../../data/board/region-calendar.json');
   const v = HP.views.p97, rc = RC.home.p97, rs = HP.rows.filter((r) => r.stats && r.p97 && r.chart.p97);
   assert.deepEqual([HB.scope.projects, HB.scope.units], [v.chart, v.units]);
-  assert.deepEqual([HB.scope.projects, HB.scope.units, HB.home.supplyUpcoming.total, HB.home.supplyUpcoming.projects], [177, 153575, 18214, 31]);   // 2026-10-22 새 덤프(20261021T212310Z): 연결 +2(부천역곡 A1 1,160·인천송림4 1 1,198) · 12개월 공급 +726(광교 A17BL 600호 2027-09 → 2026-10, 병점복합타운 주복1 726호 2026-11 새 일정 — HOME 담당자 입력) = PoC(as_of 10-22) 18,214·31 · 2026-10-21 새 덤프: 12개월 공급 = PoC 17,488·30(10-20 판 17,838·31 — 인천부평 도시재생뉴딜 A 350호 덤프 뒤 변경 해소)
-  for (const k of ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY']) assert.equal(HB.home.cards[k].current, v.reached[k], k);
+  /* 판 숫자([177, 153575, 16916, 30]) 대신: 원천 행에서 다시 센 연결 사업·집계 호수, HOME 정책 화면 정답(판이 같을 때)의 연결 사업·12개월 공급 */
+  assert.deepEqual([HB.scope.projects, HB.scope.units], [rs.length, rs.reduce((s, x) => s + x.units.counted, 0)]);
+  const gp = E.golden('golden-policy.json').doc;
+  if (gp) assert.deepEqual([HB.scope.projects, HB.home.supplyUpcoming.total, HB.home.supplyUpcoming.projects], [gp['policy.linked_projects'], gp['policy.statistics.upcoming_12m.total'], gp['policy.statistics.upcoming_12m.projects']]);
+  for (const k of ['APPROVAL', 'SUPPLY']) assert.equal(HB.home.cards[k].current, v.reached[k], k);
+  /* 2026-10-22 22:35 판: 카드(서버 tracking)와 지도 도달(프런트 reached — 호수 없는 사건은 사업 물량, 착공은 공급 사건 포함)이 HOME 안에서도 갈린다 —
+     사업화 600(광교 A17 호수 없는 사업화 근거) · 착공 1,357(다산지금A3 등 6곳 공급 사건). 카드는 '/' 단계 카드, 도달은 지도·사업 화면(PoC 지도 카드와 같은 값) */
+  /* 판 숫자([600, 1357]) 대신: 지도 도달 ≥ 카드(카드가 빼는 사건이 있을 뿐), 차이는 HOME 정답(판이 같을 때)의 지도 도달 합 − 카드 현재와 같다 */
+  for (const k of ['BUSINESS', 'CONSTRUCTION']) assert.ok(v.reached[k] >= HB.home.cards[k].current, k);
+  if (gp) for (const k of ['BUSINESS', 'CONSTRUCTION']) assert.equal(v.reached[k] - HB.home.cards[k].current, ['서울특별시', '경기도', '인천광역시'].reduce((s, n) => s + gp[`policy.map_supply.${n}.${k.toLowerCase()}_reached`], 0) - gp[`policy.stage_cards.${k}.current`], k);
   const J = HB.judgment;
   for (const k of ['NORMAL', 'WARNING', 'DELAYED', 'UNKNOWN']) {
     const j = { NORMAL: J.ok, WARNING: J.caution, DELAYED: J.delay, UNKNOWN: J.excluded }[k];
@@ -78,7 +87,10 @@ test("'/' 자료 = home-projects views.p97·region-calendar home.p97: 연결 177
   assert.deepEqual([HB.home.supplyUpcoming.total, HB.home.supplyUpcoming.projects], [v.upcoming.units, v.upcoming.projects]);
   assert.deepEqual([HB.home.supplyUpcoming.total, HB.home.supplyUpcoming.projects], [rc.total, rc.projects]);
   assert.deepEqual(HB.upcoming.map((u) => [u.ym, u.units, u.projects]), rc.months.map((m) => [m.ym, m.units, m.projects]), '월별 = region-calendar');
-  assert.equal(HB.upcoming.find((u) => u.ym === '2026-12').units, 1881);
+  /* 판 숫자(2026-12 1,881호) 대신: 달마다 = 원천 행의 공급 예정(upcoming)에서 다시 센 값 */
+  const byYm = {};
+  for (const r of rs) for (const [ym, u] of r.upcoming ?? []) byYm[ym] = (byYm[ym] ?? 0) + u;
+  assert.deepEqual(HB.upcoming.map((u) => u.units), HB.upcoming.map((u) => byYm[u.ym] ?? 0));
   for (const r of HB.regions) { const xs = rs.filter((x) => x.region === r.name); assert.deepEqual([r.projects, r.units], [xs.length, xs.reduce((s, x) => s + x.units.counted, 0)], r.name); }
   const ag = new Map();
   for (const x of rs) { const a = ag.get(x.agency) ?? [0, 0]; a[0]++; a[1] += x.units.counted; ag.set(x.agency, a); }

@@ -19,12 +19,17 @@ const WORDS = noComments(read('lib/board/public-schedule.ts'));
 const AHEAD = read('components/region/Ahead.tsx');
 const sidoName = (c) => ({ 11: '서울', 28: '인천', 41: '경기' }[c] ?? c);
 
-test('대표 숫자 = 정책 화면과 같은 함수 값(2026-10-21 W6 수도권 모집 공고 예정 30곳·17,488호 = HOME 9·7 12개월 공급 예정 — 옛 원장 준공 25곳·입주 11곳 대체)', () => {
+test('대표 숫자 = 정책 화면과 같은 함수 값(2026-10-21 W6 수도권 모집 공고 예정 = HOME 9·7 12개월 공급 예정 — 옛 원장 준공·입주 대체)', () => {
   const list = R.aheadAll({ sido: Object.fromEntries(R.METRO.map((c) => [c, calendar.home.p97.sido[c] ?? []])) }, 'metro', sidoName);
   // 2026-10-22 새 덤프(20261021T212310Z): 9·7 12개월 공급 예정 31곳·18,214호(광교 A17BL 600호 2027-09 → 2026-10, 병점복합타운 주복1 726호 2026-11 새 일정 — HOME 담당자 입력, 10-21 판 30곳·17,488호)
-  assert.equal(list.length, 31);
-  assert.equal(list.reduce((s, e) => s + e.units, 0), 18214);
-  assert.equal(P.hoText(18214), '1만 8,214호');
+  // 2026-10-22 22:35 판(20261022T133544Z): 남양주왕숙 A-25BL 1,298호 공급 예정 2026-11-15 → 2027-12-31(HOME 2027년 계획 보완) — 오전 판 31곳·18,214호
+  /* 판 숫자(30곳 · 16,916호) 대신: 사업 보기 자료(home-projects views.p97.upcoming — 정책 화면 '향후 12개월 공급 예정')와 같다. 호 글자 규칙은 판과 무관한 값으로 */
+  const up = require('../../data/board/home-projects.json').views.p97.upcoming;
+  assert.ok(list.length > 0);
+  assert.equal(list.length, up.projects);
+  assert.equal(list.reduce((s, e) => s + e.units, 0), up.units);
+  assert.equal(P.hoText(16916), '1만 6,916호');
+  assert.equal(P.hoText(up.units), up.units >= 10000 ? `${Math.floor(up.units / 10000)}만 ${(up.units % 10000).toLocaleString('en-US')}호` : `${up.units.toLocaleString('en-US')}호`);
   // 페이지는 같은 함수를 직접 쓴다(새 계산 없음)
   for (const f of ['aheadAll', 'pickMonth', 'pastDue', 'regionYears', 'metroYears']) assert.match(PAGE, new RegExp(`\\b${f}\\b`), f);
 });

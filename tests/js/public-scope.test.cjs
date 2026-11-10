@@ -10,9 +10,10 @@ const zlib = require('node:zlib');
 const H = require('../../tools/ledger/home-source');
 const { isShown, isRenewal, projectStates } = require('../../tools/ledger/board');
 const P = require('../../tools/ledger/paths');
+const E = require('./home-era.cjs');
 
 const ROOT = path.join(__dirname, '..', '..');
-const BASE = P.ledgerDir('2026-10');
+const BASE = P.ledgerDir(P.latestMonth());   // 지금 원장(가장 늦은 달 폴더) — 화면 자료(data/board)와 같은 달
 const table = (t) => JSON.parse(fs.readFileSync(path.join(BASE, 'tables', `${t}.json`), 'utf8')).rows;
 const board = (f) => JSON.parse(fs.readFileSync(path.join(ROOT, 'data/board', f), 'utf8'));
 const projects = table('projects'), live = projects.filter((p) => !p.superseded_by);
@@ -33,8 +34,11 @@ test('분류 표: 계층 순서 B·C1·C2·D·E, 프로그램 id 는 한 계층�
 });
 
 test('원장: 살아 있는 사업 = 공공 공급 285 · 민간 정비 39 · 일반 민간 53, 판단 불가(F → UNKNOWN)·공공택지 민간 0, 검토 목록 공개 범위 미상 0', () => {
-  assert.deepEqual(['PUBLIC', 'PRIVATE_RENEWAL', 'PRIVATE', 'UNKNOWN', 'PRIVATE_ON_PUBLIC_LAND'].map((s) => byScope(s).length), [289, 39, 53, 0, 0]);   // 2026-10-22 새 덤프(20261021T212310Z): 새 사업 1(부천역곡 A1 — A 공공 시행 LH) 288 → 289 · 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3(독산동·방화차고지 A 공공 시행 SH, 연남동 C1 프로그램 건설형 공공임대) 285 → 288
-  assert.equal(live.length, 381);   // 2026-10-22 새 덤프: 새 사업 1(부천역곡 A1) · 2026-10-21 새 덤프: 새 사업 3
+  /* 판 숫자(2026-10-22 판 289 · 39 · 53 / 381, 2026-11-10 판 290 · 39 · 53 / 382) 대신: 세 범위 합 = 살아 있는 사업, 판단 불가·공공택지 민간 0.
+     계층별 건수·호수는 아래 'HOME 원본으로 다시 나눈 계층' 시험이 원본에서 다시 세어 대조한다 */
+  assert.deepEqual(['UNKNOWN', 'PRIVATE_ON_PUBLIC_LAND'].map((s) => byScope(s).length), [0, 0]);
+  assert.ok(['PUBLIC', 'PRIVATE_RENEWAL', 'PRIVATE'].every((s) => byScope(s).length > 0));
+  assert.equal(['PUBLIC', 'PRIVATE_RENEWAL', 'PRIVATE'].reduce((n, s) => n + byScope(s).length, 0), live.length);
   assert.equal(table('review_required').filter((r) => r.review_type === 'PUBLIC_SCOPE_UNKNOWN').length, 0, 'F 0건');
   /* 기관이 있으면 공공 시행(A) — 기관 있는 민간 사업은 없다 */
   assert.ok(live.filter((p) => p.agency_id).every((p) => p.public_scope === 'PUBLIC'));
@@ -53,11 +57,13 @@ test('계층별 대표 사업(호수가 가장 큰 사업)', () => {
   assert.deepEqual(at('PRJ-11215-0048'), ['PRIVATE', null, 'HOME 프로그램: 일반 주택 건설 · 정책 미귀속'], 'E 자양동 도시형생활주택');
 });
 
-test('HOME 원본으로 다시 나눈 계층 = 원장 공개 범위 — A 180 · B 52 · C1 5 · C2 48 · D 39 · E 53 · F 0(건수·호수)', { skip: SKIP }, () => {
+test('HOME 원본으로 다시 나눈 계층 = 원장 공개 범위 — 계층 합 = 공공 공급 · 민간 정비 · 일반 민간(건수·호수, 보드와 같다), F 0', { skip: SKIP }, () => {
   const gz = (k) => zlib.gunzipSync(fs.readFileSync(path.join(HOME_DIR, `${k}.jsonl.gz`))).toString('utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
   const src = new Map(gz('project').map((r) => [r.entity_id, r.source_id]));
   const progs = new Map();
-  for (const m of gz('home_mapping')) if (m.status !== 'RELEASED') (progs.get(m.project_id) || progs.set(m.project_id, new Set()).get(m.project_id)).add(m.program_id);
+  /* 사업 연결은 해제(RELEASED) 제외 — 단 담당자 결정 제외(mapping_decision EXCLUDED, readHome 이 RELEASED 로 바꾸고 excluded_by_decision 표시)는 결정 전 연결로 본다(정책 집계에서만 빠지고 공공/민간 성격은 그대로).
+     2026-11-10 판: 일반 민간(E) 53곳 모두 담당자 결정으로 정책 집계에서 빠졌지만 E 로 남는다 */
+  for (const m of H.readHome(HOME_DIR).kinds.home_mapping) if (m.status !== 'RELEASED' || m.excluded_by_decision) (progs.get(m.project_id) || progs.set(m.project_id, new Set()).get(m.project_id)).add(m.program_id);
   const pros = new Map();
   for (const i of table('identifiers')) if (i.id_type === 'HOME' && i.id_value.startsWith('PRO_')) (pros.get(i.local_project_id) || pros.set(i.local_project_id, []).get(i.local_project_id)).push(i.id_value);
   const alias = (s) => String(s ?? '').replace(/^lh_incheon_/, 'lh_');
@@ -69,8 +75,12 @@ test('HOME 원본으로 다시 나눈 계층 = 원장 공개 범위 — A 180 ·
     tiers[t.tier] = (tiers[t.tier] ?? 0) + 1;
     units[t.tier] = (units[t.tier] ?? 0) + unitsOf.get(p.local_project_id);
   }
-  assert.deepEqual(tiers, { A: 184, B: 52, C1: 5, C2: 48, D: 39, E: 53 }, 'F 없음');   // 2026-10-22 새 덤프(20261021T212310Z): A +1(부천역곡 A1, 시행 LH) · 2026-10-21 새 덤프(20261020T142230Z): A +3(독산동·방화차고지·연남동, 시행 SH — 연남동은 W5 SH 규칙으로 C1 → A)
-  assert.deepEqual(units, { A: 125001, B: 33199, C1: 30000, C2: 55342, D: 27251, E: 628 });   // 2026-10-22 새 덤프: A +1,160(부천역곡 A1) · 2026-10-21 새 덤프: A +103(독산동 20·방화차고지 75·연남동 8)
+  /* 판 숫자(2026-10-22 판 A 184 · B 52 · C1 5 · C2 48 · D 39 · E 53, 호수 A 125,001 · B 33,199 · C1 30,000 · C2 55,342 · D 27,251 · E 628) 대신 원장·보드와 대조 */
+  assert.equal(tiers.F, undefined, 'F 없음');
+  const pubT = ['A', 'B', 'C1', 'C2'], n = (ts, o) => sum(ts.map((x) => o[x] ?? 0));
+  assert.deepEqual([n(pubT, tiers), tiers.D ?? 0, tiers.E ?? 0], [byScope('PUBLIC').length, byScope('PRIVATE_RENEWAL').length, byScope('PRIVATE').length]);
+  const L = board('ledger-board.json');
+  assert.deepEqual([n(pubT, units), units.D ?? 0], [L.scope.units, L.scope.renewal.units], '공공 공급 호수 = 보드 scope.units, 민간 정비 = scope.renewal.units');
 });
 
 test('화면 합계 = 공공 공급 합: 종합상황판·지도 색인·사업 색인·상세·지역 공급·지도 정적 자료·경량 번들·/citizen 에 민간 사업이 없고, 민간 정비는 따로', () => {
@@ -79,9 +89,7 @@ test('화면 합계 = 공공 공급 합: 종합상황판·지도 색인·사업 
   assert.equal(pub.size, byScope('PUBLIC').length);
   const L = board('ledger-board.json');
   assert.deepEqual([L.scope.projects, L.scope.units], [pub.size, sum([...pub].map((id) => unitsOf.get(id)))]);
-  assert.deepEqual([L.scope.projects, L.scope.units], [289, 243542]);   // 2026-10-22 새 덤프(20261021T212310Z): 새 사업 1(부천역곡 A1 1,160호) · 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3(103호)
   assert.deepEqual(L.scope.renewal, { projects: renewal.length, units: sum(renewal.map((id) => unitsOf.get(id))) });
-  assert.deepEqual(L.scope.renewal, { projects: 39, units: 27251 });
   assert.equal(sum(L.regions.map((r) => r.projects)), pub.size, '시도 합');
   assert.equal(sum(L.agencies.map((a) => a.projects)), pub.size, '기관 합');
   assert.equal(sum(L.stageProjects[L.now]), pub.size, '단계 합');
@@ -103,9 +111,17 @@ test('화면 합계 = 공공 공급 합: 종합상황판·지도 색인·사업 
   assert.ok([...pub].filter((id) => citizen.includes(id)).length > 200, '/citizen 은 공공 공급 사업을 싣는다');
 });
 
-test('9·7 정책 진행값 불변(HOME 원본에서 따로 계산 — 공공 분류와 상관없음): 같은 기간 2026 목표 8,049 · 확인 4,963 · 추정 포함 8,742', () => {
-  const s97 = board('policy-progress.json').policies.find((p) => p.policyId === 'POL_2025_0907').stages.SUPPLY.samePeriod.find((y) => y.year === 2026);
-  assert.deepEqual([s97.target, s97.actual, s97.actualWithEstimates], [8049, 4963, 8742]);   // 2026-10-22 새 덤프: 확인 +231(담당자 공급 측정값 3건 추정 → 원천 확인, policy-progress.test.cjs)
+test('9·7 정책 진행값 불변(HOME 원본에서 따로 계산 — 공공 분류와 상관없음): 같은 기간 2026 목표·추정 포함 = HOME 정책 화면 응답, 원장 공공 분류 표를 읽지 않고 다시 계산해도 같다', { skip: SKIP }, () => {
+  const PPJ = require('../../tools/ledger/policy-progress');
+  const saved = board('policy-progress.json');
+  const s97 = saved.policies.find((p) => p.policyId === 'POL_2025_0907').stages.SUPPLY.samePeriod.find((y) => y.year === 2026);
+  /* 판 숫자([8049, 4963, 8742]) 대신: HOME 원본(jsonl.gz)만으로 다시 계산한 값(원장 projects.public_scope 를 읽지 않는다) = 저장된 화면 자료 */
+  const again = PPJ.policyProgress(H.readHome(HOME_DIR)).policies.find((p) => p.policyId === 'POL_2025_0907').stages.SUPPLY.samePeriod.find((y) => y.year === 2026);
+  assert.deepEqual([again.target, again.actual, again.actualWithEstimates], [s97.target, s97.actual, s97.actualWithEstimates]);
+  assert.ok(s97.target > 0 && s97.actualWithEstimates >= s97.actual, '목표가 있고 추정 포함 ≥ 확인');
+  /* HOME 정책 화면 응답(판이 같을 때): 같은 기간 목표·추정 포함 확인이 같다 */
+  const view = E.golden('S1-view-policy.json');
+  if (view.doc) assert.deepEqual(E.homePeriod(view.doc, 'SUPPLY', s97.from, s97.through), { target: s97.target, actual: s97.actualWithEstimates });
 });
 
 test('사업 화면 민간 정비: 2026-10-21 PoC 규칙으로 HOME 원천 행 전 정책 목록에 함께 든다(?scope=renewal 따로 보기는 HOME 목록에서 받지 않는다)', async () => {
@@ -128,4 +144,22 @@ test('사업 화면 민간 정비: 2026-10-21 PoC 규칙으로 HOME 원천 행 �
   assert.equal(V.applyFilters(home, old).length, ids.size);
   const dir = fs.readFileSync(path.join(ROOT, 'lib/board/directives.ts'), 'utf8');
   assert.match(dir, /RENEWAL_NAME = '민간 정비\(정책 귀속 검토\)'/);
+});
+
+test('결정 제외(mapping_decision EXCLUDED): 정책 연결은 RELEASED 로 빠지되 공공 공급 분류용 표시(excluded_by_decision)가 남아 E(민간) 프로그램 사업후보가 F(미상)가 되지 않는다', () => {
+  const E_PRG = [...H.PUBLIC_TIER.find((x) => x.tier === 'E').ids][0];
+  const maps = [
+    { id: 'M1', project_id: 'PRO_1', program_id: E_PRG, status: 'REVIEW' },
+    { id: 'M2', project_id: 'PRO_2', program_id: E_PRG, status: 'CONFIRMED' },
+    { id: 'M3', project_id: 'PRO_3', program_id: E_PRG, status: 'RELEASED' },
+  ];
+  const dec = [{ entity_id: 'D1', payload: { subject_kind: 'project', subject_id: 'PRO_1', status: 'EXCLUDED', changed_at: '2026-11-04' } },
+    { entity_id: 'D2', payload: { subject_kind: 'project', subject_id: 'PRO_3', status: 'EXCLUDED', changed_at: '2026-11-04' } }];
+  const out = H.withDecisions(maps, dec);
+  assert.deepEqual(out.map((m) => [m.status, m.excluded_by_decision ?? false]), [['RELEASED', true], ['CONFIRMED', false], ['RELEASED', false]], '결정으로 빠진 행만 표시 · 원래 RELEASED 는 표시 없음');
+  /* programsOf 규칙(home-source.js homeRows): RELEASED 가 아니거나 결정 제외 행만 분류에 쓴다 → PRO_1(결정 제외)·PRO_2 는 E, 원래 RELEASED 인 PRO_3 은 분류 연결 없음 */
+  const usable = out.filter((r) => r.status !== 'RELEASED' || r.excluded_by_decision).map((r) => r.project_id);
+  assert.deepEqual(usable, ['PRO_1', 'PRO_2']);
+  /* 정책 연결·집계는 RELEASED 로 본다(skipPolicy 쪽): 결정 제외 행은 RELEASED */
+  assert.equal(out[0].status, 'RELEASED');
 });

@@ -69,7 +69,7 @@ test("TopNav: 로고·'종합상황판' 은 관점 첫 화면(일반사용자 /c
   const homeOf = new Function(`return ${nav.match(/const homeOf = (\(a: Audience \| null\) => [^;]*);/)[1].replace(': Audience | null', '')}`)();
   assert.equal(homeOf('public'), '/citizen');
   assert.equal(homeOf('admin'), '/');
-  assert.equal(homeOf(null), '/', "수화 전에는 '/'(AUDIENCE_INIT 이 일반사용자를 /citizen 으로 넘긴다)");
+  assert.equal(homeOf(null), '/', "수화 전에는 '/'(AUDIENCE_INIT 은 넘기지 않는다)");
 });
 
 function run(pathname, saved, throws = false) {
@@ -82,24 +82,22 @@ function run(pathname, saved, throws = false) {
   return { calls, aud: document.documentElement.dataset.aud };
 }
 
-test("AUDIENCE_INIT: html[data-aud] 를 정한다(없음·public → 'public', admin → 'admin')", () => {
-  assert.equal(run('/map', null).aud, 'public');
+test("AUDIENCE_INIT: html[data-aud] 를 정한다(/map: public 저장값만 'public', 없음·admin → 'admin')", () => {
+  assert.equal(run('/map', null).aud, 'admin');
   assert.equal(run('/projects', 'public').aud, 'admin', '정책담당자 전용 화면은 저장값과 상관없이 admin');
   for (const p of ['/', '/region', '/sources', '/month/2026-09', '/agency/lh']) assert.equal(run(p, 'public').aud, 'admin', p);
   for (const p of ['/citizen/projects', '/citizen/schedule']) for (const v of [null, 'public', 'admin']) assert.equal(run(p, v).aud, 'public', `${p} 는 저장값과 상관없이 일반사용자(${v})`);
   assert.deepEqual(run('/citizen/projects', null, true), { calls: [], aud: 'public' }, '일반사용자 화면은 저장소를 못 써도 public');
   assert.equal(run('/projects', 'admin').aud, 'admin');
-  assert.equal(run('/map', 'x').aud, 'public');
+  assert.equal(run('/map', 'x').aud, 'admin');
   assert.equal(run('/map', 'public').aud, 'public');
   assert.equal(run('/map', 'admin').aud, 'admin');
   assert.deepEqual(run('/', null, true), { calls: [], aud: 'admin' }, '저장소를 못 쓰면 넘기지 않는다(전용 화면은 admin)');
-  assert.deepEqual(run('/map', null, true), { calls: [], aud: 'public' }, '/map 은 저장값을 못 읽으면 일반사용자');
+  assert.deepEqual(run('/map', null, true), { calls: [], aud: 'admin' }, '/map 은 저장값을 못 읽으면 정책담당자');
 });
 
-test("AUDIENCE_INIT: '/' 에서만, 정책담당자가 아니면(없음·public) /citizen 으로 보낸다", () => {
-  assert.deepEqual(run('/', null).calls, ['/citizen']);
-  assert.deepEqual(run('/', 'public').calls, ['/citizen']);
-  assert.deepEqual(run('/', 'admin').calls, []);
+test("AUDIENCE_INIT: '/' 는 저장값(없음·public·admin)과 상관없이 넘기지 않고 admin 이다", () => {
+  for (const v of [null, 'public', 'admin']) assert.deepEqual(run('/', v), { calls: [], aud: 'admin' }, String(v));
   assert.deepEqual(run('/map', null).calls, []);
   assert.deepEqual(run('/projects', 'public').calls, []);
 });

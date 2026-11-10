@@ -24,18 +24,29 @@ const national = readNational(path.join(BASE, 'raw'));
 const saved = Object.fromEntries(fs.readdirSync(path.join(BASE, 'tables')).map((f) => { const j = read(`tables/${f}`); return [j.table, j.rows]; }));
 /* 수도권(11·28·41)은 HOME 덤프 판(raw/home/<덤프시각>)이 정본이다(2026-10-14). 저장된 표 = 아래 입력 + HOME 판 + HOME id 매핑(mappings/home-ids.json).
    HOME 원본(jsonl.gz)은 저장소에 없고(gitignore, Storage) 받은 자리에서만 다시 만들어 본다. pre = 같은 입력에서 HOME 판만 뺀 표(수도권 교체 전 — 전국 원천 규칙 시험은 이것으로 본다) */
-const HOME_DIR = HOME.latestHomeDir(BASE), HAVE_HOME = HOME.homeAvailable(HOME_DIR);
-const inputs = loadInputs({
-  observedMonth: '2026-10',
-  lhSgg: read('mappings/lh-block-sgg.json'),
-  hubEvents: read('snapshot/hub-events.json').rows,
-  legalDong,
-  hubBulk: readHubBulk(path.join(BASE, fs.existsSync(path.join(BASE, 'snapshot/hub-refresh.json')) ? 'snapshot/hub-refresh.json' : `snapshot/hub-bulk-${ED}.json`)),   // 열린 달 API 덮어쓰기(hub-api-refresh.js)가 있으면 그것
-  hubIds: read('mappings/hub-candidate-ids.json'),
-  national,
-  stage: readStageInput(stageFileOf(BASE)),
-});
-const rebuilt = HAVE_HOME ? convert({ ...inputs, home: HOME.readHome(HOME_DIR), homeIds: read('mappings/home-ids.json'), sidos: HOME.HOME_SIDO, report: {} }) : null;   // 2026-10-19 수도권 한정: 저장된 표 = monthly.js convertArgs(--sidos 11,28,41)
+const inputsOf = (base, observedMonth) => {
+  const rd = (p) => JSON.parse(fs.readFileSync(path.join(base, p), 'utf8'));
+  const dong = `raw/legal-dong/${fs.readdirSync(path.join(base, 'raw/legal-dong')).filter((f) => f.endsWith('.csv')).sort().pop()}`;
+  const ed = P.bulkDataMonth(path.join(base, 'raw/hub-bulk'));
+  return loadInputs({
+    observedMonth,
+    lhSgg: rd('mappings/lh-block-sgg.json'),
+    hubEvents: rd('snapshot/hub-events.json').rows,
+    legalDong: base === BASE ? legalDong : parseLegalDong(fs.readFileSync(path.join(base, dong)), path.basename(dong)),
+    hubBulk: readHubBulk(path.join(base, fs.existsSync(path.join(base, 'snapshot/hub-refresh.json')) ? 'snapshot/hub-refresh.json' : `snapshot/hub-bulk-${ed}.json`)),   // 열린 달 API 덮어쓰기(hub-api-refresh.js)가 있으면 그것
+    hubIds: rd('mappings/hub-candidate-ids.json'),
+    national: base === BASE ? national : readNational(path.join(base, 'raw')),
+    stage: readStageInput(stageFileOf(base)),
+  });
+};
+const inputs = inputsOf(BASE, '2026-10');
+/* 다시 만들기(결정적 출력)는 지금 원장(가장 늦은 달 폴더)으로 본다: 입력 중 레지스트리(registry/projects.json)는 저장소에 한 벌(지금 것)뿐이라
+   새 달을 연 뒤에는 지난 달 표를 바이트 그대로 다시 만들 수 없다(레지스트리 기준일·카운터가 바뀐다). 2026-10 이 가장 늦은 달이면 2026-10 표 */
+const LATEST = P.latestMonth(), LBASE = P.ledgerDir(LATEST);
+const lread = (p) => JSON.parse(fs.readFileSync(path.join(LBASE, p), 'utf8'));
+const lsaved = LATEST === '2026-10' ? saved : Object.fromEntries(fs.readdirSync(path.join(LBASE, 'tables')).map((f) => { const j = lread(`tables/${f}`); return [j.table, j.rows]; }));
+const HOME_DIR = HOME.latestHomeDir(LBASE), HAVE_HOME = HOME.homeAvailable(HOME_DIR);
+const rebuilt = HAVE_HOME ? convert({ ...(LATEST === '2026-10' ? inputs : inputsOf(LBASE, LATEST)), home: HOME.readHome(HOME_DIR), homeIds: lread('mappings/home-ids.json'), sidos: HOME.HOME_SIDO, report: {} }) : null;   // 2026-10-19 수도권 한정: 저장된 표 = monthly.js convertArgs(--sidos 11,28,41)
 const preReport = {};
 const pre = convert({ ...inputs, report: preReport });
 const BULK = `hub-bulk-hs-${ED}`, MYHOME = 'myhome-hwspr02', LH_NOTICE = 'datagokr-15058530', MOVE_IN = 'datagokr-15111714';
@@ -45,10 +56,11 @@ test('저장된 2026-10 기준 표 18개(HOME 표 policy_targets·area_facts 포
   assert.deepEqual(validate(saved), []);
 });
 
-test('같은 입력(법정동코드·LH 매핑·건축HUB 스냅샷·건축HUB 대용량·후보 id 매핑·전국 공고·입주예정·단계별 원천·HOME 판·HOME id 매핑·수도권 범위)으로 다시 만들면 저장된 표와 같다', { skip: !HAVE_HOME && 'HOME 원본(jsonl.gz) 없음 — Storage 에서 받거나 tools/ledger/home-dump.py' }, () => {
+test(`같은 입력(법정동코드·LH 매핑·건축HUB 스냅샷·건축HUB 대용량·후보 id 매핑·전국 공고·입주예정·단계별 원천·HOME 판·HOME id 매핑·수도권 범위)으로 다시 만들면 저장된 표와 같다(지금 원장 ${LATEST})`, { skip: !HAVE_HOME && 'HOME 원본(jsonl.gz) 없음 — Storage 에서 받거나 tools/ledger/home-dump.py' }, () => {
+  assert.deepEqual(validate(lsaved), [], `${LATEST} 표 검증`);
   for (const [table, rows] of Object.entries(rebuilt)) {
-    assert.equal(rows.length, saved[table].length, table);
-    rows.forEach((r, i) => { if (JSON.stringify(r) !== JSON.stringify(saved[table][i])) assert.deepEqual(saved[table][i], r, `${table}[${i}]`); });   // 큰 표의 deepEqual 실패 출력이 느려 다른 행만 비교한다
+    assert.equal(rows.length, lsaved[table].length, table);
+    rows.forEach((r, i) => { if (JSON.stringify(r) !== JSON.stringify(lsaved[table][i])) assert.deepEqual(lsaved[table][i], r, `${table}[${i}]`); });   // 큰 표의 deepEqual 실패 출력이 느려 다른 행만 비교한다
   }
 });
 

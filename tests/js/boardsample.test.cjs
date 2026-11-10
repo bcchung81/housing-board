@@ -15,11 +15,13 @@ const J = S.judgmentsOf(L), DL = S.delaysOf(J), TR = S.trendOf(T, J);
 const near = (a, b, msg) => assert.ok(Math.abs(a - b) < 1e-9 * Math.max(1, Math.abs(b)), `${msg}: ${a} ≠ ${b}`);
 const nearAll = (a, b, msg) => { assert.equal(a.length, b.length, msg); a.forEach((v, i) => near(v, b[i], `${msg}[${i}]`)); };
 
-test('46개 시점의 월 이름·구분이 시안과 같다(원장 시점 = 시안 시점, 기준 달까지 실제)', () => {
+test('46개 시점의 월 이름·구분이 시안과 같다(시안 기준 달이면 시안 구분 그대로, 원장 기준 달이면 같은 규칙으로 옮겨 간다 — 기준 달까지 실제)', () => {
   assert.equal(G.months.length, T.last + 1);
+  const GNOW = G.months.findIndex((g) => g.kind === '현재'), TG = S.timelineOf({ months: L.months, now: GNOW });   // 시안의 기준 달(2026.10)
   for (const g of G.months) {
     assert.equal(S.ml(T, g.m), g.label);
-    assert.equal(S.kind(T0, g.m), g.kind);
+    assert.equal(S.kind(TG, g.m), g.kind);
+    assert.equal(S.kind(T0, g.m), g.m < T0.now ? '실적 기준' : g.m === T0.now ? '현재' : '예정 기준', `원장 기준 달 ${L.observedMonth}`);
   }
 });
 
@@ -120,15 +122,18 @@ test('지시 6건: 값은 모두 자료에서 센다(통계누리 착공 누계�
   for (const r of L.regions) assert.ok(codes.includes(r.code), `${r.name} → ${r.code}`);
 });
 
-test('원장 집계와 화면 시점이 같은 칸이다: 46개월(2025-01~2028-10), NOW = 2026-10, 실제 날짜는 2026-10까지, 단계 6칸', () => {
+test('원장 집계와 화면 시점이 같은 칸이다: 46개월(2025-01~2028-10), NOW = 원장 관측 달, 실제 날짜는 HOME 덤프 달까지, 단계 6칸', () => {
   assert.equal(L.schema, 'ledger-board/1');
   assert.deepEqual([T.months, T.now, T.last], [L.months, L.now, L.months.length - 1]);
   assert.deepEqual([T.last, T.months[0], T.months[T.last]], [45, '2025-01', '2028-10']);
-  assert.equal(L.observedMonth, T.months[T.now], '첫 판 NOW = 21(2026-10)');
+  assert.equal(L.observedMonth, T.months[T.now], 'NOW = 관측 달(첫 판 21 = 2026-10)');
   /* 실제 날짜 = 원장 원천(HOME 덤프)의 데이터 월 — 2026-10-19 수도권 한정: 건축HUB 대용량 2026-08(19) → HOME 덤프 2026-10(21, actualSource home-dump-…). trend 소급 행의 edition 은 건축HUB 판(2026-08)으로 남는다 */
   const ed = L.actualThrough, a = L.months.indexOf(ed);
-  assert.deepEqual([ed, a, L.trend[L.trend.length - 1].edition], ['2026-10', 21, '2026-08']);
-  assert.match(L.actualSource, /^home-dump-/);
+  assert.match(L.actualSource, /^home-dump-\d{8}T\d{6}Z$/);
+  const dumpMonth = `${L.actualSource.slice(10, 14)}-${L.actualSource.slice(14, 16)}`;   // 덤프 시각의 달
+  assert.equal(ed, dumpMonth < L.observedMonth ? dumpMonth : L.observedMonth, '실제 날짜 = min(HOME 덤프 달, 관측 달)');
+  const edition = L.trend[L.trend.length - 1].edition;
+  assert.match(edition, /^\d{4}-\d{2}$/); assert.ok(edition <= ed, `소급 행 edition(건축HUB 판 ${edition})은 실제 날짜 달 이하`);
   assert.deepEqual([L.actualThrough, T.actual, L.actualIndex], [ed, a, a]);
   // 2026-10-19 수도권 한정: 실제 날짜 달 = 기준 달(21) 이라 '실제 뒤 ~ 기준 앞' 예정 기준 달이 없다(전엔 2026.09 한 달)
   assert.equal(a, T.now);
@@ -186,7 +191,7 @@ test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹
      옛 소급 이력(candidate 칸 없음 — 후보 포함)이 있을 때의 꼬리표도 겹침 검사에 넣으려고 그 모양을 만들어 본다 */
   assert.equal(S.scopeChangeOf(J), -1);
   const SF = S.scopeChangeOf(J.map((r, m) => (r && m < T.now ? (({ candidate: _c, ...x }) => x)(r) : r)));
-  assert.equal(L.months[SF], '2026-10');
+  assert.equal(SF, T.now, '소급 행만 후보 칸을 뺐으니 기준 변경 달 = 기준 달');
   const R = S.ribbonOf(T, L.stageUnits, DL, SF);
   // 총량이 해마다 다른 경우: 수도권 원장(총량 약 22.8만 — 2026-10-19 수도권 한정 전 141만)에서 0.5배 → 1.5배
   const grow = S.ribbonOf(T, L.stageUnits.map((r, m) => r.map((v) => Math.round(v * (0.5 + m / 45)))), DL, SF);
@@ -206,9 +211,9 @@ test('리본 글자 자리: 46개 시점 모두 글자·HUD 라벨이 서로 겹
   const o = S.ribbonLabels(R, T.now), ST = S.staticTexts(R);
   assert.deepEqual(o.years.map((y) => y.map((t) => t.t)), [['2025년'], ['2026년'], ['2027년'], ['2028년']]);
   assert.deepEqual(Object.keys(ST).sort(), ['now', 'scope', 'ticks']);   // scope = 판정 기준 변경 꼬리표(2026-10-15, 리본 아래 줄)
-  assert.equal(ST.scope.t, '판정 기준 변경 · 2026.10부터 번호 있는 사업만');
+  assert.equal(ST.scope.t, `판정 기준 변경 · ${S.ml(T, SF)}부터 번호 있는 사업만`);
   assert.deepEqual(Object.keys(o).sort(), ['statics', 'total', 'years'], '병목 핀 없음');
-  assert.equal(ST.now.t, '기준 2026.10');
+  assert.equal(ST.now.t, `기준 ${L.observedMonth.replace('-', '.')}`);
   for (const g of [R, grow]) assert.ok(S.ribbonLabels(g, T.now).statics.every((t) => !/붉은 띠|총량 매달/.test(t.t)), '차트 안 설명 글자 없음');
   assert.deepEqual(ST.ticks.map((t) => t.t), ['0', '5만', '10만', '15만', '20만', '25만']);   // 2026-10-20 공공 분류 안2: 공공 공급 24.2만 → 5만 간격 · 2026-10-20 HOME 판: 총량 27.4만 → 10만 간격 · 2026-10-19 수도권 한정: 총량 22.8만 → 5만 간격 눈금(전엔 50만 간격 0~150만)
    assert.equal(S.axisUnit(R), '호');
@@ -254,15 +259,15 @@ test('시도 3칸 한 줄: 원장 시도는 서울·인천·경기 3곳, 4곳 �
   assert.doesNotMatch(region, /text-bad">\{r\.delay\}/, '타일 안 세 숫자 칸 없음');
 });
 
-test('시점은 원장 집계에서 읽는다: 다음 달 원장(관측 2026-11, now 22)을 올리면 기준 글자·달 이름·현재 표지·SAMPLE 추이 끝점이 한 달 옮겨 가고 글자는 겹치지 않는다', () => {
-  const next = { ...L, now: 22, observedMonth: '2026-11', actualThrough: '2026-09' }, T2 = S.timelineOf(next);
-  assert.deepEqual([T2.now, T2.last, T2.actual], [22, 45, 20]);
-  assert.equal(S.ml(T2, T2.now), '2026.11');
-  assert.deepEqual([S.kind(T2, 21), S.kind(T2, 22)], ['예정 기준', '현재']);
+test('시점은 원장 집계에서 읽는다: 다음 달 원장(관측 = 지금 기준 달 + 1)을 올리면 기준 글자·달 이름·현재 표지·SAMPLE 추이 끝점이 한 달 옮겨 가고 글자는 겹치지 않는다', () => {
+  const N = L.now + 1, next = { ...L, now: N, observedMonth: L.months[N], actualThrough: L.months[L.now - 1] }, T2 = S.timelineOf(next);
+  assert.deepEqual([T2.now, T2.last, T2.actual], [N, 45, L.now - 1]);
+  assert.equal(S.ml(T2, T2.now), L.months[N].replace('-', '.'));
+  assert.deepEqual([S.kind(T2, L.now), S.kind(T2, N)], ['예정 기준', '현재']);
   const R2 = S.ribbonOf(T2, next.stageUnits, S.delaysOf(S.judgmentsOf(next))), ST2 = S.staticTexts(R2);
-  assert.equal(ST2.now.t, '기준 2026.11'); near(ST2.now.x, R2.X(23), '기준 글자 x');
-  assert.deepEqual(T2.judged, Array.from({ length: 23 }, (_, i) => i), '이력(2026.10 관측 행 포함) + 새 기준 달');
-  assert.deepEqual(S.delayAt(T2, S.delaysOf(S.judgmentsOf(next)), 21), L.delayByStage, '지난 기준 달은 그 달 이력 행');
+  assert.equal(ST2.now.t, `기준 ${L.months[N].replace('-', '.')}`); near(ST2.now.x, R2.X(N + 1), '기준 글자 x');
+  assert.deepEqual(T2.judged, Array.from({ length: N + 1 }, (_, i) => i), '이력(지금 기준 달 관측 행 포함) + 새 기준 달');
+  assert.deepEqual(S.delayAt(T2, S.delaysOf(S.judgmentsOf(next)), L.now), L.delayByStage, '지난 기준 달은 그 달 이력 행');
   for (let cur = 0; cur <= T2.last; cur++) {
     const o = S.ribbonLabels(R2, cur), B = [...o.statics, ...o.years.flat()].map(S.textBox).concat([o.total]);
     for (let i = 0; i < B.length; i++) { assert.ok(S.inView(B[i]), `${cur}: ${i} viewBox 밖`); for (let j = i + 1; j < B.length; j++) assert.ok(!S.hit(B[i], B[j]), `${cur}: ${i}⟷${j} 겹침`); }

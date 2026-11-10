@@ -37,11 +37,11 @@ test('home-board.json: 시도 묶음 3개(서울·경기·인천), 시도 타일
   assert.deepEqual(R.map((b) => b.months), R.map(() => HB.months), '시점은 같다(달을 옮겨도 같은 칸)');
 });
 
-test('HOME 지역 범위(regionView): 응답의 region:<시도> 비교 묶음 · 그 시도 사업 — 2026-10-20 HOME 응답 서울 착공(건설) 9,172호(연말 예상 7,866 → 1,306호 초과), 경기 61,223 · 인천 9,489', () => {
+test('HOME 지역 범위(regionView): 응답의 region:<시도> 비교 묶음 · 그 시도 사업 — 2026-10-20 HOME 응답 서울 착공(건설) 9,172호(12월 말 예상 10,932 — 22:35 판 머문 단계 계산, 옛 판 7,866), 경기 61,223 · 인천 9,489', () => {
   const view = require(path.join(__dirname, '..', 'fixtures', 'home-view-1020', 'policy-view.json'));
   const all = homeBoards(view);
   const c = (k) => all.byRegion[k].home.cards.CONSTRUCTION;
-  assert.deepEqual([c('11').current, c('11').year_end_expected, c('11').remainder], [9172, 7866, -1306]);
+  assert.deepEqual([c('11').current, c('11').year_end_expected, c('11').remainder], [9172, 10932, 1760]);
   assert.deepEqual([c('41').current, c('28').current], [61223, 9489]);
   assert.equal(all.home.cards.CONSTRUCTION.current, 79884, '수도권 전체는 그대로');
   assert.deepEqual([all.byRegion['11'].home.bottleneck?.label, all.byRegion['11'].home.bottleneck?.gap], ['준공', 14], '서울 병목 = HOME 시도 집계 지연 문구(준공 14호 부족)와 같은 값');
@@ -50,9 +50,12 @@ test('HOME 지역 범위(regionView): 응답의 region:<시도> 비교 묶음 ·
 
 /* 같은 날 사용자 지시로 위 줄이 HOME 6단계 카드(정책~입주)가 됨 — 진척 관리 카드의 값·문구는 건설 카드로(tests/js/board-stage-cards-1021.test.cjs 가 6장 전부) */
 test('건설 카드 = HOME 착공(건설) 카드(현재 누적 측정 + 연말 문구) — 통계누리 착공 누계(86,739)는 (i) 설명에만', () => {
-  const c = dirOf(HB, 'all')[3];
-  assert.deepEqual([c.t, c.big, c.u, c.pre, c.sub], ['건설', '82,968', '호', '연말 계획까지 16,917호', undefined], '아래 줄 = HOME 문구만(보조 값 없음 — 6열 카드 폭)');   // 2026-10-22 연말 예상 99,885(forecast_points — 옛 계획 누계 94,498 · 11,530) · 10-21 판 79,884 · 12,690
-  assert.equal(c.m, '착공(건설) 현재 누적 82,968호 · 연말 계획까지 16,917호', '숫자 이름은 읽기 이름에');
+  const c = dirOf(HB, 'all')[3], cc = HB.home.cards.CONSTRUCTION, n = (x) => x.toLocaleString('en-US');
+  /* 판 숫자('81,131' · '연말 계획까지 36,261호') 대신 '/' 자료 건설 카드(현재 누적·남은 호수 — policy-golden.test.cjs 가 PoC 와 견준다) */
+  assert.equal(cc.remainder, cc.year_end_expected - cc.current);
+  const pre = cc.remainder > 0 ? `연말 계획까지 ${n(cc.remainder)}호` : cc.remainder < 0 ? `연말 계획 대비 ${n(-cc.remainder)}호 초과` : '연말 계획과 일치';
+  assert.deepEqual([c.t, c.big, c.u, c.pre, c.sub], ['건설', n(cc.current), '호', pre, undefined], '아래 줄 = HOME 문구만(보조 값 없음 — 6열 카드 폭)');
+  assert.equal(c.m, `착공(건설) 현재 누적 ${n(cc.current)}호 · ${pre}`, '숫자 이름은 읽기 이름에');
   assert.match(c.basis, /HOME 착공\(건설\) 카드 — 현재 누적 측정량/);
   assert.match(c.basis, /통계누리 착공 통계\(민간 포함 모든 주택 · 수도권 2026년 1~8월 86,739호\)와 범위가 다릅니다/);
   const seoul = dirOf(regionOf('11'), '11')[3];

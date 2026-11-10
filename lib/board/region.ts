@@ -1,5 +1,5 @@
 /* '지역 공급'(/region) 화면 값(순수 함수 — 파일을 읽지 않는다). 자료는 tools/ledger/region-supply.js 가 만든
-   data/board/region-calendar.json(앞으로 12개월 예정) · region-map.json(서울·인천·경기 경계) · region-annual.json(서울·인천·경기 HOME 통계)과 통계누리 molit.json.
+   data/board/region-calendar.json(앞으로 12개월 예정) · region-map.json(서울·인천·경기 경계) · region-annual.json(서울·인천·경기 HOME 통계 — 수도권 연도별 실적의 정본)과 통계누리 molit.json.
    계산은 승인된 시안(docs/design/home-concept/assets/app.js 의 PAGES.region)과 같다. */
 import type { YearVal } from './annual';
 import type { Metric, Molit } from './types';
@@ -150,18 +150,25 @@ export function yearlyOf(months: string[], values: (number | null)[], provisiona
   return [...out.values()].sort((a, b) => a.year - b.year).map((y) => ({ ...y, complete: y.months === 12 }));
 }
 
-/* 시도 하나('' = 전국)의 연도별 실적: 통계누리 2022~. 서울·인천·경기는 2018~2021 을 HOME 통계(같은 통계누리 시도 자료 — 2022~2025 값이 같다, 시험으로 확인)로 앞에 잇는다.
-   인허가는 HOME 에 연 단위만 있다 */
+/* 시도 하나('' = 전국)의 연도별 실적: 통계누리 2022~.
+   서울·인천·경기는 HOME 통계(같은 통계누리 시도 자료 — 겹치는 달 값이 같다, 시험으로 확인)가 정본(2026-10-19 결정)이라
+   착공·모집·준공은 2018~ 모든 달을 HOME 월 자료로 센다(HOME 판이 통계누리 파일보다 늦은 달까지 있으면 그 달까지 — PoC #annual-supply 와 같음).
+   인허가는 HOME 에 연 단위(2018~2021 만 쓴다)뿐이라 2022~ 는 통계누리 월 자료 */
 export function regionYears(molit: Molit, annual: AnnualDoc, metric: Metric, code: string): { years: YearVal[]; spliced: boolean } {
   const total = molit.metrics[metric].series[code || '00']?.total;
   if (!total) return { years: [], spliced: false };   // 자료에 없는 시도 코드는 오류 대신 빈 연도
+  if (METRO.includes(code) && metric !== 'permit') return { years: yearlyOf(annual.months, annual.series[metric][code], molit.provisional, 2018), spliced: true };
   const years = yearlyOf(molit.months, total, molit.provisional, NATION_FROM);   // = annualSeries(…) 의 2022~ (값을 가져오지 않아 Node 시험이 이 파일만 읽는다)
   if (!METRO.includes(code)) return { years, spliced: false };
-  const early: YearVal[] = metric === 'permit'
-    ? [2018, 2019, 2020, 2021].map((year) => { const v = annual.permitYearly[code]?.[String(year)] ?? null; return { year, value: v, months: v === null ? 0 : 12, first: v === null ? null : 1, last: v === null ? null : 12, complete: v !== null, provisional: false }; })
-    : yearlyOf(annual.months, annual.series[metric][code], [], 2018, NATION_FROM - 1);
+  const early: YearVal[] = [2018, 2019, 2020, 2021].map((year) => { const v = annual.permitYearly[code]?.[String(year)] ?? null; return { year, value: v, months: v === null ? 0 : 12, first: v === null ? null : 1, last: v === null ? null : 12, complete: v !== null, provisional: false }; });
   return { years: [...early, ...years], spliced: true };
 }
+
+/* 연도별 실적이 끝나는 달(YYYY-MM): 값이 있는 마지막 해의 마지막 달. 지표마다 다를 수 있다(인허가 = 통계누리, 나머지 = HOME 판) */
+export const yearsThrough = (years: YearVal[]): string | null => {
+  const y = [...years].reverse().find((v) => v.value !== null && v.last !== null);
+  return y ? `${y.year}-${String(y.last).padStart(2, '0')}` : null;
+};
 
 /* 수도권(세 시도) 연도별 합: 해마다 값을 더하고(셋 다 비면 null), 달 수는 가장 적은 시도 것, 완결은 셋 다 완결일 때만 */
 export function metroYears(molit: Molit, annual: AnnualDoc, metric: Metric): YearVal[] {

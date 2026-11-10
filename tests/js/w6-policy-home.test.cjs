@@ -23,7 +23,7 @@ const GEN = require('../../tools/ledger/home-lh-plan');
 const HOME = require('../../tools/ledger/home-source');
 const P = require('../../tools/ledger/paths');
 
-const GOLD = path.join(ROOT, '.cache/home-parity/golden/golden-policy.json');
+const GOLD = path.join(require('./home-era.cjs').GOLDEN_DIR, 'golden-policy.json');   // HOME_GOLDEN_DIR(기본 .cache/home-parity/golden)
 const gp = fs.existsSync(GOLD) ? JSON.parse(fs.readFileSync(GOLD, 'utf8')) : null;
 const sum = (a, f) => a.reduce((s, x) => s + f(x), 0);
 
@@ -101,7 +101,9 @@ test('/region 머리 숫자 = home-projects views.p97(사업 화면 기본과 �
   const metro = head({ metro: true });
   const judge = HP.views.p97.judge;
   assert.deepEqual([metro.n, metro.check, metro.href], [HP.views.p97.rows, (judge.DELAYED?.rows ?? 0) + (judge.WARNING?.rows ?? 0), '/projects'], '수도권 9·7 = 230건 · 점검 필요 = 지연+주의');
-  assert.deepEqual([metro.n, metro.check], [232, 8]);   // 2026-10-22: 점검 필요 = 지연 6 · 주의 2(= PoC) · 9·7 원천 행 +2(10-21 판 230)
+  /* 판 숫자([232, 8]) 대신: '/'(home-board.json — 다른 생성기)의 9·7 사업 판정 지연+주의 = 점검 필요, 요구사항 모수(requirements.json — HOME 요구사항 응답) = 9·7 원천 행 */
+  assert.equal(metro.check, HB.judgment.delay.projects + HB.judgment.caution.projects);
+  assert.equal(metro.n, require('../../data/board/requirements.json').measures.base);
   for (const h of [metro, head({ sido: '11' }), head({ sido: '28' }), head({ sido: '41' }), head({ metro: true }, 'all'), head({ sido: '41' }, 'all')]) {
     assert.equal(opened(h.href), h.n, h.href);
     assert.equal(opened(h.checkHref), h.check, h.checkHref);

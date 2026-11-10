@@ -16,7 +16,8 @@ const M3 = require('../../assets/js/map3d.js');   // 3D 단계 구분도 공용 
 const R = require('../../assets/js/region.js');
 const MAP = require('../../data/board/ledger-map.json');
 const RM = require('../../data/board/region-map.json');
-const AREAS = require('../../schemas/ledger-2026-10/tables/areas.json').rows;
+const LP = require('../../tools/ledger/paths');
+const AREAS = require(path.join(LP.ledgerDir(LP.latestMonth()), 'tables/areas.json')).rows;   // 지금 원장(가장 늦은 달 폴더)
 
 const MOV = require('../../data/board/map-overview.json');
 const HP = require('../../data/board/home-projects.json');
@@ -492,9 +493,13 @@ test('상세 지도 범위(2026-10-21 W5-MP2): 9·7(기본)이면 9·7 원천 �
   assert.match(app, /const u = LOST;/, '목록의 위치 미확보도 같은 집합');
   assert.match(app, /9·7 밖: \$\{names\.join\(', '\)\}/); assert.match(app, /9·7 주택공급 대책에 들지 않은 사업입니다/, '일반사용자는 쉬운 말');
   assert.match(app, /const pstOf = \(p\) => \(p \? \(POC_SCOPE === 'p97' && p\.s97 != null \? p\.s97 : p\.s \?\? 6\) : 6\);/, '정책 없는 점 = 미확인');
-  /* 실제 자료: 그리는 점 정책 전체 176 → 9·7 110, 위치 미확보 112 → 63(같은 규칙을 시군구 파일에 돌린 값) */
+  /* 실제 자료(같은 규칙을 시군구 파일에 돌린 값 — 10-22 판: 그리는 점 정책 전체 176 → 9·7 110, 위치 미확보 113 → 64) */
   const files = fs.readdirSync(path.join(ROOT, 'data/board/home-map')).filter((f) => /^\d{5}\.json$/.test(f)).map((f) => JSON.parse(read(`data/board/home-map/${f}`)));
-  let all = 0, p97 = 0, lostAll = 0, lost97 = 0;
+  let all = 0, p97 = 0, lostAll = 0, lost97 = 0, rows = 0, rows97 = 0;
+  for (const d of files) { for (const p of d.projects) { rows++; if (p.poc && p.poc.n97 > 0) rows97++; } }
   for (const d of files) { const h = R.homeToProjects([d]); for (const p of h.projects) { all++; if (p.home.poc && p.home.poc.n97 > 0) p97++; } for (const x of h.unlocated) { lostAll++; if (x.pst && x.pst.p97 != null) lost97++; } }
-  assert.deepEqual([all, p97, lostAll, lost97], [176, 110, 113, 64]);   // 2026-10-22 새 덤프(20261021T212310Z): 위치 미확보 +1(부천역곡 A1 — HOME 위치 행 없음, 9·7)
+  /* 판 숫자 대신: 점 + 위치 미확보 = 시군구 파일 사업 전부, 9·7 쪽도 9·7 원천 행이 있는 사업(poc.n97 > 0) 전부 — 빠지거나 겹치는 사업 없이 나뉘고, 9·7 은 전체보다 적다 */
+  assert.equal(all + lostAll, rows, '정책 전체: 점 + 위치 미확보 = 사업 전부');
+  assert.equal(p97 + lost97, rows97, '9·7: 점 + 위치 미확보 = 9·7 사업 전부');
+  assert.ok(p97 > 0 && p97 < all && lost97 > 0 && lost97 < lostAll, `9·7 이 정책 전체보다 적다: ${[all, p97, lostAll, lost97]}`);
 });

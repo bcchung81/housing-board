@@ -74,11 +74,14 @@ test('3 지연 기준 하나: 시도 타일 지연율 = 지연 호수 ÷ 판정 
   assert.match(board, /data-slot="basis-tag"[^>]*title="[^"]*시도 타일도 호수 기준[^"]*"/);
 });
 
-test("4 진척 관리 숫자 링크 = 원장 지금 ③착공 단계 사업 목록 — 건수(71건)가 카드 숫자와 다른 것은 숫자 링크 title·(i)에(2026-10-18 링크 글자 '원장 194건 ›'를 없앰)", () => {
+test("4 진척 관리 숫자 링크 = 원장 지금 ③착공 단계 사업 목록 — 건수가 카드 숫자와 다른 것은 숫자 링크 title·(i)에(2026-10-18 링크 글자 '원장 194건 ›'를 없앰)", () => {
   // 2026-10-19 수도권 한정: 원장 지금 ③착공 사업 194건(전국) → 71건(수도권), 범위 글 '(전국)' → '(수도권)'
-  assert.equal(BOARD.stageProjects[BOARD.now][2], 71);   // 2026-10-22 새 덤프(20261021T212310Z): 새 사업 부천역곡 A1(③착공) +1 · 2026-10-21 새 덤프: 새 사업 독산동·방화차고지(③착공) +2 · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): ③착공 민간 정비 28·일반 민간 51 빠짐 147 → 68 · 2026-10-20 HOME 판: 지금 ③착공 사업 71 → 150 → 2026-10-20 같은 현장 병합 6쌍: ③ 대체 6 빠지고 평택고덕 대표 3곳 ①→③ 147
+  /* 판 숫자(71건) 대신: 원장 보드의 지금 ③착공 사업 수 = 사업 행(지도 색인)에서 다시 센 지금 ③착공 사업 */
+  const now3 = V.rowsOf(MAP.bySgg, IDX.projects, IDX.sgg).filter((r) => r.board === 2).length;
+  assert.ok(now3 > 0);
+  assert.equal(BOARD.stageProjects[BOARD.now][2], now3);
   assert.equal(DIR[0].list.text, undefined);
-  assert.match(DIR[0].list.title, /원장 사업\(수도권\) 71건 — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록\(건수가 다름\)/);
+  assert.ok(DIR[0].list.title.includes(`원장 사업(수도권) ${now3.toLocaleString('en-US')}건 — 카드 숫자는 통계누리 착공 통계라 사업 목록으로 거를 수 없어 가장 가까운 목록(건수가 다름)`), DIR[0].list.title);
   assert.match(board, /<Link href=\{l\.href\} onClick=\{open\(l\.href\)\} title=\{l\.title\} aria-label=\{`\$\{x\.t\} \$\{pre \? pre \+ ' ' : ''\}\$\{big\}\$\{u\} 목록`\}/, '읽기 이름에 보이는 숫자가 들어간다');
   assert.match(board, /<p className="text-muted-foreground">\{x\.list\.title\}<\/p>/, '(i) 에도 목록 설명');
 });
@@ -94,7 +97,11 @@ test("6 LH 준공 예정 파일 낡음 표지: 원장 기준일과의 차이('8�
   assert.equal(C.staleText('2026-01-27', '2026-10-13'), '8개월 전 자료');
   assert.equal(C.staleText('2026-01-27', '2026-02-26'), null);
   assert.equal(C.staleText('2026-01-27', '2026-02-27'), '1개월 전 자료');
-  assert.equal(C.staleText(LH.sourceAsOf, BOARD.referenceDate), '8개월 전 자료');
+  /* 판 숫자(10-22 판 '8개월 전 자료') 대신: 파일 기준일 → 원장 기준일 사이 꽉 찬 달 수를 다시 센다 */
+  const [y1, m1, d1] = LH.sourceAsOf.split('-').map(Number), [y2, m2, d2] = BOARD.referenceDate.split('-').map(Number);
+  const full = (y2 - y1) * 12 + (m2 - m1) - (d2 < d1 ? 1 : 0);
+  assert.ok(full > 0, 'LH 파일은 원장 기준일보다 1개월 넘게 낡았다');
+  assert.equal(C.staleText(LH.sourceAsOf, BOARD.referenceDate), `${full}개월 전 자료`);
   assert.match(agency, /const lhStale = staleText\(lh\.sourceAsOf, observedRef\)/);
   assert.match(agency, /파일 기준 \{dotDates\(lh\.sourceAsOf\)\}\{lhStale \? <span className="ml-1\.5 text-warn"[^>]*>\{lhStale\}<\/span> : null\}/);
   assert.match(month, /const lhStale = staleText\(lh\.sourceAsOf, calendar\.referenceDate\)/);

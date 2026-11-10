@@ -2,6 +2,8 @@
    근거는 2026-10-10 데이터 설계 분석(dataset.md · resource.md · docs/analysis/주택공급상황판_데이터설계_정리본.html · 스펙 5.4·6.4·7절).
    '지금' 문구는 저장소 코드로 확인한 상태이고, 외삽한 값은 estimate(추정)로 표시한다. 한도 사용률은 식으로 두어 화면과 시험(tests/js/pipeline.test.cjs)이 같은 숫자를 쓴다. */
 
+import registry from '../../registry/projects.json' with { type: 'json' };
+
 export type Status = 'done' | 'part' | 'plan';
 export const STATUS_LABEL: Record<Status, string> = { done: '구현됨', part: '일부', plan: '계획' };
 
@@ -28,6 +30,17 @@ export const ORIGINS: Origin[] = [
 ];
 
 /* 가운데: 보관 줄의 여덟 단계와 실시간 줄. now = 저장소에서 확인한 지금, next = 계획 */
+/* 사업 원장 단계의 '지금' 문구 숫자는 사업 레지스트리(registry/projects.json)에서 센다 — HOME 판이 바뀌어도 손으로 고치지 않는다(2026-11-09 P2).
+   살아 있는 사업(대체·숨김 아님)·그 시군구 수, 옛 수도권 발급(HOME 참조 없음) 대체·숨김, HOME 같은 현장 대체, 수도권 밖 숨김, 일정이 있는 사업 */
+type RegItem = { sgg: string; refs: { system: string }[]; supersededBy?: string; hiddenAt?: string; schedule?: unknown };
+export function ledgerNow(items: RegItem[]): string {
+  const n = (f: (p: RegItem) => boolean) => items.filter(f).length;
+  const metro = (p: RegItem) => /^(11|28|41)/.test(p.sgg), home = (p: RegItem) => p.refs.some((r) => r.system === 'home');
+  const live = items.filter((p) => !p.supersededBy && !p.hiddenAt);
+  const oldSup = n((p) => !home(p) && metro(p) && !!p.supersededBy), oldHid = n((p) => !home(p) && metro(p) && !p.supersededBy && !!p.hiddenAt);
+  return `사업 레지스트리(사업 번호 목록) ${live.length}건(${new Set(live.map((p) => p.sgg)).size}개 시군구 — 모두 수도권 HOME 덤프, 옛 수도권 발급 ${oldSup + oldHid}건은 대체 ${oldSup}·숨김 ${oldHid}, `
+    + `HOME 같은 현장 ${n((p) => home(p) && !!p.supersededBy)}건은 대표 사업으로 대체, 수도권 밖 ${n((p) => !metro(p) && !!p.hiddenAt)}건은 숨김). 일정(당초·변경·현재)이 있는 사업은 ${n((p) => !!p.schedule)}건이다.`;
+}
 export type Step = { id: string; no: string; name: string; does: string; inputs: string; outputs: string; now: string; next: string; status: Status; code: string[] };
 export const STEPS: Step[] = [
   { id: 'collect', no: '1', name: '수집', does: '정해 둔 주기(달마다·하루마다)로 원천에서 자료를 한꺼번에 받아 온다.', inputs: '공공 API · 파일 · 공고 · 기관 입력', outputs: '원천 응답 · 파일',
@@ -43,7 +56,7 @@ export const STEPS: Step[] = [
     now: '인허가 사업은 필지에, 지도 번들 단지는 윤곽 중심에 있는 필지에 붙였다(22곳 모두 연결). 공고·청약홈 자료는 필지 정보가 없어 아직 못 붙인다.', next: '공고와 사업을 짝짓는 연결표를 만들고, 연결된 비율을 잰다', status: 'part',
     code: ['scripts/issue-projects.js', 'lib/projects.js'] },
   { id: 'ledger', no: '5', name: '사업 원장·일정 기록', does: '사업마다 내부 번호·원천 쪽 번호(외부 참조키)·위치·단계·호수를 적고, 예정일을 달마다 저장해 이력으로 쌓는다.', inputs: '사업 id 가 붙은 사건 · 기관 입력', outputs: '사업 원장 + 월별 일정 이력',
-    now: '사업 레지스트리(사업 번호 목록) 381건(69개 시군구 — 모두 수도권 HOME 덤프, 옛 수도권 발급 61건은 대체 6·숨김 55, HOME 같은 현장 11건은 대표 사업으로 대체, 수도권 밖 16건은 숨김). 일정(당초·변경·현재)이 있는 사업은 0건이다.', next: '기존 77건부터 달마다 일정을 기록하고, 이어서 전국 주택 인허가로 사업 번호를 발급', status: 'part',
+    now: ledgerNow(registry.projects), next: '기존 77건부터 달마다 일정을 기록하고, 이어서 전국 주택 인허가로 사업 번호를 발급', status: 'part',
     code: ['registry/projects.json', 'lib/registry.js'] },
   { id: 'judge', no: '6', name: '판정', does: '사업의 6단계, 당초·변경·현재 일정, 정상·주의·지연 신호, 30일 넘게 갱신이 없는지를 계산한다.', inputs: '사업 원장 + 일정 이력', outputs: '단계 · 신호 · 지연 개월',
     now: '6단계는 278건 모두 있다. 인허가 예정일이 지났는데 기록이 없으면 그 사실만 덧붙인다. 신호(정상·주의·지연)와 지연 개월은 아직 없다.', next: '일정 기록 2회차부터 일정 변경을 알아채고, 기관 입력으로 당초 일정을 받는다', status: 'part',

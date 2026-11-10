@@ -3,7 +3,7 @@
 export type Usage = { board: string; map: string; gap: string; evidence: string[] };
 export const SCREEN_USAGE: Record<string, Usage> = {
   'hub-hs': { board: '필요 · 미연결', map: '✓ 인허가 사업', gap: '전국 정기 수집·시행자·분양 정보·위치 미확인 사업 보완', evidence: ['assets/js/region.js', 'handlers/v1/permits.js'] },
-  ledger: { board: '△ 원장 2026-10 사업 번호(목록 창 연결) · 숫자는 정책 진행 자료 9·7', map: '✓ 사업 번호·위치 연결', gap: '수도권 밖 사업 없음(2026-10-19 결정 — HOME 수도권만)', evidence: ['handlers/v1/resolve.js', 'handlers/v1/permits.js', 'data/board/ledger-board.json'] },
+  ledger: { board: '△ 원장 사업 번호(목록 창 연결) · 숫자는 정책 진행 자료 9·7', map: '✓ 사업 번호·위치 연결', gap: '수도권 밖 사업 없음(2026-10-19 결정 — HOME 수도권만)', evidence: ['handlers/v1/resolve.js', 'handlers/v1/permits.js', 'data/board/ledger-board.json'] },
   schedule: { board: '필요 · 미연결', map: '필요 · 미연결', gap: '당초·변경 예정일과 월별 이력 없음 · 지연 판단 불가', evidence: ['registry/projects.json', 'lib/board/pipeline.ts'] },
   'hub-ap': { board: '—', map: '△ 계양 시설 허가 지도 자료', gap: '시설 허가 일부만 보관 · 전국 수집과 공공사업 선별 미구현', evidence: ['regions/incheon-gyeyang/infra.json', 'assets/js/app.js'] },
   'agency-input': { board: '필요 · 미연결', map: '필요 · 미연결', gap: '기관 입력 경로·계획 호수·당초 일정·지연 사유 없음', evidence: ['lib/board/pipeline.ts'] },

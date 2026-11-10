@@ -9,7 +9,7 @@ const doc = require('../../data/board/area-facts.json');
 const { build } = require('../../tools/ledger/area-facts.js');
 
 const ROOT = path.join(__dirname, '..', '..');
-const T = path.join(ROOT, 'schemas/ledger-2026-10/tables');
+const T = path.join(require('../../tools/ledger/paths').ledgerDir(require('../../tools/ledger/paths').latestMonth()), 'tables');   // 지금 원장(가장 늦은 달 폴더)
 const rows = JSON.parse(fs.readFileSync(path.join(T, 'area_facts.json'), 'utf8')).rows;
 const areas = JSON.parse(fs.readFileSync(path.join(T, 'areas.json'), 'utf8')).rows;
 const fact = (code, metric, period, breakdown = null, ref = /kosis-housing$/) => rows.find((r) => r.area_code === code && r.metric === metric && r.period === period && r.breakdown === breakdown && ref.test(r.source_ref)).value;
@@ -32,8 +32,9 @@ test('경기 숫자 4 = 원장 값, 숫자마다 기준 시점이 따로다', ()
   assert.equal(c.housingUnits.value, 5634886);
   assert.equal(c.households.value, 5665748);
   assert.equal(c.population.value, 13967870);
-  assert.deepEqual([c.unsold.period, c.unsold.value, c.unsold.completed], ['2026-08', fact('41', 'unsold', '2026-08', 'TOTAL', /unsold$/), fact('41', 'unsold', '2026-08', 'COMPLETED', /unsold$/)]);
-  assert.equal(c.unsold.value, 14509);
+  /* 미분양은 달마다 새 달이 붙는다(2026-10 원장 2026-08 14,509) — 원장 표의 경기 미분양(전체) 중 가장 늦은 달 */
+  const unsoldAt = rows.filter((r) => r.area_code === '41' && r.metric === 'unsold' && r.breakdown === 'TOTAL' && /unsold$/.test(r.source_ref)).map((r) => r.period).sort().pop();
+  assert.deepEqual([c.unsold.period, c.unsold.value, c.unsold.completed], [unsoldAt, fact('41', 'unsold', unsoldAt, 'TOTAL', /unsold$/), fact('41', 'unsold', unsoldAt, 'COMPLETED', /unsold$/)]);
 });
 
 test('재고·가구 선은 같은 해만, 장래가구 추계는 마지막 실측 해에서 이어진다', () => {

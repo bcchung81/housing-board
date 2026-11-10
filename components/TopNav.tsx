@@ -8,7 +8,7 @@
    지도로 가는 링크와 지도 안의 모든 링크는 <Link> 대신 <a> 로 둔다: 지도는 루트 레이아웃이 달라 들어갈 때·나올 때 전체 문서가 새로 열린다
    (app.js 는 문서당 한 번만 도는 스크립트라서).
    보기 대상(관점)은 첫 그림 전 스크립트(AUDIENCE_INIT)가 정한 html[data-aud] 를 따른다: 스위치 손잡이·글자 강조는 그 표시를 보는 CSS 로 그리고,
-   로고·'종합상황판' 주소(관점 첫 화면: 일반사용자 /citizen, 정책담당자 '/')와 aria-checked 는 수화 뒤 맞춘다. 수화 전에 '/' 를 눌러도 AUDIENCE_INIT 이 일반사용자를 /citizen 으로 보낸다. */
+   로고·'종합상황판' 주소(관점 첫 화면: 일반사용자 /citizen, 정책담당자 '/')와 aria-checked 는 수화 뒤 맞춘다. '/' 는 저장값과 상관없이 정책담당자 화면이라 AUDIENCE_INIT 은 넘기지 않는다. */
 import { BriefcaseBusiness, Menu, Moon, Sun, User, X } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -20,7 +20,7 @@ import { displayAudience } from '@/lib/shell/theme';
 import { Switch } from './ui/switch';
 
 type Audience = 'public' | 'admin';
-const homeOf = (a: Audience | null) => (a === 'public' ? '/citizen' : '/');   // 관점 첫 화면(모르면 '/': AUDIENCE_INIT 이 넘긴다)
+const homeOf = (a: Audience | null) => (a === 'public' ? '/citizen' : '/');   // 관점 첫 화면(모르면 '/')
 
 const linkBase = 'relative flex items-center whitespace-nowrap text-muted-foreground no-underline hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-primary';
 
@@ -34,8 +34,8 @@ export default function TopNav({ compact = false }: { compact?: boolean }) {
   useEffect(() => { setDark(document.documentElement.classList.contains('dark')); }, []);
   /* 표시 관점 = 경로 규칙(정책담당자 전용 화면은 admin, /map 은 저장값). 첫 그림 전에는 AUDIENCE_INIT 이, 앱 안 이동으로 경로가 바뀌면 여기서 다시 정한다 */
   useEffect(() => {
-    let saved: Audience = 'public';
-    try { saved = localStorage.getItem('audience') === 'admin' ? 'admin' : 'public'; } catch (_) { /* 저장소를 못 쓰면 일반사용자 */ }
+    let saved: Audience = 'admin';
+    try { saved = localStorage.getItem('audience') === 'public' ? 'public' : 'admin'; } catch (_) { /* 저장소를 못 쓰면 정책담당자 */ }
     const next = displayAudience(pathname, saved);
     document.documentElement.dataset.aud = next;
     setAud(next);

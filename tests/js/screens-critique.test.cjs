@@ -48,11 +48,16 @@ test('단계 번호는 한 체계(①~⑥ 리본 칸): 서랍 단계 줄·목록
 test("같은 이름 = 같은 값: 병목(지연 호수가 가장 큰 단계)은 종합상황판 카드·리본과 사업 '어디서 막혀 있는가'가 같은 함수(bottleneckOf)로 같은 값을 낸다", () => {
   assert.deepEqual(V.delayByStageOf(rows), BOARD.delayByStage, '사업 행에서 다시 센 단계별 지연 호수 = 원장 집계');
   const neck = V.bottleneckOf(BOARD.delayByStage);
-  assert.deepEqual(neck, { i: 2, units: 1666 }, 'D3: 번호 있는 사업의 지연만(옛 ② 인허가 83,715호는 후보 포함)');
+  /* 판 숫자({ i: 2, units: 1666 } · '착공' · '③ 착공') 대신: 번호 있는 지연 사업 행에서 다시 센 단계별 호수의 가장 큰 칸(D3: 번호 있는 사업의 지연만 — 옛 ② 인허가 83,715호는 후보 포함) */
+  const late = [0, 0, 0, 0, 0, 0];
+  for (const r of rows.filter((x) => x.issued && x.cls === 'delay')) late[r.board] += r.units;
+  const top = late.indexOf(Math.max(...late));
+  assert.ok(late[top] > 0, '지연 사업이 있다');
+  assert.deepEqual(neck, { i: top, units: late[top] });
   const card = makeDirectives({ sourceCount: 19, stageNames: V.BOARD_NAMES, ledger: BOARD, start: { year: '2026', upto: 8, cum: 1, cumLy: 1 }, bottleneck: V.bottleneckOf })[2];
   const q = Q({})['어디서 막혀 있는가'];
-  assert.equal(card.m, `병목 착공 ${neck.units.toLocaleString('en-US')}호`);
-  assert.equal(q.value, '③ 착공');
+  assert.equal(card.m, `병목 ${V.BOARD_NAMES[top]} ${neck.units.toLocaleString('en-US')}호`);
+  assert.equal(q.value, `${V.BOARD_CIR[top]} ${V.BOARD_NAMES[top]}`);
   assert.equal(q.sub, `병목 · 지연(장기 포함) ${neck.units.toLocaleString('en-US')}호`, '전국 범위에서 카드와 같은 숫자');
   assert.equal(V.bottleneckOf([0, 0, 0, 0, 0, 0]), null);
   const board = read('components/board/Board.tsx');

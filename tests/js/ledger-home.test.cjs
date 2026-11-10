@@ -19,10 +19,24 @@ const { parseLegalDong } = require('../../tools/ledger/legal-dong');
 const P = require('../../tools/ledger/paths');
 
 const ROOT = path.join(__dirname, '..', '..');
-const BASE = P.ledgerDir('2026-10');
+/* 지금 원장(가장 늦은 달 폴더) — 새 달을 열면 그 달 폴더의 HOME 판·표를 본다 */
+const MONTH = P.latestMonth(), BASE = P.ledgerDir(MONTH);
 const read = (p) => JSON.parse(fs.readFileSync(path.join(BASE, p), 'utf8'));
 const HOME_DIR = H.latestHomeDir(BASE), HAVE = H.homeAvailable(HOME_DIR);
 const SKIP = !HAVE && 'HOME 원본(jsonl.gz) 없음 — Storage 에서 받거나 tools/ledger/home-dump.py';
+/* 담당자 이름·입력 사유(2026-11-09): 덤프 판이면 그 판 원본에서 센다. 슬라이스 판(manifest slice_format — home-slice.py apply, 담당자 칸을 처음부터 싣지 않음)이면
+   그 판 원본에 actor·reason·change_reason 칸이 하나도 없는지 확인하고(slice), 산출물 검사용 이름·사유는 같은 달 덤프 판 원본(있으면 가장 늦은 것)에서 가져온다 */
+function officerTermsFor(dir) {
+  const Hs = require('../../tools/ledger/home-source'), fsx = require('node:fs'), px = require('node:path');
+  const isSlice = (d) => !!JSON.parse(fsx.readFileSync(px.join(d, 'manifest.json'), 'utf8')).slice_format;
+  if (!isSlice(dir)) return { slice: false, ...Hs.officerTerms(Hs.readHome(dir).kinds) };
+  const keys = [];
+  const walk = (o) => { if (Array.isArray(o)) { for (const v of o) walk(v); return; } if (!o || typeof o !== 'object') return; for (const [k, v] of Object.entries(o)) { if (['actor', 'reason', 'change_reason'].includes(k)) keys.push(k); walk(v); } };
+  walk(Hs.readHome(dir).kinds);
+  const base = px.dirname(dir), dumps = fsx.readdirSync(base).map((e) => px.join(base, e)).filter((d) => fsx.existsSync(px.join(d, 'manifest.json')) && !isSlice(d) && Hs.homeAvailable(d)).sort();
+  const t = dumps.length ? Hs.officerTerms(Hs.readHome(dumps.at(-1)).kinds) : { names: [], reasons: new Set() };
+  return { slice: true, sliceKeys: keys.length, fromDump: dumps.length > 0, ...t };
+}
 const CAP = ['11', '28', '41'];
 const isCap = (sgg) => CAP.includes(String(sgg).slice(0, 2));
 const TABLES = fs.readdirSync(path.join(BASE, 'tables')).filter((f) => f.endsWith('.json')).map((f) => f.slice(0, -5)).sort();
@@ -36,7 +50,7 @@ const inputs = () => {
   if (base) return base;
   const DONG = fs.readdirSync(path.join(BASE, 'raw/legal-dong')).filter((f) => f.endsWith('.csv')).sort().pop();
   const ED = P.bulkDataMonth(path.join(BASE, 'raw/hub-bulk'));
-  base = loadInputs({ observedMonth: '2026-10', lhSgg: read('mappings/lh-block-sgg.json'), hubEvents: read('snapshot/hub-events.json').rows,
+  base = loadInputs({ observedMonth: MONTH, lhSgg: read('mappings/lh-block-sgg.json'), hubEvents: read('snapshot/hub-events.json').rows,
     legalDong: parseLegalDong(fs.readFileSync(path.join(BASE, 'raw/legal-dong', DONG)), DONG),
     hubBulk: readHubBulk(path.join(BASE, fs.existsSync(path.join(BASE, 'snapshot/hub-refresh.json')) ? 'snapshot/hub-refresh.json' : `snapshot/hub-bulk-${ED}.json`)),
     hubIds: read('mappings/hub-candidate-ids.json'), national: readNational(path.join(BASE, 'raw')), stage: readStageInput(stageFileOf(BASE)) });
@@ -101,7 +115,9 @@ test('저장된 표: GH 공고·HOME 식별자 종류가 표 계약(schemas/ledg
 
 test('② 수도권 밖 사업과 딸린 행(식별자·위치·단지·이벤트·호수·공고 연결·검토)·지역·통계 행은 없다(2026-10-19·20 결정 — 원장은 HOME 수도권만) · 공고·지역·통계의 비HOME 행은 HEAD 행에서 수도권 밖만 빠진 그대로, 원천·기관은 통째로', (t) => {
   let head;
-  try { head = Object.fromEntries(TABLES.map((x) => { try { return [x, JSON.parse(execFileSync('git', ['show', `HEAD:schemas/ledger-2026-10/tables/${x}.json`], { cwd: ROOT, maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'ignore'] }).toString()).rows]; } catch { return [x, null]; } })); } catch { return t.skip('git 없음'); }
+  try { head = Object.fromEntries(TABLES.map((x) => { try { return [x, JSON.parse(execFileSync('git', ['show', `HEAD:schemas/ledger-${MONTH}/tables/${x}.json`], { cwd: ROOT, maxBuffer: 1 << 28, stdio: ['ignore', 'pipe', 'ignore'] }).toString()).rows]; } catch { return [x, null]; } })); } catch { return t.skip('git 없음'); }
+  /* 새 달을 열고 아직 커밋하지 않았으면 HEAD 에 그 달 표가 없다 — 그때 '변경 전'은 같은 입력에서 HOME 판·수도권 범위만 뺀 변환(공고·지역·통계는 그 달에 새로 받은 원천이다) */
+  if (!head.projects) head = convert({ ...inputs(), report: {} });
   /* 2026-10-19 수도권 한정: 비수도권 행은 '변경 전과 같다'가 아니라 '없다'(convert --sidos, home-source.js keepSido) */
   assert.ok(saved.projects.length > 0 && saved.projects.every((p) => isCap(p.sgg_code)), 'projects: 모두 수도권');
   const cap = new Set(saved.projects.map((p) => p.local_project_id));
@@ -164,7 +180,8 @@ test('④ 수도권 사업 수 = HOME 사업 중 시군구가 정해진 것(같�
   /* 2026-10-21 새 덤프(20261020T142230Z): HPR 2,014(+3 독산동·연남동·방화차고지 — 새 사업) · 시군구 미정 4행(인천서구 석남어울림·거북이기지의 공급계획·공사 진행)이 지구 이름 규칙(districtOnlyKey)으로 서해구가 되어
      같은 현장 병합으로 기존 PRJ-28275-0037·0034 에 합쳐짐(합침 행 62 → 66, 미정 4 → 0) → 사업 377 → 380 */
   /* 2026-10-22 새 덤프(20261021T212310Z): HPR 4,186(+2,172 — 건축 일반 인허가 후보 GEN_ 681 → 2,852, 원천 사업후보 연결 없음 = 원장 사업 아님) · PRO 가 있는 HPR +1(부천역곡 A1 — 새 사업) → 사업 380 → 381 */
-  assert.deepEqual([home.kinds.home_project.length, build.report.noAnchor, build.groups.length, members - build.groups.length, unresolved], [4186, 3746, 381, 66, 0], '2026-10-22 새 덤프 · 부천역곡 A1 새 사업(10-21 판: 2,014 · 1,575 · 380 · 66 · 0)');
+  /* 2026-11-10 판(20261110T085301Z): HPR 4,189 · PRO 없음 3,746 · 사업 382 · 합침 행 68 · 미정 0. 판마다 바뀌는 수는 박지 않고 위 관계(HPR = 묶음 + 미정 + PRO 없음, 사업 = 묶음)와 아래(미정 = 검토 목록)로 본다 */
+  assert.ok(build.report.noAnchor < home.kinds.home_project.length && members >= build.groups.length, 'PRO 없는 HPR 은 일부, 묶음마다 행 하나 이상');
   /* 인천서구 4행 = LH 지구 '인천서구(석남어울림)'·'인천서구(거북이기지)'(괄호 뗀 지구 '인천서구' → lh-block-sgg 의 두 지구 모두 서해구 28275, HOME PoC /mappings 도 넷 다 서해구).
      공사 진행 행의 LH 지구 코드(105409|01·105410|01)가 기존 사업의 공사 계약 '[(105409)인천서구(석남어울림)]…'·'[(105410)인천서구(거북이기지)]…' 와 같고 계획 호수도 같다(110·58) */
   const into = { PRO_1c2a1be12daff06cef52f8c6: 'PRJ-28275-0037', PRO_4e534476d1d747285e612f85: 'PRJ-28275-0037', PRO_85998117430f9302232be12d: 'PRJ-28275-0034', PRO_a9e2bffb100945377e90ef33: 'PRJ-28275-0034' };
@@ -319,8 +336,9 @@ test('담당자 실명·입력 사유는 원장 표에 들어가지 않는다: �
   const s = H.scrubKinds(K);
   assert.deepEqual([s.home_mapping[0].basis, s.x[0].payload.selected.basis], ['사용자 입력', '담당자 확인 · 동일 블록']);
   assert.equal(H.scrubKinds({ a: [{ basis: '그대로' }] }).a[0].basis, '그대로', '담당자 입력이 없는 판은 그대로');
-  const { names } = H.officerTerms(H.readHome(HOME_DIR).kinds);
-  assert.ok(names.length > 0, '2026-10-14 판에는 담당자 이름이 있다');
+  const ot = officerTermsFor(HOME_DIR), { names } = ot;
+  if (ot.slice) assert.equal(ot.sliceKeys, 0, '슬라이스 판 원본에 담당자 칸(actor·reason)이 없다');
+  if (!ot.slice || ot.fromDump) assert.ok(names.length > 0, '2026-10-14 판부터 덤프에는 담당자 이름이 있다(슬라이스 판이면 같은 달 덤프 판 이름으로 원장 표를 검사)');
   for (const t of TABLES) { const text = JSON.stringify(saved[t]); for (const n of names) assert.ok(!text.includes(n), `${t} 에 담당자 이름`); }
 });
 

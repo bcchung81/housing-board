@@ -18,6 +18,7 @@ const IDX = require('../../data/board/projects-index.json');
 const DET = require('../../data/board/project-detail.json');
 const BOARD = require('../../data/board/ledger-board.json');
 const PP = require('../../data/board/policy-progress.json');
+const { fakePP } = require('./fake-pp.cjs');
 
 const rows = V.rowsOf(MAP.bySgg, IDX.projects, IDX.sgg);
 const A2 = rows.find((r) => r.id === 'PRJ-28245-0055');
@@ -59,16 +60,22 @@ test('2 상태 문구: 정상 · 예정일 지남(1개월 미만) — 경과 0�
   assert.ok(!V.statusText(late).includes('예정일 지남'));
 });
 
-test('3 용어: 목표를 넘으면 \'달성 n%\'(②인허가 3,560/1,543 = 달성 231%) · ①계획 = ②인허가 확인은 HOME 원천 값 · \'판정 밖\' → \'일정 정보 없음\'', () => {
+test('3 용어: 목표를 넘으면 \'달성 n%\'(②인허가 3,560/1,543 = 달성 230.7%) · ①계획 = ②인허가 확인은 HOME 원천 값 · \'판정 밖\' → \'일정 정보 없음\'', () => {
+  /* 규칙은 판과 무관한 가짜 자료(tests/js/fake-pp.cjs — 2026-10-19 판 예: ① 3,560/14,694 · ② 3,560/1,543)로: 판 숫자('달성 124.1%' · '달성 129.9%') 대신 */
+  const fake = V.policyStageCells(fakePP(), 'POL_2025_0907');
+  const fPermit = fake.find((c) => c.key === 'APPROVAL'), fPlan = fake.find((c) => c.key === 'BUSINESS');
+  assert.equal(V.rateOf(fPermit).word, '달성 230.7%', '목표를 넘어도 달성률 하나(초과·부족 따로 없음), 소수 한 자리');
+  assert.deepEqual([V.rateOf(fPermit).value, V.rateOf(fPermit).unit], ['230.7', '% 달성']);
+  assert.equal(V.rateOf(fPlan).word, '달성 24.2%');
+  assert.match(V.stageCellTip(fPermit, '', fake), /사업화 확인과 같은 값/, '같은 확인 값이면 꼬리가 붙는다');
+  /* 지금 판: 달성률 = 확인 ÷ 목표(소수 한 자리), 같은 확인 값인 다른 단계가 있을 때만 꼬리 */
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
-  const permit = cells.find((c) => c.key === 'APPROVAL');
-  assert.equal(V.rateOf(permit).word, '달성 124.1%');   // 2026-10-21 새 덤프: ②인허가 10,403/8,386 · 소수 한 자리(r3-screens 3) · 2026-10-20 HOME 판: ②인허가 6,249/3,658(10-19 판 3,560/1,543 = 230.7%)
-  assert.deepEqual([V.rateOf(permit).value, V.rateOf(permit).unit], ['124.1', '% 달성']);
-  const plan = cells.find((c) => c.key === 'BUSINESS');
-  assert.equal(V.rateOf(plan).word, '달성 129.9%');   // 2026-10-22 새 덤프(20261021T212310Z): ①사업화 18,074/13,914 · 2026-10-21 새 덤프 ①사업화 18,854/14,694 · r4-screens 1: 모든 칸 달성률 · 2026-10-20 HOME 판 ①사업화 7,808/14,694
-  for (const c of [plan, permit]) assert.match(V.stageCellTip(c, '', cells), /HOME\(정책 진행 자료\) 원천 값 그대로/);
-  /* 2026-10-20 HOME 판: ①사업화 7,808 · ②인허가 6,249 로 확인 값이 달라져 '①계획 확인과 같은 값' 꼬리가 붙지 않는다(같으면 붙는 규칙은 그대로) */
-  assert.doesNotMatch(V.stageCellTip(permit, '', cells), /①계획 확인과 같은 값/);
+  for (const c of cells.filter((x) => x.target != null && x.actual != null)) assert.equal(V.rateOf(c).word, `달성 ${(c.actual / c.target * 100).toFixed(1)}%`, c.key);
+  for (const c of cells.filter((x) => x.actual != null)) {
+    assert.match(V.stageCellTip(c, '', cells), /HOME\(정책 진행 자료\) 원천 값 그대로/, c.key);
+    assert.equal(/확인과 같은 값/.test(V.stageCellTip(c, '', cells)), cells.some((o) => o.board !== c.board && o.actual === c.actual), c.key);
+    assert.doesNotMatch(V.stageCellTip(c, '', cells), /①계획 확인과 같은 값/, '단계 이름은 원 숫자 없는 PoC 이름');
+  }
   assert.ok(!read('components/projects/Summary.tsx').includes("'초과'"));
   const judged = V.judgeOutText(ledgerJudged(BOARD));
   // 2026-10-19 수도권 한정: LH 후보·건축HUB 후보가 0건이라 ledgerJudged 문구에 '일정 정보 없음' 꼬리가 없다 → 치환 규칙은 옛 문구 '판정 밖'으로 확인

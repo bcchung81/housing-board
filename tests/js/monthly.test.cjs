@@ -164,6 +164,28 @@ test('새 달이지만 새 판이 없으면 앞 달 판을 그대로 복사하�
   assert.deepEqual(fs.readdirSync(path.join(nb, 'raw/hub-bulk-history')).sort(), ['basic-2026-07.zip', 'manifest.json']);
 });
 
+test('새 달: 단계별 원천 중간 스냅샷(가장 늦은 stage-<판>.json·manifest)과 그 원본 폴더를 이어받아 convert 에 --stage 로 넘긴다(원장 표가 쓰지 않는 단계별 폴더는 가져가지 않는다)', async () => {
+  const f = fixture();
+  write(path.join(f.base, 'snapshot/stage-2026-07.json'), '{"old":1}');
+  write(path.join(f.base, 'snapshot/stage-2026-08.json'), '{"dataMonth":"2026-08"}');
+  write(path.join(f.base, 'snapshot/stage-2026-08.manifest.json'), { sources: {} });
+  const stageRaw = ['raw/applyhome/manifest.json', 'raw/applyhome/getAPTLttotPblancDetail.json', 'raw/hug-sale-history/manifest.json', 'raw/lh-notice-detail/manifest.json', 'raw/hub-bulk-bld/manifest.json', 'raw/hub-bulk-bld/총괄표제부.zip',
+    'raw/reb-complex-id/manifest.json', 'raw/kapt-list/manifest.json', 'raw/molit-complex-file/manifest.json', 'raw/myhome-complex/manifest.json'];
+  for (const rel of stageRaw) write(path.join(f.base, rel), { fetched_at: '2026-10-12T00:00:00Z', rel });
+  write(path.join(f.base, 'raw/vworld-district/manifest.json'), {});
+  const r = await M.run({ ...f.opts, now: KST('2026-11-10', 9), listEditions: f.list('2026-09', '2026-08') });
+  assert.equal(r.status, 'updated');
+  const nb = path.join(f.root, 'schemas/ledger-2026-11');
+  for (const rel of [...stageRaw, 'snapshot/stage-2026-08.json', 'snapshot/stage-2026-08.manifest.json']) assert.deepEqual(fs.readFileSync(path.join(nb, rel)), fs.readFileSync(path.join(f.base, rel)), rel);
+  assert.ok(!fs.existsSync(path.join(nb, 'snapshot/stage-2026-07.json')), '가장 늦은 스냅샷만');
+  assert.ok(!fs.existsSync(path.join(nb, 'raw/vworld-district')), '원장 표가 쓰지 않는 단계별 폴더는 가져가지 않는다');
+  const convert = f.calls.find((c) => c.startsWith('convert.js')).split(' ');
+  assert.equal(convert[convert.indexOf('--stage') + 1], 'schemas/ledger-2026-11/snapshot/stage-2026-08.json');
+  const g = fixture();
+  await M.run({ ...g.opts, now: KST('2026-11-10', 9), listEditions: g.list('2026-08') });
+  assert.ok(!g.calls.find((c) => c.startsWith('convert.js')).includes('--stage'), '앞 달에 스냅샷이 없으면 넘기지 않는다');
+});
+
 test('raw-store: pull 은 그 달 → 앞 달 경로에서 찾아 sha256 을 맞추고, push 는 git 무시 파일 중 앞 달 폴더와 다른 것만 올린다(DB 호출 없음)', async () => {
   const f = fixture();
   const store = new Map(), api = { download: async (k) => store.get(k) ?? null, upload: async (k, d) => { store.set(k, d); } };

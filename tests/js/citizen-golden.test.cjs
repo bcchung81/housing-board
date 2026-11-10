@@ -11,9 +11,11 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const ROOT = path.join(__dirname, '..', '..');
-const GOLD = path.join(ROOT, '.cache/home-parity/golden');
+const E = require('./home-era.cjs');
+const GOLD = E.GOLDEN_DIR;   // HOME_GOLDEN_DIR(기본 .cache/home-parity/golden)
 const has = fs.existsSync(path.join(GOLD, 'golden-projects.json')) && fs.existsSync(path.join(GOLD, 'S2-raw-map-dashboard-js.json'));
-const skip = !has && '정답 파일(.cache/home-parity/golden) 없음';
+/* 정답 받은 시각 < 원장 HOME 판 snapshot_at 이면 옛 판 정답 — 건너뛴다(home-era.cjs) */
+const skip = has ? E.golden(path.join(GOLD, 'golden-projects.json')).skip : '정답 파일(.cache/home-parity/golden) 없음';
 const golden = has ? JSON.parse(fs.readFileSync(path.join(GOLD, 'golden-projects.json'), 'utf8')).poc_overview_97 : null;
 const dash = has ? JSON.parse(fs.readFileSync(path.join(GOLD, 'S2-raw-map-dashboard-js.json'), 'utf8')) : null;
 
@@ -134,7 +136,7 @@ test('CP08·C10 예정 대비 = PoC 판정(지연·주의만 사실 문장) — 
   console.log(`  PoC 지연·주의 ${late.length}행: ${late.join(' · ')}`);
 });
 
-test('CS /citizen/schedule 사업 수 = 사업 찾기와 같은 PoC 9·7 집계 행(175), 일정 = 모집 공고 하나(PoC 9·7 공급 예정 — W6 옛 원장 준공·입주 종류 뺌)', () => {
+test('CS /citizen/schedule 사업 수 = 사업 찾기와 같은 PoC 9·7 집계 행, 일정 = 모집 공고 하나(PoC 9·7 공급 예정 — W6 옛 원장 준공·입주 종류 뺌)', () => {
   const src = fs.readFileSync(path.join(ROOT, 'app/(dashboard)/citizen/schedule/page.tsx'), 'utf8');
   assert.match(src, /\.filter\(\(r\) => isMetro\(r\.sgg\) && r\.home!\.p97 && r\.home!\.chart\.p97\);/);
   assert.match(src, /const inScope = applyFilters\(HOME_ROWS, pf\)\.length;/);
@@ -143,10 +145,15 @@ test('CS /citizen/schedule 사업 수 = 사업 찾기와 같은 PoC 9·7 집계 
   /* 일정 종류의 수 = HOME 9·7 모집단에서 센 값: 수도권 모집 공고 30곳 17,488호 = home-projects views.p97.upcoming(12개월 공급 예정 사업 수·호수) */
   const R = require('../../lib/board/region.ts'), cal = require('../../data/board/region-calendar.json');
   const list = R.aheadAll({ sido: Object.fromEntries(R.METRO.map((c) => [c, cal.home.p97.sido[c] ?? []])) }, 'metro', (c) => c);
-  assert.equal(list.length, 31); assert.equal(list.reduce((s, e) => s + e.units, 0), 18214);   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): 광교 A17BL 600호 2027-09 → 2026-10 · 병점복합타운 주복1 726호 2026-11 새 일정(10-21 판 30곳·17,488호)
+  /* 판 숫자(30곳 · 16,916호) 대신: HOME 정책 화면 정답(판이 같을 때)의 향후 12개월 공급 예정 사업 수·호수 — 아래 줄은 home-projects views.p97.upcoming 과도 견준다 */
+  assert.ok(list.length > 0);
+  const gp = E.golden(path.join(GOLD, 'golden-policy.json')).doc;
+  if (gp) assert.deepEqual([list.length, list.reduce((s, e) => s + e.units, 0)], [gp['policy.statistics.upcoming_12m.projects'], gp['policy.statistics.upcoming_12m.total']]);
   assert.ok(list.every((e) => e.type === 'SUPPLY_NOTICE'));
   const up = home.views.p97.upcoming;
   assert.equal(list.length, up.projects, 'views.p97.upcoming 사업 수'); assert.equal(list.reduce((s, e) => s + e.units, 0), up.units, 'views.p97.upcoming 호수');
   assert.doesNotMatch(src, /calendar\.home\.all/);
-  assert.equal(p97Rows().filter((r) => r.home.chart.p97).length, 177);   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): +2(10-21 판 175)
+  /* 판 숫자(177) 대신: 사업 찾기 줄 = home-projects 9·7 집계 행(views.p97.counted) = '/' 연결 사업(home-board.json — 다른 생성기) */
+  assert.equal(p97Rows().filter((r) => r.home.chart.p97).length, home.views.p97.counted);
+  assert.equal(home.views.p97.counted, require('../../data/board/home-board.json').scope.projects);
 });

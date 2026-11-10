@@ -18,6 +18,7 @@ const G = require('../../lib/grid/spec.ts');
 const MAP = require('../../data/board/ledger-map.json');
 const IDX = require('../../data/board/projects-index.json');
 const PP = require('../../data/board/policy-progress.json');
+const { fakePP } = require('./fake-pp.cjs');
 const MOLIT = require('../../data/board/molit.json');
 
 const rows = V.rowsOf(MAP.bySgg, IDX.projects, IDX.sgg);
@@ -36,9 +37,16 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
     assert.deepEqual(q0.stages, line.cells, '정책 목표 대비 9·7 행과 같은 원천·계산');
   }
   const q0 = V.questionsOf(rows, {}, ctx)[0];
-  const words = q0.stages.map((c) => (c.target != null && c.actual != null ? `${c.actual}/${c.target} ${V.rateOf(c).word}` : c.target != null ? '실적 없음' : '목표 없음'));
-  assert.deepEqual(words, ['18074/13914 달성 129.9%', '10403/8386 달성 124.1%', '목표 없음', '4963/8049 달성 61.7%', '381/381 달성 100.0%', '목표 없음']);   // 2026-10-22 새 덤프(20261021T212310Z): ①사업화 −780 · ④공급 확인 +231 · 2026-10-21 새 덤프(20261020T142230Z, PoC 운영 값과 같음): 9·7 ①사업화 확인 7,808→18,854(목표 14,694 넘음) · ②인허가 목표 3,658→8,386·확인 6,249→10,403 — 덤프 뒤였던 담당자 단계 측정값·승인 일정이 새 판에 들어옴 · 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
-  assert.match(q0.tip, /담당자 추정 포함\(확인과 따로\): 사업화 20,303호/, '추정 포함은 title 에만');   // 2026-10-22 새 덤프(20261021T212310Z): 21,083 → 20,303(−780 병점복합타운 주복1)   // 2026-10-20 HOME 판 5,789→10,037
+  const word = (c) => (c.target != null && c.actual != null ? `${c.actual}/${c.target} ${V.rateOf(c).word}` : c.target != null ? '실적 없음' : '목표 없음');
+  /* 판 숫자(['18074/13914 달성 129.9%', …] · '사업화 20,303호') 대신: 규칙은 가짜 자료(fake-pp.cjs), 지금 판은 정책 진행 자료 값으로 만든 글 */
+  const fq = V.questionsOf([], {}, { ...ctx, pp: fakePP() })[0];
+  assert.deepEqual(fq.stages.map(word), ['3560/14694 달성 24.2%', '3560/1543 달성 230.7%', '목표 없음', '4732/8049 달성 58.8%', '381/381 달성 100.0%', '목표 없음']);
+  assert.match(fq.tip, /담당자 추정 포함\(확인과 따로\): 사업화 5,789호 · 공급 8,742호/, '추정 포함은 title 에만');
+  const sp = (k) => PP.policies[0].stages[k].samePeriod.find((y) => y.year === 2026);
+  assert.deepEqual(q0.stages.map(word), q0.stages.map((c) => { const y = sp(c.key); return y.target != null && y.actual != null ? `${y.actual}/${y.target} 달성 ${(y.actual / y.target * 100).toFixed(1)}%` : y.target != null ? '실적 없음' : '목표 없음'; }));
+  const est = q0.stages.filter((c) => c.actual != null && c.withEst > c.actual).map((c) => `${V.ppText(c)} ${c.withEst.toLocaleString('en-US')}호`);
+  if (est.length) assert.ok(q0.tip.includes(`담당자 추정 포함(확인과 따로): ${est.join(' · ')}`), '추정 포함은 title 에만');
+  else assert.doesNotMatch(q0.tip, /담당자 추정 포함/);
   assert.match(q0.help, /단계마다/); assert.match(q0.help, /'목표 없음'/);
   /* 목표가 없는 렌즈(1·29)는 단계 줄 없이 범위 줄 안 */
   const q129 = V.questionsOf(rows, { policy: IDX.policies.find((p) => p.key === '129') }, ctx)[0];
@@ -63,7 +71,11 @@ test('1·A 첫 칸: 원장 요약 밖 정책 목표 카드에 따로, ①~⑥ �
 test('A 접힌 정책 목표 대비 머리 줄: 이름표 없는 부족률 숫자 없이 단계 이름', () => {
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
   for (const l of lines) assert.doesNotMatch(V.compareHead(l), /\d%/, l.policy.key);
-  assert.equal(V.compareHead(lines[0]), '9·7 · 목표 있는 4단계 중 1단계 미달(공급)');   // 2026-10-21 새 덤프: 사업화 달성
+  /* 판 숫자('1단계 미달(공급)') 대신: 가짜 자료로 글 모양, 지금 판은 미달 단계 이름 = 확인이 목표에 못 미친 칸(비율 숫자 없음) */
+  assert.equal(V.compareHead(V.compareLines(fakePP(), IDX.policies, rows, ['97'])[0]), '9·7 · 목표 있는 4단계 중 2단계 미달(사업화·공급)');
+  const short = lines[0].cells.filter((c) => c.target != null && c.actual != null && c.actual < c.target).map(V.ppText);
+  if (short.length) assert.match(V.compareHead(lines[0]), new RegExp(`${short.length}단계 미달\\(${short.join('·')}\\)$`));
+  else assert.match(V.compareHead(lines[0]), /모두 달성$/);
 });
 
 test('2 보이는 글의 내부 용어: HOME·번들·확정 전/확정은 title 로, ⓘ 정의는 쉬운 말', () => {
@@ -117,7 +129,10 @@ test("4 지연 세 번 표시: 목록·인쇄의 현재 예정은 '경과' 꼬�
   /* 경과 개월은 번호 있는 사업(지연 열 판정 색)과 후보(지연 열 옅게, D3) 모두 같은 계산 overdueMonthsOf */
   const late = rows.filter((r) => V.overdueMonthsOf(r) !== null);
   // 2026-10-19 수도권 한정: 경과 계산 사업 > 300 → 4 (후보 313 이 비수도권이라 빠지고 주의 2·지연 2 만 남음)
-  assert.equal(late.length, 13);   // 2026-10-20 HOME 판: 주의 10·지연 2(새 사업 착공 예정 경과 8) → 기준일 10-20 주의 11(성남금토 A2)
+  /* 판 숫자(10-22 판 13 = 주의 11 + 지연 2) 대신: 경과 계산 사업 = 주의·지연 판정 사업(번호 있는 사업 + 후보) — 원장 보드 판정 건수와 같다 */
+  const B = require('../../data/board/ledger-board.json').judgment, cand = B.candidate ?? { caution: { projects: 0 }, delay: { projects: 0 } };
+  assert.ok(late.length > 0);
+  assert.equal(late.length, B.caution.projects + B.delay.projects + cand.caution.projects + cand.delay.projects);   // 2026-10-20 HOME 판: 주의 10·지연 2(새 사업 착공 예정 경과 8) → 기준일 10-20 주의 11(성남금토 A2)
   for (const r of late) {
     const c = L.nextCell(r);
     assert.equal(c.tag, V.dateAltOf(r)?.text, r.id); assert.equal(c.muted, true); assert.match(c.title, /경과 \d+개월/);   // 꼬리표는 원천 날짜 다름(D2)만

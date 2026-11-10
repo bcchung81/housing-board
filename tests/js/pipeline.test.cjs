@@ -37,21 +37,23 @@ test('단계가 가리키는 코드 위치는 저장소에 실제로 있다(없�
   for (const s of [...P.STEPS, P.LIVE]) for (const f of s.code) assert.ok(fs.existsSync(path.join(ROOT, f)), `${s.id}: ${f}`);
 });
 
-test("'지금' 문구의 수치는 저장소 자료와 같다: 살아 있는 레지스트리 262건·68개 시군구(모두 수도권 HOME, 옛 수도권 61 = 대체 6 + 숨김 55, HOME 중복 대체 4, 수도권 밖 16 숨김 — 2026-10-19)·일정 0건, 번들 단지 6곳, 실시간 API 8개", () => {
-  // 2026-10-19 수도권 한정: 광산 4·나주 12 발급 사업을 숨겨(issue-projects --home) 살아 있는 사업 278 → 262, 시군구 70 → 68, 숨김 55 → 71, 번들 단지 참조 22 → 6(계양만)
+test("'지금' 문구의 수치는 저장소 자료와 같다: 살아 있는 레지스트리·시군구(모두 수도권 HOME)·옛 수도권 발급 대체·숨김·HOME 같은 현장 대체·수도권 밖 숨김·일정, 번들 단지 6곳, 실시간 API 8개", () => {
+  /* 판 숫자(381 · 69 · 대체 17 · 숨김 71 · 문구 '381건(69개 시군구') 대신: 레지스트리에서 시험이 따로 센 값이 문구에 그대로 들어 있다(lib/board/pipeline.ts ledgerNow 가 같은 자료로 만든다) */
   const live = registry.filter((p) => !p.supersededBy && !p.hiddenAt);
-  // 2026-10-20 HOME 판: 새 발급 122 · 같은 블록 대체 1(0054→0055) → 살아 있는 사업 262 → 383, 시군구 68 → 69(연수구), 대체 10 → 11
-  // 2026-10-20 같은 현장 병합(사용자 결정): 인천검단 2쌍·인천부평 1쌍·평택고덕 3쌍을 대표로 대체 → 살아 있는 사업 383 → 377, 대체 11 → 17(HOME 같은 현장 5 → 11)
-  // 2026-10-21 새 덤프(20261020T142230Z): 새 발급 3(독산동·연남동·방화차고지 — 덤프 뒤였던 HOME 신규 행) → 377 → 380, 시군구·대체·숨김 그대로
-  // 2026-10-22 새 덤프(20261021T212310Z): 새 발급 1(부천역곡 A1 — PRJ-41192-0067, 부천시는 이미 있는 시군구) → 380 → 381, 시군구·대체·숨김 그대로
-  assert.equal(live.length, 381);
-  assert.equal(new Set(live.map((p) => p.sgg)).size, 69);
-  assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'home')).length, 381);
-  assert.deepEqual([registry.filter((p) => p.supersededBy).length, registry.filter((p) => p.hiddenAt).length], [17, 71]);
+  const isHome = (p) => p.refs.some((r) => r.system === 'home'), metro = (p) => ['11', '28', '41'].includes(p.sgg.slice(0, 2));
+  assert.ok(live.length > 0);
+  assert.ok(live.every((p) => isHome(p) && metro(p)), "살아 있는 사업은 모두 수도권 HOME — 문구 '모두 수도권 HOME 덤프'");
+  const old = registry.filter((p) => !isHome(p) && metro(p) && (p.supersededBy || p.hiddenAt));
+  const oldSup = old.filter((p) => p.supersededBy).length, oldHid = old.length - oldSup;
+  const homeSup = registry.filter((p) => isHome(p) && p.supersededBy).length, outHid = registry.filter((p) => !metro(p) && p.hiddenAt).length;
+  assert.deepEqual([registry.filter((p) => p.supersededBy).length, registry.filter((p) => p.hiddenAt).length], [oldSup + homeSup, oldHid + outHid], '대체·숨김은 네 묶음뿐');
   assert.equal(registry.filter((p) => p.schedule).length, 0);
   assert.equal(live.filter((p) => p.refs.some((r) => r.system === 'bundle')).length, 6);
-  const ledger = P.STEPS.find((s) => s.id === 'ledger').now;
-  assert.match(ledger, /381건\(69개 시군구/); assert.match(ledger, /0건/);
+  const ledger = P.STEPS.find((s) => s.id === 'ledger').now, n = (x) => String(x);
+  for (const t of [`${n(live.length)}건(${new Set(live.map((p) => p.sgg)).size}개 시군구`, `옛 수도권 발급 ${old.length}건은 대체 ${oldSup}·숨김 ${oldHid}`, `HOME 같은 현장 ${homeSup}건은 대표 사업으로 대체`, `수도권 밖 ${outHid}건은 숨김`, '있는 사업은 0건']) assert.ok(ledger.includes(t), t);
+  /* 문구 규칙(가짜 레지스트리 — 판과 무관) */
+  const fake = [{ sgg: '11110', refs: [{ system: 'home' }] }, { sgg: '41110', refs: [{ system: 'home' }] }, { sgg: '41110', refs: [{ system: 'home' }], supersededBy: 'X' }, { sgg: '28110', refs: [], hiddenAt: 'd' }, { sgg: '28110', refs: [], supersededBy: 'Y' }, { sgg: '26110', refs: [], hiddenAt: 'd' }, { sgg: '11110', refs: [{ system: 'home' }], schedule: {} }];
+  assert.equal(P.ledgerNow(fake), '사업 레지스트리(사업 번호 목록) 3건(2개 시군구 — 모두 수도권 HOME 덤프, 옛 수도권 발급 2건은 대체 1·숨김 1, HOME 같은 현장 1건은 대표 사업으로 대체, 수도권 밖 1건은 숨김). 일정(당초·변경·현재)이 있는 사업은 1건이다.');
   const routes = [];
   const walk = (d) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'route.ts' && !p.includes('/revalidate/') && !p.includes('/v1/ledger/') && !p.includes('/v1/geo/') && !p.includes('/v1/project/')) routes.push(p); } };   // ledger 는 원천이 아니라 보관한 원장(api.map)을, geo 는 요청 헤더만, project(사업 창 내용, 2026-10-19)는 빌드 자료만 읽는다
   walk(path.join(ROOT, 'app/api'));
@@ -143,7 +145,7 @@ test('화면 사용 판정은 모든 운영 자료를 포함하고, 사용 근�
     assert.ok(usage.board && usage.map && usage.gap && usage.evidence.length, id);
     for (const file of usage.evidence) assert.ok(fs.existsSync(path.join(ROOT, file)), `${id}: ${file}`);
   }
-  assert.match(SCREEN_USAGE.ledger.board, /^△ 원장 2026-10 사업 번호[^]*숫자는 정책 진행 자료 9·7$/, '2026-10-21 W6: 종합상황판 숫자는 정책 진행 자료(home-board), 원장은 사업 번호 연결만');
+  assert.match(SCREEN_USAGE.ledger.board, /^△ 원장 사업 번호[^]*숫자는 정책 진행 자료 9·7$/, '2026-10-21 W6: 종합상황판 숫자는 정책 진행 자료(home-board), 원장은 사업 번호 연결만');
   assert.match(SCREEN_USAGE['lh-completion'].board, /^△ 정책 진행 자료 경유 9·7 연결 블록/, 'LH 준공 예정은 HOME 덤프 경유(lib/board/home-lh-plan)');
   assert.match(SCREEN_USAGE.ledger.map, /✓/);
   assert.match(SCREEN_USAGE['hub-ap'].map, /△/);

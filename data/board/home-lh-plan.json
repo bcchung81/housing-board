@@ -1,7 +1,7 @@
 {
 "schema":"home-lh-plan/1",
 "asOf":"2026-10-22",
-"source":{"dump":{"edition":"20261021T212310Z","snapshotAt":"2026-10-21T21:23:10.582610+00:00","sourceCommit":null},"dataset":"LH 공공주택 준공예정현황(공공데이터포털 15141761) — 정책 진행 자료(HOME) 경유","rule":"9·7 포트폴리오 원천 사업 행에 이어진(evidence_bridge CONFIRMED·REVIEW) LH 블록×공급유형 행만"},
+"source":{"dump":{"edition":"20261022T133544Z","snapshotAt":"2026-10-22T13:35:44.723200+00:00","sourceCommit":"bbc21f7e3b0813f7390dd7d05486acc7390c98f6"},"dataset":"LH 공공주택 준공예정현황(공공데이터포털 15141761) — 정책 진행 자료(HOME) 경유","rule":"9·7 포트폴리오 원천 사업 행에 이어진(evidence_bridge CONFIRMED·REVIEW) LH 블록×공급유형 행만"},
 "sourceAsOf":"2026-01-27",
 "count":77,
 "units":45702,

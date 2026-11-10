@@ -24,9 +24,12 @@ const hctx = { policies: IDX.policies, programs: V.homeProgramsOf(rows), sidoOk:
 const qctx = { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, sidoName: (c) => c, sggName: (c) => c };
 const CIRCLED = /[①②③④⑤⑥]/;
 
-test('#1 /projects 집계 건수 = 물량 있는 집계 행(지도와 같은 문구) — 전 정책 346건 · 물량 없음 41건', () => {
+test('#1 /projects 집계 건수 = 물량 있는 집계 행(지도와 같은 문구) — 전 정책 원천 행·집계·제외·물량 없음 = 사업 보기 자료 묶음', () => {
   const f = V.parseFilters({ policy: 'all' }, hctx), scope = V.scopeOf(rows, f), s = V.homeSummaryOf(scope, V.homeChartOf(f));
-  assert.deepEqual([s.n, s.counted, s.excluded, s.missing], [444, 347, 56, 41]);   // 2026-10-22 새 덤프(20261021T212310Z): 정책 전체 +1행(부천역곡 A1, 10-21 판 443·346)
+  /* 판 숫자([444, 347, 56, 41]) 대신: 화면 요약 = home-projects.json 의 정책 전체 묶음(views.all — 생성기가 낸 값, 지도 부제와 같은 원천) */
+  const v = HP.views.all;
+  assert.deepEqual([s.n, s.counted, s.excluded, s.missing], [v.rows, v.counted, v.excluded, v.missing]);
+  assert.equal(s.n, s.counted + s.excluded + s.missing, '원천 행 = 집계 + 중복·모호 제외 + 물량 없음');
   const page = code(read('app/(dashboard)/projects/page.tsx'));
   assert.match(page, /`집계 \$\{fmt\(s\.counted\)\}건 · 중복·모호 제외 \$\{fmt\(s\.excluded\)\}\$\{s\.missing \? ` · 물량 없음 \$\{fmt\(s\.missing\)\}건` : ''\}`/);
   assert.doesNotMatch(page, /집계 \$\{fmt\(s\.chart\)\}건/);
@@ -80,11 +83,13 @@ test("#13 병목 = '/' 정의: 행 묶음의 단계 부족량 max(0, Σ목표 �
   assert.deepEqual(g.gaps.map((x) => [x.stage, x.status, x.gap, x.rate]), HB.home.stageGaps.map((x) => [x.stage, x.status, x.gap, x.rate]), "'/' home.stageGaps 와 같다");
   assert.deepEqual([g.neck.stage, g.neck.gap], [HB.home.bottleneck.stage, HB.home.bottleneck.gap]);
   for (const [k, c] of Object.entries(HB.home.stageChecks)) if (c.due && k !== 'MOVE_IN') assert.equal(g.due[k], c.due.units, `${k} 도래 목표 합`);
-  /* 핵심 질문 ② */
+  /* 핵심 질문 ②: 판 숫자('건설' · '병목 · 지연 1,988호' · short-COMPLETION) 대신 '/' 병목(home-board.json home.bottleneck — 다른 산출물)의 단계·상태·부족량 */
   const q = V.homeQuestionsOf(rows, V.parseFilters({}, hctx), qctx).find((x) => x.q === '어디서 막혀 있는가');
-  assert.equal(q.value, '건설');
-  assert.equal(q.sub, '병목 · 지연 1,988호');
-  assert.match(q.href, /status=short-COMPLETION/);
+  const nb = HB.home.bottleneck;
+  assert.ok(nb, "'/' 병목이 있다");
+  assert.equal(q.value, V.HOME_NAMES[V.HOME_SLOT[nb.stage]]);
+  assert.equal(q.sub, `병목 · ${nb.status === 'DELAYED' ? '지연' : '주의'} ${nb.gap.toLocaleString('en-US')}호`);
+  assert.match(q.href, new RegExp(`status=short-${nb.stage}`));
   assert.match(q.tip, /도래 목표 대비 누적 부족량/);
   /* 시도로 좁혀도 같은 셈(그 시도 행만) — 부족량은 음수가 아니고, 단계 부족 목록 주소는 거르기를 유지 */
   for (const sido of ['11', '28', '41']) {

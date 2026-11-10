@@ -97,7 +97,7 @@ function lateCard(L: LedgerBoard): Directive {
 }
 
 /* HOME 집계(home-board.json, 2026-10-21 사용자 지시 '상단의 6개 카드를 정책/사업화/인허가/건설/공급/입주 6단계 기준으로 PoC 를 참고해서'): HOME 정책 추진현황 '정책 진행현황' 카드 6장(home.cards).
-   정책 = 전체 목표(시도 묶음은 지역 배분 목표 — 덤프에 없어 PoC 스냅샷으로 채운 값은 from 'poc'), 사업화~공급 = 현재 누적 측정량 + 연말 문구, 입주 = 현재 누적(미측정) + 12월 말 예상.
+   정책 = 전체 목표(시도 묶음은 지역 배분 목표 — 덤프에 없어 PoC 스냅샷으로 채운 값은 from 'poc'), 사업화~공급 = 현재 누적 측정량 + 연말 문구, 입주 = 현재 누적(없으면 0건) + 12월 말 예상.
    숫자 목록 = 지금 그 단계인 사업(stage = HOME 단계 칸 0~5), 정책은 연결 사업 전체. 지시 날짜 없음 — 병목·예측·일정 지연·원천은 아래 패널·'병목 보기'에 남는다 */
 /* HOME 카드 문구(HOME policy-stage-flow.js summaryTable — 남은 호수 = 12월 말 누적 예상 − 현재 누적 측정) */
 const remainText = (rem: number | null | undefined) => (rem == null ? undefined : rem > 0 ? `연말 계획까지 ${f(rem)}호` : rem < 0 ? `연말 계획 대비 ${f(-rem)}호 초과` : '연말 계획과 일치');
@@ -114,10 +114,10 @@ function homeDirectives({ stageNames: K, ledger: L, start, sido = 'all' }: Direc
         basis: `${B} · HOME 정책 카드 — ${goal}${v === null ? ' 미확보' : `(입력 목표 · 그래프 배경 기준)`}${c.from === 'poc' ? ` · ${POC_FROM}` : ''}`,
         p: ['p-chart'], list: { href: at('/projects?sido=all'), title: `목록: 연결 사업 ${f(L.scope.projects)}개(${nation(L)}) — 카드 숫자는 정책 목표라 목록 호수와 다름` } };
     }
-    const now = c.current ?? null, big = now === null ? '미측정' : f(now), u = now === null ? '' : '호', ye = c.year_end_expected ?? null;
+    const now = c.current ?? null, big = now === null ? '0' : f(now), u = now === null ? '건' : '호', ye = c.year_end_expected ?? null;
     const pre = k === 'MOVE_IN' ? (ye === null ? '연말 계획 미확보' : `12월 말 예상 ${f(ye)}호`) : remainText(c.remainder) ?? '현재 누적';
     return { t, ...val(pre, big, u), m: `${name} 현재 누적 ${big}${u}${pre === '현재 누적' ? '' : ` · ${pre}`}`,
-      basis: `${B} · HOME ${name} 카드 — 현재 누적 측정량 ${now === null ? '미측정' : `${f(now)}호`}(${c.measured_on ? `측정일 ${dot(c.measured_on)} · ` : ''}후속 단계 포함 · 입력·추정 포함) · 12월 말 누적 예상량 ${ye === null ? '계획 미확보' : `${f(ye)}호(${c.plan_date ? `계획일 ${dot(c.plan_date)} · ` : ''}계획 기준)`}`
+      basis: `${B} · HOME ${name} 카드 — 현재 누적 측정량 ${now === null ? '0건' : `${f(now)}호`}(${c.measured_on ? `측정일 ${dot(c.measured_on)} · ` : ''}후속 단계 포함 · 입력·추정 포함) · 12월 말 누적 예상량 ${ye === null ? '계획 미확보' : `${f(ye)}호(${c.plan_date ? `계획일 ${dot(c.plan_date)} · ` : ''}계획 기준)`}`
         + (k === 'CONSTRUCTION' ? `. 통계누리 착공 통계(민간 포함 모든 주택${sido === 'all' && start.cum !== null ? ` · ${STAT_SCOPE} ${span} ${f(start.cum)}호` : ''})와 범위가 다릅니다.` : ''),
       p: ['p-chart'], list: { href: at(`/projects?sido=all&stage=${i}`), title: `목록: 지금 ${t} 단계인 사업(${nation(L)}) — 카드 숫자는 후속 단계를 포함한 누적 측정량이라 목록 건수·호수와 다름` } };
   });

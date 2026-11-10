@@ -2,7 +2,7 @@
    HOME 쪽 값은 PoC 와 같게: 수집 실행(마지막 실행이 성공이면 정상, 아니면 실패)은 덤프, 건수·기준일·조회 상태·연도 확보는 PoC 스냅샷이다. 실패한 원천은 마지막 정상 값을 쓴다. */
 
 export type QueryStatus = 'VERIFIED' | 'PARTIAL' | 'UNVERIFIED' | 'NOT_COLLECTED';
-export type HomeSource = { id: string; name: string; org: string; ok: boolean; lastRun: string; lastOk: string | null; runs: number; failed: number; interrupted: number; records: number; asOf: string | null; query: QueryStatus; provided: number | null; fetched: number | null };
+export type HomeSource = { id: string; name: string; org: string; status?: string | null; ok: boolean; lastRun: string | null; lastOk: string | null; runs: number; failed: number; interrupted: number; records: number; asOf: string | null; query: QueryStatus | null; provided: number | null; fetched: number | null };
 /* full 확보 · none 미확보(PoC 미입수) · nosrc 원본에 행 없음 · unpub 원천 미공표 */
 export type GridState = 'full' | 'none' | 'nosrc' | 'unpub';
 export type GridRow = { id: string; name: string; region: string; owner: 'HOME'; years: Record<string, GridState> };
@@ -26,13 +26,13 @@ export function kstEdition(edition: string): string | null {
   return m ? kstDate(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}Z`) : null;
 }
 
-/* warn = 마지막 수집이 정상이지만 조회 범위가 일부(PoC 조회 상태 PARTIAL) · lastRun = 마지막 실행 날짜 */
-export type StatusRow = { owner: 'HOME'; id: string; name: string; org: string; ok: boolean; warn: boolean; lastOk: string | null; lastRun: string | null; asOf: string | null; count: number; runs: string; note: string };
+/* warn = 마지막 수집이 정상이지만 조회 범위가 일부(PoC 조회 상태 PARTIAL) · missing = 수집 실행이 없고 HOME 원천 상태가 미수집 · lastRun = 마지막 실행 날짜 */
+export type StatusRow = { owner: 'HOME'; id: string; name: string; org: string; ok: boolean; warn: boolean; missing: boolean; lastOk: string | null; lastRun: string | null; asOf: string | null; count: number; runs: string; note: string };
 
-/* 원천 표: 실패한 원천을 맨 위에, 그 뒤 HOME 원천. 상태는 정상/경고/실패. 우리 보관 원천 카탈로그는 맨 아래 접힌 카탈로그에서 센다 */
+/* 원천 표: 실패한 원천을 맨 위에, 그 뒤 HOME 원천. 상태는 정상/경고/실패/미수집. 우리 보관 원천 카탈로그는 맨 아래 접힌 카탈로그에서 센다 */
 export function statusRows(hs: HomeSources): StatusRow[] {
   const all: StatusRow[] = hs.sources.map((s) => ({
-    owner: 'HOME', id: s.id, name: s.name, org: s.org, ok: s.ok, warn: s.ok && s.query === 'PARTIAL', lastOk: kstDate(s.lastOk), lastRun: kstDate(s.lastRun), asOf: s.asOf ? s.asOf.replace(/-/g, '.') : null, count: s.records,
+    owner: 'HOME', id: s.id, name: s.name, org: s.org, ok: s.ok, warn: s.ok && s.query === 'PARTIAL', missing: s.runs === 0 && s.status === 'NOT_COLLECTED', lastOk: kstDate(s.lastOk), lastRun: kstDate(s.lastRun), asOf: s.asOf ? s.asOf.replace(/-/g, '.') : null, count: s.records,
     runs: `${s.runs}회${s.failed ? ` · 실패 ${s.failed}` : ''}`,
     note: `수집 실행 ${s.runs}회 중 실패 ${s.failed}${s.interrupted ? `·중단 ${s.interrupted}` : ''}${s.ok ? '' : ` · 마지막 실행 ${kstDate(s.lastRun)} 실패${s.lastOk ? ' — 마지막 정상 값을 씀' : ' — 정상 수집 없음'}`}${s.provided !== null ? ` · 제공 ${s.provided.toLocaleString('en-US')} 조회 ${s.fetched?.toLocaleString('en-US')} 적재 ${s.records.toLocaleString('en-US')}${s.query === 'PARTIAL' ? '(조회 범위 일부)' : ''}` : ''}`,
   }));

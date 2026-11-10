@@ -77,9 +77,11 @@ test('중간 스냅샷 = 원본: zip 해시가 원본 manifest 와 같고, 기�
   const f = raw.files.basic;
   const head = execFileSync('sh', ['-c', 'unzip -p "$1" "$2" | head -n 3000', 'sh', path.join(H.RAW, f.zip), f.member], { encoding: 'utf8', maxBuffer: 64 << 20 });
   const byPk = new Map(bulk.records.map((r) => [r.pk, r]));
+  /* 진행 중 규칙 a 의 하한은 판을 만든 기준일(그 달 폴더 manifest)에서 온다 — 스냅샷 manifest 의 규칙 글에 적힌 기준일로 다시 읽는다 */
+  const aMin = H.permitFloor(manifest.rules.active.match(/기준일 (\d{4}-\d{2}-\d{2})/)[1]);
   let kept = 0;
   for (const line of head.split('\n').filter(Boolean)) {
-    const r = H.basicRecord(line.split('|')).record;
+    const r = H.basicRecord(line.split('|'), aMin).record;
     if (!r) continue;
     kept++;
     const { complex, site, site_count, ...mid } = byPk.get(r.pk);
@@ -94,8 +96,8 @@ test('중간 스냅샷 = 원본: zip 해시가 원본 manifest 와 같고, 기�
   assert.equal(fn.rows, fn.NO_PERMIT_DATE + fn.NO_HOUSEHOLDS + fn.DEMOLISHED + fn.COMPLETED_BEFORE_WINDOW + fn.STALE + fn.kept);
   assert.deepEqual(Object.keys(manifest.active), ['d', 'a', 'b', 'c'], '남은 기록의 근거(d·a·b·c 순서로 처음 맞는 것)');
   assert.equal(Object.values(manifest.active).reduce((a, b) => a + b, 0), fn.kept);
-  assert.deepEqual(bulk.records.reduce((m, r) => { m[H.activeBasis(r, H.permitFloor(manifest.rules.active.match(/기준일 (\d{4}-\d{2}-\d{2})/)[1]))]++; return m; }, { d: 0, a: 0, b: 0, c: 0 }), manifest.active, '근거 건수 = 기록에서 다시 센 것');
-  assert.ok(bulk.records.every((r) => H.activeBasis(r, H.permitFloor(manifest.rules.active.match(/기준일 (\d{4}-\d{2}-\d{2})/)[1]))), '남은 기록은 모두 진행 중');
+  assert.deepEqual(bulk.records.reduce((m, r) => { m[H.activeBasis(r, aMin)]++; return m; }, { d: 0, a: 0, b: 0, c: 0 }), manifest.active, '근거 건수 = 기록에서 다시 센 것');
+  assert.ok(bulk.records.every((r) => H.activeBasis(r, aMin)), '남은 기록은 모두 진행 중');
   assert.equal(bulk.records.length, fn.kept);
   assert.equal(new Set(bulk.records.map((r) => r.pk)).size, bulk.records.length, '관리번호 중복 없음');
 });
@@ -130,11 +132,25 @@ test('후보 id: 매핑으로 다시 만들면 같은 id, 새 필지의 새 관�
   // 2026-10-19 수도권 한정: 원장(saved)의 HOME 사업 id 도 본다(pre 에는 HOME 이 없다 — 시군구 다음 번호는 레지스트리 카운터·매핑 중 가장 큰 번호 다음)
   const max = Math.max(...[...saved.projects.map((p) => p.local_project_id), ...pre.projects.map((p) => p.local_project_id), ...Object.values(savedIds)].filter((id) => id.startsWith('PRJ-11290-')).map((id) => +id.slice(-4)));
   assert.equal(idOf('9999999999999999999999'), `PRJ-11290-${String(max + 1).padStart(4, '0')}`);
+  /* 매핑의 관리번호는 그 id 를 그대로 쓴다. 단, 판이 바뀌어 한 id 의 관리번호들이 두 묶음으로 갈라지면(예: 블록 표기 '16블럭' → '16블록')
+     id 는 한 묶음만 갖고 나머지 묶음은 새 번호다 — 그때 그 id 는 같은 id 로 매핑된 다른 관리번호의 사업이다.
+     새 판에서 위치 칸이 비어 시군구를 못 찾은 관리번호는 식별자 없이 검토 목록(SGG_UNRESOLVED)에 간다 */
   const live = new Set(bulk.records.map((r) => r.pk));
-  for (const [pk, id] of Object.entries(savedIds)) if (live.has(pk)) assert.equal(idOf(pk), id, pk);
+  const pksOf = (id) => t.identifiers.filter((i) => i.id_type === 'HUB_HS_PK' && i.local_project_id === id).map((i) => i.id_value);
+  const unresolved = new Set(t.review_required.filter((r) => r.review_type === 'SGG_UNRESOLVED').map((r) => r.record_key));
+  for (const [pk, id] of Object.entries(savedIds)) {
+    if (!live.has(pk) || idOf(pk) === id) continue;
+    if (idOf(pk) === undefined) { assert.ok(unresolved.has(pk), `${pk}: 식별자가 없으면 시군구 미해결 검토`); continue; }
+    assert.ok(pksOf(id).some((k) => k !== pk && savedIds[k] === id), `${pk}: ${id} 가 아니면 같은 id 의 다른 관리번호가 그 id 를 가져야 한다(묶음 갈라짐)`);
+    assert.ok(!Object.values(savedIds).includes(idOf(pk)), `${pk}: 갈라진 묶음은 매핑에 없던 새 번호`);
+  }
+  /* 매핑은 더하기만: 있던 항목은 그대로, 새 항목 = 이번 표의 대용량 후보 사업에 붙은 관리번호 중 매핑에 없던 것(위 2개 포함 — 판에 새로 생긴 묶음도 더해진다) */
+  const newPks = (tables) => { const own = new Set(tables.projects.filter((p) => p.source_ref === BULK).map((p) => p.local_project_id)); return tables.identifiers.filter((i) => i.id_type === 'HUB_HS_PK' && own.has(i.local_project_id) && !savedIds[i.id_value]).map((i) => i.id_value); };
   const merged = mergeHubIds(savedIds, t);
-  assert.equal(Object.keys(merged).length, Object.keys(savedIds).length + 2, '매핑은 더하기만 한다');
-  assert.deepEqual(mergeHubIds(savedIds, convert(inputs(bulk.records, savedIds))), savedIds, '같은 입력이면 매핑이 그대로');
+  for (const [pk, id] of Object.entries(savedIds)) assert.equal(merged[pk], id, pk);
+  assert.ok(['9999999999999999999998', '9999999999999999999999'].every((pk) => merged[pk] === idOf(pk)));
+  assert.equal(Object.keys(merged).length, Object.keys(savedIds).length + newPks(t).length, '매핑은 더하기만 한다');
+  assert.equal(Object.keys(mergeHubIds(savedIds, pre)).length, Object.keys(savedIds).length + newPks(pre).length, '같은 입력이면 새 묶음만 더해진다(2026-10 첫 판은 0 — 매핑 그대로)');
 });
 
 test('LH 블록 연결: 시군구·블록 코드·지구 이름이 맞으면 LH 후보(고양장항 A-2)에 붙고, 지구 이름이 없으면 따로 싣는다', () => {
@@ -167,7 +183,15 @@ test('매핑은 더하기만: 장기 미갱신으로 빠진 관리번호의 id �
   const projOf = new Set(Object.values(savedIds)), bulkProjects = pre.projects.filter((p) => p.source_ref === BULK);
   assert.ok(Object.keys(savedIds).length >= 13588, '관리번호 13,588개(2026-10 첫 실행)에서 늘기만 한다');
   assert.ok(bulkProjects.length > 0, '2026-08 판 3,495');
-  assert.ok(bulkProjects.every((p) => projOf.has(p.local_project_id)));
+  /* 매핑에 없는 대용량 후보 = 이번 판에 처음 생긴 묶음(새 관리번호·묶음 갈라짐)이고, 시군구의 매핑 번호보다 큰 새 번호다.
+     2026-10-19 수도권 한정 뒤 저장된 원장에 대용량 후보가 없어 매핑은 새 묶음으로 늘지 않는다(2026-10 첫 판은 모두 매핑의 id) */
+  const maxMapped = {};
+  for (const id of projOf) { const [, sgg, n] = /^PRJ-(\d{5})-(\d{4})$/.exec(id); maxMapped[sgg] = Math.max(maxMapped[sgg] ?? 0, +n); }
+  for (const p of bulkProjects.filter((x) => !projOf.has(x.local_project_id))) {
+    const [, sgg, n] = /^PRJ-(\d{5})-(\d{4})$/.exec(p.local_project_id);
+    assert.ok(+n > (maxMapped[sgg] ?? 0), `${p.local_project_id}: 매핑에 없는 후보는 시군구 매핑 번호 다음`);
+    assert.ok(pre.identifiers.filter((i) => i.local_project_id === p.local_project_id && i.id_type === 'HUB_HS_PK').every((i) => !savedIds[i.id_value] || savedIds[i.id_value] !== p.local_project_id), p.local_project_id);
+  }
   const live = new Set(bulk.records.map((r) => r.pk)), gone = Object.keys(savedIds).filter((pk) => !live.has(pk));
   assert.ok(gone.length > 9000, `빠진 관리번호 ${gone.length}`);
   const ids = new Set(pre.projects.map((p) => p.local_project_id)), liveIds = new Set([...live].map((pk) => savedIds[pk]));

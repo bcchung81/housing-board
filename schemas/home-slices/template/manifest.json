@@ -1,0 +1,249 @@
+{
+  "alembic_version": "0000_example",
+  "current": {
+    "area_stat": {
+      "count": 1,
+      "digest": "9e16522b8131c3bbc22a7d5f6475dc5f621d94c92f37f3d2c60521fd510bb37a"
+    },
+    "block_location": {
+      "count": 1,
+      "digest": "104dde78916597e7ff34b6f57357b5b2101bcff76dfeeb30b5d1ba3e5e03e2a2"
+    },
+    "collection_link": {
+      "count": 1,
+      "digest": "a7953d11b796f3b947f0aac8205648ee857a23edcc7d4f505af9503703724598"
+    },
+    "delivery_setting": {
+      "count": 1,
+      "digest": "6424baf9973c06089497a39da2b5eda0d54bf958bc0c48c29dd97b5ad40bf334"
+    },
+    "district": {
+      "count": 1,
+      "digest": "fcad5c6da9082cd51707a880bba562e6df70b44b86d685095261fd16dc9a0ebe"
+    },
+    "document_evidence": {
+      "count": 1,
+      "digest": "5cef593e45212bdfd933fb7fb27cb7224d78dcafa75c6e7aeb4bb91649b2f572"
+    },
+    "evidence_bridge": {
+      "count": 1,
+      "digest": "f0aa490cbedab4810a3edf5305e75584b5aed2507c09a30ab25f92544335d37a"
+    },
+    "execution_schedule": {
+      "count": 1,
+      "digest": "6f35ab934cc65467ef6f969b7d7da7997f6397b7d0e3ff7169ea8103d26a6eb9"
+    },
+    "gh_notice": {
+      "count": 1,
+      "digest": "ba35dfdb185884d0ac4a0079db87bc897bf8332dfd4ec8bba342beb33fb145c5"
+    },
+    "home_audit": {
+      "count": 1,
+      "digest": "c872f2110f4fcb7cf6ec13fbb122acb9446c1654b3d2965e32685d528e21ba7e"
+    },
+    "home_batch": {
+      "count": 1,
+      "digest": "4a04268506f5735c30b2100b0ab362d92daebbeff48ee7ed95360581d0c10ba8"
+    },
+    "lh_completion_plan": {
+      "count": 1,
+      "digest": "7a27070479f71b41558bfe97825887d2c2003fa59b7761d8b704227f882c935f"
+    },
+    "lh_movein_plan": {
+      "count": 1,
+      "digest": "740c9beda46255be6ad8dff91f1956060c7569d49e0908a8ed5f70c82ea5891e"
+    },
+    "lh_notice": {
+      "count": 1,
+      "digest": "519b490ad0f985e614a7cc9930c664d423e1ac0ad01cbdb66cca3b1259271db0"
+    },
+    "mapping_decision": {
+      "count": 1,
+      "digest": "f7d8174c49685ba1365501fa0dabd8a66e0f95bfa4bbc41aa7a06ab7e0977339"
+    },
+    "municipality": {
+      "count": 1,
+      "digest": "b53a6a76f8031518965d8578c4dd7d0f71964df9aaf17da51c8a35e14ecccb4c"
+    },
+    "notice": {
+      "count": 1,
+      "digest": "cb6bec5f570e2a69e0d55bf301e55188d5a018abf1b641facfb958d115b0670d"
+    },
+    "policy": {
+      "count": 1,
+      "digest": "89a9835274b11a321aebb855fa09d5a2d4853c114d0d455e4099ef077e6864a5"
+    },
+    "policy_delivery_plan": {
+      "count": 1,
+      "digest": "5cb71f60b6f80f734989abdc04a833a06af25f253483259c461e7443a16668eb"
+    },
+    "policy_municipality": {
+      "count": 1,
+      "digest": "f4692358468a2939d173a770037f6cd0b20965a5a4002dfab91a7ac7552935a1"
+    },
+    "project": {
+      "count": 1,
+      "digest": "e47e5a2be6ce1a4a80283570214274e54d6656fb8bdc37a2fe6591f62bd7b6d8"
+    },
+    "project_location": {
+      "count": 1,
+      "digest": "d5a13f30536d78f47d209fe02da2c3c0471f07f76a0dbe09a767fccad9ab6a9c"
+    },
+    "project_profile": {
+      "count": 1,
+      "digest": "0ccf0cf0372b540a064d9b28435981525fc2e19f02eeaaa1439f6078202ad658"
+    },
+    "project_report": {
+      "count": 1,
+      "digest": "94c5cff8952340cb65704aaacdeacb852eb8276639ea0403e5d93665b3ac6718"
+    },
+    "stage_evidence": {
+      "count": 1,
+      "digest": "f4bd0b0472b39670f62b4677a1f16c0304d50dc0e6ceb47d5d44eeb233a8277a"
+    },
+    "statistic": {
+      "count": 1,
+      "digest": "e02d50497a3b72161b5b3bf846cf4bb59619cbe9c605d12765bea64a4e29277e"
+    },
+    "unsold": {
+      "count": 1,
+      "digest": "56d54eee2a44a464ad18df188b8238298a2e0a775839af121e955d16ab4bac4c"
+    }
+  },
+  "dump_sha256": null,
+  "files": {
+    "slices/area_stat.json": {
+      "rows": 1,
+      "sha256": "9d36f6a1762b4f557df0e04074baafd2fe1e5202243780176f498db4f9ab9b67"
+    },
+    "slices/block_location.json": {
+      "rows": 1,
+      "sha256": "c0c048cdaea87868cc71335086aed35769a3d9c1fc4ace14f07c5d0c4d4528ad"
+    },
+    "slices/collection_link.json": {
+      "rows": 1,
+      "sha256": "de093dc7b905edbc6eda3841734739c4d8bdaf89fbf22ef5a9cae7bcea11f5ca"
+    },
+    "slices/delivery_setting.json": {
+      "rows": 1,
+      "sha256": "91e8a9089b1f606ea73e36c279bfeb715da7a92485fcc07a5be62a5d335ef2c3"
+    },
+    "slices/district.json": {
+      "rows": 1,
+      "sha256": "397d36dca3bb815a9bd55a82433e5fe8a767fec6341b0498aad4e6d2a0e1aa9d"
+    },
+    "slices/document_evidence.json": {
+      "rows": 1,
+      "sha256": "169dde44b082f52f4144c0a56a8e068b4b292b56a72a37c4aa02fc9781173b6c"
+    },
+    "slices/evidence_bridge.json": {
+      "rows": 1,
+      "sha256": "f3370bedd4e2b2808a75cdf3b38e7419be47b9ce0b8584200dc1e590e3be5e28"
+    },
+    "slices/execution_schedule.json": {
+      "rows": 1,
+      "sha256": "ae8f2e7f334274ee25a082d7f5f58beffce4c0d396c9e6fa4f130efa57e36de2"
+    },
+    "slices/gh_notice.json": {
+      "rows": 1,
+      "sha256": "68ae407edb0a4d3e9e896bba92154848fa20a560b1394212aa3071e460e05e78"
+    },
+    "slices/home_audit.json": {
+      "rows": 1,
+      "sha256": "273656b4afb2ebfb180eeef91807929ba59b3b4efcc382f17b300c1082ff44b5"
+    },
+    "slices/home_batch.json": {
+      "rows": 1,
+      "sha256": "e2779b46abb2923c205cb68540b84ae6b25b7306c76f73a3b1caa18f68290f4b"
+    },
+    "slices/home_identity_alias.json": {
+      "rows": 1,
+      "sha256": "81131a4796979b32e9dffc7ebaaac6e77b5d58cc2287301aa2f199283ca1bc91"
+    },
+    "slices/home_mapping.json": {
+      "rows": 1,
+      "sha256": "201f2ffb60cfa6626355e52bcb9c93d4f4f2f5dd1c4c9bade35310b988cb82af"
+    },
+    "slices/home_program_mapping.json": {
+      "rows": 1,
+      "sha256": "23d0d65369a68a6e26cfa53a20bc4368ab18f07cff80507bb12657a0bf974498"
+    },
+    "slices/home_project.json": {
+      "rows": 1,
+      "sha256": "006b1f6ac7366763d1db92eb321a2edcb637c689e3106017da96cd29339c5519"
+    },
+    "slices/lh_completion_plan.json": {
+      "rows": 1,
+      "sha256": "7a1123e943e38dde4d8160b619ae9b546fe118a34bb05736a2208e87a12c90f5"
+    },
+    "slices/lh_movein_plan.json": {
+      "rows": 1,
+      "sha256": "2b77680a5f788108d94708444f0720818a785dba067d42a254e0b7522fd2d042"
+    },
+    "slices/lh_notice.json": {
+      "rows": 1,
+      "sha256": "9562d8fe10345377a5cebf033befd164824d016749c71d95107b1496f53d4315"
+    },
+    "slices/mapping_decision.json": {
+      "rows": 1,
+      "sha256": "4149c5baacca7c28642625d554607b09b0efa06dba138f3c063f41a1cf290f13"
+    },
+    "slices/municipality.json": {
+      "rows": 1,
+      "sha256": "1fea06fd3bc02ca8f69369301d1947525caec5d2cf9c72e6d6f3aaf357b5a315"
+    },
+    "slices/notice.json": {
+      "rows": 1,
+      "sha256": "15a77cdc351e0564b37f79347e9eb002d28f2de3b3b8da8ae92ff7cf6c234e2c"
+    },
+    "slices/policy.json": {
+      "rows": 1,
+      "sha256": "f8b18c442f308affc3892a504e6d9d222fcb52b50ba54cb85ee72f61d003a1a4"
+    },
+    "slices/policy_delivery_plan.json": {
+      "rows": 1,
+      "sha256": "2087e64495bf5ba48bd7551a08874bb5cb39d4108fa0318aa7665299ad1e2008"
+    },
+    "slices/policy_municipality.json": {
+      "rows": 1,
+      "sha256": "9eb97f85814cf66962e96732a22df55c4dca9953838ccea4302d8896e52cccb4"
+    },
+    "slices/project.json": {
+      "rows": 1,
+      "sha256": "a5f6c7fe6cd59a6102cca37001a09e4abda5a881066033abae5bf641bde2f24e"
+    },
+    "slices/project_location.json": {
+      "rows": 1,
+      "sha256": "169de25c31f64ae12fbc1a7d35a3c18e38ecf28e4b1622877864b941bd585d2c"
+    },
+    "slices/project_profile.json": {
+      "rows": 1,
+      "sha256": "40091279ab5c21a1e25cb4eb7f3e1b424e67559d1fa84ec5aee341e298671228"
+    },
+    "slices/project_report.json": {
+      "rows": 1,
+      "sha256": "283359c327006d540e22ac75048354f17188bc0c45b933e1baa6b06d98a48993"
+    },
+    "slices/stage_evidence.json": {
+      "rows": 1,
+      "sha256": "deff58845f9955a51ea7b2f0d2b441c6d6fe5d7cc839ba983958e22f47d457d6"
+    },
+    "slices/statistic.json": {
+      "rows": 1,
+      "sha256": "719a0046aeb5f1368bbc1c3715ef80a88f14e7a3f5be92ed4157876f172341f2"
+    },
+    "slices/unsold.json": {
+      "rows": 1,
+      "sha256": "b6b62f2fce7f9e5a69c20436fa12652d1650ac4d02bb0052c1d3ef2563c16530"
+    }
+  },
+  "format": "home-slices/1",
+  "removed": {
+    "project": [
+      "EX_PROJECT_0002"
+    ]
+  },
+  "since": "2026-10-22 00:00:00+09",
+  "source_commit": "0000000000000000000000000000000000000000",
+  "until": "2026-10-22 13:35:44.7232+00"
+}

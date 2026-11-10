@@ -7,7 +7,13 @@ pi = json.load(open(R + 'data/board/projects-index.json'))
 lm = json.load(open(R + 'data/board/ledger-map.json'))
 rc = json.load(open(R + 'data/board/region-calendar.json'))
 rm = json.load(open(R + 'data/board/region-map.json'))
-areas = json.load(open(R + 'schemas/ledger-2026-10/tables/areas.json'))['rows']
+# 원장 달 = 상황판 원장 자료(ledger-board.json)의 observedMonth — 달 폴더(schemas/ledger-<달>)를 박지 않고 자료에서 읽는다
+LM = json.load(open(R + 'data/board/ledger-board.json'))['observedMonth']
+LD = f'schemas/ledger-{LM}/'
+def need(rel):   # 새 달 폴더에 입력이 없으면 앞 달로 조용히 넘어가지 않고 멈춘다(raw/myhome·raw/applyhome 은 새 달에 다시 받거나 앞 달에서 복사해 둔다)
+    if not os.path.exists(R + LD + rel): sys.exit(f'build_data: 입력이 없다 {LD}{rel} — 원장 달 {LM} 폴더에 받거나 앞 달에서 복사한 뒤 다시 돌린다')
+    return R + LD + rel
+areas = json.load(open(need('tables/areas.json')))['rows']
 sgg = pi['sgg']
 assert set(sgg) == set(lm['bySgg'])
 code_of_name = {r['area_name']: r['area_code'] for r in areas if r['level'] == 'SGG'}
@@ -165,14 +171,14 @@ adj = {u[0]: [o[0] for o in units if o[0] != u[0] and o[1] == u[1] and len(UP[u[
 mapdoc = {'view': rm['view'], 'units': units, 'edition': rm.get('edition'), 'adj': adj}
 # 공고 0건 넓히기용 이웃(수도권 지도 면 전부, 시도 경계를 넘어서도): 경계 꼭짓점을 2개 이상 공유. 코드는 지도 면 코드(경기는 시)
 nb = {u[0]: [o[0] for o in units if o[0] != u[0] and len(UP[u[0]] & UP[o[0]]) >= 2] for u in units}
-# 데모판 공고 표본(운영판은 /api/v1/notices): 마이홈 원천(schemas/ledger-2026-10/raw/myhome) 수도권 행을 API 와 같은 모양으로. 키·개인 정보 없음.
+# 데모판 공고 표본(운영판은 /api/v1/notices): 마이홈 원천(schemas/ledger-<달>/raw/myhome) 수도권 행을 API 와 같은 모양으로. 키·개인 정보 없음.
 # 날짜는 받은 날(sampleRef) 기준이라 화면이 오늘 날짜만큼 옮겨 보인다(표본임을 ⓘ에 적는다)
 TGT = [('신혼부부', r'신혼'), ('신생아', r'신생아'), ('청년', r'청년'), ('다자녀', r'다자녀'), ('고령자', r'고령자')]
 def ymd(v): v = str(v or ''); return f'{v[:4]}-{v[4:6]}-{v[6:8]}' if len(v) == 8 else None
 notices, seen = [], set()
-mh = json.load(open(R + 'schemas/ledger-2026-10/raw/myhome/manifest.json'))
+mh = json.load(open(need('raw/myhome/manifest.json')))
 for kind in ('rental', 'sale'):
-    for x in json.load(open(R + f'schemas/ledger-2026-10/raw/myhome/{kind}.json'))['items']:
+    for x in json.load(open(need(f'raw/myhome/{kind}.json')))['items']:
         if x.get('brtcNm') not in SDN.values(): continue
         sg = (x.get('pnu') or '')[:5] or code_of_name.get(f"{x['brtcNm']} {x.get('signguNm') or ''}".strip())
         nid = f"rental-{x['pblancId']}" if kind == 'rental' else f"sale-{x['pblancId']}-{x['houseSn']}"
@@ -239,14 +245,14 @@ for pid in lid:
 # 줄: [단지명, 세대, 구분(0 공공분양 · 1 민영), 법정동, 입주 예정 연월, 전용 최소, 최대, 시공·시행, 공고일, 접수 시작(특별공급 먼저), 접수 마감, 발표, 계약 시작, 계약 끝, 원문, 규제 비트, 특별공급 세대(주택형 줄 없으면 null), 유형별 세대 9칸(신혼부부·생애최초·다자녀·노부모·기관추천·청년·신생아·이전기관·기타, 모두 0 이면 [])]
 # (정렬용 관리번호는 18번째 칸으로 두었다가 화면으로 보낼 때 자른다 — r[:18])
 # 단계는 화면이 오늘 날짜로 계산한다. 크기를 줄이려고 빌드한 날에 끝나지 않은 줄 전부 + 끝난 줄은 공고 최근 5개만 둔다(끝난 줄은 다시 진행 중이 되지 않는다)
-AH = 'schemas/ledger-2026-10/raw/applyhome/'
-ahm = json.load(open(R + AH + 'manifest.json'))
+AH = 'raw/applyhome/'
+ahm = json.load(open(need(AH + 'manifest.json')))
 ah_ref = ahm['fetched_at'][:10]
 ah_from = '%04d%s' % (int(ah_ref[:4]) - 2, ah_ref[4:])
-ah_sgg = {r['notice_id']: r for r in json.load(open(R + 'schemas/ledger-2026-10/tables/notices.json'))['rows'] if r['notice_system'] == 'APPLYHOME' and r.get('sgg_code')}
+ah_sgg = {r['notice_id']: r for r in json.load(open(need('tables/notices.json')))['rows'] if r['notice_system'] == 'APPLYHOME' and r.get('sgg_code')}
 AH_SP = ['NWWDS_HSHLDCO', 'LFE_FRST_HSHLDCO', 'MNYCH_HSHLDCO', 'OLD_PARNTS_SUPORT_HSHLDCO', 'INSTT_RECOMEND_HSHLDCO', 'YGMN_HSHLDCO', 'NWBB_HSHLDCO', 'TRANSR_INSTT_ENFSN_HSHLDCO', 'ETC_HSHLDCO']
 ah_mdl = collections.defaultdict(list)
-for m in json.load(open(R + AH + 'getAPTLttotPblancMdl.json'))['rows']: ah_mdl[(m['HOUSE_MANAGE_NO'], m['PBLANC_NO'])].append(m)
+for m in json.load(open(need(AH + 'getAPTLttotPblancMdl.json')))['rows']: ah_mdl[(m['HOUSE_MANAGE_NO'], m['PBLANC_NO'])].append(m)
 BJD_IN = collections.defaultdict(set)
 for k, v in BJD.items(): BJD_IN[k[:5]].add(v)
 def ah_co(s):   # '(주)'·'㈜'·'주식회사' 떼기, 여럿이면 ', '
@@ -270,7 +276,7 @@ def ah_live(r, t):   # 화면 ahStep 과 같은 규칙: 끝나지 않았으면 T
     s, e, w, c2 = r[9], r[10], r[11], r[13]
     return bool((s and t < s) or (e and t <= e) or (w and t < w) or (c2 and t <= c2))
 ah_u = collections.defaultdict(list)
-for d in json.load(open(R + AH + 'getAPTLttotPblancDetail.json'))['rows']:
+for d in json.load(open(need(AH + 'getAPTLttotPblancDetail.json')))['rows']:
     n = ah_sgg.get(d['HOUSE_MANAGE_NO'] + '-' + d['PBLANC_NO'])
     if not n or (d.get('RCRIT_PBLANC_DE') or '') < ah_from: continue
     c = n['sgg_code']; unit = c[:4] + '0' if c.startswith('41') else c
@@ -303,7 +309,7 @@ ah = {'ref': ah_ref, 'from': ah_from, 'url': AH_URL, 'u': dict(sorted(ah_u.items
 # 줄: 코드 → [집계 행 수(사업 수 — 정책 화면 '집계 175'와 같은 셈), 공급 예정 호수, 해 7칸(yearBucket 과 같은 칸), 단계 6칸, 단계 탭 개수 6칸(집계 행마다 나눈 몫이 가장 큰 단계 — 같으면 뒤 단계, 호수 없는 행은 계획)]
 import gzip
 hpj = json.load(open(R + 'data/board/home-projects.json'))
-dash = json.load(gzip.open(R + f"schemas/ledger-2026-10/raw/home-api/{hpj['asOf']}/projects-map-dashboard-97.json.gz"))
+dash = json.load(gzip.open(need(f"raw/home-api/{hpj['asOf']}/projects-map-dashboard-97.json.gz")))
 HP_ORDER = ['MOVE_IN', 'SUPPLY', 'CONSTRUCTION', 'APPROVAL', 'BUSINESS', 'POLICY', 'UNKNOWN']   # 채우는 순서(뒤 단계부터)
 HP_SIX = {'POLICY': 0, 'BUSINESS': 0, 'UNKNOWN': 0, 'APPROVAL': 1, 'CONSTRUCTION': 2, 'SUPPLY': 3, 'MOVE_IN': 5}
 SD_OF = {v: k for k, v in SDN.items()}

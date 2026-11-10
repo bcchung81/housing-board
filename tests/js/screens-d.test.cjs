@@ -29,21 +29,24 @@ const listOf = (href) => {
 const D = makeDirectives({ sourceCount: 19, stageNames: [...V.BOARD_NAMES], ledger: BOARD, start: { year: '2026', upto: 8, cum: 156396, cumLy: 141000 }, bottleneck: V.bottleneckOf });
 const board = read('components/board/Board.tsx');
 
-test('1 지연 헤드라인: 카드 = 지연 2건 · 주의 2(후보 0이라 쌍 숫자 없음), 후보가 있을 때의 쌍 숫자 화면 코드는 그대로(late · review-late)', () => {
+test('1 지연 헤드라인: 카드 = 지연 n건 · 주의 n(사업 행에서 다시 센 값, 후보 0이라 쌍 숫자 없음), 후보가 있을 때의 쌍 숫자 화면 코드는 그대로(late · review-late)', () => {
   const late = D[4], c = BOARD.judgment.candidate;
   assert.equal(late.t, '일정 지연 관리');
   // 2026-10-19 수도권 한정: 후보 계산 313·확인 필요 1,839 → 0. 후보가 0이면 카드는 쌍 숫자 없이 '지연 n건' + sub '주의 n'(옛 후보 없는 모양)
-  assert.deepEqual([late.pre, late.big, late.u], ['지연', '2', '건']);
+  /* 판 숫자(10-22 판 지연 2 · 주의 11) 대신: 카드 값 = 사업 행에서 다시 센 번호 있는 지연·주의 사업 = 사업 화면 지연 목록 */
+  const fm = (n) => n.toLocaleString('en-US'), nLate = rows.filter((r) => r.issued && r.cls === 'delay').length, nWarn = rows.filter((r) => r.issued && r.cls === 'caution').length;
+  assert.ok(nLate > 0);
+  assert.deepEqual([late.pre, late.big, late.u], ['지연', fm(nLate), '건']);
   assert.equal(late.pair, undefined, '후보 계산 쌍 없음');
-  assert.equal(late.m, '지연 2건');
-  assert.equal(late.sub, '주의 11', '작은 보조 값(주의)');   // 2026-10-20 HOME 판: 주의 2→10 → 기준일 10-20 주의 11(성남금토 A2)
+  assert.equal(late.m, `지연 ${fm(nLate)}건`);
+  assert.equal(late.sub, `주의 ${fm(nWarn)}`, '작은 보조 값(주의)');   // 2026-10-20 HOME 판: 주의 2→10 → 기준일 10-20 주의 11(성남금토 A2)
   assert.equal(c.delay.projects, 0);
-  /* 목록: 지연 = 지연(장기 포함) 2건. 후보 목록(?status=review-late·review)은 0건 */
+  /* 목록: 지연 = 지연(장기 포함). 후보 목록(?status=review-late·review)은 0건 */
   assert.equal(late.list.href, '/projects?sido=all&status=late');
-  assert.equal(listOf(late.list.href).n, 2);
+  assert.equal(listOf(late.list.href).n, nLate);
   assert.equal(listOf('/projects?sido=all&status=review-late').l.length, 0, '후보 계산 목록 0건');
   assert.equal(listOf('/projects?sido=all&status=review').l.length, 0, '확인 필요(후보) 전체 목록 0건');
-  assert.match(late.list.title, /지연\(장기 포함\) 사업\(수도권\) 2건/);
+  assert.ok(late.list.title.includes(`지연(장기 포함) 사업(수도권) ${fm(nLate)}건`), late.list.title);
   /* 화면: 두 숫자는 같은 글자 크기 한 벌(dirVals 의 one — 6장 공통 규격, 2026-10-18), 겹친 층의 링크는 단추 밖(형제) */
   assert.match(board, /function dirVals\(x: Directive, link: boolean, open:/);
   assert.equal((board.slice(board.indexOf('function dirVals'), board.indexOf('/* 줄1: 지시 이름')).match(/ui-dir-num ui-kpi leading-title/g) || []).length, 1, '두 숫자가 같은 크기 클래스 하나를 쓴다');
@@ -143,7 +146,11 @@ test('7 서랍: 제목 = 지도와 같은 짧은 이름(home-map label), 원장 
   assert.match(d, /\{d\.label && d\.label !== r\.name \? <span data-slot="drawer-full"[^>]*>\{r\.name\}<\/span> : null\}/);
   assert.match(d, /사업 원장\(HOME\) \$\{edition\[1\]\}\.\$\{edition\[2\]\}\.\$\{edition\[3\]\} 받음/);   // HOME 이 무엇인지 붙여서(r3-screens 4)
   assert.doesNotMatch(d, /` · 자료 기준 \$\{edition/, '서랍의 HOME 받은 날을 \'자료 기준\'이라 부르지 않는다(화면의 자료 기준 = 원장 기준일)');
-  assert.equal(IDX.referenceDate, '2026-10-22');   // 2026-10-22: 원장 기준일 = HOME 덤프·PoC 화면 기준일(manifest reference_date) · 2026-10-20 사용자 결정: 기준일을 오늘로
+  /* 판 날짜(10-22 판 '2026-10-22') 대신: 사업 화면 기준일 = 원장 달 manifest 기준일 = 종합상황판 기준일 = HOME 덤프 시각의 날짜 */
+  const P = require('../../tools/ledger/paths'), E = require('./home-era.cjs');
+  assert.equal(IDX.referenceDate, P.referenceDateOf(P.ledgerDir(P.latestMonth())));
+  assert.equal(IDX.referenceDate, BOARD.referenceDate);
+  if (E.snapshotAt) assert.equal(IDX.referenceDate, E.snapshotAt.slice(0, 10), 'HOME 덤프 날짜');   // 2026-10-22: 원장 기준일 = HOME 덤프·PoC 화면 기준일(manifest reference_date) · 2026-10-20 사용자 결정: 기준일을 오늘로
 });
 
 test('8 월별 실적 차트: Tab 은 차트에 한 번(마지막 달), 안에서 ←→·Home·End 로 옮긴다(링크·주소는 그대로)', () => {
@@ -172,22 +179,27 @@ test('9 착공 카드(통계누리) → ③착공 목록(원장): 목록 머리�
   // 기준일 2026-10-20: 9·7 원천 행 중 지금 ④건설인 행 22건 · 집계 호수 17,865호(HOME 원천 행)
   // 2026-10-21 새 덤프(20261020T142230Z): 덤프 뒤였던 담당자 단계 측정값이 판에 들어와 ④건설 도달 행이 늘었다 → 26건 · 20,368호
   // 2026-10-22 새 덤프(20261021T212310Z): ④건설 +3행 +3,084호 — 부천역곡 A1 1,160(새 사업, HOME 단계 착공) · 인천송림4 1 1,198(9·7 확정, 2024-07 착공) · 병점복합타운 주복1 726(착공 2025-12-31 담당자 입력)
-  assert.deepEqual([hl.length, V.homeSummaryOf(hl, V.homeChartOf(hf)).units], [29, 23452], '목록 29건 · 23,452호(정책 진행 자료 원천 행)');
+  /* 판 숫자([29, 23452]) 대신: 목록 건수 = '/' 단계 사업 수(home-board.json 지금 ④건설 — 다른 산출물), 호수 = 목록 행 중 집계 행의 집계 호수를 다시 더한 값 */
+  assert.ok(hl.length > 0 && hl.every((r) => r.board === 3), '목록은 지금 ④건설인 원천 행');
+  assert.deepEqual([hl.length, V.homeSummaryOf(hl, V.homeChartOf(hf)).units], [HB.stageProjects[HB.now][3], hl.filter(V.homeChartOf(hf)).reduce((n, r) => n + (r.home.counted ?? 0), 0)], '목록 건수·호수(정책 진행 자료 원천 행)');
   const l = listOf(D[0].list.href);
   // 2026-10-19 수도권 한정: ③착공 목록 194건·107,554호 → 71건·48,320호 (= BOARD.stageUnits 지금 ③ 48,320, 후보 제외)
   // 2026-10-20 HOME 판: 71건·48,320호 → 150건·70,761호(새 사업 중 착공 단계 79건 — 단계 올리기 CONSTRUCTION_START 79)
   // 2026-10-20 같은 현장 병합 6쌍: ③ 인천 대체 3곳(2,016호) 빠지고 평택고덕은 대체 3 ↔ 대표 3(2,122호)이 맞바뀌어 147건·68,745호
   // 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): ③ 민간 79곳(22,329호) 빠져 68건·46,416호
   // 2026-10-21 새 덤프(20261020T142230Z): 새 사업 독산동(20호)·방화차고지(75호) ③착공 +2건·+95호
-  assert.deepEqual([l.n, l.units], [71, 47671], '목록 71건 · 47,671호(원장)');   // 2026-10-22 새 덤프(20261021T212310Z): ③착공 새 사업 1(부천역곡 A1 1,160호)
+  /* 판 숫자([71, 47671]) 대신: 원장 ③착공 목록 = 원장 보드(ledger-board.json — 다른 산출물)의 지금 ③착공 사업 수·호수(후보 제외) */
+  assert.ok(l.n > 0);
+  assert.deepEqual([l.n, l.units], [BOARD.stageProjects[BOARD.now][2], BOARD.stageUnits[BOARD.now][2]], '목록 건수·호수(원장)');
 });
 
-test('불변식: 지연 2 · 후보 계산 0 · 후보 0 · 수도권 262건 227,976호', () => {
-  assert.equal(BOARD.judgment.delay.projects, 2);
+test('불변식: 지연 = 사업 행 지연 · 후보 계산 0 · 후보 0 · 수도권 건수·호수 = 원장 보드(10-22 판 지연 2 · 289건 243,542호)', () => {
+  assert.equal(BOARD.judgment.delay.projects, rows.filter((r) => r.issued && r.cls === 'delay').length);
   // 2026-10-19 수도권 한정: 후보 계산 313·후보 1,839 → 0
   assert.equal(BOARD.judgment.candidate.delay.projects, 0);
   const c = BOARD.judgment.candidate;
   assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, 0);
   const metro = listOf('/projects?sido=metro');
-  assert.deepEqual([metro.n, metro.units], [289, 243542]);   // 2026-10-22 새 덤프(20261021T212310Z): 새 사업 1(부천역곡 A1 1,160호) · 2026-10-21 새 덤프: 새 사업 3 · 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
+  assert.deepEqual([metro.n, metro.units], [BOARD.scope.projects, BOARD.scope.units]);
+  assert.deepEqual([metro.n, metro.units], [rows.length, rows.reduce((n, r) => n + r.units, 0)], '수도권 = 원장 행 전부(수도권 한정)');   // 2026-10-22 새 덤프(20261021T212310Z): 새 사업 1(부천역곡 A1 1,160호) · 2026-10-21 새 덤프: 새 사업 3 · 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
 });

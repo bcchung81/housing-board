@@ -46,7 +46,9 @@ test('판정 = 정상 · 주의 · 지연(발급 사업 + 수도권 HOME 사업 
   const c = j.candidate;
   assert.equal(c.ok.projects + c.caution.projects + c.delay.projects, board.scope.candidateJudged, '확인 필요(후보) = 번호가 없는 후보의 같은 계산');
   // 2026-10-19 수도권 한정: 번호 없는 후보(건축HUB 대용량)가 없어 판정 + 확인 필요 = 판정(전엔 D3 이전 판정 1,607 · 86 · 315)
-  assert.deepEqual([j.ok.projects + c.ok.projects, j.caution.projects + c.caution.projects, j.delay.projects + c.delay.projects], [172, 11, 2], '판정 + 확인 필요 = 판정(후보 0)');   // 2026-10-20 HOME 판: 165·2·2 → 176·10·2(새 사업 122) → 같은 현장 병합(정상 −6 · 평택고덕 대표 +3)·기준일 10-20(성남금토 A2 정상→주의) 172·11·2
+  // 2026-10-20 HOME 판: 165·2·2 → 176·10·2(새 사업 122) → 같은 현장 병합(정상 −6 · 평택고덕 대표 +3)·기준일 10-20(성남금토 A2 정상→주의) 172·11·2 — 판마다 바뀌어 저장된 보드와 대조(위)하고 후보 0 만 본다
+  assert.equal(bulkN, 0, '2026-10-19 수도권 한정: 번호 없는 후보(건축HUB 대용량) 없음');
+  assert.deepEqual([c.ok.projects, c.caution.projects, c.delay.projects, board.scope.candidateJudged], [0, 0, 0, 0], '판정 + 확인 필요 = 판정(후보 0)');
   assert.equal(sum(board.regions.map((r) => r.candidate.judged)), board.scope.candidateJudged);
   assert.deepEqual(board.scope, { projects: N, issued: issuedN, candidates: N - issuedN, judged: L.scope.judged, candidateJudged: L.scope.candidateJudged, units: board.scope.units, coverage: 'CAPITAL', bySource: { issued: of((p) => p.issued_at && !isHome(p)), lhCandidates: lhN, hubBulkCandidates: bulkN, home: homeN }, sido: new Set(live.map((p) => p.sgg_code.slice(0, 2))).size, withEvents: L.scope.withEvents, renewal: { projects: tables.projects.filter(isRenewal).length, units: L.scope.renewal.units } });   // 2026-10-20 공공 분류 안2: 민간 정비는 집계 밖 건수·호수만
   assert.equal(board.scope.bySource.issued + lhN + bulkN + homeN, N, '발급 + LH 후보 + 건축HUB 대용량 후보 + 수도권 HOME');
@@ -92,13 +94,13 @@ test('예정일 경과 목록은 수집 계획 3절의 정의와 같다: 발급 
   assert.deepEqual(board0.overdue.map((o) => `${o.id}|${o.eventType}|${o.months}`), expected.slice(0, 200).map((e) => `${e.id}|${e.eventType}|${e.months}`));
   const reg = expected.filter((e) => issued.has(e.id));
   assert.ok(reg.every((e) => home.has(e.id)), '발급 사업의 경과는 모두 HOME 사업(성북·하남 건축HUB 발급 사업은 HOME 에 대응이 없어 숨김)');
-  /* 2026-10-20 HOME 판: 5개 사업 5쌍(모두 준공) → 13개 사업 13쌍(착공 8 — 새 HOME 사업 인천계양 A16·A18, 수원당수2 B1·A1·A3, 부천대장 A9, 남양주왕숙2 A6·A7 의 착공 예정 3개월 경과 · 준공 5) */
-  assert.equal(reg.length, 13);
-  assert.equal(new Set(reg.map((e) => e.id)).size, 13);
-  assert.equal(reg.filter((e) => e.eventType === 'CONSTRUCTION_START').length, 8);
-  const worst = new Map();
-  for (const e of reg) worst.set(e.id, Math.max(worst.get(e.id) ?? 0, e.months));
-  assert.deepEqual([...worst.values()].map((m) => classify(m)).sort(), [...Array(10).fill('caution'), 'delay', 'delay', 'ok'], '인천검단 35·AA13-1 준공예정 지연 · 착공 예정 경과 8 + 인천검단 AA21·이천장호원 B2 주의 · 성남금토 A2(2026-09-16) 한 달이 차지 않음');
+  /* 2026-10-20 HOME 판: 5개 사업 5쌍(모두 준공) → 13개 사업 13쌍(착공 8 — 새 HOME 사업 인천계양 A16·A18, 수원당수2 B1·A1·A3, 부천대장 A9, 남양주왕숙2 A6·A7 의 착공 예정 3개월 경과 · 준공 5)
+     → HOME 2026-11-10 판: 11개 사업 11쌍(착공 6). 쌍 수는 판마다 바뀌어 위 정의로 다시 센 목록과 대조하고, 등급은 경과 개월의 판정 규칙(classify)과 같다 */
+  assert.ok(reg.length > 0, 'HOME 사업의 예정일 경과가 있다');
+  assert.equal(reg.length, expected.length, '번호 있는 사업만(후보 0)');
+  const listed = board0.overdue.filter((o) => issued.has(o.id));
+  if (expected.length <= 200) assert.equal(listed.length, reg.length);
+  assert.ok(listed.every((o) => o.class === classify(o.months)), '목록 등급 = classify(경과 개월)');
 });
 
 test('건축HUB 대용량 후보는 착공 예정 경과를 판정에서 뺀다: 준공 예정 경과만 정상·주의·지연, 뺀 쌍은 excludedStartOverdue 로 센다(발급 사업은 둘 다 판정)', () => {

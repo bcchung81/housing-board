@@ -19,7 +19,7 @@ import { getBoardData } from '@/lib/board/data';
 import { METRO_AREAS, SIDO_SHORT, guOf } from '@/lib/board/metro-overview';
 import { mapScopeHref } from '@/lib/board/map-href';
 import ScopeChip from '@/components/ui/scope-chip';
-import { HOME_POLICY, METRO, aheadAll, inSgg, parsePolicy, parseSgg, pickMonth, viewOf, type AnnualDoc, type CalendarDoc, type HomePolicy, type RegionMapDoc } from '@/lib/board/region';
+import { HOME_POLICY, METRO, aheadAll, inSgg, metroYears, parsePolicy, parseSgg, pickMonth, regionYears, viewOf, yearsThrough, type AnnualDoc, type CalendarDoc, type HomePolicy, type RegionMapDoc } from '@/lib/board/region';
 import { POLICY_WORDS, type AheadWords } from '@/lib/board/public-schedule';
 import { getHomeProjects } from '@/lib/board/projects-index';
 import { AHEAD_SUPPLY, CAND_NAME, HOME_DEFAULT_POLICY, applyFilters, listHref, type Filters } from '@/lib/board/projects-view';
@@ -81,7 +81,7 @@ export default async function RegionPage({ searchParams }: { searchParams: Promi
   const nProjects = new Set(list.map((e) => e.pro)).size;   // 사업 수 = 증가분이 있는 원천 사업 행(HOME '사업 n개'와 같음 — 한 사업이 여러 달이면 한 번)
   const view = viewOf(regionMap, sido);
   const nowM = calendar.referenceDate.slice(0, 7);
-  const last = lastMonth(molit);
+  const last = yearsThrough(sido === 'metro' ? metroYears(molit, annual, metric) : regionYears(molit, annual, metric, sido).years) ?? lastMonth(molit);   // 실적 끝 달 = ② 지난 공급 실적(고른 지표)의 끝
 
   /* 같은 범위의 사업 화면 연결(2026-10-21 W6): 사업 화면과 같은 HOME 원천 행·같은 정책(9·7 기본, 정책 칩이 정책 전체면 전 정책) — 건수 = 그 링크로 열리는 목록 건수, 점검 필요 = 지연·주의(부족률 2%) */
   const hp = await getHomeProjects(), rows = hp.rows;

@@ -55,9 +55,12 @@ test('대조: 지연 확정·후보 계산·병목·12개월 준공·단계 호�
   assert.deepEqual([regionAhead('/region?sido=all').n, regionAhead('/region?sido=all').units], [upN, up]);
   /* 수도권 = 사업 화면 기본 = 지역 공급 기본 = 지도 개요 합계(14,570호 · 25건 — 2026-10-20 HOME 판, 10-19 판 13,372호 · 24건) */
   const ov = O.metroOverview(RMAP, { rows, calendar: CAL, sggNames: IDX.sgg, referenceDate: IDX.referenceDate });
-  assert.equal(num(metro['앞으로 얼마나 공급되는가'].value), 14570);
-  assert.deepEqual([regionAhead('/region').n, regionAhead('/region').units], [25, 14570]);
-  assert.deepEqual([ov.total.an, ov.total.a], [25, 14570]);
+  /* 판 숫자 대신: 원장이 수도권만(coverage CAPITAL, 2026-10-19)이라 수도권 = 전국 = 종합상황판 upcoming 합(2026-11-10 판 18,729호 · 31건) */
+  assert.equal(BOARD.scope.coverage, 'CAPITAL');
+  assert.ok(upN > 0);
+  assert.equal(num(metro['앞으로 얼마나 공급되는가'].value), up);
+  assert.deepEqual([regionAhead('/region').n, regionAhead('/region').units], [upN, up]);
+  assert.deepEqual([ov.total.an, ov.total.a], [upN, up]);
   assert.equal(ov.total.d, listOf('/projects?status=late&sido=metro').length, '지도 개요 지연 = 사업 화면 수도권 지연(장기 포함)');
   /* 지금 단계별 호수·건수: 리본 기준 달 = 목록 행의 현재 단계 합 */
   for (let i = 0; i < 6; i++) {
@@ -220,8 +223,9 @@ test('후속 3: 단계별 연계 ⑤ — 앞으로 12개월 · 준공 예정, �
   const o = done.outcomes.find((x) => x.name === V.AHEAD_COMPLETION);
   assert.ok(o, '이름 = 종합상황판 카드 이름');
   // 옛 원장 upcoming(준공 현재 예정 14,570호·25건) → 정책 진행 자료 LH 준공 예정 9·7 연결 행 중 2026-10~2027-09
-  assert.deepEqual([ahead.units, ahead.projects], [7944, 12]);
-  assert.deepEqual(o.lines, ['7,944호 · 12행', '정책 진행 자료 · LH 준공 예정(9·7 연결)']);
+  // 판 숫자(2026-10-22 판 7,944호 · 12행) 대신 정책 진행 자료 LH 준공 예정에서 다시 센 값
+  assert.ok(ahead.projects > 0);
+  assert.deepEqual(o.lines, [`${ahead.units.toLocaleString('en-US')}호 · ${ahead.projects}행`, '정책 진행 자료 · LH 준공 예정(9·7 연결)']);
   assert.deepEqual(done.outcomes.find((x) => x.name.startsWith('⑤ 준공 층')).lines, ['실적 = 통계누리', '예정 = LH 준공 예정(정책 진행 자료)']);
   assert.ok(!done.outcomes.some((x) => x.lines.some((l) => /LH만|갱신 필요|원장/.test(l)) || x.name === '향후 12개월 공급 예정'), '옛 기준 설명 없음');
   assert.match(read('app/(dashboard)/sources/page.tsx'), /ahead: \{ units: lhAhead\.reduce/);

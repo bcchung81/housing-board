@@ -7,8 +7,10 @@
    만드는 것:
      sources  HOME 원천(source_id)마다 이름·기관(PoC 출처 목록), 마지막 실행 상태·마지막 정상 수집·실행 수·실패 수(덤프), 정상 레코드 수(record_count)·원천 기준일(stats)·조회 상태·제공/조회 건수(PoC 스냅샷)
      poc      스냅샷을 받은 시각, 집계 시각, 데이터가 있는 출처 수(헤드라인), 등록 출처 수, 기관 수
-     grid     연도(2018~2026) × 원천×시도 확보(PoC '자료연도별 확보' 26줄 — 확보·미확보·원본 행 없음·원천 미공표)
-     links    정책–프로그램·프로그램–사업 연결을 검토 상태별로 센다(확정 CONFIRMED · 검토 중 REVIEW · 해제 RELEASED — 덤프)
+     grid     연도(2018~2026) × 원천×시도 확보(PoC '자료연도별 확보' — 확보·미확보·원본 행 없음·원천 미공표)
+     links    정책–프로그램·프로그램–사업 연결을 검토 상태별로 센다(확정 CONFIRMED · 검토 중 REVIEW · 해제 RELEASED — 덤프, 사업 연결 결정 mapping_decision 반영)
+   2026-10-22 22:35 HOME 앱(bbc21f7): /validation 이 없어졌다(404). 자료연도별 확보 격자는 새 주소 /sources/year-coverage(같은 rows 모양, 인천 행이 더해져 39줄)에서 받는다.
+     원천별 조회 상태·제공/조회 건수(옛 /validation coverage)는 HOME 이 더 내주지 않아, 받아 둔 sources-validation.json.gz(있으면)를 그대로 쓴다.
    출력은 결정적이다(정렬, 현재 시각 없음). 실행: node tools/ledger/home-sources.js [--month YYYY-MM] [--raw <HOME 덤프 폴더>] [--fetch-poc] */
 const fs = require('node:fs');
 const path = require('node:path');
@@ -23,7 +25,7 @@ const POC_API = 'https://www.minslab.kr/poc/home/api';
 const POC_FILES = {
   'sources-list.json.gz': ['sources?compact=true', (r) => r.items.length],
   'sources-summary.json.gz': ['source-summary', (r) => r.types.length],
-  'sources-validation.json.gz': ['validation?as_of_date=AS_OF', (r) => r.data_gaps.rows.length],
+  'sources-year-coverage.json.gz': ['sources/year-coverage', (r) => r.rows.length],
   'sources-mappings.json.gz': ['mappings?as_of_date=AS_OF&compact=true', (r) => r.items.length],
   'sources-requirements.json.gz': ['requirements-status?as_of_date=AS_OF', (r) => Object.keys(r.metrics).length],
 };
@@ -63,8 +65,21 @@ async function fetchPoc(dir, asOf) {
 function readPoc(dir) {
   const get = (name) => JSON.parse(zlib.gunzipSync(fs.readFileSync(path.join(dir, name))).toString('utf8'));
   const m = JSON.parse(fs.readFileSync(path.join(dir, 'manifest.json'), 'utf8'));
-  return { list: get('sources-list.json.gz').items, summary: get('sources-summary.json.gz'), validation: get('sources-validation.json.gz'), mappings: get('sources-mappings.json.gz'),
+  const has = (name) => !!m.files[name] && fs.existsSync(path.join(dir, name));
+  return { list: get('sources-list.json.gz').items, summary: get('sources-summary.json.gz'), validation: has('sources-validation.json.gz') ? get('sources-validation.json.gz') : null,
+    yearCoverage: has('sources-year-coverage.json.gz') ? get('sources-year-coverage.json.gz') : null, mappings: get('sources-mappings.json.gz'),
     requirements: get('sources-requirements.json.gz'), fetchedAt: m.files['sources-list.json.gz'].fetched_at };
+}
+
+/* 덤프의 다른 표(수집 실행·연결 결정 제외)에 행이 있는 원천 id. HOME 요약(source-summary groups)은 원천 × 레코드 종류별 행 수로 '저장된 데이터가 있는 출처'를 세므로,
+   원천 표 record_count 가 0 이어도 다른 표에 그 원천의 행이 있으면 센다(ai_publication: 문서 근거 36행 + 분석 300행) */
+function storedSourceIds(raw) {
+  const ids = new Set();
+  for (const f of fs.readdirSync(raw)) {
+    if (!f.endsWith('.jsonl.gz') || /^(home_batch|mapping_decision)\./.test(f)) continue;
+    for (const r of readGz(path.join(raw, f))) if (r.source_id) ids.add(r.source_id);
+  }
+  return ids;
 }
 
 function runStatus(batch) {
@@ -85,19 +100,20 @@ const CELL = { ACQUIRED: 'full', NOT_ACQUIRED: 'none', NO_SOURCE_RECORD: 'nosrc'
 const shortRegion = (r) => r.replace(/(특별시|광역시|도)$/, '');
 
 /* batch: 수집 실행 행 · poc: readPoc() 결과 · mapping/programMapping: 덤프 home_mapping·home_program_mapping 행 */
-function build({ batch, poc, mapping, programMapping }) {
+function build({ batch, poc, mapping, programMapping, stored = new Set() }) {
   const runs = runStatus(batch);
   const byId = Object.fromEntries(poc.list.map((s) => [s.id, s]));
-  const cov = Object.fromEntries(poc.validation.coverage.items.map((c) => [c.source_id, c]));
-  const sources = Object.keys(runs).sort().map((id) => {
-    const r = runs[id], p = byId[id], c = cov[id];
+  const cov = Object.fromEntries((poc.validation?.coverage.items ?? []).map((c) => [c.source_id, c]));
+  /* 등록 원천 전부. 수집 실행이 없는 원천(미수집)도 낸다 — HOME 은 조회 상태 미수집으로 센다. 실행이 없으면 실패가 아니다(PoC 상태가 FAILED 일 때만 실패) */
+  const sources = [...new Set([...Object.keys(runs), ...poc.list.map((s) => s.id)])].sort().map((id) => {
+    const r = runs[id] ?? { runs: 0, failed: 0, interrupted: 0, last: null, lastOk: null }, p = byId[id], c = cov[id];
     return {
-      id, name: p.name, org: p.org, ok: r.last.status === 'SUCCESS', lastRun: iso(r.last.started_at), lastOk: r.lastOk ? iso(r.lastOk) : null, runs: r.runs, failed: r.failed, interrupted: r.interrupted,
-      records: p.record_count, asOf: p.stats.source_base_date ?? p.stats.dataset_version ?? null, query: c.query_status, provided: c.provided_records, fetched: c.fetched_records,
+      id, name: p.name, org: p.org, status: p.status ?? null, ok: r.last ? r.last.status === 'SUCCESS' : p.status !== 'FAILED', lastRun: r.last ? iso(r.last.started_at) : null, lastOk: r.lastOk ? iso(r.lastOk) : null, runs: r.runs, failed: r.failed, interrupted: r.interrupted,
+      records: p.record_count, asOf: p.stats.source_base_date ?? p.stats.dataset_version ?? null, query: c?.query_status ?? null, provided: c?.provided_records ?? null, fetched: c?.fetched_records ?? null,
     };
   });
 
-  const grid = poc.validation.data_gaps.rows.map((g) => ({
+  const grid = (poc.yearCoverage?.rows ?? poc.validation.data_gaps.rows).map((g) => ({
     id: `${g.source_id}|${g.label}|${g.region}`, name: g.label, region: shortRegion(g.region), owner: 'HOME',
     years: Object.fromEntries(g.cells.map((c) => [c.year, CELL[c.status]])),
   }));
@@ -107,7 +123,7 @@ function build({ batch, poc, mapping, programMapping }) {
   const total = batch.length;
   return {
     schema: 'home-sources/2',
-    poc: { fetchedAt: poc.fetchedAt, generatedAt: poc.summary.generated_at, registered: poc.list.length, withData: poc.list.filter((s) => s.record_count > 0).length, orgs: new Set(poc.list.map((s) => s.org)).size },
+    poc: { fetchedAt: poc.fetchedAt, generatedAt: poc.summary.generated_at, registered: poc.list.length, withData: poc.list.filter((s) => s.record_count > 0 || stored.has(s.id)).length, orgs: new Set(poc.list.map((s) => s.org)).size },
     runs: { total, success: batch.filter((b) => b.status === 'SUCCESS').length, failed: batch.filter((b) => b.status === 'FAILED').length, interrupted: batch.filter((b) => b.status === 'INTERRUPTED').length },
     sources, grid, links,
   };
@@ -127,7 +143,8 @@ async function main() {
   const asOf = P.referenceDateOf(dir), pocDir = path.join(dir, 'raw', 'home-api', asOf);
   if (process.argv.includes('--fetch-poc')) await fetchPoc(pocDir, asOf);
   if (!fs.existsSync(path.join(pocDir, 'manifest.json'))) { console.error(`PoC 스냅샷이 없다: ${pocDir} — --fetch-poc 로 받는다`); process.exit(1); }
-  const doc = build({ batch: readGz(path.join(raw, 'home_batch.jsonl.gz')), poc: readPoc(pocDir), mapping: readGz(path.join(raw, 'home_mapping.jsonl.gz')), programMapping: readGz(path.join(raw, 'home_program_mapping.jsonl.gz')) });
+  const decisions = path.join(raw, 'mapping_decision.jsonl.gz'), mapping = readGz(path.join(raw, 'home_mapping.jsonl.gz'));
+  const doc = build({ batch: readGz(path.join(raw, 'home_batch.jsonl.gz')), poc: readPoc(pocDir), mapping: fs.existsSync(decisions) ? require('./home-source').withDecisions(mapping, readGz(decisions)) : mapping, programMapping: readGz(path.join(raw, 'home_program_mapping.jsonl.gz')), stored: storedSourceIds(raw) });
   fs.writeFileSync(path.join(P.ROOT, OUT), JSON.stringify(doc) + '\n');
   const bad = doc.sources.filter((s) => !s.ok).length;
   console.log(`${OUT}: 출처 ${doc.poc.withData}(등록 ${doc.sources.length}, 실패 ${bad}) · 확보 격자 ${doc.grid.length}줄 · 실행 ${doc.runs.total} · 연결 ${doc.links.map((l) => `${l.type} 검토 ${l.review}·확정 ${l.confirmed}`).join(' / ')}`);
@@ -135,4 +152,4 @@ async function main() {
 
 if (require.main === module) main().catch((e) => { console.error(e.message); process.exit(1); });
 
-module.exports = { build, runStatus, readPoc, fetchPoc, writeManifest, scrub, POC_FILES };
+module.exports = { build, storedSourceIds, runStatus, readPoc, fetchPoc, writeManifest, scrub, POC_FILES };

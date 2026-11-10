@@ -12,7 +12,11 @@ const MO = require('../../tools/ledger/map-overview.js');
 const RM = require('../../data/board/region-map.json');
 const MOV = require('../../data/board/map-overview.json');
 const HP = require('../../data/board/home-projects.json');
-const G = require('../fixtures/map-golden-1021/golden.json');
+/* 정답 파일: MAP_GOLDEN(기본 tests/fixtures/map-golden-1021/golden.json). _meta.fetched_at(정답을 받은 시각)이 원장 HOME 판 snapshot_at 보다 이르면
+   판에 따라 달라지는 대조는 건너뛴다(tests/js/home-era.cjs — 2026-11-09 P2). 2026-10-22 22:35 판 정답은 .cache/home-parity/golden 에서 다시 만들었다(만든 곳 _meta.made_from) */
+const E = require('./home-era.cjs');
+const G = require(require('node:path').resolve(E.ROOT, process.env.MAP_GOLDEN || 'tests/fixtures/map-golden-1021/golden.json'));
+const ERA = E.staleWhy(G._meta.fetched_at, `map-golden 정답(${process.env.MAP_GOLDEN || 'tests/fixtures/map-golden-1021'})`) || false;
 
 const doc = (k) => J.scopeVals(O.homeOverview(RM, MOV), k);
 const D97 = doc('p97'), DALL = doc('all');
@@ -35,10 +39,11 @@ test('9·7 기본(PoC #overview 기본): 원천 232행 · 집계 177 · 중복·
   assert.equal(D97.units.filter((u) => u.v.n > 0).length, 44);
 });
 
-test('정책 전체(?policy=all · 일반사용자 관점): 원천 444행 · 집계 347 · 제외 56 · 물량 없음 41 · 290,357호', () => {
+test('정책 전체(?policy=all · 일반사용자 관점): 원천 행 · 집계 · 제외 · 물량 없음 · 호수 = PoC', { skip: ERA }, () => {
   const o = G.overview_all, t = DALL.total;
   assert.deepEqual([t.n, t.c - t.q, t.x, t.q, t.u], [o['summary.project_count'], o['summary.target_counted_projects'], o['summary.target_excluded_projects'], o['summary.target_missing_projects'], o['summary.target_units']]);
-  assert.deepEqual([t.n, t.u], [444, 290357]);   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): +1행 부천역곡 A1 · 연남동 167 → 82 · 병점 780 → 726(10-21 판 443·289,336)
+  /* 판 숫자([444, 290357]) 대신: 지도 문서 = 사업 보기 자료(home-projects.json views.all — 같은 HOME 원천 행 묶음) */
+  assert.deepEqual([t.n, t.c - t.q, t.x, t.q, t.u], [HP.views.all.rows, HP.views.all.counted, HP.views.all.excluded, HP.views.all.missing, HP.views.all.units]);
 });
 
 test('시도 카드(9·7): 행 수·계획 호수 = PoC groups.region(서울 29·47,615 · 인천 42·20,251 · 경기 159·83,405)', () => {
@@ -61,8 +66,10 @@ test('시군구(9·7) 44곳: 면마다 행 수·계획 호수 = PoC municipaliti
   assert.deepEqual(off, [], '시군구 값 차이(설명할 잔차 없음 — home-projects 가 PoC 시군구 소속을 스냅샷으로 맞췄다)');
 });
 
-test("'!' 지연 표시(9·7): 시군구·시도 묶음의 단계 목표 대비 부족률 2% 이상 — PoC 와 다른 곳은 그 지역의 9·7 행 가운데 덤프 뒤 HOME 변경(residuals) 행으로 모두 설명된다", (t) => {
-  const pocSgg = new Set(Object.keys(G.delay_marks.city).map((id) => O.unitOf(HP.bySgg[id].codes[0])));
+test("'!' 지연 표시(9·7): 시군구·시도 묶음의 단계 목표 대비 부족률 2% 이상 — PoC 와 다른 곳은 그 지역의 9·7 행 가운데 덤프 뒤 HOME 변경(residuals) 행으로 모두 설명된다", { skip: ERA }, (t) => {
+  /* 정답에 시군구 비교가 없으면(2026-10-22 22:35 HOME 앱부터 정책 응답이 요청 범위만 싣는다 — _meta.note) 시군구 대조는 하지 않고 시도만 */
+  const pocSgg = G.delay_marks.city ? new Set(Object.keys(G.delay_marks.city).map((id) => O.unitOf(HP.bySgg[id].codes[0]))) : null;
+  if (!pocSgg) t.diagnostic('정답에 시군구 비교 없음 — 시도 표시만 대조');
   const pocSido = new Set(Object.keys(G.delay_marks.region).map((n) => SIDO[n]));
   const ours = MOV.scopes.p97.flags;
   /* 화면 문서에도 같은 표시가 실린다(면·시도 v.f) */
@@ -76,7 +83,7 @@ test("'!' 지연 표시(9·7): 시군구·시도 묶음의 단계 목표 대비 
     lines.push(`${label}: ${why.map((r) => `${r.id}(${[...new Set(resOf.get(r.id).map((x) => x.field))].join('·')})`).join(' ')} — ${resOf.get(why[0].id)[0].why}`);
   };
   const p97 = HP.rows.filter((r) => MO.inScope(r, 'p97'));
-  for (const c of new Set([...pocSgg, ...Object.keys(ours.sgg)])) {
+  for (const c of pocSgg ? new Set([...pocSgg, ...Object.keys(ours.sgg)]) : []) {
     if (pocSgg.has(c) === !!ours.sgg[c]) continue;
     explain(`시군구 ${c} ${D97.units.find((u) => u.code === c).name} 우리 ${ours.sgg[c] ? '!' : '없음'} · PoC ${pocSgg.has(c) ? '!' : '없음'}`, p97.filter((r) => faceOfRow(r) === c));
   }
@@ -84,12 +91,12 @@ test("'!' 지연 표시(9·7): 시군구·시도 묶음의 단계 목표 대비 
     if (pocSido.has(c) === !!ours.sido[c]) continue;
     explain(`시도 ${c} 우리 ${ours.sido[c] ? '!' : '없음'} · PoC ${pocSido.has(c) ? '!' : '없음'}`, p97.filter((r) => SIDO[r.region] === c));
   }
-  for (const c of pocSgg) assert.ok(ours.sgg[c], `PoC '!' 시군구 ${c} 는 우리도 '!'`);
+  for (const c of pocSgg ?? []) assert.ok(ours.sgg[c], `PoC '!' 시군구 ${c} 는 우리도 '!'`);
   note(t, lines);
 });
 
 /* 2026-10-22 새 덤프: 성남금토 A4·A2 도 같은 까닭(같은 블록 원천 행 측정값)으로 PoC 지연 — 지연 4 vs PoC 6 도 잔차로 설명한다 */
-test('지연·주의 사업 수(9·7): 지연 4 vs PoC 6 · 주의 0 vs PoC 2 는 같은 블록 원천 행 측정값이 덤프 묶음에만 있는 4행(home-projects residuals judge)', (t) => {
+test('지연·주의 사업 수(9·7) = PoC 사업 판정 — 다르면 같은 블록 원천 행 측정값이 덤프 묶음에만 있는 행(home-projects residuals judge)으로 설명', { skip: ERA }, (t) => {
   const st = G.policy_97.project_status;
   const moved = HP.residuals.filter((x) => x.field === 'judge' && rowOf.get(x.id).p97 && x.poc.status !== x.dump.status);
   const adj = (k) => moved.filter((x) => x.poc.status === k).length - moved.filter((x) => x.dump.status === k).length;
@@ -98,7 +105,7 @@ test('지연·주의 사업 수(9·7): 지연 4 vs PoC 6 · 주의 0 vs PoC 2 �
   note(t, moved.map((x) => `${x.id} 판정 덤프 ${x.dump.status} · PoC ${x.poc.status} — ${x.why}`));
 });
 
-test('향후 12개월 공급 예정(9·7): 우리 17,838호(31건) − 덤프 뒤 입력 변경 행의 차 = PoC 17,488호(30건)', (t) => {
+test('향후 12개월 공급 예정(9·7): 우리 호수·건수 − 덤프 뒤 입력 변경 행의 차 = PoC', { skip: ERA }, (t) => {
   const { total, projects } = G.policy_97.upcoming_12m, sum = (u) => (u || []).reduce((s, x) => s + x[1], 0);
   const moved = HP.residuals.filter((x) => x.field === 'upcoming' && rowOf.get(x.id).p97 && rowOf.get(x.id).chart.p97);
   const du = moved.reduce((s, x) => s + sum(x.dump) - sum(x.poc), 0), dn = moved.filter((x) => sum(x.dump) > 0).length - moved.filter((x) => sum(x.poc) > 0).length;
@@ -106,7 +113,7 @@ test('향후 12개월 공급 예정(9·7): 우리 17,838호(31건) − 덤프 �
   note(t, moved.map((x) => `${x.id} ${rowOf.get(x.id).name}: 덤프 ${sum(x.dump)}호 · PoC ${sum(x.poc)}호 — ${x.why}`));
 });
 
-test('단계 물량 띠 = PoC 지도 서버 단계 분포(2026-10-21 W4 결정 ④): 합계·시도·시군구 면마다 7칸(정책·사업화·인허가·건설·공급·입주·미확인)이 정답과 같다 — 두 범위, 잔차 0', () => {
+test('단계 물량 띠 = PoC 지도 서버 단계 분포(2026-10-21 W4 결정 ④): 합계·시도·시군구 면마다 7칸(정책·사업화·인허가·건설·공급·입주·미확인)이 정답과 같다 — 두 범위, 잔차 0', { skip: ERA }, () => {
   const names = ['POLICY', 'BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'SUPPLY', 'MOVE_IN', 'UNKNOWN'], arr = (o) => names.map((k) => o[k]);
   for (const [D, o] of [[D97, G.overview_97], [DALL, G.overview_all]]) {
     assert.deepEqual(D.total.st, arr(o.stage), '합계');
@@ -141,7 +148,13 @@ test('상세 지도 6단계 칩 = PoC 단계 이름(정책·사업화·인허가
       for (const id of b.chart_target_ids || []) if (st.has(id) && rowOf.get(id).units.counted > 0) assert.equal(st.get(id).s, nz[0][0], `${b.id} ${id}`);
     }
   }
-  /* 9·7 칩: 정책 14 · 사업화 5 · 인허가 6 · 건설 92 · 공급 83 · 입주 0 · 미확인 31(231행) — 2026-10-22 새 덤프(PoC as_of 10-22 서버 단계 분포): 새 2행(부천역곡 A1·인천송림4 1) 건설, 병점복합타운 주복1 미확인 → 건설,
-     강서염창·서울대방·서울공릉 건설 → 공급(공급 측정값 추정 → 원천 확인) · 10-21 판 14·5·6·92·80·0·32(229행) */
-  assert.deepEqual(MO.PARTS.map((_, i) => files.reduce((a, d) => a + d.poc.p97.k[i], 0)), [14, 5, 6, 92, 83, 0, 31]);
+  /* 9·7 칩 = 행 단계(위 루프가 pocStages 로 다시 센 값)와 같고, 합 + 시군구 없는 행 = HOME 응답 원천 행 수(같은 판일 때) — 판 숫자 대신 */
+  const chips = MO.PARTS.map((_, i) => files.reduce((a, d) => a + d.poc.p97.k[i], 0)), st97 = MO.pocStages(HP, dash.p97, 'p97');
+  const free = MO.PARTS.map(() => 0);
+  for (const r of HP.rows) if (MO.inScope(r, 'p97') && !HM.sggOfRow(r)) { const s = st97.get(r.id).s; free[s] += 1; }
+  assert.equal(chips.length, 7);
+  assert.equal(chips.reduce((a, b) => a + b, 0), D97.total.n - free.reduce((a, b) => a + b, 0), '칩 합 = 9·7 원천 행 − 시군구 없는 행');
+  if (!ERA) {   // HOME 응답: 원천 행 수
+    assert.equal(chips.reduce((a, b) => a + b, 0) + free.reduce((a, b) => a + b, 0), G.overview_97['summary.project_count'], '칩 합 + 시군구 없는 행 = 정답 원천 행 수');
+  }
 });

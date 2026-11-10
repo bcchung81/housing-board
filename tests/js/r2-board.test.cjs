@@ -34,7 +34,10 @@ test('1 월 상세 = 9·7 그 달 공급 예정: 달마다 건수·호수가 지
     assert.deepEqual([new Set(m.map((e) => e.pro)).size, sum(m)], [u.projects, u.units], u.ym);
     assert.equal(sum(R.aheadAll(CAL.home.p97, 'metro', (c) => c).filter((e) => e.ym === u.ym)), sum(m), `${u.ym} 지역 공급(수도권) = 월 상세`);
   }
-  assert.ok(MA.monthSupply(CAL, '2026-10').some((e) => /과천지식정보타운 S-12/.test(e.name) && e.units === 1424));
+  /* 판 예시(10-22 판 2026-10 과천지식정보타운 S-12 1,424호) 대신: 공급 예정이 있는 달이 있고, 그 달 항목은 이름·정수 호수가 있는 사업 행 */
+  const busy = CAL.home.p97.months.filter((u) => u.units > 0);
+  assert.ok(busy.length > 0, '9·7 공급 예정이 있는 달이 있다');
+  for (const u of busy) assert.ok(MA.monthSupply(CAL, u.ym).every((e) => e.name && Number.isInteger(e.units) && e.units > 0), u.ym);
   /* 화면: 공급 예정 표(DataGrid) + 머리에 건수·호수, 종합상황판 앞으로 12개월 카드에 같은 달 링크 */
   assert.match(month, /monthSupply\(calendar, ym\)/);
   assert.match(month, /<DataGrid label=\{`\$\{monthLabel\(ym\)\} 공급 예정 사업`\}/);
@@ -47,7 +50,8 @@ test('1 월 상세 = 9·7 그 달 공급 예정: 달마다 건수·호수가 지
   assert.match(fut, /data-slot="fut-month"/);
   assert.match(fut, /href=\{`\/month\/\$\{fu\.ym\}`\}/);
   assert.match(fut, /\{f\(fu\.units\)\}호/, '링크 숫자 = 그 달 준공 예정 호수(= 월 상세 합계)');
-  assert.ok(MA.monthIds(MOLIT.months, LH.blocks, CAL).includes('2027-09'), '앞으로 12개월 끝 달까지 월 상세가 열린다');
+  const lastYm = CAL.home.p97.months[CAL.home.p97.months.length - 1].ym;   // 10-22 판 2027-09
+  assert.ok(MA.monthIds(MOLIT.months, LH.blocks, CAL).includes(lastYm), '앞으로 12개월 끝 달까지 월 상세가 열린다');
 });
 
 test("2 '경과 0개월'은 쓰지 않는다 · 월 상세 판정 칸 = HOME 사업 판정", () => {

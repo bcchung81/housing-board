@@ -167,7 +167,10 @@ test('4 지역 공급 시군구 거르기: 고양시(41280) = 덕양·일산동�
     assert.equal(sum(got, (e) => e.units), sum(codes, (c) => sum(metro.filter((e) => R.entrySgg(e, e.sd, T) === c), (e) => e.units)), `${unit} 합계 = 시군구(구) 합`);
   }
   assert.deepEqual(M.guOf('41280'), ['41281', '41285', '41287']);
-  assert.ok(metro.filter((e) => R.inSgg(e, '41270', T)).length >= 2, '안산: 시 코드 + 구 코드 사업');
+  /* 안산: 시 코드 + 구 코드 사업 — 10-22 판 달력엔 둘 다 있었지만(시 1 · 단원구 2) 판·달마다 바뀌므로 같은 모양의 항목으로 본다 */
+  const ansan = [{ id: 'PRJ-41270-9001', sgg: '경기도 안산시', sd: '41' }, { id: 'PRJ-41273-9002', sgg: '경기도 안산시 단원구', sd: '41' }, { id: 'PRJ-41271-9003', sgg: '경기도 안산시 상록구', sd: '41' }];
+  assert.deepEqual(ansan.map((e) => R.inSgg(e, '41270', T)), [true, true, true], '안산: 시 코드 + 구 코드 사업');
+  assert.equal(R.inSgg({ id: 'PRJ-41281-9004', sgg: '경기도 고양시 덕양구', sd: '41' }, '41270', T), false, '다른 시의 구는 빠진다');
   const page = read('app/(dashboard)/region/page.tsx');
   assert.match(page, /const sgg = parseSgg\(regionMap, sido, SGG_TABLE, q\.sgg\);/, '서버 렌더에서 ?sgg= 를 읽는다');
   assert.match(page, /const inArea = \(pl: HomePolicy\) => aheadAll\(calendar\.home\[pl\], sido, sidoName\)\.filter\(\(e\) => !sgg \|\| inSgg\(e, sgg, SGG_TABLE\)\);/, '달별 막대·목록·합계·정책 칩이 같은 거른 목록(2026-10-21 HOME 공급 예정)');

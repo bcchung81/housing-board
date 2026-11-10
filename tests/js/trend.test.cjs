@@ -54,7 +54,10 @@ test('이력 파일: 2025-01~관측 달 앞 달 소급 행(한 줄에 하나), �
   }
   const back = h.rows.filter((r) => r.basis === 'BACKFILL');
   assert.equal(back[0].month, '2025-01');
-  assert.equal(back.length + 1, L.months.indexOf(MONTH) + 1, '2025-01 … 관측 달 앞 달이 모두 있다');
+  /* 관측 달 앞 달은 모두 한 행씩: 소급(BACKFILL) 또는 지난 달에 --close 로 붙인 관측(OBSERVED, 2026-10 부터) */
+  const before = h.rows.filter((r) => r.month < MONTH);
+  assert.deepEqual(before.map((r) => r.month), L.months.slice(0, L.months.indexOf(MONTH)), '2025-01 … 관측 달 앞 달이 모두 있다');
+  assert.ok(before.every((r) => r.basis === (r.month >= '2026-10' ? 'OBSERVED' : 'BACKFILL')), '2026-10 부터는 관측 행');
   assert.ok(back.every((r) => !('addedSources' in r)), '소급 행은 단계별 원천을 쓰지 않아 원천 추가 표지가 없다');
   assert.deepEqual(L.trend.slice(0, -1), loadHistory().filter((r) => r.month < L.observedMonth));
   const own = L.trend[L.trend.length - 1];

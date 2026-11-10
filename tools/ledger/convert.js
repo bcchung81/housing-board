@@ -192,7 +192,7 @@ function convert({ observedMonth, registry, molit, lh, catalog, bundles, agencie
   if (hubBulk) {
     if (!legalDong?.abolished) throw new Error('hubBulk 에는 legalDong(폐지 행 포함)이 필요하다');
     const ref = `hub-bulk-hs-${hubBulk.dataMonth}`, asOfB = hubBulk.dataAsOf, now = Date.parse(`${asOfB}T00:00:00Z`);
-    t.sources.push({ ...own, source_ref: ref, provider: '국토교통부 건축HUB', dataset_name: `건축HUB 대용량 제공 주택인허가(기본개요·행위개요·대지위치) ${hubBulk.dataMonth} 데이터`, source_url: 'https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do', source_record_key: '관리_주택대장_PK', data_as_of: asOfB, collected_at: hubBulk.collectedAt, original_filename: hubBulk.files.join(' · '), notes: `전국 주택인허가 중 사업승인일·총세대수가 있고 2025-01 전에 사용검사하지 않았으며 진행 중(2025 이후 사용검사 · 2021-10 이후 승인 · 2018 이후 착공 · 2015 이후 승인이고 2025 이후 사용검사 예정 중 하나)인 기록(tools/ledger/hub-bulk.js). 필지·블록 단위로 모은 후보 사업과 그 일정·물량.${hubBulk.note ? ` ${hubBulk.note}.` : ''}`, record_count: hubBulk.records.length, used_by: ['/'] });
+    t.sources.push({ ...own, source_ref: ref, provider: '국토교통부 건축HUB', dataset_name: `건축HUB 대용량 제공 주택인허가(기본개요·행위개요·대지위치) ${hubBulk.dataMonth} 데이터`, source_url: 'https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do', source_record_key: '관리_주택대장_PK', data_as_of: asOfB, collected_at: hubBulk.collectedAt, original_filename: hubBulk.files.join(' · '), notes: `전국 주택인허가 중 사업승인일·총세대수가 있고 2025-01 전에 사용검사하지 않았으며 진행 중(2025 이후 사용검사 · ${hubBulk.permitFrom ?? '2021-10'} 이후 승인 · 2018 이후 착공 · 2015 이후 승인이고 2025 이후 사용검사 예정 중 하나)인 기록(tools/ledger/hub-bulk.js). 필지·블록 단위로 모은 후보 사업과 그 일정·물량.${hubBulk.note ? ` ${hubBulk.note}.` : ''}`, record_count: hubBulk.records.length, used_by: ['/'] });
     const mapper = codeMapper(legalDong.rows, legalDong.abolished);
     const regPks = new Map(registry.projects.flatMap((p) => p.refs.filter((r) => r.system === 'hub-hs-basis').map((r) => [String(r.value), p.id])));
     const regPnus = new Map(registry.projects.flatMap((p) => (p.pnus || []).map((x) => [x, p.id])));
@@ -529,7 +529,9 @@ function loadInputs({ observedMonth = '2026-10', lhSgg, hubEvents, legalDong, hu
 function readHubBulk(file) {
   const { records } = JSON.parse(fs.readFileSync(file, 'utf8'));
   const m = JSON.parse(fs.readFileSync(file.replace(/\.json$/, '.manifest.json'), 'utf8'));
-  return { dataMonth: m.data_month, dataAsOf: m.data_as_of, collectedAt: m.fetched_at.slice(0, 10), files: Object.values(m.files).map((f) => f.zip), records, ...(m.note ? { note: m.note } : {}) };
+  /* 진행 중 규칙 a 의 승인 하한(그 판을 만든 기준일의 60개월 전 달 — hub-bulk.js permitFloor)은 manifest 규칙 글에서 읽어 sources 행 notes 에 적는다 */
+  const permitFrom = /사업승인일 ≥ (\d{4}-\d{2})-\d{2}/.exec(m.rules?.active ?? '')?.[1];
+  return { dataMonth: m.data_month, dataAsOf: m.data_as_of, collectedAt: m.fetched_at.slice(0, 10), files: Object.values(m.files).map((f) => f.zip), records, ...(m.note ? { note: m.note } : {}), ...(permitFrom ? { permitFrom } : {}) };
 }
 /* 전국 모집공고·입주예정 원본 폴더(schemas/ledger-YYYY-MM/raw: myhome · lh-notice · move-in, tools/ledger/collect-national.js) → convert 의 national 입력.
    입주예정 CSV 는 따옴표 칸(쉼표 포함)을 받고, 기준일은 원본 파일 이름 끝의 날짜(…_20260630.csv) */

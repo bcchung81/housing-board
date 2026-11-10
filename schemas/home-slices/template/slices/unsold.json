@@ -1,0 +1,1 @@
+[{"batch_id":"00000000-0000-0000-0000-000000000000","entity_id":"EX_UNSOLD_0001","kind":"unsold","payload":{"metric":"예시","municipality":"예시","period":"예시","region":"예시","unit_basis":"예시","units":0},"payload_hash":"0000000000000000000000000000000000000000000000000000000000000000","recorded_at":"2026-10-22 13:00:00.123456+00","revision_no":1,"source_id":"example_source"}]

@@ -47,7 +47,8 @@ function issueRow(r: StatusRow): Row {
     id: `${r.owner}-${r.id}`,
     c: {
       name: { text: dotBreak(r.name), title: r.note }, owner: { text: OWNER[r.owner], title: HOME_TIP }, org: dotBreak(showOrg(r.org)),
-      st: r.ok ? { text: '조회 범위 일부', swatch: 'var(--warn)', tone: 'warn', title: '마지막 수집은 정상이지만 조회 범위가 일부', sort: 1 }
+      st: r.missing ? { text: '미수집', swatch: 'var(--muted-foreground)', title: '수집 실행이 없음 — 정책 진행 자료의 원천 상태가 미수집', sort: 2 }
+        : r.ok ? { text: '조회 범위 일부', swatch: 'var(--warn)', tone: 'warn', title: '마지막 수집은 정상이지만 조회 범위가 일부', sort: 1 }
         : { text: '실패', swatch: 'var(--bad)', tone: 'bad', title: `마지막 실행 ${r.lastRun ?? ''} 실패${r.lastOk ? ' — 마지막 정상 값을 씀' : ' — 정상 수집 없음'}`, sort: 0 },
       runs: r.runs, last: r.lastOk ?? { na: '없음' }, asOf: r.asOf, n: r.count,
     },
@@ -56,8 +57,8 @@ function issueRow(r: StatusRow): Row {
 
 export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
   const all = statusRows(hs);
-  const issues = all.filter((r) => !r.ok || r.warn), okRows = all.filter((r) => r.ok && !r.warn);
-  const nFail = all.filter((r) => !r.ok).length, nWarn = all.filter((r) => r.warn).length;
+  const issues = [...all.filter((r) => !r.ok), ...all.filter((r) => r.warn), ...all.filter((r) => r.missing)], okRows = all.filter((r) => r.ok && !r.warn && !r.missing);
+  const nFail = all.filter((r) => !r.ok).length, nWarn = all.filter((r) => r.warn).length, nMiss = all.filter((r) => r.missing).length;
   const failNames = all.filter((r) => !r.ok).map((r) => r.name);
   const rows = issues.map(issueRow);
   /* 모든 행이 같은 표지인 열(예: 구분 모두 HOME · 원천 기준일 없음)은 접는다 */
@@ -79,11 +80,12 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
         <LegendList>
           {nFail ? <li className={KEY}><i className={`${dot} rounded-full bg-bad`} aria-hidden="true" />실패</li> : null}
           {nWarn ? <li className={KEY}><i className={`${dot} rounded-full bg-warn`} aria-hidden="true" />조회 범위 일부</li> : null}
+          {nMiss ? <li className={KEY}><i className={`${dot} rounded-full bg-muted-foreground`} aria-hidden="true" />미수집</li> : null}
           <li className={KEY}><i className={`${dot} rounded-full bg-ok`} aria-hidden="true" />정상</li>
         </LegendList>
         <InfoTip label="수집 상태 읽는 법">
           <dl>
-            <dt>실패 · 조회 범위 일부</dt><dd>실패 = 마지막 실행이 실패해 마지막 정상 값을 씀 · 조회 범위 일부 = 마지막 수집은 정상이지만 조회 범위가 일부 · 둘만 표로 펼치고 정상 원천은 기관별로 접음</dd>
+            <dt>실패 · 조회 범위 일부{nMiss ? ' · 미수집' : ''}</dt><dd>실패 = 마지막 실행이 실패해 마지막 정상 값을 씀 · 조회 범위 일부 = 마지막 수집은 정상이지만 조회 범위가 일부{nMiss ? ' · 미수집 = 수집 실행이 없음' : ''} · 이 상태만 표로 펼치고 정상 원천은 기관별로 접음</dd>
             <dt>{OWNER.HOME}</dt><dd>HOME(국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료)의 수집 출처 · 수집 출처 = 정상으로 저장된 레코드가 있는 출처 · 건수 = 원천별 정상 레코드 수 · 원천 기준일은 원천이 밝힌 곳만 · 건수·기준일·조회 범위는 {hs.poc.fetchedAt.slice(0, 10).replace(/-/g, '.')} 받아 둔 PoC 값(덤프에 없음), 수집 실행은 덤프</dd>
           </dl>
         </InfoTip>
@@ -92,12 +94,13 @@ export function Collect({ hs, items }: { hs: HomeSources; items: Source[] }) {
         <MetricRow label="수집 출처" value={hs.poc.withData} unit="곳"
           items={[`등록 ${hs.sources.length} · 기관 ${hs.poc.orgs} · 우리 보관 원천 ${items.length}은 아래 카탈로그`,
             <span key="f" className={nFail ? 'text-bad' : undefined}>실패 {nFail}{failNames.length ? ` (${failNames.join(' · ')})` : ''}</span>,
-            <span key="w" className={nWarn ? 'text-warn' : undefined}>조회 범위 일부 {nWarn}</span>]} />
+            <span key="w" className={nWarn ? 'text-warn' : undefined}>조회 범위 일부 {nWarn}</span>,
+            ...(nMiss ? [<span key="m">미수집 {nMiss}</span>] : [])]} />
       </div>
       {rows.length ? (
         <>
           {folded.length ? <p className="m-0 text-sm text-muted-foreground">{folded.join(' · ')}</p> : null}
-          <div className={`${GRID_DENSE} ${NOWRAP}`}><DataGrid label="실패·조회 범위 일부 원천" cols={cols} rows={rows} sortable={false} /></div>
+          <div className={`${GRID_DENSE} ${NOWRAP}`}><DataGrid label="실패·조회 범위 일부·미수집 원천" cols={cols} rows={rows} sortable={false} /></div>
         </>
       ) : null}
       <div className={rows.length ? 'mt-4' : undefined}>

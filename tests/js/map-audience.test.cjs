@@ -75,11 +75,15 @@ test('연결: 정적 제목은 CSS 로 관점별, 정책담당자 문구 유지,
   assert.equal(read('assets/js/overview.js'), read('public/assets/js/overview.js'));
 });
 
-test('일반사용자 부제 사업 수(2026-10-21 W5-MP2): 9·7 175곳 · 정책 전체 346곳, 정책담당자는 원천 230건·443건 + 집계 175·346', () => {
+test('일반사용자 부제 사업 수(2026-10-21 W5-MP2): 9·7·정책 전체 모두 집계 사업 수(곳), 정책담당자는 원천 n건 + 집계 n건 — 숫자는 HOME 원천 행 사업 보기(home-projects)와 같다', () => {
   const O = require('../../lib/board/metro-overview.ts'), RM = require('../../data/board/region-map.json'), MOV = require('../../data/board/map-overview.json');
+  const HP = require('../../data/board/home-projects.json');
   const D = (k) => J.scopeVals(O.homeOverview(RM, MOV), k).total;
-  assert.equal(J.totalSubOf('u', D('p97'), true), '사업 177곳');   // 2026-10-22 새 덤프(20261021T212310Z): 9·7 집계 행 175 → 177
-  assert.equal(J.totalSubOf('u', D('all'), true), '사업 347곳');   // 2026-10-22 새 덤프(20261021T212310Z): 정책 전체 집계 행 346 → 347(부천역곡 A1)
-  assert.match(J.totalSubOf('u', D('p97'), false), /^원천 232건 · 177건 집계/);   // 2026-10-22 새 덤프(20261021T212310Z): 9·7 +2행(부천역곡 A1·인천송림4 1), 정책 전체 +1행(부천역곡 A1)
-  assert.match(J.totalSubOf('u', D('all'), false), /^원천 444건 · 347건 집계/);
+  const n = (x) => x.toLocaleString('en-US');
+  /* 판 숫자(9·7 177곳 · 원천 232건, 정책 전체 347곳 · 원천 444건) 대신: 지도 문서(region-map·map-overview)의 부제 숫자 = 사업 보기 자료(home-projects.json views)의 원천 행·집계 행 */
+  for (const k of ['p97', 'all']) {
+    const v = HP.views[k];
+    assert.equal(J.totalSubOf('u', D(k), true), `사업 ${n(v.counted)}곳`, k);
+    assert.match(J.totalSubOf('u', D(k), false), new RegExp(`^원천 ${n(v.rows)}건 · ${n(v.counted)}건 집계`), k);
+  }
 });

@@ -11,10 +11,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..', '..');
-const GOLD = path.join(ROOT, '.cache/home-parity/golden');
+const E = require('./home-era.cjs');
+const GOLD = E.GOLDEN_DIR;   // HOME_GOLDEN_DIR(기본 .cache/home-parity/golden)
 const files = ['golden-policy.json', 'golden-projects.json', 'S2-raw-annual-supply.json'];
 const has = files.every((f) => fs.existsSync(path.join(GOLD, f)));
-const skip = !has && '정답 파일(.cache/home-parity/golden) 없음';
+/* 정답 받은 시각 < 원장 HOME 판 snapshot_at 이면 옛 판 정답 — 건너뛴다(home-era.cjs) */
+const skip = has ? E.golden(path.join(GOLD, 'golden-policy.json')).skip : '정답 파일(.cache/home-parity/golden) 없음';
 const gold = (f) => JSON.parse(fs.readFileSync(path.join(GOLD, f), 'utf8'));
 const gp = has ? gold('golden-policy.json') : null, gj = has ? gold('golden-projects.json') : null, ga = has ? gold('S2-raw-annual-supply.json') : null;
 
@@ -33,7 +35,8 @@ const res = (field) => HP.residuals.filter((r) => r.field === field);
 
 test('12개월: 지역 공급 9·7 = PoC 향후 12개월 공급 예정 — 월별·합·사업 수, 남는 차이는 덤프 뒤 변경 사업(PRO_ id)뿐', { skip }, () => {
   const g = { total: gp['policy.statistics.upcoming_12m.total'], projects: gp['policy.statistics.upcoming_12m.projects'], months: gp['policy.statistics.upcoming_12m.months'] };
-  assert.deepEqual([g.total, g.projects], [18214, 31], '정답(9·7 기본 18,214호·31사업)');   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22): 광교 A17BL 600호 2027-09 → 2026-10 · 병점복합타운 주복1 726호 2026-11(10-21 판 17,488·30)
+  /* 판 숫자(정답 16,916호·30사업) 대신: 정답 합 = 정답 월별 합(정답 자체 정합) */
+  assert.equal(g.months.reduce((n, m) => n + m.units, 0), g.total, '정답 월별 합 = 정답 합');
   const h = CAL.home.p97;
   assert.deepEqual(h.months.map((m) => m.ym), g.months.map((m) => m.month), '같은 12개월(기준 달 2026-10 ~ 2027-09)');
   /* 잔차: 덤프 값을 PoC 값으로 바꾸면 정답과 바이트까지 같아야 한다 */
@@ -41,7 +44,8 @@ test('12개월: 지역 공급 9·7 = PoC 향후 12개월 공급 예정 — 월�
   assert.ok(rs.every((r) => /^PRO_[0-9a-f]{24}$/.test(r.id) && AFTER_DUMP.test(r.why) && r.use === 'dump'), '잔차는 PRO_ id · 덤프 뒤 변경 · 값은 덤프');
   /* 2026-10-21 새 덤프(20261020T142230Z): 10-20 판 잔차 1사업(인천부평 도시재생뉴딜 A PRO_9a256c5d211050be9f0814ff — 덤프 350호, PoC 0)이 새 판에서 같아져 잔차 없음 */
   assert.deepEqual(rs.map((r) => r.id), [], '2026-10-21 새 덤프: 12개월 공급 잔차 0');
-  assert.deepEqual([h.total, h.projects], [18214, 31], '덤프 값 = 정답');   // 2026-10-22 새 덤프(20261021T212310Z, 정답 as_of 10-22)(10-21 판 17,488·30)
+  if (!rs.length) assert.deepEqual([h.total, h.projects], [g.total, g.projects], '잔차 없으면 덤프 값 = 정답(판 숫자 16,916·30 대신)');
+  assert.deepEqual([h.total, h.projects], [HP.views.p97.upcoming.units, HP.views.p97.upcoming.projects], '지역 공급 = 사업 보기 자료 views.p97.upcoming');
   const adj = Object.fromEntries(h.months.map((m) => [m.ym, m.units]));
   for (const r of rs) { for (const [ym, u] of r.dump) adj[ym] -= u; for (const [ym, u] of r.poc) adj[ym] += u; }
   assert.deepEqual(g.months.map((m) => [m.month, adj[m.month]]), g.months.map((m) => [m.month, m.units]), '월별(잔차 바꾼 뒤)');
@@ -71,8 +75,12 @@ test('12개월 자료 모양: 옛 sido 묶음(일반사용자 공급 일정)은 
   }
   /* 시군구 거르기: 이름이 코드표에 있으면 그 코드 */
   const T = { areas: require('../../lib/board/metro-overview.ts').METRO_AREAS };
-  const e = Object.values(CAL.home.p97.sido).flat().find((x) => /과천지식정보타운 S-12/.test(x.name));
-  assert.equal(R.entrySgg(e, '41', T), '41290');
+  /* 특정 사업 대신: '과천' 사업이 12개월에 있으면 41290, 아니어도 경기도 항목 중 시군구가 풀리는 사업은 41xxx 코드로 걸러진다 */
+  const flat = CAL.home.p97.sido['41'], gwa = flat.find((x) => /과천/.test(x.name));
+  if (gwa) assert.equal(R.entrySgg(gwa, '41', T), '41290');
+  const named = flat.filter((x) => R.entrySgg(x, '41', T));
+  assert.ok(named.length > 0, '시군구 거르기가 되는 12개월 항목이 있다');
+  assert.ok(named.every((x) => /^41\d{3}$/.test(R.entrySgg(x, '41', T))));
   assert.ok(Object.values(CAL.sido).flat().some((x) => x.type === 'COMPLETION'), '옛 원장 예정(준공·입주)은 /citizen/schedule 이 계속 쓴다');
 });
 

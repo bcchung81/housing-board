@@ -27,6 +27,19 @@ const pp = require('../../data/board/policy-progress.json');
 const OUTS = ['data/board/region-calendar.json', 'data/board/region-map.json', 'data/board/region-annual.json', 'data/board/requirements.json'];
 const homeDir = H.latestHomeDir(P.ledgerDir(P.latestMonth()));
 const raw = !!homeDir && H.homeAvailable(homeDir);
+/* 담당자 이름·입력 사유(2026-11-09): 덤프 판이면 그 판 원본에서 센다. 슬라이스 판(manifest slice_format — home-slice.py apply, 담당자 칸을 처음부터 싣지 않음)이면
+   그 판 원본에 actor·reason·change_reason 칸이 하나도 없는지 확인하고(slice), 산출물 검사용 이름·사유는 같은 달 덤프 판 원본(있으면 가장 늦은 것)에서 가져온다 */
+function officerTermsFor(dir) {
+  const Hs = require('../../tools/ledger/home-source'), fsx = require('node:fs'), px = require('node:path');
+  const isSlice = (d) => !!JSON.parse(fsx.readFileSync(px.join(d, 'manifest.json'), 'utf8')).slice_format;
+  if (!isSlice(dir)) return { slice: false, ...Hs.officerTerms(Hs.readHome(dir).kinds) };
+  const keys = [];
+  const walk = (o) => { if (Array.isArray(o)) { for (const v of o) walk(v); return; } if (!o || typeof o !== 'object') return; for (const [k, v] of Object.entries(o)) { if (['actor', 'reason', 'change_reason'].includes(k)) keys.push(k); walk(v); } };
+  walk(Hs.readHome(dir).kinds);
+  const base = px.dirname(dir), dumps = fsx.readdirSync(base).map((e) => px.join(base, e)).filter((d) => fsx.existsSync(px.join(d, 'manifest.json')) && !isSlice(d) && Hs.homeAvailable(d)).sort();
+  const t = dumps.length ? Hs.officerTerms(Hs.readHome(dumps.at(-1)).kinds) : { names: [], reasons: new Set() };
+  return { slice: true, sliceKeys: keys.length, fromDump: dumps.length > 0, ...t };
+}
 const pocSnap = fs.existsSync(path.join(P.ledgerDir(P.latestMonth()), 'raw', 'home-api', P.referenceDateOf(P.ledgerDir(P.latestMonth())), 'sources-requirements.json.gz'));   // PoC 스냅샷 압축 원본(git 무시)
 
 /* ---------- 생성기 결정성 ---------- */
@@ -195,7 +208,7 @@ test('lib/board/region: 종류 칩(마지막 하나는 못 끔)·고른 달(예�
 });
 
 /* ---------- 지난 공급 실적 ---------- */
-test('서울·인천·경기 HOME 통계 2022~2025 는 통계누리(molit.json)와 같다 — 그래서 2018~2021 을 앞에 이어도 된다', () => {
+test('서울·인천·경기 HOME 통계 2022~2025 는 통계누리(molit.json)와 같다 — 그래서 HOME 을 정본으로 써도 겹치는 해 값이 그대로다', () => {
   const sumYear = (months, arr, y) => months.reduce((s, m, i) => s + (m.startsWith(String(y)) && arr[i] != null ? arr[i] : 0), 0);
   for (const code of R.METRO) for (const y of [2022, 2023, 2024, 2025]) {
     for (const m of ['start', 'sale', 'complete']) assert.equal(sumYear(annual.months, annual.series[m][code], y), sumYear(molit.months, molit.metrics[m].series[code].total, y), `${code} ${m} ${y}`);
@@ -215,6 +228,51 @@ test('regionYears: 서울·인천·경기는 2018 부터(2018~2021 완결), 전�
       assert.deepEqual(r.years, A.annualSeries(molit, m, code || '00').filter((y) => y.year >= 2022), `${m} ${code}`);
     }
   }
+});
+
+/* 2026-11-10: HOME 판(region-annual)이 통계누리 파일(molit.json)보다 한 달 늦게까지 있을 때 2026 이 HOME 9개월 합보다 작아 PoC #annual-supply 와 달랐다.
+   수도권 정본 = HOME(2026-10-19) — 착공·모집·준공은 HOME 월 자료 전부, 인허가만 2022~ 통계누리. 판 숫자 대신 관계로 잠근다 */
+test('regionYears: 서울·인천·경기 착공·모집·준공 = HOME 월 자료(region-annual) 해마다 합 — 통계누리 파일과 끝 달이 달라도', () => {
+  const sumYear = (months, arr, y) => { const v = months.map((m, i) => (m.startsWith(`${y}-`) ? arr[i] : null)).filter((x) => x != null); return v.length ? v.reduce((a, b) => a + b, 0) : null; };
+  const homeYears = [...new Set(annual.months.map((m) => Number(m.slice(0, 4))))];
+  for (const code of R.METRO) {
+    for (const m of ['start', 'sale', 'complete']) {
+      const ys = R.regionYears(molit, annual, m, code).years;
+      assert.deepEqual(ys.map((y) => [y.year, y.value]), homeYears.map((y) => [y, sumYear(annual.months, annual.series[m][code], y)]), `${code} ${m}`);
+      /* 끝 달 = HOME 판의 값 있는 마지막 달(통계누리 파일 끝 달이 아니라) */
+      const lastHome = annual.months.filter((ym, i) => annual.series[m][code][i] != null).at(-1);
+      assert.equal(R.yearsThrough(ys), lastHome, `${code} ${m} 끝 달`);
+    }
+    /* 인허가: 2018~2021 = HOME 연 단위, 2022~ = 통계누리 월 자료 */
+    const p = R.regionYears(molit, annual, 'permit', code).years;
+    for (const y of p) assert.equal(y.value, y.year < R.NATION_FROM ? annual.permitYearly[code][String(y.year)] : sumYear(molit.months, molit.metrics.permit.series[code].total, y.year), `${code} permit ${y.year}`);
+    assert.equal(R.yearsThrough(p), molit.months.filter((ym, i) => molit.metrics.permit.series[code].total[i] != null).at(-1), `${code} permit 끝 달 = 통계누리`);
+  }
+  /* HOME 을 정본으로 써도 되는 근거: 두 파일에 다 있는 달은 값이 같다 */
+  for (const code of R.METRO) for (const m of ['start', 'sale', 'complete']) molit.months.forEach((ym, i) => {
+    const j = annual.months.indexOf(ym);
+    if (j >= 0) assert.equal(annual.series[m][code][j], molit.metrics[m].series[code].total[i], `${code} ${m} ${ym} HOME = 통계누리`);
+  });
+  /* 수도권 합 = 세 시도 합 */
+  for (const m of ['start', 'sale', 'complete']) for (const y of R.metroYears(molit, annual, m)) {
+    assert.equal(y.value, R.METRO.reduce((s, c) => s + (R.regionYears(molit, annual, m, c).years.find((v) => v.year === y.year)?.value ?? 0), 0), `수도권 ${m} ${y.year}`);
+  }
+  /* 한 달 늦은 HOME 판을 흉내 내도(통계누리 파일은 그대로) 그 달이 들어간다 */
+  const next = (ym) => { const k = Number(ym.slice(0, 4)) * 12 + Number(ym.slice(5, 7)); return `${Math.floor(k / 12)}-${String(k % 12 + 1).padStart(2, '0')}`; };
+  const ext = next(annual.months.at(-1));
+  const late = { ...annual, months: [...annual.months, ext], series: Object.fromEntries(Object.entries(annual.series).map(([m, by]) => [m, Object.fromEntries(Object.entries(by).map(([c, a]) => [c, [...a, 7]]))])) };
+  const y = Number(ext.slice(0, 4));
+  const before = R.regionYears(molit, annual, 'complete', '11').years.find((v) => v.year === y)?.value ?? 0;
+  assert.equal(R.regionYears(molit, late, 'complete', '11').years.find((v) => v.year === y).value, before + 7);
+  assert.equal(R.yearsThrough(R.regionYears(molit, late, 'complete', '11').years), ext);
+});
+
+test('지난 공급 실적 화면 글자: 끝 달·출처는 고른 지표의 연도별 막대 끝(yearsThrough)에서', () => {
+  const ann = read('components/region/Annual.tsx'), page = read('app/(dashboard)/region/page.tsx'), sch = read('app/(dashboard)/citizen/schedule/page.tsx');
+  assert.match(ann, /const thru = yearsThrough\(years\)/);
+  assert.match(ann, /년부터 \$\{ymDot\(thru\)\}까지/);
+  assert.match(page, /const last = yearsThrough\(/);
+  assert.match(sch, /const last = yearsThrough\(years\)/);
 });
 
 /* ---------- 동네 여건 범위 ---------- */
@@ -265,8 +323,9 @@ test('산출물에 담당자 칸(actor·reason)이 없다', () => {
   for (const f of OUTS) assert.doesNotMatch(read(f), /"(actor|actor_basis|reason|change_reason|responsible_org)"\s*:/, f);
 });
 test('산출물에 HOME 원본의 담당자 이름·입력 사유 원문이 0건이다', { skip: !raw && 'HOME 판 원본(jsonl.gz) 없음' }, () => {
-  const t = H.officerTerms(H.readHome(homeDir).kinds);
-  assert.ok(t.names.length > 0, '원본에 담당자 입력이 있다(시험이 빈 목록으로 통과하지 않게)');
+  const t = officerTermsFor(homeDir);
+  if (t.slice) assert.equal(t.sliceKeys, 0, '슬라이스 판 원본에 담당자 칸(actor·reason)이 없다');
+  if (!t.slice || t.fromDump) assert.ok(t.names.length > 0, '원본(슬라이스 판이면 같은 달 덤프 판)에 담당자 입력이 있다(시험이 빈 목록으로 통과하지 않게)');
   for (const f of [...OUTS, 'data/board/area-facts.json', 'data/board/home-sources.json']) {
     const s = read(f);
     assert.deepEqual(t.names.filter((n) => s.includes(n)), [], `${f}: 이름`);

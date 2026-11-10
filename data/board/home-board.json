@@ -84,756 +84,756 @@
  "actualSource": "HOME",
  "stageUnits": [
   [
-   86131,
-   12742,
-   24006,
-   23878,
-   6818,
+   53774,
+   23970,
+   45398,
+   26366,
+   4067,
    0
   ],
   [
-   48285,
-   47407,
-   25342,
-   25563,
-   6978,
+   20539,
+   55869,
+   45549,
+   27551,
+   4067,
    0
   ],
   [
-   47747,
-   47407,
-   24131,
-   25587,
-   8703,
+   20539,
+   55869,
+   43486,
+   28499,
+   5182,
    0
   ],
   [
-   46567,
-   47407,
-   24131,
-   25902,
-   9568,
+   20539,
+   55759,
+   42416,
+   28814,
+   6047,
    0
   ],
   [
-   43741,
-   47407,
-   25080,
-   26399,
-   10948,
+   20481,
+   54612,
+   41744,
+   30258,
+   6480,
    0
   ],
   [
-   35676,
-   45191,
-   26656,
-   29673,
-   16379,
+   20481,
+   50550,
+   37101,
+   38094,
+   7349,
    0
   ],
   [
-   34687,
-   43761,
-   27367,
-   26779,
-   20981,
+   20481,
+   50122,
+   35821,
+   35317,
+   11834,
    0
   ],
   [
-   34687,
-   43761,
-   27367,
-   26241,
-   21519,
+   20481,
+   49528,
+   36415,
+   34779,
+   12372,
    0
   ],
   [
-   31399,
-   43761,
-   26610,
-   29702,
-   22103,
+   20406,
+   48691,
+   33282,
+   38129,
+   13067,
    0
   ],
   [
-   30457,
-   43761,
-   27552,
-   29586,
-   22219,
+   20406,
+   47749,
+   34224,
+   38013,
+   13183,
    0
   ],
   [
-   28655,
-   45276,
-   27839,
-   26995,
-   24810,
+   20119,
+   47749,
+   34511,
+   35930,
+   15266,
    0
   ],
   [
-   20476,
-   45276,
-   25493,
-   31245,
-   31085,
+   18233,
+   45003,
+   28618,
+   42659,
+   19062,
    0
   ],
   [
-   20176,
-   45276,
-   25793,
-   31245,
-   31085,
+   17933,
+   45003,
+   27942,
+   43635,
+   19062,
    0
   ],
   [
-   5333,
-   57675,
-   24851,
-   34250,
-   31466,
+   2504,
+   58917,
+   26731,
+   45980,
+   19443,
    0
   ],
   [
-   3605,
-   57675,
-   22990,
-   35873,
-   33432,
+   2504,
+   57984,
+   24066,
+   49578,
+   19443,
    0
   ],
   [
-   3605,
-   57675,
-   21708,
-   33508,
-   37079,
+   2504,
+   57984,
+   22784,
+   47843,
+   22460,
    0
   ],
   [
-   3605,
-   57157,
-   20278,
-   30262,
-   42273,
+   1074,
+   57466,
+   23302,
+   47259,
+   24474,
    0
   ],
   [
-   2995,
-   52429,
-   22393,
-   28402,
-   47356,
+   773,
+   53340,
+   23634,
+   47634,
+   28194,
    0
   ],
   [
-   2395,
-   52429,
-   22453,
-   27646,
-   48652,
+   773,
+   53340,
+   23634,
+   46818,
+   29010,
    0
   ],
   [
-   1138,
-   52429,
-   22453,
-   22066,
-   55489,
+   773,
+   53340,
+   23634,
+   42506,
+   33322,
    0
   ],
   [
-   173,
-   52429,
-   19165,
-   25338,
-   56470,
+   773,
+   53340,
+   19491,
+   46216,
+   33755,
    0
   ],
   [
-   173,
-   52429,
-   18005,
-   24843,
-   58125,
+   773,
+   53340,
+   18331,
+   45721,
+   35410,
    0
   ],
   [
-   173,
-   52429,
-   18005,
-   13518,
-   67379,
+   773,
+   53340,
+   17539,
+   15537,
+   64315,
    2071
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    9397,
-   23167,
-   67486,
+   26231,
+   64422,
    3845
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    9337,
-   22432,
-   67462,
+   25496,
+   64398,
    4664
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    9337,
-   22432,
-   67448,
+   25496,
+   64384,
    4678
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    9337,
-   22432,
-   67049,
+   25496,
+   63985,
    5077
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    9227,
-   22542,
-   66637,
+   25606,
+   63573,
    5489
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    9227,
-   22542,
-   65038,
+   25606,
+   61974,
    7088
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    6953,
-   23753,
-   64647,
+   26817,
+   61583,
    8542
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    5231,
-   21332,
-   68790,
+   24396,
+   65726,
    8542
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    4337,
-   22226,
-   67679,
+   25290,
+   64615,
    9653
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    4337,
-   22226,
-   67618,
+   25290,
+   64554,
    9714
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    4337,
-   22226,
-   67265,
+   25290,
+   64201,
    10067
   ],
   [
-   173,
-   49507,
+   773,
+   48907,
    4337,
-   16586,
-   67962,
+   19650,
+   64898,
    15010
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    37572,
-   12079,
-   71756,
+   10515,
+   73320,
    15723
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    37271,
-   12380,
-   67839,
+   10816,
+   69403,
    19640
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    37271,
-   12380,
-   67489,
+   10816,
+   69053,
    19990
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    37271,
-   12380,
-   65581,
+   10816,
+   67145,
    21898
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    37271,
-   12380,
-   63945,
+   10816,
+   65509,
    23534
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    35756,
-   10249,
-   66780,
+   8685,
+   68344,
    24345
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    35756,
-   10249,
-   65655,
+   8685,
+   67219,
    25470
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    35756,
-   10249,
-   62107,
+   8685,
+   63671,
    29018
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    35756,
-   10249,
-   60870,
+   8685,
+   62434,
    30255
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    35756,
-   10249,
-   58755,
+   8685,
+   60319,
    32370
   ],
   [
-   173,
-   16272,
+   773,
+   15672,
    35756,
-   10249,
-   58211,
+   8685,
+   59775,
    32914
   ]
  ],
  "stageProjects": [
   [
+   24,
+   30,
+   74,
+   43,
+   6,
+   0
+  ],
+  [
+   21,
+   32,
    73,
-   15,
-   38,
-   41,
+   45,
+   6,
+   0
+  ],
+  [
+   21,
+   32,
+   68,
+   49,
+   7,
+   0
+  ],
+  [
+   21,
+   31,
+   67,
+   49,
+   9,
+   0
+  ],
+  [
+   20,
+   29,
+   68,
+   50,
    10,
    0
   ],
   [
-   66,
-   19,
-   39,
-   42,
+   20,
+   24,
+   60,
+   62,
    11,
    0
   ],
   [
-   65,
-   19,
-   36,
-   44,
-   13,
-   0
-  ],
-  [
-   63,
-   19,
-   36,
-   44,
-   15,
-   0
-  ],
-  [
-   58,
-   19,
-   39,
-   43,
-   18,
-   0
-  ],
-  [
-   46,
-   16,
-   41,
-   47,
-   27,
-   0
-  ],
-  [
-   44,
-   15,
-   41,
-   43,
-   34,
-   0
-  ],
-  [
-   44,
-   15,
-   41,
-   42,
-   35,
-   0
-  ],
-  [
-   39,
-   15,
-   39,
-   48,
-   36,
-   0
-  ],
-  [
-   38,
-   15,
-   40,
-   47,
-   37,
-   0
-  ],
-  [
-   36,
-   16,
-   41,
-   44,
-   40,
-   0
-  ],
-  [
-   24,
-   16,
-   36,
-   52,
-   49,
-   0
-  ],
-  [
+   20,
    23,
-   16,
-   37,
-   52,
-   49,
+   58,
+   57,
+   19,
    0
   ],
   [
-   8,
-   28,
-   36,
-   55,
-   50,
-   0
-  ],
-  [
-   6,
-   28,
-   34,
+   20,
+   22,
+   59,
    56,
-   53,
+   20,
    0
   ],
   [
-   6,
-   28,
-   33,
-   50,
+   19,
+   21,
+   54,
+   61,
+   22,
+   0
+  ],
+  [
+   19,
+   20,
+   55,
    60,
+   23,
    0
   ],
   [
-   6,
-   27,
-   32,
+   18,
+   20,
+   56,
+   57,
+   26,
+   0
+  ],
+  [
+   16,
+   17,
+   44,
+   67,
+   33,
+   0
+  ],
+  [
+   15,
+   17,
    44,
    68,
-   0
-  ],
-  [
-   4,
-   20,
-   34,
-   44,
-   75,
-   0
-  ],
-  [
-   3,
-   20,
    33,
-   41,
-   80,
    0
   ],
   [
    1,
-   20,
-   33,
    31,
-   92,
+   41,
+   70,
+   34,
    0
   ],
   [
-   0,
-   20,
-   31,
+   1,
    30,
-   96,
+   38,
+   74,
+   34,
    0
   ],
   [
-   0,
-   20,
+   1,
    30,
+   37,
+   69,
+   40,
+   0
+  ],
+  [
+   1,
    29,
-   98,
+   35,
+   69,
+   43,
+   0
+  ],
+  [
+   0,
+   22,
+   36,
+   71,
+   48,
+   0
+  ],
+  [
+   0,
+   22,
+   35,
+   68,
+   52,
+   0
+  ],
+  [
+   0,
+   22,
+   34,
+   61,
+   60,
+   0
+  ],
+  [
+   0,
+   22,
+   30,
+   62,
+   63,
+   0
+  ],
+  [
+   0,
+   22,
+   29,
+   61,
+   65,
    0
   ],
   [
    0,
    20,
    21,
-   19,
-   113,
+   22,
+   110,
    4
   ],
   [
    0,
    15,
    6,
-   30,
-   120,
+   33,
+   117,
    6
   ],
   [
    0,
    15,
    6,
-   29,
-   120,
+   32,
+   117,
    7
   ],
   [
    0,
    15,
    6,
-   29,
-   119,
+   32,
+   116,
    8
   ],
   [
    0,
    15,
    6,
-   29,
-   118,
+   32,
+   115,
    9
   ],
   [
    0,
    15,
    6,
-   29,
-   117,
+   32,
+   114,
    10
   ],
   [
    0,
    15,
    6,
-   29,
-   114,
+   32,
+   111,
    13
   ],
   [
    0,
    15,
    3,
-   30,
-   113,
+   33,
+   110,
    16
   ],
   [
    0,
    15,
    3,
-   28,
-   115,
+   31,
+   112,
    16
   ],
   [
    0,
    15,
    3,
-   28,
-   113,
+   31,
+   110,
    18
   ],
   [
    0,
    15,
    3,
-   28,
-   112,
+   31,
+   109,
    19
   ],
   [
    0,
    15,
    3,
-   28,
-   110,
+   31,
+   107,
    21
   ],
   [
    0,
    15,
    3,
-   24,
-   105,
+   27,
+   102,
    30
   ],
   [
    0,
    12,
    6,
-   16,
-   111,
+   13,
+   114,
    32
   ],
   [
    0,
    12,
    6,
-   16,
-   104,
+   13,
+   107,
    39
   ],
   [
    0,
    12,
    6,
-   16,
-   103,
+   13,
+   106,
    40
   ],
   [
    0,
    12,
    6,
-   16,
-   97,
+   13,
+   100,
    46
   ],
   [
    0,
    12,
    6,
-   16,
-   92,
+   13,
+   95,
    51
   ],
   [
    0,
    12,
    6,
-   12,
-   94,
+   9,
+   97,
    53
   ],
   [
    0,
    12,
    6,
-   12,
-   92,
+   9,
+   95,
    55
   ],
   [
    0,
    12,
    6,
-   12,
-   86,
+   9,
+   89,
    61
   ],
   [
    0,
    12,
    6,
-   12,
-   84,
+   9,
+   87,
    63
   ],
   [
    0,
    12,
    6,
-   12,
-   80,
+   9,
+   83,
    67
   ],
   [
    0,
    12,
    6,
-   12,
-   79,
+   9,
+   82,
    68
   ]
  ],
  "judgment": {
   "ok": {
-   "projects": 168,
-   "units": 149692
+   "projects": 163,
+   "units": 145417
   },
   "caution": {
-   "projects": 2,
-   "units": 541
+   "projects": 3,
+   "units": 919
   },
   "delay": {
-   "projects": 6,
-   "units": 2182
+   "projects": 10,
+   "units": 6079
   },
   "excluded": {
    "projects": 1,
@@ -845,8 +845,8 @@
   0,
   0,
   0,
-  1988,
-  0,
+  4792,
+  21592,
   0
  ],
  "cautionByStage": [
@@ -854,7 +854,7 @@
   0,
   0,
   0,
-  643,
+  0,
   0
  ],
  "regions": [
@@ -864,13 +864,13 @@
    "projects": 27,
    "units": 47615,
    "judged": 27,
-   "ok": 24,
+   "ok": 27,
    "caution": 0,
-   "delay": 3,
-   "delayUnits": 1133,
+   "delay": 0,
+   "delayUnits": 0,
    "cautionUnits": 0,
-   "okUnits": 46482,
-   "supplyReached": 2089,
+   "okUnits": 47615,
+   "supplyReached": 1821,
    "homeDelay": "준공 14호 부족 (3.5%)"
   },
   {
@@ -885,8 +885,8 @@
    "delayUnits": 0,
    "cautionUnits": 0,
    "okUnits": 21449,
-   "supplyReached": 6703,
-   "homeDelay": null
+   "supplyReached": 5245,
+   "homeDelay": "공급 1,108호 부족 (17.4%)"
   },
   {
    "code": "41",
@@ -894,14 +894,14 @@
    "projects": 120,
    "units": 84511,
    "judged": 119,
-   "ok": 114,
-   "caution": 2,
-   "delay": 3,
-   "delayUnits": 1049,
-   "cautionUnits": 541,
-   "okUnits": 81761,
-   "supplyReached": 49333,
-   "homeDelay": "공급 1,393호 부족 (2.7%) · 준공 1,974호 부족 (81.8%)"
+   "ok": 106,
+   "caution": 3,
+   "delay": 10,
+   "delayUnits": 6079,
+   "cautionUnits": 919,
+   "okUnits": 76353,
+   "supplyReached": 28344,
+   "homeDelay": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
   }
  ],
  "agencies": [
@@ -910,16 +910,16 @@
    "name": "LH",
    "projects": 144,
    "units": 95952,
-   "ok": 135,
-   "caution": 2,
-   "delay": 6,
-   "okUnits": 92069,
-   "cautionUnits": 541,
-   "delayUnits": 2182,
+   "ok": 130,
+   "caution": 3,
+   "delay": 10,
+   "okUnits": 87794,
+   "cautionUnits": 919,
+   "delayUnits": 6079,
    "excludedUnits": 1160,
    "candidateUnits": 0,
    "note": null,
-   "delayedSharePct": 2.3
+   "delayedSharePct": 6.3
   },
   {
    "id": "unknown",
@@ -1026,8 +1026,8 @@
   },
   {
    "ym": "2026-11",
-   "units": 6199,
-   "projects": 10
+   "units": 4901,
+   "projects": 9
   },
   {
    "ym": "2026-12",
@@ -1089,37 +1089,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 101,
-    "units": 66484
+    "projects": 150,
+    "units": 99248
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 3,
-    "units": 1133
+    "projects": 1,
+    "units": 726
    },
    "delayByStage": [
     0,
-    32705,
-    20114,
-    713,
-    905,
+    0,
+    0,
+    976,
+    3656,
     0
    ],
    "cautionByStage": [
     0,
-    0,
-    0,
+    348,
+    100,
     0,
     0,
     0
    ],
-   "judged": 104,
+   "judged": 151,
    "max": {
-    "d": 32705,
-    "w": 0
+    "d": 3656,
+    "w": 348
    }
   },
   {
@@ -1128,37 +1128,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 108,
-    "units": 104330
+    "projects": 154,
+    "units": 133913
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 3,
-    "units": 1133
+    "projects": 1,
+    "units": 726
    },
    "delayByStage": [
     0,
-    29524,
-    19384,
     0,
-    745,
+    0,
+    976,
+    3656,
     0
    ],
    "cautionByStage": [
     0,
+    1778,
+    100,
     0,
-    0,
-    53,
     0,
     0
    ],
-   "judged": 111,
+   "judged": 155,
    "max": {
-    "d": 29524,
-    "w": 53
+    "d": 3656,
+    "w": 1778
    }
   },
   {
@@ -1167,37 +1167,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 109,
-    "units": 104868
+    "projects": 154,
+    "units": 133913
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 3,
-    "units": 1133
+    "projects": 1,
+    "units": 726
    },
    "delayByStage": [
     0,
-    28986,
-    18846,
     0,
     0,
+    976,
+    2541,
     0
    ],
    "cautionByStage": [
     0,
+    1778,
+    100,
     0,
-    0,
-    367,
     0,
     0
    ],
-   "judged": 112,
+   "judged": 155,
    "max": {
-    "d": 28986,
-    "w": 367
+    "d": 2541,
+    "w": 1778
    }
   },
   {
@@ -1206,37 +1206,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 111,
-    "units": 106048
+    "projects": 154,
+    "units": 133913
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 3,
-    "units": 1133
+    "projects": 1,
+    "units": 726
    },
    "delayByStage": [
     0,
-    27806,
-    17776,
     0,
     0,
+    976,
+    2541,
     0
    ],
    "cautionByStage": [
     0,
+    1778,
+    100,
     0,
-    0,
-    367,
     0,
     0
    ],
-   "judged": 114,
+   "judged": 155,
    "max": {
-    "d": 27806,
-    "w": 367
+    "d": 2541,
+    "w": 1778
    }
   },
   {
@@ -1245,37 +1245,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 116,
-    "units": 108874
+    "projects": 155,
+    "units": 133971
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 3,
-    "units": 1133
+    "projects": 1,
+    "units": 726
    },
    "delayByStage": [
     0,
-    24980,
-    16097,
     0,
     0,
+    976,
+    3497,
     0
    ],
    "cautionByStage": [
     0,
+    1720,
+    42,
     0,
-    0,
-    367,
     0,
     0
    ],
-   "judged": 119,
+   "judged": 156,
    "max": {
-    "d": 24980,
-    "w": 367
+    "d": 3497,
+    "w": 1720
    }
   },
   {
@@ -1284,37 +1284,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 128,
-    "units": 116939
+    "projects": 155,
+    "units": 133971
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 3,
-    "units": 1133
+    "projects": 1,
+    "units": 726
    },
    "delayByStage": [
     0,
-    16915,
-    9936,
     0,
     0,
+    976,
+    3791,
     0
    ],
    "cautionByStage": [
     0,
+    1720,
+    100,
     0,
-    0,
-    367,
     0,
     0
    ],
-   "judged": 131,
+   "judged": 156,
    "max": {
-    "d": 16915,
-    "w": 367
+    "d": 3791,
+    "w": 1720
    }
   },
   {
@@ -1323,8 +1323,8 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 130,
-    "units": 117928
+    "projects": 153,
+    "units": 132673
    },
    "caution": {
     "projects": 0,
@@ -1332,28 +1332,28 @@
    },
    "delay": {
     "projects": 3,
-    "units": 1133
+    "units": 2024
    },
    "delayByStage": [
     0,
-    15926,
-    9662,
     0,
-    0,
+    1817,
+    976,
+    2921,
     0
    ],
    "cautionByStage": [
     0,
+    1720,
     0,
     0,
-    367,
     0,
     0
    ],
-   "judged": 133,
+   "judged": 156,
    "max": {
-    "d": 15926,
-    "w": 367
+    "d": 2921,
+    "w": 1720
    }
   },
   {
@@ -1362,8 +1362,8 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 130,
-    "units": 117928
+    "projects": 153,
+    "units": 132673
    },
    "caution": {
     "projects": 0,
@@ -1371,28 +1371,28 @@
    },
    "delay": {
     "projects": 3,
-    "units": 1133
+    "units": 2024
    },
    "delayByStage": [
     0,
-    15926,
-    10556,
     0,
-    0,
+    2117,
+    976,
+    3915,
     0
    ],
    "cautionByStage": [
     0,
+    1720,
     0,
     0,
-    367,
     0,
     0
    ],
-   "judged": 133,
+   "judged": 156,
    "max": {
-    "d": 15926,
-    "w": 367
+    "d": 3915,
+    "w": 1720
    }
   },
   {
@@ -1401,37 +1401,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 135,
-    "units": 121216
+    "projects": 153,
+    "units": 132164
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 3,
-    "units": 1133
+    "projects": 4,
+    "units": 2608
    },
    "delayByStage": [
     0,
-    12713,
-    8180,
     0,
+    2117,
     0,
+    5864,
     0
    ],
    "cautionByStage": [
     0,
+    1720,
     0,
-    0,
-    367,
+    976,
     0,
     0
    ],
-   "judged": 138,
+   "judged": 157,
    "max": {
-    "d": 12713,
-    "w": 367
+    "d": 5864,
+    "w": 1720
    }
   },
   {
@@ -1440,37 +1440,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 135,
-    "units": 121931
+    "projects": 152,
+    "units": 131937
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 4,
-    "units": 1360
+    "projects": 5,
+    "units": 2835
    },
    "delayByStage": [
     0,
-    11771,
-    8180,
-    1309,
     0,
+    2117,
+    1918,
+    5748,
     0
    ],
    "cautionByStage": [
     0,
-    0,
+    1720,
     0,
     0,
     0,
     0
    ],
-   "judged": 139,
+   "judged": 157,
    "max": {
-    "d": 11771,
-    "w": 0
+    "d": 5748,
+    "w": 1720
    }
   },
   {
@@ -1479,23 +1479,23 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 137,
-    "units": 123733
+    "projects": 153,
+    "units": 132228
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 4,
-    "units": 1360
+    "projects": 6,
+    "units": 4346
    },
    "delayByStage": [
     0,
-    11484,
-    7893,
-    1309,
-    1576,
+    2948,
+    1830,
+    1918,
+    9994,
     0
    ],
    "cautionByStage": [
@@ -1506,9 +1506,9 @@
     0,
     0
    ],
-   "judged": 141,
+   "judged": 159,
    "max": {
-    "d": 11484,
+    "d": 9994,
     "w": 0
    }
   },
@@ -1518,37 +1518,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 148,
-    "units": 130752
+    "projects": 152,
+    "units": 132043
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 4,
-    "units": 1360
+    "projects": 8,
+    "units": 5257
    },
    "delayByStage": [
     0,
-    4031,
     0,
-    1309,
     0,
+    1918,
+    9073,
     0
    ],
    "cautionByStage": [
     0,
+    1788,
     0,
-    1394,
     0,
     0,
     0
    ],
-   "judged": 152,
+   "judged": 160,
    "max": {
-    "d": 4031,
-    "w": 1394
+    "d": 9073,
+    "w": 1788
    }
   },
   {
@@ -1557,37 +1557,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 149,
-    "units": 131052
+    "projects": 153,
+    "units": 132343
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 4,
-    "units": 1360
+    "projects": 8,
+    "units": 5257
    },
    "delayByStage": [
     0,
-    3731,
-    1889,
-    1309,
     0,
+    0,
+    0,
+    9073,
     0
    ],
    "cautionByStage": [
     0,
+    1488,
     0,
-    0,
-    0,
+    942,
     0,
     0
    ],
-   "judged": 153,
+   "judged": 161,
    "max": {
-    "d": 3731,
-    "w": 0
+    "d": 9073,
+    "w": 1488
    }
   },
   {
@@ -1596,37 +1596,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 164,
-    "units": 145895
+    "projects": 167,
+    "units": 146857
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 4,
-    "units": 1360
+    "projects": 8,
+    "units": 5257
    },
    "delayByStage": [
     0,
     0,
     0,
     0,
-    0,
+    9439,
     0
    ],
    "cautionByStage": [
     0,
-    2802,
+    0,
     0,
     0,
     0,
     0
    ],
-   "judged": 168,
+   "judged": 175,
    "max": {
-    "d": 0,
-    "w": 2802
+    "d": 9439,
+    "w": 0
    }
   },
   {
@@ -1635,37 +1635,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 166,
-    "units": 147623
+    "projects": 167,
+    "units": 146857
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 4,
-    "units": 1360
+    "projects": 8,
+    "units": 5257
    },
    "delayByStage": [
     0,
     0,
     0,
     0,
-    0,
+    9439,
     0
    ],
    "cautionByStage": [
     0,
-    1074,
+    0,
     0,
     0,
     0,
     0
    ],
-   "judged": 170,
+   "judged": 175,
    "max": {
-    "d": 0,
-    "w": 1074
+    "d": 9439,
+    "w": 0
    }
   },
   {
@@ -1674,37 +1674,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 166,
-    "units": 147623
+    "projects": 167,
+    "units": 146857
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 4,
-    "units": 1360
+    "projects": 8,
+    "units": 5257
    },
    "delayByStage": [
     0,
     0,
     0,
     0,
-    0,
+    10069,
     0
    ],
    "cautionByStage": [
     0,
-    1074,
-    165,
+    0,
+    0,
     0,
     0,
     0
    ],
-   "judged": 170,
+   "judged": 175,
    "max": {
-    "d": 0,
-    "w": 1074
+    "d": 10069,
+    "w": 0
    }
   },
   {
@@ -1713,37 +1713,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 166,
-    "units": 147623
+    "projects": 167,
+    "units": 146857
    },
    "caution": {
     "projects": 0,
     "units": 0
    },
    "delay": {
-    "projects": 4,
-    "units": 1360
+    "projects": 8,
+    "units": 5257
    },
    "delayByStage": [
     0,
     0,
     0,
     0,
-    1365,
+    17398,
     0
    ],
    "cautionByStage": [
     0,
-    1074,
+    0,
     0,
     0,
     0,
     0
    ],
-   "judged": 170,
+   "judged": 175,
    "max": {
-    "d": 1365,
-    "w": 1074
+    "d": 17398,
+    "w": 0
    }
   },
   {
@@ -1752,37 +1752,37 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 168,
-    "units": 148233
+    "projects": 167,
+    "units": 146780
    },
    "caution": {
-    "projects": 0,
-    "units": 0
+    "projects": 1,
+    "units": 378
    },
    "delay": {
-    "projects": 4,
-    "units": 1360
+    "projects": 8,
+    "units": 5257
    },
    "delayByStage": [
     0,
     0,
     0,
-    1163,
-    1060,
+    0,
+    18456,
     0
    ],
    "cautionByStage": [
     0,
-    464,
+    0,
     0,
     0,
     0,
     0
    ],
-   "judged": 172,
+   "judged": 176,
    "max": {
-    "d": 1163,
-    "w": 464
+    "d": 18456,
+    "w": 0
    }
   },
   {
@@ -1791,23 +1791,23 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 166,
-    "units": 147854
+    "projects": 164,
+    "units": 145801
    },
    "caution": {
-    "projects": 2,
-    "units": 541
+    "projects": 3,
+    "units": 919
    },
    "delay": {
-    "projects": 5,
-    "units": 1798
+    "projects": 9,
+    "units": 5695
    },
    "delayByStage": [
     0,
     0,
     0,
-    1601,
-    1188,
+    3059,
+    19064,
     0
    ],
    "cautionByStage": [
@@ -1818,9 +1818,9 @@
     0,
     0
    ],
-   "judged": 173,
+   "judged": 176,
    "max": {
-    "d": 1601,
+    "d": 19064,
     "w": 0
    }
   },
@@ -1830,62 +1830,23 @@
    "edition": null,
    "basis": "BACKFILL",
    "ok": {
-    "projects": 167,
-    "units": 148727
+    "projects": 163,
+    "units": 145417
    },
    "caution": {
-    "projects": 2,
-    "units": 541
+    "projects": 3,
+    "units": 919
    },
    "delay": {
-    "projects": 6,
-    "units": 2182
+    "projects": 10,
+    "units": 6079
    },
    "delayByStage": [
     0,
     0,
     0,
-    1615,
-    2298,
-    0
-   ],
-   "cautionByStage": [
-    0,
-    0,
-    0,
-    1309,
-    0,
-    0
-   ],
-   "judged": 175,
-   "max": {
-    "d": 2298,
-    "w": 1309
-   }
-  },
-  {
-   "month": "2026-09",
-   "referenceDate": "2026-09-30",
-   "edition": null,
-   "basis": "BACKFILL",
-   "ok": {
-    "projects": 168,
-    "units": 149692
-   },
-   "caution": {
-    "projects": 2,
-    "units": 541
-   },
-   "delay": {
-    "projects": 6,
-    "units": 2182
-   },
-   "delayByStage": [
-    0,
-    0,
-    0,
-    1576,
-    2298,
+    4297,
+    22699,
     0
    ],
    "cautionByStage": [
@@ -1898,7 +1859,46 @@
    ],
    "judged": 176,
    "max": {
-    "d": 2298,
+    "d": 22699,
+    "w": 0
+   }
+  },
+  {
+   "month": "2026-09",
+   "referenceDate": "2026-09-30",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 163,
+    "units": 145417
+   },
+   "caution": {
+    "projects": 3,
+    "units": 919
+   },
+   "delay": {
+    "projects": 10,
+    "units": 6079
+   },
+   "delayByStage": [
+    0,
+    0,
+    0,
+    4380,
+    23247,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "judged": 176,
+   "max": {
+    "d": 23247,
     "w": 0
    }
   },
@@ -1908,23 +1908,23 @@
    "edition": null,
    "basis": "OBSERVED",
    "ok": {
-    "projects": 168,
-    "units": 149692
+    "projects": 163,
+    "units": 145417
    },
    "caution": {
-    "projects": 2,
-    "units": 541
+    "projects": 3,
+    "units": 919
    },
    "delay": {
-    "projects": 6,
-    "units": 2182
+    "projects": 10,
+    "units": 6079
    },
    "delayByStage": [
     0,
     0,
     0,
-    1988,
-    0,
+    4792,
+    21592,
     0
    ],
    "cautionByStage": [
@@ -1932,13 +1932,13 @@
     0,
     0,
     0,
-    643,
+    0,
     0
    ],
    "judged": 176,
    "max": {
-    "d": 1988,
-    "w": 643
+    "d": 21592,
+    "w": 0
    }
   }
  ],
@@ -1950,32 +1950,32 @@
     "target": 1350000
    },
    "BUSINESS": {
-    "current": 153402,
+    "current": 152802,
     "measured_on": "2026-10-21",
-    "year_end_expected": 153402,
-    "plan_date": "2026-10-21",
-    "remainder": 0
+    "year_end_expected": 174394,
+    "plan_date": "2026-12-31",
+    "remainder": 21592
    },
    "APPROVAL": {
-    "current": 100973,
+    "current": 99462,
     "measured_on": "2026-10-21",
-    "year_end_expected": 106771,
+    "year_end_expected": 126852,
     "plan_date": "2026-12-31",
-    "remainder": 5798
+    "remainder": 27390
    },
    "CONSTRUCTION": {
-    "current": 82968,
+    "current": 81131,
     "measured_on": "2026-10-21",
-    "year_end_expected": 99885,
+    "year_end_expected": 117392,
     "plan_date": "2026-12-31",
-    "remainder": 16917
+    "remainder": 36261
    },
    "SUPPLY": {
-    "current": 58125,
+    "current": 35410,
     "measured_on": "2026-10-19",
-    "year_end_expected": 73114,
+    "year_end_expected": 68267,
     "plan_date": "2026-12-31",
-    "remainder": 14989
+    "remainder": 32857
    },
    "MOVE_IN": {
     "current": null,
@@ -1988,16 +1988,16 @@
   "callouts": [
    {
     "stage": "SUPPLY",
-    "status": "WARNING",
-    "gap": 643,
-    "rate": "1.1%",
+    "status": "DELAYED",
+    "gap": 21592,
+    "rate": "37.9%",
     "due_date": "2026-09-30",
-    "due_units": 58768,
+    "due_units": 57002,
     "actual_date": "2026-10-19",
-    "actual_units": 58125
+    "actual_units": 35410
    }
   ],
-  "axisMax": 200000,
+  "axisMax": 229200,
   "stageChecks": {
    "BUSINESS": {
     "status": "REACHED",
@@ -2007,17 +2007,17 @@
     },
     "actual": {
      "date": "2026-10-21",
-     "units": 153402,
-     "manual": 152204,
-     "inferred": 151044
+     "units": 152802,
+     "manual": 151596,
+     "inferred": 147491
     },
     "gap": 0,
     "rate": 0,
     "rateText": "0.0%",
     "next": null,
     "yearEnd": {
-     "date": "2026-10-21",
-     "units": 153402
+     "date": "2026-12-31",
+     "units": 174394
     }
    },
    "APPROVAL": {
@@ -2028,9 +2028,9 @@
     },
     "actual": {
      "date": "2026-10-21",
-     "units": 100973,
-     "manual": 98815,
-     "inferred": 92454
+     "units": 99462,
+     "manual": 98256,
+     "inferred": 86514
     },
     "gap": 0,
     "rate": 0,
@@ -2041,7 +2041,7 @@
     },
     "yearEnd": {
      "date": "2026-12-31",
-     "units": 106771
+     "units": 126852
     }
    },
    "CONSTRUCTION": {
@@ -2052,9 +2052,9 @@
     },
     "actual": {
      "date": "2026-10-21",
-     "units": 82968,
-     "manual": 72181,
-     "inferred": 70064
+     "units": 81131,
+     "manual": 78015,
+     "inferred": 69986
     },
     "gap": 0,
     "rate": 0,
@@ -2065,31 +2065,31 @@
     },
     "yearEnd": {
      "date": "2026-12-31",
-     "units": 99885
+     "units": 117392
     }
    },
    "SUPPLY": {
-    "status": "WARNING",
+    "status": "DELAYED",
     "due": {
      "date": "2026-09-30",
-     "units": 58768
+     "units": 57002
     },
     "actual": {
      "date": "2026-10-19",
-     "units": 58125,
-     "manual": 52338,
-     "inferred": 49520
+     "units": 35410,
+     "manual": 32021,
+     "inferred": 8136
     },
-    "gap": 643,
-    "rate": 1.1,
-    "rateText": "1.1%",
+    "gap": 21592,
+    "rate": 37.9,
+    "rateText": "37.9%",
     "next": {
      "date": "2026-10-30",
-     "units": 59368
+     "units": 57602
     },
     "yearEnd": {
      "date": "2026-12-31",
-     "units": 73114
+     "units": 68267
     }
    },
    "COMPLETION": {
@@ -2100,13 +2100,13 @@
     },
     "actual": {
      "date": "2026-09-16",
-     "units": 3501,
-     "manual": 3501,
-     "inferred": 3120
+     "units": 697,
+     "manual": 697,
+     "inferred": 0
     },
-    "gap": 1988,
-    "rate": 36.2,
-    "rateText": "36.2%",
+    "gap": 4792,
+    "rate": 87.3,
+    "rateText": "87.3%",
     "next": {
      "date": "2026-10-31",
      "units": 5783
@@ -2130,34 +2130,74 @@
     }
    }
   },
-  "delayMax": 1988,
-  "warningMax": 643,
+  "delayMax": 21592,
+  "warningMax": 0,
   "stageGaps": [
    {
     "stage": "SUPPLY",
     "label": "공급",
-    "status": "WARNING",
-    "gap": 643,
-    "rate": "1.1%"
+    "status": "DELAYED",
+    "gap": 21592,
+    "rate": "37.9%"
    },
    {
     "stage": "COMPLETION",
     "label": "준공",
     "status": "DELAYED",
-    "gap": 1988,
-    "rate": "36.2%"
+    "gap": 4792,
+    "rate": "87.3%"
    }
   ],
   "bottleneck": {
-   "stage": "COMPLETION",
-   "label": "준공",
+   "stage": "SUPPLY",
+   "label": "공급",
    "status": "DELAYED",
-   "gap": 1988,
-   "rate": "36.2%"
+   "gap": 21592,
+   "rate": "37.9%"
   },
   "stageShort": {
    "SUPPLY": {
     "rows": [
+     {
+      "id": "PRO_de06501cdfc05a4baead9d6c",
+      "short": 1499
+     },
+     {
+      "id": "PRO_f6263baf545293a2283f4ad1",
+      "short": 1458
+     },
+     {
+      "id": "PRO_29bf4cef6fb4606948bb3b48",
+      "short": 1057
+     },
+     {
+      "id": "PRO_d45f401d3810473a7b1a1030",
+      "short": 1002
+     },
+     {
+      "id": "PRO_833127d228d37d6e4e73898d",
+      "short": 966
+     },
+     {
+      "id": "PRO_70c16f89c02d428a47cc1de7",
+      "short": 945
+     },
+     {
+      "id": "PRO_1993865f89886304beac4322",
+      "short": 942
+     },
+     {
+      "id": "PRO_e0405cae5623f83a2647ac0c",
+      "short": 837
+     },
+     {
+      "id": "PRO_1eb195e8ab43ebb1a9bee921",
+      "short": 753
+     },
+     {
+      "id": "PRO_5ff66dc50d3ad524d26511b6",
+      "short": 753
+     },
      {
       "id": "PRO_89b769c87e8d8ee8f6a837bf",
       "short": 690
@@ -2167,45 +2207,60 @@
       "short": 690
      },
      {
+      "id": "PRO_62fe58b54a39d604d6cf3e87",
+      "short": 679
+     },
+     {
+      "id": "PRO_94becbf0cbd773bbf5ab565c",
+      "short": 679
+     },
+     {
+      "id": "PRO_def4c369f9c976b8a84511a4",
+      "short": 630
+     },
+     {
+      "id": "PRO_672dfd527cf2fe8d9d71cf5c",
+      "short": 610
+     },
+     {
+      "id": "PRO_b0f7e7ded4e31142e5b39d02",
+      "short": 609
+     },
+     {
+      "id": "PRO_310ee8dc2c45b6ac03a9bc8f",
+      "short": 603
+     },
+     {
+      "id": "PRO_c6f5a8ea506ed720419b999a",
+      "short": 584
+     },
+     {
       "id": "PRO_e8e64858eea849421f7245dd",
-      "short": 293
+      "short": 556
      },
      {
-      "id": "PRO_2c8c2fda28fd878a7a9a94bd",
-      "short": 291
+      "id": "PRO_69217405e9523695488434c1",
+      "short": 548
      },
      {
-      "id": "PRO_9e2cfb55c9d254091d3fb30d",
-      "short": 281
+      "id": "PRO_573605b60cae1ca0690fe41b",
+      "short": 536
      },
      {
-      "id": "PRO_fcc796121d9c033bc356aaad",
-      "short": 219
+      "id": "PRO_b08b4358cb7f64e9637fb3a0",
+      "short": 508
      },
      {
-      "id": "PRO_b572acaa0e4e1468c625d137",
-      "short": 197
+      "id": "PRO_2a87e83e13bdc703528e3afe",
+      "short": 499
      },
      {
-      "id": "PRO_3e4fe820f1cb21379bbbe611",
-      "short": 111
+      "id": "PRO_7d1b5e3e2b392b43d0c59a6b",
+      "short": 480
      },
      {
-      "id": "PRO_60b4a8833ed549023a6ef1a5",
-      "short": 2
-     },
-     {
-      "id": "PRO_d86ce8966f5ed10d5ef2d175",
-      "short": 2
-     }
-    ],
-    "over": 2133
-   },
-   "COMPLETION": {
-    "rows": [
-     {
-      "id": "PRO_afa121ebed699e8aab86cd60",
-      "short": 620
+      "id": "PRO_1b0f09c1abb6e68c92fac227",
+      "short": 428
      },
      {
       "id": "PRO_7af1f4c60e23bd2da29910fc",
@@ -2216,8 +2271,105 @@
       "short": 399
      },
      {
-      "id": "PRO_e57577ac296a4798617e617b",
-      "short": 316
+      "id": "PRO_e24ec7ed0705de50dfcfb55e",
+      "short": 347
+     },
+     {
+      "id": "PRO_bceb35af2280eaa50c810c09",
+      "short": 344
+     },
+     {
+      "id": "PRO_2c8c2fda28fd878a7a9a94bd",
+      "short": 294
+     },
+     {
+      "id": "PRO_9e2cfb55c9d254091d3fb30d",
+      "short": 283
+     },
+     {
+      "id": "PRO_e79e6d9e96f006b1537e24f4",
+      "short": 252
+     },
+     {
+      "id": "PRO_1a98096fd39a060c2144684a",
+      "short": 240
+     },
+     {
+      "id": "PRO_b5b91172d6eed372aeb26e11",
+      "short": 228
+     },
+     {
+      "id": "PRO_fcc796121d9c033bc356aaad",
+      "short": 219
+     },
+     {
+      "id": "PRO_4678e7ce4d7bafb3d2e7e4ad",
+      "short": 218
+     },
+     {
+      "id": "PRO_b572acaa0e4e1468c625d137",
+      "short": 197
+     },
+     {
+      "id": "PRO_07535d298d1b6d593fdde152",
+      "short": 194
+     },
+     {
+      "id": "PRO_67142027aa77136be6cb3593",
+      "short": 193
+     },
+     {
+      "id": "PRO_7dbb8517958f6375fc421333",
+      "short": 160
+     },
+     {
+      "id": "PRO_3e4fe820f1cb21379bbbe611",
+      "short": 111
+     },
+     {
+      "id": "PRO_5c41696f54ce584f4f9b324c",
+      "short": 88
+     },
+     {
+      "id": "PRO_60b4a8833ed549023a6ef1a5",
+      "short": 2
+     },
+     {
+      "id": "PRO_d86ce8966f5ed10d5ef2d175",
+      "short": 2
+     },
+     {
+      "id": "PRO_3467a150907b93a0999e5c40",
+      "short": 1
+     }
+    ],
+    "over": 2133
+   },
+   "COMPLETION": {
+    "rows": [
+     {
+      "id": "PRO_f6263baf545293a2283f4ad1",
+      "short": 1458
+     },
+     {
+      "id": "PRO_76abe08cb7c430960fb40f03",
+      "short": 1224
+     },
+     {
+      "id": "PRO_afa121ebed699e8aab86cd60",
+      "short": 620
+     },
+     {
+      "id": "PRO_fcc796121d9c033bc356aaad",
+      "short": 438
+     },
+     {
+      "id": "PRO_7af1f4c60e23bd2da29910fc",
+      "short": 412
+     },
+     {
+      "id": "PRO_693fd7d6c158c2da26abe2c0",
+      "short": 399
      },
      {
       "id": "PRO_3e4fe820f1cb21379bbbe611",
@@ -2232,87 +2384,87 @@
    }
   },
   "supplyUpcoming": {
-   "total": 18214,
-   "projects": 31,
+   "total": 16916,
+   "projects": 30,
    "from": "2026-10",
    "to": "2027-09"
   },
   "monthly": [
    {
     "month": "2024-11",
-    "APPROVAL": 2244,
+    "APPROVAL": 694,
     "CONSTRUCTION": 945,
-    "SUPPLY": 726,
+    "SUPPLY": 142,
     "COMPLETION": 0
    },
    {
     "month": "2024-12",
-    "APPROVAL": 19690,
-    "CONSTRUCTION": 14718,
-    "SUPPLY": 446,
+    "APPROVAL": 11799,
+    "CONSTRUCTION": 15099,
+    "SUPPLY": 0,
     "COMPLETION": 0
    },
    {
     "month": "2025-01",
-    "APPROVAL": 227,
-    "CONSTRUCTION": 314,
+    "APPROVAL": 60,
+    "CONSTRUCTION": 0,
     "SUPPLY": 2089,
     "COMPLETION": 0
    },
    {
     "month": "2025-02",
-    "APPROVAL": 4296,
-    "CONSTRUCTION": 1845,
-    "SUPPLY": 160,
+    "APPROVAL": 2451,
+    "CONSTRUCTION": 1185,
+    "SUPPLY": 0,
     "COMPLETION": 0
    },
    {
     "month": "2025-03",
-    "APPROVAL": 538,
-    "CONSTRUCTION": 1749,
-    "SUPPLY": 1725,
+    "APPROVAL": 0,
+    "CONSTRUCTION": 2063,
+    "SUPPLY": 1115,
     "COMPLETION": 0
    },
    {
     "month": "2025-04",
-    "APPROVAL": 1180,
+    "APPROVAL": 110,
     "CONSTRUCTION": 1180,
     "SUPPLY": 865,
     "COMPLETION": 0
    },
    {
     "month": "2025-05",
-    "APPROVAL": 2826,
+    "APPROVAL": 1205,
     "CONSTRUCTION": 1877,
-    "SUPPLY": 1380,
+    "SUPPLY": 433,
     "COMPLETION": 0
    },
    {
     "month": "2025-06",
-    "APPROVAL": 10281,
+    "APPROVAL": 4062,
     "CONSTRUCTION": 8705,
-    "SUPPLY": 5431,
+    "SUPPLY": 869,
     "COMPLETION": 0
    },
    {
     "month": "2025-07",
-    "APPROVAL": 2419,
+    "APPROVAL": 428,
     "CONSTRUCTION": 1708,
-    "SUPPLY": 4602,
+    "SUPPLY": 4485,
     "COMPLETION": 0
    },
    {
     "month": "2025-08",
-    "APPROVAL": 0,
+    "APPROVAL": 594,
     "CONSTRUCTION": 0,
     "SUPPLY": 538,
     "COMPLETION": 0
    },
    {
     "month": "2025-09",
-    "APPROVAL": 3288,
+    "APPROVAL": 912,
     "CONSTRUCTION": 4045,
-    "SUPPLY": 584,
+    "SUPPLY": 695,
     "COMPLETION": 0
    },
    {
@@ -2326,78 +2478,78 @@
     "month": "2025-11",
     "APPROVAL": 287,
     "CONSTRUCTION": 0,
-    "SUPPLY": 2591,
+    "SUPPLY": 2083,
     "COMPLETION": 0
    },
    {
     "month": "2025-12",
-    "APPROVAL": 7685,
+    "APPROVAL": 4138,
     "CONSTRUCTION": 10525,
-    "SUPPLY": 6275,
+    "SUPPLY": 3796,
     "COMPLETION": 0
    },
    {
     "month": "2026-01",
     "APPROVAL": 794,
-    "CONSTRUCTION": 0,
+    "CONSTRUCTION": 976,
     "SUPPLY": 0,
     "COMPLETION": 0
    },
    {
     "month": "2026-02",
-    "APPROVAL": 929,
-    "CONSTRUCTION": 3005,
+    "APPROVAL": 0,
+    "CONSTRUCTION": 2726,
     "SUPPLY": 381,
     "COMPLETION": 0
    },
    {
     "month": "2026-03",
-    "APPROVAL": 1728,
-    "CONSTRUCTION": 3589,
-    "SUPPLY": 1966,
+    "APPROVAL": 933,
+    "CONSTRUCTION": 3598,
+    "SUPPLY": 0,
     "COMPLETION": 0
    },
    {
     "month": "2026-04",
-    "APPROVAL": 1515,
+    "APPROVAL": 0,
     "CONSTRUCTION": 1282,
-    "SUPPLY": 3647,
+    "SUPPLY": 3017,
     "COMPLETION": 0
    },
    {
     "month": "2026-05",
     "APPROVAL": 0,
     "CONSTRUCTION": 1430,
-    "SUPPLY": 5194,
+    "SUPPLY": 2014,
     "COMPLETION": 0
    },
    {
     "month": "2026-06",
-    "APPROVAL": 5338,
-    "CONSTRUCTION": 3162,
-    "SUPPLY": 5083,
-    "COMPLETION": 1458
+    "APPROVAL": 4427,
+    "CONSTRUCTION": 4095,
+    "SUPPLY": 3720,
+    "COMPLETION": 0
    },
    {
     "month": "2026-07",
-    "APPROVAL": 600,
-    "CONSTRUCTION": 861,
-    "SUPPLY": 1296,
+    "APPROVAL": 0,
+    "CONSTRUCTION": 0,
+    "SUPPLY": 816,
     "COMPLETION": 381
    },
    {
     "month": "2026-08",
-    "APPROVAL": 1257,
-    "CONSTRUCTION": 663,
-    "SUPPLY": 6837,
-    "COMPLETION": 1224
+    "APPROVAL": 0,
+    "CONSTRUCTION": 0,
+    "SUPPLY": 4312,
+    "COMPLETION": 0
    },
    {
     "month": "2026-09",
-    "APPROVAL": 965,
+    "APPROVAL": 0,
     "CONSTRUCTION": 4143,
-    "SUPPLY": 981,
-    "COMPLETION": 438
+    "SUPPLY": 433,
+    "COMPLETION": 316
    },
    {
     "month": "2026-10",
@@ -2409,16 +2561,16 @@
   ],
   "projectStatus": {
    "NORMAL": {
-    "projects": 168,
-    "units": 149692
-   },
-   "DELAYED": {
-    "projects": 6,
-    "units": 2182
+    "projects": 163,
+    "units": 145417
    },
    "WARNING": {
-    "projects": 2,
-    "units": 541
+    "projects": 3,
+    "units": 919
+   },
+   "DELAYED": {
+    "projects": 10,
+    "units": 6079
    },
    "UNKNOWN": {
     "projects": 1,
@@ -2426,29 +2578,29 @@
    }
   },
   "stageExclusive": {
-   "POLICY": 173,
+   "POLICY": 773,
    "UNKNOWN": 0,
    "MOVE_IN": 0,
-   "SUPPLY": 58125,
-   "CONSTRUCTION": 24843,
-   "APPROVAL": 18005,
-   "BUSINESS": 52429
+   "SUPPLY": 35410,
+   "CONSTRUCTION": 45721,
+   "APPROVAL": 18331,
+   "BUSINESS": 53340
   },
   "mapSupply": {
    "서울특별시": {
-    "supplyReached": 2089,
+    "supplyReached": 1821,
     "delayed": true,
     "delayNote": "준공 14호 부족 (3.5%)"
    },
    "경기도": {
-    "supplyReached": 49333,
+    "supplyReached": 28344,
     "delayed": true,
-    "delayNote": "공급 1,393호 부족 (2.7%) · 준공 1,974호 부족 (81.8%)"
+    "delayNote": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
    },
    "인천광역시": {
-    "supplyReached": 6703,
-    "delayed": false,
-    "delayNote": ""
+    "supplyReached": 5245,
+    "delayed": true,
+    "delayNote": "공급 1,108호 부족 (17.4%)"
    }
   }
  },
@@ -2539,243 +2691,243 @@
    "actualSource": "HOME",
    "stageUnits": [
     [
-     40103,
-     1370,
-     3670,
-     2209,
-     263,
+     38386,
+     2706,
+     3684,
+     2839,
+     0,
      0
     ],
     [
-     14102,
-     26035,
-     5006,
-     2209,
-     263,
-     0
-    ],
-    [
-     14102,
-     26035,
-     5006,
-     2209,
-     263,
-     0
-    ],
-    [
-     14102,
-     26035,
-     5006,
-     2209,
-     263,
-     0
-    ],
-    [
-     14102,
-     26035,
-     5006,
-     2207,
-     265,
-     0
-    ],
-    [
-     14102,
-     26035,
-     5006,
-     2204,
-     268,
-     0
-    ],
-    [
-     14102,
+     15151,
      24605,
-     6436,
-     2204,
-     268,
+     5020,
+     2839,
+     0,
      0
     ],
     [
-     14102,
+     15151,
      24605,
-     6436,
-     2204,
-     268,
+     5020,
+     2839,
+     0,
      0
     ],
     [
-     14027,
+     15151,
      24605,
-     6436,
-     2279,
-     268,
+     5020,
+     2839,
+     0,
      0
     ],
     [
-     14027,
+     15151,
      24605,
-     6436,
-     2279,
-     268,
+     5020,
+     2839,
+     0,
      0
     ],
     [
-     12512,
-     26120,
-     6436,
-     2279,
-     268,
+     15151,
+     24605,
+     5020,
+     2839,
+     0,
      0
     ],
     [
-     12512,
-     26120,
-     6436,
-     2279,
-     268,
+     15151,
+     24605,
+     5020,
+     2839,
+     0,
      0
     ],
     [
-     12512,
-     26120,
-     6436,
-     2279,
-     268,
+     15151,
+     24605,
+     5020,
+     2839,
+     0,
+     0
+    ],
+    [
+     15076,
+     24605,
+     5020,
+     2914,
+     0,
+     0
+    ],
+    [
+     15076,
+     24605,
+     5020,
+     2914,
+     0,
+     0
+    ],
+    [
+     15076,
+     24605,
+     5020,
+     2914,
+     0,
+     0
+    ],
+    [
+     15076,
+     24605,
+     5020,
+     2914,
+     0,
+     0
+    ],
+    [
+     15076,
+     24605,
+     5020,
+     2914,
+     0,
+     0
+    ],
+    [
+     1430,
+     36736,
+     5020,
+     4048,
+     381,
+     0
+    ],
+    [
+     1430,
+     36736,
+     5020,
+     4048,
+     381,
+     0
+    ],
+    [
+     1430,
+     36736,
+     5020,
+     4048,
+     381,
      0
     ],
     [
      0,
      36736,
-     6436,
-     3794,
-     649,
+     5020,
+     5478,
+     381,
      0
     ],
     [
      0,
      36736,
-     6436,
-     3794,
-     649,
+     5020,
+     5417,
+     442,
      0
     ],
     [
      0,
      36736,
-     6436,
-     3794,
-     649,
+     5020,
+     5357,
+     502,
      0
     ],
     [
      0,
      36736,
-     5006,
-     5224,
-     649,
+     5020,
+     5357,
+     502,
      0
     ],
     [
      0,
      36736,
-     4945,
-     5224,
-     710,
+     1842,
+     8521,
+     516,
      0
     ],
     [
      0,
      36736,
-     4885,
-     5224,
-     770,
+     1842,
+     7216,
+     1821,
      0
     ],
     [
      0,
      36736,
-     4885,
-     5224,
-     770,
-     0
-    ],
-    [
-     0,
-     36736,
-     1707,
-     8388,
-     784,
-     0
-    ],
-    [
-     0,
-     36736,
-     1707,
-     7083,
-     2089,
-     0
-    ],
-    [
-     0,
-     36736,
-     1707,
-     7083,
-     2089,
+     1842,
+     7216,
+     1821,
      0
     ],
     [
      0,
      35366,
-     3077,
-     7083,
-     2089,
+     3212,
+     7216,
+     1821,
      0
     ],
     [
      0,
      35366,
-     3077,
-     7083,
-     1708,
+     3212,
+     7216,
+     1440,
      381
     ],
     [
      0,
      35366,
-     3077,
-     7083,
-     1694,
+     3212,
+     7216,
+     1426,
      395
     ],
     [
      0,
      35366,
-     3077,
-     7083,
-     1694,
+     3212,
+     7216,
+     1426,
      395
     ],
     [
      0,
      35366,
-     3077,
-     7083,
-     1694,
+     3212,
+     7216,
+     1426,
      395
     ],
     [
      0,
      35366,
-     3077,
-     7083,
-     95,
+     3212,
+     7043,
+     0,
      1994
     ],
     [
      0,
      35366,
-     3077,
-     7083,
-     95,
+     3212,
+     7043,
+     0,
      1994
     ],
     [
@@ -2909,179 +3061,179 @@
    ],
    "stageProjects": [
     [
-     15,
-     1,
-     5,
-     5,
+     11,
+     2,
+     8,
+     6,
+     0,
+     0
+    ],
+    [
+     9,
+     3,
+     9,
+     6,
+     0,
+     0
+    ],
+    [
+     9,
+     3,
+     9,
+     6,
+     0,
+     0
+    ],
+    [
+     9,
+     3,
+     9,
+     6,
+     0,
+     0
+    ],
+    [
+     9,
+     3,
+     9,
+     6,
+     0,
+     0
+    ],
+    [
+     9,
+     3,
+     9,
+     6,
+     0,
+     0
+    ],
+    [
+     9,
+     3,
+     9,
+     6,
+     0,
+     0
+    ],
+    [
+     9,
+     3,
+     9,
+     6,
+     0,
+     0
+    ],
+    [
+     8,
+     3,
+     9,
+     7,
+     0,
+     0
+    ],
+    [
+     8,
+     3,
+     9,
+     7,
+     0,
+     0
+    ],
+    [
+     8,
+     3,
+     9,
+     7,
+     0,
+     0
+    ],
+    [
+     8,
+     3,
+     9,
+     7,
+     0,
+     0
+    ],
+    [
+     8,
+     3,
+     9,
+     7,
+     0,
+     0
+    ],
+    [
+     0,
+     11,
+     8,
+     7,
      1,
      0
     ],
     [
+     0,
      11,
-     4,
-     6,
-     5,
+     8,
+     7,
      1,
      0
     ],
     [
+     0,
      11,
-     4,
-     6,
-     5,
+     8,
+     7,
      1,
      0
     ],
     [
+     0,
      11,
-     4,
-     6,
-     5,
+     7,
+     8,
      1,
      0
     ],
     [
+     0,
      11,
-     4,
      6,
-     4,
+     8,
      2,
      0
     ],
     [
-     11,
-     4,
-     6,
-     3,
-     3,
-     0
-    ],
-    [
-     11,
-     3,
-     7,
-     3,
-     3,
-     0
-    ],
-    [
-     11,
-     3,
-     7,
-     3,
-     3,
-     0
-    ],
-    [
-     10,
-     3,
-     7,
-     4,
-     3,
-     0
-    ],
-    [
-     10,
-     3,
-     7,
-     4,
-     3,
-     0
-    ],
-    [
-     9,
-     4,
-     7,
-     4,
-     3,
-     0
-    ],
-    [
-     9,
-     4,
-     7,
-     4,
-     3,
-     0
-    ],
-    [
-     9,
-     4,
-     7,
-     4,
-     3,
-     0
-    ],
-    [
      0,
      11,
-     7,
-     5,
-     4,
-     0
-    ],
-    [
-     0,
-     11,
-     7,
-     5,
-     4,
-     0
-    ],
-    [
-     0,
-     11,
-     7,
-     5,
-     4,
-     0
-    ],
-    [
-     0,
-     11,
-     6,
-     6,
-     4,
-     0
-    ],
-    [
-     0,
-     11,
-     5,
-     6,
-     5,
-     0
-    ],
-    [
-     0,
-     11,
-     4,
-     6,
-     6,
-     0
-    ],
-    [
-     0,
-     11,
-     4,
-     6,
-     6,
-     0
-    ],
-    [
-     0,
-     11,
-     3,
-     6,
-     7,
-     0
-    ],
-    [
-     0,
-     11,
-     3,
      5,
      8,
+     3,
+     0
+    ],
+    [
+     0,
+     11,
+     5,
+     8,
+     3,
+     0
+    ],
+    [
+     0,
+     11,
+     3,
+     9,
+     4,
+     0
+    ],
+    [
+     0,
+     11,
+     3,
+     8,
+     5,
      0
     ],
     [
@@ -3279,16 +3431,16 @@
    ],
    "judgment": {
     "ok": {
-     "projects": 24,
-     "units": 46482
+     "projects": 27,
+     "units": 47615
     },
     "caution": {
      "projects": 0,
      "units": 0
     },
     "delay": {
-     "projects": 3,
-     "units": 1133
+     "projects": 0,
+     "units": 0
     },
     "excluded": {
      "projects": 0,
@@ -3334,16 +3486,16 @@
      "name": "LH",
      "projects": 10,
      "units": 12820,
-     "ok": 7,
+     "ok": 10,
      "caution": 0,
-     "delay": 3,
-     "okUnits": 11687,
+     "delay": 0,
+     "okUnits": 12820,
      "cautionUnits": 0,
-     "delayUnits": 1133,
+     "delayUnits": 0,
      "excludedUnits": 0,
      "candidateUnits": 0,
      "note": null,
-     "delayedSharePct": 8.8
+     "delayedSharePct": 0
     },
     {
      "id": "sh",
@@ -3465,23 +3617,23 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 9,
-      "units": 6379
+      "projects": 14,
+      "units": 9229
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
-      1717,
-      381,
-      367,
-      293,
+      0,
+      0,
+      0,
+      0,
       0
      ],
      "cautionByStage": [
@@ -3492,9 +3644,9 @@
       0,
       0
      ],
-     "judged": 12,
+     "judged": 14,
      "max": {
-      "d": 1717,
+      "d": 0,
       "w": 0
      }
     },
@@ -3504,37 +3656,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 13,
-      "units": 32380
+      "projects": 17,
+      "units": 33894
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
       0,
-      381,
-      367,
-      293,
+      0,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 16,
+     "judged": 17,
      "max": {
-      "d": 381,
-      "w": 381
+      "d": 1430,
+      "w": 0
      }
     },
     {
@@ -3543,37 +3695,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 13,
-      "units": 32380
+      "projects": 17,
+      "units": 33894
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
       0,
-      381,
-      367,
-      293,
+      0,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 16,
+     "judged": 17,
      "max": {
-      "d": 381,
-      "w": 381
+      "d": 1430,
+      "w": 0
      }
     },
     {
@@ -3582,37 +3734,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 13,
-      "units": 32380
+      "projects": 17,
+      "units": 33894
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
       0,
-      381,
-      367,
-      293,
+      0,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 16,
+     "judged": 17,
      "max": {
-      "d": 381,
-      "w": 381
+      "d": 1430,
+      "w": 0
      }
     },
     {
@@ -3621,37 +3773,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 13,
-      "units": 32380
+      "projects": 17,
+      "units": 33894
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
       0,
-      381,
-      367,
-      574,
+      0,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 16,
+     "judged": 17,
      "max": {
-      "d": 574,
-      "w": 381
+      "d": 1430,
+      "w": 0
      }
     },
     {
@@ -3660,37 +3812,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 13,
-      "units": 32380
+      "projects": 17,
+      "units": 33894
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
       0,
-      381,
-      367,
-      865,
+      0,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 16,
+     "judged": 17,
      "max": {
-      "d": 865,
-      "w": 381
+      "d": 1430,
+      "w": 0
      }
     },
     {
@@ -3699,37 +3851,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 13,
-      "units": 32380
+      "projects": 17,
+      "units": 33894
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
+      1430,
       0,
-      381,
-      367,
-      865,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 16,
+     "judged": 17,
      "max": {
-      "d": 865,
-      "w": 381
+      "d": 1430,
+      "w": 0
      }
     },
     {
@@ -3738,37 +3890,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 13,
-      "units": 32380
+      "projects": 17,
+      "units": 33894
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
+      1430,
       0,
-      381,
-      367,
-      865,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 16,
+     "judged": 17,
      "max": {
-      "d": 865,
-      "w": 381
+      "d": 1430,
+      "w": 0
      }
     },
     {
@@ -3777,37 +3929,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 14,
-      "units": 32455
+      "projects": 18,
+      "units": 33969
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
+      1430,
       0,
-      381,
-      367,
-      865,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 17,
+     "judged": 18,
      "max": {
-      "d": 865,
-      "w": 381
+      "d": 1430,
+      "w": 0
      }
     },
     {
@@ -3816,37 +3968,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 14,
-      "units": 32455
+      "projects": 18,
+      "units": 33969
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
+      1430,
       0,
-      381,
-      367,
-      865,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 17,
+     "judged": 18,
      "max": {
-      "d": 865,
-      "w": 381
+      "d": 1430,
+      "w": 0
      }
     },
     {
@@ -3855,37 +4007,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 15,
-      "units": 33970
+      "projects": 19,
+      "units": 35484
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      2945,
+      1430,
       0,
-      381,
-      367,
-      865,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 18,
+     "judged": 19,
      "max": {
-      "d": 865,
-      "w": 381
+      "d": 2945,
+      "w": 0
      }
     },
     {
@@ -3894,37 +4046,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 15,
-      "units": 33970
+      "projects": 19,
+      "units": 35484
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      2945,
+      1430,
       0,
-      381,
-      367,
-      865,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 18,
+     "judged": 19,
      "max": {
-      "d": 865,
-      "w": 381
+      "d": 2945,
+      "w": 0
      }
     },
     {
@@ -3933,37 +4085,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 15,
-      "units": 33970
+      "projects": 19,
+      "units": 35484
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      2945,
+      1430,
       0,
-      381,
-      367,
-      865,
+      0,
       0
      ],
      "cautionByStage": [
       0,
-      381,
+      0,
       0,
       0,
       0,
       0
      ],
-     "judged": 18,
+     "judged": 19,
      "max": {
-      "d": 865,
-      "w": 381
+      "d": 2945,
+      "w": 0
      }
     },
     {
@@ -3972,23 +4124,23 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 24,
-      "units": 46482
+      "projects": 27,
+      "units": 47615
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
       0,
       0,
-      0,
-      690,
+      958,
       0
      ],
      "cautionByStage": [
@@ -4001,7 +4153,7 @@
      ],
      "judged": 27,
      "max": {
-      "d": 690,
+      "d": 1430,
       "w": 0
      }
     },
@@ -4011,23 +4163,23 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 24,
-      "units": 46482
+      "projects": 27,
+      "units": 47615
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
       0,
       0,
-      0,
-      690,
+      958,
       0
      ],
      "cautionByStage": [
@@ -4040,7 +4192,7 @@
      ],
      "judged": 27,
      "max": {
-      "d": 690,
+      "d": 1430,
       "w": 0
      }
     },
@@ -4050,23 +4202,23 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 24,
-      "units": 46482
+      "projects": 27,
+      "units": 47615
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
+      1430,
+      1430,
       0,
-      0,
-      0,
-      690,
+      958,
       0
      ],
      "cautionByStage": [
@@ -4079,7 +4231,7 @@
      ],
      "judged": 27,
      "max": {
-      "d": 690,
+      "d": 1430,
       "w": 0
      }
     },
@@ -4089,23 +4241,23 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 24,
-      "units": 46482
+      "projects": 27,
+      "units": 47615
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
       0,
       0,
       0,
-      690,
+      958,
       0
      ],
      "cautionByStage": [
@@ -4118,7 +4270,7 @@
      ],
      "judged": 27,
      "max": {
-      "d": 690,
+      "d": 958,
       "w": 0
      }
     },
@@ -4128,23 +4280,23 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 24,
-      "units": 46482
+      "projects": 27,
+      "units": 47615
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
       0,
       0,
       0,
-      690,
+      958,
       0
      ],
      "cautionByStage": [
@@ -4157,7 +4309,7 @@
      ],
      "judged": 27,
      "max": {
-      "d": 690,
+      "d": 958,
       "w": 0
      }
     },
@@ -4167,23 +4319,23 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 24,
-      "units": 46482
+      "projects": 27,
+      "units": 47615
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
       0,
       0,
       0,
-      690,
+      958,
       0
      ],
      "cautionByStage": [
@@ -4196,7 +4348,7 @@
      ],
      "judged": 27,
      "max": {
-      "d": 690,
+      "d": 958,
       "w": 0
      }
     },
@@ -4206,37 +4358,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 24,
-      "units": 46482
+      "projects": 27,
+      "units": 47615
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
       0,
       0,
-      14,
-      905,
+      247,
+      1173,
       0
      ],
      "cautionByStage": [
       0,
       0,
       0,
-      112,
+      0,
       0,
       0
      ],
      "judged": 27,
      "max": {
-      "d": 905,
-      "w": 112
+      "d": 1173,
+      "w": 0
      }
     },
     {
@@ -4245,23 +4397,23 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 24,
-      "units": 46482
+      "projects": 27,
+      "units": 47615
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
       0,
       0,
       14,
-      905,
+      1173,
       0
      ],
      "cautionByStage": [
@@ -4274,7 +4426,7 @@
      ],
      "judged": 27,
      "max": {
-      "d": 905,
+      "d": 1173,
       "w": 0
      }
     },
@@ -4284,16 +4436,16 @@
      "edition": null,
      "basis": "OBSERVED",
      "ok": {
-      "projects": 24,
-      "units": 46482
+      "projects": 27,
+      "units": 47615
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 3,
-      "units": 1133
+      "projects": 0,
+      "units": 0
      },
      "delayByStage": [
       0,
@@ -4328,41 +4480,52 @@
      "BUSINESS": {
       "current": 47615,
       "measured_on": "2026-10-16",
-      "year_end_expected": 47615,
-      "plan_date": "2026-10-16",
-      "remainder": 0
+      "year_end_expected": 50546,
+      "plan_date": "2026-12-31",
+      "remainder": 2931
      },
      "APPROVAL": {
       "current": 10879,
       "measured_on": "2026-10-16",
-      "year_end_expected": 12249,
+      "year_end_expected": 15180,
       "plan_date": "2026-12-31",
-      "remainder": 1370
+      "remainder": 4301
      },
      "CONSTRUCTION": {
-      "current": 9172,
-      "measured_on": "2026-10-16",
-      "year_end_expected": 10871,
+      "current": 9037,
+      "measured_on": "2026-09-07",
+      "year_end_expected": 10797,
       "plan_date": "2026-12-31",
-      "remainder": 1699
+      "remainder": 1760
      },
      "SUPPLY": {
-      "current": 2089,
+      "current": 1821,
       "measured_on": "2026-10-16",
-      "year_end_expected": 3057,
+      "year_end_expected": 1924,
       "plan_date": "2026-12-31",
-      "remainder": 968
+      "remainder": 103
      },
      "MOVE_IN": {
       "current": null,
       "measured_on": null,
       "year_end_expected": null,
-      "plan_date": null,
+      "plan_date": "2026-12-31",
       "remainder": null
      }
     },
-    "callouts": [],
-    "axisMax": 80000,
+    "callouts": [
+     {
+      "stage": "APPROVAL",
+      "status": "DELAYED",
+      "gap": 2931,
+      "rate": "21.2%",
+      "due_date": "2026-04-30",
+      "due_units": 10879,
+      "actual_date": "2026-10-16",
+      "actual_units": 10879
+     }
+    ],
+    "axisMax": 67240,
     "stageChecks": {
      "BUSINESS": {
       "status": "REACHED",
@@ -4373,16 +4536,16 @@
       "actual": {
        "date": "2026-10-16",
        "units": 47615,
-       "manual": 47615,
-       "inferred": 47615
+       "manual": 47607,
+       "inferred": 44662
       },
       "gap": 0,
       "rate": 0,
       "rateText": "0.0%",
       "next": null,
       "yearEnd": {
-       "date": "2026-10-16",
-       "units": 47615
+       "date": "2026-12-31",
+       "units": 50546
       }
      },
      "APPROVAL": {
@@ -4395,7 +4558,7 @@
        "date": "2026-10-16",
        "units": 10879,
        "manual": 10871,
-       "inferred": 9172
+       "inferred": 6227
       },
       "gap": 0,
       "rate": 0,
@@ -4406,7 +4569,7 @@
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 12249
+       "units": 15180
       }
      },
      "CONSTRUCTION": {
@@ -4416,10 +4579,10 @@
        "units": 6106
       },
       "actual": {
-       "date": "2026-10-16",
-       "units": 9172,
-       "manual": 2954,
-       "inferred": 2833
+       "date": "2026-09-07",
+       "units": 9037,
+       "manual": 9037,
+       "inferred": 2894
       },
       "gap": 0,
       "rate": 0,
@@ -4430,7 +4593,7 @@
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 10871
+       "units": 10797
       }
      },
      "SUPPLY": {
@@ -4441,9 +4604,9 @@
       },
       "actual": {
        "date": "2026-10-16",
-       "units": 2089,
-       "manual": 2089,
-       "inferred": 268
+       "units": 1821,
+       "manual": 1821,
+       "inferred": 0
       },
       "gap": 0,
       "rate": 0,
@@ -4454,7 +4617,7 @@
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 3057
+       "units": 1924
       }
      },
      "COMPLETION": {
@@ -4530,21 +4693,21 @@
     "monthly": [
      {
       "month": "2024-11",
-      "APPROVAL": 61,
+      "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
       "COMPLETION": 0
      },
      {
       "month": "2024-12",
-      "APPROVAL": 443,
-      "CONSTRUCTION": 576,
+      "APPROVAL": 444,
+      "CONSTRUCTION": 957,
       "SUPPLY": 0,
       "COMPLETION": 0
      },
      {
       "month": "2025-01",
-      "APPROVAL": 0,
+      "APPROVAL": 60,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
       "COMPLETION": 0
@@ -4574,19 +4737,19 @@
       "month": "2025-05",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
-      "SUPPLY": 2,
+      "SUPPLY": 0,
       "COMPLETION": 0
      },
      {
       "month": "2025-06",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
-      "SUPPLY": 3,
+      "SUPPLY": 0,
       "COMPLETION": 0
      },
      {
       "month": "2025-07",
-      "APPROVAL": 1430,
+      "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
       "COMPLETION": 0
@@ -4635,7 +4798,7 @@
      },
      {
       "month": "2026-02",
-      "APPROVAL": 381,
+      "APPROVAL": 0,
       "CONSTRUCTION": 1515,
       "SUPPLY": 381,
       "COMPLETION": 0
@@ -4649,7 +4812,7 @@
      },
      {
       "month": "2026-04",
-      "APPROVAL": 1515,
+      "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
       "COMPLETION": 0
@@ -4671,7 +4834,7 @@
      {
       "month": "2026-07",
       "APPROVAL": 0,
-      "CONSTRUCTION": 381,
+      "CONSTRUCTION": 0,
       "SUPPLY": 60,
       "COMPLETION": 381
      },
@@ -4699,38 +4862,34 @@
     ],
     "projectStatus": {
      "NORMAL": {
-      "projects": 24,
-      "units": 46482
-     },
-     "DELAYED": {
-      "projects": 3,
-      "units": 1133
+      "projects": 27,
+      "units": 47615
      }
     },
     "stageExclusive": {
      "POLICY": 0,
      "UNKNOWN": 0,
      "MOVE_IN": 0,
-     "SUPPLY": 2089,
-     "CONSTRUCTION": 7083,
-     "APPROVAL": 1707,
+     "SUPPLY": 1821,
+     "CONSTRUCTION": 7216,
+     "APPROVAL": 1842,
      "BUSINESS": 36736
     },
     "mapSupply": {
      "서울특별시": {
-      "supplyReached": 2089,
+      "supplyReached": 1821,
       "delayed": true,
       "delayNote": "준공 14호 부족 (3.5%)"
      },
      "경기도": {
       "supplyReached": 0,
       "delayed": true,
-      "delayNote": "공급 1,393호 부족 (2.7%) · 준공 1,974호 부족 (81.8%)"
+      "delayNote": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
      },
      "인천광역시": {
       "supplyReached": 0,
-      "delayed": false,
-      "delayNote": ""
+      "delayed": true,
+      "delayNote": "공급 1,108호 부족 (17.4%)"
      }
     }
    }
@@ -4821,186 +4980,186 @@
    "actualSource": "HOME",
    "stageUnits": [
     [
-     4681,
-     5512,
-     5703,
-     2871,
-     2682,
+     763,
+     5931,
+     9202,
+     4329,
+     1224,
      0
     ],
     [
-     4681,
-     5512,
-     5703,
-     2871,
-     2682,
+     763,
+     5931,
+     9202,
+     4329,
+     1224,
      0
     ],
     [
-     4681,
-     5512,
-     5703,
-     2871,
-     2682,
+     763,
+     5931,
+     9202,
+     4329,
+     1224,
      0
     ],
     [
-     4681,
-     5512,
-     5703,
-     2871,
-     2682,
+     763,
+     5821,
+     9312,
+     4329,
+     1224,
      0
     ],
     [
-     4513,
-     5512,
-     5871,
-     2871,
-     2682,
+     705,
+     5821,
+     9370,
+     4329,
+     1224,
      0
     ],
     [
-     3564,
-     3296,
+     705,
+     3605,
+     10637,
+     5278,
+     1224,
+     0
+    ],
+    [
+     705,
+     3605,
+     10637,
+     5278,
+     1224,
+     0
+    ],
+    [
+     705,
+     3605,
+     10637,
+     5278,
+     1224,
+     0
+    ],
+    [
+     705,
+     3605,
+     10320,
+     5595,
+     1224,
+     0
+    ],
+    [
+     705,
+     3605,
+     10320,
+     5595,
+     1224,
+     0
+    ],
+    [
+     705,
+     3605,
+     10320,
+     5595,
+     1224,
+     0
+    ],
+    [
+     705,
+     3605,
+     8750,
+     6524,
+     1865,
+     0
+    ],
+    [
+     705,
+     3605,
+     8750,
+     6524,
+     1865,
+     0
+    ],
+    [
+     3,
+     4307,
      8087,
-     3820,
-     2682,
+     7187,
+     1865,
      0
     ],
     [
-     3564,
-     3296,
+     3,
+     4307,
      8087,
-     3820,
-     2682,
+     7187,
+     1865,
      0
     ],
     [
-     3564,
-     3296,
+     3,
+     4307,
      8087,
-     3820,
-     2682,
+     6562,
+     2490,
      0
     ],
     [
-     3247,
-     3296,
+     3,
+     4307,
      8087,
-     4137,
-     2682,
-     0
-    ],
-    [
-     3247,
-     3296,
-     8087,
-     4137,
-     2682,
-     0
-    ],
-    [
-     3247,
-     3296,
-     8087,
-     4137,
-     2682,
-     0
-    ],
-    [
-     1677,
-     3296,
-     8087,
-     5066,
-     3323,
-     0
-    ],
-    [
-     1677,
-     3296,
-     8087,
-     5066,
-     3323,
-     0
-    ],
-    [
-     975,
-     3998,
-     8087,
-     5066,
-     3323,
-     0
-    ],
-    [
-     975,
-     3998,
-     8087,
-     5066,
-     3323,
-     0
-    ],
-    [
-     975,
-     3998,
-     8087,
-     4441,
-     3948,
-     0
-    ],
-    [
-     975,
-     3998,
-     8087,
-     4441,
-     3948,
-     0
-    ],
-    [
-     666,
-     3216,
-     7653,
-     5966,
-     3948,
-     0
-    ],
-    [
-     666,
-     3216,
-     7653,
-     5966,
-     3948,
+     6562,
+     2490,
      0
     ],
     [
      3,
      3216,
      7653,
-     4643,
-     5934,
+     8087,
+     2490,
      0
     ],
     [
      3,
      3216,
-     7543,
-     4334,
-     6353,
+     7653,
+     8087,
+     2490,
      0
     ],
     [
      3,
      3216,
-     7543,
-     3984,
-     6703,
+     7653,
+     6101,
+     4476,
      0
     ],
     [
      3,
      3216,
-     7543,
-     2414,
+     7653,
+     5682,
+     4895,
+     0
+    ],
+    [
+     3,
+     3216,
+     7653,
+     5332,
+     5245,
+     0
+    ],
+    [
+     3,
+     3216,
+     7653,
+     2304,
      7049,
      1224
     ],
@@ -5191,163 +5350,171 @@
    ],
    "stageProjects": [
     [
+     4,
+     8,
      12,
-     6,
-     6,
-     4,
-     2,
-     0
-    ],
-    [
-     12,
-     6,
-     6,
-     4,
-     2,
-     0
-    ],
-    [
-     12,
-     6,
-     6,
-     4,
-     2,
-     0
-    ],
-    [
-     12,
-     6,
-     6,
-     4,
-     2,
-     0
-    ],
-    [
-     10,
-     6,
-     8,
-     4,
-     2,
-     0
-    ],
-    [
-     8,
-     3,
-     11,
-     6,
-     2,
-     0
-    ],
-    [
-     8,
-     3,
-     11,
-     6,
-     2,
-     0
-    ],
-    [
-     8,
-     3,
-     11,
-     6,
-     2,
-     0
-    ],
-    [
-     7,
-     3,
-     11,
-     7,
-     2,
-     0
-    ],
-    [
-     7,
-     3,
-     11,
-     7,
-     2,
-     0
-    ],
-    [
-     7,
-     3,
-     11,
-     7,
-     2,
-     0
-    ],
-    [
      5,
-     3,
-     11,
-     8,
-     3,
-     0
-    ],
-    [
-     5,
-     3,
-     11,
-     8,
-     3,
-     0
-    ],
-    [
-     2,
-     6,
-     11,
-     8,
-     3,
-     0
-    ],
-    [
-     2,
-     6,
-     11,
-     8,
-     3,
-     0
-    ],
-    [
-     2,
-     6,
-     11,
-     6,
-     5,
-     0
-    ],
-    [
-     2,
-     6,
-     11,
-     6,
-     5,
-     0
-    ],
-    [
      1,
-     5,
-     10,
-     9,
-     5,
      0
     ],
     [
+     4,
+     8,
+     12,
+     5,
      1,
+     0
+    ],
+    [
+     4,
+     8,
+     12,
      5,
-     10,
+     1,
+     0
+    ],
+    [
+     4,
+     7,
+     13,
+     5,
+     1,
+     0
+    ],
+    [
+     3,
+     7,
+     14,
+     5,
+     1,
+     0
+    ],
+    [
+     3,
+     4,
+     15,
+     7,
+     1,
+     0
+    ],
+    [
+     3,
+     4,
+     15,
+     7,
+     1,
+     0
+    ],
+    [
+     3,
+     4,
+     15,
+     7,
+     1,
+     0
+    ],
+    [
+     3,
+     4,
+     14,
+     8,
+     1,
+     0
+    ],
+    [
+     3,
+     4,
+     14,
+     8,
+     1,
+     0
+    ],
+    [
+     3,
+     4,
+     14,
+     8,
+     1,
+     0
+    ],
+    [
+     3,
+     4,
+     12,
      9,
-     5,
+     2,
+     0
+    ],
+    [
+     3,
+     4,
+     12,
+     9,
+     2,
+     0
+    ],
+    [
+     0,
+     7,
+     11,
+     10,
+     2,
+     0
+    ],
+    [
+     0,
+     7,
+     11,
+     10,
+     2,
+     0
+    ],
+    [
+     0,
+     7,
+     11,
+     8,
+     4,
+     0
+    ],
+    [
+     0,
+     7,
+     11,
+     8,
+     4,
      0
     ],
     [
      0,
      5,
      10,
-     7,
+     11,
+     4,
+     0
+    ],
+    [
+     0,
+     5,
+     10,
+     11,
+     4,
+     0
+    ],
+    [
+     0,
+     5,
+     10,
      8,
+     7,
+     0
+    ],
+    [
+     0,
+     5,
+     9,
+     7,
+     9,
      0
     ],
     [
@@ -5356,14 +5523,6 @@
      9,
      6,
      10,
-     0
-    ],
-    [
-     0,
-     5,
-     9,
-     5,
-     11,
      0
     ],
     [
@@ -5583,7 +5742,7 @@
     0,
     0,
     0,
-    0,
+    1108,
     0
    ],
    "cautionByStage": [
@@ -5715,8 +5874,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 18,
-      "units": 16771
+      "projects": 26,
+      "units": 20689
      },
      "caution": {
       "projects": 0,
@@ -5728,10 +5887,10 @@
      },
      "delayByStage": [
       0,
-      2778,
-      2301,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -5742,9 +5901,9 @@
       0,
       0
      ],
-     "judged": 18,
+     "judged": 26,
      "max": {
-      "d": 2778,
+      "d": 1458,
       "w": 0
      }
     },
@@ -5754,8 +5913,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 18,
-      "units": 16771
+      "projects": 26,
+      "units": 20689
      },
      "caution": {
       "projects": 0,
@@ -5767,10 +5926,10 @@
      },
      "delayByStage": [
       0,
-      2778,
-      2301,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -5781,9 +5940,9 @@
       0,
       0
      ],
-     "judged": 18,
+     "judged": 26,
      "max": {
-      "d": 2778,
+      "d": 1458,
       "w": 0
      }
     },
@@ -5793,8 +5952,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 18,
-      "units": 16771
+      "projects": 26,
+      "units": 20689
      },
      "caution": {
       "projects": 0,
@@ -5806,10 +5965,10 @@
      },
      "delayByStage": [
       0,
-      2778,
-      2301,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -5820,9 +5979,9 @@
       0,
       0
      ],
-     "judged": 18,
+     "judged": 26,
      "max": {
-      "d": 2778,
+      "d": 1458,
       "w": 0
      }
     },
@@ -5832,8 +5991,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 18,
-      "units": 16771
+      "projects": 26,
+      "units": 20689
      },
      "caution": {
       "projects": 0,
@@ -5845,10 +6004,10 @@
      },
      "delayByStage": [
       0,
-      2778,
-      2411,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -5859,9 +6018,9 @@
       0,
       0
      ],
-     "judged": 18,
+     "judged": 26,
      "max": {
-      "d": 2778,
+      "d": 1458,
       "w": 0
      }
     },
@@ -5871,8 +6030,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 20,
-      "units": 16939
+      "projects": 27,
+      "units": 20747
      },
      "caution": {
       "projects": 0,
@@ -5884,10 +6043,10 @@
      },
      "delayByStage": [
       0,
-      2610,
-      2243,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -5898,9 +6057,9 @@
       0,
       0
      ],
-     "judged": 20,
+     "judged": 27,
      "max": {
-      "d": 2610,
+      "d": 1458,
       "w": 0
      }
     },
@@ -5910,8 +6069,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 22,
-      "units": 17888
+      "projects": 27,
+      "units": 20747
      },
      "caution": {
       "projects": 0,
@@ -5923,10 +6082,10 @@
      },
      "delayByStage": [
       0,
-      1661,
-      1352,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -5937,9 +6096,9 @@
       0,
       0
      ],
-     "judged": 22,
+     "judged": 27,
      "max": {
-      "d": 1661,
+      "d": 1458,
       "w": 0
      }
     },
@@ -5949,8 +6108,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 22,
-      "units": 17888
+      "projects": 27,
+      "units": 20747
      },
      "caution": {
       "projects": 0,
@@ -5962,10 +6121,10 @@
      },
      "delayByStage": [
       0,
-      1661,
-      1352,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -5976,9 +6135,9 @@
       0,
       0
      ],
-     "judged": 22,
+     "judged": 27,
      "max": {
-      "d": 1661,
+      "d": 1458,
       "w": 0
      }
     },
@@ -5988,8 +6147,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 22,
-      "units": 17888
+      "projects": 27,
+      "units": 20747
      },
      "caution": {
       "projects": 0,
@@ -6001,10 +6160,10 @@
      },
      "delayByStage": [
       0,
-      1661,
-      1352,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -6015,9 +6174,9 @@
       0,
       0
      ],
-     "judged": 22,
+     "judged": 27,
      "max": {
-      "d": 1661,
+      "d": 1458,
       "w": 0
      }
     },
@@ -6027,8 +6186,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 23,
-      "units": 18205
+      "projects": 27,
+      "units": 20747
      },
      "caution": {
       "projects": 0,
@@ -6040,10 +6199,10 @@
      },
      "delayByStage": [
       0,
-      1344,
-      1035,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -6054,9 +6213,9 @@
       0,
       0
      ],
-     "judged": 23,
+     "judged": 27,
      "max": {
-      "d": 1344,
+      "d": 1458,
       "w": 0
      }
     },
@@ -6066,8 +6225,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 23,
-      "units": 18205
+      "projects": 27,
+      "units": 20747
      },
      "caution": {
       "projects": 0,
@@ -6079,10 +6238,10 @@
      },
      "delayByStage": [
       0,
-      1344,
-      1035,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -6093,9 +6252,9 @@
       0,
       0
      ],
-     "judged": 23,
+     "judged": 27,
      "max": {
-      "d": 1344,
+      "d": 1458,
       "w": 0
      }
     },
@@ -6105,8 +6264,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 23,
-      "units": 18205
+      "projects": 27,
+      "units": 20747
      },
      "caution": {
       "projects": 0,
@@ -6118,10 +6277,10 @@
      },
      "delayByStage": [
       0,
-      1344,
-      1035,
       0,
       0,
+      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -6132,9 +6291,9 @@
       0,
       0
      ],
-     "judged": 23,
+     "judged": 27,
      "max": {
-      "d": 1344,
+      "d": 1458,
       "w": 0
      }
     },
@@ -6144,8 +6303,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 25,
-      "units": 19775
+      "projects": 27,
+      "units": 20747
      },
      "caution": {
       "projects": 0,
@@ -6160,7 +6319,7 @@
       0,
       0,
       0,
-      0,
+      817,
       0
      ],
      "cautionByStage": [
@@ -6171,9 +6330,9 @@
       0,
       0
      ],
-     "judged": 25,
+     "judged": 27,
      "max": {
-      "d": 0,
+      "d": 817,
       "w": 0
      }
     },
@@ -6183,8 +6342,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 25,
-      "units": 19775
+      "projects": 27,
+      "units": 20747
      },
      "caution": {
       "projects": 0,
@@ -6199,7 +6358,7 @@
       0,
       0,
       0,
-      0,
+      817,
       0
      ],
      "cautionByStage": [
@@ -6210,9 +6369,9 @@
       0,
       0
      ],
-     "judged": 25,
+     "judged": 27,
      "max": {
-      "d": 0,
+      "d": 817,
       "w": 0
      }
     },
@@ -6222,8 +6381,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 28,
-      "units": 20477
+      "projects": 30,
+      "units": 21449
      },
      "caution": {
       "projects": 0,
@@ -6237,8 +6396,8 @@
       0,
       0,
       0,
-      663,
       0,
+      817,
       0
      ],
      "cautionByStage": [
@@ -6249,9 +6408,9 @@
       0,
       0
      ],
-     "judged": 28,
+     "judged": 30,
      "max": {
-      "d": 663,
+      "d": 817,
       "w": 0
      }
     },
@@ -6261,8 +6420,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 28,
-      "units": 20477
+      "projects": 30,
+      "units": 21449
      },
      "caution": {
       "projects": 0,
@@ -6276,8 +6435,8 @@
       0,
       0,
       0,
-      663,
       0,
+      817,
       0
      ],
      "cautionByStage": [
@@ -6288,9 +6447,9 @@
       0,
       0
      ],
-     "judged": 28,
+     "judged": 30,
      "max": {
-      "d": 663,
+      "d": 817,
       "w": 0
      }
     },
@@ -6300,8 +6459,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 28,
-      "units": 20477
+      "projects": 30,
+      "units": 21449
      },
      "caution": {
       "projects": 0,
@@ -6315,8 +6474,8 @@
       0,
       0,
       0,
-      663,
       0,
+      817,
       0
      ],
      "cautionByStage": [
@@ -6327,9 +6486,9 @@
       0,
       0
      ],
-     "judged": 28,
+     "judged": 30,
      "max": {
-      "d": 663,
+      "d": 817,
       "w": 0
      }
     },
@@ -6339,8 +6498,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 28,
-      "units": 20477
+      "projects": 30,
+      "units": 21449
      },
      "caution": {
       "projects": 0,
@@ -6354,8 +6513,8 @@
       0,
       0,
       0,
-      663,
       0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -6366,9 +6525,9 @@
       0,
       0
      ],
-     "judged": 28,
+     "judged": 30,
      "max": {
-      "d": 663,
+      "d": 1458,
       "w": 0
      }
     },
@@ -6378,8 +6537,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 29,
-      "units": 20786
+      "projects": 30,
+      "units": 21449
      },
      "caution": {
       "projects": 0,
@@ -6393,8 +6552,8 @@
       0,
       0,
       0,
-      663,
       0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -6405,9 +6564,9 @@
       0,
       0
      ],
-     "judged": 29,
+     "judged": 30,
      "max": {
-      "d": 663,
+      "d": 1458,
       "w": 0
      }
     },
@@ -6417,8 +6576,8 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 29,
-      "units": 20786
+      "projects": 30,
+      "units": 21449
      },
      "caution": {
       "projects": 0,
@@ -6432,8 +6591,8 @@
       0,
       0,
       0,
-      663,
       0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -6444,9 +6603,9 @@
       0,
       0
      ],
-     "judged": 29,
+     "judged": 30,
      "max": {
-      "d": 663,
+      "d": 1458,
       "w": 0
      }
     },
@@ -6472,7 +6631,7 @@
       0,
       0,
       0,
-      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -6485,7 +6644,7 @@
      ],
      "judged": 30,
      "max": {
-      "d": 0,
+      "d": 1458,
       "w": 0
      }
     },
@@ -6511,7 +6670,7 @@
       0,
       0,
       0,
-      0,
+      1458,
       0
      ],
      "cautionByStage": [
@@ -6524,7 +6683,7 @@
      ],
      "judged": 30,
      "max": {
-      "d": 0,
+      "d": 1458,
       "w": 0
      }
     },
@@ -6550,7 +6709,7 @@
       0,
       0,
       0,
-      0,
+      1108,
       0
      ],
      "cautionByStage": [
@@ -6563,7 +6722,7 @@
      ],
      "judged": 30,
      "max": {
-      "d": 0,
+      "d": 1108,
       "w": 0
      }
     }
@@ -6579,30 +6738,30 @@
      "BUSINESS": {
       "current": 21446,
       "measured_on": "2026-10-19",
-      "year_end_expected": 21446,
-      "plan_date": "2026-10-19",
-      "remainder": 0
+      "year_end_expected": 22554,
+      "plan_date": "2026-12-31",
+      "remainder": 1108
      },
      "APPROVAL": {
       "current": 18230,
       "measured_on": "2026-10-19",
-      "year_end_expected": 20744,
-      "plan_date": "2026-12-27",
-      "remainder": 2514
+      "year_end_expected": 21852,
+      "plan_date": "2026-12-31",
+      "remainder": 3622
      },
      "CONSTRUCTION": {
-      "current": 10687,
-      "measured_on": "2026-10-19",
-      "year_end_expected": 15959,
+      "current": 10577,
+      "measured_on": "2026-09-30",
+      "year_end_expected": 16957,
       "plan_date": "2026-12-31",
-      "remainder": 5272
+      "remainder": 6380
      },
      "SUPPLY": {
-      "current": 6703,
+      "current": 5245,
       "measured_on": "2026-10-19",
       "year_end_expected": 8331,
       "plan_date": "2026-12-31",
-      "remainder": 1628
+      "remainder": 3086
      },
      "MOVE_IN": {
       "current": null,
@@ -6612,8 +6771,19 @@
       "remainder": null
      }
     },
-    "callouts": [],
-    "axisMax": 40000,
+    "callouts": [
+     {
+      "stage": "SUPPLY",
+      "status": "DELAYED",
+      "gap": 1108,
+      "rate": "17.4%",
+      "due_date": "2026-09-30",
+      "due_units": 6353,
+      "actual_date": "2026-10-19",
+      "actual_units": 5245
+     }
+    ],
+    "axisMax": 29800,
     "stageChecks": {
      "BUSINESS": {
       "status": "REACHED",
@@ -6632,8 +6802,8 @@
       "rateText": "0.0%",
       "next": null,
       "yearEnd": {
-       "date": "2026-10-19",
-       "units": 21446
+       "date": "2026-12-31",
+       "units": 22554
       }
      },
      "APPROVAL": {
@@ -6645,8 +6815,8 @@
       "actual": {
        "date": "2026-10-19",
        "units": 18230,
-       "manual": 16598,
-       "inferred": 13101
+       "manual": 17032,
+       "inferred": 13226
       },
       "gap": 0,
       "rate": 0,
@@ -6656,8 +6826,8 @@
        "units": 19546
       },
       "yearEnd": {
-       "date": "2026-12-27",
-       "units": 20744
+       "date": "2026-12-31",
+       "units": 21852
       }
      },
      "CONSTRUCTION": {
@@ -6667,10 +6837,10 @@
        "units": 10577
       },
       "actual": {
-       "date": "2026-10-19",
-       "units": 10687,
-       "manual": 8273,
-       "inferred": 8163
+       "date": "2026-09-30",
+       "units": 10577,
+       "manual": 9070,
+       "inferred": 9070
       },
       "gap": 0,
       "rate": 0,
@@ -6681,24 +6851,24 @@
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 15959
+       "units": 16957
       }
      },
      "SUPPLY": {
-      "status": "REACHED",
+      "status": "DELAYED",
       "due": {
        "date": "2026-09-30",
        "units": 6353
       },
       "actual": {
        "date": "2026-10-19",
-       "units": 6703,
-       "manual": 4838,
-       "inferred": 4378
+       "units": 5245,
+       "manual": 3072,
+       "inferred": 0
       },
-      "gap": 0,
-      "rate": 0,
-      "rateText": "0.0%",
+      "gap": 1108,
+      "rate": 17.4,
+      "rateText": "17.4%",
       "next": {
        "date": "2026-10-31",
        "units": 7495
@@ -6709,20 +6879,15 @@
       }
      },
      "COMPLETION": {
-      "status": "REACHED",
+      "status": "NO_ACTUAL",
       "due": {
        "date": "2026-08-07",
        "units": 2682
       },
-      "actual": {
-       "date": "2026-08-07",
-       "units": 2682,
-       "manual": 2682,
-       "inferred": 2682
-      },
-      "gap": 0,
-      "rate": 0,
-      "rateText": "0.0%",
+      "actual": null,
+      "gap": null,
+      "rate": null,
+      "rateText": "미확보",
       "next": {
        "date": "2027-08-29",
        "units": 3032
@@ -6746,11 +6911,35 @@
       }
      }
     },
-    "delayMax": 0,
+    "delayMax": 1108,
     "warningMax": 0,
-    "stageGaps": [],
-    "bottleneck": null,
-    "stageShort": {},
+    "stageGaps": [
+     {
+      "stage": "SUPPLY",
+      "label": "공급",
+      "status": "DELAYED",
+      "gap": 1108,
+      "rate": "17.4%"
+     }
+    ],
+    "bottleneck": {
+     "stage": "SUPPLY",
+     "label": "공급",
+     "status": "DELAYED",
+     "gap": 1108,
+     "rate": "17.4%"
+    },
+    "stageShort": {
+     "SUPPLY": {
+      "rows": [
+       {
+        "id": "PRO_f6263baf545293a2283f4ad1",
+        "short": 1458
+       }
+      ],
+      "over": 350
+     }
+    },
     "supplyUpcoming": {
      "total": 1628,
      "projects": 3,
@@ -6763,168 +6952,168 @@
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2024-12",
-      "APPROVAL": 6592,
+      "APPROVAL": 5269,
       "CONSTRUCTION": 1323,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-01",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-02",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-03",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-04",
-      "APPROVAL": 0,
+      "APPROVAL": 110,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-05",
-      "APPROVAL": 168,
+      "APPROVAL": 58,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-06",
-      "APPROVAL": 3165,
+      "APPROVAL": 2216,
       "CONSTRUCTION": 949,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-07",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-08",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-09",
-      "APPROVAL": 317,
+      "APPROVAL": 0,
       "CONSTRUCTION": 317,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-10",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-11",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2025-12",
-      "APPROVAL": 1570,
+      "APPROVAL": 0,
       "CONSTRUCTION": 1570,
       "SUPPLY": 641,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2026-01",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2026-02",
       "APPROVAL": 0,
-      "CONSTRUCTION": 0,
+      "CONSTRUCTION": 663,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2026-03",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2026-04",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 625,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2026-05",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2026-06",
       "APPROVAL": 1091,
       "CONSTRUCTION": 1525,
       "SUPPLY": 0,
-      "COMPLETION": 1458
+      "COMPLETION": null
      },
      {
       "month": "2026-07",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 0,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2026-08",
-      "APPROVAL": 663,
-      "CONSTRUCTION": 663,
+      "APPROVAL": 0,
+      "CONSTRUCTION": 0,
       "SUPPLY": 1986,
-      "COMPLETION": 1224
+      "COMPLETION": null
      },
      {
       "month": "2026-09",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
       "SUPPLY": 419,
-      "COMPLETION": 0
+      "COMPLETION": null
      },
      {
       "month": "2026-10",
       "APPROVAL": 1198,
       "CONSTRUCTION": 0,
       "SUPPLY": 350,
-      "COMPLETION": 0
+      "COMPLETION": null
      }
     ],
     "projectStatus": {
@@ -6937,9 +7126,9 @@
      "POLICY": 3,
      "UNKNOWN": 0,
      "MOVE_IN": 0,
-     "SUPPLY": 6703,
-     "CONSTRUCTION": 3984,
-     "APPROVAL": 7543,
+     "SUPPLY": 5245,
+     "CONSTRUCTION": 5332,
+     "APPROVAL": 7653,
      "BUSINESS": 3216
     },
     "mapSupply": {
@@ -6951,12 +7140,12 @@
      "경기도": {
       "supplyReached": 0,
       "delayed": true,
-      "delayNote": "공급 1,393호 부족 (2.7%) · 준공 1,974호 부족 (81.8%)"
+      "delayNote": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
      },
      "인천광역시": {
-      "supplyReached": 6703,
-      "delayed": false,
-      "delayNote": ""
+      "supplyReached": 5245,
+      "delayed": true,
+      "delayNote": "공급 1,108호 부족 (17.4%)"
      }
     }
    }
@@ -7047,756 +7236,756 @@
    "actualSource": "HOME",
    "stageUnits": [
     [
-     41347,
-     5860,
-     14633,
-     18798,
-     3873,
+     14625,
+     15333,
+     32512,
+     19198,
+     2843,
      0
     ],
     [
-     29502,
-     15860,
-     14633,
-     20483,
-     4033,
+     4625,
+     25333,
+     31327,
+     20383,
+     2843,
      0
     ],
     [
-     28964,
-     15860,
-     13422,
-     20507,
-     5758,
+     4625,
+     25333,
+     29264,
+     21331,
+     3958,
      0
     ],
     [
-     27784,
-     15860,
-     13422,
-     20822,
-     6623,
+     4625,
+     25333,
+     28084,
+     21646,
+     4823,
      0
     ],
     [
-     25126,
-     15860,
-     14203,
-     21321,
-     8001,
+     4625,
+     24186,
+     27354,
+     23090,
+     5256,
      0
     ],
     [
-     18010,
-     15860,
-     13563,
-     23649,
-     13429,
+     4625,
+     22340,
+     21444,
+     29977,
+     6125,
      0
     ],
     [
-     17021,
-     15860,
-     12844,
-     20755,
-     18031,
+     4625,
+     21912,
+     20164,
+     27200,
+     10610,
      0
     ],
     [
-     17021,
-     15860,
-     12844,
-     20217,
-     18569,
+     4625,
+     21318,
+     20758,
+     26662,
+     11148,
      0
     ],
     [
-     14125,
-     15860,
-     12087,
-     23286,
-     19153,
+     4625,
+     20481,
+     17942,
+     29620,
+     11843,
      0
     ],
     [
-     13183,
-     15860,
-     13029,
-     23170,
-     19269,
+     4625,
+     19539,
+     18884,
+     29504,
+     11959,
      0
     ],
     [
-     12896,
-     15860,
-     13316,
-     20579,
-     21860,
+     4338,
+     19539,
+     19171,
+     27421,
+     14042,
      0
     ],
     [
-     6287,
-     15860,
-     10970,
-     23900,
-     27494,
+     2452,
+     16793,
+     14848,
+     33221,
+     17197,
      0
     ],
     [
-     5987,
-     15860,
-     11270,
-     23900,
-     27494,
+     2152,
+     16793,
+     14172,
+     34197,
+     17197,
      0
     ],
     [
-     4358,
+     1071,
+     17874,
+     13624,
+     34745,
+     17197,
+     0
+    ],
+    [
+     1071,
      16941,
-     10328,
-     25390,
-     27494,
+     10959,
+     38343,
+     17197,
      0
     ],
     [
-     2630,
+     1071,
      16941,
-     8467,
-     27013,
-     29460,
+     9677,
+     37233,
+     19589,
      0
     ],
     [
-     2630,
-     16941,
-     7185,
-     25273,
-     32482,
-     0
-    ],
-    [
-     2630,
+     1071,
      16423,
-     7185,
-     20597,
-     37676,
+     10195,
+     35219,
+     21603,
      0
     ],
     [
-     2329,
-     12477,
-     9795,
-     17212,
-     42698,
+     770,
+     13388,
+     10961,
+     34130,
+     25262,
      0
     ],
     [
-     1729,
-     12477,
-     9915,
-     16456,
-     43934,
+     770,
+     13388,
+     10961,
+     33374,
+     26018,
      0
     ],
     [
-     1135,
-     12477,
-     9915,
-     12199,
-     48785,
+     770,
+     13388,
+     10961,
+     31048,
+     28344,
      0
     ],
     [
-     170,
-     12477,
-     9915,
-     12616,
-     49333,
+     770,
+     13388,
+     9996,
+     32013,
+     28344,
      0
     ],
     [
-     170,
-     12477,
-     8755,
-     13776,
-     49333,
+     770,
+     13388,
+     8836,
+     33173,
+     28344,
      0
     ],
     [
-     170,
-     12477,
-     6624,
-     5752,
-     58641,
+     770,
+     13388,
+     5113,
+     8816,
+     55577,
      847
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      1317,
-     9575,
-     60045,
+     12639,
+     56981,
      1163
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      1317,
-     8780,
-     60402,
+     11844,
+     57338,
      1601
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      1317,
-     8780,
-     60402,
+     11844,
+     57338,
      1601
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      1317,
-     8780,
-     60003,
+     11844,
+     56939,
      2000
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      1317,
-     8780,
-     59591,
+     11844,
+     56527,
      2412
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      1317,
-     8780,
-     59591,
+     11844,
+     56527,
      2412
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      1317,
-     7717,
-     59200,
+     10781,
+     56136,
      3866
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      1025,
-     7044,
-     60165,
+     10108,
+     57101,
      3866
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      131,
-     7938,
-     59054,
+     11002,
+     55990,
      4977
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      131,
-     7938,
-     59054,
+     11002,
+     55990,
      4977
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      131,
-     7938,
-     58761,
+     11002,
+     55697,
      5270
     ],
     [
-     170,
-     12241,
+     770,
+     11641,
      131,
-     7938,
-     55141,
+     11002,
+     52077,
      8890
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      10131,
-     4631,
-     58018,
+     3067,
+     59582,
      9320
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     54101,
+     3368,
+     55665,
      13237
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     54101,
+     3368,
+     55665,
      13237
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     52678,
+     3368,
+     54242,
      14660
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     51042,
+     3368,
+     52606,
      16296
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     50231,
+     3368,
+     51795,
      17107
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     49106,
+     3368,
+     50670,
      18232
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     45866,
+     3368,
+     47430,
      21472
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     44629,
+     3368,
+     46193,
      22709
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     42514,
+     3368,
+     44078,
      24824
     ],
     [
-     170,
-     2241,
+     770,
+     1641,
      9830,
-     4932,
-     41970,
+     3368,
+     43534,
      25368
     ]
    ],
    "stageProjects": [
     [
-     46,
-     8,
-     27,
+     9,
+     20,
+     54,
      32,
-     7,
+     5,
      0
     ],
     [
-     43,
-     9,
-     27,
-     33,
+     8,
+     21,
+     52,
+     34,
+     5,
+     0
+    ],
+    [
+     8,
+     21,
+     47,
+     38,
+     6,
+     0
+    ],
+    [
+     8,
+     21,
+     45,
+     38,
      8,
      0
     ],
     [
-     42,
+     8,
+     19,
+     45,
+     39,
      9,
-     24,
-     35,
+     0
+    ],
+    [
+     8,
+     17,
+     36,
+     49,
      10,
      0
     ],
     [
-     40,
-     9,
-     24,
-     35,
-     12,
-     0
-    ],
-    [
-     37,
-     9,
-     25,
-     35,
-     14,
-     0
-    ],
-    [
-     27,
-     9,
-     24,
-     38,
-     22,
-     0
-    ],
-    [
-     25,
-     9,
-     23,
+     8,
+     16,
      34,
-     29,
+     44,
+     18,
      0
     ],
     [
-     25,
-     9,
-     23,
-     33,
-     30,
+     8,
+     15,
+     35,
+     43,
+     19,
      0
     ],
     [
-     22,
-     9,
+     8,
+     14,
+     31,
+     46,
      21,
-     37,
+     0
+    ],
+    [
+     8,
+     13,
+     32,
+     45,
+     22,
+     0
+    ],
+    [
+     7,
+     13,
+     33,
+     42,
+     25,
+     0
+    ],
+    [
+     5,
+     10,
+     23,
+     51,
      31,
      0
     ],
     [
-     21,
-     9,
-     22,
-     36,
-     32,
-     0
-    ],
-    [
-     20,
-     9,
+     4,
+     10,
      23,
-     33,
-     35,
-     0
-    ],
-    [
-     10,
-     9,
-     18,
-     40,
-     43,
-     0
-    ],
-    [
-     9,
-     9,
-     19,
-     40,
-     43,
-     0
-    ],
-    [
-     6,
-     11,
-     18,
-     42,
-     43,
-     0
-    ],
-    [
-     4,
-     11,
-     16,
-     43,
-     46,
-     0
-    ],
-    [
-     4,
-     11,
-     15,
-     39,
-     51,
-     0
-    ],
-    [
-     4,
-     10,
-     15,
-     32,
-     59,
-     0
-    ],
-    [
-     3,
-     4,
-     19,
-     29,
-     65,
-     0
-    ],
-    [
-     2,
-     4,
-     19,
-     26,
-     69,
+     52,
+     31,
      0
     ],
     [
      1,
-     4,
+     13,
+     22,
+     53,
+     31,
+     0
+    ],
+    [
+     1,
+     12,
      19,
+     57,
+     31,
+     0
+    ],
+    [
+     1,
+     12,
      18,
-     78,
+     54,
+     35,
+     0
+    ],
+    [
+     1,
+     11,
+     17,
+     53,
+     38,
      0
     ],
     [
      0,
-     4,
-     19,
-     18,
-     79,
+     6,
+     20,
+     52,
+     42,
      0
     ],
     [
      0,
-     4,
-     18,
+     6,
+     20,
+     49,
+     45,
+     0
+    ],
+    [
+     0,
+     6,
      19,
-     79,
+     45,
+     50,
+     0
+    ],
+    [
+     0,
+     6,
+     18,
+     46,
+     50,
+     0
+    ],
+    [
+     0,
+     6,
+     17,
+     47,
+     50,
      0
     ],
     [
      0,
      4,
      9,
-     11,
-     94,
+     14,
+     91,
      2
     ],
     [
      0,
      2,
      0,
-     17,
-     98,
+     20,
+     95,
      3
     ],
     [
      0,
      2,
      0,
-     16,
-     98,
+     19,
+     95,
      4
     ],
     [
      0,
      2,
      0,
-     16,
-     98,
+     19,
+     95,
      4
     ],
     [
      0,
      2,
      0,
-     16,
-     97,
+     19,
+     94,
      5
     ],
     [
      0,
      2,
      0,
-     16,
-     96,
+     19,
+     93,
      6
     ],
     [
      0,
      2,
      0,
-     16,
-     95,
+     19,
+     92,
      7
     ],
     [
      0,
      2,
      0,
-     14,
-     94,
+     17,
+     91,
      10
     ],
     [
      0,
      2,
      0,
-     13,
-     95,
-     10
-    ],
-    [
-     0,
-     2,
-     0,
-     13,
-     93,
-     12
-    ],
-    [
-     0,
-     2,
-     0,
-     13,
-     93,
-     12
-    ],
-    [
-     0,
-     2,
-     0,
-     13,
+     16,
      92,
+     10
+    ],
+    [
+     0,
+     2,
+     0,
+     16,
+     90,
+     12
+    ],
+    [
+     0,
+     2,
+     0,
+     16,
+     90,
+     12
+    ],
+    [
+     0,
+     2,
+     0,
+     16,
+     89,
      13
     ],
     [
      0,
      2,
      0,
-     13,
-     85,
+     16,
+     82,
      20
     ],
     [
      0,
      1,
      1,
-     7,
-     90,
+     4,
+     93,
      21
     ],
     [
      0,
      1,
      1,
-     7,
-     83,
+     4,
+     86,
      28
     ],
     [
      0,
      1,
      1,
-     7,
-     83,
+     4,
+     86,
      28
     ],
     [
      0,
      1,
      1,
-     7,
-     80,
+     4,
+     83,
      31
     ],
     [
      0,
      1,
      1,
-     7,
-     75,
+     4,
+     78,
      36
     ],
     [
      0,
      1,
      1,
-     7,
-     73,
+     4,
+     76,
      38
     ],
     [
      0,
      1,
      1,
-     7,
-     71,
+     4,
+     74,
      40
     ],
     [
      0,
      1,
      1,
-     7,
-     66,
+     4,
+     69,
      45
     ],
     [
      0,
      1,
      1,
-     7,
-     64,
+     4,
+     67,
      47
     ],
     [
      0,
      1,
      1,
-     7,
-     60,
+     4,
+     63,
      51
     ],
     [
      0,
      1,
      1,
-     7,
-     59,
+     4,
+     62,
      52
     ]
    ],
    "judgment": {
     "ok": {
-     "projects": 114,
-     "units": 81761
+     "projects": 106,
+     "units": 76353
     },
     "caution": {
-     "projects": 2,
-     "units": 541
+     "projects": 3,
+     "units": 919
     },
     "delay": {
-     "projects": 3,
-     "units": 1049
+     "projects": 10,
+     "units": 6079
     },
     "excluded": {
      "projects": 1,
@@ -7808,15 +7997,15 @@
     0,
     0,
     0,
-    1974,
-    1393,
+    2096,
+    20616,
     0
    ],
    "cautionByStage": [
     0,
     0,
     0,
-    37,
+    0,
     0,
     0
    ],
@@ -7826,16 +8015,16 @@
      "name": "LH",
      "projects": 115,
      "units": 72514,
-     "ok": 109,
-     "caution": 2,
-     "delay": 3,
-     "okUnits": 69764,
-     "cautionUnits": 541,
-     "delayUnits": 1049,
+     "ok": 101,
+     "caution": 3,
+     "delay": 10,
+     "okUnits": 64356,
+     "cautionUnits": 919,
+     "delayUnits": 6079,
      "excludedUnits": 1160,
      "candidateUnits": 0,
      "note": null,
-     "delayedSharePct": 1.4
+     "delayedSharePct": 8.4
     },
     {
      "id": "unknown",
@@ -7878,8 +8067,8 @@
     },
     {
      "ym": "2026-11",
-     "units": 5421,
-     "projects": 9
+     "units": 4123,
+     "projects": 8
     },
     {
      "ym": "2026-12",
@@ -7941,37 +8130,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 74,
-      "units": 43334
+      "projects": 110,
+      "units": 69330
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 0,
-      "units": 0
+      "projects": 1,
+      "units": 726
      },
      "delayByStage": [
       0,
-      28210,
-      17432,
-      0,
-      612,
+      1488,
+      1298,
+      976,
+      1642,
       0
      ],
      "cautionByStage": [
       0,
       0,
       0,
-      346,
+      0,
       0,
       0
      ],
-     "judged": 74,
+     "judged": 111,
      "max": {
-      "d": 28210,
-      "w": 346
+      "d": 1642,
+      "w": 0
      }
     },
     {
@@ -7980,37 +8169,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 77,
-      "units": 55179
+      "projects": 111,
+      "units": 79330
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 0,
-      "units": 0
+      "projects": 1,
+      "units": 726
      },
      "delayByStage": [
       0,
-      26365,
-      16702,
       0,
-      452,
+      1298,
+      976,
+      1642,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1488,
       0,
       0,
       0,
       0
      ],
-     "judged": 77,
+     "judged": 112,
      "max": {
-      "d": 26365,
-      "w": 0
+      "d": 1642,
+      "w": 1488
      }
     },
     {
@@ -8019,37 +8208,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 78,
-      "units": 55717
+      "projects": 111,
+      "units": 79330
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 0,
-      "units": 0
+      "projects": 1,
+      "units": 726
      },
      "delayByStage": [
       0,
-      25827,
-      16164,
       0,
-      0,
+      1298,
+      976,
+      527,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1488,
       0,
       0,
       0,
       0
      ],
-     "judged": 78,
+     "judged": 112,
      "max": {
-      "d": 25827,
-      "w": 0
+      "d": 1298,
+      "w": 1488
      }
     },
     {
@@ -8058,37 +8247,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 80,
-      "units": 56897
+      "projects": 111,
+      "units": 79330
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 0,
-      "units": 0
+      "projects": 1,
+      "units": 726
      },
      "delayByStage": [
       0,
-      24647,
-      14984,
       0,
-      0,
+      1298,
+      976,
+      527,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1488,
       0,
       0,
       0,
       0
      ],
-     "judged": 80,
+     "judged": 112,
      "max": {
-      "d": 24647,
-      "w": 0
+      "d": 1298,
+      "w": 1488
      }
     },
     {
@@ -8097,37 +8286,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 83,
-      "units": 59555
+      "projects": 111,
+      "units": 79330
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 0,
-      "units": 0
+      "projects": 1,
+      "units": 726
      },
      "delayByStage": [
       0,
-      21989,
-      13473,
       0,
-      0,
+      1298,
+      976,
+      1200,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1488,
       0,
       0,
       0,
       0
      ],
-     "judged": 83,
+     "judged": 112,
      "max": {
-      "d": 21989,
-      "w": 0
+      "d": 1298,
+      "w": 1488
      }
     },
     {
@@ -8136,37 +8325,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 93,
-      "units": 66671
+      "projects": 111,
+      "units": 79330
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 0,
-      "units": 0
+      "projects": 1,
+      "units": 726
      },
      "delayByStage": [
       0,
-      14873,
-      8203,
       0,
-      0,
+      1298,
+      976,
+      1200,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1488,
       0,
       0,
       0,
       0
      ],
-     "judged": 93,
+     "judged": 112,
      "max": {
-      "d": 14873,
-      "w": 0
+      "d": 1298,
+      "w": 1488
      }
     },
     {
@@ -8175,37 +8364,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 95,
-      "units": 67660
+      "projects": 109,
+      "units": 78032
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 0,
-      "units": 0
+      "projects": 3,
+      "units": 2024
      },
      "delayByStage": [
       0,
-      13884,
-      7929,
       0,
-      0,
+      1585,
+      976,
+      330,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1488,
       0,
       0,
       0,
       0
      ],
-     "judged": 95,
+     "judged": 112,
      "max": {
-      "d": 13884,
-      "w": 0
+      "d": 1585,
+      "w": 1488
      }
     },
     {
@@ -8214,37 +8403,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 95,
-      "units": 67660
+      "projects": 109,
+      "units": 78032
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 0,
-      "units": 0
+      "projects": 3,
+      "units": 2024
      },
      "delayByStage": [
       0,
-      13884,
-      8823,
       0,
-      0,
+      1885,
+      976,
+      1324,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1488,
       0,
       0,
       0,
       0
      ],
-     "judged": 95,
+     "judged": 112,
      "max": {
-      "d": 13884,
-      "w": 0
+      "d": 1885,
+      "w": 1488
      }
     },
     {
@@ -8253,37 +8442,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 98,
-      "units": 70556
+      "projects": 108,
+      "units": 77448
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 0,
-      "units": 0
+      "projects": 4,
+      "units": 2608
      },
      "delayByStage": [
       0,
-      10988,
-      6764,
       0,
-      0,
+      1885,
+      976,
+      3273,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1488,
       0,
       0,
       0,
       0
      ],
-     "judged": 98,
+     "judged": 112,
      "max": {
-      "d": 10988,
-      "w": 0
+      "d": 3273,
+      "w": 1488
      }
     },
     {
@@ -8292,37 +8481,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 98,
-      "units": 71271
+      "projects": 107,
+      "units": 77221
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 1,
-      "units": 227
+      "projects": 5,
+      "units": 2835
      },
      "delayByStage": [
       0,
-      10046,
-      6764,
-      942,
       0,
+      1885,
+      1918,
+      3157,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1488,
       0,
       0,
       0,
       0
      ],
-     "judged": 99,
+     "judged": 112,
      "max": {
-      "d": 10046,
-      "w": 0
+      "d": 3157,
+      "w": 1488
      }
     },
     {
@@ -8331,37 +8520,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 99,
-      "units": 71558
+      "projects": 107,
+      "units": 75997
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 1,
-      "units": 227
+      "projects": 6,
+      "units": 4346
      },
      "delayByStage": [
       0,
-      9759,
-      6477,
-      942,
-      711,
+      0,
+      1598,
+      1918,
+      7403,
       0
      ],
      "cautionByStage": [
       0,
-      0,
+      1201,
       0,
       0,
       0,
       0
      ],
-     "judged": 100,
+     "judged": 113,
      "max": {
-      "d": 9759,
-      "w": 0
+      "d": 7403,
+      "w": 1201
      }
     },
     {
@@ -8370,37 +8559,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 108,
-      "units": 77007
+      "projects": 106,
+      "units": 75812
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 1,
-      "units": 227
+      "projects": 8,
+      "units": 5257
      },
      "delayByStage": [
       0,
-      3876,
-      1548,
       0,
       0,
+      1918,
+      7123,
       0
      ],
      "cautionByStage": [
       0,
+      41,
       0,
       0,
-      942,
       0,
       0
      ],
-     "judged": 109,
+     "judged": 114,
      "max": {
-      "d": 3876,
-      "w": 942
+      "d": 7123,
+      "w": 41
      }
     },
     {
@@ -8409,23 +8598,23 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 109,
-      "units": 77307
+      "projects": 107,
+      "units": 76112
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 1,
-      "units": 227
+      "projects": 8,
+      "units": 5257
      },
      "delayByStage": [
       0,
-      3576,
-      2043,
       0,
       0,
+      0,
+      7123,
       0
      ],
      "cautionByStage": [
@@ -8436,9 +8625,9 @@
       0,
       0
      ],
-     "judged": 110,
+     "judged": 115,
      "max": {
-      "d": 3576,
+      "d": 7123,
       "w": 942
      }
     },
@@ -8448,37 +8637,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 112,
-      "units": 78936
+      "projects": 110,
+      "units": 77793
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 1,
-      "units": 227
+      "projects": 8,
+      "units": 5257
      },
      "delayByStage": [
       0,
-      3028,
-      1495,
       0,
       0,
+      0,
+      7664,
       0
      ],
      "cautionByStage": [
       0,
       0,
       0,
-      0,
+      942,
       0,
       0
      ],
-     "judged": 113,
+     "judged": 118,
      "max": {
-      "d": 3028,
-      "w": 0
+      "d": 7664,
+      "w": 942
      }
     },
     {
@@ -8487,37 +8676,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 114,
-      "units": 80664
+      "projects": 110,
+      "units": 77793
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 1,
-      "units": 227
+      "projects": 8,
+      "units": 5257
      },
      "delayByStage": [
       0,
       0,
       0,
       0,
-      0,
+      7664,
       0
      ],
      "cautionByStage": [
       0,
-      1300,
-      700,
       0,
+      0,
+      933,
       0,
       0
      ],
-     "judged": 115,
+     "judged": 118,
      "max": {
-      "d": 0,
-      "w": 1300
+      "d": 7664,
+      "w": 933
      }
     },
     {
@@ -8526,37 +8715,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 114,
-      "units": 80664
+      "projects": 110,
+      "units": 77793
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 1,
-      "units": 227
+      "projects": 8,
+      "units": 5257
      },
      "delayByStage": [
       0,
       0,
       0,
       0,
-      0,
+      8294,
       0
      ],
      "cautionByStage": [
       0,
-      1300,
-      700,
       0,
+      0,
+      933,
       0,
       0
      ],
-     "judged": 115,
+     "judged": 118,
      "max": {
-      "d": 0,
-      "w": 1300
+      "d": 8294,
+      "w": 933
      }
     },
     {
@@ -8565,37 +8754,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 114,
-      "units": 80664
+      "projects": 110,
+      "units": 77793
      },
      "caution": {
       "projects": 0,
       "units": 0
      },
      "delay": {
-      "projects": 1,
-      "units": 227
+      "projects": 8,
+      "units": 5257
      },
      "delayByStage": [
       0,
       0,
       0,
       0,
-      0,
+      14982,
       0
      ],
      "cautionByStage": [
       0,
-      1300,
-      182,
       0,
-      675,
+      0,
+      933,
+      0,
       0
      ],
-     "judged": 115,
+     "judged": 118,
      "max": {
-      "d": 0,
-      "w": 1300
+      "d": 14982,
+      "w": 933
      }
     },
     {
@@ -8604,37 +8793,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 115,
-      "units": 80965
+      "projects": 110,
+      "units": 77716
      },
      "caution": {
-      "projects": 0,
-      "units": 0
+      "projects": 1,
+      "units": 378
      },
      "delay": {
-      "projects": 1,
-      "units": 227
+      "projects": 8,
+      "units": 5257
      },
      "delayByStage": [
       0,
       0,
       0,
-      1791,
-      0,
+      2309,
+      16040,
       0
      ],
      "cautionByStage": [
       0,
-      999,
       0,
       0,
-      370,
+      0,
+      0,
       0
      ],
-     "judged": 116,
+     "judged": 119,
      "max": {
-      "d": 1791,
-      "w": 999
+      "d": 16040,
+      "w": 0
      }
     },
     {
@@ -8643,37 +8832,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 113,
-      "units": 80586
+      "projects": 107,
+      "units": 76737
      },
      "caution": {
-      "projects": 2,
-      "units": 541
+      "projects": 3,
+      "units": 919
      },
      "delay": {
-      "projects": 2,
-      "units": 665
+      "projects": 9,
+      "units": 5695
      },
      "delayByStage": [
       0,
       0,
       0,
-      1791,
-      0,
+      2789,
+      16648,
       0
      ],
      "cautionByStage": [
       0,
-      399,
       0,
       0,
-      498,
+      0,
+      0,
       0
      ],
-     "judged": 117,
+     "judged": 119,
      "max": {
-      "d": 1791,
-      "w": 498
+      "d": 16648,
+      "w": 0
      }
     },
     {
@@ -8682,37 +8871,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 113,
-      "units": 80796
+      "projects": 106,
+      "units": 76353
      },
      "caution": {
-      "projects": 2,
-      "units": 541
+      "projects": 3,
+      "units": 919
      },
      "delay": {
-      "projects": 3,
-      "units": 1049
+      "projects": 10,
+      "units": 6079
      },
      "delayByStage": [
       0,
       0,
       0,
-      0,
-      1393,
+      2789,
+      20068,
       0
      ],
      "cautionByStage": [
       0,
       0,
       0,
-      1197,
+      0,
       0,
       0
      ],
-     "judged": 118,
+     "judged": 119,
      "max": {
-      "d": 1393,
-      "w": 1197
+      "d": 20068,
+      "w": 0
      }
     },
     {
@@ -8721,37 +8910,37 @@
      "edition": null,
      "basis": "BACKFILL",
      "ok": {
-      "projects": 114,
-      "units": 81761
+      "projects": 106,
+      "units": 76353
      },
      "caution": {
-      "projects": 2,
-      "units": 541
+      "projects": 3,
+      "units": 919
      },
      "delay": {
-      "projects": 3,
-      "units": 1049
+      "projects": 10,
+      "units": 6079
      },
      "delayByStage": [
       0,
       0,
       0,
-      1562,
-      1393,
+      2789,
+      20616,
       0
      ],
      "cautionByStage": [
       0,
       0,
       0,
-      1197,
+      0,
       0,
       0
      ],
      "judged": 119,
      "max": {
-      "d": 1562,
-      "w": 1197
+      "d": 20616,
+      "w": 0
      }
     },
     {
@@ -8760,37 +8949,37 @@
      "edition": null,
      "basis": "OBSERVED",
      "ok": {
-      "projects": 114,
-      "units": 81761
+      "projects": 106,
+      "units": 76353
      },
      "caution": {
-      "projects": 2,
-      "units": 541
+      "projects": 3,
+      "units": 919
      },
      "delay": {
-      "projects": 3,
-      "units": 1049
+      "projects": 10,
+      "units": 6079
      },
      "delayByStage": [
       0,
       0,
       0,
-      1974,
-      1393,
+      2096,
+      20616,
       0
      ],
      "cautionByStage": [
       0,
       0,
       0,
-      37,
+      0,
       0,
       0
      ],
      "judged": 119,
      "max": {
-      "d": 1974,
-      "w": 37
+      "d": 20616,
+      "w": 0
      }
     }
    ],
@@ -8803,32 +8992,32 @@
       "from": "poc"
      },
      "BUSINESS": {
-      "current": 84341,
+      "current": 83741,
       "measured_on": "2026-10-21",
-      "year_end_expected": 84341,
-      "plan_date": "2026-10-21",
-      "remainder": 0
+      "year_end_expected": 104357,
+      "plan_date": "2026-12-31",
+      "remainder": 20616
      },
      "APPROVAL": {
-      "current": 71864,
+      "current": 70353,
       "measured_on": "2026-10-21",
-      "year_end_expected": 73778,
+      "year_end_expected": 92883,
       "plan_date": "2026-12-31",
-      "remainder": 1914
+      "remainder": 22530
      },
      "CONSTRUCTION": {
-      "current": 63109,
+      "current": 61517,
       "measured_on": "2026-10-21",
-      "year_end_expected": 73055,
+      "year_end_expected": 89770,
       "plan_date": "2026-12-31",
-      "remainder": 9946
+      "remainder": 28253
      },
      "SUPPLY": {
-      "current": 49333,
-      "measured_on": "2026-09-30",
-      "year_end_expected": 61726,
+      "current": 28344,
+      "measured_on": "2026-09-18",
+      "year_end_expected": 58144,
       "plan_date": "2026-12-31",
-      "remainder": 12393
+      "remainder": 29800
      },
      "MOVE_IN": {
       "current": null,
@@ -8840,27 +9029,17 @@
     },
     "callouts": [
      {
-      "stage": "CONSTRUCTION",
-      "status": "WARNING",
-      "gap": 37,
-      "rate": "0.1%",
-      "due_date": "2026-09-01",
-      "due_units": 63146,
-      "actual_date": "2026-10-21",
-      "actual_units": 63109
-     },
-     {
       "stage": "SUPPLY",
       "status": "DELAYED",
-      "gap": 1393,
-      "rate": "2.7%",
+      "gap": 20616,
+      "rate": "42.1%",
       "due_date": "2026-09-30",
-      "due_units": 50726,
-      "actual_date": "2026-09-30",
-      "actual_units": 49333
+      "due_units": 48960,
+      "actual_date": "2026-09-18",
+      "actual_units": 28344
      }
     ],
-    "axisMax": 100000,
+    "axisMax": 136000,
     "stageChecks": {
      "BUSINESS": {
       "status": "REACHED",
@@ -8870,17 +9049,17 @@
       },
       "actual": {
        "date": "2026-10-21",
-       "units": 84341,
-       "manual": 84341,
-       "inferred": 83181
+       "units": 83741,
+       "manual": 83741,
+       "inferred": 82581
       },
       "gap": 0,
       "rate": 0,
       "rateText": "0.0%",
       "next": null,
       "yearEnd": {
-       "date": "2026-10-21",
-       "units": 84341
+       "date": "2026-12-31",
+       "units": 104357
       }
      },
      "APPROVAL": {
@@ -8891,9 +9070,9 @@
       },
       "actual": {
        "date": "2026-10-21",
-       "units": 71864,
-       "manual": 71346,
-       "inferred": 70181
+       "units": 70353,
+       "manual": 70353,
+       "inferred": 67061
       },
       "gap": 0,
       "rate": 0,
@@ -8904,55 +9083,55 @@
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 73778
+       "units": 92883
       }
      },
      "CONSTRUCTION": {
-      "status": "WARNING",
+      "status": "DELAYED",
       "due": {
        "date": "2026-09-01",
        "units": 63146
       },
       "actual": {
        "date": "2026-10-21",
-       "units": 63109,
-       "manual": 60954,
-       "inferred": 59068
+       "units": 61517,
+       "manual": 59908,
+       "inferred": 58022
       },
-      "gap": 37,
-      "rate": 0.1,
-      "rateText": "0.1%",
+      "gap": 1629,
+      "rate": 2.6,
+      "rateText": "2.6%",
       "next": {
        "date": "2026-10-31",
        "units": 64376
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 73055
+       "units": 89770
       }
      },
      "SUPPLY": {
       "status": "DELAYED",
       "due": {
        "date": "2026-09-30",
-       "units": 50726
+       "units": 48960
       },
       "actual": {
-       "date": "2026-09-30",
-       "units": 49333,
-       "manual": 45411,
-       "inferred": 44874
+       "date": "2026-09-18",
+       "units": 28344,
+       "manual": 27128,
+       "inferred": 8136
       },
-      "gap": 1393,
-      "rate": 2.7,
-      "rateText": "2.7%",
+      "gap": 20616,
+      "rate": 42.1,
+      "rateText": "42.1%",
       "next": {
        "date": "2026-10-30",
-       "units": 51326
+       "units": 49560
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 61726
+       "units": 58144
       }
      },
      "COMPLETION": {
@@ -8963,13 +9142,13 @@
       },
       "actual": {
        "date": "2026-09-16",
-       "units": 438,
-       "manual": 438,
-       "inferred": 438
+       "units": 316,
+       "manual": 316,
+       "inferred": 0
       },
-      "gap": 1974,
-      "rate": 81.8,
-      "rateText": "81.8%",
+      "gap": 2096,
+      "rate": 86.9,
+      "rateText": "86.9%",
       "next": {
        "date": "2026-12-24",
        "units": 2759
@@ -8993,37 +9172,37 @@
       }
      }
     },
-    "delayMax": 1974,
-    "warningMax": 37,
+    "delayMax": 20616,
+    "warningMax": 0,
     "stageGaps": [
      {
       "stage": "CONSTRUCTION",
       "label": "건설",
-      "status": "WARNING",
-      "gap": 37,
-      "rate": "0.1%"
+      "status": "DELAYED",
+      "gap": 1629,
+      "rate": "2.6%"
      },
      {
       "stage": "SUPPLY",
       "label": "공급",
       "status": "DELAYED",
-      "gap": 1393,
-      "rate": "2.7%"
+      "gap": 20616,
+      "rate": "42.1%"
      },
      {
       "stage": "COMPLETION",
       "label": "준공",
       "status": "DELAYED",
-      "gap": 1974,
-      "rate": "81.8%"
+      "gap": 2096,
+      "rate": "86.9%"
      }
     ],
     "bottleneck": {
-     "stage": "COMPLETION",
-     "label": "준공",
+     "stage": "SUPPLY",
+     "label": "공급",
      "status": "DELAYED",
-     "gap": 1974,
-     "rate": "81.8%"
+     "gap": 20616,
+     "rate": "42.1%"
     },
     "stageShort": {
      "CONSTRUCTION": {
@@ -9039,12 +9218,52 @@
        {
         "id": "PRO_bd9d1c9a0e058d70200be0e8",
         "short": 693
+       },
+       {
+        "id": "PRO_7d1b5e3e2b392b43d0c59a6b",
+        "short": 480
        }
       ],
       "over": 1160
      },
      "SUPPLY": {
       "rows": [
+       {
+        "id": "PRO_de06501cdfc05a4baead9d6c",
+        "short": 1499
+       },
+       {
+        "id": "PRO_29bf4cef6fb4606948bb3b48",
+        "short": 1057
+       },
+       {
+        "id": "PRO_d45f401d3810473a7b1a1030",
+        "short": 1002
+       },
+       {
+        "id": "PRO_833127d228d37d6e4e73898d",
+        "short": 966
+       },
+       {
+        "id": "PRO_70c16f89c02d428a47cc1de7",
+        "short": 945
+       },
+       {
+        "id": "PRO_1993865f89886304beac4322",
+        "short": 942
+       },
+       {
+        "id": "PRO_e0405cae5623f83a2647ac0c",
+        "short": 837
+       },
+       {
+        "id": "PRO_1eb195e8ab43ebb1a9bee921",
+        "short": 753
+       },
+       {
+        "id": "PRO_5ff66dc50d3ad524d26511b6",
+        "short": 753
+       },
        {
         "id": "PRO_89b769c87e8d8ee8f6a837bf",
         "short": 690
@@ -9054,16 +9273,116 @@
         "short": 690
        },
        {
+        "id": "PRO_62fe58b54a39d604d6cf3e87",
+        "short": 679
+       },
+       {
+        "id": "PRO_94becbf0cbd773bbf5ab565c",
+        "short": 679
+       },
+       {
+        "id": "PRO_def4c369f9c976b8a84511a4",
+        "short": 630
+       },
+       {
+        "id": "PRO_672dfd527cf2fe8d9d71cf5c",
+        "short": 610
+       },
+       {
+        "id": "PRO_b0f7e7ded4e31142e5b39d02",
+        "short": 609
+       },
+       {
+        "id": "PRO_310ee8dc2c45b6ac03a9bc8f",
+        "short": 603
+       },
+       {
+        "id": "PRO_c6f5a8ea506ed720419b999a",
+        "short": 584
+       },
+       {
+        "id": "PRO_69217405e9523695488434c1",
+        "short": 548
+       },
+       {
+        "id": "PRO_573605b60cae1ca0690fe41b",
+        "short": 536
+       },
+       {
+        "id": "PRO_b08b4358cb7f64e9637fb3a0",
+        "short": 508
+       },
+       {
+        "id": "PRO_2a87e83e13bdc703528e3afe",
+        "short": 499
+       },
+       {
+        "id": "PRO_7d1b5e3e2b392b43d0c59a6b",
+        "short": 480
+       },
+       {
+        "id": "PRO_1b0f09c1abb6e68c92fac227",
+        "short": 428
+       },
+       {
+        "id": "PRO_7af1f4c60e23bd2da29910fc",
+        "short": 412
+       },
+       {
+        "id": "PRO_693fd7d6c158c2da26abe2c0",
+        "short": 399
+       },
+       {
+        "id": "PRO_e24ec7ed0705de50dfcfb55e",
+        "short": 347
+       },
+       {
+        "id": "PRO_bceb35af2280eaa50c810c09",
+        "short": 344
+       },
+       {
+        "id": "PRO_e79e6d9e96f006b1537e24f4",
+        "short": 252
+       },
+       {
+        "id": "PRO_1a98096fd39a060c2144684a",
+        "short": 240
+       },
+       {
+        "id": "PRO_b5b91172d6eed372aeb26e11",
+        "short": 228
+       },
+       {
         "id": "PRO_fcc796121d9c033bc356aaad",
         "short": 219
+       },
+       {
+        "id": "PRO_4678e7ce4d7bafb3d2e7e4ad",
+        "short": 218
        },
        {
         "id": "PRO_b572acaa0e4e1468c625d137",
         "short": 197
        },
        {
+        "id": "PRO_07535d298d1b6d593fdde152",
+        "short": 194
+       },
+       {
+        "id": "PRO_67142027aa77136be6cb3593",
+        "short": 193
+       },
+       {
+        "id": "PRO_7dbb8517958f6375fc421333",
+        "short": 160
+       },
+       {
         "id": "PRO_3e4fe820f1cb21379bbbe611",
         "short": 111
+       },
+       {
+        "id": "PRO_5c41696f54ce584f4f9b324c",
+        "short": 88
        },
        {
         "id": "PRO_60b4a8833ed549023a6ef1a5",
@@ -9072,6 +9391,10 @@
        {
         "id": "PRO_d86ce8966f5ed10d5ef2d175",
         "short": 2
+       },
+       {
+        "id": "PRO_3467a150907b93a0999e5c40",
+        "short": 1
        }
       ],
       "over": 518
@@ -9083,16 +9406,16 @@
         "short": 620
        },
        {
+        "id": "PRO_fcc796121d9c033bc356aaad",
+        "short": 438
+       },
+       {
         "id": "PRO_7af1f4c60e23bd2da29910fc",
         "short": 412
        },
        {
         "id": "PRO_693fd7d6c158c2da26abe2c0",
         "short": 399
-       },
-       {
-        "id": "PRO_e57577ac296a4798617e617b",
-        "short": 316
        },
        {
         "id": "PRO_3e4fe820f1cb21379bbbe611",
@@ -9103,87 +9426,87 @@
      }
     },
     "supplyUpcoming": {
-     "total": 13305,
-     "projects": 24,
+     "total": 12007,
+     "projects": 23,
      "from": "2026-10",
      "to": "2027-09"
     },
     "monthly": [
      {
       "month": "2024-11",
-      "APPROVAL": 2183,
+      "APPROVAL": 694,
       "CONSTRUCTION": 945,
-      "SUPPLY": 726,
+      "SUPPLY": 142,
       "COMPLETION": 0
      },
      {
       "month": "2024-12",
-      "APPROVAL": 12655,
+      "APPROVAL": 6086,
       "CONSTRUCTION": 12819,
-      "SUPPLY": 446,
+      "SUPPLY": 0,
       "COMPLETION": 0
      },
      {
       "month": "2025-01",
-      "APPROVAL": 227,
-      "CONSTRUCTION": 314,
+      "APPROVAL": 0,
+      "CONSTRUCTION": 0,
       "SUPPLY": 2089,
       "COMPLETION": 0
      },
      {
       "month": "2025-02",
-      "APPROVAL": 2960,
-      "CONSTRUCTION": 1845,
-      "SUPPLY": 160,
+      "APPROVAL": 1115,
+      "CONSTRUCTION": 1185,
+      "SUPPLY": 0,
       "COMPLETION": 0
      },
      {
       "month": "2025-03",
-      "APPROVAL": 538,
-      "CONSTRUCTION": 1749,
-      "SUPPLY": 1725,
+      "APPROVAL": 0,
+      "CONSTRUCTION": 2063,
+      "SUPPLY": 1115,
       "COMPLETION": 0
      },
      {
       "month": "2025-04",
-      "APPROVAL": 1180,
+      "APPROVAL": 0,
       "CONSTRUCTION": 1180,
       "SUPPLY": 865,
       "COMPLETION": 0
      },
      {
       "month": "2025-05",
-      "APPROVAL": 2658,
+      "APPROVAL": 1147,
       "CONSTRUCTION": 1877,
-      "SUPPLY": 1378,
+      "SUPPLY": 433,
       "COMPLETION": 0
      },
      {
       "month": "2025-06",
-      "APPROVAL": 7116,
+      "APPROVAL": 1846,
       "CONSTRUCTION": 7756,
-      "SUPPLY": 5428,
+      "SUPPLY": 869,
       "COMPLETION": 0
      },
      {
       "month": "2025-07",
-      "APPROVAL": 989,
+      "APPROVAL": 428,
       "CONSTRUCTION": 1708,
-      "SUPPLY": 4602,
+      "SUPPLY": 4485,
       "COMPLETION": 0
      },
      {
       "month": "2025-08",
-      "APPROVAL": 0,
+      "APPROVAL": 594,
       "CONSTRUCTION": 0,
       "SUPPLY": 538,
       "COMPLETION": 0
      },
      {
       "month": "2025-09",
-      "APPROVAL": 2896,
+      "APPROVAL": 837,
       "CONSTRUCTION": 3653,
-      "SUPPLY": 584,
+      "SUPPLY": 695,
       "COMPLETION": 0
      },
      {
@@ -9197,78 +9520,78 @@
       "month": "2025-11",
       "APPROVAL": 287,
       "CONSTRUCTION": 0,
-      "SUPPLY": 2591,
+      "SUPPLY": 2083,
       "COMPLETION": 0
      },
      {
       "month": "2025-12",
-      "APPROVAL": 6115,
+      "APPROVAL": 4138,
       "CONSTRUCTION": 8955,
-      "SUPPLY": 5634,
+      "SUPPLY": 3155,
       "COMPLETION": 0
      },
      {
       "month": "2026-01",
       "APPROVAL": 794,
-      "CONSTRUCTION": 0,
+      "CONSTRUCTION": 976,
       "SUPPLY": 0,
       "COMPLETION": 0
      },
      {
       "month": "2026-02",
-      "APPROVAL": 548,
-      "CONSTRUCTION": 1490,
+      "APPROVAL": 0,
+      "CONSTRUCTION": 548,
       "SUPPLY": 0,
       "COMPLETION": 0
      },
      {
       "month": "2026-03",
-      "APPROVAL": 1728,
-      "CONSTRUCTION": 3589,
-      "SUPPLY": 1966,
+      "APPROVAL": 933,
+      "CONSTRUCTION": 3598,
+      "SUPPLY": 0,
       "COMPLETION": 0
      },
      {
       "month": "2026-04",
       "APPROVAL": 0,
       "CONSTRUCTION": 1282,
-      "SUPPLY": 3022,
+      "SUPPLY": 2392,
       "COMPLETION": 0
      },
      {
       "month": "2026-05",
       "APPROVAL": 0,
       "CONSTRUCTION": 0,
-      "SUPPLY": 5194,
+      "SUPPLY": 2014,
       "COMPLETION": 0
      },
      {
       "month": "2026-06",
-      "APPROVAL": 4247,
-      "CONSTRUCTION": 1637,
-      "SUPPLY": 5022,
+      "APPROVAL": 3336,
+      "CONSTRUCTION": 2570,
+      "SUPPLY": 3659,
       "COMPLETION": 0
      },
      {
       "month": "2026-07",
-      "APPROVAL": 600,
-      "CONSTRUCTION": 480,
-      "SUPPLY": 1236,
+      "APPROVAL": 0,
+      "CONSTRUCTION": 0,
+      "SUPPLY": 756,
       "COMPLETION": 0
      },
      {
       "month": "2026-08",
-      "APPROVAL": 594,
+      "APPROVAL": 0,
       "CONSTRUCTION": 0,
-      "SUPPLY": 4851,
+      "SUPPLY": 2326,
       "COMPLETION": 0
      },
      {
       "month": "2026-09",
-      "APPROVAL": 965,
+      "APPROVAL": 0,
       "CONSTRUCTION": 965,
-      "SUPPLY": 548,
-      "COMPLETION": 438
+      "SUPPLY": 0,
+      "COMPLETION": 316
      },
      {
       "month": "2026-10",
@@ -9280,16 +9603,16 @@
     ],
     "projectStatus": {
      "NORMAL": {
-      "projects": 114,
-      "units": 81761
-     },
-     "DELAYED": {
-      "projects": 3,
-      "units": 1049
+      "projects": 106,
+      "units": 76353
      },
      "WARNING": {
-      "projects": 2,
-      "units": 541
+      "projects": 3,
+      "units": 919
+     },
+     "DELAYED": {
+      "projects": 10,
+      "units": 6079
      },
      "UNKNOWN": {
       "projects": 1,
@@ -9297,13 +9620,13 @@
      }
     },
     "stageExclusive": {
-     "POLICY": 170,
+     "POLICY": 770,
      "UNKNOWN": 0,
      "MOVE_IN": 0,
-     "SUPPLY": 49333,
-     "CONSTRUCTION": 13776,
-     "APPROVAL": 8755,
-     "BUSINESS": 12477
+     "SUPPLY": 28344,
+     "CONSTRUCTION": 33173,
+     "APPROVAL": 8836,
+     "BUSINESS": 13388
     },
     "mapSupply": {
      "서울특별시": {
@@ -9312,14 +9635,14 @@
       "delayNote": "준공 14호 부족 (3.5%)"
      },
      "경기도": {
-      "supplyReached": 49333,
+      "supplyReached": 28344,
       "delayed": true,
-      "delayNote": "공급 1,393호 부족 (2.7%) · 준공 1,974호 부족 (81.8%)"
+      "delayNote": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
      },
      "인천광역시": {
       "supplyReached": 0,
-      "delayed": false,
-      "delayNote": ""
+      "delayed": true,
+      "delayNote": "공급 1,108호 부족 (17.4%)"
      }
     }
    }

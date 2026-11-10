@@ -10,7 +10,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const ROOT = path.join(__dirname, '..', '..');
-const GOLD = path.join(ROOT, '.cache/home-parity/golden');
+const E = require('./home-era.cjs');
+const GOLD = E.GOLDEN_DIR;   // HOME_GOLDEN_DIR(기본 .cache/home-parity/golden)
 const V = require('../../lib/board/projects-view.ts');
 const BL = require('../../lib/board/board-lists.ts');
 const HP = require('../../data/board/home-projects.json');
@@ -19,7 +20,8 @@ const IDX = require('../../data/board/projects-index.json');
 const gold = (f) => JSON.parse(fs.readFileSync(path.join(GOLD, f), 'utf8'));
 const read = (f) => fs.readFileSync(path.join(ROOT, f), 'utf8');
 const has = fs.existsSync(path.join(GOLD, 'golden-projects.json')) && fs.existsSync(path.join(GOLD, 'golden-policy.json'));
-const opt = { skip: has ? false : '정답 파일(.cache/home-parity/golden) 없음' };
+/* 정답 받은 시각 < 원장 HOME 판 snapshot_at 이면 옛 판 정답 — 건너뛴다(home-era.cjs) */
+const opt = { skip: has ? E.golden(path.join(GOLD, 'golden-projects.json')).skip : '정답 파일(.cache/home-parity/golden) 없음' };
 
 const rows = V.homeRowsOf(HP.rows, HP.residuals);
 const programs = V.homeProgramsOf(rows), agencies = V.homeAgenciesOf(rows);
@@ -59,7 +61,7 @@ test('기본 기관별: PoC 기관 이름 7줄의 집계 행 수 · 집계 호�
   assert.equal(pocOf('agency').size, 0, '기관 잔차 없음');
 });
 
-test('기본 상태별: 사업 판정 = PoC project_status(정상 168 · 지연 6 · 주의 2 · 미확보 1) — 잔차 없음(2026-10-22 대표 행 확인 완료 측정값 규칙)', opt, () => {
+test('기본 상태별: 사업 판정 = PoC project_status — 잔차 없음', opt, () => {
   const g = gold('golden-policy.json'), res = pocOf('judge');
   const ours = {}, poc = {};
   for (const r of P97.chart) {
@@ -68,7 +70,9 @@ test('기본 상태별: 사업 판정 = PoC project_status(정상 168 · 지연 
     poc[s] = (poc[s] ?? 0) + 1;
   }
   /* 2026-10-22: 부천대장 A5·A6(주의 2호씩)·성남금토 A4·A2(지연 197·219호) — 같은 블록 계약 행 공급 추정 대신 대표 행 확인 완료 공급 측정값(policy-progress.js buildCohorts). 부천역곡 A1 판정 미확보(도래 일정 없음) */
-  assert.deepEqual(ours, { NORMAL: 168, DELAYED: 6, WARNING: 2, UNKNOWN: 1 }, '화면(덤프 값)');
+  /* 2026-10-22 22:35 판: 정상 163 · 지연 10 · 주의 3 · 미확보 1 — 담당자 공급 추정이 빠져 공급 도래 목표 대비 부족 사업이 늘었다(오전 판 168·6·2·1) */
+  /* 판 숫자({ NORMAL: 163, DELAYED: 10, WARNING: 3, UNKNOWN: 1 }) 대신: 화면(덤프 값) = 사업 보기 자료 판정 묶음(home-projects views.p97.judge — 생성기 값) */
+  assert.deepEqual(ours, Object.fromEntries(Object.entries(HP.views.p97.judge).map(([k, v]) => [k, v.rows])), '화면(덤프 값)');
   assert.deepEqual(ours, Object.fromEntries(['NORMAL', 'DELAYED', 'WARNING', 'UNKNOWN'].map((k) => [k, g[`policy.project_status.${k}.projects`]])), '덤프 값 = PoC');
   assert.deepEqual(poc, ours);
   assert.deepEqual([...res.keys()], [], '판정 잔차 없음');
@@ -87,19 +91,20 @@ test('기본 단계별: 단계별 진행 ②사업화~⑤공급 누적 도달 �
     assert.equal(cell.units, P97.chart.reduce((s, r) => s + V.slotUnits(r.home.reached, i), 0), `${V.HOME_NAMES[i]}: 화면 칸 = 덤프 값`);
     assert.equal(cell.units, want, `${V.HOME_NAMES[i]}: 화면 칸 = PoC`);
   }
-  assert.equal(P97.pipe.open[0].units, 153575, '①정책 = 집계 호수');   // 2026-10-22 새 덤프(20261021T212310Z): +2,304(부천역곡 A1 1,160·인천송림4 1 1,198·병점복합타운 주복1 780 → 726)
+  assert.equal(P97.pipe.open[0].units, HP.views.p97.units, '①정책 = 집계 호수(판 숫자 153,575 대신 사업 보기 자료 9·7 집계 호수)');
   assert.deepEqual([...res.keys()], [], '도달 잔차 없음');
 });
 
-test('기본 향후 12개월 공급 예정: 덤프 18,214호 · 31건 = PoC(2026-10-22 새 덤프 — 광교 A17BL 600호 2027-09 → 2026-10, 병점복합타운 주복1 726호 2026-11 · 10-21 판 17,488 · 30)', opt, () => {
+test('기본 향후 12개월 공급 예정: 덤프 호수·건수 = 사업 보기 자료 = PoC', opt, () => {
   const g = gold('golden-policy.json'), res = pocOf('upcoming');
   const sumOf = (r) => (res.has(r.id) ? res.get(r.id).poc.reduce((s, x) => s + x[1], 0) : r.home.upcoming);
-  assert.deepEqual([P97.chart.reduce((s, r) => s + r.home.upcoming, 0), P97.chart.filter((r) => r.home.upcoming > 0).length], [18214, 31]);
+  /* 판 숫자([16916, 30]) 대신: 화면 행 합 = 사업 보기 자료 views.p97.upcoming(생성기 값) — PoC 와는 아래 줄 */
+  assert.deepEqual([P97.chart.reduce((s, r) => s + r.home.upcoming, 0), P97.chart.filter((r) => r.home.upcoming > 0).length], [HP.views.p97.upcoming.units, HP.views.p97.upcoming.projects]);
   assert.deepEqual([P97.chart.reduce((s, r) => s + sumOf(r), 0), P97.chart.filter((r) => sumOf(r) > 0).length], [g['policy.statistics.upcoming_12m.total'], g['policy.statistics.upcoming_12m.projects']]);
   assert.deepEqual([...res.keys()], []);
 });
 
-test('전 정책(?policy=all): 원천 행 444 · 집계 347 · 제외 56 · 물량 없음 41 · 290,357호 · 시도별(PoC /map/dashboard 정책 전체)', opt, () => {
+test('전 정책(?policy=all): 원천 행 · 집계 · 제외 · 물량 없음 · 호수 · 시도별 = PoC /map/dashboard 정책 전체', opt, () => {
   const g = gold('golden-projects.json').poc_overview_all;
   assert.equal(ALL.f.policy, undefined);
   assert.deepEqual([ALL.s.n, ALL.s.counted, ALL.s.excluded, ALL.s.missing, ALL.s.units],
@@ -111,7 +116,26 @@ test('전 정책(?policy=all): 원천 행 444 · 집계 347 · 제외 56 · 물�
   /* 정책별 원천 행 = PoC groups.policy(9·7 230 · 1·29 47 · 8·13 67) */
   for (const p of g['groups.policy'].filter((x) => /^POL_/.test(x.id))) assert.equal(view({ policy: IDX.policies.find((y) => y.id === p.id).key }).s.n, p.project_count, p.name);
   /* 같은 현장 병합 원장 사업 380곳(원장 살아 있는 사업 전부 — S2 2절, 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3) */
-  assert.equal(ALL.s.sites, 381);   // 2026-10-22 새 덤프(20261021T212310Z): 새 사업 1(부천역곡 A1)
+  /* 판 숫자(381) 대신: 같은 현장 병합 원장 사업 = 레지스트리의 살아 있는(대체·숨김 아닌) 사업 중 HOME 정책 연결이 남은 사업.
+     2026-11-04 HOME 담당자가 민간 사업후보 53개(일반 주택 건설 51 · 지역주택조합 2, 정책 미귀속)를 mapping_decision EXCLUDED 로 정책 집계에서 뺐다 —
+     연결은 해제(RELEASED)로 보되 원장 사업(공공 분류)은 남는다(home-source.js withDecisions). 그래서 '살아 있는 사업 전부'(11-10 판 382)가 아니라
+     HOME 원본 연결(결정 적용 뒤 RELEASED 아님)이 하나라도 남은 사업(11-10 판 329 · 10-22 판 381 = 전부)이다. 빠진 사업은 모두 결정 제외로 풀린 사업뿐 */
+  const REG = require('../../registry/projects.json').projects.filter((p) => !p.supersededBy && !p.hiddenAt);
+  const H = require('../../tools/ledger/home-source'), PATHS = require('../../tools/ledger/paths');
+  const homeDir = H.latestHomeDir(PATHS.ledgerDir(PATHS.latestMonth()));
+  if (homeDir && H.homeAvailable(homeDir)) {
+    const maps = H.readHome(homeDir).kinds.home_mapping;
+    const live = new Set(maps.filter((m) => m.status !== 'RELEASED').map((m) => m.project_id)), byDecision = new Set(maps.filter((m) => m.excluded_by_decision).map((m) => m.project_id));
+    const pros = (p) => p.refs.filter((r) => r.system === 'home' && r.key === 'PRO').map((r) => r.value);
+    const kept = REG.filter((p) => pros(p).some((id) => live.has(id)));
+    assert.equal(ALL.s.sites, kept.length);
+    for (const p of REG.filter((x) => !kept.includes(x))) assert.ok(pros(p).length > 0 && pros(p).every((id) => byDecision.has(id)), `${p.id}: 결정 제외 없이 정책 연결이 빠짐`);
+  } else {
+    /* HOME 원본(jsonl.gz, git 무시)이 없으면: 화면 현장 = 사업 보기 자료의 통계 행 우리 id, 모두 살아 있는 사업 */
+    const ids = new Set(HP.rows.filter((r) => r.stats && r.ourId).map((r) => r.ourId)), alive = new Set(REG.map((p) => p.id));
+    assert.equal(ALL.s.sites, ids.size);
+    assert.ok([...ids].every((id) => alive.has(id)));
+  }
 });
 
 test('전 정책의 판정·도달·기관은 home-projects.json views.all(덤프 값)과 같다 — PoC 정답은 9·7 포트폴리오만 공개(정책 전체 판정·기관 화면 없음)', () => {
@@ -119,7 +143,11 @@ test('전 정책의 판정·도달·기관은 home-projects.json views.all(덤�
   const judge = {};
   for (const r of ALL.scope.filter((x) => ALL.chartOf(x) && (x.home.counted ?? 0) > 0 && x.home.reached)) { const j = (judge[r.home.judge] ??= { rows: 0, units: 0 }); j.rows++; j.units += r.home.counted; }
   assert.deepEqual(judge, v.judge);
-  for (const [i, key] of [[1, 'BUSINESS'], [2, 'APPROVAL'], [4, 'SUPPLY'], [5, 'MOVE_IN']]) assert.equal(ALL.pipe.open.find((c) => c.i === i).units, v.reached[key], key);
+  for (const [i, key] of [[1, 'BUSINESS'], [2, 'APPROVAL'], [4, 'SUPPLY']]) assert.equal(ALL.pipe.open.find((c) => c.i === i).units, v.reached[key], key);
+  /* 2026-10-22 22:35 판: 입주까지 온 행이 없어 ⑥입주 칸은 접힌다(정비사업 조합 10곳의 준공·공급·입주 도달이 덤프에서 빠짐 — 오전 판 입주 칸 열림) */
+  /* 판 숫자([[5], 0]) 대신: 접힌 칸 = 그 칸까지 온 원천 행이 없는 칸(행에서 다시 셈), 입주 도달 = 집계 행 입주 호수 합 */
+  assert.deepEqual(ALL.pipe.shut, V.HOME_NAMES.map((_, i) => i).filter((i) => !ALL.scope.some((r) => r.board >= i)));
+  assert.equal(v.reached.MOVE_IN, ALL.chart.reduce((s, r) => s + V.slotUnits(r.home.reached, 5), 0));
 });
 
 test("'/' 카드 목록 창 건수 = 카드 숫자(home-board.json): 연결 사업 175 · 지연 4 · 주의 0 · 단계별 지연 합 = 지연", () => {
@@ -135,7 +163,7 @@ test("'/' 카드 목록 창 건수 = 카드 숫자(home-board.json): 연결 사�
 });
 
 /* 2026-10-21 사용자 결정: 병목·일정 지연 카드의 목록 = 그 단계 목표보다 측정이 모자란 사업(home-board.json home.stageShort) — 부족 합 − 다른 사업 초과 = 카드 숫자 */
-test("'/' 병목·일정 지연 목록 창: 단계 부족 사업 부족 합 − 초과 = 단계 부족량(병목 1,988 · 주의 최대 223), 행은 카드 모집단 · 부족 큰 순", () => {
+test("'/' 병목·일정 지연 목록 창: 단계 부족 사업 부족 합 − 초과 = 단계 부족량(2026-10-22 22:35 판 병목 = 공급 21,592 · 46곳), 행은 카드 모집단 · 부족 큰 순", () => {
   const SS = HB.home.stageShort, R = V.homeRowsOf(HP.rows, HP.residuals, SS), L = BL.boardLists(V, R, () => undefined, SS);
   assert.deepEqual(Object.keys(SS).sort(), HB.home.stageGaps.map((g) => g.stage).sort(), '부족량이 있는 단계마다');
   for (const g of HB.home.stageGaps) {
@@ -147,8 +175,9 @@ test("'/' 병목·일정 지연 목록 창: 단계 부족 사업 부족 합 − 
   }
   assert.equal(HB.home.bottleneck.gap, SS[HB.home.bottleneck.stage].rows.reduce((n, r) => n + r.short, 0) - SS[HB.home.bottleneck.stage].over, '병목 = 카드 숫자');
   /* 사업 화면도 같은 주소로 같은 행 */
-  const f = V.parseFilters({ sido: 'all', status: `short-${HB.home.bottleneck.stage}` }, { policies: [], programs: [], sidoOk: () => true, home: { agencies: [] } });
-  assert.deepEqual(V.homeOrderOf(V.applyFilters(R, f), f).map((r) => r.id), SS[HB.home.bottleneck.stage].rows.map((r) => r.id));
+  /* 화면과 같은 거르기(정책 기본 9·7 — 2026-10-22 22:35 판부터 9·7 밖 정비사업 조합 행에도 공급 부족이 생겨 정책 기본값 없이 거르면 행이 더 나온다) */
+  const f = V.parseFilters({ sido: 'all', status: `short-${HB.home.bottleneck.stage}` }, { policies: IDX.policies, programs: [], sidoOk: () => true, home: { agencies: [] } });
+  assert.deepEqual(V.homeOrderOf(V.applyFilters(V.scopeOf(R, f), f), f).map((r) => r.id), SS[HB.home.bottleneck.stage].rows.map((r) => r.id));
   assert.equal(V.parseFilters({ status: 'short-NOPE' }, { policies: [], programs: [], sidoOk: () => true }).status, undefined, '모르는 단계는 거르지 않음');
   /* 링크: '병목 보기'가 이 주소(2026-10-21 위 줄이 6단계 카드로 바뀌어 병목·일정 지연 카드는 빠짐) */
   assert.match(read('components/board/Board.tsx'), /H\?\.bottleneck \? <PanelLink href=\{at\(shortHref\(H\.bottleneck\.stage\)\)\} onClick=\{open\(at\(shortHref\(H\.bottleneck\.stage\)\)\)\}/);

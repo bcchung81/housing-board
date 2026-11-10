@@ -6,7 +6,8 @@
    - 한국시간 이번 달보다 뒤의 달, 가장 늦은 원장 폴더보다 앞의 달은 거부한다(새 달을 적재하면 앞 달이 닫힌다). 새 달 원장은 이번 달만 만든다.
    - 받을 수 있는 최신 대용량 판(fetch-hub-bulk.js --list, 3종이 다 있는 데이터 월)이 그 달 폴더가 쓴 판과 같고 새 달도 아니면 '새 자료 없음'으로
      아무것도 바꾸지 않고 끝낸다(매일 다시 돌려도 안전). --dry-run 은 목록만 보고 할 일을 출력한다.
-   - 새 달: schemas/ledger-<달>/ 을 만들고 앞 달 폴더의 정적 입력(STATIC: 법정동·LH 준공예정·입주예정·과거 판·매핑·기관 양식)을 복사한다.
+   - 새 달: schemas/ledger-<달>/ 을 만들고 앞 달 폴더의 정적 입력(STATIC: 법정동·LH 준공예정·입주예정·과거 판·매핑·기관 양식·HOME 판·단계별 원천)과
+     단계별 원천 중간 스냅샷(가장 늦은 snapshot/stage-<판>.json·manifest — 수동 단계라 월 갱신이 다시 만들지 않는다)을 복사한다.
      같은 달 갱신이면 그 폴더를 고친다. 새 판이면 3종을 raw/hub-bulk 에 받고, 밀려난 기본개요는 raw/hub-bulk-history/basic-<판>.zip 으로 옮기고 그 manifest 에 더한다.
    - 이어서 달 기록(manifest.json: 기준일 = 한국시간 오늘) → hub-bulk → snapshot(API, 이번 달만) → collect-national(공고 API) → convert(--out tables,
      후보 id 매핑 갱신) → validate → (새 달이면 trend --close: 앞 달 보드의 판정을 관측 행으로) → trend → board.
@@ -25,8 +26,11 @@ const { spawnSync } = require('node:child_process');
 const P = require('./paths');
 
 const KINDS = ['basic', 'act', 'site'];
-/* 새 달에 앞 달 폴더에서 가져오는 정적 입력(새로 받는 것: raw/hub·myhome·lh-notice·hub-bulk(새 판), snapshot, tables). raw/home = HOME 덤프 판(수도권 정본, 팀원이 새 덤프를 줄 때만 바뀐다) */
-const STATIC = ['raw/legal-dong', 'raw/lh-completion', 'raw/move-in', 'raw/hub-bulk-history', 'raw/home', 'mappings', 'agency'];
+/* 새 달에 앞 달 폴더에서 가져오는 정적 입력(새로 받는 것: raw/hub·myhome·lh-notice·hub-bulk(새 판), snapshot, tables). raw/home = HOME 덤프 판(수도권 정본, 팀원이 새 덤프를 줄 때만 바뀐다).
+   STAGE_RAW = 단계별 전국 원천(2026-10-12 수집, docs/product/단계별-원천-수집.md) 중 중간 스냅샷(stage-snapshot.js)이 읽는 원본 폴더 — 월 갱신은 다시 받지 않는다(키·원본이 CI 에 없어 수동).
+   convert 는 스냅샷과 이 폴더들의 manifest(받은 시각)를 읽는다. 원장 표가 쓰지 않는 나머지 단계별 원천 폴더는 가져가지 않는다 */
+const STAGE_RAW = ['raw/hub-bulk-bld', 'raw/reb-complex-id', 'raw/kapt-list', 'raw/molit-complex-file', 'raw/myhome-complex', 'raw/applyhome', 'raw/hug-sale-history', 'raw/lh-notice-detail'];
+const STATIC = ['raw/legal-dong', 'raw/lh-completion', 'raw/move-in', 'raw/hub-bulk-history', 'raw/home', 'mappings', 'agency', ...STAGE_RAW];
 /* 열린 달 API 덮어쓰기(tools/ledger/hub-api-refresh.js)의 출력(snapshot/ 안) */
 const REFRESH_FILES = ['hub-refresh.json', 'hub-refresh.manifest.json', 'hub-refresh.report.json'];
 
@@ -73,7 +77,7 @@ function summaryMarkdown({ month, edition, newMonth, prevMonth, before, after })
     row('판정(정상 · 주의 · 지연)', (s) => `${fmt(s.judged)} (${fmt(s.ok)} · ${fmt(s.caution)} · ${fmt(s.delay)})`),
     '',
     newMonth ? `새 달이다. 이 PR 을 합치면 ledger-load 가 ${month} 를 Supabase 에 싣고, 그때 앞 달 ${prevMonth} 가 닫힌다(되돌릴 수 없다).` : `같은 달(${month}) 갱신이다. 합치면 ledger-load 가 열린 달 ${month} 를 다시 싣는다.`,
-    '자동으로 받지 않는 것: 통계누리(data/board/molit.json), 입주예정 새 파일(반기), LH 준공예정 새 판(연 1회), 법정동코드 새 판(연 1회).',
+    '자동으로 받지 않는 것: 통계누리(data/board/molit.json), 입주예정 새 파일(반기), LH 준공예정 새 판(연 1회), 법정동코드 새 판(연 1회), 단계별 원천과 그 중간 스냅샷(새 달에는 앞 달 것을 가져간다).',
   ].join('\n');
 }
 
@@ -145,7 +149,12 @@ async function run({ root = P.ROOT, month, dryRun = false, now = Date.now(), exe
   const before = boardSummary(boardFile);
   if (newMonth) {
     fs.mkdirSync(dir, { recursive: true });
-    for (const rel of STATIC) if (fs.existsSync(path.join(prevDir, rel))) fs.cpSync(path.join(prevDir, rel), path.join(dir, rel), { recursive: true });
+    /* 단계별 원본 zip 이 수백 MB 라 APFS 등에서는 복제(clone)로, 못 하면 보통 복사 */
+    for (const rel of STATIC) if (fs.existsSync(path.join(prevDir, rel))) fs.cpSync(path.join(prevDir, rel), path.join(dir, rel), { recursive: true, mode: fs.constants.COPYFILE_FICLONE });
+    /* convert.js 를 여기서 부르지 않는다 — 그 require 사슬(hub-bulk.js)이 가장 늦은 원장 폴더(방금 만든 새 달)의 raw/hub-bulk 를 읽어 멈춘다 */
+    const prevSnap = path.join(prevDir, 'snapshot');
+    const stage = fs.existsSync(prevSnap) ? fs.readdirSync(prevSnap).filter((f) => /^stage-\d{4}-\d{2}\.json$/.test(f)).sort().pop() : null;
+    if (stage) for (const f of [stage, stage.replace(/\.json$/, '.manifest.json')]) fs.cpSync(path.join(prevSnap, f), path.join(dir, 'snapshot', f));
     if (!fresh) fs.cpSync(path.join(prevDir, 'raw/hub-bulk'), path.join(dir, 'raw/hub-bulk'), { recursive: true });
   }
   if (fresh) {
@@ -180,7 +189,7 @@ async function run({ root = P.ROOT, month, dryRun = false, now = Date.now(), exe
 }
 
 /* convert.js 인자(그 달 폴더의 입력, --hub-bulk = snapshot/<bulkFile>). 단계별 원천 중간 스냅샷(snapshot/stage-*.json, 가장 늦은 것)이 있으면 --stage 로 넘긴다 —
-   그 스냅샷은 수동 단계(tools/ledger/stage-snapshot.js, 원본 API 자료가 CI 에 없다)라 월 갱신이 만들지 않는다.
+   그 스냅샷은 수동 단계(tools/ledger/stage-snapshot.js, 원본 API 자료가 CI 에 없다)라 월 갱신이 만들지 않고, 새 달에는 앞 달 것을 복사한다(run).
    HOME 덤프 판(raw/home/<덤프시각>, 가장 늦은 것)이 있으면 --home 과 id 매핑 --home-ids(mappings/home-ids.json)를 넘긴다 — 수도권은 HOME 이 정본이라 원본(jsonl.gz)이 없으면 convert 가 멈춘다(Storage 에서 받거나 home-dump.py — raw-store.js pull 은 아직 HOME 을 받지 않는다).
    HOME 판이 있으면 --sidos 11,28,41 도 넘긴다 — 원장 사업은 HOME 수도권만(2026-10-19 사용자 결정, 수도권 밖 사업·딸린 행을 뺀다) */
 function convertArgs(root, dir, month, bulkFile) {

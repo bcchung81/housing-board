@@ -17,6 +17,7 @@ const MAP = require('../../data/board/ledger-map.json');
 const IDX = require('../../data/board/projects-index.json');
 const DET = require('../../data/board/project-detail.json');
 const PP = require('../../data/board/policy-progress.json');
+const { fakePP } = require('./fake-pp.cjs');
 
 const rows = V.rowsOf(MAP.bySgg, IDX.projects, IDX.sgg);
 const ctx = { pp: PP, policies: IDX.policies, observedMonth: IDX.observedMonth, sidoName: (c) => c, sggName: (c) => c };
@@ -81,13 +82,17 @@ test('2 정책 전체 카드 빈자리 없음: 요약은 두 카드를 위아래
 });
 
 test('3 숫자 형식: 비율·공정률은 소수 한 자리, 날짜는 점', () => {
+  /* 판 숫자(['달성 129.9%', '달성 124.1%', null, '달성 61.7%', '달성 100.0%', null]) 대신: 규칙은 가짜 자료(fake-pp.cjs), 지금 판은 확인 ÷ 목표 소수 한 자리 */
+  const fake = V.policyStageCells(fakePP(), 'POL_2025_0907');
+  assert.deepEqual(fake.map((c) => (c.target != null && c.actual != null ? V.rateOf(c).word : null)), ['달성 24.2%', '달성 230.7%', null, '달성 58.8%', '달성 100.0%', null]);
   const cells = V.policyStageCells(PP, 'POL_2025_0907');
-  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? V.rateOf(c).word : null)), ['달성 129.9%', '달성 124.1%', null, '달성 61.7%', '달성 100.0%', null]);   // 2026-10-22 새 덤프(20261021T212310Z): ①사업화 18,074/13,914 · ④공급 4,963/8,049 · 2026-10-21 새 덤프(20261020T142230Z, PoC 운영 값과 같음): 9·7 ①사업화 확인 7,808→18,854(목표 14,694 넘음) · ②인허가 목표 3,658→8,386·확인 6,249→10,403 — 덤프 뒤였던 담당자 단계 측정값·승인 일정이 새 판에 들어옴 · 2026-10-20 HOME 판(HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249
+  assert.deepEqual(cells.map((c) => (c.target != null && c.actual != null ? V.rateOf(c).word : null)), cells.map((c) => (c.target != null && c.actual != null ? `달성 ${(c.actual / c.target * 100).toFixed(1)}%` : null)));
   assert.equal(V.pct1(93.12), '93.1');
   assert.equal(V.pct1(33), '33.0');
   /* 서랍 공정률·타임라인 */
-  const id = 'PRJ-28245-0055', t = V.timelineOf(DET.projects[id], DET.referenceDate);
-  assert.equal(t.progress.at(-1).text, '2026.07.01 보고 93.1%');
+  /* 판 숫자('2026.07.01 보고 93.1%') 대신: 서랍 공정률 = 사업 창 자료의 마지막 보고(점 날짜 · 소수 한 자리) */
+  const id = 'PRJ-28245-0055', t = V.timelineOf(DET.projects[id], DET.referenceDate), lastP = DET.projects[id].progress.at(-1);
+  assert.equal(t.progress.at(-1).text, `${lastP[0].replace(/-/g, '.')} 보고 ${lastP[1].toFixed(1)}%`);
   const det = read('components/projects/ProjectDetail.tsx');
   assert.match(det, /value=\{pct1\(last\[1\]\)\}/);
   assert.match(det, /계획의 \$\{pct1\(r\.notice \/ r\.units \* 100\)\}%/);
@@ -125,13 +130,21 @@ test('5 서랍 원천 날짜 다름은 일 단위(LH 2026.10.31 · 2028.12.31), 
 });
 
 test('6 9·7 준공 381/381 은 숫자 그대로, ⓘ 에 원천 값 그대로(검증 대기)', () => {
+  /* 규칙(가짜 자료 fake-pp.cjs — 2026-10-19 판 예): 같은 확인 값인 단계(사업화·인허가 3,560)와 목표와 같은 확인(준공 381/381)을 이름으로, 숫자는 바꾸지 않는다 */
+  const fq = V.questionsOf([], {}, { ...ctx, pp: fakePP() })[0];
+  assert.deepEqual([fq.stages[0].actual, fq.stages[1].actual, fq.stages[4].actual, fq.stages[4].target], [3560, 3560, 381, 381], '숫자는 바꾸지 않는다');
+  assert.match(fq.note, /원천 값 그대로\(검증 대기\)/);
+  assert.match(fq.note, /사업화·인허가 3,560호/);
+  assert.match(fq.note, /준공 381\/381/);
+  /* 지금 판: 판 숫자([18074, 10403, 381, 381]) 대신 정책 진행 자료 값 그대로, 이름 붙는 칸 = 같은 확인 값·목표와 같은 확인이 있는 칸뿐 */
   const q0 = V.questionsOf(rows, {}, ctx)[0];
-  const st = q0.stages;
-  // 2026-10-20 HOME 판(20261019T212247Z, HOME 운영 API 와 같음): 9·7 ①사업화 확인 3,560→7,808 · ②인허가 목표 1,543→3,658·확인 3,560→6,249 — ①·② 확인 값이 달라져 '같은 확인 값' 문구는 빠진다
-  assert.deepEqual([st[0].actual, st[1].actual, st[4].actual, st[4].target], [18074, 10403, 381, 381], '숫자는 바꾸지 않는다');   // 2026-10-22 새 덤프(20261021T212310Z): ①사업화 18,854 → 18,074 · 2026-10-21 새 덤프 값
+  const st = q0.stages, fmt = (n) => n.toLocaleString('en-US');
+  const sp = (k) => PP.policies[0].stages[k].samePeriod.find((y) => y.year === 2026);
+  assert.deepEqual(st.map((c) => [c.actual, c.target]), st.map((c) => [sp(c.key).actual, sp(c.key).target]), '숫자는 바꾸지 않는다');
   assert.match(q0.note, /원천 값 그대로\(검증 대기\)/);
   assert.doesNotMatch(q0.note, /①계획·②인허가/);
-  assert.match(q0.note, /준공 381\/381/);
+  for (const c of st.filter((x) => x.actual != null && x.actual === x.target)) assert.ok(q0.note.includes(`${V.ppText(c)} ${fmt(c.actual)}/${fmt(c.target)}`), c.key);
+  if (!st.some((x) => x.actual != null && (x.actual === x.target || st.some((o) => o.board !== x.board && o.actual === x.actual)))) assert.doesNotMatch(q0.note, /도 원천이 준 숫자 그대로/);
   /* ⓘ 둘째 문단으로 그린다 */
   assert.match(read('components/projects/Summary.tsx'), /\{x\.note \? <p>\{x\.note\}<\/p> : null\}/);
 });

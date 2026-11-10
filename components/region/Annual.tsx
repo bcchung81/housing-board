@@ -1,6 +1,6 @@
 /* 지역 공급 ② 지난 공급 실적: 고른 범위(수도권·전국·시도)의 연도별 막대 + 수도권·전국이면 시도 × 연도 표. 지표 칩(인허가·착공·모집·준공)은 주소 ?metric=.
    통계누리 '분양' 실적(입주자 모집 승인 기준)은 화면 전체에서 리본 ④와 같은 '모집'으로 부른다. 연도 범위가 시도마다 달라(수도권 2018~, 나머지 2022~) 차트 아래 한 줄로 밝힌다.
-   서울·인천·경기는 2018~2021 을 HOME 통계(통계누리 시도 자료)로 앞에 잇는다(lib/board/region.ts regionYears). 부분 연도는 옅은 막대·머리글 기간 표기, 전년 대비는 완결 연도만. */
+   서울·인천·경기는 HOME 통계(통계누리 시도 자료 — 수도권 정본)로 센다: 착공·모집·준공은 2018~ 전부, 인허가는 2018~2021 만(lib/board/region.ts regionYears). 부분 연도는 옅은 막대·머리글 기간 표기, 전년 대비는 완결 연도만. */
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import { cn } from 'cn';
@@ -13,7 +13,7 @@ import { METRIC_COLOR } from '@/components/charts/palette';
 import YearBars from '@/components/charts/YearBars';
 import { spanLabel } from '@/lib/board/annual';
 import { METRICS, NATION, ymDot } from '@/lib/board/calc';
-import { METRO, NATION_FROM, metroYears, regionYears, type AnnualDoc } from '@/lib/board/region';
+import { METRO, NATION_FROM, metroYears, regionYears, yearsThrough, type AnnualDoc } from '@/lib/board/region';
 import type { Metric, Molit } from '@/lib/board/types';
 import type { Col, Row } from '@/lib/grid/spec';
 
@@ -33,7 +33,12 @@ export default function Annual({ molit, annual, sido, metric, order, sidoName, h
   const last = years[years.length - 1];
   const part = last && !last.complete && last.value !== null ? last : null;
   const months = molit.months;
-  const srcTip = `통계누리 주택건설실적통계 ${ymDot(months[0])}~${ymDot(months[months.length - 1])}(${ymDot(molit.provisional[0])}~ 잠정치)${spliced ? ` · 2018~2021은 정책 진행 자료(HOME)에 담긴 통계누리 서울·인천·경기 시도 자료(${annual.edition.slice(0, 4)}.${annual.edition.slice(4, 6)}.${annual.edition.slice(6, 8)} 판) — 2022~2025 값이 통계누리와 같음` : ''}`;
+  const home = spliced && metric !== 'permit';   // 서울·인천·경기 착공·모집·준공 = HOME 판 월 자료 전부(인허가는 2018~2021 만 HOME)
+  const thru = yearsThrough(years) ?? months[months.length - 1];
+  const homeEd = `${annual.edition.slice(0, 4)}.${annual.edition.slice(4, 6)}.${annual.edition.slice(6, 8)} 판`;
+  const srcTip = home
+    ? `통계누리 주택건설실적통계 서울·인천·경기 시도 자료 — 정책 진행 자료(HOME)에 담긴 것(${homeEd}) ${ymDot(annual.months[0])}~${ymDot(thru)} · 통계누리 월 자료(${ymDot(months[0])}~${ymDot(months[months.length - 1])})와 겹치는 달 값이 같음 · ${ymDot(molit.provisional[0])}~ 잠정치`
+    : `통계누리 주택건설실적통계 ${ymDot(months[0])}~${ymDot(months[months.length - 1])}(${ymDot(molit.provisional[0])}~ 잠정치)${spliced ? ` · 2018~2021은 정책 진행 자료(HOME)에 담긴 통계누리 서울·인천·경기 시도 자료(${homeEd}) — 2022~2025 값이 통계누리와 같음` : ''}`;
 
   /* 수도권·전국일 때 시도 × 연도 표(맨 위 합계 행 고정). 모든 칸이 비어 있는 해(열)는 그리지 않는다 */
   let table: ReactNode = null;
@@ -70,7 +75,7 @@ export default function Annual({ molit, annual, sido, metric, order, sidoName, h
         </ul>
         <InfoTip label="연도 범위·출처">
           <p>
-            {spliced ? <><span title="HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료(2018~2021 시도 통계)">{`${years[0]?.year}~${NATION_FROM - 1}년은 정책 진행 자료에 담긴 같은 통계누리 시도 자료`}</span>{`, ${NATION_FROM}년부터 통계누리 월 자료`}</> : `${NATION_FROM}년부터(통계누리 월 자료 — ${months[0].slice(0, 4)}년은 ${Number(months[0].slice(5))}월부터라 뺌) · 서울·인천·경기는 2018년부터(수도권 칩)`}
+            {home ? <span title="HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료(서울·인천·경기 시도 통계 — 수도권 정본)">{`${years[0]?.year}년부터 정책 진행 자료에 담긴 같은 통계누리 시도 월 자료(${NATION_FROM}년부터 통계누리 월 자료와 같은 값)`}</span> : spliced ? <><span title="HOME — 국토교통부 정책·LH·SH·GH 원천을 모은 팀 자료(2018~2021 시도 통계)">{`${years[0]?.year}~${NATION_FROM - 1}년은 정책 진행 자료에 담긴 같은 통계누리 시도 자료`}</span>{`, ${NATION_FROM}년부터 통계누리 월 자료`}</> : `${NATION_FROM}년부터(통계누리 월 자료 — ${months[0].slice(0, 4)}년은 ${Number(months[0].slice(5))}월부터라 뺌) · 서울·인천·경기는 2018년부터(수도권 칩)`}
             {part ? ` · ${part.year}년은 ${spanLabel(part)}만${part.provisional ? '(잠정치 포함)' : ''}` : ''}
           </p>
         </InfoTip>
@@ -79,7 +84,7 @@ export default function Annual({ molit, annual, sido, metric, order, sidoName, h
       <p className={cn(sub, 'm-0 mb-2')}>연도별 {name}</p>
       {/* 차트 틀은 이 카드 안이라 테두리·바탕을 걷는다(카드 안 카드 금지). 좁은 폭에서는 전년 대비 꼬리표를 하나 걸러 숨겨 겹치지 않게(값은 막대 툴팁·아래 표에 있다) */}
       <div className="[&_[data-slot=chart-frame]]:rounded-none [&_[data-slot=chart-frame]]:border-0 [&_[data-slot=chart-frame]]:bg-transparent max-[720px]:[&_[data-slot=chart-frame]_span[style*=bottom]:nth-of-type(even)]:invisible">
-        <YearBars series={years} color={color} label={`${rname} 연도별 ${name} 호수, ${years[0]?.year}년부터 ${ymDot(months[months.length - 1])}까지`} />
+        <YearBars series={years} color={color} label={`${rname} 연도별 ${name} 호수, ${years[0]?.year}년부터 ${ymDot(thru)}까지`} />
       </div>
       {table ? <div className="mt-5">{table}</div> : null}
     </Card>

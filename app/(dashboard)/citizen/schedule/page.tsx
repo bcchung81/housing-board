@@ -22,7 +22,7 @@ import { METRO_AREAS, SIDO_SHORT, guOf } from '@/lib/board/metro-overview';
 import { mapScopeHref } from '@/lib/board/map-href';
 import homeJson from '@/data/board/home-projects.json';
 import { applyFilters, homeRowsOf, isMetro, listHref, type Filters, type HomeDocRow } from '@/lib/board/projects-view';
-import { METRO, aheadAll, inSgg, parseSgg, pastDue, pickMonth, metroYears, regionYears, sggUnits, type AnnualDoc, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
+import { METRO, aheadAll, inSgg, parseSgg, pastDue, pickMonth, metroYears, regionYears, sggUnits, yearsThrough, type AnnualDoc, type CalendarDoc, type RegionMapDoc } from '@/lib/board/region';
 import { PUBLIC_METRICS, PUBLIC_METRIC_NAME, PUBLIC_WORDS, hoText, koMonth, parsePublicMetric, parsePublicSido, yearRank, type PublicMetric } from '@/lib/board/public-schedule';
 import { distinctNames } from '@/lib/board/public-labels';
 import type { YearVal } from '@/lib/board/annual';
@@ -92,7 +92,6 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
   const total = list.reduce((s, e) => s + e.units, 0);
   const pastN = list.filter((e) => pastDue(e, calendar.referenceDate)).length;
   const nowM = calendar.referenceDate.slice(0, 7);
-  const last = lastMonth(molit);
 
   /* 사업 찾기·지도 연결: 사업 수 = 사업 찾기 목록과 같은 HOME PoC 행(9·7 집계 행) */
   const pf: Filters = sgg ? { sgg, gu: guOf(sgg) } : sido === 'metro' ? { metro: true } : { sido };
@@ -106,6 +105,7 @@ export default async function SchedulePage({ searchParams }: { searchParams: Pro
 
   /* ② 지난 몇 년 — 통계누리(민간 포함 모든 주택). 수도권 합 또는 시도 하나 */
   const years: YearVal[] = sido === 'metro' ? metroYears(molit, annual, metric) : regionYears(molit, annual, metric, sido).years;
+  const last = yearsThrough(years) ?? lastMonth(molit);   // 실적 끝 달 = 고른 지표 연도별 막대의 끝(서울·인천·경기 착공·준공은 HOME 판 — lib/board/region.ts regionYears)
   const part = years.length && !years[years.length - 1].complete && years[years.length - 1].value !== null ? years[years.length - 1] : null;
   const mname = PUBLIC_METRIC_NAME[metric];
   /* 순위 줄: 라벨 · 값 · 보조 (값은 기존 yearRank·hoText 그대로, 말만 나눠 놓는다) */

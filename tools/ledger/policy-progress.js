@@ -19,6 +19,10 @@
    - 2026-10-22 HOME 운영 판(소스 미공개 — PoC as_of 10-22 응답과 덤프 20261021T212310Z 를 행 단위로 맞대어 역추적, 사업 177·사건·일정·범위별 점 282 계열이 같다):
      tracking.forecast_points(연말 예상 — forecastPoints), 대표 행 담당자 확인 완료 측정값(OFFICER_VERIFIED_SOURCE)이 있는 단계는 묶음 다른 원천 행 측정값을 쓰지 않음,
      관리 일정 precision(date_precision → source_precision → DAY), 숫자 없는 영문 블록 키(home-source.js blockKey — 인천부평 A).
+   - 2026-10-22 22:35 HOME 운영 판(앱 bbc21f7 — 소스 미공개, PoC as_of 10-22 응답(정책·시도 3·프로그램 31 범위)과 덤프 20261022T133544Z 를 점 단위로 맞대어 역추적, 6 지표 목표·실적·연말 예상 점이 모두 같다):
+     ① 착공 누적(tracking)은 공급 사건으로 끌어올리지 않는다(LATER.CONSTRUCTION 에서 SUPPLY 뺌 — 다산지금A3 등 6곳 1,357호, 인허가·사업화 누적은 공급 사건도 그대로 센다)
+     ② 누적 도달·연말 예상(tracking actual·forecast)은 호수 없는 사건(units null)을 세지 않는다(신림2 1,430·흑석11 1,515 정비 단계 근거, 광교 A17) — 사업 판정(home-view measured)은 그대로 사업 물량으로 본다
+     ③ evidence_bridge 의 참고용 실제 사실(reference_only — '새 정책 실적 가산 없음')은 사건으로 쓰지 않는다(광교 A17 사업화 600 두 건).
    - 기준일(as_of) = 덤프 시각의 한국 날짜(HOME 은 기준일 다음 날 0시(한국) 전에 기록된 판을 읽는다 — 덤프 뒤 기록이 없으니 덤프의 현재 판과 같다).
    두 가지 비교
    - homeRule: HOME 화면(policy-stage-flow.js comparisonStatus)과 같다 — 기준일까지 도래한 마지막 목표 누적(정책 시작일부터) 대 기준일까지 마지막 확인 누적(처음부터). 기간이 섞인다.
@@ -38,7 +42,9 @@ const REGIONS = ['서울특별시', '경기도', '인천광역시'];
 const ALIASES = { lh_incheon_sale: 'lh_sale', lh_incheon_rent: 'lh_rent', lh_incheon_construction: 'lh_construction' };
 /* 담당자 추정 입력(project_profile.progress 의 input_rule): '기한이 지난 단계에서 담당자가 고른 현재값 — 원천 실적 확인과 구분'. HOME 화면(homeRule·actualPoints)은 그대로 섞고,
    우리 같은 기간 비교(samePeriod)는 확인(actual = 이 입력을 뺀 사건)과 추정 포함(actualWithEstimates)을 나눠 낸다(2026-10-14 결정: 확인과 추정을 섞지 않는다) */
-const ESTIMATE_RULES = new Set(['OFFICER_CURRENT_ESTIMATE']);
+/* 2026-10-22 22:35 판부터 HOME 입력 규칙 이름이 셋으로 정리됐다: SOURCE_ACCEPTED(원천 채택, 추정 아님) · SEQUENCE_VALIDATED_TARGET_ESTIMATE(선후 검증한 목표값 추정)
+   · REVIEWED_MANAGEMENT_ESTIMATE(담당자 검토 관리 추정 — 복구값). 뒤의 둘은 HOME 이 inferred=true 로 표시하는 추정이라 확인에서 뺀다(옛 판의 OFFICER_CURRENT_ESTIMATE 와 같은 자리) */
+const ESTIMATE_RULES = new Set(['OFFICER_CURRENT_ESTIMATE', 'SEQUENCE_VALIDATED_TARGET_ESTIMATE', 'REVIEWED_MANAGEMENT_ESTIMATE']);
 /* 담당자 확인 완료 측정값(원문 확인 — 대표 행에 있으면 그 단계는 같은 묶음 다른 원천 행의 측정값을 대신한다, buildCohorts) */
 const VERIFIED_RULE = 'OFFICER_VERIFIED_SOURCE';
 /* HOME policy_delivery_comparison.METRICS(2038810) — portfolio_comparisons 의 지표 이름 */
@@ -419,7 +425,7 @@ function buildCohorts(svc, asOf, policyId) {
           const stage = fact.stage === 'CONSTRUCTION' && fact.milestone === 'COMPLETION' ? 'COMPLETION' : fact.stage;
           if (!EVENT_STAGES.has(stage)) continue;
           const when = fact.date || fact.date_label;
-          if (fact.kind === 'ACTUAL' && when && when.length === 10 && when <= asOf) {
+          if (fact.kind === 'ACTUAL' && !fact.reference_only && when && when.length === 10 && when <= asOf) {   /* reference_only 실제 사실(참고 근거 — 새 정책 실적 가산 없음)은 사건이 아니다(2026-10-22 22:35 판) */
             const dateBasis = get(fact, 'date_basis', 'EVENT');
             events.push({ stage, event_date: when, units: fact.units ?? null, status: 'ACTUAL', review_status: bridge.status, origin: 'LINKED_EVIDENCE', source_id: bridge.source_id, evidence_url: bridge.evidence_url ?? null,
               date_basis: dateBasis, source_event_date: dateBasis === 'EVENT' ? when : fact.source_event_date ?? null, observed_on: fact.observed_on ?? null, method: fact.method ?? null });
@@ -562,13 +568,14 @@ function scheduleTargets(cohorts, metric, periodStart) {
 }
 /* _events: 단계 실적 사건 → 날짜별 누적(사업별 최대 도달량, 확인 필요 연결 포함). cumulative 면 후속 단계 사건도 그 단계 도달로 본다(tracking).
    keep(e) 로 사건을 거른다(우리 확인 = 담당자 추정 입력 뺌). HOME 점 그대로(…·manual_units·inferred_units·evidence_urls) */
+/* 2026-10-22 22:35 HOME 운영 판: 착공 누적은 공급 사건으로 끌어올리지 않는다(공급(모집)이 착공보다 먼저일 수 있다 — 그 판 PoC 응답 착공 점과 같다) */
 const LATER = { BUSINESS: ['BUSINESS', 'APPROVAL', 'CONSTRUCTION', 'COMPLETION', 'SUPPLY', 'MOVE_IN'], APPROVAL: ['APPROVAL', 'CONSTRUCTION', 'COMPLETION', 'SUPPLY', 'MOVE_IN'],
-  CONSTRUCTION: ['CONSTRUCTION', 'COMPLETION', 'SUPPLY', 'MOVE_IN'], COMPLETION: ['COMPLETION', 'MOVE_IN'], SUPPLY: ['SUPPLY', 'MOVE_IN'], MOVE_IN: ['MOVE_IN'] };
+  CONSTRUCTION: ['CONSTRUCTION', 'COMPLETION', 'MOVE_IN'], COMPLETION: ['COMPLETION', 'MOVE_IN'], SUPPLY: ['SUPPLY', 'MOVE_IN'], MOVE_IN: ['MOVE_IN'] };
 function homeEvents(cohorts, metric, asOf, { cumulative = false, keep = () => true } = {}) {
   const accepted = new Set(cumulative ? LATER[metric] ?? [metric] : [metric]);
   const byDate = new Map();
   for (const c of cohorts) for (const e of c.events) {
-    if (accepted.has(e.stage) && get(e, 'status', 'ACTUAL') === 'ACTUAL' && e.event_date <= asOf && keep(e)) {
+    if (accepted.has(e.stage) && get(e, 'status', 'ACTUAL') === 'ACTUAL' && e.event_date <= asOf && e.units != null && keep(e)) {   // 호수 없는 사건은 세지 않는다(2026-10-22 22:35 판)
       if (!byDate.has(e.event_date)) byDate.set(e.event_date, []);
       byDate.get(e.event_date).push([c, e]);
     }
@@ -604,7 +611,7 @@ function forecastPoints(cohorts, metric, asOf, targets, actuals) {
   const accepted = new Set(LATER[metric] ?? [metric]);
   const dates = [...new Set([...targets.map((p) => p.date), ...actuals.map((p) => p.date)])].sort(byStr);
   const incs = scheduleIncrements(cohorts, metric, '1900-01-01');   // [날짜, [{ id, units }]] 날짜 순
-  const events = cohorts.flatMap((c) => c.events.filter((e) => accepted.has(e.stage) && get(e, 'status', 'ACTUAL') === 'ACTUAL' && e.event_date <= asOf)
+  const events = cohorts.flatMap((c) => c.events.filter((e) => accepted.has(e.stage) && get(e, 'status', 'ACTUAL') === 'ACTUAL' && e.event_date <= asOf && e.units != null)
     .map((e) => ({ id: c.id, date: e.event_date, v: Math.min(c.units, e.units == null ? c.units : e.units) }))).sort((a, b) => byStr(a.date, b.date));
   const plan = new Map(), reach = new Map();
   let i = 0, j = 0;

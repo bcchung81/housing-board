@@ -56,6 +56,31 @@ test('경량 번들 생성기: 위치 있는 사업 둘레 300 m 건물 + 블록
   assert.equal(L.liteDoc({ sgg: '41000', projects: [{ id: 'x', loc: null }] }, { ...a.opts, districts: [], blocks: [] }), null);   // 담을 것이 없으면 파일도 없다
 });
 
+test('오프라인 갱신(--offline, refreshLite): 같은 home-map 이면 같은 바이트, 없어진 사업 줄은 지우고 새 사업은 번들 건물로 세며, 같은 점 블록 다각형을 링으로 옮기고, 한 블록에 둘이면 둘 다 링 없음', () => {
+  const sqr = (x, y, d = 0.0002) => [[x - d, y - d], [x + d, y - d], [x + d, y + d], [x - d, y + d], [x - d, y - d]];
+  const R1 = sqr(126.8, 37.6), R2 = sqr(126.82, 37.61);
+  const blockOf = (at) => (at[0] === 126.8 && at[1] === 37.6 ? { id: 'b1', ring: R1 } : at[0] === 126.82 && at[1] === 37.61 ? { id: 'b2', ring: R2 } : null);
+  const a = liteFixture(), text = L.renderLite(L.liteDoc(a.doc, { ...a.opts, blockOf })), old = JSON.parse(text);
+  assert.deepEqual(old.projects, [['PRJ-41281-0001', 2, R1], ['PRJ-41281-0002', 1]]);
+  assert.deepEqual(old.blocks.map((x) => [x.label, !!x.poly]), [['고양창릉 S2', true]]);
+  assert.equal(L.renderLite(L.refreshLite(JSON.parse(text), a.doc)), text, '사업이 그대로면 파일도 그대로');
+  /* 0002 없어짐 · 0005 새 블록 사업(S2 라벨점 — 다른 블록의 다각형을 링으로) · 0006 새 블록 사업(0001 링 안 — 같은 블록이라 둘 다 점 표지) */
+  const doc = { ...a.doc, projects: [a.doc.projects[1], a.doc.projects[2], { id: 'PRJ-41281-0006', loc: { by: 'block', at: [126.80005, 37.60005] } }, { id: 'PRJ-41281-0005', loc: { by: 'block', at: [126.82, 37.61] } }] };
+  const nu = L.refreshLite(JSON.parse(text), doc);
+  assert.deepEqual(nu.projects, [['PRJ-41281-0001', 2], ['PRJ-41281-0005', 0, R2], ['PRJ-41281-0006', 2]]);
+  assert.deepEqual(nu.blocks, [], '사업 표지와 같은 점의 다른 블록은 뺀다');
+  const out = L.renderLite(nu), back = JSON.parse(out);
+  assert.deepEqual(back.buildings, old.buildings, '건물은 그대로(부호화 왕복)');
+  assert.deepEqual([back.districts, back.wide, back.edition, back.basis], [old.districts, old.wide, old.edition, old.basis]);
+  const rev = { ...doc, projects: doc.projects.slice().reverse() };
+  assert.equal(L.renderLite(L.refreshLite(JSON.parse(text), rev)), out, '같은 입력 → 같은 바이트(사업 순서와 무관)');
+  /* 캐시(blockOf)는 다른 블록에 다각형이 없을 때만 — 캐시도 없으면 링 없음 */
+  const far = { ...a.doc, projects: [...a.doc.projects, { id: 'PRJ-41281-0007', loc: { by: 'block', at: [126.83, 37.62] } }] };
+  assert.deepEqual(L.refreshLite(JSON.parse(text), far).projects.at(-1), ['PRJ-41281-0007', 0]);
+  assert.deepEqual(L.refreshLite(JSON.parse(text), far, { blockOf: () => ({ id: 'b9', ring: R2 }) }).projects.at(-1), ['PRJ-41281-0007', 0, R2]);
+  assert.equal(L.renderIndex('E', [{ sgg: '41281', name: 'x', projects: 4, drawn: 2, lite: true }]), '{\n  "schema": "home-lite-index/1",\n  "edition": "E",\n  "radiusM": 300,\n  "approxRadiusM": 150,\n  "sggs": [\n    {"sgg":"41281","name":"x","projects":4,"drawn":2,"lite":true}\n  ]\n}\n');
+});
+
 test('경량 번들 건물 부호화: 정수 차이 부호화 → 지도(region.js liteFeatures)가 되돌리면 원래 좌표와 같은 수(요청 시 조회 건물과 중심점으로 겹침을 거른다)', () => {
   const g1 = { type: 'MultiPolygon', coordinates: [[[[126.123456, 37.654321], [126.123789, 37.654321], [126.123789, 37.654999], [126.123456, 37.654321]], [[126.1235, 37.6544], [126.1236, 37.6544], [126.1236, 37.6545], [126.1235, 37.6544]]]] };
   const g2 = { type: 'Polygon', coordinates: [[[127.000001, 36.999999], [127.000101, 36.999999], [127.000101, 37.000099], [127.000001, 36.999999]]] };

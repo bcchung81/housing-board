@@ -20,7 +20,9 @@ KINDS = ['policy', 'policy_delivery_plan', 'policy_event', 'project', 'project_r
          # 9·7 정책 단계별 목표·확인(tools/ledger/policy-progress.js, HOME policy_delivery.build_delivery)이 더 읽는 것
          'evidence_bridge', 'lh_movein_plan', 'document_evidence', 'delivery_setting', 'execution_schedule',
          # 담당자 입력 오버레이(계획물량·단계 측정값 — 2026-10-14 판부터). 원본 gz 는 커밋하지 않는다(실명·사유 포함)
-         'project_profile']
+         'project_profile',
+         # 사업후보 연결 결정(2026-10-22 22:35 판부터 — home_mapping 행은 그대로 두고 해제 등 결정만 따로 쌓는다. HOME /mappings 의 상태가 이것을 따른다)
+         'mapping_decision']
 SMALL_TABLES = ['home_project', 'home_identity_alias', 'home_project_evidence', 'home_mapping',
                 'home_program_mapping', 'home_plan', 'home_plan_event', 'home_plan_project_link', 'home_coverage']
 BATCH_COLS = ['id', 'source_id', 'status', 'started_at', 'finished_at']

@@ -37,7 +37,7 @@ const AGENCY = [[/^(LH|한국토지주택공사)$/, 'lh'], [/서울주택도시|
 const IH_PROGRAM = /^iH\s/;
 /* 공공 공급 분류(2026-10-20 사용자 결정 '안2'): 위 계층부터 먼저 걸린 것 하나. 시행 값·원천 출처 코드·HOME 프로그램 id 로만 판정한다(이름 글자로 정하지 않는다).
    A 공공 시행: 시행 값이 LH·SH·GH·iH 정식명(AGENCY, iH 프로그램 연결 포함)이거나 원천 사업후보의 출처가 기관 원천(AGENCY_SOURCES)
-   B·C1·C2·D·E: 원천 사업후보의 사업 연결(home_mapping, 해제 RELEASED 제외)이 가리키는 프로그램 id(아래 표, 2026-10-20 판 home_program_mapping)
+   B·C1·C2·D·E: 원천 사업후보의 사업 연결(home_mapping, 해제 RELEASED 제외 — 단 담당자 결정 제외(EXCLUDED)로 RELEASED 가 된 행은 결정 적용 전 연결로 쓴다: 결정은 정책 집계에서 뺄 뿐 공공/민간 성격을 바꾸지 않는다)가 가리키는 프로그램 id(아래 표, 2026-10-20 판 home_program_mapping)
    PUBLIC(공공 공급) = A·B·C1·C2, PRIVATE_RENEWAL(민간 정비, 정책 귀속 검토) = D, PRIVATE(일반 민간·소규모) = E. 아무 데도 걸리지 않으면 F → UNKNOWN(검토 목록 PUBLIC_SCOPE_UNKNOWN —
    이관 때 0이어야 한다, 생기면 표에 넣을지 확인). 화면은 PUBLIC 만 센다(tools/ledger/board.js isShown) */
 const AGENCY_SOURCES = new Set(['lh_construction', 'lh_sale', 'lh_rent', 'lh_progress', 'lh_policy_followup', 'sh_inventory', 'gh_supply_plan', 'ih_notice']);   // lh_incheon_* 는 src() 가 lh_* 로 푼다
@@ -74,7 +74,22 @@ function readHome(dir) {
     if (f.sha256 && crypto.createHash('sha256').update(buf).digest('hex') !== f.sha256) throw new Error(`${dir}/${file} 의 sha256 이 manifest 와 다르다`);
     kinds[file.replace(/\.jsonl\.gz$/, '')] = zlib.gunzipSync(buf).toString('utf8').split('\n').filter(Boolean).map((l) => JSON.parse(l));
   }
+  if (kinds.mapping_decision && kinds.home_mapping) kinds.home_mapping = withDecisions(kinds.home_mapping, kinds.mapping_decision);
   return { edition: path.basename(dir), dir, snapshotAt: manifest.snapshot_at, manifest, kinds };
+}
+/* 사업후보 연결 결정(mapping_decision — 2026-10-22 22:35 판부터): 담당자가 정책 집계에서 뺀 사업후보(subject_kind project · status EXCLUDED)는
+   home_mapping 행이 REVIEW 로 남아 있어도 해제(RELEASED)로 본다 — 그 판 HOME /mappings 가 이 11곳을 RELEASED·통계 제외로 낸다(인천서구 1 두 행·인천부평 A 계약 행이 새로 빠짐).
+   바뀐 행에는 excluded_by_decision: true 를 남긴다 — 정책 연결·집계는 RELEASED 로 보되, 공공 공급 분류(programsOf)만 결정 적용 전 연결로 본다(원장 표로는 나가지 않는 메모리 안 표시).
+   사업후보마다 마지막 결정(changed_at)만 쓰고, 모르는 결정(다른 subject_kind·status)이 오면 멈춘다 */
+function withDecisions(mappings, decisions) {
+  const last = new Map();
+  for (const r of decisions) {
+    const d = r.payload;
+    if (d.subject_kind !== 'project' || d.status !== 'EXCLUDED') throw new Error(`모르는 사업 연결 결정: ${r.entity_id} ${d.subject_kind}/${d.status} — home-source.js withDecisions 에 규칙을 더한다`);
+    const prev = last.get(d.subject_id);
+    if (!prev || String(d.changed_at) > String(prev.changed_at)) last.set(d.subject_id, d);
+  }
+  return mappings.map((m) => (last.has(m.project_id) && m.status !== 'RELEASED' ? { ...m, status: 'RELEASED', excluded_by_decision: true } : m));
 }
 /* 그 달 폴더의 가장 늦은 HOME 판(raw/home/<덤프시각>, manifest.json 이 있는 것), 없으면 null */
 /* 프로그램 이름 정규화 키: 공백을 빼고 가운뎃점 꼴(・ㆍ‧∙•)을 '·' 로 — '도심 공공주택 복합사업' = '도심공공주택 복합사업' */
@@ -622,10 +637,10 @@ function homeRows(build, ids, { registry, observedMonth, notices = [] }) {
   /* 사업후보(PRO) → 이어진 iH 프로그램(IH_PROGRAM, 'iH 공공분양(PRG_…)' 글) — 시행 값이 없을 때 기관 판정에 쓴다 */
   const ihPrograms = new Map(K.home_program_mapping.filter((r) => IH_PROGRAM.test(r.name ?? '')).map((r) => [r.id, `${r.name}(${r.id})`]));
   const ihProgramOf = new Map([...K.home_mapping].sort((a, b) => byStr(a.id, b.id)).filter((r) => r.status !== 'RELEASED' && ihPrograms.has(r.program_id)).map((r) => [r.project_id, ihPrograms.get(r.program_id)]).reverse());
-  /* 사업후보(PRO) → 이어진 프로그램 id(해제 RELEASED 제외) — 공공 공급 분류(PUBLIC_TIER)에 쓴다 */
+  /* 사업후보(PRO) → 이어진 프로그램 id(해제 RELEASED 제외, 결정 제외 행은 포함) — 공공 공급 분류(PUBLIC_TIER)에 쓴다 */
   const programName = new Map(K.home_program_mapping.map((r) => [r.id, r.name]));
   const programsOf = new Map();
-  for (const r of K.home_mapping) if (r.status !== 'RELEASED') (programsOf.get(r.project_id) || programsOf.set(r.project_id, new Set()).get(r.project_id)).add(r.program_id);
+  for (const r of K.home_mapping) if (r.status !== 'RELEASED' || r.excluded_by_decision) (programsOf.get(r.project_id) || programsOf.set(r.project_id, new Set()).get(r.project_id)).add(r.program_id);
   R.publicTier = { A: 0, B: 0, C1: 0, C2: 0, D: 0, E: 0, F: 0 };
   const pidOfPro = new Map(), pidOfHpr = new Map();
   for (const g of build.groups) for (const m of g.members) { pidOfPro.set(m.pro, ids.get(g)); pidOfHpr.set(m.hpr, ids.get(g)); }
@@ -1159,4 +1174,4 @@ function issueHome(registry, { tables, homeIds, lhSgg = [], today, edition }) {
   return { registry: reg, ...out };
 }
 
-module.exports = { PUBLIC_TIER, AGENCY_SOURCES, programKey, officerTerms, scrubKinds, bridgeAdopted, noticeKeyOfUrl, moveInDocOf, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, siteKeys, CODE_NAME, addressArea, buildHome, sggByPro, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, keepSido, issueHome, serialOf };
+module.exports = { PUBLIC_TIER, AGENCY_SOURCES, programKey, officerTerms, scrubKinds, bridgeAdopted, noticeKeyOfUrl, moveInDocOf, HOME_SIDO, HOME_PREFIX, HOME_SYSTEM, STAGE, readHome, withDecisions, latestHomeDir, homeAvailable, refsOf, dateParts, periodParts, blockKey, inventory, inventoryDropped, siteKey, siteKeys, CODE_NAME, addressArea, buildHome, sggByPro, assignHomeIds, mergeHomeIds, renderHomeIds, homeRows, replaceSido, keepSido, issueHome, serialOf };

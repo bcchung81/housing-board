@@ -28,12 +28,22 @@ test('#1·#9 단계 연계 ①계획: 레지스트리 계획 단계 건수와 �
   assert.match(page, /ledgerNote: `정책 진행 자료 \$\{homeBoard\.observedMonth\.replace\('-', '\.'\)\} · 수도권 9·7`/, '2026-10-21 W6: 종합상황판 집계 = home-board');
 });
 
-test('#1 실제 레지스트리: 계획(01·02) 단계는 143건이다', () => {
+test('#1 실제 레지스트리: 계획(01·02) 단계 건수는 0건이 아니고, ①계획 칸은 레지스트리에서 센 그 건수를 보인다', () => {
   const reg = json('registry/projects.json');
   const rows = Array.isArray(reg) ? reg : reg.projects;
   const list = Array.isArray(rows) ? rows : Object.values(rows);
   const n = list.filter((p) => ['01', '02'].includes(p.stageCode)).length;
-  if (list.some((p) => p.stageCode)) assert.equal(n, 175);   // 2026-10-20 HOME 판: 143 → 178(새 HOME 사업 중 계획 단계) → 2026-10-20 같은 현장 병합 6쌍 175(평택고덕 대표 3곳이 공사 계약 행을 넘겨받아 02→04)
+  /* 판 숫자(10-22 판 175 — 첫 판 143) 대신: 레지스트리에서 다시 센 값 = /sources ①계획 칸(page.tsx 처럼 stageCode 를 세어 넘긴다) */
+  if (!list.some((p) => p.stageCode)) return;
+  assert.ok(n > 0, '계획 단계 0건 표기 금지(#1)');
+  const { stageLinks } = require('../../lib/board/stage-links.ts');
+  const { ACQUIRE } = require('../../lib/board/acquire.ts');
+  const zero = new Proxy({}, { get: () => 0 }), registry = {};
+  for (const p of list) registry[p.stageCode] = (registry[p.stageCode] ?? 0) + 1;
+  const plan = stageLinks({ regions: 3, sgg: 5, registryTotal: list.length, registryRefs: 0, registry, bundle: {},
+    molit: { permit: 1, start: 1, sale: 1, complete: 1, annual: 1 }, months: '', lhBlocks: 1, lhAsOf: '', ledgerNote: '',
+    catalog: zero, hubBasis: 0, permits: 0, permitsStarted: 0, permitsCompleted: 0, plat: 0, ledger: 0, lhNotices: 0, myhome: 0, myhomePnu: 0, stan: 0 }, ACQUIRE)[0];
+  assert.match(plan.rows.find((r) => r.data.startsWith('사업 레지스트리')).cut, new RegExp(`계획 단계\\(01·02\\) ${n.toLocaleString('en-US')}건`));
 });
 
 test('#2 추가 확보 필요: 원장에서 쓰는 6건은 수집·연결됨(수집일 포함), 나머지 11건이 확보 필요', () => {
@@ -50,7 +60,8 @@ test('#2 추가 확보 필요: 원장에서 쓰는 6건은 수집·연결됨(수
   // 2026-10-19 수도권 한정: judge.dataAsOf 는 판정한 행의 원천만 적는데 판정 행이 수도권 HOME 뿐이라 datagokr-*·hub-bulk-* 키가 빠지고 home-dump-* 만 남는다. A1·A2·A10·F6 이 쓰이는 근거는 원장 sources 표(source_ref)에 둔다
   assert.deepEqual(Object.keys(asOf).filter((k) => !k.startsWith('home-dump-')), []);
   assert.ok(Object.keys(asOf).length >= 1);
-  const srcText = JSON.stringify(json('schemas/ledger-2026-10/tables/sources.json').rows.map((r) => r.source_ref));
+  const P = require('../../tools/ledger/paths');   // 지금 원장(가장 늦은 달 폴더)의 sources 표
+  const srcText = JSON.stringify(JSON.parse(fs.readFileSync(path.join(P.ledgerDir(P.latestMonth()), 'tables/sources.json'), 'utf8')).rows.map((r) => r.source_ref));
   for (const id of ['15058530', '15057999', '15098547', '15111714']) assert.ok(srcText.includes(`datagokr-${id}`), id);
   const { stageLinks } = require('../../lib/board/stage-links.ts');
   const zero = new Proxy({}, { get: () => 0 });

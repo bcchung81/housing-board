@@ -23,6 +23,7 @@ const IDX = require('../../data/board/projects-index.json');
 const PP = require('../../data/board/policy-progress.json');
 const BOARD = require('../../data/board/ledger-board.json');
 const LH = require('../../data/board/lh-completion.json');
+const E = require('./home-era.cjs');
 
 const rows = V.rowsOf(MAP.bySgg, IDX.projects, IDX.sgg);
 const byId = Object.fromEntries(rows.map((r) => [r.id, r]));
@@ -34,15 +35,16 @@ const Q = (q) => Object.fromEntries(V.questionsOf(rows, pf(q), qctx).map((x) => 
 const sum = (xs) => xs.reduce((s, x) => s + x, 0);
 
 /* ---------- D3 ---------- */
-test('D3: 지연 건수는 번호 있는 사업만(2건), 후보는 확인 필요로 따로(수도권 한정으로 0건) — 예전 전국 315건 = 2 + 313', () => {
+test('D3: 지연 건수는 번호 있는 사업만, 후보는 확인 필요로 따로(수도권 한정으로 0건) — 예전 전국 315건 = 2 + 313', () => {
   const j = BOARD.judgment, c = j.candidate;
-  assert.deepEqual([j.ok.projects, j.caution.projects, j.delay.projects], [172, 11, 2]);   // 2026-10-20 HOME 판: 새 사업 122 → 판정 169→188(정상 165→176·주의 2→10·지연 2 그대로) → 같은 현장 병합(정상 −6, 평택고덕 대표 3곳 판정 +3)·기준일 10-20(성남금토 A2 정상→주의) 185(172·11·2)
+  /* 판 숫자(10-22 판 172·11·2) 대신: 집계 = 번호 있는 사업 행에서 다시 센 판정 */
+  const nOf = (k) => rows.filter((r) => r.issued && r.cls === k).length;
+  assert.deepEqual([j.ok.projects, j.caution.projects, j.delay.projects], [nOf('ok'), nOf('caution'), nOf('delay')]);   // 2026-10-20 HOME 판: 새 사업 122 → 판정 169→188(정상 165→176·주의 2→10·지연 2 그대로) → 같은 현장 병합(정상 −6, 평택고덕 대표 3곳 판정 +3)·기준일 10-20(성남금토 A2 정상→주의) 185(172·11·2)
   // 2026-10-19 수도권 한정: 번호 없는 후보(건축HUB 대용량·LH 준공예정)가 원장에서 빠져 후보 계산 1442·84·313 → 0·0·0, 후보 판정 1,839 → 0. 그래서 지연 합 = 2, 주의 합 = 2, 정상 합 = 165
   assert.deepEqual([c.ok.projects, c.caution.projects, c.delay.projects], [0, 0, 0]);
-  assert.equal(j.delay.projects + c.delay.projects, 2);
-  assert.equal(j.caution.projects + c.caution.projects, 11);   // 2026-10-20 HOME 판: 주의 2→10 → 기준일 10-20 성남금토 A2 주의 11
-  assert.equal(j.ok.projects + c.ok.projects, 172);   // 같은 현장 병합(정상 대체 6 빠짐 · 평택고덕 대표 3 정상)·성남금토 A2 주의
-  assert.equal(BOARD.scope.judged, 185);   // 2026-10-20 같은 현장 병합: 188 − 대체 6 + 평택고덕 대표 3
+  /* 후보 0건이라 합 = 번호 있는 사업 판정(10-22 판 지연 2·주의 11·정상 172), 판정 수 = 세 칸 합(10-22 판 185) */
+  for (const k of ['ok', 'caution', 'delay']) assert.equal(j[k].projects + c[k].projects, nOf(k), k);
+  assert.equal(BOARD.scope.judged, j.ok.projects + j.caution.projects + j.delay.projects);
   assert.equal(BOARD.scope.candidateJudged, 0);
   /* 행에서 다시 센 값 = 집계 */
   assert.equal(rows.filter((r) => r.issued && r.cls === 'delay').length, j.delay.projects);
@@ -83,22 +85,32 @@ test('D3: 종합상황판 지연 = 사업 화면 지연, 시도 타일 지연율
   assert.equal(d[4].m, `지연 ${BOARD.judgment.delay.projects}건`);
   assert.equal(q.value, String(BOARD.judgment.delay.projects), '종합상황판 지연 = 사업 화면 지연(수도권)');
   assert.doesNotMatch(q.sub, /확인 필요\(후보\)/, '2026-10-19 수도권 한정: 후보 0이라 보조 글에 \'· 확인 필요(후보) n\' 이 붙지 않는다(전엔 313)');
-  assert.equal(d[2].m, `병목 ${V.BOARD_NAMES[V.bottleneckOf(BOARD.delayByStage).i]} ${BOARD.delayByStage[2].toLocaleString('en-US')}호`);
-  assert.equal(Q({ sido: 'all' })['어디서 막혀 있는가'].value, '③ 착공', '병목도 같은 값');
+  /* 병목 칸: 판 고정(③착공 [2]) 대신 번호 있는 지연 사업 행에서 다시 센 단계별 호수의 가장 큰 칸(2026-10-22 22:35 판에서 인천검단 지연 2곳이 공고 연결로 ④모집이 됐다) */
+  const late = Array(V.BOARD_NAMES.length).fill(0);
+  for (const r of rows.filter((x) => x.issued && x.cls === 'delay')) late[r.board] += r.units;
+  const neck = late.indexOf(Math.max(...late));
+  assert.ok(late[neck] > 0, '지연 사업이 있다');
+  assert.equal(d[2].m, `병목 ${V.BOARD_NAMES[neck]} ${late[neck].toLocaleString('en-US')}호`);
+  assert.equal(Q({ sido: 'all' })['어디서 막혀 있는가'].value, `${V.BOARD_CIR[neck]} ${V.BOARD_NAMES[neck]}`, '병목도 같은 값');
   for (const r of BOARD.regions) {
     const xs = rows.filter((x) => x.sgg.startsWith(r.code));
     assert.equal(r.judged, xs.filter((x) => x.issued && x.cls).length, r.code);
     assert.equal(r.delay, xs.filter((x) => x.issued && x.cls === 'delay').length, r.code);
     assert.equal(r.candidate.judged, xs.filter((x) => !x.issued && x.cls).length, r.code);
   }
-  assert.deepEqual(BOARD.regions.filter((r) => r.judged).map((r) => [r.code, r.delay, r.judged]), [['11', 0, 45], ['28', 2, 25], ['41', 0, 115]]);   // 2026-10-20 HOME 판: 인천 판정 19→28·경기 105→115 → 2026-10-20 같은 현장 병합 6쌍: 인천 대체 3곳 빠짐 25, 경기 대체 3 빠지고 대표 3 판정 115
+  /* 판 숫자([['11', 0, 45], ['28', 2, 25], ['41', 0, 115]]) 대신: 판정 있는 시도 = 판정 사업 행의 시도(모두 수도권), 시도 판정·지연 합 = 보드 판정 합 */
+  const judgedSido = [...new Set(rows.filter((x) => x.issued && x.cls).map((x) => x.sgg.slice(0, 2)))].sort();
+  assert.deepEqual(BOARD.regions.filter((r) => r.judged).map((r) => r.code).sort(), judgedSido);
+  assert.ok(judgedSido.every((c) => ['11', '28', '41'].includes(c)), '판정 시도는 수도권');
+  assert.equal(BOARD.regions.reduce((s, r) => s + r.judged, 0), BOARD.scope.judged);
+  assert.equal(BOARD.regions.reduce((s, r) => s + r.delay, 0), BOARD.judgment.delay.projects);
   const board = read('components/board/Board.tsx');
   assert.match(board, /data-slot="board-cand"/, '선택 시점 판정 카드에 확인 필요(후보) 줄');
   assert.match(board, /status=review/, '후보 목록 링크');
 });
 
 /* ---------- D4 ---------- */
-test('D4: 이 단계까지 온 사업은 현재 단계 기준 누적 — ①계획 = 전체(수도권 262/262), 칸이 뒤로 갈수록 줄어든다(단조 감소)', () => {
+test('D4: 이 단계까지 온 사업은 현재 단계 기준 누적 — ①계획 = 전체, 칸이 뒤로 갈수록 줄어든다(단조 감소)', () => {
   for (const q of [{}, { sido: 'all' }, { sido: '41' }, { policy: '97' }]) {
     const scope = V.applyFilters(rows, pf(q), 'stage'), p = V.pipelineOf(scope);
     const n = V.BOARD_NAMES.map((_, i) => scope.filter((r) => V.reachedAt(r, i)).length);
@@ -108,9 +120,13 @@ test('D4: 이 단계까지 온 사업은 현재 단계 기준 누적 — ①계�
     /* 지금 이 단계는 현재 단계 그대로 */
     for (const c of p.open) assert.equal(c.now, scope.filter((r) => r.board === c.i).length);
   }
-  const metro = V.pipelineOf(V.applyFilters(rows, pf({}), 'stage'));
-  assert.deepEqual([metro.open[0].n, metro.total, metro.open[0].units], [289, 289, 243542]);   // 2026-10-22 새 덤프(20261021T212310Z): 새 사업 1(부천역곡 A1 1,160호) · 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3(103호) · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌) 377·270,158 → 285·242,279 · 2026-10-20 HOME 판: 262→383사업·227,976→274,296호 → 2026-10-20 같은 현장 병합 6쌍(−6사업·−4,138호)
-  assert.deepEqual(metro.open.map((c) => [c.i, c.n, c.now]), [[0, 289, 162], [1, 127, 15], [2, 112, 71], [3, 41, 41]]);   // 2026-10-22 새 덤프: 새 사업 1 — 부천역곡 A1 ③착공(HOME 원천 단계 CONSTRUCTION, 인허가 실제 2025-12-30) · 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3 — 연남동 ②인허가(현재 단계), 독산동·방화차고지 ③착공 · 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌): ①계획 −13(민간 정비 11·일반 민간 2), ③착공 −79(민간 정비 28·일반 민간 51) · 2026-10-20 같은 현장 병합 6쌍: ③착공 대체 6 빠짐, 평택고덕 대표 3곳 ①→③   // 2026-10-20 HOME 판(10-19 판: [0,262,143],[1,119,12],[2,107,71],[3,36,36])
+  const scope = V.applyFilters(rows, pf({}), 'stage'), metro = V.pipelineOf(scope);
+  /* 판 숫자([289, 289, 243542]) 대신: ① = 범위 전체(건수·호수), 원장 보드(board.js — 다른 산출물)의 수도권 사업 수·호수와 같다 */
+  assert.deepEqual([metro.open[0].n, metro.total, metro.open[0].units], [scope.length, scope.length, sum(scope.map((r) => r.units))]);
+  assert.deepEqual([metro.total, metro.open[0].units], [BOARD.scope.projects, BOARD.scope.units]);
+  /* 판 숫자([[0, 289, 162], [1, 127, 15], [2, 112, 71], [3, 41, 41]]) 대신 행에서 다시 센 값: 이 단계까지 온 사업 = 현재 칸이 그 칸 이상, 지금 이 단계 = 현재 칸 그대로, 열린 칸 = 온 사업이 있는 칸 */
+  const want = V.BOARD_NAMES.map((_, i) => [i, scope.filter((r) => r.board >= i).length, scope.filter((r) => r.board === i).length]).filter((c) => c[1] > 0);
+  assert.deepEqual(metro.open.map((c) => [c.i, c.n, c.now]), want);
 });
 
 /* ---------- D2 ---------- */
@@ -140,7 +156,13 @@ test('D2: 표지는 목록 현재 예정 칸·서랍·간단 보기·CSV 비고 
   assert.equal(L.nextCell(r).tag, '원천 날짜 다름(LH 2028.12)', '목록 칸 꼬리표');
   assert.match(L.nextCell(r).title, /HOME 2025\.02\.18 · LH 준공 예정 파일 2028\.12\.31 · 판정은 HOME 날짜로/);
   assert.equal(V.dateAltOf(byId['PRJ-28245-0055']).text, '원천 날짜 다름(LH 2026.10.31)', '같은 달이면 일까지');
-  assert.match(V.dateAltOf(byId['PRJ-41290-0031']).text, /^원천 날짜 다름\(LH 준공 2027\.08\)$/, '보이는 예정이 준공이 아니면 LH 준공');
+  /* 보이는 예정(경과 우선)이 준공이 아니면 'LH 준공 …', 준공이면 'LH …' — 판마다 사업이 바뀌어 표지 있는 행 모두로 본다 */
+  const alts = rows.filter((x) => x.dateAlt && (x.overdue ?? x.next));
+  assert.ok(alts.some((x) => (x.overdue ?? x.next).eventType !== 'COMPLETION'), '준공이 아닌 예정에 표지가 붙은 사업이 있다');
+  for (const x of alts) {
+    const cp = (x.overdue ?? x.next).eventType === 'COMPLETION';
+    assert.match(V.dateAltOf(x).text, cp ? /^원천 날짜 다름\(LH \d{4}\.\d{2}(\.\d{2})?\)$/ : /^원천 날짜 다름\(LH 준공 \d{4}\.\d{2}(\.\d{2})?\)$/, `${x.id}: 보이는 예정이 준공이 아니면 LH 준공`);
+  }
   assert.equal(V.nextOf(r).alt.text, '원천 날짜 다름(LH 2028.12)', '간단 보기(nextOf.alt)');
   assert.match(read('components/projects/Candidate.tsx'), /next\.alt \?/);
   assert.match(read('components/projects/ProjectDetail.tsx'), /const alt = r\.home \|\| d\.judge \? null : dateAltOf\(r, true\)[\s\S]*\{alt\.text\}/, '서랍 타임라인 머리');
@@ -166,16 +188,24 @@ test('D2 지도 계약: 원장 행(ledger-map·home-map)의 dateAlt = { source: 
 });
 
 /* ---------- 화면 사이 불변식 ---------- */
-test('불변식: CSV = 목록(행·순서), 9·7 숫자, 수도권 227,976호·262건, 향후 12개월 준공 그대로', () => {
+test('불변식: CSV = 목록(행·순서), 9·7 숫자(화면 = 정책 진행 자료 = HOME), 수도권 건수·호수(사업 화면 = 보드), 향후 12개월 준공(행 = 보드)', () => {
   const f = pf({ sido: 'all' }), list = V.listOrder(V.applyFilters(rows, f)), grid = L.listRows(list, f, null, sido);
   const csv = S.toCsv(L.csvCols(L.dropBlank(L.LIST_COLS, grid).cols), L.csvRows(grid)).split('\r\n').filter(Boolean);
   assert.equal(csv.length - 1, grid.length);
   assert.deepEqual(csv.slice(1).map((l) => l.split(',')[0]), list.map((r) => r.id), 'CSV 순서 = 목록 순서');
   const s97 = PP.policies.find((p) => p.policyId === 'POL_2025_0907').stages.SUPPLY.samePeriod.find((y) => y.year === 2026);
-  assert.deepEqual([s97.target, s97.actual, s97.actualWithEstimates], [8049, 4963, 8742]);   // 2026-10-22 새 덤프: 확인 +231(담당자 공급 측정값 3건 추정 → 원천 확인, policy-progress.test.cjs)
+  /* 판 숫자([8049, 4963, 8742]) 대신: 사업 화면 첫 칸(정책 목표 대비)의 공급 칸·설명 글 = 정책 진행 자료 값, HOME 정책 화면 응답과 판이 같으면 목표·추정 포함도 같다 */
+  const sup = V.questionsOf(rows, pf({ sido: 'all' }), qctx)[0].stages.find((c) => c.key === 'SUPPLY');
+  assert.deepEqual([sup.target, sup.actual, sup.withEst], [s97.target, s97.actual, s97.actualWithEstimates ?? s97.actual]);
+  const fmt = (n) => n.toLocaleString('en-US'), tip = V.stageCellTip(sup);
+  assert.ok(tip.includes(`목표 ${fmt(s97.target)}호`) && tip.includes(s97.actual == null ? '확인 미확보' : `확인 ${fmt(s97.actual)}호`), tip);
+  const view = E.golden('S1-view-policy.json');
+  if (view.doc) assert.deepEqual(E.homePeriod(view.doc, 'SUPPLY', s97.from, s97.through), { target: s97.target, actual: s97.actualWithEstimates });
   const metro = V.summaryOf(V.applyFilters(rows, pf({})));
-  assert.deepEqual([metro.n, metro.units], [289, 243542]);   // 2026-10-22 새 덤프: 새 사업 1(부천역곡 A1 1,160호) · 2026-10-21 새 덤프(20261020T142230Z): 새 사업 3 · 2026-10-20 HOME 판 → 2026-10-20 같은 현장 병합 6쌍 → 2026-10-20 공공 분류 안2: 화면은 공공 공급만(민간 정비 39·일반 민간 53 뺌)
-  // 2026-10-19 수도권 한정: 향후 12개월 준공 예정 214,975호(414곳) → 13,372호(24곳)
-  assert.equal(sum(BOARD.upcoming.map((u) => u.units)), 14570);   // 2026-10-20 HOME 판: 13,372호(24곳) → 14,570호(25곳)
-  assert.equal(Q({ sido: 'all' })['앞으로 얼마나 공급되는가'].value, '14,570');
+  /* 판 숫자([289, 243542]) 대신: 사업 화면 수도권 = 원장 보드(board.js) 수도권 */
+  assert.deepEqual([metro.n, metro.units], [BOARD.scope.projects, BOARD.scope.units]);
+  /* 판 숫자(14,570) 대신: 향후 12개월 준공 = 사업 행에서 다시 센 값(준공 예정 달이 관측 달부터 12개월 안) = 보드 = 사업 화면 질문 */
+  const ahead = V.aheadMonths(BOARD.observedMonth), soon = rows.filter((r) => r.completion && ahead.includes(r.completion));
+  assert.deepEqual([sum(BOARD.upcoming.map((u) => u.units)), sum(BOARD.upcoming.map((u) => u.projects))], [sum(soon.map((r) => r.units)), soon.length]);
+  assert.equal(Q({ sido: 'all' })['앞으로 얼마나 공급되는가'].value, fmt(sum(soon.map((r) => r.units))));
 });

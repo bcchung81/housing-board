@@ -7,7 +7,7 @@
                                         sido(시도 → 예정 목록, 사업·달마다 하나, type SUPPLY_NOTICE = 공급(모집·분양), pro = PRO_ id, id = 우리 원장 사업 id 없으면 PRO_ id) ·
                                         months[{ ym, units, projects }] · total · projects(증가분 > 0 인 사업 수) · ids(그 PRO_ id 목록)
      data/board/region-map.json       서울 25·경기 31·인천 11 시군구 경계 + 공공주택지구(공동주택용지) 경계를 줄인 SVG 경로, 시도별 보기 상자
-     data/board/region-annual.json    서울·인천·경기 HOME 통계(통계누리 시도 자료)의 월 실적·연 인허가 — 화면은 2018~2021 을 통계누리(molit.json) 앞에 잇는다
+     data/board/region-annual.json    서울·인천·경기 HOME 통계(통계누리 시도 자료)의 월 실적·연 인허가 — 화면 연도별 실적(lib/board/region.ts regionYears)의 수도권 정본: 착공·모집·준공은 2018~ 이 파일 전부, 인허가는 2018~2021 만 이 파일이고 2022~ 는 통계누리(molit.json)
    입력: schemas/ledger-<달>/tables(projects·events·sources·areas), data/board/ledger-map.json·home-map/*.json·home-projects.json(tools/ledger/home-projects.js 를 먼저 돌린다),
          그 달의 가장 늦은 HOME 판 원본(raw/home/<덤프시각>/municipality·policy_municipality·district·statistic.jsonl.gz — gitignore, 없으면 멈춘다).
    계산은 승인된 시안(docs/design/home-concept/build-data.mjs 의 calendar·areaMap·annual.metro)과 같다. 출력은 결정적이다(정렬, 현재 시각 없음).

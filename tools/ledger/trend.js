@@ -110,7 +110,10 @@ async function backfill({ observedMonth, base = BASE, log = console.log } = {}) 
     log(`${m} 기준일 ${ref}: 지연 ${row.delay.projects}/${row.delay.units} · 주의 ${row.caution.projects}/${row.caution.units} · 정상 ${row.ok.projects}/${row.ok.units} (판정 ${row.judged})`);
   }
   const keep = hist.rows.filter((r) => r.basis === 'OBSERVED'), all = [...keep, ...rows];
-  writeHistory({ editions: Object.fromEntries(Object.entries(hist.editions).filter(([k]) => all.some((r) => r.edition === k))), rows: all });
+  /* 소급 행의 판 = 지금 원장 표의 건축HUB 대용량 판(base/raw/hub-bulk). 새 달을 연 직후에는 --close 가 아직 이 판을 적지 않았으므로 원본 manifest 의 기본개요 zip·sha 를 적는다(있던 항목이 앞선다) */
+  const rawM = path.join(base, 'raw/hub-bulk/manifest.json'), cur = fs.existsSync(rawM) ? json(rawM).files.basic : null;
+  const editions = { ...(cur ? { [P.bulkDataMonth(path.dirname(rawM))]: { zip: cur.zip, sha256: cur.zip_sha256 } } : {}), ...hist.editions };
+  writeHistory({ editions: Object.fromEntries(Object.entries(editions).filter(([k]) => all.some((r) => r.edition === k))), rows: all });
   return { rows };
 }
 

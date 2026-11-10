@@ -22,6 +22,7 @@ const { activeMenuId, DETAILS } = require('../../lib/shell/menu.ts');
 const MAP = require('../../data/board/ledger-map.json');
 const IDX = require('../../data/board/projects-index.json');
 const PP = require('../../data/board/policy-progress.json');
+const { fakePP } = require('./fake-pp.cjs');
 const MOLIT = require('../../data/board/molit.json');
 const calendar = require('../../data/board/region-calendar.json');
 
@@ -71,11 +72,16 @@ test("H1 서랍 단계 줄: '지금' 한 칸만 채우고 지난 단계는 옅�
 });
 
 test('H8 정책 목표 대비: 기본 접힘(머리에 핵심 한 줄) · 인쇄 보기는 펼침 · 첫 질문 칸은 이름에 범위 · 목표를 넘으면 초과', () => {
+  /* 판 숫자('1단계 미달(공급)' · '달성 124.1%' · '⑤ 준공 381 / 381') 대신: 규칙은 가짜 자료(fake-pp.cjs — 2026-10-19 판 예), 지금 판은 같은 규칙으로 자료 값에서 */
+  const fake = V.compareLines(fakePP(), IDX.policies, rows, IDX.policies.map((p) => p.key));
+  assert.deepEqual(fake.map(V.compareHead), ['9·7 · 목표 있는 4단계 중 2단계 미달(사업화·공급)'], '머리 줄은 비율 숫자 없이 단계 이름만(r4-screens 1: 부족 → 미달)');
+  assert.equal(V.rateOf(fake[0].cells[1]).word, '달성 230.7%', '② 인허가 3,560 / 1,543 — 목표를 넘어도 달성률(옛 \'초과 130.7%\', r2-screens 3)');
+  assert.equal(V.rateOf(fake[0].cells[4]).word, '달성 100.0%', '⑤ 준공 381 / 381');
   const lines = V.compareLines(PP, IDX.policies, rows, IDX.policies.map((p) => p.key));
-  assert.deepEqual(lines.map(V.compareHead), ['9·7 · 목표 있는 4단계 중 1단계 미달(공급)'], '2026-10-21 새 덤프(20261020T142230Z, PoC 운영 값과 같음): 9·7 ①사업화 확인 7,808→18,854(목표 14,694 넘음) · ②인허가 목표 3,658→8,386·확인 6,249→10,403 — 덤프 뒤였던 담당자 단계 측정값·승인 일정이 새 판에 들어옴 — 사업화 달성으로 미달은 공급 하나 · 4차(A4): 머리 줄은 비율 숫자 없이 단계 이름만(r4-screens 1: 부족 → 미달)');
-  const cells = lines[0].cells;
-  assert.equal(V.rateOf(cells[1]).word, '달성 124.1%', '② 인허가 10,403 / 8,386(2026-10-21 새 덤프) · 6,249 / 3,658 = 170.8%(2026-10-20 HOME 판 — 10-19 판 3,560 / 1,543 = 230.7%) — 2026-10-16 목표 대비 달성률(옛 \'초과 130.7%\', r2-screens 3)');
-  assert.equal(V.rateOf(cells[4]).word, '달성 100.0%', '⑤ 준공 381 / 381');
+  assert.deepEqual(lines.map((l) => l.policy.key), ['97'], '목표가 배정된 정책은 9·7 하나');
+  const tgt = lines[0].cells.filter((c) => c.target != null), short = tgt.filter((c) => c.state === 'short');
+  assert.equal(V.compareHead(lines[0]), short.length ? `9·7 · 목표 있는 ${tgt.length}단계 중 ${short.length}단계 미달(${short.map(V.ppText).join('·')})` : `9·7 · 목표 있는 ${tgt.length}단계 모두 달성`);
+  for (const c of tgt.filter((x) => x.actual != null)) assert.equal(V.rateOf(c).word, `달성 ${(c.actual / c.target * 100).toFixed(1)}%`, c.key);
   const sum = read('components/projects/Summary.tsx');
   assert.match(sum, /<details data-fold open=\{open\}/);
   assert.match(sum, /\{lines\.map\(\(l\) => <span key=\{l\.policy\.key\}[^>]*>\{compareHead\(l\)\}<\/span>\)\}/);
@@ -161,13 +167,14 @@ test("H9 회복·문구: 부산은 '자료 없음(서울·인천·경기만)', �
   const hctx = { policies: IDX.policies, programs: V.homeProgramsOf(home), sidoOk: () => true, home: { agencies: V.homeAgenciesOf(home).map((a) => a.name) } };
   const hp = V.homePriorityOf(V.scopeOf(home, V.parseFilters({}, hctx)));
   assert.ok(hp.every((r) => r.cls === 'delay' || r.cls === 'caution') && hp.every((r, i) => i === 0 || r.cls !== 'delay' || hp[i - 1].cls === 'delay'), '지연 먼저');
-  /* 기준일 2026-10-22 9·7 기본 범위: 지연 6·주의 2(= PoC 사업 판정) → 10줄 이하라 제목은 '점검 필요 8건 전부' (10-20: 지연 4·주의 0) */
-  assert.equal(hp.length, 8);
-  assert.ok(hp.length <= 10);
+  /* 판 숫자(9·7 기본 범위 점검 필요 8건 · 수도권 13건) 대신: HOME 판정 묶음(home-projects views.p97.judge)·원장 보드 판정(ledger-board — 다른 산출물)의 지연+주의 */
+  const j97 = HP.views.p97.judge;
+  assert.equal(hp.length, (j97.DELAYED?.rows ?? 0) + (j97.WARNING?.rows ?? 0));
   const all = V.priorityOf(V.scopeOf(rows, { metro: true }), Infinity);
-  /* 2026-10-20 HOME 판: 수도권 점검 필요 4 → 12건(주의 10·지연 2)이라 10줄을 넘는다 — 인쇄 제목은 '점검 필요 12건 중 상위 10' */
-  assert.ok(all.length > 10, '수도권은 10줄 넘음 — 제목은 상위 10');
-  assert.equal(all.length, 13);   // 기준일 2026-10-20: 성남금토 A2 주의 → 주의 11·지연 2
+  const B = require('../../data/board/ledger-board.json');
+  assert.equal(all.length, B.judgment.caution.projects + B.judgment.delay.projects);
+  /* 인쇄 제목의 상위 10: 기본 priorityOf 는 앞 10줄만(10줄 넘으면 '중 상위 10', 아니면 '전부' — 위 page.tsx 정규식) */
+  assert.deepEqual(V.priorityOf(V.scopeOf(rows, { metro: true })).map((r) => r.id), all.slice(0, 10).map((r) => r.id));
 });
 
 test('접근성: 본문 바로가기(첫 Tab), 인쇄 전용 표·정의는 화면에서 display:none(보조기기에도 숨김)', () => {
