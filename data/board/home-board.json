@@ -1,7 +1,7 @@
 {
  "schema": "home-board/1",
- "observedMonth": "2026-10",
- "referenceDate": "2026-10-22",
+ "observedMonth": "2026-11",
+ "referenceDate": "2026-11-10",
  "source": null,
  "stageNames": [
   "정책",
@@ -78,9 +78,9 @@
   "2028-09",
   "2028-10"
  ],
- "now": 21,
- "actualThrough": "2026-10",
- "actualIndex": 21,
+ "now": 22,
+ "actualThrough": "2026-11",
+ "actualIndex": 22,
  "actualSource": "HOME",
  "stageUnits": [
   [
@@ -255,17 +255,17 @@
    773,
    53340,
    18331,
-   45721,
-   35410,
+   43359,
+   37772,
    0
   ],
   [
    773,
    53340,
-   17539,
-   15537,
-   64315,
-   2071
+   18331,
+   42879,
+   38252,
+   0
   ],
   [
    773,
@@ -624,18 +624,18 @@
   [
    0,
    22,
-   29,
-   61,
-   65,
+   27,
+   59,
+   69,
    0
   ],
   [
    0,
-   20,
-   21,
    22,
-   110,
-   4
+   26,
+   59,
+   70,
+   0
   ],
   [
    0,
@@ -698,16 +698,8 @@
    15,
    3,
    31,
-   112,
-   16
-  ],
-  [
-   0,
-   15,
-   3,
-   31,
-   110,
-   18
+   111,
+   17
   ],
   [
    0,
@@ -722,8 +714,16 @@
    15,
    3,
    31,
-   107,
-   21
+   108,
+   20
+  ],
+  [
+   0,
+   15,
+   3,
+   31,
+   106,
+   22
   ],
   [
    0,
@@ -845,8 +845,8 @@
   0,
   0,
   0,
-  4792,
-  21592,
+  6391,
+  23233,
   0
  ],
  "cautionByStage": [
@@ -871,7 +871,7 @@
    "cautionUnits": 0,
    "okUnits": 47615,
    "supplyReached": 1821,
-   "homeDelay": "준공 14호 부족 (3.5%)"
+   "homeDelay": "준공 1,613호 부족 (80.9%)"
   },
   {
    "code": "28",
@@ -886,7 +886,7 @@
    "cautionUnits": 0,
    "okUnits": 21449,
    "supplyReached": 5245,
-   "homeDelay": "공급 1,108호 부족 (17.4%)"
+   "homeDelay": "공급 2,250호 부족 (30.0%)"
   },
   {
    "code": "41",
@@ -900,8 +900,8 @@
    "delayUnits": 6079,
    "cautionUnits": 919,
    "okUnits": 76353,
-   "supplyReached": 28344,
-   "homeDelay": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
+   "supplyReached": 31186,
+   "homeDelay": "건설 2,859호 부족 (4.4%) · 공급 21,115호 부족 (40.4%) · 준공 2,096호 부족 (86.9%)"
   }
  ],
  "agencies": [
@@ -1020,11 +1020,6 @@
  ],
  "upcoming": [
   {
-   "ym": "2026-10",
-   "units": 4133,
-   "projects": 7
-  },
-  {
    "ym": "2026-11",
    "units": 4901,
    "projects": 9
@@ -1076,6 +1071,11 @@
   },
   {
    "ym": "2027-09",
+   "units": 0,
+   "projects": 0
+  },
+  {
+   "ym": "2027-10",
    "units": 0,
    "projects": 0
   }
@@ -1904,7 +1904,46 @@
   },
   {
    "month": "2026-10",
-   "referenceDate": "2026-10-22",
+   "referenceDate": "2026-10-31",
+   "edition": null,
+   "basis": "BACKFILL",
+   "ok": {
+    "projects": 163,
+    "units": 145417
+   },
+   "caution": {
+    "projects": 3,
+    "units": 919
+   },
+   "delay": {
+    "projects": 10,
+    "units": 6079
+   },
+   "delayByStage": [
+    0,
+    0,
+    0,
+    5086,
+    23713,
+    0
+   ],
+   "cautionByStage": [
+    0,
+    0,
+    0,
+    0,
+    0,
+    0
+   ],
+   "judged": 176,
+   "max": {
+    "d": 23713,
+    "w": 0
+   }
+  },
+  {
+   "month": "2026-11",
+   "referenceDate": "2026-11-10",
    "edition": null,
    "basis": "OBSERVED",
    "ok": {
@@ -1923,8 +1962,8 @@
     0,
     0,
     0,
-    4792,
-    21592,
+    6391,
+    23233,
     0
    ],
    "cautionByStage": [
@@ -1937,7 +1976,7 @@
    ],
    "judged": 176,
    "max": {
-    "d": 21592,
+    "d": 23233,
     "w": 0
    }
   }
@@ -1951,31 +1990,31 @@
    },
    "BUSINESS": {
     "current": 152802,
-    "measured_on": "2026-10-21",
-    "year_end_expected": 174394,
+    "measured_on": "2026-11-06",
+    "year_end_expected": 176035,
     "plan_date": "2026-12-31",
-    "remainder": 21592
+    "remainder": 23233
    },
    "APPROVAL": {
     "current": 99462,
-    "measured_on": "2026-10-21",
-    "year_end_expected": 126852,
+    "measured_on": "2026-11-06",
+    "year_end_expected": 128493,
     "plan_date": "2026-12-31",
-    "remainder": 27390
+    "remainder": 29031
    },
    "CONSTRUCTION": {
     "current": 81131,
     "measured_on": "2026-10-21",
-    "year_end_expected": 117392,
+    "year_end_expected": 117803,
     "plan_date": "2026-12-31",
-    "remainder": 36261
+    "remainder": 36672
    },
    "SUPPLY": {
-    "current": 35410,
-    "measured_on": "2026-10-19",
+    "current": 38252,
+    "measured_on": "2026-11-06",
     "year_end_expected": 68267,
     "plan_date": "2026-12-31",
-    "remainder": 32857
+    "remainder": 30015
    },
    "MOVE_IN": {
     "current": null,
@@ -1989,12 +2028,12 @@
    {
     "stage": "SUPPLY",
     "status": "DELAYED",
-    "gap": 21592,
-    "rate": "37.9%",
-    "due_date": "2026-09-30",
-    "due_units": 57002,
-    "actual_date": "2026-10-19",
-    "actual_units": 35410
+    "gap": 21782,
+    "rate": "36.3%",
+    "due_date": "2026-10-31",
+    "due_units": 61485,
+    "actual_date": "2026-11-06",
+    "actual_units": 38252
    }
   ],
   "axisMax": 229200,
@@ -2006,7 +2045,7 @@
      "units": 151044
     },
     "actual": {
-     "date": "2026-10-21",
+     "date": "2026-11-06",
      "units": 152802,
      "manual": 151596,
      "inferred": 147491
@@ -2017,7 +2056,7 @@
     "next": null,
     "yearEnd": {
      "date": "2026-12-31",
-     "units": 174394
+     "units": 176035
     }
    },
    "APPROVAL": {
@@ -2027,7 +2066,7 @@
      "units": 98097
     },
     "actual": {
-     "date": "2026-10-21",
+     "date": "2026-11-06",
      "units": 99462,
      "manual": 98256,
      "inferred": 86514
@@ -2041,14 +2080,14 @@
     },
     "yearEnd": {
      "date": "2026-12-31",
-     "units": 126852
+     "units": 128493
     }
    },
    "CONSTRUCTION": {
     "status": "REACHED",
     "due": {
-     "date": "2026-09-01",
-     "units": 79829
+     "date": "2026-10-31",
+     "units": 81059
     },
     "actual": {
      "date": "2026-10-21",
@@ -2060,32 +2099,32 @@
     "rate": 0,
     "rateText": "0.0%",
     "next": {
-     "date": "2026-10-31",
-     "units": 81059
+     "date": "2026-11-30",
+     "units": 81923
     },
     "yearEnd": {
      "date": "2026-12-31",
-     "units": 117392
+     "units": 117803
     }
    },
    "SUPPLY": {
     "status": "DELAYED",
     "due": {
-     "date": "2026-09-30",
-     "units": 57002
+     "date": "2026-10-31",
+     "units": 61485
     },
     "actual": {
-     "date": "2026-10-19",
-     "units": 35410,
+     "date": "2026-11-06",
+     "units": 38252,
      "manual": 32021,
      "inferred": 8136
     },
-    "gap": 21592,
-    "rate": 37.9,
-    "rateText": "37.9%",
+    "gap": 23233,
+    "rate": 37.8,
+    "rateText": "37.8%",
     "next": {
-     "date": "2026-10-30",
-     "units": 57602
+     "date": "2026-11-14",
+     "units": 63106
     },
     "yearEnd": {
      "date": "2026-12-31",
@@ -2095,8 +2134,8 @@
    "COMPLETION": {
     "status": "DELAYED",
     "due": {
-     "date": "2026-10-05",
-     "units": 5489
+     "date": "2026-11-06",
+     "units": 7088
     },
     "actual": {
      "date": "2026-09-16",
@@ -2104,25 +2143,28 @@
      "manual": 697,
      "inferred": 0
     },
-    "gap": 4792,
-    "rate": 87.3,
-    "rateText": "87.3%",
+    "gap": 6391,
+    "rate": 90.2,
+    "rateText": "90.2%",
     "next": {
-     "date": "2026-10-31",
-     "units": 5783
+     "date": "2026-12-24",
+     "units": 7435
     },
     "yearEnd": null
    },
    "MOVE_IN": {
-    "status": "NOT_DUE",
-    "due": null,
+    "status": "NO_ACTUAL",
+    "due": {
+     "date": "2026-10-31",
+     "units": 1451
+    },
     "actual": null,
     "gap": null,
     "rate": null,
     "rateText": "미확보",
     "next": {
-     "date": "2026-10-30",
-     "units": 1224
+     "date": "2026-11-30",
+     "units": 2071
     },
     "yearEnd": {
      "date": "2026-12-31",
@@ -2130,30 +2172,30 @@
     }
    }
   },
-  "delayMax": 21592,
+  "delayMax": 23233,
   "warningMax": 0,
   "stageGaps": [
    {
     "stage": "SUPPLY",
     "label": "공급",
     "status": "DELAYED",
-    "gap": 21592,
-    "rate": "37.9%"
+    "gap": 23233,
+    "rate": "37.8%"
    },
    {
     "stage": "COMPLETION",
     "label": "준공",
     "status": "DELAYED",
-    "gap": 4792,
-    "rate": "87.3%"
+    "gap": 6391,
+    "rate": "90.2%"
    }
   ],
   "bottleneck": {
    "stage": "SUPPLY",
    "label": "공급",
    "status": "DELAYED",
-   "gap": 21592,
-   "rate": "37.9%"
+   "gap": 23233,
+   "rate": "37.8%"
   },
   "stageShort": {
    "SUPPLY": {
@@ -2189,6 +2231,10 @@
      {
       "id": "PRO_e0405cae5623f83a2647ac0c",
       "short": 837
+     },
+     {
+      "id": "PRO_4f1c664272dc56715a82cb02",
+      "short": 792
      },
      {
       "id": "PRO_1eb195e8ab43ebb1a9bee921",
@@ -2231,6 +2277,10 @@
       "short": 603
      },
      {
+      "id": "PRO_9636a0a7813451b2cb76372b",
+      "short": 600
+     },
+     {
       "id": "PRO_c6f5a8ea506ed720419b999a",
       "short": 584
      },
@@ -2255,10 +2305,6 @@
       "short": 499
      },
      {
-      "id": "PRO_7d1b5e3e2b392b43d0c59a6b",
-      "short": 480
-     },
-     {
       "id": "PRO_1b0f09c1abb6e68c92fac227",
       "short": 428
      },
@@ -2269,6 +2315,10 @@
      {
       "id": "PRO_693fd7d6c158c2da26abe2c0",
       "short": 399
+     },
+     {
+      "id": "PRO_60f74ae611079cfae69ea20e",
+      "short": 379
      },
      {
       "id": "PRO_e24ec7ed0705de50dfcfb55e",
@@ -2343,13 +2393,17 @@
       "short": 1
      }
     ],
-    "over": 2133
+    "over": 1783
    },
    "COMPLETION": {
     "rows": [
      {
       "id": "PRO_f6263baf545293a2283f4ad1",
       "short": 1458
+     },
+     {
+      "id": "PRO_1fbf5c7629634fa05be7652a",
+      "short": 1305
      },
      {
       "id": "PRO_76abe08cb7c430960fb40f03",
@@ -2372,6 +2426,10 @@
       "short": 399
      },
      {
+      "id": "PRO_2c8c2fda28fd878a7a9a94bd",
+      "short": 294
+     },
+     {
       "id": "PRO_3e4fe820f1cb21379bbbe611",
       "short": 227
      },
@@ -2384,19 +2442,12 @@
    }
   },
   "supplyUpcoming": {
-   "total": 16916,
-   "projects": 30,
-   "from": "2026-10",
-   "to": "2027-09"
+   "total": 12783,
+   "projects": 23,
+   "from": "2026-11",
+   "to": "2027-10"
   },
   "monthly": [
-   {
-    "month": "2024-11",
-    "APPROVAL": 694,
-    "CONSTRUCTION": 945,
-    "SUPPLY": 142,
-    "COMPLETION": 0
-   },
    {
     "month": "2024-12",
     "APPROVAL": 11799,
@@ -2555,7 +2606,14 @@
     "month": "2026-10",
     "APPROVAL": 1198,
     "CONSTRUCTION": 1160,
-    "SUPPLY": 1655,
+    "SUPPLY": 4017,
+    "COMPLETION": 0
+   },
+   {
+    "month": "2026-11",
+    "APPROVAL": 0,
+    "CONSTRUCTION": 0,
+    "SUPPLY": 480,
     "COMPLETION": 0
    }
   ],
@@ -2581,8 +2639,8 @@
    "POLICY": 773,
    "UNKNOWN": 0,
    "MOVE_IN": 0,
-   "SUPPLY": 35410,
-   "CONSTRUCTION": 45721,
+   "SUPPLY": 38252,
+   "CONSTRUCTION": 42879,
    "APPROVAL": 18331,
    "BUSINESS": 53340
   },
@@ -2590,25 +2648,25 @@
    "서울특별시": {
     "supplyReached": 1821,
     "delayed": true,
-    "delayNote": "준공 14호 부족 (3.5%)"
+    "delayNote": "준공 1,613호 부족 (80.9%)"
    },
    "경기도": {
-    "supplyReached": 28344,
+    "supplyReached": 31186,
     "delayed": true,
-    "delayNote": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
+    "delayNote": "건설 2,859호 부족 (4.4%) · 공급 21,115호 부족 (40.4%) · 준공 2,096호 부족 (86.9%)"
    },
    "인천광역시": {
     "supplyReached": 5245,
     "delayed": true,
-    "delayNote": "공급 1,108호 부족 (17.4%)"
+    "delayNote": "공급 2,250호 부족 (30.0%)"
    }
   }
  },
  "byRegion": {
   "11": {
    "schema": "home-board/1",
-   "observedMonth": "2026-10",
-   "referenceDate": "2026-10-22",
+   "observedMonth": "2026-11",
+   "referenceDate": "2026-11-10",
    "stageNames": [
     "정책",
     "사업화",
@@ -2685,9 +2743,9 @@
     "2028-09",
     "2028-10"
    ],
-   "now": 21,
-   "actualThrough": "2026-10",
-   "actualIndex": 21,
+   "now": 22,
+   "actualThrough": "2026-11",
+   "actualIndex": 22,
    "actualSource": "HOME",
    "stageUnits": [
     [
@@ -3240,9 +3298,9 @@
      0,
      11,
      3,
+     8,
      5,
-     7,
-     1
+     0
     ],
     [
      0,
@@ -3452,7 +3510,7 @@
     0,
     0,
     0,
-    14,
+    1613,
     0,
     0
    ],
@@ -3548,11 +3606,6 @@
    ],
    "upcoming": [
     {
-     "ym": "2026-10",
-     "units": 0,
-     "projects": 0
-    },
-    {
      "ym": "2026-11",
      "units": 0,
      "projects": 0
@@ -3604,6 +3657,11 @@
     },
     {
      "ym": "2027-09",
+     "units": 0,
+     "projects": 0
+    },
+    {
+     "ym": "2027-10",
      "units": 0,
      "projects": 0
     }
@@ -4432,7 +4490,46 @@
     },
     {
      "month": "2026-10",
-     "referenceDate": "2026-10-22",
+     "referenceDate": "2026-10-31",
+     "edition": null,
+     "basis": "BACKFILL",
+     "ok": {
+      "projects": 27,
+      "units": 47615
+     },
+     "caution": {
+      "projects": 0,
+      "units": 0
+     },
+     "delay": {
+      "projects": 0,
+      "units": 0
+     },
+     "delayByStage": [
+      0,
+      0,
+      0,
+      308,
+      0,
+      0
+     ],
+     "cautionByStage": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "judged": 27,
+     "max": {
+      "d": 308,
+      "w": 0
+     }
+    },
+    {
+     "month": "2026-11",
+     "referenceDate": "2026-11-10",
      "edition": null,
      "basis": "OBSERVED",
      "ok": {
@@ -4451,7 +4548,7 @@
       0,
       0,
       0,
-      14,
+      1613,
       0,
       0
      ],
@@ -4465,7 +4562,7 @@
      ],
      "judged": 27,
      "max": {
-      "d": 14,
+      "d": 1613,
       "w": 0
      }
     }
@@ -4623,8 +4720,8 @@
      "COMPLETION": {
       "status": "DELAYED",
       "due": {
-       "date": "2026-08-28",
-       "units": 395
+       "date": "2026-11-06",
+       "units": 1994
       },
       "actual": {
        "date": "2026-07-31",
@@ -4632,12 +4729,12 @@
        "manual": 381,
        "inferred": 0
       },
-      "gap": 14,
-      "rate": 3.5,
-      "rateText": "3.5%",
+      "gap": 1613,
+      "rate": 80.9,
+      "rateText": "80.9%",
       "next": {
-       "date": "2026-10-31",
-       "units": 689
+       "date": "2027-02-28",
+       "units": 2069
       },
       "yearEnd": null
      },
@@ -4655,27 +4752,35 @@
       "yearEnd": null
      }
     },
-    "delayMax": 14,
+    "delayMax": 1613,
     "warningMax": 0,
     "stageGaps": [
      {
       "stage": "COMPLETION",
       "label": "준공",
       "status": "DELAYED",
-      "gap": 14,
-      "rate": "3.5%"
+      "gap": 1613,
+      "rate": "80.9%"
      }
     ],
     "bottleneck": {
      "stage": "COMPLETION",
      "label": "준공",
      "status": "DELAYED",
-     "gap": 14,
-     "rate": "3.5%"
+     "gap": 1613,
+     "rate": "80.9%"
     },
     "stageShort": {
      "COMPLETION": {
       "rows": [
+       {
+        "id": "PRO_1fbf5c7629634fa05be7652a",
+        "short": 1305
+       },
+       {
+        "id": "PRO_2c8c2fda28fd878a7a9a94bd",
+        "short": 294
+       },
        {
         "id": "PRO_10812cb53671cfc2fe139728",
         "short": 14
@@ -4687,17 +4792,10 @@
     "supplyUpcoming": {
      "total": 3281,
      "projects": 4,
-     "from": "2026-10",
-     "to": "2027-09"
+     "from": "2026-11",
+     "to": "2027-10"
     },
     "monthly": [
-     {
-      "month": "2024-11",
-      "APPROVAL": 0,
-      "CONSTRUCTION": 0,
-      "SUPPLY": 0,
-      "COMPLETION": 0
-     },
      {
       "month": "2024-12",
       "APPROVAL": 444,
@@ -4858,6 +4956,13 @@
       "CONSTRUCTION": 0,
       "SUPPLY": 1305,
       "COMPLETION": 0
+     },
+     {
+      "month": "2026-11",
+      "APPROVAL": 0,
+      "CONSTRUCTION": 0,
+      "SUPPLY": 0,
+      "COMPLETION": 0
      }
     ],
     "projectStatus": {
@@ -4879,25 +4984,25 @@
      "서울특별시": {
       "supplyReached": 1821,
       "delayed": true,
-      "delayNote": "준공 14호 부족 (3.5%)"
+      "delayNote": "준공 1,613호 부족 (80.9%)"
      },
      "경기도": {
       "supplyReached": 0,
       "delayed": true,
-      "delayNote": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
+      "delayNote": "건설 2,859호 부족 (4.4%) · 공급 21,115호 부족 (40.4%) · 준공 2,096호 부족 (86.9%)"
      },
      "인천광역시": {
       "supplyReached": 0,
       "delayed": true,
-      "delayNote": "공급 1,108호 부족 (17.4%)"
+      "delayNote": "공급 2,250호 부족 (30.0%)"
      }
     }
    }
   },
   "28": {
    "schema": "home-board/1",
-   "observedMonth": "2026-10",
-   "referenceDate": "2026-10-22",
+   "observedMonth": "2026-11",
+   "referenceDate": "2026-11-10",
    "stageNames": [
     "정책",
     "사업화",
@@ -4974,9 +5079,9 @@
     "2028-09",
     "2028-10"
    ],
-   "now": 21,
-   "actualThrough": "2026-10",
-   "actualIndex": 21,
+   "now": 22,
+   "actualThrough": "2026-11",
+   "actualIndex": 22,
    "actualSource": "HOME",
    "stageUnits": [
     [
@@ -5159,9 +5264,9 @@
      3,
      3216,
      7653,
-     2304,
-     7049,
-     1224
+     5332,
+     5245,
+     0
     ],
     [
      3,
@@ -5529,9 +5634,9 @@
      0,
      5,
      9,
-     3,
-     12,
-     1
+     6,
+     10,
+     0
     ],
     [
      0,
@@ -5742,7 +5847,7 @@
     0,
     0,
     0,
-    1108,
+    2250,
     0
    ],
    "cautionByStage": [
@@ -5805,11 +5910,6 @@
    ],
    "upcoming": [
     {
-     "ym": "2026-10",
-     "units": 792,
-     "projects": 1
-    },
-    {
      "ym": "2026-11",
      "units": 778,
      "projects": 1
@@ -5861,6 +5961,11 @@
     },
     {
      "ym": "2027-09",
+     "units": 0,
+     "projects": 0
+    },
+    {
+     "ym": "2027-10",
      "units": 0,
      "projects": 0
     }
@@ -6689,7 +6794,46 @@
     },
     {
      "month": "2026-10",
-     "referenceDate": "2026-10-22",
+     "referenceDate": "2026-10-31",
+     "edition": null,
+     "basis": "BACKFILL",
+     "ok": {
+      "projects": 30,
+      "units": 21449
+     },
+     "caution": {
+      "projects": 0,
+      "units": 0
+     },
+     "delay": {
+      "projects": 0,
+      "units": 0
+     },
+     "delayByStage": [
+      0,
+      0,
+      0,
+      0,
+      2250,
+      0
+     ],
+     "cautionByStage": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "judged": 30,
+     "max": {
+      "d": 2250,
+      "w": 0
+     }
+    },
+    {
+     "month": "2026-11",
+     "referenceDate": "2026-11-10",
      "edition": null,
      "basis": "OBSERVED",
      "ok": {
@@ -6709,7 +6853,7 @@
       0,
       0,
       0,
-      1108,
+      2250,
       0
      ],
      "cautionByStage": [
@@ -6722,7 +6866,7 @@
      ],
      "judged": 30,
      "max": {
-      "d": 1108,
+      "d": 2250,
       "w": 0
      }
     }
@@ -6738,23 +6882,23 @@
      "BUSINESS": {
       "current": 21446,
       "measured_on": "2026-10-19",
-      "year_end_expected": 22554,
+      "year_end_expected": 23696,
       "plan_date": "2026-12-31",
-      "remainder": 1108
+      "remainder": 2250
      },
      "APPROVAL": {
       "current": 18230,
       "measured_on": "2026-10-19",
-      "year_end_expected": 21852,
+      "year_end_expected": 22994,
       "plan_date": "2026-12-31",
-      "remainder": 3622
+      "remainder": 4764
      },
      "CONSTRUCTION": {
       "current": 10577,
       "measured_on": "2026-09-30",
-      "year_end_expected": 16957,
+      "year_end_expected": 18099,
       "plan_date": "2026-12-31",
-      "remainder": 6380
+      "remainder": 7522
      },
      "SUPPLY": {
       "current": 5245,
@@ -6775,15 +6919,15 @@
      {
       "stage": "SUPPLY",
       "status": "DELAYED",
-      "gap": 1108,
-      "rate": "17.4%",
-      "due_date": "2026-09-30",
-      "due_units": 6353,
+      "gap": 1026,
+      "rate": "16.4%",
+      "due_date": "2026-10-31",
+      "due_units": 7495,
       "actual_date": "2026-10-19",
       "actual_units": 5245
      }
     ],
-    "axisMax": 29800,
+    "axisMax": 30840,
     "stageChecks": {
      "BUSINESS": {
       "status": "REACHED",
@@ -6803,7 +6947,7 @@
       "next": null,
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 22554
+       "units": 23696
       }
      },
      "APPROVAL": {
@@ -6827,7 +6971,7 @@
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 21852
+       "units": 22994
       }
      },
      "CONSTRUCTION": {
@@ -6851,14 +6995,14 @@
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 16957
+       "units": 18099
       }
      },
      "SUPPLY": {
       "status": "DELAYED",
       "due": {
-       "date": "2026-09-30",
-       "units": 6353
+       "date": "2026-10-31",
+       "units": 7495
       },
       "actual": {
        "date": "2026-10-19",
@@ -6866,12 +7010,12 @@
        "manual": 3072,
        "inferred": 0
       },
-      "gap": 1108,
-      "rate": 17.4,
-      "rateText": "17.4%",
+      "gap": 2250,
+      "rate": 30,
+      "rateText": "30.0%",
       "next": {
-       "date": "2026-10-31",
-       "units": 7495
+       "date": "2026-11-14",
+       "units": 8273
       },
       "yearEnd": {
        "date": "2026-12-31",
@@ -6895,15 +7039,18 @@
       "yearEnd": null
      },
      "MOVE_IN": {
-      "status": "NOT_DUE",
-      "due": null,
+      "status": "NO_ACTUAL",
+      "due": {
+       "date": "2026-10-30",
+       "units": 1224
+      },
       "actual": null,
       "gap": null,
       "rate": null,
       "rateText": "미확보",
       "next": {
-       "date": "2026-10-30",
-       "units": 1224
+       "date": "2026-12-31",
+       "units": 2682
       },
       "yearEnd": {
        "date": "2026-12-31",
@@ -6911,23 +7058,23 @@
       }
      }
     },
-    "delayMax": 1108,
+    "delayMax": 2250,
     "warningMax": 0,
     "stageGaps": [
      {
       "stage": "SUPPLY",
       "label": "공급",
       "status": "DELAYED",
-      "gap": 1108,
-      "rate": "17.4%"
+      "gap": 2250,
+      "rate": "30.0%"
      }
     ],
     "bottleneck": {
      "stage": "SUPPLY",
      "label": "공급",
      "status": "DELAYED",
-     "gap": 1108,
-     "rate": "17.4%"
+     "gap": 2250,
+     "rate": "30.0%"
     },
     "stageShort": {
      "SUPPLY": {
@@ -6935,25 +7082,22 @@
        {
         "id": "PRO_f6263baf545293a2283f4ad1",
         "short": 1458
+       },
+       {
+        "id": "PRO_4f1c664272dc56715a82cb02",
+        "short": 792
        }
       ],
-      "over": 350
+      "over": 0
      }
     },
     "supplyUpcoming": {
-     "total": 1628,
-     "projects": 3,
-     "from": "2026-10",
-     "to": "2027-09"
+     "total": 836,
+     "projects": 2,
+     "from": "2026-11",
+     "to": "2027-10"
     },
     "monthly": [
-     {
-      "month": "2024-11",
-      "APPROVAL": 0,
-      "CONSTRUCTION": 0,
-      "SUPPLY": 0,
-      "COMPLETION": null
-     },
      {
       "month": "2024-12",
       "APPROVAL": 5269,
@@ -7114,6 +7258,13 @@
       "CONSTRUCTION": 0,
       "SUPPLY": 350,
       "COMPLETION": null
+     },
+     {
+      "month": "2026-11",
+      "APPROVAL": 0,
+      "CONSTRUCTION": 0,
+      "SUPPLY": 0,
+      "COMPLETION": null
      }
     ],
     "projectStatus": {
@@ -7135,25 +7286,25 @@
      "서울특별시": {
       "supplyReached": 0,
       "delayed": true,
-      "delayNote": "준공 14호 부족 (3.5%)"
+      "delayNote": "준공 1,613호 부족 (80.9%)"
      },
      "경기도": {
       "supplyReached": 0,
       "delayed": true,
-      "delayNote": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
+      "delayNote": "건설 2,859호 부족 (4.4%) · 공급 21,115호 부족 (40.4%) · 준공 2,096호 부족 (86.9%)"
      },
      "인천광역시": {
       "supplyReached": 5245,
       "delayed": true,
-      "delayNote": "공급 1,108호 부족 (17.4%)"
+      "delayNote": "공급 2,250호 부족 (30.0%)"
      }
     }
    }
   },
   "41": {
    "schema": "home-board/1",
-   "observedMonth": "2026-10",
-   "referenceDate": "2026-10-22",
+   "observedMonth": "2026-11",
+   "referenceDate": "2026-11-10",
    "stageNames": [
     "정책",
     "사업화",
@@ -7230,9 +7381,9 @@
     "2028-09",
     "2028-10"
    ],
-   "now": 21,
-   "actualThrough": "2026-10",
-   "actualIndex": 21,
+   "now": 22,
+   "actualThrough": "2026-11",
+   "actualIndex": 22,
    "actualSource": "HOME",
    "stageUnits": [
     [
@@ -7407,17 +7558,17 @@
      770,
      13388,
      8836,
-     33173,
-     28344,
+     30811,
+     30706,
      0
     ],
     [
      770,
      13388,
-     5113,
-     8816,
-     55577,
-     847
+     8836,
+     30331,
+     31186,
+     0
     ],
     [
      770,
@@ -7776,18 +7927,18 @@
     [
      0,
      6,
-     17,
-     47,
-     50,
+     15,
+     45,
+     54,
      0
     ],
     [
      0,
-     4,
-     9,
+     6,
      14,
-     91,
-     2
+     45,
+     55,
+     0
     ],
     [
      0,
@@ -7850,24 +8001,8 @@
      2,
      0,
      16,
-     92,
-     10
-    ],
-    [
-     0,
-     2,
-     0,
-     16,
-     90,
-     12
-    ],
-    [
-     0,
-     2,
-     0,
-     16,
-     90,
-     12
+     91,
+     11
     ],
     [
      0,
@@ -7876,6 +8011,22 @@
      16,
      89,
      13
+    ],
+    [
+     0,
+     2,
+     0,
+     16,
+     89,
+     13
+    ],
+    [
+     0,
+     2,
+     0,
+     16,
+     88,
+     14
     ],
     [
      0,
@@ -7997,8 +8148,8 @@
     0,
     0,
     0,
-    2096,
-    20616,
+    2859,
+    21115,
     0
    ],
    "cautionByStage": [
@@ -8061,11 +8212,6 @@
    ],
    "upcoming": [
     {
-     "ym": "2026-10",
-     "units": 3341,
-     "projects": 6
-    },
-    {
      "ym": "2026-11",
      "units": 4123,
      "projects": 8
@@ -8117,6 +8263,11 @@
     },
     {
      "ym": "2027-09",
+     "units": 0,
+     "projects": 0
+    },
+    {
+     "ym": "2027-10",
      "units": 0,
      "projects": 0
     }
@@ -8945,7 +9096,46 @@
     },
     {
      "month": "2026-10",
-     "referenceDate": "2026-10-22",
+     "referenceDate": "2026-10-31",
+     "edition": null,
+     "basis": "BACKFILL",
+     "ok": {
+      "projects": 106,
+      "units": 76353
+     },
+     "caution": {
+      "projects": 3,
+      "units": 919
+     },
+     "delay": {
+      "projects": 10,
+      "units": 6079
+     },
+     "delayByStage": [
+      0,
+      0,
+      0,
+      2859,
+      21595,
+      0
+     ],
+     "cautionByStage": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+     ],
+     "judged": 119,
+     "max": {
+      "d": 21595,
+      "w": 0
+     }
+    },
+    {
+     "month": "2026-11",
+     "referenceDate": "2026-11-10",
      "edition": null,
      "basis": "OBSERVED",
      "ok": {
@@ -8964,8 +9154,8 @@
       0,
       0,
       0,
-      2096,
-      20616,
+      2859,
+      21115,
       0
      ],
      "cautionByStage": [
@@ -8978,7 +9168,7 @@
      ],
      "judged": 119,
      "max": {
-      "d": 20616,
+      "d": 21115,
       "w": 0
      }
     }
@@ -8993,31 +9183,31 @@
      },
      "BUSINESS": {
       "current": 83741,
-      "measured_on": "2026-10-21",
-      "year_end_expected": 104357,
+      "measured_on": "2026-11-06",
+      "year_end_expected": 104856,
       "plan_date": "2026-12-31",
-      "remainder": 20616
+      "remainder": 21115
      },
      "APPROVAL": {
       "current": 70353,
-      "measured_on": "2026-10-21",
-      "year_end_expected": 92883,
+      "measured_on": "2026-11-06",
+      "year_end_expected": 93382,
       "plan_date": "2026-12-31",
-      "remainder": 22530
+      "remainder": 23029
      },
      "CONSTRUCTION": {
       "current": 61517,
       "measured_on": "2026-10-21",
-      "year_end_expected": 89770,
+      "year_end_expected": 89039,
       "plan_date": "2026-12-31",
-      "remainder": 28253
+      "remainder": 27522
      },
      "SUPPLY": {
-      "current": 28344,
-      "measured_on": "2026-09-18",
+      "current": 31186,
+      "measured_on": "2026-11-06",
       "year_end_expected": 58144,
       "plan_date": "2026-12-31",
-      "remainder": 29800
+      "remainder": 26958
      },
      "MOVE_IN": {
       "current": null,
@@ -9031,15 +9221,15 @@
      {
       "stage": "SUPPLY",
       "status": "DELAYED",
-      "gap": 20616,
-      "rate": "42.1%",
-      "due_date": "2026-09-30",
-      "due_units": 48960,
-      "actual_date": "2026-09-18",
-      "actual_units": 28344
+      "gap": 20888,
+      "rate": "40.1%",
+      "due_date": "2026-10-31",
+      "due_units": 52301,
+      "actual_date": "2026-11-06",
+      "actual_units": 31186
      }
     ],
-    "axisMax": 136000,
+    "axisMax": 136800,
     "stageChecks": {
      "BUSINESS": {
       "status": "REACHED",
@@ -9048,7 +9238,7 @@
        "units": 83181
       },
       "actual": {
-       "date": "2026-10-21",
+       "date": "2026-11-06",
        "units": 83741,
        "manual": 83741,
        "inferred": 82581
@@ -9059,7 +9249,7 @@
       "next": null,
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 104357
+       "units": 104856
       }
      },
      "APPROVAL": {
@@ -9069,7 +9259,7 @@
        "units": 70186
       },
       "actual": {
-       "date": "2026-10-21",
+       "date": "2026-11-06",
        "units": 70353,
        "manual": 70353,
        "inferred": 67061
@@ -9083,14 +9273,14 @@
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 92883
+       "units": 93382
       }
      },
      "CONSTRUCTION": {
       "status": "DELAYED",
       "due": {
-       "date": "2026-09-01",
-       "units": 63146
+       "date": "2026-10-31",
+       "units": 64376
       },
       "actual": {
        "date": "2026-10-21",
@@ -9098,36 +9288,36 @@
        "manual": 59908,
        "inferred": 58022
       },
-      "gap": 1629,
-      "rate": 2.6,
-      "rateText": "2.6%",
+      "gap": 2859,
+      "rate": 4.4,
+      "rateText": "4.4%",
       "next": {
-       "date": "2026-10-31",
-       "units": 64376
+       "date": "2026-11-30",
+       "units": 65240
       },
       "yearEnd": {
        "date": "2026-12-31",
-       "units": 89770
+       "units": 89039
       }
      },
      "SUPPLY": {
       "status": "DELAYED",
       "due": {
-       "date": "2026-09-30",
-       "units": 48960
+       "date": "2026-10-31",
+       "units": 52301
       },
       "actual": {
-       "date": "2026-09-18",
-       "units": 28344,
+       "date": "2026-11-06",
+       "units": 31186,
        "manual": 27128,
        "inferred": 8136
       },
-      "gap": 20616,
-      "rate": 42.1,
-      "rateText": "42.1%",
+      "gap": 21115,
+      "rate": 40.4,
+      "rateText": "40.4%",
       "next": {
-       "date": "2026-10-30",
-       "units": 49560
+       "date": "2026-11-14",
+       "units": 53144
       },
       "yearEnd": {
        "date": "2026-12-31",
@@ -9156,15 +9346,18 @@
       "yearEnd": null
      },
      "MOVE_IN": {
-      "status": "NOT_DUE",
-      "due": null,
+      "status": "NO_ACTUAL",
+      "due": {
+       "date": "2026-10-31",
+       "units": 227
+      },
       "actual": null,
       "gap": null,
       "rate": null,
       "rateText": "미확보",
       "next": {
-       "date": "2026-10-31",
-       "units": 227
+       "date": "2026-11-30",
+       "units": 847
       },
       "yearEnd": {
        "date": "2026-12-31",
@@ -9172,22 +9365,22 @@
       }
      }
     },
-    "delayMax": 20616,
+    "delayMax": 21115,
     "warningMax": 0,
     "stageGaps": [
      {
       "stage": "CONSTRUCTION",
       "label": "건설",
       "status": "DELAYED",
-      "gap": 1629,
-      "rate": "2.6%"
+      "gap": 2859,
+      "rate": "4.4%"
      },
      {
       "stage": "SUPPLY",
       "label": "공급",
       "status": "DELAYED",
-      "gap": 20616,
-      "rate": "42.1%"
+      "gap": 21115,
+      "rate": "40.4%"
      },
      {
       "stage": "COMPLETION",
@@ -9201,8 +9394,8 @@
      "stage": "SUPPLY",
      "label": "공급",
      "status": "DELAYED",
-     "gap": 20616,
-     "rate": "42.1%"
+     "gap": 21115,
+     "rate": "40.4%"
     },
     "stageShort": {
      "CONSTRUCTION": {
@@ -9220,8 +9413,20 @@
         "short": 693
        },
        {
+        "id": "PRO_9636a0a7813451b2cb76372b",
+        "short": 600
+       },
+       {
         "id": "PRO_7d1b5e3e2b392b43d0c59a6b",
         "short": 480
+       },
+       {
+        "id": "PRO_60f74ae611079cfae69ea20e",
+        "short": 379
+       },
+       {
+        "id": "PRO_f4d0df2ada51ce61f9bb6b72",
+        "short": 251
        }
       ],
       "over": 1160
@@ -9297,6 +9502,10 @@
         "short": 603
        },
        {
+        "id": "PRO_9636a0a7813451b2cb76372b",
+        "short": 600
+       },
+       {
         "id": "PRO_c6f5a8ea506ed720419b999a",
         "short": 584
        },
@@ -9317,10 +9526,6 @@
         "short": 499
        },
        {
-        "id": "PRO_7d1b5e3e2b392b43d0c59a6b",
-        "short": 480
-       },
-       {
         "id": "PRO_1b0f09c1abb6e68c92fac227",
         "short": 428
        },
@@ -9331,6 +9536,10 @@
        {
         "id": "PRO_693fd7d6c158c2da26abe2c0",
         "short": 399
+       },
+       {
+        "id": "PRO_60f74ae611079cfae69ea20e",
+        "short": 379
        },
        {
         "id": "PRO_e24ec7ed0705de50dfcfb55e",
@@ -9426,19 +9635,12 @@
      }
     },
     "supplyUpcoming": {
-     "total": 12007,
-     "projects": 23,
-     "from": "2026-10",
-     "to": "2027-09"
+     "total": 8666,
+     "projects": 17,
+     "from": "2026-11",
+     "to": "2027-10"
     },
     "monthly": [
-     {
-      "month": "2024-11",
-      "APPROVAL": 694,
-      "CONSTRUCTION": 945,
-      "SUPPLY": 142,
-      "COMPLETION": 0
-     },
      {
       "month": "2024-12",
       "APPROVAL": 6086,
@@ -9597,7 +9799,14 @@
       "month": "2026-10",
       "APPROVAL": 0,
       "CONSTRUCTION": 1160,
-      "SUPPLY": 0,
+      "SUPPLY": 2362,
+      "COMPLETION": 0
+     },
+     {
+      "month": "2026-11",
+      "APPROVAL": 0,
+      "CONSTRUCTION": 0,
+      "SUPPLY": 480,
       "COMPLETION": 0
      }
     ],
@@ -9623,8 +9832,8 @@
      "POLICY": 770,
      "UNKNOWN": 0,
      "MOVE_IN": 0,
-     "SUPPLY": 28344,
-     "CONSTRUCTION": 33173,
+     "SUPPLY": 31186,
+     "CONSTRUCTION": 30331,
      "APPROVAL": 8836,
      "BUSINESS": 13388
     },
@@ -9632,17 +9841,17 @@
      "서울특별시": {
       "supplyReached": 0,
       "delayed": true,
-      "delayNote": "준공 14호 부족 (3.5%)"
+      "delayNote": "준공 1,613호 부족 (80.9%)"
      },
      "경기도": {
-      "supplyReached": 28344,
+      "supplyReached": 31186,
       "delayed": true,
-      "delayNote": "건설 1,629호 부족 (2.6%) · 공급 20,616호 부족 (42.1%) · 준공 2,096호 부족 (86.9%)"
+      "delayNote": "건설 2,859호 부족 (4.4%) · 공급 21,115호 부족 (40.4%) · 준공 2,096호 부족 (86.9%)"
      },
      "인천광역시": {
       "supplyReached": 0,
       "delayed": true,
-      "delayNote": "공급 1,108호 부족 (17.4%)"
+      "delayNote": "공급 2,250호 부족 (30.0%)"
      }
     }
    }

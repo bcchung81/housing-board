@@ -1,0 +1,53 @@
+{
+ "schema": "ledger-month/1",
+ "month": "2026-11",
+ "reference_date": "2026-11-10",
+ "edition": "2026-09",
+ "previous": {
+  "month": "2026-10",
+  "edition": "2026-08"
+ },
+ "built_at": "2026-11-10T10:57:40.997Z",
+ "tool": "tools/ledger/monthly.js",
+ "steps": [
+  "새 달 폴더 schemas/ledger-2026-11 만들기, 앞 달 2026-10 에서 정적 입력 복사(raw/legal-dong · raw/lh-completion · raw/move-in · raw/hub-bulk-history · raw/home · mappings · agency · raw/hub-bulk-bld · raw/reb-complex-id · raw/kapt-list · raw/molit-complex-file · raw/myhome-complex · raw/applyhome · raw/hug-sale-history · raw/lh-notice-detail)",
+  "건축HUB 대용량 2026-09 판 3종 받기, 밀려난 기본개요 2026-08 → raw/hub-bulk-history/basic-2026-08.zip",
+  "달 기록 manifest.json(기준일 2026-11-10)",
+  "hub-bulk.js",
+  "snapshot.js",
+  "collect-national.js(공고 API)",
+  "convert.js --out tables(후보 id 매핑 갱신)",
+  "validate",
+  "trend.js --close(앞 달 2026-10 관측 행)",
+  "trend.js",
+  "board.js"
+ ],
+ "summary": {
+  "before": {
+   "month": "2026-10",
+   "referenceDate": "2026-10-22",
+   "edition": "2026-08",
+   "projects": 289,
+   "judged": 185,
+   "ok": 172,
+   "caution": 11,
+   "delay": 2,
+   "okUnits": 168302,
+   "cautionUnits": 7444,
+   "delayUnits": 1666
+  },
+  "after": {
+   "month": "2026-11",
+   "referenceDate": "2026-11-10",
+   "edition": "2026-09",
+   "projects": 289,
+   "judged": 185,
+   "ok": 172,
+   "caution": 11,
+   "delay": 2,
+   "okUnits": 168302,
+   "cautionUnits": 7444,
+   "delayUnits": 1666
+  }
+ }
+}

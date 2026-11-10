@@ -1,0 +1,70 @@
+{
+ "source": "주택도시보증공사(HUG) 분양이력정보(지역별) OpenAPI(HUG 빅데이터 개방 포털 HOUSTA, 사업장별 분양이력정보)",
+ "fetched_at": "2026-10-12T12:11:33.887Z",
+ "endpoint": [
+  "https://www.khug.or.kr/infoDistributionHistory.do"
+ ],
+ "params": {
+  "STDD_YYM": "1990..2026 (연도별, 1990~1995 는 자료 없음, 첫 자료 1996)",
+  "AREA_DCD": "01..16 (시·도별)",
+  "쪽": "없음(연도×지역 1회에 전부)"
+ },
+ "calls": 598,
+ "pages": 598,
+ "records": 9700,
+ "notes": "연도(STDD_YYM)×지역(AREA_DCD 01~16) 조합마다 1회 호출한 응답 배열을 합쳤다(rows 는 원천 행 그대로, 값 변환 없음). 기준연도는 분양개시일자 등 연도로 추정되며 행에는 기준연도 필드가 없다.",
+ "operations": {
+  "infoDistributionHistory": {
+   "totalCount": 9700,
+   "rows": 9700,
+   "calls": 598,
+   "fields": [
+    "AREA_DCD",
+    "AREA_DCD_NM",
+    "AREA_DTL_DCD",
+    "AREA_DTL_DCD_NM",
+    "BIZ_DIVN_NM",
+    "BIZ_SCAL_CNTS",
+    "BSU_NM",
+    "COLL_ANNO_APVL_DT",
+    "EPPS_REG_NO",
+    "GNRL_SILT_HOCO",
+    "GUAR_FRST_ISSE_DT",
+    "LEAS_GUAR_HOCO",
+    "MOTA_HOCO",
+    "M_EPPS_REG_NO",
+    "OPRN_ETPR_NM",
+    "OWET_ETPR_NM",
+    "SILT_OPEN_DT",
+    "SILT_PWN",
+    "TOT_HOCO"
+   ],
+   "COLL_ANNO_APVL_DT": {
+    "earliest": "19960719",
+    "latest": "20261001"
+   },
+   "SILT_OPEN_DT": {
+    "earliest": "19000101",
+    "latest": "20280228"
+   },
+   "byArea": {
+    "07:경기도": 2672,
+    "01:서울특별시": 1456,
+    "14:경상남도": 672,
+    "02:부산광역시": 593,
+    "10:충청남도": 567,
+    "04:인천광역시": 552,
+    "03:대구광역시": 516,
+    "13:경상북도": 465,
+    "08:강원도": 350,
+    "05:광주광역시": 344,
+    "12:전라남도": 312,
+    "11:전라북도": 312,
+    "09:충청북도": 288,
+    "16:울산광역시": 242,
+    "06:대전광역시": 201,
+    "15:제주특별자치도": 158
+   }
+  }
+ }
+}

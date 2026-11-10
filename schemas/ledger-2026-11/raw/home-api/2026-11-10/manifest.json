@@ -1,0 +1,74 @@
+{
+  "files": {
+    "policy-plan-97.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/policy-delivery/view?as_of_date=2026-11-10&group=policy&scope=policy",
+      "fetched_at": "2026-11-10T08:55:47.790674+00:00",
+      "sha256": "2743065bd0d99d46559aef392015db809be2a7c6fa260ff448a98ea79788c8a2",
+      "rows": 3,
+      "bytes": 158
+    },
+    "projects-map-dashboard-97.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/map/dashboard?as_of_date=2026-11-10&policy_id=POL_2025_0907&horizon=10&measure=SUPPLY&schedule_status=all&compact=true",
+      "fetched_at": "2026-11-10T08:55:48.711218+00:00",
+      "sha256": "7611710b8cd558a7b30f5096ecbc499e18929ae5ae8e0ccf5e08908ab2e227f7",
+      "rows": 232,
+      "bytes": 310010
+    },
+    "projects-map-dashboard.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/map/dashboard?as_of_date=2026-11-10&compact=true",
+      "fetched_at": "2026-11-10T08:55:58.559216+00:00",
+      "sha256": "c093d3c6db2399e7bbd37129548488fb04d8c6b9e3f64fd6dce9ffd22319100d",
+      "rows": 391,
+      "bytes": 585310
+    },
+    "projects-policy-delivery-97.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/policy-delivery/view?as_of_date=2026-11-10&group=policy&scope=policy",
+      "fetched_at": "2026-11-10T08:55:58.559245+00:00",
+      "sha256": "a10f3eb4c2ac3819a3bbc943d9f34ac5fe6ce72d2b7b1bb27dd01b17bbda3c1d",
+      "rows": 177,
+      "bytes": 76987
+    },
+    "sources-list.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/sources?compact=true",
+      "fetched_at": "2026-11-10T08:55:58.936343+00:00",
+      "sha256": "9814ff25b958b4981c946e8172978b7b0a6f14ee5d6f1b38435e091dae08058b",
+      "rows": 84,
+      "bytes": 15150
+    },
+    "sources-mappings.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/mappings?as_of_date=2026-11-10&compact=true",
+      "fetched_at": "2026-11-10T08:55:59.707140+00:00",
+      "sha256": "75dd9292b200478046c50f1d29200efd568ea301e4da66aaef723f48dd2f6482",
+      "rows": 455,
+      "bytes": 166988
+    },
+    "sources-requirements.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/requirements-status?as_of_date=2026-11-10",
+      "fetched_at": "2026-11-10T08:55:59.735933+00:00",
+      "sha256": "2ba5d864504346ae6a742c2d58ca5de8746ce132be394bd07250f4709bf9d41d",
+      "rows": 12,
+      "bytes": 2063
+    },
+    "sources-summary.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/source-summary",
+      "fetched_at": "2026-11-10T08:56:38.341326+00:00",
+      "sha256": "6488962c51c0e5ff62d1059ddb9fb3ea9de29c6bbcb29a5cb8b384e0d9d345d3",
+      "rows": 9,
+      "bytes": 8805
+    },
+    "sources-validation.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/validation?as_of_date=2026-11-10",
+      "fetched_at": "2026-11-10T08:56:40.439841+00:00",
+      "sha256": "db6fba8bd6aae728c1cc5a042a58aae6d4488a47cee1659b94dd369f3a127ce0",
+      "rows": 26,
+      "bytes": 28977
+    },
+    "sources-year-coverage.json.gz": {
+      "url": "https://www.minslab.kr/poc/home/api/sources/year-coverage",
+      "fetched_at": "2026-11-10T08:56:40.739295+00:00",
+      "sha256": "132e2d39c4cd7580ee4437be87a2de9945a888f5644e0ec371c83da73c62d8e2",
+      "rows": 39,
+      "bytes": 2792
+    }
+  }
+}

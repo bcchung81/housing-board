@@ -1,0 +1,7 @@
+﻿local_project_id,agency_project_key,event_type,plan_basis,event_date,event_month,event_year,change_reason,change_note
+PRJ-28245-0005,,PERMIT,BASELINE,2025-03-31,,,,
+PRJ-28245-0005,,CONSTRUCTION_START,BASELINE,,2025-09,,,
+PRJ-28245-0004,,CONSTRUCTION_START,BASELINE,2025-10-15,,,,
+PRJ-28245-0004,,CONSTRUCTION_START,REVISED,2026-04-30,,,PERMIT,"[가상] 건축 인허가 보완, 착공 6개월 늦춤"
+PRJ-28245-0004,,COMPLETION,BASELINE,,,2028,,
+,LHD-NEW-01,PERMIT,BASELINE,,2027-03,,,

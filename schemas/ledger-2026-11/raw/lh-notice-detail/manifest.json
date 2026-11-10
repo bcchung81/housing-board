@@ -1,0 +1,171 @@
+{
+ "source": "LH 분양임대공고별 상세정보(15057999 lhLeaseNoticeDtlInfo1)",
+ "fetched_at": "2026-10-12T12:23:55.861Z",
+ "endpoint": "https://apis.data.go.kr/B552555/lhLeaseNoticeDtlInfo1/getLeaseNoticeDtlInfo1",
+ "params": {
+  "input": [
+   "PAN_ID",
+   "SPL_INF_TP_CD",
+   "CCR_CNNT_SYS_DS_CD",
+   "UPP_AIS_TP_CD",
+   "AIS_TP_CD"
+  ],
+  "from": "raw/lh-notice/notices.json 목록 행의 값",
+  "UPP_AIS_TP_CD": [
+   "05",
+   "06",
+   "13",
+   "39",
+   "54"
+  ],
+  "max_targets": 9000,
+  "spacing_ms": 150,
+  "concurrency": 2
+ },
+ "calls": 4988,
+ "pages": 4988,
+ "records": 4987,
+ "notes": "주택 공고(05·06·13·39·54)만 공고일 최신 순으로 호출(목록 4987행 중 대상 4987, 주택 아님 0, 중복 0, 상한 초과 0). 응답은 원본 그대로. 블록 이름이 Nm 으로 끝나는 것(dsSbdNm 등)은 필드 이름의 한글 설명표(값이 '단지명'·'단지주소' 등)라 내용·채움 수에서 뺀다(원본에는 그대로 있다). ok=설명표 아닌 블록에 값이 있는 응답, empty=그 외.",
+ "requested": 4987,
+ "ok": 4977,
+ "empty": 10,
+ "failed": 0,
+ "failed_list": [],
+ "blocks": {
+  "dsSplScdl": {
+   "rows": 10707,
+   "fields": [
+    "RMK",
+    "PZWR_ANC_DT",
+    "CTRT_ED_DT",
+    "HS_SBSC_ACP_TRG_CD_NM",
+    "ACP_DTTM",
+    "PZWR_PPR_SBM_ST_DT",
+    "SPL_SCD_GUD_FCTS",
+    "CTRT_ST_DT",
+    "PZWR_PPR_SBM_ED_DT",
+    "PPR_SBM_OPE_ANC_DT",
+    "PPR_ACP_CLSG_DT",
+    "SBD_LGO_NM",
+    "SBSC_ACP_ST_DT",
+    "SBSC_ACP_CLSG_DT",
+    "PPR_ACP_ST_DT",
+    "HS_VIE_ED_DT",
+    "HS_VIE_ST_DT",
+    "ACP_ED_DT",
+    "ACP_ST_DT",
+    "UST_ACP_CLSG_DTTM",
+    "UST_ACP_ST_DTTM"
+   ]
+  },
+  "dsEtcInfo": {
+   "rows": 4975,
+   "fields": [
+    "ETC_FCTS",
+    "PAN_DTL_CTS",
+    "ETC_CTS",
+    "CRC_RSN",
+    "ETC_CTS2",
+    "ARAG_RCR_HSH_CTS",
+    "LSC_CTS",
+    "ETC_CTS3",
+    "LSTR_CTS",
+    "CAU_FCTS",
+    "RQS_PLC_CTS",
+    "TRG_HS_CTS",
+    "SPL_HO_CNT_CTS",
+    "EPZ_TRG_ARA",
+    "SPPT_LMT_AMT_CTS"
+   ]
+  },
+  "dsAhflInfo": {
+   "rows": 19451,
+   "fields": [
+    "AHFL_URL",
+    "SL_PAN_AHFL_DS_CD_NM",
+    "CMN_AHFL_NM"
+   ]
+  },
+  "dsSbd": {
+   "rows": 8885,
+   "fields": [
+    "LCT_ARA_DTL_ADR",
+    "BZDT_NM",
+    "EDC_FCL_CTS",
+    "MIN_MAX_RSDN_DDO_AR",
+    "SUM_TOT_HSH_CNT",
+    "TFFC_FCL_CTS",
+    "LCT_ARA_ADR",
+    "CVN_FCL_CTS",
+    "HTN_FMLA_DS_CD_NM",
+    "IDT_FCL_CTS",
+    "SPL_INF_GUD_FCTS",
+    "MVIN_XPC_YM",
+    "LGDN_ADR",
+    "LGDN_DTL_ADR",
+    "HSH_CNT",
+    "HTN_FMLA_DESC",
+    "LCC_NT_NM",
+    "DDO_AR"
+   ]
+  },
+  "dsSbdAhfl": {
+   "rows": 22489,
+   "fields": [
+    "LCC_NT_NM",
+    "AHFL_URL",
+    "LS_SPL_INF_UPL_FL_DS_CD_NM",
+    "CMN_AHFL_NM",
+    "BZDT_NM",
+    "SL_PAN_AHFL_DS_CD_NM"
+   ]
+  },
+  "dsCtrtPlc": {
+   "rows": 4932,
+   "fields": [
+    "SIL_OFC_BCLS_DT",
+    "CTRT_PLC_DTL_ADR",
+    "SIL_OFC_GUD_FCTS",
+    "CTRT_PLC_ADR",
+    "SIL_OFC_DT",
+    "TSK_SCD_CTS",
+    "SIL_OFC_TLNO",
+    "SIL_OFC_OPEN_DT",
+    "TSK_ST_DTTM",
+    "TSK_ED_DTTM"
+   ]
+  },
+  "dsEtcList": {
+   "rows": 3345,
+   "fields": [
+    "ETC_CTS",
+    "PAN_ETC_INF_CD_NM"
+   ]
+  }
+ },
+ "filled": {
+  "단지주소_LGDN_ADR_or_LCT_ARA_ADR": 3677,
+  "입주예정월_MVIN_XPC_YM": 3523,
+  "세대수_HSH_CNT_or_SUM_TOT_HSH_CNT": 3664,
+  "단지명_LCC_NT_NM_or_BZDT_NM": 3669,
+  "공고문파일_AHFL_URL": 4948
+ },
+ "by_AIS_TP_CD_NM": {
+  "공공임대": 318,
+  "국민임대": 1464,
+  "행복주택": 817,
+  "영구임대": 531,
+  "매입임대": 1169,
+  "통합공공임대": 37,
+  "행복주택(신혼희망)": 98,
+  "분양주택": 301,
+  "공공분양(신혼희망)": 124,
+  "가정어린이집": 45,
+  "집주인임대": 43,
+  "이익공유형 분양주택": 3,
+  "6년 공공임대주택": 5,
+  "전세임대": 29,
+  "통합공공임대(신혼희망)": 2,
+  "신축다세대매입임대": 1
+ }
+}

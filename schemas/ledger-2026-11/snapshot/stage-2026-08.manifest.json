@@ -1,0 +1,312 @@
+{
+ "schema": "stage/1-manifest",
+ "data_month": "2026-08",
+ "tool": "tools/ledger/stage-snapshot.js",
+ "rules": "tools/ledger/clean.js",
+ "date_rule": "형식 YYYY-MM-DD · YYYYMMDD · YYYY.MM.DD · YYYYMM · YYYY · 'YYYY년 MM월' · 'YYYY.MM' 을 적힌 정밀도(일·월·연)대로. 자리표시값과 1950 전·2035 뒤는 null(nulls 에 열·사유별 수: PLACEHOLDER · RANGE · FORMAT · CALENDAR)",
+ "legal_dong": {
+  "path": "raw/legal-dong/국토교통부_법정동코드_20260929.csv",
+  "bytes": 2471662,
+  "sha256": "c9a5db5b21cab5cbf783e2f3e0ddd3f025750dba0c2a86f5f4840f2dac03ff18"
+ },
+ "ledger": {
+  "hub_snapshot": {
+   "path": "snapshot/hub-refresh.json",
+   "bytes": 1979840,
+   "sha256": "5584c76b0a9003f4b3427d5b7bed7bcbd519889f6168f551c43351901e1aeb43"
+  },
+  "records": 4103,
+  "registry_projects": 77,
+  "parcels": 3020,
+  "bjds": 1593,
+  "block_keys": 636
+ },
+ "road_jibun": {
+  "path": "mappings/road-jibun.json",
+  "bytes": 431476,
+  "sha256": "7d38423e4944a315d084b7fddc99ffb72e5c9407b8764986b90117dbe671bf73",
+  "rows": 2547,
+  "ok": 2107
+ },
+ "sources": {
+  "bld": {
+   "files": {
+    "summary": {
+     "path": "raw/hub-bulk-bld/건축물대장_총괄표제부_2026-08.zip",
+     "bytes": 37932334,
+     "sha256": "47df6b182d3df00002557e1eac9f21c4fe0c1b6e651c0a67168078f311ac559b"
+    },
+    "title": {
+     "path": "raw/hub-bulk-bld/건축물대장_표제부_2026-08.zip",
+     "bytes": 651525650,
+     "sha256": "0e1789435deb8b636452961069beb5f45fc92fa19045308fc863fe0a158f6724"
+    }
+   },
+   "rows_read": 8685372,
+   "rows_kept": 6227,
+   "by_file": {
+    "summary": {
+     "rows": 620966,
+     "parcel": 641,
+     "block": 62
+    },
+    "title": {
+     "rows": 8064406,
+     "parcel": 5518,
+     "block": 6,
+     "aux": 3597
+    }
+   },
+   "nulls": {
+    "start": {
+     "CALENDAR": 28
+    },
+    "use_date": {
+     "RANGE": 12,
+     "CALENDAR": 3
+    },
+    "permit": {
+     "RANGE": 3,
+     "CALENDAR": 4,
+     "FORMAT": 2
+    }
+   }
+  },
+  "reb": {
+   "files": {
+    "main": {
+     "path": "raw/reb-complex-id/한국부동산원_공동주택 단지 식별정보_기본정보_20260831.csv",
+     "bytes": 40085190,
+     "sha256": "87272863d9c2edcd69d1a5319eb5755c288f13e8d0525dafb92c10a54c3cb00d"
+    }
+   },
+   "rows_read": 307834,
+   "rows_kept": 777,
+   "use_date_max": "2025-12-31",
+   "nulls": {},
+   "pnu": {
+    "tried": 307834,
+    "ok": 307476,
+    "old_code": 13827,
+    "reasons": {
+     "LAND": 239,
+     "UNMAPPED": 116,
+     "LOT": 3
+    },
+    "via": {},
+    "rate": 0.9988
+   }
+  },
+  "kapt": {
+   "files": {
+    "list": {
+     "path": "raw/kapt-list/getTotalAptList4.json",
+     "bytes": 3565083,
+     "sha256": "8d237261687d5ce451cd6997c734215b694ae05f7826696b55f15ac12ef397e0"
+    },
+    "file": {
+     "path": "raw/molit-complex-file/20261009_단지_기본정보.xlsx",
+     "bytes": 12740751,
+     "sha256": "6e66b0c94bfcbb711513c4aa3f566e665f10c5ec09b16f2b6c602eb616b003c5"
+    }
+   },
+   "rows_read": 22554,
+   "folded_repeats": 816,
+   "complexes": 21738,
+   "not_in_list": 0,
+   "list_rows": 22324,
+   "before_permit": 11949,
+   "rows_kept": 2032,
+   "nulls": {
+    "developer": {
+     "PLACEHOLDER": 2
+    }
+   },
+   "pnu": {
+    "tried": 21738,
+    "ok": 21502,
+    "old_code": 0,
+    "reasons": {
+     "NO_LOT": 218,
+     "LOT": 18
+    },
+    "via": {},
+    "rate": 0.9891
+   }
+  },
+  "myhome": {
+   "files": {
+    "main": {
+     "path": "raw/myhome-complex/rentalHouseGwList.json",
+     "bytes": 72089818,
+     "sha256": "7db1d82a3cd087b58b3734bce33dbdcb6a0b236b1ec0339ec4a34e622c7f6f3f"
+    }
+   },
+   "rows_read": 135627,
+   "complexes": 33433,
+   "folded_repeats": 102194,
+   "rows_kept": 121,
+   "households_varies_kept": 6,
+   "nulls": {},
+   "pnu": {
+    "tried": 33433,
+    "ok": 33424,
+    "old_code": 1,
+    "reasons": {
+     "UNMAPPED": 4,
+     "LOT": 5
+    },
+    "via": {},
+    "rate": 0.9997
+   }
+  },
+  "applyhome": {
+   "files": {
+    "getAPTLttotPblancDetail": {
+     "path": "raw/applyhome/getAPTLttotPblancDetail.json",
+     "bytes": 4900345,
+     "sha256": "4644aeb2f2cee0aecf2c6b807ea031bf78009c3a1e54cc4863624ed796f3d4cc"
+    },
+    "getUrbtyOfctlLttotPblancDetail": {
+     "path": "raw/applyhome/getUrbtyOfctlLttotPblancDetail.json",
+     "bytes": 609043,
+     "sha256": "28f261daad7286521a2f1ead4d97e62a7481b8b855ecee3ed5c86ca9feadee74"
+    },
+    "getRemndrLttotPblancDetail": {
+     "path": "raw/applyhome/getRemndrLttotPblancDetail.json",
+     "bytes": 1623275,
+     "sha256": "680ab40f7fa136315921501dfa0ea7802f85448fcbfecad2c14bb9323ebdd29e"
+    },
+    "getPblPvtRentLttotPblancDetail": {
+     "path": "raw/applyhome/getPblPvtRentLttotPblancDetail.json",
+     "bytes": 184503,
+     "sha256": "71d01745dd88fbcc127d8b9275ce571a860dd93ac77ad43023e54ca9e58937ef"
+    },
+    "getOPTLttotPblancDetail": {
+     "path": "raw/applyhome/getOPTLttotPblancDetail.json",
+     "bytes": 623113,
+     "sha256": "60e19f1cdd7bc1bbdd85b6af1e0b77aed404bef0ae88732fd5bcd32a9acf073e"
+    }
+   },
+   "rows_read": 6096,
+   "rows_kept": 6096,
+   "duplicate_keys": 0,
+   "no_sgg": 173,
+   "road_map_used": 787,
+   "pnu_jibun_form": {
+    "rows": 4973,
+    "ok": 3808,
+    "rate": 0.7657
+   },
+   "pnu_road_form": {
+    "rows": 1123,
+    "ok": 787,
+    "rate": 0.7008
+   },
+   "nulls": {},
+   "pnu": {
+    "tried": 6096,
+    "ok": 4595,
+    "old_code": 0,
+    "reasons": {
+     "JIBUN": 1165,
+     "ROAD": 336
+    },
+    "via": {
+     "JIBUN": 3716,
+     "ROAD_MAP": 787,
+     "PAREN": 92
+    },
+    "rate": 0.7538
+   }
+  },
+  "hug": {
+   "files": {
+    "main": {
+     "path": "raw/hug-sale-history/infoDistributionHistory.json",
+     "bytes": 5450282,
+     "sha256": "8e9dd6a9e861669671a1908cb9739c0a7d2a76d0f2355eeac91a26dd781e2791"
+    }
+   },
+   "rows_read": 9700,
+   "rows_kept": 9700,
+   "duplicate_keys": 3,
+   "sgg_unresolved": {
+    "인천 중구": 5,
+    "인천 서구": 13
+   },
+   "nulls": {
+    "builder": {
+     "PLACEHOLDER": 1679
+    },
+    "sale_open": {
+     "PLACEHOLDER": 1
+    }
+   }
+  },
+  "lhDetail": {
+   "files": {
+    "main": {
+     "path": "raw/lh-notice-detail/details.json",
+     "bytes": 29884394,
+     "sha256": "cee158828008022e40e3b7b82546dc08d22b5bb978446f99b66896fca6df4db0"
+    }
+   },
+   "notices": 4987,
+   "rows_read": 8885,
+   "rows_kept": 8841,
+   "folded_repeats": 44,
+   "road_map_used": 7111,
+   "pnu_jibun_form": {
+    "rows": 431,
+    "ok": 0,
+    "rate": 0
+   },
+   "pnu_road_form": {
+    "rows": 8410,
+    "ok": 7111,
+    "rate": 0.8455
+   },
+   "no_sgg": 20,
+   "nulls": {
+    "winner_on": {
+     "PLACEHOLDER": 36
+    },
+    "move_in": {
+     "RANGE": 53,
+     "PLACEHOLDER": 76,
+     "FORMAT": 5
+    }
+   },
+   "pnu": {
+    "tried": 8841,
+    "ok": 7111,
+    "old_code": 0,
+    "reasons": {
+     "JIBUN": 431,
+     "ROAD": 1299
+    },
+    "via": {
+     "ROAD_MAP": 7111
+    },
+    "rate": 0.8043
+   }
+  },
+  "lhSchedule": {
+   "files": {
+    "main": {
+     "path": "raw/lh-notice-detail/details.json",
+     "bytes": 29884394,
+     "sha256": "cee158828008022e40e3b7b82546dc08d22b5bb978446f99b66896fca6df4db0"
+    }
+   },
+   "rows_read": 10707,
+   "rows_kept": 4916,
+   "nulls": {
+    "winner_on": {
+     "PLACEHOLDER": 36
+    }
+   }
+  }
+ }
+}

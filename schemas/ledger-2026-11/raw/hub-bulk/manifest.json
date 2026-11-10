@@ -1,0 +1,517 @@
+{
+ "source": "건축HUB 대용량 제공 서비스 - 주택인허가(기본개요·행위개요·대지위치) 최신 월",
+ "data_month": "2026-09",
+ "fetched_at": "2026-11-10T10:57:52.244Z",
+ "endpoint": "https://www.hub.go.kr/portal/opn/lps/idx-lgcpt-pvsn-srvc-list.do (다운로드 POST https://www.hub.go.kr/cmm/fms/fileOpnDown.do)",
+ "params": {
+  "observed_month": "2026-11",
+  "구분": "02 주택인허가",
+  "데이터제공년월": "2026-10(2026년 09월 데이터)",
+  "이용목적": "3 참고자료"
+ },
+ "notes": "tools/ledger/monthly.js 가 tools/ledger/fetch-hub-bulk.js 로 받았다(로그인 없음). 열 이름(columns)은 앞 판 manifest 에서 옮겼다.",
+ "files": {
+  "basic": {
+   "service": "기본개요 (2026년 09월, 데이터제공년월 2026-10)",
+   "opnTaskCd": "0201",
+   "zip": "주택인허가_기본개요_2026-09.zip",
+   "zip_bytes": 7627051,
+   "zip_sha256": "4da8648efef07a0dd8f6defb6fca13436c18f17e157e620afef1c03e69483064",
+   "member": "mart_jty_01.txt",
+   "member_bytes": 56425710,
+   "format": "UTF-8, 구분자 '|', 머리글 없음, 열 수 29",
+   "rows": 381382,
+   "fetched_at": "2026-11-10T10:57:52.244Z",
+   "columns": [
+    {
+     "name": "관리_주택대장_PK",
+     "type": "VARCHAR(33)",
+     "note": ""
+    },
+    {
+     "name": "대지_위치",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "건물_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "시군구_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "법정동_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "대지_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "번",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "지",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "특수지_명",
+     "type": "VARCHAR(200)",
+     "note": ""
+    },
+    {
+     "name": "블록",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "로트",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "용도_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "용도_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "구조_코드",
+     "type": "VARCHAR(2)",
+     "note": ""
+    },
+    {
+     "name": "구조_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "주_건축물_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "연면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "총_세대_수(세대)",
+     "type": "NUMERIC(8)",
+     "note": ""
+    },
+    {
+     "name": "철거_멸실_구분_코드",
+     "type": "CHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "철거_멸실_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "철거_시작_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "철거_종료_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "철거_멸실_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "승인_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "착공_예정_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "착공_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "사용_검사_예정_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "사용_검사_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "생성_일자",
+     "type": "VARCHAR(8)",
+     "note": ""
+    }
+   ]
+  },
+  "act": {
+   "service": "행위개요 (2026년 09월, 데이터제공년월 2026-10)",
+   "opnTaskCd": "0211",
+   "zip": "주택인허가_행위개요_2026-09.zip",
+   "zip_bytes": 17260175,
+   "zip_sha256": "764e5100a218a0decc59343a171acee0c77d0cf6ee11e564960082f4844e4ff7",
+   "member": "mart_jty_12.txt",
+   "member_bytes": 98211020,
+   "format": "UTF-8, 구분자 '|', 머리글 없음, 열 수 42",
+   "rows": 364778,
+   "fetched_at": "2026-11-10T10:57:57.565Z",
+   "columns": [
+    {
+     "name": "관리_주택대장_PK",
+     "type": "VARCHAR(33)",
+     "note": ""
+    },
+    {
+     "name": "대지_위치",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "시군구_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "법정동_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "대지_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "번",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "지",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "특수지_명",
+     "type": "VARCHAR(200)",
+     "note": ""
+    },
+    {
+     "name": "블록",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "로트",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "행위_구분",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "행위_구분_코드",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "행위_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "단지_명",
+     "type": "VARCHAR(40)",
+     "note": ""
+    },
+    {
+     "name": "건축물_여부",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "시설_종류",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "건축_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "연면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "바닥_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "주_용도_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "주_용도_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "기타_용도",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "공사_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "지하_층_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "지상_층_수",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "총_사업비",
+     "type": "NUMERIC(15,5)",
+     "note": ""
+    },
+    {
+     "name": "착공_예정_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "사용_검사_예정_일",
+     "type": "VARCHAR(8)",
+     "note": ""
+    },
+    {
+     "name": "세대_수(세대)",
+     "type": "NUMERIC(5)",
+     "note": ""
+    },
+    {
+     "name": "단지_층_수_동_수",
+     "type": "VARCHAR(1000)",
+     "note": ""
+    },
+    {
+     "name": "대장_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "대장_구분_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "행위_전_용도_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "행위_전_용도_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "행위_전_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "행위_후_용도_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "행위_후_용도_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "행위_후_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "시설_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "행위_전_기타_용도",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "행위_후_기타_용도",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "생성_일자",
+     "type": "VARCHAR(8)",
+     "note": ""
+    }
+   ]
+  },
+  "site": {
+   "service": "대지위치 (2026년 09월, 데이터제공년월 2026-10)",
+   "opnTaskCd": "0215",
+   "zip": "주택인허가_대지위치_2026-09.zip",
+   "zip_bytes": 10275133,
+   "zip_sha256": "e78f8cf3186c1db86bcbe92a9e970f7cd04cf3ee7b6298f066c908cd1b9c1e03",
+   "member": "mart_jty_15.txt",
+   "member_bytes": 106343649,
+   "format": "UTF-8, 구분자 '|', 머리글 없음, 열 수 21",
+   "rows": 859775,
+   "fetched_at": "2026-11-10T10:58:04.055Z",
+   "columns": [
+    {
+     "name": "관리_주택대장_PK",
+     "type": "VARCHAR(33)",
+     "note": ""
+    },
+    {
+     "name": "대표_여부",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "대지_위치",
+     "type": "VARCHAR(500)",
+     "note": ""
+    },
+    {
+     "name": "시군구_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "행정동_코드",
+     "type": "VARCHAR(3)",
+     "note": ""
+    },
+    {
+     "name": "법정동_코드",
+     "type": "VARCHAR(5)",
+     "note": ""
+    },
+    {
+     "name": "대지_구분_코드",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "번",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "지",
+     "type": "VARCHAR(4)",
+     "note": ""
+    },
+    {
+     "name": "특수지_명",
+     "type": "VARCHAR(200)",
+     "note": ""
+    },
+    {
+     "name": "블록",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "로트",
+     "type": "VARCHAR(20)",
+     "note": ""
+    },
+    {
+     "name": "지목_코드",
+     "type": "VARCHAR(2)",
+     "note": ""
+    },
+    {
+     "name": "지목_코드_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "관련_지번_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "대지_면적(㎡)",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "최저_대지_폭",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "최고_대지_폭",
+     "type": "NUMERIC(19,9)",
+     "note": ""
+    },
+    {
+     "name": "동별_관계_구분",
+     "type": "VARCHAR(1)",
+     "note": ""
+    },
+    {
+     "name": "동별_관계_구분_명",
+     "type": "VARCHAR(100)",
+     "note": ""
+    },
+    {
+     "name": "생성_일자",
+     "type": "VARCHAR(8)",
+     "note": ""
+    }
+   ]
+  }
+ }
+}

@@ -1,0 +1,237 @@
+{
+  "dump_sha256": "4e1406c5723a4ea923976c2b6f4963f768a4e534c357db1b927428b1cd5cf60f",
+  "files": {
+    "area_stat.jsonl.gz": {
+      "bytes": 388449,
+      "rows": 2672,
+      "sha256": "7972cf906e35c60b9f98d9186323328d832195d6f892b095fb3ce082e5bd78c8"
+    },
+    "block_location.jsonl.gz": {
+      "bytes": 28435,
+      "rows": 288,
+      "sha256": "6a4e556751b0870b7fce70e5ee7a6efcb0cbb4a914b7a5922c29325a23c50ac2"
+    },
+    "collection_link.jsonl.gz": {
+      "bytes": 112802,
+      "rows": 904,
+      "sha256": "9766e2961631512712af0b83a6b7542a5fcf4d742f8f7e5e865613e14b84101d"
+    },
+    "delivery_setting.jsonl.gz": {
+      "bytes": 20,
+      "rows": 0,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "district.jsonl.gz": {
+      "bytes": 70509,
+      "rows": 35,
+      "sha256": "55f2a8153535b53851f10c433685a07403b1f6b5bd9272692a0bb96f81ae219c"
+    },
+    "document_evidence.jsonl.gz": {
+      "bytes": 8818296,
+      "rows": 2081,
+      "sha256": "df3b629fe773381631f1d885eca163c18ade6710d0c9baee6905259e1ff6e831"
+    },
+    "evidence_bridge.jsonl.gz": {
+      "bytes": 239168,
+      "rows": 822,
+      "sha256": "0312fab4e7386ccc4ae3a93d6762855566c50d15e94fe614a985fcbec963a559"
+    },
+    "execution_schedule.jsonl.gz": {
+      "bytes": 374202,
+      "rows": 1847,
+      "sha256": "c78ca66e8e8250132386dc0f77476458b00762fa6d09f91928dc867806f8305f"
+    },
+    "gh_notice.jsonl.gz": {
+      "bytes": 80361,
+      "rows": 695,
+      "sha256": "c0f2a4a8ad7cb9583c75df037249020cef9f75fbcaeb5faf03bfc4d9643a0c02"
+    },
+    "home_audit.jsonl.gz": {
+      "bytes": 392937,
+      "rows": 1509,
+      "sha256": "b3983be1ca2a7605d979481079e13f67490aca06e8a29254db9989867092e01b"
+    },
+    "home_batch.jsonl.gz": {
+      "bytes": 689016,
+      "rows": 8609,
+      "sha256": "f4db5c189e46359e74f2a115961025b5e39fe7911d542c2f09147a719664cc2c"
+    },
+    "home_coverage.jsonl.gz": {
+      "bytes": 753474,
+      "rows": 9566,
+      "sha256": "5b4c3b1b7187c4b5304be1f8dadbaa2f28892a36908e4e986f6f9258b4e8216c"
+    },
+    "home_identity_alias.jsonl.gz": {
+      "bytes": 436439,
+      "rows": 4358,
+      "sha256": "627851b683318a902e48be00ac47992de23add8cb9fd77588ea144b4d838d6ad"
+    },
+    "home_mapping.jsonl.gz": {
+      "bytes": 33291,
+      "rows": 452,
+      "sha256": "3c1b5b320c32aef83f34d439d685bd2dfcea35e83b8bd6e2e76e66ba94a7cdce"
+    },
+    "home_plan.jsonl.gz": {
+      "bytes": 328,
+      "rows": 2,
+      "sha256": "79e6c3c29c46e76bb6d835e5b300d66256923272666fd34852b7d6d10ab99fce"
+    },
+    "home_plan_event.jsonl.gz": {
+      "bytes": 750,
+      "rows": 2,
+      "sha256": "dafe7721dc861e6313334490621f662fdfd76d040fc458111cf744d4f51cfc22"
+    },
+    "home_plan_project_link.jsonl.gz": {
+      "bytes": 20,
+      "rows": 0,
+      "sha256": "9ceffb7310338057cfe71a4ae1e2c98d2c485d81cdef906532a801f457a38d64"
+    },
+    "home_program_mapping.jsonl.gz": {
+      "bytes": 3365,
+      "rows": 45,
+      "sha256": "ef055d6dd341588800832588fad5b5162221104bfbf4733e0a569727a4333c21"
+    },
+    "home_project.jsonl.gz": {
+      "bytes": 160589,
+      "rows": 4186,
+      "sha256": "0799bbbc14a3f975324ff8cae2b5d639b5e9bfccf8c49fb79fff0e4933628a64"
+    },
+    "home_project_evidence.jsonl.gz": {
+      "bytes": 331458,
+      "rows": 4687,
+      "sha256": "cad96f7575c634d3ff3377d82a366bd62aa4b88942fdb37b44e8016bde708614"
+    },
+    "lh_completion_plan.jsonl.gz": {
+      "bytes": 26143,
+      "rows": 204,
+      "sha256": "55714bc7d4d6795debac65492c35222d68e970a832415fa11d7ffe3027ade04a"
+    },
+    "lh_movein_plan.jsonl.gz": {
+      "bytes": 36042,
+      "rows": 252,
+      "sha256": "b84da3b2551a3eca0e3bc72c8a0255f5ea9e6e235bf3b481748ccde164a2c502"
+    },
+    "lh_notice.jsonl.gz": {
+      "bytes": 541405,
+      "rows": 4020,
+      "sha256": "5f833199af3b8a061a20fed077d8d4aeae8077cb0a41e4ab87ac63acc491b55a"
+    },
+    "mapping_decision.jsonl.gz": {
+      "bytes": 2144,
+      "rows": 11,
+      "sha256": "f3aea34128c7c6380fceafeee5f587335cf127374f0345542c9edba2dcbecc14"
+    },
+    "municipality.jsonl.gz": {
+      "bytes": 506221,
+      "rows": 56,
+      "sha256": "1dfbd302ea1be984d68fd8d68af0fb89e82d4cf40f5544c2cd1a52c9491ee784"
+    },
+    "notice.jsonl.gz": {
+      "bytes": 245272,
+      "rows": 1342,
+      "sha256": "491e9b99c61bb525ae0ee2ef003cec5ca46e12ce64ca0406b98c31dc9757a3f9"
+    },
+    "plan_notice.jsonl.gz": {
+      "bytes": 1386,
+      "rows": 2,
+      "sha256": "75aec7781b361206de14910665b877a51c399d6728be2d383f8c9af99aec6191"
+    },
+    "policy.jsonl.gz": {
+      "bytes": 1045,
+      "rows": 3,
+      "sha256": "078d209fc163fa083115de129252989fe6f10343169664613352673ff4b4a657"
+    },
+    "policy_delivery_plan.jsonl.gz": {
+      "bytes": 1760,
+      "rows": 1,
+      "sha256": "6356777bd321aa949fc5c1590d0b32615c4d3c652565fbb78bb8337f4c57a996"
+    },
+    "policy_event.jsonl.gz": {
+      "bytes": 1117,
+      "rows": 5,
+      "sha256": "63b3cec60165e7b838d5c86b5d2b4f690b6c7070336081979daa16da605b14ec"
+    },
+    "policy_municipality.jsonl.gz": {
+      "bytes": 125561,
+      "rows": 11,
+      "sha256": "48f6177f3d4568110ea0e025fe3266b65eb268120e3e2391175882c6fed9c097"
+    },
+    "project.jsonl.gz": {
+      "bytes": 134916,
+      "rows": 452,
+      "sha256": "1e2701f6ee595f2841314c16e412e71771d33c3b646872ac855d1bfca72d71da"
+    },
+    "project_location.jsonl.gz": {
+      "bytes": 39332,
+      "rows": 310,
+      "sha256": "2f6651897e863839fde680ac2cdb45ba10d9004792bc33b4ef8e002e1d2b01dc"
+    },
+    "project_profile.jsonl.gz": {
+      "bytes": 273531,
+      "rows": 323,
+      "sha256": "5b5745149cacaf458fc6b9b724343c4fbde42b891ae69aec06955cd5ae6178fe"
+    },
+    "project_report.jsonl.gz": {
+      "bytes": 306796,
+      "rows": 1432,
+      "sha256": "8bebf475f2b73c3474913bd17101680c6cf789f9cd110aeeb38347aa11268847"
+    },
+    "sequence_review.jsonl.gz": {
+      "bytes": 5641,
+      "rows": 11,
+      "sha256": "db5b32f24f80e56e2a02756bf65845e87852a33cf99f667698d23cc5be115145"
+    },
+    "stage_evidence.jsonl.gz": {
+      "bytes": 196508,
+      "rows": 904,
+      "sha256": "1d8440842f9c67ff5a0c87631e3243f997f41bfed79e1ccf5e5db7dd449deb20"
+    },
+    "statistic.jsonl.gz": {
+      "bytes": 786415,
+      "rows": 5442,
+      "sha256": "912ed24c9a21c061554b5b22cb03e586f924f7c85b9d41d939f3cad6487eefc9"
+    },
+    "unsold.jsonl.gz": {
+      "bytes": 158471,
+      "rows": 1798,
+      "sha256": "f99853953b48f524cf465468574cf82ac138b7c3f80ae9f814dd8c2f61b63660"
+    }
+  },
+  "key_check": {
+    "name_value": 0,
+    "ok": true,
+    "url_query_long_token": 0
+  },
+  "kinds": [
+    "policy",
+    "policy_delivery_plan",
+    "policy_event",
+    "project",
+    "project_report",
+    "stage_evidence",
+    "sequence_review",
+    "lh_completion_plan",
+    "lh_notice",
+    "notice",
+    "gh_notice",
+    "statistic",
+    "area_stat",
+    "unsold",
+    "district",
+    "block_location",
+    "project_location",
+    "plan_notice",
+    "collection_link",
+    "municipality",
+    "policy_municipality",
+    "evidence_bridge",
+    "lh_movein_plan",
+    "document_evidence",
+    "delivery_setting",
+    "execution_schedule",
+    "project_profile",
+    "mapping_decision"
+  ],
+  "snapshot_at": "2026-10-22T13:35:44.723200+00:00",
+  "source_commit": "bbc21f7e3b0813f7390dd7d05486acc7390c98f6"
+}
